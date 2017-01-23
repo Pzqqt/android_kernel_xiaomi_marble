@@ -1432,11 +1432,13 @@ error:
  ***NOTE:
  *
  * @param  pMac      Pointer to Global MAC structure
- * @param  struct scheduler_msg  The MsgQ header, which contains the response buffer
+ * @param  struct scheduler_msg  The MsgQ header, which contains the
+ *  response buffer
  *
  * @return None
  */
-void lim_process_mlm_add_sta_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ,
+void lim_process_mlm_add_sta_rsp(tpAniSirGlobal pMac,
+				 struct scheduler_msg *limMsgQ,
 				 tpPESession psessionEntry)
 {
 	/* we need to process the deferred message since the initiating req. there might be nested request. */
@@ -1597,7 +1599,8 @@ end:
 	return;
 }
 
-void lim_process_mlm_del_bss_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ,
+void lim_process_mlm_del_bss_rsp(tpAniSirGlobal pMac,
+				 struct scheduler_msg *limMsgQ,
 				 tpPESession psessionEntry)
 {
 	/* we need to process the deferred message since the initiating req. there might be nested request. */
@@ -1625,7 +1628,8 @@ void lim_process_mlm_del_bss_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limM
 #endif
 }
 
-void lim_process_sta_mlm_del_bss_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ,
+void lim_process_sta_mlm_del_bss_rsp(tpAniSirGlobal pMac,
+				     struct scheduler_msg *limMsgQ,
 				     tpPESession psessionEntry)
 {
 	tpDeleteBssParams pDelBssParams = (tpDeleteBssParams) limMsgQ->bodyptr;
@@ -1703,8 +1707,9 @@ end:
 	return;
 }
 
-void lim_process_ap_mlm_del_bss_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ,
-					   tpPESession psessionEntry)
+void lim_process_ap_mlm_del_bss_rsp(tpAniSirGlobal pMac,
+				    struct scheduler_msg *limMsgQ,
+				    tpPESession psessionEntry)
 {
 	tSirResultCodes rc = eSIR_SME_SUCCESS;
 	tSirRetStatus status;
@@ -1926,7 +1931,8 @@ end:
 	return;
 }
 
-void lim_process_sta_mlm_del_sta_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ,
+void lim_process_sta_mlm_del_sta_rsp(tpAniSirGlobal pMac,
+				     struct scheduler_msg *limMsgQ,
 				     tpPESession psessionEntry)
 {
 	tSirResultCodes statusCode = eSIR_SME_SUCCESS;
@@ -1981,8 +1987,9 @@ end:
 	return;
 }
 
-void lim_process_ap_mlm_add_sta_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ,
-					   tpPESession psessionEntry)
+void lim_process_ap_mlm_add_sta_rsp(tpAniSirGlobal pMac,
+				    struct scheduler_msg *limMsgQ,
+				    tpPESession psessionEntry)
 {
 	tpAddStaParams pAddStaParams = (tpAddStaParams) limMsgQ->bodyptr;
 	tpDphHashNode pStaDs = NULL;
@@ -2001,13 +2008,7 @@ void lim_process_ap_mlm_add_sta_rsp(tpAniSirGlobal pMac, struct scheduler_msg *l
 			pAddStaParams->assocId);
 		goto end;
 	}
-	/* */
-	/* TODO & FIXME_GEN4 */
-	/* Need to inspect struct scheduler_msg.reserved for a valid Dialog token! */
-	/* */
-	/* TODO: any check for pMac->lim.gLimMlmState ? */
 	if (eLIM_MLM_WT_ADD_STA_RSP_STATE != pStaDs->mlmStaContext.mlmState) {
-		/* TODO: any response to be sent out here ? */
 		lim_log(pMac, LOGE,
 			FL("Received unexpected WMA_ADD_STA_RSP in state %X"),
 			pStaDs->mlmStaContext.mlmState);
@@ -2077,17 +2078,20 @@ end:
  * LIM responds with eWNI_SME_START_BSS_RSP to SME
  *
  ***ASSUMPTIONS:
- * struct scheduler_msg.body is allocated by MLME during lim_process_mlm_start_req
+ * struct scheduler_msg.body is allocated by MLME during
+ * lim_process_mlm_start_req
  * struct scheduler_msg.body will now be freed by this routine
  *
  ***NOTE:
  *
  * @param  pMac      Pointer to Global MAC structure
- * @param  struct scheduler_msg  The MsgQ header, which contains the response buffer
+ * @param  struct scheduler_msg  The MsgQ header, which contains
+ *  the response buffer
  *
  * @return None
  */
-static void lim_process_ap_mlm_add_bss_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ)
+static void lim_process_ap_mlm_add_bss_rsp(tpAniSirGlobal pMac,
+					   struct scheduler_msg *limMsgQ)
 {
 	tLimMlmStartCnf mlmStartCnf;
 	tpPESession psessionEntry;
@@ -2224,18 +2228,21 @@ end:
  * LIM responds with eWNI_SME_START_BSS_RSP to SME
  *
  ***ASSUMPTIONS:
- * struct scheduler_msg.body is allocated by MLME during lim_process_mlm_start_req
+ * struct scheduler_msg.body is allocated by MLME during
+ * lim_process_mlm_start_req
  * struct scheduler_msg.body will now be freed by this routine
  *
  ***NOTE:
  *
  * @param  pMac      Pointer to Global MAC structure
- * @param  struct scheduler_msg  The MsgQ header, which contains the response buffer
+ * @param  struct scheduler_msg  The MsgQ header, which contains
+ *  the response buffer
  *
  * @return None
  */
 static void
-lim_process_ibss_mlm_add_bss_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ,
+lim_process_ibss_mlm_add_bss_rsp(tpAniSirGlobal pMac,
+				 struct scheduler_msg *limMsgQ,
 				 tpPESession psessionEntry)
 {
 	tLimMlmStartCnf mlmStartCnf;
@@ -2429,7 +2436,8 @@ joinFailure:
  * HAL responded with WMA_ADD_BSS_RSP to MLME
  * MLME now sends WMA_ADD_STA_REQ to HAL
  * ASSUMPTIONS:
- * struct scheduler_msg.body is allocated by MLME during lim_process_mlm_join_req
+ * struct scheduler_msg.body is allocated by MLME during
+ * lim_process_mlm_join_req
  * struct scheduler_msg.body will now be freed by this routine
  *
  * Return: None

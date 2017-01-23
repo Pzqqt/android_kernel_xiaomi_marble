@@ -973,7 +973,8 @@ QDF_STATUS sme_set_ps_ns_offload(tHalHandle hal_ctx,
  * @return None
  */
 
-tSirRetStatus sme_post_pe_message(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg)
+tSirRetStatus sme_post_pe_message(tpAniSirGlobal mac_ctx,
+				  struct scheduler_msg *msg)
 {
 	QDF_STATUS qdf_status;
 	qdf_status = scheduler_post_msg(QDF_MODULE_ID_PE,

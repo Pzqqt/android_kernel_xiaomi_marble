@@ -101,6 +101,7 @@ tSirRetStatus lim_send_hal_msg_del_ts(tpAniSirGlobal pMac,
 				      uint8_t tspecIdx,
 				      tSirDeltsReqInfo delts,
 				      uint8_t sessionId, uint8_t *bssId);
-void lim_process_hal_add_ts_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsg);
+void lim_process_hal_add_ts_rsp(tpAniSirGlobal pMac,
+				struct scheduler_msg *limMsg);
 
 #endif

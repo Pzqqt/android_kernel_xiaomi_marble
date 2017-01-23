@@ -937,7 +937,8 @@ uint32_t lim_post_msg_api(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
  *
  * Return: returns value returned by vos_mq_post_message_by_priority
  */
-uint32_t lim_post_msg_high_priority(tpAniSirGlobal mac, struct scheduler_msg *msg)
+uint32_t lim_post_msg_high_priority(tpAniSirGlobal mac,
+				    struct scheduler_msg *msg)
 {
 	return scheduler_post_msg_by_priority(QDF_MODULE_ID_PE,
 					       msg, HIGH_PRIORITY);
@@ -976,7 +977,8 @@ tSirRetStatus pe_post_msg_api(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 
    --------------------------------------------------------------------------*/
 
-tSirRetStatus pe_process_messages(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
+tSirRetStatus pe_process_messages(tpAniSirGlobal pMac,
+				  struct scheduler_msg *pMsg)
 {
 	if (ANI_DRIVER_TYPE(pMac) == eDRIVER_TYPE_MFG) {
 		return eSIR_SUCCESS;
@@ -1732,7 +1734,8 @@ void lim_send_heart_beat_timeout_ind(tpAniSirGlobal pMac, tpPESession psessionEn
  *
  * Return: void
  */
-void lim_ps_offload_handle_missed_beacon_ind(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
+void lim_ps_offload_handle_missed_beacon_ind(tpAniSirGlobal pMac,
+					     struct scheduler_msg *pMsg)
 {
 	tpSirSmeMissedBeaconInd pSirMissedBeaconInd =
 		(tpSirSmeMissedBeaconInd) pMsg->bodyptr;

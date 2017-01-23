@@ -82,7 +82,8 @@ static void lim_process_auth_retry_timer(tpAniSirGlobal);
  *
  * Return: None
  */
-void lim_process_mlm_req_messages(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg)
+void lim_process_mlm_req_messages(tpAniSirGlobal mac_ctx,
+				  struct scheduler_msg *msg)
 {
 	switch (msg->type) {
 	case LIM_MLM_START_REQ:

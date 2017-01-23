@@ -874,7 +874,8 @@ lim_ft_send_aggr_qos_rsp(tpAniSirGlobal pMac, uint8_t rspReqd,
 	return;
 }
 
-void lim_process_ft_aggr_qo_s_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsg)
+void lim_process_ft_aggr_qo_s_rsp(tpAniSirGlobal pMac,
+				  struct scheduler_msg *limMsg)
 {
 	tpAggrAddTsParams pAggrQosRspMsg = NULL;
 	tAddTsParams addTsParam = { 0 };

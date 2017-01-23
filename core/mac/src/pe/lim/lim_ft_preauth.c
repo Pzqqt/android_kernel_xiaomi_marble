@@ -126,7 +126,8 @@ void lim_ft_cleanup_pre_auth_info(tpAniSirGlobal pMac,
  *
  * Return: value to indicate if buffer was consumed
  */
-int lim_process_ft_pre_auth_req(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg)
+int lim_process_ft_pre_auth_req(tpAniSirGlobal mac_ctx,
+				struct scheduler_msg *msg)
 {
 	int buf_consumed = false;
 	tpPESession session;

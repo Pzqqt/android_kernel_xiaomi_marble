@@ -596,20 +596,29 @@ void lim_send_tpc_request_frame(tpAniSirGlobal, tSirMacAddr,
 				tpPESession psessionEntry);
 
 /* Function(s) to handle responses received from HAL */
-void lim_process_mlm_add_bss_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ);
-void lim_process_mlm_add_sta_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQt,
+void lim_process_mlm_add_bss_rsp(tpAniSirGlobal pMac,
+				 struct scheduler_msg *limMsgQ);
+void lim_process_mlm_add_sta_rsp(tpAniSirGlobal pMac,
+				struct scheduler_msg *limMsgQt,
 				 tpPESession psessionEntry);
-void lim_process_mlm_del_sta_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ);
-void lim_process_mlm_del_bss_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ,
+void lim_process_mlm_del_sta_rsp(tpAniSirGlobal pMac,
+				 struct scheduler_msg *limMsgQ);
+void lim_process_mlm_del_bss_rsp(tpAniSirGlobal pMac,
+				 struct scheduler_msg *limMsgQ,
 				 tpPESession);
-void lim_process_sta_mlm_add_sta_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ,
+void lim_process_sta_mlm_add_sta_rsp(tpAniSirGlobal pMac,
+				     struct scheduler_msg *limMsgQ,
 				     tpPESession psessionEntry);
-void lim_process_sta_mlm_del_sta_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ,
+void lim_process_sta_mlm_del_sta_rsp(tpAniSirGlobal pMac,
+				     struct scheduler_msg *limMsgQ,
 				     tpPESession psessionEntry);
-void lim_process_sta_mlm_del_bss_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ,
+void lim_process_sta_mlm_del_bss_rsp(tpAniSirGlobal pMac,
+				     struct scheduler_msg *limMsgQ,
 				     tpPESession psessionEntry);
-void lim_process_mlm_set_sta_key_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ);
-void lim_process_mlm_set_bss_key_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ);
+void lim_process_mlm_set_sta_key_rsp(tpAniSirGlobal pMac,
+				     struct scheduler_msg *limMsgQ);
+void lim_process_mlm_set_bss_key_rsp(tpAniSirGlobal pMac,
+				     struct scheduler_msg *limMsgQ);
 
 /* Function to process WMA_SWITCH_CHANNEL_RSP message */
 void lim_process_switch_channel_rsp(tpAniSirGlobal pMac, void *);

@@ -47,7 +47,8 @@
 /* Function */
 
 extern void sysMACCleanup(void *);
-extern tSirRetStatus sys_bbt_process_message_core(struct sAniSirGlobal *, struct scheduler_msg *,
+extern tSirRetStatus sys_bbt_process_message_core(struct sAniSirGlobal *,
+						  struct scheduler_msg *,
 						  uint32_t, uint32_t);
 
 #endif /* __SYSSTARTUP_H */

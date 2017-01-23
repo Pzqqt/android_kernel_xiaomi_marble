@@ -1359,7 +1359,8 @@ typedef struct tHalHiddenSsidVdevRestart {
 } tHalHiddenSsidVdevRestart, *tpHalHiddenSsidVdevRestart;
 
 
-extern void sys_process_mmh_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg);
+extern void sys_process_mmh_msg(tpAniSirGlobal pMac,
+				struct scheduler_msg *pMsg);
 
 /**
  * struct tBeaconFilterMsg - Beacon Filtering data structure

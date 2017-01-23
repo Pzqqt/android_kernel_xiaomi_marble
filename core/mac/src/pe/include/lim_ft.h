@@ -48,7 +48,8 @@ void lim_ft_cleanup(tpAniSirGlobal pMac, tpPESession psessionEntry);
 #ifdef WLAN_FEATURE_HOST_ROAM
 void lim_ft_cleanup_pre_auth_info(tpAniSirGlobal pMac,
 		tpPESession psessionEntry);
-int lim_process_ft_pre_auth_req(tpAniSirGlobal pMac, struct scheduler_msg *pMsg);
+int lim_process_ft_pre_auth_req(tpAniSirGlobal pMac,
+				struct scheduler_msg *pMsg);
 void lim_process_ft_preauth_rsp_timeout(tpAniSirGlobal pMac);
 void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 		tpPESession psessionEntry);
@@ -130,6 +131,7 @@ static inline void lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 bool lim_process_ft_update_key(tpAniSirGlobal pMac, uint32_t *pMsgBuf);
 tSirRetStatus lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac,
 		uint32_t *pMsgBuf);
-void lim_process_ft_aggr_qo_s_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsg);
+void lim_process_ft_aggr_qo_s_rsp(tpAniSirGlobal pMac,
+				  struct scheduler_msg *limMsg);
 void lim_ft_cleanup_all_ft_sessions(tpAniSirGlobal pMac);
 #endif /* __LIMFT_H__ */

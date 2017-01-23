@@ -1049,7 +1049,8 @@ err:
    \param  tpAniSirGlobal  pMac
    \param  struct scheduler_msg *limMsg
    -------------------------------------------------------------*/
-void lim_process_hal_add_ts_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsg)
+void lim_process_hal_add_ts_rsp(tpAniSirGlobal pMac,
+				struct scheduler_msg *limMsg)
 {
 	tpAddTsParams pAddTsRspMsg = NULL;
 	tpDphHashNode pSta = NULL;

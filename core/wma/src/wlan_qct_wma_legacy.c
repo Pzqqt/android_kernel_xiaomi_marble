@@ -71,7 +71,8 @@ tSirRetStatus wma_post_ctrl_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
  * Return: Success or Failure
  */
 
-static tSirRetStatus wma_post_cfg_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
+static tSirRetStatus wma_post_cfg_msg(tpAniSirGlobal pMac,
+				      struct scheduler_msg *pMsg)
 {
 	tSirRetStatus rc = eSIR_SUCCESS;
 

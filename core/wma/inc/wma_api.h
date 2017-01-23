@@ -165,7 +165,8 @@ bool wma_is_vdev_up(uint8_t vdev_id);
 void *wma_get_beacon_buffer_by_vdev_id(uint8_t vdev_id, uint32_t *buffer_size);
 
 uint8_t wma_get_fw_wlan_feat_caps(uint8_t featEnumValue);
-tSirRetStatus wma_post_ctrl_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg);
+tSirRetStatus wma_post_ctrl_msg(tpAniSirGlobal pMac,
+				struct scheduler_msg *pMsg);
 
 void wma_enable_disable_wakeup_event(WMA_HANDLE handle,
 				uint32_t vdev_id,

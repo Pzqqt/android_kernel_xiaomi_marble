@@ -210,7 +210,8 @@ rrm_send_set_max_tx_power_req(tpAniSirGlobal pMac, int8_t txPower,
  * @param pSessionEntry session entry.
  * @return None
  */
-tSirRetStatus rrm_set_max_tx_power_rsp(tpAniSirGlobal pMac, struct scheduler_msg *limMsgQ)
+tSirRetStatus rrm_set_max_tx_power_rsp(tpAniSirGlobal pMac,
+				       struct scheduler_msg *limMsgQ)
 {
 	tSirRetStatus retCode = eSIR_SUCCESS;
 	tpMaxTxPowerParams pMaxTxParams = (tpMaxTxPowerParams) limMsgQ->bodyptr;

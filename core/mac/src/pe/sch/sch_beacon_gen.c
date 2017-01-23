@@ -918,7 +918,8 @@ void sch_generate_tim(tpAniSirGlobal pMac, uint8_t **pPtr, uint16_t *timLength,
  * @return None
  */
 
-void sch_process_pre_beacon_ind(tpAniSirGlobal pMac, struct scheduler_msg *limMsg)
+void sch_process_pre_beacon_ind(tpAniSirGlobal pMac,
+				struct scheduler_msg *limMsg)
 {
 	tpBeaconGenParams pMsg = (tpBeaconGenParams) limMsg->bodyptr;
 	uint32_t beaconSize;

@@ -74,13 +74,16 @@ extern void sch_initializeCfPollTemplate(tpAniSirGlobal pMac);
 extern void sch_initializeCfEndTemplate(tpAniSirGlobal pMac);
 
 /* / Process the scheduler messages */
-extern void sch_process_message(tpAniSirGlobal pMac, struct scheduler_msg *pSchMsg);
+extern void sch_process_message(tpAniSirGlobal pMac,
+				struct scheduler_msg *pSchMsg);
 
 /* / The beacon Indication handler function */
-extern void sch_process_pre_beacon_ind(tpAniSirGlobal pMac, struct scheduler_msg *limMsg);
+extern void sch_process_pre_beacon_ind(tpAniSirGlobal pMac,
+				       struct scheduler_msg *limMsg);
 
 /* / Post a message to the scheduler message queue */
-extern tSirRetStatus sch_post_message(tpAniSirGlobal pMac, struct scheduler_msg *pMsg);
+extern tSirRetStatus sch_post_message(tpAniSirGlobal pMac,
+				      struct scheduler_msg *pMsg);
 
 extern void sch_beacon_process(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 			       tpPESession psessionEntry);

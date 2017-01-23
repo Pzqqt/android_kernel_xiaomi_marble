@@ -847,7 +847,8 @@ void lim_reset_deferred_msg_q(tpAniSirGlobal pMac)
  * Return: none
  */
 
-uint8_t lim_write_deferred_msg_q(tpAniSirGlobal mac_ctx, struct scheduler_msg *lim_msg)
+uint8_t lim_write_deferred_msg_q(tpAniSirGlobal mac_ctx,
+				 struct scheduler_msg *lim_msg)
 {
 	lim_log(mac_ctx, LOG1,
 		FL("Queue a deferred message (size %d, write %d) - type 0x%x "),
@@ -929,7 +930,8 @@ uint8_t lim_write_deferred_msg_q(tpAniSirGlobal mac_ctx, struct scheduler_msg *l
 	/* save the message to the queue and advanced the write pointer */
 	qdf_mem_copy((uint8_t *) &mac_ctx->lim.gLimDeferredMsgQ.
 			deferredQueue[mac_ctx->lim.gLimDeferredMsgQ.write++],
-				(uint8_t *) lim_msg, sizeof(struct scheduler_msg));
+				(uint8_t *) lim_msg,
+				sizeof(struct scheduler_msg));
 	return TX_SUCCESS;
 
 }
@@ -1008,7 +1010,8 @@ struct scheduler_msg *lim_read_deferred_msg_q(tpAniSirGlobal pMac)
 }
 
 tSirRetStatus
-lim_sys_process_mmh_msg_api(tpAniSirGlobal pMac, struct scheduler_msg *pMsg, uint8_t qType)
+lim_sys_process_mmh_msg_api(tpAniSirGlobal pMac,
+			    struct scheduler_msg *pMsg, uint8_t qType)
 {
 	/* FIXME */
 	sys_process_mmh_msg(pMac, pMsg);
@@ -5764,7 +5767,8 @@ tpPESession lim_is_ap_session_active(tpAniSirGlobal pMac)
    \return void
    -----------------------------------------------------------*/
 
-void lim_handle_defer_msg_error(tpAniSirGlobal pMac, struct scheduler_msg *pLimMsg)
+void lim_handle_defer_msg_error(tpAniSirGlobal pMac,
+				struct scheduler_msg *pLimMsg)
 {
 	if (SIR_BB_XPORT_MGMT_MSG == pLimMsg->type) {
 		cds_pkt_return_packet((cds_pkt_t *) pLimMsg->bodyptr);

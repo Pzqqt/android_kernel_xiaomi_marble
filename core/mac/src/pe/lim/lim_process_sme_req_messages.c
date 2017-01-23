@@ -81,7 +81,8 @@
 
 /* SME REQ processing function templates */
 static bool __lim_process_sme_sys_ready_ind(tpAniSirGlobal, uint32_t *);
-static bool __lim_process_sme_start_bss_req(tpAniSirGlobal, struct scheduler_msg *pMsg);
+static bool __lim_process_sme_start_bss_req(tpAniSirGlobal,
+					    struct scheduler_msg *pMsg);
 static void __lim_process_sme_scan_req(tpAniSirGlobal, uint32_t *);
 static void __lim_process_sme_join_req(tpAniSirGlobal, uint32_t *);
 static void __lim_process_sme_reassoc_req(tpAniSirGlobal, uint32_t *);
@@ -89,7 +90,8 @@ static void __lim_process_sme_disassoc_req(tpAniSirGlobal, uint32_t *);
 static void __lim_process_sme_disassoc_cnf(tpAniSirGlobal, uint32_t *);
 static void __lim_process_sme_deauth_req(tpAniSirGlobal, uint32_t *);
 static void __lim_process_sme_set_context_req(tpAniSirGlobal, uint32_t *);
-static bool __lim_process_sme_stop_bss_req(tpAniSirGlobal, struct scheduler_msg *pMsg);
+static bool __lim_process_sme_stop_bss_req(tpAniSirGlobal,
+					   struct scheduler_msg *pMsg);
 static void __lim_process_send_disassoc_frame(tpAniSirGlobal mac_ctx,
 				uint32_t *msg_buf);
 static void lim_process_sme_channel_change_request(tpAniSirGlobal pMac,
@@ -478,7 +480,8 @@ static uint16_t __lim_get_sme_join_req_size_for_alloc(uint8_t *pBuf)
  * Return: true - If defered false - Otherwise
  */
 
-static bool __lim_is_defered_msg_for_learn(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
+static bool __lim_is_defered_msg_for_learn(tpAniSirGlobal pMac,
+					   struct scheduler_msg *pMsg)
 {
 	if (lim_is_system_in_scan_state(pMac)) {
 		if (lim_defer_msg(pMac, pMsg) != TX_SUCCESS) {
@@ -505,7 +508,8 @@ static bool __lim_is_defered_msg_for_learn(tpAniSirGlobal pMac, struct scheduler
  * Return: true, if defered otherwise return false.
  */
 static bool
-__lim_is_defered_msg_for_radar(tpAniSirGlobal mac_ctx, struct scheduler_msg *message)
+__lim_is_defered_msg_for_radar(tpAniSirGlobal mac_ctx,
+			       struct scheduler_msg *message)
 {
 	/*
 	 * fRadarDetCurOperChan will be set only if we
@@ -1171,7 +1175,8 @@ free:
  * return true - If we consumed the buffer
  *        false - If have defered the message.
  */
-static bool __lim_process_sme_start_bss_req(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
+static bool __lim_process_sme_start_bss_req(tpAniSirGlobal pMac,
+					    struct scheduler_msg *pMsg)
 {
 	if (__lim_is_defered_msg_for_learn(pMac, pMsg) ||
 	    __lim_is_defered_msg_for_radar(pMac, pMsg)) {
@@ -1468,7 +1473,8 @@ static void __lim_process_sme_scan_req(tpAniSirGlobal mac_ctx,
  * @param  *pMsgBuf  A pointer to the SME message buffer
  * @return None
  */
-static void __lim_process_clear_dfs_channel_list(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
+static void __lim_process_clear_dfs_channel_list(tpAniSirGlobal pMac,
+						 struct scheduler_msg *pMsg)
 {
 	qdf_mem_set(&pMac->lim.dfschannelList, sizeof(tSirDFSChannelList), 0);
 }
@@ -3456,7 +3462,8 @@ __lim_handle_sme_stop_bss_request(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
  *         false - If have defered the message.
  */
 
-static bool __lim_process_sme_stop_bss_req(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
+static bool __lim_process_sme_stop_bss_req(tpAniSirGlobal pMac,
+					   struct scheduler_msg *pMsg)
 {
 	if (__lim_is_defered_msg_for_learn(pMac, pMsg)) {
 		/**
@@ -4482,7 +4489,8 @@ static void __lim_process_sme_set_ht2040_mode(tpAniSirGlobal pMac,
  * @return None
  */
 
-static void __lim_process_report_message(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
+static void __lim_process_report_message(tpAniSirGlobal pMac,
+					 struct scheduler_msg *pMsg)
 {
 	switch (pMsg->type) {
 	case eWNI_SME_NEIGHBOR_REPORT_REQ_IND:
@@ -5140,7 +5148,8 @@ static void lim_process_sme_update_access_policy_vendor_ie(
  *                   false - if pMsgBuf is not to be freed.
  */
 
-bool lim_process_sme_req_messages(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
+bool lim_process_sme_req_messages(tpAniSirGlobal pMac,
+				  struct scheduler_msg *pMsg)
 {
 	bool bufConsumed = true;        /* Set this flag to false within case block of any following message, that doesnt want pMsgBuf to be freed. */
 	uint32_t *pMsgBuf = pMsg->bodyptr;

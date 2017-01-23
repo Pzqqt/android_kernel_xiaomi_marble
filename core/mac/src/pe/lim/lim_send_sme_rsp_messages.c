@@ -2099,7 +2099,8 @@ prnt_log:
  *
  * Return: None
  */
-void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg)
+void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx,
+				struct scheduler_msg *msg)
 {
 	tpPESession session_entry;
 	struct scheduler_msg mmh_msg;

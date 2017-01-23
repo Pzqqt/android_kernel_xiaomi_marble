@@ -208,7 +208,8 @@ static void lim_delete_sta_util(tpAniSirGlobal mac_ctx, tpDeleteStaContext msg,
  *
  * Return: none
  */
-void lim_delete_sta_context(tpAniSirGlobal mac_ctx, struct scheduler_msg *lim_msg)
+void lim_delete_sta_context(tpAniSirGlobal mac_ctx,
+			    struct scheduler_msg *lim_msg)
 {
 	tpDeleteStaContext msg = (tpDeleteStaContext) lim_msg->bodyptr;
 	tpPESession session_entry;

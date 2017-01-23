@@ -449,7 +449,7 @@ __lim_pno_match_fwd_bcn_probepsp(tpAniSirGlobal pmac, uint8_t *rx_pkt_info,
 {
 	struct pno_match_found  *result;
 	uint8_t                 *body;
-	struct scheduler_msg                mmh_msg;
+	struct scheduler_msg    mmh_msg;
 	tpSirMacMgmtHdr         hdr;
 	uint32_t num_results = 1, len, i;
 
@@ -507,7 +507,7 @@ __lim_ext_scan_forward_bcn_probe_rsp(tpAniSirGlobal pmac, uint8_t *rx_pkt_info,
 {
 	tpSirWifiFullScanResultEvent result;
 	uint8_t                     *body;
-	struct scheduler_msg                     mmh_msg;
+	struct scheduler_msg         mmh_msg;
 	tpSirMacMgmtHdr              hdr;
 
 	result = qdf_mem_malloc(sizeof(*result) + ie_len);
@@ -850,7 +850,8 @@ lim_check_mgmt_registered_frames(tpAniSirGlobal mac_ctx, uint8_t *buff_desc,
  */
 
 static void
-lim_handle80211_frames(tpAniSirGlobal pMac, struct scheduler_msg *limMsg, uint8_t *pDeferMsg)
+lim_handle80211_frames(tpAniSirGlobal pMac, struct scheduler_msg *limMsg,
+		       uint8_t *pDeferMsg)
 {
 	uint8_t *pRxPacketInfo = NULL;
 	tSirMacFrameCtl fc;
@@ -1199,7 +1200,7 @@ void lim_process_abort_scan_ind(tpAniSirGlobal mac_ctx,
 }
 
 static void lim_process_sme_obss_scan_ind(tpAniSirGlobal mac_ctx,
-							struct scheduler_msg *msg)
+					  struct scheduler_msg *msg)
 {
 	struct sPESession *session;
 	uint8_t session_id;
@@ -1238,7 +1239,8 @@ static void lim_process_sme_obss_scan_ind(tpAniSirGlobal mac_ctx,
  *
  * Return:  None.
  */
-static void lim_process_messages(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg)
+static void lim_process_messages(tpAniSirGlobal mac_ctx,
+				 struct scheduler_msg *msg)
 {
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	uint8_t vdev_id = 0;
@@ -1973,7 +1975,8 @@ static void lim_process_deferred_message_queue(tpAniSirGlobal pMac)
 	if (size > 0) {
 		while ((readMsg = lim_read_deferred_msg_q(pMac)) != NULL) {
 			qdf_mem_copy((uint8_t *) &limMsg,
-				     (uint8_t *) readMsg, sizeof(struct scheduler_msg));
+				     (uint8_t *) readMsg,
+				     sizeof(struct scheduler_msg));
 			size--;
 			lim_process_messages(pMac, &limMsg);
 
@@ -2024,8 +2027,9 @@ void lim_message_processor(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg)
  *
  * Return: None
  */
-static void lim_process_normal_hdd_msg(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg,
-	uint8_t rsp_reqd)
+static void lim_process_normal_hdd_msg(tpAniSirGlobal mac_ctx,
+				       struct scheduler_msg *msg,
+				       uint8_t rsp_reqd)
 {
 	bool defer_msg = true;
 

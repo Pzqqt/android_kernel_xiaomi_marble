@@ -389,8 +389,9 @@ static QDF_STATUS lim_ndp_end_indication_handler(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-void lim_process_ndi_del_sta_rsp(tpAniSirGlobal mac_ctx, struct scheduler_msg *lim_msg,
-						tpPESession pe_session)
+void lim_process_ndi_del_sta_rsp(tpAniSirGlobal mac_ctx,
+				 struct scheduler_msg *lim_msg,
+				 tpPESession pe_session)
 {
 	tpDeleteStaParams del_sta_params = (tpDeleteStaParams) lim_msg->bodyptr;
 	tpDphHashNode sta_ds;
@@ -714,8 +715,9 @@ QDF_STATUS lim_handle_ndp_request_message(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-void lim_process_ndi_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx, struct scheduler_msg *lim_msgq,
-		tpPESession session_entry)
+void lim_process_ndi_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
+				     struct scheduler_msg *lim_msgq,
+				     tpPESession session_entry)
 {
 	tLimMlmStartCnf mlm_start_cnf;
 	tpAddBssParams add_bss_params = (tpAddBssParams) lim_msgq->bodyptr;
