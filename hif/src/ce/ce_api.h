@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -28,6 +28,7 @@
 #ifndef __COPY_ENGINE_API_H__
 #define __COPY_ENGINE_API_H__
 
+#include "pld_common.h"
 #include "ce_main.h"
 #include "hif_main.h"
 
@@ -542,5 +543,9 @@ struct ce_ops {
 			    struct CE_state *CE_state);
 	void (*ce_per_engine_handler_adjust)(struct CE_state *CE_state,
 			     int disable_copy_compl_intr);
+	void (*ce_prepare_shadow_register_v2_cfg)(struct hif_softc *scn,
+			    struct pld_shadow_reg_v2_cfg **shadow_config,
+			    int *num_shadow_registers_configured);
+
 };
 #endif /* __COPY_ENGINE_API_H__ */

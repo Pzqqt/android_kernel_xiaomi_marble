@@ -63,10 +63,6 @@
 #define QCA_WIFI_SUPPORT_SRNG
 #endif
 
-#ifdef QCA_WIFI_SUPPORT_SRNG
-#include "hal_api.h"
-#endif
-
 /* Forward references */
 static int hif_post_recv_buffers_for_pipe(struct HIF_CE_pipe_info *pipe_info);
 
@@ -653,71 +649,22 @@ static struct ce_ops *ce_services_attach(struct hif_softc *scn)
 	return ce_services_legacy();
 }
 
-static void hif_hal_construct_ce_shadow_config(struct hif_softc *scn)
-{
-	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 
-	for (ce_id = 0; ce_id < scn->ce_count; ce_id++) {
-		if (hif_state->host_ce_config[ce_id].src_nentries)
-			hal_set_one_shadow_config(scn->hal_soc,
-						  CE_SRC, ce_id);
-
-		if (hif_state->host_ce_config[ce_id].dest_nentries) {
-			hal_set_one_shadow_config(scn->hal_soc,
-						  CE_DST, ce_id);
-
-			hal_set_one_shadow_config(scn->hal_soc,
-						  CE_DST_STATUS, ce_id);
-		}
-	}
-}
-
-static void hif_prepare_hal_shadow_register_cfg(struct hif_softc *scn,
-		struct pld_shadow_reg_v2_cfg **shadow_config,
-		int *num_shadow_registers_configured)
-{
-	int ce_id;
-
-	if (!ce_srng_based(scn))
-		return;
-
-	if (scn->hal == NULL) {
-		HIF_ERROR("%s: hal not initialized: not initializing shadow config",
-			  __func__);
-		return;
-	}
-
-	hal_get_shadow_config(scn->hal_soc, shadow_config,
-			      num_shadow_registers_configured);
-
-	if (*num_shadow_registers_configured != 0) {
-		HIF_ERROR("%s: hal shadow register configuration allready constructed",
-			  __func__);
-
-		/* return with original configuration*/
-		return;
-	}
-
-	hal_construct_shadow_config(scn->hal_soc);
-	hif_hal_construct_ce_shadow_config(scn);
-
-	/* get updated configuration */
-	hal_get_shadow_config(scn->hal_soc, shadow_config,
-			      num_shadow_registers_configured);
-
-}
 #else	/* QCA_LITHIUM */
-void hif_prepare_hal_shadow_register_cfg(struct hif_softc *scn,
-		struct pld_shadow_reg_v2_cfg **shadow_config,
-		int *num_shadow_registers_configured) {
-
-}
-
 static struct ce_ops *ce_services_attach(struct hif_softc *scn)
 {
 	return ce_services_legacy();
 }
 #endif /* QCA_LITHIUM */
+
+void hif_prepare_hal_shadow_register_cfg(struct hif_softc *scn,
+		struct pld_shadow_reg_v2_cfg **shadow_config,
+		int *num_shadow_registers_configured) {
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+
+	return hif_state->ce_services->ce_prepare_shadow_register_v2_cfg(
+			scn, shadow_config, num_shadow_registers_configured);
+}
 
 static inline uint32_t ce_get_desc_size(struct hif_softc *scn,
 						uint8_t ring_type)
@@ -2126,9 +2073,6 @@ int hif_wlan_enable(struct hif_softc *scn)
 
 #define CE_EPPING_USES_IRQ true
 
-
-
-
 /**
  * hif_ce_prepare_config() - load the correct static tables.
  * @scn: hif context
@@ -2141,6 +2085,8 @@ void hif_ce_prepare_config(struct hif_softc *scn)
 	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(hif_hdl);
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+
+	hif_state->ce_services = ce_services_attach(scn);
 
 	scn->ce_count = HOST_CE_COUNT;
 	/* if epping is enabled we need to use the epping configuration. */
@@ -2356,8 +2302,6 @@ int hif_config_ce(struct hif_softc *scn)
 	hif_state->fw_indicator_address = FW_INDICATOR_ADDRESS;
 
 	hif_config_rri_on_ddr(scn);
-
-	hif_state->ce_services = ce_services_attach(scn);
 
 	for (pipe_num = 0; pipe_num < scn->ce_count; pipe_num++) {
 		struct CE_attr *attr;

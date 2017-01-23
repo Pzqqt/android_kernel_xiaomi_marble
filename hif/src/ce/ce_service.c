@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -2561,6 +2561,11 @@ static void ce_ring_setup_legacy(struct hif_softc *scn, uint8_t ring_type,
 	}
 }
 
+static void ce_prepare_shadow_register_v2_cfg_legacy(struct hif_softc *scn,
+			    struct pld_shadow_reg_v2_cfg **shadow_config,
+			    int *num_shadow_registers_configured)
+{ /* noop */ }
+
 struct ce_ops ce_service_legacy = {
 	.ce_get_desc_size = ce_get_desc_size_legacy,
 	.ce_ring_setup = ce_ring_setup_legacy,
@@ -2575,6 +2580,8 @@ struct ce_ops ce_service_legacy = {
 	.ce_completed_send_next_nolock = ce_completed_send_next_nolock_legacy,
 	.ce_recv_entries_done_nolock = ce_recv_entries_done_nolock_legacy,
 	.ce_send_entries_done_nolock = ce_send_entries_done_nolock_legacy,
+	.ce_prepare_shadow_register_v2_cfg =
+		ce_prepare_shadow_register_v2_cfg_legacy,
 };
 
 

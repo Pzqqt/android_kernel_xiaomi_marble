@@ -682,6 +682,55 @@ static void ce_ring_setup_srng(struct hif_softc *scn, uint8_t ring_type,
 	}
 }
 
+static void ce_construct_shadow_config_srng(struct hif_softc *scn)
+{
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+	int ce_id;
+
+	for (ce_id = 0; ce_id < scn->ce_count; ce_id++) {
+		if (hif_state->host_ce_config[ce_id].src_nentries)
+			hal_set_one_shadow_config(scn->hal_soc,
+						  CE_SRC, ce_id);
+
+		if (hif_state->host_ce_config[ce_id].dest_nentries) {
+			hal_set_one_shadow_config(scn->hal_soc,
+						  CE_DST, ce_id);
+
+			hal_set_one_shadow_config(scn->hal_soc,
+						  CE_DST_STATUS, ce_id);
+		}
+	}
+}
+
+static void ce_prepare_shadow_register_v2_cfg_srng(struct hif_softc *scn,
+		struct pld_shadow_reg_v2_cfg **shadow_config,
+		int *num_shadow_registers_configured)
+{
+	if (scn->hal_soc == NULL) {
+		HIF_ERROR("%s: hal not initialized: not initializing shadow config",
+			  __func__);
+		return;
+	}
+
+	hal_get_shadow_config(scn->hal_soc, shadow_config,
+			      num_shadow_registers_configured);
+
+	if (*num_shadow_registers_configured != 0) {
+		HIF_ERROR("%s: hal shadow register configuration allready constructed",
+			  __func__);
+
+		/* return with original configuration*/
+		return;
+	}
+
+	hal_construct_shadow_config(scn->hal_soc);
+	ce_construct_shadow_config_srng(scn);
+
+	/* get updated configuration */
+	hal_get_shadow_config(scn->hal_soc, shadow_config,
+			      num_shadow_registers_configured);
+}
+
 static struct ce_ops ce_service_srng = {
 	.ce_get_desc_size = ce_get_desc_size_srng,
 	.ce_ring_setup = ce_ring_setup_srng,
@@ -696,6 +745,8 @@ static struct ce_ops ce_service_srng = {
 	.ce_completed_send_next_nolock = ce_completed_send_next_nolock_srng,
 	.ce_recv_entries_done_nolock = ce_recv_entries_done_nolock_srng,
 	.ce_send_entries_done_nolock = ce_send_entries_done_nolock_srng,
+	.ce_prepare_shadow_register_v2_cfg =
+		ce_prepare_shadow_register_v2_cfg_srng,
 };
 
 struct ce_ops *ce_services_srng()
