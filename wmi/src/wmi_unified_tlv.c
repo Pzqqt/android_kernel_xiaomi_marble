@@ -4626,7 +4626,9 @@ static QDF_STATUS send_set_sta_keep_alive_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_TAG_STRUC_WMI_STA_KEEPALVE_ARP_RESPONSE,
 		       WMITLV_GET_STRUCT_TLVLEN(WMI_STA_KEEPALVE_ARP_RESPONSE));
 
-	if (params->method == WMI_KEEP_ALIVE_UNSOLICIT_ARP_RSP) {
+	if ((params->method == WMI_KEEP_ALIVE_UNSOLICIT_ARP_RSP) ||
+	    (params->method ==
+	     WMI_STA_KEEPALIVE_METHOD_GRATUITOUS_ARP_REQUEST)) {
 		if ((NULL == params->hostv4addr) ||
 			(NULL == params->destv4addr) ||
 			(NULL == params->destmac)) {
@@ -4636,7 +4638,7 @@ static QDF_STATUS send_set_sta_keep_alive_cmd_tlv(wmi_unified_t wmi_handle,
 			wmi_buf_free(buf);
 			return QDF_STATUS_E_FAILURE;
 		}
-		cmd->method = WMI_STA_KEEPALIVE_METHOD_UNSOLICITED_ARP_RESPONSE;
+		cmd->method = params->method;
 		qdf_mem_copy(&arp_rsp->sender_prot_addr, params->hostv4addr,
 			     WMI_IPV4_ADDR_LEN);
 		qdf_mem_copy(&arp_rsp->target_prot_addr, params->destv4addr,
