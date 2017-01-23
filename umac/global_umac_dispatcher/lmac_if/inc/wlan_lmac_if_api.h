@@ -68,4 +68,139 @@ QDF_STATUS wlan_lmac_if_close(struct wlan_objmgr_psoc *psoc);
 QDF_STATUS wlan_lmac_if_assign_tx_registration_cb(WLAN_DEV_TYPE dev_type,
 		QDF_STATUS (*handler)(struct wlan_lmac_if_tx_ops *));
 
+
+/**
+ * wlan_lmac_if_get_mgmt_txrx_rx_ops() - retrieve the mgmt rx_ops
+ * @psoc: psoc context
+ *
+ * API to retrieve the mgmt rx_ops from the psoc context
+ *
+ * Return: mgmt_rx_ops pointer
+ */
+static inline struct wlan_lmac_if_mgmt_txrx_rx_ops *
+wlan_lmac_if_get_mgmt_txrx_rx_ops(struct wlan_objmgr_psoc *psoc)
+{
+	if (!psoc)
+		return NULL;
+
+	return &psoc->soc_cb.rx_ops.mgmt_txrx_rx_ops;
+}
+
+/**
+ * mgmt_txrx_get_nbuf() - retrieve nbuf from mgmt desc_id
+ * @psoc: psoc context
+ * @desc_id: mgmt desc_id
+ *
+ * API to retrieve the nbuf from mgmt desc_id
+ *
+ * Return: nbuf
+ */
+static inline qdf_nbuf_t
+mgmt_txrx_get_nbuf(struct wlan_objmgr_psoc *psoc, uint32_t desc_id)
+{
+	struct wlan_lmac_if_mgmt_txrx_rx_ops *mgmt_rx_ops =
+				wlan_lmac_if_get_mgmt_txrx_rx_ops(psoc);
+	if (mgmt_rx_ops && mgmt_rx_ops->mgmt_txrx_get_nbuf_from_desc_id)
+		return mgmt_rx_ops->mgmt_txrx_get_nbuf_from_desc_id(psoc,
+								     desc_id);
+
+	return NULL;
+}
+
+/**
+ * mgmt_txrx_tx_completion_handler() - mgmt tx completion handler
+ * @psoc: psoc context
+ * @desc_id: mgmt desc_id
+ * @status: tx status
+ * @params: tx params
+ *
+ * API to handle the tx completion for mgmt frames
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+static inline QDF_STATUS
+mgmt_txrx_tx_completion_handler(struct wlan_objmgr_psoc *psoc,
+				uint32_t desc_id, uint32_t status,
+				void *params)
+{
+	qdf_nbuf_t nbuf;
+	struct wlan_lmac_if_mgmt_txrx_rx_ops *mgmt_rx_ops =
+				wlan_lmac_if_get_mgmt_txrx_rx_ops(psoc);
+	if (mgmt_rx_ops && mgmt_rx_ops->mgmt_tx_completion_handler)
+		return mgmt_rx_ops->mgmt_tx_completion_handler(psoc, desc_id,
+							status, params);
+
+	nbuf = mgmt_txrx_get_nbuf(psoc, desc_id);
+	if (nbuf)
+		qdf_nbuf_free(nbuf);
+
+	return QDF_STATUS_E_NULL_VALUE;
+}
+
+/**
+ * mgmt_txrx_rx_handler() - mgmt rx frame handler
+ * @psoc: psoc context
+ * @nbuf: nbuf
+ * @params: rx params
+ *
+ * API to receive mgmt frames
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+static inline QDF_STATUS
+mgmt_txrx_rx_handler(struct wlan_objmgr_psoc *psoc, qdf_nbuf_t nbuf,
+			void *params)
+{
+	struct wlan_lmac_if_mgmt_txrx_rx_ops *mgmt_rx_ops =
+				wlan_lmac_if_get_mgmt_txrx_rx_ops(psoc);
+	if (mgmt_rx_ops && mgmt_rx_ops->mgmt_rx_frame_handler)
+		return mgmt_rx_ops->mgmt_rx_frame_handler(psoc, nbuf, params);
+
+	if (nbuf)
+		qdf_nbuf_free(nbuf);
+
+	return QDF_STATUS_E_NULL_VALUE;
+}
+
+/**
+ * mgmt_txrx_get_peer() - retrieve peer from mgmt desc_id
+ * @psoc: psoc context
+ * @desc_id: mgmt desc_id
+ *
+ * API to retrieve the peer from mgmt desc_id
+ *
+ * Return: objmgr peer pointer
+ */
+static inline struct wlan_objmgr_peer *
+mgmt_txrx_get_peer(struct wlan_objmgr_psoc *psoc, uint32_t desc_id)
+{
+	struct wlan_lmac_if_mgmt_txrx_rx_ops *mgmt_rx_ops =
+				wlan_lmac_if_get_mgmt_txrx_rx_ops(psoc);
+	if (mgmt_rx_ops && mgmt_rx_ops->mgmt_txrx_get_peer_from_desc_id)
+		return mgmt_rx_ops->mgmt_txrx_get_peer_from_desc_id(psoc,
+								     desc_id);
+
+	return NULL;
+}
+
+/**
+ * mgmt_txrx_get_vdev_id() - retrieve vdev_id from mgmt desc_id
+ * @psoc: psoc context
+ * @desc_id: mgmt desc_id
+ *
+ * API to retrieve the vdev_id from mgmt desc_id
+ *
+ * Return: vdev_id
+ */
+static inline uint8_t
+mgmt_txrx_get_vdev_id(struct wlan_objmgr_psoc *psoc, uint32_t desc_id)
+{
+	struct wlan_lmac_if_mgmt_txrx_rx_ops *mgmt_rx_ops =
+				wlan_lmac_if_get_mgmt_txrx_rx_ops(psoc);
+	if (mgmt_rx_ops && mgmt_rx_ops->mgmt_txrx_get_vdev_id_from_desc_id)
+		return mgmt_rx_ops->mgmt_txrx_get_vdev_id_from_desc_id(psoc,
+								   desc_id);
+
+	return WLAN_UMAC_VDEV_ID_MAX;
+}
 #endif /* _WLAN_LMAC_IF_API_H */
