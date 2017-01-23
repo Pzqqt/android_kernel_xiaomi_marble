@@ -1762,60 +1762,6 @@ static void hdd_get_rssi_cb(int8_t rssi, uint32_t staId, void *pContext)
 }
 
 /**
- * hdd_get_snr_cb() - "Get SNR" callback function
- * @snr: Current SNR of the station
- * @staId: ID of the station
- * @pContext: opaque context originally passed to SME.  HDD always passes
- *	a &struct statsContext
- *
- * Return: None
- */
-static void hdd_get_snr_cb(int8_t snr, uint32_t staId, void *pContext)
-{
-	struct statsContext *pStatsContext;
-	hdd_adapter_t *pAdapter;
-
-	if (NULL == pContext) {
-		hdd_err("Bad param");
-		return;
-	}
-
-	pStatsContext = pContext;
-	pAdapter = pStatsContext->pAdapter;
-
-	/* there is a race condition that exists between this callback
-	 * function and the caller since the caller could time out
-	 * either before or while this code is executing.  we use a
-	 * spinlock to serialize these actions
-	 */
-	spin_lock(&hdd_context_lock);
-
-	if ((NULL == pAdapter) || (SNR_CONTEXT_MAGIC != pStatsContext->magic)) {
-		/* the caller presumably timed out so there is nothing
-		 * we can do
-		 */
-		spin_unlock(&hdd_context_lock);
-		hdd_warn("Invalid context, pAdapter [%p] magic [%08x]",
-			 pAdapter, pStatsContext->magic);
-		return;
-	}
-
-	/* context is valid so caller is still waiting */
-
-	/* paranoia: invalidate the magic */
-	pStatsContext->magic = 0;
-
-	/* copy over the snr */
-	pAdapter->snr = snr;
-
-	/* notify the caller */
-	complete(&pStatsContext->completion);
-
-	/* serialization is complete */
-	spin_unlock(&hdd_context_lock);
-}
-
-/**
  * wlan_hdd_get_rssi() - Get the current RSSI
  * @pAdapter: adapter upon which the measurement is requested
  * @rssi_value: pointer to where the RSSI should be returned
@@ -1900,6 +1846,60 @@ QDF_STATUS wlan_hdd_get_rssi(hdd_adapter_t *pAdapter, int8_t *rssi_value)
 	*rssi_value = pAdapter->rssi;
 
 	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * hdd_get_snr_cb() - "Get SNR" callback function
+ * @snr: Current SNR of the station
+ * @staId: ID of the station
+ * @pContext: opaque context originally passed to SME.  HDD always passes
+ *	a &struct statsContext
+ *
+ * Return: None
+ */
+static void hdd_get_snr_cb(int8_t snr, uint32_t staId, void *pContext)
+{
+	struct statsContext *pStatsContext;
+	hdd_adapter_t *pAdapter;
+
+	if (NULL == pContext) {
+		hdd_err("Bad param");
+		return;
+	}
+
+	pStatsContext = pContext;
+	pAdapter = pStatsContext->pAdapter;
+
+	/* there is a race condition that exists between this callback
+	 * function and the caller since the caller could time out
+	 * either before or while this code is executing.  we use a
+	 * spinlock to serialize these actions
+	 */
+	spin_lock(&hdd_context_lock);
+
+	if ((NULL == pAdapter) || (SNR_CONTEXT_MAGIC != pStatsContext->magic)) {
+		/* the caller presumably timed out so there is nothing
+		 * we can do
+		 */
+		spin_unlock(&hdd_context_lock);
+		hdd_warn("Invalid context, pAdapter [%p] magic [%08x]",
+			 pAdapter, pStatsContext->magic);
+		return;
+	}
+
+	/* context is valid so caller is still waiting */
+
+	/* paranoia: invalidate the magic */
+	pStatsContext->magic = 0;
+
+	/* copy over the snr */
+	pAdapter->snr = snr;
+
+	/* notify the caller */
+	complete(&pStatsContext->completion);
+
+	/* serialization is complete */
+	spin_unlock(&hdd_context_lock);
 }
 
 /**
