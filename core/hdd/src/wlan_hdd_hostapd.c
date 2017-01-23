@@ -2101,7 +2101,10 @@ stopbss:
 		/* Stop the pkts from n/w stack as we are going to free all of
 		 * the TX WMM queues for all STAID's
 		 */
-		hdd_hostapd_stop(dev);
+		hdd_notice("Disabling queues");
+		wlan_hdd_netif_queue_control(pHostapdAdapter,
+					     WLAN_NETIF_TX_DISABLE_N_CARRIER,
+					     WLAN_CONTROL_PATH);
 
 		/* reclaim all resources allocated to the BSS */
 		qdf_status = hdd_softap_stop_bss(pHostapdAdapter);
@@ -7852,7 +7855,10 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	wlan_hdd_undo_acs(pAdapter);
 	qdf_mem_zero(&pAdapter->sessionCtx.ap.sapConfig.acs_cfg,
 						sizeof(struct sap_acs_cfg));
-	hdd_hostapd_stop(dev);
+	/* Stop all tx queues */
+	hdd_notice("Disabling queues");
+	wlan_hdd_netif_queue_control(pAdapter, WLAN_NETIF_TX_DISABLE_N_CARRIER,
+				     WLAN_CONTROL_PATH);
 
 	old = pAdapter->sessionCtx.ap.beacon;
 	if (!old) {
