@@ -224,56 +224,6 @@ static int wlan_send_sock_msg_to_app(tAniHdr *wmsg, int radio,
 	return err;
 }
 
-/**
- * is_data_path_module() - To check for a Datapath module
- * @mod_id: Module id
- *
- * Checks if the input module id belongs to data path.
- *
- * Return: True if the module belongs to data path, false otherwise
- */
-static bool is_data_path_module(QDF_MODULE_ID mod_id)
-{
-	switch (mod_id) {
-	case QDF_MODULE_ID_HDD_DATA:
-	case QDF_MODULE_ID_HDD_SAP_DATA:
-	case QDF_MODULE_ID_HTC:
-	case QDF_MODULE_ID_TXRX:
-	case QDF_MODULE_ID_HIF:
-		return true;
-	default:
-		return false;
-	}
-}
-
-static void set_default_logtoapp_log_level(void)
-{
-	int i;
-
-	/* module id 0 is reserved */
-	for (i = 1; i < QDF_MODULE_ID_MAX; i++) {
-		if (is_data_path_module(i))
-			qdf_trace_set_module_trace_level(i,
-					QDF_DATA_PATH_TRACE_LEVEL);
-		else
-			qdf_trace_set_value(i, QDF_TRACE_LEVEL_ALL, true);
-	}
-}
-
-static void clear_default_logtoapp_log_level(void)
-{
-	int module;
-
-	for (module = 0; module < QDF_MODULE_ID_MAX; module++) {
-		qdf_trace_set_value(module, QDF_TRACE_LEVEL_NONE, false);
-		qdf_trace_set_value(module, QDF_TRACE_LEVEL_FATAL, true);
-		qdf_trace_set_value(module, QDF_TRACE_LEVEL_ERROR, true);
-	}
-
-	qdf_trace_set_value(QDF_MODULE_ID_RSV4, QDF_TRACE_LEVEL_NONE,
-			    false);
-}
-
 /* Need to call this with spin_lock acquired */
 static int wlan_queue_logmsg_for_app(void)
 {
@@ -1028,7 +978,6 @@ int wlan_logging_sock_deactivate_svc(void)
 		return 0;
 
 	nl_srv_unregister(ANI_NL_MSG_LOG, wlan_logging_proc_sock_rx_msg);
-	clear_default_logtoapp_log_level();
 	gapp_pid = INVALID_PID;
 
 	INIT_COMPLETION(gwlan_logging.shutdown_comp);
@@ -1100,18 +1049,6 @@ void wlan_logging_set_per_pkt_stats(void)
 
 	set_bit(HOST_LOG_PER_PKT_STATS, &gwlan_logging.eventFlag);
 	wake_up_interruptible(&gwlan_logging.wait_queue);
-}
-
-/**
- * wlan_logging_set_log_level() - Set the logging level
- *
- * This function is used to set the logging level of host debug messages
- *
- * Return: None
- */
-void wlan_logging_set_log_level(void)
-{
-	set_default_logtoapp_log_level();
 }
 
 /*

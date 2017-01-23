@@ -533,7 +533,8 @@ uint8_t wlan_hdd_find_opclass(tHalHandle hal, uint8_t channel,
 static void hdd_qdf_trace_enable(QDF_MODULE_ID moduleId, uint32_t bitmask)
 {
 	QDF_TRACE_LEVEL level;
-
+	int qdf_print_idx = -1;
+	int status = -1;
 	/*
 	 * if the bitmask is the default value, then a bitmask was not
 	 * specified in cfg.ini, so leave the logging level alone (it
@@ -543,14 +544,22 @@ static void hdd_qdf_trace_enable(QDF_MODULE_ID moduleId, uint32_t bitmask)
 		return;
 	}
 
-	/* a mask was specified.  start by disabling all logging */
-	qdf_trace_set_value(moduleId, QDF_TRACE_LEVEL_NONE, 0);
+	qdf_print_idx = qdf_get_pidx();
 
+	/* a mask was specified.  start by disabling all logging */
+	status = qdf_print_set_category_verbose(qdf_print_idx, moduleId,
+					QDF_TRACE_LEVEL_NONE, 0);
+
+	if (QDF_STATUS_SUCCESS != status)
+		return;
 	/* now cycle through the bitmask until all "set" bits are serviced */
 	level = QDF_TRACE_LEVEL_FATAL;
 	while (0 != bitmask) {
 		if (bitmask & 1) {
-			qdf_trace_set_value(moduleId, level, 1);
+			status = qdf_print_set_category_verbose(qdf_print_idx,
+							moduleId, level, 1);
+			if (QDF_STATUS_SUCCESS != status)
+				return;
 		}
 		level++;
 		bitmask >>= 1;
@@ -6626,6 +6635,52 @@ static hdd_context_t *hdd_context_create(struct device *dev)
 	int ret = 0;
 	hdd_context_t *hdd_ctx;
 	v_CONTEXT_t p_cds_context;
+	int qdf_print_idx = -1;
+
+	struct category_info cinfo[MAX_SUPPORTED_CATEGORY] = {
+		[QDF_MODULE_ID_TLSHIM] =  {QDF_TRACE_LEVEL_ALL},
+		[QDF_MODULE_ID_WMI] = {QDF_TRACE_LEVEL_ALL},
+		[QDF_MODULE_ID_HTT] = {QDF_TRACE_LEVEL_ALL},
+		[QDF_MODULE_ID_HDD] = {QDF_TRACE_LEVEL_ALL},
+		[QDF_MODULE_ID_SME] = {QDF_TRACE_LEVEL_ALL},
+		[QDF_MODULE_ID_PE] = {QDF_TRACE_LEVEL_ALL},
+		[QDF_MODULE_ID_WMA] = {QDF_TRACE_LEVEL_ALL},
+		[QDF_MODULE_ID_SYS] = {QDF_TRACE_LEVEL_ALL},
+		[QDF_MODULE_ID_QDF] = {QDF_TRACE_LEVEL_ALL},
+		[QDF_MODULE_ID_SAP] = {QDF_TRACE_LEVEL_ALL},
+		[QDF_MODULE_ID_HDD_SOFTAP] = {QDF_TRACE_LEVEL_ALL},
+		[QDF_MODULE_ID_HDD_DATA] = {QDF_DATA_PATH_TRACE_LEVEL},
+		[QDF_MODULE_ID_HDD_SAP_DATA] = {QDF_DATA_PATH_TRACE_LEVEL},
+		[QDF_MODULE_ID_HIF] = {QDF_DATA_PATH_TRACE_LEVEL},
+		[QDF_MODULE_ID_HTC] = {QDF_DATA_PATH_TRACE_LEVEL},
+		[QDF_MODULE_ID_TXRX] = {QDF_DATA_PATH_TRACE_LEVEL},
+		[QDF_MODULE_ID_QDF_DEVICE] = {QDF_TRACE_LEVEL_ALL},
+		[QDF_MODULE_ID_CFG] = {QDF_TRACE_LEVEL_ALL},
+		[QDF_MODULE_ID_BMI] = {QDF_TRACE_LEVEL_ALL},
+		[QDF_MODULE_ID_EPPING] = {QDF_TRACE_LEVEL_ALL},
+		[QDF_MODULE_ID_QVIT] = {QDF_TRACE_LEVEL_ALL}
+		};
+
+	status = qdf_print_setup();
+	if (status != QDF_STATUS_SUCCESS) {
+		pr_err("QDF print control object setup failed\n");
+		ret = -EINVAL;
+		goto err_out;
+	}
+	/* Register the module here with QDF */
+	qdf_print_idx = qdf_print_ctrl_register(cinfo, NULL, NULL,
+						"MCL_WLAN");
+
+	/* if qdf_print_idx is negative */
+	if (qdf_print_idx < 0) {
+		pr_err("QDF print control can not be registered %d\n",
+			qdf_print_idx);
+		ret = -EINVAL;
+		goto err_out;
+	}
+
+	/* Store the qdf_pidx information into qdf module */
+	qdf_set_pidx(qdf_print_idx);
 
 	ENTER();
 
@@ -6702,15 +6757,6 @@ static hdd_context_t *hdd_context_create(struct device *dev)
 	ret = hdd_logging_sock_activate_svc(hdd_ctx);
 	if (ret)
 		goto err_free_histogram;
-
-
-	/*
-	 * Update QDF trace levels based upon the code. The multicast
-	 * levels of the code need not be set when the logger thread
-	 * is not enabled.
-	 */
-	if (cds_is_multicast_logging())
-		wlan_logging_set_log_level();
 
 skip_multicast_logging:
 	hdd_set_trace_level_for_each(hdd_ctx);
@@ -9380,6 +9426,8 @@ static void hdd_wait_for_recovery_completion(void)
  */
 static void __hdd_module_exit(void)
 {
+	int qdf_print_idx = -1;
+
 	pr_info("%s: Unloading driver v%s\n", WLAN_MODULE_NAME,
 		QWLAN_VERSIONSTR);
 
@@ -9392,6 +9440,9 @@ static void __hdd_module_exit(void)
 	dispatcher_deinit();
 	hdd_deinit();
 	pld_deinit();
+
+	qdf_print_idx = qdf_get_pidx();
+	qdf_print_ctrl_cleanup(qdf_print_idx);
 
 	return;
 }

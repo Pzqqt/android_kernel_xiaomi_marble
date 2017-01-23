@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -46,14 +46,10 @@ int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length);
 
 #ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
 void wlan_logging_set_per_pkt_stats(void);
-void wlan_logging_set_log_level(void);
 void wlan_logging_set_fw_flush_complete(void);
 void wlan_flush_host_logs_for_fatal(void);
 #else
 static inline void wlan_flush_host_logs_for_fatal(void)
-{
-}
-static inline void wlan_logging_set_log_level(void)
 {
 }
 static inline void wlan_logging_set_per_pkt_stats(void)
