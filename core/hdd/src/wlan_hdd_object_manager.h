@@ -157,4 +157,17 @@ int hdd_add_peer_object(struct wlan_objmgr_vdev *vdev,
  */
 int hdd_remove_peer_object(struct wlan_objmgr_vdev *vdev,
 			   uint8_t *mac_addr);
+
+/**
+ * hdd_set_peer_mlme_state() - set the peer mlme state
+ * @vdev: vdev pointer
+ * @peer_state: Peer mlme state
+ *
+ * This API set the peer mlme state
+ *
+ * Return: 0 for success, negative error code for failure
+ */
+int hdd_set_peer_mlme_state(struct wlan_objmgr_vdev *vdev,
+	enum wlan_peer_state peer_state);
+
 #endif /* end #if !defined(WLAN_HDD_OBJECT_MANAGER_H) */

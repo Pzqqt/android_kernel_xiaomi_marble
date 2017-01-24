@@ -1278,6 +1278,11 @@ static void hdd_send_association_event(struct net_device *dev,
 		if (ret)
 			hdd_err("Peer object "MAC_ADDRESS_STR" add fails!",
 					MAC_ADDR_ARRAY(peerMacAddr.bytes));
+		ret = hdd_set_peer_mlme_state(pAdapter->hdd_vdev,
+						WLAN_ASSOC_STATE);
+		if (ret)
+			hdd_err("Peer object %pM fail to set associated state",
+					peerMacAddr.bytes);
 
 		/* send peer status indication to oem app */
 		hdd_send_peer_status_ind_to_oem_app(&peerMacAddr,
