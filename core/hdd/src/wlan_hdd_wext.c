@@ -5683,10 +5683,14 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 	return 0;
 }
 
+struct temperature_priv {
+	int temperature;
+};
+
 /**
  * hdd_get_temperature_cb() - "Get Temperature" callback function
  * @temperature: measured temperature
- * @pContext: callback context
+ * @context: callback context
  *
  * This function is passed to sme_get_temperature() as the callback
  * function to be invoked when the temperature measurement is
@@ -5694,29 +5698,24 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
  *
  * Return: None
  */
-static void hdd_get_temperature_cb(int temperature, void *pContext)
+static void hdd_get_temperature_cb(int temperature, void *context)
 {
-	struct statsContext *pTempContext;
-	hdd_adapter_t *pAdapter;
+	struct hdd_request *request;
+	struct temperature_priv *priv;
+
 	ENTER();
-	if (NULL == pContext) {
-		hdd_err("pContext is NULL");
+
+	request = hdd_request_get(context);
+	if (!request) {
+		hdd_err("Obsolete request");
 		return;
 	}
-	pTempContext = pContext;
-	pAdapter = pTempContext->pAdapter;
-	spin_lock(&hdd_context_lock);
-	if ((NULL == pAdapter) || (TEMP_CONTEXT_MAGIC != pTempContext->magic)) {
-		spin_unlock(&hdd_context_lock);
-		hdd_warn("Invalid context, pAdapter [%p] magic [%08x]",
-		       pAdapter, pTempContext->magic);
-		return;
-	}
-	if (temperature != 0) {
-		pAdapter->temperature = temperature;
-	}
-	complete(&pTempContext->completion);
-	spin_unlock(&hdd_context_lock);
+
+	priv = hdd_request_priv(request);
+	priv->temperature = temperature;
+	hdd_request_complete(request);
+	hdd_request_put(request);
+
 	EXIT();
 }
 
@@ -5732,32 +5731,50 @@ static void hdd_get_temperature_cb(int temperature, void *pContext)
 int wlan_hdd_get_temperature(hdd_adapter_t *pAdapter, int *temperature)
 {
 	QDF_STATUS status;
-	static struct statsContext tempContext;
-	unsigned long rc;
+	int ret;
+	void *cookie;
+	struct hdd_request *request;
+	struct temperature_priv *priv;
+	static const struct hdd_request_params params = {
+		.priv_size = sizeof(*priv),
+		.timeout_ms = WLAN_WAIT_TIME_STATS,
+	};
 
 	ENTER();
 	if (NULL == pAdapter) {
 		hdd_err("pAdapter is NULL");
 		return -EPERM;
 	}
-	init_completion(&tempContext.completion);
-	tempContext.pAdapter = pAdapter;
-	tempContext.magic = TEMP_CONTEXT_MAGIC;
+
+	request = hdd_request_alloc(&params);
+	if (!request) {
+		hdd_err("Request allocation failure");
+		return -ENOMEM;
+	}
+	cookie = hdd_request_cookie(request);
 	status = sme_get_temperature(WLAN_HDD_GET_HAL_CTX(pAdapter),
-				     &tempContext, hdd_get_temperature_cb);
+				     cookie, hdd_get_temperature_cb);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("Unable to retrieve temperature");
 	} else {
-		rc = wait_for_completion_timeout(&tempContext.completion,
-						 msecs_to_jiffies
-							 (WLAN_WAIT_TIME_STATS));
-		if (!rc) {
+		ret = hdd_request_wait_for_response(request);
+		if (ret) {
 			hdd_err("SME timed out while retrieving temperature");
+		} else {
+			/* update the adapter with the fresh results */
+			priv = hdd_request_priv(request);
+			if (priv->temperature)
+				pAdapter->temperature = priv->temperature;
 		}
 	}
-	spin_lock(&hdd_context_lock);
-	tempContext.magic = 0;
-	spin_unlock(&hdd_context_lock);
+
+	/*
+	 * either we never sent a request, we sent a request and
+	 * received a response or we sent a request and timed out.
+	 * regardless we are done with the request.
+	 */
+	hdd_request_put(request);
+
 	*temperature = pAdapter->temperature;
 	EXIT();
 	return 0;
