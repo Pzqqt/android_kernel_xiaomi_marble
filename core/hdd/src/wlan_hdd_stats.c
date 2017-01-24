@@ -3920,6 +3920,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 
 	uint32_t vht_mcs_map;
 	enum data_rate_11ac_max_mcs vht_max_mcs;
+	int32_t rcpi_value;
 
 	ENTER_DEV(dev);
 
@@ -3959,6 +3960,10 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 		wlan_hdd_fill_station_info_signal(sinfo);
 		return 0;
 	}
+
+	if (hdd_ctx->rcpi_enabled)
+		wlan_hdd_get_rcpi(adapter, (uint8_t *)mac, &rcpi_value,
+				  RCPI_MEASUREMENT_TYPE_AVG_MGMT);
 
 	wlan_hdd_get_station_stats(adapter);
 
