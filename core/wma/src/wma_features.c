@@ -3072,37 +3072,37 @@ static void wma_wow_dump_mgmt_buffer(uint8_t *wow_packet_buffer,
 }
 
 /**
- * wma_wow_get_wakelock_duration() - return the wakelock duration
+ * wma_wow_get_wakelock_ms() - return the wakelock duration
  *        for some mgmt packets received.
  * @wake_reason: wow wakeup reason
  *
  * This function returns the wakelock duration for some mgmt packets
  * received while in wow suspend.
  *
- * Return: wakelock duration
+ * Return: wakelock duration in ms
  */
-static uint32_t wma_wow_get_wakelock_duration(int wake_reason)
+static uint32_t wma_wow_get_wakelock_ms(int wake_reason)
 {
-	uint32_t wake_lock_duration = 0;
-
 	switch (wake_reason) {
 	case WOW_REASON_AUTH_REQ_RECV:
-		wake_lock_duration = WMA_AUTH_REQ_RECV_WAKE_LOCK_TIMEOUT;
-		break;
+		return WMA_AUTH_REQ_RECV_WAKE_LOCK_TIMEOUT;
 	case WOW_REASON_ASSOC_REQ_RECV:
-		wake_lock_duration = WMA_ASSOC_REQ_RECV_WAKE_LOCK_DURATION;
-		break;
+		return WMA_ASSOC_REQ_RECV_WAKE_LOCK_DURATION;
 	case WOW_REASON_DEAUTH_RECVD:
-		wake_lock_duration = WMA_DEAUTH_RECV_WAKE_LOCK_DURATION;
-		break;
+		return WMA_DEAUTH_RECV_WAKE_LOCK_DURATION;
 	case WOW_REASON_DISASSOC_RECVD:
-		wake_lock_duration = WMA_DISASSOC_RECV_WAKE_LOCK_DURATION;
-		break;
-	default:
-		break;
+		return WMA_DISASSOC_RECV_WAKE_LOCK_DURATION;
+	case WOW_REASON_AP_ASSOC_LOST:
+		return WMA_BMISS_EVENT_WAKE_LOCK_DURATION;
+#ifdef FEATURE_WLAN_AUTO_SHUTDOWN
+	case WOW_REASON_HOST_AUTO_SHUTDOWN:
+		return WMA_AUTO_SHUTDOWN_WAKE_LOCK_DURATION;
+#endif
+	case WOW_REASON_ROAM_HO:
+		return WMA_ROAM_HO_WAKE_LOCK_DURATION;
 	}
 
-	return wake_lock_duration;
+	return 0;
 }
 
 /**
@@ -3190,7 +3190,7 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 	struct wma_txrx_node *wma_vdev;
 	WMI_WOW_WAKEUP_HOST_EVENTID_param_tlvs *param_buf;
 	WOW_EVENT_INFO_fixed_param *wake_info;
-	uint32_t wake_lock_duration = 0;
+	uint32_t wakelock_duration;
 	void *wmi_cmd_struct_ptr = NULL;
 	uint32_t tlv_hdr, tag, wow_buf_pkt_len = 0, event_id = 0;
 	uint8_t *wow_buf_data = NULL;
@@ -3257,8 +3257,6 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 	case WOW_REASON_REASSOC_RES_RECV:
 	case WOW_REASON_BEACON_RECV:
 	case WOW_REASON_ACTION_FRAME_RECV:
-		wake_lock_duration =
-			wma_wow_get_wakelock_duration(wake_info->wake_reason);
 		if (param_buf->wow_packet_buffer) {
 			/* First 4-bytes of wow_packet_buffer is the length */
 			qdf_mem_copy((uint8_t *) &wow_buf_pkt_len,
@@ -3275,12 +3273,10 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 		break;
 
 	case WOW_REASON_AP_ASSOC_LOST:
-		wake_lock_duration = WMA_BMISS_EVENT_WAKE_LOCK_DURATION;
 		wma_wow_ap_lost_helper(wma, param_buf);
 		break;
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 	case WOW_REASON_HOST_AUTO_SHUTDOWN:
-		wake_lock_duration = WMA_AUTO_SHUTDOWN_WAKE_LOCK_DURATION;
 		WMA_LOGA("Received WOW Auto Shutdown trigger in suspend");
 		if (wma_post_auto_shutdown_msg())
 			return -EINVAL;
@@ -3456,13 +3452,14 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 	else
 		WMA_LOGE("Vdev is NULL, but wake reason is vdev related");
 
-	if (wake_lock_duration) {
+	wakelock_duration = wma_wow_get_wakelock_ms(wake_info->wake_reason);
+	if (wakelock_duration) {
 		cds_host_diag_log_work(&wma->wow_wake_lock,
-				       wake_lock_duration,
+				       wakelock_duration,
 				       WIFI_POWER_EVENT_WAKELOCK_WOW);
 		qdf_wake_lock_timeout_acquire(&wma->wow_wake_lock,
-					      wake_lock_duration);
-		WMA_LOGA("Holding %d msec wake_lock", wake_lock_duration);
+					      wakelock_duration);
+		WMA_LOGA("Holding %d msec wake_lock", wakelock_duration);
 	}
 
 	if (wmi_cmd_struct_ptr)

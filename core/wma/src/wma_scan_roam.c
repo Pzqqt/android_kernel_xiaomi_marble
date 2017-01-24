@@ -2298,17 +2298,20 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 	}
 	WMA_LOGE("LFR3: Received WMA_ROAM_OFFLOAD_SYNCH_IND");
 
+	qdf_wake_lock_timeout_acquire(&wma->wow_wake_lock,
+				      WMA_ROAM_HO_WAKE_LOCK_DURATION);
+
 	wma->interfaces[synch_event->vdev_id].roam_synch_in_progress = true;
 	len = sizeof(roam_offload_synch_ind) +
 	      synch_event->bcn_probe_rsp_len + synch_event->reassoc_rsp_len +
 	      synch_event->reassoc_req_len;
-	roam_synch_ind_ptr =
-		(roam_offload_synch_ind *) qdf_mem_malloc(len);
+	roam_synch_ind_ptr = (roam_offload_synch_ind *)qdf_mem_malloc(len);
 	if (!roam_synch_ind_ptr) {
 		WMA_LOGE("%s: failed to allocate memory for roam_synch_event",
 			 __func__);
 		QDF_ASSERT(roam_synch_ind_ptr != NULL);
-		return -ENOMEM;
+		status = -ENOMEM;
+		goto cleanup_label;
 	}
 	qdf_mem_zero(roam_synch_ind_ptr, len);
 	wma_fill_roam_synch_buffer(wma, roam_synch_ind_ptr, param_buf);
@@ -2325,7 +2328,7 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 	if (NULL == bss_desc_ptr) {
 		WMA_LOGE("LFR3: mem alloc failed!");
 		QDF_ASSERT(bss_desc_ptr != NULL);
-		status =  -ENOMEM;
+		status = -ENOMEM;
 		goto cleanup_label;
 	}
 	qdf_mem_zero(bss_desc_ptr, sizeof(tSirBssDescription) + ie_len);
@@ -2351,8 +2354,11 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 		wma->interfaces[synch_event->vdev_id].roam_synch_delay);
 	wma->csr_roam_synch_cb((tpAniSirGlobal)wma->mac_context,
 		roam_synch_ind_ptr, bss_desc_ptr, SIR_ROAM_SYNCH_NAPI_OFF);
+
+	status = 0;
+
 cleanup_label:
-	if (roam_synch_ind_ptr->join_rsp)
+	if (roam_synch_ind_ptr && roam_synch_ind_ptr->join_rsp)
 		qdf_mem_free(roam_synch_ind_ptr->join_rsp);
 	if (roam_synch_ind_ptr)
 		qdf_mem_free(roam_synch_ind_ptr);
@@ -2360,7 +2366,7 @@ cleanup_label:
 		qdf_mem_free(bss_desc_ptr);
 	wma->interfaces[synch_event->vdev_id].roam_synch_in_progress = false;
 
-	return 0;
+	return status;
 }
 
 /**

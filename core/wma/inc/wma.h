@@ -310,11 +310,12 @@ enum ds_mode {
 #define WMA_ASSOC_REQ_RECV_WAKE_LOCK_DURATION   (5 * 1000)     /* in msec */
 #define WMA_DEAUTH_RECV_WAKE_LOCK_DURATION      (5 * 1000)     /* in msec */
 #define WMA_DISASSOC_RECV_WAKE_LOCK_DURATION    (5 * 1000)     /* in msec */
+#define WMA_ROAM_HO_WAKE_LOCK_DURATION          (500)          /* in msec */
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 #define WMA_AUTO_SHUTDOWN_WAKE_LOCK_DURATION    (5 * 1000)     /* in msec */
 #endif
 #define WMA_BMISS_EVENT_WAKE_LOCK_DURATION      (4 * 1000)     /* in msec */
-#define WMA_FW_RSP_EVENT_WAKE_LOCK_DURATION      (3 * 1000)  /* in msec */
+#define WMA_FW_RSP_EVENT_WAKE_LOCK_DURATION     (3 * 1000)     /* in msec */
 
 #define WMA_TXMIC_LEN 8
 #define WMA_RXMIC_LEN 8
