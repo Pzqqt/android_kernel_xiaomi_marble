@@ -7214,4 +7214,15 @@ struct action_wakeup_set_param {
 	uint32_t action_category_map[WMI_SUPPORTED_ACTION_CATEGORY_ELE_LIST];
 };
 
+/**
+ * struct wmi_host_pdev_utf_event - Host defined struct to hold utf event data
+ * @data:        Pointer to data
+ * @datalen:     Data length
+ *
+ */
+struct wmi_host_pdev_utf_event {
+	uint8_t *data;
+	uint16_t datalen;
+};
+
 #endif /* _WMI_UNIFIED_PARAM_H_ */

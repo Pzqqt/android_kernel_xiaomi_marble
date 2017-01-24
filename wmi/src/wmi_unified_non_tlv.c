@@ -7846,6 +7846,24 @@ static QDF_STATUS extract_atf_token_info_ev_non_tlv(
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * extract_pdev_utf_event_non_tlv() - extract UTF data info from event
+ * @wmi_handle: WMI handle
+ * @param evt_buf: Pointer to event buffer
+ * @param param: Pointer to hold data
+ *
+ * Return : QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_pdev_utf_event_non_tlv(
+			wmi_unified_t wmi_handle,
+			uint8_t *evt_buf,
+			struct wmi_host_pdev_utf_event *event)
+{
+	event->data = evt_buf;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #ifdef WMI_INTERFACE_EVENT_LOGGING
 static bool is_management_record_non_tlv(uint32_t cmd_id)
 {
@@ -8087,6 +8105,7 @@ struct wmi_ops non_tlv_ops =  {
 	.extract_mu_db_entry = extract_mu_db_entry_non_tlv,
 	.extract_atf_peer_stats_ev = extract_atf_peer_stats_ev_non_tlv,
 	.extract_atf_token_info_ev = extract_atf_token_info_ev_non_tlv,
+	.extract_pdev_utf_event = extract_pdev_utf_event_non_tlv,
 	.wmi_set_htc_tx_tag = wmi_set_htc_tx_tag_non_tlv,
 };
 
