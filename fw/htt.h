@@ -3879,11 +3879,14 @@ TEMPLATE_HTT_WDI_IPA_CONFIG_T(64, HTT_VAR_PADDR64_LE(tx_comp_ring_base_addr),
 #endif
 
 enum htt_wdi_ipa_op_code {
-	HTT_WDI_IPA_OPCODE_TX_SUSPEND = 0,
-	HTT_WDI_IPA_OPCODE_TX_RESUME = 1,
-	HTT_WDI_IPA_OPCODE_RX_SUSPEND = 2,
-	HTT_WDI_IPA_OPCODE_RX_RESUME = 3,
-	HTT_WDI_IPA_OPCODE_DBG_STATS = 4,
+	HTT_WDI_IPA_OPCODE_TX_SUSPEND		= 0,
+	HTT_WDI_IPA_OPCODE_TX_RESUME		= 1,
+	HTT_WDI_IPA_OPCODE_RX_SUSPEND		= 2,
+	HTT_WDI_IPA_OPCODE_RX_RESUME		= 3,
+	HTT_WDI_IPA_OPCODE_DBG_STATS		= 4,
+	HTT_WDI_IPA_OPCODE_GET_SHARING_STATS	= 5,
+	HTT_WDI_IPA_OPCODE_SET_QUOTA		= 6,
+	HTT_WDI_IPA_OPCODE_IND_QUOTA		= 7,
 	/* keep this last */
 	HTT_WDI_IPA_OPCODE_MAX
 };
@@ -3896,7 +3899,7 @@ enum htt_wdi_ipa_op_code {
  *  to either suspend or resume WDI_IPA TX or RX path.
  *     |31            24|23            16|15             8|7              0|
  *     |----------------+----------------+----------------+----------------|
- *     |             op_code             |      Rsvd      |     msg_type   |
+ *     |             op_code             |      Rsvd      |   msg_type   |
  *     |-------------------------------------------------------------------|
  *
  * Header fields:
@@ -3913,12 +3916,12 @@ enum htt_wdi_ipa_op_code {
 PREPACK struct htt_wdi_ipa_op_request_t {
 	/* DWORD 0: flags and meta-data */
 	A_UINT32
-		msg_type:8,	/* HTT_H2T_MSG_TYPE_WDI_IPA_OP_REQUEST */
+		msg_type:8,	/* HTT_H2T_MSG_TYPE_WDI_IPA_OP_REQ */
 		reserved:8,
 		op_code:16;
 } POSTPACK;
 
-#define HTT_WDI_IPA_OP_REQUEST_SZ                    4	/* bytes */
+#define HTT_WDI_IPA_OP_REQUEST_SZ                    4
 
 #define HTT_WDI_IPA_OP_REQUEST_OP_CODE_M             0xffff0000
 #define HTT_WDI_IPA_OP_REQUEST_OP_CODE_S             16
@@ -3930,6 +3933,122 @@ PREPACK struct htt_wdi_ipa_op_request_t {
 	do {								\
 		HTT_CHECK_SET_VAL(HTT_WDI_IPA_OP_REQUEST_OP_CODE, _val); \
 		((_var) |= ((_val) << HTT_WDI_IPA_OP_REQUEST_OP_CODE_S)); \
+	} while (0)
+
+/**
+ * @brief WLAN_WDI_IPA_GET_SHARING_STATS_REQ
+ *     |31            24|23            16|15             8|7              0|
+ *     |----------------+----------------+----------------+----------------|
+ *     |                reserved                          |  reset_stats   |
+ *     |-------------------------------------------------------------------|
+ * Header fields:
+ *   - RESET_STATS
+ *     Bits 7:0
+ *     Purpose: when 1, FW clears sharing stats
+ *   - RESERVED
+ *     Bits 31:8
+ *     Purpose: reserved bits
+ */
+
+PREPACK struct htt_wdi_ipa_get_sharing_stats_t {
+	A_UINT32
+		reset_stats:8,	/* reset stat countis after response */
+		reserved:24;
+} POSTPACK;
+
+#define HTT_WDI_IPA_OP_REQ_GET_SHARING_STATS_SZ     \
+		(sizeof(struct htt_wdi_ipa_get_sharing_stats_t))
+
+#define HTT_WDI_IPA_OP_REQ_GET_SHARING_STATS_RESET_STATS_M	0x000000ff
+#define HTT_WDI_IPA_OP_REQ_GET_SHARING_STATS_RESET_STATS_S	0
+#define HTT_WDI_IPA_OP_REQ_GET_SHARING_STATS_RESET_STATS_GET(_var)	\
+	(((_var) & HTT_WDI_IPA_OP_REQ_GET_SHARING_STATS_RESET_STATS_M) >>\
+	 HTT_WDI_IPA_OP_REQ_GET_SHARING_STATS_RESET_STATS_S)
+#define HTT_WDI_IPA_OP_REQ_GET_SHARING_STATS_RESET_STATS_SET(_var, _val)\
+	do {								\
+		HTT_CHECK_SET_VAL(					\
+			HTT_WDI_IPA_OP_REQ_GET_SHARING_STATS_RESET_STATS,\
+			_val);						\
+		((_var) |= ((_val) <<					\
+			HTT_WDI_IPA_OP_REQ_GET_SHARING_STATS_RESET_STATS_S)); \
+	} while (0)
+
+/**
+ * @brief WLAN_WDI_IPA_SET_QUOTA_REQ
+ *
+ *     |31            24|23            16|15             8|7              0|
+ *     |----------------+----------------+----------------+----------------|
+ *     |                reserved                          |    set_quota   |
+ *     |-------------------------------------------------------------------|
+ *     |                            quota_lo                               |
+ *     |-------------------------------------------------------------------|
+ *     |                            quota_hi                               |
+ *     |-------------------------------------------------------------------|
+ * Header fields:
+ *   - set_quota
+ *     Bits 7:0
+ *     Purpose: when 1, FW configures quota and starts quota monitoring.
+ *		when 0, FW stops.
+ *   - RESERVED
+ *     Bits 31:8
+ *     Purpose: reserved bits
+ *   - quota_lo
+ *     Bits 31:0
+ *     Purpose: bytes of quota to be set, low 32-bit.
+ *              It is accumulated number of bytes from when quota is configured.
+ *   - quota_hi
+ *     Bits 31:0
+ *     Purpose: bytes of quota to be set, high 32-bit
+ */
+
+PREPACK struct htt_wdi_ipa_set_quota_t {
+	A_UINT32
+		set_quota:8,	/* enable quota monitoring */
+		reserved:24;
+	A_UINT32 quota_lo;	/* quota limit in bytes */
+	A_UINT32 quota_hi;
+} POSTPACK;
+
+#define HTT_WDI_IPA_OP_REQ_SET_QUOTA_SZ          \
+		(sizeof(struct htt_wdi_ipa_set_quota_t))
+
+#define HTT_WDI_IPA_OP_REQ_SET_QUOTA_SET_QUOTA_M            0x000000ff
+#define HTT_WDI_IPA_OP_REQ_SET_QUOTA_SET_QUOTA_S            0
+#define HTT_WDI_IPA_OP_REQ_SET_QUOTA_SET_QUOTA_GET(_var)		\
+	(((_var) & HTT_WDI_IPA_OP_REQ_SET_QUOTA_SET_QUOTA_M) >>		\
+	 HTT_WDI_IPA_OP_REQ_SET_QUOTA_SET_QUOTA_S)
+#define HTT_WDI_IPA_OP_REQ_SET_QUOTA_SET_QUOTA_SET(_var, _val)		\
+	do {								\
+		HTT_CHECK_SET_VAL(HTT_WDI_IPA_OP_REQ_SET_QUOTA_SET_QUOTA,\
+				  _val);				\
+		((_var) |= ((_val) <<					\
+			HTT_WDI_IPA_OP_REQ_SET_QUOTA_SET_QUOTA_S));	\
+	} while (0)
+
+#define HTT_WDI_IPA_OP_REQ_SET_QUOTA_QUOTA_LO_M          0xffffffff
+#define HTT_WDI_IPA_OP_REQ_SET_QUOTA_QUOTA_LO_S          0
+#define HTT_WDI_IPA_OP_REQ_SET_QUOTA_QUOTA_LO_GET(_var)			\
+	(((_var) & HTT_WDI_IPA_OP_REQ_SET_QUOTA_QUOTA_LO_M) >>		\
+	 HTT_WDI_IPA_OP_REQ_SET_QUOTA_QUOTA_LO_S)
+#define HTT_WDI_IPA_OP_REQ_SET_QUOTA_QUOTA_LO_SET(_var, _val)		\
+	do {								\
+		HTT_CHECK_SET_VAL(HTT_WDI_IPA_OP_REQ_SET_QUOTA_QUOTA_LO,\
+				 _val);					\
+		((_var) |= ((_val) <<					\
+			HTT_WDI_IPA_OP_REQ_SET_QUOTA_QUOTA_LO_S));	\
+	} while (0)
+
+#define HTT_WDI_IPA_OP_REQ_SET_QUOTA_QUOTA_HI_M          0xffffffff
+#define HTT_WDI_IPA_OP_REQ_SET_QUOTA_QUOTA_HI_S          0
+#define HTT_WDI_IPA_OP_REQ_SET_QUOTA_QUOTA_HI_GET(_var)			\
+	(((_var) & HTT_WDI_IPA_OP_REQ_SET_QUOTA_QUOTA_HI_M) >>		\
+	 HTT_WDI_IPA_OP_REQ_SET_QUOTA_QUOTA_HI_S)
+#define HTT_WDI_IPA_OP_REQ_SET_QUOTA_QUOTA_HI_SET(_var, _val)		\
+	do {								\
+		HTT_CHECK_SET_VAL(HTT_WDI_IPA_OP_REQ_SET_QUOTA_QUOTA_HI,\
+				 _val);					\
+		((_var) |= ((_val) <<					\
+			HTT_WDI_IPA_OP_REQ_SET_QUOTA_QUOTA_HI_S));	\
 	} while (0)
 
 /*
@@ -8647,7 +8766,7 @@ enum htt_phy_mode {
 
 PREPACK struct htt_chan_change_t {
 	/* DWORD 0: flags and meta-data */
-	A_UINT32 msg_type:8,	/* HTT_T2H_MSG_TYPE_WDI_IPA_OP_RESPONSE */
+	A_UINT32 msg_type:8,	/* HTT_T2H_MSG_TYPE_CHAN_CHANGE */
 	reserved1:24;
 	A_UINT32 primary_chan_center_freq_mhz;
 	A_UINT32 contig_chan1_center_freq_mhz;
