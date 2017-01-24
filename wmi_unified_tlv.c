@@ -12775,6 +12775,26 @@ static QDF_STATUS extract_chan_info_event_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * extract_pdev_utf_event_tlv() - extract UTF data info from event
+ * @wmi_handle: WMI handle
+ * @param evt_buf: Pointer to event buffer
+ * @param param: Pointer to hold data
+ *
+ * Return : QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_pdev_utf_event_tlv(wmi_unified_t wmi_handle,
+			     uint8_t *evt_buf,
+			     struct wmi_host_pdev_utf_event *event)
+{
+	WMI_PDEV_UTF_EVENTID_param_tlvs *param_buf;
+
+	param_buf = (WMI_PDEV_UTF_EVENTID_param_tlvs *)evt_buf;
+	event->data = param_buf->data;
+	event->datalen = param_buf->num_data;
+
+	return QDF_STATUS_SUCCESS;
+}
+/**
  * extract_channel_hopping_event_tlv() - extract channel hopping param
  * from event
  * @wmi_handle: wmi handle
@@ -13382,6 +13402,7 @@ struct wmi_ops tlv_ops =  {
 				extract_mac_phy_cap_service_ready_ext_tlv,
 	.extract_reg_cap_service_ready_ext =
 				extract_reg_cap_service_ready_ext_tlv,
+	.extract_pdev_utf_event = extract_pdev_utf_event_tlv,
 	.wmi_set_htc_tx_tag = wmi_set_htc_tx_tag_tlv,
 };
 
