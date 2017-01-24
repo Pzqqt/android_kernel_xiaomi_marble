@@ -19838,9 +19838,12 @@ void csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 			FL("LFR3:Clear Connected info"));
 	csr_roam_free_connected_info(mac_ctx,
 			&session->connectedInfo);
-	len = roam_synch_data->join_rsp->parsedRicRspLen;
+	len = roam_synch_data->join_rsp->parsedRicRspLen +
+		roam_synch_data->join_rsp->tspecIeLen;
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			FL("LFR3: RIC length - %d"), len);
+		FL("LFR3: RIC length - %d tspecLen %d"),
+		roam_synch_data->join_rsp->parsedRicRspLen,
+		roam_synch_data->join_rsp->tspecIeLen);
 	if (len) {
 		session->connectedInfo.pbFrames =
 			qdf_mem_malloc(len);
@@ -19849,6 +19852,8 @@ void csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 				roam_synch_data->join_rsp->frames, len);
 			session->connectedInfo.nRICRspLength =
 				roam_synch_data->join_rsp->parsedRicRspLen;
+			session->connectedInfo.nTspecIeLength =
+				roam_synch_data->join_rsp->tspecIeLen;
 		}
 	}
 	conn_profile->vht_channel_width =

@@ -2088,8 +2088,8 @@ QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 	curr_sta_ds->nss = local_nss;
 	ft_session_ptr->limMlmState = eLIM_MLM_LINK_ESTABLISHED_STATE;
 	lim_init_tdls_data(mac_ctx, ft_session_ptr);
-	join_rsp_len = ft_session_ptr->RICDataLen + sizeof(tSirSmeJoinRsp) -
-			sizeof(uint8_t);
+	join_rsp_len = ft_session_ptr->RICDataLen + ft_session_ptr->tspecLen +
+			sizeof(tSirSmeJoinRsp) - sizeof(uint8_t);
 	roam_sync_ind_ptr->join_rsp = qdf_mem_malloc(join_rsp_len);
 	if (NULL == roam_sync_ind_ptr->join_rsp) {
 		lim_log(mac_ctx, LOGE, FL("LFR3:mem alloc failed"));
@@ -2100,8 +2100,8 @@ QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	lim_log(mac_ctx, LOG1, FL("Session RicLength = %d"),
-			ft_session_ptr->RICDataLen);
+	lim_log(mac_ctx, LOG1, FL("Session RicLength = %d tspecLen = %d"),
+			ft_session_ptr->RICDataLen, ft_session_ptr->tspecLen);
 	if (ft_session_ptr->ricData != NULL) {
 		roam_sync_ind_ptr->join_rsp->parsedRicRspLen =
 			ft_session_ptr->RICDataLen;
@@ -2111,6 +2111,17 @@ QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 		qdf_mem_free(ft_session_ptr->ricData);
 		ft_session_ptr->ricData = NULL;
 		ft_session_ptr->RICDataLen = 0;
+	}
+	if (ft_session_ptr->tspecIes != NULL) {
+		roam_sync_ind_ptr->join_rsp->tspecIeLen =
+			ft_session_ptr->tspecLen;
+		qdf_mem_copy(roam_sync_ind_ptr->join_rsp->frames +
+				roam_sync_ind_ptr->join_rsp->parsedRicRspLen,
+				ft_session_ptr->tspecIes,
+				roam_sync_ind_ptr->join_rsp->tspecIeLen);
+		qdf_mem_free(ft_session_ptr->tspecIes);
+		ft_session_ptr->tspecIes = NULL;
+		ft_session_ptr->tspecLen = 0;
 	}
 	roam_sync_ind_ptr->join_rsp->vht_channel_width =
 		ft_session_ptr->ch_width;
