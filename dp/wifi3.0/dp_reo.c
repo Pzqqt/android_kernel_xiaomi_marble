@@ -18,6 +18,7 @@
 
 #include "dp_types.h"
 #include "hal_reo.h"
+#include "dp_internal.h"
 
 QDF_STATUS dp_reo_send_cmd(struct dp_soc *soc, enum hal_reo_cmd_type type,
 		     struct hal_reo_cmd_params *params,
