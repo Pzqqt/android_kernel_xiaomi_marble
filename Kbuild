@@ -116,6 +116,14 @@ ifeq ($(KERNEL_BUILD), 0)
 	CONFIG_QCACLD_FEATURE_GREEN_AP := y
 	endif
 
+	ifeq ($(CONFIG_ARCH_SDM660), y)
+	CONFIG_QCACLD_FEATURE_METERING := y
+	endif
+
+	ifeq ($(CONFIG_ARCH_SDM630), y)
+	CONFIG_QCACLD_FEATURE_METERING := y
+	endif
+
 	#Flag to enable Fast Transition (11r) feature
 	CONFIG_QCOM_VOWIFI_11R := y
 
