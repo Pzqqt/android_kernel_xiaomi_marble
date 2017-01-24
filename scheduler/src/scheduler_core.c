@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -90,6 +90,10 @@ static QDF_STATUS scheduler_all_queues_init(
 		if (QDF_STATUS_SUCCESS != status)
 			return status;
 	}
+	/* Initialize all qid to qidx mapping to invalid values */
+	for (i = 0; i < QDF_MODULE_ID_MAX; i++)
+		sched_ctx->queue_ctx.scheduler_msg_qid_to_qidx[i] =
+					SCHEDULER_NUMBER_OF_MSG_QUEUE;
 
 	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR, FL("exit"));
 
@@ -119,6 +123,11 @@ static QDF_STATUS scheduler_all_queues_deinit(
 	/* De-Initialize all message queues */
 	for (i = 0; i < SCHEDULER_NUMBER_OF_MSG_QUEUE; i++)
 		scheduler_mq_deinit(&sched_ctx->queue_ctx.sch_msg_q[i]);
+
+	/* Initialize all qid to qidx mapping to invalid values */
+	for (i = 0; i < QDF_MODULE_ID_MAX; i++)
+		sched_ctx->queue_ctx.scheduler_msg_qid_to_qidx[i] =
+					SCHEDULER_NUMBER_OF_MSG_QUEUE;
 
 	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR, FL("exit"));
 	return status;
