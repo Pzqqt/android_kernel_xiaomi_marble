@@ -8140,16 +8140,25 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		tHalHandle hal = WLAN_HDD_GET_HAL_CTX(pAdapter);
 		eCsrPhyMode phymode;
 		eCsrBand currBand;
-		tSmeConfigParams smeconfig;
+		tSmeConfigParams *sme_config;
 
-		sme_get_config_param(hal, &smeconfig);
+		sme_config = qdf_mem_malloc(sizeof(*sme_config));
+		if (!sme_config) {
+			hdd_err("Out of memory");
+			ret = -ENOMEM;
+			break;
+		}
+
+		sme_get_config_param(hal, sme_config);
 		if (WNI_CFG_CHANNEL_BONDING_MODE_DISABLE !=
-		    smeconfig.csrConfig.channelBondingMode24GHz)
+		    sme_config->csrConfig.channelBondingMode24GHz)
 			ch_bond24 = true;
 
 		if (WNI_CFG_CHANNEL_BONDING_MODE_DISABLE !=
-		    smeconfig.csrConfig.channelBondingMode5GHz)
+		    sme_config->csrConfig.channelBondingMode5GHz)
 			ch_bond5g = true;
+
+		qdf_mem_free(sme_config);
 
 		phymode = sme_get_phy_mode(hal);
 		if ((QDF_STATUS_SUCCESS !=
