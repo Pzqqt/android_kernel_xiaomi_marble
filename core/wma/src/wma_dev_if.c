@@ -1232,6 +1232,10 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 						vdev_id);
 
 peer_detach:
+	WMA_LOGE("%s: Remove peer %p with peer_addr %pM vdevid %d peer_count %d",
+		 __func__, peer, bssid, vdev_id,
+		 wma->interfaces[vdev_id].peer_count);
+
 	if (peer) {
 		if (roam_synch_in_progress)
 			cdp_peer_detach_force_delete(soc, peer);
@@ -1240,9 +1244,6 @@ peer_detach:
 	}
 
 	wma->interfaces[vdev_id].peer_count--;
-	WMA_LOGE("%s: Removed peer %p with peer_addr %pM vdevid %d peer_count %d",
-		 __func__, peer, bssid, vdev_id,
-		 wma->interfaces[vdev_id].peer_count);
 #undef PEER_ALL_TID_BITMASK
 }
 
