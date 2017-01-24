@@ -1720,9 +1720,6 @@ void cds_set_concurrency_mode(enum tQDF_ADAPTER_MODE mode)
 		break;
 	}
 
-	/* set tdls connection tracker state */
-	cds_set_tdls_ct_mode(hdd_ctx);
-
 	cds_info("concurrency_mode = 0x%x Number of open sessions for mode %d = %d",
 		hdd_ctx->concurrency_mode, mode,
 		hdd_ctx->no_of_open_sessions[mode]);
@@ -1761,9 +1758,6 @@ void cds_clear_concurrency_mode(enum tQDF_ADAPTER_MODE mode)
 	default:
 		break;
 	}
-
-	/* set tdls connection tracker state */
-	cds_set_tdls_ct_mode(hdd_ctx);
 
 	cds_info("concurrency_mode = 0x%x Number of open sessions for mode %d = %d",
 		hdd_ctx->concurrency_mode, mode,
