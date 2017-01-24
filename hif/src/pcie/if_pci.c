@@ -112,8 +112,9 @@ void hif_pci_route_adrastea_interrupt(struct hif_pci_softc *sc)
 #endif
 
 
+#ifndef CONFIG_PLD_PCIE_INIT
 #ifdef QCA_WIFI_NAPIER_EMULATION
-void __iomem *napier_emu_ioremap(struct pci_dev *dev,
+static void __iomem *napier_emu_ioremap(struct pci_dev *dev,
 		int bar, unsigned long maxlen)
 {
 	resource_size_t start = pci_resource_start(dev, bar);
@@ -132,6 +133,7 @@ void __iomem *napier_emu_ioremap(struct pci_dev *dev,
 
 	return NULL;
 }
+#endif
 #endif
 
 
