@@ -1212,6 +1212,11 @@ QDF_STATUS (*extract_reg_cap_service_ready_ext)(
 			wmi_unified_t wmi_handle,
 			uint8_t *evt_buf, uint8_t phy_idx,
 			struct WMI_HOST_HAL_REG_CAPABILITIES_EXT *param);
+
+QDF_STATUS (*extract_pdev_utf_event)(wmi_unified_t wmi_hdl,
+				     uint8_t *evt_buf,
+				     struct wmi_host_pdev_utf_event *param);
+
 uint16_t (*wmi_set_htc_tx_tag)(wmi_unified_t wmi_handle,
 				wmi_buf_t buf, uint32_t cmd_id);
 };
