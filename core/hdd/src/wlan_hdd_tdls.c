@@ -920,10 +920,13 @@ static void wlan_hdd_tdls_peer_idle_timers_destroy(tdlsCtx_t *hdd_tdls_ctx)
 		head = &hdd_tdls_ctx->peer_list[i];
 		list_for_each(pos, head) {
 			curr_peer = list_entry(pos, hddTdlsPeer_t, node);
-			hdd_info(MAC_ADDRESS_STR ": destroy idle timer",
-				 MAC_ADDR_ARRAY(curr_peer->peerMac));
-			qdf_mc_timer_stop(&curr_peer->peer_idle_timer);
-			qdf_mc_timer_destroy(&curr_peer->peer_idle_timer);
+			if (curr_peer != NULL &&
+			    curr_peer->is_peer_idle_timer_initialised) {
+				hdd_info(MAC_ADDRESS_STR ": destroy idle timer",
+					 MAC_ADDR_ARRAY(curr_peer->peerMac));
+				qdf_mc_timer_stop(&curr_peer->peer_idle_timer);
+				qdf_mc_timer_destroy(&curr_peer->peer_idle_timer);
+			}
 		}
 	}
 }
