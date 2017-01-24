@@ -9685,12 +9685,18 @@ static enum tQDF_ADAPTER_MODE hdd_get_adpter_mode(
 static void hdd_cleanup_present_mode(hdd_context_t *hdd_ctx,
 				    enum tQDF_GLOBAL_CON_MODE curr_mode)
 {
+	int driver_status;
+
+	driver_status = hdd_ctx->driver_status;
+
 	switch (curr_mode) {
 	case QDF_GLOBAL_MISSION_MODE:
 	case QDF_GLOBAL_MONITOR_MODE:
 	case QDF_GLOBAL_FTM_MODE:
-		hdd_abort_mac_scan_all_adapters(hdd_ctx);
-		hdd_stop_all_adapters(hdd_ctx);
+		if (driver_status != DRIVER_MODULES_CLOSED) {
+			hdd_abort_mac_scan_all_adapters(hdd_ctx);
+			hdd_stop_all_adapters(hdd_ctx);
+		}
 		hdd_deinit_all_adapters(hdd_ctx, false);
 		hdd_close_all_adapters(hdd_ctx, false);
 		break;
