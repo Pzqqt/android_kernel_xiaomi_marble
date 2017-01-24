@@ -32,6 +32,7 @@
 #include "wlan_hdd_trace.h"
 #include "wlan_hdd_ioctl.h"
 #include "wlan_hdd_power.h"
+#include "wlan_hdd_request_manager.h"
 #include "wlan_hdd_driver_ops.h"
 #include "cds_concurrency.h"
 #include "wlan_hdd_hostapd.h"
@@ -2363,46 +2364,25 @@ static int hdd_set_dwell_time(hdd_adapter_t *adapter, uint8_t *command)
 	return 0;
 }
 
+struct link_status_priv {
+	uint8_t link_status;
+};
+
 static void hdd_get_link_status_cb(uint8_t status, void *context)
 {
-	struct statsContext *pLinkContext;
-	hdd_adapter_t *adapter;
+	struct hdd_request *request;
+	struct link_status_priv *priv;
 
-	if (NULL == context) {
-		hdd_err("Bad context [%p]", context);
+	request = hdd_request_get(context);
+	if (!request) {
+		hdd_err("Obsolete request");
 		return;
 	}
 
-	pLinkContext = context;
-	adapter = pLinkContext->pAdapter;
-
-	spin_lock(&hdd_context_lock);
-
-	if ((NULL == adapter) ||
-	    (LINK_STATUS_MAGIC != pLinkContext->magic)) {
-		/*
-		 * the caller presumably timed out so there is
-		 * nothing we can do
-		 */
-		spin_unlock(&hdd_context_lock);
-		hdd_warn("Invalid context, adapter [%p] magic [%08x]",
-			  adapter, pLinkContext->magic);
-		return;
-	}
-
-	/* context is valid so caller is still waiting */
-
-	/* paranoia: invalidate the magic */
-	pLinkContext->magic = 0;
-
-	/* copy over the status */
-	adapter->linkStatus = status;
-
-	/* notify the caller */
-	complete(&pLinkContext->completion);
-
-	/* serialization is complete */
-	spin_unlock(&hdd_context_lock);
+	priv = hdd_request_priv(request);
+	priv->link_status = status;
+	hdd_request_complete(request);
+	hdd_request_put(request);
 }
 
 /**
@@ -2422,9 +2402,15 @@ static int wlan_hdd_get_link_status(hdd_adapter_t *adapter)
 
 	hdd_station_ctx_t *pHddStaCtx =
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	static struct statsContext context;
 	QDF_STATUS hstatus;
-	unsigned long rc;
+	int ret;
+	void *cookie;
+	struct hdd_request *request;
+	struct link_status_priv *priv;
+	static const struct hdd_request_params params = {
+		.priv_size = sizeof(*priv),
+		.timeout_ms = WLAN_WAIT_TIME_LINK_STATUS,
+	};
 
 	if (cds_is_driver_recovering()) {
 		hdd_warn("Recovery in Progress. State: 0x%x Ignore!!!",
@@ -2449,26 +2435,38 @@ static int wlan_hdd_get_link_status(hdd_adapter_t *adapter)
 		return 0;
 	}
 
-	init_completion(&context.completion);
-	context.pAdapter = adapter;
-	context.magic = LINK_STATUS_MAGIC;
+	request = hdd_request_alloc(&params);
+	if (!request) {
+		hdd_err("Request allocation failure");
+		return 0;
+	}
+	cookie = hdd_request_cookie(request);
+
 	hstatus = sme_get_link_status(WLAN_HDD_GET_HAL_CTX(adapter),
 				      hdd_get_link_status_cb,
-				      &context, adapter->sessionId);
+				      cookie, adapter->sessionId);
 	if (QDF_STATUS_SUCCESS != hstatus) {
 		hdd_err("Unable to retrieve link status");
 		/* return a cached value */
 	} else {
 		/* request is sent -- wait for the response */
-		rc = wait_for_completion_timeout(&context.completion,
-				msecs_to_jiffies(WLAN_WAIT_TIME_LINK_STATUS));
-		if (!rc)
+		ret = hdd_request_wait_for_response(request);
+		if (ret) {
 			hdd_err("SME timed out while retrieving link status");
+			/* return a cached value */
+		} else {
+			/* update the adapter with the fresh results */
+			priv = hdd_request_priv(request);
+			adapter->linkStatus = priv->link_status;
+		}
 	}
 
-	spin_lock(&hdd_context_lock);
-	context.magic = 0;
-	spin_unlock(&hdd_context_lock);
+	/*
+	 * either we never sent a request, we sent a request and
+	 * received a response or we sent a request and timed out.
+	 * regardless we are done with the request.
+	 */
+	hdd_request_put(request);
 
 	/* either callback updated adapter stats or it has cached data */
 	return adapter->linkStatus;
