@@ -4656,7 +4656,6 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 	hdd_wext_state_t *pWextState = NULL;
 	hdd_station_ctx_t *pHddStaCtx = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	hdd_context_t *pHddCtx = NULL;
 	struct cfg80211_bss *bss_status;
 
 	hdd_info("CSR Callback: status= %d result= %d roamID=%d",
@@ -4693,15 +4692,6 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		qdf_ret_status =
 			hdd_dis_connect_handler(pAdapter, pRoamInfo, roamId,
 						roamStatus, roamResult);
-		/*
-		 * Check if Mcast/Bcast Filters are set, if yes
-		 * clear the filters here.
-		 */
-		if ((WLAN_HDD_GET_CTX(pAdapter))->hdd_mcastbcast_filter_set ==
-		    true) {
-			(WLAN_HDD_GET_CTX(pAdapter))->
-			hdd_mcastbcast_filter_set = false;
-		}
 		pHddStaCtx->ft_carrier_on = false;
 		pHddStaCtx->hdd_ReassocScenario = false;
 		hdd_info("hdd_ReassocScenario set to: %d, ReAssoc Failed, session: %d",
@@ -4765,23 +4755,6 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		qdf_ret_status =
 			hdd_dis_connect_handler(pAdapter, pRoamInfo, roamId,
 						roamStatus, roamResult);
-		/* Check if Mcast/Bcast Filters are set, if yes clear the filters here */
-		pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
-		if (pHddCtx->hdd_mcastbcast_filter_set == true) {
-			if (pHddCtx->sus_res_mcastbcast_filter_valid) {
-				pHddCtx->configuredMcastBcastFilter =
-					pHddCtx->sus_res_mcastbcast_filter;
-				pHddCtx->sus_res_mcastbcast_filter_valid =
-					false;
-			}
-
-			hdd_info("offload: disassociation happening, restoring configuredMcastBcastFilter");
-			hdd_info("McastBcastFilter = %d",
-				 pHddCtx->configuredMcastBcastFilter);
-			hdd_info("offload: already called mcastbcast filter");
-			(WLAN_HDD_GET_CTX(pAdapter))->
-			hdd_mcastbcast_filter_set = false;
-		}
 		/* Call to clear any MC Addr List filter applied after
 		 * successful connection.
 		 */

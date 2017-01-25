@@ -9402,12 +9402,7 @@ static int iw_configure_mcbc_filter(hdd_adapter_t *adapter,
 		 req->mcbc_filter_setting);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	hdd_ctx->configuredMcastBcastFilter = req->mcbc_filter_setting;
-
 	hdd_conf_hostoffload(adapter, true);
-
-	if (hdd_ctx->sus_res_mcastbcast_filter_valid)
-		hdd_ctx->sus_res_mcastbcast_filter = req->mcbc_filter_setting;
 
 	EXIT();
 	return 0;
@@ -9498,8 +9493,6 @@ static int __iw_clear_dynamic_mcbc_filter(struct net_device *dev,
 {
 	int exit_code;
 	hdd_adapter_t *adapter;
-	hdd_context_t *hdd_ctx;
-	uint8_t ini_filter_setting;
 
 	ENTER();
 
@@ -9511,14 +9504,7 @@ static int __iw_clear_dynamic_mcbc_filter(struct net_device *dev,
 
 	/* clear basically means: reset to ini filter settings */
 	adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	ini_filter_setting = hdd_ctx->config->mcastBcastFilterSetting;
-
-	hdd_ctx->configuredMcastBcastFilter = ini_filter_setting;
 	hdd_conf_hostoffload(adapter, true);
-
-	if (hdd_ctx->sus_res_mcastbcast_filter_valid)
-		hdd_ctx->sus_res_mcastbcast_filter = ini_filter_setting;
 
 	exit_code = 0;
 

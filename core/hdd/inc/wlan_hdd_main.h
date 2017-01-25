@@ -1364,9 +1364,6 @@ struct hdd_context_s {
 	bool is_ol_rx_thread_suspended;
 #endif
 
-	/* Track whether Mcast/Bcast Filter is enabled. */
-	bool hdd_mcastbcast_filter_set;
-
 	bool hdd_wlan_suspended;
 	bool suspended;
 
@@ -1419,16 +1416,6 @@ struct hdd_context_s {
 #endif
 
 	void *hdd_ipa;
-
-	/* MC/BC Filter state variable
-	 * This always contains the value that is currently
-	 * configured
-	 */
-	uint8_t configuredMcastBcastFilter;
-
-	uint8_t sus_res_mcastbcast_filter;
-
-	bool sus_res_mcastbcast_filter_valid;
 
 	/* Use below lock to protect access to isSchedScanUpdatePending
 	 * since it will be accessed in two different contexts.
