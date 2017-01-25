@@ -637,57 +637,64 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 	/* walk the chain until all are processed */
 	skb = (struct sk_buff *)rxBuf;
 
-	hdd_softap_dump_sk_buff(skb);
+	while (skb) {
+		struct sk_buff *next = skb->next;
 
-	skb->dev = pAdapter->dev;
+		skb->next = NULL;
+		hdd_softap_dump_sk_buff(skb);
 
-	if (unlikely(skb->dev == NULL)) {
+		skb->dev = pAdapter->dev;
 
-		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
-			  "%s: ERROR!!Invalid netdevice", __func__);
-		return QDF_STATUS_E_FAILURE;
+		if (unlikely(skb->dev == NULL)) {
+
+			QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
+				  "%s: ERROR!!Invalid netdevice", __func__);
+			return QDF_STATUS_E_FAILURE;
+		}
+		cpu_index = wlan_hdd_get_cpu();
+		++pAdapter->hdd_stats.hddTxRxStats.rxPackets[cpu_index];
+		++pAdapter->stats.rx_packets;
+		pAdapter->stats.rx_bytes += skb->len;
+
+		hdd_event_eapol_log(skb, QDF_RX);
+		DPTRACE(qdf_dp_trace(rxBuf,
+			QDF_DP_TRACE_RX_HDD_PACKET_PTR_RECORD,
+			qdf_nbuf_data_addr(rxBuf),
+			sizeof(qdf_nbuf_data(rxBuf)), QDF_RX));
+
+		skb->protocol = eth_type_trans(skb, skb->dev);
+
+		/* hold configurable wakelock for unicast traffic */
+		if (pHddCtx->config->rx_wakelock_timeout &&
+			skb->pkt_type != PACKET_BROADCAST &&
+			skb->pkt_type != PACKET_MULTICAST) {
+			cds_host_diag_log_work(&pHddCtx->rx_wake_lock,
+						   pHddCtx->config->rx_wakelock_timeout,
+						   WIFI_POWER_EVENT_WAKELOCK_HOLD_RX);
+			qdf_wake_lock_timeout_acquire(&pHddCtx->rx_wake_lock,
+							  pHddCtx->config->
+								  rx_wakelock_timeout);
+		}
+
+		/* Remove SKB from internal tracking table before submitting
+		 * it to stack
+		 */
+		qdf_net_buf_debug_release_skb(rxBuf);
+		if (hdd_napi_enabled(HDD_NAPI_ANY) &&
+			!pHddCtx->enableRxThread)
+			rxstat = netif_receive_skb(skb);
+		else
+			rxstat = netif_rx_ni(skb);
+		if (NET_RX_SUCCESS == rxstat) {
+			++pAdapter->hdd_stats.hddTxRxStats.rxDelivered[cpu_index];
+		} else {
+			++pAdapter->hdd_stats.hddTxRxStats.rxRefused[cpu_index];
+		}
+
+		pAdapter->dev->last_rx = jiffies;
+
+		skb = next;
 	}
-	cpu_index = wlan_hdd_get_cpu();
-	++pAdapter->hdd_stats.hddTxRxStats.rxPackets[cpu_index];
-	++pAdapter->stats.rx_packets;
-	pAdapter->stats.rx_bytes += skb->len;
-
-	hdd_event_eapol_log(skb, QDF_RX);
-	DPTRACE(qdf_dp_trace(rxBuf,
-		QDF_DP_TRACE_RX_HDD_PACKET_PTR_RECORD,
-		qdf_nbuf_data_addr(rxBuf),
-		sizeof(qdf_nbuf_data(rxBuf)), QDF_RX));
-
-	skb->protocol = eth_type_trans(skb, skb->dev);
-
-	/* hold configurable wakelock for unicast traffic */
-	if (pHddCtx->config->rx_wakelock_timeout &&
-	    skb->pkt_type != PACKET_BROADCAST &&
-	    skb->pkt_type != PACKET_MULTICAST) {
-		cds_host_diag_log_work(&pHddCtx->rx_wake_lock,
-				       pHddCtx->config->rx_wakelock_timeout,
-				       WIFI_POWER_EVENT_WAKELOCK_HOLD_RX);
-		qdf_wake_lock_timeout_acquire(&pHddCtx->rx_wake_lock,
-					      pHddCtx->config->
-						      rx_wakelock_timeout);
-	}
-
-	/* Remove SKB from internal tracking table before submitting
-	 * it to stack
-	 */
-	qdf_net_buf_debug_release_skb(rxBuf);
-	if (hdd_napi_enabled(HDD_NAPI_ANY) &&
-		!pHddCtx->enableRxThread)
-		rxstat = netif_receive_skb(skb);
-	else
-		rxstat = netif_rx_ni(skb);
-	if (NET_RX_SUCCESS == rxstat) {
-		++pAdapter->hdd_stats.hddTxRxStats.rxDelivered[cpu_index];
-	} else {
-		++pAdapter->hdd_stats.hddTxRxStats.rxRefused[cpu_index];
-	}
-
-	pAdapter->dev->last_rx = jiffies;
 
 	return QDF_STATUS_SUCCESS;
 }

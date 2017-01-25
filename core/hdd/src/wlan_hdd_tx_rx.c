@@ -1012,83 +1012,89 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 
 	skb = (struct sk_buff *)rxBuf;
 
-	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
-	if ((pHddStaCtx->conn_info.proxyARPService) &&
-	    cfg80211_is_gratuitous_arp_unsolicited_na(skb)) {
-		++pAdapter->hdd_stats.hddTxRxStats.rxDropped[cpu_index];
-		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO,
-			  "%s: Dropping HS 2.0 Gratuitous ARP or Unsolicited NA",
-			  __func__);
+	while (skb) {
+		struct sk_buff *next = skb->next;
+
+		skb->next = NULL;
+		pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+		if ((pHddStaCtx->conn_info.proxyARPService) &&
+			cfg80211_is_gratuitous_arp_unsolicited_na(skb)) {
+			++pAdapter->hdd_stats.hddTxRxStats.rxDropped[cpu_index];
+			QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO,
+				  "%s: Dropping HS 2.0 Gratuitous ARP or Unsolicited NA",
+				  __func__);
+			/* Remove SKB from internal tracking table before submitting
+			 * it to stack
+			 */
+			qdf_nbuf_free(skb);
+			return QDF_STATUS_SUCCESS;
+		}
+
+		hdd_event_eapol_log(skb, QDF_RX);
+		DPTRACE(qdf_dp_trace(skb,
+			QDF_DP_TRACE_RX_HDD_PACKET_PTR_RECORD,
+			qdf_nbuf_data_addr(skb),
+			sizeof(qdf_nbuf_data(skb)), QDF_RX));
+
+		wlan_hdd_tdls_update_rx_pkt_cnt(pAdapter, skb);
+
+		skb->dev = pAdapter->dev;
+		skb->protocol = eth_type_trans(skb, skb->dev);
+		++pAdapter->hdd_stats.hddTxRxStats.rxPackets[cpu_index];
+		++pAdapter->stats.rx_packets;
+		pAdapter->stats.rx_bytes += skb->len;
+
+		/* Check & drop replayed mcast packets (for IPV6) */
+		if (pHddCtx->config->multicast_replay_filter &&
+				hdd_is_mcast_replay(skb)) {
+			++pAdapter->hdd_stats.hddTxRxStats.rxDropped[cpu_index];
+			QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO,
+				"%s: Dropping multicast replay pkt", __func__);
+			qdf_nbuf_free(skb);
+			return QDF_STATUS_SUCCESS;
+		}
+
+		/* hold configurable wakelock for unicast traffic */
+		if (pHddCtx->config->rx_wakelock_timeout &&
+			skb->pkt_type != PACKET_BROADCAST &&
+			skb->pkt_type != PACKET_MULTICAST) {
+			cds_host_diag_log_work(&pHddCtx->rx_wake_lock,
+						   pHddCtx->config->rx_wakelock_timeout,
+						   WIFI_POWER_EVENT_WAKELOCK_HOLD_RX);
+			qdf_wake_lock_timeout_acquire(&pHddCtx->rx_wake_lock,
+							  pHddCtx->config->
+								  rx_wakelock_timeout);
+		}
+
 		/* Remove SKB from internal tracking table before submitting
 		 * it to stack
 		 */
-		qdf_nbuf_free(skb);
-		return QDF_STATUS_SUCCESS;
-	}
+		qdf_net_buf_debug_release_skb(skb);
 
-	hdd_event_eapol_log(skb, QDF_RX);
-	DPTRACE(qdf_dp_trace(rxBuf,
-		QDF_DP_TRACE_RX_HDD_PACKET_PTR_RECORD,
-		qdf_nbuf_data_addr(rxBuf),
-		sizeof(qdf_nbuf_data(rxBuf)), QDF_RX));
+		if (HDD_LRO_NO_RX ==
+			 hdd_lro_rx(pHddCtx, pAdapter, skb)) {
+			if (hdd_napi_enabled(HDD_NAPI_ANY) &&
+				!pHddCtx->enableRxThread)
+				rxstat = netif_receive_skb(skb);
+			else
+				rxstat = netif_rx_ni(skb);
 
-	wlan_hdd_tdls_update_rx_pkt_cnt(pAdapter, skb);
+			if (NET_RX_SUCCESS == rxstat)
+				++pAdapter->hdd_stats.hddTxRxStats.
+					 rxDelivered[cpu_index];
+			else
+				++pAdapter->hdd_stats.hddTxRxStats.
+					 rxRefused[cpu_index];
 
-	skb->dev = pAdapter->dev;
-	skb->protocol = eth_type_trans(skb, skb->dev);
-	++pAdapter->hdd_stats.hddTxRxStats.rxPackets[cpu_index];
-	++pAdapter->stats.rx_packets;
-	pAdapter->stats.rx_bytes += skb->len;
-
-	/* Check & drop replayed mcast packets (for IPV6) */
-	if (pHddCtx->config->multicast_replay_filter &&
-			hdd_is_mcast_replay(skb)) {
-		++pAdapter->hdd_stats.hddTxRxStats.rxDropped[cpu_index];
-		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO,
-			"%s: Dropping multicast replay pkt", __func__);
-		qdf_nbuf_free(skb);
-		return QDF_STATUS_SUCCESS;
-	}
-
-	/* hold configurable wakelock for unicast traffic */
-	if (pHddCtx->config->rx_wakelock_timeout &&
-	    skb->pkt_type != PACKET_BROADCAST &&
-	    skb->pkt_type != PACKET_MULTICAST) {
-		cds_host_diag_log_work(&pHddCtx->rx_wake_lock,
-				       pHddCtx->config->rx_wakelock_timeout,
-				       WIFI_POWER_EVENT_WAKELOCK_HOLD_RX);
-		qdf_wake_lock_timeout_acquire(&pHddCtx->rx_wake_lock,
-					      pHddCtx->config->
-						      rx_wakelock_timeout);
-	}
-
-	/* Remove SKB from internal tracking table before submitting
-	 * it to stack
-	 */
-	qdf_net_buf_debug_release_skb(rxBuf);
-
-	if (HDD_LRO_NO_RX ==
-		 hdd_lro_rx(pHddCtx, pAdapter, skb)) {
-		if (hdd_napi_enabled(HDD_NAPI_ANY) &&
-		    !pHddCtx->enableRxThread)
-			rxstat = netif_receive_skb(skb);
-		else
-			rxstat = netif_rx_ni(skb);
-
-		if (NET_RX_SUCCESS == rxstat)
+		} else {
 			++pAdapter->hdd_stats.hddTxRxStats.
 				 rxDelivered[cpu_index];
-		else
-			++pAdapter->hdd_stats.hddTxRxStats.
-				 rxRefused[cpu_index];
+		}
 
-	} else {
-		++pAdapter->hdd_stats.hddTxRxStats.
-			 rxDelivered[cpu_index];
+		pAdapter->dev->last_rx = jiffies;
+
+		skb = next;
 	}
-
-	pAdapter->dev->last_rx = jiffies;
-
 	return QDF_STATUS_SUCCESS;
 }
 
