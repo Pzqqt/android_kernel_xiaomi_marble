@@ -324,10 +324,8 @@ struct linkspeedContext {
 extern spinlock_t hdd_context_lock;
 
 #define STATS_CONTEXT_MAGIC 0x53544154  /* STAT */
-#define POWER_CONTEXT_MAGIC 0x504F5752  /* POWR */
 #define LINK_CONTEXT_MAGIC  0x4C494E4B  /* LINKSPEED */
 #define BPF_CONTEXT_MAGIC 0x4575354    /* BPF */
-#define POWER_STATS_MAGIC 0x14111990
 
 /* MAX OS Q block time value in msec
  * Prevent from permanent stall, resume OS Q if timer expired
@@ -1158,7 +1156,6 @@ struct hdd_adapter_s {
 	 */
 	uint8_t pre_cac_chan;
 	struct hdd_connect_pm_context connect_rpm_ctx;
-	struct power_stats_response *chip_power_stats;
 
 	bool fast_roaming_allowed;
 };
