@@ -726,10 +726,10 @@ QDF_STATUS hdd_softap_deregister_sta(hdd_adapter_t *pAdapter, uint8_t staId)
 	 * structures. This helps to block RX frames from other
 	 * station to this station.
 	 */
-	qdf_status = cdp_peer_clear(cds_get_context(QDF_MODULE_ID_SOC),
+	qdf_status = cdp_clear_peer(cds_get_context(QDF_MODULE_ID_SOC),
 			cds_get_context(QDF_MODULE_ID_TXRX), staId);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		hdd_err("cdp_peer_clear failed for staID %d, Status=%d [0x%08X]",
+		hdd_err("cdp_clear_peer failed for staID %d, Status=%d [0x%08X]",
 			staId, qdf_status, qdf_status);
 	}
 

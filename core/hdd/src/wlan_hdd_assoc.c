@@ -1434,10 +1434,10 @@ QDF_STATUS hdd_roam_deregister_sta(hdd_adapter_t *pAdapter, uint8_t staId)
 		 */
 	}
 
-	qdf_status = cdp_peer_clear(cds_get_context(QDF_MODULE_ID_SOC),
+	qdf_status = cdp_clear_peer(cds_get_context(QDF_MODULE_ID_SOC),
 			cds_get_context(QDF_MODULE_ID_TXRX), staId);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		hdd_err("cdp_peer_clear() failed for staID %d. Status(%d) [0x%08X]",
+		hdd_err("cdp_clear_peer() failed for staID %d. Status(%d) [0x%08X]",
 			staId, qdf_status, qdf_status);
 	}
 	return qdf_status;
@@ -3563,10 +3563,10 @@ static QDF_STATUS hdd_roam_deregister_tdlssta(hdd_adapter_t *pAdapter,
 					      uint8_t staId)
 {
 	QDF_STATUS qdf_status;
-	qdf_status = cdp_peer_clear(cds_get_context(QDF_MODULE_ID_SOC),
+	qdf_status = cdp_clear_peer(cds_get_context(QDF_MODULE_ID_SOC),
 				cds_get_context(QDF_MODULE_ID_TXRX), staId);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		hdd_warn("cdp_peer_clear() failed for staID %d. Status=%d [0x%08X]",
+		hdd_warn("cdp_clear_peer() failed for staID %d. Status=%d [0x%08X]",
 			staId, qdf_status, qdf_status);
 	}
 	return qdf_status;
