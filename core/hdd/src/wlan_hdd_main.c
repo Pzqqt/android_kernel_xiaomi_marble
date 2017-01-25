@@ -8200,6 +8200,36 @@ out:
 
 }
 
+#ifdef NAPIER_SCAN
+/**
+ *
+ * hdd_post_cds_enable_config() - HDD post cds start config helper
+ * @adapter - Pointer to the HDD
+ *
+ * Return: None
+ */
+static inline QDF_STATUS hdd_register_bcn_cb(hdd_context_t *hdd_ctx)
+{
+	QDF_STATUS status;
+
+	status = ucfg_scan_register_bcn_cb(hdd_ctx->hdd_psoc,
+		wlan_cfg80211_inform_bss_frame,
+		SCAN_CB_TYPE_INFORM_BCN);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("failed with status code %08d [x%08x]",
+			status, status);
+		return status;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static inline QDF_STATUS hdd_register_bcn_cb(hdd_context_t *hdd_ctx)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+#endif
 
 /**
  * hdd_configure_cds() - Configure cds modules
@@ -8246,6 +8276,11 @@ int hdd_configure_cds(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 	}
 
 	status = hdd_post_cds_enable_config(hdd_ctx);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_alert("hdd_post_cds_enable_config failed");
+		goto cds_disable;
+	}
+	status = hdd_register_bcn_cb(hdd_ctx);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_alert("hdd_post_cds_enable_config failed");
 		goto cds_disable;

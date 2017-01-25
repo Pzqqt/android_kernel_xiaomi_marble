@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -175,7 +175,7 @@ lim_process_beacon_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	qdf_mem_free(bcn_ptr);
 	return;
 }
-
+#ifndef NAPIER_SCAN
 /**---------------------------------------------------------------
    \fn     lim_process_beacon_frame_no_session
    \brief  This function is called by limProcessMessageQueue()
@@ -256,3 +256,4 @@ lim_process_beacon_frame_no_session(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo)
 
 	return;
 } /*** end lim_process_beacon_frame_no_session() ***/
+#endif

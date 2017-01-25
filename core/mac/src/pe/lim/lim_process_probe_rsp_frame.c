@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -329,7 +329,7 @@ lim_process_probe_rsp_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_Packet_info,
 	/* Ignore Probe Response frame in all other states */
 	return;
 }
-
+#ifndef NAPIER_SCAN
 /**
  * lim_process_probe_rsp_frame_no_session() - process Probe Response frame
  * @mac_ctx: Pointer to Global MAC structure
@@ -401,3 +401,4 @@ lim_process_probe_rsp_frame_no_session(tpAniSirGlobal mac_ctx,
 	qdf_mem_free(probe_rsp);
 	return;
 }
+#endif

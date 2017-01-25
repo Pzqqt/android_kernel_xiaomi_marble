@@ -54,6 +54,10 @@
 #include "wlan_hdd_main.h"
 #include "pld_common.h"
 #include "csr_internal.h"
+#ifdef NAPIER_SCAN
+#include <wlan_scan_ucfg_api.h>
+#include <wlan_scan_utils_api.h>
+#endif
 
 #define MIN_CHN_TIME_TO_FIND_GO 100
 #define MAX_CHN_TIME_TO_FIND_GO 100
@@ -97,12 +101,19 @@ void csr_save_tx_power_to_cfg(tpAniSirGlobal pMac, tDblLinkList *pList,
 			      uint32_t cfgId);
 void csr_set_cfg_country_code(tpAniSirGlobal pMac, uint8_t *countryCode);
 void csr_purge_channel_power(tpAniSirGlobal pMac, tDblLinkList *pChannelList);
+#ifndef NAPIER_SCAN
 static bool csr_scan_validate_scan_result(tpAniSirGlobal pMac, uint8_t *pChannels,
 					  uint8_t numChn,
 					  tSirBssDescription *pBssDesc,
 					  tDot11fBeaconIEs **ppIes);
+#endif
 bool csr_roam_is_valid_channel(tpAniSirGlobal pMac, uint8_t channel);
 static void csr_purge_scan_result_by_age(void *pv);
+static bool csr_remove_dup_bss_description(tpAniSirGlobal pMac,
+					   tSirBssDescription *bss_dscp,
+					   tDot11fBeaconIEs *pIes,
+					   tAniSSID *pSsid,
+					   unsigned long *timer, bool fForced);
 
 #define CSR_IS_SOCIAL_CHANNEL(channel) \
 	(((channel) == 1) || ((channel) == 6) || ((channel) == 11))
@@ -1316,6 +1327,7 @@ QDF_STATUS csr_scan_result_purge(tpAniSirGlobal pMac,
 	return status;
 }
 
+#ifndef NAPIER_SCAN
 /**
  * csr_remove_bssid_from_scan_list() - remove the bssid from
  * scan list
@@ -1353,7 +1365,7 @@ void csr_remove_bssid_from_scan_list(tpAniSirGlobal mac_ctx,
 
 	csr_ll_unlock(list);
 }
-
+#endif
 /**
  * csr_derive_prefer_value_from_rssi() - to derive prefer value
  * @mac_ctx: Global MAC Context
@@ -1376,6 +1388,7 @@ static int csr_derive_prefer_value_from_rssi(tpAniSirGlobal mac_ctx, int rssi)
 	return pref_val;
 }
 
+#ifndef NAPIER_SCAN
 /**
  * is_channel_found_in_pcl() - to check if channel is present in pcl
  * @mac_ctx: Global MAC Context
@@ -1403,6 +1416,8 @@ static bool is_channel_found_in_pcl(tpAniSirGlobal mac_ctx, int channel_id,
 	}
 	return status;
 }
+#endif
+
 /**
  * csr_get_altered_rssi() - Artificially increase/decrease RSSI
  * @mac_ctx:         Global MAC Context pointer.
@@ -1543,6 +1558,7 @@ static uint32_t csr_get_bss_cap_value(tpAniSirGlobal pMac,
 	return ret;
 }
 
+#ifndef NAPIER_SCAN
 /**
  * csr_is_better_rssi() - Is bss1 better than bss2
  * @mac_ctx:             Global MAC Context pointer.
@@ -1626,6 +1642,7 @@ static bool csr_is_better_bss(tpAniSirGlobal mac_ctx,
 
 	return ret;
 }
+#endif
 
 /* Add the channel to the occupiedChannels array */
 static void csr_scan_add_to_occupied_channels(tpAniSirGlobal pMac,
@@ -1697,6 +1714,7 @@ static void csr_scan_add_result(tpAniSirGlobal pMac, tCsrScanResult *pResult,
 	}
 }
 
+#ifndef NAPIER_SCAN
 static void
 csr_parser_scan_result_for_5ghz_preference(tpAniSirGlobal pMac,
 					   tCsrScanResultFilter *pFilter)
@@ -2159,6 +2177,7 @@ QDF_STATUS csr_scan_get_result(tpAniSirGlobal pMac,
 	}
 	return status;
 }
+#endif
 
 /*
  * NOTE: This routine is being added to make
@@ -2185,6 +2204,7 @@ static bool csr_scan_flush_denied(tpAniSirGlobal pMac)
 	return 0;
 }
 
+#ifndef NAPIER_SCAN
 QDF_STATUS csr_scan_flush_result(tpAniSirGlobal pMac)
 {
 	bool isFlushDenied = csr_scan_flush_denied(pMac);
@@ -2468,7 +2488,7 @@ QDF_STATUS csr_scan_copy_result_list(tpAniSirGlobal pMac, tScanResultHandle hIn,
 
 	return status;
 }
-
+#endif
 QDF_STATUS csr_scanning_state_msg_processor(tpAniSirGlobal pMac,
 	void *pMsgBuf)
 {
@@ -2540,6 +2560,7 @@ QDF_STATUS csr_scanning_state_msg_processor(tpAniSirGlobal pMac,
 	return status;
 }
 
+#ifndef NAPIER_SCAN
 static void csr_check_n_save_wsc_ie(tpAniSirGlobal pMac,
 				    tSirBssDescription *pNewBssDescr,
 				    tSirBssDescription *pOldBssDescr)
@@ -2662,7 +2683,7 @@ static bool csr_remove_dup_bss_description(tpAniSirGlobal pMac,
 	csr_ll_unlock(&pMac->scan.scanResultList);
 	return fRC;
 }
-
+#endif
 static QDF_STATUS csr_add_pmkid_candidate_list(tpAniSirGlobal pMac,
 					       uint32_t sessionId,
 					       tSirBssDescription *pBssDesc,
@@ -2719,7 +2740,6 @@ static QDF_STATUS csr_add_pmkid_candidate_list(tpAniSirGlobal pMac,
 	pSession->NumPmkidCandidate++;
 	return status;
 }
-
 /*
  * This function checks whether new AP is found for the current connected
  * profile. If it is found, it return the sessionId, else it return invalid
@@ -2860,6 +2880,7 @@ static bool csr_process_bss_desc_for_bkid_list(tpAniSirGlobal pMac,
 
 #endif
 
+#ifndef NAPIER_SCAN
 /**
  * csr_purge_old_scan_results() - This function removes old scan entries
  * @mac_ctx: pointer to Global MAC structure
@@ -3037,7 +3058,7 @@ static void csr_move_temp_scan_results_to_main_list(tpAniSirGlobal pMac,
 	if (csr_elected_country_info(pMac))
 		csr_learn_11dcountry_information(pMac, NULL, NULL, true);
 }
-
+#endif
 static tCsrScanResult *csr_scan_save_bss_description(tpAniSirGlobal pMac,
 						     tSirBssDescription *
 						     pBSSDescription,
@@ -3364,6 +3385,7 @@ void csr_clear_votes_for_country_info(tpAniSirGlobal pMac)
 		    sizeof(tCsrVotes11d) * CSR_MAX_NUM_COUNTRY_CODE, 0);
 }
 
+#ifndef NAPIER_SCAN
 void csr_add_vote_for_country_info(tpAniSirGlobal pMac, uint8_t *pCountryCode)
 {
 	bool match = false;
@@ -3464,7 +3486,7 @@ bool csr_elected_country_info(tpAniSirGlobal pMac)
 	}
 	return fRet;
 }
-
+#endif
 /**
  * csr_set_country_code() - Set country code
  * @pMac: main MAC data structure
@@ -3748,6 +3770,7 @@ free_ie:
 	return fRet;
 }
 
+#ifndef NAPIER_SCAN
 void csr_save_scan_results(tpAniSirGlobal pMac, uint8_t reason,
 				  uint8_t sessionId)
 {
@@ -3765,6 +3788,7 @@ void csr_save_scan_results(tpAniSirGlobal pMac, uint8_t reason,
 		csr_apply_country_information(pMac);
 	}
 }
+#endif
 
 void csr_reinit_scan_cmd(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 {
@@ -4287,6 +4311,7 @@ bool csr_scan_complete(tpAniSirGlobal pMac, tSirSmeScanRsp *pScanRsp)
 	return fRemoveCommand;
 }
 
+#ifndef NAPIER_SCAN
 static void
 csr_scan_remove_dup_bss_description_from_interim_list(tpAniSirGlobal mac_ctx,
 					tSirBssDescription *bss_dscp,
@@ -4602,6 +4627,7 @@ static void csr_update_scantype(tpAniSirGlobal pMac, tDot11fBeaconIEs *pIes,
 		pMac->scan.curScanType = eSIR_ACTIVE_SCAN;
 
 }
+#endif
 
 /* Return whether last scan result is received */
 static bool csr_scan_process_scan_results(tpAniSirGlobal pMac, tSmeCmd *pCommand,
@@ -4638,6 +4664,7 @@ static bool csr_scan_process_scan_results(tpAniSirGlobal pMac, tSmeCmd *pCommand
 	return fRet;
 }
 
+#ifndef NAPIER_SCAN
 /**
  * csr_scan_get_session_id() - Get session id
  * @mac_ctx: Pointer to global mac
@@ -4733,6 +4760,8 @@ QDF_STATUS csr_scan_process_single_bssdescr(tpAniSirGlobal mac_ctx,
 	}
 	return QDF_STATUS_SUCCESS;
 }
+#endif
+
 
 
 static bool csr_scan_is_wild_card_scan(tpAniSirGlobal pMac, tSmeCmd *pCommand)
@@ -4906,6 +4935,7 @@ QDF_STATUS csr_move_bss_to_head_from_bssid(tpAniSirGlobal pMac,
 	return status;
 }
 
+#ifndef NAPIER_SCAN
 /* Remove the BSS if possible. */
 /* Return -- true == the BSS is remove. False == Fail to remove it */
 /* This function is called when list lock is held. Be caution what functions it can call. */
@@ -4965,51 +4995,7 @@ static bool csr_scan_age_out_bss(tpAniSirGlobal pMac, tCsrScanResult *pResult)
 	}
 	return fRet;
 }
-
-QDF_STATUS csr_scan_age_results(tpAniSirGlobal pMac,
-				tSmeGetScanChnRsp *pScanChnInfo)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tListElem *pEntry, *tmpEntry;
-	tCsrScanResult *pResult;
-	tLimScanChn *pChnInfo;
-	uint8_t i;
-
-	csr_ll_lock(&pMac->scan.scanResultList);
-	for (i = 0; i < pScanChnInfo->numChn; i++) {
-		pChnInfo = &pScanChnInfo->scanChn[i];
-		pEntry =
-			csr_ll_peek_head(&pMac->scan.scanResultList, LL_ACCESS_NOLOCK);
-		while (pEntry) {
-			tmpEntry =
-				csr_ll_next(&pMac->scan.scanResultList, pEntry,
-					    LL_ACCESS_NOLOCK);
-			pResult = GET_BASE_ADDR(pEntry, tCsrScanResult, Link);
-			if (pResult->Result.BssDescriptor.channelId ==
-			    pChnInfo->channelId) {
-				if (pResult->AgingCount <= 0) {
-					sms_log(pMac, LOGW,
-						" age out due to ref count");
-					csr_scan_age_out_bss(pMac, pResult);
-				} else {
-					pResult->AgingCount--;
-					sms_log(pMac, LOGW,
-						FL
-							("Decremented AgingCount=%d for BSS "
-							MAC_ADDRESS_STR ""),
-						pResult->AgingCount,
-						MAC_ADDR_ARRAY(pResult->Result.
-							       BssDescriptor.
-							       bssId));
-				}
-			}
-			pEntry = tmpEntry;
-		}
-	}
-	csr_ll_unlock(&pMac->scan.scanResultList);
-
-	return status;
-}
+#endif
 
 static QDF_STATUS csr_send_mb_scan_req(tpAniSirGlobal pMac, uint16_t sessionId,
 				       tCsrScanRequest *pScanReq,
@@ -5985,6 +5971,7 @@ static void csr_sta_ap_conc_timer_handler(void *pv)
 }
 #endif
 
+#ifndef NAPIER_SCAN
 /**
  * csr_purge_scan_result_by_age() - Purge scan results based on Age
  * @pv: Global context
@@ -6024,6 +6011,7 @@ static void csr_purge_scan_result_by_age(void *pv)
 	}
 	csr_ll_unlock(&mac_ctx->scan.scanResultList);
 }
+#endif
 
 bool csr_scan_remove_fresh_scan_command(tpAniSirGlobal pMac, uint8_t sessionId)
 {
@@ -7193,6 +7181,7 @@ QDF_STATUS csr_scan_save_preferred_network_found(tpAniSirGlobal pMac,
 }
 #endif /* FEATURE_WLAN_SCAN_PNO */
 
+#ifndef NAPIER_SCAN
 void csr_init_occupied_channels_list(tpAniSirGlobal pMac, uint8_t sessionId)
 {
 	tListElem *pEntry = NULL;
@@ -7247,6 +7236,7 @@ void csr_init_occupied_channels_list(tpAniSirGlobal pMac, uint8_t sessionId)
 	} /* while */
 	csr_ll_unlock(&pMac->scan.scanResultList);
 }
+#endif
 
 QDF_STATUS csr_scan_create_entry_in_scan_cache(tpAniSirGlobal pMac,
 					       uint32_t sessionId,
@@ -7395,7 +7385,6 @@ QDF_STATUS csr_scan_save_roam_offload_ap_to_scan_cache(tpAniSirGlobal pMac,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
-
 /**
  * csr_get_fst_bssdescr_ptr() - This function returns the pointer to first bss
  * description from scan handle
@@ -7527,3 +7516,742 @@ void csr_scan_active_list_timeout_handle(void *userData)
 	csr_release_command(mac_ctx, scan_cmd);
 	return;
 }
+
+#ifdef NAPIER_SCAN
+static enum wlan_auth_type csr_covert_auth_type_new(eCsrAuthType auth)
+{
+	switch (auth) {
+	case eCSR_AUTH_TYPE_NONE:
+	case eCSR_AUTH_TYPE_OPEN_SYSTEM:
+		return WLAN_AUTH_TYPE_OPEN_SYSTEM;
+	case eCSR_AUTH_TYPE_SHARED_KEY:
+		return WLAN_AUTH_TYPE_SHARED_KEY;
+	case eCSR_AUTH_TYPE_AUTOSWITCH:
+		return WLAN_AUTH_TYPE_AUTOSWITCH;
+	case eCSR_AUTH_TYPE_WPA:
+		return WLAN_AUTH_TYPE_WPA;
+	case eCSR_AUTH_TYPE_WPA_PSK:
+		return WLAN_AUTH_TYPE_WPA_PSK;
+	case eCSR_AUTH_TYPE_WPA_NONE:
+		return WLAN_AUTH_TYPE_WPA_NONE;
+	case eCSR_AUTH_TYPE_RSN:
+		return WLAN_AUTH_TYPE_RSN;
+	case eCSR_AUTH_TYPE_RSN_PSK:
+		return WLAN_AUTH_TYPE_RSN_PSK;
+	case eCSR_AUTH_TYPE_FT_RSN:
+		return WLAN_AUTH_TYPE_FT_RSN;
+	case eCSR_AUTH_TYPE_FT_RSN_PSK:
+		return WLAN_AUTH_TYPE_FT_RSN_PSK;
+	case eCSR_AUTH_TYPE_WAPI_WAI_CERTIFICATE:
+		return WLAN_AUTH_TYPE_WAPI_WAI_CERTIFICATE;
+	case eCSR_AUTH_TYPE_WAPI_WAI_PSK:
+		return WLAN_AUTH_TYPE_WAPI_WAI_PSK;
+	case eCSR_AUTH_TYPE_CCKM_WPA:
+		return WLAN_AUTH_TYPE_CCKM_WPA;
+	case eCSR_AUTH_TYPE_CCKM_RSN:
+		return WLAN_AUTH_TYPE_CCKM_RSN;
+	case eCSR_AUTH_TYPE_RSN_PSK_SHA256:
+		return WLAN_AUTH_TYPE_RSN_PSK_SHA256;
+	case eCSR_AUTH_TYPE_RSN_8021X_SHA256:
+		return WLAN_AUTH_TYPE_RSN_8021X_SHA256;
+	case eCSR_NUM_OF_SUPPORT_AUTH_TYPE:
+	default:
+		return WLAN_AUTH_TYPE_OPEN_SYSTEM;
+	}
+}
+
+static eCsrAuthType csr_covert_auth_type_old(enum wlan_auth_type auth)
+{
+	switch (auth) {
+	case WLAN_AUTH_TYPE_OPEN_SYSTEM:
+		return eCSR_AUTH_TYPE_OPEN_SYSTEM;
+	case WLAN_AUTH_TYPE_SHARED_KEY:
+		return eCSR_AUTH_TYPE_SHARED_KEY;
+	case WLAN_AUTH_TYPE_AUTOSWITCH:
+		return eCSR_AUTH_TYPE_AUTOSWITCH;
+	case WLAN_AUTH_TYPE_WPA:
+		return eCSR_AUTH_TYPE_WPA;
+	case WLAN_AUTH_TYPE_WPA_PSK:
+		return eCSR_AUTH_TYPE_WPA_PSK;
+	case WLAN_AUTH_TYPE_WPA_NONE:
+		return eCSR_AUTH_TYPE_WPA_NONE;
+	case WLAN_AUTH_TYPE_RSN:
+		return eCSR_AUTH_TYPE_RSN;
+	case WLAN_AUTH_TYPE_RSN_PSK:
+		return eCSR_AUTH_TYPE_RSN_PSK;
+	case WLAN_AUTH_TYPE_FT_RSN:
+		return eCSR_AUTH_TYPE_FT_RSN;
+	case WLAN_AUTH_TYPE_FT_RSN_PSK:
+		return eCSR_AUTH_TYPE_FT_RSN_PSK;
+	case WLAN_AUTH_TYPE_WAPI_WAI_CERTIFICATE:
+		return eCSR_AUTH_TYPE_WAPI_WAI_CERTIFICATE;
+	case WLAN_AUTH_TYPE_WAPI_WAI_PSK:
+		return eCSR_AUTH_TYPE_WAPI_WAI_PSK;
+	case WLAN_AUTH_TYPE_CCKM_WPA:
+		return eCSR_AUTH_TYPE_CCKM_WPA;
+	case WLAN_AUTH_TYPE_CCKM_RSN:
+		return eCSR_AUTH_TYPE_CCKM_RSN;
+	case WLAN_AUTH_TYPE_RSN_PSK_SHA256:
+		return eCSR_AUTH_TYPE_RSN_PSK_SHA256;
+	case WLAN_AUTH_TYPE_RSN_8021X_SHA256:
+		return eCSR_AUTH_TYPE_RSN_8021X_SHA256;
+	case WLAN_NUM_OF_SUPPORT_AUTH_TYPE:
+	default:
+		return eCSR_AUTH_TYPE_OPEN_SYSTEM;
+	}
+}
+
+static enum wlan_enc_type csr_covert_enc_type_new(eCsrEncryptionType enc)
+{
+	switch (enc) {
+	case eCSR_ENCRYPT_TYPE_NONE:
+		return WLAN_ENCRYPT_TYPE_NONE;
+	case eCSR_ENCRYPT_TYPE_WEP40_STATICKEY:
+		return WLAN_ENCRYPT_TYPE_WEP40_STATICKEY;
+	case eCSR_ENCRYPT_TYPE_WEP104_STATICKEY:
+		return WLAN_ENCRYPT_TYPE_WEP104_STATICKEY;
+	case eCSR_ENCRYPT_TYPE_WEP40:
+		return WLAN_ENCRYPT_TYPE_WEP40;
+	case eCSR_ENCRYPT_TYPE_WEP104:
+		return WLAN_ENCRYPT_TYPE_WEP104;
+	case eCSR_ENCRYPT_TYPE_TKIP:
+		return WLAN_ENCRYPT_TYPE_TKIP;
+	case eCSR_ENCRYPT_TYPE_AES:
+		return WLAN_ENCRYPT_TYPE_AES;
+	case eCSR_ENCRYPT_TYPE_WPI:
+		return WLAN_ENCRYPT_TYPE_WPI;
+	case eCSR_ENCRYPT_TYPE_KRK:
+		return WLAN_ENCRYPT_TYPE_KRK;
+	case eCSR_ENCRYPT_TYPE_BTK:
+		return WLAN_ENCRYPT_TYPE_BTK;
+	case eCSR_ENCRYPT_TYPE_AES_CMAC:
+		return WLAN_ENCRYPT_TYPE_AES_CMAC;
+	case eCSR_ENCRYPT_TYPE_ANY:
+	default:
+		return WLAN_ENCRYPT_TYPE_NONE;
+	}
+}
+
+static eCsrEncryptionType csr_covert_enc_type_old(enum wlan_enc_type enc)
+{
+	switch (enc) {
+	case WLAN_ENCRYPT_TYPE_NONE:
+		return eCSR_ENCRYPT_TYPE_NONE;
+	case WLAN_ENCRYPT_TYPE_WEP40_STATICKEY:
+		return eCSR_ENCRYPT_TYPE_WEP40_STATICKEY;
+	case WLAN_ENCRYPT_TYPE_WEP104_STATICKEY:
+		return eCSR_ENCRYPT_TYPE_WEP104_STATICKEY;
+	case WLAN_ENCRYPT_TYPE_WEP40:
+		return eCSR_ENCRYPT_TYPE_WEP40;
+	case WLAN_ENCRYPT_TYPE_WEP104:
+		return eCSR_ENCRYPT_TYPE_WEP104;
+	case WLAN_ENCRYPT_TYPE_TKIP:
+		return eCSR_ENCRYPT_TYPE_TKIP;
+	case WLAN_ENCRYPT_TYPE_AES:
+		return eCSR_ENCRYPT_TYPE_AES;
+	case WLAN_ENCRYPT_TYPE_WPI:
+		return eCSR_ENCRYPT_TYPE_WPI;
+	case WLAN_ENCRYPT_TYPE_KRK:
+		return eCSR_ENCRYPT_TYPE_KRK;
+	case WLAN_ENCRYPT_TYPE_BTK:
+		return eCSR_ENCRYPT_TYPE_BTK;
+	case WLAN_ENCRYPT_TYPE_AES_CMAC:
+		return eCSR_ENCRYPT_TYPE_AES_CMAC;
+	case WLAN_ENCRYPT_TYPE_ANY:
+	default:
+		return eCSR_ENCRYPT_TYPE_NONE;
+	}
+}
+
+
+static QDF_STATUS csr_prepare_scan_filter(tpAniSirGlobal mac_ctx,
+	tCsrScanResultFilter *pFilter, struct scan_filter *filter)
+{
+	int i;
+	uint32_t len = 0;
+	QDF_STATUS status;
+	enum cds_con_mode new_mode;
+	uint8_t weight_list[QDF_MAX_NUM_CHAN];
+	struct roam_ext_params *roam_params = NULL;
+
+	filter->num_of_bssid = pFilter->BSSIDs.numOfBSSIDs;
+	if (filter->num_of_bssid > WLAN_SCAN_FILTER_NUM_BSSID)
+		filter->num_of_bssid = WLAN_SCAN_FILTER_NUM_BSSID;
+	for (i = 0; i < filter->num_of_bssid; i++)
+		qdf_mem_copy(filter->bssid_list[i].bytes,
+			pFilter->BSSIDs.bssid[i].bytes,
+			QDF_MAC_ADDR_SIZE);
+
+	filter->num_of_ssid = pFilter->SSIDs.numOfSSIDs;
+	if (filter->num_of_ssid > WLAN_SCAN_FILTER_NUM_SSID)
+		filter->num_of_ssid = WLAN_SCAN_FILTER_NUM_SSID;
+	for (i = 0; i < filter->num_of_ssid; i++) {
+		filter->ssid_list[i].length =
+			pFilter->SSIDs.SSIDList[i].SSID.length;
+		qdf_mem_copy(filter->ssid_list[i].ssid,
+			pFilter->SSIDs.SSIDList[i].SSID.ssId,
+			filter->ssid_list[i].length);
+	}
+
+	filter->num_of_channels =
+		pFilter->ChannelInfo.numOfChannels;
+	if (filter->num_of_channels > QDF_MAX_NUM_CHAN)
+		filter->num_of_channels = QDF_MAX_NUM_CHAN;
+	qdf_mem_copy(filter->channel_list,
+			pFilter->ChannelInfo.ChannelList,
+			filter->num_of_channels);
+
+	filter->num_of_auth =
+		pFilter->authType.numEntries;
+	if (filter->num_of_auth > WLAN_NUM_OF_SUPPORT_AUTH_TYPE)
+		filter->num_of_auth = WLAN_NUM_OF_SUPPORT_AUTH_TYPE;
+	for (i = 0; i < filter->num_of_auth; i++)
+		filter->auth_type[i] =
+		  csr_covert_auth_type_new(pFilter->authType.authType[i]);
+	filter->num_of_enc_type =
+		pFilter->EncryptionType.numEntries;
+	if (filter->num_of_enc_type > WLAN_NUM_OF_ENCRYPT_TYPE)
+		filter->num_of_enc_type = WLAN_NUM_OF_ENCRYPT_TYPE;
+	for (i = 0; i < filter->num_of_enc_type; i++)
+		filter->enc_type[i] =
+		  csr_covert_enc_type_new(
+		  pFilter->EncryptionType.encryptionType[i]);
+	filter->num_of_mc_enc_type =
+			pFilter->mcEncryptionType.numEntries;
+	if (filter->num_of_mc_enc_type > WLAN_NUM_OF_ENCRYPT_TYPE)
+		filter->num_of_mc_enc_type = WLAN_NUM_OF_ENCRYPT_TYPE;
+	for (i = 0; i < filter->num_of_mc_enc_type; i++)
+		filter->mc_enc_type[i] =
+		  csr_covert_enc_type_new(
+		  pFilter->mcEncryptionType.encryptionType[i]);
+
+	qdf_mem_copy(filter->country,
+		pFilter->countryCode, WNI_CFG_COUNTRY_CODE_LEN);
+
+	if (pFilter->bWPSAssociation || pFilter->bWPSAssociation)
+		filter->ignore_auth_enc_type = true;
+
+	filter->rrm_measurement_filter = pFilter->fMeasurement;
+
+	filter->mobility_domain = pFilter->MDID.mobilityDomain;
+
+	filter->p2p_results = pFilter->p2pResult;
+
+	if (pFilter->MFPCapable || pFilter->MFPEnabled)
+		filter->pmf_cap = WLAN_PMF_CAPABLE;
+	if (pFilter->MFPRequired)
+		filter->pmf_cap = WLAN_PMF_REQUIRED;
+
+	if (pFilter->BSSType == eCSR_BSS_TYPE_INFRASTRUCTURE)
+		filter->bss_type = WLAN_TYPE_BSS;
+	else if (pFilter->BSSType == eCSR_BSS_TYPE_IBSS ||
+		pFilter->BSSType == eCSR_BSS_TYPE_START_IBSS)
+		filter->bss_type = WLAN_TYPE_IBSS;
+	else
+		filter->bss_type = WLAN_TYPE_ANY;
+
+	filter->dot11_mode = pFilter->phyMode;
+
+	if (!pFilter->BSSIDs.numOfBSSIDs) {
+		if (cds_map_concurrency_mode(
+		   &pFilter->csrPersona, &new_mode)) {
+			status = cds_get_pcl(new_mode,
+				filter->pcl_channel_list, &len,
+				weight_list, QDF_ARRAY_SIZE(weight_list));
+			filter->num_of_pcl_channels = (uint8_t)len;
+		}
+	}
+	filter->strict_sel_5g = CSR_IS_SELECT_5GHZ_MARGIN(mac_ctx);
+
+	qdf_mem_copy(filter->bss_prefer_val,
+		  mac_ctx->roam.configParam.BssPreferValue,
+		  sizeof(uint32_t) * SCM_NUM_RSSI_CAT);
+	qdf_mem_copy(filter->rssi_cat,
+		  mac_ctx->roam.configParam.RSSICat,
+		  sizeof(int) * SCM_NUM_RSSI_CAT);
+
+	roam_params = &mac_ctx->roam.configParam.roam_params;
+
+	filter->roam_params.num_bssid_avoid_list =
+		roam_params->num_bssid_avoid_list;
+	if (filter->roam_params.num_bssid_avoid_list > MAX_BSSID_AVOID_LIST)
+		filter->roam_params.num_bssid_avoid_list = MAX_BSSID_AVOID_LIST;
+	for (i = 0; i < filter->roam_params.num_bssid_avoid_list; i++)
+		qdf_mem_copy(filter->roam_params.bssid_avoid_list[i].bytes,
+		  roam_params->bssid_avoid_list[i].bytes,
+		  QDF_MAC_ADDR_SIZE);
+
+	filter->roam_params.num_bssid_favored =
+		roam_params->num_bssid_favored;
+	if (filter->roam_params.num_bssid_favored > MAX_FAVORED_BSSID)
+		filter->roam_params.num_bssid_favored = MAX_FAVORED_BSSID;
+	for (i = 0; i < filter->roam_params.num_bssid_favored; i++) {
+		qdf_mem_copy(filter->roam_params.bssid_favored[i].bytes,
+			roam_params->bssid_favored[i].bytes,
+			QDF_MAC_ADDR_SIZE);
+	}
+
+	qdf_mem_copy(filter->roam_params.
+		  bssid_favored_factor,
+		  roam_params->bssid_favored_factor,
+		  filter->roam_params.num_bssid_favored);
+
+	filter->roam_params.raise_rssi_thresh_5g =
+		roam_params->raise_rssi_thresh_5g;
+	filter->roam_params.drop_rssi_thresh_5g =
+		roam_params->drop_rssi_thresh_5g;
+	filter->roam_params.raise_factor_5g =
+		roam_params->raise_factor_5g;
+	filter->roam_params.drop_factor_5g =
+		roam_params->drop_factor_5g;
+	filter->roam_params.max_raise_rssi_5g =
+		roam_params->max_raise_rssi_5g;
+	filter->roam_params.max_drop_rssi_5g =
+		roam_params->max_drop_rssi_5g;
+	filter->roam_params.is_5g_pref_enabled =
+		roam_params->is_5g_pref_enabled;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS csr_fill_bss_from_scan_entry(tpAniSirGlobal mac_ctx,
+	struct scan_cache_entry *scan_entry,
+	tCsrScanResult **p_result)
+{
+	tDot11fBeaconIEs *bcn_ies;
+	tSirBssDescription *bss_desc;
+	tCsrScanResultInfo *result_info;
+	tpSirMacMgmtHdr hdr;
+	uint8_t *ie_ptr;
+	tCsrScanResult *bss;
+	uint32_t bss_len, alloc_len, ie_len;
+	QDF_STATUS status;
+
+	ie_len = util_scan_entry_ie_len(scan_entry);
+	ie_ptr = util_scan_entry_ie_data(scan_entry);
+
+	hdr = (tpSirMacMgmtHdr)scan_entry->raw_frame.ptr;
+
+	bss_len = (uint16_t)(offsetof(tSirBssDescription,
+			   ieFields[0]) + ie_len);
+	alloc_len = sizeof(tCsrScanResult) + bss_len;
+	bss = qdf_mem_malloc(alloc_len);
+
+	if (!bss) {
+		sms_log(mac_ctx, LOGE, FL("could not allocate bss"));
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	bss->AgingCount =
+		(int32_t) mac_ctx->roam.configParam.agingCount;
+	bss->preferValue = scan_entry->prefer_value;
+	bss->capValue = scan_entry->cap_val;
+	bss->ucEncryptionType =
+		csr_covert_enc_type_old(scan_entry->neg_sec_info.uc_enc);
+	bss->mcEncryptionType =
+		csr_covert_enc_type_old(scan_entry->neg_sec_info.mc_enc);
+	bss->authType =
+		csr_covert_auth_type_old(scan_entry->neg_sec_info.auth_type);
+
+	result_info = &bss->Result;
+	result_info->ssId.length = scan_entry->ssid.length;
+	qdf_mem_copy(result_info->ssId.ssId,
+		scan_entry->ssid.ssid,
+		result_info->ssId.length);
+	result_info->timer = scan_entry->hidden_ssid_timestamp;
+
+	bss_desc = &result_info->BssDescriptor;
+
+	bss_desc->length = (uint16_t) (offsetof(tSirBssDescription,
+			   ieFields[0]) - sizeof(bss_desc->length) + ie_len);
+
+	qdf_mem_copy(bss_desc->bssId,
+			scan_entry->bssid.bytes,
+			QDF_MAC_ADDR_SIZE);
+	bss_desc->scanSysTimeMsec = scan_entry->scan_entry_time;
+	qdf_mem_copy(bss_desc->timeStamp,
+		scan_entry->tsf_info.data, 8);
+
+	bss_desc->beaconInterval = scan_entry->bcn_int;
+	bss_desc->capabilityInfo = scan_entry->cap_info.value;
+
+	if (CDS_IS_CHANNEL_5GHZ(scan_entry->channel.chan_idx))
+		bss_desc->nwType = eSIR_11A_NW_TYPE;
+	else if (scan_entry->phy_mode == WLAN_PHYMODE_11B)
+		bss_desc->nwType = eSIR_11B_NW_TYPE;
+	else
+		bss_desc->nwType = eSIR_11G_NW_TYPE;
+
+	bss_desc->rssi = scan_entry->rssi_raw;
+	bss_desc->rssi_raw = scan_entry->rssi_raw;
+
+	/* channelId what peer sent in beacon/probersp. */
+	bss_desc->channelId =
+		scan_entry->channel.chan_idx;
+	/* channelId on which we are parked at. */
+	/* used only in scan case. */
+	bss_desc->channelIdSelf =
+		scan_entry->channel.chan_idx;
+	bss_desc->rx_channel = bss_desc->channelIdSelf;
+	bss_desc->received_time =
+		scan_entry->scan_entry_time;
+	bss_desc->startTSF[0] =
+		mac_ctx->rrm.rrmPEContext.startTSF[0];
+	bss_desc->startTSF[1] =
+		mac_ctx->rrm.rrmPEContext.startTSF[1];
+	bss_desc->parentTSF =
+		scan_entry->rrm_parent_tsf;
+	bss_desc->fProbeRsp = (scan_entry->frm_subtype ==
+			  IEEE80211_FC0_SUBTYPE_PROBE_RESP);
+	bss_desc->seq_ctrl = hdr->seqControl;
+	bss_desc->tsf_delta = scan_entry->tsf_delta;
+
+	qdf_mem_copy((uint8_t *) &bss_desc->ieFields,
+		ie_ptr, ie_len);
+
+	status = csr_get_parsed_bss_description_ies(mac_ctx,
+			  bss_desc, &bcn_ies);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		qdf_mem_free(bss);
+		return status;
+	}
+	result_info->pvIes = bcn_ies;
+
+	if (bcn_ies->MobilityDomain.present) {
+		bss_desc->mdiePresent = true;
+		qdf_mem_copy((uint8_t *)&(bss_desc->mdie[0]),
+			     (uint8_t *)&(bcn_ies->MobilityDomain.MDID),
+			     sizeof(uint16_t));
+		bss_desc->mdie[2] =
+			((bcn_ies->MobilityDomain.overDSCap << 0) |
+			(bcn_ies->MobilityDomain.resourceReqCap << 1));
+	}
+#ifdef FEATURE_WLAN_ESE
+	if (bcn_ies->QBSSLoad.present) {
+		bss_desc->QBSSLoad_present = true;
+		bss_desc->QBSSLoad_avail =
+			bcn_ies->QBSSLoad.avail;
+	}
+#endif
+
+	if (scan_entry->alt_wcn_ie.ptr) {
+		bss_desc->WscIeLen = scan_entry->alt_wcn_ie.len;
+		qdf_mem_copy(bss_desc->WscIeProbeRsp,
+			scan_entry->alt_wcn_ie.ptr,
+			scan_entry->alt_wcn_ie.len);
+	}
+
+	*p_result = bss;
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS csr_parse_scan_list(tpAniSirGlobal mac_ctx,
+	tScanResultList *ret_list,
+	qdf_list_t *scan_list)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tCsrScanResult *pResult = NULL;
+	struct scan_cache_node *cur_node = NULL;
+	struct scan_cache_node *next_node = NULL;
+
+	status =
+		qdf_list_peek_front(scan_list,
+		   (qdf_list_node_t **) &cur_node);
+
+	while (cur_node) {
+		qdf_list_peek_next(
+		  scan_list,
+		  (qdf_list_node_t *) cur_node,
+		  (qdf_list_node_t **) &next_node);
+		status = csr_fill_bss_from_scan_entry(mac_ctx,
+			cur_node->entry, &pResult);
+		if (QDF_IS_STATUS_ERROR(status))
+			return status;
+		if (pResult)
+			csr_ll_insert_tail(&ret_list->List, &pResult->Link,
+			   LL_ACCESS_NOLOCK);
+		cur_node = next_node;
+		next_node = NULL;
+	}
+
+	return status;
+}
+QDF_STATUS csr_scan_get_result(tpAniSirGlobal mac_ctx,
+			       tCsrScanResultFilter *pFilter,
+			       tScanResultHandle *results)
+{
+	QDF_STATUS status;
+	tScanResultList *ret_list = NULL;
+	qdf_list_t *list = NULL;
+	struct scan_filter filter = {0};
+	struct wlan_objmgr_pdev *pdev = NULL;
+
+	if (results)
+		*results = CSR_INVALID_SCANRESULT_HANDLE;
+
+	pdev = wlan_objmgr_get_pdev_by_id(mac_ctx->psoc,
+		0, WLAN_LEGACY_MAC_ID);
+
+	if (!pdev) {
+		sms_log(mac_ctx, LOGE, FL("pdev is NULL"));
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (pFilter) {
+		status = csr_prepare_scan_filter(mac_ctx, pFilter, &filter);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			sms_log(mac_ctx, LOGE, FL("Prepare filter failed"));
+			goto error;
+		}
+	}
+
+	list = ucfg_scan_get_result(pdev,
+		    pFilter ? &filter : NULL);
+	sms_log(mac_ctx, LOG1, FL("num_entries %d"),
+				qdf_list_size(list));
+
+	if (!list || !qdf_list_size(list)) {
+		sms_log(mac_ctx, LOGE, FL("get scan result failed"));
+		status = QDF_STATUS_E_EMPTY;
+		goto error;
+	}
+
+	ret_list = qdf_mem_malloc(sizeof(tScanResultList));
+	if (!ret_list) {
+		sms_log(mac_ctx, LOGE, FL("pRetList is NULL"));
+		status = QDF_STATUS_E_NOMEM;
+		goto error;
+	}
+
+	csr_ll_open(mac_ctx->hHdd, &ret_list->List);
+	ret_list->pCurEntry = NULL;
+	status = csr_parse_scan_list(mac_ctx,
+		ret_list, list);
+	sms_log(mac_ctx, LOG1, FL("return %d BSS status %d"),
+			csr_ll_count(&ret_list->List), status);
+	if (QDF_IS_STATUS_ERROR(status) || !results)
+		/* Fail or No one wants the result. */
+		csr_scan_result_purge(mac_ctx, (tScanResultHandle) ret_list);
+	else {
+		if (!csr_ll_count(&ret_list->List)) {
+			/* This mean that there is no match */
+			csr_ll_close(&ret_list->List);
+			qdf_mem_free(ret_list);
+			status = QDF_STATUS_E_NULL_VALUE;
+		} else if (results) {
+			*results = ret_list;
+		}
+	}
+
+error:
+	if (list)
+		ucfg_scan_purge_results(list);
+	if (pdev)
+		wlan_objmgr_pdev_release_ref(pdev, WLAN_LEGACY_MAC_ID);
+
+	return status;
+}
+
+static inline QDF_STATUS
+csr_flush_scan_results(tpAniSirGlobal mac_ctx,
+	struct scan_filter *filter)
+{
+	struct wlan_objmgr_pdev *pdev = NULL;
+	QDF_STATUS status;
+
+	pdev = wlan_objmgr_get_pdev_by_id(mac_ctx->psoc,
+		0, WLAN_LEGACY_MAC_ID);
+	if (!pdev) {
+		sms_log(mac_ctx, LOGW,
+			FL("pdev is NULL"));
+		return QDF_STATUS_E_INVAL;
+	}
+	status = ucfg_scan_flush_results(pdev, filter);
+
+	wlan_objmgr_pdev_release_ref(pdev, WLAN_LEGACY_MAC_ID);
+	return status;
+}
+
+QDF_STATUS csr_scan_flush_result(tpAniSirGlobal mac_ctx)
+{
+
+	if (csr_scan_flush_denied(mac_ctx)) {
+		sms_log(mac_ctx, LOGW,
+			FL("scan flush denied in roam state"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return csr_flush_scan_results(mac_ctx, NULL);
+}
+
+QDF_STATUS csr_scan_flush_selective_result(tpAniSirGlobal mac_ctx,
+	bool flush_p2p)
+{
+	struct scan_filter filter = {0};
+
+	filter.p2p_results = flush_p2p;
+	return csr_flush_scan_results(mac_ctx, &filter);
+}
+
+static inline void csr_flush_bssid(tpAniSirGlobal mac_ctx,
+	uint8_t *bssid)
+{
+	struct scan_filter filter = {0};
+
+	filter.num_of_bssid = 1;
+	qdf_mem_copy(filter.bssid_list[0].bytes,
+		bssid, QDF_MAC_ADDR_SIZE);
+
+	csr_flush_scan_results(mac_ctx, &filter);
+	sms_log(mac_ctx, LOG1, FL("Removed BSS entry:%pM"),
+		bssid);
+}
+
+void csr_scan_flush_bss_entry(tpAniSirGlobal mac_ctx,
+			tpSmeCsaOffloadInd csa_off_ind)
+{
+	csr_flush_bssid(mac_ctx,
+		csa_off_ind->bssid.bytes);
+}
+
+void csr_remove_bssid_from_scan_list(tpAniSirGlobal mac_ctx,
+			tSirMacAddr bssid)
+{
+	csr_flush_bssid(mac_ctx, bssid);
+}
+
+void csr_save_scan_results(tpAniSirGlobal pMac, uint8_t reason,
+				  uint8_t sessionId)
+{
+	/* Not needed now as scan module handle this*/
+}
+
+static void csr_purge_scan_result_by_age(void *pv)
+{
+	/* Not needed now as scan module handle this*/
+}
+
+/* pIes may be NULL */
+static bool csr_remove_dup_bss_description(tpAniSirGlobal pMac,
+	   tSirBssDescription *bss_dscp,
+	   tDot11fBeaconIEs *pIes,
+	   tAniSSID *pSsid,
+	   unsigned long *timer, bool fForced)
+{
+	return false;
+}
+
+QDF_STATUS csr_scan_process_single_bssdescr(tpAniSirGlobal mac_ctx,
+					tSirBssDescription *bssdescr,
+					uint32_t scan_id, uint32_t flags)
+{
+	/* Not needed now as scan module handle this*/
+	return QDF_STATUS_SUCCESS;
+}
+
+void csr_init_occupied_channels_list(tpAniSirGlobal mac_ctx,
+	uint8_t sessionId)
+{
+	tScanResultHandle results;
+	tScanResultList *scan_list = NULL;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tListElem *scan_entry = NULL;
+	tCsrScanResult *bss_desc = NULL;
+	tDot11fBeaconIEs *ie_ptr = NULL;
+	tpCsrNeighborRoamControlInfo neighbor_roam_info =
+		&mac_ctx->roam.neighborRoamInfo[sessionId];
+
+	if (neighbor_roam_info->cfgParams.channelInfo.numOfChannels) {
+		/*
+		 * Ini file contains neighbor scan channel list, hence NO need
+		 * to build occupied channel list"
+		 */
+		sms_log(mac_ctx, LOG1, FL("Ini contains neighbor scan ch list"));
+		return;
+	}
+
+	if (!csr_neighbor_roam_is_new_connected_profile(mac_ctx, sessionId)) {
+		/*
+		 * Do not flush occupied list since current roam profile matches
+		 * previous
+		 */
+		sms_log(mac_ctx, LOG2, FL("Current roam profile matches prev"));
+		return;
+	}
+
+	/* Empty occupied channels here */
+	mac_ctx->scan.occupiedChannels[sessionId].numChannels = 0;
+	mac_ctx->scan.roam_candidate_count[sessionId] = 0;
+
+	status = csr_scan_get_result(mac_ctx, NULL, &results);
+		if (!QDF_IS_STATUS_SUCCESS(status))
+			return;
+	scan_list = results;
+	csr_ll_lock(&scan_list->List);
+	scan_entry = csr_ll_peek_head(&scan_list->List, LL_ACCESS_NOLOCK);
+	while (scan_entry) {
+		bss_desc = GET_BASE_ADDR(scan_entry, tCsrScanResult, Link);
+		ie_ptr = (tDot11fBeaconIEs *) (bss_desc->Result.pvIes);
+		if (!ie_ptr && !QDF_IS_STATUS_SUCCESS(
+			csr_get_parsed_bss_description_ies(mac_ctx,
+				&bss_desc->Result.BssDescriptor, &ie_ptr)))
+			continue;
+		csr_scan_add_to_occupied_channels(mac_ctx, bss_desc, sessionId,
+				&mac_ctx->scan.occupiedChannels[sessionId], ie_ptr,
+				true);
+		/*
+		 * Free the memory allocated for pIes in
+		 * csr_get_parsed_bss_description_ies
+		 */
+		if ((bss_desc->Result.pvIes == NULL) && ie_ptr)
+			qdf_mem_free(ie_ptr);
+		scan_entry = csr_ll_next(&scan_list->List, scan_entry,
+				     LL_ACCESS_NOLOCK);
+	}
+	csr_ll_unlock(&scan_list->List);
+
+	csr_scan_result_purge(mac_ctx, scan_list);
+}
+
+/**
+ * csr_scan_filter_results: filter scan result based
+ * on valid channel list number.
+ * @mac_ctx: mac context
+ *
+ * Get scan result from scan list and Check Scan result channel number
+ * with 11d channel list if channel number is found in 11d channel list
+ * then do not remove scan result entry from scan list
+ *
+ * return: QDF Status
+ */
+QDF_STATUS csr_scan_filter_results(tpAniSirGlobal mac_ctx)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	uint32_t len = sizeof(mac_ctx->roam.validChannelList);
+	struct wlan_objmgr_pdev *pdev = NULL;
+
+	pdev = wlan_objmgr_get_pdev_by_id(mac_ctx->psoc,
+		0, WLAN_LEGACY_MAC_ID);
+	if (!pdev) {
+		sms_log(mac_ctx, LOGW,
+			FL("pdev is NULL"));
+		return QDF_STATUS_E_INVAL;
+	}
+	status = csr_get_cfg_valid_channels(mac_ctx,
+			  mac_ctx->roam.validChannelList,
+			  &len);
+
+	/* Get valid channels list from CFG */
+	if (QDF_IS_STATUS_ERROR(status)) {
+		wlan_objmgr_pdev_release_ref(pdev, WLAN_LEGACY_MAC_ID);
+		sms_log(mac_ctx, LOGE, FL("Failed to get Channel list from CFG"));
+		return status;
+	}
+	sms_log(mac_ctx, LOGE, FL("No of valid channel %d"), len);
+
+	ucfg_scan_filter_valid_channel(pdev,
+		mac_ctx->roam.validChannelList, len);
+	wlan_objmgr_pdev_release_ref(pdev, WLAN_LEGACY_MAC_ID);
+	return QDF_STATUS_SUCCESS;
+}
+#endif

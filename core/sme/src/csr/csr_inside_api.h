@@ -295,14 +295,6 @@ QDF_STATUS csr_abort_scan_from_active_list(tpAniSirGlobal pMac,
 		uint32_t sessionId, uint32_t scan_id,
 		eSmeCommandType scan_cmd_type, eCsrAbortReason abort_reason);
 
-/* To age out scan results base. tSmeGetScanChnRsp is a pointer returned by LIM that */
-/* has the information regarding scanned channels. */
-/* The logic is that whenever CSR add a BSS to scan result, it set the age count to */
-/* a value. This function deduct the age count if channelId matches the BSS' channelId */
-/* The BSS is remove if the count reaches 0. */
-QDF_STATUS csr_scan_age_results(tpAniSirGlobal pMac,
-				tSmeGetScanChnRsp *pScanChnInfo);
-
 /* If fForce is true we will save the new String that is learn't. */
 /* Typically it will be true in case of Join or user initiated ioctl */
 bool csr_learn_11dcountry_information(tpAniSirGlobal pMac,
@@ -1065,6 +1057,16 @@ void csr_roam_prepare_bss_params(tpAniSirGlobal mac_ctx, uint32_t session_id,
 		tCsrRoamProfile *profile, tSirBssDescription *bss_desc,
 		tBssConfigParam *bss_cfg, tDot11fBeaconIEs *ies);
 
+/**
+ * csr_remove_bssid_from_scan_list() - remove the bssid from
+ * scan list
+ * @mac_tx: mac context.
+ * @bssid: bssid to be removed
+ *
+ * This function remove the given bssid from scan list.
+ *
+ * Return: void.
+ */
 void csr_remove_bssid_from_scan_list(tpAniSirGlobal mac_ctx,
 	tSirMacAddr bssid);
 

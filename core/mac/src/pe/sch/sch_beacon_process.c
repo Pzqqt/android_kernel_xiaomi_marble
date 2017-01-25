@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -300,6 +300,7 @@ static void __sch_beacon_process_no_session(tpAniSirGlobal pMac,
 		lim_handle_ibss_coalescing(pMac, pBeacon, pRxPacketInfo,
 					   psessionEntry);
 	}
+#ifndef NAPIER_SCAN
 	/* If station(STA/BT-STA/BT-AP/IBSS) mode, Always save the
 	 * beacon in the scan results, if atleast one session is
 	 * active.  sch_beacon_process_no_session will be called only
@@ -308,6 +309,7 @@ static void __sch_beacon_process_no_session(tpAniSirGlobal pMac,
 	 */
 	lim_check_and_add_bss_description(pMac, pBeacon, pRxPacketInfo, false,
 					  false);
+#endif
 	return;
 }
 

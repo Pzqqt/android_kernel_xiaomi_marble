@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -233,6 +233,7 @@ lim_collect_bss_description(tpAniSirGlobal pMac,
 	return;
 } /*** end lim_collect_bss_description() ***/
 
+#ifndef NAPIER_SCAN
 /**
  * lim_check_and_add_bss_description()
  * @mac_ctx: Pointer to Global MAC structure
@@ -367,4 +368,4 @@ lim_check_and_add_bss_description(tpAniSirGlobal mac_ctx,
 	}
 	qdf_mem_free(bssdescr);
 }
-
+#endif
