@@ -645,6 +645,17 @@ void hdd_tdls_context_init(hdd_context_t *hdd_ctx, bool ssr)
 	hdd_ctx->tdls_nss_teardown_complete = false;
 	hdd_ctx->tdls_nss_transition_mode = TDLS_NSS_TRANSITION_UNKNOWN;
 
+	if (false == hdd_ctx->config->fEnableTDLSImplicitTrigger) {
+		hdd_ctx->tdls_mode = eTDLS_SUPPORT_EXPLICIT_TRIGGER_ONLY;
+		hdd_notice("TDLS Implicit trigger not enabled!");
+	} else if (true == hdd_ctx->config->fTDLSExternalControl) {
+		hdd_ctx->tdls_mode = eTDLS_SUPPORT_EXTERNAL_CONTROL;
+	} else {
+		hdd_ctx->tdls_mode = eTDLS_SUPPORT_ENABLED;
+	}
+
+	hdd_ctx->tdls_mode_last = hdd_ctx->tdls_mode;
+
 	if (hdd_ctx->config->fEnableTDLSSleepSta ||
 	    hdd_ctx->config->fEnableTDLSBufferSta ||
 	    hdd_ctx->config->fEnableTDLSOffChannel)
@@ -796,15 +807,6 @@ int wlan_hdd_tdls_init(hdd_adapter_t *pAdapter)
 		pHddCtx->config->fTDLSRSSITeardownThreshold;
 	pHddTdlsCtx->threshold_config.rssi_delta =
 		pHddCtx->config->fTDLSRSSIDelta;
-
-	if (false == pHddCtx->config->fEnableTDLSImplicitTrigger) {
-		pHddCtx->tdls_mode = eTDLS_SUPPORT_EXPLICIT_TRIGGER_ONLY;
-		hdd_notice("TDLS Implicit trigger not enabled!");
-	} else if (true == pHddCtx->config->fTDLSExternalControl) {
-		pHddCtx->tdls_mode = eTDLS_SUPPORT_EXTERNAL_CONTROL;
-	} else {
-		pHddCtx->tdls_mode = eTDLS_SUPPORT_ENABLED;
-	}
 
 	INIT_DELAYED_WORK(&pHddCtx->tdls_scan_ctxt.tdls_scan_work,
 			  wlan_hdd_tdls_schedule_scan);
@@ -6041,8 +6043,8 @@ void wlan_hdd_change_tdls_mode(void *data)
 {
 	hdd_context_t *hdd_ctx = (hdd_context_t *)data;
 
-	wlan_hdd_tdls_set_mode(hdd_ctx, eTDLS_SUPPORT_ENABLED, false,
-			       HDD_SET_TDLS_MODE_SOURCE_OFFCHANNEL);
+	wlan_hdd_tdls_set_mode(hdd_ctx, hdd_ctx->tdls_mode_last, false,
+			       HDD_SET_TDLS_MODE_SOURCE_P2P);
 }
 
 /**
@@ -6064,7 +6066,7 @@ void hdd_restart_tdls_source_timer(hdd_context_t *pHddCtx,
 
 	if (tdls_mode == eTDLS_SUPPORT_DISABLED) {
 		wlan_hdd_tdls_set_mode(pHddCtx, tdls_mode, false,
-				HDD_SET_TDLS_MODE_SOURCE_OFFCHANNEL);
+				HDD_SET_TDLS_MODE_SOURCE_P2P);
 		wlan_hdd_tdls_disable_offchan_and_teardown_links(pHddCtx);
 	}
 
