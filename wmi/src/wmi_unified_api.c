@@ -4829,7 +4829,7 @@ QDF_STATUS wmi_ready_extract_mac_addr(void *wmi_hdl, void *ev, uint8_t *macaddr)
  * Return: length
  */
 uint8_t *wmi_extract_dbglog_data_len(void *wmi_hdl, void *evt_buf,
-			uint16_t *len)
+			uint32_t *len)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 

@@ -5706,7 +5706,7 @@ static QDF_STATUS ready_extract_mac_addr_non_tlv(wmi_unified_t wmi_hdl,
  */
 static uint8_t *extract_dbglog_data_len_non_tlv(wmi_unified_t wmi_handle,
 		void *evt_buf,
-		uint16_t *len)
+		uint32_t *len)
 {
 	/*Len is already valid from event. No need to change it */
 	 return evt_buf;

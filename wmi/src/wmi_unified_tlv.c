@@ -12275,7 +12275,7 @@ static QDF_STATUS ready_extract_mac_addr_tlv(wmi_unified_t wmi_hamdle,
  * Return: length
  */
 static uint8_t *extract_dbglog_data_len_tlv(wmi_unified_t wmi_handle,
-	void *evt_buf, uint16_t *len)
+	void *evt_buf, uint32_t *len)
 {
 	 WMI_DEBUG_MESG_EVENTID_param_tlvs *param_buf;
 

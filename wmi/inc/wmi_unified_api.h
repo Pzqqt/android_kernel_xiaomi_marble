@@ -1134,7 +1134,7 @@ QDF_STATUS wmi_extract_fw_abi_version(void *wmi_hdl,
 QDF_STATUS wmi_check_and_update_fw_version(void *wmi_hdl, void *ev);
 
 uint8_t *wmi_extract_dbglog_data_len(void *wmi_hdl,
-				void *evt_b, uint16_t *len);
+				void *evt_b, uint32_t *len);
 
 QDF_STATUS wmi_send_ext_resource_config(void *wmi_hdl,
 				wmi_host_ext_resource_config *ext_cfg);
