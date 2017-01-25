@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -711,6 +711,10 @@ struct dp_peer {
 	uint16_t local_id;
 	enum ol_txrx_peer_state state;
 	qdf_spinlock_t peer_info_lock;
+
+	qdf_time_t last_assoc_rcvd;
+	qdf_time_t last_disassoc_rcvd;
+	qdf_time_t last_deauth_rcvd;
 	/* TBD */
 };
 

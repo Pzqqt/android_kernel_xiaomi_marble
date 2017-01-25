@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -61,7 +61,7 @@ cdp_peer_register(ol_txrx_soc_handle soc, void *pdev,
 }
 
 /**
- * cdp_peer_clear() - remove peer from physical device
+ * cdp_clear_peer() - remove peer from physical device
  * @soc - data path soc handle
  * @pdev - data path device instance
  * @sta_id - local peer id
@@ -72,13 +72,16 @@ cdp_peer_register(ol_txrx_soc_handle soc, void *pdev,
  *         QDF_STATUS_E_NOSUPPORT not support this feature
  */
 static inline QDF_STATUS
-cdp_peer_clear(ol_txrx_soc_handle soc, void *pdev, uint8_t sta_id)
+cdp_clear_peer(ol_txrx_soc_handle soc, void *pdev, uint8_t sta_id)
 {
 	if (!soc || !soc->ops || !soc->ops->peer_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
 			"%s invalid instance", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
+
+	if (soc->ops->peer_ops->clear_peer)
+		return soc->ops->peer_ops->clear_peer(pdev, sta_id);
 
 	return QDF_STATUS_E_NOSUPPORT;
 }

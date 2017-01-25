@@ -58,6 +58,7 @@ extern void dp_peer_find_hash_add(struct dp_soc *soc, struct dp_peer *peer);
 extern void dp_peer_find_hash_remove(struct dp_soc *soc, struct dp_peer *peer);
 extern void dp_peer_find_hash_erase(struct dp_soc *soc);
 extern void dp_peer_rx_init(struct dp_pdev *pdev, struct dp_peer *peer);
+extern void dp_peer_cleanup(struct dp_vdev *vdev, struct dp_peer *peer);
 extern void dp_peer_rx_cleanup(struct dp_vdev *vdev, struct dp_peer *peer);
 extern void dp_peer_unref_delete(void *peer_handle);
 extern void dp_rx_discard(struct dp_vdev *vdev, struct dp_peer *peer,
@@ -81,6 +82,9 @@ int dp_get_peer_state(void *peer_handle);
 void dp_local_peer_id_pool_init(struct dp_pdev *pdev);
 void dp_local_peer_id_alloc(struct dp_pdev *pdev, struct dp_peer *peer);
 void dp_local_peer_id_free(struct dp_pdev *pdev, struct dp_peer *peer);
+qdf_time_t *dp_get_last_assoc_received(void *peer_handle);
+qdf_time_t *dp_get_last_disassoc_received(void *peer_handle);
+qdf_time_t *dp_get_last_deauth_received(void *peer_handle);
 #endif
 extern int dp_addba_requestprocess_wifi3(void *peer_handle,
 	uint8_t dialogtoken, uint16_t tid, uint16_t batimeout,

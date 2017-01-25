@@ -761,6 +761,22 @@ void dp_peer_rx_cleanup(struct dp_vdev *vdev, struct dp_peer *peer)
 }
 
 /*
+ * dp_peer_cleanup() – Cleanup peer information
+ * @vdev: Datapath vdev
+ * @peer: Datapath peer
+ *
+ */
+void dp_peer_cleanup(struct dp_vdev *vdev, struct dp_peer *peer)
+{
+	peer->last_assoc_rcvd = 0;
+	peer->last_disassoc_rcvd = 0;
+	peer->last_deauth_rcvd = 0;
+
+	/* cleanup the Rx reorder queues for this peer */
+	dp_peer_rx_cleanup(vdev, peer);
+}
+
+/*
 * dp_rx_addba_requestprocess_wifi3() – Process ADDBA request from peer
 *
 * @peer: Datapath peer handle
@@ -1165,6 +1181,51 @@ int dp_get_peer_state(void *peer_handle)
 
 	DP_TRACE(INFO, "peer %p stats %d", peer, peer->state);
 	return peer->state;
+}
+
+/**
+ * dp_get_last_assoc_received() - get time of last assoc received
+ * @peer_handle: peer handle
+ *
+ * Return: pointer for the time of last assoc received
+ */
+qdf_time_t *dp_get_last_assoc_received(void *peer_handle)
+{
+	struct dp_peer *peer = peer_handle;
+
+	DP_TRACE(INFO, "peer %p last_assoc_rcvd: %lu", peer,
+		peer->last_assoc_rcvd);
+	return &peer->last_assoc_rcvd;
+}
+
+/**
+ * dp_get_last_disassoc_received() - get time of last disassoc received
+ * @peer_handle: peer handle
+ *
+ * Return: pointer for the time of last disassoc received
+ */
+qdf_time_t *dp_get_last_disassoc_received(void *peer_handle)
+{
+	struct dp_peer *peer = peer_handle;
+
+	DP_TRACE(INFO, "peer %p last_disassoc_rcvd: %lu", peer,
+		peer->last_disassoc_rcvd);
+	return &peer->last_disassoc_rcvd;
+}
+
+/**
+ * dp_get_last_deauth_received() - get time of last deauth received
+ * @peer_handle: peer handle
+ *
+ * Return: pointer for the time of last deauth received
+ */
+qdf_time_t *dp_get_last_deauth_received(void *peer_handle)
+{
+	struct dp_peer *peer = peer_handle;
+
+	DP_TRACE(INFO, "peer %p last_deauth_rcvd: %lu", peer,
+		peer->last_deauth_rcvd);
+	return &peer->last_deauth_rcvd;
 }
 
 /**

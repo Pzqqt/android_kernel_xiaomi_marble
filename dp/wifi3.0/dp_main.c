@@ -1425,6 +1425,10 @@ static void dp_peer_setup_wifi3(void *vdev_hdl, void *peer_hdl)
 
 	dp_peer_rx_init(pdev, peer);
 
+	peer->last_assoc_rcvd = 0;
+	peer->last_disassoc_rcvd = 0;
+	peer->last_deauth_rcvd = 0;
+
 	if (soc->cdp_soc.ol_ops->peer_set_default_routing) {
 		/* TODO: Check the destination ring number to be passed to FW */
 		soc->cdp_soc.ol_ops->peer_set_default_routing(soc->osif_soc,
@@ -1517,8 +1521,8 @@ void dp_peer_unref_delete(void *peer_handle)
 				peer, vdev, &peer->vdev->peer_list);
 		}
 
-		/* cleanup the Rx reorder queues for this peer */
-		dp_peer_rx_cleanup(vdev, peer);
+		/* cleanup the peer data */
+		dp_peer_cleanup(vdev, peer);
 
 		/* check whether the parent vdev has no peers left */
 		if (TAILQ_EMPTY(&vdev->peer_list)) {
@@ -1774,6 +1778,9 @@ static struct cdp_peer_ops dp_ops_peer = {
 	.peer_get_peer_mac_addr = dp_peer_get_peer_mac_addr,
 	.get_vdev_for_peer = dp_get_vdev_for_peer,
 	.get_peer_state = dp_get_peer_state,
+	.last_assoc_received = dp_get_last_assoc_received,
+	.last_disassoc_received = dp_get_last_disassoc_received,
+	.last_deauth_received = dp_get_last_deauth_received,
 };
 #endif
 
