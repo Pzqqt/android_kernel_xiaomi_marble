@@ -243,6 +243,7 @@ static int pld_pcie_runtime_resume(struct pci_dev *pdev)
 #endif
 
 #ifdef CONFIG_PM
+#ifdef CONFIG_PLD_PCIE_CNSS
 /**
  * pld_pcie_suspend() - Suspend callback function for power management
  * @pdev: PCIE device
@@ -330,6 +331,96 @@ static int pld_pcie_resume_noirq(struct pci_dev *pdev)
 			resume_noirq(&pdev->dev, PLD_BUS_TYPE_PCIE);
 	return 0;
 }
+#else
+/**
+ * pld_pcie_pm_suspend() - Suspend callback function for power management
+ * @dev: device
+ *
+ * This function is to suspend the PCIE device when power management is
+ * enabled.
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+static int pld_pcie_pm_suspend(struct device *dev)
+{
+	struct pld_context *pld_context;
+
+	pm_message_t state = { .event = PM_EVENT_SUSPEND };
+
+	pld_context = pld_get_global_context();
+	return pld_context->ops->suspend(dev, PLD_BUS_TYPE_PCIE, state);
+}
+
+/**
+ * pld_pcie_pm_resume() - Resume callback function for power management
+ * @dev: device
+ *
+ * This function is to resume the PCIE device when power management is
+ * enabled.
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+static int pld_pcie_pm_resume(struct device *dev)
+{
+	struct pld_context *pld_context;
+
+	pld_context = pld_get_global_context();
+	return pld_context->ops->resume(dev, PLD_BUS_TYPE_PCIE);
+}
+
+/**
+ * pld_pcie_pm_suspend_noirq() - Complete the actions started by suspend()
+ * @dev: device
+ *
+ * Complete the actions started by suspend().  Carry out any additional
+ * operations required for suspending the device that might be racing
+ * with its driver's interrupt handler, which is guaranteed not to run
+ * while suspend_noirq() is being executed.
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+static int pld_pcie_pm_suspend_noirq(struct device *dev)
+{
+	struct pld_context *pld_context;
+
+	pld_context = pld_get_global_context();
+	if (!pld_context)
+		return -EINVAL;
+
+	if (pld_context->ops->suspend_noirq)
+		return pld_context->ops->suspend_noirq(dev, PLD_BUS_TYPE_PCIE);
+	return 0;
+}
+
+/**
+ * pld_pcie_pm_resume_noirq() - Prepare for the execution of resume()
+ * @dev: device
+ *
+ * Prepare for the execution of resume() by carrying out any additional
+ * operations required for resuming the device that might be racing with
+ * its driver's interrupt handler, which is guaranteed not to run while
+ * resume_noirq() is being executed.
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+static int pld_pcie_pm_resume_noirq(struct device *dev)
+{
+	struct pld_context *pld_context;
+
+	pld_context = pld_get_global_context();
+	if (!pld_context)
+		return -EINVAL;
+
+	if (pld_context->ops->resume_noirq)
+		return pld_context->ops->
+			resume_noirq(dev, PLD_BUS_TYPE_PCIE);
+	return 0;
+}
+#endif
 #endif
 
 static struct pci_device_id pld_pcie_id_table[] = {
@@ -390,15 +481,24 @@ void pld_pcie_unregister_driver(void)
 	cnss_wlan_unregister_driver(&pld_pcie_ops);
 }
 #else
+#ifdef CONFIG_PM
+static const struct dev_pm_ops pld_pm_ops = {
+	SET_SYSTEM_SLEEP_PM_OPS(pld_pcie_pm_suspend, pld_pcie_pm_resume)
+	.suspend_noirq = pld_pcie_pm_suspend_noirq,
+	.resume_noirq = pld_pcie_pm_resume_noirq,
+};
+#endif
+
 struct pci_driver pld_pcie_ops = {
 	.name       = "pld_pcie",
 	.id_table   = pld_pcie_id_table,
 	.probe      = pld_pcie_probe,
 	.remove     = pld_pcie_remove,
+	.driver     = {
 #ifdef CONFIG_PM
-	.suspend    = pld_pcie_suspend,
-	.resume     = pld_pcie_resume,
+		.pm = &pld_pm_ops,
 #endif
+	},
 };
 
 int pld_pcie_register_driver(void)
