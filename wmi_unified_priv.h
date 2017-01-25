@@ -933,7 +933,7 @@ QDF_STATUS (*ready_extract_mac_addr)(wmi_unified_t wmi_hdl, void *ev,
 		uint8_t *macaddr);
 QDF_STATUS (*check_and_update_fw_version)(wmi_unified_t wmi_hdl, void *ev);
 uint8_t* (*extract_dbglog_data_len)(wmi_unified_t wmi_handle, void *evt_buf,
-		uint16_t *len);
+		uint32_t *len);
 QDF_STATUS (*send_ext_resource_config)(wmi_unified_t wmi_handle,
 		wmi_host_ext_resource_config *ext_cfg);
 
