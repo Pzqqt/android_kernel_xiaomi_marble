@@ -160,6 +160,7 @@ do {                                                \
 		qdf_nbuf_set_next((tail), (elem));  \
 	}                                           \
 	(tail) = (elem);                            \
+	qdf_nbuf_set_next((tail), NULL);            \
 } while (0)
 
 #endif /* _DP_RX_H */
