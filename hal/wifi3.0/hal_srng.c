@@ -625,6 +625,38 @@ void hal_get_shadow_config(void *hal_soc,
 			"%s\n", __func__);
 }
 
+
+static void hal_validate_shadow_register(struct hal_soc *hal,
+				  uint32_t *destination,
+				  uint32_t *shadow_address)
+{
+	unsigned int index;
+	uint32_t *shadow_0_offset = SHADOW_REGISTER(0) + hal->dev_base_addr;
+	int destination_ba_offset =
+		((char *)destination) - (char *)hal->dev_base_addr;
+
+	index =	shadow_address - shadow_0_offset;
+
+	if (index > MAX_SHADOW_REGISTERS) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"%s: index %x out of bounds\n", __func__, index);
+		goto error;
+	} else if (hal->shadow_config[index].addr != destination_ba_offset) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"%s: sanity check failure, expected %x, found %x\n",
+			__func__, destination_ba_offset,
+			hal->shadow_config[index].addr);
+		goto error;
+	}
+	return;
+error:
+	qdf_print("%s: baddr %p, desination %p, shadow_address %p s0offset %p index %x",
+		  __func__, hal->dev_base_addr, destination, shadow_address,
+		  shadow_0_offset, index);
+	QDF_BUG(0);
+	return;
+}
+
 /**
  * hal_attach - Initalize HAL layer
  * @hif_handle: Opaque HIF handle
@@ -1034,8 +1066,9 @@ void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 					  __func__, ring_type, ring_num);
 			}
 		} else {
-			/* todo validate that the shadow register is pointing to
-			 * the correct address */
+			hal_validate_shadow_register(hal,
+						     SRNG_SRC_ADDR(srng, HP),
+						     srng->u.src_ring.hp_addr);
 		}
 	} else {
 		/* During initialization loop count in all the descriptors
@@ -1068,8 +1101,9 @@ void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 					  __func__, ring_type, ring_num);
 			}
 		} else {
-			/* todo validate that the shadow register is pointing to
-			 * the correct address */
+			hal_validate_shadow_register(hal,
+						     SRNG_DST_ADDR(srng, TP),
+						     srng->u.dst_ring.tp_addr);
 		}
 	}
 
