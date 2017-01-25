@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -341,7 +341,7 @@ static int wlan_add_user_log_radio_time_stamp(char *tbuf, size_t tbuf_sz,
 
 	qdf_get_time_of_the_day_in_hr_min_sec_usec(time_buf, sizeof(time_buf));
 
-	tlen = scnprintf(tbuf, tbuf_sz, "R%d: [%.6s][%llu] %s ", radio,
+	tlen = scnprintf(tbuf, tbuf_sz, "R%d: [%.16s][%llu] %s ", radio,
 			((in_irq() ? "irq" : in_softirq() ?  "soft_irq" :
 			current->comm)),
 			ts, time_buf);
@@ -378,7 +378,7 @@ static int wlan_add_user_log_radio_time_stamp(char *tbuf, size_t tbuf_sz,
 	qdf_get_time_of_the_day_in_hr_min_sec_usec(time_buf, sizeof(time_buf));
 
 	rem = do_div(ts, QDF_MC_TIMER_TO_SEC_UNIT);
-	tlen = scnprintf(tbuf, tbuf_sz, "R%d: [%.6s][%lu.%06lu] %s ", radio,
+	tlen = scnprintf(tbuf, tbuf_sz, "R%d: [%.16s][%lu.%06lu] %s ", radio,
 			((in_irq() ? "irq" : in_softirq() ?  "soft_irq" :
 			current->comm)),
 			(unsigned long) ts,
