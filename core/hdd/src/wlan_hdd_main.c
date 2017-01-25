@@ -6571,7 +6571,7 @@ static int hdd_context_init(hdd_context_t *hdd_ctx)
 	if (ret)
 		goto list_destroy;
 
-	hdd_tdls_context_init(hdd_ctx);
+	hdd_tdls_context_init(hdd_ctx, false);
 
 	hdd_rx_wake_lock_create(hdd_ctx);
 

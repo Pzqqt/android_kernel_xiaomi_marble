@@ -618,12 +618,13 @@ static void wlan_hdd_tdls_del_non_forced_peers(tdlsCtx_t *hdd_tdls_ctx)
 /**
  * hdd_tdls_context_init() - Init TDLS context
  * @hdd_ctx:	HDD context
+ * @ssr:	SSR case
  *
  * Initialize TDLS global context.
  *
  * Return: None
  */
-void hdd_tdls_context_init(hdd_context_t *hdd_ctx)
+void hdd_tdls_context_init(hdd_context_t *hdd_ctx, bool ssr)
 {
 	uint8_t sta_idx;
 
@@ -639,7 +640,6 @@ void hdd_tdls_context_init(hdd_context_t *hdd_ctx)
 	hdd_ctx->tdls_scan_ctxt.reject = 0;
 	hdd_ctx->tdls_scan_ctxt.source = 0;
 	hdd_ctx->tdls_scan_ctxt.scan_request = NULL;
-	hdd_ctx->tdls_external_peer_count = 0;
 	hdd_ctx->set_state_info.set_state_cnt = 0;
 	hdd_ctx->set_state_info.vdev_id = 0;
 	hdd_ctx->tdls_nss_teardown_complete = false;
@@ -660,6 +660,10 @@ void hdd_tdls_context_init(hdd_context_t *hdd_ctx)
 		qdf_mem_zero(&hdd_ctx->tdlsConnInfo[sta_idx].peerMac,
 			     QDF_MAC_ADDR_SIZE);
 	}
+
+	/* Don't reset TDLS external peer count for SSR case */
+	if (!ssr)
+		hdd_ctx->tdls_external_peer_count = 0;
 
 	/* This flag will set  be true, only when device operates in
 	 * standalone STA mode
@@ -762,7 +766,7 @@ int wlan_hdd_tdls_init(hdd_adapter_t *pAdapter)
 
 		wlan_hdd_tdls_del_non_forced_peers(pHddTdlsCtx);
 
-		pHddCtx->connected_peer_count = 0;
+		hdd_tdls_context_init(pHddCtx, true);
 	}
 
 	sme_set_tdls_power_save_prohibited(WLAN_HDD_GET_HAL_CTX(pAdapter),
