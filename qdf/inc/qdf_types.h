@@ -705,6 +705,7 @@ struct qdf_tso_num_seg_elem_t {
  * @tso_seg_list: list of TSO segments for this jumbo packet
  * @curr_seg: segment that is currently being processed
  * @tso_num_seg_list: num of tso seg for this jumbo packet
+ * @msdu_stats_idx: msdu index for tso stats
  *
  * This structure holds the TSO information extracted after parsing the TSO
  * jumbo network buffer. It contains a chain of the TSO segments belonging to
@@ -716,6 +717,7 @@ struct qdf_tso_info_t {
 	struct qdf_tso_seg_elem_t *tso_seg_list;
 	struct qdf_tso_seg_elem_t *curr_seg;
 	struct qdf_tso_num_seg_elem_t *tso_num_seg_list;
+	uint32_t msdu_stats_idx;
 };
 
 /**
