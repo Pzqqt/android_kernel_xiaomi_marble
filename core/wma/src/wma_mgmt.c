@@ -3114,9 +3114,8 @@ static bool wma_is_pkt_drop_candidate(tp_wma_handle wma_handle,
 			WMA_LOGE(FL("cdp_peer_last_assoc_received Failed"));
 			should_drop = true;
 			goto end;
-		} else {
-			if ((qdf_get_system_timestamp() -
-				*cdp_peer_last_assoc_received(soc, peer)) <
+		} else if (*ptr > 0) {
+			if ((qdf_get_system_timestamp() - *ptr) <
 				WMA_MGMT_FRAME_DETECT_DOS_TIMER) {
 				    WMA_LOGI(FL("Dropping Assoc Req received"));
 				    should_drop = true;
@@ -3126,9 +3125,13 @@ static bool wma_is_pkt_drop_candidate(tp_wma_handle wma_handle,
 				qdf_get_system_timestamp();
 		break;
 	case SIR_MAC_MGMT_DISASSOC:
-		if (*cdp_peer_last_disassoc_received(soc, peer)) {
-			if ((qdf_get_system_timestamp() -
-				*cdp_peer_last_disassoc_received(soc, peer)) <
+		ptr = cdp_peer_last_disassoc_received(soc, peer);
+		if (ptr == NULL) {
+			WMA_LOGE(FL("cdp_peer_last_disassoc_received Failed"));
+			should_drop = true;
+			goto end;
+		} else if (*ptr > 0) {
+			if ((qdf_get_system_timestamp() - *ptr) <
 				WMA_MGMT_FRAME_DETECT_DOS_TIMER) {
 				    WMA_LOGI(FL("Dropping DisAssoc received"));
 				    should_drop = true;
@@ -3138,9 +3141,13 @@ static bool wma_is_pkt_drop_candidate(tp_wma_handle wma_handle,
 				qdf_get_system_timestamp();
 		break;
 	case SIR_MAC_MGMT_DEAUTH:
-		if (*cdp_peer_last_deauth_received(soc, peer)) {
-			if ((qdf_get_system_timestamp() -
-				*cdp_peer_last_deauth_received(soc, peer)) <
+		ptr = cdp_peer_last_deauth_received(soc, peer);
+		if (ptr == NULL) {
+			WMA_LOGE(FL("cdp_peer_last_deauth_received Failed"));
+			should_drop = true;
+			goto end;
+		} else if (*ptr > 0) {
+			if ((qdf_get_system_timestamp() - *ptr) <
 				WMA_MGMT_FRAME_DETECT_DOS_TIMER) {
 				    WMA_LOGI(FL("Dropping Deauth received"));
 				    should_drop = true;
