@@ -629,6 +629,11 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 		return;
 	}
 
+	if (hdd_ctx->driver_status == DRIVER_MODULES_CLOSED) {
+		hdd_err("Driver module is closed; dropping request");
+		return;
+	}
+
 	if (hdd_ctx->isWiphySuspended == true) {
 		hdd_err("%s: system/cfg80211 is already suspend", __func__);
 		return;
