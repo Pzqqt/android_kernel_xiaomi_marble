@@ -16820,7 +16820,9 @@ QDF_STATUS sme_set_sar_power_limits(tHalHandle hal,
  * Return: QDF_STATUS enumeration.
  */
 QDF_STATUS sme_encrypt_decrypt_msg(tHalHandle hal,
-	struct encrypt_decrypt_req_params *encrypt_decrypt_params)
+	struct encrypt_decrypt_req_params *encrypt_decrypt_params,
+	sme_encrypt_decrypt_callback callback,
+	void *context)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
@@ -16850,6 +16852,8 @@ QDF_STATUS sme_encrypt_decrypt_msg(tHalHandle hal,
 	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (status == QDF_STATUS_SUCCESS) {
 		/* Serialize the req through MC thread */
+		mac_ctx->sme.encrypt_decrypt_cb = callback;
+		mac_ctx->sme.encrypt_decrypt_context = context;
 		cds_msg.bodyptr = params;
 		cds_msg.type = WMA_ENCRYPT_DECRYPT_MSG;
 		status = scheduler_post_msg(QDF_MODULE_ID_WMA, &cds_msg);
@@ -16868,79 +16872,6 @@ QDF_STATUS sme_encrypt_decrypt_msg(tHalHandle hal,
 	}
 	return status;
 
-}
-
-/**
- * sme_encrypt_decrypt_msg_register_callback() - Registers
- * encrypt/decrypt message callback
- *
- * @hal - MAC global handle
- * @callback_routine - callback routine from HDD
- *
- * This API is invoked by HDD to register its callback in SME
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS sme_encrypt_decrypt_msg_register_callback(tHalHandle hal,
-		void (*encrypt_decrypt_cb)(void *hdd_context,
-			struct sir_encrypt_decrypt_rsp_params
-				*encrypt_decrypt_rsp_params))
-{
-	QDF_STATUS status   = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal mac;
-
-	if (!hal) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  FL("hHal is not valid"));
-		return QDF_STATUS_E_INVAL;
-	}
-
-	mac = PMAC_STRUCT(hal);
-
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		mac->sme.encrypt_decrypt_cb = encrypt_decrypt_cb;
-		sme_release_global_lock(&mac->sme);
-	} else {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			FL("sme_acquire_global_lock failed"));
-	}
-	return status;
-}
-
-/**
- * sme_encrypt_decrypt_msg_deregister_callback() - Registers
- * encrypt/decrypt message callback
- *
- * @h_hal - MAC global handle
- * @callback_routine - callback routine from HDD
- *
- * This API is invoked by HDD to de-register its callback in SME
- *
- * Return: QDF_STATUS Enumeration
- */
-QDF_STATUS sme_encrypt_decrypt_msg_deregister_callback(tHalHandle h_hal)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal mac;
-
-	if (!h_hal) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  FL("hHal is not valid"));
-		return QDF_STATUS_E_INVAL;
-	}
-
-	mac = PMAC_STRUCT(h_hal);
-
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		mac->sme.encrypt_decrypt_cb = NULL;
-		sme_release_global_lock(&mac->sme);
-	} else {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			FL("sme_acquire_global_lock failed"));
-	}
-	return status;
 }
 #endif
 

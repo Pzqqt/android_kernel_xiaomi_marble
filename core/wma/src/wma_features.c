@@ -8584,7 +8584,8 @@ int wma_encrypt_decrypt_msg_handler(void *handle, uint8_t *data,
 		encrypt_decrypt_rsp_params.data = buf_ptr;
 	}
 
-	pmac->sme.encrypt_decrypt_cb(pmac->hHdd, &encrypt_decrypt_rsp_params);
+	pmac->sme.encrypt_decrypt_cb(pmac->sme.encrypt_decrypt_context,
+				     &encrypt_decrypt_rsp_params);
 
 	return 0;
 }

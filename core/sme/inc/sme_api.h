@@ -1302,43 +1302,18 @@ QDF_STATUS sme_update_session_param(tHalHandle hal, uint8_t session_id,
 
 #ifdef WLAN_FEATURE_DISA
 /**
- * sme_encrypt_decrypt_msg_register_callback() - Registers
- * encrypt/decrypt message callback
- *
- * @hal - MAC global handle
- * @callback_routine - callback routine from HDD
- *
- * This API is invoked by HDD to register its callback in SME
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS sme_encrypt_decrypt_msg_register_callback(tHalHandle hal,
-		void (*encrypt_decrypt_cb)(void *hdd_context,
-			struct sir_encrypt_decrypt_rsp_params
-					*encrypt_decrypt_rsp_params));
-
-/**
- * sme_encrypt_decrypt_msg_deregister_callback() - Registers
- * encrypt/decrypt message callback
- *
- * @h_hal - MAC global handle
- * @callback_routine - callback routine from HDD
- *
- * This API is invoked by HDD to de-register its callback in SME
- *
- * Return: QDF_STATUS Enumeration
- */
-QDF_STATUS sme_encrypt_decrypt_msg_deregister_callback(tHalHandle h_hal);
-
-/**
  * sme_encrypt_decrypt_msg() - handles encrypt/decrypt mesaage
  * @hal: HAL handle
  * @encrypt_decrypt_params: struct to set encryption/decryption params.
+ * @callback: callback function to be called with the result
+ * @context: Opaque context to be passed to callback function
  *
  * Return: QDF_STATUS enumeration.
  */
 QDF_STATUS sme_encrypt_decrypt_msg(tHalHandle hal,
-	struct encrypt_decrypt_req_params *encrypt_decrypt_params);
+		struct encrypt_decrypt_req_params *encrypt_decrypt_params,
+		sme_encrypt_decrypt_callback callback,
+		void *context);
 #endif
 
 /**

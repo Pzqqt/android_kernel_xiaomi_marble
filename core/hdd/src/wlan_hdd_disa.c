@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -366,7 +366,9 @@ static int hdd_encrypt_decrypt_msg(hdd_adapter_t *adapter,
 	spin_unlock(&hdd_context_lock);
 
 	qdf_status = sme_encrypt_decrypt_msg(hdd_ctx->hHal,
-					&encrypt_decrypt_params);
+					     &encrypt_decrypt_params,
+					     hdd_encrypt_decrypt_msg_cb,
+					     hdd_ctx);
 
 	qdf_mem_free(encrypt_decrypt_params.data);
 
@@ -408,16 +410,8 @@ static int hdd_encrypt_decrypt_msg(hdd_adapter_t *adapter,
  */
 int hdd_encrypt_decrypt_init(hdd_context_t *hdd_ctx)
 {
-	QDF_STATUS status;
-
 	init_completion(&encrypt_decrypt_msg_context.completion);
 
-	status = sme_encrypt_decrypt_msg_register_callback(hdd_ctx->hHal,
-					hdd_encrypt_decrypt_msg_cb);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hdd_err("encrypt/decrypt callback failed %d", status);
-		return -EINVAL;
-	}
 	return 0;
 }
 
@@ -430,12 +424,6 @@ int hdd_encrypt_decrypt_init(hdd_context_t *hdd_ctx)
  */
 int hdd_encrypt_decrypt_deinit(hdd_context_t *hdd_ctx)
 {
-	QDF_STATUS status;
-
-	status = sme_encrypt_decrypt_msg_deregister_callback(hdd_ctx->hHal);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		hdd_err("De-register encrypt/decrypt callback failed: %d",
-			status);
 	return 0;
 }
 

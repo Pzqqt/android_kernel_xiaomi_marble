@@ -165,6 +165,18 @@ struct sir_bpf_get_offload;
 typedef void (*bpf_get_offload_cb)(void *context,
 				   struct sir_bpf_get_offload *caps);
 
+/**
+ * typedef sme_encrypt_decrypt_callback - encrypt/decrypt callback
+ *    signature
+ * @context: Opaque context that the client can use to associate the
+ *    callback with the request
+ * @response: Encrypt/Decrypt response from firmware
+ */
+struct sir_encrypt_decrypt_rsp_params;
+typedef void (*sme_encrypt_decrypt_callback)(
+			void *context,
+			struct sir_encrypt_decrypt_rsp_params *response);
+
 typedef struct tagSmeStruct {
 	eSmeState state;
 	qdf_mutex_t lkSmeGlobalLock;
@@ -260,8 +272,8 @@ typedef struct tagSmeStruct {
 	p2p_lo_callback p2p_lo_event_callback;
 	void *p2p_lo_event_context;
 	sme_send_oem_data_rsp_msg oem_data_rsp_callback;
-	void (*encrypt_decrypt_cb)(void *,
-			struct sir_encrypt_decrypt_rsp_params *);
+	sme_encrypt_decrypt_callback encrypt_decrypt_cb;
+	void *encrypt_decrypt_context;
 	void (*lost_link_info_cb)(void *context,
 			struct sir_lost_link_info *lost_link_info);
 } tSmeStruct, *tpSmeStruct;
