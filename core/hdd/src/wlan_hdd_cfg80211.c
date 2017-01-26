@@ -98,6 +98,7 @@
 #include "wlan_hdd_lpass.h"
 #include "wlan_hdd_nan_datapath.h"
 #include "wlan_hdd_disa.h"
+#include "wlan_hdd_request_manager.h"
 
 #include <cdp_txrx_cmn.h>
 #include <cdp_txrx_misc.h>
@@ -581,7 +582,6 @@ static struct ieee80211_iface_combination
 };
 
 static struct cfg80211_ops wlan_hdd_cfg80211_ops;
-struct hdd_bpf_context bpf_context;
 
 #ifdef WLAN_NL80211_TESTMODE
 enum wlan_hdd_tm_attr {
@@ -6825,9 +6825,14 @@ wlan_hdd_bpf_offload_policy[BPF_MAX + 1] = {
 	[BPF_PROGRAM] = {.type = NLA_U8},
 };
 
+struct bpf_offload_priv {
+	struct sir_bpf_get_offload bpf_get_offload;
+};
+
 /**
  * hdd_get_bpf_offload_cb() - Callback function to BPF Offload
- * @hdd_context: hdd_context
+ * @context: opaque context originally passed to SME.  HDD always passes
+ *	a cookie for the request context
  * @bpf_get_offload: struct for get offload
  *
  * This function receives the response/data from the lower layer and
@@ -6836,39 +6841,24 @@ wlan_hdd_bpf_offload_policy[BPF_MAX + 1] = {
  *
  * Return: None
  */
-static void hdd_get_bpf_offload_cb(void *hdd_context,
+static void hdd_get_bpf_offload_cb(void *context,
 				   struct sir_bpf_get_offload *data)
 {
-	hdd_context_t *hdd_ctx = hdd_context;
-	struct hdd_bpf_context *context;
+	struct hdd_request *request;
+	struct bpf_offload_priv *priv;
 
 	ENTER();
 
-	if (wlan_hdd_validate_context(hdd_ctx) || !data) {
-		hdd_err("HDD context is invalid or data(%p) is null",
-			data);
+	request = hdd_request_get(context);
+	if (!request) {
+		hdd_err("Obsolete request");
 		return;
 	}
 
-	spin_lock(&hdd_context_lock);
-
-	context = &bpf_context;
-	/* The caller presumably timed out so there is nothing we can do */
-	if (context->magic != BPF_CONTEXT_MAGIC) {
-		spin_unlock(&hdd_context_lock);
-		return;
-	}
-
-	/* context is valid so caller is still waiting */
-	/* paranoia: invalidate the magic */
-	context->magic = 0;
-
-	context->capability_response = *data;
-	complete(&context->completion);
-
-	spin_unlock(&hdd_context_lock);
-
-	return;
+	priv = hdd_request_priv(request);
+	priv->bpf_get_offload = *data;
+	hdd_request_complete(request);
+	hdd_request_put(request);
 }
 
 /**
@@ -6925,43 +6915,54 @@ nla_put_failure:
  */
 static int hdd_get_bpf_offload(hdd_context_t *hdd_ctx)
 {
-	unsigned long rc;
-	static struct hdd_bpf_context *context;
 	QDF_STATUS status;
 	int ret;
+	void *cookie;
+	struct hdd_request *request;
+	struct bpf_offload_priv *priv;
+	static const struct hdd_request_params params = {
+		.priv_size = sizeof(*priv),
+		.timeout_ms = WLAN_WAIT_TIME_BPF,
+	};
 
 	ENTER();
 
-	spin_lock(&hdd_context_lock);
-	context = &bpf_context;
-	context->magic = BPF_CONTEXT_MAGIC;
-	INIT_COMPLETION(context->completion);
-	spin_unlock(&hdd_context_lock);
+	request = hdd_request_alloc(&params);
+	if (!request) {
+		hdd_err("Unable to allocate request");
+		return -EINVAL;
+	}
+	cookie = hdd_request_cookie(request);
 
 	status = sme_get_bpf_offload_capabilities(hdd_ctx->hHal,
 						  hdd_get_bpf_offload_cb,
-						  hdd_ctx);
+						  cookie);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("Unable to retrieve BPF caps");
-		return -EINVAL;
+		ret = qdf_status_to_os_return(status);
+		goto cleanup;
 	}
-	/* request was sent -- wait for the response */
-	rc = wait_for_completion_timeout(&context->completion,
-			msecs_to_jiffies(WLAN_WAIT_TIME_BPF));
-	if (!rc) {
+	ret = hdd_request_wait_for_response(request);
+	if (ret) {
 		hdd_err("Target response timed out");
-		spin_lock(&hdd_context_lock);
-		context->magic = 0;
-		spin_unlock(&hdd_context_lock);
-
-		return -ETIMEDOUT;
+		goto cleanup;
 	}
+	priv = hdd_request_priv(request);
 	ret = hdd_post_get_bpf_capabilities_rsp(hdd_ctx,
-					&bpf_context.capability_response);
+						&priv->bpf_get_offload);
 	if (ret)
 		hdd_err("Failed to post get bpf capabilities");
 
+cleanup:
+	/*
+	 * either we never sent a request to SME, we sent a request to
+	 * SME and timed out, or we sent a request to SME, received a
+	 * response from SME, and posted the response to userspace.
+	 * regardless we are done with the request.
+	 */
+	hdd_request_put(request);
 	EXIT();
+
 	return ret;
 }
 
@@ -7608,16 +7609,6 @@ release_intf_addr_and_return_failure:
 	 */
 	wlan_hdd_release_intf_addr(hdd_ctx, mac_addr);
 	return -EINVAL;
-}
-
-/**
- * hdd_init_bpf_completion() - Initialize the completion event for bpf
- *
- * Return: None
- */
-void hdd_init_bpf_completion(void)
-{
-	init_completion(&bpf_context.completion);
 }
 
 static const struct nla_policy

@@ -311,8 +311,6 @@
 
 extern spinlock_t hdd_context_lock;
 
-#define BPF_CONTEXT_MAGIC 0x4575354    /* BPF */
-
 /* MAX OS Q block time value in msec
  * Prevent from permanent stall, resume OS Q if timer expired
  */
@@ -1255,18 +1253,6 @@ struct hdd_offloaded_packets_ctx {
 	struct mutex op_lock;
 };
 #endif
-
-/**
- * struct hdd_bpf_context - hdd Context for bpf
- * @magic: magic number
- * @completion: Completion variable for BPF Get Capability
- * @capability_response: capabilities response received from fw
- */
-struct hdd_bpf_context {
-	unsigned int magic;
-	struct completion completion;
-	struct sir_bpf_get_offload capability_response;
-};
 
 /**
  * enum driver_status: Driver Modules status
