@@ -1383,8 +1383,9 @@ static void *dp_peer_create_wifi3(void *vdev_handle, uint8_t *peer_mac_addr)
 	dp_peer_find_hash_add(soc, peer);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
-		"vdev %p created peer %p (%pM)",
-		vdev, peer, peer->mac_addr.raw);
+		"vdev %p created peer %p (%pM) ref_cnt: %d",
+		vdev, peer, peer->mac_addr.raw,
+		qdf_atomic_read(&peer->ref_cnt));
 	/*
 	 * For every peer MAp message search and set if bss_peer
 	 */
@@ -1481,6 +1482,9 @@ void dp_peer_unref_delete(void *peer_handle)
 	 * concurrently with the empty check.
 	 */
 	qdf_spin_lock_bh(&soc->peer_ref_mutex);
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		  "%s: peer %p ref_cnt(before decrement): %d\n", __func__,
+		  peer, qdf_atomic_read(&peer->ref_cnt));
 	if (qdf_atomic_dec_and_test(&peer->ref_cnt)) {
 		peer_id = peer->peer_ids[0];
 

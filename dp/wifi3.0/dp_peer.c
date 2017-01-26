@@ -336,6 +336,9 @@ static inline void dp_peer_find_add_id(struct dp_soc *soc,
 		/* peer's ref count was already incremented by
 		 * peer_find_hash_find
 		 */
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "%s: ref_cnt: %d", __func__,
+			   qdf_atomic_read(&peer->ref_cnt));
 		soc->peer_id_to_obj_map[peer_id] = peer;
 
 		if (dp_peer_find_add_id_to_obj(peer, peer_id)) {
@@ -445,6 +448,12 @@ void *dp_find_peer_by_addr(void *dev, uint8_t *peer_mac_addr,
 	/* Multiple peer ids? How can know peer id? */
 	*local_id = peer->local_id;
 	DP_TRACE(INFO, "%s: peer %p id %d", __func__, peer, *local_id);
+
+	/* ref_cnt is incremented inside dp_peer_find_hash_find().
+	 * Decrement it here.
+	 */
+	qdf_atomic_dec(&peer->ref_cnt);
+
 	return peer;
 }
 
@@ -1007,9 +1016,12 @@ void *dp_find_peer_by_addr_and_vdev(void *pdev_handle, void *vdev,
 		return NULL;
 
 	*local_id = peer->local_id;
+	DP_TRACE(INFO, "peer %p vdev %p lcoal id %d", peer, vdev, *local_id);
 
-	DP_TRACE(INFO, "peer %p vdev %p lcoal id %d",
-			peer, vdev, *local_id);
+	/* ref_cnt is incremented inside dp_peer_find_hash_find().
+	 * Decrement it here.
+	 */
+	qdf_atomic_dec(&peer->ref_cnt);
 
 	return peer;
 }
@@ -1073,8 +1085,13 @@ QDF_STATUS dp_peer_state_update(void *pdev_handle, uint8_t *peer_mac,
 		return QDF_STATUS_E_FAILURE;
 	}
 	peer->state = state;
-	DP_TRACE(INFO, "peer %p state %d",
-			peer, peer->state);
+
+	DP_TRACE(INFO, "peer %p state %d", peer, peer->state);
+	/* ref_cnt is incremented inside dp_peer_find_hash_find().
+	 * Decrement it here.
+	 */
+	qdf_atomic_dec(&peer->ref_cnt);
+
 	return QDF_STATUS_SUCCESS;
 }
 
