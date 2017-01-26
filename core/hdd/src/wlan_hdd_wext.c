@@ -2055,28 +2055,22 @@ QDF_STATUS wlan_hdd_get_linkspeed_for_peermac(hdd_adapter_t *pAdapter,
 	QDF_STATUS status;
 	unsigned long rc;
 	static struct linkspeedContext context;
-	tSirLinkSpeedInfo *linkspeed_req;
+	tSirLinkSpeedInfo linkspeed_req;
 
 	if (NULL == pAdapter) {
 		hdd_err("pAdapter is NULL");
 		return QDF_STATUS_E_FAULT;
 	}
-	linkspeed_req = qdf_mem_malloc(sizeof(*linkspeed_req));
-	if (NULL == linkspeed_req) {
-		hdd_err("Request Buffer Alloc Fail");
-		return QDF_STATUS_E_NOMEM;
-	}
 	init_completion(&context.completion);
 	context.pAdapter = pAdapter;
 	context.magic = LINK_CONTEXT_MAGIC;
 
-	qdf_copy_macaddr(&linkspeed_req->peer_macaddr, &macAddress);
+	qdf_copy_macaddr(&linkspeed_req.peer_macaddr, &macAddress);
 	status = sme_get_link_speed(WLAN_HDD_GET_HAL_CTX(pAdapter),
-				    linkspeed_req,
+				    &linkspeed_req,
 				    &context, hdd_get_link_speed_cb);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("Unable to retrieve statistics for link speed");
-		qdf_mem_free(linkspeed_req);
 	} else {
 		rc = wait_for_completion_timeout
 			(&context.completion,

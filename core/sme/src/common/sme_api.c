@@ -10648,35 +10648,45 @@ QDF_STATUS sme_get_link_speed(tHalHandle hHal, tSirLinkSpeedInfo *lsReq,
 {
 
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	tpAniSirGlobal pMac;
+	tSirLinkSpeedInfo *req;
 	struct scheduler_msg message;
 
-	status = sme_acquire_global_lock(&pMac->sme);
-	if (QDF_STATUS_SUCCESS == status) {
-		if ((NULL == pCallbackfn) &&
-		    (NULL == pMac->sme.pLinkSpeedIndCb)) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Indication Call back did not registered",
-				  __func__);
-			sme_release_global_lock(&pMac->sme);
-			return QDF_STATUS_E_FAILURE;
-		} else if (NULL != pCallbackfn) {
-			pMac->sme.pLinkSpeedCbContext = plsContext;
-			pMac->sme.pLinkSpeedIndCb = pCallbackfn;
-		}
-		/* serialize the req through MC thread */
-		message.bodyptr = lsReq;
-		message.type = WMA_GET_LINK_SPEED;
-		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
-						 &message);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Post Link Speed msg fail", __func__);
-			status = QDF_STATUS_E_FAILURE;
-		}
-		sme_release_global_lock(&pMac->sme);
+	if (!hHal || !pCallbackfn || !lsReq) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  FL("Invalid parameter"));
+		return QDF_STATUS_E_FAILURE;
 	}
+
+	pMac = PMAC_STRUCT(hHal);
+	req = qdf_mem_malloc(sizeof(*req));
+	if (!req) {
+		sms_log(pMac, LOGP, FL("Failed to allocate memory"));
+		return QDF_STATUS_E_NOMEM;
+	}
+	*req = *lsReq;
+
+	status = sme_acquire_global_lock(&pMac->sme);
+	if (QDF_STATUS_SUCCESS != status) {
+		sms_log(pMac, LOGP, FL("Failed to acquire global lock"));
+		qdf_mem_free(req);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	pMac->sme.pLinkSpeedCbContext = plsContext;
+	pMac->sme.pLinkSpeedIndCb = pCallbackfn;
+
+	/* serialize the req through MC thread */
+	message.bodyptr = req;
+	message.type = WMA_GET_LINK_SPEED;
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
+	sme_release_global_lock(&pMac->sme);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Post Link Speed msg fail", __func__);
+		qdf_mem_free(req);
+	}
+
 	return status;
 }
 
