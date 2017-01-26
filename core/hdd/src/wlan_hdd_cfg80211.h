@@ -3489,7 +3489,6 @@ int wlan_hdd_disable_dfs_chan_scan(hdd_context_t *hdd_ctx,
 int wlan_hdd_cfg80211_update_band(struct wiphy *wiphy,
 				  eCsrBand eBand);
 
-void hdd_get_bpf_offload_cb(void *hdd_context, struct sir_bpf_get_offload *);
 void hdd_init_bpf_completion(void);
 
 #if defined(CFG80211_DISCONNECTED_V2) || \

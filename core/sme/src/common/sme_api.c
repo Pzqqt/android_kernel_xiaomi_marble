@@ -16287,14 +16287,9 @@ void sme_send_disassoc_req_frame(tHalHandle hal, uint8_t session_id,
 			FL("cds_send_mb_message Failed"));
 }
 
-/**
- * sme_get_bpf_offload_capabilities() - Get length for BPF offload
- * @hal: Global HAL handle
- * This function constructs the cds message and fill in message type,
- * post the same to WDA.
- * Return: QDF_STATUS enumeration
- */
-QDF_STATUS sme_get_bpf_offload_capabilities(tHalHandle hal)
+QDF_STATUS sme_get_bpf_offload_capabilities(tHalHandle hal,
+					    bpf_get_offload_cb callback,
+					    void *context)
 {
 	QDF_STATUS          status     = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal      mac_ctx      = PMAC_STRUCT(hal);
@@ -16305,6 +16300,8 @@ QDF_STATUS sme_get_bpf_offload_capabilities(tHalHandle hal)
 	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (QDF_STATUS_SUCCESS == status) {
 		/* Serialize the req through MC thread */
+		mac_ctx->sme.bpf_get_offload_cb = callback;
+		mac_ctx->sme.bpf_get_offload_context = context;
 		cds_msg.bodyptr = NULL;
 		cds_msg.type = WDA_BPF_GET_CAPABILITIES_REQ;
 		status = scheduler_post_msg(QDF_MODULE_ID_WMA, &cds_msg);
@@ -16381,34 +16378,6 @@ QDF_STATUS sme_set_bpf_instructions(tHalHandle hal,
 }
 
 /**
- * sme_bpf_offload_register_callback() - Register get bpf offload callbacK
- *
- * @hal - MAC global handle
- * @callback_routine - callback routine from HDD
- *
- * This API is invoked by HDD to register its callback in SME
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS sme_bpf_offload_register_callback(tHalHandle hal,
-				void (*pbpf_get_offload_cb)(void *context,
-					struct sir_bpf_get_offload *))
-{
-	QDF_STATUS status   = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal mac  = PMAC_STRUCT(hal);
-
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		mac->sme.pbpf_get_offload_cb = pbpf_get_offload_cb;
-		sme_release_global_lock(&mac->sme);
-	} else {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			FL("sme_acquire_global_lock failed"));
-	}
-	return status;
-}
-
-/**
  * sme_get_wni_dot11_mode() - return configured wni dot11mode
  * @hal: hal pointer
  *
@@ -16421,41 +16390,6 @@ uint32_t sme_get_wni_dot11_mode(tHalHandle hal)
 	return csr_translate_to_wni_cfg_dot11_mode(mac_ctx,
 		mac_ctx->roam.configParam.uCfgDot11Mode);
 }
-
-/**
- * sme_bpf_offload_deregister_callback() - Register get bpf offload callbacK
- *
- * @h_hal - MAC global handle
- * @callback_routine - callback routine from HDD
- *
- * This API is invoked by HDD to de-register its callback in SME
- *
- * Return: QDF_STATUS Enumeration
- */
-QDF_STATUS sme_bpf_offload_deregister_callback(tHalHandle h_hal)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal mac;
-
-	if (!h_hal) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  FL("hHal is not valid"));
-		return QDF_STATUS_E_INVAL;
-	}
-
-	mac = PMAC_STRUCT(h_hal);
-
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		mac->sme.pbpf_get_offload_cb = NULL;
-		sme_release_global_lock(&mac->sme);
-	} else {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			FL("sme_acquire_global_lock failed"));
-	}
-	return status;
-}
-
 
 /**
  * sme_create_mon_session() - post message to create PE session for monitormode

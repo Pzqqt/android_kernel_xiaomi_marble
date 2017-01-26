@@ -7927,7 +7927,7 @@ int wma_get_bpf_caps_event_handler(void *handle,
 		WMA_LOGE("%s: Invalid pmac", __func__);
 		return -EINVAL;
 	}
-	if (!pmac->sme.pbpf_get_offload_cb) {
+	if (!pmac->sme.bpf_get_offload_cb) {
 		WMA_LOGE("%s: Callback not registered", __func__);
 		return -EINVAL;
 	}
@@ -7950,7 +7950,8 @@ int wma_get_bpf_caps_event_handler(void *handle,
 	bpf_get_offload->max_bytes_for_bpf_inst);
 
 	WMA_LOGD("%s: sending bpf capabilities event to hdd", __func__);
-	pmac->sme.pbpf_get_offload_cb(pmac->hHdd, bpf_get_offload);
+	pmac->sme.bpf_get_offload_cb(pmac->sme.bpf_get_offload_context,
+				     bpf_get_offload);
 	qdf_mem_free(bpf_get_offload);
 	return 0;
 }

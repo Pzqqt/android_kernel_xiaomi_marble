@@ -6388,8 +6388,8 @@ wlan_hdd_bpf_offload_policy[BPF_MAX + 1] = {
  *
  * Return: None
  */
-void hdd_get_bpf_offload_cb(void *hdd_context,
-			    struct sir_bpf_get_offload *data)
+static void hdd_get_bpf_offload_cb(void *hdd_context,
+				   struct sir_bpf_get_offload *data)
 {
 	hdd_context_t *hdd_ctx = hdd_context;
 	struct hdd_bpf_context *context;
@@ -6490,7 +6490,9 @@ static int hdd_get_bpf_offload(hdd_context_t *hdd_ctx)
 	INIT_COMPLETION(context->completion);
 	spin_unlock(&hdd_context_lock);
 
-	status = sme_get_bpf_offload_capabilities(hdd_ctx->hHal);
+	status = sme_get_bpf_offload_capabilities(hdd_ctx->hHal,
+						  hdd_get_bpf_offload_cb,
+						  hdd_ctx);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("Unable to retrieve BPF caps");
 		return -EINVAL;

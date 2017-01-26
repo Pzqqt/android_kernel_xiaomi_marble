@@ -8501,14 +8501,6 @@ int hdd_register_cb(hdd_context_t *hdd_ctx)
 	sme_set_rssi_threshold_breached_cb(hdd_ctx->hHal,
 				hdd_rssi_threshold_breached);
 
-	status = sme_bpf_offload_register_callback(hdd_ctx->hHal,
-						   hdd_get_bpf_offload_cb);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hdd_err("set bpf offload callback failed");
-		ret = -EINVAL;
-		return ret;
-	}
-
 	sme_set_link_layer_stats_ind_cb(hdd_ctx->hHal,
 				wlan_hdd_cfg80211_link_layer_stats_callback);
 
@@ -8545,10 +8537,6 @@ void hdd_deregister_cb(hdd_context_t *hdd_ctx)
 			status);
 
 	sme_reset_link_layer_stats_ind_cb(hdd_ctx->hHal);
-	status = sme_bpf_offload_deregister_callback(hdd_ctx->hHal);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		hdd_err("De-register bpf offload callback failed: %d",
-			status);
 	sme_reset_rssi_threshold_breached_cb(hdd_ctx->hHal);
 
 	status = cds_deregister_sap_restart_channel_switch_cb();

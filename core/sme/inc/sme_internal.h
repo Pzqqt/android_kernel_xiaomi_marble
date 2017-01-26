@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -155,6 +155,16 @@ typedef void (*sme_set_thermal_level_callback)(void *context, u_int8_t level);
 typedef void (*p2p_lo_callback)(void *context, void *event);
 typedef void (*sme_send_oem_data_rsp_msg)(struct oem_data_rsp *);
 
+/**
+ * typedef bpf_get_offload_cb - BPF offload callback signature
+ * @context: Opaque context that the client can use to associate the
+ *    callback with the request
+ * @caps: BPF offload capabilities as reported by firmware
+ */
+struct sir_bpf_get_offload;
+typedef void (*bpf_get_offload_cb)(void *context,
+				   struct sir_bpf_get_offload *caps);
+
 typedef struct tagSmeStruct {
 	eSmeState state;
 	qdf_mutex_t lkSmeGlobalLock;
@@ -245,8 +255,8 @@ typedef struct tagSmeStruct {
 	ocb_callback dcc_stats_event_callback;
 	sme_set_thermal_level_callback set_thermal_level_cb;
 	void *saved_scan_cmd;
-	void (*pbpf_get_offload_cb)(void *context,
-			struct sir_bpf_get_offload *);
+	void *bpf_get_offload_context;
+	bpf_get_offload_cb bpf_get_offload_cb;
 	p2p_lo_callback p2p_lo_event_callback;
 	void *p2p_lo_event_context;
 	sme_send_oem_data_rsp_msg oem_data_rsp_callback;
