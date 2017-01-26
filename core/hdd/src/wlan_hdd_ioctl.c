@@ -131,138 +131,83 @@ static uint16_t cesium_pid;
 extern struct sock *cesium_nl_srv_sock;
 
 #ifdef FEATURE_WLAN_ESE
+struct tsm_priv {
+	tAniTrafStrmMetrics tsm_metrics;
+};
+
 static void hdd_get_tsm_stats_cb(tAniTrafStrmMetrics tsm_metrics,
 				 const uint32_t staId, void *context)
 {
-	struct statsContext *stats_context = NULL;
-	hdd_adapter_t *adapter = NULL;
+	struct hdd_request *request;
+	struct tsm_priv *priv;
 
-	if (NULL == context) {
-		hdd_err("Bad param, context [%p]", context);
+	request = hdd_request_get(context);
+	if (!request) {
+		hdd_err("Obsolete request");
 		return;
 	}
+	priv = hdd_request_priv(request);
+	priv->tsm_metrics = tsm_metrics;
+	hdd_request_complete(request);
+	hdd_request_put(request);
+	EXIT();
 
-	/*
-	 * there is a race condition that exists between this callback
-	 * function and the caller since the caller could time out either
-	 * before or while this code is executing.  we use a spinlock to
-	 * serialize these actions
-	 */
-	spin_lock(&hdd_context_lock);
-
-	stats_context = context;
-	adapter = stats_context->pAdapter;
-	if ((NULL == adapter) ||
-	    (STATS_CONTEXT_MAGIC != stats_context->magic)) {
-		/*
-		 * the caller presumably timed out so there is
-		 * nothing we can do
-		 */
-		spin_unlock(&hdd_context_lock);
-		hdd_warn("Invalid context, adapter [%p] magic [%08x]",
-			  adapter, stats_context->magic);
-		return;
-	}
-
-	/* context is valid so caller is still waiting */
-
-	/* paranoia: invalidate the magic */
-	stats_context->magic = 0;
-
-	/* copy over the tsm stats */
-	adapter->tsmStats.UplinkPktQueueDly = tsm_metrics.UplinkPktQueueDly;
-	qdf_mem_copy(adapter->tsmStats.UplinkPktQueueDlyHist,
-		     tsm_metrics.UplinkPktQueueDlyHist,
-		     sizeof(adapter->tsmStats.UplinkPktQueueDlyHist) /
-		     sizeof(adapter->tsmStats.UplinkPktQueueDlyHist[0]));
-	adapter->tsmStats.UplinkPktTxDly = tsm_metrics.UplinkPktTxDly;
-	adapter->tsmStats.UplinkPktLoss = tsm_metrics.UplinkPktLoss;
-	adapter->tsmStats.UplinkPktCount = tsm_metrics.UplinkPktCount;
-	adapter->tsmStats.RoamingCount = tsm_metrics.RoamingCount;
-	adapter->tsmStats.RoamingDly = tsm_metrics.RoamingDly;
-
-	/* notify the caller */
-	complete(&stats_context->completion);
-
-	/* serialization is complete */
-	spin_unlock(&hdd_context_lock);
 }
 
-static
-QDF_STATUS hdd_get_tsm_stats(hdd_adapter_t *adapter,
+static int hdd_get_tsm_stats(hdd_adapter_t *adapter,
 			     const uint8_t tid,
 			     tAniTrafStrmMetrics *tsm_metrics)
 {
-	hdd_station_ctx_t *hdd_sta_ctx = NULL;
-	QDF_STATUS hstatus;
-	QDF_STATUS vstatus = QDF_STATUS_SUCCESS;
-	unsigned long rc;
-	static struct statsContext context;
-	hdd_context_t *hdd_ctx = NULL;
+	hdd_context_t *hdd_ctx;
+	hdd_station_ctx_t *hdd_sta_ctx;
+	QDF_STATUS status;
+	int ret;
+	void *cookie;
+	struct hdd_request *request;
+	struct tsm_priv *priv;
+	static const struct hdd_request_params params = {
+		.priv_size = sizeof(*priv),
+		.timeout_ms = WLAN_WAIT_TIME_STATS,
+	};
 
 	if (NULL == adapter) {
 		hdd_err("adapter is NULL");
-		return QDF_STATUS_E_FAULT;
+		return -EINVAL;
 	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
-	/* we are connected prepare our callback context */
-	init_completion(&context.completion);
-	context.pAdapter = adapter;
-	context.magic = STATS_CONTEXT_MAGIC;
+	request = hdd_request_alloc(&params);
+	if (!request) {
+		hdd_err("Request allocation failure");
+		return -ENOMEM;
+	}
+	cookie = hdd_request_cookie(request);
 
-	/* query tsm stats */
-	hstatus = sme_get_tsm_stats(hdd_ctx->hHal, hdd_get_tsm_stats_cb,
-				    hdd_sta_ctx->conn_info.staId[0],
-				    hdd_sta_ctx->conn_info.bssId,
-				    &context, hdd_ctx->pcds_context, tid);
-	if (QDF_STATUS_SUCCESS != hstatus) {
-		hdd_err("Unable to retrieve statistics");
-		vstatus = QDF_STATUS_E_FAULT;
-	} else {
-		/* request was sent -- wait for the response */
-		rc = wait_for_completion_timeout(&context.completion,
-				msecs_to_jiffies(WLAN_WAIT_TIME_STATS));
-		if (!rc) {
-			hdd_err("SME timed out while retrieving statistics");
-			vstatus = QDF_STATUS_E_TIMEOUT;
-		}
+	status = sme_get_tsm_stats(hdd_ctx->hHal, hdd_get_tsm_stats_cb,
+				   hdd_sta_ctx->conn_info.staId[0],
+				   hdd_sta_ctx->conn_info.bssId,
+				   cookie, hdd_ctx->pcds_context, tid);
+	if (QDF_STATUS_SUCCESS != status) {
+		hdd_err("Unable to retrieve tsm statistics");
+		ret = qdf_status_to_os_return(status);
+		goto cleanup;
 	}
 
-	/*
-	 * either we never sent a request, we sent a request and received a
-	 * response or we sent a request and timed out.  if we never sent a
-	 * request or if we sent a request and got a response, we want to
-	 * clear the magic out of paranoia.  if we timed out there is a
-	 * race condition such that the callback function could be
-	 * executing at the same time we are. of primary concern is if the
-	 * callback function had already verified the "magic" but had not
-	 * yet set the completion variable when a timeout occurred. we
-	 * serialize these activities by invalidating the magic while
-	 * holding a shared spinlock which will cause us to block if the
-	 * callback is currently executing
-	 */
-	spin_lock(&hdd_context_lock);
-	context.magic = 0;
-	spin_unlock(&hdd_context_lock);
-
-	if (QDF_STATUS_SUCCESS == vstatus) {
-		tsm_metrics->UplinkPktQueueDly =
-			adapter->tsmStats.UplinkPktQueueDly;
-		qdf_mem_copy(tsm_metrics->UplinkPktQueueDlyHist,
-			     adapter->tsmStats.UplinkPktQueueDlyHist,
-			     sizeof(adapter->tsmStats.UplinkPktQueueDlyHist) /
-			     sizeof(adapter->tsmStats.
-				    UplinkPktQueueDlyHist[0]));
-		tsm_metrics->UplinkPktTxDly = adapter->tsmStats.UplinkPktTxDly;
-		tsm_metrics->UplinkPktLoss = adapter->tsmStats.UplinkPktLoss;
-		tsm_metrics->UplinkPktCount = adapter->tsmStats.UplinkPktCount;
-		tsm_metrics->RoamingCount = adapter->tsmStats.RoamingCount;
-		tsm_metrics->RoamingDly = adapter->tsmStats.RoamingDly;
+	ret = hdd_request_wait_for_response(request);
+	if (ret) {
+		hdd_err("SME timed out while retrieving tsm statistics");
+		goto cleanup;
 	}
-	return vstatus;
+
+	priv = hdd_request_priv(request);
+	*tsm_metrics = priv->tsm_metrics;
+
+ cleanup:
+	hdd_request_put(request);
+
+	return ret;
 }
 #endif /*FEATURE_WLAN_ESE */
 
@@ -5388,7 +5333,7 @@ static int drv_cmd_get_tsm_stats(hdd_adapter_t *adapter,
 	int len = 0;
 	uint8_t tid = 0;
 	hdd_station_ctx_t *pHddStaCtx;
-	tAniTrafStrmMetrics tsm_metrics;
+	tAniTrafStrmMetrics tsm_metrics = {0};
 
 	if ((QDF_STA_MODE != adapter->device_mode) &&
 	    (QDF_P2P_CLIENT_MODE != adapter->device_mode)) {
@@ -5431,10 +5376,9 @@ static int drv_cmd_get_tsm_stats(hdd_adapter_t *adapter,
 	}
 	hdd_info("Received Command to get tsm stats tid = %d",
 		 tid);
-	if (QDF_STATUS_SUCCESS !=
-	    hdd_get_tsm_stats(adapter, tid, &tsm_metrics)) {
+	ret = hdd_get_tsm_stats(adapter, tid, &tsm_metrics);
+	if (ret) {
 		hdd_err("failed to get tsm stats");
-		ret = -EFAULT;
 		goto exit;
 	}
 	hdd_info(

@@ -309,12 +309,6 @@
  * threads will be serialized.
  */
 
-struct statsContext {
-	struct completion completion;
-	hdd_adapter_t *pAdapter;
-	unsigned int magic;
-};
-
 struct linkspeedContext {
 	struct completion completion;
 	hdd_adapter_t *pAdapter;
@@ -323,7 +317,6 @@ struct linkspeedContext {
 
 extern spinlock_t hdd_context_lock;
 
-#define STATS_CONTEXT_MAGIC 0x53544154  /* STAT */
 #define LINK_CONTEXT_MAGIC  0x4C494E4B  /* LINKSPEED */
 #define BPF_CONTEXT_MAGIC 0x4575354    /* BPF */
 
@@ -1073,9 +1066,7 @@ struct hdd_adapter_s {
 	bool survey_idx;
 
 	hdd_scaninfo_t scan_info;
-#ifdef FEATURE_WLAN_ESE
-	tAniTrafStrmMetrics tsmStats;
-#endif
+
 	/* Flag to ensure PSB is configured through framework */
 	uint8_t psbChanged;
 	/* UAPSD psb value configured through framework */
