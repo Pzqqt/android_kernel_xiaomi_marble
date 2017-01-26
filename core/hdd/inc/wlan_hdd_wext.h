@@ -355,8 +355,20 @@ extern int hdd_priv_get_data(struct iw_point *p_priv_data,
 
 extern void *mem_alloc_copy_from_user_helper(const void *wrqu_data, size_t len);
 
-extern QDF_STATUS wlan_hdd_get_linkspeed_for_peermac(hdd_adapter_t *pAdapter,
-					     struct qdf_mac_addr mac_address);
+/**
+ * wlan_hdd_get_linkspeed_for_peermac() - Get link speed for a peer
+ * @adapter: adapter upon which the peer is active
+ * @mac_address: MAC address of the peer
+ * @linkspeed: pointer to memory where returned link speed is to be placed
+ *
+ * This function will send a query to SME for the linkspeed of the
+ * given peer, and then wait for the callback to be invoked.
+ *
+ * Return: 0 if linkspeed data is available, negative errno otherwise
+ */
+int wlan_hdd_get_linkspeed_for_peermac(hdd_adapter_t *adapter,
+				       struct qdf_mac_addr *mac_address,
+				       uint32_t *linkspeed);
 void hdd_clear_roam_profile_ie(hdd_adapter_t *pAdapter);
 
 uint8_t *wlan_hdd_get_vendor_oui_ie_ptr(uint8_t *oui, uint8_t oui_size,

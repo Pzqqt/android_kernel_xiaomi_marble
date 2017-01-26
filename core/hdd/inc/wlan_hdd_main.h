@@ -309,15 +309,8 @@
  * threads will be serialized.
  */
 
-struct linkspeedContext {
-	struct completion completion;
-	hdd_adapter_t *pAdapter;
-	unsigned int magic;
-};
-
 extern spinlock_t hdd_context_lock;
 
-#define LINK_CONTEXT_MAGIC  0x4C494E4B  /* LINKSPEED */
 #define BPF_CONTEXT_MAGIC 0x4575354    /* BPF */
 
 /* MAX OS Q block time value in msec
@@ -962,8 +955,9 @@ struct hdd_adapter_s {
 	struct net_device_stats stats;
 	/** HDD statistics*/
 	hdd_stats_t hdd_stats;
-	/** linkspeed statistics */
-	tSirLinkSpeedInfo ls_stats;
+
+	/* estimated link speed */
+	uint32_t estimated_linkspeed;
 
 	uint8_t sessionId;
 
