@@ -65,6 +65,7 @@
 #include "wlan_reg_services_api.h"
 #include <wlan_scan_ucfg_api.h>
 #include "wlan_reg_ucfg_api.h"
+#include "ol_txrx.h"
 
 static tSelfRecoveryStats g_self_recovery_stats;
 
@@ -5668,19 +5669,38 @@ QDF_STATUS sme_open_session(tHalHandle hHal, csr_roam_completeCallback callback,
 			    void *pContext, uint8_t *pSelfMacAddr,
 			    uint8_t session_id, uint32_t type, uint32_t subType)
 {
-	QDF_STATUS status;
+	QDF_STATUS status = QDF_STATUS_E_INVAL;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	struct cdp_pdev *pdev;
+	ol_txrx_peer_handle peer;
+	uint8_t peer_id;
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: type=%d, session_id %d subType=%d addr:%pM",
 		  __func__, type, session_id, subType, pSelfMacAddr);
 
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+
+	if (NULL == pdev) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Failed to get pdev handler", __func__);
+		return status;
+	}
+
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
-	status = csr_roam_open_session(pMac, callback, pContext, pSelfMacAddr,
-				       session_id, type, subType);
+	peer = ol_txrx_find_peer_by_addr(pdev, pSelfMacAddr, &peer_id);
+	if (peer) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Peer=%d exist with same MAC",
+			  __func__, peer_id);
+		status = QDF_STATUS_E_INVAL;
+	} else {
+		status = csr_roam_open_session(pMac, callback, pContext,
+				pSelfMacAddr, session_id, type, subType);
+	}
 	sme_release_global_lock(&pMac->sme);
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_RX_HDD_OPEN_SESSION,
