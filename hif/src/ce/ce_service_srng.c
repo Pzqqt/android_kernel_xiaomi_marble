@@ -327,10 +327,6 @@ ce_send_entries_done_nolock_srng(struct hif_softc *scn,
 	return count;
 }
 
-/* Debug support */
-void *ce_debug_cmplrn_context_srng;  /* completed recv next context */
-void *ce_debug_cmplsn_context_srng;  /* completed send next context */
-
 /*
  * Guts of ce_completed_recv_next.
  * The caller takes responsibility for any necessary locking.
@@ -396,11 +392,9 @@ ce_completed_recv_next_nolock_srng(struct CE_state *CE_state,
 	 * one-to-one mapping with status ring.
 	 * Get the per trasnfer context from dest_ring.
 	 */
-	ce_debug_cmplrn_context_srng =
-			dest_ring->per_transfer_context[sw_index];
-
 	if (per_transfer_contextp)
-		*per_transfer_contextp = ce_debug_cmplrn_context_srng;
+		*per_transfer_contextp =
+			dest_ring->per_transfer_context[sw_index];
 
 	dest_ring->per_transfer_context[sw_index] = 0;  /* sanity */
 
@@ -468,10 +462,9 @@ ce_completed_send_next_nolock_srng(struct CE_state *CE_state,
 			*per_CE_contextp = CE_state->send_context;
 
 		/* sw_index is used more like read index */
-		ce_debug_cmplsn_context_srng =
-			src_ring->per_transfer_context[sw_index];
 		if (per_transfer_contextp)
-			*per_transfer_contextp = ce_debug_cmplsn_context_srng;
+			*per_transfer_contextp =
+				src_ring->per_transfer_context[sw_index];
 
 		src_ring->per_transfer_context[sw_index] = 0;   /* sanity */
 
