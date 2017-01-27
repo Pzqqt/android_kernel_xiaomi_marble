@@ -657,7 +657,7 @@ static struct ce_ops *ce_services_attach(struct hif_softc *scn)
 }
 #endif /* QCA_LITHIUM */
 
-void hif_prepare_hal_shadow_register_cfg(struct hif_softc *scn,
+static void hif_prepare_hal_shadow_register_cfg(struct hif_softc *scn,
 		struct pld_shadow_reg_v2_cfg **shadow_config,
 		int *num_shadow_registers_configured) {
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
@@ -2011,7 +2011,7 @@ void hif_get_target_ce_config(struct hif_softc *scn,
 }
 
 
-void hif_print_hal_shadow_register_cfg(struct pld_wlan_enable_cfg *cfg)
+static void hif_print_hal_shadow_register_cfg(struct pld_wlan_enable_cfg *cfg)
 {
 	int i;
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
