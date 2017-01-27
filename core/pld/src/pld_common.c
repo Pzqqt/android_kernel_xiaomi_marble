@@ -391,24 +391,25 @@ int pld_wlan_disable(struct device *dev, enum pld_driver_mode mode)
 }
 
 /**
- * pld_set_fw_debug_mode() - Set FW debug mode
+ * pld_set_fw_log_mode() - Set FW debug log mode
  * @dev: device
- * @enablefwlog: 0 for QXDM, 1 for WMI
+ * @fw_log_mode: 0 for No log, 1 for WMI, 2 for DIAG
  *
- * Switch Fw debug mode between DIAG logging and WMI logging.
+ * Switch Fw debug log mode between DIAG logging and WMI logging.
  *
  * Return: 0 for success
  *         Non zero failure code for errors
  */
-int pld_set_fw_debug_mode(struct device *dev, bool enablefwlog)
+int pld_set_fw_log_mode(struct device *dev, u8 fw_log_mode)
 {
 	int ret = 0;
 
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		ret = pld_pcie_set_fw_debug_mode(enablefwlog);
+		ret = pld_pcie_set_fw_log_mode(fw_log_mode);
 		break;
 	case PLD_BUS_TYPE_SNOC:
+		ret = pld_snoc_set_fw_log_mode(fw_log_mode);
 		break;
 	case PLD_BUS_TYPE_SDIO:
 		break;

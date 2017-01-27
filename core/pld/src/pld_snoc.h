@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -145,6 +145,10 @@ static inline uint8_t *pld_snoc_get_wlan_mac_address(struct device *dev,
 	*num = 0;
 	return NULL;
 }
+static inline int pld_snoc_set_fw_log_mode(u8 fw_log_mode)
+{
+	return 0;
+}
 #else
 int pld_snoc_register_driver(void);
 void pld_snoc_unregister_driver(void);
@@ -241,6 +245,10 @@ static inline uint8_t *pld_snoc_get_wlan_mac_address(struct device *dev,
 						      uint32_t *num)
 {
 	return icnss_get_wlan_mac_address(dev, num);
+}
+static inline int pld_snoc_set_fw_log_mode(u8 fw_log_mode)
+{
+	return icnss_set_fw_log_mode(fw_log_mode);
 }
 #endif
 #endif

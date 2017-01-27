@@ -6742,8 +6742,8 @@ static hdd_context_t *hdd_context_create(struct device *dev)
 		goto err_free_config;
 
 
-	pld_set_fw_debug_mode(hdd_ctx->parent_dev,
-			      hdd_ctx->config->enable_fw_log);
+	pld_set_fw_log_mode(hdd_ctx->parent_dev,
+			    hdd_ctx->config->enable_fw_log);
 
 
 	/* Uses to enabled logging after SSR */

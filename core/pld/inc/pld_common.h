@@ -335,7 +335,7 @@ void pld_unregister_driver(void);
 int pld_wlan_enable(struct device *dev, struct pld_wlan_enable_cfg *config,
 		    enum pld_driver_mode mode, const char *host_version);
 int pld_wlan_disable(struct device *dev, enum pld_driver_mode mode);
-int pld_set_fw_debug_mode(struct device *dev, bool enablefwlog);
+int pld_set_fw_log_mode(struct device *dev, u8 fw_log_mode);
 void pld_get_default_fw_files(struct pld_fw_files *pfw_files);
 int pld_get_fw_files_for_target(struct device *dev,
 				struct pld_fw_files *pfw_files,

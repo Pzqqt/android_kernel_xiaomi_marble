@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -55,7 +55,7 @@ void ol_cds_free(void);
 struct ol_config_info {
 	bool enable_uart_print;
 	bool enable_self_recovery;
-	bool enable_fw_log;
+	uint8_t enable_fw_log;
 	bool enable_lpass_support;
 	bool enable_ramdump_collection;
 };

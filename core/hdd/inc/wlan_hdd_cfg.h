@@ -3380,11 +3380,13 @@ typedef enum {
  */
 #define CFG_ENABLE_FW_LOG_NAME                   "gEnablefwlog"
 #define CFG_ENABLE_FW_LOG_DISABLE                (0)
-#define CFG_ENABLE_FW_LOG_ENABLE                 (1)
+#define CFG_ENABLE_FW_LOG_WMI                    (1)
+#define CFG_ENABLE_FW_LOG_DIAG                   (2)
+#define CFG_ENABLE_FW_LOG_MAX                    (CFG_ENABLE_FW_LOG_DIAG)
 #ifdef QCA_WIFI_3_0_ADRASTEA
-#define CFG_ENABLE_FW_LOG_DEFAULT                (CFG_ENABLE_FW_LOG_DISABLE)
+#define CFG_ENABLE_FW_LOG_DEFAULT                (CFG_ENABLE_FW_LOG_DIAG)
 #else
-#define CFG_ENABLE_FW_LOG_DEFAULT                (CFG_ENABLE_FW_LOG_ENABLE)
+#define CFG_ENABLE_FW_LOG_DEFAULT                (CFG_ENABLE_FW_LOG_WMI)
 #endif
 
 /*
@@ -5775,7 +5777,7 @@ struct hdd_config {
 	bool enable_ip_tcp_udp_checksum_offload;
 	bool enablePowersaveOffload;
 	bool enablefwprint;
-	bool enable_fw_log;
+	uint8_t enable_fw_log;
 	uint8_t fVhtAmpduLenExponent;
 	uint32_t vhtMpduLen;
 	uint32_t IpaConfig;
