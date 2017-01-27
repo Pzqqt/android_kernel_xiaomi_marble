@@ -1797,7 +1797,7 @@ int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 		status = cds_open(hdd_ctx->hdd_psoc);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("Failed to Open CDS: %d", status);
-			goto ol_cds_free;
+			goto destroy_psoc_object;
 		}
 
 		hdd_ctx->driver_status = DRIVER_MODULES_OPENED;
@@ -1852,6 +1852,9 @@ int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 
 close:
 	cds_close(hdd_ctx->hdd_psoc, p_cds_context);
+
+destroy_psoc_object:
+	hdd_release_and_destroy_psoc(hdd_ctx);
 
 ol_cds_free:
 	ol_cds_free();

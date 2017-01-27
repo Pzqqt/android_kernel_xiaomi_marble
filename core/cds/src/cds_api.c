@@ -484,8 +484,7 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 		  "%s: CDS successfully Opened", __func__);
 	cds_register_all_modules();
 
-	dispatcher_psoc_open(psoc);
-	return QDF_STATUS_SUCCESS;
+	return dispatcher_psoc_open(psoc);
 
 err_sme_close:
 	sme_close(gp_cds_context->pMACContext);
