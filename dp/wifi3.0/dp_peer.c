@@ -629,10 +629,16 @@ static void dp_rx_tid_delete_cb(struct dp_soc *soc, void *cb_ctxt,
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 		"%s: rx_tid: %d status: %d\n", __func__,
 		rx_tid->tid, reo_status->rx_queue_status.header.status);
+
+	/* Calling qdf_mem_free_consistent() in MCL is resulting in kernel BUG.
+	 * Diasble this temporarily.
+	 */
+#ifndef QCA_WIFI_NAPIER_EMULATION
 	qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
 		rx_tid->hw_qdesc_alloc_size,
 		rx_tid->hw_qdesc_vaddr_unaligned,
 		rx_tid->hw_qdesc_paddr_unaligned, 0);
+#endif
 
 	qdf_mem_free(rx_tid);
 }
