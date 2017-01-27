@@ -118,6 +118,9 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 					RX_BUFFER_ALIGNMENT,
 					FALSE);
 
+		if (rx_netbuf == NULL)
+			break;
+
 		qdf_nbuf_map_single(dp_soc->osdev, rx_netbuf,
 				    QDF_DMA_BIDIRECTIONAL);
 
