@@ -5539,7 +5539,7 @@ static void hdd_bus_bw_work_handler(struct work_struct *work)
 	/* ensure periodic timer should still be running before restarting it */
 	qdf_spinlock_acquire(&hdd_ctx->bus_bw_timer_lock);
 	if (hdd_ctx->bus_bw_timer_running)
-		qdf_timer_start(&hdd_ctx->bus_bw_timer,
+		qdf_timer_mod(&hdd_ctx->bus_bw_timer,
 				hdd_ctx->config->busBandwidthComputeInterval);
 	qdf_spinlock_release(&hdd_ctx->bus_bw_timer_lock);
 }
@@ -8992,11 +8992,14 @@ void hdd_stop_bus_bw_compute_timer(hdd_adapter_t *adapter)
 	bool can_stop = true;
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
+	qdf_spinlock_acquire(&hdd_ctx->bus_bw_timer_lock);
 	if (!hdd_ctx->bus_bw_timer_running) {
+		qdf_spinlock_release(&hdd_ctx->bus_bw_timer_lock);
 		/* trying to stop timer, when not running is not good */
 		hdd_info("bus band width compute timer is not running");
 		return;
 	}
+	qdf_spinlock_release(&hdd_ctx->bus_bw_timer_lock);
 
 	if (cds_concurrent_open_sessions_running()) {
 		status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
