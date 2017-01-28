@@ -393,14 +393,32 @@ QDF_STATUS csr_set_channels(tHalHandle hHal, tCsrConfigParam *pParam)
 QDF_STATUS csr_close(tpAniSirGlobal pMac)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tSmeCmd *saved_scan_cmd;
 
 	csr_roam_close(pMac);
 	csr_scan_close(pMac);
 	csr_ll_close(&pMac->roam.statsClientReqList);
 	csr_ll_close(&pMac->roam.peStatsReqList);
-	if (pMac->sme.saved_scan_cmd) {
-		qdf_mem_free(pMac->sme.saved_scan_cmd);
-		pMac->sme.saved_scan_cmd = NULL;
+	saved_scan_cmd = (tSmeCmd *)pMac->sme.saved_scan_cmd;
+	if (saved_scan_cmd) {
+		csr_release_profile(pMac, saved_scan_cmd->u.scanCmd.
+				    pToRoamProfile);
+		if (saved_scan_cmd->u.scanCmd.pToRoamProfile) {
+			qdf_mem_free(saved_scan_cmd->u.scanCmd.pToRoamProfile);
+			saved_scan_cmd->u.scanCmd.pToRoamProfile = NULL;
+		}
+		if (saved_scan_cmd->u.scanCmd.u.scanRequest.SSIDs.SSIDList) {
+			qdf_mem_free(saved_scan_cmd->u.scanCmd.u.scanRequest.
+				     SSIDs.SSIDList);
+			saved_scan_cmd->u.scanCmd.u.scanRequest.SSIDs.
+				SSIDList = NULL;
+		}
+		if (saved_scan_cmd->u.roamCmd.pRoamBssEntry) {
+			qdf_mem_free(saved_scan_cmd->u.roamCmd.pRoamBssEntry);
+			saved_scan_cmd->u.roamCmd.pRoamBssEntry = NULL;
+		}
+		qdf_mem_free(saved_scan_cmd);
+		saved_scan_cmd = NULL;
 	}
 	/* DeInit Globals */
 	csr_roam_de_init_globals(pMac);
