@@ -77,6 +77,7 @@
 #include "wma_nan_datapath.h"
 #include "wlan_tgt_def_config.h"
 #include <cdp_txrx_handle.h>
+#include "wlan_pmo_ucfg_api.h"
 
 /**
  * wma_find_vdev_by_addr() - find vdev_id from mac address
@@ -1774,15 +1775,6 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 	} else {
 		WMA_LOGE("Failed to get value for WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED, leaving unchanged");
 	}
-
-	wma_register_wow_wakeup_events(wma_handle, self_sta_req->session_id,
-					self_sta_req->type,
-					self_sta_req->sub_type);
-
-	wma_register_action_frame_patterns(wma_handle,
-					self_sta_req->session_id);
-	wma_register_wow_default_patterns(wma_handle, self_sta_req->session_id);
-
 end:
 	self_sta_req->status = status;
 
@@ -2802,8 +2794,8 @@ static void wma_add_bss_ap_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 		goto send_fail_resp;
 	}
 	if (SAP_WPS_DISABLED == add_bss->wps_state)
-		wma_enable_disable_wakeup_event(wma, vdev_id,
-			(1 << WOW_PROBE_REQ_WPS_IE_EVENT), false);
+		pmo_ucfg_disable_wakeup_event(wma->psoc, vdev_id,
+			(1 << WOW_PROBE_REQ_WPS_IE_EVENT));
 	wma_set_bss_rate_flags(&wma->interfaces[vdev_id], add_bss);
 	status = wma_create_peer(wma, pdev, vdev, add_bss->bssId,
 				 WMI_PEER_TYPE_DEFAULT, vdev_id, false);

@@ -844,27 +844,6 @@ void wma_ndp_unregister_all_event_handlers(tp_wma_handle wma_handle)
 }
 
 /**
- * wma_ndp_add_wow_wakeup_event() - Add Wake on Wireless event for NDP
- * @wma_handle: WMA context
- * @vdev_id: vdev id
- *
- * Enables the firmware to wake up the host on NAN data path event.
- * All NDP events such as NDP_INDICATION, NDP_CONFIRM, etc. use the
- * same event. They can be distinguished using their TLV tags.
- *
- * Return: none
- */
-void wma_ndp_add_wow_wakeup_event(tp_wma_handle wma_handle,
-					uint8_t vdev_id)
-{
-	uint32_t event_bitmap;
-	event_bitmap = (1 << WOW_NAN_DATA_EVENT);
-	WMA_LOGI("NDI specific default wake up event 0x%x vdev id %d",
-		event_bitmap, vdev_id);
-	wma_add_wow_wakeup_event(wma_handle, vdev_id, event_bitmap, true);
-}
-
-/**
  * wma_ndp_get_eventid_from_tlvtag() - map tlv tag to event id
  * @tag: WMI TLV tag
  *

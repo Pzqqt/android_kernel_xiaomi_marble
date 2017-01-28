@@ -51,8 +51,6 @@ QDF_STATUS wma_handle_ndp_responder_req(tp_wma_handle wma_handle,
 
 void wma_ndp_register_all_event_handlers(tp_wma_handle wma_handle);
 void wma_ndp_unregister_all_event_handlers(tp_wma_handle wma_handle);
-void wma_ndp_add_wow_wakeup_event(tp_wma_handle wma_handle,
-						uint8_t vdev_id);
 void wma_ndp_wow_event_callback(void *handle, void *event,
 				uint32_t len, uint32_t event_id);
 void wma_add_bss_ndi_mode(tp_wma_handle wma, tpAddBssParams add_bss);
@@ -78,8 +76,6 @@ static inline void wma_ndp_register_all_event_handlers(
 					tp_wma_handle wma_handle) {}
 static inline void wma_ndp_unregister_all_event_handlers(
 					tp_wma_handle wma_handle) {}
-static inline void wma_ndp_add_wow_wakeup_event(tp_wma_handle wma_handle,
-						uint8_t vdev_id) {}
 static inline void wma_ndp_wow_event_callback(void *handle, void *event,
 					uint32_t len, uint32_t event_id) {}
 static inline void wma_add_sta_ndi_mode(tp_wma_handle wma,

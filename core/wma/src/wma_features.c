@@ -70,33 +70,11 @@
 #include "wma_internal.h"
 #include "wma_nan_datapath.h"
 #include <cdp_txrx_handle.h>
+#include "wlan_pmo_ucfg_api.h"
+
 #ifndef ARRAY_LENGTH
 #define ARRAY_LENGTH(a)         (sizeof(a) / sizeof((a)[0]))
 #endif
-
-#define WMA_WOW_STA_WAKE_UP_EVENTS ((1 << WOW_CSA_IE_EVENT) |\
-				(1 << WOW_CLIENT_KICKOUT_EVENT) |\
-				(1 << WOW_PATTERN_MATCH_EVENT) |\
-				(1 << WOW_MAGIC_PKT_RECVD_EVENT) |\
-				(1 << WOW_DEAUTH_RECVD_EVENT) |\
-				(1 << WOW_DISASSOC_RECVD_EVENT) |\
-				(1 << WOW_BMISS_EVENT) |\
-				(1 << WOW_GTK_ERR_EVENT) |\
-				(1 << WOW_BETTER_AP_EVENT) |\
-				(1 << WOW_HTT_EVENT) |\
-				(1 << WOW_RA_MATCH_EVENT) |\
-				(1 << WOW_NLO_DETECTED_EVENT) |\
-				(1 << WOW_EXTSCAN_EVENT)) |\
-				(1 << WOW_OEM_RESPONSE_EVENT)|\
-				(1 << WOW_TDLS_CONN_TRACKER_EVENT)\
-
-#define WMA_WOW_SAP_WAKE_UP_EVENTS ((1 << WOW_PROBE_REQ_WPS_IE_EVENT) |\
-				(1 << WOW_PATTERN_MATCH_EVENT) |\
-				(1 << WOW_AUTH_REQ_EVENT) |\
-				(1 << WOW_ASSOC_REQ_EVENT) |\
-				(1 << WOW_DEAUTH_RECVD_EVENT) |\
-				(1 << WOW_DISASSOC_RECVD_EVENT) |\
-				(1 << WOW_HTT_EVENT))\
 
 /**
  * WMA_SET_VDEV_IE_SOURCE_HOST - Flag to identify the source of VDEV SET IE
@@ -104,12 +82,6 @@
  * MCL platform.
  */
 #define WMA_SET_VDEV_IE_SOURCE_HOST 0x0
-
-static const uint8_t arp_ptrn[] = {0x08, 0x06};
-static const uint8_t arp_mask[] = {0xff, 0xff};
-static const uint8_t ns_ptrn[] = {0x86, 0xDD};
-static const uint8_t discvr_ptrn[] = {0xe0, 0x00, 0x00, 0xf8};
-static const uint8_t discvr_mask[] = {0xf0, 0x00, 0x00, 0xf8};
 
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 /**
@@ -1391,41 +1363,6 @@ static int wma_lphb_handler(tp_wma_handle wma, uint8_t *event)
 	return 0;
 }
 #endif /* FEATURE_WLAN_LPHB */
-
-#ifdef FEATURE_WLAN_RA_FILTERING
-/**
- * wma_wow_sta_ra_filter() - set RA filter pattern in fw
- * @wma: wma handle
- * @vdev_id: vdev id
- *
- * Return: QDF status
- */
-static QDF_STATUS wma_wow_sta_ra_filter(tp_wma_handle wma, uint8_t vdev_id)
-{
-
-	struct wma_txrx_node *iface;
-	int ret;
-	uint8_t default_pattern;
-
-	iface = &wma->interfaces[vdev_id];
-
-	default_pattern = iface->num_wow_default_patterns++;
-
-	WMA_LOGD("%s: send RA rate limit [%d] to fw vdev = %d", __func__,
-		 wma->RArateLimitInterval, vdev_id);
-
-	ret = wmi_unified_wow_sta_ra_filter_cmd(wma->wmi_handle, vdev_id,
-				   default_pattern, wma->RArateLimitInterval);
-	if (ret) {
-		WMA_LOGE("%s: Failed to send RA rate limit to fw", __func__);
-		iface->num_wow_default_patterns--;
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	return QDF_STATUS_SUCCESS;
-
-}
-#endif /* FEATURE_WLAN_RA_FILTERING */
 
 /**
  * wmi_unified_nat_keepalive_enable() - enable NAT keepalive filter
@@ -3512,463 +3449,6 @@ static inline void wma_set_wow_bus_suspend(tp_wma_handle wma, int val)
 }
 
 /**
- * wma_add_wow_wakeup_event() -  Configures wow wakeup events.
- * @wma: wma handle
- * @vdev_id: vdev id
- * @bitmap: Event bitmap
- * @enable: enable/disable
- *
- * Return: QDF status
- */
-QDF_STATUS wma_add_wow_wakeup_event(tp_wma_handle wma,
-					uint32_t vdev_id,
-					uint32_t bitmap,
-					bool enable)
-{
-	int ret;
-
-	ret = wmi_unified_add_wow_wakeup_event_cmd(wma->wmi_handle, vdev_id,
-			bitmap, enable);
-	if (ret) {
-		WMA_LOGE("Failed to config wow wakeup event");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * wma_send_wow_patterns_to_fw() - Sends WOW patterns to FW.
- * @wma: wma handle
- * @vdev_id: vdev id
- * @ptrn_id: pattern id
- * @ptrn: pattern
- * @ptrn_len: pattern length
- * @ptrn_offset: pattern offset
- * @mask: mask
- * @mask_len: mask length
- * @user: true for user configured pattern and false for default pattern
- *
- * Return: QDF status
- */
-static QDF_STATUS wma_send_wow_patterns_to_fw(tp_wma_handle wma,
-				uint8_t vdev_id, uint8_t ptrn_id,
-				const uint8_t *ptrn, uint8_t ptrn_len,
-				uint8_t ptrn_offset, const uint8_t *mask,
-				uint8_t mask_len, bool user)
-{
-	struct wma_txrx_node *iface;
-	int ret;
-
-	iface = &wma->interfaces[vdev_id];
-	ret = wmi_unified_wow_patterns_to_fw_cmd(wma->wmi_handle,
-			    vdev_id, ptrn_id, ptrn,
-				ptrn_len, ptrn_offset, mask,
-				mask_len, user, 0);
-	if (ret) {
-		if (!user)
-			iface->num_wow_default_patterns--;
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (user)
-		iface->num_wow_user_patterns++;
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * wma_wow_ap() - set WOW patterns in ap mode
- * @wma: wma handle
- * @vdev_id: vdev id
- *
- * Configures default WOW pattern for the given vdev_id which is in AP mode.
- *
- * Return: QDF status
- */
-static QDF_STATUS wma_wow_ap(tp_wma_handle wma, uint8_t vdev_id)
-{
-	QDF_STATUS ret;
-	uint8_t arp_offset = 20;
-	uint8_t mac_mask[IEEE80211_ADDR_LEN];
-	struct wma_txrx_node *iface = &wma->interfaces[vdev_id];
-
-	/*
-	 * Setup unicast pkt pattern
-	 * WoW pattern id should be unique for each vdev
-	 * WoW pattern id can be same on 2 different VDEVs
-	 */
-	qdf_mem_set(&mac_mask, IEEE80211_ADDR_LEN, 0xFF);
-	ret = wma_send_wow_patterns_to_fw(wma, vdev_id,
-				iface->num_wow_default_patterns++,
-				wma->interfaces[vdev_id].addr,
-				IEEE80211_ADDR_LEN, 0, mac_mask,
-				IEEE80211_ADDR_LEN, false);
-	if (ret != QDF_STATUS_SUCCESS) {
-		WMA_LOGE("Failed to add WOW unicast pattern ret %d", ret);
-		return ret;
-	}
-
-	/*
-	 * Setup all ARP pkt pattern. This is dummy pattern hence the length
-	 * is zero. Pattern ID should be unique per vdev.
-	 */
-	ret = wma_send_wow_patterns_to_fw(wma, vdev_id,
-			iface->num_wow_default_patterns++,
-			arp_ptrn, 0, arp_offset, arp_mask, 0, false);
-	if (ret != QDF_STATUS_SUCCESS) {
-		WMA_LOGE("Failed to add WOW ARP pattern ret %d", ret);
-		return ret;
-	}
-
-	return ret;
-}
-
-/**
- * wma_configure_wow_ssdp() - API to configure WoW SSDP
- * @wma: WMA Handle
- * @vdev_id: Vdev Id
- *
- * API to configure SSDP pattern as WoW pattern
- *
- * Return: Success/Failure
- */
-static QDF_STATUS wma_configure_wow_ssdp(tp_wma_handle wma, uint8_t vdev_id)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	uint8_t discvr_offset = 30;
-	struct wma_txrx_node *iface = &wma->interfaces[vdev_id];
-
-	/*
-	 * WoW pattern ID should be unique for each vdev
-	 * Different WoW patterns can use same pattern ID
-	 */
-	 status = wma_send_wow_patterns_to_fw(wma, vdev_id,
-				iface->num_wow_default_patterns++,
-				discvr_ptrn, sizeof(discvr_ptrn), discvr_offset,
-				discvr_mask, sizeof(discvr_ptrn), false);
-
-	if (status != QDF_STATUS_SUCCESS)
-		WMA_LOGE("Failed to add WOW mDNS/SSDP/LLMNR pattern");
-
-	return status;
-}
-
-/**
-  * wma_configure_mc_ssdp() - API to configure SSDP address as MC list
-  * @wma: WMA Handle
-  * @vdev_id: Vdev Id
-  *
-  * SSDP address 239.255.255.250 is converted to Multicast Mac address
-  * and configure it to FW. Firmware will apply this pattern on the incoming
-  * packets to filter them out during chatter/wow mode.
-  *
-  * Return: Success/Failure
-  */
-static QDF_STATUS wma_configure_mc_ssdp(tp_wma_handle wma, uint8_t vdev_id)
-{
-	WMI_SET_MCASTBCAST_FILTER_CMD_fixed_param *cmd;
-	wmi_buf_t buf;
-	const tSirMacAddr ssdp_addr = {0x01, 0x00, 0x5e, 0x7f, 0xff, 0xfa};
-	int ret;
-	WMI_SET_MCASTBCAST_FILTER_CMD_fixed_param fixed_param;
-	uint32_t tag =
-		WMITLV_TAG_STRUC_WMI_SET_MCASTBCAST_FILTER_CMD_fixed_param;
-
-	buf = wmi_buf_alloc(wma->wmi_handle, sizeof(*cmd));
-	if (!buf) {
-		WMA_LOGE("%s No Memory for MC address", __func__);
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	cmd = (WMI_SET_MCASTBCAST_FILTER_CMD_fixed_param *) wmi_buf_data(buf);
-
-	WMITLV_SET_HDR(&cmd->tlv_header, tag,
-		       WMITLV_GET_STRUCT_TLVLEN(fixed_param));
-
-	cmd->action = WMI_MCAST_FILTER_SET;
-	cmd->vdev_id = vdev_id;
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(ssdp_addr, &cmd->mcastbdcastaddr);
-	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, sizeof(*cmd),
-				   WMI_SET_MCASTBCAST_FILTER_CMDID);
-	if (ret != QDF_STATUS_SUCCESS) {
-		WMA_LOGE("%s Failed to configure FW with SSDP MC address",
-			 __func__);
-		wmi_buf_free(buf);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * wma_configure_ssdp() - API to Configure SSDP pattern to FW
- * @wma: WMA Handle
- * @vdev_id: VDEV ID
- *
- * Setup multicast pattern for mDNS 224.0.0.251, SSDP 239.255.255.250 and LLMNR
- * 224.0.0.252
- *
- * Return: Success/Failure.
- */
-static QDF_STATUS wma_configure_ssdp(tp_wma_handle wma, uint8_t vdev_id)
-{
-	if (!wma->ssdp) {
-		WMA_LOGD("mDNS, SSDP, LLMNR patterns are disabled from ini");
-		return QDF_STATUS_SUCCESS;
-	}
-
-	WMA_LOGD("%s, enable_mc_list:%d", __func__, wma->enable_mc_list);
-
-	if (wma->enable_mc_list)
-		return wma_configure_mc_ssdp(wma, vdev_id);
-
-	return wma_configure_wow_ssdp(wma, vdev_id);
-}
-
-/**
- * wma_register_action_frame_patterns() - register action frame map to fw
- * @handle: Pointer to wma handle
- * @vdev_id: VDEV ID
- *
- * This is called to push action frames wow patterns from local
- * cache to firmware.
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS wma_register_action_frame_patterns(WMA_HANDLE handle,
-						uint8_t vdev_id)
-{
-	tp_wma_handle wma = handle;
-	struct action_wakeup_set_param cmd = {0};
-	int32_t err;
-	int i = 0;
-
-	cmd.vdev_id = vdev_id;
-	cmd.operation = WOW_ACTION_WAKEUP_OPERATION_SET;
-
-	cmd.action_category_map[i++] = ALLOWED_ACTION_FRAMES_BITMAP0;
-	cmd.action_category_map[i++] = ALLOWED_ACTION_FRAMES_BITMAP1;
-	cmd.action_category_map[i++] = ALLOWED_ACTION_FRAMES_BITMAP2;
-	cmd.action_category_map[i++] = ALLOWED_ACTION_FRAMES_BITMAP3;
-	cmd.action_category_map[i++] = ALLOWED_ACTION_FRAMES_BITMAP4;
-	cmd.action_category_map[i++] = ALLOWED_ACTION_FRAMES_BITMAP5;
-	cmd.action_category_map[i++] = ALLOWED_ACTION_FRAMES_BITMAP6;
-	cmd.action_category_map[i++] = ALLOWED_ACTION_FRAMES_BITMAP7;
-
-	for (i = 0; i < WMI_SUPPORTED_ACTION_CATEGORY_ELE_LIST; i++) {
-		if (i < ALLOWED_ACTION_FRAME_MAP_WORDS)
-			WMA_LOGD("%s: %d action Wakeup pattern 0x%x in fw",
-				__func__, i, cmd.action_category_map[i]);
-		else
-			cmd.action_category_map[i] = 0;
-	}
-
-	err = wmi_unified_action_frame_patterns_cmd(wma->wmi_handle, &cmd);
-	if (err) {
-		WMA_LOGE("Failed to config wow action frame map, ret %d", err);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * wma_wow_sta() - set WOW patterns in sta mode
- * @wma: wma handle
- * @vdev_id: vdev id
- *
- * Configures default WOW pattern for the given vdev_id which is in sta mode.
- *
- * Return: QDF status
- */
-static QDF_STATUS wma_wow_sta(tp_wma_handle wma, uint8_t vdev_id)
-{
-	uint8_t arp_offset = 12;
-	uint8_t mac_mask[IEEE80211_ADDR_LEN];
-	QDF_STATUS ret = QDF_STATUS_SUCCESS;
-	struct wma_txrx_node *iface = &wma->interfaces[vdev_id];
-
-	qdf_mem_set(&mac_mask, IEEE80211_ADDR_LEN, 0xFF);
-	/*
-	 * Set up unicast wow pattern
-	 * WoW pattern ID should be unique for each vdev
-	 * Different WoW patterns can use same pattern ID
-	 */
-	ret = wma_send_wow_patterns_to_fw(wma, vdev_id,
-				iface->num_wow_default_patterns++,
-				wma->interfaces[vdev_id].addr,
-				IEEE80211_ADDR_LEN, 0, mac_mask,
-				IEEE80211_ADDR_LEN, false);
-	if (ret != QDF_STATUS_SUCCESS) {
-		WMA_LOGE("Failed to add WOW unicast pattern ret %d", ret);
-		return ret;
-	}
-
-	ret = wma_configure_ssdp(wma, vdev_id);
-	if (ret != QDF_STATUS_SUCCESS)
-		WMA_LOGE("Failed to configure SSDP patterns to FW");
-
-	/* when arp offload or ns offloaded is disabled
-	 * from ini file, configure broad cast arp pattern
-	 * to fw, so that host can wake up
-	 */
-	if (!(wma->ol_ini_info & 0x1)) {
-		/* Setup all ARP pkt pattern */
-		WMA_LOGI("ARP offload is disabled in INI enable WoW for ARP");
-		ret = wma_send_wow_patterns_to_fw(wma, vdev_id,
-				iface->num_wow_default_patterns++,
-				arp_ptrn, sizeof(arp_ptrn), arp_offset,
-				arp_mask, sizeof(arp_mask), false);
-		if (ret != QDF_STATUS_SUCCESS) {
-			WMA_LOGE("Failed to add WOW ARP pattern");
-			return ret;
-		}
-	}
-
-	/* for NS or NDP offload packets */
-	if (!(wma->ol_ini_info & 0x2)) {
-		/* Setup all NS pkt pattern */
-		WMA_LOGI("NS offload is disabled in INI enable WoW for NS");
-		ret = wma_send_wow_patterns_to_fw(wma, vdev_id,
-				iface->num_wow_default_patterns++,
-				ns_ptrn, sizeof(arp_ptrn), arp_offset,
-				arp_mask, sizeof(arp_mask), false);
-		if (ret != QDF_STATUS_SUCCESS) {
-			WMA_LOGE("Failed to add WOW NS pattern");
-			return ret;
-		}
-	}
-
-	return ret;
-}
-
-/**
- * wma_register_wow_default_patterns() - register default wow patterns with fw
- * @handle: Pointer to wma handle
- * @vdev_id: vdev id
- *
- * WoW default wake up pattern rule is:
- *  - For STA & P2P CLI mode register for same STA specific wow patterns
- *  - For SAP/P2P GO & IBSS mode register for same SAP specific wow patterns
- *
- * Return: none
- */
-void wma_register_wow_default_patterns(WMA_HANDLE handle, uint8_t vdev_id)
-{
-	tp_wma_handle wma = handle;
-	struct wma_txrx_node *iface;
-
-	if (vdev_id > wma->max_bssid) {
-		WMA_LOGE("Invalid vdev id %d", vdev_id);
-		return;
-	}
-	iface = &wma->interfaces[vdev_id];
-
-	if (iface->ptrn_match_enable) {
-		if (wma_is_vdev_in_beaconning_mode(wma, vdev_id)) {
-			/* Configure SAP/GO/IBSS mode default wow patterns */
-			WMA_LOGI("Config SAP specific default wow patterns vdev_id %d",
-				 vdev_id);
-			wma_wow_ap(wma, vdev_id);
-		} else {
-			/* Configure STA/P2P CLI mode default wow patterns */
-			WMA_LOGI("Config STA specific default wow patterns vdev_id %d",
-				vdev_id);
-			wma_wow_sta(wma, vdev_id);
-			if (wma->IsRArateLimitEnabled) {
-				WMA_LOGI("Config STA RA limit wow patterns vdev_id %d",
-					vdev_id);
-				wma_wow_sta_ra_filter(wma, vdev_id);
-			}
-		}
-	}
-
-	return;
-}
-
-/**
- * wma_register_wow_wakeup_events() - register vdev specific wake events with fw
- * @handle: Pointer to wma handle
- * @vdev_id: vdev Id
- * @vdev_type: vdev type
- * @vdev_subtype: vdev sub type
- *
- * WoW wake up event rule is following:
- * 1) STA mode and P2P CLI mode wake up events are same
- * 2) SAP mode and P2P GO mode wake up events are same
- * 3) IBSS mode wake events are same as STA mode plus WOW_BEACON_EVENT
- *
- * Return: none
- */
-void wma_register_wow_wakeup_events(WMA_HANDLE handle,
-				uint8_t vdev_id,
-				uint8_t vdev_type,
-				uint8_t vdev_subtype)
-{
-	tp_wma_handle wma = handle;
-	uint32_t event_bitmap;
-
-	WMA_LOGI("vdev_type %d vdev_subtype %d vdev_id %d", vdev_type,
-			vdev_subtype, vdev_id);
-
-	if ((WMI_VDEV_TYPE_STA == vdev_type) ||
-		((WMI_VDEV_TYPE_AP == vdev_type) &&
-		 (WMI_UNIFIED_VDEV_SUBTYPE_P2P_DEVICE == vdev_subtype))) {
-		/* Configure STA/P2P CLI mode specific default wake up events */
-		event_bitmap = WMA_WOW_STA_WAKE_UP_EVENTS;
-		WMA_LOGI("STA specific default wake up event 0x%x vdev id %d",
-			event_bitmap, vdev_id);
-	} else if (WMI_VDEV_TYPE_IBSS == vdev_type) {
-		/* Configure IBSS mode specific default wake up events */
-		event_bitmap = (WMA_WOW_STA_WAKE_UP_EVENTS |
-				(1 << WOW_BEACON_EVENT));
-		WMA_LOGI("IBSS specific default wake up event 0x%x vdev id %d",
-			event_bitmap, vdev_id);
-	} else if (WMI_VDEV_TYPE_AP == vdev_type) {
-		/* Configure SAP/GO mode specific default wake up events */
-		event_bitmap = WMA_WOW_SAP_WAKE_UP_EVENTS;
-		WMA_LOGI("SAP specific default wake up event 0x%x vdev id %d",
-			event_bitmap, vdev_id);
-	} else if (WMI_VDEV_TYPE_NDI == vdev_type) {
-		/*
-		 * Configure NAN data path specific default wake up events.
-		 * Following routine sends the command to firmware.
-		 */
-		wma_ndp_add_wow_wakeup_event(wma, vdev_id);
-		return;
-	} else {
-		WMA_LOGE("unknown type %d subtype %d", vdev_type, vdev_subtype);
-		return;
-	}
-
-	wma_add_wow_wakeup_event(wma, vdev_id, event_bitmap, true);
-
-	return;
-}
-
-/**
- * wma_enable_disable_wakeup_event() -  Configures wow wakeup events
- * @wma: wma handle
- * @vdev_id: vdev id
- * @bitmap: Event bitmap
- * @enable: enable/disable
- *
- * Return: none
- */
-void wma_enable_disable_wakeup_event(WMA_HANDLE handle,
-				uint32_t vdev_id,
-				uint32_t bitmap,
-				bool enable)
-{
-	tp_wma_handle wma = handle;
-
-	WMA_LOGI("vdev_id %d wake up event 0x%x enable %d",
-		vdev_id, bitmap, enable);
-	wma_add_wow_wakeup_event(wma, vdev_id, bitmap, enable);
-}
-
-/**
  * wma_enable_wow_in_fw() - wnable wow in fw
  * @wma: wma handle
  * @wow_flags: bitmap of WMI WOW flags to pass to FW
@@ -4108,35 +3588,6 @@ QDF_STATUS wma_resume_req(tp_wma_handle wma, enum qdf_suspend_type type)
 }
 
 /**
- * wma_wow_delete_pattern() - delete wow pattern in target
- * @wma: wma handle
- * @ptrn_id: pattern id
- * @vdev_id: vdev id
- * @user: true for user pattern and false for default pattern
- *
- * Return: QDF status
- */
-static QDF_STATUS wma_wow_delete_pattern(tp_wma_handle wma, uint8_t ptrn_id,
-					uint8_t vdev_id, bool user)
-{
-
-	struct wma_txrx_node *iface;
-	int ret;
-
-	iface = &wma->interfaces[vdev_id];
-	ret = wmi_unified_wow_delete_pattern_cmd(wma->wmi_handle, ptrn_id,
-				   vdev_id);
-	if (ret) {
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (user)
-		iface->num_wow_user_patterns--;
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
  * wma_wow_add_pattern() - add wow pattern in target
  * @wma: wma handle
  * @ptrn: wow pattern
@@ -4152,62 +3603,7 @@ static QDF_STATUS wma_wow_delete_pattern(tp_wma_handle wma, uint8_t ptrn_id,
  */
 QDF_STATUS wma_wow_add_pattern(tp_wma_handle wma, struct wow_add_pattern *ptrn)
 {
-	uint8_t id;
-	uint8_t bit_to_check, pos;
-	struct wma_txrx_node *iface;
-	QDF_STATUS ret = QDF_STATUS_SUCCESS;
-	uint8_t new_mask[SIR_WOWL_BCAST_PATTERN_MAX_SIZE];
-
-	if (ptrn->session_id > wma->max_bssid) {
-		WMA_LOGE("Invalid vdev id (%d)", ptrn->session_id);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	iface = &wma->interfaces[ptrn->session_id];
-
-	/* clear all default patterns cofigured by wma */
-	for (id = 0; id < iface->num_wow_default_patterns; id++)
-		wma_wow_delete_pattern(wma, id, ptrn->session_id, false);
-
-	iface->num_wow_default_patterns = 0;
-
-	WMA_LOGI("Add user passed wow pattern id %d vdev id %d",
-		ptrn->pattern_id, ptrn->session_id);
-	/*
-	 * Convert received pattern mask value from bit representation
-	 * to byte representation.
-	 *
-	 * For example, received value from umac,
-	 *
-	 *      Mask value    : A1 (equivalent binary is "1010 0001")
-	 *      Pattern value : 12:00:13:00:00:00:00:44
-	 *
-	 * The value which goes to FW after the conversion from this
-	 * function (1 in mask value will become FF and 0 will
-	 * become 00),
-	 *
-	 *      Mask value    : FF:00:FF:00:0:00:00:FF
-	 *      Pattern value : 12:00:13:00:00:00:00:44
-	 */
-	qdf_mem_zero(new_mask, sizeof(new_mask));
-	for (pos = 0; pos < ptrn->pattern_size; pos++) {
-		bit_to_check = (WMA_NUM_BITS_IN_BYTE - 1) -
-			       (pos % WMA_NUM_BITS_IN_BYTE);
-		bit_to_check = 0x1 << bit_to_check;
-		if (ptrn->pattern_mask[pos / WMA_NUM_BITS_IN_BYTE] &
-							bit_to_check)
-			new_mask[pos] = WMA_WOW_PTRN_MASK_VALID;
-	}
-
-	ret = wma_send_wow_patterns_to_fw(wma, ptrn->session_id,
-			ptrn->pattern_id,
-			ptrn->pattern, ptrn->pattern_size,
-			ptrn->pattern_byte_offset, new_mask,
-			ptrn->pattern_size, true);
-	if (ret != QDF_STATUS_SUCCESS)
-		WMA_LOGE("Failed to add wow pattern %d", ptrn->pattern_id);
-
-	return ret;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -4225,30 +3621,6 @@ QDF_STATUS wma_wow_add_pattern(tp_wma_handle wma, struct wow_add_pattern *ptrn)
 QDF_STATUS wma_wow_delete_user_pattern(tp_wma_handle wma,
 					struct wow_delete_pattern *pattern)
 {
-	struct wma_txrx_node *iface;
-
-	if (pattern->session_id > wma->max_bssid) {
-		WMA_LOGE("Invalid vdev id %d", pattern->session_id);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	iface = &wma->interfaces[pattern->session_id];
-	if (iface->num_wow_user_patterns <= 0) {
-		WMA_LOGE("No valid user pattern. Num user pattern %u vdev %d",
-			iface->num_wow_user_patterns, pattern->session_id);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	WMA_LOGI("Delete user passed wow pattern id %d total user pattern %d",
-		pattern->pattern_id, iface->num_wow_user_patterns);
-
-	wma_wow_delete_pattern(wma, pattern->pattern_id,
-				pattern->session_id, true);
-
-	/* configure default patterns once all user patterns are deleted */
-	if (!iface->num_wow_user_patterns)
-		wma_register_wow_default_patterns(wma, pattern->session_id);
-
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -4264,26 +3636,6 @@ QDF_STATUS wma_wow_delete_user_pattern(tp_wma_handle wma,
  */
 QDF_STATUS wma_wow_enter(tp_wma_handle wma, tpSirHalWowlEnterParams info)
 {
-	struct wma_txrx_node *iface;
-
-	WMA_LOGD("wow enable req received for vdev id: %d", info->sessionId);
-
-	if (info->sessionId > wma->max_bssid) {
-		WMA_LOGE("Invalid vdev id (%d)", info->sessionId);
-		qdf_mem_free(info);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	iface = &wma->interfaces[info->sessionId];
-	iface->ptrn_match_enable = info->ucPatternFilteringEnable ?
-				   true : false;
-	wma->wow.magic_ptrn_enable = info->ucMagicPktEnable ? true : false;
-	wma->wow.deauth_enable = info->ucWowDeauthRcv ? true : false;
-	wma->wow.disassoc_enable = info->ucWowDeauthRcv ? true : false;
-	wma->wow.bmiss_enable = info->ucWowMaxMissedBeacons ? true : false;
-
-	qdf_mem_free(info);
-
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -4296,21 +3648,6 @@ QDF_STATUS wma_wow_enter(tp_wma_handle wma, tpSirHalWowlEnterParams info)
  */
 QDF_STATUS wma_wow_exit(tp_wma_handle wma, tpSirHalWowlExitParams info)
 {
-	struct wma_txrx_node *iface;
-
-	WMA_LOGD("wow disable req received for vdev id: %d", info->sessionId);
-
-	if (info->sessionId > wma->max_bssid) {
-		WMA_LOGE("Invalid vdev id (%d)", info->sessionId);
-		qdf_mem_free(info);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	iface = &wma->interfaces[info->sessionId];
-	iface->ptrn_match_enable = false;
-	wma->wow.magic_ptrn_enable = false;
-	qdf_mem_free(info);
-
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -4628,11 +3965,11 @@ static void wma_configure_dynamic_wake_events(tp_wma_handle wma)
 		}
 
 		if (enable_mask != 0)
-			wma_enable_disable_wakeup_event(wma, vdev_id,
-					enable_mask, true);
+			pmo_ucfg_enable_wakeup_event(wma->psoc, vdev_id,
+				enable_mask);
 		if (disable_mask != 0)
-			wma_enable_disable_wakeup_event(wma, vdev_id,
-					disable_mask, false);
+			pmo_ucfg_disable_wakeup_event(wma->psoc, vdev_id,
+					disable_mask);
 	}
 }
 
@@ -5115,71 +4452,6 @@ QDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,
 #endif /* FEATURE_WLAN_ESE */
 
 /**
- * wma_add_clear_mcbc_filter() - set mcast filter command to fw
- * @wma_handle: wma handle
- * @vdev_id: vdev id
- * @multicastAddr: mcast address
- * @clearList: clear list flag
- *
- * Return: 0 for success or error code
- */
-static QDF_STATUS wma_add_clear_mcbc_filter(tp_wma_handle wma_handle,
-				     uint8_t vdev_id,
-				     struct qdf_mac_addr multicast_addr,
-				     bool clearList)
-{
-	return wmi_unified_add_clear_mcbc_filter_cmd(wma_handle->wmi_handle,
-				vdev_id, multicast_addr, clearList);
-}
-
-/**
- * wma_config_enhance_multicast_offload() - config enhance multicast offload
- * @wma_handle: wma handle
- * @vdev_id: vdev id
- * @action: enable or disable enhance multicast offload
- *
- * Return: none
- */
-static void wma_config_enhance_multicast_offload(tp_wma_handle wma_handle,
-						uint8_t vdev_id,
-						uint8_t action)
-{
-	int status;
-	wmi_buf_t buf;
-	wmi_config_enhanced_mcast_filter_cmd_fixed_param *cmd;
-
-	buf = wmi_buf_alloc(wma_handle->wmi_handle, sizeof(*cmd));
-	if (!buf) {
-		WMA_LOGE("Failed to allocate buffer to send set key cmd");
-		return;
-	}
-
-	cmd = (wmi_config_enhanced_mcast_filter_cmd_fixed_param *)
-							wmi_buf_data(buf);
-
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		 WMITLV_TAG_STRUC_wmi_config_enhanced_mcast_filter_fixed_param,
-		 WMITLV_GET_STRUCT_TLVLEN(wmi_config_enhanced_mcast_filter_cmd_fixed_param));
-
-	cmd->vdev_id = vdev_id;
-	cmd->enable = ((0 == action) ? ENHANCED_MCAST_FILTER_DISABLED :
-			ENHANCED_MCAST_FILTER_ENABLED);
-
-	WMA_LOGD("%s: config enhance multicast offload action %d for vdev %d",
-		__func__, action, vdev_id);
-
-	status = wmi_unified_cmd_send(wma_handle->wmi_handle, buf,
-			sizeof(*cmd), WMI_CONFIG_ENHANCED_MCAST_FILTER_CMDID);
-	if (status) {
-		qdf_nbuf_free(buf);
-		WMA_LOGE("%s:Failed to send WMI_CONFIG_ENHANCED_MCAST_FILTER_CMDID",
-			__func__);
-	}
-
-	return;
-}
-
-/**
  * wma_process_mcbc_set_filter_req() - process mcbc set filter request
  * @wma_handle: wma handle
  * @mcbc_param: mcbc params
@@ -5189,44 +4461,6 @@ static void wma_config_enhance_multicast_offload(tp_wma_handle wma_handle,
 QDF_STATUS wma_process_mcbc_set_filter_req(tp_wma_handle wma_handle,
 					   tSirRcvFltMcAddrList *mcbc_param)
 {
-	uint8_t vdev_id = 0;
-	int i;
-
-	if (mcbc_param->ulMulticastAddrCnt <= 0) {
-		WMA_LOGW("Number of multicast addresses is 0");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (!wma_find_vdev_by_addr(wma_handle,
-			mcbc_param->self_macaddr.bytes, &vdev_id)) {
-		WMA_LOGE("%s: Failed to find vdev id for %pM", __func__,
-			 mcbc_param->bssid.bytes);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	/*
-	 * Configure enhance multicast offload feature for filtering out
-	 * multicast IP data packets transmitted using unicast MAC address
-	 */
-	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-		WMI_SERVICE_ENHANCED_MCAST_FILTER)) {
-		WMA_LOGD("%s: FW supports enhance multicast offload", __func__);
-		wma_config_enhance_multicast_offload(wma_handle, vdev_id,
-			mcbc_param->action);
-	} else {
-		WMA_LOGD("%s: FW does not support enhance multicast offload",
-		__func__);
-	}
-
-	/* set mcbc_param->action to clear MCList and reset
-	 * to configure the MCList in FW
-	 */
-
-	for (i = 0; i < mcbc_param->ulMulticastAddrCnt; i++) {
-		wma_add_clear_mcbc_filter(wma_handle, vdev_id,
-					  mcbc_param->multicastAddr[i],
-					  (mcbc_param->action == 0));
-	}
 	return QDF_STATUS_SUCCESS;
 }
 

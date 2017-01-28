@@ -548,7 +548,6 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 
 QDF_STATUS wma_vdev_set_param(wmi_unified_t wmi_handle, uint32_t if_id,
 				uint32_t param_id, uint32_t param_value);
-
 void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 			    uint8_t vdev_id, void *peer,
 			    bool roam_synch_in_progress);
