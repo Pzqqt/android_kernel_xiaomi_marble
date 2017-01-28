@@ -1613,22 +1613,24 @@ static void wlan_hdd_tdls_set_mode(hdd_context_t *pHddCtx,
 		mutex_unlock(&pHddCtx->tdls_lock);
 		hdd_notice("already in mode %d", (int)tdls_mode);
 
-		/* TDLS is already disabled hence set source mask, return */
-		if (eTDLS_SUPPORT_DISABLED == tdls_mode) {
-			set_bit((unsigned long)source,
-				&pHddCtx->tdls_source_bitmap);
-			hdd_notice("set source mask:%d", source);
-			return;
-		}
-
+		switch (tdls_mode) {
 		/* TDLS is already enabled hence clear source mask, return */
-		if (eTDLS_SUPPORT_ENABLED == tdls_mode) {
+		case eTDLS_SUPPORT_ENABLED:
+		case eTDLS_SUPPORT_EXPLICIT_TRIGGER_ONLY:
+		case eTDLS_SUPPORT_EXTERNAL_CONTROL:
 			clear_bit((unsigned long)source,
 				  &pHddCtx->tdls_source_bitmap);
 			hdd_notice("clear source mask:%d", source);
 			return;
+		/* TDLS is already disabled hence set source mask, return */
+		case eTDLS_SUPPORT_DISABLED:
+			set_bit((unsigned long)source,
+				&pHddCtx->tdls_source_bitmap);
+			hdd_notice("set source mask:%d", source);
+			return;
+		default:
+			return;
 		}
-		return;
 	}
 
 	status = hdd_get_front_adapter(pHddCtx, &pAdapterNode);
