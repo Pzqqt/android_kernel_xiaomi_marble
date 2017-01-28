@@ -4036,8 +4036,11 @@ error:
 		qdf_mem_free(save_cmd->u.roamCmd.pRoamBssEntry);
 	if (save_cmd->u.scanCmd.u.scanRequest.SSIDs.SSIDList)
 		qdf_mem_free(save_cmd->u.scanCmd.u.scanRequest.SSIDs.SSIDList);
-	if (save_cmd->u.scanCmd.pToRoamProfile)
+	if (save_cmd->u.scanCmd.pToRoamProfile) {
+		csr_release_profile(mac_ctx,
+				    save_cmd->u.scanCmd.pToRoamProfile);
 		qdf_mem_free(save_cmd->u.scanCmd.pToRoamProfile);
+	}
 
 	return QDF_STATUS_E_FAILURE;
 }

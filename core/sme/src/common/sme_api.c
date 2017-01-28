@@ -229,9 +229,12 @@ static QDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 		if (saved_cmd->u.scanCmd.u.scanRequest.SSIDs.SSIDList)
 			qdf_mem_free(saved_cmd->u.scanCmd.u.
 					scanRequest.SSIDs.SSIDList);
-		if (saved_cmd->u.scanCmd.pToRoamProfile)
-			qdf_mem_free(saved_cmd->u.scanCmd.
-					pToRoamProfile);
+		if (saved_cmd->u.scanCmd.pToRoamProfile) {
+			csr_release_profile(mac, saved_cmd->
+					    u.scanCmd.pToRoamProfile);
+			qdf_mem_free(saved_cmd->u.scanCmd.pToRoamProfile);
+			saved_cmd->u.scanCmd.pToRoamProfile = NULL;
+		}
 		if (saved_cmd) {
 			qdf_mem_free(saved_cmd);
 			saved_cmd = NULL;

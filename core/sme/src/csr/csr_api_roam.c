@@ -288,7 +288,17 @@ static void csr_roam_init_globals(tpAniSirGlobal pMac)
 
 static void csr_roam_de_init_globals(tpAniSirGlobal pMac)
 {
+	uint8_t i;
 	if (pMac) {
+		for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
+			if (pMac->roam.roamSession[i].pCurRoamProfile)
+				csr_release_profile(pMac,
+						    pMac->roam.roamSession[i].
+						    pCurRoamProfile);
+			csr_release_profile(pMac,
+					    &pMac->roam.roamSession[i].
+					    stored_roam_profile.profile);
+		}
 		pMac->roam.roamSession = NULL;
 	}
 	return;
