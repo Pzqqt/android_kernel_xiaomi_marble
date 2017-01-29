@@ -2412,7 +2412,7 @@ static QDF_STATUS send_mgmt_cmd_tlv(wmi_unified_t wmi_handle,
 	qdf_nbuf_map_single(qdf_ctx, param->tx_frame, QDF_DMA_TO_DEVICE);
 	dma_addr = qdf_nbuf_get_frag_paddr(param->tx_frame, 0);
 	cmd->paddr_lo = (uint32_t)(dma_addr & 0xffffffff);
-#if defined(HELIUMPLUS_PADDR64)
+#if defined(HTT_PADDR64)
 	cmd->paddr_hi = (uint32_t)((dma_addr >> 32) & 0x1F);
 #endif
 	cmd->frame_len = param->frm_len;
