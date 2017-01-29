@@ -3297,7 +3297,7 @@ int htt_rx_attach(struct htt_pdev_t *pdev)
 int htt_rx_attach(struct htt_pdev_t *pdev)
 {
 	qdf_dma_addr_t paddr;
-	uint32_t ring_elem_size = sizeof(qdf_dma_addr_t);
+	uint32_t ring_elem_size = sizeof(target_paddr_t);
 
 	pdev->rx_ring.size = htt_rx_ring_size(pdev);
 	HTT_ASSERT2(QDF_IS_PWR2(pdev->rx_ring.size));
@@ -3425,7 +3425,7 @@ int htt_rx_attach(struct htt_pdev_t *pdev)
 
 fail4:
 	qdf_mem_free_consistent(pdev->osdev, pdev->osdev->dev,
-				   pdev->rx_ring.size * sizeof(qdf_dma_addr_t),
+				   pdev->rx_ring.size * sizeof(target_paddr_t),
 				   pdev->rx_ring.buf.paddrs_ring,
 				   pdev->rx_ring.base_paddr,
 				   qdf_get_dma_mem_context((&pdev->rx_ring.buf),
@@ -3470,22 +3470,21 @@ static int htt_rx_ipa_uc_alloc_wdi2_rsc(struct htt_pdev_t *pdev,
 	 *   4bytes: pointer
 	 *   2bytes: VDEV ID
 	 *   2bytes: length */
+	/* RX indication ring size, by bytes */
+	pdev->ipa_uc_rx_rsc.rx2_ind_ring_size =
+		rx_ind_ring_elements * sizeof(target_paddr_t);
 	pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.vaddr =
 		qdf_mem_alloc_consistent(
 			pdev->osdev, pdev->osdev->dev,
-			rx_ind_ring_elements *
-			sizeof(qdf_dma_addr_t),
+			pdev->ipa_uc_rx_rsc.rx2_ind_ring_size,
 			&pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.paddr);
 	if (!pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.vaddr) {
 		qdf_print("%s: RX IND RING alloc fail", __func__);
 		return -ENOBUFS;
 	}
 
-	/* RX indication ring size, by bytes */
-	pdev->ipa_uc_rx_rsc.rx2_ind_ring_size =
-		rx_ind_ring_elements * sizeof(qdf_dma_addr_t);
 	qdf_mem_zero(pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.vaddr,
-		pdev->ipa_uc_rx_rsc.rx2_ind_ring_size);
+		     pdev->ipa_uc_rx_rsc.rx2_ind_ring_size);
 
 	/* Allocate RX process done index */
 	pdev->ipa_uc_rx_rsc.rx2_ipa_prc_done_idx.vaddr =
@@ -3526,6 +3525,7 @@ int htt_rx_ipa_uc_attach(struct htt_pdev_t *pdev,
 			 unsigned int rx_ind_ring_elements)
 {
 	int ret = 0;
+
 	/* Allocate RX indication ring */
 	/* RX IND ring element
 	 *   4bytes: pointer

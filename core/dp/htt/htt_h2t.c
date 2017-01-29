@@ -178,9 +178,10 @@ A_STATUS htt_h2t_frag_desc_bank_cfg_msg(struct htt_pdev_t *pdev)
 
 	/** Bank specific data structure.*/
 #if HTT_PADDR64
-	bank_cfg->bank_base_address[0].lo =
-		pdev->frag_descs.desc_pages.dma_pages->page_p_addr;
-	bank_cfg->bank_base_address[0].hi = 0;
+	bank_cfg->bank_base_address[0].lo = qdf_get_lower_32_bits(
+			pdev->frag_descs.desc_pages.dma_pages->page_p_addr);
+	bank_cfg->bank_base_address[0].hi = qdf_get_upper_32_bits(
+			pdev->frag_descs.desc_pages.dma_pages->page_p_addr);
 #else /* ! HTT_PADDR64 */
 	bank_cfg->bank_base_address[0] =
 		pdev->frag_descs.desc_pages.dma_pages->page_p_addr;
@@ -424,10 +425,13 @@ QDF_STATUS htt_h2t_rx_ring_cfg_msg_ll(struct htt_pdev_t *pdev)
 	msg_word++;
 	*msg_word = 0;
 #if HTT_PADDR64
-	HTT_RX_RING_CFG_IDX_SHADOW_REG_PADDR_LO_SET(*msg_word,
-						    pdev->rx_ring.alloc_idx.paddr);
+	HTT_RX_RING_CFG_IDX_SHADOW_REG_PADDR_LO_SET(
+			*msg_word,
+			qdf_get_lower_32_bits(pdev->rx_ring.alloc_idx.paddr));
 	msg_word++;
-	HTT_RX_RING_CFG_IDX_SHADOW_REG_PADDR_HI_SET(*msg_word, 0);
+	HTT_RX_RING_CFG_IDX_SHADOW_REG_PADDR_HI_SET(
+			*msg_word,
+			qdf_get_upper_32_bits(pdev->rx_ring.alloc_idx.paddr));
 #else /* ! HTT_PADDR64 */
 	HTT_RX_RING_CFG_IDX_SHADOW_REG_PADDR_SET(*msg_word,
 						 pdev->rx_ring.alloc_idx.paddr);

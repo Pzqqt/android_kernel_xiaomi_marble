@@ -1285,7 +1285,7 @@ int htt_tx_ipa_uc_attach(struct htt_pdev_t *pdev,
 	}
 
 	/* Allocate TX COMP Ring */
-	tx_comp_ring_size = uc_tx_buf_cnt * sizeof(qdf_dma_addr_t);
+	tx_comp_ring_size = uc_tx_buf_cnt * sizeof(target_paddr_t);
 	pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr =
 		qdf_mem_alloc_consistent(
 			pdev->osdev, pdev->osdev->dev,
