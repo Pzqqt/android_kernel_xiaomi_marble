@@ -1576,6 +1576,11 @@ static void dp_peer_delete_wifi3(void *peer_handle)
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
 		FL("peer %p (%pM)"),  peer, peer->mac_addr.raw);
 
+#ifndef CONFIG_WIN
+	dp_local_peer_id_free(peer->vdev->pdev, peer);
+#endif
+	qdf_spinlock_destroy(&peer->peer_info_lock);
+
 	/*
 	 * Remove the reference added during peer_attach.
 	 * The peer will still be left allocated until the
@@ -1583,10 +1588,6 @@ static void dp_peer_delete_wifi3(void *peer_handle)
 	 * reference, added by the PEER_MAP message.
 	 */
 	dp_peer_unref_delete(peer_handle);
-#ifndef CONFIG_WIN
-	dp_local_peer_id_free(peer->vdev->pdev, peer);
-#endif
-	qdf_spinlock_destroy(&peer->peer_info_lock);
 }
 
 /*
