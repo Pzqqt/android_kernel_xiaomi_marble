@@ -245,6 +245,23 @@ cdp_data_tx_cb_set(ol_txrx_soc_handle soc, struct cdp_vdev *data_vdev,
 /******************************************************************************
  * Statistics and Debugging Interface (C Inteface)
  *****************************************************************************/
+/**
+ * External Device physical address types
+ *
+ * Currently, both MAC and IPA uController use the same size addresses
+ * and descriptors are exchanged between these two depending on the mode.
+ *
+ * Rationale: qdf_dma_addr_t is the type used internally on the host for DMA
+ *            operations. However, external device physical address sizes
+ *            may be different from host-specific physical address sizes.
+ *            This calls for the following definitions for target devices
+ *            (MAC, IPA uc).
+ */
+#if HTT_PADDR64
+typedef uint64_t target_paddr_t;
+#else
+typedef uint32_t target_paddr_t;
+#endif /*HTT_PADDR64 */
 
 static inline int
 cdp_aggr_cfg(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
