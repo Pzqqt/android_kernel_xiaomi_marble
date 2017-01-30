@@ -1240,6 +1240,34 @@ void hdd_svc_fw_shutdown_ind(struct device *dev)
 }
 
 /**
+ * hdd_ssr_restart_sap() - restart sap on SSR
+ * @hdd_ctx:   hdd context
+ *
+ * Return:     nothing
+ */
+static void hdd_ssr_restart_sap(hdd_context_t *hdd_ctx)
+{
+	QDF_STATUS  status;
+	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
+	hdd_adapter_t *adapter;
+
+	ENTER();
+
+	status =  hdd_get_front_adapter(hdd_ctx, &adapter_node);
+	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
+		adapter = adapter_node->pAdapter;
+		if (adapter && adapter->device_mode == QDF_SAP_MODE) {
+			hdd_notice("in sap mode %p", adapter);
+			wlan_hdd_start_sap(adapter, true);
+		}
+		status = hdd_get_next_adapter(hdd_ctx, adapter_node, &next);
+		adapter_node = next;
+	}
+
+	EXIT();
+}
+
+/**
  * hdd_wlan_shutdown() - HDD SSR shutdown function
  *
  * This function is called by the HIF to shutdown the driver during SSR.
@@ -1312,7 +1340,6 @@ QDF_STATUS hdd_wlan_shutdown(void)
 
 	hdd_bus_bandwidth_destroy(pHddCtx);
 
-	wlansap_global_deinit();
 	hdd_wlan_stop_modules(pHddCtx);
 
 	hdd_lpass_notify_stop(pHddCtx);
@@ -1335,7 +1362,6 @@ QDF_STATUS hdd_wlan_re_init(void)
 	v_CONTEXT_t p_cds_context = NULL;
 	hdd_context_t *pHddCtx = NULL;
 	hdd_adapter_t *pAdapter;
-	QDF_STATUS qdf_status;
 	int ret;
 	bool bug_on_reinit_failure = CFG_BUG_ON_REINIT_FAILURE_DEFAULT;
 
@@ -1375,14 +1401,12 @@ QDF_STATUS hdd_wlan_re_init(void)
 
 	hdd_bus_bandwidth_init(pHddCtx);
 
+
 	ret = hdd_wlan_start_modules(pHddCtx, pAdapter, true);
 	if (ret) {
 		hdd_err("Failed to start wlan after error");
 		goto err_wiphy_unregister;
 	}
-
-	if (hdd_ipa_uc_ssr_reinit())
-		hdd_err("HDD IPA UC reinit failed");
 
 	hdd_wlan_get_version(pHddCtx, NULL, NULL);
 
@@ -1408,9 +1432,6 @@ QDF_STATUS hdd_wlan_re_init(void)
 	}
 
 	hdd_lpass_notify_start(pHddCtx);
-	qdf_status = wlansap_global_init();
-	if (QDF_IS_STATUS_ERROR(qdf_status))
-		goto err_cds_disable;
 
 	hdd_err("WLAN host driver reinitiation completed!");
 	goto success;
@@ -1441,6 +1462,8 @@ err_re_init:
 	return -EPERM;
 
 success:
+	if (pHddCtx->config->sap_internal_restart)
+		hdd_ssr_restart_sap(pHddCtx);
 	hdd_ssr_timer_del();
 	return QDF_STATUS_SUCCESS;
 }

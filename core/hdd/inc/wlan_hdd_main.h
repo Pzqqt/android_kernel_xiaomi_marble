@@ -1896,7 +1896,7 @@ QDF_STATUS wlan_hdd_check_custom_con_channel_rules(hdd_adapter_t *sta_adapter,
 						  tScanResultHandle *scan_cache,
 						  bool *concurrent_chnl_same);
 void wlan_hdd_stop_sap(hdd_adapter_t *ap_adapter);
-void wlan_hdd_start_sap(hdd_adapter_t *ap_adapter);
+void wlan_hdd_start_sap(hdd_adapter_t *ap_adapter, bool reinit);
 
 void wlan_hdd_soc_set_antenna_mode_cb(enum set_antenna_mode_status status);
 
@@ -2189,4 +2189,5 @@ void wlan_hdd_init_chan_info(hdd_context_t *hdd_ctx);
  * Return: None
  */
 void wlan_hdd_deinit_chan_info(hdd_context_t *hdd_ctx);
+void wlan_hdd_start_sap(hdd_adapter_t *ap_adapter, bool reinit);
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

@@ -1865,6 +1865,12 @@ int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			hdd_info("In phase-1 initialization  don't enable modules");
 			break;
 		}
+
+		if (reinit) {
+			if (hdd_ipa_uc_ssr_reinit(hdd_ctx))
+			hdd_err("HDD IPA UC reinit failed");
+		}
+
 	/* Fall through dont add break here */
 	case DRIVER_MODULES_OPENED:
 		if (!adapter) {
@@ -3871,7 +3877,16 @@ QDF_STATUS hdd_reset_all_adapters(hdd_context_t *hdd_ctx)
 	while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
 		adapter = adapterNode->pAdapter;
 		hdd_notice("Disabling queues");
-		wlan_hdd_netif_queue_control(adapter,
+		if (hdd_ctx->config->sap_internal_restart &&
+		    adapter->device_mode == QDF_SAP_MODE) {
+			wlan_hdd_netif_queue_control(adapter,
+						     WLAN_NETIF_TX_DISABLE,
+						     WLAN_CONTROL_PATH);
+			hdd_sap_indicate_disconnect_for_sta(adapter);
+			hdd_cleanup_actionframe(hdd_ctx, adapter);
+			hdd_sap_destroy_events(adapter);
+		} else
+			wlan_hdd_netif_queue_control(adapter,
 					   WLAN_NETIF_TX_DISABLE_N_CARRIER,
 					   WLAN_CONTROL_PATH);
 
@@ -4124,7 +4139,9 @@ QDF_STATUS hdd_start_all_adapters(hdd_context_t *hdd_ctx)
 			break;
 
 		case QDF_SAP_MODE:
-			/* softAP can handle SSR */
+			 if (hdd_ctx->config->sap_internal_restart)
+				hdd_init_ap_mode(adapter, true);
+
 			break;
 
 		case QDF_P2P_GO_MODE:
@@ -7061,7 +7078,7 @@ int hdd_start_ap_adapter(hdd_adapter_t *adapter)
 
 	ENTER();
 
-	status = hdd_init_ap_mode(adapter);
+	status = hdd_init_ap_mode(adapter, false);
 
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("Error Initializing the AP mode: %d", status);
@@ -9294,7 +9311,7 @@ void wlan_hdd_stop_sap(hdd_adapter_t *ap_adapter)
  *
  * Return: None
  */
-void wlan_hdd_start_sap(hdd_adapter_t *ap_adapter)
+void wlan_hdd_start_sap(hdd_adapter_t *ap_adapter, bool reinit)
 {
 	hdd_ap_ctx_t *hdd_ap_ctx;
 	hdd_hostapd_state_t *hostapd_state;
@@ -9316,9 +9333,6 @@ void wlan_hdd_start_sap(hdd_adapter_t *ap_adapter)
 	hdd_ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(ap_adapter);
 	hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(ap_adapter);
 	sap_config = &ap_adapter->sessionCtx.ap.sapConfig;
-
-	if (wlan_hdd_validate_context(hdd_ctx))
-		return;
 
 	mutex_lock(&hdd_ctx->sap_lock);
 	if (test_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags))

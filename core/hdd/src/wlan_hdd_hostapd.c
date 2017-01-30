@@ -1740,7 +1740,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			return QDF_STATUS_E_FAILURE;
 		}
 #ifdef IPA_OFFLOAD
-		if (hdd_ipa_is_enabled(pHddCtx)) {
+		if (!cds_is_driver_recovering() &&
+		    hdd_ipa_is_enabled(pHddCtx)) {
 			status = hdd_ipa_wlan_evt(pHostapdAdapter, staId,
 					HDD_IPA_CLIENT_DISCONNECT,
 					pSapEvent->sapevt.
@@ -5817,7 +5818,7 @@ void hdd_set_ap_ops(struct net_device *pWlanHostapdDev)
 	pWlanHostapdDev->netdev_ops = &net_ops_struct;
 }
 
-QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter)
+QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter, bool reinit)
 {
 	hdd_hostapd_state_t *phostapdBuf;
 	struct net_device *dev = pAdapter->dev;
@@ -5832,18 +5833,24 @@ QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter)
 
 	ENTER();
 
-	sapContext = wlansap_open(p_cds_context);
-	if (sapContext == NULL) {
-		hdd_err("ERROR: wlansap_open failed!!");
-		return QDF_STATUS_E_FAULT;
-	}
+	hdd_info("SSR in progress: %d", reinit);
 
-	pAdapter->sessionCtx.ap.sapContext = sapContext;
-	pAdapter->sessionCtx.ap.sapConfig.channel =
-		pHddCtx->acs_policy.acs_channel;
-	acs_dfs_mode = pHddCtx->acs_policy.acs_dfs_mode;
-	pAdapter->sessionCtx.ap.sapConfig.acs_dfs_mode =
-		wlan_hdd_get_dfs_mode(acs_dfs_mode);
+	if (reinit)
+		sapContext = pAdapter->sessionCtx.ap.sapContext;
+	else {
+		sapContext = wlansap_open(p_cds_context);
+		if (sapContext == NULL) {
+			hdd_err("ERROR: wlansap_open failed!!");
+			return QDF_STATUS_E_FAULT;
+		}
+
+		pAdapter->sessionCtx.ap.sapContext = sapContext;
+		pAdapter->sessionCtx.ap.sapConfig.channel =
+			pHddCtx->acs_policy.acs_channel;
+		acs_dfs_mode = pHddCtx->acs_policy.acs_dfs_mode;
+		pAdapter->sessionCtx.ap.sapConfig.acs_dfs_mode =
+			wlan_hdd_get_dfs_mode(acs_dfs_mode);
+	}
 
 	if (pAdapter->device_mode == QDF_P2P_GO_MODE) {
 		mode = QDF_P2P_GO_MODE;
@@ -5935,10 +5942,14 @@ QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter)
 	if (0 != ret) {
 		hdd_err("WMI_PDEV_PARAM_BURST_ENABLE set failed %d", ret);
 	}
-	pAdapter->sessionCtx.ap.sapConfig.acs_cfg.acs_mode = false;
-	qdf_mem_free(pAdapter->sessionCtx.ap.sapConfig.acs_cfg.ch_list);
-	qdf_mem_zero(&pAdapter->sessionCtx.ap.sapConfig.acs_cfg,
-						sizeof(struct sap_acs_cfg));
+
+	if (!reinit) {
+		pAdapter->sessionCtx.ap.sapConfig.acs_cfg.acs_mode = false;
+		qdf_mem_free(pAdapter->sessionCtx.ap.sapConfig.acs_cfg.ch_list);
+		qdf_mem_zero(&pAdapter->sessionCtx.ap.sapConfig.acs_cfg,
+			     sizeof(struct sap_acs_cfg));
+	}
+
 	return status;
 
 error_wmm_init:
@@ -8372,3 +8383,84 @@ int wlan_hdd_cfg80211_change_beacon(struct wiphy *wiphy,
 
 	return ret;
 }
+
+/**
+ * hdd_sap_indicate_disconnect_for_sta() - Indicate disconnect indication
+ * to supplicant, if there any clients connected to SAP interface.
+ * @adapter: sap adapter context
+ *
+ * Return:   nothing
+ */
+void hdd_sap_indicate_disconnect_for_sta(hdd_adapter_t *adapter)
+{
+	tSap_Event sap_event;
+	int sta_id;
+	ptSapContext sap_ctx;
+
+	ENTER();
+
+	sap_ctx = WLAN_HDD_GET_SAP_CTX_PTR(adapter);
+	if (!sap_ctx) {
+		hdd_err("invalid sap context");
+		return;
+	}
+
+	for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT; sta_id++) {
+		if (adapter->aStaInfo[sta_id].isUsed) {
+			hdd_info("sta_id: %d isUsed: %d %p",
+				 sta_id, adapter->aStaInfo[sta_id].isUsed,
+				 adapter);
+
+			if (qdf_is_macaddr_broadcast(
+				&adapter->aStaInfo[sta_id].macAddrSTA))
+				continue;
+
+			sap_event.sapHddEventCode = eSAP_STA_DISASSOC_EVENT;
+			qdf_mem_copy(
+				&sap_event.sapevt.
+				sapStationDisassocCompleteEvent.staMac,
+				&adapter->aStaInfo[sta_id].macAddrSTA,
+				sizeof(struct qdf_mac_addr));
+			sap_event.sapevt.sapStationDisassocCompleteEvent.
+			reason =
+				eSAP_MAC_INITATED_DISASSOC;
+			sap_event.sapevt.sapStationDisassocCompleteEvent.
+			statusCode =
+				QDF_STATUS_E_RESOURCES;
+			hdd_hostapd_sap_event_cb(&sap_event,
+					sap_ctx->pUsrContext);
+		}
+	}
+
+	clear_bit(SOFTAP_BSS_STARTED, &adapter->event_flags);
+
+	EXIT();
+}
+
+/**
+ * hdd_sap_destroy_events() - Destroy sap evets
+ * @adapter: sap adapter context
+ *
+ * Return:   nothing
+ */
+void hdd_sap_destroy_events(hdd_adapter_t *adapter)
+{
+	ptSapContext sap_ctx;
+
+	ENTER();
+	sap_ctx = WLAN_HDD_GET_SAP_CTX_PTR(adapter);
+	if (!sap_ctx) {
+		hdd_err("invalid sap context");
+		return;
+	}
+
+	qdf_event_destroy(&sap_ctx->sap_session_opened_evt);
+	if (!QDF_IS_STATUS_SUCCESS(
+		qdf_mutex_destroy(&sap_ctx->SapGlobalLock))) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  "wlansap_stop failed destroy lock");
+		return;
+	}
+	EXIT();
+}
+

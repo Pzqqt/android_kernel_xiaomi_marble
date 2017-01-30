@@ -5375,7 +5375,7 @@ static void cds_sap_restart_handle(struct work_struct *work)
 		cds_ssr_unprotect(__func__);
 		return;
 	}
-	wlan_hdd_start_sap(sap_adapter);
+	wlan_hdd_start_sap(sap_adapter, false);
 
 	cds_change_sap_restart_required_status(false);
 	cds_ssr_unprotect(__func__);
