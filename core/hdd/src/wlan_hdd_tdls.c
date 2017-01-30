@@ -985,21 +985,25 @@ hddTdlsPeer_t *wlan_hdd_tdls_get_peer(hdd_adapter_t *pAdapter, const u8 *mac,
 	if (0 != (wlan_hdd_validate_context(pHddCtx)))
 		return NULL;
 
+	if (need_mutex_lock)
+		mutex_lock(&pHddCtx->tdls_lock);
+
 	/* if already there, just update */
-	peer = wlan_hdd_tdls_find_peer(pAdapter, mac, need_mutex_lock);
+	peer = wlan_hdd_tdls_find_peer(pAdapter, mac, false);
 	if (peer != NULL) {
+		if (need_mutex_lock)
+			mutex_unlock(&pHddCtx->tdls_lock);
 		return peer;
 	}
 
 	/* not found, allocate and add the list */
 	peer = qdf_mem_malloc(sizeof(hddTdlsPeer_t));
 	if (NULL == peer) {
+		if (need_mutex_lock)
+			mutex_unlock(&pHddCtx->tdls_lock);
 		hdd_err("peer malloc failed!");
 		return NULL;
 	}
-
-	if (need_mutex_lock)
-		mutex_lock(&pHddCtx->tdls_lock);
 
 	pHddTdlsCtx = WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter);
 
@@ -1041,16 +1045,28 @@ int wlan_hdd_tdls_set_cap(hdd_adapter_t *pAdapter, const uint8_t *mac,
 			  tTDLSCapType cap)
 {
 	hddTdlsPeer_t *curr_peer;
+	hdd_context_t *hdd_ctx;
+	int status = 0;
 
-	curr_peer = wlan_hdd_tdls_get_peer(pAdapter, mac, true);
+	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
+	if (0 != (wlan_hdd_validate_context(hdd_ctx))) {
+		status = -EINVAL;
+		goto ret_status;
+	}
+
+	mutex_lock(&hdd_ctx->tdls_lock);
+	curr_peer = wlan_hdd_tdls_get_peer(pAdapter, mac, false);
 	if (curr_peer == NULL) {
 		hdd_err("curr_peer is NULL");
-		return -EINVAL;
+		status = -EINVAL;
+		goto rel_lock;
 	}
 
 	curr_peer->tdls_support = cap;
-
-	return 0;
+rel_lock:
+	mutex_unlock(&hdd_ctx->tdls_lock);
+ret_status:
+	return status;
 }
 
 /**
@@ -1188,34 +1204,40 @@ int wlan_hdd_tdls_recv_discovery_resp(hdd_adapter_t *pAdapter,
 				      const uint8_t *mac)
 {
 	hddTdlsPeer_t *curr_peer;
-	tdlsCtx_t *pHddTdlsCtx = WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter);
+	tdlsCtx_t *pHddTdlsCtx;
 	hdd_context_t *pHddCtx;
-
+	int status = 0;
 	ENTER();
 
-	if (NULL == pHddTdlsCtx) {
-		hdd_err("pHddTdlsCtx is NULL");
-		return -EINVAL;
+
+	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+
+	if (0 != (wlan_hdd_validate_context(pHddCtx))) {
+		status = -EINVAL;
+		goto ret_status;
 	}
 
-	pHddCtx = WLAN_HDD_GET_CTX(pHddTdlsCtx->pAdapter);
+	mutex_lock(&pHddCtx->tdls_lock);
 
-	if (0 != (wlan_hdd_validate_context(pHddCtx)))
-		return -EINVAL;
+	pHddTdlsCtx = WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter);
+	if (NULL == pHddTdlsCtx) {
+		hdd_err("pHddTdlsCtx is NULL");
+		status = -EINVAL;
+		goto rel_lock;
+	}
 
-	curr_peer = wlan_hdd_tdls_get_peer(pAdapter, mac, true);
+	curr_peer = wlan_hdd_tdls_get_peer(pAdapter, mac, false);
 	if (NULL == curr_peer) {
 		hdd_err("curr_peer is NULL");
-		return -EINVAL;
+		status = -EINVAL;
+		goto rel_lock;
 	}
 
 	if (pHddTdlsCtx->discovery_sent_cnt)
 		pHddTdlsCtx->discovery_sent_cnt--;
 
-	mutex_lock(&pHddCtx->tdls_lock);
 	wlan_hdd_tdls_check_power_save_prohibited(pAdapter);
 
-	mutex_unlock(&pHddCtx->tdls_lock);
 	if (0 == pHddTdlsCtx->discovery_sent_cnt) {
 		qdf_mc_timer_stop(&pHddTdlsCtx->peerDiscoveryTimeoutTimer);
 	}
@@ -1235,7 +1257,7 @@ int wlan_hdd_tdls_recv_discovery_resp(hdd_adapter_t *pAdapter,
 			wlan_hdd_tdls_set_peer_link_status(curr_peer,
 							   eTDLS_LINK_DISCOVERED,
 							   eTDLS_LINK_SUCCESS,
-							   true);
+							   false);
 			hdd_notice("Rssi Threshold met: " MAC_ADDRESS_STR
 				   " rssi = %d threshold= %d",
 				   MAC_ADDR_ARRAY(curr_peer->peerMac),
@@ -1256,7 +1278,7 @@ int wlan_hdd_tdls_recv_discovery_resp(hdd_adapter_t *pAdapter,
 			wlan_hdd_tdls_set_peer_link_status(curr_peer,
 							   eTDLS_LINK_IDLE,
 							   eTDLS_LINK_UNSPECIFIED,
-							   true);
+							   false);
 
 			/* if RSSI threshold is not met then allow further discovery
 			 * attempts by decrementing count for the last attempt
@@ -1267,8 +1289,11 @@ int wlan_hdd_tdls_recv_discovery_resp(hdd_adapter_t *pAdapter,
 	}
 
 	curr_peer->tdls_support = eTDLS_CAP_SUPPORTED;
+rel_lock:
+	mutex_unlock(&pHddCtx->tdls_lock);
+ret_status:
 	EXIT();
-	return 0;
+	return status;
 }
 
 /**
@@ -1289,11 +1314,20 @@ int wlan_hdd_tdls_set_peer_caps(hdd_adapter_t *pAdapter,
 				bool is_qos_wmm_sta)
 {
 	hddTdlsPeer_t *curr_peer;
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
+	int status = 0;
 
-	curr_peer = wlan_hdd_tdls_get_peer(pAdapter, mac, true);
+	if (0 != (wlan_hdd_validate_context(hdd_ctx))) {
+		status = -EINVAL;
+		goto ret_status;
+	}
+
+	mutex_lock(&hdd_ctx->tdls_lock);
+	curr_peer = wlan_hdd_tdls_get_peer(pAdapter, mac, false);
 	if (curr_peer == NULL) {
 		hdd_err("curr_peer is NULL");
-		return -EINVAL;
+		status = -EINVAL;
+		goto rel_lock;
 	}
 
 	curr_peer->uapsdQueues = StaParams->uapsd_queues;
@@ -1314,7 +1348,10 @@ int wlan_hdd_tdls_set_peer_caps(hdd_adapter_t *pAdapter,
 	curr_peer->supported_oper_classes_len =
 		StaParams->supported_oper_classes_len;
 	curr_peer->qos = is_qos_wmm_sta;
-	return 0;
+rel_lock:
+	mutex_unlock(&hdd_ctx->tdls_lock);
+ret_status:
+	return status;
 }
 
 /**
@@ -1332,11 +1369,20 @@ int wlan_hdd_tdls_get_link_establish_params(hdd_adapter_t *pAdapter,
 					    tdlsLinkEstablishParams)
 {
 	hddTdlsPeer_t *curr_peer;
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
+	int status = 0;
 
-	curr_peer = wlan_hdd_tdls_get_peer(pAdapter, mac, true);
+	if (0 != (wlan_hdd_validate_context(hdd_ctx))) {
+		status = -EINVAL;
+		goto ret_status;
+	}
+
+	mutex_lock(&hdd_ctx->tdls_lock);
+	curr_peer = wlan_hdd_tdls_get_peer(pAdapter, mac, false);
 	if (curr_peer == NULL) {
 		hdd_err("curr_peer is NULL");
-		return -EINVAL;
+		status = -EINVAL;
+		goto rel_lock;
 	}
 
 	tdlsLinkEstablishParams->isResponder = curr_peer->is_responder;
@@ -1360,7 +1406,10 @@ int wlan_hdd_tdls_get_link_establish_params(hdd_adapter_t *pAdapter,
 	tdlsLinkEstablishParams->supportedOperClassesLen =
 		curr_peer->supported_oper_classes_len;
 	tdlsLinkEstablishParams->qos = curr_peer->qos;
-	return 0;
+rel_lock:
+	mutex_unlock(&hdd_ctx->tdls_lock);
+ret_status:
+	return status;
 }
 
 /**
@@ -1408,16 +1457,27 @@ int wlan_hdd_tdls_set_responder(hdd_adapter_t *pAdapter, const uint8_t *mac,
 				uint8_t responder)
 {
 	hddTdlsPeer_t *curr_peer;
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
+	int status = 0;
 
-	curr_peer = wlan_hdd_tdls_get_peer(pAdapter, mac, true);
+	if (0 != (wlan_hdd_validate_context(hdd_ctx))) {
+		status = -EINVAL;
+		goto ret_status;
+	}
+	mutex_lock(&hdd_ctx->tdls_lock);
+	curr_peer = wlan_hdd_tdls_get_peer(pAdapter, mac, false);
 	if (curr_peer == NULL) {
 		hdd_err("curr_peer is NULL");
-		return -EINVAL;
+		status = -EINVAL;
+		goto rel_lock;
 	}
 
 	curr_peer->is_responder = responder;
 
-	return 0;
+rel_lock:
+	mutex_unlock(&hdd_ctx->tdls_lock);
+ret_status:
+	return status;
 }
 
 /**
@@ -1432,16 +1492,27 @@ int wlan_hdd_tdls_set_signature(hdd_adapter_t *pAdapter, const uint8_t *mac,
 				uint8_t uSignature)
 {
 	hddTdlsPeer_t *curr_peer;
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
+	int status = 0;
 
-	curr_peer = wlan_hdd_tdls_get_peer(pAdapter, mac, true);
+	if (0 != (wlan_hdd_validate_context(hdd_ctx))) {
+		status = -EINVAL;
+		goto ret_status;
+	}
+
+	mutex_lock(&hdd_ctx->tdls_lock);
+	curr_peer = wlan_hdd_tdls_get_peer(pAdapter, mac, false);
 	if (curr_peer == NULL) {
 		hdd_err("curr_peer is NULL");
-		return -EINVAL;
+		status = -EINVAL;
+		goto rel_lock;
 	}
 
 	curr_peer->signature = uSignature;
-
-	return 0;
+rel_lock:
+	mutex_unlock(&hdd_ctx->tdls_lock);
+ret_status:
+	return status;
 }
 
 /**
