@@ -7356,6 +7356,8 @@ QDF_STATUS csr_scan_save_roam_offload_ap_to_scan_cache(tpAniSirGlobal pMac,
 		return QDF_STATUS_E_RESOURCES;
 	}
 	csr_scan_add_result(pMac, scan_res_ptr, ies_local_ptr, session_id);
+	if ((scan_res_ptr->Result.pvIes == NULL) && ies_local_ptr)
+		qdf_mem_free(ies_local_ptr);
 	return QDF_STATUS_SUCCESS;
 }
 #endif
