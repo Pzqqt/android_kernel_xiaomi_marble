@@ -41,6 +41,7 @@
 #endif
 #include "htc_api.h"
 #include "wmi_unified_param.h"
+#include "wlan_objmgr_psoc_obj.h"
 
 typedef qdf_nbuf_t wmi_buf_t;
 #define wmi_buf_data(_buf) qdf_nbuf_data(_buf)
@@ -112,11 +113,14 @@ enum wmi_rx_exec_ctx {
  *  @param target_type      : type of supported wmi command
  *  @param use_cookie       : flag to indicate cookie based allocation
  *  @param ops              : handle to wmi ops
+ *  @psoc                   : objmgr psoc
  *  @return opaque handle.
  */
 void *wmi_unified_attach(void *scn_handle,
 			 osdev_t osdev, enum wmi_target_type target_type,
-			 bool use_cookie, struct wmi_rx_ops *ops);
+			 bool use_cookie, struct wmi_rx_ops *ops,
+			 struct wlan_objmgr_psoc *psoc);
+
 
 
 /**
