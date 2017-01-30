@@ -414,9 +414,36 @@ ce_revoke_recv_next_srng(struct CE_handle *copyeng,
 		    void **per_CE_contextp,
 		    void **per_transfer_contextp, qdf_dma_addr_t *bufferp)
 {
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	struct CE_state *CE_state = (struct CE_state *)copyeng;
+	struct CE_ring_state *dest_ring = CE_state->dest_ring;
+	unsigned int sw_index;
 
-	return status;
+	if (!dest_ring)
+		return QDF_STATUS_E_FAILURE;
+
+	sw_index = dest_ring->sw_index;
+
+	if (per_CE_contextp)
+		*per_CE_contextp = CE_state->recv_context;
+
+	/* NOTE: sw_index is more like a read_index in this context. It has a
+	 * one-to-one mapping with status ring.
+	 * Get the per trasnfer context from dest_ring.
+	 */
+	if (per_transfer_contextp)
+		*per_transfer_contextp =
+			dest_ring->per_transfer_context[sw_index];
+
+	if (dest_ring->per_transfer_context[sw_index] == NULL)
+		return QDF_STATUS_E_FAILURE;
+
+	/* provide end condition */
+	dest_ring->per_transfer_context[sw_index] = NULL;
+
+	/* Update sw_index */
+	sw_index = CE_RING_IDX_INCR(dest_ring->nentries_mask, sw_index);
+	dest_ring->sw_index = sw_index;
+	return QDF_STATUS_SUCCESS;
 }
 
 /*
