@@ -1234,6 +1234,9 @@ struct target_abi_version {
 	/** ABI version namespace fourth four dwords */
 };
 
+/* Forward declartion for psoc*/
+struct wlan_objmgr_psoc;
+
 /**
  * struct wmi_init_cmd - Saved wmi INIT command
  * @buf: Buffer containing the wmi INIT command
@@ -1247,6 +1250,7 @@ struct wmi_cmd_init {
 struct wmi_unified {
 	void *scn_handle;    /* handle to device */
 	osdev_t  osdev; /* handle to use OS-independent services */
+	struct wlan_objmgr_psoc *wmi_psoc;
 	qdf_atomic_t pending_cmds;
 	HTC_ENDPOINT_ID wmi_endpoint_id;
 	uint16_t max_msg_len;

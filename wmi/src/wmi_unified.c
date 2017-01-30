@@ -2223,12 +2223,14 @@ static void wmi_runtime_pm_init(struct wmi_unified *wmi_handle)
  * @target_type: TLV or not-TLV based target
  * @use_cookie: cookie based allocation enabled/disabled
  * @ops: umac rx callbacks
+ * @psoc: objmgr psoc
  *
  * @Return: wmi handle.
  */
 void *wmi_unified_attach(void *scn_handle,
 			 osdev_t osdev, enum wmi_target_type target_type,
-			 bool use_cookie, struct wmi_rx_ops *rx_ops)
+			 bool use_cookie, struct wmi_rx_ops *rx_ops,
+			 struct wlan_objmgr_psoc *psoc)
 {
 	struct wmi_unified *wmi_handle;
 
@@ -2273,6 +2275,8 @@ void *wmi_unified_attach(void *scn_handle,
 	wmi_handle->use_cookie = use_cookie;
 	wmi_handle->osdev = osdev;
 	wmi_handle->wmi_stopinprogress = 0;
+	/* Increase the ref count once refcount infra is present */
+	wmi_handle->wmi_psoc = psoc;
 	qdf_spinlock_create(&wmi_handle->ctx_lock);
 
 	return wmi_handle;
@@ -2305,6 +2309,8 @@ void wmi_unified_detach(struct wmi_unified *wmi_handle)
 
 	qdf_spinlock_destroy(&wmi_handle->eventq_lock);
 	qdf_spinlock_destroy(&wmi_handle->ctx_lock);
+	/* Decrease the ref count once refcount infra is present */
+	wmi_handle->wmi_psoc = NULL;
 	OS_FREE(wmi_handle);
 	wmi_handle = NULL;
 }

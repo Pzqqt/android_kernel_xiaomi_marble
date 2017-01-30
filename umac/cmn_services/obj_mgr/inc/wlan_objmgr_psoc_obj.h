@@ -241,6 +241,8 @@ struct wlan_soc_timer {
  * @soc_comp_priv_obj[]:   component private object pointers
  * @obj_status[]:          component object status
  * @obj_state:             object state
+ * @tgt_if_handle:         target interface handle
+ *    For OL based target it points to wmi handle
  * @psoc_lock:             psoc lock
  */
 struct wlan_objmgr_psoc {
@@ -254,6 +256,7 @@ struct wlan_objmgr_psoc {
 	void *soc_comp_priv_obj[WLAN_UMAC_MAX_COMPONENTS];
 	QDF_STATUS obj_status[WLAN_UMAC_MAX_COMPONENTS];
 	WLAN_OBJ_STATE obj_state;
+	void *tgt_if_handle;
 	qdf_spinlock_t psoc_lock;
 };
 
@@ -809,4 +812,43 @@ static inline uint8_t wlan_psoc_get_pdev_count(struct wlan_objmgr_psoc *psoc)
 
 	return psoc->soc_objmgr.wlan_pdev_count;
 }
+
+/**
+ * wlan_psoc_set_tgt_if_handle(): API to set target if handle in psoc object
+ * @psoc: Psoc pointer
+ * @tgt_if_handle: target interface handle
+ *
+ * API to set target interface handle in psoc object
+ *
+ * Caller need to acquire lock with wlan_psoc_obj_lock()
+ *
+ * Return: None
+ */
+static inline void wlan_psoc_set_tgt_if_handle(struct wlan_objmgr_psoc *psoc,
+			void *tgt_if_handle)
+{
+	/* This API is invoked with lock acquired, do not add log prints */
+	if (psoc == NULL)
+		return;
+	psoc->tgt_if_handle = tgt_if_handle;
+}
+
+/**
+ * wlan_psoc_get_tgt_if_handle(): API to get target interface handle
+ * @psoc: Psoc pointer
+ *
+ * API to get target interface handle from psoc object
+ *
+ * Caller need to acquire lock with wlan_psoc_obj_lock()
+ *
+ * Return: target interface handle
+ */
+static inline void *wlan_psoc_get_tgt_if_handle(struct wlan_objmgr_psoc *psoc)
+{
+	/* This API is invoked with lock acquired, do not add log prints */
+	if (psoc == NULL)
+		return NULL;
+	return psoc->tgt_if_handle;
+}
+
 #endif /* _WLAN_OBJMGR_PSOC_OBJ_H_*/
