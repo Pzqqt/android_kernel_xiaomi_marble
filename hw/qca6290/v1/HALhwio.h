@@ -22,10 +22,10 @@
 ===========================================================================
 */
 /**
-  @file HALhwio.h 
-  
+  @file HALhwio.h
+
   Public interface include file for accessing the HWIO HAL definitions.
-  
+
   The HALhwio.h file is the public API interface to the HW I/O (HWIO)
   register access definitions.
 */
