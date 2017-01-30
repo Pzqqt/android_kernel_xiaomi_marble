@@ -1924,7 +1924,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *cds_context,
 	ops.wma_process_fw_event_handler_cbk = wma_process_fw_event_handler;
 	/* attach the wmi */
 	wmi_handle = wmi_unified_attach(wma_handle, NULL,
-					WMI_TLV_TARGET, use_cookie, &ops);
+					WMI_TLV_TARGET, use_cookie, &ops, psoc);
 	if (!wmi_handle) {
 		WMA_LOGP("%s: failed to attach WMI", __func__);
 		qdf_status = QDF_STATUS_E_NOMEM;
@@ -1932,6 +1932,12 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *cds_context,
 	}
 
 	WMA_LOGA("WMA --> wmi_unified_attach - success");
+
+	/* set the wmi handle (as tgt_if_handle) in psoc */
+	wlan_psoc_obj_lock(psoc);
+	wlan_psoc_set_tgt_if_handle(psoc, wmi_handle);
+	wlan_psoc_obj_unlock(psoc);
+
 	wmi_unified_register_event_handler(wmi_handle,
 					   WMI_SERVICE_READY_EVENTID,
 					   wma_rx_service_ready_event,
