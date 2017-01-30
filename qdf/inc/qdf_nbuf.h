@@ -555,8 +555,12 @@ qdf_nbuf_frag_push_head(qdf_nbuf_t buf,
 
 #define qdf_nbuf_num_frags_init(_nbuf) __qdf_nbuf_num_frags_init((_nbuf))
 
-/* For efficiency, it is the responsibility of the caller to ensure that val
- * is either 0 or 1.
+/**
+ * qdf_nbuf_set_chfrag_start() - set msdu start bit
+ * @buf: Network buffer
+ * @val: 0/1
+ *
+ * Return: void
  */
 static inline void
 qdf_nbuf_set_chfrag_start(qdf_nbuf_t buf, uint8_t val)
@@ -564,19 +568,59 @@ qdf_nbuf_set_chfrag_start(qdf_nbuf_t buf, uint8_t val)
 	__qdf_nbuf_set_chfrag_start(buf, val);
 }
 
+/**
+ * qdf_nbuf_is_chfrag_start() - get msdu start bit
+ * @buf: Network buffer
+ *
+ * Return: integer value - 0/1
+ */
 static inline int qdf_nbuf_is_chfrag_start(qdf_nbuf_t buf)
 {
 	return __qdf_nbuf_is_chfrag_start(buf);
 }
 
-/* For efficiency, it is the responsibility of the caller to ensure that val
- * is either 0 or 1.
+/**
+ * qdf_nbuf_set_chfrag_cont() - set msdu continuation bit
+ * @buf: Network buffer
+ * @val: 0/1
+ *
+ * Return: void
+ */
+static inline void
+qdf_nbuf_set_chfrag_cont(qdf_nbuf_t buf, uint8_t val)
+{
+	__qdf_nbuf_set_chfrag_cont(buf, val);
+}
+
+/**
+ * qdf_nbuf_is_chfrag_cont() - get msdu continuation bit
+ * @buf: Network buffer
+ *
+ * Return: integer value - 0/1
+ */
+static inline int qdf_nbuf_is_chfrag_cont(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_is_chfrag_cont(buf);
+}
+
+/**
+ * qdf_nbuf_set_chfrag_end() - set msdu end bit
+ * @buf: Network buffer
+ * @val: 0/1
+ *
+ * Return: void
  */
 static inline void qdf_nbuf_set_chfrag_end(qdf_nbuf_t buf, uint8_t val)
 {
 	__qdf_nbuf_set_chfrag_end(buf, val);
 }
 
+/**
+ * qdf_nbuf_is_chfrag_end() - set msdu end bit
+ * @buf: Network buffer
+ *
+ * Return: integer value - 0/1
+ */
 static inline int qdf_nbuf_is_chfrag_end(qdf_nbuf_t buf)
 {
 	return __qdf_nbuf_is_chfrag_end(buf);

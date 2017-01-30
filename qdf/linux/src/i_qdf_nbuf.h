@@ -165,9 +165,10 @@ struct qdf_nbuf_cb {
 							flag_nbuf:1,
 							num:1,
 							flag_chfrag_start:1,
+							flag_chfrag_cont:1,
 							flag_chfrag_end:1,
 							flag_ext_header:1,
-							reserved:2;
+							reserved:1;
 					} bits;
 					uint8_t u8;
 				} flags;
@@ -257,6 +258,9 @@ struct qdf_nbuf_cb {
 #define QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_CHFRAG_START(skb) \
 	(((struct qdf_nbuf_cb *) \
 	((skb)->cb))->u.tx.extra_frag.flags.bits.flag_chfrag_start)
+#define QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_CHFRAG_CONT(skb) \
+	(((struct qdf_nbuf_cb *) \
+	((skb)->cb))->u.tx.extra_frag.flags.bits.flag_chfrag_cont)
 #define QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_CHFRAG_END(skb) \
 		(((struct qdf_nbuf_cb *) \
 		((skb)->cb))->u.tx.extra_frag.flags.bits.flag_chfrag_end)
@@ -406,6 +410,14 @@ typedef void (*qdf_nbuf_trace_update_t)(char *);
 
 #define __qdf_nbuf_is_chfrag_start(skb) \
 	(QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_CHFRAG_START((skb)))
+
+#define __qdf_nbuf_set_chfrag_cont(skb, val) \
+	do { \
+		(QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_CHFRAG_CONT((skb))) = val; \
+	} while (0)
+
+#define __qdf_nbuf_is_chfrag_cont(skb) \
+	(QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_CHFRAG_CONT((skb)))
 
 #define __qdf_nbuf_set_chfrag_end(skb, val) \
 	do { \

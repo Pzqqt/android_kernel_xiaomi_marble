@@ -159,6 +159,51 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 	return QDF_STATUS_SUCCESS;
 }
 
+/*
+ * dp_rx_deliver_raw() - process RAW mode pkts and hand over the
+ *				pkts to RAW mode simulation to
+ *				decapsulate the pkt.
+ *
+ * @vdev: vdev on which RAW mode is enabled
+ * @nbuf_list: list of RAW pkts to process
+ *
+ * Return: void
+ */
+static void
+dp_rx_deliver_raw(struct dp_vdev *vdev, qdf_nbuf_t nbuf_list)
+{
+	qdf_nbuf_t deliver_list_head = NULL;
+	qdf_nbuf_t deliver_list_tail = NULL;
+	qdf_nbuf_t nbuf;
+
+	nbuf = nbuf_list;
+	while (nbuf) {
+		qdf_nbuf_t next = qdf_nbuf_next(nbuf);
+
+		DP_RX_LIST_APPEND(deliver_list_head, deliver_list_tail, nbuf);
+
+		/*
+		 * reset the chfrag_start and chfrag_end bits in nbuf cb
+		 * as this is a non-amsdu pkt and RAW mode simulation expects
+		 * these bit s to be 0 for non-amsdu pkt.
+		 */
+		if (qdf_nbuf_is_chfrag_start(nbuf) &&
+			 qdf_nbuf_is_chfrag_end(nbuf)) {
+			qdf_nbuf_set_chfrag_start(nbuf, 0);
+			qdf_nbuf_set_chfrag_end(nbuf, 0);
+		}
+
+		nbuf = next;
+	}
+
+	vdev->osif_rsim_rx_decap(vdev->osif_vdev, &deliver_list_head,
+				 &deliver_list_tail);
+
+	vdev->osif_rx(vdev->osif_vdev, deliver_list_head);
+}
+
+
+
 /**
  * dp_rx_intrabss_fwd() - Implements the Intra-BSS forwarding logic
  *
@@ -208,6 +253,7 @@ dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 	struct dp_peer *peer = NULL;
 	struct dp_vdev *vdev = NULL;
 	struct hal_rx_mpdu_desc_info mpdu_desc_info;
+	struct hal_rx_msdu_desc_info msdu_desc_info;
 	enum hal_reo_error_status error;
 	uint32_t pkt_len;
 	static uint32_t peer_mdata;
@@ -291,6 +337,22 @@ dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 			qdf_nbuf_free(rx_desc->nbuf);
 			goto fail;
 		}
+
+		/* Get MSDU DESC info */
+		hal_rx_msdu_desc_info_get(ring_desc, &msdu_desc_info);
+
+		/*
+		 * save msdu flags first, last and continuation msdu in
+		 * nbuf->cb
+		 */
+		if (msdu_desc_info.msdu_flags & HAL_MSDU_F_FIRST_MSDU_IN_MPDU)
+			qdf_nbuf_set_chfrag_start(rx_desc->nbuf, 1);
+
+		if (msdu_desc_info.msdu_flags & HAL_MSDU_F_MSDU_CONTINUATION)
+			qdf_nbuf_set_chfrag_cont(rx_desc->nbuf, 1);
+
+		if (msdu_desc_info.msdu_flags & HAL_MSDU_F_LAST_MSDU_IN_MPDU)
+			qdf_nbuf_set_chfrag_end(rx_desc->nbuf, 1);
 
 		qdf_nbuf_queue_add(&vdev->rxq, rx_desc->nbuf);
 fail:
@@ -425,7 +487,9 @@ done:
 						nbuf);
 		}
 
-		if (qdf_likely(vdev->osif_rx) && deliver_list_head)
+		if (qdf_unlikely(vdev->rx_decap_type == htt_pkt_type_raw))
+			dp_rx_deliver_raw(vdev, deliver_list_head);
+		else if (qdf_likely(vdev->osif_rx) && deliver_list_head)
 			vdev->osif_rx(vdev->osif_vdev, deliver_list_head);
 
 	}

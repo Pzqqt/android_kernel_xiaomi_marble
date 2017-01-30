@@ -1590,6 +1590,34 @@ static void dp_peer_setup_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
 }
 
 /*
+ * dp_set_vdev_tx_encap_type() - set the encap type of the vdev
+ * @vdev_handle: virtual device object
+ * @htt_pkt_type: type of pkt
+ *
+ * Return: void
+ */
+static void dp_set_vdev_tx_encap_type(struct cdp_vdev *vdev_handle,
+	 enum htt_cmn_pkt_type val)
+{
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
+	vdev->tx_encap_type = val;
+}
+
+/*
+ * dp_set_vdev_rx_decap_type() - set the decap type of the vdev
+ * @vdev_handle: virtual device object
+ * @htt_pkt_type: type of pkt
+ *
+ * Return: void
+ */
+static void dp_set_vdev_rx_decap_type(struct cdp_vdev *vdev_handle,
+	 enum htt_cmn_pkt_type val)
+{
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
+	vdev->rx_decap_type = val;
+}
+
+/*
  * dp_peer_authorize() - authorize txrx peer
  * @peer_handle:		Datapath peer handle
  * @authorize
@@ -1824,6 +1852,8 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 
 static struct cdp_ctrl_ops dp_ops_ctrl = {
 	.txrx_peer_authorize = dp_peer_authorize,
+	.txrx_set_vdev_rx_decap_type = dp_set_vdev_rx_decap_type,
+	.txrx_set_tx_encap_type = dp_set_vdev_tx_encap_type,
 	/* TODO: Add other functions */
 };
 
