@@ -381,5 +381,7 @@ QDF_STATUS lim_update_ext_cap_ie(tpAniSirGlobal mac_ctx,
 
 void lim_log(tpAniSirGlobal pMac, uint32_t loglevel,
 		const char *pString, ...);
+QDF_STATUS lim_add_qcn_ie(tpAniSirGlobal mac_ctx, uint8_t *ie_data,
+							uint16_t *ie_len);
 /************************************************************/
 #endif /* __LIM_API_H */

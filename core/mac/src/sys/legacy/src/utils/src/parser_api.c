@@ -1247,7 +1247,7 @@ void populate_dot11f_qcn_ie(tDot11fIEQCN_IE *pDot11f)
 {
 	pDot11f->present = 1;
 	pDot11f->version[0] = QCN_IE_VERSION_SUBATTR_ID;
-	pDot11f->version[1] = QCN_IE_VERSION_SUBATTR_LEN;
+	pDot11f->version[1] = QCN_IE_VERSION_SUBATTR_DATA_LEN;
 	pDot11f->version[2] = QCN_IE_VERSION_SUPPORTED;
 	pDot11f->version[3] = QCN_IE_SUBVERSION_SUPPORTED;
 }

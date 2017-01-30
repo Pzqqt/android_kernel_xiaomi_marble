@@ -2500,3 +2500,38 @@ void lim_log(tpAniSirGlobal pMac, uint32_t loglevel, const char *pString, ...)
 #endif
 }
 
+/**
+ * lim_add_qcn_ie() - Add QCN IE to a given IE buffer
+ *
+ * @mac_ctx: Pointer to Global MAC structure
+ * @ie_data: IE buffer
+ * @ie_len: length of the @ie_data
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS lim_add_qcn_ie(tpAniSirGlobal mac_ctx, uint8_t *ie_data,
+							uint16_t *ie_len)
+{
+	tDot11fIEQCN_IE qcn_ie;
+	uint8_t qcn_ie_hdr[QCN_IE_HDR_LEN]
+		= {IE_EID_VENDOR, DOT11F_IE_QCN_IE_MAX_LEN,
+			0x8C, 0xFD, 0xF0, 0x1};
+
+	if (((*ie_len) + DOT11F_IE_QCN_IE_MAX_LEN) > MAX_DEFAULT_SCAN_IE_LEN) {
+		lim_log(mac_ctx, LOGE, FL("IE buffer not enough for QCN IE"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* Add QCN IE header */
+	qdf_mem_copy(ie_data + (*ie_len), qcn_ie_hdr, QCN_IE_HDR_LEN);
+	(*ie_len) += QCN_IE_HDR_LEN;
+
+	/* Retrieve Version sub-attribute data */
+	populate_dot11f_qcn_ie(&qcn_ie);
+
+	/* Add QCN IE data[version sub attribute] */
+	qdf_mem_copy(ie_data + (*ie_len), qcn_ie.version,
+			(QCN_IE_VERSION_SUBATTR_LEN));
+	(*ie_len) += (QCN_IE_VERSION_SUBATTR_LEN);
+	return QDF_STATUS_SUCCESS;
+}

@@ -17763,6 +17763,11 @@ static void csr_update_driver_assoc_ies(tpAniSirGlobal mac_ctx,
 	uint8_t ese_ie[DOT11F_IE_ESEVERSION_MAX_LEN]
 			= { 0x0, 0x40, 0x96, 0x3, ESE_VERSION_SUPPORTED};
 #endif
+	uint8_t qcn_ie[DOT11F_IE_QCN_IE_MAX_LEN]
+			= {0x8C, 0xFD, 0xF0, 0x1, QCN_IE_VERSION_SUBATTR_ID,
+				QCN_IE_VERSION_SUBATTR_DATA_LEN,
+				QCN_IE_VERSION_SUPPORTED,
+				QCN_IE_SUBVERSION_SUPPORTED};
 
 	if (session->pConnectBssDesc)
 		max_tx_pwr_cap = csr_get_cfg_max_tx_power(mac_ctx,
@@ -17810,6 +17815,11 @@ static void csr_update_driver_assoc_ies(tpAniSirGlobal mac_ctx,
 	}
 	ese_populate_addtional_ies(mac_ctx, session, req_buf);
 
+	/* Append QCN IE if g_support_qcn_ie INI is enabled */
+	if (mac_ctx->roam.configParam.qcn_ie_support)
+		csr_append_assoc_ies(mac_ctx, req_buf, IEEE80211_ELEMID_VENDOR,
+					DOT11F_IE_QCN_IE_MAX_LEN,
+					qcn_ie);
 }
 
 /**
