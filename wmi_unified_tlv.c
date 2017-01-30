@@ -14707,6 +14707,8 @@ static void populate_vdev_param_tlv(uint32_t *vdev_param)
 				WMI_VDEV_PARAM_MCC_BROADCAST_PROBE_ENABLE;
 	vdev_param[wmi_vdev_param_mgmt_tx_power] = WMI_VDEV_PARAM_MGMT_TX_POWER;
 	vdev_param[wmi_vdev_param_beacon_rate] = WMI_VDEV_PARAM_BEACON_RATE;
+	vdev_param[wmi_vdev_param_rx_decap_type] = WMI_VDEV_PARAM_RX_DECAP_TYPE;
+	vdev_param[wmi_vdev_param_tx_encap_type] = WMI_VDEV_PARAM_TX_ENCAP_TYPE;
 }
 #endif
 
