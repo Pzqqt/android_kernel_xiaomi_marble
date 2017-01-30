@@ -464,11 +464,11 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 		QDF_ASSERT(0);
 		goto err_mac_close;
 	}
-	gp_cds_context->pdev_txrx_ctx =
+	cds_set_context(QDF_MODULE_ID_TXRX,
 		cdp_pdev_attach(cds_get_context(QDF_MODULE_ID_SOC),
 			gp_cds_context->cfg_ctx,
 			gp_cds_context->htc_ctx,
-			gp_cds_context->qdf_ctx, 0);
+			gp_cds_context->qdf_ctx, 0));
 	if (!gp_cds_context->pdev_txrx_ctx) {
 		/* Critical Error ...  Cannot proceed further */
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
@@ -1297,6 +1297,9 @@ QDF_STATUS cds_set_context(QDF_MODULE_ID module_id, void *context)
 	}
 
 	switch (module_id) {
+	case QDF_MODULE_ID_TXRX:
+		p_cds_context->pdev_txrx_ctx = context;
+		break;
 	case QDF_MODULE_ID_HIF:
 		p_cds_context->pHIFContext = context;
 		break;
