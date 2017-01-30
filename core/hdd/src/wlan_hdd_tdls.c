@@ -1377,14 +1377,21 @@ int wlan_hdd_tdls_set_rssi(hdd_adapter_t *pAdapter, const uint8_t *mac,
 			   int8_t rxRssi)
 {
 	hddTdlsPeer_t *curr_peer;
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 
-	curr_peer = wlan_hdd_tdls_find_peer(pAdapter, mac, true);
+	if (0 != (wlan_hdd_validate_context(hdd_ctx)))
+		return -EINVAL;
+
+	mutex_lock(&hdd_ctx->tdls_lock);
+	curr_peer = wlan_hdd_tdls_find_peer(pAdapter, mac, false);
 	if (curr_peer == NULL) {
+		mutex_unlock(&hdd_ctx->tdls_lock);
 		hdd_err("curr_peer is NULL");
 		return -EINVAL;
 	}
 
 	curr_peer->rssi = rxRssi;
+	mutex_unlock(&hdd_ctx->tdls_lock);
 
 	return 0;
 }
@@ -4120,17 +4127,24 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 			 */
 		} else {
 			hddTdlsPeer_t *pTdlsPeer;
+			mutex_lock(&pHddCtx->tdls_lock);
 			pTdlsPeer =
-				wlan_hdd_tdls_find_peer(pAdapter, peer, true);
-			if (pTdlsPeer && TDLS_IS_CONNECTED(pTdlsPeer)) {
-				QDF_TRACE(QDF_MODULE_ID_HDD,
-					  QDF_TRACE_LEVEL_ERROR,
-					  "%s:" MAC_ADDRESS_STR
-					  " already connected. action %d declined.",
-					  __func__, MAC_ADDR_ARRAY(peer),
-					  action_code);
-				return -EPERM;
+				wlan_hdd_tdls_find_peer(pAdapter, peer, false);
+			if (pTdlsPeer) {
+				if (TDLS_IS_CONNECTED(pTdlsPeer)) {
+					mutex_unlock(&pHddCtx->tdls_lock);
+					QDF_TRACE(QDF_MODULE_ID_HDD,
+						  QDF_TRACE_LEVEL_ERROR,
+						  "%s:" MAC_ADDRESS_STR
+						  " already connected."
+						  " action %d declined.",
+						  __func__,
+						  MAC_ADDR_ARRAY(peer),
+						  action_code);
+					return -EPERM;
+				}
 			}
+			mutex_unlock(&pHddCtx->tdls_lock);
 		}
 	}
 	qdf_mem_copy(peerMac, peer, 6);
@@ -4144,20 +4158,30 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 	if (SIR_MAC_TDLS_TEARDOWN == action_code) {
 
 		hddTdlsPeer_t *pTdlsPeer;
-		pTdlsPeer = wlan_hdd_tdls_find_peer(pAdapter, peerMac, true);
+		mutex_lock(&pHddCtx->tdls_lock);
+		pTdlsPeer = wlan_hdd_tdls_find_peer(pAdapter, peerMac, false);
+		if (!pTdlsPeer) {
+			mutex_unlock(&pHddCtx->tdls_lock);
+			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
+				  "%s: " MAC_ADDRESS_STR " peer doesn't exist",
+				  __func__, MAC_ADDR_ARRAY(peer));
+			return -EPERM;
+		}
 
-		if (pTdlsPeer && TDLS_IS_CONNECTED(pTdlsPeer))
+		if (TDLS_IS_CONNECTED(pTdlsPeer))
 			responder = pTdlsPeer->is_responder;
 		else {
 			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 				  "%s: " MAC_ADDRESS_STR
-				  " peer doesn't exist or not connected %d dialog_token %d status %d, len = %zu",
+				  " peer doesn't exist or not connected %d "
+				  "dialog_token %d status %d, len = %zu",
 				  __func__, MAC_ADDR_ARRAY(peer),
-				  (NULL ==
-				   pTdlsPeer) ? -1 : pTdlsPeer->link_status,
+				  pTdlsPeer->link_status,
 				  dialog_token, status_code, len);
+			mutex_unlock(&pHddCtx->tdls_lock);
 			return -EPERM;
 		}
+		mutex_unlock(&pHddCtx->tdls_lock);
 	}
 
 	/* For explicit trigger of DIS_REQ come out of BMPS for
