@@ -8561,6 +8561,7 @@ typedef enum
 #define WMI_ROAM_NOTIF_INVALID     0x0  /** invalid notification. Do not interpret notif field  */
 #define WMI_ROAM_NOTIF_ROAM_START  0x1  /** indicate that roaming is started. sent only in non WOW state */
 #define WMI_ROAM_NOTIF_ROAM_ABORT  0x2  /** indicate that roaming is aborted. sent only in non WOW state */
+#define WMI_ROAM_NOTIF_ROAM_REASSOC 0x3 /** indicate that reassociation is done. sent only in non WOW state */
 
 /**whenever RIC request information change, host driver should pass all ric related information to firmware (now only support tsepc)
 * Once, 11r roaming happens, firmware can generate RIC request in reassoc request based on these informations
@@ -10030,6 +10031,14 @@ typedef struct enlo_candidate_score_params_t {
     A_UINT32 band5GHz_bonus; /* 5GHz RSSI score bonus (applied to all 5GHz networks) */
 } enlo_candidate_score_params;
 
+typedef struct connected_nlo_bss_band_rssi_pref_t {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_connected_nlo_bss_band_rssi_pref */
+    /** band which needs to get preference over other band - see wmi_set_vdev_ie_band enum */
+    A_UINT32 band;
+    /* Amount of RSSI preference (in dB) that can be given to band (mentioned above) over other band */
+    A_INT32  rssi_pref;
+} connected_nlo_bss_band_rssi_pref;
+
 typedef struct connected_nlo_rssi_params_t {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_connected_nlo_rssi_params */
     /* Relative rssi threshold (in dB) by which new BSS should have better rssi than
@@ -10064,13 +10073,16 @@ typedef struct wmi_nlo_config {
     A_UINT32 ie_bitmap[WMI_IE_BITMAP_SIZE];
     /** Number of vendor OUIs. In the TLV vendor_oui[] **/
     A_UINT32 num_vendor_oui;
+    /** Number of connected NLO band preferences **/
+    A_UINT32 num_cnlo_band_pref;
 /* The TLVs will follow.
  * nlo_configured_parameters nlo_list[];
- * A_UINT32 channel_list[];
+ * A_UINT32 channel_list[num_of_channels];
  * nlo_channel_prediction_cfg ch_prediction_cfg;
  * enlo_candidate_score_params candidate_score_params;
- * wmi_vendor_oui vendor_oui[];
+ * wmi_vendor_oui vendor_oui[num_vendor_oui];
  * connected_nlo_rssi_params cnlo_rssi_params;
+ * connected_nlo_bss_band_rssi_pref cnlo_bss_band_rssi_pref[num_cnlo_band_pref];
  */
 } wmi_nlo_config_cmd_fixed_param;
 

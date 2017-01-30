@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2010-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -793,6 +793,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_vdev_add_mac_addr_to_rx_filter_status_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_bpf_set_vdev_active_mode_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_hw_data_filter_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_connected_nlo_bss_band_rssi_pref,
 } WMITLV_TAG_ID;
 
 /*
@@ -1871,7 +1872,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_REQUEST_LINK_STATS_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, nlo_channel_prediction_cfg, channel_prediction_param, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_enlo_candidate_score_param, enlo_candidate_score_params, candidate_score_params, WMITLV_SIZE_FIX)\
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_vendor_oui, vendor_oui, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_connected_nlo_rssi_params, connected_nlo_rssi_params, cnlo_rssi_params, WMITLV_SIZE_FIX)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_connected_nlo_rssi_params, connected_nlo_rssi_params, cnlo_rssi_params, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, connected_nlo_bss_band_rssi_pref, cnlo_bss_band_rssi_pref, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_NETWORK_LIST_OFFLOAD_CONFIG_CMDID);
 
 /* Passpoint list offload config Cmd */
