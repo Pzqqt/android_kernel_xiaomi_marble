@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -21,35 +21,6 @@
 
 #include "wlan_hdd_main.h"
 #include "sir_api.h"
-
-#ifdef WLAN_FEATURE_DISA
-/**
- * hdd_encrypt_decrypt_init () - exposes encrypt/decrypt initialization
- * functionality
- * @hdd_ctx: hdd context
- *
- Return: 0 on success, negative errno on failure
- */
-int hdd_encrypt_decrypt_init(hdd_context_t *hdd_ctx);
-
-/**
- * hdd_encrypt_decrypt_deinit () - exposes encrypt/decrypt deinitialization
- * functionality
- * @hdd_ctx: hdd context
- *
- Return: 0 on success, negative errno on failure
- */
-int hdd_encrypt_decrypt_deinit(hdd_context_t *hdd_ctx);
-#else
-static inline int hdd_encrypt_decrypt_init(hdd_context_t *hdd_ctx)
-{
-	return -ENOTSUPP;
-}
-static inline int hdd_encrypt_decrypt_deinit(hdd_context_t *hdd_ctx)
-{
-	return -ENOTSUPP;
-}
-#endif
 
 #ifdef WLAN_FEATURE_DISA
 /**
