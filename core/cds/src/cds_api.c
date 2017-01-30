@@ -896,6 +896,7 @@ QDF_STATUS cds_post_disable(v_CONTEXT_t cds_context)
 QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc, v_CONTEXT_t cds_context)
 {
 	QDF_STATUS qdf_status;
+	void *ctx;
 
 	qdf_status = wma_wmi_work_close(cds_context);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -910,10 +911,9 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc, v_CONTEXT_t cds_context)
 		gp_cds_context->htc_ctx = NULL;
 	}
 
-	cdp_pdev_detach(cds_get_context(QDF_MODULE_ID_SOC),
-		gp_cds_context->pdev_txrx_ctx, 1);
-	cds_free_context(cds_context, QDF_MODULE_ID_TXRX,
-			 gp_cds_context->pdev_txrx_ctx);
+	ctx = cds_get_context(QDF_MODULE_ID_TXRX);
+	cds_set_context(QDF_MODULE_ID_TXRX, NULL);
+	cdp_pdev_detach(cds_get_context(QDF_MODULE_ID_SOC), ctx, 1);
 
 	qdf_status = sme_close(((p_cds_contextType) cds_context)->pMACContext);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {

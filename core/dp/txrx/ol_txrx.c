@@ -1743,6 +1743,7 @@ static void ol_txrx_pdev_detach(void *ppdev, int force)
 #ifdef QCA_COMPUTE_TX_DELAY
 	qdf_spinlock_destroy(&pdev->tx_delay.mutex);
 #endif
+	qdf_mem_free(ppdev);
 }
 
 #if defined(CONFIG_PER_VDEV_TX_DESC_POOL)
