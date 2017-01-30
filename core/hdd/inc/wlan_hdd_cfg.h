@@ -195,11 +195,6 @@ typedef enum {
 	eHDD_DOT11_MODE_11a,
 } eHddDot11Mode;
 
-#define CFG_DOT11_MODE_NAME                    "gDot11Mode"
-#define CFG_DOT11_MODE_MIN                     eHDD_DOT11_MODE_AUTO
-#define CFG_DOT11_MODE_DEFAULT                 eHDD_DOT11_MODE_11ac
-#define CFG_DOT11_MODE_MAX                     eHDD_DOT11_MODE_11a
-
 #define CFG_CHANNEL_BONDING_MODE_24GHZ_NAME    "gChannelBondingMode24GHz"
 #define CFG_CHANNEL_BONDING_MODE_MIN           WNI_CFG_CHANNEL_BONDING_MODE_STAMIN
 #define CFG_CHANNEL_BONDING_MODE_MAX           WNI_CFG_CHANNEL_BONDING_MODE_STAMAX
@@ -610,48 +605,283 @@ typedef enum {
 #define CFG_INTF3_MAC_ADDR_MAX                   "ffffffffffff"
 #define CFG_INTF3_MAC_ADDR_DEFAULT               "000AF58989FC"
 
-#define CFG_AP_QOS_UAPSD_MODE_NAME             "gEnableApUapsd" /* ACs to setup U-APSD for at assoc */
+/*
+ * <ini>
+ * gDot11Mode - SAP phy mode
+ * @Min: 0
+ * @Max: 10 (11a)
+ * @Default: 9 (11ac)
+ *
+ * This ini is used to set Phy Mode (auto, b, g, n, etc/) Valid values are
+ * 0-10, with 0 = Auto, 10 = 11a.
+ *
+ * Related: None.
+ *
+ * Supported Feature: SAP
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_DOT11_MODE_NAME                    "gDot11Mode"
+#define CFG_DOT11_MODE_MIN                     eHDD_DOT11_MODE_AUTO
+#define CFG_DOT11_MODE_DEFAULT                 eHDD_DOT11_MODE_11ac
+#define CFG_DOT11_MODE_MAX                     eHDD_DOT11_MODE_11a
+
+/*
+ * <ini>
+ * gEnableApUapsd - Enable/disable UAPSD for SoftAP
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to setup setup U-APSD for Acs at association
+ *
+ * Related: None.
+ *
+ * Supported Feature: SAP
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_AP_QOS_UAPSD_MODE_NAME             "gEnableApUapsd"
 #define CFG_AP_QOS_UAPSD_MODE_MIN              (0)
 #define CFG_AP_QOS_UAPSD_MODE_MAX              (1)
 #define CFG_AP_QOS_UAPSD_MODE_DEFAULT          (1)
 
+/*
+ * <ini>
+ * gEnableApRandomBssid - Create ramdom BSSID
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to create a random BSSID in SoftAP mode to meet
+ * the Android requirement.
+ *
+ * Related: None.
+ *
+ * Supported Feature: SAP
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_AP_ENABLE_RANDOM_BSSID_NAME            "gEnableApRandomBssid"
 #define CFG_AP_ENABLE_RANDOM_BSSID_MIN             (0)
 #define CFG_AP_ENABLE_RANDOM_BSSID_MAX             (1)
 #define CFG_AP_ENABLE_RANDOM_BSSID_DEFAULT         (0)
 
+/*
+ * <ini>
+ * gEnableApProt - Enable/Disable AP protection
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable/disable AP protection
+ *
+ * Related: None.
+ *
+ * Supported Feature: SAP
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_AP_ENABLE_PROTECTION_MODE_NAME            "gEnableApProt"
 #define CFG_AP_ENABLE_PROTECTION_MODE_MIN             (0)
 #define CFG_AP_ENABLE_PROTECTION_MODE_MAX             (1)
 #define CFG_AP_ENABLE_PROTECTION_MODE_DEFAULT         (1)
 
-/* Bit map for CFG_AP_PROTECTION_MODE_DEFAULT */
-/* LOWER byte for associated stations */
-/* UPPER byte for overlapping stations */
-/* each byte will have the following info */
-/* bit15 bit14 bit13     bit12  bit11 bit10    bit9     bit8 */
-/* OBSS  RIFS  LSIG_TXOP NON_GF HT20  FROM_11G FROM_11B FROM_11A */
-/* bit7  bit6  bit5      bit4   bit3  bit2     bit1     bit0 */
-/* OBSS  RIFS  LSIG_TXOP NON_GF HT_20 FROM_11G FROM_11B FROM_11A */
+/*
+ * <ini>
+ * gApProtection - Set AP protection parameter
+ * @Min: 0x0
+ * @Max: 0xFFFF
+ * @Default: 0xBFFF
+ *
+ * This ini is used to set AP protection parameter
+ * Bit map for CFG_AP_PROTECTION_MODE_DEFAULT
+ * LOWER byte for associated stations
+ * UPPER byte for overlapping stations
+ * each byte will have the following info
+ * bit15 bit14 bit13     bit12  bit11 bit10    bit9     bit8
+ * OBSS  RIFS  LSIG_TXOP NON_GF HT20  FROM_11G FROM_11B FROM_11A
+ * bit7  bit6  bit5      bit4   bit3  bit2     bit1     bit0
+ * OBSS  RIFS  LSIG_TXOP NON_GF HT_20 FROM_11G FROM_11B FROM_11A
+ *
+ * Related: None.
+ *
+ * Supported Feature: SAP
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_AP_PROTECTION_MODE_NAME            "gApProtection"
 #define CFG_AP_PROTECTION_MODE_MIN             (0x0)
 #define CFG_AP_PROTECTION_MODE_MAX             (0xFFFF)
 #define CFG_AP_PROTECTION_MODE_DEFAULT         (0xBFFF)
 
+/*
+ * <ini>
+ * gEnableApOBSSProt - Enable/Disable AP OBSS protection
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable AP OBSS protection
+ *
+ * Related: None.
+ *
+ * Supported Feature: SAP
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_AP_OBSS_PROTECTION_MODE_NAME       "gEnableApOBSSProt"
 #define CFG_AP_OBSS_PROTECTION_MODE_MIN        (0)
 #define CFG_AP_OBSS_PROTECTION_MODE_MAX        (1)
 #define CFG_AP_OBSS_PROTECTION_MODE_DEFAULT    (0)
 
+/*
+ * <ini>
+ * gDisableIntraBssFwd - Disable intrs BSS Rx packets
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to disbale to forward Intra-BSS Rx packets when
+ * ap_isolate=1 in hostapd.conf
+ *
+ * Related: None.
+ *
+ * Supported Feature: SAP
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_AP_STA_SECURITY_SEPERATION_NAME    "gDisableIntraBssFwd"
 #define CFG_AP_STA_SECURITY_SEPERATION_MIN     (0)
 #define CFG_AP_STA_SECURITY_SEPERATION_MAX     (1)
 #define CFG_AP_STA_SECURITY_SEPERATION_DEFAULT (0)
 
+/*
+ * <ini>
+ * gAPAutoShutOff - Auto shutdown when timer expires
+ * @Min: 0
+ * @Max: 4294967295UL
+ * @Default: 0
+ *
+ * This ini is used to configure timer value to shutdown AP once timer expired
+ *
+ * Related: None.
+ *
+ * Supported Feature: SAP
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_AP_AUTO_SHUT_OFF                "gAPAutoShutOff"
 #define CFG_AP_AUTO_SHUT_OFF_MIN            (0)
 #define CFG_AP_AUTO_SHUT_OFF_MAX            (4294967295UL)
 #define CFG_AP_AUTO_SHUT_OFF_DEFAULT        (0)
+
+/*
+ * <ini>
+ * gApKeepAlivePeriod - AP keep alive period
+ * @Min: 1
+ * @Max: 65535
+ * @Default: 20
+ *
+ * This ini is used to set keep alive period of AP
+ *
+ * Related: None.
+ *
+ * Supported Feature: SAP
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_AP_KEEP_ALIVE_PERIOD_NAME          "gApKeepAlivePeriod"
+#define CFG_AP_KEEP_ALIVE_PERIOD_MIN           WNI_CFG_AP_KEEP_ALIVE_TIMEOUT_STAMIN
+#define CFG_AP_KEEP_ALIVE_PERIOD_MAX           WNI_CFG_AP_KEEP_ALIVE_TIMEOUT_STAMAX
+#define CFG_AP_KEEP_ALIVE_PERIOD_DEFAULT       WNI_CFG_AP_KEEP_ALIVE_TIMEOUT_STADEF
+
+/*
+ * <ini>
+ * gApLinkMonitorPeriod - AP keep alive period
+ * @Min: 3
+ * @Max: 50
+ * @Default: 10
+ *
+ * This ini is used to configure AP link monitor timeout value
+ *
+ * Related: None.
+ *
+ * Supported Feature: SAP
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_AP_LINK_MONITOR_PERIOD_NAME          "gApLinkMonitorPeriod"
+#define CFG_AP_LINK_MONITOR_PERIOD_MIN           (3)
+#define CFG_AP_LINK_MONITOR_PERIOD_MAX           (50)
+#define CFG_AP_LINK_MONITOR_PERIOD_DEFAULT       (10)
+
+/*
+ * <ini>
+ * gBeaconInterval - Beacon interval for SoftAP
+ * @Min: 0
+ * @Max: 65535
+ * @Default: 100
+ *
+ * This ini is used to set beacon interval for SoftAP
+ *
+ * Related: None.
+ *
+ * Supported Feature: SAP
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_BEACON_INTERVAL_NAME               "gBeaconInterval"
+#define CFG_BEACON_INTERVAL_MIN                WNI_CFG_BEACON_INTERVAL_STAMIN
+#define CFG_BEACON_INTERVAL_MAX                WNI_CFG_BEACON_INTERVAL_STAMAX
+#define CFG_BEACON_INTERVAL_DEFAULT            WNI_CFG_BEACON_INTERVAL_STADEF
+
+/*
+ * <ini>
+ * gEnableVSTASupport - Enable/disable VSTA support
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable VSTA based on max assoc limit.
+ * Enable to have maximum 32 STA (P2P GC) on DUT as P2P GO or SAP
+ *
+ * Related: None.
+ *
+ * Supported Feature: SAP
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#ifdef WLAN_SOFTAP_VSTA_FEATURE
+#define CFG_VSTA_SUPPORT_ENABLE               "gEnableVSTASupport"
+#define CFG_VSTA_SUPPORT_ENABLE_MIN           (0)
+#define CFG_VSTA_SUPPORT_ENABLE_MAX           (1)
+#define CFG_VSTA_SUPPORT_ENABLE_DEFAULT       (0)
+#endif
 
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 #define CFG_WLAN_AUTO_SHUTDOWN              "gWlanAutoShutdown"
@@ -699,20 +929,10 @@ typedef enum {
 #define CFG_ENABLE_LTE_COEX_MAX               (1)
 #define CFG_ENABLE_LTE_COEX_DEFAULT           (0)
 
-#define CFG_AP_KEEP_ALIVE_PERIOD_NAME          "gApKeepAlivePeriod"
-#define CFG_AP_KEEP_ALIVE_PERIOD_MIN           WNI_CFG_AP_KEEP_ALIVE_TIMEOUT_STAMIN
-#define CFG_AP_KEEP_ALIVE_PERIOD_MAX           WNI_CFG_AP_KEEP_ALIVE_TIMEOUT_STAMAX
-#define CFG_AP_KEEP_ALIVE_PERIOD_DEFAULT       WNI_CFG_AP_KEEP_ALIVE_TIMEOUT_STADEF
-
 #define CFG_GO_KEEP_ALIVE_PERIOD_NAME          "gGoKeepAlivePeriod"
 #define CFG_GO_KEEP_ALIVE_PERIOD_MIN           WNI_CFG_GO_KEEP_ALIVE_TIMEOUT_STAMIN
 #define CFG_GO_KEEP_ALIVE_PERIOD_MAX           WNI_CFG_GO_KEEP_ALIVE_TIMEOUT_STAMAX
 #define CFG_GO_KEEP_ALIVE_PERIOD_DEFAULT       WNI_CFG_GO_KEEP_ALIVE_TIMEOUT_STADEF
-
-#define CFG_AP_LINK_MONITOR_PERIOD_NAME          "gApLinkMonitorPeriod"
-#define CFG_AP_LINK_MONITOR_PERIOD_MIN           (3)
-#define CFG_AP_LINK_MONITOR_PERIOD_MAX           (50)
-#define CFG_AP_LINK_MONITOR_PERIOD_DEFAULT       (10)
 
 /* gGoLinkMonitorPeriod is period where link is idle and where
  * we send NULL frame
@@ -721,11 +941,6 @@ typedef enum {
 #define CFG_GO_LINK_MONITOR_PERIOD_MIN           (3)
 #define CFG_GO_LINK_MONITOR_PERIOD_MAX           (50)
 #define CFG_GO_LINK_MONITOR_PERIOD_DEFAULT       (10)
-
-#define CFG_BEACON_INTERVAL_NAME               "gBeaconInterval"
-#define CFG_BEACON_INTERVAL_MIN                WNI_CFG_BEACON_INTERVAL_STAMIN
-#define CFG_BEACON_INTERVAL_MAX                WNI_CFG_BEACON_INTERVAL_STAMAX
-#define CFG_BEACON_INTERVAL_DEFAULT            WNI_CFG_BEACON_INTERVAL_STADEF
 
 #define CFG_VCC_RSSI_TRIGGER_NAME             "gVccRssiTrigger"
 #define CFG_VCC_RSSI_TRIGGER_MIN              (0)
@@ -2307,17 +2522,6 @@ typedef enum {
 #define CFG_ENABLE_RX_LDPC_MIN                   (0)
 #define CFG_ENABLE_RX_LDPC_MAX                   (1)
 #define CFG_ENABLE_RX_LDPC_DEFAULT               (0)
-
-/*
- * Enable/Disable vsta based on MAX Assoc limit
- * defined in WCNSS_qcom_cfg.ini.
- */
-#ifdef WLAN_SOFTAP_VSTA_FEATURE
-#define CFG_VSTA_SUPPORT_ENABLE               "gEnableVSTASupport"
-#define CFG_VSTA_SUPPORT_ENABLE_MIN           (0)
-#define CFG_VSTA_SUPPORT_ENABLE_MAX           (1)
-#define CFG_VSTA_SUPPORT_ENABLE_DEFAULT       (0)
-#endif
 
 #ifdef FEATURE_WLAN_TDLS
 /*
