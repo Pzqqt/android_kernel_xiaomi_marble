@@ -681,7 +681,11 @@ fail_return:
  * Return: NULL on success,
  *         nbuf when it fails to send
  */
+#if QDF_LOCK_STATS
+static noinline
+#else
 static
+#endif
 qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				    struct dp_tx_msdu_info_s *msdu_info)
 {
