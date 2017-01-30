@@ -3325,6 +3325,11 @@ QDF_STATUS wma_wmi_service_close(void *cds_ctx)
 			qdf_mem_free(wma_handle->interfaces[i].del_staself_req);
 			wma_handle->interfaces[i].del_staself_req = NULL;
 		}
+
+		if (wma_handle->interfaces[i].stats_rsp) {
+			qdf_mem_free(wma_handle->interfaces[i].stats_rsp);
+			wma_handle->interfaces[i].stats_rsp = NULL;
+		}
 	}
 
 	qdf_mem_free(wma_handle->interfaces);
