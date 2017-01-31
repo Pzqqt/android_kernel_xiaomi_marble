@@ -3971,8 +3971,7 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 
 		curr_peer =
 			wlan_hdd_tdls_get_peer(pAdapter,
-					       pRoamInfo->peerMac.bytes,
-					       false);
+					       pRoamInfo->peerMac.bytes);
 		if (!curr_peer) {
 			hdd_info("curr_peer is null");
 			status = QDF_STATUS_E_FAILURE;
