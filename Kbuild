@@ -1089,7 +1089,7 @@ WMA_OBJS :=	$(WMA_SRC_DIR)/wma_main.o \
 		$(WMA_NDP_OBJS)
 
 ifeq ($(CONFIG_WLAN_FEATURE_DSRC), y)
-WMA_OBJS+=	$(WMA_DIR)/wma_ocb.o
+WMA_OBJS+=	$(WMA_SRC_DIR)/wma_ocb.o
 endif
 ifeq ($(CONFIG_MPC_UT_FRAMEWORK),y)
 WMA_OBJS +=	$(WMA_SRC_DIR)/wma_utils_ut.o
