@@ -963,7 +963,14 @@ static inline void hal_srng_hw_init(struct hal_soc *hal,
 		hal_srng_dst_hw_init(hal, srng);
 }
 
+#ifdef CONFIG_SHADOW_V2
+#define ignore_shadow false
 #define CHECK_SHADOW_REGISTERS true
+#else
+#define ignore_shadow true
+#define CHECK_SHADOW_REGISTERS false
+#endif
+
 /**
  * hal_srng_setup - Initalize HW SRNG ring.
  * @hal_soc: Opaque HAL SOC handle
@@ -1043,7 +1050,6 @@ void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 	srng->flags |= HAL_SRNG_RING_PTR_SWAP;
 #endif
 
-#define ignore_shadow false
 	if (srng->ring_dir == HAL_SRNG_SRC_RING) {
 		srng->u.src_ring.hp = 0;
 		srng->u.src_ring.reap_hp = srng->ring_size -

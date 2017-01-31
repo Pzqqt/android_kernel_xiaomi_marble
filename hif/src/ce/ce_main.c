@@ -2015,7 +2015,7 @@ void hif_get_target_ce_config(struct hif_softc *scn,
 		*shadow_cfg_sz_ret = shadow_cfg_sz;
 }
 
-
+#ifdef CONFIG_SHADOW_V2
 static void hif_print_hal_shadow_register_cfg(struct pld_wlan_enable_cfg *cfg)
 {
 	int i;
@@ -2028,6 +2028,14 @@ static void hif_print_hal_shadow_register_cfg(struct pld_wlan_enable_cfg *cfg)
 		     cfg->shadow_reg_v2_cfg[i].addr);
 	}
 }
+
+#else
+static void hif_print_hal_shadow_register_cfg(struct pld_wlan_enable_cfg *cfg)
+{
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		  "%s: CONFIG_SHADOW_V2 not defined\n", __func__);
+}
+#endif
 
 /**
  * hif_wlan_enable(): call the platform driver to enable wlan
