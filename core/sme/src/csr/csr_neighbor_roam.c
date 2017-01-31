@@ -1147,7 +1147,7 @@ QDF_STATUS csr_neighbor_roam_indicate_connect(
 		msg->seesionId = session_id;
 		qdf_copy_macaddr(&msg->bssid,
 			&session->connectedProfile.bssid);
-		status = cds_send_mb_message_to_mac(msg);
+		status = umac_send_mb_message_to_mac(msg);
 		qdf_copy_macaddr(&roamInfo.peerMac,
 			&session->connectedProfile.bssid);
 		roamInfo.roamSynchInProgress =

@@ -1877,11 +1877,11 @@ QDF_STATUS csr_get_tsm_stats(tpAniSirGlobal pMac,
 	pMsg->tsmStatsCallback = callback;
 	pMsg->pDevContext = pContext;
 	pMsg->p_cds_context = p_cds_context;
-	status = cds_send_mb_message_to_mac(pMsg);
+	status = umac_send_mb_message_to_mac(pMsg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(pMac, LOG1,
 			" csr_get_tsm_stats: failed to send down the rssi req");
-		/* pMsg is freed by cds_send_mb_message_to_mac */
+		/* pMsg is freed by umac_send_mb_message_to_mac */
 		status = QDF_STATUS_E_FAILURE;
 	}
 	return status;
@@ -3780,7 +3780,7 @@ csr_send_mb_tkip_counter_measures_req_msg(tpAniSirGlobal pMac,
 		pMsg->transactionId = 0;
 		qdf_copy_macaddr(&pMsg->bssId, bssId);
 		pMsg->bEnable = bEnable;
-		status = cds_send_mb_message_to_mac(pMsg);
+		status = umac_send_mb_message_to_mac(pMsg);
 	} while (0);
 	return status;
 }
@@ -10383,7 +10383,7 @@ static QDF_STATUS csr_send_reset_ap_caps_changed(tpAniSirGlobal pMac,
 		sms_log(pMac, LOG1,
 			FL("CSR reset caps change for Bssid= " MAC_ADDRESS_STR),
 			MAC_ADDR_ARRAY(pMsg->bssId.bytes));
-		status = cds_send_mb_message_to_mac(pMsg);
+		status = umac_send_mb_message_to_mac(pMsg);
 	} else {
 		sms_log(pMac, LOGE, FL("Memory allocation failed"));
 	}
@@ -11289,7 +11289,7 @@ csr_roam_chk_lnk_set_ctx_rsp(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 			qdf_copy_macaddr(&pMsg->bssid,
 				&session->connectedProfile.bssid);
 
-			status = cds_send_mb_message_to_mac(pMsg);
+			status = umac_send_mb_message_to_mac(pMsg);
 			/*
 			 * OBSS SCAN Indication will be sent to Firmware
 			 * to start OBSS Scan
@@ -11316,7 +11316,7 @@ csr_roam_chk_lnk_set_ctx_rsp(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 				      sizeof(struct sme_obss_ht40_scanind_msg);
 				qdf_copy_macaddr(&msg->mac_addr,
 					&session->connectedProfile.bssid);
-				status = cds_send_mb_message_to_mac(msg);
+				status = umac_send_mb_message_to_mac(msg);
 			}
 			result = eCSR_ROAM_RESULT_AUTHENTICATED;
 		} else {
@@ -14497,10 +14497,10 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 					break;
 			}
 		}
-		status = cds_send_mb_message_to_mac(csr_join_req);
+		status = umac_send_mb_message_to_mac(csr_join_req);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			/*
-			 * cds_send_mb_message_to_mac would've released the mem
+			 * umac_send_mb_message_to_mac would've released the mem
 			 * allocated by csr_join_req. Let's make it defensive by
 			 * assigning NULL to the pointer.
 			 */
@@ -14598,7 +14598,7 @@ QDF_STATUS csr_send_mb_disassoc_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		/* Set DoNotSendOverTheAir flag to 1 only for handoff case */
 		pMsg->doNotSendOverTheAir = CSR_DONT_SEND_DISASSOC_OVER_THE_AIR;
 	}
-	return cds_send_mb_message_to_mac(pMsg);
+	return umac_send_mb_message_to_mac(pMsg);
 }
 
 QDF_STATUS
@@ -14624,7 +14624,7 @@ csr_send_mb_get_associated_stas_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 			pfnSapEventCallback, sizeof(void *));
 	qdf_mem_copy(pMsg->pAssocStasArray, pAssocStasBuf, sizeof(void *));
 	pMsg->length = sizeof(*pMsg);
-	status = cds_send_mb_message_to_mac(pMsg);
+	status = umac_send_mb_message_to_mac(pMsg);
 
 	return status;
 }
@@ -14654,7 +14654,7 @@ csr_send_mb_get_wpspbc_sessions(tpAniSirGlobal pMac, uint32_t sessionId,
 		qdf_copy_macaddr(&pMsg->bssid, &bssid);
 		qdf_copy_macaddr(&pMsg->remove_mac, &remove_mac);
 		pMsg->length = sizeof(struct sSirSmeGetWPSPBCSessionsReq);
-		status = cds_send_mb_message_to_mac(pMsg);
+		status = umac_send_mb_message_to_mac(pMsg);
 	} while (0);
 	return status;
 }
@@ -14699,7 +14699,7 @@ QDF_STATUS csr_send_chng_mcc_beacon_interval(tpAniSirGlobal pMac, uint32_t sessi
 			beaconInterval);
 		pMsg->beaconInterval =
 			pMac->roam.roamSession[sessionId].bssParams.beaconInterval;
-		status = cds_send_mb_message_to_mac(pMsg);
+		status = umac_send_mb_message_to_mac(pMsg);
 	}
 	return status;
 }
@@ -14739,7 +14739,7 @@ QDF_STATUS csr_set_ht2040_mode(tpAniSirGlobal pMac, uint32_t sessionId,
 			sessionId, cbMode);
 		pMsg->cbMode = cbMode;
 		pMsg->obssEnabled = obssEnabled;
-		status = cds_send_mb_message_to_mac(pMsg);
+		status = umac_send_mb_message_to_mac(pMsg);
 	}
 	return status;
 }
@@ -14778,7 +14778,7 @@ QDF_STATUS csr_send_mb_deauth_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 	qdf_mem_copy(&pMsg->peer_macaddr.bytes, bssId, QDF_MAC_ADDR_SIZE);
 	pMsg->reasonCode = reasonCode;
 
-	return cds_send_mb_message_to_mac(pMsg);
+	return umac_send_mb_message_to_mac(pMsg);
 }
 
 QDF_STATUS csr_send_mb_disassoc_cnf_msg(tpAniSirGlobal pMac,
@@ -14812,7 +14812,7 @@ QDF_STATUS csr_send_mb_disassoc_cnf_msg(tpAniSirGlobal pMac,
 			break;
 		}
 
-		status = cds_send_mb_message_to_mac(pMsg);
+		status = umac_send_mb_message_to_mac(pMsg);
 	} while (0);
 	return status;
 }
@@ -14846,7 +14846,7 @@ QDF_STATUS csr_send_mb_deauth_cnf_msg(tpAniSirGlobal pMac,
 			qdf_mem_free(pMsg);
 			break;
 		}
-		status = cds_send_mb_message_to_mac(pMsg);
+		status = umac_send_mb_message_to_mac(pMsg);
 	} while (0);
 	return status;
 }
@@ -14883,8 +14883,8 @@ QDF_STATUS csr_send_assoc_cnf_msg(tpAniSirGlobal pMac, tpSirSmeAssocInd pAssocIn
 			     QDF_MAC_ADDR_SIZE);
 		/* alternateChannelId */
 		pMsg->alternateChannelId = 11;
-		/* pMsg is freed by cds_send_mb_message_to_mac in anycase*/
-		status = cds_send_mb_message_to_mac(pMsg);
+		/* pMsg is freed by umac_send_mb_message_to_mac in anycase*/
+		status = umac_send_mb_message_to_mac(pMsg);
 	} while (0);
 	return status;
 }
@@ -15037,7 +15037,7 @@ QDF_STATUS csr_send_mb_set_context_req_msg(tpAniSirGlobal pMac,
 			sir_dump_buf(pMac, SIR_SMS_MODULE_ID, LOG1, pKey,
 				     keyLength);
 		}
-		status = cds_send_mb_message_to_mac(pMsg);
+		status = umac_send_mb_message_to_mac(pMsg);
 	} while (0);
 	return status;
 }
@@ -15173,7 +15173,7 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(tpAniSirGlobal pMac, uint32_t sessionId
 	pMsg->vendor_vht_sap =
 			pMac->roam.configParam.vendor_vht_sap;
 
-	return cds_send_mb_message_to_mac(pMsg);
+	return umac_send_mb_message_to_mac(pMsg);
 }
 
 QDF_STATUS csr_send_mb_stop_bss_req_msg(tpAniSirGlobal pMac, uint32_t sessionId)
@@ -15195,7 +15195,7 @@ QDF_STATUS csr_send_mb_stop_bss_req_msg(tpAniSirGlobal pMac, uint32_t sessionId)
 	pMsg->transactionId = 0;
 	pMsg->reasonCode = 0;
 	qdf_copy_macaddr(&pMsg->bssid, &pSession->connectedProfile.bssid);
-	return cds_send_mb_message_to_mac(pMsg);
+	return umac_send_mb_message_to_mac(pMsg);
 }
 
 QDF_STATUS csr_reassoc(tpAniSirGlobal pMac, uint32_t sessionId,
@@ -15277,7 +15277,7 @@ QDF_STATUS csr_process_add_sta_session_rsp(tpAniSirGlobal pMac, uint8_t *pMsg)
 		msg->msg_type = eWNI_SME_SET_IE_REQ;
 		msg->session_id = rsp->session_id;
 		msg->length = sizeof(*msg);
-		status = cds_send_mb_message_to_mac(msg);
+		status = umac_send_mb_message_to_mac(msg);
 		if (!QDF_IS_STATUS_SUCCESS(status))
 			sms_log(pMac, LOGE,
 				FL("Failed to send down the set IE req "));
@@ -16139,7 +16139,7 @@ QDF_STATUS csr_send_mb_stats_req_msg(tpAniSirGlobal pMac, uint32_t statsMask,
 	pMsg->staId = staId;
 	pMsg->statsMask = statsMask;
 	pMsg->sessionId = sessionId;
-	status = cds_send_mb_message_to_mac(pMsg);
+	status = umac_send_mb_message_to_mac(pMsg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(pMac, LOG1, FL("Failed to send down the stats req "));
 	}
@@ -17610,7 +17610,7 @@ static QDF_STATUS csr_roam_send_rso_cmd(tpAniSirGlobal mac_ctx,
 	request_buf->message_type = eWNI_SME_ROAM_SCAN_OFFLOAD_REQ;
 	request_buf->length = sizeof(*request_buf);
 
-	status = cds_send_mb_message_to_mac(request_buf);
+	status = umac_send_mb_message_to_mac(request_buf);
 	if (QDF_STATUS_SUCCESS != status) {
 		sms_log(mac_ctx, LOGE, FL("Send RSO from CSR failed"));
 		return status;
@@ -18479,7 +18479,7 @@ QDF_STATUS csr_roam_update_apwpsie(tpAniSirGlobal pMac, uint32_t sessionId,
 	pMsg->sessionId = sessionId;
 	qdf_mem_copy(&pMsg->APWPSIEs, pAPWPSIES, sizeof(tSirAPWPSIEs));
 	pMsg->length = sizeof(*pMsg);
-	status = cds_send_mb_message_to_mac(pMsg);
+	status = umac_send_mb_message_to_mac(pMsg);
 
 	return status;
 }
@@ -18507,7 +18507,7 @@ QDF_STATUS csr_roam_update_wparsni_es(tpAniSirGlobal pMac, uint32_t sessionId,
 		qdf_mem_copy(&pMsg->APWPARSNIEs, pAPSirRSNie,
 			     sizeof(tSirRSNie));
 		pMsg->length = sizeof(struct sSirUpdateAPWPARSNIEsReq);
-		status = cds_send_mb_message_to_mac(pMsg);
+		status = umac_send_mb_message_to_mac(pMsg);
 	} while (0);
 	return status;
 }
@@ -18656,7 +18656,7 @@ QDF_STATUS csr_roam_channel_change_req(tpAniSirGlobal pMac,
 		&param.operationalRateSet, sizeof(pMsg->operational_rateset));
 	qdf_mem_copy(&pMsg->extended_rateset,
 		&param.extendedRateSet, sizeof(pMsg->extended_rateset));
-	status = cds_send_mb_message_to_mac(pMsg);
+	status = umac_send_mb_message_to_mac(pMsg);
 
 	return status;
 }
@@ -18684,7 +18684,7 @@ QDF_STATUS csr_roam_start_beacon_req(tpAniSirGlobal pMac,
 	pMsg->beaconStartStatus = dfsCacWaitStatus;
 	qdf_mem_copy(pMsg->bssid, bssid.bytes, QDF_MAC_ADDR_SIZE);
 
-	status = cds_send_mb_message_to_mac(pMsg);
+	status = umac_send_mb_message_to_mac(pMsg);
 
 	return status;
 }
@@ -18740,7 +18740,7 @@ csr_roam_modify_add_ies(tpAniSirGlobal pMac,
 
 	pModifyAddIEInd->updateType = updateType;
 
-	status = cds_send_mb_message_to_mac(pModifyAddIEInd);
+	status = umac_send_mb_message_to_mac(pModifyAddIEInd);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(pMac, LOGE,
 			FL("Failed to send eWNI_SME_UPDATE_ADDTIONAL_IES msg"
@@ -18803,7 +18803,7 @@ csr_roam_update_add_ies(tpAniSirGlobal pMac,
 
 	pUpdateAddIEs->updateType = updateType;
 
-	status = cds_send_mb_message_to_mac(pUpdateAddIEs);
+	status = umac_send_mb_message_to_mac(pUpdateAddIEs);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(pMac, LOGE,
 			FL("Failed to send eWNI_SME_UPDATE_ADDTIONAL_IES msg"
@@ -18838,7 +18838,7 @@ QDF_STATUS csr_send_ext_change_channel(tpAniSirGlobal mac_ctx, uint32_t channel,
 	msg->length = sizeof(*msg);
 	msg->new_channel = channel;
 	msg->session_id = session_id;
-	status = cds_send_mb_message_to_mac(msg);
+	status = umac_send_mb_message_to_mac(msg);
 	return status;
 }
 
@@ -18877,7 +18877,7 @@ QDF_STATUS csr_roam_send_chan_sw_ie_request(tpAniSirGlobal mac_ctx,
 	qdf_mem_copy(msg->bssid, bssid.bytes, QDF_MAC_ADDR_SIZE);
 	qdf_mem_copy(&msg->ch_params, ch_params, sizeof(struct ch_params_s));
 
-	status = cds_send_mb_message_to_mac(msg);
+	status = umac_send_mb_message_to_mac(msg);
 
 	return status;
 }
@@ -19375,7 +19375,7 @@ void csr_process_set_hw_mode(tpAniSirGlobal mac, tSmeCmd *command)
 		command->u.set_hw_mode_cmd.session_id,
 		command->u.set_hw_mode_cmd.reason);
 
-	status = cds_send_mb_message_to_mac(cmd);
+	status = umac_send_mb_message_to_mac(cmd);
 	if (QDF_STATUS_SUCCESS != status) {
 		sms_log(mac, LOGE, FL("Posting to PE failed"));
 		return;
@@ -19451,7 +19451,7 @@ void csr_process_set_dual_mac_config(tpAniSirGlobal mac, tSmeCmd *command)
 		cmd->set_dual_mac.scan_config,
 		cmd->set_dual_mac.fw_mode_config);
 
-	status = cds_send_mb_message_to_mac(cmd);
+	status = umac_send_mb_message_to_mac(cmd);
 	if (QDF_STATUS_SUCCESS != status) {
 		sms_log(mac, LOGE, FL("Posting to PE failed"));
 		return;
@@ -19515,11 +19515,11 @@ void csr_process_set_antenna_mode(tpAniSirGlobal mac, tSmeCmd *command)
 		cmd->set_antenna_mode.num_rx_chains,
 		cmd->set_antenna_mode.num_tx_chains);
 
-	status = cds_send_mb_message_to_mac(cmd);
+	status = umac_send_mb_message_to_mac(cmd);
 	if (QDF_STATUS_SUCCESS != status) {
 		sms_log(mac, LOGE, FL("Posting to PE failed"));
 		/*
-		 * cds_send_mb_message_to_mac would've released the mem
+		 * umac_send_mb_message_to_mac would've released the mem
 		 * allocated by cmd.
 		 */
 		goto fail;
@@ -19591,7 +19591,7 @@ void csr_process_nss_update_req(tpAniSirGlobal mac, tSmeCmd *command)
 	sms_log(mac, LOG1,
 		FL("Posting eWNI_SME_NSS_UPDATE_REQ to PE"));
 
-	status = cds_send_mb_message_to_mac(msg);
+	status = umac_send_mb_message_to_mac(msg);
 	if (QDF_STATUS_SUCCESS != status) {
 		sms_log(mac, LOGE, FL("Posting to PE failed"));
 		return;

@@ -89,7 +89,7 @@ QDF_STATUS p2p_process_remain_on_channel_cmd(tpAniSirGlobal pMac,
 			qdf_mem_copy((void *)pMsg->probeRspIe,
 				     (void *)pMac->p2pContext.probeRspIe,
 				     pMac->p2pContext.probeRspIeLength);
-		status = cds_send_mb_message_to_mac(pMsg);
+		status = umac_send_mb_message_to_mac(pMsg);
 	}
 error:
 	if (QDF_STATUS_E_FAILURE == status)
@@ -307,7 +307,7 @@ QDF_STATUS p2p_send_action(tHalHandle hHal, uint8_t sessionId,
 		pMsg->channel_freq = channel_freq;
 		pMsg->wait = (uint16_t) wait;
 		qdf_mem_copy(pMsg->data, pBuf, len);
-		status = cds_send_mb_message_to_mac(pMsg);
+		status = umac_send_mb_message_to_mac(pMsg);
 	}
 	return status;
 }
@@ -331,7 +331,7 @@ QDF_STATUS p2p_cancel_remain_on_channel(tHalHandle hHal,
 		pMsg->msgLen = msgLen;
 		pMsg->sessionId = sessionId;
 		pMsg->scan_id = scan_id;
-		status = cds_send_mb_message_to_mac(pMsg);
+		status = umac_send_mb_message_to_mac(pMsg);
 	}
 
 	return status;

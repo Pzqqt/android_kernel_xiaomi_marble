@@ -6646,7 +6646,7 @@ QDF_STATUS sme_register_p2p_ack_ind_callback(tHalHandle hal,
 		msg->length = sizeof(*msg);
 
 		msg->callback = callback;
-		status = cds_send_mb_message_to_mac(msg);
+		status = umac_send_mb_message_to_mac(msg);
 		sme_release_global_lock(&mac_ctx->sme);
 		return status;
 	}
@@ -6687,7 +6687,7 @@ QDF_STATUS sme_register_mgmt_frame_ind_callback(tHalHandle hal,
 		msg->length          = sizeof(*msg);
 
 		msg->callback = callback;
-		status = cds_send_mb_message_to_mac(msg);
+		status = umac_send_mb_message_to_mac(msg);
 		sme_release_global_lock(&mac_ctx->sme);
 		return status;
 	}
@@ -6747,7 +6747,7 @@ QDF_STATUS sme_register_mgmt_frame(tHalHandle hHal, uint8_t sessionId,
 			pMsg->frameType = frameType;
 			pMsg->matchLen = matchLen;
 			qdf_mem_copy(pMsg->matchData, matchData, matchLen);
-			status = cds_send_mb_message_to_mac(pMsg);
+			status = umac_send_mb_message_to_mac(pMsg);
 		}
 		sme_release_global_lock(&pMac->sme);
 	}
@@ -6807,7 +6807,7 @@ QDF_STATUS sme_deregister_mgmt_frame(tHalHandle hHal, uint8_t sessionId,
 			pMsg->frameType = frameType;
 			pMsg->matchLen = matchLen;
 			qdf_mem_copy(pMsg->matchData, matchData, matchLen);
-			status = cds_send_mb_message_to_mac(pMsg);
+			status = umac_send_mb_message_to_mac(pMsg);
 		}
 		sme_release_global_lock(&pMac->sme);
 	}
@@ -8404,7 +8404,7 @@ QDF_STATUS sme_update_session_param(tHalHandle hal, uint8_t session_id,
 			msg->session_id = session_id;
 			msg->param_type = param_type;
 			msg->param_val = param_val;
-			status = cds_send_mb_message_to_mac(msg);
+			status = umac_send_mb_message_to_mac(msg);
 		}
 		sme_release_global_lock(&mac_ctx->sme);
 	}
@@ -12271,7 +12271,7 @@ QDF_STATUS sme_update_access_policy_vendor_ie(tHalHandle hal,
 	sms_log(mac, LOG1, "sme_session_id %hu, access_policy %d", session_id,
 			access_policy);
 
-	status = cds_send_mb_message_to_mac(msg);
+	status = umac_send_mb_message_to_mac(msg);
 
 	return status;
 }
@@ -16270,7 +16270,7 @@ void sme_send_disassoc_req_frame(tHalHandle hal, uint8_t session_id,
 	*buf =  wait_for_ack;
 	buf += sizeof(uint8_t);
 
-	qdf_status = cds_send_mb_message_to_mac(msg);
+	qdf_status = umac_send_mb_message_to_mac(msg);
 
 	if (qdf_status != QDF_STATUS_SUCCESS)
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -16465,7 +16465,7 @@ QDF_STATUS sme_create_mon_session(tHalHandle hal_handle, tSirMacAddr bss_id)
 		msg->type = eWNI_SME_MON_INIT_SESSION;
 		msg->msg_len = sizeof(*msg);
 		qdf_mem_copy(msg->bss_id.bytes, bss_id, QDF_MAC_ADDR_SIZE);
-		status = cds_send_mb_message_to_mac(msg);
+		status = umac_send_mb_message_to_mac(msg);
 	}
 	return status;
 }
@@ -16535,7 +16535,7 @@ void sme_set_vdev_ies_per_band(tHalHandle hal, uint8_t vdev_id)
 	sms_log(p_mac, LOG1,
 		FL("sending eWNI_SME_SET_VDEV_IES_PER_BAND: vdev_id: %d "),
 		vdev_id);
-	status = cds_send_mb_message_to_mac(p_msg);
+	status = umac_send_mb_message_to_mac(p_msg);
 	if (QDF_STATUS_SUCCESS != status)
 		sms_log(p_mac, LOGE,
 			FL("Send eWNI_SME_SET_VDEV_IES_PER_BAND fail"));
@@ -16594,7 +16594,7 @@ void sme_set_pdev_ht_vht_ies(tHalHandle hal, bool enable2x2)
 				FL("SET_HT_VHT_IE with nss %d, dot11mode %d"),
 				ht_vht_cfg->nss,
 				ht_vht_cfg->dot11mode);
-		status = cds_send_mb_message_to_mac(ht_vht_cfg);
+		status = umac_send_mb_message_to_mac(ht_vht_cfg);
 		if (QDF_STATUS_SUCCESS != status) {
 			sms_log(mac_ctx, LOGE, FL(
 					"Send SME_PDEV_SET_HT_VHT_IE fail"));
@@ -16844,7 +16844,7 @@ QDF_STATUS sme_set_default_scan_ie(tHalHandle hal, uint16_t session_id,
 			set_ie_params->session_id = session_id;
 			set_ie_params->ie_len = ie_len;
 			qdf_mem_copy(set_ie_params->ie_data, ie_data, ie_len);
-			status = cds_send_mb_message_to_mac(set_ie_params);
+			status = umac_send_mb_message_to_mac(set_ie_params);
 		}
 		sme_release_global_lock(&mac_ctx->sme);
 	}

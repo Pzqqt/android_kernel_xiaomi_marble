@@ -157,12 +157,12 @@ tSirRetStatus u_mac_post_ctrl_msg(void *pSirGlobal, tSirMbMsg *pMb)
 } /* u_mac_post_ctrl_msg() */
 
 /**
- * cds_send_mb_message_to_mac() - post a message to a message queue
+ * umac_send_mb_message_to_mac() - post a message to a message queue
  * @pBuf: Pointer to buffer allocated by caller
  *
  * Return: qdf status
  */
-QDF_STATUS cds_send_mb_message_to_mac(void *pBuf)
+QDF_STATUS umac_send_mb_message_to_mac(void *pBuf)
 {
 	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 	tSirRetStatus sirStatus;

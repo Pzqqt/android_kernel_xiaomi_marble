@@ -498,7 +498,7 @@ QDF_STATUS csr_process_ndp_initiator_request(tpAniSirGlobal mac_ctx,
 	sms_log(mac_ctx, LOG1, FL("selfMac = "MAC_ADDRESS_STR),
 		MAC_ADDR_ARRAY(self_mac_addr));
 
-	status = cds_send_mb_message_to_mac(lim_msg);
+	status = umac_send_mb_message_to_mac(lim_msg);
 	if (status != QDF_STATUS_SUCCESS)
 		csr_free_ndp_initiator_req(cmd);
 
@@ -554,7 +554,7 @@ QDF_STATUS csr_process_ndp_responder_request(tpAniSirGlobal mac_ctx,
 		lim_msg->req.ndp_rsp,
 		lim_msg->req.ndp_instance_id);
 
-	status = cds_send_mb_message_to_mac(lim_msg);
+	status = umac_send_mb_message_to_mac(lim_msg);
 
 free_config:
 	/* If fail, free up the ndp_cfg and ndp_app_info allocated in sme. */
@@ -595,7 +595,7 @@ QDF_STATUS csr_process_ndp_data_end_request(tpAniSirGlobal mac_ctx,
 	lim_msg->msg_len = msg_len;
 	lim_msg->req = cmd->u.data_end_req;
 
-	status = cds_send_mb_message_to_mac(lim_msg);
+	status = umac_send_mb_message_to_mac(lim_msg);
 	if (status != QDF_STATUS_SUCCESS) {
 		qdf_mem_free(cmd->u.data_end_req);
 		cmd->u.data_end_req = NULL;

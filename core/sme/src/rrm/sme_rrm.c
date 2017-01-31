@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -250,7 +250,7 @@ sme_rrm_send_beacon_report_xmit_ind(tpAniSirGlobal mac_ctx,
 		sms_log(mac_ctx, LOG1,
 			"SME Sending BcnRepXmit to PE numBss %d i %d j %d",
 			beacon_rep->numBssDesc, i, j);
-		status = cds_send_mb_message_to_mac(beacon_rep);
+		status = umac_send_mb_message_to_mac(beacon_rep);
 	} while (cur_result);
 
 	return status;
@@ -974,7 +974,7 @@ QDF_STATUS sme_rrm_neighbor_report_request(tpAniSirGlobal pMac, uint8_t sessionI
 	pMsg->noSSID = pNeighborReq->no_ssid;
 	qdf_mem_copy(&pMsg->ucSSID, &pNeighborReq->ssid, sizeof(tSirMacSSid));
 
-	status = cds_send_mb_message_to_mac(pMsg);
+	status = umac_send_mb_message_to_mac(pMsg);
 	if (status != QDF_STATUS_SUCCESS)
 		return QDF_STATUS_E_FAILURE;
 

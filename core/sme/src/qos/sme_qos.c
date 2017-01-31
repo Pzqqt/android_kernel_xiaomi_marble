@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -3531,7 +3531,7 @@ QDF_STATUS sme_qos_ft_aggr_qos_req(tpAniSirGlobal mac_ctx, uint8_t session_id)
 		  FL("Sending aggregated message to HAL 0x%x"),
 		  aggr_req->aggrInfo.tspecIdx);
 
-	if (QDF_IS_STATUS_SUCCESS(cds_send_mb_message_to_mac(aggr_req))) {
+	if (QDF_IS_STATUS_SUCCESS(umac_send_mb_message_to_mac(aggr_req))) {
 		status = QDF_STATUS_SUCCESS;
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("sent down a AGGR QoS req to PE"));
@@ -4004,7 +4004,7 @@ QDF_STATUS sme_qos_add_ts_req(tpAniSirGlobal pMac,
 		pMsg->req.tsrsPresent = 1;
 	}
 #endif
-	if (QDF_IS_STATUS_SUCCESS(cds_send_mb_message_to_mac(pMsg))) {
+	if (QDF_IS_STATUS_SUCCESS(umac_send_mb_message_to_mac(pMsg))) {
 		status = QDF_STATUS_SUCCESS;
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: %d: sent down a ADDTS req to PE",
@@ -4110,7 +4110,7 @@ QDF_STATUS sme_qos_del_ts_req(tpAniSirGlobal pMac,
 		  pTspecInfo->ts_info.up, pTspecInfo->ts_info.tid);
 	qdf_mem_zero(&pACInfo->curr_QoSInfo[tspec_mask - 1],
 		     sizeof(sme_QosWmmTspecInfo));
-	if (QDF_IS_STATUS_SUCCESS(cds_send_mb_message_to_mac(pMsg))) {
+	if (QDF_IS_STATUS_SUCCESS(umac_send_mb_message_to_mac(pMsg))) {
 		status = QDF_STATUS_SUCCESS;
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: %d: sme_qos_del_ts_req:Test: sent down a DELTS req to PE",

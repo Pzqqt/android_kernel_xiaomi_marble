@@ -374,7 +374,7 @@ static QDF_STATUS tdls_send_message(tpAniSirGlobal pMac, uint16_t msg_type,
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 		  ("sending msg = %d"), pMsg->type);
 	/* Send message. */
-	if (cds_send_mb_message_to_mac(pMsg) != QDF_STATUS_SUCCESS) {
+	if (umac_send_mb_message_to_mac(pMsg) != QDF_STATUS_SUCCESS) {
 		sms_log(pMac, LOGE, FL("Cannot send message"));
 		return QDF_STATUS_E_FAILURE;
 	}

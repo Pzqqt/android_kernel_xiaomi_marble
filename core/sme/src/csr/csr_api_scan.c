@@ -3251,7 +3251,7 @@ static void csr_clear_dfs_channel_list(tpAniSirGlobal pMac)
 	if (NULL != pMsg) {
 		pMsg->type = eWNI_SME_CLEAR_DFS_CHANNEL_LIST;
 		pMsg->msgLen = msgLen;
-		cds_send_mb_message_to_mac(pMsg);
+		umac_send_mb_message_to_mac(pMsg);
 	}
 }
 
@@ -5174,7 +5174,7 @@ send_scan_req:
 	}
 
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = cds_send_mb_message_to_mac(pMsg);
+		status = umac_send_mb_message_to_mac(pMsg);
 	} else {
 		sms_log(pMac, LOGE,
 			FL("failed to send down scan req with status = %d"),
@@ -6878,7 +6878,7 @@ static void csr_send_scan_abort(tpAniSirGlobal mac_ctx,
 	sms_log(mac_ctx, LOG2,
 		FL("Abort scan sent to Firmware scan_id %d session %d"),
 		scan_id, session_id);
-	status = cds_send_mb_message_to_mac(msg);
+	status = umac_send_mb_message_to_mac(msg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(mac_ctx, LOGE,
 			FL("Failed to send abort scan.scan_id %d session %d"),
@@ -7416,7 +7416,7 @@ void csr_scan_active_list_timeout_handle(void *userData)
 	msg->msgLen = msg_len;
 	msg->sessionId = scan_cmd->sessionId;
 	msg->scan_id = scan_id;
-	status = cds_send_mb_message_to_mac(msg);
+	status = umac_send_mb_message_to_mac(msg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(mac_ctx, LOGE,
 			FL(" Failed to post message to LIM"));

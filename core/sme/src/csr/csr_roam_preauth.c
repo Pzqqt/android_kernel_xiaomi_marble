@@ -552,7 +552,7 @@ QDF_STATUS csr_roam_issue_ft_preauth_req(tHalHandle hal, uint32_t session_id,
 	qdf_mem_copy(preauth_req->pbssDescription, bss_desc,
 			sizeof(bss_desc->length) + bss_desc->length);
 	preauth_req->length = auth_req_len;
-	return cds_send_mb_message_to_mac(preauth_req);
+	return umac_send_mb_message_to_mac(preauth_req);
 }
 
 /**

@@ -6886,11 +6886,11 @@ struct wow_pulse_mode {
 
 
 /**
- * cds_send_mb_message_to_mac(): post message to umac
+ * umac_send_mb_message_to_mac(): post message to umac
  * @msg: opaque message pointer
  *
  * Return: QDF status
  */
-QDF_STATUS cds_send_mb_message_to_mac(void *msg);
+QDF_STATUS umac_send_mb_message_to_mac(void *msg);
 
 #endif /* __SIR_API_H */
