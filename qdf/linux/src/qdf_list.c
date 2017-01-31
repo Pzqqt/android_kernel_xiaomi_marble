@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -38,6 +38,26 @@
 #include <linux/export.h>
 
 /* Function declarations and documenation */
+
+QDF_STATUS qdf_list_insert_before(qdf_list_t *list,
+	qdf_list_node_t *new_node, qdf_list_node_t *node)
+{
+	list_add_tail(new_node, node);
+	list->count++;
+
+	return QDF_STATUS_SUCCESS;
+}
+EXPORT_SYMBOL(qdf_list_insert_before);
+
+QDF_STATUS qdf_list_insert_after(qdf_list_t *list,
+	qdf_list_node_t *new_node, qdf_list_node_t *node)
+{
+	list_add(new_node, node);
+	list->count++;
+
+	return QDF_STATUS_SUCCESS;
+}
+EXPORT_SYMBOL(qdf_list_insert_after);
 
 /**
  * qdf_list_insert_front() - insert input node at front of the list

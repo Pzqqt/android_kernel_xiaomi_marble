@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -56,6 +56,27 @@ typedef __qdf_list_node_t qdf_list_node_t;
 typedef __qdf_list_t qdf_list_t;
 
 /* Function declarations */
+
+/**
+ * qdf_list_insert_before() - insert new node before the node
+ * @list: Pointer to list
+ * @new_node: Pointer to input node
+ * @node: node before which new node should be added.
+ *
+ * Return: QDF status
+ */
+QDF_STATUS qdf_list_insert_before(qdf_list_t *list,
+	qdf_list_node_t *new_node, qdf_list_node_t *node);
+/**
+ * qdf_list_insert_after() - insert new node after the node
+ * @list: Pointer to list
+ * @new_node: Pointer to input node
+ * @node: node after which new node should be added.
+ *
+ * Return: QDF status
+ */
+QDF_STATUS qdf_list_insert_after(qdf_list_t *list,
+	qdf_list_node_t *new_node, qdf_list_node_t *node);
 QDF_STATUS qdf_list_insert_front(qdf_list_t *list, qdf_list_node_t *node);
 
 QDF_STATUS qdf_list_insert_back_size(qdf_list_t *list, qdf_list_node_t *node,
