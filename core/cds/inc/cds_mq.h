@@ -44,8 +44,6 @@
 #include <qdf_types.h>
 #include <qdf_status.h>
 
-#define HIGH_PRIORITY 1
-
 /**---------------------------------------------------------------------------
 
    \brief cds_send_mb_message_to_mac() - post a message to a message queue

@@ -942,7 +942,7 @@ uint32_t lim_post_msg_high_priority(tpAniSirGlobal mac,
 				    struct scheduler_msg *msg)
 {
 	return scheduler_post_msg_by_priority(QDF_MODULE_ID_PE,
-					       msg, HIGH_PRIORITY);
+					       msg, true);
 }
 
 /*--------------------------------------------------------------------------
