@@ -245,7 +245,7 @@ static QDF_STATUS cds_deregister_all_modules(void)
 {
 	QDF_STATUS status;
 	status = scheduler_deregister_module(QDF_MODULE_ID_SYS);
-	status = scheduler_deregister_module(QDF_MODULE_ID_WMA);
+	status = scheduler_deregister_module(QDF_MODULE_ID_TARGET_IF);
 	status = scheduler_deregister_module(QDF_MODULE_ID_PE);
 	status = scheduler_deregister_module(QDF_MODULE_ID_SME);
 	status = scheduler_deregister_module(QDF_MODULE_ID_OS_IF);
