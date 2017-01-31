@@ -28,6 +28,10 @@
 #include "wlan_atf_utils_defs.h"
 #endif
 
+#if WLAN_CRYPTO_SUPPORTED
+#include "wlan_crypto_global_def.h"
+#endif
+
 /* Number of dev type: Direct attach and Offload */
 #define MAX_DEV_TYPE 2
 
@@ -368,6 +372,9 @@ struct wlan_lmac_if_tx_ops {
 #ifdef WLAN_ATF_ENABLE
 	struct wlan_lmac_if_atf_tx_ops atf_tx_ops;
 #endif
+#if WLAN_CRYPTO_SUPPORTED
+	struct wlan_lmac_if_crypto_tx_ops crypto_tx_ops;
+#endif
 #ifdef WIFI_POS_CONVERGED
 	struct wlan_lmac_if_wifi_pos_tx_ops wifi_pos_tx_ops;
 #endif
@@ -588,6 +595,9 @@ struct wlan_lmac_if_rx_ops {
 #endif
 #ifdef WLAN_ATF_ENABLE
 	struct wlan_lmac_if_atf_rx_ops atf_rx_ops;
+#endif
+#if WLAN_CRYPTO_SUPPORTED
+	struct wlan_lmac_if_crypto_rx_ops crypto_rx_ops;
 #endif
 #ifdef WIFI_POS_CONVERGED
 	struct wlan_lmac_if_wifi_pos_rx_ops wifi_pos_rx_ops;
