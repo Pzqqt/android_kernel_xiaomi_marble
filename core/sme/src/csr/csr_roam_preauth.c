@@ -36,6 +36,7 @@
 #include "csr_neighbor_roam.h"
 #include "mac_trace.h"
 #include "cds_concurrency.h"
+#include "sir_api.h"
 
 static void csr_reinit_preauth_cmd(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 static QDF_STATUS csr_neighbor_roam_add_preauth_fail(tpAniSirGlobal mac_ctx,

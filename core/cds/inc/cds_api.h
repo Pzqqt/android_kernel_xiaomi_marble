@@ -43,7 +43,6 @@
 #include <qdf_event.h>
 #include <qdf_lock.h>
 #include <cds_reg_service.h>
-#include <cds_mq.h>
 #include <cds_packet.h>
 #include <cds_sched.h>
 #include <qdf_threads.h>

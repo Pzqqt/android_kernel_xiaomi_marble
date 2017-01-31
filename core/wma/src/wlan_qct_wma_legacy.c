@@ -156,3 +156,29 @@ tSirRetStatus u_mac_post_ctrl_msg(void *pSirGlobal, tSirMbMsg *pMb)
 
 } /* u_mac_post_ctrl_msg() */
 
+/**
+ * cds_send_mb_message_to_mac() - post a message to a message queue
+ * @pBuf: Pointer to buffer allocated by caller
+ *
+ * Return: qdf status
+ */
+QDF_STATUS cds_send_mb_message_to_mac(void *pBuf)
+{
+	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
+	tSirRetStatus sirStatus;
+	void *hHal;
+
+	hHal = cds_get_context(QDF_MODULE_ID_SME);
+	if (NULL == hHal) {
+		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_ERROR,
+			  "%s: invalid hHal", __func__);
+	} else {
+		sirStatus = u_mac_post_ctrl_msg(hHal, pBuf);
+		if (eSIR_SUCCESS == sirStatus)
+			qdf_ret_status = QDF_STATUS_SUCCESS;
+	}
+
+	qdf_mem_free(pBuf);
+
+	return qdf_ret_status;
+}

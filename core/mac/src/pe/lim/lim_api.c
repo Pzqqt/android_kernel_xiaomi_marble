@@ -2393,3 +2393,4 @@ QDF_STATUS lim_update_ext_cap_ie(tpAniSirGlobal mac_ctx,
 	(*local_ie_len) += DOT11F_IE_EXTCAP_MAX_LEN;
 	return QDF_STATUS_SUCCESS;
 }
+

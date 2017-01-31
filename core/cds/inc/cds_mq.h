@@ -60,6 +60,5 @@
    \sa
    --------------------------------------------------------------------------*/
 
-QDF_STATUS cds_send_mb_message_to_mac(void *pBuf);
 
 #endif /* if !defined __CDS_MQ_H */
