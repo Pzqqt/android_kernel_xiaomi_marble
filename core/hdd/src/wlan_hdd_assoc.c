@@ -3601,14 +3601,12 @@ static QDF_STATUS hdd_tdls_connection_tracker_update(hdd_adapter_t *adapter,
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	curr_peer = wlan_hdd_tdls_find_peer(adapter,
-					    roam_info->peerMac.bytes, true);
+					    roam_info->peerMac.bytes, false);
 
 	if (!curr_peer) {
 		hdd_err("curr_peer is null");
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	mutex_lock(&hdd_ctx->tdls_lock);
 
 	if (eTDLS_LINK_CONNECTED ==
 	    curr_peer->link_status) {
@@ -3640,8 +3638,6 @@ static QDF_STATUS hdd_tdls_connection_tracker_update(hdd_adapter_t *adapter,
 			roam_info->reasonCode);
 	}
 
-	mutex_unlock(&hdd_ctx->tdls_lock);
-
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -3670,7 +3666,7 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 				    eCsrRoamResult roamResult)
 {
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
-	tdlsCtx_t *pHddTdlsCtx = WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter);
+	tdlsCtx_t *pHddTdlsCtx;
 	tSmeTdlsPeerStateParams smeTdlsPeerStateParams;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint8_t staIdx;
@@ -3698,12 +3694,6 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 		  eCSR_ROAM_RESULT_TDLS_SHOULD_PEER_DISCONNECTED ?
 		  "TDLS_SHOULD_PEER_DISCONNECTED" : "UNKNOWN", pRoamInfo->staId,
 		  MAC_ADDR_ARRAY(pRoamInfo->peerMac.bytes));
-
-	if (!pHddTdlsCtx) {
-		hdd_info("TDLS ctx is null, ignore roamResult (%d)",
-			 roamResult);
-		return status;
-	}
 
 	switch (roamResult) {
 	case eCSR_ROAM_RESULT_ADD_TDLS_PEER:
@@ -3862,13 +3852,17 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 		hdd_err("Sending teardown to supplicant with reason code %u",
 			pRoamInfo->reasonCode);
 
+		mutex_lock(&pHddCtx->tdls_lock);
 		curr_peer =
 			wlan_hdd_tdls_find_peer(pAdapter,
-						pRoamInfo->peerMac.bytes, true);
+						pRoamInfo->peerMac.bytes,
+						false);
 		wlan_hdd_tdls_indicate_teardown(pAdapter, curr_peer,
-						pRoamInfo->reasonCode, true);
+						pRoamInfo->reasonCode,
+						false);
 		hdd_send_wlan_tdls_teardown_event(eTDLS_TEARDOWN_BSS_DISCONNECT,
 						curr_peer->peerMac);
+		mutex_unlock(&pHddCtx->tdls_lock);
 		status = QDF_STATUS_SUCCESS;
 		break;
 	}
@@ -4018,9 +4012,20 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 
 	case eCSR_ROAM_RESULT_TDLS_SHOULD_TEARDOWN:
 	{
+		mutex_lock(&pHddCtx->tdls_lock);
+		pHddTdlsCtx = WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter);
+		if (!pHddTdlsCtx) {
+			mutex_unlock(&pHddCtx->tdls_lock);
+			hdd_info("TDLS ctx is null, ignore roamResult (%d)",
+				 roamResult);
+			status = QDF_STATUS_E_FAILURE;
+			break;
+		}
+
 		curr_peer =
 			wlan_hdd_tdls_find_peer(pAdapter,
-						pRoamInfo->peerMac.bytes, true);
+						pRoamInfo->peerMac.bytes,
+						false);
 		if (!curr_peer) {
 			hdd_info("curr_peer is null");
 			status = QDF_STATUS_E_FAILURE;
@@ -4051,7 +4056,7 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 
 				wlan_hdd_tdls_indicate_teardown
 					(pHddTdlsCtx->pAdapter, curr_peer,
-					reason, true);
+					reason, false);
 				hdd_send_wlan_tdls_teardown_event(
 					eTDLS_TEARDOWN_BSS_DISCONNECT,
 					curr_peer->peerMac);
@@ -4061,14 +4066,26 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 			}
 			status = QDF_STATUS_SUCCESS;
 		}
+		mutex_unlock(&pHddCtx->tdls_lock);
 		break;
 	}
 
 	case eCSR_ROAM_RESULT_TDLS_SHOULD_PEER_DISCONNECTED:
 	{
+		mutex_lock(&pHddCtx->tdls_lock);
+		pHddTdlsCtx = WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter);
+		if (!pHddTdlsCtx) {
+			mutex_unlock(&pHddCtx->tdls_lock);
+			hdd_info("TDLS ctx is null, ignore roamResult (%d)",
+				 roamResult);
+			status = QDF_STATUS_E_FAILURE;
+			break;
+		}
+
 		curr_peer =
 			wlan_hdd_tdls_find_peer(pAdapter,
-						pRoamInfo->peerMac.bytes, true);
+						pRoamInfo->peerMac.bytes,
+						false);
 		if (!curr_peer) {
 			hdd_info("curr_peer is null");
 			status = QDF_STATUS_E_FAILURE;
@@ -4098,7 +4115,7 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 
 				wlan_hdd_tdls_indicate_teardown
 					(pHddTdlsCtx->pAdapter, curr_peer,
-					reason, true);
+					reason, false);
 				hdd_send_wlan_tdls_teardown_event(
 					eTDLS_TEARDOWN_BSS_DISCONNECT,
 					curr_peer->peerMac);
@@ -4108,13 +4125,25 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 			}
 			status = QDF_STATUS_SUCCESS;
 		}
+		mutex_unlock(&pHddCtx->tdls_lock);
 		break;
 	}
 
 	case eCSR_ROAM_RESULT_TDLS_CONNECTION_TRACKER_NOTIFICATION:
+		mutex_lock(&pHddCtx->tdls_lock);
+		pHddTdlsCtx = WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter);
+		if (!pHddTdlsCtx) {
+			mutex_unlock(&pHddCtx->tdls_lock);
+			hdd_info("TDLS ctx is null, ignore roamResult (%d)",
+				 roamResult);
+			status = QDF_STATUS_E_FAILURE;
+			break;
+		}
+
 		status = hdd_tdls_connection_tracker_update(pAdapter,
 							    pRoamInfo,
 							    pHddTdlsCtx);
+		mutex_unlock(&pHddCtx->tdls_lock);
 		break;
 
 	default:

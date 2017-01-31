@@ -5748,8 +5748,9 @@ static void wlan_hdd_tdls_idle_handler(void *user_data)
 		return;
 	}
 
+	mutex_lock(&hdd_ctx->tdls_lock);
 	curr_peer = wlan_hdd_tdls_find_peer(adapter,
-		(u8 *) &tdls_info->peerMac.bytes[0], true);
+		(u8 *) &tdls_info->peerMac.bytes[0], false);
 
 	if (NULL == curr_peer) {
 		hdd_err("Invalid tdls idle timer expired");
@@ -5786,9 +5787,10 @@ static void wlan_hdd_tdls_idle_handler(void *user_data)
 		wlan_hdd_tdls_indicate_teardown(curr_peer->pHddTdlsCtx->pAdapter,
 					curr_peer,
 					eSIR_MAC_TDLS_TEARDOWN_UNSPEC_REASON,
-					true);
+					false);
 	}
 error_idle_return:
+	mutex_unlock(&hdd_ctx->tdls_lock);
 	return;
 }
 
