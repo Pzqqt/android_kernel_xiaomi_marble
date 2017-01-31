@@ -4184,7 +4184,7 @@ enum htt_srng_ring_id {
 		((_var) |= ((_val) << HTT_SRING_SETUP_RING_SIZE_S));	\
 	} while (0)
 
-#define HTT_SRING_SETUP_ENTRY_SIZE_M              0x00ff00000
+#define HTT_SRING_SETUP_ENTRY_SIZE_M              0x00ff0000
 #define HTT_SRING_SETUP_ENTRY_SIZE_S              16
 #define HTT_SRING_SETUP_ENTRY_SIZE_GET(_var)				\
 	(((_var) & HTT_SRING_SETUP_ENTRY_SIZE_M) >>			\
@@ -4195,7 +4195,7 @@ enum htt_srng_ring_id {
 		((_var) |= ((_val) << HTT_SRING_SETUP_ENTRY_SIZE_S));	\
 	} while (0)
 
-#define HTT_SRING_SETUP_MISC_CFG_FLAG_M            0xff0000000
+#define HTT_SRING_SETUP_MISC_CFG_FLAG_M            0xff000000
 #define HTT_SRING_SETUP_MISC_CFG_FLAG_S            24
 #define HTT_SRING_SETUP_MISC_CFG_FLAG_GET(_var)\
 	(((_var) & HTT_SRING_SETUP_MISC_CFG_FLAG_M) >> \
@@ -4211,8 +4211,8 @@ enum htt_srng_ring_id {
  * 0: updates ring_id(default)
  * 1: ring_id updating disabled
  */
-#define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_RING_ID_DISABLE_M         0x01
-#define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_RING_ID_DISABLE_S         0
+#define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_RING_ID_DISABLE_M         0x01000000
+#define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_RING_ID_DISABLE_S         24
 #define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_RING_ID_DISABLE_GET(_var)	\
 	(((_var) & HTT_SRING_SETUP_RING_MISC_CFG_FLAG_RING_ID_DISABLE_M) >> \
 	HTT_SRING_SETUP_RING_MISC_CFG_FLAG_RING_ID_DISABLE_S)
@@ -4229,8 +4229,8 @@ enum htt_srng_ring_id {
  * 0: updates Loopcnt(default)
  * 1: Loopcnt updating disabled
  */
-#define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_LOOPCOUNT_DISABLE_M  0x02
-#define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_LOOPCOUNT_DISABLE_S  1
+#define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_LOOPCOUNT_DISABLE_M  0x02000000
+#define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_LOOPCOUNT_DISABLE_S  25
 #define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_LOOPCOUNT_DISABLE_GET(_var) \
 	(((_var) & HTT_SRING_SETUP_RING_MISC_CFG_FLAG_LOOPCOUNT_DISABLE_M) >> \
 	HTT_SRING_SETUP_RING_MISC_CFG_FLAG_LOOPCOUNT_DISABLE_S)
@@ -4245,8 +4245,8 @@ enum htt_srng_ring_id {
 /* Secured access enable/disable bit. SRNG drives value of this register bit
  * into security_id port of GXI/AXI.
  */
-#define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_SECURITY_M           0x04
-#define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_SECURITY_S           2
+#define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_SECURITY_M           0x04000000
+#define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_SECURITY_S           26
 #define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_SECURITY_GET(_var) \
 	(((_var) & HTT_SRING_SETUP_RING_MISC_CFG_FLAG_SECURITY_M) >> \
 	HTT_SRING_SETUP_RING_MISC_CFG_FLAG_SECURITY_S)
@@ -4261,8 +4261,8 @@ enum htt_srng_ring_id {
 /* During MSI write operation, SRNG drives value of this register bit into
  * swap bit of GXI/AXI.
  */
-#define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_MSI_SWAP_M           0x08
-#define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_MSI_SWAP_S           3
+#define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_MSI_SWAP_M           0x08000000
+#define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_MSI_SWAP_S           27
 #define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_MSI_SWAP_GET(_var) \
 	(((_var) & HTT_SRING_SETUP_RING_MISC_CFG_FLAG_MSI_SWAP_M) >> \
 	HTT_SRING_SETUP_RING_MISC_CFG_FLAG_MSI_SWAP_S)
@@ -4277,8 +4277,8 @@ enum htt_srng_ring_id {
 /* During Pointer write operation, SRNG drives value of this register bit into
  * swap bit of GXI/AXI.
  */
-#define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_HOST_FW_SWAP_M       0x10
-#define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_HOST_FW_SWAP_S       4
+#define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_HOST_FW_SWAP_M       0x10000000
+#define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_HOST_FW_SWAP_S       28
 #define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_HOST_FW_SWAP_GET(_var) \
 	(((_var) & HTT_SRING_SETUP_RING_MISC_CFG_FLAG_HOST_FW_SWAP_M) >> \
 	HTT_SRING_SETUP_RING_MISC_CFG_FLAG_HOST_FW_SWAP_S)
@@ -4293,8 +4293,8 @@ enum htt_srng_ring_id {
 /* During any data or TLV write operation, SRNG drives value of this register
  * bit into swap bit of GXI/AXI.
  */
-#define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_TLV_SWAP_M           0x20
-#define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_TLV_SWAP_S           5
+#define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_TLV_SWAP_M           0x20000000
+#define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_TLV_SWAP_S           29
 #define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_TLV_SWAP_GET(_var)    \
 	(((_var) & HTT_SRING_SETUP_RING_MISC_CFG_FLAG_TLV_SWAP_M) >> \
 	HTT_SRING_SETUP_RING_MISC_CFG_FLAG_TLV_SWAP_S)
@@ -4306,8 +4306,8 @@ enum htt_srng_ring_id {
 			    HTT_SRING_SETUP_RING_MISC_CFG_FLAG_TLV_SWAP_S));\
 	} while (0)
 
-#define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_RESERVED1                 0x40
-#define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_RESERVED2                 0x80
+#define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_RESERVED1                 0x40000000
+#define HTT_SRING_SETUP_RING_MISC_CFG_FLAG_RESERVED2                 0x80000000
 
 
 #define HTT_SRING_SETUP_HEAD_OFFSET32_REMOTE_BASE_ADDR_LO_M  0xffffffff
