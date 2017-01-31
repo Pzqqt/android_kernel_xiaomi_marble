@@ -166,7 +166,7 @@ ifeq ($(KERNEL_BUILD), 0)
 
 ifneq ($(CONFIG_ROME_IF),sdio)
 	#Flag to enable memdump feature
-	CONFIG_WLAN_FEATURE_MEMDUMP := n
+	CONFIG_WLAN_FEATURE_MEMDUMP := y
 
 	#Flag to enable DISA
 	CONFIG_WLAN_FEATURE_DISA := y
