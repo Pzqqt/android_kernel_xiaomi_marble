@@ -397,9 +397,21 @@ static void wlan_hdd_tdls_discovery_timeout_peer_cb(void *userData)
 	struct list_head *pos, *q;
 	tdlsCtx_t *pHddTdlsCtx;
 	hdd_context_t *pHddCtx;
+	v_CONTEXT_t cds_context;
 
 	ENTER();
 
+	cds_context = cds_get_global_context();
+	if (NULL == cds_context) {
+		hdd_err("cds_context points to NULL");
+		return;
+	}
+
+	pHddCtx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (0 != (wlan_hdd_validate_context(pHddCtx)))
+		return;
+
+	mutex_lock(&pHddCtx->tdls_lock);
 	pHddTdlsCtx = (tdlsCtx_t *) userData;
 
 	if ((NULL == pHddTdlsCtx) || (NULL == pHddTdlsCtx->pAdapter)) {
@@ -413,25 +425,17 @@ static void wlan_hdd_tdls_discovery_timeout_peer_cb(void *userData)
 		return;
 	}
 
-	pHddCtx = WLAN_HDD_GET_CTX(pHddTdlsCtx->pAdapter);
-	if (0 != (wlan_hdd_validate_context(pHddCtx)))
-		return;
-
-	mutex_lock(&pHddCtx->tdls_lock);
-
 	for (i = 0; i < TDLS_PEER_LIST_SIZE; i++) {
 		head = &pHddTdlsCtx->peer_list[i];
 		list_for_each_safe(pos, q, head) {
 			tmp = list_entry(pos, hddTdlsPeer_t, node);
 			if (eTDLS_LINK_DISCOVERING == tmp->link_status) {
-				mutex_unlock(&pHddCtx->tdls_lock);
 				hdd_notice(MAC_ADDRESS_STR " to idle state",
 					   MAC_ADDR_ARRAY(tmp->peerMac));
 				wlan_hdd_tdls_set_peer_link_status(tmp,
 								   eTDLS_LINK_IDLE,
 								   eTDLS_LINK_NOT_SUPPORTED,
-								   true);
-				mutex_lock(&pHddCtx->tdls_lock);
+								   false);
 			}
 		}
 	}
@@ -2882,7 +2886,8 @@ int wlan_hdd_tdls_scan_callback(hdd_adapter_t *pAdapter, struct wiphy *wiphy,
 	if (eTDLS_SUPPORT_NOT_ENABLED == pHddCtx->tdls_mode)
 		return 1;
 
-	curr_peer = wlan_hdd_tdls_is_progress(pHddCtx, NULL, 0, true);
+	mutex_lock(&pHddCtx->tdls_lock);
+	curr_peer = wlan_hdd_tdls_is_progress(pHddCtx, NULL, 0, false);
 	if (NULL != curr_peer) {
 		if (pHddCtx->tdls_scan_ctxt.reject++ >= TDLS_MAX_SCAN_REJECT) {
 			pHddCtx->tdls_scan_ctxt.reject = 0;
@@ -2894,13 +2899,16 @@ int wlan_hdd_tdls_scan_callback(hdd_adapter_t *pAdapter, struct wiphy *wiphy,
 			wlan_hdd_tdls_set_peer_link_status(curr_peer,
 							   eTDLS_LINK_IDLE,
 							   eTDLS_LINK_UNSPECIFIED,
-							   true);
+							   false);
+			mutex_unlock(&pHddCtx->tdls_lock);
 			return 1;
 		}
+		mutex_unlock(&pHddCtx->tdls_lock);
 		hdd_warn("tdls in progress. scan rejected %d",
 			 pHddCtx->tdls_scan_ctxt.reject);
 		return -EBUSY;
 	}
+	mutex_unlock(&pHddCtx->tdls_lock);
 
 	/* tdls teardown is ongoing */
 	if (eTDLS_SUPPORT_DISABLED == pHddCtx->tdls_mode) {
