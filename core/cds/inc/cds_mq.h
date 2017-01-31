@@ -45,7 +45,6 @@
 #include <qdf_status.h>
 
 #define HIGH_PRIORITY 1
-#define LOW_PRIORITY 0
 
 /**---------------------------------------------------------------------------
 
