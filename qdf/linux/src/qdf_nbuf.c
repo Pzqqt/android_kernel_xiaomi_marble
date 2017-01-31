@@ -660,6 +660,18 @@ __qdf_nbuf_data_get_icmpv6_subtype(uint8_t *data)
 	case ICMPV6_RESPONSE:
 		proto_subtype = QDF_PROTO_ICMPV6_RES;
 		break;
+	case ICMPV6_RS:
+		proto_subtype = QDF_PROTO_ICMPV6_RS;
+		break;
+	case ICMPV6_RA:
+		proto_subtype = QDF_PROTO_ICMPV6_RA;
+		break;
+	case ICMPV6_NS:
+		proto_subtype = QDF_PROTO_ICMPV6_NS;
+		break;
+	case ICMPV6_NA:
+		proto_subtype = QDF_PROTO_ICMPV6_NA;
+		break;
 	default:
 		break;
 	}

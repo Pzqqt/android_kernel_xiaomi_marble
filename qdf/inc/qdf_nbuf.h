@@ -196,6 +196,10 @@ struct mon_rx_status {
 #define ICMPV6_SUBTYPE_OFFSET         54
 #define ICMPV6_REQUEST                0x80
 #define ICMPV6_RESPONSE               0x81
+#define ICMPV6_RS                     0x85
+#define ICMPV6_RA                     0x86
+#define ICMPV6_NS                     0x87
+#define ICMPV6_NA                     0x88
 
 #define QDF_NBUF_IPA_CHECK_MASK		0x80000000
 
@@ -236,6 +240,10 @@ enum qdf_proto_type {
  * @QDF_PROTO_ICMP_RES - icmp response
  * @QDF_PROTO_ICMPV6_REQ - icmpv6 request
  * @QDF_PROTO_ICMPV6_RES - icmpv6 response
+ * @QDF_PROTO_ICMPV6_RS - icmpv6 rs packet
+ * @QDF_PROTO_ICMPV6_RA - icmpv6 ra packet
+ * @QDF_PROTO_ICMPV6_NS - icmpv6 ns packet
+ * @QDF_PROTO_ICMPV6_NA - icmpv6 na packet
  * @QDF_PROTO_IPV4_UDP - ipv4 udp
  * @QDF_PROTO_IPV4_TCP - ipv4 tcp
  * @QDF_PROTO_IPV6_UDP - ipv6 udp
@@ -268,6 +276,10 @@ enum qdf_proto_subtype {
 	QDF_PROTO_ICMP_RES,
 	QDF_PROTO_ICMPV6_REQ,
 	QDF_PROTO_ICMPV6_RES,
+	QDF_PROTO_ICMPV6_RS,
+	QDF_PROTO_ICMPV6_RA,
+	QDF_PROTO_ICMPV6_NS,
+	QDF_PROTO_ICMPV6_NA,
 	QDF_PROTO_IPV4_UDP,
 	QDF_PROTO_IPV4_TCP,
 	QDF_PROTO_IPV6_UDP,
