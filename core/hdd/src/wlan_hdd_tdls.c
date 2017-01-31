@@ -3150,9 +3150,7 @@ int wlan_hdd_set_callback(hddTdlsPeer_t *curr_peer,
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	if ((NULL == pHddCtx))
 		return -EINVAL;
-	mutex_lock(&pHddCtx->tdls_lock);
 	curr_peer->state_change_notification = callback;
-	mutex_unlock(&pHddCtx->tdls_lock);
 	return 0;
 }
 
@@ -4541,6 +4539,7 @@ int wlan_hdd_tdls_extctrl_config_peer(hdd_adapter_t *pAdapter,
 {
 	hddTdlsPeer_t *pTdlsPeer;
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	int status = 0;
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
 		  "%s : NL80211_TDLS_SETUP for " MAC_ADDRESS_STR,
 		  __func__, MAC_ADDR_ARRAY(peer));
@@ -4549,19 +4548,26 @@ int wlan_hdd_tdls_extctrl_config_peer(hdd_adapter_t *pAdapter,
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
 			  "%s TDLS External control or Implicit Trigger not enabled ",
 			  __func__);
-		return -ENOTSUPP;
+		status = -ENOTSUPP;
+		goto ret_status;
 	}
-	pTdlsPeer = wlan_hdd_tdls_get_peer(pAdapter, peer, true);
+
+	mutex_lock(&pHddCtx->tdls_lock);
+	pTdlsPeer = wlan_hdd_tdls_get_peer(pAdapter, peer, false);
 	if (pTdlsPeer == NULL) {
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "%s: peer " MAC_ADDRESS_STR " does not exist",
 			  __func__, MAC_ADDR_ARRAY(peer));
-		return -EINVAL;
+		status = -EINVAL;
+		goto rel_lock;
 	}
+	mutex_unlock(&pHddCtx->tdls_lock);
+
 	if (0 != wlan_hdd_tdls_set_force_peer(pAdapter, peer, true)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "%s TDLS Add Force Peer Failed", __func__);
-		return -EINVAL;
+		status = -EINVAL;
+		goto ret_status;
 	}
 	/* Update the peer mac to firmware, so firmware
 	 * could update the connection table
@@ -4570,13 +4576,11 @@ int wlan_hdd_tdls_extctrl_config_peer(hdd_adapter_t *pAdapter,
 	    eSME_TDLS_PEER_ADD_MAC_ADDR)) {
 		hdd_err("TDLS Peer mac update Failed " MAC_ADDRESS_STR,
 			MAC_ADDR_ARRAY(peer));
-		return -EINVAL;
+		status = -EINVAL;
+		goto ret_status;
 	}
 
 	pHddCtx->tdls_external_peer_count++;
-
-	/* set tdls connection tracker state */
-	cds_set_tdls_ct_mode(pHddCtx);
 
 	/* validate if off channel is DFS channel */
 	if (CDS_IS_DFS_CH(chan)) {
@@ -4591,14 +4595,36 @@ int wlan_hdd_tdls_extctrl_config_peer(hdd_adapter_t *pAdapter,
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "%s TDLS Set Peer's External Ctrl Parameter Failed",
 			  __func__);
-		return -EINVAL;
+		status = -EINVAL;
+		goto ret_status;
+	}
+
+	mutex_lock(&pHddCtx->tdls_lock);
+	pTdlsPeer = wlan_hdd_tdls_get_peer(pAdapter, peer, false);
+	if (pTdlsPeer == NULL) {
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
+			  "%s: peer " MAC_ADDRESS_STR " does not exist",
+			  __func__, MAC_ADDR_ARRAY(peer));
+		status = -EINVAL;
+		goto rel_lock;
 	}
 	if (0 != wlan_hdd_set_callback(pTdlsPeer, callback)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "%s TDLS set callback Failed", __func__);
-		return -EINVAL;
+		status = -EINVAL;
+		goto rel_lock;
 	}
-	return 0;
+
+	mutex_unlock(&pHddCtx->tdls_lock);
+
+	/* set tdls connection tracker state */
+	cds_set_tdls_ct_mode(pHddCtx);
+
+	return status;
+rel_lock:
+	mutex_unlock(&pHddCtx->tdls_lock);
+ret_status:
+	return status;
 }
 
 /**
@@ -4614,6 +4640,7 @@ int wlan_hdd_tdls_extctrl_deconfig_peer(hdd_adapter_t *pAdapter,
 {
 	hddTdlsPeer_t *pTdlsPeer;
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	int status = 0;
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
 		  "%s : NL80211_TDLS_TEARDOWN for " MAC_ADDRESS_STR,
 		  __func__, MAC_ADDR_ARRAY(peer));
@@ -4622,25 +4649,52 @@ int wlan_hdd_tdls_extctrl_deconfig_peer(hdd_adapter_t *pAdapter,
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
 			  "%s TDLS External control or Implicit Trigger not enabled ",
 			  __func__);
-		return -ENOTSUPP;
+		status = -ENOTSUPP;
+		goto ret_status;
 	}
-	pTdlsPeer = wlan_hdd_tdls_find_peer(pAdapter, peer, true);
+
+	mutex_lock(&pHddCtx->tdls_lock);
+	pTdlsPeer = wlan_hdd_tdls_find_peer(pAdapter, peer, false);
 	if (NULL == pTdlsPeer) {
 		hdd_notice("peer matching" MAC_ADDRESS_STR "not found",
 			   MAC_ADDR_ARRAY(peer));
-		return -EINVAL;
+		status = -EINVAL;
+		goto rel_lock;
 	}
 
 	wlan_hdd_tdls_indicate_teardown(pAdapter, pTdlsPeer,
 					eSIR_MAC_TDLS_TEARDOWN_UNSPEC_REASON,
-					true);
+					false);
 	hdd_send_wlan_tdls_teardown_event(eTDLS_TEARDOWN_EXT_CTRL,
 					  pTdlsPeer->peerMac);
+	mutex_unlock(&pHddCtx->tdls_lock);
+
 	if (0 != wlan_hdd_tdls_set_force_peer(pAdapter, peer, false)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "%s Failed", __func__);
-		return -EINVAL;
+		status = -EINVAL;
+		goto ret_status;
 	}
+
+	if (pHddCtx->tdls_external_peer_count)
+		pHddCtx->tdls_external_peer_count--;
+
+	mutex_lock(&pHddCtx->tdls_lock);
+	pTdlsPeer = wlan_hdd_tdls_find_peer(pAdapter, peer, false);
+	if (NULL == pTdlsPeer) {
+		hdd_notice("peer matching" MAC_ADDRESS_STR "not found",
+			   MAC_ADDR_ARRAY(peer));
+		status = -EINVAL;
+		goto rel_lock;
+	}
+	if (0 != wlan_hdd_set_callback(pTdlsPeer, NULL)) {
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
+			  "%s TDLS set callback Failed", __func__);
+		status = -EINVAL;
+		goto rel_lock;
+	}
+
+	mutex_unlock(&pHddCtx->tdls_lock);
 
 	/* Update the peer mac to firmware, so firmware
 	 * could update the connection table
@@ -4649,21 +4703,18 @@ int wlan_hdd_tdls_extctrl_deconfig_peer(hdd_adapter_t *pAdapter,
 	    eSME_TDLS_PEER_REMOVE_MAC_ADDR)) {
 		hdd_err("TDLS Peer mac update Failed " MAC_ADDRESS_STR,
 			MAC_ADDR_ARRAY(peer));
-		return -EINVAL;
+		status = -EINVAL;
+		goto ret_status;
 	}
-
-	if (pHddCtx->tdls_external_peer_count)
-		pHddCtx->tdls_external_peer_count--;
 
 	/* set tdls connection tracker state */
 	cds_set_tdls_ct_mode(pHddCtx);
+	goto ret_status;
 
-	if (0 != wlan_hdd_set_callback(pTdlsPeer, NULL)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s TDLS set callback Failed", __func__);
-		return -EINVAL;
-	}
-	return 0;
+rel_lock:
+	mutex_unlock(&pHddCtx->tdls_lock);
+ret_status:
+	return status;
 }
 
 /**
