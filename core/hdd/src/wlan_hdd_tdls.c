@@ -271,7 +271,8 @@ void wlan_hdd_tdls_disable_offchan_and_teardown_links(hdd_context_t *hddctx)
 		wlan_hdd_tdls_indicate_teardown(
 					curr_peer->pHddTdlsCtx->pAdapter,
 					curr_peer,
-					eSIR_MAC_TDLS_TEARDOWN_UNSPEC_REASON);
+					eSIR_MAC_TDLS_TEARDOWN_UNSPEC_REASON,
+					true);
 		hdd_send_wlan_tdls_teardown_event(eTDLS_TEARDOWN_CONCURRENCY,
 			curr_peer->peerMac);
 	}
@@ -2997,7 +2998,8 @@ int wlan_hdd_tdls_scan_callback(hdd_adapter_t *pAdapter, struct wiphy *wiphy,
 				wlan_hdd_tdls_indicate_teardown
 					(connectedPeerList[i]->pHddTdlsCtx->
 					 pAdapter, connectedPeerList[i],
-					 eSIR_MAC_TDLS_TEARDOWN_UNSPEC_REASON);
+					 eSIR_MAC_TDLS_TEARDOWN_UNSPEC_REASON,
+					 true);
 				hdd_send_wlan_tdls_teardown_event
 					(eTDLS_TEARDOWN_SCAN,
 					 connectedPeerList[i]->peerMac);
@@ -3101,11 +3103,13 @@ void wlan_hdd_tdls_timer_restart(hdd_adapter_t *pAdapter,
  * @pAdapter: HDD adapter
  * @curr_peer: peer tdls teardown happened
  * @reason: teardown reason
+ * @need_lock: mutex lock for wlan_hdd_tdls_set_peer_link_status()
  *
  * Return: Void
  */
 void wlan_hdd_tdls_indicate_teardown(hdd_adapter_t *pAdapter,
-				     hddTdlsPeer_t *curr_peer, uint16_t reason)
+				     hddTdlsPeer_t *curr_peer, uint16_t reason,
+				     bool need_lock)
 {
 	if ((NULL == pAdapter || WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic) ||
 	    (NULL == curr_peer)) {
@@ -3121,7 +3125,7 @@ void wlan_hdd_tdls_indicate_teardown(hdd_adapter_t *pAdapter,
 	wlan_hdd_tdls_set_peer_link_status(curr_peer,
 					   eTDLS_LINK_TEARING,
 					   eTDLS_LINK_UNSPECIFIED,
-					   true);
+					   need_lock);
 	hdd_info("Teardown reason %d", reason);
 	cfg80211_tdls_oper_request(pAdapter->dev,
 				   curr_peer->peerMac,
@@ -4628,7 +4632,8 @@ int wlan_hdd_tdls_extctrl_deconfig_peer(hdd_adapter_t *pAdapter,
 	}
 
 	wlan_hdd_tdls_indicate_teardown(pAdapter, pTdlsPeer,
-					eSIR_MAC_TDLS_TEARDOWN_UNSPEC_REASON);
+					eSIR_MAC_TDLS_TEARDOWN_UNSPEC_REASON,
+					true);
 	hdd_send_wlan_tdls_teardown_event(eTDLS_TEARDOWN_EXT_CTRL,
 					  pTdlsPeer->peerMac);
 	if (0 != wlan_hdd_tdls_set_force_peer(pAdapter, peer, false)) {
@@ -5732,8 +5737,9 @@ static void wlan_hdd_tdls_idle_handler(void *user_data)
 		hdd_info("trigger tdls link to "MAC_ADDRESS_STR
 			 " down", MAC_ADDR_ARRAY(curr_peer->peerMac));
 		wlan_hdd_tdls_indicate_teardown(curr_peer->pHddTdlsCtx->pAdapter,
-						curr_peer,
-						eSIR_MAC_TDLS_TEARDOWN_UNSPEC_REASON);
+					curr_peer,
+					eSIR_MAC_TDLS_TEARDOWN_UNSPEC_REASON,
+					true);
 	}
 error_idle_return:
 	return;
@@ -5794,8 +5800,9 @@ static void tdls_ct_process_connected_link(hddTdlsPeer_t *curr_peer,
 		/* unlock the mutex here, it may used in caller function */
 		mutex_unlock(&hdd_ctx->tdls_lock);
 		wlan_hdd_tdls_indicate_teardown(hdd_tdls_ctx->pAdapter,
-						curr_peer,
-						eSIR_MAC_TDLS_TEARDOWN_UNSPEC_REASON);
+					curr_peer,
+					eSIR_MAC_TDLS_TEARDOWN_UNSPEC_REASON,
+					true);
 		mutex_lock(&hdd_ctx->tdls_lock);
 		return;
 	}
@@ -6106,7 +6113,8 @@ static int wlan_hdd_tdls_teardown_links(hdd_context_t *hddctx,
 		wlan_hdd_tdls_indicate_teardown(
 					curr_peer->pHddTdlsCtx->pAdapter,
 					curr_peer,
-					eSIR_MAC_TDLS_TEARDOWN_UNSPEC_REASON);
+					eSIR_MAC_TDLS_TEARDOWN_UNSPEC_REASON,
+					true);
 		mutex_lock(&hddctx->tdls_lock);
 		hddctx->tdls_teardown_peers_cnt++;
 		mutex_unlock(&hddctx->tdls_lock);

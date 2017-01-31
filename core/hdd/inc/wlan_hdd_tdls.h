@@ -611,7 +611,7 @@ void wlan_hdd_tdls_timer_restart(hdd_adapter_t *pAdapter,
 				 uint32_t expirationTime);
 void wlan_hdd_tdls_indicate_teardown(hdd_adapter_t *pAdapter,
 				     hddTdlsPeer_t *curr_peer,
-				     uint16_t reason);
+				     uint16_t reason, bool need_lock);
 
 void wlan_hdd_tdls_implicit_send_discovery_request(tdlsCtx_t *hdd_tdls_ctx);
 
