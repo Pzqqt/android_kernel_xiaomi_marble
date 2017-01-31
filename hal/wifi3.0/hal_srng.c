@@ -27,7 +27,6 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "pld_common.h"
 #include "hal_api.h"
 #include "wcss_version.h"
 
