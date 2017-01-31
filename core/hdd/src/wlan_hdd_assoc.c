@@ -3966,10 +3966,20 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 			break;
 		}
 
+		mutex_lock(&pHddCtx->tdls_lock);
+		pHddTdlsCtx = WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter);
+		if (!pHddTdlsCtx) {
+			mutex_unlock(&pHddCtx->tdls_lock);
+			hdd_info("TDLS ctx is null, ignore roamResult (%d)",
+				 roamResult);
+			status = QDF_STATUS_E_FAILURE;
+			break;
+		}
+
 		curr_peer =
 			wlan_hdd_tdls_get_peer(pAdapter,
 					       pRoamInfo->peerMac.bytes,
-					       true);
+					       false);
 		if (!curr_peer) {
 			hdd_info("curr_peer is null");
 			status = QDF_STATUS_E_FAILURE;
@@ -4002,6 +4012,7 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 			}
 			status = QDF_STATUS_SUCCESS;
 		}
+		mutex_unlock(&pHddCtx->tdls_lock);
 		break;
 	}
 
