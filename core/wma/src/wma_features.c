@@ -2739,6 +2739,14 @@ wma_pkt_proto_subtype_to_string(enum qdf_proto_subtype proto_subtype)
 		return "ICMPV6 REQUEST";
 	case QDF_PROTO_ICMPV6_RES:
 		return "ICMPV6 RESPONSE";
+	case QDF_PROTO_ICMPV6_RS:
+		return "ICMPV6 RS";
+	case QDF_PROTO_ICMPV6_RA:
+		return "ICMPV6 RA";
+	case QDF_PROTO_ICMPV6_NS:
+		return "ICMPV6 NS";
+	case QDF_PROTO_ICMPV6_NA:
+		return "ICMPV6 NA";
 	case QDF_PROTO_IPV4_UDP:
 		return "IPV4 UDP Packet";
 	case QDF_PROTO_IPV4_TCP:
@@ -2931,6 +2939,10 @@ static void wma_wow_parse_data_pkt_buffer(uint8_t *data,
 
 	case QDF_PROTO_ICMPV6_REQ:
 	case QDF_PROTO_ICMPV6_RES:
+	case QDF_PROTO_ICMPV6_RS:
+	case QDF_PROTO_ICMPV6_RA:
+	case QDF_PROTO_ICMPV6_NS:
+	case QDF_PROTO_ICMPV6_NA:
 		WMA_LOGD("WOW Wakeup: %s rcvd",
 			wma_pkt_proto_subtype_to_string(proto_subtype));
 		if (buf_len >= WMA_IPV6_PKT_INFO_GET_MIN_LEN) {
