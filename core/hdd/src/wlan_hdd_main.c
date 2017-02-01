@@ -8300,7 +8300,7 @@ int hdd_wlan_startup(struct device *dev)
 	if (IS_ERR(adapter)) {
 		hdd_alert("Failed to open interface, adapter is NULL");
 		ret = PTR_ERR(adapter);
-		goto err_ipa_cleanup;
+		goto err_release_rtnl_lock;
 	}
 
 	hif_sc = cds_get_context(QDF_MODULE_ID_HIF);
@@ -8395,12 +8395,12 @@ err_debugfs_exit:
 	hdd_debugfs_exit(adapter);
 
 err_close_adapter:
-	hdd_close_all_adapters(hdd_ctx, false);
+	hdd_close_all_adapters(hdd_ctx, rtnl_held);
 
+err_release_rtnl_lock:
 	if (rtnl_held)
 		hdd_release_rtnl_lock();
 
-err_ipa_cleanup:
 	hdd_ipa_cleanup(hdd_ctx);
 
 err_wiphy_unregister:
