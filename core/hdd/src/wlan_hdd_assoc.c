@@ -3806,17 +3806,18 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 			    pHddCtx->tdlsConnInfo[staIdx].staId) {
 				hdd_warn("HDD: del STA IDX = %x",
 					 pRoamInfo->staId);
-
+				mutex_lock(&pHddCtx->tdls_lock);
 				curr_peer =
 					wlan_hdd_tdls_find_peer(pAdapter,
 								pRoamInfo->
 								peerMac.bytes,
-								true);
+								false);
 				if (NULL != curr_peer) {
 				    hdd_info("Current status for peer " MAC_ADDRESS_STR " is %d",
 				    MAC_ADDR_ARRAY(pRoamInfo->peerMac.bytes),
 					    curr_peer->link_status);
 				    if (TDLS_IS_CONNECTED(curr_peer)) {
+					mutex_unlock(&pHddCtx->tdls_lock);
 					hdd_roam_deregister_tdlssta
 						(pAdapter,
 						pRoamInfo->staId);
@@ -3824,11 +3825,14 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 						(pAdapter);
 				    } else if (eTDLS_LINK_CONNECTING ==
 					    curr_peer->link_status) {
+					mutex_unlock(&pHddCtx->tdls_lock);
 					hdd_roam_deregister_tdlssta
 						(pAdapter,
 						pRoamInfo->staId);
 				    }
-				}
+				} else
+				    mutex_unlock(&pHddCtx->tdls_lock);
+
 				wlan_hdd_tdls_reset_peer(pAdapter,
 							 pRoamInfo->
 							 peerMac.bytes);
