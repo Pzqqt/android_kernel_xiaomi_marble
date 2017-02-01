@@ -36,6 +36,7 @@
 #include "wlan_hdd_main.h"
 #include "wlan_hdd_ocb.h"
 #include "wlan_hdd_trace.h"
+#include "wlan_hdd_request_manager.h"
 #include "wlan_tgt_def_config.h"
 #include "sch_api.h"
 #include "wma_api.h"
@@ -50,20 +51,6 @@
 
 /* Maximum time(ms) to wait for OCB operations */
 #define WLAN_WAIT_TIME_OCB_CMD 1500
-#define HDD_OCB_MAGIC 0x489a154f
-
-/**
- * struct hdd_ocb_ctxt - Context for OCB operations
- * adapter: the ocb adapter
- * completion_evt: the completion event
- * status: status of the request
- */
-struct hdd_ocb_ctxt {
-	uint32_t magic;
-	hdd_adapter_t *adapter;
-	struct completion completion_evt;
-	int status;
-};
 
 /**
  * hdd_set_dot11p_config() - Set 802.11p config flag
@@ -351,6 +338,11 @@ fail:
 	return NULL;
 }
 
+struct hdd_ocb_set_config_priv {
+	int status;
+};
+
+
 /**
  * hdd_ocb_set_config_callback() - OCB set config callback function
  * @context_ptr: OCB call context
@@ -361,46 +353,27 @@ fail:
  */
 static void hdd_ocb_set_config_callback(void *context_ptr, void *response_ptr)
 {
-	struct hdd_ocb_ctxt *context = context_ptr;
-	struct sir_ocb_set_config_response *resp = response_ptr;
+	struct hdd_request *hdd_request;
+	struct hdd_ocb_set_config_priv *priv;
+	struct sir_ocb_set_config_response *response = response_ptr;
 
-	if (!context)
+	hdd_request = hdd_request_get(context_ptr);
+	if (!hdd_request) {
+		hdd_err("Obsolete request");
 		return;
-
-	if (resp && resp->status)
-		hdd_err("Operation failed: %d", resp->status);
-
-	spin_lock(&hdd_context_lock);
-	if (context->magic == HDD_OCB_MAGIC) {
-		hdd_adapter_t *adapter = context->adapter;
-		if (!resp) {
-			context->status = -EINVAL;
-			complete(&context->completion_evt);
-			spin_unlock(&hdd_context_lock);
-			return;
-		}
-
-		context->adapter->ocb_set_config_resp = *resp;
-		spin_unlock(&hdd_context_lock);
-		if (!resp->status) {
-			/*
-			 * OCB set config command successful.
-			 * Open the TX data path
-			 */
-			if (!hdd_ocb_register_sta(adapter)) {
-				wlan_hdd_netif_queue_control(adapter,
-					WLAN_START_ALL_NETIF_QUEUE_N_CARRIER,
-					WLAN_CONTROL_PATH);
-			}
-		}
-
-		spin_lock(&hdd_context_lock);
-		if (context->magic == HDD_OCB_MAGIC)
-			complete(&context->completion_evt);
-		spin_unlock(&hdd_context_lock);
-	} else {
-		spin_unlock(&hdd_context_lock);
 	}
+	priv = hdd_request_priv(hdd_request);
+
+	if (response && response->status)
+		hdd_err("Operation failed: %d", response->status);
+
+	if (response && (0 == response->status))
+		priv->status = 0;
+	else
+		priv->status = -EINVAL;
+
+	hdd_request_complete(hdd_request);
+	hdd_request_put(hdd_request);
 }
 
 /**
@@ -414,58 +387,68 @@ static int hdd_ocb_set_config_req(hdd_adapter_t *adapter,
 				  struct sir_ocb_config *config)
 {
 	int rc;
-	QDF_STATUS qdf_status;
-	struct hdd_ocb_ctxt context = {0};
+	QDF_STATUS status;
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	void *cookie;
+	struct hdd_request *hdd_request;
+	struct hdd_ocb_set_config_priv *priv;
+	static const struct hdd_request_params params = {
+		.priv_size = sizeof(*priv),
+		.timeout_ms = WLAN_WAIT_TIME_OCB_CMD,
+	};
 
 	if (hdd_ocb_validate_config(adapter, config)) {
 		hdd_err("The configuration is invalid");
 		return -EINVAL;
 	}
 
-	init_completion(&context.completion_evt);
-	context.adapter = adapter;
-	context.magic = HDD_OCB_MAGIC;
+	hdd_request = hdd_request_alloc(&params);
+	if (!hdd_request) {
+		hdd_err("Request allocation failure");
+		return -ENOMEM;
+	}
+	cookie = hdd_request_cookie(hdd_request);
 
 	hdd_notice("Disabling queues");
 	wlan_hdd_netif_queue_control(adapter, WLAN_NETIF_TX_DISABLE_N_CARRIER,
 		WLAN_CONTROL_PATH);
 
 	/* Call the SME API to set the config */
-	qdf_status = sme_ocb_set_config(
-		((hdd_context_t *)adapter->pHddCtx)->hHal, &context,
-		hdd_ocb_set_config_callback, config);
-	if (qdf_status != QDF_STATUS_SUCCESS) {
+	status = sme_ocb_set_config(hdd_ctx->hHal, cookie,
+				    hdd_ocb_set_config_callback, config);
+	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Error calling SME function.");
-		/* Convert from qdf_status to errno */
-		return -EINVAL;
+		rc = qdf_status_to_os_return(status);
+		goto end;
 	}
 
 	/* Wait for the function to complete. */
-	rc = wait_for_completion_timeout(&context.completion_evt,
-		msecs_to_jiffies(WLAN_WAIT_TIME_OCB_CMD));
-	if (rc == 0) {
-		rc = -ETIMEDOUT;
-		goto end;
-	}
-	rc = 0;
-
-	if (context.status) {
-		rc = context.status;
+	rc = hdd_request_wait_for_response(hdd_request);
+	if (rc) {
+		hdd_err("Operation timed out");
 		goto end;
 	}
 
-	if (adapter->ocb_set_config_resp.status) {
-		rc = -EINVAL;
+	priv = hdd_request_priv(hdd_request);
+	rc = priv->status;
+	if (rc) {
+		hdd_err("Operation failed: %d", rc);
 		goto end;
 	}
+
+	/*
+	 * OCB set config command successful.
+	 * Open the TX data path
+	 */
+	if (!hdd_ocb_register_sta(adapter))
+		wlan_hdd_netif_queue_control(adapter,
+					WLAN_START_ALL_NETIF_QUEUE_N_CARRIER,
+					WLAN_CONTROL_PATH);
 
 	/* fall through */
 end:
-	spin_lock(&hdd_context_lock);
-	context.magic = 0;
-	spin_unlock(&hdd_context_lock);
-	if (rc)
-		hdd_err("Operation failed: %d", rc);
+	hdd_request_put(hdd_request);
+
 	return rc;
 }
 
@@ -1301,6 +1284,11 @@ int wlan_hdd_cfg80211_ocb_stop_timing_advert(struct wiphy *wiphy,
 	return ret;
 }
 
+struct hdd_ocb_get_tsf_timer_priv {
+	struct sir_ocb_get_tsf_timer_response response;
+	int status;
+};
+
 /**
  * hdd_ocb_get_tsf_timer_callback() - Callback to get TSF command
  * @context_ptr: request context
@@ -1309,23 +1297,67 @@ int wlan_hdd_cfg80211_ocb_stop_timing_advert(struct wiphy *wiphy,
 static void hdd_ocb_get_tsf_timer_callback(void *context_ptr,
 					   void *response_ptr)
 {
-	struct hdd_ocb_ctxt *context = context_ptr;
+	struct hdd_request *hdd_request;
+	struct hdd_ocb_get_tsf_timer_priv *priv;
 	struct sir_ocb_get_tsf_timer_response *response = response_ptr;
 
-	if (!context)
+	hdd_request = hdd_request_get(context_ptr);
+	if (!hdd_request) {
+		hdd_err("Obsolete request");
 		return;
-
-	spin_lock(&hdd_context_lock);
-	if (context->magic == HDD_OCB_MAGIC) {
-		if (response) {
-			context->adapter->ocb_get_tsf_timer_resp = *response;
-			context->status = 0;
-		} else {
-			context->status = -EINVAL;
-		}
-		complete(&context->completion_evt);
 	}
-	spin_unlock(&hdd_context_lock);
+
+	if (response) {
+		priv->response = *response;
+		priv->status = 0;
+	} else {
+		priv->status = -EINVAL;
+	}
+	hdd_request_complete(hdd_request);
+	hdd_request_put(hdd_request);
+}
+
+static int
+hdd_ocb_get_tsf_timer_reply(struct wiphy *wiphy,
+			    struct sir_ocb_get_tsf_timer_response *response)
+{
+	uint32_t nl_buf_len;
+	struct sk_buff *nl_resp;
+	int rc;
+
+	/* Allocate the buffer for the response. */
+	nl_buf_len = NLMSG_HDRLEN;
+	nl_buf_len += 2 * (NLA_HDRLEN + sizeof(uint32_t));
+	nl_resp = cfg80211_vendor_cmd_alloc_reply_skb(wiphy, nl_buf_len);
+	if (!nl_resp) {
+		hdd_err("cfg80211_vendor_cmd_alloc_reply_skb failed");
+		return -ENOMEM;
+	}
+
+	/* Populate the response. */
+	rc = nla_put_u32(nl_resp,
+			 QCA_WLAN_VENDOR_ATTR_OCB_GET_TSF_RESP_TIMER_HIGH,
+			 response->timer_high);
+	if (rc)
+		goto end;
+	rc = nla_put_u32(nl_resp,
+			 QCA_WLAN_VENDOR_ATTR_OCB_GET_TSF_RESP_TIMER_LOW,
+			 response->timer_low);
+	if (rc)
+		goto end;
+
+	/* Send the response. */
+	rc = cfg80211_vendor_cmd_reply(nl_resp);
+	nl_resp = NULL;
+	if (rc) {
+		hdd_err("cfg80211_vendor_cmd_reply failed: %d", rc);
+		goto end;
+	}
+end:
+	if (nl_resp)
+		kfree_skb(nl_resp);
+
+	return rc;
 }
 
 /**
@@ -1343,18 +1375,25 @@ __wlan_hdd_cfg80211_ocb_get_tsf_timer(struct wiphy *wiphy,
 				      const void *data,
 				      int data_len)
 {
-	struct sk_buff *nl_resp = 0;
 	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
 	struct net_device *dev = wdev->netdev;
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	int rc = -EINVAL;
+	int rc;
 	struct sir_ocb_get_tsf_timer request = {0};
-	struct hdd_ocb_ctxt context = {0};
+	QDF_STATUS status;
+	void *cookie;
+	struct hdd_request *hdd_request;
+	struct hdd_ocb_get_tsf_timer_priv *priv;
+	static const struct hdd_request_params params = {
+		.priv_size = sizeof(*priv),
+		.timeout_ms = WLAN_WAIT_TIME_OCB_CMD,
+	};
 
 	ENTER_DEV(dev);
 
-	if (wlan_hdd_validate_context(hdd_ctx))
-		return -EINVAL;
+	rc = wlan_hdd_validate_context(hdd_ctx);
+	if (rc)
+		return rc;
 
 	if (adapter->device_mode != QDF_OCB_MODE) {
 		hdd_err("Device not in OCB mode!");
@@ -1366,77 +1405,52 @@ __wlan_hdd_cfg80211_ocb_get_tsf_timer(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	/* Initialize the callback context */
-	init_completion(&context.completion_evt);
-	context.adapter = adapter;
-	context.magic = HDD_OCB_MAGIC;
+	hdd_request = hdd_request_alloc(&params);
+	if (!hdd_request) {
+		hdd_err("Request allocation failure");
+		return -ENOMEM;
+	}
+	cookie = hdd_request_cookie(hdd_request);
 
 	request.vdev_id = adapter->sessionId;
 	/* Call the SME function */
-	rc = sme_ocb_get_tsf_timer(hdd_ctx->hHal, &context,
-				   hdd_ocb_get_tsf_timer_callback,
-				   &request);
+	status = sme_ocb_get_tsf_timer(hdd_ctx->hHal, cookie,
+				       hdd_ocb_get_tsf_timer_callback,
+				       &request);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Error calling SME function.");
+		rc = qdf_status_to_os_return(status);
+		goto end;
+	}
+
+	rc = hdd_request_wait_for_response(hdd_request);
 	if (rc) {
-		hdd_err("Error calling SME function");
-		/* Need to convert from qdf_status to errno. */
-		return -EINVAL;
-	}
-
-	rc = wait_for_completion_timeout(&context.completion_evt,
-		msecs_to_jiffies(WLAN_WAIT_TIME_OCB_CMD));
-	if (rc == 0) {
 		hdd_err("Operation timed out");
-		rc = -ETIMEDOUT;
-		goto end;
-	}
-	rc = 0;
-
-	if (context.status) {
-		hdd_err("Operation failed: %d", context.status);
-		rc = context.status;
 		goto end;
 	}
 
-	/* Allocate the buffer for the response. */
-	nl_resp = cfg80211_vendor_cmd_alloc_reply_skb(wiphy,
-		2 * sizeof(uint32_t) + NLMSG_HDRLEN);
-
-	if (!nl_resp) {
-		hdd_err("cfg80211_vendor_cmd_alloc_reply_skb failed");
-		rc = -ENOMEM;
+	priv = hdd_request_priv(hdd_request);
+	rc = priv->status;
+	if (rc) {
+		hdd_err("Operation failed: %d", rc);
 		goto end;
 	}
 
 	hdd_err("Got TSF timer response, high=%d, low=%d",
-	       adapter->ocb_get_tsf_timer_resp.timer_high,
-	       adapter->ocb_get_tsf_timer_resp.timer_low);
-
-	/* Populate the response. */
-	rc = nla_put_u32(nl_resp,
-			QCA_WLAN_VENDOR_ATTR_OCB_GET_TSF_RESP_TIMER_HIGH,
-			adapter->ocb_get_tsf_timer_resp.timer_high);
-	if (rc)
-		goto end;
-	rc = nla_put_u32(nl_resp,
-			    QCA_WLAN_VENDOR_ATTR_OCB_GET_TSF_RESP_TIMER_LOW,
-			    adapter->ocb_get_tsf_timer_resp.timer_low);
-	if (rc)
-		goto end;
+		priv->response.timer_high,
+		priv->response.timer_low);
 
 	/* Send the response. */
-	rc = cfg80211_vendor_cmd_reply(nl_resp);
-	nl_resp = NULL;
+	rc = hdd_ocb_get_tsf_timer_reply(wiphy, &priv->response);
 	if (rc) {
-		hdd_err("cfg80211_vendor_cmd_reply failed: %d", rc);
+		hdd_err("hdd_ocb_get_tsf_timer_reply failed: %d", rc);
 		goto end;
 	}
 
+	/* fall through */
 end:
-	spin_lock(&hdd_context_lock);
-	context.magic = 0;
-	spin_unlock(&hdd_context_lock);
-	if (nl_resp)
-		kfree_skb(nl_resp);
+	hdd_request_put(hdd_request);
+
 	return rc;
 }
 
@@ -1464,6 +1478,19 @@ int wlan_hdd_cfg80211_ocb_get_tsf_timer(struct wiphy *wiphy,
 	return ret;
 }
 
+struct hdd_dcc_stats_priv {
+	struct sir_dcc_get_stats_response *response;
+	int status;
+};
+
+static void hdd_dcc_get_stats_dealloc(void *context_ptr)
+{
+	struct hdd_dcc_stats_priv *priv = context_ptr;
+
+	qdf_mem_free(priv->response);
+	priv->response = NULL;
+}
+
 /**
  * hdd_dcc_get_stats_callback() - Callback to get stats command
  * @context_ptr: request context
@@ -1471,46 +1498,86 @@ int wlan_hdd_cfg80211_ocb_get_tsf_timer(struct wiphy *wiphy,
  */
 static void hdd_dcc_get_stats_callback(void *context_ptr, void *response_ptr)
 {
-	struct hdd_ocb_ctxt *context = context_ptr;
+	struct hdd_request *hdd_request;
+	struct hdd_dcc_stats_priv *priv;
 	struct sir_dcc_get_stats_response *response = response_ptr;
 	struct sir_dcc_get_stats_response *hdd_resp;
 
-	if (!context)
+	hdd_request = hdd_request_get(context_ptr);
+	if (!hdd_request) {
+		hdd_err("Obsolete request");
 		return;
-
-	spin_lock(&hdd_context_lock);
-	if (context->magic == HDD_OCB_MAGIC) {
-		if (response) {
-			/*
-			 * If the response is hanging around from the previous
-			 * request, delete it
-			 */
-			if (context->adapter->dcc_get_stats_resp) {
-				qdf_mem_free(
-				    context->adapter->dcc_get_stats_resp);
-			}
-			context->adapter->dcc_get_stats_resp =
-				qdf_mem_malloc(sizeof(
-				    *context->adapter->dcc_get_stats_resp) +
-				    response->channel_stats_array_len);
-			if (context->adapter->dcc_get_stats_resp) {
-				hdd_resp = context->adapter->dcc_get_stats_resp;
-				*hdd_resp = *response;
-				hdd_resp->channel_stats_array =
-					(void *)hdd_resp + sizeof(*hdd_resp);
-				qdf_mem_copy(hdd_resp->channel_stats_array,
-					     response->channel_stats_array,
-					     response->channel_stats_array_len);
-				context->status = 0;
-			} else {
-				context->status = -ENOMEM;
-			}
-		} else {
-			context->status = -EINVAL;
-		}
-		complete(&context->completion_evt);
 	}
-	spin_unlock(&hdd_context_lock);
+
+	priv = hdd_request_priv(hdd_request);
+	if (!response) {
+		priv->status = -EINVAL;
+		goto end;
+	}
+
+	priv->response = qdf_mem_malloc(sizeof(*response) +
+					response->channel_stats_array_len);
+	if (!priv->response) {
+		priv->status = -ENOMEM;
+		goto end;
+	}
+
+	hdd_resp = priv->response;
+	*hdd_resp = *response;
+	hdd_resp->channel_stats_array = (void *)hdd_resp + sizeof(*hdd_resp);
+	qdf_mem_copy(hdd_resp->channel_stats_array,
+		     response->channel_stats_array,
+		     response->channel_stats_array_len);
+	priv->status = 0;
+
+end:
+	hdd_request_complete(hdd_request);
+	hdd_request_put(hdd_request);
+}
+
+static int
+hdd_dcc_get_stats_send_reply(struct wiphy *wiphy,
+			     struct sir_dcc_get_stats_response *response)
+{
+	uint32_t nl_buf_len;
+	struct sk_buff *nl_resp;
+	int rc;
+
+	/* Allocate the buffer for the response. */
+	nl_buf_len = NLMSG_HDRLEN;
+	nl_buf_len += NLA_HDRLEN + sizeof(uint32_t);
+	nl_buf_len += NLA_HDRLEN + response->channel_stats_array_len;
+	nl_resp = cfg80211_vendor_cmd_alloc_reply_skb(wiphy, nl_buf_len);
+	if (!nl_resp) {
+		hdd_err("cfg80211_vendor_cmd_alloc_reply_skb failed");
+		return -ENOMEM;
+	}
+
+	/* Populate the response. */
+	rc = nla_put_u32(nl_resp,
+			 QCA_WLAN_VENDOR_ATTR_DCC_GET_STATS_RESP_CHANNEL_COUNT,
+			 response->num_channels);
+	if (rc)
+		goto end;
+	rc = nla_put(nl_resp,
+		     QCA_WLAN_VENDOR_ATTR_DCC_GET_STATS_RESP_STATS_ARRAY,
+		     response->channel_stats_array_len,
+		     response->channel_stats_array);
+	if (rc)
+		goto end;
+
+	/* Send the response. */
+	rc = cfg80211_vendor_cmd_reply(nl_resp);
+	nl_resp = NULL;
+	if (rc) {
+		hdd_err("cfg80211_vendor_cmd_reply failed: %d", rc);
+		goto end;
+	}
+end:
+	if (nl_resp)
+		kfree_skb(nl_resp);
+
+	return rc;
 }
 
 /**
@@ -1534,15 +1601,23 @@ static int __wlan_hdd_cfg80211_dcc_get_stats(struct wiphy *wiphy,
 	struct net_device *dev = wdev->netdev;
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_DCC_GET_STATS_MAX + 1];
-	struct sk_buff *nl_resp = 0;
-	int rc = -EINVAL;
+	int rc;
 	struct sir_dcc_get_stats request = {0};
-	struct hdd_ocb_ctxt context = {0};
+	QDF_STATUS status;
+	void *cookie;
+	struct hdd_request *hdd_request;
+	struct hdd_dcc_stats_priv *priv;
+	static const struct hdd_request_params params = {
+		.priv_size = sizeof(*priv),
+		.timeout_ms = WLAN_WAIT_TIME_OCB_CMD,
+		.dealloc = hdd_dcc_get_stats_dealloc,
+	};
 
 	ENTER_DEV(dev);
 
-	if (wlan_hdd_validate_context(hdd_ctx))
-		return -EINVAL;
+	rc = wlan_hdd_validate_context(hdd_ctx);
+	if (rc)
+		return rc;
 
 	if (adapter->device_mode != QDF_OCB_MODE) {
 		hdd_err("Device not in OCB mode!");
@@ -1577,10 +1652,12 @@ static int __wlan_hdd_cfg80211_dcc_get_stats(struct wiphy *wiphy,
 	request_array = nla_data(
 		tb[QCA_WLAN_VENDOR_ATTR_DCC_GET_STATS_REQUEST_ARRAY]);
 
-	/* Initialize the callback context */
-	init_completion(&context.completion_evt);
-	context.adapter = adapter;
-	context.magic = HDD_OCB_MAGIC;
+	hdd_request = hdd_request_alloc(&params);
+	if (!hdd_request) {
+		hdd_err("Request allocation failure");
+		return -ENOMEM;
+	}
+	cookie = hdd_request_cookie(hdd_request);
 
 	request.vdev_id = adapter->sessionId;
 	request.channel_count = channel_count;
@@ -1588,76 +1665,40 @@ static int __wlan_hdd_cfg80211_dcc_get_stats(struct wiphy *wiphy,
 	request.request_array = request_array;
 
 	/* Call the SME function. */
-	rc = sme_dcc_get_stats(hdd_ctx->hHal, &context,
-			       hdd_dcc_get_stats_callback,
-			       &request);
-	if (rc) {
-		hdd_err("Error calling SME function");
-		/* Need to convert from qdf_status to errno. */
-		return -EINVAL;
+	status = sme_dcc_get_stats(hdd_ctx->hHal, cookie,
+				   hdd_dcc_get_stats_callback,
+				   &request);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Error calling SME function.");
+		rc = qdf_status_to_os_return(status);
+		goto end;
 	}
 
 	/* Wait for the function to complete. */
-	rc = wait_for_completion_timeout(&context.completion_evt,
-				msecs_to_jiffies(WLAN_WAIT_TIME_OCB_CMD));
-	if (rc == 0) {
+	rc = hdd_request_wait_for_response(hdd_request);
+	if (rc) {
+		hdd_err("Operation timed out");
+		goto end;
+	}
+
+	priv = hdd_request_priv(hdd_request);
+	rc = priv->status;
+	if (rc) {
 		hdd_err("Operation failed: %d", rc);
-		rc = -ETIMEDOUT;
 		goto end;
 	}
-
-	if (context.status) {
-		hdd_err("There was error: %d", context.status);
-		rc = context.status;
-		goto end;
-	}
-
-	if (!adapter->dcc_get_stats_resp) {
-		hdd_err("The response was NULL");
-		rc = -EINVAL;
-		goto end;
-	}
-
-	/* Allocate the buffer for the response. */
-	nl_resp = cfg80211_vendor_cmd_alloc_reply_skb(wiphy, sizeof(uint32_t) +
-		adapter->dcc_get_stats_resp->channel_stats_array_len +
-		NLMSG_HDRLEN);
-	if (!nl_resp) {
-		hdd_err("cfg80211_vendor_cmd_alloc_reply_skb failed");
-		rc = -ENOMEM;
-		goto end;
-	}
-
-	/* Populate the response. */
-	rc = nla_put_u32(nl_resp,
-			 QCA_WLAN_VENDOR_ATTR_DCC_GET_STATS_RESP_CHANNEL_COUNT,
-			 adapter->dcc_get_stats_resp->num_channels);
-	if (rc)
-		goto end;
-	rc = nla_put(nl_resp,
-		     QCA_WLAN_VENDOR_ATTR_DCC_GET_STATS_RESP_STATS_ARRAY,
-		     adapter->dcc_get_stats_resp->channel_stats_array_len,
-		     adapter->dcc_get_stats_resp->channel_stats_array);
-	if (rc)
-		goto end;
 
 	/* Send the response. */
-	rc = cfg80211_vendor_cmd_reply(nl_resp);
-	nl_resp = NULL;
+	rc = hdd_dcc_get_stats_send_reply(wiphy, priv->response);
 	if (rc) {
-		hdd_err("cfg80211_vendor_cmd_reply failed: %d", rc);
+		hdd_err("hdd_dcc_get_stats_send_reply failed: %d", rc);
 		goto end;
 	}
 
 	/* fall through */
 end:
-	spin_lock(&hdd_context_lock);
-	context.magic = 0;
-	qdf_mem_free(adapter->dcc_get_stats_resp);
-	adapter->dcc_get_stats_resp = NULL;
-	spin_unlock(&hdd_context_lock);
-	if (nl_resp)
-		kfree_skb(nl_resp);
+	hdd_request_put(hdd_request);
+
 	return rc;
 }
 
@@ -1770,6 +1811,10 @@ int wlan_hdd_cfg80211_dcc_clear_stats(struct wiphy *wiphy,
 	return ret;
 }
 
+struct hdd_dcc_update_ndl_priv {
+	int status;
+};
+
 /**
  * hdd_dcc_update_ndl_callback() - Callback to update NDL command
  * @context_ptr: request context
@@ -1777,23 +1822,23 @@ int wlan_hdd_cfg80211_dcc_clear_stats(struct wiphy *wiphy,
  */
 static void hdd_dcc_update_ndl_callback(void *context_ptr, void *response_ptr)
 {
-	struct hdd_ocb_ctxt *context = context_ptr;
+	struct hdd_request *hdd_request;
+	struct hdd_dcc_update_ndl_priv *priv;
 	struct sir_dcc_update_ndl_response *response = response_ptr;
 
-	if (!context)
+	hdd_request = hdd_request_get(context_ptr);
+	if (!hdd_request) {
+		hdd_err("Obsolete request");
 		return;
-
-	spin_lock(&hdd_context_lock);
-	if (context->magic == HDD_OCB_MAGIC) {
-		if (response) {
-			context->adapter->dcc_update_ndl_resp = *response;
-			context->status = 0;
-		} else {
-			context->status = -EINVAL;
-		}
-		complete(&context->completion_evt);
 	}
-	spin_unlock(&hdd_context_lock);
+	priv = hdd_request_priv(hdd_request);
+	if (response && (0 == response->status)) {
+		priv->status = 0;
+	} else {
+		priv->status = -EINVAL;
+	}
+	hdd_request_complete(hdd_request);
+	hdd_request_put(hdd_request);
 }
 
 /**
@@ -1820,17 +1865,25 @@ static int __wlan_hdd_cfg80211_dcc_update_ndl(struct wiphy *wiphy,
 	void *ndl_channel_array;
 	uint32_t ndl_active_state_array_len;
 	void *ndl_active_state_array;
-	int rc = -EINVAL;
-	struct hdd_ocb_ctxt context = {0};
+	int rc;
+	QDF_STATUS status;
+	void *cookie;
+	struct hdd_request *hdd_request;
+	struct hdd_dcc_update_ndl_priv *priv;
+	static const struct hdd_request_params params = {
+		.priv_size = sizeof(*priv),
+		.timeout_ms = WLAN_WAIT_TIME_OCB_CMD,
+	};
 
 	ENTER_DEV(dev);
 
-	if (wlan_hdd_validate_context(hdd_ctx))
-		goto end;
+	rc = wlan_hdd_validate_context(hdd_ctx);
+	if (rc)
+		return rc;
 
 	if (adapter->device_mode != QDF_OCB_MODE) {
 		hdd_err("Device not in OCB mode!");
-		goto end;
+		return -EINVAL;
 	}
 
 	if (!wma_is_vdev_up(adapter->sessionId)) {
@@ -1844,7 +1897,7 @@ static int __wlan_hdd_cfg80211_dcc_update_ndl(struct wiphy *wiphy,
 		      data_len,
 		      qca_wlan_vendor_dcc_update_ndl)) {
 		hdd_err("Invalid ATTR");
-		goto end;
+		return -EINVAL;
 	}
 
 	/* Verify that the parameter is present */
@@ -1866,10 +1919,12 @@ static int __wlan_hdd_cfg80211_dcc_update_ndl(struct wiphy *wiphy,
 	ndl_active_state_array = nla_data(
 		tb[QCA_WLAN_VENDOR_ATTR_DCC_UPDATE_NDL_ACTIVE_STATE_ARRAY]);
 
-	/* Initialize the callback context */
-	init_completion(&context.completion_evt);
-	context.adapter = adapter;
-	context.magic = HDD_OCB_MAGIC;
+	hdd_request = hdd_request_alloc(&params);
+	if (!hdd_request) {
+		hdd_err("Request allocation failure");
+		return -ENOMEM;
+	}
+	cookie = hdd_request_cookie(hdd_request);
 
 	/* Copy the parameters to the request structure. */
 	request.vdev_id = adapter->sessionId;
@@ -1880,43 +1935,33 @@ static int __wlan_hdd_cfg80211_dcc_update_ndl(struct wiphy *wiphy,
 	request.dcc_ndl_active_state_list = ndl_active_state_array;
 
 	/* Call the SME function */
-	rc = sme_dcc_update_ndl(hdd_ctx->hHal, &context,
-				hdd_dcc_update_ndl_callback,
-				&request);
-	if (rc) {
+	status = sme_dcc_update_ndl(hdd_ctx->hHal, cookie,
+				    hdd_dcc_update_ndl_callback,
+				    &request);
+	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Error calling SME function.");
-		/* Convert from qdf_status to errno */
-		return -EINVAL;
+		rc = qdf_status_to_os_return(status);
+		goto end;
 	}
 
 	/* Wait for the function to complete. */
-	rc = wait_for_completion_timeout(&context.completion_evt,
-		msecs_to_jiffies(WLAN_WAIT_TIME_OCB_CMD));
-	if (rc == 0) {
+	rc = hdd_request_wait_for_response(hdd_request);
+	if (rc) {
 		hdd_err("Operation timed out");
-		rc = -ETIMEDOUT;
-		goto end;
-	}
-	rc = 0;
-
-	if (context.status) {
-		hdd_err("Operation failed: %d", context.status);
-		rc = context.status;
 		goto end;
 	}
 
-	if (adapter->dcc_update_ndl_resp.status) {
-		hdd_err("Operation returned: %d",
-		       adapter->dcc_update_ndl_resp.status);
-		rc = -EINVAL;
+	priv = hdd_request_priv(hdd_request);
+	rc = priv->status;
+	if (rc) {
+		hdd_err("Operation failed: %d", rc);
 		goto end;
 	}
 
 	/* fall through */
 end:
-	spin_lock(&hdd_context_lock);
-	context.magic = 0;
-	spin_unlock(&hdd_context_lock);
+	hdd_request_put(hdd_request);
+
 	return rc;
 }
 
