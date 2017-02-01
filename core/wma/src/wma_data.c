@@ -2866,10 +2866,11 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 
 		wh = (struct ieee80211_frame *)(qdf_nbuf_data(tx_frame));
 		mac_addr = wh->i_addr1;
-		peer = wlan_objmgr_find_peer(psoc, mac_addr);
+		peer = wlan_objmgr_get_peer(psoc, mac_addr, WLAN_MGMT_NB_ID);
 		if (!peer) {
 			mac_addr = wh->i_addr2;
-			peer = wlan_objmgr_find_peer(psoc, mac_addr);
+			peer = wlan_objmgr_get_peer(psoc, mac_addr,
+						WLAN_MGMT_NB_ID);
 		}
 
 		status = wlan_mgmt_txrx_mgmt_frame_tx(peer,

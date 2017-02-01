@@ -108,6 +108,7 @@ tSirRetStatus mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
 {
 	tpAniSirGlobal p_mac = NULL;
 	tSirRetStatus status = eSIR_SUCCESS;
+	QDF_STATUS qdf_status;
 
 	if (pHalHandle == NULL)
 		return eSIR_FAILURE;
@@ -131,7 +132,12 @@ tSirRetStatus mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
 	 */
 	p_mac->hHdd = hHdd;
 
-	/* Increase psoc ref count once APIs are available in object manager */
+	qdf_status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_LEGACY_MAC_ID);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		sys_log(p_mac, LOGE, FL("PSOC get ref failure\n"));
+		return eSIR_FAILURE;
+	}
+
 	p_mac->psoc = psoc;
 	*pHalHandle = (tHalHandle) p_mac;
 
@@ -187,7 +193,7 @@ tSirRetStatus mac_close(tHalHandle hHal)
 
 	log_deinit(pMac);
 
-	/* Decrease psoc ref count once APIs are available in object manager */
+	wlan_objmgr_psoc_release_ref(pMac->psoc, WLAN_LEGACY_MAC_ID);
 	pMac->psoc = NULL;
 	/* Finally, de-allocate the global MAC datastructure: */
 	qdf_mem_free(pMac);

@@ -53,6 +53,8 @@ int hdd_release_and_destroy_psoc(hdd_context_t *hdd_ctx)
 	if (!psoc)
 		return -EINVAL;
 
+	wlan_objmgr_print_ref_all_objects_per_psoc(psoc);
+
 	return qdf_status_to_os_return(wlan_objmgr_psoc_obj_delete(psoc));
 }
 
@@ -123,9 +125,8 @@ int hdd_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
 		wlan_objmgr_vdev_obj_delete(vdev);
 		return -ENOMEM;
 	}
-	adapter->hdd_vdev = vdev;
 
-	wlan_objmgr_peer_ref_peer(peer);
+	adapter->hdd_vdev = vdev;
 
 	return 0;
 }
@@ -177,7 +178,6 @@ int hdd_add_peer_object(struct wlan_objmgr_vdev *vdev,
 	if (!peer)
 		return -ENOMEM;
 
-	wlan_objmgr_peer_ref_peer(peer);
 	hdd_info("Peer object "MAC_ADDRESS_STR" add success!",
 					MAC_ADDR_ARRAY(mac_addr));
 
@@ -203,18 +203,12 @@ int hdd_remove_peer_object(struct wlan_objmgr_vdev *vdev,
 		return -EINVAL;
 	}
 
-	peer = wlan_objmgr_find_peer(psoc, mac_addr);
+	peer = wlan_objmgr_get_peer(psoc, mac_addr, WLAN_HDD_ID_OBJ_MGR);
 	if (peer) {
 		/* Unref to decrement ref happened in find_peer */
-		wlan_objmgr_peer_unref_peer(peer);
+		wlan_objmgr_peer_release_ref(peer, WLAN_HDD_ID_OBJ_MGR);
 
-		/*
-		 * Unref to decrement ref of create_peer. This
-		 * is needed until new ref count implementation
-		 * is done. Object manager will delete peer once
-		 * ref count is 0.
-		 */
-		wlan_objmgr_peer_unref_peer(peer);
+		wlan_objmgr_peer_obj_delete(peer);
 
 		hdd_info("Peer obj "MAC_ADDRESS_STR" deleted",
 				MAC_ADDR_ARRAY(mac_addr));

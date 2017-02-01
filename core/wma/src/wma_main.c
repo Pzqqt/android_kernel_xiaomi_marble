@@ -1939,7 +1939,11 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *cds_context,
 		qdf_wake_lock_create(&wma_handle->wow_wake_lock, "wlan_wow_wl");
 	}
 
-	/* Increase psoc ref count once APIs are available in object manager */
+	qdf_status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_LEGACY_WMA_ID);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		WMA_LOGE("%s: PSOC get_ref fails", __func__);
+		return qdf_status;
+	}
 	wma_handle->psoc = psoc;
 
 	/* Attach mc_thread context processing function */
@@ -3560,7 +3564,7 @@ QDF_STATUS wma_close(void *cds_ctx)
 		wmi_desc_pool_deinit(wma_handle);
 	}
 
-	/* Decrease psoc ref count once APIs are available in object manager */
+	wlan_objmgr_psoc_release_ref(wma_handle->psoc, WLAN_LEGACY_WMA_ID);
 	wma_handle->psoc = NULL;
 	target_if_close();
 	wma_target_if_close(wma_handle);
