@@ -3601,7 +3601,7 @@ static QDF_STATUS hdd_tdls_connection_tracker_update(hdd_adapter_t *adapter,
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	curr_peer = wlan_hdd_tdls_find_peer(adapter,
-					    roam_info->peerMac.bytes, false);
+					    roam_info->peerMac.bytes);
 
 	if (!curr_peer) {
 		hdd_err("curr_peer is null");
@@ -3810,8 +3810,7 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 				curr_peer =
 					wlan_hdd_tdls_find_peer(pAdapter,
 								pRoamInfo->
-								peerMac.bytes,
-								false);
+								peerMac.bytes);
 				if (NULL != curr_peer) {
 				    hdd_info("Current status for peer " MAC_ADDRESS_STR " is %d",
 				    MAC_ADDR_ARRAY(pRoamInfo->peerMac.bytes),
@@ -3859,8 +3858,7 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 		mutex_lock(&pHddCtx->tdls_lock);
 		curr_peer =
 			wlan_hdd_tdls_find_peer(pAdapter,
-						pRoamInfo->peerMac.bytes,
-						false);
+						pRoamInfo->peerMac.bytes);
 		wlan_hdd_tdls_indicate_teardown(pAdapter, curr_peer,
 						pRoamInfo->reasonCode);
 		hdd_send_wlan_tdls_teardown_event(eTDLS_TEARDOWN_BSS_DISCONNECT,
@@ -4026,8 +4024,7 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 
 		curr_peer =
 			wlan_hdd_tdls_find_peer(pAdapter,
-						pRoamInfo->peerMac.bytes,
-						false);
+						pRoamInfo->peerMac.bytes);
 		if (!curr_peer) {
 			hdd_info("curr_peer is null");
 			status = QDF_STATUS_E_FAILURE;
@@ -4086,8 +4083,7 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 
 		curr_peer =
 			wlan_hdd_tdls_find_peer(pAdapter,
-						pRoamInfo->peerMac.bytes,
-						false);
+						pRoamInfo->peerMac.bytes);
 		if (!curr_peer) {
 			hdd_info("curr_peer is null");
 			status = QDF_STATUS_E_FAILURE;
