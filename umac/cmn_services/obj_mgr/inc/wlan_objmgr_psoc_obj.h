@@ -791,4 +791,22 @@ static inline uint8_t *wlan_psoc_get_hw_macaddr(struct wlan_objmgr_psoc *psoc)
  */
 void *wlan_objmgr_psoc_get_comp_private_obj(struct wlan_objmgr_psoc *psoc,
 					enum wlan_umac_comp_id id);
+/**
+ * wlan_psoc_get_pdev_count() - get pdev count for psoc
+ * @psoc: PSOC object
+ *
+ * API to get number of pdev's attached to the psoc
+ *
+ * Caller need to acquire lock with wlan_psoc_obj_lock()
+ *
+ * Return: number of pdev's
+ */
+static inline uint8_t wlan_psoc_get_pdev_count(struct wlan_objmgr_psoc *psoc)
+{
+	/* This API is invoked with lock acquired, do not add log prints */
+	if (psoc == NULL)
+		return 0;
+
+	return psoc->soc_objmgr.wlan_pdev_count;
+}
 #endif /* _WLAN_OBJMGR_PSOC_OBJ_H_*/

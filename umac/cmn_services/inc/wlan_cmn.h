@@ -77,14 +77,18 @@
  * @WLAN_UMAC_COMP_MLME:     MLME
  * @WLAN_UMAC_COMP_SCAN:     SCAN MGR
  * @WLAN_UMAC_COMP_MGMT_TXRX:   MGMT Tx/Rx
+ * @WLAN_UMAC_COMP_SERIALIZATION: Serialization
+ * @WLAN_UMAC_COMP_ID_MAX: Maximum components in UMAC
  *
  * This id is static.
  * On Adding new component, new id has to be assigned
  */
 enum wlan_umac_comp_id {
-	WLAN_UMAC_COMP_MLME       = 0,
-	WLAN_UMAC_COMP_SCAN       = 1,
-	WLAN_UMAC_COMP_MGMT_TXRX  = 2,
+	WLAN_UMAC_COMP_MLME           = 0,
+	WLAN_UMAC_COMP_SCAN           = 1,
+	WLAN_UMAC_COMP_MGMT_TXRX      = 2,
+	WLAN_UMAC_COMP_SERIALIZATION  = 3,
+	WLAN_UMAC_COMP_ID_MAX,
 };
 
 /**

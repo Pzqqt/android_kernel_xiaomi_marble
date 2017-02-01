@@ -278,6 +278,13 @@ typedef void (*qdf_timer_func_t)(void *);
  * @QDF_MODULE_ID_BMI   : BMI module ID
  * @QDF_MODULE_ID_EPPING: EPPING module ID
  * @QDF_MODULE_ID_QVIT  : QVIT module ID
+ * @QDF_MODULE_ID_DP    : Data-path module ID
+ * @QDF_MODULE_ID_SOC   : SOC module ID
+ * @QDF_MODULE_ID_OS_IF : OS-interface module ID
+ * @QDF_MODULE_ID_TARGET_IF     : targer interface module ID
+ * @QDF_MODULE_ID_SCHEDULER     : schduler module ID
+ * @QDF_MODULE_ID_MGMT_TXRX     : management TX/RX module ID
+ * @QDF_MODULE_ID_SERIALIZATION : serialization module ID
  * @QDF_MODULE_ID_ANY   : anything
  * @QDF_MODULE_ID_MAX   : Max place holder module ID
  */
@@ -357,6 +364,7 @@ typedef enum {
 	QDF_MODULE_ID_TARGET_IF,
 	QDF_MODULE_ID_SCHEDULER,
 	QDF_MODULE_ID_MGMT_TXRX,
+	QDF_MODULE_ID_SERIALIZATION,
 	QDF_MODULE_ID_ANY,
 	QDF_MODULE_ID_MAX,
 } QDF_MODULE_ID;
