@@ -5219,6 +5219,7 @@ typedef enum {
 	wmi_vdev_param_mgmt_tx_power,
 	wmi_vdev_param_atf_ssid_sched_policy,
 	wmi_vdev_param_disable_dyn_bw_rts,
+	wmi_vdev_param_ampdu_subframe_size_per_ac,
 
 	wmi_vdev_param_max,
 } wmi_conv_vdev_param_id;
