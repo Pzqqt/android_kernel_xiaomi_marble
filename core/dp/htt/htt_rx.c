@@ -413,73 +413,6 @@ htt_rx_in_ord_paddr_get(uint32_t *u32p)
 #endif /* HELIUMPLUS_PADDR64 */
 #endif /* CONFIG_HL_SUPPORT*/
 
-#ifndef CONFIG_HL_SUPPORT
-
-static int htt_rx_ring_size(struct htt_pdev_t *pdev)
-{
-	int size;
-
-	/*
-	 * It is expected that the host CPU will typically be able to service
-	 * the rx indication from one A-MPDU before the rx indication from
-	 * the subsequent A-MPDU happens, roughly 1-2 ms later.
-	 * However, the rx ring should be sized very conservatively, to
-	 * accomodate the worst reasonable delay before the host CPU services
-	 * a rx indication interrupt.
-	 * The rx ring need not be kept full of empty buffers.  In theory,
-	 * the htt host SW can dynamically track the low-water mark in the
-	 * rx ring, and dynamically adjust the level to which the rx ring
-	 * is filled with empty buffers, to dynamically meet the desired
-	 * low-water mark.
-	 * In contrast, it's difficult to resize the rx ring itself, once
-	 * it's in use.
-	 * Thus, the ring itself should be sized very conservatively, while
-	 * the degree to which the ring is filled with empty buffers should
-	 * be sized moderately conservatively.
-	 */
-	size =
-		ol_cfg_max_thruput_mbps(pdev->ctrl_pdev) *
-		1000 /* 1e6 bps/mbps / 1e3 ms per sec = 1000 */  /
-		(8 * HTT_RX_AVG_FRM_BYTES) * HTT_RX_HOST_LATENCY_MAX_MS;
-
-	if (size < HTT_RX_RING_SIZE_MIN)
-		size = HTT_RX_RING_SIZE_MIN;
-	else if (size > HTT_RX_RING_SIZE_MAX)
-		size = HTT_RX_RING_SIZE_MAX;
-
-	size = qdf_get_pwr2(size);
-	return size;
-}
-
-static int htt_rx_ring_fill_level(struct htt_pdev_t *pdev)
-{
-	int size;
-
-	size = ol_cfg_max_thruput_mbps(pdev->ctrl_pdev) *
-		1000 /* 1e6 bps/mbps / 1e3 ms per sec = 1000 */  /
-		(8 * HTT_RX_AVG_FRM_BYTES) * HTT_RX_HOST_LATENCY_WORST_LIKELY_MS;
-
-	size = qdf_get_pwr2(size);
-	/*
-	 * Make sure the fill level is at least 1 less than the ring size.
-	 * Leaving 1 element empty allows the SW to easily distinguish
-	 * between a full ring vs. an empty ring.
-	 */
-	if (size >= pdev->rx_ring.size)
-		size = pdev->rx_ring.size - 1;
-
-	return size;
-}
-
-static void htt_rx_ring_refill_retry(void *arg)
-{
-	htt_pdev_handle pdev = (htt_pdev_handle) arg;
-
-	pdev->refill_retry_timer_calls++;
-	htt_rx_msdu_buff_replenish(pdev);
-}
-#endif
-
 /* full_reorder_offload case: this function is called with lock held */
 static int htt_rx_ring_fill_n(struct htt_pdev_t *pdev, int num)
 {
@@ -487,6 +420,7 @@ static int htt_rx_ring_fill_n(struct htt_pdev_t *pdev, int num)
 	QDF_STATUS status;
 	struct htt_host_rx_desc_base *rx_desc;
 	int filled = 0;
+	int debt_served = 0;
 
 	idx = *(pdev->rx_ring.alloc_idx.vaddr);
 
@@ -582,10 +516,9 @@ moretofill:
 		filled++;
 		idx &= pdev->rx_ring.size_mask;
 	}
-	if (qdf_atomic_read(&pdev->rx_ring.refill_debt) > 0) {
+	if (debt_served <  qdf_atomic_read(&pdev->rx_ring.refill_debt)) {
 		num = qdf_atomic_read(&pdev->rx_ring.refill_debt);
-		/* Ideally the following gives 0, but sub is safer */
-		qdf_atomic_sub(num, &pdev->rx_ring.refill_debt);
+		debt_served += num;
 		goto moretofill;
 	}
 
@@ -595,6 +528,94 @@ fail:
 
 	return filled;
 }
+
+
+#ifndef CONFIG_HL_SUPPORT
+
+static int htt_rx_ring_size(struct htt_pdev_t *pdev)
+{
+	int size;
+
+	/*
+	 * It is expected that the host CPU will typically be able to service
+	 * the rx indication from one A-MPDU before the rx indication from
+	 * the subsequent A-MPDU happens, roughly 1-2 ms later.
+	 * However, the rx ring should be sized very conservatively, to
+	 * accommodate the worst reasonable delay before the host CPU services
+	 * a rx indication interrupt.
+	 * The rx ring need not be kept full of empty buffers.  In theory,
+	 * the htt host SW can dynamically track the low-water mark in the
+	 * rx ring, and dynamically adjust the level to which the rx ring
+	 * is filled with empty buffers, to dynamically meet the desired
+	 * low-water mark.
+	 * In contrast, it's difficult to resize the rx ring itself, once
+	 * it's in use.
+	 * Thus, the ring itself should be sized very conservatively, while
+	 * the degree to which the ring is filled with empty buffers should
+	 * be sized moderately conservatively.
+	 */
+	size =
+		ol_cfg_max_thruput_mbps(pdev->ctrl_pdev) *
+		1000 /* 1e6 bps/mbps / 1e3 ms per sec = 1000 */  /
+		(8 * HTT_RX_AVG_FRM_BYTES) * HTT_RX_HOST_LATENCY_MAX_MS;
+
+	if (size < HTT_RX_RING_SIZE_MIN)
+		size = HTT_RX_RING_SIZE_MIN;
+	else if (size > HTT_RX_RING_SIZE_MAX)
+		size = HTT_RX_RING_SIZE_MAX;
+
+	size = qdf_get_pwr2(size);
+	return size;
+}
+
+static int htt_rx_ring_fill_level(struct htt_pdev_t *pdev)
+{
+	int size;
+
+	size = ol_cfg_max_thruput_mbps(pdev->ctrl_pdev) *
+		1000 /* 1e6 bps/mbps / 1e3 ms per sec = 1000 */  /
+		(8 * HTT_RX_AVG_FRM_BYTES) *
+		HTT_RX_HOST_LATENCY_WORST_LIKELY_MS;
+
+	size = qdf_get_pwr2(size);
+	/*
+	 * Make sure the fill level is at least 1 less than the ring size.
+	 * Leaving 1 element empty allows the SW to easily distinguish
+	 * between a full ring vs. an empty ring.
+	 */
+	if (size >= pdev->rx_ring.size)
+		size = pdev->rx_ring.size - 1;
+
+	return size;
+}
+
+static void htt_rx_ring_refill_retry(void *arg)
+{
+	htt_pdev_handle pdev = (htt_pdev_handle) arg;
+	int             filled = 0;
+	int             num;
+
+	pdev->refill_retry_timer_calls++;
+	qdf_spin_lock_bh(&(pdev->rx_ring.refill_lock));
+
+	num = qdf_atomic_read(&pdev->rx_ring.refill_debt);
+	qdf_atomic_sub(num, &pdev->rx_ring.refill_debt);
+	filled = htt_rx_ring_fill_n(pdev, num);
+
+	qdf_spin_unlock_bh(&(pdev->rx_ring.refill_lock));
+
+	if (filled > num) {
+		/* we served ourselves and some other debt */
+		/* sub is safer than  = 0 */
+		qdf_atomic_sub(filled - num, &pdev->rx_ring.refill_debt);
+	} else if (num == filled) { /* nothing to be done */
+	} else {
+		/* we could not fill all, timer must have been started */
+		pdev->refill_retry_timer_doubles++;
+	}
+
+}
+#endif
 
 static inline unsigned htt_rx_ring_elems(struct htt_pdev_t *pdev)
 {
@@ -2928,6 +2949,7 @@ int htt_rx_msdu_buff_in_order_replenish(htt_pdev_handle pdev, uint32_t num)
 		if (qdf_atomic_read(&pdev->rx_ring.refill_debt)
 			 < RX_RING_REFILL_DEBT_MAX) {
 			qdf_atomic_add(num, &pdev->rx_ring.refill_debt);
+			pdev->rx_buff_debt_invoked++;
 			return filled; /* 0 */
 		}
 		/*
@@ -2938,8 +2960,16 @@ int htt_rx_msdu_buff_in_order_replenish(htt_pdev_handle pdev, uint32_t num)
 		 */
 		qdf_spin_lock_bh(&(pdev->rx_ring.refill_lock));
 	}
+	pdev->rx_buff_fill_n_invoked++;
 	filled = htt_rx_ring_fill_n(pdev, num);
+
 	qdf_spin_unlock_bh(&(pdev->rx_ring.refill_lock));
+
+	if (filled > num) {
+		/* we served ourselves and some other debt */
+		/* sub is safer than  = 0 */
+		qdf_atomic_sub(filled - num, &pdev->rx_ring.refill_debt);
+	}
 
 	return filled;
 }

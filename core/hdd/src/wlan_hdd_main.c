@@ -6247,6 +6247,8 @@ void wlan_hdd_display_tx_rx_histogram(hdd_context_t *hdd_ctx)
 					hdd_ctx->hdd_txrx_hist[i].
 						next_tx_level));
 	}
+
+	return;
 }
 
 /**

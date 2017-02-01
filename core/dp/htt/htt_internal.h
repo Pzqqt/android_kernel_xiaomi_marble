@@ -663,7 +663,7 @@ void htt_rx_dbg_rxbuf_init(struct htt_pdev_t *pdev)
 		pdev->rx_buff_recvd_err  = 0;
 		pdev->refill_retry_timer_starts = 0;
 		pdev->refill_retry_timer_calls = 0;
-
+		pdev->refill_retry_timer_doubles = 0;
 	}
 }
 
@@ -687,16 +687,21 @@ static inline int htt_display_rx_buf_debug(struct htt_pdev_t *pdev)
 					  buf[i].posted,
 					  buf[i].recved);
 		}
+
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		"rxbuf_idx %d all_posted: %d all_recvd: %d recv_err: %d timer_starts :%d timer_calls :%d",
+		"rxbuf_idx %d all_posted: %d all_recvd: %d recv_err: %d",
 		pdev->rx_buff_index,
 		pdev->rx_buff_posted_cum,
 		pdev->rx_buff_recvd_cum,
-		pdev->rx_buff_recvd_err,
+		pdev->rx_buff_recvd_err);
+
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		"timer kicks :%d actual  :%d restarts:%d debtors: %d fill_n: %d",
 		pdev->refill_retry_timer_starts,
-		pdev->refill_retry_timer_calls);
-
-
+		pdev->refill_retry_timer_calls,
+		pdev->refill_retry_timer_doubles,
+		pdev->rx_buff_debt_invoked,
+		pdev->rx_buff_fill_n_invoked);
 	} else
 		return -EINVAL;
 	return 0;
