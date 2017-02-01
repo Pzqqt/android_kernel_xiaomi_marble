@@ -1974,9 +1974,6 @@ uint32_t cds_get_log_indicator(void)
 
 	if (cds_is_load_or_unload_in_progress() ||
 	    cds_is_driver_recovering()) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-				"%s: vos context initialization is in progress"
-				, __func__);
 		return WLAN_LOG_INDICATOR_UNUSED;
 	}
 
