@@ -795,6 +795,7 @@ UMAC_OBJMGR_OBJS := $(UMAC_OBJMGR_DIR)/src/wlan_objmgr_global_obj.o \
 		$(UMAC_OBJMGR_DIR)/src/wlan_objmgr_pdev_obj.o \
 		$(UMAC_OBJMGR_DIR)/src/wlan_objmgr_peer_obj.o \
 		$(UMAC_OBJMGR_DIR)/src/wlan_objmgr_psoc_obj.o \
+		$(UMAC_OBJMGR_DIR)/src/wlan_objmgr_psoc_service_ready_api.o \
 		$(UMAC_OBJMGR_DIR)/src/wlan_objmgr_vdev_obj.o
 
 
