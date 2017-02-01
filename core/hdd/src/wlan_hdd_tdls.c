@@ -635,8 +635,10 @@ void hdd_tdls_context_init(hdd_context_t *hdd_ctx, bool ssr)
 {
 	uint8_t sta_idx;
 
-	mutex_init(&hdd_ctx->tdls_lock);
-	qdf_spinlock_create(&hdd_ctx->tdls_ct_spinlock);
+	if (!ssr) {
+		mutex_init(&hdd_ctx->tdls_lock);
+		qdf_spinlock_create(&hdd_ctx->tdls_ct_spinlock);
+	}
 
 	/* initialize TDLS global context */
 	hdd_ctx->connected_peer_count = 0;
