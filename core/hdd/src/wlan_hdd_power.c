@@ -670,6 +670,133 @@ void hdd_conf_hostoffload(hdd_adapter_t *pAdapter, bool fenable)
 #endif
 
 /**
+ * hdd_lookup_ifaddr() - Lookup interface address data by name
+ * @adapter: the adapter whose name should be searched for
+ *
+ * return in_ifaddr pointer on success, NULL for failure
+ */
+static struct in_ifaddr *hdd_lookup_ifaddr(hdd_adapter_t *adapter)
+{
+	struct in_ifaddr *ifa;
+	struct in_device *in_dev;
+
+	if (!adapter) {
+		hdd_err("adapter is null");
+		return NULL;
+	}
+
+	in_dev = __in_dev_get_rtnl(adapter->dev);
+	if (!in_dev) {
+		hdd_err("Failed to get in_device");
+		return NULL;
+	}
+
+	/* lookup address data by interface name */
+	for (ifa = in_dev->ifa_list; ifa; ifa = ifa->ifa_next) {
+		if (!strcmp(adapter->dev->name, ifa->ifa_label))
+			return ifa;
+	}
+
+	return NULL;
+}
+
+/**
+ * hdd_populate_ipv4_addr() - Populates the adapter's IPv4 address
+ * @adapter: the adapter whose IPv4 address is desired
+ * @ipv4_addr: the address of the array to copy the IPv4 address into
+ *
+ * return: zero for success; non-zero for failure
+ */
+static int hdd_populate_ipv4_addr(hdd_adapter_t *adapter, uint8_t *ipv4_addr)
+{
+	struct in_ifaddr *ifa;
+	int i;
+
+	if (!adapter) {
+		hdd_err("adapter is null");
+		return -EINVAL;
+	}
+
+	if (!ipv4_addr) {
+		hdd_err("ipv4_addr is null");
+		return -EINVAL;
+	}
+
+	ifa = hdd_lookup_ifaddr(adapter);
+	if (!ifa || !ifa->ifa_local) {
+		hdd_err("ipv4 address not found");
+		return -EINVAL;
+	}
+
+	/* convert u32 to byte array */
+	for (i = 0; i < 4; i++)
+		ipv4_addr[i] = (ifa->ifa_local >> i * 8) & 0xff;
+
+	return 0;
+}
+
+/**
+ * hdd_set_grat_arp_keepalive() - Enable grat APR keepalive
+ * @adapter: the HDD adapter to configure
+ *
+ * This configures gratuitous APR keepalive based on the adapter's current
+ * connection information, specifically IPv4 address and BSSID
+ *
+ * return: zero for success, non-zero for failure
+ */
+static int hdd_set_grat_arp_keepalive(hdd_adapter_t *adapter)
+{
+	QDF_STATUS status;
+	int exit_code;
+	hdd_context_t *hdd_ctx;
+	hdd_station_ctx_t *sta_ctx;
+	tSirKeepAliveReq req = {
+		.packetType = SIR_KEEP_ALIVE_UNSOLICIT_ARP_RSP,
+		.destIpv4Addr = {0xff, 0xff, 0xff, 0xff},
+		.dest_macaddr = QDF_MAC_ADDR_BROADCAST_INITIALIZER,
+	};
+
+	if (!adapter) {
+		hdd_err("adapter is null");
+		return -EINVAL;
+	}
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx is null");
+		return -EINVAL;
+	}
+
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	if (!sta_ctx) {
+		hdd_err("sta_ctx is null");
+		return -EINVAL;
+	}
+
+	exit_code = hdd_populate_ipv4_addr(adapter, req.hostIpv4Addr);
+	if (exit_code) {
+		hdd_err("Failed to populate ipv4 address");
+		return exit_code;
+	}
+
+	qdf_copy_macaddr(&req.bssid, &sta_ctx->conn_info.bssId);
+	req.timePeriod = hdd_ctx->config->infraStaKeepAlivePeriod;
+	req.sessionId = adapter->sessionId;
+
+	hdd_info("Setting gratuitous ARP keepalive; ipv4_addr:%u.%u.%u.%u",
+		 req.hostIpv4Addr[0], req.hostIpv4Addr[1],
+		 req.hostIpv4Addr[2], req.hostIpv4Addr[3]);
+
+	status = sme_set_keep_alive(hdd_ctx->hHal, req.sessionId, &req);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to set keepalive");
+		return qdf_status_to_os_return(status);
+	}
+
+	return 0;
+}
+
+/**
  * __hdd_ipv4_notifier_work_queue() - IPv4 notification work function
  * @work: registered work item
  *
@@ -685,10 +812,13 @@ static void __hdd_ipv4_notifier_work_queue(struct work_struct *work)
 	hdd_adapter_t *pAdapter =
 		container_of(work, hdd_adapter_t, ipv4NotifierWorkQueue);
 	hdd_context_t *pHddCtx;
+	hdd_station_ctx_t *sta_ctx;
 	int status;
-	bool ndi_connected = false;
+	bool ndi_connected;
+	bool sta_associated;
 
 	hdd_info("Configuring ARP Offload");
+
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	status = wlan_hdd_validate_context(pHddCtx);
 	if (status)
@@ -705,19 +835,24 @@ static void __hdd_ipv4_notifier_work_queue(struct work_struct *work)
 		pHddCtx->sus_res_mcastbcast_filter_valid = true;
 	}
 
-	/* check if the device is in NAN data mode */
-	if (WLAN_HDD_IS_NDI(pAdapter))
-		ndi_connected = WLAN_HDD_IS_NDI_CONNECTED(pAdapter);
+	ndi_connected = WLAN_HDD_IS_NDI(pAdapter) &&
+		WLAN_HDD_IS_NDI_CONNECTED(pAdapter);
 
-	if (eConnectionState_Associated ==
-	     (WLAN_HDD_GET_STATION_CTX_PTR(pAdapter))->conn_info.connState ||
-		ndi_connected)
-		/*
-		 * This invocation being part of the IPv4 registration callback,
-		 * we are passing second parameter as 2 to avoid registration
-		 * of IPv4 notifier again.
-		 */
-		hdd_conf_arp_offload(pAdapter, true);
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	sta_associated = sta_ctx->conn_info.connState ==
+		eConnectionState_Associated;
+
+	if (!ndi_connected && !sta_associated)
+		return;
+
+	/*
+	 * This invocation being part of the IPv4 registration callback,
+	 * we are passing second parameter as 2 to avoid registration
+	 * of IPv4 notifier again.
+	 */
+	hdd_conf_arp_offload(pAdapter, true);
+
+	hdd_set_grat_arp_keepalive(pAdapter);
 }
 
 /**
@@ -750,9 +885,6 @@ static int __wlan_hdd_ipv4_changed(struct notifier_block *nb,
 				 unsigned long data, void *arg)
 {
 	struct in_ifaddr *ifa = (struct in_ifaddr *)arg;
-	struct in_ifaddr **ifap = NULL;
-	struct in_device *in_dev;
-
 	struct net_device *ndev = ifa->ifa_dev->dev;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 	hdd_context_t *pHddCtx;
@@ -790,19 +922,9 @@ static int __wlan_hdd_ipv4_changed(struct notifier_block *nb,
 			return NOTIFY_DONE;
 		}
 
-		in_dev = __in_dev_get_rtnl(pAdapter->dev);
-		if (in_dev) {
-			for (ifap = &in_dev->ifa_list; (ifa = *ifap) != NULL;
-			     ifap = &ifa->ifa_next) {
-				if (!strcmp(pAdapter->dev->name,
-					    ifa->ifa_label)) {
-					break;  /* found */
-				}
-			}
-		}
-		if (ifa && ifa->ifa_local) {
+		ifa = hdd_lookup_ifaddr(pAdapter);
+		if (ifa && ifa->ifa_local)
 			schedule_work(&pAdapter->ipv4NotifierWorkQueue);
-		}
 	}
 	EXIT();
 	return NOTIFY_DONE;
@@ -843,9 +965,7 @@ int wlan_hdd_ipv4_changed(struct notifier_block *nb,
  */
 QDF_STATUS hdd_conf_arp_offload(hdd_adapter_t *pAdapter, bool fenable)
 {
-	struct in_ifaddr **ifap = NULL;
-	struct in_ifaddr *ifa = NULL;
-	struct in_device *in_dev;
+	struct in_ifaddr *ifa;
 	int i = 0;
 	tSirHostOffloadReq offLoadRequest;
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
@@ -863,16 +983,7 @@ QDF_STATUS hdd_conf_arp_offload(hdd_adapter_t *pAdapter, bool fenable)
 	}
 
 	if (fenable) {
-		in_dev = __in_dev_get_rtnl(pAdapter->dev);
-		if (in_dev) {
-			for (ifap = &in_dev->ifa_list; (ifa = *ifap) != NULL;
-			     ifap = &ifa->ifa_next) {
-				if (!strcmp(pAdapter->dev->name,
-					    ifa->ifa_label)) {
-					break;  /* found */
-				}
-			}
-		}
+		ifa = hdd_lookup_ifaddr(pAdapter);
 		if (ifa && ifa->ifa_local) {
 			offLoadRequest.offloadType = SIR_IPV4_ARP_REPLY_OFFLOAD;
 			offLoadRequest.enableOrDisable = SIR_OFFLOAD_ENABLE;
