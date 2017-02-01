@@ -8082,6 +8082,10 @@ typedef struct {
  *  and to look for a matching AP profile from a list of
  *  configured profiles. */
 
+/* flags for roam_scan_mode_cmd
+ * indicate the status (success/fail) of wmi_roam_scan_mode cmd through WMI_ROAM_EVENTID */
+#define WMI_ROAM_SCAN_MODE_FLAG_REPORT_STATUS  0x1
+
 /**
  * WMI_ROAM_SCAN_MODE: Set Roam Scan mode
  *   the roam scan mode is one of the periodic, rssi change, both, none.
@@ -8096,6 +8100,7 @@ typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_scan_mode_fixed_param */
     A_UINT32 roam_scan_mode;
     A_UINT32 vdev_id;
+    A_UINT32 flags; /* see WMI_ROAM_SCAN_MODE_FLAG defs */
 } wmi_roam_scan_mode_fixed_param;
 
 #define WMI_ROAM_SCAN_MODE_NONE        0x0
@@ -8533,6 +8538,7 @@ typedef struct {
  * WMI_ROAM_REASON_HO_FAILED no matter WMI_ROAM_INVOKE_CMDID is called or not.
  */
 #define WMI_ROAM_REASON_INVOKE_ROAM_FAIL 0x6
+#define ROAM_REASON_RSO_STATUS           0x7
 /* reserved up through 0xF */
 
 /* subnet status: bits 4-5 */
@@ -8558,10 +8564,12 @@ typedef enum
      WMI_ROAM_SUBNET_CHANGE_STATUS_SHIFT)
 
 /* roaming notification */
-#define WMI_ROAM_NOTIF_INVALID     0x0  /** invalid notification. Do not interpret notif field  */
-#define WMI_ROAM_NOTIF_ROAM_START  0x1  /** indicate that roaming is started. sent only in non WOW state */
-#define WMI_ROAM_NOTIF_ROAM_ABORT  0x2  /** indicate that roaming is aborted. sent only in non WOW state */
-#define WMI_ROAM_NOTIF_ROAM_REASSOC 0x3 /** indicate that reassociation is done. sent only in non WOW state */
+#define WMI_ROAM_NOTIF_INVALID           0x0 /** invalid notification. Do not interpret notif field  */
+#define WMI_ROAM_NOTIF_ROAM_START        0x1 /** indicate that roaming is started. sent only in non WOW state */
+#define WMI_ROAM_NOTIF_ROAM_ABORT        0x2 /** indicate that roaming is aborted. sent only in non WOW state */
+#define WMI_ROAM_NOTIF_ROAM_REASSOC      0x3 /** indicate that reassociation is done. sent only in non WOW state */
+#define WMI_ROAM_NOTIF_SCAN_MODE_SUCCESS 0x4 /** indicate that roaming scan mode is successful */
+#define WMI_ROAM_NOTIF_SCAN_MODE_FAIL    0x5 /** indicate that roaming scan mode is failed due to internal roaming state */
 
 /**whenever RIC request information change, host driver should pass all ric related information to firmware (now only support tsepc)
 * Once, 11r roaming happens, firmware can generate RIC request in reassoc request based on these informations
