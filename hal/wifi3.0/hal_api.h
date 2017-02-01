@@ -101,6 +101,15 @@ enum hal_ring_type {
  */
 extern uint32_t hal_srng_get_entrysize(void *hal_soc, int ring_type);
 
+/**
+ * hal_srng_max_entries - Returns maximum possible number of ring entries
+ * @hal_soc: Opaque HAL SOC handle
+ * @ring_type: one of the types from hal_ring_type
+ *
+ * Return: Maximum number of entries for the given ring_type
+ */
+uint32_t hal_srng_max_entries(void *hal_soc, int ring_type);
+
 /* SRNG parameters to be passed to hal_srng_setup */
 struct hal_srng_params {
 	/* Physical base address of the ring */

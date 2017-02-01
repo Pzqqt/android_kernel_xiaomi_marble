@@ -156,6 +156,9 @@
 #define SRNG_MS(_reg_fld, _val) \
 	(((_val) & _SRNG_FM(_reg_fld)) >> _SRNG_FS(_reg_fld))
 
+#define SRNG_MAX_SIZE_DWORDS \
+	(SRNG_MS(SRNG_SRC_FLD(BASE_MSB, RING_SIZE), 0xffffffff))
+
 /**
  * HW ring configuration table to identify hardware ring attributes like
  * register addresses, number of rings, ring entry size etc., for each type
@@ -833,11 +836,17 @@ static inline void hal_srng_src_hw_init(struct hal_soc *hal,
 
 	SRNG_SRC_REG_WRITE(srng, CONSUMER_INT_SETUP_IX1, reg_val);
 
-	tp_addr = (uint64_t)(hal->shadow_rdptr_mem_paddr +
-		((unsigned long)(srng->u.src_ring.tp_addr) -
-		(unsigned long)(hal->shadow_rdptr_mem_vaddr)));
-	SRNG_SRC_REG_WRITE(srng, TP_ADDR_LSB, tp_addr & 0xffffffff);
-	SRNG_SRC_REG_WRITE(srng, TP_ADDR_MSB, tp_addr >> 32);
+	/* As per HW team, TP_ADDR and HP_ADDR for Idle link ring should
+	 * remain 0 to avoid some WBM stability issues. Remote head/tail
+	 * pointers are not required since this ring is completly managed
+	 * by WBM HW */
+	if (srng->ring_id != HAL_SRNG_WBM_IDLE_LINK) {
+		tp_addr = (uint64_t)(hal->shadow_rdptr_mem_paddr +
+			((unsigned long)(srng->u.src_ring.tp_addr) -
+			(unsigned long)(hal->shadow_rdptr_mem_vaddr)));
+		SRNG_SRC_REG_WRITE(srng, TP_ADDR_LSB, tp_addr & 0xffffffff);
+		SRNG_SRC_REG_WRITE(srng, TP_ADDR_MSB, tp_addr >> 32);
+	}
 
 	/* Initilaize head and tail pointers to indicate ring is empty */
 	SRNG_SRC_REG_WRITE(srng, HP, 0);
@@ -1153,6 +1162,19 @@ uint32_t hal_srng_get_entrysize(void *hal_soc, int ring_type)
 	struct hal_hw_srng_config *ring_config =
 		HAL_SRNG_CONFIG(hal, ring_type);
 	return ring_config->entry_size << 2;
+}
+
+/**
+ * hal_srng_max_entries - Returns maximum possible number of ring entries
+ * @hal_soc: Opaque HAL SOC handle
+ * @ring_type: one of the types from hal_ring_type
+ *
+ * Return: Maximum number of entries for the given ring_type
+ */
+uint32_t hal_srng_max_entries(void *hal_soc, int ring_type)
+{
+	struct hal_hw_srng_config *ring_config = HAL_SRNG_CONFIG(hal, ring_type);
+	return SRNG_MAX_SIZE_DWORDS / ring_config->entry_size;
 }
 
 /**

@@ -62,7 +62,7 @@
 /* Change this to a lower value to enforce scattered idle list mode */
 #define WLAN_CFG_MAX_ALLOC_SIZE (32 << 20)
 
-# define WLAN_CFG_MAX_CLIENTS 32
+#define WLAN_CFG_MAX_CLIENTS 64
 
 #define WLAN_CFG_PER_PDEV_TX_RING 1
 #define WLAN_CFG_NUM_TCL_DATA_RINGS 3

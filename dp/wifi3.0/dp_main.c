@@ -42,8 +42,9 @@ static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
 	/* TODO: See if we should get align size from hal */
 	uint32_t ring_base_align = 8;
 	struct hal_srng_params ring_params;
+	uint32_t max_entries = hal_srng_max_entries(hal_soc, ring_type);
 
-
+	num_entries = (num_entries > max_entries) ? max_entries : num_entries;
 	srng->hal_srng = NULL;
 	srng->alloc_size = (num_entries * entry_size) + ring_base_align - 1;
 	srng->base_vaddr_unaligned = qdf_mem_alloc_consistent(
@@ -688,11 +689,12 @@ static void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
 /* TODO: Following should be configurable */
 #define WBM_RELEASE_RING_SIZE 64
 #define TCL_DATA_RING_SIZE 512
+#define TX_COMP_RING_SIZE 1024
 #define TCL_CMD_RING_SIZE 32
 #define TCL_STATUS_RING_SIZE 32
 #define REO_DST_RING_SIZE 2048
 #define REO_REINJECT_RING_SIZE 32
-#define RX_RELEASE_RING_SIZE 256
+#define RX_RELEASE_RING_SIZE 1024
 #define REO_EXCEPTION_RING_SIZE 128
 #define REO_CMD_RING_SIZE 32
 #define REO_STATUS_RING_SIZE 32
@@ -746,7 +748,7 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 				goto fail1;
 			}
 			if (dp_srng_setup(soc, &soc->tx_comp_ring[i],
-				WBM2SW_RELEASE, i, 0, TCL_DATA_RING_SIZE)) {
+				WBM2SW_RELEASE, i, 0, TX_COMP_RING_SIZE)) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					QDF_TRACE_LEVEL_ERROR,
 					FL("dp_srng_setup failed for tx_comp_ring[%d]"), i);
