@@ -5224,10 +5224,8 @@ hddTdlsPeer_t *wlan_hdd_tdls_find_first_connected_peer(hdd_adapter_t *adapter)
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return NULL;
 
-	mutex_lock(&hdd_ctx->tdls_lock);
 	hdd_tdls_ctx = WLAN_HDD_GET_TDLS_CTX_PTR(adapter);
 	if (NULL == hdd_tdls_ctx) {
-		mutex_unlock(&hdd_ctx->tdls_lock);
 		return NULL;
 	}
 	for (i = 0; i < TDLS_PEER_LIST_SIZE; i++) {
@@ -5236,14 +5234,12 @@ hddTdlsPeer_t *wlan_hdd_tdls_find_first_connected_peer(hdd_adapter_t *adapter)
 			curr_peer = list_entry(pos, hddTdlsPeer_t, node);
 			if (curr_peer && (curr_peer->link_status ==
 					eTDLS_LINK_CONNECTED)) {
-				mutex_unlock(&hdd_ctx->tdls_lock);
 				hdd_notice(MAC_ADDRESS_STR" eTDLS_LINK_CONNECTED",
 					   MAC_ADDR_ARRAY(curr_peer->peerMac));
 				return curr_peer;
 			}
 		}
 	}
-	mutex_unlock(&hdd_ctx->tdls_lock);
 	return NULL;
 }
 
@@ -5338,29 +5334,35 @@ int hdd_set_tdls_offchannelmode(hdd_adapter_t *adapter, int offchanmode)
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	sme_tdls_chan_switch_params chan_switch_params;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	int ret_value = 0;
 
 	if (offchanmode < ENABLE_CHANSWITCH ||
 			offchanmode > DISABLE_CHANSWITCH) {
 		hdd_err("Invalid tdls off channel mode %d", offchanmode);
-		return -EINVAL;
+		ret_value = -EINVAL;
+		goto ret_status;
 	}
 	if (eConnectionState_Associated != hdd_sta_ctx->conn_info.connState) {
 		hdd_err("tdls off channel mode req in not associated state %d",
 			offchanmode);
-		return -EPERM;
+		ret_value = -EPERM;
+		goto ret_status;
 	}
 	if ((true == hdd_ctx->config->fEnableTDLSOffChannel) &&
 		(eTDLS_SUPPORT_ENABLED == hdd_ctx->tdls_mode ||
 		 eTDLS_SUPPORT_EXTERNAL_CONTROL == hdd_ctx->tdls_mode ||
 		 eTDLS_SUPPORT_EXPLICIT_TRIGGER_ONLY == hdd_ctx->tdls_mode)) {
-		 conn_peer = wlan_hdd_tdls_find_first_connected_peer(adapter);
-		 if (NULL == conn_peer) {
+		mutex_lock(&hdd_ctx->tdls_lock);
+		conn_peer = wlan_hdd_tdls_find_first_connected_peer(adapter);
+		if (NULL == conn_peer) {
 			hdd_err("No TDLS Connected Peer");
-		return -EPERM;
-	}
+			ret_value = -EPERM;
+			goto rel_lock;
+		}
 	} else {
 		hdd_err("TDLS Connection not supported");
-		return -ENOTSUPP;
+		ret_value = -ENOTSUPP;
+		goto ret_status;
 	}
 
 	hdd_notice("TDLS Channel Switch in swmode=%d tdls_off_channel %d offchanoffset %d",
@@ -5381,7 +5383,8 @@ int hdd_set_tdls_offchannelmode(hdd_adapter_t *adapter, int offchanmode)
 					chan_switch_params.tdls_off_ch_bw_offset);
 		} else {
 			hdd_err("TDLS off-channel parameters are not set yet!!!");
-			return -EINVAL;
+			ret_value = -EINVAL;
+			goto rel_lock;
 		}
 		break;
 	case DISABLE_CHANSWITCH:
@@ -5393,7 +5396,8 @@ int hdd_set_tdls_offchannelmode(hdd_adapter_t *adapter, int offchanmode)
 		hdd_err("Incorrect Parameters mode: %d tdls_off_channel: %d offchanoffset: %d",
 			offchanmode, hdd_ctx->tdls_off_channel,
 			hdd_ctx->tdls_channel_offset);
-		return -EINVAL;
+		ret_value = -EINVAL;
+		goto rel_lock;
 	} /* end switch */
 
 	chan_switch_params.vdev_id = adapter->sessionId;
@@ -5411,25 +5415,39 @@ int hdd_set_tdls_offchannelmode(hdd_adapter_t *adapter, int offchanmode)
 		 chan_switch_params.tdls_off_ch_bw_offset,
 		 chan_switch_params.tdls_off_ch_mode,
 		 chan_switch_params.is_responder);
+	mutex_unlock(&hdd_ctx->tdls_lock);
 
 	status = sme_send_tdls_chan_switch_req(WLAN_HDD_GET_HAL_CTX(adapter),
 			&chan_switch_params);
 
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("Failed to send channel switch request to sme");
-		return -EINVAL;
+		ret_value = -EINVAL;
+		goto ret_status;
 	}
 
 	hdd_ctx->tdls_fw_off_chan_mode = offchanmode;
 
 	if (ENABLE_CHANSWITCH == offchanmode) {
+		mutex_lock(&hdd_ctx->tdls_lock);
+		conn_peer = wlan_hdd_tdls_find_first_connected_peer(adapter);
+		if (NULL == conn_peer) {
+			hdd_err("No TDLS Connected Peer");
+			ret_value = -EPERM;
+			goto rel_lock;
+		}
 		conn_peer->pref_off_chan_num =
 			chan_switch_params.tdls_off_channel;
 		conn_peer->op_class_for_pref_off_chan =
 			chan_switch_params.opclass;
+		goto rel_lock;
 	}
+	goto ret_status;
 
-	return 0;
+rel_lock:
+	mutex_unlock(&hdd_ctx->tdls_lock);
+ret_status:
+	return ret_value;
 }
 
 /**
