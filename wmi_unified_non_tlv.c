@@ -8681,6 +8681,8 @@ static void populate_vdev_param_non_tlv(uint32_t *vdev_param)
 		WMI_VDEV_PARAM_ATF_SSID_SCHED_POLICY;
 	vdev_param[wmi_vdev_param_disable_dyn_bw_rts] =
 		WMI_VDEV_PARAM_DISABLE_DYN_BW_RTS;
+	vdev_param[wmi_vdev_param_ampdu_subframe_size_per_ac] =
+		WMI_VDEV_PARAM_AMPDU_SUBFRAME_SIZE_PER_AC;
 }
 #endif
 
