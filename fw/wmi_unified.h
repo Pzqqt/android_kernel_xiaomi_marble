@@ -462,7 +462,8 @@ typedef enum {
     WMI_PEER_SET_RX_BLOCKSIZE_CMDID,
     /** request peer antdiv info from FW. FW shall respond with PEER_ANTDIV_INFO_EVENTID */
     WMI_PEER_ANTDIV_INFO_REQ_CMDID,
-
+    /** Peer operating mode change indication sent to host to update stats */
+    WMI_PEER_OPER_MODE_CHANGE_EVENTID,
 
     /* beacon/management specific commands */
 
@@ -8538,7 +8539,7 @@ typedef struct {
  * WMI_ROAM_REASON_HO_FAILED no matter WMI_ROAM_INVOKE_CMDID is called or not.
  */
 #define WMI_ROAM_REASON_INVOKE_ROAM_FAIL 0x6
-#define ROAM_REASON_RSO_STATUS           0x7
+#define WMI_ROAM_REASON_RSO_STATUS       0x7
 /* reserved up through 0xF */
 
 /* subnet status: bits 4-5 */
@@ -10666,7 +10667,10 @@ typedef struct {
     A_UINT32 cwmin;
     A_UINT32 cwmax;
     A_UINT32 aifs;
-    A_UINT32 txoplimit;
+    union {
+        A_UINT32 txoplimit;
+        A_UINT32 mu_edca_timer;
+    };
     A_UINT32 acm;
     A_UINT32 no_ack;
 } wmi_wmm_vparams;
@@ -11795,6 +11799,35 @@ typedef struct {
      */
     A_INT32 chain_rssi[8];
 } wmi_peer_antdiv_info;
+
+typedef enum {
+    WMI_PEER_IND_SMPS = 0x0, /* spatial multiplexing power save */
+    WMI_PEER_IND_OMN,        /* operating mode notification */
+    WMI_PEER_IND_OMI,        /* operating mode indication */
+} WMI_PEER_OPER_MODE_IND;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     *  WMITLV_TAG_STRUC_wmi_peer_oper_mode_change */
+    A_UINT32 tlv_header;
+    /** mac addr of the peer */
+    wmi_mac_addr peer_mac_address;
+    /** Peer type indication WMI_PEER_OPER_MODE_IND. */
+    A_UINT32 ind_type;
+    /** new_rxnss valid for all peer_operating mode ind. */
+    A_UINT32 new_rxnss;
+    /** new_bw  valid for peer_operating mode ind. OMN/OMI
+     *  value of this bw is as per 11ax/ac standard:
+     *  0 = 20MHz,1 = 40MHz, 2= 80MHz, 3 = 160MHz
+     */
+    A_UINT32 new_bw;
+    /** new_txnss valid for peer_operating mode ind. OMI */
+    A_UINT32 new_txnss;
+    /** new_disablemu: disable mu mode
+     *  valid for peer_operating mode ind. OMI
+     */
+    A_UINT32 new_disablemu;
+} wmi_peer_oper_mode_change_event_fixed_param;
 
 /** FW response when tx failure count has reached threshold
  *  for a peer */
