@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -235,6 +235,18 @@ QDF_STATUS scheduler_register_wma_legacy_handler(scheduler_msg_process_fn_t
  */
 QDF_STATUS scheduler_register_sys_legacy_handler(scheduler_msg_process_fn_t
 						callback);
+/**
+ * scheduler_deregister_sys_legacy_handler() - deregister legacy sys handler
+ *
+ * Return: QDF status
+ */
+QDF_STATUS scheduler_deregister_sys_legacy_handler(void);
+/**
+ * scheduler_deregister_wma_legacy_handler() - deregister legacy wma handler
+ *
+ * Return: QDF status
+ */
+QDF_STATUS scheduler_deregister_wma_legacy_handler(void);
 /**
  * scheduler_mc_timer_callback() - timer callback, gets called at time out
  * @data: unsigned long, holds the timer object.

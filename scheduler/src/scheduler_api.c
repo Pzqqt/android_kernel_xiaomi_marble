@@ -480,6 +480,36 @@ QDF_STATUS scheduler_register_sys_legacy_handler(scheduler_msg_process_fn_t
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS scheduler_deregister_wma_legacy_handler(void)
+{
+	struct scheduler_ctx *sched_ctx = scheduler_get_context();
+
+	if (NULL == sched_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_SCHEDULER,
+			QDF_TRACE_LEVEL_ERROR, FL("scheduler context is null"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	sched_ctx->legacy_wma_handler = NULL;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS scheduler_deregister_sys_legacy_handler(void)
+{
+	struct scheduler_ctx *sched_ctx = scheduler_get_context();
+
+	if (NULL == sched_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_SCHEDULER,
+			QDF_TRACE_LEVEL_ERROR, FL("scheduler context is null"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	sched_ctx->legacy_sys_handler = NULL;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 void scheduler_mc_timer_callback(unsigned long data)
 {
 	qdf_mc_timer_t *timer = (qdf_mc_timer_t *)data;
