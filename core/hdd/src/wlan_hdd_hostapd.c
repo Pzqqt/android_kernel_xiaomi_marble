@@ -7773,7 +7773,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 					struct net_device *dev)
 {
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_context_t *pHddCtx = NULL;
+	hdd_context_t *pHddCtx = wiphy_priv(wiphy);
 	hdd_scaninfo_t *pScanInfo = NULL;
 	hdd_adapter_t *staAdapter = NULL;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
@@ -7789,6 +7789,11 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
+		return -EINVAL;
+	}
+
+	if (pHddCtx->driver_status == DRIVER_MODULES_CLOSED) {
+		hdd_err("Driver module is closed; dropping request");
 		return -EINVAL;
 	}
 
@@ -7810,7 +7815,6 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 		hdd_device_mode_to_string(pAdapter->device_mode),
 		pAdapter->device_mode);
 
-	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(pHddCtx);
 	if (0 != ret)
 		return ret;
