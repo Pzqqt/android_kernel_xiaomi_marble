@@ -2741,27 +2741,17 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 					      eCSR_BSS_TYPE_INFRASTRUCTURE);
 
 				/*
-				 * Start the Queue - Start tx queues before
-				 * hdd_roam_register_sta, since
-				 * hdd_roam_register_sta will flush any cached
-				 * data frames immediately.
+				 * Register the Station with DP after associated
 				 */
+				qdf_status = hdd_roam_register_sta(pAdapter,
+						pRoamInfo,
+						pHddStaCtx->conn_info.staId[0],
+						NULL, pRoamInfo->pBssDesc);
 				hdd_info("Enabling queues");
 				wlan_hdd_netif_queue_control(pAdapter,
 						WLAN_WAKE_ALL_NETIF_QUEUE,
 						WLAN_CONTROL_PATH);
 
-				/*
-				 * Register the Station with TL after associated
-				 */
-				qdf_status = hdd_roam_register_sta(pAdapter,
-								   pRoamInfo,
-								   pHddStaCtx->
-								   conn_info.
-								   staId[0],
-								   NULL,
-								   pRoamInfo->
-								   pBssDesc);
 			}
 		} else {
 			/*
