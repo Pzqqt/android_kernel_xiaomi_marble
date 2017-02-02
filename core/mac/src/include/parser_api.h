@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -59,6 +59,12 @@
 #define NSS_2x2_MODE 2
 #define MBO_IE_ASSOC_DISALLOWED_SUBATTR_ID 0x04
 
+/* QCN IE definitions */
+#define QCN_IE_VERSION_SUBATTR_ID   1
+#define QCN_IE_VERSION_SUBATTR_LEN  2
+#define QCN_IE_VERSION_SUPPORTED    1
+#define QCN_IE_SUBVERSION_SUPPORTED 0
+
 #define SIZE_OF_FIXED_PARAM 12
 #define SIZE_OF_TAG_PARAM_NUM 1
 #define SIZE_OF_TAG_PARAM_LEN 1
@@ -93,6 +99,12 @@ typedef struct sSirCountryInformation {
 		uint8_t maxTransmitPower;
 	} channelTransmitPower[COUNTRY_INFO_MAX_CHANNEL];
 } tSirCountryInformation, *tpSirCountryInformation;
+
+typedef struct sSirQCNIE {
+	bool    is_present;
+	uint8_t version;
+	uint8_t sub_version;
+} tSirQCNIE, *tpSirQCNIE;
 
 /* Structure common to Beacons & Probe Responses */
 typedef struct sSirProbeRespBeacon {
@@ -182,6 +194,7 @@ typedef struct sSirProbeRespBeacon {
 	uint8_t MBO_capability;
 	bool assoc_disallowed;
 	uint8_t assoc_disallowed_reason;
+	tSirQCNIE QCN_IE;
 } tSirProbeRespBeacon, *tpSirProbeRespBeacon;
 
 /* probe Request structure */
@@ -300,6 +313,7 @@ typedef struct sSirAssocRsp {
 #endif
 	tDot11fIEvendor_vht_ie vendor_vht_ie;
 	tDot11fIEOBSSScanParameters obss_scanparams;
+	tSirQCNIE QCN_IE;
 } tSirAssocRsp, *tpSirAssocRsp;
 
 #ifdef FEATURE_WLAN_ESE
@@ -949,6 +963,8 @@ populate_dot11f_vht_ext_bss_load(tpAniSirGlobal pMac,
 tSirRetStatus
 populate_dot11f_ext_cap(tpAniSirGlobal pMac, bool isVHTEnabled,
 			tDot11fIEExtCap *pDot11f, tpPESession psessionEntry);
+
+void populate_dot11f_qcn_ie(tDot11fIEQCN_IE *pDot11f);
 
 tSirRetStatus
 populate_dot11f_operating_mode(tpAniSirGlobal pMac,

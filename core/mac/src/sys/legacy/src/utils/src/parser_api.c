@@ -1265,6 +1265,15 @@ populate_dot11f_ext_cap(tpAniSirGlobal pMac,
 	return eSIR_SUCCESS;
 }
 
+void populate_dot11f_qcn_ie(tDot11fIEQCN_IE *pDot11f)
+{
+	pDot11f->present = 1;
+	pDot11f->version[0] = QCN_IE_VERSION_SUBATTR_ID;
+	pDot11f->version[1] = QCN_IE_VERSION_SUBATTR_LEN;
+	pDot11f->version[2] = QCN_IE_VERSION_SUPPORTED;
+	pDot11f->version[3] = QCN_IE_SUBVERSION_SUPPORTED;
+}
+
 tSirRetStatus
 populate_dot11f_operating_mode(tpAniSirGlobal pMac,
 			       tDot11fIEOperatingMode *pDot11f,
@@ -2611,6 +2620,17 @@ tSirRetStatus sir_convert_probe_frame2_struct(tpAniSirGlobal pMac,
 		}
 	}
 
+	if (pr->QCN_IE.present) {
+		pProbeResp->QCN_IE.is_present = true;
+
+		if (pr->QCN_IE.version[0] == QCN_IE_VERSION_SUBATTR_ID) {
+			pProbeResp->QCN_IE.version
+					= pr->QCN_IE.version[2];
+			pProbeResp->QCN_IE.sub_version
+					= pr->QCN_IE.version[3];
+		}
+	}
+
 	qdf_mem_free(pr);
 	return eSIR_SUCCESS;
 
@@ -3806,6 +3826,16 @@ sir_parse_beacon_ie(tpAniSirGlobal pMac,
 		}
 	}
 
+	if (pBies->QCN_IE.present) {
+		pBeaconStruct->QCN_IE.is_present = true;
+		if (pBies->QCN_IE.version[0] == QCN_IE_VERSION_SUBATTR_ID) {
+			pBeaconStruct->QCN_IE.version
+					= pBies->QCN_IE.version[2];
+			pBeaconStruct->QCN_IE.sub_version
+					= pBies->QCN_IE.version[3];
+		}
+	}
+
 	qdf_mem_free(pBies);
 	return eSIR_SUCCESS;
 } /* End sir_parse_beacon_ie. */
@@ -4170,6 +4200,17 @@ sir_convert_beacon_frame2_struct(tpAniSirGlobal pMac,
 			pBeaconStruct->assoc_disallowed = true;
 			pBeaconStruct->assoc_disallowed_reason =
 				pBeacon->MBO_IE.assoc_disallowed[2];
+		}
+	}
+
+	if (pBeacon->QCN_IE.present) {
+		pBeaconStruct->QCN_IE.is_present = true;
+		if (pBeacon->QCN_IE.version[0]
+					== QCN_IE_VERSION_SUBATTR_ID) {
+			pBeaconStruct->QCN_IE.version
+					= pBeacon->QCN_IE.version[2];
+			pBeaconStruct->QCN_IE.sub_version
+					= pBeacon->QCN_IE.version[3];
 		}
 	}
 
