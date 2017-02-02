@@ -4616,6 +4616,25 @@ enum dot11p_mode {
 #define CFG_CE_CLASSIFY_ENABLE_MAX	(1)
 #define CFG_CE_CLASSIFY_ENABLE_DEFAULT	(1)
 
+/*
+ *
+ * <ini>
+ * gDualMacFeatureDisable - Disable Dual MAC feature.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable dual MAC feature.
+ * 0 - enable DBS  1 - disable DBS
+ *
+ * Related: None.
+ *
+ * Supported Feature: DBS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_DUAL_MAC_FEATURE_DISABLE               "gDualMacFeatureDisable"
 #define CFG_DUAL_MAC_FEATURE_DISABLE_MIN          (0)
 #define CFG_DUAL_MAC_FEATURE_DISABLE_MAX          (1)
