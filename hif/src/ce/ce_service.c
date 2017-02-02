@@ -2564,7 +2564,10 @@ static void ce_ring_setup_legacy(struct hif_softc *scn, uint8_t ring_type,
 static void ce_prepare_shadow_register_v2_cfg_legacy(struct hif_softc *scn,
 			    struct pld_shadow_reg_v2_cfg **shadow_config,
 			    int *num_shadow_registers_configured)
-{ /* noop */ }
+{
+	*num_shadow_registers_configured = 0;
+	*shadow_config = NULL;
+}
 
 struct ce_ops ce_service_legacy = {
 	.ce_get_desc_size = ce_get_desc_size_legacy,
