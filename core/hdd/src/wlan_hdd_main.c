@@ -6844,6 +6844,22 @@ static inline int hdd_open_p2p_interface(hdd_context_t *hdd_ctx,
 }
 #endif
 
+static int hdd_open_ocb_interface(hdd_context_t *hdd_ctx, bool rtnl_held)
+{
+	hdd_adapter_t *adapter;
+	int ret = 0;
+
+	adapter = hdd_open_adapter(hdd_ctx, QDF_OCB_MODE, "wlanocb%d",
+				   wlan_hdd_get_intf_addr(hdd_ctx),
+				   NET_NAME_UNKNOWN, rtnl_held);
+	if (adapter == NULL) {
+		hdd_err("Failed to open 802.11p interface");
+		ret = -ENOSPC;
+	}
+
+	return ret;
+}
+
 /**
  * hdd_start_station_adapter()- Start the Station Adapter
  * @adapter: HDD adapter
@@ -6934,56 +6950,43 @@ int hdd_start_ftm_adapter(hdd_adapter_t *adapter)
  *
  * Open all the interfaces like STA, P2P and OCB based on the configuration.
  *
- * Return: Primary adapter on success and PTR_ERR on failure
+ * Return: 0 if all interfaces were created, otherwise negative errno
  */
-static hdd_adapter_t *hdd_open_interfaces(hdd_context_t *hdd_ctx,
-					  bool rtnl_held)
+static int hdd_open_interfaces(hdd_context_t *hdd_ctx, bool rtnl_held)
 {
-	hdd_adapter_t *adapter = NULL;
-	hdd_adapter_t *adapter_11p = NULL;
+	hdd_adapter_t *adapter;
 	int ret;
 
-	if (hdd_ctx->config->dot11p_mode == WLAN_HDD_11P_STANDALONE) {
+	if (hdd_ctx->config->dot11p_mode == WLAN_HDD_11P_STANDALONE)
 		/* Create only 802.11p interface */
-		adapter = hdd_open_adapter(hdd_ctx, QDF_OCB_MODE, "wlanocb%d",
-					   wlan_hdd_get_intf_addr(hdd_ctx),
-					   NET_NAME_UNKNOWN, rtnl_held);
+		return hdd_open_ocb_interface(hdd_ctx, rtnl_held);
 
-		if (adapter == NULL)
-			return ERR_PTR(-ENOSPC);
-
-		return adapter;
-	}
 	adapter = hdd_open_adapter(hdd_ctx, QDF_STA_MODE, "wlan%d",
 				   wlan_hdd_get_intf_addr(hdd_ctx),
 				   NET_NAME_UNKNOWN, rtnl_held);
 
 	if (adapter == NULL)
-		return ERR_PTR(-ENOSPC);
+		return -ENOSPC;
+
 	/* fast roaming is allowed only on first STA, i.e. wlan adapter */
 	adapter->fast_roaming_allowed = true;
 
 	ret = hdd_open_p2p_interface(hdd_ctx, rtnl_held);
 	if (ret)
-		goto err_close_adapter;
+		goto err_close_adapters;
 
 	/* Open 802.11p Interface */
 	if (hdd_ctx->config->dot11p_mode == WLAN_HDD_11P_CONCURRENT) {
-		adapter_11p = hdd_open_adapter(hdd_ctx, QDF_OCB_MODE,
-					       "wlanocb%d",
-					       wlan_hdd_get_intf_addr(hdd_ctx),
-					       NET_NAME_UNKNOWN, rtnl_held);
-		if (adapter_11p == NULL) {
-			hdd_err("Failed to open 802.11p interface");
-			goto err_close_adapter;
-		}
+		ret = hdd_open_ocb_interface(hdd_ctx, rtnl_held);
+		if (ret)
+			goto err_close_adapters;
 	}
 
-	return adapter;
+	return 0;
 
-err_close_adapter:
+err_close_adapters:
 	hdd_close_all_adapters(hdd_ctx, rtnl_held);
-	return ERR_PTR(ret);
+	return ret;
 }
 
 /**
@@ -8236,8 +8239,7 @@ static void hdd_register_debug_callback(void)
 int hdd_wlan_startup(struct device *dev)
 {
 	QDF_STATUS status;
-	hdd_adapter_t *adapter = NULL;
-	hdd_context_t *hdd_ctx = NULL;
+	hdd_context_t *hdd_ctx;
 	int ret;
 	void *hif_sc;
 	bool rtnl_held;
@@ -8261,7 +8263,7 @@ int hdd_wlan_startup(struct device *dev)
 
 	hdd_green_ap_init(hdd_ctx);
 
-	ret = hdd_wlan_start_modules(hdd_ctx, adapter, false);
+	ret = hdd_wlan_start_modules(hdd_ctx, NULL, false);
 	if (ret) {
 		hdd_alert("Failed to start modules: %d", ret);
 		goto err_exit_nl_srv;
@@ -8295,22 +8297,20 @@ int hdd_wlan_startup(struct device *dev)
 
 	rtnl_held = hdd_hold_rtnl_lock();
 
-	adapter = hdd_open_interfaces(hdd_ctx, rtnl_held);
-
-	if (IS_ERR(adapter)) {
-		hdd_alert("Failed to open interface, adapter is NULL");
-		ret = PTR_ERR(adapter);
+	ret = hdd_open_interfaces(hdd_ctx, rtnl_held);
+	if (ret) {
+		hdd_alert("Failed to open interfaces: %d", ret);
 		goto err_release_rtnl_lock;
 	}
 
 	hif_sc = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!hif_sc) {
 		hdd_err("HIF context is NULL");
-		goto err_close_adapter;
+		goto err_close_adapters;
 	}
 	/*
 	 * target hw version/revision would only be retrieved after firmware
-	 * donwload
+	 * download
 	 */
 	hif_get_hw_info(hif_sc, &hdd_ctx->target_hw_version,
 			&hdd_ctx->target_hw_revision,
@@ -8355,11 +8355,11 @@ int hdd_wlan_startup(struct device *dev)
 
 	ret = hdd_register_notifiers(hdd_ctx);
 	if (ret)
-		goto err_debugfs_exit;
+		goto err_close_adapters;
 
 	status = wlansap_global_init();
 	if (QDF_IS_STATUS_ERROR(status))
-		goto err_debugfs_exit;
+		goto err_close_adapters;
 
 	hdd_runtime_suspend_context_init(hdd_ctx);
 	memdump_init();
@@ -8391,10 +8391,7 @@ int hdd_wlan_startup(struct device *dev)
 	}
 	goto success;
 
-err_debugfs_exit:
-	hdd_debugfs_exit(adapter);
-
-err_close_adapter:
+err_close_adapters:
 	hdd_close_all_adapters(hdd_ctx, rtnl_held);
 
 err_release_rtnl_lock:
@@ -9723,11 +9720,9 @@ static int hdd_register_req_mode(hdd_context_t *hdd_ctx,
 	rtnl_held = hdd_hold_rtnl_lock();
 	switch (mode) {
 	case QDF_GLOBAL_MISSION_MODE:
-		adapter = hdd_open_interfaces(hdd_ctx, rtnl_held);
-		if (IS_ERR(adapter)) {
-			hdd_alert("Failed to open interface, adapter is NULL");
-			ret = -EINVAL;
-		}
+		ret = hdd_open_interfaces(hdd_ctx, rtnl_held);
+		if (ret)
+			hdd_alert("Failed to open interfaces: %d", ret);
 		break;
 	case QDF_GLOBAL_FTM_MODE:
 		adapter = hdd_open_adapter(hdd_ctx, QDF_FTM_MODE, "wlan%d",
