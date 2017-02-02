@@ -1090,6 +1090,8 @@ typedef enum {
     WMI_PDEV_ANTDIV_STATUS_EVENTID,
     /** Chip level Power stats */
     WMI_PDEV_CHIP_POWER_STATS_EVENTID,
+    /** Power Save Failure Detected */
+    WMI_PDEV_CHIP_POWER_SAVE_FAILURE_DETECTED_EVENTID,
 
     /* VDEV specific events */
     /** VDEV started event in response to VDEV_START request */
@@ -9133,6 +9135,7 @@ typedef enum event_type_e {
     WOW_OEM_RESPONSE_EVENT = WOW_NAN_RTT_EVENT, /* reuse deprecated event value */
     WOW_TDLS_CONN_TRACKER_EVENT,
     WOW_CRITICAL_LOG_EVENT,
+    WOW_CHIP_POWER_FAILURE_DETECT_EVENT,
 } WOW_WAKE_EVENT_TYPE;
 
 typedef enum wake_reason_e {
@@ -9184,6 +9187,7 @@ typedef enum wake_reason_e {
     WOW_REASON_CRITICAL_LOG,
     WOW_REASON_P2P_LISTEN_OFFLOAD,
     WOW_REASON_NAN_EVENT_WAKE_HOST,
+    WOW_REASON_CHIP_POWER_FAILURE_DETECT,
     WOW_REASON_DEBUG_TEST = 0xFF,
 } WOW_WAKE_REASON_TYPE;
 
@@ -16640,6 +16644,18 @@ typedef struct {
      *    A_UINT32 debug_registers[num_debug_registers];
      */
 } wmi_pdev_chip_power_stats_event_fixed_param;
+
+typedef enum wmi_chip_power_save_failure_reason_code_type {
+    WMI_PROTOCOL_POWER_SAVE_FAILURE_REASON,
+    WMI_HW_POWER_SAVE_FAILURE_REASON,
+    WMI_POWER_SAVE_FAILURE_REASON_MAX = 0xf,
+} WMI_POWER_SAVE_FAILURE_REASON_TYPE;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_chip_power_save_failure_detected_fixed_param */
+    A_UINT32 power_save_failure_reason_code; /* Chip power save failuire reason as defined in WMI_POWER_SAVE_FAILURE_REASON_TYPE */
+    A_UINT32 protocol_wake_lock_bitmap[4]; /* bitmap with bits set for modules (from WLAN_MODULE_ID enum) voting against sleep for prolonged duration */
+} wmi_chip_power_save_failure_detected_fixed_param;
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_ani_ofdm_event_fixed_param */
