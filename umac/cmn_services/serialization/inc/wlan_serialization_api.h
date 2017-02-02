@@ -192,7 +192,7 @@ struct wlan_serialization_command {
 	enum wlan_serialization_cmd_type cmd_type;
 	uint16_t cmd_id;
 	wlan_serialization_cmd_callback cmd_cb;
-	uint8_t source;
+	enum wlan_umac_comp_id source;
 	bool is_high_priority;
 	uint16_t cmd_timeout_duration;
 	union {
@@ -211,7 +211,7 @@ struct wlan_serialization_command {
  * @queue_type: Queues from which the command to be cancelled
  */
 struct wlan_serialization_queued_cmd_info {
-	uint8_t requestor;
+	enum wlan_umac_comp_id requestor;
 	enum wlan_serialization_cmd_type cmd_type;
 	uint16_t cmd_id;
 	enum wlan_serialization_cancel_type req_type;

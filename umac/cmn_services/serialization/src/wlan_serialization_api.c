@@ -26,6 +26,7 @@
 /* Include files */
 #include "wlan_objmgr_psoc_obj.h"
 #include "wlan_serialization_main_i.h"
+#include "wlan_serialization_utils_i.h"
 
 QDF_STATUS
 wlan_serialization_register_comp_info_cb(struct wlan_objmgr_psoc *psoc,
@@ -99,15 +100,40 @@ enum wlan_serialization_cmd_status
 wlan_serialization_cancel_request(
 		struct wlan_serialization_queued_cmd_info *req)
 {
-	serialization_info("serialization cancel request entry");
+	QDF_STATUS status;
 
-	return WLAN_SER_CMD_NOT_FOUND;
+	serialization_info("serialization cancel request entry");
+	if (!req) {
+		serialization_err("given request is empty");
+		return WLAN_SER_CMD_NOT_FOUND;
+	}
+	status = wlan_serialization_validate_cmd(req->requestor, req->cmd_type);
+	if (status != QDF_STATUS_SUCCESS) {
+		serialization_err("req is not valid");
+		return WLAN_SER_CMD_NOT_FOUND;
+	}
+
+	return wlan_serialization_find_and_cancel_cmd(req);
 }
 
 void wlan_serialization_remove_cmd(
 		struct wlan_serialization_queued_cmd_info *cmd)
 {
+	QDF_STATUS status;
+
 	serialization_info("serialization remove request entry");
+	if (!cmd) {
+		serialization_err("given request is empty");
+		QDF_ASSERT(0);
+		return;
+	}
+	status = wlan_serialization_validate_cmd(cmd->requestor, cmd->cmd_type);
+	if (status != QDF_STATUS_SUCCESS) {
+		serialization_err("cmd is not valid");
+		QDF_ASSERT(0);
+		return;
+	}
+	wlan_serialization_find_and_remove_cmd(cmd);
 
 	return;
 }
@@ -115,15 +141,33 @@ void wlan_serialization_remove_cmd(
 enum wlan_serialization_status
 wlan_serialization_request(struct wlan_serialization_command *cmd)
 {
-	serialization_info("serialization queue cmd entry");
+	bool is_active_cmd_allowed;
+	QDF_STATUS status;
 
-	return WLAN_SER_CMD_NOT_FOUND;
+	serialization_info("serialization queue cmd entry");
+	if (!cmd) {
+		serialization_err("serialization cmd is null");
+		return WLAN_SER_CMD_DENIED_UNSPECIFIED;
+	}
+	status = wlan_serialization_validate_cmd(cmd->source, cmd->cmd_type);
+	if (status != QDF_STATUS_SUCCESS) {
+		serialization_err("cmd is not valid");
+		return WLAN_SER_CMD_DENIED_UNSPECIFIED;
+	}
+
+	is_active_cmd_allowed = wlan_serialization_is_active_cmd_allowed(cmd);
+	return wlan_serialization_enqueue_cmd(cmd, is_active_cmd_allowed);
 }
 
 void wlan_serialization_flush_cmd(
 		struct wlan_serialization_queued_cmd_info *cmd)
 {
 	serialization_info("serialization cmd flushed");
+	if (!cmd) {
+		serialization_err("cmd is null, can't flush");
+		return;
+	}
+	/* TODO: discuss and fill this API later */
 
 	return;
 }

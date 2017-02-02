@@ -16,7 +16,8 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "wlan_serialization_main_i.h"
+#include "wlan_serialization_rules_i.h"
+
 bool wlan_apply_scan_rules(union wlan_serialization_rules_info *info)
 {
 	return true;

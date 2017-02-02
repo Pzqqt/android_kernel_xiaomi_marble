@@ -22,6 +22,7 @@
  */
 #ifndef __WLAN_SERIALIZATION_RULES_I_H
 #define __WLAN_SERIALIZATION_RULES_I_H
+#include "wlan_serialization_api.h"
 /**
  * wlan_apply_scan_rules() - Apply scan rules
  * @status: return information status fetched from other components

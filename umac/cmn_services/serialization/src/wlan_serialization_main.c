@@ -29,6 +29,7 @@
 #include "wlan_objmgr_psoc_obj.h"
 #include "wlan_serialization_main_i.h"
 #include "wlan_serialization_rules_i.h"
+#include "wlan_serialization_utils_i.h"
 
 /**
  * wlan_serialization_apply_rules_cb_init() - Apply rule callback init
@@ -95,6 +96,11 @@ QDF_STATUS wlan_serialization_psoc_close(struct wlan_objmgr_psoc *psoc)
 		serialization_err("invalid ser_soc_obj");
 		return QDF_STATUS_E_FAILURE;
 	}
+	/* clean up all timers before exiting */
+	status = wlan_serialization_cleanup_all_timers(ser_soc_obj);
+	if (status != QDF_STATUS_SUCCESS)
+		serialization_err("ser cleanning up all timer failed");
+
 	qdf_mem_free(ser_soc_obj->timers);
 	ser_soc_obj->timers = NULL;
 	ser_soc_obj->max_active_cmds = 0;
@@ -160,15 +166,15 @@ static void wlan_serialization_destroy_cmd_pool(
 {
 
 	qdf_list_node_t *node = NULL;
-	struct wlan_serialization_command_list *cmd_list_node;
+	struct wlan_serialization_command_list *cmd_list;
 
 	while (!qdf_list_empty(&ser_pdev_obj->global_cmd_pool_list)) {
 		qdf_list_remove_front(&ser_pdev_obj->global_cmd_pool_list,
 				&node);
-		cmd_list_node = (struct wlan_serialization_command_list *)node;
+		cmd_list = (struct wlan_serialization_command_list *)node;
 		serialization_info("Node being freed from global pool %p",
-				cmd_list_node);
-		qdf_mem_free(cmd_list_node);
+				cmd_list);
+		qdf_mem_free(cmd_list);
 
 	}
 	qdf_list_destroy(&ser_pdev_obj->global_cmd_pool_list);

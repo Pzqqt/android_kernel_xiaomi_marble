@@ -26,9 +26,6 @@
 #include "wlan_objmgr_cmn.h"
 #include "wlan_objmgr_psoc_obj.h"
 #include "wlan_objmgr_pdev_obj.h"
-#include "wlan_serialization_api.h"
-#include "wlan_serialization_rules_i.h"
-#include "wlan_serialization_utils_i.h"
 #include "qdf_mc_timer.h"
 
 #define WLAN_SERIALIZATION_MAX_GLOBAL_POOL_CMDS 24
@@ -52,36 +49,6 @@
 	serialization_logfl(QDF_TRACE_LEVEL_INFO_HIGH, format, ## args)
 #define serialization_debug(format, args...) \
 	serialization_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
-
-
-/**
- * struct wlan_serialization_timer - Timer used for serialization
- * @cmd:      Cmd to which the timer is linked
- * @timer:    Timer associated with the command
- *
- * Timers are allocated statically during init, one each for the
- * maximum active commands permitted in the system. Once a cmd is
- * moved from pending list to active list, the timer is activated
- * and once the cmd is completed, the timer is cancelled. Timer is
- * also cancelled if the command is aborted
- *
- * The timers are maintained per psoc. A timer is associated to
- * unique combination of pdev, cmd_type and cmd_id.
- */
-struct wlan_serialization_timer {
-	struct wlan_serialization_command *cmd;
-	qdf_mc_timer_t timer;
-};
-
-/**
- * struct wlan_serialization_command_list - List of commands to be serialized
- * @node: Node identifier in the list
- * @cmd: Command to be serialized
- */
-struct wlan_serialization_command_list {
-	qdf_list_node_t node;
-	struct wlan_serialization_command cmd;
-};
 
 /**
  * wlan_serialization_psoc_obj_create_notification() - PSOC obj create callback
