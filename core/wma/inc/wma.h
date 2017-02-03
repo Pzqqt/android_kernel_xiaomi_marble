@@ -997,7 +997,7 @@ typedef struct {
  * @nwType: network type (802.11a/b/g/n/ac)
  * @staKeyParams: sta key parameters
  * @ps_enabled: is powersave enable/disable
- * @dtim_policy: DTIM policy
+ * @restore_dtim_setting: DTIM settings restore flag
  * @peer_count: peer count
  * @roam_synch_in_progress: flag is in progress or not
  * @plink_status_req: link status request
@@ -1064,7 +1064,7 @@ struct wma_txrx_node {
 	int8_t max_tx_power;
 	uint32_t nwType;
 	void *staKeyParams;
-	uint32_t dtim_policy;
+	bool restore_dtim_setting;
 	uint32_t peer_count;
 	bool roam_synch_in_progress;
 	void *plink_status_req;

@@ -1737,7 +1737,6 @@ QDF_STATUS wma_set_smps_params(tp_wma_handle wma, uint8_t vdev_id,
 static void wma_set_vdev_suspend_dtim(tp_wma_handle wma, uint8_t vdev_id)
 {
 	struct wma_txrx_node *iface = &wma->interfaces[vdev_id];
-	enum powersave_qpower_mode qpower_config = wma_get_qpower_config(wma);
 
 	if ((iface->type == WMI_VDEV_TYPE_STA) &&
 	    (iface->dtimPeriod != 0)) {
@@ -1795,26 +1794,7 @@ static void wma_set_vdev_suspend_dtim(tp_wma_handle wma, uint8_t vdev_id)
 		WMA_LOGD("Set Listen Interval vdevId %d Listen Intv %d",
 			 vdev_id, listen_interval);
 
-		if (qpower_config) {
-			WMA_LOGD("disable Qpower in suspend mode!");
-			ret = wma_unified_set_sta_ps_param(wma->wmi_handle,
-						vdev_id,
-						WMI_STA_PS_ENABLE_QPOWER,
-						0);
-			if (QDF_IS_STATUS_ERROR(ret))
-				WMA_LOGE("Failed to disable Qpower in suspend mode!");
-		}
-
-		ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
-						      WMI_VDEV_PARAM_DTIM_POLICY,
-						      NORMAL_DTIM);
-		if (QDF_IS_STATUS_ERROR(ret))
-			WMA_LOGE("Failed to Set to Normal DTIM vdevId %d",
-				 vdev_id);
-
-		/* Set it to Normal DTIM */
-		iface->dtim_policy = NORMAL_DTIM;
-		WMA_LOGD("Set DTIM Policy to Normal Dtim vdevId %d", vdev_id);
+		iface->restore_dtim_setting = true;
 	}
 }
 
@@ -1851,10 +1831,9 @@ void wma_set_suspend_dtim(tp_wma_handle wma)
 static void wma_set_vdev_resume_dtim(tp_wma_handle wma, uint8_t vdev_id)
 {
 	struct wma_txrx_node *iface = &wma->interfaces[vdev_id];
-	enum powersave_qpower_mode qpower_config = wma_get_qpower_config(wma);
 
 	if ((iface->type == WMI_VDEV_TYPE_STA) &&
-	    (iface->dtim_policy == NORMAL_DTIM)) {
+	    (iface->restore_dtim_setting)) {
 		QDF_STATUS ret;
 		uint32_t cfg_data_val = 0;
 		/* get mac to acess CFG data base */
@@ -1883,26 +1862,8 @@ static void wma_set_vdev_resume_dtim(tp_wma_handle wma, uint8_t vdev_id)
 		WMA_LOGD("Set Listen Interval vdevId %d Listen Intv %d",
 			 vdev_id, cfg_data_val);
 
-		ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
-						      WMI_VDEV_PARAM_DTIM_POLICY,
-						      STICK_DTIM);
-		if (QDF_IS_STATUS_ERROR(ret)) {
-			/* Set it back to Stick DTIM */
-			WMA_LOGE("Failed to Set to Stick DTIM vdevId %d",
-				 vdev_id);
-		}
-		iface->dtim_policy = STICK_DTIM;
-		WMA_LOGD("Set DTIM Policy to Stick Dtim vdevId %d", vdev_id);
+		iface->restore_dtim_setting = false;
 
-		if (qpower_config) {
-			WMA_LOGD("enable Qpower in resume mode!");
-			ret = wma_unified_set_sta_ps_param(wma->wmi_handle,
-						vdev_id,
-						WMI_STA_PS_ENABLE_QPOWER,
-						qpower_config);
-			if (QDF_IS_STATUS_ERROR(ret))
-				WMA_LOGE("Failed to enable Qpower in resume mode!");
-		}
 	}
 }
 
