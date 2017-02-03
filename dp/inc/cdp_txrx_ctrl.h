@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -107,7 +107,7 @@ cdp_set_drop_unenc(ol_txrx_soc_handle soc,
  *  This will be used to populate the HTT desc packet type field during Tx
  *
  * @param vdev - the data virtual device object
- * @param val - the Tx encap type (htt_pkt_type)
+ * @param val - the Tx encap type (htt_cmn_pkt_type)
  * @return - void
  */
 static inline void
@@ -126,7 +126,7 @@ cdp_set_tx_encap_type(ol_txrx_soc_handle soc,
  *  decap all Rx packets into, for all peers under the VDEV.
  *
  * @param vdev - the data virtual device object
- * @param val - the Rx decap mode (htt_pkt_type)
+ * @param val - the Rx decap mode (htt_cmn_pkt_type)
  * @return - void
  */
 static inline void
@@ -143,9 +143,9 @@ cdp_set_vdev_rx_decap_type(ol_txrx_soc_handle soc,
  * @brief get the Rx decapsulation type of the VDEV
  *
  * @param vdev - the data virtual device object
- * @return - the Rx decap type (htt_pkt_type)
+ * @return - the Rx decap type (htt_cmn_pkt_type)
  */
-static inline enum htt_pkt_type
+static inline enum htt_cmn_pkt_type
 cdp_get_vdev_rx_decap_type(ol_txrx_soc_handle soc, void *vdev)
 {
 	if (soc->ops->ctrl_ops->txrx_get_vdev_rx_decap_type)

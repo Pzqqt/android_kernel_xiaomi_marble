@@ -257,7 +257,7 @@ struct cdp_ctrl_ops {
 	 * @param vdev - the data virtual device object
 	 * @return - the Rx decap type
 	 */
-	enum htt_pkt_type
+	enum htt_cmn_pkt_type
 		(*txrx_get_vdev_rx_decap_type)(void *vdev);
 
 	/* Is this similar to ol_txrx_peer_state_update() in MCL */

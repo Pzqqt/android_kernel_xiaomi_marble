@@ -25,6 +25,7 @@
 #include <qdf_atomic.h>
 #include <qdf_util.h>
 #include <queue.h>
+#include <htt_common.h>
 
 #include <cdp_txrx_cmn.h>
 #ifndef CONFIG_WIN
