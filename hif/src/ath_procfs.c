@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -104,6 +104,8 @@ static ssize_t ath_procfs_diag_read(struct file *file, char __user *buf,
 	}
 
 out:
+	if (rv)
+		return -EIO;
 
 	if (copy_to_user(buf, read_buffer, count)) {
 		qdf_mem_free(read_buffer);
@@ -113,11 +115,7 @@ out:
 	} else
 		qdf_mem_free(read_buffer);
 
-	if (rv == 0) {
-		return count;
-	} else {
-		return -EIO;
-	}
+	return count;
 }
 
 static ssize_t ath_procfs_diag_write(struct file *file,
