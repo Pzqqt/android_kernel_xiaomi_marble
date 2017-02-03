@@ -4393,7 +4393,7 @@ bool wmi_service_enabled(void *wmi_hdl, uint32_t service_id)
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS wmi_get_target_cap_from_service_ready(void *wmi_hdl,
-	void *evt_buf, target_capability_info *ev)
+	void *evt_buf, struct wlan_psoc_target_capability_info *ev)
 {
 	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
 
@@ -4453,7 +4453,7 @@ QDF_STATUS wmi_extract_fw_abi_version(void *wmi_hdl,
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS wmi_extract_hal_reg_cap(void *wmi_hdl, void *evt_buf,
-	TARGET_HAL_REG_CAPABILITIES *hal_reg_cap)
+	struct wlan_psoc_hal_reg_capability *hal_reg_cap)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
@@ -6197,7 +6197,7 @@ QDF_STATUS wmi_unified_send_btcoex_duty_cycle_cmd(void *wmi_hdl,
  * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
  */
 QDF_STATUS wmi_extract_service_ready_ext(void *wmi_hdl, uint8_t *evt_buf,
-		struct wmi_host_service_ext_param *param)
+		struct wlan_psoc_host_service_ext_param *param)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
@@ -6221,7 +6221,7 @@ QDF_STATUS wmi_extract_service_ready_ext(void *wmi_hdl, uint8_t *evt_buf,
 QDF_STATUS wmi_extract_hw_mode_cap_service_ready_ext(
 			void *wmi_hdl,
 			uint8_t *evt_buf, uint8_t hw_mode_idx,
-			struct wmi_host_hw_mode_caps *param)
+			struct wlan_psoc_host_hw_mode_caps *param)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
@@ -6248,7 +6248,7 @@ QDF_STATUS wmi_extract_mac_phy_cap_service_ready_ext(
 			uint8_t *evt_buf,
 			uint8_t hw_mode_id,
 			uint8_t phy_id,
-			struct wmi_host_mac_phy_caps *param)
+			struct wlan_psoc_host_mac_phy_caps *param)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
@@ -6273,7 +6273,7 @@ QDF_STATUS wmi_extract_mac_phy_cap_service_ready_ext(
 QDF_STATUS wmi_extract_reg_cap_service_ready_ext(
 			void *wmi_hdl,
 			uint8_t *evt_buf, uint8_t phy_idx,
-			struct WMI_HOST_HAL_REG_CAPABILITIES_EXT *param)
+			struct wlan_psoc_host_hal_reg_capabilities_ext *param)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 

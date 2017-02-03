@@ -12427,7 +12427,7 @@ static bool is_service_enabled_tlv(wmi_unified_t wmi_handle,
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
 static QDF_STATUS extract_service_ready_tlv(wmi_unified_t wmi_handle,
-		void *evt_buf, target_capability_info *cap)
+		void *evt_buf, struct wlan_psoc_target_capability_info *cap)
 {
 	WMI_SERVICE_READY_EVENTID_param_tlvs *param_buf;
 	wmi_service_ready_event_fixed_param *ev;
@@ -12471,7 +12471,7 @@ static QDF_STATUS extract_service_ready_tlv(wmi_unified_t wmi_handle,
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
 static QDF_STATUS extract_hal_reg_cap_tlv(wmi_unified_t wmi_handle,
-	void *evt_buf, TARGET_HAL_REG_CAPABILITIES *cap)
+	void *evt_buf, struct wlan_psoc_hal_reg_capability *cap)
 {
 	WMI_SERVICE_READY_EVENTID_param_tlvs *param_buf;
 	u_int32_t wireless_modes_orig = 0;
@@ -12480,7 +12480,7 @@ static QDF_STATUS extract_hal_reg_cap_tlv(wmi_unified_t wmi_handle,
 
 	qdf_mem_copy(cap, (((uint8_t *)param_buf->hal_reg_capabilities) +
 		sizeof(uint32_t)),
-		sizeof(TARGET_HAL_REG_CAPABILITIES));
+		sizeof(struct wlan_psoc_hal_reg_capability));
 
 	/* Convert REGDMN_MODE values sent by target to host internal
 	 * WMI_HOST_REGDMN_MODE values.
@@ -13507,7 +13507,7 @@ static QDF_STATUS extract_channel_hopping_event_tlv(wmi_unified_t wmi_handle,
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
 static QDF_STATUS extract_service_ready_ext_tlv(wmi_unified_t wmi_handle,
-		uint8_t *event, struct wmi_host_service_ext_param *param)
+		uint8_t *event, struct wlan_psoc_host_service_ext_param *param)
 {
 	WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *param_buf;
 	wmi_service_ready_ext_event_fixed_param *ev;
@@ -13559,7 +13559,7 @@ static QDF_STATUS extract_service_ready_ext_tlv(wmi_unified_t wmi_handle,
 static QDF_STATUS extract_hw_mode_cap_service_ready_ext_tlv(
 			wmi_unified_t wmi_handle,
 			uint8_t *event, uint8_t hw_mode_idx,
-			struct wmi_host_hw_mode_caps *param)
+			struct wlan_psoc_host_hw_mode_caps *param)
 {
 	WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *param_buf;
 	WMI_SOC_MAC_PHY_HW_MODE_CAPS *hw_caps;
@@ -13598,7 +13598,7 @@ static QDF_STATUS extract_hw_mode_cap_service_ready_ext_tlv(
 static QDF_STATUS extract_mac_phy_cap_service_ready_ext_tlv(
 			wmi_unified_t wmi_handle,
 			uint8_t *event, uint8_t hw_mode_id, uint8_t phy_id,
-			struct wmi_host_mac_phy_caps *param)
+			struct wlan_psoc_host_mac_phy_caps *param)
 {
 	WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *param_buf;
 	WMI_MAC_PHY_CAPABILITIES *mac_phy_caps;
@@ -13695,7 +13695,7 @@ static QDF_STATUS extract_mac_phy_cap_service_ready_ext_tlv(
 static QDF_STATUS extract_reg_cap_service_ready_ext_tlv(
 			wmi_unified_t wmi_handle,
 			uint8_t *event, uint8_t phy_idx,
-			struct WMI_HOST_HAL_REG_CAPABILITIES_EXT *param)
+			struct wlan_psoc_host_hal_reg_capabilities_ext *param)
 {
 	WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *param_buf;
 	WMI_SOC_HAL_REG_CAPABILITIES *reg_caps;
