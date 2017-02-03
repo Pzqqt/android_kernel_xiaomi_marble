@@ -610,6 +610,7 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 	int rxstat;
 	unsigned int cpu_index;
 	struct sk_buff *skb = NULL;
+	struct sk_buff *next = NULL;
 	hdd_context_t *pHddCtx = NULL;
 
 	/* Sanity check on inputs */
@@ -635,12 +636,18 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 	}
 
 	/* walk the chain until all are processed */
-	skb = (struct sk_buff *)rxBuf;
+	next = (struct sk_buff *)rxBuf;
 
-	while (skb) {
-		struct sk_buff *next = skb->next;
-
+	while (next) {
+		skb = next;
+		next = skb->next;
 		skb->next = NULL;
+
+#ifdef QCA_WIFI_NAPIER_EMULATION /* Debug code, remove later */
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
+			 "%s: skb %p skb->len %d\n", __func__, skb, skb->len);
+#endif
+
 		hdd_softap_dump_sk_buff(skb);
 
 		skb->dev = pAdapter->dev;
@@ -649,7 +656,7 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 
 			QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
 				  "%s: ERROR!!Invalid netdevice", __func__);
-			return QDF_STATUS_E_FAILURE;
+			continue;
 		}
 		cpu_index = wlan_hdd_get_cpu();
 		++pAdapter->hdd_stats.hddTxRxStats.rxPackets[cpu_index];
@@ -692,8 +699,6 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 		}
 
 		pAdapter->dev->last_rx = jiffies;
-
-		skb = next;
 	}
 
 	return QDF_STATUS_SUCCESS;

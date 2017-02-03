@@ -983,6 +983,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 	hdd_context_t *pHddCtx = NULL;
 	int rxstat;
 	struct sk_buff *skb = NULL;
+	struct sk_buff *next = NULL;
 	hdd_station_ctx_t *pHddStaCtx = NULL;
 	unsigned int cpu_index;
 
@@ -1010,12 +1011,18 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 
 	cpu_index = wlan_hdd_get_cpu();
 
-	skb = (struct sk_buff *)rxBuf;
+	next = (struct sk_buff *)rxBuf;
 
-	while (skb) {
-		struct sk_buff *next = skb->next;
-
+	while (next) {
+		skb = next;
+		next = skb->next;
 		skb->next = NULL;
+
+#ifdef QCA_WIFI_NAPIER_EMULATION /* Debug code, remove later */
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
+			 "%s: skb %p skb->len %d\n", __func__, skb, skb->len);
+#endif
+
 		pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 		if ((pHddStaCtx->conn_info.proxyARPService) &&
 			cfg80211_is_gratuitous_arp_unsolicited_na(skb)) {
@@ -1027,7 +1034,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 			 * it to stack
 			 */
 			qdf_nbuf_free(skb);
-			return QDF_STATUS_SUCCESS;
+			continue;
 		}
 
 		hdd_event_eapol_log(skb, QDF_RX);
@@ -1051,7 +1058,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 			QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO,
 				"%s: Dropping multicast replay pkt", __func__);
 			qdf_nbuf_free(skb);
-			return QDF_STATUS_SUCCESS;
+			continue;
 		}
 
 		/* hold configurable wakelock for unicast traffic */
@@ -1092,9 +1099,8 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 		}
 
 		pAdapter->dev->last_rx = jiffies;
-
-		skb = next;
 	}
+
 	return QDF_STATUS_SUCCESS;
 }
 
