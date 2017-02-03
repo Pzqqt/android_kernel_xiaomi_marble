@@ -806,6 +806,14 @@ BMI_OBJS := $(BMI_DIR)/src/bmi.o \
             $(BMI_DIR)/src/ol_fw_common.o
 BMI_OBJS += $(BMI_DIR)/src/bmi_1.o
 
+##########  TARGET_IF #######
+TARGET_IF_DIR := $(WLAN_COMMON_ROOT)/target_if
+
+TARGET_IF_INC := -I$(WLAN_COMMON_INC)/target_if/core/inc \
+		 -I$(WLAN_COMMON_INC)/target_if/core/src
+
+TARGET_IF_OBJ := $(TARGET_IF_DIR)/core/src/target_if_main.o
+
 ########### WMI ###########
 WMI_ROOT_DIR := wmi
 
@@ -1124,7 +1132,8 @@ INCS :=		$(HDD_INC) \
 		$(SYS_INC) \
 		$(QDF_INC) \
 		$(CDS_INC) \
-		$(DFS_INC)
+		$(DFS_INC) \
+		$(TARGET_IF_INC)
 
 INCS +=		$(WMA_INC) \
 		$(UAPI_INC) \
@@ -1191,7 +1200,8 @@ OBJS +=		$(WMA_OBJS) \
 
 OBJS +=		$(HIF_OBJS) \
 		$(BMI_OBJS) \
-		$(HTT_OBJS)
+		$(HTT_OBJS) \
+		$(TARGET_IF_OBJ)
 
 ifeq ($(CONFIG_LITHIUM), y)
 OBJS += 	$(HAL_OBJS)

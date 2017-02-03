@@ -81,6 +81,7 @@
 #include "wma_nan_datapath.h"
 #include "wlan_lmac_if_def.h"
 #include "wlan_lmac_if_api.h"
+#include "target_if.h"
 
 
 #define WMA_LOG_COMPLETION_TIMER 10000 /* 10 seconds */
@@ -1856,6 +1857,27 @@ static void wma_target_if_close(tp_wma_handle wma_handle)
 }
 
 /**
+ * wma_get_psoc_from_scn_handle() - API to get psoc from scn handle
+ * @scn_handle: opaque wma handle
+ *
+ * API to get psoc from scn handle
+ *
+ * Return: None
+ */
+static struct wlan_objmgr_psoc *wma_get_psoc_from_scn_handle(void *scn_handle)
+{
+	tp_wma_handle wma_handle;
+
+	if (!scn_handle) {
+		WMA_LOGE("invalid scn handle");
+		return NULL;
+	}
+	wma_handle = (tp_wma_handle)scn_handle;
+
+	return wma_handle->psoc;
+}
+
+/**
  * wma_open() - Allocate wma context and initialize it.
  * @psoc: Psoc pointer
  * @cds_context:  cds context
@@ -2318,6 +2340,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *cds_context,
 				WMA_RX_SERIALIZER_CTX);
 	wma_ndp_register_all_event_handlers(wma_handle);
 	wma_target_if_open(wma_handle);
+	target_if_open(wma_get_psoc_from_scn_handle);
 
 	wma_register_debug_callback();
 
@@ -3535,6 +3558,7 @@ QDF_STATUS wma_close(void *cds_ctx)
 
 	/* Decrease psoc ref count once APIs are available in object manager */
 	wma_handle->psoc = NULL;
+	target_if_close();
 	wma_target_if_close(wma_handle);
 
 	WMA_LOGD("%s: Exit", __func__);
