@@ -194,8 +194,6 @@ dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 	void *ring_desc;
 	struct dp_rx_desc *rx_desc;
 	qdf_nbuf_t nbuf;
-	qdf_nbuf_t deliver_list_head = NULL;
-	qdf_nbuf_t deliver_list_tail = NULL;
 	union dp_rx_desc_list_elem_t *head = NULL;
 	union dp_rx_desc_list_elem_t *tail = NULL;
 	uint32_t rx_bufs_used = 0, rx_buf_cookie, l2_hdr_offset;
@@ -311,6 +309,8 @@ done:
 	}
 
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+		qdf_nbuf_t deliver_list_head = NULL;
+		qdf_nbuf_t deliver_list_tail = NULL;
 
 		while ((nbuf = qdf_nbuf_queue_remove(&vdev->rxq))) {
 			rx_tlv_hdr = qdf_nbuf_data(nbuf);

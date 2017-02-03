@@ -261,7 +261,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, void *ring_desc,
 	struct dp_pdev *pdev0;
 	struct dp_vdev *vdev0;
 	uint32_t tid = 0;
-	uint16_t peer_id;
+	uint16_t peer_id = 0xFFFF;
 	struct dp_peer *peer = NULL;
 
 	rx_buf_cookie = HAL_RX_WBM_BUF_COOKIE_GET(ring_desc);
@@ -325,6 +325,16 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, void *ring_desc,
 		}
 	}
 
+#ifdef QCA_WIFI_NAPIER_EMULATION /* Debug code, remove later */
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+		 "%s: p_id %d msdu_len %d hdr_off %d",
+		 __func__, peer_id, msdu_len, l2_hdr_offset);
+
+	print_hex_dump(KERN_ERR,
+		 "\t Pkt Data:", DUMP_PREFIX_NONE, 32, 4,
+		qdf_nbuf_data(nbuf), 128, false);
+#endif /* NAPIER_EMULATION */
+
 	pdev0 = soc->pdev_list[0];/* Hard code 0th elem */
 
 	if (pdev0) {
@@ -333,7 +343,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, void *ring_desc,
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 				FL("pdev0 %p vdev0 %p osif_rx %p"), pdev0, vdev0,
 				vdev0->osif_rx);
-
+			qdf_nbuf_set_next(nbuf, NULL);
 			vdev0->osif_rx(vdev0->osif_vdev, nbuf);
 		} else {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
