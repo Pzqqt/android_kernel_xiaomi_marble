@@ -78,6 +78,7 @@
 #include "wlan_cfg80211.h"
 #endif
 #include <cdp_txrx_handle.h>
+#include <wlan_cfg80211_scan.h>
 
 #ifdef FEATURE_WLAN_EXTSCAN
 #include "wlan_hdd_ext_scan.h"
@@ -102,6 +103,8 @@
 
 #include <cdp_txrx_cmn.h>
 #include <cdp_txrx_misc.h>
+#include <qca_vendor.h>
+
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)

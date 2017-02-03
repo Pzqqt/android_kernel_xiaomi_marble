@@ -31,6 +31,14 @@
  */
 
 #include <wlan_hdd_object_manager.h>
+#include <wlan_osif_priv.h>
+
+static void hdd_init_os_priv(hdd_context_t *hdd_ctx,
+	struct pdev_osif_priv *os_priv)
+{
+	/* Initialize the OS private structure*/
+	os_priv->wiphy = hdd_ctx->wiphy;
+}
 
 int hdd_create_and_store_psoc(hdd_context_t *hdd_ctx, uint8_t psoc_id)
 {
@@ -62,13 +70,22 @@ int hdd_create_and_store_pdev(hdd_context_t *hdd_ctx)
 {
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
 	struct wlan_objmgr_pdev *pdev;
+	struct pdev_osif_priv *priv;
 
 	if (!psoc) {
 		hdd_err("Psoc NULL");
 		return -EINVAL;
 	}
 
-	pdev = wlan_objmgr_pdev_obj_create(psoc, NULL);
+	priv = qdf_mem_malloc(sizeof(*priv));
+	if (priv == NULL) {
+		hdd_err("pdev os obj create failed");
+		return -ENOMEM;
+	}
+
+	hdd_init_os_priv(hdd_ctx, priv);
+
+	pdev = wlan_objmgr_pdev_obj_create(psoc, priv);
 	if (!pdev) {
 		hdd_err("pdev obj create failed");
 		return -ENOMEM;
@@ -81,10 +98,15 @@ int hdd_create_and_store_pdev(hdd_context_t *hdd_ctx)
 int hdd_release_and_destroy_pdev(hdd_context_t *hdd_ctx)
 {
 	struct wlan_objmgr_pdev *pdev = hdd_ctx->hdd_pdev;
+	struct pdev_osif_priv *osif_priv;
 
 	hdd_ctx->hdd_pdev = NULL;
 	if (!pdev)
 		return -EINVAL;
+
+	osif_priv = pdev->pdev_nif.pdev_ospriv;
+	pdev->pdev_nif.pdev_ospriv = NULL;
+	qdf_mem_free(osif_priv);
 
 	return qdf_status_to_os_return(wlan_objmgr_pdev_obj_delete(pdev));
 }

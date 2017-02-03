@@ -26,6 +26,7 @@
 #include "wlan_hdd_disa.h"
 #include "wlan_hdd_request_manager.h"
 #include "sme_api.h"
+#include <qca_vendor.h>
 
 #define WLAN_WAIT_TIME_ENCRYPT_DECRYPT 1000
 

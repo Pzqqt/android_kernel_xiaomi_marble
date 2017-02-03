@@ -753,6 +753,9 @@ ifeq ($(CONFIG_WLAN_DEBUGFS), y)
 QDF_OBJS += $(QDF_OBJ_DIR)/qdf_debugfs.o
 endif
 
+OS_IF_INC :=	-I$(WLAN_COMMON_INC)/os_if/linux \
+		-I$(WLAN_COMMON_INC)/os_if/linux/scan/inc
+
 ############ UMAC_DISP ############
 UMAC_DISP_DIR := umac/global_umac_dispatcher/lmac_if
 UMAC_DISP_INC_DIR := $(UMAC_DISP_DIR)/inc
@@ -1164,6 +1167,7 @@ INCS :=		$(HDD_INC) \
 		$(CDS_INC) \
 		$(DFS_INC) \
 		$(TARGET_IF_INC) \
+		$(OS_IF_INC) \
 		$(GLOBAL_LMAC_IF_INC)
 
 INCS +=		$(WMA_INC) \

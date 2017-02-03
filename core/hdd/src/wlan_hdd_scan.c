@@ -50,6 +50,7 @@
 #ifdef WLAN_UMAC_CONVERGENCE
 #include "wlan_cfg80211.h"
 #endif
+#include <qca_vendor.h>
 
 #define MAX_RATES                       12
 #define HDD_WAKE_LOCK_SCAN_DURATION (5 * 1000) /* in msec */

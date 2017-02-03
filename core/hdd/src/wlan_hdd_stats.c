@@ -32,6 +32,7 @@
 #include "wlan_hdd_trace.h"
 #include "wlan_hdd_lpass.h"
 #include "hif.h"
+#include <qca_vendor.h>
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
 

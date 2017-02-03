@@ -46,6 +46,7 @@
 #include "cds_sched.h"
 #include "wma_types.h"
 #include "cds_concurrency.h"
+#include <qca_vendor.h>
 
 
 static int32_t wlan_hdd_tdls_peer_reset_discovery_processed(tdlsCtx_t *

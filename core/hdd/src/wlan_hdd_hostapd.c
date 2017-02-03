@@ -78,6 +78,8 @@
 #include <cdp_txrx_misc.h>
 #include "wlan_hdd_power.h"
 #include "wlan_hdd_object_manager.h"
+#include <qca_vendor.h>
+
 
 #define    IS_UP(_dev) \
 	(((_dev)->flags & (IFF_RUNNING|IFF_UP)) == (IFF_RUNNING|IFF_UP))

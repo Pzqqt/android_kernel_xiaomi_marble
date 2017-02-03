@@ -110,6 +110,7 @@
 #include "wlan_hdd_object_manager.h"
 #include "cds_utils.h"
 #include <cdp_txrx_handle.h>
+#include <qca_vendor.h>
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)

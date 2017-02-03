@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -33,6 +33,7 @@
 #include "sme_api.h"
 #include "wlan_hdd_main.h"
 #include "wlan_hdd_subnet_detect.h"
+#include <qca_vendor.h>
 
 /*
  * define short names for the global vendor params

@@ -32,6 +32,7 @@
 #include "wlan_hdd_regulatory.h"
 #include "cds_utils.h"
 #include "cds_sched.h"
+#include <qca_vendor.h>
 
 /* amount of time to wait for a synchronous request/response operation */
 #define WLAN_WAIT_TIME_EXTSCAN  1000
