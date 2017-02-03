@@ -26,26 +26,20 @@
 
 void
 wlan_objmgr_populate_service_ready_data(struct wlan_objmgr_psoc *psoc,
-					void *data)
+			struct wlan_objmgr_psoc_service_ready_param *data)
 {
-	struct wlan_objmgr_psoc_service_ready_param *service_ready_data = data;
-
 	wlan_psoc_obj_lock(psoc);
-	qdf_mem_copy(&psoc->service_param, service_ready_data,
-		     sizeof(psoc->service_param));
+	psoc->service_param = *data;
 	wlan_psoc_obj_unlock(psoc);
 }
 EXPORT_SYMBOL(wlan_objmgr_populate_service_ready_data);
 
 void
 wlan_objmgr_populate_ext_service_ready_data(struct wlan_objmgr_psoc *psoc,
-					    void *data)
+			struct wlan_objmgr_psoc_ext_service_ready_param *data)
 {
-	struct wlan_objmgr_psoc_ext_service_ready_param *ext_data = data;
-
 	wlan_psoc_obj_lock(psoc);
-	qdf_mem_copy(&psoc->ext_service_param, ext_data,
-		     sizeof(psoc->ext_service_param));
+	psoc->ext_service_param = *data;
 	wlan_psoc_obj_unlock(psoc);
 }
 EXPORT_SYMBOL(wlan_objmgr_populate_ext_service_ready_data);

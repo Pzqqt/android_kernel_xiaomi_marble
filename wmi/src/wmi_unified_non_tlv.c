@@ -5454,7 +5454,7 @@ static bool is_service_enabled_non_tlv(wmi_unified_t wmi_handle,
  */
 static QDF_STATUS extract_service_ready_non_tlv(wmi_unified_t wmi_handle,
 		void *evt_buf,
-		target_capability_info *cap)
+		struct wlan_psoc_target_capability_info *cap)
 {
 	wmi_service_ready_event *ev;
 
@@ -5535,7 +5535,7 @@ static QDF_STATUS extract_fw_abi_version_non_tlv(wmi_unified_t wmi_handle,
  */
 static QDF_STATUS extract_hal_reg_cap_non_tlv(wmi_unified_t wmi_handle,
 		void *evt_buf,
-		TARGET_HAL_REG_CAPABILITIES *cap)
+		struct wlan_psoc_hal_reg_capability *cap)
 {
 	wmi_service_ready_event *ev;
 	u_int32_t wireless_modes_orig = 0;
@@ -5543,7 +5543,7 @@ static QDF_STATUS extract_hal_reg_cap_non_tlv(wmi_unified_t wmi_handle,
 	ev = (wmi_service_ready_event *) evt_buf;
 
 	qdf_mem_copy(cap, &ev->hal_reg_capabilities,
-			sizeof(TARGET_HAL_REG_CAPABILITIES));
+			sizeof(struct wlan_psoc_hal_reg_capability));
 
 	/* Convert REGDMN_MODE values sent by target to host internal
 	 * WMI_HOST_REGDMN_MODE values.

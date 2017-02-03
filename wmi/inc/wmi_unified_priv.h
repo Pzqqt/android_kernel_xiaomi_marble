@@ -35,6 +35,7 @@
 #include "a_types.h"
 #include "wmi_unified_param.h"
 #include "qdf_atomic.h"
+#include "wlan_objmgr_psoc_service_ready_api.h"
 
 #define WMI_UNIFIED_MAX_EVENT 0x100
 #ifdef CONFIG_MCL
@@ -914,7 +915,7 @@ void (*save_service_bitmap)(wmi_unified_t wmi_handle,
 bool (*is_service_enabled)(wmi_unified_t wmi_handle,
 	uint32_t service_id);
 QDF_STATUS (*get_target_cap_from_service_ready)(wmi_unified_t wmi_handle,
-	void *evt_buf, target_capability_info *ev);
+	void *evt_buf, struct wlan_psoc_target_capability_info *ev);
 
 QDF_STATUS (*extract_fw_version)(wmi_unified_t wmi_handle,
 				void *ev, struct wmi_host_fw_ver *fw_ver);
@@ -923,7 +924,7 @@ QDF_STATUS (*extract_fw_abi_version)(wmi_unified_t wmi_handle,
 				void *ev, struct wmi_host_fw_abi_ver *fw_ver);
 
 QDF_STATUS (*extract_hal_reg_cap)(wmi_unified_t wmi_handle, void *evt_buf,
-	TARGET_HAL_REG_CAPABILITIES *hal_reg_cap);
+	struct wlan_psoc_hal_reg_capability *hal_reg_cap);
 
 host_mem_req * (*extract_host_mem_req)(wmi_unified_t wmi_handle,
 	void *evt_buf, uint8_t *num_entries);
@@ -1205,24 +1206,24 @@ QDF_STATUS (*send_peer_rx_reorder_queue_remove_cmd)(wmi_unified_t wmi_handle,
 
 QDF_STATUS (*extract_service_ready_ext)(wmi_unified_t wmi_handle,
 			uint8_t *evt_buf,
-			struct wmi_host_service_ext_param *param);
+			struct wlan_psoc_host_service_ext_param *param);
 
 QDF_STATUS (*extract_hw_mode_cap_service_ready_ext)(
 			wmi_unified_t wmi_handle,
 			uint8_t *evt_buf, uint8_t hw_mode_idx,
-			struct wmi_host_hw_mode_caps *param);
+			struct wlan_psoc_host_hw_mode_caps *param);
 
 QDF_STATUS (*extract_mac_phy_cap_service_ready_ext)(
 			wmi_unified_t wmi_handle,
 			uint8_t *evt_buf,
 			uint8_t hw_mode_id,
 			uint8_t phy_id,
-			struct wmi_host_mac_phy_caps *param);
+			struct wlan_psoc_host_mac_phy_caps *param);
 
 QDF_STATUS (*extract_reg_cap_service_ready_ext)(
 			wmi_unified_t wmi_handle,
 			uint8_t *evt_buf, uint8_t phy_idx,
-			struct WMI_HOST_HAL_REG_CAPABILITIES_EXT *param);
+			struct wlan_psoc_host_hal_reg_capabilities_ext *param);
 
 QDF_STATUS (*extract_pdev_utf_event)(wmi_unified_t wmi_hdl,
 				     uint8_t *evt_buf,

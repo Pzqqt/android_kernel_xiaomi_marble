@@ -37,36 +37,6 @@
 #include "wlan_objmgr_psoc_obj.h"
 #include "target_if.h"
 
-#define MAX_HW_MODE      (2)
-#define MAX_MAC_PHY_CAP  (5)
-#define MAX_PHY_REG_CAP  (3)
-
-/**
- * struct service_ready_param - service ready structure
- * @wmi_service_bitmap: wmi service bitmap
- * @target_caps: traget capability
- * @hal_reg_cap: hal reg capability
- */
-struct service_ready_param {
-	uint32_t wmi_service_bitmap[wmi_services_max];
-	target_capability_info target_caps;
-	TARGET_HAL_REG_CAPABILITIES hal_reg_cap;
-};
-
-/**
- * struct ext_service_ready_param - ext service ready structure
- * @service_ext_param: service ext param
- * @hw_mode_caps: hw mode caps
- * @mac_phy_cap: mac phy cap
- * @reg_cap: regulatory capability
- */
-struct ext_service_ready_param {
-	struct wmi_host_service_ext_param service_ext_param;
-	struct wmi_host_hw_mode_caps hw_mode_caps[MAX_HW_MODE];
-	struct wmi_host_mac_phy_caps mac_phy_cap[MAX_MAC_PHY_CAP];
-	struct WMI_HOST_HAL_REG_CAPABILITIES_EXT reg_cap[MAX_PHY_REG_CAP];
-};
-
 /**
  * init_deinit_service_ready_event_handler() - service ready handler
  * @handle: opaqueue pointer to scn

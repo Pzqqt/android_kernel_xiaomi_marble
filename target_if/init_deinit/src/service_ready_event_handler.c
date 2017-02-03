@@ -39,7 +39,7 @@ static int populate_service_bitmap(void *wmi_handle, uint8_t *event,
 }
 
 static int populate_target_cap(void *wmi_handle, uint8_t *event,
-				   target_capability_info *cap)
+			       struct wlan_psoc_target_capability_info *cap)
 {
 	QDF_STATUS status;
 
@@ -53,7 +53,7 @@ static int populate_target_cap(void *wmi_handle, uint8_t *event,
 }
 
 static int populate_hal_reg_cap(void *wmi_handle, uint8_t *event,
-				    TARGET_HAL_REG_CAPABILITIES *cap)
+				struct wlan_psoc_hal_reg_capability *cap)
 {
 	QDF_STATUS status;
 
@@ -71,7 +71,7 @@ int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 					    uint32_t data_len)
 {
 	int err_code;
-	struct service_ready_param *service_param;
+	struct wlan_objmgr_psoc_service_ready_param *service_param;
 	struct wlan_objmgr_psoc *psoc;
 	wmi_legacy_service_ready_callback legacy_callback;
 	void *wmi_handle;
@@ -89,14 +89,14 @@ int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 
 	wmi_handle = psoc->tgt_if_handle;
 
-	service_param = qdf_mem_malloc(sizeof(struct service_ready_param));
+	service_param = qdf_mem_malloc(sizeof(*service_param));
 	if (!service_param) {
-		WMI_LOGE("wmi_service_ready_param memory alloc failed");
+		WMI_LOGE("memory alloc failed for psoc service ready");
 		return -ENOMEM;
 	}
 
 	err_code = populate_service_bitmap(wmi_handle, event,
-			service_param->wmi_service_bitmap);
+			service_param->service_bitmap);
 	if (err_code)
 		goto free_param_and_exit;
 
@@ -123,7 +123,7 @@ free_param_and_exit:
 }
 
 static int populate_service_ready_ext_param(void *handle, uint8_t *evt,
-				struct wmi_host_service_ext_param *param)
+			struct wlan_psoc_host_service_ext_param *param)
 {
 	QDF_STATUS status;
 
@@ -137,8 +137,8 @@ static int populate_service_ready_ext_param(void *handle, uint8_t *evt,
 }
 
 static int populate_mac_phy_capability(void *handle, uint8_t *evt,
-		struct wmi_host_hw_mode_caps *hw_cap, uint8_t *total_mac_phy,
-		struct ext_service_ready_param *service_param)
+	struct wlan_psoc_host_hw_mode_caps *hw_cap, uint8_t *total_mac_phy,
+	struct wlan_objmgr_psoc_ext_service_ready_param *service_param)
 {
 	QDF_STATUS status;
 	uint32_t hw_mode_id;
@@ -159,7 +159,7 @@ static int populate_mac_phy_capability(void *handle, uint8_t *evt,
 			return qdf_status_to_os_return(status);
 		}
 		(*total_mac_phy)++;
-		if (*total_mac_phy > MAX_MAC_PHY_CAP) {
+		if (*total_mac_phy > PSOC_MAX_MAC_PHY_CAP) {
 			WMI_LOGE("total mac phy exceeds max limit %d",
 				*total_mac_phy);
 			return -EINVAL;
@@ -173,7 +173,7 @@ static int populate_mac_phy_capability(void *handle, uint8_t *evt,
 }
 
 static int get_hw_mode(void *handle, uint8_t *evt, uint8_t i,
-			   struct wmi_host_hw_mode_caps *cap)
+			struct wlan_psoc_host_hw_mode_caps *cap)
 {
 	QDF_STATUS status;
 
@@ -187,15 +187,15 @@ static int get_hw_mode(void *handle, uint8_t *evt, uint8_t i,
 }
 
 static int populate_hw_mode_capability(void *wmi_handle,
-			uint8_t *event, uint8_t *total_mac_phy,
-			struct ext_service_ready_param *service_param)
+		uint8_t *event, uint8_t *total_mac_phy,
+		struct wlan_objmgr_psoc_ext_service_ready_param *service_param)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint8_t hw_idx;
 	uint32_t num_hw_modes;
 
 	num_hw_modes = service_param->service_ext_param.num_hw_modes;
-	if (num_hw_modes > MAX_HW_MODE) {
+	if (num_hw_modes > PSOC_MAX_HW_MODE) {
 		WMI_LOGE("invalid num_hw_modes %d", num_hw_modes);
 		return -EINVAL;
 	}
@@ -219,14 +219,14 @@ return_exit:
 }
 
 static int populate_phy_reg_capability(void *handle, uint8_t *event,
-			struct ext_service_ready_param *service_param)
+		struct wlan_objmgr_psoc_ext_service_ready_param *service_param)
 {
 	uint8_t reg_idx;
 	uint32_t num_phy_reg_cap;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	num_phy_reg_cap = service_param->service_ext_param.num_phy;
-	if (num_phy_reg_cap > MAX_PHY_REG_CAP) {
+	if (num_phy_reg_cap > PSOC_MAX_PHY_REG_CAP) {
 		WMI_LOGE("Invalid num_phy_reg_cap %d", num_phy_reg_cap);
 		return -EINVAL;
 	}
@@ -249,7 +249,7 @@ int init_deinit_service_ext_ready_event_handler(ol_scn_t scn_handle,
 						uint32_t data_len)
 {
 	int err_code;
-	struct ext_service_ready_param *service_param;
+	struct wlan_objmgr_psoc_ext_service_ready_param *service_param;
 	struct wlan_objmgr_psoc *psoc;
 	wmi_legacy_service_ready_callback legacy_callback;
 	void *wmi_handle;
@@ -268,9 +268,9 @@ int init_deinit_service_ext_ready_event_handler(ol_scn_t scn_handle,
 	wmi_handle = psoc->tgt_if_handle;
 
 	service_param =
-		qdf_mem_malloc(sizeof(struct ext_service_ready_param));
+		qdf_mem_malloc(sizeof(*service_param));
 	if (!service_param) {
-		WMI_LOGE("wmi_service_ready_param alloc failed");
+		WMI_LOGE("ext_service_ready_param alloc failed");
 		return QDF_STATUS_E_NOMEM;
 	}
 
