@@ -1065,10 +1065,11 @@ QDF_STATUS wmi_save_service_bitmap(void *wmi_hdl, void *evt_buf,
 QDF_STATUS wmi_save_fw_version(void *wmi_hdl, void *evt_buf);
 
 QDF_STATUS wmi_get_target_cap_from_service_ready(void *wmi_hdl,
-				void *evt_buf, target_capability_info *ev);
+				void *evt_buf,
+				struct wlan_psoc_target_capability_info *ev);
 
 QDF_STATUS wmi_extract_hal_reg_cap(void *wmi_hdl, void *evt_buf,
-				TARGET_HAL_REG_CAPABILITIES *hal_reg_cap);
+			struct wlan_psoc_hal_reg_capability *hal_reg_cap);
 
 host_mem_req *wmi_extract_host_mem_req_from_service_ready(void *wmi_hdl,
 				void *evt_buf, uint8_t *num_entries);
@@ -1325,22 +1326,21 @@ QDF_STATUS wmi_unified_peer_rx_reorder_queue_remove_send(void *wmi_hdl,
 					struct rx_reorder_queue_remove_params *param);
 
 QDF_STATUS wmi_extract_service_ready_ext(void *wmi_hdl, uint8_t *evt_buf,
-		struct wmi_host_service_ext_param *param);
+		struct wlan_psoc_host_service_ext_param *param);
 QDF_STATUS wmi_extract_hw_mode_cap_service_ready_ext(
 			void *wmi_hdl,
 			uint8_t *evt_buf, uint8_t hw_mode_idx,
-			struct wmi_host_hw_mode_caps *param);
+			struct wlan_psoc_host_hw_mode_caps *param);
 QDF_STATUS wmi_extract_mac_phy_cap_service_ready_ext(
 			void *wmi_hdl,
 			uint8_t *evt_buf,
 			uint8_t hw_mode_id,
 			uint8_t phy_id,
-			struct wmi_host_mac_phy_caps *param);
+			struct wlan_psoc_host_mac_phy_caps *param);
 QDF_STATUS wmi_extract_reg_cap_service_ready_ext(
 			void *wmi_hdl,
 			uint8_t *evt_buf, uint8_t phy_idx,
-			struct WMI_HOST_HAL_REG_CAPABILITIES_EXT *param);
-
+			struct wlan_psoc_host_hal_reg_capabilities_ext *param);
 QDF_STATUS wmi_extract_pdev_utf_event(void *wmi_hdl,
 				      uint8_t *evt_buf,
 				      struct wmi_host_pdev_utf_event *param);
