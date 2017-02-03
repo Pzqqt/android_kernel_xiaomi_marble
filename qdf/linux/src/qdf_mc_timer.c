@@ -291,11 +291,7 @@ QDF_STATUS qdf_mc_timer_init_debug(qdf_mc_timer_t *timer,
 		init_timer_deferrable(&(timer->platform_info.timer));
 	else
 		init_timer(&(timer->platform_info.timer));
-#ifdef NAPIER_CODE
 	timer->platform_info.timer.function = scheduler_timer_callback;
-#else
-	timer->platform_info.timer.function = NULL;
-#endif
 	timer->platform_info.timer.data = (unsigned long)timer;
 	timer->callback = callback;
 	timer->user_data = user_data;
@@ -306,6 +302,7 @@ QDF_STATUS qdf_mc_timer_init_debug(qdf_mc_timer_t *timer,
 
 	return QDF_STATUS_SUCCESS;
 }
+EXPORT_SYMBOL(qdf_mc_timer_init_debug);
 #else
 QDF_STATUS qdf_mc_timer_init(qdf_mc_timer_t *timer, QDF_TIMER_TYPE timer_type,
 			     qdf_mc_timer_callback_t callback,
@@ -327,11 +324,7 @@ QDF_STATUS qdf_mc_timer_init(qdf_mc_timer_t *timer, QDF_TIMER_TYPE timer_type,
 		init_timer_deferrable(&(timer->platform_info.timer));
 	else
 		init_timer(&(timer->platform_info.timer));
-#ifdef NAPIER_CODE
 	timer->platform_info.timer.function = scheduler_timer_callback;
-#else
-	timer->platform_info.timer.function = NULL;
-#endif
 	timer->platform_info.timer.data = (unsigned long)timer;
 	timer->callback = callback;
 	timer->user_data = user_data;
@@ -342,6 +335,7 @@ QDF_STATUS qdf_mc_timer_init(qdf_mc_timer_t *timer, QDF_TIMER_TYPE timer_type,
 
 	return QDF_STATUS_SUCCESS;
 }
+EXPORT_SYMBOL(qdf_mc_timer_init);
 #endif
 
 /**

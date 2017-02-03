@@ -41,7 +41,7 @@ static void scheduler_flush_mqs(struct scheduler_ctx *sched_ctx)
 	 * shall be freed first
 	 */
 	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_INFO,
-		  ("Flushing scheduler message queue"));
+		  "%s: Flushing scheduler message queue", __func__);
 
 	if (!sched_ctx) {
 		QDF_ASSERT(0);
