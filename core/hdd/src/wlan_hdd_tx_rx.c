@@ -627,7 +627,11 @@ static int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	wlan_hdd_tdls_update_tx_pkt_cnt(pAdapter, skb);
 
-	++pAdapter->stats.tx_packets;
+	if (qdf_nbuf_is_tso(skb))
+		pAdapter->stats.tx_packets += qdf_nbuf_get_tso_num_seg(skb);
+	else {
+		++pAdapter->stats.tx_packets;
+	}
 
 	hdd_event_eapol_log(skb, QDF_TX);
 	qdf_dp_trace_log_pkt(pAdapter->sessionId, skb, QDF_TX);
