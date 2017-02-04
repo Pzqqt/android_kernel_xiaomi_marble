@@ -863,10 +863,19 @@ TARGET_IF_DIR := $(WLAN_COMMON_ROOT)/target_if
 
 TARGET_IF_INC := -I$(WLAN_COMMON_INC)/target_if/core/inc \
 		 -I$(WLAN_COMMON_INC)/target_if/core/src \
-		 -I$(WLAN_COMMON_INC)/target_if/init_deinit/inc
+		 -I$(WLAN_COMMON_INC)/target_if/init_deinit/inc \
+		 -I$(WLAN_COMMON_INC)/target_if/pmo/inc \
+		 -I$(WLAN_COMMON_INC)/target_if/pmo/src
 
 TARGET_IF_OBJ := $(TARGET_IF_DIR)/core/src/target_if_main.o \
-		$(TARGET_IF_DIR)/init_deinit/src/service_ready_event_handler.o
+		$(TARGET_IF_DIR)/init_deinit/src/service_ready_event_handler.o \
+		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_main.o \
+		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_arp.o \
+		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_ns.o \
+		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_gtk.o \
+		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_wow.o \
+		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_mc_addr_filtering.o \
+		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_static_config.o
 
 ########### GLOBAL_LMAC_IF ##########
 GLOBAL_LMAC_IF_DIR := $(WLAN_COMMON_ROOT)/global_lmac_if
@@ -889,6 +898,7 @@ WMI_OBJS := $(WMI_OBJ_DIR)/wmi_unified.o \
 	    $(WMI_OBJ_DIR)/wmi_tlv_helper.o \
 	    $(WMI_OBJ_DIR)/wmi_unified_tlv.o \
 	    $(WMI_OBJ_DIR)/wmi_unified_api.o \
+	    $(WMI_OBJ_DIR)/wmi_unified_pmo_api.o \
 	    $(WMI_OBJ_DIR)/wmi_unified_non_tlv.o
 
 ########### FWLOG ###########
@@ -1349,7 +1359,8 @@ CDEFINES :=	-DANI_LITTLE_BYTE_ENDIAN \
 		-DFEATURE_WLAN_EXTSCAN \
 		-DWLAN_FEATURE_MBSSID \
 		-DCONFIG_160MHZ_SUPPORT \
-		-DCONFIG_MCL
+		-DCONFIG_MCL \
+		-DWLAN_PMO_ENABLE
 
 ifneq ($(CONFIG_HIF_USB), 1)
 CDEFINES += -DWLAN_LOGGING_SOCK_SVC_ENABLE
