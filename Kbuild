@@ -824,6 +824,14 @@ TARGET_IF_INC := -I$(WLAN_COMMON_INC)/target_if/core/inc \
 TARGET_IF_OBJ := $(TARGET_IF_DIR)/core/src/target_if_main.o \
 		$(TARGET_IF_DIR)/init_deinit/src/service_ready_event_handler.o
 
+########### GLOBAL_LMAC_IF ##########
+GLOBAL_LMAC_IF_DIR := $(WLAN_COMMON_ROOT)/global_lmac_if
+
+GLOBAL_LMAC_IF_INC := -I$(WLAN_COMMON_INC)/global_lmac_if/inc \
+                      -I$(WLAN_COMMON_INC)/global_lmac_if/src
+
+GLOBAL_LMAC_IF_OBJ := $(GLOBAL_LMAC_IF_DIR)/src/wlan_global_lmac_if.o
+
 ########### WMI ###########
 WMI_ROOT_DIR := wmi
 
@@ -1155,7 +1163,8 @@ INCS :=		$(HDD_INC) \
 		$(QDF_INC) \
 		$(CDS_INC) \
 		$(DFS_INC) \
-		$(TARGET_IF_INC)
+		$(TARGET_IF_INC) \
+		$(GLOBAL_LMAC_IF_INC)
 
 INCS +=		$(WMA_INC) \
 		$(UAPI_INC) \
@@ -1223,7 +1232,8 @@ OBJS +=		$(WMA_OBJS) \
 OBJS +=		$(HIF_OBJS) \
 		$(BMI_OBJS) \
 		$(HTT_OBJS) \
-		$(TARGET_IF_OBJ)
+		$(TARGET_IF_OBJ) \
+		$(GLOBAL_LMAC_IF_OBJ)
 
 ifeq ($(CONFIG_LITHIUM), y)
 OBJS += 	$(HAL_OBJS)

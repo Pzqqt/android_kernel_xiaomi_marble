@@ -83,7 +83,7 @@
 #include "wlan_lmac_if_def.h"
 #include "wlan_lmac_if_api.h"
 #include "target_if.h"
-
+#include "wlan_global_lmac_if_api.h"
 
 #include <cdp_txrx_handle.h>
 #define WMA_LOG_COMPLETION_TIMER 10000 /* 10 seconds */
@@ -1835,12 +1835,12 @@ static void wma_target_if_open(tp_wma_handle wma_handle)
 	if (!psoc)
 		return;
 
-	wlan_lmac_if_assign_tx_registration_cb(WLAN_DEV_OL,
-					       wma_register_tx_ops_handler);
+	wlan_global_lmac_if_set_txops_registration_cb(WLAN_DEV_OL,
+					target_if_register_tx_ops);
+	wlan_lmac_if_set_umac_txops_registration_cb(
+		wma_register_tx_ops_handler);
+	wlan_global_lmac_if_open(psoc);
 
-	wlan_lmac_if_open(psoc);
-
-	/* Register WMI event handler */
 }
 
 /**
@@ -1856,7 +1856,7 @@ static void wma_target_if_close(tp_wma_handle wma_handle)
 	if (!psoc)
 		return;
 
-	wlan_lmac_if_close(psoc);
+	wlan_global_lmac_if_close(psoc);
 }
 
 /**
