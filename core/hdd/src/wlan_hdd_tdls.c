@@ -2510,7 +2510,6 @@ void wlan_hdd_tdls_disconnection_callback(hdd_adapter_t *pAdapter)
 	wlan_hdd_tdls_check_power_save_prohibited(pHddTdlsCtx->pAdapter);
 
 	wlan_hdd_tdls_timers_stop(pHddTdlsCtx);
-	wlan_hdd_tdls_free_list(pHddTdlsCtx);
 
 	pHddTdlsCtx->curr_candidate = NULL;
 
