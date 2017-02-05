@@ -217,78 +217,78 @@ typedef void (*qdf_timer_func_t)(void *);
 
 /**
  * typedef enum QDF_MODULE_ID  - Debug category level
- * @QDF_MODULE_ID_TDLS  : TDLS
- * @QDF_MODULE_ID_ACS   : auto channel selection
- * @QDF_MODULE_ID_SCAN_SM       : scan state machine
- * @QDF_MODULE_ID_SCANENTRY     : scan entry
- * @QDF_MODULE_ID_WDS   : WDS handling
+ * @QDF_MODULE_ID_TDLS: TDLS
+ * @QDF_MODULE_ID_ACS: auto channel selection
+ * @QDF_MODULE_ID_SCAN_SM: scan state machine
+ * @QDF_MODULE_ID_SCANENTRY: scan entry
+ * @QDF_MODULE_ID_WDS: WDS handling
  * @QDF_MODULE_ID_ACTION: action management frames
- * @QDF_MODULE_ID_ROAM  : sta mode roaming
- * @QDF_MODULE_ID_INACT : inactivity handling
- * @QDF_MODULE_ID_DOTH  : 11.h
- * @QDF_MODULE_ID_IQUE  : IQUE features
- * @QDF_MODULE_ID_WME   : WME protocol
- * @QDF_MODULE_ID_ACL   : ACL handling
- * @QDF_MODULE_ID_WPA   : WPA/RSN protocol
- * @QDF_MODULE_ID_RADKEYS       : dump 802.1x keys
- * @QDF_MODULE_ID_RADDUMP       : dump 802.1x radius packets
+ * @QDF_MODULE_ID_ROAM: sta mode roaming
+ * @QDF_MODULE_ID_INACT: inactivity handling
+ * @QDF_MODULE_ID_DOTH: 11.h
+ * @QDF_MODULE_ID_IQUE: IQUE features
+ * @QDF_MODULE_ID_WME: WME protocol
+ * @QDF_MODULE_ID_ACL: ACL handling
+ * @QDF_MODULE_ID_WPA: WPA/RSN protocol
+ * @QDF_MODULE_ID_RADKEYS: dump 802.1x keys
+ * @QDF_MODULE_ID_RADDUMP: dump 802.1x radius packets
  * @QDF_MODULE_ID_RADIUS: 802.1x radius client
- * @QDF_MODULE_ID_DOT1XSM       : 802.1x state machine
- * @QDF_MODULE_ID_DOT1X : 802.1x authenticator
- * @QDF_MODULE_ID_POWER : power save handling
- * @QDF_MODULE_ID_STATS : state machine
+ * @QDF_MODULE_ID_DOT1XSM: 802.1x state machine
+ * @QDF_MODULE_ID_DOT1X: 802.1x authenticator
+ * @QDF_MODULE_ID_POWER: power save handling
+ * @QDF_MODULE_ID_STATS: state machine
  * @QDF_MODULE_ID_OUTPUT: output handling
- * @QDF_MODULE_ID_SCAN  : scanning
- * @QDF_MODULE_ID_AUTH  : authentication handling
- * @QDF_MODULE_ID_ASSOC : association handling
- * @QDF_MODULE_ID_NODE  : node handling
+ * @QDF_MODULE_ID_SCAN: scanning
+ * @QDF_MODULE_ID_AUTH: authentication handling
+ * @QDF_MODULE_ID_ASSOC: association handling
+ * @QDF_MODULE_ID_NODE: node handling
  * @QDF_MODULE_ID_ELEMID: element id parsing
- * @QDF_MODULE_ID_XRATE : rate set handling
- * @QDF_MODULE_ID_INPUT : input handling
+ * @QDF_MODULE_ID_XRATE: rate set handling
+ * @QDF_MODULE_ID_INPUT: input handling
  * @QDF_MODULE_ID_CRYPTO: crypto work
- * @QDF_MODULE_ID_DUMPPKTS      : IFF_LINK2 equivalant
- * @QDF_MODULE_ID_DEBUG : IFF_DEBUG equivalent
- * @QDF_MODULE_ID_MLME  : MLME
- * @QDF_MODULE_ID_RRM   : Radio resource measurement
- * @QDF_MODULE_ID_WNM   : Wireless Network Management
- * @QDF_MODULE_ID_P2P_PROT      : P2P Protocol driver
- * @QDF_MODULE_ID_PROXYARP      : 11v Proxy ARP
- * @QDF_MODULE_ID_L2TIF : Hotspot 2.0 L2 TIF
- * @QDF_MODULE_ID_WIFIPOS       : WifiPositioning Feature
- * @QDF_MODULE_ID_WRAP  : WRAP or Wireless ProxySTA
- * @QDF_MODULE_ID_DFS   : DFS debug mesg
+ * @QDF_MODULE_ID_DUMPPKTS: IFF_LINK2 equivalant
+ * @QDF_MODULE_ID_DEBUG: IFF_DEBUG equivalent
+ * @QDF_MODULE_ID_MLME: MLME
+ * @QDF_MODULE_ID_RRM: Radio resource measurement
+ * @QDF_MODULE_ID_WNM: Wireless Network Management
+ * @QDF_MODULE_ID_P2P_PROT: P2P Protocol driver
+ * @QDF_MODULE_ID_PROXYARP: 11v Proxy ARP
+ * @QDF_MODULE_ID_L2TIF: Hotspot 2.0 L2 TIF
+ * @QDF_MODULE_ID_WIFIPOS: WifiPositioning Feature
+ * @QDF_MODULE_ID_WRAP: WRAP or Wireless ProxySTA
+ * @QDF_MODULE_ID_DFS: DFS debug mesg
  * @QDF_MODULE_ID_TLSHIM: TLSHIM module ID
- * @QDF_MODULE_ID_WMI   : WMI module ID
- * @QDF_MODULE_ID_HTT   : HTT module ID
- * @QDF_MODULE_ID_HDD   : HDD module ID
- * @QDF_MODULE_ID_SME   : SME module ID
- * @QDF_MODULE_ID_PE    : PE module ID
- * @QDF_MODULE_ID_WMA   : WMA module ID
- * @QDF_MODULE_ID_SYS   : SYS module ID
- * @QDF_MODULE_ID_QDF   : QDF module ID
- * @QDF_MODULE_ID_SAP   : SAP module ID
- * @QDF_MODULE_ID_HDD_SOFTAP    : HDD SAP module ID
- * @QDF_MODULE_ID_HDD_DATA      : HDD DATA module ID
- * @QDF_MODULE_ID_HDD_SAP_DATA  : HDD SAP DATA module ID
- * @QDF_MODULE_ID_HIF   : HIF module ID
- * @QDF_MODULE_ID_HTC   : HTC module ID
- * @QDF_MODULE_ID_TXRX  : TXRX module ID
- * @QDF_MODULE_ID_QDF_DEVICE    : QDF DEVICE module ID
- * @QDF_MODULE_ID_CFG   : CFG module ID
- * @QDF_MODULE_ID_BMI   : BMI module ID
+ * @QDF_MODULE_ID_WMI: WMI module ID
+ * @QDF_MODULE_ID_HTT: HTT module ID
+ * @QDF_MODULE_ID_HDD: HDD module ID
+ * @QDF_MODULE_ID_SME: SME module ID
+ * @QDF_MODULE_ID_PE: PE module ID
+ * @QDF_MODULE_ID_WMA: WMA module ID
+ * @QDF_MODULE_ID_SYS: SYS module ID
+ * @QDF_MODULE_ID_QDF: QDF module ID
+ * @QDF_MODULE_ID_SAP: SAP module ID
+ * @QDF_MODULE_ID_HDD_SOFTAP: HDD SAP module ID
+ * @QDF_MODULE_ID_HDD_DATA: HDD DATA module ID
+ * @QDF_MODULE_ID_HDD_SAP_DATA: HDD SAP DATA module ID
+ * @QDF_MODULE_ID_HIF: HIF module ID
+ * @QDF_MODULE_ID_HTC: HTC module ID
+ * @QDF_MODULE_ID_TXRX: TXRX module ID
+ * @QDF_MODULE_ID_QDF_DEVICE: QDF DEVICE module ID
+ * @QDF_MODULE_ID_CFG: CFG module ID
+ * @QDF_MODULE_ID_BMI: BMI module ID
  * @QDF_MODULE_ID_EPPING: EPPING module ID
- * @QDF_MODULE_ID_QVIT  : QVIT module ID
- * @QDF_MODULE_ID_DP    : Data-path module ID
- * @QDF_MODULE_ID_SOC   : SOC module ID
- * @QDF_MODULE_ID_OS_IF : OS-interface module ID
- * @QDF_MODULE_ID_TARGET_IF     : targer interface module ID
- * @QDF_MODULE_ID_SCHEDULER     : schduler module ID
- * @QDF_MODULE_ID_MGMT_TXRX     : management TX/RX module ID
- * @QDF_MODULE_ID_SERIALIZATION : serialization module ID
- * @QDF_MODULE_ID_PMO   : PMO (power manager and offloads) Module ID
+ * @QDF_MODULE_ID_QVIT: QVIT module ID
+ * @QDF_MODULE_ID_DP: Data-path module ID
+ * @QDF_MODULE_ID_SOC: SOC module ID
+ * @QDF_MODULE_ID_OS_IF: OS-interface module ID
+ * @QDF_MODULE_ID_TARGET_IF: targer interface module ID
+ * @QDF_MODULE_ID_SCHEDULER: schduler module ID
+ * @QDF_MODULE_ID_MGMT_TXRX: management TX/RX module ID
+ * @QDF_MODULE_ID_SERIALIZATION: serialization module ID
+ * @QDF_MODULE_ID_PMO: PMO (power manager and offloads) Module ID
  * @QDF_MODULE_ID_P2P   : P2P module ID
- * @QDF_MODULE_ID_ANY   : anything
- * @QDF_MODULE_ID_MAX   : Max place holder module ID
+ * @QDF_MODULE_ID_ANY: anything
+ * @QDF_MODULE_ID_MAX: Max place holder module ID
  */
 typedef enum {
 	QDF_MODULE_ID_TDLS      = 0,

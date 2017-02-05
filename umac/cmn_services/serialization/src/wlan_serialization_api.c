@@ -40,6 +40,10 @@ wlan_serialization_register_comp_info_cb(struct wlan_objmgr_psoc *psoc,
 	if (status != QDF_STATUS_SUCCESS)
 		return status;
 	ser_soc_obj = wlan_serialization_get_psoc_priv_obj(psoc);
+	if (!ser_soc_obj) {
+		serialization_err("invalid ser_soc_obj");
+		return QDF_STATUS_E_FAILURE;
+	}
 	ser_soc_obj->comp_info_cb[cmd_type][comp_id] = cb;
 
 	return QDF_STATUS_SUCCESS;
@@ -57,6 +61,10 @@ wlan_serialization_deregister_comp_info_cb(struct wlan_objmgr_psoc *psoc,
 	if (status != QDF_STATUS_SUCCESS)
 		return status;
 	ser_soc_obj = wlan_serialization_get_psoc_priv_obj(psoc);
+	if (!ser_soc_obj) {
+		serialization_err("invalid ser_soc_obj");
+		return QDF_STATUS_E_FAILURE;
+	}
 	ser_soc_obj->comp_info_cb[cmd_type][comp_id] = NULL;
 
 	return QDF_STATUS_SUCCESS;

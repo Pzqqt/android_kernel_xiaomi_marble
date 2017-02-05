@@ -42,16 +42,18 @@
 
 /**
  * enum wlan_serialization_cb_reason - reason for calling the callback
- * WLAN_SERIALIZATION_REASON_ACTIVATE_CMD: activate the cmd by sending it to FW
- * WLAN_SERIALIZATION_REASON_CANCEL_CMD: Cancel the cmd in the pending list
- * WLAN_SERIALIZATION_REASON_RELEASE_MEM_CMD:cmd execution complete. Release
+ * @WLAN_SERIALIZATION_REASON_ACTIVATE_CMD: activate the cmd by sending it to FW
+ * @WLAN_SERIALIZATION_REASON_CANCEL_CMD: Cancel the cmd in the pending list
+ * @WLAN_SERIALIZATION_REASON_RELEASE_MEM_CMD:cmd execution complete. Release
  *                                           the memory allocated while
  *                                           building the command
+ * @WLAN_SER_CB_ACTIVE_CMD_TIMEOUT: active cmd has been timeout.
  */
 enum wlan_serialization_cb_reason {
 	WLAN_SER_CB_ACTIVATE_CMD,
 	WLAN_SER_CB_CANCEL_CMD,
 	WLAN_SER_CB_RELEASE_MEM_CMD,
+	WLAN_SER_CB_ACTIVE_CMD_TIMEOUT,
 };
 
 /**
@@ -78,21 +80,15 @@ union wlan_serialization_rules_info {
  * @wlan_cmd: Command passed by the component for serialization
  * @reason: Reason code for which the callback is being called
  *
- * Reason specifies the reason for which the callback is being called
+ * Reason specifies the reason for which the callback is being called. callback
+ * should return success or failure based up on overall success of callback.
+ * if callback returns failure then serialization will remove the command from
+ * active queue and proceed for next pending command.
  *
- * Return: None
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_E_FAILURE
  */
-typedef void (*wlan_serialization_cmd_callback)(
-		void *wlan_cmd, enum wlan_serialization_cb_reason reason);
-
-/**
- * wlan_serialization_active_cmd_timeout_callback() - callback for cmd timeout
- * @wlan_cmd: Command that has timed out
- *
- * Return: None
- */
-typedef void (*wlan_serialization_active_cmd_timeout_callback)(
-		void *wlan_cmd);
+typedef QDF_STATUS (*wlan_serialization_cmd_callback) (void *wlan_cmd,
+				 enum wlan_serialization_cb_reason reason);
 
 /**
  * wlan_serialization_comp_info_cb() - callback to fill the rules information
@@ -177,23 +173,6 @@ enum wlan_serialization_cmd_status {
 };
 
 /**
- * union wlan_serialization_obj_context - Object associated to the command
- * @pdev: PDEV object associated to the command
- * @vdev: VDEV object associated to the command
- *
- * Object passed for the command
- * This is an agreement between the component and serialization as to which
- * object is being passed. A copy of this command is maintained by
- * serialization as part of queuing the command. So, the object ref count has
- * to be maintained while queuing and released during cancellation/dequeuing/
- * flushing the command.
- */
-union wlan_serialization_obj_context {
-	struct wlan_objmgr_pdev *pdev;
-	struct wlan_objmgr_vdev *vdev;
-};
-
-/**
  * struct wlan_serialization_command - Command to be serialized
  * @wlan_serialization_cmd_type: Type of command
  * @cmd_id: Command Identifier
@@ -202,18 +181,23 @@ union wlan_serialization_obj_context {
  * @is_high_priority: Normal/High Priority at which the cmd has to be queued
  * @cmd_timeout_cb: Command timeout callback
  * @cmd_timeout_duration: Timeout duration in milliseconds
- * @obj_ctxt: Object passed for the command
+ * @vdev: VDEV object associated to the command
  * @umac_cmd: Actual command that needs to be sent to WMI/firmware
+ *
+ * Note: Unnamed union has been used in this structure, so that in future if
+ * somebody wants to add pdev or psoc structure then that person can add without
+ * modifying existing code.
  */
 struct wlan_serialization_command {
 	enum wlan_serialization_cmd_type cmd_type;
 	uint16_t cmd_id;
 	wlan_serialization_cmd_callback cmd_cb;
 	uint8_t source;
-	uint8_t is_high_priority;
-	wlan_serialization_active_cmd_timeout_callback cmd_timeout_cb;
+	bool is_high_priority;
 	uint16_t cmd_timeout_duration;
-	union wlan_serialization_obj_context obj_ctxt;
+	union {
+		struct wlan_objmgr_vdev *vdev;
+	};
 	void *umac_cmd;
 };
 
@@ -223,7 +207,7 @@ struct wlan_serialization_command {
  * @cmd_type: Command type
  * @cmd_id: Command ID
  * @req_type: Commands that need to be cancelled
- * @obj_ctxt: PDEV/VDEV object on which the commands need to be cancelled
+ * @vdev: VDEV object associated to the command
  * @queue_type: Queues from which the command to be cancelled
  */
 struct wlan_serialization_queued_cmd_info {
@@ -231,7 +215,9 @@ struct wlan_serialization_queued_cmd_info {
 	enum wlan_serialization_cmd_type cmd_type;
 	uint16_t cmd_id;
 	enum wlan_serialization_cancel_type req_type;
-	union wlan_serialization_obj_context obj_ctxt;
+	union {
+		struct wlan_objmgr_vdev *vdev;
+	};
 	uint8_t queue_type;
 };
 
