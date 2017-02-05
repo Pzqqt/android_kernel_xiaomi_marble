@@ -1641,6 +1641,8 @@ static int wow_get_wmi_eventid(int32_t reason, uint32_t tag)
 		return wma_ndp_get_eventid_from_tlvtag(tag);
 	case WOW_REASON_TDLS_CONN_TRACKER_EVENT:
 		return WOW_TDLS_CONN_TRACKER_EVENT;
+	case WOW_REASON_ROAM_HO:
+		return WMI_ROAM_EVENTID;
 	default:
 		WMA_LOGD(FL("No Event Id for WOW reason %s(%d)"),
 			 wma_wow_wake_reason_str(reason), reason);
@@ -1672,6 +1674,7 @@ static bool is_piggybacked_event(int32_t reason)
 	case WOW_REASON_NAN_EVENT:
 	case WOW_REASON_NAN_DATA:
 	case WOW_REASON_TDLS_CONN_TRACKER_EVENT:
+	case WOW_REASON_ROAM_HO:
 		return true;
 	default:
 		return false;
@@ -2353,7 +2356,7 @@ static int wma_wake_event_piggybacked(
 	WMI_WOW_WAKEUP_HOST_EVENTID_param_tlvs *event_param,
 	uint32_t length)
 {
-	int errno;
+	int errno = 0;
 	void *pb_event;
 	uint32_t pb_event_len;
 	uint32_t wake_reason;
@@ -2417,8 +2420,27 @@ static int wma_wake_event_piggybacked(
 		errno = wma_csa_offload_handler(wma, pb_event, pb_event_len);
 		break;
 
+	/*
+	 * WOW_REASON_LOW_RSSI is used for following roaming events -
+	 * WMI_ROAM_REASON_BETTER_AP, WMI_ROAM_REASON_BMISS,
+	 * WMI_ROAM_REASON_SUITABLE_AP will be handled by
+	 * wma_roam_event_callback().
+	 * WOW_REASON_ROAM_HO is associated with
+	 * WMI_ROAM_REASON_HO_FAILED event and it will be handled by
+	 * wma_roam_event_callback().
+	 */
 	case WOW_REASON_LOW_RSSI:
-		errno = wma_roam_event_callback(wma, pb_event, pb_event_len);
+	case WOW_REASON_ROAM_HO:
+		if (pb_event_len > 0) {
+			errno = wma_roam_event_callback(wma, pb_event,
+							pb_event_len);
+		} else {
+			/*
+			 * No wow_packet_buffer means a better AP beacon
+			 * will follow in a later event.
+			 */
+			WMA_LOGD("Host woken up because of better AP beacon");
+		}
 		break;
 
 	case WOW_REASON_CLIENT_KICKOUT_EVENT:
