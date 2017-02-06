@@ -392,7 +392,7 @@ static QDF_STATUS oem_process_data_req_msg(int oem_data_len, char *oem_data)
  * update_channel_bw_info() - set bandwidth info for the chan
  * @hdd_ctx: hdd context
  * @chan: channel for which info are required
- * @hdd_chan_info: struct where the bandwidth info is filled
+ * @chan_info: struct where the bandwidth info is filled
  *
  * This function find the maximum bandwidth allowed, secondary
  * channel offset and center freq for the channel as per regulatory
@@ -401,13 +401,14 @@ static QDF_STATUS oem_process_data_req_msg(int oem_data_len, char *oem_data)
  *
  * Return: void
  */
-static void hdd_update_channel_bw_info(hdd_context_t *hdd_ctx,
-	uint16_t chan, tHddChannelInfo *hdd_chan_info)
+void hdd_update_channel_bw_info(hdd_context_t *hdd_ctx,
+				uint16_t chan, void *chan_info)
 {
 	struct ch_params ch_params = {0};
 	uint16_t sec_ch_2g = 0;
 	WLAN_PHY_MODE phy_mode;
 	uint32_t wni_dot11_mode;
+	tHddChannelInfo *hdd_chan_info = chan_info;
 
 	wni_dot11_mode = sme_get_wni_dot11_mode(hdd_ctx->hHal);
 

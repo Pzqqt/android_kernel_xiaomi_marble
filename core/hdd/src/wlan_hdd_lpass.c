@@ -35,8 +35,45 @@
 /* Include Files */
 #include "wlan_hdd_main.h"
 #include "wlan_hdd_lpass.h"
+#include "wlan_hdd_oemdata.h"
 #include <cds_utils.h>
 #include "qwlan_version.h"
+
+/**
+ * wlan_hdd_get_channel_info() - Get channel info
+ * @hdd_ctx: HDD context
+ * @chan_info: Pointer to the structure that stores channel info
+ * @chan_id: Channel ID
+ *
+ * Fill in the channel info to chan_info structure.
+ */
+static void wlan_hdd_get_channel_info(hdd_context_t *hdd_ctx,
+				      struct svc_channel_info *chan_info,
+				      uint32_t chan_id)
+{
+	uint32_t reg_info_1;
+	uint32_t reg_info_2;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	status = sme_get_reg_info(hdd_ctx->hHal, chan_id,
+				  &reg_info_1, &reg_info_2);
+	if (status != QDF_STATUS_SUCCESS)
+		return;
+
+	chan_info->mhz = cds_chan_to_freq(chan_id);
+	chan_info->band_center_freq1 = chan_info->mhz;
+	chan_info->band_center_freq2 = 0;
+	chan_info->info = 0;
+	if (CHANNEL_STATE_DFS ==
+	    wlan_reg_get_channel_state(hdd_ctx->hdd_pdev,
+				       chan_id))
+		WMI_SET_CHANNEL_FLAG(chan_info,
+				     WMI_CHAN_FLAG_DFS);
+	hdd_update_channel_bw_info(hdd_ctx, chan_id,
+				   chan_info);
+	chan_info->reg_info_1 = reg_info_1;
+	chan_info->reg_info_2 = reg_info_2;
+}
 
 /**
  * wlan_hdd_gen_wlan_status_pack() - Create lpass adapter status package
@@ -58,6 +95,9 @@ static int wlan_hdd_gen_wlan_status_pack(struct wlan_status_data *data,
 {
 	hdd_context_t *hdd_ctx = NULL;
 	uint8_t buflen = WLAN_SVC_COUNTRY_CODE_LEN;
+	int i;
+	uint32_t chan_id;
+	struct svc_channel_info *chan_info;
 
 	if (!data) {
 		hdd_err("invalid data pointer");
@@ -87,6 +127,14 @@ static int wlan_hdd_gen_wlan_status_pack(struct wlan_status_data *data,
 	data->numChannels = WLAN_SVC_MAX_NUM_CHAN;
 	sme_get_cfg_valid_channels(data->channel_list,
 				   &data->numChannels);
+
+	for (i = 0; i < data->numChannels; i++) {
+		chan_info = &data->channel_info[i];
+		chan_id = data->channel_list[i];
+		chan_info->chan_id = chan_id;
+		wlan_hdd_get_channel_info(hdd_ctx, chan_info, chan_id);
+	}
+
 	sme_get_country_code(hdd_ctx->hHal, data->country_code, &buflen);
 	data->is_on = is_on;
 	data->vdev_id = adapter->sessionId;
@@ -164,7 +212,7 @@ static void wlan_hdd_send_status_pkg(struct hdd_adapter_s *adapter,
 				     uint8_t is_on, uint8_t is_connected)
 {
 	int ret = 0;
-	struct wlan_status_data data;
+	struct wlan_status_data *data = NULL;
 	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
 	if (!hdd_ctx)
@@ -173,15 +221,19 @@ static void wlan_hdd_send_status_pkg(struct hdd_adapter_s *adapter,
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam())
 		return;
 
-	memset(&data, 0, sizeof(struct wlan_status_data));
+	data = kzalloc(sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return;
+
 	if (is_on)
-		ret = wlan_hdd_gen_wlan_status_pack(&data, adapter, sta_ctx,
+		ret = wlan_hdd_gen_wlan_status_pack(data, adapter, sta_ctx,
 						    is_on, is_connected);
 
 	if (!ret)
 		wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
-					WLAN_SVC_WLAN_STATUS_IND,
-					    &data, sizeof(data));
+					    WLAN_SVC_WLAN_STATUS_IND,
+					    data, sizeof(*data));
+	kfree(data);
 }
 
 /**

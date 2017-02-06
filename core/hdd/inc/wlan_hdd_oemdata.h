@@ -187,6 +187,9 @@ int iw_get_oem_data_cap(struct net_device *dev, struct iw_request_info *info,
 int oem_activate_service(struct hdd_context_s *hdd_ctx);
 
 void hdd_send_oem_data_rsp_msg(struct oem_data_rsp *oem_rsp);
+void hdd_update_channel_bw_info(hdd_context_t *hdd_ctx,
+				uint16_t chan,
+				void *hdd_chan_info);
 #else
 static inline int oem_activate_service(struct hdd_context_s *hdd_ctx)
 {
@@ -194,5 +197,9 @@ static inline int oem_activate_service(struct hdd_context_s *hdd_ctx)
 }
 
 static inline void hdd_send_oem_data_rsp_msg(void *oem_rsp) {}
+
+static inline void hdd_update_channel_bw_info(hdd_context_t *hdd_ctx,
+					      uint16_t chan,
+					      void *hdd_chan_info) {}
 #endif /* FEATURE_OEM_DATA_SUPPORT */
 #endif /* __WLAN_HDD_OEM_DATA_H__ */
