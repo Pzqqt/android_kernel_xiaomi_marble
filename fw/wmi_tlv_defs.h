@@ -796,6 +796,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_connected_nlo_bss_band_rssi_pref,
     WMITLV_TAG_STRUC_wmi_peer_oper_mode_change_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_chip_power_save_failure_detected_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_multiple_vdev_restart_request_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_csa_switch_count_status_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1116,6 +1118,7 @@ typedef enum {
     OP(WMI_VDEV_ADD_MAC_ADDR_TO_RX_FILTER_CMDID) \
     OP(WMI_BPF_SET_VDEV_ACTIVE_MODE_CMDID) \
     OP(WMI_HW_DATA_FILTER_CMDID) \
+    OP(WMI_PDEV_MULTIPLE_VDEV_RESTART_REQUEST_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -1292,6 +1295,7 @@ typedef enum {
     OP(WMI_VDEV_ADD_MAC_ADDR_TO_RX_FILTER_STATUS_EVENTID) \
     OP(WMI_PEER_OPER_MODE_CHANGE_EVENTID) \
     OP(WMI_PDEV_CHIP_POWER_SAVE_FAILURE_DETECTED_EVENTID) \
+    OP(WMI_PDEV_CSA_SWITCH_COUNT_STATUS_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -3199,6 +3203,13 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_ADD_MAC_ADDR_TO_RX_FILTER_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_hw_data_filter_cmd_fixed_param, wmi_hw_data_filter_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_HW_DATA_FILTER_CMDID);
 
+/* Multiple vdev restart request cmd */
+#define WMITLV_TABLE_WMI_PDEV_MULTIPLE_VDEV_RESTART_REQUEST_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_multiple_vdev_restart_request_cmd_fixed_param, wmi_pdev_multiple_vdev_restart_request_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, vdev_ids, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_channel, wmi_channel, chan, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_MULTIPLE_VDEV_RESTART_REQUEST_CMDID);
+
 
 /************************** TLV definitions of WMI events *******************************/
 
@@ -4267,6 +4278,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PKGID_EVENTID);
 #define WMITLV_TABLE_WMI_VDEV_ADD_MAC_ADDR_TO_RX_FILTER_STATUS_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_add_mac_addr_to_rx_filter_status_event_fixed_param, wmi_vdev_add_mac_addr_to_rx_filter_status_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_ADD_MAC_ADDR_TO_RX_FILTER_STATUS_EVENTID);
+
+#define WMITLV_TABLE_WMI_PDEV_CSA_SWITCH_COUNT_STATUS_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_csa_switch_count_status_event_fixed_param, wmi_pdev_csa_switch_count_status_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, vdev_ids, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_CSA_SWITCH_COUNT_STATUS_EVENTID);
 
 
 #ifdef __cplusplus
