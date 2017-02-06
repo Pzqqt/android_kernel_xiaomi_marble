@@ -48,7 +48,7 @@
 /*---------------------------------------------------------------------------
  * Preprocessor Definitions and Constants
  *-------------------------------------------------------------------------*/
-#define WLAN_NL_MAX_PAYLOAD   256       /* maximum size for netlink message */
+#define WLAN_NL_MAX_PAYLOAD   5120       /* maximum size for netlink message */
 #define WLAN_NLINK_PROTO_FAMILY  NETLINK_USERSOCK
 #define WLAN_NLINK_MCAST_GRP_ID  0x01
 
@@ -125,6 +125,29 @@ struct radio_index_tlv {
 	int radio;
 };
 
+/**
+ * struct svc_channel_info - Channel information
+ * @chan_id: Channel ID
+ * @reserved0: Reserved for padding and future use
+ * @mhz: Primary 20 MHz channel frequency in MHz
+ * @band_center_freq1: Center frequency 1 in MHz
+ * @band_center_freq2: Center frequency 2 in MHz
+ * @info: Channel info
+ * @reg_info_1: Regulatory information field 1 which contains
+ *              MIN power, MAX power, reg power and reg class ID
+ * @reg_info_2: Regulatory information field 2 which contains antennamax
+ */
+struct svc_channel_info {
+	uint32_t chan_id;
+	uint32_t reserved0;
+	uint32_t mhz;
+	uint32_t band_center_freq1;
+	uint32_t band_center_freq2;
+	uint32_t info;
+	uint32_t reg_info_1;
+	uint32_t reg_info_2;
+};
+
 struct wlan_status_data {
 	uint8_t lpss_support;
 	uint8_t is_on;
@@ -139,6 +162,7 @@ struct wlan_status_data {
 	uint8_t channel_list[WLAN_SVC_MAX_NUM_CHAN];
 	uint8_t ssid[WLAN_SVC_MAX_SSID_LEN];
 	uint8_t bssid[WLAN_SVC_MAX_BSSID_LEN];
+	struct svc_channel_info channel_info[WLAN_SVC_MAX_NUM_CHAN];
 };
 
 struct wlan_version_data {
