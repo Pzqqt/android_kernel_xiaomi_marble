@@ -853,17 +853,6 @@ void wlan_hdd_tdls_exit(hdd_adapter_t *pAdapter)
 		return;
 	}
 
-	pHddTdlsCtx = WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter);
-	if (NULL == pHddTdlsCtx) {
-		/* TDLS context can be null and might have been freed up during
-		 * cleanup for STA adapter
-		 */
-		hdd_info("pHddTdlsCtx is NULL, adapter device mode: %s(%d)",
-			 hdd_device_mode_to_string(pAdapter->device_mode),
-			 pAdapter->device_mode);
-		goto done;
-	}
-
 	cds_flush_delayed_work(&pHddCtx->tdls_scan_ctxt.tdls_scan_work);
 
 	mutex_lock(&pHddCtx->tdls_lock);
