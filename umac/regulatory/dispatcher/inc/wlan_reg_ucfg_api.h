@@ -28,6 +28,7 @@
 
 #include <qdf_types.h>
 #include <qdf_status.h>
+#include "../../core/src/reg_services.h"
 #include <reg_services_public_struct.h>
 
 typedef QDF_STATUS (*reg_event_cb)(void *status_struct);

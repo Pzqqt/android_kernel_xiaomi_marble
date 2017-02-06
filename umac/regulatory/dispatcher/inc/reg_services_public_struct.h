@@ -115,4 +115,14 @@ struct reg_country_update {
 	uint8_t country_code[REG_ALPHA2_LEN + 1];
 };
 
+/**
+ * struct reg_freq_range
+ * @low_freq: low frequency
+ * @high_freq: high frequency
+ */
+struct reg_freq_range {
+	uint32_t low_freq;
+	uint32_t high_freq;
+};
+
 #endif

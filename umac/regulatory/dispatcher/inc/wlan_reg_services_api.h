@@ -136,4 +136,16 @@ QDF_STATUS regulatory_psoc_open(struct wlan_objmgr_psoc *psoc);
  */
 QDF_STATUS regulatory_psoc_close(struct wlan_objmgr_psoc *psoc);
 
+/**
+ * wlan_reg_get_current_chan_list () - Get the current channel list
+ *
+ * @pdev: pdev ptr
+ * @chan_list: channel list to be returned
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_reg_get_current_chan_list(struct wlan_objmgr_pdev
+					  *pdev,
+					  struct regulatory_channel
+					  *chan_list);
 #endif

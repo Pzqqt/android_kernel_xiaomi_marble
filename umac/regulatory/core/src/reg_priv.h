@@ -56,13 +56,23 @@ struct wlan_regulatory_psoc_priv_obj {
 	uint32_t phybitmap;
 	enum dfs_reg dfs_region;
 	char country_11d[REG_ALPHA2_LEN + 1];
-	bool dfs_disable;
+	bool dfs_disabled;
 	bool set_fcc_channel;
 	enum band_info band_capability;
-	bool indoor_ch_enabled;
+	bool indoor_chan_enabled;
 	bool enable_11d_supp_original;
 	bool enable_11d_supp_current;
 	bool userspace_country_priority;
+};
+
+struct wlan_regulatory_pdev_priv_obj {
+	struct regulatory_channel cur_chan_list[NUM_CHANNELS];
+	enum channel_enum nol_list[NUM_CHANNELS];
+	struct wlan_objmgr_pdev *pdev_ptr;
+	bool dfs_disabled;
+	bool set_fcc_channel;
+	enum band_info band_capability;
+	bool indoor_chan_enabled;
 };
 
 #endif

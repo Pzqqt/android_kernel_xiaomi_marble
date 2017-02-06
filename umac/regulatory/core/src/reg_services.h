@@ -142,6 +142,14 @@ struct channel_power {
  * @CHAN_ENUM_12:  channel number 12
  * @CHAN_ENUM_13:  channel number 13
  * @CHAN_ENUM_14:  channel number 14
+ * @CHAN_ENUM_183:  channel number 183
+ * @CHAN_ENUM_184:  channel number 184
+ * @CHAN_ENUM_185:  channel number 185
+ * @CHAN_ENUM_187:  channel number 187
+ * @CHAN_ENUM_188:  channel number 188
+ * @CHAN_ENUM_189:  channel number 189
+ * @CHAN_ENUM_192:  channel number 192
+ * @CHAN_ENUM_196:  channel number 196
  * @CHAN_ENUM_36:  channel number 36
  * @CHAN_ENUM_40:  channel number 40
  * @CHAN_ENUM_44:  channel number 44
@@ -167,14 +175,6 @@ struct channel_power {
  * @CHAN_ENUM_157:  channel number 157
  * @CHAN_ENUM_161:  channel number 161
  * @CHAN_ENUM_165:  channel number 165
- * @CHAN_ENUM_183:  channel number 183
- * @CHAN_ENUM_184:  channel number 184
- * @CHAN_ENUM_185:  channel number 185
- * @CHAN_ENUM_187:  channel number 187
- * @CHAN_ENUM_188:  channel number 188
- * @CHAN_ENUM_189:  channel number 189
- * @CHAN_ENUM_192:  channel number 192
- * @CHAN_ENUM_196:  channel number 196
  */
 enum channel_enum {
 	CHAN_ENUM_1,
@@ -191,6 +191,15 @@ enum channel_enum {
 	CHAN_ENUM_12,
 	CHAN_ENUM_13,
 	CHAN_ENUM_14,
+
+	CHAN_ENUM_183,
+	CHAN_ENUM_184,
+	CHAN_ENUM_185,
+	CHAN_ENUM_187,
+	CHAN_ENUM_188,
+	CHAN_ENUM_189,
+	CHAN_ENUM_192,
+	CHAN_ENUM_196,
 
 	CHAN_ENUM_36,
 	CHAN_ENUM_40,
@@ -219,15 +228,6 @@ enum channel_enum {
 	CHAN_ENUM_157,
 	CHAN_ENUM_161,
 	CHAN_ENUM_165,
-
-	CHAN_ENUM_183,
-	CHAN_ENUM_184,
-	CHAN_ENUM_185,
-	CHAN_ENUM_187,
-	CHAN_ENUM_188,
-	CHAN_ENUM_189,
-	CHAN_ENUM_192,
-	CHAN_ENUM_196,
 
 	NUM_CHANNELS,
 
@@ -331,18 +331,22 @@ QDF_STATUS reg_get_channel_list_with_power(struct wlan_objmgr_psoc *psoc,
 void reg_read_default_country(struct wlan_objmgr_psoc *psoc,
 		uint8_t *country);
 enum channel_state reg_get_channel_state(struct wlan_objmgr_psoc *psoc,
-		uint32_t ch);
-enum channel_state reg_get_5g_bonded_channel_state(
-		struct wlan_objmgr_psoc *psoc,
-		uint8_t ch, enum phy_ch_width bw);
-enum channel_state reg_get_2g_bonded_channel_state(
-		struct wlan_objmgr_psoc *psoc,
-		uint8_t oper_ch, uint8_t sec_ch,
-		enum phy_ch_width bw);
+					 uint32_t ch);
+enum channel_state reg_get_5g_bonded_channel_state(struct wlan_objmgr_psoc
+						   *psoc,
+						   uint8_t ch,
+						   enum phy_ch_width bw);
+enum channel_state reg_get_2g_bonded_channel_state(struct wlan_objmgr_psoc
+						   *psoc,
+						   uint8_t oper_ch,
+						   uint8_t sec_ch,
+						   enum phy_ch_width bw);
+
 void reg_set_channel_params(struct wlan_objmgr_psoc *psoc,
 		uint8_t ch, struct ch_params_s *ch_params);
 void reg_get_dfs_region(struct wlan_objmgr_psoc *psoc,
-		enum dfs_reg *dfs_reg);
+			enum dfs_reg *dfs_reg);
+
 bool reg_is_dfs_ch(struct wlan_objmgr_psoc *psoc, uint8_t ch);
 
 QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info *reg_info);
@@ -355,10 +359,22 @@ QDF_STATUS  wlan_regulatory_psoc_obj_destroyed_notification(
 					    struct wlan_objmgr_psoc *psoc,
 					    void *arg_list);
 
+QDF_STATUS wlan_regulatory_pdev_obj_created_notification(
+					    struct wlan_objmgr_pdev *pdev,
+					    void *arg_list);
+
+QDF_STATUS  wlan_regulatory_pdev_obj_destroyed_notification(
+					    struct wlan_objmgr_pdev *pdev,
+					    void *arg_list);
+
 static inline struct wlan_lmac_if_reg_tx_ops *
 get_reg_psoc_tx_ops(struct wlan_objmgr_psoc *psoc)
 {
 	return &((psoc->soc_cb.tx_ops.reg_ops));
 }
+
+QDF_STATUS reg_get_current_chan_list(struct wlan_objmgr_pdev *pdev,
+				     struct regulatory_channel
+				     *chan_list);
 
 #endif

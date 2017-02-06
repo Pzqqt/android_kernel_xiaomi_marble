@@ -25,7 +25,6 @@
 #include <wlan_reg_ucfg_api.h>
 #include "../../core/src/reg_services.h"
 
-
 /**
  * ucfg_reg_set_band () - set band req handler
  * @vdev_id: vdev id
