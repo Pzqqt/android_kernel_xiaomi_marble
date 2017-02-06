@@ -478,12 +478,10 @@ done:
 
 				QDF_TRACE(QDF_MODULE_ID_DP,
 						QDF_TRACE_LEVEL_ERROR,
-						FL("HAL RING 0x%p"), hal_ring);
+						FL("MSDU DONE failure"));
 
-				print_hex_dump(KERN_ERR,
-				       "\t Pkt Desc:", DUMP_PREFIX_NONE, 32, 4,
-					rx_tlv_hdr, 128, false);
-
+				hal_rx_dump_pkt_tlvs(rx_tlv_hdr,
+							QDF_TRACE_LEVEL_INFO);
 				qdf_assert(0);
 			}
 

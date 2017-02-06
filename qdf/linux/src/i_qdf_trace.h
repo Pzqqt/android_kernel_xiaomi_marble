@@ -70,8 +70,7 @@
 #define QDF_TRACE(x, log_level, args...) \
 	qdf_trace(log_level, args)
 
-#define QDF_TRACE_HEX_DUMP(arg ...)
-
+#define QDF_TRACE_HEX_DUMP qdf_trace_hex_dump
 #endif /* CONFIG_MCL */
 
 #define QDF_ENABLE_TRACING

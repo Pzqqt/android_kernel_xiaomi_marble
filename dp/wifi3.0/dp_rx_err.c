@@ -287,8 +287,10 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 	if (!hal_rx_attn_msdu_done_get(rx_desc->rx_buf_start)) {
 
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-		FL("nbuf->data 0x%p"), rx_desc->rx_buf_start);
+				FL("MSDU DONE failure"));
 
+		hal_rx_dump_pkt_tlvs(rx_desc->rx_buf_start,
+					QDF_TRACE_LEVEL_INFO);
 		qdf_assert(0);
 	}
 
@@ -701,6 +703,18 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 			}
 		} else {
 			/* Should not come here */
+			rx_buf_cookie = HAL_RX_WBM_BUF_COOKIE_GET(ring_desc);
+			rx_desc = dp_rx_cookie_2_va(soc, rx_buf_cookie);
+
+			qdf_assert(rx_desc);
+
+			qdf_nbuf_unmap_single(soc->osdev, rx_desc->nbuf,
+						QDF_DMA_BIDIRECTIONAL);
+
+			rx_desc->rx_buf_start = qdf_nbuf_data(rx_desc->nbuf);
+			hal_rx_dump_pkt_tlvs(rx_desc->rx_buf_start,
+							QDF_TRACE_LEVEL_INFO);
+
 			qdf_assert(0);
 		}
 
@@ -708,6 +722,10 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 
 		qdf_nbuf_unmap_single(soc->osdev, rx_desc->nbuf,
 				QDF_DMA_BIDIRECTIONAL);
+
+		rx_desc->rx_buf_start = qdf_nbuf_data(rx_desc->nbuf);
+		hal_rx_dump_pkt_tlvs(rx_desc->rx_buf_start,
+						QDF_TRACE_LEVEL_INFO);
 
 		qdf_nbuf_free(rx_desc->nbuf);
 

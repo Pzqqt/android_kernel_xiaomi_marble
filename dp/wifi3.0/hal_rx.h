@@ -1354,6 +1354,606 @@ enum hal_rx_wbm_rxdma_push_reason {
 	HAL_RX_BUF_COOKIE_GET(&((struct wbm_release_ring *) \
 	wbm_desc)->released_buff_or_desc_addr_info)
 
+/**
+ * hal_rx_dump_rx_attention_tlv: dump RX attention TLV in structured
+ * 				 humman readable format.
+ * @ rx_attn: pointer the rx_attention TLV in pkt.
+ * @ dbg_level: log level.
+ *
+ * Return: void
+ */
+static inline void hal_rx_dump_rx_attention_tlv(struct rx_attention *rx_attn,
+							uint8_t dbg_level)
+{
+	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
+			"\n--------------------\n"
+			"rx_attention tlv \n"
+			"\n--------------------\n"
+			"rxpcu_mpdu_filter_in_category	: %d\n"
+			"sw_frame_group_id               : %d\n"
+			"reserved_0                      : %d\n"
+			"phy_ppdu_id                     : %d\n"
+			"first_mpdu                      : %d\n"
+			"reserved_1a                     : %d\n"
+			"mcast_bcast                     : %d\n"
+			"ast_index_not_found             : %d\n"
+			"ast_index_timeout               : %d\n"
+			"power_mgmt                      : %d\n"
+			"non_qos                         : %d\n"
+			"null_data                       : %d\n"
+			"mgmt_type                       : %d\n"
+			"ctrl_type                       : %d\n"
+			"more_data                       : %d\n"
+			"eosp                            : %d\n"
+			"a_msdu_error                    : %d\n"
+			"fragment_flag                   : %d\n"
+			"order                           : %d\n"
+			"cce_match                       : %d\n"
+			"overflow_err                    : %d\n"
+			"msdu_length_err                 : %d\n"
+			"tcp_udp_chksum_fail             : %d\n"
+			"ip_chksum_fail                  : %d\n"
+			"sa_idx_invalid                  : %d\n"
+			"da_idx_invalid                  : %d\n"
+			"reserved_1b                     : %d\n"
+			"rx_in_tx_decrypt_byp            : %d\n"
+			"encrypt_required                : %d\n"
+			"directed                        : %d\n"
+			"buffer_fragment                 : %d\n"
+			"mpdu_length_err                 : %d\n"
+			"tkip_mic_err                    : %d\n"
+			"decrypt_err                     : %d\n"
+			"unencrypted_frame_err           : %d\n"
+			"fcs_err                         : %d\n"
+			"flow_idx_timeout                : %d\n"
+			"flow_idx_invalid                : %d\n"
+			"wifi_parser_error               : %d\n"
+			"amsdu_parser_error              : %d\n"
+			"sa_idx_timeout                  : %d\n"
+			"da_idx_timeout                  : %d\n"
+			"msdu_limit_error                : %d\n"
+			"da_is_valid                     : %d\n"
+			"da_is_mcbc                      : %d\n"
+			"sa_is_valid                     : %d\n"
+			"decrypt_status_code             : %d\n"
+			"rx_bitmap_not_updated           : %d\n"
+			"reserved_2                      : %d\n"
+			"msdu_done                       : %d\n",
+			rx_attn->rxpcu_mpdu_filter_in_category,
+			rx_attn->sw_frame_group_id,
+			rx_attn->reserved_0,
+			rx_attn->phy_ppdu_id,
+			rx_attn->first_mpdu,
+			rx_attn->reserved_1a,
+			rx_attn->mcast_bcast,
+			rx_attn->ast_index_not_found,
+			rx_attn->ast_index_timeout,
+			rx_attn->power_mgmt,
+			rx_attn->non_qos,
+			rx_attn->null_data,
+			rx_attn->mgmt_type,
+			rx_attn->ctrl_type,
+			rx_attn->more_data,
+			rx_attn->eosp,
+			rx_attn->a_msdu_error,
+			rx_attn->fragment_flag,
+			rx_attn->order,
+			rx_attn->cce_match,
+			rx_attn->overflow_err,
+			rx_attn->msdu_length_err,
+			rx_attn->tcp_udp_chksum_fail,
+			rx_attn->ip_chksum_fail,
+			rx_attn->sa_idx_invalid,
+			rx_attn->da_idx_invalid,
+			rx_attn->reserved_1b,
+			rx_attn->rx_in_tx_decrypt_byp,
+			rx_attn->encrypt_required,
+			rx_attn->directed,
+			rx_attn->buffer_fragment,
+			rx_attn->mpdu_length_err,
+			rx_attn->tkip_mic_err,
+			rx_attn->decrypt_err,
+			rx_attn->unencrypted_frame_err,
+			rx_attn->fcs_err,
+			rx_attn->flow_idx_timeout,
+			rx_attn->flow_idx_invalid,
+			rx_attn->wifi_parser_error,
+			rx_attn->amsdu_parser_error,
+			rx_attn->sa_idx_timeout,
+			rx_attn->da_idx_timeout,
+			rx_attn->msdu_limit_error,
+			rx_attn->da_is_valid,
+			rx_attn->da_is_mcbc,
+			rx_attn->sa_is_valid,
+			rx_attn->decrypt_status_code,
+			rx_attn->rx_bitmap_not_updated,
+			rx_attn->reserved_2,
+			rx_attn->msdu_done);
+
+
+}
+
+/**
+ * hal_rx_dump_mpdu_start_tlv: dump RX mpdu_start TLV in structured
+ *			       human readable format.
+ * @ mpdu_start: pointer the rx_attention TLV in pkt.
+ * @ dbg_level: log level.
+ *
+ * Return: void
+ */
+static inline void hal_rx_dump_mpdu_start_tlv(struct rx_mpdu_start *mpdu_start,
+uint8_t dbg_level)
+{
+	struct	rx_mpdu_info *mpdu_info =
+		(struct rx_mpdu_info *) &mpdu_start->rx_mpdu_info_details;
+	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
+			"\n--------------------\n"
+			"rx_mpdu_start tlv \n"
+			"--------------------\n"
+			"rxpcu_mpdu_filter_in_category: %d\n"
+			"sw_frame_group_id: %d\n"
+			"ndp_frame: %d\n"
+			"phy_err: %d\n"
+			"phy_err_during_mpdu_header: %d\n"
+			"protocol_version_err: %d\n"
+			"ast_based_lookup_valid: %d\n"
+			"phy_ppdu_id: %d\n"
+			"ast_index: %d\n"
+			"sw_peer_id: %d\n"
+			"mpdu_frame_control_valid: %d\n"
+			"mpdu_duration_valid: %d\n"
+			"mac_addr_ad1_valid: %d\n"
+			"mac_addr_ad2_valid: %d\n"
+			"mac_addr_ad3_valid: %d\n"
+			"mac_addr_ad4_valid: %d\n"
+			"mpdu_sequence_control_valid: %d\n"
+			"mpdu_qos_control_valid: %d\n"
+			"mpdu_ht_control_valid: %d\n"
+			"frame_encryption_info_valid: %d\n"
+			"fr_ds: %d\n"
+			"to_ds: %d\n"
+			"encrypted: %d\n"
+			"mpdu_retry: %d\n"
+			"mpdu_sequence_number: %d\n"
+			"epd_en: %d\n"
+			"all_frames_shall_be_encrypted: %d\n"
+			"encrypt_type: %d\n"
+			"mesh_sta: %d\n"
+			"bssid_hit: %d\n"
+			"bssid_number: %d\n"
+			"tid: %d\n"
+			"pn_31_0: %d\n"
+			"pn_63_32: %d\n"
+			"pn_95_64: %d\n"
+			"pn_127_96: %d\n"
+			"peer_meta_data: %d\n"
+			"rxpt_classify_info.reo_destination_indication: %d\n"
+			"rxpt_classify_info.use_flow_id_toeplitz_clfy: %d\n"
+			"rx_reo_queue_desc_addr_31_0: %d\n"
+			"rx_reo_queue_desc_addr_39_32: %d\n"
+			"receive_queue_number: %d\n"
+			"pre_delim_err_warning: %d\n"
+			"first_delim_err: %d\n"
+			"key_id_octet: %d\n"
+			"new_peer_entry: %d\n"
+			"decrypt_needed: %d\n"
+			"decap_type: %d\n"
+			"rx_insert_vlan_c_tag_padding: %d\n"
+			"rx_insert_vlan_s_tag_padding: %d\n"
+			"strip_vlan_c_tag_decap: %d\n"
+			"strip_vlan_s_tag_decap: %d\n"
+			"pre_delim_count: %d\n"
+			"ampdu_flag: %d\n"
+			"bar_frame: %d\n"
+			"mpdu_length: %d\n"
+			"first_mpdu: %d\n"
+			"mcast_bcast: %d\n"
+			"ast_index_not_found: %d\n"
+			"ast_index_timeout: %d\n"
+			"power_mgmt: %d\n"
+			"non_qos: %d\n"
+			"null_data: %d\n"
+			"mgmt_type: %d\n"
+			"ctrl_type: %d\n"
+			"more_data: %d\n"
+			"eosp: %d\n"
+			"fragment_flag: %d\n"
+			"order: %d\n"
+			"u_apsd_trigger: %d\n"
+			"encrypt_required: %d\n"
+			"directed: %d\n"
+			"mpdu_frame_control_field: %d\n"
+			"mpdu_duration_field: %d\n"
+			"mac_addr_ad1_31_0: %d\n"
+			"mac_addr_ad1_47_32: %d\n"
+			"mac_addr_ad2_15_0: %d\n"
+			"mac_addr_ad2_47_16: %d\n"
+			"mac_addr_ad3_31_0: %d\n"
+			"mac_addr_ad3_47_32: %d\n"
+			"mpdu_sequence_control_field: %d\n"
+			"mac_addr_ad4_31_0: %d\n"
+			"mac_addr_ad4_47_32: %d\n"
+			"mpdu_qos_control_field: %d\n"
+			"mpdu_ht_control_field: %d\n",
+			mpdu_info->rxpcu_mpdu_filter_in_category,
+			mpdu_info->sw_frame_group_id,
+			mpdu_info->ndp_frame,
+			mpdu_info->phy_err,
+			mpdu_info->phy_err_during_mpdu_header,
+			mpdu_info->protocol_version_err,
+			mpdu_info->ast_based_lookup_valid,
+			mpdu_info->phy_ppdu_id,
+			mpdu_info->ast_index,
+			mpdu_info->sw_peer_id,
+			mpdu_info->mpdu_frame_control_valid,
+			mpdu_info->mpdu_duration_valid,
+			mpdu_info->mac_addr_ad1_valid,
+			mpdu_info->mac_addr_ad2_valid,
+			mpdu_info->mac_addr_ad3_valid,
+			mpdu_info->mac_addr_ad4_valid,
+			mpdu_info->mpdu_sequence_control_valid,
+			mpdu_info->mpdu_qos_control_valid,
+			mpdu_info->mpdu_ht_control_valid,
+			mpdu_info->frame_encryption_info_valid,
+			mpdu_info->fr_ds,
+			mpdu_info->to_ds,
+			mpdu_info->encrypted,
+			mpdu_info->mpdu_retry,
+			mpdu_info->mpdu_sequence_number,
+			mpdu_info->epd_en,
+			mpdu_info->all_frames_shall_be_encrypted,
+			mpdu_info->encrypt_type,
+			mpdu_info->mesh_sta,
+			mpdu_info->bssid_hit,
+			mpdu_info->bssid_number,
+			mpdu_info->tid,
+			mpdu_info->pn_31_0,
+			mpdu_info->pn_63_32,
+			mpdu_info->pn_95_64,
+			mpdu_info->pn_127_96,
+			mpdu_info->peer_meta_data,
+			mpdu_info->rxpt_classify_info_details.reo_destination_indication,
+			mpdu_info->rxpt_classify_info_details.use_flow_id_toeplitz_clfy,
+			mpdu_info->rx_reo_queue_desc_addr_31_0,
+			mpdu_info->rx_reo_queue_desc_addr_39_32,
+			mpdu_info->receive_queue_number,
+			mpdu_info->pre_delim_err_warning,
+			mpdu_info->first_delim_err,
+			mpdu_info->key_id_octet,
+			mpdu_info->new_peer_entry,
+			mpdu_info->decrypt_needed,
+			mpdu_info->decap_type,
+			mpdu_info->rx_insert_vlan_c_tag_padding,
+			mpdu_info->rx_insert_vlan_s_tag_padding,
+			mpdu_info->strip_vlan_c_tag_decap,
+			mpdu_info->strip_vlan_s_tag_decap,
+			mpdu_info->pre_delim_count,
+			mpdu_info->ampdu_flag,
+			mpdu_info->bar_frame,
+			mpdu_info->mpdu_length,
+			mpdu_info->first_mpdu,
+			mpdu_info->mcast_bcast,
+			mpdu_info->ast_index_not_found,
+			mpdu_info->ast_index_timeout,
+			mpdu_info->power_mgmt,
+			mpdu_info->non_qos,
+			mpdu_info->null_data,
+			mpdu_info->mgmt_type,
+			mpdu_info->ctrl_type,
+			mpdu_info->more_data,
+			mpdu_info->eosp,
+			mpdu_info->fragment_flag,
+			mpdu_info->order,
+			mpdu_info->u_apsd_trigger,
+			mpdu_info->encrypt_required,
+			mpdu_info->directed,
+			mpdu_info->mpdu_frame_control_field,
+			mpdu_info->mpdu_duration_field,
+			mpdu_info->mac_addr_ad1_31_0,
+			mpdu_info->mac_addr_ad1_47_32,
+			mpdu_info->mac_addr_ad2_15_0,
+			mpdu_info->mac_addr_ad2_47_16,
+			mpdu_info->mac_addr_ad3_31_0,
+			mpdu_info->mac_addr_ad3_47_32,
+			mpdu_info->mpdu_sequence_control_field,
+			mpdu_info->mac_addr_ad4_31_0,
+			mpdu_info->mac_addr_ad4_47_32,
+			mpdu_info->mpdu_qos_control_field,
+			mpdu_info->mpdu_ht_control_field);
+}
+
+/**
+ * hal_rx_dump_msdu_start_tlv: dump RX msdu_start TLV in structured
+ *			       human readable format.
+ * @ msdu_start: pointer the msdu_start TLV in pkt.
+ * @ dbg_level: log level.
+ *
+ * Return: void
+ */
+static void hal_rx_dump_msdu_start_tlv(struct rx_msdu_start *msdu_start,
+							uint8_t dbg_level)
+{
+	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
+			"\n--------------------\n"
+			"rx_msdu_start tlv \n"
+			"--------------------\n"
+			"rxpcu_mpdu_filter_in_category: %d\n"
+			"sw_frame_group_id: %d\n"
+			"phy_ppdu_id: %d\n"
+			"msdu_length: %d\n"
+			"ipsec_esp: %d\n"
+			"l3_offset: %d\n"
+			"ipsec_ah: %d\n"
+			"l4_offset: %d\n"
+			"msdu_number: %d\n"
+			"decap_format: %d\n"
+			"ipv4_proto: %d\n"
+			"ipv6_proto: %d\n"
+			"tcp_proto: %d\n"
+			"udp_proto: %d\n"
+			"ip_frag: %d\n"
+			"tcp_only_ack: %d\n"
+			"da_is_bcast_mcast: %d\n"
+			"toeplitz_hash: %d\n"
+			"ip4_protocol_ip6_next_header: %d\n"
+			"toeplitz_hash_2_or_4: %d\n"
+			"flow_id_toeplitz: %d\n"
+			"user_rssi: %d\n"
+			"pkt_type: %d\n"
+			"stbc: %d\n"
+			"sgi: %d\n"
+			"rate_mcs: %d\n"
+			"receive_bandwidth: %d\n"
+			"reception_type: %d\n"
+			"nss: %d\n"
+			"ppdu_start_timestamp: %d\n"
+			"sw_phy_meta_data: %d\n",
+		msdu_start->rxpcu_mpdu_filter_in_category,
+		msdu_start->sw_frame_group_id,
+		msdu_start->phy_ppdu_id,
+		msdu_start->msdu_length,
+		msdu_start->ipsec_esp,
+		msdu_start->l3_offset,
+		msdu_start->ipsec_ah,
+		msdu_start->l4_offset,
+		msdu_start->msdu_number,
+		msdu_start->decap_format,
+		msdu_start->ipv4_proto,
+		msdu_start->ipv6_proto,
+		msdu_start->tcp_proto,
+		msdu_start->udp_proto,
+		msdu_start->ip_frag,
+		msdu_start->tcp_only_ack,
+		msdu_start->da_is_bcast_mcast,
+		msdu_start->toeplitz_hash,
+		msdu_start->ip4_protocol_ip6_next_header,
+		msdu_start->toeplitz_hash_2_or_4,
+		msdu_start->flow_id_toeplitz,
+		msdu_start->user_rssi,
+		msdu_start->pkt_type,
+		msdu_start->stbc,
+		msdu_start->sgi,
+		msdu_start->rate_mcs,
+		msdu_start->receive_bandwidth,
+		msdu_start->reception_type,
+		msdu_start->nss,
+		msdu_start->ppdu_start_timestamp,
+		msdu_start->sw_phy_meta_data);
+}
+
+/**
+ * hal_rx_dump_msdu_end_tlv: dump RX msdu_end TLV in structured
+ *			     human readable format.
+ * @ msdu_end: pointer the msdu_end TLV in pkt.
+ * @ dbg_level: log level.
+ *
+ * Return: void
+ */
+static inline void hal_rx_dump_msdu_end_tlv(struct rx_msdu_end *msdu_end,
+							uint8_t dbg_level)
+{
+	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
+			"\n--------------------\n"
+			"rx_msdu_end tlv \n"
+			"--------------------\n"
+			"rxpcu_mpdu_filter_in_category: %d\n"
+			"sw_frame_group_id: %d\n"
+			"phy_ppdu_id: %d\n"
+			"ip_hdr_chksum: %d\n"
+			"tcp_udp_chksum: %d\n"
+			"key_id_octet: %d\n"
+			"cce_super_rule: %d\n"
+			"cce_classify_not_done_truncat: %d\n"
+			"cce_classify_not_done_cce_dis: %d\n"
+			"ext_wapi_pn_63_48: %d\n"
+			"ext_wapi_pn_95_64: %d\n"
+			"ext_wapi_pn_127_96: %d\n"
+			"reported_mpdu_length: %d\n"
+			"first_msdu: %d\n"
+			"last_msdu: %d\n"
+			"sa_idx_timeout: %d\n"
+			"da_idx_timeout: %d\n"
+			"msdu_limit_error: %d\n"
+			"flow_idx_timeout: %d\n"
+			"flow_idx_invalid: %d\n"
+			"wifi_parser_error: %d\n"
+			"amsdu_parser_error: %d\n"
+			"sa_is_valid: %d\n"
+			"da_is_valid: %d\n"
+			"da_is_mcbc: %d\n"
+			"l3_header_padding: %d\n"
+			"ipv6_options_crc: %d\n"
+			"tcp_seq_number: %d\n"
+			"tcp_ack_number: %d\n"
+			"tcp_flag: %d\n"
+			"lro_eligible: %d\n"
+			"window_size: %d\n"
+			"da_offset: %d\n"
+			"sa_offset: %d\n"
+			"da_offset_valid: %d\n"
+			"sa_offset_valid: %d\n"
+			"type_offset: %d\n"
+			"rule_indication_31_0: %d\n"
+			"rule_indication_63_32: %d\n"
+			"sa_idx: %d\n"
+			"da_idx: %d\n"
+			"msdu_drop: %d\n"
+			"reo_destination_indication: %d\n"
+			"flow_idx: %d\n"
+			"fse_metadata: %d\n"
+			"cce_metadata: %d\n"
+			"sa_sw_peer_id: %d\n",
+		msdu_end->rxpcu_mpdu_filter_in_category,
+		msdu_end->sw_frame_group_id,
+		msdu_end->phy_ppdu_id,
+		msdu_end->ip_hdr_chksum,
+		msdu_end->tcp_udp_chksum,
+		msdu_end->key_id_octet,
+		msdu_end->cce_super_rule,
+		msdu_end->cce_classify_not_done_truncate,
+		msdu_end->cce_classify_not_done_cce_dis,
+		msdu_end->ext_wapi_pn_63_48,
+		msdu_end->ext_wapi_pn_95_64,
+		msdu_end->ext_wapi_pn_127_96,
+		msdu_end->reported_mpdu_length,
+		msdu_end->first_msdu,
+		msdu_end->last_msdu,
+		msdu_end->sa_idx_timeout,
+		msdu_end->da_idx_timeout,
+		msdu_end->msdu_limit_error,
+		msdu_end->flow_idx_timeout,
+		msdu_end->flow_idx_invalid,
+		msdu_end->wifi_parser_error,
+		msdu_end->amsdu_parser_error,
+		msdu_end->sa_is_valid,
+		msdu_end->da_is_valid,
+		msdu_end->da_is_mcbc,
+		msdu_end->l3_header_padding,
+		msdu_end->ipv6_options_crc,
+		msdu_end->tcp_seq_number,
+		msdu_end->tcp_ack_number,
+		msdu_end->tcp_flag,
+		msdu_end->lro_eligible,
+		msdu_end->window_size,
+		msdu_end->da_offset,
+		msdu_end->sa_offset,
+		msdu_end->da_offset_valid,
+		msdu_end->sa_offset_valid,
+		msdu_end->type_offset,
+		msdu_end->rule_indication_31_0,
+		msdu_end->rule_indication_63_32,
+		msdu_end->sa_idx,
+		msdu_end->da_idx,
+		msdu_end->msdu_drop,
+		msdu_end->reo_destination_indication,
+		msdu_end->flow_idx,
+		msdu_end->fse_metadata,
+		msdu_end->cce_metadata,
+		msdu_end->sa_sw_peer_id);
+}
+
+/**
+ * hal_rx_dump_mpdu_end_tlv: dump RX mpdu_end TLV in structured
+ *			     human readable format.
+ * @ mpdu_end: pointer the mpdu_end TLV in pkt.
+ * @ dbg_level: log level.
+ *
+ * Return: void
+ */
+static inline void hal_rx_dump_mpdu_end_tlv(struct rx_mpdu_end *mpdu_end,
+							uint8_t dbg_level)
+{
+	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
+			"\n--------------------\n"
+			"rx_mpdu_end tlv \n"
+			"--------------------\n"
+			"rxpcu_mpdu_filter_in_category: %d\n"
+			"sw_frame_group_id: %d\n"
+			"phy_ppdu_id: %d\n"
+			"unsup_ktype_short_frame: %d\n"
+			"rx_in_tx_decrypt_byp: %d\n"
+			"overflow_err: %d\n"
+			"mpdu_length_err: %d\n"
+			"tkip_mic_err: %d\n"
+			"decrypt_err: %d\n"
+			"unencrypted_frame_err: %d\n"
+			"pn_fields_contain_valid_info: %d\n"
+			"fcs_err: %d\n"
+			"msdu_length_err: %d\n"
+			"rxdma0_destination_ring: %d\n"
+			"rxdma1_destination_ring: %d\n"
+			"decrypt_status_code: %d\n"
+			"rx_bitmap_not_updated: %d\n",
+			mpdu_end->rxpcu_mpdu_filter_in_category,
+			mpdu_end->sw_frame_group_id,
+			mpdu_end->phy_ppdu_id,
+			mpdu_end->unsup_ktype_short_frame,
+			mpdu_end->rx_in_tx_decrypt_byp,
+			mpdu_end->overflow_err,
+			mpdu_end->mpdu_length_err,
+			mpdu_end->tkip_mic_err,
+			mpdu_end->decrypt_err,
+			mpdu_end->unencrypted_frame_err,
+			mpdu_end->pn_fields_contain_valid_info,
+			mpdu_end->fcs_err,
+			mpdu_end->msdu_length_err,
+			mpdu_end->rxdma0_destination_ring,
+			mpdu_end->rxdma1_destination_ring,
+			mpdu_end->decrypt_status_code,
+			mpdu_end->rx_bitmap_not_updated);
+}
+
+/**
+ * hal_rx_dump_pkt_hdr_tlv: dump RX pkt header TLV in hex format
+ * @ pkt_hdr_tlv: pointer the pkt_hdr_tlv in pkt.
+ * @ dbg_level: log level.
+ *
+ * Return: void
+ */
+static inline void hal_rx_dump_pkt_hdr_tlv(struct rx_pkt_hdr_tlv  *pkt_hdr_tlv,
+							uint8_t dbg_level)
+{
+	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
+			"\n---------------\n"
+			"rx_pkt_hdr_tlv \n"
+			"---------------\n"
+			"phy_ppdu_id %d \n",
+			pkt_hdr_tlv->phy_ppdu_id);
+
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_DP, dbg_level,
+			pkt_hdr_tlv->rx_pkt_hdr, 128);
+}
+
+/**
+ * hal_rx_dump_pkt_tlvs: API to print all member elements of
+ *			 RX TLVs
+ * @ buf: pointer the pkt buffer.
+ * @ dbg_level: log level.
+ *
+ * Return: void
+ */
+static inline void hal_rx_dump_pkt_tlvs(uint8_t *buf, uint8_t dbg_level)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *) buf;
+	struct rx_attention *rx_attn = &pkt_tlvs->attn_tlv.rx_attn;
+	struct rx_mpdu_start *mpdu_start =
+				&pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
+	struct rx_msdu_start *msdu_start =
+				&pkt_tlvs->msdu_start_tlv.rx_msdu_start;
+	struct rx_mpdu_end *mpdu_end = &pkt_tlvs->mpdu_end_tlv.rx_mpdu_end;
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+	struct rx_pkt_hdr_tlv    *pkt_hdr_tlv = &pkt_tlvs->pkt_hdr_tlv;
+
+	hal_rx_dump_rx_attention_tlv(rx_attn, dbg_level);
+	hal_rx_dump_mpdu_start_tlv(mpdu_start, dbg_level);
+	hal_rx_dump_msdu_start_tlv(msdu_start, dbg_level);
+	hal_rx_dump_mpdu_end_tlv(mpdu_end, dbg_level);
+	hal_rx_dump_msdu_end_tlv(msdu_end, dbg_level);
+	hal_rx_dump_pkt_hdr_tlv(pkt_hdr_tlv, dbg_level);
+}
+
+
+
 #endif /* _HAL_RX_H */
 
 
