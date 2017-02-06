@@ -804,11 +804,13 @@ static inline qdf_dma_addr_t hal_srng_get_hp_addr(void *hal_soc, void *hal_ring)
 	}
 
 	if (srng->ring_dir == HAL_SRNG_SRC_RING) {
-		return hal->shadow_wrptr_mem_paddr + (srng->u.src_ring.hp_addr -
-			hal->shadow_wrptr_mem_vaddr);
+		return hal->shadow_wrptr_mem_paddr +
+		  ((unsigned long)(srng->u.src_ring.hp_addr) -
+		  (unsigned long)(hal->shadow_wrptr_mem_vaddr));
 	} else {
-		return hal->shadow_rdptr_mem_paddr + (srng->u.dst_ring.hp_addr -
-			hal->shadow_rdptr_mem_vaddr);
+		return hal->shadow_rdptr_mem_paddr +
+		  ((unsigned long)(srng->u.dst_ring.hp_addr) -
+		   (unsigned long)(hal->shadow_rdptr_mem_vaddr));
 	}
 }
 
