@@ -16238,6 +16238,8 @@ free_scan_flter:
 		csr_free_scan_filter(mac_ctx, scan_filter);
 		qdf_mem_free(scan_filter);
 	}
+	if (result_handle)
+		csr_scan_result_purge(mac_ctx, result_handle);
 
 	return status;
 }
