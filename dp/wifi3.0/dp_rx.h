@@ -22,6 +22,15 @@
 #include "hal_rx.h"
 #include "dp_tx.h"
 
+#ifdef RXDMA_OPTIMIZATION
+#define RX_BUFFER_ALIGNMENT     128
+#else /* RXDMA_OPTIMIZATION */
+#define RX_BUFFER_ALIGNMENT     4
+#endif /* RXDMA_OPTIMIZATION */
+
+#define RX_BUFFER_SIZE          2048
+#define RX_BUFFER_RESERVATION   0
+
 #define DP_PEER_METADATA_PEER_ID_MASK	0x0000ffff
 #define DP_PEER_METADATA_PEER_ID_SHIFT	0
 #define DP_PEER_METADATA_VDEV_ID_MASK	0x00070000
@@ -162,5 +171,71 @@ do {                                                \
 	(tail) = (elem);                            \
 	qdf_nbuf_set_next((tail), NULL);            \
 } while (0)
+
+#ifndef BUILD_X86
+static inline int check_x86_paddr(struct dp_soc *dp_soc, qdf_nbuf_t *rx_netbuf,
+				qdf_dma_addr_t *paddr, struct dp_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#else
+#define MAX_RETRY 100
+static inline int check_x86_paddr(struct dp_soc *dp_soc, qdf_nbuf_t *rx_netbuf,
+				qdf_dma_addr_t *paddr, struct dp_pdev *pdev)
+{
+	uint32_t nbuf_retry = 0;
+	int32_t ret;
+	const uint32_t x86_phy_addr = 0x50000000;
+	/*
+	 * in M2M emulation platforms (x86) the memory below 0x50000000
+	 * is reserved for target use, so any memory allocated in this
+	 * region should not be used by host
+	 */
+	do {
+		if (qdf_likely(*paddr > x86_phy_addr))
+			return QDF_STATUS_SUCCESS;
+		else {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+				"phy addr %p exceded 0x50000000 trying again\n",
+				paddr);
+
+			nbuf_retry++;
+			if ((*rx_netbuf)) {
+				qdf_nbuf_unmap_single(dp_soc->osdev, *rx_netbuf,
+							QDF_DMA_BIDIRECTIONAL);
+				qdf_nbuf_free(*rx_netbuf);
+			}
+
+			*rx_netbuf = qdf_nbuf_alloc(pdev->osif_pdev,
+							RX_BUFFER_SIZE,
+							RX_BUFFER_RESERVATION,
+							RX_BUFFER_ALIGNMENT,
+							FALSE);
+
+			if (qdf_unlikely(!(*rx_netbuf)))
+				return QDF_STATUS_E_FAILURE;
+
+			ret = qdf_nbuf_map_single(dp_soc->osdev, *rx_netbuf,
+							QDF_DMA_BIDIRECTIONAL);
+
+			if (qdf_unlikely(ret == QDF_STATUS_E_FAILURE)) {
+				qdf_nbuf_free(*rx_netbuf);
+				*rx_netbuf = NULL;
+				continue;
+			}
+
+			*paddr = qdf_nbuf_get_frag_paddr(*rx_netbuf, 0);
+		}
+	} while (nbuf_retry < MAX_RETRY);
+
+	if ((*rx_netbuf)) {
+		qdf_nbuf_unmap_single(dp_soc->osdev, *rx_netbuf,
+					QDF_DMA_BIDIRECTIONAL);
+		qdf_nbuf_free(*rx_netbuf);
+	}
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
 
 #endif /* _DP_RX_H */

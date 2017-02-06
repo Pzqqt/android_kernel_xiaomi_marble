@@ -24,15 +24,6 @@
 #include "qdf_nbuf.h"
 #include <ieee80211.h>
 
-#ifdef RXDMA_OPTIMIZATION
-#define RX_BUFFER_ALIGNMENT	128
-#else /* RXDMA_OPTIMIZATION */
-#define RX_BUFFER_ALIGNMENT	4
-#endif /* RXDMA_OPTIMIZATION */
-
-#define RX_BUFFER_SIZE		2048
-#define RX_BUFFER_RESERVATION	0
-
 /*
  * dp_rx_buffers_replenish() - replenish rxdma ring with rx nbufs
  *			       called during dp rx initialization
@@ -64,6 +55,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 	union dp_rx_desc_list_elem_t *next;
 	struct dp_srng *dp_rxdma_srng = &dp_pdev->rx_refill_buf_ring;
 	void *rxdma_srng = dp_rxdma_srng->hal_srng;
+	int32_t ret;
 
 	if (!rxdma_srng) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -108,10 +100,9 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 		num_req_buffers = num_entries_avail;
 	}
 
-	for (count = 0; count < num_req_buffers; count++) {
-		rxdma_ring_entry = hal_srng_src_get_next(dp_soc->hal_soc,
-							 rxdma_srng);
+	count = 0;
 
+	while (count < num_req_buffers) {
 		rx_netbuf = qdf_nbuf_alloc(dp_pdev->osif_pdev,
 					RX_BUFFER_SIZE,
 					RX_BUFFER_RESERVATION,
@@ -119,12 +110,27 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 					FALSE);
 
 		if (rx_netbuf == NULL)
-			break;
+			continue;
 
 		qdf_nbuf_map_single(dp_soc->osdev, rx_netbuf,
 				    QDF_DMA_BIDIRECTIONAL);
 
 		paddr = qdf_nbuf_get_frag_paddr(rx_netbuf, 0);
+
+		/*
+		 * check if the physical address of nbuf->data is
+		 * less then 0x50000000 then free the nbuf and try
+		 * allocating new nbuf. We can try for 100 times.
+		 * this is a temp WAR till we fix it properly.
+		 */
+		ret = check_x86_paddr(dp_soc, &rx_netbuf, &paddr, dp_pdev);
+		if (ret == QDF_STATUS_E_FAILURE)
+			break;
+
+		count++;
+
+		rxdma_ring_entry = hal_srng_src_get_next(dp_soc->hal_soc,
+								rxdma_srng);
 
 		next = (*desc_list)->next;
 
