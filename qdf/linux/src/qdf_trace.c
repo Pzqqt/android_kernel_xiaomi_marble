@@ -1780,6 +1780,12 @@ struct category_name_info g_qdf_category_name[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_BMI] = {"BMI"},
 	[QDF_MODULE_ID_EPPING] = {"EPPING"},
 	[QDF_MODULE_ID_QVIT] = {"QVIT"},
+	[QDF_MODULE_ID_DP] = {"DP"},
+	[QDF_MODULE_ID_SOC] = {"SOC"},
+	[QDF_MODULE_ID_OS_IF] = {"OSIF"},
+	[QDF_MODULE_ID_TARGET_IF] = {"TIF"},
+	[QDF_MODULE_ID_SCHEDULER] = {"SCH"},
+	[QDF_MODULE_ID_MGMT_TXRX] = {"MGMT_TXRX"},
 	[QDF_MODULE_ID_ANY] = {"ANY"},
 };
 
