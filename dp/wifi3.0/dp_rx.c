@@ -210,7 +210,7 @@ dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 	struct hal_rx_mpdu_desc_info mpdu_desc_info;
 	enum hal_reo_error_status error;
 	uint32_t pkt_len;
-	uint32_t peer_mdata;
+	static uint32_t peer_mdata;
 	uint8_t *rx_tlv_hdr;
 	uint32_t rx_bufs_reaped = 0;
 	struct dp_pdev *pdev;
@@ -338,7 +338,9 @@ done:
 				qdf_assert(0);
 			}
 
-			peer_mdata = hal_rx_mpdu_peer_meta_data_get(rx_tlv_hdr);
+			if (qdf_nbuf_is_chfrag_start(nbuf))
+				peer_mdata = hal_rx_mpdu_peer_meta_data_get(rx_tlv_hdr);
+
 			peer_id = DP_PEER_METADATA_PEER_ID_GET(peer_mdata);
 			peer = dp_peer_find_by_id(soc, peer_id);
 
