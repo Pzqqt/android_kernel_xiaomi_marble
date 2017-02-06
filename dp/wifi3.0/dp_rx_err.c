@@ -335,6 +335,17 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, void *ring_desc,
 		qdf_nbuf_data(nbuf), 128, false);
 #endif /* NAPIER_EMULATION */
 
+	if (qdf_unlikely(peer->bss_peer)) {
+		QDF_TRACE(QDF_MODULE_ID_DP,
+				QDF_TRACE_LEVEL_INFO,
+				FL("received pkt with same src MAC"));
+
+		/* Drop & free packet */
+		qdf_nbuf_free(nbuf);
+		/* Statistics */
+		goto fail;
+	}
+
 	pdev0 = soc->pdev_list[0];/* Hard code 0th elem */
 
 	if (pdev0) {
@@ -354,6 +365,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, void *ring_desc,
 			FL("INVALID pdev %p"), pdev0);
 	}
 
+fail:
 	dp_rx_add_to_free_desc_list(head, tail, rx_desc);
 
 	return rx_bufs_used;

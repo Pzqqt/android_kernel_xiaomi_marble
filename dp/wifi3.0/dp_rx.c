@@ -352,6 +352,16 @@ done:
 				continue;
 			}
 
+			if (qdf_unlikely(peer->bss_peer)) {
+				QDF_TRACE(QDF_MODULE_ID_DP,
+					QDF_TRACE_LEVEL_INFO,
+					FL("received pkt with same src MAC"));
+
+				/* Drop & free packet */
+				qdf_nbuf_free(nbuf);
+				/* Statistics */
+				continue;
+			}
 			/*
 			 * HW structures call this L3 header padding --
 			 * even though this is actually the offset from
