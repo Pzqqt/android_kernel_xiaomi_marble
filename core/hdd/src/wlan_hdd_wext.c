@@ -3137,8 +3137,7 @@ static int __iw_get_bitrate(struct net_device *dev,
 			    struct iw_request_info *info,
 			    union iwreq_data *wrqu, char *extra)
 {
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	QDF_STATUS status;
 	hdd_wext_state_t *pWextState;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
@@ -3151,12 +3150,6 @@ static int __iw_get_bitrate(struct net_device *dev,
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
 		return ret;
-
-	if (cds_is_driver_recovering()) {
-		hdd_alert("Recovery in Progress. State: 0x%x Ignore!!!",
-			  cds_get_driver_state());
-		return status;
-	}
 
 	if (eConnectionState_Associated != pHddStaCtx->conn_info.connState) {
 		wrqu->bitrate.value = 0;
@@ -3177,18 +3170,18 @@ static int __iw_get_bitrate(struct net_device *dev,
 
 		if (QDF_STATUS_SUCCESS != status) {
 			hdd_err("Unable to retrieve statistics");
-			return status;
+			return qdf_status_to_os_return(status);
 		}
 
 		pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 
-		qdf_status =
+		status =
 			qdf_wait_single_event(&pWextState->hdd_qdf_event,
 					      WLAN_WAIT_TIME_STATS);
 
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("SME timeout while retrieving statistics");
-			return QDF_STATUS_E_FAILURE;
+			return qdf_status_to_os_return(status);
 		}
 
 		wrqu->bitrate.value =
@@ -3197,7 +3190,7 @@ static int __iw_get_bitrate(struct net_device *dev,
 
 	EXIT();
 
-	return qdf_status;
+	return 0;
 }
 
 /**
