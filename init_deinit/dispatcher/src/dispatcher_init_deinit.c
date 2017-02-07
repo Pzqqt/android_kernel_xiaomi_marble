@@ -20,9 +20,7 @@
 #include <qdf_trace.h>
 #include <qdf_threads.h>
 #include <dispatcher_init_deinit.h>
-#ifdef NAPIER_CODE
 #include <scheduler_api.h>
-#endif
 #include <wlan_mgmt_txrx_utils_api.h>
 
 /**
@@ -128,18 +126,6 @@ static QDF_STATUS tdls_psoc_disable(struct wlan_objmgr_psoc *psoc)
 {
 	return QDF_STATUS_SUCCESS;
 }
-
-#ifndef NAPIER_CODE
-static QDF_STATUS scheduler_init(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS scheduler_deinit(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 
 QDF_STATUS dispatcher_init(void)
 {
