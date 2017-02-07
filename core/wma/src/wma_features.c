@@ -6704,34 +6704,19 @@ int wma_bus_resume(void)
  *
  * Return: NONE
  */
-#ifdef QCA_WIFI_3_0_ADRASTEA
 static inline void wma_suspend_target_timeout(bool is_self_recovery_enabled)
 {
-	if (cds_is_driver_recovering()) {
-		WMA_LOGE("%s: recovery is in progress, ignore!", __func__);
-	} else {
-		if (is_self_recovery_enabled) {
-			cds_trigger_recovery(false);
-		} else {
-			QDF_BUG(0);
-		}
-	}
-}
-#else /* ROME chipset */
-static inline void wma_suspend_target_timeout(bool is_self_recovery_enabled)
-{
-	if (cds_is_load_or_unload_in_progress() || cds_is_driver_recovering()) {
-		WMA_LOGE("%s: Unloading/Loading/recovery is in progress, Ignore!",
+	if (cds_is_load_or_unload_in_progress())
+		WMA_LOGE("%s: Module (un)loading; Ignoring suspend timeout",
 			 __func__);
-	} else {
-		if (is_self_recovery_enabled) {
-			cds_trigger_recovery(false);
-		} else {
-			QDF_BUG(0);
-		}
-	}
+	else if (cds_is_driver_recovering())
+		WMA_LOGE("%s: Module recovering; Ignoring suspend timeout",
+			 __func__);
+	else if (is_self_recovery_enabled)
+		cds_trigger_recovery(false);
+	else
+		QDF_BUG(0);
 }
-#endif
 
 /**
  * wma_suspend_target() - suspend target
