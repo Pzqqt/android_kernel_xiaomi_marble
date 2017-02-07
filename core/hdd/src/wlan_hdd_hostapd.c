@@ -1356,9 +1356,22 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			hdd_info("P2PGO is going down now");
 			hdd_issue_stored_joinreq(sta_adapter, pHddCtx);
 		}
-		pHddApCtx->groupKey.keyLength = 0;
-		for (i = 0; i < CSR_MAX_NUM_KEY; i++)
-			pHddApCtx->wepKey[i].keyLength = 0;
+		hdd_info("bss_stop_reason=%d", pHddApCtx->bss_stop_reason);
+		if (pHddApCtx->bss_stop_reason !=
+			BSS_STOP_DUE_TO_MCC_SCC_SWITCH) {
+			/* when MCC to SCC switching happens, key storage
+			 * should not be cleared due to hostapd will not
+			 * repopulate the original keys
+			 */
+			pHddApCtx->groupKey.keyLength = 0;
+			for (i = 0; i < CSR_MAX_NUM_KEY; i++)
+				pHddApCtx->wepKey[i].keyLength = 0;
+		}
+
+		/* clear the reason code in case BSS is stopped
+		 * in another place
+		 */
+		pHddApCtx->bss_stop_reason = BSS_STOP_REASON_INVALID;
 		goto stopbss;
 
 	case eSAP_DFS_CAC_START:

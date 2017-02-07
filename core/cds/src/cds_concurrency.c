@@ -5982,9 +5982,13 @@ static void cds_check_sta_ap_concurrent_ch_intf(void *data)
 	if (intf_ch == 0)
 		return;
 
+	cds_info("SAP restarts due to MCC->SCC switch, orig chan: %d, new chan: %d",
+		hdd_ap_ctx->sapConfig.channel, intf_ch);
+
 	hdd_ap_ctx->sapConfig.channel = intf_ch;
 	hdd_ap_ctx->sapConfig.ch_params.ch_width =
 		hdd_ap_ctx->sapConfig.ch_width_orig;
+	hdd_ap_ctx->bss_stop_reason = BSS_STOP_DUE_TO_MCC_SCC_SWITCH;
 	cds_set_channel_params(hdd_ap_ctx->sapConfig.channel,
 			hdd_ap_ctx->sapConfig.sec_ch,
 			&hdd_ap_ctx->sapConfig.ch_params);
