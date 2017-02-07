@@ -9172,6 +9172,7 @@ int wlan_hdd_cfg80211_update_band(struct wiphy *wiphy, eCsrBand eBand)
 	return 0;
 }
 
+#define WLAN_HDD_MAX_NUM_CSA_COUNTERS 2
 /*
  * FUNCTION: wlan_hdd_cfg80211_init
  * This function is called by hdd_wlan_startup()
@@ -9398,6 +9399,7 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 #endif
 	wiphy->features |= NL80211_FEATURE_INACTIVITY_TIMER;
 	hdd_add_channel_switch_support(&wiphy->flags);
+	wiphy->max_num_csa_counters = WLAN_HDD_MAX_NUM_CSA_COUNTERS;
 
 	EXIT();
 	return 0;
