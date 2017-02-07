@@ -483,6 +483,8 @@ static int curr_con_mode;
  */
 enum phy_ch_width hdd_map_nl_chan_width(enum nl80211_chan_width ch_width)
 {
+	uint8_t fw_ch_bw;
+	fw_ch_bw = wma_get_vht_ch_width();
 	switch (ch_width) {
 	case NL80211_CHAN_WIDTH_20_NOHT:
 	case NL80211_CHAN_WIDTH_20:
@@ -493,9 +495,17 @@ enum phy_ch_width hdd_map_nl_chan_width(enum nl80211_chan_width ch_width)
 	case NL80211_CHAN_WIDTH_80:
 		return CH_WIDTH_80MHZ;
 	case NL80211_CHAN_WIDTH_80P80:
-		return CH_WIDTH_80P80MHZ;
+		if (fw_ch_bw == WNI_CFG_VHT_CHANNEL_WIDTH_80_PLUS_80MHZ)
+			return CH_WIDTH_80P80MHZ;
+		else if (fw_ch_bw == WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ)
+			return CH_WIDTH_160MHZ;
+		else
+			return CH_WIDTH_80MHZ;
 	case NL80211_CHAN_WIDTH_160:
-		return CH_WIDTH_160MHZ;
+		if (fw_ch_bw >= WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ)
+			return CH_WIDTH_160MHZ;
+		else
+			return CH_WIDTH_80MHZ;
 	case NL80211_CHAN_WIDTH_5:
 		return CH_WIDTH_5MHZ;
 	case NL80211_CHAN_WIDTH_10:
@@ -945,6 +955,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 	struct ieee80211_supported_band *band_5g =
 		wiphy->bands[NL80211_BAND_5GHZ];
 	uint32_t temp = 0;
+	uint32_t ch_width = eHT_CHANNEL_WIDTH_80MHZ;
 
 	if (!band_5g) {
 		hdd_info("5GHz band disabled, skipping capability population");
@@ -974,16 +985,6 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 		if (status == QDF_STATUS_E_FAILURE) {
 			hdd_alert("could not set VHT MAX MPDU LENGTH");
 		}
-	}
-
-	/* Get the current supported chan width */
-	status = sme_cfg_get_int(hdd_ctx->hHal,
-				WNI_CFG_VHT_SUPPORTED_CHAN_WIDTH_SET,
-				&value);
-
-	if (status != QDF_STATUS_SUCCESS) {
-		hdd_err("could not get MPDU LENGTH");
-		value = 0;
 	}
 
 	sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_VHT_BASIC_MCS_SET, &temp);
@@ -1230,12 +1231,44 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 		band_5g->vht_cap.cap |= IEEE80211_VHT_CAP_MAX_MPDU_LENGTH_3895;
 
 
-	if (cfg->supp_chan_width & (1 << eHT_CHANNEL_WIDTH_80P80MHZ))
+	if (cfg->supp_chan_width & (1 << eHT_CHANNEL_WIDTH_80P80MHZ)) {
+		status = sme_cfg_set_int(hdd_ctx->hHal,
+				WNI_CFG_VHT_SUPPORTED_CHAN_WIDTH_SET,
+				VHT_CAP_160_AND_80P80_SUPP);
+		if (status == QDF_STATUS_E_FAILURE)
+			hdd_alert("could not set the VHT CAP 160");
 		band_5g->vht_cap.cap |=
 			IEEE80211_VHT_CAP_SUPP_CHAN_WIDTH_160_80PLUS80MHZ;
-	else if (cfg->supp_chan_width & (1 << eHT_CHANNEL_WIDTH_160MHZ))
+		ch_width = eHT_CHANNEL_WIDTH_80P80MHZ;
+	} else if (cfg->supp_chan_width & (1 << eHT_CHANNEL_WIDTH_160MHZ)) {
+		status = sme_cfg_set_int(hdd_ctx->hHal,
+				WNI_CFG_VHT_SUPPORTED_CHAN_WIDTH_SET,
+				VHT_CAP_160_SUPP);
+		if (status == QDF_STATUS_E_FAILURE)
+			hdd_alert("could not set the VHT CAP 160");
 		band_5g->vht_cap.cap |=
 			IEEE80211_VHT_CAP_SUPP_CHAN_WIDTH_160MHZ;
+		ch_width = eHT_CHANNEL_WIDTH_160MHZ;
+	}
+	pconfig->vhtChannelWidth = QDF_MIN(pconfig->vhtChannelWidth,
+			ch_width);
+	/* Get the current supported chan width */
+	status = sme_cfg_get_int(hdd_ctx->hHal,
+				WNI_CFG_VHT_SUPPORTED_CHAN_WIDTH_SET,
+				&value);
+	if (status != QDF_STATUS_SUCCESS) {
+		hdd_err("could not get CH BW");
+		value = 0;
+	}
+	/* set the Guard interval 80MHz */
+	if (value) {
+		status = sme_cfg_set_int(hdd_ctx->hHal,
+				WNI_CFG_VHT_SHORT_GI_160_AND_80_PLUS_80MHZ,
+				cfg->vht_short_gi_160);
+
+		if (status == QDF_STATUS_E_FAILURE)
+			hdd_alert("failed to set SHORT GI 80MHZ");
+	}
 
 	if (cfg->vht_rx_ldpc & WMI_VHT_CAP_RX_LDPC)
 		band_5g->vht_cap.cap |= IEEE80211_VHT_CAP_RXLDPC;

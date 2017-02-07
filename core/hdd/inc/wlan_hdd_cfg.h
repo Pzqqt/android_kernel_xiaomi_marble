@@ -3698,7 +3698,7 @@ typedef enum {
 #define CFG_VHT_CHANNEL_WIDTH                "gVhtChannelWidth"
 #define CFG_VHT_CHANNEL_WIDTH_MIN            (0)
 #define CFG_VHT_CHANNEL_WIDTH_MAX            (4)
-#define CFG_VHT_CHANNEL_WIDTH_DEFAULT        (3)
+#define CFG_VHT_CHANNEL_WIDTH_DEFAULT        (2)
 
 /*
 * <ini>
