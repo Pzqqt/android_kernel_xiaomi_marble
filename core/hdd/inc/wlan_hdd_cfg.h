@@ -5244,6 +5244,84 @@ enum dot11p_mode {
 #define CFG_MAX_SCHED_SCAN_PLAN_ITRNS_MAX     (100)
 #define CFG_MAX_SCHED_SCAN_PLAN_ITRNS_DEFAULT (10)
 
+/**
+ * enum hdd_wext_control - knob for wireless extensions
+ * @hdd_wext_disabled - interface is completely disabled. An access
+ *      control error log will be generated for each attempted use.
+ * @hdd_wext_deprecated - interface is available but should not be
+ *      used. An access control warning log will be generated for each
+ *      use.
+ * @hdd_wext_enabled - interface is available without restriction. No
+ *      access control logs will be generated.
+ *
+ * enum hdd_wext_control is used to enable coarse grained control on
+ * wireless extensions ioctls. This control is used by configuration
+ * items standard_wext_control and private_wext_control.
+ *
+ */
+enum hdd_wext_control {
+	hdd_wext_disabled = 0,
+	hdd_wext_deprecated = 1,
+	hdd_wext_enabled = 2,
+};
+
+/*
+ * <ini>
+ * standard_wext_control - Standard wireless extensions control
+ * @Min: 0
+ * @Max: 2
+ * @Default: 0
+ *
+ * Values are per enum hdd_wext_control.
+ *
+ * This ini is used to control access to standard wireless extensions
+ * ioctls SIOCSIWCOMMIT (0x8B00) thru SIOCSIWPMKSA (0x8B36). The
+ * functionality originally provided by these ioctls has been
+ * completely superceeded by the functionality of cfg80211, and hence
+ * by default support for these ioctls is disabled.
+ *
+ * Related: None
+ *
+ * Supported Feature: All
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_STANDARD_WEXT_CONTROL_NAME          "standard_wext_control"
+#define CFG_STANDARD_WEXT_CONTROL_MIN           (hdd_wext_disabled)
+#define CFG_STANDARD_WEXT_CONTROL_MAX           (hdd_wext_enabled)
+#define CFG_STANDARD_WEXT_CONTROL_DEFAULT       (hdd_wext_disabled)
+
+/*
+ * <ini>
+ * private_wext_control - Private wireless extensions control
+ * @Min: 0
+ * @Max: 2
+ * @Default: 1
+ *
+ * Values are per enum hdd_wext_control.
+ *
+ * This ini is used to control access to private wireless extensions
+ * ioctls SIOCIWFIRSTPRIV (0x8BE0) thru SIOCIWLASTPRIV (0x8BFF). The
+ * functionality provided by some of these ioctls has been superceeded
+ * by cfg80211 (either standard commands or vendor commands), but many
+ * of the private ioctls do not have a cfg80211-based equivalent, so
+ * by default support for these ioctls is deprecated.
+ *
+ * Related: None
+ *
+ * Supported Feature: All
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_PRIVATE_WEXT_CONTROL_NAME           "private_wext_control"
+#define CFG_PRIVATE_WEXT_CONTROL_MIN            (hdd_wext_disabled)
+#define CFG_PRIVATE_WEXT_CONTROL_MAX            (hdd_wext_enabled)
+#define CFG_PRIVATE_WEXT_CONTROL_DEFAULT        (hdd_wext_deprecated)
+
 /*
  * <ini>
  * gPowerUsage - Preferred Power Usage
@@ -6473,6 +6551,8 @@ struct hdd_config {
 	uint16_t wow_pulse_interval_high;
 	uint16_t wow_pulse_interval_low;
 #endif
+	enum hdd_wext_control standard_wext_control;
+	enum hdd_wext_control private_wext_control;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

@@ -1128,6 +1128,35 @@ int hdd_priv_get_data(struct iw_point *p_priv_data, union iwreq_data *wrqu)
 	return 0;
 }
 
+static int hdd_check_wext_control(enum hdd_wext_control wext_control,
+				  struct iw_request_info *info)
+{
+	switch (wext_control) {
+	default:
+	case hdd_wext_disabled:
+		hdd_err("Rejecting disabled ioctl %x", info->cmd);
+		return -ENOTSUPP;
+	case hdd_wext_deprecated:
+		hdd_warn("Using deprecated ioctl %x", info->cmd);
+		return 0;
+	case hdd_wext_enabled:
+		return 0;
+	}
+}
+
+int hdd_check_standard_wext_control(struct hdd_context_s *hdd_ctx,
+				    struct iw_request_info *info)
+{
+	return hdd_check_wext_control(hdd_ctx->config->standard_wext_control,
+				      info);
+}
+
+int hdd_check_private_wext_control(struct hdd_context_s *hdd_ctx,
+				   struct iw_request_info *info)
+{
+	return hdd_check_wext_control(hdd_ctx->config->private_wext_control,
+				      info);
+}
 
 /**
  * hdd_wlan_get_stats() - Get txrx stats in SAP mode
@@ -2456,6 +2485,10 @@ static int __iw_set_commit(struct net_device *dev, struct iw_request_info *info,
 	if (0 != ret)
 		return ret;
 
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 	/* Do nothing for now */
 	return 0;
 }
@@ -2502,6 +2535,10 @@ static int __iw_get_name(struct net_device *dev,
 	adapter  = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 
@@ -2558,6 +2595,10 @@ static int __iw_set_mode(struct net_device *dev,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 
@@ -2669,6 +2710,10 @@ __iw_get_mode(struct net_device *dev, struct iw_request_info *info,
 	if (0 != ret)
 		return ret;
 
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 	pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 
 	switch (pWextState->roamProfile.BSSType) {
@@ -2740,6 +2785,10 @@ static int __iw_set_freq(struct net_device *dev, struct iw_request_info *info,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 
@@ -2867,6 +2916,10 @@ static int __iw_get_freq(struct net_device *dev, struct iw_request_info *info,
 	if (0 != ret)
 		return ret;
 
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 	pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
 
@@ -2948,6 +3001,10 @@ static int __iw_get_tx_power(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 	if (eConnectionState_Associated != pHddStaCtx->conn_info.connState) {
 		wrqu->txpower.value = 0;
 		return 0;
@@ -3002,6 +3059,10 @@ static int __iw_set_tx_power(struct net_device *dev,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 
@@ -3062,6 +3123,10 @@ static int __iw_get_bitrate(struct net_device *dev,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 
@@ -3157,6 +3222,10 @@ static int __iw_set_bitrate(struct net_device *dev,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 
@@ -3257,6 +3326,10 @@ static int __iw_set_genie(struct net_device *dev,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 
@@ -3431,6 +3504,10 @@ static int __iw_get_genie(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 	hdd_notice("getGEN_IE ioctl");
 
 	pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
@@ -3519,6 +3596,10 @@ static int __iw_get_encode(struct net_device *dev,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 
@@ -3613,6 +3694,10 @@ static int __iw_get_rts_threshold(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 	if (QDF_STATUS_SUCCESS !=
 	    sme_cfg_get_int(hal, WNI_CFG_RTS_THRESHOLD, &threshold)) {
 		hdd_warn("failed to get ini parameter, WNI_CFG_RTS_THRESHOLD");
@@ -3649,6 +3734,10 @@ static int __iw_set_rts_threshold(struct net_device *dev,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 
@@ -3738,6 +3827,10 @@ static int __iw_get_frag_threshold(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 	if (sme_cfg_get_int(hal, WNI_CFG_FRAGMENTATION_THRESHOLD, &threshold)
 	    != QDF_STATUS_SUCCESS) {
 		hdd_warn("failed to get ini parameter, WNI_CFG_FRAGMENTATION_THRESHOLD");
@@ -3796,6 +3889,10 @@ static int __iw_set_frag_threshold(struct net_device *dev,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 
@@ -3863,6 +3960,10 @@ static int __iw_get_power_mode(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 	return -EOPNOTSUPP;
 }
 
@@ -3910,6 +4011,10 @@ static int __iw_set_power_mode(struct net_device *dev,
 	adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 
@@ -3969,6 +4074,10 @@ static int __iw_get_range(struct net_device *dev, struct iw_request_info *info,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret =  wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 
@@ -4384,18 +4493,23 @@ static int __iw_get_linkspeed(struct net_device *dev,
 	int len = sizeof(uint32_t) + 1;
 	uint32_t link_speed = 0;
 	hdd_context_t *hdd_ctx;
-	int rc, valid;
+	int ret;
+	int rc;
 
 	ENTER_DEV(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
-	valid = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != valid)
-		return valid;
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
 
-	rc = wlan_hdd_get_link_speed(pAdapter, &link_speed);
-	if (0 != rc) {
-		return rc;
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
+	ret = wlan_hdd_get_link_speed(pAdapter, &link_speed);
+	if (0 != ret) {
+		return ret;
 	}
 
 	wrqu->data.length = len;
@@ -4476,6 +4590,10 @@ static int __iw_set_nick(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 	return 0;
 }
 
@@ -4523,6 +4641,10 @@ static int __iw_get_nick(struct net_device *dev,
 	adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 
@@ -4579,6 +4701,10 @@ static int __iw_set_encode(struct net_device *dev, struct iw_request_info *info,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 
@@ -4762,6 +4888,10 @@ static int __iw_get_encodeext(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 	keyId = pRoamProfile->Keys.defaultIndex;
 
 	if (keyId < 0 || keyId >= MAX_WEP_KEYS) {
@@ -4862,6 +4992,10 @@ static int __iw_set_encodeext(struct net_device *dev,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 
@@ -5070,6 +5204,10 @@ static int __iw_set_retry(struct net_device *dev, struct iw_request_info *info,
 	if (0 != ret)
 		return ret;
 
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 	if (wrqu->retry.value < WNI_CFG_LONG_RETRY_LIMIT_STAMIN ||
 	    wrqu->retry.value > WNI_CFG_LONG_RETRY_LIMIT_STAMAX) {
 
@@ -5153,6 +5291,10 @@ static int __iw_get_retry(struct net_device *dev, struct iw_request_info *info,
 	if (0 != ret)
 		return ret;
 
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 	if ((wrqu->retry.flags & IW_RETRY_LONG)) {
 		wrqu->retry.flags = IW_RETRY_LIMIT | IW_RETRY_LONG;
 
@@ -5229,6 +5371,10 @@ static int __iw_set_mlme(struct net_device *dev,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 
@@ -5716,13 +5862,17 @@ static int __iw_setint_getnone(struct net_device *dev,
 
 	ENTER_DEV(dev);
 
-	INIT_COMPLETION(pWextState->completion_var);
-	memset(&smeConfig, 0x00, sizeof(smeConfig));
-
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
 		return ret;
+
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
+	INIT_COMPLETION(pWextState->completion_var);
+	memset(&smeConfig, 0x00, sizeof(smeConfig));
 
 	switch (sub_cmd) {
 	case WE_SET_11D_STATE:
@@ -6843,6 +6993,10 @@ static int __iw_setnone_get_threeint(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 	hdd_info("param = %d", value[0]);
 	switch (value[0]) {
 	case WE_GET_TSF:
@@ -6908,6 +7062,10 @@ static int __iw_setchar_getnone(struct net_device *dev,
 	}
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 
@@ -7036,6 +7194,10 @@ static int __iw_setnone_getint(struct net_device *dev,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 
@@ -7584,6 +7746,10 @@ static int __iw_set_three_ints_getnone(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 	switch (sub_cmd) {
 
 	case WE_SET_WLAN_DBG:
@@ -7698,6 +7864,10 @@ static int __iw_get_char_setnone(struct net_device *dev,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 
@@ -8246,6 +8416,10 @@ static int __iw_setnone_getnone(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 #ifdef CONFIG_COMPAT
 	/* this ioctl is a special case where a sub-ioctl is used and both
 	 * the number of get and set args is 0.  in this specific case the
@@ -8553,10 +8727,9 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
-	if (extra == NULL) {
-		hdd_err("NULL extra buffer pointer");
-		return -EINVAL;
-	}
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
 
 	sub_cmd = wrqu->data.flags;
 	num_args = wrqu->data.length;
@@ -8907,6 +9080,10 @@ static int __iw_add_tspec(struct net_device *dev, struct iw_request_info *info,
 	if (0 != ret)
 		return ret;
 
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 	/* make sure the application is sufficiently priviledged */
 	/* note that the kernel will do this for "set" ioctls, but since */
 	/* this ioctl wants to return status to user space it must be */
@@ -9078,6 +9255,10 @@ static int __iw_del_tspec(struct net_device *dev, struct iw_request_info *info,
 	if (0 != ret)
 		return ret;
 
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 	/* make sure the application is sufficiently priviledged */
 	/* note that the kernel will do this for "set" ioctls, but since */
 	/* this ioctl wants to return status to user space it must be */
@@ -9142,6 +9323,10 @@ static int __iw_get_tspec(struct net_device *dev, struct iw_request_info *info,
 	if (0 != ret)
 		return ret;
 
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 	/* although we are defined to be a "get" ioctl, the params we require */
 	/* will fit in the iwreq_data, therefore unlike iw_add_tspec() there */
 	/* is no need to copy the params from user space */
@@ -9197,6 +9382,10 @@ static int __iw_set_fties(struct net_device *dev, struct iw_request_info *info,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 
@@ -9288,6 +9477,10 @@ static int __iw_set_host_offload(struct net_device *dev,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 
@@ -9395,6 +9588,10 @@ static int __iw_set_keepalive_params(struct net_device *dev,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 
@@ -9631,6 +9828,10 @@ static int __iw_set_packet_filter_params(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 	if (hdd_priv_get_data(&priv_data, wrqu)) {
 		hdd_err("failed to get priv data");
 		return -EINVAL;
@@ -9701,6 +9902,10 @@ static int __iw_get_statistics(struct net_device *dev,
 	ENTER_DEV(dev);
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 
@@ -9946,6 +10151,10 @@ static int __iw_set_pno(struct net_device *dev,
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret)
+		return ret;
+
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
+	if (0 != ret)
 		return ret;
 
 	hdd_notice("PNO data len %d data %s", wrqu->data.length, extra);
@@ -10287,6 +10496,9 @@ static int __iw_set_band_config(struct net_device *dev,
 				struct iw_request_info *info,
 				union iwreq_data *wrqu, char *extra)
 {
+	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	hdd_context_t *hdd_ctx;
+	int ret;
 	int *value = (int *)extra;
 
 	ENTER_DEV(dev);
@@ -10295,6 +10507,11 @@ static int __iw_set_band_config(struct net_device *dev,
 		hdd_err("permission check failed");
 		return -EPERM;
 	}
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
 
 	return hdd_set_band(dev, value[0]);
 }
@@ -10373,6 +10590,10 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 	ENTER_DEV(dev);
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 

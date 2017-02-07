@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -481,8 +481,9 @@ static int __iw_set_dot11p_channel_sched(struct net_device *dev,
 					 struct iw_request_info *info,
 					 union iwreq_data *wrqu, char *extra)
 {
-	int rc = 0;
+	int rc;
 	struct dot11p_channel_sched *sched;
+	hdd_context_t *hdd_ctx;
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct sir_ocb_config *config = NULL;
 	uint8_t *mac_addr;
@@ -491,8 +492,14 @@ static int __iw_set_dot11p_channel_sched(struct net_device *dev,
 
 	ENTER_DEV(dev);
 
-	if (wlan_hdd_validate_context(WLAN_HDD_GET_CTX(adapter)))
-		return -EINVAL;
+	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
+	rc = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != rc)
+		return rc;
+
+	rc = hdd_check_private_wext_control(hdd_ctx, info);
+	if (0 != rc)
+		return rc;
 
 	if (adapter->device_mode != QDF_OCB_MODE) {
 		hdd_err("Device not in OCB mode!");

@@ -5514,6 +5514,10 @@ static int __iw_set_essid(struct net_device *dev,
 	if (ret)
 		return ret;
 
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 	if (pAdapter->device_mode != QDF_STA_MODE &&
 	    pAdapter->device_mode != QDF_IBSS_MODE &&
 	    pAdapter->device_mode != QDF_P2P_CLIENT_MODE) {
@@ -5747,6 +5751,10 @@ static int __iw_get_essid(struct net_device *dev,
 	if (ret)
 		return ret;
 
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 	if ((pHddStaCtx->conn_info.connState == eConnectionState_Associated &&
 	     wextBuf->roamProfile.SSIDs.SSIDList->SSID.length > 0) ||
 	    ((pHddStaCtx->conn_info.connState == eConnectionState_IbssConnected
@@ -5815,6 +5823,10 @@ static int __iw_set_auth(struct net_device *dev, struct iw_request_info *info,
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret)
+		return ret;
+
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
+	if (0 != ret)
 		return ret;
 
 	switch (wrqu->param.flags & IW_AUTH_INDEX) {
@@ -6050,6 +6062,10 @@ static int __iw_get_auth(struct net_device *dev, struct iw_request_info *info,
 	if (ret)
 		return ret;
 
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 	switch (pRoamProfile->negotiatedAuthType) {
 	case eCSR_AUTH_TYPE_WPA_NONE:
 		wrqu->param.flags = IW_AUTH_WPA_VERSION;
@@ -6209,6 +6225,10 @@ static int __iw_set_ap_address(struct net_device *dev,
 	if (ret)
 		return ret;
 
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 	pMacAddress = (uint8_t *) wrqu->ap_addr.sa_data;
 	hdd_info(" " MAC_ADDRESS_STR, MAC_ADDR_ARRAY(pMacAddress));
 	qdf_mem_copy(pHddStaCtx->conn_info.bssId.bytes, pMacAddress,
@@ -6265,6 +6285,10 @@ static int __iw_get_ap_address(struct net_device *dev,
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret)
+		return ret;
+
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
+	if (0 != ret)
 		return ret;
 
 	if (pHddStaCtx->conn_info.connState == eConnectionState_Associated ||

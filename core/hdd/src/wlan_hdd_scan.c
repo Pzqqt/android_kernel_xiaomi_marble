@@ -757,6 +757,10 @@ static int __iw_set_scan(struct net_device *dev, struct iw_request_info *info,
 	if (0 != ret)
 		return ret;
 
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 	/* Block All Scan during DFS operation and send null scan result */
 	con_sap_adapter = hdd_get_con_sap_adapter(pAdapter, true);
 	if (con_sap_adapter) {
@@ -936,6 +940,10 @@ static int __iw_get_scan(struct net_device *dev,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 

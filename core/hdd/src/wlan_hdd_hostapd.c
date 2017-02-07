@@ -2365,22 +2365,26 @@ static __iw_softap_set_ini_cfg(struct net_device *dev,
 			       struct iw_request_info *info,
 			       union iwreq_data *wrqu, char *extra)
 {
-	QDF_STATUS vstatus;
-	int ret = 0;            /* success */
-	hdd_adapter_t *pAdapter = (netdev_priv(dev));
-	hdd_context_t *pHddCtx;
+	QDF_STATUS status;
+	int ret;
+	hdd_adapter_t *adapter = (netdev_priv(dev));
+	hdd_context_t *hdd_ctx;
 
 	ENTER_DEV(dev);
 
-	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
-	ret = wlan_hdd_validate_context(pHddCtx);
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret)
+		return ret;
+
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
+	if (0 != ret)
 		return ret;
 
 	hdd_notice("Received data %s", extra);
 
-	vstatus = hdd_execute_global_config_command(pHddCtx, extra);
-	if (QDF_STATUS_SUCCESS != vstatus) {
+	status = hdd_execute_global_config_command(hdd_ctx, extra);
+	if (QDF_STATUS_SUCCESS != status) {
 		ret = -EINVAL;
 	}
 
@@ -2427,19 +2431,23 @@ static __iw_softap_get_ini_cfg(struct net_device *dev,
 			       struct iw_request_info *info,
 			       union iwreq_data *wrqu, char *extra)
 {
-	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_context_t *pHddCtx;
-	int ret = 0;
+	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	hdd_context_t *hdd_ctx;
+	int ret;
 
 	ENTER_DEV(dev);
 
-	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
-	ret = wlan_hdd_validate_context(pHddCtx);
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret != 0)
 		return ret;
 
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 	hdd_notice("Printing CLD global INI Config");
-	hdd_cfg_get_global_config(pHddCtx, extra, QCSAP_IOCTL_MAX_STR_LEN);
+	hdd_cfg_get_global_config(hdd_ctx, extra, QCSAP_IOCTL_MAX_STR_LEN);
 	wrqu->data.length = strlen(extra) + 1;
 
 	return 0;
@@ -2483,7 +2491,11 @@ static int __iw_softap_set_two_ints_getnone(struct net_device *dev,
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret != 0)
-		goto out;
+		return ret;
+
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
 
 	switch (sub_cmd) {
 #ifdef WLAN_DEBUG
@@ -2530,7 +2542,6 @@ static int __iw_softap_set_two_ints_getnone(struct net_device *dev,
 		break;
 	}
 
-out:
 	return ret;
 }
 
@@ -2634,6 +2645,10 @@ static __iw_softap_setparam(struct net_device *dev,
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
 		return -EINVAL;
+
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
 
 	hHal = WLAN_HDD_GET_HAL_CTX(pHostapdAdapter);
 	if (!hHal) {
@@ -3269,6 +3284,10 @@ static int __iw_softap_get_three(struct net_device *dev,
 	if (ret != 0)
 		return ret;
 
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 	switch (sub_cmd) {
 	case QCSAP_GET_TSF:
 		ret = hdd_indicate_tsf(adapter, value, 3);
@@ -3338,6 +3357,10 @@ static __iw_softap_getparam(struct net_device *dev,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 
@@ -3598,6 +3621,10 @@ int __iw_softap_modify_acl(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 	for (i = 0; i < QDF_MAC_ADDR_SIZE; i++)
 		pPeerStaMac[i] = *(value + i);
 
@@ -3650,6 +3677,10 @@ static __iw_softap_getchannel(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 	*value = 0;
 	if (test_bit(SOFTAP_BSS_STARTED, &pHostapdAdapter->event_flags))
 		*value = (WLAN_HDD_GET_AP_CTX_PTR(
@@ -3696,7 +3727,11 @@ static __iw_softap_set_max_tx_power(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
-	/* Assign correct slef MAC address */
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
+	/* Assign correct self MAC address */
 	qdf_copy_macaddr(&bssid, &pHostapdAdapter->macAddressCurrent);
 	qdf_copy_macaddr(&selfMac, &pHostapdAdapter->macAddressCurrent);
 
@@ -3729,21 +3764,23 @@ static __iw_softap_set_pktlog(struct net_device *dev,
 				    struct iw_request_info *info,
 				    union iwreq_data *wrqu, char *extra)
 {
-	hdd_adapter_t *pHostapdAdapter = netdev_priv(dev);
+	hdd_adapter_t *adapter = netdev_priv(dev);
 	hdd_context_t *hdd_ctx;
 	int *value = (int *)extra;
+	int ret;
 
 	ENTER_DEV(dev);
 
-	if (NULL == value)
-		return -ENOMEM;
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
 
 	if (wrqu->data.length < 1 || wrqu->data.length > 2) {
 		hdd_err("pktlog: either 1 or 2 parameters are required");
 		return -EINVAL;
 	}
 
-	hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
 	return hdd_process_pktlog_command(hdd_ctx, value[0], value[1]);
 }
 
@@ -3782,8 +3819,9 @@ static __iw_softap_set_tx_power(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
-	if (NULL == value)
-		return -ENOMEM;
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
 
 	qdf_copy_macaddr(&bssid, &pHostapdAdapter->macAddressCurrent);
 
@@ -3848,6 +3886,10 @@ static __iw_softap_getassoc_stamacaddr(struct net_device *dev,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 
@@ -3942,6 +3984,10 @@ static __iw_softap_disassoc_sta(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 	/* iwpriv tool or framework calls this ioctl with
 	 * data passed in extra (less than 16 octets);
 	 */
@@ -3997,6 +4043,10 @@ static int __iw_get_char_setnone(struct net_device *dev,
 	if (ret != 0)
 		return ret;
 
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 	switch (sub_cmd) {
 	case QCSAP_GET_STATS:
 		hdd_wlan_get_stats(adapter, &(wrqu->data.length),
@@ -4031,6 +4081,7 @@ static int wlan_hdd_set_force_acs_ch_range(struct net_device *dev,
 {
 	hdd_adapter_t *adapter = (netdev_priv(dev));
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	int ret;
 	int *value = (int *)extra;
 
 	ENTER_DEV(dev);
@@ -4039,6 +4090,14 @@ static int wlan_hdd_set_force_acs_ch_range(struct net_device *dev,
 		hdd_err("permission check failed");
 		return -EPERM;
 	}
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
 
 	if (wlan_hdd_validate_operation_channel(adapter, value[0]) !=
 					 QDF_STATUS_SUCCESS ||
@@ -4084,6 +4143,10 @@ static int __iw_get_channel_list(struct net_device *dev,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(hostapd_adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 
@@ -4169,6 +4232,10 @@ int __iw_get_genie(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 	/*
 	 * Actually retrieve the RSN IE from CSR.
 	 * (We previously sent it down in the CSR Roam Profile.)
@@ -4223,6 +4290,10 @@ int __iw_get_wpspbc_probe_req_ies(struct net_device *dev,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 
@@ -4288,6 +4359,10 @@ int __iw_set_auth_hostap(struct net_device *dev, struct iw_request_info *info,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 
@@ -4377,6 +4452,10 @@ static int __iw_set_ap_encodeext(struct net_device *dev,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 
@@ -4582,6 +4661,10 @@ static int __iw_get_ap_freq(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 	pHostapdState = WLAN_HDD_GET_HOSTAP_STATE_PTR(pHostapdAdapter);
 	hHal = WLAN_HDD_GET_HAL_CTX(pHostapdAdapter);
 
@@ -4665,6 +4748,10 @@ static int __iw_get_mode(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 	wrqu->mode = IW_MODE_MASTER;
 
 	return ret;
@@ -4706,6 +4793,10 @@ __iw_softap_stopbss(struct net_device *dev,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 
@@ -4763,6 +4854,10 @@ __iw_softap_version(struct net_device *dev,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 
@@ -4851,6 +4946,10 @@ static int __iw_softap_get_sta_info(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
 	status =
 		hdd_softap_get_sta_info(pHostapdAdapter, extra,
 					WE_SAP_MAX_STA_INFO);
@@ -4902,6 +5001,10 @@ static int __iw_set_ap_genie(struct net_device *dev,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_standard_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
 
@@ -4976,14 +5079,18 @@ int __iw_get_softap_linkspeed(struct net_device *dev,
 	struct qdf_mac_addr macAddress;
 	char pmacAddress[MAC_ADDRESS_STR_LEN + 1];
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	int rc, valid, i;
+	int rc, ret, i;
 
 	ENTER_DEV(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
-	valid = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != valid)
-		return valid;
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
 
 	hdd_notice("wrqu->data.length(%d)", wrqu->data.length);
 

@@ -386,4 +386,42 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 
 int wlan_hdd_get_temperature(hdd_adapter_t *pAdapter, int *temperature);
 int wlan_hdd_get_link_speed(hdd_adapter_t *sta_adapter, uint32_t *link_speed);
+
+struct iw_request_info;
+/**
+ * hdd_check_standard_wext_control() - Check to see if standard
+ *      wireless extensions ioctls are allowed
+ * @hdd_ctx: Global HDD context
+ * @info: Wireless extensions ioctl information passed by the kernel
+ *
+ * This function will examine the "standard_wext_control" configuration
+ * item to determine whether or not standard wireless extensions ioctls
+ * are allowed.
+ *
+ * Return: 0 if the ioctl is allowed to be processed, -ENOTSUPP if the
+ * ioctls have been disabled. Note that in addition to returning
+ * status, this function will log a message if the ioctls are disabled
+ * or deprecated.
+ */
+int hdd_check_standard_wext_control(struct hdd_context_s *hdd_ctx,
+				    struct iw_request_info *info);
+
+/**
+ * hdd_check_private_wext_control() - Check to see if private
+ *      wireless extensions ioctls are allowed
+ * @hdd_ctx: Global HDD context
+ * @info: Wireless extensions ioctl information passed by the kernel
+ *
+ * This function will examine the "private_wext_control" configuration
+ * item to determine whether or not private wireless extensions ioctls
+ * are allowed.
+ *
+ * Return: 0 if the ioctl is allowed to be processed, -ENOTSUPP if the
+ * ioctls have been disabled. Note that in addition to returning
+ * status, this function will log a message if the ioctls are disabled
+ * or deprecated.
+ */
+int hdd_check_private_wext_control(struct hdd_context_s *hdd_ctx,
+				   struct iw_request_info *info);
+
 #endif /* __WEXT_IW_H__ */
