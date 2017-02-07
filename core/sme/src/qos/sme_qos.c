@@ -4410,6 +4410,9 @@ QDF_STATUS sme_qos_process_reassoc_req_ev(tpAniSirGlobal pMac, uint8_t sessionId
 	sme_QosSessionInfo *pSession;
 	sme_QosACInfo *pACInfo;
 	sme_QosEdcaAcType ac;
+	sme_QosFlowInfoEntry *flow_info = NULL;
+	tListElem *entry = NULL;
+
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: invoked on session %d",
 		  __func__, __LINE__, sessionId);
@@ -4446,6 +4449,34 @@ QDF_STATUS sme_qos_process_reassoc_req_ev(tpAniSirGlobal pMac, uint8_t sessionId
 					 sessionId);
 			return QDF_STATUS_E_FAILURE;
 		}
+
+		/*
+		 * Now change reason and HO renewal of
+		 * all the flow in this session only
+		 */
+		entry = csr_ll_peek_head(&sme_qos_cb.flow_list, false);
+		if (!entry) {
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_WARN,
+				FL("Flow List empty, nothing to update"));
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		do {
+			flow_info = GET_BASE_ADDR(entry, sme_QosFlowInfoEntry,
+						  link);
+			if (sessionId == flow_info->sessionId) {
+				QDF_TRACE(QDF_MODULE_ID_SME,
+					  QDF_TRACE_LEVEL_INFO_HIGH,
+					  FL("Changing FlowID %d reason to"
+					     " SETUP and HO renewal to true"),
+					  flow_info->QosFlowID);
+				flow_info->reason = SME_QOS_REASON_SETUP;
+				flow_info->hoRenewal = true;
+			}
+			entry = csr_ll_next(&sme_qos_cb.flow_list, entry,
+					    false);
+		} while (entry);
+
 		/* buffer the existing flows to be renewed after handoff is done */
 		sme_qos_buffer_existing_flows(pMac, sessionId);
 		/* clean up the control block partially for handoff */
