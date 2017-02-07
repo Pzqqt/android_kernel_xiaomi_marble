@@ -969,6 +969,8 @@ typedef struct sAniSirGlobal {
 	bool sta_prefer_80MHz_over_160MHz;
 	struct wlan_objmgr_psoc *psoc;
 	enum  country_src reg_hint_src;
+	bool snr_monitor_enabled;
+	void (*chan_info_cb)(struct scan_chan_info *chan_info);
 } tAniSirGlobal;
 
 typedef enum {

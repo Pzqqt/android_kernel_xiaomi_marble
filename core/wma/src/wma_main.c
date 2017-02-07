@@ -2338,6 +2338,10 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *cds_context,
 				WMI_VDEV_ENCRYPT_DECRYPT_DATA_RESP_EVENTID,
 				wma_encrypt_decrypt_msg_handler,
 				WMA_RX_SERIALIZER_CTX);
+	wmi_unified_register_event_handler(wma_handle->wmi_handle,
+					   WMI_CHAN_INFO_EVENTID,
+					   wma_chan_info_event_handler,
+					   WMA_RX_SERIALIZER_CTX);
 	wma_ndp_register_all_event_handlers(wma_handle);
 	wma_target_if_open(wma_handle);
 	target_if_open(wma_get_psoc_from_scn_handle);

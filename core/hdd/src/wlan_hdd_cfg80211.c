@@ -16505,6 +16505,145 @@ void wlan_hdd_clear_link_layer_stats(hdd_adapter_t *adapter)
 	return;
 }
 
+#define CNT_DIFF(cur, prev) \
+	((cur >= prev) ? (cur - prev) : (cur + (MAX_COUNT - (prev) + 1)))
+#define MAX_COUNT 0xffffffff
+static void hdd_update_chan_info(hdd_context_t *hdd_ctx,
+			struct scan_chan_info *chan,
+			struct scan_chan_info *info, uint32_t cmd_flag)
+{
+	if ((info->cmd_flag != WMI_CHAN_InFO_START_RESP) &&
+	   (info->cmd_flag != WMI_CHAN_InFO_END_RESP))
+		hdd_err("cmd flag is invalid: %d", info->cmd_flag);
+
+	mutex_lock(&hdd_ctx->chan_info_lock);
+
+	if (info->cmd_flag == WMI_CHAN_InFO_START_RESP)
+		qdf_mem_zero(chan, sizeof(*chan));
+
+	chan->freq = info->freq;
+	chan->noise_floor = info->noise_floor;
+	chan->clock_freq = info->clock_freq;
+	chan->cmd_flag = info->cmd_flag;
+	chan->cycle_count = CNT_DIFF(info->cycle_count, chan->cycle_count);
+
+	chan->rx_clear_count =
+			CNT_DIFF(info->rx_clear_count, chan->rx_clear_count);
+
+	chan->tx_frame_count =
+			CNT_DIFF(info->tx_frame_count, chan->tx_frame_count);
+
+	mutex_unlock(&hdd_ctx->chan_info_lock);
+
+}
+#undef CNT_DIFF
+#undef MAX_COUNT
+
+/**
+ * wlan_hdd_chan_info_cb() - channel info callback
+ * @chan_info: struct scan_chan_info
+ *
+ * Store channel info into HDD context
+ *
+ * Return: None.
+ */
+static void wlan_hdd_chan_info_cb(struct scan_chan_info *info)
+{
+	hdd_context_t *hdd_ctx;
+	struct scan_chan_info *chan;
+	uint8_t idx;
+
+	ENTER();
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (wlan_hdd_validate_context(hdd_ctx) != 0) {
+		hdd_err("hdd_ctx is invalid");
+		return;
+	}
+
+	if (!hdd_ctx->chan_info) {
+		hdd_err("chan_info is NULL");
+		return;
+	}
+
+	chan = hdd_ctx->chan_info;
+	for (idx = 0; idx < SIR_MAX_NUM_CHANNELS; idx++) {
+		if (chan[idx].freq == info->freq) {
+			hdd_update_chan_info(hdd_ctx, &chan[idx], info,
+				info->cmd_flag);
+			hdd_info("cmd:%d freq:%u nf:%d cc:%u rcc:%u clk:%u cmd:%d tfc:%d index:%d",
+				chan[idx].cmd_flag, chan[idx].freq,
+				chan[idx].noise_floor,
+				chan[idx].cycle_count, chan[idx].rx_clear_count,
+				chan[idx].clock_freq, chan[idx].cmd_flag,
+				chan[idx].tx_frame_count, idx);
+			if (chan[idx].freq == 0)
+				break;
+
+		}
+	}
+
+	EXIT();
+}
+
+/**
+ * wlan_hdd_init_chan_info() - init chan info in hdd context
+ * @hdd_ctx: HDD context pointer
+ *
+ * Return: none
+ */
+void wlan_hdd_init_chan_info(hdd_context_t *hdd_ctx)
+{
+	uint8_t num_2g, num_5g, index = 0;
+
+	if (!hdd_ctx->config->fEnableSNRMonitoring) {
+		hdd_info("SNR monitoring is disabled");
+		return;
+	}
+
+	hdd_ctx->chan_info =
+		qdf_mem_malloc(sizeof(struct scan_chan_info)
+					* QDF_MAX_NUM_CHAN);
+	if (hdd_ctx->chan_info == NULL) {
+		hdd_err("Failed to malloc for chan info");
+		return;
+	}
+	mutex_init(&hdd_ctx->chan_info_lock);
+
+	num_2g = QDF_ARRAY_SIZE(hdd_channels_2_4_ghz);
+	for (; index < num_2g; index++) {
+		hdd_ctx->chan_info[index].freq =
+			hdd_channels_2_4_ghz[index].center_freq;
+	}
+
+	num_5g = QDF_ARRAY_SIZE(hdd_channels_5_ghz);
+	for (; (index - num_2g) < num_5g; index++) {
+		if (cds_is_dsrc_channel(
+			hdd_channels_5_ghz[index - num_2g].center_freq))
+			continue;
+		hdd_ctx->chan_info[index].freq =
+			hdd_channels_5_ghz[index - num_2g].center_freq;
+	}
+	sme_set_chan_info_callback(hdd_ctx->hHal,
+				   &wlan_hdd_chan_info_cb);
+}
+
+/**
+ * wlan_hdd_deinit_chan_info() - deinit chan info in hdd context
+ * @hdd_ctx: hdd context pointer
+ *
+ * Return: none
+ */
+void wlan_hdd_deinit_chan_info(hdd_context_t *hdd_ctx)
+{
+	struct scan_chan_info *chan;
+
+	chan = hdd_ctx->chan_info;
+	hdd_ctx->chan_info = NULL;
+	if (chan)
+		qdf_mem_free(chan);
+}
+
 /**
  * struct cfg80211_ops - cfg80211_ops
  *

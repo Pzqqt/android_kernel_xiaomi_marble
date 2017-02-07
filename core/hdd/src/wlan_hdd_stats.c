@@ -2401,6 +2401,106 @@ struct net_device_stats *hdd_get_stats(struct net_device *dev)
 	ENTER_DEV(dev);
 	return &adapter->stats;
 }
+
+
+/*
+ * time = cycle_count * cycle
+ * cycle = 1 / clock_freq
+ * Since the unit of clock_freq reported from
+ * FW is MHZ, and we want to calculate time in
+ * ms level, the result is
+ * time = cycle / (clock_freq * 1000)
+ */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 0, 0))
+static bool wlan_fill_survey_result(struct survey_info *survey, int opfreq,
+				    struct scan_chan_info *chan_info,
+				    struct ieee80211_channel *channels)
+{
+	uint64_t clock_freq = chan_info->clock_freq * 1000;
+
+	if (channels->center_freq != (uint16_t)chan_info->freq)
+		return false;
+
+	survey->channel = channels;
+	survey->noise = chan_info->noise_floor;
+	survey->filled = SURVEY_INFO_NOISE_DBM;
+
+	if (opfreq == chan_info->freq)
+		survey->filled |= SURVEY_INFO_IN_USE;
+
+	if (clock_freq == 0)
+		return true;
+
+	survey->time = chan_info->cycle_count / clock_freq;
+	survey->time_busy = chan_info->rx_clear_count / clock_freq;
+	survey->time_tx = chan_info->tx_frame_count / clock_freq;
+
+	survey->filled |= SURVEY_INFO_TIME |
+			  SURVEY_INFO_TIME_BUSY |
+			  SURVEY_INFO_TIME_TX;
+	return true;
+}
+#else
+static bool wlan_fill_survey_result(struct survey_info *survey, int opfreq,
+				    struct scan_chan_info *chan_info,
+				    struct ieee80211_channel *channels)
+{
+	uint64_t clock_freq = chan_info->clock_freq * 1000;
+
+	if (channels->center_freq != (uint16_t)chan_info->freq)
+		return false;
+
+	survey->channel = channels;
+	survey->noise = chan_info->noise_floor;
+	survey->filled = SURVEY_INFO_NOISE_DBM;
+
+	if (opfreq == chan_info->freq)
+		survey->filled |= SURVEY_INFO_IN_USE;
+
+	if (clock_freq == 0)
+		return true;
+
+	survey->channel_time = chan_info->cycle_count / clock_freq;
+	survey->channel_time_busy = chan_info->rx_clear_count / clock_freq;
+	survey->channel_time_tx = chan_info->tx_frame_count / clock_freq;
+
+	survey->filled |= SURVEY_INFO_CHANNEL_TIME |
+			  SURVEY_INFO_CHANNEL_TIME_BUSY |
+			  SURVEY_INFO_CHANNEL_TIME_TX;
+	return true;
+}
+#endif
+
+static bool wlan_hdd_update_survey_info(struct wiphy *wiphy,
+		hdd_adapter_t *pAdapter, struct survey_info *survey, int idx)
+{
+	bool filled = false;
+	int i, j = 0;
+	uint32_t channel = 0, opfreq; /* Initialization Required */
+	hdd_context_t *pHddCtx;
+
+	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	sme_get_operation_channel(pHddCtx->hHal, &channel, pAdapter->sessionId);
+	hdd_wlan_get_freq(channel, &opfreq);
+
+	mutex_lock(&pHddCtx->chan_info_lock);
+
+	for (i = 0; i < IEEE80211_NUM_BANDS && !filled; i++) {
+		if (wiphy->bands[i] == NULL)
+			continue;
+
+		for (j = 0; j < wiphy->bands[i]->n_channels && !filled; j++) {
+			struct ieee80211_supported_band *band = wiphy->bands[i];
+			filled = wlan_fill_survey_result(survey, opfreq,
+				&pHddCtx->chan_info[idx],
+				&band->channels[j]);
+		}
+	}
+	mutex_unlock(&pHddCtx->chan_info_lock);
+
+	return filled;
+}
+
 /**
  * __wlan_hdd_cfg80211_dump_survey() - get survey related info
  * @wiphy: Pointer to wiphy
@@ -2417,86 +2517,45 @@ static int __wlan_hdd_cfg80211_dump_survey(struct wiphy *wiphy,
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *pHddCtx;
 	hdd_station_ctx_t *pHddStaCtx;
-	tHalHandle halHandle;
-	uint32_t channel = 0, freq = 0; /* Initialization Required */
-	int8_t snr, rssi;
-	int status, i, j, filled = 0;
+	int status;
+	bool filled = false;
 
 	ENTER_DEV(dev);
 
-	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	hdd_info("dump survey index:%d", idx);
+	if (idx > QDF_MAX_NUM_CHAN - 1)
+		return -EINVAL;
+
+	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	status = wlan_hdd_validate_context(pHddCtx);
+	if (0 != status)
+		return status;
+
+	if (pHddCtx->chan_info == NULL) {
+		hdd_err("chan_info is NULL");
+		return -EINVAL;
+	}
+
+	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EINVAL;
 	}
 
-	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
-	status = wlan_hdd_validate_context(pHddCtx);
-
-	if (0 != status)
-		return status;
-
 	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
-	if (0 == pHddCtx->config->fEnableSNRMonitoring ||
-	    0 != pAdapter->survey_idx ||
-	    eConnectionState_Associated != pHddStaCtx->conn_info.connState) {
-		/* The survey dump ops when implemented completely is expected
-		 * to return a survey of all channels and the ops is called by
-		 * the kernel with incremental values of the argument 'idx'
-		 * till it returns -ENONET. But we can only support the survey
-		 * for the operating channel for now. survey_idx is used to
-		 * track that the ops is called only once and then return
-		 * -ENONET for the next iteration
-		 */
-		pAdapter->survey_idx = 0;
+	if (pHddCtx->config->fEnableSNRMonitoring == 0)
+		return -ENONET;
+
+
+	if (pHddStaCtx->hdd_ReassocScenario) {
+		hdd_info("Roaming in progress, hence return");
 		return -ENONET;
 	}
 
-	if (!pHddStaCtx->hdd_ReassocScenario) {
-		hdd_err("Roaming in progress, hence return");
+	filled = wlan_hdd_update_survey_info(wiphy, pAdapter, survey, idx);
+
+	if (!filled)
 		return -ENONET;
-	}
-
-	halHandle = WLAN_HDD_GET_HAL_CTX(pAdapter);
-
-	wlan_hdd_get_snr(pAdapter, &snr);
-	wlan_hdd_get_rssi(pAdapter, &rssi);
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_CFG80211_DUMP_SURVEY,
-			 pAdapter->sessionId, pAdapter->device_mode));
-
-	sme_get_operation_channel(halHandle, &channel, pAdapter->sessionId);
-	hdd_wlan_get_freq(channel, &freq);
-
-	for (i = 0; i < NUM_NL80211_BANDS; i++) {
-		if (NULL == wiphy->bands[i])
-			continue;
-
-		for (j = 0; j < wiphy->bands[i]->n_channels; j++) {
-			struct ieee80211_supported_band *band = wiphy->bands[i];
-
-			if (band->channels[j].center_freq == (uint16_t) freq) {
-				survey->channel = &band->channels[j];
-				/* The Rx BDs contain SNR values in dB for the
-				 * received frames while the supplicant expects
-				 * noise. So we calculate and return the value
-				 * of noise (dBm)
-				 *  SNR (dB) = RSSI (dBm) - NOISE (dBm)
-				 */
-				survey->noise = rssi - snr;
-				survey->filled = SURVEY_INFO_NOISE_DBM;
-				filled = 1;
-			}
-		}
-	}
-
-	if (filled)
-		pAdapter->survey_idx = 1;
-	else {
-		pAdapter->survey_idx = 0;
-		return -ENONET;
-	}
 	EXIT();
 	return 0;
 }

@@ -2358,4 +2358,17 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 QDF_STATUS wma_mgmt_unified_cmd_send(struct wlan_objmgr_vdev *vdev,
 				qdf_nbuf_t buf, uint32_t desc_id,
 				void *mgmt_tx_params);
+
+/**
+ * wma_chan_info_event_handler() - chan info event handler
+ * @handle: wma handle
+ * @event_buf: event handler data
+ * @len: length of @event_buf
+ *
+ * this function will handle the WMI_CHAN_INFO_EVENTID
+ *
+ * Return: int
+ */
+int wma_chan_info_event_handler(void *handle, uint8_t *event_buf,
+						uint32_t len);
 #endif

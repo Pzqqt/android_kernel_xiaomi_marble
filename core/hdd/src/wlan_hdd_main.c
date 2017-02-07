@@ -4940,6 +4940,7 @@ static void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 	cds_flush_work(&hdd_ctx->roc_req_work);
 
 	wlansap_global_deinit();
+	wlan_hdd_deinit_chan_info(hdd_ctx);
 	wiphy_unregister(wiphy);
 	wlan_hdd_cfg80211_deinit(wiphy);
 
@@ -8405,6 +8406,8 @@ int hdd_wlan_startup(struct device *dev)
 
 	if (hdd_ipa_init(hdd_ctx) == QDF_STATUS_E_FAILURE)
 		goto err_wiphy_unregister;
+
+	wlan_hdd_init_chan_info(hdd_ctx);
 
 	hdd_initialize_mac_address(hdd_ctx);
 

@@ -7088,6 +7088,8 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 		CSR_STA_ROAM_POLICY_DFS_ENABLED;
 	smeConfig->csrConfig.sta_roam_policy_params.skip_unsafe_channels = 0;
 
+	smeConfig->snr_monitor_enabled = pHddCtx->config->fEnableSNRMonitoring;
+
 	smeConfig->csrConfig.tx_aggregation_size =
 			pHddCtx->config->tx_aggregation_size;
 	smeConfig->csrConfig.rx_aggregation_size =

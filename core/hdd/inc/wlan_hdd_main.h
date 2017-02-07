@@ -1611,6 +1611,8 @@ struct hdd_context_s {
 	struct suspend_resume_stats suspend_resume_stats;
 	struct hdd_runtime_pm_context runtime_context;
 	bool roaming_in_progress;
+	struct scan_chan_info *chan_info;
+	struct mutex chan_info_lock;
 	/* bit map to set/reset TDLS by different sources */
 	unsigned long tdls_source_bitmap;
 	/* tdls source timer to enable/disable TDLS on p2p listen */
@@ -2192,5 +2194,22 @@ void hdd_set_roaming_in_progress(bool value);
 int wlan_hdd_sap_get_valid_channellist(hdd_adapter_t *adapter,
 				       uint32_t *channel_count,
 				       uint8_t *channel_list);
-
+/**
+ * wlan_hdd_init_chan_info() - initialize channel info variables
+ * @hdd_ctx: hdd ctx
+ *
+ * This API initialize channel info variables
+ *
+ * Return: None
+ */
+void wlan_hdd_init_chan_info(hdd_context_t *hdd_ctx);
+/**
+ * wlan_hdd_deinit_chan_info() - deinitialize channel info variables
+ * @hdd_ctx: hdd ctx
+ *
+ * This API deinitialize channel info variables
+ *
+ * Return: None
+ */
+void wlan_hdd_deinit_chan_info(hdd_context_t *hdd_ctx);
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

@@ -6889,4 +6889,23 @@ struct wow_pulse_mode {
  */
 QDF_STATUS umac_send_mb_message_to_mac(void *msg);
 
+/**
+ * struct scan_chan_info - channel info
+ * @freq: radio frequence
+ * @cmd flag: cmd flag
+ * @noise_floor: noise floor
+ * @cycle_count: cycle count
+ * @rx_clear_count: rx clear count
+ * @tx_frame_count: TX frame count
+ * @clock_freq: clock frequence MHZ
+ */
+struct scan_chan_info {
+	uint32_t freq;
+	uint32_t cmd_flag;
+	uint32_t noise_floor;
+	uint32_t cycle_count;
+	uint32_t rx_clear_count;
+	uint32_t tx_frame_count;
+	uint32_t clock_freq;
+};
 #endif /* __SIR_API_H */

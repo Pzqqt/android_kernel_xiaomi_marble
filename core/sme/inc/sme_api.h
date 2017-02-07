@@ -91,6 +91,7 @@ typedef void (*hdd_ftm_msg_processor)(void *);
 typedef struct _smeConfigParams {
 	tCsrConfigParam csrConfig;
 	struct rrm_config_param rrmConfig;
+	bool snr_monitor_enabled;
 } tSmeConfigParams, *tpSmeConfigParams;
 
 #ifdef FEATURE_WLAN_TDLS
@@ -1386,4 +1387,15 @@ void sme_set_cc_src(tHalHandle hal_handle, enum country_src);
 QDF_STATUS sme_set_wow_pulse(struct wow_pulse_mode *wow_pulse_set_info);
 #endif
 
+/**
+ * sme_set_chan_info_callback() - Register chan info callback
+ * @hal - MAC global handle
+ * @callback_routine - callback routine from HDD
+ *
+ * This API is invoked by HDD to register its callback to mac
+ *
+ * Return: QDF_STATUS
+ */
+void sme_set_chan_info_callback(tHalHandle hal_handle,
+			void (*callback)(struct scan_chan_info *chan_info));
 #endif /* #if !defined( __SME_API_H ) */
