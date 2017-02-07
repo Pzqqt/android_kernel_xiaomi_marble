@@ -13792,15 +13792,7 @@ static int wlan_hdd_cfg80211_set_privacy(hdd_adapter_t *pAdapter,
 	return status;
 }
 
-/**
- * wlan_hdd_try_disconnect() - try disconnnect from previous connection
- * @pAdapter: Pointer to adapter
- *
- * This function is used to disconnect from previous connection
- *
- * Return: 0 for success, non-zero for failure
- */
-static int wlan_hdd_try_disconnect(hdd_adapter_t *pAdapter)
+int wlan_hdd_try_disconnect(hdd_adapter_t *pAdapter)
 {
 	unsigned long rc;
 	hdd_station_ctx_t *pHddStaCtx;

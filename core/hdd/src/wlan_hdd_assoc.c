@@ -5495,7 +5495,6 @@ static int __iw_set_essid(struct net_device *dev,
 		 struct iw_request_info *info,
 		 union iwreq_data *wrqu, char *extra)
 {
-	unsigned long rc;
 	uint32_t status = 0;
 	hdd_wext_state_t *pWextState;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
@@ -5504,7 +5503,6 @@ static int __iw_set_essid(struct net_device *dev,
 	tCsrRoamProfile *pRoamProfile;
 	eCsrAuthType RSNAuthType;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
-	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	int ret;
 
 	ENTER_DEV(dev);
@@ -5537,23 +5535,11 @@ static int __iw_set_essid(struct net_device *dev,
 		return -EINVAL;
 
 	pRoamProfile = &pWextState->roamProfile;
-	if (hdd_conn_is_connected(pHddStaCtx) ||
-	    (pAdapter->device_mode == QDF_IBSS_MODE)) {
-		QDF_STATUS qdf_status;
-
-		/* Need to issue a disconnect to CSR. */
-		INIT_COMPLETION(pAdapter->disconnect_comp_var);
-		qdf_status = sme_roam_disconnect(hHal, pAdapter->sessionId,
-					 eCSR_DISCONNECT_REASON_UNSPECIFIED);
-
-		if (QDF_STATUS_SUCCESS == qdf_status) {
-			rc = wait_for_completion_timeout(&pAdapter->
-						 disconnect_comp_var,
-						 msecs_to_jiffies
-						 (WLAN_WAIT_TIME_DISCONNECT));
-			if (!rc)
-				hdd_err("Disconnect event timed out");
-		}
+	/*Try disconnecting if already in connected state*/
+	status = wlan_hdd_try_disconnect(pAdapter);
+	if (0 > status) {
+	    hdd_err("Failed to disconnect the existing connection");
+	    return -EALREADY;
 	}
 
 	/*
