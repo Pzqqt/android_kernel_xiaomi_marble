@@ -21,11 +21,40 @@
 #include "wlan_lmac_if_def.h"
 #include "wlan_lmac_if_api.h"
 #include "wlan_global_lmac_if_api.h"
+#ifdef WLAN_PMO_ENABLE
+#include "wlan_pmo_tgt_api.h"
+#endif
 
 /* Function pointer to call DA/OL specific tx_ops registration function */
 QDF_STATUS (*wlan_global_lmac_if_tx_ops_register[MAX_DEV_TYPE])
 				(struct wlan_lmac_if_tx_ops *tx_ops);
 
+#ifdef WLAN_PMO_ENABLE
+/**
+ * wlan_pmo_register_rx_ops() - Register PMO component RX OPS
+ * @rx_ops: lmac if receive ops
+ *
+ * Return: None
+ */
+static void wlan_pmo_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+	struct wlan_lmac_if_pmo_rx_ops *pmo_rx_ops;
+
+	pmo_rx_ops = &rx_ops->pmo_rx_ops;
+	pmo_rx_ops->rx_gtk_rsp_event = pmo_tgt_gtk_rsp_evt;
+
+}
+#else
+/**
+ * wlan_pmo_register_rx_ops() - Dummy api to register PMO component RX OPS
+ * @rx_ops: lmac if receive ops
+ *
+ * Return: None
+ */
+static void wlan_pmo_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+}
+#endif
 /**
  * wlan_global_lmac_if_rx_ops_register() - Global lmac_if
  * rx handler register
@@ -50,7 +79,8 @@ wlan_global_lmac_if_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 	/* Registeration for UMAC componets */
 	wlan_lmac_if_umac_rx_ops_register(rx_ops);
 
-	/* Registeration for componets outside UMAC */
+       /* Registeration for componets outside UMAC */
+	wlan_pmo_register_rx_ops(rx_ops);
 
 	return QDF_STATUS_SUCCESS;
 }
