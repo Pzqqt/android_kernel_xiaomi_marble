@@ -14492,20 +14492,6 @@ static QDF_STATUS extract_pdev_utf_event_tlv(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_SUCCESS;
 }
-/**
- * extract_channel_hopping_event_tlv() - extract channel hopping param
- * from event
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param ch_hopping: Pointer to hold channel hopping param
- *
- * Return: QDF_STATUS_SUCCESS for success or error code
- */
-static QDF_STATUS extract_channel_hopping_event_tlv(wmi_unified_t wmi_handle,
-	void *evt_buf, wmi_host_pdev_channel_hopping_event *chan_info)
-{
-	return QDF_STATUS_SUCCESS;
-}
 
 /**
  * extract_service_ready_ext_tlv() - extract basic extended service ready params
@@ -15069,6 +15055,179 @@ static uint16_t wmi_set_htc_tx_tag_tlv(wmi_unified_t wmi_handle,
 	return htc_tx_tag;
 }
 
+/**
+ * extract_channel_hopping_event_tlv() - extract channel hopping param
+ * from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param ch_hopping: Pointer to hold channel hopping param
+ *
+ * @return QDF_STATUS_SUCCESS  on success and -ve on failure.
+ */
+static QDF_STATUS extract_channel_hopping_event_tlv(
+	wmi_unified_t wmi_handle, void *evt_buf,
+	wmi_host_pdev_channel_hopping_event *ch_hopping)
+{
+	WMI_PDEV_CHANNEL_HOPPING_EVENTID_param_tlvs *param_buf;
+	wmi_pdev_channel_hopping_event_fixed_param *event;
+
+	param_buf = (WMI_PDEV_CHANNEL_HOPPING_EVENTID_param_tlvs *)evt_buf;
+	event = (wmi_pdev_channel_hopping_event_fixed_param *)
+						param_buf->fixed_param;
+
+	ch_hopping->noise_floor_report_iter = event->noise_floor_report_iter;
+	ch_hopping->noise_floor_total_iter = event->noise_floor_total_iter;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * extract_pdev_tpc_ev_param_tlv() - extract tpc param from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param param: Pointer to hold tpc param
+ *
+ * @return QDF_STATUS_SUCCESS  on success and -ve on failure.
+ */
+static QDF_STATUS extract_pdev_tpc_ev_param_tlv(wmi_unified_t wmi_handle,
+		void *evt_buf,
+		wmi_host_pdev_tpc_event *param)
+{
+	WMI_PDEV_TPC_EVENTID_param_tlvs *param_buf;
+	wmi_pdev_tpc_event_fixed_param *event;
+
+	param_buf = (WMI_PDEV_TPC_EVENTID_param_tlvs *)evt_buf;
+	event = (wmi_pdev_tpc_event_fixed_param *)param_buf->fixed_param;
+
+	qdf_mem_copy(param->tpc, param_buf->tpc, sizeof(param->tpc));
+
+	return QDF_STATUS_SUCCESS;
+}
+
+
+#ifdef BIG_ENDIAN_HOST
+/**
+ * wds_addr_ev_conv_data_be() - LE to BE conversion of wds addr event
+ * @param data_len - data length
+ * @param data - pointer to data
+ *
+ * Return: QDF_STATUS - success or error status
+ */
+static QDF_STATUS wds_addr_ev_conv_data_be(uint16_t data_len, uint8_t *ev)
+{
+	uint8_t *datap = (uint8_t *)ev;
+	/* Skip swapping the first word */
+	datap += sizeof(uint32_t);
+	for (i = 0; i < ((data_len / sizeof(uint32_t))-1);
+			i++, datap += sizeof(uint32_t)) {
+		*(uint32_t *)datap = qdf_le32_to_cpu(*(uint32_t *)datap);
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+/**
+ * wds_addr_ev_conv_data_be() - Dummy operation for LE platforms
+ * @param data_len - data length
+ * @param data - pointer to data
+ *
+ * Return: QDF_STATUS - success or error status
+ */
+static QDF_STATUS wds_addr_ev_conv_data_be(uint32_t data_len, uint8_t *ev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+/**
+ * extract_wds_addr_event_tlv() - extract wds address from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param wds_ev: Pointer to hold wds address
+ *
+ * @return QDF_STATUS_SUCCESS  on success and -ve on failure.
+ */
+static QDF_STATUS extract_wds_addr_event_tlv(wmi_unified_t wmi_handle,
+		void *evt_buf,
+		uint16_t len, wds_addr_event_t *wds_ev)
+{
+	WMI_WDS_PEER_EVENTID_param_tlvs *param_buf;
+	wmi_wds_addr_event_fixed_param *ev;
+	int i;
+
+	param_buf = (WMI_WDS_PEER_EVENTID_param_tlvs *)evt_buf;
+	ev = (wmi_wds_addr_event_fixed_param *)param_buf->fixed_param;
+
+	if (wds_addr_ev_conv_data_be(len, (uint8_t *)ev) != QDF_STATUS_SUCCESS)
+		return QDF_STATUS_E_FAILURE;
+
+	qdf_mem_copy(wds_ev->event_type, ev->event_type,
+		     sizeof(wds_ev->event_type));
+	for (i = 0; i < 4; i++) {
+		wds_ev->peer_mac[i] =
+			((u_int8_t *)&(ev->peer_mac.mac_addr31to0))[i];
+		wds_ev->dest_mac[i] =
+			((u_int8_t *)&(ev->dest_mac.mac_addr31to0))[i];
+	}
+	for (i = 0; i < 2; i++) {
+		wds_ev->peer_mac[4+i] =
+			((u_int8_t *)&(ev->peer_mac.mac_addr47to32))[i];
+		wds_ev->dest_mac[4+i] =
+			((u_int8_t *)&(ev->dest_mac.mac_addr47to32))[i];
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * extract_peer_sta_ps_statechange_ev_tlv() - extract peer sta ps state
+ * from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param ev: Pointer to hold peer param and ps state
+ *
+ * @return QDF_STATUS_SUCCESS  on success and -ve on failure.
+ */
+static QDF_STATUS extract_peer_sta_ps_statechange_ev_tlv(wmi_unified_t wmi_handle,
+		void *evt_buf, wmi_host_peer_sta_ps_statechange_event *ev)
+{
+	WMI_PEER_STA_PS_STATECHG_EVENTID_param_tlvs *param_buf;
+	wmi_peer_sta_ps_statechange_event_fixed_param *event;
+
+	param_buf = (WMI_PEER_STA_PS_STATECHG_EVENTID_param_tlvs *)evt_buf;
+	event = (wmi_peer_sta_ps_statechange_event_fixed_param *)
+						param_buf->fixed_param;
+
+	WMI_MAC_ADDR_TO_CHAR_ARRAY(&event->peer_macaddr, ev->peer_macaddr);
+	ev->peer_ps_state = event->peer_ps_state;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * extract_inst_rssi_stats_event_tlv() - extract inst rssi stats from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param inst_rssi_resp: Pointer to hold inst rssi response
+ *
+ * @return QDF_STATUS_SUCCESS  on success and -ve on failure.
+ */
+static QDF_STATUS extract_inst_rssi_stats_event_tlv(
+	wmi_unified_t wmi_handle, void *evt_buf,
+	wmi_host_inst_stats_resp *inst_rssi_resp)
+{
+	WMI_INST_RSSI_STATS_EVENTID_param_tlvs *param_buf;
+	wmi_inst_rssi_stats_resp_fixed_param *event;
+
+	param_buf = (WMI_INST_RSSI_STATS_EVENTID_param_tlvs *)evt_buf;
+	event = (wmi_inst_rssi_stats_resp_fixed_param *)param_buf->fixed_param;
+
+	qdf_mem_copy(&(inst_rssi_resp->peer_macaddr),
+		     &(event->peer_macaddr), sizeof(wmi_mac_addr));
+	inst_rssi_resp->iRSSI = event->iRSSI;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_tlv,
@@ -15379,6 +15538,11 @@ struct wmi_ops tlv_ops =  {
 	.is_management_record = is_management_record_tlv,
 	.extract_pdev_csa_switch_count_status =
 				extract_pdev_csa_switch_count_status_tlv,
+	.extract_pdev_tpc_ev_param = extract_pdev_tpc_ev_param_tlv,
+	.extract_wds_addr_event = extract_wds_addr_event_tlv,
+	.extract_peer_sta_ps_statechange_ev =
+		extract_peer_sta_ps_statechange_ev_tlv,
+	.extract_inst_rssi_stats_event = extract_inst_rssi_stats_event_tlv,
 };
 
 #ifndef CONFIG_MCL
