@@ -3644,7 +3644,7 @@ QDF_STATUS csr_roam_issue_disassociate(tpAniSirGlobal pMac, uint32_t sessionId,
 			     sizeof(struct qdf_mac_addr));
 	}
 
-	sms_log(pMac, LOG2,
+	sms_log(pMac, LOG1,
 		FL("CSR Attempting to Disassociate Bssid=" MAC_ADDRESS_STR
 		   " subState = %s reason=%d"), MAC_ADDR_ARRAY(bssId.bytes),
 		mac_trace_getcsr_roam_sub_state(NewSubstate), reasonCode);
@@ -5737,6 +5737,8 @@ QDF_STATUS csr_roam_process_command(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 				sessionId);
 		csr_roam_substate_change(pMac, eCSR_ROAM_SUBSTATE_DISASSOC_REQ,
 				sessionId);
+		sms_log(pMac, LOG1, FL("Disassociate issued with reason: %d"),
+			pCommand->u.roamCmd.reason);
 		status = csr_send_mb_disassoc_req_msg(pMac, sessionId,
 				pCommand->u.roamCmd.peerMac,
 				pCommand->u.roamCmd.reason);
