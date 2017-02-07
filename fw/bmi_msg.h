@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -262,8 +262,6 @@ PREPACK struct bmi_target_info {
 #define TARGET_TYPE_QCA9984     15 /* cascade */
 #define TARGET_TYPE_IPQ4019     16 /* dakota */
 #define TARGET_TYPE_QCA9888     17 /* besra */
-
-extern void target_register_tbl_attach(A_UINT32 target_type);
 
 #define BMI_ROMPATCH_INSTALL               9
         /*
