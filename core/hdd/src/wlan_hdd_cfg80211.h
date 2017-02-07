@@ -455,6 +455,33 @@ enum qca_nl80211_vendor_subcmds {
 
 	/* Set Specific Absorption Rate(SAR) Power Limits */
 	QCA_NL80211_VENDOR_SUBCMD_SET_SAR_LIMITS = 146,
+	/* Set the trace level for QDF */
+	QCA_NL80211_VENDOR_SUBCMD_SET_TRACE_LEVEL = 152,
+};
+
+/**
+ * enum qca_vendor_attr_set_trace_level - Config params for QDF set trace level
+ * @QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_INVALID: Invalid trace level
+ * @QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_PARAM : Trace level parameters
+ * @QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_MODULE_ID : Module of which trace
+    level needs to be updated.
+ * @QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_TRACE_MASK : verbose mask, which need
+ * to be set.
+ * @QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_AFTER_LAST : after last.
+ * @QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_MAX : Max attribute.
+ */
+enum qca_vendor_attr_set_trace_level {
+	QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_INVALID = 0,
+	/*
+	* Array of QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_PARAM
+	* attributes.
+	*/
+	QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_PARAM = 1,
+	QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_MODULE_ID = 2,
+	QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_TRACE_MASK = 3,
+	QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_MAX =
+		QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_AFTER_LAST - 1,
 };
 
 /**

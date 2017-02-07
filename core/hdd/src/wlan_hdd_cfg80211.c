@@ -8409,6 +8409,126 @@ static int wlan_hdd_cfg80211_set_fast_roaming(struct wiphy *wiphy,
 	return ret;
 }
 
+static const struct nla_policy qca_wlan_vendor_set_trace_level_policy[
+		QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_PARAM] = {.type = NLA_NESTED },
+	[QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_MODULE_ID] = {.type = NLA_U32 },
+	[QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_TRACE_MASK] = {.type = NLA_U32 },
+};
+
+/**
+ * __wlan_hdd_cfg80211_set_trace_level() - Set the trace level
+ * @wiphy: Pointer to wireless phy
+ * @wdev: Pointer to wireless device
+ * @data: Pointer to data
+ * @data_len: Length of @data
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+static int
+__wlan_hdd_cfg80211_set_trace_level(struct wiphy *wiphy,
+					struct wireless_dev *wdev,
+					const void *data,
+					int data_len)
+{
+	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	struct nlattr *tb1[QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_MAX + 1];
+	struct nlattr *tb2[QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_MAX + 1];
+	struct nlattr *apth;
+	int rem;
+	int ret = 1;
+	int print_idx = -1;
+	int module_id = -1;
+	int bit_mask = -1;
+	int status;
+
+	ENTER();
+
+	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE) {
+		hdd_err("Command not allowed in FTM mode");
+		return -EINVAL;
+	}
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret != 0)
+		return -EINVAL;
+
+	print_idx = qdf_get_pidx();
+	if (print_idx < 0 || print_idx >= MAX_PRINT_CONFIG_SUPPORTED) {
+		hdd_err("Invalid print controle object index");
+		return -EINVAL;
+	}
+
+	if (nla_parse(tb1, QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_MAX, data,
+			data_len, qca_wlan_vendor_set_trace_level_policy)) {
+		hdd_err("Invalid attr");
+		return -EINVAL;
+	}
+
+	if (!tb1[QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_PARAM]) {
+		hdd_err("attr trace level param failed");
+		return -EINVAL;
+	}
+
+	nla_for_each_nested(apth,
+			tb1[QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_PARAM], rem) {
+		if (nla_parse(tb2, QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_MAX,
+				nla_data(apth), nla_len(apth), NULL)) {
+			hdd_err("Invalid attr");
+			return -EINVAL;
+		}
+
+		if (!tb2[QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_MODULE_ID]) {
+			hdd_err("attr Module ID failed");
+			return -EINVAL;
+		}
+		module_id = nla_get_u32
+			(tb2[QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_MODULE_ID]);
+
+		if (!tb2[QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_TRACE_MASK]) {
+			hdd_err("attr Verbose mask failed");
+			return -EINVAL;
+		}
+		bit_mask = nla_get_u32
+		      (tb2[QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_TRACE_MASK]);
+
+		status = hdd_qdf_trace_enable(module_id, bit_mask);
+
+		if (status != 0)
+			hdd_err("can not set verbose mask %d for the category %d",
+				bit_mask, module_id);
+	}
+
+	EXIT();
+	return ret;
+}
+
+/**
+  * wlan_hdd_cfg80211_set_trace_level() - Set the trace level
+  * @wiphy: Pointer to wireless phy
+  * @wdev: Pointer to wireless device
+  * @data: Pointer to data
+  * @data_len: Length of @data
+  *
+  * Wrapper function of __wlan_hdd_cfg80211_set_trace_level()
+  *
+  * Return: 0 on success, negative errno on failure
+  */
+
+static int wlan_hdd_cfg80211_set_trace_level(struct wiphy *wiphy,
+						struct wireless_dev *wdev,
+						const void *data,
+						int data_len)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_cfg80211_set_trace_level(wiphy, wdev, data, data_len);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
+}
+
 const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,
@@ -9048,6 +9168,15 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 			 WIPHY_VENDOR_CMD_NEED_RUNNING,
 		.doit = wlan_hdd_cfg80211_set_sar_power_limits
 	},
+	{
+		.info.vendor_id = QCA_NL80211_VENDOR_ID,
+		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_SET_TRACE_LEVEL,
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
+			 WIPHY_VENDOR_CMD_NEED_NETDEV |
+			 WIPHY_VENDOR_CMD_NEED_RUNNING,
+		.doit = wlan_hdd_cfg80211_set_trace_level
+	},
+
 #ifdef WLAN_UMAC_CONVERGENCE
 	COMMON_VENDOR_COMMANDS
 #endif

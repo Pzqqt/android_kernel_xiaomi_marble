@@ -522,7 +522,7 @@ uint8_t wlan_hdd_find_opclass(tHalHandle hal, uint8_t channel,
 
 /**
  * hdd_qdf_trace_enable() - configure initial QDF Trace enable
- * @moduleId:	Module whose trace level is being configured
+ * @module_id:	Module whose trace level is being configured
  * @bitmask:	Bitmask of log levels to be enabled
  *
  * Called immediately after the cfg.ini is read in order to configure
@@ -530,7 +530,7 @@ uint8_t wlan_hdd_find_opclass(tHalHandle hal, uint8_t channel,
  *
  * Return: None
  */
-static void hdd_qdf_trace_enable(QDF_MODULE_ID moduleId, uint32_t bitmask)
+int hdd_qdf_trace_enable(QDF_MODULE_ID module_id, uint32_t bitmask)
 {
 	QDF_TRACE_LEVEL level;
 	int qdf_print_idx = -1;
@@ -541,29 +541,30 @@ static void hdd_qdf_trace_enable(QDF_MODULE_ID moduleId, uint32_t bitmask)
 	 * will remain at the "compiled in" default value)
 	 */
 	if (CFG_QDF_TRACE_ENABLE_DEFAULT == bitmask) {
-		return;
+		return 0;
 	}
 
 	qdf_print_idx = qdf_get_pidx();
 
 	/* a mask was specified.  start by disabling all logging */
-	status = qdf_print_set_category_verbose(qdf_print_idx, moduleId,
+	status = qdf_print_set_category_verbose(qdf_print_idx, module_id,
 					QDF_TRACE_LEVEL_NONE, 0);
 
 	if (QDF_STATUS_SUCCESS != status)
-		return;
+		return -EINVAL;
 	/* now cycle through the bitmask until all "set" bits are serviced */
 	level = QDF_TRACE_LEVEL_FATAL;
 	while (0 != bitmask) {
 		if (bitmask & 1) {
 			status = qdf_print_set_category_verbose(qdf_print_idx,
-							moduleId, level, 1);
+							module_id, level, 1);
 			if (QDF_STATUS_SUCCESS != status)
-				return;
+				return -EINVAL;
 		}
 		level++;
 		bitmask >>= 1;
 	}
+	return 0;
 }
 
 /**

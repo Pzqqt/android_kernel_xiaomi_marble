@@ -1740,6 +1740,8 @@ static inline void hdd_bus_bandwidth_destroy(hdd_context_t *hdd_ctx)
 }
 #endif
 
+int hdd_qdf_trace_enable(QDF_MODULE_ID module_id, uint32_t bitmask);
+
 int hdd_init(void);
 void hdd_deinit(void);
 
