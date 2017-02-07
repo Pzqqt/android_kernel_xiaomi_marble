@@ -4801,16 +4801,16 @@ __iw_softap_stopbss(struct net_device *dev,
 		    union iwreq_data *wrqu, char *extra)
 {
 	hdd_adapter_t *pHostapdAdapter = (netdev_priv(dev));
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	QDF_STATUS status;
 	hdd_context_t *hdd_ctx;
+	int ret;
 
 	ENTER_DEV(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
-	status = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != status)
-		return status;
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
 
 	if (test_bit(SOFTAP_BSS_STARTED, &pHostapdAdapter->event_flags)) {
 		hdd_hostapd_state_t *pHostapdState =
@@ -4820,12 +4820,12 @@ __iw_softap_stopbss(struct net_device *dev,
 		status = wlansap_stop_bss(
 			WLAN_HDD_GET_SAP_CTX_PTR(pHostapdAdapter));
 		if (QDF_IS_STATUS_SUCCESS(status)) {
-			qdf_status =
+			status =
 				qdf_wait_single_event(&pHostapdState->
 					qdf_stop_bss_event,
 					SME_CMD_TIMEOUT_VALUE);
 
-			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			if (!QDF_IS_STATUS_SUCCESS(status)) {
 				hdd_err("wait for single_event failed!!");
 				QDF_ASSERT(0);
 			}
@@ -4833,9 +4833,10 @@ __iw_softap_stopbss(struct net_device *dev,
 		clear_bit(SOFTAP_BSS_STARTED, &pHostapdAdapter->event_flags);
 		cds_decr_session_set_pcl(pHostapdAdapter->device_mode,
 					     pHostapdAdapter->sessionId);
+		ret = qdf_status_to_os_return(status);
 	}
 	EXIT();
-	return (status == QDF_STATUS_SUCCESS) ? 0 : -EBUSY;
+	return ret;
 }
 
 static int iw_softap_stopbss(struct net_device *dev,
