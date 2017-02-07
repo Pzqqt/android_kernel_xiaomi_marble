@@ -748,6 +748,11 @@ int wlan_hdd_tdls_init(hdd_adapter_t *pAdapter)
 	 */
 	if (0 == WLAN_HDD_IS_TDLS_SUPPORTED_ADAPTER(pAdapter)) {
 		mutex_unlock(&pHddCtx->tdls_lock);
+		/* Check whether connection tracker can be enabled in
+		 * the system.
+		 */
+		if (pAdapter->device_mode == QDF_P2P_DEVICE_MODE)
+			cds_set_tdls_ct_mode(pHddCtx);
 		return 0;
 	}
 	/* Check for the valid pHddTdlsCtx. If valid do not further
@@ -2050,10 +2055,15 @@ void wlan_hdd_tdls_notify_disconnect(hdd_adapter_t *adapter, bool lfr_roam)
 	if (!lfr_roam && !hdd_ctx->concurrency_marked) {
 		temp_adapter = wlan_hdd_tdls_get_adapter(
 					hdd_ctx);
-		if (NULL != temp_adapter)
+		if (NULL != temp_adapter) {
 			wlan_hdd_update_tdls_info(temp_adapter,
 						  false,
 						  false);
+			/* Enable connection tracker, if it is implicit and
+			 * external control mode.
+			 */
+			cds_set_tdls_ct_mode(hdd_ctx);
+		}
 	}
 }
 
