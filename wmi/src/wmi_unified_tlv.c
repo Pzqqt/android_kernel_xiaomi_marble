@@ -1877,6 +1877,25 @@ static inline void copy_scan_notify_ev_flags(
 		cmd->scan_ctrl_flags |= WMI_SCAN_OFFCHAN_DATA_TX;
 }
 #endif
+
+
+/* scan_copy_ie_buffer() - Copy scan ie_data */
+#ifndef CONFIG_MCL
+static inline void scan_copy_ie_buffer(uint8_t *buf_ptr,
+				struct scan_start_params *params)
+{
+	qdf_mem_copy(buf_ptr, params->ie_data, params->ie_len);
+}
+#else
+static inline void scan_copy_ie_buffer(uint8_t *buf_ptr,
+				struct scan_start_params *params)
+{
+	qdf_mem_copy(buf_ptr,
+			(uint8_t *) params->ie_base +
+			(params->uie_fieldOffset), params->ie_len);
+}
+#endif
+
 /**
  *  send_scan_start_cmd_tlv() - WMI scan start function
  *  @param wmi_handle      : handle to WMI.
@@ -1996,13 +2015,12 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 #endif
 	buf_ptr += WMI_TLV_HDR_SIZE + (params->num_bssid * sizeof(wmi_mac_addr));
 
-	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, params->ie_len_with_pad);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE,
+		    roundup(params->ie_len, sizeof(uint32_t)));
 	if (params->ie_len) {
-		qdf_mem_copy(buf_ptr + WMI_TLV_HDR_SIZE,
-			     (uint8_t *) params->ie_base +
-			     (params->uie_fieldOffset), params->ie_len);
+		scan_copy_ie_buffer(buf_ptr + WMI_TLV_HDR_SIZE, params);
 	}
-	buf_ptr += WMI_TLV_HDR_SIZE + params->ie_len_with_pad;
+	buf_ptr += WMI_TLV_HDR_SIZE + roundup(params->ie_len, sizeof(uint32_t));
 
 	ret = wmi_unified_cmd_send(wmi_handle, wmi_buf,
 				      len, WMI_START_SCAN_CMDID);
