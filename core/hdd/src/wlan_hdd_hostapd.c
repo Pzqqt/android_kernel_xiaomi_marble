@@ -4556,109 +4556,6 @@ static int iw_set_ap_mlme(struct net_device *dev,
 }
 
 /**
- * __iw_get_ap_rts_threshold() - get ap rts threshold
- * @dev - Pointer to the net device.
- * @info - Pointer to the iw_request_info.
- * @wrqu - Pointer to the iwreq_data.
- * @extra - Pointer to the data.
- *
- * Return: 0 for success, non zero for failure.
- */
-static int __iw_get_ap_rts_threshold(struct net_device *dev,
-				   struct iw_request_info *info,
-				   union iwreq_data *wrqu, char *extra) {
-
-	hdd_adapter_t *pHostapdAdapter = netdev_priv(dev);
-	int ret;
-	hdd_context_t *hdd_ctx;
-
-	ENTER_DEV(dev);
-
-	hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
-		return ret;
-	ret = hdd_wlan_get_rts_threshold(pHostapdAdapter, wrqu);
-
-	return ret;
-}
-
-/**
- * iw_get_ap_rts_threshold() - Wrapper function to protect
- *			__iw_get_ap_rts_threshold from the SSR.
- * @dev - Pointer to the net device.
- * @info - Pointer to the iw_request_info.
- * @wrqu - Pointer to the iwreq_data.
- * @extra - Pointer to the data.
- *
- * Return: 0 for success, non zero for failure.
- */
-static int iw_get_ap_rts_threshold(struct net_device *dev,
-				   struct iw_request_info *info,
-				   union iwreq_data *wrqu, char *extra)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __iw_get_ap_rts_threshold(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
-}
-
-/**
- * __iw_get_ap_frag_threshold() - get ap fragmentation threshold
- * @dev - Pointer to the net device.
- * @info - Pointer to the iw_request_info.
- * @wrqu - Pointer to the iwreq_data.
- * @extra - Pointer to the data.
- *
- * Return: 0 for success, non zero for failure.
- */
-static int __iw_get_ap_frag_threshold(struct net_device *dev,
-				    struct iw_request_info *info,
-				    union iwreq_data *wrqu, char *extra) {
-
-	hdd_adapter_t *pHostapdAdapter = netdev_priv(dev);
-	hdd_context_t *hdd_ctx;
-	int ret = 0;
-
-	ENTER_DEV(dev);
-
-	hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
-		return ret;
-
-	ret = hdd_wlan_get_frag_threshold(pHostapdAdapter, wrqu);
-
-	return ret;
-}
-
-/**
- * iw_get_ap_frag_threshold() - Wrapper function to protect
- *			__iw_get_ap_frag_threshold from the SSR.
- * @dev - Pointer to the net device.
- * @info - Pointer to the iw_request_info.
- * @wrqu - Pointer to the iwreq_data.
- * @extra - Pointer to the data.
- *
- * Return: 0 for success, non zero for failure.
- */
-static int iw_get_ap_frag_threshold(struct net_device *dev,
-				    struct iw_request_info *info,
-				    union iwreq_data *wrqu, char *extra)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __iw_get_ap_frag_threshold(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
-}
-
-/**
  * __iw_get_ap_freq() - get ap frequency
  * @dev - Pointer to the net device.
  * @info - Pointer to the iw_request_info.
@@ -5206,9 +5103,9 @@ static const iw_handler hostapd_handler[] = {
 	(iw_handler) NULL,      /* SIOCSIWRATE */
 	(iw_handler) NULL,      /* SIOCGIWRATE */
 	(iw_handler) NULL,      /* SIOCSIWRTS */
-	(iw_handler) iw_get_ap_rts_threshold,           /* SIOCGIWRTS */
+	(iw_handler) iw_get_rts_threshold,           /* SIOCGIWRTS */
 	(iw_handler) NULL,      /* SIOCSIWFRAG */
-	(iw_handler) iw_get_ap_frag_threshold,          /* SIOCGIWFRAG */
+	(iw_handler) iw_get_frag_threshold,          /* SIOCGIWFRAG */
 	(iw_handler) NULL,      /* SIOCSIWTXPOW */
 	(iw_handler) NULL,      /* SIOCGIWTXPOW */
 	(iw_handler) NULL,      /* SIOCSIWRETRY */

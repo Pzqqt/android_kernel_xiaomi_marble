@@ -1533,92 +1533,6 @@ static QDF_STATUS hdd_wlan_get_ibss_peer_info_all(hdd_adapter_t *pAdapter)
 }
 
 /**
- * hdd_wlan_get_rts_threshold() - Get RTS threshold
- * @pAdapter: adapter upon which the request was received
- * @wrqu: pointer to the ioctl request
- *
- * This function retrieves the current RTS threshold value and stores
- * it in the ioctl request structure
- *
- * Return: 0 if valid data was returned, non-zero on error
- */
-int hdd_wlan_get_rts_threshold(hdd_adapter_t *pAdapter, union iwreq_data *wrqu)
-{
-	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
-	uint32_t threshold = 0;
-	hdd_context_t *hdd_ctx;
-	int ret = 0;
-
-	ENTER();
-
-	if (NULL == pAdapter) {
-		hdd_err("Adapter is NULL");
-		return -EINVAL;
-	}
-
-	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
-		return ret;
-
-	if (QDF_STATUS_SUCCESS !=
-	    sme_cfg_get_int(hHal, WNI_CFG_RTS_THRESHOLD, &threshold)) {
-		hdd_warn("failed to get ini parameter, WNI_CFG_RTS_THRESHOLD");
-		return -EIO;
-	}
-	wrqu->rts.value = threshold;
-
-	hdd_notice("Rts-Threshold=%d!!", wrqu->rts.value);
-
-	EXIT();
-
-	return 0;
-}
-
-/**
- * hdd_wlan_get_frag_threshold() - Get fragmentation threshold
- * @pAdapter: adapter upon which the request was received
- * @wrqu: pointer to the ioctl request
- *
- * This function retrieves the current fragmentation threshold value
- * and stores it in the ioctl request structure
- *
- * Return: 0 if valid data was returned, non-zero on error
- */
-int hdd_wlan_get_frag_threshold(hdd_adapter_t *pAdapter,
-				union iwreq_data *wrqu)
-{
-	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
-	uint32_t threshold = 0, status = 0;
-	hdd_context_t *hdd_ctx;
-
-	ENTER();
-
-	if (NULL == pAdapter) {
-		hdd_err("Adapter is NULL");
-		return -EINVAL;
-	}
-
-	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
-	status = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != status)
-		return status;
-
-	if (sme_cfg_get_int(hHal, WNI_CFG_FRAGMENTATION_THRESHOLD, &threshold)
-	    != QDF_STATUS_SUCCESS) {
-		hdd_warn("failed to get ini parameter, WNI_CFG_FRAGMENTATION_THRESHOLD");
-		return -EIO;
-	}
-	wrqu->frag.value = threshold;
-
-	hdd_notice("Frag-Threshold=%d!!", wrqu->frag.value);
-
-	EXIT();
-
-	return 0;
-}
-
-/**
  * hdd_wlan_get_freq() - Convert channel to frequency
  * @channel: channel to be converted
  * @pfreq: where to store the frequency
@@ -3686,14 +3600,31 @@ static int __iw_get_rts_threshold(struct net_device *dev,
 				  struct iw_request_info *info,
 				  union iwreq_data *wrqu, char *extra)
 {
-	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	uint32_t status = 0;
+	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(adapter);
+	uint32_t threshold = 0;
+	hdd_context_t *hdd_ctx;
+	int ret;
 
 	ENTER_DEV(dev);
 
-	status = hdd_wlan_get_rts_threshold(pAdapter, wrqu);
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
 
-	return status;
+	if (QDF_STATUS_SUCCESS !=
+	    sme_cfg_get_int(hal, WNI_CFG_RTS_THRESHOLD, &threshold)) {
+		hdd_warn("failed to get ini parameter, WNI_CFG_RTS_THRESHOLD");
+		return -EIO;
+	}
+	wrqu->rts.value = threshold;
+
+	hdd_notice("Rts-Threshold=%d!!", wrqu->rts.value);
+
+	EXIT();
+
+	return 0;
 }
 
 /**
@@ -3746,9 +3677,9 @@ static int __iw_set_rts_threshold(struct net_device *dev,
  *
  * Return: 0 on success, error number otherwise
  */
-static int iw_get_rts_threshold(struct net_device *dev,
-				struct iw_request_info *info,
-				union iwreq_data *wrqu, char *extra)
+int iw_get_rts_threshold(struct net_device *dev,
+			 struct iw_request_info *info,
+			 union iwreq_data *wrqu, char *extra)
 {
 	int ret;
 
@@ -3794,14 +3725,31 @@ static int __iw_get_frag_threshold(struct net_device *dev,
 				   struct iw_request_info *info,
 				   union iwreq_data *wrqu, char *extra)
 {
-	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	uint32_t status = 0;
+	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(adapter);
+	uint32_t threshold = 0;
+	hdd_context_t *hdd_ctx;
+	int ret;
 
 	ENTER_DEV(dev);
 
-	status = hdd_wlan_get_frag_threshold(pAdapter, wrqu);
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
 
-	return status;
+	if (sme_cfg_get_int(hal, WNI_CFG_FRAGMENTATION_THRESHOLD, &threshold)
+	    != QDF_STATUS_SUCCESS) {
+		hdd_warn("failed to get ini parameter, WNI_CFG_FRAGMENTATION_THRESHOLD");
+		return -EIO;
+	}
+	wrqu->frag.value = threshold;
+
+	hdd_notice("Frag-Threshold=%d!!", wrqu->frag.value);
+
+	EXIT();
+
+	return 0;
 }
 
 /**
@@ -3813,9 +3761,9 @@ static int __iw_get_frag_threshold(struct net_device *dev,
  *
  * Return: 0 on success, error number otherwise
  */
-static int iw_get_frag_threshold(struct net_device *dev,
-				 struct iw_request_info *info,
-				 union iwreq_data *wrqu, char *extra)
+int iw_get_frag_threshold(struct net_device *dev,
+			  struct iw_request_info *info,
+			  union iwreq_data *wrqu, char *extra)
 {
 	int ret;
 

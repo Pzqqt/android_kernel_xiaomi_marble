@@ -304,10 +304,6 @@ typedef struct ccp_freq_chan_map_s {
 extern int hdd_unregister_wext(struct net_device *dev);
 extern int hdd_register_wext(struct net_device *dev);
 extern int hdd_wlan_get_freq(uint32_t chan, uint32_t *freq);
-extern int hdd_wlan_get_rts_threshold(hdd_adapter_t *pAdapter,
-				      union iwreq_data *wrqu);
-extern int hdd_wlan_get_frag_threshold(hdd_adapter_t *pAdapter,
-				       union iwreq_data *wrqu);
 extern void hdd_wlan_get_version(hdd_context_t *hdd_ctx,
 				 union iwreq_data *wrqu, char *extra);
 
@@ -315,6 +311,14 @@ extern void hdd_wlan_get_stats(hdd_adapter_t *pAdapter, uint16_t *length,
 			       char *buffer, uint16_t buf_len);
 extern void hdd_wlan_list_fw_profile(uint16_t *length,
 			       char *buffer, uint16_t buf_len);
+
+int iw_get_rts_threshold(struct net_device *dev,
+			 struct iw_request_info *info,
+			 union iwreq_data *wrqu, char *extra);
+
+int iw_get_frag_threshold(struct net_device *dev,
+			  struct iw_request_info *info,
+			  union iwreq_data *wrqu, char *extra);
 
 extern int iw_set_essid(struct net_device *dev,
 			struct iw_request_info *info,
