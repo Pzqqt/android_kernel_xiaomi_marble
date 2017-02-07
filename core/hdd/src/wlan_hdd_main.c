@@ -1819,16 +1819,16 @@ int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			goto hif_close;
 		}
 
-		ret = hdd_update_config(hdd_ctx);
-		if (ret) {
-			hdd_err("Failed to update configuration :%d", ret);
-			goto ol_cds_free;
-		}
-
 		ret = hdd_create_and_store_psoc(hdd_ctx, DEFAULT_PSOC_ID);
 		if (ret) {
 			hdd_err("Psoc creation fails!");
 			goto ol_cds_free;
+		}
+
+		ret = hdd_update_config(hdd_ctx);
+		if (ret) {
+			hdd_err("Failed to update configuration :%d", ret);
+			goto destroy_psoc_object;
 		}
 
 		status = cds_open(hdd_ctx->hdd_psoc);
@@ -7487,6 +7487,43 @@ static int hdd_update_cds_config(hdd_context_t *hdd_ctx)
 }
 
 /**
+ * hdd_update_user_config() - API to update user configuration
+ * parameters to obj mgr which are used by multiple components
+ * @hdd_ctx: HDD Context
+ *
+ * Return: 0 for Success, errno on failure
+ */
+static int hdd_update_user_config(hdd_context_t *hdd_ctx)
+{
+	struct wlan_objmgr_psoc_user_config *user_config;
+
+	user_config = qdf_mem_malloc(sizeof(*user_config));
+	if (user_config == NULL) {
+		hdd_alert("Failed to alloc memory for user_config!");
+		return -ENOMEM;
+	}
+
+	user_config->dot11_mode = hdd_ctx->config->dot11Mode;
+	user_config->dual_mac_feature_disable =
+		hdd_ctx->config->dual_mac_feature_disable;
+	user_config->indoor_channel_support =
+		hdd_ctx->config->indoor_channel_support;
+	user_config->is_11d_support_enabled =
+		hdd_ctx->config->Is11dSupportEnabled;
+	user_config->is_11h_support_enabled =
+		hdd_ctx->config->Is11hSupportEnabled;
+	user_config->optimize_chan_avoid_event =
+		hdd_ctx->config->goptimize_chan_avoid_event;
+	user_config->skip_dfs_chnl_in_p2p_search =
+		hdd_ctx->config->skipDfsChnlInP2pSearch;
+
+	wlan_objmgr_psoc_set_user_config(hdd_ctx->hdd_psoc, user_config);
+
+	qdf_mem_free(user_config);
+	return 0;
+}
+
+/**
  * hdd_init_thermal_info - Initialize thermal level
  * @hdd_ctx:	HDD context
  *
@@ -10370,6 +10407,7 @@ int hdd_update_config(hdd_context_t *hdd_ctx)
 		ret = hdd_update_cds_config_ftm(hdd_ctx);
 	else
 		ret = hdd_update_cds_config(hdd_ctx);
+	ret = hdd_update_user_config(hdd_ctx);
 
 	return ret;
 }
