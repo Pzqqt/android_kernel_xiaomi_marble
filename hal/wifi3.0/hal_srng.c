@@ -994,7 +994,7 @@ void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 	void *dev_base_addr;
 	int i;
 
-	ring_id = hal_get_srng_ring_id(hal_soc, ring_type, ring_num, 0);
+	ring_id = hal_get_srng_ring_id(hal_soc, ring_type, ring_num, mac_id);
 	if (ring_id < 0)
 		return NULL;
 
