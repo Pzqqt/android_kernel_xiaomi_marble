@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -48,8 +48,6 @@ static inline void wma_update_hdd_cfg_ndp(tp_wma_handle wma_handle,
 }
 QDF_STATUS wma_handle_ndp_responder_req(tp_wma_handle wma_handle,
 					struct ndp_responder_req *req_params);
-void wma_delete_all_nan_remote_peers(tp_wma_handle wma,
-					uint32_t vdev_id);
 
 void wma_ndp_register_all_event_handlers(tp_wma_handle wma_handle);
 void wma_ndp_unregister_all_event_handlers(tp_wma_handle wma_handle);
@@ -75,10 +73,6 @@ static inline void wma_add_bss_ndi_mode(tp_wma_handle wma,
 					tpAddBssParams add_bss)
 {
 	return;
-}
-static inline void wma_delete_all_nan_remote_peers(tp_wma_handle wma,
-							uint32_t vdev_id)
-{
 }
 static inline void wma_ndp_register_all_event_handlers(
 					tp_wma_handle wma_handle) {}

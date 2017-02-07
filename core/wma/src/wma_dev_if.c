@@ -1232,83 +1232,6 @@ err:
 	return QDF_STATUS_E_FAILURE;
 }
 
-#ifdef QCA_IBSS_SUPPORT
-
-/**
- * wma_delete_all_ibss_peers() - delete all ibss peer for vdev_id
- * @wma: wma handle
- * @vdev_id: vdev id
- *
- * This function send peer delete command to fw for all
- * peers in peer_list  and remove ref count for peer id
- * peer will actually remove from list after receving
- * unmap event from firmware.
- *
- * Return: none
- */
-static void wma_delete_all_ibss_peers(tp_wma_handle wma, A_UINT32 vdev_id)
-{
-	void *vdev;
-
-	if (!wma || vdev_id > wma->max_bssid)
-		return;
-
-	vdev = wma->interfaces[vdev_id].handle;
-	if (!vdev)
-		return;
-
-	/* remove all remote peers of IBSS */
-	cdp_peer_remove_for_vdev(cds_get_context(QDF_MODULE_ID_SOC), vdev,
-			(ol_txrx_vdev_peer_remove_cb)wma_remove_peer, wma,
-			true);
-}
-#else
-/**
- * wma_delete_all_ibss_peers(): dummy function for when ibss is not supported
- * @wma: wma handle
- * @vdev_id: vdev id
- *
- * This function send peer delete command to fw for all
- * peers in peer_list  and remove ref count for peer id
- * peer will actually remove from list after receving
- * unmap event from firmware.
- *
- * Return: none
- */
-static void wma_delete_all_ibss_peers(tp_wma_handle wma, A_UINT32 vdev_id)
-{
-}
-#endif /* QCA_IBSS_SUPPORT */
-
-/**
- * wma_delete_all_ap_remote_peers() - delete all ap peer for vdev_id
- * @wma: wma handle
- * @vdev_id: vdev id
- *
- * This function send peer delete command to fw for all
- * peers in peer_list  and remove ref count for peer id
- * peer will actually remove from list after receving
- * unmap event from firmware.
- *
- * Return: none
- */
-static void wma_delete_all_ap_remote_peers(tp_wma_handle wma, A_UINT32 vdev_id)
-{
-	void *vdev;
-
-	if (!wma || vdev_id > wma->max_bssid)
-		return;
-
-	vdev = wma->interfaces[vdev_id].handle;
-	if (!vdev)
-		return;
-
-	WMA_LOGE("%s: vdev_id - %d", __func__, vdev_id);
-	/* remove all remote peers of SAP */
-	cdp_peer_remove_for_vdev(cds_get_context(QDF_MODULE_ID_SOC), vdev,
-		(ol_txrx_vdev_peer_remove_cb)wma_remove_peer, wma, false);
-}
-
 /**
  * wma_hidden_ssid_vdev_restart_on_vdev_stop() - restart vdev to set hidden ssid
  * @wma_handle: wma handle
@@ -1372,6 +1295,62 @@ static void wma_cleanup_target_req_param(struct wma_target_req *tgt_req)
 }
 
 /**
+ * wma_remove_bss_peer() - remove BSS peer
+ * @wma: pointer to WMA handle
+ * @pdev: pointer to PDEV
+ * @req_msg: pointer to WMA target Request
+ * @vdev_id: vdev id on which delete BSS request was received
+ * @params: pointer to Delete BSS params
+ *
+ * This function is called on receiving vdev stop response from FW or
+ * vdev stop response timeout. In case of IBSS/NDI, use vdev's self MAC
+ * for removing the peer. In case of STA/SAP use bssid passed as part of
+ * delete STA parameter.
+ *
+ * Return: 0 on success, ERROR code on failure
+ */
+static int wma_remove_bss_peer(tp_wma_handle wma, void *pdev,
+		struct wma_target_req *req_msg, uint32_t vdev_id,
+		tpDeleteBssParams params)
+{
+	void *peer, *vdev;
+	uint8_t peer_id;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	uint8_t *mac_addr = NULL;
+
+	vdev = cdp_get_vdev_from_vdev_id(soc, pdev, vdev_id);
+	if (!vdev) {
+		WMA_LOGE(FL("vdev is NULL for vdev_id = %d"), vdev_id);
+		wma_cleanup_target_req_param(req_msg);
+		return -EINVAL;
+	}
+
+	if (wma_is_vdev_in_ibss_mode(wma, vdev_id) ||
+	    WMA_IS_VDEV_IN_NDI_MODE(wma->interfaces, vdev_id)) {
+		mac_addr = cdp_get_vdev_mac_addr(soc, vdev);
+		if (!mac_addr) {
+			WMA_LOGE(FL("mac_addr is NULL for vdev_id = %d"),
+				 vdev_id);
+			wma_cleanup_target_req_param(req_msg);
+			return -EINVAL;
+		}
+	} else {
+		mac_addr = params->bssid;
+	}
+
+	peer = cdp_peer_find_by_addr(soc, pdev, mac_addr, &peer_id);
+	if (!peer) {
+		WMA_LOGE(FL("peer NULL for vdev_id = %d"), vdev_id);
+		wma_cleanup_target_req_param(req_msg);
+		return -EINVAL;
+	}
+
+	wma_remove_peer(wma, mac_addr, vdev_id, peer, false);
+
+	return 0;
+}
+
+/**
  * wma_vdev_stop_resp_handler() - vdev stop response handler
  * @handle: wma handle
  * @cmd_param_info: event buffer
@@ -1386,9 +1365,7 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 	WMI_VDEV_STOPPED_EVENTID_param_tlvs *param_buf;
 	wmi_vdev_stopped_event_fixed_param *resp_event;
 	struct wma_target_req *req_msg;
-	void *peer;
 	void *pdev;
-	uint8_t peer_id;
 	struct wma_txrx_node *iface;
 	int32_t status = 0;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
@@ -1455,9 +1432,6 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 		if (resp_event->vdev_id > wma->max_bssid) {
 			WMA_LOGE("%s: Invalid vdev_id %d", __func__,
 				 resp_event->vdev_id);
-			wma_cleanup_target_req_param(req_msg);
-			status = -EINVAL;
-			goto free_req_msg;
 		}
 
 		iface = &wma->interfaces[resp_event->vdev_id];
@@ -1475,25 +1449,10 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 		qdf_mem_zero(&iface->arp_offload_req,
 			sizeof(iface->arp_offload_req));
 
-		if (wma_is_vdev_in_ibss_mode(wma, resp_event->vdev_id))
-			wma_delete_all_ibss_peers(wma, resp_event->vdev_id);
-		else if (WMA_IS_VDEV_IN_NDI_MODE(wma->interfaces,
-			resp_event->vdev_id)) {
-			wma_delete_all_nan_remote_peers(wma,
-				resp_event->vdev_id);
-		} else {
-			if (wma_is_vdev_in_ap_mode(wma, resp_event->vdev_id)) {
-				wma_delete_all_ap_remote_peers(wma,
-						resp_event->vdev_id);
-			}
-			peer = cdp_peer_find_by_addr(soc, pdev, params->bssid,
-							 &peer_id);
-			if (!peer)
-				WMA_LOGD("%s Failed to find peer %pM",
-					 __func__, params->bssid);
-			wma_remove_peer(wma, params->bssid, resp_event->vdev_id,
-					peer, false);
-		}
+		status = wma_remove_bss_peer(wma, pdev, req_msg,
+					     resp_event->vdev_id, params);
+		if (status != 0)
+			goto free_req_msg;
 
 		if (wmi_unified_vdev_down_send(wma->wmi_handle,
 						resp_event->vdev_id) !=
@@ -1550,6 +1509,7 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 			wma_vdev_detach(wma, iface->del_staself_req, 1);
 		}
 	}
+
 free_req_msg:
 	qdf_mc_timer_destroy(&req_msg->event_timeout);
 	qdf_mem_free(req_msg);
@@ -2458,9 +2418,7 @@ void wma_vdev_resp_timer(void *data)
 {
 	tp_wma_handle wma;
 	struct wma_target_req *tgt_req = (struct wma_target_req *)data;
-	void *peer;
 	void *pdev;
-	uint8_t peer_id;
 	struct wma_target_req *msg;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct scheduler_msg sme_msg = { 0 };
@@ -2546,19 +2504,10 @@ void wma_vdev_resp_timer(void *data)
 			return;
 		}
 
-		if (wma_is_vdev_in_ibss_mode(wma, tgt_req->vdev_id))
-			wma_delete_all_ibss_peers(wma, tgt_req->vdev_id);
-		else {
-			if (wma_is_vdev_in_ap_mode(wma, tgt_req->vdev_id)) {
-				wma_delete_all_ap_remote_peers(wma,
-							       tgt_req->
-							       vdev_id);
-			}
-			peer = cdp_peer_find_by_addr(soc, pdev, params->bssid,
-							 &peer_id);
-			wma_remove_peer(wma, params->bssid, tgt_req->vdev_id,
-					peer, false);
-		}
+		status = wma_remove_bss_peer(wma, pdev, tgt_req,
+					     tgt_req->vdev_id, params);
+		if (status != 0)
+			goto free_tgt_req;
 
 		if (wmi_unified_vdev_down_send(wma->wmi_handle,
 				tgt_req->vdev_id) != QDF_STATUS_SUCCESS) {

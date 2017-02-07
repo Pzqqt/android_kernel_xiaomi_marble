@@ -1054,65 +1054,6 @@ send_fail_resp:
 }
 
 /**
- * wma_delete_all_nan_remote_peers() - Delete all nan peers
- * @wma:  wma handle
- * @vdev_id: vdev id
- *
- * Return: None
- */
-void wma_delete_all_nan_remote_peers(tp_wma_handle wma, uint32_t vdev_id)
-{
-	void *vdev;
-	void *peer;
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	uint8_t *self_mac = NULL;
-	uint8_t peer_id;
-
-	if (!pdev) {
-		WMA_LOGE("%s:pdev is NULL", __func__);
-		return;
-	}
-
-	if (vdev_id > wma->max_bssid) {
-		WMA_LOGE("%s: invalid vdev_id = %d", __func__, vdev_id);
-		return;
-	}
-
-	vdev = wma->interfaces[vdev_id].handle;
-	if (!vdev) {
-		WMA_LOGE("%s: vdev is NULL for vdev_id = %d",
-			 __func__, vdev_id);
-		return;
-	}
-
-	if (!soc) {
-		WMA_LOGE("%s:SOC context is NULL", __func__);
-		return;
-	}
-
-	/* remove all remote peers of ndi */
-	cdp_peer_remove_for_vdev(soc, vdev, NULL, NULL, false);
-
-	/* remove ndi self peer last */
-	self_mac = cdp_get_vdev_mac_addr(soc, vdev);
-	if (!self_mac) {
-		WMA_LOGE("%s: self_mac address is NULL for vdev_id = %d",
-			 __func__, vdev_id);
-		return;
-	}
-
-	peer = cdp_peer_find_by_addr(soc, pdev, self_mac, &peer_id);
-	if (!peer) {
-		WMA_LOGE("%s: self peer is NULL for vdev_id = %d",
-			 __func__, vdev_id);
-		return;
-	}
-
-	wma_remove_peer(wma, self_mac, vdev_id, peer, false);
-}
-
-/**
  * wma_register_ndp_cb() - Register NDP callbacks
  * @pe_ndp_event_handler: PE NDP callback routine pointer
  *
