@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -140,6 +140,7 @@ QDF_STATUS hif_bus_open(struct hif_softc *hif_sc,
 		break;
 	case QDF_BUS_TYPE_SDIO:
 		status = hif_initialize_sdio_ops(hif_sc);
+		break;
 	case QDF_BUS_TYPE_USB:
 		status = hif_initialize_usb_ops(&hif_sc->bus_ops);
 		break;
