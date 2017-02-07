@@ -11466,6 +11466,7 @@ typedef struct
 #define LPI_IE_BITMAP_CHRE_ESS               0x010000000    /* ESS capability info for CHRE */
 #define LPI_IE_BITMAP_CHRE_SEC_MODE          0x020000000    /* Security capability info for CHRE */
 #define LPI_IE_BITMAP_CHRE_SUPPORTED_RATE    0x040000000    /* Hightest MCS corresponding NCC for TX and RX */
+#define LPI_IE_BITMAP_COUNTRY_STRING         0x080000000    /* send country string inside Country IE to LOWI LP */
 #define LPI_IE_BITMAP_ALL                    0xFFFFFFFF
 
 typedef struct {
