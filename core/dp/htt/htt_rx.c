@@ -395,8 +395,10 @@ htt_rx_in_ord_paddr_get(uint32_t *u32p)
 	paddr = (qdf_dma_addr_t)HTT_RX_IN_ORD_PADDR_IND_PADDR_GET(*u32p);
 	if (sizeof(qdf_dma_addr_t) > 4) {
 		u32p++;
-		paddr |= ((qdf_dma_addr_t)
-			(HTT_RX_IN_ORD_PADDR_IND_PADDR_GET(*u32p) << 16) << 16);
+		/* 32 bit architectures dont like <<32 */
+		paddr |= (((qdf_dma_addr_t)
+			  HTT_RX_IN_ORD_PADDR_IND_PADDR_GET(*u32p))
+			  << 16 << 16);
 	}
 	paddr = htt_rx_paddr_unmark_high_bits(paddr);
 
