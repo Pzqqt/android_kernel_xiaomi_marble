@@ -20,6 +20,7 @@
 #include <hal_api.h>
 #include "dp_htt.h"
 #include "dp_peer.h"
+#include "dp_types.h"
 
 #define HTT_HTC_PKT_POOL_INIT_SIZE 64
 
@@ -328,7 +329,13 @@ int htt_srng_setup(void *htt_soc, int mac_id, void *hal_srng,
 	/* word 0 */
 	*msg_word = 0;
 	HTT_H2T_MSG_TYPE_SET(*msg_word, HTT_H2T_MSG_TYPE_SRING_SETUP);
-	HTT_SRING_SETUP_PDEV_ID_SET(*msg_word, mac_id);
+
+	if (htt_ring_type == HTT_SW_TO_HW_RING)
+		HTT_SRING_SETUP_PDEV_ID_SET(*msg_word,
+			 DP_SW2HW_MACID(mac_id));
+	else
+		HTT_SRING_SETUP_PDEV_ID_SET(*msg_word, mac_id);
+
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			 "%s: mac_id %d\n", __func__, mac_id);
 	HTT_SRING_SETUP_RING_TYPE_SET(*msg_word, htt_ring_type);

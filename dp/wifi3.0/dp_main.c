@@ -1207,52 +1207,68 @@ static void dp_soc_detach_wifi3(void *txrx_soc)
 * Return: void
 */
 #ifdef QCA_HOST2FW_RXBUF_RING
-static void dp_rxdma_ring_config(struct dp_soc *soc,
-	 struct dp_pdev *pdev)
+static void dp_rxdma_ring_config(struct dp_soc *soc)
 {
-	int mac_id = 0;
-	int j;
-	int max_mac_rings =
-		 wlan_cfg_get_num_mac_rings
-		(pdev->wlan_cfg_ctx);
+	int i;
 
-	max_mac_rings =
-		 max_mac_rings < MAX_RX_MAC_RINGS ?
-		 max_mac_rings : MAX_RX_MAC_RINGS;
+	for (i = 0; i < MAX_PDEV_CNT; i++) {
+		struct dp_pdev *pdev = soc->pdev_list[i];
 
-	if (!soc->cdp_soc.ol_ops->
-		is_hw_dbs_2x2_capable()) {
-		max_mac_rings = 1;
-		QDF_TRACE(QDF_MODULE_ID_TXRX,
-			 QDF_TRACE_LEVEL_ERROR,
-			 FL("DBS enabled, max_mac_rings %d\n"),
-			 max_mac_rings);
-	} else {
-		QDF_TRACE(QDF_MODULE_ID_TXRX,
-			 QDF_TRACE_LEVEL_ERROR,
-			 FL("DBS disabled max_mac_rings %d\n"),
-			 max_mac_rings);
-	}
+		if (pdev) {
+			int mac_id = 0;
+			int j;
+			int max_mac_rings =
+				 wlan_cfg_get_num_mac_rings
+				(pdev->wlan_cfg_ctx);
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			 FL("pdev_id %d max_mac_rings %d\n"),
-			 pdev->pdev_id, max_mac_rings);
+			htt_srng_setup(soc->htt_handle, 0,
+				 pdev->rx_refill_buf_ring.hal_srng,
+				 RXDMA_BUF);
 
-	for (j = 0; j < max_mac_rings; j++) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX,
-			 QDF_TRACE_LEVEL_ERROR,
-			 FL("mac_id %d\n"), mac_id);
-		htt_srng_setup(soc->htt_handle, mac_id,
-			 pdev->rx_mac_buf_ring[j]
-				.hal_srng,
-			 RXDMA_BUF);
-		mac_id++;
+			if (!soc->cdp_soc.ol_ops->
+				is_hw_dbs_2x2_capable()) {
+				max_mac_rings = 1;
+				QDF_TRACE(QDF_MODULE_ID_TXRX,
+					 QDF_TRACE_LEVEL_ERROR,
+					 FL("DBS enabled, max_mac_rings %d\n"),
+					 max_mac_rings);
+			} else {
+				QDF_TRACE(QDF_MODULE_ID_TXRX,
+					 QDF_TRACE_LEVEL_ERROR,
+					 FL("DBS disabled max_mac_rings %d\n"),
+					 max_mac_rings);
+			}
+
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+					 FL("pdev_id %d max_mac_rings %d\n"),
+					 pdev->pdev_id, max_mac_rings);
+
+			for (j = 0; j < max_mac_rings; j++) {
+				QDF_TRACE(QDF_MODULE_ID_TXRX,
+					 QDF_TRACE_LEVEL_ERROR,
+					 FL("mac_id %d\n"), mac_id);
+				htt_srng_setup(soc->htt_handle, mac_id,
+					 pdev->rx_mac_buf_ring[j]
+						.hal_srng,
+					 RXDMA_BUF);
+				mac_id++;
+			}
+		}
 	}
 }
 #else
-static void dp_rxdma_ring_config(struct dp_soc *soc,
-	 struct dp_pdev *pdev)
+static void dp_rxdma_ring_config(struct dp_soc *soc)
 {
+	int i;
+
+	for (i = 0; i < MAX_PDEV_CNT; i++) {
+		struct dp_pdev *pdev = soc->pdev_list[i];
+
+		if (pdev) {
+			htt_srng_setup(soc->htt_handle, i,
+				pdev->rx_refill_buf_ring.hal_srng, RXDMA_BUF);
+		}
+	}
 }
 #endif
 
@@ -1263,32 +1279,11 @@ static void dp_rxdma_ring_config(struct dp_soc *soc,
 static int dp_soc_attach_target_wifi3(struct cdp_soc_t *cdp_soc)
 {
 	struct dp_soc *soc = (struct dp_soc *)cdp_soc;
-	int i; /* variable to track the pdev number */
 
 	htt_soc_attach_target(soc->htt_handle);
 
-	for (i = 0; i < MAX_PDEV_CNT; i++) {
-		struct dp_pdev *pdev = soc->pdev_list[i];
+	dp_rxdma_ring_config(soc);
 
-		if (pdev) {
-			htt_srng_setup(soc->htt_handle, i,
-				pdev->rx_refill_buf_ring.hal_srng, RXDMA_BUF);
-
-			dp_rxdma_ring_config(soc, pdev);
-
-#ifdef notyet /* FW doesn't handle monitor rings yet */
-			htt_srng_setup(soc->htt_handle, i,
-					pdev->rxdma_mon_buf_ring.hal_srng,
-					RXDMA_MONITOR_BUF);
-			htt_srng_setup(soc->htt_handle, i,
-					pdev->rxdma_mon_dst_ring.hal_srng,
-					RXDMA_MONITOR_DST);
-			htt_srng_setup(soc->htt_handle, i,
-					pdev->rxdma_mon_status_ring.hal_srng,
-					RXDMA_MONITOR_STATUS);
-#endif
-		}
-	}
 	return 0;
 }
 

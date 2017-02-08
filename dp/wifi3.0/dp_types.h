@@ -83,6 +83,18 @@ union dp_rx_desc_list_elem_t;
 #define DP_TRACE(LVL, fmt, args ...)                             \
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_##LVL,       \
 		"%s:%d: "fmt, __func__, __LINE__, ## args)
+
+/**
+ * macros to convert hw mac id to sw mac id:
+ * mac ids used by hardware start from a value of 1 while
+ * those in host software start from a value of 0. Use the
+ * macros below to convert between mac ids used by software and
+ * hardware
+ */
+#define DP_SW2HW_MACID(id) ((id) + 1)
+
+#define DP_HW2SW_MACID(id) ((id) > 0 ? ((id) - 1) : 0)
+
 /**
  * enum dp_tx_frm_type
  * @dp_tx_frm_std: Regular frame, no added header fragments
