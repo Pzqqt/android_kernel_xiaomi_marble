@@ -31,6 +31,30 @@
 #include "wmi_unified_priv.h"
 #include "wmi_version_whitelist.h"
 
+
+/* copy_vdev_create_pdev_id() - copy pdev from host params to target command
+ *                              buffer.
+ * @cmd: pointer target vdev create command buffer
+ * @param: pointer host params for vdev create
+ *
+ * Return: None
+ */
+#ifdef CONFIG_MCL
+static inline void copy_vdev_create_pdev_id(
+		wmi_vdev_create_cmd_fixed_param * cmd,
+		struct vdev_create_params *param)
+{
+	cmd->pdev_id = WMI_PDEV_ID_SOC;
+}
+#else
+static inline void copy_vdev_create_pdev_id(
+		wmi_vdev_create_cmd_fixed_param * cmd,
+		struct vdev_create_params *param)
+{
+	cmd->pdev_id = param->pdev_id;
+}
+#endif
+
 /**
  * send_vdev_create_cmd_tlv() - send VDEV create command to fw
  * @wmi_handle: wmi handle
@@ -66,7 +90,7 @@ static QDF_STATUS send_vdev_create_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->vdev_type = param->type;
 	cmd->vdev_subtype = param->subtype;
 	cmd->num_cfg_txrx_streams = num_bands;
-	cmd->pdev_id = WMI_PDEV_ID_SOC;
+	copy_vdev_create_pdev_id(cmd, param);
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(macaddr, &cmd->vdev_macaddr);
 	WMI_LOGD("%s: ID = %d VAP Addr = %02x:%02x:%02x:%02x:%02x:%02x",
 		 __func__, param->if_id,
@@ -2023,6 +2047,7 @@ static QDF_STATUS send_scan_stop_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->vdev_id = param->vdev_id;
 	cmd->requestor = param->requestor;
 	cmd->scan_id = param->scan_id;
+	cmd->pdev_id = param->pdev_id;
 	/* stop the scan with the corresponding scan_id */
 	cmd->req_type = param->req_type;
 	ret = wmi_unified_cmd_send(wmi_handle, wmi_buf,
@@ -2142,6 +2167,7 @@ static QDF_STATUS send_scan_chan_list_cmd_tlv(wmi_unified_t wmi_handle,
 
 	WMI_LOGD("no of channels = %d, len = %d", chan_list->nallchans, len);
 
+	cmd->pdev_id = chan_list->pdev_id;
 	cmd->num_scan_chans = chan_list->nallchans;
 	WMITLV_SET_HDR((buf_ptr + sizeof(wmi_scan_chan_list_cmd_fixed_param)),
 		       WMITLV_TAG_ARRAY_STRUC,
@@ -9769,7 +9795,9 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 			tgt_res_cfg->num_ocb_channels;
 	resource_cfg->num_ocb_schedules =
 			tgt_res_cfg->num_ocb_schedules;
-
+	resource_cfg->bpf_instruction_size = tgt_res_cfg->bpf_instruction_size;
+	resource_cfg->max_bssid_rx_filters = tgt_res_cfg->max_bssid_rx_filters;
+	resource_cfg->use_pdev_id = tgt_res_cfg->use_pdev_id;
 }
 #ifdef CONFIG_MCL
 /**
@@ -12345,6 +12373,7 @@ static QDF_STATUS extract_mgmt_rx_params_tlv(wmi_unified_t wmi_handle,
 		return QDF_STATUS_E_INVAL;
 	}
 
+	hdr->pdev_id = ev_hdr->pdev_id;
 
 	hdr->channel = ev_hdr->channel;
 	hdr->snr = ev_hdr->snr;
@@ -12524,6 +12553,7 @@ static QDF_STATUS extract_mgmt_tx_compl_param_tlv(wmi_unified_t wmi_handle,
 	}
 	cmpl_params = param_buf->fixed_param;
 
+	param->pdev_id = cmpl_params->pdev_id;
 	param->desc_id = cmpl_params->desc_id;
 	param->status = cmpl_params->status;
 
