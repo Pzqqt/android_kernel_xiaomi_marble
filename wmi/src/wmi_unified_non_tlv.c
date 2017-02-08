@@ -38,6 +38,14 @@
 #if defined(WMI_NON_TLV_SUPPORT) || defined(WMI_TLV_AND_NON_TLV_SUPPORT)
 #include "wmi.h"
 #include "wmi_unified.h"
+
+/* Pdev_id starts from 1. For backward compatability value zero is used
+ * for broadcast ID. pdev_id is used to distinguish the radio for which event
+ * is recieved. Since non-tlv target has only one radio, setting
+ * default pdev_id to one to keep rest of the code using WMI APIs unfiorm.
+ */
+#define WMI_NON_TLV_DEFAULT_PDEV_ID 1
+
 /**
  * send_vdev_create_cmd_non_tlv() - send VDEV create command to fw
  * @wmi_handle: wmi handle
@@ -5759,6 +5767,11 @@ static QDF_STATUS extract_wds_addr_event_non_tlv(wmi_unified_t wmi_handle,
 		wds_ev->dest_mac[4+i] =
 			((u_int8_t *)&(ev->dest_mac.mac_addr47to32))[i];
 	}
+	/* vdev_id is not available in legacy. It is required only to get
+	 * pdev, hence setting it to zero as legacy as only one pdev.
+	 */
+	wds_ev->vdev_id = 0;
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -5779,7 +5792,7 @@ static QDF_STATUS extract_dcs_interference_type_non_tlv(
 	    (wmi_dcs_interference_event_t *) evt_buf;
 
 	param->interference_type = ev->interference_type;
-	param->pdev_id = 1;
+	param->pdev_id = WMI_NON_TLV_DEFAULT_PDEV_ID;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -5836,6 +5849,8 @@ static QDF_STATUS extract_fips_event_data_non_tlv(wmi_unified_t wmi_handle,
 		struct wmi_host_fips_event_param *param)
 {
 	wmi_pdev_fips_event *event = (wmi_pdev_fips_event *)evt_buf;
+
+	param->pdev_id = WMI_NON_TLV_DEFAULT_PDEV_ID;
 #ifdef BIG_ENDIAN_HOST
 	{
 		/*****************LE to BE conversion*************************/
@@ -5955,6 +5970,7 @@ static QDF_STATUS extract_mgmt_rx_params_non_tlv(wmi_unified_t wmi_handle,
 	hdr->phy_mode = ev->hdr.phy_mode;
 	hdr->buf_len = ev->hdr.buf_len;
 	hdr->status = ev->hdr.status;
+	hdr->pdev_id = WMI_NON_TLV_DEFAULT_PDEV_ID;
 
 	*bufp = ev->bufp;
 
@@ -6216,6 +6232,7 @@ static QDF_STATUS extract_pdev_tpc_config_ev_param_non_tlv(wmi_unified_t wmi_han
 {
 	wmi_pdev_tpc_config_event *event = (wmi_pdev_tpc_config_event *)evt_buf;
 
+	param->pdev_id = WMI_NON_TLV_DEFAULT_PDEV_ID;
 	param->regDomain = event->regDomain;
 	param->chanFreq = event->chanFreq;
 	param->phyMode = event->phyMode;
@@ -6264,6 +6281,8 @@ static QDF_STATUS extract_nfcal_power_ev_param_non_tlv(wmi_unified_t wmi_handle,
 	qdf_mem_copy(param->nfdBm, event->nfdBm, sizeof(param->nfdBm));
 	qdf_mem_copy(param->freqNum, event->freqNum, sizeof(param->freqNum));
 
+	param->pdev_id = WMI_NON_TLV_DEFAULT_PDEV_ID;
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -6282,6 +6301,7 @@ static QDF_STATUS extract_pdev_tpc_ev_param_non_tlv(wmi_unified_t wmi_handle,
 	wmi_pdev_tpc_event *event = (wmi_pdev_tpc_event *)evt_buf;
 
 	qdf_mem_copy(param->tpc, event->tpc, sizeof(param->tpc));
+	param->pdev_id = WMI_NON_TLV_DEFAULT_PDEV_ID;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -6346,6 +6366,7 @@ static QDF_STATUS extract_pdev_reserve_ast_ev_param_non_tlv(
 	    (wmi_pdev_reserve_ast_entry_event *) evt_buf;
 
 	*result = ev->result;
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -6488,6 +6509,7 @@ static QDF_STATUS extract_peer_sta_kickout_ev_non_tlv(wmi_unified_t wmi_handle,
 	/**Following not available in legacy wmi*/
 	ev->reason = 0;
 	ev->rssi = 0;
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -6853,6 +6875,8 @@ static QDF_STATUS extract_comb_phyerr_non_tlv(wmi_unified_t wmi_handle, void *ev
 	phyerr->tsf64 |= (((uint64_t) pe->hdr.tsf_u32) << 32);
 
 	*buf_offset = sizeof(pe->hdr);
+	phyerr->pdev_id = WMI_NON_TLV_DEFAULT_PDEV_ID;
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -6879,6 +6903,8 @@ static QDF_STATUS extract_single_phyerr_non_tlv(wmi_unified_t wmi_handle,
 	int n = 0;
 	uint8_t *data;
 
+	phyerr->pdev_id = WMI_NON_TLV_DEFAULT_PDEV_ID;
+
 	n = (int) *buf_offset;
 	data = (uint8_t *) evt_buf;
 
@@ -6892,7 +6918,7 @@ static QDF_STATUS extract_single_phyerr_non_tlv(wmi_unified_t wmi_handle,
 		/* ensure there's at least space for the header */
 		if ((datalen - n) < sizeof(ev->hdr)) {
 			qdf_print(
-			"%s: not enough space? (datalen=%d, n=%d, hdr=%d bytes\n",
+			"%s: not enough space? (datalen=%d, n=%d, hdr=%zd bytes\n",
 				  __func__,
 				  datalen,
 				  n,
@@ -7134,6 +7160,8 @@ static QDF_STATUS extract_composite_phyerr_non_tlv(wmi_unified_t wmi_handle,
 		/* XXX what should errors be? */
 	}
 
+	phyerr->pdev_id = WMI_NON_TLV_DEFAULT_PDEV_ID;
+
 	pe = (wmi_composite_phyerr_rx_event *) evt_buf;
 	ph = &pe->hdr;
 
@@ -7270,6 +7298,7 @@ static QDF_STATUS extract_all_stats_counts_non_tlv(wmi_unified_t wmi_handle,
 	stats_param->num_peer_stats = ev->num_peer_stats;
 	stats_param->num_bcnflt_stats = ev->num_bcnflt_stats;
 	stats_param->num_chan_stats = 0;
+	stats_param->pdev_id = WMI_NON_TLV_DEFAULT_PDEV_ID;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -7666,6 +7695,7 @@ static QDF_STATUS extract_chan_info_event_non_tlv(wmi_unified_t wmi_handle,
 {
 	wmi_chan_info_event *chan_info_ev = (wmi_chan_info_event *)evt_buf;
 
+	chan_info->pdev_id = WMI_NON_TLV_DEFAULT_PDEV_ID;
 	chan_info->err_code = chan_info_ev->err_code;
 	chan_info->freq = chan_info_ev->freq;
 	chan_info->cmd_flags = chan_info_ev->cmd_flags;
@@ -7698,6 +7728,7 @@ static QDF_STATUS extract_channel_hopping_event_non_tlv(
 	wmi_pdev_channel_hopping_event *event =
 		(wmi_pdev_channel_hopping_event *)evt_buf;
 
+	ch_hopping->pdev_id = WMI_NON_TLV_DEFAULT_PDEV_ID;
 	ch_hopping->noise_floor_report_iter = event->noise_floor_report_iter;
 	ch_hopping->noise_floor_total_iter = event->noise_floor_total_iter;
 
@@ -7719,8 +7750,20 @@ static QDF_STATUS extract_bss_chan_info_event_non_tlv(wmi_unified_t wmi_handle,
 	wmi_pdev_bss_chan_info_event *event =
 		(wmi_pdev_bss_chan_info_event *)evt_buf;
 
-	qdf_mem_copy(bss_chan_info, event,
-			sizeof(wmi_pdev_bss_chan_info_event));
+	bss_chan_info->pdev_id = WMI_NON_TLV_DEFAULT_PDEV_ID;
+	bss_chan_info->freq = event->freq;
+	bss_chan_info->noise_floor = event->noise_floor;
+	bss_chan_info->rx_clear_count_low = event->rx_clear_count_low;
+	bss_chan_info->rx_clear_count_high = event->rx_clear_count_high;
+	bss_chan_info->cycle_count_low = event->cycle_count_low;
+	bss_chan_info->cycle_count_high = event->cycle_count_high;
+	bss_chan_info->tx_cycle_count_low = event->tx_cycle_count_low;
+	bss_chan_info->tx_cycle_count_high = event->tx_cycle_count_high;
+	bss_chan_info->rx_cycle_count_low = event->rx_cycle_count_low;
+	bss_chan_info->rx_cycle_count_high = event->rx_cycle_count_high;
+	bss_chan_info->rx_bss_cycle_count_low = event->rx_bss_cycle_count_low;
+	bss_chan_info->rx_bss_cycle_count_high = event->rx_bss_cycle_count_high;
+	bss_chan_info->reserved = event->reserved;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -7739,6 +7782,7 @@ static QDF_STATUS extract_inst_rssi_stats_event_non_tlv(
 {
 	wmi_inst_stats_resp *event = (wmi_inst_stats_resp *)evt_buf;
 
+	inst_rssi_resp->pdev_id = WMI_NON_TLV_DEFAULT_PDEV_ID;
 	qdf_mem_copy(inst_rssi_resp, event, sizeof(wmi_inst_stats_resp));
 
 	return QDF_STATUS_SUCCESS;
@@ -7783,6 +7827,7 @@ static QDF_STATUS extract_atf_peer_stats_ev_non_tlv(
 	wmi_atf_peer_stats_event *evt =
 		(wmi_atf_peer_stats_event *)evt_buf;
 
+	ev->pdev_id = WMI_NON_TLV_DEFAULT_PDEV_ID;
 	ev->num_atf_peers = evt->num_atf_peers;
 	ev->comp_usable_airtime = evt->comp_usable_airtime;
 	qdf_mem_copy(&ev->reserved[0], &evt->reserved[0],
