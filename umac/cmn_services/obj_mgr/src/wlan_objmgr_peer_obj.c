@@ -505,6 +505,7 @@ void wlan_objmgr_peer_get_ref(struct wlan_objmgr_peer *peer,
 	}
 	/* Increment ref count */
 	qdf_atomic_inc(&peer->peer_objmgr.ref_cnt);
+	qdf_atomic_inc(&peer->peer_objmgr.ref_id_dbg[id]);
 
 	return;
 }
@@ -543,11 +544,19 @@ void wlan_objmgr_peer_release_ref(struct wlan_objmgr_peer *peer,
 		return;
 	}
 
+	if (!qdf_atomic_read(&peer->peer_objmgr.ref_id_dbg[id])) {
+		qdf_print("%s: peer ref cnt was not taken by %d\n",
+			  __func__, id);
+		wlan_objmgr_print_ref_ids(peer->peer_objmgr.ref_id_dbg);
+		WLAN_OBJMGR_BUG(0);
+	}
+
 	if (!qdf_atomic_read(&peer->peer_objmgr.ref_cnt)) {
 		qdf_print("%s: peer ref cnt is 0\n", __func__);
 		WLAN_OBJMGR_BUG(0);
 		return;
 	}
+	qdf_atomic_dec(&peer->peer_objmgr.ref_id_dbg[id]);
 
 	/* Decrement ref count, free vdev, if ref acount == 0 */
 	if (qdf_atomic_dec_and_test(&peer->peer_objmgr.ref_cnt))

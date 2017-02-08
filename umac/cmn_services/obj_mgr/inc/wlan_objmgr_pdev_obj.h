@@ -139,6 +139,7 @@ struct wlan_objmgr_pdev_mlme {
  * @max_vdev_count:    Max no. of VDEVs supported by this PDEV
  * @wlan_psoc:         back pointer to PSOC, its attached to
  * @ref_cnt:           Ref count
+ * @ref_id_dbg:        Array to track Ref count
  */
 struct wlan_objmgr_pdev_objmgr {
 	uint8_t wlan_pdev_id;
@@ -147,6 +148,7 @@ struct wlan_objmgr_pdev_objmgr {
 	uint8_t max_vdev_count;
 	struct wlan_objmgr_psoc *wlan_psoc;
 	qdf_atomic_t ref_cnt;
+	qdf_atomic_t ref_id_dbg[WLAN_REF_ID_MAX];
 };
 
 /**
@@ -244,6 +246,10 @@ QDF_STATUS wlan_objmgr_pdev_component_obj_detach(
  ** APIs to operations on pdev objects
  */
 
+typedef void (*wlan_objmgr_pdev_op_handler)(struct wlan_objmgr_pdev *pdev,
+					void *object,
+					void *arg);
+
 /**
  * wlan_objmgr_pdev_iterate_obj_list() - operate on all objects of pdev
  * @pdev: PDEV object
@@ -261,11 +267,6 @@ QDF_STATUS wlan_objmgr_pdev_component_obj_detach(
  *
  * Return: SUCCESS/FAILURE
  */
-
-typedef void (*wlan_objmgr_pdev_op_handler)(struct wlan_objmgr_pdev *pdev,
-					void *object,
-					void *arg);
-
 QDF_STATUS wlan_objmgr_pdev_iterate_obj_list(
 		struct wlan_objmgr_pdev *pdev,
 		enum wlan_objmgr_obj_type obj_type,

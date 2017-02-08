@@ -157,6 +157,7 @@ typedef void (*wlan_objmgr_peer_status_handler)(
  * @WLAN_MLME_NB_ID:            MLME Northbound operations
  * @WLAN_MGMT_SB_ID:            MGMT Northbound operations
  * @WLAN_MGMT_NB_ID:            MGMT Southbound operations
+ * @WLAN_REF_ID_MAX:            Max ID, this should be the last one in enum
  */
 typedef enum {
 	WLAN_OBJMGR_ID      = 0,
@@ -164,6 +165,7 @@ typedef enum {
 	WLAN_MLME_NB_ID     = 2,
 	WLAN_MGMT_SB_ID     = 3,
 	WLAN_MGMT_NB_ID     = 4,
+	WLAN_REF_ID_MAX,
 } wlan_objmgr_ref_dbgid;
 
 #ifdef WLAN_OBJMGR_DEBUG

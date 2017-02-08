@@ -1321,7 +1321,7 @@ void wlan_objmgr_psoc_get_ref(struct wlan_objmgr_psoc *psoc,
 	}
 	/* Increment ref count */
 	qdf_atomic_inc(&psoc->soc_objmgr.ref_cnt);
-
+	qdf_atomic_inc(&psoc->soc_objmgr.ref_id_dbg[id]);
 	return;
 }
 EXPORT_SYMBOL(wlan_objmgr_psoc_get_ref);
@@ -1360,12 +1360,20 @@ void wlan_objmgr_psoc_release_ref(struct wlan_objmgr_psoc *psoc,
 		return;
 	}
 
+	if (!qdf_atomic_read(&psoc->soc_objmgr.ref_id_dbg[id])) {
+		qdf_print("%s: psoc ref cnt was not taken by %d\n",
+			  __func__, id);
+		wlan_objmgr_print_ref_ids(psoc->soc_objmgr.ref_id_dbg);
+		WLAN_OBJMGR_BUG(0);
+	}
+
 	if (!qdf_atomic_read(&psoc->soc_objmgr.ref_cnt)) {
 		qdf_print("%s: psoc ref cnt is 0\n", __func__);
 		WLAN_OBJMGR_BUG(0);
 		return;
 	}
 
+	qdf_atomic_dec(&psoc->soc_objmgr.ref_id_dbg[id]);
 	/* Decrement ref count, free psoc, if ref count == 0 */
 	if (qdf_atomic_dec_and_test(&psoc->soc_objmgr.ref_cnt))
 		wlan_objmgr_psoc_obj_destroy(psoc);
@@ -1373,3 +1381,70 @@ void wlan_objmgr_psoc_release_ref(struct wlan_objmgr_psoc *psoc,
 	return;
 }
 EXPORT_SYMBOL(wlan_objmgr_psoc_release_ref);
+
+static void wlan_objmgr_psoc_peer_ref_print(struct wlan_objmgr_psoc *psoc,
+					 void *obj, void *args)
+{
+	struct wlan_objmgr_peer *peer = (struct wlan_objmgr_peer *)obj;
+	uint8_t *macaddr;
+
+	wlan_peer_obj_lock(peer);
+	macaddr = wlan_peer_get_macaddr(peer);
+	wlan_peer_obj_unlock(peer);
+
+	qdf_print(" Peer MAC is %02x:%02x:%02x:%02x:%02x:%02x\n",
+		  macaddr[0], macaddr[1], macaddr[2], macaddr[3],
+		  macaddr[4], macaddr[5]);
+	wlan_objmgr_print_ref_ids(peer->peer_objmgr.ref_id_dbg);
+}
+
+static void wlan_objmgr_psoc_vdev_ref_print(struct wlan_objmgr_psoc *psoc,
+					 void *obj, void *args)
+{
+	struct wlan_objmgr_vdev *vdev = (struct wlan_objmgr_vdev *)obj;
+	uint8_t id;
+
+	wlan_vdev_obj_lock(vdev);
+	id = wlan_vdev_get_id(vdev);
+	wlan_vdev_obj_unlock(vdev);
+	qdf_print(" Vdev ID is %d\n", id);
+
+	wlan_objmgr_print_ref_ids(vdev->vdev_objmgr.ref_id_dbg);
+}
+
+static void wlan_objmgr_psoc_pdev_ref_print(struct wlan_objmgr_psoc *psoc,
+					 void *obj, void *args)
+{
+	struct wlan_objmgr_pdev *pdev = (struct wlan_objmgr_pdev *)obj;
+	uint8_t id;
+
+	wlan_pdev_obj_lock(pdev);
+	id = pdev->pdev_objmgr.wlan_pdev_id;
+	wlan_pdev_obj_unlock(pdev);
+	qdf_print(" pdev ID is %d\n", id);
+
+	wlan_objmgr_print_ref_ids(pdev->pdev_objmgr.ref_id_dbg);
+}
+
+QDF_STATUS wlan_objmgr_print_ref_all_objects_per_psoc(
+		struct wlan_objmgr_psoc *psoc)
+{
+	qdf_print(" Ref counts of PEER\n");
+	wlan_objmgr_iterate_obj_list(psoc, WLAN_PEER_OP,
+				     wlan_objmgr_psoc_peer_ref_print, NULL, 1,
+				     WLAN_OBJMGR_ID);
+	qdf_print(" Ref counts of VDEV\n");
+	wlan_objmgr_iterate_obj_list(psoc, WLAN_VDEV_OP,
+				     wlan_objmgr_psoc_vdev_ref_print, NULL, 1,
+				     WLAN_OBJMGR_ID);
+	qdf_print(" Ref counts of PDEV\n");
+	wlan_objmgr_iterate_obj_list(psoc, WLAN_PDEV_OP,
+				     wlan_objmgr_psoc_pdev_ref_print, NULL, 1,
+				     WLAN_OBJMGR_ID);
+
+	qdf_print(" Ref counts of PSOC\n");
+	wlan_objmgr_print_ref_ids(psoc->soc_objmgr.ref_id_dbg);
+
+	return QDF_STATUS_SUCCESS;
+}
+EXPORT_SYMBOL(wlan_objmgr_print_ref_all_objects_per_psoc);

@@ -300,6 +300,7 @@ struct wlan_objmgr_vdev_nif {
  *  @max_peer_count:    Max Peer count
  *  @c_flags:           creation specific flags
  *  @ref_cnt:           Ref count
+ *  @ref_id_dbg:        Array to track Ref count
  */
 struct wlan_objmgr_vdev_objmgr {
 	uint8_t vdev_id;
@@ -311,6 +312,7 @@ struct wlan_objmgr_vdev_objmgr {
 	uint16_t max_peer_count;
 	uint32_t c_flags;
 	qdf_atomic_t ref_cnt;
+	qdf_atomic_t ref_id_dbg[WLAN_REF_ID_MAX];
 };
 
 /**
@@ -408,6 +410,10 @@ QDF_STATUS wlan_objmgr_vdev_component_obj_detach(
  ** APIs to operations on vdev objects
 */
 
+typedef void (*wlan_objmgr_vdev_op_handler)(struct wlan_objmgr_vdev *vdev,
+					void *object,
+					void *arg);
+
 /**
  * wlan_objmgr_iterate_peerobj_list() - iterate vdev's peer list
  * @vdev: vdev object
@@ -421,10 +427,6 @@ QDF_STATUS wlan_objmgr_vdev_component_obj_detach(
  *
  * Return: SUCCESS/FAILURE
  */
-typedef void (*wlan_objmgr_vdev_op_handler)(struct wlan_objmgr_vdev *vdev,
-					void *object,
-					void *arg);
-
 QDF_STATUS wlan_objmgr_iterate_peerobj_list(
 		struct wlan_objmgr_vdev *vdev,
 		wlan_objmgr_vdev_op_handler handler,

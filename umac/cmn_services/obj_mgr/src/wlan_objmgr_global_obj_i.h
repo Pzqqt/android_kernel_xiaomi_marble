@@ -120,4 +120,14 @@ QDF_STATUS wlan_objmgr_psoc_object_attach(
  */
 QDF_STATUS wlan_objmgr_psoc_object_detach(
 			struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_objmgr_print_ref_ids() - Print ref counts of modules
+ * @id - array of ref debug
+ *
+ * Itertes through array, and prints the ref count debug
+ *
+ * Return: nothing
+ */
+void wlan_objmgr_print_ref_ids(qdf_atomic_t *id);
 #endif /* _WLAN_OBJMGR_GLOBAL_OBJ_I_H_ */

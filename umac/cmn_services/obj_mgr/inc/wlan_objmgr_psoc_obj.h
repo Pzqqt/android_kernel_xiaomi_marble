@@ -193,6 +193,7 @@ struct wlan_objmgr_psoc_nif {
  * @wlan_peer_count:      PEER count
  * @peer_list:            Peer list
  * @ref_cnt:              Ref count
+ * @ref_id_dbg:           Array to track Ref count
  */
 struct wlan_objmgr_psoc_objmgr {
 	uint8_t wlan_pdev_count;
@@ -205,6 +206,7 @@ struct wlan_objmgr_psoc_objmgr {
 	uint16_t wlan_peer_count;
 	struct wlan_peer_list peer_list;
 	qdf_atomic_t ref_cnt;
+	qdf_atomic_t ref_id_dbg[WLAN_REF_ID_MAX];
 };
 
 /**
@@ -334,6 +336,10 @@ QDF_STATUS wlan_objmgr_psoc_component_obj_detach(
 /**
  ** APIs to operations on psoc objects
  */
+typedef void (*wlan_objmgr_op_handler)(struct wlan_objmgr_psoc *psoc,
+					void *object,
+					void *arg);
+
 /**
  * wlan_objmgr_iterate_obj_list() - iterate through all psoc objects
  * @psoc: PSOC object
@@ -351,10 +357,6 @@ QDF_STATUS wlan_objmgr_psoc_component_obj_detach(
  *
  * Return: SUCCESS/FAILURE
  */
-typedef void (*wlan_objmgr_op_handler)(struct wlan_objmgr_psoc *psoc,
-					void *object,
-					void *arg);
-/* handler should not take obj lock */
 QDF_STATUS wlan_objmgr_iterate_obj_list(
 		struct wlan_objmgr_psoc *psoc,
 		enum wlan_objmgr_obj_type obj_type,
@@ -1022,4 +1024,15 @@ QDF_STATUS wlan_objmgr_psoc_try_get_ref(struct wlan_objmgr_psoc *psoc,
 void wlan_objmgr_psoc_release_ref(struct wlan_objmgr_psoc *psoc,
 						wlan_objmgr_ref_dbgid id);
 
+/**
+ * wlan_objmgr_print_ref_all_objects_per_psoc() - print all psoc objects'
+ *                                                ref counts
+ * @psoc: PSOC object
+ *
+ * API to be used for printing all the objects(pdev/vdev/peer) ref counts
+ *
+ * Return: SUCCESS/FAILURE
+ */
+QDF_STATUS wlan_objmgr_print_ref_all_objects_per_psoc(
+		struct wlan_objmgr_psoc *psoc);
 #endif /* _WLAN_OBJMGR_PSOC_OBJ_H_*/

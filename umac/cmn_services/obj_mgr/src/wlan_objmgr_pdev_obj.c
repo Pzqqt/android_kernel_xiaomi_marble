@@ -778,6 +778,7 @@ void wlan_objmgr_pdev_get_ref(struct wlan_objmgr_pdev *pdev,
 		return;
 	}
 	qdf_atomic_inc(&pdev->pdev_objmgr.ref_cnt);
+	qdf_atomic_inc(&pdev->pdev_objmgr.ref_id_dbg[id]);
 
 	return;
 }
@@ -816,12 +817,20 @@ void wlan_objmgr_pdev_release_ref(struct wlan_objmgr_pdev *pdev,
 		return;
 	}
 
+	if (!qdf_atomic_read(&pdev->pdev_objmgr.ref_id_dbg[id])) {
+		qdf_print("%s: pdev ref cnt was not taken by %d\n",
+			  __func__, id);
+		wlan_objmgr_print_ref_ids(pdev->pdev_objmgr.ref_id_dbg);
+		WLAN_OBJMGR_BUG(0);
+	}
+
 	if (!qdf_atomic_read(&pdev->pdev_objmgr.ref_cnt)) {
 		qdf_print("%s: pdev ref cnt is 0\n", __func__);
 		WLAN_OBJMGR_BUG(0);
 		return;
 	}
 
+	qdf_atomic_dec(&pdev->pdev_objmgr.ref_id_dbg[id]);
 	/* Decrement ref count, free pdev, if ref count == 0 */
 	if (qdf_atomic_dec_and_test(&pdev->pdev_objmgr.ref_cnt))
 		wlan_objmgr_pdev_obj_destroy(pdev);

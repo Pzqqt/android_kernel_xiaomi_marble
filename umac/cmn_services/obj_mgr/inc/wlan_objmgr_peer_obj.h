@@ -137,10 +137,12 @@ struct wlan_objmgr_peer_mlme {
  * struct wlan_objmgr_peer_objmgr - object manager data of peer
  * @vdev:              VDEV pointer to which it is associated
  * @ref_cnt:           Ref count
+ * @ref_id_dbg:        Array to track Ref count
  */
 struct wlan_objmgr_peer_objmgr {
 	struct wlan_objmgr_vdev *vdev;
 	qdf_atomic_t ref_cnt;
+	qdf_atomic_t ref_id_dbg[WLAN_REF_ID_MAX];
 };
 
 /**
