@@ -952,6 +952,7 @@ static QDF_STATUS ol_patch_pll_switch(struct ol_context *ol_ctx)
 	case AR6320_REV3_VERSION:
 	case AR6320_REV3_2_VERSION:
 	case QCA9379_REV1_VERSION:
+	case QCA9377_REV1_1_VERSION:
 		cmnos_core_clk_div_addr = AR6320V3_CORE_CLK_DIV_ADDR;
 		cmnos_cpu_pll_init_done_addr = AR6320V3_CPU_PLL_INIT_DONE_ADDR;
 		cmnos_cpu_speed_addr = AR6320V3_CPU_SPEED_ADDR;
