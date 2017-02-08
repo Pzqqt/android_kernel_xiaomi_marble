@@ -456,6 +456,9 @@ enum wmi_dwelltime_adaptive_mode {
  * @if_id: interface id
  * @type: interface type
  * @subtype: interface subtype
+ * @nss_2g: NSS for 2G
+ * @nss_5g: NSS for 5G
+ * @pdev_id: pdev id on pdev for this vdev
  */
 struct vdev_create_params {
 	uint8_t if_id;
@@ -463,6 +466,7 @@ struct vdev_create_params {
 	uint32_t subtype;
 	uint8_t nss_2g;
 	uint8_t nss_5g;
+	uint32_t pdev_id;
 };
 
 /**
@@ -1159,6 +1163,7 @@ struct scan_start_params {
  * @scan_id: scan id
  * @req_type: scan request type
  * @vdev_id: vdev id
+ * @pdev_id: pdev_id
  * @all_scans: Stop all scans
  * @vap_scans: stop vap scans
  * @specific_scan: specific scan
@@ -1170,6 +1175,7 @@ struct scan_stop_params {
 	uint32_t scan_id;
 	uint32_t req_type;
 	uint32_t vdev_id;
+	uint32_t pdev_id;
 #ifndef CONFIG_MCL
 	bool all_scans;
 	bool vap_scans;
@@ -1210,11 +1216,13 @@ struct scan_chan_list_params {
 #else
 /**
  * struct scan_chan_list_params  - scan channel list cmd parameter
+ * @pdev_id: pdev_id
  * @num_chan: no of scan channels
  * @nallchans: nall chans
  * @ch_param: pointer to channel_paramw
  */
 struct scan_chan_list_params {
+	uint32_t pdev_id;
 	uint16_t nallchans;
 	struct channel_param ch_param[1];
 };
@@ -3747,6 +3755,7 @@ struct vdev_spectral_enable_params {
  * @ctl_2G: CTL 2G
  * @ctl_5G: CTL 5G
  * @dfsDomain: DFS domain
+ * @pdev_id: pdev_id
  */
 struct pdev_set_regdomain_params {
 	uint16_t currentRDinuse;
@@ -3755,6 +3764,7 @@ struct pdev_set_regdomain_params {
 	uint32_t ctl_2G;
 	uint32_t ctl_5G;
 	uint8_t dfsDomain;
+	uint32_t pdev_id;
 };
 
 /**
@@ -4502,6 +4512,7 @@ struct rx_reorder_queue_remove_params {
  * @num_peer_stats: number of peer stats event structures 0 or max peers
  * @num_bcnflt_stats: number of beacon filter stats
  * @num_chan_stats: number of channel stats
+ * @pdev_id: pdev_id
  */
 typedef struct {
 	wmi_host_stats_id stats_id;
@@ -4511,6 +4522,7 @@ typedef struct {
 	uint32_t num_peer_stats;
 	uint32_t num_bcnflt_stats;
 	uint32_t num_chan_stats;
+	uint32_t pdev_id;
 } wmi_host_stats_event;
 
 /**
@@ -5548,6 +5560,10 @@ struct wmi_host_fw_abi_ver {
  * @num_ocb_vdevs:
  * @num_ocb_channels:
  * @num_ocb_schedules:
+ * @num_ns_ext_tuples_cfg:
+ * @bpf_instruction_size:
+ * @max_bssid_rx_filters:
+ * @use_pdev_id:
  */
 typedef struct {
 	uint32_t num_vdevs;
@@ -5609,6 +5625,10 @@ typedef struct {
 	uint32_t num_ocb_vdevs;
 	uint32_t num_ocb_channels;
 	uint32_t num_ocb_schedules;
+	uint32_t num_ns_ext_tuples_cfg;
+	uint32_t bpf_instruction_size;
+	uint32_t max_bssid_rx_filters;
+	uint32_t use_pdev_id;
 } target_resource_config;
 
 /**
@@ -5616,11 +5636,13 @@ typedef struct {
  * @event_type: event type add/delete
  * @peer_mac: peer mac
  * @dest_mac: destination mac address
+ * @vdev_id: vdev id
  */
 typedef struct {
 	uint32_t event_type[4];
 	u_int8_t peer_mac[IEEE80211_ADDR_LEN];
 	u_int8_t dest_mac[IEEE80211_ADDR_LEN];
+	uint32_t vdev_id;
 } wds_addr_event_t;
 /**
  * Enum replicated for host abstraction with FW
@@ -5671,6 +5693,7 @@ typedef struct {
  *         scan source for a scan result mgmt frame
  * @rssi: combined RSSI, i.e. the sum of the snr + noise floor (dBm units)
  * @tsf_delta:
+ * @pdev_id: pdev_id
  */
 typedef struct {
 	uint32_t	channel;
@@ -5683,6 +5706,7 @@ typedef struct {
 	uint32_t flags;
 	int32_t rssi;
 	uint32_t tsf_delta;
+	uint32_t pdev_id;
 } wmi_host_mgmt_rx_hdr;
 
 /**
@@ -5796,18 +5820,22 @@ typedef struct {
  *   chan3: {NFCalPower_chain0, NFCalPower_chain1,
  *           NFCalPower_chain2, NFCalPower_chain3},
  * @freqNum: frequency number
+ * @pdev_id: pdev_id
  */
 typedef struct {
 	int8_t nfdBr[WMI_HOST_RXG_CAL_CHAN_MAX * WMI_HOST_MAX_NUM_CHAINS];
 	int8_t nfdBm[WMI_HOST_RXG_CAL_CHAN_MAX * WMI_HOST_MAX_NUM_CHAINS];
 	uint32_t freqNum[WMI_HOST_RXG_CAL_CHAN_MAX];
+	uint32_t pdev_id;
 } wmi_host_pdev_nfcal_power_all_channels_event;
 
 /**
  * struct wmi_host_pdev_tpc_event - WMI host pdev TPC event
+ * @pdev_id: pdev_id
  * @tpc:
  */
 typedef struct {
+	uint32_t pdev_id;
 	uint32_t tpc[1];
 } wmi_host_pdev_tpc_event;
 
@@ -5836,6 +5864,7 @@ enum {
 
 /**
  * struct wmi_host_pdev_tpc_config_event - host pdev tpc config event
+ * @pdev_id: pdev_id
  * @regDomain:
  * @chanFreq:
  * @phyMode:
@@ -5854,6 +5883,7 @@ enum {
  * @ratesArray:
  */
 typedef struct {
+	uint32_t pdev_id;
 	uint32_t regDomain;
 	uint32_t chanFreq;
 	uint32_t phyMode;
@@ -5932,10 +5962,12 @@ typedef struct {
  * struct wmi_host_mgmt_tx_compl_event - TX completion event
  * @desc_id: from tx_send_cmd
  * @status: WMI_MGMT_TX_COMP_STATUS_TYPE
+ * @pdev_id: pdev_id
  */
 typedef struct {
 	uint32_t	desc_id;
 	uint32_t	status;
+	uint32_t	pdev_id;
 } wmi_host_mgmt_tx_compl_event;
 
 #define WMI_HOST_TIM_BITMAP_ARRAY_SIZE 17
@@ -5995,6 +6027,7 @@ typedef struct {
  * @peer_macaddr: peer mac address
  * @reason: kickout reason
  * @rssi: rssi
+ * @pdev_id: pdev_id
  */
 typedef struct {
 	uint8_t peer_macaddr[IEEE80211_ADDR_LEN];
@@ -6006,6 +6039,7 @@ typedef struct {
  * struct wmi_host_peer_sta_ps_statechange_event - ST ps state change event
  * @peer_macaddr: peer mac address
  * @peer_ps_stats: peer PS state
+ * @pdev_id: pdev_id
  */
 typedef struct {
 	uint8_t peer_macaddr[IEEE80211_ADDR_LEN];
@@ -6027,6 +6061,7 @@ typedef struct {
 /* TODO: ratecode_160 needs to add for future chips */
 /**
  * struct wmi_sa_rate_cap - smart antenna rat capabilities
+ * @pdev_id: pdev_id
  * @ratecode_legacy: Rate code array for CCK OFDM
  * @ratecode_20: Rate code array for 20MHz BW
  * @ratecode_40: Rate code array for 40MHz BW
@@ -6554,6 +6589,7 @@ typedef struct _wmi_host_chan_info {
  * @buf_len:
  * @phy_err_mask0:
  * @phy_err_mask1:
+ * @pdev_id: pdev_id
  */
 typedef struct _wmi_host_phyerr {
 	wmi_host_rf_info_t rf_info;
@@ -6565,6 +6601,7 @@ typedef struct _wmi_host_phyerr {
 	uint32_t buf_len;
 	uint32_t phy_err_mask0;
 	uint32_t phy_err_mask1;
+	uint32_t pdev_id;
 } wmi_host_phyerr_t;
 
 /**
@@ -6740,6 +6777,7 @@ typedef struct {
 
 /**
  * struct wmi_host_chan_info_event - Channel info WMI event
+ * @pdev_id: pdev_id
  * @err_code: Error code
  * @freq: Channel freq
  * @cmd_flags: Read flags
@@ -6752,6 +6790,7 @@ typedef struct {
  * @rx_11b_mode_data_duration: 11b mode data duration
  */
 typedef struct {
+	uint32_t pdev_id;
 	uint32_t err_code;
 	uint32_t freq;
 	uint32_t cmd_flags;
@@ -6766,16 +6805,19 @@ typedef struct {
 
 /**
  * struct wmi_host_pdev_channel_hopping_event
+ * @pdev_id: pdev_id
  * @noise_floor_report_iter: Noise threshold iterations with high values
  * @noise_floor_total_iter: Total noise threshold iterations
  */
 typedef struct {
+	uint32_t pdev_id;
 	uint32_t noise_floor_report_iter;
 	uint32_t noise_floor_total_iter;
 } wmi_host_pdev_channel_hopping_event;
 
 /**
  * struct wmi_host_pdev_bss_chan_info_event
+ * @pdev_id: pdev_id
  * @freq: Units in MHz
  * @noise_floor: units are dBm
  * @rx_clear_count_low:
@@ -6791,6 +6833,7 @@ typedef struct {
  * @reserved:
  */
 typedef struct {
+	uint32_t pdev_id;
 	uint32_t freq;
 	uint32_t noise_floor;
 	uint32_t rx_clear_count_low;
@@ -6811,10 +6854,12 @@ typedef struct {
  * struct wmi_host_inst_stats_resp
  * @iRSSI: Instantaneous RSSI
  * @peer_macaddr: peer mac address
+ * @pdev_id: pdev_id
  */
 typedef struct {
 	uint32_t iRSSI;
 	wmi_host_mac_addr peer_macaddr;
+	uint32_t pdev_id;
 } wmi_host_inst_stats_resp;
 
 /* Event definition and new structure addition to send event
@@ -6869,31 +6914,34 @@ enum {
 		token_info.field2 |= ((unused_token) & 0xffff); \
 	} while (0)
 
+/**
+ * struct wmi_host_atf_peer_stats_info
+ * @field1: bits 15:0   peer_ast_index  WMI_ATF_PEER_STATS_GET_PEER_AST_IDX
+ *          bits 31:16  reserved
+ * @field2: bits 15:0   used tokens     WMI_ATF_PEER_STATS_GET_USED_TOKENS
+ *          bits 31:16  unused tokens   WMI_ATF_PEER_STATS_GET_UNUSED_TOKENS
+ * @field3: for future use
+ */
 typedef struct {
-	/**
-	 * field1 contains:
-	 *     bits 15:0   peer_ast_index  WMI_ATF_PEER_STATS_GET_PEER_AST_IDX
-	 *                                 WMI_ATF_PEER_STATS_SET_PEER_AST_IDX
-	 *     bits 31:16  reserved
-	 *
-	 * field2 contains:
-	 *     bits 15:0   used tokens     WMI_ATF_PEER_STATS_GET_USED_TOKENS
-	 *                                 WMI_ATF_PEER_STATS_SET_USED_TOKENS
-	 *     bits 31:16  unused tokens   WMI_ATF_PEER_STATS_GET_UNUSED_TOKENS
-	 *                                 WMI_ATF_PEER_STATS_SET_UNUSED_TOKENS
-	 *
-	 * field3 for future use
-	 */
 	uint32_t    field1;
 	uint32_t    field2;
 	uint32_t    field3;
 } wmi_host_atf_peer_stats_info;
 
+/**
+ * struct wmi_host_atf_peer_stats_event
+ * @pdev_id: pdev_id
+ * @num_atf_peers: number of peers in token_info_list
+ * @comp_usable_airtime: computed usable airtime in tokens
+ * @reserved[4]: reserved for future use
+ * @wmi_host_atf_peer_stats_info token_info_list: list of num_atf_peers
+ */
 typedef struct {
-	uint32_t num_atf_peers;       /** number of peers in token_info_list */
-	uint32_t comp_usable_airtime; /** computed usable airtime in tokens */
-	uint32_t reserved[4];         /** reserved for future use */
-	wmi_host_atf_peer_stats_info token_info_list[1/*num_atf_peers*/];
+	uint32_t pdev_id;
+	uint32_t num_atf_peers;
+	uint32_t comp_usable_airtime;
+	uint32_t reserved[4];
+	wmi_host_atf_peer_stats_info token_info_list[1];
 } wmi_host_atf_peer_stats_event;
 
 /**
@@ -7335,5 +7383,4 @@ struct wmi_host_fips_event_param {
 	uint32_t data_len;
 	uint32_t *data;
 };
-
 #endif /* _WMI_UNIFIED_PARAM_H_ */
