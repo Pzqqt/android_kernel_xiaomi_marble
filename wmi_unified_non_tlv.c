@@ -6360,12 +6360,13 @@ static QDF_STATUS extract_gpio_input_ev_param_non_tlv(wmi_unified_t wmi_handle,
  */
 static QDF_STATUS extract_pdev_reserve_ast_ev_param_non_tlv(
 		wmi_unified_t wmi_handle,
-		void *evt_buf, uint32_t *result)
+		void *evt_buf, struct wmi_host_proxy_ast_reserve_param *param)
 {
 	wmi_pdev_reserve_ast_entry_event *ev =
 	    (wmi_pdev_reserve_ast_entry_event *) evt_buf;
 
-	*result = ev->result;
+	param->result = ev->result;
+	param->pdev_id = WMI_NON_TLV_DEFAULT_PDEV_ID;
 
 	return QDF_STATUS_SUCCESS;
 }

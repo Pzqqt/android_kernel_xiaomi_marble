@@ -5538,18 +5538,18 @@ QDF_STATUS wmi_extract_gpio_input_ev_param(void *wmi_hdl,
  * param from event
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
- * @param result: Pointer to hold reserve ast entry param
+ * @param param: Pointer to hold reserve ast entry param
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS wmi_extract_pdev_reserve_ast_ev_param(void *wmi_hdl,
-	void *evt_buf, uint32_t *result)
+		void *evt_buf, struct wmi_host_proxy_ast_reserve_param *param)
 {
 	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
 
 	if (wmi->ops->extract_pdev_reserve_ast_ev_param)
 		return wmi->ops->extract_pdev_reserve_ast_ev_param(wmi,
-			evt_buf, result);
+			evt_buf, param);
 
 	return QDF_STATUS_E_FAILURE;
 }
