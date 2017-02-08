@@ -1586,6 +1586,11 @@ void cds_trigger_recovery(bool skip_crash_inject)
 			  "WMA context is invalid!");
 		return;
 	}
+	if (!qdf_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "QDF context is invalid!");
+		return;
+	}
 
 	recovery_lock = qdf_runtime_lock_init("cds_recovery");
 	if (!recovery_lock) {
