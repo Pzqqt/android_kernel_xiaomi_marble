@@ -498,6 +498,7 @@ ol_tx_delay_compute(struct ol_txrx_pdev_t *pdev,
 #endif /* !QCA_TX_STD_PATH_ONLY */
 #endif /* QCA_TX_SINGLE_COMPLETIONS */
 
+#if !defined(CONFIG_HL_SUPPORT)
 void ol_tx_discard_target_frms(ol_txrx_pdev_handle pdev)
 {
 	int i = 0;
@@ -521,6 +522,7 @@ void ol_tx_discard_target_frms(ol_txrx_pdev_handle pdev)
 		}
 	}
 }
+#endif
 
 void ol_tx_credit_completion_handler(ol_txrx_pdev_handle pdev, int credits)
 {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -392,9 +392,7 @@ ol_tx_classify(
 	struct ol_tx_frms_queue_t *txq = NULL;
 	A_UINT8 *dest_addr;
 	A_UINT8 tid;
-#if defined(CONFIG_HL_SUPPORT) && defined(FEATURE_WLAN_TDLS)
 	u_int8_t peer_id;
-#endif
 
 	TX_SCHED_DEBUG_PRINT("Enter %s\n", __func__);
 	dest_addr = ol_tx_dest_addr_find(pdev, tx_nbuf);

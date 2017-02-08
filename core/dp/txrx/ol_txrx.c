@@ -104,7 +104,7 @@ ol_txrx_set_wmm_param(void *data_pdev,
 extern void ol_txrx_get_pn_info(void *ppeer, uint8_t **last_pn_valid,
 		    uint64_t **last_pn, uint32_t **rmf_pn_replays);
 
-#ifdef CONFIG_HL_SUPPORT
+#if defined(CONFIG_HL_SUPPORT) && defined(FEATURE_WLAN_TDLS)
 
 /**
  * ol_txrx_copy_mac_addr_raw() - copy raw mac addr
@@ -5344,7 +5344,7 @@ static struct cdp_peer_ops ol_ops_peer = {
 		ol_txrx_update_ibss_add_peer_num_of_vdev,
 	.remove_peers_for_vdev = ol_txrx_remove_peers_for_vdev,
 	.remove_peers_for_vdev_no_lock = ol_txrx_remove_peers_for_vdev_no_lock,
-#ifdef CONFIG_HL_SUPPORT
+#if defined(CONFIG_HL_SUPPORT) && defined(FEATURE_WLAN_TDLS)
 	.copy_mac_addr_raw = ol_txrx_copy_mac_addr_raw,
 	.add_last_real_peer = ol_txrx_add_last_real_peer,
 	.is_vdev_restore_last_peer = is_vdev_restore_last_peer,
