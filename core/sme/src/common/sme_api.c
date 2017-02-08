@@ -16084,7 +16084,7 @@ QDF_STATUS sme_set_wow_pulse(struct wow_pulse_mode *wow_pulse_set_info)
 static void sme_prepare_beacon_from_bss_descp(uint8_t *frame_buf,
 					      tSirBssDescription *bss_descp,
 					      const tSirMacAddr bssid,
-					      uint8_t ie_len)
+					      uint32_t ie_len)
 {
 	tDot11fBeacon1 *bcn_fixed;
 	tpSirMacMgmtHdr mac_hdr = (tpSirMacMgmtHdr)frame_buf;
