@@ -7383,4 +7383,14 @@ struct wmi_host_fips_event_param {
 	uint32_t data_len;
 	uint32_t *data;
 };
+
+/**
+ * struct wmi_host_proxy_ast_reserve_param
+ * @pdev_id: pdev id
+ * @result: result
+ */
+struct wmi_host_proxy_ast_reserve_param {
+	uint32_t pdev_id;
+	uint32_t result;
+};
 #endif /* _WMI_UNIFIED_PARAM_H_ */
