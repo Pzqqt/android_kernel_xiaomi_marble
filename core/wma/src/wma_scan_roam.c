@@ -2866,15 +2866,6 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 
 	qdf_mem_zero(&req, sizeof(req));
 	req.vdev_id = vdev_id;
-	msg = wma_fill_vdev_req(wma, req.vdev_id, WMA_CHNL_SWITCH_REQ,
-				WMA_TARGET_REQ_TYPE_VDEV_START, params,
-				WMA_VDEV_START_REQUEST_TIMEOUT);
-	if (!msg) {
-		WMA_LOGP("%s: Failed to fill channel switch request for vdev %d",
-			__func__, req.vdev_id);
-		status = QDF_STATUS_E_NOMEM;
-		goto send_resp;
-	}
 	req.chan = params->channelNumber;
 	req.chan_width = params->ch_width;
 
@@ -2922,6 +2913,16 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 		/* This is temporary, should be removed */
 		ol_htt_mon_note_chan(pdev, req.chan);
 	} else {
+
+		msg = wma_fill_vdev_req(wma, req.vdev_id, WMA_CHNL_SWITCH_REQ,
+				WMA_TARGET_REQ_TYPE_VDEV_START, params,
+				WMA_VDEV_START_REQUEST_TIMEOUT);
+		if (!msg) {
+			WMA_LOGP("%s: Failed to fill channel switch request for vdev %d",
+				__func__, req.vdev_id);
+			status = QDF_STATUS_E_NOMEM;
+			goto send_resp;
+		}
 		status = wma_vdev_start(wma, &req,
 				wma->interfaces[req.vdev_id].is_channel_switch);
 		if (status != QDF_STATUS_SUCCESS) {
