@@ -265,7 +265,6 @@ typedef struct hdd_wext_state_s {
 #ifdef FEATURE_WLAN_ESE
 	/* ESE state variables */
 	bool isESEConnection;
-	eCsrAuthType collectedAuthType; /* Collected from ALL SIOCSIWAUTH Ioctls. Will be negotiatedAuthType - in tCsrProfile */
 #endif
 } hdd_wext_state_t;
 

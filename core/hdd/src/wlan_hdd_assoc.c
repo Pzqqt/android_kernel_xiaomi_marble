@@ -5954,28 +5954,16 @@ static int __iw_set_auth(struct net_device *dev, struct iw_request_info *info,
 			/* Set the key management to 802.1X */
 			/* pWextState->authKeyMgmt = IW_AUTH_KEY_MGMT_802_1X; */
 			pWextState->isESEConnection = true;
-			/*
-			 * This is test code. I need to actually KNOW whether
-			 * this is an RSN Assoc or WPA.
-			 */
-			pWextState->collectedAuthType =
-				eCSR_AUTH_TYPE_CCKM_RSN;
 		} else if (wrqu->param.value & IW_AUTH_KEY_MGMT_PSK) {
 			/* Save the key management */
 			pWextState->authKeyMgmt |= IW_AUTH_KEY_MGMT_PSK;
-			pWextState->collectedAuthType =
-				eCSR_AUTH_TYPE_RSN;
-		} else
-		if (!(wrqu->param.value & IW_AUTH_KEY_MGMT_802_1X)) {
-			pWextState->collectedAuthType = eCSR_AUTH_TYPE_NONE;
+		} else if (!(wrqu->param.value & IW_AUTH_KEY_MGMT_802_1X)) {
 			/* Save the key management anyway */
 			pWextState->authKeyMgmt = wrqu->param.value;
 		} else {                /* It must be IW_AUTH_KEY_MGMT_802_1X */
 			/* Save the key management */
 			pWextState->authKeyMgmt |=
 				IW_AUTH_KEY_MGMT_802_1X;
-			pWextState->collectedAuthType =
-				eCSR_AUTH_TYPE_RSN;
 		}
 #else
 		/* Save the key management */
