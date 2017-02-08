@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -78,11 +78,6 @@ static inline void athdiag_procfs_remove(void)
 {
 	return;
 }
-#endif
-
-#ifndef REMOVE_PKT_LOG
-extern int pktlogmod_init(void *context);
-extern void pktlogmod_exit(void *context);
 #endif
 
 #define DMA_MAPPING_ERROR(dev, addr) dma_mapping_error((dev), (addr))
