@@ -136,7 +136,7 @@
 #define WLAN_VDEV_FEXT_NON_BEACON           0x00400000
 
 /* VDEV OP flags  */
-  /* if the vap deleted by user */
+  /* if the vap destroyed by user */
 #define WLAN_VDEV_OP_DELETE_PROGRESS        0x00000001
  /* set to enable sta-fws fweature */
 #define WLAN_VDEV_OP_STAFWD                 0x00000002
@@ -291,14 +291,15 @@ struct wlan_objmgr_vdev_nif {
 
 /**
  *  struct wlan_objmgr_vdev_objmgr - vdev object manager sub structure
- *  @vdev_id:          VDEV id
- *  @self_peer:        Self PEER
- *  @bss_peer:         BSS PEER
- *  @wlan_peer_list:   PEER list
- *  @wlan_pdev:        PDEV pointer
- *  @wlan_peer_count:  Peer count
- *  @max_peer_count:   Max Peer count
- *  @c_flags:          creation specific flags
+ *  @vdev_id:           VDEV id
+ *  @self_peer:         Self PEER
+ *  @bss_peer:          BSS PEER
+ *  @wlan_peer_list:    PEER list
+ *  @wlan_pdev:         PDEV pointer
+ *  @wlan_peer_count:   Peer count
+ *  @max_peer_count:    Max Peer count
+ *  @c_flags:           creation specific flags
+ *  @ref_cnt:           Ref count
  */
 struct wlan_objmgr_vdev_objmgr {
 	uint8_t vdev_id;
@@ -309,6 +310,7 @@ struct wlan_objmgr_vdev_objmgr {
 	uint16_t wlan_peer_count;
 	uint16_t max_peer_count;
 	uint32_t c_flags;
+	qdf_atomic_t ref_cnt;
 };
 
 /**
@@ -357,8 +359,9 @@ struct wlan_objmgr_vdev *wlan_objmgr_vdev_obj_create(
  * wlan_objmgr_vdev_obj_delete() - vdev object delete
  * @vdev: vdev object
  *
- * Deletes VDEV object, removes it from PSOC's, PDEV's VDEV list
- * Invokes the registered notifiers to delete component objects
+ * Logically deletes VDEV object,
+ * Once all the references are released, object manager invokes the registered
+ * notifiers to destroy component objects
  *
  * Return: SUCCESS/FAILURE
  */
@@ -411,6 +414,7 @@ QDF_STATUS wlan_objmgr_vdev_component_obj_detach(
  * @handler: the handler will be called for each object of requested type
  *            the handler should be implemented to perform required operation
  * @arg:     agruments passed by caller
+ * @dbg_id: id of the caller
  *
  * API to be used for performing the operations on all PEER objects
  * of vdev
@@ -424,7 +428,7 @@ typedef void (*wlan_objmgr_vdev_op_handler)(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS wlan_objmgr_iterate_peerobj_list(
 		struct wlan_objmgr_vdev *vdev,
 		wlan_objmgr_vdev_op_handler handler,
-		void *arg);
+		void *arg, wlan_objmgr_ref_dbgid dbg_id);
 
 /**
  * wlan_objmgr_trigger_vdev_comp_priv_object_creation() - vdev
@@ -448,7 +452,7 @@ QDF_STATUS wlan_objmgr_trigger_vdev_comp_priv_object_creation(
  * @vdev: VDEV object
  * @id: Component id
  *
- * API to delete component private object in run time, this would
+ * API to destroy component private object in run time, this would
  * be used for features which gets disabled in run time
  *
  * Return: SUCCESS on successful deletion
@@ -1364,4 +1368,89 @@ static inline void *wlan_vdev_get_ospriv(struct wlan_objmgr_vdev *vdev)
 	/* This API is invoked with lock acquired, do not add log prints */
 	return vdev->vdev_nif.osdev;
 }
+
+/**
+ * wlan_vdev_get_peer_count() - get vdev peer count
+ * @vdev: VDEV object
+ *
+ * API to get OS private pointer from VDEV
+ *
+ * Caller need to acquire lock with wlan_vdev_obj_lock()
+ *
+ * Return: peer_count - vdev's peer count
+ */
+static inline uint16_t wlan_vdev_get_peer_count(struct wlan_objmgr_vdev *vdev)
+{
+	/* This API is invoked with lock acquired, do not add log prints */
+	return vdev->vdev_objmgr.wlan_peer_count;
+}
+
+/**
+ * DOC: Examples to use VDEV ref count APIs
+ *
+ * In all the scenarios, the pair of API should be followed
+ * other it lead to memory leak
+ *
+ *  scenario 1:
+ *
+ *     wlan_objmgr_vdev_obj_create()
+ *     ----
+ *     wlan_objmgr_vdev_obj_delete()
+ *
+ *  scenario 2:
+ *
+ *     wlan_objmgr_vdev_get_ref()
+ *     ----
+ *     the operations which are done on
+ *     vdev object
+ *     ----
+ *     wlan_objmgr_vdev_release_ref()
+ *
+ *  scenario 3:
+ *
+ *     API to retrieve vdev (xxx_get_vdev_xxx())
+ *     ----
+ *     the operations which are done on
+ *     vdev object
+ *     ----
+ *     wlan_objmgr_vdev_release_ref()
+ */
+
+/**
+ * wlan_objmgr_vdev_get_ref() - increment ref count
+ * @vdev: VDEV object
+ * @id:   Object Manager ref debug id
+ *
+ * API to increment ref count of vdev
+ *
+ * Return: void
+ */
+void wlan_objmgr_vdev_get_ref(struct wlan_objmgr_vdev *vdev,
+				wlan_objmgr_ref_dbgid id);
+
+/**
+ * wlan_objmgr_vdev_try_get_ref() - increment ref count, if allowed
+ * @vdev: VDEV object
+ * @id:   Object Manager ref debug id
+ *
+ * API to increment ref count of vdev after checking valid object state
+ *
+ * Return: void
+ */
+QDF_STATUS wlan_objmgr_vdev_try_get_ref(struct wlan_objmgr_vdev *vdev,
+						wlan_objmgr_ref_dbgid id);
+
+/**
+ * wlan_objmgr_vdev_release_ref() - decrement ref count
+ * @vdev: VDEV object
+ * @id:   Object Manager ref debug id
+ *
+ * API to decrement ref count of vdev, if ref count is 1, it initiates the
+ * VDEV deletion
+ *
+ * Return: void
+ */
+void wlan_objmgr_vdev_release_ref(struct wlan_objmgr_vdev *vdev,
+						wlan_objmgr_ref_dbgid id);
+
 #endif /* _WLAN_OBJMGR_VDEV_OBJ_H_*/

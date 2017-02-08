@@ -192,6 +192,7 @@ struct wlan_objmgr_psoc_nif {
  * @wlan_vdev_id_map[]:   VDEV id map, to allocate free ids
  * @wlan_peer_count:      PEER count
  * @peer_list:            Peer list
+ * @ref_cnt:              Ref count
  */
 struct wlan_objmgr_psoc_objmgr {
 	uint8_t wlan_pdev_count;
@@ -203,6 +204,7 @@ struct wlan_objmgr_psoc_objmgr {
 	uint32_t wlan_vdev_id_map[2];
 	uint16_t wlan_peer_count;
 	struct wlan_peer_list peer_list;
+	qdf_atomic_t ref_cnt;
 };
 
 /**
@@ -282,8 +284,9 @@ struct wlan_objmgr_psoc *wlan_objmgr_psoc_obj_create(uint32_t phy_version,
  * wlan_objmgr_psoc_obj_delete() - psoc object delete
  * @psoc: PSOC object
  *
- * Deletes PSOC object,
- * Invokes the registered notifiers to delete component objects
+ * Logically deletes PSOC object,
+ * Once all the references are released, object manager invokes the registered
+ * notifiers to destroy component objects
  *
  * Return: SUCCESS/FAILURE
  */
@@ -341,6 +344,7 @@ QDF_STATUS wlan_objmgr_psoc_component_obj_detach(
  * @lock_free_op: This gives provision to run this API with out lock protected
  *                 It would be useful, for operations like Obj Delete, where
  *                 lock should not be taken by caller.
+ * @dbg_id: id of the caller
  *
  * API to be used for performing the operations on all PDEV/VDEV/PEER objects
  * of psoc
@@ -355,7 +359,8 @@ QDF_STATUS wlan_objmgr_iterate_obj_list(
 		struct wlan_objmgr_psoc *psoc,
 		enum wlan_objmgr_obj_type obj_type,
 		wlan_objmgr_op_handler handler,
-		void *arg, uint8_t lock_free_op);
+		void *arg, uint8_t lock_free_op,
+		wlan_objmgr_ref_dbgid dbg_id);
 
 /**
  * wlan_objmgr_free_all_objects_per_psoc() - free all psoc objects
@@ -385,12 +390,12 @@ QDF_STATUS wlan_objmgr_trigger_psoc_comp_priv_object_creation(
 		enum wlan_umac_comp_id id);
 
 /**
- * wlan_objmgr_trigger_psoc_comp_priv_object_deletion() - delete
+ * wlan_objmgr_trigger_psoc_comp_priv_object_deletion() - destroy
  * psoc comp object
  * @psoc: PSOC object
  * @id: Component id
  *
- * API to delete component private object in run time, this would
+ * API to destroy component private object in run time, this would
  * be used for features which gets disabled in run time
  *
  * Return: SUCCESS on successful deletion
@@ -401,85 +406,192 @@ QDF_STATUS wlan_objmgr_trigger_psoc_comp_priv_object_deletion(
 		enum wlan_umac_comp_id id);
 
 /**
- * wlan_objmgr_find_peer() - find peer from psoc's peer list
+ * wlan_objmgr_get_peer() - find peer from psoc's peer list
  * @psoc: PSOC object
  * @macaddr: MAC address
+ * @dbg_id: id of the caller
  *
  * API to find peer object pointer by MAC addr
  *
  * Return: peer pointer
  *         NULL on FAILURE
  */
-struct wlan_objmgr_peer *wlan_objmgr_find_peer(
-			struct wlan_objmgr_psoc *psoc, uint8_t *macaddr);
+struct wlan_objmgr_peer *wlan_objmgr_get_peer(
+			struct wlan_objmgr_psoc *psoc, uint8_t *macaddr,
+			wlan_objmgr_ref_dbgid dbg_id);
 
 /**
- * wlan_objmgr_find_peer_by_mac_n_vdev() - find peer from psoc's peer list
+ * wlan_objmgr_get_peer_no_state() - find peer from psoc's peer list
+ * @psoc: PSOC object
+ * @macaddr: MAC address
+ * @dbg_id: id of the caller
+ *
+ * API to find peer object pointer by MAC addr, ignores the state check
+ *
+ * Return: peer pointer
+ *         NULL on FAILURE
+ */
+struct wlan_objmgr_peer *wlan_objmgr_get_peer_no_state(
+			struct wlan_objmgr_psoc *psoc, uint8_t *macaddr,
+			wlan_objmgr_ref_dbgid dbg_id);
+
+/**
+ * wlan_objmgr_get_peer_by_mac_n_vdev() - find peer from psoc's peer list
  *                                          using mac address and bssid
  * @psoc: PSOC object
  * @macaddr: MAC address
  * @bssid: MAC address of AP its associated
+ * @dbg_id: id of the caller
  *
  * API to find peer object pointer by MAC addr and vdev self mac address
  *
  * Return: peer pointer
  *         NULL on FAILURE
  */
-struct wlan_objmgr_peer *wlan_objmgr_find_peer_by_mac_n_vdev(
+struct wlan_objmgr_peer *wlan_objmgr_get_peer_by_mac_n_vdev(
 			struct wlan_objmgr_psoc *psoc, uint8_t *macaddr,
-			uint8_t *bssid);
+			uint8_t *bssid, wlan_objmgr_ref_dbgid dbg_id);
 
 /**
- * wlan_objmgr_find_pdev_by_id() - retrieve pdev by id
+ * wlan_objmgr_get_peer_by_mac_n_vdev_no_state() - find peer from psoc's peer
+ *                                          list using mac address and bssid
+ * @psoc: PSOC object
+ * @macaddr: MAC address
+ * @bssid: MAC address of AP its associated
+ * @dbg_id: id of the caller
+ *
+ * API to find peer object pointer by MAC addr and vdev self mac address,
+ * ignores the state
+ *
+ * Return: peer pointer
+ *         NULL on FAILURE
+ */
+struct wlan_objmgr_peer *wlan_objmgr_get_peer_by_mac_n_vdev_no_state(
+			struct wlan_objmgr_psoc *psoc, uint8_t *macaddr,
+			uint8_t *bssid, wlan_objmgr_ref_dbgid dbg_id);
+
+/**
+ * wlan_objmgr_get_pdev_by_id() - retrieve pdev by id
  * @psoc: PSOC object
  * @id: pdev id
+ * @dbg_id: id of the caller
  *
  * API to find pdev object pointer by pdev id
  *
  * Return: pdev pointer
  *         NULL on FAILURE
  */
-struct wlan_objmgr_pdev *wlan_objmgr_find_pdev_by_id(
-		struct wlan_objmgr_psoc *psoc, uint8_t id);
+struct wlan_objmgr_pdev *wlan_objmgr_get_pdev_by_id(
+		struct wlan_objmgr_psoc *psoc, uint8_t id,
+		wlan_objmgr_ref_dbgid dbg_id);
 
 /**
- * wlan_objmgr_find_pdev_by_macaddr() - retrieve pdev by macaddr
+ * wlan_objmgr_get_pdev_by_id_no_state() - retrieve pdev by id
+ * @psoc: PSOC object
+ * @id: pdev id
+ * @dbg_id: id of the caller
+ *
+ * API to find pdev object pointer by pdev id, Ignores the state check
+ *
+ * Return: pdev pointer
+ *         NULL on FAILURE
+ */
+struct wlan_objmgr_pdev *wlan_objmgr_get_pdev_by_id_no_state(
+			struct wlan_objmgr_psoc *psoc, uint8_t id,
+			wlan_objmgr_ref_dbgid dbg_id);
+
+/**
+ * wlan_objmgr_get_pdev_by_macaddr() - retrieve pdev by macaddr
  * @psoc: PSOC object
  * @macaddr: MAC address
+ * @dbg_id: id of the caller
  *
  * API to find pdev object pointer by pdev macaddr
  *
  * Return: pdev pointer
  *         NULL on FAILURE
  */
-struct wlan_objmgr_pdev *wlan_objmgr_find_pdev_by_macaddr(
-		struct wlan_objmgr_psoc *psoc, uint8_t *macaddr);
+struct wlan_objmgr_pdev *wlan_objmgr_get_pdev_by_macaddr(
+		struct wlan_objmgr_psoc *psoc, uint8_t *macaddr,
+		wlan_objmgr_ref_dbgid dbg_id);
 
 /**
- * wlan_objmgr_find_vdev_by_id_from_psoc() - retrieve vdev by id
+ * wlan_objmgr_get_pdev_by_macaddr_no_state() - retrieve pdev by macaddr
+ * @psoc: PSOC object
+ * @macaddr: MAC address
+ * @dbg_id: id of the caller
+ *
+ * API to find pdev object pointer by pdev macaddr, ignores the state check
+ *
+ * Return: pdev pointer
+ *         NULL on FAILURE
+ */
+struct wlan_objmgr_pdev *wlan_objmgr_get_pdev_by_macaddr_no_state(
+		struct wlan_objmgr_psoc *psoc, uint8_t *macaddr,
+		wlan_objmgr_ref_dbgid dbg_id);
+
+/**
+ * wlan_objmgr_get_vdev_by_id_from_psoc() - retrieve vdev by id
  * @psoc: PSOC object
  * @id: vdev id
+ * @dbg_id: id of the caller
  *
  * API to find vdev object pointer by vdev id from psoc
  *
  * Return: vdev pointer
  *         NULL on FAILURE
  */
-struct wlan_objmgr_vdev *wlan_objmgr_find_vdev_by_id_from_psoc(
-			struct wlan_objmgr_psoc *psoc, uint8_t vdev_id);
+struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_id_from_psoc(
+			struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			wlan_objmgr_ref_dbgid dbg_id);
 
 /**
- * wlan_objmgr_find_vdev_by_macaddr_from_psoc() - retrieve vdev by macaddr
+ * wlan_objmgr_get_vdev_by_id_from_psoc_no_state() - retrieve vdev by id
+ * @psoc: PSOC object
+ * @id: vdev id
+ * @dbg_id: id of the caller
+ *
+ * API to find vdev object pointer by vdev id from psoc, ignores the
+ * state check
+ *
+ * Return: vdev pointer
+ *         NULL on FAILURE
+ */
+struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_id_from_psoc_no_state(
+			struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			wlan_objmgr_ref_dbgid dbg_id);
+
+/**
+ * wlan_objmgr_get_vdev_by_macaddr_from_psoc() - retrieve vdev by macaddr
  * @psoc: PSOC object
  * @macaddr: macaddr
+ * @dbg_id: id of the caller
  *
  * API to find vdev object pointer by vdev macaddr from psoc
  *
  * Return: vdev pointer
  *         NULL on FAILURE
  */
-struct wlan_objmgr_vdev *wlan_objmgr_find_vdev_by_macaddr_from_psoc(
-		struct wlan_objmgr_psoc *psoc, uint8_t *macaddr);
+struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_macaddr_from_psoc(
+		struct wlan_objmgr_psoc *psoc, uint8_t *macaddr,
+		wlan_objmgr_ref_dbgid dbg_id);
+
+/**
+ * wlan_objmgr_get_vdev_by_macaddr_from_psoc_no_state() - retrieve vdev by
+ *                                                           macaddr
+ * @psoc: PSOC object
+ * @macaddr: macaddr
+ * @dbg_id: id of the caller
+ *
+ * API to find vdev object pointer by vdev macaddr from psoc, ignores the state
+ * check
+ *
+ * Return: vdev pointer
+ *         NULL on FAILURE
+ */
+struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_macaddr_from_psoc_no_state(
+		struct wlan_objmgr_psoc *psoc, uint8_t *macaddr,
+		wlan_objmgr_ref_dbgid dbg_id);
 
 /**
  * wlan_psoc_obj_lock() - Acquire PSOC spinlock
@@ -850,5 +962,64 @@ static inline void *wlan_psoc_get_tgt_if_handle(struct wlan_objmgr_psoc *psoc)
 		return NULL;
 	return psoc->tgt_if_handle;
 }
+
+/**
+ * DOC: Examples to use PSOC ref count APIs
+ *
+ * In all the scenarios, the pair of API should be followed
+ * other it lead to memory leak
+ *
+ *  scenario 1:
+ *
+ *     wlan_objmgr_psoc_obj_create()
+ *     ----
+ *     wlan_objmgr_psoc_obj_delete()
+ *
+ *  scenario 2:
+ *
+ *     wlan_objmgr_psoc_get_ref()
+ *     ----
+ *     the operations which are done on
+ *     psoc object
+ *     ----
+ *     wlan_objmgr_psoc_release_ref()
+ */
+
+/**
+ * wlan_objmgr_psoc_get_ref() - increment ref count
+ * @psoc: PSOC object
+ * @id:   Object Manager ref debug id
+ *
+ * API to increment ref count of psoc
+ *
+ * Return: void
+ */
+void wlan_objmgr_psoc_get_ref(struct wlan_objmgr_psoc *psoc,
+					wlan_objmgr_ref_dbgid id);
+
+/**
+ * wlan_objmgr_psoc_try_get_ref() - increment ref count, if allowed
+ * @psoc: PSOC object
+ * @id:   Object Manager ref debug id
+ *
+ * API to increment ref count after checking valid object state
+ *
+ * Return: void
+ */
+QDF_STATUS wlan_objmgr_psoc_try_get_ref(struct wlan_objmgr_psoc *psoc,
+						wlan_objmgr_ref_dbgid id);
+
+/**
+ * wlan_objmgr_psoc_release_ref() - decrement ref count
+ * @psoc: PSOC object
+ * @id:   Object Manager ref debug id
+ *
+ * API to decrement ref count of psoc, if ref count is 1, it initiates the
+ * PSOC deletion
+ *
+ * Return: void
+ */
+void wlan_objmgr_psoc_release_ref(struct wlan_objmgr_psoc *psoc,
+						wlan_objmgr_ref_dbgid id);
 
 #endif /* _WLAN_OBJMGR_PSOC_OBJ_H_*/

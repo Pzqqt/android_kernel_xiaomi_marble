@@ -21,6 +21,7 @@
   */
 #ifndef _WLAN_OBJMGR_PEER_OBJ_H_
 #define _WLAN_OBJMGR_PEER_OBJ_H_
+
 #include <qdf_types.h>
 #include <qdf_atomic.h>
 
@@ -134,8 +135,8 @@ struct wlan_objmgr_peer_mlme {
 
 /**
  * struct wlan_objmgr_peer_objmgr - object manager data of peer
- * @vdev:      VDEV pointer to which it is associated
- * @ref_cnt:  Ref count
+ * @vdev:              VDEV pointer to which it is associated
+ * @ref_cnt:           Ref count
  */
 struct wlan_objmgr_peer_objmgr {
 	struct wlan_objmgr_vdev *vdev;
@@ -203,7 +204,7 @@ struct wlan_objmgr_peer *wlan_objmgr_peer_obj_create(
  * @peer: PEER object
  *
  * Deletes PEER object, removes it from PSOC's, VDEV's peer list
- * Invokes the registered notifiers to delete component objects
+ * Invokes the registered notifiers to destroy component objects
  *
  * Return: SUCCESS/FAILURE
  */
@@ -268,12 +269,12 @@ QDF_STATUS wlan_objmgr_trigger_peer_comp_priv_object_creation(
 		enum wlan_umac_comp_id id);
 
 /**
- * wlan_objmgr_trigger_peer_comp_priv_object_deletion() - delete
+ * wlan_objmgr_trigger_peer_comp_priv_object_deletion() - destroy
  * peer comp object
  * @peer: PEER object
  * @id: Component id
  *
- * API to delete component private object in run time, this would
+ * API to destroy component private object in run time, this would
  * be used for features which gets disabled in run time
  *
  * Return: SUCCESS on successful deletion
@@ -324,45 +325,74 @@ static inline void wlan_peer_obj_unlock(struct wlan_objmgr_peer *peer)
 {
 	qdf_spin_unlock_bh(&peer->peer_lock);
 }
+
 /**
- * wlan_objmgr_peer_ref_peer() - increment ref count
+ * DOC: Examples to use PEER ref count APIs
+ *
+ * In all the scenarios, the pair of API should be followed
+ * other it lead to memory leak
+ *
+ *  scenario 1:
+ *
+ *     wlan_objmgr_peer_obj_create()
+ *     ----
+ *     wlan_objmgr_peer_obj_delete()
+ *
+ *  scenario 2:
+ *
+ *     wlan_objmgr_peer_get_ref()
+ *     ----
+ *     the operations which are done on
+ *     peer object
+ *     ----
+ *     wlan_objmgr_peer_release_ref()
+ *
+ *  scenario 3:
+ *
+ *     API to retrieve peer (xxx_get_peer_xxx())
+ *     ----
+ *     the operations which are done on
+ *     peer object
+ *     ----
+ *     wlan_objmgr_peer_release_ref()
+ */
+
+/**
+ * wlan_objmgr_peer_get_ref() - increment ref count
  * @peer: PEER object
+ * @id:   Object Manager ref debug id
  *
  * API to increment ref count of peer
  *
  * Return: void
  */
-static inline void wlan_objmgr_peer_ref_peer(struct wlan_objmgr_peer *peer)
-{
-	if (peer == NULL) {
-		qdf_print("%s: peer obj is NULL\n", __func__);
-		return;
-	}
-	/* Increment ref count */
-	qdf_atomic_inc(&peer->peer_objmgr.ref_cnt);
-	return;
-}
+void wlan_objmgr_peer_get_ref(struct wlan_objmgr_peer *peer,
+					wlan_objmgr_ref_dbgid id);
 
 /**
- * wlan_objmgr_peer_unref_peer() - decrement ref count
+ * wlan_objmgr_peer_try_get_ref() - increment ref count, if allowed
  * @peer: PEER object
+ * @id:   Object Manager ref debug id
+ *
+ * API to increment ref count of peer, if object state is valid
+ *
+ * Return: void
+ */
+QDF_STATUS wlan_objmgr_peer_try_get_ref(struct wlan_objmgr_peer *peer,
+						 wlan_objmgr_ref_dbgid id);
+
+/**
+ * wlan_objmgr_peer_release_ref() - decrement ref count
+ * @peer: PEER object
+ * @id:   Object Manager ref debug id
  *
  * API to decrement ref count of peer, if ref count is 1, it initiates the
  * peer deletion
  *
  * Return: void
  */
-static inline void wlan_objmgr_peer_unref_peer(struct wlan_objmgr_peer *peer)
-{
-	if (peer == NULL) {
-		qdf_print("%s: peer obj is NULL\n", __func__);
-		return;
-	}
-	/* Decrement ref count, free peer, if count becomes 0 */
-	if (qdf_atomic_dec_and_test(&peer->peer_objmgr.ref_cnt))
-		wlan_objmgr_peer_obj_delete(peer);
-	return;
-}
+void wlan_objmgr_peer_release_ref(struct wlan_objmgr_peer *peer,
+						 wlan_objmgr_ref_dbgid id);
 
 /**
  * wlan_psoc_peer_list_peek_head() - get head of psoc peer list

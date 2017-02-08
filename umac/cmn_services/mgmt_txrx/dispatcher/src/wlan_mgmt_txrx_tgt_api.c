@@ -831,10 +831,10 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 	 * scenario.
 	 */
 	mac_addr = (uint8_t *)wh->i_addr2;
-	peer = wlan_objmgr_find_peer(psoc, mac_addr);
+	peer = wlan_objmgr_get_peer(psoc, mac_addr, WLAN_MGMT_SB_ID);
 	if (!peer) {
 		mac_addr = (uint8_t *)wh->i_addr1;
-		peer = wlan_objmgr_find_peer(psoc, mac_addr);
+		peer = wlan_objmgr_get_peer(psoc, mac_addr, WLAN_MGMT_SB_ID);
 	}
 
 	/**
@@ -922,7 +922,7 @@ rx_handler_mem_free:
 	}
 dec_peer_ref_cnt:
 	if (peer)
-		wlan_objmgr_peer_unref_peer(peer);
+		wlan_objmgr_peer_release_ref(peer, WLAN_MGMT_SB_ID);
 
 	return status;
 }
@@ -994,7 +994,7 @@ no_registered_cb:
 	 * passing peer in wlan_mgmt_txrx_mgmt_frame_tx or
 	 * wlan_mgmt_txrx_beacon_frame_tx APIs.
 	 */
-	wlan_objmgr_peer_unref_peer(mgmt_desc->peer);
+	wlan_objmgr_peer_release_ref(mgmt_desc->peer, WLAN_MGMT_NB_ID);
 	wlan_mgmt_txrx_desc_put(mgmt_txrx_ctx, desc_id);
 	return QDF_STATUS_SUCCESS;
 }

@@ -106,17 +106,17 @@ err_desc_pool_init:
 }
 
 /**
- * wlan_mgmt_txrx_psoc_obj_delete_notification() - called from objmgr when psoc
- *                                                 is deleted
+ * wlan_mgmt_txrx_psoc_obj_destroy_notification() - called from objmgr when
+ *                                                  psoc is destroyed
  * @psoc: psoc context
  * @arg: argument
  *
- * This function gets called from object manager when psoc is being deleted and
- * deletes mgmt_txrx context, mgmt desc pool.
+ * This function gets called from object manager when psoc is being destroyed
+ * psoc deletes mgmt_txrx context, mgmt desc pool.
  *
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
-static QDF_STATUS wlan_mgmt_txrx_psoc_obj_delete_notification(
+static QDF_STATUS wlan_mgmt_txrx_psoc_obj_destroy_notification(
 			struct wlan_objmgr_psoc *psoc,
 			void *arg)
 {
@@ -166,16 +166,16 @@ QDF_STATUS wlan_mgmt_txrx_init(void)
 		goto err_psoc_create;
 	}
 
-	status = wlan_objmgr_register_psoc_delete_handler(
+	status = wlan_objmgr_register_psoc_destroy_handler(
 				WLAN_UMAC_COMP_MGMT_TXRX,
-				wlan_mgmt_txrx_psoc_obj_delete_notification,
+				wlan_mgmt_txrx_psoc_obj_destroy_notification,
 				NULL);
 	if (status != QDF_STATUS_SUCCESS) {
-		mgmt_txrx_err("Failed to register mgmt txrx obj delete handler");
+		mgmt_txrx_err("Failed to register mgmt txrx obj destroy handler");
 		goto err_psoc_delete;
 	}
 
-	mgmt_txrx_info("Successfully registered create and delete handlers with objmgr");
+	mgmt_txrx_info("Successfully registered create and destroy handlers with objmgr");
 	return QDF_STATUS_SUCCESS;
 
 err_psoc_delete:
@@ -194,14 +194,15 @@ QDF_STATUS wlan_mgmt_txrx_deinit(void)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (wlan_objmgr_unregister_psoc_delete_handler(WLAN_UMAC_COMP_MGMT_TXRX,
-				wlan_mgmt_txrx_psoc_obj_delete_notification,
+	if (wlan_objmgr_unregister_psoc_destroy_handler(
+				WLAN_UMAC_COMP_MGMT_TXRX,
+				wlan_mgmt_txrx_psoc_obj_destroy_notification,
 				NULL)
 			!= QDF_STATUS_SUCCESS) {
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	mgmt_txrx_info("Successfully unregistered create and delete handlers with objmgr");
+	mgmt_txrx_info("Successfully unregistered create and destroy handlers with objmgr");
 	return QDF_STATUS_SUCCESS;
 }
 

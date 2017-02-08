@@ -64,6 +64,20 @@ static QDF_STATUS wlan_objmgr_pdev_object_status(
 	return status;
 }
 
+static QDF_STATUS wlan_objmgr_pdev_obj_free(struct wlan_objmgr_pdev *pdev)
+{
+	/* Detach PDEV from PSOC PDEV's list */
+	if (wlan_objmgr_psoc_pdev_detach(pdev->pdev_objmgr.wlan_psoc, pdev) ==
+						QDF_STATUS_E_FAILURE) {
+		qdf_print("%s: PSOC PDEV detach failed\n",  __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	qdf_spinlock_destroy(&pdev->pdev_lock);
+	qdf_mem_free(pdev);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 struct wlan_objmgr_pdev *wlan_objmgr_pdev_obj_create(
 			struct wlan_objmgr_psoc *psoc, void *osdev_priv)
 {
@@ -102,7 +116,8 @@ struct wlan_objmgr_pdev *wlan_objmgr_pdev_obj_create(
 	pdev->pdev_objmgr.max_vdev_count = WLAN_UMAC_PDEV_MAX_VDEVS;
 	/* Save HDD/OSIF pointer */
 	pdev->pdev_nif.pdev_ospriv = osdev_priv;
-
+	qdf_atomic_init(&pdev->pdev_objmgr.ref_cnt);
+	wlan_objmgr_pdev_get_ref(pdev, WLAN_OBJMGR_ID);
 	/* Invoke registered create handlers */
 	for (id = 0; id < WLAN_UMAC_MAX_COMPONENTS; id++) {
 		handler = g_umac_glb_obj->pdev_create_handler[id];
@@ -143,10 +158,10 @@ struct wlan_objmgr_pdev *wlan_objmgr_pdev_obj_create(
 }
 EXPORT_SYMBOL(wlan_objmgr_pdev_obj_create);
 
-QDF_STATUS wlan_objmgr_pdev_obj_delete(struct wlan_objmgr_pdev *pdev)
+static QDF_STATUS wlan_objmgr_pdev_obj_destroy(struct wlan_objmgr_pdev *pdev)
 {
 	uint8_t id;
-	wlan_objmgr_pdev_delete_handler handler;
+	wlan_objmgr_pdev_destroy_handler handler;
 	QDF_STATUS obj_status;
 	void *arg;
 
@@ -155,10 +170,15 @@ QDF_STATUS wlan_objmgr_pdev_obj_delete(struct wlan_objmgr_pdev *pdev)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	/* Invoke registered delete handlers */
+	if (pdev->obj_state != WLAN_OBJ_STATE_LOGICALLY_DELETED) {
+		qdf_print("%s:pdev object delete is not invoked\n", __func__);
+		WLAN_OBJMGR_BUG(0);
+	}
+
+	/* Invoke registered destroy handlers */
 	for (id = 0; id < WLAN_UMAC_MAX_COMPONENTS; id++) {
-		handler = g_umac_glb_obj->pdev_delete_handler[id];
-		arg = g_umac_glb_obj->pdev_delete_handler_arg[id];
+		handler = g_umac_glb_obj->pdev_destroy_handler[id];
+		arg = g_umac_glb_obj->pdev_destroy_handler_arg[id];
 		if (handler != NULL)
 			pdev->obj_status[id] = handler(pdev, arg);
 		else
@@ -168,7 +188,7 @@ QDF_STATUS wlan_objmgr_pdev_obj_delete(struct wlan_objmgr_pdev *pdev)
 	obj_status = wlan_objmgr_pdev_object_status(pdev);
 
 	if (obj_status == QDF_STATUS_E_FAILURE) {
-		qdf_print("%s: PDEV component objects delete failed\n",
+		qdf_print("%s: PDEV component objects destroy failed\n",
 			  __func__);
 		/* Ideally should not happen */
 		/* This leads to memleak ??? how to handle */
@@ -179,20 +199,27 @@ QDF_STATUS wlan_objmgr_pdev_obj_delete(struct wlan_objmgr_pdev *pdev)
 	if (obj_status == QDF_STATUS_COMP_ASYNC) {
 		pdev->obj_state = WLAN_OBJ_STATE_PARTIALLY_DELETED;
 		return QDF_STATUS_COMP_ASYNC;
-	} else {
-		/* Detach PDEV from PSOC PDEV's list */
-		if (wlan_objmgr_psoc_pdev_detach(pdev->pdev_objmgr.wlan_psoc,
-						 pdev) ==
-						 QDF_STATUS_E_FAILURE) {
-			qdf_print("%s: PSOC PDEV detach failed\n",
-				  __func__);
-			return QDF_STATUS_E_FAILURE;
-		}
-		/* de-init lock */
-		qdf_spinlock_destroy(&pdev->pdev_lock);
-		/* Free the memory */
-		qdf_mem_free(pdev);
 	}
+
+	/* Free PDEV object */
+	return wlan_objmgr_pdev_obj_free(pdev);
+}
+
+QDF_STATUS wlan_objmgr_pdev_obj_delete(struct wlan_objmgr_pdev *pdev)
+{
+	if (pdev == NULL) {
+		qdf_print("%s:pdev is NULL\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	/*
+	 * Update PDEV object state to LOGICALLY DELETED
+	 * It prevents further access of this object
+	 */
+	wlan_pdev_obj_lock(pdev);
+	pdev->obj_state = WLAN_OBJ_STATE_LOGICALLY_DELETED;
+	wlan_pdev_obj_unlock(pdev);
+	wlan_objmgr_pdev_release_ref(pdev, WLAN_OBJMGR_ID);
+
 	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(wlan_objmgr_pdev_obj_delete);
@@ -228,13 +255,16 @@ QDF_STATUS wlan_objmgr_pdev_component_obj_attach(
 	/* Save component's pointer and status */
 	pdev->pdev_comp_priv_obj[id] = comp_priv_obj;
 	pdev->obj_status[id] = status;
+
 	wlan_pdev_obj_unlock(pdev);
 
 	if (pdev->obj_state != WLAN_OBJ_STATE_PARTIALLY_CREATED)
 		return QDF_STATUS_SUCCESS;
-	/* If PDEV object status is partially created means, this API is
-	invoked with differnt context, this block should be executed for async
-	components only */
+	/**
+	 * If PDEV object status is partially created means, this API is
+	 * invoked with differnt context, this block should be executed for
+	 * async components only
+	 */
 	/* Derive status */
 	obj_status = wlan_objmgr_pdev_object_status(pdev);
 	/* STATUS_SUCCESS means, object is CREATED */
@@ -281,7 +311,7 @@ QDF_STATUS wlan_objmgr_pdev_component_obj_detach(
 	pdev->obj_status[id] = QDF_STATUS_SUCCESS;
 	wlan_pdev_obj_unlock(pdev);
 
-	/* If PDEV object status is partially deleted means, this API is
+	/* If PDEV object status is partially destroyed means, this API is
 	invoked with differnt context, this block should be executed for async
 	components only */
 	if ((pdev->obj_state == WLAN_OBJ_STATE_PARTIALLY_DELETED) ||
@@ -318,15 +348,8 @@ QDF_STATUS wlan_objmgr_pdev_component_obj_detach(
 		/* Delete pdev object */
 		if ((obj_status == QDF_STATUS_SUCCESS) &&
 		    (pdev->obj_state == WLAN_OBJ_STATE_DELETED)) {
-			/* Detach pdev object from psoc */
-			if (wlan_objmgr_psoc_pdev_detach(
-				pdev->pdev_objmgr.wlan_psoc, pdev) ==
-						QDF_STATUS_E_FAILURE)
-				return QDF_STATUS_E_FAILURE;
-			/* Destroy spinlock */
-			qdf_spinlock_destroy(&pdev->pdev_lock);
-			/* Free PDEV memory */
-			qdf_mem_free(pdev);
+			/* Free PDEV object */
+			return wlan_objmgr_pdev_obj_free(pdev);
 		}
 	}
 	return QDF_STATUS_SUCCESS;
@@ -338,7 +361,8 @@ QDF_STATUS wlan_objmgr_pdev_component_obj_detach(
 static void wlan_objmgr_pdev_vdev_iterate_peers(struct wlan_objmgr_pdev *pdev,
 				struct wlan_objmgr_vdev *vdev,
 				wlan_objmgr_pdev_op_handler handler,
-				void *arg, uint8_t lock_free_op)
+				void *arg, uint8_t lock_free_op,
+				wlan_objmgr_ref_dbgid dbg_id)
 {
 	qdf_list_t *peer_list = NULL;
 	struct wlan_objmgr_peer *peer = NULL;
@@ -353,17 +377,17 @@ static void wlan_objmgr_pdev_vdev_iterate_peers(struct wlan_objmgr_pdev *pdev,
 	if (peer_list != NULL) {
 		peer = wlan_vdev_peer_list_peek_head(peer_list);
 		while (peer != NULL) {
-			/* Increment ref count, to hold the
-				peer pointer */
-			wlan_objmgr_peer_ref_peer(peer);
 			/* Get next peer pointer */
 			peer_next = wlan_peer_get_next_peer_of_vdev(peer_list,
 								    peer);
-			/* Invoke the handler */
-			handler(pdev, (void *)peer, arg);
-			/* Decrement ref count, this can lead
-				to peer deletion also */
-			wlan_objmgr_peer_unref_peer(peer);
+			/* Increment ref count, to hold the
+				peer pointer */
+			if (wlan_objmgr_peer_try_get_ref(peer, dbg_id) ==
+					QDF_STATUS_SUCCESS) {
+				/* Invoke the handler */
+				handler(pdev, (void *)peer, arg);
+				wlan_objmgr_peer_release_ref(peer, dbg_id);
+			}
 			peer = peer_next;
 		}
 	}
@@ -375,7 +399,8 @@ QDF_STATUS wlan_objmgr_pdev_iterate_obj_list(
 		struct wlan_objmgr_pdev *pdev,
 		enum wlan_objmgr_obj_type obj_type,
 		wlan_objmgr_pdev_op_handler handler,
-		void *arg, uint8_t lock_free_op)
+		void *arg, uint8_t lock_free_op,
+		wlan_objmgr_ref_dbgid dbg_id)
 {
 	struct wlan_objmgr_pdev_objmgr *objmgr = &pdev->pdev_objmgr;
 	qdf_list_t *vdev_list = NULL;
@@ -394,26 +419,35 @@ QDF_STATUS wlan_objmgr_pdev_iterate_obj_list(
 			VDEV object */
 		vdev = wlan_pdev_vdev_list_peek_head(vdev_list);
 		while (vdev != NULL) {
-				/* TODO increment ref count */
-			/* Get next vdev (handler can be invoked for
-				vdev deletion also */
+			/*
+			 * Get next vdev (handler can be invoked for
+			 * vdev deletion also
+			 */
 			vdev_next = wlan_vdev_get_next_vdev_of_pdev(vdev_list,
 						vdev);
-			handler(pdev, (void *)vdev, arg);
+			if (wlan_objmgr_vdev_try_get_ref(vdev, dbg_id) ==
+						QDF_STATUS_SUCCESS) {
+				handler(pdev, (void *)vdev, arg);
+				wlan_objmgr_vdev_release_ref(vdev, dbg_id);
+			}
 			vdev = vdev_next;
-				/* TODO decrement ref count */
 		}
 		break;
 	case WLAN_PEER_OP:
 		vdev = wlan_pdev_vdev_list_peek_head(vdev_list);
 		while (vdev != NULL) {
-			/* TODO increment ref count */
-			wlan_objmgr_pdev_vdev_iterate_peers(pdev, vdev, handler,
-							    arg, lock_free_op);
 			/* Get Next VDEV */
 			vdev_next = wlan_vdev_get_next_vdev_of_pdev(vdev_list,
 						vdev);
-			/* TODO decrement ref count */
+			if (wlan_objmgr_vdev_try_get_ref(vdev, dbg_id) ==
+						QDF_STATUS_SUCCESS) {
+				wlan_objmgr_pdev_vdev_iterate_peers(pdev, vdev,
+								handler, arg,
+								lock_free_op,
+								dbg_id);
+				wlan_objmgr_vdev_release_ref(vdev, dbg_id);
+			}
+			vdev = vdev_next;
 		}
 		break;
 	default:
@@ -471,7 +505,7 @@ QDF_STATUS wlan_objmgr_trigger_pdev_comp_priv_object_deletion(
 		struct wlan_objmgr_pdev *pdev,
 		enum wlan_umac_comp_id id)
 {
-	wlan_objmgr_pdev_delete_handler handler;
+	wlan_objmgr_pdev_destroy_handler handler;
 	void *arg;
 	QDF_STATUS obj_status = QDF_STATUS_SUCCESS;
 
@@ -488,8 +522,8 @@ QDF_STATUS wlan_objmgr_trigger_pdev_comp_priv_object_deletion(
 	wlan_pdev_obj_unlock(pdev);
 
 	/* Invoke registered create handlers */
-	handler = g_umac_glb_obj->pdev_delete_handler[id];
-	arg = g_umac_glb_obj->pdev_delete_handler_arg[id];
+	handler = g_umac_glb_obj->pdev_destroy_handler[id];
+	arg = g_umac_glb_obj->pdev_destroy_handler_arg[id];
 	if (handler != NULL)
 		pdev->obj_status[id] = handler(pdev, arg);
 	else
@@ -541,6 +575,8 @@ QDF_STATUS wlan_objmgr_pdev_vdev_attach(struct wlan_objmgr_pdev *pdev,
 	}
 	/* Add vdev to pdev's vdev list */
 	wlan_obj_pdev_vdevlist_add_tail(&objmgr->wlan_vdev_list, vdev);
+	/* Increment pdev ref count to make sure it won't be destroyed before */
+	wlan_objmgr_pdev_get_ref(pdev, WLAN_OBJMGR_ID);
 	/* Increment vdev count of pdev */
 	objmgr->wlan_vdev_count++;
 	wlan_pdev_obj_unlock(pdev);
@@ -563,13 +599,15 @@ QDF_STATUS wlan_objmgr_pdev_vdev_detach(struct wlan_objmgr_pdev *pdev,
 	wlan_obj_pdev_vdevlist_remove_vdev(&objmgr->wlan_vdev_list, vdev);
 	/* decrement vdev count */
 	objmgr->wlan_vdev_count--;
-
 	wlan_pdev_obj_unlock(pdev);
+	/* Decrement pdev ref count since vdev is releasing reference */
+	wlan_objmgr_pdev_release_ref(pdev, WLAN_OBJMGR_ID);
 	return QDF_STATUS_SUCCESS;
 }
 
-struct wlan_objmgr_vdev *wlan_objmgr_find_vdev_by_id_from_pdev(
-			struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
+struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_id_from_pdev(
+			struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
+			wlan_objmgr_ref_dbgid dbg_id)
 {
 	struct wlan_objmgr_vdev *vdev;
 	struct wlan_objmgr_vdev *vdev_next;
@@ -586,6 +624,10 @@ struct wlan_objmgr_vdev *wlan_objmgr_find_vdev_by_id_from_pdev(
 	entry of vdev list */
 	while (vdev != NULL) {
 		if (wlan_vdev_get_id(vdev) == vdev_id) {
+			if (wlan_objmgr_vdev_try_get_ref(vdev, dbg_id) !=
+							QDF_STATUS_SUCCESS)
+				vdev = NULL;
+
 			wlan_pdev_obj_unlock(pdev);
 			return vdev;
 		}
@@ -596,10 +638,47 @@ struct wlan_objmgr_vdev *wlan_objmgr_find_vdev_by_id_from_pdev(
 	wlan_pdev_obj_unlock(pdev);
 	return NULL;
 }
-EXPORT_SYMBOL(wlan_objmgr_find_vdev_by_id_from_pdev);
+EXPORT_SYMBOL(wlan_objmgr_get_vdev_by_id_from_pdev);
 
-struct wlan_objmgr_vdev *wlan_objmgr_find_vdev_by_macaddr_from_pdev(
-		struct wlan_objmgr_pdev *pdev, uint8_t *macaddr)
+struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_id_from_pdev_no_state(
+			struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
+			wlan_objmgr_ref_dbgid dbg_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_vdev *vdev_next;
+	struct wlan_objmgr_pdev_objmgr *objmgr;
+	qdf_list_t *vdev_list;
+
+	wlan_pdev_obj_lock(pdev);
+
+	objmgr = &pdev->pdev_objmgr;
+	vdev_list = &objmgr->wlan_vdev_list;
+	/* Get first vdev */
+	vdev = wlan_pdev_vdev_list_peek_head(vdev_list);
+	/**
+	 * Iterate through pdev's vdev list, till vdev id matches with
+	 * entry of vdev list
+	 */
+	while (vdev != NULL) {
+		if (wlan_vdev_get_id(vdev) == vdev_id) {
+			wlan_objmgr_vdev_get_ref(vdev, dbg_id);
+			wlan_pdev_obj_unlock(pdev);
+
+			return vdev;
+		}
+		/* get next vdev */
+		vdev_next = wlan_vdev_get_next_vdev_of_pdev(vdev_list, vdev);
+		vdev = vdev_next;
+	}
+	wlan_pdev_obj_unlock(pdev);
+
+	return NULL;
+}
+EXPORT_SYMBOL(wlan_objmgr_get_vdev_by_id_from_pdev_no_state);
+
+struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_macaddr_from_pdev(
+		struct wlan_objmgr_pdev *pdev, uint8_t *macaddr,
+		wlan_objmgr_ref_dbgid dbg_id)
 {
 	struct wlan_objmgr_vdev *vdev;
 	struct wlan_objmgr_vdev *vdev_next;
@@ -616,6 +695,10 @@ struct wlan_objmgr_vdev *wlan_objmgr_find_vdev_by_macaddr_from_pdev(
 	while (vdev != NULL) {
 		if (WLAN_ADDR_EQ(wlan_vdev_mlme_get_macaddr(vdev), macaddr)
 					== QDF_STATUS_SUCCESS) {
+			if (wlan_objmgr_vdev_try_get_ref(vdev, dbg_id) !=
+							QDF_STATUS_SUCCESS)
+				vdev = NULL;
+
 			wlan_pdev_obj_unlock(pdev);
 			return vdev;
 		}
@@ -624,6 +707,40 @@ struct wlan_objmgr_vdev *wlan_objmgr_find_vdev_by_macaddr_from_pdev(
 		vdev = vdev_next;
 	}
 	wlan_pdev_obj_unlock(pdev);
+
+	return NULL;
+}
+
+struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_macaddr_from_pdev_no_state(
+		struct wlan_objmgr_pdev *pdev, uint8_t *macaddr,
+		wlan_objmgr_ref_dbgid dbg_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_vdev *vdev_next;
+	struct wlan_objmgr_pdev_objmgr *objmgr;
+	qdf_list_t *vdev_list;
+
+	wlan_pdev_obj_lock(pdev);
+	objmgr = &pdev->pdev_objmgr;
+	vdev_list = &objmgr->wlan_vdev_list;
+	/* Get first vdev */
+	vdev = wlan_pdev_vdev_list_peek_head(vdev_list);
+	/* Iterate through pdev's vdev list, till vdev macaddr matches with
+	entry of vdev list */
+	while (vdev != NULL) {
+		if (WLAN_ADDR_EQ(wlan_vdev_mlme_get_macaddr(vdev), macaddr)
+					== QDF_STATUS_SUCCESS) {
+			wlan_objmgr_vdev_get_ref(vdev, dbg_id);
+			wlan_pdev_obj_unlock(pdev);
+
+			return vdev;
+		}
+		/* get next vdev */
+		vdev_next = wlan_vdev_get_next_vdev_of_pdev(vdev_list, vdev);
+		vdev = vdev_next;
+	}
+	wlan_pdev_obj_unlock(pdev);
+
 	return NULL;
 }
 
@@ -647,6 +764,68 @@ void *wlan_objmgr_pdev_get_comp_private_obj(
 	}
 
 	comp_priv_obj = pdev->pdev_comp_priv_obj[id];
+
 	return comp_priv_obj;
 }
 EXPORT_SYMBOL(wlan_objmgr_pdev_get_comp_private_obj);
+
+void wlan_objmgr_pdev_get_ref(struct wlan_objmgr_pdev *pdev,
+					wlan_objmgr_ref_dbgid id)
+{
+	if (pdev == NULL) {
+		qdf_print("%s: pdev obj is NULL\n", __func__);
+		QDF_ASSERT(0);
+		return;
+	}
+	qdf_atomic_inc(&pdev->pdev_objmgr.ref_cnt);
+
+	return;
+}
+EXPORT_SYMBOL(wlan_objmgr_pdev_get_ref);
+
+QDF_STATUS wlan_objmgr_pdev_try_get_ref(struct wlan_objmgr_pdev *pdev,
+						wlan_objmgr_ref_dbgid id)
+{
+	if (pdev == NULL) {
+		qdf_print("%s: pdev obj is NULL\n", __func__);
+		QDF_ASSERT(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	wlan_pdev_obj_lock(pdev);
+	if (pdev->obj_state == WLAN_OBJ_STATE_LOGICALLY_DELETED) {
+		wlan_pdev_obj_unlock(pdev);
+		qdf_print("%s: pdev obj is in Deletion Progress state\n",
+			  __func__);
+		return QDF_STATUS_E_RESOURCES;
+	}
+
+	wlan_objmgr_pdev_get_ref(pdev, id);
+	wlan_pdev_obj_unlock(pdev);
+
+	return QDF_STATUS_SUCCESS;
+}
+EXPORT_SYMBOL(wlan_objmgr_pdev_try_get_ref);
+
+void wlan_objmgr_pdev_release_ref(struct wlan_objmgr_pdev *pdev,
+						wlan_objmgr_ref_dbgid id)
+{
+	if (pdev == NULL) {
+		qdf_print("%s: pdev obj is NULL\n", __func__);
+		QDF_ASSERT(0);
+		return;
+	}
+
+	if (!qdf_atomic_read(&pdev->pdev_objmgr.ref_cnt)) {
+		qdf_print("%s: pdev ref cnt is 0\n", __func__);
+		WLAN_OBJMGR_BUG(0);
+		return;
+	}
+
+	/* Decrement ref count, free pdev, if ref count == 0 */
+	if (qdf_atomic_dec_and_test(&pdev->pdev_objmgr.ref_cnt))
+		wlan_objmgr_pdev_obj_destroy(pdev);
+
+	return;
+}
+EXPORT_SYMBOL(wlan_objmgr_pdev_release_ref);

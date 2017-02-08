@@ -133,11 +133,12 @@ struct wlan_objmgr_pdev_mlme {
 
 /**
  * struct wlan_objmgr_pdev_objmgr - pdev object object manager structure
- * @wlan_pdev_id:    PDEV id
- * @wlan_vdev_list:  List maintains the VDEVs created on this PDEV
- * @wlan_vdev_count: VDEVs count
- * @max_vdev_count:  Max no. of VDEVs supported by this PDEV
- * @wlan_psoc:       back pointer to PSOC, its attached to
+ * @wlan_pdev_id:      PDEV id
+ * @wlan_vdev_list:    List maintains the VDEVs created on this PDEV
+ * @wlan_vdev_count:   VDEVs count
+ * @max_vdev_count:    Max no. of VDEVs supported by this PDEV
+ * @wlan_psoc:         back pointer to PSOC, its attached to
+ * @ref_cnt:           Ref count
  */
 struct wlan_objmgr_pdev_objmgr {
 	uint8_t wlan_pdev_id;
@@ -145,6 +146,7 @@ struct wlan_objmgr_pdev_objmgr {
 	uint8_t wlan_vdev_count;
 	uint8_t max_vdev_count;
 	struct wlan_objmgr_psoc *wlan_psoc;
+	qdf_atomic_t ref_cnt;
 };
 
 /**
@@ -192,8 +194,9 @@ struct wlan_objmgr_pdev *wlan_objmgr_pdev_obj_create(
  * wlan_objmgr_pdev_obj_delete() - pdev delete
  * @psoc: PDEV object
  *
- * Deletes PDEV object,
- * Invokes the registered notifiers to delete component objects
+ * Logically deletes PDEV object,
+ * Once all the references are released, object manager invokes the registered
+ * notifiers to destroy component objects
  *
  * Return: SUCCESS/FAILURE
  */
@@ -251,6 +254,7 @@ QDF_STATUS wlan_objmgr_pdev_component_obj_detach(
  * @lock_free_op: This gives provision to run this API with out lock protected
  *                It would be useful, for operations like Obj Delete, where
  *                lock should not be taken by caller.
+ * @dbg_id: id of the caller
  *
  * API to be used for performing the operations on all VDEV/PEER objects
  * of pdev
@@ -266,7 +270,8 @@ QDF_STATUS wlan_objmgr_pdev_iterate_obj_list(
 		struct wlan_objmgr_pdev *pdev,
 		enum wlan_objmgr_obj_type obj_type,
 		wlan_objmgr_pdev_op_handler handler,
-		void *arg, uint8_t lock_free_op);
+		void *arg, uint8_t lock_free_op,
+		wlan_objmgr_ref_dbgid dbg_id);
 
 /**
  * wlan_objmgr_trigger_pdev_comp_priv_object_creation() - create
@@ -285,12 +290,12 @@ QDF_STATUS wlan_objmgr_trigger_pdev_comp_priv_object_creation(
 		enum wlan_umac_comp_id id);
 
 /**
- * wlan_objmgr_trigger_pdev_comp_priv_object_deletion() - delete
+ * wlan_objmgr_trigger_pdev_comp_priv_object_deletion() - destroy
  * comp object of pdev
  * @pdev: PDEV object
  * @id: Component id
  *
- * API to delete component private object in run time, this would
+ * API to destroy component private object in run time, this would
  * be used for features which gets disabled in run time
  *
  * Return: SUCCESS on successful deletion
@@ -301,30 +306,66 @@ QDF_STATUS wlan_objmgr_trigger_pdev_comp_priv_object_deletion(
 		enum wlan_umac_comp_id id);
 
 /**
- * wlan_objmgr_find_vdev_by_id_from_pdev() - find vdev using id from pdev
+ * wlan_objmgr_get_vdev_by_id_from_pdev() - find vdev using id from pdev
  * @pdev: PDEV object
  * @vdev_id: vdev id
+ * @dbg_id: id of the caller
  *
  * API to find vdev object pointer by vdev id from pdev's vdev list
  *
  * Return: vdev pointer
  *         NULL on FAILURE
  */
-struct wlan_objmgr_vdev *wlan_objmgr_find_vdev_by_id_from_pdev(
-			struct wlan_objmgr_pdev *pdev, uint8_t vdev_id);
+struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_id_from_pdev(
+			struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
+			wlan_objmgr_ref_dbgid dbg_id);
 
 /**
- * wlan_objmgr_find_vdev_by_macaddr_from_pdev() - find vdev using macaddr
+ * wlan_objmgr_get_vdev_by_id_from_pdev_no_state() - find vdev using id from
+ *                                                      pdev
+ * @pdev: PDEV object
+ * @vdev_id: vdev id
+ * @dbg_id: id of the caller
+ *
+ * API to find vdev object pointer by vdev id from pdev's vdev list
+ *
+ * Return: vdev pointer
+ *         NULL on FAILURE
+ */
+struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_id_from_pdev_no_state(
+			struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
+			wlan_objmgr_ref_dbgid dbg_id);
+
+/**
+ * wlan_objmgr_get_vdev_by_macaddr_from_pdev() - find vdev using macaddr
  * @pdev: PDEV object
  * @macaddr: MAC address
+ * @dbg_id: id of the caller
  *
  * API to find vdev object pointer by vdev mac addr from pdev's vdev list
  *
  * Return: vdev pointer
  *         NULL on FAILURE
  */
-struct wlan_objmgr_vdev *wlan_objmgr_find_vdev_by_macaddr_from_pdev(
-		struct wlan_objmgr_pdev *pdev, uint8_t *macaddr);
+struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_macaddr_from_pdev(
+		struct wlan_objmgr_pdev *pdev, uint8_t *macaddr,
+		wlan_objmgr_ref_dbgid dbg_id);
+
+/**
+ * wlan_objmgr_get_vdev_by_macaddr_from_pdev_no_state() - find vdev using
+ *                                                           macaddr
+ * @pdev: PDEV object
+ * @macaddr: MAC address
+ * @dbg_id: id of the caller
+ *
+ * API to find vdev object pointer by vdev mac addr from pdev's vdev list
+ *
+ * Return: vdev pointer
+ *         NULL on FAILURE
+ */
+struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_macaddr_from_pdev_no_state(
+		struct wlan_objmgr_pdev *pdev, uint8_t *macaddr,
+		wlan_objmgr_ref_dbgid dbg_id);
 
 /**
  * wlan_objmgr_pdev_get_comp_private_obj() - get pdev component private object
@@ -601,4 +642,82 @@ static inline uint8_t wlan_pdev_get_max_vdev_count(
 	/* This API is invoked with lock acquired, do not add log prints */
 	return pdev->pdev_objmgr.max_vdev_count;
 }
+
+/**
+ * DOC: Examples to use PDEV ref count APIs
+ *
+ * In all the scenarios, the pair of API should be followed
+ * otherwise it lead to memory leak
+ *
+ *  scenario 1:
+ *
+ *     wlan_objmgr_pdev_obj_create()
+ *     ----
+ *     wlan_objmgr_pdev_obj_delete()
+ *
+ *  scenario 2:
+ *
+ *     wlan_objmgr_pdev_get_ref()
+ *     ----
+ *     the operations which are done on
+ *     pdev object
+ *     ----
+ *     wlan_objmgr_pdev_release_ref()
+ *
+ *  scenario 3:
+ *
+ *     wlan_objmgr_get_pdev_by_id[_no_state]()
+ *     ----
+ *     the operations which are done on
+ *     pdev object
+ *     ----
+ *     wlan_objmgr_pdev_release_ref()
+ *
+ *  scenario 4:
+ *
+ *     wlan_objmgr_get_pdev_by_macaddr[_no_state]()
+ *     ----
+ *     the operations which are done on
+ *     pdev object
+ *     ----
+ *     wlan_objmgr_pdev_release_ref()
+ */
+
+/**
+ * wlan_objmgr_pdev_get_ref() - increment ref count
+ * @pdev: PDEV object
+ * @id:   Object Manager ref debug id
+ *
+ * API to increment ref count of pdev
+ *
+ * Return: void
+ */
+void wlan_objmgr_pdev_get_ref(struct wlan_objmgr_pdev *pdev,
+					wlan_objmgr_ref_dbgid id);
+
+/**
+ * wlan_objmgr_pdev_try_get_ref() - increment ref count, if allowed
+ * @pdev: PDEV object
+ * @id:   Object Manager ref debug id
+ *
+ * API to increment ref count of pdev after checking valid object state
+ *
+ * Return: void
+ */
+QDF_STATUS wlan_objmgr_pdev_try_get_ref(struct wlan_objmgr_pdev *pdev,
+						wlan_objmgr_ref_dbgid id);
+
+/**
+ * wlan_objmgr_pdev_release_ref() - decrement ref count
+ * @pdev: PDEV object
+ * @id:   Object Manager ref debug id
+ *
+ * API to decrement ref count of pdev, if ref count is 1, it initiates the
+ * PDEV deletion
+ *
+ * Return: void
+ */
+void wlan_objmgr_pdev_release_ref(struct wlan_objmgr_pdev *pdev,
+						wlan_objmgr_ref_dbgid id);
+
 #endif /* _WLAN_OBJMGR_PDEV_H_*/

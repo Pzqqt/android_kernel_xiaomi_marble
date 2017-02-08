@@ -44,17 +44,17 @@ QDF_STATUS wlan_objmgr_global_obj_init(void);
 QDF_STATUS wlan_objmgr_global_obj_deinit(void);
 
 /**
- * wlan_objmgr_global_obj_can_deleted() - Checks whether global object
- *					  can be deleted
+ * wlan_objmgr_global_obj_can_destroyed() - Checks whether global object
+ *					  can be destroyed
  *
  * Checks the psoc table of global object, if psoc table is empty
  * returns the SUCCESS
  *
- * Return: SUCCESS  on can be deleted,
- *         FAILURE  on can't be deleted
+ * Return: SUCCESS  on can be destroyed,
+ *         FAILURE  on can't be destroyed
  *
  */
-QDF_STATUS wlan_objmgr_global_obj_can_deleted(void);
+QDF_STATUS wlan_objmgr_global_obj_can_destroyed(void);
 
 /**
  * wlan_objmgr_register_psoc_create_handler() - register psoc create handler
@@ -92,7 +92,7 @@ QDF_STATUS wlan_objmgr_unregister_psoc_create_handler(
 		void *args);
 
 /**
- * wlan_objmgr_register_psoc_delete_handler() - register delete handler
+ * wlan_objmgr_register_psoc_destroy_handler() - register destroy handler
  * @id: component id
  * @handler: function pointer of the component
  * @args: args, if component wants certain args to be passed on PSOC deletion
@@ -104,13 +104,13 @@ QDF_STATUS wlan_objmgr_unregister_psoc_create_handler(
  *         Failure (if registration fails, each failure has different error
  *         code)
  */
-QDF_STATUS wlan_objmgr_register_psoc_delete_handler(
+QDF_STATUS wlan_objmgr_register_psoc_destroy_handler(
 		enum wlan_umac_comp_id id,
-		wlan_objmgr_psoc_delete_handler handler,
+		wlan_objmgr_psoc_destroy_handler handler,
 		void *args);
 
 /**
- * wlan_objmgr_unregister_psoc_delete_handler() - unregister delete handler
+ * wlan_objmgr_unregister_psoc_destroy_handler() - unregister destroy handler
  * @id: component id
  * @handler: function pointer of the component
  * @args: args, if component wants certain args to be passed on PSOC deletion
@@ -121,9 +121,9 @@ QDF_STATUS wlan_objmgr_register_psoc_delete_handler(
  *         Failure (if handler is not present, each failure has different error
  *         code)
  */
-QDF_STATUS wlan_objmgr_unregister_psoc_delete_handler(
+QDF_STATUS wlan_objmgr_unregister_psoc_destroy_handler(
 		enum wlan_umac_comp_id id,
-		wlan_objmgr_psoc_delete_handler handler,
+		wlan_objmgr_psoc_destroy_handler handler,
 		void *args);
 
 /**
@@ -198,7 +198,7 @@ QDF_STATUS wlan_objmgr_unregister_pdev_create_handler(
 		void *args);
 
 /**
- * wlan_objmgr_register_pdev_delete_handler() - register pdev delete handler
+ * wlan_objmgr_register_pdev_destroy_handler() - register pdev destroy handler
  * @id: component id
  * @handler: function pointer of the component
  * @args: args, if component wants certain args to be passed on PDEV deletion
@@ -210,13 +210,13 @@ QDF_STATUS wlan_objmgr_unregister_pdev_create_handler(
  *         Failure (if registration fails, each failure has different error
  *         code)
  */
-QDF_STATUS wlan_objmgr_register_pdev_delete_handler(
+QDF_STATUS wlan_objmgr_register_pdev_destroy_handler(
 		enum wlan_umac_comp_id id,
-		wlan_objmgr_pdev_delete_handler handler,
+		wlan_objmgr_pdev_destroy_handler handler,
 		void *args);
 
 /**
- * wlan_objmgr_unregister_pdev_delete_handler() - unregister pdev delete handler
+ * wlan_objmgr_unregister_pdev_destroy_handler() - unregister pdev destroy handler
  * @id: component id
  * @handler: function pointer of the component
  * @args: args, if component wants certain args to be passed on PDEV deletion
@@ -227,9 +227,9 @@ QDF_STATUS wlan_objmgr_register_pdev_delete_handler(
  *         Failure (if handler is not present, each failure has different error
  *         code)
  */
-QDF_STATUS wlan_objmgr_unregister_pdev_delete_handler(
+QDF_STATUS wlan_objmgr_unregister_pdev_destroy_handler(
 		enum wlan_umac_comp_id id,
-		wlan_objmgr_pdev_delete_handler handler,
+		wlan_objmgr_pdev_destroy_handler handler,
 		void *args);
 
 /**
@@ -304,7 +304,7 @@ QDF_STATUS wlan_objmgr_unregister_vdev_create_handler(
 		void *args);
 
 /**
- * wlan_objmgr_register_vdev_delete_handler() - register vdev delete handler
+ * wlan_objmgr_register_vdev_destroy_handler() - register vdev destroy handler
  * @id: component id
  * @handler: function pointer of the component
  * @args: args, if component wants certain args to be passed on VDEV deletion
@@ -316,13 +316,13 @@ QDF_STATUS wlan_objmgr_unregister_vdev_create_handler(
  *         Failure (if registration fails, each failure has different error
  *         code)
  */
-QDF_STATUS wlan_objmgr_register_vdev_delete_handler(
+QDF_STATUS wlan_objmgr_register_vdev_destroy_handler(
 		enum wlan_umac_comp_id id,
-		wlan_objmgr_vdev_delete_handler handler,
+		wlan_objmgr_vdev_destroy_handler handler,
 		void *args);
 
 /**
- * wlan_objmgr_unregister_vdev_delete_handler() - unregister vdev delete handler
+ * wlan_objmgr_unregister_vdev_destroy_handler() - unregister vdev destroy handler
  * @id: component id
  * @handler: function pointer of the component
  * @args: args, if component wants certain args to be passed on VDEV deletion
@@ -333,9 +333,9 @@ QDF_STATUS wlan_objmgr_register_vdev_delete_handler(
  *         Failure (if handler is not present, each failure has different error
  *         code)
  */
-QDF_STATUS wlan_objmgr_unregister_vdev_delete_handler(
+QDF_STATUS wlan_objmgr_unregister_vdev_destroy_handler(
 		enum wlan_umac_comp_id id,
-		wlan_objmgr_vdev_delete_handler handler,
+		wlan_objmgr_vdev_destroy_handler handler,
 		void *args);
 
 /**
@@ -410,7 +410,7 @@ QDF_STATUS wlan_objmgr_unregister_peer_create_handler(
 		void *args);
 
 /**
- * wlan_objmgr_register_peer_delete_handler() - register peer delete handler
+ * wlan_objmgr_register_peer_destroy_handler() - register peer destroy handler
  * @id: component id
  * @handler: function pointer of the component
  * @args: args, if component wants certain args to be passed on PEER deletion
@@ -422,13 +422,13 @@ QDF_STATUS wlan_objmgr_unregister_peer_create_handler(
  *         Failure (if registration fails, each failure has different error
  *         code)
  */
-QDF_STATUS wlan_objmgr_register_peer_delete_handler(
+QDF_STATUS wlan_objmgr_register_peer_destroy_handler(
 		enum wlan_umac_comp_id id,
-		wlan_objmgr_peer_delete_handler handler,
+		wlan_objmgr_peer_destroy_handler handler,
 		void *args);
 
 /**
- * wlan_objmgr_unregister_peer_delete_handler() - unregister peer delete handler
+ * wlan_objmgr_unregister_peer_destroy_handler() - unregister peer destroy handler
  * @id: component id
  * @handler: function pointer of the component
  * @args: args, if component wants certain args to be passed on PEER deletion
@@ -439,9 +439,9 @@ QDF_STATUS wlan_objmgr_register_peer_delete_handler(
  *         Failure (if handler is not present, each failure has different error
  *         code)
  */
-QDF_STATUS wlan_objmgr_unregister_peer_delete_handler(
+QDF_STATUS wlan_objmgr_unregister_peer_destroy_handler(
 		enum wlan_umac_comp_id id,
-		wlan_objmgr_peer_delete_handler handler,
+		wlan_objmgr_peer_destroy_handler handler,
 		void *args);
 
 /**

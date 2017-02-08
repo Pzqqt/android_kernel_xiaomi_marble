@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,6 +26,7 @@
 #include "qdf_list.h"
 #include "qdf_status.h"
 #include "wlan_cmn.h"
+#include "qdf_atomic.h"
 
 /* No. of PSOCs can be supported */
 #define WLAN_OBJMGR_MAX_DEVICES 2
@@ -40,20 +41,23 @@
 /**
  * enum WLAN_OBJ_STATE - State of Object
  * @WLAN_OBJ_STATE_CREATED:             All component objects are created
- * @WLAN_OBJ_STATE_DELETED:             All component objects are deleted
+ * @WLAN_OBJ_STATE_DELETED:             All component objects are destroyed
  * @WLAN_OBJ_STATE_PARTIALLY_CREATED:   Few/All component objects creation is
  *                                      in progress
- * @WLAN_OBJ_STATE_PARTIALLY_DELETED:   Few/All component objects yet to be
- *                                      deleted
+ * @WLAN_OBJ_STATE_PARTIALLY_DELETED:   Component objects deletion is triggered,
+ *                                      they are yet to be destroyed
  * @WLAN_OBJ_STATE_COMP_DEL_PROGRESS:   If a component is disabled run time,
  *                                      and this state is used to represent the
  *                                      deletion in progress after that
- *                                      component object is deleted, object
+ *                                      component object is destroyed, object
  *                                      state would be moved to CREATED state
+ * @WLAN_OBJ_STATE_LOGICALLY_DELETED:   Object deletion has been initiated,
+ *                                      object destroy invoked once references
+ *                                      are released
  * @WLAN_OBJ_STATE_CREATION_FAILED:     any component object is failed to be
  *                                      created
  * @WLAN_OBJ_STATE_DELETION_FAILED:     any component object is failed to be
- *                                      deleted
+ *                                      destroyed
  */
 typedef enum {
 	WLAN_OBJ_STATE_CREATED            = 0,
@@ -61,8 +65,9 @@ typedef enum {
 	WLAN_OBJ_STATE_PARTIALLY_CREATED  = 2,
 	WLAN_OBJ_STATE_PARTIALLY_DELETED  = 3,
 	WLAN_OBJ_STATE_COMP_DEL_PROGRESS  = 4,
-	WLAN_OBJ_STATE_CREATION_FAILED    = 5,
-	WLAN_OBJ_STATE_DELETION_FAILED    = 6,
+	WLAN_OBJ_STATE_LOGICALLY_DELETED  = 5,
+	WLAN_OBJ_STATE_CREATION_FAILED    = 6,
+	WLAN_OBJ_STATE_DELETION_FAILED    = 7,
 } WLAN_OBJ_STATE;
 
 /* Object type is assigned with value */
@@ -116,14 +121,14 @@ struct wlan_objmgr_peer;
 */
 typedef QDF_STATUS (*wlan_objmgr_psoc_create_handler)(
 				struct wlan_objmgr_psoc *psoc, void *arg);
-typedef QDF_STATUS (*wlan_objmgr_psoc_delete_handler)(
+typedef QDF_STATUS (*wlan_objmgr_psoc_destroy_handler)(
 				struct wlan_objmgr_psoc *psoc, void *arg);
 typedef void (*wlan_objmgr_psoc_status_handler)(struct wlan_objmgr_psoc *psoc,
 					 void *arg, QDF_STATUS status);
 
 typedef QDF_STATUS (*wlan_objmgr_pdev_create_handler)(
 				struct wlan_objmgr_pdev *pdev, void *arg);
-typedef QDF_STATUS (*wlan_objmgr_pdev_delete_handler)(
+typedef QDF_STATUS (*wlan_objmgr_pdev_destroy_handler)(
 				struct wlan_objmgr_pdev *pdev, void *arg);
 typedef void (*wlan_objmgr_pdev_status_handler)(
 				struct wlan_objmgr_pdev *pdev, void *arg,
@@ -131,7 +136,7 @@ typedef void (*wlan_objmgr_pdev_status_handler)(
 
 typedef QDF_STATUS (*wlan_objmgr_vdev_create_handler)(
 				struct wlan_objmgr_vdev *vdev, void *arg);
-typedef QDF_STATUS (*wlan_objmgr_vdev_delete_handler)(
+typedef QDF_STATUS (*wlan_objmgr_vdev_destroy_handler)(
 				struct wlan_objmgr_vdev *vdev, void *arg);
 typedef void (*wlan_objmgr_vdev_status_handler)(
 				struct wlan_objmgr_vdev *vdev, void *arg,
@@ -139,10 +144,31 @@ typedef void (*wlan_objmgr_vdev_status_handler)(
 
 typedef QDF_STATUS (*wlan_objmgr_peer_create_handler)(
 				struct wlan_objmgr_peer *peer, void *arg);
-typedef QDF_STATUS (*wlan_objmgr_peer_delete_handler)(
+typedef QDF_STATUS (*wlan_objmgr_peer_destroy_handler)(
 				struct wlan_objmgr_peer *peer, void *arg);
 typedef void (*wlan_objmgr_peer_status_handler)(
 				struct wlan_objmgr_peer *peer, void *arg,
 						QDF_STATUS status);
 
+/**
+ * enum wlan_objmgr_ref_dbgid - ref count debug id
+ * @WLAN_OBJMGR_ID:             Object manager internal operations
+ * @WLAN_MLME_SB_ID:            MLME Southbound operations
+ * @WLAN_MLME_NB_ID:            MLME Northbound operations
+ * @WLAN_MGMT_SB_ID:            MGMT Northbound operations
+ * @WLAN_MGMT_NB_ID:            MGMT Southbound operations
+ */
+typedef enum {
+	WLAN_OBJMGR_ID      = 0,
+	WLAN_MLME_SB_ID     = 1,
+	WLAN_MLME_NB_ID     = 2,
+	WLAN_MGMT_SB_ID     = 3,
+	WLAN_MGMT_NB_ID     = 4,
+} wlan_objmgr_ref_dbgid;
+
+#ifdef WLAN_OBJMGR_DEBUG
+#define WLAN_OBJMGR_BUG(val) QDF_BUG(val)
+#else
+#define WLAN_OBJMGR_BUG(val)
+#endif
 #endif /* _WLAN_OBJMGR_CMN_H_*/

@@ -64,7 +64,7 @@ EXPORT_SYMBOL(wlan_objmgr_global_obj_init);
 
 QDF_STATUS wlan_objmgr_global_obj_deinit(void)
 {
-	/* If it is already deleted */
+	/* If it is already destroyed */
 	if (g_umac_glb_obj == NULL) {
 		qdf_print("%s: Global object is not allocated\n", __func__);
 		return QDF_STATUS_E_FAILURE;
@@ -138,9 +138,9 @@ QDF_STATUS wlan_objmgr_unregister_psoc_create_handler(
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS wlan_objmgr_register_psoc_delete_handler(
+QDF_STATUS wlan_objmgr_register_psoc_destroy_handler(
 		enum wlan_umac_comp_id id,
-		wlan_objmgr_psoc_delete_handler handler,
+		wlan_objmgr_psoc_destroy_handler handler,
 		void *arg)
 {
 	/* If id is not within valid range, return */
@@ -150,23 +150,23 @@ QDF_STATUS wlan_objmgr_register_psoc_delete_handler(
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is a valid entry, return failure */
-	if (g_umac_glb_obj->psoc_delete_handler[id] != NULL) {
+	if (g_umac_glb_obj->psoc_destroy_handler[id] != NULL) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 		qdf_print("%s:callback for comp %d is already registered\n",
 			  __func__, id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Store handler and args in Global object table */
-	g_umac_glb_obj->psoc_delete_handler[id] = handler;
-	g_umac_glb_obj->psoc_delete_handler_arg[id] = arg;
+	g_umac_glb_obj->psoc_destroy_handler[id] = handler;
+	g_umac_glb_obj->psoc_destroy_handler_arg[id] = arg;
 
 	qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS wlan_objmgr_unregister_psoc_delete_handler(
+QDF_STATUS wlan_objmgr_unregister_psoc_destroy_handler(
 		enum wlan_umac_comp_id id,
-		wlan_objmgr_psoc_delete_handler handler,
+		wlan_objmgr_psoc_destroy_handler handler,
 		void *arg)
 {
 	/* If id is not within valid range, return */
@@ -176,15 +176,15 @@ QDF_STATUS wlan_objmgr_unregister_psoc_delete_handler(
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is an invalid entry, return failure */
-	if (g_umac_glb_obj->psoc_delete_handler[id] != handler) {
+	if (g_umac_glb_obj->psoc_destroy_handler[id] != handler) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 		qdf_print("%s:callback for comp %d is not registered\n",
 			  __func__, id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Reset handlers, and args to NULL */
-	g_umac_glb_obj->psoc_delete_handler[id] = NULL;
-	g_umac_glb_obj->psoc_delete_handler_arg[id] = NULL;
+	g_umac_glb_obj->psoc_destroy_handler[id] = NULL;
+	g_umac_glb_obj->psoc_destroy_handler_arg[id] = NULL;
 
 	qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 	return QDF_STATUS_SUCCESS;
@@ -295,9 +295,9 @@ QDF_STATUS wlan_objmgr_unregister_pdev_create_handler(
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS wlan_objmgr_register_pdev_delete_handler(
+QDF_STATUS wlan_objmgr_register_pdev_destroy_handler(
 		enum wlan_umac_comp_id id,
-		wlan_objmgr_pdev_delete_handler handler,
+		wlan_objmgr_pdev_destroy_handler handler,
 		void *arg)
 {
 	/* If id is not within valid range, return */
@@ -307,23 +307,23 @@ QDF_STATUS wlan_objmgr_register_pdev_delete_handler(
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is a valid entry, return failure */
-	if (g_umac_glb_obj->pdev_delete_handler[id] != NULL) {
+	if (g_umac_glb_obj->pdev_destroy_handler[id] != NULL) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 		qdf_print("%s:callback for comp %d is already registered\n",
 			  __func__, id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Store handler and args in Global object table */
-	g_umac_glb_obj->pdev_delete_handler[id] = handler;
-	g_umac_glb_obj->pdev_delete_handler_arg[id] = arg;
+	g_umac_glb_obj->pdev_destroy_handler[id] = handler;
+	g_umac_glb_obj->pdev_destroy_handler_arg[id] = arg;
 
 	qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS wlan_objmgr_unregister_pdev_delete_handler(
+QDF_STATUS wlan_objmgr_unregister_pdev_destroy_handler(
 		enum wlan_umac_comp_id id,
-		wlan_objmgr_pdev_delete_handler handler,
+		wlan_objmgr_pdev_destroy_handler handler,
 		void *arg)
 {
 	/* If id is not within valid range, return */
@@ -333,15 +333,15 @@ QDF_STATUS wlan_objmgr_unregister_pdev_delete_handler(
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is an invalid entry, return failure */
-	if (g_umac_glb_obj->pdev_delete_handler[id] != handler) {
+	if (g_umac_glb_obj->pdev_destroy_handler[id] != handler) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 		qdf_print("%s:callback for component %d is not registered\n",
 			  __func__, id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Reset handlers, and args to NULL */
-	g_umac_glb_obj->pdev_delete_handler[id] = NULL;
-	g_umac_glb_obj->pdev_delete_handler_arg[id] = NULL;
+	g_umac_glb_obj->pdev_destroy_handler[id] = NULL;
+	g_umac_glb_obj->pdev_destroy_handler_arg[id] = NULL;
 
 	qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 	return QDF_STATUS_SUCCESS;
@@ -452,9 +452,9 @@ QDF_STATUS wlan_objmgr_unregister_vdev_create_handler(
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS wlan_objmgr_register_vdev_delete_handler(
+QDF_STATUS wlan_objmgr_register_vdev_destroy_handler(
 		enum wlan_umac_comp_id id,
-		wlan_objmgr_vdev_delete_handler handler,
+		wlan_objmgr_vdev_destroy_handler handler,
 		void *arg)
 {
 	/* If id is not within valid range, return */
@@ -464,23 +464,23 @@ QDF_STATUS wlan_objmgr_register_vdev_delete_handler(
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is a valid entry, return failure */
-	if (g_umac_glb_obj->vdev_delete_handler[id] != NULL) {
+	if (g_umac_glb_obj->vdev_destroy_handler[id] != NULL) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 		qdf_print("%s:callback for comp %d is already registered\n",
 			  __func__, id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Store handler and args in Global object table */
-	g_umac_glb_obj->vdev_delete_handler[id] = handler;
-	g_umac_glb_obj->vdev_delete_handler_arg[id] = arg;
+	g_umac_glb_obj->vdev_destroy_handler[id] = handler;
+	g_umac_glb_obj->vdev_destroy_handler_arg[id] = arg;
 
 	qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS wlan_objmgr_unregister_vdev_delete_handler(
+QDF_STATUS wlan_objmgr_unregister_vdev_destroy_handler(
 		enum wlan_umac_comp_id id,
-		wlan_objmgr_vdev_delete_handler handler,
+		wlan_objmgr_vdev_destroy_handler handler,
 		void *arg)
 {
 	/* If id is not within valid range, return */
@@ -490,15 +490,15 @@ QDF_STATUS wlan_objmgr_unregister_vdev_delete_handler(
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is an invalid entry, return failure */
-	if (g_umac_glb_obj->vdev_delete_handler[id] != handler) {
+	if (g_umac_glb_obj->vdev_destroy_handler[id] != handler) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 		qdf_print("%s:callback for comp %d is not registered\n",
 			  __func__, id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Reset handlers, and args to NULL */
-	g_umac_glb_obj->vdev_delete_handler[id] = NULL;
-	g_umac_glb_obj->vdev_delete_handler_arg[id] = NULL;
+	g_umac_glb_obj->vdev_destroy_handler[id] = NULL;
+	g_umac_glb_obj->vdev_destroy_handler_arg[id] = NULL;
 
 	qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 	return QDF_STATUS_SUCCESS;
@@ -610,9 +610,9 @@ QDF_STATUS wlan_objmgr_unregister_peer_create_handler(
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS wlan_objmgr_register_peer_delete_handler(
+QDF_STATUS wlan_objmgr_register_peer_destroy_handler(
 		enum wlan_umac_comp_id id,
-		wlan_objmgr_peer_delete_handler handler,
+		wlan_objmgr_peer_destroy_handler handler,
 		void *arg)
 {
 	/* If id is not within valid range, return */
@@ -622,23 +622,23 @@ QDF_STATUS wlan_objmgr_register_peer_delete_handler(
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is a valid entry, return failure */
-	if (g_umac_glb_obj->peer_delete_handler[id] != NULL) {
+	if (g_umac_glb_obj->peer_destroy_handler[id] != NULL) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 		qdf_print("%s:callback for comp %d is already registered\n",
 			  __func__, id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Store handler and args in Global object table */
-	g_umac_glb_obj->peer_delete_handler[id] = handler;
-	g_umac_glb_obj->peer_delete_handler_arg[id] = arg;
+	g_umac_glb_obj->peer_destroy_handler[id] = handler;
+	g_umac_glb_obj->peer_destroy_handler_arg[id] = arg;
 
 	qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS wlan_objmgr_unregister_peer_delete_handler(
+QDF_STATUS wlan_objmgr_unregister_peer_destroy_handler(
 		enum wlan_umac_comp_id id,
-		wlan_objmgr_peer_delete_handler handler,
+		wlan_objmgr_peer_destroy_handler handler,
 		void *arg)
 {
 	/* If id is not within valid range, return */
@@ -648,15 +648,15 @@ QDF_STATUS wlan_objmgr_unregister_peer_delete_handler(
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is an invalid entry, return failure */
-	if (g_umac_glb_obj->peer_delete_handler[id] != handler) {
+	if (g_umac_glb_obj->peer_destroy_handler[id] != handler) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 		qdf_print("%s:callback for comp %d is not registered\n",
 			  __func__, id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Reset handlers, and args to NULL */
-	g_umac_glb_obj->peer_delete_handler[id] = NULL;
-	g_umac_glb_obj->peer_delete_handler_arg[id] = NULL;
+	g_umac_glb_obj->peer_destroy_handler[id] = NULL;
+	g_umac_glb_obj->peer_destroy_handler_arg[id] = NULL;
 
 	qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 	return QDF_STATUS_SUCCESS;
@@ -754,7 +754,7 @@ QDF_STATUS wlan_objmgr_psoc_object_detach(struct wlan_objmgr_psoc *psoc)
 	return status;
 }
 
-QDF_STATUS wlan_objmgr_global_obj_can_deleted(void)
+QDF_STATUS wlan_objmgr_global_obj_can_destroyed(void)
 {
 	uint8_t index = 0;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -771,4 +771,4 @@ QDF_STATUS wlan_objmgr_global_obj_can_deleted(void)
 	qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 	return status;
 }
-EXPORT_SYMBOL(wlan_objmgr_global_obj_can_deleted);
+EXPORT_SYMBOL(wlan_objmgr_global_obj_can_destroyed);

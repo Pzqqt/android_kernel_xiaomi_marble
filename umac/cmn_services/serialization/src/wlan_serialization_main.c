@@ -302,7 +302,7 @@ QDF_STATUS wlan_serialization_init(void)
 		goto err_psoc_create;
 	}
 
-	status = wlan_objmgr_register_psoc_delete_handler(
+	status = wlan_objmgr_register_psoc_destroy_handler(
 			WLAN_UMAC_COMP_SERIALIZATION,
 			wlan_serialization_psoc_obj_destroy_notification, NULL);
 	if (status != QDF_STATUS_SUCCESS) {
@@ -318,7 +318,7 @@ QDF_STATUS wlan_serialization_init(void)
 		goto err_pdev_create;
 	}
 
-	status = wlan_objmgr_register_pdev_delete_handler(
+	status = wlan_objmgr_register_pdev_destroy_handler(
 			WLAN_UMAC_COMP_SERIALIZATION,
 			wlan_serialization_pdev_obj_destroy_notification, NULL);
 	if (status != QDF_STATUS_SUCCESS) {
@@ -334,7 +334,7 @@ err_pdev_delete:
 	wlan_objmgr_unregister_pdev_create_handler(WLAN_UMAC_COMP_SERIALIZATION,
 			wlan_serialization_pdev_obj_create_notification, NULL);
 err_pdev_create:
-	wlan_objmgr_unregister_psoc_delete_handler(WLAN_UMAC_COMP_SERIALIZATION,
+	wlan_objmgr_unregister_psoc_destroy_handler(WLAN_UMAC_COMP_SERIALIZATION,
 			wlan_serialization_psoc_obj_destroy_notification, NULL);
 err_psoc_delete:
 	wlan_objmgr_unregister_psoc_create_handler(WLAN_UMAC_COMP_SERIALIZATION,
@@ -358,7 +358,7 @@ QDF_STATUS wlan_serialization_deinit(void)
 				status);
 		ret_status = QDF_STATUS_E_FAILURE;
 	}
-	status = wlan_objmgr_unregister_psoc_delete_handler(
+	status = wlan_objmgr_unregister_psoc_destroy_handler(
 			WLAN_UMAC_COMP_SERIALIZATION,
 			wlan_serialization_psoc_obj_destroy_notification,
 			NULL);
@@ -378,7 +378,7 @@ QDF_STATUS wlan_serialization_deinit(void)
 		ret_status = QDF_STATUS_E_FAILURE;
 	}
 
-	status = wlan_objmgr_unregister_pdev_delete_handler(
+	status = wlan_objmgr_unregister_pdev_destroy_handler(
 			WLAN_UMAC_COMP_SERIALIZATION,
 			wlan_serialization_pdev_obj_destroy_notification,
 			NULL);
