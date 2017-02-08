@@ -428,23 +428,8 @@ static void lim_process_auth_frame_type1(tpAniSirGlobal mac_ctx,
 	if (lim_is_auth_algo_supported(mac_ctx,
 			(tAniAuthType) rx_auth_frm_body->authAlgoNumber,
 			pe_session)) {
-		int i = 0;
-		tCsrRoamSession *session;
 
-		for (i = 0; i < mac_ctx->sme.max_intf_count; i++) {
-
-			if (!CSR_IS_SESSION_VALID(mac_ctx, i))
-				continue;
-
-			session = CSR_GET_SESSION(mac_ctx, i);
-			if (!session || qdf_mem_cmp(&session->selfMacAddr,
-			    mac_hdr->sa, sizeof(tSirMacAddr))) {
-				continue;
-			}
-
-			pe_debug("vdev with id %d exist with same MAC "
-				 MAC_ADDRESS_STR, session->sessionId,
-				 MAC_ADDR_ARRAY(mac_hdr->sa));
+		if (lim_get_session_by_macaddr(mac_ctx, mac_hdr->sa)) {
 
 			auth_frame->authAlgoNumber =
 				rx_auth_frm_body->authAlgoNumber;

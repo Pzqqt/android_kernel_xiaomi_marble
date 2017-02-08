@@ -14827,8 +14827,6 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 #else
 	const u8 *bssid_hint = NULL;
 #endif
-	hdd_adapter_list_node_t *adapter_node = NULL, *next_adapter = NULL;
-	hdd_adapter_t *adapter;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 	hdd_context_t *pHddCtx;
 
@@ -14874,21 +14872,10 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 	else if (bssid_hint)
 		bssid = bssid_hint;
 
-	if (bssid) {
-		status = hdd_get_front_adapter(pHddCtx, &adapter_node);
-		while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
-			adapter = adapter_node->pAdapter;
-			if (!qdf_mem_cmp(adapter->macAddressCurrent.bytes,
-					 bssid, QDF_MAC_ADDR_SIZE)) {
-				hdd_err("Vdev %d exist with same MAC address "
-					MAC_ADDRESS_STR, adapter->sessionId,
-					MAC_ADDR_ARRAY(bssid));
-				return -EINVAL;
-			}
-			status = hdd_get_next_adapter(pHddCtx, adapter_node,
-						      &next_adapter);
-			adapter_node = next_adapter;
-		}
+	if (bssid && hdd_get_adapter_by_macaddr(pHddCtx, (uint8_t *)bssid)) {
+		hdd_err("adapter exist with same mac address " MAC_ADDRESS_STR,
+			MAC_ADDR_ARRAY(bssid));
+		return -EINVAL;
 	}
 
 	if (true == wlan_hdd_reassoc_bssid_hint(pAdapter, req, &status))

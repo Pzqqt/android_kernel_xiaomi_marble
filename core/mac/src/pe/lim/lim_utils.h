@@ -261,6 +261,18 @@ void lim_prepare_for11h_channel_switch(tpAniSirGlobal pMac,
 void lim_switch_channel_cback(tpAniSirGlobal pMac, QDF_STATUS status,
 		uint32_t *data, tpPESession psessionEntry);
 
+/**
+ * lim_get_session_by_macaddr() - api to find session based on MAC
+ * @mac_ctx: Pointer to global mac structure.
+ * @self_mac: MAC address.
+ *
+ * This function is used to get session for given MAC address.
+ *
+ * Return: session pointer if exists, NULL otherwise.
+ */
+tCsrRoamSession *lim_get_session_by_macaddr(tpAniSirGlobal mac_ctx,
+		tSirMacAddr self_mac);
+
 static inline tSirRFBand lim_get_rf_band(uint8_t channel)
 {
 	if ((channel >= SIR_11A_CHANNEL_BEGIN) &&
