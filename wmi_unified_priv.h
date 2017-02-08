@@ -1055,7 +1055,7 @@ QDF_STATUS (*extract_gpio_input_ev_param)(wmi_unified_t wmi_handle,
 	void *evt_buf, uint32_t *gpio_num);
 
 QDF_STATUS (*extract_pdev_reserve_ast_ev_param)(wmi_unified_t wmi_handle,
-	void *evt_buf, uint32_t *result);
+		void *evt_buf, struct wmi_host_proxy_ast_reserve_param *param);
 
 QDF_STATUS (*extract_nfcal_power_ev_param)(wmi_unified_t wmi_handle,
 		void *evt_buf,
