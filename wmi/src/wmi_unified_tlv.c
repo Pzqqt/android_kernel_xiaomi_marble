@@ -9208,6 +9208,52 @@ static QDF_STATUS send_process_ch_avoid_update_cmd_tlv(wmi_unified_t wmi_handle)
 }
 
 /**
+ * send_pdev_set_regdomain_cmd_tlv() - send set regdomain command to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to pdev regdomain params
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS
+send_pdev_set_regdomain_cmd_tlv(wmi_unified_t wmi_handle,
+				struct pdev_set_regdomain_params *param)
+{
+	wmi_buf_t buf;
+	wmi_pdev_set_regdomain_cmd_fixed_param *cmd;
+	int32_t len = sizeof(*cmd);
+
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGP("%s: wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+	cmd = (wmi_pdev_set_regdomain_cmd_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_pdev_set_regdomain_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_pdev_set_regdomain_cmd_fixed_param));
+
+	cmd->reg_domain = param->currentRDinuse;
+	cmd->reg_domain_2G = param->currentRD2G;
+	cmd->reg_domain_5G = param->currentRD5G;
+	cmd->conformance_test_limit_2G = param->ctl_2G;
+	cmd->conformance_test_limit_5G = param->ctl_5G;
+	cmd->dfs_domain = param->dfsDomain;
+	cmd->pdev_id = param->pdev_id;
+
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_PDEV_SET_REGDOMAIN_CMDID)) {
+		WMI_LOGE("%s: Failed to send pdev set regdomain command",
+			 __func__);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * send_regdomain_info_to_fw_cmd_tlv() - send regdomain info to fw
  * @wmi_handle: wmi handle
  * @reg_dmn: reg domain
@@ -13764,6 +13810,8 @@ struct wmi_ops tlv_ops =  {
 	.send_set_led_flashing_cmd = send_set_led_flashing_cmd_tlv,
 	.send_process_ch_avoid_update_cmd =
 		send_process_ch_avoid_update_cmd_tlv,
+	.send_pdev_set_regdomain_cmd =
+				send_pdev_set_regdomain_cmd_tlv,
 	.send_regdomain_info_to_fw_cmd = send_regdomain_info_to_fw_cmd_tlv,
 	.send_set_tdls_offchan_mode_cmd = send_set_tdls_offchan_mode_cmd_tlv,
 	.send_update_fw_tdls_state_cmd = send_update_fw_tdls_state_cmd_tlv,
