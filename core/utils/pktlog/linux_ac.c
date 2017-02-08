@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -79,7 +79,7 @@ static struct ath_pktlog_info *g_pktlog_info;
 static struct proc_dir_entry *g_pktlog_pde;
 
 static int pktlog_attach(struct hif_opaque_softc *sc);
-static void pktlog_detach(struct hif_opaque_softc *sc);
+static void pktlog_detach(struct ol_txrx_pdev_t *handle);
 static int pktlog_open(struct inode *i, struct file *f);
 static int pktlog_release(struct inode *i, struct file *f);
 static int pktlog_mmap(struct file *f, struct vm_area_struct *vma);
@@ -96,27 +96,28 @@ static struct file_operations pktlog_fops = {
 /*
  * Linux implementation of helper functions
  */
-
-static struct ol_pktlog_dev_t *get_pl_handle(struct hif_opaque_softc *scn)
+static struct ol_pktlog_dev_t *cds_get_pl_handle(void)
 {
 	ol_txrx_pdev_handle pdev_txrx_handle;
 	pdev_txrx_handle = cds_get_context(QDF_MODULE_ID_TXRX);
+	if (!pdev_txrx_handle) {
+		QDF_ASSERT(0);
+		return NULL;
+	}
+	return pdev_txrx_handle->pl_dev;
+}
+
+static struct ol_pktlog_dev_t *ol_get_pl_handle(
+		ol_txrx_pdev_handle pdev_txrx_handle)
+{
 	if (!pdev_txrx_handle)
 		return NULL;
 	return pdev_txrx_handle->pl_dev;
 }
 
-void ol_pl_set_name(hif_opaque_softc_handle scn, net_device_handle dev)
-{
-	ol_txrx_pdev_handle pdev_txrx_handle;
-	pdev_txrx_handle = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (pdev_txrx_handle && pdev_txrx_handle->pl_dev && dev)
-		pdev_txrx_handle->pl_dev->name = dev->name;
-}
-
 void pktlog_disable_adapter_logging(struct hif_opaque_softc *scn)
 {
-	struct ol_pktlog_dev_t *pl_dev = get_pl_handle(scn);
+	struct ol_pktlog_dev_t *pl_dev = cds_get_pl_handle();
 	if (pl_dev)
 		pl_dev->pl_info->log_state = 0;
 }
@@ -164,14 +165,12 @@ int pktlog_alloc_buf(struct hif_opaque_softc *scn)
 	return 0;
 }
 
-void pktlog_release_buf(struct hif_opaque_softc *scn)
+void pktlog_release_buf(ol_txrx_pdev_handle pdev_txrx_handle)
 {
 	unsigned long page_cnt;
 	unsigned long vaddr;
 	struct page *vpg;
 	struct ath_pktlog_info *pl_info;
-	ol_txrx_pdev_handle pdev_txrx_handle;
-	pdev_txrx_handle = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (!pdev_txrx_handle || !pdev_txrx_handle->pl_dev) {
 		printk(PKTLOG_TAG
@@ -219,7 +218,7 @@ qdf_sysctl_decl(ath_sysctl_pktlog_enable, ctl, write, filp, buffer, lenp, ppos)
 		return -EINVAL;
 	}
 
-	pl_dev = get_pl_handle((struct hif_opaque_softc *)scn);
+	pl_dev = cds_get_pl_handle();
 
 	if (!pl_dev) {
 		printk("%s: Invalid pktlog context\n", __func__);
@@ -275,7 +274,7 @@ qdf_sysctl_decl(ath_sysctl_pktlog_size, ctl, write, filp, buffer, lenp, ppos)
 		return -EINVAL;
 	}
 
-	pl_dev = get_pl_handle((struct hif_opaque_softc *)scn);
+	pl_dev = cds_get_pl_handle();
 
 	if (!pl_dev) {
 		printk("%s: Invalid pktlog handle\n", __func__);
@@ -307,7 +306,7 @@ qdf_sysctl_decl(ath_sysctl_pktlog_size, ctl, write, filp, buffer, lenp, ppos)
 /* Register sysctl table */
 static int pktlog_sysctl_register(struct hif_opaque_softc *scn)
 {
-	struct ol_pktlog_dev_t *pl_dev = get_pl_handle(scn);
+	struct ol_pktlog_dev_t *pl_dev = cds_get_pl_handle();
 	struct ath_pktlog_info_lnx *pl_info_lnx;
 	char *proc_name;
 
@@ -416,7 +415,7 @@ static int pktlog_attach(struct hif_opaque_softc *scn)
 	char *proc_name;
 	struct proc_dir_entry *proc_entry;
 
-	pl_dev = get_pl_handle(scn);
+	pl_dev = cds_get_pl_handle();
 
 	if (pl_dev != NULL) {
 		pl_info_lnx = kmalloc(sizeof(*pl_info_lnx), GFP_KERNEL);
@@ -495,13 +494,13 @@ static void pktlog_sysctl_unregister(struct ol_pktlog_dev_t *pl_dev)
 	}
 }
 
-static void pktlog_detach(struct hif_opaque_softc *scn)
+static void pktlog_detach(struct ol_txrx_pdev_t *handle)
 {
 	struct ol_txrx_pdev_t *txrx_pdev;
 	struct ol_pktlog_dev_t *pl_dev;
 	struct ath_pktlog_info *pl_info;
 
-	txrx_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	txrx_pdev = handle;
 	if (!txrx_pdev) {
 		printk("%s: Invalid txrx_pdev context\n", __func__);
 		ASSERT(0);
@@ -521,7 +520,7 @@ static void pktlog_detach(struct hif_opaque_softc *scn)
 	pktlog_cleanup(pl_info);
 
 	if (pl_info->buf) {
-		pktlog_release_buf(scn);
+		pktlog_release_buf(txrx_pdev);
 		pl_dev->tgt_pktlog_alloced = false;
 	}
 
@@ -914,20 +913,16 @@ attach_fail:
 	return ret;
 }
 
-void pktlogmod_exit(void *context)
+void pktlogmod_exit(struct ol_txrx_pdev_t *handle)
 {
-	struct hif_opaque_softc *scn = (struct hif_opaque_softc *)context;
 	struct ol_pktlog_dev_t *pl_dev;
 
-	if (!scn)
-		return;
-
-	pl_dev = get_pl_handle(scn);
+	pl_dev = ol_get_pl_handle(handle);
 
 	if (!pl_dev || g_pktlog_pde == NULL)
 		return;
 
-	pktlog_detach(scn);
+	pktlog_detach(handle);
 	/*
 	 *  pdev kill needs to be implemented
 	 */

@@ -1091,18 +1091,18 @@ void htt_pkt_log_init(void *ppdev, void *scn)
  *
  * Return: void
  */
-static void htt_pktlogmod_exit(struct ol_txrx_pdev_t *handle, void *scn)
+static void htt_pktlogmod_exit(struct ol_txrx_pdev_t *handle)
 {
-	if (scn && cds_get_conparam() != QDF_GLOBAL_FTM_MODE &&
+	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE &&
 		!QDF_IS_EPPING_ENABLED(cds_get_conparam()) &&
 			handle->pkt_log_init) {
-		pktlogmod_exit(scn);
+		pktlogmod_exit(handle);
 		handle->pkt_log_init = false;
 	}
 }
 #else
 void htt_pkt_log_init(void *handle, void *ol_sc) { }
-static void htt_pktlogmod_exit(ol_txrx_pdev_handle handle, void *sc)  { }
+static void htt_pktlogmod_exit(ol_txrx_pdev_handle handle)  { }
 #endif
 
 /**
@@ -1619,7 +1619,6 @@ static void ol_txrx_pdev_detach(void *ppdev, int force)
 {
 	ol_txrx_pdev_handle pdev = ppdev;
 	int i;
-	struct hif_opaque_softc *osc =  cds_get_context(QDF_MODULE_ID_HIF);
 
 	/*checking to ensure txrx pdev structure is not NULL */
 	if (!pdev) {
@@ -1632,7 +1631,7 @@ static void ol_txrx_pdev_detach(void *ppdev, int force)
 	/* check that the pdev has no vdevs allocated */
 	TXRX_ASSERT1(TAILQ_EMPTY(&pdev->vdev_list));
 
-	htt_pktlogmod_exit(pdev, osc);
+	htt_pktlogmod_exit(pdev);
 
 	OL_RX_REORDER_TIMEOUT_CLEANUP(pdev);
 

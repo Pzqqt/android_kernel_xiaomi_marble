@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2014, 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -55,8 +55,6 @@ typedef struct hif_opaque_softc *hif_opaque_softc_handle;
 struct net_device;
 typedef struct net_device *net_device_handle;
 
-void ol_pl_set_name(hif_opaque_softc_handle scn, net_device_handle dev);
-
 void ol_pl_sethandle(ol_pktlog_dev_handle *pl_handle,
 		     hif_opaque_softc_handle scn);
 
@@ -106,7 +104,7 @@ typedef void *ol_pktlog_dev_handle;
 		(void)scn;		\
 	} while (0)
 
-#define ol_pl_set_name(scn, dev)	\
+#define ol_pl_set_name(dev)	\
 	do {				\
 		(void)scn;		\
 		(void)dev;		\

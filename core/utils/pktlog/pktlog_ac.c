@@ -503,7 +503,7 @@ int pktlog_setsize(struct hif_opaque_softc *scn, int32_t size)
 			printk("Cannot unsubscribe pktlog from the WDI\n");
 			return -EFAULT;
 		}
-		pktlog_release_buf(scn);
+		pktlog_release_buf(pdev_txrx_handle);
 		pl_dev->is_pktlog_cb_subscribed = false;
 		pl_dev->tgt_pktlog_alloced = false;
 	}

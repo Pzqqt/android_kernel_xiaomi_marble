@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -61,7 +61,7 @@ struct ol_ath_generic_softc_t;
 typedef struct ol_ath_generic_softc_t *ol_ath_generic_softc_handle;
 extern void pktlog_disable_adapter_logging(struct hif_opaque_softc *scn);
 extern int pktlog_alloc_buf(struct hif_opaque_softc *scn);
-extern void pktlog_release_buf(struct hif_opaque_softc *scn);
+extern void pktlog_release_buf(ol_txrx_pdev_handle pdev_txrx_handle);
 
 ssize_t pktlog_read_proc_entry(char *buf, size_t nbytes, loff_t *ppos,
 		struct ath_pktlog_info *pl_info, bool *read_complete);
@@ -80,7 +80,8 @@ struct ol_pl_arch_dep_funcs {
 
 struct ol_pl_os_dep_funcs {
 	int (*pktlog_attach)(struct hif_opaque_softc *scn);
-	void (*pktlog_detach)(struct hif_opaque_softc *scn);
+	void (*pktlog_detach)(struct ol_txrx_pdev_t *handle);
+
 };
 
 struct ath_pktlog_wmi_params {
@@ -137,7 +138,7 @@ int pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state,
 int pktlog_setsize(struct hif_opaque_softc *scn, int32_t log_state);
 int pktlog_disable(struct hif_opaque_softc *scn);
 int pktlogmod_init(void *context);
-void pktlogmod_exit(void *context);
+void pktlogmod_exit(struct ol_txrx_pdev_t *handle);
 int pktlog_htc_attach(void);
 void pktlog_process_fw_msg(uint32_t *msg_word);
 
