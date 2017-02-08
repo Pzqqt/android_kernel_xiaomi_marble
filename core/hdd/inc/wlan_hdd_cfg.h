@@ -2940,7 +2940,7 @@ typedef enum {
  * <ini>
  * gTDLSPrefOffChanBandwidth - Preferred TDLS channel bandwidth when
  * off-channel support is enabled.
- * @Min: 0
+ * @Min: 0x01
  * @Max: 0x0F
  * @Default: 0x07
  *
@@ -2959,7 +2959,7 @@ typedef enum {
  * </ini>
  */
 #define CFG_TDLS_PREFERRED_OFF_CHANNEL_BW           "gTDLSPrefOffChanBandwidth"
-#define CFG_TDLS_PREFERRED_OFF_CHANNEL_BW_MIN      (0)
+#define CFG_TDLS_PREFERRED_OFF_CHANNEL_BW_MIN      (0x01)
 #define CFG_TDLS_PREFERRED_OFF_CHANNEL_BW_MAX      (0x0F)
 #define CFG_TDLS_PREFERRED_OFF_CHANNEL_BW_DEFAULT  (0x07)
 
