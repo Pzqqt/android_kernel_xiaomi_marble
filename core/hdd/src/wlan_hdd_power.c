@@ -744,7 +744,6 @@ static int hdd_set_grat_arp_keepalive(hdd_adapter_t *adapter)
 	hdd_station_ctx_t *sta_ctx;
 	tSirKeepAliveReq req = {
 		.packetType = SIR_KEEP_ALIVE_UNSOLICIT_ARP_RSP,
-		.destIpv4Addr = {0xff, 0xff, 0xff, 0xff},
 		.dest_macaddr = QDF_MAC_ADDR_BROADCAST_INITIALIZER,
 	};
 
@@ -770,6 +769,10 @@ static int hdd_set_grat_arp_keepalive(hdd_adapter_t *adapter)
 		hdd_err("Failed to populate ipv4 address");
 		return exit_code;
 	}
+
+	/* according to RFC5227, sender/target ip address should be the same */
+	qdf_mem_copy(&req.destIpv4Addr, &req.hostIpv4Addr,
+		     sizeof(req.destIpv4Addr));
 
 	qdf_copy_macaddr(&req.bssid, &sta_ctx->conn_info.bssId);
 	req.timePeriod = hdd_ctx->config->infraStaKeepAlivePeriod;
