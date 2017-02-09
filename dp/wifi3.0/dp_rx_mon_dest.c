@@ -581,6 +581,34 @@ mpdu_stitch_fail:
 
 }
 
+/**
+ * dp_rx_extract_radiotap_info(): Extract and populate information in
+ *				struct mon_rx_status type
+ * @rx_status: Receive status
+ * @mon_rx_status: Monitor mode status
+ *
+ * Returns: None
+ */
+static inline
+void dp_rx_extract_radiotap_info(struct cdp_mon_status *rx_status,
+				struct mon_rx_status *rx_mon_status)
+{
+	rx_mon_status->tsft = rx_status->cdp_rs_tstamp.cdp_tsf;
+	rx_mon_status->chan_freq = rx_status->rs_freq;
+	rx_mon_status->chan_num = rx_status->rs_channel;
+	rx_mon_status->chan_flags = rx_status->rs_flags;
+	rx_mon_status->rate = rx_status->rs_datarate;
+	/* TODO: rx_mon_status->ant_signal_db */
+	/* TODO: rx_mon_status->nr_ant */
+	rx_mon_status->mcs = rx_status->cdf_rs_rate_mcs;
+	rx_mon_status->is_stbc = rx_status->cdp_rs_stbc;
+	rx_mon_status->sgi = rx_status->cdp_rs_sgi;
+	/* TODO: rx_mon_status->ldpc */
+	/* TODO: rx_mon_status->beamformed */
+	/* TODO: rx_mon_status->vht_flags */
+	/* TODO: rx_mon_status->vht_flag_values1 */
+}
+
 static inline
 QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
 	qdf_nbuf_t head_msdu, qdf_nbuf_t tail_msdu)
@@ -589,6 +617,7 @@ QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
 	struct cdp_mon_status *rs = &pdev->rx_mon_recv_status;
 	qdf_nbuf_t mon_skb, skb_next;
 	qdf_nbuf_t mon_mpdu = NULL;
+	struct mon_rx_status rx_mon_status;
 
 	if ((pdev->monitor_vdev == NULL) ||
 		(pdev->monitor_vdev->osif_rx_mon == NULL)) {
@@ -600,9 +629,13 @@ QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
 				tail_msdu, rs);
 
 	if (mon_mpdu) {
-		pdev->monitor_vdev->osif_rx_mon(
-			pdev->monitor_vdev->osif_vdev, mon_mpdu, rs);
+		/* Push radiotap header */
+		dp_rx_extract_radiotap_info(rs, &rx_mon_status);
 
+		qdf_nbuf_update_radiotap(&rx_mon_status, mon_mpdu,
+				sizeof(struct rx_pkt_tlvs));
+		pdev->monitor_vdev->osif_rx_mon(
+				pdev->monitor_vdev->osif_vdev, mon_mpdu, rs);
 	} else {
 		goto mon_deliver_fail;
 	}
@@ -621,13 +654,12 @@ mon_deliver_fail:
 		mon_skb = skb_next;
 	}
 	return QDF_STATUS_E_INVAL;
-
 }
 
 /**
 * dp_rx_mon_dest_process() - Brain of the Rx processing functionality
 *	Called from the bottom half (tasklet/NET_RX_SOFTIRQ)
-* @soc: core txrx main context	164
+* @soc: core txrx main contex
 * @hal_ring: opaque pointer to the HAL Rx Ring, which will be serviced
 * @quota: No. of units (packets) that can be serviced in one shot.
 *
