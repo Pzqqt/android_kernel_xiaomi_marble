@@ -697,13 +697,19 @@ static int __wlan_hdd_bus_suspend(struct wow_enable_params wow_params)
 		return err;
 	}
 
+	err = hif_bus_early_suspend(hif_ctx);
+	if (err) {
+		hdd_err("Failed hif bus early suspend");
+		goto resume_cdp;
+	}
+
 	status = pmo_ucfg_psoc_bus_suspend_req(hdd_ctx->hdd_psoc,
 					       QDF_SYSTEM_SUSPEND,
 					       &pmo_params);
 	err = qdf_status_to_os_return(status);
 	if (err) {
 		hdd_err("Failed pmo bus suspend: %d", status);
-		goto resume_cdp;
+		goto late_hif_resume;
 	}
 
 	err = hif_bus_suspend(hif_ctx);
@@ -720,11 +726,14 @@ resume_pmo:
 					      QDF_SYSTEM_SUSPEND);
 	QDF_BUG(QDF_IS_STATUS_SUCCESS(status));
 
+late_hif_resume:
+	status = hif_bus_late_resume(hif_ctx);
+	QDF_BUG(QDF_IS_STATUS_SUCCESS(status));
+
 resume_cdp:
 	status = cdp_bus_resume(dp_soc, dp_pdev);
 	QDF_BUG(QDF_IS_STATUS_SUCCESS(status));
 
-	/* return suspend related error code */
 	return err;
 }
 
@@ -882,6 +891,12 @@ static int __wlan_hdd_bus_resume(void)
 	status = qdf_status_to_os_return(qdf_status);
 	if (status) {
 		hdd_err("Failed wma bus resume");
+		goto out;
+	}
+
+	status = hif_bus_late_resume(hif_ctx);
+	if (status) {
+		hdd_err("Failed hif bus late resume");
 		goto out;
 	}
 
