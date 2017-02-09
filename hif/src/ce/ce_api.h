@@ -549,4 +549,7 @@ struct ce_ops {
 			    int *num_shadow_registers_configured);
 
 };
+
+int hif_ce_bus_early_suspend(struct hif_softc *scn);
+int hif_ce_bus_late_resume(struct hif_softc *scn);
 #endif /* __COPY_ENGINE_API_H__ */

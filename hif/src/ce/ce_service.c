@@ -352,7 +352,7 @@ ce_send_nolock_legacy(struct CE_handle *copyeng,
 		return QDF_STATUS_E_FAILURE;
 	}
 	{
-		enum hif_ce_event_type event_type = HIF_TX_GATHER_DESC_POST;
+		enum hif_ce_event_type event_type;
 		struct CE_src_desc *src_ring_base =
 			(struct CE_src_desc *)src_ring->base_addr_owner_space;
 		struct CE_src_desc *shadow_base =
@@ -399,7 +399,12 @@ ce_send_nolock_legacy(struct CE_handle *copyeng,
 		write_index = CE_RING_IDX_INCR(nentries_mask, write_index);
 
 		/* WORKAROUND */
-		if (!shadow_src_desc->gather) {
+		if (shadow_src_desc->gather) {
+			event_type = HIF_TX_GATHER_DESC_POST;
+		} else if (qdf_unlikely(CE_state->state != CE_RUNNING)) {
+			event_type = HIF_TX_DESC_SOFTWARE_POST;
+			CE_state->state = CE_PENDING;
+		} else {
 			event_type = HIF_TX_DESC_POST;
 			war_ce_src_ring_write_idx_set(scn, ctrl_addr,
 						      write_index);
@@ -612,6 +617,7 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t msdu,
 	unsigned int frag_len;
 	uint64_t dma_addr;
 	uint32_t user_flags;
+	enum hif_ce_event_type type = FAST_TX_SOFTWARE_INDEX_UPDATE;
 
 	qdf_spin_lock_bh(&ce_state->ce_index_lock);
 	Q_TARGET_ACCESS_BEGIN(scn);
@@ -720,18 +726,16 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t msdu,
 	src_ring->write_index = write_index;
 
 	if (hif_pm_runtime_get(hif_hdl) == 0) {
-		hif_record_ce_desc_event(scn, ce_state->id,
-					 FAST_TX_WRITE_INDEX_UPDATE,
-					 NULL, NULL, write_index);
-
-		/* Don't call WAR_XXX from here
-		 * Just call XXX instead, that has the reqd. intel
-		 */
-		war_ce_src_ring_write_idx_set(scn, ctrl_addr,
+		if (qdf_likely(ce_state->state == CE_RUNNING)) {
+			type = FAST_TX_WRITE_INDEX_UPDATE;
+			war_ce_src_ring_write_idx_set(scn, ctrl_addr,
 				write_index);
+		} else
+			ce_state->state = CE_PENDING;
 		hif_pm_runtime_put(hif_hdl);
 	}
-
+	hif_record_ce_desc_event(scn, ce_state->id, type,
+				 NULL, NULL, write_index);
 
 	Q_TARGET_ACCESS_END(scn);
 	qdf_spin_unlock_bh(&ce_state->ce_index_lock);
@@ -2401,7 +2405,7 @@ void ce_ipa_get_resource(struct CE_handle *ce,
 	qdf_dma_addr_t phy_mem_base;
 	struct hif_softc *scn = CE_state->scn;
 
-	if (CE_RUNNING != CE_state->state) {
+	if (CE_UNUSED == CE_state->state) {
 		*ce_sr_base_paddr = 0;
 		*ce_sr_ring_size = 0;
 		return;

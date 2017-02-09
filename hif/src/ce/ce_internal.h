@@ -34,6 +34,7 @@ enum CE_op_state {
 	CE_UNUSED,
 	CE_PAUSED,
 	CE_RUNNING,
+	CE_PENDING,
 };
 
 enum ol_ath_hif_ce_ecodes {
@@ -389,6 +390,8 @@ union ce_desc {
  * @HIF_RX_DESC_COMPLETION: event recorded before updating sw index of RX ring.
  * @HIF_TX_GATHER_DESC_POST: post gather desc. (no write index update)
  * @HIF_TX_DESC_POST: event recorded before updating write index of TX ring.
+ * @HIF_TX_DESC_SOFTWARE_POST: event recorded when dropping a write to the write
+ *	index in a normal tx
  * @HIF_TX_DESC_COMPLETION: event recorded before updating sw index of TX ring.
  * @FAST_RX_WRITE_INDEX_UPDATE: event recorded before updating the write index
  *	of the RX ring in fastpath
@@ -396,9 +399,10 @@ union ce_desc {
  *	index of the RX ring in fastpath
  * @FAST_TX_WRITE_INDEX_UPDATE: event recorded before updating the write index
  *	of the TX ring in fastpath
+ * @FAST_TX_WRITE_INDEX_SOFTWARE_UPDATE: recored when dropping a write to
+ *	the wirte index in fastpath
  * @FAST_TX_SOFTWARE_INDEX_UPDATE: event recorded before updating the software
  *	index of the RX ring in fastpath
- *
  * @HIF_IRQ_EVENT: event recorded in the irq before scheduling the bh
  * @HIF_CE_TASKLET_ENTRY: records the start of the ce_tasklet
  * @HIF_CE_TASKLET_RESCHEDULE: records the rescheduling of the wlan_tasklet
@@ -415,11 +419,14 @@ enum hif_ce_event_type {
 	HIF_RX_DESC_COMPLETION,
 	HIF_TX_GATHER_DESC_POST,
 	HIF_TX_DESC_POST,
+	HIF_TX_DESC_SOFTWARE_POST,
 	HIF_TX_DESC_COMPLETION,
 	FAST_RX_WRITE_INDEX_UPDATE,
 	FAST_RX_SOFTWARE_INDEX_UPDATE,
 	FAST_TX_WRITE_INDEX_UPDATE,
+	FAST_TX_WRITE_INDEX_SOFTWARE_UPDATE,
 	FAST_TX_SOFTWARE_INDEX_UPDATE,
+	RESUME_WRITE_INDEX_UPDATE,
 
 	HIF_IRQ_EVENT = 0x10,
 	HIF_CE_TASKLET_ENTRY,

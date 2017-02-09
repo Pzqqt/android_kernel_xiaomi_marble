@@ -40,6 +40,8 @@ struct hif_bus_ops {
 	void (*hif_bus_close)(struct hif_softc *hif_sc);
 	void (*hif_bus_prevent_linkdown)(struct hif_softc *hif_sc, bool flag);
 	void (*hif_reset_soc)(struct hif_softc *hif_sc);
+	int (*hif_bus_early_suspend)(struct hif_softc *hif_ctx);
+	int (*hif_bus_late_resume)(struct hif_softc *hif_ctx);
 	int (*hif_bus_suspend)(struct hif_softc *hif_ctx);
 	int (*hif_bus_resume)(struct hif_softc *hif_ctx);
 	int (*hif_bus_suspend_noirq)(struct hif_softc *hif_ctx);

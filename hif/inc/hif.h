@@ -718,6 +718,17 @@ enum ipa_hw_type hif_get_ipa_hw_type(void)
 }
 #endif
 int hif_bus_resume(struct hif_opaque_softc *);
+/**
+ * hif_bus_ealry_suspend() - stop non wmi tx traffic
+ * @context: hif context
+ */
+int hif_bus_early_suspend(struct hif_opaque_softc *hif_ctx);
+
+/**
+ * hif_bus_late_resume() - resume non wmi traffic
+ * @context: hif context
+ */
+int hif_bus_late_resume(struct hif_opaque_softc *hif_ctx);
 int hif_bus_suspend(struct hif_opaque_softc *);
 int hif_bus_resume_noirq(struct hif_opaque_softc *);
 int hif_bus_suspend_noirq(struct hif_opaque_softc *);

@@ -62,6 +62,8 @@ static void hif_intialize_default_ops(struct hif_softc *hif_sc)
 	bus_ops->hif_bus_reset_resume = &hif_dummy_bus_reset_resume;
 	bus_ops->hif_bus_suspend_noirq = &hif_dummy_bus_suspend_noirq;
 	bus_ops->hif_bus_resume_noirq = &hif_dummy_bus_resume_noirq;
+	bus_ops->hif_bus_early_suspend = &hif_dummy_bus_suspend;
+	bus_ops->hif_bus_late_resume = &hif_dummy_bus_resume;
 	bus_ops->hif_grp_irq_disable = &hif_dummy_grp_irq_disable;
 	bus_ops->hif_grp_irq_enable = &hif_dummy_grp_irq_enable;
 }
@@ -189,6 +191,18 @@ void hif_reset_soc(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_ctx);
 	hif_sc->bus_ops.hif_reset_soc(hif_sc);
+}
+
+int hif_bus_early_suspend(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_ctx);
+	return hif_sc->bus_ops.hif_bus_early_suspend(hif_sc);
+}
+
+int hif_bus_late_resume(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_ctx);
+	return hif_sc->bus_ops.hif_bus_late_resume(hif_sc);
 }
 
 int hif_bus_suspend(struct hif_opaque_softc *hif_ctx)
