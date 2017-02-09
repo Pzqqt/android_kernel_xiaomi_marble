@@ -1879,12 +1879,21 @@ qdf_nbuf_t ol_tx_reinject(struct ol_txrx_vdev_t *vdev,
  */
 void ol_tso_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg)
 {
-	int i;
+	int i = 0;
 	struct qdf_tso_seg_elem_t *c_element;
 
+	/* Host should not allocate any c_element. */
+	if (num_seg <= 0) {
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+			   "%s: ERROR: Pool size passed is 0",
+			   __func__);
+		QDF_BUG(0);
+		pdev->tso_seg_pool.pool_size = i;
+		qdf_spinlock_create(&pdev->tso_seg_pool.tso_mutex);
+		return;
+	}
+
 	c_element = qdf_mem_malloc(sizeof(struct qdf_tso_seg_elem_t));
-	c_element->on_freelist = 1;
-	c_element->cookie = TSO_SEG_MAGIC_COOKIE;
 	pdev->tso_seg_pool.freelist = c_element;
 	for (i = 0; i < (num_seg - 1); i++) {
 		if (qdf_unlikely(!c_element)) {
@@ -1897,13 +1906,28 @@ void ol_tso_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg)
 			return;
 		}
 		/* set the freelist bit and magic cookie*/
+		c_element->on_freelist = 1;
+		c_element->cookie = TSO_SEG_MAGIC_COOKIE;
 		c_element->next =
 			qdf_mem_malloc(sizeof(struct qdf_tso_seg_elem_t));
 		c_element = c_element->next;
-		c_element->on_freelist = 1;
-		c_element->cookie = TSO_SEG_MAGIC_COOKIE;
-		c_element->next = NULL;
 	}
+	/*
+	 * NULL check for the last c_element of the list or
+	 * first c_element if num_seg is equal to 1.
+	 */
+	if (qdf_unlikely(!c_element)) {
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+			   "%s: ERROR: c_element NULL for seg %d",
+			   __func__, i);
+		QDF_BUG(0);
+		pdev->tso_seg_pool.pool_size = i;
+		qdf_spinlock_create(&pdev->tso_seg_pool.tso_mutex);
+		return;
+	}
+	c_element->on_freelist = 1;
+	c_element->cookie = TSO_SEG_MAGIC_COOKIE;
+	c_element->next = NULL;
 	pdev->tso_seg_pool.pool_size = num_seg;
 	qdf_spinlock_create(&pdev->tso_seg_pool.tso_mutex);
 }
@@ -1965,8 +1989,19 @@ void ol_tso_seg_list_deinit(struct ol_txrx_pdev_t *pdev)
  */
 void ol_tso_num_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg)
 {
-	int i;
+	int i = 0;
 	struct qdf_tso_num_seg_elem_t *c_element;
+
+	/* Host should not allocate any c_element. */
+	if (num_seg <= 0) {
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+			   "%s: ERROR: Pool size passed is 0",
+			   __func__);
+		QDF_BUG(0);
+		pdev->tso_num_seg_pool.num_seg_pool_size = i;
+		qdf_spinlock_create(&pdev->tso_num_seg_pool.tso_num_seg_mutex);
+		return;
+	}
 
 	c_element = qdf_mem_malloc(sizeof(struct qdf_tso_num_seg_elem_t));
 	pdev->tso_num_seg_pool.freelist = c_element;
@@ -1981,12 +2016,24 @@ void ol_tso_num_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg)
 							tso_num_seg_mutex);
 			return;
 		}
-
 		c_element->next =
 			qdf_mem_malloc(sizeof(struct qdf_tso_num_seg_elem_t));
 		c_element = c_element->next;
-		c_element->next = NULL;
 	}
+	/*
+	 * NULL check for the last c_element of the list or
+	 * first c_element if num_seg is equal to 1.
+	 */
+	if (qdf_unlikely(!c_element)) {
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+			   "%s: ERROR: c_element NULL for num of seg %d",
+			   __func__, i);
+		QDF_BUG(0);
+		pdev->tso_num_seg_pool.num_seg_pool_size = i;
+		qdf_spinlock_create(&pdev->tso_num_seg_pool.tso_num_seg_mutex);
+		return;
+	}
+	c_element->next = NULL;
 	pdev->tso_num_seg_pool.num_seg_pool_size = num_seg;
 	qdf_spinlock_create(&pdev->tso_num_seg_pool.tso_num_seg_mutex);
 }
