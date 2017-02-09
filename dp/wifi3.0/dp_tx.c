@@ -114,11 +114,10 @@ dp_tx_desc_release(struct dp_vdev *vdev, struct dp_tx_desc_s *tx_desc,
 	if (tx_desc->flags & DP_TX_DESC_FLAG_FRAG)
 		dp_tx_ext_desc_free(soc, tx_desc->msdu_ext_desc, desc_pool_id);
 
-	vdev->num_tx_outstanding--;
-	pdev->num_tx_outstanding--;
+	qdf_atomic_dec(&pdev->num_tx_outstanding);
 
 	if (tx_desc->flags & DP_TX_DESC_FLAG_TO_FW)
-		pdev->num_tx_exception--;
+		qdf_atomic_dec(&pdev->num_tx_exception);
 
 	if (HAL_TX_COMP_RELEASE_SOURCE_TQM ==
 				hal_tx_comp_get_buffer_source(&tx_desc->comp))
@@ -311,8 +310,7 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	}
 
 	/* Flow control/Congestion Control counters */
-	vdev->num_tx_outstanding++;
-	pdev->num_tx_outstanding++;
+	qdf_atomic_inc(&pdev->num_tx_outstanding);
 
 	/* Initialize the SW tx descriptor */
 	tx_desc->nbuf = nbuf;
@@ -346,7 +344,6 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 				align_pad);
 		tx_desc->pkt_offset += htt_hdr_size;
 		tx_desc->flags |= DP_TX_DESC_FLAG_TO_FW;
-		pdev->num_tx_exception++;
 		is_exception = 1;
 	}
 
@@ -354,7 +351,6 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 		eh = (struct ether_header *) qdf_nbuf_data(nbuf);
 		if (DP_FRAME_IS_MULTICAST((eh)->ether_dhost)) {
 			tx_desc->flags |= DP_TX_DESC_FLAG_TO_FW;
-			pdev->num_tx_exception++;
 			is_exception = 1;
 		}
 	}
@@ -365,7 +361,7 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	{
 		/* Temporary WAR due to TQM VP issues */
 		tx_desc->flags |= DP_TX_DESC_FLAG_TO_FW;
-		pdev->num_tx_exception++;
+		qdf_atomic_inc(&pdev->num_tx_exception);
 	}
 
 	return tx_desc;
@@ -412,11 +408,8 @@ static struct dp_tx_desc_s *dp_tx_prepare_desc(struct dp_vdev *vdev,
 	if (!tx_desc)
 		return NULL;
 
-	tx_desc->flags |= DP_TX_DESC_FLAG_ALLOCATED;
-
 	/* Flow control/Congestion Control counters */
-	vdev->num_tx_outstanding++;
-	pdev->num_tx_outstanding++;
+	qdf_atomic_inc(&pdev->num_tx_outstanding);
 
 	/* Initialize the SW tx descriptor */
 	tx_desc->nbuf = nbuf;
@@ -438,7 +431,7 @@ static struct dp_tx_desc_s *dp_tx_prepare_desc(struct dp_vdev *vdev,
 #if TQM_BYPASS_WAR
 	/* Temporary WAR due to TQM VP issues */
 	tx_desc->flags |= DP_TX_DESC_FLAG_TO_FW;
-	pdev->num_tx_exception++;
+	qdf_atomic_inc(&pdev->num_tx_exception);
 #endif
 
 	tx_desc->msdu_ext_desc = msdu_ext_desc;
@@ -1071,7 +1064,7 @@ void dp_tx_process_htt_completion(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 	switch (tx_status) {
 	case HTT_TX_FW2WBM_TX_STATUS_OK:
 	{
-		pdev->num_tx_exception--;
+		qdf_atomic_dec(&pdev->num_tx_exception);
 		DP_TX_FREE_SINGLE_BUF(soc, vdev,
 				tx_desc->nbuf);
 		break;
@@ -1081,7 +1074,7 @@ void dp_tx_process_htt_completion(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 	{
 		DP_TX_FREE_SINGLE_BUF(soc, vdev,
 				tx_desc->nbuf);
-		pdev->num_tx_exception--;
+		qdf_atomic_dec(&pdev->num_tx_exception);
 		DP_STATS_MSDU_INCR(soc, tx.dropped.pkts, tx_desc->nbuf);
 		break;
 	}
@@ -1372,8 +1365,6 @@ uint32_t dp_tx_comp_handler(struct dp_soc *soc, uint32_t ring_id,
 QDF_STATUS dp_tx_vdev_attach(struct dp_vdev *vdev)
 {
 
-	vdev->num_tx_outstanding = 0;
-
 	/*
 	 * Fill HTT TCL Metadata with Vdev ID and MAC ID
 	 */
@@ -1418,8 +1409,8 @@ QDF_STATUS dp_tx_pdev_attach(struct dp_pdev *pdev)
 	struct dp_soc *soc = pdev->soc;
 
 	/* Initialize Flow control counters */
-	pdev->num_tx_exception = 0;
-	pdev->num_tx_outstanding = 0;
+	qdf_atomic_init(&pdev->num_tx_exception);
+	qdf_atomic_init(&pdev->num_tx_outstanding);
 
 	if (wlan_cfg_per_pdev_tx_ring(soc->wlan_cfg_ctx)) {
 		/* Initialize descriptors in TCL Ring */

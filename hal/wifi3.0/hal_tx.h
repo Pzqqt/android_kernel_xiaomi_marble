@@ -280,7 +280,7 @@ static inline void hal_tx_desc_set_buf_addr(void *desc,
 	HAL_SET_FLD(desc, TCL_DATA_CMD_1,
 			 BUFFER_ADDR_INFO_BUF_ADDR_INFO) |=
 		HAL_TX_SM(BUFFER_ADDR_INFO_1, BUFFER_ADDR_39_32,
-		       (((uint64_t) paddr) << 32));
+		       (((uint64_t) paddr) >> 32));
 
 	/* Set buffer_addr_info.return_buffer_manager = pool id */
 	HAL_SET_FLD(desc, TCL_DATA_CMD_1,

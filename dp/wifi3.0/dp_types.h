@@ -537,9 +537,9 @@ struct dp_pdev {
 	/* Enhanced Stats is enabled */
 	bool ap_stats_tx_cal_enable;
 
-	uint32_t num_tx_outstanding;
+	qdf_atomic_t num_tx_outstanding;
 
-	uint32_t num_tx_exception;
+	qdf_atomic_t num_tx_exception;
 
 	/* MCL specific local peer handle */
 	struct {
@@ -654,8 +654,6 @@ struct dp_vdev {
 
 	/* Multicast enhancement enabled */
 	uint8_t mcast_enhancement_en;
-
-	uint32_t num_tx_outstanding;
 
 	/* per vdev rx nbuf queue */
 	qdf_nbuf_queue_t rxq;

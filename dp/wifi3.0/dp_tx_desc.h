@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -36,26 +36,10 @@
 #define DP_TX_DESC_ID_OFFSET_MASK  0x0003FF
 #define DP_TX_DESC_ID_OFFSET_OS    0
 
-/**
- * In case of TX descriptor pool and CPU core is combined
- * TX context and TX comp context also should running on the same core
- * in this case, each TX desciptror pool operation will be serialized by core
- * TX and TX_COMP will not race. locking for protection is not requried
- * TX_DESC_POOL_PER_CORE : this is most likely for WIN
- * MCL, TX descriptor pool will be tied to VDEV instance.
- * Then locking protection is required
- */
-#ifdef TX_CORE_ALIGNED_SEND
-#define TX_DESC_LOCK_CREATE(lock)  /* NOOP */
-#define TX_DESC_LOCK_DESTROY(lock) /* NOOP */
-#define TX_DESC_LOCK_LOCK(lock)    /* NOOP */
-#define TX_DESC_LOCK_UNLOCK(lock)  /* NOOP */
-#else
 #define TX_DESC_LOCK_CREATE(lock)  qdf_spinlock_create(lock)
 #define TX_DESC_LOCK_DESTROY(lock) qdf_spinlock_destroy(lock)
 #define TX_DESC_LOCK_LOCK(lock)    qdf_spin_lock(lock)
 #define TX_DESC_LOCK_UNLOCK(lock)  qdf_spin_unlock(lock)
-#endif /* TX_CORE_ALIGNED_SEND */
 
 QDF_STATUS dp_tx_desc_pool_alloc(struct dp_soc *soc, uint8_t pool_id,
 		uint16_t num_elem);
@@ -91,7 +75,7 @@ static inline struct dp_tx_desc_s *dp_tx_desc_alloc(struct dp_soc *soc,
 		soc->tx_desc[desc_pool_id].num_allocated++;
 	}
 	DP_STATS_ADD(pdev, pub.tx.desc_in_use, 1);
-	tx_desc->flags |= DP_TX_DESC_FLAG_ALLOCATED;
+	tx_desc->flags = DP_TX_DESC_FLAG_ALLOCATED;
 	TX_DESC_LOCK_UNLOCK(&soc->tx_desc[desc_pool_id].lock);
 
 	return tx_desc;
@@ -111,7 +95,7 @@ dp_tx_desc_free(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc,
 {
 	TX_DESC_LOCK_LOCK(&soc->tx_desc[desc_pool_id].lock);
 
-	tx_desc->flags &= ~DP_TX_DESC_FLAG_ALLOCATED;
+	tx_desc->flags = 0;
 	tx_desc->next = soc->tx_desc[desc_pool_id].freelist;
 	soc->tx_desc[desc_pool_id].freelist = tx_desc;
 	DP_STATS_SUB(pdev, pub.tx.desc_in_use, 1);
