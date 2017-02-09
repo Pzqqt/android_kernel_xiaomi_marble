@@ -5796,7 +5796,7 @@ static void hdd_pld_request_bus_bandwidth(hdd_context_t *hdd_ctx,
 	uint64_t temp_rx = 0;
 	uint64_t temp_tx = 0;
 	enum pld_bus_width_type next_vote_level = PLD_BUS_WIDTH_NONE;
-	enum wlan_tp_level next_rx_level = WLAN_SVC_TP_NONE;
+	static enum wlan_tp_level next_rx_level = WLAN_SVC_TP_NONE;
 	enum wlan_tp_level next_tx_level = WLAN_SVC_TP_NONE;
 	uint32_t delack_timer_cnt = hdd_ctx->config->tcp_delack_timer_count;
 	uint16_t index = 0;
@@ -5843,7 +5843,6 @@ static void hdd_pld_request_bus_bandwidth(hdd_context_t *hdd_ctx,
 
 	hdd_ctx->prev_rx = rx_packets;
 
-	next_rx_level = WLAN_SVC_TP_LOW;
 	if (temp_rx > hdd_ctx->config->tcpDelackThresholdHigh) {
 		if ((hdd_ctx->cur_rx_level != WLAN_SVC_TP_HIGH) &&
 		   (++hdd_ctx->rx_high_ind_cnt == delack_timer_cnt)) {
@@ -5851,6 +5850,7 @@ static void hdd_pld_request_bus_bandwidth(hdd_context_t *hdd_ctx,
 		}
 	} else {
 		hdd_ctx->rx_high_ind_cnt = 0;
+		next_rx_level = WLAN_SVC_TP_LOW;
 	}
 
 	if (hdd_ctx->cur_rx_level != next_rx_level) {
