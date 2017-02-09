@@ -908,6 +908,8 @@ typedef enum {
     /* OEM related cmd */
     WMI_OEM_REQ_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_OEM),
     WMI_OEM_REQUEST_CMDID, /* UNUSED */
+    /* OEM related cmd used for Low Power ranging */
+    WMI_LPI_OEM_REQ_CMDID,
 
     /** Nan Request */
     WMI_NAN_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_NAN),
@@ -17700,6 +17702,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_BPF_SET_VDEV_ACTIVE_MODE_CMDID);
         WMI_RETURN_STRING(WMI_HW_DATA_FILTER_CMDID);
         WMI_RETURN_STRING(MI_PDEV_MULTIPLE_VDEV_RESTART_REQUEST_CMDID);
+        WMI_RETURN_STRING(WMI_LPI_OEM_REQ_CMDID);
     }
 
     return "Invalid WMI cmd";
