@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -419,7 +419,7 @@ populate_dot11f_country(tpAniSirGlobal pMac,
 	return eSIR_SUCCESS;
 } /* End populate_dot11f_country. */
 
-#ifdef QCA_WIFI_3_0_EMU
+#if defined(QCA_WIFI_3_0_EMU) || defined(QCA_WIFI_NAPIER_EMULATION)
 /**
  * populate_dot11f_ds_params() - To populate DS IE params
  * mac_ctx: Pointer to global mac context
