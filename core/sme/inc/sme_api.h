@@ -908,7 +908,7 @@ QDF_STATUS sme_update_roam_offload_enabled(tHalHandle hHal,
 QDF_STATUS sme_update_roam_key_mgmt_offload_enabled(tHalHandle hal_ctx,
 		uint8_t session_id,
 		bool key_mgmt_offload_enabled,
-		bool okc_enabled);
+		struct pmkid_mode_bits *pmkid_modes);
 #endif
 #ifdef WLAN_FEATURE_NAN
 QDF_STATUS sme_nan_event(tHalHandle hHal, void *pMsg);

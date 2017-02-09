@@ -1028,13 +1028,14 @@ struct reg_table_entry g_registry_table[] = {
 			     CFG_ENABLE_WES_MODE_NAME_MIN,
 			     CFG_ENABLE_WES_MODE_NAME_MAX,
 			     cb_notify_set_wes_mode, 0),
-	REG_VARIABLE(CFG_OKC_FEATURE_ENABLED_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, isOkcIniFeatureEnabled,
+	REG_VARIABLE(CFG_PMKID_MODES_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, pmkid_modes,
 		     VAR_FLAGS_OPTIONAL |
 		     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_OKC_FEATURE_ENABLED_DEFAULT,
-		     CFG_OKC_FEATURE_ENABLED_MIN,
-		     CFG_OKC_FEATURE_ENABLED_MAX),
+		     CFG_PMKID_MODES_DEFAULT,
+		     CFG_PMKID_MODES_MIN,
+		     CFG_PMKID_MODES_MAX),
+
 	REG_DYNAMIC_VARIABLE(CFG_ROAM_SCAN_OFFLOAD_ENABLED, WLAN_PARAM_Integer,
 			     struct hdd_config, isRoamOffloadScanEnabled,
 			     VAR_FLAGS_OPTIONAL |
@@ -5354,8 +5355,8 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 		  pHddCtx->config->RoamRssiDiff);
 	hdd_info("Name = [isWESModeEnabled] Value = [%u] ",
 		  pHddCtx->config->isWESModeEnabled);
-	hdd_info("Name = [OkcEnabled] Value = [%u] ",
-		  pHddCtx->config->isOkcIniFeatureEnabled);
+	hdd_info("Name = [pmkidModes] Value = [0x%x] ",
+		  pHddCtx->config->pmkid_modes);
 #ifdef FEATURE_WLAN_SCAN_PNO
 	hdd_info("Name = [configPNOScanSupport] Value = [%u] ",
 		  pHddCtx->config->configPNOScanSupport);
@@ -7602,18 +7603,18 @@ QDF_STATUS hdd_cfg_get_global_config(hdd_context_t *pHddCtx, char *pBuf,
 }
 
 /**
- * hdd_is_okc_mode_enabled() - returns whether OKC mode is enabled or not
+ * hdd_get_pmkid_modes() - returns PMKID mode bits
  * @pHddCtx: the pointer to hdd context
  *
- * Return: true if OKC is enabled, otherwise false
+ * Return: value of pmkid_modes
  */
-bool hdd_is_okc_mode_enabled(hdd_context_t *pHddCtx)
+void hdd_get_pmkid_modes(hdd_context_t *pHddCtx,
+			 struct pmkid_mode_bits *pmkid_modes)
 {
-	if (NULL == pHddCtx) {
-		hdd_alert("pHddCtx is NULL");
-		return -EINVAL;
-	}
-	return pHddCtx->config->isOkcIniFeatureEnabled;
+	pmkid_modes->fw_okc = (pHddCtx->config->pmkid_modes &
+			       CFG_PMKID_MODES_OKC) ? 1 : 0;
+	pmkid_modes->fw_pmksa_cache = (pHddCtx->config->pmkid_modes &
+				       CFG_PMKID_MODES_PMKSA_CACHING) ? 1 : 0;
 }
 
 /**

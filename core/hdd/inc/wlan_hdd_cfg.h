@@ -561,6 +561,19 @@ enum hdd_dot11_mode {
  *
  * This ini is used to enable or disable DFS channel
  * scan
+ */
+#define CFG_ENABLE_DFS_CHNL_SCAN_NAME              "gEnableDFSChnlScan"
+#define CFG_ENABLE_DFS_CHNL_SCAN_MIN               (0)
+#define CFG_ENABLE_DFS_CHNL_SCAN_MAX               (1)
+#define CFG_ENABLE_DFS_CHNL_SCAN_DEFAULT           (1)
+
+/*
+ * <ini>
+ * pmkidModes - Enable PMKID modes
+ * This INI is used to enable PMKID feature options
+ * @Min: 0
+ * @Max: 3
+ * @Default: 3
  *
  * Related: None
  *
@@ -570,10 +583,12 @@ enum hdd_dot11_mode {
  *
  * </ini>
  */
-#define CFG_ENABLE_DFS_CHNL_SCAN_NAME              "gEnableDFSChnlScan"
-#define CFG_ENABLE_DFS_CHNL_SCAN_MIN               (0)
-#define CFG_ENABLE_DFS_CHNL_SCAN_MAX               (1)
-#define CFG_ENABLE_DFS_CHNL_SCAN_DEFAULT           (1)
+#define CFG_PMKID_MODES_NAME                       "pmkidModes"
+#define CFG_PMKID_MODES_MIN                        (0x0)
+#define CFG_PMKID_MODES_MAX                        (0x3)
+#define CFG_PMKID_MODES_DEFAULT                    (0x3)
+#define CFG_PMKID_MODES_OKC                        (0x1)
+#define CFG_PMKID_MODES_PMKSA_CACHING              (0x2)
 
 /*
  * <ini>
@@ -10460,7 +10475,7 @@ struct hdd_config {
 	bool isFastTransitionEnabled;
 	uint8_t RoamRssiDiff;
 	bool isWESModeEnabled;
-	bool isOkcIniFeatureEnabled;
+	uint32_t pmkid_modes;
 	bool isRoamOffloadScanEnabled;
 	bool bImplicitQosEnabled;
 
@@ -11171,6 +11186,8 @@ QDF_STATUS hdd_execute_global_config_command(hdd_context_t *pHddCtx,
 
 bool hdd_is_okc_mode_enabled(hdd_context_t *pHddCtx);
 QDF_STATUS hdd_set_idle_ps_config(hdd_context_t *pHddCtx, uint32_t val);
+void hdd_get_pmkid_modes(hdd_context_t *pHddCtx,
+			 struct pmkid_mode_bits *pmkid_modes);
 
 void hdd_update_tgt_cfg(void *context, void *param);
 

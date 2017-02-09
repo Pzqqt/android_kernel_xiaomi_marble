@@ -777,7 +777,7 @@ QDF_STATUS csr_roam_set_psk_pmk(tpAniSirGlobal pMac, uint32_t sessionId,
 QDF_STATUS csr_roam_set_key_mgmt_offload(tpAniSirGlobal mac_ctx,
 					 uint32_t session_id,
 					 bool roam_key_mgmt_offload_enabled,
-					 bool okc_enabled);
+					 struct pmkid_mode_bits *pmkid_modes);
 #endif
 /* ---------------------------------------------------------------------------
     \fn csr_roam_get_wpa_rsn_req_ie

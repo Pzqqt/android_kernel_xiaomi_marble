@@ -3404,15 +3404,17 @@ static int drv_cmd_get_ccx_mode(hdd_adapter_t *adapter,
 	bool eseMode = sme_get_is_ese_feature_enabled(hdd_ctx->hHal);
 	char extra[32];
 	uint8_t len = 0;
+	struct pmkid_mode_bits pmkid_modes;
 
+	hdd_get_pmkid_modes(hdd_ctx, &pmkid_modes);
 	/*
-	 * Check if the features OKC/ESE/11R are supported simultaneously,
+	 * Check if the features PMKID/ESE/11R are supported simultaneously,
 	 * then this operation is not permitted (return FAILURE)
 	 */
 	if (eseMode &&
-	    hdd_is_okc_mode_enabled(hdd_ctx) &&
+	    (pmkid_modes.fw_okc || pmkid_modes.fw_pmksa_cache) &&
 	    sme_get_is_ft_feature_enabled(hdd_ctx->hHal)) {
-		hdd_warn("OKC/ESE/11R are supported simultaneously hence this operation is not permitted!");
+		hdd_warn("PMKID/ESE/11R are supported simultaneously hence this operation is not permitted!");
 		ret = -EPERM;
 		goto exit;
 	}
@@ -3437,24 +3439,25 @@ static int drv_cmd_get_okc_mode(hdd_adapter_t *adapter,
 				hdd_priv_data_t *priv_data)
 {
 	int ret = 0;
-	bool okcMode = hdd_is_okc_mode_enabled(hdd_ctx);
+	struct pmkid_mode_bits pmkid_modes;
 	char extra[32];
 	uint8_t len = 0;
 
+	hdd_get_pmkid_modes(hdd_ctx, &pmkid_modes);
 	/*
 	 * Check if the features OKC/ESE/11R are supported simultaneously,
 	 * then this operation is not permitted (return FAILURE)
 	 */
-	if (okcMode &&
+	if (pmkid_modes.fw_okc &&
 	    sme_get_is_ese_feature_enabled(hdd_ctx->hHal) &&
 	    sme_get_is_ft_feature_enabled(hdd_ctx->hHal)) {
-		hdd_warn("OKC/ESE/11R are supported simultaneously hence this operation is not permitted!");
+		hdd_warn("PMKID/ESE/11R are supported simultaneously hence this operation is not permitted!");
 		ret = -EPERM;
 		goto exit;
 	}
 
 	len = scnprintf(extra, sizeof(extra), "%s %d",
-			"GETOKCMODE", okcMode);
+			"GETOKCMODE", pmkid_modes.fw_okc);
 	len = QDF_MIN(priv_data->total_len, len + 1);
 
 	if (copy_to_user(priv_data->buf, &extra, len)) {
@@ -4393,16 +4396,19 @@ static int drv_cmd_set_okc_mode(hdd_adapter_t *adapter,
 {
 	int ret = 0;
 	uint8_t *value = command;
-	uint8_t okcMode = CFG_OKC_FEATURE_ENABLED_DEFAULT;
+	uint32_t okc_mode;
+	struct pmkid_mode_bits pmkid_modes;
+
+	hdd_get_pmkid_modes(hdd_ctx, &pmkid_modes);
 
 	/*
-	 * Check if the features OKC/ESE/11R are supported simultaneously,
+	 * Check if the features PMKID/ESE/11R are supported simultaneously,
 	 * then this operation is not permitted (return FAILURE)
 	 */
 	if (sme_get_is_ese_feature_enabled(hdd_ctx->hHal) &&
-	    hdd_is_okc_mode_enabled(hdd_ctx) &&
+	    pmkid_modes.fw_okc &&
 	    sme_get_is_ft_feature_enabled(hdd_ctx->hHal)) {
-		hdd_warn("OKC/ESE/11R are supported simultaneously hence this operation is not permitted!");
+		hdd_warn("PMKID/ESE/11R are supported simultaneously hence this operation is not permitted!");
 		ret = -EPERM;
 		goto exit;
 	}
@@ -4410,33 +4416,35 @@ static int drv_cmd_set_okc_mode(hdd_adapter_t *adapter,
 	/* Move pointer to ahead of SETOKCMODE<delimiter> */
 	value = value + command_len + 1;
 
+	/* get the current configured value */
+	okc_mode = hdd_ctx->config->pmkid_modes & CFG_PMKID_MODES_OKC;
+
 	/* Convert the value from ascii to integer */
-	ret = kstrtou8(value, 10, &okcMode);
+	ret = kstrtou32(value, 10, &okc_mode);
 	if (ret < 0) {
 		/*
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
-		hdd_err("kstrtou8 failed range [%d - %d]",
-			  CFG_OKC_FEATURE_ENABLED_MIN,
-			  CFG_OKC_FEATURE_ENABLED_MAX);
+		hdd_err("value out of range [0 - 1]");
 		ret = -EINVAL;
 		goto exit;
 	}
 
-	if ((okcMode < CFG_OKC_FEATURE_ENABLED_MIN) ||
-	    (okcMode > CFG_OKC_FEATURE_ENABLED_MAX)) {
-		hdd_err("Okc mode value %d is out of range (Min: %d Max: %d)",
-			  okcMode,
-			  CFG_OKC_FEATURE_ENABLED_MIN,
-			  CFG_OKC_FEATURE_ENABLED_MAX);
+	if ((okc_mode < 0) ||
+	    (okc_mode > 1)) {
+		hdd_err("Okc mode value %d is out of range (Min: 0 Max: 1)",
+			  okc_mode);
 		ret = -EINVAL;
 		goto exit;
 	}
 	hdd_debug("Received Command to change okc mode = %d",
-		  okcMode);
+		  okc_mode);
 
-	hdd_ctx->config->isOkcIniFeatureEnabled = okcMode;
+	if (okc_mode)
+		hdd_ctx->config->pmkid_modes |= CFG_PMKID_MODES_OKC;
+	else
+		hdd_ctx->config->pmkid_modes &= ~CFG_PMKID_MODES_OKC;
 
 exit:
 	return ret;
@@ -5491,13 +5499,15 @@ static int drv_cmd_set_ccx_mode(hdd_adapter_t *adapter,
 	int ret = 0;
 	uint8_t *value = command;
 	uint8_t eseMode = CFG_ESE_FEATURE_ENABLED_DEFAULT;
+	struct pmkid_mode_bits pmkid_modes;
 
+	hdd_get_pmkid_modes(hdd_ctx, &pmkid_modes);
 	/*
 	 * Check if the features OKC/ESE/11R are supported simultaneously,
 	 * then this operation is not permitted (return FAILURE)
 	 */
 	if (sme_get_is_ese_feature_enabled(hdd_ctx->hHal) &&
-	    hdd_is_okc_mode_enabled(hdd_ctx) &&
+	    pmkid_modes.fw_okc &&
 	    sme_get_is_ft_feature_enabled(hdd_ctx->hHal)) {
 		hdd_warn("OKC/ESE/11R are supported simultaneously hence this operation is not permitted!");
 		ret = -EPERM;

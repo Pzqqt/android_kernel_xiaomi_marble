@@ -2963,6 +2963,18 @@ struct roam_ext_params {
 	int traffic_threshold;
 };
 
+/**
+ * struct pmkid_mode_bits - Bit flags for PMKID usage in RSN IE
+ * @fw_okc: Opportunistic key caching enable in firmware
+ * @fw_pmksa_cache: PMKSA caching enable in firmware, remember previously
+ *                  visited BSSID/PMK pairs
+ */
+struct pmkid_mode_bits {
+	uint32_t fw_okc:1;
+	uint32_t fw_pmksa_cache:1;
+	uint32_t unused:30;
+};
+
 typedef struct sSirRoamOffloadScanReq {
 	uint16_t message_type;
 	uint16_t length;
@@ -3007,7 +3019,7 @@ typedef struct sSirRoamOffloadScanReq {
 	uint8_t R0KH_ID[SIR_ROAM_R0KH_ID_MAX_LEN];
 	uint32_t R0KH_ID_Length;
 	uint8_t RoamKeyMgmtOffloadEnabled;
-	bool okc_enabled;
+	struct pmkid_mode_bits pmkid_modes;
 #endif
 	struct roam_ext_params roam_params;
 	uint8_t  middle_of_roaming;
