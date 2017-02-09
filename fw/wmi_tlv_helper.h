@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -103,6 +103,9 @@ typedef struct {
 
 void
 wmitlv_set_static_param_tlv_buf(void *param_tlv_buf, A_UINT32 max_tlvs_accomodated);
+
+void
+wmitlv_set_static_param_tlv_buf_ext(void *param_tlv_buf, A_UINT32 max_tlvs_accomodated, A_UINT32 indx);
 
 void
 wmitlv_free_allocated_command_tlvs(
