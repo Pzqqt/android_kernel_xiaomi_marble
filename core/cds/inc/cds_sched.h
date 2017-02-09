@@ -242,6 +242,9 @@ typedef struct _cds_context_type {
 	bool do_hw_mode_change;
 	bool enable_fatal_event;
 	struct cds_config_info *cds_cfg;
+
+	/* This is to track if HW mode change is in progress */
+	uint32_t hw_mode_change_in_progress;
 } cds_context_type, *p_cds_contextType;
 
 /*---------------------------------------------------------------------------

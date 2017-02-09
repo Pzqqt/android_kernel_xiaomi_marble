@@ -3108,6 +3108,51 @@ bool wma_is_hw_sbs_capable(void)
 	return true;
 }
 
+/*
+ * wma_get_cds_hw_mode_change_from_hw_mode_index - Returns value in terms of
+ * cds_hw_mode_change enums derived from hw_mode_index.
+ *
+ * Returns cds_hw_mode_change value derived from hw_mode_index.
+ *
+ * Return: value in terms of cds_hw_mode_change enums.
+ */
+enum cds_hw_mode_change
+wma_get_cds_hw_mode_change_from_hw_mode_index(uint32_t hw_mode_index)
+{
+	tp_wma_handle wma;
+	uint32_t param = 0;
+	enum cds_hw_mode_change value = CDS_HW_MODE_NOT_IN_PROGRESS;
+
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma) {
+		WMA_LOGE("%s: Invalid WMA handle", __func__);
+		goto ret_value;
+	}
+
+	WMA_LOGI("%s: HW param: %x", __func__, param);
+
+	param = wma->hw_mode.hw_mode_list[hw_mode_index];
+	if (WMA_HW_MODE_DBS_MODE_GET(param)) {
+		WMA_LOGI("%s: DBS is requested with HW (%d)", __func__,
+			 hw_mode_index);
+		value = CDS_DBS_IN_PROGRESS;
+		goto ret_value;
+	}
+
+	if (WMA_HW_MODE_SBS_MODE_GET(param)) {
+		WMA_LOGI("%s: SBS is requested with HW (%d)", __func__,
+			 hw_mode_index);
+		value = CDS_SBS_IN_PROGRESS;
+		goto ret_value;
+	}
+
+	value = CDS_SMM_IN_PROGRESS;
+	WMA_LOGI("%s: SMM is requested with HW (%d)", __func__,
+		 hw_mode_index);
+ret_value:
+	return value;
+}
+
 /**
  * wma_get_mac_id_of_vdev() - Get MAC id corresponding to a vdev
  * @vdev_id: VDEV whose MAC ID is required

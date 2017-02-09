@@ -7218,6 +7218,14 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 		return -EINVAL;
 	}
 
+	if (cds_is_hw_mode_change_in_progress()) {
+		status = qdf_wait_for_connection_update();
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("qdf wait for event failed!!");
+			return -EINVAL;
+		}
+	}
+
 	iniConfig = pHddCtx->config;
 	pHostapdState = WLAN_HDD_GET_HOSTAP_STATE_PTR(pHostapdAdapter);
 
@@ -8080,6 +8088,14 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	if (cds_is_connection_in_progress()) {
 		hdd_err("Can't start BSS: connection is in progress");
 		return -EBUSY;
+	}
+
+	if (cds_is_hw_mode_change_in_progress()) {
+		status = qdf_wait_for_connection_update();
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("qdf wait for event failed!!");
+			return -EINVAL;
+		}
 	}
 
 	channel_width = wlan_hdd_get_channel_bw(params->chandef.width);

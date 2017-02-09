@@ -676,6 +676,24 @@ enum cds_band {
 };
 
 /**
+ * enum cds_hw_mode_change - identify the HW mode switching to.
+ *
+ * @CDS_HW_MODE_NOT_IN_PROGRESS: HW mode change not in progress
+ * @CDS_SMM_IN_PROGRESS: switching to SMM mode
+ * @CDS_DBS_IN_PROGRESS: switching to DBS mode
+ * @CDS_SBS_IN_PROGRESS: switching to SBS mode
+ *
+ * These are generic IDs that identify the various roles
+ * in the software system
+ */
+enum cds_hw_mode_change {
+	CDS_HW_MODE_NOT_IN_PROGRESS = 0,
+	CDS_SMM_IN_PROGRESS,
+	CDS_DBS_IN_PROGRESS,
+	CDS_SBS_IN_PROGRESS
+};
+
+/**
  * struct cds_conc_connection_info - information of all existing
  * connections in the wlan system
  *
@@ -968,4 +986,6 @@ void cds_hw_mode_transition_cb(uint32_t old_hw_mode_index,
 			uint32_t new_hw_mode_index,
 			uint32_t num_vdev_mac_entries,
 			 struct sir_vdev_mac_map *vdev_mac_map);
+void cds_set_hw_mode_change_in_progress(enum cds_hw_mode_change value);
+enum cds_hw_mode_change cds_is_hw_mode_change_in_progress(void);
 #endif /* __CDS_CONCURRENCY_H */

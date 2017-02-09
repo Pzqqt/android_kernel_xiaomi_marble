@@ -654,6 +654,8 @@ static void cds_pdev_set_hw_mode_cb(uint32_t status,
 	struct sir_hw_mode_params hw_mode;
 	uint32_t i;
 
+	cds_set_hw_mode_change_in_progress(CDS_HW_MODE_NOT_IN_PROGRESS);
+
 	if (status != SET_HW_MODE_STATUS_OK) {
 		cds_err("Set HW mode failed with status %d", status);
 		return;
@@ -2308,6 +2310,7 @@ QDF_STATUS cds_init_policy_mgr(struct cds_sme_cbacks *sme_cbacks)
 	}
 
 	cds_ctx->do_hw_mode_change = false;
+	cds_ctx->hw_mode_change_in_progress = CDS_HW_MODE_NOT_IN_PROGRESS;
 	cds_ctx->sme_get_valid_channels = sme_cbacks->sme_get_valid_channels;
 	cds_ctx->sme_get_nss_for_vdev = sme_cbacks->sme_get_nss_for_vdev;
 
@@ -8307,4 +8310,59 @@ bool cds_is_hw_mode_change_after_vdev_up(void)
 	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
 
 	return flag;
+}
+
+/**
+ * cds_set_hw_mode_change_in_progress() - Set value corresponding to
+ * cds_hw_mode_change that indicate if HW mode change is in progress
+ * @value: Indicate if hw mode change is in progress
+ *
+ * Set the value corresponding to cds_hw_mode_change that
+ * indicated if hw mode change is in progress.
+ *
+ * Return: None
+ */
+void cds_set_hw_mode_change_in_progress(enum cds_hw_mode_change value)
+{
+	cds_context_type *cds_ctx;
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+
+	if (!cds_ctx) {
+		cds_err("Invalid CDS Context");
+		return;
+	}
+
+	qdf_mutex_acquire(&cds_ctx->qdf_conc_list_lock);
+	cds_ctx->hw_mode_change_in_progress = value;
+	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
+
+	cds_debug("hw_mode_change_in_progress:%d", value);
+}
+
+/**
+ * cds_is_hw_mode_change_in_progress() - Check if HW mode change is in
+ * progress.
+ *
+ * Returns the corresponding cds_hw_mode_change value.
+ *
+ * Return: cds_hw_mode_change value.
+ */
+enum cds_hw_mode_change cds_is_hw_mode_change_in_progress(void)
+{
+	cds_context_type *cds_ctx;
+	enum cds_hw_mode_change value;
+	value = CDS_HW_MODE_NOT_IN_PROGRESS;
+
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+
+	if (!cds_ctx) {
+		cds_err("Invalid CDS Context");
+		return value;
+	}
+
+	qdf_mutex_acquire(&cds_ctx->qdf_conc_list_lock);
+	value = cds_ctx->hw_mode_change_in_progress;
+	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
+
+	return value;
 }
