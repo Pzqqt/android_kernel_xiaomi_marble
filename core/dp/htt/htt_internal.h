@@ -684,6 +684,12 @@ void htt_rx_dbg_rxbuf_init(struct htt_pdev_t *pdev)
 	pdev->refill_retry_timer_doubles = 0;
 }
 
+/**
+ * htt_display_rx_buf_debug() - display debug rx buff list and some counters
+ * @pdev: pdev handle
+ *
+ * Return: Success
+ */
 static inline int htt_display_rx_buf_debug(struct htt_pdev_t *pdev)
 {
 	int i;
@@ -855,6 +861,11 @@ static inline
 void htt_rx_dbg_rxbuf_init(struct htt_pdev_t *pdev)
 {
 }
+static inline int htt_display_rx_buf_debug(struct htt_pdev_t *pdev)
+{
+	return 0;
+}
+
 static inline
 void htt_rx_dbg_rxbuf_set(struct htt_pdev_t *pdev,
 				uint32_t paddr,
