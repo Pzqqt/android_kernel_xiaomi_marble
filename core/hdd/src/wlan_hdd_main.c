@@ -1867,8 +1867,10 @@ int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 		}
 
 		if (reinit) {
-			if (hdd_ipa_uc_ssr_reinit(hdd_ctx))
-			hdd_err("HDD IPA UC reinit failed");
+			if (hdd_ipa_uc_ssr_reinit(hdd_ctx)) {
+				hdd_err("HDD IPA UC reinit failed");
+				goto close;
+			}
 		}
 
 	/* Fall through dont add break here */
@@ -8116,6 +8118,17 @@ int hdd_configure_cds(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 	if (ret) {
 		hdd_err("Failed to pre-configure cds");
 		goto out;
+	}
+
+	/* Always get latest IPA resources allocated from cds_open and configure
+	 * IPA module before configuring them to FW. Sequence required as crash
+	 * observed otherwise.
+	 */
+	if (hdd_ipa_uc_is_enabled(hdd_ctx)) {
+		if (hdd_ipa_uc_ol_init(hdd_ctx)) {
+			hdd_err("Failed to setup pipes");
+			goto out;
+		}
 	}
 
 	/*
