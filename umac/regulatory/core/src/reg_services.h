@@ -59,6 +59,7 @@ typedef enum {
 	REGDOMAIN_COUNT
 } v_REGDOMAIN_t;
 
+
 /**
  * enum phy_ch_width - channel width
  * @CH_WIDTH_20MHZ: 20 mhz width
@@ -82,7 +83,6 @@ enum phy_ch_width {
 	CH_WIDTH_INVALID,
 	CH_WIDTH_MAX
 };
-
 
 /**
  * struct ch_params
@@ -125,7 +125,6 @@ struct channel_power {
 	uint32_t chan_num;
 	uint32_t tx_power;
 };
-
 
 /**
  * enum channel_enum - channel enumeration
@@ -323,7 +322,6 @@ enum ht_sec_ch_offset {
 };
 
 
-
 extern const struct chan_map channel_map[NUM_CHANNELS];
 
 QDF_STATUS reg_get_channel_list_with_power(struct wlan_objmgr_psoc *psoc,
@@ -353,9 +351,14 @@ QDF_STATUS wlan_regulatory_psoc_obj_created_notification(
 					    struct wlan_objmgr_psoc *psoc,
 					    void *arg_list);
 
-
 QDF_STATUS  wlan_regulatory_psoc_obj_destroyed_notification(
 					    struct wlan_objmgr_psoc *psoc,
 					    void *arg_list);
+
+static inline struct wlan_lmac_if_reg_tx_ops *
+get_reg_psoc_tx_ops(struct wlan_objmgr_psoc *psoc)
+{
+	return &((psoc->soc_cb.tx_ops.reg_ops));
+}
 
 #endif

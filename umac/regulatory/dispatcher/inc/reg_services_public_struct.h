@@ -27,10 +27,28 @@
 #include "../../core/src/reg_db.h"
 
 /**
+ * struct cur_reg_rule
+ * @start_freq: start frequency
+ * @end_freq: end frequency
+ * @max_bw: maximum bandwidth
+ * @reg_power: regulatory power
+ * @ant_gain: antenna gain
+ * @flags: regulatory flags
+ */
+struct cur_reg_rule {
+	uint16_t start_freq;
+	uint16_t end_freq;
+	uint16_t max_bw;
+	uint8_t reg_power;
+	uint8_t ant_gain;
+	uint16_t flags;
+};
+
+/**
  * struct cur_regulatory_info
  * @psoc: psoc ptr
  * @alpha2: country alpha2
- * @dfs_region: dfs region
+ * @dfs_reg: dfs region
  * @phybitmap: phy bit map
  * @min_bw_2g: minimum 2G bw
  * @max_bw_2g: maximum 2G bw
@@ -52,8 +70,8 @@ struct cur_regulatory_info {
 	uint32_t max_bw_5g;
 	uint32_t num_2g_reg_rules;
 	uint32_t num_5g_reg_rules;
-	struct regulatory_rule *reg_rules_2g_ptr;
-	struct regulatory_rule *reg_rules_5g_ptr;
+	struct cur_reg_rule *reg_rules_2g_ptr;
+	struct cur_reg_rule *reg_rules_5g_ptr;
 };
 
 /**

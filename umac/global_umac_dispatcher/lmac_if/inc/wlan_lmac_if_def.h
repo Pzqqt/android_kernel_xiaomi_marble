@@ -27,6 +27,7 @@
 #ifdef WLAN_ATF_ENABLE
 #include "wlan_atf_utils_defs.h"
 #endif
+#include <reg_services_public_struct.h>
 
 #ifdef WLAN_CONV_CRYPTO_SUPPORTED
 #include "wlan_crypto_global_def.h"
@@ -346,6 +347,19 @@ struct wlan_lmac_if_nan_tx_ops {
 #endif
 
 /**
+ * struct wlan_lmac_reg_if_tx_ops - structure of tx function
+ *                  pointers for regulatory component
+ * @register_master_handler: pointer to register event handler
+ * @unregister_master_handler:  pointer to unregister event handler
+ */
+struct wlan_lmac_if_reg_tx_ops {
+	QDF_STATUS (*register_master_handler)(struct wlan_objmgr_psoc *psoc,
+					      void *arg);
+	QDF_STATUS (*unregister_master_handler)(struct wlan_objmgr_psoc *psoc,
+						void *arg);
+};
+
+/**
  * struct wlan_lmac_if_tx_ops - south bound tx function pointers
  * @mgmt_txrx_tx_ops: mgmt txrx tx ops
  * @scan: scan tx ops
@@ -369,18 +383,22 @@ struct wlan_lmac_if_tx_ops {
 #ifdef CONVERGED_P2P_ENABLE
 	struct wlan_lmac_if_p2p_tx_ops p2p;
 #endif
+
 #ifdef WLAN_ATF_ENABLE
 	struct wlan_lmac_if_atf_tx_ops atf_tx_ops;
 #endif
+
 #ifdef WLAN_CONV_CRYPTO_SUPPORTED
 	struct wlan_lmac_if_crypto_tx_ops crypto_tx_ops;
 #endif
+
 #ifdef WIFI_POS_CONVERGED
 	struct wlan_lmac_if_wifi_pos_tx_ops wifi_pos_tx_ops;
 #endif
 #ifdef WLAN_FEATURE_NAN_CONVERGENCE
 	struct wlan_lmac_if_nan_tx_ops nan_tx_ops;
 #endif
+	struct wlan_lmac_if_reg_tx_ops reg_ops;
 };
 
 /**
@@ -432,6 +450,10 @@ struct wlan_lmac_if_pmo_rx_ops {
 			struct pmo_lphb_rsp *rsp_param);
 };
 #endif
+struct wlan_lmac_if_reg_rx_ops {
+	QDF_STATUS (*master_list_handler)(struct cur_regulatory_info
+					  *reg_info);
+};
 
 #ifdef CONVERGED_P2P_ENABLE
 
@@ -593,6 +615,7 @@ struct wlan_lmac_if_rx_ops {
 #ifdef CONVERGED_P2P_ENABLE
 	struct wlan_lmac_if_p2p_rx_ops p2p;
 #endif
+
 #ifdef WLAN_ATF_ENABLE
 	struct wlan_lmac_if_atf_rx_ops atf_rx_ops;
 #endif
@@ -605,6 +628,7 @@ struct wlan_lmac_if_rx_ops {
 #ifdef WLAN_FEATURE_NAN_CONVERGENCE
 	struct wlan_lmac_if_nan_rx_ops nan_rx_ops;
 #endif
+	struct wlan_lmac_if_reg_rx_ops reg_rx_ops;
 };
 
 /* Function pointer to call legacy tx_ops registration in OL/WMA.

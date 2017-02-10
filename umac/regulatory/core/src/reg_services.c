@@ -543,6 +543,7 @@ void reg_set_channel_params(struct wlan_objmgr_psoc *psoc,
 			break;
 		}
 	}
+
 	if (CH_WIDTH_160MHZ == ch_params->ch_width) {
 		ch_params->center_freq_seg1 = ch_params->center_freq_seg0;
 		chan_state = reg_get_5g_bonded_channel(psoc, ch,
@@ -552,9 +553,10 @@ void reg_set_channel_params(struct wlan_objmgr_psoc *psoc,
 				(bonded_chan_ptr->start_ch +
 				 bonded_chan_ptr->end_ch)/2;
 	}
-	reg_info("ch %d ch_wd %d freq0 %d freq1 %d", ch,
-			ch_params->ch_width, ch_params->center_freq_seg0,
-			ch_params->center_freq_seg1);
+
+	reg_debug("ch %d ch_wd %d freq0 %d freq1 %d", ch,
+		  ch_params->ch_width, ch_params->center_freq_seg0,
+		  ch_params->center_freq_seg1);
 }
 
 /**
@@ -588,7 +590,7 @@ bool reg_is_dfs_ch(struct wlan_objmgr_psoc *psoc, uint8_t ch)
 
 
 static void reg_fill_channel_info(enum channel_enum chan_enum,
-				  struct regulatory_rule *reg_rule,
+				  struct cur_reg_rule *reg_rule,
 				  struct regulatory_channel *master_list,
 				  uint16_t min_bw)
 {
@@ -632,13 +634,13 @@ static void reg_fill_channel_info(enum channel_enum chan_enum,
 
 static void populate_band_channels(enum channel_enum start_chan,
 				   enum channel_enum end_chan,
-				   struct regulatory_rule *rule_start_ptr,
+				   struct cur_reg_rule *rule_start_ptr,
 				   uint32_t num_reg_rules,
 				   uint16_t min_bw,
 				   struct regulatory_channel *mas_chan_list)
 {
-	struct regulatory_rule *found_rule_ptr;
-	struct regulatory_rule *cur_rule_ptr;
+	struct cur_reg_rule *found_rule_ptr;
+	struct cur_reg_rule *cur_rule_ptr;
 	struct regulatory_channel;
 	enum channel_enum chan_enum;
 	uint32_t rule_num, bw;
@@ -674,7 +676,7 @@ static void populate_band_channels(enum channel_enum start_chan,
 }
 
 static void update_max_bw_per_rule(uint32_t num_reg_rules,
-				   struct regulatory_rule *reg_rule_start,
+				   struct cur_reg_rule *reg_rule_start,
 				   uint16_t max_bw)
 {
 	uint32_t count;
@@ -685,7 +687,7 @@ static void update_max_bw_per_rule(uint32_t num_reg_rules,
 }
 
 static void do_auto_bw_correction(uint32_t num_reg_rules,
-				  struct regulatory_rule *reg_rule_ptr,
+				  struct cur_reg_rule *reg_rule_ptr,
 				  uint16_t max_bw)
 {
 	uint32_t count;
@@ -710,7 +712,7 @@ QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info
 {
 	struct wlan_regulatory_psoc_priv_obj *soc_reg;
 	uint32_t num_2g_reg_rules, num_5g_reg_rules;
-	struct regulatory_rule *reg_rule_2g, *reg_rule_5g;
+	struct cur_reg_rule *reg_rule_2g, *reg_rule_5g;
 	uint16_t min_bw_2g, max_bw_2g, min_bw_5g, max_bw_5g;
 	struct regulatory_channel *mas_chan_list, *cur_chan_list;
 
@@ -765,10 +767,6 @@ QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info
 	qdf_mem_copy((void *)cur_chan_list, (void *)mas_chan_list,
 		     NUM_CHANNELS * sizeof(struct regulatory_channel));
 
-	qdf_mem_free(regulat_info->reg_rules_2g_ptr);
-	qdf_mem_free(regulat_info->reg_rules_5g_ptr);
-	qdf_mem_free(regulat_info);
-
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -818,7 +816,8 @@ QDF_STATUS wlan_regulatory_psoc_obj_created_notification(
 	status = wlan_objmgr_psoc_component_obj_attach(psoc,
 			WLAN_UMAC_COMP_REGULATORY, soc_reg_obj,
 			QDF_STATUS_SUCCESS);
-	reg_info("reg psoc obj created with status %d", status);
+
+	reg_debug("reg psoc obj created with status %d", status);
 
 	return status;
 }
@@ -840,6 +839,7 @@ QDF_STATUS  wlan_regulatory_psoc_obj_destroyed_notification(
 	struct wlan_regulatory_psoc_priv_obj *soc_reg =
 		wlan_objmgr_psoc_get_comp_private_obj(psoc,
 				WLAN_UMAC_COMP_REGULATORY);
+
 	if (NULL == soc_reg) {
 		reg_err("reg psoc private obj is NULL");
 		return QDF_STATUS_E_FAULT;
@@ -852,7 +852,9 @@ QDF_STATUS  wlan_regulatory_psoc_obj_destroyed_notification(
 			soc_reg);
 	if (status != QDF_STATUS_SUCCESS)
 		reg_err("soc_reg private obj detach failed");
-	reg_info("reg psoc obj deleted with status %d", status);
+
+	reg_debug("reg psoc obj deleted with status %d", status);
+
 	qdf_mem_free(soc_reg);
 
 	return status;

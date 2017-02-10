@@ -31,6 +31,7 @@
 #ifdef WLAN_FEATURE_NAN_CONVERGENCE
 #include "target_if_nan.h"
 #endif /* WLAN_FEATURE_NAN_CONVERGENCE */
+#include "wlan_reg_tgt_api.h"
 
 #ifdef WLAN_CONV_CRYPTO_SUPPORTED
 #include "wlan_crypto_global_api.h"
@@ -171,8 +172,10 @@ wlan_lmac_if_umac_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 			tgt_mgmt_txrx_get_peer_from_desc_id;
 	mgmt_txrx_rx_ops->mgmt_txrx_get_vdev_id_from_desc_id =
 			tgt_mgmt_txrx_get_vdev_id_from_desc_id;
+
 	/* scan rx ops */
 	rx_ops->scan.scan_ev_handler = tgt_scan_event_handler;
+
 	wlan_lmac_if_atf_rx_ops_register(rx_ops);
 
 	wlan_lmac_if_crypto_rx_ops_register(rx_ops);
@@ -180,6 +183,9 @@ wlan_lmac_if_umac_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 	wlan_lmac_if_umac_rx_ops_register_wifi_pos(rx_ops);
 
 	wlan_lmac_if_register_nan_rx_ops(rx_ops);
+
+	rx_ops->reg_rx_ops.master_list_handler =
+		tgt_reg_process_master_chan_list;
 
 	return QDF_STATUS_SUCCESS;
 }

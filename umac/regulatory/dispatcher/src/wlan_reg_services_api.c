@@ -184,7 +184,7 @@ QDF_STATUS wlan_regulatory_init(void)
 		return status;
 	}
 
-	reg_info("regulatory handlers registered with obj mgr");
+	reg_debug("regulatory handlers registered with obj mgr");
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -214,9 +214,32 @@ QDF_STATUS wlan_regulatory_deinit(void)
 				status);
 		return status;
 	}
-	reg_alert("deregistered callbacks with obj mgr successfully");
+
+	reg_debug("deregistered callbacks with obj mgr successfully");
 
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS regulatory_psoc_open(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_lmac_if_reg_tx_ops *tx_ops;
+
+	tx_ops = get_reg_psoc_tx_ops(psoc);
+	tx_ops->register_master_handler(psoc, NULL);
+
+	return QDF_STATUS_SUCCESS;
+};
+
+QDF_STATUS regulatory_psoc_close(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_lmac_if_reg_tx_ops *tx_ops;
+
+	tx_ops = get_reg_psoc_tx_ops(psoc);
+	tx_ops->unregister_master_handler(psoc, NULL);
+
+	return QDF_STATUS_SUCCESS;
+};
+
+
 
 

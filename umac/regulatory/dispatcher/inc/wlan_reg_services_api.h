@@ -121,4 +121,19 @@ QDF_STATUS wlan_regulatory_init(void);
  */
 QDF_STATUS wlan_regulatory_deinit(void);
 
+/**
+ * regulatory_psoc_open() - open regulatory component
+ *
+ * Return: Success or Failure
+ */
+QDF_STATUS regulatory_psoc_open(struct wlan_objmgr_psoc *psoc);
+
+
+/**
+ * regulatory_psoc_close() - close regulatory component
+ *
+ * Return: Success or Failure
+ */
+QDF_STATUS regulatory_psoc_close(struct wlan_objmgr_psoc *psoc);
+
 #endif
