@@ -8529,7 +8529,7 @@ static int iw_setnone_getnone(struct net_device *dev,
 static int iw_get_policy_manager_ut_ops(hdd_context_t *hdd_ctx,
 			hdd_adapter_t *adapter, int sub_cmd, int *apps_args)
 {
-	switch(sub_cmd) {
+	switch (sub_cmd) {
 	case WE_POLICY_MANAGER_CLIST_CMD:
 	{
 		hdd_err("<iwpriv wlan0 pm_clist> is called");
