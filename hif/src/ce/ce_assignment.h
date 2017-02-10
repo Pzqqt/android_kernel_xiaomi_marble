@@ -101,7 +101,7 @@ static struct CE_attr host_ce_config_wlan[] = {
 		CE_HTT_H2T_MSG_SRC_NENTRIES, 256, 0, NULL,},
 	/* ipa_uc->target HTC control */
 	{ /* CE5 */ (CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,
-		1024, 512, 0, NULL,},
+		CE_HTT_H2T_MSG_SRC_NENTRIES, 512, 0, NULL,},
 	/* Target autonomous HIF_memcpy */
 	{ /* CE6 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
 	/* ce_diag, the Diagnostic Window */
