@@ -266,6 +266,7 @@ HTC_HANDLE htc_create(void *ol_sc, HTC_INIT_INFO *pInfo, qdf_device_t osdev,
 	qdf_spinlock_create(&target->HTCTxLock);
 	qdf_spinlock_create(&target->HTCCreditLock);
 	target->is_nodrop_pkt = false;
+	target->wmi_ep_count = 1;
 
 	do {
 		qdf_mem_copy(&target->HTCInitInfo, pInfo,
@@ -410,17 +411,16 @@ A_STATUS htc_setup_target_buffer_assignments(HTC_TARGET *target)
 	credits = target->TotalTransmitCredits;
 	pEntry = &target->ServiceTxAllocTable[0];
 
+	status = A_OK;
 	/*
 	 * Allocate all credists/HTC buffers to WMI.
 	 * no buffers are used/required for data. data always
 	 * remains on host.
 	 */
-	status = A_OK;
-	pEntry++;
-	pEntry->service_id = WMI_CONTROL_SVC;
-	pEntry->CreditAllocation = credits;
-
 	if (HTC_IS_EPPING_ENABLED(target->con_mode)) {
+		pEntry++;
+		pEntry->service_id = WMI_CONTROL_SVC;
+		pEntry->CreditAllocation = credits;
 		/* endpoint ping is a testing tool directly on top of HTC in
 		 * both target and host sides.
 		 * In target side, the endppint ping fw has no wlan stack and the
@@ -447,6 +447,26 @@ A_STATUS htc_setup_target_buffer_assignments(HTC_TARGET *target)
 
 		htc_setup_epping_credit_allocation(target->hif_dev,
 						   pEntry, credits);
+	} else {
+		int i;
+		uint32_t svc_id[] = {WMI_CONTROL_SVC, WMI_CONTROL_SVC_WMAC1,
+						WMI_CONTROL_SVC_WMAC2};
+		uint32_t max_wmi_svc = (sizeof(svc_id) / sizeof(uint32_t));
+
+		if ((target->wmi_ep_count == 0) ||
+				(target->wmi_ep_count > max_wmi_svc))
+			return A_ERROR;
+
+		/*
+		 * Divide credit among number of endpoints for WMI
+		 */
+		credits = credits / target->wmi_ep_count;
+		for (i = 0; i < target->wmi_ep_count; i++) {
+			status = A_OK;
+			pEntry++;
+			pEntry->service_id = svc_id[i];
+			pEntry->CreditAllocation = credits;
+		}
 	}
 
 	if (A_SUCCESS(status)) {
@@ -1030,3 +1050,30 @@ int htc_pm_runtime_put(HTC_HANDLE htc_handle)
 	return hif_pm_runtime_put(target->hif_dev);
 }
 #endif
+
+/**
+ * htc_set_wmi_endpoint_count: Set number of WMI endpoint
+ * @htc_handle: HTC handle
+ * @wmi_ep_count: WMI enpoint count
+ *
+ * return: None
+ */
+void htc_set_wmi_endpoint_count(HTC_HANDLE htc_handle, uint8_t wmi_ep_count)
+{
+	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(htc_handle);
+
+	target->wmi_ep_count = wmi_ep_count;
+}
+
+/**
+ * htc_get_wmi_endpoint_count: Get number of WMI endpoint
+ * @htc_handle: HTC handle
+ *
+ * return: WMI enpoint count
+ */
+uint8_t htc_get_wmi_endpoint_count(HTC_HANDLE htc_handle)
+{
+	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(htc_handle);
+
+	return target->wmi_ep_count;
+}

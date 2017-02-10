@@ -399,6 +399,7 @@ bool ce_get_rx_pending(struct hif_softc *scn);
 #define CE_ATTR_SWIZZLE_DESCRIPTORS  0x04 /* Swizzle descriptors? */
 #define CE_ATTR_DISABLE_INTR         0x08 /* no interrupt on copy completion */
 #define CE_ATTR_ENABLE_POLL          0x10 /* poll for residue descriptors */
+#define CE_ATTR_DIAG                 0x20 /* Diag CE */
 
 /* Attributes of an instance of a Copy Engine */
 struct CE_attr {

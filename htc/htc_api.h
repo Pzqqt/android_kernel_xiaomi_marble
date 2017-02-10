@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -784,4 +784,21 @@ static inline int htc_pm_runtime_put(HTC_HANDLE htc_handle) { return 0; }
 
 void htc_set_async_ep(HTC_HANDLE HTCHandle,
 			HTC_ENDPOINT_ID htc_ep_id, bool value);
+
+/**
+ * htc_set_wmi_endpoint_count: Set number of WMI endpoint
+ * @htc_handle: HTC handle
+ * @wmi_ep_count: WMI enpoint count
+ *
+ * return: None
+ */
+void htc_set_wmi_endpoint_count(HTC_HANDLE htc_handle, uint8_t wmi_ep_count);
+
+/**
+ * htc_get_wmi_endpoint_count: Get number of WMI endpoint
+ * @htc_handle: HTC handle
+ *
+ * return: WMI enpoint count
+ */
+uint8_t  htc_get_wmi_endpoint_count(HTC_HANDLE htc_handle);
 #endif /* _HTC_API_H_ */

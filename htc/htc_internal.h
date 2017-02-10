@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -208,6 +208,13 @@ typedef struct _HTC_TARGET {
 	 * drop it. Besides, nodrop pkts have higher priority than normal pkts.
 	 */
 	A_BOOL is_nodrop_pkt;
+
+	/*
+	 * Number of WMI endpoints used.
+	 * Default value is 1. But it should be overidden after htc_create to
+	 * reflect the actual count.
+	 */
+	uint8_t wmi_ep_count;
 } HTC_TARGET;
 
 #if defined ENABLE_BUNDLE_TX

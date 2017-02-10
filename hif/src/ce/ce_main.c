@@ -321,6 +321,26 @@ static struct service_to_pipe target_service_to_ce_map_wlan[] = {
 		2,
 	},
 	{
+		WMI_CONTROL_SVC_WMAC1,
+		PIPEDIR_OUT,    /* out = UL = host -> target */
+		7,
+	},
+	{
+		WMI_CONTROL_SVC_WMAC1,
+		PIPEDIR_IN,     /* in = DL = target -> host */
+		2,
+	},
+	{
+		WMI_CONTROL_SVC_WMAC2,
+		PIPEDIR_OUT,    /* out = UL = host -> target */
+		9,
+	},
+	{
+		WMI_CONTROL_SVC_WMAC2,
+		PIPEDIR_IN,     /* in = DL = target -> host */
+		2,
+	},
+	{
 		HTC_CTRL_RSVD_SVC,
 		PIPEDIR_OUT,    /* out = UL = host -> target */
 		0,              /* could be moved to 3 (share with WMI) */
@@ -2334,7 +2354,7 @@ int hif_config_ce(struct hif_softc *scn)
 			goto err;
 		}
 
-		if (pipe_num == DIAG_CE_ID) {
+		if (attr->flags & CE_ATTR_DIAG) {
 			/* Reserve the ultimate CE for
 			 * Diagnostic Window support */
 			hif_state->ce_diag = pipe_info->ce_hdl;
