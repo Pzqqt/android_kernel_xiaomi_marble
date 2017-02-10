@@ -4518,7 +4518,7 @@ void lim_update_sta_run_time_ht_switch_chnl_params(tpAniSirGlobal pMac,
 	 * end...
 	 */
 	if (pMac->lim.gpLimRemainOnChanReq) {
-		lim_log(pMac, LOGE, FL("RoC is in progress"));
+		lim_log(pMac, LOG1, FL("RoC is in progress"));
 		return;
 	}
 
