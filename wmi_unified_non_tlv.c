@@ -7880,7 +7880,6 @@ static QDF_STATUS extract_pdev_utf_event_non_tlv(
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef WMI_INTERFACE_EVENT_LOGGING
 static bool is_management_record_non_tlv(uint32_t cmd_id)
 {
 	if ((cmd_id == WMI_BCN_TX_CMDID) ||
@@ -7893,7 +7892,6 @@ static bool is_management_record_non_tlv(uint32_t cmd_id)
 
 	return false;
 }
-#endif
 
 /**
  * wmi_set_htc_tx_tag_non_tlv() - set HTC TX tag for WMI commands
@@ -8123,6 +8121,7 @@ struct wmi_ops non_tlv_ops =  {
 	.extract_atf_token_info_ev = extract_atf_token_info_ev_non_tlv,
 	.extract_pdev_utf_event = extract_pdev_utf_event_non_tlv,
 	.wmi_set_htc_tx_tag = wmi_set_htc_tx_tag_non_tlv,
+	.is_management_record = is_management_record_non_tlv,
 };
 
 /**
@@ -8738,8 +8737,6 @@ void wmi_non_tlv_attach(struct wmi_unified *wmi_handle)
 #ifdef WMI_INTERFACE_EVENT_LOGGING
 	wmi_handle->log_info.buf_offset_command = 0;
 	wmi_handle->log_info.buf_offset_event = 0;
-	wmi_handle->log_info.is_management_record =
-		is_management_record_non_tlv;
 	/*(uint8 *)(*wmi_id_to_name)(uint32_t cmd_id);*/
 #endif
 #else

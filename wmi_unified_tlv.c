@@ -13578,7 +13578,6 @@ static QDF_STATUS extract_peer_delete_response_event_tlv(wmi_unified_t wmi_hdl,
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef WMI_INTERFACE_EVENT_LOGGING
 static bool is_management_record_tlv(uint32_t cmd_id)
 {
 	if (cmd_id == WMI_MGMT_TX_COMPLETION_EVENTID)
@@ -13586,7 +13585,6 @@ static bool is_management_record_tlv(uint32_t cmd_id)
 
 	return false;
 }
-#endif
 
 static uint16_t wmi_tag_vdev_set_cmd(wmi_unified_t wmi_hdl, wmi_buf_t buf)
 {
@@ -13978,6 +13976,7 @@ struct wmi_ops tlv_ops =  {
 	.send_pdev_fips_cmd = send_pdev_fips_cmd_tlv,
 	.extract_peer_delete_response_event =
 				extract_peer_delete_response_event_tlv,
+	.is_management_record = is_management_record_tlv,
 };
 
 #ifndef CONFIG_MCL
@@ -14659,34 +14658,35 @@ static void populate_vdev_param_tlv(uint32_t *vdev_param)
 #endif
 
 /**
- * wmi_tlv_attach() - Attach TLV APIs
+ * populate_target_defines_tlv() - Populate target defines and params
+ * @wmi_handle: pointer to wmi handle
  *
  * Return: None
  */
 #ifndef CONFIG_MCL
-void wmi_tlv_attach(wmi_unified_t wmi_handle)
+static void populate_target_defines_tlv(struct wmi_unified *wmi_handle)
 {
-	wmi_handle->ops = &tlv_ops;
-#ifdef WMI_INTERFACE_EVENT_LOGGING
-	wmi_handle->log_info.buf_offset_command = 2;
-	wmi_handle->log_info.buf_offset_event = 4;
-	wmi_handle->log_info.is_management_record =
-		is_management_record_tlv;
-#endif
 	populate_tlv_service(wmi_handle->services);
 	populate_tlv_events_id(wmi_handle->wmi_events);
 	populate_pdev_param_tlv(wmi_handle->pdev_param);
 	populate_vdev_param_tlv(wmi_handle->vdev_param);
 }
 #else
+static void populate_target_defines_tlv(struct wmi_unified *wmi_handle)
+{ }
+#endif
+
+/**
+ * wmi_tlv_attach() - Attach TLV APIs
+ *
+ * Return: None
+ */
 void wmi_tlv_attach(wmi_unified_t wmi_handle)
 {
 	wmi_handle->ops = &tlv_ops;
 #ifdef WMI_INTERFACE_EVENT_LOGGING
 	wmi_handle->log_info.buf_offset_command = 2;
 	wmi_handle->log_info.buf_offset_event = 4;
-	wmi_handle->log_info.is_management_record =
-		is_management_record_tlv;
 #endif
+	populate_target_defines_tlv(wmi_handle);
 }
-#endif
