@@ -17530,8 +17530,11 @@ static void csr_update_driver_assoc_ies(tpAniSirGlobal mac_ctx,
 			= {MIN_TX_PWR_CAP, MAX_TX_PWR_CAP};
 	uint8_t max_tx_pwr_cap = 0;
 	uint8_t supp_chan_ie[DOT11F_IE_SUPPCHANNELS_MAX_LEN], supp_chan_ie_len;
+
+#ifdef FEATURE_WLAN_ESE
 	uint8_t ese_ie[DOT11F_IE_ESEVERSION_MAX_LEN]
 			= { 0x0, 0x40, 0x96, 0x3, ESE_VERSION_SUPPORTED};
+#endif
 
 	if (session->pConnectBssDesc)
 		max_tx_pwr_cap = csr_get_cfg_max_tx_power(mac_ctx,
@@ -17557,11 +17560,13 @@ static void csr_update_driver_assoc_ies(tpAniSirGlobal mac_ctx,
 					supp_chan_ie_len, supp_chan_ie);
 	}
 
+#ifdef FEATURE_WLAN_ESE
 	/* Append ESE version IE if isEseIniFeatureEnabled INI is enabled */
 	if (mac_ctx->roam.configParam.isEseIniFeatureEnabled)
 		csr_append_assoc_ies(mac_ctx, req_buf, IEEE80211_ELEMID_VENDOR,
 					DOT11F_IE_ESEVERSION_MAX_LEN,
 					ese_ie);
+#endif
 
 	if (mac_ctx->rrm.rrmPEContext.rrmEnable) {
 		/* Append RRM IE */
@@ -19629,7 +19634,10 @@ void csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 	csr_roam_save_security_rsp_ie(mac_ctx, session_id,
 			session->pCurRoamProfile->negotiatedAuthType,
 			bss_desc, ies_local);
+
+#ifdef FEATURE_WLAN_ESE
 	roam_info->isESEAssoc = conn_profile->isESEAssoc;
+#endif
 
 	/*
 	 * Encryption keys for new connection are obtained as follows:
@@ -19701,12 +19709,18 @@ void csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 			FL("LFR3:Clear Connected info"));
 	csr_roam_free_connected_info(mac_ctx,
 			&session->connectedInfo);
-	len = roam_synch_data->join_rsp->parsedRicRspLen +
-		roam_synch_data->join_rsp->tspecIeLen;
+	len = roam_synch_data->join_rsp->parsedRicRspLen;
+
+#ifdef FEATURE_WLAN_ESE
+	len += roam_synch_data->join_rsp->tspecIeLen;
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-		FL("LFR3: RIC length - %d tspecLen %d"),
-		roam_synch_data->join_rsp->parsedRicRspLen,
+		FL("LFR3: tspecLen %d"),
 		roam_synch_data->join_rsp->tspecIeLen);
+#endif
+
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
+		FL("LFR3: RIC length - %d"),
+		roam_synch_data->join_rsp->parsedRicRspLen);
 	if (len) {
 		session->connectedInfo.pbFrames =
 			qdf_mem_malloc(len);
@@ -19715,8 +19729,11 @@ void csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 				roam_synch_data->join_rsp->frames, len);
 			session->connectedInfo.nRICRspLength =
 				roam_synch_data->join_rsp->parsedRicRspLen;
+
+#ifdef FEATURE_WLAN_ESE
 			session->connectedInfo.nTspecIeLength =
 				roam_synch_data->join_rsp->tspecIeLen;
+#endif
 		}
 	}
 	conn_profile->vht_channel_width =
