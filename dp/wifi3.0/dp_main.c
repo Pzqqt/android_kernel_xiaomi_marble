@@ -1118,6 +1118,30 @@ static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force)
 }
 
 /*
+ * dp_reo_desc_freelist_destroy() - Flush REO descriptors from deferred freelist
+ * @soc: DP SOC handle
+ */
+static inline void dp_reo_desc_freelist_destroy(struct dp_soc *soc)
+{
+	struct reo_desc_list_node *desc;
+	struct dp_rx_tid *rx_tid;
+
+	qdf_spin_lock_bh(&soc->reo_desc_freelist_lock);
+	while (qdf_list_remove_front(&soc->reo_desc_freelist,
+		(qdf_list_node_t **)&desc) == QDF_STATUS_SUCCESS) {
+		rx_tid = &desc->rx_tid;
+		qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
+			rx_tid->hw_qdesc_alloc_size,
+			rx_tid->hw_qdesc_vaddr_unaligned,
+			rx_tid->hw_qdesc_paddr_unaligned, 0);
+		qdf_mem_free(desc);
+	}
+	qdf_spin_unlock_bh(&soc->reo_desc_freelist_lock);
+	qdf_list_destroy(&soc->reo_desc_freelist);
+	qdf_spinlock_destroy(&soc->reo_desc_freelist_lock);
+}
+
+/*
  * dp_soc_detach_wifi3() - Detach txrx SOC
  * @txrx_soc: DP SOC handle
  *
@@ -1190,10 +1214,13 @@ static void dp_soc_detach_wifi3(void *txrx_soc)
 	/* REO command and status rings */
 	dp_srng_cleanup(soc, &soc->reo_cmd_ring, REO_CMD, 0);
 	dp_srng_cleanup(soc, &soc->reo_status_ring, REO_STATUS, 0);
+
 	qdf_spinlock_destroy(&soc->rx.reo_cmd_lock);
 
 	qdf_spinlock_destroy(&soc->peer_ref_mutex);
 	htt_soc_detach(soc->htt_handle);
+
+	dp_reo_desc_freelist_destroy(soc);
 }
 
 /*
@@ -1993,6 +2020,9 @@ void *dp_soc_attach_wifi3(void *osif_soc, void *hif_handle,
 	if (dp_soc_interrupt_attach(soc) != QDF_STATUS_SUCCESS) {
 		goto fail2;
 	}
+
+	qdf_spinlock_create(&soc->reo_desc_freelist_lock);
+	qdf_list_create(&soc->reo_desc_freelist, REO_DESC_FREELIST_SIZE);
 
 	return (void *)soc;
 

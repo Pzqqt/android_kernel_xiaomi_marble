@@ -492,6 +492,53 @@ static int dp_rx_tid_update_wifi3(struct dp_peer *peer, int tid, uint32_t
 }
 
 /*
+ * dp_reo_desc_free() - Add reo descriptor to deferred freelist and free any
+ * aged out descriptors
+ *
+ * @soc: DP SOC handle
+ * @freedesc: REO descriptor to be freed
+ */
+static void dp_reo_desc_free(struct dp_soc *soc,
+	struct reo_desc_list_node *freedesc)
+{
+	uint32_t list_size;
+	struct reo_desc_list_node *desc;
+	unsigned long curr_ts = qdf_get_system_timestamp();
+
+	qdf_spin_lock_bh(&soc->reo_desc_freelist_lock);
+	freedesc->free_ts = curr_ts;
+	qdf_list_insert_back_size(&soc->reo_desc_freelist,
+		(qdf_list_node_t *)freedesc, &list_size);
+
+	while ((qdf_list_peek_front(&soc->reo_desc_freelist,
+		(qdf_list_node_t **)&desc) == QDF_STATUS_SUCCESS) &&
+		((list_size >= REO_DESC_FREELIST_SIZE) ||
+		((curr_ts - desc->free_ts) > REO_DESC_FREE_DEFER_MS))) {
+		struct dp_rx_tid *rx_tid;
+
+		qdf_list_remove_front(&soc->reo_desc_freelist,
+				(qdf_list_node_t **)&desc);
+		list_size--;
+		rx_tid = &desc->rx_tid;
+	/* Calling qdf_mem_free_consistent() in MCL is resulting in kernel BUG.
+	 * Diasble this temporarily.
+	 */
+#ifndef QCA_WIFI_NAPIER_EMULATION
+		qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
+			rx_tid->hw_qdesc_alloc_size,
+			rx_tid->hw_qdesc_vaddr_unaligned,
+			rx_tid->hw_qdesc_paddr_unaligned, 0);
+#endif
+		qdf_mem_free(desc);
+
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
+			"%s: Freed: %p\n",
+			__func__, desc);
+	}
+	qdf_spin_unlock_bh(&soc->reo_desc_freelist_lock);
+}
+
+/*
  * dp_rx_tid_setup_wifi3() – Setup receive TID state
  * @peer: Datapath peer handle
  * @tid: TID
@@ -533,6 +580,7 @@ int dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
 		hw_qdesc_size = hal_get_reo_qdesc_size(soc->hal_soc,
 			ba_window_size);
 #endif
+
 	hw_qdesc_align = hal_get_reo_qdesc_align(soc->hal_soc);
 	/* To avoid unnecessary extra allocation for alignment, try allocating
 	 * exact size and see if we already have aligned address.
@@ -626,7 +674,8 @@ int dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
 static void dp_rx_tid_delete_cb(struct dp_soc *soc, void *cb_ctxt,
 	union hal_reo_status *reo_status)
 {
-	struct dp_rx_tid *rx_tid = (struct dp_rx_tid *)cb_ctxt;
+	struct reo_desc_list_node *freedesc =
+		(struct reo_desc_list_node *)cb_ctxt;
 
 	if (reo_status->rx_queue_status.header.status) {
 		/* Should not happen normally. Just print error for now */
@@ -634,24 +683,15 @@ static void dp_rx_tid_delete_cb(struct dp_soc *soc, void *cb_ctxt,
 			"%s: Rx tid HW desc deletion failed(%d): tid %d\n",
 			__func__,
 			reo_status->rx_queue_status.header.status,
-			rx_tid->tid);
+			freedesc->rx_tid.tid);
 	}
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 		"%s: rx_tid: %d status: %d\n", __func__,
-		rx_tid->tid, reo_status->rx_queue_status.header.status);
+		freedesc->rx_tid.tid,
+		reo_status->rx_queue_status.header.status);
 
-	/* Calling qdf_mem_free_consistent() in MCL is resulting in kernel BUG.
-	 * Diasble this temporarily.
-	 */
-#ifndef QCA_WIFI_NAPIER_EMULATION
-	qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
-		rx_tid->hw_qdesc_alloc_size,
-		rx_tid->hw_qdesc_vaddr_unaligned,
-		rx_tid->hw_qdesc_paddr_unaligned, 0);
-#endif
-
-	qdf_mem_free(rx_tid);
+	dp_reo_desc_free(soc, freedesc);
 }
 
 /*
@@ -666,29 +706,40 @@ static int dp_rx_tid_delete_wifi3(struct dp_peer *peer, int tid)
 	struct dp_rx_tid *rx_tid = &(peer->rx_tid[tid]);
 	struct dp_soc *soc = peer->vdev->pdev->soc;
 	struct hal_reo_cmd_params params;
-	struct dp_rx_tid *rx_tid_copy = qdf_mem_malloc(sizeof(*rx_tid_copy));
-	if (!rx_tid_copy) {
+	struct reo_desc_list_node *freedesc =
+		qdf_mem_malloc(sizeof(*freedesc));
+	if (!freedesc) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: malloc failed for rx_tid_copy: tid %d\n",
-			__func__, rx_tid->tid);
+			"%s: malloc failed for freedesc: tid %d\n",
+			__func__, tid);
 		return -ENOMEM;
 	}
 
-	*rx_tid_copy = *rx_tid;
+	freedesc->rx_tid = *rx_tid;
 
 	qdf_mem_zero(&params, sizeof(params));
 
-	params.std.need_status = 1;
+	params.std.need_status = 0;
 	params.std.addr_lo = rx_tid->hw_qdesc_paddr & 0xffffffff;
 	params.std.addr_hi = (uint64_t)(rx_tid->hw_qdesc_paddr) >> 32;
 	params.u.upd_queue_params.update_vld = 1;
 	params.u.upd_queue_params.vld = 0;
 
+	dp_reo_send_cmd(soc, CMD_UPDATE_RX_REO_QUEUE, &params, NULL, NULL);
+
+	/* Flush and invalidate the REO descriptor from HW cache */
+	qdf_mem_zero(&params, sizeof(params));
+	params.std.need_status = 1;
+	params.std.addr_lo = rx_tid->hw_qdesc_paddr & 0xffffffff;
+	params.std.addr_hi = (uint64_t)(rx_tid->hw_qdesc_paddr) >> 32;
+
+	dp_reo_send_cmd(soc, CMD_FLUSH_CACHE, &params, dp_rx_tid_delete_cb,
+		(void *)freedesc);
+
 	rx_tid->hw_qdesc_vaddr_unaligned = NULL;
 	rx_tid->hw_qdesc_alloc_size = 0;
+	rx_tid->hw_qdesc_paddr = 0;
 
-	dp_reo_send_cmd(soc, CMD_UPDATE_RX_REO_QUEUE, &params,
-		dp_rx_tid_delete_cb, (void *)rx_tid_copy);
 	return 0;
 }
 

@@ -24,6 +24,7 @@
 #include <qdf_lock.h>
 #include <qdf_atomic.h>
 #include <qdf_util.h>
+#include <qdf_list.h>
 #include <queue.h>
 #include <htt_common.h>
 
@@ -271,6 +272,14 @@ struct dp_intr {
 				to get DMA ring handles */
 };
 
+#define REO_DESC_FREELIST_SIZE 64
+#define REO_DESC_FREE_DEFER_MS 1000
+struct reo_desc_list_node {
+	qdf_list_node_t node;
+	unsigned long free_ts;
+	struct dp_rx_tid rx_tid;
+};
+
 /* SOC level structure for data path */
 struct dp_soc {
 	/* Common base structure - Should be the first member */
@@ -460,6 +469,8 @@ struct dp_soc {
 	/*interrupt timer*/
 	qdf_timer_t int_timer;
 #endif
+	qdf_list_t reo_desc_freelist;
+	qdf_spinlock_t reo_desc_freelist_lock;
 };
 
 #define MAX_RX_MAC_RINGS 2
