@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -129,9 +129,8 @@ void wlan_hdd_cfg80211_fw_mem_dump_cb(void *ctx,
 		       context->request_id, dump_rsp->request_id,
 		       dump_rsp->dump_complete);
 		return;
-	} else {
-		complete(&context->response_event);
 	}
+	complete(&context->response_event);
 	spin_unlock(&hdd_context_lock);
 
 	return;

@@ -908,11 +908,11 @@ static int wlan_hdd_request_remain_on_channel(struct wiphy *wiphy,
 			}
 		}
 		return 0;
-	} else {
-		if (wlan_hdd_roc_request_enqueue(pAdapter, pRemainChanCtx)) {
-			qdf_mem_free(pRemainChanCtx);
-			return -EAGAIN;
-		}
+	}
+
+	if (wlan_hdd_roc_request_enqueue(pAdapter, pRemainChanCtx)) {
+		qdf_mem_free(pRemainChanCtx);
+		return -EAGAIN;
 	}
 
 	/*
@@ -1146,8 +1146,7 @@ __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 					hdd_remain_on_chan_timer)
 				!= QDF_STATUS_SUCCESS)
 			hdd_err("Failed to stop hdd_remain_on_chan_timer");
-		if (true ==
-		    pRemainChanCtx->hdd_remain_on_chan_cancel_in_progress) {
+		if (pRemainChanCtx->hdd_remain_on_chan_cancel_in_progress) {
 			mutex_unlock(&cfgState->remain_on_chan_ctx_lock);
 			hdd_notice("ROC timer cancellation in progress, wait for completion");
 			rc = wait_for_completion_timeout(&pAdapter->
@@ -1158,9 +1157,8 @@ __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 				hdd_err("wait on cancel_rem_on_chan_var timed out");
 			}
 			return 0;
-		} else
-			pRemainChanCtx->hdd_remain_on_chan_cancel_in_progress =
-				true;
+		}
+		pRemainChanCtx->hdd_remain_on_chan_cancel_in_progress = true;
 	}
 	roc_scan_id = pRemainChanCtx->scan_id;
 	mutex_unlock(&cfgState->remain_on_chan_ctx_lock);

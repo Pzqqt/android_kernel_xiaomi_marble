@@ -185,26 +185,26 @@ static void hdd_conf_gtk_offload(hdd_adapter_t *pAdapter, bool fenable)
 			if (QDF_STATUS_SUCCESS != ret) {
 				hdd_err("sme_get_gtk_offload failed, returned %d", ret);
 				return;
-			} else {
-				hdd_notice("sme_get_gtk_offload successful");
-
-				/* Sending GTK offload dissable */
-				memcpy(&hddGtkOffloadReqParams,
-				       &pHddStaCtx->gtkOffloadReqParams,
-				       sizeof(tSirGtkOffloadParams));
-				hddGtkOffloadReqParams.ulFlags =
-					GTK_OFFLOAD_DISABLE;
-				ret =
-					sme_set_gtk_offload(WLAN_HDD_GET_HAL_CTX
-								    (pAdapter),
-							    &hddGtkOffloadReqParams,
-							    pAdapter->sessionId);
-				if (QDF_STATUS_SUCCESS != ret) {
-					hdd_err("failed to dissable GTK offload, returned %d", ret);
-					return;
-				}
-				hdd_notice("successfully dissabled GTK offload request to HAL");
 			}
+
+			hdd_notice("sme_get_gtk_offload successful");
+
+			/* Sending GTK offload dissable */
+			memcpy(&hddGtkOffloadReqParams,
+			       &pHddStaCtx->gtkOffloadReqParams,
+			       sizeof(tSirGtkOffloadParams));
+			hddGtkOffloadReqParams.ulFlags =
+				GTK_OFFLOAD_DISABLE;
+			ret = sme_set_gtk_offload(WLAN_HDD_GET_HAL_CTX
+						  (pAdapter),
+						  &hddGtkOffloadReqParams,
+						  pAdapter->sessionId);
+			if (QDF_STATUS_SUCCESS != ret) {
+				hdd_err("failed to dissable GTK offload, returned %d",
+					ret);
+				return;
+			}
+			hdd_notice("successfully dissabled GTK offload request to HAL");
 		}
 	}
 	return;
@@ -965,8 +965,8 @@ QDF_STATUS hdd_conf_arp_offload(hdd_adapter_t *pAdapter, bool fenable)
 	 * is controlled by one bit.
 	 */
 	if ((QDF_SAP_MODE == pAdapter->device_mode ||
-		QDF_P2P_GO_MODE == pAdapter->device_mode) &&
-		!pHddCtx->ap_arpns_support) {
+	     QDF_P2P_GO_MODE == pAdapter->device_mode) &&
+	    !pHddCtx->ap_arpns_support) {
 		hdd_notice("ARP Offload is not supported in SAP/P2PGO mode");
 		return QDF_STATUS_SUCCESS;
 	}
@@ -1005,22 +1005,23 @@ QDF_STATUS hdd_conf_arp_offload(hdd_adapter_t *pAdapter, bool fenable)
 		}
 
 		return QDF_STATUS_SUCCESS;
-	} else {
-		hdd_wlan_offload_event(SIR_IPV4_ARP_REPLY_OFFLOAD,
-			SIR_OFFLOAD_DISABLE);
-		qdf_mem_zero((void *)&offLoadRequest,
-			     sizeof(tSirHostOffloadReq));
-		offLoadRequest.enableOrDisable = SIR_OFFLOAD_DISABLE;
-		offLoadRequest.offloadType = SIR_IPV4_ARP_REPLY_OFFLOAD;
-
-		if (QDF_STATUS_SUCCESS !=
-		    sme_set_host_offload(WLAN_HDD_GET_HAL_CTX(pAdapter),
-					 pAdapter->sessionId, &offLoadRequest)) {
-			hdd_err("Failure to disable host " "offload feature");
-			return QDF_STATUS_E_FAILURE;
-		}
-		return QDF_STATUS_SUCCESS;
 	}
+
+	hdd_wlan_offload_event(SIR_IPV4_ARP_REPLY_OFFLOAD,
+			       SIR_OFFLOAD_DISABLE);
+	qdf_mem_zero((void *)&offLoadRequest,
+		     sizeof(tSirHostOffloadReq));
+	offLoadRequest.enableOrDisable = SIR_OFFLOAD_DISABLE;
+	offLoadRequest.offloadType = SIR_IPV4_ARP_REPLY_OFFLOAD;
+
+	if (QDF_STATUS_SUCCESS !=
+	    sme_set_host_offload(WLAN_HDD_GET_HAL_CTX(pAdapter),
+				 pAdapter->sessionId, &offLoadRequest)) {
+		hdd_err("Failure to disable host offload feature");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
 }
 
 #ifdef WLAN_FEATURE_PACKET_FILTERING

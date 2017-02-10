@@ -644,13 +644,13 @@ static QDF_STATUS wlan_hdd_scan_request_dequeue(hdd_context_t *hdd_ctx,
 				      scan_id, req,
 				      qdf_list_size(&hdd_ctx->hdd_scan_req_q));
 				return QDF_STATUS_SUCCESS;
-			} else {
-				qdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
-				hdd_err("Failed to remove node scan id %d, pending scans %d",
-				      scan_id,
-				      qdf_list_size(&hdd_ctx->hdd_scan_req_q));
-				return status;
 			}
+
+			qdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
+			hdd_err("Failed to remove node scan id %d, pending scans %d",
+				scan_id,
+				qdf_list_size(&hdd_ctx->hdd_scan_req_q));
+			return status;
 		}
 	} while (QDF_STATUS_SUCCESS ==
 		qdf_list_peek_next(&hdd_ctx->hdd_scan_req_q, pNode, &ppNode));

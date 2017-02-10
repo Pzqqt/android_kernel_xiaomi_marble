@@ -1355,16 +1355,16 @@ int wlan_hdd_cfg80211_start_acs(hdd_adapter_t *adapter)
 		sap_config->channel = AUTO_CHANNEL_SELECT;
 
 	status = wlan_hdd_sap_cfg_dfs_override(adapter);
-	if (status < 0) {
+	if (status < 0)
 		return status;
-	} else {
-		if (status > 0) {
-			/*notify hostapd about channel override */
-			wlan_hdd_cfg80211_acs_ch_select_evt(adapter);
-			clear_bit(ACS_IN_PROGRESS, &hdd_ctx->g_event_flags);
-			return 0;
-		}
+
+	if (status > 0) {
+		/*notify hostapd about channel override */
+		wlan_hdd_cfg80211_acs_ch_select_evt(adapter);
+		clear_bit(ACS_IN_PROGRESS, &hdd_ctx->g_event_flags);
+		return 0;
 	}
+
 	status = wlan_hdd_config_acs(hdd_ctx, adapter);
 	if (status) {
 		hdd_err("ACS config failed");
@@ -5380,12 +5380,12 @@ __wlan_hdd_cfg80211_offloaded_packets(struct wiphy *wiphy,
 
 	if (control == WLAN_START_OFFLOADED_PACKETS)
 		return wlan_hdd_add_tx_ptrn(adapter, hdd_ctx, tb);
-	else if (control == WLAN_STOP_OFFLOADED_PACKETS)
+	if (control == WLAN_STOP_OFFLOADED_PACKETS)
 		return wlan_hdd_del_tx_ptrn(adapter, hdd_ctx, tb);
-	else {
-		hdd_err("Invalid control: %d", control);
-		return -EINVAL;
-	}
+
+	hdd_err("Invalid control: %d", control);
+
+	return -EINVAL;
 }
 
 /*
@@ -7354,9 +7354,9 @@ static int wlan_hdd_validate_and_get_pre_cac_ch(hdd_context_t *hdd_ctx,
 			!CDS_IS_DFS_CH(channel)) {
 			hdd_err("Invalid channel for pre cac:%d", channel);
 			return -EINVAL;
-		} else {
-			*pre_cac_chan = channel;
 		}
+
+		*pre_cac_chan = channel;
 	}
 	hdd_info("selected pre cac channel:%d", *pre_cac_chan);
 	return 0;
@@ -13756,6 +13756,9 @@ static int wlan_hdd_cfg80211_set_privacy(hdd_adapter_t *pAdapter,
 
 	/*incase of WEP set default key information */
 	if (req->key && req->key_len) {
+		u8 key_len = req->key_len;
+		u8 key_idx = req->key_idx;
+
 		if ((WLAN_CIPHER_SUITE_WEP40 == req->crypto.ciphers_pairwise[0])
 		    || (WLAN_CIPHER_SUITE_WEP104 ==
 			req->crypto.ciphers_pairwise[0])
@@ -13766,25 +13769,20 @@ static int wlan_hdd_cfg80211_set_privacy(hdd_adapter_t *pAdapter,
 			     authKeyMgmt & IW_AUTH_KEY_MGMT_802_1X)) {
 				hdd_err("Dynamic WEP not supported");
 				return -EOPNOTSUPP;
-			} else {
-				u8 key_len = req->key_len;
-				u8 key_idx = req->key_idx;
+			}
 
-				if ((eCSR_SECURITY_WEP_KEYSIZE_MAX_BYTES >=
-				     key_len)
-				    && (CSR_MAX_NUM_KEY > key_idx)
-				    ) {
-					hdd_notice("setting default wep key, key_idx = %hu key_len %hu",
-						key_idx, key_len);
-					qdf_mem_copy(&pWextState->roamProfile.
-						     Keys.
-						     KeyMaterial[key_idx][0],
-						     req->key, key_len);
-					pWextState->roamProfile.Keys.
+			if ((eCSR_SECURITY_WEP_KEYSIZE_MAX_BYTES >= key_len)
+			    && (CSR_MAX_NUM_KEY > key_idx)) {
+				hdd_notice("setting default wep key, key_idx = %hu key_len %hu",
+					   key_idx, key_len);
+				qdf_mem_copy(&pWextState->roamProfile.
+					     Keys.
+					     KeyMaterial[key_idx][0],
+					     req->key, key_len);
+				pWextState->roamProfile.Keys.
 					KeyLength[key_idx] = (u8) key_len;
-					pWextState->roamProfile.Keys.
+				pWextState->roamProfile.Keys.
 					defaultIndex = (u8) key_idx;
-				}
 			}
 		}
 	}

@@ -2896,19 +2896,20 @@ int wlan_hdd_tdls_scan_callback(hdd_adapter_t *pAdapter, struct wiphy *wiphy,
 					   connectedTdlsPeers,
 					   pHddCtx->tdls_mode);
 				return 1;
-			} else {
-				for (i = 0; i < num; i++) {
-					hdd_notice("indicate TDLS teadown (staId %d)",
-						   connectedPeerList[i]->staId);
-					wlan_hdd_tdls_indicate_teardown
-						(connectedPeerList[i]->pHddTdlsCtx->
-						pAdapter, connectedPeerList[i],
-						eSIR_MAC_TDLS_TEARDOWN_UNSPEC_REASON);
-					hdd_send_wlan_tdls_teardown_event(
-						eTDLS_TEARDOWN_SCAN,
-						connectedPeerList[i]->peerMac);
-				}
 			}
+
+			for (i = 0; i < num; i++) {
+				hdd_notice("indicate TDLS teadown (staId %d)",
+					   connectedPeerList[i]->staId);
+				wlan_hdd_tdls_indicate_teardown
+					(connectedPeerList[i]->pHddTdlsCtx->
+					 pAdapter, connectedPeerList[i],
+					 eSIR_MAC_TDLS_TEARDOWN_UNSPEC_REASON);
+				hdd_send_wlan_tdls_teardown_event
+					(eTDLS_TEARDOWN_SCAN,
+					 connectedPeerList[i]->peerMac);
+			}
+
 			/* schedule scan */
 			delay =
 				(unsigned long)(TDLS_DELAY_SCAN_PER_CONNECTION *
@@ -4080,7 +4081,7 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 			/* supplicant still sends tdls_mgmt(SETUP_REQ)
 			 * even after we return error code at
 			 * 'add_station()'. Hence we have this check
-			 * again in addtion to add_station().  Anyway,
+			 * again in addition to add_station().  Anyway,
 			 * there is no harm to double-check.
 			 */
 			if (SIR_MAC_TDLS_SETUP_REQ == action_code) {
@@ -4092,24 +4093,23 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 					  action_code, numCurrTdlsPeers,
 					  pHddCtx->max_num_tdls_sta);
 				return -EINVAL;
-			} else {
-				/* maximum reached. tweak to send
-				 * error code to peer and return error
-				 * code to supplicant
-				 */
-				status_code = eSIR_MAC_UNSPEC_FAILURE_STATUS;
-				QDF_TRACE(QDF_MODULE_ID_HDD,
-					  QDF_TRACE_LEVEL_ERROR,
-					  "%s: " MAC_ADDRESS_STR
-					  " TDLS Max peer already connected, send response status (%d). Num of peers (%d), Max allowed (%d).",
-					  __func__, MAC_ADDR_ARRAY(peer),
-					  status_code, numCurrTdlsPeers,
-					  pHddCtx->max_num_tdls_sta);
-				max_sta_failed = -EPERM;
-				/* fall through to send setup resp
-				 * with failure status code
-				 */
 			}
+			/* maximum reached. tweak to send
+			 * error code to peer and return error
+			 * code to supplicant
+			 */
+			status_code = eSIR_MAC_UNSPEC_FAILURE_STATUS;
+			QDF_TRACE(QDF_MODULE_ID_HDD,
+				  QDF_TRACE_LEVEL_ERROR,
+				  "%s: " MAC_ADDRESS_STR
+				  " TDLS Max peer already connected, send response status (%d). Num of peers (%d), Max allowed (%d).",
+				  __func__, MAC_ADDR_ARRAY(peer),
+				  status_code, numCurrTdlsPeers,
+				  pHddCtx->max_num_tdls_sta);
+			max_sta_failed = -EPERM;
+			/* fall through to send setup resp
+			 * with failure status code
+			 */
 		} else {
 			hddTdlsPeer_t *pTdlsPeer;
 			pTdlsPeer =
@@ -4476,13 +4476,12 @@ int wlan_hdd_tdls_extctrl_deconfig_peer(hdd_adapter_t *pAdapter,
 		hdd_notice("peer matching" MAC_ADDRESS_STR "not found",
 			   MAC_ADDR_ARRAY(peer));
 		return -EINVAL;
-	} else {
-		wlan_hdd_tdls_indicate_teardown(pAdapter, pTdlsPeer,
-						eSIR_MAC_TDLS_TEARDOWN_UNSPEC_REASON);
-		hdd_send_wlan_tdls_teardown_event(
-			eTDLS_TEARDOWN_EXT_CTRL,
-			pTdlsPeer->peerMac);
 	}
+
+	wlan_hdd_tdls_indicate_teardown(pAdapter, pTdlsPeer,
+					eSIR_MAC_TDLS_TEARDOWN_UNSPEC_REASON);
+	hdd_send_wlan_tdls_teardown_event(eTDLS_TEARDOWN_EXT_CTRL,
+					  pTdlsPeer->peerMac);
 	if (0 != wlan_hdd_tdls_set_force_peer(pAdapter, peer, false)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "%s Failed", __func__);
@@ -5899,10 +5898,11 @@ int hdd_set_tdls_scan_type(hdd_context_t *hdd_ctx, int val)
 	if ((val != 0) && (val != 1)) {
 		hdd_err("Incorrect value of tdls scan type: %d", val);
 		return -EINVAL;
-	} else {
-		hdd_ctx->config->enable_tdls_scan = val;
-		return 0;
 	}
+
+	hdd_ctx->config->enable_tdls_scan = val;
+
+	return 0;
 }
 
 /**
@@ -6009,9 +6009,8 @@ int wlan_hdd_tdls_antenna_switch(hdd_context_t *hdd_ctx,
 		if (hdd_ctx->tdls_nss_teardown_complete == false) {
 			hdd_err("TDLS antenna switch is in progress");
 			return -EAGAIN;
-		} else {
-			goto tdls_ant_sw_done;
 		}
+		goto tdls_ant_sw_done;
 	}
 
 	/* Check whether TDLS is connected or not */

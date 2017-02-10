@@ -2931,18 +2931,18 @@ static int __iw_get_freq(struct net_device *dev, struct iw_request_info *info,
 			hdd_err("failed to get operating channel %u",
 				  pAdapter->sessionId);
 			return -EIO;
-		} else {
-			status = hdd_wlan_get_freq(channel, &freq);
-			if (true == status) {
-				/* Set Exponent parameter as 6 (MHZ)
-				 * in struct iw_freq iwlist & iwconfig
-				 * command shows frequency into proper
-				 * format (2.412 GHz instead of 246.2
-				 * MHz)
-				 */
-				fwrq->m = freq;
-				fwrq->e = MHZ;
-			}
+		}
+
+		status = hdd_wlan_get_freq(channel, &freq);
+		if (true == status) {
+			/* Set Exponent parameter as 6 (MHZ)
+			 * in struct iw_freq iwlist & iwconfig
+			 * command shows frequency into proper
+			 * format (2.412 GHz instead of 246.2
+			 * MHz)
+			 */
+			fwrq->m = freq;
+			fwrq->e = MHZ;
 		}
 	} else {
 		/* Set Exponent parameter as 6 (MHZ) in struct iw_freq
@@ -5020,23 +5020,22 @@ static int __iw_set_encodeext(struct net_device *dev,
 
 			hdd_err("Invalid Configuration");
 			return -EINVAL;
-		} else {
-			/*Static wep, update the roam profile with the keys */
-			if (ext->key_len
-			    && (ext->key_len <=
-				eCSR_SECURITY_WEP_KEYSIZE_MAX_BYTES)
-			    && key_index < CSR_MAX_NUM_KEY) {
-				qdf_mem_copy(&pRoamProfile->Keys.
-					     KeyMaterial[key_index][0],
-					     ext->key, ext->key_len);
-				pRoamProfile->Keys.KeyLength[key_index] =
-					(uint8_t) ext->key_len;
+		}
 
-				if (ext->ext_flags & IW_ENCODE_EXT_SET_TX_KEY)
-					pRoamProfile->Keys.defaultIndex =
-						(uint8_t) key_index;
+		/*Static wep, update the roam profile with the keys */
+		if (ext->key_len &&
+		    (ext->key_len <= eCSR_SECURITY_WEP_KEYSIZE_MAX_BYTES) &&
+		    key_index < CSR_MAX_NUM_KEY) {
+			qdf_mem_copy(&pRoamProfile->Keys.
+				     KeyMaterial[key_index][0],
+				     ext->key, ext->key_len);
+			pRoamProfile->Keys.KeyLength[key_index] =
+				(uint8_t) ext->key_len;
 
-			}
+			if (ext->ext_flags & IW_ENCODE_EXT_SET_TX_KEY)
+				pRoamProfile->Keys.defaultIndex =
+					(uint8_t) key_index;
+
 		}
 		return ret;
 	}

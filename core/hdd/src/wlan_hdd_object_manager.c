@@ -236,15 +236,16 @@ int hdd_set_peer_mlme_state(struct wlan_objmgr_vdev *vdev,
 	peer = wlan_vdev_get_bsspeer(vdev);
 	wlan_vdev_obj_unlock(vdev);
 
-	if (peer) {
-		wlan_peer_obj_lock(peer);
-		wlan_peer_mlme_set_state(peer, WLAN_ASSOC_STATE);
-		wlan_peer_obj_unlock(peer);
-		return 0;
-	} else {
+	if (!peer) {
 		hdd_err("peer is null");
+
 		return -EINVAL;
 	}
 
+	wlan_peer_obj_lock(peer);
+	wlan_peer_mlme_set_state(peer, WLAN_ASSOC_STATE);
+	wlan_peer_obj_unlock(peer);
+
+	return 0;
 }
 

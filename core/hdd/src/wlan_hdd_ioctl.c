@@ -2245,7 +2245,7 @@ static int hdd_parse_setmaxtxpower_command(uint8_t *pValue, int *pTxPower)
 static int hdd_get_dwell_time(struct hdd_config *pCfg, uint8_t *command,
 			      char *extra, uint8_t n, uint8_t *len)
 {
-	int ret = 0;
+	int ret;
 
 	if (!pCfg || !command || !extra || !len) {
 		hdd_err("argument passed for GETDWELLTIME is incorrect");
@@ -2257,25 +2257,28 @@ static int hdd_get_dwell_time(struct hdd_config *pCfg, uint8_t *command,
 		*len = scnprintf(extra, n, "GETDWELLTIME ACTIVE MAX %u\n",
 				 (int)pCfg->nActiveMaxChnTime);
 		return ret;
-	} else if (strncmp(command, "GETDWELLTIME ACTIVE MIN", 23) == 0) {
+	}
+	if (strncmp(command, "GETDWELLTIME ACTIVE MIN", 23) == 0) {
 		*len = scnprintf(extra, n, "GETDWELLTIME ACTIVE MIN %u\n",
 				 (int)pCfg->nActiveMinChnTime);
 		return ret;
-	} else if (strncmp(command, "GETDWELLTIME PASSIVE MAX", 24) == 0) {
+	}
+	if (strncmp(command, "GETDWELLTIME PASSIVE MAX", 24) == 0) {
 		*len = scnprintf(extra, n, "GETDWELLTIME PASSIVE MAX %u\n",
 				 (int)pCfg->nPassiveMaxChnTime);
 		return ret;
-	} else if (strncmp(command, "GETDWELLTIME PASSIVE MIN", 24) == 0) {
+	}
+	if (strncmp(command, "GETDWELLTIME PASSIVE MIN", 24) == 0) {
 		*len = scnprintf(extra, n, "GETDWELLTIME PASSIVE MIN %u\n",
 				 (int)pCfg->nPassiveMinChnTime);
 		return ret;
-	} else if (strncmp(command, "GETDWELLTIME", 12) == 0) {
+	}
+	if (strncmp(command, "GETDWELLTIME", 12) == 0) {
 		*len = scnprintf(extra, n, "GETDWELLTIME %u \n",
 				 (int)pCfg->nActiveMaxChnTime);
 		return ret;
-	} else {
-		ret = -EINVAL;
 	}
+	ret = -EINVAL;
 
 	return ret;
 }

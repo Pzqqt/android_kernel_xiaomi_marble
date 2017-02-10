@@ -4187,14 +4187,12 @@ static char *get_next_line(char *str)
 		c = *str;
 	}
 
-	if (c == '\0') {
+	if (c == '\0')
 		return NULL;
-	} else {
-		*str = '\0';
-		return str + 1;
-	}
 
-	return NULL;
+	*str = '\0';
+
+	return str + 1;
 }
 
 /** look for space. Ascii values to look are
@@ -5843,31 +5841,32 @@ QDF_STATUS hdd_parse_config_ini(hdd_context_t *pHddCtx)
 		if (strlen((char *)buffer) == 0 || *buffer == '#') {
 			buffer = line;
 			continue;
-		} else if (strncmp(buffer, "END", 3) == 0) {
+		}
+
+		if (strncmp(buffer, "END", 3) == 0)
 			break;
-		} else {
-			name = buffer;
-			while (*buffer != '=' && *buffer != '\0')
-				buffer++;
-			if (*buffer != '\0') {
-				*buffer++ = '\0';
-				i_trim(name);
-				if (strlen(name) != 0) {
-					buffer = i_trim(buffer);
-					if (strlen(buffer) > 0) {
-						value = buffer;
-						while (!i_isspace(*buffer)
-						       && *buffer != '\0')
-							buffer++;
-						*buffer = '\0';
-						cfgIniTable[i].name = name;
-						cfgIniTable[i++].value = value;
-						if (i >= MAX_CFG_INI_ITEMS) {
-							hdd_err("Number of items in %s > %d",
-							       WLAN_INI_FILE,
-							       MAX_CFG_INI_ITEMS);
-							break;
-						}
+
+		name = buffer;
+		while (*buffer != '=' && *buffer != '\0')
+			buffer++;
+		if (*buffer != '\0') {
+			*buffer++ = '\0';
+			i_trim(name);
+			if (strlen(name) != 0) {
+				buffer = i_trim(buffer);
+				if (strlen(buffer) > 0) {
+					value = buffer;
+					while (!i_isspace(*buffer)
+					       && *buffer != '\0')
+						buffer++;
+					*buffer = '\0';
+					cfgIniTable[i].name = name;
+					cfgIniTable[i++].value = value;
+					if (i >= MAX_CFG_INI_ITEMS) {
+						hdd_err("Number of items in %s > %d",
+							WLAN_INI_FILE,
+							MAX_CFG_INI_ITEMS);
+						break;
 					}
 				}
 			}

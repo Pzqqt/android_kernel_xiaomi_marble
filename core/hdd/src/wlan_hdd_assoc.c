@@ -3972,13 +3972,12 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 					hdd_info("TDLS ExternalControl enabled but curr_peer is not forced, ignore SHOULD_DISCOVER");
 					status = QDF_STATUS_SUCCESS;
 					break;
-				} else {
-					hdd_info("initiate TDLS setup on SHOULD_DISCOVER, fTDLSExternalControl: %d, curr_peer->isForcedPeer: %d, reason: %d",
-						pHddCtx->config->
-						fTDLSExternalControl,
-						curr_peer->isForcedPeer,
-						pRoamInfo->reasonCode);
 				}
+				hdd_info("initiate TDLS setup on SHOULD_DISCOVER, fTDLSExternalControl: %d, curr_peer->isForcedPeer: %d, reason: %d",
+					 pHddCtx->config->
+					 fTDLSExternalControl,
+					 curr_peer->isForcedPeer,
+					 pRoamInfo->reasonCode);
 				pHddTdlsCtx->curr_candidate = curr_peer;
 				wlan_hdd_tdls_implicit_send_discovery_request(
 								pHddTdlsCtx);

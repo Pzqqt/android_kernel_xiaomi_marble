@@ -183,11 +183,10 @@ wlan_hdd_cfg80211_extscan_get_capabilities_rsp(void *ctx,
 		hdd_err("Target response id did not match: request_id %d response_id %d",
 			context->request_id, data->requestId);
 		return;
-	} else {
-		context->capability_response = *data;
-		complete(&context->response_event);
 	}
 
+	context->capability_response = *data;
+	complete(&context->response_event);
 	spin_unlock(&context->context_lock);
 
 	return;

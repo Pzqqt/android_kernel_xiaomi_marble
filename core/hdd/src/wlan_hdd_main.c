@@ -9026,17 +9026,15 @@ void wlan_hdd_auto_shutdown_enable(hdd_context_t *hdd_ctx, bool enable)
 	if (ap_connected == true || sta_connected == true) {
 		hdd_notice("CC Session active. Shutdown timer not enabled");
 		return;
-	} else {
-		if (sme_set_auto_shutdown_timer(hal_handle,
-						hdd_ctx->config->
-						WlanAutoShutdown)
-		    != QDF_STATUS_SUCCESS)
-			hdd_err("Failed to start wlan auto shutdown timer");
-		else
-			hdd_notice("Auto Shutdown timer for %d seconds enabled",
-			       hdd_ctx->config->WlanAutoShutdown);
-
 	}
+
+	if (sme_set_auto_shutdown_timer(hal_handle,
+					hdd_ctx->config->WlanAutoShutdown)
+	    != QDF_STATUS_SUCCESS)
+		hdd_err("Failed to start wlan auto shutdown timer");
+	else
+		hdd_notice("Auto Shutdown timer for %d seconds enabled",
+			   hdd_ctx->config->WlanAutoShutdown);
 }
 #endif
 

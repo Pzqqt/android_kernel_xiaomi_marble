@@ -1983,23 +1983,22 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		 * only for non driver override acs
 		 */
 		if (pHostapdAdapter->device_mode == QDF_SAP_MODE &&
-					pHddCtx->config->force_sap_acs) {
+		    pHddCtx->config->force_sap_acs)
 			return QDF_STATUS_SUCCESS;
-		} else {
-			chan_change.chan =
-			  pSapEvent->sapevt.sap_ch_selected.pri_ch;
-			chan_change.chan_params.ch_width =
-			  pSapEvent->sapevt.sap_ch_selected.ch_width;
-			chan_change.chan_params.sec_ch_offset =
-			  pSapEvent->sapevt.sap_ch_selected.ht_sec_ch;
-			chan_change.chan_params.center_freq_seg0 =
-			  pSapEvent->sapevt.sap_ch_selected.vht_seg0_center_ch;
-			chan_change.chan_params.center_freq_seg1 =
-			  pSapEvent->sapevt.sap_ch_selected.vht_seg1_center_ch;
 
-			return hdd_chan_change_notify(pHostapdAdapter, dev,
-							chan_change);
-		}
+		chan_change.chan =
+			pSapEvent->sapevt.sap_ch_selected.pri_ch;
+		chan_change.chan_params.ch_width =
+			pSapEvent->sapevt.sap_ch_selected.ch_width;
+		chan_change.chan_params.sec_ch_offset =
+			pSapEvent->sapevt.sap_ch_selected.ht_sec_ch;
+		chan_change.chan_params.center_freq_seg0 =
+			pSapEvent->sapevt.sap_ch_selected.vht_seg0_center_ch;
+		chan_change.chan_params.center_freq_seg1 =
+			pSapEvent->sapevt.sap_ch_selected.vht_seg1_center_ch;
+
+		return hdd_chan_change_notify(pHostapdAdapter, dev,
+					      chan_change);
 	case eSAP_ACS_SCAN_SUCCESS_EVENT:
 		return hdd_handle_acs_scan_event(pSapEvent, pHostapdAdapter);
 	case eSAP_DFS_NOL_GET:
@@ -2015,10 +2014,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		if (ret > 0) {
 			hdd_info("Get %d bytes of dfs nol from PLD", ret);
 			return QDF_STATUS_SUCCESS;
-		} else {
-			hdd_info("No dfs nol entry in PLD, ret: %d", ret);
-			return QDF_STATUS_E_FAULT;
 		}
+		hdd_info("No dfs nol entry in PLD, ret: %d", ret);
+		return QDF_STATUS_E_FAULT;
 	case eSAP_DFS_NOL_SET:
 		hdd_notice("Received eSAP_DFS_NOL_SET event");
 
@@ -4123,10 +4121,10 @@ static int wlan_hdd_set_force_acs_ch_range(struct net_device *dev,
 		wlan_hdd_validate_operation_channel(adapter, value[1]) !=
 					 QDF_STATUS_SUCCESS) {
 		return -EINVAL;
-	} else {
-		hdd_ctx->config->force_sap_acs_st_ch = value[0];
-		hdd_ctx->config->force_sap_acs_end_ch = value[1];
 	}
+
+	hdd_ctx->config->force_sap_acs_st_ch = value[0];
+	hdd_ctx->config->force_sap_acs_end_ch = value[1];
 
 	return 0;
 }
@@ -4691,17 +4689,16 @@ static int __iw_get_ap_freq(struct net_device *dev,
 		if (sme_cfg_get_int(hHal, WNI_CFG_CURRENT_CHANNEL, &channel)
 		    != QDF_STATUS_SUCCESS) {
 			return -EIO;
-		} else {
-			status = hdd_wlan_get_freq(channel, &freq);
-			if (true == status) {
-				/* Set Exponent parameter as 6 (MHZ) in struct
-				 * iw_freq * iwlist & iwconfig command
-				 * shows frequency into proper
-				 * format (2.412 GHz instead of 246.2 MHz)
-				 */
-				fwrq->m = freq;
-				fwrq->e = MHZ;
-			}
+		}
+		status = hdd_wlan_get_freq(channel, &freq);
+		if (true == status) {
+			/* Set Exponent parameter as 6 (MHZ) in struct
+			 * iw_freq * iwlist & iwconfig command
+			 * shows frequency into proper
+			 * format (2.412 GHz instead of 246.2 MHz)
+			 */
+			fwrq->m = freq;
+			fwrq->e = MHZ;
 		}
 	} else {
 		channel = pHddApCtx->operatingChannel;

@@ -336,9 +336,9 @@ bool hdd_add_wowl_ptrn_debugfs(hdd_adapter_t *pAdapter, uint8_t pattern_idx,
 		hdd_err("Malformed WoW pattern!");
 
 		return false;
-	} else
-		pattern_len >>= 1;
+	}
 
+	pattern_len >>= 1;
 	if (!pattern_len || pattern_len > WOWL_PTRN_MAX_SIZE) {
 		hdd_err("WoW pattern length %d is out of range (1 ~ %d).",
 			pattern_len, WOWL_PTRN_MAX_SIZE);
