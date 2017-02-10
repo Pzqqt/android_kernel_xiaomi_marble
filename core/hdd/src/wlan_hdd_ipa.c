@@ -593,14 +593,6 @@ static struct hdd_ipa_tx_hdr ipa_tx_hdr = {
 	}
 };
 
-static const char *op_string[] = {
-	"TX_SUSPEND",
-	"TX_RESUME",
-	"RX_SUSPEND",
-	"RX_RESUME",
-	"STATS",
-};
-
 static struct hdd_ipa_priv *ghdd_ipa;
 
 /* Local Function Prototypes */
@@ -1898,7 +1890,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 	hdd_ipa = (struct hdd_ipa_priv *)hdd_ctx->hdd_ipa;
 
 	HDD_IPA_DP_LOG(QDF_TRACE_LEVEL_DEBUG,
-		    "%s, OPCODE %s", __func__, op_string[msg->op_code]);
+		       "OPCODE=%d", msg->op_code);
 
 	if ((HDD_IPA_UC_OPCODE_TX_RESUME == msg->op_code) ||
 	    (HDD_IPA_UC_OPCODE_RX_RESUME == msg->op_code)) {
