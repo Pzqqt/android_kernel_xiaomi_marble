@@ -286,6 +286,11 @@ ifeq ($(CONFIG_ROME_IF),usb)
 	CONFIG_PLD_USB_CNSS := y
 endif
 
+#Enable SDIO specific APIS
+ifeq ($(CONFIG_ROME_IF),sdio)
+	CONFIG_HIF_SDIO := 1
+endif
+
 #Enable pci read/write config functions
 ifeq ($(CONFIG_ROME_IF),pci)
 	CONFIG_ATH_PCI := 1
@@ -1817,4 +1822,3 @@ endif
 # Module information used by KBuild framework
 obj-$(CONFIG_QCA_CLD_WLAN) += $(MODNAME).o
 $(MODNAME)-y := $(OBJS)
-
