@@ -72,6 +72,7 @@ typedef qdf_nbuf_t wmi_buf_t;
 		wmi_unified_register_event_handler(wmi_handle, \
 		 event_id, handler_func, WMI_RX_UMAC_CTX)
 
+struct wmi_soc;
 /**
  * struct wmi_ops - service callbacks to upper layer
  * @service_ready_cbk: service ready callback
@@ -219,7 +220,7 @@ wmi_unified_unregister_event_handler(wmi_unified_t wmi_handle,
  *  @param htc_handle      : handle to HTC.
  *  @return void
  */
-int
+QDF_STATUS
 wmi_unified_connect_htc_service(struct wmi_unified *wmi_handle,
 				void *htc_handle);
 
@@ -304,6 +305,10 @@ static inline bool wmi_get_runtime_pm_inprogress(wmi_unified_t wmi_handle)
 	return false;
 }
 #endif
+
+void *wmi_unified_get_soc_handle(struct wmi_unified *wmi_handle);
+
+void *wmi_unified_get_pdev_handle(struct wmi_soc *soc, uint32_t pdev_idx);
 
 /**
  * UMAC Callback to process fw event.

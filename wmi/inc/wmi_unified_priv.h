@@ -152,8 +152,6 @@ struct wmi_debug_log_info {
 	bool wmi_logging_enable;
 	uint32_t buf_offset_command;
 	uint32_t buf_offset_event;
-	bool (*is_management_record)(uint32_t cmd_id);
-	uint8_t *(*wmi_id_to_name)(uint32_t cmd_id);
 	struct dentry *wmi_log_debugfs_dir;
 	uint8_t wmi_instance_id;
 };
@@ -1223,6 +1221,9 @@ QDF_STATUS (*extract_peer_delete_response_event)(
 			wmi_unified_t wmi_handle,
 			void *evt_buf,
 			struct wmi_host_peer_delete_response_event *param);
+
+bool (*is_management_record)(uint32_t cmd_id);
+uint8_t *(*wmi_id_to_name)(uint32_t cmd_id);
 };
 
 struct target_abi_version {
@@ -1256,13 +1257,12 @@ struct wmi_cmd_init {
 struct wmi_unified {
 	void *scn_handle;    /* handle to device */
 	osdev_t  osdev; /* handle to use OS-independent services */
-	struct wlan_objmgr_psoc *wmi_psoc;
 	qdf_atomic_t pending_cmds;
 	HTC_ENDPOINT_ID wmi_endpoint_id;
 	uint16_t max_msg_len;
-	uint32_t event_id[WMI_UNIFIED_MAX_EVENT];
-	wmi_unified_event_handler event_handler[WMI_UNIFIED_MAX_EVENT];
-	enum wmi_rx_exec_ctx ctx[WMI_UNIFIED_MAX_EVENT];
+	uint32_t *event_id;
+	wmi_unified_event_handler *event_handler;
+	enum wmi_rx_exec_ctx *ctx;
 	uint32_t max_event_idx;
 	void *htc_handle;
 	qdf_spinlock_t eventq_lock;
@@ -1301,6 +1301,31 @@ struct wmi_unified {
 	qdf_spinlock_t ctx_lock;
 #ifndef CONFIG_MCL
 	/* WMI service bitmap recieved from target */
+	uint32_t *wmi_service_bitmap;
+	uint32_t *wmi_events;
+	uint32_t *pdev_param;
+	uint32_t *vdev_param;
+	uint32_t *services;
+#endif
+	struct wmi_soc *soc;
+};
+
+#define WMI_MAX_RADIOS 3
+struct wmi_soc {
+	struct wlan_objmgr_psoc *wmi_psoc;
+	void *scn_handle;    /* handle to device */
+	qdf_atomic_t num_pdevs;
+	enum wmi_target_type target_type;
+	void *htc_handle;
+	uint32_t event_id[WMI_UNIFIED_MAX_EVENT];
+	wmi_unified_event_handler event_handler[WMI_UNIFIED_MAX_EVENT];
+	enum wmi_rx_exec_ctx ctx[WMI_UNIFIED_MAX_EVENT];
+	struct wmi_unified *wmi_pdev[WMI_MAX_RADIOS];
+	HTC_ENDPOINT_ID wmi_endpoint_id[WMI_MAX_RADIOS];
+	uint16_t max_msg_len[WMI_MAX_RADIOS];
+	struct wmi_ops *ops;
+#ifndef CONFIG_MCL
+	/* WMI service bitmap recieved from target */
 	uint32_t wmi_service_bitmap[wmi_services_max];
 	uint32_t wmi_events[wmi_events_max];
 	uint32_t pdev_param[wmi_pdev_param_max];
@@ -1308,6 +1333,7 @@ struct wmi_unified {
 	uint32_t services[wmi_services_max];
 #endif
 };
+
 #ifdef WMI_NON_TLV_SUPPORT
 /* ONLY_NON_TLV_TARGET:TLV attach dummy function defintion for case when
  * driver supports only NON-TLV target (WIN mainline) */
