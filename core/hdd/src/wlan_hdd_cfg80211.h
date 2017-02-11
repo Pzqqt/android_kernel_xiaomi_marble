@@ -3693,6 +3693,16 @@ int wlan_hdd_disable_dfs_chan_scan(hdd_context_t *hdd_ctx,
 int wlan_hdd_cfg80211_update_band(struct wiphy *wiphy,
 				  eCsrBand eBand);
 
+/**
+ * wlan_hdd_try_disconnect() - try disconnnect from previous connection
+ * @pAdapter: Pointer to adapter
+ *
+ * This function is used to disconnect from previous connection
+ *
+ * Return: 0 for success, non-zero for failure
+ */
+int wlan_hdd_try_disconnect(hdd_adapter_t *pAdapter);
+
 #if defined(CFG80211_DISCONNECTED_V2) || \
 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 2, 0))
 static inline void wlan_hdd_cfg80211_indicate_disconnect(struct net_device *dev,

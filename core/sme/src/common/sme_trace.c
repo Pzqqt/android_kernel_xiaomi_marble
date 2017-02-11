@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -181,8 +181,6 @@ static uint8_t *sme_trace_get_command_string(uint32_t command)
 		CASE_RETURN_STRING(eSmeCommandRoam);
 		CASE_RETURN_STRING(eSmeCommandWmStatusChange);
 		CASE_RETURN_STRING(eSmeCommandSetKey);
-		CASE_RETURN_STRING(eSmeCommandAddStaSession);
-		CASE_RETURN_STRING(eSmeCommandDelStaSession);
 #ifdef FEATURE_WLAN_TDLS
 		CASE_RETURN_STRING(eSmeCommandTdlsSendMgmt);
 		CASE_RETURN_STRING(eSmeCommandTdlsAddPeer);

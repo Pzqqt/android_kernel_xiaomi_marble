@@ -874,25 +874,6 @@ sme_process_cmd:
 	if (CSR_IS_WAIT_FOR_KEY(pMac, pCommand->sessionId)
 	    && !CSR_IS_DISCONNECT_COMMAND(pCommand)
 	    && !CSR_IS_SET_KEY_COMMAND(pCommand)) {
-		if (CSR_IS_CLOSE_SESSION_COMMAND(pCommand)) {
-			tSmeCmd *sme_cmd = NULL;
-
-			sms_log(pMac, LOGE,
-				FL("SessionId %d: close session command issued while waiting for key, issue disconnect first"),
-				pCommand->sessionId);
-			status = csr_prepare_disconnect_command(pMac,
-					pCommand->sessionId, &sme_cmd);
-			if (status == QDF_STATUS_SUCCESS && sme_cmd) {
-				csr_ll_lock(&pMac->sme.smeCmdPendingList);
-				csr_ll_insert_head(&pMac->sme.smeCmdPendingList,
-					&sme_cmd->Link, LL_ACCESS_NOLOCK);
-				pEntry = csr_ll_peek_head(
-						&pMac->sme.smeCmdPendingList,
-						LL_ACCESS_NOLOCK);
-				csr_ll_unlock(&pMac->sme.smeCmdPendingList);
-				goto sme_process_cmd;
-			}
-		}
 
 		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
 		sms_log(pMac, LOGE,
@@ -941,10 +922,6 @@ sme_process_cmd:
 			csr_release_command_set_key(pMac, pCommand);
 		}
 		break;
-	case eSmeCommandAddStaSession:
-		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
-		csr_process_add_sta_session_command(pMac, pCommand);
-		break;
 	case eSmeCommandNdpInitiatorRequest:
 		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
 		if (csr_process_ndp_initiator_request(pMac, pCommand) !=
@@ -971,10 +948,6 @@ sme_process_cmd:
 					&pCommand->Link, LL_ACCESS_LOCK))
 				csr_release_command(pMac, pCommand);
 		}
-		break;
-	case eSmeCommandDelStaSession:
-		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
-		csr_process_del_sta_session_command(pMac, pCommand);
 		break;
 	case eSmeCommandRemainOnChannel:
 		csr_ll_unlock(&pMac->sme.smeCmdActiveList);

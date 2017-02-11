@@ -1277,11 +1277,15 @@ typedef struct sAbortScanParams {
  * struct del_sta_self_params - Del Sta Self params
  * @session_id: SME Session ID
  * @status: response status code
+ * @sme_callback: callback to be called from WMA to SME
+ * @sme_ctx: pointer to context provided by SME
  */
 struct del_sta_self_params {
 	tSirMacAddr self_mac_addr;
 	uint8_t session_id;
 	uint32_t status;
+	QDF_STATUS (*sme_callback) (void *sme_ctx);
+	void *sme_ctx;
 };
 
 /**

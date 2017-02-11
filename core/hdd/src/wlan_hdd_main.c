@@ -3671,8 +3671,13 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 		 * It is possible that the caller of this function does not
 		 * wish to close the session
 		 */
-		if (true == bCloseSession)
+		if (true == bCloseSession) {
+			if (0 != wlan_hdd_try_disconnect(adapter)) {
+				hdd_err("Error: Can't disconnect adapter");
+				return QDF_STATUS_E_FAILURE;
+			}
 			hdd_wait_for_sme_close_sesion(hdd_ctx, adapter);
+		}
 		break;
 
 	case QDF_SAP_MODE:

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -223,11 +223,7 @@ bool csr_roam_is_valid40_mhz_channel(tpAniSirGlobal pmac, uint8_t channel);
 QDF_STATUS sme_acquire_global_lock(tSmeStruct *psSme);
 QDF_STATUS sme_release_global_lock(tSmeStruct *psSme);
 
-QDF_STATUS csr_process_add_sta_session_command(tpAniSirGlobal pMac,
-		tSmeCmd *pCommand);
 QDF_STATUS csr_process_add_sta_session_rsp(tpAniSirGlobal pMac, uint8_t *pMsg);
-QDF_STATUS csr_process_del_sta_session_command(tpAniSirGlobal pMac,
-		tSmeCmd *pCommand);
 QDF_STATUS csr_process_del_sta_session_rsp(tpAniSirGlobal pMac, uint8_t *pMsg);
 
 #ifdef FEATURE_WLAN_SCAN_PNO

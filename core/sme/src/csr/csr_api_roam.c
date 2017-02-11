@@ -15260,26 +15260,12 @@ static QDF_STATUS csr_roam_session_opened(tpAniSirGlobal pMac,
 
 QDF_STATUS csr_process_add_sta_session_rsp(tpAniSirGlobal pMac, uint8_t *pMsg)
 {
-	tListElem *pEntry = NULL;
-	tSmeCmd *pCommand = NULL;
 	struct add_sta_self_params *rsp;
 	struct send_extcap_ie *msg;
 	QDF_STATUS status;
 
 	if (pMsg == NULL) {
 		sms_log(pMac, LOGE, "in %s msg ptr is NULL", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-	pEntry = csr_ll_peek_head(&pMac->sme.smeCmdActiveList, LL_ACCESS_LOCK);
-	if (!pEntry) {
-		sms_log(pMac, LOGE, "in %s NO commands are ACTIVE ...",
-			__func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-	pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
-	if (eSmeCommandAddStaSession != pCommand->command) {
-		sms_log(pMac, LOGE, "in %s Cmd not in active list ...",
-			__func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 	rsp = (struct add_sta_self_params *) pMsg;
@@ -15305,14 +15291,7 @@ QDF_STATUS csr_process_add_sta_session_rsp(tpAniSirGlobal pMac, uint8_t *pMsg)
 				FL("Failed to send down the set IE req "));
 	}
 
-	csr_roam_session_opened(pMac, pCommand->sessionId);
-	/* Remove this command out of the active list */
-	if (csr_ll_remove_entry(&pMac->sme.smeCmdActiveList, pEntry,
-		 LL_ACCESS_LOCK)) {
-	/* Now put this command back on the avilable command list */
-		csr_release_command(pMac, pCommand);
-	}
-	sme_process_pending_queue(pMac);
+	csr_roam_session_opened(pMac, rsp->session_id);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -15377,39 +15356,9 @@ QDF_STATUS csr_issue_add_sta_for_session_req(tpAniSirGlobal pMac,
 					     uint32_t type, uint32_t subType)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tSmeCmd *pCommand;
-	pCommand = csr_get_command_buffer(pMac);
-	if (NULL == pCommand) {
-		status = QDF_STATUS_E_RESOURCES;
-	} else {
-		pCommand->command = eSmeCommandAddStaSession;
-		pCommand->sessionId = (uint8_t) sessionId;
-		qdf_mem_copy(pCommand->u.addStaSessionCmd.selfMacAddr,
-			     sessionMacAddr, sizeof(tSirMacAddr));
-		pCommand->u.addStaSessionCmd.currDeviceMode =
-			pMac->sme.currDeviceMode;
-		pCommand->u.addStaSessionCmd.type = type;
-		pCommand->u.addStaSessionCmd.subType = subType;
-		status = csr_queue_sme_command(pMac, pCommand, true);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			/* Should be panic?? */
-			sms_log(pMac, LOGE,
-				FL(" fail to send message status = %d"), status);
-		}
-	}
-	return status;
-}
-
-QDF_STATUS csr_process_add_sta_session_command(tpAniSirGlobal pMac,
-					       tSmeCmd *pCommand)
-{
-	tAddStaForSessionCmd *pAddStaReq =
-		&pCommand->u.addStaSessionCmd;
-	uint8_t sessionId = pCommand->sessionId;
 	struct add_sta_self_params *add_sta_self_req;
 	uint8_t nss_2g;
 	uint8_t nss_5g;
-	QDF_STATUS status = QDF_STATUS_E_NOMEM;
 	struct scheduler_msg msg;
 
 	add_sta_self_req = qdf_mem_malloc(sizeof(struct add_sta_self_params));
@@ -15420,14 +15369,14 @@ QDF_STATUS csr_process_add_sta_session_command(tpAniSirGlobal pMac,
 		return status;
 	}
 
-	csr_get_vdev_type_nss(pMac, pAddStaReq->currDeviceMode,
+	csr_get_vdev_type_nss(pMac, pMac->sme.currDeviceMode,
 			&nss_2g, &nss_5g);
-	qdf_mem_copy(add_sta_self_req->self_mac_addr, pAddStaReq->selfMacAddr,
+	qdf_mem_copy(add_sta_self_req->self_mac_addr, sessionMacAddr,
 			sizeof(tSirMacAddr));
-	add_sta_self_req->curr_device_mode = pAddStaReq->currDeviceMode;
+	add_sta_self_req->curr_device_mode = pMac->sme.currDeviceMode;
 	add_sta_self_req->session_id = sessionId;
-	add_sta_self_req->type = pAddStaReq->type;
-	add_sta_self_req->sub_type = pAddStaReq->subType;
+	add_sta_self_req->type = type;
+	add_sta_self_req->sub_type = subType;
 	add_sta_self_req->nss_2g = nss_2g;
 	add_sta_self_req->nss_5g = nss_5g;
 	add_sta_self_req->tx_aggregation_size =
@@ -15662,8 +15611,6 @@ QDF_STATUS csr_roam_open_session(tpAniSirGlobal mac_ctx,
 QDF_STATUS csr_process_del_sta_session_rsp(tpAniSirGlobal pMac, uint8_t *pMsg)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	tListElem *pEntry = NULL;
-	tSmeCmd *pCommand = NULL;
 	struct del_sta_self_params *rsp;
 	uint8_t sessionId;
 
@@ -15671,28 +15618,17 @@ QDF_STATUS csr_process_del_sta_session_rsp(tpAniSirGlobal pMac, uint8_t *pMsg)
 		sms_log(pMac, LOGE, FL("msg ptr is NULL"));
 		return status;
 	}
-	pEntry = csr_ll_peek_head(&pMac->sme.smeCmdActiveList, LL_ACCESS_LOCK);
-	if (!pEntry) {
-		sms_log(pMac, LOGE, FL("NO commands are ACTIVE ..."));
-		return status;
-	}
-	pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
-	sessionId = pCommand->sessionId;
-	if (eSmeCommandDelStaSession != pCommand->command) {
-		sms_log(pMac, LOGE, FL("NO Del sta session command ACTIVE"));
-		return status;
-	}
 	rsp = (struct del_sta_self_params *) pMsg;
+	sessionId = rsp->session_id;
 	sms_log(pMac, LOG1, FL("Del Sta rsp status = %d"), rsp->status);
 	/* This session is done. */
 	csr_cleanup_session(pMac, sessionId);
-	if (pCommand->u.delStaSessionCmd.callback) {
+	if (rsp->sme_callback) {
 		status = sme_release_global_lock(&pMac->sme);
 		if (!QDF_IS_STATUS_SUCCESS(status))
 			sms_log(pMac, LOG1, FL("Failed to Release Lock"));
 		else {
-			pCommand->u.delStaSessionCmd.
-				callback(pCommand->u.delStaSessionCmd.pContext);
+			rsp->sme_callback(rsp->sme_ctx);
 			status = sme_acquire_global_lock(&pMac->sme);
 			if (!QDF_IS_STATUS_SUCCESS(status)) {
 				sms_log(pMac, LOG1, FL("Failed to get Lock"));
@@ -15700,15 +15636,8 @@ QDF_STATUS csr_process_del_sta_session_rsp(tpAniSirGlobal pMac, uint8_t *pMsg)
 			}
 		}
 	}
-	/* Remove this command out of the active list */
-	if (csr_ll_remove_entry(&pMac->sme.smeCmdActiveList, pEntry,
-		LL_ACCESS_LOCK)) {
-		/* Now put this command back on the avilable command list */
-		csr_release_command(pMac, pCommand);
-	}
-	sme_process_pending_queue(pMac);
-	status = QDF_STATUS_SUCCESS;
-	return status;
+
+	return QDF_STATUS_SUCCESS;
 }
 
 
@@ -15717,31 +15646,6 @@ csr_issue_del_sta_for_session_req(tpAniSirGlobal pMac, uint32_t sessionId,
 				  tSirMacAddr sessionMacAddr,
 				  csr_roamSessionCloseCallback callback,
 				  void *pContext)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tSmeCmd *pCommand;
-	pCommand = csr_get_command_buffer(pMac);
-	if (NULL == pCommand) {
-		status = QDF_STATUS_E_RESOURCES;
-	} else {
-		pCommand->command = eSmeCommandDelStaSession;
-		pCommand->sessionId = (uint8_t) sessionId;
-		pCommand->u.delStaSessionCmd.callback = callback;
-		pCommand->u.delStaSessionCmd.pContext = pContext;
-		qdf_mem_copy(pCommand->u.delStaSessionCmd.selfMacAddr,
-			     sessionMacAddr, sizeof(tSirMacAddr));
-		status = csr_queue_sme_command(pMac, pCommand, true);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			/* Should be panic?? */
-			sms_log(pMac, LOGE,
-				FL(" fail to send message status = %d"), status);
-		}
-	}
-	return status;
-}
-
-QDF_STATUS csr_process_del_sta_session_command(tpAniSirGlobal pMac,
-					       tSmeCmd *pCommand)
 {
 	struct del_sta_self_params *del_sta_self_req;
 	struct scheduler_msg msg;
@@ -15754,10 +15658,11 @@ QDF_STATUS csr_process_del_sta_session_command(tpAniSirGlobal pMac,
 	}
 
 	qdf_mem_copy(del_sta_self_req->self_mac_addr,
-		pCommand->u.delStaSessionCmd.selfMacAddr,
-		sizeof(tSirMacAddr));
+			sessionMacAddr, sizeof(tSirMacAddr));
 
-	del_sta_self_req->session_id = pCommand->sessionId;
+	del_sta_self_req->session_id = sessionId;
+	del_sta_self_req->sme_callback = callback;
+	del_sta_self_req->sme_ctx = pContext;
 	msg.type = WMA_DEL_STA_SELF_REQ;
 	msg.reserved = 0;
 	msg.bodyptr = del_sta_self_req;
