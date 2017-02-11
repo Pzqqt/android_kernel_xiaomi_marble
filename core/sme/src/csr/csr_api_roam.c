@@ -189,7 +189,7 @@ static ePhyChanBondState csr_get_cb_mode_from_ies(tpAniSirGlobal pMac,
 						  tDot11fBeaconIEs *pIes);
 
 static void csr_roaming_state_config_cnf_processor(tpAniSirGlobal pMac,
-						   uint32_t result);
+				uint32_t result, uint8_t session_id);
 QDF_STATUS csr_roam_open(tpAniSirGlobal pMac);
 QDF_STATUS csr_roam_close(tpAniSirGlobal pMac);
 void csr_roamMICErrorTimerHandler(void *pv);
@@ -272,7 +272,6 @@ static QDF_STATUS csr_roam_issue_set_key_command(tpAniSirGlobal pMac,
 						 uint32_t roamId);
 static QDF_STATUS csr_roam_get_qos_info_from_bss(tpAniSirGlobal pMac,
 						 tSirBssDescription *pBssDesc);
-void csr_roam_reissue_roam_command(tpAniSirGlobal pMac);
 static void csr_ser_des_unpack_diassoc_rsp(uint8_t *pBuf,
 					   tSirSmeDisassocRsp *pRsp);
 void csr_init_operating_classes(tHalHandle hHal);
@@ -1310,7 +1309,7 @@ void csr_release_command_set_key(tpAniSirGlobal pMac, tSmeCmd *pCommand)
  *
  * Return: None
  */
-void csr_release_roc_req_cmd(tpAniSirGlobal mac_ctx)
+void csr_release_roc_req_cmd(tpAniSirGlobal mac_ctx, uint8_t session_id)
 {
 	tListElem *entry;
 	tSmeCmd *cmd = NULL;
@@ -4728,7 +4727,8 @@ static void csr_set_cfg_rate_set_from_profile(tpAniSirGlobal pMac,
 			ProprietaryOperationalRatesLength);
 }
 
-void csr_roam_ccm_cfg_set_callback(tpAniSirGlobal pMac, int32_t result)
+void csr_roam_ccm_cfg_set_callback(tpAniSirGlobal pMac, int32_t result,
+					uint8_t session_id)
 {
 	tListElem *pEntry =
 		csr_ll_peek_head(&pMac->sme.smeCmdActiveList, LL_ACCESS_LOCK);
@@ -4753,7 +4753,8 @@ void csr_roam_ccm_cfg_set_callback(tpAniSirGlobal pMac, int32_t result)
 
 	if (CSR_IS_ROAM_JOINING(pMac, sessionId)
 	    && CSR_IS_ROAM_SUBSTATE_CONFIG(pMac, sessionId)) {
-		csr_roaming_state_config_cnf_processor(pMac, (uint32_t) result);
+		csr_roaming_state_config_cnf_processor(pMac, (uint32_t) result,
+						session_id);
 	}
 }
 
@@ -4844,7 +4845,7 @@ QDF_STATUS csr_roam_set_bss_config_cfg(tpAniSirGlobal pMac, uint32_t sessionId,
 	/* Join time out */
 	csr_roam_substate_change(pMac, eCSR_ROAM_SUBSTATE_CONFIG, sessionId);
 
-	csr_roam_ccm_cfg_set_callback(pMac, status);
+	csr_roam_ccm_cfg_set_callback(pMac, status, sessionId);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -5545,16 +5546,18 @@ static QDF_STATUS csr_roam(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 			/* otherwise, we can complete the Roam command here. */
 			if (eCsrStopRoamingDueToConcurrency == RoamState)
 				csr_roam_complete(pMac,
-					eCsrJoinFailureDueToConcurrency, NULL);
+					eCsrJoinFailureDueToConcurrency, NULL,
+					sessionId);
 			else
 				csr_roam_complete(pMac,
-					eCsrNothingToJoin, NULL);
+					eCsrNothingToJoin, NULL, sessionId);
 		}
 	} else if (eCsrReassocToSelfNoCapChange == RoamState) {
 		csr_roam_complete(pMac, eCsrSilentlyStopRoamingSaveState,
-				NULL);
+				NULL, sessionId);
 	} else if (eCsrStartIbssSameIbss == RoamState) {
-		csr_roam_complete(pMac, eCsrSilentlyStopRoaming, NULL);
+		csr_roam_complete(pMac, eCsrSilentlyStopRoaming, NULL,
+				sessionId);
 	}
 
 	return status;
@@ -5580,7 +5583,7 @@ QDF_STATUS csr_process_ft_reassoc_roam_command(tpAniSirGlobal pMac,
 	if (CSR_IS_ROAMING(pSession) && pSession->fCancelRoaming) {
 		/* the roaming is cancelled. Simply complete the command */
 		sms_log(pMac, LOG1, FL("Roam command canceled"));
-		csr_roam_complete(pMac, eCsrNothingToJoin, NULL);
+		csr_roam_complete(pMac, eCsrNothingToJoin, NULL, sessionId);
 		return QDF_STATUS_E_FAILURE;
 	}
 	if (pCommand->u.roamCmd.pRoamBssEntry) {
@@ -5591,7 +5594,7 @@ QDF_STATUS csr_process_ft_reassoc_roam_command(tpAniSirGlobal pMac,
 	} else {
 		/* the roaming is cancelled. Simply complete the command */
 		sms_log(pMac, LOG1, FL("Roam command canceled"));
-		csr_roam_complete(pMac, eCsrNothingToJoin, NULL);
+		csr_roam_complete(pMac, eCsrNothingToJoin, NULL, sessionId);
 		return QDF_STATUS_E_FAILURE;
 	}
 	status = csr_roam_issue_reassociate(pMac, sessionId, pBssDesc,
@@ -5813,7 +5816,7 @@ void csr_reinit_wm_status_change_cmd(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 }
 
 void csr_roam_complete(tpAniSirGlobal pMac, eCsrRoamCompleteResult Result,
-		       void *Context)
+		       void *Context, uint8_t session_id)
 {
 	tListElem *pEntry;
 	tSmeCmd *pCommand;
@@ -7652,7 +7655,8 @@ QDF_STATUS csr_roam_issue_reassoc(tpAniSirGlobal pMac, uint32_t sessionId,
 	return status;
 }
 
-QDF_STATUS csr_dequeue_roam_command(tpAniSirGlobal pMac, eCsrRoamReason reason)
+QDF_STATUS csr_dequeue_roam_command(tpAniSirGlobal pMac, eCsrRoamReason reason,
+					uint8_t session_id)
 {
 	tListElem *pEntry;
 	tSmeCmd *pCommand;
@@ -8155,7 +8159,7 @@ QDF_STATUS csr_roam_process_disassoc_deauth(tpAniSirGlobal pMac, tSmeCmd *pComma
 		status = QDF_STATUS_E_FAILURE;
 	}
 	if (fComplete) {
-		csr_roam_complete(pMac, eCsrNothingToJoin, NULL);
+		csr_roam_complete(pMac, eCsrNothingToJoin, NULL, sessionId);
 	}
 
 	if (QDF_IS_STATUS_SUCCESS(status)) {
@@ -8582,7 +8586,8 @@ static void csr_roam_join_rsp_processor(tpAniSirGlobal pMac,
 		 * the response to upper layers
 		 * */
 		session_ptr->join_bssid_count = 0;
-		csr_roam_complete(pMac, eCsrJoinSuccess, (void *)pSmeJoinRsp);
+		csr_roam_complete(pMac, eCsrJoinSuccess, (void *)pSmeJoinRsp,
+				pSmeJoinRsp->sessionId);
 	} else {
 		uint32_t roamId = 0;
 		bool is_dis_pending;
@@ -8641,7 +8646,8 @@ static void csr_roam_join_rsp_processor(tpAniSirGlobal pMac,
 					FL("disconnect is pending, complete roam"));
 
 			session_ptr->join_bssid_count = 0;
-			csr_roam_complete(pMac, eCsrNothingToJoin, NULL);
+			csr_roam_complete(pMac, eCsrNothingToJoin, NULL,
+					pSmeJoinRsp->sessionId);
 		}
 	} /*else: ( eSIR_SME_SUCCESS == pSmeJoinRsp->statusCode ) */
 }
@@ -8665,7 +8671,8 @@ static QDF_STATUS csr_roam_issue_join(tpAniSirGlobal pMac, uint32_t sessionId,
 	return status;
 }
 
-void csr_roam_reissue_roam_command(tpAniSirGlobal pMac)
+static void
+csr_roam_reissue_roam_command(tpAniSirGlobal pMac, uint8_t session_id)
 {
 	tListElem *pEntry;
 	tSmeCmd *pCommand;
@@ -8708,7 +8715,8 @@ void csr_roam_reissue_roam_command(tpAniSirGlobal pMac)
 							      true)) {
 			sms_log(pMac, LOGW,
 				FL("Failed to reissue join command"));
-			csr_roam_complete(pMac, eCsrNothingToJoin, NULL);
+			csr_roam_complete(pMac, eCsrNothingToJoin, NULL,
+					session_id);
 		}
 		return;
 	}
@@ -8726,7 +8734,7 @@ void csr_roam_reissue_roam_command(tpAniSirGlobal pMac)
 					eCSR_ROAM_SUBSTATE_STOP_BSS_REQ))) {
 		sms_log(pMac, LOGE,
 			FL("Failed to reissue stop_bss command for WDS"));
-		csr_roam_complete(pMac, eCsrNothingToJoin, NULL);
+		csr_roam_complete(pMac, eCsrNothingToJoin, NULL, session_id);
 	}
 }
 
@@ -8799,7 +8807,8 @@ bool csr_is_roam_command_waiting(tpAniSirGlobal pMac)
 	return fRet;
 }
 
-bool csr_is_scan_for_roam_command_active(tpAniSirGlobal pMac)
+bool csr_is_scan_for_roam_command_active(tpAniSirGlobal pMac,
+					uint8_t session_id)
 {
 	bool fRet = false;
 	tListElem *pEntry;
@@ -8821,7 +8830,7 @@ bool csr_is_scan_for_roam_command_active(tpAniSirGlobal pMac)
 
 static void
 csr_roaming_state_config_cnf_processor(tpAniSirGlobal mac_ctx,
-				       uint32_t result)
+			uint32_t result, uint8_t sme_session_id)
 {
 	tListElem *entry = csr_ll_peek_head(&mac_ctx->sme.smeCmdActiveList,
 					     LL_ACCESS_LOCK);
@@ -8849,7 +8858,8 @@ csr_roaming_state_config_cnf_processor(tpAniSirGlobal mac_ctx,
 	if (CSR_IS_ROAMING(session) && session->fCancelRoaming) {
 		/* the roaming is cancelled. Simply complete the command */
 		sms_log(mac_ctx, LOGW, FL("Roam command canceled"));
-		csr_roam_complete(mac_ctx, eCsrNothingToJoin, NULL);
+		csr_roam_complete(mac_ctx, eCsrNothingToJoin, NULL,
+					sme_session_id);
 		return;
 	}
 
@@ -8860,7 +8870,8 @@ csr_roaming_state_config_cnf_processor(tpAniSirGlobal mac_ctx,
 			FL("Roam cmd (reason %d) aborted(roaming completed)"),
 			cmd->u.roamCmd.roamReason);
 		csr_set_abort_roaming_command(mac_ctx, cmd);
-		csr_roam_complete(mac_ctx, eCsrNothingToJoin, NULL);
+		csr_roam_complete(mac_ctx, eCsrNothingToJoin, NULL,
+				sme_session_id);
 		return;
 	}
 
@@ -8877,10 +8888,10 @@ csr_roaming_state_config_cnf_processor(tpAniSirGlobal mac_ctx,
 			if (csr_is_bss_type_ibss
 				    (cmd->u.roamCmd.roamProfile.BSSType)) {
 				csr_roam_complete(mac_ctx, eCsrStartBssFailure,
-						  NULL);
+						  NULL, sme_session_id);
 			} else {
 				csr_roam_complete(mac_ctx, eCsrNothingToJoin,
-						  NULL);
+						  NULL, sme_session_id);
 			}
 		}
 		return;
@@ -8908,7 +8919,8 @@ csr_roaming_state_config_cnf_processor(tpAniSirGlobal mac_ctx,
 						cmd->u.roamCmd.roamId))) {
 			sms_log(mac_ctx, LOGE, FL("CSR start BSS failed"));
 			/* We need to complete the command */
-			csr_roam_complete(mac_ctx, eCsrStartBssFailure, NULL);
+			csr_roam_complete(mac_ctx, eCsrStartBssFailure, NULL,
+					sme_session_id);
 		}
 		return;
 	}
@@ -8916,7 +8928,8 @@ csr_roaming_state_config_cnf_processor(tpAniSirGlobal mac_ctx,
 	if (!cmd->u.roamCmd.pRoamBssEntry) {
 		sms_log(mac_ctx, LOGE, FL("pRoamBssEntry is NULL"));
 		/* We need to complete the command */
-		csr_roam_complete(mac_ctx, eCsrJoinFailure, NULL);
+		csr_roam_complete(mac_ctx, eCsrJoinFailure, NULL,
+				sme_session_id);
 		return;
 	}
 
@@ -9045,9 +9058,11 @@ static void csr_roam_roaming_state_reassoc_rsp_processor(tpAniSirGlobal pMac,
 			/* Need to dig more on indicating events to SME QoS module */
 			sme_qos_csr_event_ind(pMac, pSmeJoinRsp->sessionId,
 					      SME_QOS_CSR_HANDOFF_COMPLETE, NULL);
-			csr_roam_complete(pMac, result, pSmeJoinRsp);
+			csr_roam_complete(pMac, result, pSmeJoinRsp,
+					pSmeJoinRsp->sessionId);
 		} else {
-			csr_roam_complete(pMac, result, NULL);
+			csr_roam_complete(pMac, result, NULL,
+					pSmeJoinRsp->sessionId);
 		}
 	}
 	/* Should we handle this similar to handling the join failure? Is it ok
@@ -9085,7 +9100,8 @@ static void csr_roam_roaming_state_reassoc_rsp_processor(tpAniSirGlobal pMac,
 				 * disassoc to the AP with which we were trying
 				 * to reassoc.
 				 */
-				csr_roam_complete(pMac, eCsrJoinFailure, NULL);
+				csr_roam_complete(pMac, eCsrJoinFailure, NULL,
+						pSmeJoinRsp->sessionId);
 				return;
 			}
 		}
@@ -9097,7 +9113,8 @@ static void csr_roam_roaming_state_reassoc_rsp_processor(tpAniSirGlobal pMac,
 			    (csr_roam_issue_disassociate
 				    (pMac, pSmeJoinRsp->sessionId,
 				    eCSR_ROAM_SUBSTATE_DISASSOC_REASSOC_FAILURE, false))) {
-			csr_roam_complete(pMac, eCsrJoinFailure, NULL);
+			csr_roam_complete(pMac, eCsrJoinFailure, NULL,
+					pSmeJoinRsp->sessionId);
 		}
 	}
 }
@@ -9132,10 +9149,10 @@ static void csr_roam_roaming_state_stop_bss_rsp_processor(tpAniSirGlobal pMac,
 			if (pSmeRsp->statusCode != eSIR_SME_SUCCESS)
 				result_code = eCsrStopBssFailure;
 		}
-		csr_roam_complete(pMac, result_code, NULL);
+		csr_roam_complete(pMac, result_code, NULL, pSmeRsp->sessionId);
 	} else if (CSR_IS_ROAM_SUBSTATE_DISCONNECT_CONTINUE(pMac,
 			pSmeRsp->sessionId)) {
-		csr_roam_reissue_roam_command(pMac);
+		csr_roam_reissue_roam_command(pMac, pSmeRsp->sessionId);
 	}
 }
 
@@ -9230,7 +9247,7 @@ csr_post_roam_failure(tpAniSirGlobal mac_ctx,
 		sms_log(mac_ctx, LOGE,
 			FL("csr_roam_issue_disassociate failed, status %d"),
 			status);
-		csr_roam_complete(mac_ctx, eCsrJoinFailure, NULL);
+		csr_roam_complete(mac_ctx, eCsrJoinFailure, NULL, session_id);
 	}
 }
 
@@ -9309,7 +9326,7 @@ void csr_roam_roaming_state_disassoc_rsp_processor(tpAniSirGlobal pMac,
 
 	if (CSR_IS_ROAM_SUBSTATE_DISASSOC_NO_JOIN(pMac, sessionId)) {
 		sms_log(pMac, LOG2, "***eCsrNothingToJoin***");
-		csr_roam_complete(pMac, eCsrNothingToJoin, NULL);
+		csr_roam_complete(pMac, eCsrNothingToJoin, NULL, sessionId);
 	} else if (CSR_IS_ROAM_SUBSTATE_DISASSOC_FORCED(pMac, sessionId) ||
 		   CSR_IS_ROAM_SUBSTATE_DISASSOC_REQ(pMac, sessionId)) {
 		if (eSIR_SME_SUCCESS == SmeDisassocRsp.statusCode) {
@@ -9320,7 +9337,7 @@ void csr_roam_roaming_state_disassoc_rsp_processor(tpAniSirGlobal pMac,
 			 * csr_roam_complete so no need to do anything here
 			 */
 		}
-		csr_roam_complete(pMac, eCsrNothingToJoin, NULL);
+		csr_roam_complete(pMac, eCsrNothingToJoin, NULL, sessionId);
 	} else if (CSR_IS_ROAM_SUBSTATE_DISASSOC_HO(pMac, sessionId)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  FL("CSR SmeDisassocReq due to HO on session %d"),
@@ -9388,7 +9405,7 @@ POST_ROAM_FAILURE:
 	} /* else if ( CSR_IS_ROAM_SUBSTATE_DISASSOC_HO( pMac ) ) */
 	else if (CSR_IS_ROAM_SUBSTATE_REASSOC_FAIL(pMac, sessionId)) {
 		/* Disassoc due to Reassoc failure falls into this codepath */
-		csr_roam_complete(pMac, eCsrJoinFailure, NULL);
+		csr_roam_complete(pMac, eCsrJoinFailure, NULL, sessionId);
 	} else {
 		if (eSIR_SME_SUCCESS == SmeDisassocRsp.statusCode) {
 			/*
@@ -9411,7 +9428,7 @@ POST_ROAM_FAILURE:
 				SmeDisassocRsp.statusCode);
 		}
 		/* We are not done yet. Get the data and continue roaming */
-		csr_roam_reissue_roam_command(pMac);
+		csr_roam_reissue_roam_command(pMac, sessionId);
 	}
 }
 
@@ -9424,7 +9441,8 @@ static void csr_roam_roaming_state_deauth_rsp_processor(tpAniSirGlobal pMac,
 	statusCode = csr_get_de_auth_rsp_status_code(pSmeRsp);
 	pMac->roam.deauthRspStatus = statusCode;
 	if (CSR_IS_ROAM_SUBSTATE_DEAUTH_REQ(pMac, pSmeRsp->sessionId)) {
-		csr_roam_complete(pMac, eCsrNothingToJoin, NULL);
+		csr_roam_complete(pMac, eCsrNothingToJoin, NULL,
+				pSmeRsp->sessionId);
 	} else {
 		if (eSIR_SME_SUCCESS == statusCode) {
 			/* Successfully deauth from the 'old' Bss... */
@@ -9437,7 +9455,7 @@ static void csr_roam_roaming_state_deauth_rsp_processor(tpAniSirGlobal pMac,
 				statusCode);
 		}
 		/* We are not done yet. Get the data and continue roaming */
-		csr_roam_reissue_roam_command(pMac);
+		csr_roam_reissue_roam_command(pMac, pSmeRsp->sessionId);
 	}
 }
 
@@ -9457,7 +9475,8 @@ static void csr_roam_roaming_state_start_bss_rsp_processor(tpAniSirGlobal pMac,
 		/* Let csr_roam_complete decide what to do */
 		result = eCsrStartBssFailure;
 	}
-	csr_roam_complete(pMac, result, pSmeStartBssRsp);
+	csr_roam_complete(pMac, result, pSmeStartBssRsp,
+				pSmeStartBssRsp->sessionId);
 }
 
 /**
@@ -11884,7 +11903,8 @@ QDF_STATUS csr_roam_lost_link(tpAniSirGlobal pMac, uint32_t sessionId,
 }
 
 
-static void csr_roam_wm_status_change_complete(tpAniSirGlobal pMac)
+static void csr_roam_wm_status_change_complete(tpAniSirGlobal pMac,
+						uint8_t session_id)
 {
 	tListElem *pEntry;
 	tSmeCmd *pCommand;
@@ -11953,7 +11973,7 @@ void csr_roam_process_wm_status_change_command(tpAniSirGlobal pMac,
 	}
 	/* Lost Link just triggers a roaming sequence.  We can complte the Lost Link */
 	/* command here since there is nothing else to do. */
-	csr_roam_wm_status_change_complete(pMac);
+	csr_roam_wm_status_change_complete(pMac, pCommand->sessionId);
 }
 
 

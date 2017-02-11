@@ -51,7 +51,7 @@
  * commands are removed after getting reponse from PE.
  */
 static QDF_STATUS csr_tdls_remove_sme_cmd(tpAniSirGlobal pMac,
-					  eSmeCommandType cmdType)
+			eSmeCommandType cmdType, uint8_t session_id)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tListElem *pEntry;
@@ -688,6 +688,7 @@ QDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msgType,
 {
 	tCsrRoamInfo roamInfo = { 0 };
 	eCsrRoamResult roamResult;
+	tSirSmeRsp *sme_rsp = pMsgBuf;
 	tSirTdlsAddStaRsp *addStaRsp = (tSirTdlsAddStaRsp *) pMsgBuf;
 	tSirTdlsDelStaRsp *delStaRsp = (tSirTdlsDelStaRsp *) pMsgBuf;
 	tpSirTdlsDelStaInd pSirTdlsDelStaInd = (tpSirTdlsDelStaInd) pMsgBuf;
@@ -702,7 +703,11 @@ QDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msgType,
 	switch (msgType) {
 	case eWNI_SME_TDLS_SEND_MGMT_RSP:
 		/* remove pending eSmeCommandTdlsDiscovery command */
-		csr_tdls_remove_sme_cmd(pMac, eSmeCommandTdlsSendMgmt);
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+			FL("sme_rsp->sessionId[%d] eSmeCommandTdlsSendMgmt"),
+			sme_rsp->sessionId);
+		csr_tdls_remove_sme_cmd(pMac, eSmeCommandTdlsSendMgmt,
+					sme_rsp->sessionId);
 		break;
 	case eWNI_SME_TDLS_ADD_STA_RSP:
 		qdf_copy_macaddr(&roamInfo.peerMac, &addStaRsp->peermac);
@@ -723,7 +728,8 @@ QDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msgType,
 				roamResult);
 
 		/* remove pending eSmeCommandTdlsDiscovery command */
-		csr_tdls_remove_sme_cmd(pMac, eSmeCommandTdlsAddPeer);
+		csr_tdls_remove_sme_cmd(pMac, eSmeCommandTdlsAddPeer,
+					addStaRsp->sessionId);
 		break;
 	case eWNI_SME_TDLS_DEL_STA_RSP:
 		qdf_copy_macaddr(&roamInfo.peerMac, &delStaRsp->peermac);
@@ -738,7 +744,8 @@ QDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msgType,
 				eCSR_ROAM_TDLS_STATUS_UPDATE,
 				eCSR_ROAM_RESULT_DELETE_TDLS_PEER);
 
-		csr_tdls_remove_sme_cmd(pMac, eSmeCommandTdlsDelPeer);
+		csr_tdls_remove_sme_cmd(pMac, eSmeCommandTdlsDelPeer,
+					delStaRsp->sessionId);
 		break;
 	case eWNI_SME_TDLS_DEL_STA_IND:
 		qdf_copy_macaddr(&roamInfo.peerMac,
@@ -777,7 +784,8 @@ QDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msgType,
 				eCSR_ROAM_TDLS_STATUS_UPDATE,
 				eCSR_ROAM_RESULT_LINK_ESTABLISH_REQ_RSP);
 		/* remove pending eSmeCommandTdlsLinkEstablish command */
-		csr_tdls_remove_sme_cmd(pMac, eSmeCommandTdlsLinkEstablish);
+		csr_tdls_remove_sme_cmd(pMac, eSmeCommandTdlsLinkEstablish,
+				linkEstablishReqRsp->sessionId);
 		break;
 	case eWNI_SME_TDLS_SHOULD_DISCOVER:
 		qdf_copy_macaddr(&roamInfo.peerMac, &tevent->peermac);

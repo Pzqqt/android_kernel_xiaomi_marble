@@ -394,7 +394,7 @@ ABORT_PREAUTH:
 	}
 
 DEQ_PREAUTH:
-	csr_dequeue_roam_command(mac_ctx, eCsrPerformPreauth);
+	csr_dequeue_roam_command(mac_ctx, eCsrPerformPreauth, session_id);
 	return preauth_processed;
 }
 

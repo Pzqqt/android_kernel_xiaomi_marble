@@ -6978,7 +6978,7 @@ QDF_STATUS csr_scan_abort_mac_scan_not_for_connect(tpAniSirGlobal pMac,
 						   uint8_t sessionId)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	if (!csr_is_scan_for_roam_command_active(pMac)) {
+	if (!csr_is_scan_for_roam_command_active(pMac, sessionId)) {
 		/*
 		 * Only abort the scan if it is not used for other roam/connect
 		 * purpose

@@ -93,7 +93,7 @@ QDF_STATUS p2p_process_remain_on_channel_cmd(tpAniSirGlobal pMac,
 	}
 error:
 	if (QDF_STATUS_E_FAILURE == status)
-		csr_release_roc_req_cmd(pMac);
+		csr_release_roc_req_cmd(pMac, p2pRemainonChn->sessionId);
 	return status;
 }
 

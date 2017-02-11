@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -151,13 +151,14 @@ QDF_STATUS csr_msg_processor(tpAniSirGlobal mac_ctx, void *msg_buf)
 					sms_log(mac_ctx, LOGE,
 						FL("Dequeue eSmeCommandRoam command with reason eCsrPerformPreauth"));
 					csr_dequeue_roam_command(mac_ctx,
-						eCsrPerformPreauth);
+						eCsrPerformPreauth, session_id);
 				} else if (eWNI_SME_REASSOC_RSP ==
 						sme_rsp->messageType) {
 					sms_log(mac_ctx, LOGE,
 						FL("Dequeue eSmeCommandRoam command with reason eCsrSmeIssuedFTReassoc"));
 					csr_dequeue_roam_command(mac_ctx,
-						eCsrSmeIssuedFTReassoc);
+						eCsrSmeIssuedFTReassoc,
+						session_id);
 				}
 			}
 			break;

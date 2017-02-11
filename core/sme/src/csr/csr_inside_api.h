@@ -208,7 +208,7 @@ bool csr_scan_complete(tpAniSirGlobal pMac, tSirSmeScanRsp *pScanRsp);
 void csr_release_command_roam(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 void csr_release_command_scan(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 void csr_release_command_wm_status_change(tpAniSirGlobal pMac, tSmeCmd *pCommand);
-extern void csr_release_roc_req_cmd(tpAniSirGlobal mac_ctx);
+extern void csr_release_roc_req_cmd(tpAniSirGlobal mac_ctx, uint8_t session_id);
 
 bool csr_is_duplicate_bss_description(tpAniSirGlobal pMac,
 				      tSirBssDescription *pSirBssDesc1,
@@ -333,7 +333,7 @@ QDF_STATUS csr_roam_issue_reassoc(tpAniSirGlobal pMac, uint32_t sessionId,
 				  eCsrRoamReason reason, uint32_t roamId,
 				  bool fImediate);
 void csr_roam_complete(tpAniSirGlobal pMac, eCsrRoamCompleteResult Result,
-		       void *Context);
+		       void *Context, uint8_t session_id);
 QDF_STATUS csr_roam_issue_set_context_req(tpAniSirGlobal pMac, uint32_t sessionId,
 					  eCsrEncryptionType EncryptType,
 					  tSirBssDescription *pBssDescription,
@@ -361,7 +361,8 @@ bool csr_is_same_profile(tpAniSirGlobal pMac, tCsrRoamConnectedProfile *pProfile
 			 tCsrRoamProfile *pProfile2);
 bool csr_is_roam_command_waiting(tpAniSirGlobal pMac);
 bool csr_is_roam_command_waiting_for_session(tpAniSirGlobal pMac, uint32_t sessionId);
-bool csr_is_scan_for_roam_command_active(tpAniSirGlobal pMac);
+bool csr_is_scan_for_roam_command_active(tpAniSirGlobal pMac,
+					uint8_t session_id);
 eRoamCmdStatus csr_get_roam_complete_status(tpAniSirGlobal pMac,
 					    uint32_t sessionId);
 /* pBand can be NULL if caller doesn't need to get it */
@@ -411,7 +412,8 @@ bool csr_roam_is_channel_valid(tpAniSirGlobal pMac, uint8_t channel);
 /* pNumChan is a caller allocated space with the sizeof pChannels */
 QDF_STATUS csr_get_cfg_valid_channels(tpAniSirGlobal pMac, uint8_t *pChannels,
 				      uint32_t *pNumChan);
-void csr_roam_ccm_cfg_set_callback(tpAniSirGlobal pMac, int32_t result);
+void csr_roam_ccm_cfg_set_callback(tpAniSirGlobal pMac, int32_t result,
+					uint8_t session_id);
 
 int8_t csr_get_cfg_max_tx_power(tpAniSirGlobal pMac, uint8_t channel);
 
@@ -1012,7 +1014,8 @@ void update_cckmtsf(uint32_t *timeStamp0, uint32_t *timeStamp1,
 QDF_STATUS csr_roam_enqueue_preauth(tpAniSirGlobal pMac, uint32_t sessionId,
 				    tpSirBssDescription pBssDescription,
 				    eCsrRoamReason reason, bool fImmediate);
-QDF_STATUS csr_dequeue_roam_command(tpAniSirGlobal pMac, eCsrRoamReason reason);
+QDF_STATUS csr_dequeue_roam_command(tpAniSirGlobal pMac, eCsrRoamReason reason,
+					uint8_t session_id);
 void csr_init_occupied_channels_list(tpAniSirGlobal pMac, uint8_t sessionId);
 bool csr_neighbor_roam_is_new_connected_profile(tpAniSirGlobal pMac,
 						uint8_t sessionId);
