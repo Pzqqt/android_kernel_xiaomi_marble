@@ -619,24 +619,48 @@ SAP_OBJS :=	$(SAP_SRC_DIR)/sap_api_link_cntl.o \
 		$(SAP_SRC_DIR)/sap_module.o
 
 ############ DFS ############ 350
-DFS_DIR :=	$(SAP_DIR)/dfs
-DFS_INC_DIR :=	$(DFS_DIR)/inc
-DFS_SRC_DIR :=	$(DFS_DIR)/src
+DFS_DIR :=     $(WLAN_COMMON_ROOT)/umac/dfs
+DFS_CORE_INC_DIR := $(DFS_DIR)/core/inc
+DFS_CORE_SRC_DIR := $(DFS_DIR)/core/src
 
-DFS_INC :=	-I$(WLAN_ROOT)/$(DFS_INC_DIR) \
-		-I$(WLAN_ROOT)/$(DFS_SRC_DIR)
+DFS_DISP_INC_DIR := $(DFS_DIR)/dispatcher/inc
+DFS_DISP_SRC_DIR := $(DFS_DIR)/dispatcher/src
+DFS_TARGET_INC_DIR := $(WLAN_COMMON_ROOT)/target_if/dfs/inc
+DFS_CMN_SERVICES_INC_DIR := $(WLAN_COMMON_ROOT)/umac/cmn_services/dfs/inc
 
-DFS_OBJS :=	$(DFS_SRC_DIR)/dfs_bindetects.o \
-		$(DFS_SRC_DIR)/dfs.o \
-		$(DFS_SRC_DIR)/dfs_debug.o\
-		$(DFS_SRC_DIR)/dfs_fcc_bin5.o\
-		$(DFS_SRC_DIR)/dfs_init.o\
-		$(DFS_SRC_DIR)/dfs_misc.o\
-		$(DFS_SRC_DIR)/dfs_nol.o\
-		$(DFS_SRC_DIR)/dfs_phyerr_tlv.o\
-		$(DFS_SRC_DIR)/dfs_process_phyerr.o\
-		$(DFS_SRC_DIR)/dfs_process_radarevent.o\
-		$(DFS_SRC_DIR)/dfs_staggered.o
+DFS_INC :=	-I$(WLAN_ROOT)/$(DFS_DISP_INC_DIR) \
+		-I$(WLAN_ROOT)/$(DFS_TARGET_INC_DIR) \
+		-I$(WLAN_ROOT)/$(DFS_CMN_SERVICES_INC_DIR)
+
+DFS_OBJS :=	$(DFS_CORE_SRC_DIR)/filtering/dfs_bindetects.o \
+		$(DFS_CORE_SRC_DIR)/filtering/dfs_debug.o\
+		$(DFS_CORE_SRC_DIR)/filtering/dfs_fcc_bin5.o\
+		$(DFS_CORE_SRC_DIR)/filtering/dfs_init.o\
+		$(DFS_CORE_SRC_DIR)/filtering/dfs_misc.o\
+		$(DFS_CORE_SRC_DIR)/filtering/dfs_radar.o\
+		$(DFS_CORE_SRC_DIR)/filtering/dfs_ar.o\
+		$(DFS_CORE_SRC_DIR)/filtering/ar5416_radar.o\
+		$(DFS_CORE_SRC_DIR)/filtering/ar9300_radar.o\
+		$(DFS_CORE_SRC_DIR)/filtering/ar5212_radar.o\
+		$(DFS_CORE_SRC_DIR)/filtering/dfs_phyerr_tlv.o\
+		$(DFS_CORE_SRC_DIR)/filtering/dfs_process_phyerr.o\
+		$(DFS_CORE_SRC_DIR)/filtering/dfs_process_radarevent.o\
+		$(DFS_CORE_SRC_DIR)/filtering/dfs_staggered.o \
+		$(DFS_CORE_SRC_DIR)/misc/dfs.o \
+		$(DFS_CORE_SRC_DIR)/misc/dfs_cac.o\
+		$(DFS_CORE_SRC_DIR)/misc/dfs_nol.o\
+		$(DFS_CORE_SRC_DIR)/misc/dfs_nol.o\
+		$(DFS_CORE_SRC_DIR)/misc/dfs_zero_cac.o\
+		$(DFS_CORE_SRC_DIR)/misc/dfs_random_chan_sel.o\
+		$(DFS_CORE_SRC_DIR)/misc/dfs_process_radar_found_ind.o\
+		$(DFS_DISP_SRC_DIR)/wlan_dfs_init_deinit_api.o\
+		$(DFS_DISP_SRC_DIR)/wlan_dfs_lmac_api.o\
+		$(DFS_DISP_SRC_DIR)/wlan_dfs_mlme_api.o\
+		$(DFS_DISP_SRC_DIR)/wlan_dfs_tgt_api.o\
+		$(DFS_DISP_SRC_DIR)/wlan_dfs_ucfg_api.o\
+		$(DFS_DISP_SRC_DIR)/wlan_dfs_tgt_api.o\
+		$(DFS_DISP_SRC_DIR)/wlan_dfs_utils_api.o\
+		$(WLAN_COMMON_ROOT)/target_if/dfs/src/target_if_dfs.o
 
 ############ SME ############
 SME_DIR :=	core/sme
@@ -982,6 +1006,7 @@ WMI_OBJS := $(WMI_OBJ_DIR)/wmi_unified.o \
 	    $(WMI_OBJ_DIR)/wmi_unified_api.o \
 	    $(WMI_OBJ_DIR)/wmi_unified_pmo_api.o \
 	    $(WMI_OBJ_DIR)/wmi_unified_reg_api.o \
+	    $(WMI_OBJ_DIR)/wmi_unified_dfs_api.o \
 	    $(WMI_OBJ_DIR)/wmi_unified_non_tlv.o
 
 ########### FWLOG ###########
@@ -1312,7 +1337,6 @@ WMA_OBJS :=	$(WMA_SRC_DIR)/wma_main.o \
 		$(WMA_SRC_DIR)/wma_data.o \
 		$(WMA_SRC_DIR)/wma_utils.o \
 		$(WMA_SRC_DIR)/wma_features.o \
-		$(WMA_SRC_DIR)/wma_dfs_interface.o \
 		$(WMA_SRC_DIR)/wlan_qct_wma_legacy.o\
 		$(WMA_NDP_OBJS)
 
@@ -2079,6 +2103,12 @@ CDEFINES += -DDP_PRINT_ENABLE=0
 CDEFINES += -DATH_SUPPORT_WRAP=0
 CDEFINES += -DQCA_HOST2FW_RXBUF_RING
 #endof dummy flags
+
+# DFS component
+CDEFINES += -DQCA_MCL_DFS_SUPPORT
+CDEFINES += -DDFS_COMPONENT_ENABLE
+CDEFINES += -DQCA_DFS_USE_POLICY_MANAGER
+CDEFINES += -DQCA_DFS_NOL_PLATFORM_DRV_SUPPORT
 
 ifeq ($(CONFIG_WLAN_DEBUGFS), y)
 CDEFINES += -DWLAN_DEBUGFS
