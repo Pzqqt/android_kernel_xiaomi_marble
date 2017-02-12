@@ -107,7 +107,7 @@ void wlan_cfg_set_ce_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
 void wlan_cfg_set_rxbuf_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg, int context,
 				  int mask);
 /**
- * wlan_cfg_get_num_contexts()  Number of interrupt contexts to be registered
+ * wlan_cfg_get_num_contexts() - Number of interrupt contexts to be registered
  * @wlan_cfg_ctx - Configuration Handle
  *
  * For WIN,  DP_NUM_INTERRUPT_CONTEXTS will be equal to  number of CPU cores.
@@ -120,8 +120,8 @@ void wlan_cfg_set_rxbuf_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg, int context,
 int wlan_cfg_get_num_contexts(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
 
 /**
- * wlan_cfg_get_intr_tx_ring_mask() - Return Tx interrupt mask mapped to an
- *				      interrupt context
+ * wlan_cfg_get_tx_ring_mask() - Return Tx interrupt mask mapped to an
+ *				 interrupt context
  * @wlan_cfg_ctx - Configuration Handle
  * @context - Numerical ID identifying the Interrupt/NAPI context
  *
@@ -131,8 +131,8 @@ int wlan_cfg_get_tx_ring_mask(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx,
 		int context);
 
 /**
- * wlan_cfg_get_intr_rx_ring_mask() - Return Rx interrupt mask mapped to an
- *				      interrupt context
+ * wlan_cfg_get_rx_ring_mask() - Return Rx interrupt mask mapped to an
+ *				 interrupt context
  * @wlan_cfg_ctx - Configuration Handle
  * @context - Numerical ID identifying the Interrupt/NAPI context
  *
@@ -142,8 +142,8 @@ int wlan_cfg_get_rx_ring_mask(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx,
 		int context);
 
 /**
- * wlan_cfg_get_intr_rx_mon_ring_mask() - Return Rx monitor ring interrupt mask
- *					   mapped to an interrupt context
+ * wlan_cfg_get_rx_mon_ring_mask() - Return Rx monitor ring interrupt mask
+ *				   mapped to an interrupt context
  * @wlan_cfg_ctx - Configuration Handle
  * @context - Numerical ID identifying the Interrupt/NAPI context
  *
@@ -153,7 +153,7 @@ int wlan_cfg_get_rx_mon_ring_mask(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx,
 		int context);
 
 /**
- * wlan_cfg_get_intr_ce_ring_mask() - Return CE ring interrupt mask
+ * wlan_cfg_get_ce_ring_mask() - Return CE ring interrupt mask
  *				mapped to an interrupt context
  * @wlan_cfg_ctx - Configuration Handle
  * @context - Numerical ID identifying the Interrupt/NAPI context
@@ -164,16 +164,8 @@ int wlan_cfg_get_ce_ring_mask(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx,
 		int context);
 
 /**
- * wlan_cfg_get_num_tx_pools() - Return Number of Tx Descriptor pools for SoC
- * @wlan_cfg_ctx - Configuration Handle
- *
- * Return: num_tx_pools
- */
-int wlan_cfg_get_num_tx_pools(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
-
-/**
- * wlan_cfg_get_max_clients() Return maximum number of peers/stations supported
- *			      by device
+ * wlan_cfg_get_max_clients() - Return maximum number of peers/stations
+ *				supported by device
  * @wlan_cfg_ctx - Configuration Handle
  *
  * Return: max_clients
@@ -181,7 +173,7 @@ int wlan_cfg_get_num_tx_pools(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
 uint32_t wlan_cfg_get_max_clients(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
 
 /**
- * wlan_cfg_max_alloc_size() Return Maximum allocation size for any dynamic
+ * wlan_cfg_max_alloc_size() - Return Maximum allocation size for any dynamic
  *			    memory allocation request for this device
  * @wlan_cfg_ctx - Configuration Handle
  *
@@ -190,7 +182,7 @@ uint32_t wlan_cfg_get_max_clients(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
 uint32_t wlan_cfg_max_alloc_size(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
 
 /*
- * wlan_cfg_per_pdev_tx_ring() Return true if Tx rings are mapped as
+ * wlan_cfg_per_pdev_tx_ring() - Return true if Tx rings are mapped as
  *			       one per radio
  * @wlan_cfg_ctx - Configuration Handle
  *
@@ -199,7 +191,7 @@ uint32_t wlan_cfg_max_alloc_size(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
 int wlan_cfg_per_pdev_tx_ring(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
 
 /*
- * wlan_cfg_num_tcl_data_rings() Number of TCL Data rings supported by device
+ * wlan_cfg_num_tcl_data_rings() - Number of TCL Data rings supported by device
  * @wlan_cfg_ctx
  *
  * Return: num_tcl_data_rings
@@ -207,7 +199,7 @@ int wlan_cfg_per_pdev_tx_ring(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
 int wlan_cfg_num_tcl_data_rings(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
 
 /*
- * wlan_cfg_per_pdev_rx_ring()  Return true if Rx rings are mapped as
+ * wlan_cfg_per_pdev_rx_ring() - Return true if Rx rings are mapped as
  *                              one per radio
  * @wlan_cfg_ctx
  *
@@ -216,7 +208,7 @@ int wlan_cfg_num_tcl_data_rings(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
 int wlan_cfg_per_pdev_rx_ring(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
 
 /*
- * wlan_cfg_num_reo_dest_rings() Number of REO Data rings supported by device
+ * wlan_cfg_num_reo_dest_rings() - Number of REO Data rings supported by device
  * @wlan_cfg_ctx - Configuration Handle
  *
  * Return: num_reo_dest_rings
@@ -224,7 +216,7 @@ int wlan_cfg_per_pdev_rx_ring(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
 int wlan_cfg_num_reo_dest_rings(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
 
 /*
- * wlan_cfg_pkt_type() Default 802.11 encapsulation type
+ * wlan_cfg_pkt_type() - Default 802.11 encapsulation type
  * @wlan_cfg_ctx - Configuration Handle
  *
  * Return: htt_pkt_type_ethernet
@@ -232,7 +224,8 @@ int wlan_cfg_num_reo_dest_rings(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
 int wlan_cfg_pkt_type(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
 
 /*
- * wlan_cfg_get_num_tx_desc_pool() Number of Tx Descriptor pools for the device
+ * wlan_cfg_get_num_tx_desc_pool() - Number of Tx Descriptor pools for the
+ *					device
  * @wlan_cfg_ctx - Configuration Handle
  *
  * Return: num_tx_desc_pool
@@ -240,7 +233,8 @@ int wlan_cfg_pkt_type(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
 int wlan_cfg_get_num_tx_desc_pool(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
 
 /*
- * wlan_cfg_get_num_tx_ext_desc_pool Number of Tx MSDU ext Descriptor pools
+ * wlan_cfg_get_num_tx_ext_desc_pool() -  Number of Tx MSDU ext Descriptor
+ *					pools
  * @wlan_cfg_ctx - Configuration Handle
  *
  * Return: num_tx_ext_desc_pool
@@ -249,7 +243,7 @@ int wlan_cfg_get_num_tx_ext_desc_pool(
 		struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
 
 /*
- * wlan_cfg_get_num_tx_desc Number of Tx Descriptors per pool
+ * wlan_cfg_get_num_tx_desc() - Number of Tx Descriptors per pool
  * @wlan_cfg_ctx - Configuration Handle
  *
  * Return: num_tx_desc
@@ -257,7 +251,8 @@ int wlan_cfg_get_num_tx_ext_desc_pool(
 int wlan_cfg_get_num_tx_desc(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
 
 /*
- * wlan_cfg_get_num_tx_ext_desc Number of Tx MSDU extension Descriptors per pool
+ * wlan_cfg_get_num_tx_ext_desc() - Number of Tx MSDU extension Descriptors
+ *					per pool
  * @wlan_cfg_ctx - Configuration Handle
  *
  * Return: num_tx_ext_desc
@@ -283,7 +278,7 @@ int wlan_cfg_get_dma_mon_buf_ring_size(
 
 /*
  * wlan_cfg_get_dma_mon_dest_ring_size() - Return Size of RxDMA Monitor
- *					   Destination ring
+ *					Destination ring
  * @wlan_cfg_pdev_ctx
  *
  * Return: dma_mon_dest_size
@@ -292,7 +287,7 @@ int wlan_cfg_get_dma_mon_dest_ring_size(
 		struct wlan_cfg_dp_pdev_ctxt *wlan_cfg_pdev_ctx);
 
 /*
- * wlan_cfg_get_dma_mon_stat_ring_size - Return size of Monitor Status ring
+ * wlan_cfg_get_dma_mon_stat_ring_size() - Return size of Monitor Status ring
  * @wlan_cfg_pdev_ctx
  *
  * Return: dma_mon_stat_ring_size
@@ -301,7 +296,7 @@ int wlan_cfg_get_dma_mon_stat_ring_size(
 		struct wlan_cfg_dp_pdev_ctxt *wlan_cfg_pdev_ctx);
 
 /*
- * wlan_cfg_get_rx_dma_buf_ring_size - Return Size of RxDMA buffer ring
+ * wlan_cfg_get_rx_dma_buf_ring_size() - Return Size of RxDMA buffer ring
  * @wlan_cfg_pdev_ctx
  *
  * Return: rx_dma_buf_ring_size
@@ -310,7 +305,7 @@ int wlan_cfg_get_rx_dma_buf_ring_size(
 		struct wlan_cfg_dp_pdev_ctxt *wlan_cfg_pdev_ctx);
 
 /*
- * wlan_cfg_get_num_mac_rings - Return the number of MAC RX DMA rings
+ * wlan_cfg_get_num_mac_rings() - Return the number of MAC RX DMA rings
  * per pdev
  * @wlan_cfg_pdev_ctx
  *
