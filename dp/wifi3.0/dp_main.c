@@ -1549,7 +1549,7 @@ static void dp_peer_setup_wifi3(void *vdev_hdl, void *peer_hdl)
 
 	if (soc->cdp_soc.ol_ops->peer_set_default_routing) {
 		/* TODO: Check the destination ring number to be passed to FW */
-		soc->cdp_soc.ol_ops->peer_set_default_routing(soc->osif_soc,
+		soc->cdp_soc.ol_ops->peer_set_default_routing(pdev->osif_pdev,
 			 peer->mac_addr.raw, peer->vdev->vdev_id, 0, 1);
 	}
 	return;

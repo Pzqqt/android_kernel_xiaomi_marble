@@ -610,7 +610,8 @@ int dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
 		hw_qdesc_vaddr, rx_tid->hw_qdesc_paddr, hal_pn_type);
 
 	if (soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup) {
-		soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup(soc->osif_soc,
+		soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup(
+			vdev->pdev->osif_pdev,
 			peer->vdev->vdev_id, peer->mac_addr.raw,
 			rx_tid->hw_qdesc_paddr, tid, tid);
 
@@ -753,7 +754,7 @@ void dp_peer_rx_cleanup(struct dp_vdev *vdev, struct dp_peer *peer)
 	}
 #ifdef notyet /* See if FW can remove queues as part of peer cleanup */
 	if (soc->ol_ops->peer_rx_reorder_queue_remove) {
-		soc->ol_ops->peer_rx_reorder_queue_remove(soc->osif_soc,
+		soc->ol_ops->peer_rx_reorder_queue_remove(vdev->pdev->osif_pdev,
 			peer->vdev->vdev_id, peer->mac_addr.raw,
 			tid_delete_mask);
 	}
