@@ -1177,6 +1177,7 @@ void wma_set_linkstate(tp_wma_handle wma, tpLinkStateParams params)
 	    (params->state != eSIR_LINK_DOWN_STATE)) {
 		WMA_LOGD("%s: unsupported link state %d",
 			 __func__, params->state);
+		params->status = false;
 		goto out;
 	}
 
@@ -1184,6 +1185,7 @@ void wma_set_linkstate(tp_wma_handle wma, tpLinkStateParams params)
 
 	if (NULL == pdev) {
 		WMA_LOGE("%s: Unable to get TXRX context", __func__);
+		params->status = false;
 		goto out;
 	}
 
@@ -1191,11 +1193,13 @@ void wma_set_linkstate(tp_wma_handle wma, tpLinkStateParams params)
 	if (!vdev) {
 		WMA_LOGP("%s: vdev not found for addr: %pM",
 			 __func__, params->selfMacAddr);
+		params->status = false;
 		goto out;
 	}
 
 	if (wma_is_vdev_in_ap_mode(wma, vdev_id)) {
 		WMA_LOGD("%s: Ignoring set link req in ap mode", __func__);
+		params->status = false;
 		goto out;
 	}
 
@@ -1205,8 +1209,10 @@ void wma_set_linkstate(tp_wma_handle wma, tpLinkStateParams params)
 		status = wma_create_peer(wma, pdev, vdev, params->bssid,
 				WMI_PEER_TYPE_DEFAULT, vdev_id,
 				roam_synch_in_progress);
-		if (status != QDF_STATUS_SUCCESS)
+		if (status != QDF_STATUS_SUCCESS) {
 			WMA_LOGE("%s: Unable to create peer", __func__);
+			params->status = false;
+		}
 		if (roam_synch_in_progress)
 			return;
 	} else {
@@ -1222,12 +1228,14 @@ void wma_set_linkstate(tp_wma_handle wma, tpLinkStateParams params)
 		if (!msg) {
 			WMA_LOGP(FL("Failed to fill vdev request for vdev_id %d"),
 				 vdev_id);
+			params->status = false;
 			status = QDF_STATUS_E_NOMEM;
 		}
 		wma_vdev_set_pause_bit(vdev_id, PAUSE_TYPE_HOST);
 		if (wma_send_vdev_stop_to_fw(wma, vdev_id)) {
 			WMA_LOGP("%s: %d Failed to send vdev stop",
 				 __func__, __LINE__);
+			params->status = false;
 		} else {
 			WMA_LOGP("%s: %d vdev stop sent vdev %d",
 				 __func__, __LINE__, vdev_id);

@@ -2455,8 +2455,14 @@ ol_txrx_peer_attach(struct cdp_vdev *pvdev, uint8_t *peer_mac_addr)
 			if (cds_is_self_recovery_enabled())
 				cds_trigger_recovery(false);
 			else
-				/* Added for debugging only */
-				QDF_BUG(0);
+
+				/*
+				 * Add equivalent of following line when it
+				 * becomes available.
+				 * wma_peer_debug_dump();
+				 */
+				QDF_ASSERT(0);
+
 			vdev->wait_on_peer_id = OL_TXRX_INVALID_LOCAL_PEER_ID;
 			return NULL;
 		}
