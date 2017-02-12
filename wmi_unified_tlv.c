@@ -11920,12 +11920,14 @@ static QDF_STATUS init_cmd_send_tlv(wmi_unified_t wmi_handle,
  * save_service_bitmap_tlv() - save service bitmap
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
+ * @param bitmap_buf: bitmap buffer, for converged legacy support
  *
  * Return: None
  */
 #ifndef CONFIG_MCL
 static
-void save_service_bitmap_tlv(wmi_unified_t wmi_handle, void *evt_buf)
+void save_service_bitmap_tlv(wmi_unified_t wmi_handle, void *evt_buf,
+			     void *bitmap_buf)
 {
 	WMI_SERVICE_READY_EVENTID_param_tlvs *param_buf;
 	param_buf = (WMI_SERVICE_READY_EVENTID_param_tlvs *) evt_buf;
@@ -11933,14 +11935,25 @@ void save_service_bitmap_tlv(wmi_unified_t wmi_handle, void *evt_buf)
 	qdf_mem_copy(wmi_handle->wmi_service_bitmap,
 			param_buf->wmi_service_bitmap,
 			(WMI_SERVICE_BM_SIZE * sizeof(uint32_t)));
+
+	if (bitmap_buf)
+		qdf_mem_copy(bitmap_buf,
+			     param_buf->wmi_service_bitmap,
+			     (WMI_SERVICE_BM_SIZE * sizeof(uint32_t)));
 }
 #else
 static
-void save_service_bitmap_tlv(wmi_unified_t wmi_handle, void *evt_buf)
+void save_service_bitmap_tlv(wmi_unified_t wmi_handle, void *evt_buf,
+			     void *bitmap_buf)
 {
-	return;
-}
+	WMI_SERVICE_READY_EVENTID_param_tlvs *param_buf;
+	param_buf = (WMI_SERVICE_READY_EVENTID_param_tlvs *) evt_buf;
 
+	if (bitmap_buf)
+		qdf_mem_copy(bitmap_buf,
+			     param_buf->wmi_service_bitmap,
+			     (WMI_SERVICE_BM_SIZE * sizeof(uint32_t)));
+}
 #endif
 
 /**
