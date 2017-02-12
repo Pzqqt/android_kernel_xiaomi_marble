@@ -66,7 +66,6 @@
 #include "csr_api.h"
 #include "ol_fw.h"
 
-#include "dfs.h"
 #include "wma_internal.h"
 #include "wlan_tgt_def_config.h"
 #include "wlan_reg_services_api.h"

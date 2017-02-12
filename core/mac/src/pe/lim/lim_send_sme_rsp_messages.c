@@ -2453,30 +2453,6 @@ void lim_send_sme_max_assoc_exceeded_ntf(tpAniSirGlobal pMac, tSirMacAddr peerMa
 	return;
 }
 
-/** -----------------------------------------------------------------
-   \brief lim_send_sme_dfs_event_notify() - sends
-   eWNI_SME_DFS_RADAR_FOUND
-   After receiving WMI_PHYERR_EVENTID indication frame from FW, this
-   function sends a eWNI_SME_DFS_RADAR_FOUND to SME to notify
-   that a RADAR is found on current operating channel and SAP-
-   has to move to a new channel.
-   \param pMac - global mac structure
-   \param msgType - message type received from lower layer
-   \param event - event data received from lower layer
-   \return none
-   \sa
-   ----------------------------------------------------------------- */
-void
-lim_send_sme_dfs_event_notify(tpAniSirGlobal pMac, uint16_t msgType, void *event)
-{
-	struct scheduler_msg mmhMsg = {0};
-	mmhMsg.type = eWNI_SME_DFS_RADAR_FOUND;
-	mmhMsg.bodyptr = event;
-	mmhMsg.bodyval = 0;
-	lim_sys_process_mmh_msg_api(pMac, &mmhMsg, ePROT);
-	return;
-}
-
 /*--------------------------------------------------------------------------
    \brief lim_send_dfs_chan_sw_ie_update()
    This timer handler updates the channel switch IE in beacon template

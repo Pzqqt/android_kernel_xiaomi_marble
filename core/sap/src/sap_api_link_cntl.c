@@ -715,8 +715,12 @@ wlansap_roam_process_dfs_radar_found(tpAniSirGlobal mac_ctx,
 		 * and destroy the CAC timer and post a
 		 * eSAP_DFS_CHANNEL_CAC_RADAR_FOUND  to sapFsm.
 		 */
-		qdf_mc_timer_stop(&mac_ctx->sap.SapDfsInfo.sap_dfs_cac_timer);
-		qdf_mc_timer_destroy(&mac_ctx->sap.SapDfsInfo.sap_dfs_cac_timer);
+		if (!sap_ctx->dfs_cac_offload) {
+			qdf_mc_timer_stop(&mac_ctx->
+					sap.SapDfsInfo.sap_dfs_cac_timer);
+			qdf_mc_timer_destroy(&mac_ctx->
+					sap.SapDfsInfo.sap_dfs_cac_timer);
+		}
 		mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running = false;
 
 		/*
@@ -1020,10 +1024,12 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
 				FL("sapdfs: Radar detect on pre cac:%d"),
 				sap_ctx->sessionId);
-			qdf_mc_timer_stop(
+			if (!sap_ctx->dfs_cac_offload) {
+				qdf_mc_timer_stop(
 				&mac_ctx->sap.SapDfsInfo.sap_dfs_cac_timer);
-			qdf_mc_timer_destroy(
+				qdf_mc_timer_destroy(
 				&mac_ctx->sap.SapDfsInfo.sap_dfs_cac_timer);
+			}
 			mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running =
 				false;
 			sap_signal_hdd_event(sap_ctx, NULL,
@@ -1036,11 +1042,8 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 			  FL("sapdfs: Indicate eSAP_DFS_RADAR_DETECT to HDD"));
 		sap_signal_hdd_event(sap_ctx, NULL, eSAP_DFS_RADAR_DETECT,
 				     (void *) eSAP_STATUS_SUCCESS);
-		/* sync to latest DFS-NOL */
-		sap_signal_hdd_event(sap_ctx, NULL, eSAP_DFS_NOL_GET,
-				    (void *) eSAP_STATUS_SUCCESS);
 		mac_ctx->sap.SapDfsInfo.target_channel =
-		    sap_indicate_radar(sap_ctx, &csr_roam_info->dfs_event);
+			sap_indicate_radar(sap_ctx);
 		/* if there is an assigned next channel hopping */
 		if (0 < mac_ctx->sap.SapDfsInfo.user_provided_target_channel) {
 			mac_ctx->sap.SapDfsInfo.target_channel =
@@ -1089,6 +1092,10 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 	case eCSR_ROAM_SET_CHANNEL_RSP:
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("Received set channel response"));
+		break;
+	case eCSR_ROAM_CAC_COMPLETE_IND:
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+			  FL("Received cac complete indication"));
 		break;
 	case eCSR_ROAM_EXT_CHG_CHNL_IND:
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -1286,6 +1293,9 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 	case eCSR_ROAM_RESULT_DFS_CHANSW_UPDATE_SUCCESS:
 		wlansap_roam_process_dfs_chansw_update(hal, sap_ctx,
 				&qdf_ret_status);
+		break;
+	case eCSR_ROAM_RESULT_CAC_END_IND:
+		sap_dfs_cac_timer_callback(hal);
 		break;
 	case eCSR_ROAM_RESULT_CHANNEL_CHANGE_SUCCESS:
 		wlansap_roam_process_ch_change_success(mac_ctx, sap_ctx,

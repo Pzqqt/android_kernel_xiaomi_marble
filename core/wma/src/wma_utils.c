@@ -61,7 +61,6 @@
 #include "csr_api.h"
 #include "ol_fw.h"
 
-#include "dfs.h"
 #include "wma_internal.h"
 #include "wlan_policy_mgr_api.h"
 #include "wmi_unified_param.h"

@@ -69,7 +69,6 @@
 #include "csr_api.h"
 #include "ol_fw.h"
 
-#include "dfs.h"
 #include "wma_internal.h"
 
 #include "wma_ocb.h"
@@ -726,44 +725,6 @@ static int32_t wma_set_priv_cfg(tp_wma_handle wma_handle,
 		WMA_LOGD("%s: IBSS Power Save Transmit EOSP inactivity time out = %d",
 			__func__, wma_handle->wma_ibss_power_save_params.
 			txSPEndInactivityTime);
-	}
-		break;
-	case WMA_VDEV_DFS_CONTROL_CMDID:
-	{
-		struct ieee80211com *dfs_ic = wma_handle->dfs_ic;
-		struct ath_dfs *dfs;
-
-		if (!dfs_ic) {
-			ret = -ENOENT;
-		} else {
-			if (dfs_ic->ic_curchan) {
-				WMA_LOGD("%s: Debug cmd: %s received on ch: %d",
-					__func__, "WMA_VDEV_DFS_CONTROL_CMDID",
-					dfs_ic->ic_curchan->ic_ieee);
-
-				if (dfs_ic->ic_curchan->ic_flagext &
-				    IEEE80211_CHAN_DFS) {
-					dfs = (struct ath_dfs *)dfs_ic->ic_dfs;
-					dfs->dfs_bangradar = 1;
-					dfs->ath_radar_tasksched = 1;
-					OS_SET_TIMER(&dfs->ath_dfs_task_timer,
-						     0);
-				} else {
-					ret = -ENOENT;
-				}
-			} else {
-				ret = -ENOENT;
-			}
-		}
-
-		if (ret == -ENOENT) {
-			WMA_LOGE("%s: Operating channel is not DFS capable,ignoring %s",
-				  __func__, "WMA_VDEV_DFS_CONTROL_CMDID");
-		} else if (ret) {
-			WMA_LOGE("%s: Sending command %s failed with %d\n",
-				__func__, "WMA_VDEV_DFS_CONTROL_CMDID",
-				ret);
-		}
 	}
 		break;
 	case WMA_VDEV_IBSS_PS_SET_WARMUP_TIME_SECS:
@@ -2096,14 +2057,12 @@ static int wma_flush_complete_evt_handler(void *handle,
  * @psoc: Psoc pointer
  * @cds_context:  cds context
  * @wma_tgt_cfg_cb: tgt config callback fun
- * @radar_ind_cb: dfs radar indication callback
  * @cds_cfg:  mac parameters
  *
  * Return: 0 on success, errno on failure
  */
 QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *cds_context,
 		    wma_tgt_cfg_cb tgt_cfg_cb,
-		    wma_dfs_radar_indication_cb radar_ind_cb,
 		    struct cds_config_info *cds_cfg)
 {
 	tp_wma_handle wma_handle;
@@ -2218,12 +2177,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *cds_context,
 	wma_handle->tx_chain_mask_cck = cds_cfg->tx_chain_mask_cck;
 	wma_handle->self_gen_frm_pwr = cds_cfg->self_gen_frm_pwr;
 
-	/* Allocate dfs_ic and initialize DFS */
-	wma_handle->dfs_ic = wma_dfs_attach(wma_handle->dfs_ic);
-	if (wma_handle->dfs_ic == NULL) {
-		WMA_LOGE("%s: Memory allocation failed for dfs_ic", __func__);
-		goto err_wmi_handle;
-	}
 #if defined(QCA_WIFI_FTM)
 	if (cds_get_conparam() == QDF_GLOBAL_FTM_MODE)
 		wma_utf_attach(wma_handle);
@@ -2266,13 +2219,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *cds_context,
 	wma_handle->is_lpass_enabled = cds_cfg->is_lpass_enabled;
 #endif
 	wma_set_nan_enable(wma_handle, cds_cfg);
-	/*
-	 * Indicates if DFS Phyerr filtering offload
-	 * is Enabled/Disabed from ini
-	 */
-	wma_handle->dfs_phyerr_filter_offload =
-		cds_cfg->dfs_phyerr_filter_offload;
-	wma_handle->dfs_pri_multiplier = cds_cfg->dfs_pri_multiplier;
 	wma_handle->interfaces = qdf_mem_malloc(sizeof(struct wma_txrx_node) *
 						wma_handle->max_bssid);
 	if (!wma_handle->interfaces) {
@@ -2294,7 +2240,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *cds_context,
 					WMA_RX_SERIALIZER_CTX);
 
 	wma_handle->tgt_cfg_update_cb = tgt_cfg_cb;
-	wma_handle->dfs_radar_indication_cb = radar_ind_cb;
 	wma_handle->old_hw_mode_index = WMA_DEFAULT_HW_MODE_INDEX;
 	wma_handle->new_hw_mode_index = WMA_DEFAULT_HW_MODE_INDEX;
 	wma_handle->saved_chan.num_channels = 0;
@@ -2419,12 +2364,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *cds_context,
 					   wma_oem_data_response_handler,
 					   WMA_RX_SERIALIZER_CTX);
 #endif /* FEATURE_OEM_DATA_SUPPORT */
-	/*
-	 * Register appropriate DFS phyerr event handler for
-	 * Phyerror events. Handlers differ for phyerr filtering
-	 * offload enable and disable cases.
-	 */
-	wma_register_dfs_event_handler(wma_handle);
 
 	/* Register peer change event handler */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
@@ -2599,11 +2538,9 @@ err_event_init:
 					     WMI_DEBUG_PRINT_EVENTID);
 	qdf_mem_free(wma_handle->interfaces);
 err_scn_context:
-	wma_dfs_detach(wma_handle->dfs_ic);
 #if defined(QCA_WIFI_FTM)
 	wma_utf_detach(wma_handle);
 #endif /* QCA_WIFI_FTM */
-err_wmi_handle:
 	qdf_mem_free(((p_cds_contextType) cds_context)->cfg_ctx);
 	OS_FREE(wmi_handle);
 
@@ -3639,11 +3576,6 @@ QDF_STATUS wma_close(void *cds_ctx)
 		wma_utf_detach(wma_handle);
 #endif /* QCA_WIFI_FTM */
 
-	if (NULL != wma_handle->dfs_ic) {
-		wma_dfs_detach(wma_handle->dfs_ic);
-		wma_handle->dfs_ic = NULL;
-	}
-
 	if (NULL != wma_handle->pGetRssiReq) {
 		qdf_mem_free(wma_handle->pGetRssiReq);
 		wma_handle->pGetRssiReq = NULL;
@@ -4638,7 +4570,6 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 			     sizeof(wma_handle->hw_bd_info));
 		WMA_LOGW("%s: Board version is unknown!", __func__);
 	}
-	wma_handle->dfs_ic->dfs_hw_bd_id = wma_handle->hw_bd_id;
 
 	/* TODO: Recheck below line to dump service ready event */
 	/* dbg_print_wmi_service_11ac(ev); */

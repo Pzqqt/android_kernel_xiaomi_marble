@@ -538,6 +538,5 @@ struct reg_dmn_tables {
 int32_t cds_fill_some_regulatory_info(struct regulatory *reg);
 int32_t cds_get_country_from_alpha2(uint8_t *alpha2);
 void cds_fill_and_send_ctl_to_fw(struct regulatory *reg);
-void cds_set_wma_dfs_region(uint8_t dfs_region);
 
 #endif /* __CDS_REGDOMAIN_H */

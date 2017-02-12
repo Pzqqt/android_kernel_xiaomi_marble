@@ -108,9 +108,6 @@ void lim_send_sme_tdls_link_establish_req_rsp(tpAniSirGlobal pMac, uint8_t sessi
 void lim_send_sme_tdls_event_notify(tpAniSirGlobal pMac, uint16_t msgType,
 				    void *events);
 #endif
-
-void lim_send_sme_dfs_event_notify(tpAniSirGlobal pMac, uint16_t msgType,
-				   void *event);
 void lim_send_sme_ap_channel_switch_resp(tpAniSirGlobal pMac,
 					 tpPESession psessionEntry,
 					 tpSwitchChannelParams pChnlParams);

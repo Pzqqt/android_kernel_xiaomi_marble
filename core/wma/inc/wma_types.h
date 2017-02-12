@@ -374,9 +374,6 @@
 #endif
 #define WMA_SET_SAP_INTRABSS_DIS          SIR_HAL_SET_SAP_INTRABSS_DIS
 
-/* Message to Indicate Radar Presence on SAP Channel */
-#define WMA_DFS_RADAR_IND           SIR_HAL_DFS_RADAR_IND
-
 /* Message to indicate beacon tx completion after beacon template update
  * beacon offload case
  */
@@ -631,13 +628,6 @@ typedef void (*wma_txFailIndCallback)(uint8_t *, uint8_t);
 /* generic callback for updating parameters from target to UMAC */
 typedef void (*wma_tgt_cfg_cb)(void *context, void *param);
 
-/*
- * callback for Indicating Radar to HDD and disable Tx Queues
- * to stop accepting data Tx packets from netif as radar is
- * found on the current operating channel
- */
-typedef bool (*wma_dfs_radar_indication_cb)(void *context, void *param);
-
 /**
  * struct wma_cli_set_cmd_t - set command parameters
  * @param_id: parameter id
@@ -719,9 +709,7 @@ QDF_STATUS wma_tx_packet(void *pWMA,
 			 uint16_t channel_freq);
 
 QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *p_cds_context,
-		    wma_tgt_cfg_cb pTgtUpdCB,
-		    wma_dfs_radar_indication_cb radar_ind_cb,
-		    struct cds_config_info *cds_cfg);
+		    wma_tgt_cfg_cb pTgtUpdCB, struct cds_config_info *cds_cfg);
 
 QDF_STATUS wma_register_mgmt_frm_client(void);
 

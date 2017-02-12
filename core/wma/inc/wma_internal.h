@@ -83,16 +83,6 @@
 #define MKK       0x40
 #define ETSI      0x30
 
-/* Maximum Buffer length allowed for DFS-2 phyerrors */
-#define DFS_MAX_BUF_LENGTH 4096
-
-/*
- * Maximum Buffer length allowed for DFS-3 phyerrors
- * When 160MHz is supported the Max length of phyerrors
- * is larger than the legacy phyerrors.
- */
-#define DFS3_MAX_BUF_LENGTH 4436
-
 #define WMI_DEFAULT_NOISE_FLOOR_DBM (-96)
 
 #define WMI_MCC_MIN_CHANNEL_QUOTA             20
@@ -933,11 +923,6 @@ int wma_oem_data_response_handler(void *handle, uint8_t *datap,
 				  uint32_t len);
 #endif
 
-void wma_register_dfs_event_handler(tp_wma_handle wma_handle);
-
-int
-wma_unified_dfs_phyerr_filter_offload_enable(tp_wma_handle wma_handle);
-
 #if !defined(REMOVE_PKT_LOG)
 QDF_STATUS wma_pktlog_wmi_send_cmd(WMA_HANDLE handle,
 				   struct ath_pktlog_wmi_params *params);
@@ -1112,18 +1097,6 @@ QDF_STATUS wma_set_tdls_offchan_mode(WMA_HANDLE wma_handle,
 			      tdls_chan_switch_params *chan_switch_params);
 #endif
 
-struct ieee80211com *wma_dfs_attach(struct ieee80211com *dfs_ic);
-
-void wma_dfs_detach(struct ieee80211com *dfs_ic);
-
-void wma_dfs_configure(struct ieee80211com *ic);
-
-struct dfs_ieee80211_channel *wma_dfs_configure_channel(
-						struct ieee80211com *dfs_ic,
-						uint32_t band_center_freq1,
-						uint32_t band_center_freq2,
-						struct wma_vdev_start_req
-						*req);
 void wma_set_vdev_mgmt_rate(tp_wma_handle wma, uint8_t vdev_id);
 void wma_set_sap_keepalive(tp_wma_handle wma, uint8_t vdev_id);
 

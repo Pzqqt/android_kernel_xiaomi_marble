@@ -656,26 +656,3 @@ void cds_fill_and_send_ctl_to_fw(struct regulatory *reg)
 	wma_send_regdomain_info_to_fw(reg->reg_domain, regpair->reg_dmn_2ghz,
 				      regpair->reg_dmn_5ghz, ctl_2g, ctl_5g);
 }
-
-/**
- * cds_set_wma_dfs_region() - to set the dfs region to wma
- * @reg: the regulatory handle
- *
- * Return: none
- */
-void cds_set_wma_dfs_region(uint8_t dfs_region)
-{
-	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
-
-	if (!wma) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "unable to get WMA handle");
-		return;
-	}
-
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_DEBUG,
-		  "dfs_region: %d", dfs_region);
-
-	wma_set_dfs_region(wma, dfs_region);
-}
-

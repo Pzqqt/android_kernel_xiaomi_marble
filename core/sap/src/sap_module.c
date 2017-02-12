@@ -57,6 +57,7 @@
 #include "wlan_policy_mgr_api.h"
 #include <wlan_scan_ucfg_api.h>
 #include "wlan_reg_services_api.h"
+#include <wlan_dfs_utils_api.h>
 
 /*----------------------------------------------------------------------------
  * Preprocessor Definitions and Constants
@@ -2710,6 +2711,7 @@ wlansap_channel_change_request(void *pSapCtx, uint8_t target_channel)
 						ch_params->center_freq_seg1;
 	sapContext->csr_roamProfile.supported_rates.numRates = 0;
 	sapContext->csr_roamProfile.extended_rates.numRates = 0;
+	sap_dfs_set_current_channel(sapContext);
 
 	qdf_ret_status = sme_roam_channel_change_req(hHal, sapContext->bssid,
 				ch_params, &sapContext->csr_roamProfile);
@@ -3445,123 +3447,56 @@ QDF_STATUS wlansap_get_dfs_nol(void *pSapCtx, uint8_t *nol, uint32_t *nol_len)
 	return QDF_STATUS_SUCCESS;
 }
 
-/*==========================================================================
-   FUNCTION    wlansap_set_dfs_nol
-
-   DESCRIPTION
-   This API is used to set the dfs nol
-   DEPENDENCIES
-   NA.
-
-   PARAMETERS
-   IN
-   sapContext: Pointer to cds global context structure
-   conf: set type
-
-   RETURN VALUE
-   The QDF_STATUS code associated with performing the operation
-
-   QDF_STATUS_SUCCESS:  Success
-
-   SIDE EFFECTS
-   ============================================================================*/
-QDF_STATUS wlansap_set_dfs_nol(void *pSapCtx, eSapDfsNolType conf)
+QDF_STATUS wlansap_set_dfs_nol(void *psap_ctx, eSapDfsNolType conf)
 {
-	int i = 0;
-	ptSapContext sapContext = (ptSapContext) pSapCtx;
-	void *hHal = NULL;
-	tpAniSirGlobal pMac = NULL;
+	ptSapContext sap_ctx = (ptSapContext) psap_ctx;
+	void *hal = NULL;
+	tpAniSirGlobal mac = NULL;
 
-	if (NULL == sapContext) {
+	if (!sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid SAP pointer from p_cds_gctx", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
-	hHal = CDS_GET_HAL_CB(sapContext->p_cds_gctx);
-	if (NULL == hHal) {
+
+	hal = CDS_GET_HAL_CB(sap_ctx->p_cds_gctx);
+	if (!hal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid HAL pointer from p_cds_gctx", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
-	pMac = PMAC_STRUCT(hHal);
 
-	if (!pMac->sap.SapDfsInfo.numCurrentRegDomainDfsChannels) {
+	mac = PMAC_STRUCT(hal);
+	if (!mac->sap.SapDfsInfo.numCurrentRegDomainDfsChannels) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 			  "%s: DFS NOL is empty", __func__);
 		return QDF_STATUS_SUCCESS;
 	}
 
 	if (conf == eSAP_DFS_NOL_CLEAR) {
+		struct wlan_objmgr_pdev *pdev;
+
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: clear the DFS NOL", __func__);
 
-		for (i = 0;
-		     i < pMac->sap.SapDfsInfo.numCurrentRegDomainDfsChannels;
-		     i++) {
-			if (!pMac->sap.SapDfsInfo.
-			    sapDfsChannelNolList[i].dfs_channel_number)
-				continue;
-
-			pMac->sap.SapDfsInfo.
-			sapDfsChannelNolList[i].radar_status_flag =
-				eSAP_DFS_CHANNEL_AVAILABLE;
-			pMac->sap.SapDfsInfo.
-			sapDfsChannelNolList[i].radar_found_timestamp = 0;
+		pdev = mac->pdev;
+		if (!pdev) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				  "%s: null pdev", __func__);
+			return QDF_STATUS_E_FAULT;
 		}
+		dfs_clear_nol_channels(pdev);
 	} else if (conf == eSAP_DFS_NOL_RANDOMIZE) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Randomize the DFS NOL", __func__);
 
-		/* random 1/0 to decide to put the channel into NOL */
-		for (i = 0;
-		     i < pMac->sap.SapDfsInfo.numCurrentRegDomainDfsChannels;
-		     i++) {
-			uint32_t random_bytes = 0;
-			get_random_bytes(&random_bytes, 1);
-
-			if (!pMac->sap.SapDfsInfo.
-			    sapDfsChannelNolList[i].dfs_channel_number)
-				continue;
-
-			if ((random_bytes + jiffies) % 2) {
-				/* mark the channel unavailable */
-				pMac->sap.SapDfsInfo.sapDfsChannelNolList[i]
-				.radar_status_flag =
-					eSAP_DFS_CHANNEL_UNAVAILABLE;
-
-				/* mark the timestamp */
-				pMac->sap.SapDfsInfo.sapDfsChannelNolList[i]
-				.radar_found_timestamp =
-					cds_get_monotonic_boottime();
-			} else {
-				/* mark the channel available */
-				pMac->sap.SapDfsInfo.
-				sapDfsChannelNolList[i].radar_status_flag =
-					eSAP_DFS_CHANNEL_AVAILABLE;
-
-				/* clear the timestamp */
-				pMac->sap.SapDfsInfo.
-				sapDfsChannelNolList
-				[i].radar_found_timestamp = 0;
-			}
-
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Set channel[%d] %s",
-				  __func__,
-				  pMac->sap.SapDfsInfo.sapDfsChannelNolList[i]
-				  .dfs_channel_number,
-				  (pMac->sap.SapDfsInfo.
-				   sapDfsChannelNolList[i].radar_status_flag >
-				   eSAP_DFS_CHANNEL_AVAILABLE) ? "UNAVAILABLE" :
-				  "AVAILABLE");
-		}
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: unsupport type %d", __func__, conf);
 	}
 
 	/* set DFS-NOL back to keep it update-to-date in CNSS */
-	sap_signal_hdd_event(sapContext, NULL, eSAP_DFS_NOL_SET,
+	sap_signal_hdd_event(sap_ctx, NULL, eSAP_DFS_NOL_SET,
 			  (void *) eSAP_STATUS_SUCCESS);
 
 	return QDF_STATUS_SUCCESS;

@@ -515,6 +515,7 @@ typedef enum {
 	eCSR_ROAM_ABORT,
 	eCSR_ROAM_NAPI_OFF,
 	eCSR_ROAM_CHANNEL_COMPLETE_IND,
+	eCSR_ROAM_CAC_COMPLETE_IND,
 } eRoamCmdStatus;
 
 /* comment inside indicates what roaming callback gets */
@@ -623,6 +624,7 @@ typedef enum {
 	eCSR_ROAM_RESULT_NDP_END_RSP,
 	eCSR_ROAM_RESULT_NDP_PEER_DEPARTED_IND,
 	eCSR_ROAM_RESULT_NDP_END_IND,
+	eCSR_ROAM_RESULT_CAC_END_IND,
 	/* If Scan for SSID failed to found proper BSS */
 	eCSR_ROAM_RESULT_SCAN_FOR_SSID_FAILURE,
 } eCsrRoamResult;

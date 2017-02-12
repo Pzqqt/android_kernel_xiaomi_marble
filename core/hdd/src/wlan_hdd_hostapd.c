@@ -83,6 +83,7 @@
 #include <cds_api.h>
 #include <cdp_txrx_stats.h>
 #include "wlan_hdd_he.h"
+#include "wlan_dfs_tgt_api.h"
 
 #define    IS_UP(_dev) \
 	(((_dev)->flags & (IFF_RUNNING|IFF_UP)) == (IFF_RUNNING|IFF_UP))
@@ -1413,6 +1414,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		}
 		break;
 	case eSAP_DFS_RADAR_DETECT:
+		hdd_dfs_indicate_radar(pHddCtx);
 		wlan_hdd_send_svc_nlink_msg(pHddCtx->radio_index,
 					WLAN_SVC_DFS_RADAR_DETECT_IND,
 					    &dfs_info,
@@ -3220,28 +3222,26 @@ static __iw_softap_setparam(struct net_device *dev,
 
 	case QCASAP_SET_RADAR_CMD:
 	{
-		hdd_context_t *pHddCtx =
-			WLAN_HDD_GET_CTX(pHostapdAdapter);
-		uint8_t ch =
-			(WLAN_HDD_GET_AP_CTX_PTR(pHostapdAdapter))->
-			operatingChannel;
-		bool isDfsch;
-		int32_t dfs_radar_found;
-
-		isDfsch = (CHANNEL_STATE_DFS ==
-			   wlan_reg_get_channel_state(pHddCtx->hdd_pdev, ch));
+		hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
+		uint8_t ch = (WLAN_HDD_GET_AP_CTX_PTR(pHostapdAdapter))->
+				operatingChannel;
+		struct wlan_objmgr_pdev *pdev;
+		struct radar_found_info radar;
 
 		hdd_debug("Set QCASAP_SET_RADAR_CMD val %d", set_value);
 
-		dfs_radar_found = qdf_atomic_read(&pHddCtx->dfs_radar_found);
-		if (!dfs_radar_found && isDfsch) {
-			ret = wma_cli_set_command(pHostapdAdapter->sessionId,
-						  WMA_VDEV_DFS_CONTROL_CMDID,
-						  set_value, VDEV_CMD);
-		} else {
-			hdd_err("Ignore, radar_found: %d,  dfs_channel: %d",
-				dfs_radar_found, isDfsch);
+		pdev = hdd_ctx->hdd_pdev;
+		if (!pdev) {
+			hdd_err("null pdev");
+			return -EINVAL;
 		}
+
+		qdf_mem_zero(&radar, sizeof(radar));
+		if (wlan_reg_is_dfs_ch(pdev, ch))
+			tgt_dfs_process_radar_ind(pdev, &radar);
+		else
+			hdd_err("Ignore set radar, op ch(%d) is not dfs", ch);
+
 		break;
 	}
 	case QCASAP_TX_CHAINMASK_CMD:
@@ -3599,9 +3599,20 @@ static __iw_softap_getparam(struct net_device *dev,
 
 	case QCASAP_GET_DFS_NOL:
 	{
+		hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
+		struct wlan_objmgr_pdev *pdev;
+
 		wlansap_get_dfs_nol(
 			WLAN_HDD_GET_SAP_CTX_PTR(pHostapdAdapter),
 			nol, &nol_len);
+
+		pdev = hdd_ctx->hdd_pdev;
+		if (!pdev) {
+			hdd_err("null pdev");
+			return -EINVAL;
+		}
+
+		dfs_print_nol_channels(pdev);
 	}
 	break;
 

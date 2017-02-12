@@ -10751,7 +10751,6 @@ bool hdd_is_okc_mode_enabled(hdd_context_t *pHddCtx);
 QDF_STATUS hdd_set_idle_ps_config(hdd_context_t *pHddCtx, uint32_t val);
 
 void hdd_update_tgt_cfg(void *context, void *param);
-bool hdd_dfs_indicate_radar(void *context, void *param);
 
 QDF_STATUS hdd_string_to_u8_array(char *str, uint8_t *intArray, uint8_t *len,
 				  uint8_t intArrayMaxLen);
@@ -10761,4 +10760,19 @@ QDF_STATUS hdd_hex_string_to_u16_array(char *str, uint16_t *int_array,
 void hdd_cfg_print(hdd_context_t *pHddCtx);
 
 QDF_STATUS hdd_update_nss(hdd_context_t *hdd_ctx, uint8_t nss);
+
+/**
+ * hdd_dfs_indicate_radar() - Block tx as radar found on the channel
+ * @hdd_ctxt: HDD context pointer
+ *
+ * This function is invoked in atomic context when a radar
+ * is found on the SAP current operating channel and Data Tx
+ * from netif has to be stopped to honor the DFS regulations.
+ * Actions: Stop the netif Tx queues,Indicate Radar present
+ * in HDD context for future usage.
+ *
+ * Return: true on success, else false
+ */
+bool hdd_dfs_indicate_radar(hdd_context_t *hdd_ctx);
+
 #endif

@@ -88,10 +88,6 @@ QDF_STATUS sme_unprotected_mgmt_frm_ind(tHalHandle hHal,
 					tpSirSmeUnprotMgmtFrameInd pSmeMgmtFrm);
 #endif
 
-/* Message processor for events from DFS */
-QDF_STATUS dfs_msg_processor(tpAniSirGlobal pMac,
-			     uint16_t msg_type, void *pMsgBuf);
-
 /* Channel Change Response Indication Handler */
 QDF_STATUS sme_process_channel_change_resp(tpAniSirGlobal pMac,
 					   uint16_t msg_type, void *pMsgBuf);
@@ -1427,6 +1423,67 @@ static QDF_STATUS sme_handle_roc_req(tHalHandle hal,
 	return status;
 }
 
+static QDF_STATUS dfs_msg_processor(tpAniSirGlobal mac,
+		struct scheduler_msg *msg)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tCsrRoamInfo roam_info = { 0 };
+	tSirSmeCSAIeTxCompleteRsp *csa_ie_tx_complete_rsp;
+	uint32_t session_id = 0;
+	eRoamCmdStatus roam_status;
+	eCsrRoamResult roam_result;
+
+	switch (msg->type) {
+	case eWNI_SME_DFS_RADAR_FOUND:
+	{
+		session_id = msg->bodyval;
+		roam_status = eCSR_ROAM_DFS_RADAR_IND;
+		roam_result = eCSR_ROAM_RESULT_DFS_RADAR_FOUND_IND;
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_MED,
+			  "sapdfs: Radar indication event occurred");
+		break;
+	}
+	case eWNI_SME_DFS_CSAIE_TX_COMPLETE_IND:
+	{
+		csa_ie_tx_complete_rsp =
+			(tSirSmeCSAIeTxCompleteRsp *) msg->bodyptr;
+		if (!csa_ie_tx_complete_rsp) {
+			sme_err("eWNI_SME_DFS_CSAIE_TX_COMPLETE_IND null msg");
+			return QDF_STATUS_E_FAILURE;
+		}
+		session_id = csa_ie_tx_complete_rsp->sessionId;
+		roam_status = eCSR_ROAM_DFS_CHAN_SW_NOTIFY;
+		roam_result = eCSR_ROAM_RESULT_DFS_CHANSW_UPDATE_SUCCESS;
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_MED,
+			  "eWNI_SME_DFS_CSAIE_TX_COMPLETE_IND session=%d",
+			  session_id);
+		break;
+	}
+	case eWNI_SME_DFS_CAC_COMPLETE:
+	{
+		session_id = msg->bodyval;
+		roam_status = eCSR_ROAM_CAC_COMPLETE_IND;
+		roam_result = eCSR_ROAM_RESULT_CAC_END_IND;
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_MED,
+			  "sapdfs: Received eWNI_SME_DFS_CAC_COMPLETE vdevid%d",
+			  session_id);
+		break;
+	}
+	default:
+	{
+		sme_err("Invalid DFS message: 0x%x", msg->type);
+		status = QDF_STATUS_E_FAILURE;
+		return status;
+	}
+	}
+
+	/* Indicate Radar Event to SAP */
+	csr_roam_call_callback(mac, session_id, &roam_info, 0,
+			       roam_status, roam_result);
+	return status;
+}
+
+
 #ifdef WLAN_FEATURE_11W
 /*------------------------------------------------------------------
  *
@@ -1454,80 +1511,6 @@ QDF_STATUS sme_unprotected_mgmt_frm_ind(tHalHandle hHal,
 	return status;
 }
 #endif
-
-/*------------------------------------------------------------------
- *
- * Handle the DFS Radar Event and indicate it to the SAP
- *
- *------------------------------------------------------------------*/
-QDF_STATUS dfs_msg_processor(tpAniSirGlobal pMac, uint16_t msgType, void *pMsgBuf)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tCsrRoamInfo roamInfo = { 0 };
-	tSirSmeDfsEventInd *dfs_event;
-	tSirSmeCSAIeTxCompleteRsp *csaIeTxCompleteRsp;
-	uint32_t sessionId = 0;
-	eRoamCmdStatus roamStatus;
-	eCsrRoamResult roamResult;
-	int i;
-
-	switch (msgType) {
-	case eWNI_SME_DFS_RADAR_FOUND:
-	{
-		/* Radar found !! */
-		dfs_event = (tSirSmeDfsEventInd *) pMsgBuf;
-		if (NULL == dfs_event) {
-			sme_err("dfs_event is NULL");
-			return QDF_STATUS_E_FAILURE;
-		}
-		sessionId = dfs_event->sessionId;
-		roamInfo.dfs_event.sessionId = sessionId;
-		roamInfo.dfs_event.chan_list.nchannels =
-			dfs_event->chan_list.nchannels;
-		for (i = 0; i < dfs_event->chan_list.nchannels; i++) {
-			roamInfo.dfs_event.chan_list.channels[i] =
-				dfs_event->chan_list.channels[i];
-		}
-
-		roamInfo.dfs_event.dfs_radar_status =
-			dfs_event->dfs_radar_status;
-		roamInfo.dfs_event.use_nol = dfs_event->use_nol;
-
-		roamStatus = eCSR_ROAM_DFS_RADAR_IND;
-		roamResult = eCSR_ROAM_RESULT_DFS_RADAR_FOUND_IND;
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_MED,
-			  "sapdfs: Radar indication event occurred");
-		break;
-	}
-	case eWNI_SME_DFS_CSAIE_TX_COMPLETE_IND:
-	{
-		csaIeTxCompleteRsp =
-			(tSirSmeCSAIeTxCompleteRsp *) pMsgBuf;
-		if (NULL == csaIeTxCompleteRsp) {
-			sme_err("pMsg is NULL for eWNI_SME_DFS_CSAIE_TX_COMPLETE_IND");
-			return QDF_STATUS_E_FAILURE;
-		}
-		sessionId = csaIeTxCompleteRsp->sessionId;
-		roamStatus = eCSR_ROAM_DFS_CHAN_SW_NOTIFY;
-		roamResult = eCSR_ROAM_RESULT_DFS_CHANSW_UPDATE_SUCCESS;
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_MED,
-			  "sapdfs: Received eWNI_SME_DFS_CSAIE_TX_COMPLETE_IND for session id [%d]",
-			  sessionId);
-		break;
-	}
-	default:
-	{
-		sme_err("Invalid DFS message: 0x%x", msgType);
-		status = QDF_STATUS_E_FAILURE;
-		return status;
-	}
-	}
-
-	/* Indicate Radar Event to SAP */
-	csr_roam_call_callback(pMac, sessionId, &roamInfo, 0,
-			       roamStatus, roamResult);
-	return status;
-}
 
 QDF_STATUS sme_update_new_channel_event(tHalHandle hal, uint8_t session_id)
 {
@@ -2387,8 +2370,9 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, struct scheduler_msg *pMsg)
 		break;
 #endif
 	case eWNI_SME_DFS_RADAR_FOUND:
+	case eWNI_SME_DFS_CAC_COMPLETE:
 	case eWNI_SME_DFS_CSAIE_TX_COMPLETE_IND:
-		status = dfs_msg_processor(pMac, pMsg->type, pMsg->bodyptr);
+		status = dfs_msg_processor(pMac, pMsg);
 		qdf_mem_free(pMsg->bodyptr);
 		break;
 	case eWNI_SME_CHANNEL_CHANGE_RSP:

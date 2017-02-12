@@ -1797,11 +1797,6 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 		qdf_mem_free((void *)(msg->bodyptr));
 		msg->bodyptr = NULL;
 		break;
-	case WMA_DFS_RADAR_IND:
-		lim_send_sme_dfs_event_notify(mac_ctx, msg->type,
-				(void *)msg->bodyptr);
-		/* msg->bodyptr will be freed up by SME/CSR */
-		break;
 	case WMA_DFS_BEACON_TX_SUCCESS_IND:
 		lim_process_beacon_tx_success_ind(mac_ctx, msg->type,
 				(void *)msg->bodyptr);

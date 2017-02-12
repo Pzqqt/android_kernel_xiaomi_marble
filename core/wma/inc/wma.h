@@ -222,7 +222,6 @@ enum ds_mode {
 #define WMA_ROAM_BMISS_FINAL_BCNT_DEFAULT_P2P (45)
 
 #define WMA_INVALID_KEY_IDX     0xff
-#define WMA_DFS_RADAR_FOUND   1
 
 #define WMA_MAX_RF_CHAINS(x)    ((1 << x) - 1)
 #define WMA_MIN_RF_CHAINS               (1)
@@ -384,11 +383,6 @@ enum ds_mode {
 #define WMA_VHT_PPS_PAID_MATCH 1
 #define WMA_VHT_PPS_GID_MATCH 2
 #define WMA_VHT_PPS_DELIM_CRC_FAIL 3
-
-#define WMA_DFS_MAX_20M_SUB_CH 8
-#define WMA_80MHZ_START_CENTER_CH_DIFF 6
-#define WMA_160MHZ_START_CENTER_CH_DIFF 14
-#define WMA_NEXT_20MHZ_START_CH_DIFF 4
 
 #define WMA_DEFAULT_HW_MODE_INDEX 0xFFFF
 #define TWO_THIRD (2/3)
@@ -1242,7 +1236,6 @@ struct hw_mode_idx_to_mac_cap_idx {
  * @num_mem_chunks: number of memory chunk
  * @mem_chunks: memory chunks
  * @tgt_cfg_update_cb: configuration update callback
- * @dfs_radar_indication_cb: Callback to indicate radar to HDD
  * @reg_cap: regulatory capablities
  * @scan_id: scan id
  * @interfaces: txrx nodes(per vdev)
@@ -1269,7 +1262,6 @@ struct hw_mode_idx_to_mac_cap_idx {
  * @enable_mc_list : To Check if Multicast list filtering is enabled in FW
  * @ibss_started: is IBSS started or not
  * @ibsskey_info: IBSS key info
- * @dfs_ic: DFS umac interface information
  * @hddTxFailCb: tx fail indication callback
  * @pno_wake_lock: PNO wake lock
  * @extscan_wake_lock: extscan wake lock
@@ -1278,7 +1270,6 @@ struct hw_mode_idx_to_mac_cap_idx {
  * @ap_client_cnt: ap client count
  * @is_wow_bus_suspended: is wow bus suspended flag
  * @wma_scan_comp_timer: scan completion timer
- * @dfs_phyerr_filter_offload: dfs phy error filter is offloaded or not
  * @suitable_ap_hb_failure: better ap found
  * @suitable_ap_hb_failure_rssi: record the RSSI when suitable_ap_hb_failure
  * for later usage to report RSSI at beacon miss scenario
@@ -1292,7 +1283,6 @@ struct hw_mode_idx_to_mac_cap_idx {
  * @staDynamicDtim: station dynamic DTIM
  * @enable_mhf_offload: is MHF offload enable/disable
  * @last_mhf_entries_timestamp: timestamp when last entries where set
- * @dfs_pri_multiplier: DFS multiplier
  * @hw_bd_id: hardware board id
  * @hw_bd_info: hardware board info
  * @in_d0wow: D0WOW is enable/disable
@@ -1392,7 +1382,6 @@ typedef struct {
 	uint32_t num_mem_chunks;
 	struct wmi_host_mem_chunk mem_chunks[MAX_MEM_CHUNKS];
 	wma_tgt_cfg_cb tgt_cfg_update_cb;
-	wma_dfs_radar_indication_cb dfs_radar_indication_cb;
 	HAL_REG_CAPABILITIES reg_cap;
 	uint32_t scan_id;
 	struct wma_txrx_node *interfaces;
@@ -1433,7 +1422,6 @@ typedef struct {
 	bool enable_mc_list;
 	uint8_t ibss_started;
 	tSetBssKeyParams ibsskey_info;
-	struct ieee80211com *dfs_ic;
 	txFailIndCallback hddTxFailCb;
 #ifdef FEATURE_WLAN_EXTSCAN
 	qdf_wake_lock_t extscan_wake_lock;
@@ -1442,7 +1430,6 @@ typedef struct {
 	int wow_nack;
 	qdf_atomic_t is_wow_bus_suspended;
 	qdf_mc_timer_t wma_scan_comp_timer;
-	uint8_t dfs_phyerr_filter_offload;
 	bool suitable_ap_hb_failure;
 	uint32_t suitable_ap_hb_failure_rssi;
 	ibss_power_save_params wma_ibss_power_save_params;
@@ -1461,7 +1448,6 @@ typedef struct {
 	uint8_t staDynamicDtim;
 	uint8_t enable_mhf_offload;
 	unsigned long last_mhf_entries_timestamp;
-	int32_t dfs_pri_multiplier;
 	uint32_t hw_bd_id;
 	uint32_t hw_bd_info[HW_BD_INFO_SIZE];
 	uint32_t miracast_value;
@@ -1647,7 +1633,6 @@ struct wma_target_req {
  * @pmf_enabled: is pmf enabled or not
  * @vht_capable: VHT capabality
  * @ht_capable: HT capabality
- * @dfs_pri_multiplier: DFS multiplier
  * @dot11_mode: 802.11 mode
  * @is_half_rate: is the channel operating at 10MHz
  * @is_quarter_rate: is the channel operating at 5MHz
@@ -1676,7 +1661,6 @@ struct wma_vdev_start_req {
 	uint8_t ch_center_freq_seg0;
 	uint8_t ch_center_freq_seg1;
 	uint8_t ht_capable;
-	int32_t dfs_pri_multiplier;
 	uint8_t dot11_mode;
 	bool is_half_rate;
 	bool is_quarter_rate;
@@ -1742,7 +1726,6 @@ typedef struct {
  * @WMA_VDEV_IBSS_SET_TXSP_END_INACTIVITY_TIME: set IBSS TXSP
  * @WMA_VDEV_IBSS_PS_SET_WARMUP_TIME_SECS: set IBSS power save warmup time
  * @WMA_VDEV_IBSS_PS_SET_1RX_CHAIN_IN_ATIM_WINDOW: set IBSS power save ATIM
- * @WMA_VDEV_DFS_CONTROL_CMDID: DFS control command
  * @WMA_VDEV_TXRX_GET_IPA_UC_FW_STATS_CMDID: get IPA microcontroller fw stats
  * @WMA_VDEV_TXRX_GET_IPA_UC_SHARING_STATS_CMDID: get IPA uC wifi-sharing stats
  * @WMA_VDEV_TXRX_SET_IPA_UC_QUOTA_CMDID: set IPA uC quota limit
@@ -1763,7 +1746,6 @@ enum wma_cfg_cmd_id {
 	WMA_VDEV_IBSS_SET_TXSP_END_INACTIVITY_TIME,
 	WMA_VDEV_IBSS_PS_SET_WARMUP_TIME_SECS,
 	WMA_VDEV_IBSS_PS_SET_1RX_CHAIN_IN_ATIM_WINDOW,
-	WMA_VDEV_DFS_CONTROL_CMDID,
 	WMA_VDEV_TXRX_GET_IPA_UC_FW_STATS_CMDID,
 	WMA_VDEV_TXRX_GET_IPA_UC_SHARING_STATS_CMDID,
 	WMA_VDEV_TXRX_SET_IPA_UC_QUOTA_CMDID,
@@ -1998,31 +1980,6 @@ typedef struct {
 #endif /* FEATURE_WLAN_TDLS */
 
 /**
- * struct wma_dfs_radar_channel_list - dfs radar channel list
- * @nchannels: nuber of channels
- * @channels: Channel number including bonded channels on which
- *            radar is present
- */
-struct wma_dfs_radar_channel_list {
-	A_UINT32 nchannels;
-	uint8_t channels[WMA_DFS_MAX_20M_SUB_CH];
-};
-
-/**
- * struct wma_dfs_radar_indication - Structure to indicate RADAR
- * @vdev_id: vdev id
- * @chan_list: Channel list on which RADAR is detected
- * @dfs_radar_status: Flag to Indicate RADAR presence on the current channel
- * @use_nol: Flag to indicate use NOL
- */
-struct wma_dfs_radar_indication {
-	A_UINT32 vdev_id;
-	struct wma_dfs_radar_channel_list chan_list;
-	uint32_t dfs_radar_status;
-	int use_nol;
-};
-
-/**
  * enum uapsd_ac - U-APSD Access Categories
  * @UAPSD_BE: best effort
  * @UAPSD_BK: back ground
@@ -2108,26 +2065,6 @@ A_UINT32 e_csr_auth_type_to_rsn_authmode(eCsrAuthType authtype,
 					 eCsrEncryptionType encr);
 A_UINT32 e_csr_encryption_type_to_rsn_cipherset(eCsrEncryptionType encr);
 
-/*
- * WMA-DFS Hooks
- */
-int ol_if_dfs_attach(struct ieee80211com *ic, void *ptr, void *radar_info);
-uint64_t ol_if_get_tsf64(struct ieee80211com *ic);
-int ol_if_dfs_disable(struct ieee80211com *ic);
-struct dfs_ieee80211_channel *ieee80211_find_channel(struct ieee80211com *ic,
-						 int freq, uint32_t flags);
-int ol_if_dfs_enable(struct ieee80211com *ic, int *is_fastclk, void *pe);
-uint32_t ieee80211_ieee2mhz(uint32_t chan, uint32_t flags);
-int ol_if_dfs_get_ext_busy(struct ieee80211com *ic);
-int ol_if_dfs_get_mib_cycle_counts_pct(struct ieee80211com *ic,
-				       uint32_t *rxc_pcnt, uint32_t *rxf_pcnt,
-				       uint32_t *txf_pcnt);
-uint16_t ol_if_dfs_usenol(struct ieee80211com *ic);
-void ieee80211_mark_dfs(struct ieee80211com *ic,
-			struct dfs_ieee80211_channel *ichan);
-int wma_dfs_indicate_radar(struct ieee80211com *ic,
-			   struct dfs_ieee80211_channel *ichan);
-
 QDF_STATUS wma_trigger_uapsd_params(tp_wma_handle wma_handle, uint32_t vdev_id,
 				    tp_wma_trigger_uapsd_params
 				    trigger_uapsd_params);
@@ -2179,7 +2116,6 @@ int wma_mgmt_tx_completion_handler(void *handle, uint8_t *cmpl_event_params,
 				   uint32_t len);
 int wma_mgmt_tx_bundle_completion_handler(void *handle,
 	uint8_t *cmpl_event_params, uint32_t len);
-void wma_set_dfs_region(tp_wma_handle wma, enum dfs_reg dfs_region);
 uint32_t wma_get_vht_ch_width(void);
 QDF_STATUS
 wma_config_debug_module_cmd(wmi_unified_t wmi_handle, A_UINT32 param,

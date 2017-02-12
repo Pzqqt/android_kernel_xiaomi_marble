@@ -1520,62 +1520,35 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	hdd_ctx->dfs_cac_offload = cfg->dfs_cac_offload;
 }
 
-/**
- * hdd_dfs_indicate_radar() - handle radar detection on current SAP channel
- * @context:	HDD context pointer
- * @param:	HDD radar indication pointer
- *
- * This function is invoked in atomic context when a radar
- * is found on the SAP current operating channel and Data Tx
- * from netif has to be stopped to honor the DFS regulations.
- * Actions: Stop the netif Tx queues,Indicate Radar present
- * in HDD context for future usage.
- *
- * Return: true to allow radar indication to host else false
- */
-bool hdd_dfs_indicate_radar(void *context, void *param)
+bool hdd_dfs_indicate_radar(hdd_context_t *hdd_ctx)
 {
-	hdd_context_t *hdd_ctx = (hdd_context_t *) context;
-	struct wma_dfs_radar_ind *hdd_radar_event =
-		(struct wma_dfs_radar_ind *)param;
 	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
 	hdd_adapter_t *adapter;
 	QDF_STATUS status;
 	hdd_ap_ctx_t *ap_ctx;
 
-	if (!hdd_ctx || !hdd_radar_event ||
-		 hdd_ctx->config->disableDFSChSwitch)
+	if (!hdd_ctx || hdd_ctx->config->disableDFSChSwitch) {
+		hdd_info("skip tx block hdd_ctx=%p, disableDFSChSwitch=%d",
+			 hdd_ctx, hdd_ctx->config->disableDFSChSwitch);
 		return true;
+	}
 
-	if (true == hdd_radar_event->dfs_radar_status) {
-		if (qdf_atomic_inc_return(&hdd_ctx->dfs_radar_found) > 1) {
-			/*
-			 * Application already triggered channel switch
-			 * on current channel, so return here.
-			 */
-			return false;
+	status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
+	while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
+		adapter = adapterNode->pAdapter;
+		ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
+
+		if ((QDF_SAP_MODE == adapter->device_mode ||
+		    QDF_P2P_GO_MODE == adapter->device_mode) &&
+		    (wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev,
+		     ap_ctx->operatingChannel))) {
+			WLAN_HDD_GET_AP_CTX_PTR(adapter)->dfs_cac_block_tx =
+				true;
+			hdd_info("tx blocked for session: %d",
+				adapter->sessionId);
 		}
-
-		status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
-		while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
-			adapter = adapterNode->pAdapter;
-			ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
-			if ((QDF_SAP_MODE == adapter->device_mode ||
-			     QDF_P2P_GO_MODE == adapter->device_mode) &&
-			     (CHANNEL_STATE_DFS ==
-			     wlan_reg_get_channel_state(hdd_ctx->hdd_pdev,
-				     ap_ctx->operatingChannel))) {
-				WLAN_HDD_GET_AP_CTX_PTR(adapter)->
-				dfs_cac_block_tx = true;
-				hdd_debug("tx blocked for session:%d",
-					 adapter->sessionId);
-			}
-
-			status = hdd_get_next_adapter(hdd_ctx,
-						      adapterNode,
-						      &pNext);
-			adapterNode = pNext;
-		}
+		status = hdd_get_next_adapter(hdd_ctx, adapterNode, &pNext);
+		adapterNode = pNext;
 	}
 
 	return true;

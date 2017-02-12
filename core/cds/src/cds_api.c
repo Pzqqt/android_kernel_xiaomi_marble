@@ -494,8 +494,7 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 
 	/*Open the WMA module */
 	qdf_status = wma_open(psoc, gp_cds_context,
-			      hdd_update_tgt_cfg,
-			      hdd_dfs_indicate_radar, cds_cfg);
+			      hdd_update_tgt_cfg, cds_cfg);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		/* Critical Error ...  Cannot proceed further */

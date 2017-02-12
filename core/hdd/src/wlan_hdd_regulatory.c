@@ -538,7 +538,6 @@ static int hdd_regulatory_init_no_offload(hdd_context_t *hdd_ctx,
 
 	hdd_set_dfs_region(hdd_ctx, DFS_FCC_REG);
 	wlan_reg_get_dfs_region(hdd_ctx->hdd_psoc, &dfs_reg);
-	cds_set_wma_dfs_region(dfs_reg);
 
 	reg_program_config_vars(hdd_ctx, &config_vars);
 	ucfg_reg_set_config_vars(hdd_ctx->hdd_psoc, config_vars);
@@ -736,7 +735,6 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 
 		hdd_set_dfs_region(hdd_ctx, request->dfs_region);
 		wlan_reg_get_dfs_region(hdd_ctx->hdd_psoc, &dfs_reg);
-		cds_set_wma_dfs_region(dfs_reg);
 
 		reg_program_config_vars(hdd_ctx, &config_vars);
 		ucfg_reg_set_config_vars(hdd_ctx->hdd_psoc, config_vars);
@@ -843,7 +841,6 @@ static int hdd_regulatory_init_offload(hdd_context_t *hdd_ctx,
 int hdd_regulatory_init(hdd_context_t *hdd_ctx, struct wiphy *wiphy)
 {
 	bool offload_enabled;
-	enum dfs_reg dfs_region;
 
 	offload_enabled = ucfg_reg_is_regdb_offloaded(hdd_ctx->hdd_psoc);
 
@@ -852,9 +849,6 @@ int hdd_regulatory_init(hdd_context_t *hdd_ctx, struct wiphy *wiphy)
 		wiphy->reg_notifier = NULL;
 		wiphy->regulatory_flags |= REGULATORY_WIPHY_SELF_MANAGED;
 		hdd_regulatory_init_offload(hdd_ctx, wiphy);
-
-		wlan_reg_get_dfs_region(hdd_ctx->hdd_psoc, &dfs_region);
-		cds_set_wma_dfs_region(dfs_region);
 	} else {
 		hdd_ctx->reg_offload = false;
 		wiphy->reg_notifier = hdd_reg_notifier;

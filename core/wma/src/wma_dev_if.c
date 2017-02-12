@@ -60,7 +60,6 @@
 #include "dbglog_host.h"
 #include "csr_api.h"
 
-#include "dfs.h"
 #include "wma_internal.h"
 
 #include "wma_ocb.h"
@@ -849,12 +848,6 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 		policy_mgr_set_do_hw_mode_change_flag(
 			wma->psoc, false);
 		return -EINVAL;
-	}
-
-	if (wma_is_vdev_in_ap_mode(wma, resp_event->vdev_id)) {
-		qdf_spin_lock_bh(&wma->dfs_ic->chan_lock);
-		wma->dfs_ic->disable_phy_err_processing = false;
-		qdf_spin_unlock_bh(&wma->dfs_ic->chan_lock);
 	}
 
 	if (resp_event->status == QDF_STATUS_SUCCESS) {
@@ -1909,7 +1902,6 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 	wmi_vdev_start_request_cmd_fixed_param *cmd;
 	struct wma_txrx_node *intr = wma->interfaces;
 	tpAniSirGlobal mac_ctx = NULL;
-	struct ath_dfs *dfs;
 	uint32_t temp_ssid_len = 0;
 	uint32_t temp_flags = 0;
 	uint32_t temp_chan_info = 0;
@@ -1922,8 +1914,6 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 		WMA_LOGE("%s: vdev start failed as mac_ctx is NULL", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	dfs = (struct ath_dfs *)wma->dfs_ic->ic_dfs;
 
 	WMA_LOGD("%s: Enter isRestart=%d vdev=%d", __func__, isRestart,
 		 req->vdev_id);
@@ -1998,67 +1988,20 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 	 * enable the firmware flag here.
 	 */
 
-	/*
-	 * If the Channel is DFS,
-	 * set the WMI_CHAN_FLAG_DFS flag
-	 */
 	params.is_dfs = req->is_dfs;
 	params.is_restart = isRestart;
 	params.cac_duration_ms = req->cac_duration_ms;
 	params.regdomain = req->dfs_regdomain;
 	if ((QDF_GLOBAL_MONITOR_MODE != cds_get_conparam()) && req->is_dfs) {
-		params.flag_dfs = WMI_CHAN_FLAG_DFS;
 		temp_chan_info |=  (1 << WMI_CHAN_FLAG_DFS);
 		params.dis_hw_ack = true;
-		req->dfs_pri_multiplier = wma->dfs_pri_multiplier;
 
 		/*
-		 * Configure the current operating channel
-		 * to DFS module only if the device operating
-		 * mode is AP.
-		 * Enable/Disable Phyerr filtering offload
-		 * depending on dfs_phyerr_filter_offload
-		 * flag status as set in ini for SAP mode.
-		 * Currently, only AP supports DFS master
-		 * mode operation on DFS channels, P2P-GO
-		 * does not support operation on DFS Channels.
+		 * If channel is DFS and operating in AP mode,
+		 * set the WMI_CHAN_FLAG_DFS flag.
 		 */
-		if (wma_is_vdev_in_ap_mode(wma, params.vdev_id) == true) {
-			/*
-			 * If DFS regulatory domain is invalid,
-			 * then, DFS radar filters intialization
-			 * will fail. So, do not configure the
-			 * channel in to DFS modlue, do not
-			 * indicate if phyerror filtering offload
-			 * is enabled or not to the firmware, simply
-			 * fail the VDEV start on the DFS channel
-			 * early on, to protect the DFS module from
-			 * processing phyerrors without being intialized.
-			 */
-			if (DFS_UNINIT_REG ==
-			    wma->dfs_ic->current_dfs_regdomain) {
-				WMA_LOGE("%s[%d]:DFS Configured with Invalid regdomain"
-					" Failed to send VDEV START command",
-					__func__, __LINE__);
-
-				return QDF_STATUS_E_FAILURE;
-			}
-
-			qdf_spin_lock_bh(&wma->dfs_ic->chan_lock);
-			if (isRestart)
-				wma->dfs_ic->disable_phy_err_processing = true;
-
-			/* provide the current channel to DFS */
-			wma->dfs_ic->ic_curchan =
-				wma_dfs_configure_channel(wma->dfs_ic,
-						params.band_center_freq1,
-						params.band_center_freq2, req);
-			qdf_spin_unlock_bh(&wma->dfs_ic->chan_lock);
-
-			wma_unified_dfs_phyerr_filter_offload_enable(wma);
-			dfs->disable_dfs_ch_switch =
-				mac_ctx->sap.SapDfsInfo.disable_dfs_ch_switch;
-		}
+		if (wma_is_vdev_in_ap_mode(wma, params.vdev_id) == true)
+			params.flag_dfs = WMI_CHAN_FLAG_DFS;
 	}
 
 	params.beacon_intval = req->beacon_intval;
@@ -3496,14 +3439,6 @@ void wma_add_bss(tp_wma_handle wma, tpAddBssParams params)
 
 	case QDF_SAP_MODE:
 	case QDF_P2P_GO_MODE:
-		/*If current bring up SAP/P2P channel matches the previous
-		 *radar found channel then reset the last_radar_found_chan
-		 *variable to avoid race conditions.
-		 */
-		if (params->currentOperChannel ==
-			wma->dfs_ic->last_radar_found_chan)
-			wma->dfs_ic->last_radar_found_chan = 0;
-
 		wma_add_bss_ap_mode(wma, params);
 		break;
 

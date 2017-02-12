@@ -380,10 +380,6 @@ QDF_STATUS sap_release_global_lock(ptSapContext pSapCtx);
 void sap_update_unsafe_channel_list(tHalHandle hal, ptSapContext pSapCtx);
 #endif /* FEATURE_WLAN_CH_AVOID */
 
-uint8_t
-sap_indicate_radar(ptSapContext sapContext,
-		 tSirSmeDfsEventInd *dfs_event);
-
 QDF_STATUS sap_init_dfs_channel_nol_list(ptSapContext sapContext);
 
 bool sap_dfs_is_channel_in_nol_list(ptSapContext sapContext,
@@ -484,6 +480,16 @@ sap_mark_leaking_ch(ptSapContext sap_ctx,
 
 void sap_scan_event_callback(struct wlan_objmgr_vdev *vdev,
 			struct scan_event *event, void *arg);
+
+/**
+ * sap_indicate_radar() - Process radar indication
+ * @sap_ctx: pointer to sap context
+ *
+ * process radar indication.
+ *
+ * Return: channel to which sap wishes to switch.
+ */
+uint8_t sap_indicate_radar(ptSapContext sap_ctx);
 
 #ifdef __cplusplus
 }

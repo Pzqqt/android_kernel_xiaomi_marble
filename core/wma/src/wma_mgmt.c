@@ -61,7 +61,6 @@
 #include "dbglog_host.h"
 #include "csr_api.h"
 #include "ol_fw.h"
-#include "dfs.h"
 #include "wma_internal.h"
 #include "wlan_policy_mgr_api.h"
 #include "cdp_txrx_flow_ctrl_legacy.h"
