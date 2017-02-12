@@ -54,6 +54,11 @@
 typedef struct wlan_objmgr_psoc *(*get_psoc_handle_callback)(
 			void *scn_handle);
 
+typedef int (*wmi_legacy_service_ready_callback)(uint32_t event_id,
+						void *handle,
+						uint8_t *event_data,
+						uint32_t length);
+
 /**
  * struct target_if_ctx - target_interface context
  * @magic: magic for target if ctx
@@ -63,6 +68,7 @@ typedef struct wlan_objmgr_psoc *(*get_psoc_handle_callback)(
 struct target_if_ctx {
 	uint32_t magic;
 	get_psoc_handle_callback get_psoc_hdl_cb;
+	wmi_legacy_service_ready_callback service_ready_cb;
 	qdf_spinlock_t lock;
 };
 
@@ -112,6 +118,29 @@ struct wlan_objmgr_psoc *target_if_get_psoc_from_scn_hdl(void *scn_handle);
  * Return: QDF STATUS
  */
 QDF_STATUS target_if_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops);
+
+/**
+ * target_if_get_psoc_from_scn_hdl() - get psoc from scn handle
+ *
+ * This API is generally used while processing wmi event.
+ * In wmi event SCN handle will be passed by wmi hence
+ * using this API we can get psoc from scn handle.
+ *
+ * Return: wmi_legacy_service_ready_callback
+ */
+wmi_legacy_service_ready_callback
+target_if_get_psoc_legacy_service_ready_cb(void);
+
+/**
+ * target_if_register_legacy_service_ready_cb() - get legacy
+ * service ready handler from scn handle
+ *
+ * @service_ready_cb: funtion pointer to service ready callback
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS target_if_register_legacy_service_ready_cb(
+	wmi_legacy_service_ready_callback service_ready_cb);
 
 #endif
 

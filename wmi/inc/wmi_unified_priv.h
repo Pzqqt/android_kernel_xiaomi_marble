@@ -904,7 +904,7 @@ QDF_STATUS (*send_lteu_config_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_set_ps_mode_cmd)(wmi_unified_t wmi_handle,
 		       struct set_ps_mode_params *param);
 void (*save_service_bitmap)(wmi_unified_t wmi_handle,
-		void *evt_buf);
+		void *evt_buf,  void *bitmap_buf);
 bool (*is_service_enabled)(wmi_unified_t wmi_handle,
 	uint32_t service_id);
 QDF_STATUS (*get_target_cap_from_service_ready)(wmi_unified_t wmi_handle,

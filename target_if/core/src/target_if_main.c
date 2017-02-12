@@ -76,6 +76,7 @@ QDF_STATUS target_if_close(void)
 	qdf_spin_lock_bh(&g_target_if_ctx->lock);
 	g_target_if_ctx->magic = 0;
 	g_target_if_ctx->get_psoc_hdl_cb = NULL;
+	g_target_if_ctx->service_ready_cb = NULL;
 	qdf_spin_unlock_bh(&g_target_if_ctx->lock);
 
 	qdf_spinlock_destroy(&g_target_if_ctx->lock);
@@ -92,4 +93,31 @@ QDF_STATUS target_if_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 }
 EXPORT_SYMBOL(target_if_register_tx_ops);
 
+
+wmi_legacy_service_ready_callback
+target_if_get_psoc_legacy_service_ready_cb(void)
+{
+	wmi_legacy_service_ready_callback service_ready_cb;
+
+	qdf_spin_lock_bh(&g_target_if_ctx->lock);
+	if (g_target_if_ctx->service_ready_cb)
+		service_ready_cb = g_target_if_ctx->service_ready_cb;
+	else
+		service_ready_cb = NULL;
+	qdf_spin_unlock_bh(&g_target_if_ctx->lock);
+
+	return service_ready_cb;
+}
+EXPORT_SYMBOL(target_if_get_psoc_legacy_service_ready_cb);
+
+QDF_STATUS target_if_register_legacy_service_ready_cb(
+	wmi_legacy_service_ready_callback service_ready_cb)
+{
+	qdf_spin_lock_bh(&g_target_if_ctx->lock);
+	g_target_if_ctx->service_ready_cb = service_ready_cb;
+	qdf_spin_unlock_bh(&g_target_if_ctx->lock);
+
+	return QDF_STATUS_SUCCESS;
+}
+EXPORT_SYMBOL(target_if_register_legacy_service_ready_cb);
 

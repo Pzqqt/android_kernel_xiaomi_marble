@@ -261,6 +261,7 @@ struct wlan_objmgr_psoc {
 	QDF_STATUS obj_status[WLAN_UMAC_MAX_COMPONENTS];
 	WLAN_OBJ_STATE obj_state;
 	void *tgt_if_handle;
+	uint8_t total_mac_phy;
 	qdf_spinlock_t psoc_lock;
 };
 

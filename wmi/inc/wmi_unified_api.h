@@ -1107,7 +1107,8 @@ QDF_STATUS wmi_unified_init_cmd_send(void *wmi_hdl,
 
 bool wmi_service_enabled(void *wmi_hdl, uint32_t service_id);
 
-QDF_STATUS wmi_save_service_bitmap(void *wmi_hdl, void *evt_buf);
+QDF_STATUS wmi_save_service_bitmap(void *wmi_hdl, void *evt_buf,
+				   void *bitmap_buf);
 
 QDF_STATUS wmi_save_fw_version(void *wmi_hdl, void *evt_buf);
 

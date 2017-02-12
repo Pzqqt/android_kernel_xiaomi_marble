@@ -5405,16 +5405,22 @@ static QDF_STATUS send_ext_resource_config_non_tlv(wmi_unified_t wmi_handle,
  * save_service_bitmap_non_tlv() - save service bitmap
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
+ * @param bitmap_buf: bitmap buffer for converged legacy support
  *
  * Return: None
  */
-static void save_service_bitmap_non_tlv(wmi_unified_t wmi_handle, void *evt_buf)
+static void save_service_bitmap_non_tlv(wmi_unified_t wmi_handle,
+				 void *evt_buf, void *bitmap_buf)
 {
 	wmi_service_ready_event *ev;
 
 	ev = (wmi_service_ready_event *) evt_buf;
 
 	qdf_mem_copy(wmi_handle->wmi_service_bitmap, ev->wmi_service_bitmap,
+				(WMI_SERVICE_BM_SIZE * sizeof(uint32_t)));
+
+	if (bitmap_buf)
+		qdf_mem_copy(bitmap_buf, ev->wmi_service_bitmap,
 				(WMI_SERVICE_BM_SIZE * sizeof(uint32_t)));
 }
 

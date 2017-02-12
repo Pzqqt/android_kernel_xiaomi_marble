@@ -4604,12 +4604,14 @@ QDF_STATUS wmi_unified_init_cmd_send(void *wmi_hdl,
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-QDF_STATUS wmi_save_service_bitmap(void *wmi_hdl, void *evt_buf)
+QDF_STATUS wmi_save_service_bitmap(void *wmi_hdl, void *evt_buf,
+				   void *bitmap_buf)
 {
 	struct wmi_unified *wmi_handle = (struct wmi_unified *) wmi_hdl;
 
 	if (wmi_handle->ops->save_service_bitmap) {
-		wmi_handle->ops->save_service_bitmap(wmi_handle, evt_buf);
+		wmi_handle->ops->save_service_bitmap(wmi_handle, evt_buf,
+						     bitmap_buf);
 		return 0;
 	}
 	return QDF_STATUS_E_FAILURE;
