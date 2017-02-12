@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -36,7 +36,7 @@
 #define DP_TX_DESC_FLAG_QUEUED_TX		0x20
 #define DP_TX_DESC_FLAG_COMPLETED_TX		0x40
 
-#define DP_TX_FREE_SINGLE_BUF(soc, vdev, buf)                  \
+#define DP_TX_FREE_SINGLE_BUF(soc, buf)                  \
 do {                                                           \
 	qdf_nbuf_unmap(soc->osdev, buf, QDF_DMA_FROM_DEVICE);  \
 	qdf_nbuf_free(buf);                                    \

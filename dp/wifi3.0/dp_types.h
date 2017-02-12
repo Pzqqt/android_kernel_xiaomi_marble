@@ -154,6 +154,7 @@ struct dp_tx_ext_desc_pool_s {
  * @msdu_ext_desc: MSDU extension descriptor
  * @id: Descriptor ID
  * @vdev: vdev over which the packet was transmitted
+ * @pdev: Handle to pdev
  * @pool_id: Pool ID - used when releasing the descripto
  * @flags: Flags to track the state of descriptor and special frame handling
  * @comp: Pool ID - used when releasing the descriptor
@@ -172,6 +173,7 @@ struct dp_tx_desc_s {
 	struct dp_tx_ext_desc_elem_s *msdu_ext_desc;
 	uint32_t  id;
 	struct dp_vdev *vdev;
+	struct dp_pdev *pdev;
 	uint8_t  pool_id;
 	uint8_t flags;
 	struct hal_tx_desc_comp_s comp;

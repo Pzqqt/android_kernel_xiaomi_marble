@@ -94,7 +94,6 @@ static inline void dp_tx_get_queue(struct dp_vdev *vdev,
 
 /**
  * dp_tx_desc_release() - Release Tx Descriptor
- * @vdev: DP vdev handle
  * @tx_desc : Tx Descriptor
  * @desc_pool_id: Descriptor Pool ID
  *
@@ -104,13 +103,15 @@ static inline void dp_tx_get_queue(struct dp_vdev *vdev,
  * Return:
  */
 static void
-dp_tx_desc_release(struct dp_vdev *vdev, struct dp_tx_desc_s *tx_desc,
-		   uint8_t desc_pool_id)
+dp_tx_desc_release(struct dp_tx_desc_s *tx_desc, uint8_t desc_pool_id)
 {
-	struct dp_pdev *pdev = vdev->pdev;
-	struct dp_soc *soc = pdev->soc;
+	struct dp_pdev *pdev = tx_desc->pdev;
+	struct dp_soc *soc;
 	uint8_t comp_status = 0;
 
+	qdf_assert(pdev);
+
+	soc = pdev->soc;
 	if (tx_desc->flags & DP_TX_DESC_FLAG_FRAG)
 		dp_tx_ext_desc_free(soc, tx_desc->msdu_ext_desc, desc_pool_id);
 
@@ -126,8 +127,9 @@ dp_tx_desc_release(struct dp_vdev *vdev, struct dp_tx_desc_s *tx_desc,
 		comp_status = HAL_TX_COMP_RELEASE_REASON_FW;
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			"Tx Completion Release desc %d status %d\n",
-			tx_desc->id, comp_status);
+			"Tx Completion Release desc %d status %d outstanding %d\n",
+			tx_desc->id, comp_status,
+			qdf_atomic_read(&pdev->num_tx_outstanding));
 
 	dp_tx_desc_free(soc, tx_desc, desc_pool_id);
 	return;
@@ -317,6 +319,7 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	tx_desc->frm_type = dp_tx_frm_std;
 	tx_desc->tx_encap_type = vdev->tx_encap_type;
 	tx_desc->vdev = vdev;
+	tx_desc->pdev = pdev;
 	tx_desc->msdu_ext_desc = NULL;
 
 	if (qdf_unlikely(QDF_STATUS_SUCCESS !=
@@ -367,7 +370,7 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	return tx_desc;
 
 failure:
-	dp_tx_desc_release(vdev, tx_desc, desc_pool_id);
+	dp_tx_desc_release(tx_desc, desc_pool_id);
 	return NULL;
 }
 
@@ -416,6 +419,7 @@ static struct dp_tx_desc_s *dp_tx_prepare_desc(struct dp_vdev *vdev,
 	tx_desc->frm_type = msdu_info->frm_type;
 	tx_desc->tx_encap_type = vdev->tx_encap_type;
 	tx_desc->vdev = vdev;
+	tx_desc->pdev = pdev;
 	tx_desc->pkt_offset = 0;
 
 	/* Handle scattered frames - TSO/SG/ME */
@@ -439,7 +443,7 @@ static struct dp_tx_desc_s *dp_tx_prepare_desc(struct dp_vdev *vdev,
 
 	return tx_desc;
 failure:
-	dp_tx_desc_release(vdev, tx_desc, desc_pool_id);
+	dp_tx_desc_release(tx_desc, desc_pool_id);
 	return NULL;
 }
 
@@ -659,7 +663,7 @@ static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  "%s Tx_hw_enqueue Fail tx_desc %p queue %d\n",
 			  __func__, tx_desc, tx_q->ring_id);
-		dp_tx_desc_release(vdev, tx_desc, tx_q->desc_pool_id);
+		dp_tx_desc_release(tx_desc, tx_q->desc_pool_id);
 		goto fail_return;
 	}
 
@@ -739,7 +743,7 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				  "%s Tx_hw_enqueue Fail tx_desc %p queue %d\n",
 				  __func__, tx_desc, tx_q->ring_id);
 
-			dp_tx_desc_release(vdev, tx_desc, tx_q->desc_pool_id);
+			dp_tx_desc_release(tx_desc, tx_q->desc_pool_id);
 			goto done;
 		}
 
@@ -999,14 +1003,15 @@ void dp_tx_reinject_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 
 	vdev = tx_desc->vdev;
 
+	qdf_assert(vdev);
+
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			"%s Tx reinject path\n",
-			__func__);
+			"%s Tx reinject path\n", __func__);
 
 	DP_STATS_MSDU_INCR(soc, tx.reinject.pkts, tx_desc->nbuf);
 
 	dp_tx_send(vdev, tx_desc->nbuf);
-	dp_tx_desc_release(vdev, tx_desc, tx_desc->pool_id);
+	dp_tx_desc_release(tx_desc, tx_desc->pool_id);
 }
 
 /**
@@ -1023,18 +1028,19 @@ static void dp_tx_inspect_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 {
 
 	struct dp_soc *soc;
-	struct dp_vdev *vdev;
+	struct dp_pdev *pdev = tx_desc->pdev;
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 			"%s Tx inspect path\n",
 			__func__);
 
-	vdev = tx_desc->vdev;
-	soc = vdev->pdev->soc;
+	qdf_assert(pdev);
+
+	soc = pdev->soc;
 
 	DP_STATS_MSDU_INCR(soc, tx.inspect.pkts, tx_desc->nbuf);
 
-	DP_TX_FREE_SINGLE_BUF(soc, vdev, tx_desc->nbuf);
+	DP_TX_FREE_SINGLE_BUF(soc, tx_desc->nbuf);
 }
 
 /**
@@ -1050,13 +1056,13 @@ static
 void dp_tx_process_htt_completion(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 {
 	uint8_t tx_status;
-	struct dp_vdev *vdev;
 	struct dp_pdev *pdev;
 	struct dp_soc *soc;
 	uint32_t *htt_status_word = (uint32_t *) status;
 
-	vdev = tx_desc->vdev;
-	pdev = vdev->pdev;
+	qdf_assert(tx_desc->pdev);
+
+	pdev = tx_desc->pdev;
 	soc = pdev->soc;
 
 	tx_status = HTT_TX_WBM_COMPLETION_TX_STATUS_GET(htt_status_word[0]);
@@ -1065,16 +1071,14 @@ void dp_tx_process_htt_completion(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 	case HTT_TX_FW2WBM_TX_STATUS_OK:
 	{
 		qdf_atomic_dec(&pdev->num_tx_exception);
-		DP_TX_FREE_SINGLE_BUF(soc, vdev,
-				tx_desc->nbuf);
+		DP_TX_FREE_SINGLE_BUF(soc, tx_desc->nbuf);
 		break;
 	}
 	case HTT_TX_FW2WBM_TX_STATUS_DROP:
 	case HTT_TX_FW2WBM_TX_STATUS_TTL:
 	{
-		DP_TX_FREE_SINGLE_BUF(soc, vdev,
-				tx_desc->nbuf);
 		qdf_atomic_dec(&pdev->num_tx_exception);
+		DP_TX_FREE_SINGLE_BUF(soc, tx_desc->nbuf);
 		DP_STATS_MSDU_INCR(soc, tx.dropped.pkts, tx_desc->nbuf);
 		break;
 	}
@@ -1153,7 +1157,6 @@ static void dp_tx_comp_process_desc(struct dp_soc *soc,
 {
 	struct dp_tx_desc_s *desc;
 	struct dp_tx_desc_s *next;
-	struct dp_vdev *vdev;
 
 	desc = comp_head;
 
@@ -1170,8 +1173,6 @@ static void dp_tx_comp_process_desc(struct dp_soc *soc,
 		/* Process Tx status in descriptor */
 		if (soc->process_tx_status)
 			dp_tx_comp_process_tx_status(desc);
-
-		vdev = desc->vdev;
 
 		/* 0 : MSDU buffer, 1 : MLE */
 		if (desc->msdu_ext_desc) {
@@ -1199,7 +1200,7 @@ static void dp_tx_comp_process_desc(struct dp_soc *soc,
 		}
 
 		next = desc->next;
-		dp_tx_desc_release(vdev, desc, desc->pool_id);
+		dp_tx_desc_release(desc, desc->pool_id);
 		desc = next;
 	}
 }
@@ -1217,7 +1218,7 @@ static void dp_tx_comp_process_desc(struct dp_soc *soc,
  * Return: none
  */
 uint32_t dp_tx_comp_handler(struct dp_soc *soc, uint32_t ring_id,
-		uint32_t budget)
+			uint32_t budget)
 {
 	void *tx_comp_hal_desc;
 	uint8_t buffer_src;
