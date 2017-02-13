@@ -698,8 +698,7 @@ void ol_tx_desc_frame_free_nonstd(struct ol_txrx_pdev_t *pdev,
 			qdf_nbuf_set_next(tx_desc->netbuf, NULL);
 			pdev->tx_data_callback.func(pdev->tx_data_callback.ctxt,
 						    tx_desc->netbuf, had_error);
-			ol_tx_desc_free(pdev, tx_desc);
-			return;
+			goto free_tx_desc;
 		}
 		/* let the code below unmap and free the frame */
 	}
@@ -744,11 +743,19 @@ void ol_tx_desc_frame_free_nonstd(struct ol_txrx_pdev_t *pdev,
 		}
 		/* free the netbuf */
 		qdf_nbuf_free(tx_desc->netbuf);
+	} else if (had_error == htt_tx_status_download_fail) {
+		/* Failed to send to target */
+
+		/* This is to decrement skb->users count for TSO segment */
+		if (tx_desc->pkt_type == OL_TX_FRM_TSO)
+			qdf_nbuf_tx_free(tx_desc->netbuf, had_error);
+		goto free_tx_desc;
 	} else {
-		/* single regular frame */
+		/* single regular frame, called from completion path */
 		qdf_nbuf_set_next(tx_desc->netbuf, NULL);
 		qdf_nbuf_tx_free(tx_desc->netbuf, had_error);
 	}
+free_tx_desc:
 	/* free the tx desc */
 	ol_tx_desc_free(pdev, tx_desc);
 }

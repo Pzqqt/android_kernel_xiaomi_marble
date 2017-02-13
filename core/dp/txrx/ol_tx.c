@@ -83,6 +83,18 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t msdu,
 	} while (0)
 
 #if defined(FEATURE_TSO)
+static void ol_free_remaining_tso_segs(ol_txrx_vdev_handle vdev,
+				struct ol_txrx_msdu_info_t *msdu_info)
+{
+	struct qdf_tso_seg_elem_t *next_seg;
+	struct qdf_tso_seg_elem_t *free_seg = msdu_info->tso_info.curr_seg;
+
+	while (free_seg) {
+		next_seg = free_seg->next;
+		ol_tso_free_segment(vdev->pdev, free_seg);
+		free_seg = next_seg;
+	}
+}
 /**
  * ol_tx_prepare_tso() - Given a jumbo msdu, prepare the TSO
  * related information in the msdu_info meta data
@@ -113,16 +125,10 @@ static inline uint8_t ol_tx_prepare_tso(ol_txrx_vdev_handle vdev,
 					= tso_seg;
 				num_seg--;
 			} else {
-				struct qdf_tso_seg_elem_t *next_seg;
-				struct qdf_tso_seg_elem_t *free_seg =
+				/* Free above alocated TSO segements till now */
+				msdu_info->tso_info.curr_seg =
 					msdu_info->tso_info.tso_seg_list;
-				qdf_print("TSO seg alloc failed!\n");
-				while (free_seg) {
-					next_seg = free_seg->next;
-					ol_tso_free_segment(vdev->pdev,
-						 free_seg);
-					free_seg = next_seg;
-				}
+				ol_free_remaining_tso_segs(vdev, msdu_info);
 				return 1;
 			}
 		}
@@ -133,16 +139,9 @@ static inline uint8_t ol_tx_prepare_tso(ol_txrx_vdev_handle vdev,
 			msdu_info->tso_info.tso_num_seg_list = tso_num_seg;
 		} else {
 			/* Free the already allocated num of segments */
-			struct qdf_tso_seg_elem_t *next_seg;
-			struct qdf_tso_seg_elem_t *free_seg =
-					msdu_info->tso_info.tso_seg_list;
-			qdf_print("TSO num of seg alloc for one jumbo skb failed!\n");
-			while (free_seg) {
-				next_seg = free_seg->next;
-				ol_tso_free_segment(vdev->pdev,
-					 free_seg);
-				free_seg = next_seg;
-			}
+			msdu_info->tso_info.curr_seg =
+				msdu_info->tso_info.tso_seg_list;
+			ol_free_remaining_tso_segs(vdev, msdu_info);
 			return 1;
 		}
 		qdf_nbuf_get_tso_info(vdev->pdev->osdev,
@@ -698,13 +697,28 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 				htt_tx_desc_display(tx_desc->htt_tx_desc);
 				if ((0 == ce_send_fast(pdev->ce_tx_hdl, msdu,
 						ep_id, pkt_download_len))) {
+					struct qdf_tso_info_t *tso_info =
+							&msdu_info.tso_info;
+					/*
+					 * If TSO packet, free associated
+					 * remaining TSO segment descriptors
+					 */
+					if (tx_desc->pkt_type ==
+							OL_TX_FRM_TSO) {
+						tso_info->curr_seg =
+						tso_info->curr_seg->next;
+						ol_free_remaining_tso_segs(vdev,
+							&msdu_info);
+					}
+
 					/*
 					 * The packet could not be sent.
 					 * Free the descriptor, return the
 					 * packet to the caller.
 					 */
 					ol_tx_desc_frame_free_nonstd(pdev,
-								tx_desc, 1);
+						tx_desc,
+						htt_tx_status_download_fail);
 					return msdu;
 				}
 				if (msdu_info.tso_info.curr_seg) {
