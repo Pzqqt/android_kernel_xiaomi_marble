@@ -4684,6 +4684,50 @@ enum dot11p_mode {
 #define CFG_CREATE_BUG_REPORT_FOR_SCAN_DEFAULT    (0)
 
 /*
+ * <ini>
+ * gvendor_acs_support - vendor based channel selection manager
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * Enabling this parameter will force driver to use user application based
+ * channel selection algo instead of driver based auto channel selection
+ * logic.
+ *
+ * Supported Feature: ACS
+ *
+ * Usage: External/Internal
+ *
+ * </ini>
+ */
+#define CFG_USER_AUTO_CHANNEL_SELECTION       "gvendor_acs_support"
+#define CFG_USER_AUTO_CHANNEL_SELECTION_DISABLE   (0)
+#define CFG_USER_AUTO_CHANNEL_SELECTION_ENABLE    (1)
+#define CFG_USER_AUTO_CHANNEL_SELECTION_DEFAULT   (0)
+
+/*
+ * <ini>
+ * gacs_support_for_dfs_lte_coex - acs support for lte coex and dfs event
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * Enabling this parameter will force driver to use user application based
+ * channel selection algo for channel selection in case of dfs and lte
+ * coex event.
+ *
+ * Supported Feature: ACS
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_USER_ACS_DFS_LTE           "gacs_support_for_dfs_lte_coex"
+#define CFG_USER_ACS_DFS_LTE_DISABLE   (0)
+#define CFG_USER_ACS_DFS_LTE_ENABLE    (1)
+#define CFG_USER_ACS_DFS_LTE_DEFAULT   (0)
+
+/*
  * Enabling gignore_peer_ht_opmode will enable 11g
  * protection only when there is a 11g AP in vicinity.
  */
@@ -6518,6 +6562,8 @@ struct hdd_config {
 	uint8_t adapt_dwell_lpf_weight;
 	uint8_t adapt_dwell_passive_mon_intval;
 	uint8_t adapt_dwell_wifi_act_threshold;
+	bool vendor_acs_support;
+	bool acs_support_for_dfs_ltecoex;
 	bool bug_report_for_no_scan_results;
 	bool bug_on_reinit_failure;
 #ifdef WLAN_FEATURE_NAN_DATAPATH

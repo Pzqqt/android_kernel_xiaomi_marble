@@ -2381,6 +2381,23 @@ QDF_STATUS wlansap_cancel_remain_on_channel(void *pCtx,
 	return QDF_STATUS_E_FAULT;
 }
 
+QDF_STATUS wlan_sap_update_next_channel(void *ctx, uint8_t channel,
+				       enum phy_ch_width chan_bw)
+{
+	ptSapContext sap_ctx = CDS_GET_SAP_CB(ctx);
+
+	if (!sap_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid SAP pointer", __func__);
+		return QDF_STATUS_E_FAULT;
+	}
+
+	sap_ctx->dfs_vendor_channel = channel;
+	sap_ctx->dfs_vendor_chan_bw = chan_bw;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * wlan_sap_set_pre_cac_status() - Set the pre cac status
  * @ctx: SAP context
@@ -3325,6 +3342,19 @@ void wlansap_extend_to_acs_range(uint8_t *startChannelNum,
 	}
 }
 
+QDF_STATUS wlan_sap_set_vendor_acs(void *ctx, bool is_vendor_acs)
+{
+	ptSapContext sap_context = (ptSapContext) ctx;
+
+	if (!sap_context) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid SAP pointer", __func__);
+		return QDF_STATUS_E_FAULT;
+	}
+	sap_context->vendor_acs_enabled = is_vendor_acs;
+
+	return QDF_STATUS_SUCCESS;
+}
 /**
  * wlansap_get_dfs_nol() - Get the DFS NOL
  * @pSapCtx: SAP context

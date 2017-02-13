@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -821,6 +821,55 @@ wlansap_roam_process_infra_assoc_ind(ptSapContext sap_ctx,
 	return;
 }
 
+static void wlansap_update_vendor_acs_chan(tpAniSirGlobal mac_ctx,
+				ptSapContext sap_ctx)
+{
+	int intf;
+	tHalHandle hal;
+
+	hal = CDS_GET_HAL_CB(sap_ctx->p_cds_gctx);
+	mac_ctx->sap.SapDfsInfo.target_channel =
+				sap_ctx->dfs_vendor_channel;
+
+	mac_ctx->sap.SapDfsInfo.new_chanWidth =
+				sap_ctx->dfs_vendor_chan_bw;
+	mac_ctx->sap.SapDfsInfo.new_ch_params.ch_width =
+				sap_ctx->dfs_vendor_chan_bw;
+
+	if (mac_ctx->sap.SapDfsInfo.target_channel != 0) {
+		mac_ctx->sap.SapDfsInfo.cac_state =
+			eSAP_DFS_DO_NOT_SKIP_CAC;
+		sap_cac_reset_notify(hal);
+		/* set DFS-NOL back to keep it update-to-date in CNSS */
+		sap_signal_hdd_event(sap_ctx, NULL, eSAP_DFS_NOL_SET,
+				     (void *) eSAP_STATUS_SUCCESS);
+		return;
+	}
+	/* App failed to provide new channel, try random channel algo */
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+		  FL("failed to get channel from userspace"));
+
+	/* Issue stopbss for each sapctx */
+	for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
+		ptSapContext pSapContext;
+
+		if (((QDF_SAP_MODE ==
+		    mac_ctx->sap.sapCtxList[intf].sapPersona) ||
+		    (QDF_P2P_GO_MODE ==
+		    mac_ctx->sap.sapCtxList[intf].sapPersona)) &&
+		    mac_ctx->sap.sapCtxList[intf].pSapContext !=
+		    NULL) {
+			pSapContext =
+			    mac_ctx->sap.sapCtxList[intf].pSapContext;
+			QDF_TRACE(QDF_MODULE_ID_SAP,
+				  QDF_TRACE_LEVEL_ERROR,
+				  FL("sapdfs: no available channel for sapctx[%p], StopBss"),
+				  pSapContext);
+			wlansap_stop_bss(pSapContext);
+		}
+	}
+}
+
 /**
  * wlansap_roam_callback() - Callback for Roam (connection status) Events
  * @ctx             : pContext passed in with the roam request
@@ -948,6 +997,12 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 				     eSAP_MAC_TRIG_STOP_BSS_EVENT,
 				     (void *) eSAP_STATUS_SUCCESS);
 		break;
+	case eCSR_ROAM_CHANNEL_COMPLETE_IND:
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+			  FL("Received new channel from app"));
+		wlansap_update_vendor_acs_chan(mac_ctx, sap_ctx);
+		break;
+
 	case eCSR_ROAM_DFS_RADAR_IND:
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("Received Radar Indication"));
@@ -983,6 +1038,12 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 			   mac_ctx->sap.SapDfsInfo.user_provided_target_channel;
 			mac_ctx->sap.SapDfsInfo.user_provided_target_channel =
 			   0;
+		}
+		/* if external acs enabled */
+		if (sap_ctx->vendor_acs_enabled &&
+			!mac_ctx->sap.SapDfsInfo.target_channel) {
+			/* Return from here, processing will be done later */
+			return 0;
 		}
 		if (mac_ctx->sap.SapDfsInfo.target_channel != 0) {
 			mac_ctx->sap.SapDfsInfo.cac_state =

@@ -6081,7 +6081,7 @@ static uint8_t hdd_get_safe_channel_from_pcl_and_acs_range(
  *
  * Return: None
  */
-static void hdd_restart_sap(hdd_adapter_t *adapter, uint8_t channel)
+void hdd_restart_sap(hdd_adapter_t *adapter, uint8_t channel)
 {
 	hdd_ap_ctx_t *hdd_ap_ctx;
 	tHalHandle *hal_handle;
@@ -6112,6 +6112,30 @@ static void hdd_restart_sap(hdd_adapter_t *adapter, uint8_t channel)
 
 	cds_change_sap_channel_with_csa(adapter, hdd_ap_ctx);
 }
+
+int hdd_update_acs_timer_reason(hdd_adapter_t *adapter, uint8_t reason)
+{
+	struct hdd_external_acs_timer_context *timer_context;
+
+	set_bit(VENDOR_ACS_RESPONSE_PENDING, &adapter->event_flags);
+
+	if (QDF_TIMER_STATE_RUNNING ==
+	    qdf_mc_timer_get_current_state(&adapter->sessionCtx.
+					ap.vendor_acs_timer)) {
+		qdf_mc_timer_stop(&adapter->sessionCtx.ap.vendor_acs_timer);
+	}
+	timer_context = (struct hdd_external_acs_timer_context *)
+			adapter->sessionCtx.ap.vendor_acs_timer.user_data;
+	timer_context->reason = reason;
+	qdf_mc_timer_start(&adapter->sessionCtx.ap.vendor_acs_timer,
+				WLAN_VENDOR_ACS_WAIT_TIME);
+	/* Update config to application */
+	hdd_cfg80211_update_acs_config(adapter, reason);
+	hdd_notice("Updated ACS config to nl with reason %d", reason);
+
+	return 0;
+}
+
 /**
  * hdd_unsafe_channel_restart_sap() - restart sap if sap is on unsafe channel
  * @hdd_ctx: hdd context pointer
@@ -6166,8 +6190,14 @@ void hdd_unsafe_channel_restart_sap(hdd_context_t *hdd_ctxt)
 			goto next_adapater;
 		}
 
-		restart_chan =
-			hdd_get_safe_channel_from_pcl_and_acs_range(
+		if (hdd_ctxt->config->vendor_acs_support &&
+		    hdd_ctxt->config->acs_support_for_dfs_ltecoex) {
+			hdd_update_acs_timer_reason(adapter_temp,
+				QCA_WLAN_VENDOR_ACS_SELECT_REASON_LTE_COEX);
+			goto next_adapater;
+		} else
+			restart_chan =
+				hdd_get_safe_channel_from_pcl_and_acs_range(
 					adapter_temp);
 		if (!restart_chan) {
 			hdd_alert("fail to restart SAP");
@@ -6442,6 +6472,88 @@ void hdd_indicate_mgmt_frame(tSirSmeMgmtFrameInd *frame_ind)
 						frame_ind->rxChan,
 						frame_ind->rxRssi);
 	return;
+}
+
+static void hdd_lte_coex_restart_sap(hdd_adapter_t *adapter,
+				     hdd_context_t *hdd_ctx)
+{
+	uint8_t restart_chan = 0;
+
+	restart_chan =
+		hdd_get_safe_channel_from_pcl_and_acs_range(adapter);
+	if (!restart_chan) {
+		hdd_alert("fail to restart SAP");
+	} else {
+		/* SAP restart due to unsafe channel. While restarting
+		 * the SAP, make sure to clear acs_channel, channel to
+		 * reset to 0. Otherwise these settings will override
+		 * the ACS while restart.
+		 */
+		hdd_ctx->acs_policy.acs_channel = AUTO_CHANNEL_SELECT;
+		adapter->sessionCtx.ap.sapConfig.channel =
+						AUTO_CHANNEL_SELECT;
+		hdd_info("sending coex indication");
+		wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
+				WLAN_SVC_LTE_COEX_IND, NULL, 0);
+		hdd_restart_sap(adapter, restart_chan);
+	}
+}
+
+void hdd_acs_response_timeout_handler(void *context)
+{
+	struct hdd_external_acs_timer_context *timer_context =
+			(struct hdd_external_acs_timer_context *)context;
+	hdd_adapter_t *adapter;
+	hdd_context_t *hdd_ctx;
+	uint8_t reason;
+
+	ENTER();
+	if (!timer_context) {
+		hdd_err("invlaid timer context");
+		return;
+	}
+	adapter = timer_context->adapter;
+	reason = timer_context->reason;
+
+
+	if ((!adapter) ||
+	    (adapter->magic != WLAN_HDD_ADAPTER_MAGIC)) {
+		hdd_err("invalid adapter or adapter has invalid magic");
+		return;
+	}
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	if (wlan_hdd_validate_context(hdd_ctx))
+		return;
+
+	if (test_bit(VENDOR_ACS_RESPONSE_PENDING, &adapter->event_flags))
+		clear_bit(VENDOR_ACS_RESPONSE_PENDING, &adapter->event_flags);
+	else
+		return;
+
+	hdd_err("ACS timeout happened for %s reason %d",
+				adapter->dev->name, reason);
+	switch (reason) {
+	/* SAP init case */
+	case QCA_WLAN_VENDOR_ACS_SELECT_REASON_INIT:
+		wlan_sap_set_vendor_acs(WLAN_HDD_GET_SAP_CTX_PTR(adapter),
+					false);
+		wlan_hdd_cfg80211_start_acs(adapter);
+		break;
+	/* DFS detected on current channel */
+	case QCA_WLAN_VENDOR_ACS_SELECT_REASON_DFS:
+		wlan_sap_update_next_channel(
+				WLAN_HDD_GET_SAP_CTX_PTR(adapter), 0, 0);
+		sme_update_new_channel_event(WLAN_HDD_GET_HAL_CTX(adapter),
+					     adapter->sessionId);
+		break;
+	/* LTE coex event on current channel */
+	case QCA_WLAN_VENDOR_ACS_SELECT_REASON_LTE_COEX:
+		hdd_lte_coex_restart_sap(adapter, hdd_ctx);
+		break;
+	default:
+		hdd_info("invalid reason for timer invoke");
+
+	}
 }
 
 /**

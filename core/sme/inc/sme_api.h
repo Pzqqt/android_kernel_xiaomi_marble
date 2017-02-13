@@ -1357,6 +1357,14 @@ QDF_STATUS sme_update_sta_inactivity_timeout(tHalHandle hal_handle,
 QDF_STATUS sme_set_lost_link_info_cb(tHalHandle hal,
 		void (*cb)(void *, struct sir_lost_link_info *));
 
+/**
+ * sme_update_new_channel_event() - update new channel event for sapFsm
+ * @hal: HAL handle
+ * @session_id: session id
+ *
+ * Return: QDF_STATUS_SUCCESS or non-zero on failure.
+ */
+QDF_STATUS sme_update_new_channel_event(tHalHandle hal, uint8_t session_id);
 #ifdef WLAN_POWER_DEBUGFS
 QDF_STATUS sme_power_debug_stats_req(tHalHandle hal, void (*callback_fn)
 				(struct  power_stats_response *response,

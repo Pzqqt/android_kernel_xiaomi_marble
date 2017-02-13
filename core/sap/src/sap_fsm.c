@@ -3124,6 +3124,12 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 		sap_ap_event.sapevt.sap_chan_cng_ind.new_chan =
 					   csr_roaminfo->target_channel;
 		break;
+	case eSAP_DFS_NEXT_CHANNEL_REQ:
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+				"In %s, SAP event callback event = %s",
+				__func__, "eSAP_DFS_NEXT_CHANNEL_REQ");
+		sap_ap_event.sapHddEventCode = eSAP_DFS_NEXT_CHANNEL_REQ;
+		break;
 	default:
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("SAP Unknown callback event = %d"),
@@ -4917,6 +4923,16 @@ uint8_t sap_indicate_radar(ptSapContext sapContext,
 	 * (4) When we pick a channel, skip excluded 11D channels
 	 * (5) Create the available channel list with the above rules
 	 */
+
+	if (sapContext->vendor_acs_enabled) {
+		/* Send event to hdd */
+		if (QDF_STATUS_SUCCESS ==
+			sap_signal_hdd_event(sapContext,
+					     NULL, eSAP_DFS_NEXT_CHANNEL_REQ,
+					     (void *) eSAP_STATUS_SUCCESS)) {
+			return 0;
+		}
+	}
 
 	target_channel = sap_random_channel_sel(sapContext);
 	if (0 == target_channel) {

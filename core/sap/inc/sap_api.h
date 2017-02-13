@@ -182,6 +182,7 @@ typedef enum {
 	eSAP_ACS_SCAN_SUCCESS_EVENT,
 	eSAP_ACS_CHANNEL_SELECTED,
 	eSAP_ECSA_CHANGE_CHAN_IND,
+	eSAP_DFS_NEXT_CHANNEL_REQ,
 } eSapHddEvent;
 
 typedef enum {
@@ -497,6 +498,7 @@ struct sap_acs_cfg {
 
 	uint16_t   ch_width;
 	uint8_t    pcl_channels[QDF_MAX_NUM_CHAN];
+	uint8_t    pcl_channels_weight_list[QDF_MAX_NUM_CHAN];
 	uint32_t   pcl_ch_count;
 	uint8_t    is_ht_enabled;
 	uint8_t    is_vht_enabled;
@@ -904,6 +906,18 @@ bool wlansap_is_channel_leaking_in_nol(void *ctx, uint8_t channel,
 QDF_STATUS wlansap_start_bss(void *p_cds_gctx,
 	 tpWLAN_SAPEventCB pSapEventCallback,
 	 tsap_Config_t *pConfig, void *pUsrContext);
+
+/**
+ * wlan_sap_update_next_channel() - Update next channel configured using vendor
+ * command in SAP context
+ * @ctx: SAP context
+ * @channel: channel number
+ * @chan_bw: channel width
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_sap_update_next_channel(void *ctx, uint8_t channel,
+				       enum phy_ch_width chan_bw);
 QDF_STATUS wlan_sap_set_pre_cac_status(void *ctx, bool status,
 		tHalHandle handle);
 QDF_STATUS wlan_sap_set_chan_before_pre_cac(void *ctx,
@@ -992,6 +1006,15 @@ void wlansap_extend_to_acs_range(uint8_t *startChannelNum,
 		uint8_t *bandEndChannel);
 QDF_STATUS wlansap_get_dfs_nol(void *pSapCtx, uint8_t *nol, uint32_t *nol_len);
 QDF_STATUS wlansap_set_dfs_nol(void *pSapCtx, eSapDfsNolType conf);
+
+/**
+ * wlan_sap_set_vendor_acs() - Set vendor specific acs in sap context
+ * @pSapCtx: SAP context
+ * @is_vendor_acs: if vendor specific acs is enabled
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_sap_set_vendor_acs(void *sap_ctx, bool is_vendor_acs);
 void wlansap_populate_del_sta_params(const uint8_t *mac,
 		uint16_t reason_code,
 		uint8_t subtype,

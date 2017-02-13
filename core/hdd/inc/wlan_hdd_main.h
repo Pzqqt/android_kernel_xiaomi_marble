@@ -107,6 +107,8 @@
 #define DEVICE_IFACE_OPENED    (5)
 #define TDLS_INIT_DONE         (6)
 #define ACS_PENDING            (7)
+/* Waiting for event for vendor acs */
+#define VENDOR_ACS_RESPONSE_PENDING   (8)
 
 /* HDD global event flags */
 #define ACS_IN_PROGRESS        (0)
@@ -158,6 +160,9 @@
 #define MAX_NUMBER_OF_ADAPTERS 4
 
 #define MAX_CFG_STRING_LEN  255
+
+/* Maximum time(ms) to wait for external acs response */
+#define WLAN_VENDOR_ACS_WAIT_TIME 1000
 
 /* SSR Retry Count */
 #define HDD_MOD_EXIT_SSR_MAX_RETRIES 75
@@ -803,6 +808,8 @@ struct hdd_ap_ctx_s {
 	void *sapContext;
 
 	bool dfs_cac_block_tx;
+	qdf_mc_timer_t vendor_acs_timer;
+	bool vendor_acs_timer_initialized;
 
 	enum bss_stop_reason bss_stop_reason;
 };
@@ -1612,6 +1619,46 @@ struct hdd_context_s {
 };
 
 /**
+ * struct hdd_vendor_acs_chan_params - vendor acs channel parameters
+ * @channel_count: channel count
+ * @channel_list: pointer to channel list
+ * @vendor_pcl_list: pointer to pcl list
+ * @vendor_weight_list: pointer to pcl weight list
+ */
+struct hdd_vendor_acs_chan_params {
+	uint32_t channel_count;
+	uint8_t *channel_list;
+	uint8_t *vendor_pcl_list;
+	uint8_t *vendor_weight_list;
+};
+
+/**
+ * struct hdd_external_acs_timer_context - acs timer context
+ * @reason: reason for acs trigger
+ * @adapter: hdd adapter for acs
+ */
+struct hdd_external_acs_timer_context {
+	int8_t reason;
+	hdd_adapter_t *adapter;
+};
+
+/**
+ * struct hdd_vendor_chan_info - vendor channel info
+ * @pri_ch: primary channel
+ * @ht_sec_ch: secondary channel
+ * @vht_seg0_center_ch: segment0 for vht
+ * @vht_seg1_center_ch: vht segment 1
+ * @chan_width: channel width
+ */
+struct hdd_vendor_chan_info {
+	uint8_t pri_ch;
+	uint8_t ht_sec_ch;
+	uint8_t vht_seg0_center_ch;
+	uint8_t vht_seg1_center_ch;
+	uint8_t chan_width;
+};
+
+/**
  * struct  hdd_channel_info - standard channel info
  * @freq: Freq in Mhz
  * @flags: channel info flags
@@ -1796,7 +1843,54 @@ int wlan_hdd_scan_abort(hdd_adapter_t *pAdapter);
 void hdd_get_fw_version(hdd_context_t *hdd_ctx,
 			uint32_t *major_spid, uint32_t *minor_spid,
 			uint32_t *siid, uint32_t *crmid);
+/**
+ * hdd_acs_response_timeout_handler() - timeout handler for acs_timer
+ * @context : timeout handler context
+ *
+ * Return: None
+ */
+void hdd_acs_response_timeout_handler(void *context);
 
+/**
+ * wlan_hdd_cfg80211_start_acs(): Start ACS Procedure for SAP
+ * @adapter: pointer to SAP adapter struct
+ *
+ * This function starts the ACS procedure if there are no
+ * constraints like MBSSID DFS restrictions.
+ *
+ * Return: Status of ACS Start procedure
+ */
+int wlan_hdd_cfg80211_start_acs(hdd_adapter_t *adapter);
+
+/**
+ * hdd_cfg80211_update_acs_config() - update acs config to application
+ * @adapter: hdd adapter
+ * @reason: channel change reason
+ *
+ * Return: none
+ */
+void hdd_cfg80211_update_acs_config(hdd_adapter_t *adapter,
+				    uint8_t reason);
+/**
+ * hdd_update_acs_timer_reason() - update acs timer start reason
+ * @adapter: hdd adapter
+ * @reason: channel change reason
+ *
+ * Return: 0 for success
+ */
+int hdd_update_acs_timer_reason(hdd_adapter_t *adapter, uint8_t reason);
+
+/**
+ * hdd_restart_sap() - Restarts SAP on the given channel
+ * @adapter: AP adapter
+ * @channel: Channel
+ *
+ * Restarts the SAP interface by invoking the function which executes the
+ * callback to perform channel switch using (E)CSA.
+ *
+ * Return: None
+ */
+void hdd_restart_sap(hdd_adapter_t *adapter, uint8_t channel);
 #ifdef WLAN_FEATURE_MEMDUMP
 /**
  * hdd_is_memdump_supported() - to check if memdump feature support

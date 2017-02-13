@@ -1906,6 +1906,31 @@ QDF_STATUS dfs_msg_processor(tpAniSirGlobal pMac, uint16_t msgType, void *pMsgBu
 	return status;
 }
 
+QDF_STATUS sme_update_new_channel_event(tHalHandle hal, uint8_t session_id)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+	tCsrRoamInfo *roamInfo;
+	eRoamCmdStatus roamStatus;
+	eCsrRoamResult roamResult;
+
+	roamInfo = qdf_mem_malloc(sizeof(*roamInfo));
+	roamInfo->dfs_event.sessionId = session_id;
+
+	roamStatus = eCSR_ROAM_CHANNEL_COMPLETE_IND;
+	roamResult = eCSR_ROAM_RESULT_DFS_RADAR_FOUND_IND;
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_MED,
+		  "sapdfs: Updated new channel event");
+
+	/* Indicate channel Event to SAP */
+	csr_roam_call_callback(mac, session_id, roamInfo, 0,
+			       roamStatus, roamResult);
+
+	qdf_mem_free(roamInfo);
+	return status;
+}
+
+
 /**
  * sme_extended_change_channel_ind()- function to indicate ECSA
  * action frame is received in lim to SAP

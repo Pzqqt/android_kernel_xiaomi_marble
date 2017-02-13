@@ -267,6 +267,9 @@ typedef struct sSapContext {
 	qdf_event_t sap_session_opened_evt;
 	bool is_pre_cac_on;
 	bool pre_cac_complete;
+	bool vendor_acs_enabled;
+	uint8_t dfs_vendor_channel;
+	uint8_t dfs_vendor_chan_bw;
 	uint8_t chan_before_pre_cac;
 	uint8_t beacon_tx_rate;
 	tSirMacRateSet supp_rate_set;

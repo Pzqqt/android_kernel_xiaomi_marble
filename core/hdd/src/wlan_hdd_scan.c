@@ -2037,6 +2037,18 @@ static inline void wlan_hdd_copy_bssid(struct cfg80211_scan_request *request,
 }
 #endif
 
+static void hdd_process_vendor_acs_response(hdd_adapter_t *adapter)
+{
+	if (test_bit(VENDOR_ACS_RESPONSE_PENDING, &adapter->event_flags)) {
+		if (QDF_TIMER_STATE_RUNNING ==
+		    qdf_mc_timer_get_current_state(&adapter->sessionCtx.
+					ap.vendor_acs_timer)) {
+			qdf_mc_timer_stop(&adapter->sessionCtx.
+					ap.vendor_acs_timer);
+		}
+	}
+}
+
 /**
  * __wlan_hdd_cfg80211_vendor_scan() - API to process venor scan request
  * @wiphy: Pointer to wiphy
@@ -2061,6 +2073,7 @@ static int __wlan_hdd_cfg80211_vendor_scan(struct wiphy *wiphy,
 	unsigned int len;
 	struct ieee80211_channel *chan;
 	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(wdev->netdev);
 	int ret;
 
 	ENTER_DEV(wdev->netdev);
@@ -2217,6 +2230,10 @@ static int __wlan_hdd_cfg80211_vendor_scan(struct wiphy *wiphy,
 		wlan_hdd_copy_bssid(request,
 			nla_data(tb[QCA_WLAN_VENDOR_ATTR_SCAN_BSSID]));
 	}
+
+	/* Check if external acs was requested on this adapter */
+	hdd_process_vendor_acs_response(adapter);
+
 	request->no_cck =
 		nla_get_flag(tb[QCA_WLAN_VENDOR_ATTR_SCAN_TX_NO_CCK_RATE]);
 	request->wdev = wdev;

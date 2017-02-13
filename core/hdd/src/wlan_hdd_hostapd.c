@@ -2065,6 +2065,12 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		else
 			return QDF_STATUS_SUCCESS;
 
+	case eSAP_DFS_NEXT_CHANNEL_REQ:
+		hdd_notice("Sending next channel query to userspace");
+		hdd_update_acs_timer_reason(pHostapdAdapter,
+				QCA_WLAN_VENDOR_ACS_SELECT_REASON_DFS);
+		return QDF_STATUS_SUCCESS;
+
 	default:
 		hdd_notice("SAP message is not handled");
 		goto stopbss;

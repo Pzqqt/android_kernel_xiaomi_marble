@@ -303,6 +303,8 @@ typedef enum {
  *	(SAR) power limits. A critical regulation for FCC compliance, OEMs
  *	require methods to set SAR limits on TX power of WLAN/WWAN.
  *	enum qca_vendor_attr_sar_limits attributes are used with this command.
+ * @QCA_NL80211_VENDOR_SUBCMD_EXTERNAL_ACS: Vendor command used to get/set
+ *      configuration of vendor ACS.
  */
 
 enum qca_nl80211_vendor_subcmds {
@@ -455,6 +457,10 @@ enum qca_nl80211_vendor_subcmds {
 
 	/* Set Specific Absorption Rate(SAR) Power Limits */
 	QCA_NL80211_VENDOR_SUBCMD_SET_SAR_LIMITS = 146,
+
+	/* External Auto channel configuration setting */
+	QCA_NL80211_VENDOR_SUBCMD_EXTERNAL_ACS = 147,
+
 	/* Set the trace level for QDF */
 	QCA_NL80211_VENDOR_SUBCMD_SET_TRACE_LEVEL = 152,
 };
@@ -771,6 +777,7 @@ enum qca_nl80211_vendor_subcmds_index {
 #endif /* WLAN_FEATURE_NAN_DATAPATH */
 	QCA_NL80211_VENDOR_SUBCMD_P2P_LO_EVENT_INDEX,
 	QCA_NL80211_VENDOR_SUBCMD_SAP_CONDITIONAL_CHAN_SWITCH_INDEX,
+	QCA_NL80211_VENDOR_SUBCMD_UPDATE_EXTERNAL_ACS_CONFIG,
 };
 
 /**
@@ -2734,6 +2741,73 @@ enum qca_wlan_vendor_external_acs_event_chan_info_attr {
 };
 
 /**
+ * enum qca_wlan_vendor_attr_start_acs_config: attribute to vendor sub-command
+ * QCA_NL80211_VENDOR_SUBCMD_START_ACS. This will be triggered by host
+ * driver.
+ * @QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_REASON: This reason refers to
+ * qca_wlan_vendor_acs_select_reason. This helps acs module to understand why
+ * ACS need to be started
+ * @QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_IS_SPECTRAL_SUPPORTED: Does
+ * driver supports spectral scanning or not
+ * @QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_IS_OFFLOAD_ENABLED: Is 11ac is
+ * offloaded to firmware.
+ * @QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_ADD_CHAN_STATS_SUPPORT: Does driver
+ * provides additional channel capability as part of scan operation.
+ * @QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_SAP_MODE: Operating mode of
+ * interface. It takes one of nl80211_iftype values.
+ * @QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_SAP_STATUS: Iface status: UP/Down
+ * @QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_CHAN_WIDTH: This is the upper bound
+ * of chan width. ACS logic should try to get a channel with specified width
+ * if not found then look for lower values.
+ * @QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_MAC_ADDR: Interface MAC address.
+ * @QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_BAND: nl80211_bands
+ * @QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_PHY_MODE: PHY/HW mode such as
+ * a/b/g/n/ac.
+ * @QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_CHANLIST: Supported channel list
+ * among which ACS should choose best channel.
+ * @QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_PCL:Preferred Chan List by the
+ * driver which will have <channel(u8), weight(u8)> format as array of
+ * nested values.
+ * @QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_CHAN_INFO: Array of nested attribute
+ * for each channel. It takes attr as defined in
+ * qca_wlan_vendor_start_acs_config_chan_info_attr.
+ */
+enum qca_wlan_vendor_attr_start_acs_config {
+	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_INVALID = 0,
+	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_REASON = 1,
+	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_IS_SPECTRAL_SUPPORTED = 2,
+	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_IS_OFFLOAD_ENABLED = 3,
+	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_ADD_CHAN_STATS_SUPPORT = 4,
+	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_SAP_MODE = 5,
+	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_SAP_STATUS = 6,
+	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_CHAN_WIDTH = 7,
+	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_MAC_ADDR = 8,
+	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_BAND = 9,
+	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_PHY_MODE = 10,
+	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_CHANLIST = 11,
+	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_PCL = 12,
+	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_CHAN_INFO = 13,
+
+	/* keep last */
+	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_LAST,
+	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_MAX =
+		QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_LAST - 1,
+};
+
+/**
+ * enum qca_wlan_vendor_attr_pcl_config: attribute to vendor sub-command
+ * QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_PCL.
+ * @QCA_WLAN_VENDOR_ATTR_PCL_CONFIG_INVALID: invalid value
+ * @QCA_WLAN_VENDOR_ATTR_PCL_CONFIG_CHANNEL: pcl channel number
+ * @QCA_WLAN_VENDOR_ATTR_PCL_CONFIG_WEIGHT: pcl channel weight
+ */
+enum qca_wlan_vendor_attr_pcl_config {
+	QCA_WLAN_VENDOR_ATTR_PCL_CONFIG_INVALID = 0,
+	QCA_WLAN_VENDOR_ATTR_PCL_CONFIG_CHANNEL = 1,
+	QCA_WLAN_VENDOR_ATTR_PCL_CONFIG_WEIGHT = 2,
+};
+
+/**
  * enum set_reset_packet_filter - set packet filter control commands
  * @QCA_WLAN_SET_PACKET_FILTER: Set Packet Filter
  * @QCA_WLAN_GET_PACKET_FILTER: Get Packet filter
@@ -3376,6 +3450,64 @@ enum qca_vendor_attr_sar_limits {
 	QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_AFTER_LAST,
 	QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_MAX =
 		QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_AFTER_LAST - 1
+};
+
+/**
+ * qca_wlan_vendor_attr_external_acs_channels: attribute to vendor subcmd
+ * QCA_NL80211_VENDOR_SUBCMD_EXTERNAL_ACS. This carry a list of channels
+ * in priority order as decided after acs operation in userspace.
+ * @QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_CHANNEL_REASON: One of reason code from
+ * qca_wlan_vendor_acs_select_reason.
+ * @QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_CHANNEL_COUNT: Number of channels in
+ * this list
+ * @QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_CHANNEL_LIST: Array of nested values
+ * for each channel with following attributes:
+ *     QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_CHANNEL_PRIMARY,
+ *     QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_CHANNEL_SECONDARY,
+ *     QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_CHANNEL_CENTER_SEG0,
+ *     QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_CHANNEL_CENTER_SEG1,
+ *     QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_CHANNEL_WIDTH
+ * @QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_CHANNEL_PRIMARY: Primary channel (u8)
+ * @QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_CHANNEL_SECONDARY: Secondary channel (u8)
+ * required only for 160 / 80 + 80
+ * @QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_CHANNEL_CENTER_SEG0: VHT seg0 channel (u8)
+ * @QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_CHANNEL_CENTER_SEG1: VHT seg1 channel (u8)
+ * QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_CHANNEL_WIDTH:channel width (u8)
+ */
+enum qca_wlan_vendor_attr_external_acs_channels {
+	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_CHANNEL_INVALID = 0,
+
+	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_CHANNEL_REASON = 1,
+	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_CHANNEL_COUNT = 2,
+	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_CHANNEL_LIST = 3,
+	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_CHANNEL_PRIMARY = 4,
+	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_CHANNEL_SECONDARY = 5,
+	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_CHANNEL_CENTER_SEG0 = 6,
+	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_CHANNEL_CENTER_SEG1 = 7,
+	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_CHANNEL_WIDTH = 8,
+
+	/* keep last */
+	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_CHANNEL_LAST,
+	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_CHANNEL_MAX =
+		QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_CHANNEL_LAST - 1
+};
+
+/**
+ * qca_wlan_vendor_acs_select_reason: This represents the different reasons why
+ * the ACS has to be triggered. These parameters are used by
+ * QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_REASON and
+ * QCA_NL80211_VENDOR_SUBCMD_ACS_SET_CHANNELS
+ * @QCA_WLAN_VENDOR_ACS_SELECT_REASON_INIT: Represents the reason that the
+ * ACS triggered during the AP start
+ * @QCA_WLAN_VENDOR_ACS_SELECT_REASON_DFS: Represents the reason that
+ * DFS found with current channel
+ * @QCA_WLAN_VENDOR_ACS_SELECT_REASON_LTE_COEX: Represents the reason that
+ * LTE CO-Exist in current band
+ */
+enum qca_wlan_vendor_acs_select_reason {
+	QCA_WLAN_VENDOR_ACS_SELECT_REASON_INIT,
+	QCA_WLAN_VENDOR_ACS_SELECT_REASON_DFS,
+	QCA_WLAN_VENDOR_ACS_SELECT_REASON_LTE_COEX,
 };
 
 struct cfg80211_bss *wlan_hdd_cfg80211_update_bss_db(hdd_adapter_t *pAdapter,
