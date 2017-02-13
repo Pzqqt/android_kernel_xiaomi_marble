@@ -7355,3 +7355,43 @@ QDF_STATUS wmi_extract_dfs_status_from_fw(void *wmi_hdl, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 #endif
+
+#ifdef OL_ATH_SMART_LOGGING
+QDF_STATUS wmi_unified_send_smart_logging_enable_cmd(void *wmi_hdl,
+						     uint32_t param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
+
+	if (wmi_handle->ops->send_smart_logging_enable_cmd)
+		return wmi_handle->ops->send_smart_logging_enable_cmd(
+				wmi_handle,
+				param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS
+wmi_unified_send_smart_logging_fatal_cmd(void *wmi_hdl,
+					 struct wmi_debug_fatal_events *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
+
+	if (wmi_handle->ops->send_smart_logging_fatal_cmd)
+		return wmi_handle->ops->send_smart_logging_fatal_cmd(wmi_handle,
+			param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_extract_smartlog_ev(void *wmi_hdl,
+				   void *evt_buf,
+				   struct wmi_debug_fatal_events *ev)
+{
+	wmi_unified_t wmi = (wmi_unified_t)wmi_hdl;
+
+	if (wmi->ops->extract_smartlog_event)
+		return wmi->ops->extract_smartlog_event(wmi, evt_buf, ev);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif /* OL_ATH_SMART_LOGGING */

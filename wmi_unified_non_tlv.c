@@ -5474,6 +5474,90 @@ send_coex_ver_cfg_cmd_non_tlv(wmi_unified_t wmi_handle, coex_ver_cfg_t *param)
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef OL_ATH_SMART_LOGGING
+/**
+ * send_smart_logging_enable_cmd_non_tlv() - send smartlog enable/disable
+ * @wmi_handle: wmi handle
+ * @param:     enable/disable
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS
+send_smart_logging_enable_cmd_non_tlv(wmi_unified_t wmi_handle,
+				      unsigned int enable)
+{
+	wmi_buf_t buf;
+	wmi_smart_logging *cmd;
+	int len = sizeof(wmi_smart_logging);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+
+	if (!buf) {
+		qdf_print("%s:wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cmd = (wmi_smart_logging *)wmi_buf_data(buf);
+	cmd->enable = enable;
+
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_CONFIG_SMART_LOGGING_CMDID)) {
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_smart_logging_fatal_cmd_non_tlv() - send smartlog fatal event
+ * @wmi_handle: wmi handle
+ * @param:     number of fatal events
+ * of type struct wmi_debug_fatal_condition_list_t followed by
+ * events of type wmi_fatal_condition
+ *
+ * Return: 0 for success or error code
+ */
+
+static QDF_STATUS
+send_smart_logging_fatal_cmd_non_tlv(wmi_unified_t wmi_handle,
+				     struct wmi_debug_fatal_events *param)
+{
+	wmi_buf_t buf;
+	wmi_debug_fatal_condition_list *list;
+	int len, ev;
+	wmi_fatal_condition *event;
+
+	len = sizeof(wmi_debug_fatal_condition_list) +
+			((param->num_events) * (sizeof(wmi_fatal_condition)));
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+
+	if (!buf) {
+		qdf_print("%s:wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	list = (wmi_debug_fatal_condition_list *)wmi_buf_data(buf);
+	list->num_events = param->num_events;
+	event =  (wmi_fatal_condition *)(list + 1);
+
+	for (ev = 0; ev < param->num_events; ev++) {
+		event[ev].type = param->event[ev].type;
+		event[ev].subtype = param->event[ev].subtype;
+		event[ev].reserved0 = param->event[ev].reserved0;
+	}
+
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_DEBUG_FATAL_CONDITION_CMDID)) {
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* OL_ATH_SMART_LOGGING */
+
 /**
  * wmi_copy_resource_config_non_tlv() - copy resource configuration function
  * @param resource_cfg: pointer to resource configuration
@@ -8324,6 +8408,41 @@ static QDF_STATUS extract_wds_entry_non_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef OL_ATH_SMART_LOGGING
+/**
+ * extract_smartlog_event_non_tlv() - extract smartlog event
+ * from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param atf_token_info: Pointer to hold fatal event
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS extract_smartlog_event_non_tlv
+				(wmi_unified_t wmi_handle,
+				void *evt_buf,
+				struct wmi_debug_fatal_events *evt_list)
+{
+	uint32_t ev = 0;
+	wmi_fatal_condition *event;
+	wmi_debug_fatal_condition_list *list =
+				(wmi_debug_fatal_condition_list *)evt_buf;
+
+	evt_list->num_events = list->num_events;
+
+	if (evt_list->num_events > FATAL_EVENTS_MAX)
+		return QDF_STATUS_E_INVAL;
+
+	event = (wmi_fatal_condition *)&list[1];
+
+	for (ev = 0; ev < evt_list->num_events; ev++) {
+		evt_list->event[ev].type = event[ev].type;
+		evt_list->event[ev].subtype = event[ev].subtype;
+		evt_list->event[ev].reserved0 = event[ev].reserved0;
+	}
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* OL_ATH_SMART_LOGGING */
 
 static bool is_management_record_non_tlv(uint32_t cmd_id)
 {
@@ -8640,7 +8759,10 @@ struct wmi_ops non_tlv_ops =  {
 	.send_btcoex_wlan_priority_cmd = send_btcoex_wlan_priority_cmd_non_tlv,
 	.send_btcoex_duty_cycle_cmd = send_btcoex_duty_cycle_cmd_non_tlv,
 	.send_coex_ver_cfg_cmd = send_coex_ver_cfg_cmd_non_tlv,
-
+#ifdef OL_ATH_SMART_LOGGING
+	.send_smart_logging_enable_cmd = send_smart_logging_enable_cmd_non_tlv,
+	.send_smart_logging_fatal_cmd = send_smart_logging_fatal_cmd_non_tlv,
+#endif
 	.get_target_cap_from_service_ready = extract_service_ready_non_tlv,
 	.extract_fw_version = extract_fw_version_non_tlv,
 	.extract_fw_abi_version = extract_fw_abi_version_non_tlv,
@@ -8736,6 +8858,9 @@ struct wmi_ops non_tlv_ops =  {
 	.extract_swfda_vdev_id = extract_swfda_vdev_id_non_tlv,
 #endif /* WLAN_SUPPORT_FILS */
 	.wmi_pdev_id_conversion_enable = wmi_non_tlv_pdev_id_conversion_enable,
+#ifdef OL_ATH_SMART_LOGGING
+	.extract_smartlog_event = extract_smartlog_event_non_tlv,
+#endif /* OL_ATH_SMART_LOGGING */
 #if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
 	.send_dfs_average_radar_params_cmd =
 		send_dfs_average_radar_params_cmd_non_tlv,
@@ -8827,7 +8952,10 @@ static void populate_non_tlv_service(uint32_t *wmi_service)
 				WMI_SERVICE_4_WIRE_COEX_SUPPORT;
 	wmi_service[wmi_service_extended_nss_support] =
 				WMI_SERVICE_EXTENDED_NSS_SUPPORT;
-
+#ifdef OL_ATH_SMART_LOGGING
+	wmi_service[wmi_service_smart_logging_support] =
+				WMI_SERVICE_SMART_LOGGING_SUPPORT;
+#endif /* OL_ATH_SMART_LOGGING */
 	wmi_service[wmi_service_roam_scan_offload] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_arpns_offload] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_nlo] = WMI_SERVICE_UNAVAILABLE;
@@ -9035,6 +9163,10 @@ static void populate_non_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_pdev_wds_entry_list_event_id] =
 					WMI_PDEV_WDS_ENTRY_LIST_EVENTID;
 	event_ids[wmi_host_swfda_event_id] = WMI_HOST_SWFDA_EVENTID;
+#ifdef OL_ATH_SMART_LOGGING
+	event_ids[wmi_debug_fatal_condition_eventid] =
+					WMI_DEBUG_FATAL_CONDITION_EVENTID;
+#endif /* OL_ATH_SMART_LOGGING */
 #if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
 	event_ids[wmi_host_dfs_status_check_event_id] =
 		WMI_HOST_DFS_STATUS_CHECK_EVENTID;
