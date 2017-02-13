@@ -132,4 +132,8 @@ config WLAN_FEATURE_DISA
 	bool "Enable DISA certification feature"
 	default n
 
+config WLAN_FEATURE_11AX
+	bool "Enable 11AX(High Efficiency) feature"
+	default n
+
 endif # QCA_CLD_WLAN
