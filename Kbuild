@@ -235,7 +235,7 @@ endif
 endif
 
 # If not set, assume, Common driver is with in the build tree
-WLAN_COMMON_ROOT ?= qca-wifi-host-cmn
+WLAN_COMMON_ROOT ?= ../qca-wifi-host-cmn
 WLAN_COMMON_INC ?= $(WLAN_ROOT)/$(WLAN_COMMON_ROOT)
 
 ifneq ($(CONFIG_MOBILE_ROUTER), y)
