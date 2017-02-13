@@ -1217,4 +1217,26 @@ void wma_lost_link_info_handler(tp_wma_handle wma, uint32_t vdev_id,
 				int32_t rssi);
 int wma_unified_power_debug_stats_event_handler(void *handle,
 			uint8_t *cmd_param_info, uint32_t len);
+
+#ifdef FEATURE_WLAN_DIAG_SUPPORT
+/**
+ * wma_sta_kickout_event()- send sta kickout event
+ * @kickout_reason - reasoncode for kickout
+ * @macaddr[IEEE80211_ADDR_LEN]: Peer mac address
+ * @vdev_id: Unique id for identifying the VDEV
+ *
+ * This function sends sta kickout diag event
+ *
+ * Return: void.
+ */
+void wma_sta_kickout_event(uint32_t kickout_reason, uint8_t vdev_id,
+							uint8_t *macaddr);
+#else
+static inline void wma_sta_kickout_event(uint32_t kickout_reason,
+					uint8_t vdev_id, uint8_t *macaddr)
+{
+
+};
+#endif /* FEATURE_WLAN_DIAG_SUPPORT */
+
 #endif

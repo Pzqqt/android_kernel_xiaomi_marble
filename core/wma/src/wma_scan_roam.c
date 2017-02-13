@@ -5841,6 +5841,8 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 		WMA_LOGD("Beacon Miss for vdevid %x", wmi_event->vdev_id);
 		wma_beacon_miss_handler(wma_handle, wmi_event->vdev_id,
 					wmi_event->rssi);
+		wma_sta_kickout_event(HOST_STA_KICKOUT_REASON_BMISS,
+						wmi_event->vdev_id, NULL);
 		break;
 	case WMI_ROAM_REASON_BETTER_AP:
 		WMA_LOGD("%s:Better AP found for vdevid %x, rssi %d", __func__,

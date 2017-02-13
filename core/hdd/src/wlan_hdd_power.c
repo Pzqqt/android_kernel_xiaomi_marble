@@ -1350,6 +1350,29 @@ QDF_STATUS hdd_wlan_shutdown(void)
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef FEATURE_WLAN_DIAG_SUPPORT
+/**
+* hdd_wlan_ssr_reinit_event()- send ssr reinit state
+*
+* This Function send send ssr reinit state diag event
+*
+* Return: void.
+*/
+static void hdd_wlan_ssr_reinit_event(void)
+{
+	WLAN_HOST_DIAG_EVENT_DEF(ssr_reinit, struct host_event_wlan_ssr_reinit);
+	qdf_mem_zero(&ssr_reinit, sizeof(ssr_reinit));
+	ssr_reinit.status = SSR_SUB_SYSTEM_REINIT;
+	WLAN_HOST_DIAG_EVENT_REPORT(&ssr_reinit,
+					EVENT_WLAN_SSR_REINIT_SUBSYSTEM);
+}
+#else
+static inline void hdd_wlan_ssr_reinit_event(void)
+{
+
+}
+#endif
+
 /**
  * hdd_wlan_re_init() - HDD SSR re-init function
  *
@@ -1467,6 +1490,7 @@ success:
 	if (pHddCtx->config->sap_internal_restart)
 		hdd_ssr_restart_sap(pHddCtx);
 	hdd_ssr_timer_del();
+	hdd_wlan_ssr_reinit_event();
 	return QDF_STATUS_SUCCESS;
 }
 

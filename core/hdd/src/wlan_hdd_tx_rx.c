@@ -745,6 +745,29 @@ QDF_STATUS hdd_get_peer_sta_id(hdd_station_ctx_t *pHddStaCtx,
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef FEATURE_WLAN_DIAG_SUPPORT
+/**
+* hdd_wlan_datastall_sta_event()- send sta datastall information
+*
+* This Function send send sta datastall status diag event
+*
+* Return: void.
+*/
+static void hdd_wlan_datastall_sta_event(void)
+{
+	WLAN_HOST_DIAG_EVENT_DEF(sta_data_stall,
+				struct host_event_wlan_datastall);
+	qdf_mem_zero(&sta_data_stall, sizeof(sta_data_stall));
+	sta_data_stall.reason = STA_TX_TIMEOUT;
+	WLAN_HOST_DIAG_EVENT_REPORT(&sta_data_stall, EVENT_WLAN_STA_DATASTALL);
+}
+#else
+static inline void hdd_wlan_datastall_sta_event(void)
+{
+
+}
+#endif
+
 /**
  * __hdd_tx_timeout() - TX timeout handler
  * @dev: pointer to network device
@@ -785,6 +808,7 @@ static void __hdd_tx_timeout(struct net_device *dev)
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	wlan_hdd_display_netif_queue_history(hdd_ctx);
 	cdp_dump_flow_pool_info(cds_get_context(QDF_MODULE_ID_SOC));
+	hdd_wlan_datastall_sta_event();
 }
 
 /**

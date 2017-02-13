@@ -435,6 +435,30 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	return ret;
 }
 
+#ifdef FEATURE_WLAN_DIAG_SUPPORT
+/**
+ * hdd_wlan_datastall_sap_event()- Send SAP datastall information
+ *
+ * This Function send send SAP datastall diag event
+ *
+ * Return: void.
+ */
+static void hdd_wlan_datastall_sap_event(void)
+{
+	WLAN_HOST_DIAG_EVENT_DEF(sap_data_stall,
+					struct host_event_wlan_datastall);
+	qdf_mem_zero(&sap_data_stall, sizeof(sap_data_stall));
+	sap_data_stall.reason = SOFTAP_TX_TIMEOUT;
+	WLAN_HOST_DIAG_EVENT_REPORT(&sap_data_stall,
+						EVENT_WLAN_SOFTAP_DATASTALL);
+}
+#else
+static inline void hdd_wlan_datastall_sap_event(void)
+{
+
+}
+#endif
+
 /**
  * __hdd_softap_tx_timeout() - TX timeout handler
  * @dev: pointer to network device
@@ -481,6 +505,7 @@ static void __hdd_softap_tx_timeout(struct net_device *dev)
 	cdp_dump_flow_pool_info(cds_get_context(QDF_MODULE_ID_SOC));
 	QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
 			"carrier state: %d", netif_carrier_ok(dev));
+	hdd_wlan_datastall_sap_event();
 }
 
 /**

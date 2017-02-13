@@ -175,7 +175,8 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		       psessionEntry->limSmeState, frame_rssi, reasonCode,
 		       lim_dot11_reason_str(reasonCode), MAC_ADDR_ARRAY(pHdr->sa));
 	       )
-
+	lim_diag_event_report(pMac, WLAN_PE_DIAG_DISASSOC_FRAME_EVENT,
+		psessionEntry, 0, reasonCode);
 	/**
 	 * Extract 'associated' context for STA, if any.
 	 * This is maintained by DPH and created by LIM.

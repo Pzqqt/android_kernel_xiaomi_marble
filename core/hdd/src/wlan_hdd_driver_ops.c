@@ -425,6 +425,30 @@ static void wlan_hdd_remove(struct device *dev)
 	pr_info("%s: Driver De-initialized\n", WLAN_MODULE_NAME);
 }
 
+#ifdef FEATURE_WLAN_DIAG_SUPPORT
+/**
+ * hdd_wlan_ssr_shutdown_event()- send ssr shutdown state
+ *
+ * This Function send send ssr shutdown state diag event
+ *
+ * Return: void.
+ */
+static void hdd_wlan_ssr_shutdown_event(void)
+{
+	WLAN_HOST_DIAG_EVENT_DEF(ssr_shutdown,
+					struct host_event_wlan_ssr_shutdown);
+	qdf_mem_zero(&ssr_shutdown, sizeof(ssr_shutdown));
+	ssr_shutdown.status = SSR_SUB_SYSTEM_SHUTDOWN;
+	WLAN_HOST_DIAG_EVENT_REPORT(&ssr_shutdown,
+					EVENT_WLAN_SSR_SHUTDOWN_SUBSYSTEM);
+}
+#else
+static inline void hdd_wlan_ssr_shutdown_event(void)
+{
+
+};
+#endif
+
 /**
  * wlan_hdd_shutdown() - wlan_hdd_shutdown
  *
@@ -443,6 +467,7 @@ static void wlan_hdd_shutdown(void)
 	}
 	/* this is for cases, where shutdown invoked from platform */
 	cds_set_recovery_in_progress(true);
+	hdd_wlan_ssr_shutdown_event();
 
 	if (!cds_wait_for_external_threads_completion(__func__))
 		hdd_err("Host is not ready for SSR, attempting anyway");

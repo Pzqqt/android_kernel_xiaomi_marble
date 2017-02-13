@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -181,6 +181,8 @@ lim_process_deauth_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 			reasonCode, lim_dot11_reason_str(reasonCode),
 			MAC_ADDR_ARRAY(pHdr->sa));
 	       )
+	lim_diag_event_report(pMac, WLAN_PE_DIAG_DEAUTH_FRAME_EVENT,
+		psessionEntry, 0, reasonCode);
 
 	if (lim_check_disassoc_deauth_ack_pending(pMac, (uint8_t *) pHdr->sa)) {
 		PELOGE(lim_log(pMac, LOGE,

@@ -276,6 +276,21 @@ int wma_beacon_swba_handler(void *handle, uint8_t *event, uint32_t len)
 	return 0;
 }
 
+#ifdef FEATURE_WLAN_DIAG_SUPPORT
+void wma_sta_kickout_event(uint32_t kickout_reason, uint8_t vdev_id,
+							uint8_t *macaddr)
+{
+	WLAN_HOST_DIAG_EVENT_DEF(sta_kickout, struct host_event_wlan_kickout);
+	qdf_mem_zero(&sta_kickout, sizeof(sta_kickout));
+	sta_kickout.reasoncode = kickout_reason;
+	sta_kickout.vdev_id = vdev_id;
+	if (macaddr)
+		qdf_mem_copy(sta_kickout.peer_mac, macaddr,
+							IEEE80211_ADDR_LEN);
+	WLAN_HOST_DIAG_EVENT_REPORT(&sta_kickout, EVENT_WLAN_STA_KICKOUT);
+}
+#endif
+
 /**
  * wma_peer_sta_kickout_event_handler() - kickout event handler
  * @handle: wma handle
@@ -375,6 +390,8 @@ int wma_peer_sta_kickout_event_handler(void *handle, u8 *event, u32 len)
 		     WMI_UNIFIED_VDEV_SUBTYPE_P2P_CLIENT) &&
 		    !qdf_mem_cmp(wma->interfaces[vdev_id].bssid,
 				    macaddr, IEEE80211_ADDR_LEN)) {
+			wma_sta_kickout_event(HOST_STA_KICKOUT_REASON_XRETRY,
+							vdev_id, macaddr);
 			/*
 			 * KICKOUT event is for current station-AP connection.
 			 * Treat it like final beacon miss. Station may not have
@@ -402,6 +419,8 @@ int wma_peer_sta_kickout_event_handler(void *handle, u8 *event, u32 len)
 		     WMI_UNIFIED_VDEV_SUBTYPE_P2P_CLIENT) &&
 		    !qdf_mem_cmp(wma->interfaces[vdev_id].bssid,
 				    macaddr, IEEE80211_ADDR_LEN)) {
+			wma_sta_kickout_event(
+			HOST_STA_KICKOUT_REASON_UNSPECIFIED, vdev_id, macaddr);
 			/*
 			 * KICKOUT event is for current station-AP connection.
 			 * Treat it like final beacon miss. Station may not have
@@ -447,6 +466,8 @@ int wma_peer_sta_kickout_event_handler(void *handle, u8 *event, u32 len)
 		     IEEE80211_ADDR_LEN);
 	del_sta_ctx->reasonCode = HAL_DEL_STA_REASON_CODE_KEEP_ALIVE;
 	del_sta_ctx->rssi = kickout_event->rssi + WMA_TGT_NOISE_FLOOR_DBM;
+	wma_sta_kickout_event(HOST_STA_KICKOUT_REASON_KEEP_ALIVE,
+							vdev_id, macaddr);
 	wma_send_msg(wma, SIR_LIM_DELETE_STA_CONTEXT_IND, (void *)del_sta_ctx,
 		     0);
 	wma_lost_link_info_handler(wma, vdev_id, kickout_event->rssi +
