@@ -13168,6 +13168,9 @@ static QDF_STATUS send_per_roam_config_cmd_tlv(wmi_unified_t wmi_handle,
 		(req_buf->per_config.tx_rate_thresh_percnt << 16) |
 		(req_buf->per_config.rx_rate_thresh_percnt & 0x0000ffff);
 	wmi_per_config->per_rest_time = req_buf->per_config.per_rest_time;
+	wmi_per_config->pkt_err_rate_mon_time =
+			(req_buf->per_config.tx_per_mon_time << 16) |
+			(req_buf->per_config.rx_per_mon_time & 0x0000ffff);
 
 	/* Send per roam config parameters */
 	status = wmi_unified_cmd_send(wmi_handle, buf,
