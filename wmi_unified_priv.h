@@ -1147,7 +1147,14 @@ QDF_STATUS
 
 QDF_STATUS (*send_bcn_offload_control_cmd)(wmi_unified_t wmi_handle,
 			struct bcn_offload_control *bcn_ctrl_param);
+#ifdef OL_ATH_SMART_LOGGING
+QDF_STATUS
+(*send_smart_logging_enable_cmd)(wmi_unified_t wmi_handle, uint32_t param);
 
+QDF_STATUS
+(*send_smart_logging_fatal_cmd)(wmi_unified_t wmi_handle,
+				struct wmi_debug_fatal_events *param);
+#endif /* OL_ATH_SMART_LOGGING */
 QDF_STATUS (*extract_wds_addr_event)(wmi_unified_t wmi_handle,
 	void *evt_buf, uint16_t len, wds_addr_event_t *wds_ev);
 
@@ -1366,6 +1373,10 @@ QDF_STATUS (*extract_vdev_nac_rssi_stats)(wmi_unified_t wmi_handle, void *evt_bu
 QDF_STATUS (*extract_bcn_stats)(wmi_unified_t wmi_handle, void *evt_buf,
 		uint32_t index, wmi_host_bcn_stats *bcn_stats);
 
+#ifdef OL_ATH_SMART_LOGGING
+QDF_STATUS (*extract_smartlog_event)(wmi_unified_t wmi_handle, void *evt_buf,
+				     struct wmi_debug_fatal_events *event);
+#endif /* OL_ATH_SMART_LOGGING */
 QDF_STATUS (*send_power_dbg_cmd)(wmi_unified_t wmi_handle,
 				struct wmi_power_dbg_params *param);
 

@@ -2331,4 +2331,42 @@ wmi_unified_dfs_send_avg_params_cmd(void *wmi_hdl,
 QDF_STATUS wmi_extract_dfs_status_from_fw(void *wmi_hdl, void *evt_buf,
 					  uint32_t  *dfs_status_check);
 #endif
+#ifdef OL_ATH_SMART_LOGGING
+/**
+ * wmi_unified_send_smart_logging_enable_cmd() - send smart logging enable cmd
+ * @wmi_hdl: wmi handle
+ * @params: enable/disable
+ *
+ * This function enables/disable the smart logging feature
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_send_smart_logging_enable_cmd(void *wmi_hdl,
+						     uint32_t param);
+
+/**
+ * wmi_unified_send_smart_logging_fatal_cmd() - send smart logging fatal cmd
+ * @wmi_hdl: wmi handle
+ * @param:  Fatal event
+ *
+ * This function sends the smart log fatal events to the FW
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_send_smart_logging_fatal_cmd
+					(void *wmi_hdl,
+					struct wmi_debug_fatal_events *param);
+
+/**
+ * wmi_extract_smartlog_ev() - extract smartlog event info from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param ev: Pointer to hold fatal events
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_smartlog_ev
+				(void *wmi_hdl, void *evt_buf,
+				struct wmi_debug_fatal_events *ev);
+#endif /* OL_ATH_SMART_LOGGING */
 #endif /* _WMI_UNIFIED_API_H_ */
