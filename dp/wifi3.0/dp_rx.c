@@ -245,22 +245,25 @@ dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 	void *ring_desc;
 	struct dp_rx_desc *rx_desc;
 	qdf_nbuf_t nbuf;
-	union dp_rx_desc_list_elem_t *head = NULL;
-	union dp_rx_desc_list_elem_t *tail = NULL;
+	union dp_rx_desc_list_elem_t *head[MAX_PDEV_CNT] = { NULL };
+	union dp_rx_desc_list_elem_t *tail[MAX_PDEV_CNT] = { NULL };
 	uint32_t rx_bufs_used = 0, rx_buf_cookie, l2_hdr_offset;
 	uint16_t msdu_len;
 	uint16_t peer_id;
 	struct dp_peer *peer = NULL;
 	struct dp_vdev *vdev = NULL;
+	struct dp_vdev *vdev_list[WLAN_UMAC_PSOC_MAX_VDEVS] = { NULL };
 	struct hal_rx_mpdu_desc_info mpdu_desc_info;
 	struct hal_rx_msdu_desc_info msdu_desc_info;
 	enum hal_reo_error_status error;
 	uint32_t pkt_len;
 	static uint32_t peer_mdata;
 	uint8_t *rx_tlv_hdr;
-	uint32_t rx_bufs_reaped = 0;
-	struct dp_pdev *pdev;
+	uint32_t rx_bufs_reaped[MAX_PDEV_CNT] = { 0 };
 	uint32_t sgi, rate_mcs, tid;
+	uint64_t vdev_map = 0;
+	uint8_t mac_id;
+	uint16_t i, vdev_cnt = 0;
 
 	/* Debug -- Remove later */
 	qdf_assert(soc && hal_ring);
@@ -305,7 +308,7 @@ dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 		rx_desc = dp_rx_cookie_2_va(soc, rx_buf_cookie);
 
 		qdf_assert(rx_desc);
-		rx_bufs_reaped++;
+		rx_bufs_reaped[rx_desc->pool_id]++;
 
 		/* TODO */
 		/*
@@ -336,6 +339,13 @@ dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 				FL("vdev is NULL"));
 			qdf_nbuf_free(rx_desc->nbuf);
 			goto fail;
+
+		}
+
+		if (!((vdev_map >> vdev->vdev_id) & 1)) {
+			vdev_map |= 1 << vdev->vdev_id;
+			vdev_list[vdev_cnt] = vdev;
+			vdev_cnt++;
 		}
 
 		/* Get MSDU DESC info */
@@ -356,31 +366,33 @@ dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 
 		qdf_nbuf_queue_add(&vdev->rxq, rx_desc->nbuf);
 fail:
-		dp_rx_add_to_free_desc_list(&head, &tail, rx_desc);
+		dp_rx_add_to_free_desc_list(&head[rx_desc->pool_id],
+						&tail[rx_desc->pool_id],
+						rx_desc);
 	}
 done:
 	hal_srng_access_end(hal_soc, hal_ring);
 
-	if (!rx_bufs_reaped)
-		return 0;
-	else
-		/* Replenish buffers */
-		/* Assume MAC id = 0, owner = 0 */
-		dp_rx_buffers_replenish(soc, 0, rx_bufs_reaped, &head, &tail,
+	for (mac_id = 0; mac_id < MAX_PDEV_CNT; mac_id++) {
+		/*
+		 * continue with next mac_id if no pkts were reaped
+		 * from that pool
+		 */
+		if (!rx_bufs_reaped[mac_id])
+			continue;
+
+		dp_rx_buffers_replenish(soc, mac_id,
+					rx_bufs_reaped[mac_id],
+					&head[mac_id],
+					&tail[mac_id],
 					HAL_RX_BUF_RBM_SW3_BM);
-
-	pdev = soc->pdev_list[0];
-
-	if (qdf_unlikely(!pdev)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			FL("pdev is NULL"));
-		goto fail1;
 	}
 
-	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+	for (i = 0; i < vdev_cnt; i++) {
 		qdf_nbuf_t deliver_list_head = NULL;
 		qdf_nbuf_t deliver_list_tail = NULL;
 
+		vdev = vdev_list[i];
 		while ((nbuf = qdf_nbuf_queue_remove(&vdev->rxq))) {
 			rx_tlv_hdr = qdf_nbuf_data(nbuf);
 
@@ -494,9 +506,6 @@ done:
 
 	}
 	return rx_bufs_used; /* Assume no scale factor for now */
-fail1:
-	qdf_assert(0);
-	return 0;
 }
 
 /**

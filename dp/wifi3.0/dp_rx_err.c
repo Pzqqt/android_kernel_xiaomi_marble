@@ -231,7 +231,7 @@ dp_rx_2k_jump_handle(struct dp_soc *soc, void *ring_desc,
 *                              REO or WBM ring
 *
 * @soc: core DP main context
-* @ring_desc: opaque pointer to the REO error ring descriptor
+* @rx_desc : pointer to the sw rx descriptor
 * @head: pointer to head of rx descriptors to be added to free list
 * @tail: pointer to tail of rx descriptors to be added to free list
 * quota: upper limit of descriptors that can be reaped
@@ -247,28 +247,19 @@ dp_rx_2k_jump_handle(struct dp_soc *soc, void *ring_desc,
 * Return: uint32_t: No. of Rx buffers reaped
 */
 static uint32_t
-dp_rx_null_q_desc_handle(struct dp_soc *soc, void *ring_desc,
+dp_rx_null_q_desc_handle(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 			union dp_rx_desc_list_elem_t **head,
 			union dp_rx_desc_list_elem_t **tail,
 			uint32_t quota)
 {
-	uint32_t rx_buf_cookie;
-	struct dp_rx_desc *rx_desc;
 	uint32_t rx_bufs_used = 0;
 	uint32_t pkt_len, l2_hdr_offset;
 	uint16_t msdu_len;
 	qdf_nbuf_t nbuf;
-	struct dp_pdev *pdev0;
-	struct dp_vdev *vdev0;
+	struct dp_vdev *vdev;
 	uint16_t peer_id = 0xFFFF;
 	struct dp_peer *peer = NULL;
 	uint32_t sgi, rate_mcs, tid;
-
-	rx_buf_cookie = HAL_RX_WBM_BUF_COOKIE_GET(ring_desc);
-
-	rx_desc = dp_rx_cookie_2_va(soc, rx_buf_cookie);
-
-	qdf_assert(rx_desc);
 
 	rx_bufs_used++;
 
@@ -300,6 +291,16 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, void *ring_desc,
 		qdf_assert(0);
 	}
 
+	peer_id = hal_rx_mpdu_start_sw_peer_id_get(rx_desc->rx_buf_start);
+	peer = dp_peer_find_by_id(soc, peer_id);
+
+	if (!peer) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+		FL("peer is NULL"));
+		qdf_nbuf_free(nbuf);
+		goto fail;
+	}
+
 	sgi = hal_rx_msdu_start_sgi_get(rx_desc->rx_buf_start);
 	rate_mcs = hal_rx_msdu_start_rate_mcs_get(rx_desc->rx_buf_start);
 	tid = hal_rx_mpdu_start_tid_get(rx_desc->rx_buf_start);
@@ -322,11 +323,6 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, void *ring_desc,
 		/* TODO: Assuming that qos_control_valid also indicates
 		 * unicast. Should we check this?
 		 */
-		tid = hal_rx_mpdu_start_tid_get(rx_desc->rx_buf_start);
-		peer_id = hal_rx_mpdu_start_sw_peer_id_get(
-			rx_desc->rx_buf_start);
-		peer = dp_peer_find_by_id(soc, peer_id);
-
 		if (peer &&
 			peer->rx_tid[tid].hw_qdesc_vaddr_unaligned == NULL) {
 			/* IEEE80211_SEQ_MAX indicates invalid start_seq */
@@ -344,7 +340,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, void *ring_desc,
 		qdf_nbuf_data(nbuf), 128, false);
 #endif /* NAPIER_EMULATION */
 
-	if (peer && qdf_unlikely(peer->bss_peer)) {
+	if (qdf_unlikely(peer->bss_peer)) {
 		QDF_TRACE(QDF_MODULE_ID_DP,
 				QDF_TRACE_LEVEL_INFO,
 				FL("received pkt with same src MAC"));
@@ -355,23 +351,18 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, void *ring_desc,
 		goto fail;
 	}
 
-	pdev0 = soc->pdev_list[0];/* Hard code 0th elem */
+	vdev = peer->vdev;
 
-	if (pdev0) {
-		vdev0 = (struct dp_vdev *)TAILQ_FIRST(&pdev0->vdev_list);
-		if (vdev0 && vdev0->osif_rx) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-				FL("pdev0 %p vdev0 %p osif_rx %p"), pdev0, vdev0,
-				vdev0->osif_rx);
-			qdf_nbuf_set_next(nbuf, NULL);
-			vdev0->osif_rx(vdev0->osif_vdev, nbuf);
-		} else {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				FL("INVALID vdev0 %p OR osif_rx"), vdev0);
-		}
+	if (vdev && vdev->osif_rx) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+			FL("vdev %p osif_rx %p"), vdev,
+			vdev->osif_rx);
+
+		qdf_nbuf_set_next(nbuf, NULL);
+		vdev->osif_rx(vdev->osif_vdev, nbuf);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			FL("INVALID pdev %p"), pdev0);
+			FL("INVALID vdev %p OR osif_rx"), vdev);
 	}
 
 fail:
@@ -549,7 +540,7 @@ done:
 	/* Assume MAC id = 0, owner = 0 */
 	if (rx_bufs_used)
 		dp_rx_buffers_replenish(soc, 0, rx_bufs_used, &head, &tail,
-					HAL_RX_BUF_RBM_SW3_BM);
+				HAL_RX_BUF_RBM_SW3_BM);
 
 	return rx_bufs_used; /* Assume no scale factor for now */
 }
@@ -572,12 +563,14 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 	void *hal_soc;
 	void *ring_desc;
 	struct dp_rx_desc *rx_desc;
-	union dp_rx_desc_list_elem_t *head = NULL;
-	union dp_rx_desc_list_elem_t *tail = NULL;
-	uint32_t rx_bufs_used = 0;
+	union dp_rx_desc_list_elem_t *head[MAX_PDEV_CNT] = { NULL };
+	union dp_rx_desc_list_elem_t *tail[MAX_PDEV_CNT] = { NULL };
+	uint32_t rx_bufs_used[MAX_PDEV_CNT] = { 0 };
+	uint32_t rx_bufs_reaped = 0;
 	uint8_t buf_type, rbm;
 	uint8_t wbm_err_src;
 	uint32_t rx_buf_cookie;
+	uint8_t mac_id;
 
 	/* Debug -- Remove later */
 	qdf_assert(soc && hal_ring);
@@ -623,6 +616,11 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 			continue;
 		}
 
+		rx_buf_cookie =	HAL_RX_WBM_BUF_COOKIE_GET(ring_desc);
+
+		rx_desc = dp_rx_cookie_2_va(soc, rx_buf_cookie);
+		qdf_assert(rx_desc);
+
 		/* XXX */
 		buf_type = HAL_RX_WBM_BUF_TYPE_GET(ring_desc);
 		/*
@@ -650,9 +648,12 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 						QDF_TRACE_LEVEL_WARN,
 						"Got pkt with REO ERROR: %d",
 						reo_error_code);
-					rx_bufs_used +=
+
+					rx_bufs_used[rx_desc->pool_id] +=
 						dp_rx_null_q_desc_handle(soc,
-						ring_desc, &head, &tail, quota);
+						rx_desc,
+						&head[rx_desc->pool_id],
+						&tail[rx_desc->pool_id], quota);
 					continue;
 				/* TODO */
 				/* Add per error code accounting */
@@ -689,29 +690,31 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 			/* Should not come here */
 			qdf_assert(0);
 		}
-		rx_buf_cookie = HAL_RX_WBM_BUF_COOKIE_GET(ring_desc);
 
-		rx_desc = dp_rx_cookie_2_va(soc, rx_buf_cookie);
-
-		qdf_assert(rx_desc);
-
-		rx_bufs_used++;
+		rx_bufs_used[rx_desc->pool_id]++;
 
 		qdf_nbuf_unmap_single(soc->osdev, rx_desc->nbuf,
 				QDF_DMA_BIDIRECTIONAL);
 
 		qdf_nbuf_free(rx_desc->nbuf);
 
-		dp_rx_add_to_free_desc_list(&head, &tail, rx_desc);
+		dp_rx_add_to_free_desc_list(&head[rx_desc->pool_id],
+					&tail[rx_desc->pool_id], rx_desc);
 	}
 
 done:
 	hal_srng_access_end(hal_soc, hal_ring);
 
 	/* Assume MAC id = 0, owner = 0 */
-	if (rx_bufs_used)
-		dp_rx_buffers_replenish(soc, 0, rx_bufs_used, &head, &tail,
-					HAL_RX_BUF_RBM_SW3_BM);
+	for (mac_id = 0; mac_id < MAX_PDEV_CNT; mac_id++) {
+		if (rx_bufs_used[mac_id]) {
+			dp_rx_buffers_replenish(soc, mac_id,
+						rx_bufs_used[mac_id],
+						&head[mac_id], &tail[mac_id],
+						HAL_RX_BUF_RBM_SW3_BM);
+			rx_bufs_reaped += rx_bufs_used[mac_id];
+		}
+	}
 
-	return rx_bufs_used; /* Assume no scale factor for now */
+	return rx_bufs_reaped; /* Assume no scale factor for now */
 }

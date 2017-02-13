@@ -399,7 +399,7 @@ static inline void hal_rx_msdu_desc_info_get(void *desc_addr,
  *
  */
 static inline void hal_rxdma_buff_addr_info_set(void *rxdma_entry,
-			qdf_dma_addr_t paddr, uint16_t cookie, uint8_t manager)
+			qdf_dma_addr_t paddr, uint32_t cookie, uint8_t manager)
 {
 	uint32_t paddr_lo = ((u64)paddr & 0x00000000ffffffff);
 	uint32_t paddr_hi = ((u64)paddr & 0xffffffff00000000) >> 32;

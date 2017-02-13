@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -56,10 +56,12 @@ QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc, uint32_t pool_id)
 					&soc->rx_desc[pool_id].array[i+1];
 		soc->rx_desc[pool_id].array[i].rx_desc.cookie =
 					i | (pool_id << 18);
+		soc->rx_desc[pool_id].array[i].rx_desc.pool_id = pool_id;
 	}
 
 	soc->rx_desc[pool_id].array[i].next = NULL;
 	soc->rx_desc[pool_id].array[i].rx_desc.cookie = i | (pool_id << 18);
+	soc->rx_desc[pool_id].array[i].rx_desc.pool_id = pool_id;
 	qdf_spin_unlock_bh(&soc->rx_desc_mutex[pool_id]);
 	return QDF_STATUS_SUCCESS;
 }

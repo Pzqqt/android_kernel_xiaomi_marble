@@ -62,7 +62,7 @@
 struct dp_rx_desc {
 	qdf_nbuf_t nbuf;
 	uint8_t *rx_buf_start;
-	uint16_t cookie;
+	uint32_t cookie;
 	uint8_t	 pool_id;
 };
 
