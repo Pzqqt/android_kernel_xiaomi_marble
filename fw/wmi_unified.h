@@ -8480,7 +8480,8 @@ typedef struct {
 
 /* flags for 11i offload */
 #define WMI_ROAM_OFFLOAD_FLAG_OKC_ENABLED       0   /* okc is enabled */
-/* from bit 1 to bit 31 are reserved */
+#define WMI_ROAM_OFFLOAD_FLAG_PMK_CACHE_DISABLED 1  /* pmk caching is disabled */
+/* from bit 2 to bit 31 are reserved */
 
 #define WMI_SET_ROAM_OFFLOAD_OKC_ENABLED(flag) do { \
         (flag) |=  (1 << WMI_ROAM_OFFLOAD_FLAG_OKC_ENABLED);      \
@@ -8492,6 +8493,21 @@ typedef struct {
 
 #define WMI_GET_ROAM_OFFLOAD_OKC_ENABLED(flag)   \
         ((flag) & (1 << WMI_ROAM_OFFLOAD_FLAG_OKC_ENABLED))
+
+
+#define WMI_SET_ROAM_OFFLOAD_PMK_CACHE_ENABLED(flag) \
+    do { \
+        (flag) &=  ~(1 << WMI_ROAM_OFFLOAD_FLAG_PMK_CACHE_DISABLED); \
+    } while (0)
+
+#define WMI_SET_ROAM_OFFLOAD_PMK_CACHE_DISABLED(flag) \
+    do { \
+        (flag) |=  (1 << WMI_ROAM_OFFLOAD_FLAG_PMK_CACHE_DISABLED); \
+    } while (0)
+
+#define WMI_GET_ROAM_OFFLOAD_PMK_CACHE_DISABLED(flag) \
+    ((flag) & (1 << WMI_ROAM_OFFLOAD_FLAG_PMK_CACHE_DISABLED))
+
 
 /* This TLV will be  filled only in case of wpa-psk/wpa2-psk */
 typedef struct {

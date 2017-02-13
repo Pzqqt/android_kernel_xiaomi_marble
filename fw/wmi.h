@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2010-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -144,6 +144,7 @@ typedef enum {
     PAIRWISE_USAGE      = 0x00,
     GROUP_USAGE         = 0x01,
     TX_USAGE            = 0x02,     /* default Tx Key - Static WEP only */
+    PMK_USAGE           = 0x04,     /* PMK cache */
 } KEY_USAGE;
 /*
  * List of Events (target to host)
