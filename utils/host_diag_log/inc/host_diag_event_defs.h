@@ -811,6 +811,91 @@ typedef enum {
 	 * </diag_event>
 	 */
 	EVENT_WLAN_POWERSAVE_WOW_STATS = 0xB33,
+
+	/*
+	 * <diag_event>
+	 * EVENT_WLAN_STA_KICKOUT
+	 * @reasoncode: Indicates the reasoncode of event
+	 * @peer_macaddr: Indicates the peer macaddr
+	 * @vdev_id: Indicate unique id for identifying the VDEV
+	 *
+	 * This event is used to send sta kickout information
+	 * Values for parameters are defined below:
+	 * Reasoncode: offset: 0 length: 4
+	 * Peer macaddr: offset: 4 length: 6
+	 * VDEV ID: offset: 10 length 1
+	 *
+	 * Supported Feature: STA
+	 *
+	 * </diag_event>
+	 */
+
+	EVENT_WLAN_STA_KICKOUT = 0xB39,
+
+	/*
+	 * <diag_event>
+	 * EVENT_WLAN_STA_DATASTALL
+	 * @reason: Indicates the reason of event
+	 *
+	 * This event is used to send sta datastall information
+	 * Values for parameters are defined below:
+	 * Reason: offset:0 length: 4
+	 *
+	 * Supported Feature: STA
+	 *
+	 * </diag_event>
+	 */
+
+	EVENT_WLAN_STA_DATASTALL = 0xB3A,
+
+	/*
+	 * <diag_event>
+	 * EVENT_WLAN_SOFTAP_DATASTALL
+	 * @reason: Indicates the reason of event
+	 *
+	 * This event is used to send SAP datastall information
+	 * Values for parameters are defined below:
+	 * Reason: offset:0 length: 4
+	 *
+	 * Supported Feature: SAP
+	 *
+	 * </diag_event>
+	 */
+
+	EVENT_WLAN_SOFTAP_DATASTALL = 0xB3B,
+
+	/*
+	 * <diag_event>
+	 * EVENT_WLAN_SSR_REINIT_SUBSYSTEM
+	 * @status: Indicates the status of event
+	 *
+	 * This event is used to send ssr reinit status
+	 * Values for parameters are defined below:
+	 * Status: offset: 0 length: 4
+	 *
+	 * Supported Feature: SSR
+	 *
+	 *  </diag_event>
+	 */
+
+	EVENT_WLAN_SSR_REINIT_SUBSYSTEM = 0xB3C,
+
+	/*
+	 * <diag_event>
+	 * EVENT_WLAN_SSR_SHUTDOWN_SUBSYSTEM
+	 * @status: Indicates the status of event
+	 *
+	 * This event is used to send ssr shutdown status
+	 * Values for parameters are defined below:
+	 * Status: offset: 0 length: 4
+	 *
+	 * Supported Feature: SSR
+	 *
+	 * </diag_event>
+	 */
+
+	EVENT_WLAN_SSR_SHUTDOWN_SUBSYSTEM = 0xB3D,
+
 	EVENT_MAX_ID = 0x0FFF
 } event_id_enum_type;
 

@@ -306,6 +306,119 @@ struct host_event_wlan_log_complete {
 	uint32_t reserved;
 };
 
+/*-------------------------------------------------------------------------
+  Event ID: EVENT_WLAN_STA_KICKOUT
+  ------------------------------------------------------------------------*/
+/**
+ * struct host_event_wlan_kickout - Holds diag event details
+ * @reasoncode: Indicates the reasoncode of event
+ * @peer_macaddr: Indicates the peer macaddr
+ * @vdev_id: Indicate unique id for identifying the VDEV
+ *
+ * This structure holds the diag event related information
+ */
+
+struct host_event_wlan_kickout {
+	uint32_t reasoncode;
+	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
+	uint8_t vdev_id;
+};
+
+/*-------------------------------------------------------------------------
+  Event ID: EVENT_WLAN_SOFTAP_DATASTALL/EVENT_WLAN_STA_DATASTALL
+  ------------------------------------------------------------------------*/
+/**
+ * struct host_event_wlan_softap_datastall - Holds diag event details
+ * @reason: Indicates the reason of event
+ *
+ *This structure holds the host diag event related information
+ */
+
+struct host_event_wlan_datastall {
+	uint32_t reason;
+};
+
+/*-------------------------------------------------------------------------
+  Event ID: EVENT_WLAN_SSR_REINIT_SUBSYSTEM
+  ------------------------------------------------------------------------*/
+/**
+ * struct host_event_wlan_ssr_reinit - Holds diag event details
+ * @status: Indicates the status of event
+ *
+ *This structure holds the host diag event related information
+ */
+
+struct host_event_wlan_ssr_reinit {
+	uint32_t status;
+};
+
+/*-------------------------------------------------------------------------
+  Event ID: EVENT_WLAN_SSR_SHUTDOWN_SUBSYSTEM
+  ------------------------------------------------------------------------*/
+/**
+ * struct host_event_wlan_ssr_shutdown - Holds diag event details
+ * @status: Indicates the status of event
+ *
+ *This structure holds the host diag event related information
+ */
+
+struct host_event_wlan_ssr_shutdown {
+	uint32_t status;
+};
+
+
+/*-------------------------------------------------------------------------
+   Function declarations and documenation
+   ------------------------------------------------------------------------*/
+/**
+ * enum host_sta_kickout_events - Enum containing sta kickout subtype
+ * @HOST_STA_KICKOUT_REASON_BMISS: Indicate sta got disconnected reason
+ * beacon miss
+ * @HOST_STA_KICKOUT_REASON_XRETRY: Indicate sta got disconnected reason xretry
+ * @HOST_STA_KICKOUT_REASON_UNSPECIFIED: Indicate sta disconnection
+ * reason unspecified
+ * @HOST_STA_KICKOUT_REASON_KEEP_ALIVE: Indicate sta is disconnected
+ * because of keep alive
+ *
+ * This enum contains the event subtype
+ */
+enum host_sta_kickout_events {
+	HOST_STA_KICKOUT_REASON_BMISS,
+	HOST_STA_KICKOUT_REASON_XRETRY,
+	HOST_STA_KICKOUT_REASON_UNSPECIFIED,
+	HOST_STA_KICKOUT_REASON_KEEP_ALIVE,
+};
+
+/*-------------------------------------------------------------------------
+   Function declarations and documenation
+   ------------------------------------------------------------------------*/
+/**
+ * enum host_datastall_events - Enum containing datastall subtype
+ * @STA_TX_TIMEOUT: Indicate sta tx timeout
+ * @SOFTAP_TX_TIMEOUT:Indicate softap tx timeout
+ *
+ * This enum contains the event subtype
+ */
+enum host_datastall_events {
+	STA_TX_TIMEOUT,
+	SOFTAP_TX_TIMEOUT,
+};
+
+/*-------------------------------------------------------------------------
+  Function declarations and documenation
+  ------------------------------------------------------------------------*/
+/**
+ * enum host_ssr_events - Enum containing ssr subtype
+ * @SSR_SUB_SYSTEM_REINIT: Indicate ssr reinit state
+ * @SSR_SUB_SYSTEM_SHUTDOWN: Indicate ssr shutdown state
+ *
+ * This enum contains the event subtype
+ */
+enum host_ssr_events {
+	SSR_SUB_SYSTEM_REINIT,
+	SSR_SUB_SYSTEM_SHUTDOWN,
+};
+
 /**
  * struct host_event_tdls_teardown - tdls teardown diag event
  * @reason: reason for tear down
