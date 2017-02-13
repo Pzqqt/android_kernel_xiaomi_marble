@@ -3065,6 +3065,11 @@ typedef struct {
      */
     A_UINT32 rx_tsf_u32;
 
+    /** pdev_id for identifying the MAC the rx mgmt frame was received by
+     * See macros starting with WMI_PDEV_ID_ for values.
+     */
+    A_UINT32 pdev_id;
+
 /* This TLV is followed by array of bytes:
  *   A_UINT8 bufp[]; <-- management frame buffer
  */
@@ -4057,6 +4062,10 @@ typedef struct {
     A_UINT32    tlv_header;
     A_UINT32    desc_id; /* from tx_send_cmd */
     A_UINT32    status;  /* WMI_MGMT_TX_COMP_STATUS_TYPE */
+    /** pdev_id for identifying the MAC that transmitted the mgmt frame
+     * See macros starting with WMI_PDEV_ID_ for values.
+     */
+    A_UINT32    pdev_id;
 } wmi_mgmt_tx_compl_event_fixed_param;
 
 typedef struct {
