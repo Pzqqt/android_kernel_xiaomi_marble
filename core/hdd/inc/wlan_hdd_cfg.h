@@ -8347,6 +8347,37 @@ enum hdd_wext_control {
 
 /*
  * <ini>
+ * gper_roam_mon_time - Minimum time required in seconds to
+ * be considered as valid scenario for PER based roam
+ * @Min: 5
+ * @Max: 25
+ * @Default: 25
+ *
+ * This ini is used to define minimum time in seconds for which DUT has
+ * collected the PER stats before it can consider the stats hysteresis to be
+ * valid for PER based scan.
+ * DUT collects following information during this period:
+ *     1. % of packets below gper_roam_low_rate_th
+ *     2. # packets above gper_roam_high_rate_th
+ * if DUT gets (1) greater than gper_roam_th_percent and (2) is zero during
+ * this period, it triggers PER based roam scan.
+ *
+ * Related: gper_roam_enabled, gper_roam_high_rate_th, gper_roam_low_rate_th,
+ *          gper_roam_th_percent, gper_roam_rest_time
+ *
+ * Supported Feature: LFR-3.0
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_PER_ROAM_MONITOR_TIME                "gper_roam_mon_time"
+#define CFG_PER_ROAM_MONITOR_TIME_MIN            (5)
+#define CFG_PER_ROAM_MONITOR_TIME_MAX            (25)
+#define CFG_PER_ROAM_MONTIOR_TIME_DEFAULT        (25)
+
+/*
+ * <ini>
  * gPowerUsage - Preferred Power Usage
  * @Min: Min
  * @Max: Max
@@ -9731,6 +9762,7 @@ struct hdd_config {
 	uint32_t per_roam_low_rate_threshold;
 	uint32_t per_roam_th_percent;
 	uint32_t per_roam_rest_time;
+	uint32_t per_roam_mon_time;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

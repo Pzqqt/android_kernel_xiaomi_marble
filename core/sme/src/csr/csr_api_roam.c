@@ -2532,6 +2532,10 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->per_roam_config.rx_rate_thresh_percnt;
 		pMac->roam.configParam.per_roam_config.per_rest_time =
 			pParam->per_roam_config.per_rest_time;
+		pMac->roam.configParam.per_roam_config.tx_per_mon_time =
+			pParam->per_roam_config.tx_per_mon_time;
+		pMac->roam.configParam.per_roam_config.rx_per_mon_time =
+			pParam->per_roam_config.rx_per_mon_time;
 
 		/* update p2p offload status */
 		pMac->pnoOffload = pParam->pnoOffload;
@@ -2755,6 +2759,10 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 			cfg_params->per_roam_config.rx_rate_thresh_percnt;
 	pParam->per_roam_config.per_rest_time =
 			cfg_params->per_roam_config.per_rest_time;
+	pParam->per_roam_config.tx_per_mon_time =
+			cfg_params->per_roam_config.tx_per_mon_time;
+	pParam->per_roam_config.rx_per_mon_time =
+			cfg_params->per_roam_config.rx_per_mon_time;
 
 	pParam->conc_custom_rule1 = cfg_params->conc_custom_rule1;
 	pParam->conc_custom_rule2 = cfg_params->conc_custom_rule2;
@@ -17615,18 +17623,23 @@ csr_create_per_roam_request(tpAniSirGlobal mac_ctx, uint8_t session_id)
 		mac_ctx->roam.configParam.per_roam_config.rx_low_rate_thresh;
 	req_buf->per_config.per_rest_time =
 		mac_ctx->roam.configParam.per_roam_config.per_rest_time;
+	req_buf->per_config.tx_per_mon_time =
+		mac_ctx->roam.configParam.per_roam_config.tx_per_mon_time;
+	req_buf->per_config.rx_per_mon_time =
+		mac_ctx->roam.configParam.per_roam_config.rx_per_mon_time;
 	req_buf->per_config.tx_rate_thresh_percnt =
 		mac_ctx->roam.configParam.per_roam_config.tx_rate_thresh_percnt;
 	req_buf->per_config.rx_rate_thresh_percnt =
 		mac_ctx->roam.configParam.per_roam_config.rx_rate_thresh_percnt;
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-		  FL("PER based roaming configuaration enable=%d vdev=%d high_rate_thresh=%d low_rate_thresh=%d rate_thresh_percnt=%d per_rest_time=%d"),
+		  FL("PER based roaming configuaration enable=%d vdev=%d high_rate_thresh=%d low_rate_thresh=%d rate_thresh_percnt=%d per_rest_time=%d monitor_time=%d"),
 			  req_buf->per_config.enable, session_id,
 			  req_buf->per_config.tx_high_rate_thresh,
 			  req_buf->per_config.tx_low_rate_thresh,
 			  req_buf->per_config.tx_rate_thresh_percnt,
-			  req_buf->per_config.per_rest_time);
+			  req_buf->per_config.per_rest_time,
+			  req_buf->per_config.tx_per_mon_time);
 	return req_buf;
 }
 

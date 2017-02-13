@@ -4243,6 +4243,14 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		CFG_PER_ROAM_REST_TIME_DEFAULT,
 		CFG_PER_ROAM_REST_TIME_MIN,
 		CFG_PER_ROAM_REST_TIME_MAX),
+
+	REG_VARIABLE(CFG_PER_ROAM_MONITOR_TIME, WLAN_PARAM_Integer,
+		struct hdd_config, per_roam_mon_time,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_PER_ROAM_MONTIOR_TIME_DEFAULT,
+		CFG_PER_ROAM_MONITOR_TIME_MIN,
+		CFG_PER_ROAM_MONITOR_TIME_MAX),
+
 };
 
 /**
@@ -5040,6 +5048,10 @@ static void hdd_per_roam_print_ini_config(hdd_context_t *hdd_ctx)
 	hdd_info("Name = [%s] Value = [%u]",
 		CFG_PER_ROAM_REST_TIME_NAME,
 		hdd_ctx->config->per_roam_rest_time);
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_PER_ROAM_MONITOR_TIME,
+		hdd_ctx->config->per_roam_mon_time);
+
 }
 
 /**
@@ -6908,6 +6920,10 @@ static void hdd_update_per_config_to_sme(hdd_context_t *hdd_ctx,
 
 	sme_config->csrConfig.per_roam_config.per_rest_time =
 			hdd_ctx->config->per_roam_rest_time;
+	sme_config->csrConfig.per_roam_config.tx_per_mon_time =
+			hdd_ctx->config->per_roam_mon_time;
+	sme_config->csrConfig.per_roam_config.rx_per_mon_time =
+			hdd_ctx->config->per_roam_mon_time;
 }
 
 /**
