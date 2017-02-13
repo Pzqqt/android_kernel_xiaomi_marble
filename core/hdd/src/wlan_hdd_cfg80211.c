@@ -7399,7 +7399,7 @@ static int __wlan_hdd_cfg80211_conditional_chan_switch(struct wiphy *wiphy,
 		*tb[QCA_WLAN_VENDOR_ATTR_SAP_CONDITIONAL_CHAN_SWITCH_MAX + 1];
 	uint32_t freq_len, i;
 	uint32_t *freq;
-	uint8_t chans[QDF_MAX_NUM_CHAN];
+	uint8_t chans[QDF_MAX_NUM_CHAN] = {0};
 
 	ENTER_DEV(dev);
 
