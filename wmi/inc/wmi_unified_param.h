@@ -391,6 +391,38 @@ typedef enum {
 } WMI_HOST_REGDMN_MODE;
 
 /**
+ * enum WMI_HOST_WLAN_BAND_CAPABILITY: Band capability (2.4 GHz, 5 GHz). Maps to
+ *               WLAN_BAND_CAPABILITY used in firmware header file(s).
+ * @WMI_HOST_WLAN_2G_CAPABILITY: 2.4 GHz capable
+ * @WMI_HOST_WLAN_5G_CAPABILITY: 5 GHz capable
+ */
+typedef enum {
+	WMI_HOST_WLAN_2G_CAPABILITY = 0x1,
+	WMI_HOST_WLAN_5G_CAPABILITY = 0x2,
+} WMI_HOST_WLAN_BAND_CAPABILITY;
+
+/**
+ * enum wmi_host_channel_width: Channel operating width. Maps to
+ *               wmi_channel_width used in firmware header file(s).
+ * @WMI_HOST_CHAN_WIDTH_20: 20 MHz channel operating width
+ * @WMI_HOST_CHAN_WIDTH_40: 40 MHz channel operating width
+ * @WMI_HOST_CHAN_WIDTH_80: 80 MHz channel operating width
+ * @WMI_HOST_CHAN_WIDTH_160: 160 MHz channel operating width
+ * @WMI_HOST_CHAN_WIDTH_80P80: 80+80 MHz channel operating width
+ * @WMI_HOST_CHAN_WIDTH_5: 5 MHz channel operating width
+ * @WMI_HOST_CHAN_WIDTH_10: 10 MHz channel operating width
+ */
+typedef enum {
+	WMI_HOST_CHAN_WIDTH_20    = 0,
+	WMI_HOST_CHAN_WIDTH_40    = 1,
+	WMI_HOST_CHAN_WIDTH_80    = 2,
+	WMI_HOST_CHAN_WIDTH_160   = 3,
+	WMI_HOST_CHAN_WIDTH_80P80 = 4,
+	WMI_HOST_CHAN_WIDTH_5     = 5,
+	WMI_HOST_CHAN_WIDTH_10    = 6,
+} wmi_host_channel_width;
+
+/**
  * enum wmi_dwelltime_adaptive_mode: dwelltime_mode
  * @WMI_DWELL_MODE_DEFAULT: Use firmware default mode
  * @WMI_DWELL_MODE_CONSERVATIVE: Conservative adaptive mode
@@ -7003,11 +7035,13 @@ struct wmi_host_hw_mode_caps {
  * @pdev_id: pdev_id starts with 1. pdev_id 1 => phy_id 0, pdev_id 2 => phy_id 1
  * @phy_id: Starts with 0
  * @bitmap of supported modulations
- * @supported_bands: supported bands, enum WLAN_BAND_CAPABILITY
+ * @supported_bands: supported bands, enum WLAN_BAND_CAPABILITY (mapped to
+ *        enum WMI_HOST_WLAN_BAND_CAPABILITY within host)
  * @ampdu_density: ampdu density 0 for no restriction, 1 for 1/4 us,
  *        2 for 1/2 us, 3 for 1 us,4 for 2 us, 5 for 4 us,
  *        6 for 8 us,7 for 16 us
- * @max_bw_supported_2G: max bw supported 2G, enum wmi_channel_width
+ * @max_bw_supported_2G: max bw supported 2G, enum wmi_channel_width (mapped to
+ *        enum wmi_host_channel_width within host)
  * @ht_cap_info_2G: WMI HT Capability, WMI_HT_CAP defines
  * @vht_cap_info_2G: VHT capability info field of 802.11ac, WMI_VHT_CAP defines
  * @vht_supp_mcs_2G: VHT Supported MCS Set field Rx/Tx same
@@ -7021,7 +7055,8 @@ struct wmi_host_hw_mode_caps {
  * @he_supp_mcs_2G: HE Supported MCS Set field Rx/Tx same
  * @tx_chain_mask_2G: Valid Transmit chain mask
  * @rx_chain_mask_2G: Valid Receive chain mask
- * @max_bw_supported_5G: max bw supported 5G, enum wmi_channel_width
+ * @max_bw_supported_5G: max bw supported 5G, enum wmi_channel_width (mapped to
+ *        enum wmi_host_channel_width within host)
  * @ht_cap_info_5G: WMI HT Capability, WMI_HT_CAP defines
  * @vht_cap_info_5G: VHT capability info field of 802.11ac, WMI_VHT_CAP defines
  * @vht_supp_mcs_5G: VHT Supported MCS Set field Rx/Tx same
