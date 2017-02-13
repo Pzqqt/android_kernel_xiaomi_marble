@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -101,6 +101,8 @@
 					emulation purpose */
 #define RUMIM2M_DEVICE_ID_NODE0	0xabc0
 #define RUMIM2M_DEVICE_ID_NODE1	0xabc1
+#define RUMIM2M_DEVICE_ID_NODE2	0xabc2
+#define RUMIM2M_DEVICE_ID_NODE3	0xabc3
 
 #define HIF_GET_PCI_SOFTC(scn) ((struct hif_pci_softc *)scn)
 #define HIF_GET_CE_STATE(scn) ((struct HIF_CE_state *)scn)

@@ -63,6 +63,8 @@ static inline ol_txrx_soc_handle cdp_soc_attach(u_int16_t devid,
 	case QCA8074_DEVICE_ID: /* Hawekeye */
 	case RUMIM2M_DEVICE_ID_NODE0: /*lithium emulation */
 	case RUMIM2M_DEVICE_ID_NODE1: /*lithium emulation */
+	case RUMIM2M_DEVICE_ID_NODE2: /*lithium emulation */
+	case RUMIM2M_DEVICE_ID_NODE3: /*lithium emulation */
 		return dp_soc_attach_wifi3(scn, hif_handle, htc_handle,
 			qdf_dev, dp_ol_if_ops);
 	break;
