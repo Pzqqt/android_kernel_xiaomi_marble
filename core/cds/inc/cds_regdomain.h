@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -74,7 +74,7 @@
 #define MAX_CHANNELS_PER_OPERATING_CLASS  25
 #define CDS_MAX_SUPP_OPER_CLASSES 32
 #define MIN_TX_PWR_CAP    8
-#define MAX_TX_PWR_CAP    30
+#define MAX_TX_PWR_CAP    22
 
 #define CTRY_DEFAULT          0
 #define CTRY_FLAG             0x8000
