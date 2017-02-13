@@ -1243,6 +1243,9 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_DFS_HOST_WAIT_TIMEOUT = 367,
 #endif
 	OL_ATH_PARAM_NF_THRESH = 368,
+	OL_ATH_PARAM_SMARTLOG_ENABLE = 369,
+	OL_ATH_PARAM_SMARTLOG_FATAL_EVENT = 370,
+
 };
 
 /* Enumeration of PDEV Configuration parameter */

@@ -5531,6 +5531,9 @@ typedef enum {
 	wmi_twt_enable_complete_event_id,
 	wmi_apf_get_vdev_work_memory_resp_event_id,
 
+#ifdef OL_ATH_SMART_LOGGING
+	wmi_debug_fatal_condition_eventid,
+#endif /* OL_ATH_SMART_LOGGING */
 	wmi_events_max,
 } wmi_conv_event_id;
 
@@ -5962,6 +5965,9 @@ typedef enum {
 	wmi_service_twt_responder,
 	wmi_service_listen_interval_offload_support,
 
+#ifdef OL_ATH_SMART_LOGGING
+	wmi_service_smart_logging_support,
+#endif
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF
@@ -7915,6 +7921,33 @@ struct wmi_host_pdev_band_to_mac {
 	uint32_t end_freq;
 };
 #define WMI_HOST_MAX_PDEV 3
+
+#ifdef OL_ATH_SMART_LOGGING
+/**
+ * struct wmi_fatal_condition_event - Fatal condition event param
+ * @type: Type of event
+ * @subtype: subtype of event
+ * @reserved0: reserved
+ */
+struct wmi_fatal_condition_event {
+	uint32_t type;
+	uint32_t subtype;
+	uint32_t reserved0;
+};
+
+/*Currently the Max fatal events is 3 */
+#define FATAL_EVENTS_MAX 3
+
+/**
+ * struct wmi_debug_fatal_events: Fatal events list
+ * @num_events:Number of events
+ * @event[FATAL_EVENTS_MAX]: Each event data
+ */
+struct wmi_debug_fatal_events {
+	uint32_t num_events;
+	struct wmi_fatal_condition_event event[FATAL_EVENTS_MAX];
+};
+#endif /* OL_ATH_SMART_LOGGING */
 
 /**
  * struct wmi_init_cmd_param - INIT command params
