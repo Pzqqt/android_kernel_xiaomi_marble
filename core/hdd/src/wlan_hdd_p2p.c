@@ -225,15 +225,6 @@ QDF_STATUS wlan_hdd_remain_on_channel_callback(tHalHandle hHal, void *pCtx,
 	req_type = pRemainChanCtx->rem_on_chan_request;
 	mutex_unlock(&cfgState->remain_on_chan_ctx_lock);
 
-	/* Schedule any pending RoC: Any new roc request during this time
-	 * would have got queued in 'wlan_hdd_request_remain_on_channel'
-	 * since the queue is not empty. So, the roc at the head of the
-	 * queue will only get the priority. Scheduling the work queue
-	 * after sending any cancel remain on channel event will also
-	 * ensure that the cancel roc is sent without any delays.
-	 */
-	schedule_delayed_work(&hdd_ctx->roc_req_work, 0);
-
 	if ((QDF_STA_MODE == pAdapter->device_mode) ||
 	    (QDF_P2P_CLIENT_MODE == pAdapter->device_mode) ||
 	    (QDF_P2P_DEVICE_MODE == pAdapter->device_mode)
@@ -270,6 +261,17 @@ QDF_STATUS wlan_hdd_remain_on_channel_callback(tHalHandle hHal, void *pCtx,
 	complete(&pAdapter->cancel_rem_on_chan_var);
 	if (QDF_STATUS_SUCCESS != status)
 		complete(&pAdapter->rem_on_chan_ready_event);
+
+	/* If we schedule work queue to start new RoC before completing
+	 * cancel_rem_on_chan_var then the work queue may immediately get
+	 * scheduled and update cfgState->remain_on_chan_ctx which is referred
+	 * in mgmt_tx. Due to this update the the mgmt_tx may extend the roc
+	 * which was already completed. This will lead to mgmt tx failure.
+	 * Always schedule below work queue only after completing the
+	 * cancel_rem_on_chan_var event.
+	 */
+	schedule_delayed_work(&hdd_ctx->roc_req_work, 0);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1514,9 +1516,26 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 			mutex_unlock(&cfgState->remain_on_chan_ctx_lock);
 
 		mutex_lock(&cfgState->remain_on_chan_ctx_lock);
-		if ((cfgState->remain_on_chan_ctx != NULL) &&
-		    (cfgState->current_freq == chan->center_freq)
-		    ) {
+		pRemainChanCtx = cfgState->remain_on_chan_ctx;
+
+		/* At this point if remain_on_chan_ctx exists but timer not
+		 * running means that roc workqueue requested a new RoC and it
+		 * is in progress. So wait for Ready on channel indication */
+		if ((pRemainChanCtx) &&
+			(QDF_TIMER_STATE_RUNNING !=
+			 qdf_mc_timer_get_current_state(
+				 &pRemainChanCtx->hdd_remain_on_chan_timer))) {
+			hdd_notice("remain_on_chan_ctx exists but RoC timer not running. wait for ready on channel");
+			rc = wait_for_completion_timeout(&pAdapter->
+					rem_on_chan_ready_event,
+					msecs_to_jiffies
+					(WAIT_REM_CHAN_READY));
+			if (!rc)
+				hdd_err("timeout waiting for remain on channel ready indication");
+		}
+
+		if ((pRemainChanCtx != NULL) &&
+			(cfgState->current_freq == chan->center_freq)) {
 			mutex_unlock(&cfgState->remain_on_chan_ctx_lock);
 			hdd_notice("action frame: extending the wait time");
 			extendedWait = (uint16_t) wait;
