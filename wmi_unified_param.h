@@ -6966,6 +6966,10 @@ struct wmi_adaptive_dwelltime_params {
  *     will be considered for PER based scan in rx path
  * @per_rest_time: time for which PER based roam will wait once it
  *     issues a roam scan.
+ * @tx_per_mon_time: Minimum time required to be considered as valid scenario
+ *     for PER based roam in tx path
+ * @rx_per_mon_time: Minimum time required to be considered as valid scenario
+ *     for PER based roam in rx path
  */
 struct wmi_per_roam_config {
 	uint32_t enable;
@@ -6976,6 +6980,8 @@ struct wmi_per_roam_config {
 	uint32_t tx_rate_thresh_percnt;
 	uint32_t rx_rate_thresh_percnt;
 	uint32_t per_rest_time;
+	uint32_t tx_per_mon_time;
+	uint32_t rx_per_mon_time;
 };
 
 /**
