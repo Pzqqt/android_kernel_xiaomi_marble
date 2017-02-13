@@ -46,7 +46,7 @@
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS send_vdev_create_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_vdev_create_cmd_non_tlv(wmi_unified_t wmi_handle,
 				 uint8_t macaddr[IEEE80211_ADDR_LEN],
 				 struct vdev_create_params *param)
 {
@@ -80,7 +80,7 @@ QDF_STATUS send_vdev_create_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS send_vdev_delete_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_vdev_delete_cmd_non_tlv(wmi_unified_t wmi_handle,
 					  uint8_t if_id)
 {
 	wmi_vdev_delete_cmd *cmd;
@@ -106,7 +106,7 @@ QDF_STATUS send_vdev_delete_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or erro code
  */
-QDF_STATUS send_vdev_stop_cmd_non_tlv(wmi_unified_t wmi,
+static QDF_STATUS send_vdev_stop_cmd_non_tlv(wmi_unified_t wmi,
 					uint8_t vdev_id)
 {
 	wmi_vdev_stop_cmd *cmd;
@@ -131,7 +131,7 @@ QDF_STATUS send_vdev_stop_cmd_non_tlv(wmi_unified_t wmi,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS send_vdev_down_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_vdev_down_cmd_non_tlv(wmi_unified_t wmi_handle,
 						uint8_t vdev_id)
 {
 	wmi_vdev_down_cmd *cmd;
@@ -156,7 +156,7 @@ QDF_STATUS send_vdev_down_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS send_vdev_start_cmd_non_tlv(wmi_unified_t wmi,
+static QDF_STATUS send_vdev_start_cmd_non_tlv(wmi_unified_t wmi,
 				struct vdev_start_params *param)
 {
 	wmi_vdev_start_request_cmd *cmd;
@@ -230,7 +230,7 @@ functions in OL layer
  * @param: pointer to hold neigbour rx param
  * Return: 0 for success or error code
  */
-QDF_STATUS send_vdev_set_neighbour_rx_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_vdev_set_neighbour_rx_cmd_non_tlv(wmi_unified_t wmi_handle,
 					uint8_t macaddr[IEEE80211_ADDR_LEN],
 					struct set_neighbour_rx_params *param)
 {
@@ -260,7 +260,7 @@ QDF_STATUS send_vdev_set_neighbour_rx_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS send_vdev_set_fwtest_param_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_vdev_set_fwtest_param_cmd_non_tlv(wmi_unified_t wmi_handle,
 					struct set_fwtest_params *param)
 {
 	wmi_fwtest_set_param_cmd *cmd;
@@ -288,7 +288,7 @@ QDF_STATUS send_vdev_set_fwtest_param_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS send_vdev_config_ratemask_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_vdev_config_ratemask_cmd_non_tlv(wmi_unified_t wmi_handle,
 					struct config_ratemask_params *param)
 {
 	wmi_vdev_config_ratemask *cmd;
@@ -320,7 +320,7 @@ QDF_STATUS send_vdev_config_ratemask_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS send_setup_install_key_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_setup_install_key_cmd_non_tlv(wmi_unified_t wmi_handle,
 					struct set_key_params  *param)
 {
 	wmi_vdev_install_key_cmd *cmd;
@@ -417,7 +417,7 @@ QDF_STATUS send_setup_install_key_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for sucess or error code
  */
-QDF_STATUS send_peer_flush_tids_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_peer_flush_tids_cmd_non_tlv(wmi_unified_t wmi_handle,
 					 uint8_t peer_addr[IEEE80211_ADDR_LEN],
 					 struct peer_flush_params *param)
 {
@@ -446,7 +446,7 @@ QDF_STATUS send_peer_flush_tids_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS send_peer_delete_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_peer_delete_cmd_non_tlv(wmi_unified_t wmi_handle,
 					uint8_t
 					peer_addr[IEEE80211_ADDR_LEN],
 					uint8_t vdev_id)
@@ -525,7 +525,7 @@ static QDF_STATUS convert_host_peer_id_to_target_id_non_tlv(
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS send_peer_param_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_peer_param_cmd_non_tlv(wmi_unified_t wmi_handle,
 				uint8_t peer_addr[IEEE80211_ADDR_LEN],
 				struct peer_set_params *param)
 {
@@ -560,7 +560,7 @@ QDF_STATUS send_peer_param_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS send_vdev_up_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_vdev_up_cmd_non_tlv(wmi_unified_t wmi_handle,
 				 uint8_t bssid[IEEE80211_ADDR_LEN],
 				 struct vdev_up_params *param)
 {
@@ -588,7 +588,7 @@ QDF_STATUS send_vdev_up_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS send_peer_create_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_peer_create_cmd_non_tlv(wmi_unified_t wmi_handle,
 					struct peer_create_params *param)
 {
 	wmi_peer_create_cmd *cmd;
@@ -614,7 +614,7 @@ QDF_STATUS send_peer_create_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS send_peer_add_wds_entry_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_peer_add_wds_entry_cmd_non_tlv(wmi_unified_t wmi_handle,
 					struct peer_add_wds_entry_params *param)
 {
 	wmi_peer_add_wds_entry_cmd *cmd;
@@ -641,7 +641,7 @@ QDF_STATUS send_peer_add_wds_entry_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS send_peer_del_wds_entry_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_peer_del_wds_entry_cmd_non_tlv(wmi_unified_t wmi_handle,
 					struct peer_del_wds_entry_params *param)
 {
 	wmi_peer_remove_wds_entry_cmd *cmd;
@@ -666,7 +666,7 @@ QDF_STATUS send_peer_del_wds_entry_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS send_peer_update_wds_entry_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_peer_update_wds_entry_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct peer_update_wds_entry_params *param)
 {
 	wmi_peer_update_wds_entry_cmd *cmd;
@@ -700,7 +700,7 @@ QDF_STATUS send_peer_update_wds_entry_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS send_green_ap_ps_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_green_ap_ps_cmd_non_tlv(wmi_unified_t wmi_handle,
 						uint32_t value, uint8_t mac_id)
 {
 	wmi_pdev_green_ap_ps_enable_cmd *cmd;
@@ -741,7 +741,7 @@ QDF_STATUS send_green_ap_ps_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_pdev_utf_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct pdev_utf_params *param,
 				uint8_t mac_id)
@@ -836,7 +836,7 @@ send_pdev_utf_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_pdev_qvit_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct pdev_qvit_params *param)
 {
@@ -915,7 +915,7 @@ send_pdev_qvit_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 on success, errno on failure
  */
-QDF_STATUS
+static QDF_STATUS
 send_pdev_param_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct pdev_params *param, uint8_t mac_id)
 {
@@ -949,7 +949,7 @@ send_pdev_param_cmd_non_tlv(wmi_unified_t wmi_handle,
  *  @mac_id: radio context
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
-QDF_STATUS send_suspend_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_suspend_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct suspend_params *param,
 				uint8_t mac_id)
 {
@@ -987,7 +987,7 @@ QDF_STATUS send_suspend_cmd_non_tlv(wmi_unified_t wmi_handle,
  *  @mac_id: radio context
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
-QDF_STATUS send_resume_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_resume_cmd_non_tlv(wmi_unified_t wmi_handle,
 				uint8_t mac_id)
 {
 	wmi_buf_t wmibuf;
@@ -1007,7 +1007,7 @@ QDF_STATUS send_resume_cmd_non_tlv(wmi_unified_t wmi_handle,
  *  @mac_id: radio context
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
-QDF_STATUS send_wow_enable_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_wow_enable_cmd_non_tlv(wmi_unified_t wmi_handle,
 		struct wow_cmd_params *param, uint8_t mac_id)
 {
 	QDF_STATUS res;
@@ -1030,7 +1030,7 @@ QDF_STATUS send_wow_enable_cmd_non_tlv(wmi_unified_t wmi_handle,
  *  @param wmi_handle	  : handle to WMI.
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
-QDF_STATUS send_wow_wakeup_cmd_non_tlv(wmi_unified_t wmi_handle)
+static QDF_STATUS send_wow_wakeup_cmd_non_tlv(wmi_unified_t wmi_handle)
 {
 	QDF_STATUS res;
 	wmi_buf_t buf = NULL;
@@ -1054,7 +1054,7 @@ QDF_STATUS send_wow_wakeup_cmd_non_tlv(wmi_unified_t wmi_handle)
  *  @param param	: pointer to hold wow wakeup event parameter
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
-QDF_STATUS send_wow_add_wakeup_event_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_wow_add_wakeup_event_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct wow_add_wakeup_params *param)
 {
 	QDF_STATUS res;
@@ -1083,7 +1083,7 @@ QDF_STATUS send_wow_add_wakeup_event_cmd_non_tlv(wmi_unified_t wmi_handle,
  *  @param param	: pointer to hold wow wakeup pattern parameter
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
-QDF_STATUS send_wow_add_wakeup_pattern_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_wow_add_wakeup_pattern_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct wow_add_wakeup_pattern_params *param)
 {
 	WOW_BITMAP_PATTERN_T bitmap_pattern;
@@ -1131,7 +1131,7 @@ QDF_STATUS send_wow_add_wakeup_pattern_cmd_non_tlv(wmi_unified_t wmi_handle,
  *  @param param	: pointer to hold wow wakeup pattern parameter
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
-QDF_STATUS send_wow_remove_wakeup_pattern_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_wow_remove_wakeup_pattern_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct wow_remove_wakeup_pattern_params *param)
 {
 	WMI_WOW_DEL_PATTERN_CMD *cmd;
@@ -1161,7 +1161,7 @@ QDF_STATUS send_wow_remove_wakeup_pattern_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS send_set_ap_ps_param_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_set_ap_ps_param_cmd_non_tlv(wmi_unified_t wmi_handle,
 					   uint8_t *peer_addr,
 					   struct ap_ps_params *param)
 {
@@ -1191,7 +1191,7 @@ QDF_STATUS send_set_ap_ps_param_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS send_set_sta_ps_param_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_set_sta_ps_param_cmd_non_tlv(wmi_unified_t wmi_handle,
 					   struct sta_ps_params *param)
 {
 	wmi_sta_powersave_param_cmd *cmd;
@@ -1219,7 +1219,7 @@ QDF_STATUS send_set_sta_ps_param_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS send_set_ps_mode_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_set_ps_mode_cmd_non_tlv(wmi_unified_t wmi_handle,
 					   struct set_ps_mode_params *param)
 {
 	wmi_sta_powersave_mode_cmd *cmd;
@@ -1249,7 +1249,7 @@ QDF_STATUS send_set_ps_mode_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or return error
  */
-QDF_STATUS send_crash_inject_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_crash_inject_cmd_non_tlv(wmi_unified_t wmi_handle,
 			 struct crash_inject *param)
 {
 	WMI_FORCE_FW_HANG_CMD *cmd;
@@ -1276,7 +1276,7 @@ QDF_STATUS send_crash_inject_cmd_non_tlv(wmi_unified_t wmi_handle,
  *  @param param	: pointer to hold dbglog level parameter
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
-QDF_STATUS
+static QDF_STATUS
 send_dbglog_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct dbglog_params *dbglog_param)
 {
@@ -1319,7 +1319,7 @@ send_dbglog_cmd_non_tlv(wmi_unified_t wmi_handle,
  *  @param param	: pointer to hold vdev set parameter
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
-QDF_STATUS send_vdev_set_param_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_vdev_set_param_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct vdev_set_params *param)
 {
 	wmi_vdev_set_param_cmd *cmd;
@@ -1374,7 +1374,7 @@ static uint32_t get_stats_id_non_tlv(wmi_host_stats_id host_stats_id)
  *  @param param	: pointer to hold stats request parameter
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
-QDF_STATUS send_stats_request_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_stats_request_cmd_non_tlv(wmi_unified_t wmi_handle,
 				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct stats_request_params *param)
 {
@@ -1410,7 +1410,7 @@ QDF_STATUS send_stats_request_cmd_non_tlv(wmi_unified_t wmi_handle,
  *  @param param	: pointer to hold bss chan info request parameter
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
-QDF_STATUS send_bss_chan_info_request_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_bss_chan_info_request_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct bss_chan_info_request_params *param)
 {
 	wmi_buf_t buf;
@@ -1442,7 +1442,7 @@ QDF_STATUS send_bss_chan_info_request_cmd_non_tlv(wmi_unified_t wmi_handle,
  *  @param PKTLOG_EVENT	: packet log event
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
-QDF_STATUS send_packet_log_enable_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_packet_log_enable_cmd_non_tlv(wmi_unified_t wmi_handle,
 				WMI_HOST_PKTLOG_EVENT PKTLOG_EVENT)
 {
 	wmi_pdev_pktlog_enable_cmd *cmd;
@@ -1470,7 +1470,7 @@ QDF_STATUS send_packet_log_enable_cmd_non_tlv(wmi_unified_t wmi_handle,
  *  @param wmi_handle	  : handle to WMI.
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
-QDF_STATUS send_packet_log_disable_cmd_non_tlv(wmi_unified_t wmi_handle)
+static QDF_STATUS send_packet_log_disable_cmd_non_tlv(wmi_unified_t wmi_handle)
 {
 	int len = 0;
 	wmi_buf_t buf;
@@ -1494,7 +1494,7 @@ QDF_STATUS send_packet_log_disable_cmd_non_tlv(wmi_unified_t wmi_handle)
  *  @param param	: pointer to hold beacon send cmd parameter
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
-QDF_STATUS send_beacon_send_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_beacon_send_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct beacon_params *param)
 {
 	if (param->is_high_latency) {
@@ -1594,7 +1594,7 @@ QDF_STATUS send_beacon_send_cmd_non_tlv(wmi_unified_t wmi_handle,
  *  @param param	: pointer to hold beacon prb template cmd parameter
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
-QDF_STATUS send_bcn_prb_template_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_bcn_prb_template_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct bcn_prb_template_params *param)
 {
 	wmi_bcn_prb_tmpl_cmd *cmd;
@@ -1636,7 +1636,7 @@ QDF_STATUS send_bcn_prb_template_cmd_non_tlv(wmi_unified_t wmi_handle,
  *  @param param	: pointer to peer assoc parameter
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
-QDF_STATUS send_peer_assoc_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_peer_assoc_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct peer_assoc_params *param)
 {
 	wmi_peer_assoc_complete_cmd *cmd;
@@ -1816,7 +1816,7 @@ QDF_STATUS send_peer_assoc_cmd_non_tlv(wmi_unified_t wmi_handle,
  *  @param param	: pointer to hold scan start cmd parameter
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
-QDF_STATUS send_scan_start_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_scan_start_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct scan_start_params *param)
 {
 	wmi_start_scan_cmd *cmd;
@@ -1999,7 +1999,7 @@ QDF_STATUS send_scan_start_cmd_non_tlv(wmi_unified_t wmi_handle,
  *  @param param	: pointer to hold scan start cmd parameter
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
-QDF_STATUS send_scan_stop_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_scan_stop_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct scan_stop_params *param)
 {
 	wmi_stop_scan_cmd *cmd = NULL;
@@ -2055,7 +2055,7 @@ QDF_STATUS send_scan_stop_cmd_non_tlv(wmi_unified_t wmi_handle,
  *  @param param	: pointer to hold scan channel list parameter
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
-QDF_STATUS send_scan_chan_list_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_scan_chan_list_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct scan_chan_list_params *param)
 {
 	uint32_t i;
@@ -2128,7 +2128,7 @@ QDF_STATUS send_scan_chan_list_cmd_non_tlv(wmi_unified_t wmi_handle,
  *  @param param	: pointer to hold thermal mitigation param
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
-QDF_STATUS send_thermal_mitigation_param_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_thermal_mitigation_param_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct thermal_mitigation_params *param)
 {
 	wmi_buf_t buf = NULL;
@@ -2166,7 +2166,7 @@ QDF_STATUS send_thermal_mitigation_param_cmd_non_tlv(wmi_unified_t wmi_handle,
  *  @param wmi_handle	  : handle to WMI.
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
-QDF_STATUS send_phyerr_enable_cmd_non_tlv(wmi_unified_t wmi_handle)
+static QDF_STATUS send_phyerr_enable_cmd_non_tlv(wmi_unified_t wmi_handle)
 {
 	wmi_buf_t buf;
 
@@ -2195,7 +2195,7 @@ QDF_STATUS send_phyerr_enable_cmd_non_tlv(wmi_unified_t wmi_handle)
  *  @param wmi_handle	  : handle to WMI.
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
-QDF_STATUS send_phyerr_disable_cmd_non_tlv(wmi_unified_t wmi_handle)
+static QDF_STATUS send_phyerr_disable_cmd_non_tlv(wmi_unified_t wmi_handle)
 {
 	wmi_buf_t buf;
 
@@ -2225,7 +2225,7 @@ QDF_STATUS send_phyerr_disable_cmd_non_tlv(wmi_unified_t wmi_handle)
  *  @param param	: pointer to antenna param
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
-QDF_STATUS send_smart_ant_enable_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_smart_ant_enable_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct smart_ant_enable_params *param)
 {
 	/* Send WMI COMMAND to Enable */
@@ -2304,7 +2304,7 @@ QDF_STATUS send_smart_ant_enable_cmd_non_tlv(wmi_unified_t wmi_handle,
  *  @param param		   : pointer to rx antenna param
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
-QDF_STATUS send_smart_ant_set_rx_ant_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_smart_ant_set_rx_ant_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct smart_ant_rx_ant_params *param)
 {
 	wmi_pdev_smart_ant_set_rx_antenna_cmd *cmd;
@@ -2345,7 +2345,7 @@ QDF_STATUS send_smart_ant_set_rx_ant_cmd_non_tlv(wmi_unified_t wmi_handle,
  *  @param param		   : pointer to tx antenna param
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
-QDF_STATUS send_smart_ant_set_tx_ant_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_smart_ant_set_tx_ant_cmd_non_tlv(wmi_unified_t wmi_handle,
 				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct smart_ant_tx_ant_params *param)
 {
@@ -2394,7 +2394,7 @@ QDF_STATUS send_smart_ant_set_tx_ant_cmd_non_tlv(wmi_unified_t wmi_handle,
  *  @param param		   : pointer to tx antenna param
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
-QDF_STATUS send_smart_ant_set_training_info_cmd_non_tlv(
+static QDF_STATUS send_smart_ant_set_training_info_cmd_non_tlv(
 				wmi_unified_t wmi_handle,
 				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct smart_ant_training_info_params *param)
@@ -2449,7 +2449,7 @@ QDF_STATUS send_smart_ant_set_training_info_cmd_non_tlv(
  *  @param param		   : pointer to tx antenna param
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
-QDF_STATUS send_smart_ant_set_node_config_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_smart_ant_set_node_config_cmd_non_tlv(wmi_unified_t wmi_handle,
 				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct smart_ant_node_config_params *param)
 {
@@ -2504,7 +2504,7 @@ QDF_STATUS send_smart_ant_set_node_config_cmd_non_tlv(wmi_unified_t wmi_handle,
  *  @param param		   : pointer to hold enable param
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
-QDF_STATUS send_smart_ant_enable_tx_feedback_cmd_non_tlv(
+static QDF_STATUS send_smart_ant_enable_tx_feedback_cmd_non_tlv(
 			wmi_unified_t wmi_handle,
 			struct smart_ant_enable_tx_feedback_params *param)
 {
@@ -2552,7 +2552,7 @@ QDF_STATUS send_smart_ant_enable_tx_feedback_cmd_non_tlv(
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS send_vdev_spectral_configure_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_vdev_spectral_configure_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct vdev_spectral_configure_params *param)
 {
 	wmi_vdev_spectral_configure_cmd *cmd;
@@ -2650,7 +2650,7 @@ QDF_STATUS send_vdev_spectral_configure_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS send_vdev_spectral_enable_cmd_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_vdev_spectral_enable_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct vdev_spectral_enable_params *param)
 {
 	wmi_vdev_spectral_enable_cmd *cmd;
@@ -2711,7 +2711,7 @@ QDF_STATUS send_vdev_spectral_enable_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_pdev_set_regdomain_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct pdev_set_regdomain_params *param)
 {
@@ -2746,7 +2746,7 @@ send_pdev_set_regdomain_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_set_quiet_mode_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct set_quiet_mode_params *param)
 {
@@ -2776,7 +2776,7 @@ send_set_quiet_mode_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_set_beacon_filter_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct set_beacon_filter_params *param)
 {
@@ -2817,7 +2817,7 @@ send_set_beacon_filter_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_remove_beacon_filter_cmd_non_tlv(wmi_unified_t wmi_handle,
 			struct remove_beacon_filter_params *param)
 {
@@ -2845,7 +2845,7 @@ send_remove_beacon_filter_cmd_non_tlv(wmi_unified_t wmi_handle,
  * @param: pointer to mgmt params
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_mgmt_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct wmi_mgmt_params *param)
 {
@@ -2900,7 +2900,7 @@ send_mgmt_cmd_non_tlv(wmi_unified_t wmi_handle,
  * @macaddr: vdev mac address
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_addba_clearresponse_cmd_non_tlv(wmi_unified_t wmi_handle,
 			uint8_t macaddr[IEEE80211_ADDR_LEN],
 			struct addba_clearresponse_params *param)
@@ -2930,7 +2930,7 @@ send_addba_clearresponse_cmd_non_tlv(wmi_unified_t wmi_handle,
  * @macaddr: vdev mac address
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_addba_send_cmd_non_tlv(wmi_unified_t wmi_handle,
 				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct addba_send_params *param)
@@ -2962,7 +2962,7 @@ send_addba_send_cmd_non_tlv(wmi_unified_t wmi_handle,
  * @macaddr: vdev mac address
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_delba_send_cmd_non_tlv(wmi_unified_t wmi_handle,
 				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct delba_send_params *param)
@@ -2996,7 +2996,7 @@ send_delba_send_cmd_non_tlv(wmi_unified_t wmi_handle,
  * @macaddr: vdev mac address
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_addba_setresponse_cmd_non_tlv(wmi_unified_t wmi_handle,
 				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct addba_setresponse_params *param)
@@ -3029,7 +3029,7 @@ send_addba_setresponse_cmd_non_tlv(wmi_unified_t wmi_handle,
  * @macaddr: vdev mac address
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_singleamsdu_cmd_non_tlv(wmi_unified_t wmi_handle,
 				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct singleamsdu_params *param)
@@ -3061,7 +3061,7 @@ send_singleamsdu_cmd_non_tlv(wmi_unified_t wmi_handle,
  * @macaddr: vdev mac address
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_set_qboost_param_cmd_non_tlv(wmi_unified_t wmi_handle,
 				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct set_qboost_params *param)
@@ -3093,7 +3093,7 @@ send_set_qboost_param_cmd_non_tlv(wmi_unified_t wmi_handle,
  * @param: pointer to mu scan params
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_mu_scan_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct mu_scan_params *param)
 {
@@ -3126,7 +3126,7 @@ send_mu_scan_cmd_non_tlv(wmi_unified_t wmi_handle,
  * @param: pointer to lteu config params
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_lteu_config_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct lteu_config_params *param)
 {
@@ -3164,7 +3164,7 @@ send_lteu_config_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_pdev_get_tpc_config_cmd_non_tlv(wmi_unified_t wmi_handle,
 				uint32_t param)
 {
@@ -3190,7 +3190,7 @@ send_pdev_get_tpc_config_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_set_bwf_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct set_bwf_params *param)
 {
@@ -3233,7 +3233,7 @@ send_set_bwf_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_set_atf_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct set_atf_params *param)
 {
@@ -3272,7 +3272,7 @@ send_set_atf_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_atf_peer_request_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct atf_peer_request_params *param)
 {
@@ -3311,7 +3311,7 @@ send_atf_peer_request_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_set_atf_grouping_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct atf_grouping_params *param)
 {
@@ -3350,7 +3350,7 @@ send_set_atf_grouping_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_wlan_profile_enable_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct wlan_profile_params *param)
 {
@@ -3379,7 +3379,7 @@ send_wlan_profile_enable_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_wlan_profile_trigger_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct wlan_profile_params *param)
 {
@@ -3421,7 +3421,7 @@ void wmi_host_swap_bytes(void *pv, size_t n)
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_set_ht_ie_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct ht_ie_params *param)
 {
@@ -3457,7 +3457,7 @@ send_set_ht_ie_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_set_vht_ie_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct vht_ie_params *param)
 {
@@ -3493,7 +3493,7 @@ send_set_vht_ie_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_wmm_update_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct wmm_update_params *param)
 {
@@ -3558,7 +3558,7 @@ send_wmm_update_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_set_ant_switch_tbl_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct ant_switch_tbl_params *param)
 {
@@ -3591,7 +3591,7 @@ send_set_ant_switch_tbl_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_set_ratepwr_table_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct ratepwr_table_params *param)
 {
@@ -3632,7 +3632,7 @@ send_set_ratepwr_table_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_get_ratepwr_table_cmd_non_tlv(wmi_unified_t wmi_handle)
 {
 	uint16_t len;
@@ -3667,7 +3667,7 @@ send_get_ratepwr_table_cmd_non_tlv(wmi_unified_t wmi_handle)
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_set_ctl_table_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct ctl_table_params *param)
 {
@@ -3803,7 +3803,7 @@ send_set_ctl_table_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_set_mimogain_table_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct mimogain_table_params *param)
 {
@@ -3860,7 +3860,7 @@ send_set_mimogain_table_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_set_ratepwr_chainmsk_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct ratepwr_chainmsk_params *param)
 {
@@ -3904,7 +3904,7 @@ send_set_ratepwr_chainmsk_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_set_macaddr_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct macaddr_params *param)
 {
@@ -3935,7 +3935,7 @@ send_set_macaddr_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_pdev_scan_start_cmd_non_tlv(wmi_unified_t wmi_handle)
 {
 	/*
@@ -3968,7 +3968,7 @@ send_pdev_scan_start_cmd_non_tlv(wmi_unified_t wmi_handle)
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_pdev_scan_end_cmd_non_tlv(wmi_unified_t wmi_handle)
 {
 	/*
@@ -4001,7 +4001,7 @@ send_pdev_scan_end_cmd_non_tlv(wmi_unified_t wmi_handle)
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_set_acparams_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct acparams_params *param)
 {
@@ -4033,7 +4033,7 @@ send_set_acparams_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_set_vap_dscp_tid_map_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct vap_dscp_tid_map_params *param)
 {
@@ -4065,7 +4065,7 @@ send_set_vap_dscp_tid_map_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_proxy_ast_reserve_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct proxy_ast_reserve_params *param)
 {
@@ -4097,7 +4097,7 @@ send_proxy_ast_reserve_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_pdev_fips_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct fips_params *param)
 {
@@ -4254,7 +4254,7 @@ send_pdev_fips_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_pdev_set_chan_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct channel_param *param)
 {
@@ -4320,7 +4320,7 @@ send_pdev_set_chan_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_mcast_group_update_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct mcast_group_update_params *param)
 {
@@ -4418,7 +4418,7 @@ send_mcast_group_update_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_periodic_chan_stats_config_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct periodic_chan_stats_params *param)
 {
@@ -4452,7 +4452,7 @@ send_periodic_chan_stats_config_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_nf_dbr_dbm_info_get_cmd_non_tlv(wmi_unified_t wmi_handle)
 {
 	wmi_buf_t wmibuf;
@@ -4473,7 +4473,7 @@ send_nf_dbr_dbm_info_get_cmd_non_tlv(wmi_unified_t wmi_handle)
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_packet_power_info_get_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct packet_power_info_params *param)
 {
@@ -4504,7 +4504,7 @@ send_packet_power_info_get_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_gpio_config_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct gpio_config_params *param)
 {
@@ -4538,7 +4538,7 @@ send_gpio_config_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_gpio_output_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct gpio_output_params *param)
 {
@@ -4564,7 +4564,7 @@ send_gpio_output_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_rtt_meas_req_test_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct rtt_meas_req_test_params *param)
 {
@@ -4682,7 +4682,7 @@ send_rtt_meas_req_test_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_rtt_meas_req_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct rtt_meas_req_params *param)
 {
@@ -4819,7 +4819,7 @@ send_rtt_meas_req_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_rtt_keepalive_req_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct rtt_keepalive_req_params *param)
 {
@@ -4867,7 +4867,7 @@ send_rtt_keepalive_req_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_lci_set_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct lci_set_params *param)
 {
@@ -4959,7 +4959,7 @@ send_lci_set_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_lcr_set_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct lcr_set_params *param)
 {
@@ -4993,7 +4993,7 @@ send_lcr_set_cmd_non_tlv(wmi_unified_t wmi_handle,
  * @wmi_handle: wmi handle
  * @param: pointer to hold oem req param
  */
-QDF_STATUS
+static QDF_STATUS
 send_start_oem_data_cmd_non_tlv(wmi_unified_t wmi_handle,
 				uint32_t data_len,
 				uint8_t *data)
@@ -5032,7 +5032,7 @@ send_start_oem_data_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_get_user_position_cmd_non_tlv(wmi_unified_t wmi_handle, uint32_t value)
 {
 	wmi_buf_t buf;
@@ -5064,7 +5064,7 @@ send_get_user_position_cmd_non_tlv(wmi_unified_t wmi_handle, uint32_t value)
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_reset_peer_mumimo_tx_count_cmd_non_tlv(wmi_unified_t wmi_handle,
 						uint32_t value)
 {
@@ -5096,7 +5096,7 @@ send_reset_peer_mumimo_tx_count_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_get_peer_mumimo_tx_count_cmd_non_tlv(wmi_unified_t wmi_handle,
 						uint32_t value)
 {
@@ -5129,7 +5129,7 @@ send_get_peer_mumimo_tx_count_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_pdev_caldata_version_check_cmd_non_tlv(wmi_unified_t wmi_handle,
 						uint32_t param)
 {
@@ -5160,7 +5160,7 @@ send_pdev_caldata_version_check_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_btcoex_wlan_priority_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct btcoex_cfg_params *param)
 {
@@ -5192,7 +5192,7 @@ send_btcoex_wlan_priority_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_btcoex_duty_cycle_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct btcoex_cfg_params *param)
 {
@@ -5224,7 +5224,7 @@ send_btcoex_duty_cycle_cmd_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS
+static QDF_STATUS
 send_coex_ver_cfg_cmd_non_tlv(wmi_unified_t wmi_handle, coex_ver_cfg_t *param)
 {
 	wmi_buf_t buf;
@@ -5479,7 +5479,7 @@ static QDF_STATUS extract_service_ready_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS extract_fw_version_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS extract_fw_version_non_tlv(wmi_unified_t wmi_handle,
 				void *evt_buf, struct wmi_host_fw_ver *fw_ver)
 {
 	wmi_service_ready_event *ev;
@@ -5500,7 +5500,7 @@ QDF_STATUS extract_fw_version_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS extract_fw_abi_version_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS extract_fw_abi_version_non_tlv(wmi_unified_t wmi_handle,
 			void *evt_buf, struct wmi_host_fw_abi_ver *fw_ver)
 {
 	wmi_ready_event *ev;
@@ -5915,7 +5915,7 @@ static QDF_STATUS extract_vdev_start_resp_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS extract_tbttoffset_update_params_non_tlv(void *wmi_hdl,
+static QDF_STATUS extract_tbttoffset_update_params_non_tlv(void *wmi_hdl,
 		void *evt_buf,
 		uint32_t *vdev_map, uint32_t **tbttoffset_list)
 {
@@ -6086,7 +6086,7 @@ static QDF_STATUS extract_vdev_scan_ev_param_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS extract_mu_ev_param_non_tlv(wmi_unified_t wmi_handle, void *evt_buf,
+static QDF_STATUS extract_mu_ev_param_non_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 		wmi_host_mu_report_event *param)
 {
 	wmi_mu_report_event *event = (wmi_mu_report_event *)evt_buf;
@@ -6110,7 +6110,7 @@ QDF_STATUS extract_mu_ev_param_non_tlv(wmi_unified_t wmi_handle, void *evt_buf,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS extract_mu_db_entry_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS extract_mu_db_entry_non_tlv(wmi_unified_t wmi_handle,
 		void *evt_buf, uint8_t idx,
 		wmi_host_mu_db_entry *db_entry)
 {
@@ -6134,7 +6134,7 @@ QDF_STATUS extract_mu_db_entry_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS extract_mumimo_tx_count_ev_param_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS extract_mumimo_tx_count_ev_param_non_tlv(wmi_unified_t wmi_handle,
 			void *evt_buf, wmi_host_peer_txmu_cnt_event *param)
 {
 	wmi_peer_txmu_cnt_event *event = (wmi_peer_txmu_cnt_event *)evt_buf;
@@ -6153,7 +6153,7 @@ QDF_STATUS extract_mumimo_tx_count_ev_param_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS extract_peer_gid_userpos_list_ev_param_non_tlv(
+static QDF_STATUS extract_peer_gid_userpos_list_ev_param_non_tlv(
 			wmi_unified_t wmi_handle,
 			void *evt_buf,
 			wmi_host_peer_gid_userpos_list_event *param)
@@ -6174,7 +6174,7 @@ QDF_STATUS extract_peer_gid_userpos_list_ev_param_non_tlv(
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS extract_pdev_caldata_version_check_ev_param_non_tlv(
+static QDF_STATUS extract_pdev_caldata_version_check_ev_param_non_tlv(
 			wmi_unified_t wmi_handle,
 			void *evt_buf,
 			wmi_host_pdev_check_cal_version_event *param)
@@ -6204,7 +6204,7 @@ QDF_STATUS extract_pdev_caldata_version_check_ev_param_non_tlv(
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS extract_pdev_tpc_config_ev_param_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS extract_pdev_tpc_config_ev_param_non_tlv(wmi_unified_t wmi_handle,
 		void *evt_buf,
 		wmi_host_pdev_tpc_config_event *param)
 {
@@ -6247,7 +6247,7 @@ QDF_STATUS extract_pdev_tpc_config_ev_param_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS extract_nfcal_power_ev_param_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS extract_nfcal_power_ev_param_non_tlv(wmi_unified_t wmi_handle,
 		void *evt_buf,
 		wmi_host_pdev_nfcal_power_all_channels_event *param)
 {
@@ -6269,7 +6269,7 @@ QDF_STATUS extract_nfcal_power_ev_param_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS extract_pdev_tpc_ev_param_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS extract_pdev_tpc_ev_param_non_tlv(wmi_unified_t wmi_handle,
 		void *evt_buf,
 		wmi_host_pdev_tpc_event *param)
 {
@@ -6289,7 +6289,7 @@ QDF_STATUS extract_pdev_tpc_ev_param_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS extract_pdev_generic_buffer_ev_param_non_tlv(
+static QDF_STATUS extract_pdev_generic_buffer_ev_param_non_tlv(
 		wmi_unified_t wmi_handle, void *evt_buf,
 		wmi_host_pdev_generic_buffer_event *param)
 {
@@ -6449,7 +6449,7 @@ static QDF_STATUS extract_swba_noa_info_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS extract_peer_sta_ps_statechange_ev_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS extract_peer_sta_ps_statechange_ev_non_tlv(wmi_unified_t wmi_handle,
 		void *evt_buf, wmi_host_peer_sta_ps_statechange_event *ev)
 {
 	wmi_peer_sta_ps_statechange_event *event =
@@ -6469,7 +6469,7 @@ QDF_STATUS extract_peer_sta_ps_statechange_ev_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS extract_peer_sta_kickout_ev_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS extract_peer_sta_kickout_ev_non_tlv(wmi_unified_t wmi_handle,
 		void *evt_buf,
 		wmi_host_peer_sta_kickout_event *ev)
 {
@@ -6494,7 +6494,7 @@ QDF_STATUS extract_peer_sta_kickout_ev_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS extract_peer_ratecode_list_ev_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS extract_peer_ratecode_list_ev_non_tlv(wmi_unified_t wmi_handle,
 		void *evt_buf,
 		uint8_t *peer_mac, wmi_sa_rate_cap *rate_cap)
 {
@@ -6597,7 +6597,7 @@ static QDF_STATUS extract_rtt_error_report_ev_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS extract_rtt_hdr_non_tlv(wmi_unified_t wmi_handle, void *evt_buf,
+static QDF_STATUS extract_rtt_hdr_non_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 		wmi_host_rtt_event_hdr *ev)
 {
 	wmi_rtt_event_hdr *hdr = (wmi_rtt_event_hdr *) evt_buf;
@@ -6685,7 +6685,7 @@ static uint8_t *copy_rtt_report_cfr(wmi_host_rtt_meas_event *ev,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS extract_rtt_ev_non_tlv(wmi_unified_t wmi_handle, void *evt_buf,
+static QDF_STATUS extract_rtt_ev_non_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 		wmi_host_rtt_meas_event *ev, uint8_t *hdump, uint16_t h_len)
 {
 	wmi_rtt_meas_event *body = (wmi_rtt_meas_event *) evt_buf;
@@ -6750,7 +6750,7 @@ QDF_STATUS extract_rtt_ev_non_tlv(wmi_unified_t wmi_handle, void *evt_buf,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS extract_thermal_stats_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS extract_thermal_stats_non_tlv(wmi_unified_t wmi_handle,
 		void *evt_buf,
 		uint32_t *temp, uint32_t *level)
 {
@@ -6774,7 +6774,7 @@ QDF_STATUS extract_thermal_stats_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS extract_thermal_level_stats_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS extract_thermal_level_stats_non_tlv(wmi_unified_t wmi_handle,
 		void *evt_buf,
 		uint8_t idx, uint32_t *levelcount, uint32_t *dccount)
 {
@@ -6801,7 +6801,7 @@ QDF_STATUS extract_thermal_level_stats_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS extract_comb_phyerr_non_tlv(wmi_unified_t wmi_handle, void *evt_buf,
+static QDF_STATUS extract_comb_phyerr_non_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 		uint16_t datalen, uint16_t *buf_offset,
 		wmi_host_phyerr_t *phyerr)
 {
@@ -6861,7 +6861,7 @@ QDF_STATUS extract_comb_phyerr_non_tlv(wmi_unified_t wmi_handle, void *evt_buf,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS extract_single_phyerr_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS extract_single_phyerr_non_tlv(wmi_unified_t wmi_handle,
 		void *evt_buf,
 		uint16_t datalen, uint16_t *buf_offset,
 		wmi_host_phyerr_t *phyerr)
@@ -7115,7 +7115,7 @@ QDF_STATUS extract_single_phyerr_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-QDF_STATUS extract_composite_phyerr_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS extract_composite_phyerr_non_tlv(wmi_unified_t wmi_handle,
 		void *evt_buf,
 		uint16_t datalen, wmi_host_phyerr_t *phyerr)
 {
