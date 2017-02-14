@@ -5403,18 +5403,13 @@ typedef enum {
  * data offload/filtering is enabled during cfg80211 suspend and disabled
  * during cfg80211 resume
  *
- * Active mode offload feature is bydefault enabled for adrastea and disabled
- * for non adrastea targets like ROME
+ * Active mode offload feature is bydefault enabled for all targets
  */
 
 #define CFG_ACTIVE_MODE_OFFLOAD            "gActiveModeOffload"
 #define CFG_ACTIVE_MODE_OFFLOAD_MIN        (0)
 #define CFG_ACTIVE_MODE_OFFLOAD_MAX        (1)
-#ifdef QCA_WIFI_3_0_ADRASTEA
 #define CFG_ACTIVE_MODE_OFFLOAD_DEFAULT    (1)
-#else
-#define CFG_ACTIVE_MODE_OFFLOAD_DEFAULT    (0)
-#endif
 
 /*
  * 0: Disable BPF packet filter
