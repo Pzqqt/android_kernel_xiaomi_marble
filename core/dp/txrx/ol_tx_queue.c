@@ -111,13 +111,7 @@ ol_tx_queue_vdev_flush(struct ol_txrx_pdev_t *pdev, struct ol_txrx_vdev_t *vdev)
 			for (i = 0; i < OL_TX_NUM_TIDS; i++) {
 				txq = &peer->txqs[i];
 				if (txq->frms) {
-					qdf_atomic_inc(&peer->ref_cnt);
-					QDF_TRACE(QDF_MODULE_ID_TXRX,
-						 QDF_TRACE_LEVEL_INFO_HIGH,
-						 "%s: peer %p peer->ref_cnt %d",
-						  __func__, peer,
-						  qdf_atomic_read
-							(&peer->ref_cnt));
+					OL_TXRX_PEER_INC_REF_CNT(peer);
 					peers[peer_count++] = peer;
 					break;
 				}
@@ -135,7 +129,7 @@ ol_tx_queue_vdev_flush(struct ol_txrx_pdev_t *pdev, struct ol_txrx_vdev_t *vdev)
 			}
 			ol_txrx_info(
 				   "%s: Delete Peer %p\n", __func__, peer);
-			ol_txrx_peer_unref_delete(peers[i]);
+			OL_TXRX_PEER_UNREF_DELETE(peers[i]);
 		}
 	} while (peer_count >= PEER_ARRAY_COUNT);
 }

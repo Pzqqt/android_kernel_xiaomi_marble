@@ -36,6 +36,17 @@
 #include <cdp_txrx_cmn.h>       /* ol_txrx_pdev_t, etc. */
 #include <ol_txrx_internal.h>   /* TXRX_ASSERT */
 
+
+#define OL_TXRX_PEER_INC_REF_CNT(peer) \
+	__ol_txrx_peer_change_ref_cnt(peer, 1, __func__, __LINE__);
+
+#define OL_TXRX_PEER_DEC_REF_CNT(peer) \
+	__ol_txrx_peer_change_ref_cnt(peer, (-1), __func__, __LINE__);
+
+void __ol_txrx_peer_change_ref_cnt(struct ol_txrx_peer_t *peer,
+						int change,
+						const char *fname,
+						int line);
 int ol_txrx_peer_find_attach(struct ol_txrx_pdev_t *pdev);
 
 void ol_txrx_peer_find_detach(struct ol_txrx_pdev_t *pdev);
@@ -107,10 +118,8 @@ ol_txrx_peer_find_hash_remove(struct ol_txrx_pdev_t *pdev,
 void ol_txrx_peer_find_hash_erase(struct ol_txrx_pdev_t *pdev);
 
 struct ol_txrx_peer_t *ol_txrx_assoc_peer_find(struct ol_txrx_vdev_t *vdev);
-
 void ol_txrx_peer_remove_obj_map_entries(ol_txrx_pdev_handle pdev,
 					struct ol_txrx_peer_t *peer);
-
 #if defined(TXRX_DEBUG_LEVEL) && TXRX_DEBUG_LEVEL > 5
 void ol_txrx_peer_find_display(ol_txrx_pdev_handle pdev, int indent);
 #else

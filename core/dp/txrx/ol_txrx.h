@@ -39,8 +39,13 @@
  * only for forwarding path.
  */
 #define OL_TX_NON_FWD_RESERVE	100
+#define OL_TXRX_PEER_UNREF_DELETE(peer) \
+	ol_txrx_peer_unref_delete(peer, __func__, __LINE__);
 
-int ol_txrx_peer_unref_delete(struct ol_txrx_peer_t *peer);
+int ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer,
+					      const char *fname,
+					      int line);
+
 
 /**
  * ol_tx_desc_pool_size_hl() - allocate tx descriptor pool size for HL systems
