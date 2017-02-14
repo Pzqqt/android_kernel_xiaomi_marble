@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -711,9 +711,8 @@ NOT_IP_TCP:
 		}                                                             \
 	} while (0)
 
-#define TXRX_STATS_TSO_RESET_MSDU(pdev) \
+#define TXRX_STATS_TSO_RESET_MSDU(pdev, idx) \
 	do { \
-		int idx = TXRX_STATS_TSO_MSDU_IDX(pdev);\
 		pdev->stats.pub.tx.tso.tso_info.tso_msdu_info[idx].num_seg = 0; \
 		pdev->stats.pub.tx.tso.tso_info.tso_msdu_info[idx].tso_seg_idx = 0; \
 	} while (0)
@@ -736,75 +735,69 @@ NOT_IP_TCP:
 #define TXRX_STATS_TSO_MSDU_NR_FRAGS(pdev, idx) \
 	pdev->stats.pub.tx.tso.tso_info.tso_msdu_info[idx].nr_frags
 
-#define TXRX_STATS_TSO_CURR_MSDU(pdev) \
-	TXRX_STATS_TSO_MSDU(pdev, TXRX_STATS_TSO_MSDU_IDX(pdev))
+#define TXRX_STATS_TSO_CURR_MSDU(pdev, idx) \
+	TXRX_STATS_TSO_MSDU(pdev, idx)
 
-#define TXRX_STATS_TSO_INC_MSDU_IDX(pdev) \
+#define TXRX_STATS_TSO_SEG_IDX(pdev, idx) \
+	TXRX_STATS_TSO_CURR_MSDU(pdev, idx).tso_seg_idx
+
+#define TXRX_STATS_TSO_INC_SEG(pdev, idx) \
 	do { \
-		TXRX_STATS_TSO_MSDU_IDX(pdev)++; \
-		TXRX_STATS_TSO_MSDU_IDX(pdev) &= NUM_MAX_TSO_MSDUS_MASK; \
-	} while (0)
-
-#define TXRX_STATS_TSO_SEG_IDX(pdev) \
-	TXRX_STATS_TSO_CURR_MSDU(pdev).tso_seg_idx
-
-#define TXRX_STATS_TSO_INC_SEG(pdev) \
-	do { \
-		TXRX_STATS_TSO_CURR_MSDU(pdev).num_seg++; \
-		TXRX_STATS_TSO_CURR_MSDU(pdev).num_seg &= \
+		TXRX_STATS_TSO_CURR_MSDU(pdev, idx).num_seg++; \
+		TXRX_STATS_TSO_CURR_MSDU(pdev, idx).num_seg &= \
 					 NUM_MAX_TSO_SEGS_MASK; \
 	} while (0)
 
-#define TXRX_STATS_TSO_RST_SEG(pdev) \
-	TXRX_STATS_TSO_CURR_MSDU(pdev).num_seg = 0
+#define TXRX_STATS_TSO_RST_SEG(pdev, idx) \
+	TXRX_STATS_TSO_CURR_MSDU(pdev, idx).num_seg = 0
 
-#define TXRX_STATS_TSO_RST_SEG_IDX(pdev) \
-	TXRX_STATS_TSO_CURR_MSDU(pdev).tso_seg_idx = 0
+#define TXRX_STATS_TSO_RST_SEG_IDX(pdev, idx) \
+	TXRX_STATS_TSO_CURR_MSDU(pdev, idx).tso_seg_idx = 0
 
 #define TXRX_STATS_TSO_SEG(pdev, msdu_idx, seg_idx) \
 	TXRX_STATS_TSO_MSDU(pdev, msdu_idx).tso_segs[seg_idx]
 
-#define TXRX_STATS_TSO_CURR_SEG(pdev) \
-	TXRX_STATS_TSO_SEG(pdev, TXRX_STATS_TSO_MSDU_IDX(pdev), \
-	 TXRX_STATS_TSO_SEG_IDX(pdev)) \
+#define TXRX_STATS_TSO_CURR_SEG(pdev, idx) \
+	TXRX_STATS_TSO_SEG(pdev, idx, \
+	 TXRX_STATS_TSO_SEG_IDX(pdev, idx)) \
 
-#define TXRX_STATS_TSO_INC_SEG_IDX(pdev) \
+#define TXRX_STATS_TSO_INC_SEG_IDX(pdev, idx) \
 	do { \
-		TXRX_STATS_TSO_SEG_IDX(pdev)++; \
-		TXRX_STATS_TSO_SEG_IDX(pdev) &= NUM_MAX_TSO_SEGS_MASK; \
+		TXRX_STATS_TSO_SEG_IDX(pdev, idx)++; \
+		TXRX_STATS_TSO_SEG_IDX(pdev, idx) &= NUM_MAX_TSO_SEGS_MASK; \
 	} while (0)
 
-#define TXRX_STATS_TSO_SEG_UPDATE(pdev, tso_seg) \
-	(TXRX_STATS_TSO_CURR_SEG(pdev) = tso_seg)
+#define TXRX_STATS_TSO_SEG_UPDATE(pdev, idx, tso_seg) \
+	(TXRX_STATS_TSO_CURR_SEG(pdev, idx) = tso_seg)
 
-#define TXRX_STATS_TSO_GSO_SIZE_UPDATE(pdev, size) \
-	(TXRX_STATS_TSO_CURR_MSDU(pdev).gso_size = size)
+#define TXRX_STATS_TSO_GSO_SIZE_UPDATE(pdev, idx, size) \
+	(TXRX_STATS_TSO_CURR_MSDU(pdev, idx).gso_size = size)
 
-#define TXRX_STATS_TSO_TOTAL_LEN_UPDATE(pdev, len) \
-	(TXRX_STATS_TSO_CURR_MSDU(pdev).total_len = len)
+#define TXRX_STATS_TSO_TOTAL_LEN_UPDATE(pdev, idx, len) \
+	(TXRX_STATS_TSO_CURR_MSDU(pdev, idx).total_len = len)
 
-#define TXRX_STATS_TSO_NUM_FRAGS_UPDATE(pdev, frags) \
-	(TXRX_STATS_TSO_CURR_MSDU(pdev).nr_frags = frags)
+#define TXRX_STATS_TSO_NUM_FRAGS_UPDATE(pdev, idx, frags) \
+	(TXRX_STATS_TSO_CURR_MSDU(pdev, idx).nr_frags = frags)
 
 #else
 #define TXRX_STATS_TSO_HISTOGRAM(_pdev, _p_cntrs)  /* no-op */
-#define TXRX_STATS_TSO_RESET_MSDU(pdev) /* no-op */
+#define TXRX_STATS_TSO_RESET_MSDU(pdev, idx) /* no-op */
 #define TXRX_STATS_TSO_MSDU_IDX(pdev) /* no-op */
 #define TXRX_STATS_TSO_MSDU(pdev, idx) /* no-op */
 #define TXRX_STATS_TSO_MSDU_NUM_SEG(pdev, idx) /* no-op */
-#define TXRX_STATS_TSO_CURR_MSDU(pdev) /* no-op */
+#define TXRX_STATS_TSO_CURR_MSDU(pdev, idx) /* no-op */
 #define TXRX_STATS_TSO_INC_MSDU_IDX(pdev) /* no-op */
-#define TXRX_STATS_TSO_SEG_IDX(pdev) /* no-op */
+#define TXRX_STATS_TSO_SEG_IDX(pdev, idx) /* no-op */
 #define TXRX_STATS_TSO_SEG(pdev, msdu_idx, seg_idx) /* no-op */
-#define TXRX_STATS_TSO_CURR_SEG(pdev) /* no-op */
-#define TXRX_STATS_TSO_INC_SEG_IDX(pdev) /* no-op */
-#define TXRX_STATS_TSO_SEG_UPDATE(pdev, tso_seg) /* no-op */
-#define TXRX_STATS_TSO_INC_SEG(pdev) /* no-op */
-#define TXRX_STATS_TSO_RST_SEG(pdev) /* no-op */
-#define TXRX_STATS_TSO_RST_SEG_IDX(pdev) /* no-op */
-#define TXRX_STATS_TSO_GSO_SIZE_UPDATE(pdev, size) /* no-op */
-#define TXRX_STATS_TSO_TOTAL_LEN_UPDATE(pdev, len) /* no-op */
-#define TXRX_STATS_TSO_NUM_FRAGS_UPDATE(pdev, frags) /* no-op */
+#define TXRX_STATS_TSO_CURR_SEG(pdev, idx) /* no-op */
+#define TXRX_STATS_TSO_INC_SEG_IDX(pdev, idx) /* no-op */
+#define TXRX_STATS_TSO_SEG_UPDATE(pdev, idx, tso_seg) /* no-op */
+#define TXRX_STATS_TSO_INC_SEG(pdev, idx) /* no-op */
+#define TXRX_STATS_TSO_RST_SEG(pdev, idx) /* no-op */
+#define TXRX_STATS_TSO_RST_SEG_IDX(pdev, idx) /* no-op */
+#define TXRX_STATS_TSO_GSO_SIZE_UPDATE(pdev, idx, size) /* no-op */
+#define TXRX_STATS_TSO_TOTAL_LEN_UPDATE(pdev, idx, len) /* no-op */
+#define TXRX_STATS_TSO_NUM_FRAGS_UPDATE(pdev, idx, frags) /* no-op */
 #define TXRX_STATS_TSO_MSDU_GSO_SIZE(pdev, idx) /* no-op */
 #define TXRX_STATS_TSO_MSDU_TOTAL_LEN(pdev, idx) /* no-op */
 #define TXRX_STATS_TSO_MSDU_NR_FRAGS(pdev, idx) /* no-op */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -108,6 +108,7 @@ struct ol_txrx_stats_tx_tso {
 #if defined(FEATURE_TSO)
 	struct ol_txrx_stats_tso_info tso_info;
 	struct ol_txrx_tso_histogram tso_hist;
+	qdf_spinlock_t tso_stats_lock;
 #endif
 };
 
