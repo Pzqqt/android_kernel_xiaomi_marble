@@ -25,13 +25,18 @@
 #include "qdf_nbuf.h"
 #include "../../wlan_cfg/wlan_cfg.h"
 
-#ifdef TX_PER_VDEV_DESC_POOL
-#define DP_TX_GET_DESC_POOL_ID(vdev) (vdev->vdev_id)
-#define DP_TX_GET_RING_ID(vdev) (vdev->pdev->pdev_id)
+#ifdef TX_PER_PDEV_DESC_POOL
+	#define DP_TX_GET_DESC_POOL_ID(vdev) (vdev->pdev->pdev_id)
+	#define DP_TX_GET_RING_ID(vdev) (vdev->pdev->pdev_id)
 #else
-#define DP_TX_GET_DESC_POOL_ID(vdev) qdf_get_cpu()
-#define DP_TX_GET_RING_ID(vdev) qdf_get_cpu()
-#endif /* TX_CORE_ALIGNED_SEND */
+	#ifdef TX_PER_VDEV_DESC_POOL
+		#define DP_TX_GET_DESC_POOL_ID(vdev) (vdev->vdev_id)
+		#define DP_TX_GET_RING_ID(vdev) (vdev->pdev->pdev_id)
+	#else
+		#define DP_TX_GET_DESC_POOL_ID(vdev) qdf_get_cpu()
+		#define DP_TX_GET_RING_ID(vdev) qdf_get_cpu()
+	#endif /* TX_PER_VDEV_DESC_POOL */
+#endif /* TX_PER_PDEV_DESC_POOL */
 
 /* TODO Add support in TSO */
 #define DP_DESC_NUM_FRAG(x) 0
