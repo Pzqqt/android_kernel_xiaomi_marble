@@ -6705,7 +6705,8 @@ QDF_STATUS lim_send_ext_cap_ie(tpAniSirGlobal mac_ctx,
 tSirRetStatus lim_strip_ie(tpAniSirGlobal mac_ctx,
 		uint8_t *addn_ie, uint16_t *addn_ielen,
 		uint8_t eid, eSizeOfLenField size_of_len_field,
-		uint8_t *oui, uint8_t oui_length, uint8_t *extracted_ie)
+		uint8_t *oui, uint8_t oui_length, uint8_t *extracted_ie,
+		uint32_t eid_max_len)
 {
 	uint8_t *tempbuf = NULL;
 	uint16_t templen = 0;
@@ -6757,12 +6758,11 @@ tSirRetStatus lim_strip_ie(tpAniSirGlobal mac_ctx,
 			 */
 			if (NULL != extracted_ie) {
 				qdf_mem_set(extracted_ie,
-					DOT11F_IE_EXTCAP_MAX_LEN +
-						size_of_len_field + 1, 0);
-				if (elem_len <= DOT11F_IE_EXTCAP_MAX_LEN)
+					    eid_max_len + size_of_len_field + 1,
+					    0);
+				if (elem_len <= eid_max_len)
 					qdf_mem_copy(extracted_ie, &ptr[0],
-						elem_len +
-						size_of_len_field + 1);
+					elem_len + size_of_len_field + 1);
 			}
 		}
 		left -= elem_len;
@@ -6772,6 +6772,44 @@ tSirRetStatus lim_strip_ie(tpAniSirGlobal mac_ctx,
 
 	*addn_ielen = templen;
 	qdf_mem_free(tempbuf);
+
+	return eSIR_SUCCESS;
+}
+
+tSirRetStatus lim_strip_supp_op_class_update_struct(tpAniSirGlobal mac_ctx,
+		uint8_t *addn_ie, uint16_t *addn_ielen,
+		tDot11fIESuppOperatingClasses *dst)
+{
+	uint8_t extracted_buff[DOT11F_IE_SUPPOPERATINGCLASSES_MAX_LEN + 2];
+	tSirRetStatus status;
+
+	qdf_mem_set((uint8_t *)&extracted_buff[0],
+		    DOT11F_IE_SUPPOPERATINGCLASSES_MAX_LEN + 2,
+		    0);
+	status = lim_strip_ie(mac_ctx, addn_ie, addn_ielen,
+			      DOT11F_EID_SUPPOPERATINGCLASSES, ONE_BYTE,
+			      NULL, 0, extracted_buff,
+			      DOT11F_IE_SUPPOPERATINGCLASSES_MAX_LEN);
+	if (eSIR_SUCCESS != status) {
+		lim_log(mac_ctx, LOG1,
+		       FL("Failed to strip supp_op_mode IE status = (%d)."),
+		       status);
+		return status;
+	}
+
+	if (DOT11F_EID_SUPPOPERATINGCLASSES != extracted_buff[0] ||
+	    extracted_buff[1] > DOT11F_IE_SUPPOPERATINGCLASSES_MAX_LEN) {
+		lim_log(mac_ctx, LOG1, FL("Invalid IEs eid = %d elem_len=%d "),
+			extracted_buff[0], extracted_buff[1]);
+		return eSIR_FAILURE;
+	}
+
+	/* update the extracted supp op class to struct*/
+	if (DOT11F_PARSE_SUCCESS != dot11f_unpack_ie_supp_operating_classes(
+	    mac_ctx, &extracted_buff[2], extracted_buff[1], dst)) {
+		lim_log(mac_ctx, LOGE, FL("dot11f_unpack Parse Error "));
+		return eSIR_FAILURE;
+	}
 
 	return eSIR_SUCCESS;
 }
@@ -6839,7 +6877,8 @@ tSirRetStatus lim_strip_extcap_update_struct(tpAniSirGlobal mac_ctx,
 		     0);
 	status = lim_strip_ie(mac_ctx, addn_ie, addn_ielen,
 			      DOT11F_EID_EXTCAP, ONE_BYTE,
-			      NULL, 0, extracted_buff);
+			      NULL, 0, extracted_buff,
+			      DOT11F_IE_EXTCAP_MAX_LEN);
 	if (eSIR_SUCCESS != status) {
 		lim_log(mac_ctx, LOG1,
 		       FL("Failed to strip extcap IE status = (%d)."), status);

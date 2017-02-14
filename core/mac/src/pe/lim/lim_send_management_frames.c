@@ -1942,6 +1942,11 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 		}
 	}
 
+	if (eSIR_SUCCESS != lim_strip_supp_op_class_update_struct(mac_ctx,
+			add_ie, &add_ie_len, &frm->SuppOperatingClasses))
+		lim_log(mac_ctx, LOG1,
+		FL("Unable to Stripoff supp op classes IE from Assoc Req"));
+
 	status = dot11f_get_packed_assoc_request_size(mac_ctx, frm, &payload);
 	if (DOT11F_FAILED(status)) {
 		lim_log(mac_ctx, LOGP,
