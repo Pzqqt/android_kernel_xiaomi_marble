@@ -2418,7 +2418,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *cds_context,
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 				WMI_DEBUG_MESG_FLUSH_COMPLETE_EVENTID,
 				wma_flush_complete_evt_handler,
-				WMA_RX_SERIALIZER_CTX);
+				WMA_RX_WORK_CTX);
 
 	wma_ndp_register_all_event_handlers(wma_handle);
 	wma_target_if_open(wma_handle);
