@@ -820,7 +820,10 @@ static int32_t wma_set_priv_cfg(tp_wma_handle wma_handle,
 	{
 		void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 		struct cdp_pdev *pdev;
-		uint64_t quota_bytes = privcmd->param_value;
+		uint64_t quota_bytes = privcmd->param_sec_value;
+
+		quota_bytes <<= 32;
+		quota_bytes |= privcmd->param_value;
 
 		WMA_LOGE("%s: quota_bytes=%llu",
 			 "WMA_VDEV_TXRX_SET_IPA_UC_QUOTA_CMDID",

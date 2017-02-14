@@ -1881,10 +1881,12 @@ void hdd_ipa_uc_set_quota(hdd_adapter_t *adapter, uint8_t set_quota,
 	if ((HDD_IPA_UC_NUM_WDI_PIPE == hdd_ipa->activated_fw_pipe) &&
 		(false == hdd_ipa->resource_loading)) {
 		qdf_mutex_release(&hdd_ipa->ipa_lock);
-		wma_cli_set_command(
+		wma_cli_set2_command(
 			(int)adapter->sessionId,
 			(int)WMA_VDEV_TXRX_SET_IPA_UC_QUOTA_CMDID,
-			(set_quota ? quota_bytes : 0), VDEV_CMD);
+			(set_quota ? quota_bytes&0xffffffff : 0),
+			(set_quota ? quota_bytes>>32 : 0),
+			VDEV_CMD);
 	} else {
 		qdf_mutex_release(&hdd_ipa->ipa_lock);
 	}
