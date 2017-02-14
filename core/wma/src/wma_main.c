@@ -1880,6 +1880,73 @@ static struct wlan_objmgr_psoc *wma_get_psoc_from_scn_handle(void *scn_handle)
 }
 
 /**
+ * wma_flush_complete_evt_handler() - FW log flush complete event handler
+ * @handle: WMI handle
+ * @event:  Event recevied from FW
+ * @len:    Length of the event
+ *
+ */
+static int wma_flush_complete_evt_handler(void *handle,
+		u_int8_t *event,
+		u_int32_t len)
+{
+	QDF_STATUS status;
+	tp_wma_handle wma = (tp_wma_handle) handle;
+
+	WMI_DEBUG_MESG_FLUSH_COMPLETE_EVENTID_param_tlvs *param_buf;
+	wmi_debug_mesg_flush_complete_fixed_param *wmi_event;
+	uint32_t reason_code;
+
+	param_buf = (WMI_DEBUG_MESG_FLUSH_COMPLETE_EVENTID_param_tlvs *) event;
+	if (!param_buf) {
+		WMA_LOGE("Invalid log flush complete event buffer");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	wmi_event = param_buf->fixed_param;
+	reason_code = wmi_event->reserved0;
+
+	/*
+	 * reason_code = 0; Flush event in response to flush command
+	 * reason_code = other value; Asynchronous flush event for fatal events
+	 */
+	if (!reason_code && (cds_is_log_report_in_progress() == false)) {
+		WMA_LOGE("Received WMI flush event without sending CMD");
+		return -EINVAL;
+	} else if (!reason_code && cds_is_log_report_in_progress() == true) {
+		/* Flush event in response to flush command */
+		WMA_LOGI("Received WMI flush event in response to flush CMD");
+		status = qdf_mc_timer_stop(&wma->log_completion_timer);
+		if (status != QDF_STATUS_SUCCESS)
+			WMA_LOGE("Failed to stop the log completion timeout");
+		cds_logging_set_fw_flush_complete();
+	} else if (reason_code && cds_is_log_report_in_progress() == false) {
+		/* Asynchronous flush event for fatal events */
+		WMA_LOGE("Received asynchronous WMI flush event: reason=%d",
+				reason_code);
+		status = cds_set_log_completion(WLAN_LOG_TYPE_FATAL,
+				WLAN_LOG_INDICATOR_FIRMWARE,
+				reason_code, false);
+		if (QDF_STATUS_SUCCESS != status) {
+			WMA_LOGE("%s: Failed to set log trigger params",
+					__func__);
+			return QDF_STATUS_E_FAILURE;
+		}
+		cds_logging_set_fw_flush_complete();
+		return status;
+	} else {
+		/* Asynchronous flush event for fatal event,
+		 * but, report in progress already
+		 */
+		WMA_LOGI("%s: Bug report already in progress - dropping! type:%d, indicator=%d reason_code=%d",
+				__func__, WLAN_LOG_TYPE_FATAL,
+				WLAN_LOG_INDICATOR_FIRMWARE, reason_code);
+		return QDF_STATUS_E_FAILURE;
+	}
+	return 0;
+}
+
+/**
  * wma_open() - Allocate wma context and initialize it.
  * @psoc: Psoc pointer
  * @cds_context:  cds context
@@ -2348,6 +2415,11 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *cds_context,
 					   WMI_CHAN_INFO_EVENTID,
 					   wma_chan_info_event_handler,
 					   WMA_RX_SERIALIZER_CTX);
+	wmi_unified_register_event_handler(wma_handle->wmi_handle,
+				WMI_DEBUG_MESG_FLUSH_COMPLETE_EVENTID,
+				wma_flush_complete_evt_handler,
+				WMA_RX_SERIALIZER_CTX);
+
 	wma_ndp_register_all_event_handlers(wma_handle);
 	wma_target_if_open(wma_handle);
 	target_if_open(wma_get_psoc_from_scn_handle);
@@ -2515,73 +2587,6 @@ static int wma_log_supported_evt_handler(void *handle,
 				event, len))
 		return -EINVAL;
 
-	return 0;
-}
-
-/**
- * wma_flush_complete_evt_handler() - FW log flush complete event handler
- * @handle: WMI handle
- * @event:  Event recevied from FW
- * @len:    Length of the event
- *
- */
-static int wma_flush_complete_evt_handler(void *handle,
-		u_int8_t *event,
-		u_int32_t len)
-{
-	QDF_STATUS status;
-	tp_wma_handle wma = (tp_wma_handle) handle;
-
-	WMI_DEBUG_MESG_FLUSH_COMPLETE_EVENTID_param_tlvs *param_buf;
-	wmi_debug_mesg_flush_complete_fixed_param *wmi_event;
-	uint32_t reason_code;
-
-	param_buf = (WMI_DEBUG_MESG_FLUSH_COMPLETE_EVENTID_param_tlvs *) event;
-	if (!param_buf) {
-		WMA_LOGE("Invalid log flush complete event buffer");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	wmi_event = param_buf->fixed_param;
-	reason_code = wmi_event->reserved0;
-
-	/*
-	 * reason_code = 0; Flush event in response to flush command
-	 * reason_code = other value; Asynchronous flush event for fatal events
-	 */
-	if (!reason_code && (cds_is_log_report_in_progress() == false)) {
-		WMA_LOGE("Received WMI flush event without sending CMD");
-		return -EINVAL;
-	} else if (!reason_code && cds_is_log_report_in_progress() == true) {
-		/* Flush event in response to flush command */
-		WMA_LOGI("Received WMI flush event in response to flush CMD");
-		status = qdf_mc_timer_stop(&wma->log_completion_timer);
-		if (status != QDF_STATUS_SUCCESS)
-			WMA_LOGE("Failed to stop the log completion timeout");
-		cds_logging_set_fw_flush_complete();
-	} else if (reason_code && cds_is_log_report_in_progress() == false) {
-		/* Asynchronous flush event for fatal events */
-		WMA_LOGE("Received asynchronous WMI flush event: reason=%d",
-				reason_code);
-		status = cds_set_log_completion(WLAN_LOG_TYPE_FATAL,
-				WLAN_LOG_INDICATOR_FIRMWARE,
-				reason_code, false);
-		if (QDF_STATUS_SUCCESS != status) {
-			WMA_LOGE("%s: Failed to set log trigger params",
-					__func__);
-			return QDF_STATUS_E_FAILURE;
-		}
-		cds_logging_set_fw_flush_complete();
-		return status;
-	} else {
-		/* Asynchronous flush event for fatal event,
-		 * but, report in progress already
-		 */
-		WMA_LOGI("%s: Bug report already in progress - dropping! type:%d, indicator=%d reason_code=%d",
-				__func__, WLAN_LOG_TYPE_FATAL,
-				WLAN_LOG_INDICATOR_FIRMWARE, reason_code);
-		return QDF_STATUS_E_FAILURE;
-	}
 	return 0;
 }
 
@@ -3104,17 +3109,6 @@ QDF_STATUS wma_start(void *cds_ctx)
 						WMA_RX_SERIALIZER_CTX);
 	if (0 != status) {
 		WMA_LOGP("%s: Failed to register tsf callback", __func__);
-		qdf_status = QDF_STATUS_E_FAILURE;
-		goto end;
-	}
-
-	/* Initialize the log flush complete event handler */
-	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-			WMI_DEBUG_MESG_FLUSH_COMPLETE_EVENTID,
-			wma_flush_complete_evt_handler,
-			WMA_RX_SERIALIZER_CTX);
-	if (status != QDF_STATUS_SUCCESS) {
-		WMA_LOGE("Failed to register log flush complete event cb");
 		qdf_status = QDF_STATUS_E_FAILURE;
 		goto end;
 	}
