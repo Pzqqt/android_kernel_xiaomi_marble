@@ -8795,11 +8795,9 @@ int hdd_configure_cds(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 	 * IPA module before configuring them to FW. Sequence required as crash
 	 * observed otherwise.
 	 */
-	if (hdd_ipa_uc_is_enabled(hdd_ctx)) {
-		if (hdd_ipa_uc_ol_init(hdd_ctx)) {
-			hdd_err("Failed to setup pipes");
-			goto out;
-		}
+	if (hdd_ipa_uc_ol_init(hdd_ctx)) {
+		hdd_err("Failed to setup pipes");
+		goto out;
 	}
 
 	/*
