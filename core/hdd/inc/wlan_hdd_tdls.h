@@ -51,6 +51,16 @@ typedef enum {
 	eTDLS_SUPPORT_EXTERNAL_CONTROL,
 } eTDLSSupportMode;
 
+/**
+ * enum tdls_concerned_external_events - External events that affect TDLS
+ * @P2P_ROC_START: P2P remain on channel starts
+ * @P2P_ROC_END: P2P remain on channel ends
+ */
+enum tdls_concerned_external_events {
+	P2P_ROC_START,
+	P2P_ROC_END,
+};
+
 #ifdef FEATURE_WLAN_TDLS
 
 /*
@@ -754,8 +764,22 @@ void wlan_hdd_tdls_notify_connect(hdd_adapter_t *adapter,
  */
 void wlan_hdd_tdls_notify_disconnect(hdd_adapter_t *adapter, bool lfr_roam);
 void wlan_hdd_change_tdls_mode(void *hdd_ctx);
-void hdd_restart_tdls_source_timer(hdd_context_t *pHddCtx,
-				      eTDLSSupportMode tdls_mode);
+
+/**
+ * hdd_tdls_notify_p2p_roc() - Notify p2p roc event to TDLS
+ * @hdd_ctx: ptr to hdd context.
+ * @event: P2P roc event that affect TDLS
+ *
+ * P2P roc events notified to TDLS to avoid overlap between P2P listen
+ * and TDLS operation.
+ * Based on P2P remain on channel event, TDLS mode will be
+ * updated and TDLS source timer started with timer period
+ * equivalent to P2P ROC interval to revert the TDLS mode.
+ *
+ * Return: None
+ */
+void hdd_tdls_notify_p2p_roc(hdd_context_t *hdd_ctx,
+			    enum tdls_concerned_external_events event);
 
 /**
  * wlan_hdd_cfg80211_configure_tdls_mode() - configure tdls mode
@@ -826,8 +850,8 @@ static inline void wlan_hdd_change_tdls_mode(void *hdd_ctx)
 {
 }
 static inline void
-hdd_restart_tdls_source_timer(hdd_context_t *pHddCtx,
-			      eTDLSSupportMode tdls_mode)
+hdd_tdls_notify_p2p_roc(hdd_context_t *hdd_ctx,
+			enum tdls_concerned_external_events event)
 {
 }
 #endif /* End of FEATURE_WLAN_TDLS */

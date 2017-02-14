@@ -535,7 +535,7 @@ static void wlan_hdd_remain_on_chan_timeout(void *data)
 			roc_scan_id);
 	}
 
-	hdd_restart_tdls_source_timer(hdd_ctx, hdd_ctx->tdls_mode_last);
+	hdd_tdls_notify_p2p_roc(hdd_ctx, P2P_ROC_END);
 	qdf_runtime_pm_allow_suspend(hdd_ctx->runtime_context.roc);
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_ROC);
 }
@@ -697,7 +697,7 @@ static int wlan_hdd_execute_remain_on_channel(hdd_adapter_t *pAdapter,
 		}
 
 	}
-	hdd_restart_tdls_source_timer(pHddCtx, eTDLS_SUPPORT_DISABLED);
+	hdd_tdls_notify_p2p_roc(pHddCtx, P2P_ROC_START);
 	return 0;
 }
 
