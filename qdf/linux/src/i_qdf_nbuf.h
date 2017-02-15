@@ -1073,7 +1073,16 @@ void __qdf_nbuf_unmap_tso_segment(qdf_device_t osdev,
 			  struct qdf_tso_seg_elem_t *tso_seg,
 			  bool is_last_seg);
 
+#ifdef FEATURE_TSO
 uint32_t __qdf_nbuf_get_tso_num_seg(struct sk_buff *skb);
+
+#else
+static inline uint32_t __qdf_nbuf_get_tso_num_seg(struct sk_buff *skb)
+{
+	return 0;
+}
+
+#endif /* FEATURE_TSO */
 
 static inline bool __qdf_nbuf_is_tso(struct sk_buff *skb)
 {
