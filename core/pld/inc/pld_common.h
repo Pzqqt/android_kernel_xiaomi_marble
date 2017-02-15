@@ -31,6 +31,7 @@
 #include <linux/device.h>
 #include <linux/interrupt.h>
 #include <linux/pm.h>
+#include <osapi_linux.h>
 
 #define PLD_IMAGE_FILE               "athwlan.bin"
 #define PLD_UTF_FIRMWARE_FILE        "utf.bin"
@@ -70,7 +71,7 @@ enum pld_bus_width_type {
 	PLD_BUS_WIDTH_HIGH
 };
 
-#define PLD_MAX_FILE_NAME 20
+#define PLD_MAX_FILE_NAME NAME_MAX
 
 /**
  * struct pld_fw_file - WLAN FW file names

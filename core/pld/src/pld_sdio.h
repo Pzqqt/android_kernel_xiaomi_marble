@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -21,6 +21,14 @@
 
 #include "pld_common.h"
 
+#ifdef MULTI_IF_NAME
+#define PREFIX MULTI_IF_NAME "/"
+#else
+#define PREFIX ""
+#endif
+
+#define PLD_QCA9377_REV1_1_VERSION          0x5020001
+
 #ifndef CONFIG_CNSS
 #define PLD_AR6004_VERSION_REV1_3           0x31c8088a
 #define PLD_AR9888_REV2_VERSION             0x4100016c
@@ -31,13 +39,7 @@
 #define PLD_AR6320_REV3_VERSION             0x5020000
 #define PLD_AR6320_REV3_2_VERSION           0x5030000
 #define PLD_AR6320_DEV_VERSION              0x1000000
-#define PLD_QCA9377_REV1_1_VERSION          0x5020001
 
-#ifdef MULTI_IF_NAME
-#define PREFIX MULTI_IF_NAME
-#else
-#define PREFIX ""
-#endif
 
 struct pld_fw_files fw_files_qca6174_fw_1_1 = {
 	PREFIX "qwlan11.bin", PREFIX  "bdwlan11.bin", PREFIX "otp11.bin",

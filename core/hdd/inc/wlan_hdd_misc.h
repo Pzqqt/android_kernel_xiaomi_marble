@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014,2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2014,2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -32,7 +32,7 @@
  * to prevent name conflicts when loading multiple instances of the driver.
  */
 #ifdef MULTI_IF_NAME
-#define PREFIX MULTI_IF_NAME
+#define PREFIX MULTI_IF_NAME "/"
 #else
 #define PREFIX ""
 #endif
