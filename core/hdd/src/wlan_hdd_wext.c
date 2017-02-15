@@ -7949,8 +7949,8 @@ static int __iw_setint_getnone(struct net_device *dev,
 	switch (sub_cmd) {
 	case WE_SET_11D_STATE:
 	{
-		if ((ENABLE_11D == set_value)
-		    || (DISABLE_11D == set_value)) {
+		if (((ENABLE_11D == set_value)
+		    || (DISABLE_11D == set_value)) && hHal) {
 
 			sme_get_config_param(hHal, sme_config);
 			sme_config->csrConfig.Is11dSupportEnabled =
@@ -7970,6 +7970,9 @@ static int __iw_setint_getnone(struct net_device *dev,
 
 	case WE_WOWL:
 	{
+		if (!hHal)
+			return -EINVAL;
+
 		switch (set_value) {
 		case 0x00:
 			hdd_exit_wowl(pAdapter);
@@ -7995,6 +7998,9 @@ static int __iw_setint_getnone(struct net_device *dev,
 	}
 	case WE_SET_POWER:
 	{
+		if (!hHal)
+			return -EINVAL;
+
 		switch (set_value) {
 		case 1:
 			/* Enable PowerSave */
@@ -8023,6 +8029,9 @@ static int __iw_setint_getnone(struct net_device *dev,
 
 	case WE_SET_MAX_ASSOC:
 	{
+		if (!hHal)
+			return -EINVAL;
+
 		if ((WNI_CFG_ASSOC_STA_LIMIT_STAMIN > set_value) ||
 		    (WNI_CFG_ASSOC_STA_LIMIT_STAMAX < set_value)) {
 			ret = -EINVAL;
@@ -8044,6 +8053,9 @@ static int __iw_setint_getnone(struct net_device *dev,
 		break;
 
 	case WE_SET_DATA_INACTIVITY_TO:
+		if (!hHal)
+			return -EINVAL;
+
 		if ((set_value < CFG_DATA_INACTIVITY_TIMEOUT_MIN) ||
 		    (set_value > CFG_DATA_INACTIVITY_TIMEOUT_MAX) ||
 		    (sme_cfg_set_int((WLAN_HDD_GET_CTX(pAdapter))->hHal,
@@ -8070,12 +8082,18 @@ static int __iw_setint_getnone(struct net_device *dev,
 		break;
 	case WE_SET_MC_RATE:
 	{
+		if (!hHal)
+			return -EINVAL;
+
 		ret = wlan_hdd_set_mc_rate(pAdapter, set_value);
 		break;
 	}
 	case WE_SET_TX_POWER:
 	{
 		struct qdf_mac_addr bssid;
+
+		if (!hHal)
+			return -EINVAL;
 
 		qdf_copy_macaddr(&bssid, &pHddStaCtx->conn_info.bssId);
 		if (sme_set_tx_power
@@ -8093,6 +8111,8 @@ static int __iw_setint_getnone(struct net_device *dev,
 		struct qdf_mac_addr bssid;
 		struct qdf_mac_addr selfMac;
 
+		if (!hHal)
+			return -EINVAL;
 
 		hdd_debug("Setting maximum tx power %d dBm",
 		       set_value);
@@ -8154,7 +8174,10 @@ static int __iw_setint_getnone(struct net_device *dev,
 
 	case WE_SET_TM_LEVEL:
 	{
-		hdd_debug("Set Thermal Mitigation Level %d", set_value);
+		if (!hHal)
+			return -EINVAL;
+
+		hdd_notice("Set Thermal Mitigation Level %d", set_value);
 		(void)sme_set_thermal_level(hHal, set_value);
 		break;
 	}
@@ -8162,6 +8185,8 @@ static int __iw_setint_getnone(struct net_device *dev,
 	case WE_SET_PHYMODE:
 	{
 		struct hdd_context *phddctx = WLAN_HDD_GET_CTX(pAdapter);
+		if (!hHal)
+			return -EINVAL;
 
 		ret =
 			wlan_hdd_update_phymode(dev, hHal, set_value,
@@ -8171,7 +8196,10 @@ static int __iw_setint_getnone(struct net_device *dev,
 
 	case WE_SET_NSS:
 	{
-		hdd_debug("Set NSS = %d", set_value);
+		if (!hHal)
+			return -EINVAL;
+
+		hdd_notice("Set NSS = %d", set_value);
 		if ((set_value > 2) || (set_value <= 0)) {
 			hdd_err("NSS greater than 2 not supported");
 			ret = -EINVAL;
@@ -8260,30 +8288,37 @@ static int __iw_setint_getnone(struct net_device *dev,
 
 	case WE_SET_LDPC:
 	{
+		if (!hHal)
+			return -EINVAL;
+
 		ret = hdd_set_ldpc(pAdapter, set_value);
 		break;
 	}
 
 	case WE_SET_TX_STBC:
 	{
+		if (!hHal)
+			return -EINVAL;
+
 		ret = hdd_set_tx_stbc(pAdapter, set_value);
 		break;
 	}
 
 	case WE_SET_RX_STBC:
 	{
+		if (!hHal)
+			return -EINVAL;
+
 		ret = hdd_set_rx_stbc(pAdapter, set_value);
 		break;
 	}
 
 	case WE_SET_SHORT_GI:
 	{
-		hdd_debug("WMI_VDEV_PARAM_SGI val %d", set_value);
-		/*
-		 * wma_cli_set_command should be called instead of
-		 * sme_update_ht_config since SGI is used for HT/HE.
-		 * This should be refactored.
-		 */
+		if (!hHal)
+			return -EINVAL;
+
+		hdd_notice("WMI_VDEV_PARAM_SGI val %d", set_value);
 		ret = sme_update_ht_config(hHal, pAdapter->sessionId,
 					   WNI_CFG_HT_CAP_INFO_SHORT_GI_20MHZ,
 					   set_value);
@@ -8296,7 +8331,10 @@ static int __iw_setint_getnone(struct net_device *dev,
 	{
 		uint32_t value;
 
-		hdd_debug("WMI_VDEV_PARAM_ENABLE_RTSCTS val 0x%x",
+		if (!hHal)
+			return -EINVAL;
+
+		hdd_notice("WMI_VDEV_PARAM_ENABLE_RTSCTS val 0x%x",
 		       set_value);
 
 		if ((set_value & HDD_RTSCTS_EN_MASK) ==
@@ -8333,6 +8371,8 @@ static int __iw_setint_getnone(struct net_device *dev,
 	{
 		bool chwidth = false;
 		struct hdd_context *phddctx = WLAN_HDD_GET_CTX(pAdapter);
+		if (!hHal)
+			return -EINVAL;
 
 		/*updating channel bonding only on 5Ghz */
 		hdd_debug("WMI_VDEV_PARAM_CHWIDTH val %d",
@@ -8969,6 +9009,9 @@ static int __iw_setint_getnone(struct net_device *dev,
 	case WE_SET_DEBUG_LOG:
 	{
 		struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
+		if (!hHal)
+			return -EINVAL;
+
 
 		hdd_ctx->config->gEnableDebugLog = set_value;
 		sme_update_connect_debug(hdd_ctx->hHal, set_value);
@@ -9044,7 +9087,10 @@ static int __iw_setint_getnone(struct net_device *dev,
 	}
 	case WE_SET_SCAN_DISABLE:
 	{
-		hdd_debug("SET SCAN DISABLE %d", set_value);
+		if (!hHal)
+			return -EINVAL;
+
+		hdd_notice("SET SCAN DISABLE %d", set_value);
 		sme_set_scan_disable(WLAN_HDD_GET_HAL_CTX(pAdapter), set_value);
 		break;
 	}
@@ -9060,6 +9106,9 @@ static int __iw_setint_getnone(struct net_device *dev,
 	{
 		hdd_debug("Set Channel %d Session ID %d mode %d", set_value,
 				  pAdapter->sessionId, pAdapter->device_mode);
+		if (!hHal)
+			return -EINVAL;
+
 
 		if ((QDF_STA_MODE == pAdapter->device_mode) ||
 		   (QDF_P2P_CLIENT_MODE == pAdapter->device_mode)) {
