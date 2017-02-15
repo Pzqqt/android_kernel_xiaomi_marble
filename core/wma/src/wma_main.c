@@ -1922,8 +1922,6 @@ static int wma_flush_complete_evt_handler(void *handle,
 		cds_logging_set_fw_flush_complete();
 	} else if (reason_code && cds_is_log_report_in_progress() == false) {
 		/* Asynchronous flush event for fatal events */
-		WMA_LOGE("Received asynchronous WMI flush event: reason=%d",
-				reason_code);
 		status = cds_set_log_completion(WLAN_LOG_TYPE_FATAL,
 				WLAN_LOG_INDICATOR_FIRMWARE,
 				reason_code, false);
