@@ -12479,7 +12479,7 @@ static int wlan_hdd_set_mon_chan(hdd_adapter_t *adapter, uint32_t chan,
 	tHalHandle hal_hdl = hdd_ctx->hHal;
 	struct qdf_mac_addr bssid;
 	tCsrRoamProfile roam_profile;
-	struct ch_params_s ch_params;
+	struct ch_params ch_params;
 
 	if (QDF_GLOBAL_MONITOR_MODE != hdd_get_conparam()) {
 		hdd_err("Not supported, device is not in monitor mode");

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2002-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -172,7 +172,7 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 	   This is normally 2 but can be higher for W53.
 	 */
 
-	if ((dfs->dfsdomain == DFS_MKK_REGION) &&
+	if ((dfs->dfsdomain == DFS_MKK_REG) &&
 	    (dfs->dfs_caps.ath_chip_is_bb_tlv) &&
 	    (chan->ic_freq < FREQ_5500_MHZ)) {
 
@@ -446,8 +446,8 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 		 * so process the next pulse in the queue.
 		 */
 		if ((dfs->disable_dfs_ch_switch == false) &&
-			 (DFS_FCC_REGION == dfs->dfsdomain ||
-			  DFS_MKK_REGION == dfs->dfsdomain) &&
+			 (DFS_FCC_REG == dfs->dfsdomain ||
+			  DFS_MKK_REG == dfs->dfsdomain) &&
 			 (re.re_dur >= 11 && re.re_dur <= 20) &&
 			 (diff_ts > 500 || diff_ts <= 305) &&
 			 (re.sidx == -4)) {
@@ -468,8 +468,8 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 		 * following condition is reported in radar
 		 * summary report.
 		 */
-		if ((DFS_FCC_REGION == dfs->dfsdomain ||
-			DFS_MKK_REGION == dfs->dfsdomain) &&
+		if ((DFS_FCC_REG == dfs->dfsdomain ||
+			DFS_MKK_REG == dfs->dfsdomain) &&
 		    ((chan->ic_flags & IEEE80211_CHAN_VHT80) ==
 			IEEE80211_CHAN_VHT80) &&
 		    (chan->ic_pri_freq_center_freq_mhz_separation ==
@@ -502,7 +502,7 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 		 * and ETSI type 3 radar pulses when the following
 		 * condition is reported in radar summary report.
 		 */
-		if ((DFS_ETSI_REGION == dfs->dfsdomain) &&
+		if ((DFS_ETSI_REG == dfs->dfsdomain) &&
 		    ((chan->ic_flags & IEEE80211_CHAN_VHT80) ==
 			IEEE80211_CHAN_VHT80) &&
 		    (chan->ic_pri_freq_center_freq_mhz_separation ==
@@ -536,8 +536,8 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 
 		/* BIN5 pulses are FCC and Japan specific */
 
-		if ((dfs->dfsdomain == DFS_FCC_REGION)
-		    || (dfs->dfsdomain == DFS_MKK_REGION)) {
+		if ((dfs->dfsdomain == DFS_FCC_REG)
+		    || (dfs->dfsdomain == DFS_MKK_REG)) {
 			for (p = 0;
 			     (p < dfs->dfs_rinfo.rn_numbin5radars) && (!found);
 			     p++) {

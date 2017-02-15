@@ -9786,6 +9786,26 @@ enum l1ss_sleep_allowed {
 #define CFG_QCN_IE_SUPPORT_MAX      1
 #define CFG_QCN_IE_SUPPORT_DEFAULT  0
 
+/* enable_reg_offload - enable regulatory offload
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable or disable reg offload
+ *
+ * Related: None
+ *
+ * Supported Feature: reg offload
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_REG_OFFLOAD_NAME      "enable_reg_offload"
+#define CFG_ENABLE_REG_OFFLOAD_MIN       (0)
+#define CFG_ENABLE_REG_OFFLOAD_MAX       (1)
+#define CFG_ENABLE_REG_OFFLOAD_DEFAULT   (0)
+
 /*
  * Type declarations
  */
@@ -10504,6 +10524,7 @@ struct hdd_config {
 	uint32_t arp_ac_category;
 	bool ani_enabled;
 	bool qcn_ie_support;
+	bool reg_offload_enabled;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

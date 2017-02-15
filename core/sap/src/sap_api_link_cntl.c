@@ -245,7 +245,7 @@ void sap_config_acs_result(tHalHandle hal, ptSapContext sap_ctx,
 							uint32_t sec_ch)
 {
 	uint32_t channel = sap_ctx->acs_cfg->pri_ch;
-	struct ch_params_s ch_params = {0};
+	struct ch_params ch_params = {0};
 
 	ch_params.ch_width = sap_ctx->acs_cfg->ch_width;
 	cds_set_channel_params(channel, sec_ch, &ch_params);

@@ -33,16 +33,11 @@
 
 #include "qdf_types.h"
 #include "qdf_trace.h"
-#include "cds_reg_service.h"
-#include "cds_regdomain.h"
-#include "sme_api.h"
 #include "wlan_hdd_main.h"
 #include "wlan_hdd_regulatory.h"
-
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0)) || defined(WITH_BACKPORTS)
-#define IEEE80211_CHAN_PASSIVE_SCAN IEEE80211_CHAN_NO_IR
-#define IEEE80211_CHAN_NO_IBSS IEEE80211_CHAN_NO_IR
-#endif
+#include <wlan_reg_ucfg_api.h>
+#include <wlan_reg_services_api.h>
+#include "cds_reg_service.h"
 
 #define REG_RULE_2412_2462    REG_RULE(2412-10, 2462+10, 40, 0, 20, 0)
 
@@ -178,7 +173,6 @@ static bool hdd_is_world_regdomain(uint32_t reg_domain)
 		 WORLD_ROAMING_PREFIX);
 }
 
-
 /**
  * hdd_update_regulatory_info() - update regulatory info
  * @hdd_ctx: hdd context
@@ -211,6 +205,19 @@ void hdd_reset_global_reg_params(void)
 	init_by_driver = false;
 	init_by_reg_core = false;
 }
+
+static void reg_program_config_vars(hdd_context_t *hdd_ctx,
+				    struct reg_config_vars *config_vars)
+{
+	config_vars->enable_11d_support = hdd_ctx->config->Is11dSupportEnabled;
+	config_vars->userspace_ctry_priority =
+		hdd_ctx->config->fSupplicantCountryCodeHasPriority;
+	config_vars->dfs_enabled = hdd_ctx->config->enableDFSChnlScan;
+	config_vars->indoor_chan_enabled =
+		hdd_ctx->config->indoor_channel_support;
+	config_vars->band_capability = hdd_ctx->config->nBandCapability;
+}
+
 
 /**
  * hdd_regulatory_wiphy_init() - regulatory wiphy init
@@ -318,7 +325,6 @@ static int is_wiphy_custom_regulatory(struct wiphy *wiphy)
 }
 #endif
 
-
 /**
  * hdd_modify_wiphy() - modify wiphy
  * @wiphy: wiphy
@@ -394,6 +400,7 @@ static void hdd_process_regulatory_data(hdd_context_t *hdd_ctx,
 			wiphy_chan =
 				&(wiphy->bands[band_num]->channels[chan_num]);
 			cds_chan = &(reg_channels[chan_enum]);
+			cds_chan->chan_flags = 0;
 			if (CHAN_ENUM_144 == chan_enum)
 				wiphy_chan_144 = wiphy_chan;
 
@@ -404,12 +411,11 @@ static void hdd_process_regulatory_data(hdd_context_t *hdd_ctx,
 
 			if (wiphy_chan->flags & IEEE80211_CHAN_DISABLED) {
 				cds_chan->state = CHANNEL_STATE_DISABLE;
+				cds_chan->chan_flags |=
+					REGULATORY_CHAN_DISABLED;
 			} else if ((wiphy_chan->flags &
 				    (IEEE80211_CHAN_RADAR |
-				     IEEE80211_CHAN_PASSIVE_SCAN)) ||
-				   ((hdd_ctx->config->indoor_channel_support
-				     == false) &&
-				    (wiphy_chan->flags &
+				     IEEE80211_CHAN_PASSIVE_SCAN |
 				     IEEE80211_CHAN_INDOOR_ONLY))) {
 				if ((wiphy_chan->flags &
 				     IEEE80211_CHAN_INDOOR_ONLY) &&
@@ -418,12 +424,33 @@ static void hdd_process_regulatory_data(hdd_context_t *hdd_ctx,
 					wiphy_chan->flags |=
 						IEEE80211_CHAN_PASSIVE_SCAN;
 				cds_chan->state = CHANNEL_STATE_DFS;
+				if (wiphy_chan->flags & IEEE80211_CHAN_RADAR)
+					cds_chan->chan_flags |=
+						REGULATORY_CHAN_RADAR;
+				if (wiphy_chan->flags &
+				    IEEE80211_CHAN_PASSIVE_SCAN)
+					cds_chan->chan_flags |=
+						REGULATORY_CHAN_NO_IR;
+				if (wiphy_chan->flags &
+				    IEEE80211_CHAN_INDOOR_ONLY)
+					cds_chan->chan_flags |=
+						REGULATORY_CHAN_INDOOR_ONLY;
 			} else {
 				cds_chan->state = CHANNEL_STATE_ENABLE;
 			}
-			cds_chan->pwr_limit = wiphy_chan->max_power;
-			cds_chan->flags = wiphy_chan->flags;
-
+			cds_chan->tx_power = wiphy_chan->max_power;
+			if (wiphy_chan->flags & IEEE80211_CHAN_NO_10MHZ)
+				cds_chan->max_bw = 5;
+			else if (wiphy_chan->flags & IEEE80211_CHAN_NO_20MHZ)
+				cds_chan->max_bw = 10;
+			else if (wiphy_chan->flags & IEEE80211_CHAN_NO_HT40)
+				cds_chan->max_bw = 20;
+			else if (wiphy_chan->flags & IEEE80211_CHAN_NO_80MHZ)
+				cds_chan->max_bw = 40;
+			else if (wiphy_chan->flags & IEEE80211_CHAN_NO_160MHZ)
+				cds_chan->max_bw = 80;
+			else
+				cds_chan->max_bw = 160;
 		}
 	}
 
@@ -446,9 +473,9 @@ static void hdd_process_regulatory_data(hdd_context_t *hdd_ctx,
  */
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0)) || defined(WITH_BACKPORTS)
 static void hdd_set_dfs_region(hdd_context_t *hdd_ctx,
-			       enum dfs_region dfs_reg)
+			       enum dfs_reg dfs_reg)
 {
-	cds_put_dfs_region(dfs_reg);
+	wlan_reg_set_dfs_region(hdd_ctx->hdd_psoc, dfs_reg);
 }
 #else
 static void hdd_set_dfs_region(hdd_context_t *hdd_ctx,
@@ -475,19 +502,20 @@ static void hdd_set_dfs_region(hdd_context_t *hdd_ctx,
 }
 #endif
 
-
 /**
- * hdd_regulatory_init() - regulatory_init
+ * hdd_regulatory_init_no_offload() - regulatory init
  * @hdd_ctx: hdd context
  * @wiphy: wiphy
  *
  * Return: int
  */
-int hdd_regulatory_init(hdd_context_t *hdd_ctx, struct wiphy *wiphy)
+static int hdd_regulatory_init_no_offload(hdd_context_t *hdd_ctx,
+					  struct wiphy *wiphy)
 {
 	int ret_val;
 	struct regulatory *reg_info;
-	enum dfs_region dfs_reg;
+	enum dfs_reg dfs_reg;
+	struct reg_config_vars config_vars;
 
 	reg_info = &hdd_ctx->reg;
 
@@ -507,9 +535,16 @@ int hdd_regulatory_init(hdd_context_t *hdd_ctx, struct wiphy *wiphy)
 
 	cds_fill_and_send_ctl_to_fw(reg_info);
 
-	hdd_set_dfs_region(hdd_ctx, DFS_FCC_REGION);
-	cds_get_dfs_region(&dfs_reg);
+	hdd_set_dfs_region(hdd_ctx, DFS_FCC_REG);
+	wlan_reg_get_dfs_region(hdd_ctx->hdd_psoc, &dfs_reg);
 	cds_set_wma_dfs_region(dfs_reg);
+
+	reg_program_config_vars(hdd_ctx, &config_vars);
+	ucfg_reg_set_config_vars(hdd_ctx->hdd_psoc, config_vars);
+	ucfg_reg_program_mas_chan_list(hdd_ctx->hdd_psoc,
+				       reg_channels,
+				       hdd_ctx->reg.alpha2,
+				       dfs_reg);
 
 	return 0;
 }
@@ -578,7 +613,6 @@ static void hdd_restore_custom_reg_settings(struct wiphy *wiphy,
 }
 #endif
 
-
 /**
  * hdd_restore_reg_flags() - restore regulatory flags
  * @flags: regulatory flags
@@ -597,7 +631,6 @@ static void hdd_restore_reg_flags(struct wiphy *wiphy, uint32_t flags)
 }
 #endif
 
-
 /**
  * hdd_reg_notifier() - regulatory notifier
  * @wiphy: wiphy
@@ -610,7 +643,8 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 {
 	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
 	bool reset = false;
-	enum dfs_region dfs_reg;
+	enum dfs_reg dfs_reg;
+	struct reg_config_vars config_vars;
 
 	hdd_info("country: %c%c, initiator %d, dfs_region: %d",
 		  request->alpha2[0],
@@ -641,11 +675,11 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 
 	if (('K' == request->alpha2[0]) &&
 	    ('R' == request->alpha2[1]))
-		request->dfs_region = DFS_KR_REGION;
+		request->dfs_region = DFS_KR_REG;
 
 	if (('C' == request->alpha2[0]) &&
 	    ('N' == request->alpha2[1]))
-		request->dfs_region = DFS_CN_REGION;
+		request->dfs_region = DFS_CN_REG;
 
 	/* first check if this callback is in response to the driver callback */
 
@@ -700,12 +734,157 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 		cds_fill_and_send_ctl_to_fw(&hdd_ctx->reg);
 
 		hdd_set_dfs_region(hdd_ctx, request->dfs_region);
-
-		cds_get_dfs_region(&dfs_reg);
+		wlan_reg_get_dfs_region(hdd_ctx->hdd_psoc, &dfs_reg);
 		cds_set_wma_dfs_region(dfs_reg);
+
+		reg_program_config_vars(hdd_ctx, &config_vars);
+		ucfg_reg_set_config_vars(hdd_ctx->hdd_psoc, config_vars);
+		ucfg_reg_program_mas_chan_list(hdd_ctx->hdd_psoc,
+					       reg_channels,
+					       hdd_ctx->reg.alpha2,
+					       dfs_reg);
 		break;
 
 	default:
 		break;
 	}
 }
+
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
+static void fill_wiphy_channel(struct ieee80211_channel *wiphy_chan,
+			       struct regulatory_channel *cur_chan)
+{
+
+	wiphy_chan->flags &= ~IEEE80211_CHAN_DISABLED;
+	wiphy_chan->max_power = cur_chan->tx_power;
+
+	if (cur_chan->chan_flags & REGULATORY_CHAN_DISABLED)
+		wiphy_chan->flags  |= IEEE80211_CHAN_DISABLED;
+	if (cur_chan->chan_flags & REGULATORY_CHAN_NO_IR)
+		wiphy_chan->flags  |= IEEE80211_CHAN_NO_IR;
+	if (cur_chan->chan_flags & REGULATORY_CHAN_RADAR)
+		wiphy_chan->flags  |= IEEE80211_CHAN_RADAR;
+	if (cur_chan->chan_flags & REGULATORY_CHAN_NO_OFDM)
+		wiphy_chan->flags  |= IEEE80211_CHAN_NO_OFDM;
+	if (cur_chan->chan_flags & REGULATORY_CHAN_INDOOR_ONLY)
+		wiphy_chan->flags  |= IEEE80211_CHAN_INDOOR_ONLY;
+
+	if (cur_chan->max_bw < 10)
+		wiphy_chan->flags |= IEEE80211_CHAN_NO_10MHZ;
+	if (cur_chan->max_bw < 20)
+		wiphy_chan->flags |= IEEE80211_CHAN_NO_20MHZ;
+	if (cur_chan->max_bw < 40)
+		wiphy_chan->flags |= IEEE80211_CHAN_NO_HT40;
+	if (cur_chan->max_bw < 80)
+		wiphy_chan->flags |= IEEE80211_CHAN_NO_80MHZ;
+	if (cur_chan->max_bw < 160)
+		wiphy_chan->flags |= IEEE80211_CHAN_NO_160MHZ;
+}
+
+
+static void fill_wiphy_band_channels(struct wiphy *wiphy,
+				     struct regulatory_channel *cur_chan_list,
+				     uint8_t band_id)
+{
+	uint32_t wiphy_num_chan, wiphy_index;
+	uint32_t chan_cnt;
+	struct ieee80211_channel *wiphy_chan;
+
+	wiphy_num_chan = wiphy->bands[band_id]->n_channels;
+	wiphy_chan = wiphy->bands[band_id]->channels;
+
+	for (wiphy_index = 0; wiphy_index < wiphy_num_chan; wiphy_index++) {
+		for (chan_cnt = 0; chan_cnt < NUM_CHANNELS; chan_cnt++) {
+			if (wiphy_chan[wiphy_index].center_freq ==
+			    cur_chan_list[chan_cnt].center_freq) {
+				fill_wiphy_channel(&(wiphy_chan[wiphy_index]),
+						   &(cur_chan_list[chan_cnt]));
+				break;
+			}
+		}
+	}
+}
+
+
+/**
+ * hdd_regulatory_init_offload() - regulatory init
+ * @hdd_ctx: hdd context
+ * @wiphy: wiphy
+ *
+ * Return: int
+ */
+static int hdd_regulatory_init_offload(hdd_context_t *hdd_ctx,
+				       struct wiphy *wiphy)
+{
+	struct reg_config_vars config_vars;
+	struct regulatory_channel cur_chan_list[NUM_CHANNELS];
+
+	config_vars.enable_11d_support = hdd_ctx->config->Is11dSupportEnabled;
+	config_vars.userspace_ctry_priority =
+		hdd_ctx->config->fSupplicantCountryCodeHasPriority;
+	config_vars.dfs_enabled = hdd_ctx->config->enableDFSChnlScan;
+	config_vars.indoor_chan_enabled =
+		hdd_ctx->config->indoor_channel_support;
+	config_vars.band_capability = hdd_ctx->config->nBandCapability;
+
+	reg_program_config_vars(hdd_ctx, &config_vars);
+	ucfg_reg_set_config_vars(hdd_ctx->hdd_psoc, config_vars);
+	ucfg_reg_get_current_chan_list(hdd_ctx->hdd_pdev, cur_chan_list);
+	fill_wiphy_band_channels(wiphy, cur_chan_list, NL80211_BAND_2GHZ);
+	fill_wiphy_band_channels(wiphy, cur_chan_list, NL80211_BAND_5GHZ);
+
+	return 0;
+}
+
+
+
+int hdd_regulatory_init(hdd_context_t *hdd_ctx, struct wiphy *wiphy)
+{
+	bool offload_enabled;
+	enum dfs_reg dfs_region;
+
+	offload_enabled = ucfg_reg_is_regdb_offloaded(hdd_ctx->hdd_psoc);
+
+	if (offload_enabled && hdd_ctx->config->reg_offload_enabled) {
+		hdd_ctx->reg_offload = true;
+		wiphy->reg_notifier = NULL;
+		wiphy->regulatory_flags |= REGULATORY_WIPHY_SELF_MANAGED;
+		hdd_regulatory_init_offload(hdd_ctx, wiphy);
+
+		wlan_reg_get_dfs_region(hdd_ctx->hdd_psoc, &dfs_region);
+		cds_set_wma_dfs_region(dfs_region);
+	} else {
+		hdd_ctx->reg_offload = false;
+		wiphy->reg_notifier = hdd_reg_notifier;
+		wiphy->regulatory_flags |= REGULATORY_DISABLE_BEACON_HINTS;
+		wiphy->regulatory_flags |= REGULATORY_COUNTRY_IE_IGNORE;
+		hdd_regulatory_init_no_offload(hdd_ctx, wiphy);
+
+	}
+
+	return 0;
+}
+#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0))
+int hdd_regulatory_init(hdd_context_t *hdd_ctx, struct wiphy *wiphy)
+{
+	hdd_ctx->reg_offload = false;
+	wiphy->reg_notifier = hdd_reg_notifier;
+	wiphy->regulatory_flags |= REGULATORY_DISABLE_BEACON_HINTS;
+	wiphy->regulatory_flags |= REGULATORY_COUNTRY_IE_IGNORE;
+	hdd_regulatory_init_no_offload(hdd_ctx, wiphy);
+
+	return 0;
+}
+#else
+int hdd_regulatory_init(hdd_context_t *hdd_ctx, struct wiphy *wiphy)
+{
+	hdd_ctx->reg_offload = false;
+	wiphy->reg_notifier = hdd_reg_notifier;
+	wiphy->flags |= WIPHY_FLAG_DISABLE_BEACON_HINTS;
+	wiphy->country_ie_pref |= NL80211_COUNTRY_IE_IGNORE_CORE;
+	hdd_regulatory_init_no_offload(hdd_ctx, wiphy);
+
+	return 0;
+}
+#endif

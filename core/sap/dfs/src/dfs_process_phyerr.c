@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2002-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -628,8 +628,8 @@ dfs_process_phyerr(struct ieee80211com *ic, void *buf, uint16_t datalen,
 		 *
 		 * BIN 5 chirping pulses are only for FCC or Japan MMK4 domain
 		 */
-		if (((dfs->dfsdomain == DFS_FCC_REGION) ||
-		     (dfs->dfsdomain == DFS_MKK_REGION)) &&
+		if (((dfs->dfsdomain == DFS_FCC_REG) ||
+		     (dfs->dfsdomain == DFS_MKK_REG)) &&
 		    (e.dur >= MAYBE_BIN5_DUR) && (e.dur < MAX_BIN5_DUR)) {
 			int add_dur;
 			int slope = 0, dc_found = 0;
@@ -678,8 +678,8 @@ dfs_process_phyerr(struct ieee80211com *ic, void *buf, uint16_t datalen,
 			 * We have a pulse that is either bigger than
 			 * MAX_BIN5_DUR or * less than MAYBE_BIN5_DUR
 			 */
-			if ((dfs->dfsdomain == DFS_FCC_REGION) ||
-			    (dfs->dfsdomain == DFS_MKK_REGION)) {
+			if ((dfs->dfsdomain == DFS_FCC_REG) ||
+			    (dfs->dfsdomain == DFS_MKK_REG)) {
 				/*
 				 * XXX Would this result in very large pulses
 				 *     wrapping around to become short pulses?

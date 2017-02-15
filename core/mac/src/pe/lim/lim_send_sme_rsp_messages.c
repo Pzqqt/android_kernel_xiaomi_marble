@@ -2059,7 +2059,7 @@ static void lim_process_csa_wbw_ie(tpAniSirGlobal mac_ctx,
 		tLimWiderBWChannelSwitchInfo *chnl_switch_info,
 		tpPESession session_entry)
 {
-	struct ch_params_s ch_params = {0};
+	struct ch_params ch_params = {0};
 	uint8_t ap_new_ch_width;
 	bool new_ch_width_dfn = false;
 	uint8_t center_freq_diff;
@@ -2134,7 +2134,7 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx,
 	uint8_t session_id;
 	uint16_t aid = 0;
 	uint16_t chan_space = 0;
-	struct ch_params_s ch_params;
+	struct ch_params ch_params;
 
 	tLimWiderBWChannelSwitchInfo *chnl_switch_info = NULL;
 	tLimChannelSwitchInfo *lim_ch_switch = NULL;

@@ -1658,7 +1658,7 @@ typedef struct sSirSmeSwitchChannelInd {
 	uint16_t length;
 	uint8_t sessionId;
 	uint16_t newChannelId;
-	struct ch_params_s chan_params;
+	struct ch_params chan_params;
 	struct qdf_mac_addr bssid;      /* BSSID */
 } tSirSmeSwitchChannelInd, *tpSirSmeSwitchChannelInd;
 
@@ -3860,7 +3860,7 @@ typedef struct sSirDfsCsaIeRequest {
 	uint8_t targetChannel;
 	uint8_t csaIeRequired;
 	uint8_t bssid[QDF_MAC_ADDR_SIZE];
-	struct ch_params_s ch_params;
+	struct ch_params ch_params;
 } tSirDfsCsaIeRequest, *tpSirDfsCsaIeRequest;
 
 /* Indication from lower layer indicating the completion of first beacon send

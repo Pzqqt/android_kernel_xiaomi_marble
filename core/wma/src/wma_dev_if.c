@@ -2016,7 +2016,7 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 			 * early on, to protect the DFS module from
 			 * processing phyerrors without being intialized.
 			 */
-			if (DFS_UNINIT_REGION ==
+			if (DFS_UNINIT_REG ==
 			    wma->dfs_ic->current_dfs_regdomain) {
 				WMA_LOGE("%s[%d]:DFS Configured with Invalid regdomain"
 					" Failed to send VDEV START command",

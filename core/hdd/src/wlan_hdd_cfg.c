@@ -4269,13 +4269,22 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_ANI_DEFAULT,
 		     CFG_ENABLE_ANI_MIN,
 		     CFG_ENABLE_ANI_MAX),
+
 	REG_VARIABLE(CFG_QCN_IE_SUPPORT_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, qcn_ie_support,
 		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
 		CFG_QCN_IE_SUPPORT_DEFAULT,
 		CFG_QCN_IE_SUPPORT_MIN,
 		CFG_QCN_IE_SUPPORT_MAX),
+
+	REG_VARIABLE(CFG_ENABLE_REG_OFFLOAD_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, reg_offload_enabled,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_ENABLE_REG_OFFLOAD_DEFAULT,
+		     CFG_ENABLE_REG_OFFLOAD_MIN,
+		     CFG_ENABLE_REG_OFFLOAD_MAX),
 };
+
 
 /**
  * get_next_line() - find and locate the new line pointer

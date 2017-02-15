@@ -856,7 +856,7 @@ struct hdd_netif_queue_history {
  */
 struct hdd_chan_change_params {
 	uint8_t chan;
-	struct ch_params_s chan_params;
+	struct ch_params chan_params;
 };
 
 /**
@@ -1609,6 +1609,7 @@ struct hdd_context_s {
 	enum scan_reject_states last_scan_reject_reason;
 	unsigned long last_scan_reject_timestamp;
 	bool dfs_cac_offload;
+	bool reg_offload;
 };
 
 /**

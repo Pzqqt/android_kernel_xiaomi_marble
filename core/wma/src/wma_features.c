@@ -606,7 +606,7 @@ WLAN_PHY_MODE wma_chan_phy_mode(u8 chan, enum phy_ch_width chan_width,
 				break;
 			}
 		}
-	} else if (CDS_IS_CHANNEL_DSRC(chan))
+	} else if (WLAN_REG_IS_11P_CH(chan))
 		phymode = MODE_11A;
 	else {
 		if (((CH_WIDTH_5MHZ == chan_width) ||
@@ -5009,41 +5009,41 @@ void wma_dfs_configure(struct ieee80211com *ic)
 	 * which radar pulses to use.
 	 */
 	switch (dfsdomain) {
-	case DFS_FCC_REGION:
+	case DFS_FCC_REG:
 		WMA_LOGI("%s: DFS-FCC domain", __func__);
-		rinfo.dfsdomain = DFS_FCC_REGION;
+		rinfo.dfsdomain = DFS_FCC_REG;
 		rinfo.dfs_radars = dfs_fcc_radars;
 		rinfo.numradars = QDF_ARRAY_SIZE(dfs_fcc_radars);
 		rinfo.b5pulses = dfs_fcc_bin5pulses;
 		rinfo.numb5radars = QDF_ARRAY_SIZE(dfs_fcc_bin5pulses);
 		break;
-	case DFS_ETSI_REGION:
+	case DFS_ETSI_REG:
 		WMA_LOGI("%s: DFS-ETSI domain", __func__);
-		rinfo.dfsdomain = DFS_ETSI_REGION;
+		rinfo.dfsdomain = DFS_ETSI_REG;
 		rinfo.dfs_radars = dfs_etsi_radars;
 		rinfo.numradars = QDF_ARRAY_SIZE(dfs_etsi_radars);
 		rinfo.b5pulses = NULL;
 		rinfo.numb5radars = 0;
 		break;
-	case DFS_MKK_REGION:
+	case DFS_MKK_REG:
 		WMA_LOGI("%s: DFS-MKK domain", __func__);
-		rinfo.dfsdomain = DFS_MKK_REGION;
+		rinfo.dfsdomain = DFS_MKK_REG;
 		rinfo.dfs_radars = dfs_mkk4_radars;
 		rinfo.numradars = QDF_ARRAY_SIZE(dfs_mkk4_radars);
 		rinfo.b5pulses = dfs_jpn_bin5pulses;
 		rinfo.numb5radars = QDF_ARRAY_SIZE(dfs_jpn_bin5pulses);
 		break;
-	case DFS_CN_REGION:
+	case DFS_CN_REG:
 		WMA_LOGI("%s: DFS-CN domain", __func__);
-		rinfo.dfsdomain = DFS_CN_REGION;
+		rinfo.dfsdomain = DFS_CN_REG;
 		rinfo.dfs_radars = dfs_china_radars;
 		rinfo.numradars = QDF_ARRAY_SIZE(dfs_china_radars);
 		rinfo.b5pulses = NULL;
 		rinfo.numb5radars = 0;
 		break;
-	case DFS_KR_REGION:
+	case DFS_KR_REG:
 		WMA_LOGI("%s: DFS-KR domain", __func__);
-		rinfo.dfsdomain = DFS_KR_REGION;
+		rinfo.dfsdomain = DFS_KR_REG;
 		rinfo.dfs_radars = dfs_korea_radars;
 		rinfo.numradars = QDF_ARRAY_SIZE(dfs_korea_radars);
 		rinfo.b5pulses = NULL;
@@ -5051,7 +5051,7 @@ void wma_dfs_configure(struct ieee80211com *ic)
 		break;
 	default:
 		WMA_LOGI("%s: DFS-UNINT domain", __func__);
-		rinfo.dfsdomain = DFS_UNINIT_REGION;
+		rinfo.dfsdomain = DFS_UNINIT_REG;
 		rinfo.dfs_radars = NULL;
 		rinfo.numradars = 0;
 		rinfo.b5pulses = NULL;
@@ -5207,13 +5207,13 @@ struct dfs_ieee80211_channel *wma_dfs_configure_channel(
  *
  * Return: none
  */
-void wma_set_dfs_region(tp_wma_handle wma, enum dfs_region dfs_region)
+void wma_set_dfs_region(tp_wma_handle wma, enum dfs_reg dfs_region)
 {
-	if (dfs_region >= DFS_UNDEF_REGION ||
-	    dfs_region == DFS_UNINIT_REGION)
+	if (dfs_region >= DFS_UNDEF_REG ||
+	    dfs_region == DFS_UNINIT_REG)
 
 		/* assign DFS_FCC_REGION as default region*/
-		wma->dfs_ic->current_dfs_regdomain = DFS_FCC_REGION;
+		wma->dfs_ic->current_dfs_regdomain = DFS_FCC_REG;
 	else
 		wma->dfs_ic->current_dfs_regdomain = dfs_region;
 

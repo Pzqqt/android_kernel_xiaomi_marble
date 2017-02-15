@@ -550,7 +550,7 @@ typedef struct sap_Config {
 	struct qdf_mac_addr self_macaddr;       /* self macaddress or BSSID */
 	uint8_t channel;          /* Operation channel */
 	uint8_t sec_ch;
-	struct ch_params_s ch_params;
+	struct ch_params ch_params;
 	uint32_t ch_width_orig;
 	uint8_t max_num_sta;      /* maximum number of STAs in station table */
 	uint8_t dtim_period;      /* dtim interval */
@@ -679,7 +679,7 @@ typedef struct sSapDfsInfo {
 	 */
 	enum phy_ch_width orig_chanWidth;
 	enum phy_ch_width new_chanWidth;
-	struct ch_params_s new_ch_params;
+	struct ch_params new_ch_params;
 
 	/*
 	 * INI param to enable/disable SAP W53

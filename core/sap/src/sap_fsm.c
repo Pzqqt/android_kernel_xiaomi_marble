@@ -1123,7 +1123,6 @@ static void sap_get_cac_dur_dfs_region(ptSapContext sap_ctx,
 	tHalHandle hal = NULL;
 	tpAniSirGlobal mac = NULL;
 
-	cds_get_dfs_region(dfs_region);
 	if (!sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: null sap_ctx", __func__);
@@ -1145,7 +1144,9 @@ static void sap_get_cac_dur_dfs_region(ptSapContext sap_ctx,
 		return;
 	}
 
-	if ((*dfs_region == DFS_ETSI_REGION) &&
+	wlan_reg_get_dfs_region(mac->psoc, dfs_region);
+
+	if ((*dfs_region == DFS_ETSI_REG) &&
 	    ((IS_ETSI_WEATHER_CH(sap_ctx->channel)) ||
 	    (sap_is_channel_bonding_etsi_weather_channel(sap_ctx))))
 		*cac_duration_ms = ETSI_WEATHER_CH_CAC_TIMEOUT;
@@ -1404,7 +1405,7 @@ static uint8_t sap_apply_rules(ptSapContext sap_ctx)
 	tpAniSirGlobal mac_ctx;
 	tHalHandle hal = CDS_GET_HAL_CB(sap_ctx->p_cds_gctx);
 	uint8_t preferred_location;
-	enum dfs_region dfs_region;
+	enum dfs_reg dfs_region;
 
 	if (NULL == hal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -1421,7 +1422,7 @@ static uint8_t sap_apply_rules(ptSapContext sap_ctx)
 
 	preferred_location =
 		mac_ctx->sap.SapDfsInfo.sap_operating_chan_preferred_location;
-	cds_get_dfs_region(&dfs_region);
+	wlan_reg_get_dfs_region(mac_ctx->psoc, &dfs_region);
 	/* loop to check ACS range or NOL channels */
 	num_valid_ch = sap_all_ch->numChannel;
 	for (i = 0; i < sap_all_ch->numChannel; i++) {
@@ -1444,7 +1445,7 @@ static uint8_t sap_apply_rules(ptSapContext sap_ctx)
 		 * channels only based up on the SAP Channel location
 		 * indicated by "sap_operating_channel_location" param.
 		 */
-		if (DFS_MKK_REGION == dfs_region) {
+		if (DFS_MKK_REG == dfs_region) {
 			/*
 			 * Check for JAPAN W53 Channel operation capability
 			 */
@@ -5176,7 +5177,7 @@ int sap_start_dfs_cac_timer(ptSapContext sap_ctx)
 	uint32_t cac_dur;
 	tHalHandle hal = NULL;
 	tpAniSirGlobal mac = NULL;
-	enum dfs_region dfs_region;
+	enum dfs_reg dfs_region;
 
 	if (!sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -5202,6 +5203,12 @@ int sap_start_dfs_cac_timer(ptSapContext sap_ctx)
 	sap_get_cac_dur_dfs_region(sap_ctx, &cac_dur, &dfs_region);
 	if (0 == cac_dur)
 		return 0;
+
+	if ((dfs_region == DFS_ETSI_REG) &&
+	    ((IS_ETSI_WEATHER_CH(sap_ctx->channel)) ||
+	     (sap_is_channel_bonding_etsi_weather_channel(sap_ctx)))) {
+		cac_dur = ETSI_WEATHER_CH_CAC_TIMEOUT;
+	}
 
 #ifdef QCA_WIFI_NAPIER_EMULATION
 	cac_dur = cac_dur / 100;

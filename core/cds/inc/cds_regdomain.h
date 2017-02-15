@@ -466,7 +466,7 @@ enum reg_domain {
 };
 
 /**
- * enum ctl_val - CTL value
+ * enum ctl_val: CTL value
  * @FCC: FCC
  * @MKK: MKK
  * @ETSI: ETSI
@@ -477,22 +477,6 @@ enum ctl_val {
 	MKK = 0x40,
 	ETSI = 0x30,
 	NO_CTL = 0xff
-};
-
-/**
- * enum offset_t: channel offset
- * @BW20: 20 mhz channel
- * @BW40_LOW_PRIMARY: lower channel in 40 mhz
- * @BW40_HIGH_PRIMARY: higher channel in 40 mhz
- * @BW80: 80 mhz channel
- * @BWALL: unknown bandwidth
- */
-enum offset_t {
-	BW20 = 0,
-	BW40_LOW_PRIMARY = 1,
-	BW40_HIGH_PRIMARY = 3,
-	BW80,
-	BWALL
 };
 
 /**
@@ -531,30 +515,6 @@ struct country_code_to_reg_dmn {
 struct reg_dmn {
 	uint16_t reg_dmn;
 	uint8_t conformance_test_limit;
-};
-
-/**
- * struct reg_dmn_op_class_map_t: operating class
- * @op_class: operating class number
- * @ch_spacing: channel spacing
- * @offset: offset
- * @channels: channel set
- */
-struct reg_dmn_op_class_map_t {
-	uint8_t op_class;
-	uint8_t ch_spacing;
-	enum offset_t offset;
-	uint8_t channels[MAX_CHANNELS_PER_OPERATING_CLASS];
-};
-
-/**
- * struct reg_dmn_supp_op_classes: operating classes
- * @num_classes: number of classes
- * @classes: classes
- */
-struct reg_dmn_supp_op_classes {
-	uint8_t num_classes;
-	uint8_t classes[CDS_MAX_SUPP_OPER_CLASSES];
 };
 
 /**

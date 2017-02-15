@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -39,8 +39,8 @@
 #define IEEE80211_CHAN_NO_IBSS IEEE80211_CHAN_NO_IR
 #endif
 
-void hdd_reset_global_reg_params(void);
 int hdd_regulatory_init(hdd_context_t *hdd_ctx, struct wiphy *wiphy);
 void hdd_program_country_code(hdd_context_t *hdd_ctx);
+void hdd_reset_global_reg_params(void);
 
 #endif

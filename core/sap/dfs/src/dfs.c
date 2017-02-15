@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2002-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -61,7 +61,7 @@
 #include "dfs_ioctl.h"
 #include "dfs.h"
 
-int domainoverride = DFS_UNINIT_REGION;
+int domainoverride = DFS_UNINIT_REG;
 
 /*
 ** channel switch announcement (CSA)

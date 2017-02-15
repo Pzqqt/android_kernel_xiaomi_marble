@@ -132,7 +132,7 @@
 		.hw_value = (chan), \
 		.flags = (flag), \
 		.max_antenna_gain = 0, \
-		.max_power = 30, \
+		.max_power = 0, \
 }
 
 #define HDD5GHZCHAN(freq, chan, flag)   {     \
@@ -141,7 +141,7 @@
 		.hw_value = (chan), \
 		.flags = (flag), \
 		.max_antenna_gain = 0, \
-		.max_power = 30, \
+		.max_power = 0, \
 }
 
 #define HDD_G_MODE_RATETAB(rate, rate_id, flag)	\
@@ -1470,7 +1470,7 @@ static int hdd_update_reg_chan_info(hdd_adapter_t *adapter,
 {
 	int i;
 	struct hdd_channel_info *icv;
-	struct ch_params_s ch_params = {0};
+	struct ch_params ch_params = {0};
 	uint8_t bw_offset = 0, chan = 0;
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	tsap_Config_t *sap_config = &adapter->sessionCtx.ap.sapConfig;
@@ -10213,14 +10213,6 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 
 	wiphy->mgmt_stypes = wlan_hdd_txrx_stypes;
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0))
-	wiphy->regulatory_flags |= REGULATORY_DISABLE_BEACON_HINTS;
-	wiphy->regulatory_flags |= REGULATORY_COUNTRY_IE_IGNORE;
-#else
-	wiphy->flags |= WIPHY_FLAG_DISABLE_BEACON_HINTS;
-	wiphy->country_ie_pref |= NL80211_COUNTRY_IE_IGNORE_CORE;
-#endif
-
 	wiphy->flags |= WIPHY_FLAG_HAVE_AP_SME
 			| WIPHY_FLAG_AP_PROBE_RESP_OFFLOAD
 			| WIPHY_FLAG_HAS_REMAIN_ON_CHANNEL
@@ -10268,8 +10260,6 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 	 * driver need to determine what to do with both
 	 * regulatory settings
 	 */
-
-	wiphy->reg_notifier = hdd_reg_notifier;
 
 #if  defined QCA_WIFI_FTM
 }
@@ -10455,6 +10445,7 @@ void wlan_hdd_cfg80211_deinit(struct wiphy *wiphy)
 			wiphy->bands[i]->channels = NULL;
 		}
 	}
+
 	hdd_reset_global_reg_params();
 }
 
@@ -12755,7 +12746,7 @@ QDF_STATUS wlan_hdd_cfg80211_roam_metrics_handover(hdd_adapter_t *pAdapter,
  * Return: none
  */
 void hdd_select_cbmode(hdd_adapter_t *pAdapter, uint8_t operationChannel,
-			struct ch_params_s *ch_params)
+			struct ch_params *ch_params)
 {
 	hdd_station_ctx_t *station_ctx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	struct hdd_mon_set_ch_info *ch_info = &station_ctx->ch_info;
@@ -16600,7 +16591,7 @@ static int __wlan_hdd_cfg80211_set_mon_ch(struct wiphy *wiphy,
 	tHalHandle hal_hdl;
 	struct qdf_mac_addr bssid;
 	tCsrRoamProfile roam_profile;
-	struct ch_params_s ch_params;
+	struct ch_params ch_params;
 	uint8_t sec_ch = 0;
 	int ret;
 	uint16_t chan_num = cds_freq_to_chan(chandef->chan->center_freq);

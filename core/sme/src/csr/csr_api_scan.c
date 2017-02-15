@@ -3467,7 +3467,7 @@ static void csr_diag_reset_country_information(tpAniSirGlobal pMac)
 		     Index < pMac->scan.base_channels.numChannels;
 		     Index++) {
 			p11dLog->TxPwr[Index] = QDF_MIN(
-				pMac->scan.defaultPowerTable[Index].power,
+				pMac->scan.defaultPowerTable[Index].tx_power,
 				pMac->roam.configParam.nTxPowerCap);
 		}
 	}
@@ -3662,7 +3662,7 @@ static void csr_get_channel_power_info(tpAniSirGlobal pMac, tDblLinkList *list,
 			chn_pwr_info[chn_idx].chan_num =
 				(uint8_t) (ch_set->firstChannel
 				 + (idx * ch_set->interChannelOffset));
-			chn_pwr_info[chn_idx++].power = ch_set->txPower;
+			chn_pwr_info[chn_idx++].tx_power = ch_set->txPower;
 		}
 		entry = csr_ll_next(list, entry, LL_ACCESS_LOCK);
 	}
@@ -3707,7 +3707,7 @@ static void csr_diag_apply_country_info(tpAniSirGlobal mac_ctx)
 			if (p11dLog->Channels[nTmp] ==
 			    chnPwrInfo[nChnInfo].chan_num) {
 				p11dLog->TxPwr[nTmp] =
-					chnPwrInfo[nChnInfo].power;
+					chnPwrInfo[nChnInfo].tx_power;
 				break;
 			}
 		}
@@ -3798,7 +3798,7 @@ void csr_save_channel_power_for_band(tpAniSirGlobal pMac, bool fill_5f)
 			pMac->scan.defaultPowerTable[idx].chan_num;
 		chan_info->numChannels = 1;
 		chan_info->maxTxPower =
-			QDF_MIN(pMac->scan.defaultPowerTable[idx].power,
+			QDF_MIN(pMac->scan.defaultPowerTable[idx].tx_power,
 				pMac->roam.configParam.nTxPowerCap);
 		chan_info++;
 		count++;
@@ -5818,11 +5818,11 @@ static void csr_scan_copy_request_valid_channels_only(tpAniSirGlobal mac_ctx,
 		 * This can happen only if band is set to 5Ghz mode.
 		 */
 		if (src_req->ChannelInfo.ChannelList[index] <
-		    CDS_MIN_11P_CHANNEL &&
-			((csr_roam_is_valid_channel(mac_ctx,
-			src_req->ChannelInfo.ChannelList[index])) ||
-			((eCSR_SCAN_P2P_DISCOVERY == src_req->requestType) &&
-			CSR_IS_SOCIAL_CHANNEL(
+		    WLAN_REG_MIN_11P_CH_NUM &&
+		    ((csr_roam_is_valid_channel(mac_ctx,
+		     src_req->ChannelInfo.ChannelList[index])) ||
+		     ((eCSR_SCAN_P2P_DISCOVERY == src_req->requestType) &&
+		      CSR_IS_SOCIAL_CHANNEL(
 				src_req->ChannelInfo.ChannelList[index])))) {
 			if (((src_req->skipDfsChnlInP2pSearch || skip_dfs_chnl)
 				&& (CHANNEL_STATE_DFS ==
@@ -5929,12 +5929,9 @@ static bool csr_scan_filter_given_chnl_band(tpAniSirGlobal mac_ctx,
 				valid_chnl_len);
 	}
 	for (i = 0; i < valid_chnl_len; i++) {
-		/*
-		 * Don't allow DSRC channel when IBSS or SAP DFS concurrent
-		 * connection is up
-		 */
-		if (valid_chnl_list[i] >= CDS_MIN_11P_CHANNEL)
+		if (valid_chnl_list[i] >= WLAN_REG_MIN_11P_CH_NUM)
 			continue;
+
 		if (CDS_IS_CHANNEL_5GHZ(channel) &&
 			CDS_IS_CHANNEL_24GHZ(valid_chnl_list[i])) {
 			valid_chnl_list[filter_chnl_len] =
@@ -6044,8 +6041,8 @@ QDF_STATUS csr_scan_copy_request(tpAniSirGlobal mac_ctx,
 							ChannelInfo.
 							ChannelList[index]);
 				if (src_req->ChannelInfo.ChannelList[index] <
-						CDS_MIN_11P_CHANNEL &&
-					((CHANNEL_STATE_ENABLE ==
+				    WLAN_REG_MIN_11P_CH_NUM &&
+				    ((CHANNEL_STATE_ENABLE ==
 						channel_state) ||
 					((CHANNEL_STATE_DFS == channel_state) &&
 					!skip_dfs_chnl))) {
@@ -6075,7 +6072,7 @@ QDF_STATUS csr_scan_copy_request(tpAniSirGlobal mac_ctx,
 			for (index = 0; index < src_req->ChannelInfo.
 					numOfChannels; index++) {
 				if (src_req->ChannelInfo.ChannelList[index] <
-						CDS_MIN_11P_CHANNEL) {
+				    WLAN_REG_MIN_11P_CH_NUM) {
 					dst_req->ChannelInfo.
 						ChannelList[new_index] =
 						src_req->ChannelInfo.

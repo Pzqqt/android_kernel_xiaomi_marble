@@ -2701,7 +2701,7 @@ wlansap_channel_change_request(void *pSapCtx, uint8_t target_channel)
 	void *hHal = NULL;
 	tpAniSirGlobal mac_ctx = NULL;
 	eCsrPhyMode phy_mode;
-	struct ch_params_s *ch_params;
+	struct ch_params *ch_params;
 	sapContext = (ptSapContext) pSapCtx;
 
 	if (NULL == sapContext) {
@@ -2990,7 +2990,7 @@ wlansap_set_dfs_restrict_japan_w53(tHalHandle hHal, uint8_t disable_Dfs_W53)
 {
 	tpAniSirGlobal pMac = NULL;
 	QDF_STATUS status;
-	enum dfs_region dfs_region;
+	enum dfs_reg dfs_region;
 
 	if (NULL != hHal) {
 		pMac = PMAC_STRUCT(hHal);
@@ -3000,13 +3000,13 @@ wlansap_set_dfs_restrict_japan_w53(tHalHandle hHal, uint8_t disable_Dfs_W53)
 		return QDF_STATUS_E_FAULT;
 	}
 
-	cds_get_dfs_region(&dfs_region);
+	wlan_reg_get_dfs_region(pMac->psoc, &dfs_region);
 
 	/*
 	 * Set the JAPAN W53 restriction only if the current
 	 * regulatory domain is JAPAN.
 	 */
-	if (DFS_MKK_REGION == dfs_region) {
+	if (DFS_MKK_REG == dfs_region) {
 		pMac->sap.SapDfsInfo.is_dfs_w53_disabled = disable_Dfs_W53;
 		QDF_TRACE(QDF_MODULE_ID_SAP,
 			  QDF_TRACE_LEVEL_INFO_LOW,
@@ -3086,7 +3086,7 @@ wlansap_set_dfs_preferred_channel_location(tHalHandle hHal,
 {
 	tpAniSirGlobal pMac = NULL;
 	QDF_STATUS status;
-	enum dfs_region dfs_region;
+	enum dfs_reg dfs_region;
 
 	if (NULL != hHal) {
 		pMac = PMAC_STRUCT(hHal);
@@ -3096,14 +3096,14 @@ wlansap_set_dfs_preferred_channel_location(tHalHandle hHal,
 		return QDF_STATUS_E_FAULT;
 	}
 
-	cds_get_dfs_region(&dfs_region);
+	wlan_reg_get_dfs_region(pMac->psoc, &dfs_region);
 
 	/*
 	 * The Indoor/Outdoor only random channel selection
 	 * restriction is currently enforeced only for
 	 * JAPAN regulatory domain.
 	 */
-	if (DFS_MKK_REGION == dfs_region) {
+	if (DFS_MKK_REG == dfs_region) {
 		pMac->sap.SapDfsInfo.sap_operating_chan_preferred_location =
 			dfs_Preferred_Channels_location;
 		QDF_TRACE(QDF_MODULE_ID_SAP,

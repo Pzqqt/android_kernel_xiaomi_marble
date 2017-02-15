@@ -785,14 +785,14 @@ QDF_STATUS sme_set_auto_shutdown_timer(tHalHandle hHal, uint32_t timer_value);
 #endif
 QDF_STATUS sme_roam_channel_change_req(tHalHandle hHal,
 				       struct qdf_mac_addr bssid,
-				       struct ch_params_s *ch_params,
+				       struct ch_params *ch_params,
 				       tCsrRoamProfile *profile);
 
 QDF_STATUS sme_roam_start_beacon_req(tHalHandle hHal,
 		struct qdf_mac_addr bssid, uint8_t dfsCacWaitStatus);
 QDF_STATUS sme_roam_csa_ie_request(tHalHandle hHal, struct qdf_mac_addr bssid,
 				   uint8_t targetChannel, uint8_t csaIeReqd,
-				   struct ch_params_s *ch_params);
+				   struct ch_params *ch_params);
 
 QDF_STATUS sme_init_thermal_info(tHalHandle hHal,
 				 tSmeThermalParams thermalParam);

@@ -42,6 +42,7 @@
 #include <qdf_trace.h>
 #include <qdf_event.h>
 #include <qdf_lock.h>
+#include "reg_services_public_struct.h"
 #include <cds_reg_service.h>
 #include <cds_packet.h>
 #include <cds_sched.h>

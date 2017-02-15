@@ -11411,10 +11411,10 @@ QDF_STATUS sme_get_reg_info(tHalHandle hHal, uint8_t chanId,
 	for (i = 0; i < WNI_CFG_VALID_CHANNEL_LIST_LEN; i++) {
 		if (pMac->scan.defaultPowerTable[i].chan_num == chanId) {
 			SME_SET_CHANNEL_REG_POWER(*regInfo1,
-				pMac->scan.defaultPowerTable[i].power);
+				pMac->scan.defaultPowerTable[i].tx_power);
 
 			SME_SET_CHANNEL_MAX_TX_POWER(*regInfo2,
-				pMac->scan.defaultPowerTable[i].power);
+				pMac->scan.defaultPowerTable[i].tx_power);
 			found = true;
 			break;
 		}
@@ -11677,7 +11677,7 @@ QDF_STATUS sme_set_mas(uint32_t val)
  */
 QDF_STATUS sme_roam_channel_change_req(tHalHandle hHal,
 				       struct qdf_mac_addr bssid,
-				       struct ch_params_s *ch_params,
+				       struct ch_params *ch_params,
 				       tCsrRoamProfile *profile)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
@@ -11786,7 +11786,7 @@ QDF_STATUS sme_roam_start_beacon_req(tHalHandle hHal, struct qdf_mac_addr bssid,
  */
 QDF_STATUS sme_roam_csa_ie_request(tHalHandle hHal, struct qdf_mac_addr bssid,
 				uint8_t targetChannel, uint8_t csaIeReqd,
-				struct ch_params_s *ch_params)
+				struct ch_params *ch_params)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);

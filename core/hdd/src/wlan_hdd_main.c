@@ -123,6 +123,7 @@
 #ifdef CNSS_GENL
 #include <net/cnss_nl.h>
 #endif
+#include "wlan_reg_ucfg_api.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -5771,8 +5772,15 @@ void hdd_exchange_version_and_caps(hdd_context_t *hdd_ctx)
 /* Initialize channel list in sme based on the country code */
 QDF_STATUS hdd_set_sme_chan_list(hdd_context_t *hdd_ctx)
 {
-	return sme_init_chan_list(hdd_ctx->hHal, hdd_ctx->reg.alpha2,
-				  hdd_ctx->reg.cc_src);
+
+	if (hdd_ctx->reg_offload)
+		return sme_init_chan_list(hdd_ctx->hHal,
+					  hdd_ctx->reg.alpha2,
+					  0);
+	else
+		return sme_init_chan_list(hdd_ctx->hHal,
+					  hdd_ctx->reg.alpha2,
+					  hdd_ctx->reg.cc_src);
 }
 
 /**
@@ -5836,7 +5844,8 @@ static int hdd_wiphy_init(hdd_context_t *hdd_ctx)
 		return ret_val;
 	}
 
-	hdd_program_country_code(hdd_ctx);
+	if (!hdd_ctx->reg_offload)
+		hdd_program_country_code(hdd_ctx);
 
 	return ret_val;
 }

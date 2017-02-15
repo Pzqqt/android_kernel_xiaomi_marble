@@ -432,7 +432,7 @@ QDF_STATUS csr_set_channels(tHalHandle hHal, tCsrConfigParam *pParam)
 			pMac->scan.base_channels.channelList[index];
 		pParam->Csr11dinfo.ChnPower[index].numChannels = 1;
 		pParam->Csr11dinfo.ChnPower[index].maxtxPower =
-			pMac->scan.defaultPowerTable[index].power;
+			pMac->scan.defaultPowerTable[index].tx_power;
 	}
 	pParam->Csr11dinfo.Channels.numChannels =
 		pMac->scan.base_channels.numChannels;
@@ -466,7 +466,7 @@ static int8_t csr_find_channel_pwr(struct channel_power *
 	/* order of channel numbers, we can employ binary search */
 	for (i = 0; i < WNI_CFG_VALID_CHANNEL_LIST_LEN; i++) {
 		if (pdefaultPowerTable[i].chan_num == ChannelNum)
-			return pdefaultPowerTable[i].power;
+			return pdefaultPowerTable[i].tx_power;
 	}
 	/* could not find the channel list in default list */
 	/* this should not have occured */
@@ -752,8 +752,10 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 			continue;
 
 		/* Scan is not performed on DSRC channels*/
-		if (pScan->base_channels.channelList[i] >= CDS_MIN_11P_CHANNEL)
+		if (pScan->base_channels.channelList[i] >=
+		    WLAN_REG_MIN_11P_CH_NUM)
 			continue;
+
 		channel = pScan->base_channels.channelList[i];
 
 		channel_state =
@@ -19069,7 +19071,7 @@ QDF_STATUS csr_handoff_request(tpAniSirGlobal pMac,
  */
 QDF_STATUS csr_roam_channel_change_req(tpAniSirGlobal pMac,
 				       struct qdf_mac_addr bssid,
-				       struct ch_params_s *ch_params,
+				       struct ch_params *ch_params,
 				       tCsrRoamProfile *profile)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -19313,7 +19315,7 @@ QDF_STATUS csr_roam_send_chan_sw_ie_request(tpAniSirGlobal mac_ctx,
 					    struct qdf_mac_addr bssid,
 					    uint8_t target_channel,
 					    uint8_t csa_ie_reqd,
-					    struct ch_params_s *ch_params)
+					    struct ch_params *ch_params)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tSirDfsCsaIeRequest *msg;
@@ -19329,7 +19331,7 @@ QDF_STATUS csr_roam_send_chan_sw_ie_request(tpAniSirGlobal mac_ctx,
 	msg->targetChannel = target_channel;
 	msg->csaIeRequired = csa_ie_reqd;
 	qdf_mem_copy(msg->bssid, bssid.bytes, QDF_MAC_ADDR_SIZE);
-	qdf_mem_copy(&msg->ch_params, ch_params, sizeof(struct ch_params_s));
+	qdf_mem_copy(&msg->ch_params, ch_params, sizeof(struct ch_params));
 
 	status = umac_send_mb_message_to_mac(msg);
 
