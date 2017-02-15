@@ -1331,7 +1331,7 @@ void csr_release_roc_req_cmd(tpAniSirGlobal mac_ctx, uint8_t session_id)
 			/* Put this cmd back on the available command list */
 			if (csr_ll_remove_entry(&mac_ctx->sme.smeCmdActiveList,
 						entry, LL_ACCESS_LOCK))
-				sme_release_command(mac_ctx, cmd);
+				csr_release_command(mac_ctx, cmd);
 		}
 	}
 }
@@ -8812,13 +8812,13 @@ bool csr_is_scan_for_roam_command_active(tpAniSirGlobal pMac,
 {
 	bool fRet = false;
 	tListElem *pEntry;
-	tCsrCmd *pCommand;
+	tSmeCmd *pCommand;
 	/* alwasy lock active list before locking pending list */
 	csr_ll_lock(&pMac->sme.smeCmdActiveList);
 	pEntry = csr_ll_peek_head(&pMac->sme.smeCmdActiveList, LL_ACCESS_NOLOCK);
 	if (pEntry) {
-		pCommand = GET_BASE_ADDR(pEntry, tCsrCmd, Link);
-		if ((eCsrRoamCommandScan == pCommand->command) &&
+		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
+		if ((eSmeCommandScan == pCommand->command) &&
 		    ((eCsrScanForSsid == pCommand->u.scanCmd.reason) ||
 		     (eCsrScanP2PFindPeer == pCommand->u.scanCmd.reason))) {
 			fRet = true;

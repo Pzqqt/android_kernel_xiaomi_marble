@@ -777,7 +777,7 @@ void sme_ndp_msg_processor(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg)
 		/* Now put this cmd back on the avilable command list */
 		if (csr_ll_remove_entry(&mac_ctx->sme.smeCmdActiveList,
 				     entry, LL_ACCESS_LOCK))
-			sme_release_command(mac_ctx, cmd);
+			csr_release_command(mac_ctx, cmd);
 		sme_process_pending_queue(mac_ctx);
 	}
 }
@@ -794,7 +794,7 @@ void sme_ndp_msg_processor(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg)
 void csr_release_ndp_initiator_req(tpAniSirGlobal mac_ctx, tSmeCmd *cmd)
 {
 	csr_free_ndp_initiator_req(cmd);
-	sme_release_command(mac_ctx, cmd);
+	csr_release_command(mac_ctx, cmd);
 }
 
 /**
@@ -808,7 +808,7 @@ void csr_release_ndp_initiator_req(tpAniSirGlobal mac_ctx, tSmeCmd *cmd)
 void csr_release_ndp_responder_req(tpAniSirGlobal mac_ctx, tSmeCmd *cmd)
 {
 	csr_free_ndp_responder_req(cmd);
-	sme_release_command(mac_ctx, cmd);
+	csr_release_command(mac_ctx, cmd);
 }
 
 /**
@@ -823,5 +823,5 @@ void csr_release_ndp_data_end_req(tpAniSirGlobal mac_ctx, tSmeCmd *cmd)
 {
 	qdf_mem_free(cmd->u.data_end_req);
 	cmd->u.data_end_req = NULL;
-	sme_release_command(mac_ctx, cmd);
+	csr_release_command(mac_ctx, cmd);
 }

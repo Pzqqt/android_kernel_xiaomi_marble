@@ -245,7 +245,7 @@ end:
 			LL_ACCESS_LOCK);
 	if (found) {
 		/* Now put this command back on the avilable command list */
-		sme_release_command(mac, command);
+		csr_release_command(mac, command);
 	}
 	sme_process_pending_queue(mac);
 	return QDF_STATUS_SUCCESS;
@@ -680,10 +680,10 @@ static void sme_abort_command(tpAniSirGlobal pMac, tSmeCmd *pCommand,
 					pCommand->u.remainChlCmd.scan_id);
 			}
 		}
-		sme_release_command(pMac, pCommand);
+		csr_release_command(pMac, pCommand);
 		break;
 	default:
-		sme_release_command(pMac, pCommand);
+		csr_release_command(pMac, pCommand);
 		break;
 	}
 
@@ -793,7 +793,7 @@ static bool sme_process_scan_queue(tpAniSirGlobal pMac)
 					&pMac->sme.smeScanCmdActiveList,
 					LL_ACCESS_NOLOCK);
 			pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
-			sme_release_command(pMac, pCommand);
+			csr_release_command(pMac, pCommand);
 			break;
 		}
 	}
@@ -1018,7 +1018,7 @@ sme_process_cmd:
 					    LL_ACCESS_NOLOCK);
 		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
 		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
-		sme_release_command(pMac, pCommand);
+		csr_release_command(pMac, pCommand);
 		status = QDF_STATUS_E_FAILURE;
 		break;
 	}
@@ -2433,7 +2433,7 @@ static QDF_STATUS sme_process_dual_mac_config_resp(tpAniSirGlobal mac,
 			LL_ACCESS_LOCK);
 	if (found)
 		/* Now put this command back on the available command list */
-		sme_release_command(mac, command);
+		csr_release_command(mac, command);
 
 	sme_process_pending_queue(mac);
 	return QDF_STATUS_SUCCESS;
@@ -2502,7 +2502,7 @@ static QDF_STATUS sme_process_antenna_mode_resp(tpAniSirGlobal mac,
 			LL_ACCESS_LOCK);
 	if (found)
 		/* Now put this command back on the available command list */
-		sme_release_command(mac, command);
+		csr_release_command(mac, command);
 
 	sme_process_pending_queue(mac);
 	return QDF_STATUS_SUCCESS;
@@ -3169,7 +3169,7 @@ QDF_STATUS sme_process_nss_update_resp(tpAniSirGlobal mac, uint8_t *msg)
 			LL_ACCESS_LOCK);
 	if (found) {
 		/* Now put this command back on the avilable command list */
-		sme_release_command(mac, command);
+		csr_release_command(mac, command);
 	}
 	sme_process_pending_queue(mac);
 	return QDF_STATUS_SUCCESS;
@@ -15504,7 +15504,7 @@ QDF_STATUS sme_pdev_set_hw_mode(tHalHandle hal,
 		return QDF_STATUS_E_RESOURCES;
 	}
 
-	cmd = sme_get_command_buffer(mac);
+	cmd = csr_get_command_buffer(mac);
 	if (!cmd) {
 		sms_log(mac, LOGE, FL("Get command buffer failed"));
 		sme_release_global_lock(&mac->sme);
@@ -15569,7 +15569,7 @@ QDF_STATUS sme_nss_update_request(tHalHandle hHal, uint32_t vdev_id,
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		cmd = sme_get_command_buffer(mac);
+		cmd = csr_get_command_buffer(mac);
 		if (!cmd) {
 			sms_log(mac, LOGE, FL("Get command buffer failed"));
 			sme_release_global_lock(&mac->sme);
@@ -15615,7 +15615,7 @@ QDF_STATUS sme_soc_set_dual_mac_config(tHalHandle hal,
 		return QDF_STATUS_E_RESOURCES;
 	}
 
-	cmd = sme_get_command_buffer(mac);
+	cmd = csr_get_command_buffer(mac);
 	if (!cmd) {
 		sms_log(mac, LOGE, FL("Get command buffer failed"));
 		sme_release_global_lock(&mac->sme);
@@ -15706,7 +15706,7 @@ QDF_STATUS sme_soc_set_antenna_mode(tHalHandle hal,
 		return QDF_STATUS_E_RESOURCES;
 	}
 
-	cmd = sme_get_command_buffer(mac);
+	cmd = csr_get_command_buffer(mac);
 	if (!cmd) {
 		sme_release_global_lock(&mac->sme);
 		sms_log(mac, LOGE, FL("Get command buffer failed"));

@@ -40,6 +40,7 @@
 #include "ani_global.h"
 
 #include "sme_inside.h"
+#include "csr_inside_api.h"
 #include "host_diag_core_event.h"
 #include "host_diag_core_log.h"
 
@@ -784,7 +785,7 @@ sme_QosStatusType sme_qos_release_req(tHalHandle hHal, uint8_t session_id,
 void qos_release_command(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 {
 	qdf_mem_zero(&pCommand->u.qosCmd, sizeof(tGenericQosCmd));
-	sme_release_command(pMac, pCommand);
+	csr_release_command(pMac, pCommand);
 }
 
 /**
@@ -7470,7 +7471,7 @@ static QDF_STATUS qos_issue_command(tpAniSirGlobal pMac, uint8_t sessionId,
 	QDF_STATUS status = QDF_STATUS_E_RESOURCES;
 	tSmeCmd *pCommand = NULL;
 	do {
-		pCommand = sme_get_command_buffer(pMac);
+		pCommand = csr_get_command_buffer(pMac);
 		if (!pCommand) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: fail to get command buffer for command %d",

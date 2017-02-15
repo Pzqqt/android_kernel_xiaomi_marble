@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -113,16 +113,6 @@ typedef enum {
 	/* This value can never set to CFG. Its for CSR's internal use */
 	eCSR_CFG_DOT11_MODE_AUTO,
 } eCsrCfgDot11Mode;
-
-typedef enum etCsrRoamCommands {
-	eCsrRoamNoCommand,
-	eCsrRoamCommandScan,
-	eCsrRoamCommandRoam,
-	eCsrRoamCommandWmStatusChange,
-	eCsrRoamCommandSetKey,
-	eCsrRoamCommandRemoveKey,
-
-} eCsrRoamCommands;
 
 typedef enum {
 	eCsrScanOther = 1,
@@ -446,21 +436,6 @@ typedef struct tagDelStaForSessionCmd {
 	csr_roamSessionCloseCallback callback;
 	void *pContext;
 } tDelStaForSessionCmd;
-
-/* This structure represents one scan request */
-typedef struct tagCsrCmd {
-	tListElem Link;
-	eCsrRoamCommands command;
-	uint8_t sessionId;      /* Session ID for this command */
-	union {
-		tScanCmd scanCmd;
-		tRoamCmd roamCmd;
-		tWmStatusChangeCmd wmStatusChangeCmd;
-		tSetKeyCmd setKeyCmd;
-		tAddStaForSessionCmd addStaSessionCmd;
-		tDelStaForSessionCmd delStaSessionCmd;
-	} u;
-} tCsrCmd;
 
 typedef struct tagCsr11rConfig {
 	bool IsFTResourceReqSupported;

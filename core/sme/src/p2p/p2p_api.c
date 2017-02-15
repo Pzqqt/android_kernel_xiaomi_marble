@@ -131,7 +131,7 @@ QDF_STATUS sme_remain_on_chn_rsp(tpAniSirGlobal pMac, uint8_t *pMsg)
 				     LL_ACCESS_LOCK);
 	if (fFound) {
 		/* Now put this command back on the avilable command list */
-		sme_release_command(pMac, pCommand);
+		csr_release_command(pMac, pCommand);
 	}
 	sme_process_pending_queue(pMac);
 	return status;
@@ -252,7 +252,7 @@ QDF_STATUS p2p_remain_on_channel(tHalHandle hHal, uint8_t sessionId,
 	tSmeCmd *pRemainChlCmd = NULL;
 	uint32_t phyMode;
 
-	pRemainChlCmd = sme_get_command_buffer(pMac);
+	pRemainChlCmd = csr_get_command_buffer(pMac);
 	if (pRemainChlCmd == NULL)
 		return QDF_STATUS_E_FAILURE;
 
