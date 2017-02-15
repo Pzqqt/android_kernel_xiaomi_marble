@@ -297,8 +297,13 @@ static int hdd_hostapd_open(struct net_device *dev)
 static int __hdd_hostapd_stop(struct net_device *dev)
 {
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	int ret;
 
 	ENTER_DEV(dev);
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret)
+		return ret;
 
 	clear_bit(DEVICE_IFACE_OPENED, &adapter->event_flags);
 	/* Stop all tx queues */
