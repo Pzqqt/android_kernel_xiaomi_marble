@@ -113,7 +113,7 @@ QDF_STATUS sme_ndp_initiator_req_handler(tHalHandle hal,
 		cmd->u.initiator_req.ndp_info.ndp_app_info =
 			qdf_mem_malloc(req_params->ndp_info.ndp_app_info_len);
 		if (NULL == cmd->u.initiator_req.ndp_info.ndp_app_info) {
-			csr_release_ndp_initiator_req(mac_ctx, cmd);
+			csr_release_command(mac_ctx, cmd);
 			sme_release_global_lock(&mac_ctx->sme);
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -126,7 +126,7 @@ QDF_STATUS sme_ndp_initiator_req_handler(tHalHandle hal,
 		cmd->u.initiator_req.ndp_config.ndp_cfg =
 			qdf_mem_malloc(req_params->ndp_config.ndp_cfg_len);
 		if (NULL == cmd->u.initiator_req.ndp_config.ndp_cfg) {
-			csr_release_ndp_initiator_req(mac_ctx, cmd);
+			csr_release_command(mac_ctx, cmd);
 			sme_release_global_lock(&mac_ctx->sme);
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -139,7 +139,7 @@ QDF_STATUS sme_ndp_initiator_req_handler(tHalHandle hal,
 		cmd->u.initiator_req.pmk.pmk =
 			qdf_mem_malloc(req_params->pmk.pmk_len);
 		if (NULL == cmd->u.initiator_req.pmk.pmk) {
-			csr_release_ndp_initiator_req(mac_ctx, cmd);
+			csr_release_command(mac_ctx, cmd);
 			sme_release_global_lock(&mac_ctx->sme);
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -151,7 +151,7 @@ QDF_STATUS sme_ndp_initiator_req_handler(tHalHandle hal,
 	if (QDF_STATUS_SUCCESS != status) {
 		sms_log(mac_ctx, LOGE, FL("SME enqueue failed, status:%d"),
 			status);
-		csr_release_ndp_initiator_req(mac_ctx, cmd);
+		csr_release_command(mac_ctx, cmd);
 	}
 
 	sme_release_global_lock(&mac_ctx->sme);
@@ -205,7 +205,7 @@ QDF_STATUS sme_ndp_responder_req_handler(tHalHandle hal,
 		cmd->u.responder_req.ndp_info.ndp_app_info =
 			qdf_mem_malloc(req_params->ndp_info.ndp_app_info_len);
 		if (NULL == cmd->u.responder_req.ndp_info.ndp_app_info) {
-			csr_release_ndp_responder_req(mac_ctx, cmd);
+			csr_release_command(mac_ctx, cmd);
 			sme_release_global_lock(&mac_ctx->sme);
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -218,7 +218,7 @@ QDF_STATUS sme_ndp_responder_req_handler(tHalHandle hal,
 		cmd->u.responder_req.ndp_config.ndp_cfg =
 			qdf_mem_malloc(req_params->ndp_config.ndp_cfg_len);
 		if (NULL == cmd->u.responder_req.ndp_config.ndp_cfg) {
-			csr_release_ndp_responder_req(mac_ctx, cmd);
+			csr_release_command(mac_ctx, cmd);
 			sme_release_global_lock(&mac_ctx->sme);
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -231,7 +231,7 @@ QDF_STATUS sme_ndp_responder_req_handler(tHalHandle hal,
 		cmd->u.responder_req.pmk.pmk =
 			qdf_mem_malloc(req_params->pmk.pmk_len);
 		if (NULL == cmd->u.responder_req.pmk.pmk) {
-			csr_release_ndp_responder_req(mac_ctx, cmd);
+			csr_release_command(mac_ctx, cmd);
 			sme_release_global_lock(&mac_ctx->sme);
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -243,7 +243,7 @@ QDF_STATUS sme_ndp_responder_req_handler(tHalHandle hal,
 	if (QDF_STATUS_SUCCESS != status) {
 		sms_log(mac_ctx, LOGE,
 			FL("SME enqueue failed, status:%d"), status);
-		csr_release_ndp_responder_req(mac_ctx, cmd);
+		csr_release_command(mac_ctx, cmd);
 	}
 
 	sme_release_global_lock(&mac_ctx->sme);
@@ -285,7 +285,7 @@ QDF_STATUS sme_ndp_end_req_handler(tHalHandle hal, struct ndp_end_req *req)
 	cmd->u.data_end_req = qdf_mem_malloc(sizeof(*req) +
 				(req->num_ndp_instances * sizeof(uint32_t)));
 	if (NULL == cmd->u.data_end_req) {
-			csr_release_command_roam(mac_ctx, cmd);
+			csr_release_command(mac_ctx, cmd);
 			sme_release_global_lock(&mac_ctx->sme);
 			return QDF_STATUS_E_NOMEM;
 	}
@@ -301,7 +301,7 @@ QDF_STATUS sme_ndp_end_req_handler(tHalHandle hal, struct ndp_end_req *req)
 		sms_log(mac_ctx, LOGE, FL("SME enqueue failed, status:%d"),
 			status);
 		ret = QDF_STATUS_E_FAILURE;
-		csr_release_ndp_data_end_req(mac_ctx, cmd);
+		csr_release_command(mac_ctx, cmd);
 	}
 
 	sme_release_global_lock(&mac_ctx->sme);
@@ -794,7 +794,6 @@ void sme_ndp_msg_processor(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg)
 void csr_release_ndp_initiator_req(tpAniSirGlobal mac_ctx, tSmeCmd *cmd)
 {
 	csr_free_ndp_initiator_req(cmd);
-	csr_release_command(mac_ctx, cmd);
 }
 
 /**
@@ -808,7 +807,6 @@ void csr_release_ndp_initiator_req(tpAniSirGlobal mac_ctx, tSmeCmd *cmd)
 void csr_release_ndp_responder_req(tpAniSirGlobal mac_ctx, tSmeCmd *cmd)
 {
 	csr_free_ndp_responder_req(cmd);
-	csr_release_command(mac_ctx, cmd);
 }
 
 /**
@@ -823,5 +821,4 @@ void csr_release_ndp_data_end_req(tpAniSirGlobal mac_ctx, tSmeCmd *cmd)
 {
 	qdf_mem_free(cmd->u.data_end_req);
 	cmd->u.data_end_req = NULL;
-	csr_release_command(mac_ctx, cmd);
 }

@@ -907,7 +907,7 @@ sme_process_cmd:
 		if (!QDF_IS_STATUS_SUCCESS(status)
 		    && csr_ll_remove_entry(&pMac->sme.smeCmdActiveList,
 				&pCommand->Link, LL_ACCESS_LOCK))
-			csr_release_command_roam(pMac, pCommand);
+			csr_release_command(pMac, pCommand);
 		break;
 	case eSmeCommandWmStatusChange:
 		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
@@ -919,7 +919,7 @@ sme_process_cmd:
 		if (!QDF_IS_STATUS_SUCCESS(status)
 		    && csr_ll_remove_entry(&pMac->sme.smeCmdActiveList,
 				&pCommand->Link, LL_ACCESS_LOCK)) {
-			csr_release_command_set_key(pMac, pCommand);
+			csr_release_command(pMac, pCommand);
 		}
 		break;
 	case eSmeCommandNdpInitiatorRequest:
@@ -951,7 +951,11 @@ sme_process_cmd:
 		break;
 	case eSmeCommandRemainOnChannel:
 		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
-		p2p_process_remain_on_channel_cmd(pMac, pCommand);
+		status = p2p_process_remain_on_channel_cmd(pMac, pCommand);
+		if (!QDF_IS_STATUS_SUCCESS(status)
+		    && csr_ll_remove_entry(&pMac->sme.smeCmdActiveList,
+				&pCommand->Link, LL_ACCESS_LOCK))
+			csr_release_command(pMac, pCommand);
 		break;
 	/*
 	 * Treat standby differently here because caller may not be able

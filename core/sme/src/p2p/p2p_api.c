@@ -51,14 +51,14 @@ QDF_STATUS p2p_process_remain_on_channel_cmd(tpAniSirGlobal pMac,
 	if (!pSession) {
 		sms_log(pMac, LOGE, FL("  session %d not found "),
 			p2pRemainonChn->sessionId);
-		goto error;
+		return status;
 	}
 
 	if (!pSession->sessionActive) {
 		sms_log(pMac, LOGE,
 			FL("  session %d is invalid or listen is disabled "),
 			p2pRemainonChn->sessionId);
-		goto error;
+		return status;
 	}
 	len = sizeof(tSirRemainOnChnReq) + pMac->p2pContext.probeRspIeLength;
 
@@ -66,34 +66,30 @@ QDF_STATUS p2p_process_remain_on_channel_cmd(tpAniSirGlobal pMac,
 		/*In coming len for Msg is more then 16bit value */
 		sms_log(pMac, LOGE, FL("  Message length is very large, %d"),
 			len);
-		goto error;
+		return status;
 	}
 
 	pMsg = qdf_mem_malloc(len);
 	if (NULL == pMsg)
-		goto error;
-	else {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO, "%s call",
-			  __func__);
-		pMsg->messageType = eWNI_SME_REMAIN_ON_CHANNEL_REQ;
-		pMsg->length = (uint16_t) len;
-		qdf_copy_macaddr(&pMsg->selfMacAddr, &pSession->selfMacAddr);
-		pMsg->chnNum = p2pRemainonChn->u.remainChlCmd.chn;
-		pMsg->phyMode = p2pRemainonChn->u.remainChlCmd.phyMode;
-		pMsg->duration = p2pRemainonChn->u.remainChlCmd.duration;
-		pMsg->sessionId = p2pRemainonChn->sessionId;
-		pMsg->isProbeRequestAllowed =
-			p2pRemainonChn->u.remainChlCmd.isP2PProbeReqAllowed;
-		pMsg->scan_id = p2pRemainonChn->u.remainChlCmd.scan_id;
-		if (pMac->p2pContext.probeRspIeLength)
-			qdf_mem_copy((void *)pMsg->probeRspIe,
-				     (void *)pMac->p2pContext.probeRspIe,
-				     pMac->p2pContext.probeRspIeLength);
-		status = umac_send_mb_message_to_mac(pMsg);
-	}
-error:
-	if (QDF_STATUS_E_FAILURE == status)
-		csr_release_roc_req_cmd(pMac, p2pRemainonChn->sessionId);
+		return status;
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO, "%s call",
+		  __func__);
+	pMsg->messageType = eWNI_SME_REMAIN_ON_CHANNEL_REQ;
+	pMsg->length = (uint16_t) len;
+	qdf_copy_macaddr(&pMsg->selfMacAddr, &pSession->selfMacAddr);
+	pMsg->chnNum = p2pRemainonChn->u.remainChlCmd.chn;
+	pMsg->phyMode = p2pRemainonChn->u.remainChlCmd.phyMode;
+	pMsg->duration = p2pRemainonChn->u.remainChlCmd.duration;
+	pMsg->sessionId = p2pRemainonChn->sessionId;
+	pMsg->isProbeRequestAllowed =
+		p2pRemainonChn->u.remainChlCmd.isP2PProbeReqAllowed;
+	pMsg->scan_id = p2pRemainonChn->u.remainChlCmd.scan_id;
+	if (pMac->p2pContext.probeRspIeLength)
+		qdf_mem_copy((void *)pMsg->probeRspIe,
+			     (void *)pMac->p2pContext.probeRspIe,
+			     pMac->p2pContext.probeRspIeLength);
+	status = umac_send_mb_message_to_mac(pMsg);
+
 	return status;
 }
 

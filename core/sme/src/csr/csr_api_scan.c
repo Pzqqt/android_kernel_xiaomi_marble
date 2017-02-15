@@ -644,7 +644,7 @@ release_cmd:
 			sessionId, status, scan_cmd->u.scanCmd.reason,
 			scan_req->SSIDs.numOfSSIDs, scan_req->p2pSearch,
 			scan_cmd->u.scanCmd.scanID);
-		csr_release_command_scan(pMac, scan_cmd);
+		csr_release_command(pMac, scan_cmd);
 	}
 
 	return status;
@@ -954,7 +954,7 @@ release_lost_link1_cmd:
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(mac_ctx, LOGW, FL("failed with status %d"), status);
 		if (cmd)
-			csr_release_command_scan(mac_ctx, cmd);
+			csr_release_command(mac_ctx, cmd);
 		status = csr_scan_handle_failed_lostlink1(mac_ctx, session_id);
 	}
 	return status;
@@ -1083,7 +1083,7 @@ release_lost_link2_cmd:
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(mac_ctx, LOGW, FL("failed with status %d"), status);
 		if (cmd)
-			csr_release_command_scan(mac_ctx, cmd);
+			csr_release_command(mac_ctx, cmd);
 		status = csr_scan_handle_failed_lostlink2(mac_ctx, session_id);
 	}
 	return status;
@@ -1138,7 +1138,7 @@ csr_scan_request_lost_link3(tpAniSirGlobal mac_ctx, uint32_t session_id)
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(mac_ctx, LOGW, FL("failed with status %d"), status);
 		if (cmd)
-			csr_release_command_scan(mac_ctx, cmd);
+			csr_release_command(mac_ctx, cmd);
 	}
 
 	return status;
@@ -6075,7 +6075,7 @@ bool csr_scan_remove_fresh_scan_command(tpAniSirGlobal pMac, uint8_t sessionId)
 				pCommand->u.scanCmd.pContext, sessionId,
 				pCommand->u.scanCmd.scanID, eCSR_SCAN_ABORT);
 		}
-		csr_release_command_scan(pMac, pCommand);
+		csr_release_command(pMac, pCommand);
 	}
 	csr_ll_close(&localList);
 
@@ -6101,7 +6101,7 @@ void csr_release_scan_command(tpAniSirGlobal pMac, tSmeCmd *pCommand,
 			pCommand->u.scanCmd.scanID);
 		return;
 	}
-	csr_release_command_scan(pMac, pCommand);
+	csr_release_command(pMac, pCommand);
 }
 
 QDF_STATUS csr_scan_get_pmkid_candidate_list(tpAniSirGlobal pMac,
@@ -6463,7 +6463,7 @@ error:
 		sms_log(mac_ctx, LOGE,
 			FL(" failed to iniate scan with status = %d"), status);
 		if (scan_cmd)
-			csr_release_command_scan(mac_ctx, scan_cmd);
+			csr_release_command(mac_ctx, scan_cmd);
 		if (notify)
 			csr_roam_call_callback(mac_ctx, session_id, NULL,
 					roam_id, eCSR_ROAM_FAILED,

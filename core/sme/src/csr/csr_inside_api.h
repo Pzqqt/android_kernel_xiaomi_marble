@@ -208,7 +208,7 @@ bool csr_scan_complete(tpAniSirGlobal pMac, tSirSmeScanRsp *pScanRsp);
 void csr_release_command_roam(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 void csr_release_command_scan(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 void csr_release_command_wm_status_change(tpAniSirGlobal pMac, tSmeCmd *pCommand);
-extern void csr_release_roc_req_cmd(tpAniSirGlobal mac_ctx, uint8_t session_id);
+void csr_release_roc_req_cmd(tpAniSirGlobal mac_ctx, tSmeCmd *pCommand);
 
 bool csr_is_duplicate_bss_description(tpAniSirGlobal pMac,
 				      tSirBssDescription *pSirBssDesc1,

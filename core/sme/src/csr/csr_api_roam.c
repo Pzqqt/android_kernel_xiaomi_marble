@@ -1273,7 +1273,6 @@ static QDF_STATUS csr_roam_free_connected_info(tpAniSirGlobal pMac,
 void csr_release_command_roam(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 {
 	csr_reinit_roam_cmd(pMac, pCommand);
-	csr_release_command(pMac, pCommand);
 }
 
 void csr_release_command_scan(tpAniSirGlobal pMac, tSmeCmd *pCommand)
@@ -1281,13 +1280,11 @@ void csr_release_command_scan(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 	qdf_mc_timer_stop(&pCommand->u.scanCmd.csr_scan_timer);
 	qdf_mc_timer_destroy(&pCommand->u.scanCmd.csr_scan_timer);
 	csr_reinit_scan_cmd(pMac, pCommand);
-	csr_release_command(pMac, pCommand);
 }
 
 void csr_release_command_wm_status_change(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 {
 	csr_reinit_wm_status_change_cmd(pMac, pCommand);
-	csr_release_command(pMac, pCommand);
 }
 
 void csr_reinit_set_key_cmd(tpAniSirGlobal pMac, tSmeCmd *pCommand)
@@ -1298,7 +1295,6 @@ void csr_reinit_set_key_cmd(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 void csr_release_command_set_key(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 {
 	csr_reinit_set_key_cmd(pMac, pCommand);
-	csr_release_command(pMac, pCommand);
 }
 
 /**
@@ -1309,30 +1305,18 @@ void csr_release_command_set_key(tpAniSirGlobal pMac, tSmeCmd *pCommand)
  *
  * Return: None
  */
-void csr_release_roc_req_cmd(tpAniSirGlobal mac_ctx, uint8_t session_id)
+void csr_release_roc_req_cmd(tpAniSirGlobal mac_ctx, tSmeCmd *sme_cmd)
 {
-	tListElem *entry;
-	tSmeCmd *cmd = NULL;
-
-	entry = csr_ll_peek_head(&mac_ctx->sme.smeCmdActiveList,
-			LL_ACCESS_LOCK);
-	if (entry) {
-		cmd = GET_BASE_ADDR(entry, tSmeCmd, Link);
-		if (eSmeCommandRemainOnChannel == cmd->command) {
-			remainOnChanCallback callback =
-				cmd->u.remainChlCmd.callback;
-			/* process the msg */
-			if (callback)
-				callback(mac_ctx,
-					cmd->u.remainChlCmd.callbackCtx, 0,
-					cmd->u.remainChlCmd.scan_id);
-			sms_log(mac_ctx, LOGE,
-				FL("Remove RoC Request from Active Cmd List"));
-			/* Put this cmd back on the available command list */
-			if (csr_ll_remove_entry(&mac_ctx->sme.smeCmdActiveList,
-						entry, LL_ACCESS_LOCK))
-				csr_release_command(mac_ctx, cmd);
-		}
+	if (eSmeCommandRemainOnChannel == sme_cmd->command) {
+		remainOnChanCallback callback =
+			sme_cmd->u.remainChlCmd.callback;
+		/* process the msg */
+		if (callback)
+			callback(mac_ctx,
+				 sme_cmd->u.remainChlCmd.callbackCtx, 0,
+				 sme_cmd->u.remainChlCmd.scan_id);
+		sms_log(mac_ctx, LOGE,
+			FL("Remove RoC Request from Active Cmd List"));
 	}
 }
 
@@ -1353,38 +1337,14 @@ void csr_abort_command(tpAniSirGlobal pMac, tSmeCmd *pCommand, bool fStopping)
 				csr_scan_call_callback(pMac, pCommand,
 						       eCSR_SCAN_ABORT);
 			}
-			csr_release_command_scan(pMac, pCommand);
-			break;
-		case eSmeCommandRoam:
-			csr_release_command_roam(pMac, pCommand);
-			break;
-
-		case eSmeCommandWmStatusChange:
-			csr_release_command_wm_status_change(pMac, pCommand);
-			break;
-
-		case eSmeCommandSetKey:
-			csr_release_command_set_key(pMac, pCommand);
-			break;
-
-		case eSmeCommandNdpInitiatorRequest:
-			csr_release_ndp_initiator_req(pMac, pCommand);
-			break;
-
-		case eSmeCommandNdpResponderRequest:
-			csr_release_ndp_responder_req(pMac, pCommand);
-			break;
-
-		case eSmeCommandNdpDataEndInitiatorRequest:
-			csr_release_ndp_data_end_req(pMac, pCommand);
 			break;
 
 		default:
 			sms_log(pMac, LOGW, " CSR abort standard command %d",
 				pCommand->command);
-			csr_release_command(pMac, pCommand);
 			break;
 		}
+		csr_release_command(pMac, pCommand);
 	}
 }
 
@@ -3310,7 +3270,7 @@ static void csr_roam_remove_duplicate_cmd_from_list(tpAniSirGlobal mac_ctx,
 		csr_roam_call_callback(mac_ctx, dup_cmd->sessionId, NULL,
 				dup_cmd->u.roamCmd.roamId,
 				eCSR_ROAM_CANCELLED, eCSR_ROAM_RESULT_NONE);
-		csr_release_command_roam(mac_ctx, dup_cmd);
+		csr_release_command(mac_ctx, dup_cmd);
 	}
 	csr_ll_close(&local_list);
 }
@@ -3709,7 +3669,7 @@ QDF_STATUS csr_roam_issue_disassociate_sta_cmd(tpAniSirGlobal pMac,
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			sms_log(pMac, LOGE,
 				FL(" fail to send message status = %d"), status);
-			csr_release_command_roam(pMac, pCommand);
+			csr_release_command(pMac, pCommand);
 		}
 	} while (0);
 
@@ -3751,7 +3711,7 @@ QDF_STATUS csr_roam_issue_deauth_sta_cmd(tpAniSirGlobal pMac,
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			sms_log(pMac, LOGE,
 				FL(" fail to send message status = %d"), status);
-			csr_release_command_roam(pMac, pCommand);
+			csr_release_command(pMac, pCommand);
 		}
 	} while (0);
 
@@ -5651,7 +5611,7 @@ static QDF_STATUS csr_roam_trigger_reassociate(tpAniSirGlobal mac_ctx,
 			if (!QDF_IS_STATUS_SUCCESS(status)) {
 				sms_log(mac_ctx, LOGE, FL("failed status %d"),
 					status);
-				csr_release_command_roam(mac_ctx, cmd);
+				csr_release_command(mac_ctx, cmd);
 			}
 
 			qdf_mem_free(pIes);
@@ -5838,7 +5798,7 @@ void csr_roam_complete(tpAniSirGlobal pMac, eCsrRoamCompleteResult Result,
 				if (csr_ll_remove_entry
 					    (&pMac->sme.smeCmdActiveList, pEntry,
 					    LL_ACCESS_LOCK)) {
-					csr_release_command_roam(pMac, pCommand);
+					csr_release_command(pMac, pCommand);
 				} else {
 					sms_log(pMac, LOGE,
 						" **********csr_roam_complete fail to release command reason %d",
@@ -7589,7 +7549,7 @@ QDF_STATUS csr_roam_issue_connect(tpAniSirGlobal pMac, uint32_t sessionId,
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			sms_log(pMac, LOGE,
 				FL(" fail to send message status = %d"), status);
-			csr_release_command_roam(pMac, pCommand);
+			csr_release_command(pMac, pCommand);
 		}
 	}
 
@@ -7649,7 +7609,7 @@ QDF_STATUS csr_roam_issue_reassoc(tpAniSirGlobal pMac, uint32_t sessionId,
 				FL(" fail to send message status = %d"), status);
 			csr_roam_completion(pMac, sessionId, NULL, pCommand,
 					    eCSR_ROAM_RESULT_FAILURE, false);
-			csr_release_command_roam(pMac, pCommand);
+			csr_release_command(pMac, pCommand);
 		}
 	}
 	return status;
@@ -7681,7 +7641,7 @@ QDF_STATUS csr_dequeue_roam_command(tpAniSirGlobal pMac, eCsrRoamReason reason,
 			if (csr_ll_remove_entry
 				    (&pMac->sme.smeCmdActiveList, pEntry,
 				    LL_ACCESS_LOCK)) {
-				csr_release_command_roam(pMac, pCommand);
+				csr_release_command(pMac, pCommand);
 			}
 		} else {
 			sms_log(pMac, LOGE, FL("Command = %d, Reason = %d "),
@@ -8271,7 +8231,7 @@ QDF_STATUS csr_roam_issue_disassociate_cmd(tpAniSirGlobal pMac, uint32_t session
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			sms_log(pMac, LOGE,
 				FL(" fail to send message status = %d"), status);
-			csr_release_command_roam(pMac, pCommand);
+			csr_release_command(pMac, pCommand);
 		}
 	} while (0);
 	return status;
@@ -8297,7 +8257,7 @@ QDF_STATUS csr_roam_issue_stop_bss_cmd(tpAniSirGlobal pMac, uint32_t sessionId,
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			sms_log(pMac, LOGE,
 				FL(" fail to send message status = %d"), status);
-			csr_release_command_roam(pMac, pCommand);
+			csr_release_command(pMac, pCommand);
 		}
 	} else {
 		sms_log(pMac, LOGE, FL(" fail to get command buffer"));
@@ -9195,7 +9155,7 @@ csr_dequeue_command(tpAniSirGlobal mac_ctx)
 		cmd->u.roamCmd.fReleaseProfile = false;
 	}
 	if (fRemoveCmd)
-		csr_release_command_roam(mac_ctx, cmd);
+		csr_release_command(mac_ctx, cmd);
 	else
 		sms_log(mac_ctx, LOGE, FL("fail to remove cmd reason %d"),
 			cmd->u.roamCmd.roamReason);
@@ -9968,7 +9928,7 @@ static QDF_STATUS csr_roam_issue_set_key_command(tpAniSirGlobal pMac,
 	 * KRK key.
 	 */
 	if (false == enqueue_cmd)
-		csr_release_command_set_key(pMac, pCommand);
+		csr_release_command(pMac, pCommand);
 
 	return status;
 }
@@ -10299,7 +10259,7 @@ bool csr_roam_issue_wm_status_change(tpAniSirGlobal pMac, uint32_t sessionId,
 			fCommandQueued = true;
 		} else {
 			sms_log(pMac, LOGE, FL(" fail to send message "));
-			csr_release_command_wm_status_change(pMac, pCommand);
+			csr_release_command(pMac, pCommand);
 		}
 
 		/* AP has issued Dissac/Deauth, Set the operating mode value to configured value */
@@ -11372,7 +11332,7 @@ csr_roam_chk_lnk_set_ctx_rsp(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 remove_entry_n_process_pending:
 	if (csr_ll_remove_entry(&mac_ctx->sme.smeCmdActiveList, entry,
 				LL_ACCESS_LOCK))
-		csr_release_command_set_key(mac_ctx, cmd);
+		csr_release_command(mac_ctx, cmd);
 
 process_pending_n_exit:
 	sme_process_pending_queue(mac_ctx);
@@ -11917,7 +11877,7 @@ static void csr_roam_wm_status_change_complete(tpAniSirGlobal pMac,
 			if (csr_ll_remove_entry
 				    (&pMac->sme.smeCmdActiveList, pEntry,
 				    LL_ACCESS_LOCK)) {
-				csr_release_command_wm_status_change(pMac, pCommand);
+				csr_release_command(pMac, pCommand);
 			} else {
 				sms_log(pMac, LOGE,
 					" ******csr_roam_wm_status_change_complete fail to release command");
@@ -18334,12 +18294,50 @@ tSmeCmd *csr_get_command_buffer(tpAniSirGlobal pMac)
 	return pCmd;
 }
 
+static void csr_free_cmd_memory(tpAniSirGlobal pMac, tSmeCmd *pCommand)
+{
+	if (!pCommand) {
+		return;
+	}
+	switch (pCommand->command) {
+	case eSmeCommandScan:
+		csr_release_command_scan(pMac, pCommand);
+		break;
+	case eSmeCommandRoam:
+		csr_release_command_roam(pMac, pCommand);
+		break;
+	case eSmeCommandWmStatusChange:
+		csr_release_command_wm_status_change(pMac, pCommand);
+		break;
+	case eSmeCommandSetKey:
+		csr_release_command_set_key(pMac, pCommand);
+		break;
+	case eSmeCommandNdpInitiatorRequest:
+		csr_release_ndp_initiator_req(pMac, pCommand);
+		break;
+	case eSmeCommandNdpResponderRequest:
+		csr_release_ndp_responder_req(pMac, pCommand);
+		break;
+	case eSmeCommandNdpDataEndInitiatorRequest:
+		csr_release_ndp_data_end_req(pMac, pCommand);
+		break;
+	case eSmeCommandRemainOnChannel:
+		csr_release_roc_req_cmd(pMac, pCommand);
+		break;
+	default:
+		break;
+	}
+}
+
 void csr_release_command(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 {
 	if (pMac->roam.sPendingCommands > 0) {
-		/* All command allocated through csr_get_command_buffer need to */
-		/* decrement the pending count when releasing. */
+		/*
+		 * All command allocated through csr_get_command_buffer
+		 * need to decrement the pending count when releasing
+		 */
 		pMac->roam.sPendingCommands--;
+		csr_free_cmd_memory(pMac, pCommand);
 		sme_release_command(pMac, pCommand);
 	} else {
 		sms_log(pMac, LOGE, FL("no pending commands"));

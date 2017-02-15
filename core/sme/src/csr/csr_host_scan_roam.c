@@ -118,7 +118,7 @@ QDF_STATUS csr_roam_issue_reassociate_cmd(tpAniSirGlobal pMac,
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			sms_log(pMac, LOGE,
 				FL("fail to send message status=%d"), status);
-			csr_release_command_roam(pMac, pCommand);
+			csr_release_command(pMac, pCommand);
 		}
 	} while (0);
 
