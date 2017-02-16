@@ -7735,6 +7735,7 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 	pSapEventCallback = hdd_hostapd_sap_event_cb;
 
 	(WLAN_HDD_GET_AP_CTX_PTR(pHostapdAdapter))->dfs_cac_block_tx = true;
+	set_bit(SOFTAP_INIT_DONE, &pHostapdAdapter->event_flags);
 
 	qdf_event_reset(&pHostapdState->qdf_event);
 	status = wlansap_start_bss(
@@ -7795,6 +7796,7 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 	return 0;
 
 error:
+	clear_bit(SOFTAP_INIT_DONE, &pHostapdAdapter->event_flags);
 	if (pHostapdAdapter->sessionCtx.ap.sapConfig.acs_cfg.ch_list) {
 		qdf_mem_free(pHostapdAdapter->sessionCtx.ap.sapConfig.
 			acs_cfg.ch_list);
@@ -7980,6 +7982,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	}
 	/* Reset WNI_CFG_PROBE_RSP Flags */
 	wlan_hdd_reset_prob_rspies(pAdapter);
+	clear_bit(SOFTAP_INIT_DONE, &pAdapter->event_flags);
 
 #ifdef WLAN_FEATURE_P2P_DEBUG
 	if ((pAdapter->device_mode == QDF_P2P_GO_MODE) &&
@@ -8069,6 +8072,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 
 	ENTER();
 
+	clear_bit(SOFTAP_INIT_DONE, &pAdapter->event_flags);
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EINVAL;

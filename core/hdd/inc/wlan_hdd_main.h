@@ -108,6 +108,8 @@
 #define DEVICE_IFACE_OPENED    (5)
 #define TDLS_INIT_DONE         (6)
 #define ACS_PENDING            (7)
+#define SOFTAP_INIT_DONE       (8)
+
 /* Waiting for event for vendor acs */
 #define VENDOR_ACS_RESPONSE_PENDING   (8)
 

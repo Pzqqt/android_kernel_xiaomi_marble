@@ -1257,8 +1257,10 @@ static void hdd_ssr_restart_sap(hdd_context_t *hdd_ctx)
 	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
 		adapter = adapter_node->pAdapter;
 		if (adapter && adapter->device_mode == QDF_SAP_MODE) {
-			hdd_notice("in sap mode %p", adapter);
-			wlan_hdd_start_sap(adapter, true);
+			if (test_bit(SOFTAP_INIT_DONE, &adapter->event_flags)) {
+				hdd_notice("Restart prev SAP session");
+				wlan_hdd_start_sap(adapter, true);
+			}
 		}
 		status = hdd_get_next_adapter(hdd_ctx, adapter_node, &next);
 		adapter_node = next;
