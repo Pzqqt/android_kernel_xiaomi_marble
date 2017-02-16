@@ -1318,6 +1318,7 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 	vdev->osif_rx = NULL;
 	vdev->osif_rsim_rx_decap = NULL;
 	vdev->osif_rx_mon = NULL;
+	vdev->osif_tx_free_ext = NULL;
 	vdev->osif_vdev = NULL;
 
 	vdev->delete.pending = 0;
@@ -1376,6 +1377,7 @@ static void dp_vdev_register_wifi3(struct cdp_vdev *vdev_handle,
 	vdev->osif_rx = txrx_ops->rx.rx;
 	vdev->osif_rsim_rx_decap = txrx_ops->rx.rsim_rx_decap;
 	vdev->osif_rx_mon = txrx_ops->rx.mon;
+	vdev->osif_tx_free_ext = txrx_ops->tx.tx_free_ext;
 #ifdef notyet
 #if ATH_SUPPORT_WAPI
 	vdev->osif_check_wai = txrx_ops->rx.wai_check;

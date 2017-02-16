@@ -212,6 +212,12 @@ typedef QDF_STATUS(*ol_txrx_rsim_rx_decap_fp)(void *osif_dev,
 						qdf_nbuf_t *list_head,
 						qdf_nbuf_t *list_tail);
 
+/* ol_txrx_rx_fp - external tx free function to read per packet stats and
+ *                            free tx buffer externally
+ * @netbuf - tx network buffer
+ */
+typedef void (*ol_txrx_tx_free_ext_fp)(qdf_nbuf_t netbuf);
+
 /**
  * ol_txrx_rx_check_wai_fp - OSIF WAPI receive function
 */
@@ -291,6 +297,7 @@ struct ol_txrx_ops {
 	/* tx function pointers - specified by txrx, stored by OS shim */
 	struct {
 		ol_txrx_tx_fp         tx;
+		ol_txrx_tx_free_ext_fp tx_free_ext;
 	} tx;
 
 	/* rx function pointers - specified by OS shim, stored by txrx */
