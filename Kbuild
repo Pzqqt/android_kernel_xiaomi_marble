@@ -848,6 +848,18 @@ PMO_OBJS :=     $(PMO_DIR)/core/src/wlan_pmo_main.o \
 		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_static_config.o \
 		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_mc_addr_filtering.o
 
+###### UMAC POLICY MGR ########
+UMAC_POLICY_MGR_DIR := $(WLAN_COMMON_ROOT)/umac/cmn_services/policy_mgr
+
+UMAC_POLICY_MGR_INC := -I$(WLAN_COMMON_INC)/umac/cmn_services/policy_mgr/inc \
+		-I$(WLAN_COMMON_INC)/umac/cmn_services/policy_mgr/src
+
+UMAC_POLICY_MGR_OBJS := $(UMAC_POLICY_MGR_DIR)/src/wlan_policy_mgr_action.o \
+	$(UMAC_POLICY_MGR_DIR)/src/wlan_policy_mgr_core.o \
+	$(UMAC_POLICY_MGR_DIR)/src/wlan_policy_mgr_get_set_utils.o \
+	$(UMAC_POLICY_MGR_DIR)/src/wlan_policy_mgr_init_deinit.o \
+	$(UMAC_POLICY_MGR_DIR)/src/wlan_policy_mgr_pcl.o \
+
 ########### BMI ###########
 BMI_DIR := core/bmi
 
@@ -1250,6 +1262,7 @@ endif
 INCS +=		$(UMAC_OBJMGR_INC)
 INCS +=		$(UMAC_MGMT_TXRX_INC)
 INCS +=		$(PMO_INC)
+INCS +=		$(UMAC_POLICY_MGR_INC)
 INCS +=		$(TARGET_INC)
 INCS +=		$(UMAC_SER_INC)
 INCS +=		$(NLINK_INC) \
@@ -1302,6 +1315,7 @@ endif
 OBJS +=		$(UMAC_OBJMGR_OBJS)
 OBJS +=		$(UMAC_MGMT_TXRX_OBJS)
 OBJS +=		$(PMO_OBJS)
+OBJS +=		$(UMAC_POLICY_MGR_OBJS)
 OBJS +=		$(WLAN_LOGGING_OBJS)
 OBJS +=		$(NLINK_OBJS)
 OBJS +=		$(PTT_OBJS)
