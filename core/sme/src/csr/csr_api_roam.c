@@ -321,10 +321,6 @@ QDF_STATUS csr_open(tpAniSirGlobal pMac)
 			    (csr_ll_open(pMac->hHdd,
 					 &pMac->roam.peStatsReqList)))
 			break;
-		if (!QDF_IS_STATUS_SUCCESS
-			    (csr_ll_open(pMac->hHdd,
-					 &pMac->roam.roamCmdPendingList)))
-			break;
 	} while (0);
 
 	return status;
@@ -431,7 +427,6 @@ QDF_STATUS csr_close(tpAniSirGlobal pMac)
 	csr_scan_close(pMac);
 	csr_ll_close(&pMac->roam.statsClientReqList);
 	csr_ll_close(&pMac->roam.peStatsReqList);
-	csr_ll_close(&pMac->roam.roamCmdPendingList);
 	if (pMac->sme.saved_scan_cmd) {
 		qdf_mem_free(pMac->sme.saved_scan_cmd);
 		pMac->sme.saved_scan_cmd = NULL;
@@ -930,7 +925,6 @@ QDF_STATUS csr_stop(tpAniSirGlobal pMac, tHalStopType stopType)
 	csr_scan_disable(pMac);
 	pMac->scan.fCancelIdleScan = false;
 	pMac->scan.fRestartIdleScan = false;
-	csr_ll_purge(&pMac->roam.roamCmdPendingList, true);
 
 	for (sessionId = 0; sessionId < CSR_ROAM_SESSION_MAX; sessionId++)
 		csr_neighbor_roam_close(pMac, sessionId);
@@ -3296,9 +3290,6 @@ void csr_roam_remove_duplicate_command(tpAniSirGlobal mac_ctx,
 	csr_ll_lock(&mac_ctx->sme.smeCmdActiveList);
 	csr_roam_remove_duplicate_cmd_from_list(mac_ctx,
 		session_id, &mac_ctx->sme.smeCmdPendingList,
-		command, roam_reason);
-	csr_roam_remove_duplicate_cmd_from_list(mac_ctx,
-		session_id, &mac_ctx->roam.roamCmdPendingList,
 		command, roam_reason);
 	csr_ll_unlock(&mac_ctx->sme.smeCmdActiveList);
 }
@@ -8731,24 +8722,6 @@ bool csr_is_roam_command_waiting_for_session(tpAniSirGlobal pMac, uint32_t sessi
 		}
 		csr_ll_unlock(&pMac->sme.smeCmdPendingList);
 	}
-	if (false == fRet) {
-		csr_ll_lock(&pMac->roam.roamCmdPendingList);
-		pEntry =
-			csr_ll_peek_head(&pMac->roam.roamCmdPendingList,
-					 LL_ACCESS_NOLOCK);
-		while (pEntry) {
-			pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
-			if ((eSmeCommandRoam == pCommand->command)
-			    && (sessionId == pCommand->sessionId)) {
-				fRet = true;
-				break;
-			}
-			pEntry =
-				csr_ll_next(&pMac->roam.roamCmdPendingList, pEntry,
-					    LL_ACCESS_NOLOCK);
-		}
-		csr_ll_unlock(&pMac->roam.roamCmdPendingList);
-	}
 	csr_ll_unlock(&pMac->sme.smeCmdActiveList);
 	return fRet;
 }
@@ -9510,11 +9483,6 @@ void csr_roaming_state_msg_processor(tpAniSirGlobal pMac, void *pMsgBuf)
 					pSmeRsp->sessionId,
 					INVALID_SCAN_ID,
 					&pMac->sme.smeCmdPendingList,
-					eSmeCommandWmStatusChange);
-			csr_remove_cmd_from_pending_list(pMac,
-					pSmeRsp->sessionId,
-					INVALID_SCAN_ID,
-					&pMac->roam.roamCmdPendingList,
 					eSmeCommandWmStatusChange);
 			csr_roam_roaming_state_deauth_rsp_processor(pMac,
 						(tSirSmeDeauthRsp *) pSmeRsp);
@@ -15638,40 +15606,6 @@ csr_issue_del_sta_for_session_req(tpAniSirGlobal pMac, uint32_t sessionId,
 	return status;
 }
 
-static void purge_csr_session_cmd_list(tpAniSirGlobal pMac, uint32_t sessionId)
-{
-	tDblLinkList *pList = &pMac->roam.roamCmdPendingList;
-	tListElem *pEntry, *pNext;
-	tSmeCmd *pCommand;
-	tDblLinkList localList;
-
-	qdf_mem_zero(&localList, sizeof(tDblLinkList));
-	if (!QDF_IS_STATUS_SUCCESS(csr_ll_open(pMac->hHdd, &localList))) {
-		sms_log(pMac, LOGE, FL(" failed to open list"));
-		return;
-	}
-	csr_ll_lock(pList);
-	pEntry = csr_ll_peek_head(pList, LL_ACCESS_NOLOCK);
-	while (pEntry != NULL) {
-		pNext = csr_ll_next(pList, pEntry, LL_ACCESS_NOLOCK);
-		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
-		if (pCommand->sessionId == sessionId) {
-			if (csr_ll_remove_entry(pList, pEntry, LL_ACCESS_NOLOCK)) {
-				csr_ll_insert_tail(&localList, pEntry,
-						   LL_ACCESS_NOLOCK);
-			}
-		}
-		pEntry = pNext;
-	}
-	csr_ll_unlock(pList);
-
-	while ((pEntry = csr_ll_remove_head(&localList, LL_ACCESS_NOLOCK))) {
-		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
-		csr_abort_command(pMac, pCommand, true);
-	}
-	csr_ll_close(&localList);
-}
-
 void csr_cleanup_session(tpAniSirGlobal pMac, uint32_t sessionId)
 {
 	if (CSR_IS_SESSION_VALID(pMac, sessionId)) {
@@ -15693,8 +15627,6 @@ void csr_cleanup_session(tpAniSirGlobal pMac, uint32_t sessionId)
 		purge_sme_session_cmd_list(pMac, sessionId,
 						   &pMac->sme.
 						   smeScanCmdPendingList);
-
-		purge_csr_session_cmd_list(pMac, sessionId);
 		csr_init_session(pMac, sessionId);
 	}
 }
@@ -15720,7 +15652,6 @@ QDF_STATUS csr_roam_close_session(tpAniSirGlobal pMac, uint32_t sessionId,
 			purge_sme_session_cmd_list(pMac, sessionId,
 					   &pMac->sme.smeScanCmdActiveList);
 
-			purge_csr_session_cmd_list(pMac, sessionId);
 			status = csr_issue_del_sta_for_session_req(pMac,
 						 sessionId,
 						 pSession->selfMacAddr.bytes,
@@ -18349,8 +18280,6 @@ void csr_release_command(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 QDF_STATUS csr_queue_sme_command(tpAniSirGlobal pMac, tSmeCmd *pCommand,
 				 bool fHighPriority)
 {
-	bool fNoCmdPending;
-
 	if (!SME_IS_START(pMac)) {
 		sms_log(pMac, LOGE, FL("Sme in stop state"));
 		QDF_ASSERT(0);
@@ -18375,21 +18304,7 @@ QDF_STATUS csr_queue_sme_command(tpAniSirGlobal pMac, tSmeCmd *pCommand,
 		sme_process_pending_queue(pMac);
 		return QDF_STATUS_SUCCESS;
 	}
-	/* Make sure roamCmdPendingList is not empty first */
-	fNoCmdPending =
-		csr_ll_is_list_empty(&pMac->roam.roamCmdPendingList, false);
-	if (fNoCmdPending) {
-		sme_push_command(pMac, pCommand, fHighPriority);
-	} else {
-		/* no list lock is needed since SME lock is held */
-		if (!fHighPriority) {
-			csr_ll_insert_tail(&pMac->roam.roamCmdPendingList,
-					&pCommand->Link, false);
-		} else {
-			csr_ll_insert_head(&pMac->roam.roamCmdPendingList,
-					&pCommand->Link, false);
-		}
-	}
+	sme_push_command(pMac, pCommand, fHighPriority);
 	return QDF_STATUS_SUCCESS;
 }
 
