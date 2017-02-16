@@ -526,34 +526,6 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_SCAN_RESULT_AGE_COUNT_MIN,
 		     CFG_SCAN_RESULT_AGE_COUNT_MAX),
 
-	REG_VARIABLE(CFG_SCAN_RESULT_AGE_TIME_NCNPS_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, nScanAgeTimeNCNPS,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
-		     CFG_SCAN_RESULT_AGE_TIME_NCNPS_DEFAULT,
-		     CFG_SCAN_RESULT_AGE_TIME_NCNPS_MIN,
-		     CFG_SCAN_RESULT_AGE_TIME_NCNPS_MAX),
-
-	REG_VARIABLE(CFG_SCAN_RESULT_AGE_TIME_NCPS_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, nScanAgeTimeNCPS,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
-		     CFG_SCAN_RESULT_AGE_TIME_NCPS_DEFAULT,
-		     CFG_SCAN_RESULT_AGE_TIME_NCPS_MIN,
-		     CFG_SCAN_RESULT_AGE_TIME_NCPS_MAX),
-
-	REG_VARIABLE(CFG_SCAN_RESULT_AGE_TIME_CNPS_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, nScanAgeTimeCNPS,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
-		     CFG_SCAN_RESULT_AGE_TIME_CNPS_DEFAULT,
-		     CFG_SCAN_RESULT_AGE_TIME_CNPS_MIN,
-		     CFG_SCAN_RESULT_AGE_TIME_CNPS_MAX),
-
-	REG_VARIABLE(CFG_SCAN_RESULT_AGE_TIME_CPS_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, nScanAgeTimeCPS,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
-		     CFG_SCAN_RESULT_AGE_TIME_CPS_DEFAULT,
-		     CFG_SCAN_RESULT_AGE_TIME_CPS_MIN,
-		     CFG_SCAN_RESULT_AGE_TIME_CPS_MAX),
-
 	REG_VARIABLE(CFG_RSSI_CATEGORY_GAP_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, nRssiCatGap,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -6780,10 +6752,6 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 	}
 	smeConfig->csrConfig.TxRate = pConfig->TxRate;
 	smeConfig->csrConfig.nScanResultAgeCount = pConfig->ScanResultAgeCount;
-	smeConfig->csrConfig.scanAgeTimeNCNPS = pConfig->nScanAgeTimeNCNPS;
-	smeConfig->csrConfig.scanAgeTimeNCPS = pConfig->nScanAgeTimeNCPS;
-	smeConfig->csrConfig.scanAgeTimeCNPS = pConfig->nScanAgeTimeCNPS;
-	smeConfig->csrConfig.scanAgeTimeCPS = pConfig->nScanAgeTimeCPS;
 	smeConfig->csrConfig.AdHocChannel24 = pConfig->OperatingChannel;
 	smeConfig->csrConfig.fSupplicantCountryCodeHasPriority =
 		pConfig->fSupplicantCountryCodeHasPriority;

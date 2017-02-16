@@ -489,14 +489,6 @@ typedef struct tagCsrConfig {
 	uint8_t fAllowMCCGODiffBI;
 	uint8_t AdHocChannel24;
 	uint8_t AdHocChannel5G;
-	/* scan res agingtime threshold when Not-Connect-No-Power-Save,in sec */
-	uint32_t scanAgeTimeNCNPS;
-	/* scan res aging time threshold when Not-Connect-Power-Save, in sec*/
-	uint32_t scanAgeTimeNCPS;
-	/* scan res aging time threshold when Connect-No-Power-Save, in sec*/
-	uint32_t scanAgeTimeCNPS;
-	/* scan res aging time threshold when Connect-Power-Savein sec */
-	uint32_t scanAgeTimeCPS;
 	/* each RSSI category has one value */
 	uint32_t BssPreferValue[CSR_NUM_RSSI_CAT];
 	int RSSICat[CSR_NUM_RSSI_CAT];

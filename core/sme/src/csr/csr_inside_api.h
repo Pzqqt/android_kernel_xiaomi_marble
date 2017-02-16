@@ -76,10 +76,6 @@
 #define CSR_TKIP_COUNTER_MEASURE_TIMEOUT  (60 * QDF_MC_TIMER_TO_SEC_UNIT)       /* 60 seconds */
 
 /* the following defines are NOT used by palTimer */
-#define CSR_SCAN_AGING_TIME_NOT_CONNECT_NO_PS 50        /* 50 seconds */
-#define CSR_SCAN_AGING_TIME_NOT_CONNECT_W_PS 300        /* 300 seconds */
-#define CSR_SCAN_AGING_TIME_CONNECT_NO_PS 150   /* 150 seconds */
-#define CSR_SCAN_AGING_TIME_CONNECT_W_PS 600    /* 600 seconds */
 #define CSR_JOIN_FAILURE_TIMEOUT_DEFAULT (3000)
 #define CSR_JOIN_FAILURE_TIMEOUT_MIN   (1000)   /* minimal value */
 /* These are going against the signed RSSI (int8_t) so it is between -+127 */

@@ -1120,14 +1120,6 @@ typedef struct tagCsrConfigParam {
 	 * before it is removed
 	 */
 	uint32_t nScanResultAgeCount;
-	/* scan res aging time threshold when Not-Connect-No-PowerSave,in sec */
-	uint32_t scanAgeTimeNCNPS;
-	/* scan res aging time threshold when Not-Connect-Power-Save,in sec */
-	uint32_t scanAgeTimeNCPS;
-	/* scan res aging time threshold when Connect-No-Power-Save, in sec */
-	uint32_t scanAgeTimeCNPS;
-	/* scan res aging time threshold when Connect-Power-Save, in sec */
-	uint32_t scanAgeTimeCPS;
 	/* to set the RSSI difference for each category */
 	uint8_t bCatRssiOffset;
 	/* to set MCC Enable/Disable mode */

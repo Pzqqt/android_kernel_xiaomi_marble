@@ -1419,14 +1419,6 @@ static void init_config_param(tpAniSirGlobal pMac)
 	pMac->roam.configParam.WMMSupportMode = eCsrRoamWmmAuto;
 	pMac->roam.configParam.ProprietaryRatesEnabled = true;
 	pMac->roam.configParam.TxRate = eCSR_TX_RATE_AUTO;
-	pMac->roam.configParam.scanAgeTimeNCNPS =
-		CSR_SCAN_AGING_TIME_NOT_CONNECT_NO_PS;
-	pMac->roam.configParam.scanAgeTimeNCPS =
-		CSR_SCAN_AGING_TIME_NOT_CONNECT_W_PS;
-	pMac->roam.configParam.scanAgeTimeCNPS =
-		CSR_SCAN_AGING_TIME_CONNECT_NO_PS;
-	pMac->roam.configParam.scanAgeTimeCPS =
-		CSR_SCAN_AGING_TIME_CONNECT_W_PS;
 	for (i = 0; i < CSR_NUM_RSSI_CAT; i++) {
 		pMac->roam.configParam.BssPreferValue[i] = i;
 	}
@@ -2282,22 +2274,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pMac->roam.configParam.agingCount =
 				pParam->nScanResultAgeCount;
 		}
-		if (pParam->scanAgeTimeNCNPS) {
-			pMac->roam.configParam.scanAgeTimeNCNPS =
-				pParam->scanAgeTimeNCNPS;
-		}
-		if (pParam->scanAgeTimeNCPS) {
-			pMac->roam.configParam.scanAgeTimeNCPS =
-				pParam->scanAgeTimeNCPS;
-		}
-		if (pParam->scanAgeTimeCNPS) {
-			pMac->roam.configParam.scanAgeTimeCNPS =
-				pParam->scanAgeTimeCNPS;
-		}
-		if (pParam->scanAgeTimeCPS) {
-			pMac->roam.configParam.scanAgeTimeCPS =
-				pParam->scanAgeTimeCPS;
-		}
 		if (pParam->obss_width_interval) {
 			pMac->roam.configParam.obss_width_interval =
 				pParam->obss_width_interval;
@@ -2639,10 +2615,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 #endif
 	pParam->eBand = cfg_params->eBand;
 	pParam->nScanResultAgeCount = cfg_params->agingCount;
-	pParam->scanAgeTimeNCNPS = cfg_params->scanAgeTimeNCNPS;
-	pParam->scanAgeTimeNCPS = cfg_params->scanAgeTimeNCPS;
-	pParam->scanAgeTimeCNPS = cfg_params->scanAgeTimeCNPS;
-	pParam->scanAgeTimeCPS = cfg_params->scanAgeTimeCPS;
 	pParam->bCatRssiOffset = cfg_params->bCatRssiOffset;
 	pParam->fSupplicantCountryCodeHasPriority =
 		cfg_params->fSupplicantCountryCodeHasPriority;

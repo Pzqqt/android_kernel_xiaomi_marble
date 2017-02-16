@@ -199,98 +199,6 @@ typedef enum {
 
 /*
  * <ini>
- * gScanResultAgeNCNPS - Set scan result aging time NCNPS
- * @Min: 10
- * @Max: 10000
- * @Default: 50
- *
- * This ini is used to set scan result aging time threshold
- * in secs when Not-Connect-No-PowerSave.
- *
- * Related: None
- *
- * Supported Feature: Scan
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_SCAN_RESULT_AGE_TIME_NCNPS_NAME    "gScanResultAgeNCNPS"
-#define CFG_SCAN_RESULT_AGE_TIME_NCNPS_MIN     (10)
-#define CFG_SCAN_RESULT_AGE_TIME_NCNPS_MAX     (10000)
-#define CFG_SCAN_RESULT_AGE_TIME_NCNPS_DEFAULT (50)
-
-/*
- * <ini>
- * gScanResultAgeNCPS - Set scan result aging time NCPS
- * @Min: 10
- * @Max: 10000
- * @Default: 300
- *
- * This ini is used to set scan result aging time threshold
- * in secs when Not-Connect-PowerSave.
- *
- * Related: None
- *
- * Supported Feature: Scan
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_SCAN_RESULT_AGE_TIME_NCPS_NAME     "gScanResultAgeNCPS"
-#define CFG_SCAN_RESULT_AGE_TIME_NCPS_MIN      (10)
-#define CFG_SCAN_RESULT_AGE_TIME_NCPS_MAX      (10000)
-#define CFG_SCAN_RESULT_AGE_TIME_NCPS_DEFAULT  (300)
-
-/*
- * <ini>
- * gScanResultAgeCNPS - Set scan result aging time CNPS
- * @Min: 10
- * @Max: 10000
- * @Default: 150
- *
- * This ini is used to set scan result aging time threshold
- * in secs when Connect-No-PowerSave.
- *
- * Related: None
- *
- * Supported Feature: Scan
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_SCAN_RESULT_AGE_TIME_CNPS_NAME     "gScanResultAgeCNPS"
-#define CFG_SCAN_RESULT_AGE_TIME_CNPS_MIN      (10)
-#define CFG_SCAN_RESULT_AGE_TIME_CNPS_MAX      (10000)
-#define CFG_SCAN_RESULT_AGE_TIME_CNPS_DEFAULT  (150)
-
-/*
- * <ini>
- * gScanResultAgeCPS - Set scan result aging time CPS
- * @Min: 10
- * @Max: 10000
- * @Default: 600
- *
- * This ini is used to set scan result aging time threshold
- * in secs when Connect-PowerSave.
- *
- * Related: None
- *
- * Supported Feature: Scan
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_SCAN_RESULT_AGE_TIME_CPS_NAME      "gScanResultAgeCPS"
-#define CFG_SCAN_RESULT_AGE_TIME_CPS_MIN       (10)
-#define CFG_SCAN_RESULT_AGE_TIME_CPS_MAX       (10000)
-#define CFG_SCAN_RESULT_AGE_TIME_CPS_DEFAULT   (600)
-
-/*
- * <ini>
  * gNeighborScanTimerPeriod - Set neighbor scan timer period
  * @Min: 3
  * @Max: 300
@@ -6938,10 +6846,6 @@ struct hdd_config {
 	uint16_t TxRate;
 	uint32_t ShortGI20MhzEnable;
 	uint32_t ScanResultAgeCount;
-	uint32_t nScanAgeTimeNCNPS;
-	uint32_t nScanAgeTimeNCPS;
-	uint32_t nScanAgeTimeCNPS;
-	uint32_t nScanAgeTimeCPS;
 	uint8_t nRssiCatGap;
 	bool fIsShortPreamble;
 	struct qdf_mac_addr IbssBssid;
