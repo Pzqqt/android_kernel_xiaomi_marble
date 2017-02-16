@@ -799,6 +799,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_pdev_multiple_vdev_restart_request_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_pdev_csa_switch_count_status_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_pdev_update_pkt_routing_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_check_cal_version_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_check_cal_version_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1122,6 +1124,7 @@ typedef enum {
     OP(WMI_PDEV_MULTIPLE_VDEV_RESTART_REQUEST_CMDID) \
     OP(WMI_LPI_OEM_REQ_CMDID) \
     OP(WMI_PDEV_UPDATE_PKT_ROUTING_CMDID) \
+    OP(WMI_PDEV_CHECK_CAL_VERSION_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -1299,6 +1302,7 @@ typedef enum {
     OP(WMI_PEER_OPER_MODE_CHANGE_EVENTID) \
     OP(WMI_PDEV_CHIP_POWER_SAVE_FAILURE_DETECTED_EVENTID) \
     OP(WMI_PDEV_CSA_SWITCH_COUNT_STATUS_EVENTID) \
+    OP(WMI_PDEV_CHECK_CAL_VERSION_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -3223,6 +3227,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_MULTIPLE_VDEV_RESTART_REQUEST_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_update_pkt_routing_cmd_fixed_param, wmi_pdev_update_pkt_routing_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_UPDATE_PKT_ROUTING_CMDID);
 
+/* Get cal version cmd */
+#define WMITLV_TABLE_WMI_PDEV_CHECK_CAL_VERSION_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_check_cal_version_cmd_fixed_param, wmi_pdev_check_cal_version_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_CHECK_CAL_VERSION_CMDID);
+
 
 /************************** TLV definitions of WMI events *******************************/
 
@@ -4296,6 +4305,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_ADD_MAC_ADDR_TO_RX_FILTER_STATUS_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_csa_switch_count_status_event_fixed_param, wmi_pdev_csa_switch_count_status_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, vdev_ids, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_CSA_SWITCH_COUNT_STATUS_EVENTID);
+
+/* cal version response event */
+#define WMITLV_TABLE_WMI_PDEV_CHECK_CAL_VERSION_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_check_cal_version_event_fixed_param, wmi_pdev_check_cal_version_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_CHECK_CAL_VERSION_EVENTID);
 
 
 #ifdef __cplusplus

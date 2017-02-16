@@ -188,6 +188,7 @@ typedef  enum  {
     WMI_SERVICE_HW_DATA_FILTERING=119,
     WMI_SERVICE_MULTIPLE_VDEV_RESTART=120, /* Support for single command for multiple vdev restart */
     WMI_SERVICE_PKT_ROUTING=121, /* Support for routing specific data packets to selected destination rings */
+    WMI_SERVICE_CHECK_CAL_VERSION=122, /* Support cal version check */
 
 
     /******* ADD NEW SERVICES HERE UNTIL ALL VALUES UP TO 128 ARE USED *******/

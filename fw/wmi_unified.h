@@ -360,6 +360,8 @@ typedef enum {
     WMI_PDEV_MULTIPLE_VDEV_RESTART_REQUEST_CMDID,
     /** Pdev update packet routing command */
     WMI_PDEV_UPDATE_PKT_ROUTING_CMDID,
+    /** Get Calibration data version details */
+    WMI_PDEV_CHECK_CAL_VERSION_CMDID,
 
     /* VDEV (virtual device) specific commands */
     /** vdev create */
@@ -1101,6 +1103,9 @@ typedef enum {
 
     /* Event to report the switch count in csa of one or more VDEVs */
     WMI_PDEV_CSA_SWITCH_COUNT_STATUS_EVENTID,
+
+    /** Report the caldata version to host */
+    WMI_PDEV_CHECK_CAL_VERSION_EVENTID,
 
     /* VDEV specific events */
     /** VDEV started event in response to VDEV_START request */
@@ -17731,6 +17736,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(MI_PDEV_MULTIPLE_VDEV_RESTART_REQUEST_CMDID);
         WMI_RETURN_STRING(WMI_LPI_OEM_REQ_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_UPDATE_PKT_ROUTING_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_CHECK_CAL_VERSION_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -18008,6 +18014,31 @@ typedef struct {
       */
     A_UINT32 meta_data;
 } wmi_pdev_update_pkt_routing_cmd_fixed_param;
+
+typedef enum {
+    WMI_CALIBRATION_NO_FEATURE = 0, /* The board was calibrated with a meta which did not have this feature */
+    WMI_CALIBRATION_OK,             /* The calibration status is OK */
+    WMI_CALIBRATION_NOT_OK,         /* The calibration status is NOT OK */
+} WMI_CALIBRATION_STATUS;
+
+typedef struct {
+    A_UINT32 tlv_header;            /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_check_cal_version_event_fixed_param  */
+    A_UINT32 software_cal_version;  /* Current software level calibration data version */
+    A_UINT32 board_cal_version;     /* Calibration data version programmed on chip */
+    A_UINT32 cal_status;            /* filled with WMI_CALIBRATION_STATUS enum value */
+    /** pdev_id for identifying the MAC
+     * See macros starting with WMI_PDEV_ID_ for values.
+     */
+    A_UINT32 pdev_id;
+} wmi_pdev_check_cal_version_event_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_check_cal_version_cmd_fixed_param */
+    /** pdev_id for identifying the MAC
+     * See macros starting with WMI_PDEV_ID_ for values.
+     */
+    A_UINT32 pdev_id;
+} wmi_pdev_check_cal_version_cmd_fixed_param;
 
 
 /* ADD NEW DEFS HERE */
