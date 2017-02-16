@@ -3714,7 +3714,7 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 		hdd_debug("current_intf_count=%d",
 		       hdd_ctx->current_intf_count);
 
-		cds_check_and_restart_sap_with_non_dfs_acs();
+		hdd_check_and_restart_sap_with_non_dfs_acs();
 	}
 
 	if (QDF_STATUS_SUCCESS != hdd_debugfs_init(adapter))
@@ -3952,16 +3952,6 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 
 	case QDF_SAP_MODE:
 	case QDF_P2P_GO_MODE:
-		if (hdd_ctx->config->conc_custom_rule1 &&
-			(QDF_SAP_MODE == adapter->device_mode)) {
-			/*
-			 * Before stopping the sap adapter, lets make sure there
-			 * is no sap restart work pending.
-			 */
-			cds_flush_work(&hdd_ctx->sap_start_work);
-			hdd_info("Canceled the pending SAP restart work");
-			cds_change_sap_restart_required_status(false);
-		}
 		/* Any softap specific cleanup here... */
 		if (adapter->device_mode == QDF_P2P_GO_MODE)
 			wlan_hdd_cleanup_remain_on_channel_ctx(adapter);
@@ -6493,16 +6483,16 @@ static uint8_t hdd_get_safe_channel_from_pcl_and_acs_range(
 }
 
 /**
- * hdd_restart_sap() - Restarts SAP on the given channel
+ * hdd_switch_sap_channel() - Move SAP to the given channel
  * @adapter: AP adapter
  * @channel: Channel
  *
- * Restarts the SAP interface by invoking the function which executes the
- * callback to perform channel switch using (E)CSA.
+ * Moves the SAP interface by invoking the function which
+ * executes the callback to perform channel switch using (E)CSA.
  *
  * Return: None
  */
-void hdd_restart_sap(hdd_adapter_t *adapter, uint8_t channel)
+void hdd_switch_sap_channel(hdd_adapter_t *adapter, uint8_t channel)
 {
 	hdd_ap_ctx_t *hdd_ap_ctx;
 	tHalHandle *hal_handle;
@@ -6636,7 +6626,7 @@ void hdd_unsafe_channel_restart_sap(hdd_context_t *hdd_ctxt)
 			hdd_info("sending coex indication");
 			wlan_hdd_send_svc_nlink_msg(hdd_ctxt->radio_index,
 					WLAN_SVC_LTE_COEX_IND, NULL, 0);
-			hdd_restart_sap(adapter_temp, restart_chan);
+			hdd_switch_sap_channel(adapter_temp, restart_chan);
 		}
 
 next_adapater:
@@ -6916,7 +6906,7 @@ static void hdd_lte_coex_restart_sap(hdd_adapter_t *adapter,
 		hdd_info("sending coex indication");
 		wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
 				WLAN_SVC_LTE_COEX_IND, NULL, 0);
-		hdd_restart_sap(adapter, restart_chan);
+		hdd_switch_sap_channel(adapter, restart_chan);
 	}
 }
 
@@ -9184,6 +9174,8 @@ int hdd_register_cb(hdd_context_t *hdd_ctx)
 
 	wlan_hdd_dcc_register_for_dcc_stats_event(hdd_ctx);
 
+	sme_register_set_connection_info_cb(hdd_ctx->hHal,
+				hdd_set_connection_in_progress);
 	EXIT();
 
 	return ret;
@@ -10940,6 +10932,291 @@ bool hdd_is_roaming_in_progress(hdd_adapter_t *adapter)
 			hdd_ctx->roaming_in_progress);
 
 	return ret_status;
+}
+
+/**
+ * hdd_is_connection_in_progress() - check if connection is in
+ * progress
+ * @session_id: session id
+ * @reason: scan reject reason
+ *
+ * Go through each adapter and check if Connection is in progress
+ *
+ * Return: true if connection is in progress else false
+ */
+bool hdd_is_connection_in_progress(uint8_t *session_id,
+				enum scan_reject_states *reason)
+{
+	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
+	hdd_station_ctx_t *hdd_sta_ctx = NULL;
+	hdd_adapter_t *adapter = NULL;
+	QDF_STATUS status = 0;
+	uint8_t sta_id = 0;
+	uint8_t *sta_mac = NULL;
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		hdd_err("HDD context is NULL");
+		return false;
+	}
+
+	if (true == hdd_ctx->btCoexModeSet) {
+		hdd_info("BTCoex Mode operation in progress");
+		return true;
+	}
+	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
+	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
+		adapter = adapter_node->pAdapter;
+		if (!adapter)
+			goto end;
+
+		hdd_info("Adapter with device mode %s(%d) exists",
+			hdd_device_mode_to_string(adapter->device_mode),
+			adapter->device_mode);
+		if (((QDF_STA_MODE == adapter->device_mode)
+			|| (QDF_P2P_CLIENT_MODE == adapter->device_mode)
+			|| (QDF_P2P_DEVICE_MODE == adapter->device_mode))
+			&& (eConnectionState_Connecting ==
+				(WLAN_HDD_GET_STATION_CTX_PTR(adapter))->
+					conn_info.connState)) {
+			hdd_err("%p(%d) Connection is in progress",
+				WLAN_HDD_GET_STATION_CTX_PTR(adapter),
+				adapter->sessionId);
+			if (session_id && reason) {
+				*session_id = adapter->sessionId;
+				*reason = eHDD_CONNECTION_IN_PROGRESS;
+			}
+			return true;
+		}
+		if ((QDF_STA_MODE == adapter->device_mode) &&
+				sme_neighbor_middle_of_roaming(
+					WLAN_HDD_GET_HAL_CTX(adapter),
+					adapter->sessionId)) {
+			hdd_err("%p(%d) Reassociation in progress",
+				WLAN_HDD_GET_STATION_CTX_PTR(adapter),
+				adapter->sessionId);
+			if (session_id && reason) {
+				*session_id = adapter->sessionId;
+				*reason = eHDD_REASSOC_IN_PROGRESS;
+			}
+			return true;
+		}
+		if ((QDF_STA_MODE == adapter->device_mode) ||
+			(QDF_P2P_CLIENT_MODE == adapter->device_mode) ||
+			(QDF_P2P_DEVICE_MODE == adapter->device_mode)) {
+			hdd_sta_ctx =
+				WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+			if ((eConnectionState_Associated ==
+				hdd_sta_ctx->conn_info.connState)
+				&& (false ==
+				hdd_sta_ctx->conn_info.uIsAuthenticated)) {
+				sta_mac = (uint8_t *)
+					&(adapter->macAddressCurrent.bytes[0]);
+				hdd_err("client " MAC_ADDRESS_STR
+					" is in middle of WPS/EAPOL exchange.",
+					MAC_ADDR_ARRAY(sta_mac));
+				if (session_id && reason) {
+					*session_id = adapter->sessionId;
+					*reason = eHDD_EAPOL_IN_PROGRESS;
+				}
+				return true;
+			}
+		} else if ((QDF_SAP_MODE == adapter->device_mode) ||
+				(QDF_P2P_GO_MODE == adapter->device_mode)) {
+			for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT;
+				sta_id++) {
+				if (!((adapter->aStaInfo[sta_id].isUsed)
+				    && (OL_TXRX_PEER_STATE_CONN ==
+				    adapter->aStaInfo[sta_id].tlSTAState)))
+					continue;
+
+				sta_mac = (uint8_t *)
+						&(adapter->aStaInfo[sta_id].
+							macAddrSTA.bytes[0]);
+				hdd_err("client " MAC_ADDRESS_STR
+				" of SAP/GO is in middle of WPS/EAPOL exchange",
+				MAC_ADDR_ARRAY(sta_mac));
+				if (session_id && reason) {
+					*session_id = adapter->sessionId;
+					*reason = eHDD_SAP_EAPOL_IN_PROGRESS;
+				}
+				return true;
+			}
+			if (hdd_ctx->connection_in_progress) {
+				hdd_err("AP/GO: connection is in progress");
+				return true;
+			}
+		}
+end:
+		status = hdd_get_next_adapter(hdd_ctx, adapter_node, &next);
+		adapter_node = next;
+	}
+	return false;
+}
+
+/**
+ * hdd_restart_sap() - to restart SAP in driver internally
+ * @ap_adapter: Pointer to SAP hdd_adapter_t structure
+ *
+ * Return: None
+ */
+void hdd_restart_sap(hdd_adapter_t *ap_adapter)
+{
+	hdd_ap_ctx_t *hdd_ap_ctx;
+	hdd_hostapd_state_t *hostapd_state;
+	QDF_STATUS qdf_status;
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(ap_adapter);
+	tsap_Config_t *sap_config;
+	void *sap_ctx;
+
+	hdd_ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(ap_adapter);
+	sap_config = &hdd_ap_ctx->sapConfig;
+	sap_ctx = hdd_ap_ctx->sapContext;
+
+	mutex_lock(&hdd_ctx->sap_lock);
+	if (test_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags)) {
+		wlan_hdd_del_station(ap_adapter);
+		hdd_cleanup_actionframe(hdd_ctx, ap_adapter);
+		hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(ap_adapter);
+		qdf_event_reset(&hostapd_state->qdf_stop_bss_event);
+		if (QDF_STATUS_SUCCESS == wlansap_stop_bss(sap_ctx)) {
+			qdf_status =
+				qdf_wait_single_event(&hostapd_state->
+					qdf_stop_bss_event,
+					SME_CMD_TIMEOUT_VALUE);
+
+			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+				cds_err("SAP Stop Failed");
+				goto end;
+			}
+		}
+		clear_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags);
+		cds_decr_session_set_pcl(
+			ap_adapter->device_mode, ap_adapter->sessionId);
+		cds_err("SAP Stop Success");
+
+		if (0 != wlan_hdd_cfg80211_update_apies(ap_adapter)) {
+			cds_err("SAP Not able to set AP IEs");
+			wlansap_reset_sap_config_add_ie(sap_config,
+					eUPDATE_IE_ALL);
+			goto end;
+		}
+
+		qdf_event_reset(&hostapd_state->qdf_event);
+		if (wlansap_start_bss(sap_ctx, hdd_hostapd_sap_event_cb,
+				      sap_config,
+				      ap_adapter->dev) != QDF_STATUS_SUCCESS) {
+			cds_err("SAP Start Bss fail");
+			wlansap_reset_sap_config_add_ie(sap_config,
+					eUPDATE_IE_ALL);
+			goto end;
+		}
+
+		cds_info("Waiting for SAP to start");
+		qdf_status =
+			qdf_wait_single_event(&hostapd_state->qdf_event,
+					SME_CMD_TIMEOUT_VALUE);
+		wlansap_reset_sap_config_add_ie(sap_config,
+				eUPDATE_IE_ALL);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			cds_err("SAP Start failed");
+			goto end;
+		}
+		cds_err("SAP Start Success");
+		set_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags);
+		if (hostapd_state->bssState == BSS_START)
+			cds_incr_active_session(ap_adapter->device_mode,
+						ap_adapter->sessionId);
+		hostapd_state->bCommit = true;
+	}
+end:
+	mutex_unlock(&hdd_ctx->sap_lock);
+	return;
+}
+
+/**
+ * hdd_check_and_restart_sap_with_non_dfs_acs() - Restart SAP
+ * with non dfs acs
+ *
+ * Restarts SAP in non-DFS ACS mode when STA-AP mode DFS is not supported
+ *
+ * Return: None
+ */
+void hdd_check_and_restart_sap_with_non_dfs_acs(void)
+{
+	hdd_adapter_t *ap_adapter;
+	hdd_context_t *hdd_ctx;
+	cds_context_type *cds_ctx;
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return;
+	}
+
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!cds_ctx) {
+		cds_err("Invalid CDS Context");
+		return;
+	}
+
+	if (cds_get_concurrency_mode() != (QDF_STA_MASK | QDF_SAP_MASK)) {
+		cds_info("Concurrency mode is not SAP");
+		return;
+	}
+
+	ap_adapter = hdd_get_adapter(hdd_ctx, QDF_SAP_MODE);
+	if (ap_adapter != NULL &&
+			test_bit(SOFTAP_BSS_STARTED,
+				&ap_adapter->event_flags)
+			&& CDS_IS_DFS_CH(ap_adapter->sessionCtx.ap.
+				operatingChannel)) {
+
+		cds_warn("STA-AP Mode DFS not supported. Restart SAP with Non DFS ACS");
+		ap_adapter->sessionCtx.ap.sapConfig.channel =
+			AUTO_CHANNEL_SELECT;
+		ap_adapter->sessionCtx.ap.sapConfig.
+			acs_cfg.acs_mode = true;
+
+		cds_restart_sap(ap_adapter);
+	}
+}
+
+/**
+ * hdd_set_connection_in_progress() - to set the connection in
+ * progress flag
+ * @value: value to set
+ *
+ * This function will set the passed value to connection in progress flag.
+ * If value is previously being set to true then no need to set it again.
+ *
+ * Return: true if value is being set correctly and false otherwise.
+ */
+bool hdd_set_connection_in_progress(bool value)
+{
+	bool status = true;
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return false;
+	}
+
+	qdf_spin_lock(&hdd_ctx->connection_status_lock);
+	/*
+	 * if the value is set to true previously and if someone is
+	 * trying to make it true again then it could be some race
+	 * condition being triggered. Avoid this situation by returning
+	 * false
+	 */
+	if (hdd_ctx->connection_in_progress && value)
+		status = false;
+	else
+		hdd_ctx->connection_in_progress = value;
+	qdf_spin_unlock(&hdd_ctx->connection_status_lock);
+	return status;
 }
 
 /* Register the module init/exit functions */

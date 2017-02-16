@@ -37,87 +37,8 @@
 /* Include files */
 
 #include "wlan_hdd_main.h"
-
-#define MAX_NUMBER_OF_CONC_CONNECTIONS 3
-#define DBS_OPPORTUNISTIC_TIME    10
-#ifdef QCA_WIFI_3_0_EMU
-#define CONNECTION_UPDATE_TIMEOUT 3000
-#else
-#define CONNECTION_UPDATE_TIMEOUT 1000
-#endif
-
-/* Some max value greater than the max length of the channel list */
-#define MAX_WEIGHT_OF_PCL_CHANNELS 255
-/* Some fixed weight difference between the groups */
-#define PCL_GROUPS_WEIGHT_DIFFERENCE 20
-
-/* Currently max, only 3 groups are possible as per 'enum cds_pcl_type'.
- * i.e., in a PCL only 3 groups of channels can be present
- * e.g., SCC channel on 2.4 Ghz, SCC channel on 5 Ghz & 5 Ghz channels.
- * Group 1 has highest priority, group 2 has the next higher priority
- * and so on.
- */
-#define WEIGHT_OF_GROUP1_PCL_CHANNELS MAX_WEIGHT_OF_PCL_CHANNELS
-#define WEIGHT_OF_GROUP2_PCL_CHANNELS \
-		(WEIGHT_OF_GROUP1_PCL_CHANNELS - PCL_GROUPS_WEIGHT_DIFFERENCE)
-#define WEIGHT_OF_GROUP3_PCL_CHANNELS \
-		(WEIGHT_OF_GROUP2_PCL_CHANNELS - PCL_GROUPS_WEIGHT_DIFFERENCE)
-#define WEIGHT_OF_GROUP4_PCL_CHANNELS \
-		(WEIGHT_OF_GROUP3_PCL_CHANNELS - PCL_GROUPS_WEIGHT_DIFFERENCE)
-
-#define WEIGHT_OF_NON_PCL_CHANNELS 1
-#define WEIGHT_OF_DISALLOWED_CHANNELS 0
-
-/**
- * enum hw_mode_ss_config - Possible spatial stream configuration
- * @SS_0x0: Unused Tx and Rx of MAC
- * @SS_1x1: 1 Tx SS and 1 Rx SS
- * @SS_2x2: 2 Tx SS and 2 Rx SS
- * @SS_3x3: 3 Tx SS and 3 Rx SS
- * @SS_4x4: 4 Tx SS and 4 Rx SS
- *
- * Note: Right now only 1x1 and 2x2 are being supported. Other modes should
- * be added when supported. Asymmetric configuration like 1x2, 2x1 are also
- * not supported now. But, they are still valid. Right now, Tx/Rx SS support is
- * 4 bits long. So, we can go upto 15x15
- */
-enum hw_mode_ss_config {
-	HW_MODE_SS_0x0,
-	HW_MODE_SS_1x1,
-	HW_MODE_SS_2x2,
-	HW_MODE_SS_3x3,
-	HW_MODE_SS_4x4,
-};
-
-/**
- * enum hw_mode_dbs_capab - DBS HW mode capability
- * @HW_MODE_DBS_NONE: Non DBS capable
- * @HW_MODE_DBS: DBS capable
- */
-enum hw_mode_dbs_capab {
-	HW_MODE_DBS_NONE,
-	HW_MODE_DBS,
-};
-
-/**
- * enum hw_mode_agile_dfs_capab - Agile DFS HW mode capability
- * @HW_MODE_AGILE_DFS_NONE: Non Agile DFS capable
- * @HW_MODE_AGILE_DFS: Agile DFS capable
- */
-enum hw_mode_agile_dfs_capab {
-	HW_MODE_AGILE_DFS_NONE,
-	HW_MODE_AGILE_DFS,
-};
-
-/**
- * enum hw_mode_sbs_capab - SBS HW mode capability
- * @HW_MODE_SBS_NONE: Non SBS capable
- * @HW_MODE_SBS: SBS capable
- */
-enum hw_mode_sbs_capab {
-	HW_MODE_SBS_NONE,
-	HW_MODE_SBS,
-};
+#include "wlan_policy_mgr_api.h"
+#include "wlan_policy_mgr_i.h"
 
 /**
  * enum cds_pcl_group_id - Identifies the pcl groups to be used
@@ -936,7 +857,6 @@ bool cds_map_concurrency_mode(enum tQDF_ADAPTER_MODE *old_mode,
 QDF_STATUS cds_get_channel_from_scan_result(hdd_adapter_t *adapter,
 		tCsrRoamProfile *roam_profile, uint8_t *channel);
 
-enum tQDF_GLOBAL_CON_MODE cds_get_conparam(void);
 bool cds_concurrent_open_sessions_running(void);
 bool cds_max_concurrent_connections_reached(void);
 void cds_clear_concurrent_session_count(void);

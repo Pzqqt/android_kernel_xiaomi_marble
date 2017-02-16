@@ -6805,21 +6805,6 @@ enum cds_con_mode cds_convert_device_mode_to_qdf_type(
 }
 
 /**
- * cds_get_conparam() - Get the connection mode parameters
- *
- * Return the connection mode parameter set by insmod or set during statically
- * linked driver
- *
- * Return: enum tQDF_GLOBAL_CON_MODE
- */
-enum tQDF_GLOBAL_CON_MODE cds_get_conparam(void)
-{
-	enum tQDF_GLOBAL_CON_MODE con_mode;
-	con_mode = hdd_get_conparam();
-	return con_mode;
-}
-
-/**
  * cds_concurrent_open_sessions_running() - Checks for concurrent open session
  *
  * Checks if more than one open session is running for all the allowed modes

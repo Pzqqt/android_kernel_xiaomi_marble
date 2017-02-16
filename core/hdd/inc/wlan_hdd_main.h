@@ -1887,16 +1887,16 @@ void hdd_cfg80211_update_acs_config(hdd_adapter_t *adapter,
 int hdd_update_acs_timer_reason(hdd_adapter_t *adapter, uint8_t reason);
 
 /**
- * hdd_restart_sap() - Restarts SAP on the given channel
+ * hdd_switch_sap_channel() - Move SAP to the given channel
  * @adapter: AP adapter
  * @channel: Channel
  *
- * Restarts the SAP interface by invoking the function which executes the
- * callback to perform channel switch using (E)CSA.
+ * Moves the SAP interface by invoking the function which
+ * executes the callback to perform channel switch using (E)CSA.
  *
  * Return: None
  */
-void hdd_restart_sap(hdd_adapter_t *adapter, uint8_t channel);
+void hdd_switch_sap_channel(hdd_adapter_t *adapter, uint8_t channel);
 #ifdef WLAN_FEATURE_MEMDUMP
 /**
  * hdd_is_memdump_supported() - to check if memdump feature support
@@ -2193,6 +2193,11 @@ static inline int wlan_hdd_validate_session_id(u8 session_id)
 
 bool hdd_is_roaming_in_progress(hdd_adapter_t *adapter);
 void hdd_set_roaming_in_progress(bool value);
+bool hdd_is_connection_in_progress(uint8_t *session_id,
+	enum scan_reject_states *reason);
+void hdd_restart_sap(hdd_adapter_t *ap_adapter);
+void hdd_check_and_restart_sap_with_non_dfs_acs(void);
+bool hdd_set_connection_in_progress(bool value);
 
 /**
  * wlan_hdd_sap_get_valid_channellist() - Get SAPs valid channel list

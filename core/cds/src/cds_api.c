@@ -426,13 +426,6 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 		goto err_wma_complete_event;
 	}
 
-	if (!QDF_IS_STATUS_SUCCESS(qdf_mutex_create(
-				&cds_ctx->qdf_conc_list_lock))) {
-		cds_err("Failed to init qdf_conc_list_lock");
-		QDF_ASSERT(0);
-		goto err_wma_complete_event;
-	}
-
 	/* Now Open the CDS Scheduler */
 
 	if (pHddCtx->driver_status == DRIVER_MODULES_UNINITIALIZED ||
@@ -446,7 +439,7 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 				  "%s: Failed to open CDS Scheduler", __func__);
 			QDF_ASSERT(0);
-			goto err_concurrency_lock;
+			goto err_wma_complete_event;
 		}
 	}
 
@@ -591,7 +584,6 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 		goto err_sme_close;
 	}
 
-	gp_cds_context->cdp_update_mac_id = cdp_update_mac_id;
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: CDS successfully Opened", __func__);
 	cds_register_all_modules();
@@ -621,9 +613,6 @@ err_bmi_close:
 
 err_sched_close:
 	cds_sched_close(gp_cds_context);
-
-err_concurrency_lock:
-	qdf_mutex_destroy(&cds_ctx->qdf_conc_list_lock);
 
 err_wma_complete_event:
 	qdf_event_destroy(&gp_cds_context->wmaCompleteEvent);
@@ -1092,12 +1081,6 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc, v_CONTEXT_t cds_context)
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: failed to destroy ProbeEvent", __func__);
-		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
-	}
-
-	if (!QDF_IS_STATUS_SUCCESS(qdf_mutex_destroy(
-				   &gp_cds_context->qdf_conc_list_lock))) {
-		cds_err("Failed to destroy qdf_conc_list_lock");
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
 
@@ -2459,4 +2442,21 @@ inline void cds_pkt_stats_to_logger_thread(void *pl_hdr, void *pkt_dump,
 		return;
 
 	wlan_pkt_stats_to_logger_thread(pl_hdr, pkt_dump, data);
+}
+
+/**
+ * cds_get_conparam() - Get the connection mode parameters
+ *
+ * Return the connection mode parameter set by insmod or set during statically
+ * linked driver
+ *
+ * Return: enum tQDF_GLOBAL_CON_MODE
+ */
+enum tQDF_GLOBAL_CON_MODE cds_get_conparam(void)
+{
+	enum tQDF_GLOBAL_CON_MODE con_mode;
+
+	con_mode = hdd_get_conparam();
+
+	return con_mode;
 }

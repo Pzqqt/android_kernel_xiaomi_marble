@@ -1449,4 +1449,17 @@ QDF_STATUS sme_get_beacon_frm(tHalHandle hal, tCsrRoamProfile *profile,
 
 QDF_STATUS sme_delete_all_tdls_peers(tHalHandle hal, uint8_t session_id);
 
+/**
+ * sme_register_set_connection_info_cb() - Register connection
+ * info callback
+ * @hal - MAC global handle
+ * @callback_routine - callback routine from HDD
+ *
+ * This API is invoked by HDD to register its callback to mac
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_register_set_connection_info_cb(tHalHandle hHal,
+					  bool (*set_connection_info_cb)(bool));
+
 #endif /* #if !defined( __SME_API_H ) */

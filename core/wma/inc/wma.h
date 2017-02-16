@@ -51,6 +51,8 @@
 #include "cds_ieee80211_common.h"
 #include "wlan_objmgr_psoc_obj.h"
 #include <cdp_txrx_handle.h>
+#include "wlan_policy_mgr_api.h"
+
 /* Platform specific configuration for max. no. of fragments */
 #define QCA_OL_11AC_TX_MAX_FRAGS            2
 
@@ -1169,16 +1171,6 @@ typedef struct {
 } ibss_power_save_params;
 
 /**
- * struct dbs_hw_mode_info - WLAN_DBS_HW_MODES_TLV Format
- * @tlv_header: TLV header, TLV tag and len; tag equals WMITLV_TAG_ARRAY_UINT32
- * @hw_mode_list: WLAN_DBS_HW_MODE_LIST entries
- */
-struct dbs_hw_mode_info {
-	uint32_t tlv_header;
-	uint32_t *hw_mode_list;
-};
-
-/**
  * struct mac_ss_bw_info - hw_mode_list PHY/MAC params for each MAC
  * @mac_tx_stream: Max TX stream
  * @mac_rx_stream: Max RX stream
@@ -1188,24 +1180,6 @@ struct mac_ss_bw_info {
 	uint32_t mac_tx_stream;
 	uint32_t mac_rx_stream;
 	uint32_t mac_bw;
-};
-
-/**
- * struct dual_mac_config - Dual MAC configurations
- * @prev_scan_config: Previous scan configuration
- * @prev_fw_mode_config: Previous FW mode configuration
- * @cur_scan_config: Current scan configuration
- * @cur_fw_mode_config: Current FW mode configuration
- * @req_scan_config: Requested scan configuration
- * @req_fw_mode_config: Requested FW mode configuration
- */
-struct dual_mac_config {
-	uint32_t prev_scan_config;
-	uint32_t prev_fw_mode_config;
-	uint32_t cur_scan_config;
-	uint32_t cur_fw_mode_config;
-	uint32_t req_scan_config;
-	uint32_t req_fw_mode_config;
 };
 
 /**
@@ -1238,23 +1212,6 @@ struct hw_mode_idx_to_mac_cap_idx {
 	uint8_t num_of_macs;
 	uint8_t mac_cap_idx;
 	uint8_t hw_mode_id;
-};
-
-/**
- * struct extended_caps - new extended caps given by firmware
- * @num_hw_modes: number of hardware modes for current SOC
- * @each_hw_mode_cap: hw mode id to phy id mapping
- * @each_phy_cap_per_hwmode: PHY's caps for each hw mode
- * @num_phy_for_hal_reg_cap: number of phy for hal reg cap
- * @hw_mode_to_mac_cap_map: map between hw_mode to capabilities
- */
-struct extended_caps {
-	WMI_SOC_MAC_PHY_HW_MODE_CAPS num_hw_modes;
-	WMI_HW_MODE_CAPABILITIES *each_hw_mode_cap;
-	WMI_MAC_PHY_CAPABILITIES *each_phy_cap_per_hwmode;
-	WMI_SOC_HAL_REG_CAPABILITIES num_phy_for_hal_reg_cap;
-	WMI_HAL_REG_CAPABILITIES_EXT *each_phy_hal_reg_cap;
-	struct hw_mode_idx_to_mac_cap_idx *hw_mode_to_mac_cap_map;
 };
 
 /**

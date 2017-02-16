@@ -257,6 +257,7 @@ typedef struct tagSmeStruct {
 	void *encrypt_decrypt_context;
 	void (*lost_link_info_cb)(void *context,
 			struct sir_lost_link_info *lost_link_info);
+	bool (*set_connection_info_cb)(bool);
 } tSmeStruct, *tpSmeStruct;
 
 #endif /* #if !defined( __SMEINTERNAL_H ) */

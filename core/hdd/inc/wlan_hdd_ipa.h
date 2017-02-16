@@ -117,6 +117,7 @@ struct sk_buff *hdd_ipa_tx_packet_ipa(hdd_context_t *hdd_ctx,
 bool hdd_ipa_is_present(hdd_context_t *hdd_ctx);
 void hdd_ipa_dump_info(hdd_context_t *hdd_ctx);
 QDF_STATUS hdd_ipa_uc_ol_init(hdd_context_t *hdd_ctx);
+void hdd_ipa_set_tx_flow_info(void);
 #else
 static inline QDF_STATUS hdd_ipa_init(hdd_context_t *hdd_ctx)
 {
@@ -256,5 +257,11 @@ QDF_STATUS hdd_ipa_uc_ol_init(hdd_context_t *hdd_ctx)
 {
 	return QDF_STATUS_SUCCESS;
 }
+
+static inline void hdd_ipa_set_tx_flow_info(void)
+{
+	return;
+}
+
 #endif /* IPA_OFFLOAD */
 #endif /* #ifndef HDD_IPA_H__ */

@@ -286,7 +286,6 @@ end:
 static QDF_STATUS sme_process_hw_mode_trans_ind(tpAniSirGlobal mac,
 						uint8_t *msg)
 {
-	hw_mode_transition_cb callback = NULL;
 	struct sir_hw_mode_trans_ind *param;
 
 	param = (struct sir_hw_mode_trans_ind *)msg;
@@ -295,14 +294,10 @@ static QDF_STATUS sme_process_hw_mode_trans_ind(tpAniSirGlobal mac,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	callback = mac->sme.sme_hw_mode_trans_cb;
-	if (callback) {
-		sms_log(mac, LOGE, FL("Calling registered callback..."));
-		callback(param->old_hw_mode_index,
-			param->new_hw_mode_index,
-			param->num_vdev_mac_entries,
-			param->vdev_mac_map);
-	}
+	cds_hw_mode_transition_cb(param->old_hw_mode_index,
+		param->new_hw_mode_index,
+		param->num_vdev_mac_entries,
+		param->vdev_mac_map);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -16519,4 +16514,18 @@ QDF_STATUS sme_set_peer_param(uint8_t *peer_addr, uint32_t param_id,
 
 	return wma_set_peer_param(wma_handle, peer_addr, param_id,
 				  param_value, vdev_id);
+}
+
+QDF_STATUS sme_register_set_connection_info_cb(tHalHandle hHal,
+					  bool (*set_connection_info_cb)(bool))
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+
+	status = sme_acquire_global_lock(&pMac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		pMac->sme.set_connection_info_cb = set_connection_info_cb;
+		sme_release_global_lock(&pMac->sme);
+	}
+	return status;
 }

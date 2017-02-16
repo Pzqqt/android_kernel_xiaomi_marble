@@ -40,6 +40,7 @@
 #include "cds_concurrency.h"
 #include "cds_utils.h"
 #include "scheduler_api.h"
+#include "wlan_policy_mgr_api.h"
 
 typedef void *WMA_HANDLE;
 
@@ -149,6 +150,9 @@ QDF_STATUS wma_update_channel_list(WMA_HANDLE handle, void *scan_chan_info);
 
 uint8_t *wma_get_vdev_address_by_vdev_id(uint8_t vdev_id);
 struct wma_txrx_node *wma_get_interface_by_vdev_id(uint8_t vdev_id);
+QDF_STATUS wma_get_connection_info(uint8_t vdev_id,
+		struct policy_mgr_vdev_entry_info *conn_table_entry);
+
 bool wma_is_vdev_up(uint8_t vdev_id);
 
 void *wma_get_beacon_buffer_by_vdev_id(uint8_t vdev_id, uint32_t *buffer_size);
@@ -305,4 +309,5 @@ QDF_STATUS wma_set_sar_limit(WMA_HANDLE handle,
  */
 QDF_STATUS wma_set_qpower_config(uint8_t vdev_id, uint8_t qpower);
 
+bool wma_is_service_enabled(WMI_SERVICE service_type);
 #endif

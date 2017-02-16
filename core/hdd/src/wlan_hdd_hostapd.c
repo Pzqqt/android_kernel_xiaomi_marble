@@ -620,45 +620,6 @@ static int hdd_stop_bss_link(hdd_adapter_t *pHostapdAdapter,
 }
 
 /**
- * hdd_issue_stored_joinreq() - This function will trigger stations's
- *                              cached connect request to proceed.
- * @hdd_ctx: pointer to hdd context.
- * @sta_adater: pointer to station adapter.
- *
- * This function will call SME to release station's stored/cached connect
- * request to proceed.
- *
- * Return: none.
- */
-static void hdd_issue_stored_joinreq(hdd_adapter_t *sta_adapter,
-		hdd_context_t *hdd_ctx)
-{
-	tHalHandle hal_handle;
-	uint32_t roam_id;
-
-	if (NULL == sta_adapter) {
-		hdd_err("Invalid station adapter, ignore issueing join req");
-		return;
-	}
-	hal_handle = WLAN_HDD_GET_HAL_CTX(sta_adapter);
-
-	if (true ==  cds_is_sta_connection_pending()) {
-		MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
-				TRACE_CODE_HDD_ISSUE_JOIN_REQ,
-				sta_adapter->sessionId, roam_id));
-		if (QDF_STATUS_SUCCESS !=
-			sme_issue_stored_joinreq(hal_handle,
-				&roam_id,
-				sta_adapter->sessionId)) {
-			/* change back to NotAssociated */
-			hdd_conn_set_connection_state(sta_adapter,
-				eConnectionState_NotConnected);
-		}
-		cds_change_sta_conn_pending_status(false);
-	}
-}
-
-/**
  * hdd_chan_change_notify() - Function to notify hostapd about channel change
  * @hostapd_adapter	hostapd adapter
  * @dev:		Net device structure
@@ -1315,7 +1276,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		wrqu.data.length = strlen(startBssEvent);
 		we_event = IWEVCUSTOM;
 		we_custom_event_generic = we_custom_start_event;
-		cds_dump_concurrency_info();
+		hdd_ipa_set_tx_flow_info();
 		/* Send SCC/MCC Switching event to IPA */
 		hdd_ipa_send_mcc_scc_msg(pHddCtx, pHddCtx->mcc_mode);
 
@@ -1372,13 +1333,6 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		if (!con_sap_adapter) {
 			pHddApCtx->dfs_cac_block_tx = true;
 			pHddCtx->dev_dfs_cac_status = DFS_CAC_NEVER_DONE;
-		}
-		if (pHddCtx->config->conc_custom_rule2 &&
-			(QDF_P2P_GO_MODE == pHostapdAdapter->device_mode)) {
-			hdd_adapter_t *sta_adapter = hdd_get_adapter(pHddCtx,
-					QDF_STA_MODE);
-			hdd_info("P2PGO is going down now");
-			hdd_issue_stored_joinreq(sta_adapter, pHddCtx);
 		}
 		hdd_info("bss_stop_reason=%d", pHddApCtx->bss_stop_reason);
 		if (pHddApCtx->bss_stop_reason !=
@@ -2168,7 +2122,7 @@ stopbss:
 		if (eSAP_STOP_BSS_EVENT == sapEvent)
 			qdf_event_set(&pHostapdState->qdf_stop_bss_event);
 
-		cds_dump_concurrency_info();
+		hdd_ipa_set_tx_flow_info();
 		/* Send SCC/MCC Switching event to IPA */
 		hdd_ipa_send_mcc_scc_msg(pHddCtx, pHddCtx->mcc_mode);
 	}
@@ -7355,7 +7309,7 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 
 	ENTER();
 
-	if (!update_beacon && cds_is_connection_in_progress(NULL, NULL)) {
+	if (!update_beacon && hdd_is_connection_in_progress(NULL, NULL)) {
 		hdd_err("Can't start BSS: connection is in progress");
 		return -EINVAL;
 	}
@@ -7854,7 +7808,7 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 		}
 	}
 
-	if (!cds_set_connection_in_progress(true)) {
+	if (!hdd_set_connection_in_progress(true)) {
 		hdd_err("Can't start BSS: set connnection in progress failed");
 		ret = -EINVAL;
 		goto error;
@@ -7873,7 +7827,7 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 		pSapEventCallback, pConfig, pHostapdAdapter->dev);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		wlansap_reset_sap_config_add_ie(pConfig, eUPDATE_IE_ALL);
-		cds_set_connection_in_progress(false);
+		hdd_set_connection_in_progress(false);
 		hdd_err("SAP Start Bss fail");
 		ret = -EINVAL;
 		goto error;
@@ -7888,7 +7842,7 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("ERROR: HDD qdf wait for single_event failed!!");
-		cds_set_connection_in_progress(false);
+		hdd_set_connection_in_progress(false);
 		sme_get_command_q_status(hHal);
 		wlansap_stop_bss(WLAN_HDD_GET_SAP_CTX_PTR(pHostapdAdapter));
 		QDF_ASSERT(0);
@@ -7921,7 +7875,7 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 	/* Check and restart SAP if it is on unsafe channel */
 	hdd_unsafe_channel_restart_sap(pHddCtx);
 
-	cds_set_connection_in_progress(false);
+	hdd_set_connection_in_progress(false);
 	pHostapdState->bCommit = true;
 	EXIT();
 
@@ -8237,7 +8191,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		pAdapter->device_mode, cds_is_sub_20_mhz_enabled());
 
 
-	if (cds_is_connection_in_progress(NULL, NULL)) {
+	if (hdd_is_connection_in_progress(NULL, NULL)) {
 		hdd_err("Can't start BSS: connection is in progress");
 		return -EBUSY;
 	}

@@ -1373,7 +1373,7 @@ static void hdd_send_association_event(struct net_device *dev,
 		hdd_stop_bus_bw_compute_timer(pAdapter);
 #endif
 	}
-	cds_dump_concurrency_info();
+	hdd_ipa_set_tx_flow_info();
 	/* Send SCC/MCC Switching event to IPA */
 	hdd_ipa_send_mcc_scc_msg(pHddCtx, pHddCtx->mcc_mode);
 
@@ -2982,18 +2982,6 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 		wlan_hdd_netif_queue_control(pAdapter,
 					   WLAN_NETIF_TX_DISABLE_N_CARRIER,
 					   WLAN_CONTROL_PATH);
-	}
-
-	if (QDF_STATUS_SUCCESS != cds_check_and_restart_sap(
-					roamResult, pHddStaCtx))
-		return QDF_STATUS_E_FAILURE;
-
-	if (NULL != pRoamInfo && NULL != pRoamInfo->pBssDesc) {
-		cds_force_sap_on_scc(roamResult,
-				pRoamInfo->pBssDesc->channelId);
-	} else {
-		hdd_err("pRoamInfo profile is not set properly");
-		return QDF_STATUS_E_FAILURE;
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -5053,7 +5041,7 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 				WLAN_NETIF_TX_DISABLE,
 				WLAN_CONTROL_PATH);
 		hdd_napi_serialize(1);
-		cds_set_connection_in_progress(true);
+		hdd_set_connection_in_progress(true);
 		hdd_set_roaming_in_progress(true);
 		cds_restart_opportunistic_timer(true);
 		break;
@@ -5063,7 +5051,7 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		wlan_hdd_netif_queue_control(pAdapter,
 				WLAN_WAKE_ALL_NETIF_QUEUE,
 				WLAN_CONTROL_PATH);
-		cds_set_connection_in_progress(false);
+		hdd_set_connection_in_progress(false);
 		hdd_set_roaming_in_progress(false);
 		/*
 		 * If disconnect operation is in deferred state, do it now.

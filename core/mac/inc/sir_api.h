@@ -56,6 +56,7 @@ typedef struct sAniSirGlobal *tpAniSirGlobal;
 #include "wmi_unified.h"
 #include "wmi_unified_param.h"
 #include <dot11f.h>
+#include "wlan_policy_mgr_api.h"
 
 #define OFFSET_OF(structType, fldName)   (&((structType *)0)->fldName)
 
@@ -3256,53 +3257,6 @@ struct sir_wifi_start_log {
 	int size;
 };
 
-
-/**
- * enum hw_mode_bandwidth - bandwidth of wifi channel.
- *
- * @HW_MODE_5_MHZ: 5 Mhz bandwidth
- * @HW_MODE_10_MHZ: 10 Mhz bandwidth
- * @HW_MODE_20_MHZ: 20 Mhz bandwidth
- * @HW_MODE_40_MHZ: 40 Mhz bandwidth
- * @HW_MODE_80_MHZ: 80 Mhz bandwidth
- * @HW_MODE_80_PLUS_80_MHZ: 80 Mhz plus 80 Mhz bandwidth
- * @HW_MODE_160_MHZ: 160 Mhz bandwidth
- * @HW_MODE_MAX_BANDWIDTH: Max place holder
- *
- * These are generic IDs that identify the various roles
- * in the software system
- */
-enum hw_mode_bandwidth {
-	HW_MODE_BW_NONE,
-	HW_MODE_5_MHZ,
-	HW_MODE_10_MHZ,
-	HW_MODE_20_MHZ,
-	HW_MODE_40_MHZ,
-	HW_MODE_80_MHZ,
-	HW_MODE_80_PLUS_80_MHZ,
-	HW_MODE_160_MHZ,
-	HW_MODE_MAX_BANDWIDTH
-};
-
-/**
- * enum set_hw_mode_status - Status of set HW mode command
- * @SET_HW_MODE_STATUS_OK: command successful
- * @SET_HW_MODE_STATUS_EINVAL: Requested invalid hw_mode
- * @SET_HW_MODE_STATUS_ECANCELED: HW mode change cancelled
- * @SET_HW_MODE_STATUS_ENOTSUP: HW mode not supported
- * @SET_HW_MODE_STATUS_EHARDWARE: HW mode change prevented by hardware
- * @SET_HW_MODE_STATUS_EPENDING: HW mode change is pending
- * @SET_HW_MODE_STATUS_ECOEX: HW mode change conflict with Coex
- */
-enum set_hw_mode_status {
-	SET_HW_MODE_STATUS_OK,
-	SET_HW_MODE_STATUS_EINVAL,
-	SET_HW_MODE_STATUS_ECANCELED,
-	SET_HW_MODE_STATUS_ENOTSUP,
-	SET_HW_MODE_STATUS_EHARDWARE,
-	SET_HW_MODE_STATUS_EPENDING,
-	SET_HW_MODE_STATUS_ECOEX,
-};
 
 /**
  * struct sir_pcl_list - Format of PCL

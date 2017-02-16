@@ -44,6 +44,7 @@
 #include <csr_api.h>
 #include <wlan_hdd_misc.h>
 #include <wlan_hdd_napi.h>
+#include <cds_api.h>
 #include <cds_concurrency.h>
 #include "wlan_hdd_he.h"
 

@@ -68,6 +68,7 @@
 #include "cds_packet.h"
 #include "cds_utils.h"
 #include "sys_startup.h"
+#include "cds_api.h"
 #include "cds_concurrency.h"
 #include "nan_datapath.h"
 #include "wma.h"

@@ -19515,7 +19515,7 @@ void csr_roaming_report_diag_event(tpAniSirGlobal mac_ctx,
 * param  pMac global structure
 * param  pMsgBuf - Contains the session ID for which the handler should apply
 * --------------------------------------------------------------------------*/
-void csr_process_ho_fail_ind(tpAniSirGlobal pMac, void *pMsgBuf)
+void csr_process_ho_fail_ind(tpAniSirGlobal mac_ctx, void *pMsgBuf)
 {
 	tSirSmeHOFailureInd *pSmeHOFailInd = (tSirSmeHOFailureInd *) pMsgBuf;
 	uint32_t sessionId;
@@ -19528,23 +19528,23 @@ void csr_process_ho_fail_ind(tpAniSirGlobal pMac, void *pMsgBuf)
 		return;
 	}
 	/* Roaming is supported only on Infra STA Mode. */
-	if (!csr_roam_is_sta_mode(pMac, sessionId)) {
+	if (!csr_roam_is_sta_mode(mac_ctx, sessionId)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "LFR3:HO Fail cannot be handled for session %d",
 			  sessionId);
 		return;
 	}
-	cds_set_connection_in_progress(false);
-	csr_roam_roaming_offload_timer_action(pMac, 0, sessionId,
+	mac_ctx->sme.set_connection_info_cb(false);
+	csr_roam_roaming_offload_timer_action(mac_ctx, 0, sessionId,
 			ROAMING_OFFLOAD_TIMER_STOP);
-	csr_roam_call_callback(pMac, sessionId, NULL, 0,
+	csr_roam_call_callback(mac_ctx, sessionId, NULL, 0,
 			eCSR_ROAM_NAPI_OFF, eSIR_SME_SUCCESS);
-	csr_roam_synch_clean_up(pMac, sessionId);
-	csr_roaming_report_diag_event(pMac, NULL,
+	csr_roam_synch_clean_up(mac_ctx, sessionId);
+	csr_roaming_report_diag_event(mac_ctx, NULL,
 			eCSR_REASON_ROAM_HO_FAIL);
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 		  "LFR3:Issue Disconnect on session %d", sessionId);
-	csr_roam_disconnect(pMac, sessionId,
+	csr_roam_disconnect(mac_ctx, sessionId,
 			eCSR_DISCONNECT_REASON_ROAM_HO_FAIL);
 }
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
@@ -20337,7 +20337,7 @@ QDF_STATUS csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 			roam_synch_data->hw_mode_trans_ind.new_hw_mode_index,
 			roam_synch_data->hw_mode_trans_ind.num_vdev_mac_entries,
 			roam_synch_data->hw_mode_trans_ind.vdev_mac_map);
-		cds_set_connection_in_progress(false);
+		mac_ctx->sme.set_connection_info_cb(false);
 		session->roam_synch_in_progress = false;
 		cds_check_concurrent_intf_and_restart_sap(session->pContext);
 		sme_release_global_lock(&mac_ctx->sme);

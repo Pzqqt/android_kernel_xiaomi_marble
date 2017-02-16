@@ -2433,6 +2433,25 @@ uint8_t *wma_get_vdev_address_by_vdev_id(uint8_t vdev_id)
 	return wma->interfaces[vdev_id].addr;
 }
 
+QDF_STATUS wma_get_connection_info(uint8_t vdev_id,
+		struct policy_mgr_vdev_entry_info *conn_table_entry)
+{
+	struct wma_txrx_node *wma_conn_table_entry;
+
+	wma_conn_table_entry = wma_get_interface_by_vdev_id(vdev_id);
+	if (NULL == wma_conn_table_entry) {
+		WMA_LOGE("%s: can't find vdev_id %d in WMA table", __func__, vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+	conn_table_entry->chan_width = wma_conn_table_entry->chan_width;
+	conn_table_entry->mac_id = wma_conn_table_entry->mac_id;
+	conn_table_entry->mhz = wma_conn_table_entry->mhz;
+	conn_table_entry->sub_type = wma_conn_table_entry->sub_type;
+	conn_table_entry->type = wma_conn_table_entry->type;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * wma_get_interface_by_vdev_id() - lookup interface entry using vdev ID
  * @vdev_id: vdev id
@@ -3976,4 +3995,16 @@ QDF_STATUS wma_send_vdev_stop_to_fw(t_wma_handle *wma, uint8_t vdev_id)
 		wma_release_wmi_resp_wakelock(wma);
 
 	return status;
+}
+
+bool wma_is_service_enabled(WMI_SERVICE service_type)
+{
+	tp_wma_handle wma;
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma) {
+		WMA_LOGE("%s: Invalid WMA handle", __func__);
+		return false;
+	}
+
+	return WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap, service_type);
 }

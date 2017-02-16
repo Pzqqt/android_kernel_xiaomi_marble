@@ -222,30 +222,9 @@ typedef struct _cds_context_type {
 	uint32_t fw_debug_log_level;
 	struct cds_log_complete log_complete;
 	qdf_spinlock_t bug_report_lock;
-	qdf_event_t connection_update_done_evt;
-	qdf_mutex_t qdf_conc_list_lock;
-	qdf_mc_timer_t dbs_opportunistic_timer;
-#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-	void (*sap_restart_chan_switch_cb)(void *, uint32_t, uint32_t);
-#endif
-	QDF_STATUS (*sme_get_valid_channels)(void*, uint8_t *, uint32_t *);
-	void (*sme_get_nss_for_vdev)(void*, enum tQDF_ADAPTER_MODE,
-		uint8_t *, uint8_t *);
 
-	void (*cdp_update_mac_id)(void *soc, uint8_t , uint8_t);
-
-	/* This list is not sessionized. This mandatory channel list would be
-	 * as per OEMs preference as per the regulatory/other considerations.
-	 * So, this would remain same for all the interfaces.
-	 */
-	uint8_t sap_mandatory_channels[QDF_MAX_NUM_CHAN];
-	uint32_t sap_mandatory_channels_len;
-	bool do_hw_mode_change;
 	bool enable_fatal_event;
 	struct cds_config_info *cds_cfg;
-
-	/* This is to track if HW mode change is in progress */
-	uint32_t hw_mode_change_in_progress;
 
 	struct ol_tx_sched_wrr_ac_specs_t ac_specs[TX_WMM_AC_NUM];
 } cds_context_type, *p_cds_contextType;

@@ -87,6 +87,7 @@
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
 #include "wlan_hdd_stats.h"
 #endif
+#include "cds_api.h"
 #include "cds_concurrency.h"
 #include "qwlan_version.h"
 #include "wlan_hdd_memdump.h"
@@ -8100,7 +8101,7 @@ __wlan_hdd_cfg80211_sap_configuration_set(struct wiphy *wiphy,
 				ap_ctx->sapConfig.sec_ch,
 				&ap_ctx->sapConfig.ch_params);
 
-		cds_restart_sap(hostapd_adapter);
+		hdd_restart_sap(hostapd_adapter);
 	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_SAP_MANDATORY_FREQUENCY_LIST]) {
@@ -8672,7 +8673,7 @@ static int hdd_update_acs_channel(hdd_adapter_t *adapter, uint8_t reason,
 		sap_config->acs_cfg.ch_width = channel_list->chan_width;
 		hdd_ap_ctx->sapConfig.ch_width_orig =
 				channel_list->chan_width;
-		hdd_restart_sap(adapter, sap_config->acs_cfg.pri_ch);
+		hdd_switch_sap_channel(adapter, sap_config->acs_cfg.pri_ch);
 		break;
 
 	default:
@@ -13194,18 +13195,6 @@ static int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 				&pAdapter->scan_info.scanAddIE.addIEdata[0];
 			pRoamProfile->nAddIEScanLength =
 				pAdapter->scan_info.scanAddIE.length;
-		}
-		/*
-		 * When policy manager is enabled from ini file, we shouldn't
-		 * check for other concurrency rules.
-		 */
-		if (wma_is_hw_dbs_capable() == false) {
-			cds_handle_conc_rule1(pAdapter, pRoamProfile);
-			if (true != cds_handle_conc_rule2(
-					pAdapter, pRoamProfile, &roamId)) {
-				status = 0;
-				goto conn_failure;
-			}
 		}
 
 		if ((wma_is_hw_dbs_capable() == true) &&

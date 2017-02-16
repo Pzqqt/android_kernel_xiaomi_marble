@@ -1593,7 +1593,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 #endif
 
 	/* Check if scan is allowed at this point of time */
-	if (cds_is_connection_in_progress(&curr_session_id, &curr_reason)) {
+	if (hdd_is_connection_in_progress(&curr_session_id, &curr_reason)) {
 		hdd_err("Scan not allowed");
 		if (pHddCtx->last_scan_reject_session_id != curr_session_id ||
 		    pHddCtx->last_scan_reject_reason != curr_reason ||
