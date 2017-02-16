@@ -1375,7 +1375,7 @@ QDF_STATUS dp_tx_vdev_attach(struct dp_vdev *vdev)
 			vdev->vdev_id);
 
 	HTT_TX_TCL_METADATA_PDEV_ID_SET(vdev->htt_tcl_metadata,
-			vdev->pdev->pdev_id);
+			DP_SW2HW_MACID(vdev->pdev->pdev_id));
 
 	/*
 	 * Set HTT Extension Valid bit to 0 by default
