@@ -2083,15 +2083,15 @@ int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 		if (reinit) {
 			if (hdd_ipa_uc_ssr_reinit(hdd_ctx)) {
 				hdd_err("HDD IPA UC reinit failed");
-				goto close;
+				goto post_disable;
 			}
 		}
 
 	/* Fall through dont add break here */
 	case DRIVER_MODULES_OPENED:
 		if (!adapter) {
-			hdd_err("adapter is Null");
-			goto close;
+			hdd_alert("adapter is Null");
+			goto post_disable;
 		}
 		if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 			hdd_err("in ftm mode, no need to configure cds modules");
@@ -2099,7 +2099,7 @@ int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 		}
 		if (hdd_configure_cds(hdd_ctx, adapter)) {
 			hdd_err("Failed to Enable cds modules");
-			goto close;
+			goto post_disable;
 		}
 		hdd_enable_power_management();
 		hdd_info("Driver Modules Successfully Enabled");
@@ -2118,7 +2118,11 @@ int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 	EXIT();
 	return 0;
 
+post_disable:
+	cds_post_disable(hdd_ctx->pcds_context);
+
 close:
+	hdd_ctx->driver_status = DRIVER_MODULES_CLOSED;
 	cds_close(hdd_ctx->hdd_psoc, p_cds_context);
 
 ol_cds_free:
@@ -2133,6 +2137,7 @@ release_lock:
 	hdd_ctx->start_modules_in_progress = false;
 	mutex_unlock(&hdd_ctx->iface_change_lock);
 	EXIT();
+
 	return -EINVAL;
 }
 
