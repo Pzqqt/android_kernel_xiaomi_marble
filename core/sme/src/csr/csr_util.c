@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -252,6 +252,26 @@ const char *get_e_csr_roam_result_str(eCsrRoamResult val)
 	default:
 		return "unknown";
 	}
+}
+
+void csr_nonscan_pending_ll_unlock(struct sAniSirGlobal *mac_ctx)
+{
+	csr_ll_unlock(&mac_ctx->sme.smeCmdPendingList);
+}
+
+void csr_nonscan_active_ll_unlock(struct sAniSirGlobal *mac_ctx)
+{
+	csr_ll_unlock(&mac_ctx->sme.smeCmdActiveList);
+}
+
+void csr_nonscan_pending_ll_lock(struct sAniSirGlobal *mac_ctx)
+{
+	csr_ll_lock(&mac_ctx->sme.smeCmdPendingList);
+}
+
+void csr_nonscan_active_ll_lock(struct sAniSirGlobal *mac_ctx)
+{
+	csr_ll_lock(&mac_ctx->sme.smeCmdActiveList);
 }
 
 bool csr_get_bss_id_bss_desc(tHalHandle hHal, tSirBssDescription *pSirBssDesc,

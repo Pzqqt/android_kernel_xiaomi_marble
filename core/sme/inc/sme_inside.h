@@ -202,7 +202,6 @@ void sme_process_pending_queue(tpAniSirGlobal pMac);
 void sme_release_command(tpAniSirGlobal pMac, tSmeCmd *pCmd);
 void purge_sme_session_cmd_list(tpAniSirGlobal pMac, uint32_t sessionId,
 		tDblLinkList *pList);
-bool sme_command_pending(tpAniSirGlobal pMac);
 bool qos_process_command(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 void qos_release_command(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 QDF_STATUS csr_process_scan_command(tpAniSirGlobal pMac, tSmeCmd *pCommand);

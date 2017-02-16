@@ -560,7 +560,7 @@ tSmeCmd *sme_get_command_buffer(tpAniSirGlobal pMac)
 		} /* if(pTempCmd) */
 
 		/* dump what is in the pending queue */
-		csr_ll_lock(&pMac->sme.smeCmdPendingList);
+		csr_nonscan_pending_ll_lock(pMac);
 		pEntry =
 			csr_ll_peek_head(&pMac->sme.smeCmdPendingList,
 					 LL_ACCESS_NOLOCK);
@@ -580,7 +580,7 @@ tSmeCmd *sme_get_command_buffer(tpAniSirGlobal pMac)
 				csr_ll_next(&pMac->sme.smeCmdPendingList, pEntry,
 					    LL_ACCESS_NOLOCK);
 		}
-		csr_ll_unlock(&pMac->sme.smeCmdPendingList);
+		csr_nonscan_pending_ll_unlock(pMac);
 
 		if (pMac->roam.configParam.enable_fatal_event)
 			cds_flush_logs(WLAN_LOG_TYPE_FATAL,
@@ -798,17 +798,17 @@ static bool sme_process_command(tpAniSirGlobal pMac)
 	 * a pending command...
 	 * alwasy lock active list before locking pending list
 	 */
-	csr_ll_lock(&pMac->sme.smeCmdActiveList);
+	csr_nonscan_active_ll_lock(pMac);
 	if (!csr_ll_is_list_empty(&pMac->sme.smeCmdActiveList,
 				 LL_ACCESS_NOLOCK)) {
-		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
+		csr_nonscan_active_ll_unlock(pMac);
 		goto process_scan_q;
 	}
 
 	if (csr_ll_is_list_empty(&pMac->sme.smeCmdPendingList,
 				 LL_ACCESS_LOCK)) {
 		/* No command waiting */
-		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
+		csr_nonscan_active_ll_unlock(pMac);
 		goto process_scan_q;
 	}
 
@@ -836,7 +836,7 @@ static bool sme_process_command(tpAniSirGlobal pMac)
 	pEntry = csr_ll_peek_head(&pMac->sme.smeCmdPendingList, LL_ACCESS_LOCK);
 sme_process_cmd:
 	if (!pEntry) {
-		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
+		csr_nonscan_active_ll_unlock(pMac);
 		goto process_scan_q;
 	}
 	pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
@@ -848,7 +848,7 @@ sme_process_cmd:
 	    && !CSR_IS_DISCONNECT_COMMAND(pCommand)
 	    && !CSR_IS_SET_KEY_COMMAND(pCommand)) {
 
-		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
+		csr_nonscan_active_ll_unlock(pMac);
 		sms_log(pMac, LOGE,
 			FL("SessionId %d: Can't process cmd(%d), waiting for key"),
 			pCommand->sessionId, pCommand->command);
@@ -859,7 +859,7 @@ sme_process_cmd:
 	if (!csr_ll_remove_entry(&pMac->sme.smeCmdPendingList, pEntry,
 				LL_ACCESS_LOCK)) {
 		/* This is odd. Some one else pull off the command. */
-		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
+		csr_nonscan_active_ll_unlock(pMac);
 		goto process_scan_q;
 	}
 	/* we can reuse the pCommand. Insert the command onto the ActiveList */
@@ -871,11 +871,11 @@ sme_process_cmd:
 
 	switch (pCommand->command) {
 	case eSmeCommandScan:
-		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
+		csr_nonscan_active_ll_unlock(pMac);
 		status = csr_process_scan_command(pMac, pCommand);
 		break;
 	case eSmeCommandRoam:
-		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
+		csr_nonscan_active_ll_unlock(pMac);
 		status = csr_roam_process_command(pMac, pCommand);
 		if (!QDF_IS_STATUS_SUCCESS(status)
 		    && csr_ll_remove_entry(&pMac->sme.smeCmdActiveList,
@@ -883,11 +883,11 @@ sme_process_cmd:
 			csr_release_command(pMac, pCommand);
 		break;
 	case eSmeCommandWmStatusChange:
-		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
+		csr_nonscan_active_ll_unlock(pMac);
 		csr_roam_process_wm_status_change_command(pMac, pCommand);
 		break;
 	case eSmeCommandSetKey:
-		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
+		csr_nonscan_active_ll_unlock(pMac);
 		status = csr_roam_process_set_key_command(pMac, pCommand);
 		if (!QDF_IS_STATUS_SUCCESS(status)
 		    && csr_ll_remove_entry(&pMac->sme.smeCmdActiveList,
@@ -896,7 +896,7 @@ sme_process_cmd:
 		}
 		break;
 	case eSmeCommandNdpInitiatorRequest:
-		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
+		csr_nonscan_active_ll_unlock(pMac);
 		if (csr_process_ndp_initiator_request(pMac, pCommand) !=
 			QDF_STATUS_SUCCESS)
 			if (csr_ll_remove_entry(
@@ -905,7 +905,7 @@ sme_process_cmd:
 				csr_release_command(pMac, pCommand);
 		break;
 	case eSmeCommandNdpResponderRequest:
-		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
+		csr_nonscan_active_ll_unlock(pMac);
 		status = csr_process_ndp_responder_request(pMac, pCommand);
 		if (status != QDF_STATUS_SUCCESS) {
 			if (csr_ll_remove_entry(&pMac->sme.smeCmdActiveList,
@@ -914,7 +914,7 @@ sme_process_cmd:
 		}
 		break;
 	case eSmeCommandNdpDataEndInitiatorRequest:
-		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
+		csr_nonscan_active_ll_unlock(pMac);
 		status = csr_process_ndp_data_end_request(pMac, pCommand);
 		if (status != QDF_STATUS_SUCCESS) {
 			if (csr_ll_remove_entry(&pMac->sme.smeCmdActiveList,
@@ -923,7 +923,7 @@ sme_process_cmd:
 		}
 		break;
 	case eSmeCommandRemainOnChannel:
-		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
+		csr_nonscan_active_ll_unlock(pMac);
 		status = p2p_process_remain_on_channel_cmd(pMac, pCommand);
 		if (!QDF_IS_STATUS_SUCCESS(status)
 		    && csr_ll_remove_entry(&pMac->sme.smeCmdActiveList,
@@ -938,7 +938,7 @@ sme_process_cmd:
 		break;
 	case eSmeCommandAddTs:
 	case eSmeCommandDelTs:
-		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
+		csr_nonscan_active_ll_unlock(pMac);
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
 		fContinue = qos_process_command(pMac, pCommand);
 		if (fContinue && csr_ll_remove_entry(
@@ -957,7 +957,7 @@ sme_process_cmd:
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 			  FL("sending TDLS Command 0x%x to PE"),
 			  pCommand->command);
-		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
+		csr_nonscan_active_ll_unlock(pMac);
 		status = csr_tdls_process_cmd(pMac, pCommand);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			if (csr_ll_remove_entry(&pMac->sme.smeCmdActiveList,
@@ -971,19 +971,19 @@ sme_process_cmd:
 		break;
 #endif
 	case e_sme_command_set_hw_mode:
-		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
+		csr_nonscan_active_ll_unlock(pMac);
 		csr_process_set_hw_mode(pMac, pCommand);
 		break;
 	case e_sme_command_nss_update:
-		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
+		csr_nonscan_active_ll_unlock(pMac);
 		csr_process_nss_update_req(pMac, pCommand);
 		break;
 	case e_sme_command_set_dual_mac_config:
-		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
+		csr_nonscan_active_ll_unlock(pMac);
 		csr_process_set_dual_mac_config(pMac, pCommand);
 		break;
 	case e_sme_command_set_antenna_mode:
-		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
+		csr_nonscan_active_ll_unlock(pMac);
 		csr_process_set_antenna_mode(pMac, pCommand);
 		break;
 	default:
@@ -993,7 +993,7 @@ sme_process_cmd:
 			pCommand->command);
 		pEntry = csr_ll_remove_head(&pMac->sme.smeCmdActiveList,
 					    LL_ACCESS_NOLOCK);
-		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
+		csr_nonscan_active_ll_unlock(pMac);
 		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
 		csr_release_command(pMac, pCommand);
 		status = QDF_STATUS_E_FAILURE;
@@ -1011,13 +1011,6 @@ void sme_process_pending_queue(tpAniSirGlobal pMac)
 {
 	while (sme_process_command(pMac))
 	;
-}
-
-bool sme_command_pending(tpAniSirGlobal pMac)
-{
-	return !csr_ll_is_list_empty(&pMac->sme.smeCmdActiveList, LL_ACCESS_NOLOCK)
-		|| !csr_ll_is_list_empty(&pMac->sme.smeCmdPendingList,
-					 LL_ACCESS_NOLOCK);
 }
 
 /**

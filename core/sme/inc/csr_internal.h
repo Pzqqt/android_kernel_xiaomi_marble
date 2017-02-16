@@ -1401,6 +1401,11 @@ QDF_STATUS csr_scan_process_single_bssdescr(tpAniSirGlobal pMac,
 		tSirBssDescription *pSirBssDescription,
 		uint32_t scan_id, uint32_t flags);
 
+void csr_nonscan_pending_ll_unlock(struct sAniSirGlobal *mac_ctx);
+void csr_nonscan_active_ll_unlock(struct sAniSirGlobal *mac_ctx);
+void csr_nonscan_pending_ll_lock(struct sAniSirGlobal *mac_ctx);
+void csr_nonscan_active_ll_lock(struct sAniSirGlobal *mac_ctx);
+
 bool csr_wait_for_connection_update(tpAniSirGlobal mac,
 		bool do_release_reacquire_lock);
 enum tQDF_ADAPTER_MODE csr_get_session_persona(tpAniSirGlobal pmac,

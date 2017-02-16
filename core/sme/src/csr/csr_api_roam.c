@@ -3287,11 +3287,11 @@ void csr_roam_remove_duplicate_command(tpAniSirGlobal mac_ctx,
 			eCsrRoamReason roam_reason)
 {
 	/* Always lock active list before locking pending lists */
-	csr_ll_lock(&mac_ctx->sme.smeCmdActiveList);
+	csr_nonscan_active_ll_lock(mac_ctx);
 	csr_roam_remove_duplicate_cmd_from_list(mac_ctx,
 		session_id, &mac_ctx->sme.smeCmdPendingList,
 		command, roam_reason);
-	csr_ll_unlock(&mac_ctx->sme.smeCmdActiveList);
+	csr_nonscan_active_ll_unlock(mac_ctx);
 }
 
 /**
@@ -8473,7 +8473,7 @@ bool is_disconnect_pending(tpAniSirGlobal pmac,
 	tSmeCmd *command = NULL;
 	bool disconnect_cmd_exist = false;
 
-	csr_ll_lock(&pmac->sme.smeCmdPendingList);
+	csr_nonscan_pending_ll_lock(pmac);
 	entry = csr_ll_peek_head(&pmac->sme.smeCmdPendingList, LL_ACCESS_NOLOCK);
 	while (entry) {
 		next_entry = csr_ll_next(&pmac->sme.smeCmdPendingList,
@@ -8487,7 +8487,7 @@ bool is_disconnect_pending(tpAniSirGlobal pmac,
 		}
 		entry = next_entry;
 	}
-	csr_ll_unlock(&pmac->sme.smeCmdPendingList);
+	csr_nonscan_pending_ll_unlock(pmac);
 	return disconnect_cmd_exist;
 }
 
@@ -8695,7 +8695,7 @@ bool csr_is_roam_command_waiting_for_session(tpAniSirGlobal pMac, uint32_t sessi
 	tListElem *pEntry;
 	tSmeCmd *pCommand = NULL;
 	/* alwasy lock active list before locking pending list */
-	csr_ll_lock(&pMac->sme.smeCmdActiveList);
+	csr_nonscan_active_ll_lock(pMac);
 	pEntry = csr_ll_peek_head(&pMac->sme.smeCmdActiveList, LL_ACCESS_NOLOCK);
 	if (pEntry) {
 		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
@@ -8705,7 +8705,7 @@ bool csr_is_roam_command_waiting_for_session(tpAniSirGlobal pMac, uint32_t sessi
 		}
 	}
 	if (false == fRet) {
-		csr_ll_lock(&pMac->sme.smeCmdPendingList);
+		csr_nonscan_pending_ll_lock(pMac);
 		pEntry =
 			csr_ll_peek_head(&pMac->sme.smeCmdPendingList,
 					 LL_ACCESS_NOLOCK);
@@ -8720,9 +8720,10 @@ bool csr_is_roam_command_waiting_for_session(tpAniSirGlobal pMac, uint32_t sessi
 				csr_ll_next(&pMac->sme.smeCmdPendingList, pEntry,
 					    LL_ACCESS_NOLOCK);
 		}
-		csr_ll_unlock(&pMac->sme.smeCmdPendingList);
+		csr_nonscan_pending_ll_unlock(pMac);
 	}
-	csr_ll_unlock(&pMac->sme.smeCmdActiveList);
+	csr_nonscan_active_ll_unlock(pMac);
+
 	return fRet;
 }
 
@@ -8747,7 +8748,7 @@ bool csr_is_scan_for_roam_command_active(tpAniSirGlobal pMac,
 	tListElem *pEntry;
 	tSmeCmd *pCommand;
 	/* alwasy lock active list before locking pending list */
-	csr_ll_lock(&pMac->sme.smeCmdActiveList);
+	csr_nonscan_active_ll_lock(pMac);
 	pEntry = csr_ll_peek_head(&pMac->sme.smeCmdActiveList, LL_ACCESS_NOLOCK);
 	if (pEntry) {
 		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
@@ -8757,7 +8758,7 @@ bool csr_is_scan_for_roam_command_active(tpAniSirGlobal pMac,
 			fRet = true;
 		}
 	}
-	csr_ll_unlock(&pMac->sme.smeCmdActiveList);
+	csr_nonscan_active_ll_unlock(pMac);
 	return fRet;
 }
 
