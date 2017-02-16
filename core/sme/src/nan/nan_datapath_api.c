@@ -625,7 +625,7 @@ void sme_ndp_msg_processor(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg)
 	eSmeCommandType cmd_to_rel = eSmeNoCommand;
 	bool send_to_user = true;
 
-	entry = csr_ll_peek_head(&mac_ctx->sme.smeCmdActiveList,
+	entry = csr_nonscan_active_ll_peak_head(mac_ctx,
 				 LL_ACCESS_LOCK);
 	if (entry != NULL)
 		cmd = GET_BASE_ADDR(entry, tSmeCmd, Link);
@@ -775,7 +775,7 @@ void sme_ndp_msg_processor(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg)
 
 	if (release_active_cmd && cmd && cmd_to_rel == cmd->command) {
 		/* Now put this cmd back on the avilable command list */
-		if (csr_ll_remove_entry(&mac_ctx->sme.smeCmdActiveList,
+		if (csr_nonscan_active_ll_remove_entry(mac_ctx,
 				     entry, LL_ACCESS_LOCK))
 			csr_release_command(mac_ctx, cmd);
 		sme_process_pending_queue(mac_ctx);

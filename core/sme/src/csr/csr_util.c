@@ -281,6 +281,103 @@ bool csr_get_bss_id_bss_desc(tHalHandle hHal, tSirBssDescription *pSirBssDesc,
 			sizeof(struct qdf_mac_addr));
 	return true;
 }
+bool csr_nonscan_active_ll_is_list_empty(struct sAniSirGlobal *mac_ctx,
+				bool fInterlocked)
+{
+	return csr_ll_is_list_empty(&mac_ctx->sme.smeCmdActiveList,
+					fInterlocked);
+}
+bool csr_nonscan_pending_ll_is_list_empty(struct sAniSirGlobal *mac_ctx,
+				bool fInterlocked)
+{
+	return csr_ll_is_list_empty(&mac_ctx->sme.smeCmdPendingList,
+					fInterlocked);
+}
+bool csr_nonscan_active_ll_remove_entry(struct sAniSirGlobal *mac_ctx,
+		tListElem *entry, bool fInterlocked)
+{
+	return csr_ll_remove_entry(&mac_ctx->sme.smeCmdActiveList, entry,
+					fInterlocked);
+}
+bool csr_nonscan_pending_ll_remove_entry(struct sAniSirGlobal *mac_ctx,
+		tListElem *entry, bool fInterlocked)
+{
+	return csr_ll_remove_entry(&mac_ctx->sme.smeCmdPendingList, entry,
+					fInterlocked);
+}
+tListElem *csr_nonscan_active_ll_peak_head(struct sAniSirGlobal *mac_ctx,
+		bool fInterlocked)
+{
+	return csr_ll_peek_head(&mac_ctx->sme.smeCmdActiveList, fInterlocked);
+}
+tListElem *csr_nonscan_pending_ll_peak_head(struct sAniSirGlobal *mac_ctx,
+		bool fInterlocked)
+{
+	return csr_ll_peek_head(&mac_ctx->sme.smeCmdPendingList, fInterlocked);
+}
+tListElem *csr_nonscan_active_ll_remove_head(struct sAniSirGlobal *mac_ctx,
+		bool fInterlocked)
+{
+	return csr_ll_remove_head(&mac_ctx->sme.smeCmdActiveList,
+				fInterlocked);
+}
+tListElem *csr_nonscan_pending_ll_remove_head(struct sAniSirGlobal *mac_ctx,
+		bool fInterlocked)
+{
+	return csr_ll_remove_head(&mac_ctx->sme.smeCmdPendingList,
+				fInterlocked);
+}
+
+uint32_t csr_nonscan_active_ll_count(struct sAniSirGlobal *mac_ctx)
+{
+	return csr_ll_count(&mac_ctx->sme.smeCmdActiveList);
+}
+
+void csr_nonscan_active_ll_insert_head(struct sAniSirGlobal *mac_ctx,
+			tListElem *entry, bool fInterlocked)
+{
+	csr_ll_insert_head(&mac_ctx->sme.smeCmdActiveList, entry,
+			fInterlocked);
+}
+uint32_t csr_nonscan_pending_ll_count(struct sAniSirGlobal *mac_ctx)
+{
+	return csr_ll_count(&mac_ctx->sme.smeCmdPendingList);
+}
+
+void csr_nonscan_pending_ll_insert_head(struct sAniSirGlobal *mac_ctx,
+		tListElem *entry, bool fInterlocked)
+{
+	csr_ll_insert_head(&mac_ctx->sme.smeCmdPendingList, entry,
+			fInterlocked);
+}
+
+void csr_nonscan_pending_ll_insert_tail(struct sAniSirGlobal *mac_ctx,
+		tListElem *entry, bool fInterlocked)
+{
+	csr_ll_insert_tail(&mac_ctx->sme.smeCmdPendingList, entry,
+				fInterlocked);
+}
+
+tListElem *csr_nonscan_pending_ll_next(struct sAniSirGlobal *mac_ctx,
+				tListElem *entry, bool fInterlocked)
+{
+	return csr_ll_next(&mac_ctx->sme.smeCmdPendingList, entry,
+						fInterlocked);
+}
+
+void purge_sme_session_pending_cmd_list(struct sAniSirGlobal *mac_ctx,
+				uint32_t session_id)
+{
+	purge_sme_session_cmd_list(mac_ctx, session_id,
+				&mac_ctx->sme.smeCmdPendingList);
+}
+
+void purge_sme_session_active_cmd_list(struct sAniSirGlobal *mac_ctx,
+				uint32_t session_id)
+{
+	purge_sme_session_cmd_list(mac_ctx, session_id,
+				&mac_ctx->sme.smeCmdActiveList);
+}
 
 bool csr_is_bss_id_equal(tHalHandle hHal, tSirBssDescription *pSirBssDesc1,
 			 tSirBssDescription *pSirBssDesc2)

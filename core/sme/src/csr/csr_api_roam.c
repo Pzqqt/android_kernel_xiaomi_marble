@@ -3199,8 +3199,9 @@ QDF_STATUS csr_init_channel_power_list(tpAniSirGlobal pMac, tCsr11dinfo *ps11din
  *
  * Return: void
  */
-static void csr_roam_remove_duplicate_cmd_from_list(tpAniSirGlobal mac_ctx,
-			uint32_t session_id, tDblLinkList *list,
+static void csr_roam_remove_duplicate_pending_cmd_from_list(
+			tpAniSirGlobal mac_ctx,
+			uint32_t session_id,
 			tSmeCmd *command, eCsrRoamReason roam_reason)
 {
 	tListElem *entry, *next_entry;
@@ -3212,10 +3213,11 @@ static void csr_roam_remove_duplicate_cmd_from_list(tpAniSirGlobal mac_ctx,
 		sms_log(mac_ctx, LOGE, FL(" failed to open list"));
 		return;
 	}
-	csr_ll_lock(list);
-	entry = csr_ll_peek_head(list, LL_ACCESS_NOLOCK);
+	csr_nonscan_pending_ll_lock(mac_ctx);
+	entry = csr_nonscan_pending_ll_peak_head(mac_ctx, LL_ACCESS_NOLOCK);
 	while (entry) {
-		next_entry = csr_ll_next(list, entry, LL_ACCESS_NOLOCK);
+		next_entry = csr_nonscan_pending_ll_next(mac_ctx, entry,
+						LL_ACCESS_NOLOCK);
 		dup_cmd = GET_BASE_ADDR(entry, tSmeCmd, Link);
 		/*
 		 * Remove the previous command if..
@@ -3250,13 +3252,14 @@ static void csr_roam_remove_duplicate_cmd_from_list(tpAniSirGlobal mac_ctx,
 			sms_log(mac_ctx, LOGW, FL("RoamReason = %d"),
 					dup_cmd->u.roamCmd.roamReason);
 			/* Remove the roam command from the pending list */
-			if (csr_ll_remove_entry(list, entry, LL_ACCESS_NOLOCK))
+			if (csr_nonscan_pending_ll_remove_entry(mac_ctx,
+						entry, LL_ACCESS_NOLOCK))
 				csr_ll_insert_tail(&local_list, entry,
 							LL_ACCESS_NOLOCK);
 		}
 		entry = next_entry;
 	}
-	csr_ll_unlock(list);
+	csr_nonscan_pending_ll_unlock(mac_ctx);
 
 	while ((entry = csr_ll_remove_head(&local_list, LL_ACCESS_NOLOCK))) {
 		dup_cmd = GET_BASE_ADDR(entry, tSmeCmd, Link);
@@ -3288,9 +3291,8 @@ void csr_roam_remove_duplicate_command(tpAniSirGlobal mac_ctx,
 {
 	/* Always lock active list before locking pending lists */
 	csr_nonscan_active_ll_lock(mac_ctx);
-	csr_roam_remove_duplicate_cmd_from_list(mac_ctx,
-		session_id, &mac_ctx->sme.smeCmdPendingList,
-		command, roam_reason);
+	csr_roam_remove_duplicate_pending_cmd_from_list(mac_ctx,
+		session_id, command, roam_reason);
 	csr_nonscan_active_ll_unlock(mac_ctx);
 }
 
@@ -4682,7 +4684,7 @@ void csr_roam_ccm_cfg_set_callback(tpAniSirGlobal pMac, int32_t result,
 					uint8_t session_id)
 {
 	tListElem *pEntry =
-		csr_ll_peek_head(&pMac->sme.smeCmdActiveList, LL_ACCESS_LOCK);
+		csr_nonscan_active_ll_peak_head(pMac, LL_ACCESS_LOCK);
 	uint32_t sessionId;
 	tSmeCmd *pCommand = NULL;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
@@ -5774,7 +5776,7 @@ void csr_roam_complete(tpAniSirGlobal pMac, eCsrRoamCompleteResult Result,
 	bool fReleaseCommand = true;
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: Roam Completion ...", __func__);
-	pEntry = csr_ll_peek_head(&pMac->sme.smeCmdActiveList, LL_ACCESS_LOCK);
+	pEntry = csr_nonscan_active_ll_peak_head(pMac, LL_ACCESS_LOCK);
 	if (pEntry) {
 		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
 		/* If the head of the queue is Active and it is a ROAM command, remove */
@@ -5786,9 +5788,8 @@ void csr_roam_complete(tpAniSirGlobal pMac, eCsrRoamCompleteResult Result,
 				csr_roam_process_results(pMac, pCommand, Result,
 							 Context);
 			if (fReleaseCommand) {
-				if (csr_ll_remove_entry
-					    (&pMac->sme.smeCmdActiveList, pEntry,
-					    LL_ACCESS_LOCK)) {
+				if (csr_nonscan_active_ll_remove_entry(pMac,
+						pEntry, LL_ACCESS_LOCK)) {
 					csr_release_command(pMac, pCommand);
 				} else {
 					sms_log(pMac, LOGE,
@@ -7611,7 +7612,7 @@ QDF_STATUS csr_dequeue_roam_command(tpAniSirGlobal pMac, eCsrRoamReason reason,
 {
 	tListElem *pEntry;
 	tSmeCmd *pCommand;
-	pEntry = csr_ll_peek_head(&pMac->sme.smeCmdActiveList, LL_ACCESS_LOCK);
+	pEntry = csr_nonscan_active_ll_peak_head(pMac, LL_ACCESS_LOCK);
 	if (pEntry) {
 		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
 		if ((eSmeCommandRoam == pCommand->command) &&
@@ -7619,8 +7620,7 @@ QDF_STATUS csr_dequeue_roam_command(tpAniSirGlobal pMac, eCsrRoamReason reason,
 			sms_log(pMac, LOG1, FL("DQ-Command = %d, Reason = %d"),
 				pCommand->command,
 				pCommand->u.roamCmd.roamReason);
-			if (csr_ll_remove_entry
-				    (&pMac->sme.smeCmdActiveList, pEntry,
+			if (csr_nonscan_active_ll_remove_entry(pMac, pEntry,
 				    LL_ACCESS_LOCK)) {
 				csr_release_command_preauth(pMac, pCommand);
 			}
@@ -7629,8 +7629,7 @@ QDF_STATUS csr_dequeue_roam_command(tpAniSirGlobal pMac, eCsrRoamReason reason,
 			sms_log(pMac, LOG1, FL("DQ-Command = %d, Reason = %d"),
 				pCommand->command,
 				pCommand->u.roamCmd.roamReason);
-			if (csr_ll_remove_entry
-				    (&pMac->sme.smeCmdActiveList, pEntry,
+			if (csr_nonscan_active_ll_remove_entry(pMac, pEntry,
 				    LL_ACCESS_LOCK)) {
 				csr_release_command(pMac, pCommand);
 			}
@@ -8474,9 +8473,9 @@ bool is_disconnect_pending(tpAniSirGlobal pmac,
 	bool disconnect_cmd_exist = false;
 
 	csr_nonscan_pending_ll_lock(pmac);
-	entry = csr_ll_peek_head(&pmac->sme.smeCmdPendingList, LL_ACCESS_NOLOCK);
+	entry = csr_nonscan_pending_ll_peak_head(pmac, LL_ACCESS_NOLOCK);
 	while (entry) {
-		next_entry = csr_ll_next(&pmac->sme.smeCmdPendingList,
+		next_entry = csr_nonscan_pending_ll_next(pmac,
 					entry, LL_ACCESS_NOLOCK);
 
 		command = GET_BASE_ADDR(entry, tSmeCmd, Link);
@@ -8511,7 +8510,7 @@ static void csr_roam_join_rsp_processor(tpAniSirGlobal pMac,
 		return;
 	}
 	/* The head of the active list is the request we sent */
-	pEntry = csr_ll_peek_head(&pMac->sme.smeCmdActiveList, LL_ACCESS_LOCK);
+	pEntry = csr_nonscan_active_ll_peak_head(pMac, LL_ACCESS_LOCK);
 	if (pEntry) {
 		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
 	}
@@ -8631,7 +8630,7 @@ csr_roam_reissue_roam_command(tpAniSirGlobal pMac, uint8_t session_id)
 	uint32_t sessionId;
 	tCsrRoamSession *pSession;
 
-	pEntry = csr_ll_peek_head(&pMac->sme.smeCmdActiveList, LL_ACCESS_LOCK);
+	pEntry = csr_nonscan_active_ll_peak_head(pMac, LL_ACCESS_LOCK);
 	if (NULL == pEntry) {
 		sms_log(pMac, LOGE,
 			FL("Disassoc rsp can't continue, no active CMD"));
@@ -8696,7 +8695,7 @@ bool csr_is_roam_command_waiting_for_session(tpAniSirGlobal pMac, uint32_t sessi
 	tSmeCmd *pCommand = NULL;
 	/* alwasy lock active list before locking pending list */
 	csr_nonscan_active_ll_lock(pMac);
-	pEntry = csr_ll_peek_head(&pMac->sme.smeCmdActiveList, LL_ACCESS_NOLOCK);
+	pEntry = csr_nonscan_active_ll_peak_head(pMac, LL_ACCESS_NOLOCK);
 	if (pEntry) {
 		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
 		if ((eSmeCommandRoam == pCommand->command)
@@ -8706,8 +8705,7 @@ bool csr_is_roam_command_waiting_for_session(tpAniSirGlobal pMac, uint32_t sessi
 	}
 	if (false == fRet) {
 		csr_nonscan_pending_ll_lock(pMac);
-		pEntry =
-			csr_ll_peek_head(&pMac->sme.smeCmdPendingList,
+		pEntry = csr_nonscan_pending_ll_peak_head(pMac,
 					 LL_ACCESS_NOLOCK);
 		while (pEntry) {
 			pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
@@ -8716,9 +8714,8 @@ bool csr_is_roam_command_waiting_for_session(tpAniSirGlobal pMac, uint32_t sessi
 				fRet = true;
 				break;
 			}
-			pEntry =
-				csr_ll_next(&pMac->sme.smeCmdPendingList, pEntry,
-					    LL_ACCESS_NOLOCK);
+			pEntry = csr_nonscan_pending_ll_next(pMac, pEntry,
+							LL_ACCESS_NOLOCK);
 		}
 		csr_nonscan_pending_ll_unlock(pMac);
 	}
@@ -8749,7 +8746,7 @@ bool csr_is_scan_for_roam_command_active(tpAniSirGlobal pMac,
 	tSmeCmd *pCommand;
 	/* alwasy lock active list before locking pending list */
 	csr_nonscan_active_ll_lock(pMac);
-	pEntry = csr_ll_peek_head(&pMac->sme.smeCmdActiveList, LL_ACCESS_NOLOCK);
+	pEntry = csr_nonscan_active_ll_peak_head(pMac, LL_ACCESS_NOLOCK);
 	if (pEntry) {
 		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
 		if ((eSmeCommandScan == pCommand->command) &&
@@ -8766,7 +8763,7 @@ static void
 csr_roaming_state_config_cnf_processor(tpAniSirGlobal mac_ctx,
 			uint32_t result, uint8_t sme_session_id)
 {
-	tListElem *entry = csr_ll_peek_head(&mac_ctx->sme.smeCmdActiveList,
+	tListElem *entry = csr_nonscan_active_ll_peak_head(mac_ctx,
 					     LL_ACCESS_LOCK);
 	tCsrScanResult *scan_result = NULL;
 	tSirBssDescription *bss_desc = NULL;
@@ -9101,7 +9098,7 @@ csr_dequeue_command(tpAniSirGlobal mac_ctx)
 {
 	bool fRemoveCmd;
 	tSmeCmd *cmd = NULL;
-	tListElem *entry = csr_ll_peek_head(&mac_ctx->sme.smeCmdActiveList,
+	tListElem *entry = csr_nonscan_active_ll_peak_head(mac_ctx,
 					    LL_ACCESS_LOCK);
 	if (!entry) {
 		sms_log(mac_ctx, LOGE, FL("NO commands are active"));
@@ -9122,7 +9119,7 @@ csr_dequeue_command(tpAniSirGlobal mac_ctx)
 	 * list because state changes still happening insides
 	 * roamQProcessRoamResults so no other roam command should be issued.
 	 */
-	fRemoveCmd = csr_ll_remove_entry(&mac_ctx->sme.smeCmdActiveList, entry,
+	fRemoveCmd = csr_nonscan_active_ll_remove_entry(mac_ctx, entry,
 					 LL_ACCESS_LOCK);
 	if (cmd->u.roamCmd.fReleaseProfile) {
 		csr_release_profile(mac_ctx, &cmd->u.roamCmd.roamProfile);
@@ -9480,10 +9477,8 @@ void csr_roaming_state_msg_processor(tpAniSirGlobal pMac, void *pMsgBuf)
 	case eWNI_SME_DEAUTH_RSP:
 		/* or the Deauthentication response message... */
 		if (CSR_IS_ROAM_SUBSTATE_DEAUTH_REQ(pMac, pSmeRsp->sessionId)) {
-			csr_remove_cmd_from_pending_list(pMac,
+			csr_remove_nonscan_cmd_from_pending_list(pMac,
 					pSmeRsp->sessionId,
-					INVALID_SCAN_ID,
-					&pMac->sme.smeCmdPendingList,
 					eSmeCommandWmStatusChange);
 			csr_roam_roaming_state_deauth_rsp_processor(pMac,
 						(tSirSmeDeauthRsp *) pSmeRsp);
@@ -11186,8 +11181,7 @@ csr_roam_chk_lnk_set_ctx_rsp(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 	tListElem *entry;
 
 	qdf_mem_set(&roam_info, sizeof(roam_info), 0);
-	entry = csr_ll_peek_head(&mac_ctx->sme.smeCmdActiveList,
-				 LL_ACCESS_LOCK);
+	entry = csr_nonscan_active_ll_peak_head(mac_ctx, LL_ACCESS_LOCK);
 	if (!entry) {
 		sms_log(mac_ctx, LOGE, FL("CSR: NO commands are ACTIVE ..."));
 		goto process_pending_n_exit;
@@ -11299,7 +11293,7 @@ csr_roam_chk_lnk_set_ctx_rsp(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 	}
 #endif
 remove_entry_n_process_pending:
-	if (csr_ll_remove_entry(&mac_ctx->sme.smeCmdActiveList, entry,
+	if (csr_nonscan_active_ll_remove_entry(mac_ctx, entry,
 				LL_ACCESS_LOCK))
 		csr_release_command(mac_ctx, cmd);
 
@@ -11837,14 +11831,13 @@ static void csr_roam_wm_status_change_complete(tpAniSirGlobal pMac,
 {
 	tListElem *pEntry;
 	tSmeCmd *pCommand;
-	pEntry = csr_ll_peek_head(&pMac->sme.smeCmdActiveList, LL_ACCESS_LOCK);
+	pEntry = csr_nonscan_active_ll_peak_head(pMac, LL_ACCESS_LOCK);
 	if (pEntry) {
 		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
 		if (eSmeCommandWmStatusChange == pCommand->command) {
 			/* Nothing to process in a Lost Link completion....  It just kicks off a */
 			/* roaming sequence. */
-			if (csr_ll_remove_entry
-				    (&pMac->sme.smeCmdActiveList, pEntry,
+			if (csr_nonscan_active_ll_remove_entry(pMac, pEntry,
 				    LL_ACCESS_LOCK)) {
 				csr_release_command(pMac, pCommand);
 			} else {
@@ -15623,8 +15616,7 @@ void csr_cleanup_session(tpAniSirGlobal pMac, uint32_t sessionId)
 #ifdef FEATURE_WLAN_BTAMP_UT_RF
 		qdf_mc_timer_destroy(&pSession->hTimerJoinRetry);
 #endif
-		purge_sme_session_cmd_list(pMac, sessionId,
-					   &pMac->sme.smeCmdPendingList);
+		purge_sme_session_pending_cmd_list(pMac, sessionId);
 		purge_sme_session_cmd_list(pMac, sessionId,
 						   &pMac->sme.
 						   smeScanCmdPendingList);
@@ -15645,14 +15637,10 @@ QDF_STATUS csr_roam_close_session(tpAniSirGlobal pMac, uint32_t sessionId,
 		if (fSync) {
 			csr_cleanup_session(pMac, sessionId);
 		} else {
-			purge_sme_session_cmd_list(pMac, sessionId,
-						   &pMac->sme.smeCmdPendingList);
+			purge_sme_session_pending_cmd_list(pMac, sessionId);
+			purge_sme_session_active_cmd_list(pMac, sessionId);
 			purge_sme_session_cmd_list(pMac, sessionId,
 					   &pMac->sme.smeScanCmdPendingList);
-
-			purge_sme_session_cmd_list(pMac, sessionId,
-					   &pMac->sme.smeScanCmdActiveList);
-
 			status = csr_issue_del_sta_for_session_req(pMac,
 						 sessionId,
 						 pSession->selfMacAddr.bytes,

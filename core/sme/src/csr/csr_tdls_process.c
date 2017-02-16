@@ -57,11 +57,11 @@ static QDF_STATUS csr_tdls_remove_sme_cmd(tpAniSirGlobal pMac,
 	tListElem *pEntry;
 	tSmeCmd *pCommand;
 
-	pEntry = csr_ll_peek_head(&pMac->sme.smeCmdActiveList, LL_ACCESS_LOCK);
+	pEntry = csr_nonscan_active_ll_peak_head(pMac, LL_ACCESS_LOCK);
 	if (pEntry) {
 		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
 		if (cmdType == pCommand->command) {
-			if (csr_ll_remove_entry(&pMac->sme.smeCmdActiveList,
+			if (csr_nonscan_active_ll_remove_entry(pMac,
 						pEntry, LL_ACCESS_LOCK)) {
 				qdf_mem_zero(&pCommand->u.tdlsCmd,
 					     sizeof(tTdlsCmd));

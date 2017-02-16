@@ -6755,6 +6755,60 @@ QDF_STATUS csr_scan_abort_mac_scan(tpAniSirGlobal pMac, uint8_t sessionId,
 	}
 	return status;
 }
+QDF_STATUS csr_remove_nonscan_cmd_from_pending_list(tpAniSirGlobal pMac,
+						uint8_t sessionId,
+						eSmeCommandType commandType)
+{
+	tDblLinkList localList;
+	tListElem *pEntry;
+	tSmeCmd *pCommand;
+	tListElem *pEntryToRemove;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	qdf_mem_zero(&localList, sizeof(tDblLinkList));
+	if (!QDF_IS_STATUS_SUCCESS(csr_ll_open(pMac->hHdd, &localList))) {
+		sms_log(pMac, LOGE, FL("failed to open list"));
+		return status;
+	}
+
+	csr_nonscan_pending_ll_lock(pMac);
+	pEntry = csr_nonscan_pending_ll_peak_head(pMac, LL_ACCESS_NOLOCK);
+
+	/*
+	 * Have to make sure we don't loop back to the head of the list,
+	 * which will happen if the entry is NOT on the list
+	 */
+	while (pEntry) {
+		pEntryToRemove = pEntry;
+		pEntry = csr_nonscan_pending_ll_next(pMac,
+					pEntry, LL_ACCESS_NOLOCK);
+		pCommand = GET_BASE_ADDR(pEntryToRemove, tSmeCmd, Link);
+
+		if ((pCommand->command == commandType) &&
+		    (pCommand->sessionId == sessionId)) {
+			/* Remove that entry only */
+			if (csr_nonscan_pending_ll_remove_entry(pMac,
+						pEntryToRemove,
+			    LL_ACCESS_NOLOCK)) {
+				csr_ll_insert_tail(&localList, pEntryToRemove,
+						   LL_ACCESS_NOLOCK);
+				status = QDF_STATUS_SUCCESS;
+			}
+		}
+	}
+	csr_nonscan_pending_ll_unlock(pMac);
+
+	while ((pEntry = csr_ll_remove_head(&localList, LL_ACCESS_NOLOCK))) {
+		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
+		sms_log(pMac, LOG1, FL("Sending abort for command ID %d"),
+			(commandType == eSmeCommandScan) ? pCommand->u.
+			scanCmd.scanID : sessionId);
+		csr_abort_command(pMac, pCommand, false);
+	}
+
+	csr_ll_close(&localList);
+	return status;
+}
 
 QDF_STATUS csr_remove_cmd_from_pending_list(tpAniSirGlobal pMac,
 						uint8_t sessionId,

@@ -1405,6 +1405,36 @@ void csr_nonscan_pending_ll_unlock(struct sAniSirGlobal *mac_ctx);
 void csr_nonscan_active_ll_unlock(struct sAniSirGlobal *mac_ctx);
 void csr_nonscan_pending_ll_lock(struct sAniSirGlobal *mac_ctx);
 void csr_nonscan_active_ll_lock(struct sAniSirGlobal *mac_ctx);
+bool csr_nonscan_active_ll_is_list_empty(struct sAniSirGlobal *mac_ctx,
+			bool fInterlocked);
+bool csr_nonscan_pending_ll_is_list_empty(struct sAniSirGlobal *mac_ctx,
+			bool fInterlocked);
+bool csr_nonscan_active_ll_remove_entry(struct sAniSirGlobal *mac_ctx,
+			tListElem *pEntryToRemove, bool fInterlocked);
+bool csr_nonscan_pending_ll_remove_entry(struct sAniSirGlobal *mac_ctx,
+			tListElem *pEntryToRemove, bool fInterlocked);
+tListElem *csr_nonscan_active_ll_peak_head(struct sAniSirGlobal *mac_ctx,
+			bool fInterlocked);
+tListElem *csr_nonscan_pending_ll_peak_head(struct sAniSirGlobal *mac_ctx,
+			bool fInterlocked);
+tListElem *csr_nonscan_active_ll_remove_head(struct sAniSirGlobal *mac_ctx,
+			bool fInterlocked);
+tListElem *csr_nonscan_pending_ll_remove_head(struct sAniSirGlobal *mac_ctx,
+			bool fInterlocked);
+uint32_t csr_nonscan_pending_ll_count(struct sAniSirGlobal *mac_ctx);
+void csr_nonscan_pending_ll_insert_head(struct sAniSirGlobal *mac_ctx,
+		tListElem *entry, bool fInterlocked);
+void csr_nonscan_pending_ll_insert_tail(struct sAniSirGlobal *mac_ctx,
+		tListElem *entry, bool fInterlocked);
+uint32_t csr_nonscan_active_ll_count(struct sAniSirGlobal *mac_ctx);
+void csr_nonscan_active_ll_insert_head(struct sAniSirGlobal *mac_ctx,
+		tListElem *entry, bool fInterlocked);
+tListElem *csr_nonscan_pending_ll_next(struct sAniSirGlobal *mac_ctx,
+		tListElem *entry, bool fInterlocked);
+void purge_sme_session_pending_cmd_list(struct sAniSirGlobal *mac_ctx,
+		uint32_t session_id);
+void purge_sme_session_active_cmd_list(struct sAniSirGlobal *mac_ctx,
+		uint32_t session_id);
 
 bool csr_wait_for_connection_update(tpAniSirGlobal mac,
 		bool do_release_reacquire_lock);
