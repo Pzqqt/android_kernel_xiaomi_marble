@@ -798,6 +798,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_chip_power_save_failure_detected_fixed_param,
     WMITLV_TAG_STRUC_wmi_pdev_multiple_vdev_restart_request_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_pdev_csa_switch_count_status_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_update_pkt_routing_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1120,6 +1121,7 @@ typedef enum {
     OP(WMI_HW_DATA_FILTER_CMDID) \
     OP(WMI_PDEV_MULTIPLE_VDEV_RESTART_REQUEST_CMDID) \
     OP(WMI_LPI_OEM_REQ_CMDID) \
+    OP(WMI_PDEV_UPDATE_PKT_ROUTING_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -3216,6 +3218,10 @@ WMITLV_CREATE_PARAM_STRUC(WMI_HW_DATA_FILTER_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, vdev_ids, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_channel, wmi_channel, chan, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_MULTIPLE_VDEV_RESTART_REQUEST_CMDID);
+
+#define WMITLV_TABLE_WMI_PDEV_UPDATE_PKT_ROUTING_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_update_pkt_routing_cmd_fixed_param, wmi_pdev_update_pkt_routing_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_UPDATE_PKT_ROUTING_CMDID);
 
 
 /************************** TLV definitions of WMI events *******************************/

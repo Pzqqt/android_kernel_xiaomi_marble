@@ -358,6 +358,8 @@ typedef enum {
     WMI_PDEV_SET_STATS_THRESHOLD_CMDID,
     /** vdev restart request for multiple vdevs */
     WMI_PDEV_MULTIPLE_VDEV_RESTART_REQUEST_CMDID,
+    /** Pdev update packet routing command */
+    WMI_PDEV_UPDATE_PKT_ROUTING_CMDID,
 
     /* VDEV (virtual device) specific commands */
     /** vdev create */
@@ -17728,6 +17730,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_HW_DATA_FILTER_CMDID);
         WMI_RETURN_STRING(MI_PDEV_MULTIPLE_VDEV_RESTART_REQUEST_CMDID);
         WMI_RETURN_STRING(WMI_LPI_OEM_REQ_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_UPDATE_PKT_ROUTING_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -17969,6 +17972,42 @@ typedef struct {
      * A_UINT32 vdev_ids[]; <--- Array of VDEV ids.
      */
 } wmi_pdev_csa_switch_count_status_event_fixed_param;
+
+/* Operation types for packet routing command */
+typedef enum {
+    WMI_PDEV_ADD_PKT_ROUTING,
+    WMI_PDEV_DEL_PKT_ROUTING,
+} wmi_pdev_pkt_routing_op_code;
+
+/* Packet routing types based on specific data types */
+typedef enum {
+    WMI_PDEV_ROUTING_TYPE_ARP_IPV4,
+    WMI_PDEV_ROUTING_TYPE_NS_IPV6,
+    WMI_PDEV_ROUTING_TYPE_IGMP_IPV4,
+    WMI_PDEV_ROUTING_TYPE_MLD_IPV6,
+    WMI_PDEV_ROUTING_TYPE_DHCP_IPV4,
+    WMI_PDEV_ROUTING_TYPE_DHCP_IPV6,
+} wmi_pdev_pkt_routing_type;
+
+/* This command shall be sent only when no VDEV is up. If the command is sent after any VDEV is up, target will ignore the command */
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_update_pkt_routing_cmd_fixed_param */
+    A_UINT32 tlv_header;
+    /** Identifies pdev on which routing needs to be applied */
+    A_UINT32 pdev_id;
+    /** Indicates the routing operation type: add/delete */
+    A_UINT32 op_code; /* wmi_pdev_pkt_routing_op_code */
+    /** Bitmap of multiple pkt routing types for a given destination ring and meta data */
+    A_UINT32 routing_type_bitmap; /* see wmi_pdev_pkt_routing_type */
+    /** 5 bits [4:0] are used to specify the destination ring where the CCE matched
+      * packet needs to be routed.
+      */
+    A_UINT32 dest_ring;
+    /** 16 bits [15:0] meta data can be passed to CCE. When the superrule matches,
+      * CCE copies this back in RX_MSDU_END_TLV.
+      */
+    A_UINT32 meta_data;
+} wmi_pdev_update_pkt_routing_cmd_fixed_param;
 
 
 /* ADD NEW DEFS HERE */
