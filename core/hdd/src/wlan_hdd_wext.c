@@ -124,6 +124,24 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WE_WOWL              2
 #define WE_SET_POWER         3
 #define WE_SET_MAX_ASSOC     4
+/*
+ * <ioctl>
+ * scan_diable - Disable scan
+ *
+ * @INPUT: set_value
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL is used to set disable scan
+ *
+ * @E.g: iwpriv wlan0 scan_disable 1
+ *
+ * Supported Feature: Scan
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_SCAN_DISABLE  5
 #define WE_SET_DATA_INACTIVITY_TO  6
 #define WE_SET_MAX_TX_POWER  7
@@ -539,6 +557,24 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 /* Sub ioctls 11 to 16 are not used */
 #define WE_GET_RECOVERY_STAT       17
 #define WE_GET_FW_PROFILE_DATA     18
+/*
+ * <ioctl>
+ * stop_obss_scan - Stop obss scan
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL is used to stop obss scan
+ *
+ * @E.g: iwpriv wlan0 stop_obss_scan
+ *
+ * Supported Feature: Scan
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_STOP_OBSS_SCAN          19
 
 /* Private ioctls and their sub-ioctls */
