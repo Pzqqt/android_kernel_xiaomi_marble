@@ -162,6 +162,7 @@ typedef void (*wlan_objmgr_peer_status_handler)(
  * @WLAN_LEGACY_MAC_ID:         Legacy MAC operations
  * @WLAN_LEGACY_WMA_ID:         Legacy WMA operations
  * @WLAN_SERIALIZATION_ID:      Serialization operations
+ * @WLAN_PMO_ID:                power manager offload (PMO) ID
  * @WLAN_REF_ID_MAX:            Max id used to generate ref count tracking array
  */
 typedef enum {
@@ -175,6 +176,7 @@ typedef enum {
 	WLAN_LEGACY_MAC_ID    = 7,
 	WLAN_LEGACY_WMA_ID    = 8,
 	WLAN_SERIALIZATION_ID = 9,
+	WLAN_PMO_ID           = 10,
 	WLAN_REF_ID_MAX,
 } wlan_objmgr_ref_dbgid;
 
