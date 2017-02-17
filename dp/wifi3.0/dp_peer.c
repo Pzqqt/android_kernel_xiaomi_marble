@@ -28,12 +28,7 @@
 #include <cds_ieee80211_common.h>
 #endif
 #include <cdp_txrx_handle.h>
-/* Temporary definitions to be moved to wlan_cfg */
-static inline uint32_t wlan_cfg_max_peer_id(void *wlan_cfg_ctx)
-{
-	/* TODO: This should be calculated based on target capabilities */
-	return 2048;
-}
+#include <wlan_cfg.h>
 
 static inline int dp_peer_find_mac_addr_cmp(
 	union dp_align_mac_addr *mac_addr1,

@@ -23,7 +23,7 @@
 #include "hal_tx.h"
 #include "qdf_mem.h"
 #include "qdf_nbuf.h"
-#include "../../wlan_cfg/wlan_cfg.h"
+#include <wlan_cfg.h>
 
 #ifdef TX_PER_PDEV_DESC_POOL
 	#define DP_TX_GET_DESC_POOL_ID(vdev) (vdev->pdev->pdev_id)

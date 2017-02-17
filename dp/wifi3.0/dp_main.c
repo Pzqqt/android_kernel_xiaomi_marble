@@ -28,8 +28,9 @@
 #include "dp_internal.h"
 #include "dp_tx.h"
 #include "dp_rx.h"
-#include "../../wlan_cfg/wlan_cfg.h"
 #include <cdp_txrx_handle.h>
+#include <wlan_cfg.h>
+
 #define DP_INTR_POLL_TIMER_MS	100
 /**
  * dp_setup_srng - Internal function to setup SRNG rings used by data path
