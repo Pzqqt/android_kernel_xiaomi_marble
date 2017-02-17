@@ -43,7 +43,6 @@ struct wlan_objmgr_psoc *target_if_get_psoc_from_scn_hdl(void *scn_handle)
 
 	return psoc;
 }
-EXPORT_SYMBOL(target_if_get_psoc_from_scn_hdl);
 
 QDF_STATUS target_if_open(get_psoc_handle_callback psoc_hdl_cb)
 {
@@ -63,7 +62,6 @@ QDF_STATUS target_if_open(get_psoc_handle_callback psoc_hdl_cb)
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(target_if_open);
 
 QDF_STATUS target_if_close(void)
 {
@@ -85,14 +83,25 @@ QDF_STATUS target_if_close(void)
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(target_if_close);
+
+static
+QDF_STATUS target_if_register_umac_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
+{
+	/* call umac callback to register tx ops */
+	wlan_lmac_if_umac_tx_ops_register(tx_ops);
+
+	/* Converged UMAC components to register their TX-ops here */
+	return QDF_STATUS_SUCCESS;
+}
 
 QDF_STATUS target_if_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {
+	/* Converged UMAC components to register their TX-ops */
+	target_if_register_umac_tx_ops(tx_ops);
+
+	/* Components parallel to UMAC to register their TX-ops here */
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(target_if_register_tx_ops);
-
 
 wmi_legacy_service_ready_callback
 target_if_get_psoc_legacy_service_ready_cb(void)
@@ -120,4 +129,3 @@ QDF_STATUS target_if_register_legacy_service_ready_cb(
 	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(target_if_register_legacy_service_ready_cb);
-

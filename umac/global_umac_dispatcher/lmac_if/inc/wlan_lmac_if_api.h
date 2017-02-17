@@ -24,39 +24,19 @@
 #include "wlan_objmgr_psoc_obj.h"
 
 /**
- * wlan_lmac_if_open() - lmac_if open
- * @psoc: psoc context
- *
- * Opens up lmac_if southbound layer. This function calls OL,DA and UMAC
- * modules to register respective tx and rx callbacks.
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS wlan_lmac_if_open(struct wlan_objmgr_psoc *psoc);
-
-/**
- * wlan_lmac_if_register_rx_handlers() - UMAC rx handler register
+ * wlan_lmac_if_umac_rx_ops_register() - UMAC rx handler register
  * @rx_ops: Pointer to rx_ops structure to be populated
  *
  * Register umac RX callabacks which will be called by DA/OL/WMA/WMI
  *
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
-QDF_STATUS wlan_lmac_if_register_rx_handlers
+QDF_STATUS wlan_lmac_if_umac_rx_ops_register
 		(struct wlan_lmac_if_rx_ops *rx_ops);
 
 /**
- * wlan_lmac_if_close() - Close lmac_if
- * @psoc: psoc context
- *
- * Deregister lmac_if TX and RX handlers
- *
- * Return: QDF_STATUS_SUCCESS - in case of success
- */
-QDF_STATUS wlan_lmac_if_close(struct wlan_objmgr_psoc *psoc);
-
-/**
- * wlan_lmac_if_assign_tx_registration_cb() -tx registration callback assignment
+ * wlan_lmac_if_set_umac_txops_registration_cb() - tx registration
+ * callback assignment
  * @dev_type: Dev type can be either Direct attach or Offload
  * @handler: handler to be called for LMAC tx ops registration
  *
@@ -65,8 +45,8 @@ QDF_STATUS wlan_lmac_if_close(struct wlan_objmgr_psoc *psoc);
  *
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
-QDF_STATUS wlan_lmac_if_assign_tx_registration_cb(WLAN_DEV_TYPE dev_type,
-		QDF_STATUS (*handler)(struct wlan_lmac_if_tx_ops *));
+QDF_STATUS wlan_lmac_if_set_umac_txops_registration_cb
+		(QDF_STATUS (*handler)(struct wlan_lmac_if_tx_ops *));
 
 
 /**

@@ -119,4 +119,8 @@ struct wlan_lmac_if_rx_ops {
 	 struct wlan_lmac_if_mgmt_txrx_rx_ops mgmt_txrx_rx_ops;
 };
 
+/* Function pointer to call legacy tx_ops registration in OL/WMA.
+ */
+extern QDF_STATUS (*wlan_lmac_if_umac_tx_ops_register)
+				(struct wlan_lmac_if_tx_ops *tx_ops);
 #endif /* _WLAN_LMAC_IF_DEF_H_ */
