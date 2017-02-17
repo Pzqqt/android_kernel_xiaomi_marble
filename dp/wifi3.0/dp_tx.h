@@ -32,6 +32,7 @@
 #define DP_TX_DESC_FLAG_MESH		0x10
 #define DP_TX_DESC_FLAG_QUEUED_TX		0x20
 #define DP_TX_DESC_FLAG_COMPLETED_TX		0x40
+#define DP_TX_DESC_FLAG_ME		0x80
 
 #define DP_TX_FREE_SINGLE_BUF(soc, buf)                  \
 do {                                                           \
@@ -154,6 +155,9 @@ qdf_nbuf_t dp_tx_send(void *data_vdev, qdf_nbuf_t nbuf);
 uint32_t dp_tx_comp_handler(struct dp_soc *soc, uint32_t ring_id,
 		uint32_t budget);
 
+int32_t
+dp_tx_prepare_send_me(struct dp_vdev *vdev, qdf_nbuf_t nbuf);
+
 /* TODO TX_FEATURE_NOT_YET */
 static inline void dp_tx_comp_process_exception(struct dp_tx_desc_s *tx_desc)
 {
@@ -162,11 +166,6 @@ static inline void dp_tx_comp_process_exception(struct dp_tx_desc_s *tx_desc)
 static inline QDF_STATUS dp_tx_flow_control(struct dp_vdev *vdev)
 {
 	return  QDF_STATUS_SUCCESS;
-}
-static inline qdf_nbuf_t dp_tx_prepare_me(struct dp_vdev *vdev,
-		qdf_nbuf_t nbuf, struct dp_tx_msdu_info_s *msdu_info)
-{
-	return nbuf;
 }
 /* TODO TX_FEATURE_NOT_YET */
 #endif

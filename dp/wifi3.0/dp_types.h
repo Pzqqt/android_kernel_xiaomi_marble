@@ -523,7 +523,7 @@ struct dp_soc {
 	/* HAL SOC handle */
 	void *hal_soc;
 
-    /* DP Interrupts */
+	/* DP Interrupts */
 	struct dp_intr intr_ctx[DP_MAX_INTERRUPT_CONTEXTS];
 
 	/* REO destination rings */
@@ -610,10 +610,9 @@ struct dp_soc {
 	struct {
 		int size;
 		uint32_t paddr;
-		char *vaddr;
+		uint32_t *vaddr;
 		struct dp_tx_me_buf_t *freelist;
 		int buf_in_use;
-		int nonpool_buf_in_use;
 		qdf_dma_mem_context(memctx);
 	} me_buf;
 
@@ -624,9 +623,6 @@ struct dp_soc {
 	 * 2. Provide mutex when accessing peer object lookup structures.
 	 */
 	DP_MUTEX_TYPE peer_ref_mutex;
-
-	/* Number of VAPs with mcast enhancement enabled */
-	atomic_t mc_num_vap_attached;
 
 	/* maximum value for peer_id */
 	int max_peers;
@@ -748,6 +744,9 @@ struct dp_pdev {
 	/* monitor mode mutex */
 	qdf_spinlock_t mon_mutex;
 
+	/*tx_mutex for me*/
+	DP_MUTEX_TYPE tx_mutex;
+
 	/* Band steering  */
 	/* TBD */
 
@@ -781,6 +780,19 @@ struct dp_pdev {
 	uint32_t mon_ppdu_id;
 	uint32_t mon_ppdu_status;
 	struct cdp_mon_status rx_mon_recv_status;
+
+	/* pool addr for mcast enhance buff */
+	struct {
+		int size;
+		uint32_t paddr;
+		char *vaddr;
+		struct dp_tx_me_buf_t *freelist;
+		int buf_in_use;
+		qdf_dma_mem_context(memctx);
+	} me_buf;
+
+	/* Number of VAPs with mcast enhancement enabled */
+	qdf_atomic_t mc_num_vap_attached;
 
 	/* TBD */
 
@@ -845,6 +857,7 @@ struct dp_vdev {
 	/* callback to hand rx monitor 802.11 MPDU to the OS shim */
 	ol_txrx_rx_mon_fp osif_rx_mon;
 
+	ol_txrx_mcast_me_fp me_convert;
 	/* deferred vdev deletion state */
 	struct {
 		/* VDEV delete pending */
@@ -993,4 +1006,14 @@ struct dp_invalid_peer_msg {
 	uint8_t vdev_id;
 };
 #endif
+
+/*
+ * dp_tx_me_buf_t: ME buffer
+ * data: Destination Mac address
+ * next: pointer to next buffer
+ */
+struct dp_tx_me_buf_t {
+	uint8_t data[DP_MAC_ADDR_LEN];
+	struct dp_tx_me_buf_t *next;
+};
 #endif /* _DP_TYPES_H_ */

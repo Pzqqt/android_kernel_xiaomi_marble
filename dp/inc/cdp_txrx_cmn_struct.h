@@ -307,6 +307,12 @@ typedef void (*ol_txrx_rx_mon_fp)(ol_osif_vdev_handle vdev,
 typedef int (*ol_txrx_proxy_arp_fp)(ol_osif_vdev_handle vdev,
 					    qdf_nbuf_t netbuf);
 
+/*
+ * ol_txrx_mcast_me_fp - function pointer for multicast enhancement
+ */
+typedef int (*ol_txrx_mcast_me_fp)(ol_osif_vdev_handle vdev,
+						qdf_nbuf_t netbuf);
+
 /**
  * ol_txrx_stats_callback - statistics notify callback
  */
@@ -379,6 +385,7 @@ struct ol_txrx_ops {
 
 	/* proxy arp function pointer - specified by OS shim, stored by txrx */
 	ol_txrx_proxy_arp_fp      proxy_arp;
+	ol_txrx_mcast_me_fp          me_convert;
 };
 
 /**
@@ -692,6 +699,10 @@ struct cdp_tx_ingress_stats {
 		uint32_t dropped_send_fail;
 		/* total unicast packets transmitted */
 		uint32_t ucast;
+		/* Segment allocation failure */
+		uint32_t fail_seg_alloc;
+		/* NBUF clone failure */
+		uint32_t clone_fail;
 	} mcast_en;
 
 	/* Packets dropped on the Tx side */

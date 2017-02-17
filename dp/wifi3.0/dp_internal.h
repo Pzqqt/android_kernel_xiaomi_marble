@@ -269,4 +269,10 @@ extern QDF_STATUS dp_reo_send_cmd(struct dp_soc *soc,
 
 extern void dp_reo_status_ring_handler(struct dp_soc *soc);
 void dp_aggregate_vdev_stats(struct dp_vdev *vdev);
+uint16_t dp_tx_me_send_convert_ucast(struct cdp_vdev *vdev_handle,
+		qdf_nbuf_t nbuf, uint8_t newmac[][DP_MAC_ADDR_LEN],
+		uint8_t new_mac_cnt);
+void dp_tx_me_alloc_descriptor(struct cdp_pdev *pdev);
+
+void dp_tx_me_free_descriptor(struct cdp_pdev *pdev);
 #endif /* #ifndef _DP_INTERNAL_H_ */

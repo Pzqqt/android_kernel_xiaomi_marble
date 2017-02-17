@@ -41,6 +41,7 @@
 #define TX_DESC_LOCK_DESTROY(lock) qdf_spinlock_destroy(lock)
 #define TX_DESC_LOCK_LOCK(lock)    qdf_spin_lock(lock)
 #define TX_DESC_LOCK_UNLOCK(lock)  qdf_spin_unlock(lock)
+#define MAX_POOL_BUFF_COUNT 10000
 
 QDF_STATUS dp_tx_desc_pool_alloc(struct dp_soc *soc, uint8_t pool_id,
 		uint16_t num_elem);
@@ -302,5 +303,46 @@ static inline void dp_tx_tso_desc_free(struct dp_soc *soc,
 	soc->tx_tso_desc[pool_id].freelist = tso_seg;
 	soc->tx_tso_desc[pool_id].num_free++;
 	TX_DESC_LOCK_UNLOCK(&soc->tx_tso_desc[pool_id].lock);
+}
+/*
+ * dp_tx_me_alloc_buf() Alloc descriptor from me pool
+ * @pdev DP_PDEV handle for datapath
+ *
+ * Return:dp_tx_me_buf_t(buf)
+ */
+static inline struct dp_tx_me_buf_t*
+dp_tx_me_alloc_buf(struct dp_pdev *pdev)
+{
+	struct dp_tx_me_buf_t *buf = NULL;
+	qdf_spin_lock_bh(&pdev->tx_mutex);
+	if (pdev->me_buf.freelist) {
+		buf = pdev->me_buf.freelist;
+		pdev->me_buf.freelist = pdev->me_buf.freelist->next;
+		pdev->me_buf.buf_in_use++;
+	} else {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"Error allocating memory in pool");
+		qdf_spin_unlock_bh(&pdev->tx_mutex);
+		return NULL;
+	}
+	qdf_spin_unlock_bh(&pdev->tx_mutex);
+	return buf;
+}
+
+/*
+ * dp_tx_me_free_buf() - Free me descriptor and add it to pool
+ * @pdev: DP_PDEV handle for datapath
+ * @buf : Allocated ME BUF
+ *
+ * Return:void
+ */
+static inline void
+dp_tx_me_free_buf(struct dp_pdev *pdev, struct dp_tx_me_buf_t *buf)
+{
+	qdf_spin_lock_bh(&pdev->tx_mutex);
+	buf->next = pdev->me_buf.freelist;
+	pdev->me_buf.freelist = buf;
+	pdev->me_buf.buf_in_use--;
+	qdf_spin_unlock_bh(&pdev->tx_mutex);
 }
 #endif /* DP_TX_DESC_H */

@@ -1599,6 +1599,7 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 	vdev->tx_encap_type = wlan_cfg_pkt_type(soc->wlan_cfg_ctx);
 	vdev->rx_decap_type = wlan_cfg_pkt_type(soc->wlan_cfg_ctx);
 	vdev->dscp_tid_map_id = 0;
+	vdev->mcast_enhancement_en = 0;
 
 	/* TODO: Initialize default HTT meta data that will be used in
 	 * TCL descriptors for packets transmitted from this VDEV
@@ -1655,6 +1656,8 @@ static void dp_vdev_register_wifi3(struct cdp_vdev *vdev_handle,
 	vdev->osif_proxy_arp = txrx_ops->proxy_arp;
 #endif
 #endif
+	vdev->me_convert = txrx_ops->me_convert;
+
 	/* TODO: Enable the following once Tx code is integrated */
 	txrx_ops->tx.tx = dp_tx_send;
 
@@ -3050,6 +3053,8 @@ static void dp_set_vdev_param(struct cdp_vdev *vdev_handle,
 	switch (param) {
 	case CDP_ENABLE_NAWDS:
 		vdev->nawds_enabled = val;
+	case CDP_ENABLE_MCAST_EN:
+		vdev->mcast_enhancement_en = val;
 	default:
 		break;
 	}
@@ -3355,7 +3360,11 @@ static struct cdp_ctrl_ops dp_ops_ctrl = {
 };
 
 static struct cdp_me_ops dp_ops_me = {
-	/* TODO */
+#ifdef ATH_SUPPORT_IQUE
+	.tx_me_alloc_descriptor = dp_tx_me_alloc_descriptor,
+	.tx_me_free_descriptor = dp_tx_me_free_descriptor,
+	.tx_me_convert_ucast = dp_tx_me_send_convert_ucast,
+#endif
 };
 
 static struct cdp_mon_ops dp_ops_mon = {

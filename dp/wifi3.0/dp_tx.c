@@ -566,6 +566,8 @@ failure:
 	DP_STATS_INC(vdev, tx_i.dropped.desc_na, 1);
 	DP_STATS_INC_PKT(vdev, tx_i.dropped.dropped_pkt, 1,
 			qdf_nbuf_len(nbuf));
+	if (qdf_unlikely(tx_desc->flags & DP_TX_DESC_FLAG_ME))
+		dp_tx_me_free_buf(pdev, tx_desc->me_buffer);
 	dp_tx_desc_release(tx_desc, desc_pool_id);
 	return NULL;
 }
@@ -962,6 +964,9 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		return nbuf;
 	}
 
+	if (msdu_info->frm_type == dp_tx_frm_me)
+		nbuf = msdu_info->u.sg_info.curr_seg->nbuf;
+
 	i = 0;
 
 	/*
@@ -976,6 +981,12 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		tx_desc = dp_tx_prepare_desc(vdev, nbuf, msdu_info,
 				tx_q->desc_pool_id);
 
+		if (msdu_info->frm_type == dp_tx_frm_me) {
+			tx_desc->me_buffer =
+				msdu_info->u.sg_info.curr_seg->frags[0].vaddr;
+			tx_desc->flags |= DP_TX_DESC_FLAG_ME;
+		}
+
 		if (!tx_desc) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				  "%s Tx_desc prepare Fail vdev %p queue %d\n",
@@ -985,6 +996,9 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 					tx_i.dropped.dropped_pkt, 1,
 					qdf_nbuf_len(nbuf));
 
+			if (tx_desc->flags & DP_TX_DESC_FLAG_ME)
+				dp_tx_me_free_buf(pdev, tx_desc->me_buffer);
+			dp_tx_desc_release(tx_desc, tx_q->desc_pool_id);
 			goto done;
 		}
 
@@ -1003,6 +1017,10 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 			DP_STATS_INC_PKT(pdev,
 					tx_i.dropped.dropped_pkt, 1,
 					qdf_nbuf_len(nbuf));
+
+			if (tx_desc->flags & DP_TX_DESC_FLAG_ME)
+				dp_tx_me_free_buf(pdev, tx_desc->me_buffer);
+
 			dp_tx_desc_release(tx_desc, tx_q->desc_pool_id);
 			goto done;
 		}
@@ -1041,14 +1059,14 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		 * each converted frame (for a client) is represented as
 		 * 1 segment
 		 */
-		if (msdu_info->frm_type == dp_tx_frm_sg) {
+		if ((msdu_info->frm_type == dp_tx_frm_sg) ||
+				(msdu_info->frm_type == dp_tx_frm_me)) {
 			if (msdu_info->u.sg_info.curr_seg->next) {
 				msdu_info->u.sg_info.curr_seg =
 					msdu_info->u.sg_info.curr_seg->next;
 				nbuf = msdu_info->u.sg_info.curr_seg->nbuf;
 			}
 		}
-
 		i++;
 	}
 
@@ -1344,21 +1362,25 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 		goto send_multiple;
 	}
 
+#ifdef ATH_SUPPORT_IQUE
 	/* Mcast to Ucast Conversion*/
-	if (qdf_unlikely(vdev->mcast_enhancement_en == 1)) {
+	if (qdf_unlikely(vdev->mcast_enhancement_en > 0)) {
 		eh = (struct ether_header *)qdf_nbuf_data(nbuf);
 		if (DP_FRAME_IS_MULTICAST((eh)->ether_dhost)) {
-			nbuf = dp_tx_prepare_me(vdev, nbuf, &msdu_info);
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 				  "%s Mcast frm for ME %p\n", __func__, vdev);
 
 			DP_STATS_INC_PKT(vdev,
 					tx_i.mcast_en.mcast_pkt, 1,
 					qdf_nbuf_len(nbuf));
-
-			goto send_multiple;
+			if (dp_tx_prepare_send_me(vdev, nbuf)) {
+				qdf_nbuf_free(nbuf);
+				return NULL;
+			}
+			return nbuf;
 		}
 	}
+#endif
 
 	/* RAW */
 	if (qdf_unlikely(vdev->tx_encap_type == htt_cmn_pkt_type_raw)) {
@@ -1781,6 +1803,10 @@ static void dp_tx_comp_process_desc(struct dp_soc *soc,
 		DP_HIST_PACKET_COUNT_INC(desc->pdev->pdev_id);
 		DP_TRACE(NONE, "pdev_id: %u", desc->pdev->pdev_id);
 		next = desc->next;
+
+		if (desc->flags & DP_TX_DESC_FLAG_ME)
+			dp_tx_me_free_buf(desc->pdev, desc->me_buffer);
+
 		dp_tx_desc_release(desc, desc->pool_id);
 		desc = next;
 	}
@@ -2166,4 +2192,218 @@ fail:
 	/* Detach will take care of freeing only allocated resources */
 	dp_tx_soc_detach(soc);
 	return QDF_STATUS_E_RESOURCES;
+}
+
+/*
+ * dp_tx_me_mem_free(): Function to free allocated memory in mcast enahncement
+ * pdev: pointer to DP PDEV structure
+ * seg_info_head: Pointer to the head of list
+ *
+ * return: void
+ */
+static inline void dp_tx_me_mem_free(struct dp_pdev *pdev,
+		struct dp_tx_seg_info_s *seg_info_head)
+{
+	struct dp_tx_me_buf_t *mc_uc_buf;
+	struct dp_tx_seg_info_s *seg_info_new = NULL;
+	qdf_nbuf_t nbuf = NULL;
+	uint64_t phy_addr;
+
+	while (seg_info_head) {
+		nbuf = seg_info_head->nbuf;
+		mc_uc_buf = (struct dp_tx_me_buf_t *)
+			seg_info_new->frags[0].vaddr;
+		phy_addr = seg_info_head->frags[0].paddr_hi;
+		phy_addr =  (phy_addr << 32) | seg_info_head->frags[0].paddr_lo;
+		qdf_mem_unmap_nbytes_single(pdev->soc->osdev,
+				phy_addr,
+				QDF_DMA_TO_DEVICE , DP_MAC_ADDR_LEN);
+		dp_tx_me_free_buf(pdev, mc_uc_buf);
+		qdf_nbuf_free(nbuf);
+		seg_info_new = seg_info_head;
+		seg_info_head = seg_info_head->next;
+		qdf_mem_free(seg_info_new);
+	}
+}
+
+/**
+ * dp_tx_me_send_convert_ucast(): fuction to convert multicast to unicast
+ * @vdev: DP VDEV handle
+ * @nbuf: Multicast nbuf
+ * @newmac: Table of the clients to which packets have to be sent
+ * @new_mac_cnt: No of clients
+ *
+ * return: no of converted packets
+ */
+uint16_t
+dp_tx_me_send_convert_ucast(struct cdp_vdev *vdev_handle, qdf_nbuf_t nbuf,
+		uint8_t newmac[][DP_MAC_ADDR_LEN], uint8_t new_mac_cnt)
+{
+	struct dp_vdev *vdev = (struct dp_vdev *) vdev_handle;
+	struct dp_pdev *pdev = vdev->pdev;
+	struct ether_header *eh;
+	uint8_t *data;
+	uint16_t len;
+
+	/* reference to frame dst addr */
+	uint8_t *dstmac;
+	/* copy of original frame src addr */
+	uint8_t srcmac[DP_MAC_ADDR_LEN];
+
+	/* local index into newmac */
+	uint8_t new_mac_idx = 0;
+	struct dp_tx_me_buf_t *mc_uc_buf;
+	qdf_nbuf_t  nbuf_clone;
+	struct dp_tx_msdu_info_s msdu_info;
+	struct dp_tx_seg_info_s *seg_info_head = NULL;
+	struct dp_tx_seg_info_s *seg_info_tail = NULL;
+	struct dp_tx_seg_info_s *seg_info_new;
+	struct dp_tx_frag_info_s data_frag;
+	qdf_dma_addr_t paddr_data;
+	qdf_dma_addr_t paddr_mcbuf = 0;
+	uint8_t empty_entry_mac[DP_MAC_ADDR_LEN] = {0};
+	QDF_STATUS status;
+
+	dp_tx_get_queue(vdev, nbuf, &msdu_info.tx_queue);
+
+	eh = (struct ether_header *) nbuf;
+	qdf_mem_copy(srcmac, eh->ether_shost, DP_MAC_ADDR_LEN);
+
+	len = qdf_nbuf_len(nbuf);
+
+	data = qdf_nbuf_data(nbuf);
+
+	status = qdf_nbuf_map(vdev->osdev, nbuf,
+			QDF_DMA_TO_DEVICE);
+
+	if (status) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"Mapping failure Error:%d", status);
+		DP_STATS_INC(vdev, tx_i.mcast_en.dropped_map_error, 1);
+		return 0;
+	}
+
+	paddr_data = qdf_nbuf_get_frag_paddr(nbuf, 0) + IEEE80211_ADDR_LEN;
+
+	/*preparing data fragment*/
+	data_frag.vaddr = qdf_nbuf_data(nbuf) + IEEE80211_ADDR_LEN;
+	data_frag.paddr_lo = (uint32_t)paddr_data;
+	data_frag.paddr_hi = ((uint64_t)paddr_data & 0xffffffff00000000) >> 32;
+	data_frag.len = len - DP_MAC_ADDR_LEN;
+
+	for (new_mac_idx = 0; new_mac_idx < new_mac_cnt; new_mac_idx++) {
+		dstmac = newmac[new_mac_idx];
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+				"added mac addr (%pM)", dstmac);
+
+		/* Check for NULL Mac Address */
+		if (!qdf_mem_cmp(dstmac, empty_entry_mac, DP_MAC_ADDR_LEN))
+			continue;
+
+		/* frame to self mac. skip */
+		if (!qdf_mem_cmp(dstmac, srcmac, DP_MAC_ADDR_LEN))
+			continue;
+
+		/*
+		 * TODO: optimize to avoid malloc in per-packet path
+		 * For eg. seg_pool can be made part of vdev structure
+		 */
+		seg_info_new = qdf_mem_malloc(sizeof(*seg_info_new));
+
+		if (!seg_info_new) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+					"alloc failed");
+			DP_STATS_INC(vdev, tx_i.mcast_en.fail_seg_alloc, 1);
+			goto fail_seg_alloc;
+		}
+
+		mc_uc_buf = dp_tx_me_alloc_buf(pdev);
+		if (mc_uc_buf == NULL)
+			goto fail_buf_alloc;
+
+		/*
+		 * TODO: Check if we need to clone the nbuf
+		 * Or can we just use the reference for all cases
+		 */
+		if (new_mac_idx < (new_mac_cnt - 1)) {
+			nbuf_clone = qdf_nbuf_clone((qdf_nbuf_t)nbuf);
+			if (nbuf_clone == NULL) {
+				DP_STATS_INC(vdev, tx_i.mcast_en.clone_fail, 1);
+				goto fail_clone;
+			}
+		} else {
+			/*
+			 * Update the ref
+			 * to account for frame sent without cloning
+			 */
+			qdf_nbuf_ref(nbuf);
+			nbuf_clone = nbuf;
+		}
+
+		qdf_mem_copy(mc_uc_buf->data, dstmac, DP_MAC_ADDR_LEN);
+
+		status = qdf_mem_map_nbytes_single(vdev->osdev, mc_uc_buf->data,
+				QDF_DMA_TO_DEVICE, DP_MAC_ADDR_LEN,
+				&paddr_mcbuf);
+
+		if (status) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+					"Mapping failure Error:%d", status);
+			DP_STATS_INC(vdev, tx_i.mcast_en.dropped_map_error, 1);
+			goto fail_map;
+		}
+
+		seg_info_new->frags[0].vaddr =  (uint8_t *)mc_uc_buf;
+		seg_info_new->frags[0].paddr_lo = (uint32_t) paddr_mcbuf;
+		seg_info_new->frags[0].paddr_hi =
+			((u64)paddr_mcbuf & 0xffffffff00000000) >> 32;
+		seg_info_new->frags[0].len = DP_MAC_ADDR_LEN;
+
+		seg_info_new->frags[1] = data_frag;
+		seg_info_new->nbuf = nbuf_clone;
+		seg_info_new->frag_cnt = 2;
+		seg_info_new->total_len = len;
+
+		seg_info_new->next = NULL;
+
+		if (seg_info_head == NULL)
+			seg_info_head = seg_info_new;
+		else
+			seg_info_tail->next = seg_info_new;
+
+		seg_info_tail = seg_info_new;
+	}
+
+	if (!seg_info_head)
+		return 0;
+
+	msdu_info.u.sg_info.curr_seg = seg_info_head;
+	msdu_info.num_seg = new_mac_cnt;
+	msdu_info.frm_type = dp_tx_frm_me;
+
+	DP_STATS_INC(vdev, tx_i.mcast_en.ucast, new_mac_cnt);
+	dp_tx_send_msdu_multiple(vdev, nbuf, &msdu_info);
+
+	while (seg_info_head->next) {
+		seg_info_new = seg_info_head;
+		seg_info_head = seg_info_head->next;
+		qdf_mem_free(seg_info_new);
+	}
+	qdf_mem_free(seg_info_head);
+
+	return new_mac_cnt;
+
+fail_map:
+	qdf_nbuf_free(nbuf_clone);
+
+fail_clone:
+	dp_tx_me_free_buf(pdev, mc_uc_buf);
+
+fail_buf_alloc:
+	qdf_mem_free(seg_info_new);
+
+fail_seg_alloc:
+	dp_tx_me_mem_free(pdev, seg_info_head);
+	qdf_nbuf_unmap(pdev->soc->osdev, nbuf, QDF_DMA_TO_DEVICE);
+	return 0;
 }
