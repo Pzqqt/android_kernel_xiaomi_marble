@@ -2626,6 +2626,9 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 	if (0 != ret)
 		return ret;
 
+	if (!sme_is_session_id_valid(pHddCtx->hHal, pAdapter->sessionId))
+		return -EINVAL;
+
 	config = pHddCtx->config;
 	hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
 	if (NULL == hHal) {
