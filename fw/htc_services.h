@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2012, 2014, 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2014, 2016, 2017 The Linux Foundation.
+ * All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -47,12 +48,16 @@ typedef enum {
 
 /* NOTE: service ID of 0x0000 is reserved and should never be used */
 #define HTC_CTRL_RSVD_SVC MAKE_SERVICE_ID(RSVD_SERVICE_GROUP,1)
+/* WMI_CONTROL_SVC: WMI service for MAC 0 */
 #define WMI_CONTROL_SVC   MAKE_SERVICE_ID(WMI_SERVICE_GROUP,0)
 #define WMI_DATA_BE_SVC   MAKE_SERVICE_ID(WMI_SERVICE_GROUP,1)
 #define WMI_DATA_BK_SVC   MAKE_SERVICE_ID(WMI_SERVICE_GROUP,2)
 #define WMI_DATA_VI_SVC   MAKE_SERVICE_ID(WMI_SERVICE_GROUP,3)
 #define WMI_DATA_VO_SVC   MAKE_SERVICE_ID(WMI_SERVICE_GROUP,4)
-#define WMI_MAX_SERVICES  5
+/* WMI_CONTROL_SVC_WMAC1,2: WMI service for MACs 1 and 2 (where applicable) */
+#define WMI_CONTROL_SVC_WMAC1  MAKE_SERVICE_ID(WMI_SERVICE_GROUP,5)
+#define WMI_CONTROL_SVC_WMAC2  MAKE_SERVICE_ID(WMI_SERVICE_GROUP,6)
+#define WMI_MAX_SERVICES  7
 
 #define NMI_CONTROL_SVC   MAKE_SERVICE_ID(NMI_SERVICE_GROUP,0)
 #define NMI_DATA_SVC      MAKE_SERVICE_ID(NMI_SERVICE_GROUP,1)
