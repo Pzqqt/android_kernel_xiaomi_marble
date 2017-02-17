@@ -976,4 +976,23 @@ hif_get_ce_service_max_yield_time(struct hif_opaque_softc *hif);
  */
 void hif_set_ce_service_max_rx_ind_flush(struct hif_opaque_softc *hif,
 				       uint8_t ce_service_max_rx_ind_flush);
+#ifdef OL_ATH_SMART_LOGGING
+/*
+ * hif_log_ce_dump() - Copy all the CE DEST ring to buf
+ * @scn : HIF handler
+ * @buf_cur: Current pointer in ring buffer
+ * @buf_init:Start of the ring buffer
+ * @buf_sz: Size of the ring buffer
+ * @ce: Copy Engine id
+ * @skb_sz: Max size of the SKB buffer to be copied
+ *
+ * Calls the respective function to dump all the CE SRC/DEST ring descriptors
+ * and buffers pointed by them in to the given buf
+ *
+ * Return: Current pointer in ring buffer
+ */
+uint8_t *hif_log_dump_ce(struct hif_softc *scn, uint8_t *buf_cur,
+			 uint8_t *buf_init, uint32_t buf_sz,
+			 uint32_t ce, uint32_t skb_sz);
+#endif /* OL_ATH_SMART_LOGGING */
 #endif /* _HIF_H_ */

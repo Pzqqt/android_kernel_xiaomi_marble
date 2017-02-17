@@ -3061,3 +3061,201 @@ ssize_t hif_disp_ce_enable_desc_data_hist(struct hif_softc *scn, char *buf)
 	return len;
 }
 #endif /* HIF_CE_DEBUG_DATA_BUF */
+
+#ifdef OL_ATH_SMART_LOGGING
+#define GUARD_SPACE 10
+#define LOG_ID_SZ 4
+/*
+ * hif_log_src_ce_dump() - Copy all the CE SRC ring to buf
+ * @src_ring: SRC ring state
+ * @buf_cur: Current pointer in ring buffer
+ * @buf_init:Start of the ring buffer
+ * @buf_sz: Size of the ring buffer
+ * @skb_sz: Max size of the SKB buffer to be copied
+ *
+ * Dumps all the CE SRC ring descriptors and buffers pointed by them in to
+ * the given buf, skb_sz is the max buffer size to be copied
+ *
+ * Return: Current pointer in ring buffer
+ */
+static uint8_t *hif_log_src_ce_dump(struct CE_ring_state *src_ring,
+				    uint8_t *buf_cur, uint8_t *buf_init,
+				    uint32_t buf_sz, uint32_t skb_sz)
+{
+	struct CE_src_desc *src_ring_base;
+	uint32_t len, entry;
+	struct CE_src_desc  *src_desc;
+	qdf_nbuf_t nbuf;
+	uint32_t available_buf;
+
+	src_ring_base = (struct CE_src_desc *)src_ring->base_addr_owner_space;
+	len = sizeof(struct CE_ring_state);
+	available_buf = buf_sz - (buf_cur - buf_init);
+	if (available_buf < (len + GUARD_SPACE)) {
+		snprintf(buf_cur, available_buf, "END");
+		buf_cur = buf_init;
+	}
+
+	qdf_mem_copy(buf_cur, src_ring, sizeof(struct CE_ring_state));
+	buf_cur += sizeof(struct CE_ring_state);
+
+	for (entry = 0; entry < src_ring->nentries; entry++) {
+		src_desc = CE_SRC_RING_TO_DESC(src_ring_base, entry);
+		nbuf = src_ring->per_transfer_context[entry];
+		if (nbuf) {
+			uint32_t skb_len  = qdf_nbuf_len(nbuf);
+			uint32_t skb_cp_len = qdf_min(skb_len, skb_sz);
+
+			len = sizeof(struct CE_src_desc) + skb_cp_len
+				+ LOG_ID_SZ + sizeof(skb_cp_len);
+			available_buf = buf_sz - (buf_cur - buf_init);
+			if (available_buf < (len + GUARD_SPACE)) {
+				buf_cur += snprintf(buf_cur, available_buf,
+						    "END");
+				buf_cur = buf_init;
+			}
+			qdf_mem_copy(buf_cur, src_desc,
+				     sizeof(struct CE_src_desc));
+			buf_cur += sizeof(struct CE_src_desc);
+
+			available_buf = buf_sz - (buf_cur - buf_init);
+			buf_cur += snprintf(buf_cur, available_buf, "SKB%d",
+						skb_cp_len);
+
+			if (skb_cp_len) {
+				qdf_mem_copy(buf_cur, qdf_nbuf_data(nbuf),
+					     skb_cp_len);
+				buf_cur += skb_cp_len;
+			}
+		} else {
+			len = sizeof(struct CE_src_desc) + LOG_ID_SZ;
+			available_buf = buf_sz - (buf_cur - buf_init);
+			if (available_buf < (len + GUARD_SPACE)) {
+				buf_cur += snprintf(buf_cur, available_buf,
+						    "END");
+				buf_cur = buf_init;
+			}
+			qdf_mem_copy(buf_cur, src_desc,
+				     sizeof(struct CE_src_desc));
+			buf_cur += sizeof(struct CE_src_desc);
+			available_buf = buf_sz - (buf_cur - buf_init);
+			buf_cur += snprintf(buf_cur, available_buf, "NUL");
+		}
+	}
+
+	return buf_cur;
+}
+
+/*
+ * hif_log_dest_ce_dump() - Copy all the CE DEST ring to buf
+ * @dest_ring: SRC ring state
+ * @buf_cur: Current pointer in ring buffer
+ * @buf_init:Start of the ring buffer
+ * @buf_sz: Size of the ring buffer
+ * @skb_sz: Max size of the SKB buffer to be copied
+ *
+ * Dumps all the CE SRC ring descriptors and buffers pointed by them in to
+ * the given buf, skb_sz is the max buffer size to be copied
+ *
+ * Return: Current pointer in ring buffer
+ */
+static uint8_t *hif_log_dest_ce_dump(struct CE_ring_state *dest_ring,
+				     uint8_t *buf_cur, uint8_t *buf_init,
+				     uint32_t buf_sz, uint32_t skb_sz)
+{
+	struct CE_dest_desc *dest_ring_base;
+	uint32_t len, entry;
+	struct CE_dest_desc  *dest_desc;
+	qdf_nbuf_t nbuf;
+	uint32_t available_buf;
+
+	dest_ring_base =
+		(struct CE_dest_desc *)dest_ring->base_addr_owner_space;
+
+	len = sizeof(struct CE_ring_state);
+	available_buf = buf_sz - (buf_cur - buf_init);
+	if (available_buf < (len + GUARD_SPACE)) {
+		snprintf(buf_cur, available_buf, "END");
+		buf_cur = buf_init;
+	}
+
+	qdf_mem_copy(buf_cur, dest_ring, sizeof(struct CE_ring_state));
+	buf_cur += sizeof(struct CE_ring_state);
+
+	for (entry = 0; entry < dest_ring->nentries; entry++) {
+		dest_desc = CE_DEST_RING_TO_DESC(dest_ring_base, entry);
+		nbuf = dest_ring->per_transfer_context[entry];
+		if (nbuf) {
+			uint32_t skb_len  = qdf_nbuf_len(nbuf);
+			uint32_t skb_cp_len = qdf_min(skb_len, skb_sz);
+
+			len = sizeof(struct CE_dest_desc) + skb_cp_len
+				+ LOG_ID_SZ + sizeof(skb_cp_len);
+
+			available_buf = buf_sz - (buf_cur - buf_init);
+			if (available_buf < (len + GUARD_SPACE)) {
+				buf_cur += snprintf(buf_cur, available_buf,
+						    "END");
+				buf_cur = buf_init;
+			}
+
+			qdf_mem_copy(buf_cur, dest_desc,
+				     sizeof(struct CE_dest_desc));
+			buf_cur += sizeof(struct CE_dest_desc);
+			available_buf = buf_sz - (buf_cur - buf_init);
+			buf_cur += snprintf(buf_cur, available_buf, "SKB%d",
+						skb_cp_len);
+			if (skb_cp_len) {
+				qdf_mem_copy(buf_cur, qdf_nbuf_data(nbuf),
+					     skb_cp_len);
+				buf_cur += skb_cp_len;
+			}
+		} else {
+			len = sizeof(struct CE_dest_desc) + LOG_ID_SZ;
+			available_buf = buf_sz - (buf_cur - buf_init);
+			if (available_buf < (len + GUARD_SPACE)) {
+				buf_cur += snprintf(buf_cur, available_buf,
+						    "END");
+				buf_cur = buf_init;
+			}
+			qdf_mem_copy(buf_cur, dest_desc,
+				     sizeof(struct CE_dest_desc));
+			buf_cur += sizeof(struct CE_dest_desc);
+			available_buf = buf_sz - (buf_cur - buf_init);
+			buf_cur += snprintf(buf_cur, available_buf, "NUL");
+		}
+	}
+	return buf_cur;
+}
+
+/**
+ * hif_log_ce_dump() - Copy all the CE DEST ring to buf
+ * Calls the respective function to dump all the CE SRC/DEST ring descriptors
+ * and buffers pointed by them in to the given buf
+ */
+uint8_t *hif_log_dump_ce(struct hif_softc *scn, uint8_t *buf_cur,
+			 uint8_t *buf_init, uint32_t buf_sz,
+			 uint32_t ce, uint32_t skb_sz)
+{
+	struct CE_state *ce_state;
+	struct CE_ring_state *src_ring;
+	struct CE_ring_state *dest_ring;
+
+	ce_state = scn->ce_id_to_state[ce];
+	src_ring = ce_state->src_ring;
+	dest_ring = ce_state->dest_ring;
+
+	if (src_ring) {
+		buf_cur = hif_log_src_ce_dump(src_ring, buf_cur,
+					      buf_init, buf_sz, skb_sz);
+	} else if (dest_ring) {
+		buf_cur = hif_log_dest_ce_dump(dest_ring, buf_cur,
+					       buf_init, buf_sz, skb_sz);
+	} else {
+		qdf_print("Cannot print Ring for Unused CE%d\n", ce);
+	}
+
+	return buf_cur;
+}
+#endif /* OL_ATH_SMART_LOGGING */
+
