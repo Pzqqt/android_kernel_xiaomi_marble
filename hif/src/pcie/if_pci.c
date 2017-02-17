@@ -3114,7 +3114,6 @@ bus_resume:
 	return errno;
 }
 
-#ifdef WLAN_FEATURE_FASTPATH
 /**
  * hif_fastpath_resume() - resume fastpath for runtimepm
  *
@@ -3122,7 +3121,7 @@ bus_resume:
  * since runtime pm may cause ce_send_fast to skip the register
  * write.
  */
-static void hif_fastpath_resume(struct hif_opaque_softc *hif_ctx)
+void hif_fastpath_resume(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	struct CE_state *ce_state;
@@ -3144,9 +3143,6 @@ static void hif_fastpath_resume(struct hif_opaque_softc *hif_ctx)
 		Q_TARGET_ACCESS_END(scn);
 	}
 }
-#else
-static void hif_fastpath_resume(struct hif_opaque_softc *hif_ctx) {}
-#endif
 
 /**
  * hif_runtime_resume() - do the bus resume part of a runtime resume
@@ -3160,8 +3156,6 @@ int hif_runtime_resume(struct hif_opaque_softc *hif_ctx)
 	QDF_BUG(!hif_bus_resume_noirq(hif_ctx));
 	QDF_BUG(!hif_apps_irqs_enable(hif_ctx));
 	QDF_BUG(!hif_bus_resume(hif_ctx));
-	hif_fastpath_resume(hif_ctx);
-
 	return 0;
 }
 #endif /* #ifdef FEATURE_RUNTIME_PM */

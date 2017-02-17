@@ -2009,6 +2009,8 @@ void htc_kick_queues(void *context)
 
 		htc_try_send(target, endpoint, NULL);
 	}
+
+	hif_fastpath_resume(target->hif_dev);
 }
 #endif
 
