@@ -35,26 +35,7 @@
 
 #include <hal_tx.h>
 #include <hal_reo.h>
-
-#if defined(CONFIG_MCL)
-#define MAX_PDEV_CNT 1
-#else
-#define MAX_PDEV_CNT 3
-#endif
-#define MAX_LINK_DESC_BANKS 8
-#define MAX_TXDESC_POOLS 4
-#define MAX_RXDESC_POOLS 4
-#define MAX_REO_DEST_RINGS 4
-#define MAX_TCL_DATA_RINGS 4
-#define DP_MAX_TX_RINGS 8
-#define DP_MAX_RX_RINGS 8
-#define MAX_IDLE_SCATTER_BUFS 16
-#define DP_MAX_IRQ_PER_CONTEXT 12
-#define DP_MAX_INTERRUPT_CONTEXTS 8
-
-#define MAX_TX_HW_QUEUES 3
-
-#define DP_MAX_INTERRUPT_CONTEXTS 8
+#include "wlan_cfg.h"
 
 struct dp_soc_cmn;
 struct dp_pdev;
@@ -475,8 +456,6 @@ struct dp_soc {
 	qdf_spinlock_t reo_desc_freelist_lock;
 };
 
-#define MAX_RX_MAC_RINGS 2
-
 /* PDEV level structure for data path */
 struct dp_pdev {
 	/* PDEV handle from OSIF layer TBD: see if we really need osif_pdev */
@@ -584,8 +563,6 @@ union dp_align_mac_addr {
 	} align4_2;
 };
 
-#define MAX_HTT_METADATA_LEN 32
-
 /* VDEV structure for data path state */
 struct dp_vdev {
 	/* OS device abstraction */
@@ -692,9 +669,6 @@ enum {
 	dp_sec_ucast
 };
 
-#define MAX_NUM_PEER_ID_PER_PEER 8
-#define DP_MAX_TIDS 17
-#define DP_NON_QOS_TID 16
 /* Peer structure for data path state */
 struct dp_peer {
 	/* VDEV to which this peer is associated */

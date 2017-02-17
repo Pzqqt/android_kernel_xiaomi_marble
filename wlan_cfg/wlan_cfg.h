@@ -19,6 +19,39 @@
 #ifndef __WLAN_CFG_H
 #define __WLAN_CFG_H
 
+/*
+ * Temporary place holders. These should come either from target config
+ * or platform configuration
+ */
+#if defined(CONFIG_MCL)
+#define MAX_PDEV_CNT 1
+#else
+#define MAX_PDEV_CNT 3
+#endif
+
+/* Tx configuration */
+#define MAX_LINK_DESC_BANKS 8
+#define MAX_TXDESC_POOLS 4
+#define MAX_TCL_DATA_RINGS 4
+#define DP_MAX_TX_RINGS 8
+#define MAX_TX_HW_QUEUES 3
+
+/* Rx configuration */
+#define MAX_RXDESC_POOLS 4
+#define MAX_REO_DEST_RINGS 4
+#define DP_MAX_RX_RINGS 8
+#define MAX_RX_MAC_RINGS 2
+
+/* Miscellaneous configuration */
+#define MAX_IDLE_SCATTER_BUFS 16
+#define DP_MAX_IRQ_PER_CONTEXT 12
+#define DP_MAX_INTERRUPT_CONTEXTS 8
+#define DP_MAX_INTERRUPT_CONTEXTS 8
+#define MAX_HTT_METADATA_LEN 32
+#define MAX_NUM_PEER_ID_PER_PEER 8
+#define DP_MAX_TIDS 17
+#define DP_NON_QOS_TID 16
+
 struct wlan_cfg_dp_pdev_ctxt;
 struct wlan_cfg_dp_soc_ctxt;
 
