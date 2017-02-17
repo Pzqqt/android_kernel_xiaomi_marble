@@ -2119,7 +2119,7 @@ int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 	return 0;
 
 post_disable:
-	cds_post_disable(hdd_ctx->pcds_context);
+	cds_post_disable();
 
 close:
 	hdd_ctx->driver_status = DRIVER_MODULES_CLOSED;
@@ -8960,7 +8960,7 @@ int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx, bool ftm_mode)
 		goto done;
 	}
 
-	qdf_status = cds_post_disable(hdd_ctx->pcds_context);
+	qdf_status = cds_post_disable();
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("Failed to process post CDS disable Modules! :%d",
 			qdf_status);

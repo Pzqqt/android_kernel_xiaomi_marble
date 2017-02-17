@@ -948,11 +948,10 @@ static inline void cds_suspend_target(tp_wma_handle wma_handle)
 
 /**
  * cds_post_disable() - post disable cds module
- * @cds_context: CDS context
  *
  * Return: QDF status
  */
-QDF_STATUS cds_post_disable(v_CONTEXT_t cds_context)
+QDF_STATUS cds_post_disable(void)
 {
 	tp_wma_handle wma_handle;
 	struct hif_opaque_softc *hif_ctx;
