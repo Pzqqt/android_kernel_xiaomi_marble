@@ -2652,15 +2652,21 @@ static void lim_tdls_update_hash_node_info(tpAniSirGlobal pMac,
 		pStaDs->vhtSupportedChannelWidthSet =
 			WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ;
 	}
-	/*Calculate the Secondary Coannel Offset */
-	cbMode = lim_select_cb_mode(pStaDs, psessionEntry,
+
+	/*
+	 * Calculate the Secondary Coannel Offset if our
+	 * own channel bonding state is enabled
+	 */
+	if (psessionEntry->htSupportedChannelWidthSet) {
+		cbMode = lim_select_cb_mode(pStaDs, psessionEntry,
 				    psessionEntry->currentOperChannel,
 				    pStaDs->vhtSupportedChannelWidthSet);
 
-	pStaDs->htSecondaryChannelOffset = cbMode;
-
-	if (pStaDs->mlmStaContext.vhtCapability) {
-		pStaDs->htSecondaryChannelOffset = lim_get_htcb_state(cbMode);
+		if (pStaDs->mlmStaContext.vhtCapability)
+			pStaDs->htSecondaryChannelOffset =
+					lim_get_htcb_state(cbMode);
+		else
+			pStaDs->htSecondaryChannelOffset = cbMode;
 	}
 	pSessStaDs = dph_lookup_hash_entry(pMac, psessionEntry->bssId, &aid,
 					   &psessionEntry->dph.dphHashTable);
