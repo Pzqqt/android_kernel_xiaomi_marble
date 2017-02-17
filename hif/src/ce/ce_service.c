@@ -618,11 +618,22 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t msdu,
 	uint64_t dma_addr;
 	uint32_t user_flags;
 	enum hif_ce_event_type type = FAST_TX_SOFTWARE_INDEX_UPDATE;
+	bool ok_to_send = true;
 
 	qdf_spin_lock_bh(&ce_state->ce_index_lock);
-	Q_TARGET_ACCESS_BEGIN(scn);
 
-	DATA_CE_UPDATE_SWINDEX(src_ring->sw_index, scn, ctrl_addr);
+	/*
+	 * Request runtime PM resume if it has already suspended and make
+	 * sure there is no PCIe link access.
+	 */
+	if (hif_pm_runtime_get(hif_hdl) != 0)
+		ok_to_send = false;
+
+	if (ok_to_send) {
+		Q_TARGET_ACCESS_BEGIN(scn);
+		DATA_CE_UPDATE_SWINDEX(src_ring->sw_index, scn, ctrl_addr);
+	}
+
 	write_index = src_ring->write_index;
 	sw_index = src_ring->sw_index;
 
@@ -636,7 +647,8 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t msdu,
 		      SLOTS_PER_DATAPATH_TX,
 		      CE_RING_DELTA(nentries_mask, write_index, sw_index - 1));
 		OL_ATH_CE_PKT_ERROR_COUNT_INCR(scn, CE_RING_DELTA_FAIL);
-		Q_TARGET_ACCESS_END(scn);
+		if (ok_to_send)
+			Q_TARGET_ACCESS_END(scn);
 		qdf_spin_unlock_bh(&ce_state->ce_index_lock);
 		return 0;
 	}
@@ -725,19 +737,20 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t msdu,
 
 	src_ring->write_index = write_index;
 
-	if (hif_pm_runtime_get(hif_hdl) == 0) {
+	if (ok_to_send) {
 		if (qdf_likely(ce_state->state == CE_RUNNING)) {
 			type = FAST_TX_WRITE_INDEX_UPDATE;
 			war_ce_src_ring_write_idx_set(scn, ctrl_addr,
 				write_index);
+			Q_TARGET_ACCESS_END(scn);
 		} else
 			ce_state->state = CE_PENDING;
 		hif_pm_runtime_put(hif_hdl);
 	}
+
 	hif_record_ce_desc_event(scn, ce_state->id, type,
 				 NULL, NULL, write_index);
 
-	Q_TARGET_ACCESS_END(scn);
 	qdf_spin_unlock_bh(&ce_state->ce_index_lock);
 
 	/* sent 1 packet */
