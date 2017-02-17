@@ -283,10 +283,62 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 			uint8_t *rx_tlv_hdr,
 			qdf_nbuf_t nbuf)
 {
-	DP_STATS_INC_PKT(sa_peer, rx.intra_bss, 1,
-			qdf_nbuf_len(nbuf));
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-		FL("Intra-BSS forwarding not implemented"));
+	uint16_t da_idx;
+	uint16_t len;
+	struct dp_peer *da_peer;
+	struct dp_ast_entry *ast_entry;
+	qdf_nbuf_t nbuf_copy;
+
+	/* check if the destination peer is available in peer table
+	 * and also check if the source peer and destination peer
+	 * belong to the same vap and destination peer is not bss peer.
+	 */
+	if ((hal_rx_msdu_end_da_is_valid_get(rx_tlv_hdr) &&
+	   !hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr))) {
+		da_idx = hal_rx_msdu_end_da_idx_get(rx_tlv_hdr);
+
+		ast_entry = soc->ast_table[da_idx];
+		if (!ast_entry)
+			return false;
+
+		da_peer = ast_entry->peer;
+
+		if (!da_peer)
+			return false;
+
+		if (da_peer->vdev == sa_peer->vdev && !da_peer->bss_peer) {
+			memset(nbuf->cb, 0x0, sizeof(nbuf->cb));
+			len = qdf_nbuf_len(nbuf);
+			if (!dp_tx_send(sa_peer->vdev, nbuf)) {
+				DP_STATS_INC_PKT(sa_peer, rx.intra_bss, 1, len);
+				return true;
+			} else
+				return false;
+		}
+	}
+	/* if it is a broadcast pkt (eg: ARP) and it is not its own
+	 * source, then clone the pkt and send the cloned pkt for
+	 * intra BSS forwarding and original pkt up the network stack
+	 * Note: how do we handle multicast pkts. do we forward
+	 * all multicast pkts as is or let a higher layer module
+	 * like igmpsnoop decide whether to forward or not with
+	 * Mcast enhancement.
+	 */
+	else if (qdf_unlikely((hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr) &&
+		!sa_peer->bss_peer))) {
+		nbuf_copy = qdf_nbuf_copy(nbuf);
+		if (!nbuf_copy)
+			return false;
+		memset(nbuf_copy->cb, 0x0, sizeof(nbuf_copy->cb));
+		len = qdf_nbuf_len(nbuf_copy);
+		if (dp_tx_send(sa_peer->vdev, nbuf_copy))
+			qdf_nbuf_free(nbuf_copy);
+		else
+			DP_STATS_INC_PKT(sa_peer, rx.intra_bss, 1, len);
+	}
+	/* return false as we have to still send the original pkt
+	 * up the stack
+	 */
 	return false;
 }
 
@@ -425,7 +477,6 @@ QDF_STATUS dp_rx_filter_mesh_packets(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
 }
 
 #endif
-
 
 /**
  * dp_rx_process() - Brain of the Rx processing functionality
@@ -749,9 +800,10 @@ done:
 			dp_rx_wds_srcport_learn(soc, rx_tlv_hdr, peer, nbuf);
 
 			/* Intrabss-fwd */
-			if (peer &&
-				dp_rx_intrabss_fwd(soc, peer, rx_tlv_hdr, nbuf))
-				continue; /* Get next descriptor */
+			if (vdev->opmode != wlan_op_mode_sta)
+				if (dp_rx_intrabss_fwd(soc, peer, rx_tlv_hdr,
+									nbuf))
+					continue; /* Get next descriptor */
 
 			rx_bufs_used++;
 			DP_RX_LIST_APPEND(deliver_list_head,

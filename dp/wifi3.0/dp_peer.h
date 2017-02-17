@@ -46,7 +46,7 @@ dp_peer_find_by_id(struct dp_soc *soc,
 }
 
 void dp_rx_peer_map_handler(void *soc_handle, uint16_t peer_id,
-	uint8_t vdev_id, uint8_t *peer_mac_addr);
+	uint16_t hw_peer_id, uint8_t vdev_id, uint8_t *peer_mac_addr);
 void dp_rx_peer_unmap_handler(void *soc_handle, uint16_t peer_id);
 void dp_rx_sec_ind_handler(void *soc_handle, uint16_t peer_id,
 	enum htt_sec_type sec_type, int is_unicast,

@@ -327,7 +327,8 @@ int dp_peer_find_attach(struct dp_soc *soc)
 }
 
 static inline void dp_peer_find_add_id(struct dp_soc *soc,
-	uint8_t *peer_mac_addr, uint16_t peer_id, uint8_t vdev_id)
+	uint8_t *peer_mac_addr, uint16_t peer_id, uint16_t hw_peer_id,
+	uint8_t vdev_id)
 {
 	struct dp_peer *peer;
 
@@ -353,6 +354,8 @@ static inline void dp_peer_find_add_id(struct dp_soc *soc,
 			  "%s: ref_cnt: %d", __func__,
 			   qdf_atomic_read(&peer->ref_cnt));
 		soc->peer_id_to_obj_map[peer_id] = peer;
+		peer->self_ast_entry.ast_idx = hw_peer_id;
+		soc->ast_table[hw_peer_id] = &peer->self_ast_entry;
 
 		if (dp_peer_find_add_id_to_obj(peer, peer_id)) {
 			/* TBDXXX: assert for now */
@@ -363,19 +366,95 @@ static inline void dp_peer_find_add_id(struct dp_soc *soc,
 	}
 }
 
+static inline void dp_peer_add_ast(struct dp_soc *soc,
+	struct dp_peer *peer, uint8_t *peer_mac_addr, uint16_t hw_peer_id,
+	uint8_t vdev_id)
+{
+	struct dp_ast_entry *ast_entry;
+
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		"%s: peer %p ID %d vid %d mac %02x:%02x:%02x:%02x:%02x:%02x\n",
+		__func__, peer, hw_peer_id, vdev_id, peer_mac_addr[0],
+		peer_mac_addr[1], peer_mac_addr[2], peer_mac_addr[3],
+		peer_mac_addr[4], peer_mac_addr[5]);
+
+	TAILQ_FOREACH(ast_entry, &peer->ast_entry_list, ast_entry_elem) {
+		if (!(qdf_mem_cmp(peer_mac_addr, ast_entry->mac_addr,
+				DP_MAC_ADDR_LEN))) {
+			soc->ast_table[ast_entry->ast_idx] = NULL;
+			ast_entry->ast_idx = hw_peer_id;
+			soc->ast_table[hw_peer_id] = ast_entry;
+			return;
+		}
+	}
+
+	ast_entry = (struct dp_ast_entry *)
+			qdf_mem_malloc(sizeof(struct dp_ast_entry));
+
+	if (!ast_entry) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			FL("fail to allocate ast_entry for: %d"), hw_peer_id);
+		QDF_ASSERT(0);
+	}
+
+	qdf_mem_copy(&ast_entry->mac_addr, peer_mac_addr, DP_MAC_ADDR_LEN);
+	ast_entry->peer = peer;
+	ast_entry->next_hop = 1;
+	TAILQ_INSERT_TAIL(&peer->ast_entry_list, ast_entry, ast_entry_elem);
+	soc->ast_table[hw_peer_id] = ast_entry;
+	return;
+}
+
+/**
+ * dp_rx_peer_map_handler() - handle peer map event from firmware
+ * @soc_handle - genereic soc handle
+ * @peeri_id - peer_id from firmware
+ * @hw_peer_id - ast index for this peer
+ * vdev_id - vdev ID
+ * peer_mac_addr - macc assress of the peer
+ *
+ * associate the peer_id that firmware provided with peer entry
+ * and update the ast table in the host with the hw_peer_id.
+ *
+ * Return: none
+ */
+
 void
-dp_rx_peer_map_handler(void *soc_handle, uint16_t peer_id, uint8_t vdev_id,
-	uint8_t *peer_mac_addr)
+dp_rx_peer_map_handler(void *soc_handle, uint16_t peer_id, uint16_t hw_peer_id,
+			uint8_t vdev_id, uint8_t *peer_mac_addr)
 {
 	struct dp_soc *soc = (struct dp_soc *)soc_handle;
+	struct dp_peer *peer = NULL;
+
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-		"peer_map_event (soc:%p): peer_id %d, peer_mac "
+		"peer_map_event (soc:%p): peer_id %di, hw_peer_id %d, peer_mac "
 		"%02x:%02x:%02x:%02x:%02x:%02x, vdev_id %d\n", soc, peer_id,
-		peer_mac_addr[0], peer_mac_addr[1], peer_mac_addr[2],
-		peer_mac_addr[3], peer_mac_addr[4], peer_mac_addr[5], vdev_id);
+		hw_peer_id, peer_mac_addr[0], peer_mac_addr[1],
+		peer_mac_addr[2], peer_mac_addr[3], peer_mac_addr[4],
+		peer_mac_addr[5], vdev_id);
 
-	dp_peer_find_add_id(soc, peer_mac_addr, peer_id, vdev_id);
+	peer = soc->peer_id_to_obj_map[peer_id];
+
+	if ((hw_peer_id < 0) || (hw_peer_id > WLAN_UMAC_PSOC_MAX_PEERS)) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"invalid hw_peer_id: %d", hw_peer_id);
+		QDF_ASSERT(0);
+	}
+
+	/*
+	 * check if peer already exists for this peer_id, if so
+	 * this peer map event is in response for a wds peer add
+	 * wmi command sent during wds source port learning.
+	 * in this case just add the ast entry to the existing
+	 * peer ast_list.
+	 */
+	if (!peer)
+		dp_peer_find_add_id(soc, peer_mac_addr, peer_id,
+					hw_peer_id, vdev_id);
+	else
+		dp_peer_add_ast(soc, peer, peer_mac_addr,
+					hw_peer_id, vdev_id);
 }
 
 void

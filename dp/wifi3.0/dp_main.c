@@ -1692,6 +1692,13 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 	if (!peer)
 		return NULL; /* failure */
 
+	TAILQ_INIT(&peer->ast_entry_list);
+	qdf_mem_copy(&peer->self_ast_entry.mac_addr, peer_mac_addr,
+			DP_MAC_ADDR_LEN);
+	peer->self_ast_entry.peer = peer;
+	TAILQ_INSERT_HEAD(&peer->ast_entry_list, &peer->self_ast_entry,
+				ast_entry_elem);
+
 	qdf_mem_zero(peer, sizeof(struct dp_peer));
 	qdf_spinlock_create(&peer->peer_info_lock);
 
@@ -1849,6 +1856,8 @@ void dp_peer_unref_delete(void *peer_handle)
 	struct dp_peer *tmppeer;
 	int found = 0;
 	uint16_t peer_id;
+	uint16_t hw_peer_id;
+	struct dp_ast_entry *ast_entry;
 
 	/*
 	 * Hold the lock all the way from checking if the peer ref count
@@ -1932,6 +1941,17 @@ void dp_peer_unref_delete(void *peer_handle)
 #ifdef notyet
 		qdf_mempool_free(soc->osdev, soc->mempool_ol_ath_peer, peer);
 #else
+		TAILQ_FOREACH(ast_entry, &peer->ast_entry_list,
+				ast_entry_elem) {
+			hw_peer_id = ast_entry->ast_idx;
+			if (peer->self_ast_entry.ast_idx != hw_peer_id)
+				qdf_mem_free(ast_entry);
+			else
+				peer->self_ast_entry.ast_idx =
+							HTT_INVALID_PEER;
+
+			soc->ast_table[hw_peer_id] = NULL;
+		}
 		qdf_mem_free(peer);
 #endif
 		if (soc->cdp_soc.ol_ops->peer_unref_delete) {

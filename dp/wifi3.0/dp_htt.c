@@ -518,9 +518,12 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 			u_int8_t mac_addr_deswizzle_buf[HTT_MAC_ADDR_LEN];
 			u_int8_t *peer_mac_addr;
 			u_int16_t peer_id;
+			u_int16_t hw_peer_id;
 			u_int8_t vdev_id;
 
 			peer_id = HTT_RX_PEER_MAP_PEER_ID_GET(*msg_word);
+			hw_peer_id =
+				HTT_RX_PEER_MAP_HW_PEER_ID_GET(*(msg_word+2));
 			vdev_id = HTT_RX_PEER_MAP_VDEV_ID_GET(*msg_word);
 			peer_mac_addr = htt_t2h_mac_addr_deswizzle(
 				(u_int8_t *) (msg_word+1),
@@ -530,8 +533,8 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 				"HTT_T2H_MSG_TYPE_PEER_MAP msg for peer id %d vdev id %d n",
 				peer_id, vdev_id);
 
-			dp_rx_peer_map_handler(
-				soc->dp_soc, peer_id, vdev_id, peer_mac_addr);
+			dp_rx_peer_map_handler(soc->dp_soc, peer_id, hw_peer_id,
+						vdev_id, peer_mac_addr);
 			break;
 		}
 	case HTT_T2H_MSG_TYPE_PEER_UNMAP:
