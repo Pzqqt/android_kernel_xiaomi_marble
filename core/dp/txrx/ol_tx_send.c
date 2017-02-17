@@ -516,6 +516,7 @@ void ol_tx_discard_target_frms(ol_txrx_pdev_handle pdev)
 {
 	int i = 0;
 	struct ol_tx_desc_t *tx_desc;
+	int num_disarded = 0;
 
 	for (i = 0; i < pdev->tx_desc.pool_size; i++) {
 		tx_desc = ol_tx_desc_find(pdev, i);
@@ -528,12 +529,17 @@ void ol_tx_discard_target_frms(ol_txrx_pdev_handle pdev)
 		 */
 		if (qdf_atomic_read(&tx_desc->ref_cnt)) {
 			TXRX_PRINT(TXRX_PRINT_LEVEL_WARN,
-				   "Warning: freeing tx frame "
-				   "(no tx completion from the target)\n");
+				   "Warning: freeing tx desc %d", tx_desc->id);
 			ol_tx_desc_frame_free_nonstd(pdev,
 						     tx_desc, 1);
+			num_disarded++;
 		}
 	}
+
+	if (num_disarded)
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+		"Warning: freed %d tx descs for which"
+		"no tx completion rcvd from the target", num_disarded);
 }
 #endif
 

@@ -1911,6 +1911,7 @@ void ol_tso_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg)
 				   __func__, i);
 			QDF_BUG(0);
 			pdev->tso_seg_pool.pool_size = i;
+			pdev->tso_seg_pool.num_free = i;
 			qdf_spinlock_create(&pdev->tso_seg_pool.tso_mutex);
 			return;
 		}
@@ -1931,6 +1932,7 @@ void ol_tso_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg)
 			   __func__, i);
 		QDF_BUG(0);
 		pdev->tso_seg_pool.pool_size = i;
+		pdev->tso_seg_pool.num_free = i;
 		qdf_spinlock_create(&pdev->tso_seg_pool.tso_mutex);
 		return;
 	}
@@ -1938,6 +1940,7 @@ void ol_tso_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg)
 	c_element->cookie = TSO_SEG_MAGIC_COOKIE;
 	c_element->next = NULL;
 	pdev->tso_seg_pool.pool_size = num_seg;
+	pdev->tso_seg_pool.num_free = num_seg;
 	qdf_spinlock_create(&pdev->tso_seg_pool.tso_mutex);
 }
 
@@ -2021,6 +2024,7 @@ void ol_tso_num_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg)
 				__func__, i);
 			QDF_BUG(0);
 			pdev->tso_num_seg_pool.num_seg_pool_size = i;
+			pdev->tso_num_seg_pool.num_free = i;
 			qdf_spinlock_create(&pdev->tso_num_seg_pool.
 							tso_num_seg_mutex);
 			return;
@@ -2039,11 +2043,13 @@ void ol_tso_num_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg)
 			   __func__, i);
 		QDF_BUG(0);
 		pdev->tso_num_seg_pool.num_seg_pool_size = i;
+		pdev->tso_num_seg_pool.num_free = i;
 		qdf_spinlock_create(&pdev->tso_num_seg_pool.tso_num_seg_mutex);
 		return;
 	}
 	c_element->next = NULL;
 	pdev->tso_num_seg_pool.num_seg_pool_size = num_seg;
+	pdev->tso_num_seg_pool.num_free = num_seg;
 	qdf_spinlock_create(&pdev->tso_num_seg_pool.tso_num_seg_mutex);
 }
 

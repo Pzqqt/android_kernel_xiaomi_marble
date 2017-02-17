@@ -360,10 +360,11 @@ void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 {
 	qdf_spin_lock_bh(&pdev->tx_mutex);
 
+	ol_tx_desc_dup_detect_reset(pdev, tx_desc);
+
 	if (tx_desc->pkt_type == OL_TX_FRM_TSO)
 		ol_tx_tso_desc_free(pdev, tx_desc);
 
-	ol_tx_desc_dup_detect_reset(pdev, tx_desc);
 	ol_tx_desc_reset_pkt_type(tx_desc);
 	ol_tx_desc_reset_timestamp(tx_desc);
 
@@ -821,6 +822,7 @@ void ol_tso_free_segment(struct ol_txrx_pdev_t *pdev,
 		return;
 	}
 	/*this tso seg is now a part of freelist*/
+	qdf_mem_zero(tso_seg, sizeof(*tso_seg));
 	tso_seg->next = pdev->tso_seg_pool.freelist;
 	tso_seg->on_freelist = 1;
 	pdev->tso_seg_pool.freelist = tso_seg;
@@ -870,7 +872,7 @@ void ol_tso_num_seg_free(struct ol_txrx_pdev_t *pdev,
 	qdf_spin_lock_bh(&pdev->tso_num_seg_pool.tso_num_seg_mutex);
 	tso_num_seg->next = pdev->tso_num_seg_pool.freelist;
 	pdev->tso_num_seg_pool.freelist = tso_num_seg;
-	pdev->tso_num_seg_pool.num_free++;
+		pdev->tso_num_seg_pool.num_free++;
 	qdf_spin_unlock_bh(&pdev->tso_num_seg_pool.tso_num_seg_mutex);
 }
 #endif
