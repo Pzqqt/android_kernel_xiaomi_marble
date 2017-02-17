@@ -591,10 +591,12 @@ static int wlan_hdd_execute_remain_on_channel(hdd_adapter_t *pAdapter,
 
 	/* Extending duration for proactive extension logic for RoC */
 	duration = pRemainChanCtx->duration;
-	if (isGoPresent == true)
-		duration = P2P_ROC_DURATION_MULTIPLIER_GO_PRESENT * duration;
-	else
-		duration = P2P_ROC_DURATION_MULTIPLIER_GO_ABSENT * duration;
+	if (duration < HDD_P2P_MAX_ROC_DURATION) {
+		if (isGoPresent == true)
+			duration *= P2P_ROC_DURATION_MULTIPLIER_GO_PRESENT;
+		else
+			duration *= P2P_ROC_DURATION_MULTIPLIER_GO_ABSENT;
+	}
 
 	hdd_prevent_suspend(WIFI_POWER_EVENT_WAKELOCK_ROC);
 	qdf_runtime_pm_prevent_suspend(pHddCtx->runtime_context.roc);
