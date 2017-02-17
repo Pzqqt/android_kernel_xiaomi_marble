@@ -552,6 +552,30 @@ hal_rx_attn_msdu_done_get(uint8_t *buf)
 	return msdu_done;
 }
 
+#define HAL_RX_ATTN_FIRST_MPDU_GET(_rx_attn)		\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_attn,	\
+		RX_ATTENTION_1_FIRST_MPDU_OFFSET)),	\
+		RX_ATTENTION_1_FIRST_MPDU_MASK,		\
+		RX_ATTENTION_1_FIRST_MPDU_LSB))
+
+/*
+ * hal_rx_attn_first_mpdu_get(): get fist_mpdu bit from rx attention
+ * @buf: pointer to rx_pkt_tlvs
+ *
+ * reutm: uint32_t(first_msdu)
+ */
+static inline uint32_t
+hal_rx_attn_first_mpdu_get(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_attention *rx_attn = &pkt_tlvs->attn_tlv.rx_attn;
+	uint32_t first_mpdu;
+
+	first_mpdu = HAL_RX_ATTN_FIRST_MPDU_GET(rx_attn);
+
+	return first_mpdu;
+}
+
 /*
  * Get peer_meta_data from RX_MPDU_INFO within RX_MPDU_START
  */
@@ -1231,6 +1255,58 @@ QDF_STATUS hal_rx_mpdu_get_addr2(uint8_t *buf, uint8_t *mac_addr)
 /*******************************************************************************
  * RX ERROR APIS
  ******************************************************************************/
+
+#define HAL_RX_MPDU_END_DECRYPT_ERR_GET(_rx_mpdu_end)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR((_rx_mpdu_end),\
+		RX_MPDU_END_1_RX_IN_TX_DECRYPT_BYP_OFFSET)),	\
+		RX_MPDU_END_1_RX_IN_TX_DECRYPT_BYP_MASK,	\
+		RX_MPDU_END_1_RX_IN_TX_DECRYPT_BYP_LSB))
+
+/**
+ * hal_rx_mpdu_end_decrypt_err_get(): API to get the Decrypt ERR
+ * from rx_mpdu_end TLV
+ *
+ * @buf: pointer to the start of RX PKT TLV headers
+ * Return: uint32_t(decrypt_err)
+ */
+static inline uint32_t
+hal_rx_mpdu_end_decrypt_err_get(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_mpdu_end *mpdu_end =
+		&pkt_tlvs->mpdu_end_tlv.rx_mpdu_end;
+	uint32_t decrypt_err;
+
+	decrypt_err = HAL_RX_MPDU_END_DECRYPT_ERR_GET(mpdu_end);
+
+	return decrypt_err;
+}
+
+#define HAL_RX_MPDU_END_MIC_ERR_GET(_rx_mpdu_end)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR((_rx_mpdu_end),\
+		RX_MPDU_END_1_TKIP_MIC_ERR_OFFSET)),	\
+		RX_MPDU_END_1_TKIP_MIC_ERR_MASK,	\
+		RX_MPDU_END_1_TKIP_MIC_ERR_LSB))
+
+/**
+ * hal_rx_mpdu_end_mic_err_get(): API to get the MIC ERR
+ * from rx_mpdu_end TLV
+ *
+ * @buf: pointer to the start of RX PKT TLV headers
+ * Return: uint32_t(mic_err)
+ */
+static inline uint32_t
+hal_rx_mpdu_end_mic_err_get(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_mpdu_end *mpdu_end =
+		&pkt_tlvs->mpdu_end_tlv.rx_mpdu_end;
+	uint32_t mic_err;
+
+	mic_err = HAL_RX_MPDU_END_MIC_ERR_GET(mpdu_end);
+
+	return mic_err;
+}
 
 /*******************************************************************************
  * RX REO ERROR APIS

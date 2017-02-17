@@ -51,5 +51,7 @@ void dp_rx_peer_unmap_handler(void *soc_handle, uint16_t peer_id);
 void dp_rx_sec_ind_handler(void *soc_handle, uint16_t peer_id,
 	enum htt_sec_type sec_type, int is_unicast,
 	u_int32_t *michael_key, u_int32_t *rx_pn);
+uint8_t dp_get_peer_mac_addr_frm_id(struct cdp_soc_t *soc_handle,
+		uint16_t peer_id, uint8_t *peer_mac);
 
 #endif /* _DP_PEER_H_ */

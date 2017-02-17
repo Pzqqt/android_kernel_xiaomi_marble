@@ -140,7 +140,7 @@ struct ol_txrx_stats {
 		ol_txrx_stats_elem udp_ipv6_cksum_err;
 	} rx;
 	struct {
-		/* Number of mcast recieved for conversion */
+		/* Number of mcast received for conversion */
 		u_int32_t num_me_rcvd;
 		/* Number of unicast sent as part of mcast conversion */
 		u_int32_t num_me_ucast;

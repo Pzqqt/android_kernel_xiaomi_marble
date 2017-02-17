@@ -55,7 +55,7 @@ while (0)
 
 #define DP_TRACE(LVL, fmt, args ...)                             \
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_##LVL,       \
-		"%s:%d: "fmt, __func__, __LINE__, ## args)
+		fmt, ## args)
 
 #define DP_STATS_INIT(_handle) \
 	qdf_mem_set(&((_handle)->stats), sizeof((_handle)->stats), 0x0)
@@ -83,7 +83,7 @@ while (0)
 
 #define DP_STATS_UPD(_handle, _field, _delta) \
 { \
-	_handle->stats._field = _delta \
+	_handle->stats._field = _delta; \
 }
 
 #define DP_STATS_INC_PKT(_handle, _field, _count, _bytes) \
@@ -91,13 +91,34 @@ while (0)
 	DP_STATS_INC(_handle, _field.num, _count); \
 	DP_STATS_INC(_handle, _field.bytes, _bytes) \
 }
+
+#define DP_STATS_INCC_PKT(_handle, _field, _count, _bytes, _cond) \
+{ \
+	DP_STATS_INCC(_handle, _field.num, _count, _cond); \
+	DP_STATS_INCC(_handle, _field.bytes, _bytes, _cond) \
+}
+
+#define DP_STATS_AGGR(_handle_a, _handle_b, _field) \
+{ \
+	_handle_a->stats._field += _handle_b->stats._field; \
+}
+
+#define DP_STATS_AGGR_PKT(_handle_a, _handle_b, _field) \
+{ \
+	DP_STATS_AGGR(_handle_a, _handle_b, _field.num); \
+	DP_STATS_AGGR(_handle_a, _handle_b, _field.bytes);\
+}
 #else
 #define DP_STATS_INC(_handle, _field, _delta)
 #define DP_STATS_INCC(_handle, _field, _delta, _cond)
 #define DP_STATS_DEC(_handle, _field, _delta)
 #define DP_STATS_UPD(_handle, _field, _delta)
 #define DP_STATS_INC_PKT(_handle, _field, _count, _bytes)
+#define DP_STATS_INCC_PKT(_handle, _field, _count, _bytes)
+#define DP_STATS_AGGR(_handle_a, _handle_b, _field)
+#define DP_STATS_AGGR_PKT(_handle_a, _handle_b, _field)
 #endif
+
 
 extern int dp_peer_find_attach(struct dp_soc *soc);
 extern void dp_peer_find_detach(struct dp_soc *soc);
@@ -151,13 +172,5 @@ extern QDF_STATUS dp_reo_send_cmd(struct dp_soc *soc,
 	void (*callback_fn), void *data);
 
 extern void dp_reo_status_ring_handler(struct dp_soc *soc);
-int dp_print_host_stats(struct cdp_vdev *vdev_handle,
-		struct ol_txrx_stats_req *req, enum cdp_host_txrx_stats type);
-void dp_print_pdev_tx_stats(struct dp_pdev *pdev);
-void dp_print_pdev_rx_stats(struct dp_pdev *pdev);
-void dp_print_soc_tx_stats(struct dp_soc *soc);
-void dp_print_soc_rx_stats(struct dp_soc *soc);
-void dp_txrx_host_stats_clr(struct dp_vdev *vdev);
-void dp_print_rx_rates(struct dp_vdev *vdev);
-void dp_print_tx_rates(struct dp_vdev *vdev);
+void dp_aggregate_vdev_stats(struct dp_vdev *vdev);
 #endif /* #ifndef _DP_INTERNAL_H_ */

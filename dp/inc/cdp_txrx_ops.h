@@ -183,6 +183,9 @@ struct cdp_cmn_ops {
 
 	int (*delba_process)(void *peer_handle,
 		int tid, uint16_t reasoncode);
+
+	uint8_t (*get_peer_mac_addr_frm_id)(struct cdp_soc_t *soc_handle,
+			uint16_t peer_id, uint8_t *mac_addr);
 };
 
 struct cdp_ctrl_ops {
@@ -539,6 +542,9 @@ struct ol_if_ops {
 			uint8_t *wds_macaddr);
 	QDF_STATUS (*lro_hash_config)(void *scn_handle,
 			struct cdp_lro_hash_config *lro_hash);
+	void (*update_dp_stats)(void *soc, void *stats, uint16_t id,
+			uint8_t type);
+
 	/* TODO: Add any other control path calls required to OL_IF/WMA layer */
 };
 

@@ -64,7 +64,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 	if (!rxdma_srng) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			"rxdma srng not initialized");
-		DP_STATS_INC(dp_pdev, rx.err.rxdma_unitialized, 1);
+		DP_STATS_INC(dp_pdev, err.rxdma_unitialized, 1);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -83,7 +83,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 		if (!num_alloc_desc) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				"no free rx_descs in freelist");
-			DP_STATS_INC(dp_pdev, rx.err.desc_alloc_fail,
+			DP_STATS_INC(dp_pdev, err.desc_alloc_fail,
 					num_alloc_desc);
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -142,7 +142,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 		next = (*desc_list)->next;
 
 		(*desc_list)->rx_desc.nbuf = rx_netbuf;
-		DP_STATS_INC_PKT(dp_pdev, rx.replenished, 1,
+		DP_STATS_INC_PKT(dp_pdev, replenished, 1,
 				qdf_nbuf_len(rx_netbuf));
 		hal_rxdma_buff_addr_info_set(rxdma_ring_entry, paddr,
 						(*desc_list)->rx_desc.cookie,
@@ -157,7 +157,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 		"successfully replenished %d buffers", num_req_buffers);
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 		"%d rx desc added back to free list", num_desc_to_free);
-	DP_STATS_INC(dp_pdev, rx.buf_freelist, num_desc_to_free);
+	DP_STATS_INC(dp_pdev, buf_freelist, num_desc_to_free);
 
 	/*
 	 * add any available free desc back to the free list
@@ -230,6 +230,8 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 			uint8_t *rx_tlv_hdr,
 			qdf_nbuf_t nbuf)
 {
+	DP_STATS_INC_PKT(sa_peer, rx.intra_bss, 1,
+			qdf_nbuf_len(nbuf));
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 		FL("Intra-BSS forwarding not implemented"));
 	return false;
@@ -411,6 +413,7 @@ dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 	uint8_t mac_id;
 	uint16_t i, vdev_cnt = 0;
 	uint32_t ampdu_flag, amsdu_flag;
+	struct ether_header *eh;
 
 	/* Debug -- Remove later */
 	qdf_assert(soc && hal_ring);
@@ -512,7 +515,7 @@ dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 		if (msdu_desc_info.msdu_flags & HAL_MSDU_F_LAST_MSDU_IN_MPDU)
 			qdf_nbuf_set_chfrag_end(rx_desc->nbuf, 1);
 
-		DP_STATS_INC_PKT(vdev->pdev, rx.rcvd_reo, 1,
+		DP_STATS_INC_PKT(peer, rx.rcvd_reo, 1,
 				qdf_nbuf_len(rx_desc->nbuf));
 
 		ampdu_flag = (mpdu_desc_info.mpdu_flags &
@@ -562,6 +565,7 @@ done:
 		vdev = vdev_list[i];
 		while ((nbuf = qdf_nbuf_queue_remove(&vdev->rxq))) {
 			rx_tlv_hdr = qdf_nbuf_data(nbuf);
+			eh = (struct ether_header *)qdf_nbuf_data(nbuf);
 
 			/*
 			 * Check if DMA completed -- msdu_done is the last bit
@@ -628,10 +632,23 @@ done:
 			DP_STATS_INC(vdev->pdev,
 					rx.reception_type[reception_type], 1);
 			DP_STATS_INCC(vdev->pdev, rx.nss[nss], 1,
-					((reception_type ==
-					  RECEPTION_TYPE_MU_MIMO) ||
-					 (reception_type ==
-					  RECEPTION_TYPE_MU_OFDMA_MIMO)));
+					((reception_type == REPT_MU_MIMO) ||
+					 (reception_type == REPT_MU_OFDMA_MIMO))
+					);
+			DP_STATS_INC(peer, rx.sgi_count[sgi], 1);
+			DP_STATS_INC(peer, rx.mcs_count[rate_mcs], 1);
+			DP_STATS_INCC(peer, rx.err.mic_err, 1,
+					hal_rx_mpdu_end_mic_err_get(
+						rx_tlv_hdr));
+			DP_STATS_INCC(peer, rx.err.decrypt_err, 1,
+					hal_rx_mpdu_end_decrypt_err_get(
+						rx_tlv_hdr));
+
+			DP_STATS_INC(peer, rx.wme_ac_type[TID_TO_WME_AC(tid)],
+					1);
+			DP_STATS_INC(peer, rx.bw[bw], 1);
+			DP_STATS_INC(peer, rx.reception_type[reception_type],
+					1);
 
 			/*
 			 * HW structures call this L3 header padding --
@@ -693,7 +710,33 @@ done:
 			DP_RX_LIST_APPEND(deliver_list_head,
 						deliver_list_tail,
 						nbuf);
-			DP_STATS_INC(vdev->pdev, rx.to_stack.num, 1);
+
+			DP_STATS_INCC_PKT(peer, rx.multicast, 1, pkt_len,
+					DP_FRAME_IS_MULTICAST((eh)->ether_dhost
+						));
+			DP_STATS_INCC_PKT(peer, rx.unicast, 1, pkt_len,
+					!(DP_FRAME_IS_MULTICAST(
+							(eh)->ether_dhost)));
+			DP_STATS_INC_PKT(peer, rx.to_stack, 1,
+					pkt_len);
+
+			if (hal_rx_attn_first_mpdu_get(rx_tlv_hdr)) {
+				if (soc->cdp_soc.ol_ops->update_dp_stats)
+					soc->cdp_soc.ol_ops->update_dp_stats(
+							vdev->pdev->osif_pdev,
+							&peer->stats,
+							peer_id,
+							UPDATE_PEER_STATS);
+
+				dp_aggregate_vdev_stats(peer->vdev);
+
+				if (soc->cdp_soc.ol_ops->update_dp_stats)
+					soc->cdp_soc.ol_ops->update_dp_stats(
+							vdev->pdev->osif_pdev,
+							&peer->vdev->stats,
+							peer->vdev->vdev_id,
+							UPDATE_VDEV_STATS);
+			}
 		}
 
 		if (qdf_unlikely(vdev->rx_decap_type == htt_pkt_type_raw))

@@ -382,4 +382,22 @@ static inline int cdp_delba_process(ol_txrx_soc_handle soc,
 	return 0;
 }
 
+/**
+ * cdp_get_peer_mac_addr_frm_id: function to return vdev id and and peer
+ * mac address
+ * @soc: SOC handle
+ * @peer_id: peer id of the peer for which mac_address is required
+ * @mac_addr: reference to mac address
+ *
+ * reutm: vdev_id of the vap
+ */
+static inline uint8_t
+cdp_get_peer_mac_addr_frm_id(ol_txrx_soc_handle soc, uint16_t peer_id,
+		uint8_t *mac_addr)
+{
+	if (soc->ops->cmn_drv_ops->get_peer_mac_addr_frm_id)
+		return soc->ops->cmn_drv_ops->get_peer_mac_addr_frm_id(soc,
+				peer_id, mac_addr);
+	return CDP_INVALID_VDEV_ID;
+}
 #endif /* _CDP_TXRX_CMN_H_ */
