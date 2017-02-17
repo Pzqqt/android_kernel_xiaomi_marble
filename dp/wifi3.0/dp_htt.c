@@ -259,12 +259,15 @@ int htt_srng_setup(void *htt_soc, int mac_id, void *hal_srng,
 
 	switch (hal_ring_type) {
 	case RXDMA_BUF:
-		if (srng_params.ring_id ==
-			 HAL_SRNG_WMAC1_SW2RXDMA0_BUF) {
 #ifdef QCA_HOST2FW_RXBUF_RING
+		if (srng_params.ring_id ==
+		    (HAL_SRNG_WMAC1_SW2RXDMA0_BUF)) {
 			htt_ring_id = HTT_HOST1_TO_FW_RXBUF_RING;
 			htt_ring_type = HTT_SW_TO_SW_RING;
 #else
+		if (srng_params.ring_id ==
+			(HAL_SRNG_WMAC1_SW2RXDMA0_BUF +
+			  (mac_id * HAL_MAX_RINGS_PER_LMAC))) {
 			htt_ring_id = HTT_RXDMA_HOST_BUF_RING;
 			htt_ring_type = HTT_SW_TO_HW_RING;
 #endif
