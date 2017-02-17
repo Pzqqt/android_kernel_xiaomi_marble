@@ -15995,6 +15995,11 @@ QDF_STATUS sme_get_beacon_frm(tHalHandle hal, tCsrRoamProfile *profile,
 
 	bss_list = (tScanResultList *)result_handle;
 	bss_descp = csr_get_fst_bssdescr_ptr(bss_list);
+	if (!bss_descp) {
+		sms_log(mac_ctx, LOGE, FL("unable to fetch bss descriptor"));
+		status = QDF_STATUS_E_FAULT;
+		goto free_scan_flter;
+	}
 
 	/*
 	 * bss_descp->length = sizeof(tSirBssDescription) - sizeof(length_field)
@@ -16022,7 +16027,7 @@ free_scan_flter:
 		qdf_mem_free(scan_filter);
 	}
 
-	return QDF_STATUS_SUCCESS;
+	return status;
 }
 
 /**
