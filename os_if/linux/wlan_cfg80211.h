@@ -29,6 +29,24 @@
 #include <net/cfg80211.h>
 #include <qca_vendor.h>
 
+#define cfg80211_log(level, args...) \
+	QDF_TRACE(QDF_MODULE_ID_OS_IF, level, ## args)
+#define cfg80211_logfl(level, format, args...) \
+	cfg80211_log(level, FL(format), ## args)
+
+#define cfg80211_alert(format, args...) \
+	cfg80211_logfl(QDF_TRACE_LEVEL_FATAL, format, ## args)
+#define cfg80211_err(format, args...) \
+	cfg80211_logfl(QDF_TRACE_LEVEL_ERROR, format, ## args)
+#define cfg80211_warn(format, args...) \
+	cfg80211_logfl(QDF_TRACE_LEVEL_WARN, format, ## args)
+#define cfg80211_notice(format, args...) \
+	cfg80211_logfl(QDF_TRACE_LEVEL_INFO, format, ## args)
+#define cfg80211_info(format, args...) \
+	cfg80211_logfl(QDF_TRACE_LEVEL_INFO_HIGH, format, ## args)
+#define cfg80211_debug(format, args...) \
+	cfg80211_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
+
 #define COMMON_VENDOR_COMMANDS						\
 { 									\
 	.info.vendor_id = OUI_QCA,					\

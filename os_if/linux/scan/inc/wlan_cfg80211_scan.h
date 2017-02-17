@@ -30,6 +30,7 @@
 #include <qca_vendor.h>
 #include <qdf_list.h>
 #include <qdf_types.h>
+#include <wlan_scan_ucfg_api.h>
 
 #ifdef WLAN_ENABLE_AGEIE_ON_SCAN_RESULTS
 /* GPS application requirement */
@@ -94,5 +95,16 @@ int wlan_cfg80211_scan(struct wiphy *wiphy,
 #endif
 		struct cfg80211_scan_request *request);
 
-
+/**
+ * wlan_cfg80211_inform_bss_frame() - API to inform beacon to cfg80211
+ * @pdev: Pointer to pdev
+ * @scan_params: scan entry
+ * @request: Pointer to scan request
+ *
+ * API to inform beacon to cfg80211
+ *
+ * Return: void
+ */
+void wlan_cfg80211_inform_bss_frame(struct wlan_objmgr_pdev *pdev,
+	struct scan_cache_entry *scan_params);
 #endif
