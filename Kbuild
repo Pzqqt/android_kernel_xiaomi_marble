@@ -953,9 +953,10 @@ DP_OBJS := $(DP_SRC)/dp_main.o \
 endif
 
 ############ CFG ############
-WCFG_DIR := $(WLAN_COMMON_ROOT)/wlan_cfg
-WCFG_INC := -I$(WCFG_DIR)
-WCFG_OBJS := $(WCFG_DIR)/wlan_cfg.o
+WCFG_DIR := wlan_cfg
+WCFG_INC := -I$(WLAN_COMMON_INC)/$(WCFG_DIR)
+WCFG_SRC := $(WLAN_COMMON_ROOT)/$(WCFG_DIR)
+WCFG_OBJS := $(WCFG_SRC)/wlan_cfg.o
 
 ############ OL ############
 OL_DIR :=     core/dp/ol
