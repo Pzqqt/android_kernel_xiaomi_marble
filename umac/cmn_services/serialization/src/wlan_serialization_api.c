@@ -15,7 +15,6 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
 /**
  * DOC: wlan_serialization_api.c
  * This file provides an interface for the external components
@@ -25,6 +24,8 @@
 
 /* Include files */
 #include "wlan_objmgr_psoc_obj.h"
+#include "wlan_objmgr_pdev_obj.h"
+#include "wlan_objmgr_vdev_obj.h"
 #include "wlan_serialization_main_i.h"
 #include "wlan_serialization_utils_i.h"
 
@@ -69,22 +70,6 @@ wlan_serialization_deregister_comp_info_cb(struct wlan_objmgr_psoc *psoc,
 	ser_soc_obj->comp_info_cb[cmd_type][comp_id] = NULL;
 
 	return QDF_STATUS_SUCCESS;
-}
-
-enum wlan_serialization_cmd_status
-wlan_serialization_vdev_scan_status(struct wlan_objmgr_vdev *vdev)
-{
-	serialization_info("vdev scan status entry");
-
-	return WLAN_SER_CMD_NOT_FOUND;
-}
-
-enum wlan_serialization_cmd_status
-wlan_serialization_pdev_scan_status(struct wlan_objmgr_pdev *pdev)
-{
-	serialization_info("pdev scan status entry");
-
-	return WLAN_SER_CMD_NOT_FOUND;
 }
 
 enum wlan_serialization_cmd_status
@@ -143,6 +128,9 @@ wlan_serialization_request(struct wlan_serialization_command *cmd)
 {
 	bool is_active_cmd_allowed;
 	QDF_STATUS status;
+	uint8_t comp_id;
+	struct wlan_serialization_psoc_priv_obj *ser_soc_obj;
+	union wlan_serialization_rules_info info;
 
 	serialization_info("serialization queue cmd entry");
 	if (!cmd) {
@@ -155,8 +143,44 @@ wlan_serialization_request(struct wlan_serialization_command *cmd)
 		return WLAN_SER_CMD_DENIED_UNSPECIFIED;
 	}
 
+	ser_soc_obj = wlan_serialization_get_obj(cmd);
+
+	/*
+	 * Get Component Info callback by calling
+	 * each registered module
+	 */
+	for (comp_id = 0; comp_id < WLAN_UMAC_COMP_ID_MAX; comp_id++) {
+		if (!ser_soc_obj->comp_info_cb[cmd->cmd_type][comp_id])
+			continue;
+		(ser_soc_obj->comp_info_cb[cmd->cmd_type][comp_id])(&info);
+		if (!ser_soc_obj->apply_rules_cb[cmd->cmd_type])
+			continue;
+		if (!ser_soc_obj->apply_rules_cb[cmd->cmd_type](&info, comp_id))
+			return WLAN_SER_CMD_DENIED_RULES_FAILED;
+	}
+
 	is_active_cmd_allowed = wlan_serialization_is_active_cmd_allowed(cmd);
 	return wlan_serialization_enqueue_cmd(cmd, is_active_cmd_allowed);
+}
+
+enum wlan_serialization_cmd_status
+wlan_serialization_vdev_scan_status(struct wlan_objmgr_vdev *vdev)
+{
+	bool cmd_in_active, cmd_in_pending;
+	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
+	struct wlan_serialization_pdev_priv_obj *ser_pdev_obj =
+		wlan_serialization_get_pdev_priv_obj(pdev);
+
+	cmd_in_active =
+	wlan_serialization_is_cmd_in_vdev_list(
+			vdev, &ser_pdev_obj->active_scan_list);
+
+	cmd_in_pending =
+	wlan_serialization_is_cmd_in_vdev_list(
+			vdev, &ser_pdev_obj->pending_scan_list);
+
+	return wlan_serialization_is_cmd_in_active_pending(
+			cmd_in_active, cmd_in_pending);
 }
 
 void wlan_serialization_flush_cmd(
@@ -172,3 +196,21 @@ void wlan_serialization_flush_cmd(
 	return;
 }
 
+enum wlan_serialization_cmd_status
+wlan_serialization_pdev_scan_status(struct wlan_objmgr_pdev *pdev)
+{
+	bool cmd_in_active, cmd_in_pending;
+	struct wlan_serialization_pdev_priv_obj *ser_pdev_obj =
+		wlan_serialization_get_pdev_priv_obj(pdev);
+
+	cmd_in_active =
+	wlan_serialization_is_cmd_in_pdev_list(
+			pdev, &ser_pdev_obj->active_scan_list);
+
+	cmd_in_pending =
+	wlan_serialization_is_cmd_in_pdev_list(
+			pdev, &ser_pdev_obj->pending_scan_list);
+
+	return wlan_serialization_is_cmd_in_active_pending(
+			cmd_in_active, cmd_in_pending);
+}

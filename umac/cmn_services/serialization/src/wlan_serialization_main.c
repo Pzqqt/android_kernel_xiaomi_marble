@@ -52,7 +52,8 @@ wlan_serialization_apply_rules_cb_init(struct wlan_objmgr_psoc *psoc)
 		serialization_err("invalid ser_soc_obj");
 		return QDF_STATUS_E_PERM;
 	}
-	ser_soc_obj->apply_rules_cb[WLAN_SER_CMD_SCAN] = wlan_apply_scan_rules;
+	ser_soc_obj->apply_rules_cb[WLAN_SER_CMD_SCAN] =
+			wlan_serialization_apply_scan_rules;
 
 	return QDF_STATUS_SUCCESS;
 }

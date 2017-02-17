@@ -496,3 +496,84 @@ struct wlan_serialization_pdev_priv_obj *wlan_serialization_get_pdev_priv_obj(
 	return obj;
 }
 
+struct wlan_serialization_psoc_priv_obj *
+wlan_serialization_get_obj(struct wlan_serialization_command *cmd)
+{
+	struct wlan_serialization_psoc_priv_obj *ser_soc_obj;
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_vdev_get_psoc(cmd->vdev);
+	ser_soc_obj = wlan_serialization_get_psoc_priv_obj(psoc);
+
+	return ser_soc_obj;
+}
+
+bool wlan_serialization_is_cmd_in_vdev_list(struct wlan_objmgr_vdev *vdev,
+					     qdf_list_t *queue)
+{
+	uint32_t queuelen;
+	qdf_list_node_t *nnode = NULL;
+	struct wlan_serialization_command_list *cmd_list = NULL;
+	QDF_STATUS status;
+
+	queuelen = qdf_list_size(queue);
+	if (!queuelen) {
+		serialization_err("invalid queue length");
+		return false;
+	}
+
+	while (queuelen--) {
+		status = wlan_serialization_get_cmd_from_queue(queue, &nnode);
+		if (status != QDF_STATUS_SUCCESS)
+			break;
+		cmd_list = qdf_container_of(nnode,
+				struct wlan_serialization_command_list, node);
+		if (cmd_list->cmd.vdev == vdev)
+			return true;
+	};
+
+	return false;
+}
+
+bool wlan_serialization_is_cmd_in_pdev_list(struct wlan_objmgr_pdev *pdev,
+					     qdf_list_t *queue)
+{
+	uint32_t queuelen;
+	qdf_list_node_t *nnode = NULL;
+	struct wlan_objmgr_pdev *node_pdev = NULL;
+	struct wlan_serialization_command_list *cmd_list = NULL;
+	QDF_STATUS status;
+
+	queuelen = qdf_list_size(queue);
+	if (!queuelen) {
+		serialization_err("invalid queue length");
+		return false;
+	}
+
+	while (queuelen--) {
+		status = wlan_serialization_get_cmd_from_queue(queue, &nnode);
+		if (status != QDF_STATUS_SUCCESS)
+			break;
+		cmd_list = qdf_container_of(nnode,
+				struct wlan_serialization_command_list, node);
+		node_pdev = wlan_vdev_get_pdev(cmd_list->cmd.vdev);
+		if (node_pdev == pdev)
+			return true;
+	}
+
+	return false;
+}
+
+enum wlan_serialization_cmd_status
+wlan_serialization_is_cmd_in_active_pending(bool cmd_in_active,
+					    bool cmd_in_pending)
+{
+	if (cmd_in_active && cmd_in_pending)
+		return WLAN_SER_CMDS_IN_ALL_LISTS;
+	else if (cmd_in_active)
+		return WLAN_SER_CMD_IN_ACTIVE_LIST;
+	else if (cmd_in_pending)
+		return WLAN_SER_CMD_IN_PENDING_LIST;
+	else
+		return WLAN_SER_CMD_NOT_FOUND;
+}

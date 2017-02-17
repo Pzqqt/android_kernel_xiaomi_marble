@@ -309,4 +309,47 @@ struct wlan_serialization_psoc_priv_obj *wlan_serialization_get_psoc_priv_obj(
 struct wlan_serialization_pdev_priv_obj *wlan_serialization_get_pdev_priv_obj(
 		struct wlan_objmgr_pdev *pdev);
 
+/**
+ * wlan_serialization_get_obj() - Return the component private obj
+ * @psoc: Pointer to the SERIALIZATION object
+ *
+ * Return: Serialization component's level private data object
+ */
+struct wlan_serialization_psoc_priv_obj *
+wlan_serialization_get_obj(struct wlan_serialization_command *cmd);
+
+/**
+ * wlan_serialization_is_cmd_in_vdev_list() - Check Node present in VDEV list
+ * @vdev: Pointer to the VDEV object
+ * @queue: Pointer to the qdf_list_t
+ *
+ * Return: Boolean true or false
+ */
+bool
+wlan_serialization_is_cmd_in_vdev_list(
+		struct wlan_objmgr_vdev *vdev, qdf_list_t *queue);
+
+/**
+ * wlan_serialization_is_cmd_in_pdev_list() - Check Node present in PDEV list
+ * @pdev: Pointer to the PDEV object
+ * @queue: Pointer to the qdf_list_t
+ *
+ * Return: Boolean true or false
+ */
+bool
+wlan_serialization_is_cmd_in_pdev_list(
+		struct wlan_objmgr_pdev *pdev, qdf_list_t *queue);
+
+/**
+ * wlan_serialization_is_cmd_in_active_pending() - return cmd status
+ *						active/pending queue
+ * @cmd_in_active: CMD in active list
+ * @cmd_in_pending: CMD in pending list
+ *
+ * Return: enum wlan_serialization_cmd_status
+ */
+enum wlan_serialization_cmd_status
+wlan_serialization_is_cmd_in_active_pending(bool cmd_in_active,
+		bool cmd_in_pending);
+
 #endif

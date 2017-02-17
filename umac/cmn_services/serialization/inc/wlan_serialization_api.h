@@ -115,7 +115,8 @@ typedef void (*wlan_serialization_comp_info_cb)(
  *         false, if rules failed and cmd should not be queued
  */
 typedef bool (*wlan_serialization_apply_rules_cb)(
-		union wlan_serialization_rules_info *comp_info);
+		union wlan_serialization_rules_info *comp_info,
+		uint8_t comp_id);
 
 /**
  * enum wlan_umac_cmd_id - Command Type

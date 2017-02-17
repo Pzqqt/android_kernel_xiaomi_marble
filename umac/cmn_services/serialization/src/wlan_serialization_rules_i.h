@@ -22,14 +22,23 @@
  */
 #ifndef __WLAN_SERIALIZATION_RULES_I_H
 #define __WLAN_SERIALIZATION_RULES_I_H
-#include "wlan_serialization_api.h"
+
+#include <qdf_types.h>
+#include <wlan_serialization_api.h>
+
 /**
- * wlan_apply_scan_rules() - Apply scan rules
- * @status: return information status fetched from other components
- *          to determine if the scan command can be allowed for
- *          execution or should be denied
+ * wlan_serialization_apply_scan_rules() - apply scan rules callback
+ * @info: rules info structure
+ * @comp_id: component Identifier
  *
- * Return: None
+ * This callback is registered with object manager during initialization and
+ * when serialization request is called by component, this callback handler
+ * applies rules depending on component.
+ * There will be many apply rules callback handlers in future
+ *
+ * Return: boolean
  */
-bool wlan_apply_scan_rules(union wlan_serialization_rules_info *info);
+bool
+wlan_serialization_apply_scan_rules(
+		union wlan_serialization_rules_info *info, uint8_t comp_id);
 #endif
