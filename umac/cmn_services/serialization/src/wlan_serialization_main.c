@@ -31,62 +31,6 @@
 #include "wlan_serialization_rules_i.h"
 #include "wlan_serialization_utils_i.h"
 
-/**
- * wlan_serialization_apply_rules_cb_init() - Apply rule callback init
- * @psoc: PSOC object
- *
- * Apply rules Command callback registration function is
- * called from component during its initialization
- * It initializes all cmd callback handler for given CMDIDX in
- * 1-D Array
- *
- * Return: QDF Status
- */
-static QDF_STATUS
-wlan_serialization_apply_rules_cb_init(struct wlan_objmgr_psoc *psoc)
-{
-	struct wlan_serialization_psoc_priv_obj *ser_soc_obj =
-		wlan_serialization_get_psoc_priv_obj(psoc);
-
-	if (ser_soc_obj == NULL) {
-		serialization_err("invalid ser_soc_obj");
-		return QDF_STATUS_E_PERM;
-	}
-	ser_soc_obj->apply_rules_cb[WLAN_SER_CMD_SCAN] =
-			wlan_serialization_apply_scan_rules;
-
-	return QDF_STATUS_SUCCESS;
-}
-
-
-/**
- * wlan_serialization_apply_rules_cb_deinit() - Apply rule callback deinit
- * @psoc: PSOC object
- *
- * Apply rules Command callback De-registration function
- * called from component during its initialization
- * It initializes all cmd callback handler for given CMDIDX in
- * 1-D Array
- *
- * Return: QDF Status
- */
-static QDF_STATUS
-wlan_serialization_apply_rules_cb_deinit(struct wlan_objmgr_psoc *psoc)
-{
-	struct wlan_serialization_psoc_priv_obj *ser_soc_obj =
-		wlan_serialization_get_psoc_priv_obj(psoc);
-	uint8_t i;
-
-	if (ser_soc_obj == NULL) {
-		serialization_err("invalid ser_soc_obj");
-		return QDF_STATUS_E_PERM;
-	}
-	for (i = 0; i < WLAN_SER_CMD_MAX; i++)
-		ser_soc_obj->apply_rules_cb[i] = NULL;
-
-	return QDF_STATUS_SUCCESS;
-}
-
 QDF_STATUS wlan_serialization_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS status;
@@ -105,7 +49,6 @@ QDF_STATUS wlan_serialization_psoc_close(struct wlan_objmgr_psoc *psoc)
 	qdf_mem_free(ser_soc_obj->timers);
 	ser_soc_obj->timers = NULL;
 	ser_soc_obj->max_active_cmds = 0;
-	status = wlan_serialization_apply_rules_cb_deinit(psoc);
 
 	return status;
 }
@@ -113,7 +56,6 @@ QDF_STATUS wlan_serialization_psoc_close(struct wlan_objmgr_psoc *psoc)
 QDF_STATUS wlan_serialization_psoc_open(struct wlan_objmgr_psoc *psoc)
 {
 	uint8_t pdev_count;
-	QDF_STATUS status;
 	struct wlan_serialization_psoc_priv_obj *ser_soc_obj =
 		wlan_serialization_get_psoc_priv_obj(psoc);
 
@@ -132,9 +74,8 @@ QDF_STATUS wlan_serialization_psoc_open(struct wlan_objmgr_psoc *psoc)
 		serialization_alert("Mem alloc failed for ser timers");
 		return QDF_STATUS_E_NOMEM;
 	}
-	status = wlan_serialization_apply_rules_cb_init(psoc);
 
-	return status;
+	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS wlan_serialization_psoc_obj_create_notification(

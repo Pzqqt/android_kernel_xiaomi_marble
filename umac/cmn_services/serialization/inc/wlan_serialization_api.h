@@ -339,7 +339,7 @@ wlan_serialization_request(struct wlan_serialization_command *cmd);
  * 						callback
  * @psoc: PSOC object information
  * @comp_id: Component ID
- * @cmd_id: Command ID
+ * @cmd_type: Command Type
  * @cb: Callback
  *
  * This is called from component during its initialization.It initializes
@@ -350,15 +350,15 @@ wlan_serialization_request(struct wlan_serialization_command *cmd);
 QDF_STATUS
 wlan_serialization_register_comp_info_cb(struct wlan_objmgr_psoc *psoc,
 		enum wlan_umac_comp_id comp_id,
-		enum wlan_serialization_cmd_type cmd_id,
+		enum wlan_serialization_cmd_type cmd_type,
 		wlan_serialization_comp_info_cb cb);
 
 /**
  * wlan_serialization_deregister_comp_info_cb() - Deregister component's info
- * 						  callback
+ *						callback
  * @psoc: PSOC object information
  * @comp_id: Component ID
- * @cmd_id: Command ID
+ * @cmd_type: Command Type
  *
  * This routine is called from other component during its de-initialization.
  *
@@ -367,7 +367,38 @@ wlan_serialization_register_comp_info_cb(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 wlan_serialization_deregister_comp_info_cb(struct wlan_objmgr_psoc *psoc,
 		enum wlan_umac_comp_id comp_id,
-		enum wlan_serialization_cmd_type cmd_id);
+		enum wlan_serialization_cmd_type cmd_type);
+
+/**
+ * wlan_serialization_register_apply_rules_cb() - Register component's rules
+ *						callback
+ * @psoc: PSOC object information
+ * @cmd_type: Command Type
+ * @cb: Callback
+ *
+ * This is called from component during its initialization.It initializes
+ * callback handler for given cmd_type in a 1-D array.
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_serialization_register_apply_rules_cb(struct wlan_objmgr_psoc *psoc,
+		enum wlan_serialization_cmd_type cmd_type,
+		wlan_serialization_apply_rules_cb apply_rules_cb);
+
+/**
+ * wlan_serialization_deregister_apply_rules_cb() - Deregister component's rules
+ *						callback
+ * @psoc: PSOC object information
+ * @cmd_type: Command Type
+ *
+ * This routine is called from other component during its de-initialization.
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_serialization_deregister_apply_rules_cb(struct wlan_objmgr_psoc *psoc,
+		enum wlan_serialization_cmd_type cmd_type);
 
 /**
  * @wlan_serialization_init() - Serialization component initialization routine

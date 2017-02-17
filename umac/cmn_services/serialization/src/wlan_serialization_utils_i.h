@@ -268,6 +268,14 @@ QDF_STATUS wlan_serialization_validate_cmd(
 		 enum wlan_umac_comp_id comp_id,
 		 enum wlan_serialization_cmd_type cmd_type);
 
+/**
+ * wlan_serialization_validate_cmdtype() - Validate the command type
+ * @cmd_type: Command Type
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_serialization_validate_cmdtype(
+		 enum wlan_serialization_cmd_type cmd_type);
 
 /**
  * wlan_serialization_release_list_cmds() - Release the list cmds to global pool

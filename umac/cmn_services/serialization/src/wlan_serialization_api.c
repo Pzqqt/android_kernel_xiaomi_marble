@@ -52,6 +52,53 @@ bool wlan_serialization_is_cmd_present_in_active_queue(
 }
 
 QDF_STATUS
+wlan_serialization_register_apply_rules_cb(struct wlan_objmgr_psoc *psoc,
+		enum wlan_serialization_cmd_type cmd_type,
+		wlan_serialization_apply_rules_cb cb)
+{
+	struct wlan_serialization_psoc_priv_obj *ser_soc_obj;
+	QDF_STATUS status;
+
+	status = wlan_serialization_validate_cmdtype(cmd_type);
+	if (status != QDF_STATUS_SUCCESS) {
+		serialization_err("invalid cmd_type %d",
+				cmd_type);
+		return status;
+	}
+	ser_soc_obj = wlan_serialization_get_psoc_priv_obj(psoc);
+	if (!ser_soc_obj) {
+		serialization_err("invalid ser_soc_obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+	ser_soc_obj->apply_rules_cb[cmd_type] = cb;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+wlan_serialization_deregister_apply_rules_cb(struct wlan_objmgr_psoc *psoc,
+		enum wlan_serialization_cmd_type cmd_type)
+{
+	struct wlan_serialization_psoc_priv_obj *ser_soc_obj;
+	QDF_STATUS status;
+
+	status = wlan_serialization_validate_cmdtype(cmd_type);
+	if (status != QDF_STATUS_SUCCESS) {
+		serialization_err("invalid cmd_type %d",
+				cmd_type);
+		return status;
+	}
+	ser_soc_obj = wlan_serialization_get_psoc_priv_obj(psoc);
+	if (!ser_soc_obj) {
+		serialization_err("invalid ser_soc_obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+	ser_soc_obj->apply_rules_cb[cmd_type] = NULL;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
 wlan_serialization_register_comp_info_cb(struct wlan_objmgr_psoc *psoc,
 		enum wlan_umac_comp_id comp_id,
 		enum wlan_serialization_cmd_type cmd_type,
@@ -61,8 +108,11 @@ wlan_serialization_register_comp_info_cb(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS status;
 
 	status = wlan_serialization_validate_cmd(comp_id, cmd_type);
-	if (status != QDF_STATUS_SUCCESS)
+	if (status != QDF_STATUS_SUCCESS) {
+		serialization_err("invalid comp_id %d or cmd_type %d",
+				comp_id, cmd_type);
 		return status;
+	}
 	ser_soc_obj = wlan_serialization_get_psoc_priv_obj(psoc);
 	if (!ser_soc_obj) {
 		serialization_err("invalid ser_soc_obj");
@@ -82,8 +132,11 @@ wlan_serialization_deregister_comp_info_cb(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS status;
 
 	status = wlan_serialization_validate_cmd(comp_id, cmd_type);
-	if (status != QDF_STATUS_SUCCESS)
+	if (status != QDF_STATUS_SUCCESS) {
+		serialization_err("invalid comp_id %d or cmd_type %d",
+				comp_id, cmd_type);
 		return status;
+	}
 	ser_soc_obj = wlan_serialization_get_psoc_priv_obj(psoc);
 	if (!ser_soc_obj) {
 		serialization_err("invalid ser_soc_obj");

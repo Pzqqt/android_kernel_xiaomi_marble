@@ -437,6 +437,19 @@ wlan_serialization_is_active_cmd_allowed(struct wlan_serialization_command *cmd)
 		return wlan_serialization_is_active_nonscan_cmd_allowed(pdev);
 }
 
+QDF_STATUS wlan_serialization_validate_cmdtype(
+		 enum wlan_serialization_cmd_type cmd_type)
+{
+	serialization_info("validate cmd_type:%d", cmd_type);
+
+	if (cmd_type < 0 || cmd_type >= WLAN_SER_CMD_MAX) {
+		serialization_err("Invalid cmd or comp passed");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS wlan_serialization_validate_cmd(
 		 enum wlan_umac_comp_id comp_id,
 		 enum wlan_serialization_cmd_type cmd_type)
