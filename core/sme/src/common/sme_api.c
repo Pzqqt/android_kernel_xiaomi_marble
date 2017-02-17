@@ -16442,7 +16442,7 @@ QDF_STATUS sme_get_beacon_frm(tHalHandle hal, tCsrRoamProfile *profile,
 				uint8_t **frame_buf, uint32_t *frame_len)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tScanResultHandle result_handle;
+	tScanResultHandle result_handle = NULL;
 	tCsrScanResultFilter *scan_filter;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	tSirBssDescription *bss_descp;
