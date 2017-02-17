@@ -212,9 +212,11 @@ struct mon_rx_status {
 #define ARP_REQUEST			(1)
 #define ARP_RESPONSE		(2)
 
-/* IPV4 Related Mask */
+/* IPV4 header fields offset values */
 #define IPV4_PKT_LEN_OFFSET           16
 #define IPV4_TCP_SEQ_NUM_OFFSET       38
+#define IPV4_SRC_ADDR_OFFSET          26
+#define IPV4_DST_ADDR_OFFSET          30
 #define IPV4_SRC_PORT_OFFSET          34
 #define IPV4_DST_PORT_OFFSET          36
 
@@ -224,9 +226,14 @@ struct mon_rx_status {
 #define ICMP_REQUEST                  0x08
 #define ICMP_RESPONSE                 0x00
 
-/* IPV6 Related Mask */
+#define IPV6_ADDR_STR "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:"\
+			"%02x%02x:%02x%02x"
+
+/* IPV6 header fields offset values */
 #define IPV6_PKT_LEN_OFFSET           18
 #define IPV6_TCP_SEQ_NUM_OFFSET       58
+#define IPV6_SRC_ADDR_OFFSET          22
+#define IPV6_DST_ADDR_OFFSET          38
 #define IPV6_SRC_PORT_OFFSET          54
 #define IPV6_DST_PORT_OFFSET          56
 
