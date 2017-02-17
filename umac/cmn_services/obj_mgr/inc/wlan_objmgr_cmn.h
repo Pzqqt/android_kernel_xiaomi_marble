@@ -29,7 +29,7 @@
 #include "qdf_atomic.h"
 
 /* No. of PSOCs can be supported */
-#define WLAN_OBJMGR_MAX_DEVICES 2
+#define WLAN_OBJMGR_MAX_DEVICES 3
 
 /* size of Hash */
 #define WLAN_PEER_HASHSIZE 64
