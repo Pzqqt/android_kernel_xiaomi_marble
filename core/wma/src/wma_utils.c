@@ -2213,6 +2213,7 @@ static void wma_vdev_stats_lost_link_helper(tp_wma_handle wma,
 	int32_t rssi;
 	struct wma_target_req *req_msg;
 	static const uint8_t zero_mac[QDF_MAC_ADDR_SIZE] = {0};
+	int8_t bcn_snr, dat_snr;
 
 	node = &wma->interfaces[vdev_stats->vdev_id];
 	if (wma_is_vdev_up(vdev_stats->vdev_id) &&
@@ -2224,16 +2225,18 @@ static void wma_vdev_stats_lost_link_helper(tp_wma_handle wma,
 			WMA_LOGD(FL("cannot find DELETE_BSS request message"));
 			return;
 		 }
+		bcn_snr = vdev_stats->vdev_snr.bcn_snr;
+		dat_snr = vdev_stats->vdev_snr.dat_snr;
 		WMA_LOGD(FL("get vdev id %d, beancon snr %d, data snr %d"),
-			vdev_stats->vdev_id,
-			vdev_stats->vdev_snr.bcn_snr,
-			vdev_stats->vdev_snr.dat_snr);
-		if (WMA_TGT_INVALID_SNR != vdev_stats->vdev_snr.bcn_snr)
-			rssi = vdev_stats->vdev_snr.bcn_snr;
-		else if (WMA_TGT_INVALID_SNR != vdev_stats->vdev_snr.dat_snr)
-			rssi = vdev_stats->vdev_snr.dat_snr;
+			vdev_stats->vdev_id, bcn_snr, dat_snr);
+		if ((bcn_snr != WMA_TGT_INVALID_SNR_OLD) &&
+			(bcn_snr != WMA_TGT_INVALID_SNR_NEW))
+			rssi = bcn_snr;
+		else if ((dat_snr != WMA_TGT_INVALID_SNR_OLD) &&
+			(dat_snr != WMA_TGT_INVALID_SNR_NEW))
+			rssi = dat_snr;
 		else
-			rssi = WMA_TGT_INVALID_SNR;
+			rssi = WMA_TGT_INVALID_SNR_OLD;
 
 		/* Get the absolute rssi value from the current rssi value */
 		rssi = rssi + WMA_TGT_NOISE_FLOOR_DBM;
@@ -2293,24 +2296,28 @@ static void wma_update_vdev_stats(tp_wma_handle wma,
 			summary_stats->rts_succ_cnt = vdev_stats->rts_succ_cnt;
 			summary_stats->rts_fail_cnt = vdev_stats->rts_fail_cnt;
 			/* Update SNR and RSSI in SummaryStats */
-			if (bcn_snr != WMA_TGT_INVALID_SNR) {
+			if ((bcn_snr != WMA_TGT_INVALID_SNR_OLD) &&
+				(bcn_snr != WMA_TGT_INVALID_SNR_NEW)) {
 				summary_stats->snr = bcn_snr;
 				summary_stats->rssi =
 					bcn_snr + WMA_TGT_NOISE_FLOOR_DBM;
-			} else if (dat_snr != WMA_TGT_INVALID_SNR) {
+			} else if ((dat_snr != WMA_TGT_INVALID_SNR_OLD) &&
+					(dat_snr != WMA_TGT_INVALID_SNR_NEW)) {
 				summary_stats->snr = dat_snr;
 				summary_stats->rssi =
 					bcn_snr + WMA_TGT_NOISE_FLOOR_DBM;
 			} else {
-				summary_stats->snr = WMA_TGT_INVALID_SNR;
+				summary_stats->snr = WMA_TGT_INVALID_SNR_OLD;
 				summary_stats->rssi = 0;
 			}
 		}
 	}
 
 	if (pGetRssiReq && pGetRssiReq->sessionId == vdev_stats->vdev_id) {
-		if ((bcn_snr == WMA_TGT_INVALID_SNR) &&
-			(dat_snr == WMA_TGT_INVALID_SNR)) {
+		if ((bcn_snr == WMA_TGT_INVALID_SNR_OLD ||
+				bcn_snr == WMA_TGT_INVALID_SNR_NEW) &&
+				(dat_snr == WMA_TGT_INVALID_SNR_OLD ||
+				  dat_snr == WMA_TGT_INVALID_SNR_NEW)) {
 			/*
 			 * Firmware sends invalid snr till it sees
 			 * Beacon/Data after connection since after
@@ -2321,9 +2328,11 @@ static void wma_update_vdev_stats(tp_wma_handle wma,
 			WMA_LOGE("Invalid SNR from firmware");
 
 		} else {
-			if (bcn_snr != WMA_TGT_INVALID_SNR) {
+			if (bcn_snr != WMA_TGT_INVALID_SNR_OLD &&
+				bcn_snr != WMA_TGT_INVALID_SNR_NEW) {
 				rssi = bcn_snr;
-			} else if (dat_snr != WMA_TGT_INVALID_SNR) {
+			} else if (dat_snr != WMA_TGT_INVALID_SNR_OLD &&
+				dat_snr != WMA_TGT_INVALID_SNR_NEW) {
 				rssi = dat_snr;
 			}
 
@@ -2351,10 +2360,14 @@ static void wma_update_vdev_stats(tp_wma_handle wma,
 	if (node->psnr_req) {
 		tAniGetSnrReq *p_snr_req = node->psnr_req;
 
-		if (bcn_snr != WMA_TGT_INVALID_SNR)
+		if ((bcn_snr != WMA_TGT_INVALID_SNR_OLD) &&
+			(bcn_snr != WMA_TGT_INVALID_SNR_NEW))
 			p_snr_req->snr = bcn_snr;
-		else
+		else if ((dat_snr != WMA_TGT_INVALID_SNR_OLD) &&
+				(dat_snr != WMA_TGT_INVALID_SNR_NEW))
 			p_snr_req->snr = dat_snr;
+		else
+			p_snr_req->snr = WMA_TGT_INVALID_SNR_OLD;
 
 		sme_msg.type = eWNI_SME_SNR_IND;
 		sme_msg.bodyptr = p_snr_req;
@@ -2494,9 +2507,11 @@ static void wma_update_per_chain_rssi_stats(tp_wma_handle wma,
 		dat_snr = rssi_stats->rssi_avg_data[i];
 		WMA_LOGD("chain %d beacon snr %d data snr %d",
 			i, bcn_snr, dat_snr);
-		if (dat_snr != WMA_TGT_INVALID_SNR)
+		if ((dat_snr != WMA_TGT_INVALID_SNR_OLD) &&
+			(dat_snr != WMA_TGT_INVALID_SNR_NEW))
 			rssi_per_chain_stats->rssi[i] = dat_snr;
-		else if (bcn_snr != WMA_TGT_INVALID_SNR)
+		else if ((bcn_snr != WMA_TGT_INVALID_SNR_OLD) &&
+			(bcn_snr != WMA_TGT_INVALID_SNR_NEW))
 			rssi_per_chain_stats->rssi[i] = bcn_snr;
 		else
 			/*
