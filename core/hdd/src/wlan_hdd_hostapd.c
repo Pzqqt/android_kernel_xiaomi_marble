@@ -7899,7 +7899,12 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	      pAdapter->device_mode == QDF_P2P_GO_MODE)) {
 		return -EOPNOTSUPP;
 	}
-
+	/* Clear SOFTAP_INIT_DONE flag to mark stop_ap deinit. So that we do
+	 * not restart SAP after SSR as SAP is already stopped from user space.
+	 * This update is moved to start of this function to resolve stop_ap
+	 * call during SSR case. Adapter gets cleaned up as part of SSR.
+	 */
+	clear_bit(SOFTAP_INIT_DONE, &pAdapter->event_flags);
 	hdd_notice("Device_mode %s(%d)",
 		hdd_device_mode_to_string(pAdapter->device_mode),
 		pAdapter->device_mode);
@@ -8028,7 +8033,6 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	}
 	/* Reset WNI_CFG_PROBE_RSP Flags */
 	wlan_hdd_reset_prob_rspies(pAdapter);
-	clear_bit(SOFTAP_INIT_DONE, &pAdapter->event_flags);
 
 #ifdef WLAN_FEATURE_P2P_DEBUG
 	if ((pAdapter->device_mode == QDF_P2P_GO_MODE) &&
