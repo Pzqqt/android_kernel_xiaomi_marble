@@ -376,6 +376,11 @@ void lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 				    pftSessionEntry->vht_config.su_beam_former)
 					sta_ctx->enable_su_tx_bformer = 1;
 			}
+			if (lim_is_session_he_capable(pftSessionEntry) &&
+				pBeaconStruct->vendor_he_cap.present)
+				lim_intersect_ap_he_caps(pftSessionEntry,
+					pAddBssParams, pBeaconStruct, NULL);
+
 			if ((pBeaconStruct->HTCaps.supportedChannelWidthSet) &&
 			    (chanWidthSupp)) {
 				sta_ctx->ch_width = (uint8_t)

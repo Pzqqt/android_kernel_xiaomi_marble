@@ -195,6 +195,8 @@ typedef struct sSirProbeRespBeacon {
 	bool assoc_disallowed;
 	uint8_t assoc_disallowed_reason;
 	tSirQCNIE QCN_IE;
+	tDot11fIEvendor_he_cap vendor_he_cap;
+	tDot11fIEvendor_he_op vendor_he_op;
 } tSirProbeRespBeacon, *tpSirProbeRespBeacon;
 
 /* probe Request structure */
@@ -210,6 +212,7 @@ typedef struct sSirProbeReq {
 	uint8_t wscIePresent;
 	uint8_t p2pIePresent;
 	tDot11fIEVHTCaps VHTCaps;
+	tDot11fIEvendor_he_cap vendor_he_cap;
 } tSirProbeReq, *tpSirProbeReq;
 
 /* / Association Request structure (one day to be replaced by */
@@ -263,6 +266,7 @@ typedef struct sSirAssocReq {
 	tDot11fIEExtCap ExtCap;
 	tDot11fIEvendor_vht_ie vendor_vht_ie;
 	tDot11fIEhs20vendor_ie hs20vendor_ie;
+	tDot11fIEvendor_he_cap he_cap;
 } tSirAssocReq, *tpSirAssocReq;
 
 /* / Association Response structure (one day to be replaced by */
@@ -314,6 +318,8 @@ typedef struct sSirAssocRsp {
 	tDot11fIEvendor_vht_ie vendor_vht_ie;
 	tDot11fIEOBSSScanParameters obss_scanparams;
 	tSirQCNIE QCN_IE;
+	tDot11fIEvendor_he_cap vendor_he_cap;
+	tDot11fIEvendor_he_op vendor_he_op;
 } tSirAssocRsp, *tpSirAssocRsp;
 
 #ifdef FEATURE_WLAN_ESE
@@ -999,4 +1005,23 @@ sir_validate_and_rectify_ies(tpAniSirGlobal mac_ctx,
 				uint32_t frame_bytes,
 				uint32_t *missing_rsn_bytes);
 
+#ifdef WLAN_FEATURE_11AX
+QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal , tpPESession ,
+				   tDot11fIEvendor_he_cap *);
+QDF_STATUS populate_dot11f_he_operation(tpAniSirGlobal , tpPESession ,
+					tDot11fIEvendor_he_op *);
+#else
+static inline QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal mac_ctx,
+			tpPESession session, tDot11fIEvendor_he_cap *he_cap)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS populate_dot11f_he_operation(tpAniSirGlobal mac_ctx,
+			tpPESession session, tDot11fIEvendor_he_op *he_op)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+#endif
 #endif /* __PARSE_H__ */

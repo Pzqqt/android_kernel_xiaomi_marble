@@ -304,4 +304,5 @@ QDF_STATUS wma_set_sar_limit(WMA_HANDLE handle,
  * Return: QDF_STATUS_SUCCESS on success, error number otherwise
  */
 QDF_STATUS wma_set_qpower_config(uint8_t vdev_id, uint8_t qpower);
+
 #endif

@@ -325,6 +325,11 @@ typedef struct {
 	uint32_t peerAtimWindowLength;
 	uint8_t nonRoamReassoc;
 	uint32_t nss;
+#ifdef WLAN_FEATURE_11AX
+	bool he_capable;
+	tDot11fIEvendor_he_cap he_config;
+	tDot11fIEvendor_he_op he_op;
+#endif
 } tAddStaParams, *tpAddStaParams;
 
 /**
@@ -517,7 +522,11 @@ typedef struct {
 	uint8_t beacon_tx_rate;
 	uint32_t tx_aggregation_size;
 	uint32_t rx_aggregation_size;
+#ifdef WLAN_FEATURE_11AX
 	bool he_capable;
+	tDot11fIEvendor_he_cap he_config;
+	tDot11fIEvendor_he_op he_op;
+#endif
 } tAddBssParams, *tpAddBssParams;
 
 /**
@@ -912,7 +921,9 @@ typedef struct {
 
 	uint8_t restart_on_chan_switch;
 	uint8_t nss;
+#ifdef WLAN_FEATURE_11AX
 	bool he_capable;
+#endif
 } tSwitchChannelParams, *tpSwitchChannelParams;
 
 typedef void (*tpSetLinkStateCallback)(tpAniSirGlobal pMac, void *msgParam,

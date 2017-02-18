@@ -7353,3 +7353,550 @@ void lim_update_last_processed_frame(last_processed_msg *last_processed_frm,
 	qdf_mem_copy(last_processed_frm->sa, pHdr->sa, ETH_ALEN);
 	last_processed_frm->seq_num = seq_num;
 }
+
+#ifdef WLAN_FEATURE_11AX
+/**
+ * lim_add_he_cap() - Copy HE capability into Add sta params
+ * @add_sta_params: pointer to add sta params
+ * @assoc_req: pointer to Assoc request
+ *
+ * Return: None
+ */
+void lim_add_he_cap(tpAddStaParams add_sta_params, tpSirAssocReq assoc_req)
+{
+	if (!add_sta_params->he_capable || !assoc_req)
+		return;
+
+	qdf_mem_copy(&add_sta_params->he_config, &assoc_req->he_cap,
+		     sizeof(add_sta_params->he_config));
+}
+
+/**
+ * lim_add_self_he_cap() - Copy HE capability into add sta from PE session
+ * @add_sta_params: pointer to add sta params
+ * @session: pointer to PE Session
+ *
+ * Return: None
+ */
+void lim_add_self_he_cap(tpAddStaParams add_sta_params, tpPESession session)
+{
+	if (!session)
+		return;
+
+	add_sta_params->he_capable = true;
+
+	qdf_mem_copy(&add_sta_params->he_config, &session->he_config,
+		     sizeof(add_sta_params->he_config));
+	qdf_mem_copy(&add_sta_params->he_op, &session->he_op,
+		     sizeof(add_sta_params->he_op));
+}
+
+/**
+ * lim_intersect_he_caps() - Intersect peer capability and self capability
+ * @rcvd_he: pointer to received peer capability
+ * @session_he: pointer to self capability
+ * @peer_he: pointer to Intersected capability
+ *
+ * Return: None
+ */
+static void lim_intersect_he_caps(tDot11fIEvendor_he_cap *rcvd_he,
+			tDot11fIEvendor_he_cap *session_he,
+			tDot11fIEvendor_he_cap *peer_he)
+{
+	uint8_t val;
+
+	qdf_mem_copy(peer_he, rcvd_he, sizeof(*peer_he));
+
+	peer_he->fragmentation &= session_he->fragmentation;
+
+	/* Tx STBC is first bit and Rx STBC is second bit */
+	if (session_he->stbc) {
+		val = 0;
+		if ((session_he->stbc & 0x1) && (peer_he->stbc & 0x10))
+			val |= (1 << 1);
+		if ((session_he->stbc & 0x10) && (peer_he->stbc & 0x1))
+			val |= (1 << 0);
+		peer_he->stbc = val;
+	}
+
+	/* Tx Doppler is first bit and Rx Doppler is second bit */
+	if (session_he->doppler) {
+		val = 0;
+		if ((session_he->stbc & 0x1) && (peer_he->stbc & 0x10))
+			val |= (1 << 1);
+		if ((session_he->stbc & 0x10) && (peer_he->stbc & 0x1))
+			val |= (1 << 0);
+		peer_he->doppler = val;
+	}
+
+	peer_he->su_beamformer = session_he->su_beamformee ?
+					peer_he->su_beamformer : 0;
+	peer_he->su_beamformee = (session_he->su_beamformer ||
+				  session_he->mu_beamformer) ?
+					peer_he->su_beamformee : 0;
+	peer_he->mu_beamformer = session_he->su_beamformee ?
+					peer_he->mu_beamformer : 0;
+
+	peer_he->twt_request = session_he->twt_responder ?
+					peer_he->twt_request : 0;
+	peer_he->twt_responder = session_he->twt_request ?
+					peer_he->twt_responder : 0;
+}
+
+/**
+ * lim_intersect_sta_he_caps() - Intersect STA capability with SAP capability
+ * @assoc_req: pointer to assoc request
+ * @session: pointer to PE session
+ * @sta_ds: pointer to STA dph hash table entry
+ *
+ * Return: None
+ */
+void lim_intersect_sta_he_caps(tpSirAssocReq assoc_req, tpPESession session,
+		tpDphHashNode sta_ds)
+{
+	tDot11fIEvendor_he_cap *rcvd_he = &assoc_req->he_cap;
+	tDot11fIEvendor_he_cap *session_he = &session->he_config;
+	tDot11fIEvendor_he_cap *peer_he = &sta_ds->he_config;
+
+	if (sta_ds->mlmStaContext.he_capable)
+		lim_intersect_he_caps(rcvd_he, session_he, peer_he);
+}
+
+/**
+ * lim_intersect_ap_he_caps() - Intersect AP capability with self STA capability
+ * @session: pointer to PE session
+ * @add_bss: pointer to ADD BSS params
+ * @beacon: pointer to beacon
+ * @assoc_rsp: pointer to assoc response
+ *
+ * Return: None
+ */
+void lim_intersect_ap_he_caps(tpPESession session, tpAddBssParams add_bss,
+		tSchBeaconStruct *beacon, tpSirAssocRsp assoc_rsp)
+{
+	tDot11fIEvendor_he_cap *rcvd_he;
+	tDot11fIEvendor_he_cap *session_he = &session->he_config;
+	tDot11fIEvendor_he_cap *peer_he = &add_bss->staContext.he_config;
+
+	if (beacon)
+		rcvd_he = &beacon->vendor_he_cap;
+	else
+		rcvd_he = &assoc_rsp->vendor_he_cap;
+
+	lim_intersect_he_caps(rcvd_he, session_he, peer_he);
+	add_bss->staContext.he_capable = true;
+}
+
+/**
+ * lim_add_bss_he_cap() - Copy HE capability into ADD BSS params
+ * @add_bss: pointer to add bss params
+ * @assoc_rsp: pointer to assoc response
+ *
+ * Return: None
+ */
+void lim_add_bss_he_cap(tpAddBssParams add_bss, tpSirAssocRsp assoc_rsp)
+{
+	tDot11fIEvendor_he_cap *he_cap;
+	tDot11fIEvendor_he_op *he_op;
+
+	he_cap = &assoc_rsp->vendor_he_cap;
+	he_op = &assoc_rsp->vendor_he_op;
+	add_bss->he_capable = he_cap->present;
+	if (he_cap)
+		qdf_mem_copy(&add_bss->staContext.he_config,
+			     he_cap, sizeof(*he_cap));
+	if (he_op)
+		qdf_mem_copy(&add_bss->staContext.he_op,
+			     he_op, sizeof(*he_op));
+}
+
+
+/**
+ * lim_update_stads_he_caps() - Copy HE capability into STA DPH hash table entry
+ * @sta_ds: pointer to sta dph hash table entry
+ * @assoc_rsp: pointer to assoc response
+ * @session_entry: pointer to PE session
+ *
+ * Return: None
+ */
+void lim_update_stads_he_caps(tpDphHashNode sta_ds, tpSirAssocRsp assoc_rsp,
+			      tpPESession session_entry)
+{
+	tDot11fIEvendor_he_cap *he_cap;
+
+	he_cap = &assoc_rsp->vendor_he_cap;
+	sta_ds->mlmStaContext.he_capable = he_cap->present;
+
+	if (!he_cap->present)
+		return;
+
+	qdf_mem_copy(&sta_ds->he_config, he_cap, sizeof(*he_cap));
+
+}
+
+/**
+ * lim_update_usr_he_cap() - Update HE capability based on userspace
+ * @mac_ctx: global mac context
+ * @session: PE session entry
+ *
+ * Parse the HE Capability IE and populate the fields to be
+ * sent to FW as part of add bss and update PE session.
+ */
+void lim_update_usr_he_cap(tpAniSirGlobal mac_ctx, tpPESession session)
+{
+	uint8_t *vendor_ie;
+	uint8_t *he_cap_data;
+	tSirAddIeParams *add_ie = &session->addIeParams;
+	tDot11fIEvendor_he_cap *he_cap = &session->he_config;
+
+	vendor_ie = cfg_get_vendor_ie_ptr_from_oui(mac_ctx,
+			HE_CAP_OUI_TYPE, HE_CAP_OUI_SIZE,
+			add_ie->probeRespBCNData_buff,
+			add_ie->probeRespBCNDataLen);
+
+	if (!vendor_ie) {
+		lim_log(mac_ctx, LOGE, FL("11AX: Unable to parse HE Caps"));
+		return;
+	}
+
+	he_cap_data = vendor_ie + HE_OP_OUI_SIZE + 2;
+
+	lim_log(mac_ctx, LOG1, FL("Before update: su_beamformer: %d, su_beamformee: %d, mu_beamformer: %d"),
+		he_cap->su_beamformer, he_cap->su_beamformee, he_cap->mu_beamformer);
+	if (he_cap->su_beamformer)
+		he_cap->su_beamformer = LIM_GET_SU_BEAMFORMER(he_cap_data);
+	if (he_cap->su_beamformee)
+		he_cap->su_beamformee = LIM_GET_SU_BEAMFORMEE(he_cap_data);
+	if (he_cap->mu_beamformer)
+		he_cap->mu_beamformer = LIM_GET_MU_BEAMFORMER(he_cap_data);
+
+	lim_log(mac_ctx, LOG1, FL("After update: su_beamformer: %d, su_beamformee: %d, mu_beamformer: %d"),
+		he_cap->su_beamformer, he_cap->su_beamformee, he_cap->mu_beamformer);
+}
+
+/**
+ * lim_decide_he_op() - Determine HE operation elements
+ * @mac_ctx: global mac context
+ * @he_ops: pointer to HE operation IE
+ * @session: PE session entry
+ *
+ * Parse the HE Operation IE and populate the fields to be
+ * sent to FW as part of add bss.
+ */
+void lim_decide_he_op(tpAniSirGlobal mac_ctx, tpAddBssParams add_bss,
+		      tpPESession session)
+{
+	uint8_t *vendor_ie;
+	uint32_t he_op;
+	tDot11fIEvendor_he_op *he_ops = &add_bss->he_op;
+	tSirAddIeParams *add_ie = &session->addIeParams;
+
+	vendor_ie = cfg_get_vendor_ie_ptr_from_oui(mac_ctx,
+			HE_OP_OUI_TYPE, HE_OP_OUI_SIZE,
+			add_ie->probeRespBCNData_buff,
+			add_ie->probeRespBCNDataLen);
+
+	if (!vendor_ie) {
+		lim_log(mac_ctx, LOGE, FL("11AX: Unable to parse HE Operation"));
+		return;
+	}
+
+	qdf_mem_copy(&he_op, &vendor_ie[HE_OP_OUI_SIZE + 2], sizeof(uint32_t));
+
+	he_ops->bss_color = HE_OP_BSS_COLOR_GET(he_op);
+	he_ops->default_pe = HE_OP_DEF_PE_DUR_GET(he_op);
+	he_ops->twt_required = HE_OP_TWT_REQ_GET(he_op);
+	he_ops->rts_threshold = HE_OP_RTS_THRES_GET(he_op);
+	he_ops->partial_bss_col = HE_OP_PART_BSS_COLOR_GET(he_op);
+	he_ops->maxbssid_ind = HE_OP_MAXBSSID_IND_GET(he_op);
+	he_ops->tx_bssid_ind = HE_OP_TX_BSSIX_IND_GET(he_op);
+	he_ops->bss_col_disabled = HE_OP_BSS_COLOR_DIS_GET(he_op);
+	he_ops->dual_beacon = HE_OP_DUAL_BEACON_GET(he_op);
+
+	session->he_op.bss_color = he_ops->bss_color;
+	session->he_op.default_pe = he_ops->default_pe;
+	session->he_op.twt_required = he_ops->twt_required;
+	session->he_op.rts_threshold = he_ops->rts_threshold;
+	session->he_op.partial_bss_col = he_ops->partial_bss_col;
+	session->he_op.maxbssid_ind = he_ops->maxbssid_ind;
+	session->he_op.tx_bssid_ind = he_ops->tx_bssid_ind;
+	session->he_op.bss_col_disabled = he_ops->bss_col_disabled;
+	session->he_op.dual_beacon = he_ops->dual_beacon;
+
+	lim_log(mac_ctx, LOG1, FL("HE Operation: bss_color: %0x, default_pe_duration: %0x, twt_required: %0x, rts_threshold: %0x"),
+		he_ops->bss_color, he_ops->default_pe,
+		he_ops->twt_required, he_ops->rts_threshold);
+	lim_log(mac_ctx, LOG1, ("\tpartial_bss_color: %0x, MaxBSSID Indicator: %0x, Tx BSSID Indicator: %0x, BSS color disabled: %0x, Dual beacon: %0x"),
+		he_ops->partial_bss_col, he_ops->maxbssid_ind,
+		he_ops->tx_bssid_ind, he_ops->bss_col_disabled,
+		he_ops->dual_beacon);
+}
+
+/**
+ * lim_copy_bss_he_cap() - Copy HE capability into PE session from start bss
+ * @session: pointer to PE session
+ * @sme_start_bss_req: pointer to start BSS request
+ *
+ * Return: None
+ */
+void lim_copy_bss_he_cap(tpPESession session,
+			 tpSirSmeStartBssReq sme_start_bss_req)
+{
+	qdf_mem_copy(&(session->he_config), &(sme_start_bss_req->he_config),
+		     sizeof(session->he_config));
+}
+
+/**
+ * lim_copy_join_req_he_cap() - Copy HE capability to PE session from Join req
+ * @session: pointer to PE session
+ * @sme_join_req: pointer to SME join request
+ *
+ * Return: None
+ */
+void lim_copy_join_req_he_cap(tpPESession session,
+			      tpSirSmeJoinReq sme_join_req)
+{
+	qdf_mem_copy(&(session->he_config), &(sme_join_req->he_config),
+		     sizeof(session->he_config));
+}
+
+/**
+ * lim_log_he_cap() - Print HE capabilities
+ * @mac: pointer to MAC context
+ * @he_cap: pointer to HE Capability
+ *
+ * Received HE capabilities are converted into dot11f structure.
+ * This function will print all the HE capabilities as stored
+ * in the dot11f structure.
+ *
+ * Return: None
+ */
+void lim_log_he_cap(tpAniSirGlobal mac, tDot11fIEvendor_he_cap *he_cap)
+{
+	if (!he_cap->present)
+		return;
+
+	lim_log(mac, LOG1, FL("HE Capabilities:"));
+
+	/* HE MAC capabilities */
+	lim_log(mac, LOG1, "\tHTC-HE conrol: 0x%01x", he_cap->htc_he);
+	lim_log(mac, LOG1, "\tTWT Requestor support: 0x%01x",
+			he_cap->twt_request);
+	lim_log(mac, LOG1, "\tTWT Responder support: 0x%01x",
+			he_cap->twt_responder);
+	lim_log(mac, LOG1, "\tFragmentation support: 0x%02x",
+			he_cap->fragmentation);
+	lim_log(mac, LOG1, "\tMax no.of frag MSDUs: 0x%03x",
+			he_cap->max_num_frag_msdu);
+	lim_log(mac, LOG1, "\tMin. frag size: 0x%02x", he_cap->min_frag_size);
+	lim_log(mac, LOG1, "\tTrigger MAC pad duration: 0x%02x",
+			he_cap->trigger_frm_mac_pad);
+	lim_log(mac, LOG1, "\tMulti-TID aggr support: 0x%03x",
+			he_cap->multi_tid_aggr);
+	lim_log(mac, LOG1, "\tLink adaptation: 0x%02x",
+			he_cap->he_link_adaptation);
+	lim_log(mac, LOG1, "\tAll ACK support: 0x%01x", he_cap->all_ack);
+	lim_log(mac, LOG1, "\tUL MU resp. scheduling: 0x%01x",
+			he_cap->ul_mu_rsp_sched);
+	lim_log(mac, LOG1, "\tA-Buff status report: 0x%01x", he_cap->a_bsr);
+	lim_log(mac, LOG1, "\tBroadcast TWT support: 0x%01x",
+			he_cap->broadcast_twt);
+	lim_log(mac, LOG1, "\t32bit BA bitmap support: 0x%01x",
+			he_cap->ba_32bit_bitmap);
+	lim_log(mac, LOG1, "\tMU Cascading support: 0x%01x",
+			he_cap->mu_cascade);
+	lim_log(mac, LOG1, "\tACK enabled Multi-TID: 0x%01x",
+			he_cap->ack_enabled_multitid);
+	lim_log(mac, LOG1, "\tMulti-STA BA in DL MU: 0x%01x", he_cap->dl_mu_ba);
+	lim_log(mac, LOG1, "\tOMI A-Control support: 0x%01x",
+			he_cap->omi_a_ctrl);
+	lim_log(mac, LOG1, "\tOFDMA RA support: 0x%01x", he_cap->ofdma_ra);
+	lim_log(mac, LOG1, "\tMax A-MPDU Length: 0x%02x",
+			he_cap->max_ampdu_len);
+	lim_log(mac, LOG1, "\tA-MSDU Fragmentation: 0x%01x",
+			he_cap->amsdu_frag);
+	lim_log(mac, LOG1, "\tFlex. TWT sched support: 0x%01x",
+			he_cap->flex_twt_sched);
+	lim_log(mac, LOG1, "\tRx Ctrl frame to MBSS: 0x%01x",
+			he_cap->rx_ctrl_frame);
+	lim_log(mac, LOG1, "\tBSRP A-MPDU Aggregation: 0x%01x",
+			he_cap->bsrp_ampdu_aggr);
+	lim_log(mac, LOG1, "\tQuite Time Period support: 0x%01x", he_cap->qtp);
+	lim_log(mac, LOG1, "\tA-BQR support: 0x%01x", he_cap->a_bqr);
+
+	/* HE PHY capabilities */
+	lim_log(mac, LOG1, "\tDual band support: 0x%01x", he_cap->dual_band);
+	lim_log(mac, LOG1, "\tChannel width support: 0x%07x",
+			he_cap->chan_width);
+	lim_log(mac, LOG1, "\tPreamble puncturing Rx: 0x%04x",
+			he_cap->rx_pream_puncturing);
+	lim_log(mac, LOG1, "\tClass of device: 0x%01x", he_cap->device_class);
+	lim_log(mac, LOG1, "\tLDPC coding support: 0x%01x",
+			he_cap->ldpc_coding);
+	lim_log(mac, LOG1, "\tLTF and GI for HE PPDUs: 0x%02x",
+			he_cap->he_ltf_gi_ppdu);
+	lim_log(mac, LOG1, "\tLTF and GI for NDP: 0x%02x",
+			he_cap->he_ltf_gi_ndp);
+	lim_log(mac, LOG1, "\tSTBC Tx & Rx support: 0x%02x", he_cap->stbc);
+	lim_log(mac, LOG1, "\tDoppler support: 0x%02x", he_cap->doppler);
+	lim_log(mac, LOG1, "\tUL MU: 0x%02x", he_cap->ul_mu);
+	lim_log(mac, LOG1, "\tDCM encoding Tx: 0x%03x", he_cap->dcm_enc_tx);
+	lim_log(mac, LOG1, "\tDCM encoding Tx: 0x%03x", he_cap->dcm_enc_rx);
+	lim_log(mac, LOG1, "\tHE MU PPDU payload support: 0x%01x",
+			he_cap->ul_he_mu);
+	lim_log(mac, LOG1, "\tSU Beamformer: 0x%01x", he_cap->su_beamformer);
+	lim_log(mac, LOG1, "\tSU Beamformee: 0x%01x", he_cap->su_beamformee);
+	lim_log(mac, LOG1, "\tMU Beamformer: 0x%01x", he_cap->mu_beamformer);
+	lim_log(mac, LOG1, "\tBeamformee STS for <= 80Mhz: 0x%03x",
+			he_cap->bfee_sts_lt_80);
+	lim_log(mac, LOG1, "\tNSTS total for <= 80Mhz: 0x%03x",
+			he_cap->nsts_tol_lt_80);
+	lim_log(mac, LOG1, "\tBeamformee STS for > 80Mhz: 0x%03x",
+			he_cap->bfee_sta_gt_80);
+	lim_log(mac, LOG1, "\tNSTS total for > 80Mhz: 0x%03x",
+			he_cap->nsts_tot_gt_80);
+	lim_log(mac, LOG1, "\tNo. of sounding dim <= 80Mhz: 0x%03x",
+			he_cap->num_sounding_lt_80);
+	lim_log(mac, LOG1, "\tNo. of sounding dim > 80Mhz: 0x%03x",
+			he_cap->num_sounding_gt_80);
+	lim_log(mac, LOG1, "\tNg=16 for SU feedback support: 0x%01x",
+			he_cap->su_feedback_tone16);
+	lim_log(mac, LOG1, "\tNg=16 for MU feedback support: 0x%01x",
+			he_cap->mu_feedback_tone16);
+	lim_log(mac, LOG1, "\tCodebook size for SU: 0x%01x",
+			he_cap->codebook_su);
+	lim_log(mac, LOG1, "\tCodebook size for MU: 0x%01x ",
+			he_cap->codebook_mu);
+	lim_log(mac, LOG1, "\tBeamforming trigger w/ Trigger: 0x%01x",
+			he_cap->beamforming_feedback);
+	lim_log(mac, LOG1, "\tHE ER SU PPDU payload: 0x%01x",
+			he_cap->he_er_su_ppdu);
+	lim_log(mac, LOG1, "\tDL MUMIMO on partial BW: 0x%01x",
+			he_cap->dl_mu_mimo_part_bw);
+	lim_log(mac, LOG1, "\tPPET present: 0x%01x", he_cap->ppet_present);
+	lim_log(mac, LOG1, "\tSRP based SR-support: 0x%01x", he_cap->srp);
+	lim_log(mac, LOG1, "\tPower boost factor: 0x%01x", he_cap->power_boost);
+	lim_log(mac, LOG1, "\t4x HE LTF support: 0x%01x", he_cap->he_ltf_gi_4x);
+
+	lim_log(mac, LOG1, "\tHighest NSS supported: 0x%03x",
+			he_cap->nss_supported);
+	lim_log(mac, LOG1, "\tHighest MCS supported: 0x%03x",
+			he_cap->mcs_supported);
+	lim_log(mac, LOG1, "\tTX BW bitmap: 0x%05x", he_cap->tx_bw_bitmap);
+	lim_log(mac, LOG1, "\tRX BW bitmap: 0x%05x ", he_cap->rx_bw_bitmap);
+
+	/* HE PPET */
+	if (!he_cap->ppe_threshold.present) {
+		lim_log(mac, LOG1, FL("PPET is not present. Invalid IE"));
+		return;
+	}
+
+	lim_log(mac, LOG1, "\tNSS: %d", he_cap->ppe_threshold.nss_count + 1);
+	lim_log(mac, LOG1, "\tRU Index mask: 0x%04x",
+			he_cap->ppe_threshold.ru_idx_mask);
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+		he_cap->ppe_threshold.ppet, he_cap->ppe_threshold.num_ppet);
+}
+
+/**
+ * lim_log_he_op() - Print HE Operation
+ * @mac: pointer to MAC context
+ * @he_op: pointer to HE Operation
+ *
+ * Print HE operation stored as dot11f structure
+ *
+ * Return: None
+ */
+void lim_log_he_op(tpAniSirGlobal mac, tDot11fIEvendor_he_op *he_ops)
+{
+	tDot11fIEvht_info *vht_info = &he_ops->vht_info;
+
+	lim_log(mac, LOG1, FL("bss_color: %0x, default_pe_duration: %0x, twt_required: %0x, rts_threshold: %0x"),
+		he_ops->bss_color, he_ops->default_pe,
+		he_ops->twt_required, he_ops->rts_threshold);
+	lim_log(mac, LOG1, ("\tpartial_bss_color: %0x, MaxBSSID Indicator: %0x, Tx BSSID Indicator: %0x, BSS color disabled: %0x, Dual beacon: %0x"),
+		he_ops->partial_bss_col, he_ops->maxbssid_ind,
+		he_ops->tx_bssid_ind, he_ops->bss_col_disabled,
+		he_ops->dual_beacon);
+
+	if (!vht_info->present)
+		lim_log(mac, LOG1, FL("VHT Info not present in HE Operation"));
+	else
+		lim_log(mac, LOG1, FL("VHT Info: chan_width: %d, center_freq0: %d, center_freq1: %d"),
+			vht_info->chan_width, vht_info->center_freq_seg0,
+			vht_info->center_freq_seg1);
+}
+
+/**
+ * lim_update_sta_he_capable(): Update he_capable in add sta params
+ * @mac: pointer to MAC context
+ * @add_sta_params: pointer to add sta params
+ * @sta_ds: pointer to dph hash table entry
+ * @session_entry: pointer to PE session
+ *
+ * Return: None
+ */
+void lim_update_sta_he_capable(tpAniSirGlobal mac,
+	tpAddStaParams add_sta_params, tpDphHashNode sta_ds,
+	tpPESession session_entry)
+{
+	if (LIM_IS_AP_ROLE(session_entry) || LIM_IS_IBSS_ROLE(session_entry))
+		add_sta_params->he_capable = sta_ds->mlmStaContext.he_capable;
+	else
+		add_sta_params->he_capable = session_entry->he_capable;
+
+	lim_log(mac, LOG1, FL("he_capable: %d"), add_sta_params->he_capable);
+}
+
+/**
+ * lim_update_bss_he_capable(): Update he_capable in add BSS params
+ * @mac: pointer to MAC context
+ * @add_bss: pointer to add BSS params
+ *
+ * Return: None
+ */
+void lim_update_bss_he_capable(tpAniSirGlobal mac, tpAddBssParams add_bss)
+{
+	add_bss->he_capable = true;
+	lim_log(mac, LOG1, FL("he_capable: %d"), add_bss->he_capable);
+}
+
+/**
+ * lim_update_stads_he_capable() - Update he_capable in sta ds context
+ * @sta_ds: pointer to sta ds
+ * @assoc_req: pointer to assoc request
+ *
+ * Return: None
+ */
+void lim_update_stads_he_capable(tpDphHashNode sta_ds, tpSirAssocReq assoc_req)
+{
+	sta_ds->mlmStaContext.he_capable = assoc_req->he_cap.present;
+}
+
+/**
+ * lim_update_session_he_capable(): Update he_capable in PE session
+ * @mac: pointer to MAC context
+ * @session: pointer to PE session
+ *
+ * Return: None
+ */
+void lim_update_session_he_capable(tpAniSirGlobal mac, tpPESession session)
+{
+	session->he_capable = true;
+	lim_log(mac, LOG1, FL("he_capable: %d"), session->he_capable);
+}
+
+/**
+ * lim_update_chan_he_capable(): Update he_capable in chan switch params
+ * @mac: pointer to MAC context
+ * @chan: pointer to channel switch params
+ *
+ * Return: None
+ */
+void lim_update_chan_he_capable(tpAniSirGlobal mac, tpSwitchChannelParams chan)
+{
+	chan->he_capable = true;
+	lim_log(mac, LOG1, FL("he_capable: %d"), chan->he_capable);
+}
+
+#endif

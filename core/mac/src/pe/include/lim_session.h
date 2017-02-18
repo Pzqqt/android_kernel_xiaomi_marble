@@ -493,7 +493,11 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	bool ignore_assoc_disallowed;
 	bool send_p2p_conf_frame;
 	bool process_ho_fail;
+#ifdef WLAN_FEATURE_11AX
 	bool he_capable;
+	tDot11fIEvendor_he_cap he_config;
+	tDot11fIEvendor_he_op he_op;
+#endif
 } tPESession, *tpPESession;
 
 /*-------------------------------------------------------------------------

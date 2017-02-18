@@ -687,7 +687,9 @@ typedef struct sSirSmeStartBssReq {
 	tSirMacRateSet extendedRateSet; /* Has 11g rates */
 	tSirHTConfig htConfig;
 	struct sir_vht_config vht_config;
-
+#ifdef WLAN_FEATURE_11AX
+	tDot11fIEvendor_he_cap he_config;
+#endif
 #ifdef WLAN_FEATURE_11W
 	bool pmfCapable;
 	bool pmfRequired;
@@ -1179,6 +1181,9 @@ typedef struct sSirSmeJoinReq {
 	uint8_t txLdpcIniFeatureEnabled;
 	tSirHTConfig htConfig;
 	struct sir_vht_config vht_config;
+#ifdef WLAN_FEATURE_11AX
+	tDot11fIEvendor_he_cap he_config;
+#endif
 	uint8_t enableVhtpAid;
 	uint8_t enableVhtGid;
 	uint8_t enableAmpduPs;
@@ -6876,6 +6881,9 @@ struct wow_enable_params {
 };
 
 #ifdef WLAN_FEATURE_11AX
+#define HE_OP_OUI_TYPE "\x00\x13\x74\x02"
+#define HE_OP_OUI_SIZE 4
+
 /* HE Op Mask is based on the HE Operation definition in the D1.0 spec */
 #define HE_OP_BSS_COLOR_MASK (0x3F << 0)
 #define HE_OP_DEF_PE_DUR_MASK (0x07 << 6)
@@ -6886,6 +6894,18 @@ struct wow_enable_params {
 #define HE_OP_TX_BSSIX_IND_MASK (0x01 << 29)
 #define HE_OP_BSS_COLOR_DIS_MASK (0x01 << 30)
 #define HE_OP_DUAL_BEACON_MASK (0x01 << 31)
+
+#define HE_OP_BSS_COLOR_GET(he_op) ((he_op & HE_OP_BSS_COLOR_MASK) >> 0)
+#define HE_OP_DEF_PE_DUR_GET(he_op) ((he_op & HE_OP_DEF_PE_DUR_MASK) >> 6)
+#define HE_OP_TWT_REQ_GET(he_op) ((he_op & HE_OP_TWT_REQ_MASK) >> 9)
+#define HE_OP_RTS_THRES_GET(he_op) ((he_op & HE_OP_RTS_THRES_MASK) >> 10)
+#define HE_OP_PART_BSS_COLOR_GET(he_op) ((he_op & HE_OP_PART_BSS_COLOR_MASK) \
+						>> 20)
+#define HE_OP_MAXBSSID_IND_GET(he_op) ((he_op & HE_OP_MAXBSSID_IND_MASK) >> 21)
+#define HE_OP_TX_BSSIX_IND_GET(he_op) ((he_op & HE_OP_TX_BSSIX_IND_MASK) >> 29)
+#define HE_OP_BSS_COLOR_DIS_GET(he_op) ((he_op & HE_OP_BSS_COLOR_DIS_MASK) \
+						>> 30)
+#define HE_OP_DUAL_BEACON_GET(he_op) ((he_op & HE_OP_DUAL_BEACON_MASK) >> 31)
 
 #define HE_RU_ALLOC_INDX0_MASK (0x01 << 0)
 #define HE_RU_ALLOC_INDX1_MASK (0x01 << 1)

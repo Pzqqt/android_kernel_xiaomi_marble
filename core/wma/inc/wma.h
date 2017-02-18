@@ -1089,6 +1089,10 @@ struct wma_txrx_node {
 	tSirHostOffloadReq ns_offload_req;
 	bool is_vdev_valid;
 	struct sir_vdev_wow_stats wow_stats;
+#ifdef WLAN_FEATURE_11AX
+	bool he_capable;
+	uint32_t he_ops;
+#endif
 };
 
 #if defined(QCA_WIFI_FTM)
@@ -1696,6 +1700,7 @@ struct wma_target_req {
  * @preferred_rx_streams: policy manager indicates the preferred
  *			number of receive streams
  * @he_capable: HE capability
+ * @he_ops: HE operation
  */
 struct wma_vdev_start_req {
 	uint32_t beacon_intval;
@@ -1720,7 +1725,10 @@ struct wma_vdev_start_req {
 	uint32_t preferred_tx_streams;
 	uint32_t preferred_rx_streams;
 	uint8_t beacon_tx_rate;
+#ifdef WLAN_FEATURE_11AX
 	bool he_capable;
+	uint32_t he_ops;
+#endif
 };
 
 /**

@@ -432,6 +432,10 @@ static void mlm_add_sta(tpAniSirGlobal mac_ctx, tpAddStaParams sta_param,
 		sta_param->enable_su_tx_bformer =
 				session_entry->vht_config.su_beam_former;
 	}
+
+	if (lim_is_session_he_capable(session_entry))
+		lim_add_self_he_cap(sta_param, session_entry);
+
 	/*
 	 * Since this is Self-STA, need to populate Self MAX_AMPDU_SIZE
 	 * capabilities
@@ -527,7 +531,12 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 	addbss_param->nwType = mlm_start_req->nwType;
 	addbss_param->htCapable = mlm_start_req->htCapable;
 	addbss_param->vhtCapable = session->vhtCapability;
-	addbss_param->he_capable = session->he_capable;
+	if (lim_is_session_he_capable(session)) {
+		lim_update_bss_he_capable(mac_ctx, addbss_param);
+		lim_decide_he_op(mac_ctx, addbss_param, session);
+		lim_update_usr_he_cap(mac_ctx, session);
+	}
+
 	addbss_param->ch_width = session->ch_width;
 	addbss_param->ch_center_freq_seg0 =
 		session->ch_center_freq_seg0;
@@ -557,6 +566,7 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 	addbss_param->obssProtEnabled = mlm_start_req->obssProtEnabled;
 
 	addbss_param->maxTxPower = session->maxTxPower;
+
 	mlm_add_sta(mac_ctx, &addbss_param->staContext,
 		    addbss_param->bssId, addbss_param->htCapable,
 		    session);

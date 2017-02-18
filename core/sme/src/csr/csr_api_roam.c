@@ -2195,6 +2195,173 @@ static void csr_get_he_config_param(tCsrConfigParam *param,
 	param->enable_ul_ofdma = mac_ctx->roam.configParam.enable_ul_ofdma;
 	param->enable_ul_mimo = mac_ctx->roam.configParam.enable_ul_mimo;
 }
+
+
+/**
+ * csr_join_req_copy_he_cap() - Copy HE cap into CSR Join Req
+ * @csr_join_req: pointer to CSR Join Req
+ * @session: pointer to CSR session
+ *
+ * Return: None
+ */
+static void csr_join_req_copy_he_cap(tSirSmeJoinReq *csr_join_req,
+		tCsrRoamSession *session)
+{
+	qdf_mem_copy(&csr_join_req->he_config, &session->he_config,
+		     sizeof(session->he_config));
+}
+
+/**
+ * csr_start_bss_copy_he_cap() - Copy HE cap into CSR Join Req
+ * @req: pointer to START BSS Req
+ * @session: pointer to CSR session
+ *
+ * Return: None
+ */
+static void csr_start_bss_copy_he_cap(tSirSmeStartBssReq *req,
+			tCsrRoamSession *session)
+{
+	qdf_mem_copy(&req->he_config, &session->he_config,
+		     sizeof(session->he_config));
+}
+
+static void csr_update_session_he_cap(tpAniSirGlobal mac_ctx,
+			tCsrRoamSession *session)
+{
+	uint32_t value = 0;
+	tDot11fIEvendor_he_cap *he_cap = &session->he_config;
+
+	he_cap->present = true;
+
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_CONTROL, &value);
+	he_cap->htc_he = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_TWT_REQUESTOR, &value);
+	he_cap->twt_request = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_TWT_RESPONDER, &value);
+	he_cap->twt_responder = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_FRAGMENTATION, &value);
+	he_cap->fragmentation = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_MAX_FRAG_MSDU, &value);
+	he_cap->max_num_frag_msdu = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_MIN_FRAG_SIZE, &value);
+	he_cap->min_frag_size = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_TRIG_PAD, &value);
+	he_cap->trigger_frm_mac_pad = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_MTID_AGGR, &value);
+	he_cap->multi_tid_aggr = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_LINK_ADAPTATION, &value);
+	he_cap->he_link_adaptation = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_ALL_ACK, &value);
+	he_cap->all_ack = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_UL_MU_RSP_SCHEDULING, &value);
+	he_cap->ul_mu_rsp_sched = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_BUFFER_STATUS_RPT, &value);
+	he_cap->a_bsr = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_BCAST_TWT, &value);
+	he_cap->broadcast_twt = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_BA_32BIT, &value);
+	he_cap->ba_32bit_bitmap = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_MU_CASCADING, &value);
+	he_cap->mu_cascade = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_MULTI_TID, &value);
+	he_cap->ack_enabled_multitid = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_DL_MU_BA, &value);
+	he_cap->dl_mu_ba = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_OMI, &value);
+	he_cap->omi_a_ctrl = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_OFDMA_RA, &value);
+	he_cap->ofdma_ra = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_MAX_AMPDU_LEN, &value);
+	he_cap->max_ampdu_len = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_AMSDU_FRAG, &value);
+	he_cap->amsdu_frag = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_FLEX_TWT_SCHED, &value);
+	he_cap->flex_twt_sched = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_RX_CTRL, &value);
+	he_cap->rx_ctrl_frame = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_BSRP_AMPDU_AGGR, &value);
+	he_cap->bsrp_ampdu_aggr = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_QTP, &value);
+	he_cap->qtp = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_A_BQR, &value);
+	he_cap->a_bqr = value;
+
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_DUAL_BAND, &value);
+	he_cap->dual_band = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_CHAN_WIDTH, &value);
+	he_cap->chan_width = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_RX_PREAM_PUNC, &value);
+	he_cap->rx_pream_puncturing = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_CLASS_OF_DEVICE, &value);
+	he_cap->device_class = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_LDPC, &value);
+	he_cap->ldpc_coding = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_LTF_PPDU, &value);
+	he_cap->he_ltf_gi_ppdu = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_LTF_NDP, &value);
+	he_cap->he_ltf_gi_ndp = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_STBC, &value);
+	he_cap->stbc = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_DOPPLER, &value);
+	he_cap->doppler = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_UL_MUMIMO, &value);
+	he_cap->ul_mu = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_DCM_TX, &value);
+	he_cap->dcm_enc_tx = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_DCM_RX, &value);
+	he_cap->dcm_enc_rx = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_MU_PPDU, &value);
+	he_cap->ul_he_mu = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_SU_BEAMFORMER, &value);
+	he_cap->su_beamformer = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_SU_BEAMFORMEE, &value);
+	he_cap->su_beamformee = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_MU_BEAMFORMER, &value);
+	he_cap->mu_beamformer = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_BFEE_STS_LT80, &value);
+	he_cap->bfee_sts_lt_80 = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_NSTS_TOT_LT80, &value);
+	he_cap->nsts_tol_lt_80 = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_BFEE_STS_GT80, &value);
+	he_cap->bfee_sta_gt_80 = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_NSTS_TOT_GT80, &value);
+	he_cap->nsts_tot_gt_80 = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_NUM_SOUND_LT80, &value);
+	he_cap->num_sounding_lt_80 = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_NUM_SOUND_GT80, &value);
+	he_cap->num_sounding_gt_80 = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_SU_FEED_TONE16, &value);
+	he_cap->su_feedback_tone16 = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_MU_FEED_TONE16, &value);
+	he_cap->mu_feedback_tone16 = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_CODEBOOK_SU, &value);
+	he_cap->codebook_su = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_CODEBOOK_MU, &value);
+	he_cap->codebook_mu = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_BFRM_FEED, &value);
+	he_cap->beamforming_feedback = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_ER_SU_PPDU, &value);
+	he_cap->he_er_su_ppdu = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_DL_PART_BW, &value);
+	he_cap->dl_mu_mimo_part_bw = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_PPET_PRESENT, &value);
+	he_cap->ppet_present = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_SRP, &value);
+	he_cap->srp = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_POWER_BOOST, &value);
+	he_cap->power_boost = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_4x_LTF_GI, &value);
+	he_cap->he_ltf_gi_4x = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_NSS, &value);
+	he_cap->nss_supported = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_MCS, &value);
+	he_cap->mcs_supported = value;
+
+	value = WNI_CFG_HE_PPET_LEN;
+	sme_cfg_get_str(mac_ctx, WNI_CFG_HE_PPET,
+			(void *)&he_cap->ppe_threshold, &value);
+}
+
 #else
 static inline void csr_update_he_config_param(tpAniSirGlobal mac_ctx,
 					      tCsrConfigParam *param)
@@ -2205,6 +2372,22 @@ static inline void csr_get_he_config_param(tCsrConfigParam *param,
 					   tpAniSirGlobal mac_ctx)
 {
 }
+
+static inline void csr_join_req_copy_he_cap(tSirSmeJoinReq *csr_join_req,
+			tCsrRoamSession *session)
+{
+}
+
+static inline void csr_start_bss_copy_he_cap(tSirSmeStartBssReq *req,
+			tCsrRoamSession *session)
+{
+}
+
+static inline void csr_update_session_he_cap(tpAniSirGlobal mac_ctx,
+			tCsrRoamSession *session)
+{
+}
+
 #endif
 
 QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
@@ -14483,6 +14666,10 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 			FL("ht capability 0x%x VHT capability 0x%x"),
 			(unsigned int)(*(uint32_t *) &csr_join_req->htConfig),
 			(unsigned int)(*(uint32_t *) &csr_join_req->vht_config));
+
+		if (IS_DOT11_MODE_HE(csr_join_req->dot11mode))
+			csr_join_req_copy_he_cap(csr_join_req, pSession);
+
 		if (wlan_cfg_get_int(pMac, WNI_CFG_VHT_SU_BEAMFORMEE_CAP,
 				     &value) != eSIR_SUCCESS)
 			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
@@ -15302,6 +15489,9 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(tpAniSirGlobal pMac, uint32_t sessionId
 	sms_log(pMac, LOG2, FL("ht capability 0x%x VHT capability 0x%x"),
 			 (uint32_t)(*(uint32_t *) &pMsg->htConfig),
 			 (uint32_t)(*(uint32_t *) &pMsg->vht_config));
+	if (IS_DOT11_MODE_HE(pMsg->dot11mode))
+		csr_start_bss_copy_he_cap(pMsg, pSession);
+
 	qdf_mem_copy(&pMsg->addIeParams,
 		     &pParam->addIeParams,
 		     sizeof(pParam->addIeParams));
@@ -15718,6 +15908,8 @@ QDF_STATUS csr_roam_open_session(tpAniSirGlobal mac_ctx,
 					 WNI_CFG_VHT_AMPDU_LEN_EXPONENT,
 					 &nCfgValue);
 			session->vht_config.max_ampdu_lenexp = nCfgValue;
+
+			csr_update_session_he_cap(mac_ctx, session);
 
 			status = csr_issue_add_sta_for_session_req(mac_ctx, i,
 								pSelfMacAddr,

@@ -2260,6 +2260,11 @@ sir_convert_probe_req_frame2_struct(tpAniSirGlobal pMac,
 	if (pr.P2PProbeReq.present) {
 		pProbeReq->p2pIePresent = 1;
 	}
+	if (pr.vendor_he_cap.present) {
+		qdf_mem_copy(&pProbeReq->vendor_he_cap, &pr.vendor_he_cap,
+			     sizeof(tDot11fIEvendor_he_cap));
+		lim_log(pMac, LOG1, FL("11AX: HE cap IE present"));
+	}
 	return eSIR_SUCCESS;
 } /* End sir_convert_probe_req_frame2_struct. */
 
@@ -2631,6 +2636,17 @@ tSirRetStatus sir_convert_probe_frame2_struct(tpAniSirGlobal pMac,
 		}
 	}
 
+	if (pr->vendor_he_cap.present) {
+		lim_log(pMac, LOG1, FL("11AX: HE cap IE present"));
+		qdf_mem_copy(&pProbeResp->vendor_he_cap, &pr->vendor_he_cap,
+			     sizeof(tDot11fIEvendor_he_cap));
+	}
+	if (pr->vendor_he_op.present) {
+		lim_log(pMac, LOG1, FL("11AX: HE operation IE present"));
+		qdf_mem_copy(&pProbeResp->vendor_he_op, &pr->vendor_he_op,
+			     sizeof(tDot11fIEvendor_he_op));
+	}
+
 	qdf_mem_free(pr);
 	return eSIR_SUCCESS;
 
@@ -2837,6 +2853,12 @@ sir_convert_assoc_req_frame2_struct(tpAniSirGlobal pMac,
 				FL("Received Assoc Request with Vendor specific VHT Cap"));
 			lim_log_vht_cap(pMac, &pAssocReq->VHTCaps);
 		}
+	}
+	if (ar->vendor_he_cap.present) {
+		qdf_mem_copy(&pAssocReq->he_cap, &ar->vendor_he_cap,
+			     sizeof(tDot11fIEvendor_he_cap));
+		lim_log(pMac, LOG1,
+			FL("Received Assoc Req with HE Capability IE"));
 	}
 
 	qdf_mem_free(ar);
@@ -3064,6 +3086,18 @@ sir_convert_assoc_resp_frame2_struct(tpAniSirGlobal pMac,
 		FL("Received Assoc Response with Vendor specific VHT Oper"));
 		lim_log_vht_operation(pMac, &pAssocRsp->VHTOperation);
 	}
+
+	if (ar.vendor_he_cap.present) {
+		lim_log(pMac, LOG1, FL("11AX: HE cap IE present"));
+		qdf_mem_copy(&pAssocRsp->vendor_he_cap, &ar.vendor_he_cap,
+			     sizeof(tDot11fIEvendor_he_cap));
+	}
+	if (ar.vendor_he_op.present) {
+		lim_log(pMac, LOG1, FL("11AX: HE Operation IE present"));
+		qdf_mem_copy(&pAssocRsp->vendor_he_op, &ar.vendor_he_op,
+			     sizeof(tDot11fIEvendor_he_op));
+	}
+
 	return eSIR_SUCCESS;
 
 } /* End sir_convert_assoc_resp_frame2_struct. */
@@ -3238,6 +3272,10 @@ sir_convert_reassoc_req_frame2_struct(tpAniSirGlobal pMac,
 			FL("timingMeas: %d, finetimingMeas Init: %d, Resp: %d"),
 			ext_cap->timing_meas, ext_cap->fine_time_meas_initiator,
 			ext_cap->fine_time_meas_responder);
+	}
+	if (ar.vendor_he_cap.present) {
+		qdf_mem_copy(&pAssocReq->he_cap, &ar.vendor_he_cap,
+			     sizeof(tDot11fIEvendor_he_cap));
 	}
 
 	return eSIR_SUCCESS;
@@ -3836,6 +3874,17 @@ sir_parse_beacon_ie(tpAniSirGlobal pMac,
 		}
 	}
 
+	if (pBies->vendor_he_cap.present) {
+		qdf_mem_copy(&pBeaconStruct->vendor_he_cap,
+			     &pBies->vendor_he_cap,
+			     sizeof(tDot11fIEvendor_he_cap));
+	}
+	if (pBies->vendor_he_op.present) {
+		qdf_mem_copy(&pBeaconStruct->vendor_he_op,
+			     &pBies->vendor_he_op,
+			     sizeof(tDot11fIEvendor_he_op));
+	}
+
 	qdf_mem_free(pBies);
 	return eSIR_SUCCESS;
 } /* End sir_parse_beacon_ie. */
@@ -4212,6 +4261,19 @@ sir_convert_beacon_frame2_struct(tpAniSirGlobal pMac,
 			pBeaconStruct->QCN_IE.sub_version
 					= pBeacon->QCN_IE.version[3];
 		}
+	}
+
+	if (pBeacon->vendor_he_cap.present) {
+		lim_log(pMac, LOG1, FL("11AX: HE cap IE present"));
+		qdf_mem_copy(&pBeaconStruct->vendor_he_cap,
+			     &pBeacon->vendor_he_cap,
+			     sizeof(tDot11fIEvendor_he_cap));
+	}
+	if (pBeacon->vendor_he_op.present) {
+		lim_log(pMac, LOG1, FL("11AX: HE operation IE present"));
+		qdf_mem_copy(&pBeaconStruct->vendor_he_op,
+			     &pBeacon->vendor_he_op,
+			     sizeof(tDot11fIEvendor_he_op));
 	}
 
 	qdf_mem_free(pBeacon);
@@ -5911,5 +5973,211 @@ tSirRetStatus populate_dot11f_timing_advert_frame(tpAniSirGlobal mac_ctx,
 
 	return nSirStatus;
 }
+
+#ifdef WLAN_FEATURE_11AX
+/**
+ * populate_dot11f_he_caps() - pouldate HE Capability IE
+ * @mac_ctx: Global MAC context
+ * @session: PE session
+ * @he_cap: pointer to HE capability IE
+ *
+ * Populdate the HE capability IE based on the session.
+ */
+QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal mac_ctx, tpPESession session,
+				   tDot11fIEvendor_he_cap *he_cap)
+{
+	uint32_t value = 0;
+	tSirRetStatus status;
+
+	he_cap->present = 1;
+
+	if (!session) {
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_CONTROL, value);
+		he_cap->htc_he = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_TWT_REQUESTOR, value);
+		he_cap->twt_request = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_TWT_RESPONDER, value);
+		he_cap->twt_responder = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_FRAGMENTATION, value);
+		he_cap->fragmentation = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_MAX_FRAG_MSDU, value);
+		he_cap->max_num_frag_msdu = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_MIN_FRAG_SIZE, value);
+		he_cap->min_frag_size = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_TRIG_PAD, value);
+		he_cap->trigger_frm_mac_pad = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_MTID_AGGR, value);
+		he_cap->multi_tid_aggr = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_LINK_ADAPTATION, value);
+		he_cap->he_link_adaptation = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_ALL_ACK, value);
+		he_cap->all_ack = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_UL_MU_RSP_SCHEDULING,
+			    value);
+		he_cap->ul_mu_rsp_sched = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_BUFFER_STATUS_RPT,
+			    value);
+		he_cap->a_bsr = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_BCAST_TWT, value);
+		he_cap->broadcast_twt = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_BA_32BIT, value);
+		he_cap->ba_32bit_bitmap = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_MU_CASCADING, value);
+		he_cap->mu_cascade = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_MULTI_TID, value);
+		he_cap->ack_enabled_multitid = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_DL_MU_BA, value);
+		he_cap->dl_mu_ba = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_OMI, value);
+		he_cap->omi_a_ctrl = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_OFDMA_RA, value);
+		he_cap->ofdma_ra = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_MAX_AMPDU_LEN, value);
+		he_cap->max_ampdu_len = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_AMSDU_FRAG, value);
+		he_cap->amsdu_frag = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_FLEX_TWT_SCHED, value);
+		he_cap->flex_twt_sched = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_RX_CTRL, value);
+		he_cap->rx_ctrl_frame = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_BSRP_AMPDU_AGGR, value);
+		he_cap->bsrp_ampdu_aggr = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_QTP, value);
+		he_cap->qtp = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_A_BQR, value);
+		he_cap->a_bqr = value;
+
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_DUAL_BAND, value);
+		he_cap->dual_band = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_CHAN_WIDTH, value);
+		he_cap->chan_width = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_RX_PREAM_PUNC, value);
+		he_cap->rx_pream_puncturing = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_CLASS_OF_DEVICE, value);
+		he_cap->device_class = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_LDPC, value);
+		he_cap->ldpc_coding = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_LTF_PPDU, value);
+		he_cap->he_ltf_gi_ppdu = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_LTF_NDP, value);
+		he_cap->he_ltf_gi_ndp = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_STBC, value);
+		he_cap->stbc = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_DOPPLER, value);
+		he_cap->doppler = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_UL_MUMIMO, value);
+		he_cap->ul_mu = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_DCM_TX, value);
+		he_cap->dcm_enc_tx = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_DCM_RX, value);
+		he_cap->dcm_enc_rx = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_MU_PPDU, value);
+		he_cap->ul_he_mu = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_SU_BEAMFORMER, value);
+		he_cap->su_beamformer = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_SU_BEAMFORMEE, value);
+		he_cap->su_beamformee = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_MU_BEAMFORMER, value);
+		he_cap->mu_beamformer = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_BFEE_STS_LT80, value);
+		he_cap->bfee_sts_lt_80 = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_NSTS_TOT_LT80, value);
+		he_cap->nsts_tol_lt_80 = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_BFEE_STS_GT80, value);
+		he_cap->bfee_sta_gt_80 = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_NSTS_TOT_GT80, value);
+		he_cap->nsts_tot_gt_80 = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_NUM_SOUND_LT80, value);
+		he_cap->num_sounding_lt_80 = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_NUM_SOUND_GT80, value);
+		he_cap->num_sounding_gt_80 = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_SU_FEED_TONE16, value);
+		he_cap->su_feedback_tone16 = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_MU_FEED_TONE16, value);
+		he_cap->mu_feedback_tone16 = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_CODEBOOK_SU, value);
+		he_cap->codebook_su = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_CODEBOOK_MU, value);
+		he_cap->codebook_mu = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_BFRM_FEED, value);
+		he_cap->beamforming_feedback = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_ER_SU_PPDU, value);
+		he_cap->he_er_su_ppdu = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_DL_PART_BW, value);
+		he_cap->dl_mu_mimo_part_bw = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_PPET_PRESENT, value);
+		he_cap->ppet_present = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_SRP, value);
+		he_cap->srp = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_POWER_BOOST, value);
+		he_cap->power_boost = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_4x_LTF_GI, value);
+		he_cap->he_ltf_gi_4x = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_NSS, value);
+		he_cap->nss_supported = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_MCS, value);
+		he_cap->mcs_supported = value;
+
+		value = WNI_CFG_HE_PPET_LEN;
+		CFG_GET_STR(status, mac_ctx, WNI_CFG_HE_PPET,
+			(void *)&he_cap->ppe_threshold, value, value);
+
+		return QDF_STATUS_SUCCESS;
+	}
+
+	qdf_mem_copy(he_cap, &session->he_config, sizeof(*he_cap));
+
+	lim_log_he_cap(mac_ctx, he_cap);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * populate_dot11f_he_operation() - pouldate HE Operation IE
+ * @mac_ctx: Global MAC context
+ * @session: PE session
+ * @he_op: pointer to HE Operation IE
+ *
+ * Populdate the HE Operation IE based on the session.
+ */
+QDF_STATUS populate_dot11f_he_operation(tpAniSirGlobal mac_ctx,
+			tpPESession session, tDot11fIEvendor_he_op *he_op)
+{
+	tDot11fIEvht_info *vht_info = &he_op->vht_info;
+
+	he_op->present = 1;
+
+	he_op->bss_color = session->he_op.bss_color;
+	he_op->default_pe = session->he_op.default_pe;
+	he_op->twt_required = session->he_op.twt_required;
+	he_op->rts_threshold = session->he_op.rts_threshold;
+	he_op->partial_bss_col = session->he_op.partial_bss_col;
+	he_op->maxbssid_ind = session->he_op.maxbssid_ind;
+	he_op->tx_bssid_ind = session->he_op.tx_bssid_ind;
+	he_op->bss_col_disabled = session->he_op.bss_col_disabled;
+	he_op->dual_beacon = session->he_op.dual_beacon;
+
+	vht_info->present = 1;
+	if (session->ch_width > CH_WIDTH_40MHZ) {
+		vht_info->chan_width = 1;
+		vht_info->center_freq_seg0 =
+			session->ch_center_freq_seg0;
+		if (session->ch_width == CH_WIDTH_80P80MHZ ||
+				session->ch_width == CH_WIDTH_160MHZ)
+			vht_info->center_freq_seg1 =
+				session->ch_center_freq_seg1;
+		else
+			vht_info->center_freq_seg1 = 0;
+	} else {
+		vht_info->chan_width = 0;
+		vht_info->center_freq_seg0 = 0;
+		vht_info->center_freq_seg1 = 0;
+	}
+
+	lim_log_he_op(mac_ctx, he_op);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /* parser_api.c ends here. */

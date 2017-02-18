@@ -677,4 +677,145 @@ tSirRetStatus lim_strip_ie(tpAniSirGlobal mac_ctx,
 		uint8_t eid, eSizeOfLenField size_of_len_field,
 		uint8_t *oui, uint8_t out_len, uint8_t *extracted_ie,
 		uint32_t eid_max_len);
+
+#ifdef WLAN_FEATURE_11AX
+void lim_intersect_ap_he_caps(tpPESession session, tpAddBssParams add_bss,
+		tSchBeaconStruct *pBeaconStruct, tpSirAssocRsp assoc_rsp);
+void lim_intersect_sta_he_caps(tpSirAssocReq assoc_req, tpPESession session,
+		tpDphHashNode sta_ds);
+void lim_add_he_cap(tpAddStaParams add_sta_params, tpSirAssocReq assoc_req);
+void lim_add_self_he_cap(tpAddStaParams add_sta_params, tpPESession session);
+void lim_add_bss_he_cap(tpAddBssParams add_bss, tpSirAssocRsp assoc_rsp);
+void lim_copy_bss_he_cap(tpPESession session,
+		tpSirSmeStartBssReq sme_start_bss_req);
+void lim_copy_join_req_he_cap(tpPESession session,
+			tpSirSmeJoinReq sme_join_req);
+void lim_log_he_op(tpAniSirGlobal mac, tDot11fIEvendor_he_op *he_ops);
+void lim_log_he_cap(tpAniSirGlobal mac, tDot11fIEvendor_he_cap *he_cap);
+void lim_update_stads_he_caps(tpDphHashNode sta_ds, tpSirAssocRsp assoc_rsp,
+			      tpPESession session_entry);
+void lim_update_usr_he_cap(tpAniSirGlobal mac_ctx, tpPESession session);
+void lim_decide_he_op(tpAniSirGlobal mac_ctx, tpAddBssParams add_bss,
+		tpPESession session);
+void lim_update_sta_he_capable(tpAniSirGlobal mac,
+	tpAddStaParams add_sta_params, tpDphHashNode sta_ds,
+	tpPESession session_entry);
+
+static inline bool lim_is_session_he_capable(tpPESession session)
+{
+	return session->he_capable;
+}
+
+static inline bool lim_is_sta_he_capable(tpDphHashNode sta_ds)
+{
+	return sta_ds->mlmStaContext.he_capable;
+}
+
+void lim_update_bss_he_capable(tpAniSirGlobal mac, tpAddBssParams add_bss);
+void lim_update_stads_he_capable(tpDphHashNode sta_ds, tpSirAssocReq assoc_req);
+void lim_update_session_he_capable(tpAniSirGlobal mac, tpPESession session);
+void lim_update_chan_he_capable(tpAniSirGlobal mac, tpSwitchChannelParams chan);
+
+#else
+static inline void lim_add_he_cap(tpAddStaParams add_sta_params,
+				  tpSirAssocReq assoc_req)
+{
+}
+
+static inline void lim_add_self_he_cap(tpAddStaParams add_sta_params,
+				       tpPESession session)
+{
+}
+
+static inline void lim_add_bss_he_cap(tpAddBssParams add_bss,
+				      tpSirAssocRsp assoc_rsp)
+{
+	return;
+}
+
+static inline void lim_intersect_ap_he_caps(tpPESession session,
+		tpAddBssParams add_bss,	tSchBeaconStruct *pBeaconStruct,
+		tpSirAssocRsp assoc_rsp)
+{
+	return;
+}
+
+static inline void lim_intersect_sta_he_caps(tpSirAssocReq assoc_req,
+		tpPESession session, tpDphHashNode sta_ds)
+{
+}
+
+static inline void lim_update_stads_he_caps(tpDphHashNode sta_ds, tpSirAssocRsp assoc_rsp,
+		tpPESession session_entry)
+{
+	return;
+}
+
+static inline void lim_update_usr_he_cap(tpAniSirGlobal mac_ctx,
+			tpPESession session)
+{
+}
+
+static inline void lim_decide_he_op(tpAniSirGlobal mac_ctx,
+			tpAddBssParams add_bss, tpPESession session)
+{
+}
+
+static inline void lim_copy_bss_he_cap(tpPESession session,
+				tpSirSmeStartBssReq sme_start_bss_req)
+{
+}
+static inline void lim_copy_join_req_he_cap(tpPESession session,
+			tpSirSmeJoinReq sme_join_req)
+{
+}
+
+static inline void lim_log_he_op(tpAniSirGlobal mac,
+	tDot11fIEvendor_he_op *he_ops)
+{
+}
+
+static inline void lim_log_he_cap(tpAniSirGlobal mac,
+	tDot11fIEvendor_he_cap *he_cap)
+{
+}
+
+static inline void lim_update_sta_he_capable(tpAniSirGlobal mac,
+			tpAddStaParams add_sta_params,
+			tpDphHashNode sta_ds, tpPESession session_entry)
+{
+}
+
+static inline bool lim_is_session_he_capable(tpPESession session)
+{
+	return false;
+}
+
+static inline bool lim_is_sta_he_capable(tpDphHashNode sta_ds)
+{
+	return false;
+}
+
+static inline void lim_update_bss_he_capable(tpAniSirGlobal mac,
+			tpAddBssParams add_bss)
+{
+}
+
+static inline void lim_update_stads_he_capable(tpDphHashNode sta_ds,
+		tpSirAssocReq assoc_req)
+{
+}
+
+static inline void lim_update_session_he_capable(tpAniSirGlobal mac,
+			tpPESession session)
+{
+}
+
+static inline void lim_update_chan_he_capable(tpAniSirGlobal mac,
+		tpSwitchChannelParams chan)
+{
+}
+
+#endif
+
 #endif /* __LIM_UTILS_H */

@@ -340,6 +340,9 @@ typedef struct sLimMlmStaContext {
 	/* 802.11n HT Capability in Station: Enabled 1 or DIsabled 0 */
 	uint8_t htCapability:1;
 	uint8_t vhtCapability:1;
+#ifdef WLAN_FEATURE_11AX
+	bool he_capable;
+#endif
 } tLimMlmStaContext, *tpLimMlmStaContext;
 
 /* Structure definition to hold deferred messages queue parameters */

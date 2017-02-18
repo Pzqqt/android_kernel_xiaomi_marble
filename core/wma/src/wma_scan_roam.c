@@ -72,6 +72,8 @@
 /* This is temporary, should be removed */
 #include "ol_htt_api.h"
 #include <cdp_txrx_handle.h>
+#include "wma_he.h"
+
 #define WMA_MCC_MIRACAST_REST_TIME 400
 #define WMA_SCAN_ID_MASK 0x0fff
 
@@ -2938,13 +2940,13 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 		req.is_quarter_rate = 1;
 
 	req.vht_capable = params->vhtCapable;
-	req.he_capable = params->he_capable;
 	req.ch_center_freq_seg0 = params->ch_center_freq_seg0;
 	req.ch_center_freq_seg1 = params->ch_center_freq_seg1;
 	req.dot11_mode = params->dot11_mode;
+	wma_update_vdev_he_capable(&req, params);
 
-	WMA_LOGI(FL("vht_capable: %d, he_capable: %d, dot11_mode: %d"),
-		 req.vht_capable, req.he_capable, req.dot11_mode);
+	WMA_LOGI(FL("vht_capable: %d, dot11_mode: %d"),
+		 req.vht_capable, req.dot11_mode);
 
 	status = wma_get_current_hw_mode(&hw_mode);
 	if (!QDF_IS_STATUS_SUCCESS(status))

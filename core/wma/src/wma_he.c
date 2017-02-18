@@ -25,6 +25,7 @@
 #include "wma_he.h"
 #include "wmi_unified_api.h"
 #include "cds_utils.h"
+#include "wma_internal.h"
 
 /**
  * wma_he_ppet_merge() - Merge PPET8 and PPET16 for a given ru and nss
@@ -126,7 +127,7 @@ static void wma_he_find_ppet(uint32_t *ppet, int nss, int ru,
  * Return: None
  */
 static void wma_convert_he_ppet(tDot11fIEppe_threshold *he_ppet,
-				wmi_ppe_threshold *ppet)
+				struct wmi_host_ppe_threshold *ppet)
 {
 	int bits, req_byte;
 	uint8_t *host_ppet, ru_count, mask;
@@ -139,7 +140,7 @@ static void wma_convert_he_ppet(tDot11fIEppe_threshold *he_ppet,
 
 	he_ppet->present = true;
 	he_ppet->nss_count = ppet->numss_m1;
-	he_ppet->ru_idx_mask = ppet->ru_mask;
+	he_ppet->ru_idx_mask = ppet->ru_bit_mask;
 
 	mask = he_ppet->ru_idx_mask;
 	for (ru_count = 0; mask; mask >>= 1)
@@ -184,7 +185,7 @@ static void wma_convert_he_ppet(tDot11fIEppe_threshold *he_ppet,
  * @he_cap: pointer to dot11f structure
  * @mac_cap: Received HE MAC capability
  * @phy_cap: Received HE PHY capability
- * @ppet: Received HE PPE threshold
+ * @he_ppet: Received HE PPE threshold
  * @mcs: Max MCS supported (Tx/Rx)
  * @nss: Max NSS supported (Tx/Rx)
  *
@@ -195,9 +196,11 @@ static void wma_convert_he_ppet(tDot11fIEppe_threshold *he_ppet,
  * Return: None
  */
 static void wma_convert_he_cap(tDot11fIEvendor_he_cap *he_cap, uint32_t mac_cap,
-			       uint32_t *phy_cap, wmi_ppe_threshold *ppet,
+			       uint32_t *phy_cap, void *he_ppet,
 			       uint8_t mcs, uint8_t nss)
 {
+	struct wmi_host_ppe_threshold *ppet = he_ppet;
+
 	he_cap->present = true;
 
 	/* HE MAC capabilities */
@@ -466,7 +469,7 @@ void wma_print_he_cap(tDot11fIEvendor_he_cap *he_cap)
 
 /**
  * wma_print_he_ppet() - Prints HE PPE Threshold
- * @ppet: PPE Threshold
+ * @he_ppet: PPE Threshold
  *
  * This function prints HE PPE Threshold as received from FW.
  * Refer to the definition of wmi_ppe_threshold to understand
@@ -474,9 +477,10 @@ void wma_print_he_cap(tDot11fIEvendor_he_cap *he_cap)
  *
  * Return: none
  */
-void wma_print_he_ppet(wmi_ppe_threshold *ppet)
+void wma_print_he_ppet(void *he_ppet)
 {
-	int numss, ru_count, ru_mask, i, j;
+	int numss, ru_count, ru_bit_mask, i, j;
+	struct wmi_host_ppe_threshold *ppet = he_ppet;
 
 	if (!ppet) {
 		WMA_LOGI(FL("PPET is NULL"));
@@ -484,22 +488,22 @@ void wma_print_he_ppet(wmi_ppe_threshold *ppet)
 	}
 
 	numss = ppet->numss_m1 + 1;
-	ru_mask = ppet->ru_mask;
+	ru_bit_mask = ppet->ru_bit_mask;
 
-	WMA_LOGI(FL("HE PPET: ru_idx_mask: %04x"), ru_mask);
-	for (ru_count = 0; ru_mask; ru_mask >>= 1)
-		if (ru_mask & 0x1)
+	WMA_LOGI(FL("HE PPET: ru_idx_mask: %04x"), ru_bit_mask);
+	for (ru_count = 0; ru_bit_mask; ru_bit_mask >>= 1)
+		if (ru_bit_mask & 0x1)
 			ru_count++;
 
 	if (ru_count > 0) {
 		WMA_LOGI(FL("PPET has following RU INDEX,"));
-		if (ppet->ru_mask & HE_RU_ALLOC_INDX0_MASK)
+		if (ppet->ru_bit_mask & HE_RU_ALLOC_INDX0_MASK)
 			WMA_LOGI("\tRU ALLOCATION INDEX 0");
-		if (ppet->ru_mask & HE_RU_ALLOC_INDX1_MASK)
+		if (ppet->ru_bit_mask & HE_RU_ALLOC_INDX1_MASK)
 			WMA_LOGI("\tRU ALLOCATION INDEX 1");
-		if (ppet->ru_mask & HE_RU_ALLOC_INDX2_MASK)
+		if (ppet->ru_bit_mask & HE_RU_ALLOC_INDX2_MASK)
 			WMA_LOGI("\tRU ALLOCATION INDEX 2");
-		if (ppet->ru_mask & HE_RU_ALLOC_INDX3_MASK)
+		if (ppet->ru_bit_mask & HE_RU_ALLOC_INDX3_MASK)
 			WMA_LOGI("\tRU ALLOCATION INDEX 3");
 	}
 
@@ -674,7 +678,7 @@ void wma_update_target_ext_he_cap(tp_wma_handle wma_handle,
 	int i, j = 0, max_mac;
 	uint32_t he_mac;
 	uint32_t he_phy[WMI_MAX_HECAP_PHY_SIZE];
-	wmi_ppe_threshold he_ppet;
+	uint8_t *he_ppet;
 	struct extended_caps *phy_caps;
 	WMI_MAC_PHY_CAPABILITIES *mac_cap;
 	tDot11fIEvendor_he_cap he_cap_mac0 = {0}, he_cap_mac1 = {0};
@@ -705,14 +709,14 @@ void wma_update_target_ext_he_cap(tp_wma_handle wma_handle,
 			he_mac = mac_cap->he_cap_info_2G;
 			qdf_mem_copy(he_phy, mac_cap->he_cap_phy_info_2G,
 				     WMI_MAX_HECAP_PHY_SIZE * 4);
-			he_ppet = mac_cap->he_ppet2G;
+			he_ppet = (uint8_t *)&mac_cap->he_ppet2G;
 			mcs = mac_cap->he_supp_mcs_2G;
 			nss = (mac_cap->tx_chain_mask_2G >
 				mac_cap->rx_chain_mask_2G) ?
 					mac_cap->tx_chain_mask_2G :
 					mac_cap->rx_chain_mask_2G;
 			wma_convert_he_cap(&he_cap_mac0, he_mac, he_phy,
-					   &he_ppet, mcs, nss);
+					   he_ppet, mcs, nss);
 			if (he_cap_mac0.present)
 				wma_derive_ext_he_cap(wma_handle, &tmp_he_cap,
 					&he_cap_mac0);
@@ -720,14 +724,14 @@ void wma_update_target_ext_he_cap(tp_wma_handle wma_handle,
 			he_mac = mac_cap->he_cap_info_5G;
 			qdf_mem_copy(he_phy, mac_cap->he_cap_phy_info_5G,
 				     WMI_MAX_HECAP_PHY_SIZE * 4);
-			he_ppet = mac_cap->he_ppet5G;
+			he_ppet = (uint8_t *)&mac_cap->he_ppet5G;
 			mcs = mac_cap->he_supp_mcs_5G;
 			nss = (mac_cap->tx_chain_mask_5G >
 				mac_cap->rx_chain_mask_5G) ?
 					mac_cap->tx_chain_mask_5G :
 					mac_cap->rx_chain_mask_5G;
 			wma_convert_he_cap(&he_cap_mac1, he_mac, he_phy,
-					   &he_ppet, mcs, nss);
+					   he_ppet, mcs, nss);
 			if (he_cap_mac1.present)
 				wma_derive_ext_he_cap(wma_handle, &tmp_he_cap,
 					&he_cap_mac1);
@@ -757,4 +761,338 @@ void wma_he_update_tgt_services(tp_wma_handle wma, struct wma_tgt_services *cfg)
 	} else {
 		WMA_LOGI(FL("11ax is not enabled"));
 	}
+}
+
+/**
+ * @wma_print_he_op() - Print HE Operation
+ * @he_cap: pointer to HE Operation
+ *
+ * Print HE operation stored as dot11f structure
+ *
+ * Return: None
+ */
+void wma_print_he_op(tDot11fIEvendor_he_op *he_ops)
+{
+	WMA_LOGI(FL("bss_color: %0x, default_pe_duration: %0x, twt_required: %0x, rts_threshold: %0x"),
+		he_ops->bss_color, he_ops->default_pe,
+		he_ops->twt_required, he_ops->rts_threshold);
+	WMA_LOGI(("\tpartial_bss_color: %0x, MaxBSSID Indicator: %0x, Tx BSSID Indicator: %0x, BSS color disabled: %0x, Dual beacon: %0x"),
+		he_ops->partial_bss_col, he_ops->maxbssid_ind,
+		he_ops->tx_bssid_ind, he_ops->bss_col_disabled,
+		he_ops->dual_beacon);
+}
+
+/**
+ * wma_parse_he_ppet() - Convert PPET stored in dot11f structure into FW
+ *                       structure.
+ * @dot11f_ppet: pointer to dot11f format PPET
+ * @peer_ppet: pointer peer_ppet to be sent in peer assoc
+ *
+ * This function converts the sequence of PPET stored in the host in OTA type
+ * structure into FW understandable structure to be sent as part of peer assoc
+ * command.
+ */
+static void wma_parse_he_ppet(tDot11fIEppe_threshold *dot11f_ppet,
+			      struct wmi_host_ppe_threshold *peer_ppet)
+{
+	uint8_t num_ppet, mask, mask1, mask2;
+	uint32_t ppet1, ppet2, ppet;
+	uint8_t bits, pad, pad_bits, req_byte;
+	uint8_t byte_idx, start, i, j, parsed;
+	uint32_t *ppet_r = peer_ppet->ppet16_ppet8_ru3_ru0;
+	uint8_t *rcvd_ppet;
+	uint8_t nss, ru;
+
+	nss = dot11f_ppet->nss_count + 1;
+	mask = dot11f_ppet->ru_idx_mask;
+
+	for (ru = 0; mask; mask >>= 1) {
+		if (mask & 0x1)
+			ru++;
+	}
+
+	WMA_LOGI(FL("Rcvd nss=%d ru_idx_mask: %0x ru_count=%d"),
+		 nss, mask, ru);
+
+	/* rcvd_ppet will store the ppet array and first byte of the ppet */
+	rcvd_ppet = qdf_mem_malloc(sizeof(*rcvd_ppet) *
+				  (dot11f_ppet->num_ppet + 1));
+	if (!rcvd_ppet) {
+		WMA_LOGE(FL("mem alloc failed"));
+		return;
+	}
+
+	rcvd_ppet[0] = (dot11f_ppet->ppet_b1 << 7);
+	qdf_mem_copy(&rcvd_ppet[1], dot11f_ppet->ppet, dot11f_ppet->num_ppet);
+
+	peer_ppet->numss_m1 = nss - 1;
+	peer_ppet->ru_bit_mask = dot11f_ppet->ru_idx_mask;
+
+	/* each nss-ru pair have 2 PPET (PPET8/PPET16) */
+	bits = HE_PPET_NSS_RU_LEN + (nss + ru) * (HE_PPET_SIZE * 2);
+	pad = bits % HE_BYTE_SIZE;
+	pad_bits = HE_BYTE_SIZE - pad;
+	req_byte = (bits + pad_bits) / HE_BYTE_SIZE;
+
+	/*
+	 * PPE Threshold Field Format
+	 * +-----------+--------------+--------------------+-------------+
+	 * |   NSS     | RU idx mask  | PPE Threshold info |  Padding    |
+	 * +-----------+--------------+--------------------+-------------+
+	 *        3           4             1 + variable       variable   (bits)
+	 *
+	 * PPE Threshold Info field:
+	 * number of NSS:n, number of RU: m
+	 * +------------+-----------+-----+------------+-----------+-----+-----------+-----------+
+	 * | PPET16 for | PPET8 for | ... | PPET16 for | PPET8 for | ... | PET16 for | PPET8 for |
+	 * | NSS1, RU1  | NSS1, RU1 | ... | NSS1, RUm  | NSS1, RUm | ... | NSSn, RUm | NSSn, RUm |
+	 * +------------+-----------+-----+------------+-----------+-----+-----------+-----------+
+	 *        3           3       ...       3           3        ...       3           3
+	 */
+
+	/* first bit of first PPET is in the last bit of first byte */
+	parsed = 7;
+
+	/*
+	 * refer wmi_ppe_threshold defn to understand how ppet is stored.
+	 * Index of ppet array(ppet16_ppet8_ru3_ru0) is the NSS value.
+	 * Each item in ppet16_ppet8_ru3_ru0 holds ppet for all the RUs.
+	 */
+	num_ppet = ru * 2; /* for each NSS */
+	for (i = 0; i < nss; i++) {
+		for (j = 1; j <= num_ppet; j++) {
+			start = parsed + (i * (num_ppet * HE_PPET_SIZE)) +
+				(j-1) * HE_PPET_SIZE;
+			byte_idx = start / HE_BYTE_SIZE;
+			start = start % HE_BYTE_SIZE;
+
+			if (start <= HE_BYTE_SIZE - HE_PPET_SIZE) {
+				mask = 0x07 << start;
+				ppet = (rcvd_ppet[byte_idx] & mask) >> start;
+				ppet_r[i] |= (ppet << (j - 1) * HE_PPET_SIZE);
+			} else {
+				mask1 = 0x07 << start;
+				ppet1 = (rcvd_ppet[byte_idx] & mask1) >> start;
+				mask2 = 0x07 >> (HE_BYTE_SIZE - start);
+				ppet2 = (rcvd_ppet[byte_idx + 1] & mask2) <<
+						(HE_BYTE_SIZE - start);
+				ppet = ppet1 | ppet2;
+				ppet_r[i] |= (ppet << (j - 1) * HE_PPET_SIZE);
+			}
+			WMA_LOGI(FL("nss:%d ru:%d ppet_r:%0x"), i, j/2,
+				 ppet_r[i]);
+		}
+	}
+
+	qdf_mem_free(rcvd_ppet);
+}
+
+/**
+ * wma_populate_peer_he_cap() - populate peer HE capabilities in peer assoc cmd
+ * @peer: pointer to peer assoc params
+ * @params: pointer to ADD STA params
+ *
+ * Return: None
+ */
+void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
+			      tpAddStaParams params)
+{
+	tDot11fIEvendor_he_cap *he_cap = &params->he_config;
+	tDot11fIEvendor_he_op *he_op = &params->he_op;
+	uint32_t *phy_cap = peer->peer_he_cap_phyinfo;
+	uint32_t mac_cap = 0, he_ops = 0;
+	uint8_t temp;
+
+	if (params->he_capable)
+		peer->peer_flags |= WMI_PEER_HE;
+	else
+		return;
+
+	/* HE MAC capabilities */
+	WMI_HECAP_MAC_HECTRL_SET(mac_cap, he_cap->htc_he);
+	WMI_HECAP_MAC_TWTREQ_SET(mac_cap, he_cap->twt_request);
+	WMI_HECAP_MAC_TWTRSP_SET(mac_cap, he_cap->twt_responder);
+	WMI_HECAP_MAC_HEFRAG_SET(mac_cap, he_cap->fragmentation);
+	WMI_HECAP_MAC_MAXFRAGMSDU_SET(mac_cap, he_cap->max_num_frag_msdu);
+	WMI_HECAP_MAC_MINFRAGSZ_SET(mac_cap, he_cap->min_frag_size);
+	WMI_HECAP_MAC_TRIGPADDUR_SET(mac_cap, he_cap->trigger_frm_mac_pad);
+	WMI_HECAP_MAC_ACKMTIDAMPDU_SET(mac_cap, he_cap->multi_tid_aggr);
+	WMI_HECAP_MAC_HELKAD_SET(mac_cap, he_cap->he_link_adaptation);
+	WMI_HECAP_MAC_AACK_SET(mac_cap, he_cap->all_ack);
+	WMI_HECAP_MAC_ULMURSP_SET(mac_cap, he_cap->ul_mu_rsp_sched);
+	WMI_HECAP_MAC_BSR_SET(mac_cap, he_cap->a_bsr);
+	WMI_HECAP_MAC_BCSTTWT_SET(mac_cap, he_cap->broadcast_twt);
+	WMI_HECAP_MAC_32BITBA_SET(mac_cap, he_cap->ba_32bit_bitmap);
+	WMI_HECAP_MAC_MUCASCADE_SET(mac_cap, he_cap->mu_cascade);
+	WMI_HECAP_MAC_ACKMTIDAMPDU_SET(mac_cap, he_cap->ack_enabled_multitid);
+	WMI_HECAP_MAC_GROUPMSTABA_SET(mac_cap, he_cap->dl_mu_ba);
+	WMI_HECAP_MAC_OMI_SET(mac_cap, he_cap->omi_a_ctrl);
+	WMI_HECAP_MAC_OFDMARA_SET(mac_cap, he_cap->ofdma_ra);
+	WMI_HECAP_MAC_MAXAMPDULEN_EXP_SET(mac_cap, he_cap->max_ampdu_len);
+	WMI_HECAP_MAC_AMSDUFRAG_SET(mac_cap, he_cap->amsdu_frag);
+	WMI_HECAP_MAC_FLEXTWT_SET(mac_cap, he_cap->flex_twt_sched);
+	WMI_HECAP_MAC_MBSS_SET(mac_cap, he_cap->rx_ctrl_frame);
+	WMI_HECAP_MAC_BSRPAMPDU_SET(mac_cap, he_cap->bsrp_ampdu_aggr);
+	WMI_HECAP_MAC_QTP_SET(mac_cap, he_cap->qtp);
+	peer->peer_he_cap_macinfo = mac_cap;
+
+	/* HE PHY capabilities */
+	WMI_HECAP_PHY_DB_SET(phy_cap, he_cap->dual_band);
+	WMI_HECAP_PHY_CBW_SET(phy_cap, he_cap->chan_width);
+	WMI_HECAP_PHY_PREAMBLEPUNCRX_SET(phy_cap, he_cap->rx_pream_puncturing);
+	WMI_HECAP_PHY_COD_SET(phy_cap, he_cap->device_class);
+	WMI_HECAP_PHY_LDPC_SET(phy_cap, he_cap->ldpc_coding);
+	WMI_HECAP_PHY_LTFGIFORHE_SET(phy_cap, he_cap->he_ltf_gi_ppdu);
+	WMI_HECAP_PHY_LTFGIFORNDP_SET(phy_cap, he_cap->he_ltf_gi_ndp);
+
+	temp = he_cap->stbc & 0x1;
+	WMI_HECAP_PHY_RXSTBC_SET(phy_cap, temp);
+	temp = he_cap->stbc >> 0x1;
+	WMI_HECAP_PHY_TXSTBC_SET(phy_cap, temp);
+
+	temp = he_cap->doppler & 0x1;
+	WMI_HECAP_PHY_RXDOPPLER_SET(phy_cap, temp);
+	temp = he_cap->doppler >> 0x1;
+	WMI_HECAP_PHY_TXDOPPLER_SET(phy_cap, temp);
+
+	WMI_HECAP_PHY_UL_MU_MIMO_SET(phy_cap, he_cap->ul_mu);
+	WMI_HECAP_PHY_DCMTX_SET(phy_cap, he_cap->dcm_enc_tx);
+	WMI_HECAP_PHY_DCMRX_SET(phy_cap, he_cap->dcm_enc_rx);
+	WMI_HECAP_PHY_ULHEMU_SET(phy_cap, he_cap->ul_he_mu);
+	WMI_HECAP_PHY_SUBFMR_SET(phy_cap, he_cap->su_beamformer);
+	WMI_HECAP_PHY_SUBFME_SET(phy_cap, he_cap->su_beamformee);
+	WMI_HECAP_PHY_MUBFMR_SET(phy_cap, he_cap->mu_beamformer);
+	WMI_HECAP_PHY_BFMESTSLT80MHZ_SET(phy_cap, he_cap->bfee_sts_lt_80);
+	WMI_HECAP_PHY_NSTSLT80MHZ_SET(phy_cap, he_cap->nsts_tol_lt_80);
+	WMI_HECAP_PHY_BFMESTSGT80MHZ_SET(phy_cap, he_cap->bfee_sta_gt_80);
+	WMI_HECAP_PHY_NSTSGT80MHZ_SET(phy_cap, he_cap->nsts_tot_gt_80);
+	WMI_HECAP_PHY_NUMSOUNDLT80MHZ_SET(phy_cap, he_cap->num_sounding_lt_80);
+	WMI_HECAP_PHY_NUMSOUNDGT80MHZ_SET(phy_cap, he_cap->num_sounding_gt_80);
+	WMI_HECAP_PHY_NG16SUFEEDBACKLT80_SET(phy_cap,
+					     he_cap->su_feedback_tone16);
+	WMI_HECAP_PHY_NG16MUFEEDBACKGT80_SET(phy_cap,
+					     he_cap->mu_feedback_tone16);
+	WMI_HECAP_PHY_CODBK42SU_SET(phy_cap, he_cap->codebook_su);
+	WMI_HECAP_PHY_CODBK75MU_SET(phy_cap, he_cap->codebook_mu);
+	WMI_HECAP_PHY_BFFEEDBACKTRIG_SET(phy_cap, he_cap->beamforming_feedback);
+	WMI_HECAP_PHY_HEERSU_SET(phy_cap, he_cap->he_er_su_ppdu);
+	WMI_HECAP_PHY_DLMUMIMOPARTIALBW_SET(phy_cap,
+					    he_cap->dl_mu_mimo_part_bw);
+	WMI_HECAP_PHY_PETHRESPRESENT_SET(phy_cap, he_cap->ppet_present);
+	WMI_HECAP_PHY_SRPPRESENT_SET(phy_cap, he_cap->srp);
+	WMI_HECAP_PHY_PWRBOOSTAR_SET(phy_cap, he_cap->power_boost);
+	WMI_HECAP_PHY_4XLTFAND800NSECSGI_SET(phy_cap, he_cap->he_ltf_gi_4x);
+
+	WMI_HEOPS_COLOR_SET(he_ops, he_op->bss_color);
+	WMI_HEOPS_DEFPE_SET(he_ops, he_op->default_pe);
+	WMI_HEOPS_TWT_SET(he_ops, he_op->twt_required);
+	WMI_HEOPS_RTSTHLD_SET(he_ops, he_op->rts_threshold);
+	WMI_HEOPS_PARTBSSCOLOR_SET(he_ops, he_op->partial_bss_col);
+	WMI_HEOPS_MAXBSSID_SET(he_ops, he_op->maxbssid_ind);
+	WMI_HEOPS_TXBSSID_SET(he_ops, he_op->tx_bssid_ind);
+	WMI_HEOPS_BSSCOLORDISABLE_SET(he_ops, he_op->bss_col_disabled);
+	WMI_HEOPS_DUALBEACON_SET(he_ops, he_op->dual_beacon);
+	peer->peer_he_ops = he_ops;
+
+	wma_parse_he_ppet(&he_cap->ppe_threshold, &peer->peer_ppet);
+
+	wma_print_he_cap(he_cap);
+	WMA_LOGI(FL("Peer HE Capabilities:"));
+	wma_print_he_phy_cap(phy_cap);
+	wma_print_he_mac_cap(mac_cap);
+	wma_print_he_ppet(&peer->peer_ppet);
+
+	return;
+}
+
+/**
+ * wma_update_vdev_he_ops() - update he ops in vdev start request
+ * @req: pointer to vdev start request
+ * @add_bss: pointer to ADD BSS params
+ *
+ * Return: None
+ */
+void wma_update_vdev_he_ops(struct wma_vdev_start_req *req,
+		tpAddBssParams add_bss)
+{
+	uint32_t he_ops = req->he_ops;
+	tDot11fIEvendor_he_op *he_op = &add_bss->he_op;
+
+	req->he_capable = add_bss->he_capable;
+
+	WMI_HEOPS_COLOR_SET(he_ops, he_op->bss_color);
+	WMI_HEOPS_DEFPE_SET(he_ops, he_op->default_pe);
+	WMI_HEOPS_TWT_SET(he_ops, he_op->twt_required);
+	WMI_HEOPS_RTSTHLD_SET(he_ops, he_op->rts_threshold);
+	WMI_HEOPS_PARTBSSCOLOR_SET(he_ops, he_op->partial_bss_col);
+	WMI_HEOPS_MAXBSSID_SET(he_ops, he_op->maxbssid_ind);
+	WMI_HEOPS_TXBSSID_SET(he_ops, he_op->tx_bssid_ind);
+	WMI_HEOPS_BSSCOLORDISABLE_SET(he_ops, he_op->bss_col_disabled);
+	WMI_HEOPS_DUALBEACON_SET(he_ops, he_op->dual_beacon);
+}
+
+/**
+ * wma_copy_txrxnode_he_ops() - copy HE ops from vdev start req to txrx node
+ * @node: pointer to txrx node
+ * @req: pointer to vdev start request
+ *
+ * Return: None
+ */
+void wma_copy_txrxnode_he_ops(struct wma_txrx_node *node,
+		struct wma_vdev_start_req *req)
+{
+	node->he_capable = req->he_capable;
+	node->he_ops = req->he_ops;
+}
+
+/**
+ * wma_copy_vdev_start_he_ops() - copy HE ops from vdev start req to vdev start
+ * @params: pointer to vdev_start_params
+ * @req: pointer to vdev start request
+ *
+ * Return: None
+ */
+void wma_copy_vdev_start_he_ops(struct vdev_start_params *params,
+		struct wma_vdev_start_req *req)
+{
+	params->he_ops = req->he_ops;
+}
+
+/**
+ * wma_vdev_set_he_bss_params() - set HE OPs in vdev start
+ * @wma: pointer to wma handle
+ * @vdev_id: VDEV id
+ * @req: pointer to vdev start request
+ *
+ * Return: None
+ */
+void wma_vdev_set_he_bss_params(tp_wma_handle wma, uint8_t vdev_id,
+				struct wma_vdev_start_req *req)
+{
+	QDF_STATUS ret;
+	struct wma_txrx_node *intr = wma->interfaces;
+
+	if (!req->he_capable)
+		return;
+
+	ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
+			WMI_VDEV_PARAM_HEOPS_0_31, req->he_ops);
+
+	if (QDF_IS_STATUS_ERROR(ret))
+		WMA_LOGE(FL("Failed to set HE OPs"));
+	else
+		intr[vdev_id].he_ops = req->he_ops;
+}
+
+/**
+ * wma_update_vdev_he_capable() - update vdev start request he capability
+ * @req: pointer to vdev start request
+ * @params: pointer to chan switch params
+ *
+ * Return: None
+ */
+void wma_update_vdev_he_capable(struct wma_vdev_start_req *req,
+		tpSwitchChannelParams params)
+{
+	req->he_capable = params->he_capable;
 }
