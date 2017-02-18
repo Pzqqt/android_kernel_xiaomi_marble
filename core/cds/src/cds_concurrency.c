@@ -2011,13 +2011,15 @@ enum cds_conc_next_action cds_need_opportunistic_upgrade(void)
 		} else if ((conc_connection_list[conn_index].mac == 1) &&
 			conc_connection_list[conn_index].in_use) {
 			mac |= CDS_MAC1;
-			if (CDS_MAC0_AND_MAC1 == mac) {
+			if (CDS_MAC0_AND_MAC1 == mac ||
+			    wma_is_hw_dbs_2x2_capable()) {
 				qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
 				goto done;
 			}
 		}
 	}
-	/* Let's request for single MAC mode */
+
+	cds_info("Request for single MAC mode");
 	upgrade = CDS_SINGLE_MAC;
 	/* Is there any connection had an initial connection with 2x2 */
 	for (conn_index = 0; conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;

@@ -13134,9 +13134,11 @@ static int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 		pRoamProfile->ChannelInfo.numOfChannels = 0;
 
 		if ((QDF_STA_MODE == pAdapter->device_mode)
-		    && wma_is_current_hwmode_dbs()) {
+		    && wma_is_current_hwmode_dbs() &&
+		    !wma_is_hw_dbs_2x2_capable()) {
 			cds_get_channel_from_scan_result(pAdapter,
 					pRoamProfile, &channel);
+			hdd_info("Move to single MAC mode(optimization) if applicable");
 			if (channel)
 				cds_checkn_update_hw_mode_single_mac_mode
 					(channel);
