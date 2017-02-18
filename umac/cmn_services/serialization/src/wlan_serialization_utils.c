@@ -376,7 +376,7 @@ wlan_serialization_is_active_scan_cmd_allowed(struct wlan_objmgr_pdev *pdev)
 
 	wlan_objmgr_iterate_obj_list(psoc, WLAN_PDEV_OP,
 			wlan_serialization_active_scan_cmd_count_handler,
-			&count, 0);
+			&count, 0, WLAN_SERIALIZATION_ID);
 	if (count < WLAN_SERIALIZATION_MAX_ACTIVE_SCAN_CMDS) {
 		serialization_notice("count is [%d]", count);
 		return true;

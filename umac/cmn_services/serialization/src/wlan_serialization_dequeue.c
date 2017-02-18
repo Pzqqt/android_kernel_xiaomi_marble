@@ -345,11 +345,11 @@ wlan_serialization_is_cmd_removed(struct wlan_objmgr_psoc *psoc,
 	if (check_active_queue)
 		wlan_objmgr_iterate_obj_list(psoc, WLAN_PDEV_OP,
 			wlan_serialization_remove_cmd_from_active_queue,
-				cmd, 0);
+				cmd, 0, WLAN_SERIALIZATION_ID);
 	else
 		wlan_objmgr_iterate_obj_list(psoc, WLAN_PDEV_OP,
 			wlan_serialization_remove_cmd_from_pending_queue,
-			cmd, 0);
+			cmd, 0, WLAN_SERIALIZATION_ID);
 
 	if (cmd->vdev == NULL)
 		return true;
