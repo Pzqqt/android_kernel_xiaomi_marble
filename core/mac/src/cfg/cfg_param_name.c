@@ -324,4 +324,5 @@ unsigned char *g_cfg_param_name[] = {
 	(unsigned char *)"OBSS_HT40_SCAN_ACTIVITY_THRESHOLD",
 	(unsigned char *)"TGT_GTX_USR_CFG",
 	(unsigned char *)"MAX_HT_MCS_TX_DATA",
+	(unsigned char *)"DISABLE_ABG_RATE_TX_DATA",
 };

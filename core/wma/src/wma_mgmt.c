@@ -887,6 +887,7 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 	uint32_t num_peer_11a_rates = 0;
 	uint32_t phymode;
 	uint32_t peer_nss = 1;
+	uint32_t disable_abg_rate;
 	struct wma_txrx_node *intr = NULL;
 	QDF_STATUS status;
 
@@ -917,21 +918,28 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 				   params->ch_width,
 				   params->vhtCapable);
 
-	/* Legacy Rateset */
-	rate_pos = (uint8_t *) peer_legacy_rates.rates;
-	for (i = 0; i < SIR_NUM_11B_RATES; i++) {
-		if (!params->supportedRates.llbRates[i])
-			continue;
-		rate_pos[peer_legacy_rates.num_rates++] =
-			params->supportedRates.llbRates[i];
-		num_peer_11b_rates++;
-	}
-	for (i = 0; i < SIR_NUM_11A_RATES; i++) {
-		if (!params->supportedRates.llaRates[i])
-			continue;
-		rate_pos[peer_legacy_rates.num_rates++] =
-			params->supportedRates.llaRates[i];
-		num_peer_11a_rates++;
+	if (wlan_cfg_get_int(wma->mac_context,
+			     WNI_CFG_DISABLE_ABG_RATE_FOR_TX_DATA,
+			     &disable_abg_rate) != eSIR_SUCCESS)
+		disable_abg_rate = WNI_CFG_DISABLE_ABG_RATE_FOR_TX_DATA_STADEF;
+
+	if (!disable_abg_rate) {
+		/* Legacy Rateset */
+		rate_pos = (uint8_t *) peer_legacy_rates.rates;
+		for (i = 0; i < SIR_NUM_11B_RATES; i++) {
+			if (!params->supportedRates.llbRates[i])
+				continue;
+			rate_pos[peer_legacy_rates.num_rates++] =
+				params->supportedRates.llbRates[i];
+			num_peer_11b_rates++;
+		}
+		for (i = 0; i < SIR_NUM_11A_RATES; i++) {
+			if (!params->supportedRates.llaRates[i])
+				continue;
+			rate_pos[peer_legacy_rates.num_rates++] =
+				params->supportedRates.llaRates[i];
+			num_peer_11a_rates++;
+		}
 	}
 
 	if ((phymode == MODE_11A && num_peer_11a_rates == 0) ||
