@@ -358,10 +358,10 @@ typedef struct hdd_tx_rx_stats_s {
 	/* start_xmit stats */
 	__u32    txXmitCalled;
 	__u32    txXmitDropped;
+	__u32    txXmitOrphaned;
 	__u32    txXmitClassifiedAC[NUM_TX_QUEUES];
 	__u32    txXmitDroppedAC[NUM_TX_QUEUES];
-	/* complete_cbk_stats */
-	__u32    txCompleted;
+
 	/* rx stats */
 	__u32 rxPackets[NUM_CPUS];
 	__u32 rxDropped[NUM_CPUS];

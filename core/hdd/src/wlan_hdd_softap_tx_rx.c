@@ -213,11 +213,29 @@ static inline struct sk_buff *hdd_skb_orphan(hdd_adapter_t *pAdapter,
 }
 
 #else
+/**
+ * hdd_skb_orphan() - skb_unshare a cloned packed else skb_orphan
+ * @pAdapter: pointer to HDD adapter
+ * @skb: pointer to skb data packet
+ *
+ * Return: pointer to skb structure
+ */
+static struct sk_buff *hdd_skb_orphan(hdd_adapter_t *pAdapter,
+		struct sk_buff *skb) {
 
-static inline struct sk_buff *hdd_skb_orphan(hdd_adapter_t *pAdapter,
-		struct sk_buff *skb)
-{
-	return skb_unshare(skb, GFP_ATOMIC);
+	struct sk_buff *nskb;
+	nskb = skb_unshare(skb, GFP_ATOMIC);
+
+	if (nskb == skb) {
+		/*
+		 * For UDP packets we want to orphan the packet to allow the app
+		 * to send more packets. The flow would ultimately be controlled
+		 * by the limited number of tx descriptors for the vdev.
+		 */
+		++pAdapter->hdd_stats.hddTxRxStats.txXmitOrphaned;
+		skb_orphan(skb);
+	}
+	return nskb;
 }
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 
