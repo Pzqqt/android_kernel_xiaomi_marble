@@ -5008,6 +5008,25 @@ typedef enum {
 
 /*
  * <ini>
+ * gRateForTxMgmt - rate for tx mgmt frame
+ * @Min: 0x0
+ * @Max: 0xFF
+ * @Default: 0xFF
+ *
+ * This ini is used to configure the rate for tx
+ * mgmt frame. Default 0xFF means disable.
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_RATE_FOR_TX_MGMT                  "gRateForTxMgmt"
+#define CFG_RATE_FOR_TX_MGMT_MIN              (WNI_CFG_RATE_FOR_TX_MGMT_STAMIN)
+#define CFG_RATE_FOR_TX_MGMT_MAX              (WNI_CFG_RATE_FOR_TX_MGMT_STAMAX)
+#define CFG_RATE_FOR_TX_MGMT_DEFAULT          (WNI_CFG_RATE_FOR_TX_MGMT_STADEF)
+
+/*
+ * <ini>
  * gTDLSTxPacketThreshold - Tx/Rx Packet threshold for initiating TDLS.
  * @Min: 0
  * @Max: 4294967295
@@ -9165,6 +9184,7 @@ struct hdd_config {
 	bool fRegChangeDefCountry;
 	uint16_t max_ht_mcs_txdata;
 	bool disable_abg_rate_txdata;
+	uint8_t rate_for_tx_mgmt;
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 	uint32_t TxFlowLowWaterMark;
 	uint32_t TxFlowHighWaterMarkOffset;

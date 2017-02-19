@@ -2139,6 +2139,13 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_DISABLE_ABG_RATE_FOR_TX_DATA_MIN,
 		     CFG_DISABLE_ABG_RATE_FOR_TX_DATA_MAX),
 
+	REG_VARIABLE(CFG_RATE_FOR_TX_MGMT, WLAN_PARAM_HexInteger,
+		     struct hdd_config, rate_for_tx_mgmt,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_RATE_FOR_TX_MGMT_DEFAULT,
+		     CFG_RATE_FOR_TX_MGMT_MIN,
+		     CFG_RATE_FOR_TX_MGMT_MAX),
+
 	REG_VARIABLE(CFG_ENABLE_FIRST_SCAN_2G_ONLY_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, enableFirstScan2GOnly,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -6704,6 +6711,13 @@ bool hdd_update_config_cfg(hdd_context_t *hdd_ctx)
 			    QDF_STATUS_E_FAILURE) {
 		status = false;
 		hdd_err("Couldn't pass on WNI_CFG_DISABLE_ABG_RATE_FOR_TX_DATA to CCM");
+	}
+
+	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_RATE_FOR_TX_MGMT,
+			    config->rate_for_tx_mgmt) ==
+			    QDF_STATUS_E_FAILURE) {
+		status = false;
+		hdd_err("Couldn't pass on WNI_CFG_RATE_FOR_TX_MGMT to CCM");
 	}
 
 	return status;
