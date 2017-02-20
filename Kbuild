@@ -79,13 +79,6 @@ ifeq ($(KERNEL_BUILD), 0)
 		else
 			CONFIG_FEATURE_PKTLOG := y
 		endif
-		ifeq ($(CONFIG_SLUB_DEBUG_ON),y)
-			CONFIG_FEATURE_DP_TRACE := y
-		else
-			ifeq ($(findstring perf,$(KERNEL_DEFCONFIG)),)
-				CONFIG_FEATURE_DP_TRACE := y
-			endif
-		endif
 	endif
 
 	#Flag to enable Legacy Fast Roaming2(LFR2)
@@ -1617,9 +1610,7 @@ ifeq ($(CONFIG_FEATURE_PKTLOG), y)
 CDEFINES +=     -DFEATURE_PKTLOG
 endif
 
-ifeq ($(CONFIG_FEATURE_DP_TRACE), y)
 CDEFINES +=	-DFEATURE_DP_TRACE
-endif
 
 ifeq ($(CONFIG_WLAN_NAPI), y)
 CDEFINES += -DFEATURE_NAPI
