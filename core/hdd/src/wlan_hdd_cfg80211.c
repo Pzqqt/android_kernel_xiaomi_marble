@@ -9331,16 +9331,16 @@ __wlan_hdd_cfg80211_set_trace_level(struct wiphy *wiphy,
 }
 
 /**
-  * wlan_hdd_cfg80211_set_trace_level() - Set the trace level
-  * @wiphy: Pointer to wireless phy
-  * @wdev: Pointer to wireless device
-  * @data: Pointer to data
-  * @data_len: Length of @data
-  *
-  * Wrapper function of __wlan_hdd_cfg80211_set_trace_level()
-  *
-  * Return: 0 on success, negative errno on failure
-  */
+ * wlan_hdd_cfg80211_set_trace_level() - Set the trace level
+ * @wiphy: Pointer to wireless phy
+ * @wdev: Pointer to wireless device
+ * @data: Pointer to data
+ * @data_len: Length of @data
+ *
+ * Wrapper function of __wlan_hdd_cfg80211_set_trace_level()
+ *
+ * Return: 0 on success, negative errno on failure
+ */
 
 static int wlan_hdd_cfg80211_set_trace_level(struct wiphy *wiphy,
 						struct wireless_dev *wdev,
