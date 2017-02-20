@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -19,4 +19,16 @@
 /**
  * DOC: defines driver functions interfacing with linux kernel
  */
-#include "wlan_cfg80211.h"
+
+#include <wlan_cfg80211_scan.h>
+#include <linux/wireless.h>
+#include <net/cfg80211.h>
+
+int wlan_cfg80211_scan(struct wiphy *wiphy,
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 6, 0))
+		struct net_device *dev,
+#endif
+		struct cfg80211_scan_request *request)
+{
+	return 0;
+}

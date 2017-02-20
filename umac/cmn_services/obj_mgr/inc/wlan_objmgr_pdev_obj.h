@@ -108,6 +108,9 @@
    /* enable/disable min rssi cli block */
 #define WLAN_PDEV_OP_MIN_RSSI_ENABLE    0x00010000
 
+
+struct osif_pdev_priv;
+
 /**
  * struct wlan_objmgr_pdev_nif  - pdev object nif structure
  * @pdev_fw_caps:       radio specific FW capabilities
@@ -118,7 +121,7 @@
 struct wlan_objmgr_pdev_nif {
 	uint32_t pdev_fw_caps;
 	uint32_t pdev_feature_caps;
-	void *pdev_ospriv;
+	struct pdev_osif_priv *pdev_ospriv;
 	uint8_t notified_ap_vdev;
 };
 
@@ -190,7 +193,7 @@ struct wlan_objmgr_pdev {
  *         Failure)
  */
 struct wlan_objmgr_pdev *wlan_objmgr_pdev_obj_create(
-			struct wlan_objmgr_psoc *psoc, void *scn);
+			struct wlan_objmgr_psoc *psoc, struct pdev_osif_priv *osif_priv);
 
 /**
  * wlan_objmgr_pdev_obj_delete() - pdev delete
@@ -603,7 +606,7 @@ static inline void wlan_pdev_set_hw_macaddr(struct wlan_objmgr_pdev *pdev,
  *
  * Return: ospriv - private pointer
  */
-static inline void *wlan_pdev_get_ospriv(struct wlan_objmgr_pdev *pdev)
+static inline struct pdev_osif_priv *wlan_pdev_get_ospriv(struct wlan_objmgr_pdev *pdev)
 {
 	/* This API is invoked with lock acquired, do not add log prints */
 	return pdev->pdev_nif.pdev_ospriv;

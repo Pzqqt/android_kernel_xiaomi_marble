@@ -79,7 +79,8 @@ static QDF_STATUS wlan_objmgr_pdev_obj_free(struct wlan_objmgr_pdev *pdev)
 }
 
 struct wlan_objmgr_pdev *wlan_objmgr_pdev_obj_create(
-			struct wlan_objmgr_psoc *psoc, void *osdev_priv)
+			struct wlan_objmgr_psoc *psoc,
+			struct pdev_osif_priv *osdev_priv)
 {
 	struct wlan_objmgr_pdev *pdev;
 	uint8_t id;
