@@ -386,6 +386,12 @@ static int __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 	}
 #endif
 
+	/*
+	 * Add SKB to internal tracking table before further processing
+	 * in WLAN driver.
+	 */
+	qdf_net_buf_debug_acquire_skb(skb, __FILE__, __LINE__);
+
 	pAdapter->stats.tx_bytes += skb->len;
 
 	if (qdf_nbuf_is_tso(skb))
@@ -415,12 +421,14 @@ static int __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 			  "%s: Failed to send packet to txrx for staid:%d",
 			  __func__, STAId);
 		++pAdapter->hdd_stats.hddTxRxStats.txXmitDroppedAC[ac];
-		goto drop_pkt;
+		goto drop_pkt_and_release_skb;
 	}
 	netif_trans_update(dev);
 
 	return NETDEV_TX_OK;
 
+drop_pkt_and_release_skb:
+	qdf_net_buf_debug_release_skb(skb);
 drop_pkt:
 
 	DPTRACE(qdf_dp_trace(skb, QDF_DP_TRACE_DROP_PACKET_RECORD,
