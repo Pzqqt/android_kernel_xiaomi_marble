@@ -940,6 +940,23 @@ typedef struct {
 	uint32_t rates[(WMI_MAX_SUPPORTED_RATES / 4) + 1];
 } target_rate_set;
 
+
+#define WMI_HOST_MAX_NUM_SS                    8
+#define WMI_MAX_HECAP_PHY_SIZE                 3
+
+/**
+ *  struct wmi_host_ppe_threshold -PPE threshold
+ *  @numss_m1: NSS - 1
+ *  @ru_count: Max RU count
+ *  @ppet16_ppet8_ru3_ru0: ppet8 and ppet16 for max num ss
+ */
+struct wmi_host_ppe_threshold {
+	uint32_t numss_m1;
+	uint32_t ru_count;
+	uint32_t ppet16_ppet8_ru3_ru0[WMI_HOST_MAX_NUM_SS];
+};
+
+
 /**
  * struct wmi_host_mac_addr - host mac addr 2 word representation of MAC addr
  * @mac_addr31to0: upper 4 bytes of  MAC address
@@ -996,6 +1013,11 @@ typedef struct {
  * @safe_mode_enabled: Safe enabled for this peer
  * @amsdu_disable: AMSDU disble
  * @peer_mac: Peer mac address
+ * @peer_he_cap_macinfo: Peer HE Cap MAC info
+ * @peer_he_ops: Peer HE operation info
+ * @peer_he_cap_phyinfo: Peer HE Cap PHY info
+ * @peer_he_mcs: Peer HE MCS MAP
+ * @peer_ppet: Peer HE PPET info
  */
 struct peer_assoc_params {
 	wmi_host_mac_addr peer_macaddr;
@@ -1046,6 +1068,11 @@ struct peer_assoc_params {
 	/* Use common structure */
 	uint8_t peer_mac[IEEE80211_ADDR_LEN];
 #endif
+	uint32_t peer_he_cap_macinfo;
+	uint32_t peer_he_ops;
+	uint32_t peer_he_cap_phyinfo[WMI_MAX_HECAP_PHY_SIZE];
+	uint32_t peer_he_mcs;
+	struct wmi_host_ppe_threshold peer_ppet;
 };
 
 /**
@@ -7064,19 +7091,6 @@ struct encrypt_decrypt_req_params {
 	uint8_t *data;
 };
 
-/**
- *  struct wmi_host_ppe_threshold -PPE threshold
- *  @numss_m1: NSS - 1
- *  @ru_count: Max RU count
- *  @ppet16_ppet8_ru3_ru0: ppet8 and ppet16 for max num ss
- */
-#define WMI_HOST_MAX_NUM_SS                    8
-struct wmi_host_ppe_threshold {
-	uint32_t numss_m1;
-	uint32_t ru_count;
-	uint32_t ppet16_ppet8_ru3_ru0[WMI_HOST_MAX_NUM_SS];
-};
-
 /*
  * HW mode config type replicated from FW header
  * @WMI_HOST_HW_MODE_SINGLE: Only one PHY is active.
@@ -7186,6 +7200,10 @@ struct wmi_host_hw_mode_caps {
  * @he_supp_mcs_5G: HE Supported MCS Set field Rx/Tx same
  * @tx_chain_mask_5G: Valid Transmit chain mask
  * @rx_chain_mask_5G: Valid Receive chain mask
+ * @he_cap_phy_info_2G: 2G HE capability phy field
+ * @he_cap_phy_info_5G: 5G HE capability phy field
+ * @he_ppet2G: 2G HE PPET info
+ * @he_ppet5G: 5G HE PPET info
  */
 struct wmi_host_mac_phy_caps {
 	uint32_t hw_mode_id;
@@ -7215,6 +7233,10 @@ struct wmi_host_mac_phy_caps {
 	uint32_t he_supp_mcs_5G;
 	uint32_t tx_chain_mask_5G;
 	uint32_t rx_chain_mask_5G;
+	uint32_t he_cap_phy_info_2G[WMI_MAX_HECAP_PHY_SIZE];
+	uint32_t he_cap_phy_info_5G[WMI_MAX_HECAP_PHY_SIZE];
+	struct wmi_host_ppe_threshold he_ppet2G;
+	struct wmi_host_ppe_threshold he_ppet5G;
 };
 
 /**

@@ -1802,6 +1802,14 @@ static QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 		mcs->tx_max_rate = param->tx_max_rate;
 		mcs->tx_mcs_set = param->tx_mcs_set;
 	}
+	/* Update 11ax capabilities */
+	cmd->peer_he_cap_info = param->peer_he_cap_macinfo;
+	cmd->peer_he_ops = param->peer_he_ops;
+	cmd->peer_he_mcs = param->peer_he_mcs;
+	qdf_mem_copy(&cmd->peer_he_cap_phy, &param->peer_he_cap_phyinfo,
+				sizeof(param->peer_he_cap_phyinfo));
+	qdf_mem_copy(&cmd->peer_ppet, &param->peer_ppet,
+				sizeof(param->peer_ppet));
 
 	WMI_LOGD("%s: vdev_id %d associd %d peer_flags %x rate_caps %x "
 		 "peer_caps %x listen_intval %d ht_caps %x max_mpdu %d "
@@ -13519,6 +13527,16 @@ static QDF_STATUS extract_mac_phy_cap_service_ready_ext_tlv(
 	param->he_supp_mcs_5G = mac_phy_caps->he_supp_mcs_5G;
 	param->tx_chain_mask_5G = mac_phy_caps->tx_chain_mask_5G;
 	param->rx_chain_mask_5G = mac_phy_caps->rx_chain_mask_5G;
+	qdf_mem_copy(&param->he_cap_phy_info_2G,
+			&mac_phy_caps->he_cap_phy_info_2G,
+			sizeof(param->he_cap_phy_info_2G));
+	qdf_mem_copy(&param->he_cap_phy_info_5G,
+			&mac_phy_caps->he_cap_phy_info_5G,
+			sizeof(param->he_cap_phy_info_5G));
+	qdf_mem_copy(&param->he_ppet2G, &mac_phy_caps->he_ppet2G,
+				 sizeof(param->he_ppet2G));
+	qdf_mem_copy(&param->he_ppet5G, &mac_phy_caps->he_ppet5G,
+				sizeof(param->he_ppet5G));
 
 	return QDF_STATUS_SUCCESS;
 }

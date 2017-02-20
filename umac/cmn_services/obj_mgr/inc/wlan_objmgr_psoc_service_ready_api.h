@@ -30,6 +30,7 @@
  */
 #define OBJMGR_SERVICE_BM_SIZE ((128 + sizeof(uint32_t) - 1) / sizeof(uint32_t))
 #define OBJMGR_HOST_MAX_NUM_SS (8)
+#define OBJMGR_HOST_MAX_PHY_SIZE (3)
 #define OBJMGR_MAX_HW_MODE (2)
 #define OBJMGR_MAX_MAC_PHY_CAP (5)
 #define OBJMGR_MAX_PHY_REG_CAP (3)
@@ -165,6 +166,25 @@ struct wlan_psoc_host_hal_reg_capabilities_ext {
 };
 
 /**
+ * struct wlan_objmgr_host_ppe_threshold - PPE threshold
+ * @numss_m1: NSS - 1
+ * @ru_count: Max RU count
+ * @ppet16_ppet8_ru3_ru0: ppet8 and ppet16 for max num ss
+ *
+ * wlan_objmgr_host_ppe_threshold is derived from wmi_host_ppe_threshold
+ * because of WIN direct attach limitation which blocks WMI data structures and
+ * WMI APIs direct usage in common code. So whenever wmi_host_ppe_threshold
+ * changes wlan_objmgr_host_ppe_threshold also needs to be updated
+ * accordingly.
+ */
+struct wlan_objmgr_host_ppe_threshold {
+	uint32_t numss_m1;
+	uint32_t ru_count;
+	uint32_t ppet16_ppet8_ru3_ru0[OBJMGR_HOST_MAX_NUM_SS];
+};
+
+
+/**
  * struct wlan_psoc_host_mac_phy_caps - Phy caps recvd in EXT service
  *  @hw_mode_id: identify a particular set of HW characteristics,
  *        as specified by the subsequent fields. WMI_MAC_PHY_CAPABILITIES
@@ -208,6 +228,10 @@ struct wlan_psoc_host_hal_reg_capabilities_ext {
  * @he_supp_mcs_5G: HE Supported MCS Set field Rx/Tx same
  * @tx_chain_mask_5G: Valid Transmit chain mask
  * @rx_chain_mask_5G: Valid Receive chain mask
+ * @he_cap_phy_info_2G: 2G HE capability phy field
+ * @he_cap_phy_info_5G: 5G HE capability phy field
+ * @he_ppet2G: 2G HE PPET info
+ * @he_ppet5G: 5G HE PPET info
  *
  * wlan_psoc_host_mac_phy_caps is derived from wmi_host_mac_phy_caps
  * because of WIN direct attach limitation which blocks WMI data structures and
@@ -243,6 +267,10 @@ struct wlan_psoc_host_mac_phy_caps {
 	uint32_t he_supp_mcs_5G;
 	uint32_t tx_chain_mask_5G;
 	uint32_t rx_chain_mask_5G;
+	uint32_t he_cap_phy_info_2G[OBJMGR_HOST_MAX_PHY_SIZE];
+	uint32_t he_cap_phy_info_5G[OBJMGR_HOST_MAX_PHY_SIZE];
+	struct wlan_objmgr_host_ppe_threshold he_ppet2G;
+	struct wlan_objmgr_host_ppe_threshold he_ppet5G;
 };
 
 /**
@@ -258,23 +286,7 @@ struct wlan_psoc_host_hw_mode_caps {
 	uint32_t hw_mode_config_type;
 };
 
-/**
- * struct wlan_objmgr_host_ppe_threshold - PPE threshold
- * @numss_m1: NSS - 1
- * @ru_count: Max RU count
- * @ppet16_ppet8_ru3_ru0: ppet8 and ppet16 for max num ss
- *
- * wlan_objmgr_host_ppe_threshold is derived from wmi_host_ppe_threshold
- * because of WIN direct attach limitation which blocks WMI data structures and
- * WMI APIs direct usage in common code. So whenever wmi_host_ppe_threshold
- * changes wlan_objmgr_host_ppe_threshold also needs to be updated
- * accordingly.
- */
-struct wlan_objmgr_host_ppe_threshold {
-	uint32_t numss_m1;
-	uint32_t ru_count;
-	uint32_t ppet16_ppet8_ru3_ru0[OBJMGR_HOST_MAX_NUM_SS];
-};
+
 
 /**
  * struct wlan_psoc_host_service_ext_param - EXT service base params in event
