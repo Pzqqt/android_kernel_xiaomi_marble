@@ -471,8 +471,9 @@ struct cdp_wds_ops {
 struct cdp_raw_ops {
 	int (*txrx_get_nwifi_mode)(struct cdp_vdev *vdev);
 
-	int
-		(*rsim_tx_encap)(struct cdp_vdev *vdev, qdf_nbuf_t *pnbuf);
+	void (*rsim_get_astentry)(struct cdp_vdev *vdev,
+				qdf_nbuf_t *pnbuf,
+				struct cdp_raw_ast *raw_ast);
 };
 
 #ifdef CONFIG_WIN

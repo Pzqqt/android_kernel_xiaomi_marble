@@ -29,5 +29,6 @@
 struct cdp_cfg;
 struct cdp_pdev;
 struct cdp_vdev;
+struct cdp_raw_ast;
 
 #endif
