@@ -942,8 +942,7 @@ typedef struct {
 
 
 #define WMI_HOST_MAX_NUM_SS                    8
-#define WMI_MAX_HECAP_PHY_SIZE                 3
-
+#define WMI_HOST_MAX_HECAP_PHY_SIZE            3
 /**
  *  struct wmi_host_ppe_threshold -PPE threshold
  *  @numss_m1: NSS - 1
@@ -1013,6 +1012,7 @@ typedef struct {
  * @safe_mode_enabled: Safe enabled for this peer
  * @amsdu_disable: AMSDU disble
  * @peer_mac: Peer mac address
+ * @he_flag: HE flags
  * @peer_he_cap_macinfo: Peer HE Cap MAC info
  * @peer_he_ops: Peer HE operation info
  * @peer_he_cap_phyinfo: Peer HE Cap PHY info
@@ -1068,9 +1068,10 @@ struct peer_assoc_params {
 	/* Use common structure */
 	uint8_t peer_mac[IEEE80211_ADDR_LEN];
 #endif
+	bool he_flag;
 	uint32_t peer_he_cap_macinfo;
 	uint32_t peer_he_ops;
-	uint32_t peer_he_cap_phyinfo[WMI_MAX_HECAP_PHY_SIZE];
+	uint32_t peer_he_cap_phyinfo[WMI_HOST_MAX_HECAP_PHY_SIZE];
 	uint32_t peer_he_mcs;
 	struct wmi_host_ppe_threshold peer_ppet;
 };
@@ -5361,6 +5362,11 @@ typedef enum {
 	wmi_vdev_param_atf_ssid_sched_policy,
 	wmi_vdev_param_disable_dyn_bw_rts,
 	wmi_vdev_param_ampdu_subframe_size_per_ac,
+	wmi_vdev_param_he_dcm_enable,
+	wmi_vdev_param_he_bss_color,
+	wmi_vdev_param_he_range_ext_enable,
+	wmi_vdev_param_set_hemu_mode,
+	wmi_vdev_param_tx_ofdma_cplen,
 
 	wmi_vdev_param_max,
 } wmi_conv_vdev_param_id;
@@ -6111,6 +6117,7 @@ typedef enum {
 	WMI_HOST_RATE_PREAMBLE_CCK,
 	WMI_HOST_RATE_PREAMBLE_HT,
 	WMI_HOST_RATE_PREAMBLE_VHT,
+	WMI_HOST_RATE_PREAMBLE_HE,
 } WMI_HOST_RATE_PREAMBLE;
 
 #define WMI_HOST_FIXED_RATE_NONE	(0xff)
@@ -7233,8 +7240,8 @@ struct wmi_host_mac_phy_caps {
 	uint32_t he_supp_mcs_5G;
 	uint32_t tx_chain_mask_5G;
 	uint32_t rx_chain_mask_5G;
-	uint32_t he_cap_phy_info_2G[WMI_MAX_HECAP_PHY_SIZE];
-	uint32_t he_cap_phy_info_5G[WMI_MAX_HECAP_PHY_SIZE];
+	uint32_t he_cap_phy_info_2G[WMI_HOST_MAX_HECAP_PHY_SIZE];
+	uint32_t he_cap_phy_info_5G[WMI_HOST_MAX_HECAP_PHY_SIZE];
 	struct wmi_host_ppe_threshold he_ppet2G;
 	struct wmi_host_ppe_threshold he_ppet5G;
 };
