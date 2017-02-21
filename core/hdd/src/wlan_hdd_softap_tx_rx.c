@@ -530,9 +530,15 @@ QDF_STATUS hdd_softap_init_tx_rx(hdd_adapter_t *pAdapter)
  */
 QDF_STATUS hdd_softap_deinit_tx_rx(hdd_adapter_t *pAdapter)
 {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	if (pAdapter == NULL) {
+		hdd_err("Called with pAdapter = NULL.");
+		return QDF_STATUS_E_FAILURE;
+	}
 
-	return status;
+	pAdapter->txrx_vdev = NULL;
+	pAdapter->tx_fn = NULL;
+	hdd_info("Deregistering TX function hook !");
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
