@@ -2636,6 +2636,13 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 		goto out;
 	}
 
+	/* Delete already configured multicast address list */
+	if (adapter->mc_addr_list.mc_cnt > 0) {
+		hdd_info("clear previously configured MC address list");
+		hdd_disable_and_flush_mc_addr_list(adapter,
+			pmo_mc_list_change_notify);
+	}
+
 	if (dev->flags & IFF_ALLMULTI) {
 		hdd_debug("allow all multicast frames");
 		hdd_disable_and_flush_mc_addr_list(adapter,
