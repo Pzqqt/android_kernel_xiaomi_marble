@@ -161,18 +161,6 @@ void ucfg_scan_filter_valid_channel(struct wlan_objmgr_pdev *pdev,
 	uint8_t *chan_list, uint32_t num_chan);
 
 /**
- * scan_iterator_func() - function prototype of scan iterator function
- * @scan_entry: scan entry object
- * @arg: extra argument
- *
- * PROTO TYPE, scan iterator function prototype
- *
- * @Return: QDF_STATUS
- */
-typedef QDF_STATUS (*scan_iterator_func) (void *arg,
-	struct scan_cache_entry *scan_entry);
-
-/**
  * ucfg_scan_db_iterate() - function to iterate scan table
  * @pdev: pdev object
  * @func: iterator function pointer
@@ -304,16 +292,6 @@ ucfg_scan_get_vdev_status(struct wlan_objmgr_vdev *vdev);
  */
 enum scm_scan_status
 ucfg_scan_get_pdev_status(struct wlan_objmgr_pdev *pdev);
-
-/**
- * update_beacon_cb() - cb to inform/update beacon
- * @psoc: psoc pointer
- * @scan_params:  scan entry to inform/update
- *
- * @Return: void
- */
-typedef void (*update_beacon_cb) (struct wlan_objmgr_pdev *pdev,
-	struct scan_cache_entry *scan_entry);
 
 /**
  * ucfg_scan_register_bcn_cb() - API to register api

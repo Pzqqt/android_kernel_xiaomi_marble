@@ -20,6 +20,10 @@
  * DOC: contains scan south bound interface definitions
  */
 
+#include <wlan_cmn.h>
+#include <qdf_list.h>
+#include "../../core/src/wlan_scan_main.h"
+#include <wlan_scan_utils_api.h>
 #include <wlan_scan_ucfg_api.h>
 #include <wlan_scan_tgt_api.h>
 #include <wlan_objmgr_cmn.h>
@@ -174,4 +178,57 @@ tgt_scan_event_handler(struct wlan_objmgr_psoc *psoc,
 	msg.callback = scm_scan_event_handler;
 
 	return scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+}
+
+QDF_STATUS tgt_scan_bcn_probe_rx_callback(struct wlan_objmgr_psoc *psoc,
+	struct wlan_objmgr_peer *peer, qdf_nbuf_t buf,
+	struct mgmt_rx_event_params *rx_param,
+	enum mgmt_frame_type frm_type)
+{
+	struct scheduler_msg msg = {0};
+	struct scan_bcn_probe_event *bcn;
+	QDF_STATUS status;
+
+	if ((frm_type != MGMT_PROBE_RESP) &&
+	   (frm_type != MGMT_BEACON)) {
+		scm_err("frame is not beacon or probe resp");
+		qdf_nbuf_free(buf);
+		return QDF_STATUS_E_INVAL;
+	}
+	bcn = qdf_mem_malloc(sizeof(*bcn));
+
+	if (!bcn) {
+		scm_err("Failed to allocate memory for bcn");
+		qdf_nbuf_free(buf);
+		return QDF_STATUS_E_NOMEM;
+	}
+	bcn->rx_data =
+		qdf_mem_malloc(sizeof(*rx_param));
+	if (!bcn->rx_data) {
+		scm_err("Failed to allocate memory for rx_data");
+		qdf_mem_free(bcn);
+		qdf_nbuf_free(buf);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	if (frm_type == MGMT_PROBE_RESP)
+		bcn->frm_type = MGMT_SUBTYPE_PROBE_RESP;
+	else
+		bcn->frm_type = MGMT_SUBTYPE_BEACON;
+	bcn->psoc = psoc;
+	bcn->buf = buf;
+	qdf_mem_copy(bcn->rx_data, rx_param, sizeof(*rx_param));
+
+	msg.bodyptr = bcn;
+	msg.callback = scm_handle_bcn_probe;
+
+	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		scm_err("failed to post to QDF_MODULE_ID_TARGET_IF");
+		qdf_mem_free(bcn->rx_data);
+		qdf_mem_free(bcn);
+		qdf_nbuf_free(buf);
+	}
+	return status;
 }

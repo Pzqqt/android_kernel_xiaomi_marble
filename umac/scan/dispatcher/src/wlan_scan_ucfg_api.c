@@ -30,6 +30,12 @@
 #include "../../core/src/wlan_scan_manager.h"
 #include "../../core/src/wlan_scan_cache_db.h"
 
+QDF_STATUS ucfg_scan_register_bcn_cb(struct wlan_objmgr_psoc *psoc,
+	update_beacon_cb cb, enum scan_cb_type type)
+{
+	return scm_scan_register_bcn_cb(psoc, cb, type);
+}
+
 QDF_STATUS ucfg_scan_init(void)
 {
 	QDF_STATUS status;
@@ -604,6 +610,29 @@ ucfg_scan_get_pdev_status(struct wlan_objmgr_pdev *pdev)
 	return get_scan_status_from_serialization_status(status);
 }
 
+static void
+ucfg_scan_register_unregister_bcn_cb(struct wlan_objmgr_psoc *psoc,
+	bool enable)
+{
+	QDF_STATUS status;
+	struct mgmt_txrx_mgmt_frame_cb_info cb_info[2];
+
+	cb_info[0].frm_type = MGMT_PROBE_RESP;
+	cb_info[0].mgmt_rx_cb = tgt_scan_bcn_probe_rx_callback;
+	cb_info[1].frm_type = MGMT_BEACON;
+	cb_info[1].mgmt_rx_cb = tgt_scan_bcn_probe_rx_callback;
+
+	if (enable)
+		status = wlan_mgmt_txrx_register_rx_cb(psoc,
+					 WLAN_UMAC_COMP_SCAN, cb_info, 2);
+	else
+		status = wlan_mgmt_txrx_deregister_rx_cb(psoc,
+					 WLAN_UMAC_COMP_SCAN, cb_info, 2);
+	if (status != QDF_STATUS_SUCCESS)
+		scm_err("%s the Handle with MGMT TXRX layer has failed",
+			enable ? "Registering" : "Deregistering");
+}
+
 QDF_STATUS
 ucfg_scan_psoc_open(struct wlan_objmgr_psoc *psoc)
 {
@@ -622,7 +651,6 @@ ucfg_scan_psoc_open(struct wlan_objmgr_psoc *psoc)
 	/* Initialize the scan Globals */
 	wlan_scan_global_init(scan_obj);
 	qdf_spinlock_create(&scan_obj->lock);
-	scm_db_init(psoc);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -643,7 +671,6 @@ ucfg_scan_psoc_close(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_FAILURE;
 	}
 	qdf_spinlock_destroy(&scan_obj->lock);
-	scm_db_deinit(psoc);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -661,6 +688,8 @@ ucfg_scan_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	/* Subscribe for scan events from lmac layesr */
 	status = tgt_scan_register_ev_handler(psoc);
 	QDF_ASSERT(status == QDF_STATUS_SUCCESS);
+	scm_db_init(psoc);
+	ucfg_scan_register_unregister_bcn_cb(psoc, true);
 
 	return status;
 }
@@ -678,6 +707,8 @@ ucfg_scan_psoc_disable(struct wlan_objmgr_psoc *psoc)
 	/* Unsubscribe for scan events from lmac layesr */
 	status = tgt_scan_unregister_ev_handler(psoc);
 	QDF_ASSERT(status == QDF_STATUS_SUCCESS);
+	ucfg_scan_register_unregister_bcn_cb(psoc, false);
+	scm_db_deinit(psoc);
 
 	return status;
 }

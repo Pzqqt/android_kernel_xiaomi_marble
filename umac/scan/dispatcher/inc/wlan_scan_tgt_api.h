@@ -45,7 +45,8 @@
  */
 QDF_STATUS tgt_scan_bcn_probe_rx_callback(struct wlan_objmgr_psoc *psoc,
 	struct wlan_objmgr_peer *peer, qdf_nbuf_t buf,
-	struct mgmt_rx_event_params *rx_param, uint32_t frm_type);
+	struct mgmt_rx_event_params *rx_param,
+	enum mgmt_frame_type frm_type);
 
 /**
  * tgt_scan_nlo_complete_evt_handler() - The callbeack registered

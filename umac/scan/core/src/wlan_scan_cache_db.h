@@ -24,6 +24,9 @@
 #define _WLAN_SCAN_CACHE_DB_H_
 
 #include <scheduler_api.h>
+#include <wlan_objmgr_psoc_obj.h>
+#include <wlan_objmgr_pdev_obj.h>
+#include <wlan_objmgr_vdev_obj.h>
 #include <wlan_scan_public_structs.h>
 
 #define SCAN_HASH_SIZE 64
@@ -69,16 +72,12 @@ struct scan_bcn_probe_event {
 QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg);
 
 /**
- * scm_flush_scan_entry() - API to flush the scan entry
+ * scm_age_out_entries() - Age out entries older than aging time
  * @scan_db: scan database
- * @scan_entry:entry scan_node
  *
- * API to flush the scan entry
- *
- * Return: QDF status.
+ * Return: void.
  */
-QDF_STATUS scm_flush_scan_entry(struct scan_dbs *scan_db,
-	struct scan_cache_node *scan_node);
+void scm_age_out_entries(struct scan_dbs *scan_db);
 
 /**
  * scm_get_scan_result() - fetches scan result

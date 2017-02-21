@@ -179,10 +179,12 @@ struct bss_info {
 /**
  * struct scan_cache_node - Scan cache entry node
  * @node: node pointers
+ * @ref_cnt: ref count if in use
  * @entry: scan entry pointer
  */
 struct scan_cache_node {
-	qdf_list_node_t node;   /* MUST be first element */
+	qdf_list_node_t node;
+	qdf_atomic_t ref_cnt;
 	struct scan_cache_entry *entry;
 };
 
@@ -788,4 +790,26 @@ enum scan_cb_type {
  * struct pno_scan_req_params - forward declaration
  */
 struct pno_scan_req_params;
+
+/**
+ * update_beacon_cb() - cb to inform/update beacon
+ * @psoc: psoc pointer
+ * @scan_params:  scan entry to inform/update
+ *
+ * @Return: void
+ */
+typedef void (*update_beacon_cb) (struct wlan_objmgr_pdev *pdev,
+	struct scan_cache_entry *scan_entry);
+
+/**
+ * scan_iterator_func() - function prototype of scan iterator function
+ * @scan_entry: scan entry object
+ * @arg: extra argument
+ *
+ * PROTO TYPE, scan iterator function prototype
+ *
+ * @Return: QDF_STATUS
+ */
+typedef QDF_STATUS (*scan_iterator_func) (void *arg,
+	struct scan_cache_entry *scan_entry);
 #endif
