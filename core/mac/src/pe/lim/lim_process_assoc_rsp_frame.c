@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -853,6 +853,17 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 			return;
 		}
 	}
+
+	if (assoc_rsp->QosMapSet.present)
+		qdf_mem_copy(&session_entry->QosMapSet,
+			&assoc_rsp->QosMapSet, sizeof(tSirQosMapSet));
+	 else
+		qdf_mem_zero(&session_entry->QosMapSet, sizeof(tSirQosMapSet));
+
+	if (assoc_rsp->obss_scanparams.present)
+		lim_update_obss_scanparams(session_entry,
+				&assoc_rsp->obss_scanparams);
+
 	if (subtype == LIM_REASSOC) {
 		lim_log
 		(mac_ctx, LOG1, FL("Successfully Reassociated with BSS"));
@@ -900,6 +911,8 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 			lim_log(mac_ctx, LOG1, FL("Sending self sta"));
 			lim_update_assoc_sta_datas(mac_ctx, sta_ds, assoc_rsp,
 				session_entry);
+			lim_update_stads_ext_cap(mac_ctx, session_entry,
+						 assoc_rsp, sta_ds);
 			/* Store assigned AID for TIM processing */
 			session_entry->limAID = assoc_rsp->aid & 0x3FFF;
 			/* Downgrade the EDCA parameters if needed */
@@ -1019,16 +1032,6 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_CONNECTED, session_entry,
 			      eSIR_SUCCESS, eSIR_SUCCESS);
 #endif
-	if (assoc_rsp->obss_scanparams.present)
-		lim_update_obss_scanparams(session_entry,
-				&assoc_rsp->obss_scanparams);
-
-	if (assoc_rsp->QosMapSet.present)
-		qdf_mem_copy(&session_entry->QosMapSet,
-			&assoc_rsp->QosMapSet, sizeof(tSirQosMapSet));
-	 else
-		qdf_mem_zero(&session_entry->QosMapSet, sizeof(tSirQosMapSet));
-
 	lim_update_stads_ext_cap(mac_ctx, session_entry, assoc_rsp, sta_ds);
 	/* Update the BSS Entry, this entry was added during preassoc. */
 	if (eSIR_SUCCESS == lim_sta_send_add_bss(mac_ctx, assoc_rsp,
