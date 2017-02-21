@@ -394,8 +394,6 @@ void sap_dfs_cac_timer_callback(void *data);
 
 void sap_cac_reset_notify(tHalHandle hHal);
 
-bool sap_acs_channel_check(ptSapContext sapContext, uint8_t channelNumber);
-
 bool
 sap_channel_matrix_check(ptSapContext sapContext,
 			 ePhyChanBondState cbMode,

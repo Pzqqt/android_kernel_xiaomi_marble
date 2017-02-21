@@ -1281,6 +1281,37 @@ bool sap_check_in_avoid_ch_list(ptSapContext sap_ctx, uint8_t channel)
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 
 /**
+ * sap_is_valid_acs_channel() - checks if given channel is in acs channel range
+ * @sap_ctx: sap context.
+ * @channel: channel to be checked in acs range
+ *
+ * Return: true, if channel is valid, false otherwise.
+ */
+static bool sap_is_valid_acs_channel(ptSapContext sap_ctx, uint8_t channel)
+{
+	int i = 0;
+
+	/* Check whether acs is enabled */
+	if (!sap_ctx->acs_cfg->acs_mode)
+		return true;
+
+	if ((channel < sap_ctx->acs_cfg->start_ch) ||
+			(channel > sap_ctx->acs_cfg->end_ch)) {
+		return false;
+	}
+	if (!sap_ctx->acs_cfg->ch_list) {
+		/* List not present, return */
+		return true;
+	} else {
+		for (i = 0; i < sap_ctx->acs_cfg->ch_list_count; i++)
+			if (channel == sap_ctx->acs_cfg->ch_list[i])
+				return true;
+	}
+
+	return false;
+}
+
+/**
  * sap_apply_rules() - validates channels in sap_ctx channel list
  * @sap_ctx: sap context pointer
  *
@@ -1299,7 +1330,7 @@ static uint8_t sap_apply_rules(ptSapContext sap_ctx)
 	uint8_t num_valid_ch, i = 0, ch_id;
 	tAll5GChannelList *sap_all_ch = &sap_ctx->SapAllChnlList;
 	bool is_ch_nol = false;
-	bool is_out_of_range = false;
+	bool is_valid_acs_chan = false;
 	tpAniSirGlobal mac_ctx;
 	tHalHandle hal = CDS_GET_HAL_CB(sap_ctx->p_cds_gctx);
 	uint8_t preferred_location;
@@ -1410,15 +1441,16 @@ static uint8_t sap_apply_rules(ptSapContext sap_ctx)
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 
 		/* check if the channel is within ACS channel range */
-		is_out_of_range = sap_acs_channel_check(sap_ctx, ch_id);
-		if (true == is_out_of_range) {
+		is_valid_acs_chan = sap_is_valid_acs_channel(sap_ctx, ch_id);
+		if (is_valid_acs_chan == false) {
 			/*
 			 * mark this channel invalid since it is out of ACS
 			 * channel range
 			 */
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_LOW,
-				  FL("index: %d, Channel = %d out of ACS channel range"),
-				  i, ch_id);
+				  FL("index=%d, Channel=%d out of ACS chan range %d-%d"),
+				  i, ch_id, sap_ctx->acs_cfg->start_ch,
+				  sap_ctx->acs_cfg->end_ch);
 			sap_all_ch->channelList[i].valid = false;
 			num_valid_ch--;
 			continue;
@@ -1790,26 +1822,6 @@ static uint8_t sap_random_channel_sel(ptSapContext sap_ctx)
 		FL("sapdfs: target_channel = %d"),
 		target_channel);
 	return target_channel;
-}
-
-bool sap_acs_channel_check(ptSapContext sapContext, uint8_t channelNumber)
-{
-	int i = 0;
-	if (!sapContext->acs_cfg->acs_mode)
-		return false;
-
-	if ((channelNumber >= sapContext->acs_cfg->start_ch) &&
-		(channelNumber <= sapContext->acs_cfg->end_ch)) {
-		if (!sapContext->acs_cfg->ch_list) {
-			return false;
-		} else {
-			for (i = 0; i < sapContext->acs_cfg->ch_list_count; i++)
-				if (channelNumber ==
-						sapContext->acs_cfg->ch_list[i])
-					return false;
-		}
-	}
-	return true;
 }
 
 /**
