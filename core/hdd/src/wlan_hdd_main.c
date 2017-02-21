@@ -8337,6 +8337,14 @@ static int hdd_features_init(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 			goto deregister_cb;
 		}
 	}
+	if (hdd_ctx->config->goptimize_chan_avoid_event) {
+		status = sme_enable_disable_chanavoidind_event(
+							hdd_ctx->hHal, 0);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("Failed to disable Chan Avoidance Indication");
+			goto deregister_cb;
+		}
+	}
 
 	/* register P2P Listen Offload event callback */
 	if (wma_is_p2p_lo_capable())
@@ -8852,13 +8860,6 @@ int hdd_wlan_startup(struct device *dev)
 	qdf_mc_timer_start(&hdd_ctx->iface_change_timer,
 			   hdd_ctx->config->iface_change_wait_time * 5000);
 
-	if (hdd_ctx->config->goptimize_chan_avoid_event) {
-		status = sme_enable_disable_chanavoidind_event(
-							hdd_ctx->hHal, 0);
-		if (!QDF_IS_STATUS_SUCCESS(status))
-			hdd_err("Failed to disable Chan Avoidance Indication");
-	}
-	complete(&wlan_start_comp);
 	goto success;
 
 err_close_adapters:
