@@ -1368,4 +1368,35 @@ int wma_wlan_bt_activity_evt_handler(void *handle, uint8_t *event,
 int wma_peer_ant_info_evt_handler(void *handle, u_int8_t *event,
 	u_int32_t len);
 
+/**
+ * wma_update_beacon_interval() - update beacon interval in fw
+ * @wma: wma handle
+ * @vdev_id: vdev id
+ * @beaconInterval: becon interval
+ *
+ * Return: none
+ */
+void
+wma_update_beacon_interval(tp_wma_handle wma, uint8_t vdev_id,
+				uint16_t beaconInterval);
+
+#define RESET_BEACON_INTERVAL_TIMEOUT 200
+
+struct wma_beacon_interval_reset_req {
+	qdf_timer_t event_timeout;
+	uint8_t vdev_id;
+	uint16_t interval;
+};
+
+/**
+ * wma_fill_beacon_interval_reset_req() - req to reset beacon interval
+ * @wma: wma handle
+ * @vdev_id: vdev id
+ * @beacon_interval: beacon interval
+ * @timeout: timeout val
+ *
+ * Return: status
+ */
+int wma_fill_beacon_interval_reset_req(tp_wma_handle wma, uint8_t vdev_id,
+				uint16_t beacon_interval, uint32_t timeout);
 #endif

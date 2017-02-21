@@ -748,6 +748,8 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 		sap_ctx->sessionId;
 	pmac->sap.SapDfsInfo.dfs_beacon_tx_enhanced =
 		pConfig->dfs_beacon_tx_enhanced;
+	pmac->sap.SapDfsInfo.reduced_beacon_interval =
+				pConfig->reduced_beacon_interval;
 
 	/* Copy MAC filtering settings to sap context */
 	sap_ctx->eSapMacAddrAclMode = pConfig->SapMacaddr_acl;

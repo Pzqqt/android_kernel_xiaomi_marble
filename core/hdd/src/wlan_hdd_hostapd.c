@@ -7598,6 +7598,8 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	pConfig->enOverLapCh = iniConfig->gEnableOverLapCh;
 	pConfig->dtim_period = pBeacon->dtim_period;
 	pConfig->dfs_beacon_tx_enhanced = iniConfig->dfs_beacon_tx_enhanced;
+	pConfig->reduced_beacon_interval =
+			iniConfig->reduced_beacon_interval;
 	hdd_debug("acs_mode %d", pConfig->acs_cfg.acs_mode);
 
 	if (pConfig->acs_cfg.acs_mode == true) {

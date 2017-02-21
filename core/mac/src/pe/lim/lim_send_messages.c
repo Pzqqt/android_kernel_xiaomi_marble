@@ -266,6 +266,8 @@ tSirRetStatus lim_send_switch_chnl_params(tpAniSirGlobal pMac,
 	pChnlParams->restart_on_chan_switch = is_restart;
 	pChnlParams->cac_duration_ms = cac_duration_ms;
 	pChnlParams->dfs_regdomain = dfs_regdomain;
+	pChnlParams->reduced_beacon_interval =
+		pMac->sap.SapDfsInfo.reduced_beacon_interval;
 
 	if (cds_is_5_mhz_enabled())
 		pChnlParams->ch_width = CH_WIDTH_5MHZ;

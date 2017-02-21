@@ -629,6 +629,7 @@ typedef struct sap_Config {
 	uint8_t sap_chanswitch_mode;
 	bool chan_switch_hostapd_rate_enabled;
 	bool dfs_beacon_tx_enhanced;
+	uint16_t reduced_beacon_interval;
 } tsap_Config_t;
 
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
@@ -723,6 +724,7 @@ typedef struct sSapDfsInfo {
 	uint8_t sap_ch_switch_beacon_cnt;
 	uint8_t sap_ch_switch_mode;
 	bool dfs_beacon_tx_enhanced;
+	uint16_t reduced_beacon_interval;
 } tSapDfsInfo;
 
 typedef struct tagSapCtxList {

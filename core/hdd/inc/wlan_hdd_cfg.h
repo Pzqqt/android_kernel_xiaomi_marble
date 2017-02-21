@@ -13293,6 +13293,30 @@ enum hdd_external_acs_freq_band {
 #define CFG_DFS_BEACON_TX_ENHANCED_DEFAULT (0)
 
 /*
+ * gReducedBeaconInterval - beacon interval reduced
+ * @Min: 0
+ * @Max: 100
+ * @Default: 0
+ *
+ * This ini is used to reduce beacon interval before channel
+ * switch (when val great than 0, or the feature is disabled).
+ * It would reduce the downtime on the STA side which is
+ * waiting for beacons from the AP to resume back transmission.
+ * Switch back the beacon_interval to its original value after
+ * channel switch based on the timeout.
+ *
+ * Related: none
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_REDUCED_BEACON_INTERVAL         "gReducedBeaconInterval"
+#define CFG_REDUCED_BEACON_INTERVAL_MIN     (0)
+#define CFG_REDUCED_BEACON_INTERVAL_MAX     (100)
+#define CFG_REDUCED_BEACON_INTERVAL_DEFAULT (0)
+
+/*
  * Type declarations
  */
 
@@ -14157,6 +14181,7 @@ struct hdd_config {
 	uint8_t packet_filters_bitmap;
 	uint8_t enable_phy_reg_retention;
 	uint8_t dfs_beacon_tx_enhanced;
+	uint16_t reduced_beacon_interval;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

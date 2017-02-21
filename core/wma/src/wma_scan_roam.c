@@ -3133,6 +3133,7 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 	struct wma_txrx_node *intr = wma->interfaces;
 	struct policy_mgr_hw_mode_params hw_mode = {0};
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	uint16_t beacon_interval_ori;
 
 	WMA_LOGD("%s: Enter", __func__);
 	if (!wma_find_vdev_by_addr(wma, params->selfStaMacAddr, &vdev_id)) {
@@ -3202,6 +3203,33 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 			wma->interfaces[req.vdev_id].beacon_filter_enabled)
 		wma_remove_beacon_filter(wma,
 				&wma->interfaces[req.vdev_id].beacon_filter);
+
+	if ((wma_is_vdev_in_ap_mode(wma, req.vdev_id) == true) &&
+		(params->reduced_beacon_interval)) {
+		/* Reduce the beacon interval just before the channel switch.
+		 * This would help in reducing the downtime on the STA side
+		 * (which is waiting for beacons from the AP to resume back
+		 * transmission). Switch back the beacon_interval to its
+		 * original value after the channel switch based on the
+		 * timeout. This would ensure there are atleast some beacons
+		 * sent with increased frequency.
+		 */
+
+		WMA_LOGD("%s: Changing beacon interval to %d",
+			__func__, params->reduced_beacon_interval);
+
+		/* Add a timer to reset the beacon interval back*/
+		beacon_interval_ori = req.beacon_intval;
+		req.beacon_intval = params->reduced_beacon_interval;
+		if (wma_fill_beacon_interval_reset_req(wma,
+			req.vdev_id,
+			beacon_interval_ori,
+			RESET_BEACON_INTERVAL_TIMEOUT)) {
+
+			WMA_LOGD("%s: Failed to fill beacon interval reset req",
+				__func__);
+		}
+	}
 
 	if (QDF_GLOBAL_MONITOR_MODE == cds_get_conparam() &&
 	    wma_is_vdev_up(vdev_id)) {

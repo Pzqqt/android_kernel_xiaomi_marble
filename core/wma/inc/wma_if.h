@@ -938,6 +938,7 @@ typedef struct {
 #endif
 	uint32_t cac_duration_ms;
 	uint32_t dfs_regdomain;
+	uint16_t reduced_beacon_interval;
 } tSwitchChannelParams, *tpSwitchChannelParams;
 
 typedef void (*tpSetLinkStateCallback)(tpAniSirGlobal pMac, void *msgParam,

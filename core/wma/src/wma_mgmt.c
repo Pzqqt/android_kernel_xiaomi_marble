@@ -1423,15 +1423,7 @@ void wma_update_protection_mode(tp_wma_handle wma, uint8_t vdev_id,
 		WMA_LOGD("Updated protection mode %d to target", prot_mode);
 }
 
-/**
- * wma_update_beacon_interval() - update beacon interval in fw
- * @wma: wma handle
- * @vdev_id: vdev id
- * @beaconInterval: becon interval
- *
- * Return: none
- */
-static void
+void
 wma_update_beacon_interval(tp_wma_handle wma, uint8_t vdev_id,
 			   uint16_t beaconInterval)
 {

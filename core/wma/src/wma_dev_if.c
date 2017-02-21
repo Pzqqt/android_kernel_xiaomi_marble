@@ -5276,3 +5276,57 @@ void wma_store_pdev(void *wma_ctx, struct wlan_objmgr_pdev *pdev)
 	wma->pdev = pdev;
 }
 
+/**
+ * wma_vdev_reset_beacon_interval_timer() - reset beacon interval back
+ * to its original value after the channel switch.
+ *
+ * @data: data
+ *
+ * Return: void
+ */
+static void wma_vdev_reset_beacon_interval_timer(void *data)
+{
+	tp_wma_handle wma;
+	struct wma_beacon_interval_reset_req *req =
+		(struct wma_beacon_interval_reset_req *)data;
+	uint16_t beacon_interval = req->interval;
+	uint8_t vdev_id = req->vdev_id;
+
+	wma = (tp_wma_handle)cds_get_context(QDF_MODULE_ID_WMA);
+	if (NULL == wma) {
+		WMA_LOGE("%s: Failed to get wma", __func__);
+		goto end;
+	}
+
+	/* Change the beacon interval back to its original value */
+	WMA_LOGE("%s: Change beacon interval back to %d",
+			__func__, beacon_interval);
+	wma_update_beacon_interval(wma, vdev_id, beacon_interval);
+
+end:
+	qdf_timer_stop(&req->event_timeout);
+	qdf_timer_free(&req->event_timeout);
+	qdf_mem_free(req);
+}
+
+int wma_fill_beacon_interval_reset_req(tp_wma_handle wma, uint8_t vdev_id,
+				uint16_t beacon_interval, uint32_t timeout)
+{
+	struct wma_beacon_interval_reset_req *req;
+
+	req = qdf_mem_malloc(sizeof(*req));
+	if (!req) {
+		WMA_LOGE("%s: Failed to allocate memory for beacon_interval_reset_req vdev %d",
+			__func__, vdev_id);
+		return -ENOMEM;
+	}
+
+	WMA_LOGD("%s: vdev_id %d ", __func__, vdev_id);
+	req->vdev_id = vdev_id;
+	req->interval = beacon_interval;
+	qdf_timer_init(NULL, &req->event_timeout,
+		wma_vdev_reset_beacon_interval_timer, req, QDF_TIMER_TYPE_SW);
+	qdf_timer_start(&req->event_timeout, timeout);
+
+	return 0;
+}
