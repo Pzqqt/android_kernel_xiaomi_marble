@@ -189,6 +189,24 @@ static uint8_t wma_get_number_of_peers_supported(tp_wma_handle wma)
 }
 
 /**
+ * wma_get_number_of_tids_supported - API to query for number of tids supported
+ * @no_of_peers_supported: Number of peer supported
+ *
+ * Return: Max number of tids supported
+ */
+#if defined(CONFIG_HL_SUPPORT)
+static uint32_t wma_get_number_of_tids_supported(uint8_t no_of_peers_supported)
+{
+	return 4 * no_of_peers_supported;
+}
+#else
+static uint32_t wma_get_number_of_tids_supported(uint8_t no_of_peers_supported)
+{
+	return 2 * (no_of_peers_supported + CFG_TGT_NUM_VDEV + 2);
+}
+#endif
+
+/**
  * wma_set_default_tgt_config() - set default tgt config
  * @wma_handle: wma handle
  *
@@ -244,7 +262,8 @@ static void wma_set_default_tgt_config(tp_wma_handle wma_handle)
 
 	no_of_peers_supported = wma_get_number_of_peers_supported(wma_handle);
 	tgt_cfg.num_peers = no_of_peers_supported + CFG_TGT_NUM_VDEV + 2;
-	tgt_cfg.num_tids = (2 * (no_of_peers_supported + CFG_TGT_NUM_VDEV + 2));
+	tgt_cfg.num_tids = wma_get_number_of_tids_supported(
+				no_of_peers_supported);
 	tgt_cfg.scan_max_pending_req = wma_handle->max_scan;
 
 	WMI_RSRC_CFG_FLAG_MGMT_COMP_EVT_BUNDLE_SUPPORT_SET(tgt_cfg.flag1, 1);
