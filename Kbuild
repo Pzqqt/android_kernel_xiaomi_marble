@@ -766,6 +766,24 @@ UMAC_DISP_INC := -I$(WLAN_COMMON_INC)/$(UMAC_DISP_INC_DIR)
 
 UMAC_DISP_OBJS := $(UMAC_DISP_OBJ_DIR)/wlan_lmac_if.o
 
+############# UMAC_SCAN ############
+UMAC_SCAN_DIR := umac/scan
+UMAC_SCAN_DISP_INC_DIR := $(UMAC_SCAN_DIR)/dispatcher/inc
+UMAC_SCAN_CORE_DIR := $(WLAN_COMMON_ROOT)/$(UMAC_SCAN_DIR)/core/src
+UMAC_SCAN_DISP_DIR := $(WLAN_COMMON_ROOT)/$(UMAC_SCAN_DIR)/dispatcher/src
+
+UMAC_SCAN_INC := -I$(WLAN_COMMON_INC)/$(UMAC_SCAN_DISP_INC_DIR)
+UMAC_SCAN_OBJS := $(UMAC_SCAN_CORE_DIR)/wlan_scan_cache_db.o \
+		$(UMAC_SCAN_CORE_DIR)/wlan_scan_cache_db_ops.o \
+		$(UMAC_SCAN_CORE_DIR)/wlan_scan_main.o \
+		$(UMAC_SCAN_CORE_DIR)/wlan_scan_manager.o \
+		$(UMAC_SCAN_DISP_DIR)/wlan_scan_tgt_api.o \
+		$(UMAC_SCAN_DISP_DIR)/wlan_scan_ucfg_api.o \
+		$(UMAC_SCAN_DISP_DIR)/wlan_scan_utils_api.o
+
+############# UMAC_CMN_SERVICES ############
+UMAC_COMMON_INC := -I$(WLAN_COMMON_INC)/umac/cmn_services/cmn_defs/inc
+
 ############ CDS (Connectivity driver services) ############
 CDS_DIR :=	core/cds
 CDS_INC_DIR :=	$(CDS_DIR)/inc
@@ -1215,6 +1233,8 @@ INCS +=		$(HOST_DIAG_LOG_INC)
 endif
 
 INCS +=		$(UMAC_DISP_INC)
+INCS +=		$(UMAC_SCAN_INC)
+INCS +=		$(UMAC_COMMON_INC)
 
 OBJS :=		$(HDD_OBJS) \
 		$(EPPING_OBJS) \
@@ -1262,6 +1282,7 @@ OBJS +=		$(HOST_DIAG_LOG_OBJS)
 endif
 
 OBJS +=		$(UMAC_DISP_OBJS)
+OBJS +=		$(UMAC_SCAN_OBJS)
 
 OBJS +=		$(WCFG_OBJS)
 
