@@ -72,7 +72,9 @@ ifeq ($(KERNEL_BUILD), 0)
 	#Flag to enable Legacy Fast Roaming2(LFR2)
 	CONFIG_QCACLD_WLAN_LFR2 := y
 	#Flag to enable Legacy Fast Roaming3(LFR3)
+	ifneq ($(CONFIG_ARCH_SDXHEDGEHOG), y)
 	CONFIG_QCACLD_WLAN_LFR3 := y
+	endif
 
 	# JB kernel has CPU enablement patches, so enable
 	ifeq ($(CONFIG_ROME_IF),pci)
