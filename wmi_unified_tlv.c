@@ -1662,7 +1662,10 @@ static inline void copy_peer_flags_tlv(
 			cmd->peer_flags |= WMI_PEER_SPATIAL_MUX;
 		if (param->vht_flag)
 			cmd->peer_flags |= WMI_PEER_VHT;
+		if (param->he_flag)
+			cmd->peer_flags |= WMI_PEER_HE;
 	}
+
 	/*
 	 * Suppress authorization for all AUTH modes that need 4-way handshake
 	 * (during re-association).
@@ -14886,7 +14889,13 @@ static void populate_vdev_param_tlv(uint32_t *vdev_param)
 	vdev_param[wmi_vdev_param_mgmt_tx_power] = WMI_VDEV_PARAM_MGMT_TX_POWER;
 	vdev_param[wmi_vdev_param_beacon_rate] = WMI_VDEV_PARAM_BEACON_RATE;
 	vdev_param[wmi_vdev_param_rx_decap_type] = WMI_VDEV_PARAM_RX_DECAP_TYPE;
-	vdev_param[wmi_vdev_param_tx_encap_type] = WMI_VDEV_PARAM_TX_ENCAP_TYPE;
+	vdev_param[wmi_vdev_param_he_dcm_enable] = WMI_VDEV_PARAM_HE_DCM;
+	vdev_param[wmi_vdev_param_he_range_ext_enable] =
+				 WMI_VDEV_PARAM_HE_RANGE_EXT;
+	vdev_param[wmi_vdev_param_he_bss_color] = WMI_VDEV_PARAM_BSS_COLOR;
+	vdev_param[wmi_vdev_param_set_hemu_mode] = WMI_VDEV_PARAM_SET_HEMU_MODE;
+	vdev_param[wmi_vdev_param_tx_ofdma_cplen] =
+				 WMI_VDEV_PARAM_TX_OFDMA_CPLEN;
 }
 #endif
 
