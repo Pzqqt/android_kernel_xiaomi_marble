@@ -36,6 +36,35 @@ QDF_STATUS ucfg_scan_register_bcn_cb(struct wlan_objmgr_psoc *psoc,
 	return scm_scan_register_bcn_cb(psoc, cb, type);
 }
 
+qdf_list_t *ucfg_scan_get_result(struct wlan_objmgr_pdev *pdev,
+	struct scan_filter *filter)
+{
+	return scm_get_scan_result(pdev, filter);
+}
+
+QDF_STATUS ucfg_scan_db_iterate(struct wlan_objmgr_pdev *pdev,
+	scan_iterator_func func, void *arg)
+{
+	return scm_iterate_scan_db(pdev, func, arg);
+}
+
+QDF_STATUS ucfg_scan_purge_results(qdf_list_t *scan_list)
+{
+	return scm_purge_scan_results(scan_list);
+}
+
+QDF_STATUS ucfg_scan_flush_results(struct wlan_objmgr_pdev *pdev,
+	struct scan_filter *filter)
+{
+	return scm_flush_results(pdev, filter);
+}
+
+void ucfg_scan_filter_valid_channel(struct wlan_objmgr_pdev *pdev,
+	uint8_t *chan_list, uint32_t num_chan)
+{
+	scm_filter_valid_channel(pdev, chan_list, num_chan);
+}
+
 QDF_STATUS ucfg_scan_init(void)
 {
 	QDF_STATUS status;
