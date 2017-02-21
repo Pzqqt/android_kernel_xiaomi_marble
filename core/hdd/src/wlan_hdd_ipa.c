@@ -5730,7 +5730,8 @@ static int __hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 			/* Disable IPA UC TX PIPE when STA disconnected */
 			if (!hdd_ipa->num_iface &&
 			    (HDD_IPA_UC_NUM_WDI_PIPE ==
-			    hdd_ipa->activated_fw_pipe))
+			    hdd_ipa->activated_fw_pipe) &&
+				!hdd_ipa->ipa_pipes_down)
 				hdd_ipa_uc_handle_last_discon(hdd_ipa);
 		}
 
@@ -5761,7 +5762,8 @@ static int __hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 
 		if ((!hdd_ipa->num_iface) &&
 			(HDD_IPA_UC_NUM_WDI_PIPE ==
-				hdd_ipa->activated_fw_pipe)) {
+				hdd_ipa->activated_fw_pipe) &&
+				!hdd_ipa->ipa_pipes_down) {
 			if (cds_is_driver_unloading()) {
 				/*
 				 * We disable WDI pipes directly here since
@@ -5907,7 +5909,8 @@ static int __hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 				hdd_ipa->uc_loaded == true) {
 			if ((false == hdd_ipa->resource_unloading)
 			    && (HDD_IPA_UC_NUM_WDI_PIPE ==
-				hdd_ipa->activated_fw_pipe)) {
+				hdd_ipa->activated_fw_pipe) &&
+				!hdd_ipa->ipa_pipes_down) {
 				hdd_ipa_uc_handle_last_discon(hdd_ipa);
 			}
 
