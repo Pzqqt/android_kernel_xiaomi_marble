@@ -18,6 +18,16 @@
 
 /*
  * DOC: contains scan cache api and functionality
+ * The Scan entries are protected by scan_db_lock. Holding the lock
+ * for whole scan operation during get/flush scan results may take
+ * more than 5 ms and thus ref count is used along with scan_db_lock.
+ * Below are the operation on scan cache entry:
+ * - While adding new node to the entry scan_db_lock is taken and ref_cnt
+ *   is initialized and incremented.
+ * - While reading the entry ref_cnt is incremented while holding the lock.
+ * - Once reading operation is done ref_cnt is decremented while holding
+ *   the lock.
+ * - Once ref_cnt become 0 the node is deleted from the scan cache.
  */
 #include <qdf_status.h>
 #include <wlan_objmgr_psoc_obj.h>
@@ -27,6 +37,440 @@
 #include <wlan_scan_utils_api.h>
 #include "wlan_scan_main.h"
 #include "wlan_scan_cache_db_i.h"
+
+/**
+ * scm_del_scan_node() - API to remove scan node from the list
+ * @list: hash list
+ * @scan_node: node to be removed
+ *
+ * This should be called while holding scan_db_lock.
+ *
+ * Return: void
+ */
+static void scm_del_scan_node(qdf_list_t *list,
+	struct scan_cache_node *scan_node)
+{
+	QDF_STATUS status;
+
+	status = qdf_list_remove_node(list, &scan_node->node);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		util_scan_free_cache_entry(scan_node->entry);
+		qdf_mem_free(scan_node);
+	}
+}
+
+/**
+ * scm_del_scan_node_from_db() - API to del the scan entry
+ * @scan_db: scan database
+ * @scan_entry:entry scan_node
+ *
+ * API to flush the scan entry. This should be called while
+ * holding scan_db_lock.
+ *
+ * Return: QDF status.
+ */
+static QDF_STATUS scm_del_scan_node_from_db(struct scan_dbs *scan_db,
+	struct scan_cache_node *scan_node)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	uint8_t hash_idx;
+
+	if (!scan_node)
+		return QDF_STATUS_E_INVAL;
+
+	hash_idx = SCAN_GET_HASH(scan_node->entry->bssid.bytes);
+	scm_del_scan_node(&scan_db->scan_hash_tbl[hash_idx], scan_node);
+	scan_db->num_entries--;
+
+	return status;
+}
+
+/**
+ * scm_scan_entry_get_ref() - api to increase ref count of scan entry
+ * @scan_node: scan node
+ *
+ * Return: void
+ */
+static void scm_scan_entry_get_ref(struct scan_cache_node *scan_node)
+{
+	if (scan_node == NULL) {
+		scm_err("scan_node is NULL");
+		QDF_ASSERT(0);
+		return;
+	}
+	qdf_atomic_inc(&scan_node->ref_cnt);
+}
+
+/**
+ * scm_scan_entry_put_ref() - Api to decrease ref count of scan entry
+ * and free if it become 0
+ * @scan_db: scan database
+ * @scan_node: scan node
+ * @lock_needed: if scan_db_lock is needed
+ *
+ * Return: void
+ */
+static void scm_scan_entry_put_ref(struct scan_dbs *scan_db,
+	struct scan_cache_node *scan_node, bool lock_needed)
+{
+
+	if (!scan_node) {
+		scm_err("scan_node is NULL");
+		QDF_ASSERT(0);
+		return;
+	}
+
+	if (!qdf_atomic_read(&scan_node->ref_cnt)) {
+		scm_err("scan_node ref cnt is 0");
+		QDF_ASSERT(0);
+		return;
+	}
+
+	if (lock_needed)
+		qdf_spin_lock_bh(&scan_db->scan_db_lock);
+
+	/* Decrement ref count, free scan_node, if ref count == 0 */
+	if (qdf_atomic_dec_and_test(&scan_node->ref_cnt))
+		scm_del_scan_node_from_db(scan_db, scan_node);
+
+	if (lock_needed)
+		qdf_spin_unlock_bh(&scan_db->scan_db_lock);
+}
+
+/**
+ * scm_add_scan_node() - API to add scan node
+ * @scan_db: data base
+ * @scan_node: node to be removed
+ *
+ * Return: void
+ */
+static void scm_add_scan_node(struct scan_dbs *scan_db,
+	struct scan_cache_node *scan_node)
+{
+	uint8_t hash_idx;
+
+	hash_idx =
+		SCAN_GET_HASH(scan_node->entry->bssid.bytes);
+
+	qdf_spin_lock_bh(&scan_db->scan_db_lock);
+	qdf_atomic_init(&scan_node->ref_cnt);
+	scm_scan_entry_get_ref(scan_node);
+	qdf_list_insert_back(&scan_db->scan_hash_tbl[hash_idx],
+			&scan_node->node);
+	scan_db->num_entries++;
+	qdf_spin_unlock_bh(&scan_db->scan_db_lock);
+}
+
+
+/**
+ * scm_get_next_node() - API get the next scan node from
+ * the list
+ * @list: hash list
+ * @scan_node: node to be removed
+ *
+ * API get the next node from the list. If cur_node is NULL
+ * it will return first node of the list
+ *
+ * Return: next scan cache node
+ */
+static struct scan_cache_node *
+scm_get_next_node(struct scan_dbs *scan_db,
+	qdf_list_t *list,
+	struct scan_cache_node *cur_node)
+{
+	struct scan_cache_node *next_node = NULL;
+	qdf_list_node_t *next_list = NULL;
+
+	qdf_spin_lock_bh(&scan_db->scan_db_lock);
+	if (cur_node) {
+		qdf_list_peek_next(list,
+			&cur_node->node, &next_list);
+		/* Decrement the ref count of the previous node */
+		scm_scan_entry_put_ref(scan_db,
+			cur_node, false);
+	} else {
+		qdf_list_peek_front(list, &next_list);
+	}
+	/* Increase the ref count of the obtained node */
+	if (next_list) {
+		next_node = qdf_container_of(next_list,
+			struct scan_cache_node, node);
+		scm_scan_entry_get_ref(next_node);
+	}
+	qdf_spin_unlock_bh(&scan_db->scan_db_lock);
+
+	return next_node;
+}
+
+/**
+ * scm_check_and_age_out() - check and age out the old entries
+ * @scan_db: scan db
+ * @scan_node: node to check for age out
+ *
+ * Return: void
+ */
+static void scm_check_and_age_out(struct scan_dbs *scan_db,
+	struct scan_cache_node *node)
+{
+	if (util_scan_entry_age(node->entry) >=
+	   SCAN_CACHE_AGING_TIME)
+		scm_scan_entry_put_ref(scan_db, node, true);
+}
+
+void scm_age_out_entries(struct scan_dbs *scan_db)
+{
+	int i;
+	struct scan_cache_node *cur_node = NULL;
+	struct scan_cache_node *next_node = NULL;
+
+	for (i = 0 ; i < SCAN_HASH_SIZE; i++) {
+		cur_node = scm_get_next_node(scan_db,
+			&scan_db->scan_hash_tbl[i], NULL);
+		while (cur_node) {
+			scm_check_and_age_out(scan_db, cur_node);
+			next_node = scm_get_next_node(scan_db,
+				&scan_db->scan_hash_tbl[i], cur_node);
+			cur_node = next_node;
+			next_node = NULL;
+		}
+	}
+}
+
+/**
+ * scm_flush_oldest_entry() - flust out the oldest entry
+ * @scan_db: scan db from which oldest etry needs to be flushed
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS scm_flush_oldest_entry(struct scan_dbs *scan_db)
+{
+	int i;
+	struct scan_cache_node *oldest_node = NULL;
+	struct scan_cache_node *cur_node;
+	qdf_list_node_t *cur_list = NULL;
+
+	qdf_spin_lock_bh(&scan_db->scan_db_lock);
+	for (i = 0 ; i < SCAN_HASH_SIZE; i++) {
+		cur_node = NULL;
+		qdf_list_peek_front(&scan_db->scan_hash_tbl[i],
+				&cur_list);
+		/*
+		 * Check only the first node if present as new
+		 * entry are added to tail and thus first
+		 * node is the oldest
+		 */
+		if (cur_list) {
+			cur_node = qdf_container_of(cur_list,
+				struct scan_cache_node, node);
+			if (!oldest_node ||
+			   (util_scan_entry_age(oldest_node->entry) <
+			   util_scan_entry_age(cur_node->entry)))
+				oldest_node = cur_node;
+		}
+	}
+	scm_scan_entry_put_ref(scan_db, oldest_node, false);
+	qdf_spin_unlock_bh(&scan_db->scan_db_lock);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * scm_update_alt_wcn_ie() - update the alternate WCN IE
+ * @from: copy from
+ * @dst: copy to
+ *
+ * Return: void
+ */
+static void scm_update_alt_wcn_ie(struct scan_cache_entry *from,
+	struct scan_cache_entry *dst)
+{
+	uint32_t alt_wcn_ie_len;
+
+	if (from->frm_subtype == dst->frm_subtype)
+		return;
+
+	if (!from->ie_list.wcn && !dst->ie_list.wcn)
+		return;
+
+	/* Existing WCN IE is empty. */
+	if (!from->ie_list.wcn)
+		return;
+
+	alt_wcn_ie_len = 2 + from->ie_list.wcn[1];
+	if (alt_wcn_ie_len > WLAN_MAX_IE_LEN + 2) {
+		scm_err("invalid IE len");
+		return;
+	}
+
+	if (!dst->alt_wcn_ie.ptr) {
+		/* allocate this additional buffer for alternate WCN IE */
+		dst->alt_wcn_ie.ptr = qdf_mem_malloc(WLAN_MAX_IE_LEN + 2);
+		if (!dst->alt_wcn_ie.ptr) {
+			scm_err("failed to allocate memory");
+			return;
+		}
+	}
+	qdf_mem_copy(dst->alt_wcn_ie.ptr,
+		from->ie_list.wcn, alt_wcn_ie_len);
+	dst->alt_wcn_ie.len = alt_wcn_ie_len;
+}
+
+/**
+ * scm_add_scan_entry() - add new scan entry to the database
+ * @scan_db: scan database
+ * @scan_params: new entry to be added
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS scm_add_scan_entry(struct scan_dbs *scan_db,
+	struct scan_cache_entry *scan_params)
+{
+	struct scan_cache_node *scan_node;
+	QDF_STATUS status;
+
+	if (scan_db->num_entries >= MAX_SCAN_CACHE_SIZE) {
+		status = scm_flush_oldest_entry(scan_db);
+		if (QDF_IS_STATUS_ERROR(status))
+			return status;
+	}
+
+	scan_node = qdf_mem_malloc(sizeof(*scan_node));
+	if (!scan_node)
+		return QDF_STATUS_E_NOMEM;
+
+	scan_node->entry = scan_params;
+	scm_add_scan_node(scan_db, scan_node);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * scm_delete_duplicate_entry() - remove duplicate node entry
+ * @scan_db: scan database
+ * @scan_params: new entry to be added
+ * @scan_node: old entry to removed
+ *
+ * Remove duplicate node after copying required
+ * info into new entry
+ *
+ * Return: void
+ */
+static void scm_delete_duplicate_entry(struct scan_dbs *scan_db,
+	struct scan_cache_entry *scan_params,
+	struct scan_cache_node *scan_node)
+{
+	struct scan_cache_entry *scan_entry;
+
+	scan_entry = scan_node->entry;
+	/* If old entry have the ssid but new entry does not */
+	if (!scan_params->ssid.length && scan_entry->ssid.length) {
+		uint64_t time_gap;
+
+		/*
+		 * New entry has a hidden SSID and old one has the SSID.
+		 * Add the entry by using the ssid of the old entry
+		 * only if diff of saved SSID time and current time is
+		 * less than HIDDEN_SSID_TIME time.
+		 * This will avoid issues in case AP changes its SSID
+		 * while remain hidden.
+		 */
+		time_gap =
+			qdf_mc_timer_get_system_time() -
+			scan_entry->hidden_ssid_timestamp;
+		if (time_gap <= HIDDEN_SSID_TIME) {
+			scan_params->hidden_ssid_timestamp =
+				scan_entry->hidden_ssid_timestamp;
+			scan_params->ssid.length =
+				scan_entry->ssid.length;
+			qdf_mem_copy(scan_params->ssid.ssid,
+				scan_entry->ssid.ssid,
+				scan_params->ssid.length);
+		}
+	}
+	/*
+	 * Use old value for rssi if beacon
+	 * was heard on adjacent channel.
+	 */
+	if (scan_params->channel_mismatch) {
+		scan_params->rssi_raw = scan_entry->rssi_raw;
+		scan_params->rssi_timestamp =
+			scan_entry->rssi_timestamp;
+	}
+	/* copy wsn ie from scan_entry to scan_params*/
+	scm_update_alt_wcn_ie(scan_entry, scan_params);
+
+	/* Mark delete the duplicate node */
+	scm_scan_entry_put_ref(scan_db, scan_node, true);
+}
+
+/**
+ * scm_find_duplicate_and_del() - find duplicate entry if present
+ * and update it
+ * @scan_db: scan db
+ * @entry: input scan cache entry
+ *
+ * Return: true if entry is found and updated else false
+ */
+static bool
+scm_find_duplicate_and_del(struct scan_dbs *scan_db,
+	struct scan_cache_entry *entry)
+{
+	uint8_t hash_idx;
+	struct scan_cache_node *cur_node;
+	struct scan_cache_node *next_node = NULL;
+
+	hash_idx = SCAN_GET_HASH(entry->bssid.bytes);
+
+	cur_node = scm_get_next_node(scan_db,
+		   &scan_db->scan_hash_tbl[hash_idx], NULL);
+
+	while (cur_node) {
+		if (util_is_scan_entry_match(entry,
+		   cur_node->entry)) {
+			scm_delete_duplicate_entry(scan_db,
+				entry, cur_node);
+			scm_scan_entry_put_ref(scan_db,
+				cur_node, true);
+			return true;
+		}
+		next_node = scm_get_next_node(scan_db,
+			 &scan_db->scan_hash_tbl[hash_idx], cur_node);
+		cur_node = next_node;
+		next_node = NULL;
+	}
+
+	return false;
+}
+
+/**
+ * scm_add_update_entry() - add or update scan entry
+ * @scan_db: scan database
+ * @scan_params: new received entry
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS scm_add_update_entry(struct scan_dbs *scan_db,
+	struct scan_cache_entry *scan_params)
+{
+	QDF_STATUS status;
+
+	/* SSID shouldn't be NULL in probe resp */
+	if (scan_params->frm_subtype ==
+	   MGMT_SUBTYPE_PROBE_RESP &&
+	   !scan_params->ie_list.ssid)
+		return QDF_STATUS_E_INVAL;
+
+	/* CSA or ECSA present ignore */
+	if (scan_params->ie_list.csa ||
+	   scan_params->ie_list.xcsa ||
+	   scan_params->ie_list.cswrp)
+		return QDF_STATUS_E_INVAL;
+
+	scm_find_duplicate_and_del(scan_db, scan_params);
+	status = scm_add_scan_entry(scan_db, scan_params);
+
+	return status;
+}
 
 QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 {
@@ -105,6 +549,13 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 
 	if (scan_obj->cb.inform_beacon)
 		scan_obj->cb.inform_beacon(pdev, scan_entry);
+
+	status = scm_add_update_entry(scan_db, scan_entry);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		util_scan_free_cache_entry(scan_entry);
+		scm_err("failed to add entry");
+		goto free_nbuf;
+	}
 
 free_nbuf:
 	if (pdev)

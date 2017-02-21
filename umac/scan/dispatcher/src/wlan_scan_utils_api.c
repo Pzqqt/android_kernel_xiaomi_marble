@@ -113,6 +113,46 @@ static enum wlan_band scm_chan_to_band(uint32_t chan)
 	return WLAN_BAND_5_GHZ;
 }
 
+bool util_is_scan_entry_match(
+	struct scan_cache_entry *entry1,
+	struct scan_cache_entry *entry2)
+{
+
+	if (entry1->cap_info.wlan_caps.ess !=
+	   entry1->cap_info.wlan_caps.ess)
+		return false;
+
+	if (entry1->cap_info.wlan_caps.ess &&
+	   !qdf_mem_cmp(entry1->bssid.bytes,
+	   entry1->bssid.bytes, QDF_MAC_ADDR_SIZE) &&
+	   scm_chan_to_band(
+	   entry1->channel.chan_idx) ==
+	   scm_chan_to_band(entry2->channel.chan_idx)) {
+		/* Check for BSS */
+		if (util_is_ssid_match(
+		   &entry1->ssid, &entry2->ssid))
+			return true;
+	} else if (entry1->cap_info.wlan_caps.ibss &&
+	   (entry1->channel.chan_idx ==
+	   entry2->channel.chan_idx)) {
+		/*
+		 * Same channel cannot have same SSID for
+		 * different IBSS, so no need to check BSSID
+		 */
+		if (util_is_ssid_match(
+		   &entry1->ssid, &entry2->ssid))
+			return true;
+	} else if (!entry1->cap_info.wlan_caps.ibss &&
+	   !entry1->cap_info.wlan_caps.ess &&
+	   !qdf_mem_cmp(entry1->bssid.bytes,
+	   entry1->bssid.bytes, QDF_MAC_ADDR_SIZE)) {
+		/* In case of P2P devices, ess and ibss will be set to zero */
+		return true;
+	}
+
+	return false;
+}
+
 static bool util_is_pureg_rate(uint8_t *rates, uint8_t nrates)
 {
 	static const uint8_t g_rates[] = {12, 18, 24, 36, 48, 72, 96, 108};
