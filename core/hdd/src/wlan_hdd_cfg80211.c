@@ -12602,6 +12602,14 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 				hdd_debug("After removing duplcates StaParams.supported_channels_len: %d",
 					  StaParams.supported_channels_len);
 			}
+			if (params->supported_oper_classes_len >
+			    CDS_MAX_SUPP_OPER_CLASSES) {
+				hdd_notice("received oper classes:%d, resetting it to max supported: %d",
+					  params->supported_oper_classes_len,
+					  CDS_MAX_SUPP_OPER_CLASSES);
+				params->supported_oper_classes_len =
+					CDS_MAX_SUPP_OPER_CLASSES;
+			}
 			qdf_mem_copy(StaParams.supported_oper_classes,
 				     params->supported_oper_classes,
 				     params->supported_oper_classes_len);
