@@ -5683,36 +5683,6 @@ typedef struct {
 	uint32_t cfgd_rx_streams;
 } wmi_host_vdev_start_resp;
 
-#define WMI_HOST_ATH_MAX_ANTENNA 4
-/**
- * struct wmi_host_mgmt_rx_hdr - host mgmt header params
- * @channel: channel on which this frame is received
- * @snr: snr information used to cal rssi
- * @rssi_ctl[WMI_HOST_ATH_MAX_ANTENNA]: RSSI of PRI 20MHz for each chain.
- * @rate: Rate kbps
- * @phy_mode: rx phy mode WLAN_PHY_MODE
- * @buf_len: length of the frame
- * @status: rx status
- * @flags: information about the management frame e.g. can give a
- *         scan source for a scan result mgmt frame
- * @rssi: combined RSSI, i.e. the sum of the snr + noise floor (dBm units)
- * @tsf_delta:
- * @pdev_id: pdev_id
- */
-typedef struct {
-	uint32_t	channel;
-	uint32_t	snr;
-	uint8_t rssi_ctl[WMI_HOST_ATH_MAX_ANTENNA];
-	uint32_t	rate;
-	uint32_t	phy_mode;
-	uint32_t	buf_len;
-	uint32_t	status;
-	uint32_t flags;
-	int32_t rssi;
-	uint32_t tsf_delta;
-	uint32_t pdev_id;
-} wmi_host_mgmt_rx_hdr;
-
 /**
  * struct wmi_host_roam_event - host roam event param
  * @vdev_id: vdev id
