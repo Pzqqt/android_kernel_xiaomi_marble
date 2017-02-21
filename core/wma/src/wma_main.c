@@ -3584,11 +3584,6 @@ QDF_STATUS wma_close(void *cds_ctx)
 
 	wma_ndp_unregister_all_event_handlers(wma_handle);
 
-	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-				   WMI_SERVICE_MGMT_TX_WMI)) {
-		wmi_desc_pool_deinit(wma_handle);
-	}
-
 	wlan_objmgr_psoc_release_ref(wma_handle->psoc, WLAN_LEGACY_WMA_ID);
 	wma_handle->psoc = NULL;
 	target_if_close();
@@ -4657,11 +4652,6 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
 				   WMI_SERVICE_MGMT_TX_WMI)) {
 		WMA_LOGE("Firmware supports management TX over WMI,use WMI interface instead of HTT for management Tx");
-		status = wmi_desc_pool_init(wma_handle, WMI_DESC_POOL_MAX);
-		if (status) {
-			WMA_LOGE("Failed to initialize wmi descriptor pool");
-			return -EINVAL;
-		}
 		/*
 		 * Register Tx completion event handler for MGMT Tx over WMI
 		 * case

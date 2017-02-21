@@ -1176,36 +1176,6 @@ struct mac_ss_bw_info {
 	uint32_t mac_bw;
 };
 
-/* Current HTC credit is 2, pool size of 50 is sufficient */
-#define WMI_DESC_POOL_MAX 50
-
-/**
- * struct wmi_desc_t - wmi management Tx descriptor.
- * @tx_cmpl_cb_func:	completion callback function, when DL completion and
- *			OTA done.
- * @ota_post_proc_func:	Post process callback function registered.
- * @nbuf:		Network buffer to be freed.
- * @desc_id:		WMI descriptor.
- */
-
-struct wmi_desc_t {
-	wma_tx_dwnld_comp_callback tx_cmpl_cb;
-	wma_tx_ota_comp_callback  ota_post_proc_cb;
-	qdf_nbuf_t	 nbuf;
-	uint32_t	 desc_id;
-	uint8_t vdev_id;
-};
-
-/**
- * union wmi_desc_elem_t - linked list wmi desc pool.
- * @next: Pointer next descritor in the pool.
- * @wmi_desc: wmi descriptor element.
- */
-union wmi_desc_elem_t {
-	union wmi_desc_elem_t *next;
-	struct wmi_desc_t wmi_desc;
-};
-
 /**
  * struct dual_mac_config - Dual MAC configurations
  * @prev_scan_config: Previous scan configuration
@@ -1222,9 +1192,7 @@ struct dual_mac_config {
 	uint32_t cur_fw_mode_config;
 	uint32_t req_scan_config;
 	uint32_t req_fw_mode_config;
-
 };
-
 
 /**
  * struct wma_ini_config - Structure to hold wma ini configuration
@@ -1552,13 +1520,6 @@ typedef struct {
 	/* OCB request contexts */
 	struct sir_ocb_config *ocb_config_req;
 	struct dual_mac_config dual_mac_cfg;
-	struct {
-		uint16_t pool_size;
-		uint16_t num_free;
-		union wmi_desc_elem_t *array;
-		union wmi_desc_elem_t *freelist;
-		qdf_spinlock_t wmi_desc_pool_lock;
-	} wmi_desc_pool;
 	uint8_t max_scan;
 	uint16_t self_gen_frm_pwr;
 	bool tx_chain_mask_cck;
@@ -2235,10 +2196,6 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 void wma_remove_vdev_req(tp_wma_handle wma, uint8_t vdev_id,
 				uint8_t type);
 
-int wmi_desc_pool_init(tp_wma_handle wma_handle, uint32_t pool_size);
-void wmi_desc_pool_deinit(tp_wma_handle wma_handle);
-struct wmi_desc_t *wmi_desc_get(tp_wma_handle wma_handle);
-void wmi_desc_put(tp_wma_handle wma_handle, struct wmi_desc_t *wmi_desc);
 int wma_mgmt_tx_completion_handler(void *handle, uint8_t *cmpl_event_params,
 				   uint32_t len);
 int wma_mgmt_tx_bundle_completion_handler(void *handle,
