@@ -694,4 +694,21 @@ QDF_STATUS qdf_print_set_node_flag(unsigned int idx,
 bool qdf_print_get_node_flag(unsigned int idx);
 
 #endif
+
+/**
+ * qdf_logging_init() - Initialize msg logging functionality
+ *
+ *
+ * Return : void
+ */
+void qdf_logging_init(void);
+
+/**
+ * qdf_logging_exit() - Cleanup msg logging functionality
+ *
+ *
+ * Return : void
+ */
+void qdf_logging_exit(void);
+
 #endif /* __QDF_TRACE_H */

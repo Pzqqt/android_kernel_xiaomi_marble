@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -32,6 +32,7 @@
 
 #include <linux/module.h>
 #include <qdf_perf.h>
+#include <qdf_trace.h>
 
 MODULE_AUTHOR("Qualcomm Atheros Inc.");
 MODULE_DESCRIPTION("Qualcomm Atheros Device Framework Module");
@@ -49,6 +50,7 @@ MODULE_LICENSE("Dual BSD/GPL");
 static int __init
 qdf_mod_init(void)
 {
+	qdf_logging_init();
 	qdf_perfmod_init();
 	return 0;
 }
@@ -63,6 +65,7 @@ static void __exit
 qdf_mod_exit(void)
 {
 	qdf_perfmod_exit();
+	qdf_logging_exit();
 }
 module_exit(qdf_mod_exit);
 

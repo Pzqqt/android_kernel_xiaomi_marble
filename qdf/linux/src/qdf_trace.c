@@ -38,9 +38,9 @@
 /* macro to map qdf trace levels into the bitmask */
 #define QDF_TRACE_LEVEL_TO_MODULE_BITMASK(_level) ((1 << (_level)))
 
+#include <wlan_logging_sock_svc.h>
 #ifdef CONFIG_MCL
 
-#include <wlan_logging_sock_svc.h>
 #include "qdf_time.h"
 #include "qdf_mc_timer.h"
 
@@ -2187,3 +2187,28 @@ void QDF_PRINT_INFO(unsigned int idx, QDF_MODULE_ID module,
 	va_end(args);
 }
 EXPORT_SYMBOL(QDF_PRINT_INFO);
+
+#ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
+void qdf_logging_init(void)
+{
+	wlan_logging_sock_init_svc();
+	wlan_logging_sock_activate_svc(1, 10);
+	nl_srv_init(NULL);
+}
+
+void qdf_logging_exit(void)
+{
+	nl_srv_exit();
+	wlan_logging_sock_deactivate_svc();
+	wlan_logging_sock_deinit_svc();
+}
+#else
+void qdf_logging_init(void)
+{
+}
+
+void qdf_logging_exit(void)
+{
+}
+#endif
+

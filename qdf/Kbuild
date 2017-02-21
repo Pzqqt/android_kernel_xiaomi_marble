@@ -4,6 +4,11 @@ endif
 
 DEPTH := ../..
 
+HOST_CMN_CONVG_SRC := $(DEPTH)/cmn_dev
+HOST_CMN_CONVG_NLINK := $(DEPTH)/cmn_dev/utils/nlink
+HOST_CMN_CONVG_LOGGING := $(DEPTH)/cmn_dev/utils/logging
+HOST_CMN_CONVG_PTT := $(DEPTH)/cmn_dev/utils/ptt
+
 include $(obj)/$(DEPTH)/os/linux/Makefile-linux.common
 
 ifeq ($(ATH_SUPPORT_HTC),1)
@@ -17,9 +22,31 @@ INCS += -I$(WLAN_TOP)/../../include
 INCS += -I$(WLAN_TOP)/cmn_dev/qdf/inc
 INCS += -I$(WLAN_TOP)/cmn_dev/qdf/linux/src
 
+INCS += -I$(obj)/$(HOST_CMN_CONVG_PTT)/inc \
+        -I$(obj)/$(HOST_CMN_CONVG_NLINK)/inc \
+        -I$(obj)/$(HOST_CMN_CONVG_LOGGING)/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/utils/host_diag_log/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/utils/host_diag_log/src \
+        -I$(obj)/$(DEPTH)/cmn_dev/utils/ptt/inc \
+        -I$(obj)/$(DEPTH)/hal \
+        -I$(obj)/$(DEPTH)/offload/wlan/txrx/include \
+        -I$(obj)/$(DEPTH)/offload/wlan/ath_pktlog/include \
+        -I$(obj)/$(DEPTH)/offload/wlan/include \
+        -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/obj_mgr/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/wmi/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/umac/global_umac_dispatcher/lmac_if/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/mgmt_txrx/dispatcher/inc \
+        -I$(obj)/$(DEPTH)/offload/hw/include \
+        -I$(obj)/$(DEPTH)/umac/base
+
+
 obj-m += qdf.o
 
 EXTRA_CFLAGS+= $(INCS) $(COPTS) -Wno-unused-function
+ifeq ($(LOGGING_UTILS_SUPPORT),1)
+EXTRA_CFLAGS+= -DWLAN_LOGGING_SOCK_SVC_ENABLE=1
+endif
 
 ifeq ($(strip ${QCA_PARTNER_MAKE_F_SUPPORT}),1)
 MOD_CFLAGS = -D"KBUILD_STR(s)=\#s" -D"KBUILD_BASENAME=KBUILD_STR(qdf.mod)"  -D"KBUILD_MODNAME=KBUILD_STR(qdf)"
@@ -42,6 +69,11 @@ linux/src/qdf_trace.o
 #linux/src/qdf_net_ioctl.o
 #linux/src/qdf_net_wext.o
 
+ifeq ($(LOGGING_UTILS_SUPPORT),1)
+qdf-objs += \
+$(HOST_CMN_CONVG_NLINK)/src/wlan_nlink_srv.o \
+$(HOST_CMN_CONVG_LOGGING)/src/wlan_logging_sock_svc.o
+endif
 
 ifeq ($(BUILD_ADF_NET_IOCTL),1)
 EXTRA_CFLAGS+= -DADF_NET_IOCTL_SUPPORT
