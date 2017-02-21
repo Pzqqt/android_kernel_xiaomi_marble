@@ -97,6 +97,8 @@ wlan_serialization_add_cmd_to_given_queue(qdf_list_t *queue,
 			if (qdf_status != QDF_STATUS_SUCCESS) {
 				wlan_serialization_find_and_stop_timer(psoc,
 								&cmd_list->cmd);
+				cmd_list->cmd.cmd_cb(&cmd_list->cmd,
+						WLAN_SER_CB_RELEASE_MEM_CMD);
 				wlan_serialization_put_back_to_global_list(
 						queue, ser_pdev_obj, cmd_list);
 				wlan_serialization_move_pending_to_active(

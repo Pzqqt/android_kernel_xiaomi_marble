@@ -154,8 +154,8 @@ static void wlan_serialization_generic_timer_callback(void *arg)
 		return;
 	}
 	if (cmd->cmd_cb) {
-		cmd->cmd_cb(cmd->umac_cmd, WLAN_SER_CB_ACTIVE_CMD_TIMEOUT);
-		cmd->cmd_cb(cmd->umac_cmd, WLAN_SER_CB_RELEASE_MEM_CMD);
+		cmd->cmd_cb(cmd, WLAN_SER_CB_ACTIVE_CMD_TIMEOUT);
+		cmd->cmd_cb(cmd, WLAN_SER_CB_RELEASE_MEM_CMD);
 	}
 	serialization_err("active command timeout for cmd_id[%d]", cmd->cmd_id);
 	if (cmd->cmd_type != WLAN_SER_CMD_SCAN)
