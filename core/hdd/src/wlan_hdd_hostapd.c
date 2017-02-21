@@ -3306,6 +3306,9 @@ static __iw_softap_setparam(struct net_device *dev,
 					&pHostapdAdapter->sessionCtx.ap.
 					sapConfig);
 		break;
+	case QCASAP_SET_PEER_RATE:
+		ret = hdd_set_peer_rate(pHostapdAdapter, set_value);
+		break;
 	default:
 		hdd_err("Invalid setparam command %d value %d",
 		       sub_cmd, set_value);
@@ -5770,6 +5773,12 @@ static const struct iw_priv_args hostapd_private_args[] = {
 		QCASAP_SET_11AX_RATE,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 		0, "set_11ax_rate"
+	}
+	,
+	{
+		QCASAP_SET_PEER_RATE,
+		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+		0, "set_peer_rate"
 	}
 	,
 };

@@ -1275,6 +1275,20 @@ QDF_STATUS sme_update_access_policy_vendor_ie(tHalHandle hal,
 					uint8_t session_id, uint8_t *vendor_ie,
 					int access_policy);
 
+/**
+ * sme_set_peer_param() - set peer param
+ * @vdev_id: vdev ID
+ * @peer_addr: peer MAC address
+ * @param_id: param ID to be updated
+ * @param_Value: paraam value
+ *
+ * This SME API is used to send the peer param to WMA to be sent to FW.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_set_peer_param(uint8_t *peer_addr, uint32_t param_id,
+			      uint32_t param_value, uint32_t vdev_id);
+
 QDF_STATUS sme_update_sta_roam_policy(tHalHandle hal,
 		enum sta_roam_policy_dfs_mode dfs_mode,
 		bool skip_unsafe_channels,

@@ -16487,3 +16487,19 @@ QDF_STATUS sme_delete_all_tdls_peers(tHalHandle hal, uint8_t session_id)
 
 	return status;
 }
+
+QDF_STATUS sme_set_peer_param(uint8_t *peer_addr, uint32_t param_id,
+			      uint32_t param_value, uint32_t vdev_id)
+{
+	void *wma_handle;
+
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma_handle) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				"wma handle is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return wma_set_peer_param(wma_handle, peer_addr, param_id,
+				  param_value, vdev_id);
+}
