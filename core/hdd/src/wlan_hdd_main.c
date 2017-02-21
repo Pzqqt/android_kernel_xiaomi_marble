@@ -1702,6 +1702,37 @@ static void hdd_disable_power_management(void)
 }
 
 /**
+ * hdd_update_hw_sw_info() - API to update the HW/SW information
+ *
+ * API to update the HW and SW information in the driver
+ *
+ * Return: None
+ */
+static void hdd_update_hw_sw_info(hdd_context_t *hdd_ctx)
+{
+	void *hif_sc;
+
+	hif_sc = cds_get_context(QDF_MODULE_ID_HIF);
+	if (!hif_sc) {
+		hdd_err("HIF context is NULL");
+		return;
+	}
+
+	/*
+	 * target hw version/revision would only be retrieved after firmware
+	 * download
+	 */
+	hif_get_hw_info(hif_sc, &hdd_ctx->target_hw_version,
+			&hdd_ctx->target_hw_revision,
+			&hdd_ctx->target_hw_name);
+
+	/* Get the wlan hw/fw version */
+	hdd_wlan_get_version(hdd_ctx, NULL, NULL);
+
+	return;
+}
+
+/**
  * hdd_wlan_start_modules() - Single driver state machine for starting modules
  * @hdd_ctx: HDD context
  * @adapter: HDD adapter
@@ -1812,6 +1843,8 @@ int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			hdd_err("Failed to pre-enable CDS: %d", status);
 			goto close;
 		}
+
+		hdd_update_hw_sw_info(hdd_ctx);
 
 		if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 			sme_register_ftm_msg_processor(hdd_ctx->hHal,
@@ -8361,7 +8394,6 @@ int hdd_wlan_startup(struct device *dev)
 	QDF_STATUS status;
 	hdd_context_t *hdd_ctx;
 	int ret;
-	void *hif_sc;
 	bool rtnl_held;
 	int set_value;
 
@@ -8425,22 +8457,6 @@ int hdd_wlan_startup(struct device *dev)
 		hdd_alert("Failed to open interfaces: %d", ret);
 		goto err_release_rtnl_lock;
 	}
-
-	hif_sc = cds_get_context(QDF_MODULE_ID_HIF);
-	if (!hif_sc) {
-		hdd_err("HIF context is NULL");
-		goto err_close_adapters;
-	}
-	/*
-	 * target hw version/revision would only be retrieved after firmware
-	 * download
-	 */
-	hif_get_hw_info(hif_sc, &hdd_ctx->target_hw_version,
-			&hdd_ctx->target_hw_revision,
-			&hdd_ctx->target_hw_name);
-
-	/* Get the wlan hw/fw version */
-	hdd_wlan_get_version(hdd_ctx, NULL, NULL);
 
 	hdd_release_rtnl_lock();
 	rtnl_held = false;
