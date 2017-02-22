@@ -871,7 +871,7 @@ static QDF_STATUS send_peer_add_wds_entry_cmd_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
- * send_peer_del_wds_entry_cmd_non_tlv() - send peer delete command to fw
+ * send_peer_del_wds_entry_cmd_tlv() - send peer delete command to fw
  * @wmi_handle: wmi handle
  * @param: pointer holding peer details
  *
@@ -9684,7 +9684,7 @@ static QDF_STATUS send_vdev_set_neighbour_rx_cmd_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
- *  send_smart_ant_set_tx_ant_cmd_non_tlv() - WMI set tx antenna function
+ *  send_smart_ant_set_tx_ant_cmd_tlv() - WMI set tx antenna function
  *  @param wmi_handle  : handle to WMI.
  *  @param macaddr     : vdev mac address
  *  @param param       : pointer to tx antenna param
@@ -10118,6 +10118,317 @@ send_set_qboost_param_cmd_tlv(wmi_unified_t wmi_handle,
 
 	if (ret != 0) {
 		WMI_LOGE("Setting qboost cmd failed\n");
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+
+/**
+ * send_gpio_config_cmd_tlv() - send gpio config to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to hold gpio config param
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS
+send_gpio_config_cmd_tlv(wmi_unified_t wmi_handle,
+			 struct gpio_config_params *param)
+{
+	wmi_gpio_config_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t len;
+	QDF_STATUS ret;
+
+	len = sizeof(*cmd);
+
+	/* Sanity Checks */
+	if (param->pull_type > WMI_GPIO_PULL_DOWN ||
+	    param->intr_mode > WMI_GPIO_INTTYPE_LEVEL_HIGH) {
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s: wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cmd = (wmi_gpio_config_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_gpio_config_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(
+				wmi_gpio_config_cmd_fixed_param));
+	cmd->gpio_num = param->gpio_num;
+	cmd->input = param->input;
+	cmd->pull_type = param->pull_type;
+	cmd->intr_mode = param->intr_mode;
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cmd),
+			WMI_GPIO_CONFIG_CMDID);
+
+	if (ret != 0) {
+		WMI_LOGE("Sending GPIO config cmd failed\n");
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+
+/**
+ * send_gpio_output_cmd_tlv() - send gpio output to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to hold gpio output param
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS
+send_gpio_output_cmd_tlv(wmi_unified_t wmi_handle,
+			 struct gpio_output_params *param)
+{
+	wmi_gpio_output_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t len;
+	QDF_STATUS ret;
+
+	len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s: wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cmd = (wmi_gpio_output_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_gpio_output_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(
+				wmi_gpio_output_cmd_fixed_param));
+	cmd->gpio_num = param->gpio_num;
+	cmd->set = param->set;
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cmd),
+			WMI_GPIO_OUTPUT_CMDID);
+
+	if (ret != 0) {
+		WMI_LOGE("Sending GPIO output cmd failed\n");
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+
+}
+
+/**
+ *  send_phyerr_disable_cmd_tlv() - WMI phyerr disable function
+ *
+ *  @param wmi_handle     : handle to WMI.
+ *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
+ */
+static QDF_STATUS send_phyerr_disable_cmd_tlv(wmi_unified_t wmi_handle)
+{
+	wmi_pdev_dfs_disable_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	QDF_STATUS ret;
+	int32_t len;
+
+	len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s: wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cmd = (wmi_pdev_dfs_disable_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_pdev_dfs_disable_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(
+				wmi_pdev_dfs_disable_cmd_fixed_param));
+	/* Filling it with WMI_PDEV_ID_SOC for now */
+	cmd->pdev_id = WMI_PDEV_ID_SOC;
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cmd),
+			WMI_PDEV_DFS_DISABLE_CMDID);
+
+	if (ret != 0) {
+		WMI_LOGE("Sending PDEV DFS disable cmd failed\n");
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+
+/**
+ *  send_phyerr_enable_cmd_tlv() - WMI phyerr disable function
+ *
+ *  @param wmi_handle     : handle to WMI.
+ *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
+ */
+static QDF_STATUS send_phyerr_enable_cmd_tlv(wmi_unified_t wmi_handle)
+{
+	wmi_pdev_dfs_enable_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	QDF_STATUS ret;
+	int32_t len;
+
+	len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s: wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cmd = (wmi_pdev_dfs_enable_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_pdev_dfs_enable_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(
+				wmi_pdev_dfs_enable_cmd_fixed_param));
+	/* Reserved for future use */
+	cmd->reserved0 = 0;
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cmd),
+			WMI_PDEV_DFS_ENABLE_CMDID);
+
+	if (ret != 0) {
+		WMI_LOGE("Sending PDEV DFS enable cmd failed\n");
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+
+/**
+ * send_nf_dbr_dbm_info_get_cmd_tlv() - send request to get nf to fw
+ * @wmi_handle: wmi handle
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS
+send_nf_dbr_dbm_info_get_cmd_tlv(wmi_unified_t wmi_handle)
+{
+	wmi_buf_t buf;
+	QDF_STATUS ret;
+
+	buf = wmi_buf_alloc(wmi_handle, 0);
+	if (buf == NULL)
+		return QDF_STATUS_E_NOMEM;
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, 0,
+				   WMI_PDEV_GET_NFCAL_POWER_CMDID);
+	if (ret != 0) {
+		WMI_LOGE("Sending get nfcal power cmd failed\n");
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+
+/**
+ * send_set_ht_ie_cmd_tlv() - send ht ie command to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to ht ie param
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS
+send_set_ht_ie_cmd_tlv(wmi_unified_t wmi_handle,
+		       struct ht_ie_params *param)
+{
+	wmi_pdev_set_ht_ie_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	QDF_STATUS ret;
+	int32_t len;
+	uint8_t *buf_ptr;
+
+	len = sizeof(*cmd)  + WMI_TLV_HDR_SIZE +
+	      roundup(param->ie_len, sizeof(uint32_t));
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s: wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	buf_ptr = (uint8_t *)wmi_buf_data(buf);
+	cmd = (wmi_pdev_set_ht_ie_cmd_fixed_param *)buf_ptr;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_pdev_set_ht_ie_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(
+				wmi_pdev_set_ht_ie_cmd_fixed_param));
+	cmd->reserved0 = 0;
+	cmd->ie_len = param->ie_len;
+	cmd->tx_streams = param->tx_streams;
+	cmd->rx_streams = param->rx_streams;
+
+	buf_ptr += sizeof(*cmd);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, cmd->ie_len);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	if (param->ie_len)
+		WMI_HOST_IF_MSG_COPY_CHAR_ARRAY(buf_ptr, param->ie_data,
+						cmd->ie_len);
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_PDEV_SET_HT_CAP_IE_CMDID);
+
+	if (ret != 0) {
+		WMI_LOGE("Sending set ht ie cmd failed\n");
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+
+/**
+ * send_set_vht_ie_cmd_tlv() - send vht ie command to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to vht ie param
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS
+send_set_vht_ie_cmd_tlv(wmi_unified_t wmi_handle,
+			struct vht_ie_params *param)
+{
+	wmi_pdev_set_vht_ie_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	QDF_STATUS ret;
+	int32_t len;
+	uint8_t *buf_ptr;
+
+	len = sizeof(*cmd)  + WMI_TLV_HDR_SIZE +
+	      roundup(param->ie_len, sizeof(uint32_t));
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s: wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	buf_ptr = (uint8_t *)wmi_buf_data(buf);
+	cmd = (wmi_pdev_set_vht_ie_cmd_fixed_param *)buf_ptr;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_pdev_set_vht_ie_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(
+				wmi_pdev_set_vht_ie_cmd_fixed_param));
+	cmd->reserved0 = 0;
+	cmd->ie_len = param->ie_len;
+	cmd->tx_streams = param->tx_streams;
+	cmd->rx_streams = param->rx_streams;
+
+	buf_ptr += sizeof(*cmd);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, cmd->ie_len);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	if (param->ie_len)
+		WMI_HOST_IF_MSG_COPY_CHAR_ARRAY(buf_ptr, param->ie_data,
+						cmd->ie_len);
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_PDEV_SET_VHT_CAP_IE_CMDID);
+
+	if (ret != 0) {
+		WMI_LOGE("Sending set vht ie cmd failed\n");
 		wmi_buf_free(buf);
 	}
 
@@ -15479,6 +15790,13 @@ struct wmi_ops tlv_ops =  {
 	.send_set_atf_cmd = send_set_atf_cmd_tlv,
 	.send_vdev_set_fwtest_param_cmd = send_vdev_set_fwtest_param_cmd_tlv,
 	.send_set_qboost_param_cmd = send_set_qboost_param_cmd_tlv,
+	.send_gpio_config_cmd = send_gpio_config_cmd_tlv,
+	.send_gpio_output_cmd = send_gpio_output_cmd_tlv,
+	.send_phyerr_disable_cmd = send_phyerr_disable_cmd_tlv,
+	.send_phyerr_enable_cmd = send_phyerr_enable_cmd_tlv,
+	.send_nf_dbr_dbm_info_get_cmd = send_nf_dbr_dbm_info_get_cmd_tlv,
+	.send_set_ht_ie_cmd = send_set_ht_ie_cmd_tlv,
+	.send_set_vht_ie_cmd = send_set_vht_ie_cmd_tlv,
 	.get_target_cap_from_service_ready = extract_service_ready_tlv,
 	.extract_hal_reg_cap = extract_hal_reg_cap_tlv,
 	.extract_host_mem_req = extract_host_mem_req_tlv,
