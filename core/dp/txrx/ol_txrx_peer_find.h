@@ -40,9 +40,6 @@
 #define OL_TXRX_PEER_INC_REF_CNT(peer) \
 	__ol_txrx_peer_change_ref_cnt(peer, 1, __func__, __LINE__);
 
-#define OL_TXRX_PEER_DEC_REF_CNT(peer) \
-	__ol_txrx_peer_change_ref_cnt(peer, (-1), __func__, __LINE__);
-
 void __ol_txrx_peer_change_ref_cnt(struct ol_txrx_peer_t *peer,
 						int change,
 						const char *fname,
@@ -99,10 +96,12 @@ void
 ol_txrx_peer_find_hash_add(struct ol_txrx_pdev_t *pdev,
 			   struct ol_txrx_peer_t *peer);
 
-struct ol_txrx_peer_t *ol_txrx_peer_find_hash_find(struct ol_txrx_pdev_t *pdev,
-						   uint8_t *peer_mac_addr,
-						   int mac_addr_is_aligned,
-						   uint8_t check_valid);
+struct ol_txrx_peer_t *
+ol_txrx_peer_find_hash_find_inc_ref
+				(struct ol_txrx_pdev_t *pdev,
+				uint8_t *peer_mac_addr,
+				int mac_addr_is_aligned,
+				uint8_t check_valid);
 
 struct
 ol_txrx_peer_t *ol_txrx_peer_vdev_find_hash(struct ol_txrx_pdev_t *pdev,
