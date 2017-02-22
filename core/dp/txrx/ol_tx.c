@@ -1490,7 +1490,6 @@ ol_tx_hl_base(
 	struct ocb_tx_ctrl_hdr_t tx_ctrl;
 
 	htt_pdev_handle htt_pdev = pdev->htt_pdev;
-	tx_msdu_info.peer = NULL;
 	tx_msdu_info.tso_info.is_tso = 0;
 
 	/*
@@ -1505,7 +1504,7 @@ ol_tx_hl_base(
 		struct ol_tx_desc_t *tx_desc = NULL;
 
 		qdf_mem_zero(&tx_ctrl, sizeof(tx_ctrl));
-
+		tx_msdu_info.peer = NULL;
 		/*
 		 * The netbuf will get stored into a (peer-TID) tx queue list
 		 * inside the ol_tx_classify_store function or else dropped,
