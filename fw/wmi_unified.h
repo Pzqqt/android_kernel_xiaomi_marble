@@ -362,6 +362,8 @@ typedef enum {
     WMI_PDEV_UPDATE_PKT_ROUTING_CMDID,
     /** Get Calibration data version details */
     WMI_PDEV_CHECK_CAL_VERSION_CMDID,
+    /** Set Diversity Gain */
+    WMI_PDEV_SET_DIVERSITY_GAIN_CMDID,
 
     /* VDEV (virtual device) specific commands */
     /** vdev create */
@@ -3926,6 +3928,16 @@ typedef enum {
      * 0 - Disallow mesh mcast traffic
      */
     WMI_PDEV_PARAM_MESH_MCAST_ENABLE,
+    /** Enable/Disable smart chainmask scheme
+      * 1 - Enable smart chainmask scheme
+      * 0 - Disable smart chainmask scheme
+      */
+    WMI_PDEV_PARAM_SMART_CHAINMASK_SCHEME,
+    /** Enable/Disable alternate chainmask scheme
+     * 1 - Enable alternate chainmask scheme
+     * 0 - Disable alternate chainmask scheme
+     */
+    WMI_PDEV_PARAM_ALTERNATIVE_CHAINMASK_SCHEME,
 
 } WMI_PDEV_PARAM;
 
@@ -12808,6 +12820,18 @@ enum {
 #define GET_PDEV_PARAM_TXPOWER_REASON(txpower_param)     \
     (((txpower_param) & PDEV_PARAM_TXPOWER_REASON_MASK) >> PDEV_PARAM_TXPOWER_REASON_SHIFT)
 
+#define PDEV_PARAM_SMART_CHAINMASK_SCHEME_DECISION_MASK 0x00000001
+#define PDEV_PARAM_SMART_CHAINMASK_SCHEME_DECISION_SHIFT 0
+
+#define SET_PDEV_SMART_CHAINMASK_SCHEME_DECISION(param, value) \
+    do { \
+        (param) &= ~PDEV_PARAM_SMART_CHAINMASK_SCHEME_DECISION_MASK; \
+        (param) |= (value) << PDEV_PARAM_SMART_CHAINMASK_SCHEME_DECISION_SHIFT; \
+    while (0)
+
+#define GET_PDEV_SMART_CHAINMASK_SCHEME_DECISION(param)     \
+    (((param) & PDEV_PARAM_SMART_CHAINMASK_SCHEME_DECISION_MASK) >> PDEV_PARAM_SMART_CHAINMASK_SCHEME_DECISION_SHIFT)
+
 /**
  * This command is sent from WLAN host driver to firmware to
  * notify the current modem power state. Host would receive a
@@ -17746,6 +17770,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_LPI_OEM_REQ_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_UPDATE_PKT_ROUTING_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_CHECK_CAL_VERSION_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_SET_DIVERSITY_GAIN_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -18048,6 +18073,20 @@ typedef struct {
      */
     A_UINT32 pdev_id;
 } wmi_pdev_check_cal_version_cmd_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_set_diversity_gain_cmd_fixed_param */
+    /** Identifies pdev on which diversity gain to be applied */
+    A_UINT32 pdev_id;
+    /** The number of spatial stream */
+    A_UINT32 nss;
+    /** The number of gains */
+    A_UINT32 num_gains;
+    /*
+     * This fixed_param TLV is followed by other TLVs:
+     *    A_UINT8 diversity_gains[num_gains]; (gain is in dB units)
+     */
+} wmi_pdev_set_diversity_gain_cmd_fixed_param;
 
 
 /* ADD NEW DEFS HERE */
