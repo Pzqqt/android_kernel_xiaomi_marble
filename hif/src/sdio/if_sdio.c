@@ -214,7 +214,7 @@ err_alloc:
  *
  * Return: 0 for success and non-zero for failure
  */
-int
+static int
 ol_ath_sdio_configure(void *hif_sc, struct net_device *dev,
 		      hif_handle_t *hif_hdl)
 {
@@ -350,7 +350,7 @@ static int init_ath_hif_sdio(void)
  *
  * Return: bool
  */
-bool hif_targ_is_awake(struct hif_softc *scn, void *__iomem *mem)
+static bool hif_targ_is_awake(struct hif_softc *scn, void *__iomem *mem)
 {
 	return true;
 }
@@ -406,7 +406,7 @@ void hif_enable_power_gating(void *hif_ctx)
  *
  * Return: n/a
  */
-void hif_disable_aspm(void)
+static void hif_disable_aspm(void)
 {
 }
 
@@ -460,7 +460,7 @@ QDF_STATUS hif_sdio_open(struct hif_softc *hif_sc,
  *
  * Return: 0 for success
  */
-int hif_get_target_type(struct hif_softc *ol_sc, struct device *dev,
+static int hif_get_target_type(struct hif_softc *ol_sc, struct device *dev,
 	void *bdev, const hif_bus_id *bid, uint32_t *hif_type,
 	uint32_t *target_type)
 {
@@ -496,8 +496,7 @@ void hif_get_target_revision(struct hif_softc *ol_sc)
  * Return: QDF_STATUS
  */
 QDF_STATUS hif_sdio_enable_bus(struct hif_softc *hif_sc,
-			struct device *dev, void *bdev,
-			const struct hif_bus_id *bid,
+			struct device *dev, void *bdev, const hif_bus_id *bid,
 			enum hif_enable_type type)
 {
 	int ret = 0;
@@ -661,7 +660,7 @@ void hif_wlan_disable(struct hif_softc *scn)
  *
  * Return: int
  */
-int hif_config_target(void *hif_hdl)
+static int hif_config_target(void *hif_hdl)
 {
 	return 0;
 }

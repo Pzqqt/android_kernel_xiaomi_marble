@@ -826,11 +826,11 @@ static inline void hif_dev_free_recv_pkt_queue(HTC_PACKET_QUEUE *recv_pkt_queue)
 
 static
 QDF_STATUS hif_dev_recv_message_pending_handler(struct hif_sdio_device *pdev,
-				      uint8_t mail_box_index,
-				      uint32_t msg_look_aheads[],
-				      int num_look_aheads,
-				      bool *async_proc,
-				      int *num_pkts_fetched)
+					uint8_t mail_box_index,
+					uint32_t msg_look_aheads[],
+					int num_look_aheads,
+					bool *async_proc,
+					int *num_pkts_fetched)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	HTC_PACKET *packet;

@@ -298,8 +298,7 @@ hif_bmi_buffer_receive(struct hif_sdio_dev *device,
  * Return: QDF_STATUS_SUCCESS for success.
  */
 QDF_STATUS hif_reg_based_get_target_info(struct hif_opaque_softc *hif_ctx,
-					 struct bmi_target_info
-					 *targ_info) {
+					 struct bmi_target_info *targ_info) {
 	QDF_STATUS status;
 	uint32_t cid;
 	struct hif_sdio_softc *scn = HIF_GET_SDIO_SOFTC(hif_ctx);
@@ -449,7 +448,7 @@ QDF_STATUS hif_exchange_bmi_msg(struct hif_opaque_softc *hif_ctx,
  * Return: QDF_STATUS_SUCCESS for success.
  */
 
-QDF_STATUS
+static QDF_STATUS
 hif_bmi_raw_write(struct hif_sdio_dev *device, char *buffer,
 	      uint32_t length) {
 	return hif_bmi_buffer_send(device, buffer, length);
@@ -464,7 +463,7 @@ hif_bmi_raw_write(struct hif_sdio_dev *device, char *buffer,
  *
  * Return: QDF_STATUS_SUCCESS for success.
  */
-QDF_STATUS
+static QDF_STATUS
 hif_bmi_raw_read(struct hif_sdio_dev *device, char *buffer,
 	     uint32_t length, bool want_timeout)
 {
