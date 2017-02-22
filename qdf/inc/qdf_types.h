@@ -286,7 +286,8 @@ typedef void (*qdf_timer_func_t)(void *);
  * @QDF_MODULE_ID_MGMT_TXRX: management TX/RX module ID
  * @QDF_MODULE_ID_SERIALIZATION: serialization module ID
  * @QDF_MODULE_ID_PMO: PMO (power manager and offloads) Module ID
- * @QDF_MODULE_ID_P2P   : P2P module ID
+ * @QDF_MODULE_ID_P2P: P2P module ID
+ * @QDF_MODULE_ID_POLICY_MGR: Policy Manager module ID
  * @QDF_MODULE_ID_ANY: anything
  * @QDF_MODULE_ID_MAX: Max place holder module ID
  */
@@ -369,6 +370,7 @@ typedef enum {
 	QDF_MODULE_ID_SERIALIZATION,
 	QDF_MODULE_ID_PMO,
 	QDF_MODULE_ID_P2P,
+	QDF_MODULE_ID_POLICY_MGR,
 	QDF_MODULE_ID_ANY,
 	QDF_MODULE_ID_MAX,
 } QDF_MODULE_ID;
