@@ -46,7 +46,8 @@ static QDF_STATUS wlan_objmgr_psoc_object_status(
 		if (psoc->obj_status[id] == QDF_STATUS_COMP_DISABLED)
 			continue;
 		/* If component operates in Async, status is Partially created,
-			break */
+		 * break
+		 */
 		else if (psoc->obj_status[id] == QDF_STATUS_COMP_ASYNC) {
 			if (psoc->soc_comp_priv_obj[id] == NULL) {
 				status = QDF_STATUS_COMP_ASYNC;
@@ -100,9 +101,7 @@ static QDF_STATUS wlan_objmgr_psoc_obj_free(struct wlan_objmgr_psoc *psoc)
 
 	return QDF_STATUS_SUCCESS;
 }
-/*
- * wlan_objmgr_psco_create_handler would return following status values
- */
+
 struct wlan_objmgr_psoc *wlan_objmgr_psoc_obj_create(uint32_t phy_version,
 						WLAN_DEV_TYPE dev_type)
 {
@@ -114,7 +113,6 @@ struct wlan_objmgr_psoc *wlan_objmgr_psoc_obj_create(uint32_t phy_version,
 	QDF_STATUS obj_status;
 	void *arg;
 
-	/* Allocate PSOC object's memory */
 	psoc = qdf_mem_malloc(sizeof(*psoc));
 	if (psoc == NULL) {
 		qdf_print("%s: PSOC allocation failed\n", __func__);
@@ -156,14 +154,14 @@ struct wlan_objmgr_psoc *wlan_objmgr_psoc_obj_create(uint32_t phy_version,
 				stat_handler(psoc, arg,
 					     QDF_STATUS_SUCCESS);
 		}
-	/*
-	 * Few components operates in Asynchrous communction, Object state
-	 * partially created
-	 */
 	} else if (obj_status == QDF_STATUS_COMP_ASYNC) {
+		/*
+		 * Few components operates in Asynchrous communction
+		 * Object state partially created
+		 */
 		psoc->obj_state = WLAN_OBJ_STATE_PARTIALLY_CREATED;
-	/* Component object failed to be created, clean up the object */
 	} else if (obj_status == QDF_STATUS_E_FAILURE) {
+		/* Component object failed to be created, clean up the object */
 		qdf_print("%s: PSOC component objects allocation failed\n",
 			  __func__);
 		/* Clean up the psoc */
@@ -189,7 +187,6 @@ static QDF_STATUS wlan_objmgr_psoc_obj_destroy(struct wlan_objmgr_psoc *psoc)
 	QDF_STATUS obj_status;
 	void *arg;
 
-	/* if PSOC is NULL, return */
 	if (psoc == NULL) {
 		qdf_print("%s:psoc is NULL\n", __func__);
 		return QDF_STATUS_E_FAILURE;
@@ -214,8 +211,10 @@ static QDF_STATUS wlan_objmgr_psoc_obj_destroy(struct wlan_objmgr_psoc *psoc)
 
 	if (obj_status == QDF_STATUS_E_FAILURE) {
 		qdf_print("%s: PSOC component object free failed\n", __func__);
-		/* Ideally should not happen */
-		/*This leads to memleak ??? how to handle */
+		/* Ideally should not happen
+		 * This leads to memleak, BUG_ON to find which component
+		 * delete notification failed and fix it.
+		 */
 		QDF_BUG(0);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -249,9 +248,6 @@ QDF_STATUS wlan_objmgr_psoc_obj_delete(struct wlan_objmgr_psoc *psoc)
 }
 EXPORT_SYMBOL(wlan_objmgr_psoc_obj_delete);
 
-/**
- ** APIs to attach/detach component objects
- */
 QDF_STATUS wlan_objmgr_psoc_component_obj_attach(
 		struct wlan_objmgr_psoc *psoc,
 		enum wlan_umac_comp_id id,
@@ -381,10 +377,6 @@ QDF_STATUS wlan_objmgr_psoc_component_obj_detach(
 
 	return QDF_STATUS_SUCCESS;
 }
-
-/**
- ** APIs to operations on psoc objects
- */
 
 QDF_STATUS wlan_objmgr_iterate_obj_list(
 		struct wlan_objmgr_psoc *psoc,
