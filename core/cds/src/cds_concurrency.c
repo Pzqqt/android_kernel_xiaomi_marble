@@ -374,6 +374,7 @@ static void cds_store_and_del_conn_info(enum cds_con_mode mode,
 	bool found = false;
 	cds_context_type *cds_ctx;
 
+	qdf_mem_zero(info, sizeof(*info));
 	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!cds_ctx) {
 		cds_err("Invalid CDS Context");

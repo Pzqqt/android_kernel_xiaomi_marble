@@ -2141,13 +2141,6 @@ stopbss:
 			       qdf_status);
 		}
 
-		/* once the event is set, structure dev/pHostapdAdapter should
-		 * not be touched since they are now subject to being deleted
-		 * by another thread
-		 */
-		if (eSAP_STOP_BSS_EVENT == sapEvent)
-			qdf_event_set(&pHostapdState->qdf_stop_bss_event);
-
 		/* notify userspace that the BSS has stopped */
 		memset(&we_custom_event, '\0', sizeof(we_custom_event));
 		memcpy(&we_custom_event, stopBssEvent, event_len);
@@ -2159,6 +2152,14 @@ stopbss:
 				    (char *)we_custom_event_generic);
 		cds_decr_session_set_pcl(pHostapdAdapter->device_mode,
 					 pHostapdAdapter->sessionId);
+
+		/* once the event is set, structure dev/pHostapdAdapter should
+		 * not be touched since they are now subject to being deleted
+		 * by another thread
+		 */
+		if (eSAP_STOP_BSS_EVENT == sapEvent)
+			qdf_event_set(&pHostapdState->qdf_stop_bss_event);
+
 		cds_dump_concurrency_info();
 		/* Send SCC/MCC Switching event to IPA */
 		hdd_ipa_send_mcc_scc_msg(pHddCtx, pHddCtx->mcc_mode);
