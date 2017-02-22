@@ -8014,6 +8014,9 @@ static int hdd_features_init(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 	else
 		hdd_set_idle_ps_config(hdd_ctx, false);
 
+	if (hdd_ctx->config->enable_go_cts2self_for_sta)
+	    sme_set_cts2self_for_p2p_go(hdd_ctx->hHal);
+
 	if (hdd_lro_init(hdd_ctx))
 		hdd_err("Unable to initialize LRO in fw");
 
@@ -8461,9 +8464,6 @@ int hdd_wlan_startup(struct device *dev)
 
 	hdd_release_rtnl_lock();
 	rtnl_held = false;
-
-	if (hdd_ctx->config->enable_go_cts2self_for_sta)
-		sme_set_cts2self_for_p2p_go(hdd_ctx->hHal);
 
 	wlan_hdd_update_11n_mode(hdd_ctx->config);
 
