@@ -977,6 +977,15 @@ typedef struct sSirMacRateSet {
 	uint8_t rate[SIR_MAC_RATESET_EID_MAX];
 } qdf_packed tSirMacRateSet;
 
+/** struct merged_mac_rate_set - merged mac rate set
+ * @num_rates: num of rates
+ * @rate: rate list
+ */
+struct merged_mac_rate_set {
+	uint8_t num_rates;
+	uint8_t rate[2 * SIR_MAC_RATESET_EID_MAX];
+};
+
 typedef struct sSirMacSSid {
 	uint8_t length;
 	uint8_t ssId[SIR_MAC_MAX_SSID_LENGTH];
