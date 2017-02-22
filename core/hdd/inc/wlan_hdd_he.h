@@ -31,9 +31,6 @@ struct wma_tgt_cfg;
 struct beacon_data_s;
 struct sap_Config;
 
-#define HE_CAP_OUI_TYPE "\x00\x13\x74\x01"
-#define HE_CAP_OUI_SIZE 4
-
 #ifdef WLAN_FEATURE_11AX
 /**
  * enum qca_wlan_vendor_attr_get_he_capabilities - attributes for HE caps.

@@ -865,6 +865,30 @@ void lim_update_session_he_capable(tpAniSirGlobal mac, tpPESession session);
  */
 void lim_update_chan_he_capable(tpAniSirGlobal mac, tpSwitchChannelParams chan);
 
+/**
+ * lim_set_he_caps() - update HE caps to be sent to FW as part of scan IE
+ * @mac: pointer to MAC
+ * @session: pointer to PE session
+ * @ie_start: pointer to start of IE buffer
+ * @num_bytes: length of IE buffer
+ *
+ * Return: None
+ */
+void lim_set_he_caps(tpAniSirGlobal mac, tpPESession session,
+		     uint8_t *ie_start, uint32_t num_bytes);
+
+/**
+ * lim_send_he_caps_ie() - gets HE capability and send to firmware via wma
+ * @mac_ctx: global mac context
+ * @session: pe session. This can be NULL. In that case self cap will be sent
+ * @vdev_id: vdev for which IE is targeted
+ *
+ * This function gets HE capability and send to firmware via wma
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS lim_send_he_caps_ie(tpAniSirGlobal mac_ctx, tpPESession session,
+			       uint8_t vdev_id);
 #else
 static inline void lim_add_he_cap(tpAddStaParams add_sta_params,
 				  tpSirAssocReq assoc_req)
@@ -964,5 +988,18 @@ static inline void lim_update_chan_he_capable(tpAniSirGlobal mac,
 		tpSwitchChannelParams chan)
 {
 }
+
+static inline void lim_set_he_caps(tpAniSirGlobal mac, tpPESession session,
+				   uint8_t *ie_start, uint32_t num_bytes)
+{
+}
+
+static inline QDF_STATUS lim_send_he_caps_ie(tpAniSirGlobal mac_ctx,
+					     tpPESession session,
+					     uint8_t vdev_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
 #endif
 #endif /* __LIM_UTILS_H */

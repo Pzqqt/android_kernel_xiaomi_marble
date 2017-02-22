@@ -5055,7 +5055,7 @@ static void lim_process_set_vdev_ies_per_band(tpAniSirGlobal mac_ctx,
 	/* intentionally using NULL here so that self capabilty are sent */
 	if (lim_send_ies_per_band(mac_ctx, NULL, p_msg->vdev_id) !=
 			QDF_STATUS_SUCCESS)
-		lim_log(mac_ctx, LOGE, FL("Unable to send HT/VHT Cap to FW"));
+		lim_log(mac_ctx, LOGE, FL("Unable to send HT/VHT/HE IE to FW"));
 }
 
 /**

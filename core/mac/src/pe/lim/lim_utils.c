@@ -6547,6 +6547,7 @@ QDF_STATUS lim_send_ies_per_band(tpAniSirGlobal mac_ctx,
 	tHtCaps *p_ht_cap = (tHtCaps *)(&ht_caps[2]);
 	tSirMacVHTCapabilityInfo *p_vht_cap =
 			(tSirMacVHTCapabilityInfo *)(&vht_caps[2]);
+	QDF_STATUS status;
 
 	/*
 	 * Note: Do not use Dot11f VHT structure, since 1 byte present flag in
@@ -6607,7 +6608,9 @@ QDF_STATUS lim_send_ies_per_band(tpAniSirGlobal mac_ctx,
 	lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_VHTCAPS,
 			CDS_BAND_2GHZ, &vht_caps[2], DOT11F_IE_VHTCAPS_MIN_LEN);
 
-	return QDF_STATUS_SUCCESS;
+	status = lim_send_he_caps_ie(mac_ctx, session, vdev_id);
+
+	return status;
 }
 
 /**
@@ -7764,4 +7767,132 @@ void lim_update_chan_he_capable(tpAniSirGlobal mac, tpSwitchChannelParams chan)
 	lim_log(mac, LOG1, FL("he_capable: %d"), chan->he_capable);
 }
 
+void lim_set_he_caps(tpAniSirGlobal mac, tpPESession session, uint8_t *ie_start,
+		     uint32_t num_bytes)
+{
+	uint8_t *ie = NULL;
+	tDot11fIEvendor_he_cap dot11_cap;
+	struct he_capability_info *he_cap;
+
+	populate_dot11f_he_caps(mac, session, &dot11_cap);
+	lim_log_he_cap(mac, &dot11_cap);
+	ie = cfg_get_vendor_ie_ptr_from_oui(mac, HE_CAP_OUI_TYPE,
+			HE_CAP_OUI_SIZE, ie_start, num_bytes);
+
+	if (ie) {
+		/* convert from unpacked to packed structure */
+		he_cap = (struct he_capability_info *) &ie[2 + HE_CAP_OUI_SIZE];
+
+		he_cap->htc_he = dot11_cap.htc_he;
+		he_cap->twt_request = dot11_cap.twt_request;
+		he_cap->twt_responder = dot11_cap.twt_responder;
+		he_cap->fragmentation = dot11_cap.fragmentation;
+		he_cap->max_num_frag_msdu = dot11_cap.max_num_frag_msdu;
+		he_cap->min_frag_size = dot11_cap.min_frag_size;
+		he_cap->trigger_frm_mac_pad = dot11_cap.trigger_frm_mac_pad;
+		he_cap->multi_tid_aggr = dot11_cap.multi_tid_aggr;
+		he_cap->he_link_adaptation = dot11_cap.he_link_adaptation;
+		he_cap->all_ack = dot11_cap.all_ack;
+		he_cap->ul_mu_rsp_sched = dot11_cap.ul_mu_rsp_sched;
+		he_cap->a_bsr = dot11_cap.a_bsr;
+		he_cap->broadcast_twt = dot11_cap.broadcast_twt;
+		he_cap->ba_32bit_bitmap = dot11_cap.ba_32bit_bitmap;
+		he_cap->mu_cascade = dot11_cap.mu_cascade;
+		he_cap->ack_enabled_multitid = dot11_cap.ack_enabled_multitid;
+		he_cap->dl_mu_ba = dot11_cap.dl_mu_ba;
+		he_cap->omi_a_ctrl = dot11_cap.omi_a_ctrl;
+		he_cap->ofdma_ra = dot11_cap.ofdma_ra;
+		he_cap->max_ampdu_len = dot11_cap.max_ampdu_len;
+		he_cap->amsdu_frag = dot11_cap.amsdu_frag;
+		he_cap->flex_twt_sched = dot11_cap.flex_twt_sched;
+		he_cap->rx_ctrl_frame = dot11_cap.rx_ctrl_frame;
+
+		he_cap->bsrp_ampdu_aggr = dot11_cap.bsrp_ampdu_aggr;
+		he_cap->qtp = dot11_cap.qtp;
+		he_cap->a_bqr = dot11_cap.a_bqr;
+		he_cap->reserved1 = dot11_cap.reserved1;
+
+		he_cap->dual_band = dot11_cap.dual_band;
+		he_cap->chan_width = dot11_cap.chan_width;
+		he_cap->rx_pream_puncturing = dot11_cap.rx_pream_puncturing;
+		he_cap->device_class = dot11_cap.device_class;
+		he_cap->ldpc_coding = dot11_cap.ldpc_coding;
+		he_cap->he_ltf_gi_ppdu = dot11_cap.he_ltf_gi_ppdu;
+		he_cap->he_ltf_gi_ndp = dot11_cap.he_ltf_gi_ndp;
+		he_cap->stbc = dot11_cap.stbc;
+		he_cap->doppler = dot11_cap.doppler;
+		he_cap->ul_mu = dot11_cap.ul_mu;
+		he_cap->dcm_enc_tx = dot11_cap.dcm_enc_tx;
+		he_cap->dcm_enc_rx = dot11_cap.dcm_enc_rx;
+		he_cap->ul_he_mu = dot11_cap.ul_he_mu;
+		he_cap->su_beamformer = dot11_cap.su_beamformer;
+
+		he_cap->su_beamformee = dot11_cap.su_beamformee;
+		he_cap->mu_beamformer = dot11_cap.mu_beamformer;
+		he_cap->bfee_sts_lt_80 = dot11_cap.bfee_sts_lt_80;
+		he_cap->nsts_tol_lt_80 = dot11_cap.nsts_tol_lt_80;
+		he_cap->bfee_sta_gt_80 = dot11_cap.bfee_sta_gt_80;
+		he_cap->nsts_tot_gt_80 = dot11_cap.nsts_tot_gt_80;
+		he_cap->num_sounding_lt_80 = dot11_cap.num_sounding_lt_80;
+		he_cap->num_sounding_gt_80 = dot11_cap.num_sounding_gt_80;
+		he_cap->su_feedback_tone16 = dot11_cap.su_feedback_tone16;
+		he_cap->mu_feedback_tone16 = dot11_cap.mu_feedback_tone16;
+		he_cap->codebook_su = dot11_cap.codebook_su;
+		he_cap->codebook_mu = dot11_cap.codebook_mu;
+		he_cap->beamforming_feedback = dot11_cap.beamforming_feedback;
+		he_cap->he_er_su_ppdu = dot11_cap.he_er_su_ppdu;
+		he_cap->dl_mu_mimo_part_bw = dot11_cap.dl_mu_mimo_part_bw;
+		he_cap->ppet_present = dot11_cap.ppet_present;
+		he_cap->srp = dot11_cap.srp;
+		he_cap->power_boost = dot11_cap.power_boost;
+
+		he_cap->he_ltf_gi_4x = dot11_cap.he_ltf_gi_4x;
+		he_cap->reserved2 = dot11_cap.reserved2;
+
+		he_cap->nss_supported = dot11_cap.nss_supported;
+		he_cap->mcs_supported = dot11_cap.mcs_supported;
+		he_cap->tx_bw_bitmap = dot11_cap.tx_bw_bitmap;
+		he_cap->rx_bw_bitmap = dot11_cap.rx_bw_bitmap;
+	}
+}
+
+QDF_STATUS lim_send_he_caps_ie(tpAniSirGlobal mac_ctx, tpPESession session,
+			       uint8_t vdev_id)
+{
+	uint8_t he_caps[DOT11F_IE_VENDOR_HE_CAP_MIN_LEN + 2];
+	struct he_capability_info *he_cap;
+	QDF_STATUS status_5g, status_2g;
+
+	/* Sending only minimal info(no PPET) to FW now, update if required */
+	qdf_mem_zero(he_caps, DOT11F_IE_VENDOR_HE_CAP_MIN_LEN + 2);
+	he_caps[0] = DOT11F_EID_VENDOR_HE_CAP;
+	he_caps[1] = DOT11F_IE_VENDOR_HE_CAP_MIN_LEN;
+	qdf_mem_copy(&he_caps[2], HE_CAP_OUI_TYPE, HE_CAP_OUI_SIZE);
+	lim_set_he_caps(mac_ctx, session, he_caps,
+			DOT11F_IE_VENDOR_HE_CAP_MIN_LEN + 2);
+	he_cap = (struct he_capability_info *) (&he_caps[2 + HE_CAP_OUI_SIZE]);
+	he_cap->ppet_present = 0;
+
+	status_5g = lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_VENDOR_HE_CAP,
+			CDS_BAND_5GHZ, &he_caps[2],
+			DOT11F_IE_VENDOR_HE_CAP_MIN_LEN);
+	if (QDF_IS_STATUS_ERROR(status_5g))
+		lim_log(mac_ctx, LOGE,
+			FL("Unable send HE Cap IE for 5GHZ band, status: %d"),
+			status_5g);
+
+	status_2g = lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_VENDOR_HE_CAP,
+			CDS_BAND_2GHZ, &he_caps[2],
+			DOT11F_IE_VENDOR_HE_CAP_MIN_LEN);
+	if (QDF_IS_STATUS_ERROR(status_2g))
+		lim_log(mac_ctx, LOGE,
+			FL("Unable send HE Cap IE for 2GHZ band, status: %d"),
+			status_2g);
+
+	if (QDF_IS_STATUS_SUCCESS(status_2g) &&
+		QDF_IS_STATUS_SUCCESS(status_5g))
+		return QDF_STATUS_SUCCESS;
+
+	return QDF_STATUS_E_FAILURE;
+}
 #endif
