@@ -367,7 +367,7 @@ struct ol_txrx_peer_t *ol_tx_tdls_peer_find(struct ol_txrx_pdev_t *pdev,
 }
 
 #else
-struct ol_txrx_peer_t *ol_tx_tdls_peer_find(struct ol_txrx_pdev_t *pdev,
+static struct ol_txrx_peer_t *ol_tx_tdls_peer_find(struct ol_txrx_pdev_t *pdev,
 						struct ol_txrx_vdev_t *vdev,
 						uint8_t *peer_id)
 {
@@ -734,7 +734,7 @@ ol_tx_classify_mgmt(
 	return txq;
 }
 
-A_STATUS
+static A_STATUS
 ol_tx_classify_extension(
 	struct ol_txrx_vdev_t *vdev,
 	struct ol_tx_desc_t *tx_desc,
@@ -845,7 +845,7 @@ ol_tx_classify_extension(
 	return A_OK;
 }
 
-A_STATUS
+static A_STATUS
 ol_tx_classify_mgmt_extension(
 		struct ol_txrx_vdev_t *vdev,
 		struct ol_tx_desc_t *tx_desc,

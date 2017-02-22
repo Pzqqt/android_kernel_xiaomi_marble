@@ -49,6 +49,7 @@
 /* internal header files relevant only for specific systems (Pronto) */
 #include <ol_txrx_encap.h>      /* OL_TX_ENCAP, etc */
 #include <ol_tx.h>
+#include <cdp_txrx_ipa.h>
 
 #ifdef WLAN_FEATURE_FASTPATH
 #include <hif.h>              /* HIF_DEVICE */
@@ -56,7 +57,6 @@
 #include <htt_internal.h>
 #include <htt_types.h>        /* htc_endpoint */
 #include <cdp_txrx_peer_ops.h>
-#include <cdp_txrx_ipa.h>
 #include <cdp_txrx_handle.h>
 int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t msdu,
 		 unsigned int transfer_id, uint32_t download_len);
