@@ -15733,6 +15733,15 @@ typedef struct {
      * (units are seconds)
      */
     A_UINT32 per_rest_time;
+    /* This is the total time for which PER monitoring will be run.
+     * After completion of time windows, the average PER over the window
+     * will be computed.
+     * The parameter value stores specifications for both TX and RX
+     * monitor times.
+     * The two least-significant bytes (0 & 1) hold the RX monitor time;
+     * the two most-significant bytes (2 & 3) hold the TX monitor time.
+     */
+    A_UINT32 pkt_err_rate_mon_time; /* units = seconds */
 } wmi_roam_per_config_fixed_param;
 
 typedef struct {
