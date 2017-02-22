@@ -326,6 +326,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, void *ring_desc,
 		peer_id = hal_rx_mpdu_start_sw_peer_id_get(
 			rx_desc->rx_buf_start);
 		peer = dp_peer_find_by_id(soc, peer_id);
+
 		if (peer &&
 			peer->rx_tid[tid].hw_qdesc_vaddr_unaligned == NULL) {
 			/* IEEE80211_SEQ_MAX indicates invalid start_seq */
@@ -343,7 +344,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, void *ring_desc,
 		qdf_nbuf_data(nbuf), 128, false);
 #endif /* NAPIER_EMULATION */
 
-	if (qdf_unlikely(peer->bss_peer)) {
+	if (peer && qdf_unlikely(peer->bss_peer)) {
 		QDF_TRACE(QDF_MODULE_ID_DP,
 				QDF_TRACE_LEVEL_INFO,
 				FL("received pkt with same src MAC"));
