@@ -1401,6 +1401,9 @@ void ol_rx_peer_init(struct ol_txrx_pdev_t *pdev, struct ol_txrx_peer_t *peer)
 
 		/* invalid sequence number */
 		peer->tids_last_seq[tid] = IEEE80211_SEQ_MAX;
+		/* invalid reorder index number */
+		peer->tids_next_rel_idx[tid] = INVALID_REORDER_INDEX;
+
 	}
 	/*
 	 * Set security defaults: no PN check, no security.

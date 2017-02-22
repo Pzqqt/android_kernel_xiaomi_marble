@@ -1322,4 +1322,6 @@ struct ol_rx_remote_data {
 	uint8_t mac_id;
 };
 
+#define INVALID_REORDER_INDEX 0xFFFF
+
 #endif /* _OL_TXRX_TYPES__H_ */

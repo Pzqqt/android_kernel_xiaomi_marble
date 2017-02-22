@@ -2871,6 +2871,38 @@ QDF_STATUS wma_ds_peek_rx_packet_info(cds_pkt_t *pkt, void **pkt_meta,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef HL_RX_AGGREGATION_HOLE_DETECTION
+void ol_rx_aggregation_hole(uint32_t hole_info)
+{
+	struct sir_sme_rx_aggr_hole_ind *rx_aggr_hole_event;
+	uint32_t alloc_len;
+	cds_msg_t cds_msg = { 0 };
+	QDF_STATUS status;
+
+	alloc_len = sizeof(*rx_aggr_hole_event) +
+		sizeof(rx_aggr_hole_event->hole_info_array[0]);
+	rx_aggr_hole_event = qdf_mem_malloc(alloc_len);
+	if (NULL == rx_aggr_hole_event) {
+		WMA_LOGE("%s: Memory allocation failure", __func__);
+		return;
+	}
+
+	rx_aggr_hole_event->hole_cnt = 1;
+	rx_aggr_hole_event->hole_info_array[0] = hole_info;
+
+	cds_msg.type = eWNI_SME_RX_AGGR_HOLE_IND;
+	cds_msg.bodyptr = rx_aggr_hole_event;
+	cds_msg.bodyval = 0;
+
+	status = cds_mq_post_message(CDS_MQ_ID_SME, &cds_msg);
+	if (status != QDF_STATUS_SUCCESS) {
+		WMA_LOGE("%s: Failed to post aggr event to SME", __func__);
+		qdf_mem_free(rx_aggr_hole_event);
+		return;
+	}
+}
+#endif
+
 /**
  * ol_rx_err() - ol rx err handler
  * @pdev: ol pdev

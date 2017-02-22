@@ -452,6 +452,61 @@ ol_rx_reorder_first_hole(struct ol_txrx_peer_t *peer,
 	*idx_end = tmp_idx;
 }
 
+#ifdef HL_RX_AGGREGATION_HOLE_DETECTION
+
+/**
+ * ol_rx_reorder_detect_hole - ol rx reorder detect hole
+ * @peer: ol_txrx_peer_t
+ * @tid: tid
+ * @idx_start: idx_start
+ *
+ * Return: void
+ */
+static void ol_rx_reorder_detect_hole(struct ol_txrx_peer_t *peer,
+					uint32_t tid,
+					uint32_t idx_start)
+{
+	uint32_t win_sz_mask, next_rel_idx, hole_size;
+
+	if (peer->tids_next_rel_idx[tid] == INVALID_REORDER_INDEX)
+		return;
+
+	win_sz_mask = peer->tids_rx_reorder[tid].win_sz_mask;
+	/* Return directly if block-ack not enable */
+	if (win_sz_mask == 0)
+		return;
+
+	idx_start &= win_sz_mask;
+	next_rel_idx = peer->tids_next_rel_idx[tid] & win_sz_mask;
+
+	if (idx_start != next_rel_idx) {
+		hole_size = ((int)idx_start - (int)next_rel_idx) & win_sz_mask;
+
+		ol_rx_aggregation_hole(hole_size);
+	}
+
+	return;
+}
+
+#else
+
+/**
+ * ol_rx_reorder_detect_hole - ol rx reorder detect hole
+ * @peer: ol_txrx_peer_t
+ * @tid: tid
+ * @idx_start: idx_start
+ *
+ * Return: void
+ */
+static void ol_rx_reorder_detect_hole(struct ol_txrx_peer_t *peer,
+					uint32_t tid,
+					uint32_t idx_start)
+{
+	/* no-op */
+}
+
+#endif
+
 void
 ol_rx_reorder_peer_cleanup(struct ol_txrx_vdev_t *vdev,
 			   struct ol_txrx_peer_t *peer)
@@ -518,7 +573,7 @@ ol_rx_delba_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id, uint8_t tid)
 	if (peer == NULL)
 		return;
 
-	peer->tids_next_rel_idx[tid] = 0xffff;  /* invalid value */
+	peer->tids_next_rel_idx[tid] = INVALID_REORDER_INDEX;
 	rx_reorder = &peer->tids_rx_reorder[tid];
 
 	/* check that there really was a block ack agreement */
@@ -579,6 +634,10 @@ ol_rx_flush_handler(ol_txrx_pdev_handle pdev,
 			return;
 		}
 	}
+
+	if (action == htt_rx_flush_release)
+		ol_rx_reorder_detect_hole(peer, tid, idx_start);
+
 	ol_rx_reorder_flush(vdev, peer, tid, idx_start, idx_end, action);
 	/*
 	 * If the rx reorder timeout is handled by host SW, see if there are
