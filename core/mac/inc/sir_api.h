@@ -3492,6 +3492,7 @@ typedef struct sSirScanOffloadReq {
 	enum wmi_dwelltime_adaptive_mode scan_adaptive_dwell_mode;
 	uint16_t uIEFieldLen;
 	uint16_t uIEFieldOffset;
+	uint32_t burst_scan_duration;
 	tSirChannelList channelList;
 	/*-----------------------------
 	  sSirScanOffloadReq....

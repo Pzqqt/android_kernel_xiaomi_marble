@@ -79,6 +79,9 @@
 
 #define CONV_MS_TO_US 1024      /* conversion factor from ms to us */
 
+#define BEACON_INTERVAL_THRESHOLD 50  /* in msecs */
+#define STA_BURST_SCAN_DURATION 120   /* in msecs */
+
 /* SME REQ processing function templates */
 static bool __lim_process_sme_sys_ready_ind(tpAniSirGlobal, uint32_t *);
 static bool __lim_process_sme_start_bss_req(tpAniSirGlobal,
@@ -1278,6 +1281,20 @@ static QDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 	pScanOffloadReq->idle_time = pScanReq->idle_time;
 	pScanOffloadReq->scan_adaptive_dwell_mode =
 			pScanReq->scan_adaptive_dwell_mode;
+
+	for (i = 0; i < pMac->lim.maxBssId; i++) {
+		tpPESession session_entry =
+				pe_find_session_by_sme_session_id(pMac, i);
+		if (session_entry &&
+			(eLIM_MLM_LINK_ESTABLISHED_STATE ==
+				session_entry->limMlmState) &&
+			(session_entry->beaconParams.beaconInterval
+				< BEACON_INTERVAL_THRESHOLD)) {
+			pScanOffloadReq->burst_scan_duration =
+						STA_BURST_SCAN_DURATION;
+			break;
+		}
+	}
 
 	/* for normal scan, the value for p2pScanType should be 0
 	   always */
