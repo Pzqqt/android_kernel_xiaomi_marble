@@ -9753,6 +9753,377 @@ static QDF_STATUS send_smart_ant_set_tx_ant_cmd_tlv(wmi_unified_t wmi_handle,
 	return ret;
 }
 
+/**
+ * send_set_ant_switch_tbl_cmd_tlv() - send ant switch tbl cmd to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to hold ant switch tbl param
+ *
+ *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
+ */
+static QDF_STATUS
+send_set_ant_switch_tbl_cmd_tlv(wmi_unified_t wmi_handle,
+				struct ant_switch_tbl_params *param)
+{
+	uint8_t len;
+	wmi_buf_t buf;
+	wmi_pdev_set_ant_switch_tbl_cmd_fixed_param *cmd;
+	wmi_pdev_set_ant_ctrl_chain *ctrl_chain;
+	uint8_t *buf_ptr;
+
+	len = sizeof(*cmd) + WMI_TLV_HDR_SIZE;
+	len += sizeof(wmi_pdev_set_ant_ctrl_chain);
+	buf = wmi_buf_alloc(wmi_handle, len);
+
+	if (!buf) {
+		WMI_LOGE("%s:wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = (uint8_t *)wmi_buf_data(buf);
+	qdf_mem_zero(buf_ptr, len);
+	cmd = (wmi_pdev_set_ant_switch_tbl_cmd_fixed_param *)buf_ptr;
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_pdev_set_ant_switch_tbl_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(
+			wmi_pdev_set_ant_switch_tbl_cmd_fixed_param));
+
+	cmd->antCtrlCommon1 = param->ant_ctrl_common1;
+	cmd->antCtrlCommon2 = param->ant_ctrl_common2;
+	cmd->mac_id = param->pdev_id; /* Setting it to 0 for now */
+
+	/* TLV indicating array of structures to follow */
+	buf_ptr += sizeof(wmi_pdev_set_ant_switch_tbl_cmd_fixed_param);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		       sizeof(wmi_pdev_set_ant_ctrl_chain));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	ctrl_chain = (wmi_pdev_set_ant_ctrl_chain *)buf_ptr;
+
+	ctrl_chain->pdev_id = param->pdev_id;
+	ctrl_chain->antCtrlChain = param->antCtrlChain;
+
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_PDEV_SET_ANTENNA_SWITCH_TABLE_CMDID)) {
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ *  send_smart_ant_set_training_info_cmd_tlv() - WMI set smart antenna
+ *  training information function
+ *  @param wmi_handle  : handle to WMI.
+ *  @macaddr           : vdev mac address
+ *  @param param       : pointer to tx antenna param
+ *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
+ */
+static QDF_STATUS send_smart_ant_set_training_info_cmd_tlv(
+				wmi_unified_t wmi_handle,
+				uint8_t macaddr[IEEE80211_ADDR_LEN],
+				struct smart_ant_training_info_params *param)
+{
+	wmi_peer_smart_ant_set_train_antenna_cmd_fixed_param *cmd;
+	wmi_peer_smart_ant_set_train_antenna_param *train_param;
+	wmi_buf_t buf;
+	uint8_t *buf_ptr;
+	int32_t len = 0;
+	QDF_STATUS ret;
+	int loop;
+
+	len = sizeof(*cmd) + WMI_TLV_HDR_SIZE;
+	len += (WMI_SMART_ANT_MAX_RATE_SERIES) *
+		 sizeof(wmi_peer_smart_ant_set_train_antenna_param);
+	buf = wmi_buf_alloc(wmi_handle, len);
+
+	if (!buf) {
+		WMI_LOGE("%s:wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = (uint8_t *)wmi_buf_data(buf);
+	qdf_mem_zero(buf_ptr, len);
+	cmd = (wmi_peer_smart_ant_set_train_antenna_cmd_fixed_param *)buf_ptr;
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+	WMITLV_TAG_STRUC_wmi_peer_smart_ant_set_train_antenna_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(
+			wmi_peer_smart_ant_set_train_antenna_cmd_fixed_param));
+
+	cmd->vdev_id = param->vdev_id;
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(macaddr, &cmd->peer_macaddr);
+	cmd->num_pkts = param->numpkts;
+
+	buf_ptr += sizeof(wmi_peer_smart_ant_set_train_antenna_cmd_fixed_param);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		       sizeof(wmi_peer_smart_ant_set_train_antenna_param) *
+		       WMI_SMART_ANT_MAX_RATE_SERIES);
+
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	train_param = (wmi_peer_smart_ant_set_train_antenna_param *)buf_ptr;
+
+	for (loop = 0; loop < WMI_SMART_ANT_MAX_RATE_SERIES; loop++) {
+		WMITLV_SET_HDR(&train_param->tlv_header,
+		WMITLV_TAG_STRUC_wmi_peer_smart_ant_set_train_antenna_param,
+			    WMITLV_GET_STRUCT_TLVLEN(
+				wmi_peer_smart_ant_set_train_antenna_param));
+		train_param->train_rate_series = param->rate_array[loop];
+		train_param->train_antenna_series = param->antenna_array[loop];
+		train_param->rc_flags = 0;
+		WMI_LOGI(FL("Series number:%d\n"), loop);
+		WMI_LOGI(FL("Rate [0x%02x] Tx_Antenna [0x%08x]\n"),
+			 train_param->train_rate_series,
+			 train_param->train_antenna_series);
+		train_param++;
+	}
+
+	ret = wmi_unified_cmd_send(wmi_handle,
+				buf,
+				len,
+				WMI_PEER_SMART_ANT_SET_TRAIN_INFO_CMDID);
+
+	if (ret != 0) {
+		WMI_LOGE(" %s :WMI Failed\n", __func__);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return ret;
+}
+
+/**
+ *  send_smart_ant_set_node_config_cmd_tlv() - WMI set node
+ *  configuration function
+ *  @param wmi_handle		   : handle to WMI.
+ *  @macaddr			   : vdev mad address
+ *  @param param		   : pointer to tx antenna param
+ *
+ *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
+ */
+static QDF_STATUS send_smart_ant_set_node_config_cmd_tlv(
+				wmi_unified_t wmi_handle,
+				uint8_t macaddr[IEEE80211_ADDR_LEN],
+				struct smart_ant_node_config_params *param)
+{
+	wmi_peer_smart_ant_set_node_config_ops_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint8_t *buf_ptr;
+	int32_t len = 0, args_tlv_len;
+	int ret;
+	int i = 0;
+	A_UINT32 *node_config_args;
+
+	args_tlv_len = WMI_TLV_HDR_SIZE + param->args_count * sizeof(A_UINT32);
+	len = sizeof(*cmd) + args_tlv_len;
+
+	if ((param->args_count == 0)) {
+		WMI_LOGE("%s: Can't send a command with %d arguments\n",
+			  __func__, param->args_count);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s:wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_peer_smart_ant_set_node_config_ops_cmd_fixed_param *)
+						wmi_buf_data(buf);
+	buf_ptr = (uint8_t *)cmd;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+	WMITLV_TAG_STRUC_wmi_peer_smart_ant_set_node_config_ops_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(
+		wmi_peer_smart_ant_set_node_config_ops_cmd_fixed_param));
+	cmd->vdev_id = param->vdev_id;
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(macaddr, &cmd->peer_macaddr);
+	cmd->cmd_id = param->cmd_id;
+	cmd->args_count = param->args_count;
+	buf_ptr += sizeof(
+		wmi_peer_smart_ant_set_node_config_ops_cmd_fixed_param);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32,
+			(cmd->args_count * sizeof(A_UINT32)));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	node_config_args = (A_UINT32 *)buf_ptr;
+
+	for (i = 0; i < param->args_count; i++) {
+		node_config_args[i] = param->args_arr[i];
+		WMI_LOGI("%d", param->args_arr[i]);
+	}
+
+	ret = wmi_unified_cmd_send(wmi_handle,
+			   buf,
+			   len,
+			   WMI_PEER_SMART_ANT_SET_NODE_CONFIG_OPS_CMDID);
+
+	if (ret != 0) {
+		WMI_LOGE("%s: WMI FAILED:Sent cmd_id: 0x%x\n Node: %02x:%02x:%02x:%02x:%02x:%02x cmdstatus=%d\n",
+			 __func__, param->cmd_id, macaddr[0],
+			 macaddr[1], macaddr[2], macaddr[3],
+			 macaddr[4], macaddr[5], ret);
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+
+/**
+ * send_set_atf_cmd_tlv() - send set atf command to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to set atf param
+ *
+ *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
+ */
+static QDF_STATUS
+send_set_atf_cmd_tlv(wmi_unified_t wmi_handle,
+		     struct set_atf_params *param)
+{
+	wmi_atf_peer_info *peer_info;
+	wmi_peer_atf_request_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint8_t *buf_ptr;
+	int i;
+	int32_t len = 0;
+	QDF_STATUS retval;
+
+	len = sizeof(*cmd) + WMI_TLV_HDR_SIZE;
+	len += param->num_peers * sizeof(wmi_atf_peer_info);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s:wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	buf_ptr = (uint8_t *)wmi_buf_data(buf);
+	cmd = (wmi_peer_atf_request_fixed_param *)buf_ptr;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_peer_atf_request_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(
+				wmi_peer_atf_request_fixed_param));
+	cmd->num_peers = param->num_peers;
+
+	buf_ptr += sizeof(*cmd);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		       sizeof(wmi_atf_peer_info) *
+		       cmd->num_peers);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	peer_info = (wmi_atf_peer_info *)buf_ptr;
+
+	for (i = 0; i < cmd->num_peers; i++) {
+		WMITLV_SET_HDR(&peer_info->tlv_header,
+			    WMITLV_TAG_STRUC_wmi_atf_peer_info,
+			    WMITLV_GET_STRUCT_TLVLEN(
+				wmi_atf_peer_info));
+		peer_info->atf_units = param->peer_info[i].percentage_peer;
+		/*
+		 * TLV definition for peer atf request fixed param combines
+		 * extension stats. Legacy FW for WIN (Non-TLV) has peer atf
+		 * stats and atf extension stats as two different
+		 * implementations.
+		 * Need to discuss with FW on this.
+		 *
+		 * peer_info->atf_groupid = param->peer_ext_info[i].group_index;
+		 * peer_info->atf_units_reserved =
+		 *		param->peer_ext_info[i].atf_index_reserved;
+		 */
+		peer_info++;
+	}
+
+	retval = wmi_unified_cmd_send(wmi_handle, buf, len,
+		WMI_PEER_ATF_REQUEST_CMDID);
+
+	if (retval != QDF_STATUS_SUCCESS) {
+		WMI_LOGE("%s : WMI Failed\n", __func__);
+		wmi_buf_free(buf);
+	}
+
+	return retval;
+}
+
+/**
+ * send_vdev_set_fwtest_param_cmd_tlv() - send fwtest param in fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to hold fwtest param
+ *
+ *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
+ */
+static QDF_STATUS send_vdev_set_fwtest_param_cmd_tlv(wmi_unified_t wmi_handle,
+				struct set_fwtest_params *param)
+{
+	wmi_fwtest_set_param_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+
+	if (!buf) {
+		WMI_LOGE("%s:wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cmd = (wmi_fwtest_set_param_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_fwtest_set_param_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(
+				wmi_fwtest_set_param_cmd_fixed_param));
+	cmd->param_id = param->arg;
+	cmd->param_value = param->value;
+
+	if (wmi_unified_cmd_send(wmi_handle, buf, len, WMI_FWTEST_CMDID)) {
+		WMI_LOGE("Setting FW test param failed\n");
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_set_qboost_param_cmd_tlv() - send set qboost command to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to qboost params
+ * @macaddr: vdev mac address
+ *
+ *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
+ */
+static QDF_STATUS
+send_set_qboost_param_cmd_tlv(wmi_unified_t wmi_handle,
+			      uint8_t macaddr[IEEE80211_ADDR_LEN],
+			      struct set_qboost_params *param)
+{
+	WMI_QBOOST_CFG_CMD_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t len;
+	QDF_STATUS ret;
+
+	len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s: wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cmd = (WMI_QBOOST_CFG_CMD_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_WMI_QBOOST_CFG_CMD_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(
+				WMI_QBOOST_CFG_CMD_fixed_param));
+	cmd->vdev_id = param->vdev_id;
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(macaddr, &cmd->peer_macaddr);
+	cmd->qb_enable = param->value;
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cmd),
+			WMI_QBOOST_CFG_CMDID);
+
+	if (ret != 0) {
+		WMI_LOGE("Setting qboost cmd failed\n");
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+
 static
 void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 				target_resource_config *tgt_res_cfg)
@@ -14941,6 +15312,14 @@ struct wmi_ops tlv_ops =  {
 	.send_set_vap_dscp_tid_map_cmd = send_set_vap_dscp_tid_map_cmd_tlv,
 	.send_vdev_set_neighbour_rx_cmd = send_vdev_set_neighbour_rx_cmd_tlv,
 	.send_smart_ant_set_tx_ant_cmd = send_smart_ant_set_tx_ant_cmd_tlv,
+	.send_set_ant_switch_tbl_cmd = send_set_ant_switch_tbl_cmd_tlv,
+	.send_smart_ant_set_training_info_cmd =
+		send_smart_ant_set_training_info_cmd_tlv,
+	.send_smart_ant_set_node_config_cmd =
+		send_smart_ant_set_node_config_cmd_tlv,
+	.send_set_atf_cmd = send_set_atf_cmd_tlv,
+	.send_vdev_set_fwtest_param_cmd = send_vdev_set_fwtest_param_cmd_tlv,
+	.send_set_qboost_param_cmd = send_set_qboost_param_cmd_tlv,
 	.get_target_cap_from_service_ready = extract_service_ready_tlv,
 	.extract_hal_reg_cap = extract_hal_reg_cap_tlv,
 	.extract_host_mem_req = extract_host_mem_req_tlv,

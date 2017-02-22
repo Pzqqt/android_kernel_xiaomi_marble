@@ -3970,16 +3970,6 @@ struct set_bwf_params {
 };
 
 /**
- * struct set_atf_params - ATF params
- * @num_peers: number of peers
- * @atf_peer_info: ATF peer info
- */
-struct set_atf_params {
-	uint32_t num_peers;
-	atf_peer_info peer_info[ATF_ACTIVED_MAX_CLIENTS];
-};
-
-/**
  * struct atf_peer_ext_info - ATF peer ext info params
  * @peer_macaddr: peer mac address
  * @group_index: group index
@@ -3990,6 +3980,16 @@ typedef struct {
 	uint32_t group_index;
 	uint32_t atf_index_reserved;
 } atf_peer_ext_info;
+
+/**
+ * struct set_atf_params - ATF params
+ * @num_peers: number of peers
+ * @atf_peer_info: ATF peer info
+ */
+struct set_atf_params {
+	uint32_t num_peers;
+	atf_peer_info peer_info[ATF_ACTIVED_MAX_CLIENTS];
+};
 
 /**
  * struct atf_peer_request_params - ATF peer req params
@@ -4085,6 +4085,8 @@ struct wmm_update_params {
 struct ant_switch_tbl_params {
 	uint32_t ant_ctrl_common1;
 	uint32_t ant_ctrl_common2;
+	uint32_t pdev_id;
+	uint32_t antCtrlChain;
 };
 
 /**
