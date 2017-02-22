@@ -3555,19 +3555,23 @@ struct config_ratemask_params {
  * @dest_addr: Pointer to destination macaddr
  * @peer_addr: Pointer to peer mac addr
  * @flags: flags
+ * @vdev_id: Vdev id
  */
 struct peer_add_wds_entry_params {
 	const uint8_t *dest_addr;
 	uint8_t *peer_addr;
 	uint32_t flags;
+	uint32_t vdev_id;
 };
 
 /**
  * struct peer_del_wds_entry_params - WDS peer entry del params
  * @dest_addr: Pointer to destination macaddr
+ * @vdev_id: Vdev id
  */
 struct peer_del_wds_entry_params {
 	uint8_t *dest_addr;
+	uint32_t vdev_id;
 };
 
 /**
@@ -3575,6 +3579,7 @@ struct peer_del_wds_entry_params {
  * @wds_macaddr: Pointer to destination macaddr
  * @peer_add: Pointer to peer mac addr
  * @flags: flags
+ * @vdev_id: Vdev id
  */
 struct peer_update_wds_entry_params {
 	uint8_t *wds_macaddr;
@@ -4036,19 +4041,27 @@ struct wlan_profile_params {
 /* struct ht_ie_params - HT IE params
  * @ie_len: IE length
  * @ie_data: pointer to IE data
+ * @tx_streams: Tx streams supported for this HT IE
+ * @rx_streams: Rx streams supported for this HT IE
  */
 struct ht_ie_params {
 	uint32_t ie_len;
 	uint8_t *ie_data;
+	uint32_t tx_streams;
+	uint32_t rx_streams;
 };
 
 /* struct vht_ie_params - VHT IE params
  * @ie_len: IE length
  * @ie_data: pointer to IE data
+ * @tx_streams: Tx streams supported for this VHT IE
+ * @rx_streams: Rx streams supported for this VHT IE
  */
 struct vht_ie_params {
 	uint32_t ie_len;
 	uint8_t *ie_data;
+	uint32_t tx_streams;
+	uint32_t rx_streams;
 };
 
 /**
