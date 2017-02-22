@@ -1563,9 +1563,6 @@ QDF_STATUS hdd_wlan_re_init(void)
 	if (QDF_IS_STATUS_ERROR(qdf_status))
 		goto err_cds_disable;
 
-	if (cds_is_packet_log_enabled())
-		hdd_pktlog_enable_disable(pHddCtx, true, 0, 0);
-
 	hdd_err("WLAN host driver reinitiation completed!");
 	goto success;
 

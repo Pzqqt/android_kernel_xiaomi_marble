@@ -8029,6 +8029,9 @@ static int hdd_features_init(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 		goto deregister_frames;
 	}
 
+	if (cds_is_packet_log_enabled())
+		hdd_pktlog_enable_disable(hdd_ctx, true, 0, 0);
+
 	hddtxlimit.txPower2g = hdd_ctx->config->TxPower2g;
 	hddtxlimit.txPower5g = hdd_ctx->config->TxPower5g;
 	status = sme_txpower_limit(hdd_ctx->hHal, &hddtxlimit);
@@ -8488,10 +8491,6 @@ int hdd_wlan_startup(struct device *dev)
 
 	if (hdd_ctx->rps)
 		hdd_set_rps_cpu_mask(hdd_ctx);
-
-
-	if (cds_is_packet_log_enabled())
-		hdd_pktlog_enable_disable(hdd_ctx, true, 0, 0);
 
 	ret = hdd_register_notifiers(hdd_ctx);
 	if (ret)
