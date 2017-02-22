@@ -5082,6 +5082,62 @@ static struct cdp_pflow_ops dp_ops_pflow = {
 };
 #endif /* CONFIG_WIN */
 
+#ifdef FEATURE_RUNTIME_PM
+/**
+ * dp_runtime_suspend() - ensure DP is ready to runtime suspend
+ * @opaque_pdev: DP pdev context
+ *
+ * DP is ready to runtime suspend if there are no pending TX packets.
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS dp_runtime_suspend(struct cdp_pdev *opaque_pdev)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)opaque_pdev;
+	struct dp_soc *soc = pdev->soc;
+
+	/* Call DP TX flow control API to check if there is any
+	   pending packets */
+
+	if (soc->intr_mode == DP_INTR_POLL)
+		qdf_timer_stop(&soc->int_timer);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_runtime_resume() - ensure DP is ready to runtime resume
+ * @opaque_pdev: DP pdev context
+ *
+ * Resume DP for runtime PM.
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS dp_runtime_resume(struct cdp_pdev *opaque_pdev)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)opaque_pdev;
+	struct dp_soc *soc = pdev->soc;
+	void *hal_srng;
+	int i;
+
+	if (soc->intr_mode == DP_INTR_POLL)
+		qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
+
+	for (i = 0; i < MAX_TCL_DATA_RINGS; i++) {
+		hal_srng = soc->tcl_data_ring[i].hal_srng;
+		if (hal_srng) {
+			/* We actually only need to acquire the lock */
+			hal_srng_access_start(soc->hal_soc, hal_srng);
+			/* Update SRC ring head pointer for HW to send
+			   all pending packets */
+			hal_srng_access_end(soc->hal_soc, hal_srng);
+		}
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* FEATURE_RUNTIME_PM */
+
 static QDF_STATUS dp_bus_suspend(struct cdp_pdev *opaque_pdev)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)opaque_pdev;
@@ -5108,9 +5164,9 @@ static QDF_STATUS dp_bus_resume(struct cdp_pdev *opaque_pdev)
 static struct cdp_misc_ops dp_ops_misc = {
 	.get_opmode = dp_get_opmode,
 #ifdef FEATURE_RUNTIME_PM
-	.runtime_suspend = dp_bus_suspend,
-	.runtime_resume = dp_bus_resume,
-#endif
+	.runtime_suspend = dp_runtime_suspend,
+	.runtime_resume = dp_runtime_resume,
+#endif /* FEATURE_RUNTIME_PM */
 };
 
 static struct cdp_flowctl_ops dp_ops_flowctl = {

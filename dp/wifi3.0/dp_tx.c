@@ -847,6 +847,14 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	hal_tx_desc_sync(hal_tx_desc_cached, hal_tx_desc);
 	DP_STATS_INC_PKT(vdev, tx_i.processed, 1, length);
 
+	/*
+	 * If one packet is enqueued in HW, PM usage count needs to be
+	 * incremented by one to prevent future runtime suspend. This
+	 * should be tied with the success of enqueuing. It will be
+	 * decremented after the packet has been sent.
+	 */
+	hif_pm_runtime_get_noresume(soc->hif_handle);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1042,7 +1050,13 @@ static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	nbuf = NULL;
 
 fail_return:
-	hal_srng_access_end(soc->hal_soc, hal_srng);
+	if (hif_pm_runtime_get(soc->hif_handle) == 0) {
+		hal_srng_access_end(soc->hal_soc, hal_srng);
+		hif_pm_runtime_put(soc->hif_handle);
+	} else {
+		hal_srng_access_end_reap(soc->hal_soc, hal_srng);
+	}
+
 	return nbuf;
 }
 
@@ -1184,7 +1198,12 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	nbuf = NULL;
 
 done:
-	hal_srng_access_end(soc->hal_soc, hal_srng);
+	if (hif_pm_runtime_get(soc->hif_handle) == 0) {
+		hal_srng_access_end(soc->hal_soc, hal_srng);
+		hif_pm_runtime_put(soc->hif_handle);
+	} else {
+		hal_srng_access_end_reap(soc->hal_soc, hal_srng);
+	}
 
 	return nbuf;
 }
@@ -2185,6 +2204,8 @@ uint32_t dp_tx_comp_handler(struct dp_soc *soc, void *hal_srng, uint32_t quota)
 		}
 
 		num_processed += !(count & DP_TX_NAPI_BUDGET_DIV_MASK);
+		/* Decrement PM usage count if the packet has been sent.*/
+		hif_pm_runtime_put(soc->hif_handle);
 
 		/*
 		 * Processed packet count is more than given quota

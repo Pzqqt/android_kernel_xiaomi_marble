@@ -633,7 +633,7 @@ int htt_srng_setup(void *htt_soc, int mac_id, void *hal_srng,
 		qdf_nbuf_data(htt_msg),
 		qdf_nbuf_len(htt_msg),
 		soc->htc_endpoint,
-		1); /* tag - not relevant here */
+		HTC_TX_PACKET_TAG_RUNTIME_PUT); /* tag for no FW response msg */
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, htt_msg);
 	DP_HTT_SEND_HTC_PKT(soc, pkt);
@@ -2085,6 +2085,7 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 #endif
 	case HTT_T2H_MSG_TYPE_VERSION_CONF:
 		{
+			htc_pm_runtime_put(soc->htc_soc);
 			soc->tgt_ver.major = HTT_VER_CONF_MAJOR_GET(*msg_word);
 			soc->tgt_ver.minor = HTT_VER_CONF_MINOR_GET(*msg_word);
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,

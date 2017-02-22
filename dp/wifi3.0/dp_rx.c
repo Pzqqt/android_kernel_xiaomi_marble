@@ -937,6 +937,8 @@ dp_rx_process(struct dp_intr *int_ctx, void *hal_ring, uint32_t quota)
 	/* Debug -- Remove later */
 	qdf_assert(hal_soc);
 
+	hif_pm_runtime_mark_last_busy(soc->osdev->dev);
+
 	if (qdf_unlikely(hal_srng_access_start(hal_soc, hal_ring))) {
 
 		/*
