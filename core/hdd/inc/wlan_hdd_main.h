@@ -2115,7 +2115,8 @@ void hdd_connect_result(struct net_device *dev, const u8 *bssid,
 			tCsrRoamInfo *roam_info, const u8 *req_ie,
 			size_t req_ie_len, const u8 *resp_ie,
 			size_t resp_ie_len, u16 status, gfp_t gfp,
-			bool connect_timeout);
+			bool connect_timeout,
+			tSirResultCodes timeout_reason);
 
 #ifdef WLAN_FEATURE_FASTPATH
 void hdd_enable_fastpath(struct hdd_config *hdd_cfg,
