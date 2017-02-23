@@ -1777,6 +1777,24 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WLAN_PRIV_SET_CHAR_GET_NONE   (SIOCIWFIRSTPRIV + 3)
 #define WE_WOWL_ADD_PTRN     1
 #define WE_WOWL_DEL_PTRN     2
+/*
+ * <ioctl>
+ * neighbor - Send neighbor report request
+ *
+ * @INPUT: string
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL create a Neighbor report request and send it to peer
+ *
+ * @E.g: iwpriv wlan0 neighbor "SSID"
+ *
+ * Supported Feature: 11k
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_NEIGHBOR_REPORT_REQUEST 3
 /*
  * <ioctl>

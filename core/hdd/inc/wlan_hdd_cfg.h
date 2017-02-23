@@ -3450,24 +3450,73 @@ enum station_keepalive_method {
 #define CFG_TL_DELAYED_TRGR_FRM_INT_MAX                     (4294967295UL)
 #define CFG_TL_DELAYED_TRGR_FRM_INT_DEFAULT                 3000
 
+/*
+ * <ini>
+ * gRrmEnable - Enable/Disable RRM
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to controls the capabilities (11 k) included
+ * in the capabilities field.
+ *
+ * Related: None.
+ *
+ * Supported Feature: 11k
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_RRM_ENABLE_NAME                              "gRrmEnable"
 #define CFG_RRM_ENABLE_MIN                               (0)
 #define CFG_RRM_ENABLE_MAX                               (1)
 #define CFG_RRM_ENABLE_DEFAULT                           (0)
 
+/*
+ * <ini>
+ * gRrmRandnIntvl - Randomization interval
+ * @Min: 10
+ * @Max: 100
+ * @Default: 100
+ *
+ * This ini is used to set randomization interval which is used to start a timer
+ * of a random value within randomization interval. Next RRM Scan request
+ * will be issued after the expiry of this random interval.
+ *
+ * Related: None.
+ *
+ * Supported Feature: 11k
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_RRM_MEAS_RANDOMIZATION_INTVL_NAME            "gRrmRandnIntvl"
 #define CFG_RRM_MEAS_RANDOMIZATION_INTVL_MIN             (10)
 #define CFG_RRM_MEAS_RANDOMIZATION_INTVL_MAX             (100)
 #define CFG_RRM_MEAS_RANDOMIZATION_INTVL_DEFAULT         (100)
 
-/**
- * This INI is used to configure RM enabled capabilities IE.
+/*
+ * <ini>
+ * rm_capability - Configure RM enabled capabilities IE
+ * @Default: 73,10,91,00,04
+ *
+ * This ini is used to configure RM enabled capabilities IE.
  * Using this INI, we can set/unset any of the bits in 5 bytes
  * (last 4bytes are reserved). Bit details are updated as per
  * Draft version of 11mc spec. (Draft P802.11REVmc_D4.2)
  *
  * Bitwise details are defined as bit mask in rrm_global.h
  * Comma is used as a separator for each byte.
+ *
+ * Related: None.
+ *
+ * Supported Feature: 11k
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
  */
 #define CFG_RM_CAPABILITY_NAME            "rm_capability"
 #define CFG_RM_CAPABILITY_DEFAULT         "73,10,91,00,04"
