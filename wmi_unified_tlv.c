@@ -839,6 +839,106 @@ QDF_STATUS send_peer_rx_reorder_queue_remove_cmd_tlv(wmi_unified_t wmi,
 }
 
 /**
+ * send_peer_add_wds_entry_cmd_tlv() - send peer add command to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer holding peer details
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS send_peer_add_wds_entry_cmd_tlv(wmi_unified_t wmi_handle,
+					struct peer_add_wds_entry_params *param)
+{
+	wmi_peer_add_wds_entry_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		qdf_print("%s: wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	cmd = (wmi_peer_add_wds_entry_cmd_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+			WMITLV_TAG_STRUC_wmi_peer_add_wds_entry_cmd_fixed_param,
+			WMITLV_GET_STRUCT_TLVLEN
+				(wmi_peer_add_wds_entry_cmd_fixed_param));
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(param->dest_addr, &cmd->wds_macaddr);
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(param->peer_addr, &cmd->peer_macaddr);
+	cmd->flags = param->flags;
+
+	return wmi_unified_cmd_send(wmi_handle, buf, len,
+			WMI_PEER_ADD_WDS_ENTRY_CMDID);
+}
+
+/**
+ * send_peer_del_wds_entry_cmd_non_tlv() - send peer delete command to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer holding peer details
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS send_peer_del_wds_entry_cmd_tlv(wmi_unified_t wmi_handle,
+					struct peer_del_wds_entry_params *param)
+{
+	wmi_peer_remove_wds_entry_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		qdf_print("%s: wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+	cmd = (wmi_peer_remove_wds_entry_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+			WMITLV_TAG_STRUC_wmi_peer_remove_wds_entry_cmd_fixed_param,
+			WMITLV_GET_STRUCT_TLVLEN
+				(wmi_peer_remove_wds_entry_cmd_fixed_param));
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(param->dest_addr, &cmd->wds_macaddr);
+	return wmi_unified_cmd_send(wmi_handle, buf, len,
+			WMI_PEER_REMOVE_WDS_ENTRY_CMDID);
+}
+
+/**
+ * send_peer_update_wds_entry_cmd_non_tlv() - send peer update command to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer holding peer details
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS send_peer_update_wds_entry_cmd_tlv(wmi_unified_t wmi_handle,
+				struct peer_update_wds_entry_params *param)
+{
+	wmi_peer_update_wds_entry_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		qdf_print("%s: wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	/* wmi_buf_alloc returns zeroed command buffer */
+	cmd = (wmi_peer_update_wds_entry_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+			WMITLV_TAG_STRUC_wmi_peer_update_wds_entry_cmd_fixed_param,
+			WMITLV_GET_STRUCT_TLVLEN
+				(wmi_peer_update_wds_entry_cmd_fixed_param));
+	cmd->flags = (param->flags) ? WMI_WDS_FLAG_STATIC : 0;
+	if (param->wds_macaddr)
+		WMI_CHAR_ARRAY_TO_MAC_ADDR(param->wds_macaddr,
+				&cmd->wds_macaddr);
+	if (param->peer_macaddr)
+		WMI_CHAR_ARRAY_TO_MAC_ADDR(param->peer_macaddr,
+				&cmd->peer_macaddr);
+	return wmi_unified_cmd_send(wmi_handle, buf, len,
+			WMI_PEER_UPDATE_WDS_ENTRY_CMDID);
+}
+
+
+
+/**
  * send_green_ap_ps_cmd_tlv() - enable green ap powersave command
  * @wmi_handle: wmi handle
  * @value: value
@@ -14075,6 +14175,9 @@ struct wmi_ops tlv_ops =  {
 		send_peer_rx_reorder_queue_setup_cmd_tlv,
 	.send_peer_rx_reorder_queue_remove_cmd =
 		send_peer_rx_reorder_queue_remove_cmd_tlv,
+	.send_peer_add_wds_entry_cmd = send_peer_add_wds_entry_cmd_tlv,
+	.send_peer_del_wds_entry_cmd = send_peer_del_wds_entry_cmd_tlv,
+	.send_peer_update_wds_entry_cmd = send_peer_update_wds_entry_cmd_tlv,
 	.send_green_ap_ps_cmd = send_green_ap_ps_cmd_tlv,
 	.send_pdev_utf_cmd = send_pdev_utf_cmd_tlv,
 	.send_pdev_param_cmd = send_pdev_param_cmd_tlv,
