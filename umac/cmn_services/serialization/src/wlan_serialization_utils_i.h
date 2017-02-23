@@ -352,4 +352,41 @@ enum wlan_serialization_cmd_status
 wlan_serialization_is_cmd_in_active_pending(bool cmd_in_active,
 		bool cmd_in_pending);
 
+/**
+ * wlan_serialization_remove_all_cmd_from_queue() - Remove cmd which matches
+ * @queue: queue from where command needs to be removed
+ * @ser_pdev_obj: pointer to serialization object
+ * @pdev: pointer to pdev
+ * @vdev: pointer to vdev
+ * @cmd: pointer to cmd
+ * @is_active_queue: to check if command matching is for active queue
+ *
+ * This API will remove one or more commands which match the given parameters
+ * interms of argument. For example, if user request all commands to removed
+ * which matches "vdev" then iterate through all commands, find out and remove
+ * command which matches vdev object.
+ *
+ * Return: enum wlan_serialization_cmd_status
+ */
+enum wlan_serialization_cmd_status
+wlan_serialization_remove_all_cmd_from_queue(qdf_list_t *queue,
+		struct wlan_serialization_pdev_priv_obj *ser_pdev_obj,
+		struct wlan_objmgr_pdev *pdev, struct wlan_objmgr_vdev *vdev,
+		struct wlan_serialization_command *cmd,
+		uint8_t is_active_queue);
+/**
+ * wlan_serialization_is_cmd_present_queue() - Check if same command
+ *				is already present active or pending queue
+ * @cmd: pointer to command which we need to find
+ * @is_active_queue: flag to find the command in active or pending queue
+ *
+ * This API will check the given command is already present in active or
+ * pending queue based on flag
+ * If present then return true otherwise false
+ *
+ * Return: true or false
+ */
+bool wlan_serialization_is_cmd_present_queue(
+			struct wlan_serialization_command *cmd,
+			uint8_t is_active_queue);
 #endif

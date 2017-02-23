@@ -123,8 +123,70 @@ typedef bool (*wlan_serialization_apply_rules_cb)(
  * @WLAN_SER_CMD_SCAN:     Scan command
  */
 enum wlan_serialization_cmd_type {
+	/* all scan command before non-scan */
 	WLAN_SER_CMD_SCAN,
-	WLAN_SER_CMD_MAX,
+	WLAN_SER_CMD_SCAN_OTHER,
+	WLAN_SER_CMD_SCAN_LOST_LINK1,
+	WLAN_SER_CMD_SCAN_LOST_LINK2,
+	WLAN_SER_CMD_SCAN_LOST_LINK3,
+	WLAN_SER_CMD_SCAN_11D_TYPE1,
+	WLAN_SER_CMD_SCAN_11D_TYPE2,
+	WLAN_SER_CMD_SCAN_11D_DONE,
+	WLAN_SER_CMD_SCAN_USER_REQ,
+	WLAN_SER_CMD_SCAN_FOR_SSID,
+	WLAN_SER_CMD_SCAN_IDLE_SCAN,
+	WLAN_SER_CMD_SCAN_PROBE_BSS,
+	WLAN_SER_CMD_SCAN_ABORT_NORMAL_SCAN,
+	WLAN_SER_CMD_SCAN_P2P_FIND_PEER,
+	WLAN_SER_CMD_SCAN_CANDIDATE_FOUND,
+	WLAN_SER_CMD_REMAIN_ON_CHANNEL,
+	/* all non-scan command below */
+	WLAN_SER_CMD_NONSCAN,
+	WLAN_SER_CMD_FORCE_DISASSOC,
+	WLAN_SER_CMD_HDD_ISSUED,
+	WLAN_SER_CMD_LOST_LINK1,
+	WLAN_SER_CMD_LOST_LINK2,
+	WLAN_SER_CMD_LOST_LINK3,
+	WLAN_SER_CMD_FORCE_DISASSOC_MIC_FAIL,
+	WLAN_SER_CMD_HDD_ISSUE_REASSOC_SAME_AP,
+	WLAN_SER_CMD_SME_ISSUE_REASSOC_SAME_AP,
+	WLAN_SER_CMD_SME_ISSUE_REASSOC_DIFF_AP,
+	WLAN_SER_CMD_FORCE_DEAUTH,
+	WLAN_SER_CMD_SME_ISSUE_DISASSOC_FOR_HANDOFF,
+	WLAN_SER_CMD_SME_ISSUE_ASSOC_TO_SIMILAR_AP,
+	WLAN_SER_CMD_SME_ISSUE_IBSS_JOIN_FAIL,
+	WLAN_SER_CMD_FORCE_IBSS_LEAVE,
+	WLAN_SER_CMD_STOP_BSS,
+	WLAN_SER_CMD_SME_ISSUE_FT_REASSOC,
+	WLAN_SER_CMD_FORCE_DISASSOC_STA,
+	WLAN_SER_CMD_FORCE_DEAUTH_STA,
+	WLAN_SER_CMD_PERFORM_PRE_AUTH,
+	WLAN_SER_CMD_LOST_LINK1_ABORT,
+	WLAN_SER_CMD_LOST_LINK2_ABORT,
+	WLAN_SER_CMD_LOST_LINK3_ABORT,
+	WLAN_SER_CMD_WM_STATUS_CHANGE,
+	WLAN_SER_CMD_SET_KEY,
+	WLAN_SER_CMD_NDP_INIT_REQ,
+	WLAN_SER_CMD_NDP_RESP_REQ,
+	WLAN_SER_CMD_NDP_DATA_END_INIT_REQ,
+	WLAN_SER_CMD_ENTER_STANDBY,
+	WLAN_SER_CMD_ADDTS,
+	WLAN_SER_CMD_DELTS,
+	WLAN_SER_CMD_TDLS_SEND_MGMT,
+	WLAN_SER_CMD_TDLS_ADD_PEER,
+	WLAN_SER_CMD_TDLS_DEL_PEER,
+	WLAN_SER_CMD_TDLS_LINK_EST,
+	WLAN_SER_CMD_SET_HW_MODE,
+	WLAN_SER_CMD_NSS_UPDATE,
+	WLAN_SER_CMD_SET_DUAL_MAC_CONFIG,
+	WLAN_SER_CMD_SET_ANTENNA_MODE,
+	WLAN_SER_CMD_OEM_DATA_REQ,
+	WLAN_SER_CMD_ENTER_BMPS,
+	WLAN_SER_CMD_EXIT_BMPS,
+	WLAN_SER_CMD_ENTER_UAPSD,
+	WLAN_SER_CMD_EXIT_UAPSD,
+	WLAN_SER_CMD_EXIT_WOWL,
+	WLAN_SER_CMD_MAX
 };
 
 /**
@@ -191,7 +253,7 @@ enum wlan_serialization_cmd_status {
  */
 struct wlan_serialization_command {
 	enum wlan_serialization_cmd_type cmd_type;
-	uint16_t cmd_id;
+	uint32_t cmd_id;
 	wlan_serialization_cmd_callback cmd_cb;
 	enum wlan_umac_comp_id source;
 	bool is_high_priority;
@@ -214,7 +276,7 @@ struct wlan_serialization_command {
 struct wlan_serialization_queued_cmd_info {
 	enum wlan_umac_comp_id requestor;
 	enum wlan_serialization_cmd_type cmd_type;
-	uint16_t cmd_id;
+	uint32_t cmd_id;
 	enum wlan_serialization_cancel_type req_type;
 	union {
 		struct wlan_objmgr_vdev *vdev;
@@ -364,4 +426,31 @@ wlan_serialization_pdev_scan_status(struct wlan_objmgr_pdev *pdev);
 enum wlan_serialization_cmd_status
 wlan_serialization_non_scan_cmd_status(struct wlan_objmgr_pdev *pdev,
 		enum wlan_serialization_cmd_type cmd_id);
+
+/**
+ * wlan_serialization_is_cmd_present_in_pending_queue() - Return if the command
+ *				is already present in pending queue
+ * @cmd: pointer to serialization command to check
+ *
+ * This API will check if command is present in pending queue. If present
+ * then return true, so use know that it is duplicated command
+ *
+ * Return: true or false
+ */
+bool wlan_serialization_is_cmd_present_in_pending_queue(
+		struct wlan_objmgr_psoc *psoc,
+		struct wlan_serialization_command *cmd);
+/**
+ * wlan_serialization_is_cmd_present_in_active_queue() - Return if the command
+ *			is already present in active queue
+ * @cmd: pointer to serialization command to check
+ *
+ * This API will check if command is present in active queue. If present
+ * then return true, so use know that it is duplicated command
+ *
+ * Return: true or false
+ */
+bool wlan_serialization_is_cmd_present_in_active_queue(
+		struct wlan_objmgr_psoc *psoc,
+		struct wlan_serialization_command *cmd);
 #endif

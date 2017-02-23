@@ -173,9 +173,9 @@ wlan_serialization_enqueue_cmd(struct wlan_serialization_command *cmd,
 		return status;
 	}
 
-	serialization_debug("command high_priority[%d] cmd_type[%d] cmd_id[%d]",
+	serialization_info("command high_priority[%d] cmd_type[%d] cmd_id[%d]",
 			cmd->is_high_priority, cmd->cmd_type, cmd->cmd_id);
-	if (cmd->cmd_type == WLAN_SER_CMD_SCAN) {
+	if (cmd->cmd_type < WLAN_SER_CMD_NONSCAN) {
 		if (is_cmd_for_active_queue)
 			queue = &ser_pdev_obj->active_scan_list;
 		else
@@ -185,6 +185,12 @@ wlan_serialization_enqueue_cmd(struct wlan_serialization_command *cmd,
 			queue = &ser_pdev_obj->active_list;
 		else
 			queue = &ser_pdev_obj->pending_list;
+	}
+
+	if (wlan_serialization_is_cmd_present_queue(cmd,
+				is_cmd_for_active_queue)) {
+		serialization_err("duplicate command, can't enqueue");
+		return status;
 	}
 
 	return wlan_serialization_add_cmd_to_given_queue(queue, cmd, psoc,

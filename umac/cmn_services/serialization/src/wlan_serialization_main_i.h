@@ -33,7 +33,7 @@
 #define WLAN_SERIALIZATION_MAX_ACTIVE_SCAN_CMDS 8
 
 #define serialization_log(level, args...) \
-	QDF_TRACE(QDF_MODULE_ID_SERIALIZATION, level, ## args)
+	QDF_TRACE(QDF_MODULE_ID_HDD, level, ## args)
 #define serialization_logfl(level, format, args...) \
 	serialization_log(level, FL(format), ## args)
 

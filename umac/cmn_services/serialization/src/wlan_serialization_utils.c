@@ -153,12 +153,15 @@ static void wlan_serialization_generic_timer_callback(void *arg)
 		QDF_ASSERT(0);
 		return;
 	}
+
+	serialization_err("active command timeout for cmd_id[%d]", cmd->cmd_id);
 	if (cmd->cmd_cb) {
 		cmd->cmd_cb(cmd, WLAN_SER_CB_ACTIVE_CMD_TIMEOUT);
 		cmd->cmd_cb(cmd, WLAN_SER_CB_RELEASE_MEM_CMD);
 	}
+
 	serialization_err("active command timeout for cmd_id[%d]", cmd->cmd_id);
-	if (cmd->cmd_type != WLAN_SER_CMD_SCAN)
+	if (cmd->cmd_type >= WLAN_SER_CMD_NONSCAN)
 		QDF_BUG(0);
 	/*
 	 * dequeue cmd API will cleanup and destroy the timer. If it fails to
@@ -376,7 +379,7 @@ wlan_serialization_is_active_scan_cmd_allowed(struct wlan_objmgr_pdev *pdev)
 
 	wlan_objmgr_iterate_obj_list(psoc, WLAN_PDEV_OP,
 			wlan_serialization_active_scan_cmd_count_handler,
-			&count, 0, WLAN_SERIALIZATION_ID);
+			&count, 1, WLAN_SERIALIZATION_ID);
 	if (count < WLAN_SERIALIZATION_MAX_ACTIVE_SCAN_CMDS) {
 		serialization_notice("count is [%d]", count);
 		return true;
@@ -428,7 +431,7 @@ wlan_serialization_is_active_cmd_allowed(struct wlan_serialization_command *cmd)
 		return false;
 	}
 
-	if (cmd->cmd_type == WLAN_SER_CMD_SCAN)
+	if (cmd->cmd_type < WLAN_SER_CMD_NONSCAN)
 		return wlan_serialization_is_active_scan_cmd_allowed(pdev);
 	else
 		return wlan_serialization_is_active_nonscan_cmd_allowed(pdev);
@@ -576,4 +579,76 @@ wlan_serialization_is_cmd_in_active_pending(bool cmd_in_active,
 		return WLAN_SER_CMD_IN_PENDING_LIST;
 	else
 		return WLAN_SER_CMD_NOT_FOUND;
+}
+
+static bool wlan_serialization_is_cmd_present_in_given_queue(qdf_list_t *queue,
+				struct wlan_serialization_command *cmd)
+{
+	uint32_t qsize;
+	QDF_STATUS status;
+	struct wlan_serialization_command_list *cmd_list = NULL;
+	qdf_list_node_t *nnode = NULL, *pnode = NULL;
+	bool found = false;
+
+	qsize = qdf_list_size(queue);
+	while (qsize--) {
+		if (!cmd_list)
+			status = qdf_list_peek_front(queue, &nnode);
+		else
+			status = qdf_list_peek_next(queue, pnode,
+					&nnode);
+
+		if (status != QDF_STATUS_SUCCESS)
+			break;
+
+		pnode = nnode;
+		cmd_list = qdf_container_of(nnode,
+				struct wlan_serialization_command_list, node);
+		if ((cmd_list->cmd.cmd_id == cmd->cmd_id) &&
+				(cmd_list->cmd.cmd_type == cmd->cmd_type) &&
+				(cmd_list->cmd.vdev == cmd->vdev)) {
+			found = true;
+			break;
+		}
+		nnode = NULL;
+	}
+	return found;
+}
+
+bool wlan_serialization_is_cmd_present_queue(
+			struct wlan_serialization_command *cmd,
+			uint8_t is_active_queue)
+{
+	qdf_list_t *queue;
+	struct wlan_objmgr_pdev *pdev;
+	struct wlan_serialization_pdev_priv_obj *ser_pdev_obj;
+
+	if (!cmd) {
+		serialization_err("invalid params");
+		return false;
+	}
+	pdev = wlan_serialization_get_pdev_from_cmd(cmd);
+	if (!pdev) {
+		serialization_err("invalid pdev");
+		return false;
+	}
+	ser_pdev_obj = wlan_objmgr_pdev_get_comp_private_obj(pdev,
+					WLAN_UMAC_COMP_SERIALIZATION);
+	if (!ser_pdev_obj) {
+		serialization_err("invalid ser_pdev_obj");
+		return false;
+	}
+	if (!is_active_queue) {
+		if (cmd->cmd_type < WLAN_SER_CMD_NONSCAN)
+			queue = &ser_pdev_obj->pending_scan_list;
+		else
+			queue = &ser_pdev_obj->pending_list;
+	} else {
+		if (cmd->cmd_type < WLAN_SER_CMD_NONSCAN)
+			queue = &ser_pdev_obj->active_scan_list;
+		else
+			queue = &ser_pdev_obj->active_list;
+	}
+
+	return wlan_serialization_is_cmd_present_in_given_queue(queue, cmd);
 }

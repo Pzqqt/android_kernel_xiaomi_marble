@@ -29,6 +29,28 @@
 #include "wlan_serialization_main_i.h"
 #include "wlan_serialization_utils_i.h"
 
+bool wlan_serialization_is_cmd_present_in_pending_queue(
+		struct wlan_objmgr_psoc *psoc,
+		struct wlan_serialization_command *cmd)
+{
+	if (!cmd) {
+		serialization_err("invalid cmd");
+		return false;
+	}
+	return wlan_serialization_is_cmd_present_queue(cmd, false);
+}
+
+bool wlan_serialization_is_cmd_present_in_active_queue(
+		struct wlan_objmgr_psoc *psoc,
+		struct wlan_serialization_command *cmd)
+{
+	if (!cmd) {
+		serialization_err("invalid cmd");
+		return false;
+	}
+	return wlan_serialization_is_cmd_present_queue(cmd, true);
+}
+
 QDF_STATUS
 wlan_serialization_register_comp_info_cb(struct wlan_objmgr_psoc *psoc,
 		enum wlan_umac_comp_id comp_id,

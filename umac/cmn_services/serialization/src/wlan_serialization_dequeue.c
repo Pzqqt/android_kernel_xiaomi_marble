@@ -42,7 +42,7 @@ void wlan_serialization_move_pending_to_active(
 		return;
 	}
 
-	if (cmd_type == WLAN_SER_CMD_SCAN)
+	if (cmd_type < WLAN_SER_CMD_NONSCAN)
 		pending_queue = &ser_pdev_obj->pending_scan_list;
 	else
 		pending_queue = &ser_pdev_obj->pending_list;
@@ -81,23 +81,7 @@ void wlan_serialization_move_pending_to_active(
 }
 
 
-/**
- * wlan_serialization_remove_all_cmd_from_queue() - Remove cmd which matches
- * @queue: queue from where command needs to be removed
- * @ser_pdev_obj: pointer to serialization object
- * @pdev: pointer to pdev
- * @vdev: pointer to vdev
- * @cmd: pointer to cmd
- * @is_active_queue: to check if command matching is for active queue
- *
- * This API will remove one or more commands which match the given parameters
- * interms of argument. For example, if user request all commands to removed
- * which matches "vdev" then iterate through all commands, find out and remove
- * command which matches vdev object.
- *
- * Return: enum wlan_serialization_cmd_status
- */
-static enum wlan_serialization_cmd_status
+enum wlan_serialization_cmd_status
 wlan_serialization_remove_all_cmd_from_queue(qdf_list_t *queue,
 		struct wlan_serialization_pdev_priv_obj *ser_pdev_obj,
 		struct wlan_objmgr_pdev *pdev, struct wlan_objmgr_vdev *vdev,
@@ -258,7 +242,7 @@ wlan_serialization_remove_cmd_from_active_queue(struct wlan_objmgr_psoc *psoc,
 		return;
 	}
 
-	if (cmd->cmd_type == WLAN_SER_CMD_SCAN)
+	if (cmd->cmd_type < WLAN_SER_CMD_NONSCAN)
 		queue = &ser_pdev_obj->active_scan_list;
 	else
 		queue = &ser_pdev_obj->active_list;
@@ -307,7 +291,7 @@ wlan_serialization_remove_cmd_from_pending_queue(struct wlan_objmgr_psoc *psoc,
 		return;
 	}
 
-	if (cmd->cmd_type == WLAN_SER_CMD_SCAN)
+	if (cmd->cmd_type < WLAN_SER_CMD_NONSCAN)
 		queue = &ser_pdev_obj->pending_scan_list;
 	else
 		queue = &ser_pdev_obj->pending_list;
@@ -345,11 +329,11 @@ wlan_serialization_is_cmd_removed(struct wlan_objmgr_psoc *psoc,
 	if (check_active_queue)
 		wlan_objmgr_iterate_obj_list(psoc, WLAN_PDEV_OP,
 			wlan_serialization_remove_cmd_from_active_queue,
-				cmd, 0, WLAN_SERIALIZATION_ID);
+				cmd, 1, WLAN_SERIALIZATION_ID);
 	else
 		wlan_objmgr_iterate_obj_list(psoc, WLAN_PDEV_OP,
 			wlan_serialization_remove_cmd_from_pending_queue,
-			cmd, 0, WLAN_SERIALIZATION_ID);
+			cmd, 1, WLAN_SERIALIZATION_ID);
 
 	if (cmd->vdev == NULL)
 		return true;
@@ -402,6 +386,8 @@ wlan_serialization_dequeue_cmd(struct wlan_serialization_command *cmd,
 		serialization_err("ser_pdev_obj is empty");
 		return status;
 	}
+	serialization_info("command high_priority[%d] cmd_type[%d] cmd_id[%d]",
+			cmd->is_high_priority, cmd->cmd_type, cmd->cmd_id);
 	/*
 	 *  Pass the copy of command, instead of actual command because
 	 *  wlan_serialization_is_cmd_removed() api cleans the command
@@ -484,14 +470,14 @@ wlan_serialization_cmd_cancel_handler(
 		return WLAN_SER_CMD_NOT_FOUND;
 	}
 	/* remove pending commands first */
-	if (cmd_type == WLAN_SER_CMD_SCAN)
+	if (cmd_type < WLAN_SER_CMD_NONSCAN)
 		queue = &ser_obj->pending_scan_list;
 	else
 		queue = &ser_obj->pending_list;
 	/* try and remove first from pending list */
 	status = wlan_serialization_remove_all_cmd_from_queue(queue,
 			ser_obj, pdev, vdev, cmd, false);
-	if (cmd_type == WLAN_SER_CMD_SCAN)
+	if (cmd_type < WLAN_SER_CMD_NONSCAN)
 		queue = &ser_obj->active_scan_list;
 	else
 		queue = &ser_obj->active_list;
