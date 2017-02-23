@@ -47,7 +47,6 @@
 #include <cds_sched.h>
 #include <qdf_threads.h>
 #include <qdf_mc_timer.h>
-#include <cds_pack_align.h>
 #include <wlan_objmgr_psoc_obj.h>
 
 /* Amount of time to wait for WMA to perform an asynchronous activity.
