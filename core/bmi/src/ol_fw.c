@@ -494,9 +494,6 @@ int ol_copy_ramdump(struct hif_opaque_softc *scn)
 		return -EINVAL;
 	}
 
-	if (hif_get_bus_type(scn) == QDF_BUS_TYPE_SDIO)
-		return 0;
-
 	info = qdf_mem_malloc(sizeof(struct ramdump_info));
 	if (!info) {
 		BMI_ERR("%s Memory for Ramdump Allocation failed", __func__);
@@ -1450,23 +1447,20 @@ static int ol_ath_get_reg_table(uint32_t target_version,
 
 	switch (target_version) {
 	case AR6320_REV2_1_VERSION:
-		reg_table->section =
-			(struct tgt_reg_section *) &ar6320v2_reg_table[0];
-		reg_table->section_size = sizeof(ar6320v2_reg_table)
-					  / sizeof(ar6320v2_reg_table[0]);
+		reg_table->section = ar6320v2_reg_table;
+		reg_table->section_size = ARRAY_SIZE(ar6320v2_reg_table);
 		section_len = AR6320_REV2_1_REG_SIZE;
 		break;
 	case AR6320_REV3_VERSION:
 	case AR6320_REV3_2_VERSION:
 	case QCA9379_REV1_VERSION:
-		reg_table->section =
-			(struct tgt_reg_section *) &ar6320v3_reg_table[0];
-		reg_table->section_size = sizeof(ar6320v3_reg_table)
-					  / sizeof(ar6320v3_reg_table[0]);
+	case QCA9377_REV1_1_VERSION:
+		reg_table->section = ar6320v3_reg_table;
+		reg_table->section_size = ARRAY_SIZE(ar6320v3_reg_table);
 		section_len = AR6320_REV3_REG_SIZE;
 		break;
 	default:
-		reg_table->section = (void *)NULL;
+		reg_table->section = NULL;
 		reg_table->section_size = 0;
 		section_len = 0;
 	}
@@ -1480,7 +1474,7 @@ static int ol_diag_read_reg_loc(struct hif_opaque_softc *scn, uint8_t *buffer,
 	int i, len, section_len, fill_len;
 	int dump_len, result = 0;
 	struct tgt_reg_table reg_table;
-	struct tgt_reg_section *curr_sec, *next_sec;
+	const struct tgt_reg_section *curr_sec, *next_sec;
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
 	uint32_t target_version =  tgt_info->target_version;
 
@@ -1660,8 +1654,9 @@ static int ol_target_coredump(void *inst, void *memory_block,
 		}
 
 		if ((block_len - amount_read) >= read_len) {
-			if ((hif_get_bus_type(scn) == QDF_BUS_TYPE_PCI) &&
-				(pos == REGISTER_LOCATION)) {
+			if (((hif_get_bus_type(scn) == QDF_BUS_TYPE_PCI) ||
+			     (hif_get_bus_type(scn) == QDF_BUS_TYPE_SDIO)) &&
+			    (pos == REGISTER_LOCATION)) {
 				result = ol_diag_read_reg_loc(scn,
 						buffer_loc,
 						block_len - amount_read);

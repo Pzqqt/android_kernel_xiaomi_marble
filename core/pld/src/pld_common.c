@@ -750,6 +750,7 @@ void *pld_get_virt_ramdump_mem(struct device *dev, unsigned long *size)
 	case PLD_BUS_TYPE_SNOC:
 		break;
 	case PLD_BUS_TYPE_SDIO:
+		mem = pld_sdio_get_virt_ramdump_mem(dev, size);
 		break;
 	default:
 		pr_err("Invalid device type\n");
@@ -777,6 +778,7 @@ void pld_device_crashed(struct device *dev)
 	case PLD_BUS_TYPE_SNOC:
 		break;
 	case PLD_BUS_TYPE_SDIO:
+		pld_sdio_device_crashed(dev);
 		break;
 	default:
 		pr_err("Invalid device type\n");

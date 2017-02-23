@@ -97,4 +97,27 @@ static inline uint8_t *pld_sdio_get_wlan_mac_address(struct device *dev,
 }
 #endif
 
+#ifdef CONFIG_PLD_SDIO_CNSS
+static inline void *pld_sdio_get_virt_ramdump_mem(struct device *dev,
+		unsigned long *size)
+{
+	return cnss_common_get_virt_ramdump_mem(dev, size);
+}
+
+static inline void pld_sdio_device_crashed(struct device *dev)
+{
+	cnss_common_device_crashed(dev);
+}
+
+#else
+static inline void *pld_sdio_get_virt_ramdump_mem(struct device *dev,
+		unsigned long *size)
+{
+	return NULL;
+}
+
+static inline void pld_sdio_device_crashed(struct device *dev)
+{
+}
+#endif
 #endif
