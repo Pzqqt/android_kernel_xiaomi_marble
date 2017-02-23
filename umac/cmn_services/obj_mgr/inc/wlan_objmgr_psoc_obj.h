@@ -22,6 +22,7 @@
 #ifndef _WLAN_OBJMGR_PSOC_OBJ_H_
 #define _WLAN_OBJMGR_PSOC_OBJ_H_
 
+#include "wlan_objmgr_psoc_service_ready_api.h"
 #include "wlan_objmgr_cmn.h"
 #include "wlan_lmac_if_def.h"
 
@@ -262,6 +263,8 @@ struct wlan_objmgr_psoc {
 	WLAN_OBJ_STATE obj_state;
 	void *tgt_if_handle;
 	uint8_t total_mac_phy;
+	struct wlan_objmgr_psoc_service_ready_param service_param;
+	struct wlan_objmgr_psoc_ext_service_ready_param ext_service_param;
 	qdf_spinlock_t psoc_lock;
 };
 

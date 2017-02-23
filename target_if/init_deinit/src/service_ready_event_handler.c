@@ -22,6 +22,7 @@
  * WMI common event handler implementation source file
  */
 #include "service_ready_event_handler.h"
+#include "wlan_objmgr_psoc_service_ready_api.h"
 
 static int populate_service_bitmap(void *wmi_handle, uint8_t *event,
 				      uint32_t *service_bitmap)
@@ -109,13 +110,11 @@ int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 	if (err_code)
 		goto free_param_and_exit;
 
-	/* populate wmi_service_ready_param in common psoc object using
-	 * object manager api once its available
-	 */
 	legacy_callback = target_if_get_psoc_legacy_service_ready_cb();
-
 	err_code = legacy_callback(wmi_service_ready_event_id,
 				  scn_handle, event, data_len);
+
+	wlan_objmgr_populate_service_ready_data(psoc, service_param);
 
 free_param_and_exit:
 	qdf_mem_free(service_param);
@@ -292,14 +291,11 @@ int init_deinit_service_ext_ready_event_handler(ol_scn_t scn_handle,
 	if (err_code)
 		goto free_param_and_exit;
 
-	/* populate wmi_ext_service_ready_param in common psoc object using
-	 * object manager api once its available
-	 */
-
 	legacy_callback = target_if_get_psoc_legacy_service_ready_cb();
-
 	err_code = legacy_callback(wmi_service_ready_ext_event_id,
 				  scn_handle, event, data_len);
+
+	wlan_objmgr_populate_ext_service_ready_data(psoc, service_param);
 
 free_param_and_exit:
 	qdf_mem_free(service_param);

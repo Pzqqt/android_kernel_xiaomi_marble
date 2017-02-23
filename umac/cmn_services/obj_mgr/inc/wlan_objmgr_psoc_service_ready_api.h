@@ -34,8 +34,11 @@
 #define OBJMGR_MAX_MAC_PHY_CAP (5)
 #define OBJMGR_MAX_PHY_REG_CAP (3)
 
+/* forward declaration of object manager psoc object type */
+struct wlan_objmgr_psoc;
+
 /**
- * struct wlan_objmgr_hal_reg_capability - hal reg table in psoc
+ * struct wlan_psoc_hal_reg_capability - hal reg table in psoc
  * @eeprom_rd: regdomain value specified in EEPROM
  * @eeprom_rd_ext: regdomain
  * @regcap1: CAP1 capabilities bit map
@@ -46,12 +49,12 @@
  * @low_5ghz_chan: lower 5 GHz channels
  * @high_5ghz_chan: higher 5 GHz channels
  *
- * wlan_objmgr_hal_reg_capability is derived from TARGET_HAL_REG_CAPABILITIES
+ * wlan_psoc_hal_reg_capability is derived from TARGET_HAL_REG_CAPABILITIES
  * because of WIN direct attach limitation which blocks WMI data structures and
  * WMI APIs direct usage in common code. So whenever TARGET_HAL_REG_CAPABILITIES
- * changes wlan_objmgr_hal_reg_capability also needs to be updated accordingly.
+ * changes wlan_psoc_hal_reg_capability also needs to be updated accordingly.
  */
-struct wlan_objmgr_hal_reg_capability {
+struct wlan_psoc_hal_reg_capability {
 	uint32_t eeprom_rd;
 	uint32_t eeprom_rd_ext;
 	uint32_t regcap1;
@@ -64,7 +67,7 @@ struct wlan_objmgr_hal_reg_capability {
 };
 
 /**
- * struct wlan_objmgr_target_capability_info - target capabilities in psoc
+ * struct wlan_psoc_target_capability_info - target capabilities in psoc
  * @phy_capability: PHY capabilities
  * @max_frag_entry: Maximum frag entries
  * @num_rf_chains: Number of RF chains supported
@@ -83,13 +86,13 @@ struct wlan_objmgr_hal_reg_capability {
  * @default_dbs_hw_mode_index: DBS hw mode index
  * @num_msdu_desc: number of msdu desc
  *
- * wlan_objmgr_target_capability_info is derived from target_capability_info
+ * wlan_psoc_target_capability_info is derived from target_capability_info
  * because of WIN direct attach limitation which blocks WMI data structures and
  * WMI APIs direct usage in common code. So whenever target_capability_info
- * changes wlan_objmgr_target_capability_info also needs to be updated
+ * changes wlan_psoc_target_capability_info also needs to be updated
  * accordingly.
  */
-struct wlan_objmgr_target_capability_info {
+struct wlan_psoc_target_capability_info {
 	uint32_t phy_capability;
 	uint32_t max_frag_entry;
 	uint32_t num_rf_chains;
@@ -123,12 +126,12 @@ struct wlan_objmgr_target_capability_info {
  */
 struct wlan_objmgr_psoc_service_ready_param {
 	uint32_t service_bitmap[OBJMGR_SERVICE_BM_SIZE];
-	struct wlan_objmgr_target_capability_info target_caps;
-	struct wlan_objmgr_hal_reg_capability hal_reg_cap;
+	struct wlan_psoc_target_capability_info target_caps;
+	struct wlan_psoc_hal_reg_capability hal_reg_cap;
 };
 
 /**
- * struct wlan_objmgr_host_hal_reg_capabilities_ext: Below are Reg caps per PHY.
+ * struct wlan_psoc_host_hal_reg_capabilities_ext: Below are Reg caps per PHY.
  *                       Please note PHY ID starts with 0.
  * @phy_id: phy id starts with 0.
  * @eeprom_reg_domain: regdomain value specified in EEPROM
@@ -141,14 +144,14 @@ struct wlan_objmgr_psoc_service_ready_param {
  * @low_5ghz_chan: 5G channel low
  * @high_5ghz_chan: 5G channel High
  *
- * wlan_objmgr_host_hal_reg_capabilities_ext is derived from
+ * wlan_psoc_host_hal_reg_capabilities_ext is derived from
  * WMI_HOST_HAL_REG_CAPABILITIES_EXT because of WIN direct attach limitation
  * which blocks WMI data structures and WMI APIs direct usage in common code.
  * So whenever WMI_HOST_HAL_REG_CAPABILITIES_EXT changes
- * wlan_objmgr_host_hal_reg_capabilities_ext also needs to be updated
+ * wlan_psoc_host_hal_reg_capabilities_ext also needs to be updated
  * accordingly.
  */
-struct wlan_objmgr_host_hal_reg_capabilities_ext {
+struct wlan_psoc_host_hal_reg_capabilities_ext {
 	uint32_t phy_id;
 	uint32_t eeprom_reg_domain;
 	uint32_t eeprom_reg_domain_ext;
@@ -162,7 +165,7 @@ struct wlan_objmgr_host_hal_reg_capabilities_ext {
 };
 
 /**
- * struct wlan_objmgr_host_mac_phy_caps - Phy caps recvd in EXT service
+ * struct wlan_psoc_host_mac_phy_caps - Phy caps recvd in EXT service
  *  @hw_mode_id: identify a particular set of HW characteristics,
  *        as specified by the subsequent fields. WMI_MAC_PHY_CAPABILITIES
  *        element must be mapped to its parent WMI_HW_MODE_CAPABILITIES
@@ -206,13 +209,13 @@ struct wlan_objmgr_host_hal_reg_capabilities_ext {
  * @tx_chain_mask_5G: Valid Transmit chain mask
  * @rx_chain_mask_5G: Valid Receive chain mask
  *
- * wlan_objmgr_host_mac_phy_caps is derived from wmi_host_mac_phy_caps
+ * wlan_psoc_host_mac_phy_caps is derived from wmi_host_mac_phy_caps
  * because of WIN direct attach limitation which blocks WMI data structures and
  * WMI APIs direct usage in common code. So whenever wmi_host_mac_phy_caps
- * changes wlan_objmgr_host_mac_phy_caps also needs to be updated
+ * changes wlan_psoc_host_mac_phy_caps also needs to be updated
  * accordingly.
  */
-struct wlan_objmgr_host_mac_phy_caps {
+struct wlan_psoc_host_mac_phy_caps {
 	uint32_t hw_mode_id;
 	uint32_t pdev_id;
 	uint32_t phy_id;
@@ -243,13 +246,13 @@ struct wlan_objmgr_host_mac_phy_caps {
 };
 
 /**
- * struct wlan_objmgr_host_hw_mode_caps - HW mode capabilities in EXT event
+ * struct wlan_psoc_host_hw_mode_caps - HW mode capabilities in EXT event
  * @hw_mode_id: identify a particular set of HW characteristics,
  *              as specified by the subsequent fields
  * @phy_id_map: BIT0 represents phy_id 0, BIT1 represent phy_id 1 and so on
  * @hw_mode_config_type: HW mode config type
  */
-struct wlan_objmgr_host_hw_mode_caps {
+struct wlan_psoc_host_hw_mode_caps {
 	uint32_t hw_mode_id;
 	uint32_t phy_id_map;
 	uint32_t hw_mode_config_type;
@@ -274,7 +277,7 @@ struct wlan_objmgr_host_ppe_threshold {
 };
 
 /**
- * struct wlan_objmgr_host_service_ext_param - EXT service base params in event
+ * struct wlan_psoc_host_service_ext_param - EXT service base params in event
  * @default_conc_scan_config_bits: Default concurrenct scan config
  * @default_fw_config_bits: Default HW config bits
  * @wlan_objmgr_host_ppe_threshold ppet: Host PPE threshold struct
@@ -285,13 +288,13 @@ struct wlan_objmgr_host_ppe_threshold {
  * @num_hw_modes: Number of HW modes in event
  * @num_phy: Number of Phy mode.
  *
- * wlan_objmgr_host_service_ext_param is derived from wmi_host_service_ext_param
+ * wlan_psoc_host_service_ext_param is derived from wmi_host_service_ext_param
  * because of WIN direct attach limitation which blocks WMI data structures and
  * WMI APIs direct usage in common code. So whenever wmi_host_service_ext_param
- * changes wlan_objmgr_host_service_ext_param also needs to be updated
+ * changes wlan_psoc_host_service_ext_param also needs to be updated
  * accordingly.
  */
-struct wlan_objmgr_host_service_ext_param {
+struct wlan_psoc_host_service_ext_param {
 	uint32_t default_conc_scan_config_bits;
 	uint32_t default_fw_config_bits;
 	struct wlan_objmgr_host_ppe_threshold ppet;
@@ -303,25 +306,56 @@ struct wlan_objmgr_host_service_ext_param {
 };
 
 /**
- * struct wlan_objmgr_ext_service_ready_param - psoc ext service ready structure
+ * struct wlan_objmgr_psoc_ext_service_ready_param - psoc ext service ready
  * @service_ext_param: service ext param
  * @hw_mode_caps: hw mode caps
  * @mac_phy_cap: mac phy cap
  * @reg_cap: regulatory capability
  *
- * wlan_objmgr_ext_service_ready_param is derived from
+ * wlan_objmgr_psoc_ext_service_ready_param is derived from
  * wmi_ext_service_ready_param because of WIN direct attach limitation which
  * blocks WMI data structures and WMI APIs direct usage in common code.
  * So whenever wmi_ext_service_ready_param changes
- * wlan_objmgr_ext_service_ready_param also needs to be updated accordingly.
+ * wlan_objmgr_psoc_ext_service_ready_param also needs to be updated
+ * accordingly.
  */
-struct wlan_objmgr_ext_service_ready_param {
-	struct wlan_objmgr_host_service_ext_param service_ext_param;
-	struct wlan_objmgr_host_hw_mode_caps hw_mode_caps[OBJMGR_MAX_HW_MODE];
-	struct wlan_objmgr_host_mac_phy_caps
+struct wlan_objmgr_psoc_ext_service_ready_param {
+	struct wlan_psoc_host_service_ext_param service_ext_param;
+	struct wlan_psoc_host_hw_mode_caps hw_mode_caps[OBJMGR_MAX_HW_MODE];
+	struct wlan_psoc_host_mac_phy_caps
 			mac_phy_cap[OBJMGR_MAX_MAC_PHY_CAP];
-	struct wlan_objmgr_host_hal_reg_capabilities_ext
+	struct wlan_psoc_host_hal_reg_capabilities_ext
 			reg_cap[OBJMGR_MAX_PHY_REG_CAP];
 };
+
+/**
+ * wlan_objmgr_populate_service_ready_data() - populate wmi service ready data
+ *                                             in psoc
+ * @psoc: psoc object pointer
+ * @service_ready_data: opaque pointer to wmi service ready data, it is
+ *                      intentionally taken opaque because WMI service ready
+ *                      type can't be used in common umac component because
+ *                      of WIN direct target limitation
+ *
+ * Return: QDF status
+ */
+void
+wlan_objmgr_populate_service_ready_data(struct wlan_objmgr_psoc *psoc,
+					void *service_ready_data);
+
+/**
+ * wlan_objmgr_populate_ext_service_ready_data() - populate wmi ext service
+ *                                                 ready data in psoc
+ * @psoc: psoc object pointer
+ * @ext_service_data: opaque pointer to ext wmi service ready data, it is
+ *                    intentionally taken opaque because WMI service ready
+ *                    type can't be used in common umac component because
+ *                    of WIN direct target limitation
+ *
+ * Return: QDF status
+ */
+void
+wlan_objmgr_populate_ext_service_ready_data(struct wlan_objmgr_psoc *psoc,
+					    void *ext_service_data);
 
 #endif /* _WLAN_OBJMGR_PSOC_SERVICE_READY_API_H_*/
