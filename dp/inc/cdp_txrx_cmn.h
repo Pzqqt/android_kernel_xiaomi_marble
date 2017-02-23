@@ -98,6 +98,14 @@ static inline int cdp_pdev_post_attach(ol_txrx_soc_handle soc,
 }
 
 static inline void
+cdp_pdev_pre_detach(ol_txrx_soc_handle soc, struct cdp_pdev *pdev, int force)
+{
+	if (soc->ops->cmn_drv_ops->txrx_pdev_pre_detach)
+		return soc->ops->cmn_drv_ops->txrx_pdev_pre_detach(pdev, force);
+	return;
+}
+
+static inline void
 cdp_pdev_detach(ol_txrx_soc_handle soc, struct cdp_pdev *pdev, int force)
 {
 	if (soc->ops->cmn_drv_ops->txrx_pdev_detach)

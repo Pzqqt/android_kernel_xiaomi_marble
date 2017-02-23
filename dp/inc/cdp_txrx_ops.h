@@ -58,6 +58,8 @@ struct cdp_cmn_ops {
 
 	int (*txrx_pdev_post_attach)(struct cdp_pdev *pdev);
 
+	void (*txrx_pdev_pre_detach)(struct cdp_pdev *pdev, int force);
+
 	void (*txrx_pdev_detach)(struct cdp_pdev *pdev, int force);
 
 	void *(*txrx_peer_create)
