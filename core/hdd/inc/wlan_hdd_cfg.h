@@ -1650,7 +1650,7 @@ typedef enum {
 
 /*
  * <ini>
- * gIbssPsWarmupTime - IBSS Power Save Enable/Disable 1 RX
+ * gIbssPs1RxChainInAtim - IBSS Power Save Enable/Disable 1 RX
  * chain usage during the ATIM window
  *
  * @Min: 0
