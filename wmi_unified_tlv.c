@@ -13367,11 +13367,11 @@ static QDF_STATUS extract_service_ready_ext_tlv(wmi_unified_t wmi_handle,
 
 	param_buf = (WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *) event;
 	if (!param_buf)
-		return -EINVAL;
+		return QDF_STATUS_E_INVAL;
 
 	ev = param_buf->fixed_param;
 	if (!ev)
-		return -EINVAL;
+		return QDF_STATUS_E_INVAL;
 
 	/* Move this to host based bitmap */
 	param->default_conc_scan_config_bits =
@@ -13383,10 +13383,16 @@ static QDF_STATUS extract_service_ready_ext_tlv(wmi_unified_t wmi_handle,
 	qdf_mem_copy(&param->ppet, &ev->ppet, sizeof(param->ppet));
 
 	hw_caps = param_buf->soc_hw_mode_caps;
-	param->num_hw_modes = hw_caps->num_hw_modes;
+	if (hw_caps)
+		param->num_hw_modes = hw_caps->num_hw_modes;
+	else
+		param->num_hw_modes = 0;
 
 	reg_caps = param_buf->soc_hal_reg_caps;
-	param->num_phy = reg_caps->num_phy;
+	if (reg_caps)
+		param->num_phy = reg_caps->num_phy;
+	else
+		param->num_phy = 0;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -13411,11 +13417,14 @@ static QDF_STATUS extract_hw_mode_cap_service_ready_ext_tlv(
 
 	param_buf = (WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *) event;
 	if (!param_buf)
-		return -EINVAL;
+		return QDF_STATUS_E_INVAL;
 
 	hw_caps = param_buf->soc_hw_mode_caps;
+	if (!hw_caps)
+		return QDF_STATUS_E_INVAL;
+
 	if (hw_mode_idx >= hw_caps->num_hw_modes)
-		return -EINVAL;
+		return QDF_STATUS_E_INVAL;
 
 	param->hw_mode_id = param_buf->hw_mode_caps[hw_mode_idx].hw_mode_id;
 	param->phy_id_map = param_buf->hw_mode_caps[hw_mode_idx].phy_id_map;
@@ -13450,9 +13459,12 @@ static QDF_STATUS extract_mac_phy_cap_service_ready_ext_tlv(
 
 	param_buf = (WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *) event;
 	if (!param_buf)
-		return -EINVAL;
+		return QDF_STATUS_E_INVAL;
 
 	hw_caps = param_buf->soc_hw_mode_caps;
+	if (!hw_caps)
+		return QDF_STATUS_E_INVAL;
+
 	for (hw_idx = 0; hw_idx < hw_caps->num_hw_modes; hw_idx++) {
 		if (hw_mode_id == param_buf->hw_mode_caps[hw_idx].hw_mode_id)
 			break;
@@ -13465,11 +13477,11 @@ static QDF_STATUS extract_mac_phy_cap_service_ready_ext_tlv(
 	}
 
 	if (hw_idx == hw_caps->num_hw_modes)
-		return -EINVAL;
+		return QDF_STATUS_E_INVAL;
 
 	phy_idx += phy_id;
 	if (phy_idx >= param_buf->num_mac_phy_caps)
-		return -EINVAL;
+		return QDF_STATUS_E_INVAL;
 
 	mac_phy_caps = &param_buf->mac_phy_caps[phy_idx];
 
@@ -13532,11 +13544,14 @@ static QDF_STATUS extract_reg_cap_service_ready_ext_tlv(
 
 	param_buf = (WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *) event;
 	if (!param_buf)
-		return -EINVAL;
+		return QDF_STATUS_E_INVAL;
 
 	reg_caps = param_buf->soc_hal_reg_caps;
+	if (!reg_caps)
+		return QDF_STATUS_E_INVAL;
+
 	if (phy_idx >= reg_caps->num_phy)
-		return -EINVAL;
+		return QDF_STATUS_E_INVAL;
 
 	ext_reg_cap = &param_buf->hal_reg_caps[phy_idx];
 
@@ -13571,7 +13586,7 @@ static QDF_STATUS extract_dcs_interference_type_tlv(
 
 	param_buf = (WMI_DCS_INTERFERENCE_EVENTID_param_tlvs *) evt_buf;
 	if (!param_buf)
-		return -EINVAL;
+		return QDF_STATUS_E_INVAL;
 
 	param->interference_type = param_buf->fixed_param->interference_type;
 	param->pdev_id = param_buf->fixed_param->pdev_id;
@@ -13596,7 +13611,7 @@ static QDF_STATUS extract_dcs_cw_int_tlv(wmi_unified_t wmi_handle,
 
 	param_buf = (WMI_DCS_INTERFERENCE_EVENTID_param_tlvs *) evt_buf;
 	if (!param_buf)
-		return -EINVAL;
+		return QDF_STATUS_E_INVAL;
 
 	ev = param_buf->cw_int;
 
@@ -13622,7 +13637,7 @@ static QDF_STATUS extract_dcs_im_tgt_stats_tlv(wmi_unified_t wmi_handle,
 
 	param_buf = (WMI_DCS_INTERFERENCE_EVENTID_param_tlvs *) evt_buf;
 	if (!param_buf)
-		return -EINVAL;
+		return QDF_STATUS_E_INVAL;
 
 	ev = param_buf->wlan_stat;
 	wlan_stat->reg_tsf32 = ev->reg_tsf32;
