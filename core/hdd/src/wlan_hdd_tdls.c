@@ -278,23 +278,17 @@ void wlan_hdd_tdls_disable_offchan_and_teardown_links(hdd_context_t *hddctx)
 }
 
 /**
- * hdd_tdls_notify_mode_change - Notify mode change
- * @adapter: pointer to hdd adapter
- * @hddCtx : pointer to hdd context
+ * hdd_update_tdls_ct_and_teardown_links - Update TDLS connection tracker and
+ * teardown links.
+ * @hdd_ctx : pointer to hdd context
  *
  * Return: None
  */
-void hdd_tdls_notify_mode_change(hdd_adapter_t *adapter, hdd_context_t *hddctx)
+void hdd_update_tdls_ct_and_teardown_links(hdd_context_t *hdd_ctx)
 {
-	/*
-	 * Disable tdls connection tracker, when interface
-	 * change happens in the system.
-	 */
-	mutex_lock(&hddctx->tdls_lock);
-	hddctx->enable_tdls_connection_tracker = false;
-	mutex_unlock(&hddctx->tdls_lock);
-	hdd_info("hdd_ctx->enable_tdls_connection_tracker: 0");
-	wlan_hdd_tdls_disable_offchan_and_teardown_links(hddctx);
+	/* set tdls connection tracker state */
+	cds_set_tdls_ct_mode(hdd_ctx);
+	wlan_hdd_tdls_disable_offchan_and_teardown_links(hdd_ctx);
 }
 
 /**

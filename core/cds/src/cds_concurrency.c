@@ -1964,8 +1964,7 @@ void cds_incr_active_session(enum tQDF_ADAPTER_MODE mode,
 		qdf_mutex_acquire(&cds_ctx->qdf_conc_list_lock);
 	}
 
-	/* set tdls connection tracker state */
-	cds_set_tdls_ct_mode(hdd_ctx);
+	hdd_update_tdls_ct_and_teardown_links(hdd_ctx);
 	cds_dump_current_concurrency();
 
 	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);

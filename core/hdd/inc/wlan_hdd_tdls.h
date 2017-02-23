@@ -713,8 +713,7 @@ int wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 #endif
 #endif
 
-void hdd_tdls_notify_mode_change(hdd_adapter_t *adapter,
-				hdd_context_t *hddctx);
+void hdd_update_tdls_ct_and_teardown_links(hdd_context_t *hdd_ctx);
 void wlan_hdd_tdls_disable_offchan_and_teardown_links(hdd_context_t *hddctx);
 
 hddTdlsPeer_t *wlan_hdd_tdls_find_first_connected_peer(hdd_adapter_t *adapter);
@@ -792,8 +791,7 @@ int wlan_hdd_cfg80211_configure_tdls_mode(struct wiphy *wiphy,
 					int data_len);
 
 #else
-static inline void hdd_tdls_notify_mode_change(hdd_adapter_t *adapter,
-				hdd_context_t *hddctx)
+static inline void hdd_update_tdls_ct_and_teardown_links(hdd_context_t *hdd_ctx)
 {
 }
 static inline void
