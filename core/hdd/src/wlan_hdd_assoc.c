@@ -3633,7 +3633,8 @@ static QDF_STATUS hdd_tdls_connection_tracker_update(hdd_adapter_t *adapter,
 			  roam_info->reasonCode ==
 			  eWMI_TDLS_SCAN_COMPLETED_EVENT)
 			hdd_ctx->enable_tdls_connection_tracker = true;
-
+		hdd_info("hdd_ctx->enable_tdls_connection_tracker %d",
+			hdd_ctx->enable_tdls_connection_tracker);
 	} else {
 		hdd_err("TDLS not connected, ignore notification, reason: %d",
 			roam_info->reasonCode);

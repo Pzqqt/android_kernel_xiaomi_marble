@@ -293,6 +293,7 @@ void hdd_tdls_notify_mode_change(hdd_adapter_t *adapter, hdd_context_t *hddctx)
 	mutex_lock(&hddctx->tdls_lock);
 	hddctx->enable_tdls_connection_tracker = false;
 	mutex_unlock(&hddctx->tdls_lock);
+	hdd_info("hdd_ctx->enable_tdls_connection_tracker: 0");
 	wlan_hdd_tdls_disable_offchan_and_teardown_links(hddctx);
 }
 
@@ -690,6 +691,7 @@ void hdd_tdls_context_init(hdd_context_t *hdd_ctx, bool ssr)
 	 * standalone STA mode
 	 */
 	hdd_ctx->enable_tdls_connection_tracker = false;
+	hdd_info("hdd_ctx->enable_tdls_connection_tracker: 0");
 	hdd_ctx->concurrency_marked = false;
 }
 
@@ -706,6 +708,7 @@ void hdd_tdls_context_destroy(hdd_context_t *hdd_ctx)
 	hdd_ctx->tdls_external_peer_count = 0;
 	hdd_ctx->concurrency_marked = false;
 	hdd_ctx->enable_tdls_connection_tracker = false;
+	hdd_info("hdd_ctx->enable_tdls_connection_tracker: 0");
 	mutex_destroy(&hdd_ctx->tdls_lock);
 	qdf_spinlock_destroy(&hdd_ctx->tdls_ct_spinlock);
 }
@@ -1863,13 +1866,13 @@ void wlan_hdd_update_tdls_info(hdd_adapter_t *adapter, bool tdls_prohibited,
 	if (!hdd_tdls_ctx) {
 		/* may be TDLS is not applicable for this adapter */
 		hdd_err("HDD TDLS context is null");
-		return;
+		goto done;
 	}
 
 	/* If TDLS support is disabled then no need to update target */
 	if (false == hdd_ctx->config->fEnableTDLSSupport) {
 		hdd_err("TDLS not enabled");
-		return;
+		goto done;
 	}
 
 	hdd_info("tdls_prohibited: %d, tdls_chan_swit_prohibited: %d",
@@ -1880,7 +1883,7 @@ void wlan_hdd_update_tdls_info(hdd_adapter_t *adapter, bool tdls_prohibited,
 	if (hdd_ctx->set_state_info.set_state_cnt == 0 &&
 	    tdls_prohibited) {
 		mutex_unlock(&hdd_ctx->tdls_lock);
-		return;
+		goto done;
 	}
 
 	/* If AP or caller indicated TDLS Prohibited then disable tdls mode */
@@ -1898,7 +1901,7 @@ void wlan_hdd_update_tdls_info(hdd_adapter_t *adapter, bool tdls_prohibited,
 	if (!tdls_param) {
 		mutex_unlock(&hdd_ctx->tdls_lock);
 		hdd_err("memory allocation failed for tdlsParams");
-		return;
+		goto done;
 	}
 
 	/* If any concurrency detected, teardown all TDLS links and disable
@@ -1917,7 +1920,7 @@ void wlan_hdd_update_tdls_info(hdd_adapter_t *adapter, bool tdls_prohibited,
 			wlan_hdd_tdls_disable_offchan_and_teardown_links(
 								hdd_ctx);
 			qdf_mem_free(tdls_param);
-			return;
+			goto done;
 		}
 		tdls_prohibited = true;
 		hdd_ctx->tdls_mode = eTDLS_SUPPORT_NOT_ENABLED;
@@ -1975,7 +1978,7 @@ void wlan_hdd_update_tdls_info(hdd_adapter_t *adapter, bool tdls_prohibited,
 					       true);
 	if (QDF_STATUS_SUCCESS != qdf_ret_status) {
 		qdf_mem_free(tdls_param);
-		return;
+		goto done;
 	}
 
 	mutex_lock(&hdd_ctx->tdls_lock);
@@ -1991,6 +1994,8 @@ void wlan_hdd_update_tdls_info(hdd_adapter_t *adapter, bool tdls_prohibited,
 		hdd_ctx->set_state_info.set_state_cnt);
 
 	mutex_unlock(&hdd_ctx->tdls_lock);
+done:
+	cds_set_tdls_ct_mode(hdd_ctx);
 	return;
 }
 
@@ -2056,15 +2061,10 @@ void wlan_hdd_tdls_notify_disconnect(hdd_adapter_t *adapter, bool lfr_roam)
 	if (!lfr_roam && !hdd_ctx->concurrency_marked) {
 		temp_adapter = wlan_hdd_tdls_get_adapter(
 					hdd_ctx);
-		if (NULL != temp_adapter) {
+		if (NULL != temp_adapter)
 			wlan_hdd_update_tdls_info(temp_adapter,
 						  false,
 						  false);
-			/* Enable connection tracker, if it is implicit and
-			 * external control mode.
-			 */
-			cds_set_tdls_ct_mode(hdd_ctx);
-		}
 	}
 }
 
