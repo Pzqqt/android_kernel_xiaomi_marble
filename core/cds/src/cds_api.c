@@ -627,7 +627,14 @@ err_bmi_close:
 	bmi_cleanup(ol_ctx);
 
 err_sched_close:
-	cds_sched_close(gp_cds_context);
+	if (pHddCtx->driver_status == DRIVER_MODULES_UNINITIALIZED ||
+	    cds_is_driver_recovering()) {
+		qdf_status = cds_sched_close(gp_cds_context);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			hdd_err("Failed to close CDS Scheduler");
+			QDF_ASSERT(false);
+		}
+	}
 
 err_wma_complete_event:
 	qdf_event_destroy(&gp_cds_context->wmaCompleteEvent);
