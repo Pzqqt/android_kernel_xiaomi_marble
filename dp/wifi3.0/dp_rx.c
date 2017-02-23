@@ -486,8 +486,8 @@ done:
 					qdf_nbuf_data(nbuf), 128, false);
 #endif /* NAPIER_EMULATION */
 
-			/* TODO */
 			/* WDS Source Port Learning */
+			dp_rx_wds_srcport_learn(soc, rx_tlv_hdr, peer, nbuf);
 
 			/* Intrabss-fwd */
 			if (dp_rx_intrabss_fwd(soc, peer, rx_tlv_hdr, nbuf))

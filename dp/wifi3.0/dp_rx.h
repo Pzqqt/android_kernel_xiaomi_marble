@@ -21,6 +21,7 @@
 
 #include "hal_rx.h"
 #include "dp_tx.h"
+#include "dp_peer.h"
 
 #ifdef RXDMA_OPTIMIZATION
 #define RX_BUFFER_ALIGNMENT     128
@@ -160,6 +161,57 @@ void dp_rx_add_to_free_desc_list(union dp_rx_desc_list_elem_t **head,
 		*tail = *head;
 
 }
+
+/**
+ * dp_rx_wds_srcport_learn() - Add or update the STA PEER which
+ *				is behind the WDS repeater.
+ *
+ * @soc: core txrx main context
+ * @rx_tlv_hdr: base address of RX TLV header
+ * @ta_peer: WDS repeater peer
+ * @nbuf: rx pkt
+ *
+ * Return: void:
+ */
+#ifndef CONFIG_MCL
+static inline void
+dp_rx_wds_srcport_learn(struct dp_soc *soc,
+			 uint8_t *rx_tlv_hdr,
+			 struct dp_peer *ta_peer,
+			 qdf_nbuf_t nbuf)
+{
+	uint16_t sa_sw_peer_id = hal_rx_msdu_end_sa_sw_peer_id_get(rx_tlv_hdr);
+	uint32_t flags = IEEE80211_NODE_F_WDS_HM;
+	uint32_t ret = 0;
+	uint8_t wds_src_mac[IEEE80211_ADDR_LEN];
+
+	memcpy(wds_src_mac, (qdf_nbuf_data(nbuf) + IEEE80211_ADDR_LEN),
+		IEEE80211_ADDR_LEN);
+
+	if (!hal_rx_msdu_end_sa_is_valid_get(rx_tlv_hdr)) {
+		ret = soc->cdp_soc.ol_ops->peer_add_wds_entry(
+						soc->osif_soc,
+						wds_src_mac,
+						ta_peer->mac_addr.raw,
+						flags);
+	} else if (sa_sw_peer_id != ta_peer->peer_ids[0]) {
+		ret = soc->cdp_soc.ol_ops->peer_update_wds_entry(
+						soc->osif_soc,
+						wds_src_mac,
+						ta_peer->mac_addr.raw,
+						flags);
+	}
+	return;
+}
+#else
+static inline void
+dp_rx_wds_srcport_learn(struct dp_soc *soc,
+			 uint8_t *rx_tlv_hdr,
+			 struct dp_peer *ta_peer,
+			 qdf_nbuf_t nbuf)
+{
+}
+#endif
 
 #define DP_RX_LIST_APPEND(head, tail, elem) \
 do {                                                \

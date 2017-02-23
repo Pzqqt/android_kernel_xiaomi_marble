@@ -496,6 +496,14 @@ struct ol_if_ops {
 	int (*peer_unref_delete)(void *ol_soc_handle, uint8_t vdev_id,
 			uint8_t *peer_macaddr);
 	bool (*is_hw_dbs_2x2_capable)(void);
+	int (*peer_add_wds_entry)(void *ol_soc_handle,
+			const uint8_t *dest_macaddr, uint8_t *peer_macaddr,
+			uint32_t flags);
+	int (*peer_update_wds_entry)(void *ol_soc_handle,
+			uint8_t *dest_macaddr, uint8_t *peer_macaddr,
+			uint32_t flags);
+	void (*peer_del_wds_entry)(void *ol_soc_handle,
+			uint8_t *wds_macaddr);
 
 	/* TODO: Add any other control path calls required to OL_IF/WMA layer */
 };

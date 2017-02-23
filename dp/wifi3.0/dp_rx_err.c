@@ -260,6 +260,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 	uint16_t peer_id = 0xFFFF;
 	struct dp_peer *peer = NULL;
 	uint32_t sgi, rate_mcs, tid;
+	uint32_t peer_mdata;
 
 	rx_bufs_used++;
 
@@ -308,6 +309,18 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 		"%s: %d, SGI: %d, rate_mcs: %d, tid: %d",
 		__func__, __LINE__, sgi, rate_mcs, tid);
+
+	peer_mdata = hal_rx_mpdu_peer_meta_data_get(rx_desc->rx_buf_start);
+	peer_id = DP_PEER_METADATA_PEER_ID_GET(peer_mdata);
+	peer = dp_peer_find_by_id(soc, peer_id);
+
+	if (!peer) {
+		qdf_nbuf_free(nbuf);
+		goto fail;
+	}
+
+	/* WDS Source Port Learning */
+	dp_rx_wds_srcport_learn(soc, rx_desc->rx_buf_start, peer, nbuf);
 
 	/*
 	 * Advance the packet start pointer by total size of
