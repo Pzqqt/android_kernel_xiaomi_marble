@@ -73,7 +73,7 @@
 #include "ol_htt_api.h"
 #include <cdp_txrx_handle.h>
 #include "wma_he.h"
-
+#include <wlan_scan_public_structs.h>
 #define WMA_MCC_MIRACAST_REST_TIME 400
 #define WMA_SCAN_ID_MASK 0x0fff
 
@@ -177,7 +177,7 @@ static bool wma_is_mcc_24G(WMA_HANDLE handle)
  */
 QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 				      tSirScanOffloadReq *scan_req,
-				      struct scan_start_params *cmd)
+				      struct scan_req_params *cmd)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	uint32_t dwell_time;
@@ -212,7 +212,7 @@ QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 
 	/* Set the scan events which the driver is intereseted to receive */
 	/* TODO: handle all the other flags also */
-	cmd->notify_scan_events = WMI_SCAN_EVENT_STARTED |
+	cmd->scan_events = WMI_SCAN_EVENT_STARTED |
 				  WMI_SCAN_EVENT_START_FAILED |
 				  WMI_SCAN_EVENT_FOREIGN_CHANNEL |
 				  WMI_SCAN_EVENT_COMPLETED |
@@ -260,23 +260,20 @@ QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 	cmd->max_scan_time = WMA_HW_DEF_SCAN_MAX_DURATION;
 
 	/* add DS param IE in probe req frame */
-	cmd->scan_ctrl_flags |= WMI_SCAN_ADD_DS_IE_IN_PROBE_REQ;
+	cmd->scan_f_add_ds_ie_in_probe = true;
 
 	/* set flag to get chan stats */
 	if (pMac->snr_monitor_enabled)
-		cmd->scan_ctrl_flags |= WMI_SCAN_CHAN_STAT_EVENT;
+		cmd->scan_f_chan_stat_evnt = true;
 
 	/* do not add OFDM rates in 11B mode */
 	if (scan_req->dot11mode != WNI_CFG_DOT11_MODE_11B)
-		cmd->scan_ctrl_flags |= WMI_SCAN_ADD_OFDM_RATES;
+		cmd->scan_f_ofdm_rates = true;
 	else
 		WMA_LOGD("OFDM_RATES not included in 11B mode");
 
 	if (scan_req->p2pScanType)
-		scan_req->scan_adaptive_dwell_mode = WMI_DWELL_MODE_STATIC;
-
-	WMI_SCAN_SET_DWELL_MODE(cmd->scan_ctrl_flags,
-			scan_req->scan_adaptive_dwell_mode);
+		cmd->adaptive_dwell_time_mode = WMI_DWELL_MODE_STATIC;
 
 	/* Do not combine multiple channels in a single burst. Come back
 	 * to home channel for data traffic after every foreign channel.
@@ -286,13 +283,13 @@ QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 
 	if (!scan_req->p2pScanType) {
 		WMA_LOGD("Normal Scan request");
-		cmd->scan_ctrl_flags |= WMI_SCAN_ADD_CCK_RATES;
+		cmd->scan_f_cck_rates = true;
 		if (!scan_req->numSsid)
-			cmd->scan_ctrl_flags |= WMI_SCAN_ADD_BCAST_PROBE_REQ;
+			cmd->scan_f_bcast_probe = true;
 		if (scan_req->scanType == eSIR_PASSIVE_SCAN)
-			cmd->scan_ctrl_flags |= WMI_SCAN_FLAG_PASSIVE;
-		cmd->scan_ctrl_flags |= WMI_SCAN_ADD_TPC_IE_IN_PROBE_REQ;
-		cmd->scan_ctrl_flags |= WMI_SCAN_FILTER_PROBE_REQ;
+			cmd->scan_f_passive = true;
+		cmd->scan_f_add_tpc_ie_in_probe = true;
+		cmd->scan_f_filter_prb_req = true;
 
 		/*
 		 * Decide burst_duration and dwell_time_active based on
@@ -370,15 +367,15 @@ QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 		switch (scan_req->p2pScanType) {
 		case P2P_SCAN_TYPE_LISTEN:
 			WMA_LOGD("P2P_SCAN_TYPE_LISTEN");
-			cmd->scan_ctrl_flags |= WMI_SCAN_FLAG_PASSIVE;
-			cmd->notify_scan_events |=
+			cmd->scan_f_passive = true;
+			cmd->scan_events |=
 				WMI_SCAN_EVENT_FOREIGN_CHANNEL;
 			cmd->repeat_probe_time = 0;
 			cmd->scan_priority = WMI_SCAN_PRIORITY_HIGH;
 			break;
 		case P2P_SCAN_TYPE_SEARCH:
 			WMA_LOGD("P2P_SCAN_TYPE_SEARCH");
-			cmd->scan_ctrl_flags |= WMI_SCAN_FILTER_PROBE_REQ;
+			cmd->scan_f_filter_prb_req = true;
 			/* Default P2P burst duration of 120 ms will cover
 			 * 3 channels with default max dwell time 40 ms.
 			 * Cap limit will be set by
@@ -463,13 +460,11 @@ QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 	if (scan_req->numSsid) {
 		for (i = 0; i < scan_req->numSsid; ++i) {
 			cmd->ssid[i].length = scan_req->ssId[i].length;
-			qdf_mem_copy(cmd->ssid[i].mac_ssid,
+			qdf_mem_copy(cmd->ssid[i].ssid,
 				     scan_req->ssId[i].ssId,
 				     scan_req->ssId[i].length);
 		}
 	}
-
-	cmd->num_bssid = 1;
 
 	if (!scan_req->p2pScanType) {
 		if (wma_is_sap_active(wma_handle)) {
@@ -492,12 +487,11 @@ QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 		cmd->num_ssids,
 		cmd->num_bssid);
 
-	qdf_mem_copy(cmd->mac_add_bytes, scan_req->bssId.bytes, QDF_MAC_ADDR_SIZE);
-	cmd->ie_len = scan_req->uIEFieldLen;
-	cmd->ie_len_with_pad = roundup(scan_req->uIEFieldLen, sizeof(uint32_t));
-	cmd->uie_fieldOffset = scan_req->uIEFieldOffset;
-	cmd->ie_base = (uint8_t *) scan_req;
-
+	cmd->num_bssid = 1;
+	qdf_mem_copy(cmd->bssid_list, scan_req->bssId.bytes, QDF_MAC_ADDR_SIZE);
+	cmd->extraie.len = scan_req->uIEFieldLen;
+	cmd->extraie.ptr = (uint8_t *) scan_req +
+			     (scan_req->uIEFieldOffset);
 	return QDF_STATUS_SUCCESS;
 
 error:
@@ -519,17 +513,9 @@ QDF_STATUS wma_start_scan(tp_wma_handle wma_handle,
 {
 	uint32_t vdev_id, scan_id;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	struct scan_start_params cmd = {0};
+	struct scan_req_params cmd = {0};
 	tSirScanOffloadEvent *scan_event;
 
-	if (scan_req->channelList.numChannels > 0) {
-		cmd.chan_list = qdf_mem_malloc(sizeof(uint32_t) *
-				scan_req->channelList.numChannels);
-		if (NULL == cmd.chan_list) {
-			qdf_status = QDF_STATUS_E_NOMEM;
-			goto error;
-		}
-	}
 	if (scan_req->sessionId > wma_handle->max_bssid) {
 		WMA_LOGE("%s: Invalid vdev_id %d, msg_type : 0x%x", __func__,
 			 scan_req->sessionId, msg_type);
@@ -566,7 +552,7 @@ QDF_STATUS wma_start_scan(tp_wma_handle wma_handle,
 	scan_id = cmd.scan_id;
 	WMA_LOGI("ActiveDwell %d, PassiveDwell %d, ScanFlags 0x%x NumChan %d",
 		 cmd.dwell_time_active, cmd.dwell_time_passive,
-		 cmd.scan_ctrl_flags, cmd.num_chan);
+		 cmd.scan_flags, cmd.num_chan);
 
 	/* Call the wmi api to request the scan */
 	qdf_status = wmi_unified_scan_start_cmd_send(wma_handle->wmi_handle,
@@ -575,9 +561,6 @@ QDF_STATUS wma_start_scan(tp_wma_handle wma_handle,
 		WMA_LOGE("wmi_unified_cmd_send returned Error %d", qdf_status);
 		goto dec_scans;
 	}
-
-	if (NULL != cmd.chan_list)
-		qdf_mem_free(cmd.chan_list);
 
 	WMA_LOGI("WMA --> WMI_START_SCAN_CMDID");
 
@@ -590,7 +573,6 @@ error1:
 	if (NULL != cmd.chan_list)
 		qdf_mem_free(cmd.chan_list);
 
-error:
 	/* Send completion event for only for start scan request */
 	if (msg_type == WMA_START_SCAN_OFFLOAD_REQ) {
 		scan_event =
@@ -628,13 +610,13 @@ QDF_STATUS wma_stop_scan(tp_wma_handle wma_handle,
 			 tAbortScanParams *abort_scan_req)
 {
 	QDF_STATUS qdf_status;
-	struct scan_stop_params scan_param = {0};
+	struct scan_cancel_param  scan_param = {0};
 
 	scan_param.vdev_id = abort_scan_req->SessionId;
-	scan_param.requestor = abort_scan_req->scan_requestor_id;
+	scan_param.requester = abort_scan_req->scan_requestor_id;
 	scan_param.scan_id = abort_scan_req->scan_id;
 	/* stop the scan with the corresponding scan_id */
-	scan_param.req_type = WMI_SCAN_STOP_ONE;
+	scan_param.req_type = WLAN_SCAN_CANCEL_SINGLE;
 	qdf_status = wmi_unified_scan_stop_cmd_send(wma_handle->wmi_handle,
 						&scan_param);
 	/* Call the wmi api to request the scan */

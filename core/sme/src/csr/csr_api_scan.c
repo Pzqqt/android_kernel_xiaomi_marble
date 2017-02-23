@@ -8486,7 +8486,7 @@ static QDF_STATUS csr_fill_bss_from_scan_entry(tpAniSirGlobal mac_ctx,
 	qdf_mem_copy(bss_desc->bssId,
 			scan_entry->bssid.bytes,
 			QDF_MAC_ADDR_SIZE);
-	bss_desc->scanSysTimeMsec = scan_entry->scan_entry_time;
+	bss_desc->scansystimensec = scan_entry->scan_entry_time;
 	qdf_mem_copy(bss_desc->timeStamp,
 		scan_entry->tsf_info.data, 8);
 

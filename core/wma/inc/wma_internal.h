@@ -198,7 +198,7 @@ void wma_update_per_roam_config(WMA_HANDLE handle,
 
 QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 				      tSirScanOffloadReq *scan_req,
-				      struct scan_start_params *cmd);
+				      struct scan_req_params *cmd);
 
 QDF_STATUS wma_get_buf_stop_scan_cmd(tp_wma_handle wma_handle,
 				     wmi_buf_t *buf,
