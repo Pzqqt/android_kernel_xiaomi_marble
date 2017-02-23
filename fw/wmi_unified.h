@@ -16793,6 +16793,10 @@ typedef struct {
     A_UINT32 enable;
     /** periodic stats duration (units are milliseconds) */
     A_UINT32 stats_period;
+    /** pdev_id for identifying the MAC 
+     * See macros starting with WMI_PDEV_ID_ for values.
+     */
+    A_UINT32 pdev_id;
 } wmi_set_periodic_channel_stats_config_fixed_param;
 
 typedef struct {
