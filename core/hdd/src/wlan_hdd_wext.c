@@ -123,6 +123,24 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WE_SET_11D_STATE     1
 #define WE_WOWL              2
 #define WE_SET_POWER         3
+/*
+ * <ioctl>
+ * setMaxAssoc - Sets the maximum number of associated stations
+ *
+ * @INPUT: 1 to 32
+ *
+ * @OUTPUT: None
+ *
+ * This IOTCL sets the maximum number of associated stations
+ *
+ * @E.g: iwpriv wlan0 setMaxAssoc <value>
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_MAX_ASSOC     4
 /*
  * <ioctl>
@@ -143,30 +161,357 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
  * </ioctl>
  */
 #define WE_SET_SCAN_DISABLE  5
+/*
+ * <ioctl>
+ * inactivityTO - sets the timeout value for inactivity data while
+ * in power save mode
+ *
+ * @INPUT: int1…..int255
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL set the timeout value for inactivity data in power save mode
+ *
+ * @E.g: iwpriv wlan0 inactivityTO 20
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_DATA_INACTIVITY_TO  6
+/*
+ * <ioctl>
+ * setMaxTxPower - Dynamically sets the maximum transmission power
+ *
+ * @INPUT: Transmission power in dBm
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL dynamically sets the maximum transmission power
+ * This setting does not persist over reboots
+ *
+ * @E.g: iwpriv wlan0 setMaxTxPower <value in db)
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_MAX_TX_POWER  7
 #define WE_SET_HIGHER_DTIM_TRANSITION   8
 #define WE_SET_TM_LEVEL      9
+/*
+ * <ioctl>
+ * setphymode - Set the phymode dynamically
+ *
+ * @INPUT: 0 IEEE80211_MODE_AUTO to 22 IEEE80211_MODE_11AGN
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL sets the phymode dynamically
+ *
+ * @E.g: iwpriv wlan0 setphymode 10
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_PHYMODE       10
+/*
+ * <ioctl>
+ * nss - Set the number of spatial streams
+ *
+ * @INPUT: int1…..int3
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL sets the number of spatial streams. Supported values are 1 and 2
+ *
+ * @E.g: iwpriv wlan0 nss 2
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_NSS           11
+/*
+ * <ioctl>
+ * ldpc - Enables or disables LDPC
+ *
+ * @INPUT: 0 – Disable, 1 - Enable
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL enables or disables LDPC
+ *
+ * @E.g: iwpriv wlan0 ldpc 1
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_LDPC          12
+/*
+ * <ioctl>
+ * tx_stbc - Enables or disables tx_stbc
+ *
+ * @INPUT: Int 0 – Disable, 1 - Enable
+ *
+ * @OUTPUT: None
+ *
+ * This IOTCL used to enables or disables tx_stbc
+ *
+ * @E.g: iwpriv wlan0 tx_stbc <value>
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_TX_STBC       13
+/*
+ * <ioctl>
+ * rx_stbc - Set the rx_stbc parameter
+ *
+ * @INPUT: Int 0 – Disable, 1 - Enable
+ *
+ * @OUTPUT: None
+ *
+ * This IOTCL used to set rx_stbc parameter
+ *
+ * @E.g: iwpriv wlan0 rx_stbc <value>
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_RX_STBC       14
+/*
+ * <ioctl>
+ * shortgi  - Enables or disables a short-guard interval
+ *
+ * @INPUT: Int 0 – Disable, 1 - Enable
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL enables or disables a short-guard interval.
+ *
+ * @E.g: iwpriv wlan0 shortgi <value>
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_SHORT_GI      15
+/*
+ * <ioctl>
+ * enablertscts - enables or disables rts/cts.
+ *
+ * @INPUT: 1-Enable , 0-Disable
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL enables or disables rts/cts.
+ *
+ * @E.g: iwpriv wlan0 enablertscts <value>
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_RTSCTS        16
+/*
+ * <ioctl>
+ * chwidth - Set the channel bandwidth
+ *
+ * @INPUT: 0-20mhz to 3-160mhz
+ *
+ * @OUTPUT: None
+ *
+ * This IOTCL used to set the channel bandwidth
+ *
+ * @E.g: iwpriv wlan0 chwidth 1
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_CHWIDTH       17
 #define WE_SET_ANI_EN_DIS    18
 #define WE_SET_ANI_POLL_PERIOD    19
 #define WE_SET_ANI_LISTEN_PERIOD  20
 #define WE_SET_ANI_OFDM_LEVEL     21
 #define WE_SET_ANI_CCK_LEVEL      22
+/*
+ * <ioctl>
+ * cwmenable - Enables or disables the dynamic channel bandwidth
+ *
+ * @INPUT: 0-Disable, 1-Enable
+ *
+ * @OUTPUT: None
+ *
+ * This IOTCL used to enables or disables the dynamic channel bandwidth
+ *
+ * @E.g: iwpriv wlan0 cwmenable <value>
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_DYNAMIC_BW         23
+/*
+ * <ioctl>
+ * txchainmask - This IOCTL sets the current Tx chain mask
+ *
+ * @INPUT: Mask Value
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL sets the current Tx chain mask
+ *
+ * @E.g: iwpriv wlan0 txchainmask 1
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_TX_CHAINMASK  24
+/*
+ * <ioctl>
+ * rxchainmask - Sets the current Rx chain mask
+ *
+ * @INPUT: Mask Value
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL sets the current Rx chain mask. This command is the
+ * equivalent to setting in gSetRxChainmask1x1 in WCNSS_qcom_cfg.ini.
+ *
+ * @E.g: iwpriv wlan0 rxchainmask <value>
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_RX_CHAINMASK  25
+/*
+ * <ioctl>
+ * set11NRates - Fixes the Tx data rate of the 11N mode.
+ *
+ * @INPUT: 0x1b to 0x8f
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL fixes the Tx data rate of the 11N mode.
+ *
+ * @E.g: iwpriv wlan0 set11NRates 0x85
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_11N_RATE      26
+/*
+ * <ioctl>
+ * ampdu  - Set the the maximum subframe of ampdu
+ *
+ * @INPUT: int 1 to int 63
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL sets the maximum subframe of ampdu.
+ *
+ * @E.g: iwpriv wlan0 ampdu 9
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_AMPDU         27
+/*
+ * <ioctl>
+ * amsdu - Sets the maximum subframe of amsdu.
+ *
+ * @INPUT: int 1 to int 31
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL sets the maximum subframe of amsdu.
+ *
+ * @E.g: iwpriv wlan0 amsdu 9
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_AMSDU         28
+/*
+ * <ioctl>
+ * txpow2g - current 2 GHz Tx power setting
+ *
+ * @INPUT: Tx power in dBm
+ *
+ * @OUTPUT: None
+ *
+ * This IOTCL  used to set 2 ghz tx power
+ *
+ * @E.g: iwpriv wlan0 txpow2g
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_TXPOW_2G      29
+/*
+ * <ioctl>
+ * txpow5g - Current 5 GHz tx power setting
+ *
+ * @INPUT: Tx power in dBm
+ *
+ * @OUTPUT: None
+ *
+ * This IOTCL used to set the 5 ghz txpower
+ *
+ * @E.g: iwpriv wlan0 txpow5g
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_TXPOW_5G      30
 /* Private ioctl for firmware debug log */
 #define WE_DBGLOG_LOG_LEVEL             31
@@ -177,10 +522,66 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WE_DBGLOG_MOD_LOG_LEVEL         36
 #define WE_DBGLOG_TYPE                  37
 #define WE_SET_TXRX_FWSTATS             38
+/*
+ * <ioctl>
+ * set11ACRates  - Fixes the Tx data rate of 11AC
+ *
+ * @INPUT: 0x1 to 0x9
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL fixes the Tx data rate of 11AC.
+ *
+ * @E.g: iwpriv wlan0 set11ACRates 0x9
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_VHT_RATE                 39
 #define WE_DBGLOG_REPORT_ENABLE         40
 #define WE_TXRX_FWSTATS_RESET           41
+/*
+ * <ioctl>
+ * setTxMaxPower2G - Set the maximum transmit power for the 2.4-GHz band
+ *
+ * @INPUT: Transmission power in dBm
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL sets the maximum transmit power for the 2.4-GHz band
+ * This setting does not persist over reboots
+ *
+ * @E.g: iwpriv wlan0 setTxMaxPower2G 10
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_MAX_TX_POWER_2_4   42
+/*
+ * <ioctl>
+ * setTxMaxPower5G - Set the maximum transmit power for the 5-GHz band
+ *
+ * @INPUT: Transmission power in dBm
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL sets the maximum transmit power for the 5-GHz band
+ * This setting does not persist over reboots
+ *
+ * @E.g: iwpriv wlan0 setTxMaxPower5G 10
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_MAX_TX_POWER_5_0   43
 #define WE_SET_PKTLOG                   44
 /* Private ioctl for packet powe save */
@@ -192,27 +593,243 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define  WE_PPS_MACADDR_MISMATCH        50
 #define  WE_PPS_DELIM_CRC_FAIL          51
 #define  WE_PPS_GID_NSTS_ZERO           52
+/*
+ * <ioctl>
+ * rssi_chk - Chek the rssi
+ *
+ * @INPUT: One argument as input
+ *
+ * @OUTPUT: rssi
+ *  wlan0	rssi_chk:56
+ *
+ * This IOTCL used to chek rssi
+ *
+ * @E.g: iwpriv wlan0 rssi_chk <value>
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define  WE_PPS_RSSI_CHECK              53
 #define WE_SET_SAP_AUTO_CHANNEL_SELECTION     54
+/*
+ * <ioctl>
+ * htsmps - Sets the htsmps
+ *
+ * @INPUT: Atleast one int argument
+ *
+ * @OUTPUT: None
+ *
+ * This IOTCL used to set htsmps
+ *
+ * @E.g: iwpriv wlan0 htsmps <value>
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_HTSMPS                   55
 /* Private ioctl for QPower */
 #define WE_SET_QPOWER_MAX_PSPOLL_COUNT            56
 #define WE_SET_QPOWER_MAX_TX_BEFORE_WAKE          57
 #define WE_SET_QPOWER_SPEC_PSPOLL_WAKE_INTERVAL   58
 #define WE_SET_QPOWER_SPEC_MAX_SPEC_NODATA_PSPOLL 59
-
+/*
+ * <ioctl>
+ * burst_enable - Enables or disables the burst feature
+ *
+ * @INPUT: 0-Disable, 1-Enable
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL enables or disables the burst feature.
+ *
+ * @E.g: iwpriv wlan0 burst_enable 0
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_BURST_ENABLE             60
+/*
+ * <ioctl>
+ * burst_dur - Enables or disables the burst feature
+ *
+ * @INPUT: int 1…..int 8191 in microseconds
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL sets the burst duration.
+ *
+ * @E.g: iwpriv wlan0 burst_dur <value>
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_BURST_DUR                61
 /* GTX Commands */
+/*
+ * <ioctl>
+ * gtxHTMcs - Set the tx HTM value
+ *
+ * @INPUT: Atleast one int orgument
+ *
+ * @OUTPUT: None
+ *
+ * This IOTCL sets htm tx value
+ *
+ * @E.g: iwpriv wlan0 gtxHTMcs <value>
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_GTX_HT_MCS               62
+/*
+ * <ioctl>
+ * gtxVHTMcs - Set gtxVHTMcs value
+ *
+ * @INPUT: Atleast one int argument
+ *
+ * @OUTPUT: None
+ *
+ * This IOTCL used to set gtxVHTMcs value
+ *
+ * @E.g: iwpriv wlan0 gtxVHTMcs <value>
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_GTX_VHT_MCS              63
+/*
+ * <ioctl>
+ * gtxUsrCfg - Host request for GTX mask
+ *
+ * @INPUT: Atleast one int orgument
+ *
+ * @OUTPUT: None
+ *
+ * This IOTCL used send the host request for GTX mask
+ *
+ * @E.g: iwpriv wlan0 gtxUsrCfg <value>
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_GTX_USRCFG               64
+/*
+ * <ioctl>
+ * gtxThre - Set the tx threshold
+ *
+ * @INPUT: Atleast one int argument
+ *
+ * @OUTPUT: None
+ *
+ * This IOTCL used to set tx threshold
+ *
+ * @E.g: iwpriv wlan0 gtxThre <value>
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_GTX_THRE                 65
+/*
+ * <ioctl>
+ * gtxMargin  - Set the gtxMargin
+ *
+ * @INPUT: 1 to 32
+ *
+ * @OUTPUT: None
+ *
+ * This IOTCL use dto set gtxMargin
+ *
+ * @E.g: iwpriv wlan0 gtxMargini <value>
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_GTX_MARGIN               66
+/*
+ * <ioctl>
+ * gtxStep - Set the gtxStep
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: None
+ *
+ * This IOTCL used to sets gtxStep
+ *
+ * @E.g: iwpriv wlan0 gtxStep <value>
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_GTX_STEP                 67
+/*
+ * <ioctl>
+ * gtxMinTpc - Sets the gtxMinTpc
+ *
+ * @INPUT: Atleast one int argument
+ *
+ * @OUTPUT: None
+ *
+ * This IOTCL sets the tx MinTpc
+ *
+ * @E.g: iwpriv wlan0 gtxMinTpc <value>
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_GTX_MINTPC               68
-#define WE_SET_GTX_BWMASK               69
+/*
+ * <ioctl>
+ * gtxBWMask - Sets the BW mask (20/40/80/160 Mhz)
+ *
+ * @INPUT: Mask value
+ *
+ * @OUTPUT: None
+ *
+ * This IOTCL used to set gtxBWMask
+ *
+ * @E.g: iwpriv wlan0 gtxBWMask <value>
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 
+#define WE_SET_GTX_BWMASK               69
 /*
  * <ioctl>
  * setMccLatency - Sets the MCC latency value during STA-P2P concurrency
@@ -272,6 +889,25 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #ifdef WE_SET_TX_POWER
 #undef WE_SET_TX_POWER
 #endif
+/*
+ * <ioctl>
+ * setTxPower - Set the current transmit power
+ *
+ * @INPUT: Transmission power in dBm
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL sets the current transmit power.
+ * This setting does not persist over reboots.
+ *
+ * @E.g: iwpriv wlan0 setTxPower 10
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_TX_POWER                 74
 /* Private ioctl for earlyrx power save feature */
 #define WE_SET_EARLY_RX_ADJUST_ENABLE         75
@@ -280,10 +916,65 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WE_SET_EARLY_RX_SLOP_STEP             78
 #define WE_SET_EARLY_RX_INIT_SLOP             79
 #define WE_SET_EARLY_RX_ADJUST_PAUSE          80
+/*
+ * <ioctl>
+ * setMcRate  - Set the data rate for multicast data
+ *
+ * @INPUT: 1 to 32
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL sets the data rate for multicast data. Note that this command
+ * is allowed only in STA, IBSS, or QCMobileAP mode
+ *
+ * @E.g: iwpriv wlan0 setMcRate <value>
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_MC_RATE                        81
 #define WE_SET_EARLY_RX_DRIFT_SAMPLE          82
 /* Private ioctl for packet power save */
+/*
+ * <ioctl>
+ * 5g_ebt - Sets the 5g_ebt
+ *
+ * @INPUT: <value>
+ *
+ * @OUTPUT: None
+ *
+ * This IOTCL used to set 5g_ebt
+ *
+ * @E.g: iwpriv wlan0 5g_ebt <value>
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_PPS_5G_EBT                         83
+/*
+ * <ioctl>
+ * cts_cbw  - Set CTS channel BW for dynamic BW adjustment
+ *
+ * @INPUT: 20 t0 160
+ *
+ * @OUTPUT: None
+ *
+ * This IOTCL used to set CTS channel BW for dynamic BW adjustment
+ *
+ * @E.g: iwpriv wlan0 cts_cbw <value>
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_CTS_CBW                        84
 #define WE_DUMP_STATS                         85
 #define WE_CLEAR_STATS                        86
@@ -349,25 +1040,412 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
  * </ioctl>
  */
 #define WE_GET_CONCURRENCY_MODE 9
+/*
+ * <ioctl>
+ * get_nss - Get the number of spatial STBC streams (NSS)
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: NSS
+ *  wlan0     get_nss:2
+ *
+ * This IOTCL used to get the number of spatial STBC streams
+ *
+ * @E.g: iwpriv wlan0 get_nss
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_NSS           11
+/*
+ * <ioctl>
+ * get_ldpc - This IOCTL gets the low density parity check (LDPC)
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: ldpc
+ *  wlan0     get_ldpc:1
+ *
+ * This IOTCL used to gets the low density parity check (LDPC)
+ *
+ * @E.g: iwpriv wlan0 get_ldpc
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_LDPC          12
+/*
+ * <ioctl>
+ * get_tx_stbc - Get the value of the current Tx space time block code (STBC)
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: TXSTBC
+ *  wlan0     get_tx_stbc:1
+ *
+ * This IOTCL get the value of the current Tx space time block code (STBC)
+ *
+ * @E.g: iwpriv wlan0 get_tx_stbc
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_TX_STBC       13
+/*
+ * <ioctl>
+ * get_rx_stbc - Gets the value of the current Rx STBC
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: Rx STBC
+ *  wlan0     get_rx_stbc:1
+ *
+ * This IOTCL used to get the value of the current Rx STBC
+ *
+ * @E.g: iwpriv wlan0 get_rx_stbc
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_RX_STBC       14
+/*
+ * <ioctl>
+ * get_shortgi - Get the value of the current short GI setting
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: Enable/disable of shortgi
+ *  wlan0     get_shortgi:1
+ *
+ * This IOCTL gets the value of the current short GI setting
+ *
+ * @E.g: iwpriv wlan0 get_shortgi
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_SHORT_GI      15
+/*
+ * <ioctl>
+ * get_rtscts - Get the value of the current RTS/CTS setting.
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: Enable/disable of RTS/CTS
+ *  wlan0     get_rtscts:33
+ *
+ * This IOTCL get the value of the current RTS/CTS setting.
+ *
+ * @E.g: iwpriv wlan0 get_rtscts
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_RTSCTS        16
+/*
+ * <ioctl>
+ * get_chwidth - Get the current channel width setting
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: channel width
+ *  wlan0     get_chwidth:0
+ *
+ * This IOTCL get the current channel width setting.
+ *
+ * @E.g: iwpriv wlan0 get_chwidth
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_CHWIDTH       17
+/*
+ * <ioctl>
+ * get_anienable - Get the anienable
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT:
+ *  wlan0     get_anienable:0
+ *
+ * This IOTCL get the anienable
+ *
+ * @E.g: iwpriv wlan0 get_anienable
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_ANI_EN_DIS    18
+/*
+ * <ioctl>
+ * get_aniplen  - Get the aniplen
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT:
+ *  wlan0     get_aniplen:0
+ *
+ * This IOTCL get the aniplen
+ *
+ * @E.g: iwpriv wlan0 get_aniplen
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_ANI_POLL_PERIOD    19
+/*
+ * <ioctl>
+ * get_anilislen- Get the anilislen
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT:
+ *  wlan0     get_anilislen:0
+ *
+ * This IOTCL used to get anilislen
+ *
+ * @E.g: iwpriv wlan0 get_anilislen
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_ANI_LISTEN_PERIOD  20
+/*
+ * <ioctl>
+ * get_aniofdmlvl - Get the OFDM level
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: OFDM
+ *  wlan0     get_aniofdmlvl:0
+ *
+ * This IOTCL used to get ofdm level
+ *
+ * @E.g: iwpriv wlan0 get_aniofdmlvl
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_ANI_OFDM_LEVEL     21
+/*
+ * <ioctl>
+ * get_aniccklvl - Get the cck level
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT:
+ *  wlan0     get_aniccklvl:0
+ *
+ * This IOTCL used to get cck level
+ *
+ * @E.g: iwpriv wlan0 get_aniccklvl
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_ANI_CCK_LEVEL      22
+/*
+ * <ioctl>
+ * get_cwmenable - Get the value of the dynamic channel bandwidth setting
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: Enable/disable dynamic channel bandwidth
+ *  wlan0     get_cwmenable:0
+ *
+ * This IOTCL get the value of the dynamic channel bandwidth setting
+ *
+ * @E.g: iwpriv wlan0 get_cwmenable
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_DYNAMIC_BW         23
+/*
+ * <ioctl>
+ * get_txchainmask - Get the txchainmask that was set
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: txchainmask
+ *  wlan0     get_txchainmask:1
+ *
+ * This IOCTL gets the txchainmask that was set
+ * This command is useful if it was previously set
+ *
+ * @E.g: iwpriv wlan0 get_txchainmask
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_TX_CHAINMASK  24
+/*
+ * <ioctl>
+ * get_rxchainmask - Get the rxchainmask that was set
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: rxchainmask
+ *  wlan0     get_rxchainmask:1
+ *
+ * This IOCTL gets the rxchainmask that was set
+ * This command is useful only if it was previously set.
+ *
+ * @E.g: iwpriv wlan0 get_rxchainmask
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_RX_CHAINMASK  25
+/*
+ * <ioctl>
+ * get_11nrate - Get the fixed Tx data rate
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: Using this command does not return the same value as set
+ *  wlan0     get_11nrate:0
+ *
+ * This IOCTL gets the fixed Tx data rate
+ * This command is useful only if setting the fixed Tx rate.
+ *
+ * @E.g: iwpriv wlan0 get_11nrate
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_11N_RATE      26
+/*
+ * <ioctl>
+ * get_ampdu - Get the maximum subframe of ampdu
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: Maximum subframe of ampdu
+ *  wlan0     get_ampdu:1
+ *
+ * This IOCTL gets the maximum subframe of ampdu
+ * This command is useful only if setting ampdu.
+ *
+ * @E.g: iwpriv wlan0 get_ampdu
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_AMPDU         27
+/*
+ * <ioctl>
+ * get_amsdu - Get the maximum subframe of amsdu
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: Maximum subframe of amsdu
+ *  wlan0     get_amsdu:1
+ *
+ * This IOCTL gets the maximum subframe of amsdu.
+ * This command is useful only if setting amsdu
+ *
+ * @E.g: iwpriv wlan0 get_amsdu
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_AMSDU         28
+/*
+ * <ioctl>
+ * get_txpow2g - Get the current 2 GHz Tx power setting
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: Tx Power in dbm
+ * wlan0     get_txpow2g:0
+ *
+ * This IOCTL gets the current 2 GHz Tx power setting
+ * This command is useful if setting Tx power
+ *
+ * @E.g: iwpriv wlan0 get_txpow2g
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_TXPOW_2G      29
+/*
+ * <ioctl>
+ * get_txpow5g - Get the current 5 GHz Tx power setting
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: Tx Power in dbm
+ * wlan0     get_txpow5g:0
+ *
+ * This IOCTL gets the current 5 GHz Tx power setting
+ * This command is useful if setting Tx power
+ *
+ * @E.g: iwpriv wlan0 get_txpow5g
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_TXPOW_5G      30
 /* 31 is unused */
 #define WE_GET_PPS_PAID_MATCH           32
@@ -384,16 +1462,207 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WE_GET_QPOWER_MAX_TX_BEFORE_WAKE          42
 #define WE_GET_QPOWER_SPEC_PSPOLL_WAKE_INTERVAL   43
 #define WE_GET_QPOWER_SPEC_MAX_SPEC_NODATA_PSPOLL 44
+/*
+ * <ioctl>
+ * get_burst_en - Enables or disables the burst feature
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: Enable/disable of burst feature
+ *  wlan0     get_burst_en:1
+ *
+ * This IOCTL enables or disables the burst feature
+ *
+ * @E.g: iwpriv wlan0 get_burst_en
+ *
+ * Supported Feature:STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_BURST_ENABLE             45
+/*
+ * <ioctl>
+ * get_burst_dur - Get the burst duration
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: Duration in microseconds
+ *  wlan0     get_burst_dur:8160
+ *
+ * This IOCTL gets the burst duration
+ * This command is useful if setting burst enable
+ *
+ * @E.g: iwpriv wlan0 get_burst_dur
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_BURST_DUR                46
 /* GTX Commands */
+/*
+ * <ioctl>
+ * get_gtxHTMcs - Get the tx HTM
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: HTM
+ *  wlan0     get_gtxHTMcs:32896
+ *
+ * This IOTCL used to get HTM
+ *
+ * @E.g: iwpriv wlan0 get_gtxHTMcs
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_GTX_HT_MCS               47
+/*
+ * <ioctl>
+ * get_gtxVHTMcs - Get the VHTM
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: VHTM
+ *  wlan0     get_gtxVHTMcs:524800
+ *
+ * This IOTCL used to get the VHTM
+ *
+ * @E.g: iwpriv wlan0 get_gtxVHTMcs
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_GTX_VHT_MCS              48
+/*
+ * <ioctl>
+ * get_gtxUsrCfg - Get the tx cfg
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: TXCFG
+ *  wlan0     get_gtxUsrCfg:32
+ *
+ * This IOTCL used to get the tx cfg
+ *
+ * @E.g: iwpriv wlan0 get_gtxUsrCfg
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_GTX_USRCFG               49
+/*
+ * <ioctl>
+ * get_gtxThre - Get the tx threshold
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: Threshold
+ *  wlan0     get_gtxThre:3
+ *
+ * This IOCTL is used to get tx threshold
+ *
+ * @E.g: iwpriv wlan0 get_gtxThre
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_GTX_THRE                 50
+/*
+ * <ioctl>
+ * get_gtxMargin - Get the tx margin
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: GTXMARGIN
+ *  wlan0     get_gtxMargin:2
+ *
+ * This IOCTL is used to set tx margin
+ *
+ * @E.g: iwpriv wlan0 get_gtxMargin
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_GTX_MARGIN               51
+/*
+ * <ioctl>
+ * get_gtxStep - Get the tx step
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: GTXSTEP
+ * wlan0     get_gtxStep:0
+ *
+ * This IOCTL is used to get the gtx step
+ *
+ * @E.g: iwpriv wlan0 get_gtxStep
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_GTX_STEP                 52
+/*
+ * <ioctl>
+ * get_gtxMinTpc - Get the tx miminum tpc
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: TPC
+ * wlan0     get_gtxMinTpc:0
+ *
+ * This IOCTL is used to get tx miminum tpc
+ *
+ * @E.g: iwpriv wlan0 get_gtxMinTpc
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_GTX_MINTPC               53
+/*
+ * <ioctl>
+ * get_gtxBWMask - Get the tx BW MASK
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: MASK
+ * wlan0     get_gtxBWMask:15
+ *
+ * This IOCTL is used get gtx bw mask
+ *
+ * @E.g: iwpriv wlan0 get_gtxBWMask
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_GTX_BWMASK               54
 #define WE_GET_TEMPERATURE              56
 #define WE_CAP_TSF                      58
@@ -407,6 +1676,24 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WE_WOWL_ADD_PTRN     1
 #define WE_WOWL_DEL_PTRN     2
 #define WE_NEIGHBOR_REPORT_REQUEST 3
+/*
+ * <ioctl>
+ * set_ap_wps_ie - Set the P2P IE of the probe response
+ *
+ * @INPUT: string
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL sets the P2P IE of the probe response
+ *
+ * @E.g: iwpriv wlan0 set_ap_wps_ie abcd
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_SET_AP_WPS_IE     4  /* This is called in station mode to set probe rsp ie. */
 #define WE_SET_CONFIG        5
 
@@ -421,9 +1708,66 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WLAN_PRIV_GET_CHAR_SET_NONE   (SIOCIWFIRSTPRIV + 5)
 #define WE_WLAN_VERSION      1
 #define WE_GET_STATS         2
+/*
+ * <ioctl>
+ * getConfig - gets the values of all configurations listed in WCNSS
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: Current configuration to the sys log
+ *  wlan0	getConfig: WLAN configuration written to system log
+ *
+ * This IOCTL gets the values of all configurations listed in WCNSS
+ *
+ * @E.g: iwpriv wlan0 getConfig
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_CFG           3
 #define WE_GET_WMM_STATUS    4
+/*
+ * <ioctl>
+ * getChannelList - Get the available channel list while in QCMobileAP
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: Channel list
+ * wlan0     getChannelList:36 US 1..165
+ *
+ * This IOCTL gets the available channel list while in QCMobileAP
+ *
+ * @E.g: iwpriv wlan0 getChannelList
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_CHANNEL_LIST  5
+/*
+ * <ioctl>
+ * getRSSI - Get the Received Signal Strength Indicator
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: RSSI
+ * wlan0     getRSSI:rsssi=-32
+ *
+ * This IOCTL gets the Received Signal Strength Indicator (RSSI)
+ *
+ * @E.g: iwpriv wlan0 getRSSI
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_RSSI          6
 
 /*
@@ -522,10 +1866,48 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
  * </ioctl>
  */
 #define WE_GET_IBSS_STA_INFO 11
+/*
+ * <ioctl>
+ * getphymode - Get the current phymode.
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: In phymode
+ *  wlan0     getphymode:AUTO MODE
+ *
+ * This IOCTL used to gets the current phymode.
+ *
+ * @E.g: iwpriv wlan0 getphymode
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_PHYMODE       12
 #ifdef FEATURE_OEM_DATA_SUPPORT
 #define WE_GET_OEM_DATA_CAP  13
 #endif
+/*
+ * <ioctl>
+ * getSNR - Enable SNR Monitoring
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: Signal strength/ratio
+ *  wlan0     getSNR:1
+ *
+ * This IOCTL is used to get ibss sta info
+ *
+ * @E.g: iwpriv wlan0 getSNR
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_SNR           14
 #define WE_LIST_FW_PROFILE      15
 
@@ -995,6 +2377,26 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WLAN_GET_WLAN_STATISTICS (SIOCIWFIRSTPRIV + 21)
 
 /* Private ioctl to set the Keep Alive Params */
+/*
+ * <ioctl>
+ * setKeepAlive - Set the keep alive feature
+ *
+ * @INPUT: 28 bytes of information in the order of packet type, time period
+ * host IPv4 address, destination IPv4 address, destination MAC address, bssID
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL sets the keep alive feature to send either NULL
+ * or unsolicited ARP response packets
+ *
+ * @E.g: iwpriv wlan0 setKeepAlive
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WLAN_SET_KEEPALIVE_PARAMS (SIOCIWFIRSTPRIV + 22)
 
 #ifdef WLAN_FEATURE_PACKET_FILTERING
@@ -1007,7 +2409,26 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 /* Private ioctl to get the statistics */
 #define WLAN_SET_PNO (SIOCIWFIRSTPRIV + 24)
 #endif
-
+/*
+ * <ioctl>
+ * SETBAND - Set the operational band
+ *
+ * @INPUT: 0 to Auto, 1 to 5 GHz and 2 to 2.4 GHz
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL Set the operational band If the new band is different from the
+ * current operational band, it aborts the pending scan requests, flushes
+ * the existing scan results, and then change * the band capability
+ *
+ * @E.g: iwpriv wlan0 SETBAND <value>
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WLAN_SET_BAND_CONFIG  (SIOCIWFIRSTPRIV + 25)
 
 #define WLAN_PRIV_SET_MCBC_FILTER   (SIOCIWFIRSTPRIV + 26)
@@ -1033,6 +2454,25 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 /* 802.11p IOCTL */
 #define WLAN_SET_DOT11P_CHANNEL_SCHED    (SIOCIWFIRSTPRIV + 30)
 
+/*
+ * <ioctl>
+ * getLinkSpeed - Gets the current link speed in Mbps
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: linkspeed in mbps
+ *  wlan0     getLinkSpeed:7
+ *
+ * This IOCTL is used get the current link speed in Mbps
+ *
+ * @E.g: iwpriv wlan0 getLinkSpeed
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WLAN_GET_LINK_SPEED          (SIOCIWFIRSTPRIV + 31)
 
 #define WLAN_STATS_INVALID            0

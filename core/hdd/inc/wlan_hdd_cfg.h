@@ -62,10 +62,47 @@
 
 /* Defines for all of the things we read from the configuration (registry). */
 
+/*
+ * <ini>
+ * RTSThreshold - Will provide RTSThreshold
+ * @Min: 0
+ * @Max: 1048576
+ * @Default: 2347
+ *
+ * This ini is used to set default RTSThreshold
+ * If minimum value 0 is selectd then it will use always RTS
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_RTS_THRESHOLD_NAME                 "RTSThreshold"
 #define CFG_RTS_THRESHOLD_MIN                  WNI_CFG_RTS_THRESHOLD_STAMIN     /* min is 0, meaning always use RTS. */
 #define CFG_RTS_THRESHOLD_MAX                  WNI_CFG_RTS_THRESHOLD_STAMAX     /* max is the max frame size */
 #define CFG_RTS_THRESHOLD_DEFAULT              WNI_CFG_RTS_THRESHOLD_STADEF
+
+/*
+ * <ini>
+ * gFragmentationThreshold - It will set fragmentation threshold
+ * @Min: 256
+ * @Max: 8000
+ * @Default: 8000
+ *
+ * This ini is used to indicate default fragmentation threshold
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 
 #define CFG_FRAG_THRESHOLD_NAME                "gFragmentationThreshold"
 #define CFG_FRAG_THRESHOLD_MIN                 WNI_CFG_FRAGMENTATION_THRESHOLD_STAMIN
@@ -76,6 +113,24 @@
 #define CFG_OPERATING_CHANNEL_MIN              (0)
 #define CFG_OPERATING_CHANNEL_MAX              (14)
 #define CFG_OPERATING_CHANNEL_DEFAULT          (1)
+
+/*
+ * <ini>
+ * gShortSlotTimeEnabled - It will set slot timing slot.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to set default timing slot.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 
 #define CFG_SHORT_SLOT_TIME_ENABLED_NAME       "gShortSlotTimeEnabled"
 #define CFG_SHORT_SLOT_TIME_ENABLED_MIN        WNI_CFG_SHORT_SLOT_TIME_STAMIN
@@ -103,10 +158,28 @@
 #define CFG_HEARTBEAT_THRESH_24_MAX            WNI_CFG_HEART_BEAT_THRESHOLD_STAMAX
 #define CFG_HEARTBEAT_THRESH_24_DEFAULT        WNI_CFG_HEART_BEAT_THRESHOLD_STADEF
 
-#define CFG_MAX_RX_AMPDU_FACTOR_NAME           "gMaxRxAmpduFactor"
-#define CFG_MAX_RX_AMPDU_FACTOR_MIN            WNI_CFG_MAX_RX_AMPDU_FACTOR_STAMIN
-#define CFG_MAX_RX_AMPDU_FACTOR_MAX            WNI_CFG_MAX_RX_AMPDU_FACTOR_STAMAX
-#define CFG_MAX_RX_AMPDU_FACTOR_DEFAULT        WNI_CFG_MAX_RX_AMPDU_FACTOR_STADEF
+/*
+ * <ini>
+ * gMaxRxAmpduFactor - Provide the maximum ampdu factor.
+ * @Min: 0
+ * @Max: 3
+ * @Default: 3
+ *
+ * This ini is used to set default maxampdu factor
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
+#define CFG_MAX_RX_AMPDU_FACTOR_NAME         "gMaxRxAmpduFactor"
+#define CFG_MAX_RX_AMPDU_FACTOR_MIN          WNI_CFG_MAX_RX_AMPDU_FACTOR_STAMIN
+#define CFG_MAX_RX_AMPDU_FACTOR_MAX          WNI_CFG_MAX_RX_AMPDU_FACTOR_STAMAX
+#define CFG_MAX_RX_AMPDU_FACTOR_DEFAULT      WNI_CFG_MAX_RX_AMPDU_FACTOR_STADEF
 
 /* Configuration option for HT MPDU density (Table 8-125 802.11-2012)
  * 0 for no restriction
@@ -123,8 +196,25 @@
 #define CFG_HT_MPDU_DENSITY_MAX                WNI_CFG_MPDU_DENSITY_STAMAX
 #define CFG_HT_MPDU_DENSITY_DEFAULT            WNI_CFG_MPDU_DENSITY_STADEF
 
-/* Configuration added to enable/disable CTS2SELF in */
-/* Adaptive RX drain feature */
+/*
+ * <ini>
+ * gEnableAdaptRxDrain - It will enable adapt received drain.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to Configuration added to enable/disable CTS2SELF in
+ * Adaptive RX drain feature.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_ENABLE_ADAPT_RX_DRAIN_NAME     "gEnableAdaptRxDrain"
 #define CFG_ENABLE_ADAPT_RX_DRAIN_MIN       WNI_CFG_ENABLE_ADAPT_RX_DRAIN_STAMIN
 #define CFG_ENABLE_ADAPT_RX_DRAIN_MAX       WNI_CFG_ENABLE_ADAPT_RX_DRAIN_STAMAX
@@ -154,20 +244,92 @@ typedef enum {
 	eHDD_DOT11_MODE_11a,
 } eHddDot11Mode;
 
+/*
+ * <ini>
+ * gChannelBondingMode24GHz - Configures Channel Bonding in 24 GHz
+ * @Min: 0
+ * @Max: 10
+ * @Default: 0
+ *
+ * This ini is used to set default channel bonding mode 24GHZ
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_CHANNEL_BONDING_MODE_24GHZ_NAME    "gChannelBondingMode24GHz"
 #define CFG_CHANNEL_BONDING_MODE_MIN           WNI_CFG_CHANNEL_BONDING_MODE_STAMIN
 #define CFG_CHANNEL_BONDING_MODE_MAX           WNI_CFG_CHANNEL_BONDING_MODE_STAMAX
 #define CFG_CHANNEL_BONDING_MODE_DEFAULT       WNI_CFG_CHANNEL_BONDING_MODE_STADEF
+
+/*
+ * <ini>
+ * gChannelBondingMode5GHz - Configures Channel Bonding in 5 GHz
+ * @Min: 0
+ * @Max: 10
+ * @Default: 0
+ *
+ * This ini is used to set default channel bonding mode 5GHZ
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 
 #define CFG_CHANNEL_BONDING_MODE_5GHZ_NAME     "gChannelBondingMode5GHz"
 #define CFG_CHANNEL_BONDING_MODE_MIN           WNI_CFG_CHANNEL_BONDING_MODE_STAMIN
 #define CFG_CHANNEL_BONDING_MODE_MAX           WNI_CFG_CHANNEL_BONDING_MODE_STAMAX
 #define CFG_CHANNEL_BONDING_MODE_DEFAULT       WNI_CFG_CHANNEL_BONDING_MODE_STADEF
 
+/*
+ * <ini>
+ * gFixedRate - It will provide fixed rate
+ * @Min: 0
+ * @Max: 44
+ * @Default: 0
+ *
+ * This ini is used to set default fixed rate
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_FIXED_RATE_NAME                    "gFixedRate"
 #define CFG_FIXED_RATE_MIN                     WNI_CFG_FIXED_RATE_STAMIN
 #define CFG_FIXED_RATE_MAX                     WNI_CFG_FIXED_RATE_STAMAX
 #define CFG_FIXED_RATE_DEFAULT                 WNI_CFG_FIXED_RATE_STADEF
+
+/*
+ * <ini>
+ * gShortGI20Mhz - Short Guard Interval for HT20
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to set default short interval for HT20
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 
 #define CFG_SHORT_GI_20MHZ_NAME                "gShortGI20Mhz"
 #define CFG_SHORT_GI_20MHZ_MIN                 WNI_CFG_SHORT_GI_20MHZ_STAMIN
@@ -1135,6 +1297,24 @@ typedef enum {
 #define CFG_GLOBAL_ADAPTIVE_DWELL_MODE_MAX        (4)
 #define CFG_GLOBAL_ADAPTIVE_DWELL_MODE_DEFAULT    (1)
 
+/*
+ * <ini>
+ * gRssiCatGap - Set Rssi CatGap
+ * @Min: 5
+ * @Max: 100
+ * @Default: 5
+ *
+ * This ini is used to set default RssiCatGap
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_RSSI_CATEGORY_GAP_NAME             "gRssiCatGap"
 #define CFG_RSSI_CATEGORY_GAP_MIN              (5)
 #define CFG_RSSI_CATEGORY_GAP_MAX              (100)
@@ -1163,6 +1343,24 @@ typedef enum {
 #define CFG_ROAM_INTRA_BAND_MIN               (0)
 #define CFG_ROAM_INTRA_BAND_MAX               (1)
 #define CFG_ROAM_INTRA_BAND_DEFAULT           (0)
+
+/*
+ * <ini>
+ * gShortPreamble - Set Short Preamble
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to set default short Preamble
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 
 #define CFG_SHORT_PREAMBLE_NAME                "gShortPreamble"
 #define CFG_SHORT_PREAMBLE_MIN                 WNI_CFG_SHORT_PREAMBLE_STAMIN
@@ -2093,17 +2291,52 @@ typedef enum {
 #define CFG_TX_POWER_CTRL_MIN                  (0)
 #define CFG_TX_POWER_CTRL_MAX                  (1)
 
+/*
+ * <ini>
+ * gLowGainOverride - Indicates Low Gain Override
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to set default Low Gain Override
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_LOW_GAIN_OVERRIDE_NAME             "gLowGainOverride"
 #define CFG_LOW_GAIN_OVERRIDE_MIN              WNI_CFG_LOW_GAIN_OVERRIDE_STAMIN
 #define CFG_LOW_GAIN_OVERRIDE_MAX              WNI_CFG_LOW_GAIN_OVERRIDE_STAMAX
 #define CFG_LOW_GAIN_OVERRIDE_DEFAULT          WNI_CFG_LOW_GAIN_OVERRIDE_STADEF
 
+/*
+ * <ini>
+ * gRssiFilterPeriod - Enable gRssi Filter for RSSI Monitoring
+ * @Min: STAMIN
+ * @Max: STAMAX
+ * @Default: STADEF
+ *
+ * This ini is used to Increased this value for Non-ESE AP this is cause FW
+ * RSSI Monitoring the consumer of this value is ON by default. So to impact
+ * power numbers we are setting this to a high value.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_RSSI_FILTER_PERIOD_NAME            "gRssiFilterPeriod"
 #define CFG_RSSI_FILTER_PERIOD_MIN             WNI_CFG_RSSI_FILTER_PERIOD_STAMIN
 #define CFG_RSSI_FILTER_PERIOD_MAX             WNI_CFG_RSSI_FILTER_PERIOD_STAMAX
-/* Increased this value for Non-ESE AP. This is cause FW RSSI Monitoring */
-/* the consumer of this value is ON by default. So to impact power numbers */
-/* we are setting this to a high value. */
 #define CFG_RSSI_FILTER_PERIOD_DEFAULT         WNI_CFG_RSSI_FILTER_PERIOD_STADEF
 
 #define CFG_IGNORE_DTIM_NAME                   "gIgnoreDtim"
@@ -2111,20 +2344,92 @@ typedef enum {
 #define CFG_IGNORE_DTIM_MAX                    WNI_CFG_IGNORE_DTIM_STAMAX
 #define CFG_IGNORE_DTIM_DEFAULT                WNI_CFG_IGNORE_DTIM_STADEF
 
+/*
+ * <ini>
+ * gMaxLIModulatedDTIM - Set MaxLIModulate Dtim
+ * @Min: 1
+ * @Max: 10
+ * @Default: 10
+ *
+ * This ini is used to set default MaxLIModulatedDTIM
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_MAX_LI_MODULATED_DTIM_NAME         "gMaxLIModulatedDTIM"
 #define CFG_MAX_LI_MODULATED_DTIM_MIN          (1)
 #define CFG_MAX_LI_MODULATED_DTIM_MAX          (10)
 #define CFG_MAX_LI_MODULATED_DTIM_DEFAULT      (10)
+
+/*
+ * <ini>
+ * gEnableFWHeartBeatMonitoring - Enable FWHeartBeat Monitor
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to set default FWHeartBeat Monitor
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 
 #define CFG_FW_HEART_BEAT_MONITORING_NAME      "gEnableFWHeartBeatMonitoring"
 #define CFG_FW_HEART_BEAT_MONITORING_MIN       (0)
 #define CFG_FW_HEART_BEAT_MONITORING_MAX       (1)
 #define CFG_FW_HEART_BEAT_MONITORING_DEFAULT   (1)
 
+/*
+ * <ini>
+ * gEnableFWBeaconFiltering - Enable FWBeacon Filter
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to set default FWBeacon Filter
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_FW_BEACON_FILTERING_NAME           "gEnableFWBeaconFiltering"
 #define CFG_FW_BEACON_FILTERING_MIN            (0)
 #define CFG_FW_BEACON_FILTERING_MAX            (1)
 #define CFG_FW_BEACON_FILTERING_DEFAULT        (1)
+
+/*
+ * <ini>
+ * gEnableFWRssiMonitoring - Enable FWRssi Monitor
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to set default FWRssi Monitor
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 
 #define CFG_FW_RSSI_MONITORING_NAME            "gEnableFWRssiMonitoring"
 #define CFG_FW_RSSI_MONITORING_MIN             (0)
@@ -2149,6 +2454,7 @@ typedef enum {
  *
  * </ini>
  */
+
 #define CFG_FW_MCC_RTS_CTS_PROT_NAME           "gFWMccRtsCtsProtection"
 #define CFG_FW_MCC_RTS_CTS_PROT_MIN            (0)
 #define CFG_FW_MCC_RTS_CTS_PROT_MAX            (1)
@@ -2182,10 +2488,47 @@ typedef enum {
 #define CFG_DATA_INACTIVITY_TIMEOUT_MAX        (255)
 #define CFG_DATA_INACTIVITY_TIMEOUT_DEFAULT    (200)
 
+/*
+ * <ini>
+ * rfSettlingTimeUs - Settle the TimeUs
+ * @Min: 0
+ * @Max: 60000
+ * @Default: 1500
+ *
+ * This ini is used to set default TimeUs
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_RF_SETTLING_TIME_CLK_NAME          "rfSettlingTimeUs"
 #define CFG_RF_SETTLING_TIME_CLK_MIN           (0)
 #define CFG_RF_SETTLING_TIME_CLK_MAX           (60000)
 #define CFG_RF_SETTLING_TIME_CLK_DEFAULT       (1500)
+
+/*
+ * <ini>
+ * gStaKeepAlivePeriod - Sends NULL frame to AP periodically in
+ * seconds to notify STA's existence
+ * @Min: 0
+ * @Max: 65535
+ * @Default: 30
+ *
+ * This ini is used to send default NULL frame to AP
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 
 #define CFG_INFRA_STA_KEEP_ALIVE_PERIOD_NAME          "gStaKeepAlivePeriod"
 #define CFG_INFRA_STA_KEEP_ALIVE_PERIOD_MIN           (0)
@@ -2535,15 +2878,70 @@ typedef enum {
 #define CFG_SINGLE_TID_RC_MIN                               (0) /* Seperate replay counter for all TID */
 #define CFG_SINGLE_TID_RC_MAX                               (1) /* Single replay counter for all TID */
 #define CFG_SINGLE_TID_RC_DEFAULT                           (1)
+
+/*
+ * <ini>
+ * McastBcastFilter - Filters Mcast/Bcast Rx packets completely
+ * @Min: 0
+ * @Max: 3
+ * @Default: 0
+ *
+ * This ini is used to send default NULL frame to AP
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_MCAST_BCAST_FILTER_SETTING_NAME          "McastBcastFilter"
 #define CFG_MCAST_BCAST_FILTER_SETTING_MIN           (0)
 #define CFG_MCAST_BCAST_FILTER_SETTING_MAX           (3)
 #define CFG_MCAST_BCAST_FILTER_SETTING_DEFAULT       (0)
 
+/*
+ * <ini>
+ * gDynamicPSPollvalue - Set dynamic PSpoll value
+ * @Min: 0
+ * @Max: 255
+ * @Default: 0
+ *
+ * This ini is used to send default PSpoll value
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_DYNAMIC_PSPOLL_VALUE_NAME          "gDynamicPSPollvalue"
 #define CFG_DYNAMIC_PSPOLL_VALUE_MIN           (0)
 #define CFG_DYNAMIC_PSPOLL_VALUE_MAX           (255)
 #define CFG_DYNAMIC_PSPOLL_VALUE_DEFAULT       (0)
+
+/*
+ * <ini>
+ * gTelescopicBeaconWakeupEn - Set teles copic beacon wakeup
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to set default teles copic beacon wakeup
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 
 #define CFG_TELE_BCN_WAKEUP_EN_NAME            "gTelescopicBeaconWakeupEn"
 #define CFG_TELE_BCN_WAKEUP_EN_MIN             (0)
@@ -2554,6 +2952,24 @@ typedef enum {
 #define CFG_QOS_ADDTS_WHEN_ACM_IS_OFF_MIN                  (0)
 #define CFG_QOS_ADDTS_WHEN_ACM_IS_OFF_MAX                  (1)  /* Send AddTs even when ACM is not set for the AC */
 #define CFG_QOS_ADDTS_WHEN_ACM_IS_OFF_DEFAULT              (0)
+
+/*
+ * <ini>
+ * gValidateScanList - Set valid date scan list
+ * @Min: 0
+ * @Max: 65535
+ * @Default: 30
+ *
+ * This ini is used to set default valid date scan list
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 
 #define CFG_VALIDATE_SCAN_LIST_NAME                 "gValidateScanList"
 #define CFG_VALIDATE_SCAN_LIST_MIN                  (0)
@@ -2585,6 +3001,25 @@ typedef enum {
 #define CFG_ENABLE_HOST_NSOFFLOAD_MAX          (1)
 #define CFG_ENABLE_HOST_NSOFFLOAD_DEFAULT      (1)
 
+/*
+ * <ini>
+ * BandCapability - Preferred band (0: Both,  1: 2.4G only,  2: 5G only)
+ * @Min: 0
+ * @Max: 2
+ * @Default: 0
+ *
+ * This ini is used to set default band capability
+ * (0: Both, 1: 2.4G only, 2: 5G only)
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_BAND_CAPABILITY_NAME          "BandCapability"
 #define CFG_BAND_CAPABILITY_MIN           (0)
 #define CFG_BAND_CAPABILITY_MAX           (2)
@@ -2594,6 +3029,24 @@ typedef enum {
 #define CFG_ENABLE_BYPASS_11D_MIN                  (0)
 #define CFG_ENABLE_BYPASS_11D_MAX                  (1)
 #define CFG_ENABLE_BYPASS_11D_DEFAULT              (1)
+
+/*
+ * <ini>
+ * gEnableDumpCollect - It will use for collect the dumps
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to set collect default dump
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 
 #define CFG_ENABLE_RAMDUMP_COLLECTION              "gEnableDumpCollect"
 #define CFG_ENABLE_RAMDUMP_COLLECTION_MIN          (0)
@@ -2974,6 +3427,24 @@ typedef enum {
 #define CFG_VHT_ENABLE_1x1_RX_CHAINMASK_MAX     (2)
 #define CFG_VHT_ENABLE_1x1_RX_CHAINMASK_DEFAULT (1)
 
+/*
+ * <ini>
+ * gEnableAMPDUPS - Enable the AMPDUPS
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to set default AMPDUPS
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_ENABLE_AMPDUPS_FEATURE              "gEnableAMPDUPS"
 #define CFG_ENABLE_AMPDUPS_FEATURE_MIN          (0)
 #define CFG_ENABLE_AMPDUPS_FEATURE_MAX          (1)
@@ -3020,18 +3491,69 @@ typedef enum {
 #define CFG_REPORT_MAX_LINK_SPEED_DEFAULT          (eHDD_LINK_SPEED_REPORT_MAX_SCALED)
 
 /*
- * RSSI Thresholds
+ * <ini>
+ * gLinkSpeedRssiHigh - Report the max possible speed with RSSI scaling
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to set default eHDD_LINK_SPEED_REPORT
  * Used when eHDD_LINK_SPEED_REPORT_SCALED is selected
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
  */
+
 #define CFG_LINK_SPEED_RSSI_HIGH                   "gLinkSpeedRssiHigh"
 #define CFG_LINK_SPEED_RSSI_HIGH_MIN               (-127)
 #define CFG_LINK_SPEED_RSSI_HIGH_MAX               (0)
 #define CFG_LINK_SPEED_RSSI_HIGH_DEFAULT           (-55)
 
+/*
+ * <ini>
+ * gLinkSpeedRssiMed - Used when eHDD_LINK_SPEED_REPORT_SCALED is selected
+ * @Min: -127
+ * @Max: 0
+ * @Default: -65
+ *
+ * This ini is used to set medium rssi link speed
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_LINK_SPEED_RSSI_MID                    "gLinkSpeedRssiMed"
 #define CFG_LINK_SPEED_RSSI_MID_MIN                (-127)
 #define CFG_LINK_SPEED_RSSI_MID_MAX                (0)
 #define CFG_LINK_SPEED_RSSI_MID_DEFAULT            (-65)
+
+/*
+ * <ini>
+ * gLinkSpeedRssiLow - Used when eHDD_LINK_SPEED_REPORT_SCALED is selected
+ * @Min: -127
+ * @Max: 0
+ * @Default: -80
+ *
+ * This ini is used to set low rssi link speed
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 
 #define CFG_LINK_SPEED_RSSI_LOW                    "gLinkSpeedRssiLow"
 #define CFG_LINK_SPEED_RSSI_LOW_MIN                (-127)
@@ -3048,10 +3570,49 @@ typedef enum {
 #define CFG_ENABLE_SSR_MAX                  (1)
 #define CFG_ENABLE_SSR_DEFAULT              (1)
 
+/*
+ * <ini>
+ * gEnableOverLapCh - Enables Overlap Channel. If set, allow overlapping
+ *                    channels to be selected for the SoftAP
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to set Overlap Channel
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_ENABLE_OVERLAP_CH               "gEnableOverLapCh"
 #define CFG_ENABLE_OVERLAP_CH_MIN           (0)
 #define CFG_ENABLE_OVERLAP_CH_MAX           (1)
 #define CFG_ENABLE_OVERLAP_CH_DEFAULT       (0)
+
+/*
+ * <ini>
+ * gEnable5gEBT - Enables/disables 5G early beacon termination. When enabled
+ *                 terminate the reception of beacon if the TIM element is
+ *                 clear for the power saving
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to set default 5G early beacon termination
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 
 #define CFG_PPS_ENABLE_5G_EBT                 "gEnable5gEBT"
 #define CFG_PPS_ENABLE_5G_EBT_FEATURE_MIN     (0)
@@ -3063,9 +3624,25 @@ typedef enum {
 #define CFG_ENABLE_MEMORY_DEEP_SLEEP_MAX      (1)
 #define CFG_ENABLE_MEMORY_DEEP_SLEEP_DEFAULT  (1)
 
-/* In cfg.dat 1=1MBPS, 2=2MBPS, 3=5_5MBPS, 4=11MBPS, 5=6MBPS, 6=9MBPS,
+/*
+ * <ini>
+ * gDefaultRateIndex24Ghz -Set the rate index for 24Ghz
+ * @Min: 1
+ * @Max: 9
+ * @Default: 1
+ *
+ * This ini is used to set default rate index
+ * In cfg.dat 1=1MBPS, 2=2MBPS, 3=5_5MBPS, 4=11MBPS, 5=6MBPS, 6=9MBPS,
  * 7=12MBPS, 8=18MBPS, 9=24MBPS. But 6=9MBPS and 8=18MBPS are not basic
  * 11g rates and should not be set by gDefaultRateIndex24Ghz.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
  */
 
 #define CFG_DEFAULT_RATE_INDEX_24GH               "gDefaultRateIndex24Ghz"
@@ -3110,7 +3687,13 @@ typedef enum {
 #define CFG_ENABLE_FW_MODULE_LOG_DEFAULT  ""
 
 /*
- * gEnableRTSProfiles for configuring different RTS profiles
+ * <ini>
+ * gEnableRTSProfiles - It will use configuring different RTS profiles
+ * @Min: 0
+ * @Max: 34
+ * @Default: 33
+ *
+ * This ini used for configuring different RTS profiles
  * to firmware.
  * Following are the valid values for the rtsprofile:
  * RTSCTS_DISABLED                           0
@@ -3118,7 +3701,16 @@ typedef enum {
  * CTS2SELF_ENABLED_4_SECOND_RATESERIES      18
  * RTSCTS_ENABLED_4_SWRETRIES                33
  * CTS2SELF_ENABLED_4_SWRETRIES              34
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
  */
+
 #define CFG_ENABLE_FW_RTS_PROFILE              "gEnableRTSProfiles"
 #define CFG_ENABLE_FW_RTS_PROFILE_MIN          (0)
 #define CFG_ENABLE_FW_RTS_PROFILE_MAX          (34)
@@ -3173,6 +3765,7 @@ typedef enum {
  *
  * </ini>
  */
+
 #define CFG_SAP_SCC_CHAN_AVOIDANCE         "gSapSccChanAvoidance"
 #define CFG_SAP_SCC_CHAN_AVOIDANCE_MIN     (0)
 #define CFG_SAP_SCC_CHAN_AVOIDANCE_MAX     (1)
@@ -3288,6 +3881,25 @@ typedef enum {
 #define CFG_IGNORE_DYNAMIC_DTIM_IN_P2P_MODE_MIN        (0)
 #define CFG_IGNORE_DYNAMIC_DTIM_IN_P2P_MODE_MAX        (1)
 #define CFG_IGNORE_DYNAMIC_DTIM_IN_P2P_MODE_DEFAULT    (0)
+
+/*
+ * <ini>
+ * gShortGI40Mhz - It will check gShortGI20Mhz and
+ * gShortGI40Mhz from session entry
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to set default gShortGI40Mhz
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 
 #define CFG_SHORT_GI_40MHZ_NAME                "gShortGI40Mhz"
 #define CFG_SHORT_GI_40MHZ_MIN                 0
@@ -3575,23 +4187,92 @@ typedef enum {
 #define CFG_ENABLE_MODULATED_DTIM_DEFAULT    (0)
 
 /*
- * Enable/Disable Multicast MAC Address List feature
+ * <ini>
+ * gMCAddrListEnable - Enable/Disable Multicast MAC Address List feature
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to set default MAC Address
  * Default: Enable
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
  */
+
 #define CFG_MC_ADDR_LIST_ENABLE_NAME          "gMCAddrListEnable"
 #define CFG_MC_ADDR_LIST_ENABLE_MIN           (0)
 #define CFG_MC_ADDR_LIST_ENABLE_MAX           (1)
 #define CFG_MC_ADDR_LIST_ENABLE_DEFAULT       (1)
+
+/*
+ * <ini>
+ * gEnableRXSTBC - Enables/disables Rx STBC capability in STA mode
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to set default Rx STBC capability
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 
 #define CFG_ENABLE_RX_STBC                       "gEnableRXSTBC"
 #define CFG_ENABLE_RX_STBC_MIN                   (0)
 #define CFG_ENABLE_RX_STBC_MAX                   (1)
 #define CFG_ENABLE_RX_STBC_DEFAULT               (1)
 
+/*
+ * <ini>
+ * gEnableTXSTBC - Enables/disables Tx STBC capability in STA mode
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to set default Tx STBC capability
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_ENABLE_TX_STBC                       "gEnableTXSTBC"
 #define CFG_ENABLE_TX_STBC_MIN                   (0)
 #define CFG_ENABLE_TX_STBC_MAX                   (1)
 #define CFG_ENABLE_TX_STBC_DEFAULT               (0)
+
+/*
+ * <ini>
+ * gEnableRXLDPC - Enables/disables Rx LDPC capability in STA mode
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to set default Rx LDPC capability
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 
 #define CFG_ENABLE_RX_LDPC                       "gEnableRXLDPC"
 #define CFG_ENABLE_RX_LDPC_MIN                   (0)
@@ -4288,6 +4969,24 @@ typedef enum {
 #define CFG_ENABLE_VENDOR_VHT_FOR_24GHZ_MAX       (1)
 #define CFG_ENABLE_VENDOR_VHT_FOR_24GHZ_DEFAULT   (1)
 
+/*
+ * <ini>
+ * gMaxMediumTime - Set Maximum channel time
+ * @Min: STAMIN
+ * @Max: STAMAX
+ * @Default: STADEF
+ *
+ * This ini is used to set default max channel time
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_MAX_MEDIUM_TIME                      "gMaxMediumTime"
 #define CFG_MAX_MEDIUM_TIME_STAMIN               WNI_CFG_MAX_MEDIUM_TIME_STAMIN
 #define CFG_MAX_MEDIUM_TIME_STAMAX               WNI_CFG_MAX_MEDIUM_TIME_STAMAX
@@ -4302,17 +5001,68 @@ typedef enum {
 #define CFG_ENABLE_FAST_ROAM_IN_CONCURRENCY_DEFAULT  (1)
 
 /*
- * Enable heart beat monitoring offload to FW
+ * <ini>
+ * gEnableIbssHeartBeatOffload - Enable heart beat monitoring offload to FW
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to set default ibbs heartbeat offload
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
  */
+
 #define CFG_ENABLE_HEART_BEAT_OFFLOAD          "gEnableIbssHeartBeatOffload"
 #define CFG_ENABLE_HEART_BEAT_OFFLOAD_MIN      (0)
 #define CFG_ENABLE_HEART_BEAT_OFFLOAD_MAX      (1)
 #define CFG_ENABLE_HEART_BEAT_OFFLOAD_DEFAULT  (1)
 
+/*
+ * <ini>
+ * gAntennaDiversity - It will use to set Antenna diversity
+ * @Min: 0
+ * @Max: 3
+ * @Default: 0
+ *
+ * This ini is used to set default Antenna diversity
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_ANTENNA_DIVERSITY_PARAM_NAME          "gAntennaDiversity"
 #define CFG_ANTENNA_DIVERSITY_PARAM_MIN           (0)
 #define CFG_ANTENNA_DIVERSITY_PARAM_MAX           (3)
 #define CFG_ANTENNA_DIVERSITY_PARAM_DEFAULT       (0)
+
+/*
+ * <ini>
+ * gEnableSNRMonitoring - Enables SNR Monitoring
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to set default snr monitor
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 
 #define CFG_ENABLE_SNR_MONITORING_NAME              "gEnableSNRMonitoring"
 #define CFG_ENABLE_SNR_MONITORING_MIN               (0)
@@ -4333,9 +5083,26 @@ typedef enum {
 #define CFG_STRICT_5GHZ_PREF_BY_MARGIN_MAX             (60)
 #define CFG_STRICT_5GHZ_PREF_BY_MARGIN_DEFAULT         (0)      /* set 0 to disable */
 
-/* It enables IP, TCP and UDP checksum offload in hardware
- * and also advertise same to network stack.
+/*
+ * <ini>
+ * gEnableIpTcpUdpChecksumOffload - It enables IP, TCP and UDP checksum
+ * offload in hardware
+ * @Min: 0
+ * @Max: 1
+ * @Default: DEF
+ *
+ * This ini is used to enable IP, TCP and UDP checksum offload in hardware
+ * and also advertise same to network stack
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
  */
+
 #define CFG_ENABLE_IP_TCP_UDP_CHKSUM_OFFLOAD            "gEnableIpTcpUdpChecksumOffload"
 #define CFG_ENABLE_IP_TCP_UDP_CHKSUM_OFFLOAD_DISABLE    (0)
 #define CFG_ENABLE_IP_TCP_UDP_CHKSUM_OFFLOAD_ENABLE     (1)
@@ -4448,15 +5215,29 @@ typedef enum {
 #define CFG_SAP_MAX_NO_PEERS_DEFAULT               (32)
 
 /*
- * Connection related log Enable/Disable.
+ * <ini>
+ * gEnableDebugLog - Enable/Disable the Connection related logs
+ * @Min: 0
+ * @Max: 0xFF
+ * @Default: 0x0F
+ *
+ * This ini is used to enable/disable the connection related logs
  * 0x1 - Enable mgmt pkt logs (excpet probe req/rsp, beacons).
  * 0x2 - Enable EAPOL pkt logs.
  * 0x4 - Enable DHCP pkt logs.
  * 0x8 - Enable mgmt action frames logs.
  * 0x0 - Disable all the above connection related logs.
+ * The default value of 0x0F will enable all the above logs
  *
- * The default value of 0x0F will enable all the above logs.
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
  */
+
 #define CFG_ENABLE_DEBUG_CONNECT_ISSUE             "gEnableDebugLog"
 #define CFG_ENABLE_DEBUG_CONNECT_ISSUE_MIN         (0)
 #define CFG_ENABLE_DEBUG_CONNECT_ISSUE_MAX         (0xFF)
@@ -4802,12 +5583,47 @@ typedef enum {
 #define CFG_RA_RATE_LIMIT_INTERVAL_DEFAULT         (60) /*60 SEC */
 #endif
 
+/*
+ * <ini>
+ * gIgnorePeerErpInfo - Used for ignore peer infrormation
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to ignore default peer info
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_IGNORE_PEER_ERP_INFO_NAME      "gIgnorePeerErpInfo"
 #define CFG_IGNORE_PEER_ERP_INFO_MIN       (0)
 #define CFG_IGNORE_PEER_ERP_INFO_MAX       (1)
 #define CFG_IGNORE_PEER_ERP_INFO_DEFAULT   (0)
 
-/* Enable Memory Debug */
+/*
+ * <ini>
+ * gEnableMemoryDebug - Enables the memory debug
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable default memory debug
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #ifdef MEMORY_DEBUG
 #define CFG_ENABLE_MEMORY_DEBUG_NAME             "gEnableMemoryDebug"
 #define CFG_ENABLE_MEMORY_DEBUG_MIN              (0)
@@ -4815,15 +5631,70 @@ typedef enum {
 #define CFG_ENABLE_MEMORY_DEBUG_DEFAULT          (1)
 #endif
 
+
+/*
+ * <ini>
+ * gInitialDwellTime - Used to set initial dwell time
+ * @Min: 0
+ * @Max: 0
+ * @Default: 100
+ *
+ * This ini is used to set default initial dwell time
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_INITIAL_DWELL_TIME_NAME            "gInitialDwellTime"
 #define CFG_INITIAL_DWELL_TIME_DEFAULT         (0)
 #define CFG_INITIAL_DWELL_TIME_MIN             (0)
 #define CFG_INITIAL_DWELL_TIME_MAX             (100)
 
+/*
+ * <ini>
+ * gInitialScanNoDFSChnl - WLAN skips scanning the DFS channels
+ * @Min: 0
+ * @Max: 0
+ * @Default: 1
+ *
+ * This ini is used to set for the first scan after driver
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_INITIAL_SCAN_NO_DFS_CHNL_NAME         "gInitialScanNoDFSChnl"
 #define CFG_INITIAL_SCAN_NO_DFS_CHNL_DEFAULT      (0)
 #define CFG_INITIAL_SCAN_NO_DFS_CHNL_MIN          (0)
 #define CFG_INITIAL_SCAN_NO_DFS_CHNL_MAX          (1)
+
+/*
+ * <ini>
+ * gAllowDFSChannelRoam - Allow dfs channel in roam
+ * @Min: 0
+ * @Max: 1
+ * @Default: 2
+ *
+ * This ini is used to set default dfs channel
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 
 #define CFG_ROAMING_DFS_CHANNEL_NAME               "gAllowDFSChannelRoam"
 #define CFG_ROAMING_DFS_CHANNEL_DISABLED           (0)
@@ -5047,6 +5918,24 @@ typedef enum {
 #define CFG_MAX_CONCURRENT_CONNECTIONS_MIN         (1)
 #define CFG_MAX_CONCURRENT_CONNECTIONS_MAX         (4)
 
+/*
+ * <ini>
+ * gIgnoreCAC - Used to ignore CAC
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to set default CAC
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_IGNORE_CAC_NAME                        "gIgnoreCAC"
 #define CFG_IGNORE_CAC_MIN                         (0)
 #define CFG_IGNORE_CAC_MAX                         (1)
@@ -5061,6 +5950,25 @@ typedef enum {
 #define CFG_DFS_RADAR_PRI_MULTIPLIER_DEFAULT       (4)
 #define CFG_DFS_RADAR_PRI_MULTIPLIER_MIN           (0)
 #define CFG_DFS_RADAR_PRI_MULTIPLIER_MAX           (10)
+
+/*
+ * <ini>
+ * gReorderOffloadSupported - Packet reordering offload to firmware
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to set default Packet reordering
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_REORDER_OFFLOAD_SUPPORT_NAME    "gReorderOffloadSupported"
 #define CFG_REORDER_OFFLOAD_SUPPORT_MIN     (0)
 #define CFG_REORDER_OFFLOAD_SUPPORT_MAX     (1)
@@ -5115,6 +6023,24 @@ typedef enum {
 #define CFG_WLAN_LOGGING_NUM_BUF_DEFAULT            (256)
 #endif /* WLAN_LOGGING_SOCK_SVC_ENABLE */
 
+/*
+ * <ini>
+ * gEnableSifsBurst - Enables Sifs Burst
+ * @Min: 0
+ * @Max: 1
+ * @Default: DEF
+ *
+ * This ini is used to set default Sifs Burst
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_ENABLE_SIFS_BURST                      "gEnableSifsBurst"
 #define CFG_ENABLE_SIFS_BURST_MIN                  (0)
 #define CFG_ENABLE_SIFS_BURST_MAX                  (1)
@@ -5149,6 +6075,24 @@ typedef enum {
 #define CFG_ENABLE_SAP_SUSPEND_MAX                 (1)
 #define CFG_ENABLE_SAP_SUSPEND_DEFAULT             (1)
 
+/*
+ * <ini>
+ * gEnableDeauthToDisassocMap - Enables deauth to disassoc map
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to set default  disassoc map
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_ENABLE_DEAUTH_TO_DISASSOC_MAP_NAME    "gEnableDeauthToDisassocMap"
 #define CFG_ENABLE_DEAUTH_TO_DISASSOC_MAP_MIN     (0)
 #define CFG_ENABLE_DEAUTH_TO_DISASSOC_MAP_MAX     (1)
@@ -5170,9 +6114,25 @@ typedef enum {
 #endif /* DHCP_SERVER_OFFLOAD */
 
 /*
+ * <ini>
+ * gSendDeauthBeforeCon - It will send deauth before connection
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to set default DeauthBeforeCon
  * If last disconnection was due to HB failure and we reconnect
  * to same AP next time, send Deauth before starting connection
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
  */
+
 #define CFG_ENABLE_DEAUTH_BEFORE_CONNECTION                  "gSendDeauthBeforeCon"
 #define CFG_ENABLE_DEAUTH_BEFORE_CONNECTION_MIN              (0)
 #define CFG_ENABLE_DEAUTH_BEFORE_CONNECTION_MAX              (1)
@@ -5421,13 +6381,46 @@ typedef enum {
 #define CFG_BPF_PACKET_FILTER_OFFLOAD_DEFAULT   (1)
 
 /*
+ * <ini>
+ * gCckChainMaskEnable - Used to enable/disable Cck ChainMask
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to set default Cck ChainMask
  * 0: disable the cck tx chain mask (default)
  * 1: enable the cck tx chain mask
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
  */
+
 #define CFG_TX_CHAIN_MASK_CCK          "gCckChainMaskEnable"
 #define CFG_TX_CHAIN_MASK_CCK_MIN      (0)
 #define CFG_TX_CHAIN_MASK_CCK_MAX      (1)
 #define CFG_TX_CHAIN_MASK_CCK_DEFAULT  (0)
+/*
+ * <ini>
+ * gTxChainMask1ss - Enables/disables tx chain Mask1ss
+ * @Min: 0
+ * @Max: 3
+ * @Default: 1
+ *
+ * This ini is used to set default tx chain Mask1ss
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 
 #define CFG_TX_CHAIN_MASK_1SS       "gTxChainMask1ss"
 #define CFG_TX_CHAIN_MASK_1SS_MIN      (0)
@@ -5444,18 +6437,50 @@ typedef enum {
 #define CFG_SELF_GEN_FRM_PWR_DEFAULT  (0)
 
 /*
+ * <ini>
+ * gTxAggregationSize - Gives an option to configure Tx aggregation size
+ * in no of MPDUs
+ * @Min: 0
+ * @Max: 64
+ * @Default: 64
+ *
  * gTxAggregationSize gives an option to configure Tx aggregation size
- * in no of MPDUs. This can be useful in debugging throughput issues
+ * in no of MPDUs.This can be useful in debugging throughput issues
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
  */
+
 #define CFG_TX_AGGREGATION_SIZE      "gTxAggregationSize"
 #define CFG_TX_AGGREGATION_SIZE_MIN      (0)
 #define CFG_TX_AGGREGATION_SIZE_MAX      (64)
 #define CFG_TX_AGGREGATION_SIZE_DEFAULT  (64)
 
 /*
+ * <ini>
+ * gRxAggregationSize - Gives an option to configure Rx aggregation size
+ * in no of MPDUs
+ * @Min: 1
+ * @Max: 64
+ * @Default: 64
+ *
  * gRxAggregationSize gives an option to configure Rx aggregation size
  * in no of MPDUs. This can be useful in debugging throughput issues
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
  */
+
 #define CFG_RX_AGGREGATION_SIZE      "gRxAggregationSize"
 #define CFG_RX_AGGREGATION_SIZE_MIN      (1)
 #define CFG_RX_AGGREGATION_SIZE_MAX      (64)
@@ -5750,84 +6775,321 @@ enum dot11p_mode {
 #define CFG_ENABLE_FATAL_EVENT_TRIGGER_DEFAULT         (1)
 
 /*
- * If gEnableEdcaParams is set to 1, params gEdcaVoCwmin,
+ * <ini>
+ * gEnableEdcaParams - Enable edca parameter
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used if gEnableEdcaParams is set to 1, params gEdcaVoCwmin,
  * gEdcaViCwmin, gEdcaBkCwmin, gEdcaBeCwmin, gEdcaVoCwmax,
  * gEdcaViCwmax, gEdcaBkCwmax, gEdcaBeCwmax, gEdcaVoAifs,
  * gEdcaViAifs, gEdcaBkAifs and gEdcaBeAifs values are used
  * to overwrite the values received from AP
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
  */
+
 #define CFG_ENABLE_EDCA_INI_NAME       "gEnableEdcaParams"
 #define CFG_ENABLE_EDCA_INI_MIN        (0)
 #define CFG_ENABLE_EDCA_INI_MAX        (1)
 #define CFG_ENABLE_EDCA_INI_DEFAULT    (0)
 
-/* Cwmin value for EDCA_AC_VO. CWVomin = 2^gEdcaVoCwmin -1 */
+/*
+ * <ini>
+ * gEdcaVoCwmin - Set Cwmin value for EDCA_AC_VO
+ * @Min: 0
+ * @Max: 0x15
+ * @Default: 2
+ *
+ * This ini is used to set default Cwmin value for EDCA_AC_VO
+ * Cwmin value for EDCA_AC_VO. CWVomin = 2^gEdcaVoCwmin -1
+ *
+ * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin etc
+ * are aplicable
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_EDCA_VO_CWMIN_VALUE_NAME      "gEdcaVoCwmin"
 #define CFG_EDCA_VO_CWMIN_VALUE_MIN       (0x0)
 #define CFG_EDCA_VO_CWMIN_VALUE_MAX       (15)
 #define CFG_EDCA_VO_CWMIN_VALUE_DEFAULT   (2)
 
-/* Cwmin value for EDCA_AC_VI. CWVimin = 2^gEdcaViCwmin -1 */
+/*
+ * <ini>
+ * gEdcaViCwmin - Set Cwmin value for EDCA_AC_VI
+ * @Min: 0x0
+ * @Max: 15
+ * @Default: 3
+ *
+ * This ini is used to set default value for EDCA_AC_VI
+ * Cwmin value for EDCA_AC_VI. CWVimin = 2^gEdcaViCwmin -1
+ *
+ * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin
+ * etc are aplicable
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_EDCA_VI_CWMIN_VALUE_NAME      "gEdcaViCwmin"
 #define CFG_EDCA_VI_CWMIN_VALUE_MIN       (0x0)
 #define CFG_EDCA_VI_CWMIN_VALUE_MAX       (15)
 #define CFG_EDCA_VI_CWMIN_VALUE_DEFAULT   (3)
 
-/* Cwmin value for EDCA_AC_BK. CWBkmin = 2^gEdcaBkCwmin -1 */
+/*
+ * <ini>
+ * gEdcaBkCwmin - Set Cwmin value for EDCA_AC_BK
+ * @Min: 0x0
+ * @Max: 15
+ * @Default: 4
+ *
+ * This ini is used to set default Cwmin value for EDCA_AC_BK
+ * Cwmin value for EDCA_AC_BK. CWBkmin = 2^gEdcaBkCwmin -1
+ *
+ * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin
+ * etc are aplicable
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ * </ini>
+ */
+
 #define CFG_EDCA_BK_CWMIN_VALUE_NAME      "gEdcaBkCwmin"
 #define CFG_EDCA_BK_CWMIN_VALUE_MIN       (0x0)
 #define CFG_EDCA_BK_CWMIN_VALUE_MAX       (15)
 #define CFG_EDCA_BK_CWMIN_VALUE_DEFAULT   (4)
 
-/* Cwmin value for EDCA_AC_BE. CWBemin = 2^gEdcaBeCwmin -1 */
+/*
+ * <ini>
+ * gEdcaBeCwmin - Set Cwmin value for EDCA_AC_BE
+ * @Min: 0x0
+ * @Max: 15
+ * @Default: 4
+ *
+ * This ini is used to set default Cwmin value for EDCA_AC_BE
+ * Cwmin value for EDCA_AC_BE. CWBemin = 2^gEdcaBeCwmin
+ *
+ * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin
+ * etc are aplicable
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_EDCA_BE_CWMIN_VALUE_NAME      "gEdcaBeCwmin"
 #define CFG_EDCA_BE_CWMIN_VALUE_MIN       (0x0)
 #define CFG_EDCA_BE_CWMIN_VALUE_MAX       (15)
 #define CFG_EDCA_BE_CWMIN_VALUE_DEFAULT   (4)
 
-/* Cwmax value for EDCA_AC_VO. CWVomax = 2^gEdcaVoCwmax -1 */
+/*
+ * <ini>
+ * gEdcaVoCwmax - Set Cwmax value for EDCA_AC_VO
+ * @Min: 0
+ * @Max: 15
+ * @Default: 3
+ *
+ * This ini is used to set default Cwmax value for EDCA_AC_VO
+ * Cwmax value for EDCA_AC_VO. CWVomax = 2^gEdcaVoCwmax -1
+ *
+ * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin
+ * etc are aplicable
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_EDCA_VO_CWMAX_VALUE_NAME      "gEdcaVoCwmax"
 #define CFG_EDCA_VO_CWMAX_VALUE_MIN       (0)
 #define CFG_EDCA_VO_CWMAX_VALUE_MAX       (15)
 #define CFG_EDCA_VO_CWMAX_VALUE_DEFAULT   (3)
 
-/* Cwmax value for EDCA_AC_VI. CWVimax = 2^gEdcaViCwmax -1 */
+/*
+ * <ini>
+ * gEdcaViCwmax - Set Cwmax value for EDCA_AC_VI
+ * @Min: 0
+ * @Max: 15
+ * @Default: 4
+ *
+ * This ini is used to set default Cwmax value for EDCA_AC_VI
+ * Cwmax value for EDCA_AC_VI. CWVimax = 2^gEdcaViCwmax -1
+ *
+ * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin
+ * etc are aplicable
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_EDCA_VI_CWMAX_VALUE_NAME      "gEdcaViCwmax"
 #define CFG_EDCA_VI_CWMAX_VALUE_MIN       (0)
 #define CFG_EDCA_VI_CWMAX_VALUE_MAX       (15)
 #define CFG_EDCA_VI_CWMAX_VALUE_DEFAULT   (4)
 
-/* Cwmax value for EDCA_AC_BK. CWBkmax = 2^gEdcaBkCwmax -1 */
+/*
+ * <ini>
+ * gEdcaBkCwmax - Set Cwmax value for EDCA_AC_BK
+ * @Min: 0
+ * @Max: 15
+ * @Default: 10
+ *
+ * This ini is used to set default Cwmax value for EDCA_AC_BK
+ * Cwmax value for EDCA_AC_BK. CWBkmax = 2^gEdcaBkCwmax -1
+ *
+ * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin
+ * etc are aplicable
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_EDCA_BK_CWMAX_VALUE_NAME      "gEdcaBkCwmax"
 #define CFG_EDCA_BK_CWMAX_VALUE_MIN       (0)
 #define CFG_EDCA_BK_CWMAX_VALUE_MAX       (15)
 #define CFG_EDCA_BK_CWMAX_VALUE_DEFAULT   (10)
 
-/* Cwmax value for EDCA_AC_BE. CWBemax = 2^gEdcaBeCwmax -1 */
+/*
+ * <ini>
+ * gEdcaBeCwmax - Set Cwmax value for EDCA_AC_BE
+ * @Min: 0
+ * @Max: 15
+ * @Default: 10
+ *
+ * This ini is used to set default Cwmax value for EDCA_AC_BE
+ * Cwmax value for EDCA_AC_BE. CWBemax = 2^gEdcaBeCwmax -1
+ *
+ * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin
+ * etc are aplicable
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_EDCA_BE_CWMAX_VALUE_NAME      "gEdcaBeCwmax"
 #define CFG_EDCA_BE_CWMAX_VALUE_MIN       (0)
 #define CFG_EDCA_BE_CWMAX_VALUE_MAX       (15)
 #define CFG_EDCA_BE_CWMAX_VALUE_DEFAULT   (10)
 
-/* Aifs value for EDCA_AC_VO.*/
+/*
+ * <ini>
+ * gEdcaVoAifs - Set Aifs value for EDCA_AC_VO
+ * @Min: 0
+ * @Max: 15
+ * @Default: 2
+ *
+ * This ini is used to set default Aifs value for EDCA_AC_VO
+ *
+ * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin
+ * etc are aplicable
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_EDCA_VO_AIFS_VALUE_NAME       "gEdcaVoAifs"
 #define CFG_EDCA_VO_AIFS_VALUE_MIN        (0)
 #define CFG_EDCA_VO_AIFS_VALUE_MAX        (15)
 #define CFG_EDCA_VO_AIFS_VALUE_DEFAULT    (2)
 
-/* Aifs value for EDCA_AC_VI.*/
+/*
+ * <ini>
+ * gEdcaViAifs - Set Aifs value for EDCA_AC_VI
+ * @Min: 0
+ * @Max: 15
+ * @Default: 2
+ *
+ * This ini is used to set default Aifs value for EDCA_AC_VI
+ *
+ * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin
+ * etc are aplicable
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_EDCA_VI_AIFS_VALUE_NAME       "gEdcaViAifs"
 #define CFG_EDCA_VI_AIFS_VALUE_MIN        (0)
 #define CFG_EDCA_VI_AIFS_VALUE_MAX        (15)
 #define CFG_EDCA_VI_AIFS_VALUE_DEFAULT    (2)
 
-/* Aifs value for EDCA_AC_BK.*/
+/*
+ * <ini>
+ * gEdcaBkAifs - Set Aifs value for EDCA_AC_BK
+ * @Min: 0
+ * @Max: 15
+ * @Default: 7
+ *
+ * This ini is used to set default Aifs value for EDCA_AC_BK
+ *
+ * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin
+ * etc are aplicable
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_EDCA_BK_AIFS_VALUE_NAME       "gEdcaBkAifs"
 #define CFG_EDCA_BK_AIFS_VALUE_MIN        (0)
 #define CFG_EDCA_BK_AIFS_VALUE_MAX        (15)
 #define CFG_EDCA_BK_AIFS_VALUE_DEFAULT    (7)
 
-/* Aifs value for EDCA_AC_BE.*/
+/*
+ * <ini>
+ * gEdcaBeAifs - Set Aifs value for EDCA_AC_BE
+ * @Min: 0
+ * @Max: 15
+ * @Default: 3
+ *
+ * This ini is used to set default Aifs value for EDCA_AC_BE
+ *
+ * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin
+ * etc are aplicable
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_EDCA_BE_AIFS_VALUE_NAME       "gEdcaBeAifs"
 #define CFG_EDCA_BE_AIFS_VALUE_MIN        (0)
 #define CFG_EDCA_BE_AIFS_VALUE_MAX        (15)
