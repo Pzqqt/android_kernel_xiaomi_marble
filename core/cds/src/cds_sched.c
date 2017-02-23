@@ -91,9 +91,7 @@ static p_cds_sched_context gp_cds_sched_context;
 static int cds_ol_rx_thread(void *arg);
 static unsigned long affine_cpu;
 static QDF_STATUS cds_alloc_ol_rx_pkt_freeq(p_cds_sched_context pSchedContext);
-#endif
 
-#ifdef QCA_CONFIG_SMP
 #define CDS_CORE_PER_CLUSTER (4)
 /*Maximum 2 clusters supported*/
 #define CDS_MAX_CPU_CLUSTERS 2

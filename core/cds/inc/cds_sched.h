@@ -68,11 +68,10 @@
 ** OL Rx thread.
 */
 #define CDS_MAX_OL_RX_PKT 4000
-
-typedef void (*cds_ol_rx_thread_cb)(void *context, void *rxpkt, uint16_t staid);
 #endif
 
-#ifdef QCA_CONFIG_SMP
+typedef void (*cds_ol_rx_thread_cb)(void *context, void *rxpkt, uint16_t staid);
+
 /*
 ** CDS message wrapper for data rx from TXRX
 */
@@ -90,7 +89,6 @@ struct cds_ol_rx_pkt {
 	cds_ol_rx_thread_cb callback;
 
 };
-#endif
 
 /*
 ** CDS Scheduler context
@@ -351,6 +349,7 @@ void cds_indicate_rxpkt(p_cds_sched_context pSchedContext,
 static inline
 struct cds_ol_rx_pkt *cds_alloc_ol_rx_pkt(p_cds_sched_context pSchedContext)
 {
+	return NULL;
 }
 
 /**
