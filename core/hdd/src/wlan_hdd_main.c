@@ -1969,8 +1969,6 @@ int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			goto close;
 		}
 
-		hdd_ctx->driver_status = DRIVER_MODULES_OPENED;
-
 		hdd_ctx->hHal = cds_get_context(QDF_MODULE_ID_SME);
 
 		status = cds_pre_enable(hdd_ctx->pcds_context);
@@ -1980,6 +1978,7 @@ int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 		}
 
 		hdd_update_hw_sw_info(hdd_ctx);
+		hdd_ctx->driver_status = DRIVER_MODULES_OPENED;
 
 		if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 			sme_register_ftm_msg_processor(hdd_ctx->hHal,
@@ -9006,14 +9005,13 @@ err_wiphy_unregister:
 err_stop_modules:
 	hdd_wlan_stop_modules(hdd_ctx);
 
-
+err_exit_nl_srv:
 	status = cds_sched_close(hdd_ctx->pcds_context);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_alert("Failed to close CDS Scheduler");
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(status));
 	}
 
-err_exit_nl_srv:
 	hdd_green_ap_deinit(hdd_ctx);
 	hdd_request_manager_deinit();
 	hdd_exit_netlink_services(hdd_ctx);
