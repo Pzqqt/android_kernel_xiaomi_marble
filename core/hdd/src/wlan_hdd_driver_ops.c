@@ -504,7 +504,7 @@ static void wlan_hdd_update_status(uint32_t status)
 /**
  * __wlan_hdd_bus_suspend() - handles platform supsend
  * @state: suspend message from the kernel
- * @wow_flags: bitmap of WMI WOW flags to pass to FW
+ * @wow_params: collection of wow enable override parameters
  *
  * Does precondtion validation. Ensures that a subsystem restart isn't in
  * progress.  Ensures that no load or unload is in progress.
@@ -516,7 +516,8 @@ static void wlan_hdd_update_status(uint32_t status)
  *     -EBUSY or -EAGAIN if another opperation is in progress and
  *     wlan will not be ready to suspend in time.
  */
-static int __wlan_hdd_bus_suspend(pm_message_t state, uint32_t wow_flags)
+static int __wlan_hdd_bus_suspend(pm_message_t state,
+				  struct wow_enable_params wow_params)
 {
 	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	void *hif_ctx;
@@ -524,8 +525,7 @@ static int __wlan_hdd_bus_suspend(pm_message_t state, uint32_t wow_flags)
 	int status;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
-	hdd_info("starting bus suspend; event:%d, flags:%u",
-		 state.event, wow_flags);
+	hdd_info("starting bus suspend; event:%d", state.event);
 
 	err = wlan_hdd_validate_context(hdd_ctx);
 	if (err) {
@@ -551,7 +551,7 @@ static int __wlan_hdd_bus_suspend(pm_message_t state, uint32_t wow_flags)
 		goto done;
 	}
 
-	err = wma_bus_suspend(wow_flags);
+	err = wma_bus_suspend(wow_params);
 	if (err) {
 		hdd_err("Failed wma bus suspend");
 		goto resume_oltxrx;
@@ -580,22 +580,23 @@ done:
 int wlan_hdd_bus_suspend(pm_message_t state)
 {
 	int ret;
+	struct wow_enable_params default_params = {0};
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_bus_suspend(state, 0);
+	ret = __wlan_hdd_bus_suspend(state, default_params);
 	cds_ssr_unprotect(__func__);
 
 	return ret;
 }
 
 #ifdef WLAN_SUSPEND_RESUME_TEST
-int wlan_hdd_unit_test_bus_suspend(pm_message_t state)
+int wlan_hdd_unit_test_bus_suspend(pm_message_t state,
+				   struct wow_enable_params wow_params)
 {
 	int ret;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_bus_suspend(state, WMI_WOW_FLAG_UNIT_TEST_ENABLE |
-				     WMI_WOW_FLAG_DO_HTC_WAKEUP);
+	ret = __wlan_hdd_bus_suspend(state, wow_params);
 	cds_ssr_unprotect(__func__);
 
 	return ret;

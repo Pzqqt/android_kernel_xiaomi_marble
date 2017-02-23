@@ -2262,6 +2262,7 @@ int hdd_set_qpower_config(hdd_context_t *hddctx, hdd_adapter_t *adapter,
 	return 0;
 }
 
+
 #ifdef WLAN_SUSPEND_RESUME_TEST
 /*
  * On iHelium there are 12 CE irqs and #2 is the wake irq. This may not be
@@ -2345,14 +2346,35 @@ static void hdd_wlan_fake_apps_resume_irq_callback(uint32_t val)
 	g_dev = NULL;
 }
 
-int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy, struct net_device *dev)
+int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy, struct net_device *dev,
+			       enum wow_interface_pause pause_setting,
+			       enum wow_resume_trigger resume_setting)
 {
 	qdf_device_t qdf_dev;
 	struct hif_opaque_softc *hif_ctx;
 	pm_message_t state;
 	int i, resume_err, suspend_err;
+	struct wow_enable_params wow_params = {
+		.is_unit_test = true,
+		.interface_pause = pause_setting,
+		.resume_trigger = resume_setting
+	};
 
 	hdd_info("Unit-test suspend WLAN");
+
+	if (pause_setting < WOW_INTERFACE_PAUSE_DEFAULT ||
+	    pause_setting >= WOW_INTERFACE_PAUSE_COUNT) {
+		hdd_err("Invalid interface pause %d (expected range [0, 2])",
+			pause_setting);
+		return -EINVAL;
+	}
+
+	if (resume_setting < WOW_RESUME_TRIGGER_DEFAULT ||
+	    resume_setting >= WOW_RESUME_TRIGGER_COUNT) {
+		hdd_err("Invalid resume trigger %d (expected range [0, 2])",
+			resume_setting);
+		return -EINVAL;
+	}
 
 	qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	if (!qdf_dev) {
@@ -2376,7 +2398,7 @@ int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy, struct net_device *dev)
 		goto resume_done;
 
 	state.event = PM_EVENT_SUSPEND;
-	suspend_err = wlan_hdd_unit_test_bus_suspend(state);
+	suspend_err = wlan_hdd_unit_test_bus_suspend(state, wow_params);
 	if (suspend_err)
 		goto cfg80211_resume;
 

@@ -6827,4 +6827,48 @@ struct scan_chan_info {
 	uint32_t tx_frame_count;
 	uint32_t clock_freq;
 };
+
+/**
+ * enum wow_resume_trigger - resume trigger override setting values
+ * @WOW_RESUME_TRIGGER_DEFAULT: fw to use platform default resume trigger
+ * @WOW_RESUME_TRIGGER_HTC_WAKEUP: force fw to use HTC Wakeup to resume
+ * @WOW_RESUME_TRIGGER_GPIO: force fw to use GPIO to resume
+ * @WOW_RESUME_TRIGGER_COUNT: number of resume trigger options
+ */
+enum wow_resume_trigger {
+	/* always first */
+	WOW_RESUME_TRIGGER_DEFAULT = 0,
+	WOW_RESUME_TRIGGER_HTC_WAKEUP,
+	WOW_RESUME_TRIGGER_GPIO,
+	/* always last */
+	WOW_RESUME_TRIGGER_COUNT
+};
+
+/**
+ * enum wow_interface_pause - interface pause override setting values
+ * @WOW_INTERFACE_PAUSE_DEFAULT: use platform default interface pause setting
+ * @WOW_INTERFACE_PAUSE_ENABLE: force interface pause setting to enabled
+ * @WOW_INTERFACE_PAUSE_DISABLE: force interface pause setting to disabled
+ * @WOW_INTERFACE_PAUSE_COUNT: number of interface pause options
+ */
+enum wow_interface_pause {
+	/* always first */
+	WOW_INTERFACE_PAUSE_DEFAULT = 0,
+	WOW_INTERFACE_PAUSE_ENABLE,
+	WOW_INTERFACE_PAUSE_DISABLE,
+	/* always last */
+	WOW_INTERFACE_PAUSE_COUNT
+};
+
+/**
+ * struct wow_enable_params - A collection of wow enable override parameters
+ * @is_unit_test: true to notify fw this is a unit-test suspend
+ * @interface_pause: used to override the interface pause indication sent to fw
+ * @resume_trigger: used to force fw to use a particular resume method
+ */
+struct wow_enable_params {
+	bool is_unit_test;
+	enum wow_interface_pause interface_pause;
+	enum wow_resume_trigger resume_trigger;
+};
 #endif /* __SIR_API_H */

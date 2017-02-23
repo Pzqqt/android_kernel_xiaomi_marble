@@ -2551,7 +2551,8 @@ static int __iw_softap_set_two_ints_getnone(struct net_device *dev,
 					WMI_WLAN_PROFILE_SET_HIST_INTVL_CMDID,
 					value[1], value[2], DBG_CMD);
 	case QCSAP_SET_WLAN_SUSPEND:
-		ret = hdd_wlan_fake_apps_suspend(hdd_ctx->wiphy, dev);
+		ret = hdd_wlan_fake_apps_suspend(hdd_ctx->wiphy, dev,
+						 value[1], value[2]);
 		break;
 	case QCSAP_SET_WLAN_RESUME:
 		ret = hdd_wlan_fake_apps_resume(hdd_ctx->wiphy, dev);

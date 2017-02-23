@@ -325,6 +325,7 @@ void wlan_hdd_inc_suspend_stats(hdd_context_t *hdd_ctx,
 /**
  * wlan_hdd_unit_test_bus_suspend() - suspend the wlan bus
  * @state: state containing the suspend source event
+ * @wow_params: collection of wow enable override parameters
  *
  * This function does the same as wlan_hdd_bus_suspend, but additionally passes
  * the appropriate flags to FW, indicating this is a unit-test suspend and it
@@ -332,7 +333,8 @@ void wlan_hdd_inc_suspend_stats(hdd_context_t *hdd_ctx,
  *
  * Return: 0 for success or error code
  */
-int wlan_hdd_unit_test_bus_suspend(pm_message_t state);
+int wlan_hdd_unit_test_bus_suspend(pm_message_t state,
+				   struct wow_enable_params wow_params);
 
 /**
  * hdd_wlan_fake_apps_resume() - Resume from unit-test triggered suspend
@@ -347,10 +349,14 @@ int hdd_wlan_fake_apps_resume(struct wiphy *wiphy, struct net_device *dev);
  * hdd_wlan_fake_apps_suspend() - Initiate a unit-test triggered suspend
  * @wiphy: the kernel wiphy struct for the device being suspended
  * @dev: the kernel net_device struct for the device being suspended
+ * @pause_setting: interface pause override setting
+ * @resume_setting: resume trigger override setting
  *
  * Return: Zero on success, suspend related non-zero error code on failure
  */
-int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy, struct net_device *dev);
+int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy, struct net_device *dev,
+			       enum wow_interface_pause pause_setting,
+			       enum wow_resume_trigger resume_setting);
 #else
 static inline int
 hdd_wlan_fake_apps_resume(struct wiphy *wiphy, struct net_device *dev)
@@ -359,7 +365,9 @@ hdd_wlan_fake_apps_resume(struct wiphy *wiphy, struct net_device *dev)
 }
 
 static inline int
-hdd_wlan_fake_apps_suspend(struct wiphy *wiphy, struct net_device *dev)
+hdd_wlan_fake_apps_suspend(struct wiphy *wiphy, struct net_device *dev,
+			   enum wow_interface_pause pause_setting,
+			   enum wow_resume_trigger resume_setting)
 {
 	return 0;
 }

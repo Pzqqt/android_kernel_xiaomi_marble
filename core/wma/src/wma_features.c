@@ -3451,11 +3451,12 @@ static inline void wma_set_wow_bus_suspend(tp_wma_handle wma, int val)
 /**
  * wma_enable_wow_in_fw() - wnable wow in fw
  * @wma: wma handle
- * @wow_flags: bitmap of WMI WOW flags to pass to FW
+ * @wow_params: collection of wow enable override parameters
  *
  * Return: QDF status
  */
-QDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle, uint32_t wow_flags)
+QDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle,
+				struct wow_enable_params wow_params)
 {
 	tp_wma_handle wma = handle;
 	int ret;
@@ -3481,8 +3482,42 @@ QDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle, uint32_t wow_flags)
 		 host_credits, wmi_pending_cmds);
 
 	param.enable = true;
-	param.can_suspend_link = htc_can_suspend_link(wma->htc_handle);
-	param.flags = wow_flags;
+	if (wow_params.is_unit_test)
+		param.flags = WMI_WOW_FLAG_UNIT_TEST_ENABLE;
+
+	switch (wow_params.interface_pause) {
+	default:
+		WMA_LOGE("Invalid interface pause setting: %d",
+			 wow_params.interface_pause);
+		/* intentional fall-through to default */
+	case WOW_INTERFACE_PAUSE_DEFAULT:
+		param.can_suspend_link = htc_can_suspend_link(wma->htc_handle);
+		break;
+	case WOW_INTERFACE_PAUSE_ENABLE:
+		param.can_suspend_link = true;
+		break;
+	case WOW_INTERFACE_PAUSE_DISABLE:
+		param.can_suspend_link = false;
+		break;
+	}
+
+	switch (wow_params.resume_trigger) {
+	default:
+		WMA_LOGE("Invalid resume trigger setting: %d",
+			 wow_params.resume_trigger);
+		/* intentional fall-through to default */
+	case WOW_RESUME_TRIGGER_DEFAULT:
+	case WOW_RESUME_TRIGGER_GPIO:
+		/*
+		 * GPIO is currently implicit. This means you can't actually
+		 * force GPIO if a platform's default wake trigger is HTC wakeup
+		 */
+		break;
+	case WOW_RESUME_TRIGGER_HTC_WAKEUP:
+		param.flags |= WMI_WOW_FLAG_DO_HTC_WAKEUP;
+		break;
+	}
+
 	ret = wmi_unified_wow_enable_send(wma->wmi_handle, &param,
 				   WMA_WILDCARD_PDEV_ID);
 	if (ret) {
@@ -5492,14 +5527,15 @@ failure:
 /**
  * __wma_bus_suspend(): handles bus suspend for wma
  * @type: is this suspend part of runtime suspend or system suspend?
- * @wow_flags: bitmap of WMI WOW flags to pass to FW
+ * @wow_params: collection of wow enable override parameters
  *
  * Bails if a scan is in progress.
  * Calls the appropriate handlers based on configuration and event.
  *
  * Return: 0 for success or error code
  */
-static int __wma_bus_suspend(enum qdf_suspend_type type, uint32_t wow_flags)
+static int __wma_bus_suspend(enum qdf_suspend_type type,
+			     struct wow_enable_params wow_params)
 {
 	WMA_HANDLE handle = cds_get_context(QDF_MODULE_ID_WMA);
 	if (NULL == handle) {
@@ -5523,7 +5559,7 @@ static int __wma_bus_suspend(enum qdf_suspend_type type, uint32_t wow_flags)
 				wma_is_wow_mode_selected(handle));
 
 	if (wma_is_wow_mode_selected(handle)) {
-		QDF_STATUS status = wma_enable_wow_in_fw(handle, wow_flags);
+		QDF_STATUS status = wma_enable_wow_in_fw(handle, wow_params);
 		return qdf_status_to_os_return(status);
 	}
 
@@ -5532,7 +5568,7 @@ static int __wma_bus_suspend(enum qdf_suspend_type type, uint32_t wow_flags)
 
 /**
  * wma_runtime_suspend() - handles runtime suspend request from hdd
- * @wow_flags: bitmap of WMI WOW flags to pass to FW
+ * @wow_params: collection of wow enable override parameters
  *
  * Calls the appropriate handler based on configuration and event.
  * Last busy marking should prevent race conditions between processing
@@ -5544,23 +5580,22 @@ static int __wma_bus_suspend(enum qdf_suspend_type type, uint32_t wow_flags)
  *
  * Return: 0 for success or error code
  */
-int wma_runtime_suspend(uint32_t wow_flags)
+int wma_runtime_suspend(struct wow_enable_params wow_params)
 {
-	return __wma_bus_suspend(QDF_RUNTIME_SUSPEND, wow_flags);
+	return __wma_bus_suspend(QDF_RUNTIME_SUSPEND, wow_params);
 }
 
 /**
  * wma_bus_suspend() - handles bus suspend request from hdd
- * @wow_flags: bitmap of WMI WOW flags to pass to FW
+ * @wow_params: collection of wow enable override parameters
  *
  * Calls the appropriate handler based on configuration and event
  *
  * Return: 0 for success or error code
  */
-int wma_bus_suspend(uint32_t wow_flags)
+int wma_bus_suspend(struct wow_enable_params wow_params)
 {
-
-	return __wma_bus_suspend(QDF_SYSTEM_SUSPEND, wow_flags);
+	return __wma_bus_suspend(QDF_SYSTEM_SUSPEND, wow_params);
 }
 
 /**
