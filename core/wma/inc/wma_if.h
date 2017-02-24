@@ -1238,6 +1238,7 @@ typedef struct sTdlsPeerStateParams {
 	tSirMacAddr peerMacAddr;
 	uint32_t peerState;
 	tTdlsPeerCapParams peerCap;
+	bool resp_reqd;
 } tTdlsPeerStateParams;
 
 /**

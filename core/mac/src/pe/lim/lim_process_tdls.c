@@ -2769,7 +2769,8 @@ static tSirRetStatus lim_tdls_setup_add_sta(tpAniSirGlobal pMac,
  */
 static tpDphHashNode lim_tdls_del_sta(tpAniSirGlobal pMac,
 				      struct qdf_mac_addr peerMac,
-				      tpPESession psessionEntry)
+				      tpPESession psessionEntry,
+				      bool resp_reqd)
 {
 	tSirRetStatus status = eSIR_SUCCESS;
 	uint16_t peerIdx = 0;
@@ -2783,11 +2784,13 @@ static tpDphHashNode lim_tdls_del_sta(tpAniSirGlobal pMac,
 		lim_log(pMac, LOG1, FL("DEL STA peer MAC: "MAC_ADDRESS_STR),
 		       MAC_ADDR_ARRAY(pStaDs->staAddr));
 
-		lim_log(pMac, LOG1, FL("STA type = %x, sta idx = %x"),
+		lim_log(pMac, LOG1,
+		       FL("STA type = %x, sta idx = %x resp_reqd %d"),
 		       pStaDs->staType,
-		       pStaDs->staIndex);
+		       pStaDs->staIndex,
+		       resp_reqd);
 
-		status = lim_del_sta(pMac, pStaDs, false, psessionEntry);
+		status = lim_del_sta(pMac, pStaDs, resp_reqd, psessionEntry);
 	}
 
 	return pStaDs;
@@ -3151,7 +3154,6 @@ tSirRetStatus lim_process_sme_tdls_del_sta_req(tpAniSirGlobal pMac,
 	tSirTdlsDelStaReq *pDelStaReq = (tSirTdlsDelStaReq *) pMsgBuf;
 	tpPESession psessionEntry;
 	uint8_t sessionId;
-	tpDphHashNode pStaDs = NULL;
 
 	lim_log(pMac, LOG1, FL("TDLS Delete STA Request Recieved"));
 	psessionEntry =
@@ -3190,25 +3192,8 @@ tSirRetStatus lim_process_sme_tdls_del_sta_req(tpAniSirGlobal pMac,
 		goto lim_tdls_del_sta_error;
 	}
 
-	pStaDs = lim_tdls_del_sta(pMac, pDelStaReq->peermac, psessionEntry);
-
-	/* now send indication to SME-->HDD->TL to remove STA from TL */
-
-	if (pStaDs) {
-		lim_send_sme_tdls_del_sta_rsp(pMac, psessionEntry->smeSessionId,
-					      pDelStaReq->peermac, pStaDs,
-					      eSIR_SUCCESS);
-		lim_release_peer_idx(pMac, pStaDs->assocId, psessionEntry);
-
-		/* Clear the aid in peerAIDBitmap as this aid is now in freepool */
-		CLEAR_PEER_AID_BITMAP(psessionEntry->peerAIDBitmap,
-				      pStaDs->assocId);
-		lim_delete_dph_hash_entry(pMac, pStaDs->staAddr, pStaDs->assocId,
-					  psessionEntry);
-
-		return eSIR_SUCCESS;
-
-	}
+	lim_tdls_del_sta(pMac, pDelStaReq->peermac, psessionEntry, true);
+	return eSIR_SUCCESS;
 
 lim_tdls_del_sta_error:
 	lim_send_sme_tdls_del_sta_rsp(pMac, psessionEntry->smeSessionId,
@@ -3433,7 +3418,7 @@ tSirRetStatus lim_delete_tdls_peers(tpAniSirGlobal mac_ctx,
 						QDF_MAC_ADDR_SIZE);
 
 				lim_tdls_del_sta(mac_ctx, mac_addr,
-						session_entry);
+						session_entry, false);
 
 				dph_delete_hash_entry(mac_ctx,
 					stads->staAddr, stads->assocId,
@@ -3451,5 +3436,69 @@ tSirRetStatus lim_delete_tdls_peers(tpAniSirGlobal mac_ctx,
 
 	return eSIR_SUCCESS;
 }
+
+/**
+ * lim_process_tdls_del_sta_rsp() - Handle WDA_DELETE_STA_RSP for TDLS
+ * @mac_ctx: Global MAC context
+ * @lim_msg: LIM message
+ * @pe_session: PE session
+ *
+ * Return: None
+ */
+void lim_process_tdls_del_sta_rsp(tpAniSirGlobal mac_ctx,
+				  struct scheduler_msg *lim_msg,
+				  tpPESession session_entry)
+{
+	tpDeleteStaParams del_sta_params = (tpDeleteStaParams) lim_msg->bodyptr;
+	tpDphHashNode sta_ds;
+	uint16_t peer_idx = 0;
+	struct qdf_mac_addr peer_mac;
+
+	if (!del_sta_params) {
+		lim_log(mac_ctx, LOGE,
+			FL("del_sta_params is NULL"));
+		return;
+	}
+
+	sta_ds = dph_lookup_hash_entry(mac_ctx, del_sta_params->staMac,
+			&peer_idx, &session_entry->dph.dphHashTable);
+	if (!sta_ds) {
+		lim_log(mac_ctx, LOGE,
+			FL("DPH Entry for STA %X is missing."),
+			DPH_STA_HASH_INDEX_PEER);
+		goto skip_event;
+	}
+
+	qdf_mem_copy(peer_mac.bytes,
+			del_sta_params->staMac, QDF_MAC_ADDR_SIZE);
+
+	if (QDF_STATUS_SUCCESS != del_sta_params->status) {
+		lim_log(mac_ctx, LOGE, FL("DEL STA failed!"));
+		lim_send_sme_tdls_del_sta_rsp(mac_ctx,
+				      session_entry->smeSessionId,
+				      peer_mac, NULL, eSIR_FAILURE);
+		goto skip_event;
+	}
+
+	lim_log(mac_ctx, LOG1, FL("DEL STA success"));
+
+	/* now send indication to SME-->HDD->TL to remove STA from TL */
+
+	lim_send_sme_tdls_del_sta_rsp(mac_ctx, session_entry->smeSessionId,
+				      peer_mac, sta_ds,
+				      eSIR_SUCCESS);
+	lim_release_peer_idx(mac_ctx, sta_ds->assocId, session_entry);
+
+	/* Clear the aid in peerAIDBitmap as this aid is now in freepool */
+	CLEAR_PEER_AID_BITMAP(session_entry->peerAIDBitmap,
+			      sta_ds->assocId);
+	lim_delete_dph_hash_entry(mac_ctx, sta_ds->staAddr, sta_ds->assocId,
+				  session_entry);
+
+skip_event:
+	qdf_mem_free(del_sta_params);
+	lim_msg->bodyptr = NULL;
+}
+
 
 #endif

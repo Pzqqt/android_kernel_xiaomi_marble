@@ -1990,6 +1990,13 @@ void lim_process_sta_mlm_del_sta_rsp(tpAniSirGlobal pMac,
 	lim_log(pMac, LOG1, FL("Del STA RSP received. Status:%d AssocID:%d"),
 			pDelStaParams->status, pDelStaParams->assocId);
 
+#ifdef FEATURE_WLAN_TDLS
+	if (pDelStaParams->staType == STA_ENTRY_TDLS_PEER) {
+		lim_log(pMac, LOG1, FL("TDLS Del STA RSP received."));
+		lim_process_tdls_del_sta_rsp(pMac, limMsgQ, psessionEntry);
+		return;
+	}
+#endif
 	if (QDF_STATUS_SUCCESS != pDelStaParams->status)
 		lim_log(pMac, LOGE, FL(
 			"Del STA failed! Status:%d, proceeding with Del BSS"),

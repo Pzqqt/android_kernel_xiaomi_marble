@@ -9939,6 +9939,7 @@ QDF_STATUS sme_update_tdls_peer_state(tHalHandle hHal,
 	case eSME_TDLS_PEER_STATE_TEARDOWN:
 		pTdlsPeerStateParams->peerState =
 			WMA_TDLS_PEER_STATE_TEARDOWN;
+		pTdlsPeerStateParams->resp_reqd = false;
 		break;
 
 	case eSME_TDLS_PEER_ADD_MAC_ADDR:

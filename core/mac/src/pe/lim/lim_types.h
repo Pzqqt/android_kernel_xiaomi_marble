@@ -551,6 +551,9 @@ void lim_send_sme_mgmt_tx_completion(tpAniSirGlobal pMac, tpPESession psessionEn
 tSirRetStatus lim_delete_tdls_peers(tpAniSirGlobal mac_ctx,
 				    tpPESession session_entry);
 QDF_STATUS lim_process_tdls_add_sta_rsp(tpAniSirGlobal pMac, void *msg, tpPESession);
+void lim_process_tdls_del_sta_rsp(tpAniSirGlobal mac_ctx,
+				  struct scheduler_msg *lim_msg,
+				  tpPESession session_entry);
 #else
 static inline tSirRetStatus lim_delete_tdls_peers(tpAniSirGlobal mac_ctx,
 						tpPESession session_entry)

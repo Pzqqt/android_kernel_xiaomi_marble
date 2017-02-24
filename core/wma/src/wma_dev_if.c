@@ -4131,6 +4131,8 @@ send_del_rsp:
 static void wma_del_tdls_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 {
 	tTdlsPeerStateParams *peerStateParams;
+	struct wma_target_req *msg;
+	int status;
 
 	peerStateParams = qdf_mem_malloc(sizeof(tTdlsPeerStateParams));
 	if (!peerStateParams) {
@@ -4142,6 +4144,7 @@ static void wma_del_tdls_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 
 	peerStateParams->peerState = WMA_TDLS_PEER_STATE_TEARDOWN;
 	peerStateParams->vdevId = del_sta->smesessionId;
+	peerStateParams->resp_reqd = del_sta->respReqd;
 	qdf_mem_copy(&peerStateParams->peerMacAddr,
 		     &del_sta->staMac, sizeof(tSirMacAddr));
 
@@ -4150,9 +4153,48 @@ static void wma_del_tdls_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 		 __func__, peerStateParams->peerMacAddr,
 		 peerStateParams->peerState);
 
-	wma_update_tdls_peer_state(wma, peerStateParams);
+	status = wma_update_tdls_peer_state(wma, peerStateParams);
 
-	del_sta->status = QDF_STATUS_SUCCESS;
+	if (status < 0) {
+		WMA_LOGE("%s: wma_update_tdls_peer_state returned failure",
+				__func__);
+		goto send_del_rsp;
+	}
+
+	if (del_sta->respReqd &&
+			WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
+				WMI_SERVICE_SYNC_DELETE_CMDS)) {
+		del_sta->status = QDF_STATUS_SUCCESS;
+		msg = wma_fill_hold_req(wma,
+				del_sta->smesessionId,
+				WMA_DELETE_STA_REQ,
+				WMA_DELETE_STA_RSP_START, del_sta,
+				WMA_DELETE_STA_TIMEOUT);
+		if (!msg) {
+			WMA_LOGP(FL("Failed to allocate vdev_id %d"),
+					peerStateParams->vdevId);
+			wma_remove_req(wma,
+					peerStateParams->vdevId,
+					WMA_DELETE_STA_RSP_START);
+			del_sta->status = QDF_STATUS_E_NOMEM;
+			goto send_del_rsp;
+		}
+		/*
+		 * Acquire wake lock and bus lock till
+		 * firmware sends the response
+		 */
+		cds_host_diag_log_work(&wma->
+				wmi_cmd_rsp_wake_lock,
+				WMA_FW_RSP_EVENT_WAKE_LOCK_DURATION,
+				WIFI_POWER_EVENT_WAKELOCK_WMI_CMD_RSP);
+		qdf_wake_lock_timeout_acquire(&wma->
+				wmi_cmd_rsp_wake_lock,
+				WMA_FW_RSP_EVENT_WAKE_LOCK_DURATION);
+		qdf_runtime_pm_prevent_suspend(wma->
+				wmi_cmd_rsp_runtime_lock);
+	}
+
+	return;
 
 send_del_rsp:
 	if (del_sta->respReqd) {
