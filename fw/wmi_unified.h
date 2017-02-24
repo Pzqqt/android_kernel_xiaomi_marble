@@ -17089,6 +17089,8 @@ typedef struct {
     A_UINT32 he_cap_phy_info_5G[WMI_MAX_HECAP_PHY_SIZE];
     wmi_ppe_threshold he_ppet2G;
     wmi_ppe_threshold he_ppet5G;
+    /* chainmask table to be used for the MAC */
+    A_UINT32 chainmask_table_id;
 } WMI_MAC_PHY_CAPABILITIES;
 
 typedef struct {
@@ -17109,11 +17111,62 @@ typedef struct {
     A_UINT32 hw_mode_config_type;
 } WMI_HW_MODE_CAPABILITIES;
 
+/** Definition of valid chainmask and associated capabilities */
+typedef struct {
+    A_UINT32 tlv_header;/* TLV tag and len; tag equals WMITLV_TAG_STRUC_WMI_MAC_PHY_CHAINMASK_CAPABILITY */
+     /* supported flags: Capabilities for this chianmask*/
+    union {
+        struct {
+            A_UINT32 supports_chan_width_20:1,
+                     supports_chan_width_40:1,
+                     supports_chan_width_80:1,
+                     supports_chan_width_160:1,
+                     supports_chan_width_80P80:1,
+                     reserved:22, /* bits 26:5 */
+                     chain_mask_2G:1,
+                     chain_mask_5G:1,
+                     chain_mask_tx:1,
+                     chain_mask_rx:1,
+                     supports_aDFS:1; /* agile DFS */
+        };
+        A_UINT32 supported_flags;
+    };
+    A_UINT32 chainmask;
+} WMI_MAC_PHY_CHAINMASK_CAPABILITY;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_WMI_MAC_PHY_CHAINMASK_COMBO */
+    A_UINT32 chainmask_table_id;
+    /* Number of vaild Chainmask in the table */ 
+    A_UINT32 num_valid_chainmask;
+/*
+ * This TLV is followed by the below TLVs:
+ * WMI_MAC_PHY_CHAINMASK_CAPABILITY mac_phy_chainmask_caps[num_valid_chainmask]
+ */
+} WMI_MAC_PHY_CHAINMASK_COMBO;
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_WMI_SOC_MAC_PHY_HW_MODE_CAPS */
     /* num HW modes */
     A_UINT32 num_hw_modes;
-    /* num_hw_modes WMI_HW_MODE_CAPABILITIES TLV's */
+    /* number of unique chainmask combo tables */
+    A_UINT32 num_chainmask_tables;
+/*
+ * This TLV is followed by the below TLVs:
+ *
+ * WMI_HW_MODE_CAPABILITIES soc_hw_mode_caps[num_hw_modes]
+ *
+ * (intervening TLVs, e.g. HW_MODE_CAPS, MAC_PHY_CAPS, HAL_REG_CAPS)
+ *
+ * WMI_MAC_PHY_CHAINMASK_COMBO mac_phy_chainmask_combo[num_chainmask_tables]
+ * // number of chainmasks specified in mac_phy_chainmask_combo[0]
+ * WMI_MAC_PHY_CHAINMASK_CAPABILITY mac_phy_chainmask_caps[num_valid_chainmask0]
+ * // number of chainmasks specified in mac_phy_chainmask_combo[1]
+ * WMI_MAC_PHY_CHAINMASK_CAPABILITY mac_phy_chainmask_caps[num_valid_chainmask1]
+ * // number of chainmasks specified in mac_phy_chainmask_combo[2]
+ * WMI_MAC_PHY_CHAINMASK_CAPABILITY mac_phy_chainmask_caps[num_valid_chainmask2]
+ * etc.
+ */
 } WMI_SOC_MAC_PHY_HW_MODE_CAPS;
 
 /*Below are Reg caps per PHY. Please note PHY ID starts with 0.*/
