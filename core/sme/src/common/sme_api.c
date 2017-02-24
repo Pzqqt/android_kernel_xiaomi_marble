@@ -372,65 +372,12 @@ void sme_release_command(tpAniSirGlobal mac_ctx, tSmeCmd *sme_cmd)
 				LL_ACCESS_LOCK);
 }
 
-static void sme_release_cmd_list(tpAniSirGlobal pMac, tDblLinkList *pList)
-{
-	tListElem *pEntry;
-	tSmeCmd *pCommand;
-
-	while ((pEntry = csr_ll_remove_head(pList, LL_ACCESS_LOCK)) != NULL) {
-		/* TODO: base on command type to call release functions */
-		/* reinitialize different command types so they can be reused */
-		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
-		csr_abort_command(pMac, pCommand, true);
-	}
-}
-
 static void purge_sme_cmd_list(tpAniSirGlobal pMac)
 {
-	/* purge pending command list */
+	/* purge all command lists */
+	sms_log(pMac, LOG1, FL("Purging all queues"));
 	wlan_serialization_purge_cmd_list(pMac->psoc, NULL,
-			false, false, false, true, false);
-	/* purge active command list */
-	wlan_serialization_purge_cmd_list(pMac->psoc, NULL,
-			false, false, true, false, false);
-	sme_release_cmd_list(pMac, &pMac->sme.smeScanCmdPendingList);
-	sme_release_cmd_list(pMac, &pMac->sme.smeScanCmdActiveList);
-}
-
-void purge_sme_session_cmd_list(tpAniSirGlobal pMac, uint32_t sessionId,
-				tDblLinkList *pList)
-{
-	/* release any out standing commands back to free command list */
-	tListElem *pEntry, *pNext;
-	tSmeCmd *pCommand;
-	tDblLinkList localList;
-
-	qdf_mem_zero(&localList, sizeof(tDblLinkList));
-	if (!QDF_IS_STATUS_SUCCESS(csr_ll_open(pMac->hHdd, &localList))) {
-		sms_log(pMac, LOGE, FL(" failed to open list"));
-		return;
-	}
-
-	csr_ll_lock(pList);
-	pEntry = csr_ll_peek_head(pList, LL_ACCESS_NOLOCK);
-	while (pEntry != NULL) {
-		pNext = csr_ll_next(pList, pEntry, LL_ACCESS_NOLOCK);
-		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
-		if (pCommand->sessionId == sessionId) {
-			if (csr_ll_remove_entry(pList, pEntry, LL_ACCESS_NOLOCK)) {
-				csr_ll_insert_tail(&localList, pEntry,
-						   LL_ACCESS_NOLOCK);
-			}
-		}
-		pEntry = pNext;
-	}
-	csr_ll_unlock(pList);
-
-	while ((pEntry = csr_ll_remove_head(&localList, LL_ACCESS_NOLOCK))) {
-		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
-		csr_abort_command(pMac, pCommand, true);
-	}
-	csr_ll_close(&localList);
+			false, false, false, false, true);
 }
 
 static QDF_STATUS free_sme_cmd_list(tpAniSirGlobal pMac)
@@ -569,142 +516,6 @@ tSmeCmd *sme_get_command_buffer(tpAniSirGlobal pMac)
 	return pRetCmd;
 }
 
-void sme_push_command(tpAniSirGlobal pMac, tSmeCmd *pCmd, bool fHighPriority)
-{
-	if (!SME_IS_START(pMac)) {
-		sms_log(pMac, LOGE, FL("Sme in stop state"));
-		QDF_ASSERT(0);
-		return;
-	}
-
-	if (fHighPriority) {
-		csr_nonscan_pending_ll_insert_head(pMac, &pCmd->Link,
-				   LL_ACCESS_LOCK);
-	} else {
-		csr_nonscan_pending_ll_insert_tail(pMac, &pCmd->Link,
-				   LL_ACCESS_LOCK);
-	}
-
-	/* process the command queue... */
-	sme_process_pending_queue(pMac);
-
-	return;
-}
-
-static
-tListElem *csr_get_pending_cmd_to_process(tpAniSirGlobal pMac,
-				uint8_t sessionId, bool fInterlocked)
-{
-	tListElem *pCurEntry = NULL;
-	tSmeCmd *pCommand;
-
-	/* Go through the list and return the command whose session id is not
-	 * matching with the current ongoing scan cmd sessionId */
-	pCurEntry = csr_nonscan_pending_ll_peek_head(pMac, LL_ACCESS_LOCK);
-	while (pCurEntry) {
-		pCommand = GET_BASE_ADDR(pCurEntry, tSmeCmd, Link);
-		if (pCommand->sessionId != sessionId) {
-			sms_log(pMac, LOG1,
-				"selected the command with different sessionId");
-			return pCurEntry;
-		}
-
-		pCurEntry = csr_nonscan_pending_ll_next(pMac,
-					pCurEntry, fInterlocked);
-	}
-
-	sms_log(pMac, LOG1, "No command pending with different sessionId");
-	return NULL;
-}
-
-static bool sme_process_scan_queue(tpAniSirGlobal pMac)
-{
-	tListElem *pEntry;
-	tSmeCmd *pCommand;
-	tListElem *pSmeEntry = NULL;
-	tSmeCmd *pSmeCommand = NULL;
-	bool status = true;
-
-	if ((!csr_nonscan_active_ll_is_list_empty(pMac,
-				   LL_ACCESS_LOCK))) {
-		pSmeEntry = csr_nonscan_active_ll_peek_head(pMac,
-					LL_ACCESS_LOCK);
-		if (pSmeEntry)
-			pSmeCommand = GET_BASE_ADDR(pSmeEntry, tSmeCmd, Link);
-	}
-	csr_ll_lock(&pMac->sme.smeScanCmdActiveList);
-	if (csr_ll_is_list_empty(&pMac->sme.smeScanCmdPendingList,
-				 LL_ACCESS_LOCK))
-		goto end;
-	pEntry = csr_ll_peek_head(&pMac->sme.smeScanCmdPendingList,
-				  LL_ACCESS_LOCK);
-	if (!pEntry)
-		goto end;
-
-	sms_log(pMac, LOG1,
-		FL("scan_count in active scanlist %d "),
-		pMac->sme.smeScanCmdActiveList.Count);
-
-	pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
-	if (pSmeCommand != NULL) {
-		/*
-		 * if scan is running on one interface and SME receives
-		 * the next command on the same interface then
-		 * dont the allow the command to be queued to
-		 * smeCmdPendingList. If next scan is allowed on
-		 * the same interface the CSR state machine will
-		 * get screwed up.
-		 */
-		if (pSmeCommand->sessionId == pCommand->sessionId) {
-			status = false;
-			goto end;
-		}
-	}
-	/*
-	 * We cannot execute any command in wait-for-key state until setKey is
-	 * through.
-	 */
-	if (CSR_IS_WAIT_FOR_KEY(pMac, pCommand->sessionId)) {
-		if (!CSR_IS_SET_KEY_COMMAND(pCommand)) {
-			sms_log(pMac, LOGE,
-				FL("Can't process cmd(%d), waiting for key"),
-				pCommand->command);
-			status = false;
-			goto end;
-		}
-	}
-	if (csr_ll_remove_entry(&pMac->sme.smeScanCmdPendingList, pEntry,
-				LL_ACCESS_LOCK)) {
-		csr_ll_insert_head(&pMac->sme.smeScanCmdActiveList,
-				   &pCommand->Link, LL_ACCESS_NOLOCK);
-		switch (pCommand->command) {
-		case eSmeCommandScan:
-			sms_log(pMac, LOG1, FL("Processing scan offload cmd."));
-			qdf_mc_timer_start(&pCommand->u.scanCmd.csr_scan_timer,
-				CSR_ACTIVE_SCAN_LIST_CMD_TIMEOUT);
-			csr_process_scan_command(pMac, pCommand);
-			break;
-		case eSmeCommandRemainOnChannel:
-			sms_log(pMac, LOG1,
-				FL("Processing remain on channel offload cmd"));
-			p2p_process_remain_on_channel_cmd(pMac, pCommand);
-			break;
-		default:
-			sms_log(pMac, LOGE,
-				FL("Wrong cmd enqueued to ScanCmdPendingList"));
-			pEntry = csr_ll_remove_head(
-					&pMac->sme.smeScanCmdActiveList,
-					LL_ACCESS_NOLOCK);
-			pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
-			csr_release_command(pMac, pCommand);
-			break;
-		}
-	}
-end:
-	csr_ll_unlock(&pMac->sme.smeScanCmdActiveList);
-	return status;
-}
-
 /**
  * sme_ser_handle_active_cmd() - handle command activation callback from
  *					new serialization module
@@ -760,6 +571,12 @@ QDF_STATUS sme_ser_handle_active_cmd(struct wlan_serialization_command *cmd)
 		break;
 	case eSmeCommandNdpDataEndInitiatorRequest:
 		status = csr_process_ndp_data_end_request(mac_ctx, sme_cmd);
+		break;
+	case eSmeCommandScan:
+		sms_log(mac_ctx, LOG1, FL("Processing scan offload cmd."));
+		qdf_mc_timer_start(&sme_cmd->u.scanCmd.csr_scan_timer,
+				CSR_ACTIVE_SCAN_LIST_CMD_TIMEOUT);
+		status = csr_process_scan_command(mac_ctx, sme_cmd);
 		break;
 	case eSmeCommandRemainOnChannel:
 		status = p2p_process_remain_on_channel_cmd(mac_ctx, sme_cmd);
@@ -849,7 +666,6 @@ QDF_STATUS sme_ser_cmd_callback(void *buf,
 			FL("WLAN_SER_CB_CANCEL_CMD callback"));
 		sme_cmd = cmd->umac_cmd;
 		csr_cancel_command(mac_ctx, sme_cmd);
-		csr_release_command_buffer(mac_ctx, sme_cmd);
 		break;
 	case WLAN_SER_CB_RELEASE_MEM_CMD:
 		sms_log(mac_ctx, LOG1,
@@ -866,239 +682,6 @@ QDF_STATUS sme_ser_cmd_callback(void *buf,
 		return QDF_STATUS_E_FAILURE;
 	}
 	return status;
-}
-
-/**
- * sme_process_command() - processes SME commnd
- * @mac_ctx:       mac global context
- *
- * This function is called by sme_process_pending_queue() in a while loop
- *
- * Return: true indicates that caller function can proceed to next cmd
- *         false otherwise.
- */
-static bool sme_process_command(tpAniSirGlobal pMac)
-{
-	bool fContinue = false;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tListElem *pEntry;
-	tSmeCmd *pCommand;
-	tListElem *pSmeEntry;
-	tSmeCmd *pSmeCommand;
-
-	/*
-	 * if the ActiveList is empty, then nothing is active so we can process
-	 * a pending command...
-	 * alwasy lock active list before locking pending list
-	 */
-	csr_nonscan_active_ll_lock(pMac);
-	if (!csr_nonscan_active_ll_is_list_empty(pMac, LL_ACCESS_NOLOCK)) {
-		csr_nonscan_active_ll_unlock(pMac);
-		goto process_scan_q;
-	}
-
-	if (csr_nonscan_pending_ll_is_list_empty(pMac, LL_ACCESS_LOCK)) {
-		/* No command waiting */
-		csr_nonscan_active_ll_unlock(pMac);
-		goto process_scan_q;
-	}
-
-	/*
-	 * If scan command is pending in the smeScanCmdActive list then pick the
-	 * command from smeCmdPendingList which is not matching with the scan
-	 * command session id. At any point of time only one command will be
-	 * allowed on a single session.
-	 */
-	if (!csr_ll_is_list_empty(
-			&pMac->sme.smeScanCmdActiveList, LL_ACCESS_LOCK)) {
-		pSmeEntry = csr_ll_peek_head(&pMac->sme.smeScanCmdActiveList,
-					     LL_ACCESS_LOCK);
-		if (pSmeEntry) {
-			pSmeCommand = GET_BASE_ADDR(pSmeEntry, tSmeCmd, Link);
-			pEntry = csr_get_pending_cmd_to_process(pMac,
-					pSmeCommand->sessionId,
-					LL_ACCESS_LOCK);
-			goto sme_process_cmd;
-		}
-	}
-
-	/* Peek the command */
-	pEntry = csr_nonscan_pending_ll_peek_head(pMac, LL_ACCESS_LOCK);
-sme_process_cmd:
-	if (!pEntry) {
-		csr_nonscan_active_ll_unlock(pMac);
-		goto process_scan_q;
-	}
-	pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
-	/*
-	 * Allow only disconnect command in wait-for-key state until setKey is
-	 * through.
-	 */
-	if (CSR_IS_WAIT_FOR_KEY(pMac, pCommand->sessionId)
-	    && !CSR_IS_DISCONNECT_COMMAND(pCommand)
-	    && !CSR_IS_SET_KEY_COMMAND(pCommand)) {
-
-		csr_nonscan_active_ll_unlock(pMac);
-		sms_log(pMac, LOGE,
-			FL("SessionId %d: Can't process cmd(%d), waiting for key"),
-			pCommand->sessionId, pCommand->command);
-		fContinue = false;
-		goto process_scan_q;
-	}
-
-	if (!csr_nonscan_pending_ll_remove_entry(pMac, pEntry,
-				LL_ACCESS_LOCK)) {
-		/* This is odd. Some one else pull off the command. */
-		csr_nonscan_active_ll_unlock(pMac);
-		goto process_scan_q;
-	}
-	/* we can reuse the pCommand. Insert the command onto the ActiveList */
-	csr_nonscan_active_ll_insert_head(pMac, &pCommand->Link,
-				LL_ACCESS_NOLOCK);
-	/* .... and process the command. */
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_COMMAND,
-			 pCommand->sessionId, pCommand->command));
-
-	switch (pCommand->command) {
-	case eSmeCommandScan:
-		csr_nonscan_active_ll_unlock(pMac);
-		status = csr_process_scan_command(pMac, pCommand);
-		break;
-	case eSmeCommandRoam:
-		csr_nonscan_active_ll_unlock(pMac);
-		status = csr_roam_process_command(pMac, pCommand);
-		if (!QDF_IS_STATUS_SUCCESS(status)
-		    && csr_nonscan_active_ll_remove_entry(pMac,
-				&pCommand->Link, LL_ACCESS_LOCK))
-			csr_release_command(pMac, pCommand);
-		break;
-	case eSmeCommandWmStatusChange:
-		csr_nonscan_active_ll_unlock(pMac);
-		csr_roam_process_wm_status_change_command(pMac, pCommand);
-		break;
-	case eSmeCommandSetKey:
-		csr_nonscan_active_ll_unlock(pMac);
-		status = csr_roam_process_set_key_command(pMac, pCommand);
-		if (!QDF_IS_STATUS_SUCCESS(status)
-		    && csr_nonscan_active_ll_remove_entry(pMac,
-				&pCommand->Link, LL_ACCESS_LOCK)) {
-			csr_release_command(pMac, pCommand);
-		}
-		break;
-	case eSmeCommandNdpInitiatorRequest:
-		csr_nonscan_active_ll_unlock(pMac);
-		if (csr_process_ndp_initiator_request(pMac, pCommand) !=
-			QDF_STATUS_SUCCESS)
-			if (csr_nonscan_active_ll_remove_entry(
-					pMac, &pCommand->Link, LL_ACCESS_LOCK))
-				csr_release_command(pMac, pCommand);
-		break;
-	case eSmeCommandNdpResponderRequest:
-		csr_nonscan_active_ll_unlock(pMac);
-		status = csr_process_ndp_responder_request(pMac, pCommand);
-		if (status != QDF_STATUS_SUCCESS) {
-			if (csr_nonscan_active_ll_remove_entry(pMac,
-					&pCommand->Link, LL_ACCESS_LOCK))
-				csr_release_command(pMac, pCommand);
-		}
-		break;
-	case eSmeCommandNdpDataEndInitiatorRequest:
-		csr_nonscan_active_ll_unlock(pMac);
-		status = csr_process_ndp_data_end_request(pMac, pCommand);
-		if (status != QDF_STATUS_SUCCESS) {
-			if (csr_nonscan_active_ll_remove_entry(pMac,
-					&pCommand->Link, LL_ACCESS_LOCK))
-				csr_release_command(pMac, pCommand);
-		}
-		break;
-	case eSmeCommandRemainOnChannel:
-		csr_nonscan_active_ll_unlock(pMac);
-		status = p2p_process_remain_on_channel_cmd(pMac, pCommand);
-		if (!QDF_IS_STATUS_SUCCESS(status)
-		    && csr_nonscan_active_ll_remove_entry(pMac,
-				&pCommand->Link, LL_ACCESS_LOCK))
-			csr_release_command(pMac, pCommand);
-		break;
-	/*
-	 * Treat standby differently here because caller may not be able
-	 * to handle the failure so we do our best here
-	 */
-	case eSmeCommandEnterStandby:
-		break;
-	case eSmeCommandAddTs:
-	case eSmeCommandDelTs:
-		csr_nonscan_active_ll_unlock(pMac);
-#ifndef WLAN_MDM_CODE_REDUCTION_OPT
-		fContinue = qos_process_command(pMac, pCommand);
-		if (fContinue && csr_nonscan_active_ll_remove_entry(
-			pMac, &pCommand->Link, LL_ACCESS_NOLOCK)) {
-			/* The command failed, remove it */
-			qos_release_command(pMac, pCommand);
-		}
-#endif
-		break;
-#ifdef FEATURE_WLAN_TDLS
-	case eSmeCommandTdlsSendMgmt:
-	case eSmeCommandTdlsAddPeer:
-	case eSmeCommandTdlsDelPeer:
-	case eSmeCommandTdlsLinkEstablish:
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
-			  FL("sending TDLS Command 0x%x to PE"),
-			  pCommand->command);
-		csr_nonscan_active_ll_unlock(pMac);
-		status = csr_tdls_process_cmd(pMac, pCommand);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			if (csr_nonscan_active_ll_remove_entry(
-					pMac, &pCommand->Link,
-						LL_ACCESS_LOCK)) {
-				qdf_mem_zero(&pCommand->u.tdlsCmd,
-					     sizeof(tTdlsCmd));
-				csr_release_command(pMac, pCommand);
-			}
-		}
-		break;
-#endif
-	case e_sme_command_set_hw_mode:
-		csr_nonscan_active_ll_unlock(pMac);
-		csr_process_set_hw_mode(pMac, pCommand);
-		break;
-	case e_sme_command_nss_update:
-		csr_nonscan_active_ll_unlock(pMac);
-		csr_process_nss_update_req(pMac, pCommand);
-		break;
-	case e_sme_command_set_dual_mac_config:
-		csr_nonscan_active_ll_unlock(pMac);
-		csr_process_set_dual_mac_config(pMac, pCommand);
-		break;
-	case e_sme_command_set_antenna_mode:
-		csr_nonscan_active_ll_unlock(pMac);
-		csr_process_set_antenna_mode(pMac, pCommand);
-		break;
-	default:
-		/* something is wrong */
-		/* remove it from the active list */
-		sms_log(pMac, LOGE, FL("unknown command %d"),
-			pCommand->command);
-		pEntry = csr_nonscan_active_ll_remove_head(pMac,
-					    LL_ACCESS_NOLOCK);
-		csr_nonscan_active_ll_unlock(pMac);
-		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
-		csr_release_command(pMac, pCommand);
-		status = QDF_STATUS_E_FAILURE;
-		break;
-	}
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		fContinue = true;
-process_scan_q:
-	if (!(sme_process_scan_queue(pMac)))
-		fContinue = false;
-	return fContinue;
-}
-
-void sme_process_pending_queue(tpAniSirGlobal pMac)
-{
-	while (sme_process_command(pMac))
-	;
 }
 
 /**
@@ -3424,7 +3007,7 @@ QDF_STATUS sme_scan_request(tHalHandle hal, uint8_t session_id,
 		return status;
 	}
 
-	scan_count = csr_ll_count(&mac_ctx->sme.smeScanCmdActiveList);
+	scan_count = csr_scan_active_ll_count(mac_ctx);
 	if (scan_count >= mac_ctx->scan.max_scan_count) {
 		sms_log(mac_ctx, LOGE, FL("Max scan reached"));
 		return QDF_STATUS_E_FAILURE;
@@ -6896,7 +6479,7 @@ QDF_STATUS sme_remain_on_channel(tHalHandle hHal, uint8_t session_id,
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
 			 TRACE_CODE_SME_RX_HDD_REMAIN_ONCHAN, session_id, 0));
 
-	scan_count = csr_ll_count(&mac_ctx->sme.smeScanCmdActiveList);
+	scan_count = csr_scan_active_ll_count(mac_ctx);
 	if (scan_count >= mac_ctx->scan.max_scan_count) {
 		sms_log(mac_ctx, LOGE, FL("Max scan reached"));
 		return QDF_STATUS_E_FAILURE;

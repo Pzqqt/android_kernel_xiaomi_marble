@@ -281,21 +281,18 @@ QDF_STATUS csr_scan_abort_all_scans(tpAniSirGlobal mac_ctx,
  * for failure
  */
 QDF_STATUS csr_remove_cmd_from_pending_list(tpAniSirGlobal pMac,
-						      uint8_t sessionId,
-						      uint32_t scan_id,
-						      tDblLinkList *pList,
-						      eSmeCommandType commandType);
+			uint8_t sessionId, uint32_t scan_id,
+			eSmeCommandType commandType);
 QDF_STATUS csr_remove_nonscan_cmd_from_pending_list(tpAniSirGlobal pMac,
 			uint8_t sessionId, eSmeCommandType commandType);
 QDF_STATUS csr_scan_abort_mac_scan_not_for_connect(tpAniSirGlobal pMac,
 						   uint8_t sessionId);
 QDF_STATUS csr_scan_abort_scan_for_ssid(tpAniSirGlobal pMac, uint32_t sessionId);
 void csr_remove_scan_for_ssid_from_pending_list(tpAniSirGlobal pMac,
-						tDblLinkList *pList,
 						uint32_t sessionId);
 
 QDF_STATUS csr_abort_scan_from_active_list(tpAniSirGlobal pMac,
-		tDblLinkList *pList, uint32_t sessionId, uint32_t scan_id,
+		uint32_t sessionId, uint32_t scan_id,
 		eSmeCommandType scan_cmd_type, eCsrAbortReason abort_reason);
 
 /* To age out scan results base. tSmeGetScanChnRsp is a pointer returned by LIM that */
@@ -1056,8 +1053,6 @@ tpSirBssDescription csr_get_fst_bssdescr_ptr(tScanResultHandle result_handle);
 tSirBssDescription*
 csr_get_bssdescr_from_scan_handle(tScanResultHandle result_handle,
 				  tSirBssDescription *bss_descr);
-void csr_release_scan_command(tpAniSirGlobal pMac, tSmeCmd *pCommand,
-			      eCsrScanStatus scanStatus);
 bool is_disconnect_pending(tpAniSirGlobal mac_ctx,
 				   uint8_t sessionid);
 void csr_scan_active_list_timeout_handle(void *userData);

@@ -123,13 +123,12 @@ QDF_STATUS sme_remain_on_chn_rsp(tpAniSirGlobal pMac, uint8_t *pMsg)
 		callback(pMac, pCommand->u.remainChlCmd.callbackCtx,
 			rsp->status, rsp->scan_id);
 
-	fFound = csr_ll_remove_entry(&pMac->sme.smeScanCmdActiveList, pEntry,
+	fFound = csr_scan_active_ll_remove_entry(pMac, pEntry,
 				     LL_ACCESS_LOCK);
 	if (fFound) {
 		/* Now put this command back on the avilable command list */
 		csr_release_command(pMac, pCommand);
 	}
-	sme_process_pending_queue(pMac);
 	return status;
 }
 

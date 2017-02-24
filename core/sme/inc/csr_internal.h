@@ -358,6 +358,7 @@ typedef struct tagScanCmd {
 	csr_scan_completeCallback callback;
 	void *pContext;
 	eCsrScanReason reason;
+	eCsrScanStatus status;
 	eCsrRoamState lastRoamState[CSR_ROAM_SESSION_MAX];
 	tCsrRoamProfile *pToRoamProfile;
 	/* this is the ID related to the pToRoamProfile */
@@ -1392,6 +1393,36 @@ QDF_STATUS csr_scan_process_single_bssdescr(tpAniSirGlobal pMac,
 		tSirBssDescription *pSirBssDescription,
 		uint32_t scan_id, uint32_t flags);
 
+void csr_scan_pending_ll_unlock(struct sAniSirGlobal *mac_ctx);
+void csr_scan_active_ll_unlock(struct sAniSirGlobal *mac_ctx);
+void csr_scan_pending_ll_lock(struct sAniSirGlobal *mac_ctx);
+void csr_scan_active_ll_lock(struct sAniSirGlobal *mac_ctx);
+uint32_t csr_scan_active_ll_count(struct sAniSirGlobal *mac_ctx);
+uint32_t csr_scan_pending_ll_count(struct sAniSirGlobal *mac_ctx);
+bool csr_scan_active_ll_is_list_empty(struct sAniSirGlobal *mac_ctx,
+				bool inter_locked);
+bool csr_scan_pending_ll_is_list_empty(struct sAniSirGlobal *mac_ctx,
+				bool inter_locked);
+bool csr_scan_active_ll_remove_entry(struct sAniSirGlobal *mac_ctx,
+		tListElem *entry, bool inter_locked);
+bool csr_scan_pending_ll_remove_entry(struct sAniSirGlobal *mac_ctx,
+		tListElem *entry, bool inter_locked);
+tListElem *csr_scan_active_ll_peek_head(struct sAniSirGlobal *mac_ctx,
+		bool inter_locked);
+tListElem *csr_scan_pending_ll_peek_head(struct sAniSirGlobal *mac_ctx,
+		bool inter_locked);
+tListElem *csr_scan_pending_ll_next(struct sAniSirGlobal *mac_ctx,
+		tListElem *entry, bool inter_locked);
+tListElem *csr_scan_active_ll_next(struct sAniSirGlobal *mac_ctx,
+		tListElem *entry, bool inter_locked);
+tListElem *csr_scan_active_ll_remove_head(struct sAniSirGlobal *mac_ctx,
+			bool fInterlocked);
+tListElem *csr_scan_pending_ll_remove_head(struct sAniSirGlobal *mac_ctx,
+			bool fInterlocked);
+tListElem *csr_scan_active_ll_remove_head(struct sAniSirGlobal *mac_ctx,
+			bool fInterlocked);
+tListElem *csr_scan_pending_ll_remove_head(struct sAniSirGlobal *mac_ctx,
+			bool fInterlocked);
 void csr_nonscan_pending_ll_unlock(struct sAniSirGlobal *mac_ctx);
 void csr_nonscan_active_ll_unlock(struct sAniSirGlobal *mac_ctx);
 void csr_nonscan_pending_ll_lock(struct sAniSirGlobal *mac_ctx);
@@ -1426,7 +1457,8 @@ void purge_sme_session_pending_cmd_list(struct sAniSirGlobal *mac_ctx,
 		uint32_t session_id);
 void purge_sme_session_active_cmd_list(struct sAniSirGlobal *mac_ctx,
 		uint32_t session_id);
-
+void purge_sme_session_pending_scan_cmd_list(struct sAniSirGlobal *mac_ctx,
+		uint32_t session_id);
 bool csr_wait_for_connection_update(tpAniSirGlobal mac,
 		bool do_release_reacquire_lock);
 enum tQDF_ADAPTER_MODE csr_get_session_persona(tpAniSirGlobal pmac,

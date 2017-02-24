@@ -223,11 +223,7 @@ QDF_STATUS csr_set_serialization_params_to_cmd(tpAniSirGlobal mac_ctx,
 		tSmeCmd *sme_cmd, struct wlan_serialization_command *cmd,
 		uint8_t high_priority);
 tSmeCmd *sme_get_command_buffer(tpAniSirGlobal pMac);
-void sme_push_command(tpAniSirGlobal pMac, tSmeCmd *pCmd, bool fHighPriority);
-void sme_process_pending_queue(tpAniSirGlobal pMac);
 void sme_release_command(tpAniSirGlobal pMac, tSmeCmd *pCmd);
-void purge_sme_session_cmd_list(tpAniSirGlobal pMac, uint32_t sessionId,
-		tDblLinkList *pList);
 bool qos_process_command(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 void qos_release_command(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 QDF_STATUS csr_process_scan_command(tpAniSirGlobal pMac, tSmeCmd *pCommand);
@@ -240,7 +236,6 @@ void csr_reinit_set_key_cmd(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 QDF_STATUS csr_roam_process_set_key_command(tpAniSirGlobal pMac,
 		tSmeCmd *pCommand);
 void csr_release_command_set_key(tpAniSirGlobal pMac, tSmeCmd *pCommand);
-void csr_abort_command(tpAniSirGlobal pMac, tSmeCmd *pCommand, bool fStopping);
 void csr_cancel_command(tpAniSirGlobal mac_ctx, tSmeCmd *sme_cmd);
 
 QDF_STATUS csr_is_valid_channel(tpAniSirGlobal pMac, uint8_t chnNum);
