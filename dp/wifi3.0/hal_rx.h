@@ -826,6 +826,169 @@ hal_rx_msdu_start_rate_mcs_get(uint8_t *buf)
 	return rate_mcs;
 }
 
+#define HAL_RX_ATTN_DECRYPT_STATUS_GET(_rx_attn)		\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_attn,		\
+		RX_ATTENTION_2_DECRYPT_STATUS_CODE_OFFSET)),	\
+		RX_ATTENTION_2_DECRYPT_STATUS_CODE_MASK,	\
+		RX_ATTENTION_2_DECRYPT_STATUS_CODE_LSB))
+
+/*
+ * hal_rx_attn_msdu_get_is_decrypted(): API to get the decrypt status of the
+ *  packet from rx_attention
+ *
+ * @buf: pointer to the start of RX PKT TLV header
+ * Return: uint32_t(decryt status)
+ */
+
+static inline uint32_t
+hal_rx_attn_msdu_get_is_decrypted(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_attention *rx_attn = &pkt_tlvs->attn_tlv.rx_attn;
+	uint32_t is_decrypt = 0;
+	uint32_t decrypt_status;
+
+	decrypt_status = HAL_RX_ATTN_DECRYPT_STATUS_GET(rx_attn);
+
+	if (!decrypt_status)
+		is_decrypt = 1;
+
+	return is_decrypt;
+}
+
+/*
+ * Get key index from RX_MSDU_END
+ */
+#define HAL_RX_MSDU_END_KEYID_OCTET_GET(_rx_msdu_end)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,	\
+		RX_MSDU_END_2_KEY_ID_OCTET_OFFSET)),	\
+		RX_MSDU_END_2_KEY_ID_OCTET_MASK,	\
+		RX_MSDU_END_2_KEY_ID_OCTET_LSB))
+/*
+ * hal_rx_msdu_get_keyid(): API to get the key id if the decrypted packet
+ * from rx_msdu_end
+ *
+ * @buf: pointer to the start of RX PKT TLV header
+ * Return: uint32_t(key id)
+ */
+
+static inline uint32_t
+hal_rx_msdu_get_keyid(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+	uint32_t keyid_octet;
+
+	keyid_octet = HAL_RX_MSDU_END_KEYID_OCTET_GET(msdu_end);
+
+	return (keyid_octet >> 6) & 0x3;
+}
+
+#define HAL_RX_MSDU_START_RSSI_GET(_rx_msdu_start) 	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_start,  \
+		RX_MSDU_START_5_USER_RSSI_OFFSET)),	\
+		RX_MSDU_START_5_USER_RSSI_MASK,		\
+		RX_MSDU_START_5_USER_RSSI_LSB))
+/*
+ * hal_rx_msdu_start_get_rssi(): API to get the rssi of received pkt
+ * from rx_msdu_start
+ *
+ * @buf: pointer to the start of RX PKT TLV header
+ * Return: uint32_t(rssi)
+ */
+
+static inline uint32_t
+hal_rx_msdu_start_get_rssi(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_start *msdu_start = &pkt_tlvs->msdu_start_tlv.rx_msdu_start;
+	uint32_t rssi;
+
+	rssi = HAL_RX_MSDU_START_RSSI_GET(msdu_start);
+
+	return rssi;
+
+}
+
+#define HAL_RX_MSDU_START_FREQ_GET(_rx_msdu_start) 		\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_start,  	\
+		RX_MSDU_START_7_SW_PHY_META_DATA_OFFSET)),      \
+		RX_MSDU_START_7_SW_PHY_META_DATA_MASK,  	\
+		RX_MSDU_START_7_SW_PHY_META_DATA_LSB))
+
+/*
+ * hal_rx_msdu_start_get_freq(): API to get the frequency of operating channel
+ * from rx_msdu_start
+ *
+ * @buf: pointer to the start of RX PKT TLV header
+ * Return: uint32_t(frequency)
+ */
+
+static inline uint32_t
+hal_rx_msdu_start_get_freq(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_start *msdu_start =
+		&pkt_tlvs->msdu_start_tlv.rx_msdu_start;
+	uint32_t freq;
+
+	freq = HAL_RX_MSDU_START_FREQ_GET(msdu_start);
+
+	return freq;
+}
+
+
+#define HAL_RX_MSDU_START_PKT_TYPE_GET(_rx_msdu_start) 	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_start,  \
+		RX_MSDU_START_5_PKT_TYPE_OFFSET)),      \
+		RX_MSDU_START_5_PKT_TYPE_MASK,  	\
+		RX_MSDU_START_5_PKT_TYPE_LSB))
+
+/*
+ * hal_rx_msdu_start_get_pkt_type(): API to get the pkt type
+ * from rx_msdu_start
+ *
+ * @buf: pointer to the start of RX PKT TLV header
+ * Return: uint32_t(pkt type)
+ */
+
+static inline uint32_t
+hal_rx_msdu_start_get_pkt_type(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_start *msdu_start = &pkt_tlvs->msdu_start_tlv.rx_msdu_start;
+	uint32_t pkt_type;
+
+	pkt_type = HAL_RX_MSDU_START_PKT_TYPE_GET(msdu_start);
+
+	return pkt_type;
+}
+
+#define HAL_RX_MSDU_START_NSS_GET(_rx_msdu_start)      	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR((_rx_msdu_start),\
+	RX_MSDU_START_5_NSS_OFFSET)),          		\
+	RX_MSDU_START_5_NSS_MASK,              		\
+	RX_MSDU_START_5_NSS_LSB))
+
+/*
+ * hal_rx_msdu_start_nss_get(): API to get the NSS
+ * Interval from rx_msdu_start
+ *
+ * @buf: pointer to the start of RX PKT TLV header
+ * Return: uint32_t(nss)
+ */
+
+static inline uint32_t
+hal_rx_msdu_start_nss_get(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_start *msdu_start =
+				&pkt_tlvs->msdu_start_tlv.rx_msdu_start;
+	uint32_t nss;
+
+	nss = HAL_RX_MSDU_START_NSS_GET(msdu_start);
+	return nss;
+}
 
 /*******************************************************************************
  * RX ERROR APIS

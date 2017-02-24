@@ -23,6 +23,9 @@
 #include "hal_api.h"
 #include "qdf_nbuf.h"
 #include <ieee80211.h>
+#ifdef MESH_MODE_SUPPORT
+#include "if_meta_hdr.h"
+#endif
 
 /*
  * dp_rx_buffers_replenish() - replenish rxdma ring with rx nbufs
@@ -224,6 +227,68 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 		FL("Intra-BSS forwarding not implemented"));
 	return false;
 }
+
+#ifdef MESH_MODE_SUPPORT
+
+/**
+ * dp_rx_fill_mesh_stats() - Fills the mesh per packet receive stats
+ *
+ * @vdev: DP Virtual device handle
+ * @nbuf: Buffer pointer
+ *
+ * This function allocated memory for mesh receive stats and fill the
+ * required stats. Stores the memory address in skb cb.
+ *
+ * Return: void
+ */
+static
+void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
+{
+	struct mesh_recv_hdr_s *rx_info = NULL;
+	uint32_t pkt_type;
+	uint32_t nss;
+	uint32_t rate_mcs;
+	uint8_t *rx_tlv_hdr = qdf_nbuf_data(nbuf);
+
+	/* fill recv mesh stats */
+	rx_info = qdf_mem_malloc(sizeof(struct mesh_recv_hdr_s));
+
+	/* upper layers are resposible to free this memory */
+
+	if (rx_info == NULL) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			"Memory allocation failed for mesh rx stats");
+		return;
+	}
+
+	if (qdf_nbuf_is_chfrag_start(nbuf))
+		rx_info->rs_flags |= MESH_RX_FIRST_MSDU;
+
+	if (qdf_nbuf_is_chfrag_end(nbuf))
+		rx_info->rs_flags |= MESH_RX_LAST_MSDU;
+
+	if (hal_rx_attn_msdu_get_is_decrypted(rx_tlv_hdr)) {
+		rx_info->rs_flags |= MESH_RX_DECRYPTED;
+		rx_info->rs_keyix = hal_rx_msdu_get_keyid(rx_tlv_hdr);
+		rx_info->rs_flags |= MESH_KEY_NOTFILLED;
+	}
+
+	rx_info->rs_rssi = hal_rx_msdu_start_get_rssi(rx_tlv_hdr);
+	rx_info->rs_channel = hal_rx_msdu_start_get_freq(rx_tlv_hdr);
+	pkt_type = hal_rx_msdu_start_get_pkt_type(rx_tlv_hdr);
+	rate_mcs = hal_rx_msdu_start_rate_mcs_get(rx_tlv_hdr);
+	nss = hal_rx_msdu_start_nss_get(rx_tlv_hdr);
+	rx_info->rs_ratephy1 = rate_mcs | (nss << 0x4) | (pkt_type << 6);
+
+	qdf_nbuf_set_fctx_type(nbuf, (void *)rx_info, CB_FTYPE_MESH_RX_INFO);
+}
+#else
+static
+void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
+{
+}
+
+#endif
 
 
 /**
@@ -468,6 +533,9 @@ done:
 
 			/* Set length in nbuf */
 			qdf_nbuf_set_pktlen(nbuf, pkt_len);
+
+			if (qdf_unlikely(vdev->mesh_vdev))
+				dp_rx_fill_mesh_stats(vdev, nbuf);
 
 			/*
 			 * Advance the packet start pointer by total size of
