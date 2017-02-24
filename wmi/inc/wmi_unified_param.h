@@ -5199,6 +5199,7 @@ typedef enum {
 	wmi_pdev_param_enable_btcoex,
 	wmi_pdev_param_atf_peer_stats,
 	wmi_pdev_param_btcoex_cfg,
+	wmi_pdev_param_mesh_mcast_enable,
 
 	wmi_pdev_param_max,
 } wmi_conv_pdev_params_id;
