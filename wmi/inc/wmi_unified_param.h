@@ -75,16 +75,6 @@
 #define WMI_ROAM_SCAN_PSK_SIZE    32
 #endif
 #define WMI_NOISE_FLOOR_DBM_DEFAULT      (-96)
-#define WMI_MAC_IPV6_ADDR_LEN                            16
-#define WMI_OFFLOAD_DISABLE                         0
-#define WMI_OFFLOAD_ENABLE                          1
-#ifdef WLAN_NS_OFFLOAD
-/* support only one IPv6 offload */
-#define WMI_MAC_NS_OFFLOAD_SIZE                          1
-/* Number of target IP V6 addresses for NS offload */
-#define WMI_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA            16
-#define WMI_IPV6_ADDR_VALID                              1
-#endif /* WLAN_NS_OFFLOAD */
 #define WMI_EXTSCAN_MAX_HOTLIST_SSIDS                    8
 #define WMI_ROAM_MAX_CHANNELS                            80
 #ifdef FEATURE_WLAN_EXTSCAN
@@ -3102,27 +3092,6 @@ struct periodic_tx_pattern {
 	uint8_t ucPattern[WMI_PERIODIC_TX_PTRN_MAX_SIZE];
 };
 
-#define WMI_GTK_OFFLOAD_KEK_BYTES       16
-#define WMI_GTK_OFFLOAD_KCK_BYTES       16
-#define WMI_GTK_OFFLOAD_ENABLE          0
-#define WMI_GTK_OFFLOAD_DISABLE         1
-
-/**
- * struct gtk_offload_params - gtk offload parameters
- * @ulFlags: optional flags
- * @aKCK: Key confirmation key
- * @aKEK: key encryption key
- * @ullKeyReplayCounter: replay counter
- * @bssid: bss id
- */
-struct gtk_offload_params {
-	uint32_t ulFlags;
-	uint8_t aKCK[WMI_GTK_OFFLOAD_KCK_BYTES];
-	uint8_t aKEK[WMI_GTK_OFFLOAD_KEK_BYTES];
-	uint64_t ullKeyReplayCounter;
-	struct qdf_mac_addr bssid;
-};
-
 /**
  * struct flashing_req_params - led flashing parameter
  * @reqId: request id
@@ -3285,50 +3254,6 @@ struct wmi_dual_mac_config {
 	uint32_t scan_config;
 	uint32_t fw_mode_config;
 	void *set_dual_mac_cb;
-};
-
-#ifdef WLAN_NS_OFFLOAD
-/**
- * struct ns_offload_req_params - ns offload request paramter
- * @srcIPv6Addr:  src ipv6 address
- * @selfIPv6Addr:  self ipv6 address
- * @targetIPv6Addr: target ipv6 address
- * @self_macaddr: self mac address
- * @srcIPv6AddrValid: src ipv6 address valid flag
- * @targetIPv6AddrValid: target ipv6 address valid flag
- * @target_ipv6_addr_ac_type: target ipv6 address type
- * @slotIdx: slot index
- */
-struct ns_offload_req_params {
-	uint8_t srcIPv6Addr[WMI_MAC_IPV6_ADDR_LEN];
-	uint8_t selfIPv6Addr[WMI_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA][WMI_MAC_IPV6_ADDR_LEN];
-	uint8_t targetIPv6Addr[WMI_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA][WMI_MAC_IPV6_ADDR_LEN];
-	struct qdf_mac_addr self_macaddr;
-	uint8_t srcIPv6AddrValid;
-	uint8_t targetIPv6AddrValid[WMI_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA];
-	uint8_t target_ipv6_addr_ac_type[WMI_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA];
-	uint8_t slotIdx;
-};
-#endif /* WLAN_NS_OFFLOAD */
-
-/**
- * struct host_offload_req_param - arp offload parameter
- * @offloadType: offload type
- * @enableOrDisable: enable or disable
- * @num_ns_offload_count: offload count
- */
-struct host_offload_req_param {
-	uint8_t offloadType;
-	uint8_t enableOrDisable;
-	uint32_t num_ns_offload_count;
-	union {
-		uint8_t hostIpv4Addr[WMI_IPV4_ADDR_LEN];
-		uint8_t hostIpv6Addr[WMI_MAC_IPV6_ADDR_LEN];
-	} params;
-#ifdef WLAN_NS_OFFLOAD
-	struct ns_offload_req_params nsOffloadInfo;
-#endif /* WLAN_NS_OFFLOAD */
-	struct qdf_mac_addr bssid;
 };
 
 /**
@@ -7353,22 +7278,6 @@ enum WMI_HOST_CALIBRATION_STATUS {
 	WMI_HOST_NO_FEATURE = 0,
 	WMI_HOST_CALIBRATION_OK,
 	WMI_HOST_CALIBRATION_NOT_OK,
-};
-
-#define WMI_SUPPORTED_ACTION_CATEGORY           256
-#define WMI_SUPPORTED_ACTION_CATEGORY_ELE_LIST  (WMI_SUPPORTED_ACTION_CATEGORY/32)
-
-/**
- * struct action_wakeup_set_param - action wakeup set params
- * @vdev_id: virtual device id
- * @operation: 0 reset to fw default, 1 set the bits,
- *    2 add the setting bits, 3 delete the setting bits
- * @action_category_map: bit mapping.
- */
-struct action_wakeup_set_param {
-	uint32_t vdev_id;
-	uint32_t operation;
-	uint32_t action_category_map[WMI_SUPPORTED_ACTION_CATEGORY_ELE_LIST];
 };
 
 /**

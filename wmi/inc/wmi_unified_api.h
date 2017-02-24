@@ -43,6 +43,9 @@
 #include "wmi_unified_param.h"
 #include "wlan_objmgr_psoc_obj.h"
 #include "wlan_mgmt_txrx_utils_api.h"
+#ifdef WLAN_PMO_ENABLE
+#include "wmi_unified_pmo_api.h"
+#endif
 
 typedef qdf_nbuf_t wmi_buf_t;
 #define wmi_buf_data(_buf) qdf_nbuf_data(_buf)
@@ -646,21 +649,6 @@ QDF_STATUS wmi_unified_link_status_req_cmd(void *wmi_hdl,
 				 struct link_status_params *link_status);
 
 #ifdef CONFIG_MCL
-QDF_STATUS wmi_unified_lphb_config_hbenable_cmd(void *wmi_hdl,
-				wmi_hb_set_enable_cmd_fixed_param *params);
-
-QDF_STATUS wmi_unified_lphb_config_tcp_params_cmd(void *wmi_hdl,
-				    wmi_hb_set_tcp_params_cmd_fixed_param *lphb_conf_req);
-
-QDF_STATUS wmi_unified_lphb_config_tcp_pkt_filter_cmd(void *wmi_hdl,
-					wmi_hb_set_tcp_pkt_filter_cmd_fixed_param *g_hb_tcp_filter_fp);
-
-QDF_STATUS wmi_unified_lphb_config_udp_params_cmd(void *wmi_hdl,
-				    wmi_hb_set_udp_params_cmd_fixed_param *lphb_conf_req);
-
-QDF_STATUS wmi_unified_lphb_config_udp_pkt_filter_cmd(void *wmi_hdl,
-		wmi_hb_set_udp_pkt_filter_cmd_fixed_param *lphb_conf_req);
-
 QDF_STATUS wmi_unified_process_dhcp_ind(void *wmi_hdl,
 				wmi_peer_set_param_cmd_fixed_param *ta_dhcp_ind);
 
@@ -672,15 +660,8 @@ QDF_STATUS wmi_unified_egap_conf_params_cmd(void *wmi_hdl,
 
 #endif
 
-QDF_STATUS wmi_unified_action_frame_patterns_cmd(void *wmi_hdl,
-			struct action_wakeup_set_param *action_params);
-
 QDF_STATUS wmi_unified_fw_profiling_data_cmd(void *wmi_hdl,
 			uint32_t cmd, uint32_t value1, uint32_t value2);
-
-QDF_STATUS wmi_unified_wow_sta_ra_filter_cmd(void *wmi_hdl,
-			  uint8_t vdev_id, uint8_t default_pattern,
-			  uint16_t rate_limit_interval);
 
 QDF_STATUS wmi_unified_nat_keepalive_en_cmd(void *wmi_hdl, uint8_t vdev_id);
 
@@ -699,18 +680,6 @@ QDF_STATUS wmi_unified_pktlog_wmi_send_cmd(void *wmi_hdl,
 				   uint32_t cmd_id,
 				   uint8_t user_triggered);
 #endif
-
-QDF_STATUS wmi_unified_add_wow_wakeup_event_cmd(void *wmi_hdl,
-					uint32_t vdev_id,
-					uint32_t bitmap,
-					bool enable);
-
-QDF_STATUS wmi_unified_wow_patterns_to_fw_cmd(void *wmi_hdl,
-				uint8_t vdev_id, uint8_t ptrn_id,
-				const uint8_t *ptrn, uint8_t ptrn_len,
-				uint8_t ptrn_offset, const uint8_t *mask,
-				uint8_t mask_len, bool user,
-				uint8_t default_patterns);
 
 QDF_STATUS wmi_unified_wow_delete_pattern_cmd(void *wmi_hdl, uint8_t ptrn_id,
 					uint8_t vdev_id);
@@ -731,20 +700,6 @@ QDF_STATUS wmi_unified_enable_disable_packet_filter_cmd(void *wmi_hdl,
 QDF_STATUS wmi_unified_config_packet_filter_cmd(void *wmi_hdl,
 		uint8_t vdev_id, struct rcv_pkt_filter_config *rcv_filter_param,
 		uint8_t filter_id, bool enable);
-
-QDF_STATUS wmi_unified_add_clear_mcbc_filter_cmd(void *wmi_hdl,
-					 uint8_t vdev_id,
-					 struct qdf_mac_addr multicast_addr,
-					 bool clearList);
-
-QDF_STATUS wmi_unified_send_gtk_offload_cmd(void *wmi_hdl, uint8_t vdev_id,
-					   struct gtk_offload_params *params,
-					   bool enable_offload,
-					   uint32_t gtk_offload_opcode);
-
-QDF_STATUS wmi_unified_process_gtk_offload_getinfo_cmd(void *wmi_hdl,
-				uint8_t vdev_id,
-				uint64_t offload_req_opcode);
 
 QDF_STATUS wmi_unified_process_add_periodic_tx_ptrn_cmd(void *wmi_hdl,
 						struct periodic_tx_pattern  *
@@ -840,12 +795,6 @@ QDF_STATUS wmi_unified_soc_set_hw_mode_cmd(void *wmi_hdl,
 
 QDF_STATUS wmi_unified_pdev_set_dual_mac_config_cmd(void *wmi_hdl,
 		struct wmi_dual_mac_config *msg);
-
-QDF_STATUS wmi_unified_enable_arp_ns_offload_cmd(void *wmi_hdl,
-			   struct host_offload_req_param *arp_offload_req,
-			   struct host_offload_req_param *ns_offload_req,
-			   bool arp_only,
-			   uint8_t vdev_id);
 
 /**
  * wmi_unified_configure_broadcast_filter_cmd() - Enable/Disable Broadcast

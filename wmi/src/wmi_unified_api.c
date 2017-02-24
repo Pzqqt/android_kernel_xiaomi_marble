@@ -2058,104 +2058,6 @@ QDF_STATUS wmi_unified_link_status_req_cmd(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-#ifdef FEATURE_WLAN_LPHB
-
-/**
- * wmi_unified_lphb_config_hbenable_cmd() - enable command of LPHB configuration requests
- * @wmi_handle: wmi handle
- * @lphb_conf_req: configuration info
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_lphb_config_hbenable_cmd(void *wmi_hdl,
-				wmi_hb_set_enable_cmd_fixed_param *params)
-{
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
-	if (wmi_handle->ops->send_lphb_config_hbenable_cmd)
-		return wmi_handle->ops->send_lphb_config_hbenable_cmd(wmi_handle,
-			    params);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
-/**
- * wmi_unified_lphb_config_tcp_params_cmd() - set tcp params of LPHB configuration requests
- * @wmi_handle: wmi handle
- * @lphb_conf_req: lphb config request
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_lphb_config_tcp_params_cmd(void *wmi_hdl,
-				    wmi_hb_set_tcp_params_cmd_fixed_param *lphb_conf_req)
-{
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
-	if (wmi_handle->ops->send_lphb_config_tcp_params_cmd)
-		return wmi_handle->ops->send_lphb_config_tcp_params_cmd(wmi_handle,
-			    lphb_conf_req);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
-/**
- * wmi_unified_lphb_config_tcp_pkt_filter_cmd() - configure tcp packet filter command of LPHB
- * @wmi_handle: wmi handle
- * @lphb_conf_req: lphb config request
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_lphb_config_tcp_pkt_filter_cmd(void *wmi_hdl,
-					wmi_hb_set_tcp_pkt_filter_cmd_fixed_param *g_hb_tcp_filter_fp)
-{
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
-	if (wmi_handle->ops->send_lphb_config_tcp_pkt_filter_cmd)
-		return wmi_handle->ops->send_lphb_config_tcp_pkt_filter_cmd(wmi_handle,
-			    g_hb_tcp_filter_fp);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
-/**
- * wmi_unified_lphb_config_udp_params_cmd() - configure udp param command of LPHB
- * @wmi_handle: wmi handle
- * @lphb_conf_req: lphb config request
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_lphb_config_udp_params_cmd(void *wmi_hdl,
-				    wmi_hb_set_udp_params_cmd_fixed_param *lphb_conf_req)
-{
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
-	if (wmi_handle->ops->send_lphb_config_udp_params_cmd)
-		return wmi_handle->ops->send_lphb_config_udp_params_cmd(wmi_handle,
-			    lphb_conf_req);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
-/**
- * wmi_unified_lphb_config_udp_pkt_filter_cmd() - configure udp pkt filter command of LPHB
- * @wmi_handle: wmi handle
- * @lphb_conf_req: lphb config request
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_lphb_config_udp_pkt_filter_cmd(void *wmi_hdl,
-					wmi_hb_set_udp_pkt_filter_cmd_fixed_param *lphb_conf_req)
-{
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
-	if (wmi_handle->ops->send_lphb_config_udp_pkt_filter_cmd)
-		return wmi_handle->ops->send_lphb_config_udp_pkt_filter_cmd(wmi_handle,
-			    lphb_conf_req);
-
-	return QDF_STATUS_E_FAILURE;
-}
-#endif /* FEATURE_WLAN_LPHB */
-
 /**
  * wmi_unified_process_dhcp_ind() - process dhcp indication from SME
  * @wmi_handle: wmi handle
@@ -2217,26 +2119,6 @@ QDF_STATUS wmi_unified_egap_conf_params_cmd(void *wmi_hdl,
 #endif
 
 /**
- * wmi_unified_action_frame_patterns_cmd() - send wmi cmd of action filter params
- * @wmi_handle: wmi handler
- * @action_params: pointer to action_params
- *
- * Return: 0 for success, otherwise appropriate error code
- */
-QDF_STATUS wmi_unified_action_frame_patterns_cmd(void *wmi_hdl,
-				struct action_wakeup_set_param *action_params)
-{
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
-	if (wmi_handle->ops->send_action_frame_patterns_cmd)
-		return wmi_handle->ops->send_action_frame_patterns_cmd(
-				wmi_handle,
-				action_params);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
-/**
  * wmi_unified_fw_profiling_data_cmd() - send FW profiling cmd to WLAN FW
  * @wmi_handl: wmi handle
  * @cmd: Profiling command index
@@ -2256,30 +2138,6 @@ QDF_STATUS wmi_unified_fw_profiling_data_cmd(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
-
-#ifdef FEATURE_WLAN_RA_FILTERING
-/**
- * wmi_unified_wow_sta_ra_filter_cmd() - set RA filter pattern in fw
- * @wmi_handle: wmi handle
- * @vdev_id: vdev id
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_wow_sta_ra_filter_cmd(void *wmi_hdl,
-				uint8_t vdev_id, uint8_t default_pattern,
-				uint16_t rate_limit_interval)
-{
-
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
-	if (wmi_handle->ops->send_wow_sta_ra_filter_cmd)
-		return wmi_handle->ops->send_wow_sta_ra_filter_cmd(wmi_handle,
-			    vdev_id, default_pattern, rate_limit_interval);
-
-	return QDF_STATUS_E_FAILURE;
-
-}
-#endif /* FEATURE_WLAN_RA_FILTERING */
 
 /**
  * wmi_unified_nat_keepalive_en_cmd() - enable NAT keepalive filter
@@ -2386,62 +2244,6 @@ QDF_STATUS wmi_unified_pktlog_wmi_send_cmd(void *wmi_hdl,
 }
 #endif
 #endif /* REMOVE_PKT_LOG */
-
-/**
- * wmi_unified_add_wow_wakeup_event_cmd() -  Configures wow wakeup events.
- * @wmi_handle: wmi handle
- * @vdev_id: vdev id
- * @bitmap: Event bitmap
- * @enable: enable/disable
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_add_wow_wakeup_event_cmd(void *wmi_hdl,
-					uint32_t vdev_id,
-					uint32_t bitmap,
-					bool enable)
-{
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
-	if (wmi_handle->ops->send_add_wow_wakeup_event_cmd)
-		return wmi_handle->ops->send_add_wow_wakeup_event_cmd(
-				wmi_handle, vdev_id, bitmap, enable);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
-/**
- * wmi_unified_wow_patterns_to_fw_cmd() - Sends WOW patterns to FW.
- * @wmi_handle: wmi handle
- * @vdev_id: vdev id
- * @ptrn_id: pattern id
- * @ptrn: pattern
- * @ptrn_len: pattern length
- * @ptrn_offset: pattern offset
- * @mask: mask
- * @mask_len: mask length
- * @user: true for user configured pattern and false for default pattern
- * @default_patterns: default patterns
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_wow_patterns_to_fw_cmd(void *wmi_hdl,
-				uint8_t vdev_id, uint8_t ptrn_id,
-				const uint8_t *ptrn, uint8_t ptrn_len,
-				uint8_t ptrn_offset, const uint8_t *mask,
-				uint8_t mask_len, bool user,
-				uint8_t default_patterns)
-{
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
-	if (wmi_handle->ops->send_wow_patterns_to_fw_cmd)
-		return wmi_handle->ops->send_wow_patterns_to_fw_cmd(wmi_handle,
-			    vdev_id, ptrn_id, ptrn,
-				ptrn_len, ptrn_offset, mask,
-				mask_len, user, default_patterns);
-
-	return QDF_STATUS_E_FAILURE;
-}
 
 /**
  * wmi_unified_wow_delete_pattern_cmd() - delete wow pattern in target
@@ -2583,73 +2385,6 @@ QDF_STATUS wmi_unified_config_packet_filter_cmd(void *wmi_hdl,
 		return wmi_handle->ops->send_config_packet_filter_cmd(wmi_handle,
 			    vdev_id, rcv_filter_param,
 				filter_id, enable);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
-/**
- * wmi_unified_add_clear_mcbc_filter_cmd() - set mcast filter command to fw
- * @wmi_handle: wmi handle
- * @vdev_id: vdev id
- * @multicastAddr: mcast address
- * @clearList: clear list flag
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_add_clear_mcbc_filter_cmd(void *wmi_hdl,
-				     uint8_t vdev_id,
-				     struct qdf_mac_addr multicast_addr,
-				     bool clearList)
-{
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
-	if (wmi_handle->ops->send_add_clear_mcbc_filter_cmd)
-		return wmi_handle->ops->send_add_clear_mcbc_filter_cmd(wmi_handle,
-			    vdev_id, multicast_addr, clearList);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
-/**
- * wmi_unified_send_gtk_offload_cmd() - send GTK offload command to fw
- * @wmi_handle: wmi handle
- * @vdev_id: vdev id
- * @params: GTK offload parameters
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_send_gtk_offload_cmd(void *wmi_hdl, uint8_t vdev_id,
-					   struct gtk_offload_params *params,
-					   bool enable_offload,
-					   uint32_t gtk_offload_opcode)
-{
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
-	if (wmi_handle->ops->send_gtk_offload_cmd)
-		return wmi_handle->ops->send_gtk_offload_cmd(wmi_handle,
-			    vdev_id, params,
-				enable_offload, gtk_offload_opcode);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
-/**
- * wmi_unified_process_gtk_offload_getinfo_cmd() - send GTK offload cmd to fw
- * @wmi_handle: wmi handle
- * @params: GTK offload params
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_process_gtk_offload_getinfo_cmd(void *wmi_hdl,
-				uint8_t vdev_id,
-				uint64_t offload_req_opcode)
-{
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
-	if (wmi_handle->ops->send_process_gtk_offload_getinfo_cmd)
-		return wmi_handle->ops->send_process_gtk_offload_getinfo_cmd(wmi_handle,
-			    vdev_id,
-				offload_req_opcode);
 
 	return QDF_STATUS_E_FAILURE;
 }
@@ -3186,33 +2921,6 @@ QDF_STATUS wmi_unified_pdev_set_dual_mac_config_cmd(void *wmi_hdl,
 	if (wmi_handle->ops->send_pdev_set_dual_mac_config_cmd)
 		return wmi_handle->ops->send_pdev_set_dual_mac_config_cmd(wmi_handle,
 				  msg);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
-/**
- * wmi_unified_enable_arp_ns_offload_cmd() - enable ARP NS offload
- * @wmi_hdl: wmi handle
- * @param: offload request
- * @arp_only: flag
- *
- * To configure ARP NS off load data to firmware
- * when target goes to wow mode.
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_enable_arp_ns_offload_cmd(void *wmi_hdl,
-			   struct host_offload_req_param *arp_offload_req,
-			   struct host_offload_req_param *ns_offload_req,
-			   bool arp_only,
-			   uint8_t vdev_id)
-{
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
-	if (wmi_handle->ops->send_enable_arp_ns_offload_cmd)
-		return wmi_handle->ops->send_enable_arp_ns_offload_cmd(wmi_handle,
-				  arp_offload_req, ns_offload_req, arp_only,
-				  vdev_id);
 
 	return QDF_STATUS_E_FAILURE;
 }
