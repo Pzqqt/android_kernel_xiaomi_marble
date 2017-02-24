@@ -48,6 +48,7 @@
 #include "sme_qos_internal.h"
 
 #include "sme_rrm_api.h"
+#include "wlan_serialization_api.h"
 ePhyChanBondState csr_convert_cb_ini_value_to_phy_cb_state(uint32_t cbIniValue);
 
 /*--------------------------------------------------------------------------
@@ -59,6 +60,8 @@ ePhyChanBondState csr_convert_cb_ini_value_to_phy_cb_state(uint32_t cbIniValue);
  * to make sure we have space for these cmds + some additional cmds.
  */
 #define SME_TOTAL_COMMAND                (HAL_NUM_STA * 3)
+/* default sme timeout is set to 30 secs */
+#define SME_DEFAULT_CMD_TIMEOUT  30000
 
 typedef struct sGenericPmcCmd {
 	uint32_t size;          /* sizeof the data in the union, if any */
@@ -196,6 +199,29 @@ typedef struct tagSmeCmd {
 /*--------------------------------------------------------------------------
   Internal to SME
   ------------------------------------------------------------------------*/
+/**
+ * csr_get_cmd_type() - to convert sme command type to serialization cmd type
+ * @sme_cmd: sme command pointer
+ *
+ * This API will convert SME command type to serialization command type which
+ * new serialization module understands
+ *
+ * Return: serialization cmd type based on sme command type
+ */
+enum wlan_serialization_cmd_type csr_get_cmd_type(tSmeCmd *sme_cmd);
+/**
+ * csr_set_serialization_params_to_cmd() - take sme params and create new
+ *						serialization command
+ * @mac_ctx: pointer to mac context
+ * @sme_cmd: sme command pointer
+ * @cmd: serialization command pointer
+ * @high_priority: if command is high priority
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_E_FAILURE
+ */
+QDF_STATUS csr_set_serialization_params_to_cmd(tpAniSirGlobal mac_ctx,
+		tSmeCmd *sme_cmd, struct wlan_serialization_command *cmd,
+		uint8_t high_priority);
 tSmeCmd *sme_get_command_buffer(tpAniSirGlobal pMac);
 void sme_push_command(tpAniSirGlobal pMac, tSmeCmd *pCmd, bool fHighPriority);
 void sme_process_pending_queue(tpAniSirGlobal pMac);
@@ -215,6 +241,7 @@ QDF_STATUS csr_roam_process_set_key_command(tpAniSirGlobal pMac,
 		tSmeCmd *pCommand);
 void csr_release_command_set_key(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 void csr_abort_command(tpAniSirGlobal pMac, tSmeCmd *pCommand, bool fStopping);
+void csr_cancel_command(tpAniSirGlobal mac_ctx, tSmeCmd *sme_cmd);
 
 QDF_STATUS csr_is_valid_channel(tpAniSirGlobal pMac, uint8_t chnNum);
 bool csr_roam_is_valid40_mhz_channel(tpAniSirGlobal pmac, uint8_t channel);
@@ -269,7 +296,6 @@ QDF_STATUS csr_create_roam_scan_channel_list(tpAniSirGlobal pMac,
 QDF_STATUS p2p_process_remain_on_channel_cmd(tpAniSirGlobal pMac,
 					     tSmeCmd *p2pRemainonChn);
 ePhyChanBondState csr_convert_cb_ini_value_to_phy_cb_state(uint32_t cbIniValue);
-void active_list_cmd_timeout_handle(void *userData);
 void csr_process_set_dual_mac_config(tpAniSirGlobal mac, tSmeCmd *command);
 void csr_process_set_antenna_mode(tpAniSirGlobal mac, tSmeCmd *command);
 void csr_process_set_hw_mode(tpAniSirGlobal mac, tSmeCmd *command);

@@ -975,7 +975,6 @@ typedef struct tagCsrRoamSession {
 
 typedef struct tagCsrRoamStruct {
 	uint32_t nextRoamId;
-	tDblLinkList roamCmdPendingList;
 	tDblLinkList channelList5G;
 	tDblLinkList channelList24;
 	tCsrConfig configParam;
@@ -1398,31 +1397,31 @@ void csr_nonscan_active_ll_unlock(struct sAniSirGlobal *mac_ctx);
 void csr_nonscan_pending_ll_lock(struct sAniSirGlobal *mac_ctx);
 void csr_nonscan_active_ll_lock(struct sAniSirGlobal *mac_ctx);
 bool csr_nonscan_active_ll_is_list_empty(struct sAniSirGlobal *mac_ctx,
-			bool fInterlocked);
+			bool inter_locked);
 bool csr_nonscan_pending_ll_is_list_empty(struct sAniSirGlobal *mac_ctx,
-			bool fInterlocked);
+			bool inter_locked);
 bool csr_nonscan_active_ll_remove_entry(struct sAniSirGlobal *mac_ctx,
-			tListElem *pEntryToRemove, bool fInterlocked);
+			tListElem *pEntryToRemove, bool inter_locked);
 bool csr_nonscan_pending_ll_remove_entry(struct sAniSirGlobal *mac_ctx,
-			tListElem *pEntryToRemove, bool fInterlocked);
-tListElem *csr_nonscan_active_ll_peak_head(struct sAniSirGlobal *mac_ctx,
-			bool fInterlocked);
-tListElem *csr_nonscan_pending_ll_peak_head(struct sAniSirGlobal *mac_ctx,
-			bool fInterlocked);
+			tListElem *pEntryToRemove, bool inter_locked);
+tListElem *csr_nonscan_active_ll_peek_head(struct sAniSirGlobal *mac_ctx,
+			bool inter_locked);
+tListElem *csr_nonscan_pending_ll_peek_head(struct sAniSirGlobal *mac_ctx,
+			bool inter_locked);
 tListElem *csr_nonscan_active_ll_remove_head(struct sAniSirGlobal *mac_ctx,
-			bool fInterlocked);
+			bool inter_locked);
 tListElem *csr_nonscan_pending_ll_remove_head(struct sAniSirGlobal *mac_ctx,
-			bool fInterlocked);
+			bool inter_locked);
 uint32_t csr_nonscan_pending_ll_count(struct sAniSirGlobal *mac_ctx);
 void csr_nonscan_pending_ll_insert_head(struct sAniSirGlobal *mac_ctx,
-		tListElem *entry, bool fInterlocked);
+		tListElem *entry, bool inter_locked);
 void csr_nonscan_pending_ll_insert_tail(struct sAniSirGlobal *mac_ctx,
-		tListElem *entry, bool fInterlocked);
+		tListElem *entry, bool inter_locked);
 uint32_t csr_nonscan_active_ll_count(struct sAniSirGlobal *mac_ctx);
 void csr_nonscan_active_ll_insert_head(struct sAniSirGlobal *mac_ctx,
-		tListElem *entry, bool fInterlocked);
+		tListElem *entry, bool inter_locked);
 tListElem *csr_nonscan_pending_ll_next(struct sAniSirGlobal *mac_ctx,
-		tListElem *entry, bool fInterlocked);
+		tListElem *entry, bool inter_locked);
 void purge_sme_session_pending_cmd_list(struct sAniSirGlobal *mac_ctx,
 		uint32_t session_id);
 void purge_sme_session_active_cmd_list(struct sAniSirGlobal *mac_ctx,

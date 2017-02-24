@@ -625,7 +625,7 @@ void sme_ndp_msg_processor(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg)
 	eSmeCommandType cmd_to_rel = eSmeNoCommand;
 	bool send_to_user = true;
 
-	entry = csr_nonscan_active_ll_peak_head(mac_ctx,
+	entry = csr_nonscan_active_ll_peek_head(mac_ctx,
 				 LL_ACCESS_LOCK);
 	if (entry != NULL)
 		cmd = GET_BASE_ADDR(entry, tSmeCmd, Link);
@@ -778,7 +778,6 @@ void sme_ndp_msg_processor(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg)
 		if (csr_nonscan_active_ll_remove_entry(mac_ctx,
 				     entry, LL_ACCESS_LOCK))
 			csr_release_command(mac_ctx, cmd);
-		sme_process_pending_queue(mac_ctx);
 	}
 }
 

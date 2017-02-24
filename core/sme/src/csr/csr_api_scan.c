@@ -6775,7 +6775,7 @@ QDF_STATUS csr_remove_nonscan_cmd_from_pending_list(tpAniSirGlobal pMac,
 	}
 
 	csr_nonscan_pending_ll_lock(pMac);
-	pEntry = csr_nonscan_pending_ll_peak_head(pMac, LL_ACCESS_NOLOCK);
+	pEntry = csr_nonscan_pending_ll_peek_head(pMac, LL_ACCESS_NOLOCK);
 
 	/*
 	 * Have to make sure we don't loop back to the head of the list,

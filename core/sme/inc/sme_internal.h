@@ -181,8 +181,6 @@ typedef struct tagSmeStruct {
 	uint32_t totalSmeCmd;
 	/* following pointer contains array of pointers for tSmeCmd* */
 	void **pSmeCmdBufAddr;
-	tDblLinkList smeCmdActiveList;
-	tDblLinkList smeCmdPendingList;
 	tDblLinkList smeCmdFreeList;    /* preallocated roam cmd list */
 	enum tQDF_ADAPTER_MODE currDeviceMode;
 #ifdef FEATURE_WLAN_LPHB

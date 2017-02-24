@@ -50,6 +50,7 @@
 #include "sme_rrm_internal.h"
 #include "sir_types.h"
 #include "scheduler_api.h"
+#include "wlan_serialization_api.h"
 
 /*--------------------------------------------------------------------------
   Preprocessor definitions and constants
@@ -242,6 +243,18 @@ QDF_STATUS sme_get_soft_ap_domain(tHalHandle hHal,
 		v_REGDOMAIN_t *domainIdSoftAp);
 QDF_STATUS sme_set_reg_info(tHalHandle hHal, uint8_t *apCntryCode);
 QDF_STATUS sme_hdd_ready_ind(tHalHandle hHal);
+/**
+ * sme_ser_cmd_callback() - callback from serialization module
+ * @buf: serialization command buffer
+ * @reason: reason why serialization module has given this callback
+ *
+ * Serialization module will give callback to SME for why it triggered
+ * the callback
+ *
+ * Return: QDF_STATUS_SUCCESS
+ */
+QDF_STATUS sme_ser_cmd_callback(void *buf,
+				enum wlan_serialization_cb_reason reason);
 QDF_STATUS sme_process_msg(tHalHandle hHal, struct scheduler_msg *pMsg);
 QDF_STATUS sme_mc_process_handler(struct scheduler_msg *msg);
 void sme_free_msg(tHalHandle hHal, struct scheduler_msg *pMsg);

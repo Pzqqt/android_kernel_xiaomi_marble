@@ -42,6 +42,7 @@
 #include "wma_types.h"
 #include "cds_utils.h"
 #include "cds_concurrency.h"
+#include "wlan_serialization_api.h"
 
 
 uint8_t csr_wpa_oui[][CSR_WPA_OUI_SIZE] = {
@@ -254,24 +255,173 @@ const char *get_e_csr_roam_result_str(eCsrRoamResult val)
 	}
 }
 
+void purge_sme_session_pending_cmd_list(struct sAniSirGlobal *mac_ctx,
+				uint32_t session_id)
+{
+	uint8_t vdev_id = session_id;
+
+	wlan_serialization_purge_cmd_list(mac_ctx->psoc, &vdev_id,
+			false, false, false, true, false);
+}
+
+void purge_sme_session_active_cmd_list(struct sAniSirGlobal *mac_ctx,
+				uint32_t session_id)
+{
+	uint8_t vdev_id = session_id;
+
+	wlan_serialization_purge_cmd_list(mac_ctx->psoc, &vdev_id,
+			false, false, true, false, false);
+}
+
+void csr_nonscan_active_ll_insert_head(struct sAniSirGlobal *mac_ctx,
+			tListElem *entry, bool inter_locked)
+{
+}
+
+void csr_nonscan_pending_ll_insert_head(struct sAniSirGlobal *mac_ctx,
+		tListElem *entry, bool inter_locked)
+{
+}
+
+void csr_nonscan_pending_ll_insert_tail(struct sAniSirGlobal *mac_ctx,
+		tListElem *entry, bool inter_locked)
+{
+}
 void csr_nonscan_pending_ll_unlock(struct sAniSirGlobal *mac_ctx)
 {
-	csr_ll_unlock(&mac_ctx->sme.smeCmdPendingList);
 }
 
 void csr_nonscan_active_ll_unlock(struct sAniSirGlobal *mac_ctx)
 {
-	csr_ll_unlock(&mac_ctx->sme.smeCmdActiveList);
 }
 
 void csr_nonscan_pending_ll_lock(struct sAniSirGlobal *mac_ctx)
 {
-	csr_ll_lock(&mac_ctx->sme.smeCmdPendingList);
 }
 
 void csr_nonscan_active_ll_lock(struct sAniSirGlobal *mac_ctx)
 {
-	csr_ll_lock(&mac_ctx->sme.smeCmdActiveList);
+}
+uint32_t csr_nonscan_active_ll_count(struct sAniSirGlobal *mac_ctx)
+{
+	return wlan_serialization_get_active_list_count(mac_ctx->psoc, false);
+}
+
+uint32_t csr_nonscan_pending_ll_count(struct sAniSirGlobal *mac_ctx)
+{
+	return wlan_serialization_get_pending_list_count(mac_ctx->psoc, false);
+}
+
+bool csr_nonscan_active_ll_is_list_empty(struct sAniSirGlobal *mac_ctx,
+				bool inter_locked)
+{
+	return !wlan_serialization_get_active_list_count(mac_ctx->psoc, false);
+}
+bool csr_nonscan_pending_ll_is_list_empty(struct sAniSirGlobal *mac_ctx,
+				bool inter_locked)
+{
+	return !wlan_serialization_get_pending_list_count(mac_ctx->psoc, false);
+}
+tListElem *csr_nonscan_active_ll_peek_head(struct sAniSirGlobal *mac_ctx,
+		bool inter_locked)
+{
+	struct wlan_serialization_command *cmd;
+	tSmeCmd *sme_cmd;
+
+	sms_log(mac_ctx, LOGE, "Enter");
+	cmd = wlan_serialization_peek_head_active_cmd_using_psoc(mac_ctx->psoc,
+								 false);
+	if (!cmd) {
+		sms_log(mac_ctx, LOGE, "No cmd found");
+		return NULL;
+	}
+	sme_cmd = cmd->umac_cmd;
+	sms_log(mac_ctx, LOGE, "Exit");
+
+	return &sme_cmd->Link;
+}
+tListElem *csr_nonscan_pending_ll_peek_head(struct sAniSirGlobal *mac_ctx,
+		bool inter_locked)
+{
+	struct wlan_serialization_command *cmd;
+	tSmeCmd *sme_cmd;
+
+	sms_log(mac_ctx, LOGE, "Enter");
+	cmd = wlan_serialization_peek_head_pending_cmd_using_psoc(mac_ctx->psoc,
+								  false);
+	if (!cmd) {
+		sms_log(mac_ctx, LOGE, "No cmd found");
+		return NULL;
+	}
+	sme_cmd = cmd->umac_cmd;
+	sms_log(mac_ctx, LOGE, "Exit");
+
+	return &sme_cmd->Link;
+}
+bool csr_nonscan_active_ll_remove_entry(struct sAniSirGlobal *mac_ctx,
+		tListElem *entry, bool inter_locked)
+{
+	tListElem *head;
+
+	sms_log(mac_ctx, LOGE, "Enter");
+	head = csr_nonscan_active_ll_peek_head(mac_ctx, inter_locked);
+	if (head == entry) {
+		sms_log(mac_ctx, LOGE, "Exit");
+		return true;
+	} else {
+		sms_log(mac_ctx, LOGE, "Exit");
+		return false;
+	}
+}
+bool csr_nonscan_pending_ll_remove_entry(struct sAniSirGlobal *mac_ctx,
+		tListElem *entry, bool inter_locked)
+{
+	tListElem *head;
+
+	sms_log(mac_ctx, LOGE, "Enter");
+	head = csr_nonscan_pending_ll_peek_head(mac_ctx, inter_locked);
+	if (head == entry) {
+		sms_log(mac_ctx, LOGE, "Exit");
+		return true;
+	} else {
+		sms_log(mac_ctx, LOGE, "Exit");
+		return false;
+	}
+}
+tListElem *csr_nonscan_active_ll_remove_head(struct sAniSirGlobal *mac_ctx,
+		bool inter_locked)
+{
+	return csr_nonscan_active_ll_peek_head(mac_ctx, inter_locked);
+}
+tListElem *csr_nonscan_pending_ll_remove_head(struct sAniSirGlobal *mac_ctx,
+		bool inter_locked)
+{
+	return csr_nonscan_pending_ll_peek_head(mac_ctx, inter_locked);
+}
+
+tListElem *csr_nonscan_pending_ll_next(struct sAniSirGlobal *mac_ctx,
+				tListElem *entry, bool inter_locked)
+{
+	tSmeCmd *sme_cmd;
+	struct wlan_serialization_command cmd, *tcmd;
+
+	sms_log(mac_ctx, LOGE, "Enter");
+	if (!entry)
+		return NULL;
+	sme_cmd = GET_BASE_ADDR(entry, tSmeCmd, Link);
+	cmd.cmd_id = 0;
+	cmd.cmd_type = csr_get_cmd_type(sme_cmd);
+	cmd.vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc,
+				sme_cmd->sessionId, WLAN_LEGACY_SME_ID);
+	tcmd = wlan_serialization_get_pending_list_next_node_using_psoc(
+				mac_ctx->psoc, &cmd, false);
+	if (!tcmd) {
+		sms_log(mac_ctx, LOGE, "No cmd found");
+		return NULL;
+	}
+	sme_cmd = tcmd->umac_cmd;
+	sms_log(mac_ctx, LOGE, "Exit");
+	return &sme_cmd->Link;
 }
 
 bool csr_get_bss_id_bss_desc(tHalHandle hHal, tSirBssDescription *pSirBssDesc,
@@ -280,103 +430,6 @@ bool csr_get_bss_id_bss_desc(tHalHandle hHal, tSirBssDescription *pSirBssDesc,
 	qdf_mem_copy(pBssId, &pSirBssDesc->bssId[0],
 			sizeof(struct qdf_mac_addr));
 	return true;
-}
-bool csr_nonscan_active_ll_is_list_empty(struct sAniSirGlobal *mac_ctx,
-				bool fInterlocked)
-{
-	return csr_ll_is_list_empty(&mac_ctx->sme.smeCmdActiveList,
-					fInterlocked);
-}
-bool csr_nonscan_pending_ll_is_list_empty(struct sAniSirGlobal *mac_ctx,
-				bool fInterlocked)
-{
-	return csr_ll_is_list_empty(&mac_ctx->sme.smeCmdPendingList,
-					fInterlocked);
-}
-bool csr_nonscan_active_ll_remove_entry(struct sAniSirGlobal *mac_ctx,
-		tListElem *entry, bool fInterlocked)
-{
-	return csr_ll_remove_entry(&mac_ctx->sme.smeCmdActiveList, entry,
-					fInterlocked);
-}
-bool csr_nonscan_pending_ll_remove_entry(struct sAniSirGlobal *mac_ctx,
-		tListElem *entry, bool fInterlocked)
-{
-	return csr_ll_remove_entry(&mac_ctx->sme.smeCmdPendingList, entry,
-					fInterlocked);
-}
-tListElem *csr_nonscan_active_ll_peak_head(struct sAniSirGlobal *mac_ctx,
-		bool fInterlocked)
-{
-	return csr_ll_peek_head(&mac_ctx->sme.smeCmdActiveList, fInterlocked);
-}
-tListElem *csr_nonscan_pending_ll_peak_head(struct sAniSirGlobal *mac_ctx,
-		bool fInterlocked)
-{
-	return csr_ll_peek_head(&mac_ctx->sme.smeCmdPendingList, fInterlocked);
-}
-tListElem *csr_nonscan_active_ll_remove_head(struct sAniSirGlobal *mac_ctx,
-		bool fInterlocked)
-{
-	return csr_ll_remove_head(&mac_ctx->sme.smeCmdActiveList,
-				fInterlocked);
-}
-tListElem *csr_nonscan_pending_ll_remove_head(struct sAniSirGlobal *mac_ctx,
-		bool fInterlocked)
-{
-	return csr_ll_remove_head(&mac_ctx->sme.smeCmdPendingList,
-				fInterlocked);
-}
-
-uint32_t csr_nonscan_active_ll_count(struct sAniSirGlobal *mac_ctx)
-{
-	return csr_ll_count(&mac_ctx->sme.smeCmdActiveList);
-}
-
-void csr_nonscan_active_ll_insert_head(struct sAniSirGlobal *mac_ctx,
-			tListElem *entry, bool fInterlocked)
-{
-	csr_ll_insert_head(&mac_ctx->sme.smeCmdActiveList, entry,
-			fInterlocked);
-}
-uint32_t csr_nonscan_pending_ll_count(struct sAniSirGlobal *mac_ctx)
-{
-	return csr_ll_count(&mac_ctx->sme.smeCmdPendingList);
-}
-
-void csr_nonscan_pending_ll_insert_head(struct sAniSirGlobal *mac_ctx,
-		tListElem *entry, bool fInterlocked)
-{
-	csr_ll_insert_head(&mac_ctx->sme.smeCmdPendingList, entry,
-			fInterlocked);
-}
-
-void csr_nonscan_pending_ll_insert_tail(struct sAniSirGlobal *mac_ctx,
-		tListElem *entry, bool fInterlocked)
-{
-	csr_ll_insert_tail(&mac_ctx->sme.smeCmdPendingList, entry,
-				fInterlocked);
-}
-
-tListElem *csr_nonscan_pending_ll_next(struct sAniSirGlobal *mac_ctx,
-				tListElem *entry, bool fInterlocked)
-{
-	return csr_ll_next(&mac_ctx->sme.smeCmdPendingList, entry,
-						fInterlocked);
-}
-
-void purge_sme_session_pending_cmd_list(struct sAniSirGlobal *mac_ctx,
-				uint32_t session_id)
-{
-	purge_sme_session_cmd_list(mac_ctx, session_id,
-				&mac_ctx->sme.smeCmdPendingList);
-}
-
-void purge_sme_session_active_cmd_list(struct sAniSirGlobal *mac_ctx,
-				uint32_t session_id)
-{
-	purge_sme_session_cmd_list(mac_ctx, session_id,
-				&mac_ctx->sme.smeCmdActiveList);
 }
 
 bool csr_is_bss_id_equal(tHalHandle hHal, tSirBssDescription *pSirBssDesc1,

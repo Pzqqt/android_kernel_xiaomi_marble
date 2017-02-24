@@ -57,7 +57,7 @@ static QDF_STATUS csr_tdls_remove_sme_cmd(tpAniSirGlobal pMac,
 	tListElem *pEntry;
 	tSmeCmd *pCommand;
 
-	pEntry = csr_nonscan_active_ll_peak_head(pMac, LL_ACCESS_LOCK);
+	pEntry = csr_nonscan_active_ll_peek_head(pMac, LL_ACCESS_LOCK);
 	if (pEntry) {
 		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
 		if (cmdType == pCommand->command) {
@@ -66,7 +66,6 @@ static QDF_STATUS csr_tdls_remove_sme_cmd(tpAniSirGlobal pMac,
 				qdf_mem_zero(&pCommand->u.tdlsCmd,
 					     sizeof(tTdlsCmd));
 				csr_release_command(pMac, pCommand);
-				sme_process_pending_queue(pMac);
 				status = QDF_STATUS_SUCCESS;
 			}
 		}
@@ -127,7 +126,7 @@ QDF_STATUS csr_tdls_send_mgmt_req(tHalHandle hHal, uint8_t sessionId,
 
 	tdlsSendMgmtCmd->command = eSmeCommandTdlsSendMgmt;
 	tdlsSendMgmtCmd->u.tdlsCmd.size = sizeof(tTdlsSendMgmtCmdInfo);
-	sme_push_command(pMac, tdlsSendMgmtCmd, false);
+	csr_queue_sme_command(pMac, tdlsSendMgmtCmd, false);
 	status = QDF_STATUS_SUCCESS;
 	sms_log(pMac, LOG1,
 		FL("Successfully posted eSmeCommandTdlsSendMgmt to SME"));
@@ -201,7 +200,7 @@ QDF_STATUS csr_tdls_change_peer_sta(tHalHandle hHal, uint8_t sessionId,
 			tdlsAddStaCmd->command = eSmeCommandTdlsAddPeer;
 			tdlsAddStaCmd->u.tdlsCmd.size =
 				sizeof(tTdlsAddStaCmdInfo);
-			sme_push_command(pMac, tdlsAddStaCmd, false);
+			csr_queue_sme_command(pMac, tdlsAddStaCmd, false);
 			status = QDF_STATUS_SUCCESS;
 			sms_log(pMac, LOG1,
 			FL("Successfully posted eSmeCommandTdlsAddPeer to SME to modify peer "));
@@ -273,7 +272,8 @@ QDF_STATUS csr_tdls_send_link_establish_params(tHalHandle hHal,
 				eSmeCommandTdlsLinkEstablish;
 			tdlsLinkEstablishCmd->u.tdlsCmd.size =
 				sizeof(tTdlsLinkEstablishCmdInfo);
-			sme_push_command(pMac, tdlsLinkEstablishCmd, false);
+			csr_queue_sme_command(pMac, tdlsLinkEstablishCmd,
+						false);
 			status = QDF_STATUS_SUCCESS;
 			sms_log(pMac, LOG1,
 			FL("Successfully posted eSmeCommandTdlsLinkEstablish to SME"));
@@ -312,7 +312,7 @@ QDF_STATUS csr_tdls_add_peer_sta(tHalHandle hHal, uint8_t sessionId,
 			tdlsAddStaCmd->command = eSmeCommandTdlsAddPeer;
 			tdlsAddStaCmd->u.tdlsCmd.size =
 				sizeof(tTdlsAddStaCmdInfo);
-			sme_push_command(pMac, tdlsAddStaCmd, false);
+			csr_queue_sme_command(pMac, tdlsAddStaCmd, false);
 			status = QDF_STATUS_SUCCESS;
 			sms_log(pMac, LOG1,
 			FL("Successfully posted eSmeCommandTdlsAddPeer to SME"));
@@ -350,7 +350,7 @@ QDF_STATUS csr_tdls_del_peer_sta(tHalHandle hHal, uint8_t sessionId,
 			tdlsDelStaCmd->command = eSmeCommandTdlsDelPeer;
 			tdlsDelStaCmd->u.tdlsCmd.size =
 				sizeof(tTdlsDelStaCmdInfo);
-			sme_push_command(pMac, tdlsDelStaCmd, false);
+			csr_queue_sme_command(pMac, tdlsDelStaCmd, false);
 			status = QDF_STATUS_SUCCESS;
 			sms_log(pMac, LOG1,
 			FL("Successfully posted eSmeCommandTdlsDelPeer to SME"));

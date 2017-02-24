@@ -615,6 +615,7 @@ QDF_STATUS csr_queue_sme_command(tpAniSirGlobal pMac, tSmeCmd *pCommand,
 				 bool fHighPriority);
 tSmeCmd *csr_get_command_buffer(tpAniSirGlobal pMac);
 void csr_release_command(tpAniSirGlobal pMac, tSmeCmd *pCommand);
+void csr_release_command_buffer(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 void csr_scan_flush_bss_entry(tpAniSirGlobal pMac,
 			      tpSmeCsaOffloadInd pCsaOffloadInd);
 QDF_STATUS csr_get_active_scan_entry(tpAniSirGlobal mac, uint32_t scan_id,

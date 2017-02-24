@@ -67,9 +67,6 @@
 static tSelfRecoveryStats g_self_recovery_stats;
 
 static QDF_STATUS init_sme_cmd_list(tpAniSirGlobal pMac);
-static void sme_abort_command(tpAniSirGlobal pMac, tSmeCmd *pCommand,
-			      bool fStopping);
-
 eCsrPhyMode sme_get_phy_mode(tHalHandle hHal);
 
 QDF_STATUS sme_handle_change_country_code(tpAniSirGlobal pMac, void *pMsgBuf);
@@ -137,7 +134,7 @@ QDF_STATUS sme_release_global_lock(tSmeStruct *psSme)
  */
 static QDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 {
-	tListElem *entry = NULL;
+	tListElem *entry;
 	tSmeCmd *command = NULL;
 	bool found;
 	hw_mode_cb callback = NULL;
@@ -154,7 +151,7 @@ static QDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 		 */
 	}
 
-	entry = csr_nonscan_active_ll_peak_head(mac, LL_ACCESS_LOCK);
+	entry = csr_nonscan_active_ll_peek_head(mac, LL_ACCESS_LOCK);
 	if (!entry) {
 		sms_log(mac, LOGE, FL("No cmd found in active list"));
 		return QDF_STATUS_E_FAILURE;
@@ -249,7 +246,7 @@ end:
 		/* Now put this command back on the avilable command list */
 		csr_release_command(mac, command);
 	}
-	sme_process_pending_queue(mac);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -311,19 +308,10 @@ static QDF_STATUS init_sme_cmd_list(tpAniSirGlobal pMac)
 	QDF_STATUS status;
 	tSmeCmd *pCmd;
 	uint32_t cmd_idx;
-	QDF_STATUS qdf_status;
-	qdf_mc_timer_t *cmdTimeoutTimer = NULL;
 	uint32_t sme_cmd_ptr_ary_sz;
 
 	pMac->sme.totalSmeCmd = SME_TOTAL_COMMAND;
 
-	status = csr_ll_open(pMac->hHdd, &pMac->sme.smeCmdActiveList);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		goto end;
-
-	status = csr_ll_open(pMac->hHdd, &pMac->sme.smeCmdPendingList);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		goto end;
 
 	status = csr_ll_open(pMac->hHdd, &pMac->sme.smeScanCmdActiveList);
 	if (!QDF_IS_STATUS_SUCCESS(status))
@@ -368,28 +356,6 @@ static QDF_STATUS init_sme_cmd_list(tpAniSirGlobal pMac)
 				&pCmd->Link, LL_ACCESS_LOCK);
 	}
 
-	/* This timer is only to debug the active list command timeout */
-
-	cmdTimeoutTimer =
-		(qdf_mc_timer_t *) qdf_mem_malloc(sizeof(qdf_mc_timer_t));
-	if (cmdTimeoutTimer) {
-		pMac->sme.smeCmdActiveList.cmdTimeoutTimer = cmdTimeoutTimer;
-		qdf_status =
-			qdf_mc_timer_init(pMac->sme.smeCmdActiveList.
-					  cmdTimeoutTimer, QDF_TIMER_TYPE_SW,
-					  active_list_cmd_timeout_handle, (void *)pMac);
-
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "Init Timer fail for active list command process time out");
-			qdf_mem_free(pMac->sme.smeCmdActiveList.
-				     cmdTimeoutTimer);
-			pMac->sme.smeCmdActiveList.cmdTimeoutTimer = NULL;
-		} else {
-			pMac->sme.smeCmdActiveList.cmdTimeoutDuration =
-				SME_ACTIVE_LIST_CMD_TIMEOUT_VALUE;
-		}
-	}
 
 end:
 	if (!QDF_IS_STATUS_SUCCESS(status))
@@ -399,10 +365,11 @@ end:
 	return status;
 }
 
-void sme_release_command(tpAniSirGlobal pMac, tSmeCmd *pCmd)
+void sme_release_command(tpAniSirGlobal mac_ctx, tSmeCmd *sme_cmd)
 {
-	pCmd->command = eSmeNoCommand;
-	csr_ll_insert_tail(&pMac->sme.smeCmdFreeList, &pCmd->Link, LL_ACCESS_LOCK);
+	sme_cmd->command = eSmeNoCommand;
+	csr_ll_insert_tail(&mac_ctx->sme.smeCmdFreeList, &sme_cmd->Link,
+				LL_ACCESS_LOCK);
 }
 
 static void sme_release_cmd_list(tpAniSirGlobal pMac, tDblLinkList *pList)
@@ -414,15 +381,18 @@ static void sme_release_cmd_list(tpAniSirGlobal pMac, tDblLinkList *pList)
 		/* TODO: base on command type to call release functions */
 		/* reinitialize different command types so they can be reused */
 		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
-		sme_abort_command(pMac, pCommand, true);
+		csr_abort_command(pMac, pCommand, true);
 	}
 }
 
 static void purge_sme_cmd_list(tpAniSirGlobal pMac)
 {
-	/* release any out standing commands back to free command list */
-	sme_release_cmd_list(pMac, &pMac->sme.smeCmdPendingList);
-	sme_release_cmd_list(pMac, &pMac->sme.smeCmdActiveList);
+	/* purge pending command list */
+	wlan_serialization_purge_cmd_list(pMac->psoc, NULL,
+			false, false, false, true, false);
+	/* purge active command list */
+	wlan_serialization_purge_cmd_list(pMac->psoc, NULL,
+			false, false, true, false, false);
 	sme_release_cmd_list(pMac, &pMac->sme.smeScanCmdPendingList);
 	sme_release_cmd_list(pMac, &pMac->sme.smeScanCmdActiveList);
 }
@@ -458,7 +428,7 @@ void purge_sme_session_cmd_list(tpAniSirGlobal pMac, uint32_t sessionId,
 
 	while ((pEntry = csr_ll_remove_head(&localList, LL_ACCESS_NOLOCK))) {
 		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
-		sme_abort_command(pMac, pCommand, true);
+		csr_abort_command(pMac, pCommand, true);
 	}
 	csr_ll_close(&localList);
 }
@@ -468,16 +438,9 @@ static QDF_STATUS free_sme_cmd_list(tpAniSirGlobal pMac)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	purge_sme_cmd_list(pMac);
-	csr_ll_close(&pMac->sme.smeCmdPendingList);
-	csr_ll_close(&pMac->sme.smeCmdActiveList);
 	csr_ll_close(&pMac->sme.smeScanCmdPendingList);
 	csr_ll_close(&pMac->sme.smeScanCmdActiveList);
 	csr_ll_close(&pMac->sme.smeCmdFreeList);
-
-	/*destroy active list command time out timer */
-	qdf_mc_timer_destroy(pMac->sme.smeCmdActiveList.cmdTimeoutTimer);
-	qdf_mem_free(pMac->sme.smeCmdActiveList.cmdTimeoutTimer);
-	pMac->sme.smeCmdActiveList.cmdTimeoutTimer = NULL;
 
 	status = qdf_mutex_acquire(&pMac->sme.lkSmeGlobalLock);
 	if (status != QDF_STATUS_SUCCESS) {
@@ -546,7 +509,7 @@ tSmeCmd *sme_get_command_buffer(tpAniSirGlobal pMac)
 		int idx = 1;
 
 		/* Cannot change pRetCmd here since it needs to return later. */
-		pEntry = csr_nonscan_active_ll_peak_head(pMac, LL_ACCESS_LOCK);
+		pEntry = csr_nonscan_active_ll_peek_head(pMac, LL_ACCESS_LOCK);
 		if (pEntry) {
 			pTempCmd = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
 		}
@@ -563,7 +526,7 @@ tSmeCmd *sme_get_command_buffer(tpAniSirGlobal pMac)
 		/* dump what is in the pending queue */
 		csr_nonscan_pending_ll_lock(pMac);
 		pEntry =
-			csr_nonscan_pending_ll_peak_head(pMac,
+			csr_nonscan_pending_ll_peek_head(pMac,
 					 LL_ACCESS_NOLOCK);
 		while (pEntry && !sme_command_queue_full) {
 			pTempCmd = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
@@ -628,40 +591,6 @@ void sme_push_command(tpAniSirGlobal pMac, tSmeCmd *pCmd, bool fHighPriority)
 	return;
 }
 
-/* For commands that need to do extra cleanup. */
-static void sme_abort_command(tpAniSirGlobal pMac, tSmeCmd *pCommand,
-			      bool fStopping)
-{
-	if (eSmePmcCommandMask & pCommand->command) {
-		sms_log(pMac, LOG1,
-				"No need to process PMC commands");
-		return;
-	}
-	if (eSmeCsrCommandMask & pCommand->command) {
-		csr_abort_command(pMac, pCommand, fStopping);
-		return;
-	}
-	switch (pCommand->command) {
-	case eSmeCommandRemainOnChannel:
-		if (NULL != pCommand->u.remainChlCmd.callback) {
-			remainOnChanCallback callback =
-				pCommand->u.remainChlCmd.callback;
-			/* process the msg */
-			if (callback) {
-				callback(pMac, pCommand->u.remainChlCmd.
-					callbackCtx, eCSR_SCAN_ABORT,
-					pCommand->u.remainChlCmd.scan_id);
-			}
-		}
-		csr_release_command(pMac, pCommand);
-		break;
-	default:
-		csr_release_command(pMac, pCommand);
-		break;
-	}
-
-}
-
 static
 tListElem *csr_get_pending_cmd_to_process(tpAniSirGlobal pMac,
 				uint8_t sessionId, bool fInterlocked)
@@ -671,7 +600,7 @@ tListElem *csr_get_pending_cmd_to_process(tpAniSirGlobal pMac,
 
 	/* Go through the list and return the command whose session id is not
 	 * matching with the current ongoing scan cmd sessionId */
-	pCurEntry = csr_nonscan_pending_ll_peak_head(pMac, LL_ACCESS_LOCK);
+	pCurEntry = csr_nonscan_pending_ll_peek_head(pMac, LL_ACCESS_LOCK);
 	while (pCurEntry) {
 		pCommand = GET_BASE_ADDR(pCurEntry, tSmeCmd, Link);
 		if (pCommand->sessionId != sessionId) {
@@ -698,7 +627,7 @@ static bool sme_process_scan_queue(tpAniSirGlobal pMac)
 
 	if ((!csr_nonscan_active_ll_is_list_empty(pMac,
 				   LL_ACCESS_LOCK))) {
-		pSmeEntry = csr_nonscan_active_ll_peak_head(pMac,
+		pSmeEntry = csr_nonscan_active_ll_peek_head(pMac,
 					LL_ACCESS_LOCK);
 		if (pSmeEntry)
 			pSmeCommand = GET_BASE_ADDR(pSmeEntry, tSmeCmd, Link);
@@ -777,6 +706,169 @@ end:
 }
 
 /**
+ * sme_ser_handle_active_cmd() - handle command activation callback from
+ *					new serialization module
+ * @cmd: pointer to new serialization command
+ *
+ * This API is to handle command activation callback from new serialization
+ * callback
+ *
+ * Return: QDF_STATUS_SUCCESS
+ */
+static
+QDF_STATUS sme_ser_handle_active_cmd(struct wlan_serialization_command *cmd)
+{
+	tSmeCmd *sme_cmd;
+	tHalHandle hal;
+	tpAniSirGlobal mac_ctx;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	bool do_continue;
+
+	if (!cmd) {
+		sms_log(mac_ctx, LOGE, FL("No serialization command found"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	hal = cds_get_context(QDF_MODULE_ID_SME);
+	mac_ctx = PMAC_STRUCT(hal);
+	if (!mac_ctx) {
+		sms_log(mac_ctx, LOGE, FL("No mac_ctx found"));
+		return QDF_STATUS_E_FAILURE;
+	}
+	sme_cmd = cmd->umac_cmd;
+	if (!sme_cmd) {
+		sms_log(mac_ctx, LOGE, FL("No SME command found"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	switch (sme_cmd->command) {
+	case eSmeCommandRoam:
+		status = csr_roam_process_command(mac_ctx, sme_cmd);
+		break;
+	case eSmeCommandWmStatusChange:
+		csr_roam_process_wm_status_change_command(mac_ctx,
+					sme_cmd);
+		break;
+	case eSmeCommandSetKey:
+		status = csr_roam_process_set_key_command(mac_ctx, sme_cmd);
+		break;
+	case eSmeCommandNdpInitiatorRequest:
+		status = csr_process_ndp_initiator_request(mac_ctx, sme_cmd);
+		break;
+	case eSmeCommandNdpResponderRequest:
+		status = csr_process_ndp_responder_request(mac_ctx, sme_cmd);
+		break;
+	case eSmeCommandNdpDataEndInitiatorRequest:
+		status = csr_process_ndp_data_end_request(mac_ctx, sme_cmd);
+		break;
+	case eSmeCommandRemainOnChannel:
+		status = p2p_process_remain_on_channel_cmd(mac_ctx, sme_cmd);
+		break;
+	/*
+	 * Treat standby differently here because caller may not be able
+	 * to handle the failure so we do our best here
+	 */
+	case eSmeCommandEnterStandby:
+		break;
+	case eSmeCommandAddTs:
+	case eSmeCommandDelTs:
+#ifndef WLAN_MDM_CODE_REDUCTION_OPT
+		do_continue = qos_process_command(mac_ctx, sme_cmd);
+		if (do_continue)
+			status = QDF_STATUS_E_FAILURE;
+#endif
+		break;
+#ifdef FEATURE_WLAN_TDLS
+	case eSmeCommandTdlsSendMgmt:
+	case eSmeCommandTdlsAddPeer:
+	case eSmeCommandTdlsDelPeer:
+	case eSmeCommandTdlsLinkEstablish:
+		status = csr_tdls_process_cmd(mac_ctx, sme_cmd);
+		break;
+#endif
+	case e_sme_command_set_hw_mode:
+		csr_process_set_hw_mode(mac_ctx, sme_cmd);
+		break;
+	case e_sme_command_nss_update:
+		csr_process_nss_update_req(mac_ctx, sme_cmd);
+		break;
+	case e_sme_command_set_dual_mac_config:
+		csr_process_set_dual_mac_config(mac_ctx, sme_cmd);
+		break;
+	case e_sme_command_set_antenna_mode:
+		csr_process_set_antenna_mode(mac_ctx, sme_cmd);
+		break;
+	default:
+		/* something is wrong */
+		/* remove it from the active list */
+		sms_log(mac_ctx, LOGE, FL("unknown command %d"),
+			sme_cmd->command);
+		status = QDF_STATUS_E_FAILURE;
+		break;
+	}
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		sms_log(mac_ctx, LOGE, FL("Releasing memory for %d"),
+			sme_cmd->command);
+		csr_release_command(mac_ctx, sme_cmd);
+	}
+	return status;
+}
+
+QDF_STATUS sme_ser_cmd_callback(void *buf,
+				enum wlan_serialization_cb_reason reason)
+{
+	struct wlan_serialization_command *cmd = buf;
+	tHalHandle hal;
+	tpAniSirGlobal mac_ctx;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tSmeCmd *sme_cmd;
+
+	hal = cds_get_context(QDF_MODULE_ID_SME);
+	mac_ctx = PMAC_STRUCT(hal);
+	if (!mac_ctx) {
+		sms_log(mac_ctx, LOGE, FL("mac_ctx is null"));
+		return QDF_STATUS_E_FAILURE;
+	}
+	/*
+	 * Do not acquire lock here as sme global lock is already acquired in
+	 * caller or MC thread context
+	 */
+	if (!cmd) {
+		sms_log(mac_ctx, LOGE, FL("serialization command is null"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	switch (reason) {
+	case WLAN_SER_CB_ACTIVATE_CMD:
+		sms_log(mac_ctx, LOG1,
+			FL("WLAN_SER_CB_ACTIVATE_CMD callback"));
+		status = sme_ser_handle_active_cmd(cmd);
+		break;
+	case WLAN_SER_CB_CANCEL_CMD:
+		sms_log(mac_ctx, LOG1,
+			FL("WLAN_SER_CB_CANCEL_CMD callback"));
+		sme_cmd = cmd->umac_cmd;
+		csr_cancel_command(mac_ctx, sme_cmd);
+		csr_release_command_buffer(mac_ctx, sme_cmd);
+		break;
+	case WLAN_SER_CB_RELEASE_MEM_CMD:
+		sms_log(mac_ctx, LOG1,
+			FL("WLAN_SER_CB_RELEASE_MEM_CMD callback"));
+		sme_cmd = cmd->umac_cmd;
+		csr_release_command_buffer(mac_ctx, sme_cmd);
+		break;
+	case WLAN_SER_CB_ACTIVE_CMD_TIMEOUT:
+		sms_log(mac_ctx, LOG1,
+			FL("WLAN_SER_CB_ACTIVE_CMD_TIMEOUT callback"));
+		break;
+	default:
+		sms_log(mac_ctx, LOG1, FL("STOP: unknown reason code"));
+		return QDF_STATUS_E_FAILURE;
+	}
+	return status;
+}
+
+/**
  * sme_process_command() - processes SME commnd
  * @mac_ctx:       mac global context
  *
@@ -831,7 +923,7 @@ static bool sme_process_command(tpAniSirGlobal pMac)
 	}
 
 	/* Peek the command */
-	pEntry = csr_nonscan_pending_ll_peak_head(pMac, LL_ACCESS_LOCK);
+	pEntry = csr_nonscan_pending_ll_peek_head(pMac, LL_ACCESS_LOCK);
 sme_process_cmd:
 	if (!pEntry) {
 		csr_nonscan_active_ll_unlock(pMac);
@@ -1024,7 +1116,7 @@ static uint32_t sme_get_sessionid_from_activelist(tpAniSirGlobal mac)
 	tSmeCmd *command;
 	uint32_t session_id = CSR_SESSION_ID_INVALID;
 
-	entry = csr_nonscan_active_ll_peak_head(mac, LL_ACCESS_LOCK);
+	entry = csr_nonscan_active_ll_peek_head(mac, LL_ACCESS_LOCK);
 	if (entry) {
 		command = GET_BASE_ADDR(entry, tSmeCmd, Link);
 		session_id = command->sessionId;
@@ -2361,7 +2453,7 @@ static QDF_STATUS sme_process_dual_mac_config_resp(tpAniSirGlobal mac,
 		 */
 	}
 
-	entry = csr_nonscan_active_ll_peak_head(mac, LL_ACCESS_LOCK);
+	entry = csr_nonscan_active_ll_peek_head(mac, LL_ACCESS_LOCK);
 	if (!entry) {
 		sms_log(mac, LOGE, FL("No cmd found in active list"));
 		return QDF_STATUS_E_FAILURE;
@@ -2399,7 +2491,6 @@ static QDF_STATUS sme_process_dual_mac_config_resp(tpAniSirGlobal mac,
 		/* Now put this command back on the available command list */
 		csr_release_command(mac, command);
 
-	sme_process_pending_queue(mac);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -2429,7 +2520,7 @@ static QDF_STATUS sme_process_antenna_mode_resp(tpAniSirGlobal mac,
 		 */
 	}
 
-	entry = csr_nonscan_active_ll_peak_head(mac, LL_ACCESS_LOCK);
+	entry = csr_nonscan_active_ll_peek_head(mac, LL_ACCESS_LOCK);
 	if (!entry) {
 		sms_log(mac, LOGE, FL("No cmd found in active list"));
 		return QDF_STATUS_E_FAILURE;
@@ -2466,7 +2557,6 @@ static QDF_STATUS sme_process_antenna_mode_resp(tpAniSirGlobal mac,
 		/* Now put this command back on the available command list */
 		csr_release_command(mac, command);
 
-	sme_process_pending_queue(mac);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -3091,7 +3181,7 @@ QDF_STATUS sme_process_nss_update_resp(tpAniSirGlobal mac, uint8_t *msg)
 		 */
 	}
 
-	entry = csr_nonscan_active_ll_peak_head(mac, LL_ACCESS_LOCK);
+	entry = csr_nonscan_active_ll_peek_head(mac, LL_ACCESS_LOCK);
 	if (!entry) {
 		sms_log(mac, LOGE, FL("No cmd found in active list"));
 		return QDF_STATUS_E_FAILURE;
@@ -3131,7 +3221,7 @@ QDF_STATUS sme_process_nss_update_resp(tpAniSirGlobal mac, uint8_t *msg)
 		/* Now put this command back on the avilable command list */
 		csr_release_command(mac, command);
 	}
-	sme_process_pending_queue(mac);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -11186,7 +11276,7 @@ void sme_get_command_q_status(tHalHandle hHal)
 		return;
 	}
 
-	pEntry = csr_nonscan_active_ll_peak_head(pMac, LL_ACCESS_LOCK);
+	pEntry = csr_nonscan_active_ll_peek_head(pMac, LL_ACCESS_LOCK);
 	if (pEntry) {
 		pTempCmd = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
 	}
@@ -11811,103 +11901,6 @@ void sme_get_recovery_stats(tHalHandle hHal)
 	}
 }
 
-/**
- * sme_save_active_cmd_stats() - To save active command stats
- * @hHal: HAL context
- *
- * This routine is to save active command stats
- *
- * Return: None
- */
-static void sme_save_active_cmd_stats(tHalHandle hHal)
-{
-	tSmeCmd *pTempCmd = NULL;
-	tListElem *pEntry;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	uint8_t statidx = 0;
-	tActiveCmdStats *actv_cmd_stat = NULL;
-
-	if (NULL == pMac) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				FL("pMac is NULL"));
-		return;
-	}
-
-	pEntry = csr_nonscan_active_ll_peak_head(pMac, LL_ACCESS_LOCK);
-	if (pEntry)
-		pTempCmd = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
-
-	if (!pTempCmd)
-		return;
-
-	if (eSmeCsrCommandMask & pTempCmd->command) {
-		statidx = g_self_recovery_stats.cmdStatsIndx;
-		actv_cmd_stat = &g_self_recovery_stats.activeCmdStats[statidx];
-		actv_cmd_stat->command = pTempCmd->command;
-		actv_cmd_stat->sessionId = pTempCmd->sessionId;
-		actv_cmd_stat->timestamp = cds_get_monotonic_boottime();
-		if (eSmeCommandRoam == pTempCmd->command)
-			actv_cmd_stat->reason = pTempCmd->u.roamCmd.roamReason;
-		else if (eSmeCommandScan == pTempCmd->command)
-			actv_cmd_stat->reason = pTempCmd->u.scanCmd.reason;
-		else
-			actv_cmd_stat->reason = 0xFF;
-
-		g_self_recovery_stats.cmdStatsIndx =
-			((g_self_recovery_stats.cmdStatsIndx + 1) &
-				(MAX_ACTIVE_CMD_STATS - 1));
-	}
-	return;
-}
-
-void active_list_cmd_timeout_handle(void *userData)
-{
-	tHalHandle hal = (tHalHandle)userData;
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
-	tListElem *entry;
-	tSmeCmd *temp_cmd = NULL;
-
-	if (NULL == mac_ctx) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			"%s: mac_ctx is null", __func__);
-		return;
-	}
-	/* Return if no cmd pending in active list as
-	 * in this case we should not be here.
-	 */
-	if (0 == csr_nonscan_active_ll_count(mac_ctx))
-		return;
-	sms_log(mac_ctx, LOGE,
-		FL("Active List command timeout Cmd List Count %d"),
-		  csr_nonscan_active_ll_count(mac_ctx));
-	sme_get_command_q_status(hal);
-
-	if (mac_ctx->roam.configParam.enable_fatal_event)
-		cds_flush_logs(WLAN_LOG_TYPE_FATAL,
-			WLAN_LOG_INDICATOR_HOST_DRIVER,
-			WLAN_LOG_REASON_SME_COMMAND_STUCK,
-			false,
-			mac_ctx->sme.enableSelfRecovery ? true : false);
-	else
-		qdf_trace_dump_all(mac_ctx, 0, 0, 500, 0);
-
-	entry = csr_nonscan_active_ll_peak_head(mac_ctx, LL_ACCESS_LOCK);
-	if (entry)
-		temp_cmd = GET_BASE_ADDR(entry, tSmeCmd, Link);
-	/* Ignore if ROC took more than 120 sec */
-	if (temp_cmd && (eSmeCommandRemainOnChannel == temp_cmd->command))
-		return;
-
-	if (mac_ctx->sme.enableSelfRecovery) {
-		sme_save_active_cmd_stats(hal);
-		cds_trigger_recovery(false);
-	} else {
-		if (!mac_ctx->roam.configParam.enable_fatal_event &&
-		   !(cds_is_load_or_unload_in_progress() ||
-		    cds_is_driver_recovering()))
-			QDF_BUG(0);
-	}
-}
 
 QDF_STATUS sme_notify_modem_power_state(tHalHandle hHal, uint32_t value)
 {

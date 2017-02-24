@@ -810,7 +810,7 @@ QDF_STATUS sme_qos_msg_processor(tpAniSirGlobal mac_ctx,
 	/* switch on the msg type & make the state transition accordingly */
 	switch (msg_type) {
 	case eWNI_SME_ADDTS_RSP:
-		entry = csr_nonscan_active_ll_peak_head(mac_ctx,
+		entry = csr_nonscan_active_ll_peek_head(mac_ctx,
 				LL_ACCESS_LOCK);
 		if (NULL == entry)
 			break;
@@ -821,11 +821,10 @@ QDF_STATUS sme_qos_msg_processor(tpAniSirGlobal mac_ctx,
 					LL_ACCESS_LOCK)) {
 				qos_release_command(mac_ctx, command);
 			}
-			sme_process_pending_queue(mac_ctx);
 		}
 		break;
 	case eWNI_SME_DELTS_RSP:
-		entry = csr_nonscan_active_ll_peak_head(mac_ctx,
+		entry = csr_nonscan_active_ll_peek_head(mac_ctx,
 				LL_ACCESS_LOCK);
 		if (NULL == entry)
 			break;
@@ -836,7 +835,6 @@ QDF_STATUS sme_qos_msg_processor(tpAniSirGlobal mac_ctx,
 					LL_ACCESS_LOCK)) {
 				qos_release_command(mac_ctx, command);
 			}
-			sme_process_pending_queue(mac_ctx);
 		}
 		break;
 	case eWNI_SME_DELTS_IND:
@@ -7505,7 +7503,7 @@ static QDF_STATUS qos_issue_command(tpAniSirGlobal pMac, uint8_t sessionId,
 		}
 	} while (0);
 	if (QDF_IS_STATUS_SUCCESS(status) && pCommand) {
-		sme_push_command(pMac, pCommand, false);
+		csr_queue_sme_command(pMac, pCommand, false);
 	} else if (pCommand) {
 		qos_release_command(pMac, pCommand);
 	}

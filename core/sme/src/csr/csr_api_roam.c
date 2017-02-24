@@ -57,6 +57,7 @@
 #include "sme_nan_datapath.h"
 #include "pld_common.h"
 #include <wlan_logging_sock_svc.h>
+#include "wlan_objmgr_psoc_obj.h"
 
 #define MAX_PWR_FCC_CHAN_12 8
 #define MAX_PWR_FCC_CHAN_13 2
@@ -189,7 +190,7 @@ static ePhyChanBondState csr_get_cb_mode_from_ies(tpAniSirGlobal pMac,
 						  tDot11fBeaconIEs *pIes);
 
 static void csr_roaming_state_config_cnf_processor(tpAniSirGlobal pMac,
-				uint32_t result, uint8_t session_id);
+			tSmeCmd *pCommand, uint32_t result, uint8_t session_id);
 QDF_STATUS csr_roam_open(tpAniSirGlobal pMac);
 QDF_STATUS csr_roam_close(tpAniSirGlobal pMac);
 void csr_roamMICErrorTimerHandler(void *pv);
@@ -1324,32 +1325,46 @@ void csr_release_roc_req_cmd(tpAniSirGlobal mac_ctx, tSmeCmd *sme_cmd)
 	}
 }
 
+void csr_cancel_command(tpAniSirGlobal mac_ctx, tSmeCmd *sme_cmd)
+{
+	switch (sme_cmd->command) {
+	case eSmeCommandRemainOnChannel:
+		if (NULL != sme_cmd->u.remainChlCmd.callback) {
+			remainOnChanCallback callback =
+				sme_cmd->u.remainChlCmd.callback;
+			/* process the msg */
+			if (callback) {
+				callback(mac_ctx, sme_cmd->u.remainChlCmd.
+					callbackCtx, eCSR_SCAN_ABORT,
+					sme_cmd->u.remainChlCmd.scan_id);
+			}
+		}
+		break;
+	case eSmeCommandScan:
+		/*
+		 * We need to inform the requester before dropping
+		 * the scan command
+		 */
+		sms_log(mac_ctx, LOGW,
+				"%s: Drop scan reason %d callback %p", __func__,
+				sme_cmd->u.scanCmd.reason,
+				sme_cmd->u.scanCmd.callback);
+		if (NULL != sme_cmd->u.scanCmd.callback) {
+			sms_log(mac_ctx, LOGW, "%s callback scan requester",
+					__func__);
+			csr_scan_call_callback(mac_ctx, sme_cmd,
+					eCSR_SCAN_ABORT);
+		}
+		break;
+	default:
+		break;
+	}
+}
+
 void csr_abort_command(tpAniSirGlobal pMac, tSmeCmd *pCommand, bool fStopping)
 {
-
-	if (eSmeCsrCommandMask & pCommand->command) {
-		switch (pCommand->command) {
-		case eSmeCommandScan:
-			/* We need to inform the requester before dropping the scan command */
-			sms_log(pMac, LOGW,
-				"%s: Drop scan reason %d callback %p", __func__,
-				pCommand->u.scanCmd.reason,
-				pCommand->u.scanCmd.callback);
-			if (NULL != pCommand->u.scanCmd.callback) {
-				sms_log(pMac, LOGW, "%s callback scan requester",
-					__func__);
-				csr_scan_call_callback(pMac, pCommand,
-						       eCSR_SCAN_ABORT);
-			}
-			break;
-
-		default:
-			sms_log(pMac, LOGW, " CSR abort standard command %d",
-				pCommand->command);
-			break;
-		}
-		csr_release_command(pMac, pCommand);
-	}
+	csr_cancel_command(pMac, pCommand);
+	csr_release_command(pMac, pCommand);
 }
 
 void csr_roam_substate_change(tpAniSirGlobal pMac, eCsrRoamSubState NewSubstate,
@@ -3196,7 +3211,7 @@ static void csr_roam_remove_duplicate_pending_cmd_from_list(
 		return;
 	}
 	csr_nonscan_pending_ll_lock(mac_ctx);
-	entry = csr_nonscan_pending_ll_peak_head(mac_ctx, LL_ACCESS_NOLOCK);
+	entry = csr_nonscan_pending_ll_peek_head(mac_ctx, LL_ACCESS_NOLOCK);
 	while (entry) {
 		next_entry = csr_nonscan_pending_ll_next(mac_ctx, entry,
 						LL_ACCESS_NOLOCK);
@@ -4666,7 +4681,7 @@ void csr_roam_ccm_cfg_set_callback(tpAniSirGlobal pMac, int32_t result,
 					uint8_t session_id)
 {
 	tListElem *pEntry =
-		csr_nonscan_active_ll_peak_head(pMac, LL_ACCESS_LOCK);
+		csr_nonscan_active_ll_peek_head(pMac, LL_ACCESS_LOCK);
 	uint32_t sessionId;
 	tSmeCmd *pCommand = NULL;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
@@ -4688,8 +4703,8 @@ void csr_roam_ccm_cfg_set_callback(tpAniSirGlobal pMac, int32_t result,
 
 	if (CSR_IS_ROAM_JOINING(pMac, sessionId)
 	    && CSR_IS_ROAM_SUBSTATE_CONFIG(pMac, sessionId)) {
-		csr_roaming_state_config_cnf_processor(pMac, (uint32_t) result,
-						session_id);
+		csr_roaming_state_config_cnf_processor(pMac, pCommand,
+				(uint32_t) result, session_id);
 	}
 }
 
@@ -5750,51 +5765,31 @@ void csr_reinit_wm_status_change_cmd(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 		    0);
 }
 
-void csr_roam_complete(tpAniSirGlobal pMac, eCsrRoamCompleteResult Result,
-		       void *Context, uint8_t session_id)
+void csr_roam_complete(tpAniSirGlobal mac_ctx, eCsrRoamCompleteResult Result,
+			void *Context, uint8_t session_id)
 {
-	tListElem *pEntry;
-	tSmeCmd *pCommand;
-	bool fReleaseCommand = true;
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-		  "%s: Roam Completion ...", __func__);
-	pEntry = csr_nonscan_active_ll_peak_head(pMac, LL_ACCESS_LOCK);
-	if (pEntry) {
-		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
-		/* If the head of the queue is Active and it is a ROAM command, remove */
-		/* and put this on the Free queue. */
-		if (eSmeCommandRoam == pCommand->command) {
-			/* we need to process the result first before removing it from active list because state changes */
-			/* still happening insides roamQProcessRoamResults so no other roam command should be issued */
-			fReleaseCommand =
-				csr_roam_process_results(pMac, pCommand, Result,
-							 Context);
-			if (fReleaseCommand) {
-				if (csr_nonscan_active_ll_remove_entry(pMac,
-						pEntry, LL_ACCESS_LOCK)) {
-					csr_release_command(pMac, pCommand);
-				} else {
-					sms_log(pMac, LOGE,
-						" **********csr_roam_complete fail to release command reason %d",
-						pCommand->u.roamCmd.roamReason);
-				}
-			} else {
-				sms_log(pMac, LOGE,
-					" **********csr_roam_complete fail to release command reason %d",
-					pCommand->u.roamCmd.roamReason);
-			}
-		} else {
-			sms_log(pMac, LOGW,
-				"CSR: Roam Completion called but ROAM command is not ACTIVE ...");
-		}
-	} else {
-		sms_log(pMac, LOGW,
-			"CSR: Roam Completion called but NO commands are ACTIVE ...");
+	tSmeCmd *sme_cmd;
+	struct wlan_serialization_command *cmd;
+
+	cmd = wlan_serialization_peek_head_active_cmd_using_psoc(
+				mac_ctx->psoc, false);
+	if (!cmd) {
+		sms_log(mac_ctx, LOGE,
+			FL("Roam completion called but cmd is not active"));
+		return;
 	}
-	if (fReleaseCommand) {
-		sme_process_pending_queue(pMac);
+	sme_cmd = cmd->umac_cmd;
+	if (!sme_cmd) {
+		sms_log(mac_ctx, LOGE,
+			FL("sme_cmd is NULL"));
+		return;
+	}
+	if (eSmeCommandRoam == sme_cmd->command) {
+		csr_roam_process_results(mac_ctx, sme_cmd, Result, Context);
+		csr_release_command(mac_ctx, sme_cmd);
 	}
 }
+
 
 void csr_reset_pmkid_candidate_list(tpAniSirGlobal pMac, uint32_t sessionId)
 {
@@ -7594,7 +7589,7 @@ QDF_STATUS csr_dequeue_roam_command(tpAniSirGlobal pMac, eCsrRoamReason reason,
 {
 	tListElem *pEntry;
 	tSmeCmd *pCommand;
-	pEntry = csr_nonscan_active_ll_peak_head(pMac, LL_ACCESS_LOCK);
+	pEntry = csr_nonscan_active_ll_peek_head(pMac, LL_ACCESS_LOCK);
 	if (pEntry) {
 		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
 		if ((eSmeCommandRoam == pCommand->command) &&
@@ -7624,7 +7619,6 @@ QDF_STATUS csr_dequeue_roam_command(tpAniSirGlobal pMac, eCsrRoamReason reason,
 		sms_log(pMac, LOGE,
 			FL("pEntry NULL for eWNI_SME_FT_PRE_AUTH_RSP"));
 	}
-	sme_process_pending_queue(pMac);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -8455,7 +8449,7 @@ bool is_disconnect_pending(tpAniSirGlobal pmac,
 	bool disconnect_cmd_exist = false;
 
 	csr_nonscan_pending_ll_lock(pmac);
-	entry = csr_nonscan_pending_ll_peak_head(pmac, LL_ACCESS_NOLOCK);
+	entry = csr_nonscan_pending_ll_peek_head(pmac, LL_ACCESS_NOLOCK);
 	while (entry) {
 		next_entry = csr_nonscan_pending_ll_next(pmac,
 					entry, LL_ACCESS_NOLOCK);
@@ -8492,7 +8486,7 @@ static void csr_roam_join_rsp_processor(tpAniSirGlobal pMac,
 		return;
 	}
 	/* The head of the active list is the request we sent */
-	pEntry = csr_nonscan_active_ll_peak_head(pMac, LL_ACCESS_LOCK);
+	pEntry = csr_nonscan_active_ll_peek_head(pMac, LL_ACCESS_LOCK);
 	if (pEntry) {
 		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
 	}
@@ -8612,7 +8606,7 @@ csr_roam_reissue_roam_command(tpAniSirGlobal pMac, uint8_t session_id)
 	uint32_t sessionId;
 	tCsrRoamSession *pSession;
 
-	pEntry = csr_nonscan_active_ll_peak_head(pMac, LL_ACCESS_LOCK);
+	pEntry = csr_nonscan_active_ll_peek_head(pMac, LL_ACCESS_LOCK);
 	if (NULL == pEntry) {
 		sms_log(pMac, LOGE,
 			FL("Disassoc rsp can't continue, no active CMD"));
@@ -8677,7 +8671,7 @@ bool csr_is_roam_command_waiting_for_session(tpAniSirGlobal pMac, uint32_t sessi
 	tSmeCmd *pCommand = NULL;
 	/* alwasy lock active list before locking pending list */
 	csr_nonscan_active_ll_lock(pMac);
-	pEntry = csr_nonscan_active_ll_peak_head(pMac, LL_ACCESS_NOLOCK);
+	pEntry = csr_nonscan_active_ll_peek_head(pMac, LL_ACCESS_NOLOCK);
 	if (pEntry) {
 		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
 		if ((eSmeCommandRoam == pCommand->command)
@@ -8687,7 +8681,7 @@ bool csr_is_roam_command_waiting_for_session(tpAniSirGlobal pMac, uint32_t sessi
 	}
 	if (false == fRet) {
 		csr_nonscan_pending_ll_lock(pMac);
-		pEntry = csr_nonscan_pending_ll_peak_head(pMac,
+		pEntry = csr_nonscan_pending_ll_peek_head(pMac,
 					 LL_ACCESS_NOLOCK);
 		while (pEntry) {
 			pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
@@ -8728,7 +8722,7 @@ bool csr_is_scan_for_roam_command_active(tpAniSirGlobal pMac,
 	tSmeCmd *pCommand;
 	/* alwasy lock active list before locking pending list */
 	csr_nonscan_active_ll_lock(pMac);
-	pEntry = csr_nonscan_active_ll_peak_head(pMac, LL_ACCESS_NOLOCK);
+	pEntry = csr_nonscan_active_ll_peek_head(pMac, LL_ACCESS_NOLOCK);
 	if (pEntry) {
 		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
 		if ((eSmeCommandScan == pCommand->command) &&
@@ -8743,23 +8737,19 @@ bool csr_is_scan_for_roam_command_active(tpAniSirGlobal pMac,
 
 static void
 csr_roaming_state_config_cnf_processor(tpAniSirGlobal mac_ctx,
-			uint32_t result, uint8_t sme_session_id)
+			tSmeCmd *cmd, uint32_t result, uint8_t sme_session_id)
 {
-	tListElem *entry = csr_nonscan_active_ll_peak_head(mac_ctx,
-					     LL_ACCESS_LOCK);
 	tCsrScanResult *scan_result = NULL;
 	tSirBssDescription *bss_desc = NULL;
-	tSmeCmd *cmd = NULL;
 	uint32_t session_id;
 	tCsrRoamSession *session;
 	tDot11fBeaconIEs *local_ies = NULL;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
-	if (NULL == entry) {
-		sms_log(mac_ctx, LOGE, FL("CFG_CNF with active list empty"));
+	if (NULL == cmd) {
+		sms_log(mac_ctx, LOGE, FL("given sme cmd is null"));
 		return;
 	}
-	cmd = GET_BASE_ADDR(entry, tSmeCmd, Link);
 	session_id = cmd->sessionId;
 	session = CSR_GET_SESSION(mac_ctx, session_id);
 
@@ -9080,7 +9070,7 @@ csr_dequeue_command(tpAniSirGlobal mac_ctx)
 {
 	bool fRemoveCmd;
 	tSmeCmd *cmd = NULL;
-	tListElem *entry = csr_nonscan_active_ll_peak_head(mac_ctx,
+	tListElem *entry = csr_nonscan_active_ll_peek_head(mac_ctx,
 					    LL_ACCESS_LOCK);
 	if (!entry) {
 		sms_log(mac_ctx, LOGE, FL("NO commands are active"));
@@ -11163,7 +11153,7 @@ csr_roam_chk_lnk_set_ctx_rsp(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 	tListElem *entry;
 
 	qdf_mem_set(&roam_info, sizeof(roam_info), 0);
-	entry = csr_nonscan_active_ll_peak_head(mac_ctx, LL_ACCESS_LOCK);
+	entry = csr_nonscan_active_ll_peek_head(mac_ctx, LL_ACCESS_LOCK);
 	if (!entry) {
 		sms_log(mac_ctx, LOGE, FL("CSR: NO commands are ACTIVE ..."));
 		goto process_pending_n_exit;
@@ -11280,7 +11270,7 @@ remove_entry_n_process_pending:
 		csr_release_command(mac_ctx, cmd);
 
 process_pending_n_exit:
-	sme_process_pending_queue(mac_ctx);
+	return;
 }
 
 
@@ -11599,7 +11589,6 @@ void csr_roam_wait_for_key_time_out_handler(void *pv)
 		if (csr_is_conn_state_connected_infra(pMac, pInfo->sessionId)) {
 			csr_roam_link_up(pMac,
 					 pSession->connectedProfile.bssid);
-			sme_process_pending_queue(pMac);
 			status = sme_acquire_global_lock(&pMac->sme);
 			if (QDF_IS_STATUS_SUCCESS(status)) {
 				csr_roam_disconnect(pMac, pInfo->sessionId,
@@ -11813,7 +11802,7 @@ static void csr_roam_wm_status_change_complete(tpAniSirGlobal pMac,
 {
 	tListElem *pEntry;
 	tSmeCmd *pCommand;
-	pEntry = csr_nonscan_active_ll_peak_head(pMac, LL_ACCESS_LOCK);
+	pEntry = csr_nonscan_active_ll_peek_head(pMac, LL_ACCESS_LOCK);
 	if (pEntry) {
 		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
 		if (eSmeCommandWmStatusChange == pCommand->command) {
@@ -11835,7 +11824,6 @@ static void csr_roam_wm_status_change_complete(tpAniSirGlobal pMac,
 		sms_log(pMac, LOGW,
 			"CSR: WmStatusChange Completion called but NO commands are ACTIVE ...");
 	}
-	sme_process_pending_queue(pMac);
 }
 
 void csr_roam_process_wm_status_change_command(tpAniSirGlobal pMac,
@@ -18204,6 +18192,7 @@ tSmeCmd *csr_get_command_buffer(tpAniSirGlobal pMac)
 static void csr_free_cmd_memory(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 {
 	if (!pCommand) {
+		sms_log(pMac, LOGE, "pCommand is NULL");
 		return;
 	}
 	switch (pCommand->command) {
@@ -18236,7 +18225,7 @@ static void csr_free_cmd_memory(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 	}
 }
 
-void csr_release_command(tpAniSirGlobal pMac, tSmeCmd *pCommand)
+void csr_release_command_buffer(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 {
 	if (pMac->roam.sPendingCommands > 0) {
 		/*
@@ -18252,35 +18241,337 @@ void csr_release_command(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 	}
 }
 
-/* Return SUCCESS is the command is queued, failed */
-QDF_STATUS csr_queue_sme_command(tpAniSirGlobal pMac, tSmeCmd *pCommand,
-				 bool fHighPriority)
+void csr_release_command(tpAniSirGlobal mac_ctx, tSmeCmd *sme_cmd)
 {
-	if (!SME_IS_START(pMac)) {
-		sms_log(pMac, LOGE, FL("Sme in stop state"));
+	struct wlan_serialization_queued_cmd_info cmd_info;
+
+	if (!sme_cmd) {
+		sms_log(mac_ctx, LOGE, "sme_cmd is NULL");
+		return;
+	}
+	if (sme_cmd->command != eSmeCommandScan &&
+			sme_cmd->command != eSmeCommandRemainOnChannel) {
+		qdf_mem_zero(&cmd_info,
+			     sizeof(struct wlan_serialization_queued_cmd_info));
+		cmd_info.cmd_type = csr_get_cmd_type(sme_cmd);
+		cmd_info.vdev = wlan_objmgr_get_vdev_by_id_from_psoc(
+					mac_ctx->psoc, sme_cmd->sessionId,
+					WLAN_LEGACY_SME_ID);
+		if (wlan_serialization_is_cmd_present_in_active_queue(
+					mac_ctx->psoc, &cmd_info)) {
+			sms_log(mac_ctx, LOG1,
+				FL("Releasing cmd from active queue"));
+			wlan_serialization_remove_cmd(&cmd_info);
+		} else if (wlan_serialization_is_cmd_present_in_pending_queue(
+					mac_ctx->psoc, &cmd_info)) {
+			sms_log(mac_ctx, LOG1,
+				FL("Releasing cmd from pending queue"));
+			wlan_serialization_cancel_request(&cmd_info);
+		} else {
+			sms_log(mac_ctx, LOG1,
+				FL("Can't find in any queue, its ok"));
+		}
+	} else {
+		csr_release_command_buffer(mac_ctx, sme_cmd);
+	}
+}
+
+static enum wlan_serialization_cmd_type csr_get_scan_cmd_type(tSmeCmd *sme_cmd)
+{
+	enum wlan_serialization_cmd_type cmd_type = WLAN_SER_CMD_MAX;
+
+	switch (sme_cmd->u.scanCmd.reason) {
+	case eCsrScanOther:
+		cmd_type = WLAN_SER_CMD_SCAN_OTHER;
+		break;
+	case eCsrScanLostLink1:
+		cmd_type = WLAN_SER_CMD_SCAN_LOST_LINK1;
+		break;
+	case eCsrScanLostLink2:
+		cmd_type = WLAN_SER_CMD_SCAN_LOST_LINK2;
+		break;
+	case eCsrScanLostLink3:
+		cmd_type = WLAN_SER_CMD_SCAN_LOST_LINK3;
+		break;
+	case eCsrScan11d1:
+		cmd_type = WLAN_SER_CMD_SCAN_11D_TYPE1;
+		break;
+	case eCsrScan11d2:
+		cmd_type = WLAN_SER_CMD_SCAN_11D_TYPE2;
+		break;
+	case eCsrScan11dDone:
+		cmd_type = WLAN_SER_CMD_SCAN_11D_DONE;
+		break;
+	case eCsrScanUserRequest:
+		cmd_type = WLAN_SER_CMD_SCAN_USER_REQ;
+		break;
+	case eCsrScanForSsid:
+		cmd_type = WLAN_SER_CMD_SCAN_FOR_SSID;
+		break;
+	case eCsrScanIdleScan:
+		cmd_type = WLAN_SER_CMD_SCAN_IDLE_SCAN;
+		break;
+	case eCsrScanProbeBss:
+		cmd_type = WLAN_SER_CMD_SCAN_PROBE_BSS;
+		break;
+	case eCsrScanAbortNormalScan:
+		cmd_type = WLAN_SER_CMD_SCAN_ABORT_NORMAL_SCAN;
+		break;
+	case eCsrScanP2PFindPeer:
+		cmd_type = WLAN_SER_CMD_SCAN_P2P_FIND_PEER;
+		break;
+	case eCsrScanCandidateFound:
+		cmd_type = WLAN_SER_CMD_SCAN_CANDIDATE_FOUND;
+		break;
+	default:
+		break;
+	}
+
+	return cmd_type;
+}
+
+static enum wlan_serialization_cmd_type csr_get_roam_cmd_type(tSmeCmd *sme_cmd)
+{
+	enum wlan_serialization_cmd_type cmd_type = WLAN_SER_CMD_MAX;
+	switch (sme_cmd->u.roamCmd.roamReason) {
+	case eCsrForcedDisassoc:
+		cmd_type = WLAN_SER_CMD_FORCE_DISASSOC;
+		break;
+	case eCsrHddIssued:
+		cmd_type = WLAN_SER_CMD_HDD_ISSUED;
+		break;
+	case eCsrLostLink1:
+		cmd_type = WLAN_SER_CMD_LOST_LINK1;
+		break;
+	case eCsrLostLink2:
+		cmd_type = WLAN_SER_CMD_LOST_LINK2;
+		break;
+	case eCsrLostLink3:
+		cmd_type = WLAN_SER_CMD_LOST_LINK3;
+		break;
+	case eCsrForcedDisassocMICFailure:
+		cmd_type = WLAN_SER_CMD_FORCE_DISASSOC_MIC_FAIL;
+		break;
+	case eCsrHddIssuedReassocToSameAP:
+		cmd_type = WLAN_SER_CMD_HDD_ISSUE_REASSOC_SAME_AP;
+		break;
+	case eCsrSmeIssuedReassocToSameAP:
+		cmd_type = WLAN_SER_CMD_SME_ISSUE_REASSOC_SAME_AP;
+		break;
+	case eCsrSmeIssuedReassocToDiffAP:
+		cmd_type = WLAN_SER_CMD_SME_ISSUE_REASSOC_DIFF_AP;
+		break;
+	case eCsrForcedDeauth:
+		cmd_type = WLAN_SER_CMD_FORCE_DEAUTH;
+		break;
+	case eCsrSmeIssuedDisassocForHandoff:
+		cmd_type =
+			WLAN_SER_CMD_SME_ISSUE_DISASSOC_FOR_HANDOFF;
+		break;
+	case eCsrSmeIssuedAssocToSimilarAP:
+		cmd_type =
+			WLAN_SER_CMD_SME_ISSUE_ASSOC_TO_SIMILAR_AP;
+		break;
+	case eCsrSmeIssuedIbssJoinFailure:
+		cmd_type = WLAN_SER_CMD_SME_ISSUE_IBSS_JOIN_FAIL;
+		break;
+	case eCsrForcedIbssLeave:
+		cmd_type = WLAN_SER_CMD_FORCE_IBSS_LEAVE;
+		break;
+	case eCsrStopBss:
+		cmd_type = WLAN_SER_CMD_STOP_BSS;
+		break;
+	case eCsrSmeIssuedFTReassoc:
+		cmd_type = WLAN_SER_CMD_SME_ISSUE_FT_REASSOC;
+		break;
+	case eCsrForcedDisassocSta:
+		cmd_type = WLAN_SER_CMD_FORCE_DISASSOC_STA;
+		break;
+	case eCsrForcedDeauthSta:
+		cmd_type = WLAN_SER_CMD_FORCE_DEAUTH_STA;
+		break;
+	case eCsrPerformPreauth:
+		cmd_type = WLAN_SER_CMD_PERFORM_PRE_AUTH;
+		break;
+	case eCsrLostLink1Abort:
+		cmd_type = WLAN_SER_CMD_LOST_LINK1_ABORT;
+		break;
+	case eCsrLostLink2Abort:
+		cmd_type = WLAN_SER_CMD_LOST_LINK2_ABORT;
+		break;
+	case eCsrLostLink3Abort:
+		cmd_type = WLAN_SER_CMD_LOST_LINK3_ABORT;
+		break;
+	default:
+		break;
+	}
+
+	return cmd_type;
+}
+
+enum wlan_serialization_cmd_type csr_get_cmd_type(tSmeCmd *sme_cmd)
+{
+	enum wlan_serialization_cmd_type cmd_type = WLAN_SER_CMD_MAX;
+
+	switch (sme_cmd->command) {
+	case eSmeCommandScan:
+		cmd_type = csr_get_scan_cmd_type(sme_cmd);
+		break;
+	case eSmeCommandRoam:
+		cmd_type = csr_get_roam_cmd_type(sme_cmd);
+		break;
+	case eSmeCommandWmStatusChange:
+		cmd_type = WLAN_SER_CMD_WM_STATUS_CHANGE;
+		break;
+	case eSmeCommandSetKey:
+		cmd_type = WLAN_SER_CMD_SET_KEY;
+		break;
+	case eSmeCommandNdpInitiatorRequest:
+		cmd_type = WLAN_SER_CMD_NDP_INIT_REQ;
+		break;
+	case eSmeCommandNdpResponderRequest:
+		cmd_type = WLAN_SER_CMD_NDP_RESP_REQ;
+		break;
+	case eSmeCommandNdpDataEndInitiatorRequest:
+		cmd_type = WLAN_SER_CMD_NDP_DATA_END_INIT_REQ;
+		break;
+	case eSmeCommandRemainOnChannel:
+		cmd_type = WLAN_SER_CMD_REMAIN_ON_CHANNEL;
+		break;
+	case eSmeCommandEnterStandby:
+		cmd_type = WLAN_SER_CMD_ENTER_STANDBY;
+		break;
+	case eSmeCommandAddTs:
+		cmd_type = WLAN_SER_CMD_ADDTS;
+		break;
+	case eSmeCommandDelTs:
+		cmd_type = WLAN_SER_CMD_DELTS;
+		break;
+	case eSmeCommandTdlsSendMgmt:
+		cmd_type = WLAN_SER_CMD_TDLS_SEND_MGMT;
+		break;
+	case eSmeCommandTdlsAddPeer:
+		cmd_type = WLAN_SER_CMD_TDLS_ADD_PEER;
+		break;
+	case eSmeCommandTdlsDelPeer:
+		cmd_type = WLAN_SER_CMD_TDLS_DEL_PEER;
+		break;
+	case eSmeCommandTdlsLinkEstablish:
+		cmd_type = WLAN_SER_CMD_TDLS_LINK_EST;
+		break;
+	case e_sme_command_set_hw_mode:
+		cmd_type = WLAN_SER_CMD_SET_HW_MODE;
+		break;
+	case e_sme_command_nss_update:
+		cmd_type = WLAN_SER_CMD_NSS_UPDATE;
+		break;
+	case e_sme_command_set_dual_mac_config:
+		cmd_type = WLAN_SER_CMD_SET_DUAL_MAC_CONFIG;
+		break;
+	case e_sme_command_set_antenna_mode:
+		cmd_type = WLAN_SER_CMD_SET_ANTENNA_MODE;
+		break;
+	case eSmeCommandOemDataReq:
+		cmd_type = WLAN_SER_CMD_OEM_DATA_REQ;
+		break;
+	case eSmeCommandEnterBmps:
+		cmd_type = WLAN_SER_CMD_ENTER_BMPS;
+		break;
+	case eSmeCommandExitBmps:
+		cmd_type = WLAN_SER_CMD_EXIT_BMPS;
+		break;
+	case eSmeCommandEnterUapsd:
+		cmd_type = WLAN_SER_CMD_ENTER_UAPSD;
+		break;
+	case eSmeCommandExitUapsd:
+		cmd_type = WLAN_SER_CMD_EXIT_UAPSD;
+		break;
+	case eSmeCommandExitWowl:
+		cmd_type = WLAN_SER_CMD_EXIT_WOWL;
+		break;
+	default:
+		break;
+	}
+
+	return cmd_type;
+}
+
+QDF_STATUS csr_set_serialization_params_to_cmd(tpAniSirGlobal mac_ctx,
+		tSmeCmd *sme_cmd, struct wlan_serialization_command *cmd,
+		uint8_t high_priority)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	if (!sme_cmd) {
+		sms_log(mac_ctx, LOGE, FL("Invalid sme_cmd"));
+		return status;
+	}
+	if (!cmd) {
+		sms_log(mac_ctx, LOGE, FL("Invalid serialization_cmd"));
+		return status;
+	}
+
+	/*
+	 * no need to fill command id for non-scan as they will be
+	 * zero always
+	 */
+	cmd->cmd_type = csr_get_cmd_type(sme_cmd);
+	if (cmd->cmd_type == WLAN_SER_CMD_MAX) {
+		sms_log(mac_ctx, LOGE, FL("serialization enum not found"));
+		return status;
+	}
+	cmd->vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc,
+				sme_cmd->sessionId, WLAN_LEGACY_SME_ID);
+	cmd->umac_cmd = sme_cmd;
+	cmd->cmd_timeout_duration = SME_DEFAULT_CMD_TIMEOUT;
+	cmd->cmd_cb = sme_ser_cmd_callback;
+	cmd->is_high_priority = high_priority;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS csr_queue_sme_command(tpAniSirGlobal mac_ctx, tSmeCmd *sme_cmd,
+				 bool high_priority)
+{
+	struct wlan_serialization_command cmd;
+
+	if (!SME_IS_START(mac_ctx)) {
+		sms_log(mac_ctx, LOGE, FL("Sme in stop state"));
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_PERM;
 	}
 
-	if ((eSmeCommandScan == pCommand->command) && pMac->scan.fDropScanCmd) {
-		sms_log(pMac, LOGW, FL(" drop scan (scan reason %d) command"),
-			pCommand->u.scanCmd.reason);
+	if ((eSmeCommandScan == sme_cmd->command) &&
+				mac_ctx->scan.fDropScanCmd) {
+		sms_log(mac_ctx, LOGW, FL("drop scan (scan reason %d) command"),
+			sme_cmd->u.scanCmd.reason);
 		return QDF_STATUS_CSR_WRONG_STATE;
 	}
 
-	if ((pCommand->command == eSmeCommandScan)
-	    || (pCommand->command == eSmeCommandRemainOnChannel)) {
-		sms_log(pMac, LOGW,
+	if ((sme_cmd->command == eSmeCommandScan)
+	    || (sme_cmd->command == eSmeCommandRemainOnChannel)) {
+		sms_log(mac_ctx, LOGW,
 		FL("scan pending list count %d scan_id %d"),
-			pMac->sme.smeScanCmdPendingList.Count,
-			pCommand->u.scanCmd.scanID);
-		csr_ll_insert_tail(&pMac->sme.smeScanCmdPendingList,
-				   &pCommand->Link, LL_ACCESS_LOCK);
+			mac_ctx->sme.smeScanCmdPendingList.Count,
+			sme_cmd->u.scanCmd.scanID);
+		csr_ll_insert_tail(&mac_ctx->sme.smeScanCmdPendingList,
+				   &sme_cmd->Link, LL_ACCESS_LOCK);
 		/* process the command queue... */
-		sme_process_pending_queue(pMac);
+		sme_process_pending_queue(mac_ctx);
 		return QDF_STATUS_SUCCESS;
 	}
-	sme_push_command(pMac, pCommand, fHighPriority);
+	qdf_mem_zero(&cmd, sizeof(struct wlan_serialization_command));
+	if (QDF_STATUS_SUCCESS ==
+			csr_set_serialization_params_to_cmd(mac_ctx, sme_cmd,
+						&cmd, high_priority)) {
+		if (WLAN_SER_CMD_DENIED_UNSPECIFIED ==
+				wlan_serialization_request(&cmd)) {
+			sms_log(mac_ctx, LOGE, FL("failed to enq to req"));
+			return QDF_STATUS_E_FAILURE;
+		}
+	} else {
+		sms_log(mac_ctx, LOGE, FL("failed to set ser params"));
+		return QDF_STATUS_E_FAILURE;
+	}
 	return QDF_STATUS_SUCCESS;
 }
 
