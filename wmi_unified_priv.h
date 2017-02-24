@@ -720,6 +720,9 @@ QDF_STATUS (*send_roam_scan_offload_rssi_change_cmd)(wmi_unified_t wmi_handle,
 	uint32_t bcn_rssi_weight,
 	uint32_t hirssi_delay_btw_scans);
 
+QDF_STATUS (*send_per_roam_config_cmd)(wmi_unified_t wmi_handle,
+		struct wmi_per_roam_config_req *req_buf);
+
 QDF_STATUS (*send_get_buf_extscan_hotlist_cmd)(wmi_unified_t wmi_handle,
 				   struct ext_scan_setbssi_hotlist_params *
 				   photlist, int *buf_len);
