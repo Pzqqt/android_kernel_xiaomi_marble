@@ -5285,9 +5285,12 @@ static QDF_STATUS send_roam_scan_offload_mode_cmd_tlv(wmi_unified_t wmi_handle,
 
 	roam_scan_mode_fp->roam_scan_mode = roam_req->mode;
 	roam_scan_mode_fp->vdev_id = roam_req->vdev_id;
-	if (roam_req->mode == (WMI_ROAM_SCAN_MODE_NONE
-			|WMI_ROAM_SCAN_MODE_ROAMOFFLOAD))
+	if (roam_req->mode == (WMI_ROAM_SCAN_MODE_NONE |
+			WMI_ROAM_SCAN_MODE_ROAMOFFLOAD)) {
+		roam_scan_mode_fp->flags |=
+			WMI_ROAM_SCAN_MODE_FLAG_REPORT_STATUS;
 		goto send_roam_scan_mode_cmd;
+	}
 
 	/* Fill in scan parameters suitable for roaming scan */
 	buf_ptr += sizeof(wmi_roam_scan_mode_fixed_param);
