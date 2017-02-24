@@ -478,15 +478,14 @@ struct hdd_pmf_stats {
 #endif
 
 struct hdd_arp_stats_s {
-	uint16_t tx_count;
-	uint16_t rx_count;
+	uint16_t tx_arp_req_count;
+	uint16_t rx_arp_rsp_count;
 	uint16_t tx_dropped;
 	uint16_t rx_dropped;
 	uint16_t rx_delivered;
 	uint16_t rx_refused;
 	uint16_t tx_host_fw_sent;
 	uint16_t rx_host_drop_reorder;
-	uint16_t tx_fw_cnt;
 	uint16_t rx_fw_cnt;
 	uint16_t tx_ack_cnt;
 };
@@ -1712,6 +1711,7 @@ struct hdd_context {
 	qdf_wake_lock_t monitor_mode_wakelock;
 	bool lte_coex_ant_share;
 	int sscan_pid;
+	uint32_t track_arp_ip;
 };
 
 /**

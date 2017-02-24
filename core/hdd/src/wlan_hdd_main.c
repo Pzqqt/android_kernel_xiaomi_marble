@@ -10648,9 +10648,7 @@ static void hdd_get_nud_stats_cb(void *data, struct rsp_stats *rsp)
 	hdd_notice("rsp->ba_session_establishment_status :%x",
 		   rsp->ba_session_establishment_status);
 
-	adapter->hdd_stats.hdd_arp_stats.tx_fw_cnt = rsp->arp_req_enqueue;
 	adapter->hdd_stats.hdd_arp_stats.rx_fw_cnt = rsp->arp_rsp_recvd;
-	adapter->hdd_stats.hdd_arp_stats.tx_ack_cnt = rsp->arp_req_tx_success;
 	adapter->dad |= rsp->dad_detected;
 	adapter->con_status = rsp->connect_status;
 

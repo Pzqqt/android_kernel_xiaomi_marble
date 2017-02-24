@@ -582,8 +582,9 @@ static int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	bool pkt_proto_logged = false;
 #ifdef QCA_PKT_PROTO_TRACE
 	uint8_t proto_type = 0;
+#endif
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-#endif /* QCA_PKT_PROTO_TRACE */
+	bool is_arp;
 
 #ifdef QCA_WIFI_FTM
 	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE) {
@@ -603,7 +604,22 @@ static int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	}
 
 	wlan_hdd_classify_pkt(skb);
-	wlan_hdd_latency_opt(adapter, skb);
+	if (QDF_NBUF_CB_GET_PACKET_TYPE(skb) == QDF_NBUF_CB_PACKET_TYPE_ARP) {
+		is_arp = true;
+		if (qdf_nbuf_data_is_arp_req(skb) &&
+		    (hdd_ctx->track_arp_ip == qdf_nbuf_get_arp_tgt_ip(skb))) {
+			++adapter->hdd_stats.hdd_arp_stats.tx_arp_req_count;
+			QDF_TRACE(QDF_MODULE_ID_HDD_DATA,
+				  QDF_TRACE_LEVEL_INFO_HIGH,
+					"%s : ARP packet", __func__);
+		}
+	}
+
+	if (cds_is_driver_recovering()) {
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_WARN,
+			"Recovery in progress, dropping the packet");
+		goto drop_pkt;
+	}
 
 	STAId = HDD_WLAN_INVALID_STA_ID;
 
@@ -785,6 +801,7 @@ static int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		++adapter->hdd_stats.tx_rx_stats.tx_dropped_ac[ac];
 		goto drop_pkt_and_release_skb;
 	}
+
 	netif_trans_update(dev);
 
 	return NETDEV_TX_OK;
@@ -812,6 +829,11 @@ drop_pkt_accounting:
 
 	++adapter->stats.tx_dropped;
 	++adapter->hdd_stats.tx_rx_stats.tx_dropped;
+	if (is_arp) {
+		++adapter->hdd_stats.hdd_arp_stats.tx_dropped;
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO_HIGH,
+			"%s : ARP packet dropped", __func__);
+	}
 
 	return NETDEV_TX_OK;
 }
@@ -1226,6 +1248,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 	struct qdf_mac_addr *mac_addr;
 	bool wake_lock = false;
 	bool proto_pkt_logged = false;
+	bool track_arp = false;
 
 	/* Sanity check on inputs */
 	if (unlikely((NULL == context) || (NULL == rxBuf))) {
@@ -1262,6 +1285,20 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
 			 "%s: skb %pK skb->len %d\n", __func__, skb, skb->len);
 #endif
+		if (QDF_NBUF_CB_PACKET_TYPE_ARP ==
+		    QDF_NBUF_CB_GET_PACKET_TYPE(skb)) {
+			if (qdf_nbuf_data_is_arp_rsp(skb) &&
+				(hdd_ctx->track_arp_ip ==
+			     qdf_nbuf_get_arp_src_ip(skb))) {
+				++adapter->hdd_stats.hdd_arp_stats.
+							rx_arp_rsp_count;
+				QDF_TRACE(QDF_MODULE_ID_HDD_DATA,
+						QDF_TRACE_LEVEL_INFO,
+						"%s: ARP packet received",
+						__func__);
+				track_arp = true;
+			}
+		}
 
 		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 		if ((sta_ctx->conn_info.proxyARPService) &&
@@ -1360,15 +1397,25 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 			else
 				rxstat = netif_rx_ni(skb);
 
-			if (NET_RX_SUCCESS == rxstat)
+			if (NET_RX_SUCCESS == rxstat) {
 				++adapter->hdd_stats.tx_rx_stats.
 					 rx_delivered[cpu_index];
-			else
+				if (track_arp)
+					++adapter->hdd_stats.hdd_arp_stats.
+						rx_delivered;
+			} else {
 				++adapter->hdd_stats.tx_rx_stats.
 					 rx_refused[cpu_index];
+				if (track_arp)
+					++adapter->hdd_stats.hdd_arp_stats.
+						rx_refused;
+			}
 		} else {
 			++adapter->hdd_stats.tx_rx_stats.
-				 rx_delivered[cpu_index];
+						rx_delivered[cpu_index];
+			if (track_arp)
+				++adapter->hdd_stats.hdd_arp_stats.
+						rx_delivered;
 		}
 	}
 

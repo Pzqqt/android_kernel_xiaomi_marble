@@ -12508,6 +12508,7 @@ static int __wlan_hdd_cfg80211_set_nud_stats(struct wiphy *wiphy,
 		}
 		arp_stats_params.flag = true;
 		arp_stats_params.ip_addr = nla_get_u32(tb[STATS_GW_IPV4]);
+		hdd_ctx->track_arp_ip = arp_stats_params.ip_addr;
 	} else {
 		arp_stats_params.flag = false;
 	}
@@ -12686,17 +12687,17 @@ static int __wlan_hdd_cfg80211_get_nud_stats(struct wiphy *wiphy,
 	}
 
 	if (nla_put_u16(skb, COUNT_FROM_NETDEV,
-			adapter->hdd_stats.hdd_arp_stats.tx_count) ||
+			adapter->hdd_stats.hdd_arp_stats.tx_arp_req_count) ||
 	    nla_put_u16(skb, COUNT_TO_LOWER_MAC,
 			adapter->hdd_stats.hdd_arp_stats.tx_host_fw_sent) ||
 	    nla_put_u16(skb, RX_COUNT_BY_LOWER_MAC,
-			adapter->hdd_stats.hdd_arp_stats.tx_fw_cnt) ||
+			adapter->hdd_stats.hdd_arp_stats.tx_host_fw_sent) ||
 	    nla_put_u16(skb, COUNT_TX_SUCCESS,
 			adapter->hdd_stats.hdd_arp_stats.tx_ack_cnt) ||
 	    nla_put_u16(skb, RSP_RX_COUNT_BY_LOWER_MAC,
 			adapter->hdd_stats.hdd_arp_stats.rx_fw_cnt) ||
 	    nla_put_u16(skb, RSP_RX_COUNT_BY_UPPER_MAC,
-			adapter->hdd_stats.hdd_arp_stats.rx_count) ||
+			adapter->hdd_stats.hdd_arp_stats.rx_arp_rsp_count) ||
 	    nla_put_u16(skb, RSP_COUNT_TO_NETDEV,
 			adapter->hdd_stats.hdd_arp_stats.rx_delivered) ||
 	    nla_put_u16(skb, RSP_COUNT_OUT_OF_ORDER_DROP,
@@ -12711,6 +12712,7 @@ static int __wlan_hdd_cfg80211_get_nud_stats(struct wiphy *wiphy,
 	if (adapter->dad)
 		nla_put_flag(skb, AP_LINK_DAD);
 
+	hdd_ctx->track_arp_ip = 0;
 	cfg80211_vendor_cmd_reply(skb);
 	return err;
 }

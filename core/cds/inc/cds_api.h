@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -565,4 +565,7 @@ bool cds_is_group_addr(uint8_t *mac_addr)
 		return false;
 }
 
+uint32_t cds_get_arp_stats_gw_ip(void);
+void cds_incr_arp_stats_tx_tgt_delivered(void);
+void cds_incr_arp_stats_tx_tgt_acked(void);
 #endif /* if !defined __CDS_API_H */

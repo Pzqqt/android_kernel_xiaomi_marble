@@ -630,6 +630,26 @@ static inline void ol_tx_timestamp(ol_txrx_pdev_handle pdev,
 #endif
 
 /**
+ * ol_tx_update_arp_stats() - update ARP packet TX stats
+ * @netbuf:  buffer
+ *
+ *
+ * Return: none
+ */
+static void ol_tx_update_arp_stats(qdf_nbuf_t netbuf,
+					enum htt_tx_status status)
+{
+	uint32_t tgt_ip = cds_get_arp_stats_gw_ip();
+
+	if (tgt_ip == qdf_nbuf_get_arp_tgt_ip(netbuf)) {
+		if (status != htt_tx_status_download_fail)
+			cds_incr_arp_stats_tx_tgt_delivered();
+		if (status == htt_tx_status_ok)
+			cds_incr_arp_stats_tx_tgt_acked();
+	}
+}
+
+/**
  * WARNING: ol_tx_inspect_handler()'s bahavior is similar to that of
  * ol_tx_completion_handler().
  * any change in ol_tx_completion_handler() must be mirrored in
@@ -679,6 +699,12 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 					);
 
 		QDF_NBUF_UPDATE_TX_PKT_COUNT(netbuf, QDF_NBUF_TX_PKT_FREE);
+
+		if (QDF_NBUF_CB_GET_PACKET_TYPE(netbuf) ==
+		    QDF_NBUF_CB_PACKET_TYPE_ARP) {
+			if (qdf_nbuf_data_is_arp_req(netbuf))
+				ol_tx_update_arp_stats(netbuf, status);
+		}
 
 		if (tx_desc->pkt_type != OL_TX_FRM_TSO) {
 			packetdump_cb = pdev->ol_tx_packetdump_cb;

@@ -2769,3 +2769,71 @@ cds_print_htc_credit_history(uint32_t count, qdf_abstract_print *print,
 				 print, print_priv);
 }
 #endif
+
+/**
+ * cds_get_arp_stats_gw_ip() - get arp stats track IP
+ *
+ * Return: ARP stats IP to track
+ */
+uint32_t cds_get_arp_stats_gw_ip(void)
+{
+	struct hdd_context *hdd_ctx;
+
+	hdd_ctx = (struct hdd_context *) (gp_cds_context->pHDDContext);
+	if (!hdd_ctx) {
+		cds_err("Hdd Context is Null");
+		return 0;
+	}
+
+	return hdd_ctx->track_arp_ip;
+}
+
+/**
+ * cds_incr_arp_stats_tx_tgt_delivered() - increment ARP stats
+ *
+ * Return: none
+ */
+void cds_incr_arp_stats_tx_tgt_delivered(void)
+{
+	struct hdd_context *hdd_ctx;
+	struct hdd_adapter *adapter = NULL;
+
+	hdd_ctx = (struct hdd_context *) (gp_cds_context->pHDDContext);
+	if (!hdd_ctx) {
+		cds_err("Hdd Context is Null");
+		return;
+	}
+
+	hdd_for_each_adapter(hdd_ctx, adapter) {
+		if (QDF_STA_MODE == adapter->device_mode)
+			break;
+	}
+
+	if (adapter)
+		adapter->hdd_stats.hdd_arp_stats.tx_host_fw_sent++;
+}
+
+/**
+ * cds_incr_arp_stats_tx_tgt_acked() - increment ARP stats
+ *
+ * Return: none
+ */
+void cds_incr_arp_stats_tx_tgt_acked(void)
+{
+	struct hdd_context *hdd_ctx;
+	struct hdd_adapter *adapter = NULL;
+
+	hdd_ctx = (struct hdd_context *) (gp_cds_context->pHDDContext);
+	if (!hdd_ctx) {
+		cds_err("Hdd Context is Null");
+		return;
+	}
+
+	hdd_for_each_adapter(hdd_ctx, adapter) {
+		if (QDF_STA_MODE == adapter->device_mode)
+			break;
+	}
+
+	if (adapter)
+		adapter->hdd_stats.hdd_arp_stats.tx_ack_cnt++;
+}
