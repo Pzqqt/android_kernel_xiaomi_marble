@@ -174,6 +174,7 @@
  * @QCA_NL80211_VENDOR_SUBCMD_CONFIGURE_TDLS: Configure the TDLS behavior
  *	in the host driver. The different TDLS configurations are defined
  *	by the attributes in enum qca_wlan_vendor_attr_tdls_configuration.
+ * @QCA_NL80211_VENDOR_SUBCMD_GET_HE_CAPABILITIES: Get HE related capabilities
  * @QCA_NL80211_VENDOR_SUBCMD_SET_SAR_LIMITS:Set the Specific Absorption Rate
  *	(SAR) power limits. A critical regulation for FCC compliance, OEMs
  *	require methods to set SAR limits on TX power of WLAN/WWAN.
@@ -326,6 +327,8 @@ enum qca_nl80211_vendor_subcmds {
 
 	/* Configure the TDLS mode from user space */
 	QCA_NL80211_VENDOR_SUBCMD_CONFIGURE_TDLS = 143,
+
+	QCA_NL80211_VENDOR_SUBCMD_GET_HE_CAPABILITIES = 144,
 
 	/* Vendor abort scan command */
 	QCA_NL80211_VENDOR_SUBCMD_ABORT_SCAN = 145,
