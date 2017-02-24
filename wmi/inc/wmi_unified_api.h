@@ -854,6 +854,16 @@ QDF_STATUS wmi_unified_roam_scan_offload_rssi_change_cmd(void *wmi_hdl,
 			  uint32_t bcn_rssi_weight,
 			  uint32_t hirssi_delay_btw_scans);
 
+/**
+ * wmi_unified_set_per_roam_config() - set PER roam config in FW
+ * @wmi_hdl: wmi handle
+ * @req_buf: per roam config request buffer
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_set_per_roam_config(void *wmi_hdl,
+		struct wmi_per_roam_config_req *req_buf);
+
 QDF_STATUS wmi_unified_get_buf_extscan_hotlist_cmd(void *wmi_hdl,
 				   struct ext_scan_setbssi_hotlist_params *
 				   photlist, int *buf_len);
