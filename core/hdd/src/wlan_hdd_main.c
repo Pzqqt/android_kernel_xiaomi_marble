@@ -7907,6 +7907,37 @@ static void hdd_tsf_init(hdd_context_t *hdd_ctx)
 }
 #endif
 
+static int hdd_set_smart_chainmask_enabled(hdd_context_t *hdd_ctx)
+{
+	int vdev_id = 0;
+	int param_id = WMI_PDEV_PARAM_SMART_CHAINMASK_SCHEME;
+	int value = hdd_ctx->config->smart_chainmask_enabled;
+	int vpdev = PDEV_CMD;
+	int ret;
+
+	ret = wma_cli_set_command(vdev_id, param_id, value, vpdev);
+	if (ret)
+		hdd_err("WMI_PDEV_PARAM_SMART_CHAINMASK_SCHEME failed %d", ret);
+
+	return ret;
+}
+
+static int hdd_set_alternative_chainmask_enabled(hdd_context_t *hdd_ctx)
+{
+	int vdev_id = 0;
+	int param_id = WMI_PDEV_PARAM_ALTERNATIVE_CHAINMASK_SCHEME;
+	int value = hdd_ctx->config->alternative_chainmask_enabled;
+	int vpdev = PDEV_CMD;
+	int ret;
+
+	ret = wma_cli_set_command(vdev_id, param_id, value, vpdev);
+	if (ret)
+		hdd_err("WMI_PDEV_PARAM_ALTERNATIVE_CHAINMASK_SCHEME failed %d",
+			ret);
+
+	return ret;
+}
+
 /**
  * hdd_pre_enable_configure() - Configurations prior to cds_enable
  * @hdd_ctx:	HDD context
@@ -7952,6 +7983,14 @@ static int hdd_pre_enable_configure(hdd_context_t *hdd_ctx)
 		hdd_err("WMI_PDEV_PARAM_TX_CHAIN_MASK_1SS failed %d", ret);
 		goto out;
 	}
+
+	ret = hdd_set_smart_chainmask_enabled(hdd_ctx);
+	if (ret)
+		goto out;
+
+	ret = hdd_set_alternative_chainmask_enabled(hdd_ctx);
+	if (ret)
+		goto out;
 
 	hdd_program_country_code(hdd_ctx);
 

@@ -7102,6 +7102,53 @@ typedef enum {
 #define CFG_TX_CHAIN_MASK_1SS_DEFAULT  (1)
 
 /*
+ * <ini>
+ * gEnableSmartChainmask - Enable Smart Chainmask
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable the Smart Chainmask feature via
+ * the WMI_PDEV_PARAM_SMART_CHAINMASK_SCHEME firmware parameter.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_SMART_CHAINMASK_NAME    "gEnableSmartChainmask"
+#define CFG_ENABLE_SMART_CHAINMASK_MIN     (0)
+#define CFG_ENABLE_SMART_CHAINMASK_MAX     (1)
+#define CFG_ENABLE_SMART_CHAINMASK_DEFAULT (0)
+
+/*
+ * <ini>
+ * gEnableAlternativeChainmask - Enable Co-Ex Alternative Chainmask
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable the Co-ex Alternative Chainmask
+ * feature via the WMI_PDEV_PARAM_ALTERNATIVE_CHAINMASK_SCHEME
+ * firmware parameter.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_COEX_ALT_CHAINMASK_NAME    "gEnableAlternativeChainmask"
+#define CFG_ENABLE_COEX_ALT_CHAINMASK_MIN     (0)
+#define CFG_ENABLE_COEX_ALT_CHAINMASK_MAX     (1)
+#define CFG_ENABLE_COEX_ALT_CHAINMASK_DEFAULT (0)
+
+/*
  * set the self gen power value from
  * 0 to 0xffff
  */
@@ -9351,6 +9398,8 @@ struct hdd_config {
 	uint32_t dual_mac_feature_disable;
 	bool     tx_chain_mask_cck;
 	uint8_t  tx_chain_mask_1ss;
+	bool smart_chainmask_enabled;
+	bool alternative_chainmask_enabled;
 	uint16_t  self_gen_frm_pwr;
 #ifdef FEATURE_WLAN_SCAN_PNO
 	bool pno_channel_prediction;
