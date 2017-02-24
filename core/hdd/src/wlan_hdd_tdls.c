@@ -4074,6 +4074,19 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 			return -EPERM;
 		}
 	}
+	/*
+	 * Discard TDLS Discovery request and setup confirm if violates
+	 * ACM rules
+	 */
+	if ((SIR_MAC_TDLS_DIS_REQ == action_code ||
+		SIR_MAC_TDLS_SETUP_CNF == action_code) &&
+		(hdd_wmm_is_active(pAdapter)) &&
+		!(pAdapter->hddWmmStatus.wmmAcStatus[OL_TX_WMM_AC_VI].wmmAcAccessAllowed)) {
+			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_WARN,
+			"%s: Admission control is set to VI, action %d is not allowed.",
+			__func__, action_code);
+			return -EPERM;
+	}
 
 	if (SIR_MAC_TDLS_SETUP_REQ == action_code ||
 	    SIR_MAC_TDLS_SETUP_RSP == action_code) {
