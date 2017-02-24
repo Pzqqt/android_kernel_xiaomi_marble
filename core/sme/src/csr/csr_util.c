@@ -42,7 +42,7 @@
 #include "wma_types.h"
 #include "cds_utils.h"
 #include "cds_concurrency.h"
-#include "wlan_serialization_api.h"
+#include "wlan_serialization_legacy_mcl_api.h"
 
 
 uint8_t csr_wpa_oui[][CSR_WPA_OUI_SIZE] = {
@@ -377,7 +377,7 @@ tListElem *csr_nonscan_active_ll_peek_head(struct sAniSirGlobal *mac_ctx,
 	struct wlan_serialization_command *cmd;
 	tSmeCmd *sme_cmd;
 
-	sms_log(mac_ctx, LOGE, FL("Enter"));
+	sms_log(mac_ctx, LOG3, FL("Enter"));
 	cmd = wlan_serialization_peek_head_active_cmd_using_psoc(mac_ctx->psoc,
 								 false);
 	if (!cmd) {
@@ -385,7 +385,7 @@ tListElem *csr_nonscan_active_ll_peek_head(struct sAniSirGlobal *mac_ctx,
 		return NULL;
 	}
 	sme_cmd = cmd->umac_cmd;
-	sms_log(mac_ctx, LOGE, FL("Exit"));
+	sms_log(mac_ctx, LOG3, FL("Exit"));
 
 	return &sme_cmd->Link;
 }
@@ -395,7 +395,7 @@ tListElem *csr_nonscan_pending_ll_peek_head(struct sAniSirGlobal *mac_ctx,
 	struct wlan_serialization_command *cmd;
 	tSmeCmd *sme_cmd;
 
-	sms_log(mac_ctx, LOGE, FL("Enter"));
+	sms_log(mac_ctx, LOG3, FL("Enter"));
 	cmd = wlan_serialization_peek_head_pending_cmd_using_psoc(mac_ctx->psoc,
 								  false);
 	if (!cmd) {
@@ -403,7 +403,7 @@ tListElem *csr_nonscan_pending_ll_peek_head(struct sAniSirGlobal *mac_ctx,
 		return NULL;
 	}
 	sme_cmd = cmd->umac_cmd;
-	sms_log(mac_ctx, LOGE, FL("Exit"));
+	sms_log(mac_ctx, LOG3, FL("Exit"));
 
 	return &sme_cmd->Link;
 }
@@ -414,7 +414,7 @@ tListElem *csr_scan_active_ll_peek_head(struct sAniSirGlobal *mac_ctx,
 	struct wlan_serialization_command *cmd;
 	tSmeCmd *sme_cmd;
 
-	sms_log(mac_ctx, LOGE, FL("Enter"));
+	sms_log(mac_ctx, LOG3, FL("Enter"));
 	cmd = wlan_serialization_peek_head_active_cmd_using_psoc(mac_ctx->psoc,
 			true);
 	if (!cmd) {
@@ -422,7 +422,7 @@ tListElem *csr_scan_active_ll_peek_head(struct sAniSirGlobal *mac_ctx,
 		return NULL;
 	}
 	sme_cmd = cmd->umac_cmd;
-	sms_log(mac_ctx, LOGE, FL("Exit"));
+	sms_log(mac_ctx, LOG3, FL("Exit"));
 
 	return &sme_cmd->Link;
 }
@@ -433,15 +433,15 @@ tListElem *csr_scan_pending_ll_peek_head(struct sAniSirGlobal *mac_ctx,
 	struct wlan_serialization_command *cmd;
 	tSmeCmd *sme_cmd;
 
-	sms_log(mac_ctx, LOGE, FL("Enter"));
+	sms_log(mac_ctx, LOG3, FL("Enter"));
 	cmd = wlan_serialization_peek_head_pending_cmd_using_psoc(mac_ctx->psoc,
 			true);
 	if (!cmd) {
-		sms_log(mac_ctx, LOGE, "No cmd found");
+		sms_log(mac_ctx, LOGE, FL("No cmd found"));
 		return NULL;
 	}
 	sme_cmd = cmd->umac_cmd;
-	sms_log(mac_ctx, LOGE, FL("Exit"));
+	sms_log(mac_ctx, LOG3, FL("Exit"));
 
 	return &sme_cmd->Link;
 }
@@ -451,28 +451,29 @@ bool csr_nonscan_active_ll_remove_entry(struct sAniSirGlobal *mac_ctx,
 {
 	tListElem *head;
 
-	sms_log(mac_ctx, LOGE, FL("Enter"));
+	sms_log(mac_ctx, LOG3, FL("Enter"));
 	head = csr_nonscan_active_ll_peek_head(mac_ctx, inter_locked);
 	if (head == entry) {
-		sms_log(mac_ctx, LOGE, "found and Exit");
+		sms_log(mac_ctx, LOG3, FL("found and Exit"));
 		return true;
 	} else {
-		sms_log(mac_ctx, LOGE, "not found and Exit");
+		sms_log(mac_ctx, LOG3, FL("not found and Exit"));
 		return false;
 	}
 }
+
 bool csr_nonscan_pending_ll_remove_entry(struct sAniSirGlobal *mac_ctx,
 		tListElem *entry, bool inter_locked)
 {
 	tListElem *head;
 
-	sms_log(mac_ctx, LOGE, FL("Enter"));
-	head = csr_nonscan_pending_ll_peek_head(mac_ctx, inter_locked);
+	sms_log(mac_ctx, LOG3, FL("Enter"));
+	head = csr_nonscan_pending_ll_next(mac_ctx, entry, inter_locked);
 	if (head == entry) {
-		sms_log(mac_ctx, LOGE, "found and Exit");
+		sms_log(mac_ctx, LOG3, FL("found and Exit"));
 		return true;
 	} else {
-		sms_log(mac_ctx, LOGE, "not found and Exit");
+		sms_log(mac_ctx, LOG3, FL("not found and Exit"));
 		return false;
 	}
 }
@@ -485,7 +486,7 @@ bool csr_scan_active_ll_remove_entry(struct sAniSirGlobal *mac_ctx,
 	struct wlan_serialization_command *cmd;
 
 	if (!entry) {
-		sms_log(mac_ctx, LOGE, "entry is null");
+		sms_log(mac_ctx, LOGE, FL("entry is null"));
 		return false;
 	}
 	sms_log(mac_ctx, LOGE, FL("Enter"));
@@ -494,16 +495,16 @@ bool csr_scan_active_ll_remove_entry(struct sAniSirGlobal *mac_ctx,
 				sme_cmd->sessionId, sme_cmd->u.scanCmd.scanID,
 				true);
 	if (!cmd) {
-		sms_log(mac_ctx, LOGE, "Can't find the entry");
+		sms_log(mac_ctx, LOGE, FL("Can't find the entry"));
 		return false;
 	}
 	sme_cmd = cmd->umac_cmd;
 	found_sme_cmd = &sme_cmd->Link;
 	if (found_sme_cmd == entry) {
-		sms_log(mac_ctx, LOGE, "found and Exit");
+		sms_log(mac_ctx, LOGE, FL("found and Exit"));
 		return true;
 	} else {
-		sms_log(mac_ctx, LOGE, "not found and Exit");
+		sms_log(mac_ctx, LOGE, FL("not found and Exit"));
 		return false;
 	}
 }
@@ -515,7 +516,7 @@ bool csr_scan_pending_ll_remove_entry(struct sAniSirGlobal *mac_ctx,
 	struct wlan_serialization_command *cmd;
 
 	if (!entry) {
-		sms_log(mac_ctx, LOGE, "entry is null");
+		sms_log(mac_ctx, LOGE, FL("entry is null"));
 		return false;
 	}
 	sms_log(mac_ctx, LOGE, FL("Enter"));
@@ -524,16 +525,16 @@ bool csr_scan_pending_ll_remove_entry(struct sAniSirGlobal *mac_ctx,
 				sme_cmd->sessionId, sme_cmd->u.scanCmd.scanID,
 				false);
 	if (!cmd) {
-		sms_log(mac_ctx, LOGE, "Can't find the entry");
+		sms_log(mac_ctx, LOGE, FL("Can't find the entry"));
 		return false;
 	}
 	sme_cmd = cmd->umac_cmd;
 	found_sme_cmd = &sme_cmd->Link;
 	if (found_sme_cmd == entry) {
-		sms_log(mac_ctx, LOGE, "found and Exit");
+		sms_log(mac_ctx, LOGE, FL("found and Exit"));
 		return true;
 	} else {
-		sms_log(mac_ctx, LOGE, "not found and Exit");
+		sms_log(mac_ctx, LOGE, FL("not found and Exit"));
 		return false;
 	}
 }
@@ -583,8 +584,10 @@ tListElem *csr_scan_active_ll_next(struct sAniSirGlobal *mac_ctx,
 				sme_cmd->sessionId, WLAN_LEGACY_SME_ID);
 	tcmd = wlan_serialization_get_active_list_next_node_using_psoc(
 				mac_ctx->psoc, &cmd, true);
+	if (cmd.vdev)
+		wlan_objmgr_vdev_release_ref(cmd.vdev, WLAN_LEGACY_SME_ID);
 	if (!tcmd) {
-		sms_log(mac_ctx, LOGE, "No cmd found");
+		sms_log(mac_ctx, LOGE, FL("No cmd found"));
 		return NULL;
 	}
 	sme_cmd = tcmd->umac_cmd;
@@ -612,6 +615,8 @@ tListElem *csr_scan_pending_ll_next(struct sAniSirGlobal *mac_ctx,
 				sme_cmd->sessionId, WLAN_LEGACY_SME_ID);
 	tcmd = wlan_serialization_get_pending_list_next_node_using_psoc(
 				mac_ctx->psoc, &cmd, true);
+	if (cmd.vdev)
+		wlan_objmgr_vdev_release_ref(cmd.vdev, WLAN_LEGACY_SME_ID);
 	if (!tcmd) {
 		sms_log(mac_ctx, LOGE, FL("No cmd found"));
 		return NULL;
@@ -641,8 +646,10 @@ tListElem *csr_nonscan_pending_ll_next(struct sAniSirGlobal *mac_ctx,
 				sme_cmd->sessionId, WLAN_LEGACY_SME_ID);
 	tcmd = wlan_serialization_get_pending_list_next_node_using_psoc(
 				mac_ctx->psoc, &cmd, false);
+	if (cmd.vdev)
+		wlan_objmgr_vdev_release_ref(cmd.vdev, WLAN_LEGACY_SME_ID);
 	if (!tcmd) {
-		sms_log(mac_ctx, LOGE, "No cmd found");
+		sms_log(mac_ctx, LOGE, FL("No cmd found"));
 		return NULL;
 	}
 	sme_cmd = tcmd->umac_cmd;

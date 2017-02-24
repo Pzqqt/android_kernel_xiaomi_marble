@@ -4197,8 +4197,7 @@ QDF_STATUS csr_get_active_scan_entry(tpAniSirGlobal mac_ctx,
 	}
 	localentry = csr_scan_active_ll_peek_head(mac_ctx,
 			LL_ACCESS_NOLOCK);
-	sms_log(mac_ctx, LOGE, FL("Entry %p outside while"), localentry);
-	 while (localentry) {
+	while (localentry) {
 		cmd = GET_BASE_ADDR(localentry, tSmeCmd, Link);
 		if (cmd->command == eSmeCommandScan)
 			cmd_scan_id = cmd->u.scanCmd.u.scanRequest.scan_id;
@@ -4213,7 +4212,6 @@ QDF_STATUS csr_get_active_scan_entry(tpAniSirGlobal mac_ctx,
 		}
 		localentry = csr_scan_active_ll_next(mac_ctx,
 				localentry, LL_ACCESS_NOLOCK);
-		sms_log(mac_ctx, LOGE, FL("Entry %p inside while"), localentry);
 	}
 	csr_scan_active_ll_unlock(mac_ctx);
 	sms_log(mac_ctx, LOGE, FL("Exit"));

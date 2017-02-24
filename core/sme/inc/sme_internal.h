@@ -186,10 +186,6 @@ typedef struct tagSmeStruct {
 #ifdef FEATURE_WLAN_LPHB
 	void (*pLphbIndCb)(void *pHddCtx, tSirLPHBInd *indParam);
 #endif /* FEATURE_WLAN_LPHB */
-	/* pending scan command list */
-	tDblLinkList smeScanCmdPendingList;
-	/* active scan command list */
-	tDblLinkList smeScanCmdActiveList;
 	tSmePeerInfoHddCbkInfo peerInfoParams;
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 	host_event_wlan_status_payload_type eventPayload;

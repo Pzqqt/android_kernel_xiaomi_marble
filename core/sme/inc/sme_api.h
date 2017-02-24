@@ -50,7 +50,7 @@
 #include "sme_rrm_internal.h"
 #include "sir_types.h"
 #include "scheduler_api.h"
-#include "wlan_serialization_api.h"
+#include "wlan_serialization_legacy_mcl_api.h"
 
 /*--------------------------------------------------------------------------
   Preprocessor definitions and constants

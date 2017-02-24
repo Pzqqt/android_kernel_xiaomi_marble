@@ -313,14 +313,6 @@ static QDF_STATUS init_sme_cmd_list(tpAniSirGlobal pMac)
 	pMac->sme.totalSmeCmd = SME_TOTAL_COMMAND;
 
 
-	status = csr_ll_open(pMac->hHdd, &pMac->sme.smeScanCmdActiveList);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		goto end;
-
-	status = csr_ll_open(pMac->hHdd, &pMac->sme.smeScanCmdPendingList);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		goto end;
-
 	status = csr_ll_open(pMac->hHdd, &pMac->sme.smeCmdFreeList);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		goto end;
@@ -385,8 +377,6 @@ static QDF_STATUS free_sme_cmd_list(tpAniSirGlobal pMac)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	purge_sme_cmd_list(pMac);
-	csr_ll_close(&pMac->sme.smeScanCmdPendingList);
-	csr_ll_close(&pMac->sme.smeScanCmdActiveList);
 	csr_ll_close(&pMac->sme.smeCmdFreeList);
 
 	status = qdf_mutex_acquire(&pMac->sme.lkSmeGlobalLock);
