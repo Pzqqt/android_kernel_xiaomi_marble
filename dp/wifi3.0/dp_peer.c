@@ -534,15 +534,11 @@ static void dp_reo_desc_free(struct dp_soc *soc,
 				(qdf_list_node_t **)&desc);
 		list_size--;
 		rx_tid = &desc->rx_tid;
-	/* Calling qdf_mem_free_consistent() in MCL is resulting in kernel BUG.
-	 * Diasble this temporarily.
-	 */
-#ifndef QCA_WIFI_NAPIER_EMULATION
-		qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
-			rx_tid->hw_qdesc_alloc_size,
-			rx_tid->hw_qdesc_vaddr_unaligned,
-			rx_tid->hw_qdesc_paddr_unaligned, 0);
-#endif
+		qdf_mem_unmap_nbytes_single(soc->osdev,
+			rx_tid->hw_qdesc_paddr_unaligned,
+			QDF_DMA_BIDIRECTIONAL,
+			rx_tid->hw_qdesc_alloc_size);
+		qdf_mem_free(rx_tid->hw_qdesc_vaddr_unaligned);
 		qdf_mem_free(desc);
 
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
@@ -551,6 +547,23 @@ static void dp_reo_desc_free(struct dp_soc *soc,
 	}
 	qdf_spin_unlock_bh(&soc->reo_desc_freelist_lock);
 }
+
+#if defined(QCA_WIFI_QCA8074) && defined(BUILD_X86)
+/* Hawkeye emulation requires bus address to be >= 0x50000000 */
+static inline int dp_reo_desc_addr_chk(qdf_dma_addr_t dma_addr)
+{
+	if (dma_addr < 0x50000000)
+		return QDF_STATUS_E_FAILURE;
+	else
+		return QDF_STATUS_SUCCESS;
+}
+#else
+static inline int dp_reo_desc_addr_chk(qdf_dma_addr_t dma_addr)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 
 /*
  * dp_rx_tid_setup_wifi3() – Setup receive TID state
@@ -562,7 +575,7 @@ static void dp_reo_desc_free(struct dp_soc *soc,
  * Return: 0 on success, error code on failure
  */
 int dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
-				 uint32_t ba_window_size, uint32_t start_seq)
+	uint32_t ba_window_size, uint32_t start_seq)
 {
 	struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
 	struct dp_vdev *vdev = peer->vdev;
@@ -571,6 +584,7 @@ int dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
 	uint32_t hw_qdesc_align;
 	int hal_pn_type;
 	void *hw_qdesc_vaddr;
+	uint32_t alloc_tries = 0;
 
 	if (rx_tid->hw_qdesc_vaddr_unaligned != NULL)
 		return dp_rx_tid_update_wifi3(peer, tid, ba_window_size,
@@ -600,9 +614,10 @@ int dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
 	 * exact size and see if we already have aligned address.
 	 */
 	rx_tid->hw_qdesc_alloc_size = hw_qdesc_size;
-	rx_tid->hw_qdesc_vaddr_unaligned = qdf_mem_alloc_consistent(
-		soc->osdev, soc->osdev->dev, rx_tid->hw_qdesc_alloc_size,
-		&(rx_tid->hw_qdesc_paddr_unaligned));
+
+try_desc_alloc:
+	rx_tid->hw_qdesc_vaddr_unaligned =
+		qdf_mem_malloc(rx_tid->hw_qdesc_alloc_size);
 
 	if (!rx_tid->hw_qdesc_vaddr_unaligned) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
@@ -616,16 +631,11 @@ int dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
 		/* Address allocated above is not alinged. Allocate extra
 		 * memory for alignment
 		 */
-		qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
-				rx_tid->hw_qdesc_alloc_size,
-				rx_tid->hw_qdesc_vaddr_unaligned,
-				rx_tid->hw_qdesc_paddr_unaligned, 0);
-
+		qdf_mem_free(rx_tid->hw_qdesc_vaddr_unaligned);
 		rx_tid->hw_qdesc_alloc_size =
 			hw_qdesc_size + hw_qdesc_align - 1;
-		rx_tid->hw_qdesc_vaddr_unaligned = qdf_mem_alloc_consistent(
-			soc->osdev, soc->osdev->dev, rx_tid->hw_qdesc_alloc_size,
-			&(rx_tid->hw_qdesc_paddr_unaligned));
+		rx_tid->hw_qdesc_vaddr_unaligned =
+			qdf_mem_malloc(rx_tid->hw_qdesc_alloc_size);
 
 		if (!rx_tid->hw_qdesc_vaddr_unaligned) {
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
@@ -637,13 +647,8 @@ int dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
 		hw_qdesc_vaddr = rx_tid->hw_qdesc_vaddr_unaligned +
 			((unsigned long)(rx_tid->hw_qdesc_vaddr_unaligned) %
 			hw_qdesc_align);
-
-		rx_tid->hw_qdesc_paddr = rx_tid->hw_qdesc_paddr_unaligned +
-			((unsigned long)hw_qdesc_vaddr -
-			(unsigned long)(rx_tid->hw_qdesc_vaddr_unaligned));
 	} else {
 		hw_qdesc_vaddr = rx_tid->hw_qdesc_vaddr_unaligned;
-		rx_tid->hw_qdesc_paddr = rx_tid->hw_qdesc_paddr_unaligned;
 	}
 
 	/* TODO: Ensure that sec_type is set before ADDBA is received.
@@ -671,6 +676,27 @@ int dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
 
 	hal_reo_qdesc_setup(soc->hal_soc, tid, ba_window_size, start_seq,
 		hw_qdesc_vaddr, rx_tid->hw_qdesc_paddr, hal_pn_type);
+
+	qdf_mem_map_nbytes_single(soc->osdev, rx_tid->hw_qdesc_vaddr_unaligned,
+		QDF_DMA_BIDIRECTIONAL, rx_tid->hw_qdesc_alloc_size,
+		&(rx_tid->hw_qdesc_paddr_unaligned));
+
+	if (dp_reo_desc_addr_chk(rx_tid->hw_qdesc_paddr_unaligned) !=
+			QDF_STATUS_SUCCESS) {
+		if (alloc_tries++ < 10)
+			goto try_desc_alloc;
+		else {
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"%s: Rx tid HW desc alloc failed (lowmem): tid %d\n",
+			__func__, tid);
+			return QDF_STATUS_E_NOMEM;
+		}
+	}
+
+	rx_tid->hw_qdesc_paddr = rx_tid->hw_qdesc_paddr_unaligned +
+		((unsigned long)hw_qdesc_vaddr -
+		(unsigned long)(rx_tid->hw_qdesc_vaddr_unaligned));
+
 
 	if (soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup) {
 		soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup(
@@ -944,7 +970,7 @@ int dp_delba_process_wifi3(void *peer_handle,
 	 * replace with a new one without queue extenstion descript to save
 	 * memory
 	 */
-	dp_rx_tid_update_wifi3(peer, tid, 0, 0);
+	dp_rx_tid_update_wifi3(peer, tid, 1, 0);
 
 	rx_tid->ba_status = DP_RX_BA_INACTIVE;
 

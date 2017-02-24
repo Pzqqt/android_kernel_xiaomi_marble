@@ -136,6 +136,9 @@ void hal_reo_qdesc_setup(void *hal_soc, int tid, uint32_t ba_window_size,
 	reg_val = TID_TO_WME_AC(tid);
 	HAL_DESC_SET_FIELD(reo_queue_desc, RX_REO_QUEUE_2, AC, reg_val);
 
+	if (ba_window_size < 1)
+		ba_window_size = 1;
+
 	/* Set RTY bit for non-BA case. Duplicate detection is currently not
 	 * done by HW in non-BA case if RTY bit is not set.
 	 * TODO: This is a temporary War and should be removed once HW fix is

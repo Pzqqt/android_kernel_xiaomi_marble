@@ -160,7 +160,7 @@ static inline uint32_t __qdf_mem_map_nbytes_single(qdf_device_t osdev,
  * @return - none
  */
 static inline void __qdf_mem_unmap_nbytes_single(qdf_device_t osdev,
-						 uint32_t phy_addr,
+						 qdf_dma_addr_t phy_addr,
 						 qdf_dma_dir_t dir, int nbytes)
 {
 	dma_unmap_single(osdev->dev, phy_addr, nbytes, dir);

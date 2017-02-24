@@ -481,8 +481,11 @@ inline int hal_reo_cmd_update_rx_queue(void *reo_ring, struct hal_soc *soc,
 	HAL_DESC_SET_FIELD(reo_desc, REO_UPDATE_RX_REO_QUEUE_3,
 		IGNORE_AMPDU_FLAG, p->ignore_ampdu);
 
+	if (p->ba_window_size < 1)
+		p->ba_window_size = 1;
+
 	HAL_DESC_SET_FIELD(reo_desc, REO_UPDATE_RX_REO_QUEUE_4,
-		BA_WINDOW_SIZE, p->ba_window_size);
+		BA_WINDOW_SIZE, p->ba_window_size - 1);
 
 	HAL_DESC_SET_FIELD(reo_desc, REO_UPDATE_RX_REO_QUEUE_4,
 		PN_SIZE, p->pn_size);
