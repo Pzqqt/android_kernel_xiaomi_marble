@@ -14168,6 +14168,7 @@ static void populate_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_tx_mode_dynamic] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_btcoex_duty_cycle] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_4_wire_coex_support] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_mesh] = WMI_SERVICE_ENTERPRISE_MESH;
 }
 
 /**
@@ -14570,6 +14571,8 @@ static void populate_pdev_param_tlv(uint32_t *pdev_param)
 	pdev_param[wmi_pdev_param_set_burst_mode_cmdid] =
 					WMI_PDEV_PARAM_SET_BURST_MODE_CMDID;
 	pdev_param[wmi_pdev_param_en_stats] = WMI_UNAVAILABLE_PARAM;
+	pdev_param[wmi_pdev_param_mesh_mcast_enable] =
+					WMI_PDEV_PARAM_MESH_MCAST_ENABLE;
 }
 
 /**
