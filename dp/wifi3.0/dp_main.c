@@ -1830,6 +1830,17 @@ static struct cdp_cfg *dp_get_ctrl_pdev_from_vdev_wifi3(struct cdp_vdev *pvdev)
 	return (struct cdp_cfg *)pdev->wlan_cfg_ctx;
 }
 
+#ifdef MESH_MODE_SUPPORT
+void dp_peer_set_mesh_mode(struct cdp_vdev *vdev_hdl, u_int32_t val)
+{
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_hdl;
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+		FL("%s: val %d"), __func__, val);
+	vdev->mesh_vdev = val;
+}
+#endif
+
 static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_soc_attach_target = dp_soc_attach_target_wifi3,
 	.txrx_vdev_attach = dp_vdev_attach_wifi3,
@@ -1855,6 +1866,9 @@ static struct cdp_ctrl_ops dp_ops_ctrl = {
 	.txrx_peer_authorize = dp_peer_authorize,
 	.txrx_set_vdev_rx_decap_type = dp_set_vdev_rx_decap_type,
 	.txrx_set_tx_encap_type = dp_set_vdev_tx_encap_type,
+#ifdef MESH_MODE_SUPPORT
+	.txrx_set_mesh_mode  = dp_peer_set_mesh_mode,
+#endif
 	/* TODO: Add other functions */
 };
 

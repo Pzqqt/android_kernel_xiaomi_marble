@@ -42,6 +42,16 @@ do {                                                           \
 	qdf_nbuf_free(buf);                                    \
 } while (0)
 
+#define DP_TX_FREE_DMA_TO_DEVICE(soc, vdev, buf)               \
+do {                                                           \
+	qdf_nbuf_unmap(soc->osdev, buf, QDF_DMA_TO_DEVICE);    \
+	if (!vdev->mesh_vdev) {                                \
+		qdf_nbuf_free(buf);                            \
+	} else {                                               \
+		vdev->osif_tx_free_ext((buf));		       \
+	}                                                      \
+} while (0)
+
 #define OCB_HEADER_VERSION	 1
 
 /**
@@ -130,34 +140,8 @@ struct dp_tx_msdu_info_s {
 		struct qdf_tso_info_t tso_info;
 		struct dp_tx_sg_info_s sg_info;
 	} u;
+	uint32_t meta_data[5];
 };
-
-struct meta_hdr_s {
-	uint8_t magic;
-	uint8_t flags;
-	uint8_t channel;
-	uint8_t keyix;
-	uint8_t rssi;
-	uint8_t silence;
-	uint8_t power;
-	uint8_t retries;
-	uint8_t max_tries[2];
-	uint8_t rates[2];
-	uint8_t unused[4];
-};
-
-#define METAHDR_FLAG_TX                 (1<<0) /* packet transmission */
-#define METAHDR_FLAG_TX_FAIL            (1<<1) /* transmission failed */
-#define METAHDR_FLAG_TX_USED_ALT_RATE   (1<<2) /* used alternate bitrate */
-#define METAHDR_FLAG_AUTO_RATE          (1<<5)
-#define METAHDR_FLAG_NOENCRYPT          (1<<6)
-#define METAHDR_FLAG_NOQOS              (1<<7)
-
-#define METAHDR_FLAG_RX_ERR             (1<<3) /* failed crc check */
-#define METAHDR_FLAG_RX_MORE            (1<<4) /* first part of a frag skb */
-#define METAHDR_FLAG_LOG                (1<<7)
-
-#define METAHDR_FLAG_RX_4SS             (1<<1) /* rx 4ss frame */
 
 QDF_STATUS dp_tx_vdev_attach(struct dp_vdev *vdev);
 QDF_STATUS dp_tx_vdev_detach(struct dp_vdev *vdev);
