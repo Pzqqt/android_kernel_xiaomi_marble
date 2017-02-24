@@ -1203,12 +1203,6 @@ unsigned int ce_recv_entries_done(struct CE_handle *copyeng)
 	return nentries;
 }
 
-/* Debug support */
-void *ce_debug_cmplrn_context;  /* completed recv next context */
-void *ce_debug_cnclsn_context;  /* cancel send next context */
-void *ce_debug_rvkrn_context;   /* revoke receive next context */
-void *ce_debug_cmplsn_context;  /* completed send next context */
-
 /*
  * Guts of ce_completed_recv_next.
  * The caller takes responsibility for any necessary locking.
@@ -1267,9 +1261,9 @@ ce_completed_recv_next_nolock_legacy(struct CE_state *CE_state,
 		*per_CE_contextp = CE_state->recv_context;
 	}
 
-	ce_debug_cmplrn_context = dest_ring->per_transfer_context[sw_index];
 	if (per_transfer_contextp) {
-		*per_transfer_contextp = ce_debug_cmplrn_context;
+		*per_transfer_contextp =
+			dest_ring->per_transfer_context[sw_index];
 	}
 	dest_ring->per_transfer_context[sw_index] = 0;  /* sanity */
 
@@ -1357,10 +1351,9 @@ ce_revoke_recv_next_legacy(struct CE_handle *copyeng,
 			*per_CE_contextp = CE_state->recv_context;
 		}
 
-		ce_debug_rvkrn_context =
-			dest_ring->per_transfer_context[sw_index];
 		if (per_transfer_contextp) {
-			*per_transfer_contextp = ce_debug_rvkrn_context;
+			*per_transfer_contextp =
+				dest_ring->per_transfer_context[sw_index];
 		}
 		dest_ring->per_transfer_context[sw_index] = 0;  /* sanity */
 
@@ -1452,10 +1445,9 @@ ce_completed_send_next_nolock_legacy(struct CE_state *CE_state,
 			*per_CE_contextp = CE_state->send_context;
 		}
 
-		ce_debug_cmplsn_context =
-			src_ring->per_transfer_context[sw_index];
 		if (per_transfer_contextp) {
-			*per_transfer_contextp = ce_debug_cmplsn_context;
+			*per_transfer_contextp =
+				src_ring->per_transfer_context[sw_index];
 		}
 		src_ring->per_transfer_context[sw_index] = 0;   /* sanity */
 
@@ -1535,10 +1527,9 @@ ce_cancel_send_next_legacy(struct CE_handle *copyeng,
 			*per_CE_contextp = CE_state->send_context;
 		}
 
-		ce_debug_cnclsn_context =
-			src_ring->per_transfer_context[sw_index];
 		if (per_transfer_contextp) {
-			*per_transfer_contextp = ce_debug_cnclsn_context;
+			*per_transfer_contextp =
+				src_ring->per_transfer_context[sw_index];
 		}
 		src_ring->per_transfer_context[sw_index] = 0;   /* sanity */
 
