@@ -428,6 +428,7 @@ ucfg_scan_unregister_event_handler(struct wlan_objmgr_vdev *vdev,
 	if (!handler_cnt) {
 		qdf_spin_unlock_bh(&scan->lock);
 		scm_info("No event handlers registered");
+		return;
 	}
 
 	for (idx = 0; idx < MAX_SCAN_EVENT_HANDLERS_PER_PDEV;

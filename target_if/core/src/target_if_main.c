@@ -29,6 +29,7 @@
 #include "target_if_atf.h"
 #endif
 #include <target_if_reg.h>
+#include <target_if_scan.h>
 
 #ifdef CONVERGED_P2P_ENABLE
 #include "target_if_p2p.h"
@@ -141,6 +142,9 @@ QDF_STATUS target_if_register_umac_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	/* call umac callback to register legacy tx ops */
 	wlan_lmac_if_umac_tx_ops_register(tx_ops);
 
+	/* Register scan tx ops */
+	target_if_register_scan_tx_ops(&tx_ops->scan);
+
 	target_if_atf_tx_ops_register(tx_ops);
 
 	target_if_wifi_pos_tx_ops_register(tx_ops);
@@ -183,6 +187,7 @@ QDF_STATUS target_if_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {
 	/* Converged UMAC components to register their TX-ops */
 	target_if_register_umac_tx_ops(tx_ops);
+
 	/* Components parallel to UMAC to register their TX-ops here */
 	target_if_pmo_register_tx_ops_req(tx_ops);
 

@@ -33,6 +33,8 @@
 #ifndef _WMI_UNIFIED_PARAM_H_
 #define _WMI_UNIFIED_PARAM_H_
 
+#include <wlan_scan_public_structs.h>
+
 #define MAC_MAX_KEY_LENGTH 32
 #define MAC_PN_LENGTH 8
 #define MAX_MAC_HEADER_LEN 32
@@ -1136,120 +1138,6 @@ struct ap_ps_params {
 #define WMI_HOST_SCAN_CHAN_FREQ_MASK	0xffff
 #define WMI_HOST_SCAN_CHAN_MODE_SHIFT	16
 #define WMI_HOST_SCAN_CHAN_MODE_MASK	0xff
-
-/**
- * struct scan_start_params - start scan cmd parameter
- * @scan_id: scan id
- * @scan_req_id: requeted scan id
- * @vdev_id: vdev id
- * @scan_priority: scan priority
- * @notify_scan_events: flag to indicate if scan to be notified
- * @dwell_time_active: active dwell time
- * @dwell_time_passive: passive dwell time
- * @min_rest_time: min rest time
- * @max_rest_time: max rest time
- * @repeat_probe_time: repeat probe time
- * @probe_spacing_time: probe spacing time
- * @idle_time: idle time
- * @max_scan_time: max scan time
- * @probe_delay: probe delay
- * @scan_ctrl_flags: scan control flag
- * @burst_duration: burst duration
- * @num_chan: no of channel
- * @num_bssid: no of bssid
- * @num_ssids: no of ssid
- * @ie_len: ie length
- * @n_probes: no of probe
- * @chan_list: channel list
- * @ie_len_with_pad: ie length with padding
- * @num_ssid: no of ssid
- * @sid: pointer to mac_ssid structure
- * @uie_fieldOffset: ie field offset
- * @mac_add_bytes: mac address bytes
- * @is_strict_pscan_en: Is this a strict passive scan
- * @is_promiscous_mode: Is promiscous mode
- * @is_phy_error: is Phy error
- * @add_cck_rates: Add cck rates
- * @chan_stat_enable: channel stats enabled
- * @offchan_tx_mgmt: Offchan tx scan
- * @offchan_tx_data: offchan tx data
- * @add_bcast_probe_reqd: Add bcast probe request
- * @bssid_list: Lisst of bssid to scan
- * @ie_data: IE data buffer pointer
- * @passive_flag: Is this passive scan
- */
-struct scan_start_params {
-	uint32_t scan_id;
-	uint32_t scan_req_id;
-	uint32_t vdev_id;
-	uint32_t scan_priority;
-	uint32_t notify_scan_events;
-	uint32_t dwell_time_active;
-	uint32_t dwell_time_passive;
-	uint32_t min_rest_time;
-	uint32_t max_rest_time;
-	uint32_t repeat_probe_time;
-	uint32_t probe_spacing_time;
-	uint32_t idle_time;
-	uint32_t max_scan_time;
-	uint32_t probe_delay;
-	uint32_t scan_ctrl_flags;
-	uint32_t burst_duration;
-	uint32_t num_chan;
-	uint32_t num_bssid;
-	uint32_t num_ssids;
-	uint32_t ie_len;
-	uint32_t n_probes;
-	uint32_t *chan_list;
-	uint32_t ie_len_with_pad;
-	struct mac_ssid ssid[WMI_SCAN_MAX_NUM_SSID];
-	uint8_t  *ie_base;
-	uint16_t uie_fieldOffset;
-	uint8_t  mac_add_bytes[IEEE80211_ADDR_LEN];
-#ifndef CONFIG_MCL
-	bool half_rate;
-	bool quarter_rate;
-	bool is_strict_pscan_en;
-	bool is_promiscous_mode;
-	bool is_phy_error;
-	bool add_cck_rates;
-	bool chan_stat_enable;
-	bool offchan_tx_mgmt;
-	bool offchan_tx_data;
-	bool add_bcast_probe_reqd;
-	uint8_t bssid_list[WMI_SCAN_MAX_NUM_BSSID][IEEE80211_ADDR_LEN];
-	uint8_t *ie_data;
-	int passive_flag;
-#endif
-};
-
-/**
- * struct scan_stop_params - stop scan cmd parameter
- * @requestor: scan requestor
- * @scan_id: scan id
- * @req_type: scan request type
- * @vdev_id: vdev id
- * @pdev_id: pdev_id
- * @all_scans: Stop all scans
- * @vap_scans: stop vap scans
- * @specific_scan: specific scan
- * @flags: scan flags
- * @ss_scan_id: ss scan id
- */
-struct scan_stop_params {
-	uint32_t requestor;
-	uint32_t scan_id;
-	uint32_t req_type;
-	uint32_t vdev_id;
-	uint32_t pdev_id;
-#ifndef CONFIG_MCL
-	bool all_scans;
-	bool vap_scans;
-	bool specific_scan;
-	uint32_t flags;
-	uint32_t ss_scan_id;
-#endif
-};
 
 /**
  * struct scan_chan_list_params  - scan channel list cmd parameter

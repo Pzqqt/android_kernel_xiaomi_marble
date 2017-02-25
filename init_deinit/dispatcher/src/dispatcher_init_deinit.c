@@ -21,6 +21,7 @@
 #include <qdf_threads.h>
 #include <dispatcher_init_deinit.h>
 #include <scheduler_api.h>
+#include <wlan_scan_ucfg_api.h>
 #include <wlan_mgmt_txrx_utils_api.h>
 #include <wlan_serialization_api.h>
 #ifdef WLAN_PMO_ENABLE
@@ -52,16 +53,6 @@
  * thier actual handlers are ready
  */
 
-static QDF_STATUS scm_init(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS scm_deinit(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
 static QDF_STATUS p2p_init(void)
 {
 	return QDF_STATUS_SUCCESS;
@@ -79,16 +70,6 @@ static QDF_STATUS tdls_init(void)
 }
 
 static QDF_STATUS tdls_deinit(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS scm_psoc_open(struct wlan_objmgr_psoc *psoc)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS scm_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -112,17 +93,6 @@ static QDF_STATUS tdls_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
 	return QDF_STATUS_SUCCESS;
 }
-
-static QDF_STATUS scm_psoc_enable(struct wlan_objmgr_psoc *psoc)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS scm_psoc_disable(struct wlan_objmgr_psoc *psoc)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
 
 static QDF_STATUS p2p_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
@@ -390,8 +360,8 @@ QDF_STATUS dispatcher_init(void)
 	if (QDF_STATUS_SUCCESS != wlan_mgmt_txrx_init())
 		goto mgmt_txrx_init_fail;
 
-	if (QDF_STATUS_SUCCESS != scm_init())
-		goto scm_init_fail;
+	if (QDF_STATUS_SUCCESS != ucfg_scan_init())
+		goto ucfg_scan_init_fail;
 
 	if (QDF_STATUS_SUCCESS != p2p_init())
 		goto p2p_init_fail;
@@ -444,8 +414,8 @@ serialization_init_fail:
 tdls_init_fail:
 	p2p_deinit();
 p2p_init_fail:
-	scm_deinit();
-scm_init_fail:
+	ucfg_scan_deinit();
+ucfg_scan_init_fail:
 	wlan_mgmt_txrx_deinit();
 mgmt_txrx_init_fail:
 	wlan_objmgr_global_obj_deinit();
@@ -477,7 +447,7 @@ QDF_STATUS dispatcher_deinit(void)
 
 	QDF_BUG(QDF_STATUS_SUCCESS == p2p_deinit());
 
-	QDF_BUG(QDF_STATUS_SUCCESS == scm_deinit());
+	QDF_BUG(QDF_STATUS_SUCCESS == ucfg_scan_deinit());
 
 	QDF_BUG(QDF_STATUS_SUCCESS == wlan_mgmt_txrx_deinit());
 
@@ -489,7 +459,7 @@ EXPORT_SYMBOL(dispatcher_deinit);
 
 QDF_STATUS dispatcher_psoc_open(struct wlan_objmgr_psoc *psoc)
 {
-	if (QDF_STATUS_SUCCESS != scm_psoc_open(psoc))
+	if (QDF_STATUS_SUCCESS != ucfg_scan_psoc_open(psoc))
 		goto out;
 
 	if (QDF_STATUS_SUCCESS != p2p_psoc_open(psoc))
@@ -513,7 +483,7 @@ serialization_psoc_open_fail:
 tdls_psoc_open_fail:
 	p2p_psoc_close(psoc);
 p2p_psoc_open_fail:
-	scm_psoc_close(psoc);
+	ucfg_scan_psoc_close(psoc);
 
 out:
 	return QDF_STATUS_E_FAILURE;
@@ -530,7 +500,7 @@ QDF_STATUS dispatcher_psoc_close(struct wlan_objmgr_psoc *psoc)
 
 	QDF_BUG(QDF_STATUS_SUCCESS == p2p_psoc_close(psoc));
 
-	QDF_BUG(QDF_STATUS_SUCCESS == scm_psoc_close(psoc));
+	QDF_BUG(QDF_STATUS_SUCCESS == ucfg_scan_psoc_close(psoc));
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -538,7 +508,7 @@ EXPORT_SYMBOL(dispatcher_psoc_close);
 
 QDF_STATUS dispatcher_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
-	if (QDF_STATUS_SUCCESS != scm_psoc_enable(psoc))
+	if (QDF_STATUS_SUCCESS != ucfg_scan_psoc_enable(psoc))
 		goto out;
 
 	if (QDF_STATUS_SUCCESS != p2p_psoc_enable(psoc))
@@ -572,7 +542,7 @@ policy_mgr_psoc_enable_fail:
 tdls_psoc_enable_fail:
 	p2p_psoc_disable(psoc);
 p2p_psoc_enable_fail:
-	scm_psoc_disable(psoc);
+	ucfg_scan_psoc_disable(psoc);
 
 out:
 	return QDF_STATUS_E_FAILURE;
@@ -594,7 +564,7 @@ QDF_STATUS dispatcher_psoc_disable(struct wlan_objmgr_psoc *psoc)
 
 	QDF_BUG(QDF_STATUS_SUCCESS == p2p_psoc_disable(psoc));
 
-	QDF_BUG(QDF_STATUS_SUCCESS == scm_psoc_disable(psoc));
+	QDF_BUG(QDF_STATUS_SUCCESS == ucfg_scan_psoc_disable(psoc));
 
 	return QDF_STATUS_SUCCESS;
 }

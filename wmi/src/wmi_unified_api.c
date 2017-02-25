@@ -745,7 +745,7 @@ QDF_STATUS wmi_unified_peer_assoc_send(void *wmi_hdl,
  *  Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS wmi_unified_scan_start_cmd_send(void *wmi_hdl,
-				struct scan_start_params *param)
+				struct scan_req_params *param)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
@@ -765,7 +765,7 @@ QDF_STATUS wmi_unified_scan_start_cmd_send(void *wmi_hdl,
  *  Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS wmi_unified_scan_stop_cmd_send(void *wmi_hdl,
-				struct scan_stop_params *param)
+				struct scan_cancel_param *param)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
@@ -5158,7 +5158,7 @@ QDF_STATUS wmi_extract_vdev_roam_param(void *wmi_hdl, void *evt_buf,
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS wmi_extract_vdev_scan_ev_param(void *wmi_hdl, void *evt_buf,
-	wmi_host_scan_event *param)
+	struct scan_event *param)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 

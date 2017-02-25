@@ -1946,78 +1946,88 @@ static QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 
 /* copy_scan_notify_events() - Helper routine to copy scan notify events
  */
-#ifdef CONFIG_MCL
-static inline void copy_scan_notify_ev_flags(
+static inline void copy_scan_event_cntrl_flags(
 		wmi_start_scan_cmd_fixed_param * cmd,
-		struct scan_start_params *params)
+		struct scan_req_params *param)
 {
-	cmd->notify_scan_events = params->notify_scan_events;
-	cmd->scan_ctrl_flags = params->scan_ctrl_flags;
-}
-#else
-static inline void copy_scan_notify_ev_flags(
-		wmi_start_scan_cmd_fixed_param * cmd,
-		struct scan_start_params *params)
-{
-	cmd->notify_scan_events = WMI_SCAN_EVENT_STARTED |
-		WMI_SCAN_EVENT_COMPLETED |
-		WMI_SCAN_EVENT_BSS_CHANNEL |
-		WMI_SCAN_EVENT_FOREIGN_CHANNEL |
-		WMI_SCAN_EVENT_DEQUEUED
-		;
 
-	cmd->scan_ctrl_flags = (params->passive_flag) ?
-	    WMI_SCAN_FLAG_PASSIVE : 0;
+	/* Scan events subscription */
+	if (param->scan_ev_started)
+		cmd->notify_scan_events |= WMI_SCAN_EVENT_STARTED;
+	if (param->scan_ev_completed)
+		cmd->notify_scan_events |= WMI_SCAN_EVENT_COMPLETED;
+	if (param->scan_ev_bss_chan)
+		cmd->notify_scan_events |= WMI_SCAN_EVENT_BSS_CHANNEL;
+	if (param->scan_ev_foreign_chan)
+		cmd->notify_scan_events |= WMI_SCAN_EVENT_FOREIGN_CHANNEL;
+	if (param->scan_ev_dequeued)
+		cmd->notify_scan_events |= WMI_SCAN_EVENT_DEQUEUED;
+	if (param->scan_ev_preempted)
+		cmd->notify_scan_events |= WMI_SCAN_EVENT_PREEMPTED;
+	if (param->scan_ev_start_failed)
+		cmd->notify_scan_events |= WMI_SCAN_EVENT_START_FAILED;
+	if (param->scan_ev_restarted)
+		cmd->notify_scan_events |= WMI_SCAN_EVENT_RESTARTED;
+	if (param->scan_ev_foreign_chn_exit)
+		cmd->notify_scan_events |= WMI_SCAN_EVENT_FOREIGN_CHANNEL_EXIT;
+	if (param->scan_ev_suspended)
+		cmd->notify_scan_events |= WMI_SCAN_EVENT_SUSPENDED;
+	if (param->scan_ev_resumed)
+		cmd->notify_scan_events |= WMI_SCAN_EVENT_RESUMED;
 
-	if (params->is_strict_pscan_en)
+	/** Set scan control flags */
+	cmd->scan_ctrl_flags = 0;
+	if (param->scan_f_passive)
+		cmd->scan_ctrl_flags |= WMI_SCAN_FLAG_PASSIVE;
+	if (param->scan_f_strict_passive_pch)
 		cmd->scan_ctrl_flags |= WMI_SCAN_FLAG_STRICT_PASSIVE_ON_PCHN;
-
-	if (params->is_phy_error)
+	if (param->scan_f_promisc_mode)
+		cmd->scan_ctrl_flags |= WMI_SCAN_FILTER_PROMISCOUS;
+	if (param->scan_f_capture_phy_err)
 		cmd->scan_ctrl_flags |= WMI_SCAN_CAPTURE_PHY_ERROR;
-
-	if (params->half_rate)
+	if (param->scan_f_half_rate)
 		cmd->scan_ctrl_flags |= WMI_SCAN_FLAG_HALF_RATE_SUPPORT;
-
-	if (params->quarter_rate)
+	if (param->scan_f_quarter_rate)
 		cmd->scan_ctrl_flags |= WMI_SCAN_FLAG_QUARTER_RATE_SUPPORT;
-
-	if (params->is_phy_error)
-		cmd->scan_ctrl_flags |= WMI_SCAN_CAPTURE_PHY_ERROR;
-
-	cmd->scan_ctrl_flags |= WMI_SCAN_ADD_OFDM_RATES;
-	/* add cck rates if required */
-	if (params->add_cck_rates)
+	if (param->scan_f_cck_rates)
 		cmd->scan_ctrl_flags |= WMI_SCAN_ADD_CCK_RATES;
-	/** It enables the Channel stat event indication to host */
-	if (params->chan_stat_enable)
+	if (param->scan_f_ofdm_rates)
+		cmd->scan_ctrl_flags |= WMI_SCAN_ADD_OFDM_RATES;
+	if (param->scan_f_chan_stat_evnt)
 		cmd->scan_ctrl_flags |= WMI_SCAN_CHAN_STAT_EVENT;
-	if (params->add_bcast_probe_reqd)
+	if (param->scan_f_filter_prb_req)
+		cmd->scan_ctrl_flags |= WMI_SCAN_FILTER_PROBE_REQ;
+	if (param->scan_f_bcast_probe)
 		cmd->scan_ctrl_flags |= WMI_SCAN_ADD_BCAST_PROBE_REQ;
-	/* off channel TX control */
-	if (params->offchan_tx_mgmt)
+	if (param->scan_f_offchan_mgmt_tx)
 		cmd->scan_ctrl_flags |= WMI_SCAN_OFFCHAN_MGMT_TX;
-	if (params->offchan_tx_data)
+	if (param->scan_f_offchan_data_tx)
 		cmd->scan_ctrl_flags |= WMI_SCAN_OFFCHAN_DATA_TX;
-}
-#endif
+	if (param->scan_f_force_active_dfs_chn)
+		cmd->scan_ctrl_flags |= WMI_SCAN_FLAG_FORCE_ACTIVE_ON_DFS;
+	if (param->scan_f_add_tpc_ie_in_probe)
+		cmd->scan_ctrl_flags |= WMI_SCAN_ADD_TPC_IE_IN_PROBE_REQ;
+	if (param->scan_f_add_ds_ie_in_probe)
+		cmd->scan_ctrl_flags |= WMI_SCAN_ADD_DS_IE_IN_PROBE_REQ;
+	if (param->scan_f_add_spoofed_mac_in_probe)
+		cmd->scan_ctrl_flags |= WMI_SCAN_ADD_SPOOFED_MAC_IN_PROBE_REQ;
+	if (param->scan_f_add_rand_seq_in_probe)
+		cmd->scan_ctrl_flags |= WMI_SCAN_RANDOM_SEQ_NO_IN_PROBE_REQ;
+	if (param->scan_f_en_ie_whitelist_in_probe)
+		cmd->scan_ctrl_flags |=
+			WMI_SCAN_ENABLE_IE_WHTELIST_IN_PROBE_REQ;
 
+	/* for adaptive scan mode using 3 bits (21 - 23 bits) */
+	WMI_SCAN_SET_DWELL_MODE(cmd->scan_ctrl_flags,
+		param->adaptive_dwell_time_mode);
+}
 
 /* scan_copy_ie_buffer() - Copy scan ie_data */
-#ifndef CONFIG_MCL
 static inline void scan_copy_ie_buffer(uint8_t *buf_ptr,
-				struct scan_start_params *params)
+				struct scan_req_params *params)
 {
-	qdf_mem_copy(buf_ptr, params->ie_data, params->ie_len);
+	qdf_mem_copy(buf_ptr, params->extraie.ptr, params->extraie.len);
 }
-#else
-static inline void scan_copy_ie_buffer(uint8_t *buf_ptr,
-				struct scan_start_params *params)
-{
-	qdf_mem_copy(buf_ptr,
-			(uint8_t *) params->ie_base +
-			(params->uie_fieldOffset), params->ie_len);
-}
-#endif
 
 /**
  *  send_scan_start_cmd_tlv() - WMI scan start function
@@ -2027,7 +2037,7 @@ static inline void scan_copy_ie_buffer(uint8_t *buf_ptr,
  *  Return: 0  on success and -ve on failure.
  */
 static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
-				struct scan_start_params *params)
+				struct scan_req_params *params)
 {
 	int32_t ret = 0;
 	int32_t i;
@@ -2038,6 +2048,7 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_ssid *ssid = NULL;
 	wmi_mac_addr *bssid;
 	int len = sizeof(*cmd);
+	uint8_t extraie_len_with_pad = 0;
 
 	/* Length TLV placeholder for array of uint32_t */
 	len += WMI_TLV_HDR_SIZE;
@@ -2057,8 +2068,10 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 
 	/* Length TLV placeholder for array of bytes */
 	len += WMI_TLV_HDR_SIZE;
-	if (params->ie_len)
-		len += roundup(params->ie_len, sizeof(uint32_t));
+	if (params->extraie.len)
+		extraie_len_with_pad =
+		roundup(params->extraie.len, sizeof(uint32_t));
+		len += extraie_len_with_pad;
 
 	/* Allocate the memory */
 	wmi_buf = wmi_buf_alloc(wmi_handle, len);
@@ -2078,7 +2091,9 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->scan_req_id = params->scan_req_id;
 	cmd->vdev_id = params->vdev_id;
 	cmd->scan_priority = params->scan_priority;
-	copy_scan_notify_ev_flags(cmd, params);
+
+	copy_scan_event_cntrl_flags(cmd, params);
+
 	cmd->dwell_time_active = params->dwell_time_active;
 	cmd->dwell_time_passive = params->dwell_time_passive;
 	cmd->min_rest_time = params->min_rest_time;
@@ -2092,7 +2107,7 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->num_chan = params->num_chan;
 	cmd->num_bssid = params->num_bssid;
 	cmd->num_ssids = params->num_ssids;
-	cmd->ie_len = params->ie_len;
+	cmd->ie_len = params->extraie.len;
 	cmd->n_probes = params->n_probes;
 	buf_ptr += sizeof(*cmd);
 	tmp_ptr = (uint32_t *) (buf_ptr + WMI_TLV_HDR_SIZE);
@@ -2115,7 +2130,7 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 		ssid = (wmi_ssid *) (buf_ptr + WMI_TLV_HDR_SIZE);
 		for (i = 0; i < params->num_ssids; ++i) {
 			ssid->ssid_len = params->ssid[i].length;
-			qdf_mem_copy(ssid->ssid, params->ssid[i].mac_ssid,
+			qdf_mem_copy(ssid->ssid, params->ssid[i].ssid,
 				     params->ssid[i].length);
 			ssid++;
 		}
@@ -2125,25 +2140,24 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_FIXED_STRUC,
 		       (params->num_bssid * sizeof(wmi_mac_addr)));
 	bssid = (wmi_mac_addr *) (buf_ptr + WMI_TLV_HDR_SIZE);
-#if CONFIG_MCL
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(params->mac_add_bytes, bssid);
-#else
+
 	if (params->num_bssid) {
 		for (i = 0; i < params->num_bssid; ++i) {
-			WMI_CHAR_ARRAY_TO_MAC_ADDR(params->bssid_list[i],
-					bssid);
+			WMI_CHAR_ARRAY_TO_MAC_ADDR(
+				&params->bssid_list[i].bytes[0], bssid);
 			bssid++;
 		}
 	}
-#endif
-	buf_ptr += WMI_TLV_HDR_SIZE + (params->num_bssid * sizeof(wmi_mac_addr));
 
-	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE,
-		    roundup(params->ie_len, sizeof(uint32_t)));
-	if (params->ie_len) {
-		scan_copy_ie_buffer(buf_ptr + WMI_TLV_HDR_SIZE, params);
-	}
-	buf_ptr += WMI_TLV_HDR_SIZE + roundup(params->ie_len, sizeof(uint32_t));
+	buf_ptr += WMI_TLV_HDR_SIZE +
+		(params->num_bssid * sizeof(wmi_mac_addr));
+
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, extraie_len_with_pad);
+	if (params->extraie.len)
+		scan_copy_ie_buffer(buf_ptr + WMI_TLV_HDR_SIZE,
+			     params);
+
+	buf_ptr += WMI_TLV_HDR_SIZE + extraie_len_with_pad;
 
 	ret = wmi_unified_cmd_send(wmi_handle, wmi_buf,
 				      len, WMI_START_SCAN_CMDID);
@@ -2160,12 +2174,12 @@ error:
 /**
  *  send_scan_stop_cmd_tlv() - WMI scan start function
  *  @param wmi_handle      : handle to WMI.
- *  @param param    : pointer to hold scan start cmd parameter
+ *  @param param    : pointer to hold scan cancel cmd parameter
  *
  *  Return: 0  on success and -ve on failure.
  */
 static QDF_STATUS send_scan_stop_cmd_tlv(wmi_unified_t wmi_handle,
-				struct scan_stop_params *param)
+				struct scan_cancel_param *param)
 {
 	wmi_stop_scan_cmd_fixed_param *cmd;
 	int ret;
@@ -2186,11 +2200,21 @@ static QDF_STATUS send_scan_stop_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_TAG_STRUC_wmi_stop_scan_cmd_fixed_param,
 		       WMITLV_GET_STRUCT_TLVLEN(wmi_stop_scan_cmd_fixed_param));
 	cmd->vdev_id = param->vdev_id;
-	cmd->requestor = param->requestor;
+	cmd->requestor = param->requester;
 	cmd->scan_id = param->scan_id;
 	cmd->pdev_id = param->pdev_id;
 	/* stop the scan with the corresponding scan_id */
-	cmd->req_type = param->req_type;
+	if (param->req_type == WLAN_SCAN_CANCEL_PDEV_ALL) {
+		/* Cancelling all scans */
+		cmd->req_type = WMI_SCAN_STOP_ALL;
+	} else if (param->req_type == WLAN_SCAN_CANCEL_VDEV_ALL) {
+		/* Cancelling VAP scans */
+		cmd->req_type = WMI_SCN_STOP_VAP_ALL;
+	} else if (param->req_type == WLAN_SCAN_CANCEL_SINGLE) {
+		/* Cancelling specific scan */
+		cmd->req_type = WMI_SCAN_STOP_ONE;
+	}
+
 	ret = wmi_unified_cmd_send(wmi_handle, wmi_buf,
 				      len, WMI_STOP_SCAN_CMDID);
 	if (ret) {
@@ -14557,7 +14581,7 @@ static QDF_STATUS extract_vdev_roam_param_tlv(wmi_unified_t wmi_handle,
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
 static QDF_STATUS extract_vdev_scan_ev_param_tlv(wmi_unified_t wmi_handle,
-	void *evt_buf, wmi_host_scan_event *param)
+	void *evt_buf, struct scan_event *param)
 {
 	WMI_SCAN_EVENTID_param_tlvs *param_buf = NULL;
 	wmi_scan_event_fixed_param *evt = NULL;
@@ -14568,65 +14592,65 @@ static QDF_STATUS extract_vdev_scan_ev_param_tlv(wmi_unified_t wmi_handle,
 	qdf_mem_zero(param, sizeof(*param));
 	switch (evt->event) {
 	case WMI_SCAN_EVENT_STARTED:
-		param->event = WMI_HOST_SCAN_EVENT_STARTED;
+		param->type = SCAN_EVENT_TYPE_STARTED;
 		break;
 	case WMI_SCAN_EVENT_COMPLETED:
-		param->event = WMI_HOST_SCAN_EVENT_COMPLETED;
+		param->type = SCAN_EVENT_TYPE_COMPLETED;
 		break;
 	case WMI_SCAN_EVENT_BSS_CHANNEL:
-		param->event = WMI_HOST_SCAN_EVENT_BSS_CHANNEL;
+		param->type = SCAN_EVENT_TYPE_BSS_CHANNEL;
 		break;
 	case WMI_SCAN_EVENT_FOREIGN_CHANNEL:
-		param->event = WMI_HOST_SCAN_EVENT_FOREIGN_CHANNEL;
+		param->type = SCAN_EVENT_TYPE_FOREIGN_CHANNEL;
 		break;
 	case WMI_SCAN_EVENT_DEQUEUED:
-		param->event = WMI_HOST_SCAN_EVENT_DEQUEUED;
+		param->type = SCAN_EVENT_TYPE_DEQUEUED;
 		break;
 	case WMI_SCAN_EVENT_PREEMPTED:
-		param->event = WMI_HOST_SCAN_EVENT_PREEMPTED;
+		param->type = SCAN_EVENT_TYPE_PREEMPTED;
 		break;
 	case WMI_SCAN_EVENT_START_FAILED:
-		param->event = WMI_HOST_SCAN_EVENT_START_FAILED;
+		param->type = SCAN_EVENT_TYPE_START_FAILED;
 		break;
 	case WMI_SCAN_EVENT_RESTARTED:
-		param->event = WMI_HOST_SCAN_EVENT_RESTARTED;
+		param->type = SCAN_EVENT_TYPE_RESTARTED;
 		break;
 	case WMI_HOST_SCAN_EVENT_FOREIGN_CHANNEL_EXIT:
-		param->event = WMI_HOST_SCAN_EVENT_FOREIGN_CHANNEL_EXIT;
+		param->type = SCAN_EVENT_TYPE_FOREIGN_CHANNEL_EXIT;
 		break;
 	case WMI_SCAN_EVENT_MAX:
 	default:
-		param->event = WMI_HOST_SCAN_EVENT_MAX;
+		param->type = SCAN_EVENT_TYPE_MAX;
 		break;
 	};
 
 	switch (evt->reason) {
 	case WMI_SCAN_REASON_NONE:
-		param->reason = WMI_HOST_SCAN_REASON_NONE;
+		param->reason = SCAN_REASON_NONE;
 		break;
 	case WMI_SCAN_REASON_COMPLETED:
-		param->reason = WMI_HOST_SCAN_REASON_COMPLETED;
+		param->reason = SCAN_REASON_COMPLETED;
 		break;
 	case WMI_SCAN_REASON_CANCELLED:
-		param->reason = WMI_HOST_SCAN_REASON_CANCELLED;
+		param->reason = SCAN_REASON_CANCELLED;
 		break;
 	case WMI_SCAN_REASON_PREEMPTED:
-		param->reason = WMI_HOST_SCAN_REASON_PREEMPTED;
+		param->reason = SCAN_REASON_PREEMPTED;
 		break;
 	case WMI_SCAN_REASON_TIMEDOUT:
-		param->reason = WMI_HOST_SCAN_REASON_TIMEDOUT;
+		param->reason = SCAN_REASON_TIMEDOUT;
 		break;
 	case WMI_SCAN_REASON_INTERNAL_FAILURE:
-		param->reason = WMI_HOST_SCAN_REASON_INTERNAL_FAILURE;
+		param->reason = SCAN_REASON_INTERNAL_FAILURE;
 		break;
 	case WMI_SCAN_REASON_MAX:
 	default:
-		param->reason = WMI_HOST_SCAN_REASON_MAX;
+		param->reason = SCAN_REASON_MAX;
 		break;
 	};
 
-	param->channel_freq = evt->channel_freq;
-	param->requestor = evt->requestor;
+	param->chan_freq = evt->channel_freq;
+	param->requester = evt->requestor;
 	param->scan_id = evt->scan_id;
 	param->vdev_id = evt->vdev_id;
 

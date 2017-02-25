@@ -34,6 +34,7 @@
 #include <osdep.h>
 #include "a_types.h"
 #include "wmi_unified_param.h"
+#include "wlan_scan_ucfg_api.h"
 #include "qdf_atomic.h"
 #include "wlan_objmgr_psoc_service_ready_api.h"
 
@@ -279,10 +280,10 @@ QDF_STATUS (*send_peer_assoc_cmd)(wmi_unified_t wmi_handle,
 				struct peer_assoc_params *param);
 
 QDF_STATUS (*send_scan_start_cmd)(wmi_unified_t wmi_handle,
-				struct scan_start_params *param);
+				struct scan_req_params *param);
 
 QDF_STATUS (*send_scan_stop_cmd)(wmi_unified_t wmi_handle,
-				struct scan_stop_params *param);
+				struct scan_cancel_param *param);
 
 QDF_STATUS (*send_scan_chan_list_cmd)(wmi_unified_t wmi_handle,
 				struct scan_chan_list_params *param);
@@ -1055,7 +1056,7 @@ QDF_STATUS (*extract_vdev_roam_param)(wmi_unified_t wmi_handle, void *evt_buf,
 	wmi_host_roam_event *param);
 
 QDF_STATUS (*extract_vdev_scan_ev_param)(wmi_unified_t wmi_handle,
-		void *evt_buf, wmi_host_scan_event *param);
+		void *evt_buf, struct scan_event *param);
 
 QDF_STATUS (*extract_mu_ev_param)(wmi_unified_t wmi_handle, void *evt_buf,
 	wmi_host_mu_report_event *param);

@@ -73,8 +73,15 @@ target_if_scan_event_handler(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 	event_info = qdf_mem_malloc(sizeof(*event_info));
 
 	if (!event_info) {
-		target_if_err("%s: unable to allocate scan_event\n", __func__);
+		target_if_err("unable to allocate scan_event");
 		return -ENOMEM;
+	}
+
+	if (wmi_extract_vdev_scan_ev_param(wmi_handle, data,
+	   &(event_info->event))) {
+		target_if_err("Failed to extract wmi scan event");
+		qdf_mem_free(event_info);
+		return -EINVAL;
 	}
 
 #ifdef CONFIG_MCL
@@ -124,14 +131,15 @@ QDF_STATUS
 target_if_scan_start(struct wlan_objmgr_psoc *psoc,
 		struct scan_start_request *req)
 {
-	return QDF_STATUS_SUCCESS;
+	return wmi_unified_scan_start_cmd_send(psoc->tgt_if_handle,
+		&req->scan_req);
 }
 
 QDF_STATUS
 target_if_scan_cancel(struct wlan_objmgr_psoc *psoc,
 		struct scan_cancel_param *req)
 {
-	return QDF_STATUS_SUCCESS;
+	return wmi_unified_scan_stop_cmd_send(psoc->tgt_if_handle, req);
 }
 
 QDF_STATUS
