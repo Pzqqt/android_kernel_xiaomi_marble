@@ -114,7 +114,9 @@ int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 	err_code = legacy_callback(wmi_service_ready_event_id,
 				  scn_handle, event, data_len);
 
+#ifdef CONFIG_MCL
 	wlan_objmgr_populate_service_ready_data(psoc, service_param);
+#endif
 
 free_param_and_exit:
 	qdf_mem_free(service_param);
@@ -295,7 +297,9 @@ int init_deinit_service_ext_ready_event_handler(ol_scn_t scn_handle,
 	err_code = legacy_callback(wmi_service_ready_ext_event_id,
 				  scn_handle, event, data_len);
 
+#ifdef CONFIG_MCL
 	wlan_objmgr_populate_ext_service_ready_data(psoc, service_param);
+#endif
 
 free_param_and_exit:
 	qdf_mem_free(service_param);
