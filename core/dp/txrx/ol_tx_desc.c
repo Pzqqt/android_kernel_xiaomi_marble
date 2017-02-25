@@ -825,6 +825,7 @@ void ol_tso_free_segment(struct ol_txrx_pdev_t *pdev,
 	qdf_mem_zero(tso_seg, sizeof(*tso_seg));
 	tso_seg->next = pdev->tso_seg_pool.freelist;
 	tso_seg->on_freelist = 1;
+	tso_seg->cookie = TSO_SEG_MAGIC_COOKIE;
 	pdev->tso_seg_pool.freelist = tso_seg;
 	pdev->tso_seg_pool.num_free++;
 	qdf_spin_unlock_bh(&pdev->tso_seg_pool.tso_mutex);
