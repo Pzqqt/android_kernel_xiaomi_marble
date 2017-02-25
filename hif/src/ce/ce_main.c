@@ -1721,6 +1721,34 @@ void hif_dump_pipe_debug_count(struct hif_softc *scn)
 	}
 }
 
+static void hif_post_recv_buffers_failure(struct HIF_CE_pipe_info *pipe_info,
+					  void *nbuf, uint32_t *error_cnt,
+					  enum hif_ce_event_type failure_type,
+					  const char *failure_type_string)
+{
+	int bufs_needed_tmp = atomic_inc_return(&pipe_info->recv_bufs_needed);
+	struct CE_state *CE_state = (struct CE_state *)pipe_info->ce_hdl;
+	struct hif_softc *scn = HIF_GET_SOFTC(pipe_info->HIF_CE_state);
+	int ce_id = CE_state->id;
+	uint32_t error_cnt_tmp;
+
+	qdf_spin_lock_bh(&pipe_info->recv_bufs_needed_lock);
+	error_cnt_tmp = ++(*error_cnt);
+	qdf_spin_unlock_bh(&pipe_info->recv_bufs_needed_lock);
+	HIF_ERROR("%s: pipe_num %d, needed %d, err_cnt = %u, fail_type = %s",
+		  __func__, pipe_info->pipe_num, bufs_needed_tmp, error_cnt_tmp,
+		  failure_type_string);
+	hif_record_ce_desc_event(scn, ce_id, failure_type,
+				 NULL, nbuf, bufs_needed_tmp);
+	/* if we fail to allocate the last buffer for an rx pipe,
+	 *	there is no trigger to refill the ce and we will
+	 *	eventually crash
+	 */
+	if (bufs_needed_tmp == CE_state->dest_ring->nentries - 1)
+		QDF_ASSERT(0);
+}
+
+
 static int hif_post_recv_buffers_for_pipe(struct HIF_CE_pipe_info *pipe_info)
 {
 	struct CE_handle *ce_hdl;
@@ -1748,16 +1776,10 @@ static int hif_post_recv_buffers_for_pipe(struct HIF_CE_pipe_info *pipe_info)
 
 		nbuf = qdf_nbuf_alloc(scn->qdf_dev, buf_sz, 0, 4, false);
 		if (!nbuf) {
-			qdf_spin_lock_bh(&pipe_info->recv_bufs_needed_lock);
-			pipe_info->nbuf_alloc_err_count++;
-			qdf_spin_unlock_bh(
-				&pipe_info->recv_bufs_needed_lock);
-			HIF_ERROR(
-				"%s buf alloc error [%d] needed %d, nbuf_alloc_err_count = %u",
-				 __func__, pipe_info->pipe_num,
-				 atomic_read(&pipe_info->recv_bufs_needed),
-				pipe_info->nbuf_alloc_err_count);
-			atomic_inc(&pipe_info->recv_bufs_needed);
+			hif_post_recv_buffers_failure(pipe_info, nbuf,
+					&pipe_info->nbuf_alloc_err_count,
+					 HIF_RX_NBUF_ALLOC_FAILURE,
+					"HIF_RX_NBUF_ALLOC_FAILURE");
 			return 1;
 		}
 
@@ -1771,16 +1793,11 @@ static int hif_post_recv_buffers_for_pipe(struct HIF_CE_pipe_info *pipe_info)
 					    QDF_DMA_FROM_DEVICE);
 
 		if (unlikely(ret != QDF_STATUS_SUCCESS)) {
-			qdf_spin_lock_bh(&pipe_info->recv_bufs_needed_lock);
-			pipe_info->nbuf_dma_err_count++;
-			qdf_spin_unlock_bh(&pipe_info->recv_bufs_needed_lock);
-			HIF_ERROR(
-				"%s buf alloc error [%d] needed %d, nbuf_dma_err_count = %u",
-				 __func__, pipe_info->pipe_num,
-				 atomic_read(&pipe_info->recv_bufs_needed),
-				pipe_info->nbuf_dma_err_count);
+			hif_post_recv_buffers_failure(pipe_info, nbuf,
+					&pipe_info->nbuf_dma_err_count,
+					 HIF_RX_NBUF_MAP_FAILURE,
+					"HIF_RX_NBUF_MAP_FAILURE");
 			qdf_nbuf_free(nbuf);
-			atomic_inc(&pipe_info->recv_bufs_needed);
 			return 1;
 		}
 
@@ -1790,18 +1807,14 @@ static int hif_post_recv_buffers_for_pipe(struct HIF_CE_pipe_info *pipe_info)
 					       buf_sz, DMA_FROM_DEVICE);
 		status = ce_recv_buf_enqueue(ce_hdl, (void *)nbuf, CE_data);
 		QDF_ASSERT(status == QDF_STATUS_SUCCESS);
-		if (status != EOK) {
-			qdf_spin_lock_bh(&pipe_info->recv_bufs_needed_lock);
-			pipe_info->nbuf_ce_enqueue_err_count++;
-			qdf_spin_unlock_bh(&pipe_info->recv_bufs_needed_lock);
-			HIF_ERROR(
-				"%s buf alloc error [%d] needed %d, nbuf_alloc_err_count = %u",
-				__func__, pipe_info->pipe_num,
-				atomic_read(&pipe_info->recv_bufs_needed),
-				pipe_info->nbuf_ce_enqueue_err_count);
+		if (unlikely(status != EOK)) {
+			hif_post_recv_buffers_failure(pipe_info, nbuf,
+					&pipe_info->nbuf_ce_enqueue_err_count,
+					 HIF_RX_NBUF_ENQUEUE_FAILURE,
+					"HIF_RX_NBUF_ENQUEUE_FAILURE");
+
 			qdf_nbuf_unmap_single(scn->qdf_dev, nbuf,
 						QDF_DMA_FROM_DEVICE);
-			atomic_inc(&pipe_info->recv_bufs_needed);
 			qdf_nbuf_free(nbuf);
 			return 1;
 		}
@@ -1817,7 +1830,7 @@ static int hif_post_recv_buffers_for_pipe(struct HIF_CE_pipe_info *pipe_info)
 		pipe_info->nbuf_dma_err_count - bufs_posted : 0;
 	pipe_info->nbuf_ce_enqueue_err_count =
 		(pipe_info->nbuf_ce_enqueue_err_count > bufs_posted) ?
-	     pipe_info->nbuf_ce_enqueue_err_count - bufs_posted : 0;
+	pipe_info->nbuf_ce_enqueue_err_count - bufs_posted : 0;
 
 	qdf_spin_unlock_bh(&pipe_info->recv_bufs_needed_lock);
 
