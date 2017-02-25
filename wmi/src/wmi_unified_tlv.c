@@ -12562,6 +12562,91 @@ static QDF_STATUS extract_service_ready_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+/* convert_wireless_modes_tlv() - Convert REGDMN_MODE values sent by target
+ *         to host internal WMI_HOST_REGDMN_MODE values.
+ *         REGULATORY TODO : REGDMN_MODE_11AC_VHT*_2G values are not used by the
+ *         host currently. Add this in the future if required.
+ *         11AX (Phase II) : 11ax related values are not currently
+ *         advertised separately by FW. As part of phase II regulatory bring-up,
+ *         finalize the advertisement mechanism.
+ * @target_wireless_mode: target wireless mode received in message
+ *
+ * Return: returns the host internal wireless mode.
+ */
+static inline uint32_t convert_wireless_modes_tlv(uint32_t target_wireless_mode)
+{
+
+	uint32_t wireless_modes = 0;
+
+	if (target_wireless_mode & REGDMN_MODE_11A)
+		wireless_modes |= WMI_HOST_REGDMN_MODE_11A;
+
+	if (target_wireless_mode & REGDMN_MODE_TURBO)
+		wireless_modes |= WMI_HOST_REGDMN_MODE_TURBO;
+
+	if (target_wireless_mode & REGDMN_MODE_11B)
+		wireless_modes |= WMI_HOST_REGDMN_MODE_11B;
+
+	if (target_wireless_mode & REGDMN_MODE_PUREG)
+		wireless_modes |= WMI_HOST_REGDMN_MODE_PUREG;
+
+	if (target_wireless_mode & REGDMN_MODE_11G)
+		wireless_modes |= WMI_HOST_REGDMN_MODE_11G;
+
+	if (target_wireless_mode & REGDMN_MODE_108G)
+		wireless_modes |= WMI_HOST_REGDMN_MODE_108G;
+
+	if (target_wireless_mode & REGDMN_MODE_108A)
+		wireless_modes |= WMI_HOST_REGDMN_MODE_108A;
+
+	if (target_wireless_mode & REGDMN_MODE_XR)
+		wireless_modes |= WMI_HOST_REGDMN_MODE_XR;
+
+	if (target_wireless_mode & REGDMN_MODE_11A_HALF_RATE)
+		wireless_modes |= WMI_HOST_REGDMN_MODE_11A_HALF_RATE;
+
+	if (target_wireless_mode & REGDMN_MODE_11A_QUARTER_RATE)
+		wireless_modes |= WMI_HOST_REGDMN_MODE_11A_QUARTER_RATE;
+
+	if (target_wireless_mode & REGDMN_MODE_11NG_HT20)
+		wireless_modes |= WMI_HOST_REGDMN_MODE_11NG_HT20;
+
+	if (target_wireless_mode & REGDMN_MODE_11NA_HT20)
+		wireless_modes |= WMI_HOST_REGDMN_MODE_11NA_HT20;
+
+	if (target_wireless_mode & REGDMN_MODE_11NG_HT40PLUS)
+		wireless_modes |= WMI_HOST_REGDMN_MODE_11NG_HT40PLUS;
+
+	if (target_wireless_mode & REGDMN_MODE_11NG_HT40MINUS)
+		wireless_modes |= WMI_HOST_REGDMN_MODE_11NG_HT40MINUS;
+
+	if (target_wireless_mode & REGDMN_MODE_11NA_HT40PLUS)
+		wireless_modes |= WMI_HOST_REGDMN_MODE_11NA_HT40PLUS;
+
+	if (target_wireless_mode & REGDMN_MODE_11NA_HT40MINUS)
+		wireless_modes |= WMI_HOST_REGDMN_MODE_11NA_HT40MINUS;
+
+	if (target_wireless_mode & REGDMN_MODE_11AC_VHT20)
+		wireless_modes |= WMI_HOST_REGDMN_MODE_11AC_VHT20;
+
+	if (target_wireless_mode & REGDMN_MODE_11AC_VHT40PLUS)
+		wireless_modes |= WMI_HOST_REGDMN_MODE_11AC_VHT40PLUS;
+
+	if (target_wireless_mode & REGDMN_MODE_11AC_VHT40MINUS)
+		wireless_modes |= WMI_HOST_REGDMN_MODE_11AC_VHT40MINUS;
+
+	if (target_wireless_mode & REGDMN_MODE_11AC_VHT80)
+		wireless_modes |= WMI_HOST_REGDMN_MODE_11AC_VHT80;
+
+	if (target_wireless_mode & REGDMN_MODE_11AC_VHT160)
+		wireless_modes |= WMI_HOST_REGDMN_MODE_11AC_VHT160;
+
+	if (target_wireless_mode & REGDMN_MODE_11AC_VHT80_80)
+		wireless_modes |= WMI_HOST_REGDMN_MODE_11AC_VHT80_80;
+
+	return wireless_modes;
+}
+
 /**
  * extract_hal_reg_cap_tlv() - extract HAL registered capabilities
  * @wmi_handle: wmi handle
@@ -12574,7 +12659,6 @@ static QDF_STATUS extract_hal_reg_cap_tlv(wmi_unified_t wmi_handle,
 	void *evt_buf, struct wlan_psoc_hal_reg_capability *cap)
 {
 	WMI_SERVICE_READY_EVENTID_param_tlvs *param_buf;
-	u_int32_t wireless_modes_orig = 0;
 
 	param_buf = (WMI_SERVICE_READY_EVENTID_param_tlvs *) evt_buf;
 
@@ -12582,85 +12666,8 @@ static QDF_STATUS extract_hal_reg_cap_tlv(wmi_unified_t wmi_handle,
 		sizeof(uint32_t)),
 		sizeof(struct wlan_psoc_hal_reg_capability));
 
-	/* Convert REGDMN_MODE values sent by target to host internal
-	 * WMI_HOST_REGDMN_MODE values.
-	 *
-	 * REGULATORY TODO : REGDMN_MODE_11AC_VHT*_2G values are not used by the
-	 * host currently. Add this in the future if required.
-	 *
-	 * 11AX TODO (Phase II) : 11ax related values are not currently
-	 * advertised separately by FW. As part of phase II regulatory bring-up,
-	 * finalize the advertisement mechanism.
-	 */
-
-	wireless_modes_orig = param_buf->hal_reg_capabilities->wireless_modes;
-	cap->wireless_modes = 0;
-
-	if (wireless_modes_orig & REGDMN_MODE_11A)
-		cap->wireless_modes |= WMI_HOST_REGDMN_MODE_11A;
-
-	if (wireless_modes_orig & REGDMN_MODE_TURBO)
-		cap->wireless_modes |= WMI_HOST_REGDMN_MODE_TURBO;
-
-	if (wireless_modes_orig & REGDMN_MODE_11B)
-		cap->wireless_modes |= WMI_HOST_REGDMN_MODE_11B;
-
-	if (wireless_modes_orig & REGDMN_MODE_PUREG)
-		cap->wireless_modes |= WMI_HOST_REGDMN_MODE_PUREG;
-
-	if (wireless_modes_orig & REGDMN_MODE_11G)
-		cap->wireless_modes |= WMI_HOST_REGDMN_MODE_11G;
-
-	if (wireless_modes_orig & REGDMN_MODE_108G)
-		cap->wireless_modes |= WMI_HOST_REGDMN_MODE_108G;
-
-	if (wireless_modes_orig & REGDMN_MODE_108A)
-		cap->wireless_modes |= WMI_HOST_REGDMN_MODE_108A;
-
-	if (wireless_modes_orig & REGDMN_MODE_XR)
-		cap->wireless_modes |= WMI_HOST_REGDMN_MODE_XR;
-
-	if (wireless_modes_orig & REGDMN_MODE_11A_HALF_RATE)
-		cap->wireless_modes |= WMI_HOST_REGDMN_MODE_11A_HALF_RATE;
-
-	if (wireless_modes_orig & REGDMN_MODE_11A_QUARTER_RATE)
-		cap->wireless_modes |= WMI_HOST_REGDMN_MODE_11A_QUARTER_RATE;
-
-	if (wireless_modes_orig & REGDMN_MODE_11NG_HT20)
-		cap->wireless_modes |= WMI_HOST_REGDMN_MODE_11NG_HT20;
-
-	if (wireless_modes_orig & REGDMN_MODE_11NA_HT20)
-		cap->wireless_modes |= WMI_HOST_REGDMN_MODE_11NA_HT20;
-
-	if (wireless_modes_orig & REGDMN_MODE_11NG_HT40PLUS)
-		cap->wireless_modes |= WMI_HOST_REGDMN_MODE_11NG_HT40PLUS;
-
-	if (wireless_modes_orig & REGDMN_MODE_11NG_HT40MINUS)
-		cap->wireless_modes |= WMI_HOST_REGDMN_MODE_11NG_HT40MINUS;
-
-	if (wireless_modes_orig & REGDMN_MODE_11NA_HT40PLUS)
-		cap->wireless_modes |= WMI_HOST_REGDMN_MODE_11NA_HT40PLUS;
-
-	if (wireless_modes_orig & REGDMN_MODE_11NA_HT40MINUS)
-		cap->wireless_modes |= WMI_HOST_REGDMN_MODE_11NA_HT40MINUS;
-
-	if (wireless_modes_orig & REGDMN_MODE_11AC_VHT20)
-		cap->wireless_modes |= WMI_HOST_REGDMN_MODE_11AC_VHT20;
-
-	if (wireless_modes_orig & REGDMN_MODE_11AC_VHT40PLUS)
-		cap->wireless_modes |= WMI_HOST_REGDMN_MODE_11AC_VHT40PLUS;
-
-	if (wireless_modes_orig & REGDMN_MODE_11AC_VHT40MINUS)
-		cap->wireless_modes |= WMI_HOST_REGDMN_MODE_11AC_VHT40MINUS;
-
-	if (wireless_modes_orig & REGDMN_MODE_11AC_VHT80)
-		cap->wireless_modes |= WMI_HOST_REGDMN_MODE_11AC_VHT80;
-
-	if (wireless_modes_orig & REGDMN_MODE_11AC_VHT160)
-		cap->wireless_modes |= WMI_HOST_REGDMN_MODE_11AC_VHT160;
-
-	if (wireless_modes_orig & REGDMN_MODE_11AC_VHT80_80)
-		cap->wireless_modes |= WMI_HOST_REGDMN_MODE_11AC_VHT80_80;
+	cap->wireless_modes = convert_wireless_modes_tlv(
+			param_buf->hal_reg_capabilities->wireless_modes);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -13819,7 +13826,8 @@ static QDF_STATUS extract_reg_cap_service_ready_ext_tlv(
 	param->eeprom_reg_domain_ext = ext_reg_cap->eeprom_reg_domain_ext;
 	param->regcap1 = ext_reg_cap->regcap1;
 	param->regcap2 = ext_reg_cap->regcap2;
-	param->wireless_modes = ext_reg_cap->wireless_modes;
+	param->wireless_modes = convert_wireless_modes_tlv(
+						ext_reg_cap->wireless_modes);
 	param->low_2ghz_chan = ext_reg_cap->low_2ghz_chan;
 	param->high_2ghz_chan = ext_reg_cap->high_2ghz_chan;
 	param->low_5ghz_chan = ext_reg_cap->low_5ghz_chan;
