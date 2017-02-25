@@ -49,6 +49,7 @@
 #ifdef CONVERGED_P2P_ENABLE
 #include "wlan_p2p_public_struct.h"
 #endif
+#include "wlan_scan_public_structs.h"
 
 typedef qdf_nbuf_t wmi_buf_t;
 #define wmi_buf_data(_buf) qdf_nbuf_data(_buf)
@@ -445,10 +446,10 @@ QDF_STATUS wmi_unified_ap_ps_cmd_send(void *wmi_hdl,
 				struct ap_ps_params *param);
 
 QDF_STATUS wmi_unified_scan_start_cmd_send(void *wmi_hdl,
-				struct scan_start_params *param);
+				struct scan_req_params *param);
 
 QDF_STATUS wmi_unified_scan_stop_cmd_send(void *wmi_hdl,
-				struct scan_stop_params *param);
+				struct scan_cancel_param *param);
 
 QDF_STATUS wmi_unified_scan_chan_list_cmd_send(void *wmi_hdl,
 				struct scan_chan_list_params *param);
@@ -1204,7 +1205,7 @@ QDF_STATUS wmi_extract_vdev_roam_param(void *wmi_hdl, void *evt_buf,
 		wmi_host_roam_event *ev);
 
 QDF_STATUS wmi_extract_vdev_scan_ev_param(void *wmi_hdl, void *evt_buf,
-		wmi_host_scan_event *param);
+		struct scan_event *param);
 
 QDF_STATUS wmi_extract_mu_ev_param(void *wmi_hdl, void *evt_buf,
 		wmi_host_mu_report_event *param);
