@@ -73,6 +73,18 @@
 #define WLAN_PSOC_CREATE_TIMEOUT_CNT 300
 /* 25 msec */
 #define WLAN_PSOC_CREATE_TIMEOUT 25
+#define WLAN_24_GHZ_BASE_FREQ   (2407)
+#define WLAN_5_GHZ_BASE_FREQ    (5000)
+#define WLAN_24_GHZ_CHANNEL_6   (6)
+#define WLAN_24_GHZ_CHANNEL_14  (14)
+#define WLAN_24_GHZ_CHANNEL_15  (15)
+#define WLAN_24_GHZ_CHANNEL_27  (27)
+#define WLAN_5_GHZ_CHANNEL_170  (170)
+#define WLAN_CHAN_SPACING_5MHZ  (5)
+#define WLAN_CHAN_SPACING_20MHZ (20)
+#define WLAN_CHAN_14_FREQ       (2484)
+#define WLAN_CHAN_15_FREQ       (2512)
+#define WLAN_CHAN_170_FREQ      (5852)
 
 /**
  * enum wlan_umac_comp_id - UMAC component id

@@ -26,6 +26,7 @@
 
 #include <linux/version.h>
 #include <linux/netdevice.h>
+#include <net/netlink.h>
 #include <net/cfg80211.h>
 #include <qca_vendor.h>
 
@@ -62,5 +63,19 @@
 		WIPHY_VENDOR_CMD_NEED_NETDEV,				\
 	.doit = NULL							\
 },
+
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 7, 0))
+static inline int
+wlan_cfg80211_nla_put_u64(struct sk_buff *skb, int attrtype, u64 value)
+{
+	return nla_put_u64(skb, attrtype, value);
+}
+#else
+static inline int
+wlan_cfg80211_nla_put_u64(struct sk_buff *skb, int attrtype, u64 value)
+{
+	return nla_put_u64_64bit(skb, attrtype, value, NL80211_ATTR_PAD);
+}
+#endif
 
 #endif

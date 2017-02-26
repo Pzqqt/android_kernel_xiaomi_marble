@@ -346,6 +346,7 @@ wlan_scan_global_init(struct wlan_scan_obj *scan_obj)
 	scan_obj->scan_def.idle_time = SCAN_NETWORK_IDLE_TIMEOUT;
 	/* scan contrl flags */
 	scan_obj->scan_def.scan_f_passive = true;
+	scan_obj->scan_def.scan_f_ofdm_rates = true;
 	scan_obj->scan_def.scan_f_2ghz = true;
 	scan_obj->scan_def.scan_f_5ghz = true;
 	/* scan event flags */
@@ -354,6 +355,9 @@ wlan_scan_global_init(struct wlan_scan_obj *scan_obj)
 	scan_obj->scan_def.scan_ev_bss_chan = true;
 	scan_obj->scan_def.scan_ev_foreign_chan = true;
 	scan_obj->scan_def.scan_ev_dequeued = true;
+	scan_obj->scan_def.scan_ev_preempted = true;
+	scan_obj->scan_def.scan_ev_start_failed = true;
+	scan_obj->scan_def.scan_ev_restarted = true;
 	/* init scan id seed */
 	qdf_atomic_init(&scan_obj->scan_ids);
 

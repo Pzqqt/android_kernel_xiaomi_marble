@@ -21,4 +21,30 @@
  */
 
 #include "wlan_utility.h"
+#include <wlan_cmn.h>
 
+uint32_t wlan_chan_to_freq(uint8_t chan)
+{
+	/* ch 0 - ch 13 */
+	if (chan < WLAN_24_GHZ_CHANNEL_14)
+		return WLAN_24_GHZ_BASE_FREQ + chan * WLAN_CHAN_SPACING_5MHZ;
+	else if (chan == WLAN_24_GHZ_CHANNEL_14)
+		return WLAN_CHAN_14_FREQ;
+	else if (chan < WLAN_24_GHZ_CHANNEL_27)
+		/* ch 15 - ch 26 */
+		return WLAN_CHAN_15_FREQ +
+		  (chan - WLAN_24_GHZ_CHANNEL_15) * WLAN_CHAN_SPACING_20MHZ;
+	else if (chan == WLAN_5_GHZ_CHANNEL_170)
+		return WLAN_CHAN_170_FREQ;
+	else
+		return WLAN_5_GHZ_BASE_FREQ + chan * WLAN_CHAN_SPACING_5MHZ;
+}
+
+bool wlan_is_dsrc_channel(uint16_t center_freq)
+{
+	if (center_freq >= 5852 &&
+	    center_freq <= 5920)
+		return true;
+
+	return false;
+}

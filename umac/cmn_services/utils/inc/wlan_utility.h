@@ -23,4 +23,22 @@
 #ifndef _WLAN_UTILITY_H_
 #define _WLAN_UTILITY_H_
 
+#include <qdf_types.h>
+
+/**
+ * wlan_chan_to_freq() - converts channel to frequency
+ * @chan: channel number
+ *
+ * @return frequency of the channel
+ */
+uint32_t wlan_chan_to_freq(uint8_t chan);
+
+/*
+ * wlan_is_dsrc_channel() - is the channel DSRC
+ * @center_freq: center freq of the channel
+ *
+ * Return: true if DSRC channel or false otherwise
+ */
+bool wlan_is_dsrc_channel(uint16_t center_freq);
+
 #endif /* _WLAN_UTILITY_H_ */
