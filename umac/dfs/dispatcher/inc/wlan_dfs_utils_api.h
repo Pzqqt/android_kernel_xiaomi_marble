@@ -26,6 +26,24 @@
 #define _WLAN_DFS_UTILS_API_H_
 
 #include "wlan_dfs_ucfg_api.h"
+#include "wlan_reg_services_api.h"
+
+/* Add channel to nol */
+#define DFS_NOL_SET                  1
+
+/* Remove channel from nol */
+#define DFS_NOL_RESET                0
+
+/* Max nol channels */
+#define DFS_MAX_NOL_CHANNEL        128
+
+/* dfs offload service bit */
+#define DFS_SERVICE_PHYERR_OFFLOAD 113
+
+/* check if dfs offload enabled */
+#define DFS_OFFLOAD_IS_ENABLED(service_bitmap) \
+	(((service_bitmap)[(DFS_SERVICE_PHYERR_OFFLOAD)/(sizeof(A_UINT32))] & \
+	   (1 << ((DFS_SERVICE_PHYERR_OFFLOAD)%(sizeof(A_UINT32))))) != 0)
 
 extern struct dfs_to_mlme global_dfs_to_mlme;
 
@@ -284,4 +302,107 @@ QDF_STATUS utils_dfs_get_nol_chfreq_and_chwidth(struct wlan_objmgr_pdev *pdev,
 		uint32_t *nol_chfreq,
 		uint32_t *nol_chwidth,
 		int index);
+
+/**
+ * dfs_get_random_channel() - Get random channel.
+ * @pdev: Pointer to DFS pdev object.
+ * @flags: random channel selection flags.
+ * @ch_params: current channel params.
+ * @hw_mode: current operating mode.
+ * @target_chan: Pointer to target_chan.
+ *
+ * wrapper function for get_random_chan(). this
+ * function called from outside of dfs component.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS dfs_get_random_channel(struct wlan_objmgr_pdev *pdev,
+		uint16_t flags, struct ch_params *ch_params,
+		uint32_t *hw_mode, int *target_chan);
+
+/**
+ * dfs_init_nol() - Initialize nol from platform driver.
+ * @pdev: pdev handler.
+ *
+ * Initialize nol from platform driver.
+ *
+ * Return: None
+ */
+void dfs_init_nol(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * dfs_save_nol() - save nol list to platform driver.
+ * @pdev: pdev handler.
+ *
+ * Save nol list to platform driver.
+ *
+ * Return: None
+ */
+void dfs_save_nol(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * dfs_print_nol_channels() - log nol channels.
+ * @pdev: pdev handler.
+ *
+ * log nol channels.
+ *
+ * Return: None
+ */
+void dfs_print_nol_channels(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * dfs_clear_nol_channels() - clear nol list.
+ * @pdev: pdev handler.
+ *
+ * log nol channels.
+ *
+ * Return: None
+ */
+void dfs_clear_nol_channels(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * utils_is_dfs_ch() - is channel dfs.
+ * @pdev: pdev handler.
+ *
+ * is channel dfs.
+ *
+ * Return: True if channel dfs, else false.
+ */
+bool utils_is_dfs_ch(struct wlan_objmgr_pdev *pdev, uint32_t chan);
+
+/**
+ * utils_dfs_reg_update_nol_ch() - set nol channel
+ *
+ * @pdev: pdev ptr
+ * @ch_list: channel list to be returned
+ * @num_ch: number of channels
+ * @nol_ch: nol flag
+ *
+ * Return: void
+ */
+void utils_dfs_reg_update_nol_ch(struct wlan_objmgr_pdev *pdev,
+		uint8_t *ch_list,
+		uint8_t num_ch,
+		bool nol_ch);
+
+/**
+ * utils_dfs_freq_to_chan () - convert channel freq to channel number
+ * @pdev: pdev ptr
+ * @freq: frequency
+ *
+ * Return: channel number
+ */
+uint32_t utils_dfs_freq_to_chan(struct wlan_objmgr_pdev *pdev,
+			       uint32_t freq);
+
+/**
+ * utils_dfs__chan_to_freq () - convert channel number to frequency
+ * @pdev: pdev ptr
+ * @chan: channel number
+ *
+ * Return: frequency
+ */
+uint32_t utils_dfs_chan_to_freq(struct wlan_objmgr_pdev *pdev,
+			       uint32_t chan);
+
 #endif /* _WLAN_DFS_UTILS_API_H_ */

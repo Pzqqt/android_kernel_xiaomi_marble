@@ -26,13 +26,15 @@
  * NOL when its time is up.
  */
 
-#include <dfs_ioctl.h>
 #include "../dfs.h"
 #include "../dfs_channel.h"
 #include "../dfs_ioctl_private.h"
-#include "qdf_time.h"
-#include "wlan_dfs_mlme_api.h"
 #include "../dfs_internal.h"
+#include <qdf_time.h>
+#include <wlan_dfs_mlme_api.h>
+#include <wlan_dfs_utils_api.h>
+#include <wlan_reg_services_api.h>
+#include <dfs_ioctl.h>
 
 /* for loop to traverse the channel list. */
 
@@ -103,6 +105,7 @@ static os_timer_func(dfs_remove_from_nol)
 	struct wlan_dfs *dfs;
 	uint16_t delfreq;
 	uint16_t delchwidth;
+	uint32_t chan;
 
 	OS_GET_TIMER_ARG(nol_arg, struct dfs_nol_timer_arg *);
 
@@ -117,7 +120,12 @@ static os_timer_func(dfs_remove_from_nol)
 	dfs_nol_update(dfs);
 
 	dfs_mlme_nol_timeout_notification(dfs->dfs_pdev_obj);
-
+	chan = utils_dfs_freq_to_chan(dfs->dfs_pdev_obj, delfreq);
+	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_NOL,
+		    "%s: remove channel %d from nol\n", __func__, chan);
+	utils_dfs_reg_update_nol_ch(dfs->dfs_pdev_obj,
+			(uint8_t *)&chan, 1, DFS_NOL_RESET);
+	dfs_save_nol(dfs->dfs_pdev_obj);
 	qdf_mem_free(nol_arg);
 }
 
