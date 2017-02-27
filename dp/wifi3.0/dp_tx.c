@@ -48,30 +48,6 @@
 /* disable TQM_BYPASS */
 #define TQM_BYPASS_WAR 0
 
-/*
- * default_dscp_tid_map - Default DSCP-TID mapping
- *
- * DSCP        TID     AC
- * 000000      0       WME_AC_BE
- * 001000      1       WME_AC_BK
- * 010000      1       WME_AC_BK
- * 011000      0       WME_AC_BE
- * 100000      5       WME_AC_VI
- * 101000      5       WME_AC_VI
- * 110000      6       WME_AC_VO
- * 111000      6       WME_AC_VO
- */
-static uint8_t default_dscp_tid_map[64] = {
-	0, 0, 0, 0, 0, 0, 0, 0,
-	1, 1, 1, 1, 1, 1, 1, 1,
-	1, 1, 1, 1, 1, 1, 1, 1,
-	0, 0, 0, 0, 0, 0, 0, 0,
-	5, 5, 5, 5, 5, 5, 5, 5,
-	5, 5, 5, 5, 5, 5, 5, 5,
-	6, 6, 6, 6, 6, 6, 6, 6,
-	6, 6, 6, 6, 6, 6, 6, 6,
-};
-
 /**
  * dp_tx_get_queue() - Returns Tx queue IDs to be used for this Tx frame
  * @vdev: DP Virtual device handle
@@ -669,6 +645,8 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	hal_tx_desc_set_buf_length(hal_tx_desc_cached, length);
 	hal_tx_desc_set_buf_offset(hal_tx_desc_cached, tx_desc->pkt_offset);
 	hal_tx_desc_set_encap_type(hal_tx_desc_cached, tx_desc->tx_encap_type);
+	hal_tx_desc_set_dscp_tid_table_id(hal_tx_desc_cached,
+			vdev->dscp_tid_map_id);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 			"%s length:%d , type = %d, dma_addr %llx, offset %d\n",
@@ -730,15 +708,122 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
  * Extract the DSCP or PCP information from frame and map into TID value.
  * Software based TID classification is required when more than 2 DSCP-TID
  * mapping tables are needed.
- * Hardware supports 2 DSCP-TID mapping tables.
+ * Hardware supports 2 DSCP-TID mapping tables
  *
- * Return:
+ * Return: void
  */
-static int dp_tx_classify_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
-			      struct dp_tx_msdu_info_s *msdu_info)
+static void dp_tx_classify_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
+		struct dp_tx_msdu_info_s *msdu_info)
 {
-	/* TODO */
-	return 0;
+	uint8_t tos = 0, dscp_tid_override = 0;
+	uint8_t *hdr_ptr, *L3datap;
+	uint8_t is_mcast = 0;
+	struct ether_header *eh = NULL;
+	qdf_ethervlan_header_t *evh = NULL;
+	uint16_t   ether_type;
+	qdf_llc_t *llcHdr;
+	struct dp_pdev *pdev = (struct dp_pdev *)vdev->pdev;
+
+	/* for mesh packets don't do any classification */
+	if (qdf_unlikely(vdev->mesh_vdev))
+		return;
+
+	if (qdf_likely(vdev->tx_encap_type != htt_cmn_pkt_type_raw)) {
+		eh = (struct ether_header *) nbuf->data;
+		hdr_ptr = eh->ether_dhost;
+		L3datap = hdr_ptr + sizeof(struct ether_header);
+	} else {
+		qdf_dot3_qosframe_t *qos_wh =
+			(qdf_dot3_qosframe_t *) nbuf->data;
+		msdu_info->tid = qos_wh->i_fc[0] & DP_FC0_SUBTYPE_QOS ?
+			qos_wh->i_qos[0] & DP_QOS_TID : 0;
+		return;
+	}
+
+	is_mcast = DP_FRAME_IS_MULTICAST(hdr_ptr);
+	ether_type = eh->ether_type;
+	/*
+	 * Check if packet is dot3 or eth2 type.
+	 */
+	if (IS_LLC_PRESENT(ether_type)) {
+		ether_type = (uint16_t)*(nbuf->data + 2*ETHER_ADDR_LEN +
+				sizeof(*llcHdr));
+
+		if (ether_type == htons(ETHERTYPE_8021Q)) {
+			L3datap = hdr_ptr + sizeof(qdf_ethervlan_header_t) +
+				sizeof(*llcHdr);
+			ether_type = (uint16_t)*(nbuf->data + 2*ETHER_ADDR_LEN
+					+ sizeof(*llcHdr) +
+					sizeof(qdf_net_vlanhdr_t));
+		} else {
+			L3datap = hdr_ptr + sizeof(struct ether_header) +
+				sizeof(*llcHdr);
+		}
+
+	} else {
+		if (ether_type == htons(ETHERTYPE_8021Q)) {
+			evh = (qdf_ethervlan_header_t *) eh;
+			ether_type = evh->ether_type;
+			L3datap = hdr_ptr + sizeof(qdf_ethervlan_header_t);
+		}
+	}
+	/*
+	 * Find priority from IP TOS DSCP field
+	 */
+	if (qdf_nbuf_is_ipv4_pkt(nbuf)) {
+		qdf_net_iphdr_t *ip = (qdf_net_iphdr_t *) L3datap;
+		if (qdf_nbuf_is_ipv4_dhcp_pkt(nbuf)) {
+			/* Only for unicast frames */
+			if (!is_mcast) {
+				/* send it on VO queue */
+				msdu_info->tid = DP_VO_TID;
+			}
+		} else {
+			/*
+			 * IP frame: exclude ECN bits 0-1 and map DSCP bits 2-7
+			 * from TOS byte.
+			 */
+			tos = ip->ip_tos;
+			dscp_tid_override = 1;
+
+		}
+	} else if (qdf_nbuf_is_ipv6_pkt(nbuf)) {
+		/* TODO
+		 * use flowlabel
+		 *igmpmld cases to be handled in phase 2
+		 */
+		unsigned long ver_pri_flowlabel;
+		unsigned long pri;
+		ver_pri_flowlabel = *(unsigned long *) L3datap;
+		pri = (ntohl(ver_pri_flowlabel) & IPV6_FLOWINFO_PRIORITY) >>
+			DP_IPV6_PRIORITY_SHIFT;
+		tos = pri;
+		dscp_tid_override = 1;
+	} else if (qdf_nbuf_is_ipv4_eapol_pkt(nbuf))
+		msdu_info->tid = DP_VO_TID;
+	else if (qdf_nbuf_is_ipv4_arp_pkt(nbuf)) {
+		/* Only for unicast frames */
+		if (!is_mcast) {
+			/* send ucast arp on VO queue */
+			msdu_info->tid = DP_VO_TID;
+		}
+	}
+
+	/*
+	 * Assign all MCAST packets to BE
+	 */
+	if (qdf_unlikely(vdev->tx_encap_type != htt_cmn_pkt_type_raw)) {
+		if (is_mcast) {
+			tos = 0;
+			dscp_tid_override = 1;
+		}
+	}
+
+	if (dscp_tid_override == 1) {
+		tos = (tos >> DP_IP_DSCP_SHIFT) & DP_IP_DSCP_MASK;
+		msdu_info->tid = pdev->dscp_tid_map[vdev->dscp_tid_map_id][tos];
+	}
+	return;
 }
 
 /**
@@ -1197,7 +1282,7 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 	}
 
 	/* RAW */
-	if (qdf_unlikely(vdev->tx_encap_type == htt_pkt_type_raw)) {
+	if (qdf_unlikely(vdev->tx_encap_type == htt_cmn_pkt_type_raw)) {
 		nbuf = dp_tx_prepare_raw(vdev, nbuf, &seg_info, &msdu_info);
 		if (nbuf == NULL)
 			return NULL;
@@ -1978,10 +2063,6 @@ QDF_STATUS dp_tx_soc_attach(struct dp_soc *soc)
 	 * are stable.
 	 */
 	soc->process_tx_status = 1;
-
-	/* Initialize Default DSCP-TID mapping table in TCL */
-	hal_tx_set_dscp_tid_map(soc->hal_soc, default_dscp_tid_map,
-			HAL_TX_DSCP_TID_MAP_TABLE_DEFAULT);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 			"%s HAL Tx init Success\n", __func__);

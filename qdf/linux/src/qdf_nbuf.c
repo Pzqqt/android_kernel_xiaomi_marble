@@ -739,6 +739,7 @@ bool __qdf_nbuf_data_is_ipv4_pkt(uint8_t *data)
 	else
 		return false;
 }
+EXPORT_SYMBOL(__qdf_nbuf_data_is_ipv4_pkt);
 
 /**
  * __qdf_nbuf_data_is_ipv4_dhcp_pkt() - check if skb data is a dhcp packet
@@ -768,6 +769,7 @@ bool __qdf_nbuf_data_is_ipv4_dhcp_pkt(uint8_t *data)
 	else
 		return false;
 }
+EXPORT_SYMBOL(__qdf_nbuf_data_is_ipv4_dhcp_pkt);
 
 /**
  * __qdf_nbuf_data_is_ipv4_eapol_pkt() - check if skb data is a eapol packet
@@ -790,6 +792,7 @@ bool __qdf_nbuf_data_is_ipv4_eapol_pkt(uint8_t *data)
 	else
 		return false;
 }
+EXPORT_SYMBOL(__qdf_nbuf_data_is_ipv4_eapol_pkt);
 
 /**
  * __qdf_nbuf_is_ipv4_wapi_pkt() - check if skb data is a wapi packet
@@ -834,6 +837,7 @@ bool __qdf_nbuf_data_is_ipv4_arp_pkt(uint8_t *data)
 	else
 		return false;
 }
+EXPORT_SYMBOL(__qdf_nbuf_data_is_ipv4_arp_pkt);
 
 /**
  * __qdf_nbuf_data_is_ipv6_pkt() - check if it is IPV6 packet.
@@ -856,6 +860,7 @@ bool __qdf_nbuf_data_is_ipv6_pkt(uint8_t *data)
 	else
 		return false;
 }
+EXPORT_SYMBOL(__qdf_nbuf_data_is_ipv6_pkt);
 
 /**
  * __qdf_nbuf_data_is_ipv4_mcast_pkt() - check if it is IPV4 multicast packet.

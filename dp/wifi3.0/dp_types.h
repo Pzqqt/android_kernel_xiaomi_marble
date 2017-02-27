@@ -45,6 +45,16 @@
 #define REPT_MU_MIMO 1
 #define REPT_MU_OFDMA_MIMO 3
 #define REO_ERROR_TYPE_MAX (HAL_REO_ERR_QUEUE_DESC_BLOCKED_SET+1)
+#define DP_VO_TID 6
+
+#define DP_MAX_INTERRUPT_CONTEXTS 8
+#define DP_MAX_TID_MAPS 16 /* MAX TID MAPS AVAILABLE PER PDEV*/
+#define DSCP_TID_MAP_MAX    (64)
+#define DP_IP_DSCP_SHIFT 2
+#define DP_IP_DSCP_MASK 0x3f
+#define DP_FC0_SUBTYPE_QOS 0x80
+#define DP_QOS_TID 0x0f
+#define DP_IPV6_PRIORITY_SHIFT 20
 
 struct dp_soc_cmn;
 struct dp_pdev;
@@ -69,6 +79,7 @@ union dp_rx_desc_list_elem_t;
      (_a)[3] == 0xff &&                         \
      (_a)[4] == 0xff &&                         \
      (_a)[5] == 0xff)
+#define IS_LLC_PRESENT(typeorlen) ((typeorlen) >= 0x600)
 
 /**
  * macros to convert hw mac id to sw mac id:
@@ -581,6 +592,10 @@ struct dp_pdev {
 		qdf_spinlock_t lock;
 		struct dp_peer *map[OL_TXRX_NUM_LOCAL_PEER_IDS];
 	} local_peer_ids;
+
+	/* dscp_tid_map_*/
+	uint8_t dscp_tid_map[DP_MAX_TID_MAPS][DSCP_TID_MAP_MAX];
+
 	/* TBD */
 };
 
@@ -668,9 +683,9 @@ struct dp_vdev {
 	enum wlan_op_mode opmode;
 
 	/* Tx encapsulation type for this VAP */
-	enum htt_pkt_type tx_encap_type;
+	enum htt_cmn_pkt_type tx_encap_type;
 	/* Rx Decapsulation type for this VAP */
-	enum htt_pkt_type rx_decap_type;
+	enum htt_cmn_pkt_type rx_decap_type;
 
 	/* BSS peer */
 	struct dp_peer *vap_bss_peer;
@@ -771,5 +786,4 @@ struct dp_peer {
 	/* Peer Stats */
 	struct cdp_peer_stats stats;
 };
-
 #endif /* _DP_TYPES_H_ */

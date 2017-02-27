@@ -40,6 +40,31 @@
 #define DP_NSS_LENGTH (6*SS_COUNT)
 #define DP_RXDMA_ERR_LENGTH (6*MAX_RXDMA_ERRORS)
 #define DP_REO_ERR_LENGTH (6*REO_ERROR_TYPE_MAX)
+
+/**
+ * default_dscp_tid_map - Default DSCP-TID mapping
+ *
+ * DSCP        TID     AC
+ * 000000      0       WME_AC_BE
+ * 001000      1       WME_AC_BK
+ * 010000      1       WME_AC_BK
+ * 011000      0       WME_AC_BE
+ * 100000      5       WME_AC_VI
+ * 101000      5       WME_AC_VI
+ * 110000      6       WME_AC_VO
+ * 111000      6       WME_AC_VO
+ */
+static uint8_t default_dscp_tid_map[DSCP_TID_MAP_MAX] = {
+	0, 0, 0, 0, 0, 0, 0, 0,
+	1, 1, 1, 1, 1, 1, 1, 1,
+	1, 1, 1, 1, 1, 1, 1, 1,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	5, 5, 5, 5, 5, 5, 5, 5,
+	5, 5, 5, 5, 5, 5, 5, 5,
+	6, 6, 6, 6, 6, 6, 6, 6,
+	6, 6, 6, 6, 6, 6, 6, 6,
+};
+
 /**
  * dp_setup_srng - Internal function to setup SRNG rings used by data path
  */
@@ -987,6 +1012,28 @@ static int dp_rxdma_ring_setup(struct dp_soc *soc,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+/**
+ * dp_dscp_tid_map_setup(): Initialize the dscp-tid maps
+ * @pdev - DP_PDEV handle
+ *
+ * Return: void
+ */
+static inline void
+dp_dscp_tid_map_setup(struct dp_pdev *pdev)
+{
+	uint8_t map_id;
+	for (map_id = 0; map_id < DP_MAX_TID_MAPS; map_id++) {
+		qdf_mem_copy(pdev->dscp_tid_map[map_id], default_dscp_tid_map,
+				sizeof(default_dscp_tid_map));
+	}
+	for (map_id = 0; map_id < HAL_MAX_HW_DSCP_TID_MAPS; map_id++) {
+		hal_tx_set_dscp_tid_map(pdev->soc->hal_soc,
+				pdev->dscp_tid_map[map_id],
+				map_id);
+	}
+}
+
 /*
 * dp_pdev_attach_wifi3() - attach txrx pdev
 * @osif_pdev: Opaque PDEV handle from OSIF/HDD
@@ -1119,6 +1166,7 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	dp_local_peer_id_pool_init(pdev);
 #endif
 	dp_lro_hash_setup(soc);
+	dp_dscp_tid_map_setup(pdev);
 
 	return (struct cdp_pdev *)pdev;
 
@@ -1446,6 +1494,7 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 
 	vdev->tx_encap_type = wlan_cfg_pkt_type(soc->wlan_cfg_ctx);
 	vdev->rx_decap_type = wlan_cfg_pkt_type(soc->wlan_cfg_ctx);
+	vdev->dscp_tid_map_id = 0;
 
 	/* TODO: Initialize default HTT meta data that will be used in
 	 * TCL descriptors for packets transmitted from this VDEV
@@ -2708,6 +2757,42 @@ dp_get_peer_stats(struct cdp_pdev *pdev_handle, char *mac_addr)
 		return;
 }
 
+/*
+ * dp_set_vdev_dscp_tid_map_wifi3(): Update Map ID selected for particular vdev
+ * @vdev_handle: DP_VDEV handle
+ * @map_id:ID of map that needs to be updated
+ *
+ * Return: void
+ */
+static void dp_set_vdev_dscp_tid_map_wifi3(struct cdp_vdev *vdev_handle,
+		uint8_t map_id)
+{
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
+	vdev->dscp_tid_map_id = map_id;
+	return;
+}
+
+/**
+ * dp_set_pdev_dscp_tid_map_wifi3(): update dscp tid map in pdev
+ * @pdev: DP_PDEV handle
+ * @map_id: ID of map that needs to be updated
+ * @tos: index value in map
+ * @tid: tid value passed by the user
+ *
+ * Return: void
+ */
+static void dp_set_pdev_dscp_tid_map_wifi3(struct cdp_pdev *pdev_handle,
+		uint8_t map_id, uint8_t tos, uint8_t tid)
+{
+	uint8_t dscp;
+	struct dp_pdev *pdev = (struct dp_pdev *) pdev_handle;
+	dscp = (tos >> DP_IP_DSCP_SHIFT) & DP_IP_DSCP_MASK;
+	pdev->dscp_tid_map[map_id][dscp] = tid;
+	hal_tx_update_dscp_tid(pdev->soc->hal_soc, tid,
+			map_id, dscp);
+	return;
+}
+
 static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_soc_attach_target = dp_soc_attach_target_wifi3,
 	.txrx_vdev_attach = dp_vdev_attach_wifi3,
@@ -2727,6 +2812,9 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.addba_responsesetup = dp_addba_responsesetup_wifi3,
 	.delba_process = dp_delba_process_wifi3,
 	.get_peer_mac_addr_frm_id = dp_get_peer_mac_addr_frm_id,
+	/* TODO: get API's for dscp-tid need to be added*/
+	.set_vdev_dscp_tid_map = dp_set_vdev_dscp_tid_map_wifi3,
+	.set_pdev_dscp_tid_map = dp_set_pdev_dscp_tid_map_wifi3,
 	/* TODO: Add other functions */
 };
 

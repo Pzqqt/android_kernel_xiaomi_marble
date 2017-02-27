@@ -400,4 +400,39 @@ cdp_get_peer_mac_addr_frm_id(ol_txrx_soc_handle soc, uint16_t peer_id,
 				peer_id, mac_addr);
 	return CDP_INVALID_VDEV_ID;
 }
+
+/**
+ * cdp_set_vdev_dscp_tid_map(): function to set DSCP-tid map in the vap
+ * @vdev: vdev handle
+ * @map_id: id of the tid map
+ *
+ * Return: void
+ */
+static inline void cdp_set_vdev_dscp_tid_map(ol_txrx_soc_handle soc,
+		struct cdp_vdev *vdev, uint8_t map_id)
+{
+	if (soc->ops->cmn_drv_ops->set_vdev_dscp_tid_map)
+		return soc->ops->cmn_drv_ops->set_vdev_dscp_tid_map(vdev,
+				map_id);
+	return;
+}
+
+/**
+ * cdp_set_pdev_dscp_tid_map(): function to change tid values in DSCP-tid map
+ * @pdev: pdev handle
+ * @map_id: id of the tid map
+ * @tos: index value in map that needs to be changed
+ * @tid: tid value passed by user
+ *
+ * Return: void
+ */
+static inline void cdp_set_pdev_dscp_tid_map(ol_txrx_soc_handle soc,
+		struct cdp_pdev *pdev, uint8_t map_id, uint8_t tos, uint8_t tid)
+{
+	if (soc->ops->cmn_drv_ops->set_pdev_dscp_tid_map) {
+		return soc->ops->cmn_drv_ops->set_pdev_dscp_tid_map(pdev,
+				map_id, tos, tid);
+	}
+	return;
+}
 #endif /* _CDP_TXRX_CMN_H_ */

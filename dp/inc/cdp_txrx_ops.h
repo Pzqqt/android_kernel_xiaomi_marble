@@ -186,6 +186,13 @@ struct cdp_cmn_ops {
 
 	uint8_t (*get_peer_mac_addr_frm_id)(struct cdp_soc_t *soc_handle,
 			uint16_t peer_id, uint8_t *mac_addr);
+
+	void (*set_vdev_dscp_tid_map)(struct cdp_vdev *vdev_handle,
+			uint8_t map_id);
+
+	void (*set_pdev_dscp_tid_map)(struct cdp_pdev *pdev, uint8_t map_id,
+			uint8_t tos, uint8_t tid);
+
 };
 
 struct cdp_ctrl_ops {

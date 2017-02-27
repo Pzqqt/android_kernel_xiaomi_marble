@@ -75,6 +75,9 @@ do {                                            \
 
 #define HAL_TX_COMPLETION_DESC_LEN_DWORDS (NUM_OF_DWORDS_WBM_RELEASE_RING)
 #define HAL_TX_COMPLETION_DESC_LEN_BYTES (NUM_OF_DWORDS_WBM_RELEASE_RING*4)
+#define HAL_TX_BITS_PER_TID 3
+#define HAL_TX_NUM_DSCP_PER_REGISTER 10
+#define HAL_MAX_HW_DSCP_TID_MAPS 2
 
 #define HTT_META_HEADER_LEN_BYTES 64
 #define HAL_TX_EXT_DESC_WITH_META_DATA \
@@ -1023,6 +1026,41 @@ static inline void hal_tx_set_dscp_tid_map(void *hal_soc, uint8_t *map,
 
 		addr += 4;
 	}
+}
+
+/**
+ * hal_tx_update_dscp_tid() - Update the dscp tid map table as updated by user
+ * @soc: HAL SoC context
+ * @map: DSCP-TID mapping table
+ * @id : MAP ID
+ * @dscp: DSCP_TID map index
+ *
+ * Return: void
+ */
+static inline void hal_tx_update_dscp_tid(void *hal_soc, uint8_t tid,
+		uint8_t id, uint8_t dscp)
+{
+	int index;
+	uint32_t addr;
+	uint32_t value;
+
+	struct hal_soc *soc = (struct hal_soc *)hal_soc;
+
+	if (id == HAL_TX_DSCP_TID_MAP_TABLE_DEFAULT)
+		addr =
+			HWIO_TCL_R0_DSCP_TID1_MAP_0_ADDR(
+					SEQ_WCSS_UMAC_MAC_TCL_REG_OFFSET);
+	else
+		addr =
+			HWIO_TCL_R0_DSCP_TID2_MAP_0_ADDR(
+					SEQ_WCSS_UMAC_MAC_TCL_REG_OFFSET);
+
+	index = dscp % HAL_TX_NUM_DSCP_PER_REGISTER;
+	addr += 4 * (dscp/HAL_TX_NUM_DSCP_PER_REGISTER);
+	value = tid << (HAL_TX_BITS_PER_TID * index);
+
+	HAL_REG_WRITE(soc, addr,
+			(value & HWIO_TCL_R0_DSCP_TID1_MAP_1_RMSK));
 }
 
 /**
