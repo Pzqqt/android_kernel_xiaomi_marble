@@ -1308,8 +1308,11 @@ QDF_STATUS hdd_wlan_shutdown(void)
 
 	hdd_info("Invoking packetdump deregistration API");
 	wlan_deregister_txrx_packetdump();
-
+#ifndef NAPIER_SCAN
 	hdd_cleanup_scan_queue(pHddCtx);
+#else
+	wlan_cfg80211_abort_scan(pHddCtx->hdd_pdev);
+#endif
 	hdd_ipa_uc_ssr_deinit();
 	hdd_reset_all_adapters(pHddCtx);
 

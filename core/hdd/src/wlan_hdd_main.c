@@ -6900,9 +6900,9 @@ scan_destroy:
 	hdd_scan_context_destroy(hdd_ctx);
 	hdd_rx_wake_lock_destroy(hdd_ctx);
 	hdd_tdls_context_destroy(hdd_ctx);
-
 list_destroy:
 	qdf_list_destroy(&hdd_ctx->hddAdapters);
+
 	return ret;
 }
 

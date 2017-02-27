@@ -6943,8 +6943,12 @@ static int drv_cmd_set_fcc_channel(hdd_adapter_t *adapter,
 		hdd_err("value out of range");
 		return -EINVAL;
 	}
-
+#ifndef NAPIER_SCAN
+	/* This code will be removed*/
 	scan_pending = !qdf_list_empty(&hdd_ctx->hdd_scan_req_q);
+#else
+	scan_pending = ucfg_scan_get_pdev_status(hdd_ctx->hdd_pdev);
+#endif
 	status = sme_handle_set_fcc_channel(hdd_ctx->hHal, !fcc_constraint,
 					    scan_pending);
 	if (status != QDF_STATUS_SUCCESS) {

@@ -38,6 +38,7 @@ static void hdd_init_os_priv(hdd_context_t *hdd_ctx,
 {
 	/* Initialize the OS private structure*/
 	os_priv->wiphy = hdd_ctx->wiphy;
+	wlan_cfg80211_scan_priv_init(hdd_ctx->hdd_pdev);
 }
 
 int hdd_create_and_store_psoc(hdd_context_t *hdd_ctx, uint8_t psoc_id)
@@ -82,15 +83,13 @@ int hdd_create_and_store_pdev(hdd_context_t *hdd_ctx)
 		hdd_err("pdev os obj create failed");
 		return -ENOMEM;
 	}
-
-	hdd_init_os_priv(hdd_ctx, priv);
-
 	pdev = wlan_objmgr_pdev_obj_create(psoc, priv);
 	if (!pdev) {
 		hdd_err("pdev obj create failed");
 		return -ENOMEM;
 	}
 	hdd_ctx->hdd_pdev = pdev;
+	hdd_init_os_priv(hdd_ctx, priv);
 
 	return 0;
 }

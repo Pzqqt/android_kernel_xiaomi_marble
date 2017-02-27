@@ -30,6 +30,7 @@
 #define WLAN_HDD_SCAN_H
 
 #include "wlan_hdd_main.h"
+#include <wlan_cfg80211_scan.h>
 
 #define MAX_PENDING_LOG 5
 
