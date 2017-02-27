@@ -5638,6 +5638,31 @@ QDF_STATUS wmi_extract_mgmt_tx_compl_param(void *wmi_hdl, void *evt_buf,
 }
 
 /**
+ * wmi_extract_pdev_csa_switch_count_status() - extract CSA switch count status
+ * from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param param: Pointer to CSA switch count status param
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_pdev_csa_switch_count_status(void *wmi_hdl,
+	void *evt_buf,
+	struct pdev_csa_switch_count_status *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->extract_pdev_csa_switch_count_status)
+		return wmi_handle->ops->extract_pdev_csa_switch_count_status(
+				wmi_handle,
+				evt_buf,
+				param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+
+/**
  * wmi_extract_swba_vdev_map() - extract swba vdev map from event
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
@@ -6350,6 +6375,28 @@ QDF_STATUS wmi_unified_send_power_dbg_cmd(void *wmi_hdl,
 	if (wmi_handle->ops->send_power_dbg_cmd)
 		return wmi_handle->ops->send_power_dbg_cmd(wmi_handle,
 				  param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_send_multiple_vdev_restart_req_cmd() - send multiple vdev restart
+ * @wmi_handle: wmi handle
+ * @param: multiple vdev restart parameter
+ *
+ * Send WMI_PDEV_MULTIPLE_VDEV_RESTART_REQUEST_CMDID parameters to fw.
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+QDF_STATUS wmi_unified_send_multiple_vdev_restart_req_cmd(void *wmi_hdl,
+				struct multiple_vdev_restart_params *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_multiple_vdev_restart_req_cmd)
+		return wmi_handle->ops->send_multiple_vdev_restart_req_cmd(
+					wmi_handle,
+					param);
 
 	return QDF_STATUS_E_FAILURE;
 }
