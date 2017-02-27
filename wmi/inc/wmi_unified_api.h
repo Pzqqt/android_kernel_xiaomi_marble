@@ -1250,6 +1250,10 @@ QDF_STATUS wmi_extract_pdev_generic_buffer_ev_param(void *wmi_hdl,
 QDF_STATUS wmi_extract_mgmt_tx_compl_param(void *wmi_hdl, void *evt_buf,
 		wmi_host_mgmt_tx_compl_event *param);
 
+QDF_STATUS wmi_extract_pdev_csa_switch_count_status(void *wmi_hdl,
+		void *evt_buf,
+		struct pdev_csa_switch_count_status *param);
+
 QDF_STATUS wmi_extract_swba_vdev_map(void *wmi_hdl, void *evt_buf,
 		uint32_t *vdev_map);
 
@@ -1354,6 +1358,10 @@ QDF_STATUS wmi_extract_vdev_extd_stats(void *wmi_hdl, void *evt_buf,
 
 QDF_STATUS wmi_unified_send_power_dbg_cmd(void *wmi_hdl,
 				struct wmi_power_dbg_params *param);
+
+QDF_STATUS wmi_unified_send_multiple_vdev_restart_req_cmd(void *wmi_hdl,
+				struct multiple_vdev_restart_params *param);
+
 QDF_STATUS wmi_unified_send_sar_limit_cmd(void *wmi_hdl,
 				struct sar_limit_cmd_params *params);
 QDF_STATUS wmi_unified_send_adapt_dwelltime_params_cmd(void *wmi_hdl,

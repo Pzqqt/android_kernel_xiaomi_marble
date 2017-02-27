@@ -227,6 +227,8 @@
 #define WMI_HOST_MAX_NUM_CHAINS	4
 #define WMI_MAX_NUM_OF_RATE_THRESH   4
 
+#define WMI_HOST_PDEV_MAX_VDEVS         17
+
 #include "qdf_atomic.h"
 
 #ifdef BIG_ENDIAN_HOST
@@ -857,6 +859,8 @@ struct pdev_params {
  * @tim_ie_offset: tim ie offset
  * @tmpl_len: beacon template length
  * @tmpl_len_aligned: beacon template alignment
+ * @csa_switch_count_offset: CSA swith count offset in beacon frame
+ * @ext_csa_switch_count_offset: ECSA switch count offset in beacon frame
  * @frm: beacon template parameter
  */
 struct beacon_tmpl_params {
@@ -864,6 +868,8 @@ struct beacon_tmpl_params {
 	uint32_t tim_ie_offset;
 	uint32_t tmpl_len;
 	uint32_t tmpl_len_aligned;
+	uint32_t csa_switch_count_offset;
+	uint32_t ext_csa_switch_count_offset;
 	uint8_t *frm;
 };
 
@@ -1228,6 +1234,25 @@ struct scan_chan_list_params {
 };
 #endif
 
+/**
+ * struct multiple_vdev_restart_params - Multiple vdev restart cmd parameter
+ * @pdev_id: Pdev identifier
+ * @requestor_id: Unique id identifying the module
+ * @disable_hw_ack: Flag to indicate disabling HW ACK during CAC
+ * @cac_duration_ms: CAC duration on the given channel
+ * @num_vdevs: No. of vdevs that need to be restarted
+ * @ch_param: Pointer to channel_param
+ * @vdev_ids: Pointer to array of vdev_ids
+ */
+struct multiple_vdev_restart_params {
+	uint32_t pdev_id;
+	uint32_t requestor_id;
+	uint32_t disable_hw_ack;
+	uint32_t cac_duration_ms;
+	uint32_t num_vdevs;
+	struct channel_param ch_param;
+	uint32_t vdev_ids[WMI_HOST_PDEV_MAX_VDEVS];
+};
 /**
  * struct fw_hang_params - fw hang command parameters
  * @type: 0:unused 1: ASSERT, 2:not respond detect command, 3:simulate ep-full
@@ -5058,6 +5083,7 @@ typedef enum {
 	wmi_pdev_check_cal_version_event_id,
 	wmi_atf_peer_stats_event_id,
 	wmi_peer_delete_response_event_id,
+	wmi_pdev_csa_switch_count_status_event_id,
 
 	wmi_events_max,
 } wmi_conv_event_id;
@@ -5420,6 +5446,7 @@ typedef enum {
 	wmi_service_check_cal_version,
 	wmi_service_btcoex_duty_cycle,
 	wmi_service_4_wire_coex_support,
+	wmi_service_multiple_vdev_restart,
 
 	wmi_services_max,
 } wmi_conv_service_ids;
@@ -7401,4 +7428,19 @@ struct wmi_init_cmd_param {
 	uint32_t num_band_to_mac;
 	struct wmi_host_pdev_band_to_mac band_to_mac[WMI_HOST_MAX_PDEV];
 };
+
+/**
+ * struct pdev_csa_switch_count_status - CSA switch count status event param
+ * @pdev_id: Physical device identifier
+ * @current_switch_count: Current CSA switch count
+ * @num_vdevs: Number of vdevs that need restart
+ * @vdev_ids: Array containing the vdev ids that need restart
+ */
+struct pdev_csa_switch_count_status {
+	uint32_t pdev_id;
+	uint32_t current_switch_count;
+	uint32_t num_vdevs;
+	uint32_t *vdev_ids;
+};
+
 #endif /* _WMI_UNIFIED_PARAM_H_ */

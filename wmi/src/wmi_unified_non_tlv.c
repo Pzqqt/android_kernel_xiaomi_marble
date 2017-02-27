@@ -8265,7 +8265,8 @@ static void populate_non_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_mgmt_tx_wmi] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_ext_msg] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_mawc] = WMI_SERVICE_UNAVAILABLE;
-
+	wmi_service[wmi_service_multiple_vdev_restart] =
+				WMI_SERVICE_UNAVAILABLE;
 }
 
 /**
