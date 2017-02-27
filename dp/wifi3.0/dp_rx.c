@@ -281,6 +281,15 @@ void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
 	rx_info->rs_ratephy1 = rate_mcs | (nss << 0x4) | (pkt_type << 6);
 
 	qdf_nbuf_set_fctx_type(nbuf, (void *)rx_info, CB_FTYPE_MESH_RX_INFO);
+
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
+		FL("Mesh rx stats: flags %x, rssi %x, chn %x, rate %x, kix %x"),
+						rx_info->rs_flags,
+						rx_info->rs_rssi,
+						rx_info->rs_channel,
+						rx_info->rs_ratephy1,
+						rx_info->rs_keyix);
+
 }
 #else
 static

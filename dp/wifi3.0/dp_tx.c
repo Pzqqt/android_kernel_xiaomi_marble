@@ -895,6 +895,15 @@ void dp_tx_extract_mesh_meta_data(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	meta_data->key_flags = (mhdr->keyix & 0x3);
 
 	qdf_nbuf_pull_head(nbuf, sizeof(struct meta_hdr_s));
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			"%s , Meta hdr %0x %0x %0x %0x %0x\n",
+			__func__, msdu_info->meta_data[0],
+			msdu_info->meta_data[1],
+			msdu_info->meta_data[2],
+			msdu_info->meta_data[3],
+			msdu_info->meta_data[4]);
+
 	return;
 }
 #else
@@ -925,10 +934,6 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 	struct dp_tx_seg_info_s seg_info;
 	struct dp_vdev *vdev = (struct dp_vdev *) vap_dev;
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"%s , skb %0x:%0x:%0x:%0x:%0x:%0x\n",
-			__func__, nbuf->data[0], nbuf->data[1], nbuf->data[2],
-			nbuf->data[3], nbuf->data[4], nbuf->data[5]);
 	/*
 	 * Set Default Host TID value to invalid TID
 	 * (TID override disabled)
@@ -937,6 +942,11 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 
 	if (qdf_unlikely(vdev->mesh_vdev))
 		dp_tx_extract_mesh_meta_data(vdev, nbuf, &msdu_info);
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			"%s , skb %0x:%0x:%0x:%0x:%0x:%0x\n",
+			__func__, nbuf->data[0], nbuf->data[1], nbuf->data[2],
+			nbuf->data[3], nbuf->data[4], nbuf->data[5]);
 	/*
 	 * Get HW Queue to use for this frame.
 	 * TCL supports upto 4 DMA rings, out of which 3 rings are
