@@ -1272,7 +1272,8 @@ static void dp_tx_comp_process_desc(struct dp_soc *soc,
 		}
 
 		/* Process Tx status in descriptor */
-		if (soc->process_tx_status)
+		if (soc->process_tx_status ||
+				(desc->vdev && desc->vdev->mesh_vdev))
 			dp_tx_comp_process_tx_status(desc);
 
 		/* 0 : MSDU buffer, 1 : MLE */
