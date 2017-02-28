@@ -13477,6 +13477,8 @@ static QDF_STATUS extract_pdev_utf_event_tlv(wmi_unified_t wmi_handle,
 	param_buf = (WMI_PDEV_UTF_EVENTID_param_tlvs *)evt_buf;
 	event->data = param_buf->data;
 	event->datalen = param_buf->num_data;
+	/* Set pdev_id=1 until FW adds support to include pdev_id */
+	event->pdev_id = 1;
 
 	return QDF_STATUS_SUCCESS;
 }
