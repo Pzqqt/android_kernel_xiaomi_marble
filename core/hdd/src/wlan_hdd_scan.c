@@ -1615,12 +1615,17 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 				pHddCtx->last_scan_reject_timestamp = 0;
 				if (pHddCtx->config->enable_fatal_event) {
 					cds_flush_logs(WLAN_LOG_TYPE_FATAL,
-					    WLAN_LOG_INDICATOR_HOST_DRIVER,
-					    WLAN_LOG_REASON_SCAN_NOT_ALLOWED,
-					    false, true);
-				} else {
+					   WLAN_LOG_INDICATOR_HOST_DRIVER,
+					   WLAN_LOG_REASON_SCAN_NOT_ALLOWED,
+					   false,
+					   pHddCtx->config->enableSelfRecovery);
+				} else if (pHddCtx->config->
+					   enableSelfRecovery) {
 					hdd_err("Triggering SSR due to scan stuck");
 					cds_trigger_recovery(false);
+				} else {
+					hdd_err("QDF_BUG due to scan stuck");
+					QDF_BUG(0);
 				}
 			}
 		}
