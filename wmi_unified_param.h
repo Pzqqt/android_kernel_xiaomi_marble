@@ -7289,6 +7289,7 @@ enum WMI_HOST_CALIBRATION_STATUS {
 struct wmi_host_pdev_utf_event {
 	uint8_t *data;
 	uint16_t datalen;
+	uint32_t pdev_id;
 };
 
 /**
