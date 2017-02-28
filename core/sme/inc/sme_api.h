@@ -1331,6 +1331,28 @@ QDF_STATUS sme_update_short_retry_limit_threshold(tHalHandle hal_handle,
 		struct sme_short_retry_limit *short_retry_limit_th);
 QDF_STATUS sme_update_long_retry_limit_threshold(tHalHandle hal_handle,
 		struct sme_long_retry_limit  *long_retry_limit_th);
+/**
+ * sme_roam_is_ese_assoc() - Check if association type is ESE
+ * @roam_info: Pointer to roam info
+ *
+ * Return: true if ESE Association, false otherwise.
+ */
+#ifdef FEATURE_WLAN_ESE
+bool sme_roam_is_ese_assoc(tCsrRoamInfo *roam_info);
+#else
+static inline bool sme_roam_is_ese_assoc(tCsrRoamInfo *roam_info)
+{
+	return false;
+}
+#endif
+/**
+ * sme_neighbor_roam_is11r_assoc() - Check if association type is 11R
+ * @hal_ctx: HAL handle
+ * @session_id: session id
+ *
+ * Return: true if 11r Association, false otherwise.
+ */
+bool sme_neighbor_roam_is11r_assoc(tHalHandle hal_ctx, uint8_t session_id);
 
 /**
  * sme_update_sta_inactivity_timeout(): Update sta_inactivity_timeout to FW

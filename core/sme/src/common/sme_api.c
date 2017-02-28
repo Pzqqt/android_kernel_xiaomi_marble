@@ -16252,6 +16252,18 @@ QDF_STATUS sme_set_lost_link_info_cb(tHalHandle hal,
 	return status;
 }
 
+#ifdef FEATURE_WLAN_ESE
+bool sme_roam_is_ese_assoc(tCsrRoamInfo *roam_info)
+{
+	return roam_info->isESEAssoc;
+}
+#endif
+
+bool sme_neighbor_roam_is11r_assoc(tHalHandle hal_ctx, uint8_t session_id)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_ctx);
+	return csr_neighbor_roam_is11r_assoc(mac_ctx, session_id);
+}
 
 #ifdef WLAN_FEATURE_WOW_PULSE
 /**

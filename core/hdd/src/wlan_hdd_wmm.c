@@ -61,6 +61,7 @@
 #include <wlan_hdd_hostapd.h>
 #include <wlan_hdd_softap_tx_rx.h>
 #include <cds_sched.h>
+#include "sme_api.h"
 
 #define WLAN_HDD_MAX_DSCP 0x3f
 
@@ -1970,6 +1971,16 @@ QDF_STATUS hdd_wmm_connect(hdd_adapter_t *pAdapter,
 				SME_QOS_WMM_TS_DIR_DOWNLINK)) {
 				pAdapter->hddWmmStatus.wmmAcStatus[ac].
 				wmmAcAccessAllowed = true;
+			}
+			if (!pRoamInfo->fReassocReq &&
+			    !sme_neighbor_roam_is11r_assoc(
+			    WLAN_HDD_GET_HAL_CTX(pAdapter),
+			    pAdapter->sessionId) &&
+			    !sme_roam_is_ese_assoc(pRoamInfo)) {
+				pAdapter->hddWmmStatus.wmmAcStatus[ac].
+					wmmAcTspecValid = false;
+				pAdapter->hddWmmStatus.wmmAcStatus[ac].
+					wmmAcAccessAllowed = false;
 			}
 		} else {
 			hdd_info("ac %d off", ac);

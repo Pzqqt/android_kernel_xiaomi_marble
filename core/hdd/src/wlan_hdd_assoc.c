@@ -2194,8 +2194,6 @@ static inline bool hdd_is_key_install_required_for_ibss(
 static void hdd_change_peer_state_after_set_key(hdd_adapter_t *adapter,
 			tCsrRoamInfo *roaminfo, eCsrRoamResult roam_result)
 {
-	tHalHandle hal_ctx = WLAN_HDD_GET_HAL_CTX(adapter);
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_ctx);
 	hdd_station_ctx_t *hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	eCsrEncryptionType encr_type = hdd_sta_ctx->conn_info.ucEncryptionType;
 
@@ -2221,7 +2219,8 @@ static void hdd_change_peer_state_after_set_key(hdd_adapter_t *adapter,
 		 * ptk_installed is true. So, make ptk_installed to true in
 		 * case of 11R roaming.
 		 */
-		if (csr_neighbor_roam_is11r_assoc(mac_ctx, adapter->sessionId))
+		if (sme_neighbor_roam_is11r_assoc(WLAN_HDD_GET_HAL_CTX(adapter),
+						  adapter->sessionId))
 			hdd_sta_ctx->conn_info.ptk_installed = true;
 	} else {
 		hdd_sta_ctx->conn_info.ptk_installed = true;
