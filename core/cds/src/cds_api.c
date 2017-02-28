@@ -84,6 +84,43 @@ static struct ol_if_ops  dp_ol_if_ops = {
 
 void cds_sys_probe_thread_cback(void *pUserData);
 
+/** cds_get_datapath_handles - Initialize pdev, vdev and soc
+ * @soc - soc handle
+ * @vdev - virtual handle
+ * @pdev - physical handle
+ */
+uint8_t cds_get_datapath_handles(void **soc, struct cdp_pdev **pdev,
+		struct cdp_vdev **vdev, uint8_t sessionId)
+{
+
+	(*soc) = cds_get_context(QDF_MODULE_ID_SOC);
+
+	if (!(*soc)) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			"soc handle is invalid");
+		return -EINVAL;
+	}
+
+	(*pdev) = cds_get_context(QDF_MODULE_ID_TXRX);
+
+	if (!(*pdev)) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			"pdev handle is invalid");
+		return -EINVAL;
+	}
+
+	(*vdev) = cdp_get_vdev_from_vdev_id((*soc), (*pdev),
+					sessionId);
+
+	if (!(*vdev)) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			"vdev handle is invalid");
+		return -EINVAL;
+	}
+	return 0;
+}
+
+
 /**
  * cds_init() - Initialize CDS
  *

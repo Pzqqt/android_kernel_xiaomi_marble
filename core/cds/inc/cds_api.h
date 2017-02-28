@@ -48,6 +48,7 @@
 #include <qdf_threads.h>
 #include <qdf_mc_timer.h>
 #include <wlan_objmgr_psoc_obj.h>
+#include <cdp_txrx_handle.h>
 
 /* Amount of time to wait for WMA to perform an asynchronous activity.
  * This value should be larger than the timeout used by WMI to wait for
@@ -212,6 +213,8 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc, v_CONTEXT_t cds_context);
 
 void *cds_get_context(QDF_MODULE_ID moduleId);
 
+uint8_t cds_get_datapath_handles(void **soc, struct cdp_pdev **pdev,
+			 struct cdp_vdev **vdev, uint8_t sessionId);
 v_CONTEXT_t cds_get_global_context(void);
 
 QDF_STATUS cds_alloc_context(void *p_cds_context, QDF_MODULE_ID moduleID,
