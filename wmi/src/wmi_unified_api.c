@@ -6309,6 +6309,29 @@ QDF_STATUS wmi_extract_pdev_utf_event(void *wmi_hdl,
 }
 
 /**
+ * wmi_extract_pdev_qvit_event() -
+ *       extract UTF data from pdev qvit event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param param: Pointer to hold evt buf
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS wmi_extract_pdev_qvit_event(void *wmi_hdl,
+				      uint8_t *evt_buf,
+				      struct wmi_host_pdev_qvit_event *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->extract_pdev_qvit_event)
+		return wmi_handle->ops->extract_pdev_qvit_event(
+				wmi_handle,
+				evt_buf, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
  * wmi_unified_send_coex_ver_cfg_cmd() - send coex ver cfg command
  * @wmi_handle: wmi handle
  * @param:      wmi coex ver cfg params

@@ -1345,6 +1345,10 @@ QDF_STATUS wmi_extract_pdev_utf_event(void *wmi_hdl,
 				      uint8_t *evt_buf,
 				      struct wmi_host_pdev_utf_event *param);
 
+QDF_STATUS wmi_extract_pdev_qvit_event(void *wmi_hdl,
+				      uint8_t *evt_buf,
+				      struct wmi_host_pdev_qvit_event *param);
+
 QDF_STATUS wmi_extract_peer_delete_response_event(void *wmi_hdl,
 		uint8_t *evt_buf,
 		struct wmi_host_peer_delete_response_event *param);
