@@ -7881,6 +7881,25 @@ static QDF_STATUS extract_pdev_utf_event_non_tlv(
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * extract_pdev_qvit_event_non_tlv() - extract QVIT data info from event
+ * @wmi_handle: WMI handle
+ * @param evt_buf: Pointer to event buffer
+ * @param param: Pointer to hold data
+ *
+ * Return : QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_pdev_qvit_event_non_tlv(
+			wmi_unified_t wmi_handle,
+			uint8_t *evt_buf,
+			struct wmi_host_pdev_qvit_event *event)
+{
+	event->data = evt_buf;
+	event->pdev_id = WMI_NON_TLV_DEFAULT_PDEV_ID;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 static bool is_management_record_non_tlv(uint32_t cmd_id)
 {
 	if ((cmd_id == WMI_BCN_TX_CMDID) ||
