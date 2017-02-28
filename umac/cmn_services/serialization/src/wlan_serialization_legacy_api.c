@@ -16,13 +16,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 /**
- * DOC: wlan_serialization_legacy_mcl_api.c
+ * DOC: wlan_serialization_legacy_api.c
  * This file provides prototypes of the routines needed for the
  * legacy mcl serialization to utilize the services provided by the
  * serialization component.
  */
 
-#include "wlan_serialization_legacy_mcl_api.h"
+#include "wlan_serialization_legacy_api.h"
 #include "wlan_serialization_main_i.h"
 #include "wlan_serialization_utils_i.h"
 #include "wlan_objmgr_vdev_obj.h"
