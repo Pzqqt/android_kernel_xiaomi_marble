@@ -3938,6 +3938,11 @@ typedef enum {
      * 0 - Disable alternate chainmask scheme
      */
     WMI_PDEV_PARAM_ALTERNATIVE_CHAINMASK_SCHEME,
+    /** User configured parameters for antenna diversity algorithm
+     *  BIT[25..13]: Probe period (milliseconds units)
+     *  BIT[12..0]: Stay period (milliseconds units)
+     */
+    WMI_PDEV_PARAM_ANT_DIV_USRCFG,
 
 } WMI_PDEV_PARAM;
 
