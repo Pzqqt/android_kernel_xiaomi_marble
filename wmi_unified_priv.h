@@ -1228,6 +1228,10 @@ QDF_STATUS (*extract_pdev_utf_event)(wmi_unified_t wmi_hdl,
 				     uint8_t *evt_buf,
 				     struct wmi_host_pdev_utf_event *param);
 
+QDF_STATUS (*extract_pdev_qvit_event)(wmi_unified_t wmi_hdl,
+				     uint8_t *evt_buf,
+				     struct wmi_host_pdev_qvit_event *param);
+
 uint16_t (*wmi_set_htc_tx_tag)(wmi_unified_t wmi_handle,
 				wmi_buf_t buf, uint32_t cmd_id);
 

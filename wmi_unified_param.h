@@ -7293,6 +7293,18 @@ struct wmi_host_pdev_utf_event {
 };
 
 /**
+ * struct wmi_host_pdev_qvit_event - Host defined struct to hold qvit event data
+ * @data:        Pointer to data
+ * @datalen:     Data length
+ *
+ */
+struct wmi_host_pdev_qvit_event {
+	uint8_t *data;
+	uint16_t datalen;
+	uint32_t pdev_id;
+};
+
+/**
  * struct wmi_host_peer_delete_response_event - Peer Delete response event param
  * @vdev_id: vdev id
  * @mac_address: Peer Mac Address
