@@ -67,7 +67,7 @@
 
 #define WLAN_CFG_DP_TX_NUM_POOLS 3
 /* Change this to a lower value to enforce scattered idle list mode */
-#define WLAN_CFG_MAX_ALLOC_SIZE (32 << 20)
+#define WLAN_CFG_MAX_ALLOC_SIZE (2 << 20)
 
 #define WLAN_CFG_MAX_CLIENTS 64
 
