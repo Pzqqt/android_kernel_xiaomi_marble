@@ -15979,6 +15979,50 @@ bool sme_roam_is_ese_assoc(tCsrRoamInfo *roam_info)
 {
 	return roam_info->isESEAssoc;
 }
+
+/**
+ * sme_set_band_specific_pref(): If 5G preference is enabled,set boost/drop
+ * params from ini.
+ * @hal_handle: Handle returned by mac_open
+ * @5g_pref_params: pref params from ini.
+ *
+ * Returns: None
+ */
+void sme_set_5g_band_pref(tHalHandle hal_handle,
+			  struct sme_5g_band_pref_params *pref_params)
+{
+
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_handle);
+	struct roam_ext_params *roam_params;
+	QDF_STATUS status    = QDF_STATUS_SUCCESS;
+
+	if (!pref_params) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  "Invalid 5G pref params!");
+		return;
+	}
+	status = sme_acquire_global_lock(&mac_ctx->sme);
+	if (QDF_STATUS_SUCCESS == status) {
+		roam_params = &mac_ctx->roam.configParam.roam_params;
+		roam_params->raise_rssi_thresh_5g =
+				pref_params->rssi_boost_threshold_5g;
+		roam_params->raise_factor_5g =
+				pref_params->rssi_boost_factor_5g;
+		roam_params->max_raise_rssi_5g =
+				pref_params->max_rssi_boost_5g;
+		roam_params->drop_rssi_thresh_5g =
+				pref_params->rssi_penalize_threshold_5g;
+		roam_params->drop_factor_5g =
+				pref_params->rssi_penalize_factor_5g;
+		roam_params->max_drop_rssi_5g =
+				pref_params->max_rssi_penalize_5g;
+
+		sme_release_global_lock(&mac_ctx->sme);
+	} else
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  "Unable to acquire global sme lock");
+}
+
 #endif
 
 bool sme_neighbor_roam_is11r_assoc(tHalHandle hal_ctx, uint8_t session_id)

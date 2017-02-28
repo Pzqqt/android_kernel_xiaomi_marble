@@ -9257,6 +9257,162 @@ enum dot11p_mode {
 
 /*
  * <ini>
+ * enable_5g_band_pref - Enable preference for 5G from INI.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ * This ini is used to enable 5G preference parameters.
+ *
+ * Related: 5g_rssi_boost_threshold, 5g_rssi_boost_factor, 5g_max_rssi_boost
+ * 5g_rssi_penalize_threshold, 5g_rssi_penalize_factor, 5g_max_rssi_penalize
+ *
+ * Supported Feature: 5G band preference
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+
+#define CFG_ENABLE_5G_BAND_PREF_NAME             "enable_5g_band_pref"
+#define CFG_ENABLE_5G_BAND_PREF_MIN              (0)
+#define CFG_ENABLE_5G_BAND_PREF_MAX              (1)
+#define CFG_ENABLE_5G_BAND_PREF_DEFAULT          (0)
+
+/*
+ * <ini>
+ * 5g_rssi_boost_threshold - A_band_boost_threshold above which 5 GHz is favored.
+ * @Min: -55
+ * @Max: -70
+ * @Default: -60
+ * This ini is used to set threshold for 5GHz band preference.
+ *
+ * Related: 5g_rssi_boost_factor, 5g_max_rssi_boost
+ * 5g_rssi_penalize_threshold, 5g_rssi_penalize_factor, 5g_max_rssi_penalize
+ *
+ * Supported Feature: 5G band preference
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_5G_RSSI_BOOST_THRESHOLD_NAME         "5g_rssi_boost_threshold"
+#define CFG_5G_RSSI_BOOST_THRESHOLD_MIN          (-55)
+#define CFG_5G_RSSI_BOOST_THRESHOLD_MAX          (-70)
+#define CFG_5G_RSSI_BOOST_THRESHOLD_DEFAULT      (-60)
+
+/*
+ * <ini>
+ * 5g_rssi_boost_factor - Factor by which 5GHz RSSI is boosted.
+ * @Min: 0
+ * @Max: 2
+ * @Default: 1
+ * This ini is used to set the 5Ghz boost factor.
+ *
+ * Related: 5g_rssi_boost_threshold, 5g_max_rssi_boost
+ * 5g_rssi_penalize_threshold, 5g_rssi_penalize_factor, 5g_max_rssi_penalize
+ *
+ * Supported Feature: 5G band preference
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_5G_RSSI_BOOST_FACTOR_NAME            "5g_rssi_boost_factor"
+#define CFG_5G_RSSI_BOOST_FACTOR_MIN             (0)
+#define CFG_5G_RSSI_BOOST_FACTOR_MAX             (2)
+#define CFG_5G_RSSI_BOOST_FACTOR_DEFAULT         (1)
+
+/*
+ * <ini>
+ * 5g_max_rssi_boost - Maximum boost that can be applied to 5GHz RSSI.
+ * @Min: 0
+ * @Max: 20
+ * @Default: 10
+ * This ini is used to set maximum boost which can be given to a 5Ghz network.
+ *
+ * Related: 5g_rssi_boost_threshold, 5g_rssi_boost_factor
+ * 5g_rssi_penalize_threshold, 5g_rssi_penalize_factor, 5g_max_rssi_penalize
+ *
+ * Supported Feature: 5G band preference
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_5G_MAX_RSSI_BOOST_NAME               "5g_max_rssi_boost"
+#define CFG_5G_MAX_RSSI_BOOST_MIN                (0)
+#define CFG_5G_MAX_RSSI_BOOST_MAX                (20)
+#define CFG_5G_MAX_RSSI_BOOST_DEFAULT            (10)
+
+/*
+ * <ini>
+ * 5g_rssi_penalize_threshold - A_band_penalize_threshold above which
+ * 5 GHz is not favored.
+ * @Min: -65
+ * @Max: -80
+ * @Default: -70
+ * This ini is used to set threshold for 5GHz band preference.
+ *
+ * Related: 5g_rssi_penalize_factor, 5g_max_rssi_penalize
+ * 5g_rssi_boost_threshold, 5g_rssi_boost_factor, 5g_max_rssi_boost
+ *
+ * Supported Feature: 5G band preference
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_5G_RSSI_PENALIZE_THRESHOLD_NAME      "5g_rssi_penalize_threshold"
+#define CFG_5G_RSSI_PENALIZE_THRESHOLD_MIN       (-65)
+#define CFG_5G_RSSI_PENALIZE_THRESHOLD_MAX       (-80)
+#define CFG_5G_RSSI_PENALIZE_THRESHOLD_DEFAULT   (-70)
+
+/*
+ * <ini>
+ * 5g_rssi_penalize_factor - Factor by which 5GHz RSSI is penalizeed.
+ * @Min: 0
+ * @Max: 2
+ * @Default: 1
+ * This ini is used to set the 5Ghz penalize factor.
+ *
+ * Related: 5g_rssi_penalize_threshold, 5g_max_rssi_penalize
+ * 5g_rssi_boost_threshold, 5g_rssi_boost_factor, 5g_max_rssi_boost
+ *
+ * Supported Feature: 5G band preference
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_5G_RSSI_PENALIZE_FACTOR_NAME         "5g_rssi_penalize_factor"
+#define CFG_5G_RSSI_PENALIZE_FACTOR_MIN          (0)
+#define CFG_5G_RSSI_PENALIZE_FACTOR_MAX          (2)
+#define CFG_5G_RSSI_PENALIZE_FACTOR_DEFAULT      (1)
+
+/*
+ * <ini>
+ * 5g_max_rssi_penalize - Maximum penalty that can be applied to 5GHz RSSI.
+ * @Min: 0
+ * @Max: 20
+ * @Default: 10
+ * This ini is used to set maximum penalty which can be given to a 5Ghz network.
+ *
+ * Related: 5g_rssi_penalize_threshold, 5g_rssi_penalize_factor
+ * 5g_rssi_boost_threshold, 5g_rssi_boost_factor, 5g_max_rssi_boost
+ *
+ * Supported Feature: 5G band preference
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_5G_MAX_RSSI_PENALIZE_NAME            "5g_max_rssi_penalize"
+#define CFG_5G_MAX_RSSI_PENALIZE_MIN             (0)
+#define CFG_5G_MAX_RSSI_PENALIZE_MAX             (20)
+#define CFG_5G_MAX_RSSI_PENALIZE_DEFAULT         (10)
+
+/*
+ * <ini>
  * g_max_sched_scan_plan_int - pno sched max scan plan interval.
  * @Min: 1
  * @Max: 7200
@@ -11528,6 +11684,15 @@ struct hdd_config {
 	uint32_t num_disallowed_aps;
 	bool oce_sta_enabled;
 	bool oce_sap_enabled;
+	/* 5G preference parameters for boosting RSSI */
+	bool                        enable_5g_band_pref;
+	int8_t                      rssi_boost_threshold_5g;
+	uint8_t                     rssi_boost_factor_5g;
+	uint8_t                     max_rssi_boost_5g;
+	/* 5G preference parameters for dropping RSSI*/
+	int8_t                      rssi_penalize_threshold_5g;
+	uint8_t                     rssi_penalize_factor_5g;
+	uint8_t                     max_rssi_penalize_5g;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

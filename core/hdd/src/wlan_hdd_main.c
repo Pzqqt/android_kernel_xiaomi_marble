@@ -8886,6 +8886,7 @@ static int hdd_features_init(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 {
 	tSirTxPowerLimit hddtxlimit;
 	QDF_STATUS status;
+	struct sme_5g_band_pref_params band_pref_params;
 	int ret;
 
 	ENTER();
@@ -8956,6 +8957,22 @@ static int hdd_features_init(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 			hdd_err("Failed to disable Chan Avoidance Indication");
 			goto deregister_cb;
 		}
+	}
+
+	if (hdd_ctx->config->enable_5g_band_pref) {
+		band_pref_params.rssi_boost_threshold_5g =
+				hdd_ctx->config->rssi_boost_threshold_5g;
+		band_pref_params.rssi_boost_factor_5g =
+				hdd_ctx->config->rssi_boost_factor_5g;
+		band_pref_params.max_rssi_boost_5g =
+				hdd_ctx->config->max_rssi_boost_5g;
+		band_pref_params.rssi_penalize_threshold_5g =
+				hdd_ctx->config->rssi_penalize_threshold_5g;
+		band_pref_params.rssi_penalize_factor_5g =
+				hdd_ctx->config->rssi_penalize_factor_5g;
+		band_pref_params.max_rssi_penalize_5g =
+				hdd_ctx->config->max_rssi_penalize_5g;
+		sme_set_5g_band_pref(hdd_ctx->hHal, &band_pref_params);
 	}
 
 	/* register P2P Listen Offload event callback */
