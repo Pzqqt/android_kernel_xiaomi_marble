@@ -484,19 +484,6 @@ struct reg_config_vars {
 	uint32_t indoor_chan_enabled;
 };
 
-struct set_band_req {
-	enum band_info band;
-	uint32_t pdev_id;
-};
-
-struct country_info {
-	uint8_t country_code[REG_ALPHA2_LEN + 1];
-};
-
-struct reg_country_update {
-	uint8_t country_code[REG_ALPHA2_LEN + 1];
-};
-
 /**
  * struct reg_freq_range
  * @low_freq: low frequency

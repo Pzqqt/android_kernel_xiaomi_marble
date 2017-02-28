@@ -33,13 +33,83 @@
 
 typedef QDF_STATUS (*reg_event_cb)(void *status_struct);
 
-QDF_STATUS ucfg_reg_set_band(uint8_t vdev_id, uint8_t pdev_id,
-		struct set_band_req *req);
-QDF_STATUS ucfg_reg_reset_country(uint8_t vdev_id, uint8_t pdev_id);
-QDF_STATUS ucfg_reg_set_default_country(uint8_t vdev_id, uint8_t pdev_id,
-		struct country_info *cc_info);
-QDF_STATUS ucfg_reg_update_country(uint8_t vdev_id, uint8_t pdev_id,
-		struct reg_country_update *country_update);
+/**
+ * ucfg_reg_set_band() - Sets the band information for the PDEV
+ * @pdev: The physical pdev to set the band for
+ * @band: The set band parameter to configure for the pysical device
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_reg_set_band(struct wlan_objmgr_pdev *pdev,
+		enum band_info band);
+/**
+ * ucfg_reg_set_fcc_constraint() - apply fcc constraints on channels 12/13
+ * @pdev: The physical pdev to reduce tx power for
+ *
+ * This function adjusts the transmit power on channels 12 and 13, to comply
+ * with FCC regulations in the USA.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_reg_set_fcc_constraint(struct wlan_objmgr_pdev *pdev,
+		bool fcc_constraint);
+
+/**
+ * ucfg_reg_get_default_country() - Get the default regulatory country
+ * @psoc: The physical SoC to get default country from
+ * @country_code: the buffer to populate the country code into
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_reg_get_default_country(struct wlan_objmgr_psoc *psoc,
+					       uint8_t *country_code);
+
+/**
+ * ucfg_reg_set_default_country() - Set the default regulatory country
+ * @psoc: The physical SoC to set default country for
+ * @country_code: The country information to configure
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_reg_set_default_country(struct wlan_objmgr_psoc *psoc,
+					       uint8_t *country_code);
+
+/**
+ * ucfg_reg_set_country() - Set the current regulatory country
+ * @pdev: The physical dev to set current country for
+ * @country_code: The country information to configure
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_reg_set_country(struct wlan_objmgr_pdev *pdev,
+		uint8_t *country_code);
+
+/**
+ * ucfg_reg_reset_country() - Reset the regulatory country to default
+ * @psoc: The physical SoC to reset country for
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_reg_reset_country(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_reg_get_curr_band() - Get the current band capability
+ * @pdev: The physical dev to get default country from
+ * @band: buffer to populate the band into
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_reg_get_curr_band(struct wlan_objmgr_pdev *pdev,
+		enum band_info *band);
+/**
+ * ucfg_reg_enable_dfs_channels() - Enable the use of DFS channels
+ * @pdev: The physical dev to enable DFS channels for
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_reg_enable_dfs_channels(struct wlan_objmgr_pdev *pdev,
+		bool dfs_enable);
+
 QDF_STATUS ucfg_reg_register_event_handler(uint8_t vdev_id, reg_event_cb cb,
 		void *arg);
 QDF_STATUS ucfg_reg_unregister_event_handler(uint8_t vdev_id, reg_event_cb cb,

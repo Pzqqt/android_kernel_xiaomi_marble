@@ -100,9 +100,6 @@ QDF_STATUS reg_get_channel_list_with_power(struct wlan_objmgr_pdev *pdev,
 					   struct channel_power *ch_list,
 					   uint8_t *num_chan);
 
-QDF_STATUS reg_read_default_country(struct wlan_objmgr_psoc *psoc,
-				    uint8_t *country);
-
 enum channel_state reg_get_channel_state(struct wlan_objmgr_pdev *pdev,
 					 uint32_t ch);
 
@@ -121,6 +118,74 @@ void reg_set_channel_params(struct wlan_objmgr_pdev *pdev,
 			    uint8_t ch, uint8_t sec_ch_2g,
 			    struct ch_params *ch_params);
 
+/**
+ * reg_set_band() - Sets the band information for the PDEV
+ * @pdev: The physical dev to set the band for
+ * @band: The set band parameters to configure for the pysical device
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS reg_set_band(struct wlan_objmgr_pdev *pdev, enum band_info band);
+
+/**
+ * reg_set_fcc_constraint() - Apply fcc constraints on channels 12/13
+ * @pdev: The physical dev to set the band for
+ *
+ * This function reduces the transmit power on channels 12 and 13, to comply
+ * with FCC regulations in the USA.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS reg_set_fcc_constraint(struct wlan_objmgr_pdev *pdev,
+		bool fcc_constraint);
+
+
+/**
+ * reg_read_default_country() - Get the default regulatory country
+ * @psoc: The physical SoC to get default country from
+ * @country_code: the buffer to populate the country code into
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS reg_read_default_country(struct wlan_objmgr_psoc *psoc,
+				   uint8_t *country_code);
+
+/**
+ * reg_set_default_country() - Set the default regulatory country
+ * @psoc: The physical SoC to set default country for
+ * @req: The country information to configure
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS reg_set_default_country(struct wlan_objmgr_psoc *psoc,
+		uint8_t *country);
+
+/**
+ * reg_set_country() - Set the current regulatory country
+ * @pdev: The physical dev to set current country for
+ * @country: The country information to configure
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS reg_set_country(struct wlan_objmgr_pdev *pdev, uint8_t *country);
+
+/**
+ * reg_reset_country() - Reset the regulatory country to default
+ * @psoc: The physical SoC to reset country for
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS reg_reset_country(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * reg_enable_dfs_channels() - Enable the use of DFS channels
+ * @pdev: The physical dev to enable/disable DFS channels for
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS reg_enable_dfs_channels(struct wlan_objmgr_pdev *pdev, bool enable);
+
+
 void reg_get_dfs_region(struct wlan_objmgr_psoc *psoc,
 			enum dfs_reg *dfs_reg);
 
@@ -130,10 +195,6 @@ uint32_t reg_get_channel_reg_power(struct wlan_objmgr_pdev *pdev,
 uint32_t reg_get_channel_freq(struct wlan_objmgr_pdev *pdev,
 			      uint32_t chan_num);
 
-QDF_STATUS reg_read_default_country(struct wlan_objmgr_psoc *psoc,
-				    uint8_t *country);
-
-void reg_set_default_country(struct wlan_objmgr_psoc *psoc, uint8_t *country);
 
 uint16_t reg_get_bw_value(enum phy_ch_width bw);
 
@@ -233,4 +294,9 @@ QDF_STATUS reg_program_default_cc(struct wlan_objmgr_psoc *psoc,
 
 QDF_STATUS reg_get_current_cc(struct wlan_objmgr_psoc *psoc,
 		struct cc_regdmn_s *rd);
+
+QDF_STATUS reg_get_curr_band(struct wlan_objmgr_pdev *pdev,
+		enum band_info *band);
+
+
 #endif
