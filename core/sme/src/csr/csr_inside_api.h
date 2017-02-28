@@ -1042,11 +1042,15 @@ QDF_STATUS csr_scan_handle_search_for_ssid(tpAniSirGlobal mac,
 		tSmeCmd *command);
 QDF_STATUS csr_scan_handle_search_for_ssid_failure(tpAniSirGlobal mac,
 		tSmeCmd *command);
+void csr_saved_scan_cmd_free_fields(tpAniSirGlobal mac_ctx,
+				    tSmeCmd *saved_scan_cmd);
 #else
 QDF_STATUS csr_scan_handle_search_for_ssid(tpAniSirGlobal mac_ctx,
 					   uint32_t session_id);
 QDF_STATUS csr_scan_handle_search_for_ssid_failure(tpAniSirGlobal mac,
 		uint32_t session_id);
+void csr_saved_scan_cmd_free_fields(tpAniSirGlobal mac_ctx,
+				    tCsrRoamSession *session);
 #endif
 tpSirBssDescription csr_get_fst_bssdescr_ptr(tScanResultHandle result_handle);
 

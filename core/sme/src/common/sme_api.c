@@ -252,6 +252,7 @@ static QDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 			saved_cmd->u.scanCmd.pToRoamProfile = NULL;
 		}
 		if (saved_cmd) {
+			csr_saved_scan_cmd_free_fields(mac, saved_cmd);
 			qdf_mem_free(saved_cmd);
 			saved_cmd = NULL;
 			mac->sme.saved_scan_cmd = NULL;
@@ -266,13 +267,7 @@ static QDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 			csr_scan_handle_search_for_ssid_failure(mac,
 					session_id);
 		}
-		if (session->scan_info.roambssentry)
-			qdf_mem_free(session->scan_info.roambssentry);
-		if (session->scan_info.profile) {
-			csr_release_profile(mac, session->scan_info.profile);
-			qdf_mem_free(session->scan_info.profile);
-			session->scan_info.profile = NULL;
-		}
+		csr_saved_scan_cmd_free_fields(mac, session);
 #endif
 	}
 

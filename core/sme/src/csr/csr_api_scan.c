@@ -2599,6 +2599,32 @@ csr_diag_scan_complete(tpAniSirGlobal mac_ctx,
 
 #ifdef NAPIER_SCAN
 /**
+ * csr_saved_scan_cmd_free_fields() - Free internal fields of scan command
+ *
+ * @mac_ctx: Global MAC context
+ * @saved_scan_cmd: Pointer to scan command
+ *
+ * Frees data structures allocated inside saved_scan_cmd and releases
+ * the profile.
+ * Return: None
+ */
+
+void csr_saved_scan_cmd_free_fields(tpAniSirGlobal mac_ctx,
+				    tCsrRoamSession *session)
+{
+	if (session->scan_info.profile) {
+		csr_release_profile(mac_ctx,
+				    session->scan_info.profile);
+		qdf_mem_free(session->scan_info.profile);
+		session->scan_info.profile = NULL;
+	}
+
+	if (session->scan_info.roambssentry) {
+		qdf_mem_free(session->scan_info.roambssentry);
+		session->scan_info.roambssentry = NULL;
+	}
+}
+/**
  * csr_save_profile() - Save the profile info from sme command
  * @mac_ctx: Global MAC context
  * @save_cmd: Pointer where the command will be saved
@@ -2659,16 +2685,7 @@ static QDF_STATUS csr_save_profile(tpAniSirGlobal mac_ctx,
 error:
 	csr_scan_handle_search_for_ssid_failure(mac_ctx,
 			session_id);
-	if (session->scan_info.roambssentry) {
-		qdf_mem_free(session->scan_info.roambssentry);
-		session->scan_info.roambssentry = NULL;
-	}
-	if (session->scan_info.profile) {
-		csr_release_profile(mac_ctx,
-				    session->scan_info.profile);
-		qdf_mem_free(session->scan_info.profile);
-		session->scan_info.profile = NULL;
-	}
+	csr_saved_scan_cmd_free_fields(mac_ctx, session);
 
 	return QDF_STATUS_E_FAILURE;
 }
@@ -2720,6 +2737,37 @@ static void csr_handle_nxt_cmd(tpAniSirGlobal mac_ctx,
 	}
 }
 #else
+/**
+ * csr_saved_scan_cmd_free_fields() - Free internal fields of scan command
+ *
+ * @mac_ctx: Global MAC context
+ * @saved_scan_cmd: Pointer to scan command
+ *
+ * Frees data structures allocated inside saved_scan_cmd and releases
+ * the profile.
+ * Return: None
+ */
+
+void csr_saved_scan_cmd_free_fields(tpAniSirGlobal mac_ctx,
+				    tSmeCmd *saved_scan_cmd)
+{
+	if (saved_scan_cmd->u.scanCmd.pToRoamProfile) {
+		csr_release_profile(mac_ctx,
+				    saved_scan_cmd->u.scanCmd.pToRoamProfile);
+		qdf_mem_free(saved_scan_cmd->u.scanCmd.pToRoamProfile);
+		saved_scan_cmd->u.scanCmd.pToRoamProfile = NULL;
+	}
+	if (saved_scan_cmd->u.scanCmd.u.scanRequest.SSIDs.SSIDList) {
+		qdf_mem_free(saved_scan_cmd->u.scanCmd.u.
+			     scanRequest.SSIDs.SSIDList);
+		saved_scan_cmd->u.scanCmd.u.scanRequest.SSIDs.SSIDList = NULL;
+	}
+	if (saved_scan_cmd->u.roamCmd.pRoamBssEntry) {
+		qdf_mem_free(saved_scan_cmd->u.roamCmd.pRoamBssEntry);
+		saved_scan_cmd->u.roamCmd.pRoamBssEntry = NULL;
+	}
+}
+
 /**
  * csr_save_profile() - Save the profile info from sme command
  * @mac_ctx: Global MAC context
@@ -2813,15 +2861,7 @@ static QDF_STATUS csr_save_profile(tpAniSirGlobal mac_ctx,
 error:
 	csr_scan_handle_search_for_ssid_failure(mac_ctx,
 			command);
-	if (save_cmd->u.roamCmd.pRoamBssEntry)
-		qdf_mem_free(save_cmd->u.roamCmd.pRoamBssEntry);
-	if (save_cmd->u.scanCmd.u.scanRequest.SSIDs.SSIDList)
-		qdf_mem_free(save_cmd->u.scanCmd.u.scanRequest.SSIDs.SSIDList);
-	if (save_cmd->u.scanCmd.pToRoamProfile) {
-		csr_release_profile(mac_ctx,
-				    save_cmd->u.scanCmd.pToRoamProfile);
-		qdf_mem_free(save_cmd->u.scanCmd.pToRoamProfile);
-	}
+	csr_saved_scan_cmd_free_fields(mac_ctx, save_cmd);
 
 	return QDF_STATUS_E_FAILURE;
 }
@@ -2900,26 +2940,8 @@ csr_handle_nxt_cmd(tpAniSirGlobal mac_ctx, tSmeCmd *pCommand,
 					chan, pCommand->sessionId, ret);
 		saved_scan_cmd = (tSmeCmd *)mac_ctx->sme.saved_scan_cmd;
 		if (saved_scan_cmd) {
-			csr_release_profile(mac_ctx, saved_scan_cmd->u.scanCmd.
-					    pToRoamProfile);
-			if (saved_scan_cmd->u.scanCmd.pToRoamProfile) {
-				qdf_mem_free(saved_scan_cmd->u.scanCmd.
-					     pToRoamProfile);
-				saved_scan_cmd->u.scanCmd.
-					pToRoamProfile = NULL;
-			}
-			if (saved_scan_cmd->u.scanCmd.u.scanRequest.SSIDs.
-			    SSIDList) {
-				qdf_mem_free(saved_scan_cmd->u.scanCmd.u.
-					     scanRequest.SSIDs.SSIDList);
-				saved_scan_cmd->u.scanCmd.u.scanRequest.SSIDs.
-					SSIDList = NULL;
-			}
-			if (saved_scan_cmd->u.roamCmd.pRoamBssEntry) {
-				qdf_mem_free(saved_scan_cmd->u.roamCmd.
-					     pRoamBssEntry);
-				saved_scan_cmd->u.roamCmd.pRoamBssEntry = NULL;
-			}
+			csr_saved_scan_cmd_free_fields(mac_ctx,
+						       saved_scan_cmd);
 			qdf_mem_free(saved_scan_cmd);
 			saved_scan_cmd = NULL;
 			sme_err(FL("memory should have been free. Check!"));
@@ -2946,6 +2968,8 @@ error:
 			csr_scan_handle_search_for_ssid_failure(mac_ctx,
 								pCommand);
 			if (mac_ctx->sme.saved_scan_cmd) {
+				csr_saved_scan_cmd_free_fields(mac_ctx,
+						mac_ctx->sme.saved_scan_cmd);
 				qdf_mem_free(mac_ctx->sme.saved_scan_cmd);
 				mac_ctx->sme.saved_scan_cmd = NULL;
 			}
@@ -2954,6 +2978,8 @@ error:
 			sme_err("conn update ret %d", ret);
 			csr_scan_handle_search_for_ssid(mac_ctx, pCommand);
 			if (mac_ctx->sme.saved_scan_cmd) {
+				csr_saved_scan_cmd_free_fields(mac_ctx,
+						mac_ctx->sme.saved_scan_cmd);
 				qdf_mem_free(mac_ctx->sme.saved_scan_cmd);
 				mac_ctx->sme.saved_scan_cmd = NULL;
 			}
