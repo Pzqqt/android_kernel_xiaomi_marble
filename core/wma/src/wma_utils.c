@@ -265,7 +265,8 @@ static uint8_t wma_get_mcs_idx(uint16_t maxRate, uint8_t rate_flags,
 				goto rate_found;
 			}
 		}
-		if (rate_flags & eHAL_TX_RATE_HT20) {
+		if ((rate_flags & eHAL_TX_RATE_HT20) ||
+			(rate_flags & eHAL_TX_RATE_HT40)) {
 			/* check for ht20 nss1/2 rate set */
 			match_rate = wma_mcs_rate_match(maxRate, &is_sgi, nss,
 					mcs_nss1[index].ht20_rate[0],
