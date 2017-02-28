@@ -66,6 +66,58 @@ static uint8_t default_dscp_tid_map[DSCP_TID_MAP_MAX] = {
 };
 
 /**
+ * @brief Select the type of statistics
+ */
+enum dp_stats_type {
+	STATS_FW   = 0,
+	STATS_HOST = 1,
+	STATS_TYPE_MAX  = 2,
+};
+
+/**
+ * @brief General Firmware statistics options
+ *
+ */
+enum dp_fw_stats {
+	TXRX_FW_STATS_INVALID	= -1,
+};
+
+/**
+ * @brief Firmware and Host statistics
+ * currently supported
+ */
+const int dp_stats_mapping_table[][STATS_TYPE_MAX] = {
+	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
+	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
+	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
+	{TXRX_FW_STATS_INVALID, TXRX_RX_RATE_STATS},
+	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
+	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
+	{TXRX_FW_STATS_INVALID, TXRX_TX_RATE_STATS},
+	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
+	{TXRX_FW_STATS_INVALID, TXRX_TX_HOST_STATS},
+	{TXRX_FW_STATS_INVALID, TXRX_CLEAR_STATS},
+	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
+	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
+	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
+	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
+	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
+	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
+	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
+	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
+	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
+	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
+	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
+	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
+	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
+	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
+	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
+	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
+	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
+	{TXRX_FW_STATS_INVALID, TXRX_RX_HOST_STATS},
+};
+
+/**
  * dp_setup_srng - Internal function to setup SRNG rings used by data path
  */
 static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
@@ -2793,6 +2845,38 @@ static void dp_set_pdev_dscp_tid_map_wifi3(struct cdp_pdev *pdev_handle,
 	return;
 }
 
+/*
+ * dp_txrx_stats() - function to map to firmware and host stats
+ * @vdev: virtual handle
+ * @req: statistics request handle
+ * @stats: type of statistics requested
+ *
+ * Return: integer
+ */
+static int dp_txrx_stats(struct cdp_vdev *vdev,
+			struct ol_txrx_stats_req *req, enum cdp_stats stats)
+{
+	int host_stats;
+	int fw_stats;
+
+	if (stats >= CDP_TXRX_MAX_STATS)
+		return 0;
+
+	fw_stats = dp_stats_mapping_table[stats][STATS_FW];
+	host_stats = dp_stats_mapping_table[stats][STATS_HOST];
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+		 "stats: %u fw_stats_type: %d host_stats_type: %d",
+		  stats, fw_stats, host_stats);
+
+	/* TODO: Firmware Mapping not implemented */
+
+	if (host_stats != TXRX_HOST_STATS_INVALID)
+		return dp_print_host_stats(vdev, req, host_stats);
+
+	return 0;
+}
+
 static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_soc_attach_target = dp_soc_attach_target_wifi3,
 	.txrx_vdev_attach = dp_vdev_attach_wifi3,
@@ -2815,6 +2899,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	/* TODO: get API's for dscp-tid need to be added*/
 	.set_vdev_dscp_tid_map = dp_set_vdev_dscp_tid_map_wifi3,
 	.set_pdev_dscp_tid_map = dp_set_pdev_dscp_tid_map_wifi3,
+	.txrx_stats = dp_txrx_stats,
 	/* TODO: Add other functions */
 };
 
@@ -2918,7 +3003,6 @@ static struct cdp_throttle_ops dp_ops_throttle = {
 };
 
 static struct cdp_mob_stats_ops dp_ops_mob_stats = {
-	/* WIFI 3.0 DP NOT IMPLEMENTED YET */
 };
 
 static struct cdp_cfg_ops dp_ops_cfg = {

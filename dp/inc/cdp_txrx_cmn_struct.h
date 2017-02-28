@@ -102,13 +102,15 @@ enum htt_cmn_dbg_stats_type {
 
 /*
  * cdp_host_txrx_stats: Different types of host stats
+ * @TXRX_HOST_STATS_INVALID: Invalid option
  * @TXRX_RX_RATE_STATS: Rx rate info
  * @TXRX_TX_RATE_STATS: Tx rate info
  * @TXRX_TX_HOST_STATS: Print Tx stats
  * @TXRX_RX_HOST_STATS: Print host Rx stats
  * @TXRX_CLEAR_STATS: clear all host stats
- */
+*/
 enum cdp_host_txrx_stats {
+	TXRX_HOST_STATS_INVALID  = -1,
 	TXRX_RX_RATE_STATS  = 0,
 	TXRX_TX_RATE_STATS  = 1,
 	TXRX_TX_HOST_STATS  = 2,
@@ -431,6 +433,41 @@ struct cdp_soc_t {
 #define PER_RADIO_FW_STATS_REQUEST 0
 #define PER_VDEV_FW_STATS_REQUEST 1
 
+/*
+ * cdp_stats - options for host and firmware
+ * statistics
+*/
+enum cdp_stats {
+	CDP_TXRX_STATS_0  = 0,
+	CDP_TXRX_STATS_1,
+	CDP_TXRX_STATS_2,
+	CDP_TXRX_STATS_3,
+	CDP_TXRX_STATS_4,
+	CDP_TXRX_STATS_5,
+	CDP_TXRX_STATS_6,
+	CDP_TXRX_STATS_7,
+	CDP_TXRX_STATS_8,
+	CDP_TXRX_STATS_9,
+	CDP_TXRX_STATS_10,
+	CDP_TXRX_STATS_11,
+	CDP_TXRX_STATS_12,
+	CDP_TXRX_STATS_13,
+	CDP_TXRX_STATS_14,
+	CDP_TXRX_STATS_15,
+	CDP_TXRX_STATS_16,
+	CDP_TXRX_STATS_17,
+	CDP_TXRX_STATS_18,
+	CDP_TXRX_STATS_19,
+	CDP_TXRX_STATS_20,
+	CDP_TXRX_STATS_21,
+	CDP_TXRX_STATS_22,
+	CDP_TXRX_STATS_23,
+	CDP_TXRX_STATS_24,
+	CDP_TXRX_STATS_25,
+	CDP_TXRX_STATS_26,
+	CDP_TXRX_STATS_27,
+	CDP_TXRX_MAX_STATS,
+};
 
 /* Different Packet Types */
 enum cdp_packet_type {

@@ -36,6 +36,7 @@
 #include "qdf_nbuf.h"
 #include "cdp_txrx_ops.h"
 #include "cdp_txrx_handle.h"
+#include "cdp_txrx_cmn_struct.h"
 /******************************************************************************
  *
  * Common Data Path Header File
@@ -435,4 +436,23 @@ static inline void cdp_set_pdev_dscp_tid_map(ol_txrx_soc_handle soc,
 	}
 	return;
 }
+
+/**
+ * cdp_txrx_stats(): function to map to host and firmware statistics
+ * @soc: soc handle
+ * @vdev: virtual device
+ * @req: statistics request handle
+ * @stats: statistics option
+ *
+ * return: status
+ */
+static inline
+int cdp_txrx_stats(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
+		struct ol_txrx_stats_req *req, enum cdp_stats stats)
+{
+	if (soc->ops->cmn_drv_ops->txrx_stats)
+		return soc->ops->cmn_drv_ops->txrx_stats(vdev, req, stats);
+	return 0;
+}
+
 #endif /* _CDP_TXRX_CMN_H_ */
