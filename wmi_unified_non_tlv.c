@@ -7876,6 +7876,7 @@ static QDF_STATUS extract_pdev_utf_event_non_tlv(
 			struct wmi_host_pdev_utf_event *event)
 {
 	event->data = evt_buf;
+	event->pdev_id = WMI_NON_TLV_DEFAULT_PDEV_ID;
 
 	return QDF_STATUS_SUCCESS;
 }
