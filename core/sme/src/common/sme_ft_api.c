@@ -268,11 +268,8 @@ QDF_STATUS sme_ft_send_update_key_ind(tHalHandle hal, uint32_t session_id,
 	tSirKeyMaterial *keymaterial = NULL;
 	tAniEdType ed_type;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
-	int i = 0;
 
 	sms_log(mac_ctx, LOG1, FL("keyLength %d"), ftkey_info->keyLength);
-	for (i = 0; i < ftkey_info->keyLength; i++)
-		sms_log(mac_ctx, LOG1, FL("%02x"), ftkey_info->Key[i]);
 
 	if (ftkey_info->keyLength > CSR_MAX_KEY_LEN) {
 		sms_log(mac_ctx, LOGE, FL("invalid keyLength %d"),
@@ -302,32 +299,9 @@ QDF_STATUS sme_ft_send_update_key_ind(tHalHandle hal, uint32_t session_id,
 	keymaterial->key[0].paeRole = ftkey_info->paeRole;
 	keymaterial->key[0].keyLength = ftkey_info->keyLength;
 
-	if (ftkey_info->keyLength) {
+	if (ftkey_info->keyLength)
 		qdf_mem_copy(&keymaterial->key[0].key, ftkey_info->Key,
 				ftkey_info->keyLength);
-		if (ftkey_info->keyLength == 16) {
-			sms_log(mac_ctx, LOG1,
-				FL("set update ind keyidx(%d) encType(%d) key = %02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X"),
-				msg->keyMaterial.key[0].keyId,
-				(tAniEdType) msg->keyMaterial.edType,
-				msg->keyMaterial.key[0].key[0],
-				msg->keyMaterial.key[0].key[1],
-				msg->keyMaterial.key[0].key[2],
-				msg->keyMaterial.key[0].key[3],
-				msg->keyMaterial.key[0].key[4],
-				msg->keyMaterial.key[0].key[5],
-				msg->keyMaterial.key[0].key[6],
-				msg->keyMaterial.key[0].key[7],
-				msg->keyMaterial.key[0].key[8],
-				msg->keyMaterial.key[0].key[9],
-				msg->keyMaterial.key[0].key[10],
-				msg->keyMaterial.key[0].key[11],
-				msg->keyMaterial.key[0].key[12],
-				msg->keyMaterial.key[0].key[13],
-				msg->keyMaterial.key[0].key[14],
-				msg->keyMaterial.key[0].key[15]);
-		}
-	}
 
 	qdf_copy_macaddr(&msg->bssid, &ftkey_info->peerMac);
 	msg->smeSessionId = session_id;

@@ -14936,15 +14936,9 @@ QDF_STATUS csr_send_mb_set_context_req_msg(tpAniSirGlobal pMac,
 		/* 0 is Supplicant */
 		pMsg->keyMaterial.key[0].paeRole = paeRole;
 		pMsg->keyMaterial.key[0].keyLength = keyLength;
-		if (keyLength && pKey) {
+		if (keyLength && pKey)
 			qdf_mem_copy(pMsg->keyMaterial.key[0].key,
 					pKey, keyLength);
-			sms_log(pMac, LOG1,
-				FL("SME set keyIndx (%d) encType (%d) key"),
-				keyId, edType);
-			sir_dump_buf(pMac, SIR_SMS_MODULE_ID, LOG1, pKey,
-				     keyLength);
-		}
 		status = umac_send_mb_message_to_mac(pMsg);
 	} while (0);
 	return status;
