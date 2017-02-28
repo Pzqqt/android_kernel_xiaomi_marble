@@ -48,7 +48,7 @@
 #include "sme_qos_internal.h"
 
 #include "sme_rrm_api.h"
-#include "wlan_serialization_legacy_mcl_api.h"
+#include "wlan_serialization_legacy_api.h"
 ePhyChanBondState csr_convert_cb_ini_value_to_phy_cb_state(uint32_t cbIniValue);
 
 /*--------------------------------------------------------------------------

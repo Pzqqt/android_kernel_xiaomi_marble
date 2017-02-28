@@ -1015,7 +1015,7 @@ UMAC_SER_OBJS := $(UMAC_SER_OBJ_DIR)/wlan_serialization_dequeue.o \
 		 $(UMAC_SER_OBJ_DIR)/wlan_serialization_main.o \
 		 $(UMAC_SER_OBJ_DIR)/wlan_serialization_api.o \
 		 $(UMAC_SER_OBJ_DIR)/wlan_serialization_utils.o \
-		 $(UMAC_SER_OBJ_DIR)/wlan_serialization_legacy_mcl_api.o \
+		 $(UMAC_SER_OBJ_DIR)/wlan_serialization_legacy_api.o \
 		 $(UMAC_SER_OBJ_DIR)/wlan_serialization_rules.o
 ############## HTC ##########
 HTC_DIR := htc

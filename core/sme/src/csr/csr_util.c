@@ -42,7 +42,7 @@
 #include "wma_types.h"
 #include "cds_utils.h"
 #include "cds_concurrency.h"
-#include "wlan_serialization_legacy_mcl_api.h"
+#include "wlan_serialization_legacy_api.h"
 
 
 uint8_t csr_wpa_oui[][CSR_WPA_OUI_SIZE] = {
