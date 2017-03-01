@@ -28,6 +28,7 @@
 #include "../../core/src/wlan_tdls_cmds_process.h"
 #include <wlan_objmgr_global_obj.h>
 #include <wlan_objmgr_cmn.h>
+#include "wlan_policy_mgr_api.h"
 
 QDF_STATUS ucfg_tdls_init(void)
 {
@@ -122,7 +123,6 @@ static QDF_STATUS tdls_global_init(struct tdls_soc_priv_obj *soc_obj)
 	soc_obj->tdls_teardown_peers_cnt = 0;
 	soc_obj->tdls_nss_teardown_complete = false;
 	soc_obj->tdls_nss_transition_mode = TDLS_NSS_TRANSITION_S_UNKNOWN;
-	soc_obj->tdls_user_config_mode = TDLS_SUPPORT_DISABLED;
 
 	feature = soc_obj->tdls_configs.tdls_feature_flags;
 	if (TDLS_IS_BUFFER_STA_ENABLED(feature) ||
@@ -178,6 +178,7 @@ QDF_STATUS ucfg_tdls_update_config(struct wlan_objmgr_psoc *psoc,
 {
 	struct tdls_soc_priv_obj *soc_obj;
 	uint32_t tdls_feature_flags;
+	struct policy_mgr_tdls_cbacks tdls_pm_call_backs;
 
 	tdls_notice("tdls update config ");
 	if (!psoc || !req) {
@@ -208,6 +209,16 @@ QDF_STATUS ucfg_tdls_update_config(struct wlan_objmgr_psoc *psoc,
 	soc_obj->tdls_add_sta_req = req->tdls_add_sta_req;
 	soc_obj->tdls_del_sta_req = req->tdls_del_sta_req;
 	soc_obj->tdls_update_peer_state = req->tdls_update_peer_state;
+	tdls_pm_call_backs.tdls_notify_increment_session =
+			tdls_notify_increment_session;
+
+	tdls_pm_call_backs.tdls_notify_decrement_session =
+			tdls_notify_decrement_session;
+	if (QDF_STATUS_SUCCESS != policy_mgr_register_tdls_cb(
+		psoc, &tdls_pm_call_backs)) {
+		tdls_err("policy manager callback registration failed ");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	/* Update TDLS user config */
 	qdf_mem_copy(&soc_obj->tdls_configs, &req->config, sizeof(req->config));

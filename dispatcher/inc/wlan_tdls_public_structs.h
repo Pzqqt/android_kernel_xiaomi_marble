@@ -287,6 +287,22 @@ enum tdls_event_reason {
 };
 
 /**
+ * enum tdls_disable_sources - TDLS disable sources
+ * @TDLS_SET_MODE_SOURCE_USER: disable from user
+ * @TDLS_SET_MODE_SOURCE_SCAN: disable during scan
+ * @TDLS_SET_MODE_SOURCE_OFFCHANNEL: disable during offchannel
+ * @TDLS_SET_MODE_SOURCE_BTC: disable during bluetooth
+ * @TDLS_SET_MODE_SOURCE_P2P: disable during p2p
+ */
+enum tdls_disable_sources {
+	TDLS_SET_MODE_SOURCE_USER = 0,
+	TDLS_SET_MODE_SOURCE_SCAN,
+	TDLS_SET_MODE_SOURCE_OFFCHANNEL,
+	TDLS_SET_MODE_SOURCE_BTC,
+	TDLS_SET_MODE_SOURCE_P2P,
+};
+
+/**
  * struct tdls_osif_indication - tdls indication to os if layer
  * @vdev: vdev object
  * @reason: used with teardown indication
