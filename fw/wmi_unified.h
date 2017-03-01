@@ -5747,6 +5747,10 @@ typedef struct {
  *  For STA/client vdevs, it indicates that sta will
  *  associate with AP with RMF enabled. */
 #define WMI_UNIFIED_VDEV_START_PMF_ENABLED  (1<<1)
+/** Indicates if LDPC RX will be advertized inside HT/VHT Capabilities IE
+ * of assoc request/response
+ */
+#define WMI_UNIFIED_VDEV_START_LDPC_RX_ENABLED  (1<<2)
 
 /*
  * Host is sending bcn_tx_rate to override the beacon tx rates.
