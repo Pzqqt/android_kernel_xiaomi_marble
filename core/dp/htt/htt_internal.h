@@ -644,27 +644,25 @@ void htt_tx_group_credit_process(struct htt_pdev_t *pdev, u_int32_t *msg_word)
  * htt_rx_dbg_rxbuf_init() - init debug rx buff list
  * @pdev: pdev handle
  *
+ * Allocation is done from bss segment. This uses vmalloc and has a bit
+ * of an overhead compared to kmalloc (which qdf_mem_alloc wraps). The impact
+ * of the overhead to performance will need to be quantified.
+ *
  * Return: none
  */
+static struct rx_buf_debug rx_buff_list_bss[HTT_RX_RING_BUFF_DBG_LIST];
 static inline
 void htt_rx_dbg_rxbuf_init(struct htt_pdev_t *pdev)
 {
-	pdev->rx_buff_list = qdf_mem_malloc(
-				 HTT_RX_RING_BUFF_DBG_LIST *
-				 sizeof(struct rx_buf_debug));
-	if (!pdev->rx_buff_list) {
-		qdf_print("HTT: debug RX buffer allocation failed\n");
-		QDF_ASSERT(0);
-	} else {
-		qdf_spinlock_create(&(pdev->rx_buff_list_lock));
-		pdev->rx_buff_index = 0;
-		pdev->rx_buff_posted_cum = 0;
-		pdev->rx_buff_recvd_cum  = 0;
-		pdev->rx_buff_recvd_err  = 0;
-		pdev->refill_retry_timer_starts = 0;
-		pdev->refill_retry_timer_calls = 0;
-		pdev->refill_retry_timer_doubles = 0;
-	}
+	pdev->rx_buff_list = rx_buff_list_bss;
+	qdf_spinlock_create(&(pdev->rx_buff_list_lock));
+	pdev->rx_buff_index = 0;
+	pdev->rx_buff_posted_cum = 0;
+	pdev->rx_buff_recvd_cum  = 0;
+	pdev->rx_buff_recvd_err  = 0;
+	pdev->refill_retry_timer_starts = 0;
+	pdev->refill_retry_timer_calls = 0;
+	pdev->refill_retry_timer_doubles = 0;
 }
 
 static inline int htt_display_rx_buf_debug(struct htt_pdev_t *pdev)
@@ -830,7 +828,7 @@ static inline
 void htt_rx_dbg_rxbuf_deinit(struct htt_pdev_t *pdev)
 {
 	if (pdev->rx_buff_list)
-		qdf_mem_free(pdev->rx_buff_list);
+		pdev->rx_buff_list = NULL;
 	qdf_spinlock_destroy(&(pdev->rx_buff_list_lock));
 }
 #else
