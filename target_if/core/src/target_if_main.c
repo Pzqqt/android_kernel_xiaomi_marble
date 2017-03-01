@@ -211,6 +211,10 @@ QDF_STATUS target_if_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	/* Converged UMAC components to register P2P TX-ops */
 	target_if_p2p_register_tx_ops(tx_ops);
 #endif
+#ifdef CONVERGED_TDLS_ENABLE
+	target_if_tdls_register_tx_ops(tx_ops);
+#endif
+
 	return QDF_STATUS_SUCCESS;
 }
 

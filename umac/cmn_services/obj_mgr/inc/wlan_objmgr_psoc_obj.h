@@ -645,6 +645,22 @@ struct wlan_objmgr_pdev *wlan_objmgr_get_pdev_by_macaddr_no_state(
 		wlan_objmgr_ref_dbgid dbg_id);
 
 /**
+ * wlan_objmgr_get_vdev_by_opmode_from_psoc() - retrieve vdev by opmode
+ * @psoc: PSOC object
+ * @opmode: vdev operating mode
+ * @dbg_id: id of the caller
+ *
+ * API to find vdev object pointer by vdev operating mode from psoc
+ *
+ * Return: vdev pointer
+ *         NULL on FAILURE
+ */
+struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_opmode_from_psoc(
+			struct wlan_objmgr_psoc *psoc,
+			enum tQDF_ADAPTER_MODE opmode,
+			wlan_objmgr_ref_dbgid dbg_id);
+
+/**
  * wlan_objmgr_get_vdev_by_id_from_psoc() - retrieve vdev by id
  * @psoc: PSOC object
  * @id: vdev id

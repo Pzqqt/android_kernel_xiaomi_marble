@@ -858,6 +858,40 @@ QDF_STATUS wlan_objmgr_psoc_vdev_detach(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_opmode_from_psoc(
+			struct wlan_objmgr_psoc *psoc,
+			enum tQDF_ADAPTER_MODE opmode,
+			wlan_objmgr_ref_dbgid dbg_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	int vdev_cnt = 0;
+
+	/* if PSOC is NULL, return */
+	if (psoc == NULL)
+		return NULL;
+
+	wlan_psoc_obj_lock(psoc);
+
+	/* retrieve vdev pointer from vdev list */
+	while (vdev_cnt < WLAN_UMAC_PSOC_MAX_VDEVS) {
+		vdev = psoc->soc_objmgr.wlan_vdev_list[vdev_cnt];
+		vdev_cnt++;
+		if (vdev == NULL)
+			continue;
+		wlan_vdev_obj_lock(vdev);
+		if (vdev->vdev_mlme.vdev_opmode == opmode) {
+			wlan_vdev_obj_unlock(vdev);
+			if (wlan_objmgr_vdev_try_get_ref(vdev, dbg_id) !=
+							QDF_STATUS_SUCCESS)
+				vdev = NULL;
+			break;
+		}
+		wlan_vdev_obj_unlock(vdev);
+	}
+	wlan_psoc_obj_unlock(psoc);
+
+	return vdev;
+}
 
 struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_id_from_psoc(
 			struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,

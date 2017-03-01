@@ -605,10 +605,10 @@ QDF_STATUS policy_mgr_register_tdls_cb(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	pm_ctx->tdls_cbacks.check_is_tdls_allowed =
-		tdls_cbacks->check_is_tdls_allowed;
-	pm_ctx->tdls_cbacks.set_tdls_ct_mode =
-		tdls_cbacks->set_tdls_ct_mode;
+	pm_ctx->tdls_cbacks.tdls_notify_increment_session =
+		tdls_cbacks->tdls_notify_increment_session;
+	pm_ctx->tdls_cbacks.tdls_notify_decrement_session =
+		tdls_cbacks->tdls_notify_decrement_session;
 
 	return QDF_STATUS_SUCCESS;
 }

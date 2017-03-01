@@ -145,7 +145,8 @@ struct tdls_set_state_info {
  * struct tdls_psoc_priv_ctx - tdls context
  * @soc: objmgr psoc
  * @tdls_current_mode: current tdls mode
- * @tdls_user_config_mode: user configure tdls mode
+ * @tdls_last_mode: last tdls mode
+ * @tdls_source_bitmap: bit map to set/reset TDLS by different sources
  * @tdls_conn_info: this tdls_conn_info can be removed and we can use peer type
  *                of peer object to get the active tdls peers
  * @tdls_configs: tdls user configure
@@ -180,7 +181,8 @@ struct tdls_set_state_info {
 struct tdls_soc_priv_obj {
 	struct wlan_objmgr_psoc *soc;
 	enum tdls_feature_mode tdls_current_mode;
-	enum tdls_feature_mode tdls_user_config_mode;
+	enum tdls_feature_mode tdls_last_mode;
+	unsigned long tdls_source_bitmap;
 	struct tdls_conn_info tdls_conn_info[WLAN_TDLS_STA_MAX_NUM];
 	struct tdls_user_config tdls_configs;
 	uint16_t max_num_tdls_sta;
@@ -192,6 +194,7 @@ struct tdls_soc_priv_obj {
 	uint8_t tdls_external_peer_count;
 	bool tdls_nss_switch_in_progress;
 	bool tdls_nss_teardown_complete;
+	bool tdls_disable_in_progress;
 	enum tdls_nss_transition_state tdls_nss_transition_mode;
 	int32_t tdls_teardown_peers_cnt;
 	struct tdls_set_state_info set_state_info;
@@ -320,6 +323,25 @@ struct tdls_peer {
 	struct tdls_peer_mlme_info *tdls_info;
 };
 
+/**
+ * struct tdls_os_if_event - TDLS os event info
+ * @type: type of event
+ * @info: pointer to event information
+ */
+struct tdls_os_if_event {
+	uint32_t type;
+	void *info;
+};
+
+/**
+ * enum tdls_os_if_notification - TDLS notification from OS IF
+ * @TDLS_NOTIFY_STA_SESSION_INCREMENT: sta session count incremented
+ * @TDLS_NOTIFY_STA_SESSION_DECREMENT: sta session count decremented
+ */
+enum tdls_os_if_notification {
+	TDLS_NOTIFY_STA_SESSION_INCREMENT,
+	TDLS_NOTIFY_STA_SESSION_DECREMENT
+};
 /**
  * wlan_vdev_get_tdls_soc_obj - private API to get tdls soc object from vdev
  * @vdev: vdev object
@@ -500,5 +522,104 @@ void tdls_timers_stop(struct tdls_vdev_priv_obj *tdls_vdev);
 QDF_STATUS tdls_get_vdev_objects(struct wlan_objmgr_vdev *vdev,
 				   struct tdls_vdev_priv_obj **tdls_vdev_obj,
 				   struct tdls_soc_priv_obj **tdls_soc_obj);
+
+/**
+ * cds_set_tdls_ct_mode() - Set the tdls connection tracker mode
+ * @hdd_ctx: hdd context
+ *
+ * This routine is called to set the tdls connection tracker operation status
+ *
+ * Return: NONE
+ */
+void tdls_set_ct_mode(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * tdls_notify_sta_connect() - Update tdls state for every
+ * connect event.
+ * @vdev: vdev object manager
+ * @tdls_prohibited: flag to tell whether tdls prohibited in this bss
+ * @tdls_chan_swit_prohibited: flag to tell whether tdls channel switch
+ *                                        prohibited in this bss
+ * @session_id: session id
+ *
+ * After every connect event in the system, check whether TDLS
+ * can be enabled in the system. If TDLS can be enabled, update the
+ * TDLS state as needed.
+ *
+ * Return: None
+ */
+void tdls_notify_sta_connect(struct wlan_objmgr_vdev *vdev,
+			      bool tdls_prohibited,
+			      bool tdls_chan_swit_prohibited,
+			      uint8_t session_id);
+
+/**
+ * tdls_notify_sta_disconnect() - Update tdls state for every
+ * disconnect event.
+ * @vdev: vdev object manager
+ * @lfr_roam: roaming case
+ * @session_id: session id
+ *
+ * After every disconnect event in the system, check whether TDLS
+ * can be disabled/enabled in the system and update the
+ * TDLS state as needed.
+ *
+ * Return: None
+ */
+void tdls_notify_sta_disconnect(struct wlan_objmgr_vdev *vdev,
+				 bool lfr_roam,
+				 uint8_t session_id);
+
+/**
+ * tdls_notify_decrement_session() - Notify the session decrement
+ * @psoc: psoc  object manager
+ *
+ * Policy manager notify TDLS about session decrement
+ *
+ * Return: None
+ */
+void tdls_notify_decrement_session(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * tdls_notify_increment_session() - Notify the session increment
+ * @psoc: psoc  object manager
+ *
+ * Policy manager notify TDLS about session increment
+ *
+ * Return: None
+ */
+void tdls_notify_increment_session(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * tdls_check_is_tdls_allowed() - check is tdls allowed or not
+ * @vdev: vdev object
+ *
+ * Function determines the whether TDLS allowed in the system
+ *
+ * Return: true or false
+ */
+bool tdls_check_is_tdls_allowed(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * tdls_get_vdev() - Get tdls specific vdev object manager
+ * @psoc: wlan psoc object manager
+ * @dbg_id: debug id
+ *
+ * If TDLS possible, return the corresponding vdev
+ * to enable TDLS in the system.
+ *
+ * Return: vdev manager pointer or NULL.
+ */
+struct wlan_objmgr_vdev *tdls_get_vdev(struct wlan_objmgr_psoc *psoc,
+					  wlan_objmgr_ref_dbgid dbg_id);
+
+/**
+ * tdls_process_policy_mgr_notification() - process policy manager notification
+ * @psoc: soc object manager
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+tdls_process_policy_mgr_notification(struct wlan_objmgr_psoc *psoc);
 
 #endif

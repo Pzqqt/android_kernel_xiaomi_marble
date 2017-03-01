@@ -1114,9 +1114,10 @@ void policy_mgr_incr_active_session(struct wlan_objmgr_psoc *psoc,
 		qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	}
 
-	/* set tdls connection tracker state */
-	if (pm_ctx->tdls_cbacks.set_tdls_ct_mode)
-		pm_ctx->tdls_cbacks.set_tdls_ct_mode(psoc);
+	/* Notify tdls */
+	if (pm_ctx->tdls_cbacks.tdls_notify_increment_session)
+		pm_ctx->tdls_cbacks.tdls_notify_increment_session(psoc);
+
 	policy_mgr_dump_current_concurrency(psoc);
 
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
@@ -1152,9 +1153,9 @@ void policy_mgr_decr_active_session(struct wlan_objmgr_psoc *psoc,
 
 	policy_mgr_decr_connection_count(psoc, session_id);
 
-	/* set tdls connection tracker state */
-	if (pm_ctx->tdls_cbacks.set_tdls_ct_mode)
-		pm_ctx->tdls_cbacks.set_tdls_ct_mode(psoc);
+	/* Notify tdls */
+	if (pm_ctx->tdls_cbacks.tdls_notify_decrement_session)
+		pm_ctx->tdls_cbacks.tdls_notify_decrement_session(psoc);
 
 	policy_mgr_dump_current_concurrency(psoc);
 }

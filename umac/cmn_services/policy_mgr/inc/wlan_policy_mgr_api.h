@@ -796,8 +796,8 @@ struct policy_mgr_hdd_cbacks {
  * @check_is_tdls_allowed: check if tdls allowed or not
  */
 struct policy_mgr_tdls_cbacks {
-	void (*set_tdls_ct_mode)(struct wlan_objmgr_psoc *psoc);
-	bool (*check_is_tdls_allowed)(enum tQDF_ADAPTER_MODE device_mode);
+	void (*tdls_notify_increment_session)(struct wlan_objmgr_psoc *psoc);
+	void (*tdls_notify_decrement_session)(struct wlan_objmgr_psoc *psoc);
 };
 
 /**
