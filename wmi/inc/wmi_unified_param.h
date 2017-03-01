@@ -127,6 +127,9 @@
 #define FIPS_IS_ALIGNED(__addr, __to) \
 		(!(((unsigned long int)(__addr)) & ((__to)-1)))
 
+#define WMI_HOST_MAX_SERIAL_ANTENNA 2
+#define WMI_SMART_ANT_MAX_RATE_SERIES 2
+
 #define WMI_HOST_F_MS(_v, _f)	\
 	(((_v) & (_f)) >> (_f##_S))
 
@@ -218,6 +221,40 @@
 #define WMI_MAX_NUM_OF_RATE_THRESH   4
 
 #define WMI_HOST_PDEV_MAX_VDEVS         17
+
+/* for QC98XX only */
+/*6 modes (A, HT20, HT40, VHT20, VHT40, VHT80) * 3 reg dommains
+ */
+#define WMI_HOST_NUM_CTLS_5G                18
+/*6 modes (B, G, HT20, HT40, VHT20, VHT40) * 3 reg domains */
+#define WMI_HOST_NUM_CTLS_2G                18
+#define WMI_HOST_NUM_BAND_EDGES_5G          8
+#define WMI_HOST_NUM_BAND_EDGES_2G          4
+
+/*Beelinier 5G*/
+#define WMI_HOST_NUM_CTLS_5G_11A            9
+#define WMI_HOST_NUM_BAND_EDGES_5G_11A      25
+#define WMI_HOST_NUM_CTLS_5G_HT20           24
+#define WMI_HOST_NUM_BAND_EDGES_5G_HT20     25
+#define WMI_HOST_NUM_CTLS_5G_HT40           18
+#define WMI_HOST_NUM_BAND_EDGES_5G_HT40     12
+#define WMI_HOST_NUM_CTLS_5G_HT80           18
+#define WMI_HOST_NUM_BAND_EDGES_5G_HT80     6
+#define WMI_HOST_NUM_CTLS_5G_HT160          9
+#define WMI_HOST_NUM_BAND_EDGES_5G_HT160    2
+
+/* Beeliner 2G */
+#define WMI_HOST_NUM_CTLS_2G_11B            6
+#define WMI_HOST_NUM_BAND_EDGES_2G_11B      9
+#define WMI_HOST_NUM_CTLS_2G_20MHZ          30
+#define WMI_HOST_NUM_BAND_EDGES_2G_20MHZ    11
+#define WMI_HOST_NUM_CTLS_2G_40MHZ          18
+#define WMI_HOST_NUM_BAND_EDGES_2G_40MHZ    6
+
+/* for QC98XX only */
+#define WMI_HOST_TX_NUM_CHAIN               0x3
+#define WMI_HOST_TPC_REGINDEX_MAX           4
+#define WMI_HOST_ARRAY_GAIN_NUM_STREAMS     2
 
 #include "qdf_atomic.h"
 
@@ -3543,6 +3580,7 @@ struct peer_update_wds_entry_params {
 	uint8_t *wds_macaddr;
 	uint8_t *peer_macaddr;
 	uint32_t flags;
+	uint32_t vdev_id;
 };
 
 /**
@@ -3597,6 +3635,7 @@ struct smart_ant_enable_params {
 	uint32_t rx_antenna;
 	uint32_t gpio_pin[WMI_HAL_MAX_SANTENNA];
 	uint32_t gpio_func[WMI_HAL_MAX_SANTENNA];
+	uint32_t pdev_id;
 };
 
 /**
@@ -3605,6 +3644,7 @@ struct smart_ant_enable_params {
  */
 struct smart_ant_rx_ant_params {
 	uint32_t antenna;
+	uint32_t pdev_id;
 };
 
 /**
@@ -4069,6 +4109,7 @@ struct ctl_table_params {
 	uint32_t target_type;
 	bool is_2g;
 	uint32_t ctl_band;
+	uint32_t pdev_id;
 };
 
 /**
@@ -4081,6 +4122,7 @@ struct mimogain_table_params {
 	uint8_t *array_gain;
 	uint16_t tbl_len;
 	bool multichain_gain_bypass;
+	uint32_t pdev_id;
 };
 
 /**
@@ -4207,6 +4249,7 @@ struct packet_power_info_params {
 	uint16_t nss;
 	uint16_t preamble;
 	uint16_t hw_rate;
+	uint32_t pdev_id;
 };
 
 /**

@@ -3679,36 +3679,6 @@ static QDF_STATUS
 send_set_ctl_table_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct ctl_table_params *param)
 {
-/* for QC98XX only */
-/*6 modes (A, HT20, HT40, VHT20, VHT40, VHT80) * 3 reg dommains
- * TODO for 160/80+80
- */
-#define WHAL_NUM_CTLS_5G		18
-/*6 modes (B, G, HT20, HT40, VHT20, VHT40) * 3 reg domains */
-#define WHAL_NUM_CTLS_2G		18
-#define WHAL_NUM_BAND_EDGES_5G		8
-#define WHAL_NUM_BAND_EDGES_2G		4
-
-/*Beelinier 5G*/
-#define WHAL_NUM_CTLS_5G_11A            9
-#define WHAL_NUM_BAND_EDGES_5G_11A      25
-#define WHAL_NUM_CTLS_5G_HT20           24
-#define WHAL_NUM_BAND_EDGES_5G_HT20     25
-#define WHAL_NUM_CTLS_5G_HT40           18
-#define WHAL_NUM_BAND_EDGES_5G_HT40     12
-#define WHAL_NUM_CTLS_5G_HT80           18
-#define WHAL_NUM_BAND_EDGES_5G_HT80     6
-#define WHAL_NUM_CTLS_5G_HT160          9
-#define WHAL_NUM_BAND_EDGES_5G_HT160    2
-
-/* Beeliner 2G */
-#define WHAL_NUM_CTLS_2G_11B            6
-#define WHAL_NUM_BAND_EDGES_2G_11B      9
-#define WHAL_NUM_CTLS_2G_20MHZ          30
-#define WHAL_NUM_BAND_EDGES_2G_20MHZ    11
-#define WHAL_NUM_CTLS_2G_40MHZ          18
-#define WHAL_NUM_BAND_EDGES_2G_40MHZ    6
-
 	uint16_t len;
 	wmi_buf_t buf;
 	wmi_pdev_set_ctl_table_cmd *cmd;
@@ -3724,52 +3694,52 @@ send_set_ctl_table_cmd_non_tlv(wmi_unified_t wmi_handle,
 		if (param->is_2g) {
 			/* For 2G, CTL array length should be 688*/
 			if (param->ctl_cmd_len !=
-					(4 + (WHAL_NUM_CTLS_2G_11B * 2) +
-					 (WHAL_NUM_BAND_EDGES_2G_11B * 3) +
-					 1 + (WHAL_NUM_CTLS_2G_11B *
-						 WHAL_NUM_BAND_EDGES_2G_11B) +
-					 (WHAL_NUM_CTLS_2G_20MHZ * 2) +
-					 (WHAL_NUM_BAND_EDGES_2G_20MHZ * 3) +
-					 1 + (WHAL_NUM_CTLS_2G_20MHZ *
-						 WHAL_NUM_BAND_EDGES_2G_20MHZ) +
-					 (WHAL_NUM_CTLS_2G_40MHZ * 2) +
-					 (WHAL_NUM_BAND_EDGES_2G_40MHZ * 3) +
-					 (WHAL_NUM_CTLS_2G_40MHZ *
-					  WHAL_NUM_BAND_EDGES_2G_40MHZ) + 4)) {
+				(4 + (WMI_HOST_NUM_CTLS_2G_11B * 2) +
+				 (WMI_HOST_NUM_BAND_EDGES_2G_11B * 3) +
+				 1 + (WMI_HOST_NUM_CTLS_2G_11B *
+					 WMI_HOST_NUM_BAND_EDGES_2G_11B) +
+				 (WMI_HOST_NUM_CTLS_2G_20MHZ * 2) +
+				 (WMI_HOST_NUM_BAND_EDGES_2G_20MHZ * 3) +
+				 1 + (WMI_HOST_NUM_CTLS_2G_20MHZ *
+					 WMI_HOST_NUM_BAND_EDGES_2G_20MHZ) +
+				 (WMI_HOST_NUM_CTLS_2G_40MHZ * 2) +
+				 (WMI_HOST_NUM_BAND_EDGES_2G_40MHZ * 3) +
+				 (WMI_HOST_NUM_CTLS_2G_40MHZ *
+				  WMI_HOST_NUM_BAND_EDGES_2G_40MHZ) + 4)) {
 				qdf_print("CTL array len not correct\n");
 				return QDF_STATUS_E_FAILURE;
 			}
 		} else {
 			/* For 5G, CTL array length should be 1540 */
 			if (param->ctl_cmd_len !=
-					(4 + (WHAL_NUM_CTLS_5G_11A * 2) +
-					 (WHAL_NUM_BAND_EDGES_5G_11A * 3) +
-					 1 + (WHAL_NUM_CTLS_5G_11A *
-						 WHAL_NUM_BAND_EDGES_5G_11A) + 1
-					 + (WHAL_NUM_CTLS_5G_HT20 * 2) +
-					 (WHAL_NUM_BAND_EDGES_5G_HT20 * 3) +
-					 1 + (WHAL_NUM_CTLS_5G_HT20 *
-						 WHAL_NUM_BAND_EDGES_5G_HT20) +
-					 (WHAL_NUM_CTLS_5G_HT40 * 2) +
-					 (WHAL_NUM_BAND_EDGES_5G_HT40 * 3) +
-					 (WHAL_NUM_CTLS_5G_HT40 *
-					  WHAL_NUM_BAND_EDGES_5G_HT40) +
-					 (WHAL_NUM_CTLS_5G_HT80 * 2) +
-					 (WHAL_NUM_BAND_EDGES_5G_HT80 * 3) +
-					 (WHAL_NUM_CTLS_5G_HT80 *
-					  WHAL_NUM_BAND_EDGES_5G_HT80) +
-					 (WHAL_NUM_CTLS_5G_HT160 * 2) +
-					 (WHAL_NUM_BAND_EDGES_5G_HT160 * 3) +
-					 (WHAL_NUM_CTLS_5G_HT160 *
-					  WHAL_NUM_BAND_EDGES_5G_HT160))) {
+				(4 + (WMI_HOST_NUM_CTLS_5G_11A * 2) +
+				(WMI_HOST_NUM_BAND_EDGES_5G_11A * 3) +
+				 1 + (WMI_HOST_NUM_CTLS_5G_11A *
+					 WMI_HOST_NUM_BAND_EDGES_5G_11A) + 1
+				 + (WMI_HOST_NUM_CTLS_5G_HT20 * 2) +
+				 (WMI_HOST_NUM_BAND_EDGES_5G_HT20 * 3) +
+				 1 + (WMI_HOST_NUM_CTLS_5G_HT20 *
+					 WMI_HOST_NUM_BAND_EDGES_5G_HT20) +
+				 (WMI_HOST_NUM_CTLS_5G_HT40 * 2) +
+				 (WMI_HOST_NUM_BAND_EDGES_5G_HT40 * 3) +
+				 (WMI_HOST_NUM_CTLS_5G_HT40 *
+				  WMI_HOST_NUM_BAND_EDGES_5G_HT40) +
+				 (WMI_HOST_NUM_CTLS_5G_HT80 * 2) +
+				 (WMI_HOST_NUM_BAND_EDGES_5G_HT80 * 3) +
+				 (WMI_HOST_NUM_CTLS_5G_HT80 *
+				  WMI_HOST_NUM_BAND_EDGES_5G_HT80) +
+				 (WMI_HOST_NUM_CTLS_5G_HT160 * 2) +
+				 (WMI_HOST_NUM_BAND_EDGES_5G_HT160 * 3) +
+				 (WMI_HOST_NUM_CTLS_5G_HT160 *
+				  WMI_HOST_NUM_BAND_EDGES_5G_HT160))) {
 				qdf_print("CTL array len not correct\n");
 				return QDF_STATUS_E_FAILURE;
 			}
 		}
 	} else {
 		if (param->ctl_cmd_len !=
-			WHAL_NUM_CTLS_2G * WHAL_NUM_BAND_EDGES_2G * 2 +
-			WHAL_NUM_CTLS_5G * WHAL_NUM_BAND_EDGES_5G * 2) {
+			WMI_HOST_NUM_CTLS_2G * WMI_HOST_NUM_BAND_EDGES_2G * 2 +
+			WMI_HOST_NUM_CTLS_5G * WMI_HOST_NUM_BAND_EDGES_5G * 2) {
 			qdf_print("CTL array len not correct\n");
 			return QDF_STATUS_E_FAILURE;
 		}
@@ -3798,10 +3768,6 @@ send_set_ctl_table_cmd_non_tlv(wmi_unified_t wmi_handle,
 	}
 
 	return QDF_STATUS_SUCCESS;
-#undef WHAL_NUM_CTLS_5G
-#undef WHAL_NUM_CTLS_2G
-#undef WHAL_NUM_BAND_EDGES_5G
-#undef WHAL_NUM_BAND_EDGES_2G
 }
 
 /**
@@ -3815,11 +3781,6 @@ static QDF_STATUS
 send_set_mimogain_table_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct mimogain_table_params *param)
 {
-/* for QC98XX only */
-#define WHAL_TX_NUM_CHAIN		0x3
-#define WHAL_TPC_REGINDEX_MAX		4
-#define WHAL_ARRAY_GAIN_NUM_STREAMS	2
-
 	uint16_t len;
 	wmi_buf_t buf;
 	wmi_pdev_set_mimogain_table_cmd *cmd;
@@ -3828,8 +3789,9 @@ send_set_mimogain_table_cmd_non_tlv(wmi_unified_t wmi_handle,
 		return QDF_STATUS_E_FAILURE;
 
 	/* len must be multiple of a single array gain table */
-	if (param->tbl_len % ((WHAL_TX_NUM_CHAIN-1) * WHAL_TPC_REGINDEX_MAX *
-		    WHAL_ARRAY_GAIN_NUM_STREAMS) != 0) {
+	if (param->tbl_len %
+	    ((WMI_HOST_TX_NUM_CHAIN-1) * WMI_HOST_TPC_REGINDEX_MAX *
+	     WMI_HOST_ARRAY_GAIN_NUM_STREAMS) != 0) {
 		qdf_print("Array gain table len not correct\n");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3856,9 +3818,6 @@ send_set_mimogain_table_cmd_non_tlv(wmi_unified_t wmi_handle,
 	}
 
 	return QDF_STATUS_SUCCESS;
-#undef WHAL_TX_NUM_CHAIN
-#undef WHAL_TPC_REGINDEX_MAX
-#undef WHAL_ARRAY_GAIN_NUM_STREAMS
 }
 
 /**
