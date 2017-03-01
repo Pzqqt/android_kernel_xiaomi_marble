@@ -192,7 +192,7 @@ static int populate_hw_mode_capability(void *wmi_handle,
 			uint8_t *event, uint8_t *total_mac_phy,
 			struct ext_service_ready_param *service_param)
 {
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint8_t hw_idx;
 	uint32_t num_hw_modes;
 
@@ -225,7 +225,7 @@ static int populate_phy_reg_capability(void *handle, uint8_t *event,
 {
 	uint8_t reg_idx;
 	uint32_t num_phy_reg_cap;
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	num_phy_reg_cap = service_param->service_ext_param.num_phy;
 	if (num_phy_reg_cap > MAX_PHY_REG_CAP) {
@@ -243,7 +243,7 @@ static int populate_phy_reg_capability(void *handle, uint8_t *event,
 		}
 	}
 
-	return 0;
+	return qdf_status_to_os_return(status);
 }
 
 int init_deinit_service_ext_ready_event_handler(ol_scn_t scn_handle,
