@@ -667,10 +667,6 @@ static int send_filled_buffers_to_user(void)
 		if (ret < 0 && (!(gwlan_logging.drop_count % 0x40))) {
 			pr_err("%s: Send Failed %d drop_count = %u\n",
 			       __func__, ret, ++gwlan_logging.drop_count);
-			skb = NULL;
-		} else {
-			skb = NULL;
-			ret = 0;
 		}
 	}
 
