@@ -35,6 +35,7 @@ wlan_objmgr_populate_service_ready_data(struct wlan_objmgr_psoc *psoc,
 		     sizeof(psoc->service_param));
 	wlan_psoc_obj_unlock(psoc);
 }
+EXPORT_SYMBOL(wlan_objmgr_populate_service_ready_data);
 
 void
 wlan_objmgr_populate_ext_service_ready_data(struct wlan_objmgr_psoc *psoc,
@@ -47,3 +48,4 @@ wlan_objmgr_populate_ext_service_ready_data(struct wlan_objmgr_psoc *psoc,
 		     sizeof(psoc->ext_service_param));
 	wlan_psoc_obj_unlock(psoc);
 }
+EXPORT_SYMBOL(wlan_objmgr_populate_ext_service_ready_data);
