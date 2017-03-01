@@ -310,7 +310,6 @@ static struct wma_target_req *wma_peek_vdev_req(tp_wma_handle wma,
 	if (QDF_STATUS_SUCCESS != qdf_list_peek_front(&wma->vdev_resp_queue,
 							&node2)) {
 		qdf_spin_unlock_bh(&wma->vdev_respq_lock);
-		WMA_LOGE(FL("unable to get target req from vdev resp queue"));
 		return NULL;
 	}
 
