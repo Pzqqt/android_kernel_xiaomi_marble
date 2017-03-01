@@ -234,10 +234,13 @@ static void dp_interrupt_timer(void *arg)
 	struct dp_soc *soc = (struct dp_soc *) arg;
 	int i;
 
-	for (i = 0 ; i < wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx); i++)
-		dp_service_srngs(&soc->intr_ctx[i], 0xffff);
+	if (qdf_atomic_read(&soc->cmn_init_done)) {
+		for (i = 0;
+			i < wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx); i++)
+			dp_service_srngs(&soc->intr_ctx[i], 0xffff);
 
-	qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
+		qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
+	}
 }
 
 /*
@@ -716,7 +719,7 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 {
 	int i;
 
-	if (soc->cmn_init_done)
+	if (qdf_atomic_read(&soc->cmn_init_done))
 		return 0;
 
 	if (dp_peer_find_attach(soc))
@@ -857,7 +860,7 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 	/* Setup HW REO */
 	hal_reo_setup(soc->hal_soc);
 
-	soc->cmn_init_done = 1;
+	qdf_atomic_set(&soc->cmn_init_done, 1);
 	return 0;
 fail1:
 	/*
@@ -1152,7 +1155,7 @@ static void dp_soc_detach_wifi3(void *txrx_soc)
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
 	int i;
 
-	soc->cmn_init_done = 0;
+	qdf_atomic_set(&soc->cmn_init_done, 0);
 
 	dp_soc_interrupt_detach(soc);
 

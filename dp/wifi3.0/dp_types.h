@@ -281,7 +281,7 @@ struct dp_soc {
 	void *htt_handle;
 
 	/* Commint init done */
-	bool cmn_init_done;
+	qdf_atomic_t cmn_init_done;
 
 	/* Opaque hif handle */
 	struct hif_opaque_softc *hif_handle;
