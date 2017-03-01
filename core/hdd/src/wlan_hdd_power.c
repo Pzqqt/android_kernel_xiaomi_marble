@@ -1392,6 +1392,10 @@ QDF_STATUS hdd_wlan_re_init(void)
 	/* Restart all adapters */
 	hdd_start_all_adapters(pHddCtx);
 
+	pHddCtx->last_scan_reject_session_id = 0xFF;
+	pHddCtx->last_scan_reject_reason = 0;
+	pHddCtx->last_scan_reject_timestamp = 0;
+
 	pHddCtx->btCoexModeSet = false;
 
 	/* Allow the phone to go to sleep */

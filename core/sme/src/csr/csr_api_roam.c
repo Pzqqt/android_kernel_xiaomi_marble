@@ -19506,7 +19506,7 @@ void csr_process_set_hw_mode(tpAniSirGlobal mac, tSmeCmd *command)
 
 	if ((SIR_UPDATE_REASON_OPPORTUNISTIC ==
 	     command->u.set_hw_mode_cmd.reason) &&
-	    (true == cds_is_connection_in_progress())) {
+	    (true == cds_is_connection_in_progress(NULL, NULL))) {
 		sms_log(mac, LOGE, FL("Set HW mode refused: conn in progress"));
 		cds_restart_opportunistic_timer(false);
 		goto fail;

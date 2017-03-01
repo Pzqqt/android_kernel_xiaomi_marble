@@ -1508,6 +1508,8 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	uint16_t con_dfs_ch;
 	uint8_t num_chan = 0;
 	bool is_p2p_scan = false;
+	uint8_t curr_session_id;
+	enum scan_reject_states curr_reason;
 
 	ENTER();
 
@@ -1612,10 +1614,41 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 #endif
 
 	/* Check if scan is allowed at this point of time */
-	if (cds_is_connection_in_progress()) {
+	if (cds_is_connection_in_progress(&curr_session_id, &curr_reason)) {
 		hdd_err("Scan not allowed");
+		if (pHddCtx->last_scan_reject_session_id != curr_session_id ||
+		    pHddCtx->last_scan_reject_reason != curr_reason ||
+		    !pHddCtx->last_scan_reject_timestamp) {
+			pHddCtx->last_scan_reject_session_id = curr_session_id;
+			pHddCtx->last_scan_reject_reason = curr_reason;
+			pHddCtx->last_scan_reject_timestamp =
+				jiffies_to_msecs(jiffies);
+		} else {
+			hdd_err("curr_session id %d curr_reason %d time delta %lu",
+				curr_session_id, curr_reason,
+				(jiffies_to_msecs(jiffies) -
+				 pHddCtx->last_scan_reject_timestamp));
+			if ((jiffies_to_msecs(jiffies) -
+			    pHddCtx->last_scan_reject_timestamp) >=
+			    SCAN_REJECT_THRESHOLD_TIME) {
+				pHddCtx->last_scan_reject_timestamp = 0;
+				if (pHddCtx->config->enable_fatal_event) {
+					cds_flush_logs(WLAN_LOG_TYPE_FATAL,
+					    WLAN_LOG_INDICATOR_HOST_DRIVER,
+					    WLAN_LOG_REASON_SCAN_NOT_ALLOWED,
+					    false, true);
+				} else {
+					hdd_err("Triggering SSR due to scan stuck");
+					cds_trigger_recovery(false);
+				}
+			}
+		}
 		return -EBUSY;
 	}
+	pHddCtx->last_scan_reject_timestamp = 0;
+	pHddCtx->last_scan_reject_session_id = 0xFF;
+	pHddCtx->last_scan_reject_reason = 0;
+
 	/* Check whether SAP scan can be skipped or not */
 	if (pAdapter->device_mode == QDF_SAP_MODE &&
 	   wlan_hdd_sap_skip_scan_check(pHddCtx, request)) {

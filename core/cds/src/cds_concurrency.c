@@ -846,13 +846,15 @@ QDF_STATUS cds_pdev_set_hw_mode(uint32_t session_id,
 
 /**
  * cds_is_connection_in_progress() - check if connection is in progress
- * @hdd_ctx - HDD context
+ * @session_id: session id
+ * @reason: scan reject reason
  *
  * Go through each adapter and check if Connection is in progress
  *
  * Return: true if connection is in progress else false
  */
-bool cds_is_connection_in_progress(void)
+bool cds_is_connection_in_progress(uint8_t *session_id,
+				enum scan_reject_states *reason)
 {
 	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
 	hdd_station_ctx_t *hdd_sta_ctx = NULL;
@@ -890,6 +892,10 @@ bool cds_is_connection_in_progress(void)
 			cds_err("%p(%d) Connection is in progress",
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter),
 				adapter->sessionId);
+			if (session_id && reason) {
+				*session_id = adapter->sessionId;
+				*reason = eHDD_CONNECTION_IN_PROGRESS;
+			}
 			return true;
 		}
 		if ((QDF_STA_MODE == adapter->device_mode) &&
@@ -899,6 +905,10 @@ bool cds_is_connection_in_progress(void)
 			cds_err("%p(%d) Reassociation in progress",
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter),
 				adapter->sessionId);
+			if (session_id && reason) {
+				*session_id = adapter->sessionId;
+				*reason = eHDD_REASSOC_IN_PROGRESS;
+			}
 			return true;
 		}
 		if ((QDF_STA_MODE == adapter->device_mode) ||
@@ -915,6 +925,10 @@ bool cds_is_connection_in_progress(void)
 				cds_err("client " MAC_ADDRESS_STR
 					" is in middle of WPS/EAPOL exchange.",
 					MAC_ADDR_ARRAY(sta_mac));
+				if (session_id && reason) {
+					*session_id = adapter->sessionId;
+					*reason = eHDD_EAPOL_IN_PROGRESS;
+				}
 				return true;
 			}
 		} else if ((QDF_SAP_MODE == adapter->device_mode) ||
@@ -932,6 +946,10 @@ bool cds_is_connection_in_progress(void)
 				cds_err("client " MAC_ADDRESS_STR
 				" of SAP/GO is in middle of WPS/EAPOL exchange",
 				MAC_ADDR_ARRAY(sta_mac));
+				if (session_id && reason) {
+					*session_id = adapter->sessionId;
+					*reason = eHDD_SAP_EAPOL_IN_PROGRESS;
+				}
 				return true;
 			}
 			if (hdd_ctx->connection_in_progress) {

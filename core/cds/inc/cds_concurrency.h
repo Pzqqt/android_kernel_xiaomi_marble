@@ -729,7 +729,8 @@ typedef const enum cds_conc_next_action next_action_two_connection_table_type
 typedef const enum cds_conc_next_action next_action_three_connection_table_type
 [CDS_MAX_TWO_CONNECTION_MODE][CDS_MAX_BAND];
 
-bool cds_is_connection_in_progress(void);
+bool cds_is_connection_in_progress(uint8_t *session_id,
+				enum scan_reject_states *reason);
 void cds_dump_concurrency_info(void);
 
 #ifdef FEATURE_WLAN_TDLS

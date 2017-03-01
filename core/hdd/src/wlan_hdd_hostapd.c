@@ -7214,7 +7214,7 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 
 	ENTER();
 
-	if (!update_beacon && cds_is_connection_in_progress()) {
+	if (!update_beacon && cds_is_connection_in_progress(NULL, NULL)) {
 		hdd_err("Can't start BSS: connection is in progress");
 		return -EINVAL;
 	}
@@ -8086,7 +8086,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		pAdapter->device_mode, cds_is_sub_20_mhz_enabled());
 
 
-	if (cds_is_connection_in_progress()) {
+	if (cds_is_connection_in_progress(NULL, NULL)) {
 		hdd_err("Can't start BSS: connection is in progress");
 		return -EBUSY;
 	}

@@ -6867,6 +6867,7 @@ static hdd_context_t *hdd_context_create(struct device *dev)
 
 	hdd_ctx->pcds_context = p_cds_context;
 	hdd_ctx->parent_dev = dev;
+	hdd_ctx->last_scan_reject_session_id = 0xFF;
 
 	hdd_ctx->config = qdf_mem_malloc(sizeof(struct hdd_config));
 	if (hdd_ctx->config == NULL) {
