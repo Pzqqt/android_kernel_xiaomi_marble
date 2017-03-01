@@ -2935,8 +2935,7 @@ void wma_hidden_ssid_vdev_restart(tp_wma_handle wma_handle,
 		wma_handle->
 		interfaces[pReq->sessionId].handle,
 		OL_TXQ_PAUSE_REASON_VDEV_STOP);
-	wma_handle->interfaces[pReq->sessionId].pause_bitmap |=
-							(1 << PAUSE_TYPE_HOST);
+	wma_vdev_set_pause_bit(pReq->sessionId, PAUSE_TYPE_HOST);
 	if (wma_send_vdev_stop_to_fw(wma_handle, pReq->sessionId)) {
 		WMA_LOGE("%s: %d Failed to send vdev stop", __func__, __LINE__);
 		qdf_atomic_set(&intr[pReq->sessionId].vdev_restart_params.

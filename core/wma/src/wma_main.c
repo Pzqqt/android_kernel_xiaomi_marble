@@ -86,6 +86,7 @@
 #include "wlan_global_lmac_if_api.h"
 #include "target_if_pmo.h"
 #include "wma_he.h"
+#include "wlan_pmo_obj_mgmt_api.h"
 
 #include <cdp_txrx_handle.h>
 #define WMA_LOG_COMPLETION_TIMER 10000 /* 10 seconds */
@@ -2533,6 +2534,11 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *cds_context,
 	wma_ndp_register_all_event_handlers(wma_handle);
 
 	wma_register_debug_callback();
+	/* Register callback with PMO so PMO can update the vdev pause bitmap*/
+	pmo_register_pause_bitmap_notifier(wma_handle->psoc,
+		wma_vdev_update_pause_bitmap);
+	pmo_register_get_pause_bitmap(wma_handle->psoc,
+		wma_vdev_get_pause_bitmap);
 
 	return QDF_STATUS_SUCCESS;
 
@@ -3633,6 +3639,12 @@ QDF_STATUS wma_close(void *cds_ctx)
 	wma_handle->psoc = NULL;
 	target_if_close();
 	wma_target_if_close(wma_handle);
+
+	pmo_unregister_pause_bitmap_notifier(wma_handle->psoc,
+		wma_vdev_update_pause_bitmap);
+	pmo_unregister_get_pause_bitmap(wma_handle->psoc,
+		wma_vdev_get_pause_bitmap);
+
 
 	WMA_LOGD("%s: Exit", __func__);
 	return QDF_STATUS_SUCCESS;

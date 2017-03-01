@@ -1222,7 +1222,7 @@ void wma_set_linkstate(tp_wma_handle wma, tpLinkStateParams params)
 		cdp_fc_vdev_pause(soc,
 			wma->interfaces[vdev_id].handle,
 			OL_TXQ_PAUSE_REASON_VDEV_STOP);
-		wma->interfaces[vdev_id].pause_bitmap |= (1 << PAUSE_TYPE_HOST);
+		wma_vdev_set_pause_bit(vdev_id, PAUSE_TYPE_HOST);
 		if (wma_send_vdev_stop_to_fw(wma, vdev_id)) {
 			WMA_LOGP("%s: %d Failed to send vdev stop",
 				 __func__, __LINE__);
@@ -1259,11 +1259,11 @@ void wma_unpause_vdev(tp_wma_handle wma)
 
 #if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || defined(QCA_LL_TX_FLOW_CONTROL_V2)
 		/* When host resume, by default, unpause all active vdev */
-		if (wma->interfaces[vdev_id].pause_bitmap) {
+		if (wma_vdev_get_pause_bitmap(vdev_id)) {
 			cdp_fc_vdev_unpause(cds_get_context(QDF_MODULE_ID_SOC),
 			     wma->interfaces[vdev_id].handle,
 			     0xffffffff);
-			wma->interfaces[vdev_id].pause_bitmap = 0;
+			wma_vdev_update_pause_bitmap(vdev_id, 0);
 		}
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 
@@ -1650,20 +1650,20 @@ int wma_mcc_vdev_tx_pause_evt_handler(void *handle, uint8_t *event,
 				 * Now only support per-dev pause so it is not
 				 * necessary to pause a paused queue again.
 				 */
-				if (!wma->interfaces[vdev_id].pause_bitmap)
+				if (!wma_vdev_get_pause_bitmap(vdev_id))
 					cdp_fc_vdev_pause(soc,
 						wma->
 						interfaces[vdev_id].handle,
 						OL_TXQ_PAUSE_REASON_FW);
-				wma->interfaces[vdev_id].pause_bitmap |=
-					(1 << wmi_event->pause_type);
+				wma_vdev_set_pause_bit(vdev_id,
+					wmi_event->pause_type);
 			}
 			/* UNPAUSE action, clean bitmap */
 			else if (ACTION_UNPAUSE == wmi_event->action) {
 				/* Handle unpause only if already paused */
-				if (wma->interfaces[vdev_id].pause_bitmap) {
-					wma->interfaces[vdev_id].pause_bitmap &=
-						~(1 << wmi_event->pause_type);
+				if (wma_vdev_get_pause_bitmap(vdev_id)) {
+					wma_vdev_clear_pause_bit(vdev_id,
+						wmi_event->pause_type);
 
 					if (!wma->interfaces[vdev_id].
 					    pause_bitmap) {
@@ -1682,7 +1682,7 @@ int wma_mcc_vdev_tx_pause_evt_handler(void *handle, uint8_t *event,
 
 			WMA_LOGD
 				("vdev_id %d, pause_map 0x%x, pause type %d, action %d",
-				vdev_id, wma->interfaces[vdev_id].pause_bitmap,
+				vdev_id, wma_vdev_get_pause_bitmap(vdev_id),
 				wmi_event->pause_type, wmi_event->action);
 		}
 		/* Test Next VDEV */
@@ -2998,7 +2998,7 @@ void wma_tx_abort(uint8_t vdev_id)
 		return;
 	}
 	WMA_LOGI("%s: vdevid %d bssid %pM", __func__, vdev_id, iface->bssid);
-	iface->pause_bitmap |= (1 << PAUSE_TYPE_HOST);
+	wma_vdev_set_pause_bit(vdev_id, PAUSE_TYPE_HOST);
 	cdp_fc_vdev_pause(cds_get_context(QDF_MODULE_ID_SOC),
 			iface->handle,
 			OL_TXQ_PAUSE_REASON_TX_ABORT);

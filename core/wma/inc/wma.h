@@ -2377,4 +2377,121 @@ void wma_vdev_set_mlme_state(tp_wma_handle wma, uint8_t vdev_id,
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
 	}
 }
+
+/**
+ * wma_update_vdev_pause_bitmap() - update vdev pause bitmap
+ * @vdev_id: the Id of the vdev to configure
+ * @value: value pause bitmap value
+ *
+ * Return: None
+ */
+static inline
+void wma_vdev_update_pause_bitmap(uint8_t vdev_id, uint16_t value)
+{
+	tp_wma_handle wma = (tp_wma_handle)cds_get_context(QDF_MODULE_ID_WMA);
+	struct wma_txrx_node *iface;
+
+	if (vdev_id > wma->max_bssid) {
+		WMA_LOGE("%s: Invalid vdev_id: %d", __func__, vdev_id);
+		return;
+	}
+
+	if (!wma) {
+		WMA_LOGE("%s: WMA context is invald!", __func__);
+		return;
+	}
+
+	iface = &wma->interfaces[vdev_id];
+	if (!iface || !iface->handle) {
+		WMA_LOGE("%s: Failed to get iface handle: %p",
+			 __func__, iface->handle);
+		return;
+	}
+
+	iface->pause_bitmap = value;
+}
+
+/**
+ * wma_vdev_get_pause_bitmap() - Get vdev pause bitmap
+ * @vdev_id: the Id of the vdev to configure
+ *
+ * Return: Vdev pause bitmap value else 0 on error
+ */
+static inline
+uint16_t wma_vdev_get_pause_bitmap(uint8_t vdev_id)
+{
+	tp_wma_handle wma = (tp_wma_handle)cds_get_context(QDF_MODULE_ID_WMA);
+	struct wma_txrx_node *iface;
+
+	if (!wma) {
+		WMA_LOGE("%s: WMA context is invald!", __func__);
+		return 0;
+	}
+
+	iface = &wma->interfaces[vdev_id];
+	if (!iface || !iface->handle) {
+		WMA_LOGE("%s: Failed to get iface handle: %p",
+			 __func__, iface->handle);
+		return 0;
+	}
+
+	return iface->pause_bitmap;
+}
+
+/**
+ * wma_vdev_set_pause_bit() - Set a bit in vdev pause bitmap
+ * @vdev_id: the Id of the vdev to configure
+ * @bit_pos: set bit position in pause bitmap
+ *
+ * Return: None
+ */
+static inline
+void wma_vdev_set_pause_bit(uint8_t vdev_id, wmi_tx_pause_type bit_pos)
+{
+	tp_wma_handle wma = (tp_wma_handle)cds_get_context(QDF_MODULE_ID_WMA);
+	struct wma_txrx_node *iface;
+
+	if (!wma) {
+		WMA_LOGE("%s: WMA context is invald!", __func__);
+		return;
+	}
+
+	iface = &wma->interfaces[vdev_id];
+	if (!iface || !iface->handle) {
+		WMA_LOGE("%s: Failed to get iface handle: %p",
+			 __func__, iface->handle);
+		return;
+	}
+
+	iface->pause_bitmap |= (1 << bit_pos);
+}
+
+/**
+ * wma_vdev_clear_pause_bit() - Clear a bit from vdev pause bitmap
+ * @vdev_id: the Id of the vdev to configure
+ * @bit_pos: set bit position in pause bitmap
+ *
+ * Return: None
+ */
+static inline
+void wma_vdev_clear_pause_bit(uint8_t vdev_id, wmi_tx_pause_type bit_pos)
+{
+	tp_wma_handle wma = (tp_wma_handle)cds_get_context(QDF_MODULE_ID_WMA);
+	struct wma_txrx_node *iface;
+
+	if (!wma) {
+		WMA_LOGE("%s: WMA context is invald!", __func__);
+		return;
+	}
+
+	iface = &wma->interfaces[vdev_id];
+	if (!iface || !iface->handle) {
+		WMA_LOGE("%s: Failed to get iface handle: %p",
+			 __func__, iface->handle);
+		return;
+	}
+
+	iface->pause_bitmap &= ~(1 << bit_pos);
+}
+
 #endif

@@ -911,7 +911,7 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 		cdp_fc_vdev_unpause(cds_get_context(QDF_MODULE_ID_SOC),
 				iface->handle,
 				OL_TXQ_PAUSE_REASON_VDEV_STOP);
-		iface->pause_bitmap &= ~(1 << PAUSE_TYPE_HOST);
+		wma_vdev_clear_pause_bit(resp_event->vdev_id, PAUSE_TYPE_HOST);
 	}
 
 	req_msg = wma_find_vdev_req(wma, resp_event->vdev_id,
@@ -1527,7 +1527,7 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 			 __func__, resp_event->vdev_id);
 		cdp_fc_vdev_unpause(soc, iface->handle,
 				     OL_TXQ_PAUSE_REASON_VDEV_STOP);
-		iface->pause_bitmap &= ~(1 << PAUSE_TYPE_HOST);
+		wma_vdev_clear_pause_bit(resp_event->vdev_id, PAUSE_TYPE_HOST);
 		qdf_atomic_set(&iface->bss_status, WMA_BSS_STATUS_STOPPED);
 		WMA_LOGD("%s: (type %d subtype %d) BSS is stopped",
 			 __func__, iface->type, iface->sub_type);
@@ -1640,7 +1640,7 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 					self_sta_req->self_mac_addr,
 					self_sta_req->session_id,
 					txrx_vdev_type);
-	wma_handle->interfaces[self_sta_req->session_id].pause_bitmap = 0;
+	wma_vdev_update_pause_bitmap(self_sta_req->session_id, 0);
 
 	WMA_LOGD("vdev_id %hu, txrx_vdev_handle = %p", self_sta_req->session_id,
 		 txrx_vdev_handle);
@@ -2112,7 +2112,7 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 		cdp_fc_vdev_unpause(cds_get_context(QDF_MODULE_ID_SOC),
 			wma->interfaces[params.vdev_id].handle,
 			0xffffffff);
-		wma->interfaces[params.vdev_id].pause_bitmap = 0;
+		wma_vdev_update_pause_bitmap(params.vdev_id, 0);
 	}
 
 	return wma_send_vdev_start_to_fw(wma, &params);
@@ -2607,7 +2607,7 @@ void wma_vdev_resp_timer(void *data)
 			 __func__, tgt_req->vdev_id);
 		cdp_fc_vdev_unpause(soc, iface->handle,
 				     OL_TXQ_PAUSE_REASON_VDEV_STOP);
-		iface->pause_bitmap &= ~(1 << PAUSE_TYPE_HOST);
+		wma_vdev_clear_pause_bit(tgt_req->vdev_id, PAUSE_TYPE_HOST);
 		qdf_atomic_set(&iface->bss_status, WMA_BSS_STATUS_STOPPED);
 		WMA_LOGD("%s: (type %d subtype %d) BSS is stopped",
 			 __func__, iface->type, iface->sub_type);
@@ -4452,14 +4452,14 @@ void wma_delete_bss_ho_fail(tp_wma_handle wma, tpDeleteBssParams params)
 		 __func__, params->smesessionId);
 	cdp_fc_vdev_pause(soc, iface->handle,
 			   OL_TXQ_PAUSE_REASON_VDEV_STOP);
-	iface->pause_bitmap |= (1 << PAUSE_TYPE_HOST);
+	wma_vdev_set_pause_bit(params->smesessionId, PAUSE_TYPE_HOST);
 
 	cdp_fc_vdev_flush(soc, iface->handle);
 	WMA_LOGD("%s, vdev_id: %d, un-pausing tx_ll_queue for VDEV_STOP rsp",
 			__func__, params->smesessionId);
 	cdp_fc_vdev_unpause(soc, iface->handle,
 			OL_TXQ_PAUSE_REASON_VDEV_STOP);
-	iface->pause_bitmap &= ~(1 << PAUSE_TYPE_HOST);
+	wma_vdev_clear_pause_bit(params->smesessionId, PAUSE_TYPE_HOST);
 	qdf_atomic_set(&iface->bss_status, WMA_BSS_STATUS_STOPPED);
 	WMA_LOGD("%s: (type %d subtype %d) BSS is stopped",
 			__func__, iface->type, iface->sub_type);
@@ -4602,11 +4602,10 @@ void wma_delete_bss(tp_wma_handle wma, tpDeleteBssParams params)
 
 	WMA_LOGD("%s, vdev_id: %d, pausing tx_ll_queue for VDEV_STOP (del_bss)",
 		 __func__, params->smesessionId);
-	iface->pause_bitmap |= (1 << PAUSE_TYPE_HOST);
+	wma_vdev_set_pause_bit(params->smesessionId, PAUSE_TYPE_HOST);
 	cdp_fc_vdev_pause(soc,
 		wma->interfaces[params->smesessionId].handle,
 		OL_TXQ_PAUSE_REASON_VDEV_STOP);
-	iface->pause_bitmap |= (1 << PAUSE_TYPE_HOST);
 
 	if (wma_send_vdev_stop_to_fw(wma, params->smesessionId)) {
 		WMA_LOGP("%s: %d Failed to send vdev stop", __func__, __LINE__);
