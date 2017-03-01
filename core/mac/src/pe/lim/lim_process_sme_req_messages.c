@@ -3918,8 +3918,7 @@ end:
 			       smesessionId, smetransactionId);
 }
 
-static void lim_process_sme_addts_rsp_timeout(tpAniSirGlobal pMac,
-					      uint32_t param)
+void lim_process_sme_addts_rsp_timeout(tpAniSirGlobal pMac, uint32_t param)
 {
 	/* fetch the sessionEntry based on the sessionId */
 	tpPESession psessionEntry;

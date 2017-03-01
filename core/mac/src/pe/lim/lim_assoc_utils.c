@@ -573,6 +573,10 @@ lim_cleanup_rx_path(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 			       (pMac, TRACE_CODE_TIMER_DEACTIVATE,
 			       psessionEntry->peSessionId, eLIM_ADDTS_RSP_TIMER));
 		tx_timer_deactivate(&pMac->lim.limTimers.gLimAddtsRspTimer);
+		lim_log(pMac, LOG1,
+			FL("Reset gLimAddtsSent flag and send addts timeout to SME"));
+		lim_process_sme_addts_rsp_timeout(pMac,
+					pMac->lim.gLimAddtsRspTimerCount);
 	}
 
 	if (pStaDs->mlmStaContext.mlmState == eLIM_MLM_WT_ASSOC_CNF_STATE) {

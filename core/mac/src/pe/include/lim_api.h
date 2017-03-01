@@ -337,6 +337,18 @@ void lim_process_abort_scan_ind(tpAniSirGlobal pMac, uint8_t sessionId,
 	uint32_t scan_id, uint32_t scan_requestor_id);
 
 void __lim_process_sme_assoc_cnf_new(tpAniSirGlobal, uint32_t, uint32_t *);
+
+/**
+ * lim_process_sme_addts_rsp_timeout(): Send addts rsp timeout to SME
+ * @pMac: Pointer to Global MAC structure
+ * @param: Addts rsp timer count
+ *
+ * This function is used to reset the addts sent flag and
+ * send addts rsp timeout to SME
+ *
+ * Return: None
+ */
+void lim_process_sme_addts_rsp_timeout(tpAniSirGlobal pMac, uint32_t param);
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 void lim_fill_join_rsp_ht_caps(tpPESession session, tpSirSmeJoinRsp rsp);
 #else
