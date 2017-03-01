@@ -482,10 +482,10 @@ void htt_h2t_send_complete(void *context, HTC_PACKET *pkt);
 
 A_STATUS htt_h2t_ver_req_msg(struct htt_pdev_t *pdev);
 
-#if defined(HELIUMPLUS_PADDR64)
+#if defined(HELIUMPLUS)
 A_STATUS
 htt_h2t_frag_desc_bank_cfg_msg(struct htt_pdev_t *pdev);
-#endif /* defined(HELIUMPLUS_PADDR64) */
+#endif /* defined(HELIUMPLUS) */
 
 extern QDF_STATUS htt_h2t_rx_ring_cfg_msg_ll(struct htt_pdev_t *pdev);
 

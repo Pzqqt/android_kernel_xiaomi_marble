@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2015, 2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -112,7 +112,7 @@ struct rx_msdu_start {
 		tcp_only_ack:1, /* [15] */
 		sa_idx:11, /* [26:16] */
 		reserved_2b:5; /* [31:27] */
-#if defined(HELIUMPLUS_PADDR64)
+#if defined(HELIUMPLUS)
 	volatile
 	uint32_t da_idx:11, /* [10:0] */
 		da_is_bcast_mcast:1, /* [11] */
@@ -120,7 +120,7 @@ struct rx_msdu_start {
 		ip4_protocol_ip6_next_header:8, /* [23:16] */
 		ring_mask:8; /* [31:24] */
 	volatile uint32_t toeplitz_hash_2_or_4:32; /* [31:0] */
-#endif /* defined(HELIUMPLUS_PADDR64) */
+#endif /* defined(HELIUMPLUS) */
 };
 
 struct rx_msdu_end {
@@ -152,7 +152,7 @@ struct rx_msdu_end {
 		reserved_3a:3, /* [29:27] */
 		pre_delim_err:1, /* [30] */
 		reserved_3b:1; /* [31] */
-#if defined(HELIUMPLUS_PADDR64)
+#if defined(HELIUMPLUS)
 	volatile uint32_t ipv6_options_crc:32;
 	volatile uint32_t tcp_seq_number:32;
 	volatile uint32_t tcp_ack_number:32;
@@ -173,7 +173,7 @@ struct rx_msdu_end {
 	volatile uint32_t rule_indication_63_32:32;
 	volatile uint32_t rule_indication_95_64:32;
 	volatile uint32_t rule_indication_127_96:32;
-#endif /* defined(HELIUMPLUS_PADDR64) */
+#endif /* defined(HELIUMPLUS) */
 };
 
 struct rx_mpdu_end {

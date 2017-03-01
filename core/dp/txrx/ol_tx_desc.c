@@ -552,7 +552,7 @@ struct ol_tx_desc_t *ol_tx_desc_ll(struct ol_txrx_pdev_t *pdev,
 	num_frags = (num_frags > QDF_NBUF_CB_TX_MAX_EXTRA_FRAGS)
 		? QDF_NBUF_CB_TX_MAX_EXTRA_FRAGS
 		: num_frags;
-#if defined(HELIUMPLUS_PADDR64)
+#if defined(HELIUMPLUS)
 	/*
 	 * Use num_frags - 1, since 1 frag is used to store
 	 * the HTT/HTC descriptor
@@ -560,10 +560,10 @@ struct ol_tx_desc_t *ol_tx_desc_ll(struct ol_txrx_pdev_t *pdev,
 	 */
 	htt_tx_desc_num_frags(pdev->htt_pdev, tx_desc->htt_frag_desc,
 			      num_frags - 1);
-#else /* ! defined(HELIUMPLUSPADDR64) */
+#else /* ! defined(HELIUMPLUS) */
 	htt_tx_desc_num_frags(pdev->htt_pdev, tx_desc->htt_tx_desc,
 			      num_frags - 1);
-#endif /* defined(HELIUMPLUS_PADDR64) */
+#endif /* defined(HELIUMPLUS) */
 
 	if (msdu_info->tso_info.is_tso) {
 		htt_tx_desc_fill_tso_info(pdev->htt_pdev,
@@ -581,7 +581,7 @@ struct ol_tx_desc_t *ol_tx_desc_ll(struct ol_txrx_pdev_t *pdev,
 #endif
 			frag_len = qdf_nbuf_get_frag_len(netbuf, i);
 			frag_paddr = qdf_nbuf_get_frag_paddr(netbuf, i);
-#if defined(HELIUMPLUS_PADDR64)
+#if defined(HELIUMPLUS)
 			htt_tx_desc_frag(pdev->htt_pdev, tx_desc->htt_frag_desc, i - 1,
 				 frag_paddr, frag_len);
 #if defined(HELIUMPLUS_DEBUG)
@@ -590,10 +590,10 @@ struct ol_tx_desc_t *ol_tx_desc_ll(struct ol_txrx_pdev_t *pdev,
 				  i-1, frag_vaddr, frag_paddr, frag_len);
 			ol_txrx_dump_pkt(netbuf, frag_paddr, 64);
 #endif /* HELIUMPLUS_DEBUG */
-#else /* ! defined(HELIUMPLUSPADDR64) */
+#else /* ! defined(HELIUMPLUS) */
 			htt_tx_desc_frag(pdev->htt_pdev, tx_desc->htt_tx_desc, i - 1,
 							 frag_paddr, frag_len);
-#endif /* defined(HELIUMPLUS_PADDR64) */
+#endif /* defined(HELIUMPLUS) */
 		}
 	}
 
@@ -704,7 +704,7 @@ void ol_tx_desc_frame_free_nonstd(struct ol_txrx_pdev_t *pdev,
 		   (tx_desc->pkt_type != ol_tx_frm_freed)) {
 		qdf_dma_addr_t frag_desc_paddr = 0;
 
-#if defined(HELIUMPLUS_PADDR64)
+#if defined(HELIUMPLUS)
 		frag_desc_paddr = tx_desc->htt_frag_desc_paddr;
 		/* FIX THIS -
 		 * The FW currently has trouble using the host's fragments
@@ -720,7 +720,7 @@ void ol_tx_desc_frame_free_nonstd(struct ol_txrx_pdev_t *pdev,
 			  __func__, __LINE__, tx_desc->id,
 			  frag_desc_paddr);
 #endif /* HELIUMPLUS_DEBUG */
-#endif /* HELIUMPLUS_PADDR64 */
+#endif /* HELIUMPLUS */
 		htt_tx_desc_frags_table_set(pdev->htt_pdev,
 					    tx_desc->htt_tx_desc, 0,
 					    frag_desc_paddr, 1);

@@ -1027,10 +1027,10 @@ htt_rx_amsdu_pop_ll(htt_pdev_handle pdev,
 		 * Check if this MSDU completes a MPDU.
 		 */
 		rx_desc = htt_rx_desc(msdu);
-#if defined(HELIUMPLUS_PADDR64)
+#if defined(HELIUMPLUS)
 		if (HTT_WIFI_IP(pdev, 2, 0))
 			pad_bytes = rx_desc->msdu_end.l3_header_padding;
-#endif /* defined(HELIUMPLUS_PADDR64) */
+#endif /* defined(HELIUMPLUS) */
 		/*
 		 * Make the netbuf's data pointer point to the payload rather
 		 * than the descriptor.

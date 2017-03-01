@@ -323,10 +323,9 @@ htt_pdev_alloc(ol_txrx_pdev_handle txrx_pdev,
 	}
 
 	pdev->targetdef = htc_get_targetdef(htc_pdev);
-#if defined(HELIUMPLUS_PADDR64)
-	/* TODO: OKA: Remove hard-coding */
+#if defined(HELIUMPLUS)
 	HTT_SET_WIFI_IP(pdev, 2, 0);
-#endif /* defined(HELIUMPLUS_PADDR64) */
+#endif /* defined(HELIUMPLUS) */
 
 	if (NO_HTT_NEEDED)
 		goto success;
@@ -519,12 +518,12 @@ A_STATUS htt_attach_target(htt_pdev_handle pdev)
 	if (status != A_OK)
 		return status;
 
-#if defined(HELIUMPLUS_PADDR64)
+#if defined(HELIUMPLUS)
 	/*
 	 * Send the frag_desc info to target.
 	 */
 	htt_h2t_frag_desc_bank_cfg_msg(pdev);
-#endif /* defined(HELIUMPLUS_PADDR64) */
+#endif /* defined(HELIUMPLUS) */
 
 
 	/*

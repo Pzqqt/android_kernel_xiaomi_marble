@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -625,7 +625,7 @@ void htt_tx_desc_frags_table_set(htt_pdev_handle pdev,
 		((uint32_t *) htt_tx_desc) +
 		HTT_TX_DESC_FRAGS_DESC_PADDR_OFFSET_DWORD;
 	if (reset) {
-#if defined(HELIUMPLUS_PADDR64)
+#if defined(HELIUMPLUS)
 		*fragmentation_descr_field_ptr = frag_desc_paddr;
 #else
 		*fragmentation_descr_field_ptr =

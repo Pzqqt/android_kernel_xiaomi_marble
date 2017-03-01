@@ -495,7 +495,7 @@ ol_tx_prepare_ll_fast(struct ol_txrx_pdev_t *pdev,
 	num_frags = (num_frags > QDF_NBUF_CB_TX_MAX_EXTRA_FRAGS)
 		? QDF_NBUF_CB_TX_MAX_EXTRA_FRAGS
 		: num_frags;
-#if defined(HELIUMPLUS_PADDR64)
+#if defined(HELIUMPLUS)
 	/*
 	 * Use num_frags - 1, since 1 frag is used to store
 	 * the HTT/HTC descriptor
@@ -503,10 +503,10 @@ ol_tx_prepare_ll_fast(struct ol_txrx_pdev_t *pdev,
 	 */
 	htt_tx_desc_num_frags(pdev->htt_pdev, tx_desc->htt_frag_desc,
 			      num_frags - 1);
-#else /* ! defined(HELIUMPLUSPADDR64) */
+#else /* ! defined(HELIUMPLUS) */
 	htt_tx_desc_num_frags(pdev->htt_pdev, tx_desc->htt_tx_desc,
 			      num_frags-1);
-#endif /* defined(HELIUMPLUS_PADDR64) */
+#endif /* defined(HELIUMPLUS) */
 	if (msdu_info->tso_info.is_tso) {
 		htt_tx_desc_fill_tso_info(pdev->htt_pdev,
 			 tx_desc->htt_frag_desc, &msdu_info->tso_info);
@@ -526,7 +526,7 @@ ol_tx_prepare_ll_fast(struct ol_txrx_pdev_t *pdev,
 				frag_len -=
 				    sizeof(struct htt_tx_msdu_desc_ext_t);
 			}
-#if defined(HELIUMPLUS_PADDR64)
+#if defined(HELIUMPLUS)
 			htt_tx_desc_frag(pdev->htt_pdev, tx_desc->htt_frag_desc,
 					 i - 1, frag_paddr, frag_len);
 #if defined(HELIUMPLUS_DEBUG)
@@ -535,10 +535,10 @@ ol_tx_prepare_ll_fast(struct ol_txrx_pdev_t *pdev,
 				  i-1, frag_paddr, frag_len);
 			ol_txrx_dump_pkt(netbuf, frag_paddr, 64);
 #endif /* HELIUMPLUS_DEBUG */
-#else /* ! defined(HELIUMPLUSPADDR64) */
+#else /* ! defined(HELIUMPLUS) */
 			htt_tx_desc_frag(pdev->htt_pdev, tx_desc->htt_tx_desc,
 					 i - 1, frag_paddr, frag_len);
-#endif /* defined(HELIUMPLUS_PADDR64) */
+#endif /* defined(HELIUMPLUS) */
 		}
 	}
 
@@ -1424,10 +1424,10 @@ ol_txrx_mgmt_tx_desc_alloc(
 	 * specifying the fragment table to the FW, specify just the
 	 * address of the initial fragment.
 	 */
-#if defined(HELIUMPLUS_PADDR64)
+#if defined(HELIUMPLUS)
 	/* ol_txrx_dump_frag_desc("ol_txrx_mgmt_send(): after ol_tx_desc_ll",
 	   tx_desc); */
-#endif /* defined(HELIUMPLUS_PADDR64) */
+#endif /* defined(HELIUMPLUS) */
 	if (tx_desc) {
 		/*
 		 * Following the call to ol_tx_desc_ll, frag 0 is the
@@ -1439,11 +1439,11 @@ ol_txrx_mgmt_tx_desc_alloc(
 				tx_desc->htt_tx_desc,
 				qdf_nbuf_get_frag_paddr(tx_mgmt_frm, 1),
 				0, 0);
-#if defined(HELIUMPLUS_PADDR64) && defined(HELIUMPLUS_DEBUG)
+#if defined(HELIUMPLUS) && defined(HELIUMPLUS_DEBUG)
 		ol_txrx_dump_frag_desc(
 				"after htt_tx_desc_frags_table_set",
 				tx_desc);
-#endif /* defined(HELIUMPLUS_PADDR64) */
+#endif /* defined(HELIUMPLUS) */
 	}
 
 	return tx_desc;
@@ -1733,7 +1733,7 @@ ol_txrx_mgmt_tx_cb_set(struct cdp_pdev *ppdev,
 	pdev->tx_mgmt.callbacks[type].ctxt = ctxt;
 }
 
-#if defined(HELIUMPLUS_PADDR64)
+#if defined(HELIUMPLUS)
 void ol_txrx_dump_frag_desc(char *msg, struct ol_tx_desc_t *tx_desc)
 {
 	uint32_t                *frag_ptr_i_p;
@@ -1771,7 +1771,7 @@ void ol_txrx_dump_frag_desc(char *msg, struct ol_tx_desc_t *tx_desc)
 	}
 	return;
 }
-#endif /* HELIUMPLUS_PADDR64 */
+#endif /* HELIUMPLUS */
 
 int
 ol_txrx_mgmt_send_ext(struct cdp_vdev *pvdev,

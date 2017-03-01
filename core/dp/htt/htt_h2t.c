@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -119,7 +119,7 @@ HTC_SEND_FULL_ACTION htt_h2t_full(void *context, HTC_PACKET *pkt)
 	return HTC_SEND_FULL_KEEP;
 }
 
-#if defined(HELIUMPLUS_PADDR64)
+#if defined(HELIUMPLUS)
 A_STATUS htt_h2t_frag_desc_bank_cfg_msg(struct htt_pdev_t *pdev)
 {
 	A_STATUS rc = A_OK;
@@ -210,7 +210,7 @@ A_STATUS htt_h2t_frag_desc_bank_cfg_msg(struct htt_pdev_t *pdev)
 	return rc;
 }
 
-#endif /* defined(HELIUMPLUS_PADDR64) */
+#endif /* defined(HELIUMPLUS) */
 
 A_STATUS htt_h2t_ver_req_msg(struct htt_pdev_t *pdev)
 {

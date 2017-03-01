@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -371,7 +371,7 @@ void *htt_tx_desc_alloc(htt_pdev_handle pdev, qdf_dma_addr_t *paddr,
  */
 void htt_tx_desc_free(htt_pdev_handle htt_pdev, void *htt_tx_desc);
 
-#if defined(HELIUMPLUS_PADDR64)
+#if defined(HELIUMPLUS)
 /**
  * @brief Allocate TX frag descriptor
  * @details
@@ -392,7 +392,7 @@ static inline int htt_tx_frag_alloc(htt_pdev_handle pdev,
 	*frag_ptr = NULL;
 	return 0;
 }
-#endif /* defined(HELIUMPLUS_PADDR64) */
+#endif /* defined(HELIUMPLUS) */
 
 #if defined(CONFIG_HL_SUPPORT)
 
@@ -598,7 +598,7 @@ htt_tx_desc_num_frags(htt_pdev_handle pdev, void *desc, uint32_t num_frags)
 	 * Set the element after the valid frag elems to 0x0,
 	 * to terminate the list of fragments.
 	 */
-#if defined(HELIUMPLUS_PADDR64)
+#if defined(HELIUMPLUS)
 	if (HTT_WIFI_IP(pdev, 2, 0)) {
 		struct msdu_ext_frag_desc *fdesc;
 
@@ -611,10 +611,10 @@ htt_tx_desc_num_frags(htt_pdev_handle pdev, void *desc, uint32_t num_frags)
 		*((u_int32_t *)
 		  (((char *) desc) + HTT_TX_DESC_LEN + num_frags * 8)) = 0;
 	}
-#else /* ! HELIUMPLUS_PADDR64 */
+#else /* ! HELIUMPLUS */
 	*((uint32_t *)
 	  (((char *)desc) + HTT_TX_DESC_LEN + num_frags * 8)) = 0;
-#endif /* HELIUMPLUS_PADDR64 */
+#endif /* HELIUMPLUS */
 }
 
 /* checksum offload flags for hw */
@@ -649,7 +649,7 @@ htt_tx_desc_frag(htt_pdev_handle pdev,
 		 int frag_num, qdf_dma_addr_t frag_phys_addr, uint16_t frag_len)
 {
 	uint32_t *word32;
-#if defined(HELIUMPLUS_PADDR64)
+#if defined(HELIUMPLUS)
 	uint64_t  *word64;
 
 	if (HTT_WIFI_IP(pdev, 2, 0)) {
@@ -685,7 +685,7 @@ htt_tx_desc_frag(htt_pdev_handle pdev,
 		/* For Helium+, this block cannot exist */
 		QDF_ASSERT(0);
 	}
-#else /* !defined(HELIUMPLUS_PADDR64) */
+#else /* !defined(HELIUMPLUS) */
 	{
 		uint64_t u64  = (uint64_t)frag_phys_addr;
 		uint32_t u32l = (u64 & 0xffffffff);
@@ -698,7 +698,7 @@ htt_tx_desc_frag(htt_pdev_handle pdev,
 		word32++;
 		*word32 = (u32h << 16) | frag_len;
 	}
-#endif /* defined(HELIUMPLUS_PADDR64) */
+#endif /* defined(HELIUMPLUS) */
 }
 
 void htt_tx_desc_frags_table_set(htt_pdev_handle pdev,

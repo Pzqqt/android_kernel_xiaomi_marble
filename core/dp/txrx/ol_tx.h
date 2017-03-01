@@ -196,7 +196,7 @@ static inline void ol_tso_num_seg_list_deinit(struct ol_txrx_pdev_t *pdev)
 }
 #endif
 
-#if defined(HELIUMPLUS_PADDR64)
+#if defined(HELIUMPLUS)
 void ol_txrx_dump_frag_desc(char *msg, struct ol_tx_desc_t *tx_desc);
 #else
 static inline
