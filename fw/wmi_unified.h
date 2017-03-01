@@ -419,6 +419,10 @@ typedef enum {
     /** Command to enable mac randomizaton **/
     WMI_VDEV_ADD_MAC_ADDR_TO_RX_FILTER_CMDID,
 
+    /** WMI commands related to dbg arp stats */
+    WMI_VDEV_SET_ARP_STAT_CMDID,
+    WMI_VDEV_GET_ARP_STAT_CMDID,
+
     /* peer specific commands */
 
     /** create a peer */
@@ -1135,6 +1139,9 @@ typedef enum {
 
     /** event to report mac randomization success **/
     WMI_VDEV_ADD_MAC_ADDR_TO_RX_FILTER_STATUS_EVENTID,
+
+    /* event for ARP stats collection */
+    WMI_VDEV_GET_ARP_STAT_EVENTID,
 
     /* peer specific events */
     /** FW reauet to kick out the station for reasons like inactivity,lack of response ..etc */
@@ -5999,17 +6006,18 @@ typedef struct {
     A_UINT32 key_seq_counter_h;
 } wmi_key_seq_counter;
 
-#define  WMI_CIPHER_NONE     0x0  /* clear key */
-#define  WMI_CIPHER_WEP      0x1
-#define  WMI_CIPHER_TKIP     0x2
-#define  WMI_CIPHER_AES_OCB  0x3
-#define  WMI_CIPHER_AES_CCM  0x4
-#define  WMI_CIPHER_WAPI     0x5
-#define  WMI_CIPHER_CKIP     0x6
-#define  WMI_CIPHER_AES_CMAC 0x7
-#define  WMI_CIPHER_ANY      0x8
-#define  WMI_CIPHER_AES_GCM  0x9
-#define  WMI_CIPHER_AES_GMAC 0xa
+#define  WMI_CIPHER_NONE         0x0  /* clear key */
+#define  WMI_CIPHER_WEP          0x1
+#define  WMI_CIPHER_TKIP         0x2
+#define  WMI_CIPHER_AES_OCB      0x3
+#define  WMI_CIPHER_AES_CCM      0x4
+#define  WMI_CIPHER_WAPI         0x5
+#define  WMI_CIPHER_CKIP         0x6
+#define  WMI_CIPHER_AES_CMAC     0x7
+#define  WMI_CIPHER_ANY          0x8
+#define  WMI_CIPHER_AES_GCM      0x9
+#define  WMI_CIPHER_AES_GMAC     0xa
+#define  WMI_CIPHER_WAPI_GCM_SM4 0xb
 
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_install_key_cmd_fixed_param */
@@ -10441,6 +10449,54 @@ typedef struct {
     A_UINT32 keepaliveInterval; /* seconds */
     A_UINT32 keepaliveMethod; /* seconds */
 } wmi_vdev_get_keepalive_event_fixed_param;
+
+typedef enum {
+    WMI_CLEAR_ARP_STATS_COLLECTED = 0x0,
+    WMI_START_ARP_STATS_COLLECTION,
+} WMI_ARP_STATS_ACTION;
+
+typedef enum {
+    WMI_ARP_STATS_RX_PKT_TYPE_ARP = 0x1,      
+} WMI_ARP_STATS_RX_PKT_TYPE;
+
+typedef enum {
+    WMI_BA_SESSION_ESTABLISHMENT_STATUS_SUCCESS = 0x0,
+    WMI_BA_SESSION_ESTABLISHMENT_STATUS_FAILURE,
+} WMI_ARP_STATS_BA_SESSION_ESTABLISH_STATUS;
+
+typedef enum {
+    WMI_CONNECTION_STATUS_FAILURE = 0x0,
+    WMI_CONNECTION_STATUS_SUCCESS,    
+} WMI_ARP_STATS_CONNECTION_STATUS;
+
+/* ARP stats set (configure) req */
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_set_arp_stats_cmd_fixed_param */
+    A_UINT32 vdev_id;
+    A_UINT32 set_clr;  /* WMI_ARP_STATS_ACTION */
+    A_UINT32 pkt_type; /* WMI_ARP_STATS_RX_PKT_TYPE */
+    A_UINT32 ipv4;     /* target will maintain ARP stats (only) for frames containing this IP address */
+} wmi_vdev_set_arp_stats_cmd_fixed_param;
+
+/* ARP stats get req */
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_get_arp_stats_cmd_fixed_param */
+    A_UINT32 vdev_id;    
+} wmi_vdev_get_arp_stats_cmd_fixed_param;
+
+/* per vdev based ARP stats */
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_get_arp_stats_event_fixed_param */
+    A_UINT32 vdev_id;
+    A_UINT32 arp_req_enqueue;
+    A_UINT32 arp_req_tx_success;
+    A_UINT32 arp_req_tx_failure; /* number of times a tx MPDU containing a unicast ARP request went unacked */
+    A_UINT32 arp_rsp_recvd;
+    A_UINT32 out_of_order_arp_rsp_drop_cnt;
+    A_UINT32 dad_detected; /* duplicate address detection */
+    A_UINT32 connect_status; /* WMI_ARP_STATS_CONNECTION_STATUS */
+    A_UINT32 ba_session_establishment_status; /* WMI_ARP_STATS_BA_SESSION_ESTABLISH_STATUS */
+} wmi_vdev_get_arp_stats_event_fixed_param;
 
 typedef struct {
     A_UINT32 tlv_header;
@@ -16489,7 +16545,7 @@ typedef struct {
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_inst_rssi_stats_resp_fixed_param */
-    A_UINT32 iRSSI; /* dBm above the noise floor */
+    A_UINT32 iRSSI; /* dB above the noise floor */
     /* peer MAC address */
     wmi_mac_addr peer_macaddr;
     A_UINT32 vdev_id; /* ID of the vdev this peer belongs to */
@@ -17833,6 +17889,8 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PDEV_UPDATE_PKT_ROUTING_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_CHECK_CAL_VERSION_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_SET_DIVERSITY_GAIN_CMDID);
+        WMI_RETURN_STRING(WMI_VDEV_SET_ARP_STAT_CMDID);
+        WMI_RETURN_STRING(WMI_VDEV_GET_ARP_STAT_CMDID);
     }
 
     return "Invalid WMI cmd";
