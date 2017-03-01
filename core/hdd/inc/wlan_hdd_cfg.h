@@ -2536,66 +2536,807 @@ typedef enum {
 #define CFG_INFRA_STA_KEEP_ALIVE_PERIOD_DEFAULT       (90)
 
 /* WMM configuration */
-#define CFG_QOS_WMM_MODE_NAME                             "WmmIsEnabled"
-#define CFG_QOS_WMM_MODE_MIN                               (0)
-#define CFG_QOS_WMM_MODE_MAX                               (2)  /* HDD_WMM_NO_QOS */
-#define CFG_QOS_WMM_MODE_DEFAULT                           (0)  /* HDD_WMM_AUTO */
+/*
+ * <ini>
+ * WmmIsEnabled - Enable WMM feature
+ * @Min: 0
+ * @Max: 2
+ * @Default: 0
+ *
+ * This ini is used to enable/disable WMM.
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_MODE_NAME                          "WmmIsEnabled"
+#define CFG_QOS_WMM_MODE_MIN                           (0)
+#define CFG_QOS_WMM_MODE_MAX                           (2) /* HDD_WMM_NO_QOS */
+#define CFG_QOS_WMM_MODE_DEFAULT                       (0) /* HDD_WMM_AUTO */
 
+/*
+ * <ini>
+ * 80211eIsEnabled - Enable 802.11e feature
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable 802.11e.
+ *
+ * Related: None.
+ *
+ * Supported Feature: 802.11e
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_QOS_WMM_80211E_ENABLED_NAME                   "80211eIsEnabled"
 #define CFG_QOS_WMM_80211E_ENABLED_MIN                     (0)
 #define CFG_QOS_WMM_80211E_ENABLED_MAX                     (1)
 #define CFG_QOS_WMM_80211E_ENABLED_DEFAULT                 (0)
 
-#define CFG_QOS_WMM_UAPSD_MASK_NAME                        "UapsdMask"  /* ACs to setup U-APSD for at assoc */
+/*
+ * <ini>
+ * UapsdMask - To setup U-APSD mask for ACs
+ * @Min: 0x00
+ * @Max: 0xFF
+ * @Default: 0x00
+ *
+ * This ini is used to setup U-APSD mask for ACs.
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_UAPSD_MASK_NAME                        "UapsdMask"
 #define CFG_QOS_WMM_UAPSD_MASK_MIN                         (0x00)
 #define CFG_QOS_WMM_UAPSD_MASK_MAX                         (0xFF)
 #define CFG_QOS_WMM_UAPSD_MASK_DEFAULT                     (0x00)
 
-#define CFG_QOS_WMM_INFRA_UAPSD_VO_SRV_INTV_NAME           "InfraUapsdVoSrvIntv"
-#define CFG_QOS_WMM_INFRA_UAPSD_VO_SRV_INTV_MIN             (0)
-#define CFG_QOS_WMM_INFRA_UAPSD_VO_SRV_INTV_MAX             (4294967295UL)
-#define CFG_QOS_WMM_INFRA_UAPSD_VO_SRV_INTV_DEFAULT         (20)
+/*
+ * <ini>
+ * ImplicitQosIsEnabled - Enableimplicit QOS
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable implicit QOS.
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_IMPLICIT_SETUP_ENABLED_NAME             "ImplicitQosIsEnabled"
+#define CFG_QOS_IMPLICIT_SETUP_ENABLED_MIN              (0)
+#define CFG_QOS_IMPLICIT_SETUP_ENABLED_MAX              (1)
+#define CFG_QOS_IMPLICIT_SETUP_ENABLED_DEFAULT          (0)
 
-#define CFG_QOS_WMM_INFRA_UAPSD_VO_SUS_INTV_NAME           "InfraUapsdVoSuspIntv"
-#define CFG_QOS_WMM_INFRA_UAPSD_VO_SUS_INTV_MIN             (0)
-#define CFG_QOS_WMM_INFRA_UAPSD_VO_SUS_INTV_MAX             (4294967295UL)
-#define CFG_QOS_WMM_INFRA_UAPSD_VO_SUS_INTV_DEFAULT         (2000)
+/*
+ * <ini>
+ * InfraUapsdVoSrvIntv - Set Uapsd service interval for voice
+ * @Min: 0
+ * @Max: 4294967295UL
+ * @Default: 20
+ *
+ * This ini is used to set Uapsd service interval for voice.
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_INFRA_UAPSD_VO_SRV_INTV_NAME         "InfraUapsdVoSrvIntv"
+#define CFG_QOS_WMM_INFRA_UAPSD_VO_SRV_INTV_MIN           (0)
+#define CFG_QOS_WMM_INFRA_UAPSD_VO_SRV_INTV_MAX           (4294967295UL)
+#define CFG_QOS_WMM_INFRA_UAPSD_VO_SRV_INTV_DEFAULT       (20)
 
-#define CFG_QOS_WMM_INFRA_UAPSD_VI_SRV_INTV_NAME           "InfraUapsdViSrvIntv"
-#define CFG_QOS_WMM_INFRA_UAPSD_VI_SRV_INTV_MIN             (0)
-#define CFG_QOS_WMM_INFRA_UAPSD_VI_SRV_INTV_MAX             (4294967295UL)
-#define CFG_QOS_WMM_INFRA_UAPSD_VI_SRV_INTV_DEFAULT         (300)
+/*
+ * <ini>
+ * InfraUapsdVoSuspIntv - Set Uapsd suspension interval for voice
+ * @Min: 0
+ * @Max: 4294967295UL
+ * @Default: 2000
+ *
+ * This ini is used to set Uapsd suspension interval for voice.
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_INFRA_UAPSD_VO_SUS_INTV_NAME         "InfraUapsdVoSuspIntv"
+#define CFG_QOS_WMM_INFRA_UAPSD_VO_SUS_INTV_MIN           (0)
+#define CFG_QOS_WMM_INFRA_UAPSD_VO_SUS_INTV_MAX           (4294967295UL)
+#define CFG_QOS_WMM_INFRA_UAPSD_VO_SUS_INTV_DEFAULT       (2000)
 
-#define CFG_QOS_WMM_INFRA_UAPSD_VI_SUS_INTV_NAME           "InfraUapsdViSuspIntv"
-#define CFG_QOS_WMM_INFRA_UAPSD_VI_SUS_INTV_MIN             (0)
-#define CFG_QOS_WMM_INFRA_UAPSD_VI_SUS_INTV_MAX             (4294967295UL)
-#define CFG_QOS_WMM_INFRA_UAPSD_VI_SUS_INTV_DEFAULT         (2000)
+/*
+ * <ini>
+ * InfraUapsdViSrvIntv - Set Uapsd service interval for video
+ * @Min: 0
+ * @Max: 4294967295UL
+ * @Default: 300
+ *
+ * This ini is used to set Uapsd service interval for video.
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_INFRA_UAPSD_VI_SRV_INTV_NAME         "InfraUapsdViSrvIntv"
+#define CFG_QOS_WMM_INFRA_UAPSD_VI_SRV_INTV_MIN           (0)
+#define CFG_QOS_WMM_INFRA_UAPSD_VI_SRV_INTV_MAX           (4294967295UL)
+#define CFG_QOS_WMM_INFRA_UAPSD_VI_SRV_INTV_DEFAULT       (300)
 
-#define CFG_QOS_WMM_INFRA_UAPSD_BE_SRV_INTV_NAME           "InfraUapsdBeSrvIntv"
-#define CFG_QOS_WMM_INFRA_UAPSD_BE_SRV_INTV_MIN             (0)
-#define CFG_QOS_WMM_INFRA_UAPSD_BE_SRV_INTV_MAX             (4294967295UL)
-#define CFG_QOS_WMM_INFRA_UAPSD_BE_SRV_INTV_DEFAULT         (300)
+/*
+ * <ini>
+ * InfraUapsdViSuspIntv - Set Uapsd suspension interval for video
+ * @Min: 0
+ * @Max: 4294967295UL
+ * @Default: 2000
+ *
+ * This ini is used to set Uapsd suspension interval for video
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_INFRA_UAPSD_VI_SUS_INTV_NAME         "InfraUapsdViSuspIntv"
+#define CFG_QOS_WMM_INFRA_UAPSD_VI_SUS_INTV_MIN           (0)
+#define CFG_QOS_WMM_INFRA_UAPSD_VI_SUS_INTV_MAX           (4294967295UL)
+#define CFG_QOS_WMM_INFRA_UAPSD_VI_SUS_INTV_DEFAULT       (2000)
 
-#define CFG_QOS_WMM_INFRA_UAPSD_BE_SUS_INTV_NAME           "InfraUapsdBeSuspIntv"
-#define CFG_QOS_WMM_INFRA_UAPSD_BE_SUS_INTV_MIN             (0)
-#define CFG_QOS_WMM_INFRA_UAPSD_BE_SUS_INTV_MAX             (4294967295UL)
-#define CFG_QOS_WMM_INFRA_UAPSD_BE_SUS_INTV_DEFAULT         (2000)
+/*
+ * <ini>
+ * InfraUapsdBeSrvIntv - Set Uapsd service interval for BE
+ * @Min: 0
+ * @Max: 4294967295UL
+ * @Default: 300
+ *
+ * This ini is used to set Uapsd service interval for BE
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_INFRA_UAPSD_BE_SRV_INTV_NAME         "InfraUapsdBeSrvIntv"
+#define CFG_QOS_WMM_INFRA_UAPSD_BE_SRV_INTV_MIN           (0)
+#define CFG_QOS_WMM_INFRA_UAPSD_BE_SRV_INTV_MAX           (4294967295UL)
+#define CFG_QOS_WMM_INFRA_UAPSD_BE_SRV_INTV_DEFAULT       (300)
 
-#define CFG_QOS_WMM_INFRA_UAPSD_BK_SRV_INTV_NAME           "InfraUapsdBkSrvIntv"
-#define CFG_QOS_WMM_INFRA_UAPSD_BK_SRV_INTV_MIN             (0)
-#define CFG_QOS_WMM_INFRA_UAPSD_BK_SRV_INTV_MAX             (4294967295UL)
-#define CFG_QOS_WMM_INFRA_UAPSD_BK_SRV_INTV_DEFAULT         (300)
+/*
+ * <ini>
+ * InfraUapsdBeSuspIntv - Set Uapsd suspension interval for BE
+ * @Min: 0
+ * @Max: 4294967295UL
+ * @Default: 2000
+ *
+ * This ini is used to set Uapsd suspension interval for BE
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_INFRA_UAPSD_BE_SUS_INTV_NAME         "InfraUapsdBeSuspIntv"
+#define CFG_QOS_WMM_INFRA_UAPSD_BE_SUS_INTV_MIN           (0)
+#define CFG_QOS_WMM_INFRA_UAPSD_BE_SUS_INTV_MAX           (4294967295UL)
+#define CFG_QOS_WMM_INFRA_UAPSD_BE_SUS_INTV_DEFAULT       (2000)
 
-#define CFG_QOS_WMM_INFRA_UAPSD_BK_SUS_INTV_NAME           "InfraUapsdBkSuspIntv"
-#define CFG_QOS_WMM_INFRA_UAPSD_BK_SUS_INTV_MIN             (0)
-#define CFG_QOS_WMM_INFRA_UAPSD_BK_SUS_INTV_MAX             (4294967295UL)
-#define CFG_QOS_WMM_INFRA_UAPSD_BK_SUS_INTV_DEFAULT         (2000)
+/*
+ * <ini>
+ * InfraUapsdBkSrvIntv - Set Uapsd service interval for BK
+ * @Min: 0
+ * @Max: 4294967295UL
+ * @Default: 300
+ *
+ * This ini is used to set Uapsd service interval for BK
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_INFRA_UAPSD_BK_SRV_INTV_NAME         "InfraUapsdBkSrvIntv"
+#define CFG_QOS_WMM_INFRA_UAPSD_BK_SRV_INTV_MIN           (0)
+#define CFG_QOS_WMM_INFRA_UAPSD_BK_SRV_INTV_MAX           (4294967295UL)
+#define CFG_QOS_WMM_INFRA_UAPSD_BK_SRV_INTV_DEFAULT       (300)
+
+/*
+ * <ini>
+ * InfraUapsdBkSuspIntv - Set Uapsd suspension interval for BK
+ * @Min: 0
+ * @Max: 4294967295UL
+ * @Default: 2000
+ *
+ * This ini is used to set Uapsd suspension interval for BK
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_INFRA_UAPSD_BK_SUS_INTV_NAME         "InfraUapsdBkSuspIntv"
+#define CFG_QOS_WMM_INFRA_UAPSD_BK_SUS_INTV_MIN           (0)
+#define CFG_QOS_WMM_INFRA_UAPSD_BK_SUS_INTV_MAX           (4294967295UL)
+#define CFG_QOS_WMM_INFRA_UAPSD_BK_SUS_INTV_DEFAULT       (2000)
+
+/* default TSPEC parameters for AC_VO */
+/*
+ * <ini>
+ * InfraDirAcVo - Set TSPEC direction for VO
+ * @Min: 0
+ * @Max: 3
+ * @Default: 3
+ *
+ * This ini is used to set TSPEC direction for VO
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_INFRA_DIR_AC_VO_NAME   "InfraDirAcVo"
+#define CFG_QOS_WMM_INFRA_DIR_AC_VO_MIN     (0)
+#define CFG_QOS_WMM_INFRA_DIR_AC_VO_MAX     (3)
+#define CFG_QOS_WMM_INFRA_DIR_AC_VO_DEFAULT (3) /*WLAN_QCT_CUST_WMM_TSDIR_BOTH*/
+
+/*
+ * <ini>
+ * InfraNomMsduSizeAcVo - Set normal MSDU size for VO
+ * @Min: 0x0
+ * @Max: 0xFFFF
+ * @Default: 0x80D0
+ *
+ * This ini is used to set normal MSDU size for VO
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_VO_NAME      "InfraNomMsduSizeAcVo"
+#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_VO_MIN        (0x0)
+#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_VO_MAX        (0xFFFF)
+#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_VO_DEFAULT    (0x80D0)
+
+/*
+ * <ini>
+ * InfraMeanDataRateAcVo - Set mean data rate for VO
+ * @Min: 0x0
+ * @Max: 0xFFFFFFFF
+ * @Default: 0x14500
+ *
+ * This ini is used to set mean data rate for VO
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_VO_NAME    "InfraMeanDataRateAcVo"
+#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_VO_MIN      (0x0)
+#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_VO_MAX      (0xFFFFFFFF)
+#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_VO_DEFAULT  (0x14500)
+
+/*
+ * <ini>
+ * InfraMinPhyRateAcVo - Set min PHY rate for VO
+ * @Min: 0x0
+ * @Max: 0xFFFFFFFF
+ * @Default: 0x5B8D80
+ *
+ * This ini is used to set min PHY rate for VO
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_VO_NAME       "InfraMinPhyRateAcVo"
+#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_VO_MIN         (0x0)
+#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_VO_MAX         (0xFFFFFFFF)
+#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_VO_DEFAULT     (0x5B8D80)
+/*
+ * <ini>
+ * InfraSbaAcVo - Set surplus bandwidth allowance for VO
+ * @Min: 0x2001
+ * @Max: 0xFFFF
+ * @Default: 0x2001
+ *
+ * This ini is used to set surplus bandwidth allowance for VO
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+ #define CFG_QOS_WMM_INFRA_SBA_AC_VO_NAME                   "InfraSbaAcVo"
+ #define CFG_QOS_WMM_INFRA_SBA_AC_VO_MIN                     (0x2001)
+ #define CFG_QOS_WMM_INFRA_SBA_AC_VO_MAX                     (0xFFFF)
+ #define CFG_QOS_WMM_INFRA_SBA_AC_VO_DEFAULT                 (0x2001)
+
+ /* default TSPEC parameters for AC_VI */
+/*
+ * <ini>
+ * InfraDirAcVi - Set TSPEC direction for VI
+ * @Min: 0
+ * @Max: 3
+ * @Default: 3
+ *
+ * This ini is used to set TSPEC direction for VI
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_INFRA_DIR_AC_VI_NAME   "InfraDirAcVi"
+#define CFG_QOS_WMM_INFRA_DIR_AC_VI_MIN     (0)
+#define CFG_QOS_WMM_INFRA_DIR_AC_VI_MAX     (3)
+#define CFG_QOS_WMM_INFRA_DIR_AC_VI_DEFAULT (3) /*WLAN_QCT_CUST_WMM_TSDIR_BOTH*/
+
+/*
+ * <ini>
+ * InfraNomMsduSizeAcVi - Set normal MSDU size for VI
+ * @Min: 0x0
+ * @Max: 0xFFFF
+ * @Default: 0x85DC
+ *
+ * This ini is used to set normal MSDU size for VI
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_VI_NAME      "InfraNomMsduSizeAcVi"
+#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_VI_MIN        (0x0)
+#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_VI_MAX        (0xFFFF)
+#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_VI_DEFAULT    (0x85DC)
+
+/*
+ * <ini>
+ * InfraMeanDataRateAcVi - Set mean data rate for VI
+ * @Min: 0x0
+ * @Max: 0xFFFFFFFF
+ * @Default: 0x57E40
+ *
+ * This ini is used to set mean data rate for VI
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_VI_NAME    "InfraMeanDataRateAcVi"
+#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_VI_MIN      (0x0)
+#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_VI_MAX      (0xFFFFFFFF)
+#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_VI_DEFAULT  (0x57E40)
+
+/*
+ * <ini>
+ * iInfraMinPhyRateAcVi - Set min PHY rate for VI
+ * @Min: 0x0
+ * @Max: 0xFFFFFFFF
+ * @Default: 0x5B8D80
+ *
+ * This ini is used to set min PHY rate for VI
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_VI_NAME        "InfraMinPhyRateAcVi"
+#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_VI_MIN          (0x0)
+#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_VI_MAX          (0xFFFFFFFF)
+#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_VI_DEFAULT      (0x5B8D80)
+
+/*
+ * <ini>
+ * InfraSbaAcVi - Set surplus bandwidth allowance for VI
+ * @Min: 0x2001
+ * @Max: 0xFFFF
+ * @Default: 0x2001
+ *
+ * This ini is used to set surplus bandwidth allowance for VI
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+ #define CFG_QOS_WMM_INFRA_SBA_AC_VI_NAME                   "InfraSbaAcVi"
+ #define CFG_QOS_WMM_INFRA_SBA_AC_VI_MIN                     (0x2001)
+ #define CFG_QOS_WMM_INFRA_SBA_AC_VI_MAX                     (0xFFFF)
+ #define CFG_QOS_WMM_INFRA_SBA_AC_VI_DEFAULT                 (0x2001)
+
+ /* default TSPEC parameters for AC_BE*/
+/*
+ * <ini>
+ * InfraDirAcBe - Set TSPEC direction for BE
+ * @Min: 0
+ * @Max: 3
+ * @Default: 3
+ *
+ * This ini is used to set TSPEC direction for BE
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_INFRA_DIR_AC_BE_NAME   "InfraDirAcBe"
+#define CFG_QOS_WMM_INFRA_DIR_AC_BE_MIN     (0)
+#define CFG_QOS_WMM_INFRA_DIR_AC_BE_MAX     (3)
+#define CFG_QOS_WMM_INFRA_DIR_AC_BE_DEFAULT (3) /*WLAN_QCT_CUST_WMM_TSDIR_BOTH*/
+
+/*
+ * <ini>
+ * InfraNomMsduSizeAcBe - Set normal MSDU size for BE
+ * @Min: 0x0
+ * @Max: 0xFFFF
+ * @Default: 0x85DC
+ *
+ * This ini is used to set normal MSDU size for BE
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_BE_NAME      "InfraNomMsduSizeAcBe"
+#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_BE_MIN        (0x0)
+#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_BE_MAX        (0xFFFF)
+#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_BE_DEFAULT    (0x85DC)
+
+/*
+ * <ini>
+ * InfraMeanDataRateAcBe - Set mean data rate for BE
+ * @Min: 0x0
+ * @Max: 0xFFFFFFFF
+ * @Default: 0x493E0
+ *
+ * This ini is used to set mean data rate for BE
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_BE_NAME    "InfraMeanDataRateAcBe"
+#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_BE_MIN      (0x0)
+#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_BE_MAX      (0xFFFFFFFF)
+#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_BE_DEFAULT  (0x493E0)
+
+/*
+ * <ini>
+ * InfraMinPhyRateAcBe - Set min PHY rate for BE
+ * @Min: 0x0
+ * @Max: 0xFFFFFFFF
+ * @Default: 0x5B8D80
+ *
+ * This ini is used to set min PHY rate for BE
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_BE_NAME        "InfraMinPhyRateAcBe"
+#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_BE_MIN          (0x0)
+#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_BE_MAX          (0xFFFFFFFF)
+#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_BE_DEFAULT      (0x5B8D80)
+
+/*
+ * <ini>
+ * InfraSbaAcBe - Set surplus bandwidth allowance for BE
+ * @Min: 0x2001
+ * @Max: 0xFFFF
+ * @Default: 0x2001
+ *
+ * This ini is used to set surplus bandwidth allowance for BE
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+ #define CFG_QOS_WMM_INFRA_SBA_AC_BE_NAME                   "InfraSbaAcBe"
+ #define CFG_QOS_WMM_INFRA_SBA_AC_BE_MIN                     (0x2001)
+ #define CFG_QOS_WMM_INFRA_SBA_AC_BE_MAX                     (0xFFFF)
+ #define CFG_QOS_WMM_INFRA_SBA_AC_BE_DEFAULT                 (0x2001)
+
+ /* default TSPEC parameters for AC_Bk*/
+/*
+ * <ini>
+ * InfraDirAcBk - Set TSPEC direction for BK
+ * @Min: 0
+ * @Max: 3
+ * @Default: 3
+ *
+ * This ini is used to set TSPEC direction for BK
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_INFRA_DIR_AC_BK_NAME   "InfraDirAcBk"
+#define CFG_QOS_WMM_INFRA_DIR_AC_BK_MIN     (0)
+#define CFG_QOS_WMM_INFRA_DIR_AC_BK_MAX     (3)
+#define CFG_QOS_WMM_INFRA_DIR_AC_BK_DEFAULT (3) /*WLAN_QCT_CUST_WMM_TSDIR_BOTH*/
+
+/*
+ * <ini>
+ * InfraNomMsduSizeAcBk - Set normal MSDU size for BK
+ * @Min: 0x0
+ * @Max: 0xFFFF
+ * @Default: 0x85DC
+ *
+ * This ini is used to set normal MSDU size for BK
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_BK_NAME      "InfraNomMsduSizeAcBk"
+#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_BK_MIN        (0x0)
+#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_BK_MAX        (0xFFFF)
+#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_BK_DEFAULT    (0x85DC)
+
+/*
+ * <ini>
+ * InfraMeanDataRateAcBk - Set mean data rate for BK
+ * @Min: 0x0
+ * @Max: 0xFFFFFFFF
+ * @Default: 0x493E0
+ *
+ * This ini is used to set mean data rate for BK
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_BK_NAME    "InfraMeanDataRateAcBk"
+#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_BK_MIN      (0x0)
+#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_BK_MAX      (0xFFFFFFFF)
+#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_BK_DEFAULT  (0x493E0)
+
+/*
+ * <ini>
+ * InfraMinPhyRateAcBke - Set min PHY rate for BK
+ * @Min: 0x0
+ * @Max: 0xFFFFFFFF
+ * @Default: 0x5B8D80
+ *
+ * This ini is used to set min PHY rate for BK
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_BK_NAME        "InfraMinPhyRateAcBk"
+#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_BK_MIN          (0x0)
+#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_BK_MAX          (0xFFFFFFFF)
+#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_BK_DEFAULT      (0x5B8D80)
+
+/*
+ * <ini>
+ * InfraSbaAcBk - Set surplus bandwidth allowance for BK
+ * @Min: 0x2001
+ * @Max: 0xFFFF
+ * @Default: 0x2001
+ *
+ * This ini is used to set surplus bandwidth allowance for BK
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+ #define CFG_QOS_WMM_INFRA_SBA_AC_BK_NAME                   "InfraSbaAcBk"
+ #define CFG_QOS_WMM_INFRA_SBA_AC_BK_MIN                     (0x2001)
+ #define CFG_QOS_WMM_INFRA_SBA_AC_BK_MAX                     (0xFFFF)
+ #define CFG_QOS_WMM_INFRA_SBA_AC_BK_DEFAULT                 (0x2001)
+
+/*
+ * <ini>
+ * burstSizeDefinition - Set TS burst size
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to set TS burst size
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_BURST_SIZE_DEFN_NAME                "burstSizeDefinition"
+#define CFG_QOS_WMM_BURST_SIZE_DEFN_MIN                  (0)
+#define CFG_QOS_WMM_BURST_SIZE_DEFN_MAX                  (1)
+#define CFG_QOS_WMM_BURST_SIZE_DEFN_DEFAULT              (0)
+
+/*
+ * <ini>
+ * tsInfoAckPolicy - Set TS ack policy
+ * @Min: 0x00
+ * @Max: 0x01
+ * @Default: 0x00
+ *
+ * This ini is used to set TS ack policy
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_TS_INFO_ACK_POLICY_NAME              "tsInfoAckPolicy"
+#define CFG_QOS_WMM_TS_INFO_ACK_POLICY_MIN                (0x00)
+#define CFG_QOS_WMM_TS_INFO_ACK_POLICY_MAX                (0x01)
+#define CFG_QOS_WMM_TS_INFO_ACK_POLICY_DEFAULT            (0x00)
+
+/*
+ * <ini>
+ * SingleTIDRC - Set replay counter for all TID's
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to set replay counter for all TID's
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_SINGLE_TID_RC_NAME    "SingleTIDRC"
+#define CFG_SINGLE_TID_RC_MIN      (0) /* Separate replay counter for all TID */
+#define CFG_SINGLE_TID_RC_MAX      (1) /* Single replay counter for all TID */
+#define CFG_SINGLE_TID_RC_DEFAULT  (1)
+
+/*
+ * <ini>
+ * gAddTSWhenACMIsOff - Set ACM value for AC
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to set ACM value for AC
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_ADDTS_WHEN_ACM_IS_OFF_NAME               "gAddTSWhenACMIsOff"
+#define CFG_QOS_ADDTS_WHEN_ACM_IS_OFF_MIN                (0)
+/* Send AddTs even when ACM is not set for the AC */
+#define CFG_QOS_ADDTS_WHEN_ACM_IS_OFF_MAX                (1)
+#define CFG_QOS_ADDTS_WHEN_ACM_IS_OFF_DEFAULT            (0)
 
 #ifdef FEATURE_WLAN_ESE
-#define CFG_QOS_WMM_INFRA_INACTIVITY_INTERVAL_NAME         "InfraInactivityInterval"
-#define CFG_QOS_WMM_INFRA_INACTIVITY_INTERVAL_MIN           (0)
-#define CFG_QOS_WMM_INFRA_INACTIVITY_INTERVAL_MAX           (4294967295UL)
-#define CFG_QOS_WMM_INFRA_INACTIVITY_INTERVAL_DEFAULT       (0) /* disabled */
+#define CFG_QOS_WMM_INFRA_INACTIVITY_INTERVAL_NAME    "InfraInactivityInterval"
+#define CFG_QOS_WMM_INFRA_INACTIVITY_INTERVAL_MIN      (0)
+#define CFG_QOS_WMM_INFRA_INACTIVITY_INTERVAL_MAX      (4294967295UL)
+#define CFG_QOS_WMM_INFRA_INACTIVITY_INTERVAL_DEFAULT  (0) /* disabled */
 
 #define CFG_ESE_FEATURE_ENABLED_NAME                       "EseEnabled"
 #define CFG_ESE_FEATURE_ENABLED_MIN                         (0)
@@ -2663,110 +3404,6 @@ typedef enum {
 #define CFG_ROAM_SCAN_OFFLOAD_ENABLED_MAX                   (1)
 #define CFG_ROAM_SCAN_OFFLOAD_ENABLED_DEFAULT               (1)
 
-/* default TSPEC parameters for AC_VO */
-#define CFG_QOS_WMM_INFRA_DIR_AC_VO_NAME                   "InfraDirAcVo"
-#define CFG_QOS_WMM_INFRA_DIR_AC_VO_MIN                     (0)
-#define CFG_QOS_WMM_INFRA_DIR_AC_VO_MAX                     (3)
-#define CFG_QOS_WMM_INFRA_DIR_AC_VO_DEFAULT                 (3) /* WLAN_QCT_CUST_WMM_TSDIR_BOTH */
-
-#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_VO_NAME         "InfraNomMsduSizeAcVo"
-#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_VO_MIN           (0x0)
-#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_VO_MAX           (0xFFFF)
-#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_VO_DEFAULT       (0x80D0)
-
-#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_VO_NAME        "InfraMeanDataRateAcVo"
-#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_VO_MIN          (0x0)
-#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_VO_MAX          (0xFFFFFFFF)
-#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_VO_DEFAULT      (0x14500)
-
-#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_VO_NAME          "InfraMinPhyRateAcVo"
-#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_VO_MIN            (0x0)
-#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_VO_MAX            (0xFFFFFFFF)
-#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_VO_DEFAULT        (0x5B8D80)
-
-#define CFG_QOS_WMM_INFRA_SBA_AC_VO_NAME                   "InfraSbaAcVo"
-#define CFG_QOS_WMM_INFRA_SBA_AC_VO_MIN                     (0x2001)
-#define CFG_QOS_WMM_INFRA_SBA_AC_VO_MAX                     (0xFFFF)
-#define CFG_QOS_WMM_INFRA_SBA_AC_VO_DEFAULT                 (0x2001)
-
-/* default TSPEC parameters for AC_VI */
-#define CFG_QOS_WMM_INFRA_DIR_AC_VI_NAME                   "InfraDirAcVi"
-#define CFG_QOS_WMM_INFRA_DIR_AC_VI_MIN                     (0)
-#define CFG_QOS_WMM_INFRA_DIR_AC_VI_MAX                     (3)
-#define CFG_QOS_WMM_INFRA_DIR_AC_VI_DEFAULT                 (3) /* WLAN_QCT_CUST_WMM_TSDIR_BOTH */
-
-#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_VI_NAME         "InfraNomMsduSizeAcVi"
-#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_VI_MIN           (0x0)
-#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_VI_MAX           (0xFFFF)
-#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_VI_DEFAULT       (0x85DC)
-
-#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_VI_NAME        "InfraMeanDataRateAcVi"
-#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_VI_MIN          (0x0)
-#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_VI_MAX          (0xFFFFFFFF)
-#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_VI_DEFAULT      (0x57E40)
-
-#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_VI_NAME          "InfraMinPhyRateAcVi"
-#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_VI_MIN            (0x0)
-#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_VI_MAX            (0xFFFFFFFF)
-#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_VI_DEFAULT        (0x5B8D80)
-
-#define CFG_QOS_WMM_INFRA_SBA_AC_VI_NAME                   "InfraSbaAcVi"
-#define CFG_QOS_WMM_INFRA_SBA_AC_VI_MIN                     (0x2001)
-#define CFG_QOS_WMM_INFRA_SBA_AC_VI_MAX                     (0xFFFF)
-#define CFG_QOS_WMM_INFRA_SBA_AC_VI_DEFAULT                 (0x2001)
-
-/* default TSPEC parameters for AC_BE*/
-#define CFG_QOS_WMM_INFRA_DIR_AC_BE_NAME                   "InfraDirAcBe"
-#define CFG_QOS_WMM_INFRA_DIR_AC_BE_MIN                     (0)
-#define CFG_QOS_WMM_INFRA_DIR_AC_BE_MAX                     (3)
-#define CFG_QOS_WMM_INFRA_DIR_AC_BE_DEFAULT                 (3) /* WLAN_QCT_CUST_WMM_TSDIR_BOTH */
-
-#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_BE_NAME         "InfraNomMsduSizeAcBe"
-#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_BE_MIN           (0x0)
-#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_BE_MAX           (0xFFFF)
-#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_BE_DEFAULT       (0x85DC)
-
-#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_BE_NAME        "InfraMeanDataRateAcBe"
-#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_BE_MIN          (0x0)
-#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_BE_MAX          (0xFFFFFFFF)
-#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_BE_DEFAULT      (0x493E0)
-
-#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_BE_NAME          "InfraMinPhyRateAcBe"
-#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_BE_MIN            (0x0)
-#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_BE_MAX            (0xFFFFFFFF)
-#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_BE_DEFAULT        (0x5B8D80)
-
-#define CFG_QOS_WMM_INFRA_SBA_AC_BE_NAME                   "InfraSbaAcBe"
-#define CFG_QOS_WMM_INFRA_SBA_AC_BE_MIN                     (0x2001)
-#define CFG_QOS_WMM_INFRA_SBA_AC_BE_MAX                     (0xFFFF)
-#define CFG_QOS_WMM_INFRA_SBA_AC_BE_DEFAULT                 (0x2001)
-
-/* default TSPEC parameters for AC_Bk*/
-#define CFG_QOS_WMM_INFRA_DIR_AC_BK_NAME                   "InfraDirAcBk"
-#define CFG_QOS_WMM_INFRA_DIR_AC_BK_MIN                     (0)
-#define CFG_QOS_WMM_INFRA_DIR_AC_BK_MAX                     (3)
-#define CFG_QOS_WMM_INFRA_DIR_AC_BK_DEFAULT                 (3) /* WLAN_QCT_CUST_WMM_TSDIR_BOTH */
-
-#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_BK_NAME         "InfraNomMsduSizeAcBk"
-#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_BK_MIN           (0x0)
-#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_BK_MAX           (0xFFFF)
-#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_BK_DEFAULT       (0x85DC)
-
-#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_BK_NAME        "InfraMeanDataRateAcBk"
-#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_BK_MIN          (0x0)
-#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_BK_MAX          (0xFFFFFFFF)
-#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_BK_DEFAULT      (0x493E0)
-
-#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_BK_NAME          "InfraMinPhyRateAcBk"
-#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_BK_MIN            (0x0)
-#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_BK_MAX            (0xFFFFFFFF)
-#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_BK_DEFAULT        (0x5B8D80)
-
-#define CFG_QOS_WMM_INFRA_SBA_AC_BK_NAME                   "InfraSbaAcBk"
-#define CFG_QOS_WMM_INFRA_SBA_AC_BK_MIN                     (0x2001)
-#define CFG_QOS_WMM_INFRA_SBA_AC_BK_MAX                     (0xFFFF)
-#define CFG_QOS_WMM_INFRA_SBA_AC_BK_DEFAULT                 (0x2001)
-
 #define CFG_TL_DELAYED_TRGR_FRM_INT_NAME                   "DelayedTriggerFrmInt"
 #define CFG_TL_DELAYED_TRGR_FRM_INT_MIN                     1
 #define CFG_TL_DELAYED_TRGR_FRM_INT_MAX                     (4294967295UL)
@@ -2793,11 +3430,6 @@ typedef enum {
  */
 #define CFG_RM_CAPABILITY_NAME            "rm_capability"
 #define CFG_RM_CAPABILITY_DEFAULT         "73,10,91,00,04"
-
-#define CFG_QOS_IMPLICIT_SETUP_ENABLED_NAME                 "ImplicitQosIsEnabled"
-#define CFG_QOS_IMPLICIT_SETUP_ENABLED_MIN                  (0)
-#define CFG_QOS_IMPLICIT_SETUP_ENABLED_MAX                  (1)
-#define CFG_QOS_IMPLICIT_SETUP_ENABLED_DEFAULT              (0)
 
 #define CFG_FT_RESOURCE_REQ_NAME                        "gFTResourceReqSupported"
 #define CFG_FT_RESOURCE_REQ_MIN                         (0)
@@ -2863,21 +3495,6 @@ typedef enum {
 #define CFG_ROAM_BEACON_RSSI_WEIGHT_MIN                 (0)
 #define CFG_ROAM_BEACON_RSSI_WEIGHT_MAX                 (16)
 #define CFG_ROAM_BEACON_RSSI_WEIGHT_DEFAULT             (14)
-
-#define CFG_QOS_WMM_BURST_SIZE_DEFN_NAME                        "burstSizeDefinition"
-#define CFG_QOS_WMM_BURST_SIZE_DEFN_MIN                         (0)
-#define CFG_QOS_WMM_BURST_SIZE_DEFN_MAX                         (1)
-#define CFG_QOS_WMM_BURST_SIZE_DEFN_DEFAULT                     (0)
-
-#define CFG_QOS_WMM_TS_INFO_ACK_POLICY_NAME                        "tsInfoAckPolicy"
-#define CFG_QOS_WMM_TS_INFO_ACK_POLICY_MIN                         (0x00)
-#define CFG_QOS_WMM_TS_INFO_ACK_POLICY_MAX                         (0x01)
-#define CFG_QOS_WMM_TS_INFO_ACK_POLICY_DEFAULT                     (0x00)
-
-#define CFG_SINGLE_TID_RC_NAME                             "SingleTIDRC"
-#define CFG_SINGLE_TID_RC_MIN                               (0) /* Seperate replay counter for all TID */
-#define CFG_SINGLE_TID_RC_MAX                               (1) /* Single replay counter for all TID */
-#define CFG_SINGLE_TID_RC_DEFAULT                           (1)
 
 /*
  * <ini>
@@ -2947,11 +3564,6 @@ typedef enum {
 #define CFG_TELE_BCN_WAKEUP_EN_MIN             (0)
 #define CFG_TELE_BCN_WAKEUP_EN_MAX             (1)
 #define CFG_TELE_BCN_WAKEUP_EN_DEFAULT         (0)
-
-#define CFG_QOS_ADDTS_WHEN_ACM_IS_OFF_NAME                 "gAddTSWhenACMIsOff"
-#define CFG_QOS_ADDTS_WHEN_ACM_IS_OFF_MIN                  (0)
-#define CFG_QOS_ADDTS_WHEN_ACM_IS_OFF_MAX                  (1)  /* Send AddTs even when ACM is not set for the AC */
-#define CFG_QOS_ADDTS_WHEN_ACM_IS_OFF_DEFAULT              (0)
 
 /*
  * <ini>
