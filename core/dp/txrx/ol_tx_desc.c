@@ -156,6 +156,8 @@ struct ol_tx_desc_t *ol_tx_desc_alloc(struct ol_txrx_pdev_t *pdev,
 	if (!tx_desc)
 		return NULL;
 
+	tx_desc->vdev_id = vdev->vdev_id;
+
 	ol_tx_desc_vdev_update(tx_desc, vdev);
 	ol_tx_desc_count_inc(vdev);
 	qdf_atomic_inc(&tx_desc->ref_cnt);
@@ -221,6 +223,8 @@ struct ol_tx_desc_t *ol_tx_desc_alloc(struct ol_txrx_pdev_t *pdev,
 	} else {
 		pdev->pool_stats.pkt_drop_no_pool++;
 	}
+
+	tx_desc->vdev_id = vdev->vdev_id;
 
 	return tx_desc;
 }
@@ -365,6 +369,7 @@ void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 
 	ol_tx_put_desc_global_pool(pdev, tx_desc);
 	ol_tx_desc_vdev_rm(tx_desc);
+	tx_desc->vdev_id = OL_TXRX_INVALID_VDEV_ID;
 
 	qdf_spin_unlock_bh(&pdev->tx_mutex);
 }
@@ -415,6 +420,9 @@ void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 				 __func__, __LINE__);
 		break;
 	};
+
+	tx_desc->vdev_id = OL_TXRX_INVALID_VDEV_ID;
+
 	qdf_spin_unlock_bh(&pool->flow_pool_lock);
 
 }

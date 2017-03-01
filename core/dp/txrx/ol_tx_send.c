@@ -649,7 +649,7 @@ void ol_tx_desc_update_group_credit(ol_txrx_pdev_handle pdev,
 			OL_TXQ_GROUP_VDEV_ID_MASK_GET(
 					pdev->txq_grps[i].membership);
 		is_member = OL_TXQ_GROUP_VDEV_ID_BIT_MASK_GET(vdev_id_mask,
-				tx_desc->vdev->vdev_id);
+				tx_desc->vdev_id);
 		if (is_member) {
 			ol_txrx_update_group_credit(&pdev->txq_grps[i],
 						    credit, absolute);
