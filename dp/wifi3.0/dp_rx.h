@@ -255,7 +255,12 @@ static inline int check_x86_paddr(struct dp_soc *dp_soc, qdf_nbuf_t *rx_netbuf,
 			if ((*rx_netbuf)) {
 				qdf_nbuf_unmap_single(dp_soc->osdev, *rx_netbuf,
 							QDF_DMA_BIDIRECTIONAL);
-				qdf_nbuf_free(*rx_netbuf);
+				/* Not freeing buffer intentionally.
+				 * Observed that same buffer is getting
+				 * re-allocated resulting in longer load time
+				 * WMI init timeout.
+				 * This buffer is anyway not useful so skip it.
+				 **/
 			}
 
 			*rx_netbuf = qdf_nbuf_alloc(pdev->osif_pdev,

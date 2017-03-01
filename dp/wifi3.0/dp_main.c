@@ -1150,7 +1150,6 @@ static inline void dp_reo_desc_freelist_destroy(struct dp_soc *soc)
 static void dp_soc_detach_wifi3(void *txrx_soc)
 {
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
-	struct dp_pdev *pdev = qdf_mem_malloc(sizeof(*pdev));
 	int i;
 
 	soc->cmn_init_done = 0;
@@ -1159,7 +1158,8 @@ static void dp_soc_detach_wifi3(void *txrx_soc)
 
 	for (i = 0; i < MAX_PDEV_CNT; i++) {
 		if (soc->pdev_list[i])
-			dp_pdev_detach_wifi3((struct cdp_pdev *)pdev, 1);
+			dp_pdev_detach_wifi3(
+				(struct cdp_pdev *)soc->pdev_list[i], 1);
 	}
 
 	dp_peer_find_detach(soc);
