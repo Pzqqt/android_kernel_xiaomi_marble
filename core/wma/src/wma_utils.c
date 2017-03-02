@@ -344,7 +344,7 @@ void wma_lost_link_info_handler(tp_wma_handle wma, uint32_t vdev_id,
 	struct scheduler_msg sme_msg = {0};
 
 	/* report lost link information only for STA mode */
-	if (wma->interfaces[vdev_id].vdev_up &&
+	if (wma_is_vdev_up(vdev_id) &&
 	    (WMI_VDEV_TYPE_STA == wma->interfaces[vdev_id].type) &&
 	    (0 == wma->interfaces[vdev_id].sub_type)) {
 		lost_link_info = qdf_mem_malloc(sizeof(*lost_link_info));
@@ -1334,7 +1334,7 @@ static void wma_vdev_stats_lost_link_helper(tp_wma_handle wma,
 	static const uint8_t zero_mac[QDF_MAC_ADDR_SIZE] = {0};
 
 	node = &wma->interfaces[vdev_stats->vdev_id];
-	if (node->vdev_up &&
+	if (wma_is_vdev_up(vdev_stats->vdev_id) &&
 	    qdf_mem_cmp(node->bssid, zero_mac, QDF_MAC_ADDR_SIZE)) {
 		req_msg = wma_peek_vdev_req(wma, vdev_stats->vdev_id,
 					    WMA_TARGET_REQ_TYPE_VDEV_STOP);
@@ -1998,7 +1998,7 @@ bool wma_is_sap_active(tp_wma_handle wma_handle)
 	int i;
 
 	for (i = 0; i < wma_handle->max_bssid; i++) {
-		if (!wma_handle->interfaces[i].vdev_up)
+		if (!wma_is_vdev_up(i))
 			continue;
 		if (wma_handle->interfaces[i].type == WMI_VDEV_TYPE_AP &&
 		    wma_handle->interfaces[i].sub_type == 0)
@@ -2018,7 +2018,7 @@ bool wma_is_p2p_go_active(tp_wma_handle wma_handle)
 	int i;
 
 	for (i = 0; i < wma_handle->max_bssid; i++) {
-		if (!wma_handle->interfaces[i].vdev_up)
+		if (!wma_is_vdev_up(i))
 			continue;
 		if (wma_handle->interfaces[i].type == WMI_VDEV_TYPE_AP &&
 		    wma_handle->interfaces[i].sub_type ==
@@ -2039,7 +2039,7 @@ bool wma_is_p2p_cli_active(tp_wma_handle wma_handle)
 	int i;
 
 	for (i = 0; i < wma_handle->max_bssid; i++) {
-		if (!wma_handle->interfaces[i].vdev_up)
+		if (!wma_is_vdev_up(i))
 			continue;
 		if (wma_handle->interfaces[i].type == WMI_VDEV_TYPE_STA &&
 		    wma_handle->interfaces[i].sub_type ==
@@ -2060,7 +2060,7 @@ bool wma_is_sta_active(tp_wma_handle wma_handle)
 	int i;
 
 	for (i = 0; i < wma_handle->max_bssid; i++) {
-		if (!wma_handle->interfaces[i].vdev_up)
+		if (!wma_is_vdev_up(i))
 			continue;
 		if (wma_handle->interfaces[i].type == WMI_VDEV_TYPE_STA &&
 		    wma_handle->interfaces[i].sub_type == 0)
@@ -2476,21 +2476,6 @@ struct wma_txrx_node  *wma_get_interface_by_vdev_id(uint8_t vdev_id)
 	}
 
 	return &wma->interfaces[vdev_id];
-}
-
-/**
- * wma_is_vdev_up() - return whether a vdev is up
- * @vdev_id: vdev id
- *
- * Return: true if the vdev is up, false otherwise
- */
-bool wma_is_vdev_up(uint8_t vdev_id)
-{
-	struct wma_txrx_node *vdev = wma_get_interface_by_vdev_id(vdev_id);
-	if (vdev)
-		return vdev->vdev_up;
-	else
-		return false;
 }
 
 #if defined(QCA_WIFI_FTM)
@@ -3950,3 +3935,27 @@ bool wma_is_hw_dbs_2x2_capable(void)
 
 	return (final_min_rf_chains == 2) ? true : false;
 }
+
+bool wma_is_vdev_up(uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	tp_wma_handle wma = (tp_wma_handle)cds_get_context(QDF_MODULE_ID_WMA);
+	enum wlan_vdev_state state = WLAN_VDEV_S_INIT;
+
+	if (!wma) {
+		WMA_LOGE("%s: WMA context is invald!", __func__);
+		return false;
+	}
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(wma->psoc, vdev_id,
+			WLAN_LEGACY_WMA_ID);
+	if (vdev) {
+		wlan_vdev_obj_lock(vdev);
+		state = wlan_vdev_mlme_get_state(vdev);
+		wlan_vdev_obj_unlock(vdev);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
+	}
+
+	return (state == WLAN_VDEV_S_RUN) ? true : false;
+}
+

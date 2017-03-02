@@ -3698,7 +3698,7 @@ void wma_calculate_and_update_conn_state(tp_wma_handle wma)
 	int i;
 	for (i = 0; i < wma->max_bssid; i++) {
 		wma->interfaces[i].conn_state =
-			!!(wma->interfaces[i].vdev_up &&
+			!!(wma_is_vdev_up(i) &&
 					!wma_is_vdev_in_ap_mode(wma, i));
 	}
 }
@@ -3743,7 +3743,7 @@ bool wma_is_beaconning_vdev_up(tp_wma_handle wma)
 	int i;
 	for (i = 0; i < wma->max_bssid; i++) {
 		if (wma_is_vdev_in_beaconning_mode(wma, i)
-				&& wma->interfaces[i].vdev_up)
+				&& wma_is_vdev_up(i))
 			return true;
 	}
 	return false;

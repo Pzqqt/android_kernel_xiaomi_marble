@@ -773,7 +773,7 @@ static void wma_find_mcc_ap(tp_wma_handle wma, uint8_t vdev_id, bool add)
 		if (add == false && i == vdev_id)
 			continue;
 
-		if (wma->interfaces[i].vdev_up || (i == vdev_id && add)) {
+		if (wma_is_vdev_up(vdev_id) || (i == vdev_id && add)) {
 			if (wma->interfaces[i].type == WMI_VDEV_TYPE_AP) {
 				is_ap = true;
 				ap_vdev_ids[i] = i;
@@ -896,7 +896,8 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 		qdf_atomic_set(&wma->interfaces[resp_event->vdev_id].
 			       vdev_restart_params.
 			       hidden_ssid_restart_in_progress, 0);
-		wma->interfaces[resp_event->vdev_id].vdev_up = true;
+		wma_vdev_set_mlme_state(wma, resp_event->vdev_id,
+			WLAN_VDEV_S_RUN);
 		/*
 		 * Unpause TX queue in SAP case while configuring hidden ssid
 		 * enable or disable, else the data path is paused forever
@@ -961,12 +962,12 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 			if (QDF_IS_STATUS_ERROR(status)) {
 				WMA_LOGE("%s:vdev_up failed vdev_id %d",
 					 __func__, resp_event->vdev_id);
-				wma->interfaces[resp_event->vdev_id].vdev_up =
-					false;
+				wma_vdev_set_mlme_state(wma,
+					resp_event->vdev_id, WLAN_VDEV_S_STOP);
 				cds_set_do_hw_mode_change_flag(false);
 			} else {
-				wma->interfaces[resp_event->vdev_id].vdev_up =
-					true;
+				wma_vdev_set_mlme_state(wma,
+					resp_event->vdev_id, WLAN_VDEV_S_RUN);
 			}
 		}
 
@@ -986,13 +987,13 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 			cds_set_do_hw_mode_change_flag(false);
 			return -EEXIST;
 		}
-		iface->vdev_up = true;
-
+		wma_vdev_set_mlme_state(wma, resp_event->vdev_id,
+			WLAN_VDEV_S_RUN);
 		wma_ocb_start_resp_ind_cont(wma);
 	}
 
 	if ((wma->interfaces[resp_event->vdev_id].type == WMI_VDEV_TYPE_AP) &&
-		wma->interfaces[resp_event->vdev_id].vdev_up)
+		wma_is_vdev_up(resp_event->vdev_id))
 		wma_set_sap_keepalive(wma, resp_event->vdev_id);
 
 	qdf_mc_timer_destroy(&req_msg->event_timeout);
@@ -1465,7 +1466,8 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 			WMA_LOGE("Failed to send vdev down cmd: vdev %d",
 				 resp_event->vdev_id);
 		} else {
-			wma->interfaces[resp_event->vdev_id].vdev_up = false;
+			wma_vdev_set_mlme_state(wma, resp_event->vdev_id,
+				WLAN_VDEV_S_STOP);
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 		if (mac_ctx->sap.sap_channel_avoidance)
 			wma_find_mcc_ap(wma, resp_event->vdev_id, false);
@@ -2033,7 +2035,7 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 		 * since, VDEV RESTART will do a VDEV DOWN
 		 * in the firmware.
 		 */
-		intr[params.vdev_id].vdev_up = false;
+		wma_vdev_set_mlme_state(wma, params.vdev_id, WLAN_VDEV_S_STOP);
 	} else {
 		WMA_LOGD("%s, vdev_id: %d, unpausing tx_ll_queue at VDEV_START",
 			 __func__, params.vdev_id);
@@ -2522,7 +2524,8 @@ void wma_vdev_resp_timer(void *data)
 			WMA_LOGE("Failed to send vdev down cmd: vdev %d",
 				 tgt_req->vdev_id);
 		} else {
-			wma->interfaces[tgt_req->vdev_id].vdev_up = false;
+			wma_vdev_set_mlme_state(wma, tgt_req->vdev_id,
+				WLAN_VDEV_S_STOP);
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 		if (mac_ctx->sap.sap_channel_avoidance)
 			wma_find_mcc_ap(wma, tgt_req->vdev_id, false);
@@ -2614,7 +2617,8 @@ void wma_vdev_resp_timer(void *data)
 
 		WMA_LOGE(FL("Failed to send OCB set config cmd"));
 		iface = &wma->interfaces[tgt_req->vdev_id];
-		iface->vdev_up = false;
+		wma_vdev_set_mlme_state(wma, tgt_req->vdev_id,
+			WLAN_VDEV_S_STOP);
 		wma_ocb_set_config_resp(wma, QDF_STATUS_E_TIMEOUT);
 	} else if (tgt_req->msg_type == WMA_HIDDEN_SSID_VDEV_RESTART) {
 		WMA_LOGE("Hidden ssid vdev restart Timed Out; vdev_id: %d, type = %d",
@@ -3851,7 +3855,7 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 		goto out;
 	}
 
-	if (wma->interfaces[params->smesessionId].vdev_up == true) {
+	if (wma_is_vdev_up(params->smesessionId)) {
 		WMA_LOGE("%s: vdev id %d is already UP for %pM", __func__,
 			params->smesessionId, params->bssId);
 		status = QDF_STATUS_E_FAILURE;
@@ -3989,8 +3993,9 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 		cds_set_do_hw_mode_change_flag(false);
 		status = QDF_STATUS_E_FAILURE;
 	} else {
-		wma->interfaces[params->smesessionId].vdev_up = true;
 		wma_set_vdev_mgmt_rate(wma, params->smesessionId);
+		wma_vdev_set_mlme_state(wma, params->smesessionId,
+				WLAN_VDEV_S_RUN);
 	}
 
 	qdf_atomic_set(&iface->bss_status, WMA_BSS_STATUS_STARTED);
@@ -4386,7 +4391,7 @@ void wma_delete_bss_ho_fail(tp_wma_handle wma, tpDeleteBssParams params)
 	qdf_atomic_set(&iface->bss_status, WMA_BSS_STATUS_STOPPED);
 	WMA_LOGD("%s: (type %d subtype %d) BSS is stopped",
 			__func__, iface->type, iface->sub_type);
-	iface->vdev_up = false;
+	wma_vdev_set_mlme_state(wma, params->smesessionId, WLAN_VDEV_S_STOP);
 	params->status = QDF_STATUS_SUCCESS;
 	if (!iface->peer_count) {
 		WMA_LOGE("%s: Can't remove peer with peer_addr %pM vdevid %d peer_count %d",
@@ -4490,7 +4495,8 @@ void wma_delete_bss(tp_wma_handle wma, tpDeleteBssParams params)
 		roam_synch_in_progress = true;
 		WMA_LOGD("LFR3:%s: Setting vdev_up to FALSE for session %d",
 			__func__, params->smesessionId);
-		iface->vdev_up = false;
+		wma_vdev_set_mlme_state(wma, params->smesessionId,
+			WLAN_VDEV_S_STOP);
 		goto detach_peer;
 	}
 	msg = wma_fill_vdev_req(wma, params->smesessionId, WMA_DELETE_BSS_REQ,

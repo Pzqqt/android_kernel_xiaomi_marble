@@ -149,7 +149,7 @@ static bool wma_is_mcc_24G(WMA_HANDLE handle)
 	}
 	for (i = 0; i < wma_handle->max_bssid; i++) {
 		if (wma_handle->interfaces[i].handle &&
-				wma_handle->interfaces[i].vdev_up) {
+				wma_is_vdev_up(i)) {
 			if ((prev_chan != 0 &&
 				prev_chan != wma_handle->interfaces[i].mhz) &&
 				(wma_handle->interfaces[i].mhz <=
@@ -2257,7 +2257,7 @@ static void wma_roam_update_vdev(tp_wma_handle wma,
 	wma_set_linkstate(wma, set_link_params);
 	wma_add_bss(wma, (tpAddBssParams)roam_synch_ind_ptr->add_bss_params);
 	wma_add_sta(wma, add_sta_params);
-	wma->interfaces[vdev_id].vdev_up = true;
+	wma_vdev_set_mlme_state(wma, vdev_id, WLAN_VDEV_S_RUN);
 	qdf_mem_copy(wma->interfaces[vdev_id].bssid,
 			roam_synch_ind_ptr->bssid.bytes, IEEE80211_ADDR_LEN);
 	qdf_mem_free(del_bss_params);

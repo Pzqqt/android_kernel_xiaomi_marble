@@ -1798,7 +1798,7 @@ static void wma_state_info_dump(char **buf_ptr, uint16_t *size)
 			iface->ht_capable,
 			iface->chan_width,
 			iface->vdev_active,
-			iface->vdev_up,
+			wma_is_vdev_up(vdev_id),
 			iface->aid,
 			iface->rate_flags,
 			iface->nss,
@@ -3277,7 +3277,7 @@ QDF_STATUS wma_stop(void *cds_ctx, uint8_t reason)
 	/* clean up ll-queue for all vdev */
 	for (i = 0; i < wma_handle->max_bssid; i++) {
 		if (wma_handle->interfaces[i].handle &&
-				wma_handle->interfaces[i].vdev_up) {
+				wma_is_vdev_up(i)) {
 			cdp_fc_vdev_flush(
 				cds_get_context(QDF_MODULE_ID_SOC),
 				wma_handle->

@@ -2521,7 +2521,7 @@ void wma_send_beacon(tp_wma_handle wma, tpSendbeaconParams bcn_info)
 		&wma->interfaces[vdev_id].vdev_restart_params.
 		hidden_ssid_restart_in_progress)) ||
 		(wma->interfaces[vdev_id].is_channel_switch))) {
-		if (!wma->interfaces[vdev_id].vdev_up) {
+		if (!wma_is_vdev_up(vdev_id)) {
 			param.vdev_id = vdev_id;
 			param.assoc_id = 0;
 			status = wmi_unified_vdev_up_send(wma->wmi_handle,
@@ -2532,7 +2532,7 @@ void wma_send_beacon(tp_wma_handle wma, tpSendbeaconParams bcn_info)
 				cds_set_do_hw_mode_change_flag(false);
 				return;
 			}
-			wma->interfaces[vdev_id].vdev_up = true;
+			wma_vdev_set_mlme_state(wma, vdev_id, WLAN_VDEV_S_RUN);
 			wma_set_sap_keepalive(wma, vdev_id);
 			wma_set_vdev_mgmt_rate(wma, vdev_id);
 		}

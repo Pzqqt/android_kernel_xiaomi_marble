@@ -175,7 +175,7 @@ int wma_ocb_set_config_req(tp_wma_handle wma_handle,
 	 * OCB set_config request should be sent on receiving
 	 * vdev start response message
 	 */
-	if (!wma_handle->interfaces[config_req->session_id].vdev_up) {
+	if (!wma_is_vdev_up(config_req->session_id)) {
 		qdf_mem_zero(&req, sizeof(req));
 		/* Enqueue OCB Set Schedule request message */
 		msg = wma_fill_vdev_req(wma_handle, config_req->session_id,

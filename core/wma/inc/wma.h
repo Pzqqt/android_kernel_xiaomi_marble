@@ -1039,7 +1039,6 @@ struct wma_txrx_node {
 	A_UINT32 mhz;
 	enum phy_ch_width chan_width;
 	bool vdev_active;
-	bool vdev_up;
 	uint64_t tsfadjust;
 	void *addBssStaContext;
 	uint8_t aid;
@@ -2330,4 +2329,33 @@ QDF_STATUS wma_mgmt_unified_cmd_send(struct wlan_objmgr_vdev *vdev,
  */
 int wma_chan_info_event_handler(void *handle, uint8_t *event_buf,
 						uint32_t len);
+
+/**
+ * wma_vdev_set_mlme_state() - Set vdev mlme state
+ * @wma: wma handle
+ * @vdev_id: the Id of the vdev to configure
+ * @state: vdev state
+ *
+ * Return: None
+ */
+static inline
+void wma_vdev_set_mlme_state(tp_wma_handle wma, uint8_t vdev_id,
+		enum wlan_vdev_state state)
+{
+	struct wlan_objmgr_vdev *vdev;
+
+	if (!wma) {
+		WMA_LOGE("%s: WMA context is invald!", __func__);
+		return;
+	}
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(wma->psoc, vdev_id,
+			WLAN_LEGACY_WMA_ID);
+	if (vdev) {
+		wlan_vdev_obj_lock(vdev);
+		wlan_vdev_mlme_set_state(vdev, state);
+		wlan_vdev_obj_unlock(vdev);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
+	}
+}
 #endif

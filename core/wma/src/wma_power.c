@@ -368,7 +368,7 @@ void wma_set_tx_power(WMA_HANDLE handle,
 		return;
 	}
 
-	if (!(wma_handle->interfaces[vdev_id].vdev_up)) {
+	if (!wma_is_vdev_up(vdev_id)) {
 		WMA_LOGE("%s: vdev id %d is not up for %pM", __func__, vdev_id,
 			 tx_pwr_params->bssId.bytes);
 		qdf_mem_free(tx_pwr_params);
@@ -443,7 +443,7 @@ void wma_set_max_tx_power(WMA_HANDLE handle,
 		return;
 	}
 
-	if (!(wma_handle->interfaces[vdev_id].vdev_up)) {
+	if (!wma_is_vdev_up(vdev_id)) {
 		WMA_LOGE("%s: vdev id %d is not up", __func__, vdev_id);
 		qdf_mem_free(tx_pwr_params);
 		return;
@@ -1947,7 +1947,7 @@ QDF_STATUS wma_set_tx_power_scale(uint8_t vdev_id, int value)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!(wma_handle->interfaces[vdev_id].vdev_up)) {
+	if (!wma_is_vdev_up(vdev_id)) {
 		WMA_LOGE("%s: vdev id %d is not up", __func__, vdev_id);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1978,7 +1978,7 @@ QDF_STATUS wma_set_tx_power_scale_decr_db(uint8_t vdev_id, int value)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!(wma_handle->interfaces[vdev_id].vdev_up)) {
+	if (!wma_is_vdev_up(vdev_id)) {
 		WMA_LOGE("%s: vdev id %d is not up", __func__, vdev_id);
 		return QDF_STATUS_E_FAILURE;
 	}
