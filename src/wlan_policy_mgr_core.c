@@ -145,6 +145,21 @@ bool policy_mgr_is_dual_mac_disabled_in_ini(
 }
 
 /**
+ * policy_mgr_is_mas_enabled_in_user_cfg() - Check if MCC
+ * adaptive scheduler is enabled in INI
+ * @psoc: PSOC object information
+ *
+ * Checks if MCC adaptive scheduler is enabled in INI
+ *
+ * Return: true if MCC adaptive scheduler is enabled in INI
+ */
+bool policy_mgr_is_mas_enabled_in_user_cfg(
+	struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+
+/**
  * policy_mgr_get_dbs_config() - Get DBS bit
  *
  * Gets the DBS bit of fw_mode_config_bits

@@ -60,23 +60,27 @@ typedef const enum policy_mgr_conc_next_action
 
 /**
  * policy_mgr_set_concurrency_mode() - To set concurrency mode
- * @mode: adapter mode
+ * @psoc: PSOC object data
+ * @mode: device mode
  *
  * This routine is called to set the concurrency mode
  *
  * Return: NONE
  */
-void policy_mgr_set_concurrency_mode(enum tQDF_ADAPTER_MODE mode);
+void policy_mgr_set_concurrency_mode(struct wlan_objmgr_psoc *psoc,
+				     enum tQDF_ADAPTER_MODE mode);
 
 /**
  * policy_mgr_clear_concurrency_mode() - To clear concurrency mode
- * @mode: adapter mode
+ * @psoc: PSOC object data
+ * @mode: device mode
  *
  * This routine is called to clear the concurrency mode
  *
  * Return: NONE
  */
-void policy_mgr_clear_concurrency_mode(enum tQDF_ADAPTER_MODE mode);
+void policy_mgr_clear_concurrency_mode(struct wlan_objmgr_psoc *psoc,
+				       enum tQDF_ADAPTER_MODE mode);
 
 /**
  * policy_mgr_get_connection_count() - provides the count of
@@ -174,20 +178,23 @@ uint8_t policy_mgr_is_mcc_in_24G(struct wlan_objmgr_psoc *psoc);
 
 /**
  * policy_mgr_set_mas() - Function to set MAS value to UMAC
- * @psoc: PSOC object information
- * @mas_value: 0-Disable, 1-Enable MAS
+ * @psoc:               Pointer to psoc
+ * @mas_value:          0-Disable, 1-Enable MAS
+ * @dev_mode:           device mode
  *
  * This function passes down the value of MAS to UMAC
  *
  * Return: Configuration message posting status, SUCCESS or Fail
  *
  */
-int32_t policy_mgr_set_mas(struct wlan_objmgr_psoc *psoc, uint8_t mas_value);
+int32_t policy_mgr_set_mas(struct wlan_objmgr_psoc *psoc,
+			   uint8_t mas_value,
+			   enum tQDF_ADAPTER_MODE dev_mode);
 
 /**
  * policy_mgr_set_mcc_p2p_quota() - Function to set quota for P2P
  * @psoc: PSOC object information
- * @set_value:          Qouta value for the interface
+ * @set_value:          Quota value for the interface
  *
  * This function is used to set the quota for P2P cases
  *
@@ -772,6 +779,7 @@ typedef void (*policy_mgr_nss_update_cback)(struct wlan_objmgr_psoc *psoc,
  * @sme_pdev_set_hw_mode: Set the new HW mode to FW
  * @sme_pdev_set_pcl: Set new PCL to FW
  * @sme_nss_update_request: Update NSS value to FW
+ * @sme_set_mas: Set MCC adaptive scheduler value
  */
 struct policy_mgr_sme_cbacks {
 	QDF_STATUS (*sme_get_valid_channels)(uint8_t *chan_list,
@@ -786,6 +794,7 @@ struct policy_mgr_sme_cbacks {
 		uint8_t  new_nss, policy_mgr_nss_update_cback cback,
 		uint8_t next_action, struct wlan_objmgr_psoc *psoc,
 		enum policy_mgr_conn_update_reason reason);
+	QDF_STATUS (*sme_set_mas) (uint32_t val);
 };
 
 /**
@@ -1666,4 +1675,18 @@ static inline bool policy_mgr_is_scan_simultaneous_capable(
 
 	return false;
 }
+
+/**
+ * policy_mgr_is_mcc_adaptive_scheduler_enabled() - Function to
+ * gets the policy manager mcc adaptive scheduler enabled
+ * @psoc: PSOC object information
+ *
+ * This function gets the value mcc adaptive scheduler
+ *
+ * Return: true if MCC adaptive scheduler is set else false
+ *
+ */
+bool policy_mgr_is_mcc_adaptive_scheduler_enabled(
+	struct wlan_objmgr_psoc *psoc);
+
 #endif /* __WLAN_POLICY_MGR_API_H */

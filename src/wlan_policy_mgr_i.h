@@ -68,6 +68,12 @@ extern enum cds_band_type cds_chan_to_band(uint32_t chan);
 #endif
 
 /**
+ *  Some P2P quota calues for MCC
+ */
+#define POLICY_MGR_DEFAULT_MCC_P2P_QUOTA 70
+#define POLICY_MGR_RESET_MCC_P2P_QUOTA   50
+
+/**
  * Policy Mgr hardware mode list bit-mask definitions.
  * Bits 4:0, 31:29 are unused.
  *
@@ -252,6 +258,8 @@ extern enum policy_mgr_conc_next_action
  *              scan & connections
  * @hw_mode_change_in_progress: This is to track if HW mode
  *                            change is in progress
+ * @enable_mcc_adaptive_scheduler: Enable MCC adaptive scheduler
+ *      			 value from INI
  */
 struct policy_mgr_psoc_priv_obj {
 		struct wlan_objmgr_psoc *psoc;
@@ -280,6 +288,7 @@ struct policy_mgr_psoc_priv_obj {
 		uint8_t conc_system_pref;
 		struct dual_mac_config dual_mac_cfg;
 		uint32_t hw_mode_change_in_progress;
+		uint8_t enable_mcc_adaptive_scheduler;
 };
 
 struct policy_mgr_psoc_priv_obj *policy_mgr_get_context(
@@ -297,6 +306,18 @@ QDF_STATUS policy_mgr_get_updated_fw_mode_config(
 		bool agile_dfs);
 bool policy_mgr_is_dual_mac_disabled_in_ini(
 		struct wlan_objmgr_psoc *psoc);
+
+/**
+ * policy_mgr_is_mas_enabled_in_user_cfg() - Check if MCC
+ * adaptive scheduler is enabled in INI
+ * @psoc: PSOC object information
+ *
+ * Checks if MCC adaptive scheduler is enabled in INI
+ *
+ * Return: true if MCC adaptive scheduler is enabled in INI
+ */
+bool policy_mgr_is_mas_enabled_in_user_cfg(
+	struct wlan_objmgr_psoc *psoc);
 bool policy_mgr_get_dbs_config(struct wlan_objmgr_psoc *psoc);
 bool policy_mgr_get_agile_dfs_config(struct wlan_objmgr_psoc *psoc);
 bool policy_mgr_get_dbs_scan_config(struct wlan_objmgr_psoc *psoc);
