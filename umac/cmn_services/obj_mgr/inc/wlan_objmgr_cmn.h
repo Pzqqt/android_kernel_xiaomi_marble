@@ -167,6 +167,8 @@ typedef void (*wlan_objmgr_peer_status_handler)(
  * @WLAN_SCAN_ID:               scan operations
  * @WLAN_DFS_ID:                DFS operations
  * @WLAN_P2P_ID:                P2P operations
+ * @WLAN_TDLS_SB_ID:            TDLS Southbound operations
+ * @WLAN_TDLS_NB_ID:            TDLS Northbound operations
  * @WLAN_REF_ID_MAX:            Max id used to generate ref count tracking array
  */
 typedef enum {
@@ -186,6 +188,8 @@ typedef enum {
 	WLAN_WIFI_POS_ID      = 13,
 	WLAN_DFS_ID           = 14,
 	WLAN_P2P_ID           = 15,
+	WLAN_TDLS_SB_ID       = 16,
+	WLAN_TDLS_NB_ID       = 17,
 	WLAN_REF_ID_MAX,
 } wlan_objmgr_ref_dbgid;
 

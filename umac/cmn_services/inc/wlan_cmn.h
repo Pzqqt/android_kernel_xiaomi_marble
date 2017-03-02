@@ -99,6 +99,7 @@
  * @WLAN_UMAC_COMP_POLICY_MGR:     Policy Manager
  * @WLAN_UMAC_COMP_CONFIG:     Configuration
  * @WLAN_UMAC_COMP_WIFI_POS:    WIFI Positioning
+ * @WLAN_UMAC_COMP_TDLS:     TDLS
  * @WLAN_UMAC_COMP_ID_MAX: Maximum components in UMAC
  *
  * This id is static.
@@ -114,6 +115,7 @@ enum wlan_umac_comp_id {
 	WLAN_UMAC_COMP_POLICY_MGR     = 6,
 	WLAN_UMAC_COMP_CONFIG         = 7,
 	WLAN_UMAC_COMP_WIFI_POS       = 8,
+	WLAN_UMAC_COMP_TDLS           = 9,
 	WLAN_UMAC_COMP_ID_MAX,
 };
 
