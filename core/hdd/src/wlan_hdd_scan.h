@@ -36,17 +36,6 @@
 /* (30 Mins) */
 #define MIN_TIME_REQUIRED_FOR_NEXT_BUG_REPORT (30 * 60 * 1000)
 
-/*
- * enum scan_source - scan request source
- *
- * @NL_SCAN: Scan initiated from NL
- * @VENDOR_SCAN: Scan intiated from vendor command
- */
-enum scan_source {
-	NL_SCAN,
-	VENDOR_SCAN,
-};
-
 int iw_get_scan(struct net_device *dev, struct iw_request_info *info,
 		union iwreq_data *wrqu, char *extra);
 
