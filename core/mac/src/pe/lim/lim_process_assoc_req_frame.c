@@ -1797,7 +1797,7 @@ void lim_process_assoc_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			 */
 			lim_send_assoc_rsp_mgmt_frame(mac_ctx, eSIR_SUCCESS,
 					sta_ds->assocId, sta_ds->staAddr,
-					sta_ds->mlmStaContext.subType,
+					sub_type,
 					sta_ds, session);
 			pe_err("DUT already received an assoc request frame and STA is sending another assoc req.So, do not Process sessionid: %d sys sub_type: %d for role: %d from: "
 					MAC_ADDRESS_STR,
