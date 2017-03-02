@@ -2995,7 +2995,7 @@ QDF_STATUS wma_start(void *cds_ctx)
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
 						    WMI_ROAM_EVENTID,
 						    wma_roam_event_callback,
-						    WMA_RX_WORK_CTX);
+						    WMA_RX_SERIALIZER_CTX);
 	if (0 != status) {
 		WMA_LOGP("%s: Failed to register Roam callback", __func__);
 		qdf_status = QDF_STATUS_E_FAILURE;
