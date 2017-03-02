@@ -22,6 +22,9 @@
 #include "wlan_lmac_if_api.h"
 #include "wlan_mgmt_txrx_tgt_api.h"
 #include "wlan_scan_tgt_api.h"
+#ifdef WLAN_ATF_ENABLE
+#include "wlan_atf_tgt_api.h"
+#endif
 
 /* Function pointer for OL/WMA specific UMAC tx_ops
  * registration.
@@ -29,6 +32,63 @@
 QDF_STATUS (*wlan_lmac_if_umac_tx_ops_register)
 				(struct wlan_lmac_if_tx_ops *tx_ops);
 EXPORT_SYMBOL(wlan_lmac_if_umac_tx_ops_register);
+
+#ifdef WLAN_ATF_ENABLE
+/**
+ * wlan_lmac_if_atf_rx_ops_register() - Function to register ATF RX ops.
+ */
+static void
+wlan_lmac_if_atf_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+	struct wlan_lmac_if_atf_rx_ops *atf_rx_ops = &rx_ops->atf_rx_ops;
+
+	/* ATF rx ops */
+	atf_rx_ops->atf_get_atf_commit = tgt_atf_get_atf_commit;
+	atf_rx_ops->atf_get_fmcap = tgt_atf_get_fmcap;
+	atf_rx_ops->atf_get_obss_scale = tgt_atf_get_obss_scale;
+	atf_rx_ops->atf_get_mode = tgt_atf_get_mode;
+	atf_rx_ops->atf_get_msdu_desc = tgt_atf_get_msdu_desc;
+	atf_rx_ops->atf_get_max_vdevs = tgt_atf_get_max_vdevs;
+	atf_rx_ops->atf_get_peers = tgt_atf_get_peers;
+	atf_rx_ops->atf_get_tput_based = tgt_atf_get_tput_based;
+	atf_rx_ops->atf_get_logging = tgt_atf_get_logging;
+	atf_rx_ops->atf_get_txbuf_share = tgt_atf_get_txbuf_share;
+	atf_rx_ops->atf_get_txbuf_max = tgt_atf_get_txbuf_max;
+	atf_rx_ops->atf_get_txbuf_min = tgt_atf_get_txbuf_min;
+	atf_rx_ops->atf_get_ssidgroup = tgt_atf_get_ssidgroup;
+	atf_rx_ops->atf_get_tx_block_count = tgt_atf_get_tx_block_count;
+	atf_rx_ops->atf_get_peer_blk_txtraffic = tgt_atf_get_peer_blk_txtraffic;
+	atf_rx_ops->atf_get_vdev_blk_txtraffic = tgt_atf_get_vdev_blk_txtraffic;
+	atf_rx_ops->atf_get_sched = tgt_atf_get_sched;
+	atf_rx_ops->atf_get_tx_tokens = tgt_atf_get_tx_tokens;
+	atf_rx_ops->atf_get_shadow_tx_tokens = tgt_atf_get_shadow_tx_tokens;
+	atf_rx_ops->atf_get_shadow_alloted_tx_tokens =
+					tgt_atf_get_shadow_alloted_tx_tokens;
+	atf_rx_ops->atf_get_txtokens_common = tgt_atf_get_txtokens_common;
+	atf_rx_ops->atf_get_peer_stats = tgt_atf_get_peer_stats;
+	atf_rx_ops->atf_get_token_allocated = tgt_atf_get_token_allocated;
+	atf_rx_ops->atf_get_token_utilized = tgt_atf_get_token_utilized;
+
+	atf_rx_ops->atf_set_sched = tgt_atf_set_sched;
+	atf_rx_ops->atf_set_fmcap = tgt_atf_set_fmcap;
+	atf_rx_ops->atf_set_obss_scale = tgt_atf_set_obss_scale;
+	atf_rx_ops->atf_set_mode = tgt_atf_set_mode;
+	atf_rx_ops->atf_set_msdu_desc = tgt_atf_set_msdu_desc;
+	atf_rx_ops->atf_set_max_vdevs = tgt_atf_set_max_vdevs;
+	atf_rx_ops->atf_set_peers = tgt_atf_set_peers;
+	atf_rx_ops->atf_set_peer_stats = tgt_atf_set_peer_stats;
+	atf_rx_ops->atf_set_vdev_blk_txtraffic = tgt_atf_set_vdev_blk_txtraffic;
+	atf_rx_ops->atf_set_peer_blk_txtraffic = tgt_atf_set_peer_blk_txtraffic;
+	atf_rx_ops->atf_set_tx_block_count = tgt_atf_set_tx_block_count;
+	atf_rx_ops->atf_set_token_allocated = tgt_atf_set_token_allocated;
+	atf_rx_ops->atf_set_token_utilized = tgt_atf_set_token_utilized;
+}
+#else
+static void
+wlan_lmac_if_atf_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+}
+#endif
 
 /**
  * wlan_lmac_if_umac_rx_ops_register() - UMAC rx handler register
@@ -67,6 +127,7 @@ wlan_lmac_if_umac_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 			tgt_mgmt_txrx_get_vdev_id_from_desc_id;
 	/* scan rx ops */
 	rx_ops->scan.scan_ev_handler = tgt_scan_event_handler;
+	wlan_lmac_if_atf_rx_ops_register(rx_ops);
 
 	return QDF_STATUS_SUCCESS;
 }

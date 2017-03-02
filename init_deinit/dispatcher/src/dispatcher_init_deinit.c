@@ -29,6 +29,9 @@
 #ifdef WLAN_POLICY_MGR_ENABLE
 #include "wlan_policy_mgr_api.h"
 #endif
+#ifdef WLAN_ATF_ENABLE
+#include <wlan_atf_utils_api.h>
+#endif
 
 /**
  * DOC: This file provides various init/deinit trigger point for new
@@ -202,6 +205,68 @@ static QDF_STATUS dispatcher_policy_mgr_psoc_disable(
 }
 #endif /* END of WLAN_POLICY_MGR_ENABLE */
 
+#ifdef WLAN_ATF_ENABLE
+static QDF_STATUS dispatcher_init_atf(void)
+{
+	return wlan_atf_init();
+}
+
+static QDF_STATUS dispatcher_deinit_atf(void)
+{
+	return wlan_atf_deinit();
+}
+
+static QDF_STATUS atf_psoc_open(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_atf_open(psoc);
+}
+
+static QDF_STATUS atf_psoc_close(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_atf_close(psoc);
+}
+
+static QDF_STATUS atf_psoc_enable(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_atf_enable(psoc);
+}
+
+static QDF_STATUS atf_psoc_disable(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_atf_disable(psoc);
+}
+#else
+static QDF_STATUS dispatcher_init_atf(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS dispatcher_deinit_atf(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS atf_psoc_open(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS atf_psoc_close(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS atf_psoc_enable(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS atf_psoc_disable(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* END of WLAN_ATF_ENABLE */
+
 QDF_STATUS dispatcher_init(void)
 {
 	if (QDF_STATUS_SUCCESS != wlan_objmgr_global_obj_init())
@@ -231,8 +296,13 @@ QDF_STATUS dispatcher_init(void)
 	if (QDF_STATUS_SUCCESS != dispatcher_policy_mgr_init())
 		goto policy_mgr_init_fail;
 
+	if (QDF_STATUS_SUCCESS != dispatcher_init_atf())
+		goto atf_init_fail;
+
 	return QDF_STATUS_SUCCESS;
 
+atf_init_fail:
+	dispatcher_policy_mgr_deinit();
 policy_mgr_init_fail:
 	dispatcher_deinit_pmo();
 pmo_init_fail:
@@ -257,6 +327,8 @@ EXPORT_SYMBOL(dispatcher_init);
 
 QDF_STATUS dispatcher_deinit(void)
 {
+	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_deinit_atf());
+
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_policy_mgr_deinit());
 
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_deinit_pmo());
@@ -293,8 +365,13 @@ QDF_STATUS dispatcher_psoc_open(struct wlan_objmgr_psoc *psoc)
 	if (QDF_STATUS_SUCCESS != wlan_serialization_psoc_open(psoc))
 		goto serialization_psoc_open_fail;
 
+	if (QDF_STATUS_SUCCESS != atf_psoc_open(psoc))
+		goto atf_psoc_open_fail;
+
 	return QDF_STATUS_SUCCESS;
 
+atf_psoc_open_fail:
+	wlan_serialization_psoc_close(psoc);
 serialization_psoc_open_fail:
 	tdls_psoc_close(psoc);
 tdls_psoc_open_fail:
@@ -309,6 +386,8 @@ EXPORT_SYMBOL(dispatcher_psoc_open);
 
 QDF_STATUS dispatcher_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
+	QDF_BUG(QDF_STATUS_SUCCESS == atf_psoc_close(psoc));
+
 	QDF_BUG(QDF_STATUS_SUCCESS == tdls_psoc_close(psoc));
 
 	QDF_BUG(QDF_STATUS_SUCCESS == p2p_psoc_close(psoc));
@@ -335,8 +414,13 @@ QDF_STATUS dispatcher_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	if (QDF_STATUS_SUCCESS != dispatcher_policy_mgr_psoc_enable(psoc))
 		goto policy_mgr_psoc_enable_fail;
 
+	if (QDF_STATUS_SUCCESS != atf_psoc_enable(psoc))
+		goto atf_psoc_enable_fail;
+
 	return QDF_STATUS_SUCCESS;
 
+atf_psoc_enable_fail:
+	dispatcher_policy_mgr_psoc_disable(psoc);
 policy_mgr_psoc_enable_fail:
 	tdls_psoc_disable(psoc);
 tdls_psoc_enable_fail:
@@ -351,6 +435,8 @@ EXPORT_SYMBOL(dispatcher_psoc_enable);
 
 QDF_STATUS dispatcher_psoc_disable(struct wlan_objmgr_psoc *psoc)
 {
+	QDF_BUG(QDF_STATUS_SUCCESS == atf_psoc_disable(psoc));
+
 	QDF_BUG(QDF_STATUS_SUCCESS ==
 		dispatcher_policy_mgr_psoc_disable(psoc));
 

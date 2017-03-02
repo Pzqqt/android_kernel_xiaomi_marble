@@ -674,6 +674,7 @@ struct wlan_objmgr_pdev *wlan_objmgr_get_pdev_by_id(
 
 	return pdev;
 }
+EXPORT_SYMBOL(wlan_objmgr_get_pdev_by_id);
 
 struct wlan_objmgr_pdev *wlan_objmgr_get_pdev_by_id_no_state(
 		struct wlan_objmgr_psoc *psoc, uint8_t id,

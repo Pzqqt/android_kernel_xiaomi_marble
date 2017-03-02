@@ -25,6 +25,9 @@
 #ifdef WLAN_PMO_ENABLE
 #include "target_if_pmo_main.h"
 #endif
+#ifdef WLAN_ATF_ENABLE
+#include "target_if_atf.h"
+#endif
 
 #ifdef WLAN_P2P_ENABLE
 #include "target_if_p2p.h"
@@ -91,11 +94,19 @@ QDF_STATUS target_if_close(void)
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifndef WLAN_ATF_ENABLE
+static void target_if_atf_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
+{
+}
+#endif /* WLAN_ATF_ENABLE */
+
 static
 QDF_STATUS target_if_register_umac_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {
-	/* call umac callback to register tx ops */
+	/* call umac callback to register legacy tx ops */
 	wlan_lmac_if_umac_tx_ops_register(tx_ops);
+
+	target_if_atf_tx_ops_register(tx_ops);
 
 	/* Converged UMAC components to register their TX-ops here */
 	return QDF_STATUS_SUCCESS;
