@@ -165,6 +165,29 @@ struct wlan_objmgr_psoc_regulatory {
 };
 
 /**
+ * struct wlan_objmgr_psoc_user_config -  user configurations to
+ * be used by common modules
+ * @is_11d_support_enabled: Enable/disable 11d feature
+ * @is_11h_support_enabled: Enable/disable 11h feature
+ * @dot11_mode: Phy mode
+ * @skip_dfs_chnl_in_p2p_search: Skip Dfs Channel in case of P2P
+ *                             Search
+ * @dual_mac_feature_disable: Disable Dual MAC feature
+ * @indoor_channel_support: Enable/disable sap on indoor channel
+ * @optimize_chan_avoid_event: Optimize channel avoidance
+ *                           indication coming from firmware
+ */
+struct wlan_objmgr_psoc_user_config {
+	bool is_11d_support_enabled;
+	bool is_11h_support_enabled;
+	uint8_t dot11_mode;
+	bool skip_dfs_chnl_in_p2p_search;
+	uint32_t dual_mac_feature_disable;
+	bool indoor_channel_support;
+	bool optimize_chan_avoid_event;
+};
+
+/**
  * struct wlan_objmgr_psoc_nif - HDD/OSIF specific sub structure of PSOC
  * @phy_version:     phy version, read in device probe
  * @phy_type:        OL/DA type
@@ -172,6 +195,7 @@ struct wlan_objmgr_psoc_regulatory {
  * @soc_fw_ext_caps: FW ext capabilities
  * @soc_feature_caps:Feature capabilities
  * @soc_hw_macaddr[]:HW MAC address
+ * @user_config:     user config from OS layer
  */
 struct wlan_objmgr_psoc_nif {
 	uint32_t phy_version;
@@ -180,6 +204,7 @@ struct wlan_objmgr_psoc_nif {
 	uint32_t soc_fw_ext_caps;
 	uint32_t soc_feature_caps;
 	uint8_t soc_hw_macaddr[WLAN_MACADDR_LEN];
+	struct wlan_objmgr_psoc_user_config user_config;
 };
 
 /**
@@ -247,6 +272,9 @@ struct wlan_soc_timer {
  * @obj_status[]:          component object status
  * @obj_state:             object state
  * @tgt_if_handle:         target interface handle
+ * @total_mac_phy:         number of mac/phy supported by HW
+ * @service_param:         FW service capability info
+ * @ext_service_param:     extended FW service capability info
  *    For OL based target it points to wmi handle
  * @psoc_lock:             psoc lock
  */
@@ -1055,4 +1083,34 @@ void wlan_objmgr_psoc_release_ref(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS wlan_objmgr_print_ref_all_objects_per_psoc(
 		struct wlan_objmgr_psoc *psoc);
+
+/**
+* wlan_objmgr_psoc_set_user_config () - populate user config
+* data in psoc
+* @psoc: psoc object pointer
+* @user_config_data: pointer to user config data filled up by os
+*                  dependent component
+* it is intended to set all elements by OSIF/HDD and it not
+* intended to modify a single element
+* Return: QDF status
+*/
+QDF_STATUS wlan_objmgr_psoc_set_user_config(struct wlan_objmgr_psoc *psoc,
+		struct wlan_objmgr_psoc_user_config *user_config_data);
+
+/**
+* wlan_objmgr_psoc_get_dual_mac_disable () - get user config
+* data for DBS disable
+* @psoc: psoc object pointer
+*
+* Return: Disable or Enable
+*/
+static inline uint32_t wlan_objmgr_psoc_get_dual_mac_disable(
+		struct wlan_objmgr_psoc *psoc)
+{
+	/* This API is invoked with lock acquired, do not add log prints */
+	if (psoc == NULL)
+		return 0;
+	return psoc->soc_nif.user_config.dual_mac_feature_disable;
+}
+
 #endif /* _WLAN_OBJMGR_PSOC_OBJ_H_*/

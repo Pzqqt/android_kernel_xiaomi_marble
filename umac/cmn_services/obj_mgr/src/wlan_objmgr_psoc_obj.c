@@ -1510,3 +1510,19 @@ QDF_STATUS wlan_objmgr_print_ref_all_objects_per_psoc(
 	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(wlan_objmgr_print_ref_all_objects_per_psoc);
+
+QDF_STATUS wlan_objmgr_psoc_set_user_config(struct wlan_objmgr_psoc *psoc,
+		struct wlan_objmgr_psoc_user_config *user_config_data)
+{
+	if (user_config_data == NULL) {
+		qdf_print("%s:user_config_data is NULL\n", __func__);
+		QDF_BUG(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+	wlan_psoc_obj_lock(psoc);
+	qdf_mem_copy(&psoc->soc_nif.user_config, user_config_data,
+				sizeof(psoc->soc_nif.user_config));
+	wlan_psoc_obj_unlock(psoc);
+
+	return QDF_STATUS_SUCCESS;
+}
