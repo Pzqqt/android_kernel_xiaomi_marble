@@ -6953,7 +6953,8 @@ static void hdd_set_trace_level_for_each(hdd_context_t *hdd_ctx)
 				hdd_ctx->config->qdf_trace_enable_hdd_sap_data);
 	hdd_qdf_trace_enable(QDF_MODULE_ID_HDD_DATA,
 				hdd_ctx->config->qdf_trace_enable_hdd_data);
-
+	hdd_qdf_trace_enable(QDF_MODULE_ID_WIFIPOS,
+				hdd_ctx->config->qdf_trace_enable_wifi_pos);
 	hdd_cfg_print(hdd_ctx);
 }
 
