@@ -566,14 +566,82 @@ bool policy_mgr_current_concurrency_is_mcc(struct wlan_objmgr_psoc *psoc)
 	return is_mcc;
 }
 
-void policy_mgr_set_concurrency_mode(enum tQDF_ADAPTER_MODE mode)
+/**
+ * policy_mgr_set_concurrency_mode() - To set concurrency mode
+ * @psoc: PSOC object data
+ * @mode: device mode
+ *
+ * This routine is called to set the concurrency mode
+ *
+ * Return: NONE
+ */
+void policy_mgr_set_concurrency_mode(struct wlan_objmgr_psoc *psoc,
+				     enum tQDF_ADAPTER_MODE mode)
 {
-	return;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid context");
+		return;
+	}
+
+	switch (mode) {
+	case QDF_STA_MODE:
+	case QDF_P2P_CLIENT_MODE:
+	case QDF_P2P_GO_MODE:
+	case QDF_SAP_MODE:
+	case QDF_IBSS_MODE:
+	case QDF_MONITOR_MODE:
+		pm_ctx->concurrency_mode |= (1 << mode);
+		pm_ctx->no_of_open_sessions[mode]++;
+		break;
+	default:
+		break;
+	}
+
+	policy_mgr_info("concurrency_mode = 0x%x Number of open sessions for mode %d = %d",
+		pm_ctx->concurrency_mode, mode,
+		pm_ctx->no_of_open_sessions[mode]);
 }
 
-void policy_mgr_clear_concurrency_mode(enum tQDF_ADAPTER_MODE mode)
+/**
+ * policy_mgr_clear_concurrency_mode() - To clear concurrency mode
+ * @psoc: PSOC object data
+ * @mode: device mode
+ *
+ * This routine is called to clear the concurrency mode
+ *
+ * Return: NONE
+ */
+void policy_mgr_clear_concurrency_mode(struct wlan_objmgr_psoc *psoc,
+				       enum tQDF_ADAPTER_MODE mode)
 {
-	return;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid context");
+		return;
+	}
+
+	switch (mode) {
+	case QDF_STA_MODE:
+	case QDF_P2P_CLIENT_MODE:
+	case QDF_P2P_GO_MODE:
+	case QDF_SAP_MODE:
+	case QDF_MONITOR_MODE:
+		pm_ctx->no_of_open_sessions[mode]--;
+		if (!(pm_ctx->no_of_open_sessions[mode]))
+			pm_ctx->concurrency_mode &= (~(1 << mode));
+		break;
+	default:
+		break;
+	}
+
+	policy_mgr_info("concurrency_mode = 0x%x Number of open sessions for mode %d = %d",
+		pm_ctx->concurrency_mode, mode,
+		pm_ctx->no_of_open_sessions[mode]);
 }
 
 void policy_mgr_incr_active_session(struct wlan_objmgr_psoc *psoc,
@@ -1208,8 +1276,93 @@ uint8_t policy_mgr_is_mcc_in_24G(struct wlan_objmgr_psoc *psoc)
 	return is_24G_mcc;
 }
 
-int32_t policy_mgr_set_mas(struct wlan_objmgr_psoc *psoc, uint8_t mas_value)
+/**
+ * policy_mgr_is_mcc_adaptive_scheduler_enabled() - Function to
+ * gets the policy manager mcc adaptive scheduler enabled
+ * @psoc: PSOC object information
+ *
+ * This function gets the value mcc adaptive scheduler
+ *
+ * Return: true if MCC adaptive scheduler is set else false
+ *
+ */
+bool policy_mgr_is_mcc_adaptive_scheduler_enabled(
+	struct wlan_objmgr_psoc *psoc) {
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid context");
+		return false;
+	}
+
+	return pm_ctx->enable_mcc_adaptive_scheduler ? true : false;
+}
+
+/**
+ * policy_mgr_set_mas() - Function to set MAS value to UMAC
+ * @psoc:               Pointer to psoc
+ * @mas_value:          0-Disable, 1-Enable MAS
+ * @dev_mode:           device mode
+ *
+ * This function passes down the value of MAS to UMAC
+ *
+ * Return: Configuration message posting status, SUCCESS or Fail
+ *
+ */
+int32_t policy_mgr_set_mas(struct wlan_objmgr_psoc *psoc,
+			   uint8_t mas_value,
+			   enum tQDF_ADAPTER_MODE dev_mode)
 {
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	QDF_STATUS ret_status;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid context");
+		return -EFAULT;
+	}
+
+	if (mas_value) {
+		if (policy_mgr_is_mas_enabled_in_user_cfg(psoc)) {
+			policy_mgr_info("Miracast is ON. Disable MAS and configure P2P quota");
+			pm_ctx->enable_mcc_adaptive_scheduler = false;
+			ret_status = pm_ctx->sme_cbacks.sme_set_mas(false);
+			if (QDF_STATUS_SUCCESS != ret_status) {
+				policy_mgr_err("Failed to disable MAS");
+				return -EBUSY;
+			}
+		}
+
+		/* Config p2p quota */
+		if (dev_mode == QDF_STA_MODE)
+			policy_mgr_set_mcc_p2p_quota(psoc,
+				100 - POLICY_MGR_DEFAULT_MCC_P2P_QUOTA);
+		else if (dev_mode == QDF_P2P_GO_MODE)
+			policy_mgr_go_set_mcc_p2p_quota(psoc,
+				POLICY_MGR_DEFAULT_MCC_P2P_QUOTA);
+		else
+			policy_mgr_set_mcc_p2p_quota(psoc,
+				POLICY_MGR_DEFAULT_MCC_P2P_QUOTA);
+	} else {
+		policy_mgr_info("Miracast is OFF. Enable MAS and reset P2P quota");
+		if (dev_mode == QDF_P2P_GO_MODE)
+			policy_mgr_go_set_mcc_p2p_quota(psoc,
+				POLICY_MGR_RESET_MCC_P2P_QUOTA);
+		else
+			policy_mgr_set_mcc_p2p_quota(psoc,
+				POLICY_MGR_RESET_MCC_P2P_QUOTA);
+
+		if (policy_mgr_is_mas_enabled_in_user_cfg(psoc)) {
+			pm_ctx->enable_mcc_adaptive_scheduler = true;
+			ret_status = pm_ctx->sme_cbacks.sme_set_mas(true);
+			if (QDF_STATUS_SUCCESS != ret_status) {
+				policy_mgr_err("Unable to enable MAS");
+				return -EBUSY;
+			}
+		}
+	}
+
 	return 0;
 }
 
