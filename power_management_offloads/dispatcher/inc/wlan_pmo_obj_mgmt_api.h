@@ -106,6 +106,17 @@ QDF_STATUS pmo_register_suspend_handler(
 		void *arg);
 
 /**
+ * pmo_unregister_suspend_handler():unregister suspend handler for components
+ * @id: component id
+ * @handler: resume handler for the mention component
+ *
+ * Return QDF_STATUS status -in case of success else return error
+ */
+QDF_STATUS pmo_unregister_suspend_handler(
+		enum wlan_umac_comp_id id,
+		pmo_psoc_suspend_handler handler);
+
+/**
  * pmo_register_resume_handler(): API to register resume handler for components
  * @id: component id
  * @handler: resume handler for the mention component
@@ -119,23 +130,34 @@ QDF_STATUS pmo_register_resume_handler(
 		void *arg);
 
 /**
- * pmo_suspend_psoc(): API to suspend psoc
- * @psoc:objmgr psoc
- * @is_runtime_suspend: true for run time suspend else false
+ * pmo_unregister_resume_handler(): unregister resume handler for components
+ * @id: component id
+ * @handler: resume handler for the mention component
  *
  * Return QDF_STATUS status - in case of success else return error
  */
-QDF_STATUS pmo_suspend_psoc(struct wlan_objmgr_psoc *psoc,
-		bool is_runtime_suspend);
+QDF_STATUS pmo_unregister_resume_handler(
+		enum wlan_umac_comp_id id,
+		pmo_psoc_resume_handler handler);
 
 /**
- * pmo_resume_psoc(): API to resume psoc
+ * pmo_suspend_all_components(): API to suspend all component
  * @psoc:objmgr psoc
- * @is_runtime_resume: true for run time resume else false
+ * @suspend_type: Tell suspend type (apps suspend / runtime suspend)
  *
  * Return QDF_STATUS status - in case of success else return error
  */
-QDF_STATUS pmo_resume_psoc(struct wlan_objmgr_psoc *psoc,
-		bool is_runtime_resume);
+QDF_STATUS pmo_suspend_all_components(struct wlan_objmgr_psoc *psoc,
+		enum qdf_suspend_type suspend_type);
+
+/**
+ * pmo_resume_all_components(): API to resume all component
+ * @psoc:objmgr psoc
+ * @suspend_type: Tell suspend type from which resume is required
+ *
+ * Return QDF_STATUS status - in case of success else return error
+ */
+QDF_STATUS pmo_resume_all_components(struct wlan_objmgr_psoc *psoc,
+		enum qdf_suspend_type suspend_type);
 
 #endif /* end  of _WLAN_PMO_OBJ_MGMT_API_H_ */

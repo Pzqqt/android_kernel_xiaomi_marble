@@ -36,6 +36,7 @@
 #include "wmi_unified.h"
 #include "qdf_status.h"
 #include "qdf_lock.h"
+#include "qdf_event.h"
 
 #define PMO_IPV4_ADDR_LEN         4
 
@@ -53,6 +54,9 @@
 #define PMO_IPV6_ADDR_AC_TYPE                 1
 
 #define PMO_80211_ADDR_LEN  6  /* size of 802.11 address */
+
+#define PMO_WOW_REQUIRED_CREDITS 1
+
 /**
  * enum pmo_offload_type: tell offload type
  * @pmo_arp_offload: arp offload
@@ -63,6 +67,135 @@ enum pmo_offload_type {
 	pmo_arp_offload = 0,
 	pmo_ns_offload,
 	pmo_gtk_offload,
+};
+
+/**
+ * enum pmo_vdev_param_id: tell vdev param id
+ * @pmo_vdev_param_listen_interval: vdev listen interval param id
+ * @pmo_vdev_param_dtim_policy: vdev param dtim policy
+ * @pmo_vdev_max_param: Max vdev param id
+ */
+enum pmo_vdev_param_id {
+	pmo_vdev_param_listen_interval = 0,
+	pmo_vdev_param_dtim_policy,
+	pmo_vdev_max_param
+};
+
+/**
+ * enum pmo_beacon_dtim_policy: tell vdev beacon policy
+ * @pmo_ignore_dtim: fwr need to igonre dtime policy
+ * @pmo_normal_dtim: fwr need to use normal dtime policy
+ * @pmo_stick_dtim: fwr need to use stick dtime policy
+ * @auto_dtim: fwr need to auto dtime policy
+ */
+enum pmo_beacon_dtim_policy {
+	pmo_ignore_dtim = 0x01,
+	pmo_normal_dtim = 0x02,
+	pmo_stick_dtim = 0x03,
+	pmo_auto_dtim = 0x04,
+};
+
+/**
+ * @pmo_sta_ps_param_rx_wake_policy: Controls how frames are retrievd from AP
+ *  while STA is sleeping.
+ * @pmo_sta_ps_param_tx_wake_threshold: STA will go active after this many TX
+ * @pmo_sta_ps_param_pspoll_count:No of PS-Poll to send before STA wakes up
+ * @pmo_sta_ps_param_inactivity_time: TX/RX inactivity time in msec before
+    going to sleep.
+ * @pmo_sta_ps_param_uapsd: Set uapsd configuration.
+ * @pmo_sta_ps_param_qpower_pspoll_count: No of PS-Poll to send before
+    STA wakes up in QPower Mode.
+ * @pmo_sta_ps_enable_qpower:  Enable QPower
+ * @pmo_sta_ps_param_qpower_max_tx_before_wake: Number of TX frames before the
+    entering the Active state
+ */
+enum pmo_sta_powersave_param {
+	pmo_sta_ps_param_rx_wake_policy = 0,
+	pmo_sta_ps_param_tx_wake_threshold = 1,
+	pmo_sta_ps_param_pspoll_count = 2,
+	pmo_sta_ps_param_inactivity_time = 3,
+	pmo_sta_ps_param_uapsd = 4,
+	pmo_sta_ps_param_qpower_pspoll_count = 5,
+	pmo_sta_ps_enable_qpower = 6,
+	pmo_sta_ps_param_qpower_max_tx_before_wake = 7,
+};
+
+/**
+ * enum powersave_qpower_mode: QPOWER modes
+ * @pmo_qpower_disabled: Qpower is disabled
+ * @pmo_qpower_enabled: Qpower is enabled
+ * @pmo_qpower_duty_cycling: Qpower is enabled with duty cycling
+ */
+enum pmo_power_save_qpower_mode {
+	pmo_qpower_disabled = 0,
+	pmo_qpower_enabled = 1,
+	pmo_qpower_duty_cycling = 2
+};
+
+/**
+ * enum powersave_qpower_mode: powersave_mode
+ * @pmo_ps_not_supported: Power save is not supported
+ * @pmo_ps_legacy_no_deep_sleep: Legacy pwr save enabled and deep sleep disabled
+ * @pmo_ps_qpower_no_deep_sleep: QPOWER enabled and deep sleep disabled
+ * @pmo_ps_legacy_deep_sleep: Legacy power save enabled and deep sleep enabled
+ * @pmo_ps_qpower_deep_sleep: QPOWER enabled and deep sleep enabled
+ * @pmo_ps_duty_cycling_qpower: QPOWER enabled in duty cycling mode
+ */
+enum pmo_powersave_mode {
+	pmo_ps_not_supported = 0,
+	pmo_ps_legacy_no_deep_sleep = 1,
+	pmo_ps_qpower_no_deep_sleep = 2,
+	pmo_ps_legacy_deep_sleep = 3,
+	pmo_ps_qpower_deep_sleep = 4,
+	pmo_ps_duty_cycling_qpower = 5
+};
+
+/**
+ * enum wow_resume_trigger - resume trigger override setting values
+ * @PMO_WOW_RESUME_TRIGGER_DEFAULT: fw to use platform default resume trigger
+ * @PMO_WOW_RESUME_TRIGGER_HTC_WAKEUP: force fw to use HTC Wakeup to resume
+ * @PMO_WOW_RESUME_TRIGGER_GPIO: force fw to use GPIO to resume
+ * @PMO_WOW_RESUME_TRIGGER_COUNT: number of resume trigger options
+ */
+enum pmo_wow_resume_trigger {
+	/* always first */
+	PMO_WOW_RESUME_TRIGGER_DEFAULT = 0,
+	PMO_WOW_RESUME_TRIGGER_HTC_WAKEUP,
+	PMO_WOW_RESUME_TRIGGER_GPIO,
+	/* always last */
+	PMO_WOW_RESUME_TRIGGER_COUNT
+};
+
+/**
+ * enum wow_interface_pause - interface pause override setting values
+ * @PMO_WOW_INTERFACE_PAUSE_DEFAULT: use platform default iface pause setting
+ * @PMO_WOW_INTERFACE_PAUSE_ENABLE: force interface pause setting to enabled
+ * @PMO_WOW_INTERFACE_PAUSE_DISABLE: force interface pause setting to disabled
+ * @PMO_WOW_INTERFACE_PAUSE_COUNT: number of interface pause options
+ */
+enum pmo_wow_interface_pause {
+	/* always first */
+	PMO_WOW_INTERFACE_PAUSE_DEFAULT = 0,
+	PMO_WOW_INTERFACE_PAUSE_ENABLE,
+	PMO_WOW_INTERFACE_PAUSE_DISABLE,
+	/* always last */
+	PMO_WOW_INTERFACE_PAUSE_COUNT
+};
+
+#define PMO_TGT_SUSPEND_COMPLETE_TIMEOUT   6000
+#define PMO_WAKE_LOCK_TIMEOUT              1000
+#define PMO_RESUME_TIMEOUT                 25000
+
+/**
+ * struct wow_enable_params - A collection of wow enable override parameters
+ * @is_unit_test: true to notify fw this is a unit-test suspend
+ * @interface_pause: used to override the interface pause indication sent to fw
+ * @resume_trigger: used to force fw to use a particular resume method
+ */
+struct pmo_wow_enable_params {
+	bool is_unit_test;
+	enum pmo_wow_interface_pause interface_pause;
+	enum pmo_wow_resume_trigger resume_trigger;
 };
 
 /**
@@ -124,6 +257,12 @@ enum pmo_offload_trigger {
  * @deauth_enable: true when wake up on deauth is enabled else false
  * @disassoc_enable:  true when wake up on disassoc is enabled else false
  * @bmiss_enable: true when wake up on bmiss is enabled else false
+ * @nan_enable:  true when nan is enabled else false
+ * @lpass_enable: true when lpass is enabled else false
+ * @sta_dynamic_dtim: station dynamic DTIM value
+ * @sta_mod_dtim: station modulated DTIM value
+ * @sta_max_li_mod_dtim: station max listen interval DTIM value
+ * @power_save_mode: power save mode for psoc
  */
 struct pmo_psoc_cfg {
 	bool ptrn_match_enable_all_vdev;
@@ -142,6 +281,12 @@ struct pmo_psoc_cfg {
 	bool deauth_enable;
 	bool disassoc_enable;
 	bool bmiss_enable;
+	bool nan_enable;
+	bool lpass_enable;
+	uint8_t sta_dynamic_dtim;
+	uint8_t sta_mod_dtim;
+	uint8_t sta_max_li_mod_dtim;
+	uint8_t power_save_mode;
 };
 
 #endif /* end  of _WLAN_PMO_COMMONP_STRUCT_H_ */

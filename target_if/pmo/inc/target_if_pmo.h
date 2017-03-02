@@ -183,6 +183,172 @@ QDF_STATUS target_if_pmo_send_gtk_response_req(struct wlan_objmgr_vdev *vdev);
 int target_if_pmo_gtk_offload_status_event(void *scn_handle,
 	uint8_t *event, uint32_t len);
 
+/**
+ * target_if_pmo_send_lphb_enable() - enable command of LPHB config req
+ * @psoc: objmgr psoc handle
+ * @ts_lphb_enable: lphb enable request which needs to configure in fwr
+ *
+ * Return: QDF status
+ */
+QDF_STATUS target_if_pmo_send_lphb_enable(struct wlan_objmgr_psoc *psoc,
+			struct pmo_lphb_enable_req *ts_lphb_enable);
+
+/**
+ * target_if_pmo_send_lphb_tcp_params() - set lphb tcp params config request
+ * @psoc: objmgr psoc handle
+ * @ts_lphb_tcp_param: lphb tcp params which needs to configure in fwr
+ *
+ * Return: QDF status
+ */
+QDF_STATUS target_if_pmo_send_lphb_tcp_params(struct wlan_objmgr_psoc *psoc,
+			struct pmo_lphb_tcp_params *ts_lphb_tcp_param);
+
+/**
+ * target_if_pmo_send_lphb_tcp_pkt_filter() - send lphb tcp packet filter req
+ * @psoc: objmgr psoc handle
+ * @ts_lphb_tcp_filter: lphb tcp filter request which needs to configure in fwr
+ *
+ * Return: QDF status
+ */
+QDF_STATUS target_if_pmo_send_lphb_tcp_pkt_filter(struct wlan_objmgr_psoc *psoc,
+			struct pmo_lphb_tcp_filter_req *ts_lphb_tcp_filter);
+
+/**
+ * target_if_pmo_send_lphb_udp_params() - Send udp param command of LPHB
+ * @psoc: objmgr psoc handle
+ * @ts_lphb_udp_param: lphb udp params which needs to configure in fwr
+ *
+ * Return: QDF status
+ */
+QDF_STATUS target_if_pmo_send_lphb_udp_params(struct wlan_objmgr_psoc *psoc,
+			struct pmo_lphb_udp_params *ts_lphb_udp_param);
+
+/**
+ * target_if_pmo_send_lphb_udp_pkt_filter() - Send lphb udp pkt filter cmd req
+ * @psoc: objmgr psoc handle
+ * @ts_lphb_udp_filter: lphb udp filter request which needs to configure in fwr
+ *
+ * Return: QDF status
+ */
+QDF_STATUS target_if_pmo_send_lphb_udp_pkt_filter(struct wlan_objmgr_psoc *psoc,
+			struct pmo_lphb_udp_filter_req *ts_lphb_udp_filter);
+
+/**
+ * target_if_pmo_lphb_evt_handler() - send LPHB indication to os if /HDD
+ * @psoc: objmgr psoc handle
+ * @event: lphb event buffer
+ *
+ * Return: QDF_STATUS_SUCCESS for success else error code
+ */
+QDF_STATUS target_if_pmo_lphb_evt_handler(struct wlan_objmgr_psoc *psoc,
+		uint8_t *event);
+
+/**
+ * target_if_pmo_send_vdev_update_param_req() - Send vdev param value to fwr
+ * @vdev: objmgr vdev
+ * @param_id: tell vdev param id which needs to be updated in fwr
+ * @param_value: vdev parameter value
+ *
+ * Return: QDF status
+ */
+QDF_STATUS target_if_pmo_send_vdev_update_param_req(
+		struct wlan_objmgr_vdev *vdev,
+		uint32_t param_id, uint32_t param_value);
+
+/**
+ * target_if_pmo_send_vdev_ps_param_req() - Send vdev ps param value to fwr
+ * @vdev: objmgr vdev
+ * @param_id: tell vdev param id which needs to be updated in fwr
+ * @param_value: vdev parameter value
+ *
+ * Return: QDF status
+ */
+QDF_STATUS target_if_pmo_send_vdev_ps_param_req(
+		struct wlan_objmgr_vdev *vdev,
+		uint32_t param_id,
+		uint32_t param_value);
+
+/**
+ * target_if_pmo_psoc_update_bus_suspend() - update wmi bus suspend flag
+ * @psoc: objmgr psoc
+ * @value: bus suspend value
+ *
+ * Return: None
+ */
+void target_if_pmo_psoc_update_bus_suspend(struct wlan_objmgr_psoc *psoc,
+		uint8_t value);
+
+/**
+ * target_if_pmo_psoc_get_host_credits() - get available host credits
+ * @psoc: objmgr psoc
+ *
+ * Return: return host credits
+ */
+int target_if_pmo_psoc_get_host_credits(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * target_if_pmo_psoc_get_pending_cmnds() - get wmi pending commands
+ * @psoc: objmgr psoc
+ *
+ * Return: return wmi pending commands
+ */
+int target_if_pmo_psoc_get_pending_cmnds(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * target_if_pmo_update_target_suspend_flag() - set wmi target suspend flag
+ * @psoc: objmgr psoc
+ * @value: value
+ *
+ * Return: return wmi pending commands
+ */
+void target_if_pmo_update_target_suspend_flag(struct wlan_objmgr_psoc *psoc,
+		uint8_t value);
+
+/**
+ * target_if_pmo_psoc_send_wow_enable_req() -send wow enable request
+ * @psoc: objmgr psoc
+ * @param: wow command params
+ *
+ * Return: return QDF_STATUS_SUCCESS on success else error code
+ */
+QDF_STATUS target_if_pmo_psoc_send_wow_enable_req(struct wlan_objmgr_psoc *psoc,
+		struct pmo_wow_cmd_params *param);
+
+/**
+ * target_if_pmo_psoc_send_suspend_req() - fp to send suspend request
+ * @psoc: objmgr psoc
+ * @param: target suspend params
+ *
+ * Return: return QDF_STATUS_SUCCESS on success else error code
+ */
+QDF_STATUS target_if_pmo_psoc_send_suspend_req(struct wlan_objmgr_psoc *psoc,
+		struct pmo_suspend_params *param);
+
+/**
+ * target_if_pmo_get_runtime_pm_in_progress() - fp to get runtime pm status
+ * @psoc: objmgr psoc
+ *
+ * Return: true if runtime pm in progress else false
+ */
+bool target_if_pmo_get_runtime_pm_in_progress(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * target_if_pmo_psoc_send_host_wakeup_ind() - send host wake ind to fwr
+ * @psoc: objmgr psoc
+ *
+ * Return: return QDF_STATUS_SUCCESS on success else error code
+ */
+QDF_STATUS target_if_pmo_psoc_send_host_wakeup_ind(
+		struct wlan_objmgr_psoc *psoc);
+
+/**
+ * target_if_pmo_psoc_send_target_resume_req() -send target resume request
+ * @psoc: objmgr psoc
+ *
+ * Return: return QDF_STATUS_SUCCESS on success else error code
+ */
+QDF_STATUS target_if_pmo_psoc_send_target_resume_req(
+		struct wlan_objmgr_psoc *psoc);
 
 #endif
 

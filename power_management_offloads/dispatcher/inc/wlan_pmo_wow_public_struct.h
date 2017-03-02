@@ -24,6 +24,8 @@
   */
 
 #ifndef _WLAN_PMO_WOW_PUBLIC_STRUCT_H_
+#include "wlan_pmo_lphb_public_struct.h"
+
 #define _WLAN_PMO_WOW_PUBLIC_STRUCT_H_
 
 #define PMO_WOWL_PTRN_MAX_SIZE          146
@@ -142,41 +144,19 @@ enum pmo_wow_action_wakeup_opertion {
 };
 
 /**
- * struct pmo_lphb_enable_req -pmo lphb enable request
- * @enable: true if enable else false
- * @item: item number
- * @session: session number
- */
-struct pmo_lphb_enable_req {
-	bool enable;
-	uint8_t item;
-	uint8_t session;
-};
-
-/**
- * struct pmo_lphb_req -pmo lphb request
- * @cmd: command
- * @dummy: true if dummy else false
- * @params: place holder for lphb enable request
- */
-struct pmo_lphb_req {
-	uint16_t cmd;
-	uint16_t dummy;
-	union {
-		struct pmo_lphb_enable_req lphb_enable_req;
-	} params;
-};
-
-/**
  * struct pmo_wow - store wow patterns
- * @magic_ptrn_enable: magic pattern enable/disable
  * @wow_enable: wow enable/disable
  * @wow_enable_cmd_sent: is wow enable command sent to fw
- * @deauth_enable: is deauth wakeup enable/disable
- * @disassoc_enable: is disassoc wakeup enable/disable
- * @bmiss_enable: is bmiss wakeup enable/disable
- * @gtk_pdev_enable: is GTK based wakeup enable/disable
+ * @is_wow_bus_suspended: true if bus is suspended
+ * @target_suspend: target suspend event
+ * @target_resume: target resume event
+ * @wow_nack: wow negative ack flag
+ * @wow_initial_wake_up: target initial wake up is received
+ * @wow_wake_lock: wow wake lock
  * @lphb_cache: lphb cache
+ * @lphb_cb_ctx: callback context for lphb, kept as void* as
+ *                        osif structures are opaque to pmo.
+ * @pmo_lphb_callback: registered os if calllback function
  *
  * This structure stores wow patterns and
  * wow related parameters in host.
@@ -184,11 +164,19 @@ struct pmo_lphb_req {
 struct pmo_wow {
 	bool wow_enable;
 	bool wow_enable_cmd_sent;
+	bool is_wow_bus_suspended;
+	qdf_event_t target_suspend;
+	qdf_event_t target_resume;
+	int wow_nack;
+	bool wow_initial_wake_up;
+	qdf_wake_lock_t wow_wake_lock;
 	/*
 	 * currently supports only vdev 0.
 	 * cache has two entries: one for TCP and one for UDP.
 	 */
 	struct pmo_lphb_req lphb_cache[2];
+	void *lphb_cb_ctx;
+	pmo_lphb_callback lphb_cb;
 };
 
 /* WOW related structures */
@@ -227,6 +215,27 @@ struct pmo_wow_enter_params {
 	uint8_t wow_deauth_rcv;
 	uint8_t pattern_filtering_enable;
 	uint8_t wow_bss_conn_loss;
+};
+
+/**
+ * struct pmo_wow_cmd_params - wow cmd parameter
+ * @enable: wow enable or disable flag
+ * @can_suspend_link: flag to indicate if link can be suspended
+ * @pause_iface_config: interface config
+ */
+struct pmo_wow_cmd_params {
+	bool enable;
+	bool can_suspend_link;
+	uint8_t pause_iface_config;
+	uint32_t flags;
+};
+
+/**
+ * struct pmo_suspend_params - suspend cmd parameter
+ * @disable_target_intr: disable target interrupt
+ */
+struct pmo_suspend_params {
+	uint8_t disable_target_intr;
 };
 
 #endif /* end  of _WLAN_PMO_WOW_PUBLIC_STRUCT_H_ */

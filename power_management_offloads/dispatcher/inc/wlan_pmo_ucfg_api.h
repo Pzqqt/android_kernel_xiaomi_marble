@@ -287,4 +287,214 @@ QDF_STATUS pmo_ucfg_disable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev);
 QDF_STATUS pmo_ucfg_get_gtk_rsp(struct wlan_objmgr_vdev *vdev,
 		struct pmo_gtk_rsp_req *gtk_rsp_req);
 
+/**
+ * pmo_ucfg_update_nlo_scan_in_progress(): update nlo scan is in progress flags
+ * @vdev: objmgr vdev handle
+ * @value:true if pno scan is in progress else false
+ *
+ * Return: TRUE/FALSE
+ */
+void pmo_ucfg_update_nlo_scan_in_progress(struct wlan_objmgr_vdev *vdev,
+	bool value);
+
+/**
+ * pmo_ucfg_update_nlo_match_found(): Update nlo scan match flag to value
+ * @vdev: objmgr vdev handle
+ * @value:true if nlo scan match event received else false
+ *
+ * Return: TRUE/FALSE
+ */
+void pmo_ucfg_update_nlo_match_found(struct wlan_objmgr_vdev *vdev,
+	bool value);
+
+/**
+ * pmo_ucfg_update_extscan_in_progress(): update extscan is in progress flags
+ * @vdev: objmgr vdev handle
+ * @value:true if extscan is in progress else false
+ *
+ * Return: TRUE/FALSE
+ */
+void pmo_ucfg_update_extscan_in_progress(struct wlan_objmgr_vdev *vdev,
+	bool value);
+
+/**
+ * pmo_ucfg_update_p2plo_in_progress(): update p2plo is in progress flags
+ * @vdev: objmgr vdev handle
+ * @value:true if p2plo is in progress else false
+ *
+ * Return: TRUE/FALSE
+ */
+void pmo_ucfg_update_p2plo_in_progress(struct wlan_objmgr_vdev *vdev,
+	bool value);
+
+/**
+ * pmo_ucfg_lphb_config_req() -  Handles lphb config request for psoc
+ * @psoc: objmgr psoc handle
+ * @lphb_req: low power heart beat request
+ * @lphb_cb_ctx: Context which needs to pass to soif when lphb callback called
+ * @callback: upon receiving of lphb indication from fwr call lphb callback
+ *
+ * Return: QDF status
+ */
+QDF_STATUS pmo_ucfg_lphb_config_req(struct wlan_objmgr_psoc *psoc,
+		struct pmo_lphb_req *lphb_req, void *lphb_cb_ctx,
+		pmo_lphb_callback callback);
+
+/**
+ * pmo_ucfg_update_alt_modulated_dtim_enable() - update alt modulatate dtim
+ * @vdev: objmgr vdev handle
+ * @value: true for alt_modulated_dtim enable else false
+ *
+ * Return: QDF status
+ */
+void pmo_ucfg_update_alt_modulated_dtim_enable(struct wlan_objmgr_vdev *vdev,
+	bool value);
+
+/**
+ * pmo_ucfg_psoc_update_power_save_mode() - update power save mode
+ * @vdev: objmgr vdev handle
+ * @value:vdev power save mode
+ *
+ * Return: None
+ */
+void pmo_ucfg_psoc_update_power_save_mode(struct wlan_objmgr_psoc *psoc,
+	uint8_t value);
+
+/**
+ * pmo_ucfg_psoc_update_dp_handle() - update psoc data path handle
+ * @psoc: objmgr psoc handle
+ * @dp_hdl: psoc data path handle
+ *
+ * Return: None
+ */
+void pmo_ucfg_psoc_update_dp_handle(struct wlan_objmgr_psoc *psoc,
+	void *dp_hdl);
+
+/**
+ * pmo_ucfg_vdev_update_dp_handle() - update vdev data path handle
+ * @vdev: objmgr vdev handle
+ * @dp_hdl: vdev data path handle
+ *
+ * Return: None
+ */
+void pmo_ucfg_vdev_update_dp_handle(struct wlan_objmgr_vdev *vdev,
+	void *dp_hdl);
+
+/**
+ * pmo_ucfg_psoc_update_htc_handle() - update psoc htc layer handle
+ * @psoc: objmgr psoc handle
+ * @htc_handle: psoc host-to-tagret layer (htc) handle
+ *
+ * Return: None
+ */
+void pmo_ucfg_psoc_update_htc_handle(struct wlan_objmgr_psoc *psoc,
+		void *htc_handle);
+
+/**
+ * pmo_ucfg_psoc_user_space_suspend_req() -  Handles user space suspend req
+ * @psoc: objmgr psoc handle
+ * @type: type of suspend
+ *
+ * Handles user space suspend indication for psoc
+ *
+ * Return: QDF status
+ */
+QDF_STATUS pmo_ucfg_psoc_user_space_suspend_req(struct wlan_objmgr_psoc *psoc,
+		enum qdf_suspend_type type);
+
+/**
+ * pmo_ucfg_psoc_user_space_resume_req() -  Handles user space resume req
+ * @psoc: objmgr psoc handle
+ * @type: type of suspend from which resume needed
+ *
+ * Handles user space resume indication for psoc
+ *
+ * Return: QDF status
+ */
+QDF_STATUS pmo_ucfg_psoc_user_space_resume_req(struct wlan_objmgr_psoc *psoc,
+		enum qdf_suspend_type type);
+
+/**
+ * pmo_ucfg_psoc_bus_suspend_req(): handles bus suspend for psoc
+ * @psoc: objmgr psoc
+ * @type: is this suspend part of runtime suspend or system suspend?
+ * @wow_params: collection of wow enable override parameters
+ *
+ * Bails if a scan is in progress.
+ * Calls the appropriate handlers based on configuration and event.
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS pmo_ucfg_psoc_bus_suspend_req(struct wlan_objmgr_psoc *psoc,
+		enum qdf_suspend_type type,
+		struct pmo_wow_enable_params *wow_params);
+
+/**
+ * pmo_ucfg_psoc_suspend_target() -Send suspend target command
+ * @psoc: objmgr psoc handle
+ * @disable_target_intr: disable target interrupt
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS pmo_ucfg_psoc_suspend_target(struct wlan_objmgr_psoc *psoc,
+		int disable_target_intr);
+
+/**
+ * pmo_ucfg_psoc_bus_resume() -handle bus resume request for psoc
+ * @psoc: objmgr psoc handle
+ * @type: is this suspend part of runtime suspend or system suspend?
+ *
+ * Return:QDF_STATUS_SUCCESS on success else error code
+ */
+QDF_STATUS pmo_ucfg_psoc_bus_resume_req(struct wlan_objmgr_psoc *psoc,
+		enum qdf_suspend_type type);
+
+/**
+ * pmo_ucfg_get_wow_bus_suspend(): API to check if wow bus is suspended or not
+ * @psoc: objmgr psoc handle
+ *
+ * Return: True if bus suspende else false
+ */
+bool pmo_ucfg_get_wow_bus_suspend(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * pmo_ucfg_psoc_handle_initial_wake_up() - update initial wake up
+ * @cb_ctx: objmgr psoc handle as void * due to htc layer is not aware psoc
+ *
+ * Return: None
+ */
+void pmo_ucfg_psoc_handle_initial_wake_up(void *cb_ctx);
+
+/**
+ * pmo_ucfg_psoc_is_target_wake_up_received() - Get initial wake up status
+ * @psoc: objmgr psoc handle
+ *
+ * Return: 0 on success else error code
+ */
+int pmo_ucfg_psoc_is_target_wake_up_received(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * pmo_ucfg_psoc_is_target_wake_up_received() - Clear initial wake up status
+ * @psoc: objmgr psoc handle
+ *
+ * Return: 0 on success else error code
+ */
+int pmo_ucfg_psoc_clear_target_wake_up(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * pmo_ucfg_psoc_target_suspend_acknowledge() - Clear initial wake up status
+ * @psoc: objmgr psoc handle
+ *
+ * Return: None
+ */
+void pmo_ucfg_psoc_target_suspend_acknowledge(void *context, bool wow_nack);
+
+/**
+ * pmo_ucfg_psoc_wakeup_host_event_received() - got host wake up evennt from fwr
+ * @psoc: objmgr psoc handle
+ *
+ * Return: None
+ */
+void pmo_ucfg_psoc_wakeup_host_event_received(struct wlan_objmgr_psoc *psoc);
+
 #endif /* end  of _WLAN_PMO_UCFG_API_H_ */

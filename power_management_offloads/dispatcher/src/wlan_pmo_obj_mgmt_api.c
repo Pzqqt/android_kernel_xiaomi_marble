@@ -172,6 +172,19 @@ QDF_STATUS pmo_psoc_object_created_notification(
 		goto out;
 	}
 	qdf_spinlock_create(&psoc_ctx->lock);
+	qdf_wake_lock_create(&psoc_ctx->wow.wow_wake_lock, "pmo_wow_wl");
+	status = qdf_event_create(&psoc_ctx->wow.target_suspend);
+	if (status != QDF_STATUS_SUCCESS) {
+		pmo_err("target suspend event initialization failed");
+		status = QDF_STATUS_E_FAILURE;
+		goto out;
+	}
+	status = qdf_event_create(&psoc_ctx->wow.target_resume);
+	if (status != QDF_STATUS_SUCCESS) {
+		pmo_err("target resume event initialization failed");
+		status = QDF_STATUS_E_FAILURE;
+		goto out;
+	}
 out:
 	PMO_EXIT();
 
@@ -202,6 +215,9 @@ QDF_STATUS pmo_psoc_object_destroyed_notification(
 	}
 
 	qdf_spinlock_destroy(&psoc_ctx->lock);
+	qdf_event_destroy(&psoc_ctx->wow.target_suspend);
+	qdf_event_destroy(&psoc_ctx->wow.target_resume);
+	qdf_wake_lock_destroy(&psoc_ctx->wow.wow_wake_lock);
 	qdf_mem_free(psoc_ctx);
 out:
 	PMO_EXIT();
@@ -317,10 +333,49 @@ QDF_STATUS pmo_register_suspend_handler(
 		goto out;
 	}
 
-	qdf_spin_lock(&pmo_ctx->lock);
+	qdf_spin_lock_bh(&pmo_ctx->lock);
 	pmo_ctx->pmo_suspend_handler[id] = handler;
-	pmo_ctx->pmo_suspend_handler_arg[id] = handler;
-	qdf_spin_unlock(&pmo_ctx->lock);
+	pmo_ctx->pmo_suspend_handler_arg[id] = arg;
+	qdf_spin_unlock_bh(&pmo_ctx->lock);
+out:
+	PMO_EXIT();
+
+	return status;
+}
+
+QDF_STATUS pmo_unregister_suspend_handler(
+		enum wlan_umac_comp_id id,
+		pmo_psoc_suspend_handler handler)
+{
+	struct wlan_pmo_ctx *pmo_ctx;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	PMO_ENTER();
+	pmo_ctx = pmo_get_context();
+	if (!pmo_ctx) {
+		QDF_ASSERT(0);
+		pmo_err("unable to get pmo ctx");
+		status = QDF_STATUS_E_FAILURE;
+		goto out;
+	}
+
+	if (id > WLAN_UMAC_MAX_COMPONENTS || id < 0) {
+		pmo_err("component id: %d is %s then valid components id",
+			id, id < 0 ? "Less" : "More");
+		status = QDF_STATUS_E_FAILURE;
+		goto out;
+	}
+
+	qdf_spin_lock_bh(&pmo_ctx->lock);
+	if (pmo_ctx->pmo_suspend_handler[id] == handler) {
+		pmo_ctx->pmo_suspend_handler[id] = NULL;
+		pmo_ctx->pmo_suspend_handler_arg[id] = NULL;
+		qdf_spin_unlock_bh(&pmo_ctx->lock);
+	} else {
+		qdf_spin_unlock_bh(&pmo_ctx->lock);
+		pmo_err("can't find suspend handler for component id: %d ", id);
+		status = QDF_STATUS_E_FAILURE;
+	}
 out:
 	PMO_EXIT();
 
@@ -350,25 +405,159 @@ QDF_STATUS pmo_register_resume_handler(
 		goto out;
 	}
 
-	qdf_spin_lock(&pmo_ctx->lock);
+	qdf_spin_lock_bh(&pmo_ctx->lock);
 	pmo_ctx->pmo_resume_handler[id] = handler;
-	pmo_ctx->pmo_resume_handler_arg[id] = handler;
-	qdf_spin_unlock(&pmo_ctx->lock);
+	pmo_ctx->pmo_resume_handler_arg[id] = arg;
+	qdf_spin_unlock_bh(&pmo_ctx->lock);
 out:
 	PMO_EXIT();
 
 	return status;
 }
 
-QDF_STATUS pmo_suspend_psoc(struct wlan_objmgr_psoc *psoc,
-		bool is_runtime_suspend)
+QDF_STATUS pmo_unregister_resume_handler(
+		enum wlan_umac_comp_id id,
+		pmo_psoc_resume_handler handler)
 {
-	return QDF_STATUS_SUCCESS;
+	struct wlan_pmo_ctx *pmo_ctx;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	PMO_ENTER();
+	pmo_ctx = pmo_get_context();
+	if (!pmo_ctx) {
+		pmo_err("unable to get pmo ctx");
+		status = QDF_STATUS_E_FAILURE;
+		goto out;
+	}
+
+	if (id > WLAN_UMAC_MAX_COMPONENTS || id < 0) {
+		pmo_err("component id: %d is %s then valid components id",
+			id, id < 0 ? "Less" : "More");
+		status = QDF_STATUS_E_FAILURE;
+		goto out;
+	}
+
+	qdf_spin_lock_bh(&pmo_ctx->lock);
+	if (pmo_ctx->pmo_resume_handler[id] == handler) {
+		pmo_ctx->pmo_resume_handler[id] = NULL;
+		pmo_ctx->pmo_resume_handler_arg[id] = NULL;
+		qdf_spin_unlock_bh(&pmo_ctx->lock);
+	} else {
+		qdf_spin_unlock_bh(&pmo_ctx->lock);
+		pmo_err("can't find resume handler for component id: %d ", id);
+		status = QDF_STATUS_E_FAILURE;
+	}
+out:
+	PMO_EXIT();
+
+	return status;
 }
 
-QDF_STATUS pmo_resume_psoc(struct wlan_objmgr_psoc *psoc,
-		bool is_runtime_resume)
+QDF_STATUS pmo_suspend_all_components(struct wlan_objmgr_psoc *psoc,
+	enum qdf_suspend_type suspend_type)
 {
-	return QDF_STATUS_SUCCESS;
+	pmo_psoc_suspend_handler handler;
+	uint8_t index = 0;
+	QDF_STATUS suspend_status = QDF_STATUS_SUCCESS;
+	QDF_STATUS resume_status = QDF_STATUS_SUCCESS;
+	void *arg;
+	struct wlan_pmo_ctx *pmo_ctx;
+
+	PMO_ENTER();
+	pmo_ctx = pmo_get_context();
+	if (!pmo_ctx) {
+		QDF_ASSERT(0);
+		pmo_err("unable to get pmo ctx");
+		suspend_status = QDF_STATUS_E_FAILURE;
+		goto out;
+	}
+
+	/* call all component's Suspend Handler */
+	while (index < WLAN_UMAC_MAX_COMPONENTS) {
+		qdf_spin_lock_bh(&pmo_ctx->lock);
+		if (pmo_ctx->pmo_suspend_handler[index]) {
+			handler = pmo_ctx->pmo_suspend_handler[index];
+			arg = pmo_ctx->pmo_suspend_handler_arg[index];
+			qdf_spin_unlock_bh(&pmo_ctx->lock);
+			suspend_status = handler(psoc, arg);
+			if (suspend_status != QDF_STATUS_SUCCESS) {
+				pmo_err("component id: %d failed to suspend status: %d",
+					index, suspend_status);
+				QDF_ASSERT(0);
+				/* break, no need to suspend next components */
+				break;
+			}
+		} else {
+			qdf_spin_unlock_bh(&pmo_ctx->lock);
+		}
+		index++;
+	}
+
+	/* resume the succefully suspended components */
+	if (suspend_status != QDF_STATUS_SUCCESS) {
+		while (index >= 0) {
+			/*
+			 * index points to id which refuse suspend
+			 * so go to previous id.
+			 */
+			index--;
+			qdf_spin_lock_bh(&pmo_ctx->lock);
+			handler = pmo_ctx->pmo_resume_handler[index];
+			arg = pmo_ctx->pmo_resume_handler_arg[index];
+			qdf_spin_unlock_bh(&pmo_ctx->lock);
+			/* TODO: if resume got failed for some component ?? */
+			resume_status = handler(psoc, arg);
+			if (resume_status != QDF_STATUS_SUCCESS) {
+				pmo_err("Component id: %d failed to resume status: %d",
+					index, resume_status);
+				QDF_ASSERT(0);
+			}
+		}
+	}
+out:
+	PMO_EXIT();
+
+	return suspend_status;
 }
 
+QDF_STATUS pmo_resume_all_components(struct wlan_objmgr_psoc *psoc,
+	enum qdf_suspend_type suspend_type)
+{
+	uint8_t index = 0;
+	QDF_STATUS component_ret = QDF_STATUS_SUCCESS;
+	void *arg;
+	struct wlan_pmo_ctx *pmo_ctx;
+	pmo_psoc_suspend_handler handler;
+
+	PMO_ENTER();
+	pmo_ctx = pmo_get_context();
+	if (!pmo_ctx) {
+		QDF_ASSERT(0);
+		pmo_err("unable to get pmo ctx");
+		component_ret = QDF_STATUS_E_FAILURE;
+		goto out;
+	}
+
+	/* call all components Resume Handler */
+	while (index < WLAN_UMAC_MAX_COMPONENTS) {
+		qdf_spin_lock_bh(&pmo_ctx->lock);
+		if (pmo_ctx->pmo_resume_handler[index]) {
+			handler = pmo_ctx->pmo_resume_handler[index];
+			arg = pmo_ctx->pmo_resume_handler_arg[index];
+			qdf_spin_unlock_bh(&pmo_ctx->lock);
+			component_ret = handler(psoc, arg);
+			if (component_ret != QDF_STATUS_SUCCESS) {
+				pmo_err("Component id: %d failed to resume status: %d",
+					index, component_ret);
+				QDF_ASSERT(0);
+			}
+		} else {
+			qdf_spin_unlock_bh(&pmo_ctx->lock);
+		}
+		index++;
+}
+out:
+	PMO_EXIT();
+
+	return component_ret;
+}

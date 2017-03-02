@@ -52,6 +52,9 @@
 #define PMO_ENTER() pmo_logfl(QDF_TRACE_LEVEL_INFO, "enter")
 #define PMO_EXIT() pmo_logfl(QDF_TRACE_LEVEL_INFO, "exit")
 
+#define PMO_VDEV_IN_STA_MODE(mode)\
+	((mode == QDF_STA_MODE || mode == QDF_P2P_CLIENT_MODE) == 1 ? 1 : 0)
+
 static inline enum tQDF_ADAPTER_MODE pmo_get_vdev_opmode(
 			struct wlan_objmgr_vdev *vdev)
 {
@@ -207,5 +210,179 @@ QDF_STATUS pmo_core_get_psoc_config(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS pmo_core_update_psoc_config(struct wlan_objmgr_psoc *psoc,
 		struct pmo_psoc_cfg *psoc_cfg);
+
+
+/**
+ * pmo_core_get_vdev_op_mode(): API to get the vdev operation mode
+ * @vdev: objmgr vdev handle
+ *
+ * API to get the vdev operation mode
+ *
+ * Return QDF_MAX_NO_OF_MODE - in case of error else return vdev opmode
+ */
+static inline enum tQDF_ADAPTER_MODE pmo_core_get_vdev_op_mode(
+					struct wlan_objmgr_vdev *vdev)
+{
+	enum tQDF_ADAPTER_MODE op_mode = QDF_MAX_NO_OF_MODE;
+
+	if (!vdev)
+		return op_mode;
+	wlan_vdev_obj_lock(vdev);
+	op_mode = wlan_vdev_mlme_get_opmode(vdev);
+	wlan_vdev_obj_unlock(vdev);
+
+	return op_mode;
+}
+
+/**
+ * pmo_core_psoc_update_dp_handle() - update psoc data path handle
+ * @psoc: objmgr psoc handle
+ * @dp_hdl: psoc data path handle
+ *
+ * Return: None
+ */
+static inline
+void pmo_core_psoc_update_dp_handle(struct wlan_objmgr_psoc *psoc,
+	void *dp_hdl)
+{
+	struct pmo_psoc_priv_obj *psoc_ctx;
+
+	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
+	if (!psoc_ctx)
+		return;
+	qdf_spin_lock_bh(&psoc_ctx->lock);
+	psoc_ctx->dp_hdl = dp_hdl;
+	qdf_spin_unlock_bh(&psoc_ctx->lock);
+}
+
+/**
+ * pmo_core_psoc_get_dp_handle() - Get psoc data path handle
+ * @psoc: objmgr psoc handle
+ *
+ * Return: psoc data path handle
+ */
+static inline
+void *pmo_core_psoc_get_dp_handle(struct wlan_objmgr_psoc *psoc)
+{
+	void *dp_hdl;
+	struct pmo_psoc_priv_obj *psoc_ctx;
+
+	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
+	if (!psoc_ctx)
+		return NULL;
+	qdf_spin_lock_bh(&psoc_ctx->lock);
+	dp_hdl = psoc_ctx->dp_hdl;
+	qdf_spin_unlock_bh(&psoc_ctx->lock);
+
+	return dp_hdl;
+}
+
+/**
+ * pmo_core_vdev_update_dp_handle() - update vdev data path handle
+ * @vdev: objmgr vdev handle
+ * @dp_hdl: Vdev data path handle
+ *
+ * Return: None
+ */
+static inline
+void pmo_core_vdev_update_dp_handle(struct wlan_objmgr_vdev *vdev,
+	void *dp_hdl)
+{
+	struct pmo_vdev_priv_obj *vdev_ctx;
+
+	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
+	if (!vdev_ctx)
+		return;
+	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+	vdev_ctx->vdev_dp_hdl = dp_hdl;
+	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+}
+
+/**
+ * pmo_core_vdev_get_dp_handle() - Get vdev data path handle
+ * @vdev: objmgr vdev handle
+ *
+ * Return: Vdev data path handle
+ */
+static inline
+void *pmo_core_vdev_get_dp_handle(struct wlan_objmgr_vdev *vdev)
+{
+	void *dp_hdl;
+	struct pmo_vdev_priv_obj *vdev_ctx;
+
+	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
+	if (!vdev_ctx)
+		return NULL;
+	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+	dp_hdl = vdev_ctx->vdev_dp_hdl;
+	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+
+	return dp_hdl;
+}
+
+/**
+ * pmo_core_psoc_update_htc_handle() - update psoc htc layer handle
+ * @psoc: objmgr psoc handle
+ * @htc_hdl: psoc htc layer handle
+ *
+ * Return: None
+ */
+static inline
+void pmo_core_psoc_update_htc_handle(struct wlan_objmgr_psoc *psoc,
+	void *htc_hdl)
+{
+	struct pmo_psoc_priv_obj *psoc_ctx;
+
+	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
+	if (!psoc_ctx)
+		return;
+	qdf_spin_lock_bh(&psoc_ctx->lock);
+	psoc_ctx->htc_hdl = htc_hdl;
+	qdf_spin_unlock_bh(&psoc_ctx->lock);
+}
+
+/**
+ * pmo_core_psoc_get_htc_handle() - Get psoc htc layer handle
+ * @psoc: objmgr psoc handle
+ *
+ * Return: psoc htc layer handle
+ */
+static inline
+void *pmo_core_psoc_get_htc_handle(struct wlan_objmgr_psoc *psoc)
+{
+	void *htc_hdl;
+	struct pmo_psoc_priv_obj *psoc_ctx;
+
+	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
+	if (!psoc_ctx)
+		return NULL;
+	qdf_spin_lock_bh(&psoc_ctx->lock);
+	htc_hdl = psoc_ctx->htc_hdl;
+	qdf_spin_unlock_bh(&psoc_ctx->lock);
+
+	return htc_hdl;
+}
+
+/**
+ * pmo_is_vdev_up() - API to check whether vdev is UP
+ * @vdev: objmgr vdev handle
+ *
+ * Return:true if vdev is up else false
+ */
+static inline
+bool pmo_is_vdev_up(struct wlan_objmgr_vdev *vdev)
+{
+	enum wlan_vdev_state state = WLAN_VDEV_S_INIT;
+
+	if (!vdev) {
+		pmo_err("vdev context is invalid!");
+		return false;
+	}
+	wlan_vdev_obj_lock(vdev);
+	state = wlan_vdev_mlme_get_state(vdev);
+	wlan_vdev_obj_unlock(vdev);
+
+	return (state == WLAN_VDEV_S_RUN) ? true : false;
+}
 
 #endif /* end  of _WLAN_PMO_MAIN_H_ */

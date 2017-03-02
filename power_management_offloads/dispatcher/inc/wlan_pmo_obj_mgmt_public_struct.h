@@ -35,16 +35,17 @@
 
 /**
  * struct pmo_psoc_priv_obj - psoc related data require for pmo
- * @wow: place holder for psoc wow configuration
- * @ps_config: place holder for psoc power configuration
  * @psoc_cfg: place holder for psoc configuration
- * @wow: true  wow configuration
- * @lphb_cache: lphb cache
+ * @wow: wow configuration
+ * @dp_hdl: psoc data path handle
+ * @htc_hdl: htc layer handle
  * @lock: spin lock for pmo psoc
  */
 struct pmo_psoc_priv_obj {
 	struct pmo_psoc_cfg psoc_cfg;
 	struct pmo_wow wow;
+	void *dp_hdl;
+	void *htc_hdl;
 	qdf_spinlock_t lock;
 };
 
@@ -78,10 +79,19 @@ struct wlan_pmo_ctx {
  * @gtk_err_enable: gtk error is enabled or not
  * @vdev_bpf_req: place holder for apf/bpf for vdev
  * @vdev_pkt_filter: place holder for vdev packet filter
- * @dtim_period: dtim period
  * @ptrn_match_enable: true when pattern match is enabled else false
  * @num_wow_default_patterns: number of wow default patterns for vdev
  * @num_wow_user_patterns: number of user wow patterns for vdev
+ * @nlo_in_progress: true when pno/nlo in progress else false
+ * @nlo_match_received: true when nlo match recevied from fwr else false
+ * @extscan_in_progress: true when extscan in progress else false
+ * @p2plo_in_progress: true when p2plo_in_progress in progress else false
+ * @dtim_period: dtim period for vdev
+ * @beacon_interval: vdev beacon interval
+ * @alt_modulated_dtim_enabled:dynamic modulated dtim enabled
+ * @dtim_policy: tells vdev beacon dtim policy
+ * @pause_bitmap: tell about reason why vde is paused
+ * @vdev_dp_hdl: vdev data path handle
  * @pmo_vdev_lock: spin lock for pmo vdev priv ctx
  */
 struct pmo_vdev_priv_obj {
@@ -93,10 +103,19 @@ struct pmo_vdev_priv_obj {
 	struct pmo_gtk_req vdev_gtk_req;
 	struct pmo_gtk_rsp_req vdev_gtk_rsp_req;
 	qdf_atomic_t gtk_err_enable;
-	uint8_t dtim_period;
 	bool ptrn_match_enable;
 	uint8_t num_wow_default_patterns;
 	uint8_t num_wow_user_patterns;
+	bool nlo_in_progress;
+	bool nlo_match_received;
+	bool extscan_in_progress;
+	bool p2plo_in_progress;
+	uint8_t dtim_period;
+	uint8_t beacon_interval;
+	bool alt_modulated_dtim_enable;
+	uint32_t dtim_policy;
+	uint16_t pause_bitmap;
+	void *vdev_dp_hdl;
 	qdf_spinlock_t pmo_vdev_lock;
 };
 

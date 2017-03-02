@@ -58,6 +58,38 @@ void target_if_pmo_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 		target_if_pmo_send_gtk_response_req;
 	pmo_tx_ops->send_action_frame_pattern_req =
 		target_if_pmo_send_action_frame_patterns;
+	pmo_tx_ops->send_lphb_enable =
+		target_if_pmo_send_lphb_enable;
+	pmo_tx_ops->send_lphb_tcp_params =
+		target_if_pmo_send_lphb_tcp_params;
+	pmo_tx_ops->send_lphb_tcp_filter_req =
+		target_if_pmo_send_lphb_tcp_pkt_filter;
+	pmo_tx_ops->send_lphb_upd_params =
+		target_if_pmo_send_lphb_udp_params;
+	pmo_tx_ops->send_lphb_udp_filter_req =
+		target_if_pmo_send_lphb_udp_pkt_filter;
+	pmo_tx_ops->send_vdev_param_update_req =
+		target_if_pmo_send_vdev_update_param_req;
+	pmo_tx_ops->send_vdev_sta_ps_param_req =
+		target_if_pmo_send_vdev_ps_param_req;
+	pmo_tx_ops->psoc_update_wow_bus_suspend =
+		target_if_pmo_psoc_update_bus_suspend;
+	pmo_tx_ops->psoc_get_host_credits =
+		target_if_pmo_psoc_get_host_credits;
+	pmo_tx_ops->psoc_get_pending_cmnds =
+		target_if_pmo_psoc_get_pending_cmnds;
+	pmo_tx_ops->update_target_suspend_flag =
+		target_if_pmo_update_target_suspend_flag;
+	pmo_tx_ops->psoc_send_wow_enable_req =
+		target_if_pmo_psoc_send_wow_enable_req;
+	pmo_tx_ops->psoc_send_supend_req =
+		target_if_pmo_psoc_send_suspend_req;
+	pmo_tx_ops->psoc_get_runtime_pm_in_progress =
+		target_if_pmo_get_runtime_pm_in_progress;
+	pmo_tx_ops->psoc_send_host_wakeup_ind =
+		target_if_pmo_psoc_send_host_wakeup_ind;
+	pmo_tx_ops->psoc_send_target_resume_req =
+		target_if_pmo_psoc_send_target_resume_req;
 
 }
 

@@ -254,4 +254,460 @@ void pmo_core_enable_wakeup_event(struct wlan_objmgr_psoc *psoc,
 void pmo_core_disable_wakeup_event(struct wlan_objmgr_psoc *psoc,
 	uint32_t vdev_id, uint32_t bitmap);
 
+/**
+ * pmo_is_wow_applicable(): should enable wow
+ * @psoc: objmgr psoc object
+ *
+ *  Enable WOW if any one of the condition meets,
+ *  1) Is any one of vdev in beaconning mode (in AP mode) ?
+ *  2) Is any one of vdev in connected state (in STA mode) ?
+ *  3) Is PNO in progress in any one of vdev ?
+ *  4) Is Extscan in progress in any one of vdev ?
+ *  5) Is P2P listen offload in any one of vdev?
+ *  6) Is any vdev in NAN data mode? BSS is already started at the
+ *     the time of device creation. It is ready to accept data
+ *     requests.
+ *  7) If LPASS feature is enabled
+ *  8) If NaN feature is enabled
+ *  If none of above conditions is true then return false
+ *
+ * Return: true if wma needs to configure wow false otherwise.
+ */
+bool pmo_core_is_wow_applicable(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * pmo_core_update_wow_enable() - update wow enable flag
+ * @psoc_ctx: Pointer to objmgr psoc handle
+ * @value: true if wow mode enable else false
+ *
+ * Return: None
+ */
+static inline
+void pmo_core_update_wow_enable(struct pmo_psoc_priv_obj *psoc_ctx,
+	bool value)
+{
+	qdf_spin_lock_bh(&psoc_ctx->lock);
+	psoc_ctx->wow.wow_enable = value;
+	qdf_spin_unlock_bh(&psoc_ctx->lock);
+}
+
+/**
+ * pmo_core_is_wow_mode_enabled() - check if wow needs to be enabled in fw
+ * @psoc_ctx: Pointer to objmgr psoc handle
+ *
+ * API to check if wow mode is enabled in fwr as part of apps suspend or not
+ *
+ * Return: true is wow mode is enabled else false
+ */
+static inline
+bool pmo_core_is_wow_enabled(struct pmo_psoc_priv_obj *psoc_ctx)
+{
+	bool value;
+
+	if (!psoc_ctx) {
+		pmo_err("psoc_ctx is null");
+		return false;
+	}
+
+	qdf_spin_lock_bh(&psoc_ctx->lock);
+	value = psoc_ctx->wow.wow_enable;
+	qdf_spin_unlock_bh(&psoc_ctx->lock);
+	pmo_debug("WoW enable %d", value);
+
+	return value;
+}
+
+/**
+ * pmo_core_set_wow_nack() - Set wow nack flag
+ * @psoc_ctx: Pointer to objmgr psoc handle
+ * @value: true if received wow nack from else false
+ *
+ * Return: None
+ */
+static inline
+void pmo_core_set_wow_nack(struct pmo_psoc_priv_obj *psoc_ctx, bool value)
+{
+	qdf_spin_lock_bh(&psoc_ctx->lock);
+	psoc_ctx->wow.wow_nack = value;
+	qdf_spin_unlock_bh(&psoc_ctx->lock);
+}
+
+/**
+ * pmo_core_get_wow_nack() - Get wow nack flag
+ * @psoc_ctx: Pointer to objmgr psoc handle
+ *
+ * Return: wow nack flag
+ */
+static inline
+bool pmo_core_get_wow_nack(struct pmo_psoc_priv_obj *psoc_ctx)
+{
+	bool value;
+
+	qdf_spin_lock_bh(&psoc_ctx->lock);
+	value = psoc_ctx->wow.wow_nack;
+	qdf_spin_unlock_bh(&psoc_ctx->lock);
+
+	return value;
+}
+/**
+ * pmo_core_update_wow_enable_cmd_sent() - update wow enable cmd sent flag
+ * @psoc_ctx: Pointer to objmgr psoc handle
+ * @value: true if wow enable cmd sent else false
+ *
+ * Return: None
+ */
+static inline
+void pmo_core_update_wow_enable_cmd_sent(struct pmo_psoc_priv_obj *psoc_ctx,
+	bool value)
+{
+	qdf_spin_lock_bh(&psoc_ctx->lock);
+	psoc_ctx->wow.wow_enable_cmd_sent = value;
+	qdf_spin_unlock_bh(&psoc_ctx->lock);
+}
+
+/**
+ * pmo_core_get_wow_enable_cmd_sent() - Get wow enable cmd sent flag
+ * @psoc_ctx: Pointer to objmgr psoc handle
+ *
+ * Return: return true if wow enable cmd sent else false
+ */
+static inline
+bool pmo_core_get_wow_enable_cmd_sent(struct pmo_psoc_priv_obj *psoc_ctx)
+{
+	bool value;
+
+	qdf_spin_lock_bh(&psoc_ctx->lock);
+	value = psoc_ctx->wow.wow_enable_cmd_sent;
+	qdf_spin_unlock_bh(&psoc_ctx->lock);
+
+	return value;
+}
+
+/**
+ * pmo_core_update_wow_initial_wake_up() - update wow initial wake up
+ * @psoc_ctx: Pointer to objmgr psoc handle
+ * @value: true if wow initial wake up is received else false
+ *
+ * Return: None
+ */
+static inline
+void pmo_core_update_wow_initial_wake_up(struct pmo_psoc_priv_obj *psoc_ctx,
+	bool value)
+{
+	qdf_spin_lock_bh(&psoc_ctx->lock);
+	psoc_ctx->wow.wow_initial_wake_up = value;
+	qdf_spin_unlock_bh(&psoc_ctx->lock);
+}
+
+/**
+ * pmo_core_get_wow_initial_wake_up() - Get wow initial wake up
+ * @psoc_ctx: Pointer to objmgr psoc handle
+ *
+ * Return:  true if wow initial wake up is received else false
+ */
+static inline
+bool pmo_core_get_wow_initial_wake_up(struct pmo_psoc_priv_obj *psoc_ctx)
+{
+	bool value;
+
+	qdf_spin_lock_bh(&psoc_ctx->lock);
+	value = psoc_ctx->wow.wow_initial_wake_up;
+	qdf_spin_unlock_bh(&psoc_ctx->lock);
+
+	return value;
+}
+
+#ifdef FEATURE_WLAN_SCAN_PNO
+/**
+ * pmo_core_is_nlo_scan_in_progress(): check if nlo scan is in progress
+ * @vdev: objmgr vdev handle
+ *
+ * Return: TRUE/FALSE
+ */
+static inline
+bool pmo_core_is_nlo_scan_in_progress(struct wlan_objmgr_vdev *vdev)
+{
+	bool nlo_in_progress;
+	struct pmo_vdev_priv_obj *vdev_ctx;
+
+	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
+	if (!vdev_ctx)
+		return false;
+	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+	nlo_in_progress = vdev_ctx->nlo_in_progress;
+	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+
+	return nlo_in_progress;
+}
+
+/**
+ * pmo_core_is_nlo_scan_match_found(): check if a nlo scan match was found
+ * @vdev: objmgr vdev handle
+ *
+ * Return: TRUE/FALSE
+ */
+static inline
+bool pmo_core_is_nlo_scan_match_found(struct wlan_objmgr_vdev *vdev)
+{
+	bool nlo_match_received;
+	struct pmo_vdev_priv_obj *vdev_ctx;
+
+	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
+	if (!vdev_ctx)
+		return false;
+	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+	nlo_match_received = vdev_ctx->nlo_match_received;
+	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+
+	return nlo_match_received;
+}
+
+/**
+ * pmo_core_update_nlo_scan_in_progress(): update nlo scan is in progress flags
+ * @vdev: objmgr vdev handle
+ * @value:true if pno scan is in progress else false
+ *
+ * Return: None
+ */
+static inline
+void pmo_core_update_nlo_scan_in_progress(struct wlan_objmgr_vdev *vdev,
+	bool value)
+{
+	struct pmo_vdev_priv_obj *vdev_ctx;
+
+	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
+	if (!vdev_ctx)
+		return;
+	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+	vdev_ctx->nlo_in_progress = value;
+	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+}
+
+/**
+ * pmo_core_update_nlo_match_found(): Update nlo scan match flag to value
+ * @vdev: objmgr vdev handle
+ * @value:true if nlo scan match event received else false
+ *
+ * Return: TRUE/FALSE
+ */
+static inline
+void pmo_core_update_nlo_match_found(struct wlan_objmgr_vdev *vdev,
+	bool value)
+{
+	struct pmo_vdev_priv_obj *vdev_ctx;
+
+	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
+	if (!vdev_ctx)
+		return;
+	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+	vdev_ctx->nlo_match_received = value;
+	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+}
+#else
+/**
+ * pmo_is_nlo_scan_in_progress(): dummy
+ *
+ * Return: False since no pnoscan cannot be in progress
+ * when feature flag is not defined.
+ */
+static inline
+bool pmo_core_is_nlo_scan_in_progress(struct wlan_objmgr_vdev *vdev)
+{
+	return false;
+}
+
+/**
+ * wma_is_pnoscan_match_found(): dummy
+ * @vdev: objmgr vdev handle
+ *
+ * Return: False since no pnoscan cannot occur
+ * when feature flag is not defined.
+ */
+static inline
+bool pmo_core_is_nlo_scan_match_found(struct wlan_objmgr_vdev *vdev)
+{
+	return false;
+}
+
+static inline
+void pmo_core_update_nlo_scan_in_progress(struct wlan_objmgr_vdev *vdev,
+	bool value)
+{
+}
+
+static inline
+void pmo_core_update_nlo_match_found(struct wlan_objmgr_vdev *vdev,
+	bool value)
+{
+}
+#endif
+
+#ifdef FEATURE_WLAN_EXTSCAN
+/**
+ * pmo_core_is_extscan_in_progress(): check if a extscan is in progress
+ * @vdev: objmgr vdev handle
+ *
+ * Return: TRUE/FALSE
+ */
+static inline
+bool pmo_core_is_extscan_in_progress(struct wlan_objmgr_vdev *vdev)
+{
+	bool extscan_in_progress;
+	struct pmo_vdev_priv_obj *vdev_ctx;
+
+	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
+	if (!vdev_ctx)
+		return false;
+	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+	extscan_in_progress = vdev_ctx->extscan_in_progress;
+	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+
+	return extscan_in_progress;
+}
+
+/**
+ * pmo_core_update_extscan_in_progress(): update extscan is in progress flags
+ * @vdev: objmgr vdev handle
+ * @value:true if extscan is in progress else false
+ *
+ * Return: TRUE/FALSE
+ */
+static inline
+void pmo_core_update_extscan_in_progress(struct wlan_objmgr_vdev *vdev,
+	bool value)
+{
+	struct pmo_vdev_priv_obj *vdev_ctx;
+
+	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
+	if (!vdev_ctx)
+		return;
+	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+	vdev_ctx->extscan_in_progress = value;
+	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+}
+#else
+static inline
+bool pmo_core_is_extscan_in_progress(struct wlan_objmgr_vdev *vdev)
+{
+	return false;
+}
+
+static inline
+void pmo_core_update_extscan_in_progress(struct wlan_objmgr_vdev *vdev,
+	bool value)
+{
+}
+#endif
+
+/**
+ * pmo_core_is_p2plo_in_progress(): check if p2plo is in progress
+ * @vdev: objmgr vdev handle
+ *
+ * Return: TRUE/FALSE
+ */
+static inline
+bool pmo_core_is_p2plo_in_progress(struct wlan_objmgr_vdev *vdev)
+{
+	bool p2plo_in_progress;
+	struct pmo_vdev_priv_obj *vdev_ctx;
+
+	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
+	if (!vdev_ctx)
+		return false;
+	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+	p2plo_in_progress = vdev_ctx->p2plo_in_progress;
+	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+
+	return p2plo_in_progress;
+}
+
+/**
+ * pmo_core_update_p2plo_in_progress(): update p2plo is in progress flags
+ * @vdev: objmgr vdev handle
+ * @value:true if p2plo is in progress else false
+ *
+ * Return: TRUE/FALSE
+ */
+static inline
+void pmo_core_update_p2plo_in_progress(struct wlan_objmgr_vdev *vdev,
+	bool value)
+{
+	struct pmo_vdev_priv_obj *vdev_ctx;
+
+	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
+	if (!vdev_ctx)
+		return;
+	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+	vdev_ctx->p2plo_in_progress = value;
+	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+}
+
+#ifdef WLAN_FEATURE_LPSS
+/**
+ * pmo_is_lpass_enabled() - check if lpass is enabled
+ * @vdev: objmgr vdev handle
+ *
+ * WoW is needed if LPASS or NaN feature is enabled in INI because
+ * target can't wake up itself if its put in PDEV suspend when LPASS
+ * or NaN features are supported
+ *
+ * Return: true if lpass is enabled else false
+ */
+static inline
+bool pmo_core_is_lpass_enabled(struct wlan_objmgr_vdev *vdev)
+{
+	bool lpass_enable;
+	struct pmo_vdev_priv_obj *vdev_ctx;
+
+	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
+	if (!vdev_ctx)
+		return false;
+	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+	lpass_enable = vdev_ctx->pmo_psoc_ctx->psoc_cfg.lpass_enable;
+	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+
+	return lpass_enable;
+}
+#else
+static inline
+bool pmo_core_is_lpass_enabled(struct wlan_objmgr_vdev *vdev)
+{
+	return false;
+}
+#endif
+
+#ifdef WLAN_FEATURE_NAN
+/**
+ * pmo_is_nan_enabled() - check if NaN is enabled
+ * @vdev: objmgr vdev handle
+ *
+ * WoW is needed if LPASS or NaN feature is enabled in INI because
+ * target can't wake up itself if its put in PDEV suspend when LPASS
+ * or NaN features are supported
+ *
+ * Return: true if NaN is enabled else false
+ */
+static inline
+bool pmo_core_is_nan_enabled(struct wlan_objmgr_vdev *vdev)
+{
+	bool nan_enable;
+	struct pmo_vdev_priv_obj *vdev_ctx;
+
+	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
+	if (!vdev_ctx)
+		return false;
+	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+	nan_enable = vdev_ctx->pmo_psoc_ctx->psoc_cfg.nan_enable;
+	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+
+	return nan_enable;
+}
+#else
+static inline
+bool pmo_core_is_nan_enabled(struct wlan_objmgr_vdev *vdev)
+{
+	return false;
+}
+#endif
+
 #endif /* end  of _WLAN_PMO_WOW_H_ */
