@@ -112,6 +112,7 @@ struct CE_state {
 	fastpath_msg_handler fastpath_handler;
 	void *context;
 #endif /* WLAN_FEATURE_FASTPATH */
+	qdf_work_t oom_allocation_work;
 
 	ce_send_cb send_cb;
 	void *send_context;

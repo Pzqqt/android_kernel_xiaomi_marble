@@ -839,6 +839,26 @@ int hif_ce_bus_late_resume(struct hif_softc *scn)
 	return 0;
 }
 
+/**
+ * ce_oom_recovery() - try to recover rx ce from oom condition
+ * @context: CE_state of the CE with oom rx ring
+ *
+ * the executing work Will continue to be rescheduled untill
+ * at least 1 descriptor is successfully posted to the rx ring.
+ *
+ * return: none
+ */
+static void ce_oom_recovery(void *context)
+{
+	struct CE_state *ce_state = context;
+	struct hif_softc *scn = ce_state->scn;
+	struct HIF_CE_state *ce_softc = HIF_GET_CE_STATE(scn);
+	struct HIF_CE_pipe_info *pipe_info =
+		&ce_softc->pipe_info[ce_state->id];
+
+	hif_post_recv_buffers_for_pipe(pipe_info);
+}
+
 /*
  * Initialize a Copy Engine based on caller-supplied attributes.
  * This may be called once to initialize both source and destination
@@ -1061,6 +1081,9 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 		if (Q_TARGET_ACCESS_END(scn) < 0)
 			goto error_target_access;
 	}
+
+	qdf_create_work(scn->qdf_dev, &CE_state->oom_allocation_work,
+			ce_oom_recovery, CE_state);
 
 	/* update the htt_data attribute */
 	ce_mark_datapath(CE_state);
@@ -1744,9 +1767,14 @@ static void hif_post_recv_buffers_failure(struct HIF_CE_pipe_info *pipe_info,
 	 *	there is no trigger to refill the ce and we will
 	 *	eventually crash
 	 */
-	if (bufs_needed_tmp == CE_state->dest_ring->nentries - 1)
+	if (bufs_needed_tmp == CE_state->dest_ring->nentries - 1) {
+
 		QDF_ASSERT(0);
+		qdf_sched_work(scn->qdf_dev, &CE_state->oom_allocation_work);
+	}
 }
+
+
 
 
 static int hif_post_recv_buffers_for_pipe(struct HIF_CE_pipe_info *pipe_info)
@@ -1788,8 +1816,7 @@ static int hif_post_recv_buffers_for_pipe(struct HIF_CE_pipe_info *pipe_info)
 		 * CE_data = dma_map_single(dev, data, buf_sz, );
 		 * DMA_FROM_DEVICE);
 		 */
-		ret =
-			qdf_nbuf_map_single(scn->qdf_dev, nbuf,
+		ret = qdf_nbuf_map_single(scn->qdf_dev, nbuf,
 					    QDF_DMA_FROM_DEVICE);
 
 		if (unlikely(ret != QDF_STATUS_SUCCESS)) {
@@ -2026,6 +2053,19 @@ void hif_flush_surprise_remove(struct hif_opaque_softc *hif_ctx)
 	hif_buffer_cleanup(hif_state);
 }
 
+static void hif_destroy_oom_work(struct hif_softc *scn)
+{
+	struct CE_state *ce_state;
+	int ce_id;
+
+	for (ce_id = 0; ce_id < scn->ce_count; ce_id++) {
+		ce_state = scn->ce_id_to_state[ce_id];
+		if (ce_state)
+			qdf_destroy_work(scn->qdf_dev,
+					 &ce_state->oom_allocation_work);
+	}
+}
+
 void hif_ce_stop(struct hif_softc *scn)
 {
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
@@ -2036,6 +2076,7 @@ void hif_ce_stop(struct hif_softc *scn)
 	 * bottom half contexts will not be re-entered
 	 */
 	hif_nointrs(scn);
+	hif_destroy_oom_work(scn);
 	scn->hif_init_done = false;
 
 	/*
