@@ -1461,4 +1461,38 @@ QDF_STATUS wlan_objmgr_vdev_try_get_ref(struct wlan_objmgr_vdev *vdev,
 void wlan_objmgr_vdev_release_ref(struct wlan_objmgr_vdev *vdev,
 						wlan_objmgr_ref_dbgid id);
 
+/**
+ * wlan_vdev_set_max_peer_count() - set max peer count
+ * @vdev: VDEV object
+ * @count: Max peer count
+ *
+ * API to set max peer count of VDEV
+ *
+ * Caller need to acquire lock with wlan_vdev_obj_lock()
+ *
+ * Return: void
+ */
+static inline void wlan_vdev_set_max_peer_count(struct wlan_objmgr_vdev *vdev,
+						uint16_t count)
+{
+	/* This API is invoked with lock acquired, do not add log prints */
+	vdev->vdev_objmgr.max_peer_count = count;
+}
+
+/**
+ * wlan_vdev_get_max_peer_count() - get max peer count
+ * @vdev: VDEV object
+ *
+ * API to get max peer count of VDEV
+ *
+ * Caller need to acquire lock with wlan_vdev_obj_lock()
+ *
+ * Return: max peer count
+ */
+static inline uint16_t wlan_vdev_get_max_peer_count(
+						struct wlan_objmgr_vdev *vdev)
+{
+	/* This API is invoked with lock acquired, do not add log prints */
+	return vdev->vdev_objmgr.max_peer_count;
+}
 #endif /* _WLAN_OBJMGR_VDEV_OBJ_H_*/
