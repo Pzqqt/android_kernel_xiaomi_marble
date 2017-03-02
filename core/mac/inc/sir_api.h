@@ -2901,6 +2901,7 @@ typedef struct {
  * @sessionId: Session identifier
  * @fast_scan_period: Fast Scan period
  * @slow_scan_period: Slow scan period
+ * @delay_start_time: delay in seconds to use before starting the first scan
  * @fast_scan_max_cycles: Fast scan max cycles
  * @us24GProbeTemplateLen: 2.4G probe template length
  * @p24GProbeTemplate: 2.4G probe template
@@ -2915,6 +2916,7 @@ typedef struct sSirPNOScanReq {
 	uint8_t sessionId;
 	uint32_t fast_scan_period;
 	uint32_t slow_scan_period;
+	uint32_t delay_start_time;
 	uint8_t fast_scan_max_cycles;
 
 	uint32_t        active_min_time;
