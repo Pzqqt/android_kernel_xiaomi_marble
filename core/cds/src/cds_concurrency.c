@@ -3865,44 +3865,6 @@ bool cds_is_ibss_conn_exist(uint8_t *ibss_channel)
 }
 
 /**
- * cds_vht160_conn_exist() - to check if we have a connection
- * already using vht160 or vht80+80
- *
- * This routine will check if vht160 connection already exist or
- * no. If it exist then this routine will return true.
- *
- * Return: true if vht160 connection exist else false
- */
-static bool cds_vht160_conn_exist(void)
-{
-	uint32_t conn_index;
-	bool status = false;
-	cds_context_type *cds_ctx;
-
-	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
-	if (!cds_ctx) {
-		cds_err("Invalid CDS Context");
-		return status;
-	}
-
-	qdf_mutex_acquire(&cds_ctx->qdf_conc_list_lock);
-	for (conn_index = 0; conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
-		conn_index++) {
-		if (conc_connection_list[conn_index].in_use &&
-			((conc_connection_list[conn_index].bw ==
-			HW_MODE_80_PLUS_80_MHZ) ||
-			(conc_connection_list[conn_index].bw ==
-			HW_MODE_160_MHZ))) {
-			 status = true;
-			 break;
-		}
-	}
-	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
-
-	return status;
-}
-
-/**
  * cds_is_5g_channel_allowed() - check if 5g channel is allowed
  * @channel: channel number which needs to be validated
  * @list: list of existing connections.
@@ -4143,20 +4105,6 @@ bool cds_allow_concurrency(enum cds_con_mode mode,
 		}
 		qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
 	}
-
-	/* don't allow concurrency on vht160 or vht 80+80 */
-	if (num_connections &&
-			((bw == HW_MODE_80_PLUS_80_MHZ) ||
-				(bw == HW_MODE_160_MHZ))) {
-		cds_err("No VHT160, we have one connection already");
-		goto done;
-	}
-
-	if (cds_vht160_conn_exist()) {
-		cds_err("VHT160/80+80 connection exists, no concurrency");
-		goto done;
-	}
-
 
 	status = true;
 
