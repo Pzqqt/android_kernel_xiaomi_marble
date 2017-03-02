@@ -42,7 +42,7 @@ static void wlan_pmo_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
 
 	pmo_rx_ops = &rx_ops->pmo_rx_ops;
 	pmo_rx_ops->rx_gtk_rsp_event = pmo_tgt_gtk_rsp_evt;
-
+	pmo_rx_ops->lphb_rsp_event = pmo_tgt_lphb_rsp_evt;
 }
 #else
 /**

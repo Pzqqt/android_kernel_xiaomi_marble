@@ -83,6 +83,13 @@ struct pmo_arp_offload_params;
 struct pmo_ns_offload_params;
 struct pmo_gtk_req;
 struct pmo_action_wakeup_set_params;
+struct pmo_lphb_enable_req;
+struct pmo_lphb_tcp_params;
+struct pmo_lphb_tcp_filter_req;
+struct pmo_lphb_udp_params;
+struct pmo_lphb_udp_filter_req;
+struct pmo_wow_cmd_params;
+struct pmo_suspend_params;
 
 /**
  * struct wlan_lmac_if_pmo_tx_ops - structure of tx function
@@ -99,6 +106,22 @@ struct pmo_action_wakeup_set_params;
  * @send_gtk_offload_req: fp to send gtk offload request command
  * @send_get_gtk_rsp_cmd: fp to send get gtk response request cmd to firmware
  * @send_action_frame_pattern_req: fp to send wow action frame patterns request
+ * @send_lphb_enable: fp to send lphb enable request command
+ * @send_lphb_tcp_params: fp to send lphb tcp params request command
+ * @send_lphb_tcp_filter_req: fp to send lphb tcp packet filter request command
+ * @send_lphb_upd_params: fp to send lphb udp params request command
+ * @send_lphb_udp_filter_req: fp to send lphb udp packet filter request command
+ * @send_vdev_param_update_req: fp to send vdev param request
+ * @send_vdev_set_sta_ps_param: fp to send sta vdev ps power set req
+ * @psoc_update_wow_bus_suspend: fp to update bus suspend req flag at wmi
+ * @psoc_get_host_credits: fp to get the host credits
+ * @psoc_get_pending_cmnds: fp to get the host pending wmi commands
+ * @update_target_suspend_flag: fp to update target suspend flag at wmi
+ * @psoc_send_wow_enable_req: fp to send wow enable request
+ * @psoc_send_supend_req: fp to send target suspend request
+ * @psoc_get_runtime_pm_in_progress: fp to get runtime pm is in progress status
+ * @psoc_send_host_wakeup_ind: fp tp send host wake indication to fwr
+ * @psoc_send_target_resume_req: fp to send target resume request
  */
 struct wlan_lmac_if_pmo_tx_ops {
 	QDF_STATUS(*send_arp_offload_req)(struct wlan_objmgr_vdev *vdev,
@@ -136,6 +159,44 @@ struct wlan_lmac_if_pmo_tx_ops {
 	QDF_STATUS(*send_action_frame_pattern_req)(
 			struct wlan_objmgr_vdev *vdev,
 			struct pmo_action_wakeup_set_params *ip_cmd);
+	QDF_STATUS(*send_lphb_enable)(
+			struct wlan_objmgr_psoc *psoc,
+			struct pmo_lphb_enable_req *ts_lphb_enable);
+	QDF_STATUS(*send_lphb_tcp_params)(
+			struct wlan_objmgr_psoc *psoc,
+			struct pmo_lphb_tcp_params *ts_lphb_tcp_param);
+	QDF_STATUS(*send_lphb_tcp_filter_req)(
+			struct wlan_objmgr_psoc *psoc,
+			struct pmo_lphb_tcp_filter_req *ts_lphb_tcp_filter);
+	QDF_STATUS(*send_lphb_upd_params)(
+			struct wlan_objmgr_psoc *psoc,
+			struct pmo_lphb_udp_params *ts_lphb_udp_param);
+	QDF_STATUS(*send_lphb_udp_filter_req)(
+			struct wlan_objmgr_psoc *psoc,
+			struct pmo_lphb_udp_filter_req *ts_lphb_udp_filter);
+	QDF_STATUS(*send_vdev_param_update_req)(
+			struct wlan_objmgr_vdev *vdev,
+			uint32_t param_id, uint32_t param_value);
+	QDF_STATUS(*send_vdev_sta_ps_param_req)(
+			struct wlan_objmgr_vdev *vdev,
+			uint32_t ps_mode, uint32_t value);
+	void(*psoc_update_wow_bus_suspend)(
+			struct wlan_objmgr_psoc *psoc, uint8_t value);
+	int(*psoc_get_host_credits)(
+			struct wlan_objmgr_psoc *psoc);
+	int(*psoc_get_pending_cmnds)(
+			struct wlan_objmgr_psoc *psoc);
+	void(*update_target_suspend_flag)(
+		struct wlan_objmgr_psoc *psoc, uint8_t value);
+	QDF_STATUS(*psoc_send_wow_enable_req)(struct wlan_objmgr_psoc *psoc,
+		struct pmo_wow_cmd_params *param);
+	QDF_STATUS(*psoc_send_supend_req)(struct wlan_objmgr_psoc *psoc,
+		struct pmo_suspend_params *param);
+	bool(*psoc_get_runtime_pm_in_progress)(struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS(*psoc_send_host_wakeup_ind)(struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS (*psoc_send_target_resume_req)(
+			struct wlan_objmgr_psoc *psoc);
+
 };
 #endif
 
@@ -196,15 +257,19 @@ struct wlan_lmac_if_mgmt_txrx_rx_ops {
 
 /* fwd declarations for pmo rx ops */
 struct pmo_gtk_rsp_params;
+struct pmo_lphb_rsp;
 
 /**
  * struct wlan_lmac_if_pmo_rx_ops - structure of rx function
  *                  pointers for pmo component
  * @gtk_rsp_event: function pointer to handle gtk rsp event from fwr
+ * @lphb_rsp_event: function pointer to handle lphb rsp event from fwr
  */
 struct wlan_lmac_if_pmo_rx_ops {
 	QDF_STATUS(*rx_gtk_rsp_event)(struct wlan_objmgr_psoc *psoc,
 			struct pmo_gtk_rsp_params *rsp_param);
+	QDF_STATUS (*lphb_rsp_event)(struct wlan_objmgr_psoc *psoc,
+			struct pmo_lphb_rsp *rsp_param);
 };
 #endif
 
