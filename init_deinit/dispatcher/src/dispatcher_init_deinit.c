@@ -202,6 +202,8 @@ EXPORT_SYMBOL(dispatcher_init);
 
 QDF_STATUS dispatcher_deinit(void)
 {
+	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_deinit_pmo());
+
 	QDF_BUG(QDF_STATUS_SUCCESS == scheduler_deinit());
 
 	QDF_BUG(QDF_STATUS_SUCCESS == wlan_serialization_deinit());
@@ -213,8 +215,6 @@ QDF_STATUS dispatcher_deinit(void)
 	QDF_BUG(QDF_STATUS_SUCCESS == scm_deinit());
 
 	QDF_BUG(QDF_STATUS_SUCCESS == wlan_mgmt_txrx_deinit());
-
-	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_deinit_pmo());
 
 	QDF_BUG(QDF_STATUS_SUCCESS == wlan_objmgr_global_obj_deinit());
 
