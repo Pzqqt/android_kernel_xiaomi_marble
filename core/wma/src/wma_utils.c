@@ -1500,11 +1500,8 @@ static void wma_update_vdev_stats(tp_wma_handle wma,
  */
 static void wma_post_stats(tp_wma_handle wma, struct wma_txrx_node *node)
 {
-	tAniGetPEStatsRsp *stats_rsp_params;
-
-	stats_rsp_params = node->stats_rsp;
 	/* send response to UMAC */
-	wma_send_msg(wma, WMA_GET_STATISTICS_RSP, (void *)stats_rsp_params, 0);
+	wma_send_msg(wma, WMA_GET_STATISTICS_RSP, node->stats_rsp, 0);
 	node->stats_rsp = NULL;
 	node->fw_stats_set = 0;
 }
@@ -1530,10 +1527,10 @@ static void wma_update_peer_stats(tp_wma_handle wma,
 		return;
 
 	node = &wma->interfaces[vdev_id];
-	if (node->stats_rsp) {
+	stats_rsp_params = (tAniGetPEStatsRsp *) node->stats_rsp;
+	if (stats_rsp_params) {
 		node->fw_stats_set |= FW_PEER_STATS_SET;
 		WMA_LOGD("<-- FW PEER STATS received for vdevId:%d", vdev_id);
-		stats_rsp_params = (tAniGetPEStatsRsp *) node->stats_rsp;
 		stats_buf = (uint8_t *) (stats_rsp_params + 1);
 		temp_mask = stats_rsp_params->statsMask;
 		if (temp_mask & (1 << eCsrSummaryStats))
@@ -1661,11 +1658,11 @@ static void wma_update_rssi_stats(tp_wma_handle wma,
 
 	vdev_id = rssi_stats->vdev_id;
 	node = &wma->interfaces[vdev_id];
-	if (node->stats_rsp) {
+	stats_rsp_params = (tAniGetPEStatsRsp *) node->stats_rsp;
+	if (stats_rsp_params) {
 		node->fw_stats_set |=  FW_RSSI_PER_CHAIN_STATS_SET;
 		WMA_LOGD("<-- FW RSSI PER CHAIN STATS received for vdevId:%d",
 				vdev_id);
-		stats_rsp_params = (tAniGetPEStatsRsp *) node->stats_rsp;
 		stats_buf = (uint8_t *) (stats_rsp_params + 1);
 		temp_mask = stats_rsp_params->statsMask;
 
@@ -2351,7 +2348,16 @@ void wma_get_stats_req(WMA_HANDLE handle,
 		goto end;
 
 	node->fw_stats_set = 0;
+	if (node->stats_rsp) {
+		WMA_LOGD(FL("stats_rsp is not null, prev_value: %p"),
+			node->stats_rsp);
+		qdf_mem_free(node->stats_rsp);
+		node->stats_rsp = NULL;
+	}
 	node->stats_rsp = pGetPEStatsRspParams;
+	WMA_LOGD("stats_rsp allocated: %p, sta_id: %d, mask: %d, vdev_id: %d",
+		node->stats_rsp, node->stats_rsp->staId,
+		node->stats_rsp->statsMask, get_stats_param->sessionId);
 
 	cmd.session_id = get_stats_param->sessionId;
 	if (wmi_unified_get_stats_cmd(wma_handle->wmi_handle, &cmd,
@@ -2366,10 +2372,10 @@ void wma_get_stats_req(WMA_HANDLE handle,
 failed:
 
 	pGetPEStatsRspParams->rc = QDF_STATUS_E_FAILURE;
-	node->stats_rsp = NULL;
 	/* send response to UMAC */
 	wma_send_msg(wma_handle, WMA_GET_STATISTICS_RSP, pGetPEStatsRspParams,
 		     0);
+	node->stats_rsp = NULL;
 end:
 	qdf_mem_free(get_stats_param);
 	WMA_LOGD("%s: Exit", __func__);

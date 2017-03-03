@@ -447,6 +447,10 @@ static void wma_vdev_detach_callback(void *ctx)
 
 	if (iface->staKeyParams)
 		qdf_mem_free(iface->staKeyParams);
+
+	if (iface->stats_rsp)
+		qdf_mem_free(iface->stats_rsp);
+
 	qdf_mem_zero(iface, sizeof(*iface));
 	param->status = QDF_STATUS_SUCCESS;
 	sme_msg.type = eWNI_SME_DEL_STA_SELF_RSP;
