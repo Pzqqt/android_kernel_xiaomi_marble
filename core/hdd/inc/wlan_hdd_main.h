@@ -2199,4 +2199,14 @@ void wlan_hdd_init_chan_info(hdd_context_t *hdd_ctx);
  */
 void wlan_hdd_deinit_chan_info(hdd_context_t *hdd_ctx);
 void wlan_hdd_start_sap(hdd_adapter_t *ap_adapter, bool reinit);
+/**
+ * hdd_check_for_opened_interfaces()- Check for interface up
+ * @hdd_ctx: HDD context
+ *
+ * check  if there are any wlan interfaces before starting the timer
+ * to close the modules
+ *
+ * Return: 0 if interface was opened else false
+ */
+bool hdd_check_for_opened_interfaces(hdd_context_t *hdd_ctx);
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

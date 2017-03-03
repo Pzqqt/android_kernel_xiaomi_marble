@@ -2091,10 +2091,7 @@ static int __hdd_stop(struct net_device *dev)
 {
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	hdd_adapter_list_node_t *adapternode = NULL, *next = NULL;
 	int ret;
-	bool close_modules = true;
-	QDF_STATUS status;
 
 	ENTER_DEV(dev);
 
@@ -2155,20 +2152,7 @@ static int __hdd_stop(struct net_device *dev)
 	 * Find if any iface is up. If any iface is up then can't put device to
 	 * sleep/power save mode
 	 */
-	status = hdd_get_front_adapter(hdd_ctx, &adapternode);
-	while ((NULL != adapternode) && (QDF_STATUS_SUCCESS == status)) {
-		if (test_bit(DEVICE_IFACE_OPENED,
-			     &adapternode->pAdapter->event_flags)) {
-			hdd_info("Still other ifaces are up cannot close modules");
-			close_modules = false;
-			break;
-		}
-		status = hdd_get_next_adapter(hdd_ctx, adapternode, &next);
-		adapternode = next;
-
-	}
-
-	if (close_modules) {
+	if (hdd_check_for_opened_interfaces(hdd_ctx)) {
 		hdd_info("Closing all modules from the hdd_stop");
 		qdf_mc_timer_start(&hdd_ctx->iface_change_timer,
 				   hdd_ctx->config->iface_change_wait_time
@@ -3997,6 +3981,27 @@ QDF_STATUS hdd_reset_all_adapters(hdd_context_t *hdd_ctx)
 	EXIT();
 
 	return QDF_STATUS_SUCCESS;
+}
+
+bool hdd_check_for_opened_interfaces(hdd_context_t *hdd_ctx)
+{
+	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
+	QDF_STATUS status;
+	bool close_modules = true;
+
+	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
+	while ((NULL != adapter_node) && (QDF_STATUS_SUCCESS == status)) {
+		if (test_bit(DEVICE_IFACE_OPENED,
+		    &adapter_node->pAdapter->event_flags)) {
+			hdd_info("Still other ifaces are up cannot close modules");
+			close_modules = false;
+			break;
+		}
+		status = hdd_get_next_adapter(hdd_ctx, adapter_node, &next);
+		adapter_node = next;
+	}
+
+	return close_modules;
 }
 
 /**

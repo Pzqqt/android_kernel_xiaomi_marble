@@ -2138,8 +2138,10 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 	 * open the modules.
 	 */
 	ret = hdd_wlan_start_modules(pHddCtx, pAdapter, false);
-	if (ret)
-		return ERR_PTR(ret);
+	if (ret) {
+		hdd_err("Failed to start the wlan_modules");
+		goto close_adapter;
+	}
 
 	/*
 	 * Once the support for session creation/deletion from
@@ -2150,7 +2152,7 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 		ret = hdd_start_adapter(pAdapter);
 		if (ret) {
 			hdd_err("Failed to start %s", name);
-			return ERR_PTR(-EINVAL);
+			goto stop_modules;
 		}
 	}
 
@@ -2159,6 +2161,24 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 
 	EXIT();
 	return pAdapter->dev->ieee80211_ptr;
+
+stop_modules:
+	/*
+	 * Find if any iface is up. If there is not iface which is up
+	 * start the timer to close the modules
+	 */
+	if (hdd_check_for_opened_interfaces(pHddCtx)) {
+		hdd_info("Closing all modules from the add_virt_iface");
+		qdf_mc_timer_start(&pHddCtx->iface_change_timer,
+				   pHddCtx->config->iface_change_wait_time
+				   * 50000);
+	} else
+		hdd_info("Other interfaces are still up dont close modules!");
+
+close_adapter:
+	hdd_close_adapter(pHddCtx, pAdapter, false);
+
+	return ERR_PTR(-EINVAL);
 }
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)) || defined(WITH_BACKPORTS)
