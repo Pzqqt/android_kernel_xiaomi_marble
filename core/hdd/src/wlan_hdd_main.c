@@ -5000,7 +5000,7 @@ static int hdd_logging_sock_activate_svc(hdd_context_t *hdd_ctx)
 	if (!config->wlanLoggingEnable)
 		return 0;
 
-	ret = wlan_logging_sock_activate_svc(config->wlanLoggingFEToConsole,
+	ret = wlan_logging_sock_activate_svc(config->wlanLoggingToConsole,
 					     config->wlanLoggingNumBuf);
 	if (ret)
 		hdd_err("wlan_logging_sock_activate_svc failed: %d", ret);
