@@ -3012,6 +3012,7 @@ send_resp:
 }
 
 #ifdef FEATURE_WLAN_SCAN_PNO
+#ifndef NAPIER_SCAN
 /**
  * wma_set_pno_channel_prediction() - Set PNO configuration
  * @buf_ptr:      Buffer passed by upper layers
@@ -3196,6 +3197,8 @@ void wma_config_pno(tp_wma_handle wma, tpSirPNOScanReq pno)
 	 * processing PNO request. */
 	qdf_mem_free(pno);
 }
+#endif
+#endif
 
 #ifdef FEATURE_WLAN_ESE
 /**
@@ -3352,63 +3355,6 @@ void wma_config_plm(tp_wma_handle wma, tpSirPlmReq plm)
 }
 #endif
 
-/**
- * wma_scan_cache_updated_ind() - scan update indication
- * @wma: wma handle
- * @sessionId: session ID
- *
- * After pushing cached scan results (that are stored in LIM) to SME,
- * PE will post WMA_SME_SCAN_CACHE_UPDATED message indication to
- * wma and intern this function handles that message. This function will
- * check for PNO completion (by checking NLO match event) and post PNO
- * completion back to SME if PNO operation is completed successfully.
- *
- * Return: none
- */
-void wma_scan_cache_updated_ind(tp_wma_handle wma, uint8_t sessionId)
-{
-	tSirPrefNetworkFoundInd *nw_found_ind;
-	QDF_STATUS status;
-	struct scheduler_msg cds_msg;
-	uint8_t len, i;
-
-	for (i = 0; i < wma->max_bssid; i++) {
-		if (wma->interfaces[i].nlo_match_evt_received)
-			break;
-	}
-
-	if (i == wma->max_bssid) {
-		WMA_LOGD("PNO match event is not received in any vdev, skip scan cache update indication");
-		return;
-	}
-	wma->interfaces[i].nlo_match_evt_received = false;
-
-	WMA_LOGD("Posting PNO completion to umac");
-
-	len = sizeof(tSirPrefNetworkFoundInd);
-	nw_found_ind = (tSirPrefNetworkFoundInd *) qdf_mem_malloc(len);
-
-	if (NULL == nw_found_ind) {
-		WMA_LOGE("%s: Memory allocation failure", __func__);
-		return;
-	}
-
-	nw_found_ind->mesgType = eWNI_SME_PREF_NETWORK_FOUND_IND;
-	nw_found_ind->mesgLen = len;
-	nw_found_ind->sessionId = sessionId;
-
-	cds_msg.type = eWNI_SME_PREF_NETWORK_FOUND_IND;
-	cds_msg.bodyptr = (void *)nw_found_ind;
-	cds_msg.bodyval = 0;
-
-	status = scheduler_post_msg(QDF_MODULE_ID_SME, &cds_msg);
-	if (status != QDF_STATUS_SUCCESS) {
-		WMA_LOGE("%s: Failed to post PNO completion match event to SME",
-			 __func__);
-		qdf_mem_free(nw_found_ind);
-	}
-}
-
 #ifdef FEATURE_WLAN_EXTSCAN
 /**
  * wma_extscan_wow_event_callback() - extscan wow event callback
@@ -3473,6 +3419,64 @@ void wma_extscan_wow_event_callback(void *handle, void *event, uint32_t len)
 	return;
 }
 #endif
+
+#ifdef FEATURE_WLAN_SCAN_PNO
+/**
+ * wma_scan_cache_updated_ind() - scan update indication
+ * @wma: wma handle
+ * @sessionId: session ID
+ *
+ * After pushing cached scan results (that are stored in LIM) to SME,
+ * PE will post WMA_SME_SCAN_CACHE_UPDATED message indication to
+ * wma and intern this function handles that message. This function will
+ * check for PNO completion (by checking NLO match event) and post PNO
+ * completion back to SME if PNO operation is completed successfully.
+ *
+ * Return: none
+ */
+void wma_scan_cache_updated_ind(tp_wma_handle wma, uint8_t sessionId)
+{
+	tSirPrefNetworkFoundInd *nw_found_ind;
+	QDF_STATUS status;
+	struct scheduler_msg cds_msg;
+	uint8_t len, i;
+
+	for (i = 0; i < wma->max_bssid; i++) {
+		if (wma->interfaces[i].nlo_match_evt_received)
+			break;
+	}
+
+	if (i == wma->max_bssid) {
+		WMA_LOGD("PNO match event is not received in any vdev, skip scan cache update indication");
+		return;
+	}
+	wma->interfaces[i].nlo_match_evt_received = false;
+
+	WMA_LOGD("Posting PNO completion to umac");
+
+	len = sizeof(tSirPrefNetworkFoundInd);
+	nw_found_ind = (tSirPrefNetworkFoundInd *) qdf_mem_malloc(len);
+
+	if (NULL == nw_found_ind) {
+		WMA_LOGE("%s: Memory allocation failure", __func__);
+		return;
+	}
+
+	nw_found_ind->mesgType = eWNI_SME_PREF_NETWORK_FOUND_IND;
+	nw_found_ind->mesgLen = len;
+	nw_found_ind->sessionId = sessionId;
+
+	cds_msg.type = eWNI_SME_PREF_NETWORK_FOUND_IND;
+	cds_msg.bodyptr = (void *)nw_found_ind;
+	cds_msg.bodyval = 0;
+
+	status = scheduler_post_msg(QDF_MODULE_ID_SME, &cds_msg);
+	if (status != QDF_STATUS_SUCCESS) {
+		WMA_LOGE("%s: Failed to post PNO completion match event to SME",
+			 __func__);
+		qdf_mem_free(nw_found_ind);
+	}
+}
 
 /**
  * wma_nlo_match_evt_handler() - nlo match event handler

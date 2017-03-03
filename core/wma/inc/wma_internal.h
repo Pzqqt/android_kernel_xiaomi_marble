@@ -295,8 +295,12 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params);
 QDF_STATUS wma_pno_start(tp_wma_handle wma, tpSirPNOScanReq pno);
 
 QDF_STATUS wma_pno_stop(tp_wma_handle wma, uint8_t vdev_id);
-
+#ifndef NAPIER_SCAN
 void wma_config_pno(tp_wma_handle wma, tpSirPNOScanReq pno);
+#else
+static inline void wma_config_pno(tp_wma_handle wma, tpSirPNOScanReq pno) {}
+#endif
+
 void wma_set_pno_channel_prediction(uint8_t *buf_ptr,
 		tpSirPNOScanReq pno);
 void wma_scan_cache_updated_ind(tp_wma_handle wma, uint8_t sessionId);

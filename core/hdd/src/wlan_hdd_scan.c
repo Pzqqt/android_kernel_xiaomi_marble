@@ -2679,14 +2679,9 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if ((QDF_STA_MODE == pAdapter->device_mode) &&
-	    (eConnectionState_Connecting ==
-	     (WLAN_HDD_GET_STATION_CTX_PTR(pAdapter))->conn_info.connState)) {
-		hdd_err("%p(%d) Connection in progress: sched_scan_start denied (EBUSY)",
-		       WLAN_HDD_GET_STATION_CTX_PTR(pAdapter),
-		       pAdapter->sessionId);
-		return -EBUSY;
-	}
+#ifdef NAPIER_SCAN
+	return wlan_cfg80211_sched_scan_start(pHddCtx->hdd_pdev, dev, request);
+#endif
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_SCHED_SCAN_START,
@@ -2943,6 +2938,9 @@ int wlan_hdd_sched_scan_stop(struct net_device *dev)
 		goto exit;
 	}
 
+#ifdef NAPIER_SCAN
+	return wlan_cfg80211_sched_scan_stop(hdd_ctx->hdd_pdev, dev);
+#endif
 	pno_req = (tpSirPNOScanReq) qdf_mem_malloc(sizeof(tSirPNOScanReq));
 	if (NULL == pno_req) {
 		hdd_err("qdf_mem_malloc failed");

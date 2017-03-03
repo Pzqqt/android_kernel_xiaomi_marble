@@ -71,6 +71,7 @@
 #include "wma_nan_datapath.h"
 #include <cdp_txrx_handle.h>
 #include "wlan_pmo_ucfg_api.h"
+#include <target_if_scan.h>
 
 #ifndef ARRAY_LENGTH
 #define ARRAY_LENGTH(a)         (sizeof(a) / sizeof((a)[0]))
@@ -3224,21 +3225,23 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 #ifdef FEATURE_WLAN_SCAN_PNO
 	case WOW_REASON_NLOD:
 		if (wma_vdev) {
+			wmi_nlo_event *nlo_event;
+			WMI_NLO_MATCH_EVENTID_param_tlvs param_buf;
+
 			WMA_LOGD("NLO match happened");
-			wma_vdev->nlo_match_evt_received = true;
-			cds_host_diag_log_work(&wma->pno_wake_lock,
-					WMA_PNO_MATCH_WAKE_LOCK_TIMEOUT,
-					WIFI_POWER_EVENT_WAKELOCK_PNO);
-			qdf_wake_lock_timeout_acquire(&wma->pno_wake_lock,
-					WMA_PNO_MATCH_WAKE_LOCK_TIMEOUT);
+			nlo_event = param_buf.fixed_param;
+			nlo_event->vdev_id = wake_info->vdev_id;
+			target_if_nlo_match_event_handler(handle,
+				(uint8_t *)&param_buf,
+				sizeof(WMI_NLO_MATCH_EVENTID_param_tlvs));
 		}
 		break;
 
 	case WOW_REASON_NLO_SCAN_COMPLETE:
 		WMA_LOGD("Host woken up due to pno scan complete reason");
 		if (param_buf->wow_packet_buffer)
-			wma_nlo_scan_cmp_evt_handler(handle,
-					wmi_cmd_struct_ptr, wow_buf_pkt_len);
+			target_if_nlo_complete_handler(handle,
+				wmi_cmd_struct_ptr, wow_buf_pkt_len);
 		else
 			WMA_LOGD("No wow_packet_buffer present");
 		break;

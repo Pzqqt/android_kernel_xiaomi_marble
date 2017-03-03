@@ -10935,6 +10935,27 @@ static int hdd_update_pmo_config(hdd_context_t *hdd_ctx)
 }
 
 #ifdef NAPIER_SCAN
+
+#ifdef FEATURE_WLAN_SCAN_PNO
+static inline void hdd_update_pno_config(struct pno_user_cfg *pno_cfg,
+	struct hdd_config *cfg)
+{
+	pno_cfg->channel_prediction = cfg->pno_channel_prediction;
+	pno_cfg->top_k_num_of_channels = cfg->top_k_num_of_channels;
+	pno_cfg->stationary_thresh = cfg->stationary_thresh;
+	pno_cfg->adaptive_dwell_mode = cfg->adaptive_dwell_mode_enabled;
+	pno_cfg->channel_prediction_full_scan =
+		cfg->channel_prediction_full_scan;
+}
+#else
+static inline void
+hdd_update_pno_config(struct pno_user_cfg *pno_cfg,
+	struct hdd_config *cfg)
+{
+	return;
+}
+#endif
+
 /**
  * hdd_update_scan_config - API to update scan configuration parameters
  * @hdd_ctx: HDD context
@@ -10957,6 +10978,8 @@ static int hdd_update_scan_config(hdd_context_t *hdd_ctx)
 	scan_cfg.conc_idle_time = cfg->idle_time_conc;
 	scan_cfg.scan_cache_aging_time = cfg->scanAgingTimeout;
 	scan_cfg.scan_dwell_time_mode = cfg->scan_adaptive_dwell_mode;
+
+	hdd_update_pno_config(&scan_cfg.pno_cfg, cfg);
 
 	status = ucfg_scan_update_user_config(psoc, &scan_cfg);
 	if (status != QDF_STATUS_SUCCESS) {

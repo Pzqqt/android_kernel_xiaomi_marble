@@ -3081,7 +3081,7 @@ QDF_STATUS wma_start(void *cds_ctx)
 		qdf_status = QDF_STATUS_E_FAILURE;
 		goto end;
 	}
-
+#ifndef NAPIER_SCAN
 #ifdef FEATURE_WLAN_SCAN_PNO
 	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
 				   WMI_SERVICE_NLO)) {
@@ -3109,6 +3109,7 @@ QDF_STATUS wma_start(void *cds_ctx)
 		}
 	}
 #endif /* FEATURE_WLAN_SCAN_PNO */
+#endif
 
 #if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || \
 	defined(QCA_LL_TX_FLOW_CONTROL_V2) || defined(CONFIG_HL_SUPPORT)

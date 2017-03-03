@@ -77,6 +77,11 @@ int wlan_hdd_cfg80211_sched_scan_stop(struct wiphy *wiphy,
  * Return: 0 for success, non zero for failure
  */
 int wlan_hdd_sched_scan_stop(struct net_device *dev);
+#else
+static inline int wlan_hdd_sched_scan_stop(struct net_device *dev)
+{
+	return 0;
+}
 #endif /* End of FEATURE_WLAN_SCAN_PNO */
 
 int wlan_hdd_cfg80211_vendor_scan(struct wiphy *wiphy,
