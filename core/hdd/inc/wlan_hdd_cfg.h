@@ -7795,8 +7795,8 @@ enum dot11p_mode {
  */
 #define CFG_ADAPT_DWELL_PASMON_INTVAL_NAME     "adapt_dwell_passive_mon_intval"
 #define CFG_ADAPT_DWELL_PASMON_INTVAL_MIN      (0)
-#define CFG_ADAPT_DWELL_PASMON_INTVAL_MAX      (10)
-#define CFG_ADAPT_DWELL_PASMON_INTVAL_DEFAULT  (25)
+#define CFG_ADAPT_DWELL_PASMON_INTVAL_MAX      (25)
+#define CFG_ADAPT_DWELL_PASMON_INTVAL_DEFAULT  (10)
 
 /*
  * This parameter will set % of wifi activity used in passive scan 0-100.
