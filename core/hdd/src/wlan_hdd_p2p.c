@@ -2176,7 +2176,7 @@ stop_modules:
 		hdd_info("Other interfaces are still up dont close modules!");
 
 close_adapter:
-	hdd_close_adapter(pHddCtx, pAdapter, false);
+	hdd_close_adapter(pHddCtx, pAdapter, true);
 
 	return ERR_PTR(-EINVAL);
 }
