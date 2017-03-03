@@ -920,6 +920,7 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 	if (!hal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("Invalid handle"));
+		wlansap_context_put(sap_ctx);
 		return QDF_STATUS_E_NOMEM;
 	}
 
