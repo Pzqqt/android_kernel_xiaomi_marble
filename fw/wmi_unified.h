@@ -4421,6 +4421,19 @@ typedef enum {
     WMI_REQUEST_RSSI_PER_CHAIN_STAT = 0x100,
 } wmi_stats_id;
 
+/*
+ * cfg_retry_count is set to max number of times the AP should try sending
+ * QoS Null frames to the STA for measuring the instantaneous RSSI
+ *
+ * retry_count is used to maintain the number of times the AP has tried sending
+ * QoS Null frames to the STA for measuring the instantaneous RSSI
+ */
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_request_stats_cmd_sub_struc_param */
+    A_UINT32 cfg_retry_count;
+    A_UINT32 retry_count;
+} wmi_inst_rssi_stats_params;
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_request_stats_cmd_fixed_param */
     wmi_stats_id stats_id;
@@ -4428,6 +4441,10 @@ typedef struct {
     A_UINT32 vdev_id;
     /** peer MAC address */
     wmi_mac_addr peer_macaddr;
+/*
+ * This TLV is (optionally) followed by other TLVs:
+ *     wmi_inst_rssi_stats_params inst_rssi_params;
+ */
 } wmi_request_stats_cmd_fixed_param;
 
 /* stats type bitmap  */

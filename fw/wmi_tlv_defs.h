@@ -808,6 +808,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_vdev_get_arp_stats_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_vdev_get_arp_stats_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_iface_offload_stats,
+    WMITLV_TAG_STRUC_wmi_request_stats_cmd_sub_struc_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1854,7 +1855,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_SPECTRAL_SCAN_ENABLE_CMDID);
 
 /* Request stats Cmd */
 #define WMITLV_TABLE_WMI_REQUEST_STATS_CMDID(id,op,buf,len) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_request_stats_cmd_fixed_param, wmi_request_stats_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_request_stats_cmd_fixed_param, wmi_request_stats_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_inst_rssi_stats_params, inst_rssi_params, WMITLV_SIZE_VAR)
 
 WMITLV_CREATE_PARAM_STRUC(WMI_REQUEST_STATS_CMDID);
 
