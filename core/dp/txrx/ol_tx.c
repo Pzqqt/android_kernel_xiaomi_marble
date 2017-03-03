@@ -82,7 +82,7 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t msdu,
 			 */						\
 			if (qdf_nbuf_is_tso(msdu))			\
 				ol_free_remaining_tso_segs(		\
-					vdev, msdu_info);		\
+					vdev, msdu_info, true);		\
 			TXRX_STATS_MSDU_LIST_INCR(			\
 				pdev, tx.dropped.host_reject, msdu);	\
 			return msdu; /* the list of unaccepted MSDUs */	\
@@ -91,17 +91,77 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t msdu,
 
 #if defined(FEATURE_TSO)
 void ol_free_remaining_tso_segs(ol_txrx_vdev_handle vdev,
-				struct ol_txrx_msdu_info_t *msdu_info)
+				       struct ol_txrx_msdu_info_t *msdu_info,
+				       bool is_tso_seg_mapping_done)
 {
 	struct qdf_tso_seg_elem_t *next_seg;
 	struct qdf_tso_seg_elem_t *free_seg = msdu_info->tso_info.curr_seg;
+	struct ol_txrx_pdev_t *pdev;
+	bool is_last_seg = false;
 
-	while (free_seg) {
-		next_seg = free_seg->next;
-		ol_tso_free_segment(vdev->pdev, free_seg);
-		free_seg = next_seg;
+	if (qdf_unlikely(!vdev)) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"%s:vdev is null", __func__);
+		return;
+	} else {
+		pdev = vdev->pdev;
+		if (qdf_unlikely(!pdev)) {
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+				"%s:pdev is null", __func__);
+			return;
+		}
+	}
+
+	if (is_tso_seg_mapping_done) {
+		/*
+		 * TSO segment are mapped already, therefore,
+		 * 1. unmap the tso segments,
+		 * 2. free tso num segment if it is a last segment, and
+		 * 3. free the tso segments.
+		 */
+		 struct qdf_tso_num_seg_elem_t *tso_num_desc =
+				msdu_info->tso_info.tso_num_seg_list;
+
+		if (qdf_unlikely(tso_num_desc == NULL)) {
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "%s %d TSO common info is NULL!",
+			  __func__, __LINE__);
+			return;
+		}
+
+		while (free_seg) {
+			qdf_spin_lock_bh(&pdev->tso_seg_pool.tso_mutex);
+			tso_num_desc->num_seg.tso_cmn_num_seg--;
+
+			is_last_seg = (tso_num_desc->num_seg.tso_cmn_num_seg ==
+				       0) ? true : false;
+			qdf_nbuf_unmap_tso_segment(pdev->osdev, free_seg,
+						   is_last_seg);
+			qdf_spin_unlock_bh(&pdev->tso_seg_pool.tso_mutex);
+
+			if (is_last_seg) {
+				ol_tso_num_seg_free(pdev,
+					msdu_info->tso_info.tso_num_seg_list);
+				msdu_info->tso_info.tso_num_seg_list = NULL;
+			}
+
+			next_seg = free_seg->next;
+			ol_tso_free_segment(pdev, free_seg);
+			free_seg = next_seg;
+		}
+	} else {
+		/*
+		 * TSO segment are not mapped therefore,
+		 * free the tso segments only.
+		 */
+		while (free_seg) {
+			next_seg = free_seg->next;
+			ol_tso_free_segment(pdev, free_seg);
+			free_seg = next_seg;
+		}
 	}
 }
+
 /**
  * ol_tx_prepare_tso() - Given a jumbo msdu, prepare the TSO
  * related information in the msdu_info meta data
@@ -135,7 +195,8 @@ static inline uint8_t ol_tx_prepare_tso(ol_txrx_vdev_handle vdev,
 				/* Free above alocated TSO segements till now */
 				msdu_info->tso_info.curr_seg =
 					msdu_info->tso_info.tso_seg_list;
-				ol_free_remaining_tso_segs(vdev, msdu_info);
+				ol_free_remaining_tso_segs(vdev, msdu_info,
+							   false);
 				return 1;
 			}
 		}
@@ -148,7 +209,7 @@ static inline uint8_t ol_tx_prepare_tso(ol_txrx_vdev_handle vdev,
 			/* Free the already allocated num of segments */
 			msdu_info->tso_info.curr_seg =
 				msdu_info->tso_info.tso_seg_list;
-			ol_free_remaining_tso_segs(vdev, msdu_info);
+			ol_free_remaining_tso_segs(vdev, msdu_info, false);
 			return 1;
 		}
 
@@ -157,7 +218,7 @@ static inline uint8_t ol_tx_prepare_tso(ol_txrx_vdev_handle vdev,
 			/* Free the already allocated num of segments */
 			msdu_info->tso_info.curr_seg =
 				msdu_info->tso_info.tso_seg_list;
-			ol_free_remaining_tso_segs(vdev, msdu_info);
+			ol_free_remaining_tso_segs(vdev, msdu_info, false);
 			return 1;
 		}
 
@@ -725,7 +786,7 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 						tso_info->curr_seg =
 						tso_info->curr_seg->next;
 						ol_free_remaining_tso_segs(vdev,
-							&msdu_info);
+							&msdu_info, true);
 					}
 
 					/*
@@ -757,7 +818,7 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 				 */
 				if (qdf_nbuf_is_tso(msdu))
 					ol_free_remaining_tso_segs(vdev,
-							&msdu_info);
+							&msdu_info, true);
 
 				TXRX_STATS_MSDU_LIST_INCR(
 					pdev, tx.dropped.host_reject, msdu);
