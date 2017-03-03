@@ -23,6 +23,8 @@
 #include "wlan_pmo_tgt_api.h"
 #include "wlan_pmo_main.h"
 #include "wlan_pmo_obj_mgmt_public_struct.h"
+#include <wlan_scan_ucfg_api.h>
+
 
 static inline int pmo_find_wow_ptrn_len(const char *ptrn)
 {
@@ -213,7 +215,7 @@ bool pmo_core_is_wow_applicable(struct wlan_objmgr_psoc *psoc)
 			pmo_debug("STA is connected, enabling wow");
 			is_wow_applicable = true;
 			break;
-		} else if (pmo_core_is_nlo_scan_in_progress(vdev)) {
+		} else if (ucfg_scan_get_pno_in_progress(vdev)) {
 			wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
 			pmo_debug("NLO is in progress, enabling wow");
 			is_wow_applicable = true;

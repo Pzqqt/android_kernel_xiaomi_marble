@@ -59,28 +59,39 @@ wlan_vdev_get_scan_rxops(struct wlan_objmgr_vdev *vdev)
 	return &((psoc->soc_cb.rx_ops.scan));
 }
 
-QDF_STATUS
-tgt_scan_nlo_complete_evt_handler(void *handle, uint8_t *event,
-	uint32_t len)
+#ifdef FEATURE_WLAN_SCAN_PNO
+
+QDF_STATUS tgt_scan_pno_start(struct wlan_objmgr_vdev *vdev,
+	struct pno_scan_req_params *req)
 {
-	/*
-	 * Convert the tlv/non tlv data to struct scan_event
-	 * (SCM_EVENT_NLO_COMPLETE) (same as WIN does by calling a win API) and
-	 * Post msg to target_if queue
-	 */
+	struct wlan_lmac_if_scan_tx_ops *scan_ops = NULL;
+	struct wlan_objmgr_psoc *psoc = wlan_vdev_get_psoc(vdev);
+
+	scan_ops = wlan_vdev_get_scan_txops(vdev);
+	/* invoke wmi_unified_pno_start_cmd() */
+	QDF_ASSERT(scan_ops->pno_start);
+	if (scan_ops->pno_start)
+		return scan_ops->pno_start(psoc, req);
+
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS
-tgt_nlo_match_evt_handler(void *handle, uint8_t *event,
-		uint32_t len)
+QDF_STATUS tgt_scan_pno_stop(struct wlan_objmgr_vdev *vdev,
+	uint8_t vdev_id)
 {
-	/*
-	 * Convert the tlv/non tlv data to comman data
-	 * and set the pno match received flag in vdev scan info
-	 */
+	struct wlan_lmac_if_scan_tx_ops *scan_ops = NULL;
+	struct wlan_objmgr_psoc *psoc = wlan_vdev_get_psoc(vdev);
+
+	scan_ops = wlan_vdev_get_scan_txops(vdev);
+
+	/* invoke wmi_unified_pno_stop_cmd() */
+	QDF_ASSERT(scan_ops->pno_stop);
+	if (scan_ops->pno_stop)
+		return scan_ops->pno_stop(psoc, vdev_id);
+
 	return QDF_STATUS_SUCCESS;
 }
+#endif
 
 QDF_STATUS
 tgt_scan_start(struct scan_start_request *req)

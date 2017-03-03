@@ -29,6 +29,8 @@
 #include "cdp_txrx_flow_ctrl_legacy.h"
 #include "htc_api.h"
 #include "wlan_pmo_obj_mgmt_api.h"
+#include <wlan_scan_ucfg_api.h>
+
 
 /**
  * pmo_core_calculate_listen_interval() - Calculate vdev listen interval
@@ -231,8 +233,8 @@ void pmo_core_configure_dynamic_wake_events(struct wlan_objmgr_psoc *psoc)
 
 		enable_mask = 0;
 		disable_mask = 0;
-		if (pmo_core_is_nlo_scan_in_progress(vdev)) {
-			if (pmo_core_is_nlo_scan_match_found(vdev))
+		if (ucfg_scan_get_pno_in_progress(vdev)) {
+			if (ucfg_scan_get_pno_match(vdev))
 				enable_mask |=
 					(1 << WOW_NLO_SCAN_COMPLETE_EVENT);
 			else

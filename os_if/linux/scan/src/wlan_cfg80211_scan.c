@@ -35,6 +35,351 @@
 #include <qdf_mem.h>
 #include <wlan_utility.h>
 
+#ifdef FEATURE_WLAN_SCAN_PNO
+#if ((LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)) || \
+	defined(CFG80211_MULTI_SCAN_PLAN_BACKPORT))
+
+/**
+ * wlan_config_sched_scan_plan() - configures the sched scan plans
+ *   from the framework.
+ * @pno_req: pointer to PNO scan request
+ * @request: pointer to scan request from framework
+ *
+ * Return: None
+ */
+static void wlan_config_sched_scan_plan(struct pno_scan_req_params *pno_req,
+	struct cfg80211_sched_scan_request *request)
+{
+	pno_req->delay_start_time = request->delay;
+	/*
+	 * As of now max 2 scan plans were supported by firmware
+	 * if number of scan plan supported by firmware increased below logic
+	 * must change.
+	 */
+	if (request->n_scan_plans == SCAN_PNO_MAX_PLAN_REQUEST) {
+		pno_req->fast_scan_period =
+			request->scan_plans[0].interval * MSEC_PER_SEC;
+		pno_req->fast_scan_max_cycles =
+			request->scan_plans[0].iterations;
+		pno_req->slow_scan_period =
+			request->scan_plans[1].interval * MSEC_PER_SEC;
+	} else if (request->n_scan_plans == 1) {
+		pno_req->fast_scan_period =
+			request->scan_plans[0].interval * MSEC_PER_SEC;
+		/*
+		 * if only one scan plan is configured from framework
+		 * then both fast and slow scan should be configured with the
+		 * same value that is why fast scan cycles are hardcoded to one
+		 */
+		pno_req->fast_scan_max_cycles = 1;
+		pno_req->slow_scan_period =
+			request->scan_plans[0].interval * MSEC_PER_SEC;
+	} else {
+		cfg80211_err("Invalid number of scan plans %d !!",
+			request->n_scan_plans);
+	}
+}
+#else
+static void wlan_config_sched_scan_plan(struct pno_scan_req_params *pno_req,
+	struct cfg80211_sched_scan_request *request)
+{
+	pno_req->fast_scan_period = request->interval;
+	pno_req->fast_scan_max_cycles = SCAN_PNO_DEF_SCAN_TIMER_REPEAT;
+	pno_req->slow_scan_period =
+		SCAN_PNO_DEF_SLOW_SCAN_MULTIPLIER *
+		pno_req->fast_scan_period;
+}
+#endif
+
+/**
+ * wlan_cfg80211_pno_callback() - pno callback function to handle
+ * pno events.
+ * @vdev: vdev ptr
+ * @event: scan events
+ * @args: argument
+ *
+ * Return: void
+ */
+static void wlan_cfg80211_pno_callback(struct wlan_objmgr_vdev *vdev,
+	struct scan_event *event,
+	void *args)
+{
+	struct wlan_objmgr_pdev *pdev;
+	struct pdev_osif_priv *pdev_ospriv;
+
+	if (event->type != SCAN_EVENT_TYPE_NLO_COMPLETE)
+		return;
+
+	cfg80211_info("vdev id = %d", event->vdev_id);
+
+	wlan_vdev_obj_lock(vdev);
+	pdev = wlan_vdev_get_pdev(vdev);
+	wlan_vdev_obj_unlock(vdev);
+	if (!pdev) {
+		cfg80211_err("pdev is NULL");
+		return;
+	}
+
+	wlan_pdev_obj_lock(pdev);
+	pdev_ospriv = wlan_pdev_get_ospriv(pdev);
+	wlan_pdev_obj_unlock(pdev);
+	if (!pdev_ospriv) {
+		cfg80211_err("pdev_osprivis NULL");
+		return;
+	}
+	cfg80211_sched_scan_results(pdev_ospriv->wiphy);
+}
+
+static void
+wlan_cfg80211_register_pno_cb(struct wlan_objmgr_psoc *psoc)
+{
+	ucfg_scan_register_pno_cb(psoc,
+		wlan_cfg80211_pno_callback, NULL);
+}
+
+/**
+ * wlan_cfg80211_is_pno_allowed() -  Check if PNO is allowed
+ * @vdev: vdev ptr
+ *
+ * The PNO Start request is coming from upper layers.
+ * It is to be allowed only for Infra STA device type
+ * and the link should be in a disconnected state.
+ *
+ * Return: Success if PNO is allowed, Failure otherwise.
+ */
+static QDF_STATUS wlan_cfg80211_is_pno_allowed(struct wlan_objmgr_vdev *vdev)
+{
+	enum wlan_vdev_state state;
+	enum tQDF_ADAPTER_MODE vdev_opmode;
+	uint8_t vdev_id;
+
+	wlan_vdev_obj_lock(vdev);
+	vdev_opmode = wlan_vdev_mlme_get_opmode(vdev);
+	state = wlan_vdev_mlme_get_state(vdev);
+	vdev_id = wlan_vdev_get_id(vdev);
+	wlan_vdev_obj_unlock(vdev);
+
+	cfg80211_notice("dev_mode=%d, state=%d vdev id %d",
+		vdev_opmode, state, vdev_id);
+
+	if ((vdev_opmode == QDF_STA_MODE) &&
+	   ((state == WLAN_VDEV_S_INIT) ||
+	   (state == WLAN_VDEV_S_STOP)))
+		return QDF_STATUS_SUCCESS;
+	else
+		return QDF_STATUS_E_FAILURE;
+}
+
+int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_pdev *pdev,
+	struct net_device *dev,
+	struct cfg80211_sched_scan_request *request)
+{
+	struct pno_scan_req_params *req;
+	int i, j, ret = 0;
+	QDF_STATUS status;
+	uint8_t num_chan = 0, channel;
+	struct wlan_objmgr_vdev *vdev;
+	uint32_t valid_ch[SCAN_PNO_MAX_NETW_CHANNELS_EX] = {0};
+
+	vdev = wlan_objmgr_get_vdev_by_macaddr_from_pdev(pdev, dev->dev_addr,
+		WLAN_OSIF_ID);
+	if (!vdev) {
+		cfg80211_err("vdev object is NULL");
+		return -EIO;
+	}
+
+	status = wlan_cfg80211_is_pno_allowed(vdev);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cfg80211_err("pno is not allowed");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
+		return -ENOTSUPP;
+	}
+
+	ucfg_scan_flush_results(pdev, NULL);
+	if (ucfg_scan_get_pdev_status(pdev) !=
+	   SCAN_NOT_IN_PROGRESS) {
+		status = wlan_abort_scan(pdev,
+				wlan_objmgr_pdev_get_pdev_id(pdev),
+				INVAL_VDEV_ID, INVAL_SCAN_ID);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			cfg80211_err("aborting the existing scan is unsuccessful");
+			wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
+			return -EBUSY;
+		}
+	}
+
+	req = qdf_mem_malloc(sizeof(*req));
+	if (!req) {
+		cfg80211_err("req malloc failed");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
+		return -ENOMEM;
+	}
+
+	req->networks_cnt = request->n_match_sets;
+	wlan_vdev_obj_lock(vdev);
+	req->vdev_id = wlan_vdev_get_id(vdev);
+	wlan_vdev_obj_unlock(vdev);
+
+	if ((!req->networks_cnt) ||
+	    (req->networks_cnt > SCAN_PNO_MAX_SUPP_NETWORKS)) {
+		cfg80211_err("Network input is not correct %d",
+			req->networks_cnt);
+		ret = -EINVAL;
+		goto error;
+	}
+
+	if (request->n_channels > SCAN_PNO_MAX_NETW_CHANNELS_EX) {
+		cfg80211_err("Incorrect number of channels %d",
+			request->n_channels);
+		ret = -EINVAL;
+		goto error;
+	}
+
+	if (request->n_channels) {
+		char chl[(request->n_channels * 5) + 1];
+		int len = 0;
+
+		for (i = 0; i < request->n_channels; i++) {
+			channel = request->channels[i]->hw_value;
+			if (wlan_is_dsrc_channel(wlan_chan_to_freq(channel)))
+				continue;
+			len += snprintf(chl + len, 5, "%d ", channel);
+			valid_ch[num_chan++] = wlan_chan_to_freq(channel);
+		}
+		cfg80211_notice("No. of Scan Channels: %d", num_chan);
+		cfg80211_notice("Channel-List: %s", chl);
+		/* If all channels are DFS and dropped,
+		 * then ignore the PNO request
+		 */
+		if (!num_chan) {
+			cfg80211_notice("Channel list empty due to filtering of DSRC");
+			ret = -EINVAL;
+			goto error;
+		}
+	}
+
+	/* Filling per profile  params */
+	for (i = 0; i < req->networks_cnt; i++) {
+		req->networks_list[i].ssid.length =
+			request->match_sets[i].ssid.ssid_len;
+
+		if ((!req->networks_list[i].ssid.length) ||
+		    (req->networks_list[i].ssid.length > WLAN_SSID_MAX_LEN)) {
+			cfg80211_err(" SSID Len %d is not correct for network %d",
+				  req->networks_list[i].ssid.length, i);
+			ret = -EINVAL;
+			goto error;
+		}
+
+		qdf_mem_copy(req->networks_list[i].ssid.ssid,
+			request->match_sets[i].ssid.ssid,
+			req->networks_list[i].ssid.length);
+		req->networks_list[i].authentication = 0;   /*eAUTH_TYPE_ANY */
+		req->networks_list[i].encryption = 0;       /*eED_ANY */
+		req->networks_list[i].bc_new_type = 0;    /*eBCAST_UNKNOWN */
+
+		cfg80211_notice("Received ssid:%.*s",
+			req->networks_list[i].ssid.length,
+			req->networks_list[i].ssid.ssid);
+
+		/*Copying list of valid channel into request */
+		qdf_mem_copy(req->networks_list[i].channels, valid_ch,
+			num_chan * sizeof(uint32_t));
+		req->networks_list[i].channel_cnt = num_chan;
+		req->networks_list[i].rssi_thresh =
+			request->match_sets[i].rssi_thold;
+	}
+
+	for (i = 0; i < request->n_ssids; i++) {
+		j = 0;
+		while (j < req->networks_cnt) {
+			if ((req->networks_list[j].ssid.length ==
+			     request->ssids[i].ssid_len) &&
+			    (!qdf_mem_cmp(req->networks_list[j].ssid.ssid,
+					 request->ssids[i].ssid,
+					 req->networks_list[j].ssid.length))) {
+				req->networks_list[j].bc_new_type =
+					SSID_BC_TYPE_HIDDEN;
+				break;
+			}
+			j++;
+		}
+	}
+	cfg80211_notice("Number of hidden networks being Configured = %d",
+		  request->n_ssids);
+
+	/*
+	 * Before Kernel 4.4
+	 *   Driver gets only one time interval which is hard coded in
+	 *   supplicant for 10000ms.
+	 *
+	 * After Kernel 4.4
+	 *   User can configure multiple scan_plans, each scan would have
+	 *   separate scan cycle and interval. (interval is in unit of second.)
+	 *   For our use case, we would only have supplicant set one scan_plan,
+	 *   and firmware also support only one as well, so pick up the first
+	 *   index.
+	 *
+	 *   Taking power consumption into account
+	 *   firmware after gPNOScanTimerRepeatValue times fast_scan_period
+	 *   switches slow_scan_period. This is less frequent scans and firmware
+	 *   shall be in slow_scan_period mode until next PNO Start.
+	 */
+	wlan_config_sched_scan_plan(req, request);
+	cfg80211_notice("Base scan interval: %d sec, scan cycles: %d, slow scan interval %d",
+		req->fast_scan_period, req->fast_scan_max_cycles,
+		req->slow_scan_period);
+
+	ucfg_scan_get_pno_def_params(vdev, req);
+	status = ucfg_scan_pno_start(vdev, req);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cfg80211_err("Failed to enable PNO");
+		ret = -EINVAL;
+		goto error;
+	}
+
+	cfg80211_info("PNO scan request offloaded");
+
+error:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
+	qdf_mem_free(req);
+	return ret;
+}
+
+int wlan_cfg80211_sched_scan_stop(struct wlan_objmgr_pdev *pdev,
+	struct net_device *dev)
+{
+	int ret = 0;
+	QDF_STATUS status;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_macaddr_from_pdev(pdev, dev->dev_addr,
+		WLAN_OSIF_ID);
+	if (!vdev) {
+		cfg80211_err("vdev object is NULL");
+		return -EIO;
+	}
+
+	status = ucfg_scan_pno_stop(vdev);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cfg80211_err("Failed to disabled PNO");
+		ret = -EINVAL;
+	} else {
+		cfg80211_info("PNO scan disabled");
+	}
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
+	return ret;
+}
+#else
+static inline void
+wlan_cfg80211_register_pno_cb(struct wlan_objmgr_psoc *psoc)
+{
+	return;
+}
+
+#endif /*FEATURE_WLAN_SCAN_PNO */
+
 /**
  * wlan_scan_request_enqueue() - enqueue Scan Request
  * @pdev: pointer to pdev object
@@ -352,6 +697,8 @@ QDF_STATUS wlan_cfg80211_scan_priv_init(struct wlan_objmgr_pdev *pdev)
 	wlan_pdev_obj_lock(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
 	wlan_pdev_obj_unlock(pdev);
+
+	wlan_cfg80211_register_pno_cb(psoc);
 	req_id = ucfg_scan_register_requester(psoc, "HDD",
 		wlan_cfg80211_scan_done_callback, NULL);
 

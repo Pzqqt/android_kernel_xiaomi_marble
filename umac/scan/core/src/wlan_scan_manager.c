@@ -26,6 +26,9 @@
 #include "wlan_scan_main.h"
 #include "wlan_scan_manager.h"
 #include "wlan_utility.h"
+#ifdef FEATURE_WLAN_SCAN_PNO
+#include <host_diag_core_event.h>
+#endif
 
 static QDF_STATUS
 scm_free_scan_request_mem(struct scan_start_request *req)
@@ -485,6 +488,64 @@ scm_scan_cancel_req(struct scheduler_msg *msg)
 	return status;
 }
 
+#ifdef FEATURE_WLAN_SCAN_PNO
+static QDF_STATUS
+scm_pno_event_handler(struct wlan_objmgr_vdev *vdev,
+	struct scan_event *event)
+{
+	struct scan_vdev_obj *scan_vdev_obj;
+	struct wlan_scan_obj *scan_psoc_obj;
+	scan_event_handler pno_cb;
+	void *cb_arg;
+
+	scan_vdev_obj = wlan_get_vdev_scan_obj(vdev);
+	scan_psoc_obj = wlan_vdev_get_scan_obj(vdev);
+	if (!scan_vdev_obj || !scan_psoc_obj) {
+		scm_err("null scan_vdev_obj %p scan_obj %p",
+			scan_vdev_obj, scan_psoc_obj);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	switch (event->type) {
+	case SCAN_EVENT_TYPE_NLO_COMPLETE:
+		if (!scan_vdev_obj->pno_match_evt_received)
+			return QDF_STATUS_SUCCESS;
+		qdf_wake_lock_release(&scan_psoc_obj->pno_cfg.pno_wake_lock,
+			WIFI_POWER_EVENT_WAKELOCK_PNO);
+		qdf_wake_lock_timeout_acquire(
+			&scan_psoc_obj->pno_cfg.pno_wake_lock,
+			SCAN_PNO_SCAN_COMPLETE_WAKE_LOCK_TIMEOUT);
+		scan_vdev_obj->pno_match_evt_received = false;
+		break;
+	case SCAN_EVENT_TYPE_NLO_MATCH:
+		scan_vdev_obj->pno_match_evt_received = true;
+		qdf_wake_lock_timeout_acquire(
+			&scan_psoc_obj->pno_cfg.pno_wake_lock,
+			SCAN_PNO_MATCH_WAKE_LOCK_TIMEOUT);
+		return QDF_STATUS_SUCCESS;
+	default:
+		return QDF_STATUS_E_INVAL;
+	}
+	qdf_spin_lock_bh(&scan_psoc_obj->lock);
+	pno_cb = scan_psoc_obj->pno_cfg.pno_cb.func;
+	cb_arg = scan_psoc_obj->pno_cfg.pno_cb.arg;
+	qdf_spin_unlock_bh(&scan_psoc_obj->lock);
+
+	if (pno_cb)
+		pno_cb(vdev, event, cb_arg);
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+
+static QDF_STATUS
+scm_pno_event_handler(struct wlan_objmgr_vdev *vdev,
+	struct scan_event *event)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 QDF_STATUS
 scm_scan_event_handler(struct scheduler_msg *msg)
 {
@@ -510,12 +571,17 @@ scm_scan_event_handler(struct scheduler_msg *msg)
 	case SCAN_EVENT_TYPE_DEQUEUED:
 		scm_release_serialization_command(vdev, event->scan_id);
 		break;
+	case SCAN_EVENT_TYPE_NLO_COMPLETE:
+	case SCAN_EVENT_TYPE_NLO_MATCH:
+		scm_pno_event_handler(vdev, event);
+		goto exit;
 	default:
 		break;
 	}
 
 	/* Notify all interested parties */
 	scm_scan_post_event(vdev, event);
+exit:
 	/* free event info memory */
 	qdf_mem_free(event_info);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_SCAN_ID);

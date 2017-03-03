@@ -148,6 +148,39 @@ struct pdev_scan_info {
 };
 
 /**
+ * struct scan_vdev_obj - scan vdev obj
+ * @pno_match_evt_received: pno match received
+ * @pno_in_progress: pno in progress
+ */
+struct scan_vdev_obj {
+	bool pno_match_evt_received;
+	bool pno_in_progress;
+};
+
+/**
+ * struct pno_def_config - def configuration for PNO
+ * @channel_prediction: config PNO channel prediction feature status
+ * @top_k_num_of_channels: def top K number of channels are used for tanimoto
+ * distance calculation.
+ * @stationary_thresh: def threshold val to determine that STA is stationary.
+ * @pnoscan_adaptive_dwell_mode: def adaptive dwelltime mode for pno scan
+ * @channel_prediction_full_scan: def periodic timer upon which full scan needs
+ * to be triggered.
+ * @pno_wake_lock: pno wake lock
+ * @pno_cb: callback to call on PNO completion
+ */
+struct pno_def_config {
+	bool channel_prediction;
+	uint8_t top_k_num_of_channels;
+	uint8_t stationary_thresh;
+	enum scan_dwelltime_adaptive_mode adaptive_dwell_mode;
+	uint32_t channel_prediction_full_scan;
+	qdf_wake_lock_t pno_wake_lock;
+	struct cb_handler pno_cb;
+};
+
+
+/**
  * struct scan_default_params - default scan parameters to be used
  * @active_dwell: default active dwell time
  * @passive_dwell:default passive dwell time
@@ -310,6 +343,7 @@ struct wlan_scan_obj {
 	struct scan_requester_info requesters[WLAN_MAX_REQUESTORS];
 	struct global_scan_ev_handlers global_evhandlers;
 	struct pdev_scan_info pdev_info[WLAN_UMAC_MAX_PDEVS];
+	struct pno_def_config pno_cfg;
 };
 
 /**
@@ -352,6 +386,20 @@ wlan_vdev_get_scan_obj(struct wlan_objmgr_vdev *vdev)
 	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
 
 	return wlan_pdev_get_scan_obj(pdev);
+}
+
+/**
+ * wlan_get_vdev_scan_obj() - private API to get scan object vdev
+ * @vdev: vdev object
+ *
+ * Return: scan object
+ */
+static inline struct scan_vdev_obj *
+wlan_get_vdev_scan_obj(struct wlan_objmgr_vdev *vdev)
+{
+	return (struct scan_vdev_obj *)
+		wlan_objmgr_vdev_get_comp_private_obj(vdev,
+				WLAN_UMAC_COMP_SCAN);
 }
 
 /**
@@ -434,4 +482,25 @@ QDF_STATUS wlan_scan_psoc_created_notification(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS wlan_scan_psoc_destroyed_notification(struct wlan_objmgr_psoc *psoc,
 	void *arg_list);
+
+/**
+ * wlan_scan_vdev_created_notification() - scan psoc create handler
+ * @vdev: vdev object
+ * @arg_list: Argument list
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_scan_vdev_created_notification(struct wlan_objmgr_vdev *vdev,
+	void *arg_list);
+
+/**
+ * wlan_scan_vdev_destroyed_notification() - scan psoc delete handler
+ * @vdev: vdev object
+ * @arg_list: Argument list
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_scan_vdev_destroyed_notification(struct wlan_objmgr_vdev *vdev,
+	void *arg_list);
+
 #endif

@@ -22,9 +22,41 @@
 #ifndef __TARGET_SCAN_IF_H__
 #define __TARGET_SCAN_IF_H__
 
+#include <wmi_unified_api.h>
+
 struct scan_req_params;
 struct scan_cancel_param;
 struct wlan_objmgr_psoc;
+
+#ifdef FEATURE_WLAN_SCAN_PNO
+/**
+ * target_if_nlo_match_event_handler() - nlo match event handler
+ * @scn: scn handle
+ * @event: event data
+ * @len: data length
+ *
+ * Record NLO match event comes from FW. It's a indication that
+ * one of the profile is matched.
+ *
+ * Return: 0 for success or error code.
+ */
+int target_if_nlo_match_event_handler(ol_scn_t scn, uint8_t *data,
+	uint32_t len);
+
+/**
+ * target_if_nlo_complete_handler() - nlo complete event handler
+ * @scn: scn handle
+ * @event: event data
+ * @len: data length
+ *
+ * Record NLO match event comes from FW. It's a indication that
+ * one of the profile is matched.
+ *
+ * Return: 0 for success or error code.
+ */
+int target_if_nlo_complete_handler(ol_scn_t scn, uint8_t *data,
+	uint32_t len);
+#endif
 
 /**
  * target_if_scan_register_event_handler() - lmac handler API

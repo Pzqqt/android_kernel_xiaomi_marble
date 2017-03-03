@@ -64,6 +64,8 @@ struct wlan_lmac_if_mgmt_txrx_tx_ops {
  * struct wlan_lmac_if_scan_tx_ops - south bound tx function pointers for scan
  * @scan_start: function to start scan
  * @scan_cancel: function to cancel scan
+ * @pno_start: start pno scan
+ * @pno_stop: stop pno scan
  * @scan_reg_ev_handler: function to register for scan events
  * @scan_unreg_ev_handler: function to unregister for scan events
  *
@@ -74,6 +76,10 @@ struct wlan_lmac_if_scan_tx_ops {
 			struct scan_start_request *req);
 	QDF_STATUS (*scan_cancel)(struct wlan_objmgr_psoc *psoc,
 			struct scan_cancel_param *req);
+	QDF_STATUS (*pno_start)(struct wlan_objmgr_psoc *psoc,
+			struct pno_scan_req_params *req);
+	QDF_STATUS (*pno_stop)(struct wlan_objmgr_psoc *psoc,
+			uint8_t vdev_id);
 	QDF_STATUS (*scan_reg_ev_handler)(struct wlan_objmgr_psoc *psoc,
 			void *arg);
 	QDF_STATUS (*scan_unreg_ev_handler)(struct wlan_objmgr_psoc *psoc,

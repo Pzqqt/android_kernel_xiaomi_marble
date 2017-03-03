@@ -22,13 +22,13 @@
 
 #include <qdf_mem.h>
 #include <qdf_status.h>
-#include <wmi_unified_api.h>
+#include <target_if_scan.h>
 #include <wmi_unified_priv.h>
 #include <wmi_unified_param.h>
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_scan_tgt_api.h>
 #include <target_if.h>
-#include <target_if_scan.h>
+
 
 static inline struct wlan_lmac_if_scan_rx_ops *
 target_if_scan_get_rx_ops(struct wlan_objmgr_psoc *psoc)
@@ -82,19 +82,229 @@ target_if_scan_event_handler(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 	return 0;
 }
 
+#ifdef FEATURE_WLAN_SCAN_PNO
+
+int target_if_nlo_complete_handler(ol_scn_t scn, uint8_t *data,
+	uint32_t len)
+{
+	wmi_nlo_event *nlo_event;
+	struct scan_event_info *event_info;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_scan_rx_ops *scan_rx_ops;
+	WMI_NLO_MATCH_EVENTID_param_tlvs *param_buf =
+		(WMI_NLO_MATCH_EVENTID_param_tlvs *) data;
+	QDF_STATUS status;
+
+	if (!scn || !data) {
+		target_if_err("scn: 0x%p, data: 0x%p", scn, data);
+		return -EINVAL;
+	}
+
+	psoc = target_if_get_psoc_from_scn_hdl(scn);
+	if (!psoc) {
+		target_if_err("null psoc");
+		return -EINVAL;
+	}
+
+	event_info = qdf_mem_malloc(sizeof(*event_info));
+	if (!event_info) {
+		target_if_err("unable to allocate scan_event");
+		return -ENOMEM;
+	}
+
+	nlo_event = param_buf->fixed_param;
+	target_if_info("PNO complete event received for vdev %d",
+		nlo_event->vdev_id);
+
+	event_info->event.type = SCAN_EVENT_TYPE_NLO_COMPLETE;
+	event_info->event.vdev_id = nlo_event->vdev_id;
+
+	scan_rx_ops = target_if_scan_get_rx_ops(psoc);
+	if (scan_rx_ops->scan_ev_handler) {
+		status = scan_rx_ops->scan_ev_handler(psoc, event_info);
+		if (status != QDF_STATUS_SUCCESS) {
+			qdf_mem_free(event_info);
+			return -EINVAL;
+		}
+	}
+
+	return 0;
+}
+
+int target_if_nlo_match_event_handler(ol_scn_t scn, uint8_t *data,
+	uint32_t len)
+{
+	wmi_nlo_event *nlo_event;
+	struct scan_event_info *event_info;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_scan_rx_ops *scan_rx_ops;
+	WMI_NLO_MATCH_EVENTID_param_tlvs *param_buf =
+		(WMI_NLO_MATCH_EVENTID_param_tlvs *) data;
+	QDF_STATUS status;
+
+	if (!scn || !data) {
+		target_if_err("scn: 0x%p, data: 0x%p", scn, data);
+		return -EINVAL;
+	}
+
+	psoc = target_if_get_psoc_from_scn_hdl(scn);
+	if (!psoc) {
+		target_if_err("null psoc");
+		return -EINVAL;
+	}
+
+	event_info = qdf_mem_malloc(sizeof(*event_info));
+	if (!event_info) {
+		target_if_err("unable to allocate scan_event");
+		return -ENOMEM;
+	}
+
+	nlo_event = param_buf->fixed_param;
+	target_if_info("PNO match event received for vdev %d",
+		nlo_event->vdev_id);
+
+	event_info->event.type = SCAN_EVENT_TYPE_NLO_MATCH;
+	event_info->event.vdev_id = nlo_event->vdev_id;
+
+	scan_rx_ops = target_if_scan_get_rx_ops(psoc);
+	if (scan_rx_ops->scan_ev_handler) {
+		status = scan_rx_ops->scan_ev_handler(psoc, event_info);
+		if (status != QDF_STATUS_SUCCESS) {
+			qdf_mem_free(event_info);
+			return -EINVAL;
+		}
+	}
+
+	return 0;
+}
+
+static QDF_STATUS
+target_if_scan_register_pno_event_handler(struct wlan_objmgr_psoc *psoc,
+	void *arg)
+{
+	QDF_STATUS status;
+
+	status = wmi_unified_register_event(psoc->tgt_if_handle,
+			wmi_nlo_match_event_id,
+			target_if_nlo_match_event_handler);
+	if (status) {
+		target_if_err("Failed to register nlo match event cb");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = wmi_unified_register_event(psoc->tgt_if_handle,
+			wmi_nlo_scan_complete_event_id,
+			target_if_nlo_complete_handler);
+	if (status) {
+		target_if_err("Failed to register nlo scan comp event cb");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS
+target_if_scan_unregister_pno_event_handler(struct wlan_objmgr_psoc *psoc,
+		void *arg)
+{
+	QDF_STATUS status;
+
+	status = wmi_unified_unregister_event(psoc->tgt_if_handle,
+			wmi_nlo_match_event_id);
+	if (status) {
+		target_if_err("Failed to unregister nlo match event cb");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = wmi_unified_unregister_event(psoc->tgt_if_handle,
+			wmi_nlo_scan_complete_event_id);
+	if (status) {
+		target_if_err("Failed to unregister nlo scan comp event cb");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS
+target_if_pno_start(struct wlan_objmgr_psoc *psoc,
+	struct pno_scan_req_params *req)
+{
+	return wmi_unified_pno_start_cmd(psoc->tgt_if_handle, req);
+}
+
+static QDF_STATUS
+target_if_pno_stop(struct wlan_objmgr_psoc *psoc,
+	uint8_t vdev_id)
+{
+	return wmi_unified_pno_stop_cmd(psoc->tgt_if_handle, vdev_id);
+}
+
+#else
+
+static inline QDF_STATUS
+target_if_scan_register_pno_event_handler(struct wlan_objmgr_psoc *psoc,
+	void *arg)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+target_if_scan_unregister_pno_event_handler(struct wlan_objmgr_psoc *psoc,
+	void *arg)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+target_if_pno_start(struct wlan_objmgr_psoc *psoc,
+	struct pno_scan_req_params *req)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+target_if_pno_stop(struct wlan_objmgr_psoc *psoc,
+	uint8_t vdev_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+
 QDF_STATUS
 target_if_scan_register_event_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 {
-	return wmi_unified_register_event(psoc->tgt_if_handle,
+	QDF_STATUS status;
+
+	status = wmi_unified_register_event(psoc->tgt_if_handle,
 		wmi_scan_event_id, target_if_scan_event_handler);
+	if (status) {
+		target_if_err("Failed to register Scan match event cb");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = target_if_scan_register_pno_event_handler(psoc, arg);
+
+	return status;
 }
 
 QDF_STATUS
 target_if_scan_unregister_event_handler(struct wlan_objmgr_psoc *psoc,
 		void *arg)
 {
-	return wmi_unified_unregister_event(psoc->tgt_if_handle,
+	QDF_STATUS status;
+
+	status = wmi_unified_unregister_event(psoc->tgt_if_handle,
 		wmi_scan_event_id);
+	if (status) {
+		target_if_err("Failed to unregister Scan match event cb");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = target_if_scan_unregister_pno_event_handler(psoc, arg);
+
+	return status;
 }
 
 QDF_STATUS
@@ -117,6 +327,8 @@ target_if_register_scan_tx_ops(struct wlan_lmac_if_scan_tx_ops *scan)
 {
 	scan->scan_start = target_if_scan_start;
 	scan->scan_cancel = target_if_scan_cancel;
+	scan->pno_start = target_if_pno_start;
+	scan->pno_stop = target_if_pno_stop;
 	scan->scan_reg_ev_handler = target_if_scan_register_event_handler;
 	scan->scan_unreg_ev_handler = target_if_scan_unregister_event_handler;
 

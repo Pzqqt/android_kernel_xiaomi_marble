@@ -70,3 +70,53 @@ QDF_STATUS wlan_scan_psoc_destroyed_notification(
 
 	return status;
 }
+
+QDF_STATUS wlan_scan_vdev_created_notification(struct wlan_objmgr_vdev *vdev,
+	void *arg_list)
+{
+	struct scan_vdev_obj *scan_vdev_obj;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	scan_vdev_obj = qdf_mem_malloc(sizeof(struct scan_vdev_obj));
+	if (scan_vdev_obj == NULL) {
+		scm_err("Failed to allocate memory");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	/* Attach scan private date to psoc */
+	status = wlan_objmgr_vdev_component_obj_attach(vdev,
+		WLAN_UMAC_COMP_SCAN, (void *)scan_vdev_obj,
+		QDF_STATUS_SUCCESS);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		scm_err("Failed to attach vdev scan component");
+		qdf_mem_free(scan_vdev_obj);
+	} else {
+		scm_info("vdev scan object attach successful");
+	}
+
+	return status;
+}
+
+QDF_STATUS wlan_scan_vdev_destroyed_notification(
+	struct wlan_objmgr_vdev *vdev,
+	void *arg_list)
+{
+	void *scan_vdev_obj = NULL;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	scan_vdev_obj = wlan_objmgr_vdev_get_comp_private_obj(vdev,
+		WLAN_UMAC_COMP_SCAN);
+	if (!scan_vdev_obj) {
+		scm_err("Failed to detach scan in vdev ctx");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = wlan_objmgr_vdev_component_obj_detach(vdev,
+		WLAN_UMAC_COMP_SCAN, scan_vdev_obj);
+	if (QDF_IS_STATUS_ERROR(status))
+		scm_err("Failed to detach vdev scan component");
+
+	qdf_mem_free(scan_vdev_obj);
+
+	return status;
+}

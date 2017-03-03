@@ -49,37 +49,6 @@ QDF_STATUS tgt_scan_bcn_probe_rx_callback(struct wlan_objmgr_psoc *psoc,
 	enum mgmt_frame_type frm_type);
 
 /**
- * tgt_scan_nlo_complete_evt_handler() - The callbeack registered
- * to WMI for PNO complete
- * @handle: psoc handle
- * @event: event handler
- * @len: length of data
- *
- * This function handles NLO scan completion event.
- *
- * Return: 0 for success or error code.
- */
-
-QDF_STATUS
-tgt_scan_nlo_complete_evt_handler(void *handle, uint8_t *event,
-	uint32_t len);
-
-/**
- * tgt_nlo_match_evt_handler() - nlo match event handler
- * @handle: psoc handle
- * @event: event data
- * @len: data length
- *
- * Record NLO match event comes from FW. It's a indication that
- * one of the profile is matched.
- *
- * Return: 0 for success or error code.
- */
-QDF_STATUS
-tgt_nlo_match_evt_handler(void *handle, uint8_t *event,
-	uint32_t len);
-
-/**
  * tgt_scan_event_handler() - The callbeack registered to WMI for scan events
  * @psoc: psoc handle
  * @event_info: event info
@@ -92,6 +61,30 @@ tgt_nlo_match_evt_handler(void *handle, uint8_t *event,
 QDF_STATUS
 tgt_scan_event_handler(struct wlan_objmgr_psoc *psoc,
 	struct scan_event_info *event_info);
+
+#ifdef FEATURE_WLAN_SCAN_PNO
+
+/**
+ * tgt_scan_pno_start() - invoke lmac send PNO start req
+ * @vdev: vdev pointer
+ * @req: pno req params
+ *
+ * Return: 0 for success or error code.
+ */
+QDF_STATUS tgt_scan_pno_start(struct wlan_objmgr_vdev *vdev,
+	struct pno_scan_req_params *req);
+
+/**
+ * tgt_scan_pno_stop() - invoke lmac send PNO stop req
+ * @vdev: vdev pointer
+ * @vdev_id: pno req params
+ *
+ * Return: 0 for success or error code.
+ */
+QDF_STATUS tgt_scan_pno_stop(struct wlan_objmgr_vdev *vdev,
+	uint8_t vdev_id);
+
+#endif
 
 /**
  * tgt_scan_start() - invoke lmac scan start

@@ -115,11 +115,34 @@ struct scan_req {
 	uint8_t source;
 };
 
+#ifdef FEATURE_WLAN_SCAN_PNO
+/**
+ * wlan_cfg80211_sched_scan_start() - cfg80211 scheduled scan(pno) start
+ * @pdev: pdev pointer
+ * @dev: Pointer network device
+ * @request: Pointer to cfg80211 scheduled scan start request
+ *
+ * Return: 0 for success, non zero for failure
+ */
+int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_pdev *pdev,
+	struct net_device *dev,
+	struct cfg80211_sched_scan_request *request);
+
+/**
+ * wlan_cfg80211_sched_scan_stop() - cfg80211 scheduled scan(pno) stop
+ * @pdev: pdev pointer
+ * @dev: Pointer network device
+ *
+ * Return: 0 for success, non zero for failure
+ */
+int wlan_cfg80211_sched_scan_stop(struct wlan_objmgr_pdev *pdev,
+	struct net_device *dev);
+#endif
 
 /**
  * wlan_cfg80211_scan_priv_init() - API to initialize cfg80211 scan
  * @pdev: Pointer to net device
-				 *
+ *
  * API to initialize cfg80211 scan module.
  *
  * Return: QDF_STATUS

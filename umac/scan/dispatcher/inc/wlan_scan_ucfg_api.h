@@ -88,7 +88,79 @@ uint8_t *ucfg_get_scan_requester_name(struct wlan_objmgr_psoc *psoc,
 wlan_scan_id
 ucfg_scan_get_scan_id(struct wlan_objmgr_psoc *psoc);
 
+#ifdef FEATURE_WLAN_SCAN_PNO
+/**
+ * ucfg_scan_pno_start() - Public API to start PNO
+ * @vdev: vdev pointer
+ * @req: pno req params
+ *
+ * Return: 0 for success or error code.
+ */
+QDF_STATUS ucfg_scan_pno_start(struct wlan_objmgr_vdev *vdev,
+struct pno_scan_req_params *req);
 
+/**
+ * ucfg_scan_pno_stop() - Public API to stop PNO
+ * @vdev: vdev pointer
+ * @req: pno req params
+ *
+ * Return: 0 for success or error code.
+ */
+QDF_STATUS ucfg_scan_pno_stop(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * ucfg_scan_get_pno_in_progress() - Public API to check if pno is in progress
+ * @vdev: vdev pointer
+ *
+ * Return: true if pno in progress else false.
+ */
+bool ucfg_scan_get_pno_in_progress(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * ucfg_scan_get_pno_match() - Public API to check if pno matched
+ * @vdev: vdev pointer
+ *
+ * Return: true if pno matched else false.
+ */
+bool ucfg_scan_get_pno_match(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * ucfg_scan_register_pno_cb() - register pno cb
+ * @psoc: psoc object
+ * @event_cb: callback function pointer
+ * @arg: argument to @event_cb
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+ucfg_scan_register_pno_cb(struct wlan_objmgr_psoc *psoc,
+	scan_event_handler event_cb, void *arg);
+
+/**
+ * ucfg_scan_get_pno_def_params() - get the defaults pno params
+ * @vdev: vdev object
+ * @req: pno request object
+ *
+ * Return: QDF_STATUS_SUCCESS or error code
+ */
+QDF_STATUS
+ucfg_scan_get_pno_def_params(struct wlan_objmgr_vdev *vdev,
+	struct pno_scan_req_params *req);
+
+#else
+
+static inline bool
+ucfg_scan_get_pno_in_progress(struct wlan_objmgr_vdev *vdev)
+{
+	return false;
+}
+
+static inline bool
+ucfg_scan_get_pno_match(struct wlan_objmgr_vdev *vdev)
+{
+	return false;
+}
+#endif /* FEATURE_WLAN_SCAN_PNO */
 /**
  * ucfg_scan_start() - Public API to start a scan
  * @req: start scan req params

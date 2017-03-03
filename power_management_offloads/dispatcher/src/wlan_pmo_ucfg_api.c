@@ -175,18 +175,6 @@ QDF_STATUS pmo_ucfg_get_gtk_rsp(struct wlan_objmgr_vdev *vdev,
 	return pmo_core_get_gtk_rsp(vdev, gtk_rsp_req);
 }
 
-void pmo_ucfg_update_nlo_scan_in_progress(struct wlan_objmgr_vdev *vdev,
-	bool value)
-{
-	pmo_core_update_nlo_scan_in_progress(vdev, value);
-}
-
-void pmo_ucfg_update_nlo_match_found(struct wlan_objmgr_vdev *vdev,
-	bool value)
-{
-	pmo_core_update_nlo_match_found(vdev, value);
-}
-
 void pmo_ucfg_update_extscan_in_progress(struct wlan_objmgr_vdev *vdev,
 	bool value)
 {

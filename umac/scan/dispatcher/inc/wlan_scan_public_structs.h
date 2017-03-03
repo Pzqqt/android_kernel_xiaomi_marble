@@ -692,6 +692,7 @@ struct mlme_update_info {
  * @SCAN_EVENT_TYPE_SUSPENDED: scan got suspended
  * @SCAN_EVENT_TYPE_RESUMED: scan resumed
  * @SCAN_EVENT_TYPE_NLO_COMPLETE: NLO completed
+ * @SCAN_EVENT_TYPE_NLO_MATCH: NLO match event
  * @SCAN_EVENT_TYPE_INVALID: invalid request
  * @SCAN_EVENT_TYPE_GPIO_TIMEOUT: gpio timeout
  * @SCAN_EVENT_TYPE_RADIO_MEASUREMENT_START: radio measurement start
@@ -713,6 +714,7 @@ enum scan_event_type {
 	SCAN_EVENT_TYPE_SUSPENDED,
 	SCAN_EVENT_TYPE_RESUMED,
 	SCAN_EVENT_TYPE_NLO_COMPLETE,
+	SCAN_EVENT_TYPE_NLO_MATCH,
 	SCAN_EVENT_TYPE_INVALID,
 	SCAN_EVENT_TYPE_GPIO_TIMEOUT,
 	SCAN_EVENT_TYPE_RADIO_MEASUREMENT_START,
@@ -819,10 +821,110 @@ enum scan_cb_type {
 	SCAN_CB_TYPE_UPDATE_BCN,
 };
 
+/* Set PNO */
+#define SCAN_PNO_MAX_PLAN_REQUEST   2
+#define SCAN_PNO_MAX_NETW_CHANNELS_EX  60
+#define SCAN_PNO_MAX_SUPP_NETWORKS  16
+#define SCAN_PNO_DEF_SLOW_SCAN_MULTIPLIER 6
+#define SCAN_PNO_DEF_SCAN_TIMER_REPEAT 20
+#define SCAN_PNO_MATCH_WAKE_LOCK_TIMEOUT         (5 * 1000)     /* in msec */
+#ifdef CONFIG_SLUB_DEBUG_ON
+#define SCAN_PNO_SCAN_COMPLETE_WAKE_LOCK_TIMEOUT (2 * 1000)     /* in msec */
+#else
+#define SCAN_PNO_SCAN_COMPLETE_WAKE_LOCK_TIMEOUT (1 * 1000)     /* in msec */
+#endif /* CONFIG_SLUB_DEBUG_ON */
+
+#define SCAN_PNO_CHANNEL_PREDICTION 0
+#define SCAN_TOP_K_NUM_OF_CHANNELS 3
+#define SCAN_STATIONARY_THRESHOLD 10
+#define SCAN_CHANNEL_PREDICTION_FULL_SCAN_MS 60000
+#define SCAN_ADAPTIVE_PNOSCAN_DWELL_MODE 0
+
 /**
- * struct pno_scan_req_params - forward declaration
+ * enum ssid_bc_type - SSID broadcast type
+ * @SSID_BC_TYPE_UNKNOWN: Broadcast unknown
+ * @SSID_BC_TYPE_NORMAL: Broadcast normal
+ * @SSID_BC_TYPE_HIDDEN: Broadcast hidden
  */
-struct pno_scan_req_params;
+enum ssid_bc_type {
+	SSID_BC_TYPE_UNKNOWN = 0,
+	SSID_BC_TYPE_NORMAL = 1,
+	SSID_BC_TYPE_HIDDEN = 2,
+};
+
+/**
+ * struct pno_nw_type - pno nw type
+ * @ssid: ssid
+ * @authentication: authentication type
+ * @encryption: encryption type
+ * @bcastNetwType: broadcast nw type
+ * @ucChannelCount: uc channel count
+ * @aChannels: pno channel
+ * @rssiThreshold: rssi threshold
+ */
+struct pno_nw_type {
+	struct wlan_ssid ssid;
+	uint32_t authentication;
+	uint32_t encryption;
+	uint32_t bc_new_type;
+	uint8_t channel_cnt;
+	uint32_t channels[SCAN_PNO_MAX_NETW_CHANNELS_EX];
+	int32_t rssi_thresh;
+};
+
+/**
+ * struct pno_scan_req_params - PNO Scan request structure
+ * @networks_cnt: Number of networks
+ * @vdev_id: vdev id
+ * @fast_scan_period: Fast Scan period
+ * @slow_scan_period: Slow scan period
+ * @delay_start_time: delay in seconds to use before starting the first scan
+ * @fast_scan_max_cycles: Fast scan max cycles
+ * @pno_channel_prediction: PNO channel prediction feature status
+ * @uint32_t active_dwell_time: active dwell time
+ * @uint32_t passive_dwell_time: passive dwell time
+ * @top_k_num_of_channels: top K number of channels are used for tanimoto
+ * distance calculation.
+ * @stationary_thresh: threshold value to determine that the STA is stationary.
+ * @adaptive_dwell_mode: adaptive dwelltime mode for pno scan
+ * @channel_prediction_full_scan: periodic timer upon which a full scan needs
+ * to be triggered.
+ * @networks_list: Preferred network list
+ */
+struct pno_scan_req_params {
+	uint32_t networks_cnt;
+	uint32_t vdev_id;
+	uint32_t fast_scan_period;
+	uint32_t slow_scan_period;
+	uint32_t delay_start_time;
+	uint32_t fast_scan_max_cycles;
+	uint32_t active_dwell_time;
+	uint32_t passive_dwell_time;
+	uint32_t pno_channel_prediction;
+	uint32_t top_k_num_of_channels;
+	uint32_t stationary_thresh;
+	enum scan_dwelltime_adaptive_mode adaptive_dwell_mode;
+	uint32_t channel_prediction_full_scan;
+	struct pno_nw_type networks_list[SCAN_PNO_MAX_SUPP_NETWORKS];
+};
+
+/**
+ * struct pno_user_cfg - user configuration required for PNO
+ * @channel_prediction: config PNO channel prediction feature status
+ * @top_k_num_of_channels: def top K number of channels are used for tanimoto
+ * distance calculation.
+ * @stationary_thresh: def threshold val to determine that STA is stationary.
+ * @pnoscan_adaptive_dwell_mode: def adaptive dwelltime mode for pno scan
+ * @channel_prediction_full_scan: def periodic timer upon which full scan needs
+ * to be triggered.
+ */
+struct pno_user_cfg {
+	bool channel_prediction;
+	uint8_t top_k_num_of_channels;
+	uint8_t stationary_thresh;
+	enum scan_dwelltime_adaptive_mode adaptive_dwell_mode;
+	uint32_t channel_prediction_full_scan;
+};
 
 /**
  * struct scan_user_cfg - user configuration required for for scan
@@ -835,6 +937,7 @@ struct pno_scan_req_params;
  * @conc_idle_time: default concurrent idle time
  * @scan_cache_aging_time: default scan cache aging time
  * @scan_dwell_time_mode: Adaptive dweltime mode
+ * @pno_cfg: Pno related config params
  */
 struct scan_user_cfg {
 	uint32_t active_dwell;
@@ -846,6 +949,7 @@ struct scan_user_cfg {
 	uint32_t conc_idle_time;
 	uint32_t scan_cache_aging_time;
 	enum scan_dwelltime_adaptive_mode scan_dwell_time_mode;
+	struct pno_user_cfg pno_cfg;
 };
 
 /**

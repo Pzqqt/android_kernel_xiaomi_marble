@@ -289,26 +289,6 @@ QDF_STATUS pmo_ucfg_get_gtk_rsp(struct wlan_objmgr_vdev *vdev,
 		struct pmo_gtk_rsp_req *gtk_rsp_req);
 
 /**
- * pmo_ucfg_update_nlo_scan_in_progress(): update nlo scan is in progress flags
- * @vdev: objmgr vdev handle
- * @value:true if pno scan is in progress else false
- *
- * Return: TRUE/FALSE
- */
-void pmo_ucfg_update_nlo_scan_in_progress(struct wlan_objmgr_vdev *vdev,
-	bool value);
-
-/**
- * pmo_ucfg_update_nlo_match_found(): Update nlo scan match flag to value
- * @vdev: objmgr vdev handle
- * @value:true if nlo scan match event received else false
- *
- * Return: TRUE/FALSE
- */
-void pmo_ucfg_update_nlo_match_found(struct wlan_objmgr_vdev *vdev,
-	bool value);
-
-/**
  * pmo_ucfg_update_extscan_in_progress(): update extscan is in progress flags
  * @vdev: objmgr vdev handle
  * @value:true if extscan is in progress else false
