@@ -733,13 +733,6 @@ void lim_send_p2p_action_frame(tpAniSirGlobal mac_ctx,
 	return;
 }
 
-void lim_abort_remain_on_chan(tpAniSirGlobal pMac, uint8_t sessionId,
-	uint32_t scan_id)
-{
-	lim_process_abort_scan_ind(pMac, sessionId, scan_id,
-		ROC_SCAN_REQUESTOR_ID);
-}
-
 /* Power Save Related Functions */
 tSirRetStatus __lim_process_sme_no_a_update(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 {

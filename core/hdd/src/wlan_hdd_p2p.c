@@ -1522,7 +1522,8 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 
 		/* At this point if remain_on_chan_ctx exists but timer not
 		 * running means that roc workqueue requested a new RoC and it
-		 * is in progress. So wait for Ready on channel indication */
+		 * is in progress. So wait for Ready on channel indication
+		 */
 		if ((pRemainChanCtx) &&
 			(QDF_TIMER_STATE_RUNNING !=
 			 qdf_mc_timer_get_current_state(
