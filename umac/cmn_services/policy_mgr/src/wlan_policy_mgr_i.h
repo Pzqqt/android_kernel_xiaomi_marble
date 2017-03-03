@@ -189,6 +189,24 @@
 		((MAX_NUMBER_OF_CONC_CONNECTIONS > index) && \
 			(pm_conc_connection_list[index].in_use))
 
+extern struct policy_mgr_conc_connection_info
+	pm_conc_connection_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
+
+extern const enum policy_mgr_pcl_type
+	first_connection_pcl_table[PM_MAX_NUM_OF_MODE]
+			[PM_MAX_CONC_PRIORITY_MODE];
+extern pm_dbs_pcl_second_connection_table_type
+		*second_connection_pcl_dbs_table;
+extern pm_dbs_pcl_third_connection_table_type
+		*third_connection_pcl_dbs_table;
+extern policy_mgr_next_action_two_connection_table_type
+		*next_action_two_connection_table;
+extern policy_mgr_next_action_three_connection_table_type
+		*next_action_three_connection_table;
+extern enum policy_mgr_conc_next_action
+	(*policy_mgr_get_current_pref_hw_mode_ptr)
+	(struct wlan_objmgr_psoc *psoc);
+
 /**
  * struct policy_mgr_psoc_priv_obj - Policy manager private data
  * @psoc: pointer to PSOC object information

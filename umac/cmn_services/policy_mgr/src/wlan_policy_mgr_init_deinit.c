@@ -45,12 +45,36 @@
 static QDF_STATUS policy_mgr_psoc_obj_create_cb(struct wlan_objmgr_psoc *psoc,
 		void *data)
 {
+	struct policy_mgr_psoc_priv_obj *policy_mgr_ctx;
+
+	policy_mgr_ctx = qdf_mem_malloc(
+		sizeof(struct policy_mgr_psoc_priv_obj));
+	if (!policy_mgr_ctx) {
+		policy_mgr_err("memory allocation failed");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	policy_mgr_ctx->psoc = psoc;
+
+	wlan_objmgr_psoc_component_obj_attach(psoc,
+			WLAN_UMAC_COMP_POLICY_MGR,
+			policy_mgr_ctx,
+			QDF_STATUS_SUCCESS);
+
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS policy_mgr_psoc_obj_delete_cb(struct wlan_objmgr_psoc *psoc,
+static QDF_STATUS policy_mgr_psoc_obj_destroy_cb(struct wlan_objmgr_psoc *psoc,
 		void *data)
 {
+	struct policy_mgr_psoc_priv_obj *policy_mgr_ctx;
+
+	policy_mgr_ctx = policy_mgr_get_context(psoc);
+	wlan_objmgr_psoc_component_obj_detach(psoc,
+					WLAN_UMAC_COMP_POLICY_MGR,
+					policy_mgr_ctx);
+	qdf_mem_free(policy_mgr_ctx);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -66,7 +90,7 @@ static QDF_STATUS policy_mgr_vdev_obj_create_cb(struct wlan_objmgr_vdev *vdev,
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS policy_mgr_vdev_obj_delete_cb(struct wlan_objmgr_vdev *vdev,
+static QDF_STATUS policy_mgr_vdev_obj_destroy_cb(struct wlan_objmgr_vdev *vdev,
 		void *data)
 {
 	return QDF_STATUS_SUCCESS;
@@ -92,7 +116,7 @@ QDF_STATUS policy_mgr_init(void)
 
 	status = wlan_objmgr_register_psoc_destroy_handler(
 				WLAN_UMAC_COMP_POLICY_MGR,
-				policy_mgr_psoc_obj_delete_cb,
+				policy_mgr_psoc_obj_destroy_cb,
 				NULL);
 	if (status != QDF_STATUS_SUCCESS) {
 		policy_mgr_err("Failed to register psoc obj delete cback");
@@ -119,7 +143,7 @@ QDF_STATUS policy_mgr_init(void)
 
 	status = wlan_objmgr_register_vdev_destroy_handler(
 				WLAN_UMAC_COMP_POLICY_MGR,
-				policy_mgr_vdev_obj_delete_cb,
+				policy_mgr_vdev_obj_destroy_cb,
 				NULL);
 	if (status != QDF_STATUS_SUCCESS) {
 		policy_mgr_err("Failed to register vdev obj delete cback");
@@ -141,7 +165,7 @@ QDF_STATUS policy_mgr_init(void)
 
 err_vdev_status:
 	wlan_objmgr_unregister_vdev_destroy_handler(WLAN_UMAC_COMP_POLICY_MGR,
-			policy_mgr_vdev_obj_delete_cb, NULL);
+			policy_mgr_vdev_obj_destroy_cb, NULL);
 err_vdev_delete:
 	wlan_objmgr_unregister_vdev_create_handler(WLAN_UMAC_COMP_POLICY_MGR,
 			policy_mgr_vdev_obj_create_cb, NULL);
@@ -150,7 +174,7 @@ err_vdev_create:
 			policy_mgr_psoc_obj_status_cb, NULL);
 err_psoc_status:
 	wlan_objmgr_unregister_psoc_destroy_handler(WLAN_UMAC_COMP_POLICY_MGR,
-			policy_mgr_psoc_obj_delete_cb, NULL);
+			policy_mgr_psoc_obj_destroy_cb, NULL);
 err_psoc_delete:
 	wlan_objmgr_unregister_psoc_create_handler(WLAN_UMAC_COMP_POLICY_MGR,
 			policy_mgr_psoc_obj_create_cb, NULL);
@@ -171,7 +195,7 @@ QDF_STATUS policy_mgr_deinit(void)
 
 	status = wlan_objmgr_unregister_psoc_destroy_handler(
 				WLAN_UMAC_COMP_POLICY_MGR,
-				policy_mgr_psoc_obj_delete_cb,
+				policy_mgr_psoc_obj_destroy_cb,
 				NULL);
 	if (status != QDF_STATUS_SUCCESS)
 		policy_mgr_err("Failed to deregister psoc obj delete cback");
@@ -192,7 +216,7 @@ QDF_STATUS policy_mgr_deinit(void)
 
 	status = wlan_objmgr_unregister_vdev_destroy_handler(
 				WLAN_UMAC_COMP_POLICY_MGR,
-				policy_mgr_vdev_obj_delete_cb,
+				policy_mgr_vdev_obj_destroy_cb,
 				NULL);
 	if (status != QDF_STATUS_SUCCESS)
 		policy_mgr_err("Failed to deregister vdev obj delete cback");
@@ -223,12 +247,130 @@ QDF_STATUS policy_mgr_psoc_close(struct wlan_objmgr_psoc *psoc)
 
 QDF_STATUS policy_mgr_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
+	QDF_STATUS status;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	policy_mgr_debug("Initializing the policy manager");
+
+	/* init pm_conc_connection_list */
+	qdf_mem_zero(pm_conc_connection_list, sizeof(pm_conc_connection_list));
+
+	/* init dbs_opportunistic_timer */
+	status = qdf_mc_timer_init(&pm_ctx->dbs_opportunistic_timer,
+				QDF_TIMER_TYPE_SW,
+				pm_dbs_opportunistic_timer_handler,
+				(void *)psoc);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		policy_mgr_err("Failed to init DBS opportunistic timer");
+		return status;
+	}
+
+	/* init connection_update_done_evt */
+	status = policy_mgr_init_connection_update(pm_ctx);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		policy_mgr_err("connection_update_done_evt init failed");
+		return status;
+	}
+
+	pm_ctx->do_hw_mode_change = false;
+
+	/* reset sap mandatory channels */
+	status = policy_mgr_reset_sap_mandatory_channels(pm_ctx);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		policy_mgr_err("failed to reset mandatory channels");
+		return status;
+	}
+
+	/* init PCL table & function pointers based on HW capability */
+	if (policy_mgr_is_hw_dbs_2x2_capable(psoc))
+		policy_mgr_get_current_pref_hw_mode_ptr =
+		policy_mgr_get_current_pref_hw_mode_dbs_2x2;
+	else
+		policy_mgr_get_current_pref_hw_mode_ptr =
+		policy_mgr_get_current_pref_hw_mode_dbs_1x1;
+
+	if (policy_mgr_is_hw_dbs_2x2_capable(psoc))
+		second_connection_pcl_dbs_table =
+		&pm_second_connection_pcl_dbs_2x2_table;
+	else
+		second_connection_pcl_dbs_table =
+		&pm_second_connection_pcl_dbs_1x1_table;
+
+	if (policy_mgr_is_hw_dbs_2x2_capable(psoc))
+		third_connection_pcl_dbs_table =
+		&pm_third_connection_pcl_dbs_2x2_table;
+	else
+		third_connection_pcl_dbs_table =
+		&pm_third_connection_pcl_dbs_1x1_table;
+
+	if (policy_mgr_is_hw_dbs_2x2_capable(psoc))
+		next_action_two_connection_table =
+		&pm_next_action_two_connection_dbs_2x2_table;
+	else
+		next_action_two_connection_table =
+		&pm_next_action_two_connection_dbs_1x1_table;
+
+	if (policy_mgr_is_hw_dbs_2x2_capable(psoc))
+		next_action_three_connection_table =
+		&pm_next_action_three_connection_dbs_2x2_table;
+	else
+		next_action_three_connection_table =
+		&pm_next_action_three_connection_dbs_1x1_table;
+
 	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS policy_mgr_psoc_disable(struct wlan_objmgr_psoc *psoc)
 {
-	return QDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* destroy connection_update_done_evt */
+	if (!QDF_IS_STATUS_SUCCESS(qdf_event_destroy
+		(&pm_ctx->connection_update_done_evt))) {
+		policy_mgr_err("Failed to destroy connection_update_done_evt");
+		status = QDF_STATUS_E_FAILURE;
+		QDF_ASSERT(0);
+	}
+
+	/* deallocate dbs_opportunistic_timer */
+	if (QDF_TIMER_STATE_RUNNING ==
+			qdf_mc_timer_get_current_state(
+				&pm_ctx->dbs_opportunistic_timer)) {
+		qdf_mc_timer_stop(&pm_ctx->dbs_opportunistic_timer);
+	}
+
+	if (!QDF_IS_STATUS_SUCCESS(qdf_mc_timer_destroy(
+			&pm_ctx->dbs_opportunistic_timer))) {
+		policy_mgr_err("Cannot deallocate dbs opportunistic timer");
+		status = QDF_STATUS_E_FAILURE;
+		QDF_ASSERT(0);
+	}
+
+	/* reset sap mandatory channels */
+	if (QDF_IS_STATUS_ERROR(
+		policy_mgr_reset_sap_mandatory_channels(pm_ctx))) {
+		policy_mgr_err("failed to reset sap mandatory channels");
+		status = QDF_STATUS_E_FAILURE;
+		QDF_ASSERT(0);
+	}
+
+	/* deinit pm_conc_connection_list */
+	qdf_mem_zero(pm_conc_connection_list, sizeof(pm_conc_connection_list));
+
+	return status;
 }
 
 QDF_STATUS policy_mgr_register_sme_cb(struct wlan_objmgr_psoc *psoc,
