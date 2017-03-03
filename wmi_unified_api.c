@@ -1950,21 +1950,19 @@ QDF_STATUS wmi_unified_pno_stop_cmd(void *wmi_hdl, uint8_t vdev_id)
  * wmi_unified_pno_start_cmd() - PNO start request
  * @wmi_hdl: wmi handle
  * @pno: PNO request
- * @gchannel_freq_list: channel frequency list
  *
  * This function request FW to start PNO request.
  * Request: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 #ifdef FEATURE_WLAN_SCAN_PNO
 QDF_STATUS wmi_unified_pno_start_cmd(void *wmi_hdl,
-		   struct pno_scan_req_params *pno,
-		   uint32_t *gchannel_freq_list)
+		   struct pno_scan_req_params *pno)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
 	if (wmi_handle->ops->send_pno_start_cmd)
 		return wmi_handle->ops->send_pno_start_cmd(wmi_handle,
-			    pno, gchannel_freq_list);
+			    pno);
 
 	return QDF_STATUS_E_FAILURE;
 }

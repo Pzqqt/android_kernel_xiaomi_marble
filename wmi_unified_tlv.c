@@ -30,10 +30,10 @@
 #include "wmi_version.h"
 #include "wmi_unified_priv.h"
 #include "wmi_version_whitelist.h"
-
 #ifdef CONVERGED_P2P_ENABLE
 #include "wlan_p2p_public_struct.h"
 #endif
+#include <wlan_utility.h>
 
 /* copy_vdev_create_pdev_id() - copy pdev from host params to target command
  *                              buffer.
@@ -6891,8 +6891,7 @@ static void wmi_set_pno_channel_prediction(uint8_t *buf_ptr,
  * Request: CDF status
  */
 static QDF_STATUS send_pno_start_cmd_tlv(wmi_unified_t wmi_handle,
-		   struct pno_scan_req_params *pno,
-		   uint32_t *gchannel_freq_list)
+		   struct pno_scan_req_params *pno)
 {
 	wmi_nlo_config_cmd_fixed_param *cmd;
 	nlo_configured_parameters *nlo_list;
@@ -6911,10 +6910,10 @@ static QDF_STATUS send_pno_start_cmd_tlv(wmi_unified_t wmi_handle,
 	len = sizeof(*cmd) +
 		WMI_TLV_HDR_SIZE + WMI_TLV_HDR_SIZE + WMI_TLV_HDR_SIZE;
 
-	len += sizeof(uint32_t) * QDF_MIN(pno->aNetworks[0].ucChannelCount,
+	len += sizeof(uint32_t) * QDF_MIN(pno->networks_list[0].channel_cnt,
 					  WMI_NLO_MAX_CHAN);
 	len += sizeof(nlo_configured_parameters) *
-	       QDF_MIN(pno->ucNetworksCount, WMI_NLO_MAX_SSIDS);
+	       QDF_MIN(pno->networks_cnt, WMI_NLO_MAX_SSIDS);
 	len += sizeof(nlo_channel_prediction_cfg);
 
 	buf = wmi_buf_alloc(wmi_handle, len);
@@ -6930,16 +6929,16 @@ static QDF_STATUS send_pno_start_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_TAG_STRUC_wmi_nlo_config_cmd_fixed_param,
 		       WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_nlo_config_cmd_fixed_param));
-	cmd->vdev_id = pno->sessionId;
+	cmd->vdev_id = pno->vdev_id;
 	cmd->flags = WMI_NLO_CONFIG_START | WMI_NLO_CONFIG_SSID_HIDE_EN;
 
 #ifdef FEATURE_WLAN_SCAN_PNO
 	WMI_SCAN_SET_DWELL_MODE(cmd->flags,
-			pno->pnoscan_adaptive_dwell_mode);
+			pno->adaptive_dwell_mode);
 #endif
 	/* Current FW does not support min-max range for dwell time */
-	cmd->active_dwell_time = pno->active_max_time;
-	cmd->passive_dwell_time = pno->passive_max_time;
+	cmd->active_dwell_time = pno->active_dwell_time;
+	cmd->passive_dwell_time = pno->passive_dwell_time;
 
 	/* Copy scan interval */
 	cmd->fast_scan_period = pno->fast_scan_period;
@@ -6952,7 +6951,7 @@ static QDF_STATUS send_pno_start_cmd_tlv(wmi_unified_t wmi_handle,
 
 	buf_ptr += sizeof(wmi_nlo_config_cmd_fixed_param);
 
-	cmd->no_of_ssids = QDF_MIN(pno->ucNetworksCount, WMI_NLO_MAX_SSIDS);
+	cmd->no_of_ssids = QDF_MIN(pno->networks_cnt, WMI_NLO_MAX_SSIDS);
 	WMI_LOGD("SSID count : %d", cmd->no_of_ssids);
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
 		       cmd->no_of_ssids * sizeof(nlo_configured_parameters));
@@ -6966,9 +6965,10 @@ static QDF_STATUS send_pno_start_cmd_tlv(wmi_unified_t wmi_handle,
 				       (nlo_configured_parameters));
 		/* Copy ssid and it's length */
 		nlo_list[i].ssid.valid = true;
-		nlo_list[i].ssid.ssid.ssid_len = pno->aNetworks[i].ssid.length;
+		nlo_list[i].ssid.ssid.ssid_len =
+			pno->networks_list[i].ssid.length;
 		qdf_mem_copy(nlo_list[i].ssid.ssid.ssid,
-			     pno->aNetworks[i].ssid.mac_ssid,
+			     pno->networks_list[i].ssid.ssid,
 			     nlo_list[i].ssid.ssid.ssid_len);
 		WMI_LOGD("index: %d ssid: %.*s len: %d", i,
 			 nlo_list[i].ssid.ssid.ssid_len,
@@ -6976,24 +6976,25 @@ static QDF_STATUS send_pno_start_cmd_tlv(wmi_unified_t wmi_handle,
 			 nlo_list[i].ssid.ssid.ssid_len);
 
 		/* Copy rssi threshold */
-		if (pno->aNetworks[i].rssiThreshold &&
-		    pno->aNetworks[i].rssiThreshold > WMI_RSSI_THOLD_DEFAULT) {
+		if (pno->networks_list[i].rssi_thresh &&
+		    pno->networks_list[i].rssi_thresh >
+		    WMI_RSSI_THOLD_DEFAULT) {
 			nlo_list[i].rssi_cond.valid = true;
 			nlo_list[i].rssi_cond.rssi =
-				pno->aNetworks[i].rssiThreshold;
+				pno->networks_list[i].rssi_thresh;
 			WMI_LOGD("RSSI threshold : %d dBm",
 				 nlo_list[i].rssi_cond.rssi);
 		}
 		nlo_list[i].bcast_nw_type.valid = true;
 		nlo_list[i].bcast_nw_type.bcast_nw_type =
-			pno->aNetworks[i].bcastNetwType;
+			pno->networks_list[i].bc_new_type;
 		WMI_LOGI("Broadcast NW type (%u)",
 			 nlo_list[i].bcast_nw_type.bcast_nw_type);
 	}
 	buf_ptr += cmd->no_of_ssids * sizeof(nlo_configured_parameters);
 
 	/* Copy channel info */
-	cmd->num_of_channels = QDF_MIN(pno->aNetworks[0].ucChannelCount,
+	cmd->num_of_channels = QDF_MIN(pno->networks_list[0].channel_cnt,
 				       WMI_NLO_MAX_CHAN);
 	WMI_LOGD("Channel count: %d", cmd->num_of_channels);
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32,
@@ -7002,10 +7003,12 @@ static QDF_STATUS send_pno_start_cmd_tlv(wmi_unified_t wmi_handle,
 
 	channel_list = (uint32_t *) buf_ptr;
 	for (i = 0; i < cmd->num_of_channels; i++) {
-		channel_list[i] = pno->aNetworks[0].aChannels[i];
+		channel_list[i] = pno->networks_list[0].channels[i];
 
 		if (channel_list[i] < WMI_NLO_FREQ_THRESH)
-			channel_list[i] = gchannel_freq_list[i];
+			channel_list[i] =
+				wlan_chan_to_freq(pno->
+					networks_list[0].channels[i]);
 
 		WMI_LOGD("Ch[%d]: %d MHz", i, channel_list[i]);
 	}
@@ -16939,9 +16942,7 @@ struct wmi_ops tlv_ops =  {
 	.send_plm_stop_cmd = send_plm_stop_cmd_tlv,
 	.send_plm_start_cmd = send_plm_start_cmd_tlv,
 	.send_pno_stop_cmd = send_pno_stop_cmd_tlv,
-#ifdef FEATURE_WLAN_SCAN_PNO
 	.send_pno_start_cmd = send_pno_start_cmd_tlv,
-#endif
 	.send_set_ric_req_cmd = send_set_ric_req_cmd_tlv,
 	.send_process_ll_stats_clear_cmd = send_process_ll_stats_clear_cmd_tlv,
 	.send_process_ll_stats_set_cmd = send_process_ll_stats_set_cmd_tlv,
