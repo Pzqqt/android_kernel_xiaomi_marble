@@ -1223,7 +1223,7 @@ void wma_set_linkstate(tp_wma_handle wma, tpLinkStateParams params)
 			wma->interfaces[vdev_id].handle,
 			OL_TXQ_PAUSE_REASON_VDEV_STOP);
 		wma->interfaces[vdev_id].pause_bitmap |= (1 << PAUSE_TYPE_HOST);
-		if (wmi_unified_vdev_stop_send(wma->wmi_handle, vdev_id)) {
+		if (wma_send_vdev_stop_to_fw(wma, vdev_id)) {
 			WMA_LOGP("%s: %d Failed to send vdev stop",
 				 __func__, __LINE__);
 		}

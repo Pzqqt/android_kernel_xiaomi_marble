@@ -1239,4 +1239,36 @@ static inline void wma_sta_kickout_event(uint32_t kickout_reason,
 };
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
+/**
+ * wma_acquire_wmi_resp_wakelock() - acquire the WMI response wakelock
+ * @wma: the WMA handle containing the wakelock to acquire
+ * @msec: the wakelock duration in milliseconds
+ *
+ * Return: void
+ */
+void wma_acquire_wmi_resp_wakelock(t_wma_handle *wma, uint32_t msec);
+
+/**
+ * wma_release_wmi_resp_wakelock() - release the WMI response wakelock
+ * @wma: the WMA handle containing the wakelock to release
+ *
+ * Return: void
+ */
+void wma_release_wmi_resp_wakelock(t_wma_handle *wma);
+
+/**
+ * wma_send_vdev_stop_to_fw() - send the vdev stop command to firmware
+ * @wma: the WMA handle containing a reference to the wmi_handle to use
+ * @vdev_id: the VDEV Id of the VDEV to stop
+ *
+ * This is a helper function that acquires the WMI response wakelock before
+ * sending down the VDEV_STOP command to firmware. This wakelock is
+ * automatically released on failure. Consumers should call
+ * wma_release_wmi_resp_wakelock() upon receipt of the VDEV_STOP response from
+ * firmware, to avoid power penalties.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wma_send_vdev_stop_to_fw(t_wma_handle *wma, uint8_t vdev_id);
+
 #endif

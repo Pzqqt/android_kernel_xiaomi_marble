@@ -3960,3 +3960,30 @@ bool wma_is_vdev_up(uint8_t vdev_id)
 	return (state == WLAN_VDEV_S_RUN) ? true : false;
 }
 
+void wma_acquire_wmi_resp_wakelock(t_wma_handle *wma, uint32_t msec)
+{
+	cds_host_diag_log_work(&wma->wmi_cmd_rsp_wake_lock,
+			       msec,
+			       WIFI_POWER_EVENT_WAKELOCK_WMI_CMD_RSP);
+	qdf_wake_lock_timeout_acquire(&wma->wmi_cmd_rsp_wake_lock, msec);
+	qdf_runtime_pm_prevent_suspend(wma->wmi_cmd_rsp_runtime_lock);
+}
+
+void wma_release_wmi_resp_wakelock(t_wma_handle *wma)
+{
+	qdf_wake_lock_release(&wma->wmi_cmd_rsp_wake_lock,
+			      WIFI_POWER_EVENT_WAKELOCK_WMI_CMD_RSP);
+	qdf_runtime_pm_allow_suspend(wma->wmi_cmd_rsp_runtime_lock);
+}
+
+QDF_STATUS wma_send_vdev_stop_to_fw(t_wma_handle *wma, uint8_t vdev_id)
+{
+	QDF_STATUS status;
+
+	wma_acquire_wmi_resp_wakelock(wma, WMA_VDEV_STOP_REQUEST_TIMEOUT);
+	status = wmi_unified_vdev_stop_send(wma->wmi_handle, vdev_id);
+	if (QDF_IS_STATUS_ERROR(status))
+		wma_release_wmi_resp_wakelock(wma);
+
+	return status;
+}

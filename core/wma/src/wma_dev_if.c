@@ -1375,6 +1375,9 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 	struct wma_txrx_node *iface;
 	int32_t status = 0;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+
+	wma_release_wmi_resp_wakelock(wma);
+
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	tpAniSirGlobal mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 	if (NULL == mac_ctx) {
@@ -1435,6 +1438,7 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 		tpDeleteBssParams params =
 			(tpDeleteBssParams) req_msg->user_data;
 		struct beacon_info *bcn;
+
 		if (resp_event->vdev_id > wma->max_bssid) {
 			WMA_LOGE("%s: Invalid vdev_id %d", __func__,
 				 resp_event->vdev_id);
@@ -4578,7 +4582,7 @@ void wma_delete_bss(tp_wma_handle wma, tpDeleteBssParams params)
 		OL_TXQ_PAUSE_REASON_VDEV_STOP);
 	iface->pause_bitmap |= (1 << PAUSE_TYPE_HOST);
 
-	if (wmi_unified_vdev_stop_send(wma->wmi_handle, params->smesessionId)) {
+	if (wma_send_vdev_stop_to_fw(wma, params->smesessionId)) {
 		WMA_LOGP("%s: %d Failed to send vdev stop", __func__, __LINE__);
 		wma_remove_vdev_req(wma, params->smesessionId,
 				WMA_TARGET_REQ_TYPE_VDEV_STOP);
