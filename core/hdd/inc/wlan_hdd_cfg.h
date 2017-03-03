@@ -4290,13 +4290,13 @@ typedef enum {
 #define CFG_ENABLE_FW_DEBUG_LOG_LEVEL          "gFwDebugLogLevel"
 #define CFG_ENABLE_FW_DEBUG_LOG_LEVEL_MIN      (0)
 #define CFG_ENABLE_FW_DEBUG_LOG_LEVEL_MAX      (255)
-#define CFG_ENABLE_FW_DEBUG_LOG_LEVEL_DEFAULT  (4)
+#define CFG_ENABLE_FW_DEBUG_LOG_LEVEL_DEFAULT  (3)
 
 /* For valid values of log levels check enum DBGLOG_LOG_LVL and
  * for valid values of module ids check enum WLAN_MODULE_ID.
  */
 #define CFG_ENABLE_FW_MODULE_LOG_LEVEL    "gFwDebugModuleLoglevel"
-#define CFG_ENABLE_FW_MODULE_LOG_DEFAULT  ""
+#define CFG_ENABLE_FW_MODULE_LOG_DEFAULT  "2,1,5,1,8,1,9,1,11,1,18,1,27,1,31,1,36,1,47,1"
 
 /*
  * <ini>

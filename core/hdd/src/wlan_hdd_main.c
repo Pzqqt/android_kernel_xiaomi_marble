@@ -3109,11 +3109,16 @@ static void hdd_set_fw_log_params(hdd_context_t *hdd_ctx,
 		 * For FW module ID 7 enable log level 6
 		 */
 
-		/* FW expects WMI command value =
-		 * Module ID * 10 + Module Log level
-		 */
-		value = ((moduleloglevel[count] * 10) +
-			 moduleloglevel[count + 1]);
+		if ((moduleloglevel[count] > WLAN_MODULE_ID_MAX)
+			|| (moduleloglevel[count + 1] > DBGLOG_LVL_MAX)) {
+			hdd_err("Module id %d and dbglog level %d input length is more than max",
+				moduleloglevel[count],
+				moduleloglevel[count + 1]);
+			return;
+		}
+
+		value = moduleloglevel[count] << 16;
+		value |= moduleloglevel[count + 1];
 		ret = wma_cli_set_command(adapter->sessionId,
 				WMI_DBGLOG_MOD_LOG_LEVEL,
 				value, DBG_CMD);
