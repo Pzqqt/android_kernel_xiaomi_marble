@@ -113,16 +113,18 @@ static const char *hdd_he_wni_cfg_to_string(uint16_t cfg_id)
  *
  * Update WNI CFG with the value passed.
  *
- * Return: None
+ * Return: 0 on success and errno on failure
  */
-static void hdd_he_set_wni_cfg(struct hdd_context_s *hdd_ctx,
-			    uint16_t cfg_id, uint32_t new_value)
+static int hdd_he_set_wni_cfg(struct hdd_context_s *hdd_ctx,
+				     uint16_t cfg_id, uint32_t new_value)
 {
 	QDF_STATUS status;
 
 	status = sme_cfg_set_int(hdd_ctx->hHal, cfg_id, new_value);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("could not set %s", hdd_he_wni_cfg_to_string(cfg_id));
+
+	return qdf_status_to_os_return(status);
 }
 
 /**
@@ -268,4 +270,69 @@ void wlan_hdd_check_11ax_support(beacon_data_t *beacon, tsap_Config_t *config)
 					    beacon->tail, beacon->tail_len);
 	if (ie)
 		config->SapHw_mode = eCSR_DOT11_MODE_11ax;
+}
+
+/**
+ * hdd_he_print_ini_config()- Print 11AX(HE) specific INI configuration
+ * @hdd_ctx: handle to hdd context
+ *
+ * Return: None
+ */
+void hdd_he_print_ini_config(hdd_context_t *hdd_ctx)
+{
+	hdd_info("Name = [%s] Value = [%d]", CFG_ENABLE_UL_MIMO_NAME,
+		hdd_ctx->config->enable_ul_mimo);
+	hdd_info("Name = [%s] Value = [%d]", CFG_ENABLE_UL_OFDMA_NAME,
+		hdd_ctx->config->enable_ul_ofdma);
+}
+
+/**
+ * hdd_update_he_cap_in_cfg() - update HE cap in global CFG
+ * @hdd_ctx: pointer to hdd context
+ *
+ * This API will update the HE config in CFG after taking intersection
+ * of INI and firmware capabilities provided reading CFG
+ *
+ * Return: 0 on success and errno on failure
+ */
+int hdd_update_he_cap_in_cfg(hdd_context_t *hdd_ctx)
+{
+	uint32_t val, val1 = 0;
+	QDF_STATUS status;
+	int ret;
+	struct hdd_config *config = hdd_ctx->config;
+
+	status = sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_HE_UL_MUMIMO, &val);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("could not get WNI_CFG_HE_UL_MUMIMO");
+		return qdf_status_to_os_return(status);
+	}
+
+	/* In val,
+	 * Bit 1 - corresponds to UL MIMO
+	 * Bit 2 - corresponds to UL OFDMA
+	 */
+	if (val & 0x1)
+		val1 = config->enable_ul_mimo & 0x1;
+
+	if ((val >> 1) & 0x1)
+		val1 |= ((config->enable_ul_ofdma & 0x1) << 1);
+
+	ret = hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_UL_MUMIMO, val1);
+
+	return ret;
+}
+
+/**
+ * hdd_he_set_sme_config() - set HE related SME config param
+ * @sme_config: pointer to SME config
+ * @config: pointer to INI config
+ *
+ * Return: None
+ */
+void hdd_he_set_sme_config(tSmeConfigParams *sme_config,
+			   struct hdd_config *config)
+{
+	sme_config->csrConfig.enable_ul_ofdma = config->enable_ul_ofdma;
+	sme_config->csrConfig.enable_ul_mimo = config->enable_ul_mimo;
 }

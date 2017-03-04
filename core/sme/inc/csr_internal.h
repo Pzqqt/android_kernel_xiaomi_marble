@@ -639,6 +639,10 @@ typedef struct tagCsrConfig {
 	uint32_t rx_aggregation_size;
 	struct wmi_per_roam_config per_roam_config;
 	bool enable_bcast_probe_rsp;
+#ifdef WLAN_FEATURE_11AX
+	bool enable_ul_ofdma;
+	bool enable_ul_mimo;
+#endif
 } tCsrConfig;
 
 typedef struct tagCsrChannelPowerInfo {

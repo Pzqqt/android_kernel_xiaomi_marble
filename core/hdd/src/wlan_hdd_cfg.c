@@ -4263,6 +4263,21 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		CFG_ENABLE_BCAST_PROBE_RESP_DEFAULT,
 		CFG_ENABLE_BCAST_PROBE_RESP_MIN,
 		CFG_ENABLE_BCAST_PROBE_RESP_MAX),
+#ifdef WLAN_FEATURE_11AX
+	REG_VARIABLE(CFG_ENABLE_UL_MIMO_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, enable_ul_mimo,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_ENABLE_UL_MIMO_DEFAULT,
+		     CFG_ENABLE_UL_MIMO_MIN,
+		     CFG_ENABLE_UL_MIMO_MAX),
+
+	REG_VARIABLE(CFG_ENABLE_UL_OFDMA_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, enable_ul_ofdma,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_ENABLE_UL_OFDMA_DEFAULT,
+		     CFG_ENABLE_UL_OFDMA_MIN,
+		     CFG_ENABLE_UL_OFDMA_MAX),
+#endif
 };
 
 /**
@@ -5740,6 +5755,7 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 		CFG_SAP_INTERNAL_RESTART_NAME,
 		pHddCtx->config->sap_internal_restart);
 	hdd_per_roam_print_ini_config(pHddCtx);
+	hdd_he_print_ini_config(pHddCtx);
 }
 
 
@@ -6446,6 +6462,11 @@ bool hdd_update_config_cfg(hdd_context_t *hdd_ctx)
 		hdd_err("Couldn't set VHT CAP in cfg");
 	}
 
+	if (0 != hdd_update_he_cap_in_cfg(hdd_ctx)) {
+		status = false;
+		hdd_err("Couldn't set HE CAP in cfg");
+	}
+
 	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_FIXED_RATE, config->TxRate)
 			    == QDF_STATUS_E_FAILURE) {
 		status = false;
@@ -6864,6 +6885,7 @@ bool hdd_update_config_cfg(hdd_context_t *hdd_ctx)
 
 	return status;
 }
+
 #ifdef FEATURE_WLAN_SCAN_PNO
 /**
  * hdd_set_pno_channel_prediction_config() - Set PNO configuration
@@ -7301,6 +7323,8 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 			pHddCtx->config->rx_aggregation_size;
 	smeConfig->csrConfig.enable_bcast_probe_rsp =
 			pHddCtx->config->enable_bcast_probe_rsp;
+
+	hdd_he_set_sme_config(smeConfig, pConfig);
 
 	status = sme_update_config(pHddCtx->hHal, smeConfig);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
