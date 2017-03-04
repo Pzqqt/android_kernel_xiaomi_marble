@@ -1326,12 +1326,9 @@ int dbglog_set_log_lvl(wmi_unified_t wmi_handle, enum DBGLOG_LOG_LVL log_lvl)
 
 int dbglog_set_mod_log_lvl(wmi_unified_t wmi_handle, A_UINT32 mod_log_lvl)
 {
-	A_UINT32 val = 0;
 	/* set the global module level to log_lvl */
-	WMI_DBGLOG_SET_MODULE_ID(val, (mod_log_lvl / 10));
-	WMI_DBGLOG_SET_LOG_LEVEL(val, (mod_log_lvl % 10));
 	wma_config_debug_module_cmd(wmi_handle, WMI_DEBUG_LOG_PARAM_LOG_LEVEL,
-				    val, NULL, 0);
+				    mod_log_lvl, NULL, 0);
 
 	return 0;
 }
