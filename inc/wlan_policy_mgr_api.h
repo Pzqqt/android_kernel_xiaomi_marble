@@ -177,56 +177,18 @@ static inline void policy_mgr_check_concurrent_intf_and_restart_sap(
 uint8_t policy_mgr_is_mcc_in_24G(struct wlan_objmgr_psoc *psoc);
 
 /**
- * policy_mgr_set_mas() - Function to set MAS value to UMAC
- * @psoc:               Pointer to psoc
- * @mas_value:          0-Disable, 1-Enable MAS
- * @dev_mode:           device mode
- *
- * This function passes down the value of MAS to UMAC
- *
- * Return: Configuration message posting status, SUCCESS or Fail
- *
- */
-int32_t policy_mgr_set_mas(struct wlan_objmgr_psoc *psoc,
-			   uint8_t mas_value,
-			   enum tQDF_ADAPTER_MODE dev_mode);
-
-/**
- * policy_mgr_set_mcc_p2p_quota() - Function to set quota for P2P
- * @psoc: PSOC object information
- * @set_value:          Quota value for the interface
- *
- * This function is used to set the quota for P2P cases
- *
- * Return: Configuration message posting status, SUCCESS or Fail
- *
- */
-int policy_mgr_set_mcc_p2p_quota(struct wlan_objmgr_psoc *psoc,
-		uint32_t set_value);
-
-/**
  * policy_mgr_change_mcc_go_beacon_interval() - Change MCC beacon interval
  * @psoc: PSOC object information
+ * @vdev_id: vdev id
+ * @dev_mode: device mode
  *
  * Updates the beacon parameters of the GO in MCC scenario
  *
  * Return: Success or Failure depending on the overall function behavior
  */
 QDF_STATUS policy_mgr_change_mcc_go_beacon_interval(
-		struct wlan_objmgr_psoc *psoc);
-
-/**
- * policy_mgr_go_set_mcc_p2p_quota() - Function to set quota for P2P GO
- * @psoc: PSOC object information
- * @set_value:          Qouta value for the interface
- *
- * This function is used to set the quota for P2P GO cases
- *
- * Return: Configuration message posting status, SUCCESS or Fail
- *
- */
-int policy_mgr_go_set_mcc_p2p_quota(struct wlan_objmgr_psoc *psoc,
-		uint32_t set_value);
+		struct wlan_objmgr_psoc *psoc,
+		uint8_t vdev_id, enum tQDF_ADAPTER_MODE dev_mode);
 
 /**
  * policy_mgr_set_mcc_latency() - Set MCC latency
@@ -779,7 +741,7 @@ typedef void (*policy_mgr_nss_update_cback)(struct wlan_objmgr_psoc *psoc,
  * @sme_pdev_set_hw_mode: Set the new HW mode to FW
  * @sme_pdev_set_pcl: Set new PCL to FW
  * @sme_nss_update_request: Update NSS value to FW
- * @sme_set_mas: Set MCC adaptive scheduler value
+ * @sme_change_mcc_beacon_interval: Set MCC beacon interval to FW
  */
 struct policy_mgr_sme_cbacks {
 	QDF_STATUS (*sme_get_valid_channels)(uint8_t *chan_list,
@@ -794,7 +756,7 @@ struct policy_mgr_sme_cbacks {
 		uint8_t  new_nss, policy_mgr_nss_update_cback cback,
 		uint8_t next_action, struct wlan_objmgr_psoc *psoc,
 		enum policy_mgr_conn_update_reason reason);
-	QDF_STATUS (*sme_set_mas) (uint32_t val);
+	QDF_STATUS (*sme_change_mcc_beacon_interval) (uint8_t session_id);
 };
 
 /**

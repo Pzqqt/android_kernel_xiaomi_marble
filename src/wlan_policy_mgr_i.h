@@ -68,12 +68,6 @@ extern enum cds_band_type cds_chan_to_band(uint32_t chan);
 #endif
 
 /**
- *  Some P2P quota calues for MCC
- */
-#define POLICY_MGR_DEFAULT_MCC_P2P_QUOTA 70
-#define POLICY_MGR_RESET_MCC_P2P_QUOTA   50
-
-/**
  * Policy Mgr hardware mode list bit-mask definitions.
  * Bits 4:0, 31:29 are unused.
  *
