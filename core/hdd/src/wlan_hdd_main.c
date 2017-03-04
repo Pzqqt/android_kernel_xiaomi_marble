@@ -93,7 +93,6 @@
 #include "wlan_hdd_driver_ops.h"
 #include "epping_main.h"
 #include "wlan_hdd_memdump.h"
-#include "wlan_hdd_he.h"
 
 #include <wlan_hdd_ipa.h>
 #include "hif.h"
@@ -117,6 +116,7 @@
 #include "os_if_wifi_pos.h"
 #include "wifi_pos_api.h"
 #include "wlan_hdd_oemdata.h"
+#include "wlan_hdd_he.h"
 
 #ifdef CNSS_GENL
 #include <net/cnss_nl.h>
@@ -782,6 +782,11 @@ static void hdd_update_tgt_services(hdd_context_t *hdd_ctx,
 
 	/* Set up UAPSD */
 	config->apUapsdEnabled &= cfg->uapsd;
+
+	/* 11AX mode support */
+	if ((config->dot11Mode == eHDD_DOT11_MODE_11ax ||
+	     config->dot11Mode == eHDD_DOT11_MODE_11ax_ONLY) && !cfg->en_11ax)
+		config->dot11Mode = eHDD_DOT11_MODE_11ac;
 
 	/* 11AC mode support */
 	if ((config->dot11Mode == eHDD_DOT11_MODE_11ac ||

@@ -527,6 +527,7 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 	addbss_param->nwType = mlm_start_req->nwType;
 	addbss_param->htCapable = mlm_start_req->htCapable;
 	addbss_param->vhtCapable = session->vhtCapability;
+	addbss_param->he_capable = session->he_capable;
 	addbss_param->ch_width = session->ch_width;
 	addbss_param->ch_center_freq_seg0 =
 		session->ch_center_freq_seg0;

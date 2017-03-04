@@ -249,3 +249,23 @@ void hdd_update_tgt_he_cap(struct hdd_context_s *hdd_ctx,
 	if (status == QDF_STATUS_E_FAILURE)
 		hdd_alert("could not set HE PPET");
 }
+
+/**
+ * wlan_hdd_check_11ax_support() - check if beacon IE and update hw mode
+ * @beacon: beacon IE buffer
+ * @config: pointer to sap config
+ *
+ * Check if HE cap IE is present in beacon IE, if present update hw mode
+ * to 11ax.
+ *
+ * Return: None
+ */
+void wlan_hdd_check_11ax_support(beacon_data_t *beacon, tsap_Config_t *config)
+{
+	uint8_t *ie;
+
+	ie = wlan_hdd_get_vendor_oui_ie_ptr(HE_CAP_OUI_TYPE, HE_CAP_OUI_SIZE,
+					    beacon->tail, beacon->tail_len);
+	if (ie)
+		config->SapHw_mode = eCSR_DOT11_MODE_11ax;
+}

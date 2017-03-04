@@ -237,9 +237,12 @@ tSirRetStatus lim_send_switch_chnl_params(tpAniSirGlobal pMac,
 		     sizeof(tSirMacAddr));
 	pChnlParams->peSessionId = peSessionId;
 	pChnlParams->vhtCapable = pSessionEntry->vhtCapability;
+	pChnlParams->he_capable = pSessionEntry->he_capable;
 	pChnlParams->dot11_mode = pSessionEntry->dot11mode;
 	pChnlParams->nss = pSessionEntry->nss;
-	lim_log(pMac, LOG2, FL("nss value: %d"), pChnlParams->nss);
+	lim_log(pMac, LOG1, FL("dot11mode: %d, he_capable: %d, vht_capable: %d nss value: %d"),
+		pChnlParams->dot11_mode, pChnlParams->he_capable,
+		pChnlParams->vhtCapable, pChnlParams->nss);
 
 	/*Set DFS flag for DFS channel */
 	if (ch_width == CH_WIDTH_160MHZ) {

@@ -3184,13 +3184,17 @@ wlansap_update_sap_config_add_ie(tsap_Config_t *pConfig,
 			bufferLength = additionIELength;
 			pBuffer = qdf_mem_malloc(bufferLength);
 			if (NULL == pBuffer) {
-				QDF_TRACE(QDF_MODULE_ID_SME,
+				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_ERROR,
 					  FL("Could not allocate the buffer "));
 				return QDF_STATUS_E_NOMEM;
 			}
 			qdf_mem_copy(pBuffer, pAdditionIEBuffer, bufferLength);
 			bufferValid = true;
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+				  FL("update_type: %d"), updateType);
+			qdf_trace_hex_dump(QDF_MODULE_ID_SAP,
+				QDF_TRACE_LEVEL_INFO, pBuffer, bufferLength);
 		}
 	}
 
@@ -3203,9 +3207,8 @@ wlansap_update_sap_config_add_ie(tsap_Config_t *pConfig,
 			qdf_mem_free(pConfig->pProbeRespBcnIEsBuffer);
 			pConfig->probeRespBcnIEsLen = 0;
 			pConfig->pProbeRespBcnIEsBuffer = NULL;
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
-				  FL
-					  ("No Probe Resp beacone IE received in set beacon"));
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+				  FL("No Probe Resp beacone IE received in set beacon"));
 		}
 		break;
 	case eUPDATE_IE_PROBE_RESP:
@@ -3216,9 +3219,8 @@ wlansap_update_sap_config_add_ie(tsap_Config_t *pConfig,
 			qdf_mem_free(pConfig->pProbeRespIEsBuffer);
 			pConfig->probeRespIEsBufferLen = 0;
 			pConfig->pProbeRespIEsBuffer = NULL;
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
-				  FL
-					  ("No Probe Response IE received in set beacon"));
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+				  FL("No Probe Response IE received in set beacon"));
 		}
 		break;
 	case eUPDATE_IE_ASSOC_RESP:
@@ -3229,13 +3231,12 @@ wlansap_update_sap_config_add_ie(tsap_Config_t *pConfig,
 			qdf_mem_free(pConfig->pAssocRespIEsBuffer);
 			pConfig->assocRespIEsLen = 0;
 			pConfig->pAssocRespIEsBuffer = NULL;
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
-				  FL
-					  ("No Assoc Response IE received in set beacon"));
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+				  FL("No Assoc Response IE received in set beacon"));
 		}
 		break;
 	default:
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 			  FL("No matching buffer type %d"), updateType);
 		if (pBuffer != NULL)
 			qdf_mem_free(pBuffer);

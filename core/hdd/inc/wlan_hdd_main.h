@@ -75,6 +75,8 @@
 #else
 #include "wlan_hdd_oemdata.h"
 #endif
+#include "wlan_hdd_he.h"
+
 /*
  * Preprocessor definitions and constants
  */

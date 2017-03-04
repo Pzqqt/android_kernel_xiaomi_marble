@@ -80,6 +80,8 @@
 #include "wlan_hdd_object_manager.h"
 #include <qca_vendor.h>
 
+#include "wlan_hdd_he.h"
+
 #define    IS_UP(_dev) \
 	(((_dev)->flags & (IFF_RUNNING|IFF_UP)) == (IFF_RUNNING|IFF_UP))
 #define    IS_UP_AUTO(_ic) \
@@ -6921,6 +6923,11 @@ static void wlan_hdd_set_sap_hwmode(hdd_adapter_t *pHostapdAdapter)
 		if (require_vht)
 			pConfig->SapHw_mode = eCSR_DOT11_MODE_11ac_ONLY;
 	}
+
+	wlan_hdd_check_11ax_support(pBeacon, pConfig);
+
+	hdd_info("SAP hw_mode: %d", pConfig->SapHw_mode);
+
 }
 
 /**
@@ -7090,9 +7097,11 @@ static int wlan_hdd_setup_driver_overrides(hdd_adapter_t *ap_adapter)
 			hdd_ctx->config->sap_p2p_11ac_override &&
 			(sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11n ||
 			sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ac ||
-			sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ac_ONLY) &&
+			sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ac_ONLY ||
+			sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ax ||
+			sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ax_ONLY) &&
 			!hdd_ctx->config->sap_force_11n_for_11ac) {
-		hdd_notice("** Driver force 11AC override for SAP/Go **");
+		hdd_notice("** Driver force override for SAP/Go **");
 
 		/* 11n only shall not be overridden since it may be on purpose*/
 		if (sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11n)
@@ -7130,8 +7139,12 @@ setup_acs_overrides:
 	/* Derive ACS HW mode */
 	sap_cfg->SapHw_mode = hdd_cfg_xlate_to_csr_phy_mode(
 						hdd_ctx->config->dot11Mode);
-	if (sap_cfg->SapHw_mode == eCSR_DOT11_MODE_AUTO)
-		sap_cfg->SapHw_mode = eCSR_DOT11_MODE_11ac;
+	if (sap_cfg->SapHw_mode == eCSR_DOT11_MODE_AUTO) {
+		if (sme_is_feature_supported_by_fw(DOT11AX))
+			sap_cfg->SapHw_mode = eCSR_DOT11_MODE_11ax;
+		else
+			sap_cfg->SapHw_mode = eCSR_DOT11_MODE_11ac;
+	}
 
 	if (hdd_ctx->config->sap_force_11n_for_11ac) {
 		if (sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ac ||
@@ -7153,8 +7166,9 @@ setup_acs_overrides:
 	/* Derive ACS BW */
 	sap_cfg->ch_width_orig = eHT_CHANNEL_WIDTH_20MHZ;
 	if (sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ac ||
-			sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ac_ONLY) {
-
+	    sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ac_ONLY ||
+	    sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ax ||
+	    sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ax_ONLY) {
 		sap_cfg->ch_width_orig = hdd_ctx->config->vhtChannelWidth;
 		/* VHT in 2.4G depends on gChannelBondingMode24GHz INI param */
 		if (sap_cfg->acs_cfg.end_ch <= 14)

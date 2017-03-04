@@ -6173,6 +6173,12 @@ static eCsrPhyMode csr_roamdot11mode_to_phymode(uint8_t dot11mode)
 	case WNI_CFG_DOT11_MODE_11AC_ONLY:
 		phymode = eCSR_DOT11_MODE_11ac_ONLY;
 		break;
+	case WNI_CFG_DOT11_MODE_11AX:
+		phymode = eCSR_DOT11_MODE_11ax;
+		break;
+	case WNI_CFG_DOT11_MODE_11AX_ONLY:
+		phymode = eCSR_DOT11_MODE_11ax_ONLY;
+		break;
 	default:
 		break;
 	}
@@ -7579,7 +7585,9 @@ QDF_STATUS csr_roam_issue_connect(tpAniSirGlobal pMac, uint32_t sessionId,
 		pCommand->u.roamCmd.fReleaseBssList = true;
 		pCommand->u.roamCmd.fUpdateCurRoamProfile = true;
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
-			  FL("CSR PERSONA=%d"),
+			  FL("phymode: %d, cbmode: %d, CSR PERSONA=%d"),
+			  pCommand->u.roamCmd.roamProfile.phyMode,
+			  pCommand->u.roamCmd.roamProfile.CBMode,
 			  pCommand->u.roamCmd.roamProfile.csrPersona);
 		status = csr_queue_sme_command(pMac, pCommand, fImediate);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -12021,6 +12029,7 @@ csr_compute_mode_and_band(tpAniSirGlobal mac_ctx,
 			  uint8_t opr_ch)
 {
 	bool vht_24_ghz = mac_ctx->roam.configParam.enableVhtFor24GHz;
+
 	switch (mac_ctx->roam.configParam.uCfgDot11Mode) {
 	case eCSR_CFG_DOT11_MODE_11A:
 		*dot11_mode = eCSR_CFG_DOT11_MODE_11A;
@@ -12070,8 +12079,29 @@ csr_compute_mode_and_band(tpAniSirGlobal mac_ctx,
 		}
 		*band = CSR_GET_BAND(opr_ch);
 		break;
+	case eCSR_CFG_DOT11_MODE_11AX:
+	case eCSR_CFG_DOT11_MODE_11AX_ONLY:
+		if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AX)) {
+			*dot11_mode = mac_ctx->roam.configParam.uCfgDot11Mode;
+		} else if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AC)) {
+			/*
+			 * If the operating channel is in 2.4 GHz band, check
+			 * for INI item to disable VHT operation in 2.4 GHz band
+			 */
+			if (CDS_IS_CHANNEL_24GHZ(opr_ch) && !vht_24_ghz)
+				/* Disable 11AC operation */
+				*dot11_mode = eCSR_CFG_DOT11_MODE_11N;
+			else
+				*dot11_mode = eCSR_CFG_DOT11_MODE_11AC;
+		} else {
+			*dot11_mode = eCSR_CFG_DOT11_MODE_11N;
+		}
+		*band = CSR_GET_BAND(opr_ch);
+		break;
 	case eCSR_CFG_DOT11_MODE_AUTO:
-		if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AC)) {
+		if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AX)) {
+			*dot11_mode = eCSR_CFG_DOT11_MODE_11AX;
+		} else if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AC)) {
 			/*
 			 * If the operating channel is in 2.4 GHz band,
 			 * check for INI item to disable VHT operation
@@ -12217,6 +12247,7 @@ csr_roam_get_phy_mode_band_for_bss(tpAniSirGlobal mac_ctx,
 		else
 			cfg_dot11_mode = eCSR_CFG_DOT11_MODE_11A;
 	}
+	sms_log(mac_ctx, LOG1, FL("dot11mode: %d"), cfg_dot11_mode);
 	return cfg_dot11_mode;
 }
 
@@ -14028,9 +14059,11 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		csr_join_req->staPersona = (uint8_t) pProfile->csrPersona;
 		csr_join_req->wps_registration = pProfile->bWPSAssociation;
 		csr_join_req->cbMode = (uint8_t) pSession->bssParams.cbMode;
-		sms_log(pMac, LOG2,
-			  FL("CSR PERSONA=%d CSR CbMode %d"),
-			  pProfile->csrPersona, pSession->bssParams.cbMode);
+		sms_log(pMac, LOG1,
+			  FL("CSR PERSONA=%d CSR CbMode %d dot11mode: %d"),
+			  pProfile->csrPersona, pSession->bssParams.cbMode,
+			  csr_join_req->dot11mode);
+
 		csr_join_req->uapsdPerAcBitmask = pProfile->uapsd_mask;
 		pSession->uapsd_mask = pProfile->uapsd_mask;
 		status =

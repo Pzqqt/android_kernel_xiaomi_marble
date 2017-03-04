@@ -45,6 +45,7 @@
 #include <wlan_hdd_misc.h>
 #include <wlan_hdd_napi.h>
 #include <cds_concurrency.h>
+#include "wlan_hdd_he.h"
 
 static void
 cb_notify_set_roam_prefer5_g_hz(hdd_context_t *pHddCtx, unsigned long notifyId)
@@ -6070,6 +6071,10 @@ eCsrPhyMode hdd_cfg_xlate_to_csr_phy_mode(eHddDot11Mode dot11Mode)
 		return eCSR_DOT11_MODE_AUTO;
 	case (eHDD_DOT11_MODE_11a):
 		return eCSR_DOT11_MODE_11a;
+	case (eHDD_DOT11_MODE_11ax_ONLY):
+		return eCSR_DOT11_MODE_11ax_ONLY;
+	case (eHDD_DOT11_MODE_11ax):
+		return eCSR_DOT11_MODE_11ax;
 	}
 
 }

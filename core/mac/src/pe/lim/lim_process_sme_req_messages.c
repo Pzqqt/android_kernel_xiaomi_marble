@@ -794,9 +794,12 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			IS_DOT11_MODE_HT(session->dot11mode);
 		session->vhtCapability =
 			IS_DOT11_MODE_VHT(session->dot11mode);
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
-			  FL("*****session->vhtCapability = %d"),
-			  session->vhtCapability);
+		session->he_capable =
+			IS_DOT11_MODE_HE(session->dot11mode);
+
+		lim_log(mac_ctx, LOG1, FL("HT[%d], VHT[%d], HE[%d]"),
+			session->htCapability, session->vhtCapability,
+			session->he_capable);
 		session->txLdpcIniFeatureEnabled =
 			sme_start_bss_req->txLdpcIniFeatureEnabled;
 #ifdef WLAN_FEATURE_11W
@@ -899,7 +902,8 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			(session->htSecondaryChannelOffset) ? 1 : 0;
 		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
 			  FL("cbMode %u"), sme_start_bss_req->cbMode);
-		if (session->vhtCapability || session->htCapability) {
+		if (session->he_capable || session->vhtCapability ||
+		    session->htCapability) {
 			chanwidth = sme_start_bss_req->vht_channel_width;
 			lim_log(mac_ctx, LOG1,
 				FL("vht_channel_width %u htSupportedChannelWidthSet %d"),
@@ -918,7 +922,7 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		}
 
 		if (session->vhtCapability &&
-				(session->ch_width > CH_WIDTH_80MHZ)) {
+			(session->ch_width > CH_WIDTH_80MHZ)) {
 			session->nss = 1;
 			lim_log(mac_ctx, LOG1, FL("nss set to [%d]"),
 							session->nss);
@@ -1700,8 +1704,10 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		/*Store Persona */
 		session->pePersona = sme_join_req->staPersona;
 		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
-			  FL("PE PERSONA=%d cbMode %u"),
-			  session->pePersona, sme_join_req->cbMode);
+			  FL("PE PERSONA=%d cbMode %u nwType: %d dot11mode: %d"),
+			  session->pePersona, sme_join_req->cbMode,
+			  session->nwType, session->dot11mode);
+
 		/* Copy The channel Id to the session Table */
 		session->currentOperChannel = bss_desc->channelId;
 		if (IS_5G_CH(session->currentOperChannel))
@@ -1730,12 +1736,16 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 					session->vht_config.su_beam_former);
 		}
 
+		session->he_capable =
+			IS_DOT11_MODE_HE(session->dot11mode);
+
 		lim_log(mac_ctx, LOG1,
-				FL("vhtCapability: %d su_beam_formee: %d txbf_csn_value: %d su_tx_bformer %d"),
+				FL("vhtCapability: %d su_beam_formee: %d txbf_csn_value: %d su_tx_bformer %d he_capable: %d"),
 				session->vhtCapability,
 				session->vht_config.su_beam_formee,
 				session->vht_config.csnof_beamformer_antSup,
-				session->vht_config.su_beam_former);
+				session->vht_config.su_beam_former,
+				session->he_capable);
 		/*Phy mode */
 		session->gLimPhyMode = bss_desc->nwType;
 		handle_ht_capabilityand_ht_info(mac_ctx, session);

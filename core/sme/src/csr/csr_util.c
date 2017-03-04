@@ -1051,7 +1051,9 @@ static void csr_calc_chb_for_sap_phymode(tpAniSirGlobal mac_ctx,
 			*sap_cch = CSR_GET_HT40_MINUS_CCH(*sap_ch);
 
 	} else if (*sap_phymode == eCSR_DOT11_MODE_11ac ||
-			*sap_phymode == eCSR_DOT11_MODE_11ac_ONLY) {
+		   *sap_phymode == eCSR_DOT11_MODE_11ac_ONLY ||
+		   *sap_phymode == eCSR_DOT11_MODE_11ax ||
+		   *sap_phymode == eCSR_DOT11_MODE_11ax_ONLY) {
 		/*11AC only 80/40/20 Mhz supported in Rome */
 		if (mac_ctx->roam.configParam.nVhtChannelWidth ==
 				(WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ + 1)) {
@@ -1847,6 +1849,9 @@ static eCsrPhyMode csr_translate_to_phy_mode_from_bss_desc(
 	case eSIR_11N_NW_TYPE:
 		phyMode = eCSR_DOT11_MODE_11n;
 		break;
+	case eSIR_11AX_NW_TYPE:
+		phyMode = eCSR_DOT11_MODE_11ax;
+		break;
 	case eSIR_11AC_NW_TYPE:
 	default:
 		phyMode = eCSR_DOT11_MODE_11ac;
@@ -1864,7 +1869,9 @@ uint32_t csr_translate_to_wni_cfg_dot11_mode(tpAniSirGlobal pMac,
 	case eCSR_CFG_DOT11_MODE_AUTO:
 		sms_log(pMac, LOGW,
 			FL("  Warning: sees eCSR_CFG_DOT11_MODE_AUTO "));
-		if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AC))
+		if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AX))
+			ret = WNI_CFG_DOT11_MODE_11AX;
+		else if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AC))
 			ret = WNI_CFG_DOT11_MODE_11AC;
 		else
 			ret = WNI_CFG_DOT11_MODE_11N;
@@ -1895,6 +1902,22 @@ uint32_t csr_translate_to_wni_cfg_dot11_mode(tpAniSirGlobal pMac,
 		break;
 	case eCSR_CFG_DOT11_MODE_11AC:
 		if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AC))
+			ret = WNI_CFG_DOT11_MODE_11AC;
+		else
+			ret = WNI_CFG_DOT11_MODE_11N;
+		break;
+	case eCSR_CFG_DOT11_MODE_11AX_ONLY:
+		if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AX))
+			ret = WNI_CFG_DOT11_MODE_11AX_ONLY;
+		else if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AC))
+			ret = WNI_CFG_DOT11_MODE_11AC;
+		else
+			ret = WNI_CFG_DOT11_MODE_11N;
+		break;
+	case eCSR_CFG_DOT11_MODE_11AX:
+		if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AX))
+			ret = WNI_CFG_DOT11_MODE_11AX;
+		else if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AC))
 			ret = WNI_CFG_DOT11_MODE_11AC;
 		else
 			ret = WNI_CFG_DOT11_MODE_11N;
@@ -1939,6 +1962,8 @@ QDF_STATUS csr_get_phy_mode_from_bss(tpAniSirGlobal pMac,
 			if (IS_BSS_VHT_CAPABLE(pIes->VHTCaps) ||
 				IS_BSS_VHT_CAPABLE(pIes->vendor_vht_ie.VHTCaps))
 				phyMode = eCSR_DOT11_MODE_11ac;
+			if (pIes->vendor_he_cap.present)
+				phyMode = eCSR_DOT11_MODE_11ax;
 		}
 		*pPhyMode = phyMode;
 	}
@@ -2032,6 +2057,7 @@ static bool csr_get_phy_mode_in_use(eCsrPhyMode phyModeIn,
 			break;
 		case eCSR_DOT11_MODE_11n:
 		case eCSR_DOT11_MODE_11ac:
+		case eCSR_DOT11_MODE_11ax:
 			cfgDot11Mode = eCSR_CFG_DOT11_MODE_11N;
 			break;
 
@@ -2065,6 +2091,7 @@ static bool csr_get_phy_mode_in_use(eCsrPhyMode phyModeIn,
 			cfgDot11Mode = eCSR_CFG_DOT11_MODE_11N;
 			break;
 		case eCSR_DOT11_MODE_11ac:
+		case eCSR_DOT11_MODE_11ax:
 		default:
 			cfgDot11Mode = eCSR_CFG_DOT11_MODE_11AC;
 			break;
@@ -2075,6 +2102,37 @@ static bool csr_get_phy_mode_in_use(eCsrPhyMode phyModeIn,
 		if ((eCSR_DOT11_MODE_11ac == bssPhyMode)) {
 			fMatch = true;
 			cfgDot11Mode = eCSR_CFG_DOT11_MODE_11AC;
+		}
+		break;
+	case eCSR_DOT11_MODE_11ax:
+		fMatch = true;
+		switch (bssPhyMode) {
+		case eCSR_DOT11_MODE_11g:
+			cfgDot11Mode = eCSR_CFG_DOT11_MODE_11G;
+			break;
+		case eCSR_DOT11_MODE_11b:
+			cfgDot11Mode = eCSR_CFG_DOT11_MODE_11B;
+			break;
+		case eCSR_DOT11_MODE_11a:
+			cfgDot11Mode = eCSR_CFG_DOT11_MODE_11A;
+			break;
+		case eCSR_DOT11_MODE_11n:
+			cfgDot11Mode = eCSR_CFG_DOT11_MODE_11N;
+			break;
+		case eCSR_DOT11_MODE_11ac:
+			cfgDot11Mode = eCSR_CFG_DOT11_MODE_11AC;
+			break;
+		case eCSR_DOT11_MODE_11ax:
+		default:
+			cfgDot11Mode = eCSR_CFG_DOT11_MODE_11AX;
+			break;
+		}
+		break;
+
+	case eCSR_DOT11_MODE_11ax_ONLY:
+		if (eCSR_DOT11_MODE_11ax == bssPhyMode) {
+			fMatch = true;
+			cfgDot11Mode = eCSR_CFG_DOT11_MODE_11AX;
 		}
 		break;
 
@@ -2096,6 +2154,9 @@ static bool csr_get_phy_mode_in_use(eCsrPhyMode phyModeIn,
 		case eCSR_DOT11_MODE_11ac:
 			cfgDot11Mode = eCSR_CFG_DOT11_MODE_11AC;
 			break;
+		case eCSR_DOT11_MODE_11ax:
+			cfgDot11Mode = eCSR_CFG_DOT11_MODE_11AX;
+			break;
 		default:
 			cfgDot11Mode = eCSR_CFG_DOT11_MODE_AUTO;
 			break;
@@ -2104,11 +2165,20 @@ static bool csr_get_phy_mode_in_use(eCsrPhyMode phyModeIn,
 	}
 
 	if (fMatch && pCfgDot11ModeToUse) {
-		if (cfgDot11Mode == eCSR_CFG_DOT11_MODE_11AC
-		    && (!IS_FEATURE_SUPPORTED_BY_FW(DOT11AC)))
-			*pCfgDot11ModeToUse = eCSR_CFG_DOT11_MODE_11N;
-		else
-			*pCfgDot11ModeToUse = cfgDot11Mode;
+		if (cfgDot11Mode == eCSR_CFG_DOT11_MODE_11AX) {
+			if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AX))
+				*pCfgDot11ModeToUse = eCSR_CFG_DOT11_MODE_11AX;
+			else if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AC))
+				*pCfgDot11ModeToUse = eCSR_CFG_DOT11_MODE_11AC;
+			else
+				*pCfgDot11ModeToUse = eCSR_CFG_DOT11_MODE_11N;
+		} else {
+			if (cfgDot11Mode == eCSR_CFG_DOT11_MODE_11AC
+			    && (!IS_FEATURE_SUPPORTED_BY_FW(DOT11AC)))
+				*pCfgDot11ModeToUse = eCSR_CFG_DOT11_MODE_11N;
+			else
+				*pCfgDot11ModeToUse = cfgDot11Mode;
+		}
 	}
 	return fMatch;
 }
@@ -2144,14 +2214,20 @@ bool csr_is_phy_mode_match(tpAniSirGlobal pMac, uint32_t phyMode,
 
 	if ((0 == phyMode) || (eCSR_DOT11_MODE_AUTO & phyMode)) {
 		if (eCSR_CFG_DOT11_MODE_ABG ==
-				pMac->roam.configParam.uCfgDot11Mode)
+				pMac->roam.configParam.uCfgDot11Mode) {
 			phyMode = eCSR_DOT11_MODE_abg;
-		else if (eCSR_CFG_DOT11_MODE_AUTO ==
-				pMac->roam.configParam.uCfgDot11Mode)
-			phyMode = eCSR_DOT11_MODE_11ac;
-		else
+		} else if (eCSR_CFG_DOT11_MODE_AUTO ==
+				pMac->roam.configParam.uCfgDot11Mode) {
+			if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AX))
+				phyMode = eCSR_DOT11_MODE_11ax;
+			else if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AC))
+				phyMode = eCSR_DOT11_MODE_11ac;
+			else
+				phyMode = eCSR_DOT11_MODE_11n;
+		} else {
 			/* user's pick */
 			phyMode = pMac->roam.configParam.phyMode;
+		}
 	}
 
 	if ((0 == phyMode) || (eCSR_DOT11_MODE_AUTO & phyMode)) {
@@ -2195,6 +2271,8 @@ bool csr_is_phy_mode_match(tpAniSirGlobal pMac, uint32_t phyMode,
 					&& ((eCSR_CFG_DOT11_MODE_11N ==
 						cfgDot11ModeToUse) ||
 					(eCSR_CFG_DOT11_MODE_11AC ==
+						cfgDot11ModeToUse) ||
+					(eCSR_CFG_DOT11_MODE_11AX ==
 						cfgDot11ModeToUse))) {
 				/* We cannot do 11n here */
 				if (!CDS_IS_CHANNEL_5GHZ
@@ -2219,8 +2297,19 @@ eCsrCfgDot11Mode csr_find_best_phy_mode(tpAniSirGlobal pMac, uint32_t phyMode)
 	eCsrBand eBand = pMac->roam.configParam.eBand;
 
 	if ((0 == phyMode) ||
-	    (eCSR_DOT11_MODE_11ac & phyMode) ||
-	    (eCSR_DOT11_MODE_AUTO & phyMode)) {
+	    (eCSR_DOT11_MODE_AUTO & phyMode) ||
+	    (eCSR_DOT11_MODE_11ax & phyMode)) {
+		if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AX)) {
+			cfgDot11ModeToUse = eCSR_CFG_DOT11_MODE_11AX;
+		} else if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AC)) {
+			cfgDot11ModeToUse = eCSR_CFG_DOT11_MODE_11AC;
+		} else {
+			/* Default to 11N mode if user has configured 11ac mode
+			 * and FW doesn't supports 11ac mode .
+			 */
+			cfgDot11ModeToUse = eCSR_CFG_DOT11_MODE_11N;
+		}
+	} else if (eCSR_DOT11_MODE_11ac & phyMode) {
 		if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AC)) {
 			cfgDot11ModeToUse = eCSR_CFG_DOT11_MODE_11AC;
 		} else {
@@ -5784,6 +5873,23 @@ eCsrCfgDot11Mode csr_get_cfg_dot11_mode_from_csr_phy_mode(tCsrRoamProfile *pProf
 			cfgDot11Mode = eCSR_CFG_DOT11_MODE_11N;
 		}
 		break;
+	case eCSR_DOT11_MODE_11ax:
+		if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AX))
+			cfgDot11Mode = eCSR_CFG_DOT11_MODE_11AX;
+		else if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AC))
+			cfgDot11Mode = eCSR_CFG_DOT11_MODE_11AC;
+		else
+			cfgDot11Mode = eCSR_CFG_DOT11_MODE_11N;
+		break;
+	case eCSR_DOT11_MODE_11ax_ONLY:
+		if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AX))
+			cfgDot11Mode = eCSR_CFG_DOT11_MODE_11AX_ONLY;
+		else if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AC))
+			cfgDot11Mode = eCSR_CFG_DOT11_MODE_11AC;
+		else
+			cfgDot11Mode = eCSR_CFG_DOT11_MODE_11N;
+		break;
+
 	default:
 		/* No need to assign anything here */
 		break;

@@ -12733,6 +12733,15 @@ void hdd_select_cbmode(hdd_adapter_t *pAdapter, uint8_t operationChannel,
 		hdd_notice("Dot11Mode is %u", iniDot11Mode);
 		switch (iniDot11Mode) {
 		case eHDD_DOT11_MODE_AUTO:
+		case eHDD_DOT11_MODE_11ax:
+		case eHDD_DOT11_MODE_11ax_ONLY:
+			if (sme_is_feature_supported_by_fw(DOT11AX))
+				hdd_dot11_mode = eHDD_DOT11_MODE_11ax;
+			else if (sme_is_feature_supported_by_fw(DOT11AC))
+				hdd_dot11_mode = eHDD_DOT11_MODE_11ac;
+			else
+				hdd_dot11_mode = eHDD_DOT11_MODE_11n;
+			break;
 		case eHDD_DOT11_MODE_11ac:
 		case eHDD_DOT11_MODE_11ac_ONLY:
 			if (sme_is_feature_supported_by_fw(DOT11AC))
