@@ -21,7 +21,7 @@
  */
 
 #include <wlan_utility.h>
-#include "../inc/wlan_p2p_off_chan_tx.h"
+#include "wlan_p2p_off_chan_tx.h"
 
 QDF_STATUS p2p_process_mgmt_tx(struct tx_action_context *tx_ctx)
 {

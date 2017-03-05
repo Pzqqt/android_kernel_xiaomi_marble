@@ -22,15 +22,14 @@
 
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_mgmt_txrx_utils_api.h>
+#include <scheduler_api.h>
 #include "wlan_p2p_tgt_api.h"
-#include "../../core/inc/wlan_p2p_main.h"
+#include "wlan_p2p_public_struct.h"
+#include "../../core/src/wlan_p2p_main.h"
 
-QDF_STATUS tgt_p2p_scan_event_cb(uint8_t vdev,
+void tgt_p2p_scan_event_cb(struct wlan_objmgr_vdev *vdev,
 	struct scan_event *event, void *arg)
 {
-	/* call p2p_process_scan_event directly*/
-	/* since this is from target thread */
-	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS tgt_p2p_mgmt_download_comp_cb(void *context,
@@ -45,22 +44,22 @@ QDF_STATUS tgt_p2p_mgmt_ota_comp_cb(void *context, qdf_nbuf_t buf,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS tgt_p2p_mgmt_frame_rx_cb(
-	struct wlan_objmgr_psoc *psoc,
-	struct wlan_objmgr_peer *peer,
-	qdf_nbuf_t buf, void *params,
+QDF_STATUS tgt_p2p_mgmt_frame_rx_cb(struct wlan_objmgr_psoc *psoc,
+	struct wlan_objmgr_peer *peer, qdf_nbuf_t buf,
+	struct mgmt_rx_event_params *mgmt_rx_params,
 	enum mgmt_frame_type frm_type)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-int tgt_p2p_noa_event_cb(void *data, uint8_t *event_buf,
-	uint32_t len)
+QDF_STATUS  tgt_p2p_noa_event_cb(struct wlan_objmgr_psoc *psoc,
+		struct p2p_noa_info *event_info)
 {
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 
-int tgt_p2p_lo_event_cb(void *data, uint8_t *event_buf, uint32_t len)
+QDF_STATUS tgt_p2p_lo_event_cb(struct wlan_objmgr_psoc *psoc,
+		struct p2p_lo_event *event_info)
 {
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }

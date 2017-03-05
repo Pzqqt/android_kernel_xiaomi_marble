@@ -122,13 +122,13 @@ QDF_STATUS p2p_process_cancel_roc_req(
 /**
  * p2p_scan_event_cb() - Process scan event
  * @vdev: vdev associated to this scan event
- * @event: event type
+ * @event: event information
  * @arg: registered arguments
  *
  * This function handles P2P scan event and deliver P2P event to HDD
  * layer by registered callback.
  *
- * Return: QDF_STATUS_SUCCESS - in case of success
+ * Return: None
  */
 void p2p_scan_event_cb(struct wlan_objmgr_vdev *vdev,
 	struct scan_event *event, void *arg);

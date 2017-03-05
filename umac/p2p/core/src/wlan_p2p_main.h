@@ -27,8 +27,8 @@
 #include <qdf_types.h>
 #include <qdf_event.h>
 
-#define P2P_MAX_NOA_DESC 4
 #define MAX_QUEUE_LENGTH 20
+#define P2P_MODULE_NAME  "P2P"
 
 #define p2p_log(level, args...) \
 	QDF_TRACE(QDF_MODULE_ID_P2P, level, ## args)
@@ -51,6 +51,7 @@ struct p2p_tx_cnf;
 struct p2p_rx_mgmt_frame;
 struct p2p_lo_event;
 struct p2p_start_param;
+struct p2p_noa_info;
 
 /**
  * enum p2p_cmd_type - P2P request type
@@ -80,38 +81,6 @@ enum p2p_event_type {
 	P2P_EVENT_RX_MGMT,
 	P2P_EVENT_LO_STOPPED,
 	P2P_EVENT_NOA,
-};
-
-/**
- * struct noa_descriptor - noa descriptor
- * @type_count:     255: continuous schedule, 0: reserved
- * @duration:       Absent period duration in micro seconds
- * @interval:       Absent period interval in micro seconds
- * @start_time:     32 bit tsf time when in starts
- */
-struct noa_descriptor {
-	uint8_t type_count;
-	uint32_t duration;
-	uint32_t interval;
-	uint32_t start_time;
-};
-
-/**
- * struct p2p_noa_info - p2p noa information
- * @index:             Identifies instance of NOA su element
- * @opps_ps:           Opps ps state of the AP
- * @ct_window:         Ct window in TUs
- * @num_descriptors:   Number of NOA descriptors
- * @noa_desc:          Noa descriptors
- * @vdev_id:           Vdev id
- */
-struct p2p_noa_info {
-	uint8_t index;
-	uint8_t opps_ps;
-	uint8_t ct_window;
-	uint8_t num_desc;
-	struct noa_descriptor noa_desc[P2P_MAX_NOA_DESC];
-	uint32_t vdev_id;
 };
 
 /**
@@ -204,24 +173,24 @@ QDF_STATUS p2p_component_init(void);
 QDF_STATUS p2p_component_deinit(void);
 
 /**
- * p2p_psoc_open() - Open P2P component
+ * p2p_psoc_object_open() - Open P2P component
  * @soc: soc context
  *
  * This function initialize p2p psoc object
  *
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
-QDF_STATUS p2p_psoc_open(struct wlan_objmgr_psoc *soc);
+QDF_STATUS p2p_psoc_object_open(struct wlan_objmgr_psoc *soc);
 
 /**
- * p2p_psoc_close() - Close P2P component
+ * p2p_psoc_object_close() - Close P2P component
  * @soc: soc context
  *
  * This function de-init p2p psoc object.
  *
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
-QDF_STATUS p2p_psoc_close(struct wlan_objmgr_psoc *soc);
+QDF_STATUS p2p_psoc_object_close(struct wlan_objmgr_psoc *soc);
 
 /**
  * p2p_psoc_start() - Start P2P component

@@ -28,20 +28,23 @@
 struct scan_event;
 struct wlan_objmgr_psoc;
 struct wlan_objmgr_peer;
+struct p2p_noa_info;
+struct p2p_lo_event;
+struct mgmt_rx_event_params;
 enum mgmt_frame_type;
 
 /**
  * tgt_p2p_scan_event_cb() - Callback for scan event
- * @vdev: vdev id
- * @event: event type
+ * @vdev: vdev object
+ * @event: event information
  * @arg: registered arguments
  *
  * This function gets called from scan component when getting P2P
  * scan event.
  *
- * Return: QDF_STATUS_SUCCESS - in case of success
+ * Return: None
  */
-QDF_STATUS tgt_p2p_scan_event_cb(uint8_t vdev,
+void tgt_p2p_scan_event_cb(struct wlan_objmgr_vdev *vdev,
 	struct scan_event *event, void *arg);
 
 /**
@@ -79,7 +82,7 @@ QDF_STATUS tgt_p2p_mgmt_ota_comp_cb(void *context, qdf_nbuf_t buf,
  * @psoc: soc context
  * @peer: peer context
  * @buf: rx buffer
- * @params: rx parameters
+ * @mgmt_rx_params: mgmt rx parameters
  * @frm_type: frame type
  *
  * This function gets called from mgmt tx/rx component when rx mgmt
@@ -87,39 +90,32 @@ QDF_STATUS tgt_p2p_mgmt_ota_comp_cb(void *context, qdf_nbuf_t buf,
  *
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
-QDF_STATUS tgt_p2p_mgmt_frame_rx_cb(
-	struct wlan_objmgr_psoc *psoc,
-	struct wlan_objmgr_peer *peer,
-	qdf_nbuf_t buf, void *params,
+QDF_STATUS tgt_p2p_mgmt_frame_rx_cb(struct wlan_objmgr_psoc *psoc,
+	struct wlan_objmgr_peer *peer, qdf_nbuf_t buf,
+	struct mgmt_rx_event_params *mgmt_rx_params,
 	enum mgmt_frame_type frm_type);
-
 /**
  * tgt_p2p_noa_event_cb() - Callback for noa event
- * @data:
- * @event_buf: event buffer
- * @len: buffer length
+ * @psoc: soc object
+ * @event_info: noa event information
  *
- * This function gets called from WMI when triggered WMI event
- * WMI_P2P_NOA_EVENTID.
+ * This function gets called from target interface.
  *
- * Return: 0      - success
- *         others - failure
+ * Return: QDF_STATUS_SUCCESS - in case of success
  */
-int tgt_p2p_noa_event_cb(void *data, uint8_t *event_buf,
-	uint32_t len);
+QDF_STATUS tgt_p2p_noa_event_cb(struct wlan_objmgr_psoc *psoc,
+		struct p2p_noa_info *event_info);
 
 /**
  * tgt_p2p_lo_event_cb() - Listen offload stop request
- * @data:
- * @event_buf: event buffer
- * @len: buffer length
+ * @psoc: soc object
+ * @event_info: lo stop event buffer
  *
- * This function gets called from WMI when triggered WMI event
- * WMI_P2P_LISTEN_OFFLOAD_STOPPED_EVENTID.
+ * This function gets called from target interface.
  *
- * Return: 0      - success
- *         others - failure
+ * Return: QDF_STATUS_SUCCESS - in case of success
  */
-int tgt_p2p_lo_event_cb(void *data, uint8_t *event_buf, uint32_t len);
+QDF_STATUS tgt_p2p_lo_event_cb(struct wlan_objmgr_psoc *psoc,
+	struct p2p_lo_event *event_info);
 
 #endif /* _WLAN_P2P_TGT_API_H_ */

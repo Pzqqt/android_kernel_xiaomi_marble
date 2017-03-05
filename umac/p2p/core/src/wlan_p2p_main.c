@@ -29,9 +29,59 @@
 #include "wlan_p2p_public_struct.h"
 #include "wlan_p2p_ucfg_api.h"
 #include "wlan_p2p_tgt_api.h"
-#include "../inc/wlan_p2p_main.h"
-#include "../inc/wlan_p2p_roc.h"
-#include "../inc/wlan_p2p_off_chan_tx.h"
+#include "wlan_p2p_main.h"
+#include "wlan_p2p_roc.h"
+#include "wlan_p2p_off_chan_tx.h"
+
+/**
+ * p2p_get_cmd_type_str() - parse cmd to string
+ * @cmd_type: P2P cmd type
+ *
+ * This function parse P2P cmd to string.
+ *
+ * Return: command string
+ */
+static char *p2p_get_cmd_type_str(enum p2p_cmd_type cmd_type)
+{
+	switch (cmd_type) {
+	case P2P_ROC_REQ:
+		return "P2P roc request";
+	case P2P_CANCEL_ROC_REQ:
+		return "P2P cancel roc request";
+	case P2P_MGMT_TX:
+		return "P2P mgmt tx request";
+	case P2P_MGMT_TX_CANCEL:
+		return "P2P cancel mgmt tx request";
+	default:
+		return "Invalid P2P command";
+	}
+}
+
+/**
+ * p2p_get_event_type_str() - parase event to string
+ * @event_type: P2P event type
+ *
+ * This function parse P2P event to string.
+ *
+ * Return: event string
+ */
+static char *p2p_get_event_type_str(enum p2p_event_type event_type)
+{
+	switch (event_type) {
+	case P2P_EVENT_SCAN_EVENT:
+		return "P2P scan event";
+	case P2P_EVENT_MGMT_TX_ACK_CNF:
+		return "P2P mgmt tx ack event";
+	case P2P_EVENT_RX_MGMT:
+		return "P2P mgmt rx event";
+	case P2P_EVENT_LO_STOPPED:
+		return "P2P lo stop event";
+	case P2P_EVENT_NOA:
+		return "P2P noa event";
+	default:
+		return "Invalid P2P event";
+	}
+}
 
 /**
  * p2p_psoc_obj_create_notification() - Function to allocate per P2P
@@ -60,6 +110,7 @@ static QDF_STATUS p2p_psoc_obj_create_notification(
 		p2p_err("Failed to allocate p2p soc private object");
 		return QDF_STATUS_E_NOMEM;
 	}
+
 	p2p_soc_obj->soc = soc;
 
 	status = wlan_objmgr_psoc_component_obj_attach(soc,
@@ -70,6 +121,8 @@ static QDF_STATUS p2p_psoc_obj_create_notification(
 		p2p_err("Failed to attach p2p component, %d", status);
 		return status;
 	}
+
+	p2p_info("p2p soc object create successful, %p", p2p_soc_obj);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -102,12 +155,17 @@ static QDF_STATUS p2p_psoc_obj_destroy_notification(
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	p2p_soc_obj->soc = NULL;
+
 	status = wlan_objmgr_psoc_component_obj_detach(soc,
 				WLAN_UMAC_COMP_P2P, p2p_soc_obj);
 	if (status != QDF_STATUS_SUCCESS) {
 		p2p_err("Failed to detach p2p component, %d", status);
 		return status;
 	}
+
+	p2p_info("destroy p2p soc object, %p", p2p_soc_obj);
+
 	qdf_mem_free(p2p_soc_obj);
 
 	return QDF_STATUS_SUCCESS;
@@ -139,7 +197,9 @@ static QDF_STATUS p2p_vdev_obj_create_notification(
 		p2p_err("Failed to allocate p2p vdev object");
 		return QDF_STATUS_E_NOMEM;
 	}
+
 	p2p_vdev_obj->vdev = vdev;
+
 	status = wlan_objmgr_vdev_component_obj_attach(vdev,
 				WLAN_UMAC_COMP_P2P, p2p_vdev_obj,
 				QDF_STATUS_SUCCESS);
@@ -149,6 +209,8 @@ static QDF_STATUS p2p_vdev_obj_create_notification(
 			status);
 		return status;
 	}
+
+	p2p_info("p2p vdev object create successful, %p", p2p_vdev_obj);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -181,12 +243,20 @@ static QDF_STATUS p2p_vdev_obj_destroy_notification(
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	p2p_vdev_obj->vdev = NULL;
+
 	status = wlan_objmgr_vdev_component_obj_detach(vdev,
 				WLAN_UMAC_COMP_P2P, p2p_vdev_obj);
 	if (status != QDF_STATUS_SUCCESS) {
 		p2p_err("Failed to detach p2p component, %d", status);
 		return status;
 	}
+
+	p2p_info("destroy p2p vdev object, p2p vdev obj:%p, noa info:%p",
+		p2p_vdev_obj, p2p_vdev_obj->noa_info);
+
+	if (p2p_vdev_obj->noa_info)
+		qdf_mem_free(p2p_vdev_obj->noa_info);
 
 	qdf_mem_free(p2p_vdev_obj);
 
@@ -206,7 +276,7 @@ QDF_STATUS p2p_component_init(void)
 		goto err_reg_psoc_create;
 	}
 
-	status = wlan_objmgr_register_psoc_delete_handler(
+	status = wlan_objmgr_register_psoc_destroy_handler(
 				WLAN_UMAC_COMP_P2P,
 				p2p_psoc_obj_destroy_notification,
 				NULL);
@@ -224,7 +294,7 @@ QDF_STATUS p2p_component_init(void)
 		goto err_reg_vdev_create;
 	}
 
-	status = wlan_objmgr_register_vdev_delete_handler(
+	status = wlan_objmgr_register_vdev_destroy_handler(
 				WLAN_UMAC_COMP_P2P,
 				p2p_vdev_obj_destroy_notification,
 				NULL);
@@ -240,7 +310,7 @@ err_reg_vdev_delete:
 	wlan_objmgr_unregister_vdev_create_handler(WLAN_UMAC_COMP_P2P,
 			p2p_vdev_obj_create_notification, NULL);
 err_reg_vdev_create:
-	wlan_objmgr_unregister_psoc_delete_handler(WLAN_UMAC_COMP_P2P,
+	wlan_objmgr_unregister_psoc_destroy_handler(WLAN_UMAC_COMP_P2P,
 			p2p_psoc_obj_destroy_notification, NULL);
 err_reg_psoc_delete:
 	wlan_objmgr_unregister_psoc_create_handler(WLAN_UMAC_COMP_P2P,
@@ -264,7 +334,7 @@ QDF_STATUS p2p_component_deinit(void)
 		ret_status = status;
 	}
 
-	status = wlan_objmgr_unregister_vdev_delete_handler(
+	status = wlan_objmgr_unregister_vdev_destroy_handler(
 				WLAN_UMAC_COMP_P2P,
 				p2p_vdev_obj_destroy_notification,
 				NULL);
@@ -284,7 +354,7 @@ QDF_STATUS p2p_component_deinit(void)
 		ret_status = status;
 	}
 
-	status = wlan_objmgr_unregister_psoc_delete_handler(
+	status = wlan_objmgr_unregister_psoc_destroy_handler(
 				WLAN_UMAC_COMP_P2P,
 				p2p_psoc_obj_destroy_notification,
 				NULL);
@@ -299,7 +369,7 @@ QDF_STATUS p2p_component_deinit(void)
 	return ret_status;
 }
 
-QDF_STATUS p2p_psoc_open(struct wlan_objmgr_psoc *soc)
+QDF_STATUS p2p_psoc_object_open(struct wlan_objmgr_psoc *soc)
 {
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 
@@ -326,7 +396,7 @@ QDF_STATUS p2p_psoc_open(struct wlan_objmgr_psoc *soc)
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS p2p_psoc_close(struct wlan_objmgr_psoc *soc)
+QDF_STATUS p2p_psoc_object_close(struct wlan_objmgr_psoc *soc)
 {
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 
@@ -431,7 +501,9 @@ QDF_STATUS p2p_process_cmd(struct scheduler_msg *msg)
 {
 	QDF_STATUS status;
 
-	p2p_info("msg type %d", msg->type);
+	p2p_info("msg type %d, %s", msg->type,
+		p2p_get_cmd_type_str(msg->type));
+
 	if (msg->bodyptr == NULL) {
 		p2p_err("Invalid message body");
 		return QDF_STATUS_E_INVAL;
@@ -474,7 +546,9 @@ QDF_STATUS p2p_process_evt(struct scheduler_msg *msg)
 {
 	QDF_STATUS status;
 
-	p2p_info("msg type %d", msg->type);
+	p2p_info("msg type %d, %s", msg->type,
+		p2p_get_event_type_str(msg->type));
+
 	if (msg->bodyptr == NULL) {
 		p2p_err("Invalid message body");
 		return QDF_STATUS_E_INVAL;

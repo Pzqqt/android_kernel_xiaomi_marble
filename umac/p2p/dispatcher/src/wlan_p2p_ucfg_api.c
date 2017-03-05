@@ -20,12 +20,12 @@
  * DOC: This file contains p2p north bound interface definitions
  */
 
+#include <wmi_unified_api.h>
 #include <wlan_objmgr_psoc_obj.h>
+#include <scheduler_api.h>
 #include "wlan_p2p_ucfg_api.h"
 #include "wlan_p2p_public_struct.h"
-#include "../../core/inc/wlan_p2p_main.h"
-#include "../../core/inc/wlan_p2p_roc.h"
-#include "../../core/inc/wlan_p2p_off_chan_tx.h"
+#include "../../core/src/wlan_p2p_main.h"
 
 QDF_STATUS ucfg_p2p_init(void)
 {
@@ -39,12 +39,12 @@ QDF_STATUS ucfg_p2p_deinit(void)
 
 QDF_STATUS ucfg_p2p_psoc_open(struct wlan_objmgr_psoc *soc)
 {
-	return p2p_psoc_open(soc);
+	return p2p_psoc_object_open(soc);
 }
 
 QDF_STATUS ucfg_p2p_psoc_close(struct wlan_objmgr_psoc *soc)
 {
-	return p2p_psoc_close(soc);
+	return p2p_psoc_object_close(soc);
 }
 
 QDF_STATUS ucfg_p2p_psoc_start(struct wlan_objmgr_psoc *soc,
