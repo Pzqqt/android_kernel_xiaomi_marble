@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -24,6 +24,8 @@
 #define _WLAN_P2P_PUBLIC_STRUCT_H_
 
 #include <qdf_types.h>
+
+#define P2P_MAX_NOA_DESC 4
 
 /**
  * struct p2p_roc_req - P2P roc request
@@ -171,12 +173,44 @@ struct p2p_lo_start {
 
 /**
  * struct p2p_lo_event
- * @vdev_id:        Vdev id
+ * @vdev_id:        vdev id
  * @reason_code:    reason code
  */
 struct p2p_lo_event {
 	uint32_t vdev_id;
 	uint32_t reason_code;
+};
+
+/**
+ * struct noa_descriptor - noa descriptor
+ * @type_count:     255: continuous schedule, 0: reserved
+ * @duration:       Absent period duration in micro seconds
+ * @interval:       Absent period interval in micro seconds
+ * @start_time:     32 bit tsf time when in starts
+ */
+struct noa_descriptor {
+	uint32_t type_count;
+	uint32_t duration;
+	uint32_t interval;
+	uint32_t start_time;
+};
+
+/**
+ * struct p2p_noa_info - p2p noa information
+ * @index:             identifies instance of NOA su element
+ * @opps_ps:           opps ps state of the AP
+ * @ct_window:         ct window in TUs
+ * @vdev_id:           vdev id
+ * @num_descriptors:   number of NOA descriptors
+ * @noa_desc:          noa descriptors
+ */
+struct p2p_noa_info {
+	uint32_t index;
+	uint32_t opps_ps;
+	uint32_t ct_window;
+	uint32_t vdev_id;
+	uint32_t num_desc;
+	struct noa_descriptor noa_desc[P2P_MAX_NOA_DESC];
 };
 
 #endif /* _WLAN_P2P_PUBLIC_STRUCT_H_ */

@@ -20,7 +20,7 @@
  * DOC: This file contains RoC API definitions
  */
 
-#include "../inc/wlan_p2p_roc.h"
+#include "wlan_p2p_roc.h"
 
 QDF_STATUS p2p_process_roc_req(struct p2p_roc_context *roc_ctx)
 {
