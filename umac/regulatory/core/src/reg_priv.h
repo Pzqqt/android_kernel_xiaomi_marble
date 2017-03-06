@@ -48,7 +48,7 @@
 struct wlan_regulatory_psoc_priv_obj {
 	struct regulatory_channel mas_chan_list[NUM_CHANNELS];
 	bool offload_enabled;
-	enum channel_enum nol_list[NUM_CHANNELS];
+	bool nol_chan[NUM_CHANNELS];
 	char default_country[REG_ALPHA2_LEN + 1];
 	char current_country[REG_ALPHA2_LEN + 1];
 	struct wlan_objmgr_psoc *psoc_ptr;
@@ -66,7 +66,6 @@ struct wlan_regulatory_psoc_priv_obj {
 
 struct wlan_regulatory_pdev_priv_obj {
 	struct regulatory_channel cur_chan_list[NUM_CHANNELS];
-	enum channel_enum nol_list[NUM_CHANNELS];
 	struct wlan_objmgr_pdev *pdev_ptr;
 	bool dfs_disabled;
 	bool set_fcc_channel;

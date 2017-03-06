@@ -405,3 +405,18 @@ QDF_STATUS wlan_reg_get_current_chan_list(struct wlan_objmgr_pdev
 {
 	return reg_get_current_chan_list(pdev, chan_list);
 }
+
+/**
+ * wlan_reg_update_nol_ch () - Updates NOL channels in current channel list
+ * @pdev: pointer to pdev object
+ * @ch_list: pointer to NOL channel list
+ * @num_ch: No.of channels in list
+ * @nol_ch: set/reset the NOL status
+ *
+ * Return: None
+ */
+void wlan_reg_update_nol_ch(struct wlan_objmgr_pdev *pdev, uint8_t *ch_list,
+		uint8_t num_ch, bool nol_ch)
+{
+	reg_update_nol_ch(pdev, ch_list, num_ch, nol_ch);
+}

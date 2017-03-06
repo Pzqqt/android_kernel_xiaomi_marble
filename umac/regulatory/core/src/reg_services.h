@@ -126,6 +126,9 @@ struct ch_params {
  * @state: channel state
  * @chan_flags: channel flags
  * @tx_power: TX powers
+ * @min_bw: min bandwidth
+ * @max_bw: max bandwidth
+ * @nol_chan: whether channel is nol
  */
 struct regulatory_channel {
 	uint32_t center_freq;
@@ -135,6 +138,7 @@ struct regulatory_channel {
 	uint32_t tx_power;
 	uint16_t min_bw;
 	uint16_t max_bw;
+	bool nol_chan;
 };
 
 /**
@@ -482,4 +486,6 @@ QDF_STATUS reg_get_current_chan_list(struct wlan_objmgr_pdev *pdev,
 				     struct regulatory_channel
 				     *chan_list);
 
+void reg_update_nol_ch(struct wlan_objmgr_pdev *pdev, uint8_t *ch_list,
+		uint8_t num_ch, bool nol_ch);
 #endif
