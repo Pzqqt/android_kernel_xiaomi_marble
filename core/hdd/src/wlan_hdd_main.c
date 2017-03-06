@@ -114,6 +114,9 @@
 #include <qca_vendor.h>
 #include "wlan_pmo_ucfg_api.h"
 #include "sir_api.h"
+#include "os_if_wifi_pos.h"
+#include "wifi_pos_api.h"
+#include "wlan_hdd_oemdata.h"
 
 #ifdef CNSS_GENL
 #include <net/cnss_nl.h>
@@ -2042,6 +2045,63 @@ release_lock:
 	return -EINVAL;
 }
 
+#ifdef WIFI_POS_CONVERGED
+static int hdd_activate_wifi_pos(hdd_context_t *hdd_ctx)
+{
+	int ret = os_if_wifi_pos_register_nl();
+
+	if (ret)
+		hdd_err("os_if_wifi_pos_register_nl failed");
+
+	return ret;
+}
+
+static int hdd_deactivate_wifi_pos(void)
+{
+	int ret = os_if_wifi_pos_deregister_nl();
+
+	if (ret)
+		hdd_err("os_if_wifi_pos_deregister_nl failed");
+
+	return  ret;
+}
+
+/**
+ * hdd_populate_wifi_pos_cfg - populates wifi_pos parameters
+ * @hdd_ctx: hdd context
+ *
+ * Return: status of operation
+ */
+static void hdd_populate_wifi_pos_cfg(hdd_context_t *hdd_ctx)
+{
+	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
+	struct hdd_config *cfg = hdd_ctx->config;
+
+	wifi_pos_set_oem_target_type(psoc, hdd_ctx->target_type);
+	wifi_pos_set_oem_fw_version(psoc, hdd_ctx->target_fw_version);
+	wifi_pos_set_drv_ver_major(psoc, QWLAN_VERSION_MAJOR);
+	wifi_pos_set_drv_ver_minor(psoc, QWLAN_VERSION_MINOR);
+	wifi_pos_set_drv_ver_patch(psoc, QWLAN_VERSION_PATCH);
+	wifi_pos_set_drv_ver_build(psoc, QWLAN_VERSION_BUILD);
+	wifi_pos_set_dwell_time_min(psoc, cfg->nNeighborScanMinChanTime);
+	wifi_pos_set_dwell_time_max(psoc, cfg->nNeighborScanMaxChanTime);
+}
+#else
+static int hdd_activate_wifi_pos(hdd_context_t *hdd_ctx)
+{
+	return oem_activate_service(hdd_ctx);
+}
+
+static int hdd_deactivate_wifi_pos(void)
+{
+	return 0;
+}
+
+static void hdd_populate_wifi_pos_cfg(hdd_context_t *hdd_ctx)
+{
+}
+#endif
+
 /**
  * __hdd_open() - HDD Open function
  * @dev:	Pointer to net_device structure
@@ -2097,6 +2157,8 @@ static int __hdd_open(struct net_device *dev)
 			WLAN_START_ALL_NETIF_QUEUE_N_CARRIER,
 			WLAN_CONTROL_PATH);
 	}
+
+	hdd_populate_wifi_pos_cfg(hdd_ctx);
 
 	return ret;
 }
@@ -4941,7 +5003,7 @@ static void hdd_unregister_notifiers(hdd_context_t *hdd_ctx)
 static void hdd_exit_netlink_services(hdd_context_t *hdd_ctx)
 {
 	hdd_close_cesium_nl_sock();
-
+	hdd_deactivate_wifi_pos();
 	ptt_sock_deactivate_svc();
 
 	nl_srv_exit();
@@ -4967,9 +5029,9 @@ static int hdd_init_netlink_services(hdd_context_t *hdd_ctx)
 	}
 	cds_set_radio_index(hdd_ctx->radio_index);
 
-	ret = oem_activate_service(hdd_ctx);
+	ret = hdd_activate_wifi_pos(hdd_ctx);
 	if (ret) {
-		hdd_alert("oem_activate_service failed: %d", ret);
+		hdd_alert("hdd_activate_wifi_pos failed: %d", ret);
 		goto err_nl_srv;
 	}
 

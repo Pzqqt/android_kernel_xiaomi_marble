@@ -95,6 +95,7 @@
 #include "wlan_hdd_lro.h"
 #include "cds_utils.h"
 #include "wlan_hdd_request_manager.h"
+#include "os_if_wifi_pos.h"
 
 #define HDD_FINISH_ULA_TIME_OUT         800
 #define HDD_SET_MCBC_FILTERS_TO_FW      1
@@ -1886,9 +1887,25 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
  * </ioctl>
  */
 #define WE_GET_PHYMODE       12
-#ifdef FEATURE_OEM_DATA_SUPPORT
+
+/*
+ * <ioctl>
+ * getOemDataCap - Get the oem data caps.
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: oem data capability
+ *
+ * This IOCTL used to gets the current oem data cap.
+ *
+ * @E.g: iwpriv wlan0 getOemDataCap
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
 #define WE_GET_OEM_DATA_CAP  13
-#endif
+
 /*
  * <ioctl>
  * getSNR - Enable SNR Monitoring
@@ -1908,6 +1925,7 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
  *
  * </ioctl>
  */
+
 #define WE_GET_SNR           14
 #define WE_LIST_FW_PROFILE      15
 
@@ -9306,6 +9324,43 @@ hdd_connection_state_string(eConnectionState connection_state)
 	}
 }
 
+#if defined(FEATURE_OEM_DATA_SUPPORT)
+/**
+ * iw_get_oem_data_cap_wrapper() - wrapper function to call legacy or new
+ * wifi_pos api to get oem data caps
+ * @dev: net device upon which the request was received
+ * @info: ioctl request information
+ * @wrqu: ioctl request data
+ * @extra: ioctl data payload
+ *
+ * Return: 0 for success, negative errno value on failure
+ */
+static inline int iw_get_oem_data_cap_wrapper(struct net_device *dev,
+					struct iw_request_info *info,
+					union iwreq_data *wrqu, char *extra)
+{
+	return iw_get_oem_data_cap(dev, info, wrqu, extra);
+}
+#elif defined(WIFI_POS_CONVERGED)
+static inline int iw_get_oem_data_cap_wrapper(struct net_device *dev,
+					struct iw_request_info *info,
+					union iwreq_data *wrqu, char *extra)
+{
+	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	return os_if_wifi_pos_populate_caps(hdd_ctx->hdd_psoc,
+					(struct wifi_pos_driver_caps *)extra);
+}
+#else
+static inline int iw_get_oem_data_cap_wrapper(struct net_device *dev,
+					struct iw_request_info *info,
+					union iwreq_data *wrqu, char *extra)
+{
+	return -ENOTSUPP;
+}
+#endif
+
 /**
  * iw_get_char_setnone() - Generic "get string" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -9806,12 +9861,8 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		break;
 	}
 
-#ifdef FEATURE_OEM_DATA_SUPPORT
 	case WE_GET_OEM_DATA_CAP:
-	{
-		return iw_get_oem_data_cap(dev, info, wrqu, extra);
-	}
-#endif /* FEATURE_OEM_DATA_SUPPORT */
+		return iw_get_oem_data_cap_wrapper(dev, info, wrqu, extra);
 	case WE_GET_SNR:
 	{
 		int8_t s7snr = 0;
@@ -13091,12 +13142,12 @@ static const struct iw_priv_args we_private_args[] = {
 	 0,
 	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
 	 "getphymode"},
-#ifdef FEATURE_OEM_DATA_SUPPORT
+#if defined(FEATURE_OEM_DATA_SUPPORT) || defined(WIFI_POS_CONVERGED)
 	{WE_GET_OEM_DATA_CAP,
 	 0,
 	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
 	 "getOemDataCap"},
-#endif /* FEATURE_OEM_DATA_SUPPORT */
+#endif
 	{WE_GET_SNR,
 	 0,
 	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,

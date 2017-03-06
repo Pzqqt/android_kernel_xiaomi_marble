@@ -142,7 +142,9 @@ typedef void (*preferred_network_found_ind_cb)(void *callback_context,
 typedef void (*ocb_callback)(void *context, void *response);
 typedef void (*sme_set_thermal_level_callback)(void *context, u_int8_t level);
 typedef void (*p2p_lo_callback)(void *context, void *event);
+#ifdef FEATURE_OEM_DATA_SUPPORT
 typedef void (*sme_send_oem_data_rsp_msg)(struct oem_data_rsp *);
+#endif
 
 /**
  * typedef bpf_get_offload_cb - BPF offload callback signature
@@ -248,7 +250,9 @@ typedef struct tagSmeStruct {
 	bpf_get_offload_cb bpf_get_offload_cb;
 	p2p_lo_callback p2p_lo_event_callback;
 	void *p2p_lo_event_context;
+#ifdef FEATURE_OEM_DATA_SUPPORT
 	sme_send_oem_data_rsp_msg oem_data_rsp_callback;
+#endif
 	sme_encrypt_decrypt_callback encrypt_decrypt_cb;
 	void *encrypt_decrypt_context;
 	void (*lost_link_info_cb)(void *context,

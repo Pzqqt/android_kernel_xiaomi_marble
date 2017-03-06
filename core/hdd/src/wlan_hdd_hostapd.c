@@ -80,7 +80,6 @@
 #include "wlan_hdd_object_manager.h"
 #include <qca_vendor.h>
 
-
 #define    IS_UP(_dev) \
 	(((_dev)->flags & (IFF_RUNNING|IFF_UP)) == (IFF_RUNNING|IFF_UP))
 #define    IS_UP_AUTO(_ic) \
@@ -1691,7 +1690,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		}
 		if (pHostapdAdapter->device_mode == QDF_P2P_GO_MODE) {
 			/* send peer status indication to oem app */
-			hdd_send_peer_status_ind_to_oem_app(&pSapEvent->sapevt.
+			hdd_send_peer_status_ind_to_app(&pSapEvent->sapevt.
 					sapStationAssocReassocCompleteEvent.
 					staMac, ePeerConnected,
 					pSapEvent->sapevt.
@@ -1820,7 +1819,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		}
 		if (pHostapdAdapter->device_mode == QDF_P2P_GO_MODE) {
 			/* send peer status indication to oem app */
-			hdd_send_peer_status_ind_to_oem_app(&pSapEvent->sapevt.
+			hdd_send_peer_status_ind_to_app(&pSapEvent->sapevt.
 						sapStationDisassocCompleteEvent.
 						staMac, ePeerDisconnected,
 						0,
