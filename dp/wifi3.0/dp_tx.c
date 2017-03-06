@@ -1743,6 +1743,7 @@ static void dp_tx_comp_process_desc(struct dp_soc *soc,
 	uint32_t length;
 	struct dp_peer *peer;
 
+	DP_HIST_INIT();
 	desc = comp_head;
 
 	while (desc) {
@@ -1786,10 +1787,13 @@ static void dp_tx_comp_process_desc(struct dp_soc *soc,
 			DP_TX_FREE_DMA_TO_DEVICE(soc, desc->vdev, desc->nbuf);
 		}
 
+		DP_HIST_PACKET_COUNT_INC(desc->pdev->pdev_id);
+		DP_TRACE(NONE, "pdev_id: %u", desc->pdev->pdev_id);
 		next = desc->next;
 		dp_tx_desc_release(desc, desc->pool_id);
 		desc = next;
 	}
+	DP_TX_HIST_STATS_PER_PDEV();
 }
 
 /**

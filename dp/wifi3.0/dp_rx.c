@@ -611,6 +611,7 @@ dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 	struct dp_srng *dp_rxdma_srng;
 	struct rx_desc_pool *rx_desc_pool;
 
+	DP_HIST_INIT();
 	/* Debug -- Remove later */
 	qdf_assert(soc && hal_ring);
 
@@ -625,6 +626,7 @@ dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 		 * Need API to convert from hal_ring pointer to
 		 * Ring Type / Ring Id combo
 		 */
+		DP_STATS_INC(soc, rx.err.hal_ring_access_fail, 1);
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			FL("HAL RING Access Failed -- %p"), hal_ring);
 		hal_srng_access_end(hal_soc, hal_ring);
@@ -709,6 +711,7 @@ dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 
 		ampdu_flag = (mpdu_desc_info.mpdu_flags &
 				HAL_MPDU_F_AMPDU_FLAG);
+
 		DP_STATS_INCC(peer, rx.ampdu_cnt, 1, ampdu_flag);
 		DP_STATS_INCC(peer, rx.non_ampdu_cnt, 1, !(ampdu_flag));
 
@@ -723,6 +726,7 @@ dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 		DP_STATS_INCC(peer, rx.amsdu_cnt, 1,
 				!(amsdu_flag));
 
+		DP_HIST_PACKET_COUNT_INC(vdev->pdev->pdev_id);
 		qdf_nbuf_queue_add(&vdev->rxq, rx_desc->nbuf);
 fail:
 		dp_rx_add_to_free_desc_list(&head[rx_desc->pool_id],
@@ -731,6 +735,9 @@ fail:
 	}
 done:
 	hal_srng_access_end(hal_soc, hal_ring);
+
+	/* Update histogram statistics by looping through pdev's */
+	DP_RX_HIST_STATS_PER_PDEV();
 
 	for (mac_id = 0; mac_id < MAX_PDEV_CNT; mac_id++) {
 		/*

@@ -464,6 +464,7 @@ dp_rx_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 		 * Need API to convert from hal_ring pointer to
 		 * Ring Type / Ring Id combo
 		 */
+		DP_STATS_INC(soc, rx.err.hal_ring_access_fail, 1);
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			FL("HAL RING Access Failed -- %p"), hal_ring);
 		goto done;
@@ -485,7 +486,6 @@ dp_rx_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 		if (qdf_unlikely(rbm != HAL_RX_BUF_RBM_SW3_BM)) {
 			/* TODO */
 			/* Call appropriate handler */
-
 			DP_STATS_INC(soc, rx.err.invalid_rbm, 1);
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			FL("Invalid RBM %d"), rbm);
@@ -505,6 +505,8 @@ dp_rx_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 
 		if (mpdu_desc_info.mpdu_flags & HAL_MPDU_F_FRAGMENT) {
 			/* TODO */
+			DP_STATS_INC(soc,
+				rx.err.reo_error[HAL_MPDU_F_FRAGMENT], 1);
 			rx_bufs_used += dp_rx_frag_handle(soc,
 					ring_desc, &mpdu_desc_info,
 					&head, &tail, quota);
@@ -513,6 +515,10 @@ dp_rx_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 
 		if (hal_rx_reo_is_pn_error(ring_desc)) {
 			/* TOD0 */
+			DP_STATS_INC(soc,
+				rx.err.
+				reo_error[HAL_REO_ERR_PN_CHECK_FAILED],
+				1);
 			rx_bufs_used += dp_rx_pn_error_handle(soc,
 					ring_desc, &mpdu_desc_info,
 					&head, &tail, quota);
@@ -521,6 +527,10 @@ dp_rx_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 
 		if (hal_rx_reo_is_2k_jump(ring_desc)) {
 			/* TOD0 */
+			DP_STATS_INC(soc,
+				rx.err.
+				reo_error[HAL_REO_ERR_REGULAR_FRAME_2K_JUMP],
+				1);
 			rx_bufs_used += dp_rx_2k_jump_handle(soc,
 					ring_desc, &mpdu_desc_info,
 					&head, &tail, quota);

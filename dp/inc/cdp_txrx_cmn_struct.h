@@ -51,6 +51,22 @@
 #define SUPPORTED_BW 4
 #define SUPPORTED_RECEPTION_TYPES 4
 
+/* Options for Dump Statistics */
+#define CDP_HDD_STATS               0
+#define CDP_TXRX_PATH_STATS         1
+#define CDP_TXRX_HIST_STATS         2
+#define CDP_TXRX_TSO_STATS          3
+#define CDP_HDD_NETIF_OPER_HISTORY  4
+#define CDP_DUMP_TX_FLOW_POOL_INFO  5
+#define CDP_TXRX_DESC_STATS         6
+#define CDP_HIF_STATS               7
+#define CDP_LRO_STATS               8
+#define CDP_NAPI_STATS              9
+#define CDP_SCHEDULER_STATS        21
+#define CDP_TX_QUEUE_STATS         22
+#define CDP_BUNDLE_STATS           23
+#define CDP_CREDIT_STATS           24
+
 /* WME stream classes */
 #define WME_AC_BE    0    /* best effort */
 #define WME_AC_BK    1    /* background */
@@ -701,6 +717,31 @@ struct cdp_peer_stats {
 	struct cdp_rx_stats rx;
 };
 
+/* Tx completions per interrupt */
+struct cdp_hist_tx_comp {
+	uint32_t pkts_1;
+	uint32_t pkts_2_20;
+	uint32_t pkts_21_40;
+	uint32_t pkts_41_60;
+	uint32_t pkts_61_80;
+	uint32_t pkts_81_100;
+	uint32_t pkts_101_200;
+	uint32_t pkts_201_plus;
+};
+
+/* Rx ring descriptors reaped per interrupt */
+struct cdp_hist_rx_ind {
+	uint32_t pkts_1;
+	uint32_t pkts_2_20;
+	uint32_t pkts_21_40;
+	uint32_t pkts_41_60;
+	uint32_t pkts_61_80;
+	uint32_t pkts_81_100;
+	uint32_t pkts_101_200;
+	uint32_t pkts_201_plus;
+};
+
+
 struct cdp_pdev_stats {
 	/* packets dropped on rx */
 	struct {
@@ -724,5 +765,9 @@ struct cdp_pdev_stats {
 	struct cdp_tx_stats tx;
 	/* CDP Rx Stats */
 	struct cdp_rx_stats rx;
+	/* Number of Tx completions per interrupt */
+	struct cdp_hist_tx_comp tx_comp_histogram;
+	/* Number of Rx ring descriptors reaped per interrupt */
+	struct cdp_hist_rx_ind rx_ind_histogram;
 };
 #endif

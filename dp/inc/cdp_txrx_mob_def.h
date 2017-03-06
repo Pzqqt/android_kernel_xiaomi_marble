@@ -29,22 +29,6 @@
 #define OL_TXQ_PAUSE_REASON_VDEV_STOP         (1 << 3)
 #define OL_TXQ_PAUSE_REASON_THERMAL_MITIGATION (1 << 4)
 
-/* command options for dumpStats*/
-#define WLAN_HDD_STATS        0
-#define WLAN_TXRX_STATS       1
-#define WLAN_TXRX_HIST_STATS  2
-#define WLAN_TXRX_TSO_STATS   3
-#define WLAN_HDD_NETIF_OPER_HISTORY 4
-#define WLAN_DUMP_TX_FLOW_POOL_INFO 5
-#define WLAN_TXRX_DESC_STATS  6
-#define WLAN_HIF_STATS  7
-#define WLAN_LRO_STATS  8
-#define WLAN_NAPI_STATS  9
-#define WLAN_SCHEDULER_STATS        21
-#define WLAN_TX_QUEUE_STATS         22
-#define WLAN_BUNDLE_STATS           23
-#define WLAN_CREDIT_STATS           24
-
 #define OL_TXRX_INVALID_NUM_PEERS (-1)
 
 #define OL_TXRX_MAC_ADDR_LEN 6

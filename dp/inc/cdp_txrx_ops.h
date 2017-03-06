@@ -199,6 +199,8 @@ struct cdp_cmn_ops {
 
 	A_STATUS(*txrx_stats)(struct cdp_vdev *vdev,
 		struct ol_txrx_stats_req *req, enum cdp_stats stats);
+
+	QDF_STATUS (*display_stats)(void *psoc, uint16_t value);
 };
 
 struct cdp_ctrl_ops {
@@ -849,12 +851,10 @@ struct cdp_throttle_ops {
 
 /**
  * struct cdp_ocb_ops - mcl ocb ops
- * @display_stats:
  * @clear_stats:
  * @stats:
  */
 struct cdp_mob_stats_ops {
-	QDF_STATUS (*display_stats)(uint16_t bitmap);
 	void (*clear_stats)(uint16_t bitmap);
 	int (*stats)(uint8_t vdev_id, char *buffer, unsigned buf_len);
 };

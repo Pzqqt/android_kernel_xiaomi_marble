@@ -474,4 +474,17 @@ int cdp_txrx_stats(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 	return 0;
 }
 
+/**
+  * cdp_display_stats(): function to map to dump stats
+  * @soc: soc handle
+  * @value: statistics option
+  */
+static inline QDF_STATUS
+cdp_display_stats(ol_txrx_soc_handle soc, uint16_t value)
+{
+	if (soc->ops->cmn_drv_ops->display_stats)
+		return soc->ops->cmn_drv_ops->display_stats(soc, value);
+
+	return 0;
+}
 #endif /* _CDP_TXRX_CMN_H_ */

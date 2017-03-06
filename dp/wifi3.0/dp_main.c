@@ -1134,6 +1134,7 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	pdev->osif_pdev = ctrl_pdev;
 	pdev->pdev_id = pdev_id;
 	soc->pdev_list[pdev_id] = pdev;
+	soc->pdev_count++;
 
 	TAILQ_INIT(&pdev->vdev_list);
 	pdev->vdev_count = 0;
@@ -1325,7 +1326,7 @@ static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force)
 		RXDMA_MONITOR_DESC, 0);
 
 	soc->pdev_list[pdev->pdev_id] = NULL;
-
+	soc->pdev_count--;
 	qdf_mem_free(pdev);
 }
 
@@ -3094,6 +3095,180 @@ static int dp_txrx_stats(struct cdp_vdev *vdev,
 	return 0;
 }
 
+/*
+ * dp_txrx_path_stats() - Function to display dump stats
+ * @soc - soc handle
+ *
+ * return: none
+ */
+static void dp_txrx_path_stats(struct dp_soc *soc)
+{
+	uint8_t error_code;
+	uint8_t loop_pdev;
+	struct dp_pdev *pdev;
+
+	for (loop_pdev = 0; loop_pdev < soc->pdev_count; loop_pdev++) {
+
+		pdev = soc->pdev_list[loop_pdev];
+		dp_aggregate_pdev_stats(pdev);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			"Tx path Statistics:");
+
+		DP_TRACE(NONE, "from stack: %u msdus (%u bytes)",
+			pdev->stats.tx_i.rcvd.num,
+			pdev->stats.tx_i.rcvd.bytes);
+		DP_TRACE(NONE, "processed from host: %u msdus (%u bytes)",
+			pdev->stats.tx_i.processed.num,
+			pdev->stats.tx_i.processed.bytes);
+		DP_TRACE(NONE, "successfully transmitted: %u msdus (%u bytes)",
+			pdev->stats.tx.tx_success.num,
+			pdev->stats.tx.tx_success.bytes);
+
+		DP_TRACE(NONE, "Dropped in host:");
+		DP_TRACE(NONE, "Total packets dropped: %u,",
+			pdev->stats.tx_i.dropped.dropped_pkt.num);
+		DP_TRACE(NONE, "Descriptor not available: %u",
+			pdev->stats.tx_i.dropped.desc_na);
+		DP_TRACE(NONE, "Ring full: %u",
+			pdev->stats.tx_i.dropped.ring_full);
+		DP_TRACE(NONE, "Enqueue fail: %u",
+			pdev->stats.tx_i.dropped.enqueue_fail);
+		DP_TRACE(NONE, "DMA Error: %u",
+			pdev->stats.tx_i.dropped.dma_error);
+
+		DP_TRACE(NONE, "Dropped in hardware:");
+		DP_TRACE(NONE, "total packets dropped: %u",
+			pdev->stats.tx.tx_failed);
+		DP_TRACE(NONE, "mpdu age out: %u",
+			pdev->stats.tx.dropped.mpdu_age_out);
+		DP_TRACE(NONE, "firmware discard reason1: %u",
+			pdev->stats.tx.dropped.fw_discard_reason1);
+		DP_TRACE(NONE, "firmware discard reason2: %u",
+			pdev->stats.tx.dropped.fw_discard_reason2);
+		DP_TRACE(NONE, "firmware discard reason3: %u",
+			pdev->stats.tx.dropped.fw_discard_reason3);
+		DP_TRACE(NONE, "peer_invalid: %u",
+			pdev->soc->stats.tx.tx_invalid_peer.num);
+
+
+		DP_TRACE(NONE, "Tx packets sent per interrupt:");
+		DP_TRACE(NONE, "Single Packet: %u",
+			pdev->stats.tx_comp_histogram.pkts_1);
+		DP_TRACE(NONE, "2-20 Packets:  %u",
+			pdev->stats.tx_comp_histogram.pkts_2_20);
+		DP_TRACE(NONE, "21-40 Packets: %u",
+			pdev->stats.tx_comp_histogram.pkts_21_40);
+		DP_TRACE(NONE, "41-60 Packets: %u",
+			pdev->stats.tx_comp_histogram.pkts_41_60);
+		DP_TRACE(NONE, "61-80 Packets: %u",
+			pdev->stats.tx_comp_histogram.pkts_61_80);
+		DP_TRACE(NONE, "81-100 Packets: %u",
+			pdev->stats.tx_comp_histogram.pkts_81_100);
+		DP_TRACE(NONE, "101-200 Packets: %u",
+			pdev->stats.tx_comp_histogram.pkts_101_200);
+		DP_TRACE(NONE, "   201+ Packets: %u",
+			pdev->stats.tx_comp_histogram.pkts_201_plus);
+
+		DP_TRACE(NONE, "Rx path statistics");
+
+		DP_TRACE(NONE, "delivered %u msdus ( %u bytes),",
+			pdev->stats.rx.to_stack.num,
+			pdev->stats.rx.to_stack.bytes);
+		DP_TRACE(NONE, "received on reo %u msdus ( %u bytes),",
+			pdev->stats.rx.rcvd_reo.num,
+			pdev->stats.rx.rcvd_reo.bytes);
+		DP_TRACE(NONE, "intra-bss packets %u msdus ( %u bytes),",
+			pdev->stats.rx.intra_bss.num,
+			pdev->stats.rx.intra_bss.bytes);
+		DP_TRACE(NONE, "raw packets %u msdus ( %u bytes),",
+			pdev->stats.rx.raw.num,
+			pdev->stats.rx.raw.bytes);
+		DP_TRACE(NONE, "dropped: error %u msdus",
+			pdev->stats.rx.err.mic_err);
+		DP_TRACE(NONE, "peer invalid %u",
+			pdev->soc->stats.rx.err.rx_invalid_peer.num);
+
+		DP_TRACE(NONE, "Reo Statistics");
+		DP_TRACE(NONE, "rbm error: %u msdus",
+			pdev->soc->stats.rx.err.invalid_rbm);
+		DP_TRACE(NONE, "hal ring access fail: %u msdus",
+			pdev->soc->stats.rx.err.hal_ring_access_fail);
+
+		DP_TRACE(NONE, "Reo errors");
+
+		for (error_code = 0; error_code < REO_ERROR_TYPE_MAX;
+				error_code++) {
+			DP_TRACE(NONE, "Reo error number (%u): %u msdus",
+				error_code,
+				pdev->soc->stats.rx.err.reo_error[error_code]);
+		}
+
+		for (error_code = 0; error_code < MAX_RXDMA_ERRORS;
+				error_code++) {
+			DP_TRACE(NONE, "Rxdma error number (%u): %u msdus",
+				error_code,
+				pdev->soc->stats.rx.err
+				.rxdma_error[error_code]);
+		}
+
+		DP_TRACE(NONE, "Rx packets reaped per interrupt:");
+		DP_TRACE(NONE, "Single Packet: %u",
+			 pdev->stats.rx_ind_histogram.pkts_1);
+		DP_TRACE(NONE, "2-20 Packets:  %u",
+			 pdev->stats.rx_ind_histogram.pkts_2_20);
+		DP_TRACE(NONE, "21-40 Packets: %u",
+			 pdev->stats.rx_ind_histogram.pkts_21_40);
+		DP_TRACE(NONE, "41-60 Packets: %u",
+			 pdev->stats.rx_ind_histogram.pkts_41_60);
+		DP_TRACE(NONE, "61-80 Packets: %u",
+			 pdev->stats.rx_ind_histogram.pkts_61_80);
+		DP_TRACE(NONE, "81-100 Packets: %u",
+			 pdev->stats.rx_ind_histogram.pkts_81_100);
+		DP_TRACE(NONE, "101-200 Packets: %u",
+			 pdev->stats.rx_ind_histogram.pkts_101_200);
+		DP_TRACE(NONE, "   201+ Packets: %u",
+			 pdev->stats.rx_ind_histogram.pkts_201_plus);
+	}
+}
+
+/*
+ * dp_txrx_dump_stats() -  Dump statistics
+ * @value - Statistics option
+ */
+static QDF_STATUS dp_txrx_dump_stats(void *psoc, uint16_t value)
+{
+	struct dp_soc *soc =
+		(struct dp_soc *)psoc;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (!soc) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			"%s: soc is NULL", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	switch (value) {
+	case CDP_TXRX_PATH_STATS:
+		dp_txrx_path_stats(soc);
+		break;
+	case CDP_TXRX_TSO_STATS:
+		/* TODO: NOT IMPLEMENTED */
+		break;
+	case CDP_DUMP_TX_FLOW_POOL_INFO:
+		/* TODO: NOT IMPLEMENTED */
+		break;
+	case CDP_TXRX_DESC_STATS:
+		/* TODO: NOT IMPLEMENTED */
+		break;
+	default:
+		status = QDF_STATUS_E_INVAL;
+		break;
+	}
+
+	return status;
+
+}
+
 static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_soc_attach_target = dp_soc_attach_target_wifi3,
 	.txrx_vdev_attach = dp_vdev_attach_wifi3,
@@ -3119,6 +3294,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.set_pdev_dscp_tid_map = dp_set_pdev_dscp_tid_map_wifi3,
 	.txrx_stats = dp_txrx_stats,
 	.txrx_set_monitor_mode = dp_vdev_set_monitor_mode,
+	.display_stats = dp_txrx_dump_stats,
 	/* TODO: Add other functions */
 };
 
@@ -3230,6 +3406,7 @@ static struct cdp_throttle_ops dp_ops_throttle = {
 };
 
 static struct cdp_mob_stats_ops dp_ops_mob_stats = {
+	/* WIFI 3.0 DP NOT IMPLEMENTED YET */
 };
 
 static struct cdp_cfg_ops dp_ops_cfg = {

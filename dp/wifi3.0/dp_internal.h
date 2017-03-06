@@ -108,6 +108,96 @@ while (0)
 	DP_STATS_AGGR(_handle_a, _handle_b, _field.num); \
 	DP_STATS_AGGR(_handle_a, _handle_b, _field.bytes);\
 }
+
+
+#define DP_HIST_INIT() \
+	uint32_t num_of_packets[MAX_PDEV_CNT] = {0};
+
+#define DP_HIST_PACKET_COUNT_INC(_pdev_id) \
+{ \
+		++num_of_packets[_pdev_id]; \
+}
+
+#define DP_TX_HISTOGRAM_UPDATE(_pdev, _p_cntrs) \
+	do {                                                              \
+		if (_p_cntrs == 1) {                                      \
+			DP_STATS_INC(_pdev,                               \
+				tx_comp_histogram.pkts_1, 1);             \
+		} else if (_p_cntrs > 1 && _p_cntrs <= 20) {              \
+			DP_STATS_INC(_pdev,                               \
+				tx_comp_histogram.pkts_2_20, 1);          \
+		} else if (_p_cntrs > 20 && _p_cntrs <= 40) {             \
+			DP_STATS_INC(_pdev,                               \
+				tx_comp_histogram.pkts_21_40, 1);         \
+		} else if (_p_cntrs > 40 && _p_cntrs <= 60) {             \
+			DP_STATS_INC(_pdev,                               \
+				tx_comp_histogram.pkts_41_60, 1);         \
+		} else if (_p_cntrs > 60 && _p_cntrs <= 80) {             \
+			DP_STATS_INC(_pdev,                               \
+				tx_comp_histogram.pkts_61_80, 1);         \
+		} else if (_p_cntrs > 80 && _p_cntrs <= 100) {            \
+			DP_STATS_INC(_pdev,                               \
+				tx_comp_histogram.pkts_81_100, 1);        \
+		} else if (_p_cntrs > 100 && _p_cntrs <= 200) {           \
+			DP_STATS_INC(_pdev,                               \
+				tx_comp_histogram.pkts_101_200, 1);       \
+		} else if (_p_cntrs > 200) {                              \
+			DP_STATS_INC(_pdev,                               \
+				tx_comp_histogram.pkts_201_plus, 1);      \
+		}                                                         \
+	} while (0)
+
+#define DP_RX_HISTOGRAM_UPDATE(_pdev, _p_cntrs) \
+	do {                                                              \
+		if (_p_cntrs == 1) {                                      \
+			DP_STATS_INC(_pdev,                               \
+				rx_ind_histogram.pkts_1, 1);              \
+		} else if (_p_cntrs > 1 && _p_cntrs <= 20) {              \
+			DP_STATS_INC(_pdev,                               \
+				rx_ind_histogram.pkts_2_20, 1);           \
+		} else if (_p_cntrs > 20 && _p_cntrs <= 40) {             \
+			DP_STATS_INC(_pdev,                               \
+				rx_ind_histogram.pkts_21_40, 1);          \
+		} else if (_p_cntrs > 40 && _p_cntrs <= 60) {             \
+			DP_STATS_INC(_pdev,                               \
+				rx_ind_histogram.pkts_41_60, 1);          \
+		} else if (_p_cntrs > 60 && _p_cntrs <= 80) {             \
+			DP_STATS_INC(_pdev,                               \
+				rx_ind_histogram.pkts_61_80, 1);          \
+		} else if (_p_cntrs > 80 && _p_cntrs <= 100) {            \
+			DP_STATS_INC(_pdev,                               \
+				rx_ind_histogram.pkts_81_100, 1);         \
+		} else if (_p_cntrs > 100 && _p_cntrs <= 200) {           \
+			DP_STATS_INC(_pdev,                               \
+				rx_ind_histogram.pkts_101_200, 1);        \
+		} else if (_p_cntrs > 200) {                              \
+			DP_STATS_INC(_pdev,                               \
+				rx_ind_histogram.pkts_201_plus, 1);       \
+		}                                                         \
+	} while (0)
+
+#define DP_TX_HIST_STATS_PER_PDEV() \
+	do { \
+		uint8_t hist_stats = 0; \
+		for (hist_stats = 0; hist_stats < soc->pdev_count; \
+				hist_stats++) { \
+			DP_TX_HISTOGRAM_UPDATE(soc->pdev_list[hist_stats], \
+					num_of_packets[hist_stats]); \
+		} \
+	}  while (0)
+
+
+#define DP_RX_HIST_STATS_PER_PDEV() \
+	do { \
+		uint8_t hist_stats = 0; \
+		for (hist_stats = 0; hist_stats < soc->pdev_count; \
+				hist_stats++) { \
+			DP_RX_HISTOGRAM_UPDATE(soc->pdev_list[hist_stats], \
+					num_of_packets[hist_stats]); \
+		} \
+	}  while (0)
+
+
 #else
 #define DP_STATS_INC(_handle, _field, _delta)
 #define DP_STATS_INCC(_handle, _field, _delta, _cond)
@@ -117,6 +207,12 @@ while (0)
 #define DP_STATS_INCC_PKT(_handle, _field, _count, _bytes)
 #define DP_STATS_AGGR(_handle_a, _handle_b, _field)
 #define DP_STATS_AGGR_PKT(_handle_a, _handle_b, _field)
+#define DP_HIST_INIT()
+#define DP_HIST_PACKET_COUNT_INC(_pdev_id)
+#define DP_TX_HISTOGRAM_UPDATE(_pdev, _p_cntrs)
+#define DP_RX_HISTOGRAM_UPDATE(_pdev, _p_cntrs)
+#define DP_RX_HIST_STATS_PER_PDEV()
+#define DP_TX_HIST_STATS_PER_PDEV()
 #endif
 
 
