@@ -260,7 +260,7 @@ struct policy_mgr_psoc_priv_obj {
 		qdf_event_t connection_update_done_evt;
 		qdf_mutex_t qdf_conc_list_lock;
 		qdf_mc_timer_t dbs_opportunistic_timer;
-		void (*sap_restart_chan_switch_cb)(void *, uint32_t, uint32_t);
+		void (*sap_restart_chan_switch_cb)(uint8_t, uint32_t, uint32_t);
 		struct policy_mgr_sme_cbacks sme_cbacks;
 		struct policy_mgr_wma_cbacks wma_cbacks;
 		struct policy_mgr_tdls_cbacks tdls_cbacks;

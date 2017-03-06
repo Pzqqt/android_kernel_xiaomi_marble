@@ -190,30 +190,27 @@ QDF_STATUS policy_mgr_change_mcc_go_beacon_interval(
 		struct wlan_objmgr_psoc *psoc,
 		uint8_t vdev_id, enum tQDF_ADAPTER_MODE dev_mode);
 
-/**
- * policy_mgr_set_mcc_latency() - Set MCC latency
- * @psoc: PSOC object information
- * @set_value: Latency value
- *
- * Sets the MCC latency value during STA-P2P concurrency
- *
- * Return: None
- */
-void policy_mgr_set_mcc_latency(struct wlan_objmgr_psoc *psoc, int set_value);
 #if defined(FEATURE_WLAN_MCC_TO_SCC_SWITCH)
 /**
  * policy_mgr_change_sap_channel_with_csa() - Move SAP channel using (E)CSA
  * @psoc: PSOC object information
- * @hdd_ap_ctx: AP context
+ * @vdev_id: Vdev id
+ * @channel: Channel to change
+ * @ch_width: channel width to change
  *
  * Invoke the callback function to change SAP channel using (E)CSA
  *
  * Return: None
  */
-void policy_mgr_change_sap_channel_with_csa(struct wlan_objmgr_psoc *psoc);
+void policy_mgr_change_sap_channel_with_csa(
+		struct wlan_objmgr_psoc *psoc,
+		uint8_t vdev_id, uint32_t channel,
+		uint32_t ch_width);
 #else
 static inline void policy_mgr_change_sap_channel_with_csa(
-		struct wlan_objmgr_psoc *psoc)
+		struct wlan_objmgr_psoc *psoc,
+		uint8_t vdev_id, uint32_t channel,
+		uint32_t ch_width)
 {
 
 }
@@ -757,6 +754,12 @@ struct policy_mgr_sme_cbacks {
 		uint8_t next_action, struct wlan_objmgr_psoc *psoc,
 		enum policy_mgr_conn_update_reason reason);
 	QDF_STATUS (*sme_change_mcc_beacon_interval) (uint8_t session_id);
+	QDF_STATUS (*sme_get_ap_channel_from_scan_cache) (
+		void *roam_profile,
+		void **scan_cache,
+		uint8_t *channel);
+	QDF_STATUS (*sme_scan_result_purge) (
+				void *scan_result);
 };
 
 /**
@@ -938,23 +941,27 @@ void policy_mgr_clear_concurrent_session_count(struct wlan_objmgr_psoc *psoc);
 /**
  * policy_mgr_is_multiple_active_sta_sessions() - Check for
  * multiple STA connections
+ * @psoc: PSOC object information
  *
  * Checks if multiple active STA connection are in the driver
  *
  * Return: True if multiple STA sessions are present, False otherwise
  *
  */
-bool policy_mgr_is_multiple_active_sta_sessions(struct wlan_objmgr_psoc *psoc);
+bool policy_mgr_is_multiple_active_sta_sessions(
+	struct wlan_objmgr_psoc *psoc);
 
 /**
  * policy_mgr_is_sta_active_connection_exists() - Check if a STA
  * connection is active
+ * @psoc: PSOC object information
  *
  * Checks if there is atleast one active STA connection in the driver
  *
  * Return: True if an active STA session is present, False otherwise
  */
-bool policy_mgr_is_sta_active_connection_exists(void);
+bool policy_mgr_is_sta_active_connection_exists(
+	struct wlan_objmgr_psoc *psoc);
 
 /**
  * policy_mgr_concurrent_beaconing_sessions_running() - Checks
@@ -1137,7 +1144,7 @@ QDF_STATUS policy_mgr_set_sap_mandatory_channels(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS policy_mgr_register_sap_restart_channel_switch_cb(
 		struct wlan_objmgr_psoc *psoc,
-		void (*sap_restart_chan_switch_cb)(void *, uint32_t, uint32_t));
+		void (*sap_restart_chan_switch_cb)(uint8_t, uint32_t, uint32_t));
 
 /**
  * policy_mgr_deregister_sap_restart_channel_switch_cb() -
