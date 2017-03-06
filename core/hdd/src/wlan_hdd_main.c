@@ -10643,11 +10643,53 @@ static int hdd_update_pmo_config(hdd_context_t *hdd_ctx)
 	return 0;
 }
 
+#ifdef NAPIER_SCAN
+/**
+ * hdd_update_scan_config - API to update scan configuration parameters
+ * @hdd_ctx: HDD context
+ *
+ * Return: 0 if success else err
+ */
+static int hdd_update_scan_config(hdd_context_t *hdd_ctx)
+{
+	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
+	struct scan_user_cfg scan_cfg;
+	struct hdd_config *cfg = hdd_ctx->config;
+	QDF_STATUS status;
+
+	scan_cfg.active_dwell = cfg->nActiveMaxChnTime;
+	scan_cfg.passive_dwell = cfg->nPassiveMaxChnTime;
+	scan_cfg.conc_active_dwell = cfg->nActiveMaxChnTimeConc;
+	scan_cfg.conc_passive_dwell = cfg->nPassiveMaxChnTimeConc;
+	scan_cfg.conc_max_rest_time = cfg->nRestTimeConc;
+	scan_cfg.conc_min_rest_time = cfg->min_rest_time_conc;
+	scan_cfg.conc_idle_time = cfg->idle_time_conc;
+	scan_cfg.scan_cache_aging_time = cfg->scanAgingTimeout;
+	scan_cfg.scan_dwell_time_mode = cfg->scan_adaptive_dwell_mode;
+
+	status = ucfg_scan_update_user_config(psoc, &scan_cfg);
+	if (status != QDF_STATUS_SUCCESS) {
+		hdd_err("failed pmo psoc configuration");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+#else
+static int hdd_update_scan_config(hdd_context_t *hdd_ctx)
+{
+	return 0;
+}
+#endif
+
 int hdd_update_components_config(hdd_context_t *hdd_ctx)
 {
 	int ret;
 
 	ret = hdd_update_pmo_config(hdd_ctx);
+	if (ret)
+		return ret;
+	ret = hdd_update_scan_config(hdd_ctx);
 
 	return ret;
 }
