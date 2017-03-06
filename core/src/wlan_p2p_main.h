@@ -28,6 +28,7 @@
 #include <qdf_event.h>
 
 #define MAX_QUEUE_LENGTH 20
+#define P2P_NOA_ATTR_IND 0x1090
 #define P2P_MODULE_NAME  "P2P"
 
 #define p2p_log(level, args...) \
@@ -152,6 +153,40 @@ struct p2p_soc_priv_obj {
 struct p2p_vdev_priv_obj {
 	struct wlan_objmgr_vdev *vdev;
 	struct p2p_noa_info *noa_info;
+};
+
+/**
+ * struct p2p_noa_attr - p2p noa attribute
+ * @rsvd1:             reserved bits 1
+ * @opps_ps:           opps ps state of the AP
+ * @ct_win:            ct window in TUs
+ * @index:             identifies instance of NOA su element
+ * @rsvd2:             reserved bits 2
+ * @noa1_count:        interval count of noa1
+ * @noa1_duration:     absent period duration of noa1
+ * @noa1_interval:     absent period interval of noa1
+ * @noa1_start_time:   32 bit tsf time of noa1
+ * @rsvd3:             reserved bits 3
+ * @noa2_count:        interval count of noa2
+ * @noa2_duration:     absent period duration of noa2
+ * @noa2_interval:     absent period interval of noa2
+ * @noa2_start_time:   32 bit tsf time of noa2
+ */
+struct p2p_noa_attr {
+	uint32_t rsvd1:16;
+	uint32_t ct_win:7;
+	uint32_t opps_ps:1;
+	uint32_t index:8;
+	uint32_t rsvd2:24;
+	uint32_t noa1_count:8;
+	uint32_t noa1_duration;
+	uint32_t noa1_interval;
+	uint32_t noa1_start_time;
+	uint32_t rsvd3:24;
+	uint32_t noa2_count:8;
+	uint32_t noa2_duration;
+	uint32_t noa2_interval;
+	uint32_t noa2_start_time;
 };
 
 /**
