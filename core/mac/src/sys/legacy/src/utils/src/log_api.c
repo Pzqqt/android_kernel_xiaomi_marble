@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -149,8 +149,9 @@ QDF_TRACE_LEVEL get_vos_debug_level(uint32_t debugLevel)
 		return QDF_TRACE_LEVEL_INFO_MED;
 	case LOG4:
 		return QDF_TRACE_LEVEL_INFO_LOW;
+	case LOGD:
 	default:
-		return QDF_TRACE_LEVEL_INFO_LOW;
+		return QDF_TRACE_LEVEL_DEBUG;
 	}
 }
 
