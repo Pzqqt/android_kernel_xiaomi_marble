@@ -34,6 +34,50 @@ struct mgmt_rx_event_params;
 enum mgmt_frame_type;
 
 /**
+ * tgt_p2p_register_lo_ev_handler() - register lo event
+ * @psoc: soc object
+ *
+ * p2p tgt api to register listen offload event handler.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS tgt_p2p_register_lo_ev_handler(
+	struct wlan_objmgr_psoc *psoc);
+
+/**
+ * tgt_p2p_register_noa_ev_handler() - register noa event
+ * @psoc: soc object
+ *
+ * p2p tgt api to register noa event handler.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS tgt_p2p_register_noa_ev_handler(
+	struct wlan_objmgr_psoc *psoc);
+
+/**
+ * tgt_p2p_unregister_lo_ev_handler() - unregister lo event
+ * @psoc: soc object
+ *
+ * p2p tgt api to unregister listen offload event handler.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS tgt_p2p_unregister_lo_ev_handler(
+	struct wlan_objmgr_psoc *psoc);
+
+/**
+ * tgt_p2p_unregister_noa_ev_handler() - unregister noa event
+ * @psoc: soc object
+ *
+ * p2p tgt api to unregister noa event handler.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS tgt_p2p_unregister_noa_ev_handler(
+	struct wlan_objmgr_psoc *psoc);
+
+/**
  * tgt_p2p_scan_event_cb() - Callback for scan event
  * @vdev: vdev object
  * @event: event information
