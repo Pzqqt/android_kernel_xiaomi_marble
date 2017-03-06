@@ -1163,11 +1163,46 @@ uint32_t policy_mgr_get_concurrency_mode(void)
 	return 0;
 }
 
+/**
+ * policy_mgr_get_channel_from_scan_result() - to get channel from scan result
+ * @psoc: PSOC object information
+ * @roam_profile: pointer to roam profile
+ * @channel: channel to be filled
+ *
+ * This routine gets channel which most likely a candidate to which STA
+ * will make connection.
+ *
+ * Return: QDF_STATUS
+ */
 QDF_STATUS policy_mgr_get_channel_from_scan_result(
 		struct wlan_objmgr_psoc *psoc,
 		void *roam_profile, uint8_t *channel)
 {
-	return QDF_STATUS_SUCCESS;
+	QDF_STATUS status;
+	void *scan_cache = NULL;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid context");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!roam_profile || !channel) {
+		policy_mgr_err("Invalid input parameters");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = pm_ctx->sme_cbacks.sme_get_ap_channel_from_scan_cache
+		(roam_profile, &scan_cache, channel);
+	if (status != QDF_STATUS_SUCCESS) {
+		policy_mgr_err("Get AP channel failed");
+		return status;
+	}
+
+	status = pm_ctx->sme_cbacks.sme_scan_result_purge(scan_cache);
+
+	return status;
 }
 
 uint8_t policy_mgr_search_and_check_for_session_conc(
@@ -1341,11 +1376,6 @@ QDF_STATUS policy_mgr_change_mcc_go_beacon_interval(
 	return QDF_STATUS_SUCCESS;
 }
 
-void policy_mgr_set_mcc_latency(struct wlan_objmgr_psoc *psoc, int set_value)
-{
-	return;
-}
-
 struct policy_mgr_conc_connection_info *policy_mgr_get_conn_info(uint32_t *len)
 {
 	struct policy_mgr_conc_connection_info *conn_ptr =
@@ -1412,9 +1442,20 @@ bool policy_mgr_is_multiple_active_sta_sessions(struct wlan_objmgr_psoc *psoc)
 		psoc, PM_STA_MODE, NULL) > 1;
 }
 
-bool policy_mgr_is_sta_active_connection_exists(void)
+/**
+ * policy_mgr_is_sta_active_connection_exists() - Check if a STA
+ * connection is active
+ * @psoc: PSOC object information
+ *
+ * Checks if there is atleast one active STA connection in the driver
+ *
+ * Return: True if an active STA session is present, False otherwise
+ */
+bool policy_mgr_is_sta_active_connection_exists(
+	struct wlan_objmgr_psoc *psoc)
 {
-	return true;
+	return (!policy_mgr_mode_specific_connection_count(
+		psoc, QDF_STA_MODE, NULL)) ? false : true;
 }
 
 bool policy_mgr_is_any_nondfs_chnl_present(struct wlan_objmgr_psoc *psoc,

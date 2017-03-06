@@ -588,9 +588,34 @@ void policy_mgr_check_concurrent_intf_and_restart_sap(
 #endif /* FEATURE_WLAN_MCC_TO_SCC_SWITCH */
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-void policy_mgr_change_sap_channel_with_csa(struct wlan_objmgr_psoc *psoc)
+/**
+ * policy_mgr_change_sap_channel_with_csa() - Move SAP channel using (E)CSA
+ * @psoc: PSOC object information
+ * @vdev_id: Vdev id
+ * @channel: Channel to change
+ * @ch_width: channel width to change
+ *
+ * Invoke the callback function to change SAP channel using (E)CSA
+ *
+ * Return: None
+ */
+void policy_mgr_change_sap_channel_with_csa(struct wlan_objmgr_psoc *psoc,
+					    uint8_t vdev_id, uint32_t channel,
+					    uint32_t ch_width)
 {
-	return;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid context");
+		return;
+	}
+
+	if (pm_ctx->sap_restart_chan_switch_cb) {
+		policy_mgr_info("SAP change change without restart");
+		pm_ctx->sap_restart_chan_switch_cb(vdev_id,
+				channel, ch_width);
+	}
 }
 #endif
 
@@ -694,7 +719,7 @@ QDF_STATUS policy_mgr_restart_opportunistic_timer(
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 QDF_STATUS policy_mgr_register_sap_restart_channel_switch_cb(
 		struct wlan_objmgr_psoc *psoc,
-		void (*sap_restart_chan_switch_cb)(void *, uint32_t, uint32_t))
+		void (*sap_restart_chan_switch_cb)(uint8_t, uint32_t, uint32_t))
 {
 	struct policy_mgr_psoc_priv_obj *policy_mgr_ctx;
 
