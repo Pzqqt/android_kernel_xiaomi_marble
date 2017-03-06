@@ -181,6 +181,7 @@ typedef enum {
 	WLAN_PMO_ID           = 10,
 	WLAN_LEGACY_SME_ID    = 11,
 	WLAN_SCAN_ID          = 12,
+	WLAN_WIFI_POS_ID      = 13,
 	WLAN_REF_ID_MAX,
 } wlan_objmgr_ref_dbgid;
 
