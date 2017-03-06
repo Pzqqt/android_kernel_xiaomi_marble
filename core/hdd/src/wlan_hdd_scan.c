@@ -1443,7 +1443,7 @@ static int wlan_hdd_update_scan_ies(hdd_adapter_t *adapter,
 	uint16_t elem_len;
 
 	if (!scan_info->default_scan_ies_len || !scan_info->default_scan_ies)
-		return -EINVAL;
+		return 0;
 
 	while (rem_len >= 2) {
 		current_ie = temp_ie;
