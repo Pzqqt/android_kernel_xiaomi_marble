@@ -17,7 +17,7 @@
  */
 
 /**
- * DOC: wifi_pos_main.h
+ * DOC: wifi_pos_main_i.h
  * This file prototyps the important functions pertinent to wifi positioning
  * component.
  */
@@ -25,4 +25,33 @@
 #ifndef _WIFI_POS_MAIN_H_
 #define _WIFI_POS_MAIN_H_
 
+/* forward reference */
+struct wlan_objmgr_psoc;
+
+/**
+ * wifi_pos_psoc_obj_created_notification: callback registered to be called when
+ * psoc object is created.
+ * @psoc: pointer to psoc object just created
+ * @arg_list: argument list
+ *
+ * This function will:
+ *         create WIFI POS psoc object and attach to psoc
+ *         register TLV vs nonTLV callbacks
+ * Return: status of operation
+ */
+QDF_STATUS wifi_pos_psoc_obj_created_notification(
+		struct wlan_objmgr_psoc *psoc, void *arg_list);
+
+/**
+ * wifi_pos_psoc_obj_destroyed_notification: callback registered to be called
+ * when psoc object is destroyed.
+ * @psoc: pointer to psoc object just about to be destroyed
+ * @arg_list: argument list
+ *
+ * This function will:
+ *         detach WIFI POS from psoc object and free
+ * Return: status of operation
+ */
+QDF_STATUS  wifi_pos_psoc_obj_destroyed_notification(
+				struct wlan_objmgr_psoc *psoc, void *arg_list);
 #endif

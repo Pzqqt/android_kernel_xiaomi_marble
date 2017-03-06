@@ -32,4 +32,245 @@
 #ifndef _WIFI_POS_API_H_
 #define _WIFI_POS_API_H_
 
+/* Include files */
+#include "qdf_types.h"
+
+/* forward reference */
+struct wlan_objmgr_psoc;
+struct wifi_pos_driver_caps;
+
+#ifdef WIFI_POS_CONVERGED
+/**
+ * enum oem_err_msg - err msg returned to user space
+ * @OEM_ERR_NULL_CONTEXT: NULL context
+ * @OEM_ERR_APP_NOT_REGISTERED: OEM App is not registered
+ * @OEM_ERR_INVALID_SIGNATURE: Invalid signature
+ * @OEM_ERR_NULL_MESSAGE_HEADER: Invalid message header
+ * @OEM_ERR_INVALID_MESSAGE_TYPE: Invalid message type
+ * @OEM_ERR_INVALID_MESSAGE_LENGTH: Invalid length in message body
+ */
+enum oem_err_msg {
+	OEM_ERR_NULL_CONTEXT = 1,
+	OEM_ERR_APP_NOT_REGISTERED,
+	OEM_ERR_INVALID_SIGNATURE,
+	OEM_ERR_NULL_MESSAGE_HEADER,
+	OEM_ERR_INVALID_MESSAGE_TYPE,
+	OEM_ERR_INVALID_MESSAGE_LENGTH
+};
+
+/* this struct is needed since MLME is not converged yet */
+struct wifi_pos_ch_info {
+	uint8_t chan_id;
+	uint32_t mhz;
+	uint32_t band_center_freq1;
+	uint32_t band_center_freq2;
+	uint32_t info;
+	uint32_t reg_info_1;
+	uint32_t reg_info_2;
+	uint8_t nss;
+	uint32_t rate_flags;
+	uint8_t sec_ch_offset;
+	uint32_t ch_width;
+};
+
+/**
+ * typedef wifi_pos_ch_info_rsp - Channel information
+ * @chan_id: channel id
+ * @reserved0: reserved for padding and future use
+ * @mhz: primary 20 MHz channel frequency in mhz
+ * @band_center_freq1: Center frequency 1 in MHz
+ * @band_center_freq2: Center frequency 2 in MHz, valid only for 11ac
+ *      VHT 80+80 mode
+ * @info: channel info
+ * @reg_info_1: regulatory information field 1 which contains min power,
+ *      max power, reg power and reg class id
+ * @reg_info_2: regulatory information field 2 which contains antennamax
+ */
+struct qdf_packed wifi_pos_ch_info_rsp {
+	uint32_t chan_id;
+	uint32_t reserved0;
+	uint32_t mhz;
+	uint32_t band_center_freq1;
+	uint32_t band_center_freq2;
+	uint32_t info;
+	uint32_t reg_info_1;
+	uint32_t reg_info_2;
+};
+
+/**
+ * struct wmi_pos_peer_status_info - Status information for a given peer
+ * @peer_mac_addr: peer mac address
+ * @peer_status: peer status: 1: CONNECTED, 2: DISCONNECTED
+ * @vdev_id: vdev_id for the peer mac
+ * @peer_capability: peer capability: 0: RTT/RTT2, 1: RTT3. Default is 0
+ * @reserved0: reserved0
+ * @peer_chan_info: channel info on which peer is connected
+ */
+struct qdf_packed wmi_pos_peer_status_info {
+	uint8_t peer_mac_addr[ETH_ALEN];
+	uint8_t peer_status;
+	uint8_t vdev_id;
+	uint32_t peer_capability;
+	uint32_t reserved0;
+	struct wifi_pos_ch_info_rsp peer_chan_info;
+};
+
+/**
+ * struct wifi_pos_req_msg - wifi pos request struct
+ * @msg_type: message type
+ * @pid: process id
+ * @buf: request buffer
+ * @buf_len: request buffer length
+ * @field_info_buf: buffer containing field info
+ * @field_info_buf_len: length of field info buffer
+ *
+ */
+struct wifi_pos_req_msg {
+	uint32_t msg_type;
+	uint32_t pid;
+	uint8_t *buf;
+	uint32_t buf_len;
+	struct wifi_pos_field_info *field_info_buf;
+	uint32_t field_info_buf_len;
+};
+
+/**
+ * wifi_pos_init: initializes WIFI POS component, called by dispatcher init
+ *
+ * Return: status of operation
+ */
+QDF_STATUS wifi_pos_init(void);
+
+/**
+ * wifi_pos_deinit: de-initializes WIFI POS component, called by dispatcher init
+ *
+ * Return: status of operation
+ */
+QDF_STATUS wifi_pos_deinit(void);
+
+/**
+ * wifi_pos_set_oem_target_type: public API to set param in wifi_pos private
+ * object
+ * @psoc: pointer to PSOC
+ * @val: value to set
+ *
+ * Return: None
+ */
+void wifi_pos_set_oem_target_type(struct wlan_objmgr_psoc *psoc, uint32_t val);
+
+/**
+ * wifi_pos_set_oem_fw_version: public API to set param in wifi_pos private
+ * object
+ * @psoc: pointer to PSOC
+ * @val: value to set
+ *
+ * Return: None
+ */
+void wifi_pos_set_oem_fw_version(struct wlan_objmgr_psoc *psoc, uint32_t val);
+
+/**
+ * wifi_pos_set_drv_ver_major: public API to set param in wifi_pos private
+ * object
+ * @psoc: pointer to PSOC
+ * @val: value to set
+ *
+ * Return: None
+ */
+void wifi_pos_set_drv_ver_major(struct wlan_objmgr_psoc *psoc, uint8_t val);
+
+/**
+ * wifi_pos_set_drv_ver_minor: public API to set param in wifi_pos private
+ * object
+ * @psoc: pointer to PSOC
+ * @val: value to set
+ *
+ * Return: None
+ */
+void wifi_pos_set_drv_ver_minor(struct wlan_objmgr_psoc *psoc, uint8_t val);
+
+/**
+ * wifi_pos_set_drv_ver_patch: public API to set param in wifi_pos private
+ * object
+ * @psoc: pointer to PSOC
+ * @val: value to set
+ *
+ * Return: None
+ */
+void wifi_pos_set_drv_ver_patch(struct wlan_objmgr_psoc *psoc, uint8_t val);
+
+/**
+ * wifi_pos_set_drv_ver_build: public API to set param in wifi_pos private
+ * object
+ * @psoc: pointer to PSOC
+ * @val: value to set
+ *
+ * Return: None
+ */
+void wifi_pos_set_drv_ver_build(struct wlan_objmgr_psoc *psoc, uint8_t val);
+
+/**
+ * wifi_pos_set_dwell_time_min: public API to set param in wifi_pos private
+ * object
+ * @psoc: pointer to PSOC
+ * @val: value to set
+ *
+ * Return: None
+ */
+void wifi_pos_set_dwell_time_min(struct wlan_objmgr_psoc *psoc, uint16_t val);
+
+/**
+ * wifi_pos_set_dwell_time_max: public API to set param in wifi_pos private
+ * object
+ * @psoc: pointer to PSOC
+ * @val: value to set
+ *
+ * Return: None
+ */
+void wifi_pos_set_dwell_time_max(struct wlan_objmgr_psoc *psoc, uint16_t val);
+
+/**
+ * wifi_pos_set_current_dwell_time_min: public API to set param in wifi_pos
+ * private object
+ * @psoc: pointer to PSOC
+ * @val: value to set
+ *
+ * Return: None
+ */
+void wifi_pos_set_current_dwell_time_min(struct wlan_objmgr_psoc *psoc,
+					 uint16_t val);
+
+/**
+ * wifi_pos_set_current_dwell_time_max: public API to set param in wifi_pos
+ * private object
+ * @psoc: pointer to PSOC
+ * @val: value to set
+ *
+ * Return: None
+ */
+void wifi_pos_set_current_dwell_time_max(struct wlan_objmgr_psoc *psoc,
+					 uint16_t val);
+
+/**
+ * wifi_pos_populate_caps() - populate oem capabilities
+ * @psoc: psoc object
+ * @caps: pointer to populate the capabilities
+ *
+ * Return: error code
+ */
+QDF_STATUS wifi_pos_populate_caps(struct wlan_objmgr_psoc *psoc,
+			   struct wifi_pos_driver_caps *caps);
+
+#else
+static inline QDF_STATUS wifi_pos_init(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS wifi_pos_deinit(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+#endif
+
 #endif

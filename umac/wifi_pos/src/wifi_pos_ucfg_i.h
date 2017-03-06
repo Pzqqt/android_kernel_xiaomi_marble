@@ -17,6 +17,7 @@
  */
 
 /**
+ * DOC: wifi_pos_ucfg_i.h
  * This file prototyps the important functions pertinent to wifi positioning
  * component.
  */
@@ -24,4 +25,24 @@
 #ifndef _WIFI_POS_UCFG_H_
 #define _WIFI_POS_UCFG_H_
 
-#endif
+#include "qdf_types.h"
+#include "qdf_status.h"
+
+struct wlan_objmgr_psoc;
+struct wifi_pos_req_msg;
+
+/**
+ * ucfg_wifi_pos_process_req: ucfg API to be called from HDD/OS_IF to process a
+ * wifi_pos request from userspace
+ * @psoc: pointer to psoc object
+ * @req: wifi_pos request msg
+ * @send_rsp_cb: callback pointer required to send msg to userspace
+ *
+ * Return: status of operation
+ */
+QDF_STATUS ucfg_wifi_pos_process_req(struct wlan_objmgr_psoc *psoc,
+		struct wifi_pos_req_msg *req,
+		void (*send_rsp_cb)(struct wlan_objmgr_psoc *,
+			uint32_t, uint32_t, uint8_t *));
+
+#endif /* _WIFI_POS_UCFG_H_ */
