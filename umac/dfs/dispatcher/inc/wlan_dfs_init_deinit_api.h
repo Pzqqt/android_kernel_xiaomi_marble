@@ -63,4 +63,10 @@ QDF_STATUS wlan_dfs_pdev_obj_create_notification(struct wlan_objmgr_pdev *pdev,
 QDF_STATUS wlan_dfs_pdev_obj_destroy_notification(struct wlan_objmgr_pdev *pdev,
 		void *arg);
 
+/**
+ * wifi_dfs_psoc_enable() - handles registering dfs event handlers.
+ * @psoc: psoc object.
+ */
+QDF_STATUS wifi_dfs_psoc_enable(struct wlan_objmgr_psoc *psoc);
+
 #endif /* _WLAN_DFS_INIT_DEINIT_API_H_ */

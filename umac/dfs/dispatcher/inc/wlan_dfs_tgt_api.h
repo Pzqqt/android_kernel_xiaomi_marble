@@ -26,6 +26,7 @@
 #define _WLAN_DFS_TGT_API_H_
 
 #include "wlan_dfs_ucfg_api.h"
+#include "wlan_dfs_utils_api.h"
 
 extern struct dfs_to_mlme global_dfs_to_mlme;
 
@@ -185,4 +186,39 @@ QDF_STATUS tgt_dfs_find_vht80_chan_for_precac(struct wlan_objmgr_pdev *pdev,
 		bool *dfs_set_cfreq2,
 		bool *set_agile);
 
+/**
+ * tgt_dfs_process_radar_ind() - Process radar found indication.
+ * @pdev: Pointer to DFS pdev object.
+ * @radar_found: radar found info.
+ *
+ * Process radar found indication.
+ *
+ * Return QDF_STATUS.
+ */
+QDF_STATUS tgt_dfs_process_radar_ind(struct wlan_objmgr_pdev *pdev,
+		struct radar_found_info *radar_found);
+
+/**
+ * tgt_dfs_cac_complete() - Process cac complete indication.
+ * @pdev: Pointer to DFS pdev object.
+ * @vdev_id: vdev id.
+ *
+ * Process cac complete indication from firmware.
+ *
+ * Return QDF_STATUS.
+ */
+QDF_STATUS tgt_dfs_cac_complete(struct wlan_objmgr_pdev *pdev,
+		uint32_t vdev_id);
+
+/**
+ * tgt_dfs_reg_ev_handler() - Register dfs events.
+ * @psoc: Pointer to psoc.
+ * @dfs_offload: phy err processing offloaded to firmware.
+ *
+ * Register dfs events.
+ *
+ * Return: QDF_STATUS.
+ */
+QDF_STATUS tgt_dfs_reg_ev_handler(struct wlan_objmgr_psoc *psoc,
+		bool dfs_offload);
 #endif /* _WLAN_DFS_TGT_API_H_ */

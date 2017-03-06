@@ -171,7 +171,7 @@ static os_timer_func(dfs_cac_timeout)
 	}
 
 	/* Iterate over the nodes, processing the CAC completion event. */
-	dfs_mlme_proc_cac(dfs->dfs_pdev_obj);
+	dfs_mlme_proc_cac(dfs->dfs_pdev_obj, 0);
 
 	/* Send a CAC timeout, VAP up event to user space */
 	dfs_mlme_deliver_event_up_afrer_cac(dfs->dfs_pdev_obj);

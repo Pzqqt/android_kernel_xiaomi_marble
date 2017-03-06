@@ -70,8 +70,9 @@ void dfs_mlme_start_csa(struct wlan_objmgr_pdev *pdev, uint8_t ieeeChan);
 /**
  * dfs_mlme_proc_cac() - Process the CAC completion event.
  * @pdev: Pointer to DFS pdev object.
+ * @vdev_id: vdev id.
  */
-void dfs_mlme_proc_cac(struct wlan_objmgr_pdev *pdev);
+void dfs_mlme_proc_cac(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id);
 
 /**
  * dfs_mlme_deliver_event_up_afrer_cac() - Send a CAC timeout, VAP up event to

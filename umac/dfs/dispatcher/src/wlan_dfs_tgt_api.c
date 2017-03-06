@@ -22,8 +22,18 @@
  * to outside of DFS component.
  */
 #include "wlan_dfs_tgt_api.h"
+#include "wlan_lmac_if_def.h"
+#include "wlan_lmac_if_api.h"
+#include "wlan_dfs_mlme_api.h"
 #include "../../core/src/dfs.h"
 #include "../../core/src/dfs_zero_cac.h"
+#include "../../core/src/dfs_process_radar_found_ind.h"
+
+static inline struct wlan_lmac_if_dfs_tx_ops *
+wlan_psoc_get_dfs_txops(struct wlan_objmgr_psoc *psoc)
+{
+	return &((psoc->soc_cb.tx_ops.dfs_tx_ops));
+}
 
 QDF_STATUS tgt_dfs_set_current_channel(struct wlan_objmgr_pdev *pdev,
 		uint16_t ic_freq,
@@ -224,3 +234,63 @@ QDF_STATUS tgt_dfs_find_vht80_chan_for_precac(struct wlan_objmgr_pdev *pdev,
 	return  QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(tgt_dfs_find_vht80_chan_for_precac);
+
+QDF_STATUS tgt_dfs_process_radar_ind(struct wlan_objmgr_pdev *pdev,
+		struct radar_found_info *radar_found)
+{
+	struct wlan_dfs *dfs;
+
+	if (!pdev) {
+		DFS_PRINTK("%s: null pdev\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	if (!dfs || !dfs->dfs_curchan) {
+		DFS_PRINTK("%s: err, dfs=%p, dfs->dfs_curchan=%p\n",
+			   __func__, dfs, dfs->dfs_curchan);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	dfs_process_radar_found_indication(dfs, radar_found);
+	dfs_mlme_mark_dfs(pdev, dfs->dfs_curchan->ic_ieee,
+		dfs->dfs_curchan->ic_freq,
+		dfs->dfs_curchan->ic_vhtop_ch_freq_seg2,
+		dfs->dfs_curchan->ic_flags);
+
+	return QDF_STATUS_SUCCESS;
+}
+EXPORT_SYMBOL(tgt_dfs_process_radar_ind);
+
+QDF_STATUS tgt_dfs_cac_complete(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id)
+{
+	dfs_mlme_proc_cac(pdev, vdev_id);
+
+	return QDF_STATUS_SUCCESS;
+}
+EXPORT_SYMBOL(tgt_dfs_cac_complete);
+
+QDF_STATUS tgt_dfs_reg_ev_handler(struct wlan_objmgr_psoc *psoc,
+		bool dfs_offload)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
+	struct wlan_objmgr_pdev *pdev = NULL;
+
+	pdev = wlan_objmgr_get_pdev_by_id(psoc, 0, WLAN_DFS_ID);
+	if (!pdev) {
+		DFS_PRINTK("%s: null pdev\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	dfs_tx_ops = wlan_psoc_get_dfs_txops(psoc);
+	if (dfs_tx_ops && dfs_tx_ops->dfs_reg_ev_handler)
+		status = dfs_tx_ops->dfs_reg_ev_handler(pdev, dfs_offload);
+	else
+		DFS_PRINTK("%s: err, dfs_tx_ops=%p\n", __func__, dfs_tx_ops);
+
+	wlan_objmgr_pdev_release_ref(pdev, WLAN_DFS_ID);
+
+	return status;
+}
+EXPORT_SYMBOL(tgt_dfs_reg_ev_handler);

@@ -22,6 +22,13 @@
  */
 
 #include "wlan_dfs_mlme_api.h"
+#include "wlan_objmgr_vdev_obj.h"
+#include "wlan_objmgr_pdev_obj.h"
+#include "../../core/src/dfs.h"
+#include "scheduler_api.h"
+#ifdef QCA_MCL_DFS_SUPPORT
+#include "wni_api.h"
+#endif
 
 void dfs_mlme_channel_mark_radar(struct wlan_objmgr_pdev *pdev,
 		uint16_t freq,
@@ -41,6 +48,7 @@ void dfs_mlme_start_rcsa(struct wlan_objmgr_pdev *pdev)
 		global_dfs_to_mlme.dfs_start_rcsa(pdev);
 }
 
+#ifndef QCA_MCL_DFS_SUPPORT
 void dfs_mlme_mark_dfs(struct wlan_objmgr_pdev *pdev,
 		uint8_t ieee,
 		uint16_t freq,
@@ -54,6 +62,39 @@ void dfs_mlme_mark_dfs(struct wlan_objmgr_pdev *pdev,
 				vhtop_ch_freq_seg2,
 				flags);
 }
+#else
+static void dfs_send_radar_ind(struct wlan_objmgr_pdev *pdev,
+		void *object,
+		void *arg)
+{
+	struct scheduler_msg sme_msg = {0};
+	uint8_t vdev_id = wlan_vdev_get_id((struct wlan_objmgr_vdev *)object);
+
+	sme_msg.type = eWNI_SME_DFS_RADAR_FOUND;
+	sme_msg.bodyptr = NULL;
+	sme_msg.bodyval = vdev_id;
+	scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
+	DFS_PRINTK("%s: eWNI_SME_DFS_RADAR_FOUND pdev%d posted\n",
+		   __func__, vdev_id);
+}
+
+void dfs_mlme_mark_dfs(struct wlan_objmgr_pdev *pdev,
+		uint8_t ieee,
+		uint16_t freq,
+		uint8_t vhtop_ch_freq_seg2,
+		uint32_t flags)
+{
+	if (!pdev) {
+		DFS_PRINTK("%s: null pdev\n", __func__);
+		return;
+	}
+
+	wlan_objmgr_pdev_iterate_obj_list(pdev,
+				WLAN_VDEV_OP,
+				dfs_send_radar_ind,
+				NULL, 0, WLAN_DFS_ID);
+}
+#endif
 
 void dfs_mlme_start_csa(struct wlan_objmgr_pdev *pdev,
 		uint8_t ieeeChan)
@@ -62,11 +103,25 @@ void dfs_mlme_start_csa(struct wlan_objmgr_pdev *pdev,
 		global_dfs_to_mlme.mlme_start_csa(pdev, ieeeChan);
 }
 
-void dfs_mlme_proc_cac(struct wlan_objmgr_pdev *pdev)
+#ifndef QCA_MCL_DFS_SUPPORT
+void dfs_mlme_proc_cac(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id)
 {
 	if (global_dfs_to_mlme.mlme_proc_cac != NULL)
 		global_dfs_to_mlme.mlme_proc_cac(pdev);
 }
+#else
+void dfs_mlme_proc_cac(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id)
+{
+	struct scheduler_msg sme_msg = {0};
+
+	sme_msg.type = eWNI_SME_DFS_CAC_COMPLETE;
+	sme_msg.bodyptr = NULL;
+	sme_msg.bodyval = vdev_id;
+	scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
+	DFS_PRINTK("%s: eWNI_SME_DFS_CAC_COMPLETE vdev%d posted\n",
+		   __func__, vdev_id);
+}
+#endif
 
 void dfs_mlme_deliver_event_up_afrer_cac(struct wlan_objmgr_pdev *pdev)
 {

@@ -22,12 +22,15 @@
  */
 
 #include "wlan_dfs_ucfg_api.h"
+#include "wlan_dfs_tgt_api.h"
+#include "wlan_dfs_utils_api.h"
 #ifndef QCA_MCL_DFS_SUPPORT
 #include "ieee80211_mlme_dfs_interface.h"
 #endif
 #include "wlan_objmgr_global_obj.h"
 #include "wlan_dfs_init_deinit_api.h"
 #include "../../core/src/dfs.h"
+#include "a_types.h"
 
 struct dfs_to_mlme global_dfs_to_mlme;
 
@@ -138,35 +141,43 @@ QDF_STATUS wlan_dfs_pdev_obj_create_notification(struct wlan_objmgr_pdev *pdev,
 		void *arg)
 {
 	struct wlan_dfs *dfs = NULL;
+	struct wlan_objmgr_psoc *psoc;
+	bool dfs_offload = false;
 
 	if (pdev == NULL) {
-		DFS_PRINTK("%s:PDEV is NULL\n", __func__);
+		DFS_PRINTK("%s: null pdev\n", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (dfs_create_object(&dfs) == 1) {
-		DFS_PRINTK("%s : Failed to create DFS object\n", __func__);
+		DFS_PRINTK("%s: failed to create object\n", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	global_dfs_to_mlme.pdev_component_obj_attach(pdev,
-			WLAN_UMAC_COMP_DFS,
-			(void *)dfs,
-			QDF_STATUS_SUCCESS);
+		WLAN_UMAC_COMP_DFS, (void *)dfs, QDF_STATUS_SUCCESS);
 	dfs->dfs_pdev_obj = pdev;
-
-	/* wlan_ar_ops are assigned to sc_wlan_ops in wlan_dev_attach.
-	 * This function is called during module init.
-	 * and wlan_dev_attach is called during wlan_attach.
-	 * If we call dfs_attach here, seen crash in wlan_net80211_attach_dfs.
-	 */
-	if (dfs_attach(dfs) == 1) {
-		DFS_PRINTK("%s : dfs_attch failed\n", __func__);
-		dfs_destroy_object(dfs);
+	wlan_pdev_obj_lock(pdev);
+	psoc = wlan_pdev_get_psoc(pdev);
+	wlan_pdev_obj_unlock(pdev);
+	if (!psoc) {
+		DFS_PRINTK("%s: null psoc\n", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	dfs_get_radars(dfs);
+	dfs_offload =
+		DFS_OFFLOAD_IS_ENABLED(psoc->service_param.service_bitmap);
+	DFS_PRINTK("%s: dfs_offload %d\n", __func__, dfs_offload);
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+	if (!dfs_offload) {
+		if (dfs_attach(dfs) == 1) {
+			DFS_PRINTK("%s: dfs_attch failed\n", __func__);
+			dfs_destroy_object(dfs);
+			return QDF_STATUS_E_FAILURE;
+		}
+		dfs_get_radars(dfs);
+	}
+	dfs_init_nol(pdev);
+	dfs_print_nol(dfs);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -198,3 +209,17 @@ QDF_STATUS wlan_dfs_pdev_obj_destroy_notification(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS wifi_dfs_psoc_enable(struct wlan_objmgr_psoc *psoc)
+{
+	bool dfs_offload =
+		DFS_OFFLOAD_IS_ENABLED(psoc->service_param.service_bitmap);
+
+	DFS_PRINTK("%s: dfs_offload %d\n", __func__, dfs_offload);
+
+	if (QDF_STATUS_SUCCESS != tgt_dfs_reg_ev_handler(psoc, dfs_offload)) {
+		DFS_PRINTK("%s: tgt_dfs_reg_ev_handler failed\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
