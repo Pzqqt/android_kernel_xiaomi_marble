@@ -685,6 +685,36 @@ ucfg_scan_register_unregister_bcn_cb(struct wlan_objmgr_psoc *psoc,
 			enable ? "Registering" : "Deregistering");
 }
 
+QDF_STATUS ucfg_scan_update_user_config(struct wlan_objmgr_psoc *psoc,
+	struct scan_user_cfg *scan_cfg)
+{
+	struct wlan_scan_obj *scan_obj;
+	struct scan_default_params *scan_def;
+
+	if (!psoc) {
+		scm_err("null psoc");
+		return QDF_STATUS_E_FAILURE;
+	}
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (scan_obj == NULL) {
+		scm_err("Failed to get scan object");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	scan_def = &scan_obj->scan_def;
+	scan_def->active_dwell = scan_cfg->active_dwell;
+	scan_def->passive_dwell = scan_cfg->passive_dwell;
+	scan_def->conc_active_dwell = scan_cfg->conc_active_dwell;
+	scan_def->conc_passive_dwell = scan_cfg->conc_passive_dwell;
+	scan_def->conc_max_rest_time = scan_cfg->conc_max_rest_time;
+	scan_def->conc_min_rest_time = scan_cfg->conc_min_rest_time;
+	scan_def->conc_idle_time = scan_cfg->conc_idle_time;
+	scan_def->scan_cache_aging_time = scan_cfg->scan_cache_aging_time;
+	scan_def->adaptive_dwell_time_mode = scan_cfg->scan_dwell_time_mode;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS
 ucfg_scan_psoc_open(struct wlan_objmgr_psoc *psoc)
 {

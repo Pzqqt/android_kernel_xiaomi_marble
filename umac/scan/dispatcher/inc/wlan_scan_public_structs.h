@@ -825,6 +825,30 @@ enum scan_cb_type {
 struct pno_scan_req_params;
 
 /**
+ * struct scan_user_cfg - user configuration required for for scan
+ * @active_dwell: default active dwell time
+ * @passive_dwell:default passive dwell time
+ * @conc_active_dwell: default concurrent active dwell time
+ * @conc_passive_dwell: default concurrent passive dwell time
+ * @conc_max_rest_time: default concurrent max rest time
+ * @conc_min_rest_time: default concurrent min rest time
+ * @conc_idle_time: default concurrent idle time
+ * @scan_cache_aging_time: default scan cache aging time
+ * @scan_dwell_time_mode: Adaptive dweltime mode
+ */
+struct scan_user_cfg {
+	uint32_t active_dwell;
+	uint32_t passive_dwell;
+	uint32_t conc_active_dwell;
+	uint32_t conc_passive_dwell;
+	uint32_t conc_max_rest_time;
+	uint32_t conc_min_rest_time;
+	uint32_t conc_idle_time;
+	uint32_t scan_cache_aging_time;
+	enum scan_dwelltime_adaptive_mode scan_dwell_time_mode;
+};
+
+/**
  * update_beacon_cb() - cb to inform/update beacon
  * @psoc: psoc pointer
  * @scan_params:  scan entry to inform/update

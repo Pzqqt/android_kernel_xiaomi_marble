@@ -306,6 +306,16 @@ QDF_STATUS ucfg_scan_register_bcn_cb(struct wlan_objmgr_psoc *psoc,
 	update_beacon_cb cb, enum scan_cb_type type);
 
 /*
+ * ucfg_scan_update_user_config() - Update scan cache user config
+ * @psoc: psoc
+ * @scan_cfg: scan user config
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_scan_update_user_config(struct wlan_objmgr_psoc *psoc,
+	struct scan_user_cfg *scan_cfg);
+
+/*
  * ucfg_scan_init() - Scan module initialization API
  *
  * Return: QDF_STATUS
