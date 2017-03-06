@@ -876,7 +876,7 @@ void dp_tx_extract_mesh_meta_data(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 	mhdr = (struct meta_hdr_s *)qdf_nbuf_data(nbuf);
 
-	memset(meta_data, 0, sizeof(struct htt_tx_msdu_desc_ext2_t));
+	qdf_mem_set(meta_data, 0, sizeof(struct htt_tx_msdu_desc_ext2_t));
 
 	if (!(mhdr->flags & METAHDR_FLAG_AUTO_RATE)) {
 		meta_data->power = mhdr->power;
@@ -894,7 +894,6 @@ void dp_tx_extract_mesh_meta_data(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		meta_data->valid_retries = 1;
 		meta_data->valid_bw_info = 1;
 	}
-
 
 	if (mhdr->flags & METAHDR_FLAG_NOENCRYPT) {
 		meta_data->encrypt_type = 0;

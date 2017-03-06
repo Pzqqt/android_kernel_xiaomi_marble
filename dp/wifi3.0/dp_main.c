@@ -1846,7 +1846,7 @@ void dp_peer_set_mesh_mode(struct cdp_vdev *vdev_hdl, uint32_t val)
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_hdl;
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-		FL("%s: val %d"), __func__, val);
+		FL("val %d"), val);
 	vdev->mesh_vdev = val;
 }
 
