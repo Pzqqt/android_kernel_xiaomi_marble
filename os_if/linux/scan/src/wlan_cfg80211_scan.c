@@ -595,6 +595,7 @@ QDF_STATUS wlan_abort_scan(struct wlan_objmgr_pdev *pdev,
 	struct pdev_osif_priv *osif_ctx;
 	struct osif_scan_pdev *scan_priv;
 	QDF_STATUS status;
+	struct wlan_objmgr_vdev *vdev;
 
 	req = qdf_mem_malloc(sizeof(*req));
 	if (!req) {
@@ -608,9 +609,16 @@ QDF_STATUS wlan_abort_scan(struct wlan_objmgr_pdev *pdev,
 		cfg80211_err("Failed to retrieve osif context");
 		return QDF_STATUS_E_FAILURE;
 	}
+	if (vdev_id == INVAL_VDEV_ID)
+		vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev,
+				0, WLAN_OSIF_ID);
+	else
+		vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev,
+				vdev_id, WLAN_OSIF_ID);
 
 	scan_priv = osif_ctx->osif_scan;
 	req->cancel_req.requester = scan_priv->req_id;
+	req->vdev = vdev;
 	req->cancel_req.scan_id = scan_id;
 	req->cancel_req.pdev_id = pdev_id;
 	req->cancel_req.vdev_id = vdev_id;
@@ -623,6 +631,7 @@ QDF_STATUS wlan_abort_scan(struct wlan_objmgr_pdev *pdev,
 	status = ucfg_scan_cancel(req);
 	if (QDF_IS_STATUS_ERROR(status))
 		cfg80211_err("Cancel scan request failed");
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
 
 	return status;
 }
