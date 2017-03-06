@@ -30,6 +30,9 @@
 #endif
 #include <target_if_reg.h>
 #include <target_if_scan.h>
+#ifdef DFS_COMPONENT_ENABLE
+#include <target_if_dfs.h>
+#endif
 
 #ifdef CONVERGED_P2P_ENABLE
 #include "target_if_p2p.h"
@@ -151,6 +154,19 @@ static void target_if_tdls_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
 }
 #endif /* CONVERGED_TDLS_ENABLE */
 
+#ifdef DFS_COMPONENT_ENABLE
+static void target_if_dfs_tx_ops_register(
+				struct wlan_lmac_if_tx_ops *tx_ops)
+{
+	target_if_register_dfs_tx_ops(tx_ops);
+}
+#else
+static void target_if_dfs_tx_ops_register(
+				struct wlan_lmac_if_tx_ops *tx_ops)
+{
+}
+#endif /* DFS_COMPONENT_ENABLE */
+
 static
 QDF_STATUS target_if_register_umac_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {
@@ -165,6 +181,8 @@ QDF_STATUS target_if_register_umac_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	target_if_wifi_pos_tx_ops_register(tx_ops);
 
 	target_if_nan_tx_ops_register(tx_ops);
+
+	target_if_dfs_tx_ops_register(tx_ops);
 
 	/* call regulatory callback to register tx ops */
 	target_if_register_regulatory_tx_ops(tx_ops);

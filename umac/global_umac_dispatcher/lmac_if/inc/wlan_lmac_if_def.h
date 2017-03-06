@@ -22,6 +22,9 @@
 
 #include "qdf_status.h"
 #include "wlan_objmgr_cmn.h"
+#ifdef DFS_COMPONENT_ENABLE
+#include <wlan_dfs_public_struct.h>
+#endif
 #include "wlan_mgmt_txrx_utils_api.h"
 #include "wlan_scan_public_structs.h"
 #ifdef WLAN_ATF_ENABLE
@@ -441,6 +444,7 @@ struct wlan_lmac_if_reg_tx_ops {
  * @dfs_is_mode_offload:           Check the radio for offload.
  * @dfs_get_ah_devid:              Get ah devid.
  * @dfs_get_phymode_info:          Get phymode info.
+ * @dfs_reg_ev_handler:            Register dfs event handler.
  */
 
 struct wlan_lmac_if_dfs_tx_ops {
@@ -497,6 +501,8 @@ struct wlan_lmac_if_dfs_tx_ops {
 	QDF_STATUS (*dfs_get_phymode_info)(struct wlan_objmgr_pdev *pdev,
 			uint32_t chan_mode,
 			uint32_t *mode_info);
+	QDF_STATUS (*dfs_reg_ev_handler)(struct wlan_objmgr_pdev *pdev,
+			bool dfs_offload);
 };
 
 /**
@@ -758,6 +764,8 @@ struct wlan_lmac_if_nan_rx_ops {
  * @dfs_get_precac_enable:            Get precac enable flag.
  * @dfs_get_override_precac_timeout:  Get precac timeout.
  * @dfs_set_current_channel:          Set DFS current channel.
+ * @dfs_process_radar_ind:            Process radar found indication.
+ * @dfs_dfs_cac_complete_ind:         Process cac complete indication.
  */
 struct wlan_lmac_if_dfs_rx_ops {
 	QDF_STATUS (*dfs_reset)(struct wlan_objmgr_pdev *pdev);
@@ -811,6 +819,12 @@ struct wlan_lmac_if_dfs_rx_ops {
 			uint8_t ic_ieee,
 			uint8_t ic_vhtop_ch_freq_seg1,
 			uint8_t ic_vhtop_ch_freq_seg2);
+#ifdef DFS_COMPONENT_ENABLE
+	QDF_STATUS (*dfs_process_radar_ind)(struct wlan_objmgr_pdev *pdev,
+			struct radar_found_info *radar_found);
+	QDF_STATUS (*dfs_dfs_cac_complete_ind)(struct wlan_objmgr_pdev *pdev,
+			uint32_t vdev_id);
+#endif
 };
 
 /**
