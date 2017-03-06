@@ -25,6 +25,7 @@
 
 #include "wlan_hdd_main.h"
 #include "wlan_hdd_he.h"
+#include "wma_he.h"
 
 /**
  * hdd_he_wni_cfg_to_string() - return string conversion of HE WNI CFG
@@ -335,4 +336,119 @@ void hdd_he_set_sme_config(tSmeConfigParams *sme_config,
 {
 	sme_config->csrConfig.enable_ul_ofdma = config->enable_ul_ofdma;
 	sme_config->csrConfig.enable_ul_mimo = config->enable_ul_mimo;
+}
+
+/*
+ * __wlan_hdd_cfg80211_get_he_cap() - get HE Capabilities
+ * @wiphy: Pointer to wiphy
+ * @wdev: Pointer to wdev
+ * @data: Pointer to data
+ * @data_len: Data length
+ *
+ * Return: 0 if success, non-zero for failure
+ */
+static int
+__wlan_hdd_cfg80211_get_he_cap(struct wiphy *wiphy,
+			       struct wireless_dev *wdev,
+			       const void *data,
+			       int data_len)
+{
+	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	int ret;
+	QDF_STATUS status;
+	struct sk_buff *reply_skb;
+	uint32_t nl_buf_len;
+	struct he_capability he_cap;
+	uint8_t he_supported = 0;
+
+	ENTER();
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+		hdd_err("Command not allowed in FTM mode");
+		return -EPERM;
+	}
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	nl_buf_len = NLMSG_HDRLEN;
+	if (sme_is_feature_supported_by_fw(DOT11AX)) {
+		he_supported = 1;
+
+		status = wma_get_he_capabilities(&he_cap);
+		if (QDF_STATUS_SUCCESS != status)
+			return -EINVAL;
+	} else {
+		hdd_info("11AX: HE not supported, send only QCA_WLAN_VENDOR_ATTR_HE_SUPPORTED");
+	}
+
+	if (he_supported) {
+		nl_buf_len += NLA_HDRLEN + sizeof(he_supported) +
+			      NLA_HDRLEN + sizeof(he_cap.phy_cap) +
+			      NLA_HDRLEN + sizeof(he_cap.mac_cap) +
+			      NLA_HDRLEN + sizeof(he_cap.mcs) +
+			      NLA_HDRLEN + sizeof(he_cap.ppet.numss_m1) +
+			      NLA_HDRLEN + sizeof(he_cap.ppet.ru_bit_mask) +
+			      NLA_HDRLEN +
+				sizeof(he_cap.ppet.ppet16_ppet8_ru3_ru0);
+	} else {
+		nl_buf_len += NLA_HDRLEN + sizeof(he_supported);
+	}
+
+	hdd_info("11AX: he_supported: %d", he_supported);
+
+	reply_skb = cfg80211_vendor_cmd_alloc_reply_skb(wiphy, nl_buf_len);
+
+	if (!reply_skb) {
+		hdd_err("Allocate reply_skb failed");
+		return -EINVAL;
+	}
+
+	if (nla_put_u8(reply_skb,
+		       QCA_WLAN_VENDOR_ATTR_HE_SUPPORTED, he_supported))
+		goto nla_put_failure;
+
+	/* No need to populate other attributes if HE is not supported */
+	if (0 == he_supported)
+		goto end;
+
+	if (nla_put_u32(reply_skb,
+			QCA_WLAN_VENDOR_ATTR_MAC_CAPAB, he_cap.mac_cap) ||
+	    nla_put_u32(reply_skb,
+			QCA_WLAN_VENDOR_ATTR_HE_MCS, he_cap.mcs) ||
+	    nla_put_u32(reply_skb,
+			QCA_WLAN_VENDOR_ATTR_NUM_SS, he_cap.ppet.numss_m1) ||
+	    nla_put_u32(reply_skb,
+			QCA_WLAN_VENDOR_ATTR_RU_IDX_MASK,
+			he_cap.ppet.ru_bit_mask) ||
+	    nla_put(reply_skb,
+		    QCA_WLAN_VENDOR_ATTR_PHY_CAPAB,
+		    sizeof(u32) * HE_MAX_PHY_CAP_SIZE, he_cap.phy_cap) ||
+	    nla_put(reply_skb, QCA_WLAN_VENDOR_ATTR_PPE_THRESHOLD,
+		    sizeof(u32) * PSOC_HOST_MAX_NUM_SS,
+		    he_cap.ppet.ppet16_ppet8_ru3_ru0))
+		goto nla_put_failure;
+end:
+	ret = cfg80211_vendor_cmd_reply(reply_skb);
+	EXIT();
+	return ret;
+
+nla_put_failure:
+	hdd_err("nla put fail");
+	kfree_skb(reply_skb);
+	return -EINVAL;
+}
+
+int wlan_hdd_cfg80211_get_he_cap(struct wiphy *wiphy,
+				 struct wireless_dev *wdev,
+				 const void *data,
+				 int data_len)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_cfg80211_get_he_cap(wiphy, wdev, data, data_len);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
 }

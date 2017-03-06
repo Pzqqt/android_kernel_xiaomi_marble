@@ -1096,3 +1096,28 @@ void wma_update_vdev_he_capable(struct wma_vdev_start_req *req,
 {
 	req->he_capable = params->he_capable;
 }
+
+QDF_STATUS wma_get_he_capabilities(struct he_capability *he_cap)
+{
+	tp_wma_handle wma_handle;
+
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma_handle) {
+		WMA_LOGE(FL("Invalid WMA handle"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_mem_copy(he_cap->phy_cap,
+		     &wma_handle->he_cap.phy_cap,
+		     WMI_MAX_HECAP_PHY_SIZE);
+	he_cap->mac_cap = wma_handle->he_cap.mac_cap;
+	he_cap->mcs = wma_handle->he_cap.mcs;
+
+	he_cap->ppet.numss_m1 = wma_handle->he_cap.ppet.numss_m1;
+	he_cap->ppet.ru_bit_mask = wma_handle->he_cap.ppet.ru_bit_mask;
+	qdf_mem_copy(&he_cap->ppet.ppet16_ppet8_ru3_ru0,
+		     &wma_handle->he_cap.ppet.ppet16_ppet8_ru3_ru0,
+		     WMI_MAX_NUM_SS);
+
+	return QDF_STATUS_SUCCESS;
+}

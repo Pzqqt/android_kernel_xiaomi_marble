@@ -100,6 +100,7 @@
 #include "wlan_hdd_nan_datapath.h"
 #include "wlan_hdd_disa.h"
 #include "wlan_hdd_request_manager.h"
+#include "wlan_hdd_he.h"
 
 #include <cdp_txrx_cmn.h>
 #include <cdp_txrx_misc.h>
@@ -10074,6 +10075,7 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 #ifdef WLAN_UMAC_CONVERGENCE
 	COMMON_VENDOR_COMMANDS
 #endif
+	FEATURE_11AX_VENDOR_COMMANDS
 };
 
 #if ((LINUX_VERSION_CODE > KERNEL_VERSION(4, 4, 0)) || \

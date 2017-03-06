@@ -51,6 +51,19 @@ static inline bool wma_is_peer_he_capable(tpAddStaParams params)
 void wma_update_vdev_he_capable(struct wma_vdev_start_req *req,
 		tpSwitchChannelParams params);
 
+/**
+ * wma_get_he_capabilities() - Get HE capabilities from WMA
+ * @he_cap: Pointer to HE capabilities
+ *
+ * Currently HE capabilities are not updated in wma_handle. This
+ * is an interface for upper layer to query capabilities from WMA.
+ * When the real use case arise, update wma_handle with HE capabilities
+ * as required.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wma_get_he_capabilities(struct he_capability *he_cap);
+
 #else
 static inline void wma_print_he_cap(tDot11fIEvendor_he_cap *he_cap)
 {

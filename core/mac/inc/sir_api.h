@@ -6919,6 +6919,21 @@ struct wow_enable_params {
 #define HE_PPET_SIZE 3
 #define HE_BYTE_SIZE 8
 
+#define HE_MAX_PHY_CAP_SIZE 3
+
+/**
+ * struct he_capability - to store 11ax HE capabilities
+ * @phy_cap: HE PHY capabilities
+ * @mac_cap: HE MAC capabilities
+ * @mcs: HE MCS
+ * @ppet: HE PPE threshold
+ */
+struct he_capability {
+	uint32_t phy_cap[HE_MAX_PHY_CAP_SIZE];
+	uint32_t mac_cap;
+	uint32_t mcs;
+	struct wlan_psoc_host_ppe_threshold ppet;
+};
 #endif
 
 /**
