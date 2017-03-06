@@ -498,12 +498,6 @@ QDF_STATUS sme_deregister_mgmt_frame(tHalHandle hHal, uint8_t sessionId,
 		uint16_t frameType, uint8_t *matchData,
 		uint16_t matchLen);
 QDF_STATUS sme_ConfigureAppsCpuWakeupState(tHalHandle hHal, bool isAppsAwake);
-QDF_STATUS sme_configure_suspend_ind(tHalHandle hHal,
-		uint32_t conn_state_mask,
-		csr_readyToSuspendCallback,
-		void *callbackContext);
-QDF_STATUS sme_configure_resume_req(tHalHandle hHal,
-		tpSirWlanResumeParam wlanResumeParam);
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
 QDF_STATUS sme_configure_ext_wow(tHalHandle hHal,
 		tpSirExtWoWParams wlanExtParams,

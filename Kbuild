@@ -842,6 +842,8 @@ PMO_OBJS :=     $(PMO_DIR)/core/src/wlan_pmo_main.o \
 		$(PMO_DIR)/core/src/wlan_pmo_mc_addr_filtering.o \
 		$(PMO_DIR)/core/src/wlan_pmo_static_config.o \
 		$(PMO_DIR)/core/src/wlan_pmo_wow.o \
+		$(PMO_DIR)/core/src/wlan_pmo_lphb.o \
+		$(PMO_DIR)/core/src/wlan_pmo_suspend_resume.o \
 		$(PMO_DIR)/dispatcher/src/wlan_pmo_obj_mgmt_api.o \
 		$(PMO_DIR)/dispatcher/src/wlan_pmo_ucfg_api.o \
 		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_arp.o \
@@ -849,7 +851,9 @@ PMO_OBJS :=     $(PMO_DIR)/core/src/wlan_pmo_main.o \
 		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_gtk.o \
 		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_wow.o \
 		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_static_config.o \
-		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_mc_addr_filtering.o
+		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_mc_addr_filtering.o \
+		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_lphb.o \
+		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_suspend_resume.o
 
 ###### UMAC POLICY MGR ########
 UMAC_POLICY_MGR_DIR := $(WLAN_COMMON_ROOT)/umac/cmn_services/policy_mgr
@@ -890,7 +894,9 @@ TARGET_IF_OBJ := $(TARGET_IF_DIR)/core/src/target_if_main.o \
 		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_gtk.o \
 		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_wow.o \
 		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_mc_addr_filtering.o \
-		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_static_config.o
+		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_static_config.o \
+		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_lphb.o \
+		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_suspend_resume.o
 
 ########### GLOBAL_LMAC_IF ##########
 GLOBAL_LMAC_IF_DIR := $(WLAN_COMMON_ROOT)/global_lmac_if

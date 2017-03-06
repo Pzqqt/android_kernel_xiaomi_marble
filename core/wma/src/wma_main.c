@@ -1720,6 +1720,7 @@ static void wma_shutdown_notifier_cb(void *priv)
 
 	qdf_event_set(&wma_handle->wma_resume_event);
 	wma_cleanup_vdev_resp_queue(wma_handle);
+	pmo_ucfg_psoc_wakeup_host_event_received(wma_handle->psoc);
 }
 
 struct wma_version_info g_wmi_version_info;
@@ -6575,10 +6576,6 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, struct scheduler_msg *msg)
 		wma_resume_req(wma_handle, QDF_RUNTIME_SUSPEND);
 		break;
 
-	case WMA_WLAN_SUSPEND_IND:
-		wma_update_conn_state(wma_handle, msg->bodyval);
-		wma_suspend_req(wma_handle, QDF_SYSTEM_SUSPEND);
-		break;
 	case WMA_8023_MULTICAST_LIST_REQ:
 		wma_process_mcbc_set_filter_req(wma_handle,
 				(tpSirRcvFltMcAddrList) msg->bodyptr);
@@ -6717,10 +6714,6 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, struct scheduler_msg *msg)
 				(tSirModemPowerStateInd *) msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
-	case WMA_WLAN_RESUME_REQ:
-		wma_resume_req(wma_handle, QDF_SYSTEM_SUSPEND);
-		break;
-
 #ifdef WLAN_FEATURE_STATS_EXT
 	case WMA_STATS_EXT_REQUEST:
 		wma_stats_ext_req(wma_handle,

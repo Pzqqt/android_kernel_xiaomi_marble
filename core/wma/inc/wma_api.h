@@ -138,21 +138,6 @@ QDF_STATUS wma_get_wcnss_software_version(void *p_cds_gctx,
 int wma_runtime_suspend(struct wow_enable_params wow_params);
 int wma_runtime_resume(void);
 
-int wma_bus_suspend(struct wow_enable_params wow_params);
-int wma_is_target_wake_up_received(void);
-int wma_clear_target_wake_up(void);
-QDF_STATUS wma_suspend_target(WMA_HANDLE handle, int disable_target_intr);
-void wma_target_suspend_acknowledge(void *context, bool wow_nack);
-void wma_handle_initial_wake_up(void);
-int wma_bus_resume(void);
-QDF_STATUS wma_resume_target(WMA_HANDLE handle);
-QDF_STATUS wma_disable_wow_in_fw(WMA_HANDLE handle);
-QDF_STATUS wma_disable_d0wow_in_fw(WMA_HANDLE handle);
-bool wma_is_wow_mode_selected(WMA_HANDLE handle);
-QDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle,
-				struct wow_enable_params wow_params);
-QDF_STATUS wma_enable_d0wow_in_fw(WMA_HANDLE handle,
-				  struct wow_enable_params wow_params);
 bool wma_check_scan_in_progress(WMA_HANDLE handle);
 void wma_set_peer_authorized_cb(void *wma_ctx, wma_peer_authorized_fp auth_cb);
 QDF_STATUS wma_set_peer_param(void *wma_ctx, uint8_t *peer_addr,

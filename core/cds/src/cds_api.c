@@ -376,8 +376,10 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	}
 	htcInfo.pContext = ol_ctx;
 	htcInfo.TargetFailure = ol_target_failure;
-	htcInfo.TargetSendSuspendComplete = wma_target_suspend_acknowledge;
-	htcInfo.target_initial_wakeup_cb = wma_handle_initial_wake_up;
+	htcInfo.TargetSendSuspendComplete =
+		pmo_ucfg_psoc_target_suspend_acknowledge;
+	htcInfo.target_initial_wakeup_cb = pmo_ucfg_psoc_handle_initial_wake_up;
+	htcInfo.target_psoc = (void *)psoc;
 	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
 	/* Create HTC */
@@ -388,6 +390,7 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 			  "%s: Failed to Create HTC", __func__);
 		goto err_bmi_close;
 	}
+	pmo_ucfg_psoc_update_htc_handle(psoc, (void *)gp_cds_context->htc_ctx);
 
 	if (bmi_done(ol_ctx)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
@@ -837,7 +840,7 @@ static inline void cds_suspend_target(tp_wma_handle wma_handle)
 {
 	QDF_STATUS status;
 	/* Suspend the target and disable interrupt */
-	status = wma_suspend_target(wma_handle, 0);
+	status = pmo_ucfg_psoc_suspend_target(wma_handle->psoc, 0);
 	if (status)
 		cds_err("Failed to suspend target, status = %d", status);
 }
@@ -846,7 +849,7 @@ static inline void cds_suspend_target(tp_wma_handle wma_handle)
 {
 	QDF_STATUS status;
 	/* Suspend the target and disable interrupt */
-	status = wma_suspend_target(wma_handle, 1);
+	status = pmo_ucfg_psoc_suspend_target(wma_handle->psoc, 1);
 	if (status)
 		cds_err("Failed to suspend target, status = %d", status);
 }
@@ -917,6 +920,7 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc, v_CONTEXT_t cds_context)
 	if (gp_cds_context->htc_ctx) {
 		htc_stop(gp_cds_context->htc_ctx);
 		htc_destroy(gp_cds_context->htc_ctx);
+		pmo_ucfg_psoc_update_htc_handle(psoc, NULL);
 		gp_cds_context->htc_ctx = NULL;
 	}
 

@@ -1617,7 +1617,7 @@ int wma_mcc_vdev_tx_pause_evt_handler(void *handle, uint8_t *event,
 		return -EINVAL;
 	}
 
-	if (wma_get_wow_bus_suspend(wma)) {
+	if (pmo_ucfg_get_wow_bus_suspend(wma->psoc)) {
 		WMA_LOGD(" Suspend is in progress: Pause/Unpause Tx is NoOp");
 		return 0;
 	}

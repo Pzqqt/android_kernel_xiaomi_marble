@@ -964,18 +964,6 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 				     uint32_t len);
 int wma_pdev_resume_event_handler(void *handle, uint8_t *event, uint32_t len);
 
-/**
- * wma_get_wow_bus_suspend() - check is wow bus suspended or not
- * @wma: wma handle
- *
- * Return: true/false
- */
-static inline int wma_get_wow_bus_suspend(tp_wma_handle wma)
-{
-
-	return qdf_atomic_read(&wma->is_wow_bus_suspended);
-}
-
 QDF_STATUS wma_resume_req(tp_wma_handle wma, enum qdf_suspend_type type);
 
 QDF_STATUS wma_wow_add_pattern(tp_wma_handle wma,
@@ -989,6 +977,7 @@ QDF_STATUS wma_wow_enter(tp_wma_handle wma, tpSirHalWowlEnterParams info);
 QDF_STATUS wma_wow_exit(tp_wma_handle wma, tpSirHalWowlExitParams info);
 
 QDF_STATUS wma_suspend_req(tp_wma_handle wma, enum qdf_suspend_type type);
+
 void wma_calculate_and_update_conn_state(tp_wma_handle wma);
 void wma_update_conn_state(tp_wma_handle wma, uint32_t conn_mask);
 void wma_update_conn_state(tp_wma_handle wma, uint32_t conn_mask);
@@ -1121,7 +1110,6 @@ QDF_STATUS wma_process_ch_avoid_update_req(tp_wma_handle wma_handle,
 					   ch_avoid_update_req);
 #endif
 
-QDF_STATUS wma_suspend_target(WMA_HANDLE handle, int disable_target_intr);
 
 #ifdef FEATURE_WLAN_TDLS
 

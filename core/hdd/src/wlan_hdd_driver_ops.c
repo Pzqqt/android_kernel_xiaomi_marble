@@ -549,6 +549,8 @@ static int __wlan_hdd_bus_suspend(pm_message_t state,
 	int err;
 	int status;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	QDF_STATUS qdf_status;
+	struct pmo_wow_enable_params *params = NULL;
 
 	hdd_info("starting bus suspend; event:%d", state.event);
 
@@ -576,7 +578,16 @@ static int __wlan_hdd_bus_suspend(pm_message_t state,
 		goto done;
 	}
 
-	err = wma_bus_suspend(wow_params);
+	params = (struct pmo_wow_enable_params *)qdf_mem_malloc(
+			sizeof(*params));
+	if (!params) {
+		hdd_err("params is Null");
+		err = -ENOMEM;
+		goto done;
+	}
+	qdf_status = pmo_ucfg_psoc_bus_suspend_req(hdd_ctx->hdd_psoc,
+			QDF_SYSTEM_SUSPEND, params);
+	err = qdf_status_to_os_return(qdf_status);
 	if (err) {
 		hdd_err("Failed wma bus suspend");
 		goto resume_oltxrx;
@@ -592,12 +603,15 @@ static int __wlan_hdd_bus_suspend(pm_message_t state,
 	return 0;
 
 resume_wma:
-	status = wma_bus_resume();
-	QDF_BUG(!status);
+	qdf_status = pmo_ucfg_psoc_bus_resume_req(hdd_ctx->hdd_psoc,
+			QDF_SYSTEM_SUSPEND);
+	QDF_BUG(!qdf_status);
 resume_oltxrx:
 	status = cdp_bus_resume(soc);
 	QDF_BUG(!status);
 done:
+	if (params)
+		qdf_mem_free(params);
 	hdd_err("suspend failed, status = %d", err);
 	return err;
 }
@@ -666,7 +680,8 @@ static int __wlan_hdd_bus_suspend_noirq(void)
 	if (err)
 		goto done;
 
-	err = wma_is_target_wake_up_received();
+	err = pmo_ucfg_psoc_is_target_wake_up_received(
+			hdd_ctx->hdd_psoc);
 	if (err)
 		goto resume_hif_noirq;
 
@@ -749,7 +764,9 @@ static int __wlan_hdd_bus_resume(void)
 		goto out;
 	}
 
-	status = wma_bus_resume();
+	qdf_status = pmo_ucfg_psoc_bus_resume_req(hdd_ctx->hdd_psoc,
+			QDF_SYSTEM_SUSPEND);
+	status = qdf_status_to_os_return(qdf_status);
 	if (status) {
 		hdd_err("Failed wma bus resume");
 		goto out;
@@ -799,6 +816,7 @@ static int __wlan_hdd_bus_resume_noirq(void)
 	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	void *hif_ctx;
 	int status;
+	QDF_STATUS qdf_status;
 
 	if (cds_is_driver_recovering())
 		return 0;
@@ -818,8 +836,8 @@ static int __wlan_hdd_bus_resume_noirq(void)
 	if (NULL == hif_ctx)
 		return -EINVAL;
 
-	status = wma_clear_target_wake_up();
-	QDF_BUG(!status);
+	qdf_status = pmo_ucfg_psoc_clear_target_wake_up(hdd_ctx->hdd_psoc);
+	QDF_BUG(!qdf_status);
 
 	status = hif_bus_resume_noirq(hif_ctx);
 	QDF_BUG(!status);

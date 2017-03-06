@@ -975,57 +975,6 @@ void hdd_disable_and_flush_mc_addr_list(hdd_adapter_t *adapter,
 }
 
 /**
- * hdd_conf_suspend_ind() - Send Suspend notification
- * @pHddCtx: HDD Global context
- * @pAdapter: adapter being suspended
- * @callback: callback function to be called upon completion
- * @callbackContext: callback context to be passed back to callback function
- *
- * Return: None.
- */
-static void hdd_send_suspend_ind(hdd_context_t *pHddCtx,
-				uint32_t conn_state_mask,
-				 void (*callback)(void *callbackContext,
-						  bool suspended),
-				 void *callbackContext)
-{
-	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
-
-	hdd_info("send wlan suspend indication");
-
-	qdf_ret_status =
-		sme_configure_suspend_ind(pHddCtx->hHal, conn_state_mask,
-					  callback, callbackContext);
-
-	if (QDF_STATUS_SUCCESS != qdf_ret_status)
-		hdd_err("sme_configure_suspend_ind returned failure %d",
-		       qdf_ret_status);
-}
-
-/**
- * hdd_conf_suspend_ind() - Send Resume notification
- * @pAdapter: adapter being resumed
- *
- * Return: None.
- */
-static void hdd_conf_resume_ind(hdd_adapter_t *pAdapter)
-{
-	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
-	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
-
-	qdf_ret_status = sme_configure_resume_req(pHddCtx->hHal, NULL);
-
-	if (QDF_STATUS_SUCCESS != qdf_ret_status) {
-		hdd_err("sme_configure_resume_req return failure %d", qdf_ret_status);
-
-	}
-
-	hdd_notice("send wlan resume indication");
-	/* Disable supported OffLoads */
-	hdd_disable_host_offloads(pAdapter, pmo_apps_resume);
-}
-
-/**
  * hdd_update_conn_state_mask(): record info needed by wma_suspend_req
  * @adapter: adapter to get info from
  * @conn_state_mask: mask of connection info
@@ -1051,11 +1000,10 @@ hdd_update_conn_state_mask(hdd_adapter_t *adapter, uint32_t *conn_state_mask)
  * @callback: Callback function to invoke when driver is ready to suspend
  * @callbackContext: Context to pass back to @callback function
  *
- * Return: None.
+ * Return: 0 on success else error code.
  */
-static void
-hdd_suspend_wlan(void (*callback)(void *callbackContext, bool suspended),
-		 void *callbackContext)
+static int
+hdd_suspend_wlan(void)
 {
 	hdd_context_t *pHddCtx;
 
@@ -1068,18 +1016,22 @@ hdd_suspend_wlan(void (*callback)(void *callbackContext, bool suspended),
 	pHddCtx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!pHddCtx) {
 		hdd_alert("HDD context is Null");
-		return;
+		return -EINVAL;
 	}
 
 	if (cds_is_driver_recovering()) {
 		hdd_err("Recovery in Progress. State: 0x%x Ignore suspend!!!",
 			 cds_get_driver_state());
-		return;
+		return -EINVAL;
 	}
 
 	status = hdd_get_front_adapter(pHddCtx, &pAdapterNode);
 	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
 		pAdapter = pAdapterNode->pAdapter;
+		if (wlan_hdd_validate_session_id(pAdapter->sessionId)) {
+			hdd_err("invalid session id: %d", pAdapter->sessionId);
+			goto next_adapter;
+		}
 
 		/* stop all TX queues before suspend */
 		hdd_notice("Disabling queues");
@@ -1089,27 +1041,28 @@ hdd_suspend_wlan(void (*callback)(void *callbackContext, bool suspended),
 		/* Configure supported OffLoads */
 		hdd_enable_host_offloads(pAdapter, pmo_apps_suspend);
 		hdd_update_conn_state_mask(pAdapter, &conn_state_mask);
-
+next_adapter:
 		status = hdd_get_next_adapter(pHddCtx, pAdapterNode, &pNext);
-
 		pAdapterNode = pNext;
 	}
 
-	hdd_send_suspend_ind(pHddCtx, conn_state_mask, callback,
-			callbackContext);
+	status = pmo_ucfg_psoc_user_space_suspend_req(pHddCtx->hdd_psoc,
+			QDF_SYSTEM_SUSPEND);
+	if (status != QDF_STATUS_SUCCESS)
+		return -EAGAIN;
 
 	pHddCtx->hdd_wlan_suspended = true;
 	hdd_wlan_suspend_resume_event(HDD_WLAN_EARLY_SUSPEND);
 
-	return;
+	return 0;
 }
 
 /**
  * hdd_resume_wlan() - Driver resume function
  *
- * Return: None.
+ * Return: 0 on success else error code.
  */
-static void hdd_resume_wlan(void)
+static int hdd_resume_wlan(void)
 {
 	hdd_context_t *pHddCtx;
 	hdd_adapter_t *pAdapter = NULL;
@@ -1121,13 +1074,13 @@ static void hdd_resume_wlan(void)
 	pHddCtx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!pHddCtx) {
 		hdd_err("HDD context is Null");
-		return;
+		return -EINVAL;
 	}
 
 	if (cds_is_driver_recovering()) {
 		hdd_err("Recovery in Progress. State: 0x%x Ignore resume!!!",
 			 cds_get_driver_state());
-		return;
+		return -EINVAL;
 	}
 
 	pHddCtx->hdd_wlan_suspended = false;
@@ -1138,6 +1091,12 @@ static void hdd_resume_wlan(void)
 
 	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
 		pAdapter = pAdapterNode->pAdapter;
+		if (wlan_hdd_validate_session_id(pAdapter->sessionId)) {
+			hdd_err("invalid session id: %d", pAdapter->sessionId);
+			goto next_adapter;
+		}
+		/* Disable supported OffLoads */
+		hdd_disable_host_offloads(pAdapter, pmo_apps_resume);
 
 		/* wake the tx queues */
 		hdd_info("Enabling queues");
@@ -1145,14 +1104,17 @@ static void hdd_resume_wlan(void)
 					WLAN_WAKE_ALL_NETIF_QUEUE,
 					WLAN_CONTROL_PATH);
 
-		hdd_conf_resume_ind(pAdapter);
-
+next_adapter:
 		status = hdd_get_next_adapter(pHddCtx, pAdapterNode, &pNext);
 		pAdapterNode = pNext;
 	}
 	hdd_ipa_resume(pHddCtx);
+	status = pmo_ucfg_psoc_user_space_resume_req(pHddCtx->hdd_psoc,
+			QDF_SYSTEM_SUSPEND);
+	if (status != QDF_STATUS_SUCCESS)
+		return -EAGAIN;
 
-	return;
+	return 0;
 }
 
 /**
@@ -1631,6 +1593,11 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 
 	pld_request_bus_bandwidth(pHddCtx->parent_dev, PLD_BUS_WIDTH_MEDIUM);
 
+	status = hdd_resume_wlan();
+	if (status != QDF_STATUS_SUCCESS) {
+		exit_code = 0;
+		goto exit_with_code;
+	}
 	/* Resume control path scheduler */
 	if (pHddCtx->is_scheduler_suspended) {
 		scheduler_resume();
@@ -1643,7 +1610,6 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 		pHddCtx->is_ol_rx_thread_suspended = false;
 	}
 #endif
-	hdd_resume_wlan();
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_RESUME_WLAN,
@@ -1695,21 +1661,6 @@ exit_with_success:
 exit_with_code:
 	EXIT();
 	return exit_code;
-}
-
-/**
- * wlan_hdd_cfg80211_ready_to_suspend() - set cfg80211 ready to suspend event
- * @callbackContext: Pointer to callback context
- * @suspended: Suspend flag
- *
- * Return: none
- */
-static void wlan_hdd_cfg80211_ready_to_suspend(void *callbackContext,
-						bool suspended)
-{
-	hdd_context_t *pHddCtx = (hdd_context_t *) callbackContext;
-	pHddCtx->suspended = suspended;
-	complete(&pHddCtx->ready_to_suspend);
 }
 
 /**
@@ -1878,24 +1829,6 @@ next_adapter:
 		return -EAGAIN;
 	}
 
-	/* Wait for the target to be ready for suspend */
-	INIT_COMPLETION(pHddCtx->ready_to_suspend);
-
-	hdd_suspend_wlan(&wlan_hdd_cfg80211_ready_to_suspend, pHddCtx);
-
-	rc = wait_for_completion_timeout(&pHddCtx->ready_to_suspend,
-		msecs_to_jiffies(WLAN_WAIT_TIME_READY_TO_SUSPEND));
-	if (!rc) {
-		hdd_err("Failed to get ready to suspend");
-		goto resume_tx;
-	}
-
-	if (!pHddCtx->suspended) {
-		hdd_err("Faied as suspend_status is wrong:%d",
-			pHddCtx->suspended);
-		goto resume_tx;
-	}
-
 	/* Suspend control path scheduler */
 	scheduler_register_hdd_suspend_callback(hdd_suspend_cb);
 	scheduler_set_event_mask(MC_SUSPEND_EVENT_MASK);
@@ -1909,7 +1842,6 @@ next_adapter:
 		hdd_err("Failed to stop mc thread");
 		goto resume_tx;
 	}
-
 	pHddCtx->is_scheduler_suspended = true;
 
 #ifdef QCA_CONFIG_SMP
@@ -1928,6 +1860,9 @@ next_adapter:
 	}
 	pHddCtx->is_ol_rx_thread_suspended = true;
 #endif
+	if (hdd_suspend_wlan() < 0)
+		goto resume_all;
+
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_SUSPEND_WLAN,
 			 NO_SESSION, pHddCtx->isWiphySuspended));
