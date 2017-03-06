@@ -1078,6 +1078,27 @@ UMAC_SER_OBJS := $(UMAC_SER_OBJ_DIR)/wlan_serialization_dequeue.o \
 		 $(UMAC_SER_OBJ_DIR)/wlan_serialization_utils.o \
 		 $(UMAC_SER_OBJ_DIR)/wlan_serialization_legacy_api.o \
 		 $(UMAC_SER_OBJ_DIR)/wlan_serialization_rules.o
+
+###### WIFI POS ########
+CONFIG_WIFI_POS_CONVERGED := n
+
+WIFI_POS_OS_IF_DIR := $(WLAN_COMMON_ROOT)/os_if/linux/wifi_pos/src
+WIFI_POS_OS_IF_INC := -I$(WLAN_COMMON_INC)/os_if/linux/wifi_pos/inc
+WIFI_POS_TGT_DIR := $(WLAN_COMMON_ROOT)/target_if/wifi_pos/src
+WIFI_POS_TGT_INC := -I$(WLAN_COMMON_INC)/target_if/wifi_pos/inc
+WIFI_POS_CORE_DIR := $(WLAN_COMMON_ROOT)/umac/wifi_pos/src
+WIFI_POS_API_INC := -I$(WLAN_COMMON_INC)/umac/wifi_pos/inc
+
+
+ifeq ($(CONFIG_WIFI_POS_CONVERGED), y)
+WIFI_POS_OBJS := $(WIFI_POS_CORE_DIR)/wifi_pos_api.o \
+		 $(WIFI_POS_CORE_DIR)/wifi_pos_main.o \
+		 $(WIFI_POS_CORE_DIR)/wifi_pos_ucfg.o \
+		 $(WIFI_POS_CORE_DIR)/wifi_pos_utils.o \
+		 $(WIFI_POS_OS_IF_DIR)/os_if_wifi_pos.o \
+		 $(WIFI_POS_TGT_DIR)/target_if_wifi_pos.o
+endif
+
 ############## HTC ##########
 HTC_DIR := htc
 HTC_INC := -I$(WLAN_COMMON_INC)/$(HTC_DIR)
@@ -1310,6 +1331,12 @@ INCS += 	$(HAL_INC) \
 		$(DP_INC)
 endif
 
+################ WIFI POS ################
+INCS +=		$(WIFI_POS_API_INC)
+INCS +=		$(WIFI_POS_TGT_INC)
+INCS +=		$(WIFI_POS_OS_IF_INC)
+##########################################
+
 INCS +=		$(UMAC_OBJMGR_INC)
 INCS +=		$(UMAC_MGMT_TXRX_INC)
 INCS +=		$(PMO_INC)
@@ -1367,6 +1394,7 @@ OBJS += 	$(HAL_OBJS)
 endif
 
 OBJS +=		$(UMAC_OBJMGR_OBJS)
+OBJS +=		$(WIFI_POS_OBJS)
 OBJS +=		$(UMAC_MGMT_TXRX_OBJS)
 OBJS +=		$(PMO_OBJS)
 OBJS +=		$(UMAC_P2P_OBJS)
@@ -1407,7 +1435,6 @@ CDEFINES :=	-DANI_LITTLE_BYTE_ENDIAN \
 		-D__linux__ \
 		-DHAL_SELF_STA_PER_BSS=1 \
 		-DFEATURE_WLAN_WAPI \
-		-DFEATURE_OEM_DATA_SUPPORT\
 		-DSOFTAP_CHANNEL_RANGE \
 		-DWLAN_AP_STA_CONCURRENCY \
 		-DFEATURE_WLAN_SCAN_PNO \
@@ -1433,6 +1460,15 @@ CDEFINES :=	-DANI_LITTLE_BYTE_ENDIAN \
 		-DWLAN_PMO_ENABLE \
 		-DWLAN_P2P_ENABLE \
 		-DWLAN_POLICY_MGR_ENABLE
+
+
+############ WIFI POS ##############
+ifeq ($(CONFIG_WIFI_POS_CONVERGED), y)
+CDEFINES += -DWIFI_POS_CONVERGED
+else
+CDEFINES += -DFEATURE_OEM_DATA_SUPPORT
+endif
+####################################
 
 ifneq ($(CONFIG_HIF_USB), 1)
 CDEFINES += -DWLAN_LOGGING_SOCK_SVC_ENABLE
