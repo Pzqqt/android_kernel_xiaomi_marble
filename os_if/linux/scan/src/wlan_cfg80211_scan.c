@@ -277,12 +277,12 @@ nla_put_failure:
 
 /**
  * wlan_cfg80211_scan_done_callback() - scan done callback function called after
- *				scan is finished
- * @pContext: Pointer to context
- * @scanId: Scan Id
- * @status: Scan status
+ * scan is finished
+ * @vdev: vdev ptr
+ * @event: Scan event
+ * @args: Scan cb arg
  *
- * Return: QDF status
+ * Return: void
  */
 static void wlan_cfg80211_scan_done_callback(
 					struct wlan_objmgr_vdev *vdev,
@@ -296,8 +296,15 @@ static void wlan_cfg80211_scan_done_callback(
 	struct wlan_objmgr_pdev *pdev;
 	QDF_STATUS status;
 
-	cfg80211_err("called  with ID = %d, reason = %d",
-				scan_id, event->reason);
+	if (event->type != SCAN_EVENT_TYPE_COMPLETED)
+		return;
+
+	cfg80211_info("scan ID = %d vdev id = %d, event type %s(%d) reason = %s(%d)",
+		scan_id, event->vdev_id,
+		util_scan_get_ev_type_name(event->type),
+		event->type,
+		util_scan_get_ev_reason_name(event->reason),
+		event->reason);
 
 	/*
 	 * cfg80211_scan_done informing NL80211 about completion

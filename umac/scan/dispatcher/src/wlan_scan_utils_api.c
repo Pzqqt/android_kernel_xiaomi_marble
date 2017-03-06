@@ -53,11 +53,8 @@ util_scan_get_ev_type_name(enum scan_event_type type)
 			"FOREIGN_CHANNEL_GET_NF",
 	};
 
-	if (type >= SCAN_EVENT_TYPE_MAX) {
-		scm_err("unknown type : %d", type);
-		QDF_ASSERT(0);
+	if (type >= SCAN_EVENT_TYPE_MAX)
 		return "UNKNOWN";
-	}
 
 	return event_name[type];
 }
@@ -79,11 +76,8 @@ util_scan_get_ev_reason_name(enum scan_completion_reason reason)
 		[SCAN_REASON_MAX_OFFCHAN_RETRIES] = "MAX_OFFCHAN_RETRIES",
 	};
 
-	if (reason >= SCAN_REASON_MAX) {
-		scm_err("unknown reason : %d", reason);
-		QDF_ASSERT(0);
+	if (reason >= SCAN_REASON_MAX)
 		return "UNKNOWN";
-	}
 
 	return reason_name[reason];
 }

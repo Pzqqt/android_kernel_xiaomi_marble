@@ -213,8 +213,12 @@ static void scm_check_and_age_out(struct scan_dbs *scan_db,
 	struct scan_cache_node *node)
 {
 	if (util_scan_entry_age(node->entry) >=
-	   SCAN_CACHE_AGING_TIME)
+	   SCAN_CACHE_AGING_TIME) {
+		scm_err("Aging out BSSID: %pM with age %d ms",
+			node->entry->bssid.bytes,
+			util_scan_entry_age(node->entry));
 		scm_scan_entry_put_ref(scan_db, node, true);
+	}
 }
 
 void scm_age_out_entries(struct scan_dbs *scan_db)
