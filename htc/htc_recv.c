@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -275,6 +275,7 @@ QDF_STATUS htc_rx_completion_handler(void *Context, qdf_nbuf_t netbuf,
 	uint16_t payloadLen;
 	uint32_t trailerlen = 0;
 	uint8_t htc_ep_id;
+	HTC_INIT_INFO *info;
 
 #ifdef RX_SG_SUPPORT
 	LOCK_HTC_RX(target);
@@ -450,8 +451,10 @@ QDF_STATUS htc_rx_completion_handler(void *Context, qdf_nbuf_t netbuf,
 					HTC_PACKET_QUEUE_DEPTH(
 						&pEndpoint->TxQueue));
 				UNLOCK_HTC_CREDIT(target);
-				if (target->HTCInitInfo.target_initial_wakeup_cb)
-					target->HTCInitInfo.target_initial_wakeup_cb();
+				info = &target->HTCInitInfo;
+				if (info && info->target_initial_wakeup_cb)
+					info->target_initial_wakeup_cb(
+						info->target_psoc);
 				else
 					AR_DEBUG_PRINTF(ATH_DEBUG_ANY,
 						("No initial wake up cb"));
@@ -466,7 +469,7 @@ QDF_STATUS htc_rx_completion_handler(void *Context, qdf_nbuf_t netbuf,
 						&pEndpoint->TxQueue));
 				UNLOCK_HTC_CREDIT(target);
 				target->HTCInitInfo.TargetSendSuspendComplete(
-					target->HTCInitInfo.pContext,
+					target->HTCInitInfo.target_psoc,
 					wow_nack);
 
 				break;
@@ -480,7 +483,7 @@ QDF_STATUS htc_rx_completion_handler(void *Context, qdf_nbuf_t netbuf,
 				UNLOCK_HTC_CREDIT(target);
 
 				target->HTCInitInfo.TargetSendSuspendComplete(
-					target->HTCInitInfo.pContext,
+					target->HTCInitInfo.target_psoc,
 					wow_nack);
 				break;
 			}
