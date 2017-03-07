@@ -55,7 +55,7 @@ QDF_STATUS csr_roam_issue_reassociate(tpAniSirGlobal pMac,
 	/* Set the roaming substate to 'join attempt'... */
 	csr_roam_substate_change(pMac, eCSR_ROAM_SUBSTATE_REASSOC_REQ,
 			sessionId);
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  FL(" calling csr_send_join_req_msg (eWNI_SME_REASSOC_REQ)"));
 	/* attempt to Join this BSS... */
 	return csr_send_join_req_msg(pMac, sessionId, pSirBssDesc, pProfile,
@@ -192,7 +192,7 @@ void csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
 				 * in the roamable AP list
 				 */
 				QDF_TRACE(QDF_MODULE_ID_SME,
-					  QDF_TRACE_LEVEL_INFO,
+					  QDF_TRACE_LEVEL_DEBUG,
 					  "SKIP-currently associated AP");
 				continue;
 			}
@@ -228,7 +228,7 @@ void csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
 			     || (descr->channelId !=
 				 n_roam_info->handoffReqInfo.channel))) {
 				QDF_TRACE(QDF_MODULE_ID_SME,
-					  QDF_TRACE_LEVEL_INFO,
+					  QDF_TRACE_LEVEL_DEBUG,
 					  "SKIP-not a candidate AP for OS requested roam");
 				continue;
 			}
@@ -259,14 +259,14 @@ void csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
 			if (voadmitted && qpresent &&
 			    (qavail < n_roam_info->MinQBssLoadRequired)) {
 				QDF_TRACE(QDF_MODULE_ID_SME,
-					QDF_TRACE_LEVEL_INFO,
+					QDF_TRACE_LEVEL_DEBUG,
 					"BSSID:" MAC_ADDRESS_STR "has no BW",
 					MAC_ADDR_ARRAY(descr->bssId));
 				continue;
 			}
 			if (voadmitted && !qpresent) {
 				QDF_TRACE(QDF_MODULE_ID_SME,
-					QDF_TRACE_LEVEL_INFO,
+					QDF_TRACE_LEVEL_DEBUG,
 					"BSSID:" MAC_ADDRESS_STR "no LOAD IE",
 					MAC_ADDR_ARRAY(descr->bssId));
 				continue;
