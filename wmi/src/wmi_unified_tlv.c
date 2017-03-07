@@ -13519,7 +13519,7 @@ static QDF_STATUS send_multiple_vdev_restart_req_cmd_tlv(
 	WMITLV_SET_HDR(buf_ptr,
 		       WMITLV_TAG_STRUC_wmi_channel,
 		       WMITLV_GET_STRUCT_TLVLEN(wmi_channel));
-	chan_info = (wmi_channel *)(buf_ptr + WMI_TLV_HDR_SIZE);
+	chan_info = (wmi_channel *)buf_ptr;
 	tchan_info = &(param->ch_param);
 	chan_info->mhz = tchan_info->mhz;
 	chan_info->band_center_freq1 = tchan_info->cfreq1;
