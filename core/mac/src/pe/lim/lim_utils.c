@@ -5436,6 +5436,9 @@ tSirNwType lim_get_nw_type(tpAniSirGlobal pMac, uint8_t channelNum, uint32_t typ
 					       (pMac, LOG3, FL("Beacon, nwtype=G"));
 				       )
 				nwType = eSIR_11G_NW_TYPE;
+			} else if (pBeacon->HTInfo.present ||
+				   IS_BSS_VHT_CAPABLE(pBeacon->VHTCaps)) {
+				nwType = eSIR_11G_NW_TYPE;
 			}
 		} else {
 			/* 11a packet */

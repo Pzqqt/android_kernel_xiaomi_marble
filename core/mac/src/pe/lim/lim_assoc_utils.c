@@ -2133,7 +2133,6 @@ lim_add_sta(tpAniSirGlobal mac_ctx,
 	struct scheduler_msg msg_q;
 	tSirRetStatus ret_code = eSIR_SUCCESS;
 	tSirMacAddr sta_mac, *sta_Addr;
-	uint8_t i, nw_type_11b = 0;
 	tpSirAssocReq assoc_req;
 	tLimIbssPeerNode *peer_node; /* for IBSS mode */
 	uint8_t *p2p_ie = NULL;
@@ -2485,18 +2484,7 @@ lim_add_sta(tpAniSirGlobal mac_ctx,
 	if (add_sta_params->respReqd)
 		SET_LIM_PROCESS_DEFD_MESGS(mac_ctx, false);
 
-	for (i = 0; i < SIR_NUM_11A_RATES; i++) {
-		if (sirIsArate(sta_ds->supportedRates.llaRates[i] & 0x7F)) {
-			nw_type_11b = 0;
-			break;
-		} else {
-			nw_type_11b = 1;
-		}
-	}
-	if (nw_type_11b)
-		add_sta_params->nwType = eSIR_11B_NW_TYPE;
-	else
-		add_sta_params->nwType = session_entry->nwType;
+	add_sta_params->nwType = session_entry->nwType;
 
 	msg_q.type = WMA_ADD_STA_REQ;
 
