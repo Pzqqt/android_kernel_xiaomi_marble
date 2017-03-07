@@ -1691,6 +1691,7 @@ void __qdf_dmaaddr_to_32s(qdf_dma_addr_t dmaaddr,
 		*hi = 0;
 	}
 }
+EXPORT_SYMBOL(__qdf_dmaaddr_to_32s);
 
 /**
  * __qdf_nbuf_fill_tso_cmn_seg_info() - Init function for each TSO nbuf segment
@@ -1805,6 +1806,13 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 	tso_frag_vaddr = skb->data + tso_cmn_info.eit_hdr_len;
 	/* get the length of the next tso fragment */
 	tso_frag_len = min(skb_frag_len, tso_seg_size);
+
+	if (tso_frag_len == 0) {
+		qdf_print("ERROR:tso_frag_len=0, gso_size=%d!!!",
+				tso_seg_size);
+		return 0;
+	}
+
 	tso_frag_paddr = dma_map_single(osdev->dev,
 		 tso_frag_vaddr, tso_frag_len, DMA_TO_DEVICE);
 	TSO_DEBUG("%s[%d] skb frag len %d tso frag len %d\n", __func__,
@@ -1828,6 +1836,7 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 			return tso_info->num_segs;
 
 		curr_seg->seg.tso_flags.ip_len = tso_cmn_info.ip_tcp_hdr_len;
+		curr_seg->seg.tso_flags.l2_len = tso_cmn_info.l2_len;
 		curr_seg->seg.num_frags++;
 
 		while (more_tso_frags) {
@@ -1984,6 +1993,7 @@ EXPORT_SYMBOL(__qdf_nbuf_unmap_tso_segment);
  *
  * Return: 0 - success, 1 - failure
  */
+#ifndef BUILD_X86
 uint32_t __qdf_nbuf_get_tso_num_seg(struct sk_buff *skb)
 {
 	uint32_t gso_size, tmp_len, num_segs = 0;
@@ -1998,8 +2008,62 @@ uint32_t __qdf_nbuf_get_tso_num_seg(struct sk_buff *skb)
 		else
 			break;
 	}
+
 	return num_segs;
 }
+#else
+uint32_t __qdf_nbuf_get_tso_num_seg(struct sk_buff *skb)
+{
+	uint32_t i, gso_size, tmp_len, num_segs = 0;
+	struct skb_frag_struct *frag = NULL;
+
+	/*
+	 * Check if the head SKB or any of frags are allocated in < 0x50000000
+	 * region which cannot be accessed by Target
+	 */
+	if (virt_to_phys(skb->data) < 0x50000040) {
+		TSO_DEBUG("%s %d: Invalid Address nr_frags = %d, paddr = %p \n",
+				__func__, __LINE__, skb_shinfo(skb)->nr_frags,
+				virt_to_phys(skb->data));
+		goto fail;
+
+	}
+
+	for (i = 0; i < skb_shinfo(skb)->nr_frags; i++) {
+		frag = &skb_shinfo(skb)->frags[i];
+
+		if (!frag)
+			goto fail;
+
+		if (virt_to_phys(skb_frag_address_safe(frag)) < 0x50000040)
+			goto fail;
+	}
+
+
+	gso_size = skb_shinfo(skb)->gso_size;
+	tmp_len = skb->len - ((skb_transport_header(skb) - skb_mac_header(skb))
+			+ tcp_hdrlen(skb));
+	while (tmp_len) {
+		num_segs++;
+		if (tmp_len > gso_size)
+			tmp_len -= gso_size;
+		else
+			break;
+	}
+
+	return num_segs;
+
+	/*
+	 * Do not free this frame, just do socket level accounting
+	 * so that this is not reused.
+	 */
+fail:
+	if (skb->sk)
+		atomic_sub(skb->truesize, &(skb->sk->sk_wmem_alloc));
+
+	return 0;
+}
+#endif
 EXPORT_SYMBOL(__qdf_nbuf_get_tso_num_seg);
 
 #endif /* FEATURE_TSO */
