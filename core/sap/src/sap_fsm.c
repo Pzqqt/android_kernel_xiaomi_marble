@@ -3788,6 +3788,8 @@ static QDF_STATUS sap_fsm_state_ch_select(ptSapContext sap_ctx,
 		sap_ctx->sapsMachine = eSAP_DISCONNECTED;
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 		FL("Cannot start BSS, ACS Fail"));
+		sap_signal_hdd_event(sap_ctx, NULL, eSAP_START_BSS_EVENT,
+					(void *)eSAP_STATUS_FAILURE);
 	} else if (msg == eSAP_HDD_STOP_INFRA_BSS) {
 		sap_ctx->sapsMachine = eSAP_DISCONNECTED;
 		sap_signal_hdd_event(sap_ctx, NULL, eSAP_START_BSS_EVENT,
