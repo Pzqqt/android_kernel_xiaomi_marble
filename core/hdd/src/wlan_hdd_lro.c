@@ -415,7 +415,7 @@ int hdd_lro_init(hdd_context_t *hdd_ctx)
 
 	if ((!hdd_ctx->config->lro_enable) &&
 	    (hdd_napi_enabled(HDD_NAPI_ANY) == 0)) {
-		hdd_err("LRO and NAPI are both disabled.");
+		hdd_warn("LRO and NAPI are both disabled");
 		return 0;
 	}
 
@@ -527,7 +527,7 @@ int hdd_lro_enable(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 
 	if (!hdd_ctx->config->lro_enable ||
 		 QDF_STA_MODE != adapter->device_mode) {
-		hdd_info("LRO Disabled");
+		hdd_debug("LRO Disabled");
 		return 0;
 	}
 
@@ -535,7 +535,7 @@ int hdd_lro_enable(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 	cdp_register_lro_flush_cb(soc, hdd_lro_flush, hdd_init_lro_mgr);
 	adapter->dev->features |= NETIF_F_LRO;
 
-	hdd_info("LRO Enabled");
+	hdd_debug("LRO Enabled");
 
 	return 0;
 }
@@ -543,7 +543,7 @@ int hdd_lro_enable(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 static void hdd_deinit_lro_mgr(void *lro_info)
 {
 	if (lro_info) {
-		hdd_err("LRO instance %p is being freed", lro_info);
+		hdd_debug("LRO instance %p is being freed", lro_info);
 		qdf_mem_free(lro_info);
 	}
 }
@@ -648,5 +648,5 @@ enum hdd_lro_rx_status hdd_lro_rx(hdd_context_t *hdd_ctx,
  */
 void hdd_lro_display_stats(hdd_context_t *hdd_ctx)
 {
-	hdd_err("LRO stats is broken, will fix it");
+	hdd_debug("LRO stats is broken, will fix it");
 }
