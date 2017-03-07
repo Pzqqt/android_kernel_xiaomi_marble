@@ -577,13 +577,22 @@ QDF_STATUS policy_mgr_handle_conc_multiport(struct wlan_objmgr_psoc *psoc,
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 void policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
 {
-	return;
 }
 
+/**
+ * policy_mgr_check_concurrent_intf_and_restart_sap() - Check
+ * concurrent change intf
+ * @psoc: PSOC object information
+ * @operation_channel: operation channel
+ *
+ * Checks the concurrent change interface and restarts SAP
+ *
+ * Return: None
+ */
 void policy_mgr_check_concurrent_intf_and_restart_sap(
-		struct wlan_objmgr_psoc *psoc)
+		struct wlan_objmgr_psoc *psoc,
+		uint8_t operation_channel)
 {
-	return;
 }
 #endif /* FEATURE_WLAN_MCC_TO_SCC_SWITCH */
 

@@ -159,6 +159,12 @@ bool policy_mgr_is_mas_enabled_in_user_cfg(
 	return false;
 }
 
+uint32_t policy_mgr_mcc_to_scc_switch_mode_in_user_cfg(
+	struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
 /**
  * policy_mgr_get_dbs_config() - Get DBS bit
  *

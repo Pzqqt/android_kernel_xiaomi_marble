@@ -95,12 +95,13 @@ uint32_t policy_mgr_get_connection_count(struct wlan_objmgr_psoc *psoc);
 
 /**
  * policy_mgr_get_concurrency_mode() - return concurrency mode
+ * @psoc: PSOC object information
  *
  * This routine is used to retrieve concurrency mode
  *
  * Return: uint32_t value of concurrency mask
  */
-uint32_t policy_mgr_get_concurrency_mode(void);
+uint32_t policy_mgr_get_concurrency_mode(struct wlan_objmgr_psoc *psoc);
 
 /**
  * policy_mgr_search_and_check_for_session_conc() - Checks if
@@ -150,15 +151,19 @@ QDF_STATUS policy_mgr_handle_conc_multiport(
  * policy_mgr_check_concurrent_intf_and_restart_sap() - Check
  * concurrent change intf
  * @psoc: PSOC object information
+ * @operation_channel: operation channel
  *
  * Checks the concurrent change interface and restarts SAP
+ *
  * Return: None
  */
 void policy_mgr_check_concurrent_intf_and_restart_sap(
-	struct wlan_objmgr_psoc *psoc);
+		struct wlan_objmgr_psoc *psoc,
+		uint8_t operation_channel);
 #else
 static inline void policy_mgr_check_concurrent_intf_and_restart_sap(
-						struct wlan_objmgr_psoc *psoc)
+		struct wlan_objmgr_psoc *psoc,
+		uint8_t operation_channel)
 {
 
 }
@@ -904,13 +909,15 @@ QDF_STATUS policy_mgr_get_channel_from_scan_result(
 /**
  * policy_mgr_concurrent_open_sessions_running() - Checks for
  * concurrent open session
+ * @psoc: PSOC object information
  *
  * Checks if more than one open session is running for all the allowed modes
  * in the driver
  *
  * Return: True if more than one open session exists, False otherwise
  */
-bool policy_mgr_concurrent_open_sessions_running(void);
+bool policy_mgr_concurrent_open_sessions_running(
+	struct wlan_objmgr_psoc *psoc);
 
 /**
  * policy_mgr_max_concurrent_connections_reached() - Check if
@@ -966,13 +973,15 @@ bool policy_mgr_is_sta_active_connection_exists(
 /**
  * policy_mgr_concurrent_beaconing_sessions_running() - Checks
  * for concurrent beaconing entities
+ * @psoc: PSOC object information
  *
  * Checks if multiple beaconing sessions are running i.e., if SAP or GO or IBSS
  * are beaconing together
  *
  * Return: True if multiple entities are beaconing together, False otherwise
  */
-bool policy_mgr_concurrent_beaconing_sessions_running(void);
+bool policy_mgr_concurrent_beaconing_sessions_running(
+	struct wlan_objmgr_psoc *psoc);
 
 /**
  * policy_mgr_wait_for_connection_update() - Wait for hw mode
