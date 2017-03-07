@@ -158,6 +158,7 @@ tgt_scan_event_handler(struct wlan_objmgr_psoc *psoc,
 	struct scheduler_msg msg = {0,};
 	struct scan_event *event = &event_info->event;
 	uint8_t vdev_id = event->vdev_id;
+	QDF_STATUS status;
 
 	if (!psoc || !event_info) {
 		scm_err("psoc: 0x%p, event_info: 0x%p", psoc, event_info);
@@ -177,7 +178,13 @@ tgt_scan_event_handler(struct wlan_objmgr_psoc *psoc,
 	msg.bodyptr = event_info;
 	msg.callback = scm_scan_event_handler;
 
-	return scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		qdf_mem_free(event_info);
+		wlan_objmgr_vdev_release_ref(event_info->vdev, WLAN_SCAN_ID);
+	}
+
+	return status;
 }
 
 QDF_STATUS tgt_scan_bcn_probe_rx_callback(struct wlan_objmgr_psoc *psoc,

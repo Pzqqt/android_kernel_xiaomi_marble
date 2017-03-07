@@ -112,6 +112,7 @@ QDF_STATUS
 ucfg_scan_start(struct scan_start_request *req)
 {
 	struct scheduler_msg msg = {0, };
+	QDF_STATUS status;
 
 	if (!req || !req->vdev) {
 		scm_err("vdev: %p, req: %p", req->vdev, req);
@@ -123,16 +124,25 @@ ucfg_scan_start(struct scan_start_request *req)
 	msg.bodyptr = req;
 	msg.callback = scm_scan_start_req;
 
-	return scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
+	status = scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		scm_err("failed to post to QDF_MODULE_ID_OS_IF");
+		qdf_mem_free(req);
+	}
+
+	return status;
 }
 
 QDF_STATUS
 ucfg_scan_cancel(struct scan_cancel_request *req)
 {
 	struct scheduler_msg msg = {0, };
+	QDF_STATUS status;
 
 	if (!req || !req->vdev) {
 		scm_err("vdev: %p, req: %p", req->vdev, req);
+		if (req)
+			qdf_mem_free(req);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 	scm_info("reqid: %d, scanid: %d, vdevid: %d, type: %d",
@@ -141,7 +151,13 @@ ucfg_scan_cancel(struct scan_cancel_request *req)
 	msg.bodyptr = req;
 	msg.callback = scm_scan_cancel_req;
 
-	return scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
+	status = scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		scm_err("failed to post to QDF_MODULE_ID_OS_IF");
+		qdf_mem_free(req);
+	}
+
+	return status;
 }
 
 wlan_scan_requester
