@@ -55,7 +55,8 @@
 #include "sap_internal.h"
 #include "cds_concurrency.h"
 #include "wma.h"
-
+#include <wlan_objmgr_vdev_obj.h>
+#include <wlan_objmgr_pdev_obj.h>
 /*----------------------------------------------------------------------------
  * Preprocessor Definitions and Constants
  * -------------------------------------------------------------------------*/
@@ -1314,4 +1315,42 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 	}
 	wlansap_context_put(sap_ctx);
 	return qdf_ret_status;
+}
+
+void sap_scan_event_callback(struct wlan_objmgr_vdev *vdev,
+			struct scan_event *event, void *arg)
+{
+	uint32_t scan_id;
+	uint8_t session_id;
+	eCsrScanStatus scan_status = eCSR_SCAN_FAILURE;
+	tHalHandle hal_handle;
+	ptSapContext sap_ctx = (ptSapContext) arg;
+
+	session_id = wlan_vdev_get_id(vdev);
+	scan_id = event->scan_id;
+	hal_handle = cds_get_context(QDF_MODULE_ID_SME);
+	if (!hal_handle) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_FATAL,
+			  FL("invalid h_hal"));
+		return;
+	}
+
+	if ((event->type == SCAN_EVENT_TYPE_COMPLETED) &&
+		((event->reason == SCAN_REASON_CANCELLED) ||
+		(event->reason == SCAN_REASON_TIMEDOUT) ||
+		(event->reason == SCAN_REASON_INTERNAL_FAILURE)))
+		scan_status = eCSR_SCAN_FAILURE;
+	else if ((event->type == SCAN_EVENT_TYPE_COMPLETED) &&
+			(event->reason == SCAN_REASON_COMPLETED))
+		scan_status = eCSR_SCAN_SUCCESS;
+	else
+		return;
+
+	if (!sap_ctx->sap_acs_pre_start_bss)
+		wlansap_scan_callback(hal_handle, arg, session_id, scan_id,
+				scan_status);
+	else
+		wlansap_pre_start_bss_acs_scan_callback(hal_handle,
+					arg, session_id,
+					scan_id, scan_status);
 }

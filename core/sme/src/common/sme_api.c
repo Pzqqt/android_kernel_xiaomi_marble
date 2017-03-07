@@ -2922,6 +2922,7 @@ QDF_STATUS sme_remove_bssid_from_scan_list(tHalHandle hal,
 	return status;
 }
 
+#ifndef NAPIER_SCAN
 /**
  * sme_scan_request() - wrapper function to Request a 11d or full scan from CSR.
  * @hal:          hal global context
@@ -3012,6 +3013,14 @@ QDF_STATUS sme_scan_request(tHalHandle hal, uint8_t session_id,
 	sme_release_global_lock(&mac_ctx->sme);
 	return status;
 }
+#else
+QDF_STATUS sme_scan_request(tHalHandle hal, uint8_t session_id,
+		tCsrScanRequest *scan_req,
+		csr_scan_completeCallback callback, void *ctx)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /* ---------------------------------------------------------------------------
     \fn sme_scan_get_result

@@ -51,7 +51,9 @@
 #include "cds_reg_service.h"
 #include "qdf_util.h"
 #include "cds_concurrency.h"
-
+#include <wlan_objmgr_pdev_obj.h>
+#include <wlan_objmgr_vdev_obj.h>
+#include <wlan_utility.h>
 /*----------------------------------------------------------------------------
  * Preprocessor Definitions and Constants
  * -------------------------------------------------------------------------*/
@@ -2192,9 +2194,15 @@ QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 	/* Initiate a SCAN request */
 	QDF_STATUS qdf_ret_status;
 	/* To be initialised if scan is required */
-	tCsrScanRequest scan_request;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac_ctx;
+#ifdef NAPIER_SCAN
+	struct scan_start_request *req;
+	struct wlan_objmgr_vdev *vdev;
+	uint8_t i;
+#else
+	tCsrScanRequest scan_request;
+#endif
 
 #ifdef SOFTAP_CHANNEL_RANGE
 	uint8_t *channel_list = NULL;
@@ -2305,50 +2313,57 @@ QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 		if (sap_context->acs_cfg->skip_scan_status !=
 						eSAP_SKIP_ACS_SCAN) {
 #endif
+#ifndef NAPIER_SCAN
 		qdf_mem_zero(&scan_request, sizeof(scan_request));
-
 		/*
 		 * Set scanType to Active scan. FW takes care of using passive
 		 * scan for DFS and active for non DFS channels.
 		 */
 		scan_request.scanType = eSIR_ACTIVE_SCAN;
-
 		/* Set min and max channel time to zero */
 		scan_request.minChnTime = 0;
 		scan_request.maxChnTime = 0;
-
 		/* Set BSSType to default type */
 		scan_request.BSSType = eCSR_BSS_TYPE_ANY;
-
-#ifndef SOFTAP_CHANNEL_RANGE
-		/*Scan all the channels */
-		scan_request.ChannelInfo.num_of_channels = 0;
-
-		scan_request.ChannelInfo.ChannelList = NULL;
-
-		scan_request.requestType = eCSR_SCAN_REQUEST_FULL_SCAN;
-		/* eCSR_SCAN_REQUEST_11D_SCAN; */
-
 #else
-
+		req = qdf_mem_malloc(sizeof(*req));
+		if (!req) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+			  FL("Failed to allocate memory"));
+			return QDF_STATUS_E_NOMEM;
+		}
+		vdev = wlan_objmgr_get_vdev_by_macaddr_from_psoc(
+						mac_ctx->psoc,
+						sap_context->self_mac_addr,
+						WLAN_LEGACY_SME_ID);
+		ucfg_scan_init_default_params(vdev, req);
+		req->scan_req.dwell_time_active = 0;
+		req->scan_req.scan_id = ucfg_scan_get_scan_id(mac_ctx->psoc);
+		req->scan_req.vdev_id = wlan_vdev_get_id(vdev);
+		req->scan_req.scan_req_id = sap_context->req_id;
+#endif
 		sap_get_channel_list(sap_context, &channel_list,
 				  &num_of_channels);
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
 		if (num_of_channels != 0) {
 #endif
+
+#ifndef NAPIER_SCAN
 		/*Scan the channels in the list */
 		scan_request.ChannelInfo.numOfChannels =
 			num_of_channels;
-
 		scan_request.ChannelInfo.ChannelList =
 			channel_list;
-
 		scan_request.requestType =
 			eCSR_SCAN_SOFTAP_CHANNEL_RANGE;
-
+#else
+		req->scan_req.num_chan = num_of_channels;
+		for (i = 0; i < num_of_channels; i++)
+			req->scan_req.chan_list[i] =
+				wlan_chan_to_freq(channel_list[i]);
+#endif
 		sap_context->channelList = channel_list;
 		sap_context->num_of_channel = num_of_channels;
-#endif
 		/* Set requestType to Full scan */
 
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -2358,6 +2373,8 @@ QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 			eSAP_DO_NEW_ACS_SCAN)
 #endif
 			sme_scan_flush_result(h_hal);
+		sap_context->sap_acs_pre_start_bss = sap_do_acs_pre_start_bss;
+#ifndef NAPIER_SCAN
 		if (true == sap_do_acs_pre_start_bss) {
 			/*
 			 * when ID == 0 11D scan/active scan with callback,
@@ -2383,6 +2400,10 @@ QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 				&wlansap_scan_callback,
 				sap_context);
 		}
+#else
+		qdf_ret_status = ucfg_scan_start(req);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+#endif
 		if (QDF_STATUS_SUCCESS != qdf_ret_status) {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 				  FL("sme_scan_request  fail %d!!!"),
@@ -2420,7 +2441,12 @@ QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 		} else {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 				 FL("return sme_ScanReq, scanID=%d, Ch=%d"),
-				 scan_request.scan_id, sap_context->channel);
+#ifndef NAPIER_SCAN
+				 scan_request.scan_id,
+#else
+				req->scan_req.scan_id,
+#endif
+				 sap_context->channel);
 		}
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
 		}

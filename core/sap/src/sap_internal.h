@@ -41,6 +41,8 @@
 #include "sap_api.h"
 #include "sap_fsm_ext.h"
 #include "sap_ch_select.h"
+#include <wlan_scan_public_structs.h>
+#include <wlan_objmgr_pdev_obj.h>
 
 /*----------------------------------------------------------------------------
  * Preprocessor Definitions and Constants
@@ -275,6 +277,8 @@ typedef struct sSapContext {
 	tSirMacRateSet supp_rate_set;
 	tSirMacRateSet extended_rate_set;
 	enum sap_acs_dfs_mode dfs_mode;
+	wlan_scan_requester req_id;
+	uint8_t sap_acs_pre_start_bss;
 } *ptSapContext;
 
 /*----------------------------------------------------------------------------
@@ -456,6 +460,9 @@ sap_mark_leaking_ch(ptSapContext sap_ctx,
 		tSapDfsNolInfo *nol,
 		uint8_t temp_ch_lst_sz,
 		uint8_t *temp_ch_lst);
+
+void sap_scan_event_callback(struct wlan_objmgr_vdev *vdev,
+			struct scan_event *event, void *arg);
 
 #ifdef __cplusplus
 }

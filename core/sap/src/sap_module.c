@@ -315,6 +315,7 @@ QDF_STATUS wlansap_start(void *pCtx, enum tQDF_ADAPTER_MODE mode,
 	ptSapContext pSapCtx = NULL;
 	QDF_STATUS qdf_ret_status;
 	tHalHandle hal;
+	tpAniSirGlobal pmac;
 
 	/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 
@@ -369,9 +370,8 @@ QDF_STATUS wlansap_start(void *pCtx, enum tQDF_ADAPTER_MODE mode,
 			"%s: Invalid HAL pointer", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
-
+	pmac = PMAC_STRUCT(hal);
 	qdf_ret_status = sap_open_session(hal, pSapCtx, session_id);
-
 	if (QDF_STATUS_SUCCESS != qdf_ret_status) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			"Error: In %s calling sap_open_session status = %d",
@@ -379,6 +379,9 @@ QDF_STATUS wlansap_start(void *pCtx, enum tQDF_ADAPTER_MODE mode,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	/* Register with scan component */
+	pSapCtx->req_id = ucfg_scan_register_requester(pmac->psoc, "SAP",
+					sap_scan_event_callback, pSapCtx);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -400,6 +403,7 @@ QDF_STATUS wlansap_start(void *pCtx, enum tQDF_ADAPTER_MODE mode,
 QDF_STATUS wlansap_stop(void *pCtx)
 {
 	ptSapContext pSapCtx = NULL;
+	tpAniSirGlobal pmac;
 
 	/* Sanity check - Extract SAP control block */
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -411,7 +415,14 @@ QDF_STATUS wlansap_stop(void *pCtx)
 			  "%s: Invalid SAP pointer from pCtx", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
-
+	pmac = (tpAniSirGlobal) CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
+	if (NULL == pmac) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+			  "%s: Invalid MAC context from p_cds_gctx",
+			  __func__);
+		return QDF_STATUS_E_FAULT;
+	}
+	ucfg_scan_unregister_requester(pmac->psoc, pSapCtx->req_id);
 	sap_free_roam_profile(&pSapCtx->csr_roamProfile);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_mutex_destroy(&pSapCtx->SapGlobalLock))) {
