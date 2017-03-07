@@ -114,6 +114,10 @@
 #include "wlan_pmo_ucfg_api.h"
 #include "sir_api.h"
 
+#ifdef CNSS_GENL
+#include <net/cnss_nl.h>
+#endif
+
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
 #else
@@ -9270,6 +9274,24 @@ void wlan_hdd_enable_roaming(hdd_adapter_t *adapter)
 	}
 }
 
+/**
+ * nl_srv_bcast_svc() - Wrapper function to send bcast msgs to SVC mcast group
+ * @skb: sk buffer pointer
+ *
+ * Sends the bcast message to SVC multicast group with generic nl socket
+ * if CNSS_GENL is enabled. Else, use the legacy netlink socket to send.
+ *
+ * Return: None
+ */
+static void nl_srv_bcast_svc(struct sk_buff *skb)
+{
+#ifdef CNSS_GENL
+	nl_srv_bcast(skb, CLD80211_MCGRP_SVC_MSGS, WLAN_NL_MSG_SVC);
+#else
+	nl_srv_bcast(skb);
+#endif
+}
+
 void wlan_hdd_send_svc_nlink_msg(int radio, int type, void *data, int len)
 {
 	struct sk_buff *skb;
@@ -9354,7 +9376,7 @@ void wlan_hdd_send_svc_nlink_msg(int radio, int type, void *data, int len)
 	nlh->nlmsg_len += tlv_len;
 	skb_put(skb, NLMSG_SPACE(sizeof(tAniMsgHdr) + len + tlv_len));
 
-	nl_srv_bcast(skb);
+	nl_srv_bcast_svc(skb);
 
 	return;
 }
