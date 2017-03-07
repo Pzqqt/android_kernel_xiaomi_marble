@@ -75,7 +75,7 @@ static void hdd_encrypt_decrypt_msg_cb(void *cookie,
 		encrypt_decrypt_rsp_params->data,
 		encrypt_decrypt_rsp_params->data_length, 0);
 
-	hdd_err("vdev_id %d,status %d data_length %d",
+	hdd_debug("vdev_id: %d status:%d data_length: %d",
 		encrypt_decrypt_rsp_params->vdev_id,
 		encrypt_decrypt_rsp_params->status,
 		encrypt_decrypt_rsp_params->data_length);
@@ -124,7 +124,7 @@ static int hdd_post_encrypt_decrypt_msg_rsp(hdd_context_t *hdd_ctx,
 
 	skb = cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy, nl_buf_len);
 	if (!skb) {
-		hdd_err(FL("cfg80211_vendor_cmd_alloc_reply_skb failed"));
+		hdd_err("cfg80211_vendor_cmd_alloc_reply_skb failed");
 		return -ENOMEM;
 	}
 
@@ -132,7 +132,7 @@ static int hdd_post_encrypt_decrypt_msg_rsp(hdd_context_t *hdd_ctx,
 		if (nla_put(skb, QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_DATA,
 				encrypt_decrypt_rsp_params->data_length,
 				encrypt_decrypt_rsp_params->data)) {
-			hdd_err(FL("put fail"));
+			hdd_err("put fail");
 			goto nla_put_failure;
 		}
 	}
@@ -174,7 +174,7 @@ static int hdd_fill_encrypt_decrypt_params(struct encrypt_decrypt_req_params
 	}
 
 	encrypt_decrypt_params->vdev_id = adapter->sessionId;
-	hdd_err("vdev_id : %d", encrypt_decrypt_params->vdev_id);
+	hdd_debug("vdev_id: %d", encrypt_decrypt_params->vdev_id);
 
 	if (!tb[QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_NEEDS_DECRYPTION]) {
 		hdd_err("attr flag NEEDS_DECRYPTION not present");
@@ -183,7 +183,7 @@ static int hdd_fill_encrypt_decrypt_params(struct encrypt_decrypt_req_params
 		hdd_err("attr flag NEEDS_DECRYPTION present");
 		encrypt_decrypt_params->key_flag = WMI_DECRYPT;
 	}
-	hdd_err("Key flag : %d", encrypt_decrypt_params->key_flag);
+	hdd_debug("Key flag: %d", encrypt_decrypt_params->key_flag);
 
 	if (!tb[QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_KEYID]) {
 		hdd_err("attr key id failed");
@@ -191,7 +191,7 @@ static int hdd_fill_encrypt_decrypt_params(struct encrypt_decrypt_req_params
 	}
 	encrypt_decrypt_params->key_idx = nla_get_u8(tb
 		    [QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_KEYID]);
-	hdd_err("Key Idx : %d", encrypt_decrypt_params->key_idx);
+	hdd_debug("Key Idx: %d", encrypt_decrypt_params->key_idx);
 
 	if (!tb[QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_CIPHER]) {
 		hdd_err("attr Cipher failed");
@@ -199,7 +199,7 @@ static int hdd_fill_encrypt_decrypt_params(struct encrypt_decrypt_req_params
 	}
 	encrypt_decrypt_params->key_cipher = nla_get_u32(tb
 		    [QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_CIPHER]);
-	hdd_err("key_cipher : %d", encrypt_decrypt_params->key_cipher);
+	hdd_debug("key_cipher: %d", encrypt_decrypt_params->key_cipher);
 
 	if (!tb[QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_TK]) {
 		hdd_err("attr TK failed");
@@ -211,7 +211,7 @@ static int hdd_fill_encrypt_decrypt_params(struct encrypt_decrypt_req_params
 		hdd_err("Invalid TK length");
 		return -EINVAL;
 	}
-	hdd_err("Key len : %d", encrypt_decrypt_params->key_len);
+	hdd_debug("Key len: %d", encrypt_decrypt_params->key_len);
 
 	if (encrypt_decrypt_params->key_len > SIR_MAC_MAX_KEY_LENGTH)
 		encrypt_decrypt_params->key_len = SIR_MAC_MAX_KEY_LENGTH;
@@ -252,7 +252,7 @@ static int hdd_fill_encrypt_decrypt_params(struct encrypt_decrypt_req_params
 		return -EINVAL;
 	}
 
-	hdd_err("Header and Payload length %d ", len);
+	hdd_debug("Header and Payload length: %d", len);
 
 	tmp = nla_data(tb[QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_DATA]);
 
@@ -283,7 +283,7 @@ static int hdd_fill_encrypt_decrypt_params(struct encrypt_decrypt_req_params
 		mac_hdr_len += QOS_CONTROL_LEN;
 	}
 
-	hdd_err("mac_hdr_len %d", mac_hdr_len);
+	hdd_debug("mac_hdr_len: %d", mac_hdr_len);
 
 	qdf_mem_copy(encrypt_decrypt_params->mac_header,
 			tmp, mac_hdr_len);
@@ -296,7 +296,7 @@ static int hdd_fill_encrypt_decrypt_params(struct encrypt_decrypt_req_params
 	encrypt_decrypt_params->data_len =
 			len - mac_hdr_len;
 
-	hdd_err("Payload length : %d", encrypt_decrypt_params->data_len);
+	hdd_debug("Payload length: %d", encrypt_decrypt_params->data_len);
 
 	if (encrypt_decrypt_params->data_len) {
 		encrypt_decrypt_params->data =
