@@ -20,6 +20,7 @@
 #ifndef _WLAN_LMAC_IF_DEF_H_
 #define _WLAN_LMAC_IF_DEF_H_
 
+#include <qdf_time.h>
 #include "qdf_status.h"
 #include "wlan_objmgr_cmn.h"
 #ifdef DFS_COMPONENT_ENABLE
@@ -94,6 +95,13 @@ struct wlan_lmac_if_scan_tx_ops {
 	QDF_STATUS (*set_chan_list)(struct wlan_objmgr_pdev *pdev, void *arg);
 };
 
+
+struct wlan_lmac_if_mlme_tx_ops {
+	void (*scan_sta_power_events)(struct wlan_objmgr_pdev *pdev,
+			int event_type, int event_status);
+	void (*scan_connection_lost)(struct wlan_objmgr_pdev *pdev);
+	void (*scan_end)(struct wlan_objmgr_pdev *pdev);
+};
 
 /**
  * struct wlan_lmac_if_scan_rx_ops  - south bound rx function pointers for scan
@@ -559,6 +567,7 @@ struct wlan_lmac_if_tx_ops {
 #ifdef CONVERGED_TDLS_ENABLE
 	struct wlan_lmac_if_tdls_tx_ops tdls_tx_ops;
 #endif
+	 struct wlan_lmac_if_mlme_tx_ops mops;
 };
 
 /**
@@ -836,6 +845,64 @@ struct wlan_lmac_if_dfs_rx_ops {
 #endif
 };
 
+struct wlan_lmac_if_mlme_rx_ops {
+
+	void (*wlan_mlme_scan_start)(struct wlan_objmgr_pdev *pdev);
+	void (*wlan_mlme_register_pm_event_handler)(
+			struct wlan_objmgr_pdev *pdev,
+			uint8_t vdev_id);
+	void (*wlan_mlme_unregister_pm_event_handler)(
+			struct wlan_objmgr_pdev *pdev,
+			uint8_t vdev_id);
+	QDF_STATUS (*wlan_mlme_register_vdev_event_handler)(
+			struct wlan_objmgr_pdev *pdev,
+			uint8_t vdev_id);
+	QDF_STATUS (*wlan_mlme_unregister_vdev_event_handler)(
+			struct wlan_objmgr_pdev *pdev,
+			uint8_t vdev_id);
+	int (*wlan_mlme_send_probe_request)(struct wlan_objmgr_pdev *pdev,
+			uint8_t vdev_id,
+			u_int8_t  *destination,
+			u_int8_t  *bssid,
+			u_int8_t  *ssid,
+			u_int32_t  ssidlen,
+			u_int8_t  *ie,
+			size_t len);
+	int (*wlan_mlme_resmgr_request_bsschan)(struct wlan_objmgr_pdev *pdev);
+	int (*wlan_mlme_resmgr_request_offchan)(struct wlan_objmgr_pdev *pdev,
+			u_int32_t freq,
+			u_int32_t flags,
+			u_int32_t estimated_offchannel_time);
+	int (*wlan_mlme_resmgr_active)(struct wlan_objmgr_pdev *pdev);
+	int (*wlan_mlme_get_cw_inter_found)(struct wlan_objmgr_pdev *pdev);
+	int (*wlan_mlme_set_home_channel)(struct wlan_objmgr_pdev *pdev,
+			uint8_t vdev_id);
+	int (*wlan_mlme_set_channel)(struct wlan_objmgr_pdev *pdev,
+			u_int32_t freq,
+			u_int32_t flags);
+	void (*wlan_mlme_start_record_stats)(struct wlan_objmgr_pdev *pdev);
+	void (*wlan_mlme_end_record_stats)(struct wlan_objmgr_pdev *pdev);
+	int (*wlan_mlme_get_enh_rpt_ind)(struct wlan_objmgr_pdev *pdev);
+	int (*wlan_mlme_pause)(struct wlan_objmgr_pdev *pdev);
+	void (*wlan_mlme_unpause)(struct wlan_objmgr_pdev *pdev);
+	int (*wlan_mlme_vdev_pause_control)(struct wlan_objmgr_pdev *pdev,
+			uint8_t vdev_id);
+	int (*wlan_mlme_sta_power_pause)(
+			struct wlan_objmgr_pdev *pdev,
+			uint8_t vdev_id,
+			u_int32_t timeout);
+	int (*wlan_mlme_sta_power_unpause)(struct wlan_objmgr_pdev *pdev,
+			uint8_t vdev_id);
+	int (*wlan_mlme_set_vdev_sleep)(struct wlan_objmgr_pdev *pdev,
+			uint8_t vdev_id);
+	int (*wlan_mlme_set_vdev_wakeup)(struct wlan_objmgr_pdev *pdev,
+			uint8_t vdev_id);
+	qdf_time_t (*wlan_mlme_get_traffic_indication_timestamp)(
+			struct wlan_objmgr_pdev *pdev);
+	int (*wlan_mlme_get_acs_in_progress)(struct wlan_objmgr_pdev *pdev,
+			uint8_t vdev_id);
+	void (*wlan_mlme_end_scan)(struct wlan_objmgr_pdev *pdev);
+};
 /**
  * struct wlan_lmac_if_rx_ops - south bound rx function pointers
  * @mgmt_txrx_tx_ops: mgmt txrx rx ops
@@ -877,6 +944,7 @@ struct wlan_lmac_if_rx_ops {
 #ifdef CONVERGED_TDLS_ENABLE
 	struct wlan_lmac_if_tdls_rx_ops tdls_rx_ops;
 #endif
+	struct wlan_lmac_if_mlme_rx_ops mops;
 };
 
 /* Function pointer to call legacy tx_ops registration in OL/WMA.
