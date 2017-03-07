@@ -175,7 +175,7 @@ static void hdd_disable_gtk_offload(hdd_adapter_t *adapter)
 		hdd_err("Failed to send get gtk rsp status:%d", status);
 		return;
 	}
-	hdd_notice("send get_gtk_rsp successful");
+	hdd_debug("send get_gtk_rsp successful");
 	status = pmo_ucfg_disable_gtk_offload_in_fwr(adapter->hdd_vdev);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_info("Failed to disable gtk offload");
@@ -290,13 +290,13 @@ static int hdd_fill_ipv6_uc_addr(struct inet6_dev *idev,
 			qdf_mem_copy(ipv6_uc_addr[*count], &ifa->addr.s6_addr,
 				sizeof(ifa->addr.s6_addr));
 			ipv6addr_type[*count] = PMO_IPV6_ADDR_UC_TYPE;
-			hdd_info("Index %d scope = %s UC-Address: %pI6",
+			hdd_debug("Index %d scope = %s UC-Address: %pI6",
 				*count, (scope == IPV6_ADDR_SCOPE_LINKLOCAL) ?
 				"LINK LOCAL" : "GLOBAL", ipv6_uc_addr[*count]);
 			*count += 1;
 			break;
 		default:
-			hdd_err("The Scope %d is not supported", scope);
+			hdd_warn("The Scope %d is not supported", scope);
 		}
 	}
 
@@ -336,13 +336,13 @@ static int hdd_fill_ipv6_ac_addr(struct inet6_dev *idev,
 			qdf_mem_copy(ipv6_ac_addr[*count], &ifaca->aca_addr,
 				sizeof(ifaca->aca_addr));
 			ipv6addr_type[*count] = PMO_IPV6_ADDR_AC_TYPE;
-			hdd_info("Index %d scope = %s AC-Address: %pI6",
+			hdd_debug("Index %d scope = %s AC-Address: %pI6",
 				*count, (scope == IPV6_ADDR_SCOPE_LINKLOCAL) ?
 				"LINK LOCAL" : "GLOBAL", ipv6_ac_addr[*count]);
 			*count += 1;
 			break;
 		default:
-			hdd_err("The Scope %d is not supported", scope);
+			hdd_warn("The Scope %d is not supported", scope);
 		}
 	}
 
@@ -388,7 +388,7 @@ void hdd_enable_ns_offload(hdd_adapter_t *adapter,
 		ns_req->ipv6_addr_type, &ns_req->count);
 	if (err) {
 		hdd_disable_ns_offload(adapter, trigger);
-		hdd_notice("Reached max supported addresses and not enabling "
+		hdd_debug("Reached max supported addresses and not enabling "
 			"NS offload");
 		goto out;
 	}
@@ -398,7 +398,7 @@ void hdd_enable_ns_offload(hdd_adapter_t *adapter,
 		ns_req->ipv6_addr_type, &ns_req->count);
 	if (err) {
 		hdd_disable_ns_offload(adapter, trigger);
-		hdd_notice("Reached max supported addresses and not enabling "
+		hdd_debug("Reached max supported addresses and not enabling "
 			"NS offload");
 		goto out;
 	}
@@ -658,7 +658,7 @@ static int hdd_set_grat_arp_keepalive(hdd_adapter_t *adapter)
 	req.timePeriod = hdd_ctx->config->infraStaKeepAlivePeriod;
 	req.sessionId = adapter->sessionId;
 
-	hdd_info("Setting gratuitous ARP keepalive; ipv4_addr:%u.%u.%u.%u",
+	hdd_debug("Setting gratuitous ARP keepalive; ipv4_addr:%u.%u.%u.%u",
 		 req.hostIpv4Addr[0], req.hostIpv4Addr[1],
 		 req.hostIpv4Addr[2], req.hostIpv4Addr[3]);
 
@@ -758,7 +758,7 @@ static int __wlan_hdd_ipv4_changed(struct notifier_block *nb,
 					  pAdapter->sessionId);
 
 		if (!pHddCtx->config->fhostArpOffload) {
-			hdd_notice("Offload not enabled ARPOffload=%d",
+			hdd_debug("Offload not enabled ARPOffload=%d",
 				pHddCtx->config->fhostArpOffload);
 			return NOTIFY_DONE;
 		}
@@ -891,7 +891,6 @@ void hdd_disable_arp_offload(hdd_adapter_t *adapter,
 		hdd_info("fail to disable arp offload");
 out:
 	EXIT();
-
 }
 
 void hdd_enable_mc_addr_filtering(hdd_adapter_t *adapter,
@@ -1016,12 +1015,12 @@ hdd_suspend_wlan(void)
 
 	pHddCtx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!pHddCtx) {
-		hdd_alert("HDD context is Null");
+		hdd_err("HDD context is Null");
 		return -EINVAL;
 	}
 
 	if (cds_is_driver_recovering()) {
-		hdd_err("Recovery in Progress. State: 0x%x Ignore suspend!!!",
+		hdd_info("Recovery in Progress. State: 0x%x Ignore suspend!!!",
 			 cds_get_driver_state());
 		return -EINVAL;
 	}
@@ -1035,7 +1034,7 @@ hdd_suspend_wlan(void)
 		}
 
 		/* stop all TX queues before suspend */
-		hdd_notice("Disabling queues");
+		hdd_debug("Disabling queues");
 		wlan_hdd_netif_queue_control(pAdapter, WLAN_NETIF_TX_DISABLE,
 					   WLAN_CONTROL_PATH);
 
@@ -1079,7 +1078,7 @@ static int hdd_resume_wlan(void)
 	}
 
 	if (cds_is_driver_recovering()) {
-		hdd_err("Recovery in Progress. State: 0x%x Ignore resume!!!",
+		hdd_info("Recovery in Progress. State: 0x%x Ignore resume!!!",
 			 cds_get_driver_state());
 		return -EINVAL;
 	}
@@ -1157,7 +1156,7 @@ static void hdd_ssr_timer_del(void)
  */
 static void hdd_ssr_timer_cb(unsigned long data)
 {
-	hdd_alert("HDD SSR timer expired!");
+	hdd_info("HDD SSR timer expired!");
 	QDF_BUG(0);
 }
 
@@ -1170,7 +1169,7 @@ static void hdd_ssr_timer_cb(unsigned long data)
 static void hdd_ssr_timer_start(int msec)
 {
 	if (ssr_timer_started) {
-		hdd_alert("Trying to start SSR timer when " "it's running!");
+		hdd_debug("Trying to start SSR timer when " "it's running!");
 	}
 	ssr_timer.expires = jiffies + msecs_to_jiffies(msec);
 	ssr_timer.function = hdd_ssr_timer_cb;
@@ -1221,7 +1220,7 @@ static void hdd_ssr_restart_sap(hdd_context_t *hdd_ctx)
 		adapter = adapter_node->pAdapter;
 		if (adapter && adapter->device_mode == QDF_SAP_MODE) {
 			if (test_bit(SOFTAP_INIT_DONE, &adapter->event_flags)) {
-				hdd_notice("Restart prev SAP session");
+				hdd_debug("Restart prev SAP session");
 				wlan_hdd_start_sap(adapter, true);
 			}
 		}
@@ -1248,7 +1247,7 @@ QDF_STATUS hdd_wlan_shutdown(void)
 	QDF_STATUS qdf_status;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
-	hdd_alert("WLAN driver shutting down!");
+	hdd_info("WLAN driver shutting down!");
 
 	/* If SSR never completes, then do kernel panic. */
 	hdd_ssr_timer_init();
@@ -1257,20 +1256,20 @@ QDF_STATUS hdd_wlan_shutdown(void)
 	/* Get the global CDS context. */
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
-		hdd_alert("Global CDS context is Null");
+		hdd_err("Global CDS context is Null");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* Get the HDD context. */
 	pHddCtx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!pHddCtx) {
-		hdd_alert("HDD context is Null");
+		hdd_err("HDD context is Null");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	policy_mgr_clear_concurrent_session_count(pHddCtx->hdd_psoc);
 
-	hdd_info("Invoking packetdump deregistration API");
+	hdd_debug("Invoking packetdump deregistration API");
 	wlan_deregister_txrx_packetdump();
 #ifndef NAPIER_SCAN
 	hdd_cleanup_scan_queue(pHddCtx);
@@ -1314,7 +1313,7 @@ QDF_STATUS hdd_wlan_shutdown(void)
 
 	hdd_lpass_notify_stop(pHddCtx);
 
-	hdd_alert("WLAN driver shutdown complete");
+	hdd_info("WLAN driver shutdown complete");
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1363,14 +1362,14 @@ QDF_STATUS hdd_wlan_re_init(void)
 	/* Get the CDS context */
 	p_cds_context = cds_get_global_context();
 	if (p_cds_context == NULL) {
-		hdd_alert("Failed cds_get_global_context");
+		hdd_err("Failed cds_get_global_context");
 		goto err_re_init;
 	}
 
 	/* Get the HDD context */
 	pHddCtx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!pHddCtx) {
-		hdd_alert("HDD context is Null");
+		hdd_err("HDD context is Null");
 		goto err_re_init;
 	}
 	bug_on_reinit_failure = pHddCtx->config->bug_on_reinit_failure;
@@ -1384,7 +1383,7 @@ QDF_STATUS hdd_wlan_re_init(void)
 		if (!pAdapter) {
 			pAdapter = hdd_get_adapter(pHddCtx, QDF_IBSS_MODE);
 			if (!pAdapter) {
-				hdd_alert("Failed to get Adapter!");
+				hdd_err("Failed to get Adapter!");
 			}
 		}
 	}
@@ -1426,7 +1425,7 @@ QDF_STATUS hdd_wlan_re_init(void)
 
 	hdd_lpass_notify_start(pHddCtx);
 
-	hdd_err("WLAN host driver reinitiation completed!");
+	hdd_info("WLAN host driver reinitiation completed!");
 	goto success;
 
 err_cds_disable:
@@ -1477,7 +1476,7 @@ static int wlan_hdd_set_powersave(hdd_adapter_t *adapter,
 	hdd_context_t *hdd_ctx;
 
 	if (NULL == adapter) {
-		hdd_alert("Adapter NULL");
+		hdd_err("Adapter NULL");
 		return -ENODEV;
 	}
 
@@ -1487,20 +1486,20 @@ static int wlan_hdd_set_powersave(hdd_adapter_t *adapter,
 		return -EINVAL;
 	}
 
-	hdd_info("Allow power save: %d", allow_power_save);
+	hdd_debug("Allow power save: %d", allow_power_save);
 	hal = WLAN_HDD_GET_HAL_CTX(adapter);
 
 	if (allow_power_save) {
 		if (QDF_STA_MODE == adapter->device_mode ||
 		    QDF_P2P_CLIENT_MODE == adapter->device_mode) {
-			hdd_notice("Disabling Auto Power save timer");
+			hdd_debug("Disabling Auto Power save timer");
 			sme_ps_disable_auto_ps_timer(
 				WLAN_HDD_GET_HAL_CTX(adapter),
 				adapter->sessionId);
 		}
 
 		if (hdd_ctx->config && hdd_ctx->config->is_ps_enabled) {
-			hdd_notice("Wlan driver Entering Power save");
+			hdd_debug("Wlan driver Entering Power save");
 
 			/*
 			 * Enter Power Save command received from GUI
@@ -1509,10 +1508,10 @@ static int wlan_hdd_set_powersave(hdd_adapter_t *adapter,
 			sme_ps_enable_disable(hal, adapter->sessionId,
 					SME_PS_ENABLE);
 		} else {
-			hdd_info("Power Save is not enabled in the cfg");
+			hdd_debug("Power Save is not enabled in the cfg");
 		}
 	} else {
-		hdd_info("Wlan driver Entering Full Power");
+		hdd_debug("Wlan driver Entering Full Power");
 
 		/*
 		 * Enter Full power command received from GUI
@@ -1568,7 +1567,7 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 	ENTER();
 
 	if (cds_is_driver_recovering()) {
-		hdd_info("Driver is recovering; Skipping resume");
+		hdd_debug("Driver is recovering; Skipping resume");
 		exit_code = 0;
 		goto exit_with_code;
 	}
@@ -1588,7 +1587,7 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 	mutex_lock(&pHddCtx->iface_change_lock);
 	if (pHddCtx->driver_status != DRIVER_MODULES_ENABLED) {
 		mutex_unlock(&pHddCtx->iface_change_lock);
-		hdd_info("Driver is not enabled; Skipping resume");
+		hdd_debug("Driver is not enabled; Skipping resume");
 		exit_code = 0;
 		goto exit_with_code;
 	}
@@ -1621,7 +1620,7 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 	pHddCtx->isWiphySuspended = false;
 	if (true != pHddCtx->isSchedScanUpdatePending) {
 		qdf_spin_unlock(&pHddCtx->sched_scan_lock);
-		hdd_info("Return resume is not due to PNO indication");
+		hdd_debug("Return resume is not due to PNO indication");
 		goto exit_with_success;
 	}
 	/* Reset flag to avoid updatating cfg80211 data old results again */
@@ -1650,7 +1649,7 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 				cfg80211_sched_scan_results(pHddCtx->wiphy);
 			}
 
-			hdd_info("cfg80211 scan result database updated");
+			hdd_debug("cfg80211 scan result database updated");
 			goto exit_with_success;
 		}
 		status = hdd_get_next_adapter(pHddCtx, pAdapterNode, &pNext);
@@ -1736,7 +1735,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	mutex_lock(&pHddCtx->iface_change_lock);
 	if (pHddCtx->driver_status != DRIVER_MODULES_ENABLED) {
 		mutex_unlock(&pHddCtx->iface_change_lock);
-		hdd_info("Driver Modules not Enabled ");
+		hdd_debug("Driver Modules not Enabled ");
 		return 0;
 	}
 	mutex_unlock(&pHddCtx->iface_change_lock);
@@ -1945,7 +1944,7 @@ static void hdd_start_dhcp_ind(hdd_adapter_t *adapter)
 {
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	hdd_err("DHCP start indicated through power save");
+	hdd_debug("DHCP start indicated through power save");
 	qdf_runtime_pm_prevent_suspend(adapter->connect_rpm_ctx.connect);
 	hdd_prevent_suspend_timeout(1000, WIFI_POWER_EVENT_WAKELOCK_DHCP);
 	sme_dhcp_start_ind(hdd_ctx->hHal, adapter->device_mode,
@@ -1974,7 +1973,7 @@ static int __wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 	ENTER();
 
 	if (timeout < 0) {
-		hdd_notice("User space timeout: %d; Using default instead: %d",
+		hdd_debug("User space timeout: %d; Using default instead: %d",
 			timeout, AUTO_PS_ENTRY_USER_TIMER_DEFAULT_VALUE);
 		timeout = AUTO_PS_ENTRY_USER_TIMER_DEFAULT_VALUE;
 	}
@@ -2002,7 +2001,7 @@ static int __wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 	mutex_lock(&pHddCtx->iface_change_lock);
 	if (pHddCtx->driver_status != DRIVER_MODULES_ENABLED) {
 		mutex_unlock(&pHddCtx->iface_change_lock);
-		hdd_info("Driver Module not enabled return success");
+		hdd_debug("Driver Module not enabled return success");
 		return 0;
 	}
 	mutex_unlock(&pHddCtx->iface_change_lock);
@@ -2083,7 +2082,7 @@ static int __wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 		return -EIO;
 	}
 
-	hdd_info("Set tx power level %d dbm", dbm);
+	hdd_debug("Set tx power level %d dbm", dbm);
 
 	switch (type) {
 	/* Automatically determine transmit power */
@@ -2180,7 +2179,7 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 	mutex_lock(&pHddCtx->iface_change_lock);
 	if (pHddCtx->driver_status != DRIVER_MODULES_ENABLED) {
 		mutex_unlock(&pHddCtx->iface_change_lock);
-		hdd_info("Driver Module not enabled return success");
+		hdd_debug("Driver Module not enabled return success");
 		/* Send cached data to upperlayer*/
 		*dbm = adapter->hdd_stats.ClassA_stat.max_pwr;
 		return 0;
@@ -2288,7 +2287,7 @@ static void __hdd_wlan_fake_apps_resume(struct wiphy *wiphy,
 	struct hif_opaque_softc *hif_ctx;
 	qdf_device_t qdf_dev;
 
-	hdd_info("Unit-test resume WLAN");
+	hdd_debug("Unit-test resume WLAN");
 
 	qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	if (!qdf_dev) {
@@ -2304,7 +2303,7 @@ static void __hdd_wlan_fake_apps_resume(struct wiphy *wiphy,
 	}
 
 	if (!test_and_clear_bit(HDD_FA_SUSPENDED_BIT, &fake_apps_state)) {
-		hdd_info("Not unit-test suspended; Nothing to do");
+		hdd_debug("Not unit-test suspended; Nothing to do");
 		return;
 	}
 
@@ -2325,7 +2324,7 @@ static void __hdd_wlan_fake_apps_resume(struct wiphy *wiphy,
 
 	dev->watchdog_timeo = HDD_TX_TIMEOUT;
 
-	hdd_info("Unit-test resume succeeded");
+	hdd_debug("Unit-test resume succeeded");
 }
 
 /**
@@ -2339,7 +2338,7 @@ static void __hdd_wlan_fake_apps_resume(struct wiphy *wiphy,
  */
 static void hdd_wlan_fake_apps_resume_irq_callback(uint32_t val)
 {
-	hdd_info("Trigger unit-test resume WLAN; val: 0x%x", val);
+	hdd_debug("Trigger unit-test resume WLAN; val: 0x%x", val);
 
 	QDF_BUG(g_wiphy);
 	QDF_BUG(g_dev);
@@ -2361,7 +2360,7 @@ int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy, struct net_device *dev,
 		.resume_trigger = resume_setting
 	};
 
-	hdd_info("Unit-test suspend WLAN");
+	hdd_debug("Unit-test suspend WLAN");
 
 	if (pause_setting < WOW_INTERFACE_PAUSE_DEFAULT ||
 	    pause_setting >= WOW_INTERFACE_PAUSE_COUNT) {
@@ -2390,7 +2389,7 @@ int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy, struct net_device *dev,
 	}
 
 	if (test_and_set_bit(HDD_FA_SUSPENDED_BIT, &fake_apps_state)) {
-		hdd_info("Already unit-test suspended; Nothing to do");
+		hdd_debug("Already unit-test suspended; Nothing to do");
 		return 0;
 	}
 
@@ -2432,7 +2431,7 @@ int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy, struct net_device *dev,
 	 */
 	dev->watchdog_timeo = INT_MAX;
 
-	hdd_info("Unit-test suspend succeeded");
+	hdd_debug("Unit-test suspend succeeded");
 
 	return 0;
 
