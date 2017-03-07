@@ -780,7 +780,10 @@ UMAC_SCAN_OBJS := $(UMAC_SCAN_CORE_DIR)/wlan_scan_cache_db.o \
 		$(UMAC_SCAN_CORE_DIR)/wlan_scan_manager.o \
 		$(UMAC_SCAN_DISP_DIR)/wlan_scan_tgt_api.o \
 		$(UMAC_SCAN_DISP_DIR)/wlan_scan_ucfg_api.o \
-		$(UMAC_SCAN_DISP_DIR)/wlan_scan_utils_api.o
+		$(UMAC_SCAN_DISP_DIR)/wlan_scan_utils_api.o \
+		$(WLAN_COMMON_ROOT)/os_if/linux/scan/src/wlan_cfg80211_scan.o \
+		$(WLAN_COMMON_ROOT)/os_if/linux/wlan_cfg80211.o \
+		$(WLAN_COMMON_ROOT)/target_if/scan/src/target_if_scan.o
 
 ############# UMAC_CMN_SERVICES ############
 UMAC_COMMON_INC := -I$(WLAN_COMMON_INC)/umac/cmn_services/cmn_defs/inc \
