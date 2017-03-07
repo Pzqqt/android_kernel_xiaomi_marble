@@ -3511,8 +3511,9 @@ int wma_nlo_scan_cmp_evt_handler(void *handle, uint8_t *event,
 
 	qdf_wake_lock_release(&wma->pno_wake_lock,
 		WIFI_POWER_EVENT_WAKELOCK_PNO);
-	scan_event =
-		(tSirScanOffloadEvent *)
+	node->wow_stats.pno_complete++;
+
+	scan_event = (tSirScanOffloadEvent *)
 		qdf_mem_malloc(sizeof(tSirScanOffloadEvent));
 	if (scan_event) {
 		/* Posting scan completion msg would take scan cache result
