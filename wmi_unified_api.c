@@ -6570,3 +6570,24 @@ wmi_unified_dfs_phyerr_offload_dis_cmd(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+/*
+ * wmi_extract_chainmask_tables_tlv() - extract chain mask tables
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer.
+ * @chainmask_table: pointer to struct wlan_psoc_host_chainmask_table
+ *
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+QDF_STATUS wmi_extract_chainmask_tables(void *wmi_hdl, uint8_t *evt_buf,
+		struct wlan_psoc_host_chainmask_table *chainmask_table)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->extract_chainmask_tables)
+		return wmi_handle->ops->extract_chainmask_tables(wmi_handle,
+				evt_buf, chainmask_table);
+
+	return QDF_STATUS_E_FAILURE;
+}
