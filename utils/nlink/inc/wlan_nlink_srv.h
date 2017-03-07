@@ -65,4 +65,6 @@ int nl_srv_bcast(struct sk_buff *skb);
 #endif
 
 int nl_srv_is_initialized(void);
+void nl_srv_ucast_oem(struct sk_buff *skb, int dst_pid, int flag);
+
 #endif

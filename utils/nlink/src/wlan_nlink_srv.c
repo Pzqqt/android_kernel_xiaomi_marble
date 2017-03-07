@@ -753,3 +753,28 @@ int nl_srv_is_initialized(void)
 	return 0;
 }
 #endif
+
+
+/**
+ * nl_srv_ucast_oem() - Wrapper function to send ucast msgs to OEM
+ * @skb: sk buffer pointer
+ * @dst_pid: Destination PID
+ * @flag: flags
+ *
+ * Sends the ucast message to OEM with generic nl socket if CNSS_GENL
+ * is enabled. Else, use the legacy netlink socket to send.
+ *
+ * Return: None
+ */
+#ifdef CNSS_GENL
+void nl_srv_ucast_oem(struct sk_buff *skb, int dst_pid, int flag)
+{
+	nl_srv_ucast(skb, dst_pid, flag, WLAN_NL_MSG_OEM,
+					CLD80211_MCGRP_OEM_MSGS);
+}
+#else
+void nl_srv_ucast_oem(struct sk_buff *skb, int dst_pid, int flag)
+{
+	nl_srv_ucast(skb, dst_pid, flag);
+}
+#endif
