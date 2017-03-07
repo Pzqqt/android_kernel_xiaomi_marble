@@ -122,7 +122,7 @@ static int hdd_green_ap_enable(hdd_adapter_t *adapter, uint8_t enable)
 {
 	int ret;
 
-	hdd_notice("Set Green-AP val: %d", enable);
+	hdd_debug("Set Green-AP val: %d", enable);
 
 	ret = wma_cli_set_command(adapter->sessionId,
 				  WMI_PDEV_GREEN_AP_PS_ENABLE_CMDID,
@@ -148,7 +148,7 @@ static void hdd_green_ap_mc(struct hdd_context_s *hdd_ctx,
 	if (green_ap == NULL)
 		return;
 
-	hdd_notice("Green-AP event: %d, state: %d, num_nodes: %d",
+	hdd_debug("Green-AP event: %d, state: %d, num_nodes: %d",
 		   event, green_ap->ps_state, green_ap->num_nodes);
 
 	/* handle the green ap ps event */
@@ -175,7 +175,7 @@ static void hdd_green_ap_mc(struct hdd_context_s *hdd_ctx,
 		break;
 
 	default:
-		hdd_err("invalid event %d", event);
+		hdd_err("Invalid event: %d", event);
 		break;
 	}
 
@@ -187,7 +187,7 @@ static void hdd_green_ap_mc(struct hdd_context_s *hdd_ctx,
 
 	/* Confirm that power save is enabled before doing state transitions */
 	if (!green_ap->ps_enable) {
-		hdd_notice("Green-AP is disabled");
+		hdd_debug("Green-AP is disabled");
 		hdd_green_ap_update(hdd_ctx,
 				    GREEN_AP_PS_OFF_STATE,
 				    GREEN_AP_PS_WAIT_EVENT);
@@ -308,7 +308,7 @@ static QDF_STATUS hdd_green_ap_attach(struct hdd_context_s *hdd_ctx)
 
 	green_ap = qdf_mem_malloc(sizeof(*green_ap));
 	if (!green_ap) {
-		hdd_alert("Memory allocation for Green-AP failed!");
+		hdd_err("Memory allocation for Green-AP failed!");
 		status = QDF_STATUS_E_NOMEM;
 		goto error;
 	}
@@ -344,7 +344,7 @@ static QDF_STATUS hdd_green_ap_deattach(struct hdd_context_s *hdd_ctx)
 	ENTER();
 
 	if (green_ap == NULL) {
-		hdd_notice("Green-AP is not enabled");
+		hdd_debug("Green-AP is not enabled");
 		status = QDF_STATUS_E_NOSUPPORT;
 		goto done;
 	}
@@ -356,7 +356,7 @@ static QDF_STATUS hdd_green_ap_deattach(struct hdd_context_s *hdd_ctx)
 
 	/* Destroy the Green AP timer */
 	if (!QDF_IS_STATUS_SUCCESS(qdf_mc_timer_destroy(&green_ap->ps_timer)))
-		hdd_notice("Cannot deallocate Green-AP's timer");
+		hdd_debug("Cannot deallocate Green-AP's timer");
 
 	/* release memory */
 	qdf_mem_zero(green_ap, sizeof(*green_ap));
@@ -478,13 +478,13 @@ void hdd_green_ap_start_bss(struct hdd_context_s *hdd_ctx)
 	if ((hdd_ctx->concurrency_mode & QDF_SAP_MASK) &&
 			!(hdd_ctx->concurrency_mode & (QDF_SAP_MASK)) &&
 			cfg->enable2x2 && cfg->enableGreenAP) {
-		hdd_notice("Green AP enabled - sta_con: %d, 2x2: %d, GAP: %d",
+		hdd_debug("Green AP enabled - sta_con: %d, 2x2: %d, GAP: %d",
 			QDF_STA_MASK & hdd_ctx->concurrency_mode,
 			cfg->enable2x2, cfg->enableGreenAP);
 		hdd_green_ap_mc(hdd_ctx, GREEN_AP_PS_START_EVENT);
 	} else {
 		hdd_green_ap_mc(hdd_ctx, GREEN_AP_PS_STOP_EVENT);
-		hdd_notice("Green-AP: is disabled, due to sta_concurrency: %d, enable2x2: %d, enableGreenAP: %d",
+		hdd_debug("Green-AP: is disabled, due to sta_concurrency: %d, enable2x2: %d, enableGreenAP: %d",
 			   QDF_STA_MASK & hdd_ctx->concurrency_mode,
 			   cfg->enable2x2, cfg->enableGreenAP);
 	}
