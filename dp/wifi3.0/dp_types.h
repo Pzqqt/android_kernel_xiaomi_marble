@@ -783,6 +783,9 @@ struct dp_pdev {
 	struct cdp_mon_status rx_mon_recv_status;
 
 	/* TBD */
+
+	/* map this pdev to a particular Reo Destination ring */
+	enum cdp_host_reo_dest_ring reo_dest;
 };
 
 struct dp_peer;

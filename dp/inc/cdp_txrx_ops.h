@@ -365,6 +365,30 @@ struct cdp_ctrl_ops {
 			enum cdp_vdev_param_type param, uint32_t val);
 
 	void (*txrx_peer_set_nawds)(void *peer, uint8_t value);
+	/**
+	 * @brief Set the reo dest ring num of the radio
+	 * @details
+	 *  Set the reo destination ring no on which we will receive
+	 *  pkts for this radio.
+	 *
+	 * @param pdev - the data physical device object
+	 * @param reo_dest_ring_num - value ranges between 1 - 4
+	 */
+	void (*txrx_set_pdev_reo_dest)(
+			struct cdp_pdev *pdev,
+			enum cdp_host_reo_dest_ring reo_dest_ring_num);
+
+	/**
+	 * @brief Get the reo dest ring num of the radio
+	 * @details
+	 *  Get the reo destination ring no on which we will receive
+	 *  pkts for this radio.
+	 *
+	 * @param pdev - the data physical device object
+	 * @return the reo destination ring number
+	 */
+	enum cdp_host_reo_dest_ring (*txrx_get_pdev_reo_dest)(
+						struct cdp_pdev *pdev);
 };
 
 struct cdp_me_ops {

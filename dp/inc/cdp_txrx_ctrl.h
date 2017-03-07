@@ -154,6 +154,41 @@ cdp_get_vdev_rx_decap_type(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 	return 0;
 }
 
+/**
+ * @brief set the Reo Destination ring for the pdev
+ * @details
+ *  This will be used to configure the Reo Destination ring for this pdev.
+ *
+ * @param soc - pointer to the soc
+ * @param pdev - the data physical device object
+ * @param val - the Reo destination ring index (1 to 4)
+ * @return - void
+ */
+static inline void
+cdp_set_pdev_reo_dest(ol_txrx_soc_handle soc,
+	struct cdp_pdev *pdev, enum cdp_host_reo_dest_ring val)
+{
+	if (soc->ops->ctrl_ops->txrx_set_pdev_reo_dest)
+		return soc->ops->ctrl_ops->txrx_set_pdev_reo_dest
+			(pdev, val);
+	return;
+}
+
+/**
+ * @brief get the Reo Destination ring for the pdev
+ *
+ * @param soc - pointer to the soc
+ * @param pdev - the data physical device object
+ * @return - the Reo destination ring index (1 to 4), 0 if not supported.
+ */
+static inline enum cdp_host_reo_dest_ring
+cdp_get_pdev_reo_dest(ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
+{
+	if (soc->ops->ctrl_ops->txrx_get_pdev_reo_dest)
+		return soc->ops->ctrl_ops->txrx_get_pdev_reo_dest(pdev);
+	return cdp_host_reo_dest_ring_unknown;
+}
+
 /* Is this similar to ol_txrx_peer_state_update() in MCL */
 /**
  * @brief Update the authorize peer object at association time

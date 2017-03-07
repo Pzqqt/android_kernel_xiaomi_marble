@@ -151,6 +151,15 @@ enum htt_cmn_pkt_type {
     htt_cmn_pkt_num_types
 };
 
+
+enum cdp_host_reo_dest_ring {
+    cdp_host_reo_dest_ring_unknown = 0,
+    cdp_host_reo_dest_ring_1 = 1,
+    cdp_host_reo_dest_ring_2 = 2,
+    cdp_host_reo_dest_ring_3 = 3,
+    cdp_host_reo_dest_ring_4 = 4,
+};
+
 enum htt_cmn_t2h_en_stats_type {
     /* keep this alwyas first */
     HTT_CMN_T2H_EN_STATS_TYPE_START     = 0,

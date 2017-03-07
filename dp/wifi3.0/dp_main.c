@@ -1245,6 +1245,8 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 		goto fail0;
 	}
 
+	/* set the reo destination to 1 during initialization */
+	pdev->reo_dest = 1;
 	return (struct cdp_pdev *)pdev;
 
 fail1:
@@ -1815,6 +1817,7 @@ static void dp_peer_setup_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
 	struct dp_pdev *pdev;
 	struct dp_soc *soc;
 	bool hash_based = 0;
+	enum cdp_host_reo_dest_ring reo_dest;
 
 	/* preconditions */
 	qdf_assert(vdev);
@@ -1833,11 +1836,16 @@ static void dp_peer_setup_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 		FL("hash based steering %d\n"), hash_based);
 
+	if (!hash_based)
+		reo_dest = pdev->reo_dest;
+	else
+		reo_dest = 1;
+
 	if (soc->cdp_soc.ol_ops->peer_set_default_routing) {
 		/* TODO: Check the destination ring number to be passed to FW */
 		soc->cdp_soc.ol_ops->peer_set_default_routing(
 			pdev->osif_pdev, peer->mac_addr.raw,
-			 peer->vdev->vdev_id, hash_based, 1);
+			 peer->vdev->vdev_id, hash_based, reo_dest);
 	}
 	return;
 }
@@ -1868,6 +1876,39 @@ static void dp_set_vdev_rx_decap_type(struct cdp_vdev *vdev_handle,
 {
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
 	vdev->rx_decap_type = val;
+}
+
+/*
+ * dp_set_pdev_reo_dest() - set the reo destination ring for this pdev
+ * @pdev_handle: physical device object
+ * @val: reo destination ring index (1 - 4)
+ *
+ * Return: void
+ */
+static void dp_set_pdev_reo_dest(struct cdp_pdev *pdev_handle,
+	 enum cdp_host_reo_dest_ring val)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+
+	if (pdev)
+		pdev->reo_dest = val;
+}
+
+/*
+ * dp_get_pdev_reo_dest() - get the reo destination for this pdev
+ * @pdev_handle: physical device object
+ *
+ * Return: reo destination ring index
+ */
+static enum cdp_host_reo_dest_ring
+dp_get_pdev_reo_dest(struct cdp_pdev *pdev_handle)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+
+	if (pdev)
+		return pdev->reo_dest;
+	else
+		return cdp_host_reo_dest_ring_unknown;
 }
 
 /*
@@ -3308,6 +3349,8 @@ static struct cdp_ctrl_ops dp_ops_ctrl = {
 #endif
 	.txrx_set_vdev_param = dp_set_vdev_param,
 	.txrx_peer_set_nawds = dp_peer_set_nawds,
+	.txrx_set_pdev_reo_dest = dp_set_pdev_reo_dest,
+	.txrx_get_pdev_reo_dest = dp_get_pdev_reo_dest,
 	/* TODO: Add other functions */
 };
 
