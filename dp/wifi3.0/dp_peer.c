@@ -30,6 +30,23 @@
 #include <cdp_txrx_handle.h>
 #include <wlan_cfg.h>
 
+#ifdef DP_LFR
+static inline void
+dp_set_ssn_valid_flag(struct hal_reo_cmd_params *params,
+					uint8_t valid)
+{
+	params->u.upd_queue_params.update_svld = 1;
+	params->u.upd_queue_params.svld = valid;
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
+		"%s: Setting SSN valid bit to %d\n",
+				__func__, valid);
+}
+#else
+static inline void
+dp_set_ssn_valid_flag(struct hal_reo_cmd_params *params,
+					uint8_t valid) {};
+#endif
+
 static inline int dp_peer_find_mac_addr_cmp(
 	union dp_align_mac_addr *mac_addr1,
 	union dp_align_mac_addr *mac_addr2)
@@ -482,6 +499,8 @@ static int dp_rx_tid_update_wifi3(struct dp_peer *peer, int tid, uint32_t
 		params.u.upd_queue_params.ssn = start_seq;
 	}
 
+	dp_set_ssn_valid_flag(&params, 0);
+
 	dp_reo_send_cmd(soc, CMD_UPDATE_RX_REO_QUEUE, &params, dp_rx_tid_update_cb, rx_tid);
 	return 0;
 }
@@ -738,6 +757,21 @@ static int dp_rx_tid_delete_wifi3(struct dp_peer *peer, int tid)
 	return 0;
 }
 
+#ifdef DP_LFR
+static void dp_peer_setup_remaining_tids(struct dp_peer *peer)
+{
+	int tid;
+
+	for (tid = 1; tid < DP_MAX_TIDS-1; tid++) {
+		dp_rx_tid_setup_wifi3(peer, tid, 1, 0);
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
+			"Setting up TID %d for peer %p peer->local_id %d\n",
+			tid, peer, peer->local_id);
+	}
+}
+#else
+static void dp_peer_setup_remaining_tids(struct dp_peer *peer) {};
+#endif
 /*
  * dp_peer_rx_init() – Initialize receive TID state
  * @pdev: Datapath pdev
@@ -774,6 +808,11 @@ void dp_peer_rx_init(struct dp_pdev *pdev, struct dp_peer *peer)
 	 * NULL REO queue error
 	 */
 	dp_rx_tid_setup_wifi3(peer, 0, 1, 0);
+
+	/*
+	 * Setup the rest of TID's to handle LFR
+	 */
+	dp_peer_setup_remaining_tids(peer);
 
 	/*
 	 * Set security defaults: no PN check, no security. The target may

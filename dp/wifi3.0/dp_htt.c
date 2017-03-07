@@ -21,6 +21,7 @@
 #include "dp_htt.h"
 #include "dp_peer.h"
 #include "dp_types.h"
+#include "dp_internal.h"
 
 #define HTT_HTC_PKT_POOL_INIT_SIZE 64
 
@@ -524,6 +525,10 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 			peer_mac_addr = htt_t2h_mac_addr_deswizzle(
 				(u_int8_t *) (msg_word+1),
 				&mac_addr_deswizzle_buf[0]);
+			QDF_TRACE(QDF_MODULE_ID_TXRX,
+				QDF_TRACE_LEVEL_INFO,
+				"HTT_T2H_MSG_TYPE_PEER_MAP msg for peer id %d vdev id %d n",
+				peer_id, vdev_id);
 
 			dp_rx_peer_map_handler(
 				soc->dp_soc, peer_id, vdev_id, peer_mac_addr);
@@ -590,6 +595,40 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 			}
 			break;
 		}
+	case HTT_T2H_MSG_TYPE_RX_ADDBA:
+		{
+			uint16_t peer_id;
+			uint8_t tid;
+			uint8_t win_sz;
+			uint16_t status;
+			struct dp_peer *peer;
+
+			/*
+			 * Update REO Queue Desc with new values
+			 */
+			peer_id = HTT_RX_ADDBA_PEER_ID_GET(*msg_word);
+			tid = HTT_RX_ADDBA_TID_GET(*msg_word);
+			win_sz = HTT_RX_ADDBA_WIN_SIZE_GET(*msg_word);
+			peer = dp_peer_find_by_id(soc->dp_soc, peer_id);
+
+			if (peer) {
+				status = dp_addba_requestprocess_wifi3(peer,
+						0, tid, 0, win_sz, 0xffff);
+				QDF_TRACE(QDF_MODULE_ID_TXRX,
+					QDF_TRACE_LEVEL_INFO,
+					FL("PeerID %d BAW %d TID %d stat %d\n"),
+					peer_id, win_sz, tid, status);
+
+			} else {
+				QDF_TRACE(QDF_MODULE_ID_TXRX,
+					QDF_TRACE_LEVEL_ERROR,
+					FL("Peer not found peer id %d\n"),
+					peer_id);
+			}
+			break;
+		}
+
+
 	default:
 		break;
 	};

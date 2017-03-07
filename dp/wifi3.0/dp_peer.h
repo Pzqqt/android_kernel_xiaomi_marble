@@ -54,4 +54,39 @@ void dp_rx_sec_ind_handler(void *soc_handle, uint16_t peer_id,
 uint8_t dp_get_peer_mac_addr_frm_id(struct cdp_soc_t *soc_handle,
 		uint16_t peer_id, uint8_t *peer_mac);
 
+#ifdef DP_LFR
+/*
+ * dp_get_vdev_from_soc_vdev_id_wifi3() -
+ * Returns vdev object given the vdev id
+ * vdev id is unique across pdev's
+ *
+ * @soc         : core DP soc context
+ * @vdev_id     : vdev id from vdev object can be retrieved
+ *
+ * Return: struct dp_vdev*: Pointer to DP vdev object
+ */
+static inline struct dp_vdev *
+dp_get_vdev_from_soc_vdev_id_wifi3(struct dp_soc *soc,
+					uint8_t vdev_id)
+{
+	struct dp_pdev *pdev = NULL;
+	struct dp_vdev *vdev = NULL;
+	int i;
+
+	for (i = 0; i < MAX_PDEV_CNT && soc->pdev_list[i]; i++) {
+		pdev = soc->pdev_list[i];
+		TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+			if (vdev->vdev_id == vdev_id) {
+				QDF_TRACE(QDF_MODULE_ID_DP,
+					QDF_TRACE_LEVEL_INFO,
+					FL("Found vdev 0x%p on pdev %d\n"),
+					vdev, i);
+				return vdev;
+			}
+		}
+	}
+	return NULL;
+
+}
+#endif
 #endif /* _DP_PEER_H_ */

@@ -213,7 +213,60 @@ dp_rx_deliver_raw(struct dp_vdev *vdev, qdf_nbuf_t nbuf_list)
 }
 
 
+#ifdef DP_LFR
+/*
+ * In case of LFR, data of a new peer might be sent up
+ * even before peer is added.
+ */
+static inline struct dp_vdev *
+dp_get_vdev_from_peer(struct dp_soc *soc,
+			uint16_t peer_id,
+			struct dp_peer *peer,
+			struct hal_rx_mpdu_desc_info mpdu_desc_info)
+{
+	struct dp_vdev *vdev;
+	uint8_t vdev_id;
 
+	if (unlikely(!peer)) {
+		if (peer_id != HTT_INVALID_PEER) {
+			vdev_id = DP_PEER_METADATA_ID_GET(
+					mpdu_desc_info.peer_meta_data);
+			QDF_TRACE(QDF_MODULE_ID_DP,
+				QDF_TRACE_LEVEL_ERROR,
+				FL("PeerID %d not found use vdevID %d"),
+				peer_id, vdev_id);
+			vdev = dp_get_vdev_from_soc_vdev_id_wifi3(soc,
+							vdev_id);
+		} else {
+			QDF_TRACE(QDF_MODULE_ID_DP,
+				QDF_TRACE_LEVEL_ERROR,
+				FL("Invalid PeerID %d"),
+				peer_id);
+			return NULL;
+		}
+	} else {
+		vdev = peer->vdev;
+	}
+	return vdev;
+}
+#else
+static inline struct dp_vdev *
+dp_get_vdev_from_peer(struct dp_soc *soc,
+			uint16_t peer_id,
+			struct dp_peer *peer,
+			struct hal_rx_mpdu_desc_info mpdu_desc_info)
+{
+	if (unlikely(!peer)) {
+		QDF_TRACE(QDF_MODULE_ID_DP,
+			QDF_TRACE_LEVEL_ERROR,
+			FL("Peer not found for peerID %d"),
+			peer_id);
+		return NULL;
+	} else {
+		return peer->vdev;
+	}
+}
+#endif
 /**
  * dp_rx_intrabss_fwd() - Implements the Intra-BSS forwarding logic
  *
@@ -474,17 +527,10 @@ dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 				mpdu_desc_info.peer_meta_data);
 
 		peer = dp_peer_find_by_id(soc, peer_id);
-		if (!peer) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				 FL("peer look-up failed peer id %d"), peer_id);
 
-			/* Drop & free packet */
-			qdf_nbuf_free(rx_desc->nbuf);
-			/* Statistics */
-			goto fail;
-		}
+		vdev = dp_get_vdev_from_peer(soc, peer_id, peer,
+						mpdu_desc_info);
 
-		vdev = peer->vdev;
 		if (!vdev) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				FL("vdev is NULL"));
@@ -595,7 +641,7 @@ done:
 			 * Cannot drop these packets right away.
 			 */
 			/* Peer lookup failed */
-			if (!peer) {
+			if (!peer && !vdev) {
 
 				/* Drop & free packet */
 				qdf_nbuf_free(nbuf);
@@ -604,7 +650,7 @@ done:
 				continue;
 			}
 
-			if (qdf_unlikely(peer->bss_peer)) {
+			if (peer && qdf_unlikely(peer->bss_peer)) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					QDF_TRACE_LEVEL_INFO,
 					FL("received pkt with same src MAC"));
@@ -703,7 +749,8 @@ done:
 			dp_rx_wds_srcport_learn(soc, rx_tlv_hdr, peer, nbuf);
 
 			/* Intrabss-fwd */
-			if (dp_rx_intrabss_fwd(soc, peer, rx_tlv_hdr, nbuf))
+			if (peer &&
+				dp_rx_intrabss_fwd(soc, peer, rx_tlv_hdr, nbuf))
 				continue; /* Get next descriptor */
 
 			rx_bufs_used++;
