@@ -646,7 +646,7 @@ static void hdd_link_layer_process_peer_stats(hdd_adapter_t *pAdapter,
 	if (0 != status)
 		return;
 
-	hdd_notice("LL_STATS_PEER_ALL : numPeers %u, more data = %u",
+	hdd_debug("LL_STATS_PEER_ALL : numPeers %u, more data = %u",
 		   pWifiPeerStat->numPeers, more_data);
 
 	/*
@@ -773,7 +773,7 @@ static void hdd_link_layer_process_iface_stats(hdd_adapter_t *pAdapter,
 		return;
 	}
 
-	hdd_notice("WMI_LINK_STATS_IFACE Data");
+	hdd_debug("WMI_LINK_STATS_IFACE Data");
 
 	if (false == hdd_get_interface_info(pAdapter, &pWifiIfaceStat->info)) {
 		hdd_err("hdd_get_interface_info get fail");
@@ -995,10 +995,10 @@ static void hdd_link_layer_process_radio_stats(hdd_adapter_t *pAdapter,
 	if (0 != status)
 		return;
 
-	hdd_notice("LL_STATS_RADIO: number of radios: %u", num_radio);
+	hdd_debug("LL_STATS_RADIO: number of radios: %u", num_radio);
 
 	for (i = 0; i < num_radio; i++) {
-		hdd_notice("LL_STATS_RADIO"
+		hdd_debug("LL_STATS_RADIO"
 		       " radio: %u onTime: %u txTime: %u rxTime: %u"
 		       " onTimeScan: %u onTimeNbd: %u"
 		       " onTimeGscan: %u onTimeRoamScan: %u"
@@ -1061,12 +1061,12 @@ void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
 		return;
 	}
 
-	hdd_notice("Link Layer Indication indType: %d", indType);
+	hdd_debug("Link Layer Indication indType: %d", indType);
 
 	switch (indType) {
 	case SIR_HAL_LL_STATS_RESULTS_RSP:
 	{
-		hdd_notice("LL_STATS RESP paramID = 0x%x, ifaceId = %u, respId= %u , moreResultToFollow = %u, num radio = %u result = %p",
+		hdd_debug("LL_STATS RESP paramID = 0x%x, ifaceId = %u, respId= %u , moreResultToFollow = %u, num radio = %u result = %p",
 			linkLayerStatsResults->paramId,
 			linkLayerStatsResults->ifaceId,
 			linkLayerStatsResults->rspId,
@@ -1141,7 +1141,7 @@ void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
 		break;
 	}
 	default:
-		hdd_err("invalid event type %d", indType);
+		hdd_warn("invalid event type %d", indType);
 		break;
 	}
 
@@ -1171,7 +1171,7 @@ void hdd_lost_link_info_cb(void *context,
 	}
 
 	adapter->rssi_on_disconnect = lost_link_info->rssi;
-	hdd_info("rssi on disconnect %d", adapter->rssi_on_disconnect);
+	hdd_debug("rssi on disconnect %d", adapter->rssi_on_disconnect);
 }
 
 const struct
@@ -1248,7 +1248,7 @@ __wlan_hdd_cfg80211_ll_stats_set(struct wiphy *wiphy,
 
 	LinkLayerStatsSetReq.staId = pAdapter->sessionId;
 
-	hdd_notice("LL_STATS_SET reqId = %d, staId = %d, mpduSizeThreshold = %d, Statistics Gathering = %d",
+	hdd_debug("LL_STATS_SET reqId = %d, staId = %d, mpduSizeThreshold = %d, Statistics Gathering = %d",
 		LinkLayerStatsSetReq.reqId, LinkLayerStatsSetReq.staId,
 		LinkLayerStatsSetReq.mpduSizeThreshold,
 		LinkLayerStatsSetReq.aggressiveStatisticsGathering);
@@ -1470,7 +1470,7 @@ __wlan_hdd_cfg80211_ll_stats_clear(struct wiphy *wiphy,
 		return -EINVAL;
 
 	if (!pAdapter->isLinkLayerStatsSet) {
-		hdd_alert("isLinkLayerStatsSet : %d",
+		hdd_warn("isLinkLayerStatsSet : %d",
 			  pAdapter->isLinkLayerStatsSet);
 		return -EINVAL;
 	}
@@ -1503,7 +1503,7 @@ __wlan_hdd_cfg80211_ll_stats_clear(struct wiphy *wiphy,
 
 	LinkLayerStatsClearReq.staId = pAdapter->sessionId;
 
-	hdd_notice("LL_STATS_CLEAR reqId = %d, staId = %d, statsClearReqMask = 0x%X, stopReq = %d",
+	hdd_debug("LL_STATS_CLEAR reqId = %d, staId = %d, statsClearReqMask = 0x%X, stopReq = %d",
 		LinkLayerStatsClearReq.reqId,
 		LinkLayerStatsClearReq.staId,
 		LinkLayerStatsClearReq.statsClearReqMask,
@@ -1785,14 +1785,14 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 
 	if ((eConnectionState_Associated != pHddStaCtx->conn_info.connState) ||
 	    (0 == ssidlen)) {
-		hdd_notice("Not associated or Invalid ssidlen, %d",
+		hdd_debug("Not associated or Invalid ssidlen, %d",
 			ssidlen);
 		/*To keep GUI happy */
 		return 0;
 	}
 
 	if (true == pHddStaCtx->hdd_ReassocScenario) {
-		hdd_notice("Roaming is in progress, cannot continue with this request");
+		hdd_debug("Roaming is in progress, cannot continue with this request");
 		/*
 		 * supplicant reports very low rssi to upper layer
 		 * and handover happens to cellular.
@@ -1811,7 +1811,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	wlan_hdd_get_station_stats(pAdapter);
 	sinfo->signal = pAdapter->hdd_stats.summary_stat.rssi;
 	snr = pAdapter->hdd_stats.summary_stat.snr;
-	hdd_info("snr: %d, rssi: %d",
+	hdd_debug("snr: %d, rssi: %d",
 		pAdapter->hdd_stats.summary_stat.snr,
 		pAdapter->hdd_stats.summary_stat.rssi);
 	pHddStaCtx->conn_info.signal = sinfo->signal;
@@ -1846,7 +1846,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 			mcs_index = 0;
 	}
 
-	hdd_info("RSSI %d, RLMS %u, rate %d, rssi high %d, rssi mid %d, rssi low %d, rate_flags 0x%x, MCS %d",
+	hdd_debug("RSSI %d, RLMS %u, rate %d, rssi high %d, rssi mid %d, rssi low %d, rate_flags 0x%x, MCS %d",
 		 sinfo->signal, pCfg->reportMaxLinkSpeed, myRate,
 		 (int)pCfg->linkSpeedRssiHigh, (int)pCfg->linkSpeedRssiMid,
 		 (int)pCfg->linkSpeedRssiLow, (int)rate_flags, (int)mcs_index);
@@ -2265,11 +2265,11 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 #endif
 
 	if (rate_flags & eHAL_TX_RATE_LEGACY)
-		hdd_notice("Reporting legacy rate %d pkt cnt tx %d rx %d",
+		hdd_debug("Reporting legacy rate %d pkt cnt tx %d rx %d",
 			sinfo->txrate.legacy, sinfo->tx_packets,
 			sinfo->rx_packets);
 	else
-		hdd_notice("Reporting MCS rate %d flags 0x%x pkt cnt tx %d rx %d",
+		hdd_debug("Reporting MCS rate %d flags 0x%x pkt cnt tx %d rx %d",
 			sinfo->txrate.mcs, sinfo->txrate.flags,
 			sinfo->tx_packets, sinfo->rx_packets);
 
@@ -2283,7 +2283,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 				   sinfo->chain_signal_avg[i] != 0)
 			sinfo->signal_avg = sinfo->chain_signal_avg[i];
 
-		hdd_info("RSSI for chain %d, vdev_id %d is %d",
+		hdd_debug("RSSI for chain %d, vdev_id %d is %d",
 			i, pAdapter->sessionId, sinfo->chain_signal_avg[i]);
 
 		if (!rssi_stats_valid && sinfo->chain_signal_avg[i])
