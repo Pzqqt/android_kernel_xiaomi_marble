@@ -136,6 +136,20 @@ static int populate_service_ready_ext_param(void *handle, uint8_t *evt,
 	return 0;
 }
 
+static int populate_chainmaks_tables(void *handle, uint8_t *evt,
+		struct wlan_psoc_host_chainmask_table *param)
+{
+	QDF_STATUS status;
+
+	status = wmi_extract_chainmask_tables(handle, evt, param);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMI_LOGE("failed to parse wmi service ready ext param");
+		return qdf_status_to_os_return(status);
+	}
+
+	return 0;
+}
+
 static int populate_mac_phy_capability(void *handle, uint8_t *evt,
 	struct wlan_psoc_host_hw_mode_caps *hw_cap, uint8_t *total_mac_phy,
 	struct wlan_objmgr_psoc_ext_service_ready_param *service_param)
@@ -290,6 +304,14 @@ int init_deinit_service_ext_ready_event_handler(ol_scn_t scn_handle,
 					   event, service_param);
 	if (err_code)
 		goto free_param_and_exit;
+
+	if (wlan_objmgr_ext_service_ready_chainmask_table_caplist_alloc(
+				&(service_param->service_ext_param)) == QDF_STATUS_SUCCESS) {
+		err_code = populate_chainmaks_tables(wmi_handle, event,
+				&(service_param->service_ext_param.chainmask_table[0]));
+		if (err_code)
+			goto free_param_and_exit;
+	}
 
 	legacy_callback = target_if_get_psoc_legacy_service_ready_cb();
 	err_code = legacy_callback(wmi_service_ready_ext_event_id,

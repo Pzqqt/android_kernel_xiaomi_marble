@@ -31,6 +31,7 @@
 #define PSOC_MAX_HW_MODE (2)
 #define PSOC_MAX_MAC_PHY_CAP (5)
 #define PSOC_MAX_PHY_REG_CAP (3)
+#define PSOC_MAX_CHAINMASK_TABLES (5)
 
 /* forward declaration of object manager psoc object type */
 struct wlan_objmgr_psoc;
@@ -198,6 +199,7 @@ struct wlan_psoc_host_ppe_threshold {
  * @he_cap_phy_info_5G: 5G HE capability phy field
  * @he_ppet2G: 2G HE PPET info
  * @he_ppet5G: 5G HE PPET info
+ * @chainmask_table_id: chain mask table id
  */
 struct wlan_psoc_host_mac_phy_caps {
 	uint32_t hw_mode_id;
@@ -231,6 +233,7 @@ struct wlan_psoc_host_mac_phy_caps {
 	uint32_t he_cap_phy_info_5G[PSOC_HOST_MAX_PHY_SIZE];
 	struct wlan_psoc_host_ppe_threshold he_ppet2G;
 	struct wlan_psoc_host_ppe_threshold he_ppet5G;
+	uint32_t chainmask_table_id;
 };
 
 /**
@@ -247,6 +250,47 @@ struct wlan_psoc_host_hw_mode_caps {
 };
 
 /**
+ * struct wlan_psoc_host_chainmask_capabilities - chain mask capabilities list
+ * @supports_chan_width_20: channel width 20 support for this chain mask.
+ * @supports_chan_width_40: channel width 40 support for this chain mask.
+ * @supports_chan_width_80: channel width 80 support for this chain mask.
+ * @supports_chan_width_160: channel width 160 support for this chain mask.
+ * @supports_chan_width_80P80: channel width 80P80 support for this chain mask.
+ * @chain_mask_2G: 2G support for this chain mask.
+ * @chain_mask_5G: 5G support for this chain mask.
+ * @chain_mask_tx: Tx support for this chain mask.
+ * @chain_mask_rx: Rx support for this chain mask.
+ * @supports_aDFS: Agile DFS support for this chain mask.
+ * @chainmask: chain mask value.
+ */
+struct wlan_psoc_host_chainmask_capabilities {
+	uint32_t supports_chan_width_20:1,
+		 supports_chan_width_40:1,
+		 supports_chan_width_80:1,
+		 supports_chan_width_160:1,
+		 supports_chan_width_80P80:1,
+		 reserved:22,
+		 chain_mask_2G:1,
+		 chain_mask_5G:1,
+		 chain_mask_tx:1,
+		 chain_mask_rx:1,
+		 supports_aDFS:1;
+	uint32_t chainmask;
+};
+
+/**
+ * struct wlan_psoc_host_chainmask_table - chain mask table
+ * @table_id: tableid.
+ * @num_valid_chainmasks: num valid chainmasks.
+ * @cap_list: pointer to wlan_psoc_host_chainmask_capabilities list.
+ */
+struct wlan_psoc_host_chainmask_table {
+	uint32_t table_id;
+	uint32_t num_valid_chainmasks;
+	struct wlan_psoc_host_chainmask_capabilities *cap_list;
+};
+
+/**
  * struct wlan_psoc_host_service_ext_param - EXT service base params in event
  * @default_conc_scan_config_bits: Default concurrenct scan config
  * @default_fw_config_bits: Default HW config bits
@@ -257,6 +301,8 @@ struct wlan_psoc_host_hw_mode_caps {
  *                        Value 0 means FW hasn't given any limit to host.
  * @num_hw_modes: Number of HW modes in event
  * @num_phy: Number of Phy mode.
+ * @num_chainmask_tables: Number of chain mask tables.
+ * @chainmask_table: Available chain mask tables.
  */
 struct wlan_psoc_host_service_ext_param {
 	uint32_t default_conc_scan_config_bits;
@@ -267,6 +313,8 @@ struct wlan_psoc_host_service_ext_param {
 	uint32_t max_bssid_rx_filters;
 	uint32_t num_hw_modes;
 	uint32_t num_phy;
+	uint32_t num_chainmask_tables;
+	struct wlan_psoc_host_chainmask_table chainmask_table[PSOC_MAX_CHAINMASK_TABLES];
 };
 
 /**
@@ -308,5 +356,29 @@ wlan_objmgr_populate_service_ready_data(struct wlan_objmgr_psoc *psoc,
 void
 wlan_objmgr_populate_ext_service_ready_data(struct wlan_objmgr_psoc *psoc,
 	struct wlan_objmgr_psoc_ext_service_ready_param *ext_service_data);
+
+/**
+ * wlan_objmgr_ext_service_ready_chainmask_table_caplist_alloc()
+ *	- allocate chainmask table capability list.
+ * @service_ext_param: pointer to server ext param.
+ *
+ * Allocates capability list based on num_valid_chainmasks for that table.
+ *
+ * Return: QDF Status.
+ */
+QDF_STATUS wlan_objmgr_ext_service_ready_chainmask_table_caplist_alloc(
+		struct wlan_psoc_host_service_ext_param *service_ext_param);
+
+/**
+ * wlan_objmgr_ext_service_ready_chainmask_table_caplist_free()
+ *	-free chainmask table capability list.
+ * @service_ext_param: pointer to server ext param.
+ *
+ * free capability list based on num_valid_chainmasks for that table.
+ *
+ * Return: QDF Status.
+ */
+QDF_STATUS wlan_objmgr_ext_service_ready_chainmask_table_caplist_free(
+		struct wlan_psoc_host_service_ext_param *service_ext_param);
 
 #endif /* _WLAN_OBJMGR_PSOC_SERVICE_READY_API_H_*/

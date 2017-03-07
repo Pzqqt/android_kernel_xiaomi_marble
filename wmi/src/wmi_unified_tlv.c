@@ -16017,6 +16017,87 @@ static QDF_STATUS extract_pdev_utf_event_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * extract_chainmask_tables_tlv() - extract chain mask tables from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param param: Pointer to hold evt buf
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_chainmask_tables_tlv(wmi_unified_t wmi_handle,
+		uint8_t *event, struct wlan_psoc_host_chainmask_table *chainmask_table)
+{
+	WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *param_buf;
+	WMI_MAC_PHY_CHAINMASK_CAPABILITY *chainmask_caps;
+	WMI_SOC_MAC_PHY_HW_MODE_CAPS *hw_caps;
+	uint8_t i = 0, j = 0;
+
+	param_buf = (WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *) event;
+	if (!param_buf)
+		return QDF_STATUS_E_INVAL;
+
+	hw_caps = param_buf->soc_hw_mode_caps;
+	if (!hw_caps)
+		return QDF_STATUS_E_INVAL;
+
+	if (!hw_caps->num_chainmask_tables)
+		return QDF_STATUS_E_INVAL;
+
+	chainmask_caps = param_buf->mac_phy_chainmask_caps;
+
+	if (chainmask_caps == NULL)
+		return QDF_STATUS_E_INVAL;
+
+	for (i = 0; i < hw_caps->num_chainmask_tables; i++) {
+
+		qdf_print("Dumping chain mask combo data for table : %d\n", i);
+		for (j = 0; j < chainmask_table[i].num_valid_chainmasks; j++) {
+
+			chainmask_table[i].cap_list[j].chainmask =
+				chainmask_caps->chainmask;
+
+			chainmask_table[i].cap_list[j].supports_chan_width_20 =
+				WMI_SUPPORT_CHAN_WIDTH_20_GET(chainmask_caps->supported_flags);
+
+			chainmask_table[i].cap_list[j].supports_chan_width_40 =
+				WMI_SUPPORT_CHAN_WIDTH_40_GET(chainmask_caps->supported_flags);
+
+			chainmask_table[i].cap_list[j].supports_chan_width_80 =
+				WMI_SUPPORT_CHAN_WIDTH_80_GET(chainmask_caps->supported_flags);
+
+			chainmask_table[i].cap_list[j].supports_chan_width_160 =
+				WMI_SUPPORT_CHAN_WIDTH_160_GET(chainmask_caps->supported_flags);
+
+			chainmask_table[i].cap_list[j].supports_chan_width_80P80 =
+				WMI_SUPPORT_CHAN_WIDTH_80P80_GET(chainmask_caps->supported_flags);
+
+			chainmask_table[i].cap_list[j].chain_mask_2G =
+				WMI_SUPPORT_CHAIN_MASK_2G_GET(chainmask_caps->supported_flags);
+
+			chainmask_table[i].cap_list[j].chain_mask_5G =
+				WMI_SUPPORT_CHAIN_MASK_5G_GET(chainmask_caps->supported_flags);
+
+			chainmask_table[i].cap_list[j].chain_mask_tx =
+				WMI_SUPPORT_CHAIN_MASK_TX_GET(chainmask_caps->supported_flags);
+
+			chainmask_table[i].cap_list[j].chain_mask_rx =
+				WMI_SUPPORT_CHAIN_MASK_RX_GET(chainmask_caps->supported_flags);
+
+			chainmask_table[i].cap_list[j].supports_aDFS =
+				WMI_SUPPORT_CHAIN_MASK_ADFS_GET(chainmask_caps->supported_flags);
+
+			qdf_print("supported_flags: 0x%08x  chainmasks: 0x%08x\n",
+					chainmask_caps->supported_flags,
+					chainmask_caps->chainmask
+				 );
+			chainmask_caps++;
+		}
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * extract_service_ready_ext_tlv() - extract basic extended service ready params
  * from event
  * @wmi_handle: wmi handle
@@ -16032,6 +16113,8 @@ static QDF_STATUS extract_service_ready_ext_tlv(wmi_unified_t wmi_handle,
 	wmi_service_ready_ext_event_fixed_param *ev;
 	WMI_SOC_MAC_PHY_HW_MODE_CAPS *hw_caps;
 	WMI_SOC_HAL_REG_CAPABILITIES *reg_caps;
+	WMI_MAC_PHY_CHAINMASK_COMBO *chain_mask_combo;
+	uint8_t i = 0;
 
 	param_buf = (WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *) event;
 	if (!param_buf)
@@ -16061,6 +16144,32 @@ static QDF_STATUS extract_service_ready_ext_tlv(wmi_unified_t wmi_handle,
 		param->num_phy = reg_caps->num_phy;
 	else
 		param->num_phy = 0;
+
+	param->num_chainmask_tables = hw_caps->num_chainmask_tables;
+
+	qdf_print("Num chain mask tables: %d\n", hw_caps->num_chainmask_tables);
+
+	chain_mask_combo = param_buf->mac_phy_chainmask_combo;
+
+	if (chain_mask_combo == NULL)
+		return QDF_STATUS_SUCCESS;
+
+	qdf_print("Dumping chain mask combo data\n");
+
+	for (i = 0; i < hw_caps->num_chainmask_tables; i++) {
+
+		qdf_print("table_id : %d Num valid chainmasks: %d\n",
+				chain_mask_combo->chainmask_table_id,
+				chain_mask_combo->num_valid_chainmask
+			 );
+
+		param->chainmask_table[i].table_id =
+			chain_mask_combo->chainmask_table_id;
+		param->chainmask_table[i].num_valid_chainmasks =
+			chain_mask_combo->num_valid_chainmask;
+		chain_mask_combo++;
+	}
+	qdf_print("chain mask combo end\n");
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -16197,6 +16306,7 @@ static QDF_STATUS extract_mac_phy_cap_service_ready_ext_tlv(
 				 sizeof(param->he_ppet2G));
 	qdf_mem_copy(&param->he_ppet5G, &mac_phy_caps->he_ppet5G,
 				sizeof(param->he_ppet5G));
+	param->chainmask_table_id = mac_phy_caps->chainmask_table_id;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -17185,7 +17295,9 @@ struct wmi_ops tlv_ops =  {
 	.send_dfs_phyerr_offload_en_cmd = send_dfs_phyerr_offload_en_cmd_tlv,
 	.send_dfs_phyerr_offload_dis_cmd = send_dfs_phyerr_offload_dis_cmd_tlv,
 	.extract_reg_chan_list_update_event =
-				extract_reg_chan_list_update_event_tlv,
+		extract_reg_chan_list_update_event_tlv,
+	.extract_chainmask_tables =
+		extract_chainmask_tables_tlv,
 };
 
 /**

@@ -1287,6 +1287,9 @@ QDF_STATUS (*extract_reg_chan_list_update_event)(wmi_unified_t wmi_handle,
 						 struct cur_regulatory_info
 						 *reg_info,
 						 uint32_t len);
+QDF_STATUS (*extract_chainmask_tables)(wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct wlan_psoc_host_chainmask_table *chainmask_table);
 };
 
 struct target_abi_version {

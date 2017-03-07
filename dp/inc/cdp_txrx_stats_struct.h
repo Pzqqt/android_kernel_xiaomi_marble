@@ -475,6 +475,7 @@ typedef enum _ol_ath_param_t {
 	OL_ATH_COEX_VER_CFG = 347,
 	OL_ATH_PARAM_DUMP_TARGET = 348,
 	OL_ATH_PARAM_PDEV_TO_REO_DEST = 349,
+	OL_ATH_PARAM_DUMP_CHAINMASK_TABLES = 350,
 } ol_ath_param_t;
 
 /*

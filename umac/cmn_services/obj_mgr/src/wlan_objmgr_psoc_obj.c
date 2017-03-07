@@ -90,12 +90,17 @@ static void wlan_objmgr_psoc_peer_list_deinit(struct wlan_peer_list *peer_list)
 
 static QDF_STATUS wlan_objmgr_psoc_obj_free(struct wlan_objmgr_psoc *psoc)
 {
+	struct wlan_psoc_host_service_ext_param *ext_param =
+		&(psoc->ext_service_param.service_ext_param);
+
 	/* Detach PSOC from global object's psoc list  */
 	if (wlan_objmgr_psoc_object_detach(psoc) == QDF_STATUS_E_FAILURE) {
 		qdf_print("%s: PSOC object detach failed\n", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 	wlan_objmgr_psoc_peer_list_deinit(&psoc->soc_objmgr.peer_list);
+	wlan_objmgr_ext_service_ready_chainmask_table_caplist_free(ext_param);
+
 	qdf_spinlock_destroy(&psoc->psoc_lock);
 	qdf_mem_free(psoc);
 
