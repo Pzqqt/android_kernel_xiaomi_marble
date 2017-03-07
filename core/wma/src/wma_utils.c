@@ -328,7 +328,7 @@ static struct wma_target_req *wma_peek_vdev_req(tp_wma_handle wma,
 							  node1, &node2));
 	qdf_spin_unlock_bh(&wma->vdev_respq_lock);
 	if (!found) {
-		WMA_LOGP(FL("target request not found for vdev_id %d type %d"),
+		WMA_LOGE(FL("target request not found for vdev_id %d type %d"),
 			 vdev_id, type);
 		return NULL;
 	}
@@ -358,7 +358,7 @@ void wma_lost_link_info_handler(tp_wma_handle wma, uint32_t vdev_id,
 		sme_msg.type = eWNI_SME_LOST_LINK_INFO_IND;
 		sme_msg.bodyptr = lost_link_info;
 		sme_msg.bodyval = 0;
-		WMA_LOGI("%s: post msg to SME, bss_idx %d, rssi %d",  __func__,
+		WMA_LOGD("%s: post msg to SME, bss_idx %d, rssi %d",  __func__,
 			 lost_link_info->vdev_id, lost_link_info->rssi);
 
 		qdf_status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
@@ -1839,7 +1839,6 @@ int wma_stats_event_handler(void *handle, uint8_t *cmd_param_info,
 		}
 	}
 
-	WMA_LOGI("%s: Exit", __func__);
 	return 0;
 }
 
@@ -1917,7 +1916,7 @@ QDF_STATUS wma_wni_cfg_dnld(tp_wma_handle wma_handle)
 	WMA_LOGD("%s: Enter", __func__);
 
 	if (NULL == mac) {
-		WMA_LOGP("%s: Invalid context", __func__);
+		WMA_LOGE("%s: Invalid context", __func__);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2127,7 +2126,7 @@ WLAN_PHY_MODE wma_peer_phymode(tSirNwType nw_type, uint8_t sta_type,
 			phymode = (ch_width) ? MODE_11NA_HT40 : MODE_11NA_HT20;
 		break;
 	default:
-		WMA_LOGP("%s: Invalid nw type %d", __func__, nw_type);
+		WMA_LOGE("%s: Invalid nw type %d", __func__, nw_type);
 		break;
 	}
 	WMA_LOGD(FL("nw_type %d is_ht %d ch_width %d is_vht %d is_he %d phymode %d"),
@@ -2309,7 +2308,7 @@ void wma_get_stats_req(WMA_HANDLE handle,
 		if (pGetPEStatsRspParams->staId == get_stats_param->staId &&
 		    pGetPEStatsRspParams->statsMask ==
 		    get_stats_param->statsMask) {
-			WMA_LOGI("Stats for staId %d with stats mask %d "
+			WMA_LOGD("Stats for staId %d with stats mask %d "
 				 "is pending.... ignore new request",
 				 get_stats_param->staId,
 				 get_stats_param->statsMask);
@@ -2650,7 +2649,7 @@ void wma_utf_attach(tp_wma_handle wma_handle)
 						 WMA_RX_SERIALIZER_CTX);
 
 	if (ret)
-		WMA_LOGP("%s: Failed to register UTF event callback", __func__);
+		WMA_LOGE("%s: Failed to register UTF event callback", __func__);
 }
 
 /**
@@ -2738,7 +2737,6 @@ QDF_STATUS wma_get_wcnss_software_version(void *p_cds_gctx,
 		 (unsigned int)wma_handle->target_fw_version);
 	return QDF_STATUS_SUCCESS;
 }
-
 
 /**
  * wma_get_mac_id_of_vdev() - Get MAC id corresponding to a vdev
