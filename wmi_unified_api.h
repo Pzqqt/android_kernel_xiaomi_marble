@@ -1421,6 +1421,8 @@ QDF_STATUS wmi_extract_peer_delete_response_event(void *wmi_hdl,
 		uint8_t *evt_buf,
 		struct wmi_host_peer_delete_response_event *param);
 
+QDF_STATUS wmi_extract_chainmask_tables(void *wmi_hdl, uint8_t *evt_buf,
+		struct wlan_psoc_host_chainmask_table *chainmask_table);
 /**
  * wmi_unified_dfs_phyerr_offload_en_cmd() - enable dfs phyerr offload
  * @wmi_handle: wmi handle
