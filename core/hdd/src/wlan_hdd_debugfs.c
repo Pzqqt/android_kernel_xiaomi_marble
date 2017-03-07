@@ -75,8 +75,7 @@ static ssize_t __wcnss_wowenable_write(struct file *file,
 
 	pAdapter = (hdd_adapter_t *)file->private_data;
 	if ((NULL == pAdapter) || (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic)) {
-		hdd_alert("Invalid adapter or adapter has invalid magic.");
-
+		hdd_err("Invalid adapter or adapter has invalid magic");
 		return -EINVAL;
 	}
 
@@ -88,14 +87,12 @@ static ssize_t __wcnss_wowenable_write(struct file *file,
 
 	if (!sme_is_feature_supported_by_fw(WOW)) {
 		hdd_err("Wake-on-Wireless feature is not supported in firmware!");
-
 		return -EINVAL;
 	}
 
 	if (count > MAX_USER_COMMAND_SIZE_WOWL_ENABLE) {
-		hdd_err("Command length is larger than %d bytes.",
+		hdd_err("Command length is larger than %d bytes",
 			MAX_USER_COMMAND_SIZE_WOWL_ENABLE);
-
 		return -EINVAL;
 	}
 
@@ -116,7 +113,6 @@ static ssize_t __wcnss_wowenable_write(struct file *file,
 	if (!wow_enable) {
 		if (!hdd_exit_wowl(pAdapter)) {
 			hdd_err("hdd_exit_wowl failed!");
-
 			return -EFAULT;
 		}
 
@@ -143,7 +139,6 @@ static ssize_t __wcnss_wowenable_write(struct file *file,
 
 	if (!hdd_enter_wowl(pAdapter, wow_mp, wow_pbm)) {
 		hdd_err("hdd_enter_wowl failed!");
-
 		return -EFAULT;
 	}
 	EXIT();
@@ -198,8 +193,7 @@ static ssize_t __wcnss_wowpattern_write(struct file *file,
 	ENTER();
 
 	if ((NULL == pAdapter) || (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic)) {
-		hdd_alert("Invalid adapter or adapter has invalid magic.");
-
+		hdd_err("Invalid adapter or adapter has invalid magic");
 		return -EINVAL;
 	}
 
@@ -210,14 +204,12 @@ static ssize_t __wcnss_wowpattern_write(struct file *file,
 
 	if (!sme_is_feature_supported_by_fw(WOW)) {
 		hdd_err("Wake-on-Wireless feature is not supported in firmware!");
-
 		return -EINVAL;
 	}
 
 	if (count > MAX_USER_COMMAND_SIZE_WOWL_PATTERN) {
-		hdd_err("Command length is larger than %d bytes.",
+		hdd_err("Command length is larger than %d bytes",
 			MAX_USER_COMMAND_SIZE_WOWL_PATTERN);
-
 		return -EINVAL;
 	}
 
@@ -322,8 +314,7 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 
 	pAdapter = (hdd_adapter_t *)file->private_data;
 	if ((NULL == pAdapter) || (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic)) {
-		hdd_alert("Invalid adapter or adapter has invalid magic.");
-
+		hdd_err("Invalid adapter or adapter has invalid magic");
 		return -EINVAL;
 	}
 
@@ -341,7 +332,7 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 	if (count <= MAX_USER_COMMAND_SIZE_FRAME)
 		cmd = qdf_mem_malloc(count + 1);
 	else {
-		hdd_err("Command length is larger than %d bytes.",
+		hdd_err("Command length is larger than %d bytes",
 			MAX_USER_COMMAND_SIZE_FRAME);
 
 		return -EINVAL;
@@ -367,7 +358,7 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 		goto failure;
 
 	if (pattern_idx > (MAXNUM_PERIODIC_TX_PTRNS - 1)) {
-		hdd_err("Pattern index %d is not in the range (0 ~ %d).",
+		hdd_err("Pattern index: %d is not in the range (0 ~ %d)",
 			pattern_idx, MAXNUM_PERIODIC_TX_PTRNS - 1);
 
 		goto failure;
@@ -413,7 +404,7 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 	 * In STA mode check if it's in connected state before adding
 	 * patterns
 	 */
-	hdd_info("device mode %d", pAdapter->device_mode);
+	hdd_debug("device mode %d", pAdapter->device_mode);
 	if ((QDF_STA_MODE == pAdapter->device_mode) &&
 	    (!hdd_conn_is_connected(WLAN_HDD_GET_STATION_CTX_PTR(pAdapter)))) {
 			hdd_err("Not in Connected state!");
@@ -745,7 +736,7 @@ static int __wcnss_debugfs_open(struct inode *inode, struct file *file)
 
 	adapter = (hdd_adapter_t *)file->private_data;
 	if ((NULL == adapter) || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
-		hdd_alert("Invalid adapter or adapter has invalid magic.");
+		hdd_err("Invalid adapter or adapter has invalid magic");
 		return -EINVAL;
 	}
 
@@ -883,6 +874,6 @@ void hdd_debugfs_exit(hdd_adapter_t *adapter)
 	if (adapter->debugfs_phy)
 		debugfs_remove_recursive(adapter->debugfs_phy);
 	else
-		hdd_info("Interface %s has no debugfs entry", dev->name);
+		hdd_debug("Interface %s has no debugfs entry", dev->name);
 }
 #endif /* #ifdef WLAN_OPEN_SOURCE */
