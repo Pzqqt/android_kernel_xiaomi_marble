@@ -5819,157 +5819,496 @@ typedef struct {
  */
 #define WMI_UNIFIED_VDEV_START_BCN_TX_RATE_PRESENT (1<<2)
 
-
+/* BSS color 0-6 */
 #define WMI_HEOPS_COLOR_GET(he_ops) WMI_GET_BITS(he_ops, 0, 6)
 #define WMI_HEOPS_COLOR_SET(he_ops, value) WMI_SET_BITS(he_ops, 0, 6, value)
 
+/* Default PE Duration subfield indicates the PE duration in units of 4 us */
 #define WMI_HEOPS_DEFPE_GET(he_ops) WMI_GET_BITS(he_ops, 6, 3)
 #define WMI_HEOPS_DEFPE_SET(he_ops, value) WMI_SET_BITS(he_ops, 6, 3, value)
 
+/* TWT required */
 #define WMI_HEOPS_TWT_GET(he_ops) WMI_GET_BITS(he_ops, 9, 1)
 #define WMI_HEOPS_TWT_SET(he_ops, value) WMI_SET_BITS(he_ops, 9, 1, value)
 
+/* RTS threshold in units of 32 us,0 - always use RTS 1023 - this is disabled */
 #define WMI_HEOPS_RTSTHLD_GET(he_ops) WMI_GET_BITS(he_ops, 10, 10)
 #define WMI_HEOPS_RTSTHLD_SET(he_ops, value) WMI_SET_BITS(he_ops, 10, 10, value)
 
-#define WMI_HEOPS_PDMIN_GET(he_ops) WMI_GET_BITS(he_ops, 20, 5)
-#define WMI_HEOPS_PDMIN_SET(he_ops, value) WMI_SET_BITS(he_ops, 20, 5, value)
+/* Partial BSS Color field indicates whether BSS applies an AID assignment rule using partial BSS color bits */
+#define WMI_HEOPS_PARTBSSCOLOR_GET(he_ops) WMI_GET_BITS(he_ops, 20, 1)
+#define WMI_HEOPS_PARTBSSCOLOR_SET(he_ops, value) WMI_SET_BITS(he_ops, 20, 1, value)
 
-#define WMI_HEOPS_PDMAX_GET(he_ops) WMI_GET_BITS(he_ops, 25, 5)
-#define WMI_HEOPS_PDMAX_SET(he_ops, value) WMI_SET_BITS(he_ops, 25, 5, value)
+/* MAX BSS supported by MultiBSS element */
+#define WMI_HEOPS_MAXBSSID_GET(he_ops) WMI_GET_BITS(he_ops, 21, 8)
+#define WMI_HEOPS_MAXBSSID_SET(he_ops, value) WMI_SET_BITS(he_ops, 21, 8, value)
+
+/* Tx BSSID Indicator indicates whether HE AP corresponds to transmitted BSSID */
+#define WMI_HEOPS_TXBSSID_GET(he_ops) WMI_GET_BITS(he_ops, 29, 1)
+#define WMI_HEOPS_TXBSSID_SET(he_ops, value) WMI_SET_BITS(he_ops, 29, 1, value)
+
+/* when set to 1 disables use of BSS color */
+#define WMI_HEOPS_BSSCOLORDISABLE_GET(he_ops) WMI_GET_BITS(he_ops, 30, 1)
+#define WMI_HEOPS_BSSCOLORDISABLE_SET(he_ops, value) WMI_SET_BITS(he_ops, 30, 1, value)
+
+/* When set to 1 HE AP transmits beacons using two PHY formats,
+ * one in non-HE format and other in an HE_EXT_SU PHY format
+ */
+#define WMI_HEOPS_DUALBEACON_GET(he_ops) WMI_GET_BITS(he_ops, 30, 1)
+#define WMI_HEOPS_DUALBEACON_SET(he_ops, value) WMI_SET_BITS(he_ops, 30, 1, value)
 
 #define WMI_MAX_HECAP_PHY_SIZE                 (3)
-#define WMI_HECAP_PHY_COD_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 0, 1)
-#define WMI_HECAP_PHY_COD_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 0, 1, value)
 
-#define WMI_HECAP_PHY_TXLDPC_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 1, 1)
-#define WMI_HECAP_PHY_TXLDPC_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 1, 1, value)
 
-#define WMI_HECAP_PHY_RXLDPC_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 2, 1)
-#define WMI_HECAP_PHY_RXLDPC_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 2, 1, value)
 
-#define WMI_HECAP_PHY_DCM_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 3, 3)
-#define WMI_HECAP_PHY_DCM_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 3, 3, value)
 
-#define WMI_HECAP_PHY_OLTF_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 6, 1)
-#define WMI_HECAP_PHY_OLTF_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 6, 1, value)
 
-#define WMI_HECAP_PHY_CBW_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 7, 3)
-#define WMI_HECAP_PHY_CBW_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 7, 3, value)
 
-#define WMI_HECAP_PHY_TXSTBC_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 10, 1)
-#define WMI_HECAP_PHY_TXSTBC_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 10, 1, value)
 
-#define WMI_HECAP_PHY_RXSTBC_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 11, 1)
-#define WMI_HECAP_PHY_RXSTBC_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 11, 1, value)
+/* Dual Band both 2.4 GHz and 5 GHz Supported */
+#define WMI_HECAP_PHY_DB_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 0, 1)
+#define WMI_HECAP_PHY_DB_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 0, 1, value)
 
-#define WMI_HECAP_PHY_DLOFMAMUMIMO_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 12, 1)
-#define WMI_HECAP_PHY_DLOFDMAMUMIO_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 12, 1, value)
+/*
+ * B0: Indicates STA support 40 MHz channel width in 2.4 GHz
+ * B1: Indicates STA support 40 MHz and 80 MHz channel width in 5 GHz
+ * B2: Indicates STA supports 160 MHz channel width in 5 GHz
+ * B3: Indicates STA supports 160/80+80 MHz channel width in 5 GHz
+ * B4: If B1 is set to 0, then B5 indicates support of 242/106/52/26-tone
+ *     RU mapping in 40 MHz channel width in 2.4 GHz. Otherwise Reserved.
+ * B5: If B2, B3, and B4 are set to 0, then B6 indicates support of
+ *     242-tone RU mapping in 40 MHz and 80
+ * MHz channel width in 5 GHz. Otherwise Reserved.
+ * B6: Reserved
+ */
+#define WMI_HECAP_PHY_CBW_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 1, 7)
+#define WMI_HECAP_PHY_CBW_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 1, 7, value)
 
-#define WMI_HECAP_PHY_UL_MU_MIMO_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 13, 1)
-#define WMI_HECAP_PHY_UL_MU_MIMO_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 13, 1, value)
+/*
+ * B0: Indicates STA supports reception of preamble puncturing in 80 MHz,
+ *     where in the preamble only the secondary 20 MHz is punctured
+ * B1: Indicates STA supports reception of preamble puncturing in 80 MHz,
+ *     where in the preamble only one of the two 20 MHz sub-channels in the
+ *     secondary 40 MHz is punctured
+ * B2: Indicates STA supports reception of preamble puncturing in 160 MHz
+ *     or 80+80 MHz, where in the primary 80 MHz of the preamble only the
+ *     secondary 20 MHz is punctured
+ * B3: Indicates STA supports reception of preamble puncturing in 160 MHz
+ *     or 80+80 MHz, where in the primary 80 MHz of the preamble, the
+ *     primary 40 MHz is present
+ */
+#define WMI_HECAP_PHY_PREAMBLEPUNCRX_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 8, 4)
+#define WMI_HECAP_PHY_PREAMBLEPUNCRX_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 8, 4, value)
 
-#define WMI_HECAP_PHY_ULOFDMA_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 14, 1)
-#define WMI_HECAP_PHY_ULOFDMA_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 14, 1, value)
+/* Indicates transmitting STA is a Class A (1) or a Class B (0) device */
+#define WMI_HECAP_PHY_COD_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 12, 1)
+#define WMI_HECAP_PHY_COD_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 12, 1, value)
 
-#define WMI_HECAP_PHY_TXDOPPLER_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 15, 1)
-#define WMI_HECAP_PHY_TXDOPPLER_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 15, 1, value)
+/* Indicates support of transmission and reception of LDPC encoded packets */
+#define WMI_HECAP_PHY_LDPC_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 13, 1)
+#define WMI_HECAP_PHY_LDPC_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 13, 1, value)
 
-#define WMI_HECAP_PHY_RXDOPPLER_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 16, 1)
-#define WMI_HECAP_PHY_RXDOPPLER_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 16, 1, value)
+/* Below 2 macros are for maintaining backward compatability - Deprecated use WMI_HECAP_PHY_LDPC instead */
+#define WMI_HECAP_PHY_TXLDPC_GET(he_cap_phy) WMI_HECAP_PHY_LDPC_GET(he_cap_phy)
+#define WMI_HECAP_PHY_TXLDPC_SET(he_cap_phy, value) WMI_HECAP_PHY_LDPC_SET(he_cap_phy, value)
+/* Below 2 macros are for maintaining backward compatability - Deprecated use WMI_HECAP_PHY_LDPC instead */
+#define WMI_HECAP_PHY_RXLDPC_GET(he_cap_phy) WMI_HECAP_PHY_LDPC_GET(he_cap_phy)
+#define WMI_HECAP_PHY_RXLDPC_SET(he_cap_phy, value) WMI_HECAP_PHY_LDPC_SET(he_cap_phy, value)
 
-#define WMI_HECAP_PHY_CBMODE_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 17, 8)
-#define WMI_HECAP_PHY_CBMODE_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 17, 8, value)
+/*
+ * B0: Indicates support of reception of 1x LTF and 0.8us guard interval
+ *     duration for HE SU PPDUs.
+ * B1: Indicates support of reception of 1x LTF and 1.6us guard interval
+ */
+#define WMI_HECAP_PHY_LTFGIFORHE_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 14, 2)
+#define WMI_HECAP_PHY_LTFGIFORHE_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 14, 2, value)
 
-#define WMI_HECAP_PHY_PADDING_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 25, 2)
-#define WMI_HECAP_PHY_PADDING_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 25, 2, value)
 
-#define WMI_HECAP_PHY_32GI_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 0, 26)
-#define WMI_HECAP_PHY_32GI_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 0, 26, value)
+/* Below 2 macros are for maintaining backward compatability - Deprecated use WMI_HECAP_PHY_LTFGIFORHE_GET instead */
+#define WMI_HECAP_PHY_OLTF_GET(he_cap_phy) WMI_HECAP_PHY_LTFGIFORHE_GET(he_cap_phy)
+#define WMI_HECAP_PHY_OLTF_SET(he_cap_phy, value) WMI_HECAP_PHY_LTFGIFORHE_SET(he_cap_phy, value)
 
-#define WMI_HECAP_PHY_SUBFMR_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 26, 1)
-#define WMI_HECAP_PHY_SUBFMR_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 26, 1, value)
+/*
+ * B0: For a transmitting STA acting as beamformer, it indicates support of
+ *     NDP transmission using 4x LTFand 3.2 us guard interval duration
+ * B1: For a transmitting STA acting as beamformee, it indicates support of
+ *     NDP reception using 4x LTF and 3.2 us guard interval duration
+ */
+#define WMI_HECAP_PHY_LTFGIFORNDP_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 16, 2)
+#define WMI_HECAP_PHY_LTFGIFORNDP_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 16, 2, value)
 
-#define WMI_HECAP_PHY_SUBFME_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 27, 1)
-#define WMI_HECAP_PHY_SUBFME_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 27, 1, value)
+/* indicates support for the transmission of HE PPDUs using STBC with one spatial stream */
+#define WMI_HECAP_PHY_TXSTBC_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 18, 1)
+#define WMI_HECAP_PHY_TXSTBC_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 18, 1, value)
 
-#define WMI_HECAP_PHY_SUBFMESTS_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 28, 3)
-#define WMI_HECAP_PHY_SUBFMESTS_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 28, 3, value)
+/* indicates support for the reception of HE PPDUs using STBC with one spatial stream */
+#define WMI_HECAP_PHY_RXSTBC_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 19, 1)
+#define WMI_HECAP_PHY_RXSTBC_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 19, 1, value)
 
-#define WMI_HECAP_PHY_NOSUNDIMENS_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[2], 0, 3)
-#define WMI_HECAP_PHY_NOSUNDIMENS_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[2], 0, 3, value)
+/* indicates transmitting STA supports transmitting HE PPDUs with Doppler procedure */
+#define WMI_HECAP_PHY_TXDOPPLER_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 20, 1)
+#define WMI_HECAP_PHY_TXDOPPLER_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 20, 1, value)
 
-#define WMI_HECAP_PHY_MUBFMR_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[2], 3, 1)
-#define WMI_HECAP_PHY_MUBFMR_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[2], 3, 1, value)
+/* indicates transmitting STA supports receiving HE PPDUs with Doppler procedure */
+#define WMI_HECAP_PHY_RXDOPPLER_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 21, 1)
+#define WMI_HECAP_PHY_RXDOPPLER_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 21, 1, value)
 
-#define WMI_HECAP_PHY_40MHZNSS_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[2], 4, 18)
-#define WMI_HECAP_PHY_40MHZNSS_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[2], 4, 18, value)
+/*
+ * If the transmitting STA is an AP:
+ *     indicates STA supports of reception of full bandwidth UL MU-MIMO
+ *     transmission.
+ * If the transmitting STA is a non-AP STA:
+ *     indicates STA supports of transmission of full bandwidth UL MU-MIMO
+ *     transmission.
+ */
+#define WMI_HECAP_PHY_UL_MU_MIMO_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 22, 1)
+#define WMI_HECAP_PHY_UL_MU_MIMO_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 22, 1, value)
 
-#define WMI_HECAP_MAC_MTID_GET(he_cap) WMI_GET_BITS(he_cap, 0, 3)
-#define WMI_HECAP_MAC_MTID_SET(he_cap, value) WMI_SET_BITS(he_cap, 0, 3, value)
+/*
+ * If the transmitting STA is an AP:
+ *     indicates STA supports of reception of UL MUMIMO transmission on an
+ *     RU in an HE MU PPDU where the RU does not span the entire PPDU bandwidth.
+ * If the transmitting STA is a non-AP STA:
+ *     indicates STA supports of transmission of UL MU-MIMO transmission on an
+ *     RU in an HE MU PPDU where the RU does not span the entire PPDU bandwidth.
+ */
+#define WMI_HECAP_PHY_ULOFDMA_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 23, 1)
+#define WMI_HECAP_PHY_ULOFDMA_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 23, 1, value)
 
-#define WMI_HECAP_MAC_AACK_GET(he_cap) WMI_GET_BITS(he_cap, 3, 1)
-#define WMI_HECAP_MAC_AACK_SET(he_cap, value) WMI_SET_BITS(he_cap, 3, 1, value)
+/* Tx DCM
+ * B0:B1
+ *     00: Does not support DCM
+ *     01: BPSK
+ *     10: QPSK
+ *     11: 16-QAM
+ * B2 signals maximum number of spatial streams with DCM
+ *     0: 1 spatial stream
+ *     1: 2 spatial streams
+ */
+#define WMI_HECAP_PHY_DCMTX_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 24, 3)
+#define WMI_HECAP_PHY_DCMTX_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 24, 3, value)
 
-#define WMI_HECAP_MAC_MINFRAGSZ_GET(he_cap) WMI_GET_BITS(he_cap, 4, 2)
-#define WMI_HECAP_MAC_MINFRAGSZ_SET(he_cap, value) WMI_SET_BITS(he_cap, 4, 2, value)
+/* Rx DCM
+ * B0:B1
+ *     00: Does not support DCM
+ *     01: BPSK
+ *     10: QPSK
+ *     11: 16-QAM
+ * B2 signals maximum number of spatial streams with DCM
+ *     0: 1 spatial stream
+ *     1: 2 spatial streams
+ */
+#define WMI_HECAP_PHY_DCMRX_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 27, 3)
+#define WMI_HECAP_PHY_DCMRX_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 27, 3, value)
 
-#define WMI_HECAP_MAC_HEFRAG_GET(he_cap) WMI_GET_BITS(he_cap, 6, 2)
-#define WMI_HECAP_MAC_HEFRAG_SET(he_cap, value) WMI_SET_BITS(he_cap, 6, 2, value)
+/* DEPRECATED - use WMI_HECAP_PHY_DCMRX or WMI_HECAP_PHY_DCMTX */
+#define WMI_HECAP_PHY_DCM_GET(he_cap_phy) WMI_HECAP_PHY_DCMRX_GET(he_cap_phy)
+#define WMI_HECAP_PHY_DCM_SET(he_cap_phy, value) WMI_HECAP_PHY_DCMRX_SET(he_cap_phy, value)
 
-#define WMI_HECAP_MAC_MURTS_GET(he_cap) WMI_GET_BITS(he_cap, 8, 1)
-#define WMI_HECAP_MAC_MURTS_SET(he_cap, value) WMI_SET_BITS(he_cap, 8, 1, value)
+/*
+ * Indicates that the STA supports the reception of an HE MU PPDU payload
+ * over full bandwidth and partial bandwidth (106-tone RU within 20 MHz).
+ */
+#define WMI_HECAP_PHY_ULHEMU_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 30, 1)
+#define WMI_HECAP_PHY_ULHEMU_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 30, 1, value)
 
-#define WMI_HECAP_MAC_OMI_GET(he_cap) WMI_GET_BITS(he_cap, 9, 1)
-#define WMI_HECAP_MAC_OMI_SET(he_cap, value) WMI_SET_BITS(he_cap, 9, 1, value)
+/* Indicates support for operation as an SU beamformer */
+#define WMI_HECAP_PHY_SUBFMR_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 31, 1)
+#define WMI_HECAP_PHY_SUBFMR_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 31, 1, value)
 
-#define WMI_HECAP_MAC_HECTRL_GET(he_cap) WMI_GET_BITS(he_cap, 10, 1)
-#define WMI_HECAP_MAC_HECTRL_SET(he_cap, value) WMI_SET_BITS(he_cap, 10, 1, value)
+/* Indicates support for operation as an SU beamformee */
+#define WMI_HECAP_PHY_SUBFME_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 0, 1)
+#define WMI_HECAP_PHY_SUBFME_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 0, 1, value)
 
-#define WMI_HECAP_MAC_MBAHECTRL_GET(he_cap) WMI_GET_BITS(he_cap, 11, 1)
-#define WMI_HECAP_MAC_MBAHECTRL_SET(he_cap, value) WMI_SET_BITS(he_cap, 11, 1, value)
+/* Indicates support for operation as an MU Beamformer */
+#define WMI_HECAP_PHY_MUBFMR_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 1, 1)
+#define WMI_HECAP_PHY_MUBFMR_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 1, 1, value)
 
-#define WMI_HECAP_MAC_ULMURSP_GET(he_cap) WMI_GET_BITS(he_cap, 12, 1)
-#define WMI_HECAP_MAC_ULMURSP_SET(he_cap, value) WMI_SET_BITS(he_cap, 12, 1, value)
+/*
+ * Num STS -1 for <= 80MHz (min val 3)
+ * The maximum number of space-time streams minus 1 that the STA can
+ * receive in an HE NDP
+ */
+#define WMI_HECAP_PHY_BFMESTSLT80MHZ_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 2, 3)
+#define WMI_HECAP_PHY_BFMESTSLT80MHZ_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 2, 3, value)
 
-#define WMI_HECAP_MAC_HELKAD_GET(he_cap) WMI_GET_BITS(he_cap, 13, 2)
-#define WMI_HECAP_MAC_HELKAD_SET(he_cap, value) WMI_SET_BITS(he_cap, 13, 2, value)
+/*
+ * The maximum value for NSTS-1<=80MHz,(min val 3)total that can be sent
+ * to the STA in a DL MU-MIMO transmission on full or partial bandwidth
+ */
+#define WMI_HECAP_PHY_NSTSLT80MHZ_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 5, 3)
+#define WMI_HECAP_PHY_NSTSLT80MHZ_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 5, 3, value)
 
-#define WMI_HECAP_MAC_BSR_GET(he_cap) WMI_GET_BITS(he_cap, 15, 1)
-#define WMI_HECAP_MAC_BSR_SET(he_cap, value) WMI_SET_BITS(he_cap, 15, 1, value)
+/*
+ * Num STS -1 for > 80MHz (min val 3)
+ * The maximum number of space-time streams minus 1 that the STA can
+ * receive in an HE NDP
+ */
+#define WMI_HECAP_PHY_BFMESTSGT80MHZ_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 8, 3)
+#define WMI_HECAP_PHY_BFMESTSGT80MHZ_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 8, 3, value)
 
-#define WMI_HECAP_MAC_TWTREQ_GET(he_cap) WMI_GET_BITS(he_cap, 16, 1)
-#define WMI_HECAP_MAC_TWTREQ_SET(he_cap, value) WMI_SET_BITS(he_cap, 16, 1, value)
+/*
+ * The maximum value for NSTS-1 > 80MHz (min val 3) total that can be sent
+ * to the STA in a DL MU-MIMO transmission on full or partial bandwidth
+ */
+#define WMI_HECAP_PHY_NSTSGT80MHZ_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 11, 3)
+#define WMI_HECAP_PHY_NSTSGT80MHZ_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 11, 3, value)
 
-#define WMI_HECAP_MAC_TWTRSP_GET(he_cap) WMI_GET_BITS(he_cap, 17, 1)
-#define WMI_HECAP_MAC_TWTRSP_SET(he_cap, value) WMI_SET_BITS(he_cap, 17, 1, value)
+/*
+ * Number Of Sounding Dimensions For <= 80 MHz
+ * If SU beamformer capable, set to the maximum supported value of the
+ * TXVECTOR parameter NUM_STS minus 1.
+ * Otherwise, reserved.
+ */
+#define WMI_HECAP_PHY_NUMSOUNDLT80MHZ_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 14, 3)
+#define WMI_HECAP_PHY_NUMSOUNDLT80MHZ_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 14, 3, value)
 
-#define WMI_HECAP_MAC_BCSTTWT_GET(he_cap) WMI_GET_BITS(he_cap, 18, 1)
-#define WMI_HECAP_MAC_BCSTTWT_SET(he_cap, value) WMI_SET_BITS(he_cap, 18, 1, value)
+/*
+ * Number Of Sounding Dimensions For > 80 MHz
+ * If SU beamformer capable, set to the maximum supported value of the
+ * TXVECTOR parameter NUM_STS minus 1.
+ * Otherwise, reserved.
+ */
+#define WMI_HECAP_PHY_NUMSOUNDGT80MHZ_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 17, 3)
+#define WMI_HECAP_PHY_NUMSOUNDGT80MHZ_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 17, 3, value)
 
-#define WMI_HECAP_MAC_MBSS_GET(he_cap) WMI_GET_BITS(he_cap, 19, 1)
-#define WMI_HECAP_MAC_MBSS_SET(he_cap, value) WMI_SET_BITS(he_cap, 19, 1, value)
+/*
+ * Indicates if the HE beamformee is capable of feedback with tone
+ * grouping of 16 in the HE Compressed Beamforming Report field for
+ * a SU-type feedback.
+ */
+#define WMI_HECAP_PHY_NG16SUFEEDBACKLT80_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 20, 1)
+#define WMI_HECAP_PHY_NG16SUFEEDBACKLT80_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 20, 1, value)
 
-#define WMI_HECAP_MAC_TRIGPADDUR_GET(he_cap) WMI_GET_BITS(he_cap, 20, 2)
-#define WMI_HECAP_MAC_TRIGPADDUR_SET(he_cap, value) WMI_SET_BITS(he_cap, 20, 2, value)
+/*
+ * Indicates if the HE beamformee is capable of feedback with tone
+ * grouping of 16 in the HE Compressed Beamforming Report field for
+ * a MU-type feedback.
+ */
+#define WMI_HECAP_PHY_NG16MUFEEDBACKGT80_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 21, 1)
+#define WMI_HECAP_PHY_NG16MUFEEDBACKGT80_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 21, 1, value)
 
-#define WMI_HECAP_MAC_MAXFRAGMSDU_GET(he_cap) WMI_GET_BITS(he_cap, 22, 3)
-#define WMI_HECAP_MAC_MAXFRAGMSDU_SET(he_cap, value) WMI_SET_BITS(he_cap, 22, 3, value)
+/*
+ * Indicates if HE beamformee is capable of feedback with codebook
+ * size {4, 2} in the HECompressed Beamforming Report field for
+ * a SU-type feedback.
+ */
+#define WMI_HECAP_PHY_CODBK42SU_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 22, 1)
+#define WMI_HECAP_PHY_CODBK42SU_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 22, 1, value)
 
-#define WMI_HECAP_MAC_32BITBA_GET(he_cap) WMI_GET_BITS(he_cap, 25, 1)
-#define WMI_HECAP_MAC_32BITBA_SET(he_cap, value) WMI_SET_BITS(he_cap, 25, 1, value)
+/*
+ * Indicates if HE beamformee is capable of feedback with codebook
+ * size {7, 5} in the HE Compressed Beamforming Report field for
+ * a MU-type feedback.
+ */
+#define WMI_HECAP_PHY_CODBK75MU_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 23, 1)
+#define WMI_HECAP_PHY_CODBK75MU_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 23, 1, value)
 
-#define WMI_HECAP_MAC_MUCASCADE_GET(he_cap) WMI_GET_BITS(he_cap, 26, 1)
-#define WMI_HECAP_MAC_MUCASCADE_SET(he_cap, value) WMI_SET_BITS(he_cap, 26, 1, value)
+/*
+ * Beamforming Feedback With Trigger Frame*/
+/*If the transmitting STA is an AP STA:
+  B0: indicates support of reception of SU-Type partial(1) and full bandwidth feedback(0)
+  B1: indicates support of reception of MU-Type partial(1) bandwidth feedback
+  B2: indicates support of reception of CQI-Only partial and full bandwidth feedback
+  If the transmitting STA is a non-AP STA:
+  B0: indicates support of transmission of SU-Type partial(1) and full bandwidth(0) feedback
+  B1: indicates support of transmission of MU-Type partial(1) bandwidth feedback
+  B2: indicates support of transmission of CQI-Onlypartial (1)and full bandwidth feedback*/
+#define WMI_HECAP_PHY_BFFEEDBACKTRIG_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 24, 3)
+#define WMI_HECAP_PHY_BFFEEDBACKTRIG_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 24, 3, value)
 
-#define WMI_HECAP_MAC_ACKMTIDAMPDU_GET(he_cap) WMI_GET_BITS(he_cap, 27, 1)
-#define WMI_HECAP_MAC_ACKMTIDAMPDU_SET(he_cap, value) WMI_SET_BITS(he_cap, 27, 1, value)
+/*Indicates the support of transmission and reception of an HE extended range SU PPDU payload transmitted over the right 106-tone RU */
+#define WMI_HECAP_PHY_HEERSU_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 27, 1)
+#define WMI_HECAP_PHY_HEERSU_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 27, 1, value)
 
-#define WMI_HECAP_MAC_GROUPMSTABA_GET(he_cap) WMI_GET_BITS(he_cap, 28, 1)
-#define WMI_HECAP_MAC_GROUPMSTABA_SET(he_cap, value) WMI_SET_BITS(he_cap, 28, 1, value)
+/*Indicates that the non-AP STA supports reception of a DL MU-MIMO transmission on an RU in an HE MU PPDU where the RU does not span the entire PPDU bandwidth.*/
+#define WMI_HECAP_PHY_DLMUMIMOPARTIALBW_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 28, 1)
+#define WMI_HECAP_PHY_DLMUMIMOPARTIALBW_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 28, 1, value)
 
-#define WMI_HECAP_MAC_OFDMARA_GET(he_cap) WMI_GET_BITS(he_cap, 29, 1)
-#define WMI_HECAP_MAC_OFDMARA_SET(he_cap, value) WMI_SET_BITS(he_cap, 29, 1, value)
+/*Indicates whether or not the PPE Threshold field is present*/
+#define WMI_HECAP_PHY_PETHRESPRESENT_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 29, 1)
+#define WMI_HECAP_PHY_PETHRESPRESENT_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 29, 1, value)
+
+/*Indicates that the STA supports SRP-based SR operation*/
+#define WMI_HECAP_PHY_SRPSPRESENT_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 30, 1)
+#define WMI_HECAP_PHY_SRPPRESENT_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 30, 1, value)
+
+/*Indicates that the STA supports a power boost factor ar for the r-th RU in the range [0.5, 2]*/
+#define WMI_HECAP_PHY_PWRBOOSTAR_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 31, 1)
+#define WMI_HECAP_PHY_PWRBOOSTAR_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 31, 1, value)
+
+/*Indicates support for the reception of 4x LTF and 0.8us guard interval duration for HE SU PPDUs.*/
+#define WMI_HECAP_PHY_4XLTFAND800NSECSGI_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[2], 0, 1)
+#define WMI_HECAP_PHY_4XLTFAND800NSECSGI_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[2], 0, 1, value)
+
+/*HTC + HE Support  Set to 1 if STA supports reception of HE Variant HT control Field*/
+#define WMI_HECAP_MAC_HECTRL_GET(he_cap) WMI_GET_BITS(he_cap, 0, 1)
+#define WMI_HECAP_MAC_HECTRL_SET(he_cap, value) WMI_SET_BITS(he_cap, 0, 1, value)
+
+/* set to 1 to for TWT Requestor support*/
+#define WMI_HECAP_MAC_TWTREQ_GET(he_cap) WMI_GET_BITS(he_cap, 1, 1)
+#define WMI_HECAP_MAC_TWTREQ_SET(he_cap, value) WMI_SET_BITS(he_cap, 1, 1, value)
+
+/* set to 1 to for TWT Responder support*/
+#define WMI_HECAP_MAC_TWTRSP_GET(he_cap) WMI_GET_BITS(he_cap, 2, 1)
+#define WMI_HECAP_MAC_TWTRSP_SET(he_cap, value) WMI_SET_BITS(he_cap, 2, 1, value)
+
+/* Level of frag support
+   Set to 0 for no support for dynamic fragmentation.
+   Set to 1 for support for dynamic fragments that are contained within a S-MPDU
+   Set to 2 for support for dynamic fragments that are contained within a Single MPDU and support for up to
+        one dynamic fragment for each MSDU and each MMPDU within an A-MPDU or multi-TID A-MPDU.
+   Set to 3 for support for dynamic fragments that are contained within a Single MPDU and support for multiple
+        dynamic fragments for each MSDU within an AMPDU or multi-TID AMPDU and up to one dynamic fragment
+        for each MMPDU in a multi-TID A-MPDU that is not a Single MPDU
+*/
+#define WMI_HECAP_MAC_HEFRAG_GET(he_cap) WMI_GET_BITS(he_cap, 3, 2)
+#define WMI_HECAP_MAC_HEFRAG_SET(he_cap, value) WMI_SET_BITS(he_cap, 3, 2, value)
+
+/* The maximum number of fragmented MSDUs, Nmax,defined by this field is Nmax = 2 Maximum Number Of FMPDUs*/
+#define WMI_HECAP_MAC_MAXFRAGMSDU_GET(he_cap) WMI_GET_BITS(he_cap, 5, 3)
+#define WMI_HECAP_MAC_MAXFRAGMSDU_SET(he_cap, value) WMI_SET_BITS(he_cap, 5, 3, value)
+
+/* 0 =  no restriction on the minimum payload , 1 = 128 octets min, 2 = 256 octets min, 3 = 512 octets min */
+#define WMI_HECAP_MAC_MINFRAGSZ_GET(he_cap) WMI_GET_BITS(he_cap, 8, 2)
+#define WMI_HECAP_MAC_MINFRAGSZ_SET(he_cap, value) WMI_SET_BITS(he_cap, 8, 2, value)
+
+/*0 = no additional processing time, 1 = 8us,2 = 16us */
+#define WMI_HECAP_MAC_TRIGPADDUR_GET(he_cap) WMI_GET_BITS(he_cap, 10, 2)
+#define WMI_HECAP_MAC_TRIGPADDUR_SET(he_cap, value) WMI_SET_BITS(he_cap, 10, 2, value)
+
+/*number of TIDs minus 1 of QoS Data frames that HE STA can aggregate in  multi-TID AMPDU*/
+#define WMI_HECAP_MAC_MTID_GET(he_cap) WMI_GET_BITS(he_cap, 12, 3)
+#define WMI_HECAP_MAC_MTID_SET(he_cap, value) WMI_SET_BITS(he_cap, 12, 3, value)
+
+/*0=No Feedback,2=Unsolicited,3=Both*/
+#define WMI_HECAP_MAC_HELKAD_GET(he_cap) WMI_GET_BITS(he_cap, 15, 2)
+#define WMI_HECAP_MAC_HELKAD_SET(he_cap, value) WMI_SET_BITS(he_cap, 15, 2, value)
+
+/*Set to 1 for reception of AllAck support*/
+#define WMI_HECAP_MAC_AACK_GET(he_cap) WMI_GET_BITS(he_cap, 17, 1)
+#define WMI_HECAP_MAC_AACK_SET(he_cap, value) WMI_SET_BITS(he_cap, 17, 1, value)
+
+/*Set to 1 if the STA supports reception of the UL MU Response Scheduling A-Control field*/
+#define WMI_HECAP_MAC_ULMURSP_GET(he_cap) WMI_GET_BITS(he_cap, 18, 1)
+#define WMI_HECAP_MAC_ULMURSP_SET(he_cap, value) WMI_SET_BITS(he_cap, 18, 1, value)
+
+/*Set to 1 if the STA supports the BSR A-Control field functionality.*/
+#define WMI_HECAP_MAC_BSR_GET(he_cap) WMI_GET_BITS(he_cap, 19, 1)
+#define WMI_HECAP_MAC_BSR_SET(he_cap, value) WMI_SET_BITS(he_cap, 19, 1, value)
+
+/*Set to 1 when the STA supports broadcast TWT functionality.*/
+#define WMI_HECAP_MAC_BCSTTWT_GET(he_cap) WMI_GET_BITS(he_cap, 20, 1)
+#define WMI_HECAP_MAC_BCSTTWT_SET(he_cap, value) WMI_SET_BITS(he_cap, 20, 1, value)
+
+/*Set to 1 if STA supports rx of Multi-STA BA that has 32-bit Block Ack Bitmap*/
+#define WMI_HECAP_MAC_32BITBA_GET(he_cap) WMI_GET_BITS(he_cap, 21, 1)
+#define WMI_HECAP_MAC_32BITBA_SET(he_cap, value) WMI_SET_BITS(he_cap, 21, 1, value)
+
+/*Set to 1 if the STA supports MU cascading operation*/
+#define WMI_HECAP_MAC_MUCASCADE_GET(he_cap) WMI_GET_BITS(he_cap, 22, 1)
+#define WMI_HECAP_MAC_MUCASCADE_SET(he_cap, value) WMI_SET_BITS(he_cap, 22, 1, value)
+
+/*Set to 1 when the STA supports reception of this multi-TID A-MPDU format*/
+#define WMI_HECAP_MAC_ACKMTIDAMPDU_GET(he_cap) WMI_GET_BITS(he_cap, 23, 1)
+#define WMI_HECAP_MAC_ACKMTIDAMPDU_SET(he_cap, value) WMI_SET_BITS(he_cap, 23, 1, value)
+
+/*Set to 1 when the STA supports its reception*/
+#define WMI_HECAP_MAC_GROUPMSTABA_GET(he_cap) WMI_GET_BITS(he_cap, 24, 1)
+#define WMI_HECAP_MAC_GROUPMSTABA_SET(he_cap, value) WMI_SET_BITS(he_cap, 24, 1, value)
+
+/*Set to 1 if the STA supports reception of the OMI A-Control field*/
+#define WMI_HECAP_MAC_OMI_GET(he_cap) WMI_GET_BITS(he_cap, 25, 1)
+#define WMI_HECAP_MAC_OMI_SET(he_cap, value) WMI_SET_BITS(he_cap, 25, 1, value)
+
+/*1 if OFDMA Random Access Supported*/
+#define WMI_HECAP_MAC_OFDMARA_GET(he_cap) WMI_GET_BITS(he_cap, 26, 1)
+#define WMI_HECAP_MAC_OFDMARA_SET(he_cap, value) WMI_SET_BITS(he_cap, 26, 1, value)
+
+/* Maximum AMPDU Length Exponent.
+ * If the HE STA includes a VHT Capabilities element, the Maximum A-MPDU Length Exponent subfield in
+ * HE Capabilities element combined with the Maximum A-MPDU Length Exponent subfield in VHT
+ * Capabilities element indicate the maximum length of A-MPDU that the STA can Receive where EOF
+ * padding is not included in this limit.
+*/
+#define WMI_HECAP_MAC_MAXAMPDULEN_EXP_GET(he_cap) WMI_GET_BITS(he_cap, 27, 2)
+#define WMI_HECAP_MAC_MAXAMPDULEN_EXP_SET(he_cap, value) WMI_SET_BITS(he_cap, 27, 2, value)
+
+/*A-MSDU Fragmentation Support*/
+#define WMI_HECAP_MAC_AMSDUFRAG_GET(he_cap) WMI_GET_BITS(he_cap, 29, 1)
+#define WMI_HECAP_MAC_AMSDUFRAG_SET(he_cap, value) WMI_SET_BITS(he_cap, 29, 1, value)
+
+/*Flexible TWT Schedule Support*/
+#define WMI_HECAP_MAC_FLEXTWT_GET(he_cap) WMI_GET_BITS(he_cap, 30, 1)
+#define WMI_HECAP_MAC_FLEXTWT_SET(he_cap, value) WMI_SET_BITS(he_cap, 30, 1, value)
+
+/*Rx Control Frame to MultiBSS*/
+#define WMI_HECAP_MAC_MBSS_GET(he_cap) WMI_GET_BITS(he_cap, 31, 1)
+#define WMI_HECAP_MAC_MBSS_SET(he_cap, value) WMI_SET_BITS(he_cap, 31, 1, value)
+
+/*BSRP A-MPDU Aggregation
+  maintaining compatability since we dont support this now so not wasting memory*/
+#define WMI_HECAP_MAC_BSRPAMPDU_GET(he_cap) (0)
+#define WMI_HECAP_MAC_BSRPAMPDU_SET(he_cap, value) {;}
+
+/* Quiet Time Period (QTP) operation
+  maintaining compatability since we dont support this now so not wasting memory*/
+#define WMI_HECAP_MAC_QTP_GET(he_cap) (0)
+#define WMI_HECAP_MAC_QTP_SET(he_cap, value) {;}
+
+/*support by an AP for receiving an (A-)MPDU that contains a BQR in the
+  A-Control subfield and support by a non-AP STA for generating an (A-)MPDU
+  that contains a BQR in the A-Control subfield
+  maintaining compatability since we dont support this now so not wasting memory*/
+#define WMI_HECAP_MAC_ABQR_GET(he_cap) (0)
+#define WMI_HECAP_MAC_ABQR_SET(he_cap, value) {;}
+
+/*BELOW MACROS ARE DEPRECATED Also we are not defining bits for capabilities
+   beyond bit 31 we donot support as it adds additional dword to our struct which may be later
+   removed by standard*/
+#define WMI_HECAP_MAC_MBAHECTRL_GET(he_cap) (0) /* DO NOT USE - DEPRECATED*/
+#define WMI_HECAP_MAC_MBAHECTRL_SET(he_cap, value) {;} /* DO NOT USE - DEPRECATED*/
+
+#define WMI_HECAP_MAC_MURTS_GET(he_cap) (0) /* DO NOT USE - DEPRECATED*/
+#define WMI_HECAP_MAC_MURTS_SET(he_cap, value) {;} /* DO NOT USE - DEPRECATED*/
+
+/*Deprecate use  WMI_HECAP_PHY_PREAMBLEPUNCRX instead*/
+#define WMI_HECAP_PHY_CBMODE_GET(he_cap_phy) WMI_HECAP_PHY_CBMODE_GET(he_cap_phy)
+#define WMI_HECAP_PHY_CBMODE_SET(he_cap_phy, value) WMI_HECAP_PHY_CBMODE_SET(he_cap_phy, value)
+
+
+/*DEPRECATED - USE WMI_HECAP_PHY_BFMENLTSGT80MHZ*/
+#define WMI_HECAP_PHY_SUBFMESTS_GET(he_cap_phy) WMI_HECAP_PHY_BFMESTSLT80MHZ_GET(he_cap_phy)
+#define WMI_HECAP_PHY_SUBFMESTS_SET(he_cap_phy, value) WMI_HECAP_PHY_BFMESTSLT80MHZ_GET(he_cap_phy, value)
+
+/*DEPRECATED - use WMI_HECAP_PHY_PETHRESPRESENT**/
+#define WMI_HECAP_PHY_PADDING_GET(he_cap_phy) WMI_HECAP_PHY_PETHRESPRESENT_GET(he_cap_phy)
+#define WMI_HECAP_PHY_PADDING_SET(he_cap_phy, value) WMI_HECAP_PHY_PETHRESPRESENT_SET(he_cap_phy, value)
+
+
+/**DO NOT USE - DEPRECATED*/
+#define WMI_HECAP_PHY_DLOFMAMUMIMO_GET(he_cap_phy) {0}
+#define WMI_HECAP_PHY_DLOFDMAMUMIO_SET(he_cap_phy, value) {;}
+
+/*DO NOT USE - DEPRECATED**/
+#define WMI_HECAP_PHY_32GI_GET(he_cap_phy) (0)
+#define WMI_HECAP_PHY_32GI_SET(he_cap_phy, value) {;}
+
+/*DO NOT USE - DEPRECATED**/
+#define WMI_HECAP_PHY_NOSUNDIMENS_GET(he_cap_phy) (0)
+#define WMI_HECAP_PHY_NOSUNDIMENS_SET(he_cap_phy, value) {;}
+
+/*DO NOT USE - DEPRECATED**/
+#define WMI_HECAP_PHY_40MHZNSS_GET(he_cap_phy)(0)
+#define WMI_HECAP_PHY_40MHZNSS_SET(he_cap_phy, value) {;}
+
+
+
+
+
+
+
+
 
 #define WMI_GET_HW_RATECODE_PREAM_V1(_rcode)     (((_rcode) >> 8) & 0x7)
 #define WMI_GET_HW_RATECODE_NSS_V1(_rcode)       (((_rcode) >> 5) & 0x7)
@@ -6131,6 +6470,11 @@ typedef enum {
 /** Value to disable fixed rate setting */
 #define WMI_FIXED_RATE_NONE    (0xff)
 
+#define WMI_GI_400_NS 1
+#define WMI_GI_800_NS 0
+#define WMI_GI_1600_NS 2
+#define WMI_GI_3200_NS 3
+
 /** the definition of different VDEV parameters */
 typedef enum {
     /** RTS Threshold */
@@ -6198,7 +6542,11 @@ typedef enum {
      * by the target).
      */
     WMI_VDEV_PARAM_FIXED_RATE,
-    /** Short GI Enable/Disable */
+    /**
+     * 11AX: GI =
+     *     WMI_GI_400_NS, WMI_GI_800_NS, WMI_GI_1600_NS, or WMI_GI_3200_NS
+     * 11N: SGI=WMI_GI_400_NS
+     */
     WMI_VDEV_PARAM_SGI,
     /** Enable LDPC */
     WMI_VDEV_PARAM_LDPC,
@@ -6534,6 +6882,7 @@ typedef enum {
      */
     WMI_VDEV_PARAM_PROTOTYPE = 0x8000,
         /* 11AX SPECIFIC defines */
+        /* USE this for BSS color change */
         WMI_VDEV_PARAM_BSS_COLOR,
         /*
          * Enable / disable trigger access for a AP vdev's peers.
@@ -6551,15 +6900,8 @@ typedef enum {
          * 9  Enable UL MUMIMO
          */
         WMI_VDEV_PARAM_SET_HEMU_MODE,
-        /* For Tx OFDMA this will set values of CP length or guard interval
-         * to be
-         *     0: Auto
-         *     1: 0.8 us
-         *     2: 1.6 us
-         *     3: 3.2 us
-         * Similar to Guard Interval
-         */
-        WMI_VDEV_PARAM_TX_OFDMA_CPLEN,
+        WMI_VDEV_PARAM_HEOPS_0_31,
+        WMI_VDEV_PARAM_OBSSPD,
     /*=== END VDEV_PARAM_PROTOTYPE SECTION ===*/
 } WMI_VDEV_PARAM;
 
