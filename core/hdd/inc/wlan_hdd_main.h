@@ -2388,4 +2388,16 @@ hdd_adapter_t *wlan_hdd_get_adapter_from_vdev(struct wlan_objmgr_psoc
  *
  */
 void hdd_unregister_notifiers(hdd_context_t *hdd_ctx);
+
+/**
+ * hdd_start_complete()- complete the start event
+ * @ret: return value for complete event.
+ *
+ * complete the startup event and set the return in
+ * global variable
+ *
+ * Return: void
+ */
+
+void hdd_start_complete(int ret);
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

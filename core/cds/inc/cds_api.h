@@ -196,6 +196,18 @@ static inline void cds_set_unload_in_progress(uint8_t value)
 		cds_clear_driver_state(CDS_DRIVER_STATE_UNLOADING);
 }
 
+/**
+ * cds_is_driver_loaded() - Is driver loaded
+ *
+ * Return: true if driver is loaded or false otherwise.
+ */
+static inline bool cds_is_driver_loaded(void)
+{
+	enum cds_driver_state state = cds_get_driver_state();
+
+	return __CDS_IS_DRIVER_STATE(state, CDS_DRIVER_STATE_LOADED);
+}
+
 v_CONTEXT_t cds_init(void);
 void cds_deinit(void);
 
