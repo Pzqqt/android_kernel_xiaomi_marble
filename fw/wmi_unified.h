@@ -18478,6 +18478,8 @@ typedef struct {
     A_UINT32 enable;
     /* randomization mac address if randomization is enabled */
     wmi_mac_addr mac_addr;
+    /* To get the PMAC from freq param */
+    A_UINT32 freq;  /* units in MHz */
 } wmi_vdev_add_mac_addr_to_rx_filter_cmd_fixed_param;
 
 typedef struct {
