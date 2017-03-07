@@ -1158,9 +1158,28 @@ done:
 	return status;
 }
 
-uint32_t policy_mgr_get_concurrency_mode(void)
+/**
+ * policy_mgr_get_concurrency_mode() - return concurrency mode
+ * @psoc: PSOC object information
+ *
+ * This routine is used to retrieve concurrency mode
+ *
+ * Return: uint32_t value of concurrency mask
+ */
+uint32_t policy_mgr_get_concurrency_mode(struct wlan_objmgr_psoc *psoc)
 {
-	return 0;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid context");
+		return QDF_STA_MASK;
+	}
+
+	policy_mgr_info("concurrency_mode: 0x%x",
+			pm_ctx->concurrency_mode);
+
+	return pm_ctx->concurrency_mode;
 }
 
 /**
@@ -1239,6 +1258,11 @@ uint8_t policy_mgr_search_and_check_for_session_conc(
 	return channel;
 }
 
+uint8_t policy_mgr_is_mcc_in_24G(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
 bool policy_mgr_check_for_session_conc(struct wlan_objmgr_psoc *psoc,
 				uint8_t session_id, uint8_t channel)
 {
@@ -1264,51 +1288,6 @@ bool policy_mgr_check_for_session_conc(struct wlan_objmgr_psoc *psoc,
 	}
 
 	return true;
-}
-
-uint8_t policy_mgr_is_mcc_in_24G(struct wlan_objmgr_psoc *psoc)
-{
-	uint32_t num_connections = 0;
-	bool is_24G_mcc = false;
-
-	num_connections = policy_mgr_get_connection_count(psoc);
-
-	switch (num_connections) {
-	case 1:
-		break;
-	case 2:
-		if ((pm_conc_connection_list[0].chan !=
-			pm_conc_connection_list[1].chan) &&
-			(pm_conc_connection_list[0].mac ==
-			pm_conc_connection_list[1].mac) &&
-			(pm_conc_connection_list[0].chan <=
-			WLAN_REG_MAX_24GHZ_CH_NUM) &&
-			(pm_conc_connection_list[1].chan <=
-			WLAN_REG_MAX_24GHZ_CH_NUM))
-			is_24G_mcc = true;
-		break;
-	case 3:
-		if (((pm_conc_connection_list[0].chan !=
-			pm_conc_connection_list[1].chan) ||
-			(pm_conc_connection_list[0].chan !=
-			pm_conc_connection_list[2].chan) ||
-			(pm_conc_connection_list[1].chan !=
-			pm_conc_connection_list[2].chan)) &&
-			(pm_conc_connection_list[0].chan <=
-			WLAN_REG_MAX_24GHZ_CH_NUM) &&
-			(pm_conc_connection_list[1].chan <=
-			WLAN_REG_MAX_24GHZ_CH_NUM) &&
-			(pm_conc_connection_list[2].chan <=
-			WLAN_REG_MAX_24GHZ_CH_NUM))
-			is_24G_mcc = true;
-		break;
-	default:
-		policy_mgr_err("unexpected num_connections value %d",
-			num_connections);
-		break;
-	}
-
-	return is_24G_mcc;
 }
 
 /**
@@ -1413,14 +1392,55 @@ enum policy_mgr_con_mode policy_mgr_convert_device_mode_to_qdf_type(
 	return mode;
 }
 
-bool policy_mgr_concurrent_open_sessions_running(void)
+/**
+ * policy_mgr_concurrent_open_sessions_running() - Checks for
+ * concurrent open session
+ * @psoc: PSOC object information
+ *
+ * Checks if more than one open session is running for all the allowed modes
+ * in the driver
+ *
+ * Return: True if more than one open session exists, False otherwise
+ */
+bool policy_mgr_concurrent_open_sessions_running(
+	struct wlan_objmgr_psoc *psoc)
 {
-	return true;
+	uint8_t i = 0;
+	uint8_t j = 0;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid context");
+		return false;
+	}
+
+	for (i = 0; i < QDF_MAX_NO_OF_MODE; i++)
+		j += pm_ctx->no_of_open_sessions[i];
+
+	return j > 1;
 }
 
-bool policy_mgr_concurrent_beaconing_sessions_running(void)
+/**
+ * policy_mgr_concurrent_beaconing_sessions_running() - Checks
+ * for concurrent beaconing entities
+ * @psoc: PSOC object information
+ *
+ * Checks if multiple beaconing sessions are running i.e., if SAP or GO or IBSS
+ * are beaconing together
+ *
+ * Return: True if multiple entities are beaconing together, False otherwise
+ */
+bool policy_mgr_concurrent_beaconing_sessions_running(
+	struct wlan_objmgr_psoc *psoc)
 {
-	return true;
+	return (policy_mgr_mode_specific_connection_count(
+			psoc, QDF_SAP_MODE, NULL) +
+		policy_mgr_mode_specific_connection_count(
+			psoc, QDF_P2P_GO_MODE, NULL) +
+		policy_mgr_mode_specific_connection_count(
+			psoc, QDF_IBSS_MODE, NULL) > 1) ?
+		true : false;
 }
 
 

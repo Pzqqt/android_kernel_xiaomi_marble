@@ -312,6 +312,17 @@ bool policy_mgr_is_dual_mac_disabled_in_ini(
  */
 bool policy_mgr_is_mas_enabled_in_user_cfg(
 	struct wlan_objmgr_psoc *psoc);
+/**
+ * policy_mgr_mcc_to_scc_switch_mode_in_user_cfg() - MCC to SCC
+ * switch mode value in the user config
+ * @psoc: PSOC object information
+ *
+ * MCC to SCC switch mode value in user config
+ *
+ * Return: MCC to SCC switch mode value
+ */
+uint32_t policy_mgr_mcc_to_scc_switch_mode_in_user_cfg(
+	struct wlan_objmgr_psoc *psoc);
 bool policy_mgr_get_dbs_config(struct wlan_objmgr_psoc *psoc);
 bool policy_mgr_get_agile_dfs_config(struct wlan_objmgr_psoc *psoc);
 bool policy_mgr_get_dbs_scan_config(struct wlan_objmgr_psoc *psoc);
