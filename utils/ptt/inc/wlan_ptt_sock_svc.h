@@ -119,6 +119,19 @@ typedef struct sAniAppRegReq {
 	tAniNlModTypes type;    /* module id */
 	int pid;                /* process id */
 } tAniNlAppRegReq;
+
+/**
+ * struct sptt_app_reg_req - PTT register request structure
+ * @radio: Radio ID
+ * @wmsg: ANI header
+ *
+ * payload structure received as nl data from PTT app/user space
+ */
+typedef struct sptt_app_reg_req {
+	int radio;
+	tAniHdr wmsg;
+} ptt_app_reg_req;
+
 typedef struct sAniNlAppRegRsp {
 	tAniHdr wniHdr;         /* Generic WNI msg header */
 	tAniNlAppRegReq regReq; /* The original request msg */

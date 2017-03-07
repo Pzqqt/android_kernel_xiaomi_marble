@@ -54,7 +54,15 @@ void nl_srv_exit(void);
 int nl_srv_register(tWlanNlModTypes msg_type, nl_srv_msg_callback msg_handler);
 int nl_srv_unregister(tWlanNlModTypes msg_type,
 		      nl_srv_msg_callback msg_handler);
+
+#ifdef CNSS_GENL
+int nl_srv_ucast(struct sk_buff *skb, int dst_pid, int flag,
+			int app_id, int mcgroup_id);
+int nl_srv_bcast(struct sk_buff *skb, int mcgroup_id, int app_id);
+#else
 int nl_srv_ucast(struct sk_buff *skb, int dst_pid, int flag);
 int nl_srv_bcast(struct sk_buff *skb);
+#endif
+
 int nl_srv_is_initialized(void);
 #endif

@@ -51,6 +51,10 @@
 #include "ol_txrx_api.h"
 #include "pktlog_ac.h"
 
+#ifdef CNSS_GENL
+#include <net/cnss_nl.h>
+#endif
+
 #define MAX_NUM_PKT_LOG 32
 
 /**
@@ -85,7 +89,8 @@ static uint8_t grx_count;
 
 #define ANI_NL_MSG_LOG_TYPE 89
 #define ANI_NL_MSG_READY_IND_TYPE 90
-#define MAX_LOGMSG_LENGTH 4096
+#define MAX_LOGMSG_LENGTH 2048
+#define MAX_SKBMSG_LENGTH 4096
 #define MAX_PKTSTATS_LENGTH 2048
 #define MAX_PKTSTATS_BUFF   16
 
@@ -179,6 +184,7 @@ static struct pkt_stats_msg *gpkt_stats_buffers;
 /* PID of the APP to log the message */
 static int gapp_pid = INVALID_PID;
 
+#ifndef CNSS_GENL
 /* Utility function to send a netlink message to an application
  * in user space
  */
@@ -230,6 +236,7 @@ static int wlan_send_sock_msg_to_app(tAniHdr *wmsg, int radio,
 			__func__, wmsg->type, pid);
 	return err;
 }
+#endif
 
 /* Need to call this with spin_lock acquired */
 static int wlan_queue_logmsg_for_app(void)
@@ -524,6 +531,42 @@ static int pkt_stats_fill_headers(struct sk_buff *skb)
 }
 
 /**
+ * nl_srv_bcast_diag() - Wrapper to send bcast msgs to diag events mcast grp
+ * @skb: sk buffer pointer
+ *
+ * Sends the bcast message to diag events multicast group with generic nl socket
+ * if CNSS_GENL is enabled. Else, use the legacy netlink socket to send.
+ *
+ * Return: zero on success, error code otherwise
+ */
+static int nl_srv_bcast_diag(struct sk_buff *skb)
+{
+#ifdef CNSS_GENL
+	return nl_srv_bcast(skb, CLD80211_MCGRP_DIAG_EVENTS, ANI_NL_MSG_PUMAC);
+#else
+	return nl_srv_bcast(skb);
+#endif
+}
+
+/**
+ * nl_srv_bcast_host_logs() - Wrapper to send bcast msgs to host logs mcast grp
+ * @skb: sk buffer pointer
+ *
+ * Sends the bcast message to host logs multicast group with generic nl socket
+ * if CNSS_GENL is enabled. Else, use the legacy netlink socket to send.
+ *
+ * Return: zero on success, error code otherwise
+ */
+static int nl_srv_bcast_host_logs(struct sk_buff *skb)
+{
+#ifdef CNSS_GENL
+	return nl_srv_bcast(skb, CLD80211_MCGRP_HOST_LOGS, ANI_NL_MSG_LOG);
+#else
+	return nl_srv_bcast(skb);
+#endif
+}
+
+/**
  * pktlog_send_per_pkt_stats_to_user() - This function is used to send the per
  * packet statistics to the user
  *
@@ -542,11 +585,11 @@ int pktlog_send_per_pkt_stats_to_user(void)
 
 	while (!list_empty(&gwlan_logging.pkt_stat_filled_list)
 		&& !gwlan_logging.exit) {
-		skb_new = dev_alloc_skb(MAX_PKTSTATS_LENGTH);
+		skb_new = dev_alloc_skb(MAX_SKBMSG_LENGTH);
 		if (skb_new == NULL) {
 			if (!rate_limit) {
 				pr_err("%s: dev_alloc_skb() failed for msg size[%d] drop count = %u\n",
-					__func__, MAX_LOGMSG_LENGTH,
+					__func__, MAX_SKBMSG_LENGTH,
 					gwlan_logging.drop_count);
 			}
 			rate_limit = 1;
@@ -567,7 +610,7 @@ int pktlog_send_per_pkt_stats_to_user(void)
 			free_old_skb = true;
 			goto err;
 		}
-		ret = nl_srv_bcast(pstats_msg->skb);
+		ret = nl_srv_bcast_diag(pstats_msg->skb);
 		if (ret < 0) {
 			pr_info("%s: Send Failed %d drop_count = %u\n",
 				__func__, ret,
@@ -662,7 +705,7 @@ static int send_filled_buffers_to_user(void)
 		list_add_tail(&plog_msg->node, &gwlan_logging.free_list);
 		spin_unlock_irqrestore(&gwlan_logging.spin_lock, flags);
 
-		ret = nl_srv_bcast(skb);
+		ret = nl_srv_bcast_host_logs(skb);
 		/* print every 64th drop count */
 		if (ret < 0 && (!(gwlan_logging.drop_count % 0x40))) {
 			pr_err("%s: Send Failed %d drop_count = %u\n",
@@ -825,6 +868,30 @@ static int wlan_logging_thread(void *Arg)
 	return 0;
 }
 
+#ifdef CNSS_GENL
+/**
+ * register_logging_sock_handler() - Logging sock handler registration
+ *
+ * Dummy API to register the command handler for logger socket app.
+ *
+ * Return: None
+ */
+static void register_logging_sock_handler(void)
+{
+}
+
+/**
+ * unregister_logging_sock_handler() - Logging sock handler unregistration
+ *
+ * Dummy API to unregister the command handler for logger socket app.
+ *
+ * Return: None
+ */
+static void unregister_logging_sock_handler(void)
+{
+}
+#else
+
 /*
  * Process all the Netlink messages from Logger Socket app in user space
  */
@@ -874,6 +941,34 @@ static int wlan_logging_proc_sock_rx_msg(struct sk_buff *skb)
 
 	return ret;
 }
+
+/**
+ * register_logging_sock_handler() - Logging sock handler registration
+ *
+ * API to register the command handler for logger socket app. Registers
+ * legacy handler
+ *
+ * Return: None
+ */
+static void register_logging_sock_handler(void)
+{
+	nl_srv_register(ANI_NL_MSG_LOG, wlan_logging_proc_sock_rx_msg);
+}
+
+/**
+ * unregister_logging_sock_handler() - Logging sock handler unregistration
+ *
+ * API to unregister the command handler for logger socket app. Unregisters
+ * legacy handler
+ *
+ * Return: None
+ */
+static void unregister_logging_sock_handler(void)
+{
+	nl_srv_unregister(ANI_NL_MSG_LOG, wlan_logging_proc_sock_rx_msg);
+}
+#endif
+
 
 int wlan_logging_sock_activate_svc(int log_fe_to_console, int num_buf)
 {
@@ -962,8 +1057,7 @@ int wlan_logging_sock_activate_svc(int log_fe_to_console, int num_buf)
 	gwlan_logging.is_active = true;
 	gwlan_logging.is_flush_complete = false;
 
-	nl_srv_register(ANI_NL_MSG_LOG, wlan_logging_proc_sock_rx_msg);
-
+	register_logging_sock_handler();
 	return 0;
 
 err3:
@@ -994,7 +1088,7 @@ int wlan_logging_sock_deactivate_svc(void)
 	if (!gplog_msg)
 		return 0;
 
-	nl_srv_unregister(ANI_NL_MSG_LOG, wlan_logging_proc_sock_rx_msg);
+	unregister_logging_sock_handler();
 	gapp_pid = INVALID_PID;
 
 #ifdef CONFIG_MCL
