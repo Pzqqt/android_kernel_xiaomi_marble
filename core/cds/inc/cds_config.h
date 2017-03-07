@@ -27,6 +27,9 @@
 #if !defined(__CDS_CONFIG_H)
 #define __CDS_CONFIG_H
 
+#include "osdep.h"
+#include "cdp_txrx_mob_def.h"
+
 /**
  * enum driver_type - Indicate the driver type to the cds, and based on this
  * do appropriate initialization.
@@ -148,5 +151,7 @@ struct cds_config_info {
 	bool flow_steering_enabled;
 	bool self_recovery_enabled;
 	bool fw_timeout_crash;
+
+	struct ol_tx_sched_wrr_ac_specs_t ac_specs[TX_WMM_AC_NUM];
 };
 #endif /* !defined( __CDS_CONFIG_H ) */

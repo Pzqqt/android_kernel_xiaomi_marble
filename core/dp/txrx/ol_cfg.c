@@ -103,6 +103,7 @@ struct cdp_cfg *ol_pdev_cfg_attach(qdf_device_t osdev, void *pcfg_param)
 {
 	struct txrx_pdev_cfg_param_t *cfg_param = pcfg_param;
 	struct txrx_pdev_cfg_t *cfg_ctx;
+	int i;
 
 	cfg_ctx = qdf_mem_malloc(sizeof(*cfg_ctx));
 	if (!cfg_ctx) {
@@ -144,6 +145,20 @@ struct cdp_cfg *ol_pdev_cfg_attach(qdf_device_t osdev, void *pcfg_param)
 	cfg_ctx->ce_classify_enabled = cfg_param->ce_classify_enabled;
 
 	ol_tx_set_flow_control_parameters((struct cdp_cfg *)cfg_ctx, cfg_param);
+
+	for (i = 0; i < OL_TX_NUM_WMM_AC; i++) {
+		cfg_ctx->ac_specs[i].wrr_skip_weight =
+			cfg_param->ac_specs[i].wrr_skip_weight;
+		cfg_ctx->ac_specs[i].credit_threshold =
+			cfg_param->ac_specs[i].credit_threshold;
+		cfg_ctx->ac_specs[i].send_limit =
+			cfg_param->ac_specs[i].send_limit;
+		cfg_ctx->ac_specs[i].credit_reserve =
+			cfg_param->ac_specs[i].credit_reserve;
+		cfg_ctx->ac_specs[i].discard_weight =
+			cfg_param->ac_specs[i].discard_weight;
+	}
+
 	return (struct cdp_cfg *)cfg_ctx;
 }
 
@@ -387,4 +402,89 @@ bool ol_cfg_is_ce_classify_enabled(struct cdp_cfg *cfg_pdev)
 {
 	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)cfg_pdev;
 	return cfg->ce_classify_enabled;
+}
+
+/**
+ * ol_cfg_get_wrr_skip_weight() - brief Query for the param of wrr_skip_weight
+ * @pdev: handle to the physical device.
+ * @ac: access control, it will be BE, BK, VI, VO
+ *
+ * Return: wrr_skip_weight for specified ac.
+ */
+int ol_cfg_get_wrr_skip_weight(ol_pdev_handle pdev, int ac)
+{
+	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)pdev;
+
+	if (ac >= OL_TX_WMM_AC_BE && ac <= OL_TX_WMM_AC_VO)
+		return cfg->ac_specs[ac].wrr_skip_weight;
+
+	return 0;
+}
+
+/**
+ * ol_cfg_get_credit_threshold() - Query for the param of credit_threshold
+ * @pdev: handle to the physical device.
+ * @ac: access control, it will be BE, BK, VI, VO
+ *
+ * Return: credit_threshold for specified ac.
+ */
+uint32_t ol_cfg_get_credit_threshold(ol_pdev_handle pdev, int ac)
+{
+	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)pdev;
+
+	if (ac >= OL_TX_WMM_AC_BE && ac <= OL_TX_WMM_AC_VO)
+		return cfg->ac_specs[ac].credit_threshold;
+
+	return 0;
+}
+
+/**
+ * ol_cfg_get_send_limit() - Query for the param of send_limit
+ * @pdev: handle to the physical device.
+ * @ac: access control, it will be BE, BK, VI, VO
+ *
+ * Return: send_limit for specified ac.
+ */
+uint16_t ol_cfg_get_send_limit(ol_pdev_handle pdev, int ac)
+{
+	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)pdev;
+
+	if (ac >= OL_TX_WMM_AC_BE && ac <= OL_TX_WMM_AC_VO)
+		return cfg->ac_specs[ac].send_limit;
+
+	return 0;
+}
+
+/**
+ * ol_cfg_get_credit_reserve() - Query for the param of credit_reserve
+ * @pdev: handle to the physical device.
+ * @ac: access control, it will be BE, BK, VI, VO
+ *
+ * Return: credit_reserve for specified ac.
+ */
+int ol_cfg_get_credit_reserve(ol_pdev_handle pdev, int ac)
+{
+	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)pdev;
+
+	if (ac >= OL_TX_WMM_AC_BE && ac <= OL_TX_WMM_AC_VO)
+		return cfg->ac_specs[ac].credit_reserve;
+
+	return 0;
+}
+
+/**
+ * ol_cfg_get_discard_weight() - Query for the param of discard_weight
+ * @pdev: handle to the physical device.
+ * @ac: access control, it will be BE, BK, VI, VO
+ *
+ * Return: discard_weight for specified ac.
+ */
+int ol_cfg_get_discard_weight(ol_pdev_handle pdev, int ac)
+{
+	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)pdev;
+
+	if (ac >= OL_TX_WMM_AC_BE && ac <= OL_TX_WMM_AC_VO)
+		return cfg->ac_specs[ac].discard_weight;
+
+	return 0;
 }

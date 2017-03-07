@@ -243,6 +243,8 @@ typedef struct _cds_context_type {
 
 	/* This is to track if HW mode change is in progress */
 	uint32_t hw_mode_change_in_progress;
+
+	struct ol_tx_sched_wrr_ac_specs_t ac_specs[TX_WMM_AC_NUM];
 } cds_context_type, *p_cds_contextType;
 
 /*---------------------------------------------------------------------------

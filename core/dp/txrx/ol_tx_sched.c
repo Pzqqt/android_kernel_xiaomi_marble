@@ -1009,6 +1009,72 @@ ol_tx_sched_category_info_wrr_adv(
 	*bytes = category->state.bytes;
 }
 
+/**
+ * ol_tx_sched_wrr_param_update() - update the WRR TX sched params
+ * @pdev: Pointer to PDEV structure.
+ * @scheduler: Pointer to tx scheduler.
+ *
+ * Update the WRR TX schedule parameters for each category if it is
+ * specified in the ini file by user.
+ *
+ * Return: none
+ */
+void ol_tx_sched_wrr_param_update(struct ol_txrx_pdev_t *pdev,
+				struct ol_tx_sched_wrr_adv_t *scheduler)
+{
+	int i;
+	static const char * const tx_sched_wrr_name[4] = {
+		"BE",
+		"BK",
+		"VI",
+		"VO"
+	};
+
+	if (NULL == scheduler)
+		return;
+
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+		"%s: Tuning the TX scheduler wrr parameters by ini file:",
+		__func__);
+
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+		"         skip credit limit credit disc");
+
+	for (i = OL_TX_SCHED_WRR_ADV_CAT_BE;
+		i <= OL_TX_SCHED_WRR_ADV_CAT_VO; i++) {
+		if (ol_cfg_get_wrr_skip_weight(pdev->ctrl_pdev, i)) {
+			scheduler->categories[i].specs.wrr_skip_weight =
+				ol_cfg_get_wrr_skip_weight(pdev->ctrl_pdev, i);
+			scheduler->categories[i].specs.credit_threshold =
+				ol_cfg_get_credit_threshold(pdev->ctrl_pdev, i);
+			scheduler->categories[i].specs.send_limit =
+				ol_cfg_get_send_limit(pdev->ctrl_pdev, i);
+			scheduler->categories[i].specs.credit_reserve =
+				ol_cfg_get_credit_reserve(pdev->ctrl_pdev, i);
+			scheduler->categories[i].specs.discard_weight =
+				ol_cfg_get_discard_weight(pdev->ctrl_pdev, i);
+
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+				"%s-update: %d,  %d,    %d,   %d,    %d",
+				tx_sched_wrr_name[i],
+				scheduler->categories[i].specs.wrr_skip_weight,
+				scheduler->categories[i].specs.credit_threshold,
+				scheduler->categories[i].specs.send_limit,
+				scheduler->categories[i].specs.credit_reserve,
+				scheduler->categories[i].specs.discard_weight);
+		} else {
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+				"%s-orig: %d,  %d,    %d,   %d,    %d",
+				tx_sched_wrr_name[i],
+				scheduler->categories[i].specs.wrr_skip_weight,
+				scheduler->categories[i].specs.credit_threshold,
+				scheduler->categories[i].specs.send_limit,
+				scheduler->categories[i].specs.credit_reserve,
+				scheduler->categories[i].specs.discard_weight);
+		}
+	}
+}
+
 void *
 ol_tx_sched_init_wrr_adv(
 		struct ol_txrx_pdev_t *pdev)
@@ -1029,6 +1095,8 @@ ol_tx_sched_init_wrr_adv(
 	OL_TX_SCHED_WRR_ADV_CAT_CFG_STORE(UCAST_MGMT, scheduler);
 	OL_TX_SCHED_WRR_ADV_CAT_CFG_STORE(MCAST_DATA, scheduler);
 	OL_TX_SCHED_WRR_ADV_CAT_CFG_STORE(MCAST_MGMT, scheduler);
+
+	ol_tx_sched_wrr_param_update(pdev, scheduler);
 
 	for (i = 0; i < OL_TX_SCHED_WRR_ADV_NUM_CATEGORIES; i++) {
 		scheduler->categories[i].state.active = 0;

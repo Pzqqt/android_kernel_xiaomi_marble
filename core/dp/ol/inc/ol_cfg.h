@@ -39,6 +39,7 @@
 #endif
 #include "ol_txrx_ctrl_api.h"   /* txrx_pdev_cfg_param_t */
 #include <cdp_txrx_handle.h>
+
 /**
  * @brief format of data frames delivered to/from the WLAN driver by/to the OS
  */
@@ -94,6 +95,8 @@ struct txrx_pdev_cfg_t {
 	uint32_t tx_flow_start_queue_offset;
 #endif
 	bool flow_steering_enabled;
+
+	struct ol_tx_sched_wrr_ac_specs_t ac_specs[TX_WMM_AC_NUM];
 };
 
 /**
@@ -637,4 +640,49 @@ static inline uint8_t ol_cfg_is_flow_steering_enabled(struct cdp_cfg *cfg_pdev)
 
 	return cfg->flow_steering_enabled;
 }
+
+/**
+ * ol_cfg_get_wrr_skip_weight() - brief Query for the param of wrr_skip_weight
+ * @pdev: handle to the physical device.
+ * @ac: access control, it will be BE, BK, VI, VO
+ *
+ * Return: wrr_skip_weight for specified ac.
+ */
+int ol_cfg_get_wrr_skip_weight(ol_pdev_handle pdev, int ac);
+
+/**
+ * ol_cfg_get_credit_threshold() - Query for the param of credit_threshold
+ * @pdev: handle to the physical device.
+ * @ac: access control, it will be BE, BK, VI, VO
+ *
+ * Return: credit_threshold for specified ac.
+ */
+uint32_t ol_cfg_get_credit_threshold(ol_pdev_handle pdev, int ac);
+
+/**
+ * ol_cfg_get_send_limit() - Query for the param of send_limit
+ * @pdev: handle to the physical device.
+ * @ac: access control, it will be BE, BK, VI, VO
+ *
+ * Return: send_limit for specified ac.
+ */
+uint16_t ol_cfg_get_send_limit(ol_pdev_handle pdev, int ac);
+
+/**
+ * ol_cfg_get_credit_reserve() - Query for the param of credit_reserve
+ * @pdev: handle to the physical device.
+ * @ac: access control, it will be BE, BK, VI, VO
+ *
+ * Return: credit_reserve for specified ac.
+ */
+int ol_cfg_get_credit_reserve(ol_pdev_handle pdev, int ac);
+
+/**
+ * ol_cfg_get_discard_weight() - Query for the param of discard_weight
+ * @pdev: handle to the physical device.
+ * @ac: access control, it will be BE, BK, VI, VO
+ *
+ * Return: discard_weight for specified ac.
+ */
+int ol_cfg_get_discard_weight(ol_pdev_handle pdev, int ac);
 #endif /* _OL_CFG__H_ */

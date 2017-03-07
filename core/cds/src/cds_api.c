@@ -170,6 +170,39 @@ void cds_tdls_tx_rx_mgmt_event(uint8_t event_id, uint8_t tx_rx,
 #endif
 
 /**
+ * cds_cfg_update_ac_specs_params() - update ac_specs params
+ * @olcfg: cfg handle
+ * @mac_params: mac params
+ *
+ * Return: none
+ */
+static void
+cds_cfg_update_ac_specs_params(struct txrx_pdev_cfg_param_t *olcfg,
+		struct cds_config_info *cds_cfg)
+{
+	int i;
+
+	if (NULL == olcfg)
+		return;
+
+	if (NULL == cds_cfg)
+		return;
+
+	for (i = 0; i < OL_TX_NUM_WMM_AC; i++) {
+		olcfg->ac_specs[i].wrr_skip_weight =
+			cds_cfg->ac_specs[i].wrr_skip_weight;
+		olcfg->ac_specs[i].credit_threshold =
+			cds_cfg->ac_specs[i].credit_threshold;
+		olcfg->ac_specs[i].send_limit =
+			cds_cfg->ac_specs[i].send_limit;
+		olcfg->ac_specs[i].credit_reserve =
+			cds_cfg->ac_specs[i].credit_reserve;
+		olcfg->ac_specs[i].discard_weight =
+			cds_cfg->ac_specs[i].discard_weight;
+	}
+}
+
+/**
  * cds_cdp_cfg_attach() - attach data path config module
  * @cds_cfg: generic platform level config instance
  *
@@ -191,6 +224,7 @@ static void cds_cdp_cfg_attach(struct cds_config_info *cds_cfg)
 			cds_cfg->ip_tcp_udp_checksum_offload;
 	cdp_cfg.ce_classify_enabled = cds_cfg->ce_classify_enabled;
 
+	cds_cfg_update_ac_specs_params(&cdp_cfg, cds_cfg);
 	gp_cds_context->cfg_ctx = cdp_cfg_attach(soc, gp_cds_context->qdf_ctx,
 					(void *)(&cdp_cfg));
 	if (!gp_cds_context->cfg_ctx) {
@@ -257,6 +291,35 @@ static QDF_STATUS cds_deregister_all_modules(void)
 	status = scheduler_deregister_module(QDF_MODULE_ID_OS_IF);
 
 	return status;
+}
+
+/**
+ * cds_set_ac_specs_params() - set ac_specs params in cds_config_info
+ * @cds_cfg: Pointer to cds_config_info
+ * @hdd_ctx: Pointer to hdd context
+ *
+ * Return: none
+ */
+static void
+cds_set_ac_specs_params(struct cds_config_info *cds_cfg)
+{
+	int i;
+	cds_context_type *cds_ctx;
+
+	if (NULL == cds_cfg)
+		return;
+
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+
+	if (!cds_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			"Invalid CDS Context");
+		return;
+	}
+
+	for (i = 0; i < OL_TX_NUM_WMM_AC; i++) {
+		cds_cfg->ac_specs[i] = cds_ctx->ac_specs[i];
+	}
 }
 
 /**
@@ -451,6 +514,8 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 			gp_cds_context->pHIFContext, scn,
 			gp_cds_context->htc_ctx, gp_cds_context->qdf_ctx,
 			&dp_ol_if_ops);
+
+	cds_set_ac_specs_params(cds_cfg);
 
 	cds_cdp_cfg_attach(cds_cfg);
 

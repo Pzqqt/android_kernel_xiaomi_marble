@@ -1736,6 +1736,78 @@ static void hdd_update_hw_sw_info(hdd_context_t *hdd_ctx)
 }
 
 /**
+ * hdd_update_cds_ac_specs_params() - update cds ac_specs params
+ * @hdd_ctx: Pointer to hdd context
+ *
+ * Return: none
+ */
+static void
+hdd_update_cds_ac_specs_params(hdd_context_t *hdd_ctx)
+{
+	uint8_t num_entries = 0;
+	uint8_t tx_sched_wrr_param[TX_SCHED_WRR_PARAMS_NUM];
+	uint8_t *tx_sched_wrr_ac;
+	int i;
+	cds_context_type *cds_ctx;
+
+	if (NULL == hdd_ctx)
+		return;
+
+	if (NULL == hdd_ctx->config) {
+		/* Do nothing if hdd_ctx is invalid */
+		hdd_err("%s: Warning: hdd_ctx->cfg_ini is NULL", __func__);
+		return;
+	}
+
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+
+	if (!cds_ctx) {
+		hdd_err("Invalid CDS Context");
+		return;
+	}
+
+	for (i = 0; i < OL_TX_NUM_WMM_AC; i++) {
+		switch (i) {
+		case OL_TX_WMM_AC_BE:
+			tx_sched_wrr_ac = hdd_ctx->config->tx_sched_wrr_be;
+			break;
+		case OL_TX_WMM_AC_BK:
+			tx_sched_wrr_ac = hdd_ctx->config->tx_sched_wrr_bk;
+			break;
+		case OL_TX_WMM_AC_VI:
+			tx_sched_wrr_ac = hdd_ctx->config->tx_sched_wrr_vi;
+			break;
+		case OL_TX_WMM_AC_VO:
+			tx_sched_wrr_ac = hdd_ctx->config->tx_sched_wrr_vo;
+			break;
+		default:
+			tx_sched_wrr_ac = NULL;
+			break;
+		}
+
+		hdd_string_to_u8_array(tx_sched_wrr_ac,
+				tx_sched_wrr_param,
+				&num_entries,
+				sizeof(tx_sched_wrr_param));
+
+		if (num_entries == TX_SCHED_WRR_PARAMS_NUM) {
+			cds_ctx->ac_specs[i].wrr_skip_weight =
+						tx_sched_wrr_param[0];
+			cds_ctx->ac_specs[i].credit_threshold =
+						tx_sched_wrr_param[1];
+			cds_ctx->ac_specs[i].send_limit =
+						tx_sched_wrr_param[2];
+			cds_ctx->ac_specs[i].credit_reserve =
+						tx_sched_wrr_param[3];
+			cds_ctx->ac_specs[i].discard_weight =
+						tx_sched_wrr_param[4];
+		}
+
+		num_entries = 0;
+	}
+}
+
+/**
  * hdd_wlan_start_modules() - Single driver state machine for starting modules
  * @hdd_ctx: HDD context
  * @adapter: HDD adapter
@@ -1830,6 +1902,8 @@ int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			hdd_err("Failed to update configuration :%d", ret);
 			goto destroy_psoc_object;
 		}
+
+		hdd_update_cds_ac_specs_params(hdd_ctx);
 
 		status = cds_open(hdd_ctx->hdd_psoc);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
