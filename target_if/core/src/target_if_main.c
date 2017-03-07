@@ -33,6 +33,10 @@
 #include "target_if_p2p.h"
 #endif
 
+#ifdef WIFI_POS_CONVERGED
+#include "target_if_wifi_pos.h"
+#endif
+
 static struct target_if_ctx *g_target_if_ctx;
 
 struct target_if_ctx *target_if_get_ctx()
@@ -100,6 +104,19 @@ static void target_if_atf_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
 }
 #endif /* WLAN_ATF_ENABLE */
 
+#ifdef WIFI_POS_CONVERGED
+static void target_if_wifi_pos_tx_ops_register(
+			struct wlan_lmac_if_tx_ops *tx_ops)
+{
+	target_if_wifi_pos_register_tx_ops(tx_ops);
+}
+#else
+static void target_if_wifi_pos_tx_ops_register(
+			struct wlan_lmac_if_tx_ops *tx_ops)
+{
+}
+#endif
+
 static
 QDF_STATUS target_if_register_umac_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {
@@ -108,6 +125,7 @@ QDF_STATUS target_if_register_umac_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 
 	target_if_atf_tx_ops_register(tx_ops);
 
+	target_if_wifi_pos_tx_ops_register(tx_ops);
 	/* Converged UMAC components to register their TX-ops here */
 	return QDF_STATUS_SUCCESS;
 }
@@ -141,7 +159,6 @@ QDF_STATUS target_if_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {
 	/* Converged UMAC components to register their TX-ops */
 	target_if_register_umac_tx_ops(tx_ops);
-
 	/* Components parallel to UMAC to register their TX-ops here */
 	target_if_pmo_register_tx_ops_req(tx_ops);
 

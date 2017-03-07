@@ -177,6 +177,24 @@ QDF_STATUS  wifi_pos_psoc_obj_destroyed_notification(
 	return status;
 }
 
+int wifi_pos_oem_rsp_handler(struct wlan_objmgr_psoc *psoc,
+			     struct oem_data_rsp *oem_rsp)
+{
+	struct wifi_pos_psoc_priv_obj *wifi_pos_obj =
+					wifi_pos_get_psoc_priv_obj(psoc);
+	/* handle oem event here */
+	if (oem_rsp->rsp_len > OEM_DATA_RSP_SIZE) {
+		wifi_pos_err("invalid length of Oem Data response");
+		return -EINVAL;
+	}
+
+	wifi_pos_debug("sending oem data rsp, len: %d to pid: %d",
+			oem_rsp->rsp_len, wifi_pos_obj->app_pid);
+	wifi_pos_obj->wifi_pos_send_rsp(psoc, ANI_MSG_OEM_DATA_RSP,
+					oem_rsp->rsp_len, oem_rsp->data);
+	return 0;
+}
+
 #ifdef UMAC_REG_COMPONENT
 /* enable this when regulatory component gets merged */
 static void get_ch_info(struct wlan_objmgr_psoc *psoc,

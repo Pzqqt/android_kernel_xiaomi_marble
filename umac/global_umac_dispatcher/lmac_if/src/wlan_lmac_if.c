@@ -25,6 +25,9 @@
 #ifdef WLAN_ATF_ENABLE
 #include "wlan_atf_tgt_api.h"
 #endif
+#ifdef WIFI_POS_CONVERGED
+#include "target_if_wifi_pos.h"
+#endif /* WIFI_POS_CONVERGED */
 
 /* Function pointer for OL/WMA specific UMAC tx_ops
  * registration.
@@ -90,6 +93,19 @@ wlan_lmac_if_atf_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 }
 #endif
 
+#ifdef WIFI_POS_CONVERGED
+static void wlan_lmac_if_umac_rx_ops_register_wifi_pos(
+				struct wlan_lmac_if_rx_ops *rx_ops)
+{
+	target_if_wifi_pos_register_rx_ops(rx_ops);
+}
+#else
+static void wlan_lmac_if_umac_rx_ops_register_wifi_pos(
+				struct wlan_lmac_if_rx_ops *rx_ops)
+{
+}
+#endif /* WIFI_POS_CONVERGED */
+
 /**
  * wlan_lmac_if_umac_rx_ops_register() - UMAC rx handler register
  * @rx_ops: Pointer to rx_ops structure to be populated
@@ -128,6 +144,9 @@ wlan_lmac_if_umac_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 	/* scan rx ops */
 	rx_ops->scan.scan_ev_handler = tgt_scan_event_handler;
 	wlan_lmac_if_atf_rx_ops_register(rx_ops);
+
+	/* wifi_pos rx ops */
+	wlan_lmac_if_umac_rx_ops_register_wifi_pos(rx_ops);
 
 	return QDF_STATUS_SUCCESS;
 }

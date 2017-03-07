@@ -84,6 +84,26 @@ QDF_STATUS wifi_pos_deinit(void)
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS wifi_pos_psoc_enable(struct wlan_objmgr_psoc *psoc)
+{
+	QDF_STATUS status = target_if_wifi_pos_register_events(psoc);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		wifi_pos_err("target_if_wifi_pos_register_events failed");
+
+	return status;
+}
+
+QDF_STATUS wifi_pos_psoc_disable(struct wlan_objmgr_psoc *psoc)
+{
+	QDF_STATUS status = target_if_wifi_pos_deregister_events(psoc);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		wifi_pos_err("target_if_wifi_pos_deregister_events failed");
+
+	return QDF_STATUS_SUCCESS;
+}
+
 void wifi_pos_set_oem_target_type(struct wlan_objmgr_psoc *psoc, uint32_t val)
 {
 	struct wifi_pos_psoc_priv_obj *wifi_pos_psoc =

@@ -149,6 +149,22 @@ QDF_STATUS wifi_pos_init(void);
 QDF_STATUS wifi_pos_deinit(void);
 
 /**
+ * wifi_pos_psoc_enable: psoc enable API for wifi positioning component
+ * @psoc: pointer to PSOC
+ *
+ * Return: status of operation
+ */
+QDF_STATUS wifi_pos_psoc_enable(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wifi_pos_psoc_disable: psoc disable API for wifi positioning component
+ * @psoc: pointer to PSOC
+ *
+ * Return: status of operation
+ */
+QDF_STATUS wifi_pos_psoc_disable(struct wlan_objmgr_psoc *psoc);
+
+/**
  * wifi_pos_set_oem_target_type: public API to set param in wifi_pos private
  * object
  * @psoc: pointer to PSOC
@@ -271,6 +287,15 @@ static inline QDF_STATUS wifi_pos_deinit(void)
 	return QDF_STATUS_SUCCESS;
 }
 
+static inline QDF_STATUS wifi_pos_psoc_enable(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS wifi_pos_psoc_disable(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif
 
 #endif

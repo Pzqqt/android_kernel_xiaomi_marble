@@ -54,4 +54,15 @@ QDF_STATUS wifi_pos_psoc_obj_created_notification(
  */
 QDF_STATUS  wifi_pos_psoc_obj_destroyed_notification(
 				struct wlan_objmgr_psoc *psoc, void *arg_list);
+
+/**
+ * wifi_pos_oem_rsp_handler: lmac rx ops registered
+ * @psoc: pointer to psoc object
+ * @oem_rsp: response from firmware
+ *
+ * Return: status of operation
+ */
+int wifi_pos_oem_rsp_handler(struct wlan_objmgr_psoc *psoc,
+			     struct oem_data_rsp *oem_rsp);
+
 #endif

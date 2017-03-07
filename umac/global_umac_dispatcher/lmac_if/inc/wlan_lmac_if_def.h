@@ -31,6 +31,12 @@
 /* Number of dev type: Direct attach and Offload */
 #define MAX_DEV_TYPE 2
 
+#ifdef WIFI_POS_CONVERGED
+/* forward declarations */
+struct oem_data_req;
+struct oem_data_rsp;
+#endif /* WIFI_POS_CONVERGED */
+
 /**
  * struct wlan_lmac_if_mgmt_txrx_tx_ops - structure of tx function
  *                  pointers for mgmt txrx component
@@ -312,6 +318,18 @@ struct wlan_lmac_if_atf_tx_ops {
 };
 #endif
 
+#ifdef WIFI_POS_CONVERGED
+/*
+ * struct wlan_lmac_if_wifi_pos_tx_ops - structure of firmware tx function
+ * pointers for wifi_pos component
+ * @data_req_tx: function pointer to send wifi_pos req to firmware
+ */
+struct wlan_lmac_if_wifi_pos_tx_ops {
+	QDF_STATUS (*data_req_tx)(struct wlan_objmgr_psoc *psoc,
+				  struct oem_data_req *req);
+};
+#endif
+
 /**
  * struct wlan_lmac_if_tx_ops - south bound tx function pointers
  * @mgmt_txrx_tx_ops: mgmt txrx tx ops
@@ -338,6 +356,9 @@ struct wlan_lmac_if_tx_ops {
 #endif
 #ifdef WLAN_ATF_ENABLE
 	struct wlan_lmac_if_atf_tx_ops atf_tx_ops;
+#endif
+#ifdef WIFI_POS_CONVERGED
+	struct wlan_lmac_if_wifi_pos_tx_ops wifi_pos_tx_ops;
 #endif
 };
 
@@ -506,6 +527,18 @@ struct wlan_lmac_if_atf_rx_ops {
 };
 #endif
 
+#ifdef WIFI_POS_CONVERGED
+/**
+ * struct wlan_lmac_if_wifi_pos_rx_ops - structure of rx function
+ * pointers for wifi_pos component
+ * @oem_rsp_event_rx: callback for WMI_OEM_RESPONSE_EVENTID
+ */
+struct wlan_lmac_if_wifi_pos_rx_ops {
+	int (*oem_rsp_event_rx)(struct wlan_objmgr_psoc *psoc,
+				struct oem_data_rsp *oem_rsp);
+};
+#endif
+
 /**
  * struct wlan_lmac_if_rx_ops - south bound rx function pointers
  * @arg1
@@ -530,6 +563,9 @@ struct wlan_lmac_if_rx_ops {
 #endif
 #ifdef WLAN_ATF_ENABLE
 	struct wlan_lmac_if_atf_rx_ops atf_rx_ops;
+#endif
+#ifdef WIFI_POS_CONVERGED
+	struct wlan_lmac_if_wifi_pos_rx_ops wifi_pos_rx_ops;
 #endif
 };
 
