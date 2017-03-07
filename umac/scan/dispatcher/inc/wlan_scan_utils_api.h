@@ -646,6 +646,8 @@ util_scan_copy_beacon_data(struct scan_cache_entry *new_entry,
 	ie_lst->txpwrenvlp = conv_ptr(ie_lst->txpwrenvlp, old_ptr, new_ptr);
 	ie_lst->bwnss_map = conv_ptr(ie_lst->bwnss_map, old_ptr, new_ptr);
 	ie_lst->mdie = conv_ptr(ie_lst->mdie, old_ptr, new_ptr);
+	ie_lst->hecap = conv_ptr(ie_lst->hecap, old_ptr, new_ptr);
+	ie_lst->heop = conv_ptr(ie_lst->heop, old_ptr, new_ptr);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1240,6 +1242,35 @@ static inline struct mlme_info*
 util_scan_entry_mlme_info(struct scan_cache_entry *scan_entry)
 {
 	return &(scan_entry->mlme_info);
+}
+
+/**
+ * util_scan_entry_hecap() - function to read he caps vendor ie
+ * @scan_entry: scan entry
+ *
+ * API, function to read he caps vendor ie
+ *
+ * Return: he caps vendorie or NULL if ie is not present
+ */
+static inline uint8_t*
+util_scan_entry_hecap(struct scan_cache_entry *scan_entry)
+{
+	return scan_entry->ie_list.hecap;
+}
+
+
+/**
+ * util_scan_entry_heop() - function to read heop vendor ie
+ * @scan_entry: scan entry
+ *
+ * API, function to read heop vendor ie
+ *
+ * Return, heop vendorie or NULL if ie is not present
+ */
+static inline uint8_t*
+util_scan_entry_heop(struct scan_cache_entry *scan_entry)
+{
+	return scan_entry->ie_list.heop;
 }
 
 /**

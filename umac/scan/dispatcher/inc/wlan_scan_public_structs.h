@@ -142,6 +142,8 @@ struct ie_list {
 	uint8_t *bwnss_map;
 	uint8_t *secchanoff;
 	uint8_t *mdie;
+	uint8_t *hecap;
+	uint8_t *heop;
 };
 
 /**

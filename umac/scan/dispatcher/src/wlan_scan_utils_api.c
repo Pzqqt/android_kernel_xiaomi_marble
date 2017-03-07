@@ -392,7 +392,14 @@ util_scan_parse_vendor_ie(struct scan_cache_entry *scan_params,
 		 * hence copy data just after version byte
 		 */
 		scan_params->ie_list.bwnss_map = (((uint8_t *)ie) + 8);
+	} else if (is_he_cap_oui(((uint8_t *)(ie))) &&
+			!(scan_params->ie_list.hecap)) {
+		scan_params->ie_list.hecap = (uint8_t *)ie;
+	} else if (is_he_op_oui(((uint8_t *)(ie))) &&
+			!(scan_params->ie_list.heop)) {
+		scan_params->ie_list.heop = (uint8_t *)ie;
 	}
+
 }
 
 static QDF_STATUS

@@ -63,6 +63,11 @@
 #define VHT_INTEROP_OUI_SUBTYPE 0x08
 #define VHT_INTEROP_OUI_SUBTYPE_VENDORSPEC 0x18
 
+/* ATH HE OUI ( in little endian) */
+#define ATH_HE_OUI                  0x741300
+#define ATH_HE_CAP_SUBTYPE          0x01
+#define ATH_HE_OP_SUBTYPE           0x02
+
 /* EPR information element flags */
 #define ERP_NON_ERP_PRESENT   0x01
 #define ERP_USE_PROTECTION    0x02
@@ -942,6 +947,37 @@ is_bwnss_oui(uint8_t *frm)
 	return (frm[1] > 3) && (LE_READ_4(frm + 2) ==
 		((ATH_OUI_BW_NSS_MAP_TYPE << 24) | ATH_OUI));
 }
+
+/**
+ * is_he_cap_oui() - If vendor IE is HE CAP OUI
+ * @frm: vendor IE pointer
+ *
+ * API to check if vendor IE is HE CAP
+ *
+ * Return: true if its HE CAP IE
+ */
+static inline bool
+is_he_cap_oui(uint8_t *frm)
+{
+	return (frm[1] > 4) && (LE_READ_4(frm + 2) ==
+		((ATH_HE_CAP_SUBTYPE << 24) | ATH_HE_OUI));
+}
+
+/**
+ * is_he_op_oui() - If vendor IE is HE OP OUI
+ * @frm: vendor IE pointer
+ *
+ * API to check if vendor IE is HE OP OUT
+ *
+ * Return: true if its HE OP OUI
+ */
+static inline bool
+is_he_op_oui(uint8_t *frm)
+{
+	return (frm[1] > 4) && (LE_READ_4(frm + 2) ==
+		((ATH_HE_OP_SUBTYPE << 24) | ATH_HE_OUI));
+}
+
 
 /**
  * wlan_parse_rsn_ie() - parse rsn ie
