@@ -329,6 +329,16 @@ struct cdp_ctrl_ops {
 	/* Should be ol_txrx_ctrl_api.h */
 	void (*txrx_set_mesh_mode)(struct cdp_vdev *vdev, u_int32_t val);
 
+	/**
+	 * @brief setting mesh rx filter
+	 * @details
+	 *  based on the bits enabled in the filter packets has to be dropped.
+	 *
+	 * @param vdev - the data virtual device object
+	 * @param val - value to set
+	 */
+	void (*txrx_set_mesh_rx_filter)(struct cdp_vdev *vdev, uint32_t val);
+
 	void (*tx_flush_buffers)(struct cdp_vdev *vdev);
 
 	int (*txrx_is_target_ar900b)(struct cdp_vdev *vdev);

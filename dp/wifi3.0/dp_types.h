@@ -578,6 +578,10 @@ union dp_align_mac_addr {
 		uint32_t bytes_abcd;
 		uint16_t bytes_ef;
 	} align4;
+	struct {
+		uint16_t bytes_ab;
+		uint32_t bytes_cdef;
+	} align4_2;
 };
 
 #define MAX_HTT_METADATA_LEN 32
@@ -662,6 +666,9 @@ struct dp_vdev {
 
 	/* Mesh mode vdev */
 	uint32_t mesh_vdev;
+
+	/* Mesh mode rx filter setting */
+	uint32_t mesh_rx_filter;
 
 	/* DSCP-TID mapping table ID */
 	uint8_t dscp_tid_map_id;

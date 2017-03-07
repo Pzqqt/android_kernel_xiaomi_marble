@@ -1831,13 +1831,29 @@ static struct cdp_cfg *dp_get_ctrl_pdev_from_vdev_wifi3(struct cdp_vdev *pvdev)
 }
 
 #ifdef MESH_MODE_SUPPORT
-void dp_peer_set_mesh_mode(struct cdp_vdev *vdev_hdl, u_int32_t val)
+void dp_peer_set_mesh_mode(struct cdp_vdev *vdev_hdl, uint32_t val)
 {
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_hdl;
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 		FL("%s: val %d"), __func__, val);
 	vdev->mesh_vdev = val;
+}
+
+/*
+ * dp_peer_set_mesh_rx_filter() - to set the mesh rx filter
+ * @vdev_hdl: virtual device object
+ * @val: value to be set
+ *
+ * Return: void
+ */
+void dp_peer_set_mesh_rx_filter(struct cdp_vdev *vdev_hdl, uint32_t val)
+{
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_hdl;
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+		FL("val %d"), val);
+	vdev->mesh_rx_filter = val;
 }
 #endif
 
@@ -1868,6 +1884,7 @@ static struct cdp_ctrl_ops dp_ops_ctrl = {
 	.txrx_set_tx_encap_type = dp_set_vdev_tx_encap_type,
 #ifdef MESH_MODE_SUPPORT
 	.txrx_set_mesh_mode  = dp_peer_set_mesh_mode,
+	.txrx_set_mesh_rx_filter = dp_peer_set_mesh_rx_filter,
 #endif
 	/* TODO: Add other functions */
 };

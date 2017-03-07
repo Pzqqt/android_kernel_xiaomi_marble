@@ -990,6 +990,169 @@ hal_rx_msdu_start_nss_get(uint8_t *buf)
 	return nss;
 }
 
+#define HAL_RX_MPDU_GET_TODS(_rx_mpdu_info)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info,	\
+		RX_MPDU_INFO_2_TO_DS_OFFSET)),	\
+		RX_MPDU_INFO_2_TO_DS_MASK,	\
+		RX_MPDU_INFO_2_TO_DS_LSB))
+
+/*
+ * hal_rx_mpdu_get_tods(): API to get the tods info
+ * from rx_mpdu_start
+ *
+ * @buf: pointer to the start of RX PKT TLV header
+ * Return: uint32_t(to_ds)
+ */
+
+static inline uint32_t
+hal_rx_mpdu_get_to_ds(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_mpdu_start *mpdu_start =
+				 &pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
+
+	struct rx_mpdu_info *mpdu_info = &mpdu_start->rx_mpdu_info_details;
+	uint32_t to_ds;
+
+	to_ds = HAL_RX_MPDU_GET_TODS(mpdu_info);
+
+	return to_ds;
+}
+
+#define HAL_RX_MPDU_GET_FROMDS(_rx_mpdu_info)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info,	\
+		RX_MPDU_INFO_2_FR_DS_OFFSET)),	\
+		RX_MPDU_INFO_2_FR_DS_MASK,	\
+		RX_MPDU_INFO_2_FR_DS_LSB))
+
+/*
+ * hal_rx_mpdu_get_fr_ds(): API to get the from ds info
+ * from rx_mpdu_start
+ *
+ * @buf: pointer to the start of RX PKT TLV header
+ * Return: uint32_t(fr_ds)
+ */
+
+static inline uint32_t
+hal_rx_mpdu_get_fr_ds(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_mpdu_start *mpdu_start =
+				 &pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
+
+	struct rx_mpdu_info *mpdu_info = &mpdu_start->rx_mpdu_info_details;
+	uint32_t fr_ds;
+
+	fr_ds = HAL_RX_MPDU_GET_FROMDS(mpdu_info);
+
+	return fr_ds;
+}
+
+#define HAL_RX_MPDU_MAC_ADDR_AD1_VALID_GET(_rx_mpdu_info) \
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info, \
+		RX_MPDU_INFO_2_MAC_ADDR_AD1_VALID_OFFSET)), \
+		RX_MPDU_INFO_2_MAC_ADDR_AD1_VALID_MASK,	\
+		RX_MPDU_INFO_2_MAC_ADDR_AD1_VALID_LSB))
+
+#define HAL_RX_MPDU_MAC_ADDR_AD2_VALID_GET(_rx_mpdu_info) \
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info, \
+		RX_MPDU_INFO_2_MAC_ADDR_AD2_VALID_OFFSET)), \
+		RX_MPDU_INFO_2_MAC_ADDR_AD2_VALID_MASK,	\
+		RX_MPDU_INFO_2_MAC_ADDR_AD2_VALID_LSB))
+
+#define HAL_RX_MPDU_AD1_31_0_GET(_rx_mpdu_info)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info, \
+		RX_MPDU_INFO_15_MAC_ADDR_AD1_31_0_OFFSET)), \
+		RX_MPDU_INFO_15_MAC_ADDR_AD1_31_0_MASK,	\
+		RX_MPDU_INFO_15_MAC_ADDR_AD1_31_0_LSB))
+
+#define HAL_RX_MPDU_AD1_47_32_GET(_rx_mpdu_info)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info, \
+		RX_MPDU_INFO_16_MAC_ADDR_AD1_47_32_OFFSET)), \
+		RX_MPDU_INFO_16_MAC_ADDR_AD1_47_32_MASK,	\
+		RX_MPDU_INFO_16_MAC_ADDR_AD1_47_32_LSB))
+
+#define HAL_RX_MPDU_AD2_15_0_GET(_rx_mpdu_info)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info, \
+		RX_MPDU_INFO_16_MAC_ADDR_AD2_15_0_OFFSET)), \
+		RX_MPDU_INFO_16_MAC_ADDR_AD2_15_0_MASK,	\
+		RX_MPDU_INFO_16_MAC_ADDR_AD2_15_0_LSB))
+
+#define HAL_RX_MPDU_AD2_47_16_GET(_rx_mpdu_info)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info, \
+		RX_MPDU_INFO_17_MAC_ADDR_AD2_47_16_OFFSET)), \
+		RX_MPDU_INFO_17_MAC_ADDR_AD2_47_16_MASK,	\
+		RX_MPDU_INFO_17_MAC_ADDR_AD2_47_16_LSB))
+
+/*
+ * hal_rx_mpdu_get_addr1(): API to check get address1 of the mpdu
+ *
+ * @buf: pointer to the start of RX PKT TLV headera
+ * @mac_addr: pointer to mac address
+ * Return: sucess/failure
+ */
+static inline
+QDF_STATUS hal_rx_mpdu_get_addr1(uint8_t *buf, uint8_t *mac_addr)
+{
+	struct __attribute__((__packed__)) hal_addr1 {
+		uint32_t ad1_31_0;
+		uint16_t ad1_47_32;
+	};
+
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_mpdu_start *mpdu_start =
+				 &pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
+
+	struct rx_mpdu_info *mpdu_info = &mpdu_start->rx_mpdu_info_details;
+	struct hal_addr1 *addr = (struct hal_addr1 *)mac_addr;
+	uint32_t mac_addr_ad1_valid;
+
+	mac_addr_ad1_valid = HAL_RX_MPDU_MAC_ADDR_AD1_VALID_GET(mpdu_info);
+
+	if (mac_addr_ad1_valid) {
+		addr->ad1_31_0 = HAL_RX_MPDU_AD1_31_0_GET(mpdu_info);
+		addr->ad1_47_32 = HAL_RX_MPDU_AD1_47_32_GET(mpdu_info);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/*
+ * hal_rx_mpdu_get_addr2(): API to check get address2 of the mpdu
+ * in the packet
+ *
+ * @buf: pointer to the start of RX PKT TLV header
+ * @mac_addr: pointer to mac address
+ * Return: sucess/failure
+ */
+static inline
+QDF_STATUS hal_rx_mpdu_get_addr2(uint8_t *buf, uint8_t *mac_addr)
+{
+	struct __attribute__((__packed__)) hal_addr2 {
+		uint16_t ad2_15_0;
+		uint32_t ad2_47_16;
+	};
+
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_mpdu_start *mpdu_start =
+				 &pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
+
+	struct rx_mpdu_info *mpdu_info = &mpdu_start->rx_mpdu_info_details;
+	struct hal_addr2 *addr = (struct hal_addr2 *)mac_addr;
+	uint32_t mac_addr_ad2_valid;
+
+	mac_addr_ad2_valid = HAL_RX_MPDU_MAC_ADDR_AD2_VALID_GET(mpdu_info);
+
+	if (mac_addr_ad2_valid) {
+		addr->ad2_15_0 = HAL_RX_MPDU_AD2_15_0_GET(mpdu_info);
+		addr->ad2_47_16 = HAL_RX_MPDU_AD2_47_16_GET(mpdu_info);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 /*******************************************************************************
  * RX ERROR APIS
  ******************************************************************************/

@@ -262,6 +262,24 @@ static inline void cdp_set_mesh_mode
 	return;
 }
 
+/**
+ * @brief set mesh rx filter
+ * @details based on the bits enabled in the filter packets has to be dropped.
+ *
+ * @param soc - pointer to the soc
+ * @param vdev - the data virtual device object
+ * @param val - value to be set
+ * @return - void
+ */
+static inline
+void cdp_set_mesh_rx_filter(ol_txrx_soc_handle soc,
+				struct cdp_vdev *vdev, uint32_t val)
+{
+	if (soc->ops->ctrl_ops->txrx_set_mesh_rx_filter)
+		return soc->ops->ctrl_ops->txrx_set_mesh_rx_filter(vdev, val);
+	return;
+}
+
 static inline void cdp_tx_flush_buffers
 (ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 {

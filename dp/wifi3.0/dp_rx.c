@@ -291,10 +291,75 @@ void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
 						rx_info->rs_keyix);
 
 }
+
+/**
+ * dp_rx_fill_mesh_stats() - Filters mesh unwanted packets
+ *
+ * @vdev: DP Virtual device handle
+ * @nbuf: Buffer pointer
+ *
+ * This checks if the received packet is matching any filter out
+ * catogery and and drop the packet if it matches.
+ *
+ * Return: status(0 indicates drop, 1 indicate to no drop)
+ */
+
+static inline
+QDF_STATUS dp_rx_filter_mesh_packets(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
+{
+	uint8_t *rx_tlv_hdr = qdf_nbuf_data(nbuf);
+	union dp_align_mac_addr mac_addr;
+
+	if (qdf_unlikely(vdev->mesh_rx_filter)) {
+		if (vdev->mesh_rx_filter & MESH_FILTER_OUT_FROMDS)
+			if (hal_rx_mpdu_get_fr_ds(rx_tlv_hdr))
+				return  QDF_STATUS_SUCCESS;
+
+		if (vdev->mesh_rx_filter & MESH_FILTER_OUT_TODS)
+			if (hal_rx_mpdu_get_to_ds(rx_tlv_hdr))
+				return  QDF_STATUS_SUCCESS;
+
+		if (vdev->mesh_rx_filter & MESH_FILTER_OUT_NODS)
+			if (!hal_rx_mpdu_get_fr_ds(rx_tlv_hdr)
+				&& !hal_rx_mpdu_get_to_ds(rx_tlv_hdr))
+				return  QDF_STATUS_SUCCESS;
+
+		if (vdev->mesh_rx_filter & MESH_FILTER_OUT_RA) {
+			if (hal_rx_mpdu_get_addr1(rx_tlv_hdr,
+					&mac_addr.raw[0]))
+				return QDF_STATUS_E_FAILURE;
+
+			if (!qdf_mem_cmp(&mac_addr.raw[0],
+					&vdev->mac_addr.raw[0],
+					DP_MAC_ADDR_LEN))
+				return  QDF_STATUS_SUCCESS;
+		}
+
+		if (vdev->mesh_rx_filter & MESH_FILTER_OUT_TA) {
+			if (hal_rx_mpdu_get_addr2(rx_tlv_hdr,
+					&mac_addr.raw[0]))
+				return QDF_STATUS_E_FAILURE;
+
+			if (!qdf_mem_cmp(&mac_addr.raw[0],
+					&vdev->mac_addr.raw[0],
+					DP_MAC_ADDR_LEN))
+				return  QDF_STATUS_SUCCESS;
+		}
+	}
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 #else
 static
 void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
 {
+}
+
+static inline
+QDF_STATUS dp_rx_filter_mesh_packets(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
+{
+	return QDF_STATUS_E_FAILURE;
 }
 
 #endif
@@ -541,8 +606,18 @@ done:
 			/* Set length in nbuf */
 			qdf_nbuf_set_pktlen(nbuf, pkt_len);
 
-			if (qdf_unlikely(vdev->mesh_vdev))
+			if (qdf_unlikely(vdev->mesh_vdev)) {
+				if (dp_rx_filter_mesh_packets(vdev, nbuf)
+						== QDF_STATUS_SUCCESS) {
+					QDF_TRACE(QDF_MODULE_ID_DP,
+						QDF_TRACE_LEVEL_INFO_MED,
+						FL("mesh pkt filtered"));
+
+					qdf_nbuf_free(nbuf);
+					continue;
+				}
 				dp_rx_fill_mesh_stats(vdev, nbuf);
+			}
 
 			/*
 			 * Advance the packet start pointer by total size of
