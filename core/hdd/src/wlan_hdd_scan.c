@@ -1508,6 +1508,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 #endif
 	uint8_t curr_session_id;
 	enum scan_reject_states curr_reason;
+	static uint32_t scan_ebusy_cnt;
 
 	ENTER();
 
@@ -1595,7 +1596,8 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 
 	/* Check if scan is allowed at this point of time */
 	if (hdd_is_connection_in_progress(&curr_session_id, &curr_reason)) {
-		hdd_err("Scan not allowed");
+		scan_ebusy_cnt++;
+		hdd_err("Scan not allowed. scan_ebusy_cnt: %d", scan_ebusy_cnt);
 		if (pHddCtx->last_scan_reject_session_id != curr_session_id ||
 		    pHddCtx->last_scan_reject_reason != curr_reason ||
 		    !pHddCtx->last_scan_reject_timestamp) {
@@ -1883,7 +1885,9 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("sme_scan_request returned error %d", status);
 		if (QDF_STATUS_E_RESOURCES == status) {
-			hdd_err("HO is in progress.So defer the scan by informing busy");
+			scan_ebusy_cnt++;
+			hdd_err("HO is in progress. Defer scan scan_ebusy_cnt: %d",
+				scan_ebusy_cnt);
 			status = -EBUSY;
 		} else {
 			status = -EIO;
@@ -1903,6 +1907,9 @@ free_mem:
 
 	if (channelList)
 		qdf_mem_free(channelList);
+
+	if (status == 0)
+		scan_ebusy_cnt = 0;
 
 	EXIT();
 	return status;
