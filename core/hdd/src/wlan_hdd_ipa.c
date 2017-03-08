@@ -444,6 +444,7 @@ struct hdd_ipa_priv {
 	struct ipa_wdi_in_params cons_pipe_in;
 	struct ipa_wdi_in_params prod_pipe_in;
 	bool uc_loaded;
+	bool wdi_enabled;
 	qdf_mc_timer_t rt_debug_fill_timer;
 	qdf_mutex_t rt_debug_lock;
 	qdf_mutex_t ipa_lock;
@@ -669,43 +670,6 @@ static void hdd_ipa_uc_loaded_uc_cb(void *priv_ctxt)
 }
 
 /**
- * hdd_ipa_uc_register_uc_ready() - Register UC ready callback function to IPA
- * @hdd_ipa: HDD IPA local context
- *
- * Register IPA UC ready callback function to IPA kernel driver
- * Even IPA UC loaded later than WLAN kernel driver, WLAN kernel driver will
- * open WDI pipe after WLAN driver loading finished
- *
- * Return: 0 Success
- *         -EPERM Registration fail
- */
-static int hdd_ipa_uc_register_uc_ready(struct hdd_ipa_priv *hdd_ipa)
-{
-	struct ipa_wdi_uc_ready_params uc_ready_param;
-
-	hdd_ipa->uc_loaded = false;
-	uc_ready_param.priv = (void *)hdd_ipa;
-	uc_ready_param.notify = hdd_ipa_uc_loaded_uc_cb;
-	if (ipa_uc_reg_rdyCB(&uc_ready_param)) {
-		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
-			"UC Ready CB register fail");
-		return -EPERM;
-	}
-	if (true == uc_ready_param.is_uC_ready) {
-		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "UC Ready");
-		hdd_ipa->uc_loaded = true;
-	}
-
-	return 0;
-}
-
-#ifdef QCA_LL_TX_FLOW_CONTROL_V2
-static int hdd_ipa_uc_send_wdi_control_msg(bool ctrl)
-{
-	return 0;
-}
-#else
-/**
  * hdd_ipa_uc_send_wdi_control_msg() - Set WDI control message
  * @ctrl: WDI control value
  *
@@ -742,10 +706,42 @@ static int hdd_ipa_uc_send_wdi_control_msg(bool ctrl)
 			meta.msg_type,  ret);
 		qdf_mem_free(ipa_msg);
 	}
-	return 0;
+	return ret;
 }
-#endif /* QCA_LL_TX_FLOW_CONTROL_V2 */
 
+/**
+ * hdd_ipa_uc_register_uc_ready() - Register UC ready callback function to IPA
+ * @hdd_ipa: HDD IPA local context
+ *
+ * Register IPA UC ready callback function to IPA kernel driver
+ * Even IPA UC loaded later than WLAN kernel driver, WLAN kernel driver will
+ * open WDI pipe after WLAN driver loading finished
+ *
+ * Return: 0 Success
+ *         -EPERM Registration fail
+ */
+static int hdd_ipa_uc_register_uc_ready(struct hdd_ipa_priv *hdd_ipa)
+{
+	struct ipa_wdi_uc_ready_params uc_ready_param;
+	int ret = 0;
+
+	hdd_ipa->uc_loaded = false;
+	uc_ready_param.priv = (void *)hdd_ipa;
+	uc_ready_param.notify = hdd_ipa_uc_loaded_uc_cb;
+	if (ipa_uc_reg_rdyCB(&uc_ready_param)) {
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
+			"UC Ready CB register fail");
+		return -EPERM;
+	}
+	if (true == uc_ready_param.is_uC_ready) {
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "UC Ready");
+		hdd_ipa->uc_loaded = true;
+	} else {
+		ret = hdd_ipa_uc_send_wdi_control_msg(false);
+	}
+
+	return ret;
+}
 #else
 static void hdd_ipa_uc_get_db_paddr(qdf_dma_addr_t *db_paddr,
 					  enum ipa_client_type client)
@@ -1898,10 +1894,11 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 		hdd_ipa->activated_fw_pipe++;
 		if (HDD_IPA_UC_NUM_WDI_PIPE == hdd_ipa->activated_fw_pipe) {
 			hdd_ipa->resource_loading = false;
-			if (hdd_ipa_uc_send_wdi_control_msg(true) < 0) {
-				qdf_mutex_release(&hdd_ipa->event_lock);
-				qdf_mem_free(op_msg);
-				return;
+			if (hdd_ipa->wdi_enabled == false) {
+				hdd_ipa->wdi_enabled = true;
+				if (hdd_ipa_uc_send_wdi_control_msg(true) == 0)
+					hdd_ipa_send_mcc_scc_msg(hdd_ctx,
+							 hdd_ctx->mcc_mode);
 			}
 			hdd_ipa_uc_proc_pending_event(hdd_ipa);
 			if (hdd_ipa->pending_cons_req)
@@ -1917,11 +1914,6 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 		hdd_ipa->activated_fw_pipe--;
 		if (!hdd_ipa->activated_fw_pipe) {
 			hdd_ipa_uc_disable_pipes(hdd_ipa);
-			if (hdd_ipa_uc_send_wdi_control_msg(false) < 0) {
-				qdf_mutex_release(&hdd_ipa->event_lock);
-				qdf_mem_free(op_msg);
-				return;
-			}
 			if (hdd_ipa_is_rm_enabled(hdd_ipa->hdd_ctx))
 				ipa_rm_release_resource(
 					IPA_RM_RESOURCE_WLAN_PROD);
@@ -2656,7 +2648,6 @@ static int hdd_ipa_uc_disconnect_ap(hdd_adapter_t *adapter)
 	return ret;
 }
 
-#ifdef IPA_UC_STA_OFFLOAD
 /**
  * hdd_ipa_uc_disconnect_sta() - send sta disconnect event
  * @hdd_ctx: pointer to hdd adapter
@@ -2671,22 +2662,15 @@ static int hdd_ipa_uc_disconnect_sta(hdd_adapter_t *adapter)
 	struct hdd_ipa_priv *hdd_ipa = ghdd_ipa;
 	int ret = 0;
 
-	if (hdd_ipa_uc_sta_is_enabled(hdd_ipa) &&
+	if (hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx) &&
 	    hdd_ipa->sta_connected) {
 		pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 		hdd_ipa_uc_send_evt(adapter, WLAN_STA_DISCONNECT,
-			pHddStaCtx->conn_info.bssId);
+				pHddStaCtx->conn_info.bssId.bytes);
 	}
 
 	return ret;
 }
-#else
-static int hdd_ipa_uc_disconnect_sta(hdd_adapter_t *adapter)
-{
-	return 0;
-}
-
-#endif
 
 /**
  * hdd_ipa_uc_disconnect() - send disconnect ipa event
@@ -5396,6 +5380,7 @@ static QDF_STATUS __hdd_ipa_init(hdd_context_t *hdd_ctx)
 		hdd_ipa->resource_unloading = false;
 		hdd_ipa->sta_connected = 0;
 		hdd_ipa->ipa_pipes_down = true;
+		hdd_ipa->wdi_enabled = false;
 		/* Setup IPA sys_pipe for MCC */
 		if (hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx)) {
 			ret = hdd_ipa_setup_sys_pipe(hdd_ipa);
