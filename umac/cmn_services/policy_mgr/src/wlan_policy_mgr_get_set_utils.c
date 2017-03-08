@@ -528,7 +528,39 @@ void policy_mgr_set_dual_mac_fw_mode_config(struct wlan_objmgr_psoc *psoc,
 
 bool policy_mgr_current_concurrency_is_mcc(struct wlan_objmgr_psoc *psoc)
 {
-	return true;
+	uint32_t num_connections = 0;
+	bool is_mcc = false;
+
+	num_connections = policy_mgr_get_connection_count(psoc);
+
+	switch (num_connections) {
+	case 1:
+		break;
+	case 2:
+		if ((pm_conc_connection_list[0].chan !=
+			pm_conc_connection_list[1].chan) &&
+		    (pm_conc_connection_list[0].mac ==
+			pm_conc_connection_list[1].mac)) {
+			is_mcc = true;
+		}
+		break;
+	case 3:
+		if ((pm_conc_connection_list[0].chan !=
+			pm_conc_connection_list[1].chan) ||
+		    (pm_conc_connection_list[0].chan !=
+			pm_conc_connection_list[2].chan) ||
+		    (pm_conc_connection_list[1].chan !=
+			pm_conc_connection_list[2].chan)){
+				is_mcc = true;
+		}
+		break;
+	default:
+		policy_mgr_err("unexpected num_connections value %d",
+			num_connections);
+		break;
+	}
+
+	return is_mcc;
 }
 
 void policy_mgr_set_concurrency_mode(enum tQDF_ADAPTER_MODE mode)
@@ -545,41 +577,302 @@ void policy_mgr_incr_active_session(struct wlan_objmgr_psoc *psoc,
 				enum tQDF_ADAPTER_MODE mode,
 				uint8_t session_id)
 {
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
+
+	/*
+	 * Need to aquire mutex as entire functionality in this function
+	 * is in critical section
+	 */
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	switch (mode) {
+	case QDF_STA_MODE:
+	case QDF_P2P_CLIENT_MODE:
+	case QDF_P2P_GO_MODE:
+	case QDF_SAP_MODE:
+	case QDF_IBSS_MODE:
+		pm_ctx->no_of_active_sessions[mode]++;
+		break;
+	default:
+		break;
+	}
+
+
+	policy_mgr_notice("No.# of active sessions for mode %d = %d",
+		mode, pm_ctx->no_of_active_sessions[mode]);
+	/*
+	 * Get PCL logic makes use of the connection info structure.
+	 * Let us set the PCL to the FW before updating the connection
+	 * info structure about the new connection.
+	 */
+	if (mode == QDF_STA_MODE) {
+		qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+		/* Set PCL of STA to the FW */
+		policy_mgr_pdev_set_pcl(psoc, mode);
+		qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+		policy_mgr_notice("Set PCL of STA to FW");
+	}
+	policy_mgr_incr_connection_count(psoc, session_id);
+	if ((policy_mgr_mode_specific_connection_count(
+		psoc, PM_STA_MODE, NULL) > 0) && (mode != QDF_STA_MODE)) {
+		qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+		policy_mgr_set_pcl_for_existing_combo(psoc, PM_STA_MODE);
+		qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	}
+
+	/* set tdls connection tracker state */
+	pm_ctx->tdls_cbacks.set_tdls_ct_mode(psoc);
+	policy_mgr_dump_current_concurrency(psoc);
+
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 }
 
 void policy_mgr_decr_active_session(struct wlan_objmgr_psoc *psoc,
 				enum tQDF_ADAPTER_MODE mode,
 				uint8_t session_id)
 {
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("context is NULL");
+		return;
+	}
+
+	switch (mode) {
+	case QDF_STA_MODE:
+	case QDF_P2P_CLIENT_MODE:
+	case QDF_P2P_GO_MODE:
+	case QDF_SAP_MODE:
+	case QDF_IBSS_MODE:
+		if (pm_ctx->no_of_active_sessions[mode])
+			pm_ctx->no_of_active_sessions[mode]--;
+		break;
+	default:
+		break;
+	}
+
+	policy_mgr_notice("No.# of active sessions for mode %d = %d",
+		mode, pm_ctx->no_of_active_sessions[mode]);
+
+	policy_mgr_decr_connection_count(psoc, session_id);
+
+	/* set tdls connection tracker state */
+	pm_ctx->tdls_cbacks.set_tdls_ct_mode(psoc);
+
+	policy_mgr_dump_current_concurrency(psoc);
 }
 
 QDF_STATUS policy_mgr_incr_connection_count(
 		struct wlan_objmgr_psoc *psoc, uint32_t vdev_id)
 {
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	uint32_t conn_index;
+	struct policy_mgr_vdev_entry_info conn_table_entry;
+	enum policy_mgr_chain_mode chain_mask = POLICY_MGR_ONE_ONE;
+	uint8_t nss_2g = 0, nss_5g = 0;
+	enum policy_mgr_con_mode mode;
+	uint8_t chan;
+	uint32_t nss = 0;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("context is NULL");
+		return status;
+	}
+
+	conn_index = policy_mgr_get_connection_count(psoc);
+	if (pm_ctx->gMaxConcurrentActiveSessions < conn_index) {
+		policy_mgr_err("exceeded max connection limit %d",
+			pm_ctx->gMaxConcurrentActiveSessions);
+		return status;
+	}
+
+	status = pm_ctx->wma_cbacks.wma_get_connection_info(
+				vdev_id, &conn_table_entry);
+	if (QDF_STATUS_SUCCESS != status) {
+		policy_mgr_err("can't find vdev_id %d in connection table",
+			vdev_id);
+		return status;
+	}
+	mode = policy_mgr_get_mode(conn_table_entry.type,
+					conn_table_entry.sub_type);
+	chan = reg_freq_to_chan(conn_table_entry.mhz);
+	status = policy_mgr_get_nss_for_vdev(psoc, mode, &nss_2g, &nss_5g);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		if ((WLAN_REG_IS_24GHZ_CH(chan) && (nss_2g > 1)) ||
+			(WLAN_REG_IS_5GHZ_CH(chan) && (nss_5g > 1)))
+			chain_mask = POLICY_MGR_TWO_TWO;
+		else
+			chain_mask = POLICY_MGR_ONE_ONE;
+		nss = (WLAN_REG_IS_24GHZ_CH(chan)) ? nss_2g : nss_5g;
+	} else {
+		policy_mgr_err("Error in getting nss");
+	}
+
+
+	/* add the entry */
+	policy_mgr_update_conc_list(psoc, conn_index,
+			mode,
+			chan,
+			policy_mgr_get_bw(conn_table_entry.chan_width),
+			conn_table_entry.mac_id,
+			chain_mask,
+			nss, vdev_id, true);
+	policy_mgr_notice("Add at idx:%d vdev %d mac=%d",
+		conn_index, vdev_id,
+		conn_table_entry.mac_id);
+
 	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS policy_mgr_decr_connection_count(struct wlan_objmgr_psoc *psoc,
 					uint32_t vdev_id)
 {
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	uint32_t conn_index = 0, next_conn_index = 0;
+	bool found = false;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return status;
+	}
+
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	while (PM_CONC_CONNECTION_LIST_VALID_INDEX(conn_index)) {
+		if (vdev_id == pm_conc_connection_list[conn_index].vdev_id) {
+			/* debug msg */
+			found = true;
+			break;
+		}
+		conn_index++;
+	}
+	if (!found) {
+		policy_mgr_err("can't find vdev_id %d in pm_conc_connection_list",
+			vdev_id);
+		qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+		return status;
+	}
+	next_conn_index = conn_index + 1;
+	while (PM_CONC_CONNECTION_LIST_VALID_INDEX(next_conn_index)) {
+		pm_conc_connection_list[conn_index].vdev_id =
+			pm_conc_connection_list[next_conn_index].vdev_id;
+		pm_conc_connection_list[conn_index].mode =
+			pm_conc_connection_list[next_conn_index].mode;
+		pm_conc_connection_list[conn_index].mac =
+			pm_conc_connection_list[next_conn_index].mac;
+		pm_conc_connection_list[conn_index].chan =
+			pm_conc_connection_list[next_conn_index].chan;
+		pm_conc_connection_list[conn_index].bw =
+			pm_conc_connection_list[next_conn_index].bw;
+		pm_conc_connection_list[conn_index].chain_mask =
+			pm_conc_connection_list[next_conn_index].chain_mask;
+		pm_conc_connection_list[conn_index].original_nss =
+			pm_conc_connection_list[next_conn_index].original_nss;
+		pm_conc_connection_list[conn_index].in_use =
+			pm_conc_connection_list[next_conn_index].in_use;
+		conn_index++;
+		next_conn_index++;
+	}
+
+	/* clean up the entry */
+	qdf_mem_zero(&pm_conc_connection_list[next_conn_index - 1],
+		sizeof(*pm_conc_connection_list));
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+
 	return QDF_STATUS_SUCCESS;
 }
 
 bool policy_mgr_map_concurrency_mode(enum tQDF_ADAPTER_MODE *old_mode,
 		enum policy_mgr_con_mode *new_mode)
 {
-	return true;
+	bool status = true;
+
+	switch (*old_mode) {
+
+	case QDF_STA_MODE:
+		*new_mode = PM_STA_MODE;
+		break;
+	case QDF_SAP_MODE:
+		*new_mode = PM_SAP_MODE;
+		break;
+	case QDF_P2P_CLIENT_MODE:
+		*new_mode = PM_P2P_CLIENT_MODE;
+		break;
+	case QDF_P2P_GO_MODE:
+		*new_mode = PM_P2P_GO_MODE;
+		break;
+	case QDF_IBSS_MODE:
+		*new_mode = PM_IBSS_MODE;
+		break;
+	default:
+		*new_mode = PM_MAX_NUM_OF_MODE;
+		status = false;
+		break;
+	}
+
+	return status;
 }
 
 bool policy_mgr_is_ibss_conn_exist(struct wlan_objmgr_psoc *psoc,
 				uint8_t *ibss_channel)
 {
-	return QDF_STATUS_SUCCESS;
+	uint32_t count = 0, index = 0;
+	uint32_t list[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	bool status = false;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return status;
+	}
+	if (NULL == ibss_channel) {
+		policy_mgr_err("Null pointer error");
+		return false;
+	}
+	count = policy_mgr_mode_specific_connection_count(
+				psoc, PM_IBSS_MODE, list);
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	if (count == 0) {
+		/* No IBSS connection */
+		status = false;
+	} else if (count == 1) {
+		*ibss_channel = pm_conc_connection_list[list[index]].chan;
+		status = true;
+	} else {
+		*ibss_channel = pm_conc_connection_list[list[index]].chan;
+		policy_mgr_notice("Multiple IBSS connections, picking first one");
+		status = true;
+	}
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+
+	return status;
 }
 
 bool policy_mgr_max_concurrent_connections_reached(
 		struct wlan_objmgr_psoc *psoc)
 {
+	uint8_t i = 0, j = 0;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (NULL != pm_ctx) {
+		for (i = 0; i < QDF_MAX_NO_OF_MODE; i++)
+			j += pm_ctx->no_of_active_sessions[i];
+		return j >
+			(pm_ctx->
+			 gMaxConcurrentActiveSessions - 1);
+	}
+
 	return false;
 }
 
