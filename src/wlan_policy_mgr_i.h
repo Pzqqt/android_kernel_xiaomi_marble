@@ -387,6 +387,7 @@ void policy_mgr_set_pcl_for_existing_combo(
 void pm_dbs_opportunistic_timer_handler(void *data);
 enum policy_mgr_con_mode policy_mgr_get_mode(uint8_t type,
 		uint8_t subtype);
+enum hw_mode_bandwidth policy_mgr_get_bw(enum phy_ch_width chan_width);
 QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
 			enum policy_mgr_pcl_type pcl,
 			uint8_t *pcl_channels, uint32_t *len,
