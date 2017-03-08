@@ -1980,7 +1980,7 @@ QDF_STATUS csr_roam_read_tsf(tpAniSirGlobal pMac, uint8_t *pTimestamp,
 	timer_diff = (qdf_get_monotonic_boottime_ns()  -
 				pBssDescription->scansystimensec);
 	/* Convert msec to micro sec timer */
-	timer_diff = (timer_diff / SYSTEM_TIME_NSEC_TO_USEC);
+	timer_diff = do_div(timer_diff, SYSTEM_TIME_NSEC_TO_USEC);
 	timeStamp[0] = pBssDescription->timeStamp[0];
 	timeStamp[1] = pBssDescription->timeStamp[1];
 	update_cckmtsf(&(timeStamp[0]), &(timeStamp[1]), &timer_diff);
