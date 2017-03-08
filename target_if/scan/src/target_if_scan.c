@@ -28,6 +28,7 @@
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_scan_tgt_api.h>
 #include <target_if.h>
+#include <target_if_scan.h>
 
 #ifdef CONFIG_MCL
 inline uint32_t get_scan_event_id(void)
@@ -74,14 +75,6 @@ target_if_scan_event_handler(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 		return -ENOMEM;
 	}
 
-	if (wmi_extract_vdev_scan_ev_param(wmi_handle, data,
-			&(event_info->event))) {
-		target_if_err("%s: Failed to extract wmi scan event\n",
-			__func__);
-		qdf_mem_free(event_info);
-		return -EINVAL;
-	}
-
 	scan_rx_ops = target_if_scan_get_rx_ops(psoc);
 	if (scan_rx_ops->scan_ev_handler) {
 		status = scan_rx_ops->scan_ev_handler(psoc, event_info);
@@ -120,14 +113,23 @@ QDF_STATUS
 target_if_scan_start(struct wlan_objmgr_psoc *psoc,
 		struct scan_start_request *req)
 {
-	return wmi_unified_scan_start_cmd_send(psoc->tgt_if_handle,
-		&req->scan_req);
+	return QDF_STATUS_SUCCESS;
 }
-
 
 QDF_STATUS
 target_if_scan_cancel(struct wlan_objmgr_psoc *psoc,
 		struct scan_cancel_param *req)
 {
-	return wmi_unified_scan_stop_cmd_send(psoc->tgt_if_handle, req);
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+target_if_register_scan_tx_ops(struct wlan_lmac_if_scan_tx_ops *scan)
+{
+	scan->scan_start = target_if_scan_start;
+	scan->scan_cancel = target_if_scan_cancel;
+	scan->scan_reg_ev_handler = target_if_scan_register_event_handler;
+	scan->scan_unreg_ev_handler = target_if_scan_unregister_event_handler;
+
+	return QDF_STATUS_SUCCESS;
 }

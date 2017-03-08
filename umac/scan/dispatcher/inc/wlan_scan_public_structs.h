@@ -25,6 +25,7 @@
 #include <wlan_cmn.h>
 #include <qdf_time.h>
 #include <qdf_list.h>
+#include <qdf_atomic.h>
 #include <wlan_cmn_ieee80211.h>
 
 typedef uint16_t wlan_scan_requester;
@@ -44,6 +45,11 @@ typedef uint32_t wlan_scan_id;
 #define SCM_BSS_CAP_VALUE_WMM   1
 #define SCM_BSS_CAP_VALUE_UAPSD 1
 #define SCM_BSS_CAP_VALUE_5GHZ  2
+
+/* forward declaration */
+struct wlan_objmgr_vdev;
+struct wlan_objmgr_pdev;
+struct wlan_objmgr_psoc;
 
 /**
  * struct channel_info - BSS channel information
@@ -444,6 +450,7 @@ struct scan_extra_params_legacy {
  * @scan_id: scan id
  * @scan_req_id: scan requester id
  * @vdev_id: vdev id where scan was originated
+ * @pdev_id: pdev id of parent pdev
  * @scan_priority: scan priority
  * @scan_ev_started: notify scan started event
  * @scan_ev_completed: notify scan completed event
@@ -513,6 +520,7 @@ struct scan_req_params {
 	uint32_t scan_id;
 	uint32_t scan_req_id;
 	uint32_t vdev_id;
+	uint32_t pdev_id;
 	enum scan_priority scan_priority;
 	union {
 		struct {
@@ -614,12 +622,14 @@ enum scan_cancel_req_type {
  * @scan_id: scan id
  * @req_type: scan request type
  * @vdev_id: vdev id
+ * @pdev_id: pdev id of parent pdev
  */
 struct scan_cancel_param {
 	uint32_t requester;
 	uint32_t scan_id;
 	enum scan_cancel_req_type req_type;
 	uint32_t vdev_id;
+	uint32_t pdev_id;
 };
 
 /**

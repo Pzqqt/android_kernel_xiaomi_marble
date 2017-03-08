@@ -21,6 +21,7 @@
 #include "wlan_lmac_if_def.h"
 #include "wlan_lmac_if_api.h"
 #include "wlan_mgmt_txrx_tgt_api.h"
+#include "wlan_scan_tgt_api.h"
 
 /* Function pointer for OL/WMA specific UMAC tx_ops
  * registration.
@@ -64,6 +65,9 @@ wlan_lmac_if_umac_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 			tgt_mgmt_txrx_get_peer_from_desc_id;
 	mgmt_txrx_rx_ops->mgmt_txrx_get_vdev_id_from_desc_id =
 			tgt_mgmt_txrx_get_vdev_id_from_desc_id;
+	/* scan rx ops */
+	rx_ops->scan.scan_ev_handler = tgt_scan_event_handler;
+
 	return QDF_STATUS_SUCCESS;
 }
 

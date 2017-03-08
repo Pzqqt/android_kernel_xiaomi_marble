@@ -72,4 +72,15 @@ target_if_scan_start(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 target_if_scan_cancel(struct wlan_objmgr_psoc *psoc,
 		struct scan_cancel_param *req);
+
+/**
+ * target_if_register_scan_tx_ops() - lmac handler to register scan tx_ops
+ * callback functions
+ * @scan: wlan_lmac_if_scan_tx_ops object
+ *
+ * Return: QDF_STATUS
+ */
+
+QDF_STATUS
+target_if_register_scan_tx_ops(struct wlan_lmac_if_scan_tx_ops *scan);
 #endif
