@@ -2251,6 +2251,14 @@ int hdd_set_qpower_config(hdd_context_t *hddctx, hdd_adapter_t *adapter,
 		return -EINVAL;
 	}
 
+	if (hddctx->config->nMaxPsPoll) {
+		if ((qpower == PS_QPOWER_NODEEPSLEEP) ||
+				(qpower == PS_LEGACY_NODEEPSLEEP))
+			qpower = PS_LEGACY_NODEEPSLEEP;
+		else
+			qpower = PS_LEGACY_DEEPSLEEP;
+		hdd_info("Qpower disabled, %d", qpower);
+	}
 	status = wma_set_qpower_config(adapter->sessionId, qpower);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("failed to configure qpower: %d", status);

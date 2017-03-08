@@ -7496,8 +7496,23 @@ static int hdd_update_cds_config(hdd_context_t *hdd_ctx)
 	}
 
 	cds_cfg->driver_type = DRIVER_TYPE_PRODUCTION;
-	cds_cfg->powersave_offload_enabled =
-		hdd_ctx->config->enablePowersaveOffload;
+	if (!hdd_ctx->config->nMaxPsPoll ||
+			!hdd_ctx->config->enablePowersaveOffload) {
+		cds_cfg->powersave_offload_enabled =
+			hdd_ctx->config->enablePowersaveOffload;
+	} else {
+		if ((hdd_ctx->config->enablePowersaveOffload ==
+				PS_QPOWER_NODEEPSLEEP) ||
+				(hdd_ctx->config->enablePowersaveOffload ==
+				 PS_LEGACY_NODEEPSLEEP))
+			cds_cfg->powersave_offload_enabled =
+				PS_LEGACY_NODEEPSLEEP;
+		else
+			cds_cfg->powersave_offload_enabled =
+				PS_LEGACY_DEEPSLEEP;
+		hdd_info("Qpower disabled in cds config, %d",
+				cds_cfg->powersave_offload_enabled);
+	}
 	cds_cfg->sta_dynamic_dtim = hdd_ctx->config->enableDynamicDTIM;
 	cds_cfg->sta_mod_dtim = hdd_ctx->config->enableModulatedDTIM;
 	cds_cfg->sta_maxlimod_dtim = hdd_ctx->config->fMaxLIModulatedDTIM;

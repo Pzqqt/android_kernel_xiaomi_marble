@@ -4257,6 +4257,7 @@ QDF_STATUS sme_qos_process_del_ts_ind(tpAniSirGlobal pMac, void *pMsgBuf)
 	uint8_t sessionId = pdeltsind->sessionId;
 	sme_QosEdcaAcType ac;
 	sme_QosSearchInfo search_key;
+	tSirMacTSInfo *tsinfo;
 	sme_QosWmmUpType up =
 		(sme_QosWmmUpType) pdeltsind->rsp.tspec.tsinfo.traffic.userPrio;
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
@@ -4265,6 +4266,7 @@ QDF_STATUS sme_qos_process_del_ts_ind(tpAniSirGlobal pMac, void *pMsgBuf)
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: Invoked on session %d for UP %d",
 		  __func__, __LINE__, sessionId, up);
+	tsinfo = &pdeltsind->rsp.tspec.tsinfo;
 	ac = sme_qos_up_to_ac(up);
 	if (SME_QOS_EDCA_AC_MAX == ac) {
 		/* err msg */
@@ -4291,6 +4293,7 @@ QDF_STATUS sme_qos_process_del_ts_ind(tpAniSirGlobal pMac, void *pMsgBuf)
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
+	sme_set_tspec_uapsd_mask_per_session(pMac, tsinfo, sessionId);
 /* event: EVENT_WLAN_QOS */
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 	qos.eventId = SME_QOS_DIAG_DELTS;
