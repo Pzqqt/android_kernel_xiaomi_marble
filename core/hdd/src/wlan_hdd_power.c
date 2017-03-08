@@ -687,11 +687,18 @@ static int hdd_set_grat_arp_keepalive(hdd_adapter_t *adapter)
  */
 static void __hdd_ipv4_notifier_work_queue(struct work_struct *work)
 {
-	hdd_adapter_t *pAdapter =
-		container_of(work, hdd_adapter_t, ipv4NotifierWorkQueue);
+	hdd_adapter_t *adapter;
+	hdd_context_t *hdd_ctx;
+
 	ENTER();
-	hdd_enable_arp_offload(pAdapter, pmo_ipv4_change_notify);
-	hdd_set_grat_arp_keepalive(pAdapter);
+
+	adapter = container_of(work, hdd_adapter_t, ipv4NotifierWorkQueue);
+	hdd_enable_arp_offload(adapter, pmo_ipv4_change_notify);
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	if (hdd_ctx->config->sta_keepalive_method == HDD_STA_KEEPALIVE_GRAT_ARP)
+		hdd_set_grat_arp_keepalive(adapter);
+
 	EXIT();
 }
 

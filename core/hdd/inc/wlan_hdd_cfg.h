@@ -2537,6 +2537,43 @@ typedef enum {
 #define CFG_INFRA_STA_KEEP_ALIVE_PERIOD_MAX           (65535)
 #define CFG_INFRA_STA_KEEP_ALIVE_PERIOD_DEFAULT       (90)
 
+/**
+ * enum station_keepalive_method - available keepalive methods for stations
+ * @HDD_STA_KEEPALIVE_NULL_DATA: null data packet
+ * @HDD_STA_KEEPALIVE_GRAT_ARP: gratuitous ARP packet
+ * @HDD_STA_KEEPALIVE_COUNT: number of method options available
+ */
+enum station_keepalive_method {
+	HDD_STA_KEEPALIVE_NULL_DATA,
+	HDD_STA_KEEPALIVE_GRAT_ARP,
+	/* keep at the end */
+	HDD_STA_KEEPALIVE_COUNT
+};
+
+/*
+ * <ini>
+ * gStaKeepAliveMethod - Which keepalive method to use
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini determines which keepalive method to use for station interfaces
+ *       1) Use null data packets
+ *       2) Use gratuitous ARP packets
+ *
+ * Related: gStaKeepAlivePeriod, gApKeepAlivePeriod, gGoKeepAlivePeriod
+ *
+ * Supported Feature: STA, Keepalive
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_STA_KEEPALIVE_METHOD_NAME              "gStaKeepAliveMethod"
+#define CFG_STA_KEEPALIVE_METHOD_MIN               (HDD_STA_KEEPALIVE_NULL_DATA)
+#define CFG_STA_KEEPALIVE_METHOD_MAX               (HDD_STA_KEEPALIVE_COUNT - 1)
+#define CFG_STA_KEEPALIVE_METHOD_DEFAULT           (HDD_STA_KEEPALIVE_GRAT_ARP)
+
 /* WMM configuration */
 /*
  * <ini>
@@ -8852,6 +8889,7 @@ enum hdd_wext_control {
 #define CFG_EXTWOW_TCP_RX_TIMEOUT_DEFAULT          (200)
 #endif
 
+
 /*
  * Type declarations
  */
@@ -8901,6 +8939,7 @@ struct hdd_config {
 	uint8_t enableLTECoex;
 	uint32_t apKeepAlivePeriod;
 	uint32_t goKeepAlivePeriod;
+	enum station_keepalive_method sta_keepalive_method;
 	uint32_t apLinkMonitorPeriod;
 	uint32_t goLinkMonitorPeriod;
 	uint32_t nBeaconInterval;
