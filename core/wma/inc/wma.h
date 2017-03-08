@@ -305,8 +305,13 @@ enum ds_mode {
 
 #ifdef FEATURE_WLAN_SCAN_PNO
 #define WMA_PNO_MATCH_WAKE_LOCK_TIMEOUT         (5 * 1000)     /* in msec */
+#ifdef CONFIG_SLUB_DEBUG_ON
 #define WMA_PNO_SCAN_COMPLETE_WAKE_LOCK_TIMEOUT (2 * 1000)     /* in msec */
-#endif
+#else
+#define WMA_PNO_SCAN_COMPLETE_WAKE_LOCK_TIMEOUT (1 * 1000)     /* in msec */
+#endif /* CONFIG_SLUB_DEBUG_ON */
+#endif /* FEATURE_WLAN_SCAN_PNO */
+
 #define WMA_AUTH_REQ_RECV_WAKE_LOCK_TIMEOUT     (5 * 1000)     /* in msec */
 #define WMA_ASSOC_REQ_RECV_WAKE_LOCK_DURATION   (5 * 1000)     /* in msec */
 #define WMA_DEAUTH_RECV_WAKE_LOCK_DURATION      (5 * 1000)     /* in msec */
