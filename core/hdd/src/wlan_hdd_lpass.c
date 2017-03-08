@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -278,6 +278,16 @@ void hdd_lpass_populate_cds_config(struct cds_config_info *cds_config,
 				   struct hdd_context_s *hdd_ctx)
 {
 	cds_config->is_lpass_enabled = hdd_ctx->config->enable_lpass_support;
+}
+
+/*
+ * hdd_lpass_populate_pmo_config() - Populate LPASS configuration
+ * (public function documented in wlan_hdd_lpass.h)
+ */
+void hdd_lpass_populate_pmo_config(struct pmo_psoc_cfg *pmo_config,
+				   struct hdd_context_s *hdd_ctx)
+{
+	pmo_config->lpass_enable = hdd_ctx->config->enable_lpass_support;
 }
 
 /*

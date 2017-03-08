@@ -10601,8 +10601,15 @@ static int hdd_update_pmo_config(hdd_context_t *hdd_ctx)
 		hdd_ctx->config->active_mode_offload;
 	psoc_cfg.ap_arpns_support = hdd_ctx->ap_arpns_support;
 	psoc_cfg.max_wow_filters = hdd_ctx->config->maxWoWFilters;
+	psoc_cfg.sta_dynamic_dtim = hdd_ctx->config->enableDynamicDTIM;
+	psoc_cfg.sta_mod_dtim = hdd_ctx->config->enableModulatedDTIM;
+	psoc_cfg.sta_max_li_mod_dtim = hdd_ctx->config->fMaxLIModulatedDTIM;
+	psoc_cfg.power_save_mode =
+		hdd_ctx->config->enablePowersaveOffload;
 
 	hdd_ra_populate_pmo_config(&psoc_cfg, hdd_ctx);
+	hdd_nan_populate_pmo_config(&psoc_cfg, hdd_ctx);
+	hdd_lpass_populate_pmo_config(&psoc_cfg, hdd_ctx);
 	status = pmo_ucfg_update_psoc_config(psoc, &psoc_cfg);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("failed pmo psoc configuration");

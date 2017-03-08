@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -58,6 +58,19 @@ void hdd_lpass_target_config(struct hdd_context_s *hdd_ctx,
  * Return: none
  */
 void hdd_lpass_populate_cds_config(struct cds_config_info *cds_config,
+				   struct hdd_context_s *hdd_ctx);
+
+/**
+ * hdd_lpass_populate_pmo_config() - Populate LPASS configuration
+ * @pmo_config: PMO configuration to populate with lpass info
+ * @hdd_ctx: HDD global context which contains lpass information
+ *
+ * This function seeds the PMO configuration structure with
+ * lpass-specific information gleaned from the HDD context.
+ *
+ * Return: none
+ */
+void hdd_lpass_populate_pmo_config(struct pmo_psoc_cfg *pmo_config,
 				   struct hdd_context_s *hdd_ctx);
 
 /**
@@ -134,6 +147,13 @@ void hdd_lpass_populate_cds_config(struct cds_config_info *cds_config,
 				   struct hdd_context_s *hdd_ctx)
 {
 }
+
+static inline
+void hdd_lpass_populate_pmo_config(struct pmo_psoc_cfg *pmo_config,
+				   struct hdd_context_s *hdd_ctx)
+{
+}
+
 static inline void hdd_lpass_notify_connect(struct hdd_adapter_s *adapter)
 {
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -58,6 +58,20 @@ static inline void hdd_nan_populate_cds_config(struct cds_config_info *cds_cfg,
 {
 	cds_cfg->is_nan_enabled = hdd_ctx->config->enable_nan_support;
 }
+
+/**
+ * hdd_nan_populate_pmo_config() - Populate NAN pmo configuration
+ * @pmo_cfg: PMO Configuration
+ * @hdd_ctx: Pointer to hdd context
+ *
+ * Return: none
+ */
+static inline void hdd_nan_populate_pmo_config(struct pmo_psoc_cfg *pmo_cfg,
+			hdd_context_t *hdd_ctx)
+{
+	pmo_cfg->nan_enable = hdd_ctx->config->enable_nan_support;
+}
+
 void wlan_hdd_cfg80211_nan_callback(void *ctx, tSirNanEvent *msg);
 #else
 static inline bool wlan_hdd_nan_is_supported(void)
@@ -68,6 +82,12 @@ static inline void hdd_nan_populate_cds_config(struct cds_config_info *cds_cfg,
 			hdd_context_t *hdd_ctx)
 {
 }
+
+static inline void hdd_nan_populate_pmo_config(struct pmo_psoc_cfg *pmo_cfg,
+			hdd_context_t *hdd_ctx)
+{
+}
+
 static inline void wlan_hdd_cfg80211_nan_callback(void *ctx,
 						  tSirNanEvent *msg)
 {
