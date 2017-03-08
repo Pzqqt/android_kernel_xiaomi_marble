@@ -17228,6 +17228,7 @@ typedef enum wmi_coex_config_type {
     WMI_COEX_CONFIG_INQUIRY_SAP_TDM     = 10, /* config interval (ms units) (arg1 BT, arg2 WLAN) for SAP + INQUIRY */
     WMI_COEX_CONFIG_INQUIRY_P2P_STA_TDM = 11, /* config interval (ms units) (arg1 BT, arg2 WLAN) for P2P + STA + INQUIRY */
     WMI_COEX_CONFIG_TX_POWER            = 12, /* config wlan total tx power when bt coex (arg1 is wlan_tx_power_limit, in 0.5dbm units) */
+    WMI_COEX_CONFIG_PTA_CONFIG          = 13, /* config  whether enable PTA and GPIO number (arg1 is pta_enable, arg2 is GPIO number used as /BT_ACTIVE/BT_PRIORITY/WLAN_DENY,8 bit for each) */
 } WMI_COEX_CONFIG_TYPE;
 
 typedef struct {
@@ -18295,7 +18296,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_VDEV_ADD_MAC_ADDR_TO_RX_FILTER_CMDID);
         WMI_RETURN_STRING(WMI_BPF_SET_VDEV_ACTIVE_MODE_CMDID);
         WMI_RETURN_STRING(WMI_HW_DATA_FILTER_CMDID);
-        WMI_RETURN_STRING(MI_PDEV_MULTIPLE_VDEV_RESTART_REQUEST_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_MULTIPLE_VDEV_RESTART_REQUEST_CMDID);
         WMI_RETURN_STRING(WMI_LPI_OEM_REQ_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_UPDATE_PKT_ROUTING_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_CHECK_CAL_VERSION_CMDID);
