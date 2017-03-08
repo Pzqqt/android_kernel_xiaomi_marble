@@ -15979,9 +15979,9 @@ bool sme_roam_is_ese_assoc(tCsrRoamInfo *roam_info)
 {
 	return roam_info->isESEAssoc;
 }
-
+#endif
 /**
- * sme_set_band_specific_pref(): If 5G preference is enabled,set boost/drop
+ * sme_set_5g_band_pref(): If 5G preference is enabled,set boost/drop
  * params from ini.
  * @hal_handle: Handle returned by mac_open
  * @5g_pref_params: pref params from ini.
@@ -16023,7 +16023,6 @@ void sme_set_5g_band_pref(tHalHandle hal_handle,
 			  "Unable to acquire global sme lock");
 }
 
-#endif
 
 bool sme_neighbor_roam_is11r_assoc(tHalHandle hal_ctx, uint8_t session_id)
 {
