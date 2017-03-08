@@ -826,6 +826,47 @@ void qdf_mem_exit(void)
 }
 EXPORT_SYMBOL(qdf_mem_exit);
 
+#ifdef CONFIG_WCNSS_MEM_PRE_ALLOC
+/**
+ * qdf_mem_prealloc_get() - conditionally pre-allocate memory
+ * @size: the number of bytes to allocate
+ *
+ * If size if greater than WCNSS_PRE_ALLOC_GET_THRESHOLD, this function returns
+ * a chunk of pre-allocated memory. If size if less than or equal to
+ * WCNSS_PRE_ALLOC_GET_THRESHOLD, or an error occurs, NULL is returned instead.
+ *
+ * Return: NULL on failure, non-NULL on success
+ */
+static void *qdf_mem_prealloc_get(size_t size)
+{
+	void *mem;
+
+	if (size <= WCNSS_PRE_ALLOC_GET_THRESHOLD)
+		return NULL;
+
+	mem = wcnss_prealloc_get(size);
+	if (mem)
+		memset(mem, 0, size);
+
+	return mem;
+}
+
+static inline bool qdf_mem_prealloc_put(void *ptr)
+{
+	return wcnss_prealloc_put(ptr);
+}
+#else
+static inline void *qdf_mem_prealloc_get(size_t size)
+{
+	return NULL;
+}
+
+static inline bool qdf_mem_prealloc_put(void *ptr)
+{
+	return false;
+}
+#endif /* CONFIG_WCNSS_MEM_PRE_ALLOC */
+
 /**
  * qdf_mem_malloc_debug() - debug version of QDF memory allocation API
  * @size: Number of bytes of memory to allocate.
@@ -858,16 +899,9 @@ void *qdf_mem_malloc_debug(size_t size,
 		return NULL;
 	}
 
-#if defined(CONFIG_CNSS) && defined(CONFIG_WCNSS_MEM_PRE_ALLOC)
-	if (size > WCNSS_PRE_ALLOC_GET_THRESHOLD) {
-		void *pmem;
-		pmem = wcnss_prealloc_get(size);
-		if (NULL != pmem) {
-			memset(pmem, 0, size);
-			return pmem;
-		}
-	}
-#endif
+	mem_ptr = qdf_mem_prealloc_get(size);
+	if (mem_ptr)
+		return mem_ptr;
 
 	if (in_interrupt() || irqs_disabled() || in_atomic())
 		flags = GFP_ATOMIC;
@@ -983,10 +1017,9 @@ void qdf_mem_free(void *ptr)
 		QDF_BUG(0);
 	}
 
-#if defined(CONFIG_CNSS) && defined(CONFIG_WCNSS_MEM_PRE_ALLOC)
-	if (wcnss_prealloc_put(ptr))
+	if (qdf_mem_prealloc_put(ptr))
 		return;
-#endif
+
 	if (!qdf_atomic_dec_and_test(&mem_struct->in_use))
 		return;
 
@@ -1085,6 +1118,11 @@ EXPORT_SYMBOL(qdf_mem_free);
 void *qdf_mem_malloc(size_t size)
 {
 	int flags = GFP_KERNEL;
+	void *mem;
+
+	mem = qdf_mem_prealloc_get(size);
+	if (mem)
+		return mem;
 
 	if (in_interrupt() || irqs_disabled() || in_atomic())
 		flags = GFP_ATOMIC;
@@ -1105,10 +1143,10 @@ void qdf_mem_free(void *ptr)
 {
 	if (ptr == NULL)
 		return;
-#if defined(CONFIG_CNSS) && defined(CONFIG_WCNSS_MEM_PRE_ALLOC)
-	if (wcnss_prealloc_put(ptr))
+
+	if (qdf_mem_prealloc_put(ptr))
 		return;
-#endif
+
 	kfree(ptr);
 }
 EXPORT_SYMBOL(qdf_mem_free);
