@@ -8326,6 +8326,16 @@ static int hdd_pre_enable_configure(hdd_context_t *hdd_ctx)
 
 	hdd_program_country_code(hdd_ctx);
 
+	ret = wma_cli_set_command(0, WMI_PDEV_PARAM_ARP_AC_OVERRIDE,
+				  hdd_ctx->config->arp_ac_category,
+				  PDEV_CMD);
+	if (0 != ret) {
+		hdd_err("WMI_PDEV_PARAM_ARP_AC_OVERRIDE ac: %d ret: %d",
+			hdd_ctx->config->arp_ac_category, ret);
+		goto out;
+	}
+
+
 	status = hdd_set_sme_chan_list(hdd_ctx);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_alert("Failed to init channel list: %d", status);

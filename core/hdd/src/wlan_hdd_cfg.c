@@ -4210,6 +4210,7 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		CFG_SAP_INTERNAL_RESTART_DEFAULT,
 		CFG_SAP_INTERNAL_RESTART_MIN,
 		CFG_SAP_INTERNAL_RESTART_MAX),
+
 	REG_VARIABLE(CFG_PER_ROAM_ENABLE_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, is_per_roam_enabled,
 		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -4287,6 +4288,12 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		CFG_L1SS_SLEEP_ALLOWED_MIN,
 		CFG_L1SS_SLEEP_ALLOWED_MAX),
 
+	REG_VARIABLE(CFG_ARP_AC_CATEGORY, WLAN_PARAM_Integer,
+		struct hdd_config, arp_ac_category,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_ARP_AC_CATEGORY_DEFAULT,
+		CFG_ARP_AC_CATEGORY_MIN,
+		CFG_ARP_AC_CATEGORY_MAX),
 };
 
 /**
@@ -5765,6 +5772,9 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 		pHddCtx->config->sap_internal_restart);
 	hdd_per_roam_print_ini_config(pHddCtx);
 	hdd_he_print_ini_config(pHddCtx);
+	hdd_info("Name = [%s] Value = [%d]",
+		CFG_ARP_AC_CATEGORY,
+		pHddCtx->config->arp_ac_category);
 }
 
 

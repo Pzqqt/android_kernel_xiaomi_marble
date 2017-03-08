@@ -9128,6 +9128,31 @@ enum hdd_wext_control {
 #define CFG_ENABLE_BCAST_PROBE_RESP_MAX     (1)
 #define CFG_ENABLE_BCAST_PROBE_RESP_DEFAULT (0)
 
+/**
+ * arp_ac_category - ARP access category
+ * @Min: 0
+ * @Max: 3
+ * @Default: 3
+ *
+ * Firmware by default categorizes ARP packets with VOICE TID.
+ * This ini shall be used to override the default configuration.
+ * Access category enums are referenced in ieee80211_common.h
+ * WME_AC_BE = 0 (Best effort)
+ * WME_AC_BK = 1 (Background)
+ * WME_AC_VI = 2 (Video)
+ * WME_AC_VO = 3 (Voice)
+ *
+ * Related: none
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_ARP_AC_CATEGORY                "arp_ac_category"
+#define CFG_ARP_AC_CATEGORY_MIN            (0)
+#define CFG_ARP_AC_CATEGORY_MAX            (3)
+#define CFG_ARP_AC_CATEGORY_DEFAULT        (3)
+
 /*
  * <ini>
  * gActiveBpfMode - Control active BPF mode
@@ -9956,6 +9981,7 @@ struct hdd_config {
 	bool enable_ul_ofdma;
 #endif
 	enum l1ss_sleep_allowed l1ss_sleep_allowed;
+	uint32_t arp_ac_category;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))
