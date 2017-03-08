@@ -118,6 +118,34 @@ void htt_htc_pkt_pool_free(struct htt_pdev_t *pdev)
 }
 
 #ifdef ATH_11AC_TXCOMPACT
+
+void
+htt_htc_misc_pkt_list_trim(struct htt_pdev_t *pdev, int level)
+{
+	struct htt_htc_pkt_union *pkt, *next, *prev = NULL;
+	int i = 0;
+	qdf_nbuf_t netbuf;
+
+	HTT_TX_MUTEX_ACQUIRE(&pdev->htt_tx_mutex);
+	pkt = pdev->htt_htc_pkt_misclist;
+	while (pkt) {
+		next = pkt->u.next;
+		/* trim the out grown list*/
+		if (++i > level) {
+			netbuf = (qdf_nbuf_t)(pkt->u.pkt.htc_pkt.pNetBufContext);
+			qdf_nbuf_unmap(pdev->osdev, netbuf, QDF_DMA_TO_DEVICE);
+			qdf_nbuf_free(netbuf);
+			qdf_mem_free(pkt);
+			pkt = NULL;
+			if (prev)
+				prev->u.next = NULL;
+		}
+		prev = pkt;
+		pkt = next;
+	}
+	HTT_TX_MUTEX_RELEASE(&pdev->htt_tx_mutex);
+}
+
 void htt_htc_misc_pkt_list_add(struct htt_pdev_t *pdev, struct htt_htc_pkt *pkt)
 {
 	struct htt_htc_pkt_union *u_pkt = (struct htt_htc_pkt_union *)pkt;
@@ -130,6 +158,8 @@ void htt_htc_misc_pkt_list_add(struct htt_pdev_t *pdev, struct htt_htc_pkt *pkt)
 		pdev->htt_htc_pkt_misclist = u_pkt;
 	}
 	HTT_TX_MUTEX_RELEASE(&pdev->htt_tx_mutex);
+
+	htt_htc_misc_pkt_list_trim(pdev, HTT_HTC_PKT_MISCLIST_SIZE);
 }
 
 void htt_htc_misc_pkt_pool_free(struct htt_pdev_t *pdev)
