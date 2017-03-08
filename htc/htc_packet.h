@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -87,6 +87,7 @@ typedef struct _HTC_RX_PACKET_INFO {
 } HTC_RX_PACKET_INFO;
 
 #define HTC_RX_FLAGS_INDICATE_MORE_PKTS  (1 << 0)       /* more packets on this endpoint are being fetched */
+#define HTC_PACKET_MAGIC_COOKIE          0xdeadbeef
 
 /* wrapper around endpoint-specific packets */
 typedef struct _HTC_PACKET {
@@ -124,6 +125,7 @@ typedef struct _HTC_PACKET {
 				can pass the network buffer corresponding to the HTC packet
 				lower layers may optimized the transfer knowing this is
 				a network buffer */
+	uint32_t magic_cookie;
 } HTC_PACKET;
 
 #define COMPLETE_HTC_PACKET(p, status)	     \
@@ -277,5 +279,33 @@ static inline HTC_PACKET *htc_packet_dequeue_tail(HTC_PACKET_QUEUE *queue)
 #define HTC_PACKET_QUEUE_ITERATE_RESET(pQ) ITERATE_RESET(&(pQ)->QueueHead)
 
 #define HTC_PACKET_QUEUE_ITERATE_END ITERATE_END
+
+/**
+ * htc_packet_set_magic_cookie() - set magic cookie in htc packet
+ * htc_pkt - pointer to htc packet
+ * value - value to set in magic cookie
+ *
+ * This API sets the magic cookie passed in htc packet.
+ *
+ * Return : None
+ */
+static inline void htc_packet_set_magic_cookie(HTC_PACKET *htc_pkt,
+			uint32_t value)
+{
+	htc_pkt->magic_cookie = value;
+}
+
+/**
+ * htc_packet_set_magic_cookie() - get magic cookie in htc packet
+ * htc_pkt - pointer to htc packet
+ *
+ * This API returns the magic cookie in htc packet.
+ *
+ * Return : magic cookie
+ */
+static inline uint32_t htc_packet_get_magic_cookie(HTC_PACKET *htc_pkt)
+{
+	return htc_pkt->magic_cookie;
+}
 
 #endif /*HTC_PACKET_H_ */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -629,10 +629,12 @@ static A_STATUS htc_issue_packets(HTC_TARGET *target,
 					pEndpoint->UL_PipeID, false);
 		}
 
+		htc_packet_set_magic_cookie(pPacket, HTC_PACKET_MAGIC_COOKIE);
 		status = hif_send_head(target->hif_dev,
 				       pEndpoint->UL_PipeID, pEndpoint->Id,
 				       HTC_HDR_LENGTH + pPacket->ActualLength,
 				       netbuf, data_attr);
+
 #if DEBUG_BUNDLE
 		qdf_print(" Send single EP%d buffer size:0x%x, total:0x%x.\n",
 			  pEndpoint->Id,
@@ -658,8 +660,9 @@ static A_STATUS htc_issue_packets(HTC_TARGET *target,
 			pEndpoint->ul_outstanding_cnt--;
 			HTC_PACKET_REMOVE(&pEndpoint->TxLookupQueue, pPacket);
 			/* reclaim credits */
-				pEndpoint->TxCredits +=
-					pPacket->PktInfo.AsTx.CreditsUsed;
+			pEndpoint->TxCredits +=
+				pPacket->PktInfo.AsTx.CreditsUsed;
+			htc_packet_set_magic_cookie(pPacket, 0);
 			/* put it back into the callers queue */
 			HTC_PACKET_ENQUEUE_TO_HEAD(pPktQueue, pPacket);
 			if (!pEndpoint->async_update) {
