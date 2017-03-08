@@ -949,9 +949,6 @@ void *qdf_mem_malloc_debug(size_t size,
 		mem_ptr = (void *)(mem_struct + 1);
 	}
 
-	if (!mem_ptr)
-		host_log_low_resource_failure(WIFI_EVENT_MEMORY_FAILURE);
-
 	return mem_ptr;
 }
 EXPORT_SYMBOL(qdf_mem_malloc_debug);
