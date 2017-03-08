@@ -4515,6 +4515,7 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	struct sir_set_tx_rx_aggregation_size request;
 	QDF_STATUS qdf_status;
 	uint8_t retry, delay;
+	uint32_t abs_delay;
 	int param_id;
 	uint32_t tx_fail_count;
 
@@ -4672,9 +4673,18 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 				QCA_WLAN_VENDOR_ATTR_CONFIG_PROPAGATION_DELAY]);
 		delay = delay > CFG_PROPAGATION_DELAY_MAX ?
 				CFG_PROPAGATION_DELAY_MAX : delay;
+		abs_delay = delay + CFG_PROPAGATION_DELAY_BASE;
 		param_id = WMI_PDEV_PARAM_PROPAGATION_DELAY;
 		ret_val = wma_cli_set_command(adapter->sessionId, param_id,
-					      delay, PDEV_CMD);
+					      abs_delay, PDEV_CMD);
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_PROPAGATION_ABS_DELAY]) {
+		abs_delay = nla_get_u8(tb[
+			QCA_WLAN_VENDOR_ATTR_CONFIG_PROPAGATION_ABS_DELAY]);
+		param_id = WMI_PDEV_PARAM_PROPAGATION_DELAY;
+		ret_val = wma_cli_set_command(adapter->sessionId, param_id,
+					      abs_delay, PDEV_CMD);
 	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_FAIL_COUNT]) {
