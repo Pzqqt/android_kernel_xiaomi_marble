@@ -60,7 +60,7 @@
  * @compare_data: Array of 8 bytes
  * @data_mask: Mask to be applied on the received packet data (Array of 8 bytes)
  */
-static const struct pkt_filter_cfg
+static struct pkt_filter_cfg
 		packet_filter_default_rules[MAX_NUM_PACKET_FILTERS] = {
 	{ .filter_action = 1,
 	  .filter_id = 0,

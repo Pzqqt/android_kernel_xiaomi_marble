@@ -25,7 +25,8 @@
  */
 
 /* Include files */
-
+#include "wlan_hdd_assoc.h"
+#include "wlan_hdd_power.h"
 /**
  * hdd_enable_default_pkt_filters() - Enable default packet filters based
  * on, filters bit map provided in INI, when target goes to suspend mode
