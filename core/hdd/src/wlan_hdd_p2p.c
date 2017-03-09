@@ -2344,8 +2344,7 @@ stop_modules:
 	if (hdd_check_for_opened_interfaces(pHddCtx)) {
 		hdd_info("Closing all modules from the add_virt_iface");
 		qdf_mc_timer_start(&pHddCtx->iface_change_timer,
-				   pHddCtx->config->iface_change_wait_time
-				   * 50000);
+				   pHddCtx->config->iface_change_wait_time);
 	} else
 		hdd_info("Other interfaces are still up dont close modules!");
 
