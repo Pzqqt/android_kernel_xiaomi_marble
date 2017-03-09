@@ -129,6 +129,12 @@ tSirRetStatus mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
 	*pHalHandle = (tHalHandle) p_mac;
 
 	{
+		/*
+		 * For Non-FTM cases this value will be reset during mac_start
+		 */
+		if (cds_cfg->driver_type)
+			p_mac->gDriverType = eDRIVER_TYPE_MFG;
+
 		/* Call routine to initialize CFG data structures */
 		if (eSIR_SUCCESS != cfg_init(p_mac))
 			return eSIR_FAILURE;
