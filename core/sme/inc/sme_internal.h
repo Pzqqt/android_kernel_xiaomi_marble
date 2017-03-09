@@ -258,6 +258,8 @@ typedef struct tagSmeStruct {
 	void (*lost_link_info_cb)(void *context,
 			struct sir_lost_link_info *lost_link_info);
 	bool (*set_connection_info_cb)(bool);
+	bool (*get_connection_info_cb)(uint8_t *session_id,
+			enum scan_reject_states *reason);
 } tSmeStruct, *tpSmeStruct;
 
 #endif /* #if !defined( __SMEINTERNAL_H ) */

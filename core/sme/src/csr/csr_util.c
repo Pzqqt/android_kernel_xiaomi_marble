@@ -41,7 +41,7 @@
 #include "sme_qos_internal.h"
 #include "wma_types.h"
 #include "cds_utils.h"
-#include "cds_concurrency.h"
+#include "wlan_policy_mgr_api.h"
 #include "wlan_serialization_legacy_api.h"
 
 
@@ -1273,7 +1273,9 @@ uint16_t csr_check_concurrent_channel_overlap(tpAniSirGlobal mac_ctx,
 		else if (cc_switch_mode ==
 			QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL) {
 			status =
-			    cds_get_sap_mandatory_channel((uint32_t *)&intf_ch);
+				policy_mgr_get_sap_mandatory_channel(
+				mac_ctx->psoc,
+				(uint32_t *)&intf_ch);
 			if (QDF_IS_STATUS_ERROR(status)) {
 				sms_log(mac_ctx, LOGE,
 						FL("no mandatory channel"));
@@ -1284,8 +1286,8 @@ uint16_t csr_check_concurrent_channel_overlap(tpAniSirGlobal mac_ctx,
 				QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL)) {
 		if (cds_chan_to_band(intf_ch) == CDS_BAND_2GHZ) {
 			status =
-				cds_get_sap_mandatory_channel(
-						(uint32_t *)&intf_ch);
+				policy_mgr_get_sap_mandatory_channel(
+					mac_ctx->psoc, (uint32_t *)&intf_ch);
 			if (QDF_IS_STATUS_ERROR(status)) {
 				sms_log(mac_ctx, LOGE,
 						FL("no mandatory channel"));
@@ -6218,7 +6220,7 @@ bool csr_wait_for_connection_update(tpAniSirGlobal mac,
 		}
 	}
 
-	status = qdf_wait_for_connection_update();
+	status = policy_mgr_wait_for_connection_update(mac->psoc);
 
 	if (do_release_reacquire_lock == true) {
 		ret = sme_acquire_global_lock(&mac->sme);

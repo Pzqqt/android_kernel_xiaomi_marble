@@ -35,7 +35,7 @@
 #include "sme_api.h"
 #include "csr_neighbor_roam.h"
 #include "mac_trace.h"
-#include "cds_concurrency.h"
+#include "wlan_policy_mgr_api.h"
 #include "sir_api.h"
 
 static void csr_reinit_preauth_cmd(tpAniSirGlobal pMac, tSmeCmd *pCommand);

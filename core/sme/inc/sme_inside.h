@@ -184,7 +184,7 @@ typedef struct tagSmeCmd {
 #ifdef FEATURE_WLAN_TDLS
 		tTdlsCmd tdlsCmd;
 #endif
-		struct sir_hw_mode set_hw_mode_cmd;
+		struct policy_mgr_hw_mode set_hw_mode_cmd;
 		struct s_nss_update_cmd nss_update_cmd;
 		struct sir_dual_mac_config set_dual_mac_cmd;
 		struct sir_antenna_mode_param set_antenna_mode_cmd;

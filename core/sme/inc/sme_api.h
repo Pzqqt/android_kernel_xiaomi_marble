@@ -527,7 +527,7 @@ uint16_t sme_check_concurrent_channel_overlap(tHalHandle hHal, uint16_t sap_ch,
  */
 QDF_STATUS sme_abort_mac_scan(tHalHandle hHal, uint8_t sessionId,
 		uint32_t scan_id, eCsrAbortReason reason);
-QDF_STATUS sme_get_cfg_valid_channels(tHalHandle hHal, uint8_t *aValidChannels,
+QDF_STATUS sme_get_cfg_valid_channels(uint8_t *aValidChannels,
 		uint32_t *len);
 #ifdef FEATURE_WLAN_SCAN_PNO
 QDF_STATUS sme_set_preferred_network_list(tHalHandle hHal,
@@ -1002,23 +1002,20 @@ void sme_update_user_configured_nss(tHalHandle hal, uint8_t nss);
 
 bool sme_is_any_session_in_connected_state(tHalHandle h_hal);
 
-QDF_STATUS sme_pdev_set_pcl(tHalHandle hal,
-		struct sir_pcl_list msg);
-QDF_STATUS sme_pdev_set_hw_mode(tHalHandle hal,
-		struct sir_hw_mode msg);
+QDF_STATUS sme_pdev_set_pcl(struct policy_mgr_pcl_list msg);
+QDF_STATUS sme_pdev_set_hw_mode(struct policy_mgr_hw_mode msg);
 void sme_register_hw_mode_trans_cb(tHalHandle hal,
 		hw_mode_transition_cb callback);
-QDF_STATUS sme_nss_update_request(tHalHandle hHal, uint32_t vdev_id,
-				uint8_t  new_nss, void *cback,
-				uint8_t next_action, void *hdd_context,
-				enum sir_conn_update_reason reason);
+QDF_STATUS sme_nss_update_request(uint32_t vdev_id,
+				uint8_t  new_nss, policy_mgr_nss_update_cback cback,
+				uint8_t next_action, struct wlan_objmgr_psoc *psoc,
+				enum policy_mgr_conn_update_reason reason);
 
 typedef void (*sme_peer_authorized_fp) (uint32_t vdev_id);
 QDF_STATUS sme_set_peer_authorized(uint8_t *peer_addr,
 				   sme_peer_authorized_fp auth_fp,
 				   uint32_t vdev_id);
-QDF_STATUS sme_soc_set_dual_mac_config(tHalHandle hal,
-		struct sir_dual_mac_config msg);
+QDF_STATUS sme_soc_set_dual_mac_config(struct policy_mgr_dual_mac_config msg);
 QDF_STATUS sme_soc_set_antenna_mode(tHalHandle hal,
 		struct sir_antenna_mode_param *msg);
 
@@ -1263,7 +1260,7 @@ QDF_STATUS sme_process_mac_pwr_dbg_cmd(tHalHandle hal, uint32_t session_id,
 				       struct sir_mac_pwr_dbg_cmd*
 				       dbg_args);
 
-void sme_get_vdev_type_nss(tHalHandle hal, enum tQDF_ADAPTER_MODE dev_mode,
+void sme_get_vdev_type_nss(enum tQDF_ADAPTER_MODE dev_mode,
 		uint8_t *nss_2g, uint8_t *nss_5g);
 QDF_STATUS sme_roam_set_default_key_index(tHalHandle hal, uint8_t session_id,
 					  uint8_t default_idx);
@@ -1453,13 +1450,18 @@ QDF_STATUS sme_delete_all_tdls_peers(tHalHandle hal, uint8_t session_id);
  * sme_register_set_connection_info_cb() - Register connection
  * info callback
  * @hal - MAC global handle
- * @callback_routine - callback routine from HDD
+ * @set_connection_info_cb - callback routine from HDD to set
+ *                   connection info flag
+ * @get_connection_info_cb - callback routine from HDD to get
+ *                         connection info
  *
  * This API is invoked by HDD to register its callback to mac
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS sme_register_set_connection_info_cb(tHalHandle hHal,
-					  bool (*set_connection_info_cb)(bool));
+				bool (*set_connection_info_cb)(bool),
+				bool (*get_connection_info_cb)(uint8_t *session_id,
+				enum scan_reject_states *reason));
 
 #endif /* #if !defined( __SME_API_H ) */

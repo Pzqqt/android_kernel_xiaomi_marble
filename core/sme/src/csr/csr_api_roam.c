@@ -53,11 +53,12 @@
 #include "cfg_api.h"
 #include "sme_power_save_api.h"
 #include "wma.h"
-#include "cds_concurrency.h"
+#include "wlan_policy_mgr_api.h"
 #include "sme_nan_datapath.h"
 #include "pld_common.h"
 #include <wlan_logging_sock_svc.h>
 #include "wlan_objmgr_psoc_obj.h"
+#include <wlan_scan_ucfg_api.h>
 
 #define MAX_PWR_FCC_CHAN_12 8
 #define MAX_PWR_FCC_CHAN_13 2
@@ -5399,8 +5400,8 @@ static bool csr_roam_select_bss(tpAniSirGlobal mac_ctx,
 		 * sessions exempted
 		 */
 		result = &scan_result->Result;
-		if (cds_concurrent_open_sessions_running() &&
-			!csr_is_valid_mc_concurrent_session(mac_ctx,
+		if (policy_mgr_concurrent_open_sessions_running(mac_ctx->psoc)
+			&& !csr_is_valid_mc_concurrent_session(mac_ctx,
 					session_id, &result->BssDescriptor)) {
 			conc_channel = csr_get_concurrent_operation_channel(
 					mac_ctx);
@@ -8043,8 +8044,8 @@ QDF_STATUS csr_roam_connect(tpAniSirGlobal pMac, uint32_t sessionId,
 			 (pScanFilter->csrPersona == QDF_P2P_CLIENT_MODE)) {
 			csr_get_bssdescr_from_scan_handle(hBSSList,
 					&first_ap_profile);
-			status = cds_handle_conc_multiport(sessionId,
-						first_ap_profile.channelId);
+			status = policy_mgr_handle_conc_multiport(pMac->psoc,
+					sessionId, first_ap_profile.channelId);
 			if ((QDF_IS_STATUS_SUCCESS(status)) &&
 				(!csr_wait_for_connection_update(pMac, true))) {
 					sms_log(pMac, LOG1,
@@ -14656,7 +14657,7 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		 * those cases (by now channel has been decided).
 		 */
 		if (eSIR_INFRASTRUCTURE_MODE == csr_join_req->bsstype ||
-		    !wma_is_dbs_enable())
+		    !policy_mgr_is_dbs_enable(pMac->psoc))
 			csr_set_ldpc_exception(pMac, pSession,
 					pBssDescription->channelId,
 					pMac->roam.configParam.rxLdpcEnable);
@@ -15478,7 +15479,8 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(tpAniSirGlobal pMac, uint32_t sessionId
 	 * for 5Ghz for STA like persona then here is how to handle
 	 * those cases (by now channel has been decided).
 	 */
-	if (eSIR_IBSS_MODE == pMsg->bssType || !wma_is_dbs_enable())
+	if (eSIR_IBSS_MODE == pMsg->bssType ||
+		!policy_mgr_is_dbs_enable(pMac->psoc))
 		csr_set_ldpc_exception(pMac, pSession,
 				pMsg->channelId,
 				pMac->roam.configParam.rxLdpcEnable);
@@ -19907,7 +19909,7 @@ void csr_process_set_hw_mode(tpAniSirGlobal mac, tSmeCmd *command)
 	QDF_STATUS status;
 	struct scheduler_msg msg;
 	struct sir_set_hw_mode_resp *param;
-	enum cds_hw_mode_change cds_hw_mode;
+	enum policy_mgr_hw_mode_change hw_mode;
 
 	/* Setting HW mode is for the entire system.
 	 * So, no need to check session
@@ -19931,7 +19933,8 @@ void csr_process_set_hw_mode(tpAniSirGlobal mac, tSmeCmd *command)
 	/* For hidden SSID case, if there is any scan command pending
 	 * it needs to be cleared before issuing set HW mode
 	 */
-	if (command->u.set_hw_mode_cmd.reason == SIR_UPDATE_REASON_HIDDEN_STA) {
+	if (command->u.set_hw_mode_cmd.reason ==
+		POLICY_MGR_UPDATE_REASON_HIDDEN_STA) {
 		sms_log(mac, LOGE, FL("clear any pending scan command"));
 		status = csr_scan_abort_mac_scan_not_for_connect(mac,
 				command->u.set_hw_mode_cmd.session_id);
@@ -19941,21 +19944,23 @@ void csr_process_set_hw_mode(tpAniSirGlobal mac, tSmeCmd *command)
 		}
 	}
 
-	if ((SIR_UPDATE_REASON_OPPORTUNISTIC ==
-	     command->u.set_hw_mode_cmd.reason) &&
-	    (true == cds_is_connection_in_progress(NULL, NULL))) {
+	if ((POLICY_MGR_UPDATE_REASON_OPPORTUNISTIC ==
+		command->u.set_hw_mode_cmd.reason) &&
+		(true == mac->sme.get_connection_info_cb(NULL, NULL))) {
 		sms_log(mac, LOGE, FL("Set HW mode refused: conn in progress"));
-		cds_restart_opportunistic_timer(false);
+		policy_mgr_restart_opportunistic_timer(mac->psoc, false);
 		goto fail;
 	}
 
-	cds_hw_mode = wma_get_cds_hw_mode_change_from_hw_mode_index(
-				command->u.set_hw_mode_cmd.hw_mode_index);
+	hw_mode = policy_mgr_get_hw_mode_change_from_hw_mode_index(
+			mac->psoc, command->u.set_hw_mode_cmd.hw_mode_index);
 
-	if (CDS_HW_MODE_NOT_IN_PROGRESS == cds_hw_mode)
+	if (POLICY_MGR_HW_MODE_NOT_IN_PROGRESS == hw_mode) {
+		sms_log(mac, LOGE, FL("hw_mode %d, failing"), hw_mode);
 		goto fail;
+	}
 
-	cds_set_hw_mode_change_in_progress(cds_hw_mode);
+	policy_mgr_set_hw_mode_change_in_progress(mac->psoc, hw_mode);
 
 	cmd->messageType = eWNI_SME_SET_HW_MODE_REQ;
 	cmd->length = len;
@@ -19974,7 +19979,8 @@ void csr_process_set_hw_mode(tpAniSirGlobal mac, tSmeCmd *command)
 
 	status = umac_send_mb_message_to_mac(cmd);
 	if (QDF_STATUS_SUCCESS != status) {
-		cds_set_hw_mode_change_in_progress(CDS_HW_MODE_NOT_IN_PROGRESS);
+		policy_mgr_set_hw_mode_change_in_progress(mac->psoc,
+			POLICY_MGR_HW_MODE_NOT_IN_PROGRESS);
 		sms_log(mac, LOGE, FL("Posting to PE failed"));
 		return;
 	}
@@ -20329,17 +20335,18 @@ QDF_STATUS csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 		 * 3) Set connection in progress = false
 		 */
 		/* first update connection info from wma interface */
-		cds_update_connection_info(session_id);
+		policy_mgr_update_connection_info(mac_ctx->psoc, session_id);
 		/* then update remaining parameters from roam sync ctx */
 		sms_log(mac_ctx, LOGE, FL("Update DBS hw mode"));
-		cds_hw_mode_transition_cb(
+		policy_mgr_hw_mode_transition_cb(
 			roam_synch_data->hw_mode_trans_ind.old_hw_mode_index,
 			roam_synch_data->hw_mode_trans_ind.new_hw_mode_index,
 			roam_synch_data->hw_mode_trans_ind.num_vdev_mac_entries,
-			roam_synch_data->hw_mode_trans_ind.vdev_mac_map);
+			roam_synch_data->hw_mode_trans_ind.vdev_mac_map,
+			mac_ctx->psoc);
 		mac_ctx->sme.set_connection_info_cb(false);
 		session->roam_synch_in_progress = false;
-		cds_check_concurrent_intf_and_restart_sap(session->pContext);
+		policy_mgr_check_concurrent_intf_and_restart_sap(mac_ctx->psoc);
 		sme_release_global_lock(&mac_ctx->sme);
 		return status;
 	default:

@@ -50,7 +50,7 @@
 #include "cfg_api.h"
 #include "wma.h"
 
-#include "cds_concurrency.h"
+#include "wlan_policy_mgr_api.h"
 #include "wlan_hdd_main.h"
 #include "pld_common.h"
 #include "csr_internal.h"
@@ -2244,16 +2244,16 @@ csr_parse_scan_results(tpAniSirGlobal pMac,
 	eCsrEncryptionType uc, mc;
 	eCsrAuthType auth = eCSR_AUTH_TYPE_OPEN_SYSTEM;
 	uint32_t len = 0;
-	enum cds_con_mode new_mode;
+	enum policy_mgr_con_mode new_mode;
 	uint8_t weight_list[QDF_MAX_NUM_CHAN];
 
 
 	csr_ll_lock(&pMac->scan.scanResultList);
 
 	if (pFilter && (0 == pFilter->BSSIDs.numOfBSSIDs)) {
-		if (cds_map_concurrency_mode(
+		if (policy_mgr_map_concurrency_mode(
 					&pFilter->csrPersona, &new_mode)) {
-			status = cds_get_pcl(new_mode,
+			status = policy_mgr_get_pcl(pMac->psoc, new_mode,
 				&pFilter->pcl_channels.channelList[0], &len,
 				weight_list, QDF_ARRAY_SIZE(weight_list));
 			pFilter->pcl_channels.numChannels = (uint8_t)len;
@@ -3983,7 +3983,8 @@ static eCsrScanCompleteNextCommand csr_scan_get_next_command_state(
 	switch (session->scan_info.scan_reason) {
 	case eCsrScanForSsid:
 		sms_log(mac_ctx, LOG1, FL("Resp for Scan For Ssid"));
-		channel = cds_search_and_check_for_session_conc(
+		channel = policy_mgr_search_and_check_for_session_conc(
+				mac_ctx->psoc,
 				session_id,
 				session->scan_info.profile);
 		if ((!channel) || scan_status) {
@@ -4050,7 +4051,8 @@ static eCsrScanCompleteNextCommand csr_scan_get_next_command_state(
 		 * failure: csr_scan_handle_search_for_ssid_failure
 		 */
 		sms_log(pMac, LOG1, FL("Resp for eCsrScanForSsid"));
-		channel = cds_search_and_check_for_session_conc(
+		channel = policy_mgr_search_and_check_for_session_conc(
+				pMac->psoc,
 				pCommand->sessionId,
 				pCommand->u.scanCmd.pToRoamProfile);
 		if ((!channel) || !fSuccess) {
@@ -4323,8 +4325,8 @@ static void csr_handle_nxt_cmd(tpAniSirGlobal mac_ctx,
 		csr_scan_handle_search_for_ssid_failure(mac_ctx, session_id);
 		break;
 	case eCsrNextCheckAllowConc:
-		ret = cds_current_connections_update(session_id,
-					chan,
+		ret = policy_mgr_current_connections_update(mac_ctx->psoc,
+					session_id, chan,
 					SIR_UPDATE_REASON_HIDDEN_STA);
 		sms_log(mac_ctx, LOG1, FL("chan: %d session: %d status: %d"),
 					chan, session_id, ret);
@@ -4527,8 +4529,8 @@ csr_handle_nxt_cmd(tpAniSirGlobal mac_ctx, tSmeCmd *pCommand,
 		csr_scan_handle_search_for_ssid_failure(mac_ctx, pCommand);
 		break;
 	case eCsrNextCheckAllowConc:
-		ret = cds_current_connections_update(pCommand->sessionId,
-					chan,
+		ret = policy_mgr_current_connections_update(mac_ctx->psoc,
+					pCommand->sessionId, chan,
 					SIR_UPDATE_REASON_HIDDEN_STA);
 		sms_log(mac_ctx, LOG1, FL("chan: %d session: %d status: %d"),
 					chan, pCommand->sessionId, ret);
@@ -6183,10 +6185,11 @@ QDF_STATUS csr_scan_copy_request(tpAniSirGlobal mac_ctx,
 	 * out SAP/GO channel's band otherwise it will cause issue in
 	 * SAP+STA concurrency
 	 */
-	if (cds_is_ibss_conn_exist(&channel)) {
+	if (policy_mgr_is_ibss_conn_exist(mac_ctx->psoc, &channel)) {
 		sms_log(mac_ctx, LOG1,
 			FL("Conc IBSS exist, channel list will be modified"));
-	} else if (cds_is_any_dfs_beaconing_session_present(&channel)) {
+	} else if (policy_mgr_is_any_dfs_beaconing_session_present(
+			mac_ctx->psoc, &channel)) {
 		/*
 		 * 1) if agile & DFS scans are supported
 		 * 2) if hardware is DBS capable
@@ -6194,9 +6197,10 @@ QDF_STATUS csr_scan_copy_request(tpAniSirGlobal mac_ctx,
 		 * if all above 3 conditions are true then don't skip any
 		 * channel from scan list
 		 */
-		if (true != wma_is_current_hwmode_dbs() &&
-		    wma_get_dbs_plus_agile_scan_config() &&
-		    wma_get_single_mac_scan_with_dfs_config())
+		if (true != policy_mgr_is_current_hwmode_dbs(mac_ctx->psoc) &&
+		    policy_mgr_get_dbs_plus_agile_scan_config(mac_ctx->psoc) &&
+		    policy_mgr_get_single_mac_scan_with_dfs_config(
+		    mac_ctx->psoc))
 			channel = 0;
 		else
 			sms_log(mac_ctx, LOG1,
@@ -8288,7 +8292,7 @@ static QDF_STATUS csr_prepare_scan_filter(tpAniSirGlobal mac_ctx,
 	int i;
 	uint32_t len = 0;
 	QDF_STATUS status;
-	enum cds_con_mode new_mode;
+	enum policy_mgr_con_mode new_mode;
 	uint8_t weight_list[QDF_MAX_NUM_CHAN];
 	struct roam_ext_params *roam_params = NULL;
 
@@ -8371,9 +8375,9 @@ static QDF_STATUS csr_prepare_scan_filter(tpAniSirGlobal mac_ctx,
 	filter->dot11_mode = pFilter->phyMode;
 
 	if (!pFilter->BSSIDs.numOfBSSIDs) {
-		if (cds_map_concurrency_mode(
+		if (policy_mgr_map_concurrency_mode(
 		   &pFilter->csrPersona, &new_mode)) {
-			status = cds_get_pcl(new_mode,
+			status = policy_mgr_get_pcl(mac_ctx->psoc, new_mode,
 				filter->pcl_channel_list, &len,
 				weight_list, QDF_ARRAY_SIZE(weight_list));
 			filter->num_of_pcl_channels = (uint8_t)len;

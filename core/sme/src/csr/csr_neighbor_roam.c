@@ -45,7 +45,7 @@
 #include "sme_api.h"
 #include "csr_neighbor_roam.h"
 #include "mac_trace.h"
-#include "cds_concurrency.h"
+#include "wlan_policy_mgr_api.h"
 
 #define NEIGHBOR_ROAM_DEBUG sms_log
 static const char *lfr_get_config_item_string(uint8_t reason)
@@ -1044,7 +1044,7 @@ static void csr_neighbor_roam_info_ctx_init(
 	/* Initialize all the data structures needed for the 11r FT Preauth */
 	ngbr_roam_info->FTRoamInfo.currentNeighborRptRetryNum = 0;
 	csr_neighbor_roam_purge_preauth_failed_list(pMac);
-	if (!cds_is_multiple_active_sta_sessions() &&
+	if (!policy_mgr_is_multiple_active_sta_sessions(pMac->psoc) &&
 		csr_roam_is_roam_offload_scan_enabled(pMac)) {
 		/*
 		 * If this is not a INFRA type BSS, then do not send the command

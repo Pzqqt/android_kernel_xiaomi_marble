@@ -35,7 +35,7 @@
 #include "sme_api.h"
 #include "csr_neighbor_roam.h"
 #include "mac_trace.h"
-#include "cds_concurrency.h"
+#include "wlan_policy_mgr_api.h"
 
 /**
  * csr_roam_issue_reassociate() - Issue Reassociate
@@ -204,8 +204,9 @@ void csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
 			 * Continue if MCC is disabled in INI and if AP
 			 * will create MCC
 			 */
-			if (cds_concurrent_open_sessions_running() &&
-			   !mac_ctx->roam.configParam.fenableMCCMode) {
+			if (policy_mgr_concurrent_open_sessions_running(
+				mac_ctx->psoc) &&
+				!mac_ctx->roam.configParam.fenableMCCMode) {
 				uint8_t conc_channel;
 
 				conc_channel =

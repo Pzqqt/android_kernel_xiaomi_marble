@@ -198,7 +198,8 @@ static QDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 	callback(param->status,
 			param->cfgd_hw_mode_index,
 			param->num_vdev_mac_entries,
-			param->vdev_mac_map);
+			param->vdev_mac_map,
+			command->u.set_hw_mode_cmd.context);
 	session = CSR_GET_SESSION(mac, session_id);
 	if (reason == SIR_UPDATE_REASON_HIDDEN_STA) {
 		/* In the case of hidden SSID, connection update
@@ -294,10 +295,10 @@ static QDF_STATUS sme_process_hw_mode_trans_ind(tpAniSirGlobal mac,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	cds_hw_mode_transition_cb(param->old_hw_mode_index,
+	policy_mgr_hw_mode_transition_cb(param->old_hw_mode_index,
 		param->new_hw_mode_index,
 		param->num_vdev_mac_entries,
-		param->vdev_mac_map);
+		param->vdev_mac_map, mac->psoc);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -6981,16 +6982,45 @@ QDF_STATUS sme_set_tsf_gpio(tHalHandle h_hal, uint32_t pinvalue)
 }
 #endif
 
-QDF_STATUS sme_get_cfg_valid_channels(tHalHandle hHal, uint8_t *aValidChannels,
+static tpAniSirGlobal sme_get_mac_context(void)
+{
+	tpAniSirGlobal mac_ctx;
+	tHalHandle h_hal;
+
+	h_hal = cds_get_context(QDF_MODULE_ID_SME);
+	if (NULL == h_hal) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
+		FL("invalid h_hal"));
+		return NULL;
+	}
+
+	mac_ctx = PMAC_STRUCT(h_hal);
+	if (NULL == mac_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+		FL("Invalid MAC context"));
+		return NULL;
+	}
+
+	return mac_ctx;
+}
+
+QDF_STATUS sme_get_cfg_valid_channels(uint8_t *aValidChannels,
 				      uint32_t *len)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	tpAniSirGlobal mac_ctx = sme_get_mac_context();
 
-	status = sme_acquire_global_lock(&pMac->sme);
+	if (NULL == mac_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+		FL("Invalid MAC context"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_get_cfg_valid_channels(pMac, aValidChannels, len);
-		sme_release_global_lock(&pMac->sme);
+		status = csr_get_cfg_valid_channels(mac_ctx,
+			aValidChannels, len);
+		sme_release_global_lock(&mac_ctx->sme);
 	}
 
 	return status;
@@ -12626,7 +12656,8 @@ QDF_STATUS sme_update_dsc_pto_up_mapping(tHalHandle hHal,
 	}
 
 	if (!pSession->QosMapSet.present) {
-		hdd_notice("QOS Mapping IE not present");
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				FL("QOS Mapping IE not present"));
 		sme_release_global_lock(&pMac->sme);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -12720,7 +12751,7 @@ QDF_STATUS sme_get_valid_channels_by_band(tHalHandle hHal,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	status = sme_get_cfg_valid_channels(hHal, &chanList[0],
+	status = sme_get_cfg_valid_channels(&chanList[0],
 			&totValidChannels);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(pMac, QDF_TRACE_LEVEL_ERROR,
@@ -14722,11 +14753,10 @@ QDF_STATUS sme_fw_mem_dump(tHalHandle hHal, void *recvd_req)
  * Sends the command to WMA to send WMI_PDEV_SET_PCL_CMDID to FW
  * Return: QDF_STATUS_SUCCESS on successful posting
  */
-QDF_STATUS sme_pdev_set_pcl(tHalHandle hal,
-		struct sir_pcl_list msg)
+QDF_STATUS sme_pdev_set_pcl(struct policy_mgr_pcl_list msg)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal mac   = PMAC_STRUCT(hal);
+	tpAniSirGlobal mac   = sme_get_mac_context();
 	struct scheduler_msg message;
 	struct wmi_pcl_chan_weights *req_msg;
 	uint32_t len, i;
@@ -14779,11 +14809,10 @@ QDF_STATUS sme_pdev_set_pcl(tHalHandle hal,
  * Sends the command to CSR to send WMI_PDEV_SET_HW_MODE_CMDID to FW
  * Return: QDF_STATUS_SUCCESS on successful posting
  */
-QDF_STATUS sme_pdev_set_hw_mode(tHalHandle hal,
-		struct sir_hw_mode msg)
+QDF_STATUS sme_pdev_set_hw_mode(struct policy_mgr_hw_mode msg)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+	tpAniSirGlobal mac = sme_get_mac_context();
 	tSmeCmd *cmd = NULL;
 
 	status = sme_acquire_global_lock(&mac->sme);
@@ -14804,6 +14833,7 @@ QDF_STATUS sme_pdev_set_hw_mode(tHalHandle hal,
 	cmd->u.set_hw_mode_cmd.set_hw_mode_cb = msg.set_hw_mode_cb;
 	cmd->u.set_hw_mode_cmd.reason = msg.reason;
 	cmd->u.set_hw_mode_cmd.session_id = msg.session_id;
+	cmd->u.set_hw_mode_cmd.context = msg.context;
 
 	sms_log(mac, LOG1,
 		FL("Queuing set hw mode to CSR, session:%d reason:%d"),
@@ -14846,13 +14876,13 @@ void sme_register_hw_mode_trans_cb(tHalHandle hal,
  * Sends the command to CSR to send to PE
  * Return: QDF_STATUS_SUCCESS on successful posting
  */
-QDF_STATUS sme_nss_update_request(tHalHandle hHal, uint32_t vdev_id,
-				uint8_t  new_nss, void *cback, uint8_t next_action,
-				void *hdd_context,
-				enum sir_conn_update_reason reason)
+QDF_STATUS sme_nss_update_request(uint32_t vdev_id,
+				uint8_t  new_nss, policy_mgr_nss_update_cback cback,
+				uint8_t next_action, struct wlan_objmgr_psoc *psoc,
+				enum policy_mgr_conn_update_reason reason)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	tpAniSirGlobal mac = PMAC_STRUCT(hHal);
+	tpAniSirGlobal mac = sme_get_mac_context();
 	tSmeCmd *cmd = NULL;
 
 	status = sme_acquire_global_lock(&mac->sme);
@@ -14869,7 +14899,7 @@ QDF_STATUS sme_nss_update_request(tHalHandle hHal, uint32_t vdev_id,
 		cmd->u.nss_update_cmd.new_nss = new_nss;
 		cmd->u.nss_update_cmd.session_id = vdev_id;
 		cmd->u.nss_update_cmd.nss_update_cb = cback;
-		cmd->u.nss_update_cmd.context = hdd_context;
+		cmd->u.nss_update_cmd.context = psoc;
 		cmd->u.nss_update_cmd.next_action = next_action;
 		cmd->u.nss_update_cmd.reason = reason;
 
@@ -14890,11 +14920,10 @@ QDF_STATUS sme_nss_update_request(tHalHandle hHal, uint32_t vdev_id,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_soc_set_dual_mac_config(tHalHandle hal,
-		struct sir_dual_mac_config msg)
+QDF_STATUS sme_soc_set_dual_mac_config(struct policy_mgr_dual_mac_config msg)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+	tpAniSirGlobal mac = sme_get_mac_context();
 	tSmeCmd *cmd;
 
 	status = sme_acquire_global_lock(&mac->sme);
@@ -15978,7 +16007,6 @@ QDF_STATUS sme_process_mac_pwr_dbg_cmd(tHalHandle hal, uint32_t session_id,
 }
 /**
  * sme_get_vdev_type_nss() - gets the nss per vdev type
- * @hal: Pointer to HAL
  * @dev_mode: connection type.
  * @nss2g: Pointer to the 2G Nss parameter.
  * @nss5g: Pointer to the 5G Nss parameter.
@@ -15987,10 +16015,16 @@ QDF_STATUS sme_process_mac_pwr_dbg_cmd(tHalHandle hal, uint32_t session_id,
  *
  * Return: None
  */
-void sme_get_vdev_type_nss(tHalHandle hal, enum tQDF_ADAPTER_MODE dev_mode,
+void sme_get_vdev_type_nss(enum tQDF_ADAPTER_MODE dev_mode,
 		uint8_t *nss_2g, uint8_t *nss_5g)
 {
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	tpAniSirGlobal mac_ctx = sme_get_mac_context();
+
+	if (NULL == mac_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+		FL("Invalid MAC context"));
+		return;
+	}
 	csr_get_vdev_type_nss(mac_ctx, dev_mode, nss_2g, nss_5g);
 }
 
@@ -16517,7 +16551,9 @@ QDF_STATUS sme_set_peer_param(uint8_t *peer_addr, uint32_t param_id,
 }
 
 QDF_STATUS sme_register_set_connection_info_cb(tHalHandle hHal,
-					  bool (*set_connection_info_cb)(bool))
+				bool (*set_connection_info_cb)(bool),
+				bool (*get_connection_info_cb)(uint8_t *session_id,
+				enum scan_reject_states *reason))
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
@@ -16525,6 +16561,7 @@ QDF_STATUS sme_register_set_connection_info_cb(tHalHandle hHal,
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		pMac->sme.set_connection_info_cb = set_connection_info_cb;
+		pMac->sme.get_connection_info_cb = get_connection_info_cb;
 		sme_release_global_lock(&pMac->sme);
 	}
 	return status;

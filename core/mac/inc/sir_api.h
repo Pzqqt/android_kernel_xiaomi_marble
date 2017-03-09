@@ -436,20 +436,6 @@ typedef struct sSirSmeReadyReq {
 } tSirSmeReadyReq, *tpSirSmeReadyReq;
 
 /**
- * struct sir_hw_mode - Format of set HW mode
- * @hw_mode_index: Index of HW mode to be set
- * @set_hw_mode_cb: HDD set HW mode callback
- * @reason: Reason for HW mode change
- * @session_id: Session id
- */
-struct sir_hw_mode {
-	uint32_t hw_mode_index;
-	void *set_hw_mode_cb;
-	enum sir_conn_update_reason reason;
-	uint32_t session_id;
-};
-
-/**
  * struct s_sir_set_hw_mode - Set HW mode request
  * @messageType: Message type
  * @length: Length of the message
@@ -458,7 +444,7 @@ struct sir_hw_mode {
 struct s_sir_set_hw_mode {
 	uint16_t messageType;
 	uint16_t length;
-	struct sir_hw_mode set_hw;
+	struct policy_mgr_hw_mode set_hw;
 };
 
 /**
@@ -3349,7 +3335,7 @@ struct sir_hw_mode_trans_ind {
 	uint32_t old_hw_mode_index;
 	uint32_t new_hw_mode_index;
 	uint32_t num_vdev_mac_entries;
-	struct sir_vdev_mac_map vdev_mac_map[MAX_VDEV_SUPPORTED];
+	struct policy_mgr_vdev_mac_map vdev_mac_map[MAX_VDEV_SUPPORTED];
 };
 
 /**
@@ -5494,7 +5480,8 @@ struct send_extcap_ie {
 
 typedef void (*hw_mode_cb)(uint32_t status, uint32_t cfgd_hw_mode_index,
 		uint32_t num_vdev_mac_entries,
-		struct sir_vdev_mac_map *vdev_mac_map);
+		struct sir_vdev_mac_map *vdev_mac_map,
+		struct wlan_objmgr_psoc *context);
 typedef void (*hw_mode_transition_cb)(uint32_t old_hw_mode_index,
 		uint32_t new_hw_mode_index,
 		uint32_t num_vdev_mac_entries,
@@ -6902,5 +6889,20 @@ struct sir_del_all_tdls_peers {
 	uint16_t msg_type;
 	uint16_t msg_len;
 	struct qdf_mac_addr bssid;
+};
+
+/*
+ * @SCAN_REJECT_DEFAULT: default value
+ * @CONNECTION_IN_PROGRESS: connection is in progress
+ * @REASSOC_IN_PROGRESS: reassociation is in progress
+ * @EAPOL_IN_PROGRESS: STA/P2P-CLI is in middle of EAPOL/WPS exchange
+ * @SAP_EAPOL_IN_PROGRESS: SAP/P2P-GO is in middle of EAPOL/WPS exchange
+ */
+enum scan_reject_states {
+	SCAN_REJECT_DEFAULT = 0,
+	CONNECTION_IN_PROGRESS,
+	REASSOC_IN_PROGRESS,
+	EAPOL_IN_PROGRESS,
+	SAP_EAPOL_IN_PROGRESS,
 };
 #endif /* __SIR_API_H */
