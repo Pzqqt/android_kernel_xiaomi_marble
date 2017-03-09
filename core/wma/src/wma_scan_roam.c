@@ -433,6 +433,11 @@ QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 			cmd->dwell_time_passive = cmd->dwell_time_active;
 		}
 		cmd->burst_duration = 0;
+		if (CDS_IS_DFS_CH(cds_get_channel(CDS_SAP_MODE, NULL)))
+			cmd->burst_duration =
+				WMA_BURST_SCAN_MAX_NUM_OFFCHANNELS *
+				scan_req->maxChannelTime;
+		WMA_LOGI("SAP: burst_duration: %d", cmd->burst_duration);
 	}
 
 	cmd->n_probes = (cmd->repeat_probe_time > 0) ?
