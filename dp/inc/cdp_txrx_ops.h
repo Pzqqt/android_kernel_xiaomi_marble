@@ -75,7 +75,8 @@ struct cdp_cmn_ops {
 
 	void (*txrx_peer_delete)(void *peer);
 
-	int (*txrx_set_monitor_mode)(struct cdp_vdev *vdev);
+	int (*txrx_set_monitor_mode)(struct cdp_vdev *vdev,
+			uint8_t smart_monitor);
 
 	void (*txrx_set_curchan)(struct cdp_pdev *pdev, uint32_t chan_mhz);
 
@@ -211,7 +212,11 @@ struct cdp_ctrl_ops {
 	int
 		(*txrx_set_filter_neighbour_peers)(
 				struct cdp_pdev *pdev,
-				u_int32_t val);
+				uint32_t val);
+	int
+		(*txrx_update_filter_neighbour_peers)(
+				struct cdp_pdev *pdev,
+				uint32_t cmd, uint8_t *macaddr);
 	/**
 	 * @brief set the safemode of the device
 	 * @details

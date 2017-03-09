@@ -1147,6 +1147,9 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	TAILQ_INIT(&pdev->vdev_list);
 	pdev->vdev_count = 0;
 
+	qdf_spinlock_create(&pdev->neighbour_peer_mutex);
+	TAILQ_INIT(&pdev->neighbour_peers_list);
+
 	if (dp_soc_cmn_setup(soc)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			FL("dp_soc_cmn_setup failed"));
@@ -1291,6 +1294,29 @@ static void dp_rxdma_ring_cleanup(struct dp_soc *soc,
 {
 }
 #endif
+
+/*
+ * dp_neighbour_peers_detach() - Detach neighbour peers(nac clients)
+ * @pdev: device object
+ *
+ * Return: void
+ */
+static void dp_neighbour_peers_detach(struct dp_pdev *pdev)
+{
+	struct dp_neighbour_peer *peer = NULL;
+	struct dp_neighbour_peer *temp_peer = NULL;
+
+	TAILQ_FOREACH_SAFE(peer, &pdev->neighbour_peers_list,
+			neighbour_peer_list_elem, temp_peer) {
+		/* delete this peer from the list */
+		TAILQ_REMOVE(&pdev->neighbour_peers_list,
+				peer, neighbour_peer_list_elem);
+		qdf_mem_free(peer);
+	}
+
+	qdf_spinlock_destroy(&pdev->neighbour_peer_mutex);
+}
+
 /*
 * dp_pdev_detach_wifi3() - detach txrx pdev
 * @txrx_pdev: Datapath PDEV handle
@@ -1314,6 +1340,8 @@ static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force)
 	dp_rx_pdev_detach(pdev);
 
 	dp_rx_pdev_mon_detach(pdev);
+
+	dp_neighbour_peers_detach(pdev);
 
 	/* Setup per PDEV REO rings if configured */
 	if (wlan_cfg_per_pdev_rx_ring(soc->wlan_cfg_ctx)) {
@@ -1932,6 +1960,91 @@ dp_get_pdev_reo_dest(struct cdp_pdev *pdev_handle)
 }
 
 /*
+ * dp_set_filter_neighbour_peers() - set filter neighbour peers for smart mesh
+ * @pdev_handle: device object
+ * @val: value to be set
+ *
+ * Return: void
+ */
+static int dp_set_filter_neighbour_peers(struct cdp_pdev *pdev_handle,
+	 uint32_t val)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+
+	/* Enable/Disable smart mesh filtering. This flag will be checked
+	 * during rx processing to check if packets are from NAC clients.
+	 */
+	pdev->filter_neighbour_peers = val;
+	return 0;
+}
+
+/*
+ * dp_update_filter_neighbour_peers() - set neighbour peers(nac clients)
+ * address for smart mesh filtering
+ * @pdev_handle: device object
+ * @cmd: Add/Del command
+ * @macaddr: nac client mac address
+ *
+ * Return: void
+ */
+static int dp_update_filter_neighbour_peers(struct cdp_pdev *pdev_handle,
+	 uint32_t cmd, uint8_t *macaddr)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	struct dp_neighbour_peer *peer = NULL;
+
+	if (!macaddr)
+		goto fail0;
+
+	/* Store address of NAC (neighbour peer) which will be checked
+	 * against TA of received packets.
+	 */
+	if (cmd == DP_NAC_PARAM_ADD) {
+		peer = (struct dp_neighbour_peer *) qdf_mem_malloc(
+				sizeof(*peer));
+
+		if (!peer) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				FL("DP neighbour peer node memory allocation failed"));
+			goto fail0;
+		}
+
+		qdf_mem_copy(&peer->neighbour_peers_macaddr.raw[0],
+			macaddr, DP_MAC_ADDR_LEN);
+
+
+		qdf_spin_lock_bh(&pdev->neighbour_peer_mutex);
+		/* add this neighbour peer into the list */
+		TAILQ_INSERT_TAIL(&pdev->neighbour_peers_list, peer,
+				neighbour_peer_list_elem);
+		qdf_spin_unlock_bh(&pdev->neighbour_peer_mutex);
+
+		return 1;
+
+	} else if (cmd == DP_NAC_PARAM_DEL) {
+		qdf_spin_lock_bh(&pdev->neighbour_peer_mutex);
+		TAILQ_FOREACH(peer, &pdev->neighbour_peers_list,
+				neighbour_peer_list_elem) {
+			if (!qdf_mem_cmp(&peer->neighbour_peers_macaddr.raw[0],
+				macaddr, DP_MAC_ADDR_LEN)) {
+				/* delete this peer from the list */
+				TAILQ_REMOVE(&pdev->neighbour_peers_list,
+					peer, neighbour_peer_list_elem);
+				qdf_mem_free(peer);
+				break;
+			}
+		}
+		qdf_spin_unlock_bh(&pdev->neighbour_peer_mutex);
+
+		return 1;
+
+	}
+
+fail0:
+	return 0;
+}
+
+/*
  * dp_peer_authorize() - authorize txrx peer
  * @peer_handle:		Datapath peer handle
  * @authorize
@@ -2173,10 +2286,12 @@ static struct cdp_cfg *dp_get_ctrl_pdev_from_vdev_wifi3(struct cdp_vdev *pvdev)
 /**
  * dp_vdev_set_monitor_mode() - Set DP VDEV to monitor mode
  * @vdev_handle: Datapath VDEV handle
+ * @smart_monitor: Flag to denote if its smart monitor mode
  *
  * Return: 0 on success, not 0 on failure
  */
-static int dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle)
+static int dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle,
+		uint8_t smart_monitor)
 {
 	/* Many monitor VAPs can exists in a system but only one can be up at
 	 * anytime
@@ -2205,6 +2320,10 @@ static int dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle)
 	}
 
 	pdev->monitor_vdev = vdev;
+
+	/* If smart monitor mode, do not configure monitor ring */
+	if (smart_monitor)
+		return QDF_STATUS_SUCCESS;
 
 	htt_tlv_filter.mpdu_start = 1;
 	htt_tlv_filter.msdu_start = 1;
@@ -2241,12 +2360,12 @@ static int dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle)
 	htt_tlv_filter.enable_fp = 1;
 	htt_tlv_filter.enable_md = 1;
 	htt_tlv_filter.enable_mo = 1;
-
 	/*
 	 * htt_h2t_rx_ring_cfg(soc->htt_handle, pdev_id,
 	 * pdev->rxdma_mon_status_ring.hal_srng,
 	 * RXDMA_MONITOR_STATUS, RX_BUFFER_SIZE, &htt_tlv_filter);
 	 */
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -3400,6 +3519,9 @@ static struct cdp_ctrl_ops dp_ops_ctrl = {
 	.txrx_peer_set_nawds = dp_peer_set_nawds,
 	.txrx_set_pdev_reo_dest = dp_set_pdev_reo_dest,
 	.txrx_get_pdev_reo_dest = dp_get_pdev_reo_dest,
+	.txrx_set_filter_neighbour_peers = dp_set_filter_neighbour_peers,
+	.txrx_update_filter_neighbour_peers =
+		dp_update_filter_neighbour_peers,
 	/* TODO: Add other functions */
 };
 

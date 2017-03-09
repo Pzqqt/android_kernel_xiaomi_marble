@@ -150,10 +150,12 @@ cdp_peer_delete(ol_txrx_soc_handle soc, void *peer)
 }
 
 static inline int
-cdp_set_monitor_mode(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
+cdp_set_monitor_mode(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
+			uint8_t smart_monitor)
 {
 	if (soc->ops->cmn_drv_ops->txrx_set_monitor_mode)
-		return soc->ops->cmn_drv_ops->txrx_set_monitor_mode(vdev);
+		return soc->ops->cmn_drv_ops->txrx_set_monitor_mode(vdev,
+					smart_monitor);
 	return 0;
 }
 

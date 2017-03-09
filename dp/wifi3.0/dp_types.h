@@ -678,6 +678,46 @@ struct dp_soc {
 	struct wlan_objmgr_psoc *psoc;
 };
 
+#define MAX_RX_MAC_RINGS 2
+/* Same as NAC_MAX_CLENT */
+#define DP_NAC_MAX_CLIENT  24
+
+/* same as ieee80211_nac_param */
+enum dp_nac_param_cmd {
+	/* IEEE80211_NAC_PARAM_ADD */
+	DP_NAC_PARAM_ADD = 1,
+	/* IEEE80211_NAC_PARAM_DEL */
+	DP_NAC_PARAM_DEL,
+	/* IEEE80211_NAC_PARAM_LIST */
+	DP_NAC_PARAM_LIST,
+};
+
+#define DP_MAC_ADDR_LEN 6
+union dp_align_mac_addr {
+	uint8_t raw[DP_MAC_ADDR_LEN];
+	struct {
+		uint16_t bytes_ab;
+		uint16_t bytes_cd;
+		uint16_t bytes_ef;
+	} align2;
+	struct {
+		uint32_t bytes_abcd;
+		uint16_t bytes_ef;
+	} align4;
+};
+
+/**
+ * struct dp_neighbour_peer - neighbour peer list type for smart mesh
+ * @neighbour_peers_macaddr: neighbour peer's mac address
+ * @neighbour_peer_list_elem: neighbour peer list TAILQ element
+ */
+struct dp_neighbour_peer {
+	/* MAC address of neighbour's peer */
+	union dp_align_mac_addr neighbour_peers_macaddr;
+	/* node in the list of neighbour's peer */
+	TAILQ_ENTRY(dp_neighbour_peer) neighbour_peer_list_elem;
+};
+
 /* PDEV level structure for data path */
 struct dp_pdev {
 	/* PDEV handle from OSIF layer TBD: see if we really need osif_pdev */
@@ -752,6 +792,13 @@ struct dp_pdev {
 	/*tx_mutex for me*/
 	DP_MUTEX_TYPE tx_mutex;
 
+	/* Smart Mesh */
+	bool filter_neighbour_peers;
+	/* smart mesh mutex */
+	qdf_spinlock_t neighbour_peer_mutex;
+	/* Neighnour peer list */
+	TAILQ_HEAD(, dp_neighbour_peer) neighbour_peers_list;
+
 	/* Band steering  */
 	/* TBD */
 
@@ -806,23 +853,6 @@ struct dp_pdev {
 };
 
 struct dp_peer;
-
-union dp_align_mac_addr {
-	uint8_t raw[DP_MAC_ADDR_LEN];
-	struct {
-		uint16_t bytes_ab;
-		uint16_t bytes_cd;
-		uint16_t bytes_ef;
-	} align2;
-	struct {
-		uint32_t bytes_abcd;
-		uint16_t bytes_ef;
-	} align4;
-	struct {
-		uint16_t bytes_ab;
-		uint32_t bytes_cdef;
-	} align4_2;
-};
 
 /* VDEV structure for data path state */
 struct dp_vdev {
