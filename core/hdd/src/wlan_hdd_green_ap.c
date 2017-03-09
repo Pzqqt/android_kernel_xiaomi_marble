@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -31,7 +31,7 @@
 #include <wlan_hdd_misc.h>
 #include "wlan_hdd_green_ap.h"
 #include "wma_api.h"
-#include "cds_concurrency.h"
+#include "wlan_policy_mgr_api.h"
 
 #define GREEN_AP_PS_ON_TIME        (0)
 #define GREEN_AP_PS_DELAY_TIME     (20)

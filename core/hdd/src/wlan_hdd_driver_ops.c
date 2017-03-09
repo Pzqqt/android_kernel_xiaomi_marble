@@ -40,7 +40,7 @@
 #include "wlan_logging_sock_svc.h"
 #include "wma_api.h"
 #include "wlan_hdd_napi.h"
-#include "cds_concurrency.h"
+#include "wlan_policy_mgr_api.h"
 #include "qwlan_version.h"
 #include "bmi.h"
 #include "cdp_txrx_bus.h"
