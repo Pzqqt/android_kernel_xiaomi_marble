@@ -809,6 +809,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_vdev_get_arp_stats_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_iface_offload_stats,
     WMITLV_TAG_STRUC_wmi_request_stats_cmd_sub_struc_param,
+    WMITLV_TAG_STRUC_rssi_ctl_ext,
+    WMITLV_TAG_STRUC_wmi_single_phyerr_ext_rx_hdr,
 } WMITLV_TAG_ID;
 
 /*
@@ -3377,7 +3379,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_CHAN_INFO_EVENTID);
 /* Phy Error Event */
 #define WMITLV_TABLE_WMI_PHYERR_EVENTID(id,op,buf,len)                                                                                                 \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_comb_phyerr_rx_hdr, wmi_comb_phyerr_rx_hdr, hdr, WMITLV_SIZE_FIX)   \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, bufp, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, bufp, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_single_phyerr_ext_rx_hdr, single_phyerr_ext, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PHYERR_EVENTID);
 
 /* TX Pause/Unpause event */
@@ -3425,7 +3428,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PEER_STA_KICKOUT_EVENTID);
 /* Management Rx Event */
 #define WMITLV_TABLE_WMI_MGMT_RX_EVENTID(id,op,buf,len)                                                                                                 \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mgmt_rx_hdr, wmi_mgmt_rx_hdr, hdr, WMITLV_SIZE_FIX)   \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, bufp, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, bufp, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_rssi_ctl_ext, rssi_ctl_ext, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_MGMT_RX_EVENTID);
 
 /* TBTT offset Event */
