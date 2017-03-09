@@ -226,7 +226,7 @@ static void send_oem_reg_rsp_nlink_msg(void)
 			*deviceMode = pAdapter->device_mode;
 			*vdevId = pAdapter->sessionId;
 			(*numInterfaces)++;
-			hdd_notice("numInterfaces: %d, deviceMode: %d, vdevId: %d",
+			hdd_debug("numInterfaces: %d, deviceMode: %d, vdevId: %d",
 				   *numInterfaces, *deviceMode,
 				   *vdevId);
 		}
@@ -240,7 +240,7 @@ static void send_oem_reg_rsp_nlink_msg(void)
 
 	skb_put(skb, NLMSG_SPACE((sizeof(tAniMsgHdr) + aniHdr->length)));
 
-	hdd_notice("sending App Reg Response length (%d) to process pid (%d)",
+	hdd_debug("sending App Reg Response length: %d to pid: %d",
 		   aniHdr->length, p_hdd_ctx->oem_pid);
 
 	(void)nl_srv_ucast_oem(skb, p_hdd_ctx->oem_pid, MSG_DONTWAIT);
@@ -282,7 +282,7 @@ static void send_oem_err_rsp_nlink_msg(int32_t app_pid, uint8_t error_code)
 
 	skb_put(skb, NLMSG_SPACE(sizeof(tAniMsgHdr) + aniHdr->length));
 
-	hdd_notice("sending oem error response to process pid (%d)", app_pid);
+	hdd_debug("sending oem error response to pid: %d", app_pid);
 
 	(void)nl_srv_ucast_oem(skb, app_pid, MSG_DONTWAIT);
 }
@@ -336,7 +336,7 @@ void hdd_send_oem_data_rsp_msg(struct oem_data_rsp *oem_data_rsp)
 
 	skb_put(skb, NLMSG_SPACE((sizeof(tAniMsgHdr) + ani_hdr->length)));
 
-	hdd_notice("sending Oem Data Response of len (%d) to process pid (%d)",
+	hdd_debug("sending Oem Data Response of len : %d to pid: %d",
 		   oem_data_rsp->rsp_len, p_hdd_ctx->oem_pid);
 
 	(void)nl_srv_ucast_oem(skb, p_hdd_ctx->oem_pid, MSG_DONTWAIT);
@@ -379,8 +379,6 @@ static QDF_STATUS oem_process_data_req_msg(int oem_data_len, char *oem_data)
 
 	oem_data_req.data_len = oem_data_len;
 	qdf_mem_copy(oem_data_req.data, oem_data, oem_data_len);
-
-	hdd_notice("calling sme_oem_data_req");
 
 	status = sme_oem_data_req(p_hdd_ctx->hHal, &oem_data_req);
 
@@ -543,7 +541,7 @@ static int oem_process_channel_info_req_msg(int numOfChannels, char *chanList)
 
 	skb_put(skb, NLMSG_SPACE((sizeof(tAniMsgHdr) + aniHdr->length)));
 
-	hdd_notice("sending channel info resp for num channels (%d) to pid (%d)",
+	hdd_debug("sending channel info resp for num channels (%d) to pid (%d)",
 		   numOfChannels, p_hdd_ctx->oem_pid);
 
 	(void)nl_srv_ucast_oem(skb, p_hdd_ctx->oem_pid, MSG_DONTWAIT);
@@ -603,7 +601,7 @@ static int oem_process_set_cap_req_msg(int oem_cap_len,
 
 	skb_put(skb, NLMSG_SPACE(sizeof(tAniMsgHdr) + ani_hdr->length));
 
-	hdd_info("sending oem response to process pid %d", app_pid);
+	hdd_debug("sending oem response to pid %d", app_pid);
 
 	(void)nl_srv_ucast_oem(skb, app_pid, MSG_DONTWAIT);
 
@@ -796,20 +794,20 @@ static int oem_app_reg_req_handler(struct hdd_context_s *hdd_ctx,
 	char *sign_str = NULL;
 
 	/* Registration request is only allowed for Qualcomm Application */
-	hdd_info("Received App Reg Req from App process pid(%d), len(%d)",
-			pid, msg_hdr->length);
+	hdd_debug("Received App Req Req from App pid: %d len: %d",
+			   pid, msg_hdr->length);
 
 	sign_str = (char *)((char *)msg_hdr + sizeof(tAniMsgHdr));
 	if ((OEM_APP_SIGNATURE_LEN == msg_hdr->length) &&
 			(0 == strncmp(sign_str, OEM_APP_SIGNATURE_STR,
 				      OEM_APP_SIGNATURE_LEN))) {
-		hdd_info("Valid App Reg Req from oem app process pid(%d)", pid);
+		hdd_debug("Valid App Req Req from oem app pid: %d", pid);
 
 		hdd_ctx->oem_app_registered = true;
 		hdd_ctx->oem_pid = pid;
 		send_oem_reg_rsp_nlink_msg();
 	} else {
-		hdd_err("Invalid signature in App Reg Req from pid(%d)", pid);
+		hdd_err("Invalid signature in App Reg Req from pid: %d", pid);
 		send_oem_err_rsp_nlink_msg(pid, OEM_ERR_INVALID_SIGNATURE);
 		return -EPERM;
 	}
@@ -828,7 +826,7 @@ static int oem_app_reg_req_handler(struct hdd_context_s *hdd_ctx,
 static int oem_data_req_handler(struct hdd_context_s *hdd_ctx,
 				tAniMsgHdr *msg_hdr, int pid)
 {
-	hdd_info("Received Oem Data Request length(%d) from pid: %d",
+	hdd_debug("Received Oem Data Request length: %d from pid: %d",
 			msg_hdr->length, pid);
 
 	if ((!hdd_ctx->oem_app_registered) ||
@@ -865,7 +863,7 @@ static int oem_data_req_handler(struct hdd_context_s *hdd_ctx,
 static int oem_chan_info_req_handler(struct hdd_context_s *hdd_ctx,
 					tAniMsgHdr *msg_hdr, int pid)
 {
-	hdd_info("Received channel info request, num channel(%d) from pid: %d",
+	hdd_debug("Received channel info request, num channel(%d) from pid: %d",
 			msg_hdr->length, pid);
 
 	if ((!hdd_ctx->oem_app_registered) ||

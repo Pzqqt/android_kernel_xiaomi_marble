@@ -1927,7 +1927,7 @@ static void hdd_stop_dhcp_ind(hdd_adapter_t *adapter)
 {
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	hdd_warn("DHCP stop indicated through power save");
+	hdd_debug("DHCP stop indicated through power save");
 	sme_dhcp_stop_ind(hdd_ctx->hHal, adapter->device_mode,
 			  adapter->macAddressCurrent.bytes,
 			  adapter->sessionId);

@@ -1209,7 +1209,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		pHostapdState->bssState = BSS_START;
 
 		/* Set default key index */
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
 			"%s: default key index %hu", __func__,
 			pHddApCtx->wep_def_key_idx);
 

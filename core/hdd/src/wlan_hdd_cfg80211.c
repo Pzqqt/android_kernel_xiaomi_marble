@@ -4112,7 +4112,7 @@ __wlan_hdd_cfg80211_get_wifi_info(struct wiphy *wiphy,
 	}
 
 	if (tb_vendor[QCA_WLAN_VENDOR_ATTR_WIFI_INFO_DRIVER_VERSION]) {
-		hdd_err("Rcvd req for Driver version");
+		hdd_debug("Rcvd req for Driver version");
 		strlcpy(driver_version, QWLAN_VERSIONSTR,
 			sizeof(driver_version));
 		skb_len += strlen(driver_version) + 1;
@@ -4609,8 +4609,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		vendor_ie_present = true;
 		hdd_debug("Access policy vendor ie present.attr_len %d",
 			attr_len);
-		qdf_trace_hex_dump(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-			&vendor_ie[0], attr_len);
 	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_ACCESS_POLICY]) {
@@ -7068,7 +7066,7 @@ static int hdd_set_reset_bpf_offload(hdd_context_t *hdd_ctx,
 	bpf_set_offload->session_id = adapter->sessionId;
 
 	hdd_debug("BPF set instructions");
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
 			   bpf_set_offload->program, prog_len);
 
 	/* Parse and fetch filter Id */
@@ -12396,7 +12394,7 @@ struct cfg80211_bss *wlan_hdd_cfg80211_inform_bss_frame(hdd_adapter_t *pAdapter,
 	/* Supplicant takes the signal strength in terms of mBm(100*dBm) */
 	rssi = QDF_MIN(rssi, 0) * 100;
 
-	hdd_log(LOG1, "BSSID: " MAC_ADDRESS_STR " Channel:%d RSSI:%d TSF %u",
+	hdd_debug("BSSID: " MAC_ADDRESS_STR " Channel:%d RSSI:%d TSF %u",
 	       MAC_ADDR_ARRAY(mgmt->bssid), chan->center_freq,
 	       (int)(rssi / 100),
 	       bss_desc->timeStamp[0]);
