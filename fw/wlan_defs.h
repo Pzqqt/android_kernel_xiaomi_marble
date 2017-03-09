@@ -283,10 +283,10 @@ typedef struct {
 #else
   #define A_RATEMASK A_UINT32
 #endif
- 
+
 typedef A_UINT8 A_RATE;
 typedef A_UINT8 A_RATECODE;
- 
+
 #define A_RATEMASK_NUM_OCTET (sizeof (A_RATEMASK))
 #define A_RATEMASK_NUM_BITS ((sizeof (A_RATEMASK)) << 3)
 
