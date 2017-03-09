@@ -140,7 +140,7 @@ int hif_napi_create(struct hif_opaque_softc   *hif_ctx,
 			goto hnc_err;
 		}
 
-		HIF_INFO("%s: NAPI structures initialized, rc=%d",
+		HIF_DBG("%s: NAPI structures initialized, rc=%d",
 			 __func__, rc);
 	}
 	for (i = 0; i < hif->ce_count; i++) {
@@ -186,7 +186,7 @@ int hif_napi_create(struct hif_opaque_softc   *hif_ctx,
 		 * protection as there should be no-one around yet
 		 */
 		napid->ce_map |= (0x01 << i);
-		HIF_INFO("%s: NAPI id %d created for pipe %d", __func__,
+		HIF_DBG("%s: NAPI id %d created for pipe %d", __func__,
 			 napii->id, i);
 	}
 	NAPI_DEBUG("NAPI ids created for all applicable pipes");
@@ -242,7 +242,7 @@ int hif_napi_destroy(struct hif_opaque_softc *hif_ctx,
 		if (hif->napi_data.state == HIF_NAPI_CONF_UP) {
 			if (force) {
 				napi_disable(&(napii->napi));
-				HIF_INFO("%s: NAPI entry %d force disabled",
+				HIF_DBG("%s: NAPI entry %d force disabled",
 					 __func__, id);
 				NAPI_DEBUG("NAPI %d force disabled", id);
 			} else {
@@ -265,7 +265,7 @@ int hif_napi_destroy(struct hif_opaque_softc *hif_ctx,
 
 			napid->ce_map &= ~(0x01 << ce);
 			napii->scale  = 0;
-			HIF_INFO("%s: NAPI %d destroyed\n", __func__, id);
+			HIF_DBG("%s: NAPI %d destroyed\n", __func__, id);
 
 			/* if there are no active instances and
 			 * if they are all destroyed,
@@ -278,7 +278,7 @@ int hif_napi_destroy(struct hif_opaque_softc *hif_ctx,
 				qdf_spinlock_destroy(&(napid->lock));
 				memset(napid,
 				       0, sizeof(struct qca_napi_data));
-				HIF_INFO("%s: no NAPI instances. Zapped.",
+				HIF_DBG("%s: no NAPI instances. Zapped.",
 					 __func__);
 			}
 		}
@@ -323,7 +323,7 @@ int hif_napi_lro_flush_cb_register(struct hif_opaque_softc *hif_hdl,
 				napii = &(napid->napis[i]);
 				napii->lro_flush_cb = lro_flush_handler;
 				napii->lro_ctx = data;
-				HIF_ERROR("Registering LRO for ce_id %d NAPI callback for %d flush_cb %p, lro_data %p\n",
+				HIF_DBG("Registering LRO for ce_id %d NAPI callback for %d flush_cb %p, lro_data %p\n",
 					i, napii->id, napii->lro_flush_cb,
 					napii->lro_ctx);
 				rc++;
@@ -359,7 +359,7 @@ void hif_napi_lro_flush_cb_deregister(struct hif_opaque_softc *hif_hdl,
 			ce_state = scn->ce_id_to_state[i];
 			if ((ce_state != NULL) && (ce_state->htt_rx_data)) {
 				napii = &(napid->napis[i]);
-				HIF_ERROR("deRegistering LRO for ce_id %d NAPI callback for %d flush_cb %p, lro_data %p\n",
+				HIF_DBG("deRegistering LRO for ce_id %d NAPI callback for %d flush_cb %p, lro_data %p\n",
 					i, napii->id, napii->lro_flush_cb,
 					napii->lro_ctx);
 				qdf_spin_lock_bh(&napii->lro_unloading_lock);
@@ -492,25 +492,25 @@ int hif_napi_event(struct hif_opaque_softc *hif_ctx, enum qca_napi_event event,
 	case NAPI_EVT_INT_STATE: {
 		int on = (data != ((void *)0));
 
-		HIF_INFO("%s: recved evnt: STATE_CMD %d; v = %d (state=0x%0x)",
+		HIF_DBG("%s: recved evnt: STATE_CMD %d; v = %d (state=0x%0x)",
 			 __func__, event,
 			 on, prev_state);
 		if (on)
 			if (prev_state & HIF_NAPI_CONF_UP) {
-				HIF_INFO("%s: duplicate NAPI conf ON msg",
+				HIF_DBG("%s: duplicate NAPI conf ON msg",
 					 __func__);
 			} else {
-				HIF_INFO("%s: setting state to ON",
+				HIF_DBG("%s: setting state to ON",
 					 __func__);
 				napid->state |= HIF_NAPI_CONF_UP;
 			}
 		else /* off request */
 			if (prev_state & HIF_NAPI_CONF_UP) {
-				HIF_INFO("%s: setting state to OFF",
+				HIF_DBG("%s: setting state to OFF",
 				 __func__);
 				napid->state &= ~HIF_NAPI_CONF_UP;
 			} else {
-				HIF_INFO("%s: duplicate NAPI conf OFF msg",
+				HIF_DBG("%s: duplicate NAPI conf OFF msg",
 					 __func__);
 			}
 		break;
@@ -640,7 +640,7 @@ int hif_napi_event(struct hif_opaque_softc *hif_ctx, enum qca_napi_event event,
 				}
 		}
 	} else {
-		HIF_INFO("%s: no change in hif napi state (still %d)",
+		HIF_DBG("%s: no change in hif napi state (still %d)",
 			 __func__, prev_state);
 	}
 
@@ -1520,7 +1520,7 @@ static inline void hif_napi_bl_irq(struct qca_napi_data *napid, bool bl_flag)
 		else
 			irq_modify_status(napid->napis[i].irq,
 					  IRQ_NO_BALANCING, 0);
-		HIF_INFO("%s: bl_flag %d CE %d", __func__, bl_flag, i);
+		HIF_DBG("%s: bl_flag %d CE %d", __func__, bl_flag, i);
 	}
 }
 

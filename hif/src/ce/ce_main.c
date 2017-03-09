@@ -1113,7 +1113,7 @@ void hif_enable_fastpath(struct hif_opaque_softc *hif_ctx)
 		HIF_INFO("%s, srng rings do not support fastpath", __func__);
 		return;
 	}
-	HIF_INFO("%s, Enabling fastpath mode", __func__);
+	HIF_DBG("%s, Enabling fastpath mode", __func__);
 	scn->fastpath_mode_on = true;
 }
 
@@ -1172,7 +1172,7 @@ void ce_h2t_tx_ce_cleanup(struct CE_handle *ce_hdl)
 		return;
 
 	if (sc->fastpath_mode_on && ce_state->htt_tx_data) {
-		HIF_INFO("%s %d Fastpath mode ON, Cleaning up HTT Tx CE",
+		HIF_DBG("%s %d Fastpath mode ON, Cleaning up HTT Tx CE",
 			 __func__, __LINE__);
 		sw_index = src_ring->sw_index;
 		write_index = src_ring->sw_index;
@@ -1666,7 +1666,7 @@ static int hif_completion_thread_startup(struct HIF_CE_state *hif_state)
 		attr = hif_state->host_ce_config[pipe_num];
 		if (attr.src_nentries) {
 			/* pipe used to send to target */
-			HIF_INFO_MED("%s: pipe_num:%d pipe_info:0x%p",
+			HIF_DBG("%s: pipe_num:%d pipe_info:0x%p",
 					 __func__, pipe_num, pipe_info);
 			ce_send_cb_register(pipe_info->ce_hdl,
 					    hif_pci_ce_send_done, pipe_info,
@@ -2499,17 +2499,17 @@ int hif_config_ce(struct hif_softc *scn)
 	}
 	scn->athdiag_procfs_inited = true;
 
-	HIF_INFO_MED("%s: ce_init done", __func__);
+	HIF_DBG("%s: ce_init done", __func__);
 
 	init_tasklet_workers(hif_hdl);
 	hif_fake_apps_init_ctx(scn);
 
-	HIF_TRACE("%s: X, ret = %d", __func__, rv);
+	HIF_DBG("%s: X, ret = %d", __func__, rv);
 
 #ifdef ADRASTEA_SHADOW_REGISTERS
-	HIF_INFO("%s, Using Shadow Registers instead of CE Registers", __func__);
+	HIF_DBG("%s, Using Shadow Registers instead of CE Registers", __func__);
 	for (i = 0; i < NUM_SHADOW_REGISTERS; i++) {
-		HIF_INFO("%s Shadow Register%d is mapped to address %x",
+		HIF_DBG("%s Shadow Register%d is mapped to address %x",
 			  __func__, i,
 			  (A_TARGET_READ(scn, (SHADOW_ADDRESS(i))) << 2));
 	}
@@ -3010,7 +3010,7 @@ static inline void hif_config_rri_on_ddr(struct hif_softc *scn)
 	low_paddr  = BITS0_TO_31(paddr_rri_on_ddr);
 	high_paddr = BITS32_TO_35(paddr_rri_on_ddr);
 
-	HIF_INFO("%s using srri and drri from DDR", __func__);
+	HIF_DBG("%s using srri and drri from DDR", __func__);
 
 	WRITE_CE_DDR_ADDRESS_FOR_RRI_LOW(scn, low_paddr);
 	WRITE_CE_DDR_ADDRESS_FOR_RRI_HIGH(scn, high_paddr);

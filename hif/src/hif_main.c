@@ -544,7 +544,7 @@ QDF_STATUS hif_enable(struct hif_opaque_softc *hif_ctx, struct device *dev,
 
 	scn->hif_init_done = true;
 
-	HIF_TRACE("%s: OK", __func__);
+	HIF_DBG("%s: OK", __func__);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -568,7 +568,7 @@ void hif_disable(struct hif_opaque_softc *hif_ctx, enum hif_disable_type type)
 
 	scn->notice_send = false;
 
-	HIF_INFO("%s: X", __func__);
+	HIF_DBG("%s: X", __func__);
 }
 
 void hif_display_stats(struct hif_opaque_softc *hif_ctx)
