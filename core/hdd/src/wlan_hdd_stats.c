@@ -1016,7 +1016,8 @@ static void hdd_link_layer_process_radio_stats(hdd_adapter_t *pAdapter,
 		       " onTimeScan: %u onTimeNbd: %u"
 		       " onTimeGscan: %u onTimeRoamScan: %u"
 		       " onTimePnoScan: %u  onTimeHs20: %u"
-		       " numChannels: %u total_num_tx_pwr_levels: %u",
+		       " numChannels: %u total_num_tx_pwr_levels: %u"
+		       " on_time_host_scan: %u, on_time_lpi_scan: %u",
 		       pWifiRadioStat->radio, pWifiRadioStat->onTime,
 		       pWifiRadioStat->txTime, pWifiRadioStat->rxTime,
 		       pWifiRadioStat->onTimeScan, pWifiRadioStat->onTimeNbd,
@@ -1024,7 +1025,9 @@ static void hdd_link_layer_process_radio_stats(hdd_adapter_t *pAdapter,
 		       pWifiRadioStat->onTimeRoamScan,
 		       pWifiRadioStat->onTimePnoScan,
 		       pWifiRadioStat->onTimeHs20, pWifiRadioStat->numChannels,
-		       pWifiRadioStat->total_num_tx_power_levels);
+		       pWifiRadioStat->total_num_tx_power_levels,
+		       pWifiRadioStat->on_time_host_scan,
+		       pWifiRadioStat->on_time_lpi_scan);
 		pWifiRadioStat++;
 	}
 

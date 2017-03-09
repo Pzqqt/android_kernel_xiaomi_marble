@@ -1484,6 +1484,8 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 	WMA_LOGD("on_time_pno_scan: %u on_time_hs20: %u num_channels: %u",
 		radio_stats->on_time_pno_scan, radio_stats->on_time_hs20,
 		radio_stats->num_channels);
+	WMA_LOGD("on_time_host_scan: %u, on_time_lpi_scan: %u",
+		radio_stats->on_time_host_scan, radio_stats->on_time_lpi_scan);
 
 	link_stats_results->paramId = WMI_LINK_STATS_RADIO;
 	link_stats_results->rspId = fixed_param->request_id;
@@ -1519,6 +1521,8 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 	rs_results->total_num_tx_power_levels = 0;
 	rs_results->tx_time_per_power_level = NULL;
 	rs_results->numChannels = radio_stats->num_channels;
+	rs_results->on_time_host_scan = radio_stats->on_time_host_scan;
+	rs_results->on_time_lpi_scan = radio_stats->on_time_lpi_scan;
 	rs_results->channels = NULL;
 
 	if (rs_results->numChannels) {
@@ -1891,12 +1895,14 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 	wmi_iface_link_stats_event_fixed_param *fixed_param;
 	wmi_iface_link_stats *link_stats;
 	wmi_wmm_ac_stats *ac_stats;
+	wmi_iface_offload_stats *offload_stats;
 	tSirLLStatsResults *link_stats_results;
-	uint8_t *results, *t_link_stats, *t_ac_stats;
-	uint32_t next_res_offset, next_ac_offset, count;
-	uint32_t roaming_offset, roaming_size;
+	uint8_t *results, *t_link_stats, *t_ac_stats, *t_offload_stats;
+	uint32_t next_res_offset, next_ac_offset, next_offload_offset, count;
+	uint32_t roaming_offset, size;
 	size_t link_stats_size, ac_stats_size, iface_info_size;
-	size_t link_stats_results_size;
+	size_t link_stats_results_size, offload_stats_size;
+	size_t total_ac_size, total_offload_size;
 
 	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 
@@ -1921,20 +1927,30 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 	 * wmi_iface_link_stats_event_fixed_param fixed_param;
 	 * wmi_iface_link_stats iface_link_stats;
 	 * iface_link_stats->num_ac * size of(struct wmi_wmm_ac_stats)
+	 * fixed_param->num_offload_stats * size of(wmi_iface_offload_stats);
 	 */
 	fixed_param = param_tlvs->fixed_param;
 	link_stats = param_tlvs->iface_link_stats;
 	ac_stats = param_tlvs->ac;
+	offload_stats = param_tlvs->iface_offload_stats;
 
-	if (!fixed_param || !link_stats || (link_stats->num_ac && !ac_stats)) {
+	if (!fixed_param || !link_stats || (link_stats->num_ac && !ac_stats) ||
+	    (fixed_param->num_offload_stats && !offload_stats)) {
 		WMA_LOGA("%s: Invalid param_tlvs for Iface Stats", __func__);
 		return -EINVAL;
 	}
 
 	link_stats_size = sizeof(tSirWifiIfaceStat);
 	iface_info_size = sizeof(tSirWifiInterfaceInfo);
+
 	ac_stats_size = sizeof(tSirWifiWmmAcStat);
-	link_stats_results_size = sizeof(*link_stats_results) + link_stats_size;
+	offload_stats_size = sizeof(struct wifi_iface_offload_stat);
+
+	total_ac_size = ac_stats_size * WIFI_AC_MAX;
+	total_offload_size = offload_stats_size * WMI_OFFLOAD_STATS_TYPE_MAX +
+			      member_size(tSirWifiIfaceStat, num_offload_stats);
+
+	link_stats_results_size = sizeof(*link_stats_results) +	link_stats_size;
 
 	link_stats_results = qdf_mem_malloc(link_stats_results_size);
 	if (!link_stats_results) {
@@ -1952,23 +1968,34 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 	link_stats_results->peer_event_number = 0;
 	link_stats_results->moreResultToFollow = 0;
 
+	/* results is copied to tSirWifiIfaceStat in upper layer
+	 *   tSirWifiIfaceStat
+	 *    - tSirWifiInterfaceInfo (all fields except roaming is
+	 *                             filled by host in the upper layer)
+	 *    - various members of tSirWifiIfaceStat (from wmi_iface_link_stats)
+	 *    - ACs information (from wmi_wmm_ac_stats)
+	 *    - num_offload_stats (from fixed param)
+	 *    - offload stats (from wmi_iface_offload_stats)
+	 */
+
 	results = (uint8_t *) link_stats_results->results;
 	t_link_stats = (uint8_t *) link_stats;
 	t_ac_stats = (uint8_t *) ac_stats;
+	t_offload_stats = (uint8_t *) offload_stats;
 
 	/* Copy roaming state */
 	roaming_offset = offsetof(tSirWifiInterfaceInfo, roaming);
-	roaming_size = member_size(tSirWifiInterfaceInfo, roaming);
+	size = member_size(tSirWifiInterfaceInfo, roaming);
 
-	qdf_mem_copy(results + roaming_offset, &link_stats->roam_state,
-		     roaming_size);
+	qdf_mem_copy(results + roaming_offset, &link_stats->roam_state, size);
 
-	qdf_mem_copy(results + iface_info_size,
+	next_res_offset = iface_info_size;
+	qdf_mem_copy(results + next_res_offset,
 		     t_link_stats + WMI_TLV_HDR_SIZE,
 		     link_stats_size - iface_info_size -
-		     WIFI_AC_MAX * ac_stats_size);
+		     total_ac_size - total_offload_size);
 
-	next_res_offset = link_stats_size - WIFI_AC_MAX * ac_stats_size;
+	next_res_offset = link_stats_size - total_ac_size - total_offload_size;
 	next_ac_offset = WMI_TLV_HDR_SIZE;
 
 	for (count = 0; count < link_stats->num_ac; count++) {
@@ -1978,6 +2005,23 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 			     t_ac_stats + next_ac_offset, ac_stats_size);
 		next_res_offset += ac_stats_size;
 		next_ac_offset += sizeof(*ac_stats);
+	}
+
+	next_res_offset = link_stats_size - total_offload_size;
+	/* copy num_offload_stats into result */
+	size =  member_size(tSirWifiIfaceStat, num_offload_stats);
+	qdf_mem_copy(results + next_res_offset, &fixed_param->num_offload_stats,
+		     size);
+
+	next_res_offset += size;
+	next_offload_offset = WMI_TLV_HDR_SIZE;
+
+	for (count = 0; count < fixed_param->num_offload_stats; count++) {
+		qdf_mem_copy(results + next_res_offset,
+			     t_offload_stats + next_offload_offset,
+			     offload_stats_size);
+		next_res_offset += offload_stats_size;
+		next_offload_offset += sizeof(*offload_stats);
 	}
 
 	/* call hdd callback with Link Layer Statistics
