@@ -620,7 +620,7 @@ static void ol_tx_set_desc_global_pool_size(uint32_t num_msdu_desc)
 	pdev->num_msdu_desc = num_msdu_desc;
 	if (!ol_tx_get_is_mgmt_over_wmi_enabled())
 		pdev->num_msdu_desc += TX_FLOW_MGMT_POOL_SIZE;
-	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "Global pool size: %d\n",
+	TXRX_PRINT(TXRX_PRINT_LEVEL_INFO2, "Global pool size: %d\n",
 		pdev->num_msdu_desc);
 	return;
 }
@@ -1311,7 +1311,7 @@ ol_txrx_pdev_post_attach(struct cdp_pdev *ppdev)
 		desc_per_page = desc_per_page >> 1;
 	}
 	pdev->tx_desc.page_divider = (sig_bit - 1);
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
 		"page_divider 0x%x, offset_filter 0x%x num elem %d, ol desc num page %d, ol desc per page %d",
 		pdev->tx_desc.page_divider, pdev->tx_desc.offset_filter,
 		desc_pool_size, pdev->tx_desc.desc_pages.num_pages,
@@ -2349,7 +2349,7 @@ ol_txrx_peer_attach(struct cdp_vdev *pvdev, uint8_t *peer_mac_addr)
 	TAILQ_FOREACH(temp_peer, &vdev->peer_list, peer_list_elem) {
 		if (!ol_txrx_peer_find_mac_addr_cmp(&temp_peer->mac_addr,
 			(union ol_txrx_align_mac_addr_t *)peer_mac_addr)) {
-			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+			TXRX_PRINT(TXRX_PRINT_LEVEL_INFO1,
 				"vdev_id %d (%02x:%02x:%02x:%02x:%02x:%02x) already exsist.\n",
 				vdev->vdev_id,
 				peer_mac_addr[0], peer_mac_addr[1],
@@ -2737,7 +2737,7 @@ ol_txrx_remove_peers_for_vdev(struct cdp_vdev *pvdev,
 		}
 		/* self peer is deleted last */
 		if (peer == TAILQ_FIRST(&vdev->peer_list)) {
-			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+			TXRX_PRINT(TXRX_PRINT_LEVEL_INFO1,
 				   "%s: self peer removed by caller ",
 				   __func__);
 			break;
@@ -2772,7 +2772,7 @@ ol_txrx_remove_peers_for_vdev_no_lock(struct cdp_vdev *pvdev,
 	ol_txrx_peer_handle peer = NULL;
 
 	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
-		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+		TXRX_PRINT(TXRX_PRINT_LEVEL_INFO1,
 			   "%s: peer found for vdev id %d. deleting the peer",
 			   __func__, vdev->vdev_id);
 		callback(callback_context, (uint8_t *)&vdev->mac_addr,
@@ -3314,7 +3314,7 @@ static void ol_txrx_peer_detach_force_delete(void *ppeer)
 	ol_txrx_peer_handle peer = ppeer;
 	ol_txrx_pdev_handle pdev = peer->vdev->pdev;
 
-	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "%s peer %p, peer->ref_cnt %d",
+	TXRX_PRINT(TXRX_PRINT_LEVEL_INFO1, "%s peer %p, peer->ref_cnt %d",
 		__func__, peer, qdf_atomic_read(&peer->ref_cnt));
 
 	/* Clear the peer_id_to_obj map entries */
@@ -3365,7 +3365,7 @@ static void ol_txrx_dump_tx_desc(ol_txrx_pdev_handle pdev_handle)
 
 	num_free = ol_tx_get_total_free_desc(pdev);
 
-	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+	TXRX_PRINT(TXRX_PRINT_LEVEL_INFO1,
 		   "total tx credit %d num_free %d",
 		   total, num_free);
 
@@ -4611,7 +4611,7 @@ void ol_rx_data_process(struct ol_txrx_peer_t *peer,
 	if (!data_rx) {
 		struct ol_rx_cached_buf *cache_buf;
 
-		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+		TXRX_PRINT(TXRX_PRINT_LEVEL_WARN,
 			   "Data on the peer before it is registered!!!");
 		buf = rx_buf_list;
 		while (buf) {
@@ -4650,7 +4650,7 @@ void ol_rx_data_process(struct ol_txrx_peer_t *peer,
 
 			pkt = cds_alloc_ol_rx_pkt(sched_ctx);
 			if (!pkt) {
-				TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+				TXRX_PRINT(TXRX_PRINT_LEVEL_INFO1,
 					   "No available Rx message buffer");
 				goto drop_rx_buf;
 			}
@@ -4669,7 +4669,7 @@ void ol_rx_data_process(struct ol_txrx_peer_t *peer,
 	return;
 
 drop_rx_buf:
-	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "Dropping rx packets");
+	TXRX_PRINT(TXRX_PRINT_LEVEL_INFO1, "Dropping rx packets");
 	buf = rx_buf_list;
 	while (buf) {
 		next_buf = qdf_nbuf_queue_next(buf);
@@ -4928,7 +4928,7 @@ static void ol_register_lro_flush_cb(void (lro_flush_cb)(void *),
 		goto out;
 	}
 	if (pdev->lro_info.lro_flush_cb != NULL) {
-		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+		TXRX_PRINT(TXRX_PRINT_LEVEL_INFO1,
 			   "%s: LRO already initialised\n", __func__);
 		if (pdev->lro_info.lro_flush_cb != lro_flush_cb) {
 			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
@@ -4976,7 +4976,7 @@ static void ol_deregister_lro_flush_cb(void (lro_deinit_cb)(void *))
 		return;
 	}
 	if (qdf_atomic_dec_and_test(&pdev->lro_info.lro_dev_cnt) == 0) {
-		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+		TXRX_PRINT(TXRX_PRINT_LEVEL_INFO1,
 			   "%s: Other LRO enabled modules still exist, do not unregister the lro_flush_cb\n", __func__);
 		return;
 	}
