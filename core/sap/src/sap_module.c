@@ -378,10 +378,11 @@ QDF_STATUS wlansap_start(void *pCtx, enum tQDF_ADAPTER_MODE mode,
 			__func__, qdf_ret_status);
 		return QDF_STATUS_E_FAILURE;
 	}
-
+#ifdef NAPIER_SCAN
 	/* Register with scan component */
 	pSapCtx->req_id = ucfg_scan_register_requester(pmac->psoc, "SAP",
 					sap_scan_event_callback, pSapCtx);
+#endif
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -422,7 +423,9 @@ QDF_STATUS wlansap_stop(void *pCtx)
 			  __func__);
 		return QDF_STATUS_E_FAULT;
 	}
+#ifdef NAPIER_SCAN
 	ucfg_scan_unregister_requester(pmac->psoc, pSapCtx->req_id);
+#endif
 	sap_free_roam_profile(&pSapCtx->csr_roamProfile);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_mutex_destroy(&pSapCtx->SapGlobalLock))) {
