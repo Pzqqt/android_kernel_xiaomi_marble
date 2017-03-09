@@ -259,9 +259,6 @@ typedef struct hdd_wext_state_s {
 	/**Counter measure state, Started/Stopped*/
 	bool mTKIPCounterMeasures;
 
-	/**Completion Variable*/
-	struct completion completion_var;
-
 #ifdef FEATURE_WLAN_ESE
 	/* ESE state variables */
 	bool isESEConnection;
