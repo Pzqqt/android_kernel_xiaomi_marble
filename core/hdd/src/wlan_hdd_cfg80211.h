@@ -328,7 +328,7 @@ int wlan_hdd_cfg80211_update_apies(hdd_adapter_t *adapter);
 int wlan_hdd_request_pre_cac(uint8_t channel);
 int wlan_hdd_sap_cfg_dfs_override(hdd_adapter_t *adapter);
 
-enum cds_con_mode wlan_hdd_convert_nl_iftype_to_hdd_type(
+enum policy_mgr_con_mode wlan_hdd_convert_nl_iftype_to_hdd_type(
 					enum nl80211_iftype type);
 
 int wlan_hdd_disable_dfs_chan_scan(hdd_context_t *hdd_ctx,

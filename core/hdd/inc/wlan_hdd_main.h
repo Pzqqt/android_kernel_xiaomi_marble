@@ -278,21 +278,6 @@
 
 #define SCAN_REJECT_THRESHOLD_TIME 300000 /* Time is in msec, equal to 5 mins */
 
-/*
- * @eHDD_SCAN_REJECT_DEFAULT: default value
- * @eHDD_CONNECTION_IN_PROGRESS: connection is in progress
- * @eHDD_REASSOC_IN_PROGRESS: reassociation is in progress
- * @eHDD_EAPOL_IN_PROGRESS: STA/P2P-CLI is in middle of EAPOL/WPS exchange
- * @eHDD_SAP_EAPOL_IN_PROGRESS: SAP/P2P-GO is in middle of EAPOL/WPS exchange
- */
-enum scan_reject_states {
-	eHDD_SCAN_REJECT_DEFAULT = 0,
-	eHDD_CONNECTION_IN_PROGRESS,
-	eHDD_REASSOC_IN_PROGRESS,
-	eHDD_EAPOL_IN_PROGRESS,
-	eHDD_SAP_EAPOL_IN_PROGRESS,
-};
-
 /* Default Psoc id */
 #define DEFAULT_PSOC_ID 1
 

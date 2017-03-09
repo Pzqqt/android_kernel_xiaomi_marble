@@ -88,7 +88,7 @@
 #include "wlan_hdd_stats.h"
 #endif
 #include "cds_api.h"
-#include "cds_concurrency.h"
+#include "wlan_policy_mgr_api.h"
 #include "qwlan_version.h"
 #include "wlan_hdd_memdump.h"
 
@@ -1214,12 +1214,14 @@ int wlan_hdd_sap_cfg_dfs_override(hdd_adapter_t *adapter)
 	hdd_adapter_t *con_sap_adapter;
 	tsap_Config_t *sap_config, *con_sap_config;
 	int con_ch;
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	/*
 	 * Check if AP+AP case, once primary AP chooses a DFS
 	 * channel secondary AP should always follow primary APs channel
 	 */
-	if (!cds_concurrent_beaconing_sessions_running())
+	if (!policy_mgr_concurrent_beaconing_sessions_running(
+		hdd_ctx->hdd_psoc))
 		return 0;
 
 	con_sap_adapter = hdd_get_con_sap_adapter(adapter, true);
@@ -2001,7 +2003,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	hdd_debug("get pcl for DO_ACS vendor command");
 
 	/* consult policy manager to get PCL */
-	status = cds_get_pcl(CDS_SAP_MODE,
+	status = policy_mgr_get_pcl(hdd_ctx->hdd_psoc, PM_SAP_MODE,
 				sap_config->acs_cfg.pcl_channels,
 				&sap_config->acs_cfg.pcl_ch_count,
 				sap_config->acs_cfg.pcl_channels_weight_list,
@@ -2690,7 +2692,7 @@ __wlan_hdd_cfg80211_get_features(struct wiphy *wiphy,
 
 	wlan_hdd_cfg80211_set_feature(feature_flags,
 				QCA_WLAN_VENDOR_FEATURE_SUPPORT_HW_MODE_ANY);
-	if (wma_is_scan_simultaneous_capable())
+	if (policy_mgr_is_scan_simultaneous_capable(hdd_ctx_ptr->hdd_psoc))
 		wlan_hdd_cfg80211_set_feature(feature_flags,
 			QCA_WLAN_VENDOR_FEATURE_OFFCHANNEL_SIMULTANEOUS);
 
@@ -2710,7 +2712,8 @@ __wlan_hdd_cfg80211_get_features(struct wiphy *wiphy,
 			sizeof(feature_flags), feature_flags))
 		goto nla_put_failure;
 
-	ret = wma_get_dbs_hw_modes(&one_by_one_dbs, &two_by_two_dbs);
+	ret = policy_mgr_get_dbs_hw_modes(hdd_ctx_ptr->hdd_psoc,
+		&one_by_one_dbs, &two_by_two_dbs);
 	if (QDF_STATUS_SUCCESS == ret) {
 		if (one_by_one_dbs)
 			dbs_capability = DRV_DBS_CAPABILITY_1X1;
@@ -5794,7 +5797,7 @@ static int __wlan_hdd_cfg80211_get_preferred_freq_list(struct wiphy *wiphy,
 	uint8_t pcl[QDF_MAX_NUM_CHAN], weight_list[QDF_MAX_NUM_CHAN];
 	uint32_t pcl_len = 0;
 	uint32_t freq_list[QDF_MAX_NUM_CHAN];
-	enum cds_con_mode intf_mode;
+	enum policy_mgr_con_mode intf_mode;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_GET_PREFERRED_FREQ_LIST_MAX + 1];
 	struct sk_buff *reply_skb;
 
@@ -5818,14 +5821,15 @@ static int __wlan_hdd_cfg80211_get_preferred_freq_list(struct wiphy *wiphy,
 	intf_mode = nla_get_u32(tb
 		    [QCA_WLAN_VENDOR_ATTR_GET_PREFERRED_FREQ_LIST_IFACE_TYPE]);
 
-	if (intf_mode < CDS_STA_MODE || intf_mode >= CDS_MAX_NUM_OF_MODE) {
+	if (intf_mode < PM_STA_MODE || intf_mode >= PM_MAX_NUM_OF_MODE) {
 		hdd_err("Invalid interface type");
 		return -EINVAL;
 	}
 
 	hdd_debug("Userspace requested pref freq list");
 
-	status = cds_get_pcl(intf_mode, pcl, &pcl_len,
+	status = policy_mgr_get_pcl(hdd_ctx->hdd_psoc,
+				intf_mode, pcl, &pcl_len,
 				weight_list, QDF_ARRAY_SIZE(weight_list));
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("Get pcl failed");
@@ -5914,7 +5918,7 @@ static int __wlan_hdd_cfg80211_set_probable_oper_channel(struct wiphy *wiphy,
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
 	int ret = 0;
-	enum cds_con_mode intf_mode;
+	enum policy_mgr_con_mode intf_mode;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_GET_PREFERRED_FREQ_LIST_MAX + 1];
 	uint32_t channel_hint;
 
@@ -5938,7 +5942,7 @@ static int __wlan_hdd_cfg80211_set_probable_oper_channel(struct wiphy *wiphy,
 	intf_mode = nla_get_u32(tb
 		    [QCA_WLAN_VENDOR_ATTR_PROBABLE_OPER_CHANNEL_IFACE_TYPE]);
 
-	if (intf_mode < CDS_STA_MODE || intf_mode >= CDS_MAX_NUM_OF_MODE) {
+	if (intf_mode < PM_STA_MODE || intf_mode >= PM_MAX_NUM_OF_MODE) {
 		hdd_err("Invalid interface type");
 		return -EINVAL;
 	}
@@ -5952,7 +5956,7 @@ static int __wlan_hdd_cfg80211_set_probable_oper_channel(struct wiphy *wiphy,
 			[QCA_WLAN_VENDOR_ATTR_PROBABLE_OPER_CHANNEL_FREQ]));
 
 	/* check pcl table */
-	if (!cds_allow_concurrency(intf_mode,
+	if (!policy_mgr_allow_concurrency(hdd_ctx->hdd_psoc, intf_mode,
 					channel_hint, HW_MODE_20_MHZ)) {
 		hdd_err("Set channel hint failed due to concurrency check");
 		return -EINVAL;
@@ -5961,12 +5965,12 @@ static int __wlan_hdd_cfg80211_set_probable_oper_channel(struct wiphy *wiphy,
 	if (0 != wlan_hdd_check_remain_on_channel(adapter))
 		hdd_warn("Remain On Channel Pending");
 
-	ret = qdf_reset_connection_update();
+	ret = policy_mgr_reset_connection_update(hdd_ctx->hdd_psoc);
 	if (!QDF_IS_STATUS_SUCCESS(ret))
 		hdd_err("clearing event failed");
 
-	ret = cds_current_connections_update(adapter->sessionId,
-				channel_hint,
+	ret = policy_mgr_current_connections_update(hdd_ctx->hdd_psoc,
+				adapter->sessionId, channel_hint,
 				SIR_UPDATE_REASON_SET_OPER_CHAN);
 	if (QDF_STATUS_E_FAILURE == ret) {
 		/* return in the failure case */
@@ -5981,7 +5985,7 @@ static int __wlan_hdd_cfg80211_set_probable_oper_channel(struct wiphy *wiphy,
 		 * For any other return value it should be a pass
 		 * through
 		 */
-		ret = qdf_wait_for_connection_update();
+		ret = policy_mgr_wait_for_connection_update(hdd_ctx->hdd_psoc);
 		if (!QDF_IS_STATUS_SUCCESS(ret)) {
 			hdd_err("ERROR: qdf wait for event failed!!");
 			return -EINVAL;
@@ -7365,12 +7369,13 @@ static int wlan_hdd_validate_and_get_pre_cac_ch(hdd_context_t *hdd_ctx,
 		 * 6. But, we are in need of a DFS channel. So, going with the
 		 * first channel from the valid channel list.
 		 */
-		status = cds_get_valid_chans(channel_list, &len);
+		status = policy_mgr_get_valid_chans(hdd_ctx->hdd_psoc,
+				channel_list, &len);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			hdd_err("Failed to get channel list");
 			return -EINVAL;
 		}
-		cds_update_with_safe_channel_list(channel_list, &len,
+		policy_mgr_update_with_safe_channel_list(channel_list, &len,
 				pcl_weights, weight_len);
 		ret = wlan_hdd_sap_get_nol(ap_adapter, nol, &nol_len);
 		for (i = 0; i < len; i++) {
@@ -7439,7 +7444,7 @@ int wlan_hdd_request_pre_cac(uint8_t channel)
 	if (0 != wlan_hdd_validate_context(hdd_ctx))
 		return -EINVAL;
 
-	if (cds_get_connection_count() > 1) {
+	if (policy_mgr_get_connection_count(hdd_ctx->hdd_psoc) > 1) {
 		hdd_err("pre cac not allowed in concurrency");
 		return -EINVAL;
 	}
@@ -7593,7 +7598,8 @@ int wlan_hdd_request_pre_cac(uint8_t channel)
 	 * Since current SAP is in 2.4GHz and pre CAC channel is in 5GHz, this
 	 * connection update should result in DBS mode
 	 */
-	status = cds_update_and_wait_for_connection_update(
+	status = policy_mgr_update_and_wait_for_connection_update(
+						hdd_ctx->hdd_psoc,
 						ap_adapter->sessionId,
 						pre_cac_chan,
 						SIR_UPDATE_REASON_PRE_CAC);
@@ -8130,7 +8136,8 @@ __wlan_hdd_cfg80211_sap_configuration_set(struct wiphy *wiphy,
 			hdd_debug("freq[%d]=%d", i, freq[i]);
 		}
 
-		status = cds_set_sap_mandatory_channels(chans, freq_len);
+		status = policy_mgr_set_sap_mandatory_channels(
+			hdd_ctx->hdd_psoc, chans, freq_len);
 		if (QDF_IS_STATUS_ERROR(status))
 			return -EINVAL;
 	}
@@ -11097,7 +11104,7 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (!cds_allow_concurrency(
+	if (!policy_mgr_allow_concurrency(pHddCtx->hdd_psoc,
 				wlan_hdd_convert_nl_iftype_to_hdd_type(type),
 				0, HW_MODE_20_MHZ)) {
 		hdd_debug("This concurrency combination is not allowed");
@@ -11108,7 +11115,8 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 	wdev = ndev->ieee80211_ptr;
 
 	/* Reset the current device mode bit mask */
-	cds_clear_concurrency_mode(pAdapter->device_mode);
+	policy_mgr_clear_concurrency_mode(pHddCtx->hdd_psoc,
+		pAdapter->device_mode);
 
 	hdd_update_tdls_ct_and_teardown_links(pHddCtx);
 	if ((pAdapter->device_mode == QDF_STA_MODE) ||
@@ -11244,7 +11252,8 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 	}
 done:
 	/* Set bitmask based on updated value */
-	cds_set_concurrency_mode(pAdapter->device_mode);
+	policy_mgr_set_concurrency_mode(pHddCtx->hdd_psoc,
+		pAdapter->device_mode);
 
 	hdd_lpass_notify_mode_change(pAdapter);
 
@@ -12873,7 +12882,7 @@ static bool wlan_hdd_handle_sap_sta_dfs_conc(hdd_adapter_t *adapter,
 	 * find out by looking in to scan cache where sta is going to
 	 * connect by passing its roam_profile.
 	 */
-	status = cds_get_channel_from_scan_result(adapter,
+	status = policy_mgr_get_channel_from_scan_result(hdd_ctx->hdd_psoc,
 			roam_profile, &channel);
 
 	/*
@@ -12892,8 +12901,8 @@ static bool wlan_hdd_handle_sap_sta_dfs_conc(hdd_adapter_t *adapter,
 	 * scenario.
 	 */
 	if ((0 == channel) || CDS_IS_DFS_CH(channel))
-		channel = cds_get_nondfs_preferred_channel(CDS_SAP_MODE,
-								true);
+		channel = policy_mgr_get_nondfs_preferred_channel(
+			hdd_ctx->hdd_psoc, PM_SAP_MODE, true);
 
 	hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(ap_adapter);
 	qdf_event_reset(&hostapd_state->qdf_event);
@@ -13003,7 +13012,7 @@ static int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 		goto ret_status;
 	}
 
-	if (true == cds_is_connection_in_progress(NULL, NULL)) {
+	if (true == hdd_is_connection_in_progress(NULL, NULL)) {
 		hdd_err("Connection refused: conn in progress");
 		status = -EINVAL;
 		goto ret_status;
@@ -13024,16 +13033,19 @@ static int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 		 *
 		 * Else set connect_in_progress as true and proceed.
 		 */
-		cds_restart_opportunistic_timer(false);
-		if (cds_is_hw_mode_change_in_progress()) {
-			status = qdf_wait_for_connection_update();
+		policy_mgr_restart_opportunistic_timer(
+			pHddCtx->hdd_psoc, false);
+		if (policy_mgr_is_hw_mode_change_in_progress(
+			pHddCtx->hdd_psoc)) {
+			status = policy_mgr_wait_for_connection_update(
+				pHddCtx->hdd_psoc);
 			if (!QDF_IS_STATUS_SUCCESS(status)) {
 				hdd_err("qdf wait for event failed!!");
 				status = -EINVAL;
 				goto ret_status;
 			}
 		}
-		cds_set_connection_in_progress(true);
+		hdd_set_connection_in_progress(true);
 
 		if (HDD_WMM_USER_MODE_NO_QOS ==
 		    (WLAN_HDD_GET_CTX(pAdapter))->config->WmmMode) {
@@ -13197,8 +13209,8 @@ static int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 				pAdapter->scan_info.scanAddIE.length;
 		}
 
-		if ((wma_is_hw_dbs_capable() == true) &&
-			(false == wlan_hdd_handle_sap_sta_dfs_conc(pAdapter,
+		if ((policy_mgr_is_hw_dbs_capable(pHddCtx->hdd_psoc) == true)
+			&& (false == wlan_hdd_handle_sap_sta_dfs_conc(pAdapter,
 				pRoamProfile))) {
 			hdd_err("sap-sta conc will fail, can't allow sta");
 			hdd_conn_set_connection_state(pAdapter,
@@ -13273,20 +13285,22 @@ static int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 		}
 
 		/* Reset connect_in_progress */
-		cds_set_connection_in_progress(false);
+		hdd_set_connection_in_progress(false);
 
 		pRoamProfile->ChannelInfo.ChannelList = NULL;
 		pRoamProfile->ChannelInfo.numOfChannels = 0;
 
 		if ((QDF_STA_MODE == pAdapter->device_mode)
-		    && wma_is_current_hwmode_dbs() &&
-		    !wma_is_hw_dbs_2x2_capable()) {
-			cds_get_channel_from_scan_result(pAdapter,
-					pRoamProfile, &channel);
+			&& policy_mgr_is_current_hwmode_dbs(pHddCtx->hdd_psoc)
+			&& !policy_mgr_is_hw_dbs_2x2_capable(
+			pHddCtx->hdd_psoc)) {
+			policy_mgr_get_channel_from_scan_result(
+				pHddCtx->hdd_psoc,
+				pRoamProfile, &channel);
 			hdd_info("Move to single MAC mode(optimization) if applicable");
 			if (channel)
-				cds_checkn_update_hw_mode_single_mac_mode
-					(channel);
+				policy_mgr_checkn_update_hw_mode_single_mac_mode(
+					pHddCtx->hdd_psoc, channel);
 		}
 
 	} else {
@@ -13297,7 +13311,7 @@ static int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 
 conn_failure:
 	/* Reset connect_in_progress */
-	cds_set_connection_in_progress(false);
+	hdd_set_connection_in_progress(false);
 
 ret_status:
 	EXIT();
@@ -14182,16 +14196,16 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 
 	/* Check for max concurrent connections after doing disconnect if any */
 	if (req->channel) {
-		if (!cds_allow_concurrency(
-				cds_convert_device_mode_to_qdf_type(
+		if (!policy_mgr_allow_concurrency(pHddCtx->hdd_psoc,
+				policy_mgr_convert_device_mode_to_qdf_type(
 				pAdapter->device_mode),
 				req->channel->hw_value, HW_MODE_20_MHZ)) {
 			hdd_err("This concurrency combination is not allowed");
 			return -ECONNREFUSED;
 		}
 	} else {
-		if (!cds_allow_concurrency(
-				cds_convert_device_mode_to_qdf_type(
+		if (!policy_mgr_allow_concurrency(pHddCtx->hdd_psoc,
+				policy_mgr_convert_device_mode_to_qdf_type(
 				pAdapter->device_mode), 0, HW_MODE_20_MHZ)) {
 			hdd_err("This concurrency combination is not allowed");
 			return -ECONNREFUSED;
@@ -14725,18 +14739,18 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 		}
 	}
 
-	if (!cds_allow_concurrency(CDS_IBSS_MODE, channelNum,
-		HW_MODE_20_MHZ)) {
+	if (!policy_mgr_allow_concurrency(pHddCtx->hdd_psoc,
+		PM_IBSS_MODE, channelNum, HW_MODE_20_MHZ)) {
 		hdd_err("This concurrency combination is not allowed");
 		return -ECONNREFUSED;
 	}
 
-	status = qdf_reset_connection_update();
+	status = policy_mgr_reset_connection_update(pHddCtx->hdd_psoc);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("ERR: clear event failed");
 
-	status = cds_current_connections_update(pAdapter->sessionId,
-					channelNum,
+	status = policy_mgr_current_connections_update(pHddCtx->hdd_psoc,
+					pAdapter->sessionId, channelNum,
 					SIR_UPDATE_REASON_JOIN_IBSS);
 	if (QDF_STATUS_E_FAILURE == status) {
 		hdd_err("ERROR: connections update failed!!");
@@ -14744,7 +14758,8 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 	}
 
 	if (QDF_STATUS_SUCCESS == status) {
-		status = qdf_wait_for_connection_update();
+		status = policy_mgr_wait_for_connection_update(
+			pHddCtx->hdd_psoc);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("ERROR: qdf wait for event failed!!");
 			return -EINVAL;
@@ -16537,25 +16552,25 @@ static int wlan_hdd_cfg80211_channel_switch(struct wiphy *wiphy,
  *
  * Return: cds_con_mode enum
  */
-enum cds_con_mode wlan_hdd_convert_nl_iftype_to_hdd_type(
+enum policy_mgr_con_mode wlan_hdd_convert_nl_iftype_to_hdd_type(
 						enum nl80211_iftype type)
 {
-	enum cds_con_mode mode = CDS_MAX_NUM_OF_MODE;
+	enum policy_mgr_con_mode mode = PM_MAX_NUM_OF_MODE;
 	switch (type) {
 	case NL80211_IFTYPE_STATION:
-		mode = CDS_STA_MODE;
+		mode = PM_STA_MODE;
 		break;
 	case NL80211_IFTYPE_P2P_CLIENT:
-		mode = CDS_P2P_CLIENT_MODE;
+		mode = PM_P2P_CLIENT_MODE;
 		break;
 	case NL80211_IFTYPE_P2P_GO:
-		mode = CDS_P2P_GO_MODE;
+		mode = PM_P2P_GO_MODE;
 		break;
 	case NL80211_IFTYPE_AP:
-		mode = CDS_SAP_MODE;
+		mode = PM_SAP_MODE;
 		break;
 	case NL80211_IFTYPE_ADHOC:
-		mode = CDS_IBSS_MODE;
+		mode = PM_IBSS_MODE;
 		break;
 	default:
 		hdd_err("Unsupported interface type (%d)",

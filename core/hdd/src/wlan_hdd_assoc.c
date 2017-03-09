@@ -51,7 +51,7 @@
 #include "wlan_hdd_lpass.h"
 #include <wlan_logging_sock_svc.h>
 #include <cds_sched.h>
-#include "cds_concurrency.h"
+#include "wlan_policy_mgr_api.h"
 #include <cds_utils.h>
 #include "sme_power_save_api.h"
 #include "wlan_hdd_napi.h"
@@ -1215,8 +1215,8 @@ static void hdd_send_association_event(struct net_device *dev,
 		}
 
 		if (!hdd_is_roam_sync_in_progress(pCsrRoamInfo))
-			cds_incr_active_session(pAdapter->device_mode,
-					pAdapter->sessionId);
+			policy_mgr_incr_active_session(pHddCtx->hdd_psoc,
+				pAdapter->device_mode, pAdapter->sessionId);
 		memcpy(wrqu.ap_addr.sa_data, pCsrRoamInfo->pBssDesc->bssId,
 		       sizeof(pCsrRoamInfo->pBssDesc->bssId));
 
@@ -1311,11 +1311,12 @@ static void hdd_send_association_event(struct net_device *dev,
 #endif
 	} else if (eConnectionState_IbssConnected ==    /* IBss Associated */
 			pHddStaCtx->conn_info.connState) {
-		cds_update_connection_info(pAdapter->sessionId);
+		policy_mgr_update_connection_info(pHddCtx->hdd_psoc,
+				pAdapter->sessionId);
 		memcpy(wrqu.ap_addr.sa_data, pHddStaCtx->conn_info.bssId.bytes,
-		       ETH_ALEN);
+				ETH_ALEN);
 		hdd_err("wlan: new IBSS connection to " MAC_ADDRESS_STR,
-			 MAC_ADDR_ARRAY(pHddStaCtx->conn_info.bssId.bytes));
+			MAC_ADDR_ARRAY(pHddStaCtx->conn_info.bssId.bytes));
 
 		ret = hdd_objmgr_add_peer_object(pAdapter->hdd_vdev,
 						 QDF_IBSS_MODE,
@@ -1332,8 +1333,8 @@ static void hdd_send_association_event(struct net_device *dev,
 	} else {                /* Not Associated */
 		hdd_err("wlan: disconnected");
 		memset(wrqu.ap_addr.sa_data, '\0', ETH_ALEN);
-		cds_decr_session_set_pcl(pAdapter->device_mode,
-					pAdapter->sessionId);
+		policy_mgr_decr_session_set_pcl(pHddCtx->hdd_psoc,
+				pAdapter->device_mode, pAdapter->sessionId);
 
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 		wlan_hdd_auto_shutdown_enable(pHddCtx, true);
@@ -1960,6 +1961,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	uint8_t *final_req_ie = NULL;
 	tCsrRoamConnectedProfile roam_profile;
 	tHalHandle hal_handle = WLAN_HDD_GET_HAL_CTX(pAdapter);
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 
 	qdf_mem_zero(&roam_profile, sizeof(roam_profile));
 
@@ -2008,8 +2010,8 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	 * successful reassoc decrement the active session count here.
 	 */
 	if (!hdd_is_roam_sync_in_progress(pCsrRoamInfo))
-		cds_decr_session_set_pcl(pAdapter->device_mode,
-					pAdapter->sessionId);
+		policy_mgr_decr_session_set_pcl(hdd_ctx->hdd_psoc,
+				pAdapter->device_mode, pAdapter->sessionId);
 
 	/* Send the Assoc Resp, the supplicant needs this for initial Auth */
 	len = pCsrRoamInfo->nAssocRspLength - FT_ASSOC_RSP_IES_OFFSET;
@@ -2428,9 +2430,10 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 		/* Indicate 'connect' status to user space */
 		hdd_send_association_event(dev, pRoamInfo);
 
-		if (cds_is_mcc_in_24G()) {
+		if (policy_mgr_is_mcc_in_24G(pHddCtx->hdd_psoc)) {
 			if (pHddCtx->miracast_value)
-				cds_set_mas(pAdapter, pHddCtx->miracast_value);
+				wlan_hdd_set_mas(pAdapter,
+					pHddCtx->miracast_value);
 		}
 
 		/* Initialize the Linkup event completion variable */
@@ -2494,7 +2497,8 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 #endif
 
 		hdd_info("check for SAP restart");
-		cds_check_concurrent_intf_and_restart_sap(pAdapter);
+		policy_mgr_check_concurrent_intf_and_restart_sap(
+			pHddCtx->hdd_psoc);
 
 		DPTRACE(qdf_dp_trace_mgmt_pkt(QDF_DP_TRACE_MGMT_PACKET_RECORD,
 			pAdapter->sessionId,
@@ -2619,9 +2623,10 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 						 */
 						if (!hdd_is_roam_sync_in_progress
 								(pRoamInfo))
-							cds_decr_session_set_pcl
-								(pAdapter->device_mode,
-								 pAdapter->sessionId);
+						policy_mgr_decr_session_set_pcl(
+							pHddCtx->hdd_psoc,
+							pAdapter->device_mode,
+							pAdapter->sessionId);
 						hdd_info("ft_carrier_on is %d, sending roamed indication",
 							 ft_carrier_on);
 						chan =
@@ -3006,6 +3011,8 @@ static void hdd_roam_ibss_indication_handler(hdd_adapter_t *pAdapter,
 					     eRoamCmdStatus roamStatus,
 					     eCsrRoamResult roamResult)
 {
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
+
 	hdd_info("%s: id %d, status %d, result %d",
 		 pAdapter->dev->name, roamId,
 		 roamStatus, roamResult);
@@ -3102,11 +3109,12 @@ static void hdd_roam_ibss_indication_handler(hdd_adapter_t *pAdapter,
 				bss);
 		}
 		if (eCSR_ROAM_RESULT_IBSS_STARTED == roamResult) {
-			cds_incr_active_session(pAdapter->device_mode,
-					pAdapter->sessionId);
+			policy_mgr_incr_active_session(hdd_ctx->hdd_psoc,
+				pAdapter->device_mode, pAdapter->sessionId);
 		} else if (eCSR_ROAM_RESULT_IBSS_JOIN_SUCCESS == roamResult ||
 				eCSR_ROAM_RESULT_IBSS_COALESCED == roamResult) {
-			cds_update_connection_info(pAdapter->sessionId);
+			policy_mgr_update_connection_info(hdd_ctx->hdd_psoc,
+					pAdapter->sessionId);
 		}
 		break;
 	}
@@ -4665,6 +4673,7 @@ static void hdd_roam_channel_switch_handler(hdd_adapter_t *adapter,
 	struct wireless_dev *wdev = dev->ieee80211_ptr;
 	struct wiphy *wiphy = wdev->wiphy;
 	QDF_STATUS status;
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	hdd_info("channel switch for session:%d to channel:%d",
 		adapter->sessionId, roam_info->chan_info.chan_id);
@@ -4689,7 +4698,8 @@ static void hdd_roam_channel_switch_handler(hdd_adapter_t *adapter,
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("channel change notification failed");
 
-	status = cds_set_hw_mode_on_channel_switch(adapter->sessionId);
+	status = policy_mgr_set_hw_mode_on_channel_switch(hdd_ctx->hdd_psoc,
+		adapter->sessionId);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_info("set hw mode change not done");
 }
@@ -4714,6 +4724,7 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 	hdd_station_ctx_t *pHddStaCtx = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct cfg80211_bss *bss_status;
+	hdd_context_t *hdd_ctx;
 
 	hdd_info("CSR Callback: status= %d result= %d roamID=%d",
 		 roamStatus, roamResult, roamId);
@@ -4726,6 +4737,7 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 
 	pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 
 	/* Omitting eCSR_ROAM_UPDATE_SCAN_RESULT as this is too frequent */
 	if (eCSR_ROAM_UPDATE_SCAN_RESULT != roamStatus)
@@ -5043,7 +5055,7 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		hdd_napi_serialize(1);
 		hdd_set_connection_in_progress(true);
 		hdd_set_roaming_in_progress(true);
-		cds_restart_opportunistic_timer(true);
+		policy_mgr_restart_opportunistic_timer(hdd_ctx->hdd_psoc, true);
 		break;
 	case eCSR_ROAM_ABORT:
 		hdd_info("Firmware aborted roaming operation, previous connection is still valid");
