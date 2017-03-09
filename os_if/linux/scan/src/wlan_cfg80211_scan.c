@@ -392,6 +392,7 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 	struct pdev_osif_priv *osif_priv;
 	struct wlan_objmgr_psoc *psoc;
 	wlan_scan_id scan_id;
+	bool is_p2p_scan = false;
 
 	/* Get the vdev object */
 	vdev = wlan_objmgr_get_vdev_by_macaddr_from_pdev(pdev, dev->dev_addr,
@@ -427,6 +428,7 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 	}
 	/* fill the scan request structure */
 	req->vdev = vdev;
+	req->scan_req.vdev_id = wlan_vdev_get_id(vdev);
 	req->scan_req.scan_id = scan_id;
 	req->scan_req.scan_req_id = req_id;
 	/*
@@ -460,17 +462,58 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 	   (wlan_vdev_mlme_get_opmode(vdev) == QDF_P2P_GO_MODE))
 		req->scan_req.scan_f_passive = false;
 
-	if (!request->no_cck) {
+	if ((request->n_ssids == 1) && request->ssids &&
+	   !qdf_mem_cmp(&request->ssids[0], "DIRECT-", 7))
+		is_p2p_scan = true;
+
+	if (is_p2p_scan && request->no_cck) {
+		req->scan_req.adaptive_dwell_time_mode =
+			SCAN_DWELL_MODE_STATIC;
+		req->scan_req.dwell_time_active +=
+			P2P_SEARCH_DWELL_TIME_INC;
+		req->scan_req.repeat_probe_time =
+			req->scan_req.dwell_time_active / 5;
+		req->scan_req.burst_duration =
+			BURST_SCAN_MAX_NUM_OFFCHANNELS *
+			req->scan_req.dwell_time_active;
+		if (req->scan_req.burst_duration >
+		    P2P_SCAN_MAX_BURST_DURATION) {
+			uint8_t channels =
+				P2P_SCAN_MAX_BURST_DURATION /
+				req->scan_req.dwell_time_active;
+			if (channels)
+				req->scan_req.burst_duration =
+					channels *
+					req->scan_req.dwell_time_active;
+			else
+				req->scan_req.burst_duration =
+					P2P_SCAN_MAX_BURST_DURATION;
+		}
+		req->scan_req.scan_ev_bss_chan = false;
+	} else {
 		req->scan_req.scan_f_cck_rates = true;
 		if (!req->scan_req.num_ssids)
 			req->scan_req.scan_f_bcast_probe = true;
 		req->scan_req.scan_f_add_tpc_ie_in_probe = true;
-		req->scan_req.scan_f_filter_prb_req = true;
 	}
 	req->scan_req.scan_f_add_ds_ie_in_probe = true;
+	req->scan_req.scan_f_filter_prb_req = true;
 
+	req->scan_req.n_probes = (req->scan_req.repeat_probe_time > 0) ?
+		(req->scan_req.dwell_time_active /
+		req->scan_req.repeat_probe_time) : 0;
+
+	/*
+	 * FW require at least 1 MAC to send probe request.
+	 * If MAC is all 0 set it to BC addr as this is the address on
+	 * which fw will send probe req.
+	 */
+	req->scan_req.num_bssid = 1;
 	qdf_mem_copy(&req->scan_req.bssid_list[0].bytes, request->bssid,
 			QDF_MAC_ADDR_SIZE);
+	if (qdf_is_macaddr_zero(&req->scan_req.bssid_list[0]))
+		qdf_set_macaddr_broadcast(&req->scan_req.bssid_list[0]);
+
 	if (request->n_channels) {
 		char chl[(request->n_channels * 5) + 1];
 		int len = 0;
@@ -494,9 +537,7 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 	req->scan_req.num_chan = num_chan;
 
 	/* P2P increase the scan priority */
-	if ((request->n_ssids == 1) &&
-		(request->ssids != NULL) &&
-		qdf_mem_cmp(&request->ssids[0], "DIRECT-", 7))
+	if (is_p2p_scan)
 		req->scan_req.scan_priority = SCAN_PRIORITY_HIGH;
 	if (request->ie_len) {
 		req->scan_req.extraie.ptr = qdf_mem_malloc(request->ie_len);
@@ -510,6 +551,10 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 		qdf_mem_copy(req->scan_req.extraie.ptr, request->ie,
 				request->ie_len);
 	}
+
+	if (request->flags & NL80211_SCAN_FLAG_FLUSH)
+		ucfg_scan_flush_results(pdev, NULL);
+
 	/* Enqueue the scan request */
 	wlan_scan_request_enqueue(pdev, request, source, req->scan_req.scan_id);
 
@@ -524,8 +569,6 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 		}
 	}
 
-	if (request->flags & NL80211_SCAN_FLAG_FLUSH)
-		ucfg_scan_flush_results(pdev, NULL);
 end:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
 	return status;

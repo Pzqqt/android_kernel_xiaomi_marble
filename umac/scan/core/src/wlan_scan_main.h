@@ -57,8 +57,8 @@
 #ifdef CONFIG_MCL
 #define SCAN_ACTIVE_DWELL_TIME 40
 #define SCAN_PASSIVE_DWELL_TIME 110
-#define SCAN_MAX_REST_TIME 100
-#define SCAN_MIN_REST_TIME 50
+#define SCAN_MAX_REST_TIME 0
+#define SCAN_MIN_REST_TIME 0
 #define SCAN_BURST_DURATION 0
 #define SCAN_CONC_ACTIVE_DWELL_TIME 20
 #define SCAN_CONC_PASSIVE_DWELL_TIME 100
@@ -70,7 +70,7 @@
 #define SCAN_PROBE_DELAY 0
 #define SCAN_MAX_SCAN_TIME 30000
 #define SCAN_NUM_PROBES 2
-#define SCAN_NETWORK_IDLE_TIMEOUT 25
+#define SCAN_NETWORK_IDLE_TIMEOUT 0
 #else
 #define SCAN_ACTIVE_DWELL_TIME 105
 #define SCAN_PASSIVE_DWELL_TIME 300
@@ -229,6 +229,7 @@ struct scan_default_params {
 	uint16_t max_bss_per_pdev;
 	uint8_t max_num_scan_allowed;
 	enum scan_priority scan_priority;
+	enum scan_dwelltime_adaptive_mode adaptive_dwell_time_mode;
 	union {
 		struct {
 			uint32_t scan_f_passive:1,

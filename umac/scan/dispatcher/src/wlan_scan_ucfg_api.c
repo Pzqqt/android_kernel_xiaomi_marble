@@ -360,6 +360,7 @@ wlan_scan_global_init(struct wlan_scan_obj *scan_obj)
 	scan_obj->scan_def.max_num_scan_allowed = SCAN_MAX_NUM_SCAN_ALLOWED;
 	scan_obj->scan_def.scan_priority = SCAN_PRIORITY;
 	scan_obj->scan_def.idle_time = SCAN_NETWORK_IDLE_TIMEOUT;
+	scan_obj->scan_def.adaptive_dwell_time_mode = SCAN_DWELL_MODE_DEFAULT;
 	/* scan contrl flags */
 	scan_obj->scan_def.scan_f_passive = true;
 	scan_obj->scan_def.scan_f_ofdm_rates = true;
@@ -478,6 +479,8 @@ ucfg_scan_init_default_params(struct wlan_objmgr_vdev *vdev,
 	req->scan_req.probe_delay = def->probe_delay;
 	req->scan_req.burst_duration = def->burst_duration;
 	req->scan_req.n_probes = def->num_probes;
+	req->scan_req.adaptive_dwell_time_mode =
+		def->adaptive_dwell_time_mode;
 	req->scan_req.scan_flags = def->scan_flags;
 	req->scan_req.scan_events = def->scan_events;
 

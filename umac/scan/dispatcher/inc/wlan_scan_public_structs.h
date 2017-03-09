@@ -46,6 +46,11 @@ typedef uint32_t wlan_scan_id;
 #define SCM_BSS_CAP_VALUE_UAPSD 1
 #define SCM_BSS_CAP_VALUE_5GHZ  2
 
+#define BURST_SCAN_MAX_NUM_OFFCHANNELS 3
+#define P2P_SCAN_MAX_BURST_DURATION 180
+/* Increase dwell time for P2P search in ms */
+#define P2P_SEARCH_DWELL_TIME_INC 20
+
 /* forward declaration */
 struct wlan_objmgr_vdev;
 struct wlan_objmgr_pdev;
@@ -444,6 +449,21 @@ struct scan_extra_params_legacy {
 	uint32_t init_rest_time;
 };
 
+/**
+ * enum scan_dwelltime_adaptive_mode: dwelltime_mode
+ * @SCAN_DWELL_MODE_DEFAULT: Use firmware default mode
+ * @SCAN_DWELL_MODE_CONSERVATIVE: Conservative adaptive mode
+ * @SCAN_DWELL_MODE_MODERATE: Moderate adaptive mode
+ * @SCAN_DWELL_MODE_AGGRESSIVE: Aggressive adaptive mode
+ * @SCAN_DWELL_MODE_STATIC: static adaptive mode
+ */
+enum scan_dwelltime_adaptive_mode {
+	SCAN_DWELL_MODE_DEFAULT = 0,
+	SCAN_DWELL_MODE_CONSERVATIVE = 1,
+	SCAN_DWELL_MODE_MODERATE = 2,
+	SCAN_DWELL_MODE_AGGRESSIVE = 3,
+	SCAN_DWELL_MODE_STATIC = 4
+};
 
 /**
  * struct scan_req_params - start scan request parameter
@@ -579,6 +599,7 @@ struct scan_req_params {
 		};
 		uint32_t scan_flags;
 	};
+	enum scan_dwelltime_adaptive_mode adaptive_dwell_time_mode;
 	uint32_t burst_duration;
 	uint32_t num_chan;
 	uint32_t num_bssid;
