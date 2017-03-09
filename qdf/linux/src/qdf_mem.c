@@ -722,6 +722,47 @@ qdf_mem_zero_outline(void *buf, qdf_size_t size)
 }
 EXPORT_SYMBOL(qdf_mem_zero_outline);
 
+#ifdef CONFIG_WCNSS_MEM_PRE_ALLOC
+/**
+ * qdf_mem_prealloc_get() - conditionally pre-allocate memory
+ * @size: the number of bytes to allocate
+ *
+ * If size if greater than WCNSS_PRE_ALLOC_GET_THRESHOLD, this function returns
+ * a chunk of pre-allocated memory. If size if less than or equal to
+ * WCNSS_PRE_ALLOC_GET_THRESHOLD, or an error occurs, NULL is returned instead.
+ *
+ * Return: NULL on failure, non-NULL on success
+ */
+static void *qdf_mem_prealloc_get(size_t size)
+{
+	void *mem;
+
+	if (size <= WCNSS_PRE_ALLOC_GET_THRESHOLD)
+		return NULL;
+
+	mem = wcnss_prealloc_get(size);
+	if (mem)
+		memset(mem, 0, size);
+
+	return mem;
+}
+
+static inline bool qdf_mem_prealloc_put(void *ptr)
+{
+	return wcnss_prealloc_put(ptr);
+}
+#else
+static inline void *qdf_mem_prealloc_get(size_t size)
+{
+	return NULL;
+}
+
+static inline bool qdf_mem_prealloc_put(void *ptr)
+{
+	return false;
+}
+#endif /* CONFIG_WCNSS_MEM_PRE_ALLOC */
+
 /* External Function implementation */
 #ifdef MEMORY_DEBUG
 
@@ -825,47 +866,6 @@ void qdf_mem_exit(void)
 	qdf_list_destroy(&qdf_mem_list);
 }
 EXPORT_SYMBOL(qdf_mem_exit);
-
-#ifdef CONFIG_WCNSS_MEM_PRE_ALLOC
-/**
- * qdf_mem_prealloc_get() - conditionally pre-allocate memory
- * @size: the number of bytes to allocate
- *
- * If size if greater than WCNSS_PRE_ALLOC_GET_THRESHOLD, this function returns
- * a chunk of pre-allocated memory. If size if less than or equal to
- * WCNSS_PRE_ALLOC_GET_THRESHOLD, or an error occurs, NULL is returned instead.
- *
- * Return: NULL on failure, non-NULL on success
- */
-static void *qdf_mem_prealloc_get(size_t size)
-{
-	void *mem;
-
-	if (size <= WCNSS_PRE_ALLOC_GET_THRESHOLD)
-		return NULL;
-
-	mem = wcnss_prealloc_get(size);
-	if (mem)
-		memset(mem, 0, size);
-
-	return mem;
-}
-
-static inline bool qdf_mem_prealloc_put(void *ptr)
-{
-	return wcnss_prealloc_put(ptr);
-}
-#else
-static inline void *qdf_mem_prealloc_get(size_t size)
-{
-	return NULL;
-}
-
-static inline bool qdf_mem_prealloc_put(void *ptr)
-{
-	return false;
-}
-#endif /* CONFIG_WCNSS_MEM_PRE_ALLOC */
 
 /**
  * qdf_mem_malloc_debug() - debug version of QDF memory allocation API
