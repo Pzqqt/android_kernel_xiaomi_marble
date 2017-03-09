@@ -148,9 +148,6 @@ static void hdd_green_ap_mc(struct hdd_context_s *hdd_ctx,
 	if (green_ap == NULL)
 		return;
 
-	if ((hdd_ctx->concurrency_mode << QDF_SAP_MODE) != QDF_SAP_MODE)
-		return;
-
 	hdd_debug("Green-AP event: %d, state: %d, num_nodes: %d",
 		   event, green_ap->ps_state, green_ap->num_nodes);
 

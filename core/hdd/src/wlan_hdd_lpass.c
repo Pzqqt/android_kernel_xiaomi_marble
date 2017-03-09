@@ -174,7 +174,7 @@ static void wlan_hdd_send_status_pkg(struct hdd_adapter_s *adapter,
 		return;
 
 	memset(&data, 0, sizeof(struct wlan_status_data));
-	if (is_on && (adapter->sessionId != HDD_SESSION_ID_INVALID))
+	if (is_on)
 		ret = wlan_hdd_gen_wlan_status_pack(&data, adapter, sta_ctx,
 						    is_on, is_connected);
 
