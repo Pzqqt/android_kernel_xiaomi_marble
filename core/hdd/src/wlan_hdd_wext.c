@@ -80,7 +80,7 @@
 #include "wlan_hdd_ioctl.h"
 #include "wlan_hdd_scan.h"
 #include "sme_power_save_api.h"
-#include "cds_concurrency.h"
+#include "wlan_policy_mgr_api.h"
 #include "wlan_hdd_conc_ut.h"
 #include "wlan_hdd_tsf.h"
 #include "wlan_hdd_ocb.h"
@@ -2241,7 +2241,7 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
  * @INPUT: dbs, system_pref
  * @dbs: Value of DBS capability to be set
  * @system_pref: System preference
- *     0:CDS_THROUGHPUT 1: CDS_POWERSAVE 2: CDS_LATENCY
+ *     0:PM_THROUGHPUT 1: PM_POWERSAVE 2: PM_LATENCY
  *
  * @OUTPUT: None
  *
@@ -2262,15 +2262,15 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
  * <ioctl>
  * pm_pcl - Set pcl for concurrency mode.
  *
- * @INPUT: cds_con_mode
- * @cds_con_mode: concurrency mode for PCL table
+ * @INPUT: policy_mgr_con_mode
+ * @policy_mgr_con_mode: concurrency mode for PCL table
  *     0:STA  1:SAP  2:P2P_Client  3:P2P_GO  4:IBSS
  *
  * @OUTPUT: None
  *
  * This IOCTL is used to set pcl for concurrency mode.
  *
- * @E.g: iwpriv wlan0 pm_pcl cds_con_mode
+ * @E.g: iwpriv wlan0 pm_pcl policy_mgr_con_mode
  * iwpriv wlan0 pm_pcl 0
  *
  * Supported Feature: DBS
@@ -8530,7 +8530,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 
 	case WE_MCC_CONFIG_LATENCY:
 	{
-		cds_set_mcc_latency(pAdapter, set_value);
+		wlan_hdd_set_mcc_latency(pAdapter, set_value);
 		break;
 	}
 
@@ -8538,7 +8538,8 @@ static int __iw_setint_getnone(struct net_device *dev,
 	{
 		hdd_notice("iwpriv cmd to set MCC quota with val %dms",
 				set_value);
-		ret = cds_set_mcc_p2p_quota(pAdapter, set_value);
+		ret = wlan_hdd_set_mcc_p2p_quota(pAdapter,
+			set_value);
 		break;
 	}
 	case WE_SET_DEBUG_LOG:
@@ -8974,7 +8975,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 
 	case WE_GET_CONCURRENCY_MODE:
 	{
-		*value = cds_get_concurrency_mode();
+		*value = policy_mgr_get_concurrency_mode(hdd_ctx->hdd_psoc);
 
 		hdd_notice("concurrency mode=%d", *value);
 		break;
@@ -9532,7 +9533,8 @@ static int __iw_set_three_ints_getnone(struct net_device *dev,
 			return -EPERM;
 		}
 		hdd_debug("%d %d %d", value[1], value[2], value[3]);
-		cds_set_dual_mac_scan_config(value[1], value[2], value[3]);
+		policy_mgr_set_dual_mac_scan_config(hdd_ctx->hdd_psoc,
+			value[1], value[2], value[3]);
 		break;
 	case WE_SET_FW_TEST:
 	{
@@ -10337,28 +10339,26 @@ static int iw_get_policy_manager_ut_ops(hdd_context_t *hdd_ctx,
 	case WE_POLICY_MANAGER_CLIST_CMD:
 	{
 		hdd_err("<iwpriv wlan0 pm_clist> is called");
-		cds_incr_connection_count_utfw(apps_args[0],
-			apps_args[1], apps_args[2], apps_args[3],
-			apps_args[4], apps_args[5], apps_args[6],
-			apps_args[7]);
+		policy_mgr_incr_connection_count_utfw(hdd_ctx->hdd_psoc,
+			apps_args[0], apps_args[1], apps_args[2], apps_args[3],
+			apps_args[4], apps_args[5], apps_args[6], apps_args[7]);
 	}
 	break;
 
 	case WE_POLICY_MANAGER_DLIST_CMD:
 	{
 		hdd_err("<iwpriv wlan0 pm_dlist> is called");
-		cds_decr_connection_count_utfw(apps_args[0],
-			apps_args[1]);
+		policy_mgr_decr_connection_count_utfw(hdd_ctx->hdd_psoc,
+			apps_args[0], apps_args[1]);
 	}
 	break;
 
 	case WE_POLICY_MANAGER_ULIST_CMD:
 	{
 		hdd_err("<iwpriv wlan0 pm_ulist> is called");
-		cds_update_connection_info_utfw(apps_args[0],
-			apps_args[1], apps_args[2], apps_args[3],
-			apps_args[4], apps_args[5], apps_args[6],
-			apps_args[7]);
+		policy_mgr_update_connection_info_utfw(hdd_ctx->hdd_psoc,
+			apps_args[0], apps_args[1], apps_args[2], apps_args[3],
+			apps_args[4], apps_args[5], apps_args[6], apps_args[7]);
 	}
 	break;
 
@@ -10370,8 +10370,8 @@ static int iw_get_policy_manager_ut_ops(hdd_context_t *hdd_ctx,
 		else
 			wma_set_dbs_capability_ut(1);
 
-		if (apps_args[1] >= CDS_THROUGHPUT &&
-			apps_args[1] <= CDS_LATENCY) {
+		if (apps_args[1] >= PM_THROUGHPUT &&
+			apps_args[1] <= PM_LATENCY) {
 			pr_info("setting system pref to [%d]\n", apps_args[1]);
 			hdd_ctx->config->conc_system_pref = apps_args[1];
 		}
@@ -10386,7 +10386,7 @@ static int iw_get_policy_manager_ut_ops(hdd_context_t *hdd_ctx,
 
 		hdd_err("<iwpriv wlan0 pm_pcl> is called");
 
-		cds_get_pcl(apps_args[0],
+		policy_mgr_get_pcl(hdd_ctx->hdd_psoc, apps_args[0],
 				pcl, &pcl_len,
 				weight_list, QDF_ARRAY_SIZE(weight_list));
 		pr_info("PCL list for role[%d] is {", apps_args[0]);
@@ -10400,7 +10400,7 @@ static int iw_get_policy_manager_ut_ops(hdd_context_t *hdd_ctx,
 	{
 		if (apps_args[0] == 0) {
 			hdd_err("set hw mode for single mac");
-			cds_pdev_set_hw_mode(
+			policy_mgr_pdev_set_hw_mode(hdd_ctx->hdd_psoc,
 					adapter->sessionId,
 					HW_MODE_SS_2x2,
 					HW_MODE_80_MHZ,
@@ -10411,7 +10411,7 @@ static int iw_get_policy_manager_ut_ops(hdd_context_t *hdd_ctx,
 					SIR_UPDATE_REASON_UT);
 		} else if (apps_args[0] == 1) {
 			hdd_err("set hw mode for dual mac");
-			cds_pdev_set_hw_mode(
+			policy_mgr_pdev_set_hw_mode(hdd_ctx->hdd_psoc,
 					adapter->sessionId,
 					HW_MODE_SS_1x1,
 					HW_MODE_80_MHZ,
@@ -10426,11 +10426,12 @@ static int iw_get_policy_manager_ut_ops(hdd_context_t *hdd_ctx,
 
 	case WE_POLICY_MANAGER_QUERY_ACTION_CMD:
 	{
-		enum cds_conc_next_action action;
+		enum policy_mgr_conc_next_action action;
 		hdd_notice("<iwpriv wlan0 pm_query_action> is called");
-		action = cds_current_connections_update(adapter->sessionId,
-						apps_args[0],
-						SIR_UPDATE_REASON_UT);
+		action = policy_mgr_current_connections_update(
+			hdd_ctx->hdd_psoc,
+			adapter->sessionId, apps_args[0],
+			SIR_UPDATE_REASON_UT);
 		pr_info("next action is %d {HDD_NOP = 0, HDD_DBS, HDD_DBS_DOWNGRADE, HDD_MCC, HDD_MCC_UPGRADE}", action);
 	}
 	break;
@@ -10439,7 +10440,7 @@ static int iw_get_policy_manager_ut_ops(hdd_context_t *hdd_ctx,
 	{
 		bool allow;
 		hdd_err("<iwpriv wlan0 pm_query_allow> is called");
-		allow = cds_allow_concurrency(
+		allow = policy_mgr_allow_concurrency(hdd_ctx->hdd_psoc,
 				apps_args[0], apps_args[1], apps_args[2]);
 		pr_info("allow %d {0 = don't allow, 1 = allow}", allow);
 	}
@@ -10452,38 +10453,38 @@ static int iw_get_policy_manager_ut_ops(hdd_context_t *hdd_ctx,
 			wlan_hdd_one_connection_scenario(hdd_ctx);
 		} else if (apps_args[0] == 2) {
 			wlan_hdd_two_connections_scenario(hdd_ctx,
-				6, CDS_TWO_TWO);
+				6, POLICY_MGR_TWO_TWO);
 			wlan_hdd_two_connections_scenario(hdd_ctx,
-				36, CDS_TWO_TWO);
+				36, POLICY_MGR_TWO_TWO);
 			wlan_hdd_two_connections_scenario(hdd_ctx,
-				6, CDS_ONE_ONE);
+				6, POLICY_MGR_ONE_ONE);
 			wlan_hdd_two_connections_scenario(hdd_ctx,
-				36, CDS_ONE_ONE);
+				36, POLICY_MGR_ONE_ONE);
 		} else if (apps_args[0] == 3) {
 			/* MCC on same band with 2x2 same mac*/
 			wlan_hdd_three_connections_scenario(hdd_ctx,
-				6, 11, CDS_TWO_TWO, 0);
+				6, 11, POLICY_MGR_TWO_TWO, 0);
 			/* MCC on diff band with 2x2 same mac*/
 			wlan_hdd_three_connections_scenario(hdd_ctx,
-				6, 36, CDS_TWO_TWO, 0);
+				6, 36, POLICY_MGR_TWO_TWO, 0);
 			/* MCC on diff band with 1x1 diff mac */
 			wlan_hdd_three_connections_scenario(hdd_ctx,
-				36, 6, CDS_ONE_ONE, 0);
+				36, 6, POLICY_MGR_ONE_ONE, 0);
 			/* MCC on diff band with 1x1 same mac */
 			wlan_hdd_three_connections_scenario(hdd_ctx,
-				36, 6, CDS_ONE_ONE, 1);
+				36, 6, POLICY_MGR_ONE_ONE, 1);
 			/* SCC on same band with 2x2 same mac */
 			wlan_hdd_three_connections_scenario(hdd_ctx,
-				36, 36, CDS_TWO_TWO, 0);
+				36, 36, POLICY_MGR_TWO_TWO, 0);
 			/* SCC on same band with 1x1 same mac */
 			wlan_hdd_three_connections_scenario(hdd_ctx,
-				36, 36, CDS_ONE_ONE, 1);
+				36, 36, POLICY_MGR_ONE_ONE, 1);
 			/* MCC on same band with 2x2 same mac */
 			wlan_hdd_three_connections_scenario(hdd_ctx,
-				36, 149, CDS_TWO_TWO, 0);
+				36, 149, POLICY_MGR_TWO_TWO, 0);
 			/* MCC on same band with 1x1 same mac */
 			wlan_hdd_three_connections_scenario(hdd_ctx,
-				36, 149, CDS_ONE_ONE, 1);
+				36, 149, POLICY_MGR_ONE_ONE, 1);
 		}
 		print_report(hdd_ctx);
 	}
@@ -10600,11 +10601,11 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 
 	case WE_POLICY_MANAGER_CINFO_CMD:
 	{
-		struct cds_conc_connection_info *conn_info;
+		struct policy_mgr_conc_connection_info *conn_info;
 		uint32_t i = 0, len = 0;
 
 		hdd_info("<iwpriv wlan0 pm_cinfo> is called");
-		conn_info = cds_get_conn_info(&len);
+		conn_info = policy_mgr_get_conn_info(&len);
 		pr_info("+--------------------------+\n");
 		for (i = 0; i < len; i++) {
 		     pr_info("|table_index[%d]\t\t\n", i);
@@ -12435,7 +12436,8 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 			return -EPERM;
 		}
 		hdd_debug("%d %d", value[1], value[2]);
-		cds_set_dual_mac_fw_mode_config(value[1], value[2]);
+		policy_mgr_set_dual_mac_fw_mode_config(hdd_ctx->hdd_psoc,
+			value[1], value[2]);
 		break;
 	case WE_DUMP_DP_TRACE_LEVEL:
 		hdd_info("WE_DUMP_DP_TRACE_LEVEL: %d %d",

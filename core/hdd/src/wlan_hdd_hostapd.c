@@ -73,7 +73,7 @@
 #include "qdf_types.h"
 #include "qdf_trace.h"
 #include "wlan_hdd_cfg.h"
-#include "cds_concurrency.h"
+#include "wlan_policy_mgr_api.h"
 #include "wlan_hdd_tsf.h"
 #include "wlan_hdd_green_ap.h"
 #include <cdp_txrx_misc.h>
@@ -514,6 +514,7 @@ static void hdd_hostapd_inactivity_timer_cb(void *context)
 	QDF_STATUS qdf_status;
 	hdd_adapter_t *pHostapdAdapter;
 	hdd_ap_ctx_t *pHddApCtx;
+	hdd_context_t *hdd_ctx;
 #endif /* DISABLE_CONCURRENCY_AUTOSAVE */
 
 	/* event_name space-delimiter driver_module_name
@@ -527,7 +528,8 @@ static void hdd_hostapd_inactivity_timer_cb(void *context)
 	ENTER_DEV(dev);
 
 #ifdef DISABLE_CONCURRENCY_AUTOSAVE
-	if (cds_concurrent_open_sessions_running()) {
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	if (policy_mgr_concurrent_open_sessions_running(hdd_ctx->hdd_psoc)) {
 		/*
 		 * This timer routine is going to be called only when AP
 		 * persona is up.
@@ -612,8 +614,9 @@ static int hdd_stop_bss_link(hdd_adapter_t *pHostapdAdapter,
 			hdd_err("Deleting SAP/P2P link!!!!!!");
 
 		clear_bit(SOFTAP_BSS_STARTED, &pHostapdAdapter->event_flags);
-		cds_decr_session_set_pcl(pHostapdAdapter->device_mode,
-					     pHostapdAdapter->sessionId);
+		policy_mgr_decr_session_set_pcl(pHddCtx->hdd_psoc,
+					pHostapdAdapter->device_mode,
+					pHostapdAdapter->sessionId);
 	}
 	EXIT();
 	return (status == QDF_STATUS_SUCCESS) ? 0 : -EBUSY;
@@ -1280,13 +1283,15 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		/* Send SCC/MCC Switching event to IPA */
 		hdd_ipa_send_mcc_scc_msg(pHddCtx, pHddCtx->mcc_mode);
 
-		if (cds_is_hw_mode_change_after_vdev_up()) {
+		if (policy_mgr_is_hw_mode_change_after_vdev_up(
+			pHddCtx->hdd_psoc)) {
 			hdd_info("check for possible hw mode change");
-			status = cds_set_hw_mode_on_channel_switch(
-					pHostapdAdapter->sessionId);
+			status = policy_mgr_set_hw_mode_on_channel_switch(
+				pHddCtx->hdd_psoc, pHostapdAdapter->sessionId);
 			if (QDF_IS_STATUS_ERROR(status))
 				hdd_info("set hw mode change not done");
-			cds_set_do_hw_mode_change_flag(false);
+			policy_mgr_set_do_hw_mode_change_flag(
+					pHddCtx->hdd_psoc, false);
 		}
 		/*
 		 * set this event at the very end because once this events
@@ -1784,7 +1789,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 				 bytes[0], GFP_KERNEL);
 
 		/* Update the beacon Interval if it is P2P GO */
-		qdf_status = cds_change_mcc_go_beacon_interval(pHostapdAdapter);
+		qdf_status = policy_mgr_change_mcc_go_beacon_interval(
+			pHddCtx->hdd_psoc, pHostapdAdapter->sessionId,
+			pHostapdAdapter->device_mode);
 		if (QDF_STATUS_SUCCESS != qdf_status) {
 			hdd_err("failed to update Beacon interval %d",
 				qdf_status);
@@ -2112,7 +2119,8 @@ stopbss:
 		we_custom_event_generic = we_custom_event;
 		wireless_send_event(dev, we_event, &wrqu,
 				    (char *)we_custom_event_generic);
-		cds_decr_session_set_pcl(pHostapdAdapter->device_mode,
+		policy_mgr_decr_session_set_pcl(pHddCtx->hdd_psoc,
+					 pHostapdAdapter->device_mode,
 					 pHostapdAdapter->sessionId);
 
 		/* once the event is set, structure dev/pHostapdAdapter should
@@ -2858,7 +2866,7 @@ static __iw_softap_setparam(struct net_device *dev,
 	}
 	case QCSAP_PARAM_SET_MCC_CHANNEL_LATENCY:
 	{
-		cds_set_mcc_latency(pHostapdAdapter, set_value);
+		wlan_hdd_set_mcc_latency(pHostapdAdapter, set_value);
 		break;
 	}
 
@@ -2866,7 +2874,7 @@ static __iw_softap_setparam(struct net_device *dev,
 	{
 		hdd_notice("iwpriv cmd to set MCC quota value %dms",
 		       set_value);
-		ret = cds_go_set_mcc_p2p_quota(pHostapdAdapter,
+		ret = wlan_hdd_go_set_mcc_p2p_quota(pHostapdAdapter,
 						    set_value);
 		break;
 	}
@@ -4862,7 +4870,8 @@ __iw_softap_stopbss(struct net_device *dev,
 			}
 		}
 		clear_bit(SOFTAP_BSS_STARTED, &pHostapdAdapter->event_flags);
-		cds_decr_session_set_pcl(pHostapdAdapter->device_mode,
+		policy_mgr_decr_session_set_pcl(hdd_ctx->hdd_psoc,
+					     pHostapdAdapter->device_mode,
 					     pHostapdAdapter->sessionId);
 		ret = qdf_status_to_os_return(status);
 	}
@@ -6077,9 +6086,10 @@ hdd_adapter_t *hdd_wlan_create_ap_dev(hdd_context_t *pHddCtx,
 		pHostapdAdapter->sessionId = HDD_SESSION_ID_INVALID;
 
 		hdd_info("pWlanHostapdDev = %p, pHostapdAdapter = %p, concurrency_mode=0x%x",
-		       pWlanHostapdDev,
-		       pHostapdAdapter,
-		       (int)cds_get_concurrency_mode());
+			pWlanHostapdDev,
+			pHostapdAdapter,
+			(int)policy_mgr_get_concurrency_mode(
+			pHddCtx->hdd_psoc));
 
 		/* Init the net_device structure */
 		strlcpy(pWlanHostapdDev->name, (const char *)iface_name,
@@ -7314,8 +7324,9 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 		return -EINVAL;
 	}
 
-	if (cds_is_hw_mode_change_in_progress()) {
-		status = qdf_wait_for_connection_update();
+	if (policy_mgr_is_hw_mode_change_in_progress(pHddCtx->hdd_psoc)) {
+		status = policy_mgr_wait_for_connection_update(
+			pHddCtx->hdd_psoc);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("qdf wait for event failed!!");
 			return -EINVAL;
@@ -7798,8 +7809,8 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 	}
 
 	if (check_for_concurrency) {
-		if (!cds_allow_concurrency(
-					cds_convert_device_mode_to_qdf_type(
+		if (!policy_mgr_allow_concurrency(pHddCtx->hdd_psoc,
+				policy_mgr_convert_device_mode_to_qdf_type(
 					pHostapdAdapter->device_mode),
 					pConfig->channel, HW_MODE_20_MHZ)) {
 			hdd_warn("This concurrency combination is not allowed");
@@ -7854,7 +7865,8 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 	/* Initialize WMM configuation */
 	hdd_wmm_init(pHostapdAdapter);
 	if (pHostapdState->bssState == BSS_START)
-		cds_incr_active_session(pHostapdAdapter->device_mode,
+		policy_mgr_incr_active_session(pHddCtx->hdd_psoc,
+					pHostapdAdapter->device_mode,
 					pHostapdAdapter->sessionId);
 #ifdef DHCP_SERVER_OFFLOAD
 	if (iniConfig->enableDHCPServerOffload)
@@ -8039,7 +8051,8 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 		}
 		clear_bit(SOFTAP_BSS_STARTED, &pAdapter->event_flags);
 		/*BSS stopped, clear the active sessions for this device mode*/
-		cds_decr_session_set_pcl(pAdapter->device_mode,
+		policy_mgr_decr_session_set_pcl(pHddCtx->hdd_psoc,
+						pAdapter->device_mode,
 						pAdapter->sessionId);
 		pAdapter->sessionCtx.ap.beacon = NULL;
 		qdf_mem_free(old);
@@ -8196,8 +8209,9 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		return -EBUSY;
 	}
 
-	if (cds_is_hw_mode_change_in_progress()) {
-		status = qdf_wait_for_connection_update();
+	if (policy_mgr_is_hw_mode_change_in_progress(pHddCtx->hdd_psoc)) {
+		status = policy_mgr_wait_for_connection_update(
+			pHddCtx->hdd_psoc);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("qdf wait for event failed!!");
 			return -EINVAL;
@@ -8245,8 +8259,8 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	}
 
 	/* check if concurrency is allowed */
-	if (!cds_allow_concurrency(
-				cds_convert_device_mode_to_qdf_type(
+	if (!policy_mgr_allow_concurrency(pHddCtx->hdd_psoc,
+				policy_mgr_convert_device_mode_to_qdf_type(
 				pAdapter->device_mode),
 				channel,
 				channel_width)) {
@@ -8254,12 +8268,12 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	status = qdf_reset_connection_update();
+	status = policy_mgr_reset_connection_update(pHddCtx->hdd_psoc);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("ERR: clear event failed");
 
-	status = cds_current_connections_update(pAdapter->sessionId,
-			channel,
+	status = policy_mgr_current_connections_update(pHddCtx->hdd_psoc,
+			pAdapter->sessionId, channel,
 			SIR_UPDATE_REASON_START_AP);
 	if (QDF_STATUS_E_FAILURE == status) {
 		hdd_err("ERROR: connections update failed!!");
@@ -8267,7 +8281,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	}
 
 	if (QDF_STATUS_SUCCESS == status) {
-		status = qdf_wait_for_connection_update();
+		status = policy_mgr_wait_for_connection_update(pHddCtx->hdd_psoc);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("ERROR: qdf wait for event failed!!");
 			return -EINVAL;

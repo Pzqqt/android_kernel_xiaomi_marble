@@ -51,7 +51,7 @@
 #include "qdf_types.h"
 #include "qdf_trace.h"
 #include "cds_sched.h"
-#include "cds_concurrency.h"
+#include "wlan_policy_mgr_api.h"
 #include "cds_utils.h"
 
 #ifdef CONVERGED_P2P_ENABLE

@@ -100,7 +100,7 @@ static int populate_oem_data_cap(hdd_adapter_t *adapter,
 
 	/* request for max num of channels */
 	num_chan = OEM_CAP_MAX_NUM_CHANNELS;
-	status = sme_get_cfg_valid_channels(hdd_ctx->hHal,
+	status = sme_get_cfg_valid_channels(
 					    &chan_list[0], &num_chan);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("failed to get valid channel list, status: %d", status);

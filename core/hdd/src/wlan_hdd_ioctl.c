@@ -34,7 +34,7 @@
 #include "wlan_hdd_power.h"
 #include "wlan_hdd_request_manager.h"
 #include "wlan_hdd_driver_ops.h"
-#include "cds_concurrency.h"
+#include "wlan_policy_mgr_api.h"
 #include "wlan_hdd_hostapd.h"
 #include "scheduler_api.h"
 
@@ -4698,8 +4698,8 @@ static int drv_cmd_miracast(hdd_adapter_t *adapter,
 		return -EBUSY;
 	}
 
-	if (cds_is_mcc_in_24G())
-		return cds_set_mas(adapter, filterType);
+	if (policy_mgr_is_mcc_in_24G(hdd_ctx->hdd_psoc))
+		return wlan_hdd_set_mas(adapter, filterType);
 
 exit:
 	return ret;
@@ -6747,7 +6747,8 @@ static int drv_cmd_set_antenna_mode(hdd_adapter_t *adapter,
 
 	/* Check TDLS status and update antenna mode */
 	if ((QDF_STA_MODE == adapter->device_mode) &&
-	    cds_is_sta_active_connection_exists()) {
+		policy_mgr_is_sta_active_connection_exists(
+		hdd_ctx->hdd_psoc)) {
 		ret = wlan_hdd_tdls_antenna_switch(hdd_ctx, adapter,
 						   mode);
 		if (0 != ret)

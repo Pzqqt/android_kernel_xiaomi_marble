@@ -85,7 +85,7 @@ static int wlan_hdd_gen_wlan_status_pack(struct wlan_status_data *data,
 	else
 		data->lpss_support = 0;
 	data->numChannels = WLAN_SVC_MAX_NUM_CHAN;
-	sme_get_cfg_valid_channels(hdd_ctx->hHal, data->channel_list,
+	sme_get_cfg_valid_channels(data->channel_list,
 				   &data->numChannels);
 	sme_get_country_code(hdd_ctx->hHal, data->country_code, &buflen);
 	data->is_on = is_on;

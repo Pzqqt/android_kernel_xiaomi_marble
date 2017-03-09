@@ -73,7 +73,7 @@
 #include <ol_txrx_osif_api.h>
 #include "hif.h"
 #include "sme_power_save_api.h"
-#include "cds_concurrency.h"
+#include "wlan_policy_mgr_api.h"
 #include "cdp_txrx_flow_ctrl_v2.h"
 #include "pld_common.h"
 #include "wlan_hdd_driver_ops.h"
@@ -1268,7 +1268,7 @@ QDF_STATUS hdd_wlan_shutdown(void)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	cds_clear_concurrent_session_count();
+	policy_mgr_clear_concurrent_session_count(pHddCtx->hdd_psoc);
 
 	hdd_info("Invoking packetdump deregistration API");
 	wlan_deregister_txrx_packetdump();
