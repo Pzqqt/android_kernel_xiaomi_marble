@@ -1482,7 +1482,7 @@ int htt_mon_rx_handle_amsdu_packet(qdf_nbuf_t msdu, htt_pdev_handle pdev,
 	qdf_nbuf_trim_tail(frag_nbuf, HTT_RX_BUF_SIZE - len);
 
 	HTT_PKT_DUMP(qdf_trace_hex_dump(QDF_MODULE_ID_TXRX,
-					QDF_TRACE_LEVEL_FATAL,
+					QDF_TRACE_LEVEL_DEBUG,
 					qdf_nbuf_data(frag_nbuf),
 					qdf_nbuf_len(frag_nbuf)));
 	prev_frag_nbuf = frag_nbuf;
@@ -1505,7 +1505,7 @@ int htt_mon_rx_handle_amsdu_packet(qdf_nbuf_t msdu, htt_pdev_handle pdev,
 		amsdu_len -= len;
 		qdf_nbuf_trim_tail(frag_nbuf, HTT_RX_BUF_SIZE - len);
 		HTT_PKT_DUMP(qdf_trace_hex_dump(QDF_MODULE_ID_TXRX,
-						QDF_TRACE_LEVEL_FATAL,
+						QDF_TRACE_LEVEL_DEBUG,
 						qdf_nbuf_data(frag_nbuf),
 						qdf_nbuf_len(frag_nbuf)));
 
@@ -1783,7 +1783,7 @@ static int htt_rx_mon_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 	msg_word = (uint32_t *)rx_ind_data;
 
 	HTT_PKT_DUMP(qdf_trace_hex_dump(QDF_MODULE_ID_TXRX,
-					QDF_TRACE_LEVEL_FATAL,
+					QDF_TRACE_LEVEL_DEBUG,
 					(void *)rx_ind_data,
 					(int)qdf_nbuf_len(rx_ind_msg)));
 
@@ -1844,7 +1844,7 @@ static int htt_rx_mon_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 
 
 		HTT_PKT_DUMP(qdf_trace_hex_dump(QDF_MODULE_ID_TXRX,
-						QDF_TRACE_LEVEL_FATAL,
+						QDF_TRACE_LEVEL_DEBUG,
 						qdf_nbuf_data(msdu),
 						qdf_nbuf_len(msdu)));
 		last_frag = ((struct htt_rx_in_ord_paddr_ind_msdu_t *)
