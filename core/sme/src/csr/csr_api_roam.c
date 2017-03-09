@@ -18483,9 +18483,6 @@ enum wlan_serialization_cmd_type csr_get_cmd_type(tSmeCmd *sme_cmd)
 	case e_sme_command_set_antenna_mode:
 		cmd_type = WLAN_SER_CMD_SET_ANTENNA_MODE;
 		break;
-	case eSmeCommandOemDataReq:
-		cmd_type = WLAN_SER_CMD_OEM_DATA_REQ;
-		break;
 	case eSmeCommandEnterBmps:
 		cmd_type = WLAN_SER_CMD_ENTER_BMPS;
 		break;

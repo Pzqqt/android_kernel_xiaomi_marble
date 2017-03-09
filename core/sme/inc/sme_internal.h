@@ -83,9 +83,6 @@ typedef enum eSmeCommandType {
 	eSmeQosCommandMask = 0x40000,   /* To identify Qos commands */
 	eSmeCommandAddTs,
 	eSmeCommandDelTs,
-#ifdef FEATURE_OEM_DATA_SUPPORT
-	eSmeCommandOemDataReq = 0x80000, /* To identify the oem data commands */
-#endif
 	eSmeCommandRemainOnChannel,
 	e_sme_command_set_hw_mode,
 	e_sme_command_nss_update,
