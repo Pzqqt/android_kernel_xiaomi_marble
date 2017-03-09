@@ -69,7 +69,7 @@
 #include "cds_utils.h"
 #include "sys_startup.h"
 #include "cds_api.h"
-#include "cds_concurrency.h"
+#include "wlan_policy_mgr_api.h"
 #include "nan_datapath.h"
 #include "wma.h"
 #include "wlan_mgmt_txrx_utils_api.h"

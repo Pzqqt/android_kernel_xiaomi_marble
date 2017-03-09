@@ -53,7 +53,7 @@
 #include "sme_api.h"
 /* SAP Internal API header file */
 #include "sap_internal.h"
-#include "cds_concurrency.h"
+#include "wlan_policy_mgr_api.h"
 #include "wma.h"
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_objmgr_pdev_obj.h>

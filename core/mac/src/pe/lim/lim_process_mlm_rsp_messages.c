@@ -48,7 +48,7 @@
 #include "wma_types.h"
 #include "cds_utils.h"
 #include "lim_types.h"
-#include "cds_concurrency.h"
+#include "wlan_policy_mgr_api.h"
 #include "nan_datapath.h"
 
 #define MAX_SUPPORTED_PEERS_WEP 16
@@ -3241,7 +3241,8 @@ void lim_process_switch_channel_rsp(tpAniSirGlobal pMac, void *body)
 		/* If MCC upgrade/DBS downgrade happended during channel switch,
 		 * the policy manager connection table needs to be updated.
 		 */
-		cds_update_connection_info(psessionEntry->smeSessionId);
+		policy_mgr_update_connection_info(pMac->psoc,
+			psessionEntry->smeSessionId);
 		if (psessionEntry->pePersona == QDF_P2P_CLIENT_MODE) {
 			lim_log(pMac, LOG1,
 				FL("Send p2p operating channel change conf action frame once first beacon is received on new channel"));
@@ -3259,12 +3260,13 @@ void lim_process_switch_channel_rsp(tpAniSirGlobal pMac, void *body)
 		 * SAP.
 		 */
 		lim_send_sme_ap_channel_switch_resp(pMac, psessionEntry,
-						    pChnlParams);
+						pChnlParams);
 		/* If MCC upgrade/DBS downgrade happended during channel switch,
 		 * the policy manager connection table needs to be updated.
 		 */
-		cds_update_connection_info(psessionEntry->smeSessionId);
-		cds_set_do_hw_mode_change_flag(true);
+		policy_mgr_update_connection_info(pMac->psoc,
+						psessionEntry->smeSessionId);
+		policy_mgr_set_do_hw_mode_change_flag(pMac->psoc, true);
 	}
 	break;
 	default:

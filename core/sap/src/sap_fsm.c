@@ -50,7 +50,7 @@
 #include "cds_ieee80211_common_i.h"
 #include "cds_reg_service.h"
 #include "qdf_util.h"
-#include "cds_concurrency.h"
+#include "wlan_policy_mgr_api.h"
 #include <wlan_objmgr_pdev_obj.h>
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_utility.h>
@@ -2238,7 +2238,7 @@ QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (cds_concurrent_beaconing_sessions_running()) {
+	if (policy_mgr_concurrent_beaconing_sessions_running(mac_ctx->psoc)) {
 		con_ch =
 			sme_get_concurrent_operation_channel(h_hal);
 #ifdef FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE
@@ -2282,7 +2282,8 @@ QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 #endif
 	}
 
-	if (cds_get_concurrency_mode() == (QDF_STA_MASK | QDF_SAP_MASK)) {
+	if (policy_mgr_get_concurrency_mode(mac_ctx->psoc) ==
+		(QDF_STA_MASK | QDF_SAP_MASK)) {
 #ifdef FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE
 		if (sap_context->channel == AUTO_CHANNEL_SELECT)
 			sap_context->dfs_ch_disable = true;
@@ -2482,7 +2483,9 @@ QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 			/* This wait happens in the hostapd context. The event
 			 * is set in the MC thread context.
 			 */
-			qdf_status = cds_update_and_wait_for_connection_update(
+			qdf_status =
+			policy_mgr_update_and_wait_for_connection_update(
+					mac_ctx->psoc,
 					sap_context->sessionId,
 					sap_context->channel,
 					SIR_UPDATE_REASON_START_AP);
@@ -3755,7 +3758,8 @@ static QDF_STATUS sap_fsm_state_ch_select(ptSapContext sap_ctx,
 		 * ACS check if AP1 ACS resulting channel is DFS and if yes
 		 * override AP2 ACS scan result with AP1 DFS channel
 		 */
-		if (cds_concurrent_beaconing_sessions_running()) {
+		if (policy_mgr_concurrent_beaconing_sessions_running(
+			mac_ctx->psoc)) {
 			uint16_t con_ch;
 
 			con_ch = sme_get_concurrent_operation_channel(hal);
@@ -4831,7 +4835,25 @@ static QDF_STATUS sap_get_5ghz_channel_list(ptSapContext sapContext)
 	struct sir_pcl_list pcl;
 	QDF_STATUS status;
 	enum channel_state ch_state;
+	tpAniSirGlobal mac_ctx;
+	tHalHandle h_hal;
+
 	pcl.pcl_len = 0;
+	h_hal = cds_get_context(QDF_MODULE_ID_SME);
+	if (NULL == h_hal) {
+		/* we have a serious problem */
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_FATAL,
+		FL("invalid h_hal"));
+		return QDF_STATUS_E_FAULT;
+	}
+
+	mac_ctx = PMAC_STRUCT(h_hal);
+	if (NULL == mac_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+		FL("Invalid MAC context"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	if (NULL == sapContext) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "Invalid sapContext pointer on sap_get_channel_list");
@@ -4851,13 +4873,15 @@ static QDF_STATUS sap_get_5ghz_channel_list(ptSapContext sapContext)
 			  " Memory Allocation failed sap_get_channel_list");
 		return QDF_STATUS_E_NOMEM;
 	}
-	if (cds_mode_specific_connection_count(CDS_SAP_MODE, NULL) == 0) {
-		status = cds_get_pcl(CDS_SAP_MODE,
+	if (policy_mgr_mode_specific_connection_count(mac_ctx->psoc,
+		PM_SAP_MODE, NULL) == 0) {
+		status = policy_mgr_get_pcl(mac_ctx->psoc, PM_SAP_MODE,
 				pcl.pcl_list, &pcl.pcl_len, pcl.weight_list,
 				QDF_ARRAY_SIZE(pcl.weight_list));
 	} else  {
-		status = cds_get_pcl_for_existing_conn(CDS_SAP_MODE,
-				pcl.pcl_list, &pcl.pcl_len, pcl.weight_list,
+		status = policy_mgr_get_pcl_for_existing_conn(mac_ctx->psoc,
+				PM_SAP_MODE, pcl.pcl_list, &pcl.pcl_len,
+				pcl.weight_list,
 				QDF_ARRAY_SIZE(pcl.weight_list));
 	}
 	if (status != QDF_STATUS_SUCCESS) {

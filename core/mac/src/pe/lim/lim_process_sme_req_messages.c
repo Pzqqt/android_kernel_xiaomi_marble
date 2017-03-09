@@ -135,7 +135,7 @@ static QDF_STATUS lim_process_set_hw_mode(tpAniSirGlobal mac, uint32_t *msg)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct scheduler_msg message;
-	struct sir_hw_mode *req_msg;
+	struct policy_mgr_hw_mode *req_msg;
 	uint32_t len;
 	struct s_sir_set_hw_mode *buf;
 	struct scheduler_msg resp_msg;

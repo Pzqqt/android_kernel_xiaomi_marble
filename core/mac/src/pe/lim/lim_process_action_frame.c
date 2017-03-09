@@ -54,7 +54,7 @@
 #include "lim_send_messages.h"
 #include "rrm_api.h"
 #include "lim_session_utils.h"
-#include "cds_concurrency.h"
+#include "wlan_policy_mgr_api.h"
 #include "wma_types.h"
 #include "wma.h"
 #include <cdp_txrx_cmn.h>
@@ -404,10 +404,10 @@ lim_process_ext_channel_switch_action_frame(tpAniSirGlobal mac_ctx,
 	 * and no concurrent session is running.
 	 */
 	if (!((session_entry->currentOperChannel != target_channel) &&
-	 ((cds_get_channel_state(target_channel)
+	((cds_get_channel_state(target_channel)
 				== CHANNEL_STATE_ENABLE) ||
-	 (cds_get_channel_state(target_channel) == CHANNEL_STATE_DFS &&
-	 !cds_concurrent_open_sessions_running())))) {
+	(cds_get_channel_state(target_channel) == CHANNEL_STATE_DFS &&
+	!policy_mgr_concurrent_open_sessions_running(mac_ctx->psoc))))) {
 		lim_log(mac_ctx, LOGE, FL("Channel %d is not valid"),
 							target_channel);
 		return;

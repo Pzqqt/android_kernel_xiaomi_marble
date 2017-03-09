@@ -62,7 +62,7 @@
 #include "qdf_types.h"
 #include "cds_packet.h"
 #include "qdf_mem.h"
-#include "cds_concurrency.h"
+#include "wlan_policy_mgr_api.h"
 #include "nan_datapath.h"
 
 void lim_log_session_states(tpAniSirGlobal pMac);
