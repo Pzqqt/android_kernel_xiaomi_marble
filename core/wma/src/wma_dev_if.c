@@ -2184,7 +2184,7 @@ int wma_peer_assoc_conf_handler(void *handle, uint8_t *cmd_param_info,
 
 		/* peer assoc conf event means the cmd succeeds */
 		params->status = QDF_STATUS_SUCCESS;
-		WMA_LOGE(FL("Send ADD_STA_RSP: statype %d vdev_id %d aid %d bssid %pM staIdx %d status %d"),
+		WMA_LOGD(FL("Send ADD_STA_RSP: statype %d vdev_id %d aid %d bssid %pM staIdx %d status %d"),
 			 params->staType, params->smesessionId,
 			 params->assocId, params->bssId, params->staIdx,
 			 params->status);
@@ -2200,7 +2200,8 @@ int wma_peer_assoc_conf_handler(void *handle, uint8_t *cmd_param_info,
 
 		/* peer assoc conf event means the cmd succeeds */
 		params->status = QDF_STATUS_SUCCESS;
-		WMA_LOGE(FL("Send ADD BSS RSP: opermode %d update_bss %d nw_type %d bssid %pM"
+		WMA_LOGD(FL("Send ADD BSS RSP: opermode: %d update_bss: %d"
+			" nw_type: %d bssid: %pM"
 			" staIdx %d status %d"), params->operMode,
 			params->updateBss, params->nwType, params->bssId,
 			params->staContext.staIdx, params->status);

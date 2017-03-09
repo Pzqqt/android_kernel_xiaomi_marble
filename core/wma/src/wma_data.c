@@ -2769,7 +2769,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		if ((pFc->type == SIR_MAC_MGMT_FRAME) &&
 		    (pFc->subType != SIR_MAC_MGMT_PROBE_REQ) &&
 		    (pFc->subType != SIR_MAC_MGMT_PROBE_RSP)) {
-			WMA_LOGE("TX MGMT - Type %hu, SubType %hu seq_num[%d]",
+			WMA_LOGD("TX MGMT - Type %hu, SubType %hu seq_num[%d]",
 				 pFc->type, pFc->subType,
 				 ((mHdr->seqControl.seqNumHi << 4) |
 				 mHdr->seqControl.seqNumLo));
@@ -3010,7 +3010,7 @@ void wma_tx_abort(uint8_t vdev_id)
 			 __func__, iface->handle);
 		return;
 	}
-	WMA_LOGI("%s: vdevid %d bssid %pM", __func__, vdev_id, iface->bssid);
+	WMA_LOGD("%s: vdevid %d bssid %pM", __func__, vdev_id, iface->bssid);
 	wma_vdev_set_pause_bit(vdev_id, PAUSE_TYPE_HOST);
 	cdp_fc_vdev_pause(cds_get_context(QDF_MODULE_ID_SOC),
 			iface->handle,

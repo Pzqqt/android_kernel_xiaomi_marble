@@ -120,7 +120,7 @@ static void wma_dec_pending_scans(tp_wma_handle wma)
 	}
 
 	qdf_atomic_dec(&wma->num_pending_scans);
-	WMA_LOGI("Ending pending scan: %d <- %d", scan_cnt, scan_cnt - 1);
+	WMA_LOGD("Ending pending scan: %d <- %d", scan_cnt, scan_cnt - 1);
 }
 
 /**
@@ -132,7 +132,7 @@ static void wma_dec_pending_scans(tp_wma_handle wma)
 static void wma_inc_pending_scans(tp_wma_handle wma)
 {
 	int32_t scan_cnt = qdf_atomic_inc_return(&wma->num_pending_scans);
-	WMA_LOGI("Starting pending scan: %d -> %d", scan_cnt - 1, scan_cnt);
+	WMA_LOGD("Starting pending scan: %d -> %d", scan_cnt - 1, scan_cnt);
 }
 
 /**
@@ -482,10 +482,10 @@ QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 				cmd->repeat_probe_time : 0;
 		}
 	}
-	WMA_LOGI("Scan Type 0x%x, Active dwell time %u, Passive dwell time %u",
+	WMA_LOGD("Scan Type 0x%x, Active dwell time %u, Passive dwell time %u",
 		scan_req->scanType, cmd->dwell_time_active,
 		cmd->dwell_time_passive);
-	WMA_LOGI("Scan repeat_probe_time %u n_probes %u num_ssids %u num_bssid %u",
+	WMA_LOGD("Scan repeat_probe_time %u n_probes %u num_ssids %u num_bssid %u",
 		cmd->repeat_probe_time,
 		cmd->n_probes,
 		cmd->num_ssids,
@@ -554,7 +554,7 @@ QDF_STATUS wma_start_scan(tp_wma_handle wma_handle,
 	 */
 	vdev_id = cmd.vdev_id;
 	scan_id = cmd.scan_id;
-	WMA_LOGI("ActiveDwell %d, PassiveDwell %d, ScanFlags 0x%x NumChan %d",
+	WMA_LOGD("ActiveDwell %d, PassiveDwell %d, ScanFlags 0x%x NumChan %d",
 		 cmd.dwell_time_active, cmd.dwell_time_passive,
 		 cmd.scan_flags, cmd.num_chan);
 
@@ -566,7 +566,7 @@ QDF_STATUS wma_start_scan(tp_wma_handle wma_handle,
 		goto dec_scans;
 	}
 
-	WMA_LOGI("WMA --> WMI_START_SCAN_CMDID");
+	WMA_LOGD("WMA --> WMI_START_SCAN_CMDID");
 
 	return QDF_STATUS_SUCCESS;
 
@@ -815,7 +815,7 @@ QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
-	WMA_LOGI("%s: WMA --> WMI_ROAM_SCAN_MODE", __func__);
+	WMA_LOGD("%s: WMA --> WMI_ROAM_SCAN_MODE", __func__);
 	qdf_mem_free(params);
 	return status;
 }
@@ -923,12 +923,12 @@ QDF_STATUS wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 		return status;
 	}
 
-	WMA_LOGI(FL("roam_scan_rssi_thresh=%d, roam_rssi_thresh_diff=%d"),
+	WMA_LOGD(FL("roam_scan_rssi_thresh=%d, roam_rssi_thresh_diff=%d"),
 		rssi_thresh, rssi_thresh_diff);
-	WMA_LOGI(
+	WMA_LOGD(
 		FL("hirssi_scan max_count=%d, delta=%d, hirssi_upper_bound=%d"),
 		hirssi_scan_max_count, hirssi_scan_delta, hirssi_upper_bound);
-	WMA_LOGI(
+	WMA_LOGD(
 		FL("dense_rssi_thresh_offset=%d, dense_min_aps_cnt=%d, traffic_threshold=%d initial_dense_status=%d"),
 			roam_params->dense_rssi_thresh_offset,
 			roam_params->dense_min_aps_cnt,
@@ -1021,7 +1021,7 @@ QDF_STATUS wma_roam_scan_offload_chan_list(tp_wma_handle wma_handle,
 	for (i = 0; ((i < chan_count) &&
 		     (i < SIR_ROAM_MAX_CHANNELS)); i++) {
 		chan_list_mhz[i] = cds_chan_to_freq(chan_list[i]);
-		WMA_LOGI("%d,", chan_list_mhz[i]);
+		WMA_LOGD("%d,", chan_list_mhz[i]);
 	}
 
 	status = wmi_unified_roam_scan_offload_chan_list_cmd(wma_handle->wmi_handle,
@@ -1367,13 +1367,13 @@ void wma_roam_scan_fill_scan_params(tp_wma_handle wma_handle,
 				       WMI_SCAN_ADD_DS_IE_IN_PROBE_REQ;
 	if (roam_req != NULL) {
 		/* Parameters updated after association is complete */
-		WMA_LOGI("%s: Input parameters: NeighborScanChannelMinTime"
-			 " = %d, NeighborScanChannelMaxTime = %d",
+		WMA_LOGD("%s: NeighborScanChannelMinTime: %d"
+			 " NeighborScanChannelMaxTime: %d",
 			 __func__,
 			 roam_req->NeighborScanChannelMinTime,
 			 roam_req->NeighborScanChannelMaxTime);
-		WMA_LOGI("%s: Input parameters: NeighborScanTimerPeriod ="
-			 " %d, HomeAwayTime = %d, nProbes = %d",
+		WMA_LOGD("%s: NeighborScanTimerPeriod: %d"
+			 " HomeAwayTime: %d nProbes: %d",
 			 __func__,
 			 roam_req->NeighborScanTimerPeriod,
 			 roam_req->HomeAwayTime, roam_req->nProbes);
@@ -1506,18 +1506,18 @@ void wma_roam_scan_fill_scan_params(tp_wma_handle wma_handle,
 		scan_params->n_probes = 0;
 	}
 
-	WMA_LOGI("%s: Rome roam scan parameters:"
+	WMA_LOGD("%s: Rome roam scan parameters:"
 		 " dwell_time_active = %d, dwell_time_passive = %d",
 		 __func__,
 		 scan_params->dwell_time_active,
 		 scan_params->dwell_time_passive);
-	WMA_LOGI("%s: min_rest_time = %d, max_rest_time = %d,"
+	WMA_LOGD("%s: min_rest_time = %d, max_rest_time = %d,"
 		 " repeat_probe_time = %d n_probes = %d",
 		 __func__,
 		 scan_params->min_rest_time,
 		 scan_params->max_rest_time,
 		 scan_params->repeat_probe_time, scan_params->n_probes);
-	WMA_LOGI("%s: max_scan_time = %d, idle_time = %d,"
+	WMA_LOGD("%s: max_scan_time = %d, idle_time = %d,"
 		 " burst_duration = %d, scan_ctrl_flags = 0x%x",
 		 __func__,
 		 scan_params->max_scan_time,
@@ -1666,7 +1666,7 @@ QDF_STATUS wma_roam_scan_bmiss_cnt(tp_wma_handle wma_handle,
 {
 	QDF_STATUS status;
 
-	WMA_LOGI("%s: first_bcnt=%d, final_bcnt=%d", __func__, first_bcnt,
+	WMA_LOGD("%s: first_bcnt: %d, final_bcnt: %d", __func__, first_bcnt,
 		 final_bcnt);
 
 	status = wma_vdev_set_param(wma_handle->wmi_handle,
@@ -1728,7 +1728,7 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 	uint32_t mode = 0;
 	struct wma_txrx_node *intr = NULL;
 
-	WMA_LOGI("%s: command 0x%x, reason %d", __func__, roam_req->Command,
+	WMA_LOGD("%s: command 0x%x, reason %d", __func__, roam_req->Command,
 		 roam_req->reason);
 
 	if (NULL == pMac) {
@@ -4006,7 +4006,6 @@ int wma_extscan_capabilities_event_handler(void *handle,
 
 	pMac->sme.pExtScanIndCb(pMac->hHdd,
 				eSIR_EXTSCAN_GET_CAPABILITIES_IND, dest_capab);
-	WMA_LOGI("%s: sending capabilities event to hdd", __func__);
 	qdf_mem_free(dest_capab);
 	return 0;
 }
@@ -5605,7 +5604,7 @@ int wma_scan_event_callback(WMA_HANDLE handle, uint8_t *data,
 		return -ENOMEM;
 	}
 
-	WMA_LOGI("scan event %u, id 0x%x, requestor 0x%x, freq %u, reason %u",
+	WMA_LOGD("scan_event: %u, id: 0x%x, requestor: 0x%x, freq: %u, reason: %u",
 		 wmi_event->event, wmi_event->scan_id, wmi_event->requestor,
 		 wmi_event->channel_freq, wmi_event->reason);
 

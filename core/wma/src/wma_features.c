@@ -511,7 +511,7 @@ QDF_STATUS wma_process_dhcp_ind(tp_wma_handle wma_handle,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	WMA_LOGI("%s: WMA --> WMI_PEER_SET_PARAM triggered by DHCP, "
+	WMA_LOGD("%s: WMA --> WMI_PEER_SET_PARAM triggered by DHCP, "
 		 "msgType=%s,"
 		 "device_mode=%d, macAddr=" MAC_ADDRESS_STR,
 		 __func__,
@@ -1264,7 +1264,7 @@ int wma_oem_data_response_handler(void *handle,
 
 	qdf_mem_copy(oem_rsp->data, data, datalen);
 
-	WMA_LOGI(FL("Sending OEM_DATA_RSP(len: %d) to upper layer"), datalen);
+	WMA_LOGD("Sending OEM_DATA_RSP(len: %d) to upper layer", datalen);
 
 	pmac->sme.oem_data_rsp_callback(oem_rsp);
 
@@ -3189,7 +3189,6 @@ void wma_del_ts_req(tp_wma_handle wma, tDelTsParams *msg)
 	if (msg->setRICparams == true)
 		wma_set_ric_req(wma, msg, false);
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
-
 	qdf_mem_free(msg);
 }
 
@@ -4367,14 +4366,14 @@ QDF_STATUS wma_process_ch_avoid_update_req(tp_wma_handle wma_handle,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	WMA_LOGI("%s: WMA --> WMI_CHAN_AVOID_UPDATE", __func__);
+	WMA_LOGD("%s: WMA --> WMI_CHAN_AVOID_UPDATE", __func__);
 
 	status = wmi_unified_process_ch_avoid_update_cmd(
 					wma_handle->wmi_handle);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
-	WMA_LOGI("%s: WMA --> WMI_CHAN_AVOID_UPDATE sent through WMI",
+	WMA_LOGD("%s: WMA --> WMI_CHAN_AVOID_UPDATE sent through WMI",
 		 __func__);
 	return status;
 }
@@ -5784,7 +5783,7 @@ QDF_STATUS wma_set_tx_rx_aggregation_size(
 	cmd->tx_aggr_size = tx_rx_aggregation_size->tx_aggregation_size;
 	cmd->rx_aggr_size = tx_rx_aggregation_size->rx_aggregation_size;
 
-	WMA_LOGI("tx aggr: %d rx aggr: %d vdev: %d",
+	WMA_LOGD("tx aggr: %d rx aggr: %d vdev: %d",
 		cmd->tx_aggr_size, cmd->rx_aggr_size, cmd->vdev_id);
 
 	ret = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,

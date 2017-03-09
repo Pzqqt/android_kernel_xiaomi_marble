@@ -331,7 +331,7 @@ void wma_update_edca_params_for_ac(tSirMacEdcaParamRecord *edca_param,
 	/* TODO: No ack is not present in EdcaParamRecord */
 	wmm_param->no_ack = 0;
 
-	WMA_LOGI("WMM PARAMS AC[%d]: AIFS %d Min %d Max %d TXOP %d ACM %d NOACK %d",
+	WMA_LOGD("WMM PARAMS AC[%d]: AIFS %d Min %d Max %d TXOP %d ACM %d NOACK %d",
 		ac, wmm_param->aifs, wmm_param->cwmin, wmm_param->cwmax,
 		wmm_param->txoplimit, wmm_param->acm, wmm_param->no_ack);
 }

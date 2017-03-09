@@ -797,7 +797,7 @@ int wma_vdev_install_key_complete_event_handler(void *handle,
 	/*
 	 * Do nothing for now. Completion of set key is already indicated to lim
 	 */
-	WMA_LOGI("%s: WMI_VDEV_INSTALL_KEY_COMPLETE_EVENTID", __func__);
+	WMA_LOGD("%s: WMI_VDEV_INSTALL_KEY_COMPLETE_EVENTID", __func__);
 	return 0;
 }
 /*
@@ -2483,7 +2483,7 @@ void wma_send_probe_rsp_tmpl(tp_wma_handle wma,
 
 	if (WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
 				   WMI_SERVICE_BEACON_OFFLOAD)) {
-		WMA_LOGI("Beacon Offload Enabled Sending Unified command");
+		WMA_LOGD("Beacon Offload Enabled Sending Unified command");
 		if (wmi_unified_probe_rsp_tmpl_send(wma, vdev_id,
 						    probe_rsp_info) < 0) {
 			WMA_LOGE(FL("wmi_unified_probe_rsp_tmpl_send Failed "));
@@ -2520,7 +2520,7 @@ void wma_send_beacon(tp_wma_handle wma, tpSendbeaconParams bcn_info)
 
 	if (WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
 				   WMI_SERVICE_BEACON_OFFLOAD)) {
-		WMA_LOGI("Beacon Offload Enabled Sending Unified command");
+		WMA_LOGD("Beacon Offload Enabled Sending Unified command");
 		status = wma_unified_bcn_tmpl_send(wma, vdev_id, bcn_info, 4);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			WMA_LOGE("%s : wmi_unified_bcn_tmpl_send Failed ",
@@ -2642,8 +2642,7 @@ static int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
 		return -EINVAL;
 	}
 
-	WMA_LOGI("%s: status:%d desc id:%d", __func__, status, desc_id);
-
+	WMA_LOGD("%s: status: %d wmi_desc_id: %d", __func__, status, desc_id);
 
 	psoc = wma_handle->psoc;
 	if (psoc == NULL) {
