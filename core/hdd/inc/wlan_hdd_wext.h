@@ -254,8 +254,6 @@ typedef struct hdd_wext_state_s {
 	/* qdf event */
 	qdf_event_t hdd_qdf_event;
 
-	qdf_event_t scanevent;
-
 	/**Counter measure state, Started/Stopped*/
 	bool mTKIPCounterMeasures;
 
