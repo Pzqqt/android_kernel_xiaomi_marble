@@ -22,6 +22,137 @@
 #ifndef _WLAN_CRYPTO_DEF_I_H_
 #define _WLAN_CRYPTO_DEF_I_H_
 
+#include "wlan_crypto_aes_i.h"
+
+/* IEEE 802.11 defines */
+#define WLAN_FC_PVER      0x0003
+#define WLAN_FC_TODS      0x0100
+#define WLAN_FC_FROMDS    0x0200
+#define WLAN_FC_MOREFRAG  0x0400
+#define WLAN_FC_RETRY     0x0800
+#define WLAN_FC_PWRMGT    0x1000
+#define WLAN_FC_MOREDATA  0x2000
+#define WLAN_FC_ISWEP     0x4000
+#define WLAN_FC_ORDER     0x8000
+
+#define WLAN_FC_GET_TYPE(fc)    (((fc) & 0x000c) >> 2)
+#define WLAN_FC_GET_STYPE(fc)   (((fc) & 0x00f0) >> 4)
+
+#define WLAN_INVALID_MGMT_SEQ   0xffff
+#define WLAN_SEQ_MASK           0x0fff
+#define WLAN_QOS_TID_MASK       0x00ff
+#define WLAN_GET_SEQ_FRAG(seq) ((seq) & (BIT(3) | BIT(2) | BIT(1) | BIT(0)))
+#define WLAN_GET_SEQ_SEQ(seq) \
+	(((seq) & (~(BIT(3) | BIT(2) | BIT(1) | BIT(0)))) >> 4)
+
+#define WLAN_FC_TYPE_MGMT        0
+#define WLAN_FC_TYPE_CTRL        1
+#define WLAN_FC_TYPE_DATA        2
+
+/* management */
+#define WLAN_FC_STYPE_ASSOC_REQ      0
+#define WLAN_FC_STYPE_ASSOC_RESP     1
+#define WLAN_FC_STYPE_REASSOC_REQ    2
+#define WLAN_FC_STYPE_REASSOC_RESP   3
+#define WLAN_FC_STYPE_PROBE_REQ      4
+#define WLAN_FC_STYPE_PROBE_RESP     5
+#define WLAN_FC_STYPE_BEACON         8
+#define WLAN_FC_STYPE_ATIM           9
+#define WLAN_FC_STYPE_DISASSOC      10
+#define WLAN_FC_STYPE_AUTH          11
+#define WLAN_FC_STYPE_DEAUTH        12
+#define WLAN_FC_STYPE_ACTION        13
+
+/* control */
+#define WLAN_FC_STYPE_PSPOLL        10
+#define WLAN_FC_STYPE_RTS           11
+#define WLAN_FC_STYPE_CTS           12
+#define WLAN_FC_STYPE_ACK           13
+#define WLAN_FC_STYPE_CFEND         14
+#define WLAN_FC_STYPE_CFENDACK      15
+
+/* data */
+#define WLAN_FC_STYPE_DATA                0
+#define WLAN_FC_STYPE_DATA_CFACK          1
+#define WLAN_FC_STYPE_DATA_CFPOLL         2
+#define WLAN_FC_STYPE_DATA_CFACKPOLL      3
+#define WLAN_FC_STYPE_NULLFUNC            4
+#define WLAN_FC_STYPE_CFACK               5
+#define WLAN_FC_STYPE_CFPOLL              6
+#define WLAN_FC_STYPE_CFACKPOLL           7
+#define WLAN_FC_STYPE_QOS_DATA            8
+#define WLAN_FC_STYPE_QOS_DATA_CFACK      9
+#define WLAN_FC_STYPE_QOS_DATA_CFPOLL    10
+#define WLAN_FC_STYPE_QOS_DATA_CFACKPOLL 11
+#define WLAN_FC_STYPE_QOS_NULL           12
+#define WLAN_FC_STYPE_QOS_CFPOLL         14
+#define WLAN_FC_STYPE_QOS_CFACKPOLL      15
+
+#define WLAN_TID_SIZE                    17
+#define WLAN_NONQOS_SEQ                  16
+
+/* Macros for handling unaligned memory accesses */
+
+static inline uint16_t WPA_GET_BE16(const uint8_t *a)
+{
+	return (a[0] << 8) | a[1];
+}
+
+static inline void WPA_PUT_BE16(uint8_t *a, uint16_t val)
+{
+	a[0] = val >> 8;
+	a[1] = val & 0xff;
+}
+
+static inline uint16_t WPA_GET_LE16(const uint8_t *a)
+{
+	return (a[1] << 8) | a[0];
+}
+
+static inline void WPA_PUT_LE16(uint8_t *a, uint16_t val)
+{
+	a[1] = val >> 8;
+	a[0] = val & 0xff;
+}
+
+static inline uint32_t WPA_GET_BE32(const uint8_t *a)
+{
+	return ((u32) a[0] << 24) | (a[1] << 16) | (a[2] << 8) | a[3];
+}
+
+static inline void WPA_PUT_BE32(uint8_t *a, uint32_t val)
+{
+	a[0] = (val >> 24) & 0xff;
+	a[1] = (val >> 16) & 0xff;
+	a[2] = (val >> 8) & 0xff;
+	a[3] = val & 0xff;
+}
+
+static inline uint32_t WPA_GET_LE32(const uint8_t *a)
+{
+	return ((u32) a[3] << 24) | (a[2] << 16) | (a[1] << 8) | a[0];
+}
+
+static inline void WPA_PUT_LE32(uint8_t *a, uint32_t val)
+{
+	a[3] = (val >> 24) & 0xff;
+	a[2] = (val >> 16) & 0xff;
+	a[1] = (val >> 8) & 0xff;
+	a[0] = val & 0xff;
+}
+
+static inline void WPA_PUT_BE64(u8 *a, u64 val)
+{
+	a[0] = val >> 56;
+	a[1] = val >> 48;
+	a[2] = val >> 40;
+	a[3] = val >> 32;
+	a[4] = val >> 24;
+	a[5] = val >> 16;
+	a[6] = val >> 8;
+	a[7] = val & 0xff;
+}
+
 #define WLAN_CRYPTO_TX_OPS_ALLOCKEY(psoc) \
 		(psoc->soc_cb.tx_ops.crypto_tx_ops.allockey)
 #define WLAN_CRYPTO_TX_OPS_SETKEY(psoc) \
@@ -33,25 +164,25 @@
 
 /* unalligned little endian access */
 #ifndef LE_READ_2
-#define LE_READ_2(p)                            \
-	((uint16_t)                                \
+#define LE_READ_2(p) \
+	((uint16_t)                          \
 	((((const uint8_t *)(p))[0]) |       \
 	(((const uint8_t *)(p))[1] <<  8)))
 #endif
 
 #ifndef LE_READ_4
-#define LE_READ_4(p)                            \
-	((uint32_t)                                \
+#define LE_READ_4(p)                   \
+	((uint32_t)                          \
 	((((const uint8_t *)(p))[0]) |       \
-	(((const uint8_t *)(p))[1] <<  8) |        \
-	(((const uint8_t *)(p))[2] << 16) |        \
+	(((const uint8_t *)(p))[1] <<  8) |  \
+	(((const uint8_t *)(p))[2] << 16) |  \
 	(((const uint8_t *)(p))[3] << 24)))
 #endif
 
 #ifndef BE_READ_4
-#define BE_READ_4(p)                            \
-	((uint32_t)                                \
-	((((const uint8_t *)(p))[0] << 24) |      \
+#define BE_READ_4(p)                        \
+	((uint32_t)                              \
+	((((const uint8_t *)(p))[0] << 24) |     \
 	(((const uint8_t *)(p))[1] << 16) |      \
 	(((const uint8_t *)(p))[2] <<  8) |      \
 	(((const uint8_t *)(p))[3])))
@@ -65,8 +196,8 @@
 })
 #endif
 
-#define OUI_SIZE		(4)
-#define	WLAN_CRYPTO_ADDSHORT(frm, v)  \
+#define OUI_SIZE   (4)
+#define WLAN_CRYPTO_ADDSHORT(frm, v)  \
 	do {frm[0] = (v) & 0xff; frm[1] = (v) >> 8; frm += 2; } while (0)
 
 #define	WLAN_CRYPTO_ADDSELECTOR(frm, sel) \
@@ -79,9 +210,9 @@
 	 (((uint32_t) (c)) << 8) | \
 		(uint32_t) (d))
 
-#define WPA_TYPE_OUI            WLAN_CRYPTO_SELECTOR(0x00, 0x50, 0xf2, 1)
+#define WPA_TYPE_OUI     WLAN_CRYPTO_SELECTOR(0x00, 0x50, 0xf2, 1)
 
-#define WPA_AUTH_KEY_MGMT_NONE        \
+#define WPA_AUTH_KEY_MGMT_NONE \
 				WLAN_CRYPTO_SELECTOR(0x00, 0x50, 0xf2, 0)
 #define WPA_AUTH_KEY_MGMT_UNSPEC_802_1X \
 				WLAN_CRYPTO_SELECTOR(0x00, 0x50, 0xf2, 1)
@@ -138,15 +269,15 @@
 #define RSN_CIPHER_SUITE_BIP_CMAC_256 \
 				WLAN_CRYPTO_SELECTOR(0x00, 0x0f, 0xac, 13)
 
-#define RESET_PARAM(__param)			((__param) = 0)
-#define SET_PARAM(__param, __val)		((__param) |= (1<<(__val)))
-#define HAS_PARAM(__param, __val)		((__param) &  (1<<(__val)))
-#define CLEAR_PARAM(__param, __val)		((__param) &= ((~1) << (__val)))
+#define RESET_PARAM(__param)         ((__param) = 0)
+#define SET_PARAM(__param, __val)    ((__param) |= (1<<(__val)))
+#define HAS_PARAM(__param, __val)    ((__param) &  (1<<(__val)))
+#define CLEAR_PARAM(__param, __val)  ((__param) &= ((~1) << (__val)))
 
 
-#define RESET_AUTHMODE(_param)        ((_param)->authmodeset = 0)
-#define SET_AUTHMODE(_param, _mode)   ((_param)->authmodeset |= (1<<(_mode)))
-#define HAS_AUTHMODE(_param, _mode)   ((_param)->authmodeset &  (1<<(_mode)))
+#define RESET_AUTHMODE(_param)       ((_param)->authmodeset = 0)
+#define SET_AUTHMODE(_param, _mode)  ((_param)->authmodeset |= (1<<(_mode)))
+#define HAS_AUTHMODE(_param, _mode)  ((_param)->authmodeset &  (1<<(_mode)))
 
 #define AUTH_IS_OPEN(_param)   HAS_AUTHMODE((_param), WLAN_CRYPTO_AUTH_OPEN)
 #define AUTH_IS_SHARED_KEY(_param)  \
@@ -246,6 +377,15 @@
 #define HAS_CIPHER_CAP(_param, _c)  ((_param)->cipher_caps & (1<<(_c)))
 #define HAS_ANY_CIPHER_CAP(_param)  ((_param)->cipher_caps)
 
+/* Management MIC information element (IEEE 802.11w) */
+struct wlan_crypto_mmie {
+	uint8_t  element_id;
+	uint8_t  length;
+	uint16_t key_id;
+	uint8_t  sequence_number[6];
+	uint8_t  mic[16];
+} __packed;
+
 struct wlan_crypto_comp_priv {
 	struct wlan_crypto_params crypto_params;
 	struct wlan_crypto_key *key[4];
@@ -283,18 +423,39 @@ struct wlan_crypto_cipher {
 */
 static inline int ieee80211_hdrsize(const void *data)
 {
-	const struct ieee80211_frame *wh = (const struct ieee80211_frame *)data;
-	int16_t size = sizeof(struct ieee80211_frame);
+	const struct ieee80211_hdr *hdr = (const struct ieee80211_hdr *)data;
+	int16_t size = sizeof(struct ieee80211_hdr);
 
-	if ((wh->i_fc[1] & 0x03) == 0x03)
-		size += 6;
+	if ((hdr->frame_control & (WLAN_FC_TODS | WLAN_FC_FROMDS))
+				== (WLAN_FC_TODS | WLAN_FC_FROMDS)) {
+		size += WLAN_ALEN;
+	}
 
-	if ((((wh)->i_fc[0] & (0x0c | 0x80)) == (0x00 | 0x80))) {
+	if (((WLAN_FC_GET_STYPE(hdr->frame_control)
+			== WLAN_FC_STYPE_QOS_DATA)) {
 		size += sizeof(uint16_t);
 		/* Qos frame with Order bit set indicates an HTC frame */
-		if (wh->i_fc[1] & 0x80)
+		if (hdr->frame_control & WLAN_FC_ORDER)
 			size += (sizeof(uint8_t)*4);
 	}
 	return size;
+}
+
+static inline int wlan_get_tid(const void *data)
+{
+	const struct ieee80211_hdr *hdr = (const struct ieee80211_hdr *)data;
+
+	if (((WLAN_FC_GET_STYPE(hdr->frame_control)
+				== WLAN_FC_STYPE_QOS_DATA)) {
+		if ((hdr->frame_control & (WLAN_FC_TODS | WLAN_FC_FROMDS))
+				== (WLAN_FC_TODS | WLAN_FC_FROMDS)) {
+			return ((struct ieee80211_hdr_qos_addr4 *)data)->qos
+							& WLAN_QOS_TID_MASK;
+		} else {
+			return ((struct ieee80211_hdr_qos *)data)->qos
+							& WLAN_QOS_TID_MASK;
+		}
+	} else
+		return WLAN_NONQOS_SEQ;
 }
 #endif /* end of _WLAN_CRYPTO_DEF_I_H_ */

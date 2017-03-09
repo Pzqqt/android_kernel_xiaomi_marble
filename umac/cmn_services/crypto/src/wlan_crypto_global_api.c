@@ -1085,9 +1085,9 @@ uint8_t *wlan_crypto_add_mmie(struct wlan_objmgr_vdev *vdev,
 	aad[1] = wh->i_fc[1] & ~(IEEE80211_FC1_RETRY | IEEE80211_FC1_PWR_MGT
 						| IEEE80211_FC1_MORE_DATA);
 	/* A1 || A2 || A3 */
-	qdf_mem_copy(aad + 2, wh->i_addr1, IEEE80211_ADDR_LEN);
-	qdf_mem_copy(aad + 8, wh->i_addr2, IEEE80211_ADDR_LEN);
-	qdf_mem_copy(aad + 14, wh->i_addr3, IEEE80211_ADDR_LEN);
+	qdf_mem_copy(aad + 2, wh->i_addr1, WLAN_ALEN);
+	qdf_mem_copy(aad + 8, wh->i_addr2, WLAN_ALEN);
+	qdf_mem_copy(aad + 14, wh->i_addr3, WLAN_ALEN);
 	/*
 	 * MIC = AES-128-CMAC(IGTK, AAD || Management Frame Body || MMIE, 64)
 	 */
@@ -1103,7 +1103,7 @@ uint8_t *wlan_crypto_add_mmie(struct wlan_objmgr_vdev *vdev,
 	} else if ((HAS_MGMT_CIPHER(crypto_params, WLAN_CRYPTO_CIPHER_AES_GMAC))
 		|| HAS_MGMT_CIPHER(crypto_params,
 					WLAN_CRYPTO_CIPHER_AES_GMAC_256)) {
-		qdf_mem_copy(nounce, wh->i_addr2, IEEE80211_ADDR_LEN);
+		qdf_mem_copy(nounce, wh->i_addr2, WLAN_ALEN);
 		qdf_mem_copy(nounce + 6, pn, 6);
 		wlan_crypto_gmac_calc_mic(key, aad, bfrm + hdrlen, 20,
 							mmie->mic, nounce);
@@ -1186,7 +1186,7 @@ bool wlan_crypto_is_mmie_valid(struct wlan_objmgr_vdev *vdev,
 	aad[1] = wh->i_fc[1] & ~(IEEE80211_FC1_RETRY | IEEE80211_FC1_PWR_MGT
 						| IEEE80211_FC1_MORE_DATA);
 	/* A1 || A2 || A3 */
-	qdf_mem_copy(aad + 2, wh->i_addr_all, 3 * IEEE80211_ADDR_LEN);
+	qdf_mem_copy(aad + 2, wh->i_addr_all, 3 * WLAN_ALEN);
 
 	/*
 	 * MIC = AES-128-CMAC(IGTK, AAD || Management Frame Body || MMIE, 64)
@@ -1201,7 +1201,7 @@ bool wlan_crypto_is_mmie_valid(struct wlan_objmgr_vdev *vdev,
 		|| HAS_MGMT_CIPHER(crypto_params,
 					WLAN_CRYPTO_CIPHER_AES_GMAC_256)) {
 		mic_length = 16;
-		qdf_mem_copy(nounce, wh->i_addr2, IEEE80211_ADDR_LEN);
+		qdf_mem_copy(nounce, wh->i_addr2, WLAN_ALEN);
 		qdf_mem_copy(nounce + 6, ipn, 6);
 		wlan_crypto_gmac_calc_mic(key, aad,  (uint8_t *)(wh+1),
 							20, mic, nounce);
@@ -1951,7 +1951,7 @@ struct wlan_crypto_params *wlan_crypto_peer_get_crypto_params(
 
 QDF_STATUS wlan_crypto_set_peer_wep_keys(struct wlan_objmgr_vdev *vdev,
 						uint8_t *mac_addr){
-	uint8_t keymac[IEEE80211_ADDR_LEN];
+	uint8_t keymac[WLAN_ALEN];
 	struct wlan_crypto_comp_priv *crypto_priv;
 	struct wlan_crypto_params *crypto_params;
 	struct wlan_crypto_key *key;
