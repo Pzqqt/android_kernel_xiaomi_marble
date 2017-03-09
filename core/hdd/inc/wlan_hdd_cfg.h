@@ -11778,6 +11778,7 @@ enum hdd_external_acs_freq_band {
 #define CFG_TX_ORPHAN_ENABLE_DEFAULT (0)
 #define CFG_TX_ORPHAN_ENABLE_MIN     (0)
 #define CFG_TX_ORPHAN_ENABLE_MAX     (1)
+
 /*
  * <ini>
  * gItoRepeatCount - sets ito repeated count
@@ -11791,7 +11792,6 @@ enum hdd_external_acs_freq_band {
  *
  * </ini>
  */
-
 #define CFG_ITO_REPEAT_COUNT_NAME "gItoRepeatCount"
 #define CFG_ITO_REPEAT_COUNT_MIN        (0)
 #define CFG_ITO_REPEAT_COUNT_MAX        (5)
@@ -12068,6 +12068,101 @@ enum hdd_external_acs_freq_band {
 #define CFG_CHAN_SWITCH_HOSTAPD_RATE_ENABLED_MIN     (0)
 #define CFG_CHAN_SWITCH_HOSTAPD_RATE_ENABLED_MAX     (1)
 #define CFG_CHAN_SWITCH_HOSTAPD_RATE_ENABLED_DEFAULT (0)
+
+/*
+ * <ini>
+ * g_mbo_candidate_rssi_thres - Candidate AP's minimum RSSI to accept
+ * @Min: -120
+ * @Max: 0
+ * @Default: -72
+ *
+ * This ini specifies the minimum RSSI value a candidate should have to accept
+ * it as a target for transition.
+ *
+ * Related: N/A
+ *
+ * Supported Feature: MBO
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_MBO_CANDIDATE_RSSI_THRESHOLD_NAME   "g_mbo_candidate_rssi_thres"
+#define CFG_CANDIDATE_RSSI_THRESHOLD_DEFAULT    (-72)
+#define CFG_CANDIDATE_RSSI_THRESHOLD_MIN        (-120)
+#define CFG_CANDIDATE_RSSI_THRESHOLD_MAX        (0)
+
+/*
+ * <ini>
+ * g_mbo_current_rssi_thres - Connected AP's RSSI threshold to consider a
+ * transition
+ * @Min: -120
+ * @Max: 0
+ * @Default: -65
+ *
+ * This ini is used to configure connected AP's RSSI threshold value to consider
+ * a transition.
+ *
+ * Related: N/A
+ *
+ * Supported Feature: MBO
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_MBO_CURRENT_RSSI_THRESHOLD_NAME     "g_mbo_current_rssi_thres"
+#define CFG_CURRENT_RSSI_THRESHOLD_DEFAULT      (-65)
+#define CFG_CURRENT_RSSI_THRESHOLD_MIN          (-120)
+#define CFG_CURRENT_RSSI_THRESHOLD_MAX          (0)
+
+/*
+ * <ini>
+ * g_mbo_current_rssi_mcc_thres - connected AP's RSSI threshold value to prefer
+ * against a MCC
+ * @Min: -120
+ * @Max: 0
+ * @Default: -75
+ *
+ * This ini is used to configure connected AP's minimum RSSI threshold that is
+ * preferred against a MCC case, if the candidate can cause MCC.
+ *
+ * Related: N/A
+ *
+ * Supported Feature: MBO
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_MBO_CUR_RSSI_MCC_THRESHOLD_NAME       "g_mbo_current_rssi_mcc_thres"
+#define CFG_MBO_CUR_RSSI_MCC_THRESHOLD_DEFAULT    (-75)
+#define CFG_MBO_CUR_RSSI_MCC_THRESHOLD_MIN        (-120)
+#define CFG_MBO_CUR_RSSI_MCC_THRESHOLD_MAX        (0)
+
+/*
+ * <ini>
+ * g_mbo_candidate_rssi_btc_thres -  Candidate AP's minimum RSSI threshold to
+ * prefer it even in case of BT coex
+ * @Min: -120
+ * @Max: 0
+ * @Default: -70
+ *
+ * This ini is used to configure candidate AP's minimum RSSI threshold to prefer
+ * it for transition even in case of BT coex.
+ *
+ * Related: N/A
+ *
+ * Supported Feature: MBO
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_MBO_CAND_RSSI_BTC_THRESHOLD_NAME    "g_mbo_candidate_rssi_btc_thres"
+#define CFG_MBO_CAND_RSSI_BTC_THRESHOLD_DEFAULT (-70)
+#define CFG_MBO_CAND_RSSI_BTC_THRESHOLD_MIN     (-120)
+#define CFG_MBO_CAND_RSSI_BTC_THRESHOLD_MAX     (0)
 
 /*
  * Type declarations
@@ -12881,6 +12976,11 @@ struct hdd_config {
 	bool is_ndi_mac_randomized;
 	uint32_t scan_11d_interval;
 	bool chan_switch_hostapd_rate_enabled;
+	/* mbo related thresholds */
+	int8_t mbo_candidate_rssi_thres;
+	int8_t mbo_current_rssi_thres;
+	int8_t mbo_current_rssi_mcc_thres;
+	int8_t mbo_candidate_rssi_btc_thres;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))
