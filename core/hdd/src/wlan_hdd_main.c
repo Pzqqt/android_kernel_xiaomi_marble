@@ -7205,6 +7205,7 @@ static hdd_context_t *hdd_context_create(struct device *dev)
 		[QDF_MODULE_ID_PMO] = {QDF_TRACE_LEVEL_ALL},
 		[QDF_MODULE_ID_SCAN] = {QDF_TRACE_LEVEL_ALL},
 		[QDF_MODULE_ID_POLICY_MGR] = {QDF_TRACE_LEVEL_ALL},
+		[QDF_MODULE_ID_P2P] = {QDF_TRACE_LEVEL_ALL},
 		};
 
 	status = qdf_print_setup();

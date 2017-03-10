@@ -3260,6 +3260,7 @@ QDF_STATUS wma_start(void *cds_ctx)
 		goto end;
 	}
 
+#ifndef CONVERGED_P2P_ENABLE
 	/* Initialize the P2P Listen Offload event handler */
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
 			WMI_P2P_LISTEN_OFFLOAD_STOPPED_EVENTID,
@@ -3270,6 +3271,7 @@ QDF_STATUS wma_start(void *cds_ctx)
 		qdf_status = QDF_STATUS_E_FAILURE;
 		goto end;
 	}
+#endif
 
 end:
 	WMA_LOGD("%s: Exit", __func__);
@@ -4755,6 +4757,7 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	}
 #endif /* WLAN_FEATURE_GTK_OFFLOAD */
 
+#ifndef CONVERGED_P2P_ENABLE
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
 						    WMI_P2P_NOA_EVENTID,
 						    wma_p2p_noa_event_handler,
@@ -4763,6 +4766,7 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 		WMA_LOGE("Failed to register WMI_P2P_NOA_EVENTID callback");
 		return -EINVAL;
 	}
+#endif
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
 				WMI_TBTTOFFSET_UPDATE_EVENTID,
 				wma_tbttoffset_update_event_handler,

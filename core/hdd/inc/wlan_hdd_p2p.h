@@ -159,4 +159,42 @@ int __wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev);
 void wlan_hdd_cleanup_remain_on_channel_ctx(hdd_adapter_t *pAdapter);
 
 void wlan_hdd_roc_request_dequeue(struct work_struct *work);
+
+/**
+ * wlan_hdd_set_power_save() - hdd set power save
+ * @adapter:    adapter context
+ * @pnoa:       pointer to noa parameters
+ *
+ * This function sets power save parameters.
+ *
+ * Return: 0 - success
+ *    others - failure
+ */
+int wlan_hdd_set_power_save(hdd_adapter_t *adapter,
+	tpP2pPsConfig pnoa);
+
+/**
+ * wlan_hdd_listen_offload_start() - hdd set listen offload start
+ * @adapter:  adapter context
+ * @params:   listen offload parameters
+ *
+ * This function sets listen offload start parameters.
+ *
+ * Return: 0 - success
+ *    others - failure
+ */
+int wlan_hdd_listen_offload_start(hdd_adapter_t *adapter,
+	struct sir_p2p_lo_start *params);
+
+/**
+ * wlan_hdd_listen_offload_stop() - hdd set listen offload stop
+ * @adapter:  adapter context
+ *
+ * This function sets listen offload stop parameters.
+ *
+ * Return: 0 - success
+ *    others - failure
+ */
+int wlan_hdd_listen_offload_stop(hdd_adapter_t *adapter);
+
 #endif /* __P2P_H */

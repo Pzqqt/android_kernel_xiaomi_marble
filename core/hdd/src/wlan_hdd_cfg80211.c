@@ -6611,7 +6611,6 @@ static int __wlan_hdd_cfg80211_p2p_lo_start(struct wiphy *wiphy,
 	hdd_adapter_t *adapter;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_MAX + 1];
 	struct sir_p2p_lo_start params;
-	QDF_STATUS status;
 
 	ENTER_DEV(dev);
 
@@ -6718,14 +6717,7 @@ static int __wlan_hdd_cfg80211_p2p_lo_start(struct wiphy *wiphy,
 	hdd_debug("P2P LO params: freq=%d, period=%d, interval=%d, count=%d",
 		  params.freq, params.period, params.interval, params.count);
 
-	status = wma_p2p_lo_start(&params);
-
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hdd_err("P2P LO start failed");
-		return -EINVAL;
-	}
-
-	return 0;
+	return wlan_hdd_listen_offload_start(adapter, &params);
 }
 
 
@@ -6773,7 +6765,6 @@ static int __wlan_hdd_cfg80211_p2p_lo_stop(struct wiphy *wiphy,
 						const void *data,
 						int data_len)
 {
-	QDF_STATUS status;
 	hdd_adapter_t *adapter;
 	struct net_device *dev = wdev->netdev;
 
@@ -6790,14 +6781,7 @@ static int __wlan_hdd_cfg80211_p2p_lo_stop(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	status = wma_p2p_lo_stop(adapter->sessionId);
-
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hdd_err("P2P LO stop failed");
-		return -EINVAL;
-	}
-
-	return 0;
+	return wlan_hdd_listen_offload_stop(adapter);
 }
 
 /**
