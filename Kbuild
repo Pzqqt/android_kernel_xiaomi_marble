@@ -824,7 +824,6 @@ CDS_OBJS :=	$(CDS_SRC_DIR)/cds_api.o \
 		$(CDS_SRC_DIR)/cds_packet.o \
 		$(CDS_SRC_DIR)/cds_regdomain.o \
 		$(CDS_SRC_DIR)/cds_sched.o \
-		$(CDS_SRC_DIR)/cds_concurrency.o \
 		$(CDS_SRC_DIR)/cds_utils.o
 
 
