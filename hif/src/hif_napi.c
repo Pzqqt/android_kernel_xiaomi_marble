@@ -41,8 +41,9 @@
 #include <linux/interrupt.h>
 #include <linux/irq.h>
 #ifdef HELIUMPLUS
-#include <soc/qcom/irq-helper.h>
+#ifdef CONFIG_SCHED_CORE_CTL
 #include <linux/sched/core_ctl.h>
+#endif
 #include <pld_snoc.h>
 #endif
 #include <linux/pm.h>
@@ -1527,6 +1528,18 @@ static inline void hif_napi_bl_irq(struct qca_napi_data *napid, bool bl_flag)
 	}
 }
 
+#ifdef CONFIG_SCHED_CORE_CTL
+/* Enable this API only if kernel feature - CONFIG_SCHED_CORE_CTL is defined */
+static inline int hif_napi_core_ctl_set_boost(bool boost)
+{
+	return core_ctl_set_boost(boost);
+}
+#else
+static inline int hif_napi_core_ctl_set_boost(bool boost)
+{
+	return 0;
+}
+#endif
 /**
  * hif_napi_cpu_blacklist() - en(dis)ables blacklisting for NAPI RX interrupts.
  * @napid: pointer to qca_napi_data structure
@@ -1566,7 +1579,7 @@ int hif_napi_cpu_blacklist(struct qca_napi_data *napid, enum qca_blacklist_op op
 		ref_count++;
 		rc = 0;
 		if (ref_count == 1) {
-			rc = core_ctl_set_boost(true);
+			rc = hif_napi_core_ctl_set_boost(true);
 			NAPI_DEBUG("boost_on() returns %d - refcnt=%d",
 				rc, ref_count);
 			hif_napi_bl_irq(napid, true);
@@ -1577,7 +1590,7 @@ int hif_napi_cpu_blacklist(struct qca_napi_data *napid, enum qca_blacklist_op op
 			ref_count--;
 		rc = 0;
 		if (ref_count == 0) {
-			rc = core_ctl_set_boost(false);
+			rc = hif_napi_core_ctl_set_boost(false);
 			NAPI_DEBUG("boost_off() returns %d - refcnt=%d",
 				   rc, ref_count);
 			hif_napi_bl_irq(napid, false);
