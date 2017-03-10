@@ -141,7 +141,7 @@ struct pkt_stats_msg {
 
 struct wlan_logging {
 	/* Log Fatal and ERROR to console */
-	bool log_fe_to_console;
+	bool log_to_console;
 	/* Number of buffers to be used for logging */
 	int num_buf;
 	/* Lock to synchronize access to shared logging resource */
@@ -463,7 +463,7 @@ int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
 			wake_up_interruptible(&gwlan_logging.wait_queue);
 	}
 
-	if (gwlan_logging.log_fe_to_console
+	if (gwlan_logging.log_to_console
 	    && ((QDF_TRACE_LEVEL_FATAL == log_level)
 		|| (QDF_TRACE_LEVEL_ERROR == log_level))) {
 		print_to_console(tbuf, to_be_sent);
@@ -980,7 +980,7 @@ static void unregister_logging_sock_handler(void)
 #endif
 
 
-int wlan_logging_sock_activate_svc(int log_fe_to_console, int num_buf)
+int wlan_logging_sock_activate_svc(int log_to_console, int num_buf)
 {
 	int i = 0, j, pkt_stats_size;
 	unsigned long irq_flag;
@@ -995,7 +995,7 @@ int wlan_logging_sock_activate_svc(int log_fe_to_console, int num_buf)
 
 	qdf_mem_zero(gplog_msg, (num_buf * sizeof(struct log_msg)));
 
-	gwlan_logging.log_fe_to_console = !!log_fe_to_console;
+	gwlan_logging.log_to_console = !!log_to_console;
 	gwlan_logging.num_buf = num_buf;
 
 	spin_lock_irqsave(&gwlan_logging.spin_lock, irq_flag);
