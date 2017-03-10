@@ -799,7 +799,7 @@ QDF_STATUS csr_scan_handle_failed_lostlink2(tpAniSirGlobal pMac,
 QDF_STATUS csr_scan_handle_failed_lostlink3(tpAniSirGlobal pMac,
 					    uint32_t sessionId)
 {
-	sms_log(pMac, LOGW, "Lost link scan 3 failed");
+	sms_log(pMac, LOGD, "Lost link scan 3 failed");
 	return QDF_STATUS_SUCCESS;
 }
 static QDF_STATUS

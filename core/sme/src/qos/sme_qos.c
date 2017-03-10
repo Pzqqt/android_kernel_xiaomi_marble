@@ -2930,7 +2930,7 @@ sme_QosStatusType sme_qos_setup(tpAniSirGlobal pMac,
 QDF_STATUS sme_qos_process_set_key_success_ind(tpAniSirGlobal pMac,
 					       uint8_t sessionId, void *pEvent_info)
 {
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_WARN,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 		  "########### Set Key Complete #############");
 	(void)sme_qos_process_buffered_cmd(sessionId);
 	return QDF_STATUS_SUCCESS;
@@ -6350,7 +6350,7 @@ static QDF_STATUS sme_qos_delete_existing_flows(tpAniSirGlobal pMac,
 	sme_QosFlowInfoEntry *flow_info = NULL;
 	pEntry = csr_ll_peek_head(&sme_qos_cb.flow_list, true);
 	if (!pEntry) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_WARN,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: %d: Flow List empty, nothing to delete",
 			  __func__, __LINE__);
 		return QDF_STATUS_E_FAILURE;
@@ -6557,7 +6557,7 @@ static QDF_STATUS sme_qos_delete_buffered_requests(tpAniSirGlobal pMac,
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
 	pEntry = csr_ll_peek_head(&pSession->bufferedCommandList, true);
 	if (!pEntry) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_WARN,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: %d: Buffered List empty, nothing to delete on session %d",
 			  __func__, __LINE__, sessionId);
 		return QDF_STATUS_E_FAILURE;

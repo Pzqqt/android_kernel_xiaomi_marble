@@ -444,27 +444,27 @@ static void dump_csr_command_info(tpAniSirGlobal pMac, tSmeCmd *pCmd)
 {
 	switch (pCmd->command) {
 	case eSmeCommandScan:
-		sms_log(pMac, LOGE, " scan command reason is %d",
+		sms_log(pMac, LOGD, " scan command reason is %d",
 			pCmd->u.scanCmd.reason);
 		break;
 
 	case eSmeCommandRoam:
-		sms_log(pMac, LOGE, " roam command reason is %d",
+		sms_log(pMac, LOGD, " roam command reason is %d",
 			pCmd->u.roamCmd.roamReason);
 		break;
 
 	case eSmeCommandWmStatusChange:
-		sms_log(pMac, LOGE, " WMStatusChange command type is %d",
+		sms_log(pMac, LOGD, " WMStatusChange command type is %d",
 			pCmd->u.wmStatusChangeCmd.Type);
 		break;
 
 	case eSmeCommandSetKey:
-		sms_log(pMac, LOGE, " setKey command auth(%d) enc(%d)",
+		sms_log(pMac, LOGD, " setKey command auth(%d) enc(%d)",
 			pCmd->u.setKeyCmd.authType, pCmd->u.setKeyCmd.encType);
 		break;
 
 	default:
-		sms_log(pMac, LOGE, " default: Unhandled command %d",
+		sms_log(pMac, LOGD, " default: Unhandled command %d",
 			pCmd->command);
 		break;
 	}
@@ -6541,8 +6541,6 @@ QDF_STATUS sme_send_action(tHalHandle hHal, uint8_t sessionId,
 		/* release the lock for the sme object */
 		sme_release_global_lock(&pMac->sme);
 	}
-
-	sms_log(pMac, LOGW, "exiting function %s", __func__);
 
 	return status;
 }
