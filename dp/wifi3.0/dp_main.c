@@ -1439,6 +1439,7 @@ static void dp_soc_detach_wifi3(void *txrx_soc)
 	htt_soc_detach(soc->htt_handle);
 
 	dp_reo_desc_freelist_destroy(soc);
+	qdf_mem_free(soc);
 }
 
 /*
