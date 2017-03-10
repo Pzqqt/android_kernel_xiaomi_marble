@@ -1265,7 +1265,7 @@ enum hdd_dot11_mode {
  * during host scan
  * @Min: 0
  * @Max: 4
- * @Default: 0
+ * @Default: 1
  *
  * This ini will set the algo used in dwell time optimization
  * during host scan. see enum wmi_dwelltime_adaptive_mode.
@@ -1287,7 +1287,7 @@ enum hdd_dot11_mode {
 #define CFG_ADAPTIVE_SCAN_DWELL_MODE_NAME        "hostscan_adaptive_dwell_mode"
 #define CFG_ADAPTIVE_SCAN_DWELL_MODE_MIN         (0)
 #define CFG_ADAPTIVE_SCAN_DWELL_MODE_MAX         (4)
-#define CFG_ADAPTIVE_SCAN_DWELL_MODE_DEFAULT     (0)
+#define CFG_ADAPTIVE_SCAN_DWELL_MODE_DEFAULT     (1)
 
 /*
  * <ini>
@@ -1295,7 +1295,7 @@ enum hdd_dot11_mode {
  * during ext scan
  * @Min: 0
  * @Max: 4
- * @Default: 0
+ * @Default: 1
  *
  * This ini will set the algo used in dwell time optimization
  * during ext scan. see enum wmi_dwelltime_adaptive_mode.
@@ -1317,7 +1317,7 @@ enum hdd_dot11_mode {
 #define CFG_ADAPTIVE_EXTSCAN_DWELL_MODE_NAME     "extscan_adaptive_dwell_mode"
 #define CFG_ADAPTIVE_EXTSCAN_DWELL_MODE_MIN      (0)
 #define CFG_ADAPTIVE_EXTSCAN_DWELL_MODE_MAX      (4)
-#define CFG_ADAPTIVE_EXTSCAN_DWELL_MODE_DEFAULT  (0)
+#define CFG_ADAPTIVE_EXTSCAN_DWELL_MODE_DEFAULT  (1)
 
 /*
  * <ini>
@@ -1325,7 +1325,7 @@ enum hdd_dot11_mode {
  * during pno scan
  * @Min: 0
  * @Max: 4
- * @Default: 0
+ * @Default: 1
  *
  * This ini will set the algo used in dwell time optimization
  * during pno scan. see enum wmi_dwelltime_adaptive_mode.
@@ -1347,7 +1347,7 @@ enum hdd_dot11_mode {
 #define CFG_ADAPTIVE_PNOSCAN_DWELL_MODE_NAME     "pnoscan_adaptive_dwell_mode"
 #define CFG_ADAPTIVE_PNOSCAN_DWELL_MODE_MIN      (0)
 #define CFG_ADAPTIVE_PNOSCAN_DWELL_MODE_MAX      (4)
-#define CFG_ADAPTIVE_PNOSCAN_DWELL_MODE_DEFAULT  (0)
+#define CFG_ADAPTIVE_PNOSCAN_DWELL_MODE_DEFAULT  (1)
 
 /*
  * <ini>
@@ -1381,7 +1381,7 @@ enum hdd_dot11_mode {
  * global_adapt_dwelltime_mode - Set default adaptive mode
  * @Min: 0
  * @Max: 4
- * @Default: 1
+ * @Default: 0
  *
  * This parameter will set default adaptive mode, will be used if any of the
  * scan dwell mode is set to default.
@@ -1398,7 +1398,7 @@ enum hdd_dot11_mode {
 #define CFG_GLOBAL_ADAPTIVE_DWELL_MODE_NAME       "global_adapt_dwelltime_mode"
 #define CFG_GLOBAL_ADAPTIVE_DWELL_MODE_MIN        (0)
 #define CFG_GLOBAL_ADAPTIVE_DWELL_MODE_MAX        (4)
-#define CFG_GLOBAL_ADAPTIVE_DWELL_MODE_DEFAULT    (1)
+#define CFG_GLOBAL_ADAPTIVE_DWELL_MODE_DEFAULT    (0)
 
 /*
  * <ini>
@@ -1989,7 +1989,7 @@ enum hdd_dot11_mode {
  * roamscan_adaptive_dwell_mode - Sets dwell time adaptive mode
  * @Min: 0
  * @Max: 4
- * @Default: 0
+ * @Default: 1
  *
  * This parameter will set the algo used in dwell time optimization during
  * roam scan. see enum wmi_dwelltime_adaptive_mode.
@@ -2011,7 +2011,7 @@ enum hdd_dot11_mode {
 #define CFG_ADAPTIVE_ROAMSCAN_DWELL_MODE_NAME    "roamscan_adaptive_dwell_mode"
 #define CFG_ADAPTIVE_ROAMSCAN_DWELL_MODE_MIN     (0)
 #define CFG_ADAPTIVE_ROAMSCAN_DWELL_MODE_MAX     (4)
-#define CFG_ADAPTIVE_ROAMSCAN_DWELL_MODE_DEFAULT (0)
+#define CFG_ADAPTIVE_ROAMSCAN_DWELL_MODE_DEFAULT (1)
 
 /*
  * Timer waiting for interface up from the upper layer. If
