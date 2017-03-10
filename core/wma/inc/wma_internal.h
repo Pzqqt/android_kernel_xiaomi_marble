@@ -1255,6 +1255,22 @@ void wma_acquire_wmi_resp_wakelock(t_wma_handle *wma, uint32_t msec);
 void wma_release_wmi_resp_wakelock(t_wma_handle *wma);
 
 /**
+ * wma_send_vdev_start_to_fw() - send the vdev start command to firmware
+ * @wma: the WMA handle containing a reference to the wmi_handle to use
+ * @params: the VDEV_START params to send to firmware
+ *
+ * This is a helper function that acquires the WMI response wakelock before
+ * sending down the VDEV_START command to firmware. This wakelock is
+ * automatically released on failure. Consumers should call
+ * wma_release_wmi_resp_wakelock() upon receipt of the VDEV_START response from
+ * firmware, to avoid power penalties.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wma_send_vdev_start_to_fw(t_wma_handle *wma, struct vdev_start_params *params);
+
+/**
  * wma_send_vdev_stop_to_fw() - send the vdev stop command to firmware
  * @wma: the WMA handle containing a reference to the wmi_handle to use
  * @vdev_id: the VDEV Id of the VDEV to stop

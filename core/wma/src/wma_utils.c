@@ -3976,6 +3976,19 @@ void wma_release_wmi_resp_wakelock(t_wma_handle *wma)
 	qdf_runtime_pm_allow_suspend(wma->wmi_cmd_rsp_runtime_lock);
 }
 
+QDF_STATUS
+wma_send_vdev_start_to_fw(t_wma_handle *wma, struct vdev_start_params *params)
+{
+	QDF_STATUS status;
+
+	wma_acquire_wmi_resp_wakelock(wma, WMA_VDEV_START_REQUEST_TIMEOUT);
+	status = wmi_unified_vdev_start_send(wma->wmi_handle, params);
+	if (QDF_IS_STATUS_ERROR(status))
+		wma_release_wmi_resp_wakelock(wma);
+
+	return status;
+}
+
 QDF_STATUS wma_send_vdev_stop_to_fw(t_wma_handle *wma, uint8_t vdev_id)
 {
 	QDF_STATUS status;
