@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2002-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -234,7 +234,7 @@ int dfs_init_radar_filters(struct ieee80211com *ic,
 	 * the rest of the radar configuration as suspect.
 	 */
 	if (radar_info == NULL || radar_info->dfsdomain == 0) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s[%d]: Unknown dfs domain %d ",
 			  __func__, __LINE__, dfs->dfsdomain);
 		/* Disable radar detection since we don't have a radar domain */

@@ -2005,7 +2005,7 @@ static uint8_t sap_get_bonding_channels(ptSapContext sapContext,
 	} else
 		return 0;
 
-	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 		  FL("cbmode: %d, channel: %d"), chanBondState, channel);
 
 	switch (chanBondState) {
@@ -2706,9 +2706,6 @@ static QDF_STATUS sap_goto_starting(ptSapContext sapContext,
 	qdf_mem_copy(sapContext->key_material, key_material,
 		     sizeof(key_material));
 
-	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH, "In %s",
-		  __func__);
-
 	if (NULL == hHal) {
 		/* we have a serious problem */
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_FATAL,
@@ -2716,7 +2713,7 @@ static QDF_STATUS sap_goto_starting(ptSapContext sapContext,
 		return QDF_STATUS_E_FAULT;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO, "%s: session: %d",
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG, "%s: session: %d",
 		  __func__, sapContext->sessionId);
 
 	qdf_ret_status = sme_roam_connect(hHal, sapContext->sessionId,

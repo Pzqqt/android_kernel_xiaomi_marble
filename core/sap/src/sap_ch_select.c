@@ -452,7 +452,7 @@ void sap_cleanup_channel_list(void *p_cds_gctx)
 {
 	ptSapContext pSapCtx;
 
-	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 		  "Cleaning up the channel list structure");
 
 	if (NULL == p_cds_gctx) {
