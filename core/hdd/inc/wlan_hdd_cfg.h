@@ -6740,10 +6740,13 @@ typedef enum {
  * <ini>
  * gEnableSifsBurst - Enables Sifs Burst
  * @Min: 0
- * @Max: 1
- * @Default: DEF
+ * @Max: 3
+ * @Default: 0
  *
- * This ini is used to set default Sifs Burst
+ * Sifs burst mode configuration
+ *     0) disabled
+ *     1) enabled, but disabled for legacy mode
+ *     3) enabled
  *
  * Related: None
  *
@@ -6756,7 +6759,7 @@ typedef enum {
 
 #define CFG_ENABLE_SIFS_BURST                      "gEnableSifsBurst"
 #define CFG_ENABLE_SIFS_BURST_MIN                  (0)
-#define CFG_ENABLE_SIFS_BURST_MAX                  (1)
+#define CFG_ENABLE_SIFS_BURST_MAX                  (3)
 #define CFG_ENABLE_SIFS_BURST_DEFAULT              (0)
 
 #ifdef WLAN_FEATURE_LPSS
@@ -9579,7 +9582,7 @@ struct hdd_config {
 	uint32_t wlanLoggingNumBuf;
 #endif /* WLAN_LOGGING_SOCK_SVC_ENABLE */
 
-	bool enableSifsBurst;
+	uint8_t enableSifsBurst;
 
 #ifdef WLAN_FEATURE_LPSS
 	bool enable_lpass_support;
