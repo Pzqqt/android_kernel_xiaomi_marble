@@ -4014,3 +4014,20 @@ bool wma_is_service_enabled(WMI_SERVICE service_type)
 
 	return WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap, service_type);
 }
+
+tSirWifiPeerType wmi_to_sir_peer_type(enum wmi_peer_type type)
+{
+	switch (type) {
+	case WMI_PEER_TYPE_DEFAULT:
+		return WIFI_PEER_STA;
+	case WMI_PEER_TYPE_BSS:
+		return WIFI_PEER_AP;
+	case WMI_PEER_TYPE_TDLS:
+		return WIFI_PEER_TDLS;
+	case WMI_PEER_TYPE_NAN_DATA:
+		return WIFI_PEER_NAN;
+	default:
+		WMA_LOGE("Cannot map wmi_peer_type %d to HAL peer type", type);
+		return WIFI_PEER_INVALID;
+	}
+}

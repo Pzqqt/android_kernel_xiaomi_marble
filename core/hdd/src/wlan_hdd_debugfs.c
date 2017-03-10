@@ -40,6 +40,7 @@
 #include <wlan_hdd_request_manager.h>
 #include <wlan_hdd_wowl.h>
 #include <cds_sched.h>
+#include <wlan_hdd_debugfs_llstat.h>
 
 #define MAX_USER_COMMAND_SIZE_WOWL_ENABLE 8
 #define MAX_USER_COMMAND_SIZE_WOWL_PATTERN 512
@@ -865,6 +866,9 @@ QDF_STATUS hdd_debugfs_init(hdd_adapter_t *adapter)
 		return QDF_STATUS_E_FAILURE;
 
 	if (QDF_STATUS_SUCCESS != wlan_hdd_create_power_stats_file(adapter))
+		return QDF_STATUS_E_FAILURE;
+
+	if (0 != wlan_hdd_create_ll_stats_file(adapter))
 		return QDF_STATUS_E_FAILURE;
 
 	return QDF_STATUS_SUCCESS;

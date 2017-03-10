@@ -81,6 +81,21 @@ struct index_data_rate_type {
 };
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
+
+/**
+ * struct hdd_ll_stats_context - hdd link layer stats context
+ *
+ * @request_id: userspace-assigned link layer stats request id
+ * @request_bitmap: userspace-assigned link layer stats request bitmap
+ * @response_event: LL stats request wait event
+ */
+struct hdd_ll_stats_context {
+	uint32_t request_id;
+	uint32_t request_bitmap;
+	struct completion response_event;
+	spinlock_t context_lock;
+};
+
 /*
  * Used to allocate the size of 4096 for the link layer stats.
  * The size of 4096 is considered assuming that all data per
@@ -153,6 +168,27 @@ int wlan_hdd_cfg80211_ll_stats_ext_set_param(struct wiphy *wiphy,
 					     struct wireless_dev *wdev,
 					     const void *data,
 					     int data_len);
+/**
+ * hdd_get_interface_info() - get interface info
+ * @adapter: Pointer to device adapter
+ * @info: Pointer to interface info
+ *
+ * Return: bool
+ */
+bool hdd_get_interface_info(hdd_adapter_t *adapter,
+			    tpSirWifiInterfaceInfo info);
+
+/**
+ * wlan_hdd_ll_stats_get() - Get Link Layer statistics from FW
+ * @adapter: Pointer to device adapter
+ * @req_id: request id
+ * @req_mask: bitmask used by FW for the request
+ *
+ * Return: 0 on success and error code otherwise
+ */
+int wlan_hdd_ll_stats_get(hdd_adapter_t *adapter, uint32_t req_id,
+			  uint32_t req_mask);
+
 #else
 
 static inline void hdd_init_ll_stats_ctx(void)

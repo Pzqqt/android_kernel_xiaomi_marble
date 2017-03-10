@@ -306,4 +306,11 @@ static inline void wma_tx_failure_cb(void *ctx, uint32_t num_msdu,
  */
 void wma_store_pdev(void *wma_ctx, struct wlan_objmgr_pdev *pdev);
 
+/**
+ * wmi_to_sir_peer_type() - convert peer type from WMI to SIR enum
+ * @type: enum wmi_peer_type
+ *
+ * Return: tSirWifiPeerType
+ */
+tSirWifiPeerType wmi_to_sir_peer_type(enum wmi_peer_type type);
 #endif
