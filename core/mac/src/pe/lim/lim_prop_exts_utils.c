@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -153,7 +153,7 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 	else
 		mac_ctx->lim.htCapabilityPresentInBeacon = 0;
 
-	lim_log(mac_ctx, LOG1, FL(
+	lim_log(mac_ctx, LOGD, FL(
 		"Bcon: VHTCap.present %d SU Beamformer %d BSS_VHT_CAPABLE %d"),
 		beacon_struct->VHTCaps.present,
 		beacon_struct->VHTCaps.suBeamFormerCap,
@@ -270,7 +270,7 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 				session->ch_center_freq_seg1 = 0;
 		}
 		session->ch_width = vht_ch_wd + 1;
-		lim_log(mac_ctx, LOGE, FL(
+		lim_log(mac_ctx, LOGD, FL(
 				"cntr_freq0 %d, cntr_freq1 %d, width %d"),
 				session->ch_center_freq_seg0,
 				session->ch_center_freq_seg1,
@@ -322,7 +322,7 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 		session->is_ext_caps_present = true;
 	/* Update HS 2.0 Information Element */
 	if (beacon_struct->hs20vendor_ie.present) {
-		lim_log(mac_ctx, LOG1,
+		lim_log(mac_ctx, LOGD,
 			FL("HS20 Indication Element Present, rel#:%u, id:%u\n"),
 			beacon_struct->hs20vendor_ie.release_num,
 			beacon_struct->hs20vendor_ie.hs_id_present);

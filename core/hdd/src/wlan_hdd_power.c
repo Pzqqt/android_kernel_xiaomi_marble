@@ -2144,23 +2144,16 @@ int wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
  */
 static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 				  struct wireless_dev *wdev,
-				  int *dbm)
+				  int *dbm, hdd_adapter_t *adapter)
 {
 
 	hdd_context_t *pHddCtx = (hdd_context_t *) wiphy_priv(wiphy);
-	struct net_device *ndev = wdev->netdev;
-	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 	int status;
 
 	ENTER();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
-		return -EINVAL;
-	}
-
-	if (wlan_hdd_validate_session_id(adapter->sessionId)) {
-		hdd_err("invalid session id: %d", adapter->sessionId);
 		return -EINVAL;
 	}
 
@@ -2212,12 +2205,15 @@ int wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 					 struct wireless_dev *wdev,
 					 int *dbm)
 {
-	int ret;
+	int ret = -ENOTSUPP;
+	struct net_device *ndev = wdev->netdev;
+	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_get_txpower(wiphy,
+	if (adapter->sessionId != HDD_SESSION_ID_INVALID)
+		ret = __wlan_hdd_cfg80211_get_txpower(wiphy,
 						wdev,
-						dbm);
+						dbm, adapter);
 	cds_ssr_unprotect(__func__);
 
 	return ret;

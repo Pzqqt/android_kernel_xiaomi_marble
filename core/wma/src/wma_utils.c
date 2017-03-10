@@ -1780,9 +1780,6 @@ int wma_stats_event_handler(void *handle, uint8_t *cmd_param_info,
 	event = param_buf->fixed_param;
 	temp = (uint8_t *) param_buf->data;
 
-	WMA_LOGD("%s: num_stats: pdev: %u vdev: %u peer %u",
-		 __func__, event->num_pdev_stats, event->num_vdev_stats,
-		 event->num_peer_stats);
 	if (event->num_pdev_stats > 0) {
 		for (i = 0; i < event->num_pdev_stats; i++) {
 			pdev_stats = (wmi_pdev_stats *) temp;
@@ -1834,7 +1831,6 @@ int wma_stats_event_handler(void *handle, uint8_t *cmd_param_info,
 	for (i = 0; i < wma->max_bssid; i++) {
 		node = &wma->interfaces[i];
 		if (node->fw_stats_set & FW_PEER_STATS_SET) {
-			WMA_LOGD("<--STATS RSP VDEV_ID:%d", i);
 			wma_post_stats(wma, node);
 		}
 	}

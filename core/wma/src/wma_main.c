@@ -2621,7 +2621,7 @@ QDF_STATUS wma_pre_start(void *cds_ctx)
 		goto end;
 	}
 
-	WMA_LOGA("WMA --> wmi_unified_connect_htc_service - success");
+	WMA_LOGD("WMA --> wmi_unified_connect_htc_service - success");
 
 	/* Trigger the CFG DOWNLOAD */
 	wma_msg.type = WNI_CFG_DNLD_REQ;
@@ -4468,17 +4468,17 @@ static void wma_dump_dbs_hw_mode(tp_wma_handle wma_handle)
 
 	for (i = 0; i < wma_handle->num_dbs_hw_modes; i++) {
 		param = wma_handle->hw_mode.hw_mode_list[i];
-		WMA_LOGA("%s:[%d]-MAC0: tx_ss:%d rx_ss:%d bw_idx:%d",
+		WMA_LOGD("%s:[%d]-MAC0: tx_ss:%d rx_ss:%d bw_idx:%d",
 			__func__, i,
 			WMA_HW_MODE_MAC0_TX_STREAMS_GET(param),
 			WMA_HW_MODE_MAC0_RX_STREAMS_GET(param),
 			WMA_HW_MODE_MAC0_BANDWIDTH_GET(param));
-		WMA_LOGA("%s:[%d]-MAC1: tx_ss:%d rx_ss:%d bw_idx:%d",
+		WMA_LOGD("%s:[%d]-MAC1: tx_ss:%d rx_ss:%d bw_idx:%d",
 			__func__, i,
 			WMA_HW_MODE_MAC1_TX_STREAMS_GET(param),
 			WMA_HW_MODE_MAC1_RX_STREAMS_GET(param),
 			WMA_HW_MODE_MAC1_BANDWIDTH_GET(param));
-		WMA_LOGA("%s:[%d] DBS:%d SBS:%d", __func__, i,
+		WMA_LOGD("%s:[%d] DBS:%d SBS:%d", __func__, i,
 			WMA_HW_MODE_DBS_MODE_GET(param),
 			WMA_HW_MODE_SBS_MODE_GET(param));
 	}
@@ -4563,7 +4563,7 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 		return -EINVAL;
 	}
 
-	WMA_LOGA("WMA <-- WMI_SERVICE_READY_EVENTID");
+	WMA_LOGD("WMA <-- WMI_SERVICE_READY_EVENTID");
 
 	wma_handle->num_dbs_hw_modes = ev->num_dbs_hw_modes;
 	ev_wlan_dbs_hw_mode_list = param_buf->wlan_dbs_hw_mode_list;
@@ -5478,9 +5478,9 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 		return -EINVAL;
 	}
 
-	WMA_LOGA("WMA <-- WMI_SERVICE_READY_EXT_EVENTID");
+	WMA_LOGD("WMA <-- WMI_SERVICE_READY_EXT_EVENTID");
 
-	WMA_LOGA("%s: Defaults: scan config:%x FW mode config:%x",
+	WMA_LOGD("%s: Defaults: scan config:%x FW mode config:%x",
 			__func__, ev->default_conc_scan_config_bits,
 			ev->default_fw_config_bits);
 
@@ -5497,7 +5497,7 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 		return -EINVAL;
 	}
 
-	WMA_LOGA("WMA --> WMI_INIT_CMDID");
+	WMA_LOGD("WMA --> WMI_INIT_CMDID");
 	status = wmi_unified_send_saved_init_cmd(wma_handle->wmi_handle);
 	if (status != EOK)
 		/* In success case, WMI layer will free after getting copy
@@ -5537,7 +5537,7 @@ int wma_rx_ready_event(void *handle, uint8_t *cmd_param_info,
 		return -EINVAL;
 	}
 
-	WMA_LOGA("WMA <-- WMI_READY_EVENTID");
+	WMA_LOGD("WMA <-- WMI_READY_EVENTID");
 
 	ev = param_buf->fixed_param;
 	/* Indicate to the waiting thread that the ready
@@ -5969,12 +5969,12 @@ static void wma_set_wifi_start_packet_stats(void *wma_handle,
 		pktlog_enable(scn, log_state, start_log->ini_triggered,
 			      start_log->user_triggered,
 			      start_log->is_iwpriv_command);
-		WMA_LOGI("%s: Enabling per packet stats", __func__);
+		WMA_LOGD("%s: Enabling per packet stats", __func__);
 	} else {
 		pktlog_enable(scn, 0, start_log->ini_triggered,
 				start_log->user_triggered,
 				start_log->is_iwpriv_command);
-		WMA_LOGI("%s: Disabling per packet stats", __func__);
+		WMA_LOGD("%s: Disabling per packet stats", __func__);
 	}
 }
 #endif
@@ -6361,12 +6361,12 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, struct scheduler_msg *msg)
 
 #ifdef FEATURE_WLAN_ESE
 	case WMA_TSM_STATS_REQ:
-		WMA_LOGA("McThread: WMA_TSM_STATS_REQ");
+		WMA_LOGD("McThread: WMA_TSM_STATS_REQ");
 		wma_process_tsm_stats_req(wma_handle, (void *)msg->bodyptr);
 		break;
 #endif /* FEATURE_WLAN_ESE */
 	case WNI_CFG_DNLD_REQ:
-		WMA_LOGA("McThread: WNI_CFG_DNLD_REQ");
+		WMA_LOGD("McThread: WNI_CFG_DNLD_REQ");
 		qdf_status = wma_wni_cfg_dnld(wma_handle);
 		if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			cds_wma_complete_cback(cds_context);
