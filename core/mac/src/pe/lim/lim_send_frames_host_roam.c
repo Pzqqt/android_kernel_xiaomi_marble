@@ -99,7 +99,7 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 
 	add_ie_len = pe_session->pLimReAssocReq->addIEAssoc.length;
 	add_ie = pe_session->pLimReAssocReq->addIEAssoc.addIEdata;
-	lim_log(mac_ctx, LOG1,
+	lim_log(mac_ctx, LOGD,
 		FL("called in state (%d)."), pe_session->limMlmState);
 
 	qdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
@@ -294,7 +294,7 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 	}
 	if (pe_session->vhtCapability &&
 	    pe_session->vhtCapabilityPresentInBeacon) {
-		lim_log(mac_ctx, LOG1,
+		lim_log(mac_ctx, LOGD,
 			FL("Populate VHT IEs in Re-Assoc Request"));
 		populate_dot11f_vht_caps(mac_ctx, pe_session, &frm.VHTCaps);
 		vht_enabled = true;
@@ -303,7 +303,7 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 	}
 	if (!vht_enabled &&
 			pe_session->is_vendor_specific_vhtcaps) {
-		lim_log(mac_ctx, LOG1,
+		lim_log(mac_ctx, LOGD,
 			FL("Populate Vendor VHT IEs in Re-Assoc Request"));
 		frm.vendor_vht_ie.present = 1;
 		frm.vendor_vht_ie.type =
@@ -325,7 +325,7 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 	status = dot11f_get_packed_re_assoc_request_size(mac_ctx, &frm,
 			&payload);
 	if (DOT11F_FAILED(status)) {
-		lim_log(mac_ctx, LOGP,
+		lim_log(mac_ctx, LOGE,
 			FL("Failure in size calculation (0x%08x)."), status);
 		/* We'll fall back on the worst case scenario: */
 		payload = sizeof(tDot11fReAssocRequest);
@@ -336,7 +336,7 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 
 	bytes = payload + sizeof(tSirMacMgmtHdr) + add_ie_len;
 
-	lim_log(mac_ctx, LOG1, FL("FT IE Reassoc Req (%d)."),
+	lim_log(mac_ctx, LOGD, FL("FT IE Reassoc Req (%d)."),
 		ft_sme_context->reassoc_ft_ies_length);
 
 	if (pe_session->is11Rconnection)
@@ -349,13 +349,13 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 		MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_MLM_STATE,
 				 pe_session->peSessionId,
 				 pe_session->limMlmState));
-		lim_log(mac_ctx, LOGP, FL("Failed to alloc memory %d"), bytes);
+		lim_log(mac_ctx, LOGE, FL("Failed to alloc memory %d"), bytes);
 		goto end;
 	}
 	/* Paranoia: */
 	qdf_mem_set(frame, bytes + ft_ies_length, 0);
 
-	lim_print_mac_addr(mac_ctx, pe_session->limReAssocbssId, LOG1);
+	lim_print_mac_addr(mac_ctx, pe_session->limReAssocbssId, LOGD);
 	/* Next, we fill out the buffer descriptor: */
 	lim_populate_mac_header(mac_ctx, frame, SIR_MAC_MGMT_FRAME,
 		SIR_MAC_MGMT_REASSOC_REQ, pe_session->limReAssocbssId,
@@ -374,7 +374,7 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 			status);
 	}
 
-	lim_log(mac_ctx, LOG3,
+	lim_log(mac_ctx, LOGD,
 		       FL("*** Sending Re-Assoc Request length %d %d to "),
 		       bytes, payload);
 
@@ -447,7 +447,7 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 			pe_session->assocReqLen = ft_ies_length;
 		}
 	} else {
-		lim_log(mac_ctx, LOG1, FL("FT IEs not present"));
+		lim_log(mac_ctx, LOGD, FL("FT IEs not present"));
 		pe_session->assocReqLen = 0;
 	}
 
@@ -509,7 +509,7 @@ void lim_send_retry_reassoc_req_frame(tpAniSirGlobal pMac,
 	    != TX_SUCCESS) {
 		/* Could not start reassoc failure timer. */
 		/* Log error */
-		lim_log(pMac, LOGP,
+		lim_log(pMac, LOGE,
 			FL("could not start Reassociation failure timer"));
 		/* Return Reassoc confirm with */
 		/* Resources Unavailable */
@@ -706,7 +706,7 @@ void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 	nStatus =
 		dot11f_get_packed_re_assoc_request_size(pMac, &frm, &nPayload);
 	if (DOT11F_FAILED(nStatus)) {
-		lim_log(pMac, LOGP, FL("Fail to get size:ReassocReq(0x%08x)"),
+		lim_log(pMac, LOGE, FL("Fail to get size:ReassocReq(0x%08x)"),
 			nStatus);
 		/* We'll fall back on the worst case scenario: */
 		nPayload = sizeof(tDot11fReAssocRequest);
@@ -724,7 +724,7 @@ void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 		MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_MLM_STATE,
 				 psessionEntry->peSessionId,
 				 psessionEntry->limMlmState));
-		lim_log(pMac, LOGP,
+		lim_log(pMac, LOGE,
 			FL("Failed to alloc %d bytes for a ReAssociation Req."),
 			nBytes);
 		goto end;
@@ -752,11 +752,9 @@ void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 			nStatus);
 	}
 
-	PELOG1(lim_log
-		       (pMac, LOG1,
-		       FL("*** Sending Re-Association Request length %d" "to "),
+	lim_log(pMac, LOGD,
+		FL("*** Sending Re-Association Request length %d" "to "),
 		       nBytes);
-	       )
 
 	if (psessionEntry->assocReq != NULL) {
 		qdf_mem_free(psessionEntry->assocReq);
