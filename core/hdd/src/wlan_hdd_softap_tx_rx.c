@@ -526,14 +526,14 @@ static void __hdd_softap_tx_timeout(struct net_device *dev)
 	for (i = 0; i < NUM_TX_QUEUES; i++) {
 		txq = netdev_get_tx_queue(dev, i);
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "Queue%d status: %d txq->trans_start %lu",
+			  QDF_TRACE_LEVEL_DEBUG,
+			  "Queue: %d status: %d txq->trans_start: %lu",
 			  i, netif_tx_queue_stopped(txq), txq->trans_start);
 	}
 
 	wlan_hdd_display_netif_queue_history(hdd_ctx);
 	cdp_dump_flow_pool_info(cds_get_context(QDF_MODULE_ID_SOC));
-	QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
+	QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
 			"carrier state: %d", netif_carrier_ok(dev));
 	hdd_wlan_datastall_sap_event();
 }
@@ -685,7 +685,7 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 
 	pAdapter = (hdd_adapter_t *)context;
 	if (unlikely(WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_FATAL,
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
 			  "Magic cookie(%x) for adapter sanity verification is invalid",
 			  pAdapter->magic);
 		return QDF_STATUS_E_FAILURE;
