@@ -1887,6 +1887,12 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		pe_debug("Reg max %d local power con %d max tx pwr %d",
 			reg_max, local_power_constraint, session->maxTxPower);
 
+		if (sme_join_req->powerCap.maxTxPower > session->maxTxPower) {
+			sme_join_req->powerCap.maxTxPower = session->maxTxPower;
+			pe_debug("Update MaxTxPower in join Req to %d",
+				sme_join_req->powerCap.maxTxPower);
+		}
+
 		if (session->gLimCurrentBssUapsd) {
 			session->gUapsdPerAcBitmask =
 				session->pLimJoinReq->uapsdPerAcBitmask;
