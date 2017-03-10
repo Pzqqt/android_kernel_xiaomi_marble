@@ -2040,9 +2040,10 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	hdd_notice("Req RSN IE:");
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
 			   final_req_ie, (ssid_ie_len + reqRsnLength));
-	cfg80211_roamed_bss(dev, bss,
-			final_req_ie, (ssid_ie_len + reqRsnLength),
-			rspRsnIe, rspRsnLength, GFP_KERNEL);
+	if (!pAdapter->defer_disconnect)
+		cfg80211_roamed_bss(dev, bss,
+				final_req_ie, (ssid_ie_len + reqRsnLength),
+				rspRsnIe, rspRsnLength, GFP_KERNEL);
 
 	qdf_mem_copy(assoc_req_ies,
 		(u8 *)pCsrRoamInfo->pbFrames + pCsrRoamInfo->nBeaconLength,
@@ -2637,7 +2638,8 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 								pConnectedProfile->SSID.ssId,
 								pRoamInfo->u.
 								pConnectedProfile->SSID.length);
-						cfg80211_roamed_bss(dev,
+						if (!pAdapter->defer_disconnect)
+							cfg80211_roamed_bss(dev,
 								roam_bss,
 								pFTAssocReq,
 								assocReqlen,
@@ -4786,6 +4788,8 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		hdd_info("After Roam Synch Comp: NAPI Serialize OFF");
 		hdd_napi_serialize(0);
 		hdd_set_roaming_in_progress(false);
+		if (pAdapter->defer_disconnect)
+			hdd_process_defer_disconnect(pAdapter);
 		break;
 	case eCSR_ROAM_SHOULD_ROAM:
 		/* notify apps that we can't pass traffic anymore */
@@ -5046,6 +5050,11 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 				WLAN_CONTROL_PATH);
 		cds_set_connection_in_progress(false);
 		hdd_set_roaming_in_progress(false);
+		/*
+		 * If disconnect operation is in deferred state, do it now.
+		 */
+		if (pAdapter->defer_disconnect)
+			hdd_process_defer_disconnect(pAdapter);
 		break;
 
 	default:

@@ -4335,6 +4335,19 @@ int wlan_hdd_send_roam_auth_event(hdd_adapter_t *adapter, uint8_t *bssid,
 			!roam_info_ptr->roamSynchInProgress)
 		return 0;
 
+	/*
+	 * The user space has issued a disconnect when roaming is in
+	 * progress. The disconnect should be honored gracefully.
+	 * If the roaming is complete and the roam event is sent
+	 * back to the user space, it will get confused as it is
+	 * expecting a disconnect event. So, do not send the event
+	 * and handle the disconnect later.
+	 */
+	if (adapter->defer_disconnect) {
+		hdd_notice("LFR3:Do not send roam auth event");
+		return 0;
+	}
+
 	skb = cfg80211_vendor_event_alloc(hdd_ctx_ptr->wiphy,
 			&(adapter->wdev),
 			ETH_ALEN + req_rsn_len + rsp_rsn_len +
@@ -13904,8 +13917,34 @@ int wlan_hdd_try_disconnect(hdd_adapter_t *pAdapter)
 	unsigned long rc;
 	hdd_station_ctx_t *pHddStaCtx;
 	int status, result = 0;
+	tHalHandle hal;
 
 	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	hal = WLAN_HDD_GET_HAL_CTX(pAdapter);
+	if (pAdapter->device_mode ==  QDF_STA_MODE) {
+		hdd_notice("Stop firmware roaming");
+		sme_stop_roaming(hal, pAdapter->sessionId, eCsrHddIssued);
+	}
+	/*
+	 * If firmware has already started roaming process, driver
+	 * needs to defer the processing of this disconnect request.
+	 *
+	 */
+	if (hdd_is_roaming_in_progress(pAdapter)) {
+		/*
+		 * Defer the disconnect action until firmware roaming
+		 * result is received. If STA is in connected state after
+		 * that, send the disconnect command to CSR, otherwise
+		 * CSR would have already sent disconnect event to upper
+		 * layer.
+		 */
+
+		hdd_err("Roaming in progress, <try disconnect> deferred.");
+		pAdapter->defer_disconnect = DEFER_DISCONNECT_TRY_DISCONNECT;
+		pAdapter->cfg80211_disconnect_reason =
+			eCSR_DISCONNECT_REASON_UNSPECIFIED;
+		return 0;
+	}
 
 	if ((QDF_IBSS_MODE == pAdapter->device_mode) ||
 	  (eConnectionState_Associated == pHddStaCtx->conn_info.connState) ||
@@ -14156,6 +14195,7 @@ static int wlan_hdd_disconnect(hdd_adapter_t *pAdapter, u16 reason)
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	eConnectionState prev_conn_state;
+	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(pAdapter);
 
 	ENTER();
 
@@ -14163,18 +14203,41 @@ static int wlan_hdd_disconnect(hdd_adapter_t *pAdapter, u16 reason)
 
 	if (0 != status)
 		return status;
+	if (pAdapter->device_mode ==  QDF_STA_MODE) {
+		hdd_notice("Stop firmware roaming");
+		status = sme_stop_roaming(hal, pAdapter->sessionId,
+				eCsrHddIssued);
+	}
+	/*
+	 * If firmware has already started roaming process, driver
+	 * needs to defer the processing of this disconnect request.
+	 */
+	if (hdd_is_roaming_in_progress(pAdapter)) {
+		/*
+		 * Defer the disconnect action until firmware roaming
+		 * result is received. If STA is in connected state after
+		 * that, send the disconnect command to CSR, otherwise
+		 * CSR would have already sent disconnect event to upper
+		 * layer.
+		 */
+		hdd_err("Roaming in progress, disconnect command deferred.");
+		pAdapter->defer_disconnect =
+			DEFER_DISCONNECT_CFG80211_DISCONNECT;
+		pAdapter->cfg80211_disconnect_reason = reason;
+		return 0;
+	}
 
 	prev_conn_state = pHddStaCtx->conn_info.connState;
 
-	/*stop tx queues */
+	/* stop tx queues */
 	hdd_notice("Disabling queues");
-	wlan_hdd_netif_queue_control(pAdapter, WLAN_NETIF_TX_DISABLE_N_CARRIER,
-				   WLAN_CONTROL_PATH);
+	wlan_hdd_netif_queue_control(pAdapter,
+		WLAN_NETIF_TX_DISABLE_N_CARRIER, WLAN_CONTROL_PATH);
 	hdd_notice("Set HDD connState to eConnectionState_Disconnecting");
 	pHddStaCtx->conn_info.connState = eConnectionState_Disconnecting;
 	INIT_COMPLETION(pAdapter->disconnect_comp_var);
 
-	/*issue disconnect */
+	/* issue disconnect */
 
 	status = sme_roam_disconnect(WLAN_HDD_GET_HAL_CTX(pAdapter),
 				     pAdapter->sessionId, reason);
@@ -14325,11 +14388,6 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 		pAdapter->device_mode, reason);
 
 	status = wlan_hdd_validate_context(pHddCtx);
-
-	if (hdd_is_roaming_in_progress()) {
-		hdd_err("Roaming In Progress. Ignore!!!");
-		return -EAGAIN;
-	}
 
 	if (0 != status)
 		return status;
@@ -16562,6 +16620,36 @@ void wlan_hdd_clear_link_layer_stats(hdd_adapter_t *adapter)
 	sme_ll_stats_clear_req(hal, &link_layer_stats_clear_req);
 
 	return;
+}
+
+/**
+ * hdd_process_defer_disconnect() - Handle the deferred disconnect
+ * @adapter: HDD Adapter
+ *
+ * If roaming is in progress and there is a request to
+ * disconnect the session, then it is deferred. Once
+ * roaming is complete/aborted, then this routine is
+ * used to resume the disconnect that was deferred
+ *
+ * Return: None
+ */
+void hdd_process_defer_disconnect(hdd_adapter_t *adapter)
+{
+	switch (adapter->defer_disconnect) {
+	case DEFER_DISCONNECT_CFG80211_DISCONNECT:
+		adapter->defer_disconnect = 0;
+		wlan_hdd_disconnect(adapter,
+			adapter->cfg80211_disconnect_reason);
+		break;
+	case DEFER_DISCONNECT_TRY_DISCONNECT:
+		wlan_hdd_try_disconnect(adapter);
+		adapter->defer_disconnect = 0;
+		break;
+	default:
+		hdd_info("Invalid source to defer:%d. Hence not handling it",
+				adapter->defer_disconnect);
+		break;
+	}
 }
 
 #define CNT_DIFF(cur, prev) \

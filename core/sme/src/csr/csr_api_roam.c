@@ -17745,19 +17745,6 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 			FL("Supplicant disabled driver roaming"));
 		return QDF_STATUS_E_FAILURE;
 	}
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	if (session->roam_synch_in_progress
-	    && (ROAM_SCAN_OFFLOAD_STOP == command)) {
-		/*
-		 * When roam synch is in progress for propagation, there is no
-		 * need to send down the STOP command since the firmware is not
-		 * expecting any WMI commands when the roam synch is in progress
-		 */
-		b_roam_scan_offload_started = false;
-		sms_log(mac_ctx, LOG1, FL("Roam sync in progress"));
-		return QDF_STATUS_SUCCESS;
-	}
-#endif
 	if (0 == csr_roam_is_roam_offload_scan_enabled(mac_ctx)) {
 		sms_log(mac_ctx, LOGE, "isRoamOffloadScanEnabled not set");
 		return QDF_STATUS_E_FAILURE;

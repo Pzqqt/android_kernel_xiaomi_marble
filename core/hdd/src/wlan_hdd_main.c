@@ -10709,20 +10709,26 @@ void hdd_set_roaming_in_progress(bool value)
 
 /**
  * hdd_is_roaming_in_progress() - check if roaming is in progress
- * @hdd_ctx - HDD context
+ * @adapter - HDD adapter
  *
- * Return: true if roaming is in progress else false
+ * Return: true if roaming is in progress for STA type, else false
  */
-bool hdd_is_roaming_in_progress(void)
+bool hdd_is_roaming_in_progress(hdd_adapter_t *adapter)
 {
 	hdd_context_t *hdd_ctx;
+	bool ret_status = false;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		hdd_err("HDD context is NULL");
-		return false;
+		return ret_status;
 	}
-	return hdd_ctx->roaming_in_progress;
+	hdd_info("dev mode = %d, roaming_in_progress = %d",
+		adapter->device_mode, hdd_ctx->roaming_in_progress);
+	ret_status = ((adapter->device_mode == QDF_STA_MODE) &&
+			hdd_ctx->roaming_in_progress);
+
+	return ret_status;
 }
 
 /* Register the module init/exit functions */

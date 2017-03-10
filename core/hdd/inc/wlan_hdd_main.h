@@ -1144,7 +1144,27 @@ struct hdd_adapter_s {
 	struct hdd_connect_pm_context connect_rpm_ctx;
 
 	bool fast_roaming_allowed;
+	/*
+	 * defer disconnect is used as a flag by roaming to check
+	 * if any disconnect has been deferred because of roaming
+	 * and handle it. It stores the source of the disconnect.
+	 * Based on the source, it will appropriately handle the
+	 * disconnect.
+	 */
+	uint8_t defer_disconnect;
+	/*
+	 * cfg80211 issues a reason for disconnect. Store this reason if the
+	 * disconnect is being deferred.
+	 */
+	uint8_t cfg80211_disconnect_reason;
 };
+
+/*
+ * Below two definitions are useful to distinguish the
+ * source of the disconnect when a disconnect is deferred
+ */
+#define DEFER_DISCONNECT_TRY_DISCONNECT      1
+#define DEFER_DISCONNECT_CFG80211_DISCONNECT 2
 
 #define WLAN_HDD_GET_STATION_CTX_PTR(pAdapter) (&(pAdapter)->sessionCtx.station)
 #define WLAN_HDD_GET_AP_CTX_PTR(pAdapter) (&(pAdapter)->sessionCtx.ap)
@@ -2163,7 +2183,7 @@ static inline int wlan_hdd_validate_session_id(u8 session_id)
 	return -EINVAL;
 }
 
-bool hdd_is_roaming_in_progress(void);
+bool hdd_is_roaming_in_progress(hdd_adapter_t *adapter);
 void hdd_set_roaming_in_progress(bool value);
 
 /**
