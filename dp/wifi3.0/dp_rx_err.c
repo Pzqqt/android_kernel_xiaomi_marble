@@ -234,7 +234,6 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 	uint16_t peer_id = 0xFFFF;
 	struct dp_peer *peer = NULL;
 	uint32_t sgi, rate_mcs, tid;
-	uint32_t peer_mdata;
 
 	rx_bufs_used++;
 
@@ -279,6 +278,17 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 		goto fail;
 	}
 
+	vdev = peer->vdev;
+	if (!vdev) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				FL("INVALID vdev %p OR osif_rx"), vdev);
+		/* Drop & free packet */
+		qdf_nbuf_free(nbuf);
+		DP_STATS_INC(soc, rx.err.invalid_vdev, 1);
+		goto fail;
+	}
+
+
 	sgi = hal_rx_msdu_start_sgi_get(rx_desc->rx_buf_start);
 	rate_mcs = hal_rx_msdu_start_rate_mcs_get(rx_desc->rx_buf_start);
 	tid = hal_rx_mpdu_start_tid_get(rx_desc->rx_buf_start);
@@ -287,14 +297,9 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 		"%s: %d, SGI: %d, rate_mcs: %d, tid: %d",
 		__func__, __LINE__, sgi, rate_mcs, tid);
 
-	peer_mdata = hal_rx_mpdu_peer_meta_data_get(rx_desc->rx_buf_start);
-	peer_id = DP_PEER_METADATA_PEER_ID_GET(peer_mdata);
-	peer = dp_peer_find_by_id(soc, peer_id);
-
-	if (!peer) {
-		qdf_nbuf_free(nbuf);
-		goto fail;
-	}
+	/* WDS Source Port Learning */
+	if (qdf_likely(vdev->rx_decap_type == htt_cmn_pkt_type_ethernet))
+		dp_rx_wds_srcport_learn(soc, rx_desc->rx_buf_start, peer, nbuf);
 
 	/*
 	 * Advance the packet start pointer by total size of
@@ -330,33 +335,33 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 		qdf_nbuf_data(nbuf), 128, false);
 #endif /* NAPIER_EMULATION */
 
-	if (qdf_unlikely(peer->bss_peer)) {
-		QDF_TRACE(QDF_MODULE_ID_DP,
-				QDF_TRACE_LEVEL_INFO,
-				FL("received pkt with same src MAC"));
-
-		/* Drop & free packet */
-		qdf_nbuf_free(nbuf);
-		/* Statistics */
-		goto fail;
-	}
-
-	vdev = peer->vdev;
-
-	if (vdev && vdev->osif_rx) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			FL("vdev %p osif_rx %p"), vdev,
-			vdev->osif_rx);
-
+	if (qdf_unlikely(vdev->rx_decap_type == htt_cmn_pkt_type_raw)) {
 		qdf_nbuf_set_next(nbuf, NULL);
-		vdev->osif_rx(vdev->osif_vdev, nbuf);
-		DP_STATS_INC(vdev->pdev, rx.to_stack.num, 1);
+		dp_rx_deliver_raw(vdev, nbuf);
 	} else {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			FL("INVALID vdev %p OR osif_rx"), vdev);
-		DP_STATS_INC(soc, rx.err.invalid_vdev, 1);
-	}
+		if (qdf_unlikely(peer->bss_peer)) {
+			QDF_TRACE(QDF_MODULE_ID_DP,
+					QDF_TRACE_LEVEL_INFO,
+					FL("received pkt with same src MAC"));
+			/* Drop & free packet */
+			qdf_nbuf_free(nbuf);
+			goto fail;
+		}
 
+		if (vdev->osif_rx) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+				FL("vdev %p osif_rx %p"), vdev,
+				vdev->osif_rx);
+
+			qdf_nbuf_set_next(nbuf, NULL);
+			vdev->osif_rx(vdev->osif_vdev, nbuf);
+			DP_STATS_INC(vdev->pdev, rx.to_stack.num, 1);
+		} else {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				FL("INVALID vdev %p OR osif_rx"), vdev);
+			DP_STATS_INC(soc, rx.err.invalid_vdev, 1);
+		}
+	}
 fail:
 	dp_rx_add_to_free_desc_list(head, tail, rx_desc);
 

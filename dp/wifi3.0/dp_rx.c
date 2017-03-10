@@ -196,7 +196,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
  *
  * Return: void
  */
-static void
+void
 dp_rx_deliver_raw(struct dp_vdev *vdev, qdf_nbuf_t nbuf_list)
 {
 	qdf_nbuf_t deliver_list_head = NULL;
@@ -284,6 +284,7 @@ dp_get_vdev_from_peer(struct dp_soc *soc,
 	}
 }
 #endif
+
 /**
  * dp_rx_intrabss_fwd() - Implements the Intra-BSS forwarding logic
  *
@@ -902,7 +903,10 @@ done:
 #endif /* NAPIER_EMULATION */
 
 			/* WDS Source Port Learning */
-			dp_rx_wds_srcport_learn(soc, rx_tlv_hdr, peer, nbuf);
+			if (qdf_likely(vdev->rx_decap_type ==
+						htt_cmn_pkt_type_ethernet))
+				dp_rx_wds_srcport_learn(soc, rx_tlv_hdr, peer,
+									nbuf);
 
 			/* Intrabss-fwd */
 			if (vdev->opmode != wlan_op_mode_sta)
