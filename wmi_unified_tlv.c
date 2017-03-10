@@ -16674,8 +16674,6 @@ static void populate_vdev_param_tlv(uint32_t *vdev_param)
 				 WMI_VDEV_PARAM_HE_RANGE_EXT;
 	vdev_param[wmi_vdev_param_he_bss_color] = WMI_VDEV_PARAM_BSS_COLOR;
 	vdev_param[wmi_vdev_param_set_hemu_mode] = WMI_VDEV_PARAM_SET_HEMU_MODE;
-	vdev_param[wmi_vdev_param_tx_ofdma_cplen] =
-				 WMI_VDEV_PARAM_TX_OFDMA_CPLEN;
 }
 #endif
 
