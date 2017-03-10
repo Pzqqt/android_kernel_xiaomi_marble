@@ -191,7 +191,7 @@ sme_rrm_send_beacon_report_xmit_ind(tpAniSirGlobal mac_ctx,
 		length = sizeof(tSirBeaconReportXmitInd);
 		beacon_rep = qdf_mem_malloc(length);
 		if (NULL == beacon_rep) {
-			sms_log(mac_ctx, LOGP,
+			sms_log(mac_ctx, LOGE,
 				"Unable to allocate memory for beacon report");
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -441,7 +441,7 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 		filter.SSIDs.SSIDList =
 			(tCsrSSIDInfo *) qdf_mem_malloc(sizeof(tCsrSSIDInfo));
 		if (filter.SSIDs.SSIDList == NULL) {
-			sms_log(mac_ctx, LOGP, FL("qdf_mem_malloc failed"));
+			sms_log(mac_ctx, LOGE, FL("qdf_mem_malloc failed"));
 			return QDF_STATUS_E_NOMEM;
 		}
 
@@ -522,7 +522,7 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 
 	roam_info = qdf_mem_malloc(sizeof(*roam_info));
 	if (NULL == roam_info) {
-		sms_log(mac_ctx, LOGP, FL("vos_mem_malloc failed"));
+		sms_log(mac_ctx, LOGE, FL("vos_mem_malloc failed"));
 		status = QDF_STATUS_E_NOMEM;
 		goto rrm_send_scan_results_done;
 	}
@@ -685,7 +685,7 @@ static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 				(tCsrSSIDInfo *)qdf_mem_malloc(
 					sizeof(tCsrSSIDInfo));
 			if (NULL == scan_req.SSIDs.SSIDList) {
-				sms_log(mac_ctx, LOGP,
+				sms_log(mac_ctx, LOGE,
 					FL("qdf_mem_malloc failed"));
 				return QDF_STATUS_E_NOMEM;
 			}
@@ -843,7 +843,7 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal pMac, void *pMsg
 		wlan_cfg_get_str_len(pMac, WNI_CFG_VALID_CHANNEL_LIST, &len);
 		pSmeRrmContext->channelList.ChannelList = qdf_mem_malloc(len);
 		if (pSmeRrmContext->channelList.ChannelList == NULL) {
-			sms_log(pMac, LOGP, FL("qdf_mem_malloc failed"));
+			sms_log(pMac, LOGE, FL("qdf_mem_malloc failed"));
 			return QDF_STATUS_E_NOMEM;
 		}
 		csr_get_cfg_valid_channels(pMac,
@@ -863,7 +863,7 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal pMac, void *pMsg
 
 		pSmeRrmContext->channelList.ChannelList = qdf_mem_malloc(len);
 		if (pSmeRrmContext->channelList.ChannelList == NULL) {
-			sms_log(pMac, LOGP, FL("qdf_mem_malloc failed"));
+			sms_log(pMac, LOGE, FL("qdf_mem_malloc failed"));
 			return QDF_STATUS_E_NOMEM;
 		}
 
@@ -1260,7 +1260,7 @@ end:
 QDF_STATUS sme_rrm_msg_processor(tpAniSirGlobal pMac, uint16_t msg_type,
 				 void *pMsgBuf)
 {
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_HIGH,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  FL(" Msg = %d for RRM measurement"), msg_type);
 
 	/* switch on the msg type & make the state transition accordingly */
@@ -1417,7 +1417,7 @@ QDF_STATUS rrm_close(tpAniSirGlobal pMac)
 			qdf_mc_timer_stop(&pSmeRrmContext->neighborReqControlInfo.
 					  neighborRspWaitTimer);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  FL("Timer stop fail"));
 		}
 	}
@@ -1426,7 +1426,7 @@ QDF_STATUS rrm_close(tpAniSirGlobal pMac)
 		qdf_mc_timer_destroy(&pSmeRrmContext->neighborReqControlInfo.
 				     neighborRspWaitTimer);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("Fail to destroy timer"));
 
 	}
