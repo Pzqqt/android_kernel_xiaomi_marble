@@ -740,7 +740,7 @@ struct tgt_reg_section {
 };
 
 struct tgt_reg_table {
-	struct tgt_reg_section *section;
+	const struct tgt_reg_section *section;
 	uint32_t section_size;
 };
 
