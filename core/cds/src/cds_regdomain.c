@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011,2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011,2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -758,7 +758,7 @@ void cds_set_wma_dfs_region(uint8_t dfs_region)
 		return;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_DEBUG,
 		  "dfs_region: %d", dfs_region);
 
 	wma_set_dfs_region(wma, dfs_region);
