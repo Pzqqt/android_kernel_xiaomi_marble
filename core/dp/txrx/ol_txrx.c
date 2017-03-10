@@ -5142,7 +5142,7 @@ static int ol_txrx_soc_attach_target(ol_txrx_soc_handle soc)
  */
 static void ol_txrx_soc_detach(void *soc)
 {
-	/* MCL legacy OL do nothing here */
+	qdf_mem_free(soc);
 	return;
 }
 
