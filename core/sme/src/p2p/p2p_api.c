@@ -284,7 +284,7 @@ QDF_STATUS p2p_send_action(tHalHandle hHal, uint8_t sessionId,
 	tSirMbMsgP2p *pMsg;
 	uint16_t msgLen;
 
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_MED,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  " %s sends action frame", __func__);
 	msgLen = (uint16_t) ((sizeof(tSirMbMsgP2p)) + len);
 	pMsg = qdf_mem_malloc(msgLen);
