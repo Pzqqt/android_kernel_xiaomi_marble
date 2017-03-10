@@ -108,7 +108,7 @@ static QDF_STATUS lim_send_hal_req_remain_on_chan_offload(tpAniSirGlobal pMac,
 	pScanOffloadReq->scan_id = pRemOnChnReq->scan_id;
 	pScanOffloadReq->scan_requestor_id = ROC_SCAN_REQUESTOR_ID;
 
-	lim_log(pMac, LOG1,
+	lim_log(pMac, LOGD,
 		FL("Req-rem-on-channel: duration %u, session %hu, chan %hu"),
 		pRemOnChnReq->duration, pRemOnChnReq->sessionId,
 		pRemOnChnReq->chnNum);
@@ -285,7 +285,7 @@ void lim_exit_remain_on_channel(tpAniSirGlobal pMac, QDF_STATUS status,
 {
 
 	if (status != QDF_STATUS_SUCCESS) {
-		PELOGE(lim_log(pMac, LOGE, "Remain on Channel Failed");)
+		lim_log(pMac, LOGE, "Remain on Channel Failed");
 		goto error;
 	}
 	/* Set the resume channel to Any valid channel (invalid). */
@@ -311,10 +311,9 @@ void lim_remain_on_chn_rsp(tpAniSirGlobal pMac, QDF_STATUS status, uint32_t *dat
 	tSirMacAddr nullBssid = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 	if (NULL == MsgRemainonChannel) {
-		PELOGE(lim_log(pMac, LOGP,
+		lim_log(pMac, LOGE,
 			       "%s: No Pointer for Remain on Channel Req",
 			       __func__);
-		       )
 		return;
 	}
 	/* Incase of the Remain on Channel Failure Case */
@@ -383,7 +382,7 @@ void lim_send_sme_mgmt_frame_ind(tpAniSirGlobal pMac, uint8_t frameType,
 
 	pSirSmeMgmtFrame = qdf_mem_malloc(length);
 	if (NULL == pSirSmeMgmtFrame) {
-		lim_log(pMac, LOGP,
+		lim_log(pMac, LOGE,
 			FL("AllocateMemory failed for eWNI_SME_LISTEN_RSP"));
 		return;
 	}
@@ -426,7 +425,7 @@ QDF_STATUS lim_p2p_action_cnf(void *context, qdf_nbuf_t buf,
 			 * action confirmation received after
 			 * remain on channel timer expired.
 			 */
-			lim_log(pMac, LOG1,
+			lim_log(pMac, LOGD,
 				FL("mgmt_frame_sessionId %d"),
 					 mgmt_frame_sessionId);
 			if (pMac->p2p_ack_ind_cb)
@@ -502,7 +501,7 @@ static void lim_tx_action_frame(tpAniSirGlobal mac_ctx,
 			mac_ctx->lim.mgmtFrameSessionId = 0xff;
 		} else {
 			mac_ctx->lim.mgmtFrameSessionId = mb_msg->sessionId;
-			lim_log(mac_ctx, LOG2,
+			lim_log(mac_ctx, LOGD,
 				FL("lim.actionFrameSessionId = %u"),
 				mac_ctx->lim.mgmtFrameSessionId);
 		}
