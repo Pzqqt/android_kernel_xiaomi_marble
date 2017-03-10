@@ -8908,6 +8908,7 @@ int hdd_wlan_startup(struct device *dev)
 	qdf_mc_timer_start(&hdd_ctx->iface_change_timer,
 			   hdd_ctx->config->iface_change_wait_time * 5000);
 
+	complete(&wlan_start_comp);
 	goto success;
 
 err_close_adapters:
