@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -142,7 +142,7 @@ uint32_t tx_timer_activate(TX_TIMER *timer_ptr)
 		return TX_SUCCESS;
 	} else if (QDF_STATUS_E_ALREADY == status) {
 		/* starting timer fails because timer is already started; this is okay */
-		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_DEBUG,
 			  "Timer %s is already running\n", TIMER_NAME);
 		return TX_SUCCESS;
 	} else {
@@ -336,7 +336,7 @@ uint32_t tx_timer_create_intern_debug(void *pMacGlobal,
 	}
 
 	if (0 != rescheduleTimeInTicks) {
-		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_DEBUG,
 			  "Creating periodic timer for %s\n", TIMER_NAME);
 	}
 	/* Activate this timer if required */
