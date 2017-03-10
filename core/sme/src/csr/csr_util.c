@@ -3345,7 +3345,7 @@ csr_is_pmf_capabilities_in_rsn_match(tHalHandle hHal,
 		apProfileMFPCapable = (pRSNIe->RSN_Cap[0] >> 7) & 0x1;
 		apProfileMFPRequired = (pRSNIe->RSN_Cap[0] >> 6) & 0x1;
 
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			FL("pFilterMFPEnabled=%d pFilterMFPRequired=%d"
 			   "pFilterMFPCapable=%d apProfileMFPCapable=%d"
 			   "apProfileMFPRequired=%d"),
@@ -3355,7 +3355,7 @@ csr_is_pmf_capabilities_in_rsn_match(tHalHandle hHal,
 
 		if (*pFilterMFPEnabled && *pFilterMFPCapable
 		    && *pFilterMFPRequired && (apProfileMFPCapable == 0)) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				  "AP is not capable to make PMF connection");
 			return false;
 		}  else if (!(*pFilterMFPCapable) &&
@@ -3366,7 +3366,7 @@ csr_is_pmf_capabilities_in_rsn_match(tHalHandle hHal,
 			 * requires mandatory PMF connections and we are not
 			 * capable so this AP is not good choice to connect
 			 */
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				  "AP needs PMF connection and we are not capable of pmf connection");
 			return false;
 		}

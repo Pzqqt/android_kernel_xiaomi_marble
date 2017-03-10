@@ -717,7 +717,7 @@ QDF_STATUS csr_neighbor_roam_issue_preauth_req(tpAniSirGlobal mac_ctx,
 				&neighbor_roam_info->roamableAPList, NULL);
 
 	if (NULL == neighbor_bss_node) {
-		sme_err("Roamable AP list is empty..");
+		sme_err("Roamable AP list is empty");
 		return QDF_STATUS_E_FAILURE;
 	} else {
 		csr_neighbor_roam_send_lfr_metric_event(mac_ctx, session_id,

@@ -617,7 +617,7 @@ QDF_STATUS csr_neighbor_roam_merge_channel_lists(tpAniSirGlobal pMac,
 		if (j == outputNumOfChannels) {
 			if (pInputChannelList[i]) {
 				QDF_TRACE(QDF_MODULE_ID_SME,
-					  QDF_TRACE_LEVEL_INFO,
+					  QDF_TRACE_LEVEL_DEBUG,
 					  "%s: [INFOLOG] Adding extra %d to Neighbor channel list",
 					  __func__, pInputChannelList[i]);
 				pOutputChannelList[numChannels] =
@@ -626,7 +626,7 @@ QDF_STATUS csr_neighbor_roam_merge_channel_lists(tpAniSirGlobal pMac,
 			}
 		}
 		if (numChannels >= WNI_CFG_VALID_CHANNEL_LIST_LEN) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				  "%s: Merge Neighbor channel list reached Max "
 				  "limit %d", __func__, numChannels);
 			break;
@@ -827,7 +827,7 @@ QDF_STATUS csr_neighbor_roam_indicate_disconnect(tpAniSirGlobal pMac,
 		sme_err("pSession is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			FL("Disconn ind on session %d in state %d from bss :"
 			MAC_ADDRESS_STR), sessionId,
 			pNeighborRoamInfo->neighborRoamState,
@@ -1004,7 +1004,7 @@ static void csr_neighbor_roam_info_ctx_init(
 		ngbr_roam_info->is11rAssoc = true;
 	} else
 		ngbr_roam_info->is11rAssoc = false;
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_HIGH,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			FL("11rAssoc is = %d"), ngbr_roam_info->is11rAssoc);
 
 #ifdef FEATURE_WLAN_ESE
@@ -1015,7 +1015,7 @@ static void csr_neighbor_roam_info_ctx_init(
 		ngbr_roam_info->isESEAssoc = true;
 	} else
 		ngbr_roam_info->isESEAssoc = false;
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_HIGH,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			FL("isESEAssoc is = %d ft = %d"),
 			ngbr_roam_info->isESEAssoc, init_ft_flag);
 #endif
