@@ -140,8 +140,11 @@ static QDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 	hw_mode_cb callback = NULL;
 	struct sir_set_hw_mode_resp *param;
 	enum sir_conn_update_reason reason;
+	tCsrRoamSession *session;
+	uint32_t session_id;
+#ifndef NAPIER_SCAN
 	tSmeCmd *saved_cmd;
-
+#endif
 	sms_log(mac, LOG1, FL("%s"), __func__);
 	param = (struct sir_set_hw_mode_resp *)msg;
 	if (!param) {
@@ -170,6 +173,7 @@ static QDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 
 	callback = command->u.set_hw_mode_cmd.set_hw_mode_cb;
 	reason = command->u.set_hw_mode_cmd.reason;
+	session_id = command->u.set_hw_mode_cmd.session_id;
 
 	sms_log(mac, LOG1, FL("reason:%d session:%d"),
 		command->u.set_hw_mode_cmd.reason,
@@ -195,7 +199,7 @@ static QDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 			param->cfgd_hw_mode_index,
 			param->num_vdev_mac_entries,
 			param->vdev_mac_map);
-
+	session = CSR_GET_SESSION(mac, session_id);
 	if (reason == SIR_UPDATE_REASON_HIDDEN_STA) {
 		/* In the case of hidden SSID, connection update
 		 * (set hw mode) is done after the scan with reason
@@ -203,6 +207,7 @@ static QDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 		 * needs to be handled after the response of set hw
 		 * mode
 		 */
+#ifndef NAPIER_SCAN
 		saved_cmd = (tSmeCmd *)mac->sme.saved_scan_cmd;
 		if (!saved_cmd) {
 			sms_log(mac, LOGP,
@@ -237,6 +242,26 @@ static QDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 			saved_cmd = NULL;
 			mac->sme.saved_scan_cmd = NULL;
 		}
+#else
+		if (param->status == SET_HW_MODE_STATUS_OK) {
+			sms_log(mac, LOG1,
+					FL("search for ssid success"));
+			csr_scan_handle_search_for_ssid(mac,
+					session_id);
+		} else {
+			sms_log(mac, LOG1,
+					FL("search for ssid failure"));
+			csr_scan_handle_search_for_ssid_failure(mac,
+					session_id);
+		}
+		if (session->scan_info.roambssentry)
+			qdf_mem_free(session->scan_info.roambssentry);
+		if (session->scan_info.profile) {
+			csr_release_profile(mac, session->scan_info.profile);
+			qdf_mem_free(session->scan_info.profile);
+			session->scan_info.profile = NULL;
+		}
+#endif
 	}
 
 end:

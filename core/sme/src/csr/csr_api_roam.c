@@ -922,6 +922,12 @@ QDF_STATUS csr_start(tpAniSirGlobal pMac)
 				" csr_start: Couldn't Init HO control blk ");
 			break;
 		}
+#ifdef NAPIER_SCAN
+		/* Register with scan component */
+		pMac->scan.requester_id = ucfg_scan_register_requester(
+						pMac->psoc,
+						"CSR", csr_scan_callback, pMac);
+#endif
 	} while (0);
 	return status;
 }
@@ -11757,7 +11763,9 @@ QDF_STATUS csr_roam_lost_link(tpAniSirGlobal pMac, uint32_t sessionId,
 	}
 	/* Only need to roam for infra station. In this case P2P client will roam as well */
 	fToRoam = CSR_IS_INFRASTRUCTURE(&pSession->connectedProfile);
+#ifndef NAPIER_SCAN
 	pSession->fCancelRoaming = false;
+#endif
 	if (eWNI_SME_DISASSOC_IND == type) {
 		result = eCSR_ROAM_RESULT_DISASSOC_IND;
 		pDisassocIndMsg = (tSirSmeDisassocInd *) pSirMsg;
@@ -11821,7 +11829,8 @@ QDF_STATUS csr_roam_lost_link(tpAniSirGlobal pMac, uint32_t sessionId,
 		roamInfo.rxRssi = pDeauthIndMsg->rssi;
 	}
 	sms_log(pMac, LOGW, FL("roamInfo.staId: %d"), roamInfo.staId);
-
+/* Dont initiate internal driver based roaming after disconnection*/
+#ifndef NAPIER_SCAN
 	/* See if we can possibly roam.  If so, start the roaming process and notify HDD
 	   that we are roaming.  But if we cannot possibly roam, or if we are unable to
 	   currently roam, then notify HDD of the lost link */
@@ -11836,7 +11845,7 @@ QDF_STATUS csr_roam_lost_link(tpAniSirGlobal pMac, uint32_t sessionId,
 				eCsrLostlinkRoamingDeauth :
 				eCsrLostlinkRoamingDisassoc);
 	}
-
+#endif
 	return status;
 }
 

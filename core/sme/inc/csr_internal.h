@@ -755,6 +755,7 @@ typedef struct tagCsrScanStruct {
 	bool fcc_constraint;
 	uint8_t max_scan_count;
 	bool defer_update_channel_list;
+	wlan_scan_requester requester_id;
 } tCsrScanStruct;
 
 /*
@@ -856,6 +857,22 @@ struct csr_roam_stored_profile {
 	uint32_t roam_id;
 	bool imediate_flag;
 	bool clear_flag;
+};
+
+/**
+ * struct scan_cmd_info - Scan cache entry node
+ * @scan_id: scan id
+ * @scan_reason: scan reason
+ * @profile: roam profile
+ * @roam_id: Roam id
+ * @roambssentry: scan entries
+ */
+struct scan_cmd_info {
+	wlan_scan_id scan_id;
+	eCsrScanReason scan_reason;
+	tCsrRoamProfile *profile;
+	uint32_t roam_id;
+	tListElem *roambssentry;
 };
 
 typedef struct tagCsrRoamSession {
@@ -972,6 +989,7 @@ typedef struct tagCsrRoamSession {
 	bool dhcp_done;
 	uint8_t disconnect_reason;
 	uint8_t uapsd_mask;
+	struct scan_cmd_info scan_info;
 } tCsrRoamSession;
 
 typedef struct tagCsrRoamStruct {

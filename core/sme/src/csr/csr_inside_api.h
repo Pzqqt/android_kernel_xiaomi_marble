@@ -201,6 +201,8 @@ eCsrRoamState csr_roam_state_change(tpAniSirGlobal pMac,
 QDF_STATUS csr_scanning_state_msg_processor(tpAniSirGlobal pMac, void *pMsgBuf);
 void csr_roaming_state_msg_processor(tpAniSirGlobal pMac, void *pMsgBuf);
 void csr_roam_joined_state_msg_processor(tpAniSirGlobal pMac, void *pMsgBuf);
+void csr_scan_callback(struct wlan_objmgr_vdev *vdev,
+				struct scan_event *event, void *arg);
 bool csr_scan_complete(tpAniSirGlobal pMac, tSirSmeScanRsp *pScanRsp);
 void csr_release_command_roam(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 void csr_release_command_scan(tpAniSirGlobal pMac, tSmeCmd *pCommand);
@@ -1036,11 +1038,17 @@ QDF_STATUS csr_send_ext_change_channel(tpAniSirGlobal mac_ctx,
 QDF_STATUS csr_set_ht2040_mode(tpAniSirGlobal pMac, uint32_t sessionId,
 			       ePhyChanBondState cbMode, bool obssEnabled);
 #endif
+#ifndef NAPIER_SCAN
 QDF_STATUS csr_scan_handle_search_for_ssid(tpAniSirGlobal mac,
 		tSmeCmd *command);
 QDF_STATUS csr_scan_handle_search_for_ssid_failure(tpAniSirGlobal mac,
 		tSmeCmd *command);
-
+#else
+QDF_STATUS csr_scan_handle_search_for_ssid(tpAniSirGlobal mac_ctx,
+					   uint32_t session_id);
+QDF_STATUS csr_scan_handle_search_for_ssid_failure(tpAniSirGlobal mac,
+		uint32_t session_id);
+#endif
 tpSirBssDescription csr_get_fst_bssdescr_ptr(tScanResultHandle result_handle);
 
 tSirBssDescription*
