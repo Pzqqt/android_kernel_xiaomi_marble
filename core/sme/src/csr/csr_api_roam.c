@@ -13863,6 +13863,36 @@ static QDF_STATUS csr_set_ldpc_exception(tpAniSirGlobal mac_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_11W
+/**
+ * csr_set_mgmt_enc_type() - set mgmt enc type for PMF
+ * @profile: roam profile
+ * @ies: AP ie
+ * @csr_join_req: csr join req
+ *
+ * Return: void
+ */
+static void csr_set_mgmt_enc_type(tCsrRoamProfile *profile,
+	tDot11fBeaconIEs *ies, tSirSmeJoinReq *csr_join_req)
+{
+	if (profile->MFPEnabled)
+		csr_join_req->MgmtEncryptionType = eSIR_ED_AES_128_CMAC;
+	else
+		csr_join_req->MgmtEncryptionType = eSIR_ED_NONE;
+	if (profile->MFPEnabled &&
+	   !(profile->MFPRequired) &&
+	   ((ies->RSN.present) &&
+	   (!(ies->RSN.RSN_Cap[0] >> 7) & 0x1)))
+		csr_join_req->MgmtEncryptionType = eSIR_ED_NONE;
+}
+#else
+static inline void csr_set_mgmt_enc_type(tCsrRoamProfile *profile,
+	tDot11fBeaconIEs *pIes, tSirSmeJoinReq *csr_join_req)
+{
+}
+#endif
+
+
 /**
  * The communication between HDD and LIM is thru mailbox (MB).
  * Both sides will access the data structure "tSirSmeJoinReq".
@@ -14249,17 +14279,7 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		csr_join_req->MCEncryptionType =
 				csr_translate_encrypt_type_to_ed_type
 					(pProfile->negotiatedMCEncryptionType);
-#ifdef WLAN_FEATURE_11W
-		if (pProfile->MFPEnabled)
-			csr_join_req->MgmtEncryptionType = eSIR_ED_AES_128_CMAC;
-		else
-			csr_join_req->MgmtEncryptionType = eSIR_ED_NONE;
-#endif
-		if (pProfile->MFPEnabled &&
-			 !(pProfile->MFPRequired) &&
-			 ((pIes->RSN.present) &&
-			 (!(pIes->RSN.RSN_Cap[0] >> 7) & 0x1)))
-			csr_join_req->MgmtEncryptionType = eSIR_ED_NONE;
+	csr_set_mgmt_enc_type(pProfile, pIes, csr_join_req);
 #ifdef FEATURE_WLAN_ESE
 		ese_config =  pMac->roam.configParam.isEseIniFeatureEnabled;
 #endif

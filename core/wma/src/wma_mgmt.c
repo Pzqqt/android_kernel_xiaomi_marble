@@ -3180,6 +3180,16 @@ int wma_process_rmf_frame(tp_wma_handle wma_handle,
 	}
     return 0;
 }
+#else
+static inline int wma_process_rmf_frame(tp_wma_handle wma_handle,
+	struct wma_txrx_node *iface,
+	struct ieee80211_frame *wh,
+	cds_pkt_t *rx_pkt,
+	qdf_nbuf_t wbuf)
+{
+	return 0;
+}
+
 #endif
 
 /**
@@ -3385,7 +3395,6 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 	mgt_type = (wh)->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 	mgt_subtype = (wh)->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
 
-#ifdef WLAN_FEATURE_11W
 	if (mgt_type == IEEE80211_FC0_TYPE_MGT &&
 	    (mgt_subtype == IEEE80211_FC0_SUBTYPE_DISASSOC ||
 	     mgt_subtype == IEEE80211_FC0_SUBTYPE_DEAUTH ||
@@ -3407,7 +3416,6 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 			}
 		}
 	}
-#endif /* WLAN_FEATURE_11W */
 
 	rx_pkt->pkt_meta.sessionId =
 		(vdev_id == WMA_INVALID_VDEV_ID ? 0 : vdev_id);

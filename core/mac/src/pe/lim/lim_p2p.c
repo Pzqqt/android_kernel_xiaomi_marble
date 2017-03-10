@@ -511,6 +511,52 @@ static void lim_tx_action_frame(tpAniSirGlobal mac_ctx,
 	return;
 }
 
+#ifdef WLAN_FEATURE_11W
+static void lim_check_rmf_and_set_protected(tpAniSirGlobal mac_ctx,
+	tSirMbMsgP2p *mb_msg, uint8_t *frame)
+{
+	uint8_t session_id = 0;
+	tpPESession session_entry;
+	tpSirMacMgmtHdr mac_hdr;
+	tpSirMacActionFrameHdr action_hdr;
+	tpSirMacFrameCtl fc = (tpSirMacFrameCtl) mb_msg->data;
+
+	action_hdr = (tpSirMacActionFrameHdr)
+		(frame + sizeof(tSirMacMgmtHdr));
+	mac_hdr = (tpSirMacMgmtHdr) frame;
+	session_entry = pe_find_session_by_bssid(mac_ctx,
+		(uint8_t *) mb_msg->data + BSSID_OFFSET,
+		&session_id);
+
+	/*
+	 * Check for session corresponding to ADDR2 as supplicant
+	 * is filling ADDR2  with BSSID
+	 */
+	if (!session_entry) {
+		session_entry = pe_find_session_by_bssid(mac_ctx,
+			(uint8_t *) mb_msg->data + ADDR2_OFFSET,
+			 &session_id);
+	}
+	/*
+	 * Setting Protected bit only for Robust Action Frames
+	 * This has to be based on the current Connection with the
+	 * station. lim_set_protected_bit API will set the protected
+	 * bit if connection is PMF
+	 */
+	if (session_entry && (SIR_MAC_MGMT_ACTION == fc->subType) &&
+		session_entry->limRmfEnabled &&
+		(!lim_is_group_addr(mac_hdr->da)) &&
+		lim_is_robust_mgmt_action_frame(action_hdr->category))
+		lim_set_protected_bit(mac_ctx, session_entry,
+					mac_hdr->da, mac_hdr);
+}
+#else
+static inline void lim_check_rmf_and_set_protected(tpAniSirGlobal mac_ctx,
+	tSirMbMsgP2p *mb_msg, uint8_t *frame)
+{
+}
+#endif
+
 /**
  * lim_send_p2p_action_frame() - Process action frame request
  * @mac_ctx:  Pointer to mac context
@@ -533,17 +579,12 @@ void lim_send_p2p_action_frame(tpAniSirGlobal mac_ctx,
 	uint8_t noa_len = 0;
 	uint8_t noa_stream[SIR_MAX_NOA_ATTR_LEN + (2 * SIR_P2P_IE_HEADER_LEN)];
 	uint8_t orig_len = 0;
-	uint8_t session_id = 0;
 	uint8_t *p2p_ie = NULL;
 	tpPESession session_entry = NULL;
 	uint8_t *presence_noa_attr = NULL;
 	uint8_t *tmp_p2p_ie = NULL;
 	uint16_t remain_len = 0;
 	uint8_t sme_session_id = 0;
-#ifdef WLAN_FEATURE_11W
-	tpSirMacMgmtHdr mac_hdr;
-	tpSirMacActionFrameHdr action_hdr;
-#endif
 
 	msg_len = mb_msg->msgLen - sizeof(tSirMbMsgP2p);
 	lim_log(mac_ctx, LOG1, FL("sending fc->type=%d fc->subType=%d"),
@@ -698,36 +739,7 @@ void lim_send_p2p_action_frame(tpAniSirGlobal mac_ctx,
 		qdf_mem_copy(frame, mb_msg->data, msg_len);
 	}
 
-#ifdef WLAN_FEATURE_11W
-	action_hdr = (tpSirMacActionFrameHdr)
-		(frame + sizeof(tSirMacMgmtHdr));
-	mac_hdr = (tpSirMacMgmtHdr) frame;
-	session_entry = pe_find_session_by_bssid(mac_ctx,
-		(uint8_t *) mb_msg->data + BSSID_OFFSET,
-		&session_id);
-
-	/*
-	 * Check for session corresponding to ADDR2 as supplicant
-	 * is filling ADDR2  with BSSID
-	 */
-	if (NULL == session_entry) {
-		session_entry = pe_find_session_by_bssid(mac_ctx,
-			(uint8_t *) mb_msg->data + ADDR2_OFFSET,
-			 &session_id);
-	}
-	/*
-	 * Setting Protected bit only for Robust Action Frames
-	 * This has to be based on the current Connection with the
-	 * station. lim_set_protected_bit API will set the protected
-	 * bit if connection is PMF
-	 */
-	if (session_entry && (SIR_MAC_MGMT_ACTION == fc->subType) &&
-		session_entry->limRmfEnabled &&
-		(!lim_is_group_addr(mac_hdr->da)) &&
-		lim_is_robust_mgmt_action_frame(action_hdr->category))
-		lim_set_protected_bit(mac_ctx, session_entry,
-					mac_hdr->da, mac_hdr);
-#endif
+	lim_check_rmf_and_set_protected(mac_ctx, mb_msg, frame);
 
 	lim_tx_action_frame(mac_ctx, mb_msg, msg_len, packet, frame);
 	return;

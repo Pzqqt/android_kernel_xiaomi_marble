@@ -2832,6 +2832,33 @@ wma_vdev_set_bss_params(tp_wma_handle wma, int vdev_id,
 	wma_update_protection_mode(wma, vdev_id, llbCoexist);
 }
 
+#ifdef WLAN_FEATURE_11W
+static void wma_set_mgmt_frame_protection(tp_wma_handle wma)
+{
+	struct pdev_params param = {0};
+	QDF_STATUS ret;
+
+	/*
+	 * when 802.11w PMF is enabled for hw encr/decr
+	 * use hw MFP Qos bits 0x10
+	 */
+	param.param_id = WMI_PDEV_PARAM_PMF_QOS;
+	param.param_value = true;
+	ret = wmi_unified_pdev_param_send(wma->wmi_handle,
+					 &param, WMA_WILDCARD_PDEV_ID);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		WMA_LOGE("%s: Failed to set QOS MFP/PMF (%d)",
+			 __func__, ret);
+	} else {
+		WMA_LOGD("%s: QOS MFP/PMF set", __func__);
+	}
+}
+#else
+static inline void wma_set_mgmt_frame_protection(tp_wma_handle wma)
+{
+}
+#endif /* WLAN_FEATURE_11W */
+
 /**
  * wma_add_bss_ap_mode() - process add bss request in ap mode
  * @wma: wma handle
@@ -2849,10 +2876,6 @@ static void wma_add_bss_ap_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	uint8_t vdev_id, peer_id;
 	QDF_STATUS status;
 	int8_t maxTxPower;
-	struct pdev_params param = {0};
-#ifdef WLAN_FEATURE_11W
-	QDF_STATUS ret;
-#endif /* WLAN_FEATURE_11W */
 	struct sir_hw_mode_params hw_mode = {0};
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
@@ -2914,24 +2937,9 @@ static void wma_add_bss_ap_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	req.vht_capable = add_bss->vhtCapable;
 	req.max_txpow = add_bss->maxTxPower;
 	maxTxPower = add_bss->maxTxPower;
-#ifdef WLAN_FEATURE_11W
-	if (add_bss->rmfEnabled) {
-		/*
-		 * when 802.11w PMF is enabled for hw encr/decr
-		 * use hw MFP Qos bits 0x10
-		 */
-		param.param_id = WMI_PDEV_PARAM_PMF_QOS;
-		param.param_value = true;
-		ret = wmi_unified_pdev_param_send(wma->wmi_handle,
-						 &param, WMA_WILDCARD_PDEV_ID);
-		if (QDF_IS_STATUS_ERROR(ret)) {
-			WMA_LOGE("%s: Failed to set QOS MFP/PMF (%d)",
-				 __func__, ret);
-		} else {
-			WMA_LOGI("%s: QOS MFP/PMF set to %d", __func__, true);
-		}
-	}
-#endif /* WLAN_FEATURE_11W */
+
+	if (add_bss->rmfEnabled)
+		wma_set_mgmt_frame_protection(wma);
 
 	req.beacon_intval = add_bss->beaconInterval;
 	req.dtim_period = add_bss->dtimPeriod;
@@ -3153,7 +3161,6 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 	struct sir_hw_mode_params hw_mode = {0};
 	bool peer_assoc_sent = false;
-	struct pdev_params param = {0};
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	if (NULL == pMac) {
@@ -3359,24 +3366,9 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 		wma_send_peer_assoc(wma, add_bss->nwType,
 					    &add_bss->staContext);
 		peer_assoc_sent = true;
-#ifdef WLAN_FEATURE_11W
-		if (add_bss->rmfEnabled) {
-			/* when 802.11w PMF is enabled for hw encr/decr
-			   use hw MFP Qos bits 0x10 */
-			param.param_id = WMI_PDEV_PARAM_PMF_QOS;
-			param.param_value = true;
-			status = wmi_unified_pdev_param_send(wma->wmi_handle,
-							 &param,
-							 WMA_WILDCARD_PDEV_ID);
-			if (QDF_IS_STATUS_ERROR(status)) {
-				WMA_LOGE("%s: Failed to set QOS MFP/PMF (%d)",
-					 __func__, status);
-			} else {
-				WMA_LOGI("%s: QOS MFP/PMF set to %d",
-					 __func__, true);
-			}
-		}
-#endif /* WLAN_FEATURE_11W */
+
+		if (add_bss->rmfEnabled)
+			wma_set_mgmt_frame_protection(wma);
 
 		wma_vdev_set_bss_params(wma, add_bss->staContext.smesessionId,
 					add_bss->beaconInterval,
@@ -3501,7 +3493,6 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 	struct wma_txrx_node *iface = NULL;
 	struct wma_target_req *msg;
 	bool peer_assoc_cnf = false;
-	struct pdev_params param;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
@@ -3637,30 +3628,8 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 	}
 #endif
 
-#ifdef WLAN_FEATURE_11W
-	if (add_sta->rmfEnabled) {
-		/*
-		 * We have to store the state of PMF connection
-		 * per STA for SAP case
-		 * We will isolate the ifaces based on vdevid
-		 */
-		iface->rmfEnabled = add_sta->rmfEnabled;
-		/*
-		 * when 802.11w PMF is enabled for hw encr/decr
-		 * use hw MFP Qos bits 0x10
-		 */
-		param.param_id = WMI_PDEV_PARAM_PMF_QOS;
-		param.param_value = true;
-		status = wmi_unified_pdev_param_send(wma->wmi_handle,
-						 &param, WMA_WILDCARD_PDEV_ID);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			WMA_LOGE("%s: Failed to set QOS MFP/PMF (%d)",
-				 __func__, status);
-		} else {
-			WMA_LOGI("%s: QOS MFP/PMF set to %d", __func__, true);
-		}
-	}
-#endif /* WLAN_FEATURE_11W */
+	if (add_sta->rmfEnabled)
+		wma_set_mgmt_frame_protection(wma);
 
 	if (add_sta->uAPSD) {
 		status = wma_set_ap_peer_uapsd(wma, add_sta->smesessionId,
@@ -3876,7 +3845,6 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 	struct wma_target_req *msg;
 	bool peer_assoc_cnf = false;
 	struct vdev_up_params param = {0};
-	struct pdev_params pdev_param = {0};
 	int smps_param;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
@@ -3994,24 +3962,10 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 					params->smesessionId, peer, false);
 			goto out;
 		}
-#ifdef WLAN_FEATURE_11W
-		if (params->rmfEnabled) {
-			/* when 802.11w PMF is enabled for hw encr/decr
-			   use hw MFP Qos bits 0x10 */
-			pdev_param.param_id = WMI_PDEV_PARAM_PMF_QOS;
-			pdev_param.param_value = true;
-			status = wmi_unified_pdev_param_send(wma->wmi_handle,
-							 &pdev_param,
-							 WMA_WILDCARD_PDEV_ID);
-			if (QDF_IS_STATUS_ERROR(status)) {
-				WMA_LOGE("%s: Failed to set QOS MFP/PMF (%d)",
-					 __func__, status);
-			} else {
-				WMA_LOGI("%s: QOS MFP/PMF set to %d",
-					 __func__, true);
-			}
-		}
-#endif /* WLAN_FEATURE_11W */
+
+		if (params->rmfEnabled)
+			wma_set_mgmt_frame_protection(wma);
+
 		/*
 		 * Set the PTK in 11r mode because we already have it.
 		 */

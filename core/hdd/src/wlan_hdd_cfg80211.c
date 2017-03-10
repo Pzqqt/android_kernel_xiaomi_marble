@@ -12872,6 +12872,38 @@ static bool wlan_hdd_handle_sap_sta_dfs_conc(hdd_adapter_t *adapter,
 	return true;
 }
 
+#ifdef WLAN_FEATURE_11W
+/**
+ * wlan_hdd_cfg80211_check_pmf_valid() - check if pmf status is ok
+ * @roam_profile: pointer to roam profile
+ *
+ * if MFPEnabled is set but the peer AP is non-PMF i.e 80211w=2
+ * or pmf=2 is an explicit configuration in the supplicant
+ * configuration, drop the connection request.
+ *
+ * Return: 0 if check result is valid, otherwise return error code
+ */
+static int wlan_hdd_cfg80211_check_pmf_valid(tCsrRoamProfile *roam_profile)
+{
+	if (roam_profile->MFPEnabled &&
+	    !(roam_profile->MFPRequired ||
+	    roam_profile->MFPCapable)) {
+		hdd_err("Drop connect req as supplicant has indicated PMF required for the non-PMF peer. MFPEnabled %d MFPRequired %d MFPCapable %d",
+				roam_profile->MFPEnabled,
+				roam_profile->MFPRequired,
+				roam_profile->MFPCapable);
+		return -EINVAL;
+	}
+	return 0;
+}
+#else
+static inline
+int wlan_hdd_cfg80211_check_pmf_valid(tCsrRoamProfile *roam_profile)
+{
+	return 0;
+}
+#endif
+
 /**
  * wlan_hdd_cfg80211_connect_start() - to start the association process
  * @pAdapter: Pointer to adapter
@@ -13088,19 +13120,9 @@ static int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 			hdd_select_cbmode(pAdapter, operatingChannel,
 					  &pRoamProfile->ch_params);
 		}
-		/*
-		 * if MFPEnabled is set but the peer AP is non-PMF i.e 80211w=2
-		 * or pmf=2 is an explicit configuration in the supplicant
-		 * configuration, drop the connection request.
-		 */
-		if (pWextState->roamProfile.MFPEnabled &&
-		    !(pWextState->roamProfile.MFPRequired ||
-		    pWextState->roamProfile.MFPCapable)) {
-			hdd_err("Drop connect req as supplicant has indicated PMF req for a non-PMF peer. MFPEnabled %d MFPRequired %d MFPCapable %d",
-					pWextState->roamProfile.MFPEnabled,
-					pWextState->roamProfile.MFPRequired,
-					pWextState->roamProfile.MFPCapable);
 
+		if (wlan_hdd_cfg80211_check_pmf_valid(
+		   &pWextState->roamProfile)) {
 			status = -EINVAL;
 			goto conn_failure;
 		}

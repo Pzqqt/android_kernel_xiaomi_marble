@@ -546,6 +546,7 @@ tSirRetStatus lim_init_mlm(tpAniSirGlobal pMac)
 	return eSIR_SUCCESS;
 } /*** end lim_init_mlm() ***/
 
+#ifdef WLAN_FEATURE_11W
 /**
  * lim_deactivate_del_sta() - This function deactivate/delete associates STA
  * @mac_ctx: pointer to Global Mac Structure
@@ -577,6 +578,7 @@ static void lim_deactivate_del_sta(tpAniSirGlobal mac_ctx, uint32_t bss_entry,
 		tx_timer_delete(&sta_ds->pmfSaQueryTimer);
 	}
 }
+#endif
 
 /**
  * lim_cleanup_mlm() - This function is called to cleanup

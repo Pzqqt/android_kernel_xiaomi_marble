@@ -572,14 +572,14 @@ bool lim_check_disassoc_deauth_ack_pending(tpAniSirGlobal pMac,
 
 #ifdef WLAN_FEATURE_11W
 void lim_pmf_sa_query_timer_handler(void *pMacGlobal, uint32_t param);
-#endif
-
-void lim_set_protected_bit(tpAniSirGlobal pMac,
-		tpPESession psessionEntry,
-		tSirMacAddr peer, tpSirMacMgmtHdr pMacHdr);
-
-#ifdef WLAN_FEATURE_11W
 void lim_pmf_comeback_timer_callback(void *context);
+void lim_set_protected_bit(tpAniSirGlobal pMac,
+	tpPESession psessionEntry,
+	tSirMacAddr peer, tpSirMacMgmtHdr pMacHdr);
+#else
+static inline void lim_set_protected_bit(tpAniSirGlobal pMac,
+	tpPESession psessionEntry,
+	tSirMacAddr peer, tpSirMacMgmtHdr pMacHdr) {}
 #endif /* WLAN_FEATURE_11W */
 
 void lim_set_ht_caps(tpAniSirGlobal p_mac,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -248,6 +248,36 @@ static void pe_reset_protection_callback(void *ptr)
 	}
 }
 
+#ifdef WLAN_FEATURE_11W
+/**
+ * pe_init_pmf_comeback_timer: init PMF comeback timer
+ * @mac_ctx: pointer to global adapter context
+ * @session: pe session
+ * @session_id: session ID
+ *
+ * Return: void
+ */
+static void pe_init_pmf_comeback_timer(tpAniSirGlobal mac_ctx,
+tpPESession session, uint8_t session_id)
+{
+	QDF_STATUS status;
+
+	session->pmfComebackTimerInfo.pMac = mac_ctx;
+	session->pmfComebackTimerInfo.sessionID = session_id;
+	status = qdf_mc_timer_init(&session->pmfComebackTimer,
+			QDF_TIMER_TYPE_SW, lim_pmf_comeback_timer_callback,
+			(void *)&session->pmfComebackTimerInfo);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		lim_log(mac_ctx, LOGE, FL("cannot init pmf comeback timer."));
+}
+#else
+static inline void
+pe_init_pmf_comeback_timer(tpAniSirGlobal mac_ctx,
+	tpPESession session, uint8_t session_id)
+{
+}
+#endif
+
 /**
  * pe_create_session() creates a new PE session given the BSSID
  * @param pMac:        pointer to global adapter context
@@ -401,14 +431,7 @@ pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 			QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
 				FL("cannot create or start protectionFieldsResetTimer"));
 	}
-
-	session_ptr->pmfComebackTimerInfo.pMac = pMac;
-	session_ptr->pmfComebackTimerInfo.sessionID = *sessionId;
-	status = qdf_mc_timer_init(&session_ptr->pmfComebackTimer,
-			QDF_TIMER_TYPE_SW, lim_pmf_comeback_timer_callback,
-			(void *)&session_ptr->pmfComebackTimerInfo);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		lim_log(pMac, LOGE, FL("cannot init pmf comeback timer."));
+	pe_init_pmf_comeback_timer(pMac, session_ptr, *sessionId);
 
 	return &pMac->lim.gpSession[i];
 }
