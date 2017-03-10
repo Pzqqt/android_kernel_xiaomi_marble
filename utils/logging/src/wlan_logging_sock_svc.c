@@ -57,6 +57,12 @@
 
 #define MAX_NUM_PKT_LOG 32
 
+#define ALLOWED_LOG_LEVELS_TO_CONSOLE(level) \
+	((QDF_TRACE_LEVEL_FATAL == (level)) || \
+	 (QDF_TRACE_LEVEL_ERROR == (level)) || \
+	 (QDF_TRACE_LEVEL_WARN == (level)) || \
+	 (QDF_TRACE_LEVEL_INFO == (level)))
+
 /**
  * struct tx_status - tx status
  * @tx_status_ok: successfully sent + acked
@@ -407,8 +413,7 @@ int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
 	}
 
 	if (gwlan_logging.log_to_console
-	    && ((QDF_TRACE_LEVEL_FATAL == log_level)
-		|| (QDF_TRACE_LEVEL_ERROR == log_level))) {
+	    && ALLOWED_LOG_LEVELS_TO_CONSOLE(log_level)) {
 		print_to_console(tbuf, to_be_sent);
 	}
 
