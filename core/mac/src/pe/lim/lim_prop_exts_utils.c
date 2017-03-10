@@ -129,7 +129,7 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 	*qos_cap = 0;
 	*prop_cap = 0;
 	*uapsd = 0;
-	lim_log(mac_ctx, LOG3,
+	lim_log(mac_ctx, LOGD,
 		FL("In lim_extract_ap_capability: The IE's being received:"));
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			   p_ie, ie_len);
