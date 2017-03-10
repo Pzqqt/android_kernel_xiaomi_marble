@@ -3613,7 +3613,6 @@ static void hdd_statistics_cb(void *pStats, void *pContext)
 	tCsrGlobalClassBStatsInfo *pClassBStats = NULL;
 	tCsrGlobalClassCStatsInfo *pClassCStats = NULL;
 	tCsrGlobalClassDStatsInfo *pClassDStats = NULL;
-	tCsrPerStaStatsInfo *pPerStaStats = NULL;
 
 	if (pAdapter != NULL)
 		pStatsCache = &pAdapter->hdd_stats;
@@ -3623,7 +3622,6 @@ static void hdd_statistics_cb(void *pStats, void *pContext)
 	pClassBStats = (tCsrGlobalClassBStatsInfo *) (pClassAStats + 1);
 	pClassCStats = (tCsrGlobalClassCStatsInfo *) (pClassBStats + 1);
 	pClassDStats = (tCsrGlobalClassDStatsInfo *) (pClassCStats + 1);
-	pPerStaStats = (tCsrPerStaStatsInfo *) (pClassDStats + 1);
 
 	if (pStatsCache != NULL) {
 		/* copy the stats into the cache we keep in the
@@ -3639,8 +3637,6 @@ static void hdd_statistics_cb(void *pStats, void *pContext)
 			     sizeof(pStatsCache->ClassC_stat));
 		qdf_mem_copy(&pStatsCache->ClassD_stat, pClassDStats,
 			     sizeof(pStatsCache->ClassD_stat));
-		qdf_mem_copy(&pStatsCache->perStaStats, pPerStaStats,
-			     sizeof(pStatsCache->perStaStats));
 	}
 
 	if (pAdapter) {
@@ -4640,8 +4636,7 @@ static int __iw_get_bitrate(struct net_device *dev,
 					   SME_GLOBAL_CLASSA_STATS |
 					   SME_GLOBAL_CLASSB_STATS |
 					   SME_GLOBAL_CLASSC_STATS |
-					   SME_GLOBAL_CLASSD_STATS |
-					   SME_PER_STA_STATS,
+					   SME_GLOBAL_CLASSD_STATS,
 					   hdd_statistics_cb, 0,
 					   false,
 					   pHddStaCtx->conn_info.staId[0],
@@ -11440,8 +11435,7 @@ static int __iw_get_statistics(struct net_device *dev,
 					    SME_GLOBAL_CLASSA_STATS |
 					    SME_GLOBAL_CLASSB_STATS |
 					    SME_GLOBAL_CLASSC_STATS |
-					    SME_GLOBAL_CLASSD_STATS |
-					    SME_PER_STA_STATS,
+					    SME_GLOBAL_CLASSD_STATS,
 					    hdd_statistics_cb, 0, false,
 					    (WLAN_HDD_GET_STATION_CTX_PTR
 						     (pAdapter))->conn_info.staId[0],
@@ -11465,8 +11459,7 @@ static int __iw_get_statistics(struct net_device *dev,
 						    SME_GLOBAL_CLASSA_STATS |
 						    SME_GLOBAL_CLASSB_STATS |
 						    SME_GLOBAL_CLASSC_STATS |
-						    SME_GLOBAL_CLASSD_STATS |
-						    SME_PER_STA_STATS,
+						    SME_GLOBAL_CLASSD_STATS,
 						    NULL, 0, false,
 						    (WLAN_HDD_GET_STATION_CTX_PTR
 							     (pAdapter))->conn_info.
