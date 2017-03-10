@@ -4584,6 +4584,7 @@ error:
 }
 
 #endif
+#ifndef NAPIER_SCAN
 /**
  * csr_get_active_scan_entry() - To get scan entry from active command list
  *
@@ -4613,6 +4614,7 @@ QDF_STATUS csr_get_active_scan_entry(tpAniSirGlobal mac_ctx,
 		csr_scan_active_ll_unlock(mac_ctx);
 		return QDF_STATUS_SUCCESS;
 	}
+
 	localentry = csr_scan_active_ll_peek_head(mac_ctx,
 			LL_ACCESS_NOLOCK);
 	while (localentry) {
@@ -4635,6 +4637,56 @@ QDF_STATUS csr_get_active_scan_entry(tpAniSirGlobal mac_ctx,
 	sms_log(mac_ctx, LOGE, FL("Exit"));
 	return status;
 }
+
+#else
+
+/* API will be removed after p2p component L0 */
+QDF_STATUS csr_get_active_scan_entry(tpAniSirGlobal mac_ctx,
+	uint32_t scan_id, tListElem **entry)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	struct wlan_serialization_command *cmn_cmd;
+	tSmeCmd *sme_cmd;
+	uint32_t cmd_scan_id = 0;
+
+	sms_log(mac_ctx, LOGE, FL("Enter"));
+	csr_scan_active_ll_lock(mac_ctx);
+
+	if (csr_scan_active_ll_is_list_empty(mac_ctx, LL_ACCESS_NOLOCK)) {
+		sms_log(mac_ctx, LOGE,
+			FL(" Active list Empty scanId: %d"), scan_id);
+		csr_scan_active_ll_unlock(mac_ctx);
+		return QDF_STATUS_SUCCESS;
+	}
+	cmn_cmd = wlan_serialization_peek_head_active_cmd_using_psoc(
+			mac_ctx->psoc, true);
+	while (cmn_cmd) {
+		sme_cmd = cmn_cmd->umac_cmd;
+		if (cmn_cmd->cmd_type == WLAN_SER_CMD_SCAN)
+			cmd_scan_id = cmn_cmd->cmd_id;
+		else if (cmn_cmd->cmd_type == WLAN_SER_CMD_REMAIN_ON_CHANNEL)
+			cmd_scan_id = sme_cmd->u.remainChlCmd.scan_id;
+		sms_log(mac_ctx, LOG1, FL(" cmd_scan_id %d"),
+					cmd_scan_id);
+		if ((cmn_cmd->cmd_type == WLAN_SER_CMD_REMAIN_ON_CHANNEL) &&
+			(cmd_scan_id == scan_id)) {
+			sms_log(mac_ctx, LOG1, FL(" scanId Matched %d"),
+					scan_id);
+			*entry = &sme_cmd->Link;
+			csr_scan_active_ll_unlock(mac_ctx);
+			return QDF_STATUS_SUCCESS;
+		}
+		cmn_cmd =
+			wlan_serialization_get_active_list_next_node_using_psoc(
+				mac_ctx->psoc, cmn_cmd, true);
+	}
+	csr_scan_active_ll_unlock(mac_ctx);
+	sms_log(mac_ctx, LOGE, FL("Exit"));
+
+	return status;
+}
+#endif
+
 #ifdef NAPIER_SCAN
 void csr_scan_callback(struct wlan_objmgr_vdev *vdev,
 				struct scan_event *event, void *arg)

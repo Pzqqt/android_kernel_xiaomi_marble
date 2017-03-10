@@ -5957,6 +5957,9 @@ QDF_STATUS wma_get_scan_id(uint32_t *scan_id)
 		return QDF_STATUS_E_FAULT;
 	}
 
+#ifdef NAPIER_SCAN
+	*scan_id = ucfg_scan_get_scan_id(wma->psoc);
+#else
 	/* host need to cycle through the lower 12 bits to generate ids */
 	*scan_id = qdf_atomic_inc_return(&wma->scan_id_counter) &
 			WMA_SCAN_ID_MASK;
@@ -5965,6 +5968,7 @@ QDF_STATUS wma_get_scan_id(uint32_t *scan_id)
 	 * by PREFIX 0xA000
 	 */
 	*scan_id = *scan_id | WMI_HOST_SCAN_REQ_ID_PREFIX;
+#endif
 	return QDF_STATUS_SUCCESS;
 }
 
