@@ -3110,7 +3110,7 @@ void hdd_cleanup_scan_queue(hdd_context_t *hdd_ctx)
 			return;
 		}
 		qdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
-		hdd_scan_req = (struct hdd_scan_req *)node;
+		hdd_scan_req = container_of(node, struct hdd_scan_req, node);
 		req = hdd_scan_req->scan_request;
 		source = hdd_scan_req->source;
 		adapter = hdd_scan_req->adapter;
@@ -3145,6 +3145,7 @@ void hdd_scan_context_destroy(hdd_context_t *hdd_ctx)
 {
 #ifndef NAPIER_SCAN
 	qdf_list_destroy(&hdd_ctx->hdd_scan_req_q);
+	qdf_spinlock_destroy(&hdd_ctx->hdd_scan_req_q_lock);
 #endif
 	qdf_spinlock_destroy(&hdd_ctx->sched_scan_lock);
 }
