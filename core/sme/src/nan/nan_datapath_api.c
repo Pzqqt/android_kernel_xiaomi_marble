@@ -341,11 +341,7 @@ QDF_STATUS csr_roam_start_ndi(tpAniSirGlobal mac_ctx, uint32_t session,
 						NULL, &bss_cfg, NULL, false);
 	}
 
-	if (QDF_IS_STATUS_SUCCESS(status))
-		sms_log(mac_ctx, LOG1, FL("Profile config is valid"));
-	else
-		sms_log(mac_ctx, LOGE,
-			FL("Profile config is invalid. status = 0x%x"), status);
+	sms_log(mac_ctx, LOGD, FL("profile config validity: %d"), status);
 
 	return status;
 }
@@ -498,7 +494,7 @@ QDF_STATUS csr_process_ndp_initiator_request(tpAniSirGlobal mac_ctx,
 	qdf_mem_copy(&lim_msg->req, req, sizeof(struct ndp_initiator_req));
 
 	self_mac_addr = lim_msg->req.self_ndi_mac_addr.bytes;
-	sms_log(mac_ctx, LOG1, FL("selfMac = "MAC_ADDRESS_STR),
+	sms_log(mac_ctx, LOGD, FL("selfMac = "MAC_ADDRESS_STR),
 		MAC_ADDR_ARRAY(self_mac_addr));
 
 	status = umac_send_mb_message_to_mac(lim_msg);
@@ -551,7 +547,7 @@ QDF_STATUS csr_process_ndp_responder_request(tpAniSirGlobal mac_ctx,
 	qdf_mem_copy(&lim_msg->req, &cmd->u.responder_req,
 			sizeof(struct ndp_responder_req));
 
-	sms_log(mac_ctx, LOG1,
+	sms_log(mac_ctx, LOGD,
 		FL("vdev_id %d ndp_rsp = %d Instance id %d"),
 		lim_msg->req.vdev_id,
 		lim_msg->req.ndp_rsp,

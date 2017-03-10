@@ -214,7 +214,7 @@ void csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
 				if (conc_channel &&
 				   (conc_channel !=
 				   scan_result->BssDescriptor.channelId)) {
-					sms_log(mac_ctx, LOG1, FL("MCC not supported so Ignore AP on channel %d"),
+					sms_log(mac_ctx, LOGD, FL("MCC not supported so Ignore AP on channel %d"),
 					  scan_result->BssDescriptor.channelId);
 					continue;
 				}
@@ -258,7 +258,7 @@ void csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
 			qavail = descr->QBSSLoad_avail;
 			voadmitted = n_roam_info->isVOAdmitted;
 			if (voadmitted)
-				sms_log(mac_ctx, LOG1,
+				sms_log(mac_ctx, LOGD,
 					FL("New QBSS=%s,BWavail=0x%x,req=0x%x"),
 					((qpresent) ? "yes" : "no"), qavail,
 					n_roam_info->MinQBssLoadRequired);
@@ -469,7 +469,7 @@ QDF_STATUS csr_neighbor_roam_candidate_found_ind_hdlr(tpAniSirGlobal pMac,
 		&pMac->roam.neighborRoamInfo[sessionId];
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	sms_log(pMac, LOG1, FL("Received indication from firmware"));
+	sms_log(pMac, LOGD, FL("Received indication from firmware"));
 
 	/* we must be in connected state, if not ignore it */
 	if ((eCSR_NEIGHBOR_ROAM_STATE_CONNECTED !=
@@ -518,7 +518,7 @@ void csr_neighbor_roam_free_roamable_bss_list(tpAniSirGlobal mac_ctx,
 {
 	tpCsrNeighborRoamBSSInfo result = NULL;
 
-	sms_log(mac_ctx, LOG2,
+	sms_log(mac_ctx, LOGD,
 		FL("Emptying the BSS list. Current count = %d"),
 		csr_ll_count(llist));
 
@@ -556,7 +556,7 @@ bool csr_neighbor_roam_remove_roamable_ap_list_entry(tpAniSirGlobal pMac,
 					   LL_ACCESS_LOCK);
 	}
 
-	sms_log(pMac, LOGE,
+	sms_log(pMac, LOGD,
 		FL("Remove neigh BSS node from fail list. Current count = %d"),
 		csr_ll_count(pList));
 
@@ -728,7 +728,7 @@ bool csr_neighbor_roam_get_handoff_ap_info(tpAniSirGlobal pMac,
 			pMac,
 			&ngbr_roam_info->FTRoamInfo.preAuthDoneList,
 			NULL);
-		sms_log(pMac, LOG1,
+		sms_log(pMac, LOGD,
 			FL("Number of Handoff candidates = %d"),
 			csr_ll_count(&
 				ngbr_roam_info->FTRoamInfo.preAuthDoneList));
@@ -740,7 +740,7 @@ bool csr_neighbor_roam_get_handoff_ap_info(tpAniSirGlobal pMac,
 			csr_neighbor_roam_next_roamable_ap(pMac,
 				&ngbr_roam_info->FTRoamInfo.preAuthDoneList,
 				NULL);
-		sms_log(pMac, LOG1,
+		sms_log(pMac, LOGD,
 			FL("Number of Handoff candidates = %d"),
 			csr_ll_count(&ngbr_roam_info->FTRoamInfo.
 			preAuthDoneList));
@@ -752,7 +752,7 @@ bool csr_neighbor_roam_get_handoff_ap_info(tpAniSirGlobal pMac,
 			csr_neighbor_roam_next_roamable_ap(pMac,
 			&ngbr_roam_info->FTRoamInfo.preAuthDoneList,
 			NULL);
-		sms_log(pMac, LOG1,
+		sms_log(pMac, LOGD,
 			FL("Number of Handoff candidates = %d"),
 			csr_ll_count(
 				&ngbr_roam_info->FTRoamInfo.preAuthDoneList));
@@ -761,7 +761,7 @@ bool csr_neighbor_roam_get_handoff_ap_info(tpAniSirGlobal pMac,
 			csr_neighbor_roam_next_roamable_ap(pMac,
 				&ngbr_roam_info->roamableAPList,
 				NULL);
-		sms_log(pMac, LOG1,
+		sms_log(pMac, LOGD,
 			FL("Number of Handoff candidates = %d"),
 			csr_ll_count(&ngbr_roam_info->roamableAPList));
 	}

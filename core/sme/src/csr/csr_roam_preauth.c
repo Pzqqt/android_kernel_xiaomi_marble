@@ -276,10 +276,10 @@ QDF_STATUS csr_neighbor_roam_preauth_rsp_handler(tpAniSirGlobal mac_ctx,
 				mac_ctx, &neighbor_roam_info->roamableAPList,
 				NULL);
 	if ((eSIR_SUCCESS == lim_status) && (NULL != preauth_rsp_node)) {
-		sms_log(mac_ctx, LOG1,
+		sms_log(mac_ctx, LOGD,
 			FL("Preauth completed successfully after %d tries"),
 			neighbor_roam_info->FTRoamInfo.numPreAuthRetries);
-		sms_log(mac_ctx, LOG1,
+		sms_log(mac_ctx, LOGD,
 			FL("After Pre-Auth: BSSID " MAC_ADDRESS_STR ", Ch:%d"),
 			MAC_ADDR_ARRAY(
 				preauth_rsp_node->pBssDescription->bssId),
@@ -746,7 +746,7 @@ QDF_STATUS csr_neighbor_roam_issue_preauth_req(tpAniSirGlobal mac_ctx,
 				neighbor_bss_node->pBssDescription,
 				eCsrPerformPreauth, true);
 
-		sms_log(mac_ctx, LOG1,
+		sms_log(mac_ctx, LOGD,
 			FL("Before Pre-Auth: BSSID " MAC_ADDRESS_STR ", Ch:%d"),
 			MAC_ADDR_ARRAY(
 				neighbor_bss_node->pBssDescription->bssId),
