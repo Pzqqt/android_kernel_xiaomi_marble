@@ -172,4 +172,47 @@ QDF_STATUS pmo_suspend_all_components(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS pmo_resume_all_components(struct wlan_objmgr_psoc *psoc,
 		enum qdf_suspend_type suspend_type);
 
+/**
+ * pmo_register_pause_bitmap_notifier(): API to register pause bitmap notifier
+ * @psoc: objmgr psoc handle
+ * @handler: pause bitmap updated notifier
+ *
+ * Return QDF_STATUS status - in case of success else return error
+ */
+QDF_STATUS pmo_register_pause_bitmap_notifier(
+		struct wlan_objmgr_psoc *psoc,
+		pmo_notify_pause_bitmap handler);
+
+/**
+ * pmo_unregister_pause_bitmap_notifier(): API to unregister pause bitmap notifier
+ * @psoc: objmgr psoc handle
+ * @handler: pause bitmap updated notifier
+ *
+ * Return QDF_STATUS status - in case of success else return error
+ */
+QDF_STATUS pmo_unregister_pause_bitmap_notifier(
+		struct wlan_objmgr_psoc *psoc,
+		pmo_notify_pause_bitmap handler);
+
+/**
+ * pmo_register_get_pause_bitmap(): API to get register pause bitmap notifier
+ * @psoc: objmgr psoc handle
+ * @handler: pause bitmap updated notifier
+ *
+ * Return QDF_STATUS status - in case of success else return error
+ */
+QDF_STATUS pmo_register_get_pause_bitmap(struct wlan_objmgr_psoc *psoc,
+		pmo_get_pause_bitmap handler);
+
+/**
+ * pmo_unregister_get_pause_bitmap(): API to unregister get pause bitmap callback
+ * @psoc: objmgr psoc handle
+ * @handler: pause bitmap updated notifier
+ *
+ * Return QDF_STATUS status - in case of success else return error
+ */
+QDF_STATUS pmo_unregister_get_pause_bitmap(struct wlan_objmgr_psoc *psoc,
+		pmo_get_pause_bitmap handler);
+
+
 #endif /* end  of _WLAN_PMO_OBJ_MGMT_API_H_ */

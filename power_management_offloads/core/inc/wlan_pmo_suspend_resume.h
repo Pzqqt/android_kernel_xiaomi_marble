@@ -312,44 +312,25 @@ enum pmo_power_save_qpower_mode pmo_core_psoc_get_qpower_config(
 }
 
 /**
- * pmo_core_vdev_update_pause_bitmap() - update vdev pause bitmap value
- * @vdev: objmgr vdev handle
- * @value: value of pause bitmap
- *
- * Return: None
- */
-static inline
-void pmo_core_vdev_update_pause_bitmap(struct wlan_objmgr_vdev *vdev,
-		uint16_t value)
-{
-	struct pmo_vdev_priv_obj *vdev_ctx;
-
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx)
-		return;
-	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
-	vdev_ctx->pause_bitmap = value;
-	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
-}
-
-/**
  * pmo_core_vdev_get_pause_bitmap() - Get vdev pause bitmap
- * @vdev: objmgr vdev handle
+ * @psoc_ctx: psoc priv ctx
+ * @vdev_id: vdev id
  *
  * Return: vdev pause bitmap
  */
 static inline
-uint16_t pmo_core_vdev_get_pause_bitmap(struct wlan_objmgr_vdev *vdev)
+uint16_t pmo_core_vdev_get_pause_bitmap(struct pmo_psoc_priv_obj *psoc_ctx,
+		uint8_t vdev_id)
 {
-	uint16_t value;
-	struct pmo_vdev_priv_obj *vdev_ctx;
+	uint16_t value = 0;
+	pmo_get_pause_bitmap handler;
 
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx)
-		return 0;
-	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
-	value = vdev_ctx->pause_bitmap;
-	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+	qdf_spin_lock_bh(&psoc_ctx->lock);
+	handler = psoc_ctx->get_pause_bitmap;
+	qdf_spin_unlock_bh(&psoc_ctx->lock);
+
+	if (handler)
+		value = handler(vdev_id);
 
 	return value;
 }

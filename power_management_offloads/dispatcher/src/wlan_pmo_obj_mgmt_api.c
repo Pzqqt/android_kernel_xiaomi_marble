@@ -576,3 +576,119 @@ out:
 
 	return component_ret;
 }
+
+QDF_STATUS pmo_register_pause_bitmap_notifier(struct wlan_objmgr_psoc *psoc,
+		pmo_notify_pause_bitmap handler)
+{
+	struct pmo_psoc_priv_obj *psoc_ctx;
+
+	if (!psoc) {
+		pmo_err("psoc is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!handler) {
+		pmo_err("pmo_notify_vdev_pause_bitmap is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
+	if (!psoc_ctx) {
+		pmo_err("psoc_ctx is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	qdf_spin_lock_bh(&psoc_ctx->lock);
+	psoc_ctx->pause_bitmap_notifier = handler;
+	qdf_spin_unlock_bh(&psoc_ctx->lock);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS pmo_unregister_pause_bitmap_notifier(struct wlan_objmgr_psoc *psoc,
+		pmo_notify_pause_bitmap handler)
+{
+	struct pmo_psoc_priv_obj *psoc_ctx;
+
+	if (!psoc) {
+		pmo_err("psoc is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!handler) {
+		pmo_err("pmo_notify_vdev_pause_bitmap is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
+	if (!psoc_ctx) {
+		pmo_err("psoc_ctx is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	qdf_spin_lock_bh(&psoc_ctx->lock);
+	if (psoc_ctx->pause_bitmap_notifier == handler)
+		psoc_ctx->pause_bitmap_notifier = NULL;
+	qdf_spin_unlock_bh(&psoc_ctx->lock);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS pmo_register_get_pause_bitmap(struct wlan_objmgr_psoc *psoc,
+		pmo_get_pause_bitmap handler)
+{
+	struct pmo_psoc_priv_obj *psoc_ctx;
+
+	if (!psoc) {
+		pmo_err("psoc is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!handler) {
+		pmo_err("pmo_get_pause_bitmap is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
+	if (!psoc_ctx) {
+		pmo_err("psoc_ctx is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	qdf_spin_lock_bh(&psoc_ctx->lock);
+	psoc_ctx->get_pause_bitmap = handler;
+	qdf_spin_unlock_bh(&psoc_ctx->lock);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS pmo_unregister_get_pause_bitmap(struct wlan_objmgr_psoc *psoc,
+		pmo_get_pause_bitmap handler)
+{
+	struct pmo_psoc_priv_obj *psoc_ctx;
+
+	if (!psoc) {
+		pmo_err("psoc is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!handler) {
+		pmo_err("pmo_get_pause_bitmap is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
+	if (!psoc_ctx) {
+		pmo_err("psoc_ctx is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	qdf_spin_lock_bh(&psoc_ctx->lock);
+	if (psoc_ctx->get_pause_bitmap == handler)
+		psoc_ctx->get_pause_bitmap = NULL;
+	qdf_spin_unlock_bh(&psoc_ctx->lock);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+

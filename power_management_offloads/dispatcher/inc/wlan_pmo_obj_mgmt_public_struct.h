@@ -34,11 +34,24 @@
 #include "wlan_pmo_mc_addr_filtering_public_struct.h"
 
 /**
+ * typedef for vdev notifying the vdev pause bitmap new value to mlme
+ */
+typedef void (*pmo_notify_pause_bitmap)(
+			uint8_t vdev_id, uint16_t value);
+
+/**
+ * typedef for getting vdev pause bitmap
+ */
+typedef  uint16_t(*pmo_get_pause_bitmap)(uint8_t vdev_id);
+
+/**
  * struct pmo_psoc_priv_obj - psoc related data require for pmo
  * @psoc_cfg: place holder for psoc configuration
  * @wow: wow configuration
  * @dp_hdl: psoc data path handle
  * @htc_hdl: htc layer handle
+ * @pause_bitmap_notifier: registered callback to update pause bitmap value
+ * @pmo_get_pause_bitmap: registered callback to get pause bitmap value
  * @lock: spin lock for pmo psoc
  */
 struct pmo_psoc_priv_obj {
@@ -46,6 +59,8 @@ struct pmo_psoc_priv_obj {
 	struct pmo_wow wow;
 	void *dp_hdl;
 	void *htc_hdl;
+	pmo_notify_pause_bitmap pause_bitmap_notifier;
+	pmo_get_pause_bitmap get_pause_bitmap;
 	qdf_spinlock_t lock;
 };
 
@@ -90,7 +105,6 @@ struct wlan_pmo_ctx {
  * @beacon_interval: vdev beacon interval
  * @alt_modulated_dtim_enabled:dynamic modulated dtim enabled
  * @dtim_policy: tells vdev beacon dtim policy
- * @pause_bitmap: tell about reason why vde is paused
  * @vdev_dp_hdl: vdev data path handle
  * @pmo_vdev_lock: spin lock for pmo vdev priv ctx
  */
@@ -114,7 +128,6 @@ struct pmo_vdev_priv_obj {
 	uint8_t beacon_interval;
 	bool alt_modulated_dtim_enable;
 	uint32_t dtim_policy;
-	uint16_t pause_bitmap;
 	void *vdev_dp_hdl;
 	qdf_spinlock_t pmo_vdev_lock;
 };

@@ -417,7 +417,8 @@ static void pmo_core_set_resume_dtim(struct wlan_objmgr_psoc *psoc)
  *
  * Return: none
  */
-static void pmo_unpause_all_vdev(struct wlan_objmgr_psoc *psoc)
+static void pmo_unpause_all_vdev(struct wlan_objmgr_psoc *psoc,
+		struct pmo_psoc_priv_obj *psoc_ctx)
 {
 	uint8_t vdev_id;
 	struct wlan_objmgr_psoc_objmgr *objmgr;
@@ -439,12 +440,14 @@ static void pmo_unpause_all_vdev(struct wlan_objmgr_psoc *psoc)
 			 * When host resume, by default,
 			 * unpause all active vdev
 			 */
-			if (pmo_core_vdev_get_pause_bitmap(vdev)) {
+			if (pmo_core_vdev_get_pause_bitmap(psoc_ctx, vdev_id)) {
 				cdp_fc_vdev_unpause(
 					pmo_core_psoc_get_dp_handle(psoc),
 					pmo_core_vdev_get_dp_handle(vdev),
 					0xffffffff);
-				/* wma_vdev_update_pause_bitmap(vdev_id, 0); */
+				if (psoc_ctx->pause_bitmap_notifier)
+					psoc_ctx->pause_bitmap_notifier(vdev_id,
+							0);
 			}
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 		}
@@ -484,7 +487,7 @@ QDF_STATUS pmo_core_psoc_user_space_resume_req(struct wlan_objmgr_psoc *psoc,
 	/* need to reset if hif_pci_suspend_fails */
 	pmo_core_update_wow_bus_suspend(psoc, psoc_ctx, false);
 	/* unpause the vdev if left paused and hif_pci_suspend fails */
-	pmo_unpause_all_vdev(psoc);
+	pmo_unpause_all_vdev(psoc, psoc_ctx);
 
 dec_psoc_ref:
 	wlan_objmgr_psoc_release_ref(psoc, WLAN_PMO_ID);
@@ -778,7 +781,7 @@ QDF_STATUS pmo_core_psoc_disable_wow_in_fw(struct wlan_objmgr_psoc *psoc,
 	/* To allow the tx pause/unpause events */
 	pmo_core_update_wow_bus_suspend(psoc, psoc_ctx, false);
 	/* Unpause the vdev as we are resuming */
-	pmo_unpause_all_vdev(psoc);
+	pmo_unpause_all_vdev(psoc, psoc_ctx);
 out:
 	PMO_EXIT();
 
