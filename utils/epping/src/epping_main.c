@@ -53,7 +53,7 @@
 #include "hif.h"
 #include "epping_main.h"
 #include "epping_internal.h"
-#include "cds_concurrency.h"
+#include "wlan_policy_mgr_api.h"
 
 #ifdef TIMER_MANAGER
 #define TIMER_MANAGER_STR " +TIMER_MANAGER"
