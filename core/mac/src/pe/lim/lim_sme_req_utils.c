@@ -72,15 +72,13 @@ lim_is_rsn_ie_valid_in_sme_req_message(tpAniSirGlobal mac_ctx, tpSirRSNie rsn_ie
 	int len;
 
 	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_PRIVACY_ENABLED,
-			     &privacy) != eSIR_SUCCESS) {
+			     &privacy) != eSIR_SUCCESS)
 		lim_log(mac_ctx, LOGP, FL("Unable to retrieve POI from CFG"));
-	}
 
 	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_RSN_ENABLED, &val)
-		!= eSIR_SUCCESS) {
-		lim_log(mac_ctx, LOGP,
+		!= eSIR_SUCCESS)
+		lim_log(mac_ctx, LOGW,
 			FL("Unable to retrieve RSN_ENABLED from CFG"));
-	}
 
 	if (rsn_ie->length && (!privacy || !val)) {
 		/* Privacy & RSN not enabled in CFG.
@@ -88,9 +86,9 @@ lim_is_rsn_ie_valid_in_sme_req_message(tpAniSirGlobal mac_ctx, tpSirRSNie rsn_ie
 		 * allow BSS creation/join with no Privacy capability
 		 * yet advertising WPA IE
 		 */
-		PELOG1(lim_log(mac_ctx, LOG1,
-			       FL("RSN ie len %d PRIVACY %d RSN %d"),
-			       rsn_ie->length, privacy, val);)
+		lim_log(mac_ctx, LOGD,
+			FL("RSN ie len %d PRIVACY %d RSN %d"),
+			       rsn_ie->length, privacy, val);
 	}
 
 	if (!rsn_ie->length)
@@ -246,11 +244,11 @@ lim_set_rs_nie_wp_aiefrom_sme_start_bss_req_message(tpAniSirGlobal mac_ctx,
 
 	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_PRIVACY_ENABLED,
 			     &privacy) != eSIR_SUCCESS)
-		lim_log(mac_ctx, LOGP, FL("Unable to retrieve POI from CFG"));
+		lim_log(mac_ctx, LOGW, FL("Unable to retrieve POI from CFG"));
 
 	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_RSN_ENABLED,
 			     &val) != eSIR_SUCCESS)
-		lim_log(mac_ctx, LOGP,
+		lim_log(mac_ctx, LOGW,
 			FL("Unable to retrieve RSN_ENABLED from CFG"));
 
 	if (rsn_ie->length && (!privacy || !val)) {
@@ -260,7 +258,7 @@ lim_set_rs_nie_wp_aiefrom_sme_start_bss_req_message(tpAniSirGlobal mac_ctx,
 		 * allow BSS creation/join with no Privacy capability
 		 * yet advertising WPA IE
 		 */
-		lim_log(mac_ctx, LOG1,
+		lim_log(mac_ctx, LOGD,
 			FL("RSN ie len %d but PRIVACY %d RSN %d"),
 			rsn_ie->length, privacy, val);
 	}
@@ -291,18 +289,18 @@ lim_set_rs_nie_wp_aiefrom_sme_start_bss_req_message(tpAniSirGlobal mac_ctx,
 				rsn_ie->rsnIEdata[1]);
 			return false;
 		}
-		lim_log(mac_ctx, LOG1,
+		lim_log(mac_ctx, LOGD,
 			FL("WPA IE is present along with WPA2 IE"));
 		wpa_idx = 2 + rsn_ie->rsnIEdata[1];
 	} else if ((rsn_ie->length == rsn_ie->rsnIEdata[1] + 2) &&
 		   (rsn_ie->rsnIEdata[0] == SIR_MAC_RSN_EID)) {
-		lim_log(mac_ctx, LOG1, FL("Only RSN IE is present"));
+		lim_log(mac_ctx, LOGD, FL("Only RSN IE is present"));
 		dot11f_unpack_ie_rsn(mac_ctx, &rsn_ie->rsnIEdata[2],
 				     (uint8_t) rsn_ie->length,
 				     &session->gStartBssRSNIe, false);
 	} else if ((rsn_ie->length == rsn_ie->rsnIEdata[1] + 2)
 		   && (rsn_ie->rsnIEdata[0] == SIR_MAC_WPA_EID)) {
-		lim_log(mac_ctx, LOG1, FL("Only WPA IE is present"));
+		lim_log(mac_ctx, LOGD, FL("Only WPA IE is present"));
 		dot11f_unpack_ie_wpa(mac_ctx, &rsn_ie->rsnIEdata[6],
 				     (uint8_t) rsn_ie->length - 4,
 				     &session->gStartBssWPAIe, false);
@@ -388,12 +386,12 @@ lim_is_sme_start_bss_req_valid(tpAniSirGlobal mac_ctx,
 	uint8_t i = 0;
 	tSirMacRateSet *opr_rates = &start_bss_req->operationalRateSet;
 
-	PELOG1(lim_log(mac_ctx, LOG1,
+	lim_log(mac_ctx, LOGD,
 	       FL("Parsed START_BSS_REQ fields are bssType=%s (%d), channelId=%d, SSID len=%d, rsnIE len=%d, nwType=%d, rateset len=%d"),
 	       lim_bss_type_to_string(start_bss_req->bssType),
 	       start_bss_req->bssType, start_bss_req->channelId,
 	       start_bss_req->ssId.length, start_bss_req->rsnIE.length,
-	       start_bss_req->nwType, opr_rates->numRates);)
+	       start_bss_req->nwType, opr_rates->numRates);
 
 	switch (start_bss_req->bssType) {
 	case eSIR_INFRASTRUCTURE_MODE:
@@ -815,10 +813,9 @@ lim_is_sme_set_context_req_valid(tpAniSirGlobal pMac,
 		uint32_t poi;
 
 		if (wlan_cfg_get_int(pMac, WNI_CFG_PRIVACY_ENABLED,
-				     &poi) != eSIR_SUCCESS) {
-			lim_log(pMac, LOGP,
+				     &poi) != eSIR_SUCCESS)
+			lim_log(pMac, LOGW,
 				FL("Unable to retrieve POI from CFG"));
-		}
 
 		if (!poi) {
 			/**
@@ -827,11 +824,9 @@ lim_is_sme_set_context_req_valid(tpAniSirGlobal pMac,
 			 * allow BSS creation/join with no Privacy capability
 			 * yet advertising WPA IE
 			 */
-			PELOG1(lim_log(pMac, LOG1,
-				       FL
-					       ("Privacy is not enabled, yet non-None EDtype=%d in SME_SETCONTEXT_REQ"),
+			lim_log(pMac, LOGD,
+				FL("Privacy is not enabled, yet non-None EDtype=%d in SME_SETCONTEXT_REQ"),
 				       pSetContextReq->keyMaterial.edType);
-			       )
 		}
 	}
 
