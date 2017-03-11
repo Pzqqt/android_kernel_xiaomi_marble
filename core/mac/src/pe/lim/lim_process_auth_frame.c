@@ -111,12 +111,12 @@ static void lim_process_auth_shared_system_algo(tpAniSirGlobal mac_ctx,
 	uint8_t cfg_privacy_opt_imp, *challenge;
 	struct tLimPreAuthNode *auth_node;
 
-	lim_log(mac_ctx, LOGW, FL("=======> eSIR_SHARED_KEY  ..."));
+	lim_log(mac_ctx, LOGD, FL("=======> eSIR_SHARED_KEY  ..."));
 	if (LIM_IS_AP_ROLE(pe_session))
 		val = pe_session->privacy;
 	else if (wlan_cfg_get_int(mac_ctx,
 			WNI_CFG_PRIVACY_ENABLED, &val) != eSIR_SUCCESS)
-		lim_log(mac_ctx, LOGP, FL("couldnt retrieve Privacy option"));
+		lim_log(mac_ctx, LOGW, FL("couldnt retrieve Privacy option"));
 	cfg_privacy_opt_imp = (uint8_t) val;
 	if (!cfg_privacy_opt_imp) {
 		lim_log(mac_ctx, LOGE,
@@ -171,9 +171,9 @@ static void lim_process_auth_shared_system_algo(tpAniSirGlobal mac_ctx,
 		if (tx_timer_change_context(&auth_node->timer,
 				auth_node->authNodeIdx) != TX_SUCCESS) {
 			/* Could not start Auth response timer. Log error */
-			lim_log(mac_ctx, LOGP,
+			lim_log(mac_ctx, LOGW,
 				FL("Unable to chg context auth response timer for peer "));
-			lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOGP);
+			lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOGW);
 
 			/*
 			 * Send Auth frame with unspecified failure status code.
@@ -413,7 +413,7 @@ static void lim_process_auth_frame_type1(tpAniSirGlobal mac_ctx,
 	}
 	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_MAX_NUM_PRE_AUTH,
 				(uint32_t *) &maxnum_preauth) != eSIR_SUCCESS)
-		lim_log(mac_ctx, LOGP, FL("could not retrieve MaxNumPreAuth"));
+		lim_log(mac_ctx, LOGW, FL("could not retrieve MaxNumPreAuth"));
 
 	if (mac_ctx->lim.gLimNumPreAuthContexts == maxnum_preauth &&
 			!lim_delete_open_auth_pre_auth_node(mac_ctx)) {
@@ -651,7 +651,7 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 		else if (wlan_cfg_get_int(mac_ctx,
 					WNI_CFG_PRIVACY_ENABLED,
 					&val) != eSIR_SUCCESS)
-			lim_log(mac_ctx, LOGP,
+			lim_log(mac_ctx, LOGW,
 					FL("couldnt retrieve Privacy option"));
 		cfg_privacy_opt_imp = (uint8_t) val;
 		if (!cfg_privacy_opt_imp) {
@@ -685,7 +685,7 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 		}
 		if (wlan_cfg_get_int(mac_ctx, WNI_CFG_WEP_DEFAULT_KEYID,
 					&val) != eSIR_SUCCESS)
-			lim_log(mac_ctx, LOGP,
+			lim_log(mac_ctx, LOGW,
 				FL("could not retrieve Default key_id"));
 		key_id = (uint8_t) val;
 		val = SIR_MAC_KEY_LENGTH;
@@ -698,7 +698,7 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 				(uint16_t)(WNI_CFG_WEP_DEFAULT_KEY_1 + key_id),
 				defaultkey, &val) != eSIR_SUCCESS) {
 			/* Couldnt get Default key from CFG. */
-			lim_log(mac_ctx, LOGP,
+			lim_log(mac_ctx, LOGW,
 				FL("cant retrieve Defaultkey"));
 			auth_frame->authAlgoNumber =
 				rx_auth_frm_body->authAlgoNumber;
@@ -1176,7 +1176,7 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			 * implemented, if Could not get Privacy option
 			 * from CFG then Log fatal error
 			 */
-			lim_log(mac_ctx, LOGP,
+			lim_log(mac_ctx, LOGW,
 				FL("could not retrieve Privacy option"));
 		}
 		cfg_privacy_opt_imp = (uint8_t) val;
@@ -1274,7 +1274,7 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		} else if (wlan_cfg_get_str(mac_ctx,
 				(uint16_t) (WNI_CFG_WEP_DEFAULT_KEY_1 + key_id),
 				defaultkey, &val) != eSIR_SUCCESS) {
-			lim_log(mac_ctx, LOGP,
+			lim_log(mac_ctx, LOGW,
 				FL("could not retrieve Default key"));
 
 			/*
@@ -1384,7 +1384,7 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		break;
 	default:
 		/* Invalid Authentication Frame received. Ignore it. */
-		lim_log(mac_ctx, LOGE,
+		lim_log(mac_ctx, LOGW,
 			FL("rx auth frm with invalid authseq no %d from: %pM"),
 			rx_auth_frm_body->authTransactionSeqNumber,
 			mac_hdr->sa);
@@ -1456,11 +1456,11 @@ tSirRetStatus lim_process_auth_frame_no_session(tpAniSirGlobal pMac, uint8_t *pB
 		lim_log(pMac, LOGE, FL("Error: Frame len = 0"));
 		return eSIR_FAILURE;
 	}
-	lim_print_mac_addr(pMac, pHdr->bssId, LOG2);
+	lim_print_mac_addr(pMac, pHdr->bssId, LOGD);
 	lim_print_mac_addr(pMac,
 			   psessionEntry->ftPEContext.pFTPreAuthReq->preAuthbssId,
-			   LOG2);
-	lim_log(pMac, LOG2, FL("seqControl 0x%X"),
+			   LOGD);
+	lim_log(pMac, LOGD, FL("seqControl 0x%X"),
 		((pHdr->seqControl.seqNumHi << 8) |
 		 (pHdr->seqControl.seqNumLo << 4) |
 		 (pHdr->seqControl.fragNum)));
@@ -1547,7 +1547,7 @@ tSirRetStatus lim_process_auth_frame_no_session(tpAniSirGlobal pMac, uint8_t *pB
 		break;
 
 	default:
-		lim_log(pMac, LOGE, "Seq. no incorrect expected 2 received %d",
+		lim_log(pMac, LOGW, "Seq. no incorrect expected 2 received %d",
 			(uint32_t) pRxAuthFrameBody->authTransactionSeqNumber);
 		break;
 	}
