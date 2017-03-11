@@ -3656,6 +3656,16 @@ typedef enum {
 } WMI_PEER_MCAST2UCAST_MODE;
 
 typedef enum {
+    PKT_PWR_SAVE_NAP_ENABLE     = 0x00000001,
+    PKT_PWR_SAVE_LS_ENABLE      = 0x00000002,
+    PKT_PWR_SAVE_DS_ENABLE      = 0x00000004,
+
+    PKT_PWR_SAVE_BTCOEX_ENABLE  = 0x00000008,
+
+    PKT_PWR_SAVE_FSM_ENABLE     = 0x80000000,
+} WMI_PDEV_PKT_PWR_SAVE_LEVEL;
+
+typedef enum {
     /** TX chain mask */
     WMI_PDEV_PARAM_TX_CHAIN_MASK = 0x1,
     /** RX chain mask */
@@ -4017,7 +4027,10 @@ typedef enum {
      *  BIT[12..0]: Stay period (milliseconds units)
      */
     WMI_PDEV_PARAM_ANT_DIV_USRCFG,
-
+    /** pdev packet power save levels,
+     *  refer to WMI_PDEV_PKT_PWR_SAVE_LEVEL
+     */
+    WMI_PDEV_PARAM_PACKET_POWER_SAVE_LEVEL,
 } WMI_PDEV_PARAM;
 
 typedef struct {
@@ -4027,8 +4040,8 @@ typedef struct {
      */
     A_UINT32 pdev_id;
     /** parameter id   */
-    A_UINT32 param_id;
-    /** parametr value */
+    A_UINT32 param_id; /* WMI_PDEV_PARAM */
+    /** parameter value */
     A_UINT32 param_value;
 } wmi_pdev_set_param_cmd_fixed_param;
 
@@ -10173,18 +10186,23 @@ typedef struct {
 #define WMI_RXERR_KEY_CACHE_MISS    0x20    /* No/incorrect key matter in h/w */
 
 typedef enum {
-    PKT_PWR_SAVE_PAID_MATCH =       0x0001,
-    PKT_PWR_SAVE_GID_MATCH =        0x0002,
-    PKT_PWR_SAVE_EARLY_TIM_CLEAR =  0x0004,
-    PKT_PWR_SAVE_EARLY_DTIM_CLEAR = 0x0008,
-    PKT_PWR_SAVE_EOF_PAD_DELIM =    0x0010,
-    PKT_PWR_SAVE_MACADDR_MISMATCH = 0x0020,
-    PKT_PWR_SAVE_DELIM_CRC_FAIL =   0x0040,
-    PKT_PWR_SAVE_GID_NSTS_ZERO =    0x0080,
-    PKT_PWR_SAVE_RSSI_CHECK =       0x0100,
-    PKT_PWR_SAVE_5G_EBT =           0x0200,
-    PKT_PWR_SAVE_2G_EBT =           0x0400,
-    WMI_PKT_PWR_SAVE_MAX =          0x0800,
+    PKT_PWR_SAVE_PAID_MATCH =           0x00000001,
+    PKT_PWR_SAVE_GID_MATCH =            0x00000002,
+    PKT_PWR_SAVE_EARLY_TIM_CLEAR =      0x00000004,
+    PKT_PWR_SAVE_EARLY_DTIM_CLEAR =     0x00000008,
+    PKT_PWR_SAVE_EOF_PAD_DELIM =        0x00000010,
+    PKT_PWR_SAVE_MACADDR_MISMATCH =     0x00000020,
+    PKT_PWR_SAVE_DELIM_CRC_FAIL =       0x00000040,
+    PKT_PWR_SAVE_GID_NSTS_ZERO =        0x00000080,
+    PKT_PWR_SAVE_RSSI_CHECK =           0x00000100,
+    PKT_PWR_SAVE_5G_EBT =               0x00000200,
+    PKT_PWR_SAVE_2G_EBT =               0x00000400,
+    PKT_PWR_SAVE_BSS_COLOR_MISMATCH =   0x00000800,
+    PKT_PWR_SAVE_UL_FLAG =              0x00001000,
+    PKT_PWR_SAVE_STA_ID_MISMATCH =      0x00002000,
+    PKT_PWR_SAVE_MACADDR_MISMATCH_FCS = 0x00004000,
+
+    PKT_PWR_SAVE_ENABLE =               0x80000000,
 } WMI_PKT_PWR_SAVE_TYPE;
 
 typedef struct {
