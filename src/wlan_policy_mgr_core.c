@@ -144,21 +144,6 @@ bool policy_mgr_is_dual_mac_disabled_in_ini(
 	return wlan_objmgr_psoc_get_dual_mac_disable(psoc);
 }
 
-/**
- * policy_mgr_is_mas_enabled_in_user_cfg() - Check if MCC
- * adaptive scheduler is enabled in INI
- * @psoc: PSOC object information
- *
- * Checks if MCC adaptive scheduler is enabled in INI
- *
- * Return: true if MCC adaptive scheduler is enabled in INI
- */
-bool policy_mgr_is_mas_enabled_in_user_cfg(
-	struct wlan_objmgr_psoc *psoc)
-{
-	return false;
-}
-
 uint32_t policy_mgr_mcc_to_scc_switch_mode_in_user_cfg(
 	struct wlan_objmgr_psoc *psoc)
 {

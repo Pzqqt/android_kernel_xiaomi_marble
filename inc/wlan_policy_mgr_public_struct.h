@@ -972,4 +972,11 @@ struct dual_mac_config {
 	uint32_t req_fw_mode_config;
 };
 
+/**
+ * struct policy_mgr_user_cfg - Policy manager user config variables
+ * @enable_mcc_adaptive_scheduler: Enable MCC adaptive scheduler
+ */
+struct policy_mgr_user_cfg {
+	uint8_t enable_mcc_adaptive_scheduler;
+};
 #endif /* __WLAN_POLICY_MGR_PUBLIC_STRUCT_H */

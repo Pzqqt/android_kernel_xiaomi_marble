@@ -1224,6 +1224,27 @@ QDF_STATUS policy_mgr_get_channel_from_scan_result(
 	return status;
 }
 
+QDF_STATUS policy_mgr_set_user_cfg(struct wlan_objmgr_psoc *psoc,
+				struct policy_mgr_user_cfg *user_cfg)
+{
+
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid context");
+		return QDF_STATUS_E_FAILURE;
+	}
+	if (NULL == user_cfg) {
+		policy_mgr_err("Invalid User Config");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	pm_ctx->user_cfg = *user_cfg;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 uint8_t policy_mgr_search_and_check_for_session_conc(
 		struct wlan_objmgr_psoc *psoc,
 		uint8_t session_id,
@@ -1366,9 +1387,20 @@ bool policy_mgr_is_mcc_adaptive_scheduler_enabled(
 		return false;
 	}
 
-	return pm_ctx->enable_mcc_adaptive_scheduler ? true : false;
+	return pm_ctx->user_cfg.enable_mcc_adaptive_scheduler ?
+		true : false;
 }
 
+/**
+ * policy_mgr_change_mcc_go_beacon_interval() - Change MCC beacon interval
+ * @psoc: PSOC object information
+ * @vdev_id: vdev id
+ * @dev_mode: device mode
+ *
+ * Updates the beacon parameters of the GO in MCC scenario
+ *
+ * Return: Success or Failure depending on the overall function behavior
+ */
 QDF_STATUS policy_mgr_change_mcc_go_beacon_interval(
 		struct wlan_objmgr_psoc *psoc,
 		uint8_t vdev_id, enum tQDF_ADAPTER_MODE dev_mode)
