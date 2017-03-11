@@ -499,7 +499,7 @@ uint8_t htc_get_credit_allocation(HTC_TARGET *target, uint16_t service_id)
 	}
 
 	if (0 == allocation) {
-		AR_DEBUG_PRINTF(ATH_DEBUG_INIT,
+		AR_DEBUG_PRINTF(ATH_DEBUG_RSVD1,
 			("HTC Service TX : 0x%2.2X : allocation is zero!\n",
 				 service_id));
 	}
@@ -521,7 +521,7 @@ QDF_STATUS htc_wait_target(HTC_HANDLE HTCHandle)
 
 	AR_DEBUG_PRINTF(ATH_DEBUG_TRC,
 			("htc_wait_target - Enter (target:0x%p)\n", HTCHandle));
-	AR_DEBUG_PRINTF(ATH_DEBUG_ANY, ("+HWT\n"));
+	AR_DEBUG_PRINTF(ATH_DEBUG_RSVD1, ("+HWT\n"));
 
 	do {
 
@@ -621,7 +621,7 @@ QDF_STATUS htc_wait_target(HTC_HANDLE HTCHandle)
 
 	AR_DEBUG_PRINTF(ATH_DEBUG_TRC, ("htc_wait_target - Exit (%d)\n",
 			status));
-	AR_DEBUG_PRINTF(ATH_DEBUG_ANY, ("-HWT\n"));
+	AR_DEBUG_PRINTF(ATH_DEBUG_RSVD1, ("-HWT\n"));
 	return status;
 }
 
