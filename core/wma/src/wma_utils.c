@@ -2255,51 +2255,39 @@ static tAniGetPEStatsRsp *wma_get_stats_rsp_buf
 			(tAniGetPEStatsReq *get_stats_param)
 {
 	tAniGetPEStatsRsp *stats_rsp_params;
-	uint32_t len, temp_mask, counter = 0;
+	uint32_t len, temp_mask;
 
 	len = sizeof(tAniGetPEStatsRsp);
 	temp_mask = get_stats_param->statsMask;
 
-	while (temp_mask) {
-		if (temp_mask & 1) {
-			switch (counter) {
-			case eCsrSummaryStats:
-				len += sizeof(tCsrSummaryStatsInfo);
-				break;
-			case eCsrGlobalClassAStats:
-				len += sizeof(tCsrGlobalClassAStatsInfo);
-				break;
-			case eCsrGlobalClassBStats:
-				len += sizeof(tCsrGlobalClassBStatsInfo);
-				break;
-			case eCsrGlobalClassCStats:
-				len += sizeof(tCsrGlobalClassCStatsInfo);
-				break;
-			case eCsrGlobalClassDStats:
-				len += sizeof(tCsrGlobalClassDStatsInfo);
-				break;
-			case eCsrPerStaStats:
-				len += sizeof(tCsrPerStaStatsInfo);
-				break;
-			case csr_per_chain_rssi_stats:
-				len +=
-				   sizeof(struct csr_per_chain_rssi_stats_info);
-				break;
-			}
-		}
+	if (temp_mask & (1 << eCsrSummaryStats))
+		len += sizeof(tCsrSummaryStatsInfo);
 
-		counter++;
-		temp_mask >>= 1;
-	}
+	if (temp_mask & (1 << eCsrGlobalClassAStats))
+		len += sizeof(tCsrGlobalClassAStatsInfo);
 
-	stats_rsp_params = (tAniGetPEStatsRsp *) qdf_mem_malloc(len);
+	if (temp_mask & (1 << eCsrGlobalClassBStats))
+		len += sizeof(tCsrGlobalClassBStatsInfo);
+
+	if (temp_mask & (1 << eCsrGlobalClassCStats))
+		len += sizeof(tCsrGlobalClassCStatsInfo);
+
+	if (temp_mask & (1 << eCsrGlobalClassDStats))
+		len += sizeof(tCsrGlobalClassDStatsInfo);
+
+	if (temp_mask & (1 << eCsrPerStaStats))
+		len += sizeof(tCsrPerStaStatsInfo);
+
+	if (temp_mask & (1 << csr_per_chain_rssi_stats))
+		len += sizeof(struct csr_per_chain_rssi_stats_info);
+
+	stats_rsp_params = qdf_mem_malloc(len);
 	if (!stats_rsp_params) {
 		WMA_LOGE("memory allocation failed for tAniGetPEStatsRsp");
 		QDF_ASSERT(0);
 		return NULL;
 	}
 
-	qdf_mem_zero(stats_rsp_params, len);
 	stats_rsp_params->staId = get_stats_param->staId;
 	stats_rsp_params->statsMask = get_stats_param->statsMask;
 	stats_rsp_params->msgType = WMA_GET_STATISTICS_RSP;
