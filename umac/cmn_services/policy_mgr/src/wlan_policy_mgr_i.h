@@ -257,7 +257,7 @@ struct policy_mgr_psoc_priv_obj {
 		uint8_t conc_system_pref;
 		struct dual_mac_config dual_mac_cfg;
 		uint32_t hw_mode_change_in_progress;
-		uint8_t enable_mcc_adaptive_scheduler;
+		struct policy_mgr_user_cfg user_cfg;
 };
 
 struct policy_mgr_psoc_priv_obj *policy_mgr_get_context(
@@ -276,17 +276,6 @@ QDF_STATUS policy_mgr_get_updated_fw_mode_config(
 bool policy_mgr_is_dual_mac_disabled_in_ini(
 		struct wlan_objmgr_psoc *psoc);
 
-/**
- * policy_mgr_is_mas_enabled_in_user_cfg() - Check if MCC
- * adaptive scheduler is enabled in INI
- * @psoc: PSOC object information
- *
- * Checks if MCC adaptive scheduler is enabled in INI
- *
- * Return: true if MCC adaptive scheduler is enabled in INI
- */
-bool policy_mgr_is_mas_enabled_in_user_cfg(
-	struct wlan_objmgr_psoc *psoc);
 /**
  * policy_mgr_mcc_to_scc_switch_mode_in_user_cfg() - MCC to SCC
  * switch mode value in the user config

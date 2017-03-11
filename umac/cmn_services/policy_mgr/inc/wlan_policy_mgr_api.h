@@ -1739,4 +1739,18 @@ static inline bool policy_mgr_is_scan_simultaneous_capable(
 bool policy_mgr_is_mcc_adaptive_scheduler_enabled(
 	struct wlan_objmgr_psoc *psoc);
 
+/**
+ * policy_mgr_set_user_cfg() - Function to set user cfg variables
+ * required by policy manager component
+ * @psoc: PSOC object information
+ * @user_cfg: User config valiables structure pointer
+ *
+ * This function sets the user cfg variables required by policy
+ * manager
+ *
+ * Return: SUCCESS or FAILURE
+ *
+ */
+QDF_STATUS policy_mgr_set_user_cfg(struct wlan_objmgr_psoc *psoc,
+				struct policy_mgr_user_cfg *user_cfg);
 #endif /* __WLAN_POLICY_MGR_API_H */
