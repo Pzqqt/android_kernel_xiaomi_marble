@@ -4063,8 +4063,14 @@ QDF_STATUS csr_roam_prepare_bss_config(tpAniSirGlobal pMac,
 		pBssConfig->uJoinTimeOut =
 			CSR_JOIN_FAILURE_TIMEOUT_DEFAULT;
 	/* validate CB */
-	pBssConfig->cbMode = csr_get_cb_mode_from_ies(pMac, pBssDesc->channelId,
-						      pIes);
+	if ((pBssConfig->uCfgDot11Mode == eCSR_CFG_DOT11_MODE_11N)
+	    || (pBssConfig->uCfgDot11Mode == eCSR_CFG_DOT11_MODE_11AC)
+	    || (pBssConfig->uCfgDot11Mode == eCSR_CFG_DOT11_MODE_11AC_ONLY)
+	    || (pBssConfig->uCfgDot11Mode == eCSR_CFG_DOT11_MODE_11N_ONLY))
+		pBssConfig->cbMode = csr_get_cb_mode_from_ies(pMac,
+				pBssDesc->channelId, pIes);
+	else
+		pBssConfig->cbMode = PHY_SINGLE_CHANNEL_CENTERED;
 
 	return QDF_STATUS_SUCCESS;
 }
