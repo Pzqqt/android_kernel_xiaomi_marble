@@ -7214,8 +7214,8 @@ static QDF_STATUS send_process_ll_stats_get_cmd_tlv(wmi_unified_t wmi_handle,
 				   &cmd->peer_macaddr);
 
 	WMI_LOGD("LINK_LAYER_STATS - Get Request Params");
-	WMI_LOGD("Request ID      : %d", cmd->request_id);
-	WMI_LOGD("Stats Type      : %d", cmd->stats_type);
+	WMI_LOGD("Request ID      : %u", cmd->request_id);
+	WMI_LOGD("Stats Type      : %0x", cmd->stats_type);
 	WMI_LOGD("Vdev ID         : %d", cmd->vdev_id);
 	WMI_LOGD("Peer MAC Addr   : %pM", addr);
 
