@@ -82,7 +82,7 @@ void lim_process_mlm_reassoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 		return;
 	}
 
-	lim_log(mac_ctx, LOG1,
+	lim_log(mac_ctx, LOGD,
 		FL("ReAssoc Req on session %d role %d mlm %d " MAC_ADDRESS_STR),
 		reassoc_req->sessionId, GET_LIM_SYSTEM_ROLE(session),
 		session->limMlmState, MAC_ADDR_ARRAY(reassoc_req->peerMacAddr));
@@ -193,7 +193,7 @@ static void lim_handle_sme_reaasoc_result(tpAniSirGlobal pMac,
 	uint16_t smetransactionId;
 
 	if (psessionEntry == NULL) {
-		PELOGE(lim_log(pMac, LOGE, FL("psessionEntry is NULL "));)
+		lim_log(pMac, LOGE, FL("psessionEntry is NULL "));
 		return;
 	}
 	smesessionId = psessionEntry->smeSessionId;
@@ -282,7 +282,7 @@ void lim_process_mlm_reassoc_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	 * HT params.
 	 */
 	if (session->ftPEContext.pFTPreAuthReq) {
-		lim_log(mac_ctx, LOG1, FL("Freeing pFTPreAuthReq= %p"),
+		lim_log(mac_ctx, LOGD, FL("Freeing pFTPreAuthReq= %p"),
 			session->ftPEContext.pFTPreAuthReq);
 		if (session->ftPEContext.pFTPreAuthReq->pbssDescription) {
 			qdf_mem_free(
@@ -303,7 +303,7 @@ void lim_process_mlm_reassoc_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	}
 #endif
 
-	lim_log(mac_ctx, LOG1, FL("Rcv MLM_REASSOC_CNF with result code %d"),
+	lim_log(mac_ctx, LOGD, FL("Rcv MLM_REASSOC_CNF with result code %d"),
 		lim_mlm_reassoc_cnf->resultCode);
 	if (lim_mlm_reassoc_cnf->resultCode == eSIR_SME_SUCCESS) {
 		/* Successful Reassociation */
@@ -373,7 +373,7 @@ void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 	/* Sanity Checks */
 
 	if (pAddBssParams == NULL) {
-		PELOGE(lim_log(pMac, LOGE, FL("Invalid parameters"));)
+		lim_log(pMac, LOGE, FL("Invalid parameters"));
 		goto end;
 	}
 	if (eLIM_MLM_WT_ADD_BSS_RSP_FT_REASSOC_STATE !=
@@ -407,7 +407,7 @@ void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 			!= TX_SUCCESS) {
 			/* / Could not start reassoc failure timer. */
 			/* Log error */
-			lim_log(pMac, LOGP,
+			lim_log(pMac, LOGE,
 				FL("could not start Reassoc failure timer"));
 			/* Return Reassoc confirm with */
 			/* Resources Unavailable */
@@ -446,10 +446,8 @@ void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 	MTRACE(mac_trace
 		       (pMac, TRACE_CODE_MLM_STATE, psessionEntry->peSessionId,
 		       eLIM_MLM_WT_FT_REASSOC_RSP_STATE));
-	PELOGE(lim_log
-		       (pMac, LOG1, FL("Set the mlm state to %d session=%d"),
+	lim_log(pMac, LOGD, FL("Set the mlm state to %d session=%d"),
 		       psessionEntry->limMlmState, psessionEntry->peSessionId);
-	       )
 
 	psessionEntry->bssIdx = (uint8_t) pAddBssParams->bssIdx;
 
@@ -465,7 +463,7 @@ void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 
 	pAddStaParams = qdf_mem_malloc(sizeof(tAddStaParams));
 	if (NULL == pAddStaParams) {
-		lim_log(pMac, LOGP,
+		lim_log(pMac, LOGE,
 			FL("Unable to allocate memory during ADD_STA"));
 		goto end;
 	}
@@ -536,7 +534,7 @@ void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_LISTEN_INTERVAL, &listenInterval) !=
 	    eSIR_SUCCESS)
-		lim_log(pMac, LOGP, FL("Couldn't get LISTEN_INTERVAL"));
+		lim_log(pMac, LOGE, FL("Couldn't get LISTEN_INTERVAL"));
 	pAddStaParams->listenInterval = (uint16_t) listenInterval;
 
 	wlan_cfg_get_int(pMac, WNI_CFG_DOT11_MODE, &selfStaDot11Mode);
@@ -667,7 +665,7 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 
 	lim_update_caps_info_for_bss(pMac, &caps,
 		psessionEntry->pLimReAssocReq->bssDescription.capabilityInfo);
-	lim_log(pMac, LOG1, FL("Capabilities info FT Reassoc: 0x%X"), caps);
+	lim_log(pMac, LOGD, FL("Capabilities info FT Reassoc: 0x%X"), caps);
 
 	pMlmReassocReq->capabilityInfo = caps;
 
@@ -679,7 +677,7 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 	 */
 	if (wlan_cfg_get_int(pMac, WNI_CFG_TELE_BCN_WAKEUP_EN, &teleBcnEn) !=
 	    eSIR_SUCCESS) {
-		lim_log(pMac, LOGP,
+		lim_log(pMac, LOGE,
 			FL("Couldn't get WNI_CFG_TELE_BCN_WAKEUP_EN"));
 		qdf_mem_free(pMlmReassocReq);
 		return;
@@ -728,7 +726,7 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 	msgQ.bodyptr = psessionEntry->ftPEContext.pAddBssReq;
 	msgQ.bodyval = 0;
 
-	lim_log(pMac, LOG1, FL("Sending SIR_HAL_ADD_BSS_REQ..."));
+	lim_log(pMac, LOGD, FL("Sending SIR_HAL_ADD_BSS_REQ..."));
 	MTRACE(mac_trace_msg_tx(pMac, psessionEntry->peSessionId, msgQ.type));
 	retCode = wma_post_ctrl_msg(pMac, &msgQ);
 	if (eSIR_SUCCESS != retCode) {
