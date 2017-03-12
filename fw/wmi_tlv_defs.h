@@ -811,6 +811,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_request_stats_cmd_sub_struc_param,
     WMITLV_TAG_STRUC_rssi_ctl_ext,
     WMITLV_TAG_STRUC_wmi_single_phyerr_ext_rx_hdr,
+    WMITLV_TAG_STRUC_wmi_coex_bt_activity_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1317,6 +1318,7 @@ typedef enum {
     OP(WMI_PDEV_CSA_SWITCH_COUNT_STATUS_EVENTID) \
     OP(WMI_PDEV_CHECK_CAL_VERSION_EVENTID) \
     OP(WMI_VDEV_GET_ARP_STAT_EVENTID) \
+    OP(WMI_WLAN_COEX_BT_ACTIVITY_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -4351,6 +4353,10 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_CHECK_CAL_VERSION_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_get_arp_stats_event_fixed_param, wmi_vdev_get_arp_stats_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_GET_ARP_STAT_EVENTID);
 
+/* Coex BT activity response event */
+#define WMITLV_TABLE_WMI_WLAN_COEX_BT_ACTIVITY_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_coex_bt_activity_event_fixed_param, wmi_coex_bt_activity_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_WLAN_COEX_BT_ACTIVITY_EVENTID);
 
 #ifdef __cplusplus
 }

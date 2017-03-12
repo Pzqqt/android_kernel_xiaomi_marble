@@ -1506,7 +1506,8 @@ typedef enum {
     WMI_NDP_END_RSP_EVENTID,
     WMI_NDP_INDICATION_EVENTID,
     WMI_NDP_CONFIRM_EVENTID,
-    WMI_NDP_END_INDICATION_EVENTID,
+	WMI_NDP_END_INDICATION_EVENTID,
+	WMI_WLAN_COEX_BT_ACTIVITY_EVENTID,
 } WMI_EVT_ID;
 
 /* defines for OEM message sub-types */
@@ -11267,6 +11268,22 @@ typedef struct {
     A_UINT32 reserved0;
     A_UINT32 vdev_id;
 } wmi_gtk_rekey_fail_event_fixed_param;
+
+
+typedef enum WLAN_COEX_EVENT {
+    WLAN_COEX_EVENT_BT_NONE                     = 0,
+    WLAN_COEX_EVENT_BT_A2DP_PROFILE_ADD         = 1,
+    WLAN_COEX_EVENT_BT_A2DP_PROFILE_REMOVE      = 2,
+    WLAN_COEX_EVENT_BT_VOICE_PROFILE_ADD        = 3,
+    WLAN_COEX_EVENT_BT_VOICE_PROFILE_REMOVE     = 4,
+    WLAN_COEX_EVENT_BT_SCAN_START               = 5,
+    WLAN_COEX_EVENT_BT_SCAN_STOP                = 6,
+}WLAN_COEX_EVENT;
+
+typedef struct {
+    A_UINT32 tlv_header;
+    A_UINT32 coex_profile_evt; //uses the enum values form WLAN_COEX_EVENT
+} wmi_coex_bt_activity_event_fixed_param;
 
 enum wmm_ac_downgrade_policy {
     WMM_AC_DOWNGRADE_DEPRIO,
