@@ -176,10 +176,10 @@ static inline void policy_mgr_check_concurrent_intf_and_restart_sap(
  * This function is used to check for MCC operation in 2.4GHz band.
  * STA, P2P and SAP adapters are only considered.
  *
- * Return: Non zero value if MCC is detected in 2.4GHz band
+ * Return: True if mcc is detected in 2.4 Ghz, false otherwise
  *
  */
-uint8_t policy_mgr_is_mcc_in_24G(struct wlan_objmgr_psoc *psoc);
+bool policy_mgr_is_mcc_in_24G(struct wlan_objmgr_psoc *psoc);
 
 /**
  * policy_mgr_change_mcc_go_beacon_interval() - Change MCC beacon interval
