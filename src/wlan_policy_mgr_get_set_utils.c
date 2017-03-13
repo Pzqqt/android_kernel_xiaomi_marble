@@ -1258,9 +1258,75 @@ uint8_t policy_mgr_search_and_check_for_session_conc(
 	return channel;
 }
 
-uint8_t policy_mgr_is_mcc_in_24G(struct wlan_objmgr_psoc *psoc)
+/**
+ * policy_mgr_is_two_connection_mcc() - Check if MCC scenario
+ * when there are two connections
+ *
+ * If if MCC scenario when there are two connections
+ *
+ * Return: true or false
+ */
+static bool policy_mgr_is_two_connection_mcc(void)
 {
-	return 0;
+	return ((pm_conc_connection_list[0].chan !=
+		 pm_conc_connection_list[1].chan) &&
+		(pm_conc_connection_list[0].mac ==
+		 pm_conc_connection_list[1].mac) &&
+		(pm_conc_connection_list[0].chan <=
+		 WLAN_REG_MAX_24GHZ_CH_NUM) &&
+		(pm_conc_connection_list[1].chan <=
+		 WLAN_REG_MAX_24GHZ_CH_NUM)) ? true : false;
+}
+
+/**
+ * policy_mgr_is_three_connection_mcc() - Check if MCC scenario
+ * when there are three connections
+ *
+ * If if MCC scenario when there are three connections
+ *
+ * Return: true or false
+ */
+static bool policy_mgr_is_three_connection_mcc(void)
+{
+	return (((pm_conc_connection_list[0].chan !=
+		  pm_conc_connection_list[1].chan) ||
+		 (pm_conc_connection_list[0].chan !=
+		  pm_conc_connection_list[2].chan) ||
+		 (pm_conc_connection_list[1].chan !=
+		  pm_conc_connection_list[2].chan)) &&
+		(pm_conc_connection_list[0].chan <=
+		 WLAN_REG_MAX_24GHZ_CH_NUM) &&
+		(pm_conc_connection_list[1].chan <=
+		 WLAN_REG_MAX_24GHZ_CH_NUM) &&
+		(pm_conc_connection_list[2].chan <=
+		 WLAN_REG_MAX_24GHZ_CH_NUM)) ? true : false;
+}
+
+bool policy_mgr_is_mcc_in_24G(struct wlan_objmgr_psoc *psoc)
+{
+	uint32_t num_connections = 0;
+	bool is_24G_mcc = false;
+
+	num_connections = policy_mgr_get_connection_count(psoc);
+
+	switch (num_connections) {
+	case 1:
+		break;
+	case 2:
+		if (policy_mgr_is_two_connection_mcc())
+			is_24G_mcc = true;
+		break;
+	case 3:
+		if (policy_mgr_is_three_connection_mcc())
+			is_24G_mcc = true;
+		break;
+	default:
+		policy_mgr_err("unexpected num_connections value %d",
+			num_connections);
+		break;
+	}
+
+	return is_24G_mcc;
 }
 
 bool policy_mgr_check_for_session_conc(struct wlan_objmgr_psoc *psoc,
@@ -1290,16 +1356,6 @@ bool policy_mgr_check_for_session_conc(struct wlan_objmgr_psoc *psoc,
 	return true;
 }
 
-/**
- * policy_mgr_is_mcc_adaptive_scheduler_enabled() - Function to
- * gets the policy manager mcc adaptive scheduler enabled
- * @psoc: PSOC object information
- *
- * This function gets the value mcc adaptive scheduler
- *
- * Return: true if MCC adaptive scheduler is set else false
- *
- */
 bool policy_mgr_is_mcc_adaptive_scheduler_enabled(
 	struct wlan_objmgr_psoc *psoc) {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
@@ -1313,16 +1369,6 @@ bool policy_mgr_is_mcc_adaptive_scheduler_enabled(
 	return pm_ctx->enable_mcc_adaptive_scheduler ? true : false;
 }
 
-/**
- * policy_mgr_change_mcc_go_beacon_interval() - Change MCC beacon interval
- * @psoc: PSOC object information
- * @vdev_id: vdev id
- * @dev_mode: device mode
- *
- * Updates the beacon parameters of the GO in MCC scenario
- *
- * Return: Success or Failure depending on the overall function behavior
- */
 QDF_STATUS policy_mgr_change_mcc_go_beacon_interval(
 		struct wlan_objmgr_psoc *psoc,
 		uint8_t vdev_id, enum tQDF_ADAPTER_MODE dev_mode)

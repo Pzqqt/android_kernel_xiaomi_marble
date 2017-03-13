@@ -593,6 +593,31 @@ void policy_mgr_check_concurrent_intf_and_restart_sap(
 		struct wlan_objmgr_psoc *psoc,
 		uint8_t operation_channel)
 {
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint32_t mcc_to_scc_switch;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid context");
+		return;
+	}
+
+	mcc_to_scc_switch =
+		policy_mgr_mcc_to_scc_switch_mode_in_user_cfg(psoc);
+	policy_mgr_info("MCC to SCC switch: %d chan: %d",
+			mcc_to_scc_switch, operation_channel);
+	if ((mcc_to_scc_switch != QDF_MCC_TO_SCC_SWITCH_DISABLE)
+#ifdef FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE
+		 && !wlan_reg_is_dfs_ch(psoc,
+					 operationChannel)
+#endif
+	    ) {
+		qdf_create_work(0, &pm_ctx->sta_ap_intf_check_work,
+			policy_mgr_check_sta_ap_concurrent_ch_intf,
+				(void *)psoc);
+		qdf_sched_work(0, &pm_ctx->sta_ap_intf_check_work);
+		policy_mgr_info("Checking for Concurrent Change interference");
+	}
 }
 #endif /* FEATURE_WLAN_MCC_TO_SCC_SWITCH */
 
