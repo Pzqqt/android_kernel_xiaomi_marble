@@ -1648,4 +1648,22 @@ enum policy_mgr_hw_mode_change policy_mgr_is_hw_mode_change_in_progress(
  */
 enum policy_mgr_hw_mode_change policy_mgr_get_hw_mode_change_from_hw_mode_index(
 	struct wlan_objmgr_psoc *psoc, uint32_t hw_mode_index);
+
+/**
+ * policy_mgr_is_scan_simultaneous_capable() - Check if scan
+ * parallelization is supported or not
+ * @psoc: PSOC object information
+ * currently scan parallelization feature support is dependent on DBS but
+ * it can be independent in future.
+ *
+ * Return: True if master DBS control is enabled
+ */
+static inline bool policy_mgr_is_scan_simultaneous_capable(
+	struct wlan_objmgr_psoc *psoc)
+{
+	if (policy_mgr_is_hw_dbs_capable(psoc))
+		return true;
+
+	return false;
+}
 #endif /* __WLAN_POLICY_MGR_API_H */
