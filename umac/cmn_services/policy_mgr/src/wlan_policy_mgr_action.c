@@ -177,6 +177,23 @@ void policy_mgr_checkn_update_hw_mode_single_mac_mode(
 {
 }
 
+void policy_mgr_set_hw_mode_change_in_progress(
+	struct wlan_objmgr_psoc *psoc, enum policy_mgr_hw_mode_change value)
+{
+}
+
+enum policy_mgr_hw_mode_change policy_mgr_is_hw_mode_change_in_progress(
+	struct wlan_objmgr_psoc *psoc)
+{
+	return POLICY_MGR_HW_MODE_NOT_IN_PROGRESS;
+}
+
+enum policy_mgr_hw_mode_change policy_mgr_get_hw_mode_change_from_hw_mode_index(
+	struct wlan_objmgr_psoc *psoc, uint32_t hw_mode_index)
+{
+	return POLICY_MGR_HW_MODE_NOT_IN_PROGRESS;
+}
+
 #ifdef MPC_UT_FRAMEWORK
 QDF_STATUS policy_mgr_update_connection_info_utfw(
 		struct wlan_objmgr_psoc *psoc,

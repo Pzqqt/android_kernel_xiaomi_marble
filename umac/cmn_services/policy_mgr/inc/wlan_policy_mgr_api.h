@@ -1609,4 +1609,43 @@ bool policy_mgr_get_dbs_plus_agile_scan_config(struct wlan_objmgr_psoc *psoc);
  */
 bool policy_mgr_get_single_mac_scan_with_dfs_config(
 		struct wlan_objmgr_psoc *psoc);
+
+/**
+ * policy_mgr_set_hw_mode_change_in_progress() - Set value
+ * corresponding to policy_mgr_hw_mode_change that indicate if
+ * HW mode change is in progress
+ * @psoc: PSOC object information
+ * @value: Indicate if hw mode change is in progress
+ *
+ * Set the value corresponding to policy_mgr_hw_mode_change that
+ * indicated if hw mode change is in progress.
+ *
+ * Return: None
+ */
+void policy_mgr_set_hw_mode_change_in_progress(
+	struct wlan_objmgr_psoc *psoc, enum policy_mgr_hw_mode_change value);
+
+/**
+ * policy_mgr_is_hw_mode_change_in_progress() - Check if HW mode
+ * change is in progress.
+ * @psoc: PSOC object information
+ *
+ * Returns the corresponding policy_mgr_hw_mode_change value.
+ *
+ * Return: policy_mgr_hw_mode_change value.
+ */
+enum policy_mgr_hw_mode_change policy_mgr_is_hw_mode_change_in_progress(
+	struct wlan_objmgr_psoc *psoc);
+
+/**
+ * policy_mgr_get_hw_mode_change_from_hw_mode_index() - Get
+ * matching HW mode from index
+ * @psoc: PSOC object information
+ * @hw_mode_index: HW mode index
+ * Returns the corresponding policy_mgr_hw_mode_change HW mode.
+ *
+ * Return: policy_mgr_hw_mode_change value.
+ */
+enum policy_mgr_hw_mode_change policy_mgr_get_hw_mode_change_from_hw_mode_index(
+	struct wlan_objmgr_psoc *psoc, uint32_t hw_mode_index);
 #endif /* __WLAN_POLICY_MGR_API_H */
