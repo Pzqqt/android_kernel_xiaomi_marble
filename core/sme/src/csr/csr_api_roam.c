@@ -1443,10 +1443,6 @@ static void init_config_param(tpAniSirGlobal pMac)
 	pMac->roam.configParam.nRestTimeConc = CSR_REST_TIME_CONC;
 	pMac->roam.configParam.min_rest_time_conc =  CSR_MIN_REST_TIME_CONC;
 	pMac->roam.configParam.idle_time_conc = CSR_IDLE_TIME_CONC;
-	pMac->roam.configParam.nNumStaChanCombinedConc =
-		CSR_NUM_STA_CHAN_COMBINED_CONC;
-	pMac->roam.configParam.nNumP2PChanCombinedConc =
-		CSR_NUM_P2P_CHAN_COMBINED_CONC;
 #endif
 	pMac->roam.configParam.nTxPowerCap = CSR_MAX_TX_POWER;
 	pMac->roam.configParam.allow_tpc_from_ap = true;
@@ -2489,14 +2485,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->min_rest_time_conc;
 		pMac->roam.configParam.idle_time_conc = pParam->idle_time_conc;
 
-		if (pParam->nNumStaChanCombinedConc) {
-			pMac->roam.configParam.nNumStaChanCombinedConc =
-				pParam->nNumStaChanCombinedConc;
-		}
-		if (pParam->nNumP2PChanCombinedConc) {
-			pMac->roam.configParam.nNumP2PChanCombinedConc =
-				pParam->nNumP2PChanCombinedConc;
-		}
 #endif
 		pMac->roam.configParam.eBand = pParam->eBand;
 		pMac->roam.configParam.uCfgDot11Mode =
@@ -2876,8 +2864,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->nRestTimeConc = cfg_params->nRestTimeConc;
 	pParam->min_rest_time_conc = cfg_params->min_rest_time_conc;
 	pParam->idle_time_conc = cfg_params->idle_time_conc;
-	pParam->nNumStaChanCombinedConc = cfg_params->nNumStaChanCombinedConc;
-	pParam->nNumP2PChanCombinedConc = cfg_params->nNumP2PChanCombinedConc;
 #endif
 	pParam->eBand = cfg_params->eBand;
 	pParam->nScanResultAgeCount = cfg_params->agingCount;

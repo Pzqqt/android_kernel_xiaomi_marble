@@ -754,20 +754,6 @@ struct reg_table_entry g_registry_table[] = {
 		      CFG_IDLE_TIME_DEFAULT,
 		      CFG_IDLE_TIME_MIN,
 		      CFG_IDLE_TIME_MAX),
-
-	REG_VARIABLE(CFG_NUM_STA_CHAN_COMBINED_CONC_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, nNumStaChanCombinedConc,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_NUM_STA_CHAN_COMBINED_CONC_DEFAULT,
-		     CFG_NUM_STA_CHAN_COMBINED_CONC_MIN,
-		     CFG_NUM_STA_CHAN_COMBINED_CONC_MAX),
-
-	REG_VARIABLE(CFG_NUM_P2P_CHAN_COMBINED_CONC_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, nNumP2PChanCombinedConc,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_NUM_P2P_CHAN_COMBINED_CONC_DEFAULT,
-		     CFG_NUM_P2P_CHAN_COMBINED_CONC_MIN,
-		     CFG_NUM_P2P_CHAN_COMBINED_CONC_MAX),
 #endif
 
 	REG_VARIABLE(CFG_MAX_PS_POLL_NAME, WLAN_PARAM_Integer,
@@ -7172,10 +7158,6 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 	smeConfig->csrConfig.nRestTimeConc = pConfig->nRestTimeConc;
 	smeConfig->csrConfig.min_rest_time_conc = pConfig->min_rest_time_conc;
 	smeConfig->csrConfig.idle_time_conc     = pConfig->idle_time_conc;
-	smeConfig->csrConfig.nNumStaChanCombinedConc =
-		pConfig->nNumStaChanCombinedConc;
-	smeConfig->csrConfig.nNumP2PChanCombinedConc =
-		pConfig->nNumP2PChanCombinedConc;
 
 #endif
 	smeConfig->csrConfig.Is11eSupportEnabled = pConfig->b80211eIsEnabled;

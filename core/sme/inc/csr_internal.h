@@ -509,10 +509,6 @@ typedef struct tagCsrConfig {
 	/* In units of milliseconds */
 	uint32_t  idle_time_conc;
 
-	/* number of channels combined for Sta in each split scan operation */
-	uint8_t nNumStaChanCombinedConc;
-	/* number of channels combined for P2P in each split scan operation */
-	uint8_t nNumP2PChanCombinedConc;
 #endif
 	/*
 	 * in dBm, the max TX power. The actual TX power is the lesser of this
@@ -661,9 +657,6 @@ typedef struct tagCsrScanStruct {
 	tScanProfile scanProfile;
 	bool fScanEnable;
 	bool fFullScanIssued;
-#ifdef WLAN_AP_STA_CONCURRENCY
-	qdf_mc_timer_t hTimerStaApConcTimer;
-#endif
 	qdf_mc_timer_t hTimerIdleScan;
 	/*
 	 * changes on every scan, it is used as a flag for whether 11d info is

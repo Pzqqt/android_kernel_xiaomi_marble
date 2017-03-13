@@ -2761,55 +2761,6 @@ enum hdd_dot11_mode {
 #define CFG_IDLE_TIME_MIN                           (0)
 #define CFG_IDLE_TIME_MAX                           (25)
 #define CFG_IDLE_TIME_DEFAULT                       (25)
-
-
-/*
- * <ini>
- * gNumStaChanCombinedConc - Number of channels combined for STA in each
- * split scan operation.
- * @Min: 1
- * @Max: 255
- * @Default: 3
- *
- * This ini is used to configure the number of channels combined for STA in
- * each split scan operation.
- *
- * Related: None.
- *
- * Supported Feature: Concurrency
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_NUM_STA_CHAN_COMBINED_CONC_NAME             "gNumStaChanCombinedConc"
-#define CFG_NUM_STA_CHAN_COMBINED_CONC_MIN              (1)
-#define CFG_NUM_STA_CHAN_COMBINED_CONC_MAX              (255)
-#define CFG_NUM_STA_CHAN_COMBINED_CONC_DEFAULT          (3)
-
-/*
- * <ini>
- * gNumP2PChanCombinedConc - Number of channels combined for P2P in each
- * split scan operation.
- * @Min: 1
- * @Max: 255
- * @Default: 1
- *
- * This ini is used to configure the number of channels combined for P2P in
- * each split scan operation.
- *
- * Related: None.
- *
- * Supported Feature: Concurrency
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_NUM_P2P_CHAN_COMBINED_CONC_NAME             "gNumP2PChanCombinedConc"
-#define CFG_NUM_P2P_CHAN_COMBINED_CONC_MIN              (1)
-#define CFG_NUM_P2P_CHAN_COMBINED_CONC_MAX              (255)
-#define CFG_NUM_P2P_CHAN_COMBINED_CONC_DEFAULT          (1)
 #endif
 
 #define CFG_MAX_PS_POLL_NAME                   "gMaxPsPoll"
@@ -10211,10 +10162,6 @@ struct hdd_config {
 	uint32_t       min_rest_time_conc;
 	/* In units of milliseconds */
 	uint32_t       idle_time_conc;
-	uint8_t nNumStaChanCombinedConc;
-	/* STA in each split scan operation */
-	uint8_t nNumP2PChanCombinedConc;
-	/* P2P in each split scan operation */
 #endif
 
 	uint8_t nMaxPsPoll;

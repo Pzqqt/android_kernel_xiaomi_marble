@@ -9780,31 +9780,6 @@ QDF_STATUS sme_is_sta_p2p_client_connected(tHalHandle hHal)
 	return QDF_STATUS_E_FAILURE;
 }
 
-/*--------------------------------------------------------------------------
-   \brief sme_enable_disable_split_scan() - a wrapper function to set the split
-					    scan parameter.
-   This is a synchronous call
-   \param hHal - The handle returned by mac_open
-   \return NONE.
-   \sa
-   --------------------------------------------------------------------------*/
-void sme_enable_disable_split_scan(tHalHandle hHal, uint8_t nNumStaChan,
-				   uint8_t nNumP2PChan)
-{
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
-	pMac->roam.configParam.nNumStaChanCombinedConc = nNumStaChan;
-	pMac->roam.configParam.nNumP2PChanCombinedConc = nNumP2PChan;
-
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
-		  "%s: SCAN nNumStaChanCombinedConc : %d,"
-		  "nNumP2PChanCombinedConc : %d ",
-		  __func__, nNumStaChan, nNumP2PChan);
-
-	return;
-
-}
-
 /**
  * sme_add_periodic_tx_ptrn() - Add Periodic TX Pattern
  * @hal: global hal handle

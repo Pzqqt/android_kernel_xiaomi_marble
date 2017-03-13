@@ -95,9 +95,6 @@
 static void csr_set_default_scan_timing(tpAniSirGlobal pMac,
 					tSirScanType scanType,
 					tCsrScanRequest *pScanRequest);
-#ifdef WLAN_AP_STA_CONCURRENCY
-static void csr_sta_ap_conc_timer_handler(void *);
-#endif
 static QDF_STATUS csr_scan_channels(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 static void csr_set_cfg_valid_channel_list(tpAniSirGlobal pMac, uint8_t
 					*pChannelList, uint8_t NumChannels);
@@ -157,7 +154,6 @@ static QDF_STATUS csr_ll_scan_purge_result(tpAniSirGlobal pMac,
 
 QDF_STATUS csr_scan_open(tpAniSirGlobal mac_ctx)
 {
-	QDF_STATUS status;
 	csr_ll_open(mac_ctx->hHdd, &mac_ctx->scan.channelPowerInfoList24);
 	csr_ll_open(mac_ctx->hHdd, &mac_ctx->scan.channelPowerInfoList5G);
 #ifdef WLAN_AP_STA_CONCURRENCY
@@ -165,17 +161,8 @@ QDF_STATUS csr_scan_open(tpAniSirGlobal mac_ctx)
 #endif
 	mac_ctx->scan.fFullScanIssued = false;
 	mac_ctx->scan.nBssLimit = CSR_MAX_BSS_SUPPORT;
-#ifdef WLAN_AP_STA_CONCURRENCY
-	status = qdf_mc_timer_init(&mac_ctx->scan.hTimerStaApConcTimer,
-				   QDF_TIMER_TYPE_SW,
-				   csr_sta_ap_conc_timer_handler,
-				   mac_ctx);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sme_err("Mem Alloc failed for hTimerStaApConcTimer timer");
-		return status;
-	}
-#endif
-	return status;
+
+	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS csr_scan_close(tpAniSirGlobal pMac)
@@ -191,9 +178,6 @@ QDF_STATUS csr_scan_close(tpAniSirGlobal pMac)
 	csr_ll_close(&pMac->scan.channelPowerInfoList24);
 	csr_ll_close(&pMac->scan.channelPowerInfoList5G);
 	csr_scan_disable(pMac);
-#ifdef WLAN_AP_STA_CONCURRENCY
-	qdf_mc_timer_destroy(&pMac->scan.hTimerStaApConcTimer);
-#endif
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -4093,181 +4077,6 @@ void csr_scan_call_callback(tpAniSirGlobal pMac, tSmeCmd *pCommand,
 		sme_debug("Callback NULL!!!");
 	}
 }
-
-#ifdef WLAN_AP_STA_CONCURRENCY
-/**
- * csr_sta_ap_conc_timer_handler - Function to handle STA,AP concurrency timer
- * @pv: pointer variable
- *
- * Function handles STA,AP concurrency timer
- *
- * Return: none
- */
-static void csr_sta_ap_conc_timer_handler(void *pv)
-{
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(pv);
-	tListElem *entry;
-	tSmeCmd *scan_cmd;
-	uint32_t session_id = CSR_SESSION_ID_INVALID;
-	tCsrScanRequest scan_req;
-	tSmeCmd *send_scancmd = NULL;
-	uint8_t num_chn = 0;
-	uint8_t numchan_combinedconc = 0;
-	uint8_t i, j;
-	tCsrChannelInfo *chn_info = NULL;
-	uint8_t channel_to_scan[WNI_CFG_VALID_CHANNEL_LIST_LEN];
-	QDF_STATUS status;
-
-	csr_ll_lock(&mac_ctx->scan.scanCmdPendingList);
-
-	entry = csr_ll_peek_head(&mac_ctx->scan.scanCmdPendingList,
-			LL_ACCESS_NOLOCK);
-
-	if (NULL == entry) {
-		csr_ll_unlock(&mac_ctx->scan.scanCmdPendingList);
-		return;
-	}
-
-
-	chn_info = &scan_req.ChannelInfo;
-	scan_cmd = GET_BASE_ADDR(entry, tSmeCmd, Link);
-	num_chn =
-		scan_cmd->u.scanCmd.u.scanRequest.ChannelInfo.numOfChannels;
-	session_id = scan_cmd->sessionId;
-
-	/*
-	 * if any session is connected and the number of channels to scan is
-	 * greater than 1 then split the scan into multiple scan operations
-	 * on each individual channel else continue to perform scan on all
-	 * specified channels
-	 */
-
-	/*
-	 * split scan if number of channels to scan is greater than 1 and
-	 * any one of the following:
-	 * - STA session is connected and the scan is not a P2P search
-	 * - any P2P session is connected
-	 * Do not split scans if no concurrent infra connections are
-	 * active and if the scan is a BG scan triggered by LFR (OR)
-	 * any scan if LFR is in the middle of a BG scan. Splitting
-	 * the scan is delaying the time it takes for LFR to find
-	 * candidates and resulting in disconnects.
-	 */
-
-	if ((csr_is_sta_session_connected(mac_ctx) &&
-		!csr_is_p2p_session_connected(mac_ctx)))
-		numchan_combinedconc =
-			mac_ctx->roam.configParam.nNumStaChanCombinedConc;
-	else if (csr_is_p2p_session_connected(mac_ctx))
-		numchan_combinedconc =
-			mac_ctx->roam.configParam.nNumP2PChanCombinedConc;
-
-	if ((num_chn > numchan_combinedconc) &&
-			((csr_is_sta_session_connected(mac_ctx) &&
-			(csr_is_concurrent_infra_connected(mac_ctx)) &&
-			(scan_cmd->u.scanCmd.u.scanRequest.p2pSearch != 1)) ||
-			(csr_is_p2p_session_connected(mac_ctx)))) {
-		qdf_mem_set(&scan_req, sizeof(tCsrScanRequest), 0);
-
-		/* optimize this to use 2 command buffer only */
-		send_scancmd = csr_get_command_buffer(mac_ctx);
-		if (!send_scancmd) {
-			sme_err("Failed to get Queue command buffer");
-			csr_ll_unlock(&mac_ctx->scan.scanCmdPendingList);
-			return;
-		}
-		send_scancmd->command = scan_cmd->command;
-		send_scancmd->sessionId = scan_cmd->sessionId;
-		send_scancmd->u.scanCmd.callback = NULL;
-		send_scancmd->u.scanCmd.pContext =
-		scan_cmd->u.scanCmd.pContext;
-		send_scancmd->u.scanCmd.reason =
-				scan_cmd->u.scanCmd.reason;
-		/* let it wrap around */
-		wma_get_scan_id(&send_scancmd->u.scanCmd.scanID);
-
-		/*
-		 * First copy all the parameters to local variable of scan
-		 * request
-		 */
-		csr_scan_copy_request(mac_ctx, &scan_req,
-					&scan_cmd->u.scanCmd.u.scanRequest);
-
-		/*
-		 * Now modify the elements of local var scan request required
-		 * to be modified for split scan
-		 */
-		if (scan_req.ChannelInfo.ChannelList != NULL) {
-			qdf_mem_free(scan_req.ChannelInfo.ChannelList);
-			scan_req.ChannelInfo.ChannelList = NULL;
-		}
-
-		chn_info->numOfChannels = numchan_combinedconc;
-		qdf_mem_copy(&channel_to_scan[0],
-				&scan_cmd->u.scanCmd.u.scanRequest.ChannelInfo.
-				ChannelList[0], chn_info->numOfChannels
-				* sizeof(uint8_t));
-		chn_info->ChannelList = &channel_to_scan[0];
-
-		for (i = 0, j = numchan_combinedconc;
-				i < (num_chn - numchan_combinedconc);
-						i++, j++) {
-			/* Move all the channels one step */
-			scan_cmd->u.scanCmd.u.scanRequest.ChannelInfo.
-					ChannelList[i] =
-					scan_cmd->u.scanCmd.u.scanRequest.
-					ChannelInfo.ChannelList[j];
-		}
-
-		/* reduce outstanding # of channels to be scanned */
-		scan_cmd->u.scanCmd.u.scanRequest.ChannelInfo.numOfChannels =
-				num_chn - numchan_combinedconc;
-
-		scan_req.BSSType = eCSR_BSS_TYPE_ANY;
-		/* Modify callers parameters in case of concurrency */
-		scan_req.scanType = eSIR_ACTIVE_SCAN;
-		/* Use concurrency values for min/maxChnTime. */
-		csr_set_default_scan_timing(mac_ctx, scan_req.scanType,
-						&scan_req);
-
-		status = csr_scan_copy_request(mac_ctx,
-						&send_scancmd->u.scanCmd.u.
-						scanRequest, &scan_req);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			sme_err("csr_scan_copy_request failed status: %d",
-				status);
-			csr_ll_unlock(&mac_ctx->scan.scanCmdPendingList);
-			return;
-		}
-		/* Clean the local scan variable */
-		scan_req.ChannelInfo.ChannelList = NULL;
-		scan_req.ChannelInfo.numOfChannels = 0;
-		csr_scan_free_request(mac_ctx, &scan_req);
-	} else {
-		/*
-		 * no active connected session present or numChn == 1
-		 * scan all remaining channels
-		 */
-		send_scancmd = scan_cmd;
-		/* remove this command from pending list */
-		if (csr_ll_remove_head(&mac_ctx->scan.scanCmdPendingList,
-			/*
-			 * In case between PeekHead and here, the entry
-			 * got removed by another thread.
-			 */
-					LL_ACCESS_NOLOCK) == NULL) {
-			sme_err(
-				"Failed to remove entry from scanCmdPendingList");
-		}
-
-	}
-	csr_queue_sme_command(mac_ctx, send_scancmd, false);
-
-
-	csr_ll_unlock(&mac_ctx->scan.scanCmdPendingList);
-
-}
-#endif
 
 bool csr_scan_remove_fresh_scan_command(tpAniSirGlobal pMac, uint8_t sessionId)
 {
