@@ -1258,6 +1258,9 @@ populate_dot11f_ext_cap(tpAniSirGlobal pMac,
 #endif
 	p_ext_cap->ext_chan_switch = 1;
 
+	if (pMac->roam.configParam.enable_bcast_probe_rsp)
+		p_ext_cap->fils_capability = 1;
+
 	/* Need to calulate the num_bytes based on bits set */
 	if (pDot11f->present)
 		pDot11f->num_bytes = lim_compute_ext_cap_ie_length(pDot11f);

@@ -2480,8 +2480,8 @@ QDF_STATUS lim_update_ext_cap_ie(tpAniSirGlobal mac_ctx,
 	lim_merge_extcap_struct(&driver_ext_cap, &default_scan_ext_cap, true);
 
 	qdf_mem_copy(local_ie_buf + (*local_ie_len),
-			driver_ext_cap.bytes, DOT11F_IE_EXTCAP_MAX_LEN);
-	(*local_ie_len) += DOT11F_IE_EXTCAP_MAX_LEN;
+			driver_ext_cap.bytes, driver_ext_cap.num_bytes);
+	(*local_ie_len) += driver_ext_cap.num_bytes;
 	return QDF_STATUS_SUCCESS;
 }
 
