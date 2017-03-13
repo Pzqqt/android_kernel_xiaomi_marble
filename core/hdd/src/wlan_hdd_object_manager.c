@@ -50,6 +50,19 @@ static void hdd_init_vdev_os_priv(hdd_adapter_t *adapter,
 	os_priv->wdev = adapter->dev->ieee80211_ptr;
 }
 
+static void hdd_init_psoc_qdf_ctx(struct wlan_objmgr_psoc *psoc)
+{
+	qdf_device_t qdf_ctx;
+
+	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+	if (!qdf_ctx) {
+		hdd_err("qdf ctx is null, can't set to soc object");
+		return;
+	}
+
+	wlan_psoc_set_qdf_dev(psoc, qdf_ctx);
+}
+
 int hdd_create_and_store_psoc(hdd_context_t *hdd_ctx, uint8_t psoc_id)
 {
 	struct wlan_objmgr_psoc *psoc;
@@ -58,6 +71,7 @@ int hdd_create_and_store_psoc(hdd_context_t *hdd_ctx, uint8_t psoc_id)
 	if (!psoc)
 		return -ENOMEM;
 
+	hdd_init_psoc_qdf_ctx(psoc);
 	hdd_ctx->hdd_psoc = psoc;
 
 	return 0;
