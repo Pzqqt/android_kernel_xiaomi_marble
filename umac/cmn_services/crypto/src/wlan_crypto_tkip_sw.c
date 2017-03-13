@@ -159,12 +159,12 @@ static void tkip_mixing_phase2(uint8_t *WEPSeed, const uint8_t *TK,
 	WEPSeed[1] = (Hi8(IV16) | 0x20) & 0x7F;
 	WEPSeed[2] = Lo8(IV16);
 	WEPSeed[3] = Lo8((PPK[5] ^ Mk16_le((uint16_t *) &TK[0])) >> 1);
-	WPA_PUT_LE16(&WEPSeed[4], PPK[0]);
-	WPA_PUT_LE16(&WEPSeed[6], PPK[1]);
-	WPA_PUT_LE16(&WEPSeed[8], PPK[2]);
-	WPA_PUT_LE16(&WEPSeed[10], PPK[3]);
-	WPA_PUT_LE16(&WEPSeed[12], PPK[4]);
-	WPA_PUT_LE16(&WEPSeed[14], PPK[5]);
+	wlan_crypto_put_le16(&WEPSeed[4], PPK[0]);
+	wlan_crypto_put_le16(&WEPSeed[6], PPK[1]);
+	wlan_crypto_put_le16(&WEPSeed[8], PPK[2]);
+	wlan_crypto_put_le16(&WEPSeed[10], PPK[3]);
+	wlan_crypto_put_le16(&WEPSeed[12], PPK[4]);
+	wlan_crypto_put_le16(&WEPSeed[14], PPK[5]);
 }
 
 
@@ -197,24 +197,24 @@ static void michael_mic(const uint8_t *key, const uint8_t *hdr,
 	uint32_t l, r;
 	int i, blocks, last;
 
-	l = WPA_GET_LE32(key);
-	r = WPA_GET_LE32(key + 4);
+	l = wlan_crypto_get_le32(key);
+	r = wlan_crypto_get_le32(key + 4);
 
 	/* Michael MIC pseudo header: DA, SA, 3 x 0, Priority */
-	l ^= WPA_GET_LE32(hdr);
+	l ^= wlan_crypto_get_le32(hdr);
 	michael_block(l, r);
-	l ^= WPA_GET_LE32(&hdr[4]);
+	l ^= wlan_crypto_get_le32(&hdr[4]);
 	michael_block(l, r);
-	l ^= WPA_GET_LE32(&hdr[8]);
+	l ^= wlan_crypto_get_le32(&hdr[8]);
 	michael_block(l, r);
-	l ^= WPA_GET_LE32(&hdr[12]);
+	l ^= wlan_crypto_get_le32(&hdr[12]);
 	michael_block(l, r);
 
 	/* 32-bit blocks of data */
 	blocks = data_len / 4;
 	last = data_len % 4;
 	for (i = 0; i < blocks; i++) {
-		l ^= WPA_GET_LE32(&data[4 * i]);
+		l ^= wlan_crypto_get_le32(&data[4 * i]);
 		michael_block(l, r);
 	}
 
@@ -238,8 +238,8 @@ static void michael_mic(const uint8_t *key, const uint8_t *hdr,
 	/* l ^= 0; */
 	michael_block(l, r);
 
-	WPA_PUT_LE32(mic, l);
-	WPA_PUT_LE32(mic + 4, r);
+	wlan_crypto_put_le32(mic, l);
+	wlan_crypto_put_le32(mic + 4, r);
 }
 
 
@@ -281,8 +281,7 @@ static void michael_mic_hdr(const struct ieee80211_hdr *hdr11, uint8_t *hdr)
 
 uint8_t *wlan_crypto_tkip_decrypt(const uint8_t *tk,
 					const struct ieee80211_hdr *hdr,
-					const uint8_t *data, size_t data_len,
-					size_t *decrypted_len){
+					uint8_t *data, size_t data_len){
 	uint16_t iv16;
 	uint32_t iv32;
 	uint16_t ttak[5];
@@ -299,7 +298,7 @@ uint8_t *wlan_crypto_tkip_decrypt(const uint8_t *tk,
 		return NULL;
 
 	iv16 = (data[0] << 8) | data[2];
-	iv32 = WPA_GET_LE32(&data[4]);
+	iv32 = wlan_crypto_get_le32(&data[4]);
 	wpa_printf(MSG_EXCESSIVE, "TKIP decrypt: iv32=%08x iv16=%04x",
 		   iv32, iv16);
 
@@ -309,16 +308,11 @@ uint8_t *wlan_crypto_tkip_decrypt(const uint8_t *tk,
 	wpa_hexdump(MSG_EXCESSIVE, "TKIP RC4KEY", rc4key, sizeof(rc4key));
 
 	plain_len = data_len - 8;
-	plain = qdf_mem_malloc(plain_len);
-	if (plain == NULL) {
-		qdf_print("%s[%d] mem alloc failed\n", __func__, __LINE__);
-		return NULL;
-	}
-	qdf_mem_copy(plain, data + 8, plain_len);
+	plain = data + 8;
 	wlan_crypto_wep_crypt(rc4key, plain, plain_len);
 
 	icv = wlan_crypto_crc32(plain, plain_len - 4);
-	rx_icv = WPA_GET_LE32(plain + plain_len - 4);
+	rx_icv = wlan_crypto_get_le32(plain + plain_len - 4);
 	if (icv != rx_icv) {
 		wpa_printf(MSG_INFO, "TKIP ICV mismatch in frame from " MACSTR,
 			   MAC2STR(hdr->addr2));
@@ -347,12 +341,10 @@ uint8_t *wlan_crypto_tkip_decrypt(const uint8_t *tk,
 		wpa_hexdump(MSG_DEBUG, "TKIP: Calculated MIC", mic, 8);
 		wpa_hexdump(MSG_DEBUG, "TKIP: Received MIC",
 			    plain + plain_len - 8, 8);
-		qdf_mem_free(plain);
 		return NULL;
 	}
 
-	*decrypted_len = plain_len - 8;
-	return plain;
+	return data;
 }
 
 
@@ -368,14 +360,13 @@ void tkip_get_pn(uint8_t *pn, const uint8_t *data)
 
 
 uint8_t *wlan_crypto_tkip_encrypt(const uint8_t *tk, uint8_t *frame,
-				size_t len, size_t hdrlen, uint8_t *qos,
-				uint8_t *pn, int keyid, size_t *encrypted_len){
+				size_t len, size_t hdrlen){
 	uint8_t michael_hdr[16];
 	uint8_t mic[8];
 	struct ieee80211_hdr *hdr;
 	uint16_t fc;
 	const uint8_t *mic_key;
-	uint8_t *crypt, *pos;
+	uint8_t *pos;
 	uint16_t iv16;
 	uint32_t iv32;
 	uint16_t ttak[5];
@@ -390,35 +381,22 @@ uint8_t *wlan_crypto_tkip_encrypt(const uint8_t *tk, uint8_t *frame,
 	mic_key = tk + ((fc & WLAN_FC_FROMDS) ? 16 : 24);
 	michael_mic(mic_key, michael_hdr, frame + hdrlen, len - hdrlen, mic);
 	wpa_hexdump(MSG_EXCESSIVE, "TKIP: MIC", mic, sizeof(mic));
+	pos = frame + hdrlen;
 
-	iv32 = WPA_GET_BE32(pn);
-	iv16 = WPA_GET_BE16(pn + 4);
+	iv32 = wlan_crypto_get_be32(pos);
+	iv16 = wlan_crypto_get_be16(pos + 4);
 	tkip_mixing_phase1(ttak, tk, hdr->addr2, iv32);
 	wpa_hexdump(MSG_EXCESSIVE, "TKIP TTAK", (uint8_t *) ttak, sizeof(ttak));
 	tkip_mixing_phase2(rc4key, tk, ttak, iv16);
 	wpa_hexdump(MSG_EXCESSIVE, "TKIP RC4KEY", rc4key, sizeof(rc4key));
 
-	crypt = qdf_mem_malloc(len + 8 + sizeof(mic) + 4);
-	if (crypt == NULL) {
-		qdf_print("%s[%d] mem alloc failed\n", __func__, __LINE__);
-		return NULL;
-	}
-	qdf_mem_copy(crypt, frame, hdrlen);
-	pos = crypt + hdrlen;
 	qdf_mem_copy(pos, rc4key, 3);
-	pos += 3;
-	*pos++ = keyid << 6 | BIT(5);
-	*pos++ = pn[3];
-	*pos++ = pn[2];
-	*pos++ = pn[1];
-	*pos++ = pn[0];
+	pos += 8;
 
-	qdf_mem_copy(pos, frame + hdrlen, len - hdrlen);
 	qdf_mem_copy(pos + len - hdrlen, mic, sizeof(mic));
-	WPA_PUT_LE32(pos + len - hdrlen + sizeof(mic),
+	wlan_crypto_put_le32(pos + len - hdrlen + sizeof(mic),
 		     wlan_crypto_crc32(pos, len - hdrlen + sizeof(mic)));
 	wlan_crypto_wep_crypt(rc4key, pos, len - hdrlen + sizeof(mic) + 4);
 
-	*encrypted_len = len + 8 + sizeof(mic) + 4;
-	return crypt;
+	return frame;
 }

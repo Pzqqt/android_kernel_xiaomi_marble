@@ -342,4 +342,15 @@ QDF_STATUS wlan_crypto_set_peer_wep_keys(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS wlan_crypto_register_crypto_rx_ops(
 			struct wlan_lmac_if_crypto_rx_ops *crypto_rx_ops);
 
+/**
+ * wlan_crypto_get_crypto_rx_ops - get crypto_rx_ops from psoc
+ *
+ * @psoc: psoc
+ *
+ * This function gets called by umac to get the crypto_rx_ops
+ *
+ * Return: crypto_rx_ops
+ */
+struct wlan_lmac_if_crypto_rx_ops *wlan_crypto_get_crypto_rx_ops(
+			struct wlan_objmgr_psoc *psoc);
 #endif /* end of _WLAN_CRYPTO_GLOBAL_API_H_ */

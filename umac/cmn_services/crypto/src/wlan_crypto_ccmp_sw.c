@@ -46,13 +46,13 @@ static void ccmp_aad_nonce(const struct ieee80211_hdr *hdr, const uint8_t *data,
 
 	fc &= ~(WLAN_FC_RETRY | WLAN_FC_PWRMGT | WLAN_FC_MOREDATA);
 	fc |= WLAN_FC_ISWEP;
-	WPA_PUT_LE16(aad, fc);
+	wlan_crypto_put_le16(aad, fc);
 	pos = aad + 2;
 	qdf_mem_copy(pos, hdr->addr1, 3 * WLAN_ALEN);
 	pos += 3 * WLAN_ALEN;
 	seq = qdf_le16_to_cpu(hdr->seq_ctrl);
 	seq &= ~0xfff0; /* Mask Seq#; do not modify Frag# */
-	WPA_PUT_LE16(pos, seq);
+	wlan_crypto_put_le16(pos, seq);
 	pos += 2;
 
 	qdf_mem_copy(pos, hdr + 1, addr4 * WLAN_ALEN + qos * 2);
@@ -79,8 +79,7 @@ static void ccmp_aad_nonce(const struct ieee80211_hdr *hdr, const uint8_t *data,
 
 uint8_t *wlan_crypto_ccmp_decrypt(const uint8_t *tk,
 					const struct ieee80211_hdr *hdr,
-					const uint8_t *data, size_t data_len,
-					size_t *decrypted_len){
+					uint8_t *data, size_t data_len){
 	uint8_t aad[30], nonce[13];
 	size_t aad_len;
 	size_t mlen;
@@ -116,8 +115,9 @@ uint8_t *wlan_crypto_ccmp_decrypt(const uint8_t *tk,
 	}
 	wpa_hexdump(MSG_EXCESSIVE, "CCMP decrypted", plain, mlen);
 
-	*decrypted_len = mlen;
-	return plain;
+	qdf_mem_copy(data, plain, data_len);
+	qdf_mem_free(plain);
+	return data;
 }
 
 
@@ -133,9 +133,7 @@ void ccmp_get_pn(uint8_t *pn, const uint8_t *data)
 
 
 uint8_t *wlan_crypto_ccmp_encrypt(const uint8_t *tk, uint8_t *frame,
-					size_t len, size_t hdrlen, uint8_t *qos,
-					uint8_t *pn, int keyid,
-					size_t *encrypted_len){
+					size_t len, size_t hdrlen){
 	uint8_t aad[30], nonce[13];
 	size_t aad_len, plen;
 	uint8_t *crypt, *pos;
@@ -152,17 +150,10 @@ uint8_t *wlan_crypto_ccmp_encrypt(const uint8_t *tk, uint8_t *frame,
 	}
 
 	qdf_mem_copy(crypt, frame, hdrlen);
+
 	hdr = (struct ieee80211_hdr *) crypt;
 	hdr->frame_control |= qdf_cpu_to_le16(WLAN_FC_ISWEP);
-	pos = crypt + hdrlen;
-	*pos++ = pn[5]; /* PN0 */
-	*pos++ = pn[4]; /* PN1 */
-	*pos++ = 0x00; /* Rsvd */
-	*pos++ = 0x20 | (keyid << 6);
-	*pos++ = pn[3]; /* PN2 */
-	*pos++ = pn[2]; /* PN3 */
-	*pos++ = pn[1]; /* PN4 */
-	*pos++ = pn[0]; /* PN5 */
+	pos = crypt + hdrlen + 8;
 
 	qdf_mem_set(aad, 0, sizeof(aad));
 	ccmp_aad_nonce(hdr, crypt + hdrlen, aad, &aad_len, nonce);
@@ -175,11 +166,11 @@ uint8_t *wlan_crypto_ccmp_encrypt(const uint8_t *tk, uint8_t *frame,
 		return NULL;
 	}
 
+	qdf_mem_copy(frame, crypt, len);
 	wpa_hexdump(MSG_EXCESSIVE, "CCMP encrypted", crypt + hdrlen + 8, plen);
+	qdf_mem_free(crypt);
 
-	*encrypted_len = hdrlen + 8 + plen + 8;
-
-	return crypt;
+	return frame;
 }
 
 

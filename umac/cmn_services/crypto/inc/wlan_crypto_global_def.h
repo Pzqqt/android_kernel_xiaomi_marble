@@ -23,6 +23,8 @@
 #ifndef _WLAN_CRYPTO_GLOBAL_DEF_H_
 #define _WLAN_CRYPTO_GLOBAL_DEF_H_
 
+#include <wlan_cmn.h>
+
 #define WLAN_CRYPTO_TID_SIZE         (17)
 #define WLAN_CRYPTO_KEYBUF_SIZE      (32)
 #define WLAN_CRYPTO_MICBUF_SIZE      (16)
@@ -292,5 +294,16 @@ struct wlan_lmac_if_crypto_rx_ops {
 	QDF_STATUS(*set_peer_wep_keys)(struct wlan_objmgr_vdev *vdev,
 						uint8_t *mac_addr);
 };
+
+#define WLAN_CRYPTO_RX_OPS_ENCAP(crypto_rx_ops) \
+				(crypto_rx_ops->crypto_encap)
+#define WLAN_CRYPTO_RX_OPS_DECAP(crypto_rx_ops) \
+				(crypto_rx_ops->crypto_decap)
+#define WLAN_CRYPTO_RX_OPS_ENMIC(crypto_rx_ops) \
+				(crypto_rx_ops->crypto_enmic)
+#define WLAN_CRYPTO_RX_OPS_DEMIC(crypto_rx_ops) \
+				(crypto_rx_ops->crypto_demic)
+#define WLAN_CRYPTO_RX_OPS_SET_PEER_WEP_KEYS(crypto_rx_ops) \
+				(crypto_rx_ops->set_peer_wep_keys)
 
 #endif /* end of _WLAN_CRYPTO_GLOBAL_DEF_H_ */

@@ -39,15 +39,18 @@ static void aes_ccm_auth_start(void *aes, size_t M, size_t L,
 	b[0] |= (((M - 2) / 2) /* M' */ << 3);
 	b[0] |= (L - 1) /* L' */;
 	qdf_mem_copy(&b[1], nonce, 15 - L);
-	WPA_PUT_BE16(&b[AES_BLOCK_SIZE - L], plain_len);
+	wlan_crypto_put_be16(&b[AES_BLOCK_SIZE - L], plain_len);
 
 	wpa_hexdump_key(MSG_EXCESSIVE, "CCM B_0", b, AES_BLOCK_SIZE);
 	wlan_crypto_aes_encrypt(aes, b, x); /* X_1 = E(K, B_0) */
 
-	if (!aad_len)
+	if (!aad_len) {
+		qdf_print("%s[%d] aad length should be non zero\n",
+						__func__, __LINE__);
 		return;
+	}
 
-	WPA_PUT_BE16(aad_buf, aad_len);
+	wlan_crypto_put_be16(aad_buf, aad_len);
 	qdf_mem_copy(aad_buf + 2, aad, aad_len);
 	qdf_mem_set(aad_buf + 2 + aad_len, 0, sizeof(aad_buf) - 2 - aad_len);
 
@@ -97,7 +100,7 @@ static void aes_ccm_encr(void *aes, size_t L, const uint8_t *in, size_t len,
 
 	/* crypt = msg XOR (S_1 | S_2 | ... | S_n) */
 	for (i = 1; i <= len / AES_BLOCK_SIZE; i++) {
-		WPA_PUT_BE16(&a[AES_BLOCK_SIZE - 2], i);
+		wlan_crypto_put_be16(&a[AES_BLOCK_SIZE - 2], i);
 		/* S_i = E(K, A_i) */
 		wlan_crypto_aes_encrypt(aes, a, out);
 		xor_aes_block(out, in);
@@ -105,7 +108,7 @@ static void aes_ccm_encr(void *aes, size_t L, const uint8_t *in, size_t len,
 		in += AES_BLOCK_SIZE;
 	}
 	if (last) {
-		WPA_PUT_BE16(&a[AES_BLOCK_SIZE - 2], i);
+		wlan_crypto_put_be16(&a[AES_BLOCK_SIZE - 2], i);
 		wlan_crypto_aes_encrypt(aes, a, out);
 		/* XOR zero-padded last block */
 		for (i = 0; i < last; i++)
@@ -121,7 +124,7 @@ static void aes_ccm_encr_auth(void *aes, size_t M, uint8_t *x, uint8_t *a,
 
 	wpa_hexdump_key(MSG_EXCESSIVE, "CCM T", x, M);
 	/* U = T XOR S_0; S_0 = E(K, A_0) */
-	WPA_PUT_BE16(&a[AES_BLOCK_SIZE - 2], 0);
+	wlan_crypto_put_be16(&a[AES_BLOCK_SIZE - 2], 0);
 	wlan_crypto_aes_encrypt(aes, a, tmp);
 	for (i = 0; i < M; i++)
 		auth[i] = x[i] ^ tmp[i];
@@ -136,7 +139,7 @@ static void aes_ccm_decr_auth(void *aes, size_t M, uint8_t *a,
 
 	wpa_hexdump_key(MSG_EXCESSIVE, "CCM U", auth, M);
 	/* U = T XOR S_0; S_0 = E(K, A_0) */
-	WPA_PUT_BE16(&a[AES_BLOCK_SIZE - 2], 0);
+	wlan_crypto_put_be16(&a[AES_BLOCK_SIZE - 2], 0);
 	wlan_crypto_aes_encrypt(aes, a, tmp);
 	for (i = 0; i < M; i++)
 		t[i] = auth[i] ^ tmp[i];

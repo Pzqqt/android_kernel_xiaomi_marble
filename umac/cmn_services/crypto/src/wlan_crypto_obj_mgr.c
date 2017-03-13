@@ -50,16 +50,6 @@ static QDF_STATUS wlan_crypto_register_all_ciphers(
 					struct wlan_crypto_params *crypto_param)
 {
 
-	wlan_crypto_cipher_ops[WLAN_CRYPTO_CIPHER_WEP]  = wep_register();
-	wlan_crypto_cipher_ops[WLAN_CRYPTO_CIPHER_TKIP] = tkip_register();
-	wlan_crypto_cipher_ops[WLAN_CRYPTO_CIPHER_AES_CCM]
-							= ccmp_register();
-	wlan_crypto_cipher_ops[WLAN_CRYPTO_CIPHER_AES_CCM_256]
-							= ccmp256_register();
-	wlan_crypto_cipher_ops[WLAN_CRYPTO_CIPHER_AES_GCM]
-						= gcmp_register();
-	wlan_crypto_cipher_ops[WLAN_CRYPTO_CIPHER_AES_GCM_256]
-							= gcmp256_register();
 	if (HAS_CIPHER_CAP(crypto_param, WLAN_CRYPTO_CAP_WEP)) {
 		wlan_crypto_cipher_ops[WLAN_CRYPTO_CIPHER_WEP]
 							= wep_register();
@@ -117,20 +107,22 @@ static QDF_STATUS wlan_crypto_vdev_obj_create_handler(
 
 	crypto_param = &(crypto_priv->crypto_params);
 	pdev = wlan_vdev_get_pdev(vdev);
-
 	wlan_pdev_obj_lock(pdev);
 	if (wlan_pdev_nif_fw_cap_get(pdev, WLAN_SOC_C_WEP))
 		SET_CIPHER_CAP(crypto_param, WLAN_CRYPTO_CAP_WEP);
 	if (wlan_pdev_nif_fw_cap_get(pdev, WLAN_SOC_C_TKIP))
 		SET_CIPHER_CAP(crypto_param, WLAN_CRYPTO_CAP_TKIP_MIC);
-	if (wlan_pdev_nif_fw_cap_get(pdev, WLAN_SOC_C_AES))
+	if (wlan_pdev_nif_fw_cap_get(pdev, WLAN_SOC_C_AES)) {
 		SET_CIPHER_CAP(crypto_param, WLAN_CRYPTO_CAP_AES);
+		SET_CIPHER_CAP(crypto_param, WLAN_CRYPTO_CAP_CCM256);
+		SET_CIPHER_CAP(crypto_param, WLAN_CRYPTO_CAP_GCM);
+		SET_CIPHER_CAP(crypto_param, WLAN_CRYPTO_CAP_GCM_256);
+	}
 	if (wlan_pdev_nif_fw_cap_get(pdev, WLAN_SOC_C_CKIP))
 		SET_CIPHER_CAP(crypto_param, WLAN_CRYPTO_CAP_CKIP);
 	if (wlan_pdev_nif_fw_cap_get(pdev, WLAN_SOC_C_WAPI))
 		SET_CIPHER_CAP(crypto_param, WLAN_CRYPTO_CAP_WAPI_SMS4);
 	wlan_pdev_obj_unlock(pdev);
-
 	/* update the crypto cipher table based on the fw caps*/
 	/* update the fw_caps into ciphercaps then attach to objmgr*/
 	wlan_crypto_register_all_ciphers(crypto_param);
@@ -178,13 +170,22 @@ static void wlan_crypto_free_key(struct wlan_crypto_comp_priv *crypto_priv)
 {
 	uint8_t i;
 
-	for (i = 0; i < WLAN_CRYPTO_MAXKEYIDX; i++) {
-		if (crypto_priv->key[i])
-			qdf_mem_free(crypto_priv->key[i]);
+	if (!crypto_priv) {
+		qdf_print("%s[%d] crypto_priv NULL\n", __func__, __LINE__);
+		return;
 	}
 
-	if (crypto_priv->igtk_key)
+	for (i = 0; i < WLAN_CRYPTO_MAXKEYIDX; i++) {
+		if (crypto_priv->key[i]) {
+			qdf_mem_free(crypto_priv->key[i]);
+			crypto_priv->key[i] = NULL;
+		}
+	}
+
+	if (crypto_priv->igtk_key) {
 		qdf_mem_free(crypto_priv->igtk_key);
+		crypto_priv->igtk_key = NULL;
+	}
 
 }
 
@@ -193,9 +194,18 @@ static QDF_STATUS wlan_crypto_vdev_obj_destroy_handler(
 						void *arg){
 	struct wlan_crypto_comp_priv *crypto_priv;
 
+	if (!vdev) {
+		qdf_print("%s[%d] Vdev NULL\n", __func__, __LINE__);
+		return QDF_STATUS_E_INVAL;
+	}
+
 	crypto_priv = (struct wlan_crypto_comp_priv *)
 				wlan_get_vdev_crypto_obj(vdev);
 
+	if (!crypto_priv) {
+		qdf_print("%s[%d] crypto_priv NULL\n", __func__, __LINE__);
+		return QDF_STATUS_E_INVAL;
+	}
 	wlan_objmgr_vdev_component_obj_detach(vdev,
 						WLAN_UMAC_COMP_CRYPTO,
 						(void *)crypto_priv);
@@ -210,8 +220,16 @@ static QDF_STATUS wlan_crypto_peer_obj_destroy_handler(
 						void *arg){
 	struct wlan_crypto_comp_priv *crypto_priv;
 
+	if (!peer) {
+		qdf_print("%s[%d] Peer NULL\n", __func__, __LINE__);
+		return QDF_STATUS_E_INVAL;
+	}
 	crypto_priv = (struct wlan_crypto_comp_priv *)
 				wlan_get_peer_crypto_obj(peer);
+	if (!crypto_priv) {
+		qdf_print("%s[%d] crypto_priv NULL\n", __func__, __LINE__);
+		return QDF_STATUS_E_INVAL;
+	}
 
 	wlan_objmgr_peer_component_obj_detach(peer,
 						WLAN_UMAC_COMP_CRYPTO,

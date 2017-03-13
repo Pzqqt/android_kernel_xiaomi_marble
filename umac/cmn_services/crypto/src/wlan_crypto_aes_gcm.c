@@ -19,9 +19,9 @@
 static void inc32(uint8_t *block)
 {
 	uint32_t val;
-	val = WPA_GET_BE32(block + AES_BLOCK_SIZE - 4);
+	val = wlan_crypto_get_be32(block + AES_BLOCK_SIZE - 4);
 	val++;
-	WPA_PUT_BE32(block + AES_BLOCK_SIZE - 4, val);
+	wlan_crypto_put_be32(block + AES_BLOCK_SIZE - 4, val);
 }
 
 
@@ -40,27 +40,27 @@ static void shift_right_block(uint8_t *v)
 {
 	uint32_t val;
 
-	val = WPA_GET_BE32(v + 12);
+	val = wlan_crypto_get_be32(v + 12);
 	val >>= 1;
 	if (v[11] & 0x01)
 		val |= 0x80000000;
-	WPA_PUT_BE32(v + 12, val);
+	wlan_crypto_put_be32(v + 12, val);
 
-	val = WPA_GET_BE32(v + 8);
+	val = wlan_crypto_get_be32(v + 8);
 	val >>= 1;
 	if (v[7] & 0x01)
 		val |= 0x80000000;
-	WPA_PUT_BE32(v + 8, val);
+	wlan_crypto_put_be32(v + 8, val);
 
-	val = WPA_GET_BE32(v + 4);
+	val = wlan_crypto_get_be32(v + 4);
 	val >>= 1;
 	if (v[3] & 0x01)
 		val |= 0x80000000;
-	WPA_PUT_BE32(v + 4, val);
+	wlan_crypto_put_be32(v + 4, val);
 
-	val = WPA_GET_BE32(v);
+	val = wlan_crypto_get_be32(v);
 	val >>= 1;
-	WPA_PUT_BE32(v, val);
+	wlan_crypto_put_be32(v, val);
 }
 
 
@@ -208,8 +208,8 @@ static void aes_gcm_prepare_j0(const uint8_t *iv, size_t iv_len,
 		 */
 		ghash_start(J0);
 		ghash(H, iv, iv_len, J0);
-		WPA_PUT_BE64(len_buf, 0);
-		WPA_PUT_BE64(len_buf + 8, iv_len * 8);
+		wlan_crypto_put_be64(len_buf, 0);
+		wlan_crypto_put_be64(len_buf + 8, iv_len * 8);
 		ghash(H, len_buf, sizeof(len_buf), J0);
 	}
 }
@@ -242,8 +242,8 @@ static void aes_gcm_ghash(const uint8_t *H, const uint8_t *aad, size_t aad_len,
 	ghash_start(S);
 	ghash(H, aad, aad_len, S);
 	ghash(H, crypt, crypt_len, S);
-	WPA_PUT_BE64(len_buf, aad_len * 8);
-	WPA_PUT_BE64(len_buf + 8, crypt_len * 8);
+	wlan_crypto_put_be64(len_buf, aad_len * 8);
+	wlan_crypto_put_be64(len_buf + 8, crypt_len * 8);
 	ghash(H, len_buf, sizeof(len_buf), S);
 
 	wpa_hexdump_key(MSG_EXCESSIVE, "S = GHASH_H(...)", S, 16);

@@ -41,13 +41,13 @@ static void gcmp_aad_nonce(const struct ieee80211_hdr *hdr, const uint8_t *data,
 	}
 
 	fc &= ~(WLAN_FC_RETRY | WLAN_FC_PWRMGT | WLAN_FC_MOREDATA);
-	WPA_PUT_LE16(aad, fc);
+	wlan_crypto_put_le16(aad, fc);
 	pos = aad + 2;
 	qdf_mem_copy(pos, hdr->addr1, 3 * WLAN_ALEN);
 	pos += 3 * WLAN_ALEN;
 	seq = qdf_le16_to_cpu(hdr->seq_ctrl);
 	seq &= ~0xfff0; /* Mask Seq#; do not modify Frag# */
-	WPA_PUT_LE16(pos, seq);
+	wlan_crypto_put_le16(pos, seq);
 	pos += 2;
 
 	qdf_mem_copy(pos, hdr + 1, addr4 * WLAN_ALEN + qos * 2);

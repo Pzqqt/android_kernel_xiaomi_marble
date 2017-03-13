@@ -33,9 +33,6 @@
 #include "wlan_crypto_main_i.h"
 #include "wlan_crypto_obj_mgr_i.h"
 
-#include "wlan_crypto_rijndael.h"
-#include "wlan_crypto_tkip_i.h"
-
 
 static QDF_STATUS wep_setkey(struct wlan_crypto_key *key)
 {
@@ -48,11 +45,8 @@ static QDF_STATUS wep_encap(struct wlan_crypto_key *key,
 				uint8_t hdrlen)
 {
 	uint8_t *ivp;
-	struct ieee80211_frame *wh;
 	struct wlan_crypto_cipher *cipher_table;
-	uint16_t off, data_len;
 
-	wh = (struct ieee80211_frame *)qdf_nbuf_data(wbuf);
 	cipher_table = key->cipher_table;
 	/*
 	 * Copy down 802.11 header and add the IV, KeyID, and ExtIV.
@@ -64,8 +58,6 @@ static QDF_STATUS wep_encap(struct wlan_crypto_key *key,
 		ivp = (uint8_t *)qdf_nbuf_push_head(wbuf,
 						cipher_table->header);
 		memmove(ivp, ivp + cipher_table->header, hdrlen);
-		/* recompute wh */
-		wh = (struct ieee80211_frame *) qdf_nbuf_data(wbuf);
 	}
 
 	ivp += hdrlen;
@@ -84,10 +76,9 @@ static QDF_STATUS wep_encap(struct wlan_crypto_key *key,
 	/*
 	 * Finally, do software encrypt if neeed.
 	 */
-	off = hdrlen + cipher_table->header;
-	data_len = qdf_nbuf_len(wbuf) - off;
 	if ((key->flags & WLAN_CRYPTO_KEY_SWENCRYPT) &&
-		!wlan_crypto_wep_encrypt(key->keyval, wbuf, off, data_len)) {
+		!wlan_crypto_wep_encrypt(key->keyval, key->keylen,
+				qdf_nbuf_data(wbuf), qdf_nbuf_len(wbuf))) {
 		return QDF_STATUS_CRYPTO_ENCRYPT_FAILED;
 	}
 
@@ -98,12 +89,10 @@ static QDF_STATUS wep_decap(struct wlan_crypto_key *key,
 					uint8_t tid,
 					uint8_t hdrlen)
 {
-	struct ieee80211_frame *wh;
 	struct wlan_crypto_cipher *cipher_table;
 	uint8_t *origHdr = (uint8_t *)qdf_nbuf_data(wbuf);
 	uint16_t off, data_len;
 
-	wh = (struct ieee80211_frame *)origHdr;
 	cipher_table = key->cipher_table;
 
 	/*
@@ -115,8 +104,9 @@ static QDF_STATUS wep_decap(struct wlan_crypto_key *key,
 	off = hdrlen + cipher_table->header;
 	data_len = qdf_nbuf_len(wbuf) - off - cipher_table->trailer;
 	if ((key->flags & WLAN_CRYPTO_KEY_SWDECRYPT) &&
-		!wlan_crypto_wep_decrypt(key->keyval, wbuf, off, data_len)) {
-		return 0;
+		!wlan_crypto_wep_decrypt(key->keyval, key->keylen,
+				qdf_nbuf_data(wbuf), qdf_nbuf_len(wbuf))) {
+		return QDF_STATUS_CRYPTO_DECRYPT_FAILED;
 	}
 	/*
 	 * Copy up 802.11 header and strip crypto bits.

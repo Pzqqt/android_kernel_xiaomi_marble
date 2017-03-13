@@ -12,6 +12,13 @@
 #ifndef WLAN_CRYPTO_AES_I_H
 #define WLAN_CRYPTO_AES_I_H
 
+#include <wlan_cmn.h>
+#include <wlan_objmgr_cmn.h>
+#include <wlan_objmgr_global_obj.h>
+#include <wlan_objmgr_psoc_obj.h>
+#include <wlan_objmgr_pdev_obj.h>
+#include <wlan_objmgr_vdev_obj.h>
+#include <wlan_objmgr_peer_obj.h>
 #include "wlan_crypto_global_def.h"
 
 
@@ -182,29 +189,24 @@ struct ieee80211_hdr_qos_addr4 {
 int wlan_crypto_rijndaelKeySetupEnc(uint32_t rk[], const uint8_t cipherKey[],
 					int keyBits);
 
-uint8_t *wlan_crypto_ccmp_encrypt(const uint8_t *tk, uint8_t *frame, size_t len,
-				size_t hdrlen, uint8_t *qos,
-				uint8_t *pn, int keyid,
-				size_t *encrypted_len);
+uint8_t *wlan_crypto_ccmp_encrypt(const uint8_t *key, uint8_t *frame,
+					size_t len, size_t hdrlen);
 
-uint8_t *wlan_crypto_ccmp_decrypt(const uint8_t *tk,
+uint8_t *wlan_crypto_ccmp_decrypt(const uint8_t *key,
 				const struct ieee80211_hdr *hdr,
-				const uint8_t *data, size_t data_len,
-				size_t *decrypted_len);
+				uint8_t *data, size_t data_len);
 
-uint8_t *wlan_crypto_tkip_encrypt(const uint8_t *tk, uint8_t *frame, size_t len,
-				size_t hdrlen, uint8_t *qos, uint8_t *pn,
-				int keyid, size_t *encrypted_len);
+uint8_t *wlan_crypto_tkip_encrypt(const uint8_t *key, uint8_t *frame,
+					size_t len, size_t hdrlen);
 
-uint8_t *wlan_crypto_tkip_decrypt(const uint8_t *tk,
+uint8_t *wlan_crypto_tkip_decrypt(const uint8_t *key,
 				const struct ieee80211_hdr *hdr,
-				const uint8_t *data, size_t data_len,
-				size_t *decrypted_len);
+				uint8_t *data, size_t data_len);
 
+uint8_t *wlan_crypto_wep_encrypt(const uint8_t *key, uint16_t key_len,
+				uint8_t *data, size_t data_len);
 uint8_t *wlan_crypto_wep_decrypt(const uint8_t *key, uint16_t key_len,
-				const struct ieee80211_hdr *hdr,
-				const uint8_t *data, size_t data_len,
-				size_t *decrypted_len);
+				uint8_t *data, size_t data_len);
 
 void wlan_crypto_wep_crypt(uint8_t *key, uint8_t *buf, size_t plen);
 
@@ -242,4 +244,8 @@ void wlan_crypto_aes_encrypt_deinit(void *ctx);
 void *wlan_crypto_aes_decrypt_init(const uint8_t *key, size_t len);
 void wlan_crypto_aes_decrypt(void *ctx, const uint8_t *crypt, uint8_t *plain);
 void wlan_crypto_aes_decrypt_deinit(void *ctx);
+int omac1_aes_128(const uint8_t *key, const uint8_t *data,
+				size_t data_len, uint8_t *mac);
+int omac1_aes_256(const uint8_t *key, const uint8_t *data,
+				size_t data_len, uint8_t *mac);
 #endif /* WLAN_CRYPTO_AES_I_H */

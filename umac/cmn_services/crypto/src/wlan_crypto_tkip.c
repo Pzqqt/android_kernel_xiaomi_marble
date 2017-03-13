@@ -32,7 +32,6 @@
 #include "wlan_crypto_def_i.h"
 #include "wlan_crypto_main_i.h"
 #include "wlan_crypto_obj_mgr_i.h"
-#include "wlan_crypto_tkip_i.h"
 
 
 static QDF_STATUS tkip_enmic(struct wlan_crypto_key *key, qdf_nbuf_t wbuf,
@@ -43,7 +42,7 @@ static QDF_STATUS tkip_demic(struct wlan_crypto_key *key, qdf_nbuf_t wbuf,
 
 static QDF_STATUS tkip_setkey(struct wlan_crypto_key *key)
 {
-	struct wlan_crypto_tkip_ctx *ctx;
+/*	struct wlan_crypto_tkip_ctx *ctx;
 
 	if (key->private == NULL) {
 		key->private = qdf_mem_malloc(
@@ -53,7 +52,7 @@ static QDF_STATUS tkip_setkey(struct wlan_crypto_key *key)
 	}
 
 	ctx = key->private;
-
+*/
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -62,13 +61,9 @@ static QDF_STATUS tkip_encap(struct wlan_crypto_key *key,
 				uint8_t encapdone,
 				uint8_t hdrlen){
 	uint8_t *ivp;
-	struct ieee80211_frame *wh;
-	qdf_nbuf_t wbuf0;
-	uint16_t pktlen;
 	struct wlan_crypto_cipher *cipher_table;
 
 	cipher_table = key->cipher_table;
-	wh = (struct ieee80211_frame *)qdf_nbuf_data(wbuf);
 
 	/*
 	 * Copy down 802.11 header and add the IV, KeyID, and ExtIV.
@@ -76,12 +71,10 @@ static QDF_STATUS tkip_encap(struct wlan_crypto_key *key,
 	if (encapdone) {
 		ivp = (uint8_t *)qdf_nbuf_data(wbuf);
 	} else {
-		ivp = (uint8_t *)qdf_nbuf_push_head(wbuf, cipher_table->header);
+		ivp = qdf_nbuf_push_head(wbuf, cipher_table->header);
 		qdf_mem_move(ivp, (ivp + cipher_table->header), hdrlen);
-		wh = (struct ieee80211_frame *) qdf_nbuf_data(wbuf);
 	}
 
-	ivp += hdrlen;
 	key->keytsc++;         /* XXX wrap at 48 bits */
 
 	ivp[0] = key->keytsc >> 8;            /* TSC1 */
@@ -93,24 +86,24 @@ static QDF_STATUS tkip_encap(struct wlan_crypto_key *key,
 	ivp[6] = key->keytsc >> 32;           /* PN4 */
 	ivp[7] = key->keytsc >> 40;           /* PN5 */
 
-	wbuf0 = wbuf;
+/*	wbuf0 = wbuf;
 	pktlen = qdf_nbuf_len(wbuf);
 	while (qdf_nbuf_queue_next(wbuf0) != NULL) {
 		wbuf = qdf_nbuf_queue_next(wbuf0);
 		pktlen += qdf_nbuf_len(wbuf0);
 	}
-
+*/
 	/*
 	 * Finally, do software encrypt if neeed.
 	 */
 	if (key->flags & WLAN_CRYPTO_KEY_SWENCRYPT) {
-		/*if not frag frame then do mic calculation */
-		if (tkip_enmic(key, wbuf, encapdone, hdrlen)
-						!= QDF_STATUS_SUCCESS) {
+		qdf_nbuf_realloc_tailroom(wbuf, cipher_table->miclen);
+		if (qdf_nbuf_realloc_tailroom(wbuf, cipher_table->miclen)
+			&& (!wlan_crypto_tkip_encrypt(key->keyval,
+				qdf_nbuf_data(wbuf), qdf_nbuf_len(wbuf),
+				hdrlen))){
 			return QDF_STATUS_CRYPTO_ENCRYPT_FAILED;
 		}
-		if (!wlan_crypto_tkip_encrypt(key, wbuf, hdrlen))
-			return QDF_STATUS_CRYPTO_ENCRYPT_FAILED;
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -120,7 +113,7 @@ static QDF_STATUS tkip_decap(struct wlan_crypto_key *key,
 				qdf_nbuf_t wbuf,
 				uint8_t tid,
 				uint8_t hdrlen){
-	struct ieee80211_frame *wh;
+	struct ieee80211_hdr *hdr;
 	uint8_t *ivp, *origHdr;
 	uint64_t pn;
 	struct wlan_crypto_cipher *cipher_table;
@@ -132,37 +125,29 @@ static QDF_STATUS tkip_decap(struct wlan_crypto_key *key,
 	 * verify the former and validate the latter.
 	 */
 	origHdr = (uint8_t *)qdf_nbuf_data(wbuf);
-	wh = (struct ieee80211_frame *)origHdr;
+	hdr = (struct ieee80211_hdr *)origHdr;
 
 	ivp = origHdr + hdrlen;
 
 	if ((ivp[WLAN_CRYPTO_IV_LEN] & WLAN_CRYPTO_EXT_IV_BIT) == 0)
 		return 0;
 
-	tid = 16; /* non QoS*/
-	if ((((wh)->i_fc[0] & (0x0c | 0x80)) == (0x00 | 0x80))) {
-		if ((wh->i_fc[1] & 0x03) == 0x03) {
-			tid = ((struct ieee80211_qosframe_addr4 *)wh)->i_qos[0]
-									& 0x0f;
-		} else {
-			tid = ((struct ieee80211_qosframe *)wh)->i_qos[0]
-									& 0x0f;
-		}
-	}
+	tid = wlan_get_tid(qdf_nbuf_data(wbuf));
 
-	/* NB: assume IEEEE80211_WEP_MINLEN covers the extended IV */
 	pn = READ_6(ivp[0], ivp[1], ivp[4], ivp[5], ivp[6], ivp[7]);
 
 	if (pn <= key->keyrsc[tid]) {
 		/* Replay violation.*/
-		return 0;
+		return QDF_STATUS_CRYPTO_DECRYPT_FAILED;
 	}
 
 	if ((key->flags & WLAN_CRYPTO_KEY_SWDECRYPT)) {
-		if (!wlan_crypto_tkip_decrypt(key, wbuf, hdrlen) == 0)
+		if (!wlan_crypto_tkip_decrypt(key->keyval,
+					(struct ieee80211_hdr *)origHdr,
+					(origHdr + hdrlen),
+					(qdf_nbuf_len(wbuf) - hdrlen)))
 			return QDF_STATUS_CRYPTO_DECRYPT_FAILED;
 	}
-	/* PN will be updated in tkip_demic*/
 
 	/*
 	 * Copy up 802.11 header and strip crypto bits.
@@ -170,8 +155,8 @@ static QDF_STATUS tkip_decap(struct wlan_crypto_key *key,
 	qdf_mem_move(origHdr + cipher_table->header, origHdr, hdrlen);
 
 	qdf_nbuf_pull_head(wbuf, cipher_table->header);
-	while (qdf_nbuf_queue_next(wbuf) != NULL)
-		wbuf = qdf_nbuf_queue_next(wbuf);
+	/*while (qdf_nbuf_queue_next(wbuf) != NULL)
+		wbuf = qdf_nbuf_queue_next(wbuf);*/
 	qdf_nbuf_trim_tail(wbuf, cipher_table->trailer);
 
 	return QDF_STATUS_SUCCESS;

@@ -93,34 +93,34 @@
 
 /* Macros for handling unaligned memory accesses */
 
-static inline uint16_t WPA_GET_BE16(const uint8_t *a)
+static inline uint16_t wlan_crypto_get_be16(const uint8_t *a)
 {
 	return (a[0] << 8) | a[1];
 }
 
-static inline void WPA_PUT_BE16(uint8_t *a, uint16_t val)
+static inline void wlan_crypto_put_be16(uint8_t *a, uint16_t val)
 {
 	a[0] = val >> 8;
 	a[1] = val & 0xff;
 }
 
-static inline uint16_t WPA_GET_LE16(const uint8_t *a)
+static inline uint16_t wlan_crypto_get_le16(const uint8_t *a)
 {
 	return (a[1] << 8) | a[0];
 }
 
-static inline void WPA_PUT_LE16(uint8_t *a, uint16_t val)
+static inline void wlan_crypto_put_le16(uint8_t *a, uint16_t val)
 {
 	a[1] = val >> 8;
 	a[0] = val & 0xff;
 }
 
-static inline uint32_t WPA_GET_BE32(const uint8_t *a)
+static inline uint32_t wlan_crypto_get_be32(const uint8_t *a)
 {
 	return ((u32) a[0] << 24) | (a[1] << 16) | (a[2] << 8) | a[3];
 }
 
-static inline void WPA_PUT_BE32(uint8_t *a, uint32_t val)
+static inline void wlan_crypto_put_be32(uint8_t *a, uint32_t val)
 {
 	a[0] = (val >> 24) & 0xff;
 	a[1] = (val >> 16) & 0xff;
@@ -128,12 +128,12 @@ static inline void WPA_PUT_BE32(uint8_t *a, uint32_t val)
 	a[3] = val & 0xff;
 }
 
-static inline uint32_t WPA_GET_LE32(const uint8_t *a)
+static inline uint32_t wlan_crypto_get_le32(const uint8_t *a)
 {
 	return ((u32) a[3] << 24) | (a[2] << 16) | (a[1] << 8) | a[0];
 }
 
-static inline void WPA_PUT_LE32(uint8_t *a, uint32_t val)
+static inline void wlan_crypto_put_le32(uint8_t *a, uint32_t val)
 {
 	a[3] = (val >> 24) & 0xff;
 	a[2] = (val >> 16) & 0xff;
@@ -141,7 +141,7 @@ static inline void WPA_PUT_LE32(uint8_t *a, uint32_t val)
 	a[0] = val & 0xff;
 }
 
-static inline void WPA_PUT_BE64(u8 *a, u64 val)
+static inline void wlan_crypto_put_be64(u8 *a, u64 val)
 {
 	a[0] = val >> 56;
 	a[1] = val >> 48;
@@ -390,6 +390,7 @@ struct wlan_crypto_comp_priv {
 	struct wlan_crypto_params crypto_params;
 	struct wlan_crypto_key *key[4];
 	struct wlan_crypto_key *igtk_key;
+	uint32_t igtk_key_type;
 	uint8_t def_tx_keyid;
 };
 
@@ -432,7 +433,7 @@ static inline int ieee80211_hdrsize(const void *data)
 	}
 
 	if (((WLAN_FC_GET_STYPE(hdr->frame_control)
-			== WLAN_FC_STYPE_QOS_DATA)) {
+			== WLAN_FC_STYPE_QOS_DATA))) {
 		size += sizeof(uint16_t);
 		/* Qos frame with Order bit set indicates an HTC frame */
 		if (hdr->frame_control & WLAN_FC_ORDER)
@@ -446,7 +447,7 @@ static inline int wlan_get_tid(const void *data)
 	const struct ieee80211_hdr *hdr = (const struct ieee80211_hdr *)data;
 
 	if (((WLAN_FC_GET_STYPE(hdr->frame_control)
-				== WLAN_FC_STYPE_QOS_DATA)) {
+				== WLAN_FC_STYPE_QOS_DATA))) {
 		if ((hdr->frame_control & (WLAN_FC_TODS | WLAN_FC_FROMDS))
 				== (WLAN_FC_TODS | WLAN_FC_FROMDS)) {
 			return ((struct ieee80211_hdr_qos_addr4 *)data)->qos

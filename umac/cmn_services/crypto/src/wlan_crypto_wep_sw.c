@@ -44,13 +44,11 @@ void wlan_crypto_wep_crypt(uint8_t *key, uint8_t *buf, size_t plen)
 }
 
 
-static int wlan_crypto_try_wep(const uint8_t *key, size_t key_len,
-				const uint8_t *data, size_t data_len,
-				uint8_t *plain){
-	uint32_t icv, rx_icv;
+void wlan_crypto_try_wep(const uint8_t *key, size_t key_len,
+				uint8_t *data, size_t data_len,
+				uint32_t *icv){
 	uint8_t k[16];
 	int i, j;
-	int32_t status = -1;
 
 	for (i = 0, j = 0; i < sizeof(k); i++) {
 		k[i] = key[j];
@@ -59,46 +57,48 @@ static int wlan_crypto_try_wep(const uint8_t *key, size_t key_len,
 			j = 0;
 	}
 
-	qdf_mem_copy(plain, data, data_len);
-	wlan_crypto_wep_crypt(k, plain, data_len);
-	icv = wlan_crypto_crc32(plain, data_len - 4);
-	rx_icv = WPA_GET_LE32(plain + data_len - 4);
-	if (icv != rx_icv)
-		return status;
+	wlan_crypto_wep_crypt(k, data, data_len);
+	*icv = wlan_crypto_crc32(data, data_len - 4);
+}
 
-	return 0;
+uint8_t *wlan_crypto_wep_encrypt(const uint8_t *key, uint16_t key_len,
+					uint8_t *data, size_t data_len){
+	uint8_t k[16];
+	uint32_t icv;
+
+	if (data_len < 4 + 4) {
+		qdf_print("%s[%d] invalid len\n", __func__, __LINE__);
+		return NULL;
+	}
+
+	qdf_mem_copy(k, data, 3);
+	qdf_mem_copy(k + 3, key, key_len);
+	wlan_crypto_try_wep(k, 3 + key_len, data + 4, data_len - 4, &icv);
+
+	return data;
 }
 
 uint8_t *wlan_crypto_wep_decrypt(const uint8_t *key, uint16_t key_len,
-				const struct ieee80211_hdr *hdr,
-				const uint8_t *data, size_t data_len,
-				size_t *decrypted_len){
-
-	uint8_t *plain;
-	int found = 0;
+					uint8_t *data, size_t data_len){
 	uint8_t k[16];
+	uint32_t icv, rx_icv;
 
-	if (data_len < 4 + 4)
-		return NULL;
-	plain = qdf_mem_malloc(data_len - 4);
-
-	if (plain == NULL) {
-		qdf_print("%s[%d] mem alloc failed\n", __func__, __LINE__);
+	if (data_len < 4 + 4) {
+		qdf_print("%s[%d] invalid len\n", __func__, __LINE__);
 		return NULL;
 	}
 
 	qdf_mem_copy(k, data, 3);
 	qdf_mem_copy(k + 3, key, key_len);
 
-	if (wlan_crypto_try_wep(k, 3 + key_len, data + 4,
-			data_len - 4, plain)  == 0)
-		found = 1;
+	rx_icv = wlan_crypto_get_le32(data + data_len - 4);
 
-	if (!found) {
-		qdf_mem_free(plain);
+	wlan_crypto_try_wep(k, 3 + key_len, data + 4, data_len - 4, &icv);
+
+	if (icv != rx_icv) {
+		qdf_print("%s[%d] iv mismatch\n", __func__, __LINE__);
 		return NULL;
 	}
 
-	*decrypted_len = data_len - 4 - 4;
-	return plain;
+	return data;
 }

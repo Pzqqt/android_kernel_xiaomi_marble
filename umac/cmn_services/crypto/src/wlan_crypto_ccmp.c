@@ -32,26 +32,11 @@
 #include "wlan_crypto_def_i.h"
 #include "wlan_crypto_main_i.h"
 #include "wlan_crypto_obj_mgr_i.h"
-#include "wlan_crypto_ccmp_i.h"
 
 #define MAX_CCMP_PN_GAP_ERR_CHECK 0
 
 static QDF_STATUS ccmp_setkey(struct wlan_crypto_key *key)
 {
-
-	struct wlan_crypto_ccmp_ctx *ctx;
-
-	if (key->private == NULL) {
-		key->private = qdf_mem_malloc(
-					sizeof(struct wlan_crypto_ccmp_ctx));
-		if (key->private == NULL)
-			return QDF_STATUS_E_NOMEM;
-	}
-
-	ctx = key->private;
-	wlan_crypto_rijndael_set_key(&ctx->cc_aes, key->keyval,
-					(key->keylen*NBBY));
-
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -60,12 +45,12 @@ static QDF_STATUS ccmp_encap(struct wlan_crypto_key *key,
 				uint8_t encapdone,
 				uint8_t hdrlen){
 	uint8_t *ivp;
-	struct ieee80211_frame *wh;
+	struct ieee80211_hdr *hdr;
 	struct wlan_crypto_cipher *cipher_table;
 
 	cipher_table = (struct wlan_crypto_cipher *)key->cipher_table;
 
-	wh = (struct ieee80211_frame *)qdf_nbuf_data(wbuf);
+	hdr = (struct ieee80211_hdr *)qdf_nbuf_data(wbuf);
 
 	/*
 	 * Copy down 802.11 header and add the IV, KeyID, and ExtIV.
@@ -77,8 +62,8 @@ static QDF_STATUS ccmp_encap(struct wlan_crypto_key *key,
 		ivp = (uint8_t *)qdf_nbuf_push_head(wbuf,
 							cipher_table->header);
 		qdf_mem_move(ivp, ivp + cipher_table->header, hdrlen);
-		/* recompute wh */
-		wh = (struct ieee80211_frame *) qdf_nbuf_data(wbuf);
+		/* recompute hdr */
+		hdr = (struct ieee80211_hdr *) qdf_nbuf_data(wbuf);
 	}
 
 	ivp += hdrlen;
@@ -99,8 +84,9 @@ static QDF_STATUS ccmp_encap(struct wlan_crypto_key *key,
 	 * Finally, do software encrypt if neeed.
 	 */
 	if (key->flags & WLAN_CRYPTO_KEY_SWENCRYPT) {
-		if (!wlan_crypto_ccmp_encrypt(key, wbuf, hdrlen,
-				IEEE80211_IS_MFP_FRAME(wh))) {
+		if (!wlan_crypto_ccmp_encrypt(key->keyval,
+						qdf_nbuf_data(wbuf),
+						qdf_nbuf_len(wbuf), hdrlen)) {
 			return 0;
 		}
 	}
@@ -114,7 +100,7 @@ static QDF_STATUS ccmp_decap(struct wlan_crypto_key *key,
 				qdf_nbuf_t wbuf,
 				uint8_t tid,
 				uint8_t hdrlen){
-	struct ieee80211_frame *wh;
+	struct ieee80211_hdr *hdr;
 	uint8_t *ivp, *origHdr;
 	uint64_t pn;
 	uint8_t  update_keyrsc = 1;
@@ -127,7 +113,7 @@ static QDF_STATUS ccmp_decap(struct wlan_crypto_key *key,
 	 * verify the former and validate the latter.
 	 */
 	origHdr = (uint8_t *)qdf_nbuf_data(wbuf);
-	wh = (struct ieee80211_frame *)origHdr;
+	hdr = (struct ieee80211_hdr *)origHdr;
 
 	ivp = origHdr + hdrlen;
 
@@ -136,20 +122,8 @@ static QDF_STATUS ccmp_decap(struct wlan_crypto_key *key,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	tid = IEEE80211_NON_QOS_SEQ;
+	tid = wlan_get_tid(qdf_nbuf_data(wbuf));
 
-	if (IEEE80211_QOS_HAS_SEQ(wh)) {
-		if ((wh->i_fc[1] & IEEE80211_FC1_DIR_MASK)
-				== IEEE80211_FC1_DIR_DSTODS) {
-			tid = ((struct ieee80211_qosframe_addr4 *)wh)->i_qos[0]
-							& IEEE80211_QOS_TID;
-		} else {
-			tid = ((struct ieee80211_qosframe *)wh)->i_qos[0]
-							& IEEE80211_QOS_TID;
-		}
-	}
-
-	/* NB: assume IEEEE80211_WEP_MINLEN covers the extended IV */
 	pn = READ_6(ivp[0], ivp[1], ivp[4], ivp[5], ivp[6], ivp[7]);
 
 	if (pn <= key->keyrsc[tid]) {
@@ -160,8 +134,10 @@ static QDF_STATUS ccmp_decap(struct wlan_crypto_key *key,
 	}
 
 	if ((key->flags & WLAN_CRYPTO_KEY_SWDECRYPT)) {
-		if (!wlan_crypto_ccmp_decrypt(key,
-				pn, wbuf, hdrlen, IEEE80211_IS_MFP_FRAME(wh))) {
+		if (!wlan_crypto_ccmp_decrypt(key->keyval,
+				(struct ieee80211_hdr *)origHdr,
+				(origHdr + hdrlen),
+				(qdf_nbuf_len(wbuf) - hdrlen))) {
 			return QDF_STATUS_CRYPTO_DECRYPT_FAILED;
 		}
 	}
