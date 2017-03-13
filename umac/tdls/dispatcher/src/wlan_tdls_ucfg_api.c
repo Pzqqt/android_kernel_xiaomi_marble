@@ -24,6 +24,7 @@
 
 #include <wlan_tdls_ucfg_api.h>
 #include "../../core/src/wlan_tdls_main.h"
+#include "../../core/src/wlan_tdls_cmds_process.h"
 #include <wlan_objmgr_global_obj.h>
 #include <wlan_objmgr_cmn.h>
 
@@ -113,6 +114,7 @@ QDF_STATUS ucfg_tdls_deinit(void)
 static QDF_STATUS tdls_global_init(struct tdls_soc_priv_obj *soc_obj)
 {
 	uint8_t sta_idx;
+	uint32_t feature;
 
 	soc_obj->connected_peer_count = 0;
 	soc_obj->tdls_nss_switch_in_progress = false;
@@ -120,7 +122,16 @@ static QDF_STATUS tdls_global_init(struct tdls_soc_priv_obj *soc_obj)
 	soc_obj->tdls_nss_teardown_complete = false;
 	soc_obj->tdls_nss_transition_mode = TDLS_NSS_TRANSITION_S_UNKNOWN;
 	soc_obj->tdls_user_config_mode = TDLS_SUPPORT_DISABLED;
-	soc_obj->max_num_tdls_sta = WLAN_TDLS_STA_MAX_NUM;
+
+	feature = soc_obj->tdls_configs.tdls_feature_flags;
+	if (TDLS_IS_BUFFER_STA_ENABLED(feature) ||
+	    TDLS_IS_SLEEP_STA_ENABLED(feature) ||
+	    TDLS_IS_OFF_CHANNEL_ENABLED(feature))
+		soc_obj->max_num_tdls_sta =
+			WLAN_TDLS_STA_P_UAPSD_OFFCHAN_MAX_NUM;
+		else
+			soc_obj->max_num_tdls_sta = WLAN_TDLS_STA_MAX_NUM;
+
 
 	for (sta_idx = 0; sta_idx < soc_obj->max_num_tdls_sta; sta_idx++) {
 		soc_obj->tdls_conn_info[sta_idx].sta_id = 0;
@@ -142,7 +153,7 @@ QDF_STATUS ucfg_tdls_psoc_open(struct wlan_objmgr_psoc *psoc)
 	tdls_notice("tdls psoc open");
 	soc_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
 							WLAN_UMAC_COMP_TDLS);
-	if (soc_obj == NULL) {
+	if (!soc_obj) {
 		tdls_err("Failed to get tdls psoc component");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -152,15 +163,21 @@ QDF_STATUS ucfg_tdls_psoc_open(struct wlan_objmgr_psoc *psoc)
 	return status;
 }
 
-QDF_STATUS ucfg_tdls_psoc_start(struct wlan_objmgr_psoc *psoc,
-				struct tdls_start_params *req)
+QDF_STATUS ucfg_tdls_update_config(struct wlan_objmgr_psoc *psoc,
+				   struct tdls_start_params *req)
 {
 	struct tdls_soc_priv_obj *soc_obj;
+	uint32_t tdls_feature_flags;
 
-	tdls_notice("tdls psoc start");
+	tdls_notice("tdls update config ");
+	if (!psoc || !req) {
+		tdls_err("psoc: 0x%p, req: 0x%p", psoc, req);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	soc_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
 							WLAN_UMAC_COMP_TDLS);
-	if (soc_obj == NULL) {
+	if (!soc_obj) {
 		tdls_err("Failed to get tdls psoc component");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -170,6 +187,28 @@ QDF_STATUS ucfg_tdls_psoc_start(struct wlan_objmgr_psoc *psoc,
 
 	soc_obj->tdls_tx_cnf_cb = req->ack_cnf_cb;
 	soc_obj->tx_ack_cnf_cb_data = req->tx_ack_cnf_cb_data;
+
+	/* Save callbacks to register/deregister TDLS sta with TL */
+	soc_obj->tdls_reg_tl_peer = req->tdls_reg_tl_peer;
+	soc_obj->tdls_dereg_tl_peer = req->tdls_dereg_tl_peer;
+	soc_obj->tdls_tl_peer_data = req->tdls_tl_peer_data;
+
+	/* Save legacy PE/WMA commands in TDLS soc object */
+	soc_obj->tdls_send_mgmt_req = req->tdls_send_mgmt_req;
+	soc_obj->tdls_add_sta_req = req->tdls_add_sta_req;
+	soc_obj->tdls_del_sta_req = req->tdls_del_sta_req;
+	soc_obj->tdls_update_peer_state = req->tdls_update_peer_state;
+
+	/* Update TDLS user config */
+	qdf_mem_copy(&soc_obj->tdls_configs, &req->config, sizeof(req->config));
+	tdls_feature_flags = soc_obj->tdls_configs.tdls_feature_flags;
+
+	if (!TDLS_IS_IMPLICIT_TRIG_ENABLED(tdls_feature_flags))
+		soc_obj->tdls_current_mode = TDLS_SUPPORT_EXP_TRIG_ONLY;
+	else if (TDLS_IS_EXTERNAL_CONTROL_ENABLED(tdls_feature_flags))
+		soc_obj->tdls_current_mode = TDLS_SUPPORT_EXT_CONTROL;
+	else
+		soc_obj->tdls_current_mode = TDLS_SUPPORT_IMP_MODE;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -181,7 +220,7 @@ QDF_STATUS ucfg_tdls_psoc_stop(struct wlan_objmgr_psoc *psoc)
 	tdls_notice("tdls psoc stop");
 	soc_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
 							WLAN_UMAC_COMP_TDLS);
-	if (soc_obj == NULL) {
+	if (!soc_obj) {
 		tdls_err("Failed to get tdls psoc component");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -201,5 +240,95 @@ QDF_STATUS ucfg_tdls_psoc_close(struct wlan_objmgr_psoc *psoc)
 
 	tdls_notice("tdls psoc close");
 
+	return status;
+}
+
+QDF_STATUS ucfg_tdls_add_peer(struct wlan_objmgr_vdev *vdev,
+			      struct tdls_add_peer_params *add_peer_req)
+{
+	struct scheduler_msg msg = {0, };
+	struct tdls_add_peer_request *req;
+	QDF_STATUS status;
+
+	if (!vdev || !add_peer_req) {
+		tdls_err("vdev: %p, req %p", vdev, add_peer_req);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	tdls_debug("vdevid: %d, peertype: %d",
+		   add_peer_req->vdev_id, add_peer_req->peer_type);
+
+	status = wlan_objmgr_vdev_try_get_ref(vdev, WLAN_TDLS_NB_ID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		tdls_err("can't get vdev");
+		return status;
+	}
+
+	req = qdf_mem_malloc(sizeof(*req));
+	if (!req) {
+		tdls_err("mem allocate fail");
+		status = QDF_STATUS_E_NOMEM;
+		goto dec_ref;
+	}
+
+	qdf_mem_copy(&req->add_peer_req, add_peer_req, sizeof(*add_peer_req));
+	req->vdev = vdev;
+
+	msg.bodyptr = req;
+	msg.callback = tdls_process_cmd;
+	msg.type = TDLS_CMD_ADD_STA;
+	status = scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		tdls_err("post add peer msg fail");
+		qdf_mem_free(req);
+		goto dec_ref;
+	}
+
+	return status;
+dec_ref:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
+	return status;
+}
+
+QDF_STATUS ucfg_tdls_update_peer(struct wlan_objmgr_vdev *vdev,
+				 struct tdls_update_peer_params *update_peer)
+{
+	struct scheduler_msg msg = {0,};
+	struct tdls_update_peer_request *req;
+	QDF_STATUS status;
+
+	if (!vdev || !update_peer) {
+		tdls_err("vdev: %p, update_peer: %p", vdev, update_peer);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	tdls_debug("vdev_id: %d, peertype: %d",
+		   update_peer->vdev_id, update_peer->peer_type);
+	status = wlan_objmgr_vdev_try_get_ref(vdev, WLAN_TDLS_NB_ID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		tdls_err("can't get vdev");
+		return status;
+	}
+	req = qdf_mem_malloc(sizeof(*req));
+	if (!req) {
+		tdls_err("mem allocate fail");
+		status = QDF_STATUS_E_NOMEM;
+		goto dec_ref;
+	}
+	qdf_mem_copy(&req->update_peer_req, update_peer, sizeof(*update_peer));
+	req->vdev = vdev;
+
+	msg.bodyptr = req;
+	msg.callback = tdls_process_cmd;
+	msg.type = TDLS_CMD_CHANGE_STA;
+	status = scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		tdls_err("post update peer msg fail");
+		qdf_mem_free(req);
+		goto dec_ref;
+	}
+
+	return status;
+dec_ref:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
 	return status;
 }
