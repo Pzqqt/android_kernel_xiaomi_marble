@@ -28,6 +28,9 @@
 #include <scheduler_api.h>
 #include <wlan_tdls_public_structs.h>
 #include <wlan_objmgr_cmn.h>
+#include <wlan_objmgr_psoc_obj.h>
+#include <wlan_objmgr_pdev_obj.h>
+#include <wlan_objmgr_vdev_obj.h>
 
 /**
  * ucfg_tdls_init() - TDLS module initialization API
@@ -66,8 +69,9 @@ QDF_STATUS ucfg_tdls_psoc_close(struct wlan_objmgr_psoc *psoc);
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS ucfg_tdls_psoc_start(struct wlan_objmgr_psoc *psoc,
-				struct tdls_start_params *req);
+QDF_STATUS ucfg_tdls_update_config(struct wlan_objmgr_psoc *psoc,
+				   struct tdls_start_params *req);
+
 /**
  * ucfg_tdls_psoc_stop() - TDLS module stop
  * @psoc: psoc object
@@ -75,4 +79,24 @@ QDF_STATUS ucfg_tdls_psoc_start(struct wlan_objmgr_psoc *psoc,
  * Return: QDF_STATUS
  */
 QDF_STATUS ucfg_tdls_psoc_stop(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_tdls_add_peer() - handle TDLS add peer
+ * @vdev: vdev object
+ * @add_peer_req: add peer request parameters
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_tdls_add_peer(struct wlan_objmgr_vdev *vdev,
+			      struct tdls_add_peer_params *add_peer_req);
+
+/**
+ * ucfg_tdls_update_peer() - handle TDLS update peer
+ * @vdev: vdev object
+ * @update_peer: update TDLS request parameters
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_tdls_update_peer(struct wlan_objmgr_vdev *vdev,
+				 struct tdls_update_peer_params *update_peer);
 #endif

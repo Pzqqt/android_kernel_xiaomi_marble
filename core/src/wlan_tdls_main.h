@@ -39,6 +39,17 @@
 #define ENA_TDLS_BUFFER_STA   (1 << 1)  /* TDLS Buffer STA support */
 #define ENA_TDLS_SLEEP_STA    (1 << 2)  /* TDLS Sleep STA support */
 
+#define BW_20_OFFSET_BIT   0
+#define BW_40_OFFSET_BIT   1
+#define BW_80_OFFSET_BIT   2
+#define BW_160_OFFSET_BIT  3
+
+#define TDLS_SEC_OFFCHAN_OFFSET_0        0
+#define TDLS_SEC_OFFCHAN_OFFSET_40PLUS   40
+#define TDLS_SEC_OFFCHAN_OFFSET_40MINUS  (-40)
+#define TDLS_SEC_OFFCHAN_OFFSET_80       80
+#define TDLS_SEC_OFFCHAN_OFFSET_160      160
+
 #define tdls_log(level, args...) \
 	QDF_TRACE(QDF_MODULE_ID_TDLS, level, ## args)
 #define tdls_logfl(level, format, args...) \
@@ -163,13 +174,20 @@ struct tdls_set_state_info {
  * @tx_ack_cnf_cb_data: user data to tdls_tx_cnf_cb
  * @tdls_event_cb: tdls event callback
  * @tdls_evt_cb_data: tdls event user data
+ * @tdls_reg_tl_peer: callback to register the TDLS peer with TL
+ * @tdls_dereg_tl_peer: callback to unregister the TDLS peer
+ * @tdls_tl_peer_data: userdata for register/deregister TDLS peer
  * @tx_q_ack: queue for tx frames waiting for ack
  * @tdls_con_cap: tdls concurrency support
+ * @tdls_send_mgmt_req: store eWNI_SME_TDLS_SEND_MGMT_REQ value
+ * @tdls_add_sta_req: store eWNI_SME_TDLS_ADD_STA_REQ value
+ * @tdls_del_sta_req: store eWNI_SME_TDLS_DEL_STA_REQ value
+ * @tdls_update_peer_state: store WMA_UPDATE_TDLS_PEER_STATE value
  */
 struct tdls_soc_priv_obj {
 	struct wlan_objmgr_psoc *soc;
-	enum tdls_support_mode tdls_current_mode;
-	enum tdls_support_mode tdls_user_config_mode;
+	enum tdls_feature_mode tdls_current_mode;
+	enum tdls_feature_mode tdls_user_config_mode;
 	struct tdls_conn_info tdls_conn_info[WLAN_TDLS_STA_MAX_NUM];
 	struct tdls_user_config tdls_configs;
 	uint16_t max_num_tdls_sta;
@@ -188,8 +206,15 @@ struct tdls_soc_priv_obj {
 	void *tx_ack_cnf_cb_data;
 	tdls_evt_callback tdls_event_cb;
 	void *tdls_evt_cb_data;
+	tdls_register_tl_peer_callback tdls_reg_tl_peer;
+	tdls_deregister_tl_peer_callback tdls_dereg_tl_peer;
+	void *tdls_tl_peer_data;
 	qdf_list_t tx_q_ack;
 	enum tdls_conc_cap tdls_con_cap;
+	uint16_t tdls_send_mgmt_req;
+	uint16_t tdls_add_sta_req;
+	uint16_t tdls_del_sta_req;
+	uint16_t tdls_update_peer_state;
 };
 
 /**
@@ -223,6 +248,12 @@ struct tdls_vdev_priv_obj {
 	uint8_t valid_mac_entries;
 	uint32_t magic;
 	qdf_list_t tx_queue;
+};
+
+/**
+ * struct tdls_peer_mlme_info - tdls peer mlme info
+ **/
+struct tdls_peer_mlme_info {
 };
 
 /**
@@ -266,7 +297,7 @@ struct tdls_peer {
 	uint16_t sta_id;
 	int8_t rssi;
 	enum tdls_peer_capab tdls_support;
-	enum tdls_link_status link_status;
+	enum tdls_link_state link_status;
 	uint8_t signature;
 	uint8_t is_responder;
 	uint8_t discovery_processed;
@@ -288,9 +319,10 @@ struct tdls_peer {
 	qdf_mc_timer_t peer_idle_timer;
 	bool is_peer_idle_timer_initialised;
 	uint8_t spatial_streams;
-	enum tdls_link_reason reason;
+	enum tdls_link_state_reason reason;
 	tdls_state_change_callback state_change_notification;
 	uint8_t qos;
+	struct tdls_peer_mlme_info *tdls_info;
 };
 
 /**
@@ -302,12 +334,29 @@ struct tdls_peer {
 static inline struct tdls_soc_priv_obj *
 wlan_vdev_get_tdls_soc_obj(struct wlan_objmgr_vdev *vdev)
 {
-	struct wlan_objmgr_psoc *psoc =
-		wlan_pdev_get_psoc(wlan_vdev_get_pdev(vdev));
+	struct wlan_objmgr_psoc *psoc;
+	struct tdls_soc_priv_obj *soc_obj;
 
-	return (struct tdls_soc_priv_obj *)
+	if (!vdev) {
+		tdls_err("NULL vdev");
+		return NULL;
+	}
+
+	wlan_vdev_obj_lock(vdev);
+	psoc = wlan_vdev_get_psoc(vdev);
+	wlan_vdev_obj_unlock(vdev);
+	if (!psoc) {
+		tdls_err("can't get psoc");
+		return NULL;
+	}
+
+	wlan_psoc_obj_lock(psoc);
+	soc_obj = (struct tdls_soc_priv_obj *)
 		wlan_objmgr_psoc_get_comp_private_obj(psoc,
 						      WLAN_UMAC_COMP_TDLS);
+	wlan_psoc_obj_unlock(psoc);
+
+	return soc_obj;
 }
 
 /**
@@ -319,9 +368,18 @@ wlan_vdev_get_tdls_soc_obj(struct wlan_objmgr_vdev *vdev)
 static inline struct tdls_soc_priv_obj *
 wlan_psoc_get_tdls_soc_obj(struct wlan_objmgr_psoc *psoc)
 {
-	return (struct tdls_soc_priv_obj *)
+	struct tdls_soc_priv_obj *soc_obj;
+	if (!psoc) {
+		tdls_err("NULL psoc");
+		return NULL;
+	}
+	wlan_psoc_obj_lock(psoc);
+	soc_obj = (struct tdls_soc_priv_obj *)
 		wlan_objmgr_psoc_get_comp_private_obj(psoc,
 						      WLAN_UMAC_COMP_TDLS);
+	wlan_psoc_obj_unlock(psoc);
+
+	return soc_obj;
 }
 
 /**
@@ -333,22 +391,33 @@ wlan_psoc_get_tdls_soc_obj(struct wlan_objmgr_psoc *psoc)
 static inline struct tdls_vdev_priv_obj *
 wlan_vdev_get_tdls_vdev_obj(struct wlan_objmgr_vdev *vdev)
 {
-	return (struct tdls_vdev_priv_obj *)
+	struct tdls_vdev_priv_obj *vdev_obj;
+
+	if (!vdev) {
+		tdls_err("NULL vdev");
+		return NULL;
+	}
+
+	wlan_vdev_obj_lock(vdev);
+	vdev_obj = (struct tdls_vdev_priv_obj *)
 		wlan_objmgr_vdev_get_comp_private_obj(vdev,
 						      WLAN_UMAC_COMP_TDLS);
+	wlan_vdev_obj_unlock(vdev);
+
+	return vdev_obj;
 }
 
 /**
  * tdls_set_link_status - tdls set link status
  * @vdev: vdev object
  * @mac: mac address of tdls peer
- * @link_status: tdls link status
+ * @link_state: tdls link state
  * @link_reason: reason
  */
 void tdls_set_link_status(struct tdls_vdev_priv_obj *vdev,
 			  const uint8_t *mac,
-			  enum tdls_link_status link_status,
-			  enum tdls_link_reason link_reason);
+			  enum tdls_link_state link_state,
+			  enum tdls_link_state_reason link_reason);
 /**
  * tdls_psoc_obj_create_notification() - tdls psoc create notification handler
  * @psoc: psoc object
