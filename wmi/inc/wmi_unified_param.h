@@ -614,6 +614,8 @@ struct mac_ssid {
  * @reg_info_1: to update min power, max power,
  *              reg power and reg class id
  * @reg_info_2: to update antennamax
+ * @cac_duration_ms: cac duration in milliseconds
+ * @regdomain: Regulatory domain
  * @oper_mode: Operating mode
  * @dfs_pri_multiplier: DFS primary multiplier
  *    allow pulse if they are within multiple of PRI for the radar type
@@ -643,6 +645,8 @@ struct vdev_start_params {
 	uint32_t num_noa_descriptors;
 	uint32_t preferred_rx_streams;
 	uint32_t preferred_tx_streams;
+	uint32_t cac_duration_ms;
+	uint32_t regdomain;
 #ifndef CONFIG_MCL
 	uint8_t oper_mode;
 	int32_t dfs_pri_multiplier;
