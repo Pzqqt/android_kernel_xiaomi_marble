@@ -33,6 +33,13 @@
 #if !defined(__QDF_TYPES_H)
 #define __QDF_TYPES_H
 
+#ifndef CONFIG_MCL
+#if !defined(__printf)
+#define __printf(a, b)
+#endif
+#endif
+
+
 /* Include Files */
 #include <i_qdf_types.h>
 
@@ -481,7 +488,6 @@ enum tQDF_GLOBAL_CON_MODE {
 #define  QDF_IS_EPPING_ENABLED(mode) (mode == QDF_GLOBAL_EPPING_MODE)
 
 
-#ifdef CONFIG_MCL
 /**
  * qdf_trace_msg()- logging API
  * @module: Module identifier. A member of the QDF_MODULE_ID enumeration that
@@ -504,6 +510,7 @@ enum tQDF_GLOBAL_CON_MODE {
 void __printf(3, 4) qdf_trace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
 		   char *str_format, ...);
 
+#ifdef CONFIG_MCL
 #define qdf_print(args...) \
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR, ## args)
 

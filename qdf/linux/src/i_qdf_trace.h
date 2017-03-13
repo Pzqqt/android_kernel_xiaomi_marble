@@ -67,8 +67,8 @@
 				printk("\n"); \
 			} \
 		} while (0)
-#define QDF_TRACE(x, log_level, args...) \
-	qdf_trace(log_level, args)
+
+#define QDF_TRACE qdf_trace_msg
 
 #define QDF_TRACE_HEX_DUMP qdf_trace_hex_dump
 #endif /* CONFIG_MCL */

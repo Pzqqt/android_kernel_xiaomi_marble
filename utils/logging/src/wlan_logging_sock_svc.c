@@ -351,6 +351,16 @@ static int wlan_add_user_log_radio_time_stamp(char *tbuf, size_t tbuf_sz,
 }
 #endif
 
+#ifdef CONFIG_MCL
+static inline void print_to_console(char *tbuf, char *to_be_sent)
+{
+	pr_info("%s %s\n", tbuf, to_be_sent);
+}
+#else
+#define print_to_console(str1, str2)
+#endif
+
+
 int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
 {
 	/* Add the current time stamp */
@@ -456,7 +466,7 @@ int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
 	if (gwlan_logging.log_fe_to_console
 	    && ((QDF_TRACE_LEVEL_FATAL == log_level)
 		|| (QDF_TRACE_LEVEL_ERROR == log_level))) {
-		pr_info("%s %s\n", tbuf, to_be_sent);
+		print_to_console(tbuf, to_be_sent);
 	}
 
 	return 0;

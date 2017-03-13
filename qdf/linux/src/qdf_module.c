@@ -50,6 +50,7 @@ MODULE_LICENSE("Dual BSD/GPL");
 static int __init
 qdf_mod_init(void)
 {
+	qdf_shared_print_ctrl_init();
 	qdf_logging_init();
 	qdf_perfmod_init();
 	return 0;
@@ -66,6 +67,7 @@ qdf_mod_exit(void)
 {
 	qdf_perfmod_exit();
 	qdf_logging_exit();
+	qdf_shared_print_ctrl_cleanup();
 }
 module_exit(qdf_mod_exit);
 

@@ -21,7 +21,6 @@ INCS += -Inbuf/linux -Inet/linux -Ios/linux
 INCS += -I$(WLAN_TOP)/../../include
 INCS += -I$(WLAN_TOP)/cmn_dev/qdf/inc
 INCS += -I$(WLAN_TOP)/cmn_dev/qdf/linux/src
-
 INCS += -I$(obj)/$(HOST_CMN_CONVG_PTT)/inc \
         -I$(obj)/$(HOST_CMN_CONVG_NLINK)/inc \
         -I$(obj)/$(HOST_CMN_CONVG_LOGGING)/inc \
@@ -38,15 +37,17 @@ INCS += -I$(obj)/$(HOST_CMN_CONVG_PTT)/inc \
         -I$(obj)/$(DEPTH)/cmn_dev/umac/global_umac_dispatcher/lmac_if/inc \
         -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/mgmt_txrx/dispatcher/inc \
         -I$(obj)/$(DEPTH)/offload/hw/include \
-        -I$(obj)/$(DEPTH)/umac/base
+        -I$(obj)/$(DEPTH)/umac/base \
+        -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/cmn_defs/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/umac/scan/dispatcher/inc \
+        -I$(obj)/$(DEPTH)/hal/linux \
+        -I$(obj)/$(DEPTH)/lmac/ath_dev
+
 
 
 obj-m += qdf.o
 
 EXTRA_CFLAGS+= $(INCS) $(COPTS) -Wno-unused-function
-ifeq ($(LOGGING_UTILS_SUPPORT),1)
-EXTRA_CFLAGS+= -DWLAN_LOGGING_SOCK_SVC_ENABLE=1
-endif
 
 ifeq ($(strip ${QCA_PARTNER_MAKE_F_SUPPORT}),1)
 MOD_CFLAGS = -D"KBUILD_STR(s)=\#s" -D"KBUILD_BASENAME=KBUILD_STR(qdf.mod)"  -D"KBUILD_MODNAME=KBUILD_STR(qdf)"

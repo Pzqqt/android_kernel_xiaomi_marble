@@ -39,13 +39,13 @@
 #define QDF_TRACE_LEVEL_TO_MODULE_BITMASK(_level) ((1 << (_level)))
 
 #include <wlan_logging_sock_svc.h>
+static int qdf_pidx = -1;
 #ifdef CONFIG_MCL
 
 #include "qdf_time.h"
 #include "qdf_mc_timer.h"
 
 /* Global qdf print id */
-static int qdf_pidx = -1;
 
 /* Preprocessor definitions and constants */
 
@@ -1706,6 +1706,24 @@ EXPORT_SYMBOL(qdf_dp_trace_dump_all);
 
 #endif
 
+#else /* CONFIG_MCL */
+
+void qdf_trace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
+		char *str_format, ...)
+{
+	va_list val;
+
+	va_start(val, str_format);
+	/*
+	 * TODO: remove this hack when modules start using the qdf_print_ctrl
+	 * framework.
+	 * Any newly added code that wishes to use QDF_TRACE needs to adapt
+	 * to the framework, and using it this way is not encouraged.
+	 */
+	qdf_trace_msg_cmn(qdf_pidx, module, level, str_format, val);
+	va_end(val);
+}
+EXPORT_SYMBOL(qdf_trace_msg);
 #endif /* CONFIG_MCL */
 
 struct qdf_print_ctrl print_ctrl_obj[MAX_PRINT_CONFIG_SUPPORTED];
@@ -1792,6 +1810,15 @@ struct category_name_info g_qdf_category_name[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_ANY] = {"ANY"},
 };
 
+#ifdef CONFIG_MCL
+#define print_to_console(str)
+#else
+static inline void print_to_console(char *str_buffer)
+{
+	pr_err("%s\n", str_buffer);
+}
+#endif
+
 void qdf_trace_msg_cmn(unsigned int idx,
 			QDF_MODULE_ID category,
 			QDF_TRACE_LEVEL verbose,
@@ -1855,6 +1882,7 @@ void qdf_trace_msg_cmn(unsigned int idx,
 #if defined(WLAN_LOGGING_SOCK_SVC_ENABLE)
 		wlan_log_to_user(verbose, (char *)str_buffer,
 				 strlen(str_buffer));
+		print_to_console(str_buffer);
 #else
 		pr_err("%s\n", str_buffer);
 #endif
@@ -1968,6 +1996,40 @@ int qdf_print_ctrl_register(const struct category_info *cinfo,
 	return idx;
 }
 EXPORT_SYMBOL(qdf_print_ctrl_register);
+
+#ifndef CONFIG_MCL
+void qdf_shared_print_ctrl_cleanup(void)
+{
+	qdf_print_ctrl_cleanup(qdf_pidx);
+}
+EXPORT_SYMBOL(qdf_shared_print_ctrl_cleanup);
+
+extern int qdf_dbg_mask;
+void qdf_shared_print_ctrl_init(void)
+{
+	int i;
+	QDF_TRACE_LEVEL level;
+	struct category_info *cinfo = qdf_mem_malloc((sizeof(*cinfo))*
+			MAX_SUPPORTED_CATEGORY);
+	if (cinfo == NULL) {
+		pr_info("ERROR!! qdf_mem_malloc failed. \
+				Shared Print Ctrl object not initialized \
+				\nQDF_TRACE messages may not be logged/displayed");
+		return;
+	}
+	for (i = 0; i < MAX_SUPPORTED_CATEGORY; i++) {
+		cinfo[i].category_verbose_mask = 0;
+		for (level = QDF_TRACE_LEVEL_NONE; level <= qdf_dbg_mask; level++) {
+			cinfo[i].category_verbose_mask |=
+				QDF_TRACE_LEVEL_TO_MODULE_BITMASK(level);
+		}
+	}
+	qdf_pidx = qdf_print_ctrl_register(cinfo, NULL, NULL,
+			"LOG_SHARED_OBJ");
+	qdf_mem_free(cinfo);
+}
+EXPORT_SYMBOL(qdf_shared_print_ctrl_init);
+#endif
 
 QDF_STATUS qdf_print_set_category_verbose(unsigned int idx,
 						QDF_MODULE_ID category,

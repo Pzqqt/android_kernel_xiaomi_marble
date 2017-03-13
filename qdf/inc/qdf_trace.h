@@ -599,6 +599,15 @@ int qdf_print_ctrl_register(const struct category_info *cinfo,
 			    const char *pctrl_name);
 
 /**
+ * qdf_shared_print_ctrl_init() - Initialize the shared print ctrl obj with
+ *                                all categories set to the default level
+ *
+ * Return                 : void
+ *
+ */
+void qdf_shared_print_ctrl_init(void);
+
+/**
  * qdf_print_setup() - Setup default values to all the print control objects
  *
  * Register new print control object for the callee
@@ -618,6 +627,15 @@ QDF_STATUS qdf_print_setup(void);
  * Return : QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE on failure
  */
 QDF_STATUS qdf_print_ctrl_cleanup(unsigned int idx);
+
+/**
+ * qdf_print_ctrl_shared_cleanup() - Clean up of the shared object
+ *
+ * Cleanup the shared print-ctrl-object
+ *
+ * Return : void
+ */
+void qdf_shared_print_ctrl_cleanup(void);
 
 /**
  * qdf_print_set_category_verbose() - Enable/Disable category for a
