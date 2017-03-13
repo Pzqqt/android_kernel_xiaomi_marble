@@ -932,6 +932,55 @@ QDF_STATUS wmi_unified_set_p2pgo_noa_req_cmd(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef CONVERGED_P2P_ENABLE
+/**
+ * wmi_unified_p2p_lo_start_cmd() - send p2p lo start request to fw
+ * @wmi_hdl: wmi handle
+ * @param: p2p listen offload start parameters
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_p2p_lo_start_cmd(void *wmi_hdl,
+	struct p2p_lo_start *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (!wmi_handle) {
+		WMI_LOGE("wmi handle is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (wmi_handle->ops->send_p2p_lo_start_cmd)
+		return wmi_handle->ops->send_p2p_lo_start_cmd(wmi_handle,
+				  param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_p2p_lo_stop_cmd() - send p2p lo stop request to fw
+ * @wmi_hdl: wmi handle
+ * @vdev_id: vdev id
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_p2p_lo_stop_cmd(void *wmi_hdl, uint8_t vdev_id)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (!wmi_handle) {
+		WMI_LOGE("wmi handle is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (wmi_handle->ops->send_p2p_lo_start_cmd)
+		return wmi_handle->ops->send_p2p_lo_stop_cmd(wmi_handle,
+				  vdev_id);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif /* End of CONVERGED_P2P_ENABLE */
+
 /**
  * wmi_get_temperature() - get pdev temperature req
  * @wmi_hdl: wmi handle
@@ -5460,6 +5509,58 @@ QDF_STATUS wmi_extract_swba_noa_info(void *wmi_hdl, void *evt_buf,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+#ifdef CONVERGED_P2P_ENABLE
+/**
+ * wmi_extract_p2p_lo_stop_ev_param() - extract p2p lo stop param from event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @param: Pointer to hold listen offload stop param
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_p2p_lo_stop_ev_param(void *wmi_hdl, void *evt_buf,
+	struct p2p_lo_event *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (!wmi_handle) {
+		WMI_LOGE("wmi handle is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (wmi_handle->ops->extract_p2p_lo_stop_ev_param)
+		return wmi_handle->ops->extract_p2p_lo_stop_ev_param(
+				wmi_handle, evt_buf, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_extract_p2p_noa_ev_param() - extract p2p noa param from event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @param: Pointer to hold p2p noa param
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_p2p_noa_ev_param(void *wmi_hdl, void *evt_buf,
+	struct p2p_noa_info *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (!wmi_handle) {
+		WMI_LOGE("wmi handle is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (wmi_handle->ops->extract_p2p_noa_ev_param)
+		return wmi_handle->ops->extract_p2p_noa_ev_param(
+				wmi_handle, evt_buf, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
 
 /**
  * wmi_extract_peer_sta_ps_statechange_ev() - extract peer sta ps state
