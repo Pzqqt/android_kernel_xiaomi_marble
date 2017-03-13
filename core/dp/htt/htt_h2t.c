@@ -51,7 +51,7 @@
 #include <ol_htt_tx_api.h>
 
 #include <htt_internal.h>
-#include <cds_concurrency.h>
+#include <wlan_policy_mgr_api.h>
 
 #define HTT_MSG_BUF_SIZE(msg_bytes) \
 	((msg_bytes) + HTC_HEADER_LEN + HTC_HDR_ALIGNMENT_PADDING)

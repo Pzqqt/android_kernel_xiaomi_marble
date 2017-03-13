@@ -51,7 +51,7 @@
 
 #include "i_bmi.h"
 #include "qwlan_version.h"
-#include "cds_concurrency.h"
+#include "wlan_policy_mgr_api.h"
 #include "dbglog_host.h"
 
 #ifdef FEATURE_SECURE_FIRMWARE

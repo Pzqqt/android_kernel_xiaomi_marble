@@ -58,7 +58,7 @@
 #include <ipv6_defs.h>          /* IPv6 header defs */
 #include <ol_vowext_dbg_defs.h>
 #include <wma.h>
-#include <cds_concurrency.h>
+#include <wlan_policy_mgr_api.h>
 #include "pktlog_ac_fmt.h"
 #include <cdp_txrx_handle.h>
 #include <pld_common.h>

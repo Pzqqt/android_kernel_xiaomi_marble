@@ -52,7 +52,7 @@
 #include "ol_fw.h"
 #include "ol_if_athvar.h"
 #include "hif.h"
-#include "cds_concurrency.h"
+#include "wlan_policy_mgr_api.h"
 #include "cds_utils.h"
 #include "wlan_logging_sock_svc.h"
 #include "wma.h"

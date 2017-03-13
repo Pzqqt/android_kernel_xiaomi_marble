@@ -54,7 +54,7 @@
 #include <cds_ieee80211_common.h>   /* ieee80211_frame, ieee80211_qoscntl */
 #include <cds_ieee80211_defines.h>  /* ieee80211_rx_status */
 #include <cds_utils.h>
-#include <cds_concurrency.h>
+#include <wlan_policy_mgr_api.h>
 #include "ol_txrx_types.h"
 #ifdef DEBUG_DMA_DONE
 #include <asm/barrier.h>

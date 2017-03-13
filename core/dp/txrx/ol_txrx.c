@@ -82,7 +82,7 @@
 #ifndef REMOVE_PKT_LOG
 #include "pktlog_ac.h"
 #endif
-#include <cds_concurrency.h>
+#include <wlan_policy_mgr_api.h>
 #include "epping_main.h"
 #include <a_types.h>
 #include <cdp_txrx_handle.h>
