@@ -457,6 +457,8 @@ static QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
 		}
 	}
 
+	hif_configure_ext_group_interrupts(soc->hif_handle);
+
 	return QDF_STATUS_SUCCESS;
 }
 
