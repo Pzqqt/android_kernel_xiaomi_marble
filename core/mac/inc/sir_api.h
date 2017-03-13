@@ -5082,6 +5082,450 @@ struct sir_wifi_iface_tx_fail {
 	enum htt_tx_status status;
 };
 
+/**
+ * struct sir_wifi_chan_cca_stats - channal CCA stats
+ * @vdev_id: vdev ID
+ * @idle_time: percentage of idle time, no TX, no RX, no interference
+ * @tx_time: percentage of time transmitting packets
+ * @rx_in_bss_time: percentage of time receiving packets in current BSS
+ * @rx_out_bss_time: percentage of time receiving packets not in current BSS
+ * @rx_busy_time: percentage of time interference detected
+ * @rx_in_bad_cond_time: percentage of time receiving packets with errors
+ *	or packets flagged as retransmission or seqnum discontinued.
+ * @tx_in_bad_cond_time: percentage of time the device transmitted packets
+ *	that haven't been ACKed.
+ * @wlan_not_avail_time: percentage of time the chip is unable to
+ *	work in normal conditions.
+ */
+struct sir_wifi_chan_cca_stats {
+	uint32_t vdev_id;
+	uint32_t idle_time;
+	uint32_t tx_time;
+	uint32_t rx_in_bss_time;
+	uint32_t rx_out_bss_time;
+	uint32_t rx_busy_time;
+	uint32_t rx_in_bad_cond_time;
+	uint32_t tx_in_bad_cond_time;
+	uint32_t wlan_not_avail_time;
+};
+
+#define WIFI_MAX_CHAINS                 8
+
+/**
+ * struct sir_wifi_peer_signal_stats - peer signal stats
+ * @vdev_id: vdev ID
+ * @peer_id: peer ID
+ * @per_ant_snr: per antenna SNR
+ * @nf: peer background noise
+ */
+struct sir_wifi_peer_signal_stats {
+	uint32_t vdev_id;
+	uint32_t peer_id;
+
+	/* per antenna SNR in current bss */
+	int32_t per_ant_snr[WIFI_MAX_CHAINS];
+
+	/* Background noise */
+	int32_t nf[WIFI_MAX_CHAINS];
+};
+
+#define WIFI_VDEV_NUM           4
+#define WFIF_MCS_NUM            10
+#define WIFI_AGGR_NUM           8
+#define WIFI_DELAY_SIZE         11
+
+/**
+ * struct sir_wifi_tx - per AC tx stats
+ * @msdus: number of totoal MSDUs on MAC layer in the period
+ * @mpdus: number of totoal MPDUs on MAC layer in the period
+ * @ppdus: number of totoal PPDUs on PHY layer in the period
+ * @bytes: bytes of tx data on MAC layer in the period
+ * @drops: number of TX packets cancelled due to any reason in the period,
+ *	such as WMM limitation/bandwidth limitation/radio congestion
+ * @drop_bytes: bytes of dropped TX packets in the period
+ * @retries: number of unacked transmissions of MPDUs
+ * @failed: number of packets have not been ACKed despite retried
+ * @aggr_len: length of the MPDU aggregation size buffer
+ * @mpdu_aggr_size: histogram of MPDU aggregation size
+ * @success_mcs_len: length of success mcs buffer
+ * @success_mcs: histogram of successed received MPDUs encoding rate
+ * @fail_mcs_len: length of failed mcs buffer
+ * @fail_mcs: histogram of failed received MPDUs encoding rate
+ * @delay_len: length of the delay histofram buffer
+ * @delay: histogram of delays on MAC layer
+ */
+struct sir_wifi_tx {
+	uint32_t msdus;
+	uint32_t mpdus;
+	uint32_t ppdus;
+	uint32_t bytes;
+	uint32_t drops;
+	uint32_t drop_bytes;
+	uint32_t retries;
+	uint32_t failed;
+	uint32_t aggr_len;
+	uint32_t *mpdu_aggr_size;
+	uint32_t success_mcs_len;
+	uint32_t *success_mcs;
+	uint32_t fail_mcs_len;
+	uint32_t *fail_mcs;
+	uint32_t delay_len;
+	uint32_t *delay;
+};
+
+/**
+ * struct sir_wifi_rx - per AC rx stats
+ * @mpdus: number of RX packets on MAC layer
+ * @bytes: bytes of RX packets on MAC layer
+ * @ppdus: number of RX packets on PHY layer
+ * @ppdu_bytes: bytes of RX packets on PHY layer
+ * @mpdu_lost: number of discontinuity in seqnum
+ * @mpdu_retry: number of RX packets flagged as retransmissions
+ * @mpdu_dup: number of RX packets identified as duplicates
+ * @mpdu_discard: number of RX packets discarded
+ * @aggr_len: length of MPDU aggregation histogram buffer
+ * @mpdu_aggr: histogram of MPDU aggregation size
+ * @mcs_len: length of mcs histogram buffer
+ * @mcs: histogram of encoding rate.
+ */
+struct sir_wifi_rx {
+	uint32_t mpdus;
+	uint32_t bytes;
+	uint32_t ppdus;
+	uint32_t ppdu_bytes;
+	uint32_t mpdu_lost;
+	uint32_t mpdu_retry;
+	uint32_t mpdu_dup;
+	uint32_t mpdu_discard;
+	uint32_t aggr_len;
+	uint32_t *mpdu_aggr;
+	uint32_t mcs_len;
+	uint32_t *mcs;
+};
+
+/**
+ * struct sir_wifi_ll_ext_wmm_ac_stats - stats for WMM AC
+ * @type: WMM AC type
+ * @tx_stats: pointer to TX stats
+ * @rx_stats: pointer to RX stats
+ */
+struct sir_wifi_ll_ext_wmm_ac_stats {
+	uint32_t type;
+	struct sir_wifi_tx *tx_stats;
+	struct sir_wifi_rx *rx_stats;
+};
+
+#define WIFI_INVALID_PEER_ID            (-1)
+#define WIFI_INVALID_VDEV_ID            (-1)
+#define WIFI_MAX_AC                     (4)
+
+/**
+ * struct sir_wifi_ll_ext_peer_stats - per peer stats
+ * @peer_id: peer ID
+ * @vdev_id: VDEV ID
+ * mac_address: MAC address
+ * @sta_ps_inds: how many times STAs go to sleep
+ * @sta_ps_durs: total sleep time of STAs (units in ms)
+ * @rx_probe_reqs: number of probe requests received
+ * @rx_oth_mgmts: number of other management frames received,
+ *		  not including probe requests
+ * @peer_signal_stat: signal stats
+ * @ac_stats: WMM BE/BK/VI/VO stats
+ */
+struct sir_wifi_ll_ext_peer_stats {
+	uint32_t peer_id;
+	uint32_t vdev_id;
+	tSirMacAddr mac_address;
+	uint32_t sta_ps_inds;
+	uint32_t sta_ps_durs;
+	uint32_t rx_probe_reqs;
+	uint32_t rx_oth_mgmts;
+	struct sir_wifi_peer_signal_stats peer_signal_stats;
+	struct sir_wifi_ll_ext_wmm_ac_stats ac_stats[WIFI_MAX_AC];
+};
+
+/**
+ * struct sir_wifi_ll_ext_stats - link layer stats report
+ * @trigger_cond_id:  Indicate what triggered this event.
+ *	1: timeout. 2: threshold
+ * @cca_chgd_bitmap: Bitmap to indicate changed channel CCA stats
+ *	which exceeded the thresholds
+ * @sig_chgd_bitmap: Bitmap to indicate changed peer signal stats
+ *	which exceeded the thresholds
+ * @tx_chgd_bitmap: Bitmap to indicate changed TX counters
+ *	which exceeded the thresholds
+ * @rx_chgd_bitmap: Bitmap to indicate changed RX counters
+ *	which exceeded the thresholds
+ * @chan_cca_stats: channel CCA stats
+ * @peer_signal_stats: peer signal stats
+ * @tx_mpdu_aggr_array_len: length of TX MPDU aggregation buffer
+ * @tx_succ_mcs_array_len: length of mcs buffer for ACKed MPDUs
+ * @tx_fail_mcs_array_len: length of mcs buffer for no-ACKed MPDUs
+ * @tx_delay_array_len: length of delay stats buffer
+ * @rx_mpdu_aggr_array_len: length of RX MPDU aggregation buffer
+ * @rx_mcs_array_len: length of RX mcs stats buffer
+ * @peer_stats: peer stats
+ * @cca: physical channel CCA stats
+ * @stats: pointer to stats data buffer.
+ *
+ * Structure of the whole statictics is like this:
+ *     ---------------------------------
+ *     |      trigger_cond_i           |
+ *     +-------------------------------+
+ *     |      cca_chgd_bitmap          |
+ *     +-------------------------------+
+ *     |      sig_chgd_bitmap          |
+ *     +-------------------------------+
+ *     |      tx_chgd_bitmap           |
+ *     +-------------------------------+
+ *     |      rx_chgd_bitmap           |
+ *     +-------------------------------+
+ *     |      peer_num                 |
+ *     +-------------------------------+
+ *     |      channel_num              |
+ *     +-------------------------------+
+ *     |      tx_mpdu_aggr_array_len   |
+ *     +-------------------------------+
+ *     |      tx_succ_mcs_array_len    |
+ *     +-------------------------------+
+ *     |      tx_fail_mcs_array_len    |
+ *     +-------------------------------+
+ *     |      tx_delay_array_len       |
+ *     +-------------------------------+
+ *     |      rx_mpdu_aggr_array_len   |
+ *     +-------------------------------+
+ *     |      rx_mcs_array_len         |
+ *     +-------------------------------+
+ *     |      pointer to CCA stats     |
+ *     +-------------------------------+
+ *     |      pointer to peer stats    |
+ *     +-------------------------------+
+ *     |      CCA stats                |
+ *     +-------------------------------+
+ *     |      peer_stats               |----+
+ *     +-------------------------------+    |
+ *     |      per peer signals stats   |<---+
+ *     |        peer0 ~ peern          |    |
+ *     +-------------------------------+    |
+ *     | TX aggr/mcs parameters array  |    |
+ *     | Length of this buffer is      |    |
+ *     | configurable for user layer.  |<-+ |
+ *     +-------------------------------+  | |
+ *     |      per peer tx stats        |--+ |
+ *     |         BE                    | <--+
+ *     |         BK                    |    |
+ *     |         VI                    |    |
+ *     |         VO                    |    |
+ *     +-------------------------------+    |
+ *     | TX aggr/mcs parameters array  |    |
+ *     | Length of this buffer is      |    |
+ *     | configurable for user layer.  |<-+ |
+ *     +-------------------------------+  | |
+ *     |      peer peer rx stats       |--+ |
+ *     |         BE                    | <--+
+ *     |         BE                    |
+ *     |         BK                    |
+ *     |         VI                    |
+ *     |         VO                    |
+ *     ---------------------------------
+ */
+struct sir_wifi_ll_ext_stats {
+	uint32_t trigger_cond_id;
+	uint32_t cca_chgd_bitmap;
+	uint32_t sig_chgd_bitmap;
+	uint32_t tx_chgd_bitmap;
+	uint32_t rx_chgd_bitmap;
+	uint8_t peer_num;
+	uint8_t channel_num;
+	uint32_t tx_mpdu_aggr_array_len;
+	uint32_t tx_succ_mcs_array_len;
+	uint32_t tx_fail_mcs_array_len;
+	uint32_t tx_delay_array_len;
+	uint32_t rx_mpdu_aggr_array_len;
+	uint32_t rx_mcs_array_len;
+	struct sir_wifi_ll_ext_peer_stats *peer_stats;
+	struct sir_wifi_chan_cca_stats *cca;
+	uint8_t stats[];
+};
+
+/**
+ * struct sir_channel_cca_threshold - threshold for channel CCA
+ * @idle_time: idle time, no TX, no RX, no interference
+ * @tx_time: time transmitting packets
+ * @rx_in_bss_time: time receiving packets in current BSSs
+ * @rx_out_bss_time: time receiving packets not in current BSSs
+ * @rx_busy_time: time interference detected
+ * @rx_in_bad_cond_time: receiving packets with errors
+ * @tx_in_bad_cond_time: time transmitted packets not been ACKed
+ * @wlan_not_avail_time: wlan card cannot work
+ */
+struct sir_channel_cca_threshold {
+	uint32_t idle_time;
+	uint32_t tx_time;
+	uint32_t rx_in_bss_time;
+	uint32_t rx_out_bss_time;
+	uint32_t rx_busy_time;
+	uint32_t rx_in_bad_cond_time;
+	uint32_t tx_in_bad_cond_time;
+	uint32_t wlan_not_avail_time;
+};
+
+/**
+ * struct sir_signal_threshold - threshold for per peer sigbal
+ * @snr: signal to noise rate
+ * @nf: noise floor
+ */
+struct sir_signal_threshold {
+	uint32_t snr;
+	uint32_t nf;
+};
+
+/**
+ * struct sir_tx_threshold - threshold for TX
+ * @msdu: TX MSDUs on MAC layer
+ * @mpdu: TX MPDUs on MAC layer
+ * @ppdu: TX PPDUs on MAC layer
+ * @bytes: TX bytes on MAC layer
+ * @msdu_drop: drooped MSDUs
+ * @byte_drop: dropped Bytes
+ * @mpdu_retry: MPDU not acked
+ * @ppdu_fail: PPDUs which received no block ack
+ * @aggregation: aggregation size
+ * @succ_mcs: histogram of encoding rate for acked PPDUs
+ * @fail_mcs: histogram of encoding rate for no-acked PPDUs
+ */
+struct sir_tx_threshold {
+	uint32_t msdu;
+	uint32_t mpdu;
+	uint32_t ppdu;
+	uint32_t bytes;
+	uint32_t msdu_drop;
+	uint32_t byte_drop;
+	uint32_t mpdu_retry;
+	uint32_t mpdu_fail;
+	uint32_t ppdu_fail;
+	uint32_t aggregation;
+	uint32_t succ_mcs;
+	uint32_t fail_mcs;
+	uint32_t delay;
+};
+
+/**
+ * struct sir_rx_threshold - threshold for RX
+ * @mpdu: RX MPDUs on MAC layer
+ * @bytes: RX bytes on MAC layer
+ * @ppdu: RX PPDU on PHY layer
+ * @ppdu_bytes: RX bytes on PHY layer
+ * @disorder: discontinuity in seqnum
+ * @mpdu_retry: MPDUs flagged as retry
+ * @mpdu_dup: MPDUs identified as duplicated
+ * @aggregation: aggregation size
+ * @mcs: histogram of encoding rate for PPDUs
+ * @ps_inds: power save indication
+ * @ps_durs: total time in power save
+ * @probe_reqs: probe request received
+ * @other_mgmt: other MGMT frames received
+ */
+struct sir_rx_threshold {
+	uint32_t mpdu;
+	uint32_t bytes;
+	uint32_t ppdu;
+	uint32_t ppdu_bytes;
+	uint32_t disorder;
+	uint32_t mpdu_lost;
+	uint32_t mpdu_retry;
+	uint32_t mpdu_dup;
+	uint32_t mpdu_discard;
+	uint32_t aggregation;
+	uint32_t mcs;
+	uint32_t ps_inds;
+	uint32_t ps_durs;
+	uint32_t probe_reqs;
+	uint32_t other_mgmt;
+};
+
+/**
+ * struct sir_wifi_ll_ext_stats_threshold - Threshold for stats update
+ * @period: MAC counter indication period (unit in ms)
+ * @enable: if threshold mechnism is enabled or disabled
+ * @enable_bitmap: whether dedicated threshold is enabed.
+ *     Every MAC counter has a dedicated threshold. If the dedicated
+ *     threshold is not set in the bitmap, global threshold will take
+ *     effect.
+ * @global: whether clobal threshold is enabled.
+ *     When both global and dedicated threshold are diabled, MAC counter
+ *     will indicate stats periodically.
+ * @global_threshold: global threshold value
+ * @cca_bitmap: bitmap for CCA.
+ *     Bit0: idle time
+ *     Bit1: tx time
+ *     Bit2: RX in BSS
+ *     Bit3: RX out of BSS
+ *     Bit4: medium busy
+ *     Bit5: RX bad
+ *     Bit6: TX bad
+ *     Bit7: WLAN card not available
+ * @signal_bitmap:
+ *     Bit0: Per channel SNR counter
+ *     Bit1: Per channel noise floor counter
+ * @tx_bitmap:  bitmap for TX counters
+ *     Bit0: TX counter unit in MSDU
+ *     Bit1: TX counter unit in MPDU
+ *     Bit2: TX counter unit in PPDU
+ *     Bit3: TX counter unit in byte
+ *     Bit4: Dropped MSDUs
+ *     Bit5: Dropped Bytes
+ *     Bit6: MPDU retry counter
+ *     Bit7: MPDU failure counter
+ *     Bit8: PPDU failure counter
+ *     Bit9: MPDU aggregation counter
+ *     Bit10: MCS counter for ACKed MPDUs
+ *     Bit11: MCS counter for Failed MPDUs
+ *     Bit12: TX Delay counter
+ * @rx_bitmap:bitmap for RX counters
+ *     Bit0: MAC RX counter unit in MPDU
+ *     Bit1: MAC RX counter unit in byte
+ *     Bit2: PHY RX counter unit in PPDU
+ *     Bit3: PHY RX counter unit in byte
+ *     Bit4: Disorder counter
+ *     Bit5: Retry counter
+ *     Bit6: Duplication counter
+ *     Bit7: Discard counter
+ *     Bit8: MPDU aggregation size counter
+ *     Bit9: MCS counter
+ *     Bit10: Peer STA power state change (wake to sleep) counter
+ *     Bit11: Peer STA power save counter, total time in PS mode
+ *     Bit12: Probe request counter
+ *     Bit13: Other management frames counter
+ * @cca_thresh: CCA threshold
+ * @signal_thresh: signal threshold
+ * @tx_thresh: TX threshold
+ * @rx_thresh: RX threshold
+ *
+ * Generally, Link layer statistics is reported periodically. But if the
+ * variation of one stats of compared to the pervious notification exceeds
+ * a threshold, FW will report the new stats immediately.
+ * This structure contains threshold for different counters.
+ */
+struct sir_ll_ext_stats_threshold {
+	uint32_t period;
+	uint32_t enable;
+	uint32_t enable_bitmap;
+	uint32_t global;
+	uint32_t global_threshold;
+	uint32_t cca_bitmap;
+	uint32_t signal_bitmap;
+	uint32_t tx_bitmap;
+	uint32_t rx_bitmap;
+	struct sir_channel_cca_threshold cca;
+	struct sir_signal_threshold signal;
+	struct sir_tx_threshold tx;
+	struct sir_rx_threshold rx;
+};
+
+#define LL_STATS_MIN_PERIOD          10
+#define LL_STATS_INVALID_PERIOD      0xFFFFFFFF
+
 typedef struct {
 	uint32_t paramId;
 	uint8_t ifaceId;

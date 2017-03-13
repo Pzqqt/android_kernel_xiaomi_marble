@@ -822,6 +822,8 @@ QDF_STATUS wma_process_ll_stats_get_req
 int wma_unified_link_iface_stats_event_handler(void *handle,
 					       uint8_t *cmd_param_info,
 					       uint32_t len);
+void wma_config_stats_ext_threshold(tp_wma_handle wma,
+				    struct sir_ll_ext_stats_threshold *thresh);
 #endif
 
 void wma_post_link_status(tAniGetLinkStatus *pGetLinkStatus,
