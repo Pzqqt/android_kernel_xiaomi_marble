@@ -1402,7 +1402,6 @@ struct hdd_context_s {
 
 #ifdef FEATURE_WLAN_TDLS
 	eTDLSSupportMode tdls_mode;
-	bool concurrency_marked;
 	eTDLSSupportMode tdls_mode_last;
 	tdlsConnInfo_t tdlsConnInfo[HDD_MAX_NUM_TDLS_STA];
 	/* maximum TDLS station number allowed upon runtime condition */
