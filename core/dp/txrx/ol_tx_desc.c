@@ -104,6 +104,7 @@ ol_tx_desc_vdev_update(struct ol_tx_desc_t *tx_desc,
 		       struct ol_txrx_vdev_t *vdev)
 {
 	tx_desc->vdev = vdev;
+	tx_desc->vdev_id = vdev->vdev_id;
 }
 
 #ifdef CONFIG_PER_VDEV_TX_DESC_POOL
@@ -155,8 +156,6 @@ struct ol_tx_desc_t *ol_tx_desc_alloc(struct ol_txrx_pdev_t *pdev,
 
 	if (!tx_desc)
 		return NULL;
-
-	tx_desc->vdev_id = vdev->vdev_id;
 
 	ol_tx_desc_vdev_update(tx_desc, vdev);
 	ol_tx_desc_count_inc(vdev);
@@ -223,8 +222,6 @@ struct ol_tx_desc_t *ol_tx_desc_alloc(struct ol_txrx_pdev_t *pdev,
 	} else {
 		pdev->pool_stats.pkt_drop_no_pool++;
 	}
-
-	tx_desc->vdev_id = vdev->vdev_id;
 
 	return tx_desc;
 }
