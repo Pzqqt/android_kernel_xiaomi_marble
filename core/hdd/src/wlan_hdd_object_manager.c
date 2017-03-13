@@ -34,7 +34,7 @@
 #include <wlan_osif_priv.h>
 
 #ifdef NAPIER_SCAN
-static void hdd_init_os_priv(hdd_context_t *hdd_ctx,
+static void hdd_init_pdev_os_priv(hdd_context_t *hdd_ctx,
 	struct pdev_osif_priv *os_priv)
 {
 	/* Initialize the OS private structure*/
@@ -42,6 +42,13 @@ static void hdd_init_os_priv(hdd_context_t *hdd_ctx,
 	wlan_cfg80211_scan_priv_init(hdd_ctx->hdd_pdev);
 }
 #endif
+
+static void hdd_init_vdev_os_priv(hdd_adapter_t *adapter,
+	struct vdev_osif_priv *os_priv)
+{
+	/* Initialize the vdev OS private structure*/
+	os_priv->wdev = adapter->dev->ieee80211_ptr;
+}
 
 int hdd_create_and_store_psoc(hdd_context_t *hdd_ctx, uint8_t psoc_id)
 {
@@ -92,7 +99,7 @@ int hdd_create_and_store_pdev(hdd_context_t *hdd_ctx)
 	}
 	hdd_ctx->hdd_pdev = pdev;
 #ifdef NAPIER_SCAN
-	hdd_init_os_priv(hdd_ctx, priv);
+	hdd_init_pdev_os_priv(hdd_ctx, priv);
 #endif
 	return 0;
 }
@@ -118,6 +125,7 @@ int hdd_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
 {
 	struct wlan_objmgr_vdev *vdev;
 	struct wlan_objmgr_peer *peer;
+	struct vdev_osif_priv *osif_priv;
 	struct wlan_vdev_create_params vdev_params;
 
 	vdev_params.opmode = adapter->device_mode;
@@ -127,6 +135,15 @@ int hdd_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
 		hdd_err("pdev NULL");
 		return -EINVAL;
 	}
+
+	osif_priv = qdf_mem_malloc(sizeof(*osif_priv));
+	if (!osif_priv) {
+		hdd_err("vdev os obj create failed");
+		return -ENOMEM;
+	}
+
+	hdd_init_vdev_os_priv(adapter, osif_priv);
+	vdev_params.osifp = osif_priv;
 
 	vdev = wlan_objmgr_vdev_obj_create(pdev, &vdev_params);
 	if (!vdev) {
@@ -158,10 +175,15 @@ int hdd_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
 int hdd_release_and_destroy_vdev(hdd_adapter_t *adapter)
 {
 	struct wlan_objmgr_vdev *vdev = adapter->hdd_vdev;
+	struct vdev_osif_priv *osif_priv;
 
 	adapter->hdd_vdev = NULL;
 	if (!vdev)
 		return -EFAULT;
+
+	osif_priv = wlan_vdev_get_ospriv(vdev);
+	vdev->vdev_nif.osdev = NULL;
+	qdf_mem_free(osif_priv);
 
 	if (hdd_remove_peer_object(vdev,
 			wlan_vdev_mlme_get_macaddr(vdev))) {
