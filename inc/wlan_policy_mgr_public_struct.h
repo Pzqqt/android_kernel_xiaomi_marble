@@ -750,6 +750,24 @@ enum set_hw_mode_status {
 };
 
 /**
+ * enum policy_mgr_hw_mode_change - identify the HW mode switching to.
+ *
+ * @POLICY_MGR_HW_MODE_NOT_IN_PROGRESS: HW mode change not in progress
+ * @POLICY_MGR_SMM_IN_PROGRESS: switching to SMM mode
+ * @POLICY_MGR_DBS_IN_PROGRESS: switching to DBS mode
+ * @POLICY_MGR_SBS_IN_PROGRESS: switching to SBS mode
+ *
+ * These are generic IDs that identify the various roles
+ * in the software system
+ */
+enum policy_mgr_hw_mode_change {
+	POLICY_MGR_HW_MODE_NOT_IN_PROGRESS = 0,
+	POLICY_MGR_SMM_IN_PROGRESS,
+	POLICY_MGR_DBS_IN_PROGRESS,
+	POLICY_MGR_SBS_IN_PROGRESS
+};
+
+/**
  * struct policy_mgr_conc_connection_info - information of all existing
  * connections in the wlan system
  *

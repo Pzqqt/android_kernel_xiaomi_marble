@@ -252,6 +252,8 @@ extern enum policy_mgr_conc_next_action
  *                  config
  * @dual_mac_cfg: DBS configuration currenctly used by FW for
  *              scan & connections
+ * @hw_mode_change_in_progress: This is to track if HW mode
+ *                            change is in progress
  */
 struct policy_mgr_psoc_priv_obj {
 		struct wlan_objmgr_psoc *psoc;
@@ -279,6 +281,7 @@ struct policy_mgr_psoc_priv_obj {
 		uint8_t gMaxConcurrentActiveSessions;
 		uint8_t conc_system_pref;
 		struct dual_mac_config dual_mac_cfg;
+		uint32_t hw_mode_change_in_progress;
 };
 
 struct policy_mgr_psoc_priv_obj *policy_mgr_get_context(
