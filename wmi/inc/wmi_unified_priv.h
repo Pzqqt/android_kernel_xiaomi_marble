@@ -37,6 +37,10 @@
 #include "qdf_atomic.h"
 #include "wlan_objmgr_psoc_service_ready_api.h"
 
+#ifdef CONVERGED_P2P_ENABLE
+#include <wlan_p2p_public_struct.h>
+#endif
+
 #define WMI_UNIFIED_MAX_EVENT 0x100
 #ifdef CONFIG_MCL
 #define WMI_MAX_CMDS  256
@@ -299,6 +303,14 @@ QDF_STATUS (*send_set_p2pgo_oppps_req_cmd)(wmi_unified_t wmi_handle,
 
 QDF_STATUS (*send_set_p2pgo_noa_req_cmd)(wmi_unified_t wmi_handle,
 			struct p2p_ps_params *noa);
+
+#ifdef CONVERGED_P2P_ENABLE
+QDF_STATUS (*send_p2p_lo_start_cmd)(wmi_unified_t wmi_handle,
+			struct p2p_lo_start *param);
+
+QDF_STATUS (*send_p2p_lo_stop_cmd)(wmi_unified_t wmi_handle,
+			uint8_t vdev_id);
+#endif
 
 QDF_STATUS (*send_set_smps_params_cmd)(wmi_unified_t wmi_handle,
 			  uint8_t vdev_id,
@@ -1094,6 +1106,14 @@ QDF_STATUS (*extract_swba_tim_info)(wmi_unified_t wmi_handle, void *evt_buf,
 
 QDF_STATUS (*extract_swba_noa_info)(wmi_unified_t wmi_handle, void *evt_buf,
 	    uint32_t idx, wmi_host_p2p_noa_info *p2p_desc);
+
+#ifdef CONVERGED_P2P_ENABLE
+QDF_STATUS (*extract_p2p_lo_stop_ev_param)(wmi_unified_t wmi_handle,
+	void *evt_buf, struct p2p_lo_event *param);
+
+QDF_STATUS (*extract_p2p_noa_ev_param)(wmi_unified_t wmi_handle,
+	void *evt_buf, struct p2p_noa_info *param);
+#endif
 
 QDF_STATUS (*extract_peer_sta_ps_statechange_ev)(wmi_unified_t wmi_handle,
 	void *evt_buf, wmi_host_peer_sta_ps_statechange_event *ev);

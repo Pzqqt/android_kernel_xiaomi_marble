@@ -31,6 +31,9 @@
 #include "wmi_unified_priv.h"
 #include "wmi_version_whitelist.h"
 
+#ifdef CONVERGED_P2P_ENABLE
+#include "wlan_p2p_public_struct.h"
+#endif
 
 /* copy_vdev_create_pdev_id() - copy pdev from host params to target command
  *                              buffer.
@@ -2738,6 +2741,149 @@ end:
 	WMI_LOGD("%s: Exit", __func__);
 	return status;
 }
+
+#ifdef CONVERGED_P2P_ENABLE
+/**
+ * send_p2p_lo_start_cmd_tlv() - send p2p lo start request to fw
+ * @wmi_handle: wmi handle
+ * @param: p2p listen offload start parameters
+ *
+ * Return: QDF status
+ */
+static QDF_STATUS send_p2p_lo_start_cmd_tlv(wmi_unified_t wmi_handle,
+	struct p2p_lo_start *param)
+{
+	wmi_buf_t buf;
+	wmi_p2p_lo_start_cmd_fixed_param *cmd;
+	int32_t len = sizeof(*cmd);
+	uint8_t *buf_ptr;
+	QDF_STATUS status;
+	int device_types_len_aligned;
+	int probe_resp_len_aligned;
+
+	if (!param) {
+		WMI_LOGE("lo start param is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	WMI_LOGD("%s: vdev_id:%d", __func__, param->vdev_id);
+
+	device_types_len_aligned =
+		qdf_roundup(param->dev_types_len,
+			sizeof(A_UINT32));
+	probe_resp_len_aligned =
+		qdf_roundup(param->probe_resp_len,
+			sizeof(A_UINT32));
+
+	len += 2 * WMI_TLV_HDR_SIZE + device_types_len_aligned +
+			probe_resp_len_aligned;
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s: Failed to allocate memory for p2p lo start",
+			__func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_p2p_lo_start_cmd_fixed_param *)wmi_buf_data(buf);
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		 WMITLV_TAG_STRUC_wmi_p2p_lo_start_cmd_fixed_param,
+		 WMITLV_GET_STRUCT_TLVLEN(
+			wmi_p2p_lo_start_cmd_fixed_param));
+
+	cmd->vdev_id = param->vdev_id;
+	cmd->ctl_flags = param->ctl_flags;
+	cmd->channel = param->freq;
+	cmd->period = param->period;
+	cmd->interval = param->interval;
+	cmd->count = param->count;
+	cmd->device_types_len = param->dev_types_len;
+	cmd->prob_resp_len = param->probe_resp_len;
+
+	buf_ptr += sizeof(wmi_p2p_lo_start_cmd_fixed_param);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE,
+				device_types_len_aligned);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	qdf_mem_copy(buf_ptr, param->device_types,
+			param->dev_types_len);
+
+	buf_ptr += device_types_len_aligned;
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE,
+			probe_resp_len_aligned);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	qdf_mem_copy(buf_ptr, param->probe_resp_tmplt,
+			param->probe_resp_len);
+
+	WMI_LOGD("%s: Sending WMI_P2P_LO_START command, channel=%d, period=%d, interval=%d, count=%d", __func__,
+	cmd->channel, cmd->period, cmd->interval, cmd->count);
+
+	status = wmi_unified_cmd_send(wmi_handle,
+				buf, len,
+				WMI_P2P_LISTEN_OFFLOAD_START_CMDID);
+	if (status != QDF_STATUS_SUCCESS) {
+		WMI_LOGE("%s: Failed to send p2p lo start: %d",
+			__func__, status);
+		wmi_buf_free(buf);
+		return status;
+	}
+
+	WMI_LOGD("%s: Successfully sent WMI_P2P_LO_START", __func__);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_p2p_lo_stop_cmd_tlv() - send p2p lo stop request to fw
+ * @wmi_handle: wmi handle
+ * @param: p2p listen offload stop parameters
+ *
+ * Return: QDF status
+ */
+static QDF_STATUS send_p2p_lo_stop_cmd_tlv(wmi_unified_t wmi_handle,
+	uint8_t vdev_id)
+{
+	wmi_buf_t buf;
+	wmi_p2p_lo_stop_cmd_fixed_param *cmd;
+	int32_t len;
+	QDF_STATUS status;
+
+	WMI_LOGD("%s: vdev_id:%d", __func__, vdev_id);
+
+	len = sizeof(*cmd);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		qdf_print("%s: Failed to allocate memory for p2p lo stop",
+			__func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+	cmd = (wmi_p2p_lo_stop_cmd_fixed_param *)wmi_buf_data(buf);
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_p2p_lo_stop_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(
+			wmi_p2p_lo_stop_cmd_fixed_param));
+
+	cmd->vdev_id = vdev_id;
+
+	WMI_LOGD("%s: Sending WMI_P2P_LO_STOP command", __func__);
+
+	status = wmi_unified_cmd_send(wmi_handle,
+				buf, len,
+				WMI_P2P_LISTEN_OFFLOAD_STOP_CMDID);
+	if (status != QDF_STATUS_SUCCESS) {
+		WMI_LOGE("%s: Failed to send p2p lo stop: %d",
+			__func__, status);
+		wmi_buf_free(buf);
+		return status;
+	}
+
+	WMI_LOGD("%s: Successfully sent WMI_P2P_LO_STOP", __func__);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* End of CONVERGED_P2P_ENABLE */
 
 /**
  * send_get_temperature_cmd_tlv() - get pdev temperature req
@@ -14659,6 +14805,118 @@ static QDF_STATUS extract_swba_noa_info_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef CONVERGED_P2P_ENABLE
+/**
+ * extract_p2p_noa_ev_param_tlv() - extract p2p noa information from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param param: Pointer to hold p2p noa info
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_p2p_noa_ev_param_tlv(
+	wmi_unified_t wmi_handle, void *evt_buf,
+	struct p2p_noa_info *param)
+{
+	WMI_P2P_NOA_EVENTID_param_tlvs *param_tlvs;
+	wmi_p2p_noa_event_fixed_param *fixed_param;
+	uint8_t i;
+	wmi_p2p_noa_info *wmi_noa_info;
+	uint8_t *buf_ptr;
+	uint32_t descriptors;
+
+	param_tlvs = (WMI_P2P_NOA_EVENTID_param_tlvs *) evt_buf;
+	if (!param_tlvs) {
+		WMI_LOGE("%s: Invalid P2P NoA event buffer", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!param) {
+		WMI_LOGE("noa information param is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	fixed_param = param_tlvs->fixed_param;
+	buf_ptr = (uint8_t *) fixed_param;
+	buf_ptr += sizeof(wmi_p2p_noa_event_fixed_param);
+	wmi_noa_info = (wmi_p2p_noa_info *) (buf_ptr);
+
+	if (!WMI_UNIFIED_NOA_ATTR_IS_MODIFIED(wmi_noa_info)) {
+		WMI_LOGE("%s: noa attr is not modified", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	param->vdev_id = fixed_param->vdev_id;
+	param->index =
+		(uint8_t) WMI_UNIFIED_NOA_ATTR_INDEX_GET(wmi_noa_info);
+	param->opps_ps =
+		(uint8_t) WMI_UNIFIED_NOA_ATTR_OPP_PS_GET(wmi_noa_info);
+	param->ct_window =
+		(uint8_t) WMI_UNIFIED_NOA_ATTR_CTWIN_GET(wmi_noa_info);
+	descriptors = WMI_UNIFIED_NOA_ATTR_NUM_DESC_GET(wmi_noa_info);
+	param->num_desc = (uint8_t) descriptors;
+
+	WMI_LOGD("%s:index %u, opps_ps %u, ct_window %u, num_descriptors = %u", __func__,
+		param->index, param->opps_ps, param->ct_window,
+		param->num_desc);
+	for (i = 0; i < param->num_desc; i++) {
+		param->noa_desc[i].type_count =
+			(uint8_t) wmi_noa_info->noa_descriptors[i].
+			type_count;
+		param->noa_desc[i].duration =
+			wmi_noa_info->noa_descriptors[i].duration;
+		param->noa_desc[i].interval =
+			wmi_noa_info->noa_descriptors[i].interval;
+		param->noa_desc[i].start_time =
+			wmi_noa_info->noa_descriptors[i].start_time;
+		WMI_LOGD("%s:NoA descriptor[%d] type_count %u, duration %u, interval %u, start_time = %u",
+			__func__, i, param->noa_desc[i].type_count,
+			param->noa_desc[i].duration,
+			param->noa_desc[i].interval,
+			param->noa_desc[i].start_time);
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * extract_p2p_lo_stop_ev_param_tlv() - extract p2p lo stop
+ * information from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param param: Pointer to hold p2p lo stop event information
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_p2p_lo_stop_ev_param_tlv(
+	wmi_unified_t wmi_handle, void *evt_buf,
+	struct p2p_lo_event *param)
+{
+	WMI_P2P_LISTEN_OFFLOAD_STOPPED_EVENTID_param_tlvs *param_tlvs;
+	wmi_p2p_lo_stopped_event_fixed_param *lo_param;
+
+	param_tlvs = (WMI_P2P_LISTEN_OFFLOAD_STOPPED_EVENTID_param_tlvs *)
+					evt_buf;
+	if (!param_tlvs) {
+		WMI_LOGE("%s: Invalid P2P lo stop event buffer", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!param) {
+		WMI_LOGE("lo stop event param is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	lo_param = param_tlvs->fixed_param;
+	param->vdev_id = lo_param->vdev_id;
+	param->reason_code = lo_param->reason;
+	WMI_LOGD("%s: vdev_id:%d, reason:%d", __func__,
+		param->vdev_id, param->reason_code);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* End of CONVERGED_P2P_ENABLE */
+
 /**
  * extract_peer_sta_kickout_ev_tlv() - extract peer sta kickout event
  * @wmi_handle: wmi handle
@@ -15809,6 +16067,10 @@ struct wmi_ops tlv_ops =  {
 	.send_get_temperature_cmd = send_get_temperature_cmd_tlv,
 	.send_set_p2pgo_oppps_req_cmd = send_set_p2pgo_oppps_req_cmd_tlv,
 	.send_set_p2pgo_noa_req_cmd = send_set_p2pgo_noa_req_cmd_tlv,
+#ifdef CONVERGED_P2P_ENABLE
+	.send_p2p_lo_start_cmd = send_p2p_lo_start_cmd_tlv,
+	.send_p2p_lo_stop_cmd = send_p2p_lo_stop_cmd_tlv,
+#endif
 	.send_set_smps_params_cmd = send_set_smps_params_cmd_tlv,
 	.send_set_mimops_cmd = send_set_mimops_cmd_tlv,
 	.send_ocb_set_utc_time_cmd = send_ocb_set_utc_time_cmd_tlv,
@@ -16039,6 +16301,11 @@ struct wmi_ops tlv_ops =  {
 	.extract_swba_vdev_map = extract_swba_vdev_map_tlv,
 	.extract_swba_tim_info = extract_swba_tim_info_tlv,
 	.extract_swba_noa_info = extract_swba_noa_info_tlv,
+#ifdef CONVERGED_P2P_ENABLE
+	.extract_p2p_noa_ev_param = extract_p2p_noa_ev_param_tlv,
+	.extract_p2p_lo_stop_ev_param =
+				extract_p2p_lo_stop_ev_param_tlv,
+#endif
 	.extract_peer_sta_kickout_ev = extract_peer_sta_kickout_ev_tlv,
 	.extract_all_stats_count = extract_all_stats_counts_tlv,
 	.extract_pdev_stats = extract_pdev_stats_tlv,
