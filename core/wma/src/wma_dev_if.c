@@ -52,7 +52,6 @@
 #include "lim_session_utils.h"
 
 #include "cds_utils.h"
-#include "cds_concurrency.h"
 
 #if !defined(REMOVE_PKT_LOG)
 #include "pktlog_ac.h"
@@ -72,7 +71,7 @@
 #include <cdp_txrx_cmn.h>
 #include <cdp_txrx_misc.h>
 
-#include "cds_concurrency.h"
+#include "wlan_policy_mgr_api.h"
 #include "wma_nan_datapath.h"
 #include "wlan_tgt_def_config.h"
 #include <cdp_txrx_handle.h>
@@ -820,7 +819,8 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 	if (NULL == mac_ctx) {
 		wma_release_wmi_resp_wakelock(wma);
 		WMA_LOGE("%s: Failed to get mac_ctx", __func__);
-		cds_set_do_hw_mode_change_flag(false);
+		policy_mgr_set_do_hw_mode_change_flag(
+			wma->psoc, false);
 		return -EINVAL;
 	}
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
@@ -832,14 +832,16 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 	param_buf = (WMI_VDEV_START_RESP_EVENTID_param_tlvs *) cmd_param_info;
 	if (!param_buf) {
 		WMA_LOGE("Invalid start response event buffer");
-		cds_set_do_hw_mode_change_flag(false);
+		policy_mgr_set_do_hw_mode_change_flag(
+			wma->psoc, false);
 		return -EINVAL;
 	}
 
 	resp_event = param_buf->fixed_param;
 	if (!resp_event) {
 		WMA_LOGE("Invalid start response event buffer");
-		cds_set_do_hw_mode_change_flag(false);
+		policy_mgr_set_do_hw_mode_change_flag(
+			wma->psoc, false);
 		return -EINVAL;
 	}
 
@@ -895,7 +897,8 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 			    wma->interfaces[resp_event->vdev_id].bssid,
 				&param) != QDF_STATUS_SUCCESS) {
 			WMA_LOGE("%s : failed to send vdev up", __func__);
-			cds_set_do_hw_mode_change_flag(false);
+			policy_mgr_set_do_hw_mode_change_flag(
+				wma->psoc, false);
 			return -EEXIST;
 		}
 		qdf_atomic_set(&wma->interfaces[resp_event->vdev_id].
@@ -920,7 +923,8 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 	if (!req_msg) {
 		WMA_LOGE("%s: Failed to lookup request message for vdev %d",
 			 __func__, resp_event->vdev_id);
-		cds_set_do_hw_mode_change_flag(false);
+		policy_mgr_set_do_hw_mode_change_flag(
+			wma->psoc, false);
 		return -EINVAL;
 	}
 
@@ -938,7 +942,8 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 		if (!params) {
 			WMA_LOGE("%s: channel switch params is NULL for vdev %d",
 				__func__, resp_event->vdev_id);
-			cds_set_do_hw_mode_change_flag(false);
+			policy_mgr_set_do_hw_mode_change_flag(
+				wma->psoc, false);
 			return -EINVAL;
 		}
 
@@ -969,7 +974,8 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 					 __func__, resp_event->vdev_id);
 				wma_vdev_set_mlme_state(wma,
 					resp_event->vdev_id, WLAN_VDEV_S_STOP);
-				cds_set_do_hw_mode_change_flag(false);
+				policy_mgr_set_do_hw_mode_change_flag(
+					wma->psoc, false);
 			} else {
 				wma_vdev_set_mlme_state(wma,
 					resp_event->vdev_id, WLAN_VDEV_S_RUN);
@@ -989,7 +995,8 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 					     iface->bssid,
 					     &param) != QDF_STATUS_SUCCESS) {
 			WMA_LOGE(FL("failed to send vdev up"));
-			cds_set_do_hw_mode_change_flag(false);
+			policy_mgr_set_do_hw_mode_change_flag(
+				wma->psoc, false);
 			return -EEXIST;
 		}
 		wma_vdev_set_mlme_state(wma, resp_event->vdev_id,
@@ -2886,7 +2893,7 @@ static void wma_add_bss_ap_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	uint8_t vdev_id, peer_id;
 	QDF_STATUS status;
 	int8_t maxTxPower;
-	struct sir_hw_mode_params hw_mode = {0};
+	struct policy_mgr_hw_mode_params hw_mode = {0};
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
@@ -2962,9 +2969,9 @@ static void wma_add_bss_ap_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	if (req.ssid.length > 0)
 		qdf_mem_copy(req.ssid.ssId, add_bss->ssId.ssId,
 			     add_bss->ssId.length);
-	status = wma_get_current_hw_mode(&hw_mode);
+	status = policy_mgr_get_current_hw_mode(wma->psoc, &hw_mode);
 	if (!QDF_IS_STATUS_SUCCESS(status))
-		WMA_LOGE("wma_get_current_hw_mode failed");
+		WMA_LOGE("policy_mgr_get_current_hw_mode failed");
 
 	if ((add_bss->nss == 2) && !hw_mode.dbs_cap) {
 		req.preferred_rx_streams = 2;
@@ -3015,7 +3022,7 @@ static void wma_add_bss_ibss_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	uint8_t vdev_id, peer_id;
 	QDF_STATUS status;
 	tSetBssKeyParams key_info;
-	struct sir_hw_mode_params hw_mode = {0};
+	struct policy_mgr_hw_mode_params hw_mode = {0};
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	vdev = wma_find_vdev_by_addr(wma, add_bss->selfMacAddr, &vdev_id);
@@ -3111,9 +3118,9 @@ static void wma_add_bss_ibss_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	if (req.ssid.length > 0)
 		qdf_mem_copy(req.ssid.ssId, add_bss->ssId.ssId,
 			     add_bss->ssId.length);
-	status = wma_get_current_hw_mode(&hw_mode);
+	status = policy_mgr_get_current_hw_mode(wma->psoc, &hw_mode);
 	if (!QDF_IS_STATUS_SUCCESS(status))
-		WMA_LOGE("wma_get_current_hw_mode failed");
+		WMA_LOGE("policy_mgr_get_current_hw_mode failed");
 
 	if ((add_bss->nss == 2) && !hw_mode.dbs_cap) {
 		req.preferred_rx_streams = 2;
@@ -3173,7 +3180,7 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	int pps_val = 0;
 	bool roam_synch_in_progress = false;
 	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
-	struct sir_hw_mode_params hw_mode = {0};
+	struct policy_mgr_hw_mode_params hw_mode = {0};
 	bool peer_assoc_sent = false;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
@@ -3295,9 +3302,10 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 			if (req.ssid.length > 0)
 				qdf_mem_copy(req.ssid.ssId, add_bss->ssId.ssId,
 					     add_bss->ssId.length);
-			status = wma_get_current_hw_mode(&hw_mode);
+			status = policy_mgr_get_current_hw_mode(wma->psoc,
+				&hw_mode);
 			if (!QDF_IS_STATUS_SUCCESS(status))
-				WMA_LOGE("wma_get_current_hw_mode failed");
+				WMA_LOGE("policy_mgr_get_current_hw_mode failed");
 
 			if ((add_bss->nss == 2) && !hw_mode.dbs_cap) {
 				req.preferred_rx_streams = 2;
@@ -4020,7 +4028,8 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 				     &param) != QDF_STATUS_SUCCESS) {
 		WMA_LOGP("%s: Failed to send vdev up cmd: vdev %d bssid %pM",
 			 __func__, params->smesessionId, params->bssId);
-		cds_set_do_hw_mode_change_flag(false);
+		policy_mgr_set_do_hw_mode_change_flag(
+			wma->psoc, false);
 		status = QDF_STATUS_E_FAILURE;
 	} else {
 		wma_set_vdev_mgmt_rate(wma, params->smesessionId);

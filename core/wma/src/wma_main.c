@@ -73,7 +73,7 @@
 #include "wma_internal.h"
 
 #include "wma_ocb.h"
-#include "cds_concurrency.h"
+#include "wlan_policy_mgr_api.h"
 #include "cdp_txrx_cfg.h"
 #include "cdp_txrx_flow_ctrl_legacy.h"
 #include "cdp_txrx_flow_ctrl_v2.h"
@@ -2794,6 +2794,8 @@ static int wma_pdev_set_hw_mode_resp_evt_handler(void *handle,
 			wma->old_hw_mode_index = wma->new_hw_mode_index;
 			wma->new_hw_mode_index = wmi_event->cfgd_hw_mode_index;
 		}
+		policy_mgr_update_hw_mode_index(wma->psoc,
+		wmi_event->cfgd_hw_mode_index);
 	}
 
 	WMA_LOGI("%s: Updated: old_hw_mode_index:%d new_hw_mode_index:%d",
@@ -2870,6 +2872,10 @@ void wma_process_pdev_hw_mode_trans_ind(void *handle,
 	}
 	wma->old_hw_mode_index = fixed_param->old_hw_mode_index;
 	wma->new_hw_mode_index = fixed_param->new_hw_mode_index;
+	policy_mgr_update_new_hw_mode_index(wma->psoc,
+		fixed_param->new_hw_mode_index);
+	policy_mgr_update_old_hw_mode_index(wma->psoc,
+		fixed_param->old_hw_mode_index);
 
 	WMA_LOGI("%s: Updated: old_hw_mode_index:%d new_hw_mode_index:%d",
 		__func__, wma->old_hw_mode_index, wma->new_hw_mode_index);
@@ -2981,14 +2987,8 @@ static int wma_pdev_set_dual_mode_config_resp_evt_handler(void *handle,
 	dual_mac_cfg_resp->status = wmi_event->status;
 
 	if (SET_HW_MODE_STATUS_OK == dual_mac_cfg_resp->status) {
-		wma->dual_mac_cfg.prev_scan_config =
-			wma->dual_mac_cfg.cur_scan_config;
-		wma->dual_mac_cfg.prev_fw_mode_config =
-			wma->dual_mac_cfg.cur_fw_mode_config;
-		wma->dual_mac_cfg.cur_scan_config =
-			wma->dual_mac_cfg.req_scan_config;
-		wma->dual_mac_cfg.cur_fw_mode_config =
-			wma->dual_mac_cfg.req_fw_mode_config;
+		policy_mgr_update_dbs_scan_config(wma->psoc);
+		policy_mgr_update_dbs_fw_config(wma->psoc);
 	}
 
 	/* Pass the message to PE */
@@ -4470,6 +4470,7 @@ static void wma_dump_dbs_hw_mode(tp_wma_handle wma_handle)
 			WMA_HW_MODE_DBS_MODE_GET(param),
 			WMA_HW_MODE_SBS_MODE_GET(param));
 	}
+	policy_mgr_dump_dbs_hw_mode(wma_handle->psoc);
 }
 
 /**
@@ -4487,61 +4488,14 @@ static void wma_init_scan_fw_mode_config(tp_wma_handle wma_handle,
 					 uint32_t scan_config,
 					 uint32_t fw_config)
 {
-	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
-
 	WMA_LOGD("%s: Enter", __func__);
-
-	if (!mac) {
-		WMA_LOGE("%s: Invalid mac handle", __func__);
-		return;
-	}
 
 	if (!wma_handle) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
 		return;
 	}
 
-	wma_handle->dual_mac_cfg.cur_scan_config = 0;
-	wma_handle->dual_mac_cfg.cur_fw_mode_config = 0;
-
-	/* If dual mac features are disabled in the INI, we
-	 * need not proceed further
-	 */
-	if (mac->dual_mac_feature_disable) {
-		WMA_LOGE("%s: Disabling dual mac capabilities", __func__);
-		/* All capabilites are initialized to 0. We can return */
-		goto done;
-	}
-
-	/* Initialize concurrent_scan_config_bits with default FW value */
-	WMI_DBS_CONC_SCAN_CFG_DBS_SCAN_SET(
-			wma_handle->dual_mac_cfg.cur_scan_config,
-			WMI_DBS_CONC_SCAN_CFG_DBS_SCAN_GET(scan_config));
-	WMI_DBS_CONC_SCAN_CFG_AGILE_SCAN_SET(
-			wma_handle->dual_mac_cfg.cur_scan_config,
-			WMI_DBS_CONC_SCAN_CFG_AGILE_SCAN_GET(scan_config));
-	WMI_DBS_CONC_SCAN_CFG_AGILE_DFS_SCAN_SET(
-			wma_handle->dual_mac_cfg.cur_scan_config,
-			WMI_DBS_CONC_SCAN_CFG_AGILE_DFS_SCAN_GET(scan_config));
-
-	/* Initialize fw_mode_config_bits with default FW value */
-	WMI_DBS_FW_MODE_CFG_DBS_SET(
-			wma_handle->dual_mac_cfg.cur_fw_mode_config,
-			WMI_DBS_FW_MODE_CFG_DBS_GET(fw_config));
-	WMI_DBS_FW_MODE_CFG_AGILE_DFS_SET(
-			wma_handle->dual_mac_cfg.cur_fw_mode_config,
-			WMI_DBS_FW_MODE_CFG_AGILE_DFS_GET(fw_config));
-done:
-	/* Initialize the previous scan/fw mode config */
-	wma_handle->dual_mac_cfg.prev_scan_config =
-		wma_handle->dual_mac_cfg.cur_scan_config;
-	wma_handle->dual_mac_cfg.prev_fw_mode_config =
-		wma_handle->dual_mac_cfg.cur_fw_mode_config;
-
-	WMA_LOGD("%s: cur_scan_config:%x cur_fw_mode_config:%x",
-			__func__,
-			wma_handle->dual_mac_cfg.cur_scan_config,
-			wma_handle->dual_mac_cfg.cur_fw_mode_config);
+	policy_mgr_init_dbs_config(wma_handle->psoc, scan_config, fw_config);
 }
 
 /**
@@ -4612,7 +4566,8 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 			ev_wlan_dbs_hw_mode_list,
 			(sizeof(*wma_handle->hw_mode.hw_mode_list) *
 						wma_handle->num_dbs_hw_modes));
-
+	policy_mgr_init_dbs_hw_mode(wma_handle->psoc,
+	ev->num_dbs_hw_modes, ev_wlan_dbs_hw_mode_list);
 	wma_dump_dbs_hw_mode(wma_handle);
 
 	/* Initializes the fw_mode and scan_config to zero.
@@ -4635,6 +4590,8 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 
 	wma_handle->target_fw_version = ev->fw_build_vers;
 	wma_handle->new_hw_mode_index = ev->default_dbs_hw_mode_index;
+	policy_mgr_update_new_hw_mode_index(wma_handle->psoc,
+	ev->default_dbs_hw_mode_index);
 	wma_handle->fine_time_measurement_cap = ev->wmi_fw_sub_feat_caps;
 
 	WMA_LOGD("%s: Firmware default hw mode index : %d",
@@ -4960,7 +4917,7 @@ QDF_STATUS wma_get_caps_for_phyidx_hwmode(struct wma_caps_per_phy *caps_per_phy,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!wma_is_dbs_enable())
+	if (!policy_mgr_is_dbs_enable(wma_handle->psoc))
 		our_hw_mode = HW_MODE_DBS_NONE;
 
 	if (!caps_per_phy) {
@@ -5324,6 +5281,10 @@ static QDF_STATUS wma_update_hw_mode_list(t_wma_handle *wma_handle)
 				       mac1_ss_bw_info, i, dbs_mode,
 				       sbs_mode);
 	}
+
+	if (QDF_STATUS_SUCCESS !=
+	policy_mgr_update_hw_mode_list(wma_handle->psoc, phy_caps))
+		WMA_LOGE("%s: failed to update policy manager", __func__);
 	wma_dump_dbs_hw_mode(wma_handle);
 	return QDF_STATUS_SUCCESS;
 }
@@ -7002,7 +6963,7 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, struct scheduler_msg *msg)
 		break;
 	case SIR_HAL_PDEV_SET_HW_MODE:
 		wma_send_pdev_set_hw_mode_cmd(wma_handle,
-				(struct sir_hw_mode *)msg->bodyptr);
+				(struct policy_mgr_hw_mode *)msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	case WMA_OCB_SET_CONFIG_CMD:
@@ -7262,7 +7223,8 @@ QDF_STATUS wma_send_pdev_set_pcl_cmd(tp_wma_handle wma_handle,
 	}
 
 	msg->saved_num_chan = wma_handle->saved_chan.num_channels;
-	status = cds_get_valid_chan_weights((struct sir_pcl_chan_weights *)msg);
+	status = policy_mgr_get_valid_chan_weights(wma_handle->psoc,
+		(struct policy_mgr_pcl_chan_weights *)msg);
 
 	for (i = 0; i < msg->saved_num_chan; i++) {
 		msg->weighed_valid_list[i] =
@@ -7298,7 +7260,7 @@ QDF_STATUS wma_send_pdev_set_pcl_cmd(tp_wma_handle wma_handle,
  * Return: Success if the cmd is sent successfully to the firmware
  */
 QDF_STATUS wma_send_pdev_set_hw_mode_cmd(tp_wma_handle wma_handle,
-				struct sir_hw_mode *msg)
+				struct policy_mgr_hw_mode *msg)
 {
 	struct sir_set_hw_mode_resp *param;
 
@@ -7371,8 +7333,8 @@ QDF_STATUS wma_send_pdev_set_dual_mac_config(tp_wma_handle wma_handle,
 		return status;
 	}
 
-	wma_handle->dual_mac_cfg.req_scan_config = msg->scan_config;
-	wma_handle->dual_mac_cfg.req_fw_mode_config = msg->fw_mode_config;
+	policy_mgr_update_dbs_req_config(wma_handle->psoc,
+	msg->scan_config, msg->fw_mode_config);
 
 	return QDF_STATUS_SUCCESS;
 }

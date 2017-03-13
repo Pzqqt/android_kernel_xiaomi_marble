@@ -55,7 +55,7 @@
 #include "lim_session_utils.h"
 
 #include "cds_utils.h"
-#include "cds_concurrency.h"
+#include "wlan_policy_mgr_api.h"
 
 #if !defined(REMOVE_PKT_LOG)
 #include "pktlog_ac.h"
@@ -74,6 +74,8 @@
 #include <cdp_txrx_handle.h>
 #include "wma_he.h"
 #include <wlan_scan_public_structs.h>
+#include <wlan_scan_ucfg_api.h>
+
 #define WMA_MCC_MIRACAST_REST_TIME 400
 #define WMA_SCAN_ID_MASK 0x0fff
 
@@ -425,14 +427,16 @@ QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 			QDF_MIN(scan_req->maxChannelTime,
 					(WMA_CTS_DURATION_MS_MAX -
 					 WMA_ROAM_SCAN_CHANNEL_SWITCH_TIME));
-		if (!wma_is_hw_dbs_capable() ||
-			(wma_is_hw_dbs_capable() &&
+		if (!policy_mgr_is_hw_dbs_capable(wma_handle->psoc) ||
+			(policy_mgr_is_hw_dbs_capable(wma_handle->psoc) &&
 				CDS_IS_CHANNEL_5GHZ(
-					cds_get_channel(CDS_SAP_MODE, NULL)))) {
+					policy_mgr_get_channel(wma_handle->psoc,
+						PM_SAP_MODE, NULL)))) {
 			cmd->dwell_time_passive = cmd->dwell_time_active;
 		}
 		cmd->burst_duration = 0;
-		if (CDS_IS_DFS_CH(cds_get_channel(CDS_SAP_MODE, NULL)))
+		if (CDS_IS_DFS_CH(policy_mgr_get_channel(wma_handle->psoc,
+			PM_SAP_MODE, NULL)))
 			cmd->burst_duration =
 				WMA_BURST_SCAN_MAX_NUM_OFFCHANNELS *
 				scan_req->maxChannelTime;
@@ -2895,7 +2899,7 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 	void *peer;
 	struct cdp_pdev *pdev;
 	struct wma_txrx_node *intr = wma->interfaces;
-	struct sir_hw_mode_params hw_mode = {0};
+	struct policy_mgr_hw_mode_params hw_mode = {0};
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	WMA_LOGD("%s: Enter", __func__);
@@ -2935,9 +2939,9 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 	WMA_LOGI(FL("vht_capable: %d, dot11_mode: %d"),
 		 req.vht_capable, req.dot11_mode);
 
-	status = wma_get_current_hw_mode(&hw_mode);
+	status = policy_mgr_get_current_hw_mode(wma->psoc, &hw_mode);
 	if (!QDF_IS_STATUS_SUCCESS(status))
-		WMA_LOGE("wma_get_current_hw_mode failed");
+		WMA_LOGE("policy_mgr_get_current_hw_mode failed");
 
 	if ((params->nss == 2) && !hw_mode.dbs_cap) {
 		req.preferred_rx_streams = 2;

@@ -37,7 +37,6 @@
 #include "htc_api.h"
 #endif
 #include "lim_global.h"
-#include "cds_concurrency.h"
 #include "cds_utils.h"
 #include "scheduler_api.h"
 #include "wlan_policy_mgr_api.h"
@@ -165,49 +164,10 @@ tSirRetStatus wma_post_ctrl_msg(tpAniSirGlobal pMac,
 void wma_register_wow_wakeup_events(WMA_HANDLE handle, uint8_t vdev_id,
 					uint8_t vdev_type, uint8_t sub_type);
 void wma_register_wow_default_patterns(WMA_HANDLE handle, uint8_t vdev_id);
-int8_t wma_get_hw_mode_idx_from_dbs_hw_list(enum hw_mode_ss_config mac0_ss,
-		enum hw_mode_bandwidth mac0_bw,
-		enum hw_mode_ss_config mac1_ss,
-		enum hw_mode_bandwidth mac1_bw,
-		enum hw_mode_dbs_capab dbs,
-		enum hw_mode_agile_dfs_capab dfs,
-		enum hw_mode_sbs_capab sbs);
-QDF_STATUS wma_get_hw_mode_from_idx(uint32_t idx,
-		struct sir_hw_mode_params *hw_mode);
-int8_t wma_get_num_dbs_hw_modes(void);
-bool wma_is_hw_dbs_capable(void);
-bool wma_is_hw_sbs_capable(void);
-bool wma_is_hw_dbs_2x2_capable(void);
 int8_t wma_get_mac_id_of_vdev(uint32_t vdev_id);
 void wma_update_intf_hw_mode_params(uint32_t vdev_id, uint32_t mac_id,
 				uint32_t cfgd_hw_mode_index);
-QDF_STATUS wma_get_old_and_new_hw_index(uint32_t *old_hw_mode_index,
-		uint32_t *new_hw_mode_index);
 void wma_set_dbs_capability_ut(uint32_t dbs);
-QDF_STATUS wma_get_dbs_hw_modes(bool *one_by_one_dbs, bool *two_by_two_dbs);
-QDF_STATUS wma_get_current_hw_mode(struct sir_hw_mode_params *hw_mode);
-bool wma_is_dbs_enable(void);
-enum cds_hw_mode_change
-wma_get_cds_hw_mode_change_from_hw_mode_index(uint32_t hw_mode_index);
-
-QDF_STATUS wma_get_updated_scan_config(uint32_t *scan_config,
-		bool dbs_scan,
-		bool dbs_plus_agile_scan,
-		bool single_mac_scan_with_dfs);
-QDF_STATUS wma_get_updated_fw_mode_config(uint32_t *fw_mode_config,
-		bool dbs,
-		bool agile_dfs);
-bool wma_get_dbs_scan_config(void);
-bool wma_get_dbs_plus_agile_scan_config(void);
-bool wma_get_single_mac_scan_with_dfs_config(void);
-bool wma_get_dbs_config(void);
-bool wma_get_agile_dfs_config(void);
-bool wma_is_dual_mac_disabled_in_ini(void);
-bool wma_get_prev_dbs_config(void);
-bool wma_get_prev_agile_dfs_config(void);
-bool wma_get_prev_dbs_scan_config(void);
-bool wma_get_prev_dbs_plus_agile_scan_config(void);
-bool wma_get_prev_single_mac_scan_with_dfs_config(void);
 QDF_STATUS wma_get_caps_for_phyidx_hwmode(struct wma_caps_per_phy *caps_per_phy,
 		enum hw_mode_dbs_capab hw_mode, enum cds_band_type band);
 bool wma_is_rx_ldpc_supported_for_channel(uint32_t channel);
@@ -215,7 +175,6 @@ bool wma_is_rx_ldpc_supported_for_channel(uint32_t channel);
 #if defined(FEATURE_LRO)
 int wma_lro_init(struct cdp_lro_hash_config *lro_config);
 #endif
-bool wma_is_scan_simultaneous_capable(void);
 
 QDF_STATUS wma_remove_beacon_filter(WMA_HANDLE wma,
 				struct beacon_filter_param *filter_params);

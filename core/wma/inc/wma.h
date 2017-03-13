@@ -51,7 +51,7 @@
 #include "cds_ieee80211_common.h"
 #include "wlan_objmgr_psoc_obj.h"
 #include <cdp_txrx_handle.h>
-#include "wlan_policy_mgr_api.h"
+#include <wlan_policy_mgr_api.h>
 
 /* Platform specific configuration for max. no. of fragments */
 #define QCA_OL_11AC_TX_MAX_FRAGS            2
@@ -1490,7 +1490,6 @@ typedef struct {
 
 	/* OCB request contexts */
 	struct sir_ocb_config *ocb_config_req;
-	struct dual_mac_config dual_mac_cfg;
 	uint8_t max_scan;
 	uint16_t self_gen_frm_pwr;
 	bool tx_chain_mask_cck;
@@ -2153,7 +2152,7 @@ QDF_STATUS wma_send_pdev_set_pcl_cmd(tp_wma_handle wma_handle,
 		struct wmi_pcl_chan_weights *msg);
 
 QDF_STATUS wma_send_pdev_set_hw_mode_cmd(tp_wma_handle wma_handle,
-		struct sir_hw_mode *msg);
+		struct policy_mgr_hw_mode *msg);
 QDF_STATUS wma_get_scan_id(uint32_t *scan_id);
 
 QDF_STATUS wma_send_pdev_set_dual_mac_config(tp_wma_handle wma_handle,
@@ -2202,7 +2201,6 @@ static inline QDF_STATUS wma_set_gateway_params(tp_wma_handle wma,
 QDF_STATUS wma_lro_config_cmd(void *handle,
 	 struct cdp_lro_hash_config *wma_lro_cmd);
 
-bool wma_is_current_hwmode_dbs(void);
 void
 wma_indicate_err(enum ol_rx_err_type err_type,
 	 struct ol_error_info *err_info);

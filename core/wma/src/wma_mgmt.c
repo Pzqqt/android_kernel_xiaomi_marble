@@ -63,7 +63,7 @@
 #include "ol_fw.h"
 #include "dfs.h"
 #include "wma_internal.h"
-#include "cds_concurrency.h"
+#include "wlan_policy_mgr_api.h"
 #include "cdp_txrx_flow_ctrl_legacy.h"
 #include <cdp_txrx_peer_ops.h>
 #include <cdp_txrx_pmf.h>
@@ -2554,7 +2554,8 @@ void wma_send_beacon(tp_wma_handle wma, tpSendbeaconParams bcn_info)
 					&param);
 			if (QDF_IS_STATUS_ERROR(status)) {
 				WMA_LOGE(FL("failed to send vdev up"));
-				cds_set_do_hw_mode_change_flag(false);
+				policy_mgr_set_do_hw_mode_change_flag(
+					wma->psoc, false);
 				return;
 			}
 			wma_vdev_set_mlme_state(wma, vdev_id, WLAN_VDEV_S_RUN);
