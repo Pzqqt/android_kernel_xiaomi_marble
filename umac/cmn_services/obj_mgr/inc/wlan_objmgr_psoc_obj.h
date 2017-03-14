@@ -220,6 +220,7 @@ struct wlan_objmgr_psoc_nif {
  * @peer_list:            Peer list
  * @ref_cnt:              Ref count
  * @ref_id_dbg:           Array to track Ref count
+ * @qdf_dev:              QDF Device
  */
 struct wlan_objmgr_psoc_objmgr {
 	uint8_t wlan_pdev_count;
@@ -233,6 +234,7 @@ struct wlan_objmgr_psoc_objmgr {
 	struct wlan_peer_list peer_list;
 	qdf_atomic_t ref_cnt;
 	qdf_atomic_t ref_id_dbg[WLAN_REF_ID_MAX];
+	qdf_device_t qdf_dev;
 };
 
 /**
@@ -1011,6 +1013,48 @@ static inline void *wlan_psoc_get_tgt_if_handle(struct wlan_objmgr_psoc *psoc)
 	if (psoc == NULL)
 		return NULL;
 	return psoc->tgt_if_handle;
+}
+
+/**
+ * wlan_psoc_get_qdf_dev(): API to get qdf device
+ * @psoc: Psoc pointer
+ *
+ * API to get qdf device from psoc object
+ *
+ * Caller need to acquire lock with wlan_psoc_obj_lock()
+ *
+ * Return: qdf_device_t
+ */
+static inline qdf_device_t wlan_psoc_get_qdf_dev(
+			struct wlan_objmgr_psoc *psoc)
+{
+	/* This API is invoked with lock acquired, do not add log prints */
+	if (psoc == NULL)
+		return NULL;
+
+	return psoc->soc_objmgr.qdf_dev;
+}
+
+/**
+ * wlan_psoc_set_qdf_dev(): API to get qdf device
+ * @psoc: Psoc pointer
+ * dev: qdf device
+ *
+ * API to set qdf device from psoc object
+ *
+ * Caller need to acquire lock with wlan_psoc_obj_lock()
+ *
+ * Return: None
+ */
+static inline void wlan_psoc_set_qdf_dev(
+			struct wlan_objmgr_psoc *psoc,
+			qdf_device_t dev)
+{
+	/* This API is invoked with lock acquired, do not add log prints */
+	if (psoc == NULL)
+		return;
+
+	psoc->soc_objmgr.qdf_dev = dev;
 }
 
 /**
