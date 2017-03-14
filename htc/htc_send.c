@@ -142,6 +142,14 @@ void htc_dump_counter_info(HTC_HANDLE HTCHandle)
 			 __func__, target->ce_send_cnt, target->TX_comp_cnt));
 }
 
+int htc_get_tx_queue_depth(HTC_HANDLE *htc_handle, HTC_ENDPOINT_ID endpoint_id)
+{
+	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(htc_handle);
+	HTC_ENDPOINT *endpoint = &target->endpoint[endpoint_id];
+
+	return HTC_PACKET_QUEUE_DEPTH(&endpoint->TxQueue);
+}
+
 void htc_get_control_endpoint_tx_host_credits(HTC_HANDLE HTCHandle, int *credits)
 {
 	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(HTCHandle);

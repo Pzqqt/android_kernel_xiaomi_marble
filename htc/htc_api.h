@@ -689,6 +689,14 @@ A_STATUS HTCWaitForPendingRecv(HTC_HANDLE HTCHandle,
 /* function to fetch stats from htc layer*/
 struct ol_ath_htc_stats *ieee80211_ioctl_get_htc_stats(HTC_HANDLE
 						       HTCHandle);
+/**
+ * htc_get_tx_queue_depth() - get the tx queue depth of an htc endpoint
+ * @htc_handle: htc handle
+ * @enpoint_id: endpoint to check
+ *
+ * Return: htc_handle tx queue depth
+ */
+int htc_get_tx_queue_depth(HTC_HANDLE *htc_handle, HTC_ENDPOINT_ID endpoint_id);
 
 #ifdef HIF_USB
 #define HTCReturnReceivePkt(target, p, osbuf) \
