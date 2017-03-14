@@ -224,9 +224,12 @@ QDF_STATUS wlan_mgmt_txrx_mgmt_frame_tx(struct wlan_objmgr_peer *peer,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
+	wlan_objmgr_peer_get_ref(peer, WLAN_MGMT_SB_ID);
+
 	vdev = wlan_peer_get_vdev(peer);
 	if (!vdev) {
 		mgmt_txrx_err("vdev unavailable for peer %p", peer);
+		wlan_objmgr_peer_release_ref(peer, WLAN_MGMT_SB_ID);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
@@ -234,6 +237,7 @@ QDF_STATUS wlan_mgmt_txrx_mgmt_frame_tx(struct wlan_objmgr_peer *peer,
 	if (!psoc) {
 		mgmt_txrx_err("psoc unavailable for peer %p vdev %p",
 				peer, vdev);
+		wlan_objmgr_peer_release_ref(peer, WLAN_MGMT_SB_ID);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
@@ -243,12 +247,15 @@ QDF_STATUS wlan_mgmt_txrx_mgmt_frame_tx(struct wlan_objmgr_peer *peer,
 	if (!txrx_ctx) {
 		mgmt_txrx_err("No txrx context for peer %p psoc %p",
 				peer, psoc);
+		wlan_objmgr_peer_release_ref(peer, WLAN_MGMT_SB_ID);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
 	desc = wlan_mgmt_txrx_desc_get(txrx_ctx);
-	if (!desc)
+	if (!desc) {
+		wlan_objmgr_peer_release_ref(peer, WLAN_MGMT_SB_ID);
 		return QDF_STATUS_E_RESOURCES;
+	}
 
 	desc->nbuf = buf;
 	desc->tx_ota_cmpl_cb = tx_ota_comp_cb;
@@ -260,6 +267,7 @@ QDF_STATUS wlan_mgmt_txrx_mgmt_frame_tx(struct wlan_objmgr_peer *peer,
 	if (!psoc->soc_cb.tx_ops.mgmt_txrx_tx_ops.mgmt_tx_send) {
 		mgmt_txrx_err("mgmt txrx tx op to send mgmt frame is NULL for psoc: %p",
 				psoc);
+		wlan_objmgr_peer_release_ref(peer, WLAN_MGMT_SB_ID);
 		wlan_mgmt_txrx_desc_put(txrx_ctx, desc->desc_id);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -268,6 +276,7 @@ QDF_STATUS wlan_mgmt_txrx_mgmt_frame_tx(struct wlan_objmgr_peer *peer,
 			vdev, buf, desc->desc_id, mgmt_tx_params)) {
 		mgmt_txrx_err("Mgmt send fail for peer %p psoc %p",
 				peer, psoc);
+		wlan_objmgr_peer_release_ref(peer, WLAN_MGMT_SB_ID);
 		wlan_mgmt_txrx_desc_put(txrx_ctx, desc->desc_id);
 		return QDF_STATUS_E_FAILURE;
 	}
