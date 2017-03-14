@@ -536,6 +536,7 @@ OL_RX_THREAD_START_FAILURE:
 	cds_free_ol_rx_pkt_freeq(gp_cds_sched_context);
 pkt_freeqalloc_failure:
 #endif
+	gp_cds_sched_context = NULL;
 
 	return QDF_STATUS_E_RESOURCES;
 

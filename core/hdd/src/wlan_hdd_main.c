@@ -9188,10 +9188,12 @@ err_stop_modules:
 	hdd_wlan_stop_modules(hdd_ctx, false);
 
 err_exit_nl_srv:
-	status = cds_sched_close(hdd_ctx->pcds_context);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hdd_err("Failed to close CDS Scheduler");
-		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(status));
+	if (DRIVER_MODULES_CLOSED == hdd_ctx->driver_status) {
+		status = cds_sched_close(hdd_ctx->pcds_context);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("Failed to close CDS Scheduler");
+			QDF_ASSERT(QDF_IS_STATUS_SUCCESS(status));
+		}
 	}
 
 	hdd_green_ap_deinit(hdd_ctx);
