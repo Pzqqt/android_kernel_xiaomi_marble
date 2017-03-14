@@ -1378,6 +1378,22 @@ static inline struct vdev_osif_priv *wlan_vdev_get_ospriv(
 }
 
 /**
+ * wlan_vdev_reset_ospriv() - reset os priv pointer
+ * @vdev: VDEV object
+ *
+ * API to reset OS private pointer in VDEV
+ *
+ * Caller need to acquire lock with wlan_vdev_obj_lock()
+ *
+ * Return: void
+ */
+static inline void wlan_vdev_reset_ospriv(struct wlan_objmgr_vdev *vdev)
+{
+	/* This API is invoked with lock acquired, do not add log prints */
+	vdev->vdev_nif.osdev = NULL;
+}
+
+/**
  * wlan_vdev_get_peer_count() - get vdev peer count
  * @vdev: VDEV object
  *
