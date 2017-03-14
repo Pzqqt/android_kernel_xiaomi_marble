@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -44,6 +44,7 @@
  * @en_tdls_uapsd_buf_sta: enable sta tdls uapsd buf
  * @en_tdls_uapsd_sleep_sta: enable sta tdls uapsd sleep
  * @en_roam_offload: enable roam offload
+ * @en_11ax: enable 11ax
  */
 struct wma_tgt_services {
 	uint32_t sta_power_save;
@@ -67,6 +68,7 @@ struct wma_tgt_services {
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	bool en_roam_offload;
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
+	bool en_11ax;
 };
 
 /**
@@ -149,6 +151,7 @@ struct wma_dfs_radar_ind {
  * @egap_support: enhanced green ap support
  * @nan_datapath_enabled: nan data path support
  * @bool is_ra_rate_limit_enabled: RA filter support
+ * @he_cap: HE capability received from FW
  */
 struct wma_tgt_cfg {
 	uint32_t target_fw_version;
@@ -178,5 +181,8 @@ struct wma_tgt_cfg {
 #endif
 	bool sub_20_support;
 	uint16_t wmi_max_len;
+#ifdef WLAN_FEATURE_11AX
+	tDot11fIEvendor_he_cap he_cap;
+#endif
 };
 #endif /* WMA_TGT_CFG_H */

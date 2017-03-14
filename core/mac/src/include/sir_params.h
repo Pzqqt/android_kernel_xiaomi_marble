@@ -70,8 +70,34 @@ typedef enum {
 } ePhyChanBondState;
 
 #define MAX_BONDED_CHANNELS 8
-
-typedef enum {
+/**
+ * enum cap_bitmap - bit field for FW capability
+ * MCC - indicate MCC
+ * P2P - indicate P2P
+ * DOT11AC - indicate 11AC
+ * SLM_SESSIONIZATION - indicate SLM_SESSIONIZATION
+ * DOT11AC_OPMODE - indicate 11ac opmode
+ * SAP32STA - indicate SAP32STA
+ * TDLS - indicate TDLS
+ * P2P_GO_NOA_DECOUPLE_INIT_SCAN - indicate P2P_GO_NOA_DECOUPLE_INIT_SCAN
+ * WLANACTIVE_OFFLOAD - indicate active offload
+ * EXTENDED_SCAN - indicate extended scan
+ * PNO - indicate PNO
+ * NAN - indicate NAN
+ * RTT - indicate RTT
+ * DOT11AX - indicate 11ax
+ * WOW - indicate WOW
+ * WLAN_ROAM_SCAN_OFFLOAD - indicate Roam scan offload
+ * IBSS_HEARTBEAT_OFFLOAD - indicate IBSS HB offload
+ * WLAN_PERIODIC_TX_PTRN - indicate WLAN_PERIODIC_TX_PTRN
+ * ADVANCE_TDLS - indicate advanced TDLS
+ * TDLS_OFF_CHANNEL - indicate TDLS off channel
+ *
+ * This definition is independent of any other modules.
+ * We can use any unused numbers.
+ */
+#define MAX_SUPPORTED_FEATURE 32
+enum cap_bitmap {
 	MCC = 0,
 	P2P = 1,
 	DOT11AC = 2,
@@ -91,6 +117,7 @@ typedef enum {
 	NAN = 11,
 #endif
 	RTT = 12,
+	DOT11AX = 13,
 	WOW = 22,
 	WLAN_ROAM_SCAN_OFFLOAD = 23,
 	IBSS_HEARTBEAT_OFFLOAD = 26,
@@ -100,8 +127,8 @@ typedef enum {
 	TDLS_OFF_CHANNEL = 30,
 #endif
 
-	/* MAX_FEATURE_SUPPORTED = 128 */
-} placeHolderInCapBitmap;
+	/* MAX_FEATURE_SUPPORTED = 32 */
+};
 
 typedef enum eSriLinkState {
 	eSIR_LINK_IDLE_STATE = 0,

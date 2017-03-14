@@ -679,7 +679,7 @@ bool sme_get_is_lfr_feature_enabled(tHalHandle hHal);
 bool sme_get_is_ft_feature_enabled(tHalHandle hHal);
 QDF_STATUS sme_update_roam_scan_offload_enabled(tHalHandle hHal,
 		bool nRoamScanOffloadEnabled);
-uint8_t sme_is_feature_supported_by_fw(uint8_t featEnumValue);
+bool sme_is_feature_supported_by_fw(enum cap_bitmap feature);
 #ifdef FEATURE_WLAN_TDLS
 QDF_STATUS sme_send_tdls_link_establish_params(tHalHandle hHal,
 		uint8_t sessionId,

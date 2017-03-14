@@ -6873,4 +6873,31 @@ struct wow_enable_params {
 	enum wow_interface_pause interface_pause;
 	enum wow_resume_trigger resume_trigger;
 };
+
+#ifdef WLAN_FEATURE_11AX
+/* HE Op Mask is based on the HE Operation definition in the D1.0 spec */
+#define HE_OP_BSS_COLOR_MASK (0x3F << 0)
+#define HE_OP_DEF_PE_DUR_MASK (0x07 << 6)
+#define HE_OP_TWT_REQ_MASK (0x01 << 9)
+#define HE_OP_RTS_THRES_MASK (0x3FF << 10)
+#define HE_OP_PART_BSS_COLOR_MASK (0x01 << 20)
+#define HE_OP_MAXBSSID_IND_MASK (0xFF << 21)
+#define HE_OP_TX_BSSIX_IND_MASK (0x01 << 29)
+#define HE_OP_BSS_COLOR_DIS_MASK (0x01 << 30)
+#define HE_OP_DUAL_BEACON_MASK (0x01 << 31)
+
+#define HE_RU_ALLOC_INDX0_MASK (0x01 << 0)
+#define HE_RU_ALLOC_INDX1_MASK (0x01 << 1)
+#define HE_RU_ALLOC_INDX2_MASK (0x01 << 2)
+#define HE_RU_ALLOC_INDX3_MASK (0x01 << 3)
+
+/* 3 bits for NSS and 4 bits for RU Index */
+#define HE_PPET_NSS_LEN 3
+#define HE_PEPT_RU_IDX_LEN 4
+#define HE_PPET_NSS_RU_LEN (HE_PPET_NSS_LEN + HE_PEPT_RU_IDX_LEN)
+#define HE_PPET_SIZE 3
+#define HE_BYTE_SIZE 8
+
+#endif
+
 #endif /* __SIR_API_H */

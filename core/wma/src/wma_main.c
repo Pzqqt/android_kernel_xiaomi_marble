@@ -85,6 +85,7 @@
 #include "target_if.h"
 #include "wlan_global_lmac_if_api.h"
 #include "target_if_pmo.h"
+#include "wma_he.h"
 
 #include <cdp_txrx_handle.h>
 #define WMA_LOG_COMPLETION_TIMER 10000 /* 10 seconds */
@@ -95,13 +96,24 @@ static uint32_t g_fw_wlan_feat_caps;
 
 /**
  * wma_get_fw_wlan_feat_caps() - get fw feature capablity
- * @featEnumValue: feature enum value
+ * @feature: feature enum value
  *
  * Return: true/false
  */
-uint8_t wma_get_fw_wlan_feat_caps(uint8_t featEnumValue)
+bool wma_get_fw_wlan_feat_caps(enum cap_bitmap feature)
 {
-	return (g_fw_wlan_feat_caps & (1 << featEnumValue)) ? true : false;
+	return (g_fw_wlan_feat_caps & (1 << feature)) ? true : false;
+}
+
+/**
+ * wma_set_fw_wlan_feat_caps() - set fw feature capablity
+ * @feature: feature enum value
+ *
+ * Return: None
+ */
+void wma_set_fw_wlan_feat_caps(enum cap_bitmap feature)
+{
+	g_fw_wlan_feat_caps |= (1 << feature);
 }
 
 /**
@@ -3842,6 +3854,8 @@ static inline void wma_update_target_services(tp_wma_handle wh,
 		WMA_LOGI("%s: TX_MSDU_ID_OLD_PARTITION=%d", __func__,
 				HTT_TX_IPA_MSDU_ID_SPACE_BEGIN);
 	}
+
+	wma_he_update_tgt_services(wh, cfg);
 }
 
 /**
@@ -4306,6 +4320,8 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	 */
 	wma_update_target_ext_ht_cap(wma_handle, &tgt_cfg.ht_cap);
 	wma_update_target_ext_vht_cap(wma_handle, &tgt_cfg.vht_cap);
+
+	wma_update_target_ext_he_cap(wma_handle, &tgt_cfg);
 
 	tgt_cfg.target_fw_version = wma_handle->target_fw_version;
 	tgt_cfg.target_fw_vers_ext = wma_handle->target_fw_vers_ext;
@@ -4978,6 +4994,72 @@ bool wma_is_rx_ldpc_supported_for_channel(uint32_t channel)
 	return status;
 }
 
+/**
+ * wma_print_mac_phy_capabilities() - Prints MAC PHY capabilities
+ * @cap: pointer to WMI_MAC_PHY_CAPABILITIES
+ * @index: MAC_PHY index
+ *
+ * Return: none
+ */
+static void wma_print_mac_phy_capabilities(WMI_MAC_PHY_CAPABILITIES *cap,
+					   int index)
+{
+	uint32_t mac_2G, mac_5G;
+	uint32_t phy_2G[WMI_MAX_HECAP_PHY_SIZE];
+	uint32_t phy_5G[WMI_MAX_HECAP_PHY_SIZE];
+	wmi_ppe_threshold ppet_2G, ppet_5G;
+
+	WMA_LOGI("\t: index [%d]", index);
+	WMA_LOGI("\t: cap for hw_mode_id[%d]", cap->hw_mode_id);
+	WMA_LOGI("\t: pdev_id[%d]", cap->pdev_id);
+	WMA_LOGI("\t: phy_id[%d]", cap->phy_id);
+	WMA_LOGI("\t: supports_11b[%d]",
+		WMI_SUPPORT_11B_GET(cap->supported_flags));
+	WMA_LOGI("\t: supports_11g[%d]",
+		WMI_SUPPORT_11G_GET(cap->supported_flags));
+	WMA_LOGI("\t: supports_11a[%d]",
+		WMI_SUPPORT_11A_GET(cap->supported_flags));
+	WMA_LOGI("\t: supports_11n[%d]",
+		WMI_SUPPORT_11N_GET(cap->supported_flags));
+	WMA_LOGI("\t: supports_11ac[%d]",
+		WMI_SUPPORT_11AC_GET(cap->supported_flags));
+	WMA_LOGI("\t: supports_11ax[%d]",
+		WMI_SUPPORT_11AX_GET(cap->supported_flags));
+	WMA_LOGI("\t: supported_flags[%d]", cap->supported_flags);
+	WMA_LOGI("\t: supported_bands[%d]", cap->supported_bands);
+	WMA_LOGI("\t: ampdu_density[%d]", cap->ampdu_density);
+	WMA_LOGI("\t: max_bw_supported_2G[%d]", cap->max_bw_supported_2G);
+	WMA_LOGI("\t: ht_cap_info_2G[%d]", cap->ht_cap_info_2G);
+	WMA_LOGI("\t: vht_cap_info_2G[%d]", cap->vht_cap_info_2G);
+	WMA_LOGI("\t: vht_supp_mcs_2G[%d]", cap->vht_supp_mcs_2G);
+	WMA_LOGI("\t: tx_chain_mask_2G[%d]", cap->tx_chain_mask_2G);
+	WMA_LOGI("\t: rx_chain_mask_2G[%d]", cap->rx_chain_mask_2G);
+	WMA_LOGI("\t: max_bw_supported_5G[%d]", cap->max_bw_supported_5G);
+	WMA_LOGI("\t: ht_cap_info_5G[%d]", cap->ht_cap_info_5G);
+	WMA_LOGI("\t: vht_cap_info_5G[%d]", cap->vht_cap_info_5G);
+	WMA_LOGI("\t: vht_supp_mcs_5G[%d]", cap->vht_supp_mcs_5G);
+	WMA_LOGI("\t: tx_chain_mask_5G[%d]", cap->tx_chain_mask_5G);
+	WMA_LOGI("\t: rx_chain_mask_5G[%d]", cap->rx_chain_mask_5G);
+	WMA_LOGI("\t: he_cap_info_2G[%08x]", cap->he_cap_info_2G);
+	WMA_LOGI("\t: he_supp_mcs_2G[%08x]", cap->he_supp_mcs_2G);
+	WMA_LOGI("\t: he_cap_info_5G[%08x]", cap->he_cap_info_5G);
+	WMA_LOGI("\t: he_supp_mcs_5G[%08x]", cap->he_supp_mcs_5G);
+	mac_2G = cap->he_cap_info_2G;
+	mac_5G = cap->he_cap_info_5G;
+	qdf_mem_copy(phy_2G, cap->he_cap_phy_info_2G,
+		     WMI_MAX_HECAP_PHY_SIZE * 4);
+	qdf_mem_copy(phy_5G, cap->he_cap_phy_info_5G,
+		     WMI_MAX_HECAP_PHY_SIZE * 4);
+	ppet_2G = cap->he_ppet2G;
+	ppet_5G = cap->he_ppet5G;
+
+	wma_print_he_mac_cap(mac_2G);
+	wma_print_he_phy_cap(phy_2G);
+	wma_print_he_ppet(&ppet_2G);
+	wma_print_he_mac_cap(mac_5G);
+	wma_print_he_phy_cap(phy_5G);
+	wma_print_he_ppet(&ppet_5G);
+}
 
 /**
  * wma_print_populate_soc_caps() - Prints all the caps populated per hw mode
@@ -5009,55 +5091,7 @@ static void wma_print_populate_soc_caps(t_wma_handle *wma_handle)
 
 		for ( ; j < max_mac; j++) {
 			tmp = &wma_handle->phy_caps.each_phy_cap_per_hwmode[j];
-			WMA_LOGI("\t: index j[%d]", j);
-			WMA_LOGI("\t: cap for hw_mode_id[%d]", tmp->hw_mode_id);
-			WMA_LOGI("\t: pdev_id[%d]", tmp->pdev_id);
-			WMA_LOGI("\t: phy_id[%d]", tmp->phy_id);
-			WMA_LOGI("\t: supports_11b[%d]",
-				WMI_SUPPORT_11B_GET(tmp->supported_flags));
-			WMA_LOGI("\t: supports_11g[%d]",
-				WMI_SUPPORT_11G_GET(tmp->supported_flags));
-			WMA_LOGI("\t: supports_11a[%d]",
-				WMI_SUPPORT_11A_GET(tmp->supported_flags));
-			WMA_LOGI("\t: supports_11n[%d]",
-				WMI_SUPPORT_11N_GET(tmp->supported_flags));
-			WMA_LOGI("\t: supports_11ac[%d]",
-				WMI_SUPPORT_11AC_GET(tmp->supported_flags));
-			WMA_LOGI("\t: supports_11ax[%d]",
-				WMI_SUPPORT_11AX_GET(tmp->supported_flags));
-			WMA_LOGI("\t: supported_flags[%d]",
-					tmp->supported_flags);
-			WMA_LOGI("\t: supported_bands[%d]",
-					tmp->supported_bands);
-			WMA_LOGI("\t: ampdu_density[%d]",
-					tmp->ampdu_density);
-			WMA_LOGI("\t: max_bw_supported_2G[%d]",
-					tmp->max_bw_supported_2G);
-			WMA_LOGI("\t: ht_cap_info_2G[%d]", tmp->ht_cap_info_2G);
-			WMA_LOGI("\t: vht_cap_info_2G[%d]",
-					tmp->vht_cap_info_2G);
-			WMA_LOGI("\t: he_cap_info_2G[%d]", tmp->he_cap_info_2G);
-			WMA_LOGI("\t: vht_supp_mcs_2G[%d]",
-					tmp->vht_supp_mcs_2G);
-			WMA_LOGI("\t: he_supp_mcs_2G[%d]", tmp->he_supp_mcs_2G);
-			WMA_LOGI("\t: tx_chain_mask_2G[%d]",
-					tmp->tx_chain_mask_2G);
-			WMA_LOGI("\t: rx_chain_mask_2G[%d]",
-					tmp->rx_chain_mask_2G);
-			WMA_LOGI("\t: max_bw_supported_5G[%d]",
-					tmp->max_bw_supported_5G);
-			WMA_LOGI("\t: ht_cap_info_5G[%d]",
-					tmp->ht_cap_info_5G);
-			WMA_LOGI("\t: vht_cap_info_5G[%d]",
-					tmp->vht_cap_info_5G);
-			WMA_LOGI("\t: he_cap_info_5G[%d]", tmp->he_cap_info_5G);
-			WMA_LOGI("\t: vht_supp_mcs_5G[%d]",
-					tmp->vht_supp_mcs_5G);
-			WMA_LOGI("\t: he_supp_mcs_5G[%d]", tmp->he_supp_mcs_5G);
-			WMA_LOGI("\t: tx_chain_mask_5G[%d]",
-					tmp->tx_chain_mask_5G);
-			WMA_LOGI("\t: rx_chain_mask_5G[%d]",
-					tmp->rx_chain_mask_5G);
+			wma_print_mac_phy_capabilities(tmp, j);
 		}
 	}
 	WMA_LOGI("%s: <====== HW mode cap printing ends ======>\n", __func__);
