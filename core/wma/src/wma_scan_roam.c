@@ -2387,8 +2387,13 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 		goto cleanup_label;
 	}
 	qdf_mem_zero(bss_desc_ptr, sizeof(tSirBssDescription) + ie_len);
-	wma->pe_roam_synch_cb((tpAniSirGlobal)wma->mac_context,
-			roam_synch_ind_ptr, bss_desc_ptr);
+	if (QDF_IS_STATUS_ERROR(wma->pe_roam_synch_cb(
+			(tpAniSirGlobal)wma->mac_context,
+			roam_synch_ind_ptr, bss_desc_ptr))) {
+		WMA_LOGE("LFR3: PE roam synch cb failed");
+		status = -EBUSY;
+		goto cleanup_label;
+	}
 	wma_roam_update_vdev(wma, roam_synch_ind_ptr);
 	wma->csr_roam_synch_cb((tpAniSirGlobal)wma->mac_context,
 		roam_synch_ind_ptr, bss_desc_ptr, SIR_ROAM_SYNCH_PROPAGATION);

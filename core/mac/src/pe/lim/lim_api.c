@@ -1995,6 +1995,14 @@ QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 		lim_log(mac_ctx, LOGE, FL("LFR3:session is not in STA mode"));
 		return status;
 	}
+	/*
+	 * If deauth from AP already in progress, ignore Roam Synch Indication
+	 * from firmware.
+	 */
+	if (session_ptr->limSmeState != eLIM_SME_LINK_EST_STATE) {
+		lim_log(mac_ctx, LOGE, FL("LFR3: Not in Link est state"));
+		return status;
+	}
 	status = lim_roam_fill_bss_descr(mac_ctx, roam_sync_ind_ptr, bss_desc);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		lim_log(mac_ctx, LOGE, FL("LFR3:Failed to fill Bss Descr"));
