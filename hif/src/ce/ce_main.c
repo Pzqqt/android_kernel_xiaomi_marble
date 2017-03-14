@@ -2801,10 +2801,10 @@ int hif_map_service_to_pipe(struct hif_opaque_softc *hif_hdl, uint16_t svc_id,
 		}
 	}
 	if (ul_updated == false)
-		HIF_WARN("%s: ul pipe is NOT updated for service %d",
+		HIF_INFO("%s: ul pipe is NOT updated for service %d",
 			 __func__, svc_id);
 	if (dl_updated == false)
-		HIF_WARN("%s: dl pipe is NOT updated for service %d",
+		HIF_INFO("%s: dl pipe is NOT updated for service %d",
 			 __func__, svc_id);
 
 	return status;
