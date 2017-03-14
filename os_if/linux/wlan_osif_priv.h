@@ -23,16 +23,25 @@
 struct osif_scan_pdev;
 
 /**
- *  struct pdev_osif_priv - OS private strcutre
- *  wiphy: wiphy handle
- *  legacy_osif_priv: legacy osif private handle
- *  scan_priv: Scan related data used by cfg80211 scan
-*/
-
+ *  struct pdev_osif_priv - OS private structure
+ *  @wiphy:            wiphy handle
+ *  @legacy_osif_priv: legacy osif private handle
+ *  @scan_priv:        Scan related data used by cfg80211 scan
+ */
 struct pdev_osif_priv {
 	struct wiphy *wiphy;
 	void *legacy_osif_priv;
 	struct osif_scan_pdev *osif_scan;
+};
+
+/**
+ *  struct vdev_osif_priv - OS private structure of vdev
+ *  @wdev:             wireless device handle
+ *  @legacy_osif_priv: legacy osif private handle
+ */
+struct vdev_osif_priv {
+	struct wireless_dev *wdev;
+	void *legacy_osif_priv;
 };
 
 #endif

@@ -230,7 +230,7 @@ struct wlan_vdev_create_params {
 	enum tQDF_ADAPTER_MODE opmode;
 	uint8_t macaddr[WLAN_MACADDR_LEN];
 	uint32_t flags;
-	void *osifp;
+	struct vdev_osif_priv *osifp;
 	uint8_t mataddr[WLAN_MACADDR_LEN];
 };
 
@@ -286,7 +286,7 @@ struct wlan_objmgr_vdev_mlme {
  *  @osdev:  OS specific pointer
  */
 struct wlan_objmgr_vdev_nif {
-	void *osdev;
+	struct vdev_osif_priv *osdev;
 };
 
 /**
@@ -1365,7 +1365,8 @@ static inline struct wlan_objmgr_peer *wlan_vdev_get_bsspeer(
  *
  * Return: ospriv - private pointer
  */
-static inline void *wlan_vdev_get_ospriv(struct wlan_objmgr_vdev *vdev)
+static inline struct vdev_osif_priv *wlan_vdev_get_ospriv(
+	struct wlan_objmgr_vdev *vdev)
 {
 	/* This API is invoked with lock acquired, do not add log prints */
 	return vdev->vdev_nif.osdev;
