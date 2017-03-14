@@ -1137,9 +1137,9 @@ static int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 	tx_buffer_count_pwr2 = qdf_rounddown_pow_of_two(tx_buffer_count + 1)
 			       - 1;
 	if (tx_buffer_count > tx_buffer_count_pwr2) {
-		qdf_print(
-		    "%s: Allocated Tx buffer count %d is rounded down to %d",
-		    __func__, tx_buffer_count, tx_buffer_count_pwr2);
+		QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_INFO,
+			  "%s: Allocated Tx buffer count %d is rounded down to %d",
+			  __func__, tx_buffer_count, tx_buffer_count_pwr2);
 
 		/* Free over allocated buffers below power of 2 */
 		for (idx = tx_buffer_count_pwr2; idx < tx_buffer_count; idx++) {
@@ -1237,9 +1237,9 @@ static int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 	tx_buffer_count_pwr2 = qdf_rounddown_pow_of_two(tx_buffer_count + 1)
 			       - 1;
 	if (tx_buffer_count > tx_buffer_count_pwr2) {
-		qdf_print(
-		    "%s: Allocated Tx buffer count %d is rounded down to %d",
-		    __func__, tx_buffer_count, tx_buffer_count_pwr2);
+		QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_INFO,
+			  "%s: Allocated Tx buffer count %d is rounded down to %d",
+			  __func__, tx_buffer_count, tx_buffer_count_pwr2);
 
 		/* Free over allocated buffers below power of 2 */
 		for (idx = tx_buffer_count_pwr2; idx < tx_buffer_count; idx++) {
@@ -1703,7 +1703,7 @@ htt_tx_desc_init(htt_pdev_handle pdev,
 
 		ce_pkt_type = htt_to_ce_pkt_type[pkt_type];
 		if (0xffffffff == ce_pkt_type) {
-			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
 			"Invalid HTT pkt type %d\n", pkt_type);
 			return QDF_STATUS_E_INVAL;
 		}
