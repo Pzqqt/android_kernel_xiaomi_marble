@@ -2874,10 +2874,7 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 		bss_complete = &sap_ap_event.sapevt.sapStartBssCompleteEvent;
 
 		bss_complete->status = (eSapStatus) context;
-		if (csr_roaminfo != NULL)
-			bss_complete->staId = csr_roaminfo->staId;
-		else
-			bss_complete->staId = 0;
+		bss_complete->staId = sap_ctx->sap_sta_id;
 
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("(eSAP_START_BSS_EVENT): staId = %d"),

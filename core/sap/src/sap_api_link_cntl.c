@@ -1197,6 +1197,7 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 		 */
 		sap_event.event = eSAP_MAC_START_BSS_SUCCESS;
 		sap_event.params = csr_roam_info;
+		sap_ctx->sap_sta_id = csr_roam_info->staId;
 		sap_event.u1 = roam_status;
 		sap_event.u2 = roam_result;
 		qdf_status = sap_fsm(sap_ctx, &sap_event);

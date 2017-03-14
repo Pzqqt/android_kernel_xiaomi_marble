@@ -279,6 +279,7 @@ typedef struct sSapContext {
 	enum sap_acs_dfs_mode dfs_mode;
 	wlan_scan_requester req_id;
 	uint8_t sap_acs_pre_start_bss;
+	uint8_t sap_sta_id;
 } *ptSapContext;
 
 /*----------------------------------------------------------------------------
