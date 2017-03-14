@@ -1812,6 +1812,50 @@ static A_STATUS ol_txrx_pdev_attach_target(struct cdp_pdev *ppdev)
 }
 
 /**
+ * ol_tx_free_descs_inuse - free tx descriptors which are in use
+ * @pdev - the physical device for which tx descs need to be freed
+ *
+ * Cycle through the list of TX descriptors (for a pdev) which are in use,
+ * for which TX completion has not been received and free them. Should be
+ * called only when the interrupts are off and all lower layer RX is stopped.
+ * Otherwise there may be a race condition with TX completions.
+ *
+ * Return: None
+ */
+static void ol_tx_free_descs_inuse(ol_txrx_pdev_handle pdev)
+{
+	int i;
+	void *htt_tx_desc;
+	struct ol_tx_desc_t *tx_desc;
+	int num_freed_tx_desc = 0;
+
+	for (i = 0; i < pdev->tx_desc.pool_size; i++) {
+		tx_desc = ol_tx_desc_find(pdev, i);
+		/*
+		 * Confirm that each tx descriptor is "empty", i.e. it has
+		 * no tx frame attached.
+		 * In particular, check that there are no frames that have
+		 * been given to the target to transmit, for which the
+		 * target has never provided a response.
+		 */
+		if (qdf_atomic_read(&tx_desc->ref_cnt)) {
+			ol_txrx_dbg("Warning: freeing tx frame (no compltn)");
+			ol_tx_desc_frame_free_nonstd(pdev,
+						     tx_desc, 1);
+			num_freed_tx_desc++;
+		}
+		htt_tx_desc = tx_desc->htt_tx_desc;
+		htt_tx_desc_free(pdev->htt_pdev, htt_tx_desc);
+	}
+
+	if (num_freed_tx_desc)
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+		"freed %d tx frames for which no resp from target",
+		num_freed_tx_desc);
+
+}
+
+/**
  * ol_txrx_pdev_pre_detach() - detach the data SW state
  * @pdev - the data physical device object being removed
  * @force - delete the pdev (and its vdevs and peers) even if
@@ -1826,8 +1870,6 @@ static A_STATUS ol_txrx_pdev_attach_target(struct cdp_pdev *ppdev)
 static void ol_txrx_pdev_pre_detach(struct cdp_pdev *ppdev, int force)
 {
 	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
-	int i;
-	int num_freed_tx_desc = 0;
 
 	/* preconditions */
 	TXRX_ASSERT2(pdev);
@@ -1844,8 +1886,6 @@ static void ol_txrx_pdev_pre_detach(struct cdp_pdev *ppdev, int force)
 	qdf_timer_free(&pdev->tx_throttle.tx_timer);
 #endif
 #endif
-	ol_tso_seg_list_deinit(pdev);
-	ol_tso_num_seg_list_deinit(pdev);
 
 	if (force) {
 		/*
@@ -1867,37 +1907,17 @@ static void ol_txrx_pdev_pre_detach(struct cdp_pdev *ppdev, int force)
 
 	/* to get flow pool status before freeing descs */
 	ol_tx_dump_flow_pool_info((void *)pdev);
-
-	for (i = 0; i < pdev->tx_desc.pool_size; i++) {
-		void *htt_tx_desc;
-		struct ol_tx_desc_t *tx_desc;
-
-		tx_desc = ol_tx_desc_find(pdev, i);
-		/*
-		 * Confirm that each tx descriptor is "empty", i.e. it has
-		 * no tx frame attached.
-		 * In particular, check that there are no frames that have
-		 * been given to the target to transmit, for which the
-		 * target has never provided a response.
-		 */
-		if (qdf_atomic_read(&tx_desc->ref_cnt) &&
-				tx_desc->vdev_id != OL_TXRX_INVALID_VDEV_ID) {
-			ol_txrx_dbg(
-				   "Warning: freeing tx frame (no compltn)\n");
-			ol_tx_desc_frame_free_nonstd(pdev,
-						     tx_desc, 1);
-			num_freed_tx_desc++;
-		}
-		htt_tx_desc = tx_desc->htt_tx_desc;
-		htt_tx_desc_free(pdev->htt_pdev, htt_tx_desc);
-	}
-
-	if (num_freed_tx_desc)
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
-		"freed %d tx frames for which no resp from target",
-		num_freed_tx_desc);
-
+	ol_tx_free_descs_inuse(pdev);
 	ol_tx_deregister_flow_control(pdev);
+
+	/*
+	 * ol_tso_seg_list_deinit should happen after
+	 * ol_tx_deinit_tx_desc_inuse as it tries to access the tso seg freelist
+	 * which is being de-initilized in ol_tso_seg_list_deinit
+	 */
+	ol_tso_seg_list_deinit(pdev);
+	ol_tso_num_seg_list_deinit(pdev);
+
 	/* Stop the communication between HTT and target at first */
 	htt_detach_target(pdev->htt_pdev);
 

@@ -305,37 +305,75 @@ ol_tx_desc_vdev_rm(struct ol_tx_desc_t *tx_desc)
 #endif
 
 #ifdef FEATURE_TSO
-static void ol_tx_tso_desc_free(struct ol_txrx_pdev_t *pdev,
-				struct ol_tx_desc_t *tx_desc)
+/**
+ * ol_tso_unmap_tso_segment() - Unmap TSO segment
+ * @pdev: pointer to ol_txrx_pdev_t structure
+ * @tx_desc: pointer to ol_tx_desc_t containing the TSO segment
+ *
+ * Unmap TSO segment (frag[1]). If it is the last TSO segment corresponding the
+ * nbuf, also unmap the EIT header(frag[0]).
+ *
+ * Return: None
+ */
+static void ol_tso_unmap_tso_segment(struct ol_txrx_pdev_t *pdev,
+						struct ol_tx_desc_t *tx_desc)
 {
+	bool is_last_seg = false;
+	struct qdf_tso_num_seg_elem_t *tso_num_desc = NULL;
+
 	if (qdf_unlikely(tx_desc->tso_desc == NULL)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "%s %d TSO desc is NULL!",
 			  __func__, __LINE__);
 		qdf_assert(0);
+		return;
 	} else if (qdf_unlikely(tx_desc->tso_num_desc == NULL)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "%s %d TSO common info is NULL!",
 			  __func__, __LINE__);
 		qdf_assert(0);
-	} else {
-		struct qdf_tso_num_seg_elem_t *tso_num_desc =
-			(struct qdf_tso_num_seg_elem_t *)tx_desc->tso_num_desc;
-		if (tso_num_desc->num_seg.tso_cmn_num_seg > 1) {
-			tso_num_desc->num_seg.tso_cmn_num_seg--;
-			qdf_nbuf_unmap_tso_segment(pdev->osdev,
-						   tx_desc->tso_desc, false);
-		} else {
-			tso_num_desc->num_seg.tso_cmn_num_seg--;
-			qdf_assert(tso_num_desc->num_seg.tso_cmn_num_seg == 0);
-			qdf_nbuf_unmap_tso_segment(pdev->osdev,
-						   tx_desc->tso_desc, true);
-			ol_tso_num_seg_free(pdev, tx_desc->tso_num_desc);
-			tx_desc->tso_num_desc = NULL;
-		}
-		ol_tso_free_segment(pdev, tx_desc->tso_desc);
-		tx_desc->tso_desc = NULL;
+		return;
 	}
+
+	tso_num_desc = tx_desc->tso_num_desc;
+
+	qdf_spin_lock_bh(&pdev->tso_seg_pool.tso_mutex);
+
+	tso_num_desc->num_seg.tso_cmn_num_seg--;
+	is_last_seg = (tso_num_desc->num_seg.tso_cmn_num_seg == 0) ?
+								true : false;
+	qdf_nbuf_unmap_tso_segment(pdev->osdev, tx_desc->tso_desc, is_last_seg);
+
+	qdf_spin_unlock_bh(&pdev->tso_seg_pool.tso_mutex);
+
+}
+
+/**
+ * ol_tx_tso_desc_free() - Add TSO TX descs back to the freelist
+ * @pdev: pointer to ol_txrx_pdev_t structure
+ * @tx_desc: pointer to ol_tx_desc_t containing the TSO segment
+ *
+ * Add qdf_tso_seg_elem_t corresponding to the TSO seg back to freelist.
+ * If it is the last segment of the jumbo skb, also add the
+ * qdf_tso_num_seg_elem_t to the free list.
+ *
+ * Return: None
+ */
+static void ol_tx_tso_desc_free(struct ol_txrx_pdev_t *pdev,
+				struct ol_tx_desc_t *tx_desc)
+{
+	bool is_last_seg;
+	struct qdf_tso_num_seg_elem_t *tso_num_desc = tx_desc->tso_num_desc;
+
+	is_last_seg = (tso_num_desc->num_seg.tso_cmn_num_seg == 0) ?
+								true : false;
+	if (is_last_seg) {
+		ol_tso_num_seg_free(pdev, tx_desc->tso_num_desc);
+		tx_desc->tso_num_desc = NULL;
+	}
+
+	ol_tso_free_segment(pdev, tx_desc->tso_desc);
+	tx_desc->tso_desc = NULL;
 }
 
 #else
@@ -344,7 +382,35 @@ static inline void ol_tx_tso_desc_free(struct ol_txrx_pdev_t *pdev,
 {
 }
 
+static inline void ol_tso_unmap_tso_segment(
+					struct ol_txrx_pdev_t *pdev,
+					struct ol_tx_desc_t *tx_desc)
+{
+}
 #endif
+
+/**
+ * ol_tx_desc_free_common() - common funcs to free tx_desc for all flow ctl vers
+ * @pdev: pdev handle
+ * @tx_desc: tx descriptor
+ *
+ * Set of common functions needed for QCA_LL_TX_FLOW_CONTROL_V2 and older
+ * versions of flow control. Needs to be called from within a spinlock.
+ *
+ * Return: None
+ */
+static void ol_tx_desc_free_common(struct ol_txrx_pdev_t *pdev,
+						struct ol_tx_desc_t *tx_desc)
+{
+	ol_tx_desc_dup_detect_reset(pdev, tx_desc);
+
+	if (tx_desc->pkt_type == OL_TX_FRM_TSO)
+		ol_tx_tso_desc_free(pdev, tx_desc);
+
+	ol_tx_desc_reset_pkt_type(tx_desc);
+	ol_tx_desc_reset_timestamp(tx_desc);
+	tx_desc->vdev_id = OL_TXRX_INVALID_VDEV_ID;
+}
 
 #ifndef QCA_LL_TX_FLOW_CONTROL_V2
 /**
@@ -358,17 +424,10 @@ void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 {
 	qdf_spin_lock_bh(&pdev->tx_mutex);
 
-	ol_tx_desc_dup_detect_reset(pdev, tx_desc);
-
-	if (tx_desc->pkt_type == OL_TX_FRM_TSO)
-		ol_tx_tso_desc_free(pdev, tx_desc);
-
-	ol_tx_desc_reset_pkt_type(tx_desc);
-	ol_tx_desc_reset_timestamp(tx_desc);
+	ol_tx_desc_free_common(pdev, tx_desc);
 
 	ol_tx_put_desc_global_pool(pdev, tx_desc);
 	ol_tx_desc_vdev_rm(tx_desc);
-	tx_desc->vdev_id = OL_TXRX_INVALID_VDEV_ID;
 
 	qdf_spin_unlock_bh(&pdev->tx_mutex);
 }
@@ -385,14 +444,9 @@ void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 {
 	struct ol_tx_flow_pool_t *pool = tx_desc->pool;
 
-	if (tx_desc->pkt_type == OL_TX_FRM_TSO)
-		ol_tx_tso_desc_free(pdev, tx_desc);
-
-	ol_tx_desc_reset_pkt_type(tx_desc);
-	ol_tx_desc_reset_timestamp(tx_desc);
-
 	qdf_spin_lock_bh(&pool->flow_pool_lock);
-	ol_tx_desc_dup_detect_reset(pdev, tx_desc);
+
+	ol_tx_desc_free_common(pdev, tx_desc);
 	ol_tx_put_desc_flow_pool(pool, tx_desc);
 	switch (pool->status) {
 	case FLOW_POOL_ACTIVE_PAUSED:
@@ -419,8 +473,6 @@ void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 				 __func__, __LINE__);
 		break;
 	};
-
-	tx_desc->vdev_id = OL_TXRX_INVALID_VDEV_ID;
 
 	qdf_spin_unlock_bh(&pool->flow_pool_lock);
 
@@ -704,7 +756,10 @@ void ol_tx_desc_frame_free_nonstd(struct ol_txrx_pdev_t *pdev,
 		}
 		/* let the code below unmap and free the frame */
 	}
-	qdf_nbuf_unmap(pdev->osdev, tx_desc->netbuf, QDF_DMA_TO_DEVICE);
+	if (tx_desc->pkt_type == OL_TX_FRM_TSO)
+		ol_tso_unmap_tso_segment(pdev, tx_desc);
+	else
+		qdf_nbuf_unmap(pdev->osdev, tx_desc->netbuf, QDF_DMA_TO_DEVICE);
 	/* check the frame type to see what kind of special steps are needed */
 	if ((tx_desc->pkt_type >= OL_TXRX_MGMT_TYPE_BASE) &&
 		   (tx_desc->pkt_type != ol_tx_frm_freed)) {
