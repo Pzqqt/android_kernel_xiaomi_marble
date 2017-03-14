@@ -600,6 +600,8 @@ static int __wlan_hdd_bus_suspend(pm_message_t state,
 	}
 
 	hdd_info("bus suspend succeeded");
+	qdf_mem_free(params);
+	params = NULL;
 	return 0;
 
 resume_wma:
