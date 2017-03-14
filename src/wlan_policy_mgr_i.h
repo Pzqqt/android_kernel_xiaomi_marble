@@ -68,33 +68,6 @@ extern enum cds_band_type cds_chan_to_band(uint32_t chan);
 #endif
 
 /**
- *  Some max value greater than the max length of the channel list
- */
-#define MAX_WEIGHT_OF_PCL_CHANNELS 255
-/**
- *  Some fixed weight difference between the groups
- */
-#define PCL_GROUPS_WEIGHT_DIFFERENCE 20
-
-/**
- * Currently max, only 3 groups are possible as per 'enum policy_mgr_pcl_type'.
- * i.e., in a PCL only 3 groups of channels can be present
- * e.g., SCC channel on 2.4 Ghz, SCC channel on 5 Ghz & 5 Ghz channels.
- * Group 1 has highest priority, group 2 has the next higher priority
- * and so on.
- */
-#define WEIGHT_OF_GROUP1_PCL_CHANNELS MAX_WEIGHT_OF_PCL_CHANNELS
-#define WEIGHT_OF_GROUP2_PCL_CHANNELS \
-	(WEIGHT_OF_GROUP1_PCL_CHANNELS - PCL_GROUPS_WEIGHT_DIFFERENCE)
-#define WEIGHT_OF_GROUP3_PCL_CHANNELS \
-	(WEIGHT_OF_GROUP2_PCL_CHANNELS - PCL_GROUPS_WEIGHT_DIFFERENCE)
-#define WEIGHT_OF_GROUP4_PCL_CHANNELS \
-	(WEIGHT_OF_GROUP3_PCL_CHANNELS - PCL_GROUPS_WEIGHT_DIFFERENCE)
-
-#define WEIGHT_OF_NON_PCL_CHANNELS 1
-#define WEIGHT_OF_DISALLOWED_CHANNELS 0
-
-/**
  * Policy Mgr hardware mode list bit-mask definitions.
  * Bits 4:0, 31:29 are unused.
  *
