@@ -172,8 +172,7 @@ static int htt_tx_frag_desc_attach(struct htt_pdev_t *pdev,
 		qdf_get_dma_mem_context((&pdev->frag_descs), memctx), false);
 	if ((0 == pdev->frag_descs.desc_pages.num_pages) ||
 		(NULL == pdev->frag_descs.desc_pages.dma_pages)) {
-		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-			"FRAG descriptor alloc fail");
+		ol_txrx_err("FRAG descriptor alloc fail");
 		return -ENOBUFS;
 	}
 	return 0;
@@ -354,8 +353,7 @@ int htt_tx_attach(struct htt_pdev_t *pdev, int desc_pool_elems)
 							  memctx), true);
 	if ((0 == pdev->tx_descs.desc_pages.num_pages) ||
 	    (NULL == pdev->tx_descs.desc_pages.cacheable_pages)) {
-		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-			   "HTT desc alloc fail");
+		ol_txrx_err("HTT desc alloc fail");
 		goto out_fail;
 	}
 	num_page = pdev->tx_descs.desc_pages.num_pages;
@@ -374,8 +372,7 @@ int htt_tx_attach(struct htt_pdev_t *pdev, int desc_pool_elems)
 				 * should point next page
 				 */
 				if (!cacheable_pages[i + 1]) {
-					TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-						   "over flow num link %d\n",
+					ol_txrx_err("over flow num link %d\n",
 						   num_link);
 					goto free_htt_desc;
 				}
@@ -394,8 +391,7 @@ int htt_tx_attach(struct htt_pdev_t *pdev, int desc_pool_elems)
 	*p = NULL;
 
 	if (htt_tx_frag_desc_attach(pdev, desc_pool_elems)) {
-		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-			   "HTT Frag descriptor alloc fail");
+		ol_txrx_err("HTT Frag descriptor alloc fail");
 		goto free_htt_desc;
 	}
 
@@ -526,8 +522,7 @@ int htt_tx_attach(struct htt_pdev_t *pdev, int desc_pool_elems)
 		qdf_get_dma_mem_context((&pdev->tx_descs), memctx), false);
 	if ((0 == pdev->tx_descs.desc_pages.num_pages) ||
 		(NULL == pdev->tx_descs.desc_pages.dma_pages)) {
-		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-			"HTT desc alloc fail");
+		ol_txrx_err("HTT desc alloc fail");
 		goto out_fail;
 	}
 	num_page = pdev->tx_descs.desc_pages.num_pages;
@@ -544,8 +539,7 @@ int htt_tx_attach(struct htt_pdev_t *pdev, int desc_pool_elems)
 				 * Last element on this page,
 				 * should pint next page */
 				if (!page_info->page_v_addr_start) {
-					TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-						"over flow num link %d\n",
+					ol_txrx_err("over flow num link %d\n",
 						num_link);
 					goto free_htt_desc;
 				}
@@ -565,8 +559,7 @@ int htt_tx_attach(struct htt_pdev_t *pdev, int desc_pool_elems)
 	*p = NULL;
 
 	if (htt_tx_frag_desc_attach(pdev, desc_pool_elems)) {
-		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-			"HTT Frag descriptor alloc fail");
+		ol_txrx_err("HTT Frag descriptor alloc fail");
 		goto free_htt_desc;
 	}
 
@@ -660,7 +653,7 @@ static qdf_dma_addr_t htt_tx_get_paddr(htt_pdev_handle pdev,
 	}
 
 	if (!page_info) {
-		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "invalid page_info");
+		ol_txrx_err("invalid page_info");
 		return 0;
 	}
 

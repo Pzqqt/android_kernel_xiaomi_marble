@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -36,15 +36,20 @@
 #include <ol_rx.h>              /* ol_rx_deliver */
 
 /* add the MSDUs from this MPDU to the list of good frames */
-#define ADD_MPDU_TO_LIST(head, tail, mpdu, mpdu_tail) do {		\
-		if (!head) {						\
-			head = mpdu;					\
-		} else {						\
-			qdf_nbuf_set_next(tail, mpdu);			\
-		}							\
-		tail = mpdu_tail;					\
-	} while (0)
-
+/* add the MSDUs from this MPDU to the list of good frames */
+static void ol_rx_add_mpdu_to_list(qdf_nbuf_t head,
+				   qdf_nbuf_t tail,
+				   qdf_nbuf_t mpdu,
+				   qdf_nbuf_t mpdu_tail)
+{
+	do {
+		if (!head)
+			head = mpdu;
+		else
+			qdf_nbuf_set_next(tail, mpdu);
+		tail = mpdu_tail;
+	} while (0);
+}
 int ol_rx_pn_cmp24(union htt_rx_pn_t *new_pn,
 		   union htt_rx_pn_t *old_pn, int is_unicast, int opmode)
 {
@@ -127,8 +132,8 @@ ol_rx_pn_check_base(struct ol_txrx_vdev_t *vdev,
 
 		/* Don't check the PN replay for non-encrypted frames */
 		if (!htt_rx_mpdu_is_encrypted(pdev->htt_pdev, rx_desc)) {
-			ADD_MPDU_TO_LIST(out_list_head, out_list_tail, mpdu,
-					 mpdu_tail);
+			ol_rx_add_mpdu_to_list(out_list_head, out_list_tail,
+					       mpdu, mpdu_tail);
 			mpdu = next_mpdu;
 			continue;
 		}
@@ -149,7 +154,6 @@ ol_rx_pn_check_base(struct ol_txrx_vdev_t *vdev,
 		if (pn_is_replay) {
 			qdf_nbuf_t msdu;
 			static uint32_t last_pncheck_print_time /* = 0 */;
-			int log_level;
 			uint32_t current_time_ms;
 
 			/*
@@ -164,12 +168,7 @@ ol_rx_pn_check_base(struct ol_txrx_vdev_t *vdev,
 			if (TXRX_PN_CHECK_FAILURE_PRINT_PERIOD_MS <
 			    (current_time_ms - last_pncheck_print_time)) {
 				last_pncheck_print_time = current_time_ms;
-				log_level = TXRX_PRINT_LEVEL_WARN;
-			} else {
-				log_level = TXRX_PRINT_LEVEL_INFO2;
-			}
-
-			TXRX_PRINT(log_level,
+				ol_txrx_warn(
 				   "PN check failed - TID %d, peer %p "
 				   "(%02x:%02x:%02x:%02x:%02x:%02x) %s\n"
 				   "    old PN (u64 x2)= 0x%08llx %08llx (LSBs = %lld)\n"
@@ -187,6 +186,26 @@ ol_rx_pn_check_base(struct ol_txrx_vdev_t *vdev,
 				   new_pn.pn128[0] & 0xffffffffffffULL,
 				   htt_rx_mpdu_desc_seq_num(pdev->htt_pdev,
 							    rx_desc));
+			} else {
+				ol_txrx_dbg(
+				   "PN check failed - TID %d, peer %p "
+				   "(%02x:%02x:%02x:%02x:%02x:%02x) %s\n"
+				   "    old PN (u64 x2)= 0x%08llx %08llx (LSBs = %lld)\n"
+				   "    new PN (u64 x2)= 0x%08llx %08llx (LSBs = %lld)\n"
+				   "    new seq num = %d\n",
+				   tid, peer,
+				   peer->mac_addr.raw[0], peer->mac_addr.raw[1],
+				   peer->mac_addr.raw[2], peer->mac_addr.raw[3],
+				   peer->mac_addr.raw[4], peer->mac_addr.raw[5],
+				   (index ==
+				    txrx_sec_ucast) ? "ucast" : "mcast",
+				   last_pn->pn128[1], last_pn->pn128[0],
+				   last_pn->pn128[0] & 0xffffffffffffULL,
+				   new_pn.pn128[1], new_pn.pn128[0],
+				   new_pn.pn128[0] & 0xffffffffffffULL,
+				   htt_rx_mpdu_desc_seq_num(pdev->htt_pdev,
+							    rx_desc));
+			}
 #if defined(ENABLE_RX_PN_TRACE)
 			ol_rx_pn_trace_display(pdev, 1);
 #endif /* ENABLE_RX_PN_TRACE */
@@ -208,8 +227,8 @@ ol_rx_pn_check_base(struct ol_txrx_vdev_t *vdev,
 					msdu = next_msdu;
 			} while (1);
 		} else {
-			ADD_MPDU_TO_LIST(out_list_head, out_list_tail, mpdu,
-					 mpdu_tail);
+			ol_rx_add_mpdu_to_list(out_list_head, out_list_tail,
+					       mpdu, mpdu_tail);
 			/*
 			 * Remember the new PN.
 			 * For simplicity, just do 2 64-bit word copies to

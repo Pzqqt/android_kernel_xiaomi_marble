@@ -133,7 +133,7 @@ ol_tx_queue_vdev_flush(struct ol_txrx_pdev_t *pdev, struct ol_txrx_vdev_t *vdev)
 				if (txq->frms)
 					ol_tx_queue_free(pdev, txq, j, true);
 			}
-			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+			ol_txrx_info(
 				   "%s: Delete Peer %p\n", __func__, peer);
 			ol_txrx_peer_unref_delete(peers[i]);
 		}
@@ -1810,7 +1810,7 @@ ol_txrx_map_to_netif_reason_type(uint32_t reason)
 	case OL_TXQ_PAUSE_REASON_THERMAL_MITIGATION:
 		return WLAN_THERMAL_MITIGATION;
 	default:
-		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+		ol_txrx_err(
 			   "%s: reason not supported %d\n",
 			   __func__, reason);
 		return WLAN_REASON_TYPE_MAX;
@@ -1831,8 +1831,7 @@ void ol_txrx_vdev_pause(struct cdp_vdev *pvdev, uint32_t reason)
 	enum netif_reason_type netif_reason;
 
 	if (qdf_unlikely((!pdev) || (!pdev->pause_cb))) {
-		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-				   "%s: invalid pdev\n", __func__);
+		ol_txrx_err("%s: invalid pdev\n", __func__);
 		return;
 	}
 
@@ -1857,7 +1856,7 @@ void ol_txrx_vdev_unpause(struct cdp_vdev *pvdev, uint32_t reason)
 	enum netif_reason_type netif_reason;
 
 	if (qdf_unlikely((!pdev) || (!pdev->pause_cb))) {
-		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+		ol_txrx_err(
 				   "%s: invalid pdev\n", __func__);
 		return;
 	}
@@ -1982,7 +1981,7 @@ static void ol_tx_pdev_throttle_phase_timer(void *context)
 
 	if (pdev->tx_throttle.current_throttle_phase == THROTTLE_PHASE_OFF) {
 		/* Traffic is stopped */
-		TXRX_PRINT(TXRX_PRINT_LEVEL_WARN,
+		ol_txrx_dbg(
 				   "throttle phase --> OFF\n");
 		ol_txrx_throttle_pause(pdev);
 		ol_txrx_thermal_pause(pdev);
@@ -1991,14 +1990,14 @@ static void ol_tx_pdev_throttle_phase_timer(void *context)
 		ms = pdev->tx_throttle.throttle_time_ms[cur_level][cur_phase];
 		if (pdev->tx_throttle.current_throttle_level !=
 				THROTTLE_LEVEL_0) {
-			TXRX_PRINT(TXRX_PRINT_LEVEL_WARN,
+			ol_txrx_dbg(
 					   "start timer %d ms\n", ms);
 			qdf_timer_start(&pdev->tx_throttle.
 							phase_timer, ms);
 		}
 	} else {
 		/* Traffic can go */
-		TXRX_PRINT(TXRX_PRINT_LEVEL_WARN,
+		ol_txrx_dbg(
 					"throttle phase --> ON\n");
 		ol_txrx_throttle_unpause(pdev);
 		ol_txrx_thermal_unpause(pdev);
@@ -2007,7 +2006,7 @@ static void ol_tx_pdev_throttle_phase_timer(void *context)
 		ms = pdev->tx_throttle.throttle_time_ms[cur_level][cur_phase];
 		if (pdev->tx_throttle.current_throttle_level !=
 		    THROTTLE_LEVEL_0) {
-			TXRX_PRINT(TXRX_PRINT_LEVEL_WARN, "start timer %d ms\n",
+			ol_txrx_dbg("start timer %d ms\n",
 				   ms);
 			qdf_timer_start(&pdev->tx_throttle.phase_timer,
 						ms);
@@ -2078,13 +2077,13 @@ void ol_tx_throttle_set_level(struct cdp_pdev *ppdev, int level)
 	int ms = 0;
 
 	if (level >= THROTTLE_LEVEL_MAX) {
-		TXRX_PRINT(TXRX_PRINT_LEVEL_WARN,
+		ol_txrx_dbg(
 			   "%s invalid throttle level set %d, ignoring\n",
 			   __func__, level);
 		return;
 	}
 
-	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "Setting throttle level %d\n", level);
+	ol_txrx_info("Setting throttle level %d\n", level);
 
 	/* Set the current throttle level */
 	pdev->tx_throttle.current_throttle_level = (enum throttle_level) level;
@@ -2104,7 +2103,7 @@ void ol_tx_throttle_init_period(struct cdp_pdev *ppdev, int period,
 	/* Set the current throttle level */
 	pdev->tx_throttle.throttle_period_ms = period;
 
-	TXRX_PRINT(TXRX_PRINT_LEVEL_WARN, "level  OFF  ON\n");
+	ol_txrx_dbg("level  OFF  ON\n");
 	for (i = 0; i < THROTTLE_LEVEL_MAX; i++) {
 		pdev->tx_throttle.throttle_time_ms[i][THROTTLE_PHASE_ON] =
 			pdev->tx_throttle.throttle_period_ms -
@@ -2114,7 +2113,7 @@ void ol_tx_throttle_init_period(struct cdp_pdev *ppdev, int period,
 			pdev->tx_throttle.throttle_period_ms -
 			pdev->tx_throttle.throttle_time_ms[
 				i][THROTTLE_PHASE_ON];
-		TXRX_PRINT(TXRX_PRINT_LEVEL_WARN, "%d      %d    %d\n", i,
+		ol_txrx_dbg("%d      %d    %d\n", i,
 			   pdev->tx_throttle.
 			   throttle_time_ms[i][THROTTLE_PHASE_OFF],
 			   pdev->tx_throttle.

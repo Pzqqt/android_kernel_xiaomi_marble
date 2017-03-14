@@ -47,7 +47,7 @@ static inline void ol_tx_desc_sanity_checks(struct ol_txrx_pdev_t *pdev,
 					struct ol_tx_desc_t *tx_desc)
 {
 	if (tx_desc->pkt_type != ol_tx_frm_freed) {
-		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+		ol_txrx_err(
 				   "%s Potential tx_desc corruption pkt_type:0x%x pdev:0x%p",
 				   __func__, tx_desc->pkt_type, pdev);
 		qdf_assert(0);
@@ -61,7 +61,7 @@ static inline void ol_tx_desc_reset_pkt_type(struct ol_tx_desc_t *tx_desc)
 static inline void ol_tx_desc_compute_delay(struct ol_tx_desc_t *tx_desc)
 {
 	if (tx_desc->entry_timestamp_ticks != 0xffffffff) {
-		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "%s Timestamp:0x%x\n",
+		ol_txrx_err("%s Timestamp:0x%x\n",
 				   __func__, tx_desc->entry_timestamp_ticks);
 		qdf_assert(0);
 	}

@@ -210,8 +210,7 @@ qdf_nbuf_t ol_tx_send_ipa_data_frame(struct cdp_vdev *vdev,
 	qdf_nbuf_t ret;
 
 	if (qdf_unlikely(!pdev)) {
-		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-			"%s: pdev is NULL", __func__);
+		ol_txrx_err("%s: pdev is NULL", __func__);
 		return skb;
 	}
 
@@ -224,8 +223,7 @@ qdf_nbuf_t ol_tx_send_ipa_data_frame(struct cdp_vdev *vdev,
 	qdf_nbuf_set_next(skb, NULL);
 	ret = OL_TX_SEND((struct ol_txrx_vdev_t *)vdev, skb);
 	if (ret) {
-		TXRX_PRINT(TXRX_PRINT_LEVEL_WARN,
-			"%s: Failed to tx", __func__);
+		ol_txrx_warn("%s: Failed to tx", __func__);
 		return ret;
 	}
 
@@ -1299,8 +1297,7 @@ struct ol_tx_desc_t *ol_tx_hl_desc_alloc(struct ol_txrx_pdev_t *pdev,
 		    (QDF_NBUF_CB_GET_PACKET_TYPE(msdu) ==
 			QDF_NBUF_CB_PACKET_TYPE_EAPOL)) {
 			tx_desc = ol_tx_desc_hl(pdev, vdev, msdu, msdu_info);
-			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-				   "Provided tx descriptor from reserve pool for DHCP/EAPOL\n");
+			ol_txrx_info("Provided tx descriptor from reserve pool for DHCP/EAPOL\n");
 		}
 	}
 	return tx_desc;
@@ -1893,8 +1890,7 @@ void ol_tso_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg)
 
 	/* Host should not allocate any c_element. */
 	if (num_seg <= 0) {
-		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-			   "%s: ERROR: Pool size passed is 0",
+		ol_txrx_err("%s: ERROR: Pool size passed is 0",
 			   __func__);
 		QDF_BUG(0);
 		pdev->tso_seg_pool.pool_size = i;
@@ -1906,8 +1902,7 @@ void ol_tso_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg)
 	pdev->tso_seg_pool.freelist = c_element;
 	for (i = 0; i < (num_seg - 1); i++) {
 		if (qdf_unlikely(!c_element)) {
-			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-				   "%s: ERROR: c_element NULL for seg %d",
+			ol_txrx_err("%s: ERROR: c_element NULL for seg %d",
 				   __func__, i);
 			QDF_BUG(0);
 			pdev->tso_seg_pool.pool_size = i;
@@ -1927,8 +1922,7 @@ void ol_tso_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg)
 	 * first c_element if num_seg is equal to 1.
 	 */
 	if (qdf_unlikely(!c_element)) {
-		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-			   "%s: ERROR: c_element NULL for seg %d",
+		ol_txrx_err("%s: ERROR: c_element NULL for seg %d",
 			   __func__, i);
 		QDF_BUG(0);
 		pdev->tso_seg_pool.pool_size = i;
@@ -2006,8 +2000,7 @@ void ol_tso_num_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg)
 
 	/* Host should not allocate any c_element. */
 	if (num_seg <= 0) {
-		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-			   "%s: ERROR: Pool size passed is 0",
+		ol_txrx_err("%s: ERROR: Pool size passed is 0",
 			   __func__);
 		QDF_BUG(0);
 		pdev->tso_num_seg_pool.num_seg_pool_size = i;
@@ -2019,8 +2012,7 @@ void ol_tso_num_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg)
 	pdev->tso_num_seg_pool.freelist = c_element;
 	for (i = 0; i < (num_seg - 1); i++) {
 		if (qdf_unlikely(!c_element)) {
-			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-				"%s: ERROR: c_element NULL for num of seg %d",
+			ol_txrx_err("%s: ERROR: c_element NULL for num of seg %d",
 				__func__, i);
 			QDF_BUG(0);
 			pdev->tso_num_seg_pool.num_seg_pool_size = i;
@@ -2038,8 +2030,7 @@ void ol_tso_num_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg)
 	 * first c_element if num_seg is equal to 1.
 	 */
 	if (qdf_unlikely(!c_element)) {
-		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-			   "%s: ERROR: c_element NULL for num of seg %d",
+		ol_txrx_err("%s: ERROR: c_element NULL for num of seg %d",
 			   __func__, i);
 		QDF_BUG(0);
 		pdev->tso_num_seg_pool.num_seg_pool_size = i;

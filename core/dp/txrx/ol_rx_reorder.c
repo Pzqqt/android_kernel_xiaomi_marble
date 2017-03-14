@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -524,8 +524,8 @@ ol_rx_delba_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id, uint8_t tid)
 	 * used for non block-ack cases.
 	 */
 	if (rx_reorder->array != &rx_reorder->base) {
-		TXRX_PRINT(TXRX_PRINT_LEVEL_INFO1,
-			   "%s, delete reorder array, tid:%d\n", __func__, tid);
+		ol_txrx_dbg("%s, delete reorder array, tid:%d\n",
+			    __func__, tid);
 		qdf_mem_free(rx_reorder->array);
 	}
 
@@ -632,7 +632,6 @@ ol_rx_pn_ind_handler(ol_txrx_pdev_handle pdev,
 				static uint32_t last_pncheck_print_time;
 				/* Do not need to initialize as C does it */
 
-				int log_level;
 				uint32_t current_time_ms;
 				union htt_rx_pn_t pn = { 0 };
 				int index, pn_len;
@@ -660,11 +659,7 @@ ol_rx_pn_ind_handler(ol_txrx_pdev_handle pdev,
 				     last_pncheck_print_time)) {
 					last_pncheck_print_time =
 						current_time_ms;
-					log_level = TXRX_PRINT_LEVEL_WARN;
-				} else {
-					log_level = TXRX_PRINT_LEVEL_INFO2;
-				}
-				TXRX_PRINT(log_level,
+					ol_txrx_warn(
 					   "Tgt PN check failed - TID %d, peer %p "
 					   "(%02x:%02x:%02x:%02x:%02x:%02x)\n"
 					   "    PN (u64 x2)= 0x%08llx %08llx (LSBs = %lld)\n"
@@ -680,6 +675,24 @@ ol_rx_pn_ind_handler(ol_txrx_pdev_handle pdev,
 					   pn.pn128[0] & 0xffffffffffffULL,
 					   htt_rx_mpdu_desc_seq_num(htt_pdev,
 								    rx_desc));
+				} else {
+					ol_txrx_dbg(
+					   "Tgt PN check failed - TID %d, peer %p "
+					   "(%02x:%02x:%02x:%02x:%02x:%02x)\n"
+					   "    PN (u64 x2)= 0x%08llx %08llx (LSBs = %lld)\n"
+					   "    new seq num = %d\n",
+					   tid, peer,
+					   peer->mac_addr.raw[0],
+					   peer->mac_addr.raw[1],
+					   peer->mac_addr.raw[2],
+					   peer->mac_addr.raw[3],
+					   peer->mac_addr.raw[4],
+					   peer->mac_addr.raw[5], pn.pn128[1],
+					   pn.pn128[0],
+					   pn.pn128[0] & 0xffffffffffffULL,
+					   htt_rx_mpdu_desc_seq_num(htt_pdev,
+								    rx_desc));
+				}
 				ol_rx_err(pdev->ctrl_pdev, vdev->vdev_id,
 					  peer->mac_addr.raw, tid,
 					  htt_rx_mpdu_desc_tsf32(htt_pdev,

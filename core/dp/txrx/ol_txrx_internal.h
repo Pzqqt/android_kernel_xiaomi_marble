@@ -74,64 +74,41 @@
 #define TXRX_ASSERT2(condition)
 #endif
 #endif /* #ifdef __KLOCWORK__ */
-enum {
-	/* FATAL_ERR - print only irrecoverable error messages */
-	TXRX_PRINT_LEVEL_FATAL_ERR,
-
-	/* ERR - include non-fatal err messages */
-	TXRX_PRINT_LEVEL_ERR,
-
-	/* WARN - include warnings */
-	TXRX_PRINT_LEVEL_WARN,
-
-	/* INFO1 - include fundamental, infrequent events */
-	TXRX_PRINT_LEVEL_INFO1,
-
-	/* INFO2 - include non-fundamental but infrequent events */
-	TXRX_PRINT_LEVEL_INFO2,
-
-	/* INFO3 - include frequent events */
-	/* to avoid performance impact, don't use INFO3
-	   unless explicitly enabled */
-#ifdef TXRX_PRINT_VERBOSE_ENABLE
-	TXRX_PRINT_LEVEL_INFO3,
-#endif /* TXRX_PRINT_VERBOSE_ENABLE */
-};
-
-extern unsigned g_txrx_print_level;
 
 #ifdef TXRX_PRINT_ENABLE
 
 #include <stdarg.h>             /* va_list */
 #include <qdf_types.h>          /* qdf_vprint */
 
-/* Supress 4296 - expression is always true
-* It will fire if level is TXRX_PRINT_LEVEL_FATAL_ERR (0)
-* because g_txrx_print_level is unsigned */
-#define ol_txrx_print(level, fmt, ...)  {		\
-		if (level <= g_txrx_print_level)	\
-			qdf_print(fmt, ## __VA_ARGS__); }
-#define TXRX_PRINT(level, fmt, ...) \
-	ol_txrx_print(level, "TXRX: " fmt, ## __VA_ARGS__)
+#define ol_txrx_log(level, args...) QDF_TRACE(QDF_MODULE_ID_TXRX, level, ## args)
+#define ol_txrx_logfl(level, format, args...) ol_txrx_log(level, FL(format), ## args)
 
-#ifdef TXRX_PRINT_VERBOSE_ENABLE
-
-#define ol_txrx_print_verbose(fmt, ...) {		  \
-	if (TXRX_PRINT_LEVEL_INFO3 <= g_txrx_print_level) \
-		qdf_print(fmt, ## __VA_ARGS__); }
-#define TXRX_PRINT_VERBOSE(fmt, ...) \
-	ol_txrx_print_verbose("TXRX: " fmt, ## __VA_ARGS__)
-#else
-#define TXRX_PRINT_VERBOSE(fmt, ...)
-#endif /* TXRX_PRINT_VERBOSE_ENABLE */
+#define ol_txrx_alert(format, args...) \
+		ol_txrx_logfl(QDF_TRACE_LEVEL_FATAL, format, ## args)
+#define ol_txrx_err(format, args...) \
+		ol_txrx_logfl(QDF_TRACE_LEVEL_ERROR, format, ## args)
+#define ol_txrx_warn(format, args...) \
+		ol_txrx_logfl(QDF_TRACE_LEVEL_WARN, format, ## args)
+#define ol_txrx_info(format, args...) \
+		ol_txrx_logfl(QDF_TRACE_LEVEL_INFO, format, ## args)
+#define ol_txrx_info_high(format, args...) \
+		ol_txrx_logfl(QDF_TRACE_LEVEL_INFO_HIGH, format, ## args)
+#define ol_txrx_dbg(format, args...) \
+		ol_txrx_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
 
 /* define PN check failure message print rate
    as 1 second */
 #define TXRX_PN_CHECK_FAILURE_PRINT_PERIOD_MS  1000
 
 #else
-#define TXRX_PRINT(level, fmt, ...)
-#define TXRX_PRINT_VERBOSE(fmt, ...)
+#define ol_txrx_log(level, args...)
+#define ol_txrx_logfl(level, format, args...)
+#define ol_txrx_alert(format, args...)
+#define ol_txrx_err(format, args...)
+#define ol_txrx_warn(format, args...)
+#define ol_txrx_info(format, args...)
+#define ol_txrx_info_high(format, args...)
+#define ol_txrx_dbg(format, args...)
 #endif /* TXRX_PRINT_ENABLE */
 
 /*--- tx credit debug printouts ---*/

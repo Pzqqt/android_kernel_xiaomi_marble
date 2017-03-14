@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -187,8 +187,7 @@ ol_rx_frag_restructure(
 	int rx_desc_len)
 {
 	if ((ind_old_position == NULL) || (rx_desc_old_position == NULL)) {
-		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-			   "ind_old_position,rx_desc_old_position is NULL\n");
+		ol_txrx_err("ind_old_position,rx_desc_old_position is NULL\n");
 		ASSERT(0);
 		return;
 	}
@@ -453,8 +452,7 @@ ol_rx_reorder_store_frag(ol_txrx_pdev_handle pdev,
 					  rx_reorder_array_elem->head);
 			rx_reorder_array_elem->head = NULL;
 			rx_reorder_array_elem->tail = NULL;
-			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-				   "\n ol_rx_reorder_store:  %s mismatch \n",
+			ol_txrx_err("\n ol_rx_reorder_store:%s mismatch\n",
 				   (rxseq == frxseq)
 				   ? "address"
 				   : "seq number");
@@ -594,8 +592,7 @@ void ol_rx_defrag_waitlist_remove(struct ol_txrx_peer_t *peer, unsigned tid)
 		rx_reorder->defrag_waitlist_elem.tqe_next = NULL;
 		rx_reorder->defrag_waitlist_elem.tqe_prev = NULL;
 	} else if (rx_reorder->defrag_waitlist_elem.tqe_next != NULL) {
-		TXRX_PRINT(TXRX_PRINT_LEVEL_FATAL_ERR,
-				"waitlist->tqe_prv = NULL\n");
+		ol_txrx_alert("waitlist->tqe_prv = NULL\n");
 		QDF_ASSERT(0);
 		rx_reorder->defrag_waitlist_elem.tqe_next = NULL;
 	}
@@ -673,8 +670,7 @@ ol_rx_defrag(ol_txrx_pdev_handle pdev,
 				ol_rx_frames_free(htt_pdev, frag_list);
 			}
 			ol_rx_frames_free(htt_pdev, tmp_next);
-			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-				   "ol_rx_defrag: PN Check failed\n");
+			ol_txrx_err("ol_rx_defrag: PN Check failed\n");
 			return;
 		}
 		/* remove FCS from each fragment */
@@ -701,8 +697,7 @@ ol_rx_defrag(ol_txrx_pdev_handle pdev,
 			if (!ol_rx_frag_tkip_decap(pdev, cur, hdr_space)) {
 				/* TKIP decap failed, discard frags */
 				ol_rx_frames_free(htt_pdev, frag_list);
-				TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-					   "\n ol_rx_defrag: TKIP decap failed\n");
+				ol_txrx_err("\n ol_rx_defrag: TKIP decap failed\n");
 				return;
 			}
 			cur = tmp_next;
@@ -715,15 +710,13 @@ ol_rx_defrag(ol_txrx_pdev_handle pdev,
 			if (!ol_rx_frag_ccmp_demic(pdev, cur, hdr_space)) {
 				/* CCMP demic failed, discard frags */
 				ol_rx_frames_free(htt_pdev, frag_list);
-				TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-					   "\n ol_rx_defrag: CCMP demic failed\n");
+				ol_txrx_err("\n ol_rx_defrag: CCMP demic failed\n");
 				return;
 			}
 			if (!ol_rx_frag_ccmp_decap(pdev, cur, hdr_space)) {
 				/* CCMP decap failed, discard frags */
 				ol_rx_frames_free(htt_pdev, frag_list);
-				TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-					   "\n ol_rx_defrag: CCMP decap failed\n");
+				ol_txrx_err("\n ol_rx_defrag: CCMP decap failed\n");
 				return;
 			}
 			cur = tmp_next;
@@ -738,8 +731,7 @@ ol_rx_defrag(ol_txrx_pdev_handle pdev,
 			if (!ol_rx_frag_wep_decap(pdev, cur, hdr_space)) {
 				/* wep decap failed, discard frags */
 				ol_rx_frames_free(htt_pdev, frag_list);
-				TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-					   "\n ol_rx_defrag: wep decap failed\n");
+				ol_txrx_err("\n ol_rx_defrag: wep decap failed\n");
 				return;
 			}
 			cur = tmp_next;
@@ -763,8 +755,7 @@ ol_rx_defrag(ol_txrx_pdev_handle pdev,
 			ol_rx_err(pdev->ctrl_pdev,
 				  vdev->vdev_id, peer->mac_addr.raw, tid, 0,
 				  OL_RX_DEFRAG_ERR, msdu, NULL, 0);
-			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-				   "\n ol_rx_defrag: TKIP demic failed\n");
+			ol_txrx_err("\n ol_rx_defrag: TKIP demic failed\n");
 			return;
 		}
 	}

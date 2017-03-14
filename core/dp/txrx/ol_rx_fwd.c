@@ -79,11 +79,8 @@ static inline void ol_ap_fwd_check(struct ol_txrx_vdev_t *vdev, qdf_nbuf_t msdu)
 	    qdf_mem_cmp
 		     (mac_header->i_addr3, vdev->mac_addr.raw,
 		     IEEE80211_ADDR_LEN)) {
-#ifdef DEBUG_HOST_RC
-		TXRX_PRINT(TXRX_PRINT_LEVEL_INFO1,
-			   "Exit: %s | Unnecessary to adjust mac header\n",
+		ol_txrx_dbg("Exit: %s | Unnecessary to adjust mac header\n",
 			   __func__);
-#endif
 	} else {
 		/* Flip the ToDs bit to FromDs */
 		mac_header->i_fc[1] &= 0xfe;
