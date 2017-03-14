@@ -575,8 +575,144 @@ QDF_STATUS policy_mgr_handle_conc_multiport(struct wlan_objmgr_psoc *psoc,
 }
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
+/**
+ * policy_mgr_is_restart_sap_allowed() - Check if restart SAP
+ * allowed during SCC -> MCC switch
+ * @psoc: PSOC object data
+ * @mcc_to_scc_switch: MCC to SCC switch enabled user config
+ *
+ * Check if restart SAP allowed during SCC->MCC switch
+ *
+ * Restart: true or false
+ */
+static bool policy_mgr_is_restart_sap_allowed(
+	struct wlan_objmgr_psoc *psoc,
+	uint32_t mcc_to_scc_switch)
+{
+	if ((mcc_to_scc_switch == QDF_MCC_TO_SCC_SWITCH_DISABLE) ||
+	    !(policy_mgr_concurrent_open_sessions_running(psoc) &&
+	      (policy_mgr_get_concurrency_mode(psoc) ==
+	       (QDF_STA_MASK | QDF_SAP_MASK)))) {
+		policy_mgr_err("MCC switch disabled or not concurrent STA/SAP");
+		return false;
+	}
+	return true;
+}
+
+/**
+ * policy_mgr_is_sap_channel_change_without_restart() - Check if
+ * SAP channel change allowed without restart
+ * @mcc_to_scc_switch: MCC to SCC switch enabled user config
+ *
+ * Check if SAP channel change allowed without restart
+ *
+ * Restart: true or false
+ */
+static bool policy_mgr_is_sap_channel_change_without_restart(
+			uint32_t mcc_to_scc_switch) {
+	if (mcc_to_scc_switch ==
+	    QDF_MCC_TO_SCC_SWITCH_FORCE_WITHOUT_DISCONNECTION ||
+	    mcc_to_scc_switch ==
+	    QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL) {
+		policy_mgr_info("SAP chan change without restart allowed");
+		return true;
+	}
+	return false;
+}
+
+/**
+ * policy_mgr_check_sta_ap_concurrent_ch_intf() - Restart SAP in STA-AP case
+ * @data: Pointer check concurrent channel work data
+ *
+ * Restarts the SAP interface in STA-AP concurrency scenario
+ *
+ * Restart: None
+ */
 void policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
 {
+	struct check_cc_channel_work *cc_intf_work =
+		(struct check_cc_channel_work *) data;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint32_t mcc_to_scc_switch;
+	struct wlan_objmgr_psoc *psoc;
+	QDF_STATUS status;
+	uint8_t channel, sec_ch;
+	struct ch_params_s ch_params;
+
+	if (!cc_intf_work) {
+		policy_mgr_err("Invalid check channel interface work");
+		goto work_done;
+	}
+	psoc = cc_intf_work->psoc;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid context");
+		goto work_done;
+	}
+	mcc_to_scc_switch =
+		policy_mgr_mcc_to_scc_switch_mode_in_user_cfg(psoc);
+
+	policy_mgr_info("Concurrent open sessions running: %d",
+		policy_mgr_concurrent_open_sessions_running(psoc));
+
+	if (!policy_mgr_is_restart_sap_allowed(psoc, mcc_to_scc_switch))
+		goto work_done;
+
+	status = pm_ctx->hdd_cbacks.
+		wlan_hdd_get_channel_for_sap_restart(
+			cc_intf_work->vdev_id, &channel,
+			&sec_ch, &ch_params);
+	if (status != QDF_STATUS_SUCCESS) {
+		policy_mgr_err("Failed to get channel to restart SAP");
+		goto work_done;
+	}
+
+	if (channel == 0) {
+		policy_mgr_err("Invalid channel to restart SAP");
+		goto work_done;
+	}
+	policy_mgr_info("SAP restarts due to MCC->SCC switch, new chan: %d",
+			channel);
+
+	wlan_reg_set_channel_params(channel, sec_ch, &ch_params);
+
+	if (policy_mgr_is_sap_channel_change_without_restart(
+		mcc_to_scc_switch) &&
+	    pm_ctx->hdd_cbacks.sap_restart_chan_switch_cb) {
+		pm_ctx->hdd_cbacks.sap_restart_chan_switch_cb(
+			cc_intf_work->vdev_id, channel,
+			ch_params.ch_width);
+	}
+
+work_done:
+	qdf_mem_free(cc_intf_work);
+
+}
+
+/**
+ * create_check_cc_channel_work() - Create Check concurrent intf
+ * channel work
+ * @psoc: PSOC object information
+ *
+ * Create check concurrent interface channel work
+ *
+ * Return: check concurrent channel interface work object
+ */
+static struct check_cc_channel_work *create_check_cc_channel_work(
+	struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
+{
+	struct check_cc_channel_work *cc_intf_work;
+
+	cc_intf_work = qdf_mem_malloc(
+		sizeof(struct check_cc_channel_work));
+	if (NULL == cc_intf_work) {
+		policy_mgr_err("Falied to allocate check concurrent channel work");
+		return NULL;
+	}
+	cc_intf_work->psoc = psoc;
+	cc_intf_work->vdev_id = vdev_id;
+	return cc_intf_work;
 }
 
 /**
@@ -584,6 +720,7 @@ void policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
  * concurrent change intf
  * @psoc: PSOC object information
  * @operation_channel: operation channel
+ * @vdev_id: vdev id of SAP
  *
  * Checks the concurrent change interface and restarts SAP
  *
@@ -591,10 +728,12 @@ void policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
  */
 void policy_mgr_check_concurrent_intf_and_restart_sap(
 		struct wlan_objmgr_psoc *psoc,
+		uint8_t vdev_id,
 		uint8_t operation_channel)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	uint32_t mcc_to_scc_switch;
+	struct check_cc_channel_work *cc_intf_work;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -612,9 +751,12 @@ void policy_mgr_check_concurrent_intf_and_restart_sap(
 					 operationChannel)
 #endif
 	    ) {
+		cc_intf_work = create_check_cc_channel_work(psoc, vdev_id);
+		if (!cc_intf_work)
+			return;
 		qdf_create_work(0, &pm_ctx->sta_ap_intf_check_work,
 			policy_mgr_check_sta_ap_concurrent_ch_intf,
-				(void *)psoc);
+			cc_intf_work);
 		qdf_sched_work(0, &pm_ctx->sta_ap_intf_check_work);
 		policy_mgr_info("Checking for Concurrent Change interference");
 	}
@@ -645,9 +787,9 @@ void policy_mgr_change_sap_channel_with_csa(struct wlan_objmgr_psoc *psoc,
 		return;
 	}
 
-	if (pm_ctx->sap_restart_chan_switch_cb) {
+	if (pm_ctx->hdd_cbacks.sap_restart_chan_switch_cb) {
 		policy_mgr_info("SAP change change without restart");
-		pm_ctx->sap_restart_chan_switch_cb(vdev_id,
+		pm_ctx->hdd_cbacks.sap_restart_chan_switch_cb(vdev_id,
 				channel, ch_width);
 	}
 }
@@ -752,8 +894,8 @@ QDF_STATUS policy_mgr_restart_opportunistic_timer(
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 QDF_STATUS policy_mgr_register_sap_restart_channel_switch_cb(
-		struct wlan_objmgr_psoc *psoc,
-		void (*sap_restart_chan_switch_cb)(uint8_t, uint32_t, uint32_t))
+	struct wlan_objmgr_psoc *psoc,
+	void (*sap_restart_chan_switch_cb)(uint8_t, uint32_t, uint32_t))
 {
 	struct policy_mgr_psoc_priv_obj *policy_mgr_ctx;
 
@@ -763,7 +905,8 @@ QDF_STATUS policy_mgr_register_sap_restart_channel_switch_cb(
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	policy_mgr_ctx->sap_restart_chan_switch_cb = sap_restart_chan_switch_cb;
+	policy_mgr_ctx->hdd_cbacks.sap_restart_chan_switch_cb =
+		sap_restart_chan_switch_cb;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -779,7 +922,7 @@ QDF_STATUS policy_mgr_deregister_sap_restart_channel_switch_cb(
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	policy_mgr_ctx->sap_restart_chan_switch_cb = NULL;
+	policy_mgr_ctx->hdd_cbacks.sap_restart_chan_switch_cb = NULL;
 
 	return QDF_STATUS_SUCCESS;
 }
