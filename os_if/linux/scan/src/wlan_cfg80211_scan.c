@@ -650,6 +650,7 @@ QDF_STATUS wlan_abort_scan(struct wlan_objmgr_pdev *pdev,
 	osif_ctx = wlan_pdev_get_ospriv(pdev);
 	if (!osif_ctx) {
 		cfg80211_err("Failed to retrieve osif context");
+		qdf_mem_free(req);
 		return QDF_STATUS_E_FAILURE;
 	}
 	if (vdev_id == INVAL_VDEV_ID)
@@ -659,6 +660,11 @@ QDF_STATUS wlan_abort_scan(struct wlan_objmgr_pdev *pdev,
 		vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev,
 				vdev_id, WLAN_OSIF_ID);
 
+	if (!vdev) {
+		cfg80211_err("Failed get vdev");
+		qdf_mem_free(req);
+		return QDF_STATUS_E_INVAL;
+	}
 	scan_priv = osif_ctx->osif_scan;
 	req->cancel_req.requester = scan_priv->req_id;
 	req->vdev = vdev;
@@ -674,6 +680,7 @@ QDF_STATUS wlan_abort_scan(struct wlan_objmgr_pdev *pdev,
 	status = ucfg_scan_cancel(req);
 	if (QDF_IS_STATUS_ERROR(status))
 		cfg80211_err("Cancel scan request failed");
+
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
 
 	return status;
@@ -684,7 +691,11 @@ int wlan_cfg80211_abort_scan(struct wlan_objmgr_pdev *pdev)
 	uint8_t pdev_id;
 
 	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
-	wlan_abort_scan(pdev, pdev_id, INVAL_VDEV_ID, INVAL_SCAN_ID);
+
+	if (ucfg_scan_get_pdev_status(pdev) !=
+	   SCAN_NOT_IN_PROGRESS)
+		wlan_abort_scan(pdev, pdev_id,
+			INVAL_VDEV_ID, INVAL_SCAN_ID);
 
 	return 0;
 }
@@ -711,7 +722,10 @@ int wlan_vendor_abort_scan(struct wlan_objmgr_pdev *pdev,
 		ret = wlan_get_scanid(pdev, &scan_id, cookie);
 		if (ret != 0)
 			return ret;
-		wlan_abort_scan(pdev, pdev_id, INVAL_VDEV_ID, scan_id);
+		if (ucfg_scan_get_pdev_status(pdev) !=
+		   SCAN_NOT_IN_PROGRESS)
+			wlan_abort_scan(pdev, pdev_id,
+					INVAL_VDEV_ID, scan_id);
 	}
 	return 0;
 }
