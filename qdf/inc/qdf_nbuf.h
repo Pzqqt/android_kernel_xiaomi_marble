@@ -92,6 +92,13 @@
 #define EAPOL_M3_BIT_MASK			0x8013
 #define EAPOL_M4_BIT_MASK			0x0003
 
+/* ARP Related MASK */
+#define QDF_NBUF_PKT_ARP_OPCODE_OFFSET	20
+#define QDF_NBUF_PKT_ARPOP_REQ		1
+#define QDF_NBUF_PKT_ARPOP_REPLY	2
+#define QDF_NBUF_PKT_ARP_SRC_IP_OFFSET	28
+#define QDF_NBUF_PKT_ARP_TGT_IP_OFFSET	38
+
 /* Tracked Packet types */
 #define QDF_NBUF_TX_PKT_INVALID              0
 #define QDF_NBUF_TX_PKT_DATA_TRACK           1
@@ -2066,6 +2073,58 @@ static inline
 bool qdf_nbuf_data_is_ipv4_arp_pkt(uint8_t *data)
 {
 	return __qdf_nbuf_data_is_ipv4_arp_pkt(data);
+}
+
+/**
+ * qdf_nbuf_data_is_arp_req() - check if ARP packet is request.
+ * @buf:  buffer
+ *
+ * This func. checks whether it is a ARP request or not.
+ *
+ * Return: true if it is a ARP request or FALSE if not
+ */
+static inline
+bool qdf_nbuf_data_is_arp_req(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_data_is_arp_req(qdf_nbuf_data(buf));
+}
+
+/**
+ * qdf_nbuf_data_is_arp_rsp() - check if ARP packet is response.
+ * @buf:  buffer
+ *
+ * This func. checks whether it is a ARP response or not.
+ *
+ * Return: true if it is a ARP response or FALSE if not
+ */
+static inline
+bool qdf_nbuf_data_is_arp_rsp(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_data_is_arp_rsp(qdf_nbuf_data(buf));
+}
+
+/**
+ * qdf_nbuf_data_get_arp_src_ip() - get ARP packet source IP gateway.
+ * @buf:  buffer
+ *
+ * Return: ARP packet source IP value.
+ */
+static inline
+uint32_t qdf_nbuf_get_arp_src_ip(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_get_arp_src_ip(qdf_nbuf_data(buf));
+}
+
+/**
+ * qdf_nbuf_data_get_arp_tgt_ip() - get ARP packet target IP gateway.
+ * @buf:  buffer
+ *
+ * Return: ARP packet target IP value.
+ */
+static inline
+uint32_t qdf_nbuf_get_arp_tgt_ip(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_get_arp_tgt_ip(qdf_nbuf_data(buf));
 }
 
 /**
