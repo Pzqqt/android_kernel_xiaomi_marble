@@ -2135,7 +2135,7 @@ void wma_process_roam_synch_fail(WMA_HANDLE handle,
  *
  * Return: Success or Failure
  */
-static QDF_STATUS wma_fill_roam_synch_buffer(tp_wma_handle wma,
+static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 				roam_offload_synch_ind *roam_synch_ind_ptr,
 				WMI_ROAM_SYNCH_EVENTID_param_tlvs *param_buf)
 {
@@ -2145,7 +2145,6 @@ static QDF_STATUS wma_fill_roam_synch_buffer(tp_wma_handle wma,
 	uint8_t *reassoc_req_ptr;
 	wmi_channel *chan;
 	wmi_key_material *key;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	synch_event = param_buf->fixed_param;
 	roam_synch_ind_ptr->roamedVdevId = synch_event->vdev_id;
@@ -2168,7 +2167,7 @@ static QDF_STATUS wma_fill_roam_synch_buffer(tp_wma_handle wma,
 		wma->csr_roam_synch_cb((tpAniSirGlobal)wma->mac_context,
 		roam_synch_ind_ptr, NULL, SIR_ROAMING_DEREGISTER_STA))) {
 		WMA_LOGE("LFR3: CSR Roam synch cb failed");
-		return QDF_STATUS_E_FAILURE;
+		return -EINVAL;
 	}
 	/* Beacon/Probe Rsp data */
 	roam_synch_ind_ptr->beaconProbeRespOffset =
@@ -2229,7 +2228,7 @@ static QDF_STATUS wma_fill_roam_synch_buffer(tp_wma_handle wma,
 	else
 		WMA_LOGD(FL("hw_mode transition fixed param is NULL"));
 
-	return status;
+	return 0;
 }
 
 /**
@@ -2314,28 +2313,29 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 	WMI_ROAM_SYNCH_EVENTID_param_tlvs *param_buf = NULL;
 	wmi_roam_synch_event_fixed_param *synch_event = NULL;
 	tp_wma_handle wma = (tp_wma_handle) handle;
-	roam_offload_synch_ind *roam_synch_ind_ptr;
+	roam_offload_synch_ind *roam_synch_ind_ptr = NULL;
 	tpSirBssDescription  bss_desc_ptr = NULL;
 	uint16_t ie_len = 0;
 	int status = -EINVAL;
+	tSirRoamOffloadScanReq *roam_req;
 	qdf_time_t roam_synch_received = qdf_get_system_timestamp();
 
 	WMA_LOGD("LFR3:%s", __func__);
 	if (!event) {
 		WMA_LOGE("%s: event param null", __func__);
-		return status;
+		goto cleanup_label;
 	}
 
 	param_buf = (WMI_ROAM_SYNCH_EVENTID_param_tlvs *) event;
 	if (!param_buf) {
 		WMA_LOGE("%s: received null buf from target", __func__);
-		return status;
+		goto cleanup_label;
 	}
 
 	synch_event = param_buf->fixed_param;
 	if (!synch_event) {
 		WMA_LOGE("%s: received null event data from target", __func__);
-		return status;
+		goto cleanup_label;
 	}
 
 	DPTRACE(qdf_dp_trace_record_event(QDF_DP_TRACE_EVENT_RECORD,
@@ -2344,7 +2344,7 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 	if (wma_is_roam_synch_in_progress(wma, synch_event->vdev_id)) {
 		WMA_LOGE("%s: Ignoring RSI since one is already in progress",
 				__func__);
-		return status;
+		goto cleanup_label;
 	}
 	WMA_LOGE("LFR3: Received WMA_ROAM_OFFLOAD_SYNCH_IND");
 
@@ -2364,8 +2364,9 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 		goto cleanup_label;
 	}
 	qdf_mem_zero(roam_synch_ind_ptr, len);
-	status = wma_fill_roam_synch_buffer(wma, roam_synch_ind_ptr, param_buf);
-	if (!QDF_IS_STATUS_SUCCESS(status))
+	status = wma_fill_roam_synch_buffer(wma,
+			roam_synch_ind_ptr, param_buf);
+	if (status != 0)
 		goto cleanup_label;
 	/* 24 byte MAC header and 12 byte to ssid IE */
 	if (roam_synch_ind_ptr->beaconProbeRespLength >
@@ -2410,6 +2411,15 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 	status = 0;
 
 cleanup_label:
+	if (status != 0) {
+		if (roam_synch_ind_ptr)
+			wma->csr_roam_synch_cb((tpAniSirGlobal)wma->mac_context,
+				roam_synch_ind_ptr, NULL, SIR_ROAMING_ABORT);
+		roam_req = qdf_mem_malloc(sizeof(tSirRoamOffloadScanReq));
+		roam_req->Command = ROAM_SCAN_OFFLOAD_STOP;
+		roam_req->reason = REASON_ROAM_SYNCH_FAILED;
+		wma_process_roaming_config(wma, roam_req);
+	}
 	if (roam_synch_ind_ptr && roam_synch_ind_ptr->join_rsp)
 		qdf_mem_free(roam_synch_ind_ptr->join_rsp);
 	if (roam_synch_ind_ptr)
