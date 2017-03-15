@@ -27,6 +27,15 @@
 #include <qdf_mc_timer.h>
 
 #define P2P_EVENT_PROPOGATE_TIME 10
+#define P2P_WAIT_CANCEL_ROC      1000
+
+#ifdef QCA_WIFI_3_0_EMU
+#define P2P_ROC_DURATION_MULTI_GO_PRESENT   2
+#define P2P_ROC_DURATION_MULTI_GO_ABSENT    3
+#else
+#define P2P_ROC_DURATION_MULTI_GO_PRESENT   2
+#define P2P_ROC_DURATION_MULTI_GO_ABSENT    5
+#endif
 
 struct wlan_objmgr_vdev;
 struct scan_event;
@@ -96,6 +105,41 @@ struct cancel_roc_context {
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 	uint64_t cookie;
 };
+
+/**
+ * p2p_find_current_roc_ctx() - Find out roc context in progressing
+ * @p2p_soc_obj: p2p psoc private object
+ *
+ * This function find out roc context in progressing from p2p psoc
+ * private object
+ *
+ * Return: Pointer to roc context - success
+ *         NULL                   - failure
+ */
+struct p2p_roc_context *p2p_find_current_roc_ctx(
+	struct p2p_soc_priv_obj *p2p_soc_obj);
+
+/**
+ * p2p_restart_roc_timer() - Restarts roc timer
+ * @roc_ctx: remain on channel context
+ *
+ * This function restarts roc timer with updated duration.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS p2p_restart_roc_timer(struct p2p_roc_context *roc_ctx);
+
+/**
+ * p2p_cleanup_roc_queue() - Cleanup roc context in queue
+ * @p2p_soc_obj: p2p psoc private object
+ *
+ * This function cleanup roc context in queue, include the roc
+ * context in progressing.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS p2p_cleanup_roc_queue(
+	struct p2p_soc_priv_obj *p2p_soc_obj);
 
 /**
  * p2p_process_roc_req() - Process roc request

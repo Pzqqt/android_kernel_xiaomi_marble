@@ -26,6 +26,7 @@
 #include "wlan_p2p_ucfg_api.h"
 #include "wlan_p2p_public_struct.h"
 #include "../../core/src/wlan_p2p_main.h"
+#include "../../core/src/wlan_p2p_roc.h"
 
 static inline struct wlan_lmac_if_p2p_tx_ops *
 ucfg_p2p_psoc_get_tx_ops(struct wlan_objmgr_psoc *psoc)
@@ -67,12 +68,82 @@ QDF_STATUS ucfg_p2p_psoc_stop(struct wlan_objmgr_psoc *soc)
 QDF_STATUS ucfg_p2p_roc_req(struct wlan_objmgr_psoc *soc,
 	struct p2p_roc_req *roc_req, uint64_t *cookie)
 {
+	struct scheduler_msg msg;
+	struct p2p_soc_priv_obj *p2p_soc_obj;
+	struct p2p_roc_context *roc_ctx;
+
+	p2p_debug("soc:%p, vdev_id:%d, chan:%d, phy_mode:%d, duration:%d",
+		soc, roc_req->vdev_id, roc_req->chan,
+		roc_req->phy_mode, roc_req->duration);
+
+	if (!soc) {
+		p2p_err("psoc context passed is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	p2p_soc_obj = wlan_objmgr_psoc_get_comp_private_obj(soc,
+			WLAN_UMAC_COMP_P2P);
+	if (!p2p_soc_obj) {
+		p2p_err("P2P soc object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	roc_ctx = qdf_mem_malloc(sizeof(*roc_ctx));
+	if (!roc_ctx) {
+		p2p_err("failed to allocate p2p roc context");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	*cookie = (uintptr_t)roc_ctx;
+	roc_ctx->p2p_soc_obj = p2p_soc_obj;
+	roc_ctx->vdev_id = roc_req->vdev_id;
+	roc_ctx->chan = roc_req->chan;
+	roc_ctx->phy_mode = roc_req->phy_mode;
+	roc_ctx->duration = roc_req->duration;
+	roc_ctx->roc_state = ROC_STATE_IDLE;
+	roc_ctx->roc_type = USER_REQUESTED;
+	msg.type = P2P_ROC_REQ;
+	msg.bodyptr = roc_ctx;
+	msg.callback = p2p_process_cmd;
+	scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
+
 	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS ucfg_p2p_roc_cancel_req(struct wlan_objmgr_psoc *soc,
 	uint64_t cookie)
 {
+	struct scheduler_msg msg;
+	struct p2p_soc_priv_obj *p2p_soc_obj;
+	struct cancel_roc_context *cancel_roc;
+
+	p2p_debug("soc:%p, cookie:0x%llx", soc, cookie);
+
+	if (!soc) {
+		p2p_err("psoc context passed is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	p2p_soc_obj = wlan_objmgr_psoc_get_comp_private_obj(soc,
+			WLAN_UMAC_COMP_P2P);
+	if (!p2p_soc_obj) {
+		p2p_err("p2p soc context is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cancel_roc = qdf_mem_malloc(sizeof(*cancel_roc));
+	if (!cancel_roc) {
+		p2p_err("failed to allocate cancel p2p roc");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cancel_roc->p2p_soc_obj = p2p_soc_obj;
+	cancel_roc->cookie = cookie;
+	msg.type = P2P_CANCEL_ROC_REQ;
+	msg.bodyptr = cancel_roc;
+	msg.callback = p2p_process_cmd;
+	scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
+
 	return QDF_STATUS_SUCCESS;
 }
 
