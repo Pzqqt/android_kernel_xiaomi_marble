@@ -55,6 +55,7 @@
 #include "cds_ieee80211_common_i.h"
 #include "cds_regdomain.h"
 #include "wlan_policy_mgr_api.h"
+#include <wlan_scan_ucfg_api.h>
 
 /*----------------------------------------------------------------------------
  * Preprocessor Definitions and Constants

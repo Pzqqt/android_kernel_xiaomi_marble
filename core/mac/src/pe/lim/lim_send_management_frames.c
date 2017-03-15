@@ -62,6 +62,7 @@
 
 #include "wma_types.h"
 #include <cdp_txrx_cmn.h>
+#include <cdp_txrx_peer_ops.h>
 
 /**
  *

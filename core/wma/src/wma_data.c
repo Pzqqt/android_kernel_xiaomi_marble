@@ -82,6 +82,7 @@
 #include "wlan_objmgr_vdev_obj.h"
 #include "wlan_objmgr_peer_obj.h"
 #include <cdp_txrx_handle.h>
+#include <wlan_pmo_ucfg_api.h>
 
 typedef struct {
 	int32_t rate;

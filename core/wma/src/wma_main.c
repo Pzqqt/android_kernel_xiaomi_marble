@@ -89,6 +89,8 @@
 #include "wlan_pmo_obj_mgmt_api.h"
 
 #include <cdp_txrx_handle.h>
+#include <wlan_pmo_ucfg_api.h>
+
 #define WMA_LOG_COMPLETION_TIMER 10000 /* 10 seconds */
 
 #define WMI_TLV_HEADROOM 128

@@ -58,6 +58,7 @@
 #include "wma_types.h"
 #include "wma.h"
 #include <cdp_txrx_cmn.h>
+#include <cdp_txrx_peer_ops.h>
 
 #define BA_DEFAULT_TX_BUFFER_SIZE 64
 

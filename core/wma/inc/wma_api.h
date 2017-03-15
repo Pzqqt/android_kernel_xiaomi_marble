@@ -40,6 +40,7 @@
 #include "cds_utils.h"
 #include "scheduler_api.h"
 #include "wlan_policy_mgr_api.h"
+#include <cdp_txrx_ops.h>
 
 typedef void *WMA_HANDLE;
 

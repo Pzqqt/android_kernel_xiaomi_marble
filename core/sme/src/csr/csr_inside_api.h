@@ -39,6 +39,8 @@
 #include "sme_inside.h"
 #include "cds_reg_service.h"
 
+extern void wlan_objmgr_vdev_release_ref(struct wlan_objmgr_vdev *vdev,
+						wlan_objmgr_ref_dbgid id);
 #define CSR_PASSIVE_MAX_CHANNEL_TIME   110
 #define CSR_PASSIVE_MIN_CHANNEL_TIME   60
 

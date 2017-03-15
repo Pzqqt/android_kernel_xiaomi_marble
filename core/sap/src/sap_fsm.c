@@ -54,6 +54,11 @@
 #include <wlan_objmgr_pdev_obj.h>
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_utility.h>
+#include <linux/netdevice.h>
+#include <net/cfg80211.h>
+#include <qca_vendor.h>
+#include <wlan_scan_ucfg_api.h>
+
 /*----------------------------------------------------------------------------
  * Preprocessor Definitions and Constants
  * -------------------------------------------------------------------------*/
