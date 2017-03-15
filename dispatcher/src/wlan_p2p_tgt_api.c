@@ -26,6 +26,7 @@
 #include "wlan_p2p_tgt_api.h"
 #include "wlan_p2p_public_struct.h"
 #include "../../core/src/wlan_p2p_main.h"
+#include "../../core/src/wlan_p2p_roc.h"
 
 static inline struct wlan_lmac_if_p2p_tx_ops *
 wlan_psoc_get_p2p_tx_ops(struct wlan_objmgr_psoc *psoc)
@@ -96,6 +97,7 @@ QDF_STATUS tgt_p2p_unregister_noa_ev_handler(
 void tgt_p2p_scan_event_cb(struct wlan_objmgr_vdev *vdev,
 	struct scan_event *event, void *arg)
 {
+	p2p_scan_event_cb(vdev, event, arg);
 }
 
 QDF_STATUS tgt_p2p_mgmt_download_comp_cb(void *context,

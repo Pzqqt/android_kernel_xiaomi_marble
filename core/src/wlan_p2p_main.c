@@ -26,6 +26,7 @@
 #include <wlan_objmgr_pdev_obj.h>
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_objmgr_peer_obj.h>
+#include <wlan_scan_ucfg_api.h>
 #include "wlan_p2p_public_struct.h"
 #include "wlan_p2p_ucfg_api.h"
 #include "wlan_p2p_tgt_api.h"
@@ -542,7 +543,13 @@ QDF_STATUS p2p_psoc_start(struct wlan_objmgr_psoc *soc,
 	tgt_p2p_register_lo_ev_handler(soc);
 	tgt_p2p_register_noa_ev_handler(soc);
 
-	p2p_debug("p2p psoc start successful");
+	/* register scan request id */
+	p2p_soc_obj->scan_req_id = ucfg_scan_register_requester(
+		soc, P2P_MODULE_NAME, tgt_p2p_scan_event_cb,
+		p2p_soc_obj);
+
+	p2p_debug("p2p psoc start successful, scan request id:%d",
+		p2p_soc_obj->scan_req_id);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -570,6 +577,12 @@ QDF_STATUS p2p_psoc_stop(struct wlan_objmgr_psoc *soc)
 		p2p_err("start parameters is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	/* clean up queue of p2p psoc private object */
+	p2p_cleanup_roc_queue(p2p_soc_obj);
+
+	/* unrgister scan request id*/
+	ucfg_scan_unregister_requester(soc, p2p_soc_obj->scan_req_id);
 
 	/* unregister p2p lo stop and noa event */
 	tgt_p2p_unregister_lo_ev_handler(soc);
@@ -609,6 +622,7 @@ QDF_STATUS p2p_process_cmd(struct scheduler_msg *msg)
 		status = p2p_process_cancel_roc_req(
 				(struct cancel_roc_context *)
 				msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
 		break;
 	case P2P_MGMT_TX:
 		status = p2p_process_mgmt_tx(
@@ -619,6 +633,7 @@ QDF_STATUS p2p_process_cmd(struct scheduler_msg *msg)
 		status = p2p_process_mgmt_tx_cancel(
 				(struct cancel_roc_context *)
 				msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
 		break;
 	default:
 		p2p_err("drop unexpected message received %d",
@@ -626,9 +641,6 @@ QDF_STATUS p2p_process_cmd(struct scheduler_msg *msg)
 		status = QDF_STATUS_E_INVAL;
 		break;
 	}
-
-	qdf_mem_free(msg->bodyptr);
-	msg->bodyptr = NULL;
 
 	return status;
 }
