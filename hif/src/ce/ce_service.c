@@ -3092,7 +3092,6 @@ static uint8_t *hif_log_src_ce_dump(struct CE_ring_state *src_ring,
 	len = sizeof(struct CE_ring_state);
 	available_buf = buf_sz - (buf_cur - buf_init);
 	if (available_buf < (len + GUARD_SPACE)) {
-		snprintf(buf_cur, available_buf, "END");
 		buf_cur = buf_init;
 	}
 
@@ -3110,8 +3109,6 @@ static uint8_t *hif_log_src_ce_dump(struct CE_ring_state *src_ring,
 				+ LOG_ID_SZ + sizeof(skb_cp_len);
 			available_buf = buf_sz - (buf_cur - buf_init);
 			if (available_buf < (len + GUARD_SPACE)) {
-				buf_cur += snprintf(buf_cur, available_buf,
-						    "END");
 				buf_cur = buf_init;
 			}
 			qdf_mem_copy(buf_cur, src_desc,
@@ -3131,8 +3128,6 @@ static uint8_t *hif_log_src_ce_dump(struct CE_ring_state *src_ring,
 			len = sizeof(struct CE_src_desc) + LOG_ID_SZ;
 			available_buf = buf_sz - (buf_cur - buf_init);
 			if (available_buf < (len + GUARD_SPACE)) {
-				buf_cur += snprintf(buf_cur, available_buf,
-						    "END");
 				buf_cur = buf_init;
 			}
 			qdf_mem_copy(buf_cur, src_desc,
@@ -3175,7 +3170,6 @@ static uint8_t *hif_log_dest_ce_dump(struct CE_ring_state *dest_ring,
 	len = sizeof(struct CE_ring_state);
 	available_buf = buf_sz - (buf_cur - buf_init);
 	if (available_buf < (len + GUARD_SPACE)) {
-		snprintf(buf_cur, available_buf, "END");
 		buf_cur = buf_init;
 	}
 
@@ -3184,6 +3178,7 @@ static uint8_t *hif_log_dest_ce_dump(struct CE_ring_state *dest_ring,
 
 	for (entry = 0; entry < dest_ring->nentries; entry++) {
 		dest_desc = CE_DEST_RING_TO_DESC(dest_ring_base, entry);
+
 		nbuf = dest_ring->per_transfer_context[entry];
 		if (nbuf) {
 			uint32_t skb_len  = qdf_nbuf_len(nbuf);
@@ -3194,8 +3189,6 @@ static uint8_t *hif_log_dest_ce_dump(struct CE_ring_state *dest_ring,
 
 			available_buf = buf_sz - (buf_cur - buf_init);
 			if (available_buf < (len + GUARD_SPACE)) {
-				buf_cur += snprintf(buf_cur, available_buf,
-						    "END");
 				buf_cur = buf_init;
 			}
 
@@ -3214,8 +3207,6 @@ static uint8_t *hif_log_dest_ce_dump(struct CE_ring_state *dest_ring,
 			len = sizeof(struct CE_dest_desc) + LOG_ID_SZ;
 			available_buf = buf_sz - (buf_cur - buf_init);
 			if (available_buf < (len + GUARD_SPACE)) {
-				buf_cur += snprintf(buf_cur, available_buf,
-						    "END");
 				buf_cur = buf_init;
 			}
 			qdf_mem_copy(buf_cur, dest_desc,
@@ -3251,8 +3242,6 @@ uint8_t *hif_log_dump_ce(struct hif_softc *scn, uint8_t *buf_cur,
 	} else if (dest_ring) {
 		buf_cur = hif_log_dest_ce_dump(dest_ring, buf_cur,
 					       buf_init, buf_sz, skb_sz);
-	} else {
-		qdf_print("Cannot print Ring for Unused CE%d\n", ce);
 	}
 
 	return buf_cur;
