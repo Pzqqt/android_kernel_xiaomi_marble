@@ -54,12 +54,15 @@ static QDF_STATUS wlan_regulatory_psoc_obj_created_notification(
 
 	soc_reg_obj =
 		qdf_mem_malloc(sizeof(*soc_reg_obj));
+
 	if (NULL == soc_reg_obj) {
 		reg_alert("Mem alloc failed for reg psoc priv obj");
 		return QDF_STATUS_E_NOMEM;
 	}
 
 	soc_reg_obj->offload_enabled  = false;
+	soc_reg_obj->psoc_ptr = psoc;
+
 	status = wlan_objmgr_psoc_component_obj_attach(psoc,
 			WLAN_UMAC_COMP_REGULATORY, soc_reg_obj,
 			QDF_STATUS_SUCCESS);

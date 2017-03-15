@@ -23,9 +23,6 @@
  * service functions
  */
 
-#include "qdf_types.h"
-#include "qdf_trace.h"
-
 enum channel_state {
 	CHANNEL_STATE_DISABLE,
 	CHANNEL_STATE_PASSIVE,
@@ -75,6 +72,7 @@ struct chan_map {
 	uint32_t center_freq;
 	uint32_t chan_num;
 };
+
 
 enum channel_enum {
 	CHAN_ENUM_1 = 1,
@@ -160,6 +158,22 @@ enum band_info {
 	band_5g_149_165 = 0x20
 };
 
+/**
+ * struct bonded_channel
+ * @start_ch: start channel
+ * @end_ch: end channel
+ */
+struct bonded_channel {
+	uint16_t start_ch;
+	uint16_t end_ch;
+};
+
+enum ht_sec_ch_offset {
+	NO_SEC_CH = 0,
+	LOW_PRIMARY_CH = 1,
+	HIGH_PRIMARY_CH = 3,
+};
+
 struct reg_ini_vars {
 	uint32_t enable_11d_support;
 	uint32_t userspace_ctry_priority;
@@ -174,19 +188,31 @@ struct set_band_req {
 };
 
 struct country_info {
-	uint8_t country_code[3];
+	uint8_t country_code[REG_ALPHA2_LEN + 1];
 };
 
 struct reg_country_update {
-	uint8_t country_code[3];
+	uint8_t country_code[REG_ALPHA2_LEN + 1];
 };
 
 
-QDF_STATUS reg_get_channel_list_with_power(struct regulatory_channel *ch_list);
-void reg_read_default_country(uint8_t *country);
-enum channel_state reg_get_channel_state(uint8_t ch);
-enum channel_state reg_get_5g_bonded_channel_state(uint8_t ch, uint8_t bw);
-enum channel_state reg_get_2g_bonded_channel_state(uint8_t ch, uint8_t bw);
-void reg_set_channel_params(uint8_t ch, struct ch_params *ch_params);
-void reg_get_dfs_region(enum dfs_region *dfs_reg);
-bool reg_is_dfs_ch(uint8_t ch);
+QDF_STATUS reg_get_channel_list_with_power(struct wlan_objmgr_psoc *psoc,
+					   struct channel_power *ch_list,
+					   uint8_t *num_chan);
+
+void reg_read_default_country(struct wlan_objmgr_psoc *psoc,
+		uint8_t *country);
+enum channel_state reg_get_channel_state(struct wlan_objmgr_psoc *psoc,
+		uint32_t ch);
+enum channel_state reg_get_5g_bonded_channel_state(
+		struct wlan_objmgr_psoc *psoc,
+		uint8_t ch, enum phy_ch_width bw);
+enum channel_state reg_get_2g_bonded_channel_state(
+		struct wlan_objmgr_psoc *psoc,
+		uint8_t oper_ch, uint8_t sec_ch,
+		enum phy_ch_width bw);
+void reg_set_channel_params(struct wlan_objmgr_psoc *psoc,
+		uint8_t ch, struct ch_params *ch_params);
+void reg_get_dfs_region(struct wlan_objmgr_psoc *psoc,
+		enum dfs_region *dfs_reg);
+bool reg_is_dfs_ch(struct wlan_objmgr_psoc *psoc, uint8_t ch);

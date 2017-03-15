@@ -23,7 +23,12 @@
  */
 
 #include "qdf_types.h"
-#include "qdf_trace.h"
+#include "qdf_status.h"
+#include "wlan_objmgr_cmn.h"
+#include "wlan_objmgr_global_obj.h"
+#include "wlan_objmgr_psoc_obj.h"
+#include "wlan_objmgr_pdev_obj.h"
+#include "scheduler_api.h"
 #include "reg_db.h"
 #include "reg_services.h"
 #include "wlan_reg_services_api.h"
@@ -34,13 +39,14 @@
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_reg_get_channel_list_with_power(
-		struct regulatory_channel *ch_list)
+QDF_STATUS wlan_reg_get_channel_list_with_power(struct wlan_objmgr_psoc *psoc,
+						struct channel_power *ch_list,
+						uint8_t *num_chan)
 {
 	/*
 	 * Update the channel list with channel information with power.
 	 */
-	return reg_get_channel_list_with_power(ch_list);
+	return reg_get_channel_list_with_power(psoc, ch_list, num_chan);
 }
 
 /**
@@ -49,12 +55,13 @@ QDF_STATUS wlan_reg_get_channel_list_with_power(
  *
  * Return: None
  */
-void wlan_reg_read_default_country(uint8_t *country)
+void wlan_reg_read_default_country(struct wlan_objmgr_psoc *psoc,
+		uint8_t *country)
 {
 	/*
 	 * Get the default country information
 	 */
-	reg_read_default_country(country);
+	reg_read_default_country(psoc, country);
 }
 
 /**
@@ -63,12 +70,13 @@ void wlan_reg_read_default_country(uint8_t *country)
  *
  * Return: channel state
  */
-enum channel_state wlan_reg_get_channel_state(uint8_t ch)
+enum channel_state wlan_reg_get_channel_state(struct wlan_objmgr_psoc *psoc,
+		uint32_t ch)
 {
 	/*
 	 * Get channel state from regulatory
 	 */
-	return reg_get_channel_state(ch);
+	return reg_get_channel_state(psoc, ch);
 }
 
 /**
@@ -78,13 +86,14 @@ enum channel_state wlan_reg_get_channel_state(uint8_t ch)
  *
  * Return: channel state
  */
-enum channel_state wlan_reg_get_5g_bonded_channel_state(uint8_t ch,
-		uint8_t bw)
+enum channel_state wlan_reg_get_5g_bonded_channel_state(
+		struct wlan_objmgr_psoc *psoc, uint8_t ch,
+		enum phy_ch_width bw)
 {
 	/*
 	 * Get channel state from regulatory
 	 */
-	return reg_get_5g_bonded_channel_state(ch, bw);
+	return reg_get_5g_bonded_channel_state(psoc, ch, bw);
 }
 
 /**
@@ -94,13 +103,14 @@ enum channel_state wlan_reg_get_5g_bonded_channel_state(uint8_t ch,
  *
  * Return: channel state
  */
-enum channel_state wlan_reg_get_2g_bonded_channel_state(uint8_t ch,
-		uint8_t bw)
+enum channel_state wlan_reg_get_2g_bonded_channel_state(
+		struct wlan_objmgr_psoc *psoc, uint8_t ch, uint8_t sec_ch,
+		enum phy_ch_width bw)
 {
 	/*
 	 * Get channel state from regulatory
 	 */
-	return reg_get_2g_bonded_channel_state(ch, bw);
+	return reg_get_2g_bonded_channel_state(psoc, ch, sec_ch, bw);
 }
 
 /**
@@ -110,13 +120,14 @@ enum channel_state wlan_reg_get_2g_bonded_channel_state(uint8_t ch,
  *
  * Return: None
  */
-void wlan_reg_set_channel_params(uint8_t ch, struct ch_params *ch_params)
+void wlan_reg_set_channel_params(struct wlan_objmgr_psoc *psoc, uint8_t ch,
+		struct ch_params *ch_params)
 {
 	/*
 	 * Set channel parameters like center frequency for a bonded channel
 	 * state. Also return the maximum bandwidth supported by the channel.
 	 */
-	reg_set_channel_params(ch, ch_params);
+	reg_set_channel_params(psoc, ch, ch_params);
 }
 
 /**
@@ -125,12 +136,13 @@ void wlan_reg_set_channel_params(uint8_t ch, struct ch_params *ch_params)
  *
  * Return: None
  */
-void wlan_reg_get_dfs_region(enum dfs_region *dfs_reg)
+void wlan_reg_get_dfs_region(struct wlan_objmgr_psoc *psoc,
+		enum dfs_region *dfs_reg)
 {
 	/*
 	 * Get the current dfs region
 	 */
-	reg_get_dfs_region(dfs_reg);
+	reg_get_dfs_region(psoc, dfs_reg);
 }
 
 /**
@@ -139,10 +151,10 @@ void wlan_reg_get_dfs_region(enum dfs_region *dfs_reg)
  *
  * Return: true or false
  */
-bool wlan_reg_is_dfs_ch(uint8_t ch)
+bool wlan_reg_is_dfs_ch(struct wlan_objmgr_psoc *psoc, uint8_t ch)
 {
 	/*
 	 * Get the current dfs region
 	 */
-	return reg_is_dfs_ch(ch);
+	return reg_is_dfs_ch(psoc, ch);
 }

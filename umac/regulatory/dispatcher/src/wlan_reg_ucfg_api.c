@@ -22,6 +22,13 @@
  * @brief contains regulatory user config interface definations
  */
 
+#include "qdf_types.h"
+#include "qdf_status.h"
+#include "wlan_objmgr_cmn.h"
+#include "wlan_objmgr_global_obj.h"
+#include "wlan_objmgr_psoc_obj.h"
+#include "wlan_objmgr_pdev_obj.h"
+#include "scheduler_api.h"
 #include "reg_db.h"
 #include "reg_services.h"
 #include "wlan_reg_ucfg_api.h"

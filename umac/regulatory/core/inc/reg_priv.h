@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2017 The Linux Foundation. All rights reserved.
  *
+ *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
  * above copyright notice and this permission notice appear in all
@@ -45,6 +46,7 @@ struct wlan_regulatory_psoc_priv_obj {
 	enum channel_enum nol_list[NUM_CHANNELS];
 	char default_country[REG_ALPHA2_LEN + 1];
 	char current_country[REG_ALPHA2_LEN + 1];
+	struct wlan_objmgr_psoc psoc_ptr;
 	uint32_t phybitmap;
 	enum dfs_region dfs_region;
 	char country_11d[REG_ALPHA2_LEN + 1];
