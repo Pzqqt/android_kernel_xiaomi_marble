@@ -163,6 +163,7 @@ struct wlan_objmgr_pdev_objmgr {
  * @pdev_comp_priv_obj[]:   component's private object array
  * @obj_status[]:      object status of each component object
  * @obj_state:         object state
+ * @tgt_if_handle      Target interface handle
  * @pdev_lock:         lock to protect object
 */
 struct wlan_objmgr_pdev {
@@ -173,6 +174,7 @@ struct wlan_objmgr_pdev {
 	void *pdev_comp_priv_obj[WLAN_UMAC_MAX_COMPONENTS];
 	QDF_STATUS obj_status[WLAN_UMAC_MAX_COMPONENTS];
 	WLAN_OBJ_STATE obj_state;
+	void *tgt_if_handle;
 	qdf_spinlock_t pdev_lock;
 };
 
@@ -739,5 +741,45 @@ uint8_t wlan_objmgr_pdev_get_pdev_id(struct wlan_objmgr_pdev *pdev)
 {
 	/* This API is invoked with lock acquired, do not add log prints */
 	return pdev->pdev_objmgr.wlan_pdev_id;
+}
+
+/**
+ * wlan_pdev_set_tgt_if_handle(): API to set target if handle in pdev object
+ * @pdev: Pdev pointer
+ * @tgt_if_handle: target interface handle
+ *
+ * API to set target interface handle in pdev object
+ *
+ * Caller needs to acquire lock with wlan_pdev_obj_lock()
+ *
+ * Return: None
+ */
+static inline void wlan_pdev_set_tgt_if_handle(struct wlan_objmgr_pdev *pdev,
+			void *tgt_if_handle)
+{
+	/* This API is invoked with lock acquired, do not add log prints */
+	if (pdev == NULL)
+		return;
+
+	pdev->tgt_if_handle = tgt_if_handle;
+}
+
+/**
+ * wlan_pdev_get_tgt_if_handle(): API to get target interface handle
+ * @pdev: Pdev pointer
+ *
+ * API to get target interface handle from pdev object
+ *
+ * Caller need to acquire lock with wlan_pdev_obj_lock()
+ *
+ * Return: target interface handle
+ */
+static inline void *wlan_pdev_get_tgt_if_handle(struct wlan_objmgr_pdev *pdev)
+{
+	/* This API is invoked with lock acquired, do not add log prints */
+	if (pdev == NULL)
+		return NULL;
+
+	return pdev->tgt_if_handle;
 }
 #endif /* _WLAN_OBJMGR_PDEV_H_*/
