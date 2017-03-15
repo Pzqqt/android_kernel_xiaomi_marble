@@ -1910,9 +1910,6 @@ static int hdd_enable_ext_wow(hdd_adapter_t *adapter,
 
 	if (hdd_ctx->ext_wow_should_suspend) {
 		if (hdd_ctx->config->extWowGotoSuspend) {
-			pm_message_t state;
-
-			state.event = PM_EVENT_SUSPEND;
 			hdd_info("Received ready to ExtWoW. Going to suspend");
 
 			rc = wlan_hdd_cfg80211_suspend_wlan(hdd_ctx->wiphy, NULL);
@@ -1921,7 +1918,7 @@ static int hdd_enable_ext_wow(hdd_adapter_t *adapter,
 					 rc);
 				return rc;
 			}
-			qdf_ret_status = wlan_hdd_bus_suspend(state);
+			qdf_ret_status = wlan_hdd_bus_suspend();
 			if (qdf_ret_status != QDF_STATUS_SUCCESS) {
 				hdd_err("wlan_hdd_suspend failed, status = %d",
 					 qdf_ret_status);

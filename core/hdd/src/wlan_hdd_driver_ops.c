@@ -526,118 +526,178 @@ static void wlan_hdd_update_status(uint32_t status)
 		cds_set_recovery_in_progress(true);
 }
 
+static int hdd_to_pmo_interface_pause(enum wow_interface_pause hdd_pause,
+				      enum pmo_wow_interface_pause *pmo_pause)
+{
+	switch (hdd_pause) {
+	case WOW_INTERFACE_PAUSE_DEFAULT:
+		*pmo_pause = PMO_WOW_INTERFACE_PAUSE_DEFAULT;
+		break;
+	case WOW_INTERFACE_PAUSE_ENABLE:
+		*pmo_pause = PMO_WOW_INTERFACE_PAUSE_ENABLE;
+		break;
+	case WOW_INTERFACE_PAUSE_DISABLE:
+		*pmo_pause = PMO_WOW_INTERFACE_PAUSE_DISABLE;
+		break;
+	default:
+		hdd_err("Invalid interface pause: %d", hdd_pause);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+static int hdd_to_pmo_resume_trigger(enum wow_resume_trigger hdd_trigger,
+				     enum pmo_wow_resume_trigger *pmo_trigger)
+{
+	switch (hdd_trigger) {
+	case WOW_RESUME_TRIGGER_DEFAULT:
+		*pmo_trigger = PMO_WOW_RESUME_TRIGGER_DEFAULT;
+		break;
+	case WOW_RESUME_TRIGGER_HTC_WAKEUP:
+		*pmo_trigger = PMO_WOW_RESUME_TRIGGER_HTC_WAKEUP;
+		break;
+	case WOW_RESUME_TRIGGER_GPIO:
+		*pmo_trigger = PMO_WOW_RESUME_TRIGGER_GPIO;
+		break;
+	default:
+		hdd_err("Invalid resume trigger: %d", hdd_trigger);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+static int
+hdd_to_pmo_wow_enable_params(struct wow_enable_params *in_params,
+			     struct pmo_wow_enable_params *out_params)
+{
+	int err;
+
+	/* unit-test suspend */
+	out_params->is_unit_test = in_params->is_unit_test;
+
+	/* interface pause */
+	err = hdd_to_pmo_interface_pause(in_params->interface_pause,
+					 &out_params->interface_pause);
+	if (err)
+		return err;
+
+	/* resume trigger */
+	err = hdd_to_pmo_resume_trigger(in_params->resume_trigger,
+					&out_params->resume_trigger);
+	if (err)
+		return err;
+
+	return 0;
+}
+
 /**
  * __wlan_hdd_bus_suspend() - handles platform supsend
- * @state: suspend message from the kernel
  * @wow_params: collection of wow enable override parameters
  *
  * Does precondtion validation. Ensures that a subsystem restart isn't in
- * progress.  Ensures that no load or unload is in progress.
- * Calls ol_txrx_bus_suspend to ensure the layer is ready for a bus suspend.
- * Calls wma_suspend to configure offloads.
- * Calls hif_suspend to suspend the bus.
+ * progress. Ensures that no load or unload is in progress. Does:
+ *	data path suspend
+ *	component (pmo) suspend
+ *	hif (bus) suspend
  *
  * Return: 0 for success, -EFAULT for null pointers,
  *     -EBUSY or -EAGAIN if another opperation is in progress and
  *     wlan will not be ready to suspend in time.
  */
-static int __wlan_hdd_bus_suspend(pm_message_t state,
-				  struct wow_enable_params wow_params)
+static int __wlan_hdd_bus_suspend(struct wow_enable_params wow_params)
 {
-	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	void *hif_ctx;
 	int err;
-	int status;
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	QDF_STATUS qdf_status;
-	struct pmo_wow_enable_params *params = NULL;
+	QDF_STATUS status;
+	hdd_context_t *hdd_ctx;
+	void *hif_ctx;
+	void *soc;
+	struct pmo_wow_enable_params pmo_params;
 
-	hdd_info("starting bus suspend; event:%d", state.event);
+	hdd_info("starting bus suspend");
 
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	err = wlan_hdd_validate_context(hdd_ctx);
 	if (err) {
-		hdd_err("Invalid hdd context");
-		goto done;
+		hdd_err("Invalid hdd context: %d", err);
+		return err;
 	}
 
 	if (hdd_ctx->driver_status != DRIVER_MODULES_ENABLED) {
-		hdd_info("Driver Module closed; return success");
+		hdd_info("Driver Module closed; skipping suspend");
 		return 0;
 	}
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
-	if (NULL == hif_ctx) {
+	if (!hif_ctx) {
 		hdd_err("Failed to get hif context");
-		err = -EINVAL;
-		goto done;
+		return -EINVAL;
 	}
 
+	err = hdd_to_pmo_wow_enable_params(&wow_params, &pmo_params);
+	if (err) {
+		hdd_err("Invalid WoW enable parameters: %d", err);
+		return err;
+	}
+
+	soc = cds_get_context(QDF_MODULE_ID_SOC);
 	err = qdf_status_to_os_return(cdp_bus_suspend(soc));
 	if (err) {
-		hdd_err("Failed cdp bus suspend");
-		goto done;
+		hdd_err("Failed cdp bus suspend: %d", err);
+		return err;
 	}
 
-	params = (struct pmo_wow_enable_params *)qdf_mem_malloc(
-			sizeof(*params));
-	if (!params) {
-		hdd_err("params is Null");
-		err = -ENOMEM;
-		goto done;
-	}
-	qdf_status = pmo_ucfg_psoc_bus_suspend_req(hdd_ctx->hdd_psoc,
-			QDF_SYSTEM_SUSPEND, params);
-	err = qdf_status_to_os_return(qdf_status);
+	status = pmo_ucfg_psoc_bus_suspend_req(hdd_ctx->hdd_psoc,
+					       QDF_SYSTEM_SUSPEND,
+					       &pmo_params);
+	err = qdf_status_to_os_return(status);
 	if (err) {
-		hdd_err("Failed wma bus suspend");
-		goto resume_oltxrx;
+		hdd_err("Failed pmo bus suspend: %d", status);
+		goto resume_cdp;
 	}
 
 	err = hif_bus_suspend(hif_ctx);
 	if (err) {
-		hdd_err("Failed hif bus suspend");
-		goto resume_wma;
+		hdd_err("Failed hif bus suspend: %d", err);
+		goto resume_pmo;
 	}
 
 	hdd_info("bus suspend succeeded");
-	qdf_mem_free(params);
-	params = NULL;
 	return 0;
 
-resume_wma:
-	qdf_status = pmo_ucfg_psoc_bus_resume_req(hdd_ctx->hdd_psoc,
-			QDF_SYSTEM_SUSPEND);
-	QDF_BUG(!qdf_status);
-resume_oltxrx:
+resume_pmo:
+	status = pmo_ucfg_psoc_bus_resume_req(hdd_ctx->hdd_psoc,
+					      QDF_SYSTEM_SUSPEND);
+	QDF_BUG(QDF_IS_STATUS_SUCCESS(status));
+
+resume_cdp:
 	status = cdp_bus_resume(soc);
-	QDF_BUG(!status);
-done:
-	if (params)
-		qdf_mem_free(params);
-	hdd_err("suspend failed, status = %d", err);
+	QDF_BUG(QDF_IS_STATUS_SUCCESS(status));
+
+	/* return suspend related error code */
 	return err;
 }
 
-int wlan_hdd_bus_suspend(pm_message_t state)
+int wlan_hdd_bus_suspend(void)
 {
 	int ret;
 	struct wow_enable_params default_params = {0};
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_bus_suspend(state, default_params);
+	ret = __wlan_hdd_bus_suspend(default_params);
 	cds_ssr_unprotect(__func__);
 
 	return ret;
 }
 
 #ifdef WLAN_SUSPEND_RESUME_TEST
-int wlan_hdd_unit_test_bus_suspend(pm_message_t state,
-				   struct wow_enable_params wow_params)
+int wlan_hdd_unit_test_bus_suspend(struct wow_enable_params wow_params)
 {
 	int ret;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_bus_suspend(state, wow_params);
+	ret = __wlan_hdd_bus_suspend(wow_params);
 	cds_ssr_unprotect(__func__);
 
 	return ret;
@@ -1113,11 +1173,11 @@ static void wlan_hdd_pld_crash_shutdown(struct device *dev,
  * Return: 0 on success
  */
 static int wlan_hdd_pld_suspend(struct device *dev,
-		     enum pld_bus_type bus_type,
-		     pm_message_t state)
+				enum pld_bus_type bus_type,
+				pm_message_t state)
 
 {
-	return wlan_hdd_bus_suspend(state);
+	return wlan_hdd_bus_suspend();
 }
 
 /**

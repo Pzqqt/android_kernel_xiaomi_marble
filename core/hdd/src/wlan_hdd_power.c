@@ -2358,7 +2358,6 @@ int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy, struct net_device *dev,
 {
 	qdf_device_t qdf_dev;
 	struct hif_opaque_softc *hif_ctx;
-	pm_message_t state;
 	int i, resume_err, suspend_err;
 	struct wow_enable_params wow_params = {
 		.is_unit_test = true,
@@ -2403,8 +2402,7 @@ int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy, struct net_device *dev,
 	if (suspend_err)
 		goto resume_done;
 
-	state.event = PM_EVENT_SUSPEND;
-	suspend_err = wlan_hdd_unit_test_bus_suspend(state, wow_params);
+	suspend_err = wlan_hdd_unit_test_bus_suspend(wow_params);
 	if (suspend_err)
 		goto cfg80211_resume;
 

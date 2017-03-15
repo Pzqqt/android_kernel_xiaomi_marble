@@ -44,11 +44,9 @@ void wlan_hdd_unregister_driver(void);
  * This function is called by the platform driver to suspend the
  * wlan bus
  *
- * @state: state
- *
  * Return: QDF_STATUS
  */
-int wlan_hdd_bus_suspend(pm_message_t state);
+int wlan_hdd_bus_suspend(void);
 
 /**
  * wlan_hdd_bus_suspend_noirq() - handle .suspend_noirq callback

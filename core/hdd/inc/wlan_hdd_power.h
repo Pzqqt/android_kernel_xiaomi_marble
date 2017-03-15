@@ -324,7 +324,6 @@ void wlan_hdd_inc_suspend_stats(hdd_context_t *hdd_ctx,
 #ifdef WLAN_SUSPEND_RESUME_TEST
 /**
  * wlan_hdd_unit_test_bus_suspend() - suspend the wlan bus
- * @state: state containing the suspend source event
  * @wow_params: collection of wow enable override parameters
  *
  * This function does the same as wlan_hdd_bus_suspend, but additionally passes
@@ -333,8 +332,7 @@ void wlan_hdd_inc_suspend_stats(hdd_context_t *hdd_ctx,
  *
  * Return: 0 for success or error code
  */
-int wlan_hdd_unit_test_bus_suspend(pm_message_t state,
-				   struct wow_enable_params wow_params);
+int wlan_hdd_unit_test_bus_suspend(struct wow_enable_params wow_params);
 
 /**
  * hdd_wlan_fake_apps_resume() - Resume from unit-test triggered suspend
