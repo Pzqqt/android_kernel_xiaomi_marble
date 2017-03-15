@@ -521,10 +521,19 @@ ce_sendlist_send_legacy(struct CE_handle *copyeng,
 	unsigned int num_items = sl->num_items;
 	unsigned int sw_index;
 	unsigned int write_index;
+	struct hif_softc *scn = CE_state->scn;
 
 	QDF_ASSERT((num_items > 0) && (num_items < src_ring->nentries));
 
 	qdf_spin_lock_bh(&CE_state->ce_index_lock);
+
+	if (CE_state->scn->fastpath_mode_on && CE_state->htt_tx_data &&
+	    Q_TARGET_ACCESS_BEGIN(scn) == 0) {
+		src_ring->sw_index = CE_SRC_RING_READ_IDX_GET_FROM_DDR(
+					       scn, CE_state->ctrl_addr);
+		Q_TARGET_ACCESS_END(scn);
+	}
+
 	sw_index = src_ring->sw_index;
 	write_index = src_ring->write_index;
 
