@@ -1789,13 +1789,6 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_TELE_BCN_MAX_LI_NUM_IDLE_BCNS_MIN,
 		     CFG_TELE_BCN_MAX_LI_NUM_IDLE_BCNS_MAX),
 
-	REG_VARIABLE(CFG_AP_DATA_AVAIL_POLL_PERIOD_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, apDataAvailPollPeriodInMs,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_AP_DATA_AVAIL_POLL_PERIOD_DEFAULT,
-		     CFG_AP_DATA_AVAIL_POLL_PERIOD_MIN,
-		     CFG_AP_DATA_AVAIL_POLL_PERIOD_MAX),
-
 	REG_VARIABLE(CFG_ENABLE_BYPASS_11D_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, enableBypass11d,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -5330,8 +5323,6 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 		  pHddCtx->config->nTeleBcnMaxListenInterval);
 	hdd_info("Name = [maxLiNumIdleBeacons] Value = [%u] ",
 		  pHddCtx->config->nTeleBcnMaxLiNumIdleBeacons);
-	hdd_info("Name = [gApDataAvailPollInterVal] Value = [%u] ",
-		  pHddCtx->config->apDataAvailPollPeriodInMs);
 	hdd_info("Name = [gEnableBypass11d] Value = [%u] ",
 		  pHddCtx->config->enableBypass11d);
 	hdd_info("Name = [gEnableDFSChnlScan] Value = [%u] ",
@@ -6675,13 +6666,6 @@ bool hdd_update_config_cfg(hdd_context_t *hdd_ctx)
 		    config->HeartbeatThresh24) == QDF_STATUS_E_FAILURE) {
 		status = false;
 		hdd_err("Couldn't pass on WNI_CFG_HEART_BEAT_THRESHOLD to CFG");
-	}
-
-	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_AP_DATA_AVAIL_POLL_PERIOD,
-		    config->apDataAvailPollPeriodInMs) ==
-		    QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_AP_DATA_AVAIL_POLL_PERIOD to CFG");
 	}
 
 	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_ENABLE_MC_ADDR_LIST,
