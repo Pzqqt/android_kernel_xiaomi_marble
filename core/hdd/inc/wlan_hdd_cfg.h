@@ -1335,7 +1335,7 @@ typedef enum {
 #define CFG_INTERFACE_CHANGE_WAIT_NAME    "gInterfaceChangeWait"
 #define CFG_INTERFACE_CHANGE_WAIT_MIN     (10)
 #define CFG_INTERFACE_CHANGE_WAIT_MAX     (500000)
-#define CFG_INTERFACE_CHANGE_WAIT_DEFAULT (100000)
+#define CFG_INTERFACE_CHANGE_WAIT_DEFAULT (15000)
 
 /*
  * To enable, set gRoamIntraBand=1 (Roaming within band)
