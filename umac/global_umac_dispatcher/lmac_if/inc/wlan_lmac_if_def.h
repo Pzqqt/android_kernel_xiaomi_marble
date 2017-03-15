@@ -200,6 +200,41 @@ struct wlan_lmac_if_pmo_tx_ops {
 };
 #endif
 
+#ifdef WLAN_P2P_ENABLE
+
+/* forward declarations for p2p tx ops */
+struct p2p_ps_config;
+struct p2p_lo_start;
+
+/**
+ * struct wlan_lmac_if_p2p_tx_ops - structure of tx function pointers
+ * for P2P component
+ * @set_ps:      function pointer to set power save
+ * @lo_start:    function pointer to start listen offload
+ * @lo_stop:     function pointer to stop listen offload
+ * @reg_lo_ev_handler:   function pointer to register lo event handler
+ * @reg_noa_ev_handler:  function pointer to register noa event handler
+ * @unreg_lo_ev_handler: function pointer to unregister lo event handler
+ * @unreg_noa_ev_handler:function pointer to unregister noa event handler
+ */
+struct wlan_lmac_if_p2p_tx_ops {
+	QDF_STATUS (*set_ps)(struct wlan_objmgr_psoc *psoc,
+		struct p2p_ps_config *ps_config);
+	QDF_STATUS (*lo_start)(struct wlan_objmgr_psoc *psoc,
+		struct p2p_lo_start *lo_start);
+	QDF_STATUS (*lo_stop)(struct wlan_objmgr_psoc *psoc,
+		uint32_t vdev_id);
+	QDF_STATUS (*reg_lo_ev_handler)(struct wlan_objmgr_psoc *psoc,
+			void *arg);
+	QDF_STATUS (*reg_noa_ev_handler)(struct wlan_objmgr_psoc *psoc,
+			void *arg);
+	QDF_STATUS (*unreg_lo_ev_handler)(struct wlan_objmgr_psoc *psoc,
+			void *arg);
+	QDF_STATUS (*unreg_noa_ev_handler)(struct wlan_objmgr_psoc *psoc,
+			void *arg);
+};
+#endif
+
 /**
  * struct wlan_lmac_if_tx_ops - south bound tx function pointers
  * @mgmt_txrx_tx_ops: mgmt txrx tx ops
@@ -220,6 +255,9 @@ struct wlan_lmac_if_tx_ops {
 	 struct wlan_lmac_if_scan_tx_ops scan;
 #ifdef WLAN_PMO_ENABLE
 	 struct wlan_lmac_if_pmo_tx_ops pmo_tx_ops;
+#endif
+#ifdef WLAN_P2P_ENABLE
+	struct wlan_lmac_if_p2p_tx_ops p2p;
 #endif
 };
 
@@ -273,6 +311,26 @@ struct wlan_lmac_if_pmo_rx_ops {
 };
 #endif
 
+#ifdef WLAN_P2P_ENABLE
+
+/* forward declarations for p2p rx ops */
+struct p2p_noa_info;
+struct p2p_lo_event;
+
+/**
+ * struct wlan_lmac_if_p2p_rx_ops - structure of rx function pointers
+ * for P2P component
+ * @lo_ev_handler:    function pointer to give listen offload event
+ * @noa_ev_handler:   function pointer to give noa event
+ */
+struct wlan_lmac_if_p2p_rx_ops {
+	QDF_STATUS (*lo_ev_handler)(struct wlan_objmgr_psoc *psoc,
+		struct p2p_lo_event *event_info);
+	QDF_STATUS (*noa_ev_handler)(struct wlan_objmgr_psoc *psoc,
+		struct p2p_noa_info *event_info);
+};
+#endif
+
 /**
  * struct wlan_lmac_if_rx_ops - south bound rx function pointers
  * @arg1
@@ -291,6 +349,9 @@ struct wlan_lmac_if_rx_ops {
 	 struct wlan_lmac_if_scan_rx_ops scan;
 #ifdef WLAN_PMO_ENABLE
 	 struct wlan_lmac_if_pmo_rx_ops pmo_rx_ops;
+#endif
+#ifdef WLAN_P2P_ENABLE
+	struct wlan_lmac_if_p2p_rx_ops p2p;
 #endif
 };
 

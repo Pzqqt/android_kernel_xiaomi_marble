@@ -16294,7 +16294,8 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_p2p_disc_event_id] = WMI_P2P_DISC_EVENTID;
 
 	event_ids[wmi_p2p_noa_event_id] = WMI_P2P_NOA_EVENTID;
-
+	event_ids[wmi_p2p_lo_stop_event_id] =
+				WMI_P2P_LISTEN_OFFLOAD_STOPPED_EVENTID;
 	event_ids[wmi_pdev_resume_event_id] = WMI_PDEV_RESUME_EVENTID;
 	event_ids[wmi_wow_wakeup_host_event_id] = WMI_WOW_WAKEUP_HOST_EVENTID;
 	event_ids[wmi_do_wow_disable_ack_event_id] =

@@ -41,4 +41,12 @@ uint32_t wlan_chan_to_freq(uint8_t chan);
  */
 bool wlan_is_dsrc_channel(uint16_t center_freq);
 
+/**
+ * wlan_freq_to_chan() - converts frequency to channel
+ * @freq: frequency
+ *
+ * Return: channel of frequency
+ */
+uint8_t wlan_freq_to_chan(uint32_t freq);
+
 #endif /* _WLAN_UTILITY_H_ */

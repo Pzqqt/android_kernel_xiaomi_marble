@@ -26,6 +26,10 @@
 #include "target_if_pmo_main.h"
 #endif
 
+#ifdef WLAN_P2P_ENABLE
+#include "target_if_p2p.h"
+#endif
+
 static struct target_if_ctx *g_target_if_ctx;
 
 struct target_if_ctx *target_if_get_ctx()
@@ -130,6 +134,10 @@ QDF_STATUS target_if_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	/* Components parallel to UMAC to register their TX-ops here */
 	target_if_pmo_register_tx_ops_req(tx_ops);
 
+#ifdef WLAN_P2P_ENABLE
+	/* Converged UMAC components to register P2P TX-ops */
+	target_if_p2p_register_tx_ops(tx_ops);
+#endif
 	return QDF_STATUS_SUCCESS;
 }
 

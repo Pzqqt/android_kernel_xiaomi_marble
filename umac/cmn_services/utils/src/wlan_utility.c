@@ -48,3 +48,24 @@ bool wlan_is_dsrc_channel(uint16_t center_freq)
 
 	return false;
 }
+
+uint8_t wlan_freq_to_chan(uint32_t freq)
+{
+	uint8_t chan;
+
+	if (freq > WLAN_24_GHZ_BASE_FREQ && freq < WLAN_CHAN_14_FREQ)
+		chan = ((freq - WLAN_24_GHZ_BASE_FREQ) /
+			WLAN_CHAN_SPACING_5MHZ);
+	else if (freq == WLAN_CHAN_14_FREQ)
+		chan = WLAN_24_GHZ_CHANNEL_14;
+	else if ((freq > WLAN_24_GHZ_BASE_FREQ) &&
+		(freq < WLAN_5_GHZ_BASE_FREQ))
+		chan = (((freq - WLAN_CHAN_15_FREQ) /
+			WLAN_CHAN_SPACING_20MHZ) +
+			WLAN_24_GHZ_CHANNEL_15);
+	else
+		chan = (freq - WLAN_5_GHZ_BASE_FREQ) /
+			WLAN_CHAN_SPACING_5MHZ;
+
+	return chan;
+}
