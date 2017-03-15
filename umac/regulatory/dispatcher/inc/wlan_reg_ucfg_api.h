@@ -26,36 +26,6 @@
  * config interface routines
  */
 
-enum band_info {
-	band_2g = 0x1,
-	band_49g = 0x2,
-	band_5g_36_48 = 0x4,
-	band_5g_52_64 = 0x8,
-	band_5g_100_144 = 0x10,
-	band_5g_149_165 = 0x20
-};
-
-struct reg_ini_vars {
-	uint32_t enable_11d_support;
-	uint32_t userspace_ctry_priority;
-	enum band_info band_capability;
-	uint32_t dfs_enable;
-	uint32_t indoor_channel_support;
-};
-
-struct set_band_req {
-	enum band_info band;
-	uint32_t pdev_id;
-};
-
-struct country_info {
-	uint8_t country_code[3];
-};
-
-struct reg_country_update {
-	uint8_t country_code[3];
-};
-
 typedef QDF_STATUS (*reg_event_cb)(void *status_struct);
 
 QDF_STATUS ucfg_reg_set_band(uint8_t vdev_id, uint8_t pdev_id,

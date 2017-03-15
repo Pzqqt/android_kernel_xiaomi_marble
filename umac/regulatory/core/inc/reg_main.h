@@ -23,18 +23,5 @@
  * functions
  */
 
-#include "qdf_status.h"
-#include "qdf_types.h"
-#include "qdf_trace.h"
-#include "wlan_objmgr_cmn.h"
-#include "wlan_objmgr_global_obj.h"
-#include "wlan_objmgr_psoc_obj.h"
-
-
-/**
- * reg_init() - Regulatory component initialization
- * @psoc: pointer to psoc object
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS reg_init(struct wlan_objmgr_psoc *psoc);
+QDF_STATUS wlan_regulatory_init(void);
+QDF_STATUS wlan_regulatory_deinit(void);

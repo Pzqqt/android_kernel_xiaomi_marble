@@ -22,26 +22,145 @@
  * This file provides the regulatory component initialization and
  * registration functions
  */
+
+#include "qdf_status.h"
+#include "qdf_types.h"
+#include "qdf_trace.h"
+#include "wlan_objmgr_cmn.h"
+#include "wlan_objmgr_global_obj.h"
+#include "wlan_objmgr_psoc_obj.h"
+#include "wlan_objmgr_pdev_obj.h"
+#include "scheduler_api.h"
+#include "reg_db.h"
+#include "reg_services.h"
+#include "reg_priv.h"
 #include "reg_main.h"
 
 /**
- * reg_init() - Regulatory component initialization
- * @psoc: pointer to psoc object
+ * wlan_regulatory_psoc_obj_created_notification() - PSOC obj create callback
+ * @psoc: PSOC object
+ * @arg_list: Variable argument list
  *
- * Return: QDF_STATUS
+ * This callback is registered with object manager during initialization to
+ * get notified when the object is created.
+ *
+ * Return: Success or Failure
  */
-QDF_STATUS reg_init(struct wlan_objmgr_psoc *psoc)
+static QDF_STATUS wlan_regulatory_psoc_obj_created_notification(
+		struct wlan_objmgr_psoc *psoc, void *arg_list)
 {
-	/*
-	 * Regulatory component initialization
-	 */
-	struct wlan_objmgr_psoc_regulatory *psoc_reg = NULL;
+	struct wlan_regulatory_psoc_priv_obj *soc_reg_obj;
+	QDF_STATUS status;
 
-	psoc_reg = &psoc->soc_reg;
+	soc_reg_obj =
+		qdf_mem_malloc(sizeof(*soc_reg_obj));
+	if (NULL == soc_reg_obj) {
+		reg_alert("Mem alloc failed for reg psoc priv obj");
+		return QDF_STATUS_E_NOMEM;
+	}
 
-	psoc_reg->country_code = 0;
-	psoc_reg->reg_dmn = 0;
-	psoc_reg->reg_flags = 0;
-	return 0;
+	soc_reg_obj->offload_enabled  = false;
+	status = wlan_objmgr_psoc_component_obj_attach(psoc,
+			WLAN_UMAC_COMP_REGULATORY, soc_reg_obj,
+			QDF_STATUS_SUCCESS);
+	reg_info("reg psoc obj created with status %d", status);
 
+	return status;
 }
+
+/**
+ * wlan_regulatory_psoc_obj_destroyed_notification() - PSOC obj delete callback
+ * @psoc: PSOC object
+ * @arg_list: Variable argument list
+ *
+ * This callback is registered with object manager during initialization to
+ * get notified when the object is deleted.
+ *
+ * Return: Success or Failure
+ */
+static QDF_STATUS  wlan_regulatory_psoc_obj_destroyed_notification(
+		struct wlan_objmgr_psoc *psoc, void *arg_list)
+{
+	QDF_STATUS status;
+	struct wlan_regulatory_psoc_priv_obj *soc_reg =
+		wlan_objmgr_psoc_get_comp_private_obj(psoc,
+				WLAN_UMAC_COMP_REGULATORY);
+	if (NULL == soc_reg) {
+		reg_err("reg psoc private obj is NULL");
+		return QDF_STATUS_E_FAULT;
+	}
+	status = wlan_objmgr_psoc_component_obj_detach(psoc,
+			WLAN_UMAC_COMP_REGULATORY,
+			soc_reg);
+	if (status != QDF_STATUS_SUCCESS)
+		reg_err("soc_reg private obj detach failed");
+	reg_info("reg psoc obj deleted with status %d", status);
+	qdf_mem_free(soc_reg);
+
+	return status;
+}
+
+/**
+ * wlan_regulatory_init() - init regulatory component
+ *
+ * Return: Success or Failure
+ */
+QDF_STATUS wlan_regulatory_init(void)
+{
+	QDF_STATUS status;
+
+	status = wlan_objmgr_register_psoc_create_handler(
+			WLAN_UMAC_COMP_REGULATORY,
+			wlan_regulatory_psoc_obj_created_notification, NULL);
+	if (status != QDF_STATUS_SUCCESS) {
+		reg_err("Failed to register reg obj create handler");
+		return status;
+	}
+
+	status = wlan_objmgr_register_psoc_destroy_handler(
+			WLAN_UMAC_COMP_REGULATORY,
+			wlan_regulatory_psoc_obj_destroyed_notification, NULL);
+	if (status != QDF_STATUS_SUCCESS) {
+		reg_err("Failed to register reg obj delete handler");
+		wlan_objmgr_unregister_psoc_create_handler(
+				WLAN_UMAC_COMP_REGULATORY,
+				wlan_regulatory_psoc_obj_created_notification,
+				NULL);
+		return status;
+	}
+
+	reg_info("regulatory handlers registered with obj mgr");
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wlan_regulatory_deinit() - deinit regulatory component
+ *
+ * Return: Success or Failure
+ */
+QDF_STATUS wlan_regulatory_deinit(void)
+{
+	QDF_STATUS status;
+
+	status = wlan_objmgr_unregister_psoc_create_handler(
+			WLAN_UMAC_COMP_REGULATORY,
+			wlan_regulatory_psoc_obj_created_notification,
+			NULL);
+	if (status != QDF_STATUS_SUCCESS)
+		reg_err("deregister fail for psoc create notif:%d",
+				status);
+	status = wlan_objmgr_unregister_psoc_destroy_handler(
+			WLAN_UMAC_COMP_REGULATORY,
+			wlan_regulatory_psoc_obj_destroyed_notification,
+			NULL);
+	if (status != QDF_STATUS_SUCCESS) {
+		reg_err("deregister fail for psoc delete notif:%d",
+				status);
+		return status;
+	}
+	reg_alert("deregistered callbacks with obj mgr successfully");
+
+	return QDF_STATUS_SUCCESS;
+}
+

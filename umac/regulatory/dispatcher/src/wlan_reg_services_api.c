@@ -24,7 +24,9 @@
 
 #include "qdf_types.h"
 #include "qdf_trace.h"
+#include "reg_db.h"
 #include "reg_services.h"
+#include "wlan_reg_services_api.h"
 
 /**
  * wlan_reg_get_channel_list_with_power() - Provide the channel list with power

@@ -92,6 +92,7 @@
 /**
  * enum wlan_umac_comp_id - UMAC component id
  * @WLAN_UMAC_COMP_MLME:     MLME
+ * @WLAN_UMAC_COMP_REGULATORY: REGULATORY
  * @WLAN_UMAC_COMP_MGMT_TXRX:   MGMT Tx/Rx
  * @WLAN_UMAC_COMP_SERIALIZATION: Serialization
  * @WLAN_UMAC_COMP_SCAN: SCAN - as scan module uses services provided by
@@ -121,6 +122,7 @@ enum wlan_umac_comp_id {
 	WLAN_UMAC_COMP_WIFI_POS       = 8,
 	WLAN_UMAC_COMP_TDLS           = 9,
 	WLAN_UMAC_COMP_ATF            = 10,
+	WLAN_UMAC_COMP_REGULATORY     = 11,
 	WLAN_UMAC_COMP_ID_MAX,
 };
 

@@ -22,6 +22,8 @@
  * @brief contains regulatory user config interface definations
  */
 
+#include "reg_db.h"
+#include "reg_services.h"
 #include "wlan_reg_ucfg_api.h"
 
 /**

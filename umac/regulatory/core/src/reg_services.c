@@ -33,6 +33,7 @@
 
 #include "qdf_types.h"
 #include "qdf_trace.h"
+#include "reg_db.h"
 #include "reg_services.h"
 /**
  * reg_get_channel_list_with_power() - Provides the channel list with power
