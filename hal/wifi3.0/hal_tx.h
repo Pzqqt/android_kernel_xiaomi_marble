@@ -526,6 +526,20 @@ static inline void hal_tx_ext_desc_set_tso_enable(void *desc,
 }
 
 /**
+ * hal_tx_ext_desc_set_tso_flags() - Set TSO Flags
+ * @desc: Handle to Tx MSDU Extension Descriptor
+ * @falgs: 32-bit word with all TSO flags consolidated
+ *
+ * Return: none
+ */
+static inline void hal_tx_ext_desc_set_tso_flags(void *desc,
+		uint32_t tso_flags)
+{
+	HAL_SET_FLD_OFFSET(desc, TX_MSDU_EXTENSION_0, TSO_ENABLE, 0) =
+		tso_flags;
+}
+
+/**
  * hal_tx_ext_desc_set_checksum_en() - Enable HW Checksum offload
  * @desc: Handle to Tx MSDU Extension Descriptor
  * @en: Checksum offload enable
@@ -592,6 +606,20 @@ static inline void hal_tx_ext_desc_set_tcp_seq(void *desc,
 		((HAL_TX_SM(TX_MSDU_EXTENSION_2, TCP_SEQ_NUMBER, seq_num)));
 }
 
+
+/**
+ * hal_tx_ext_desc_set_ip_id() - Set IP Identification field
+ * @desc: Handle to Tx MSDU Extension Descriptor
+ * @id: IP Id field for the msdu, if tso is enabled
+ *
+ * Return: none
+ */
+static inline void hal_tx_ext_desc_set_ip_id(void *desc,
+					       uint16_t id)
+{
+	HAL_SET_FLD(desc, TX_MSDU_EXTENSION_3, IP_IDENTIFICATION) |=
+		((HAL_TX_SM(TX_MSDU_EXTENSION_3, IP_IDENTIFICATION, id)));
+}
 /**
  * hal_tx_ext_desc_set_buffer() - Set Buffer Pointer and Length for a fragment
  * @desc: Handle to Tx MSDU Extension Descriptor

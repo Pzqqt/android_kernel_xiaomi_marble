@@ -240,6 +240,7 @@ QDF_STATUS dp_tx_ext_desc_pool_alloc(struct dp_soc *soc, uint8_t pool_id,
 			break;
 	}
 
+	soc->tx_ext_desc[pool_id].num_free = num_elem;
 	TX_DESC_LOCK_CREATE(&soc->tx_ext_desc[pool_id].lock);
 	return QDF_STATUS_SUCCESS;
 
@@ -279,3 +280,111 @@ QDF_STATUS dp_tx_ext_desc_pool_free(struct dp_soc *soc, uint8_t pool_id)
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * dp_tx_tso_desc_pool_alloc() - allocate tx tso descriptor pool
+ * @soc: Handle to DP SoC structure
+ * @pool_id: tso descriptor pool id
+ * @num_elem: number of element
+ *
+ * Return: QDF_STATUS_SUCCESS
+ */
+#if defined(FEATURE_TSO)
+QDF_STATUS dp_tx_tso_desc_pool_alloc(struct dp_soc *soc, uint8_t pool_id,
+		uint16_t num_elem)
+{
+	int i;
+	struct qdf_tso_seg_elem_t *c_element;
+	struct qdf_tso_seg_elem_t *temp;
+
+	c_element = qdf_mem_malloc(sizeof(struct qdf_tso_seg_elem_t));
+
+	if (!c_element) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+				FL("Alloc Failed %p pool_id %d"),
+				soc, pool_id);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	soc->tx_tso_desc[pool_id].freelist = c_element;
+	for (i = 0; i < (num_elem - 1); i++) {
+		c_element->next =
+			qdf_mem_malloc(sizeof(struct qdf_tso_seg_elem_t));
+
+		if (!c_element->next) {
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+					FL("Alloc Failed %p pool_id %d"),
+					soc, pool_id);
+			goto fail;
+		}
+
+		c_element = c_element->next;
+		c_element->next = NULL;
+	}
+
+	soc->tx_tso_desc[pool_id].pool_size = num_elem;
+	TX_DESC_LOCK_CREATE(&soc->tx_tso_desc[pool_id].lock);
+
+	return QDF_STATUS_SUCCESS;
+
+fail:
+	c_element = soc->tx_tso_desc[pool_id].freelist;
+	while (c_element) {
+		temp = c_element->next;
+		qdf_mem_free(c_element);
+		c_element = temp;
+	}
+
+	return QDF_STATUS_E_NOMEM;
+}
+#else
+QDF_STATUS dp_tx_tso_desc_pool_alloc(struct dp_soc *soc, uint8_t pool_id,
+		uint16_t num_elem)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+/**
+ * dp_tx_tso_desc_pool_free() - free tx tso descriptor pool
+ * @soc: Handle to DP SoC structure
+ * @pool_id: extension descriptor pool id
+ *
+ * Return: NONE
+ */
+#if defined(FEATURE_TSO)
+void dp_tx_tso_desc_pool_free(struct dp_soc *soc, uint8_t pool_id)
+{
+	int i;
+	struct qdf_tso_seg_elem_t *c_element;
+	struct qdf_tso_seg_elem_t *temp;
+
+	TX_DESC_LOCK_LOCK(&soc->tx_tso_desc[pool_id].lock);
+	c_element = soc->tx_tso_desc[pool_id].freelist;
+
+	if (!c_element) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("Desc Pool Corrupt %d", pool_id);
+			return;
+	}
+
+	for (i = 0; i < soc->tx_tso_desc[pool_id].pool_size; i++) {
+		temp = c_element->next;
+		qdf_mem_free(c_element);
+		c_element = temp;
+		if (!c_element)
+			break;
+	}
+
+	soc->tx_tso_desc[pool_id].freelist = NULL;
+	soc->tx_tso_desc[pool_id].num_free = 0;
+	soc->tx_tso_desc[pool_id].pool_size = 0;
+	TX_DESC_LOCK_UNLOCK(&soc->tx_tso_desc[pool_id].lock);
+	TX_DESC_LOCK_DESTROY(&soc->tx_tso_desc[pool_id].lock);
+	return;
+}
+#else
+void dp_tx_tso_desc_pool_free(struct dp_soc *soc, uint8_t pool_id)
+{
+	return;
+}
+#endif

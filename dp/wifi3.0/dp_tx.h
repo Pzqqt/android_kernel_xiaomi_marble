@@ -163,11 +163,6 @@ static inline QDF_STATUS dp_tx_flow_control(struct dp_vdev *vdev)
 {
 	return  QDF_STATUS_SUCCESS;
 }
-static inline QDF_STATUS dp_tx_prepare_tso(struct dp_vdev *vdev,
-		qdf_nbuf_t nbuf, struct dp_tx_msdu_info_s *msdu_info)
-{
-	return  QDF_STATUS_SUCCESS;
-}
 static inline qdf_nbuf_t dp_tx_prepare_me(struct dp_vdev *vdev,
 		qdf_nbuf_t nbuf, struct dp_tx_msdu_info_s *msdu_info)
 {

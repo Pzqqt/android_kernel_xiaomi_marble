@@ -115,6 +115,7 @@ struct dp_tx_ext_desc_elem_s {
  * struct dp_tx_ext_desc_s - Tx Extension Descriptor Pool
  * @elem_count: Number of descriptors in the pool
  * @elem_size: Size of each descriptor
+ * @num_free: Number of free descriptors
  * @msdu_ext_desc: MSDU extension descriptor
  * @desc_pages: multiple page allocation information for actual descriptors
  * @link_elem_size: size of the link descriptor in cacheable memory used for
@@ -124,6 +125,7 @@ struct dp_tx_ext_desc_elem_s {
 struct dp_tx_ext_desc_pool_s {
 	uint16_t elem_count;
 	int elem_size;
+	uint16_t num_free;
 	struct qdf_mem_multi_page_t desc_pages;
 	int link_elem_size;
 	struct qdf_mem_multi_page_t desc_link_pages;
@@ -169,29 +171,39 @@ struct dp_tx_desc_s {
 };
 
 /**
+ * struct dp_tx_tso_seg_pool_s
+ * @pool_size: total number of pool elements
+ * @num_free: free element count
+ * @freelist: first free element pointer
+ * @lock: lock for accessing the pool
+ */
+struct dp_tx_tso_seg_pool_s {
+	uint16_t pool_size;
+	uint16_t num_free;
+	struct qdf_tso_seg_elem_t *freelist;
+	qdf_spinlock_t lock;
+};
+
+/**
  * struct dp_tx_desc_pool_s - Tx Descriptor pool information
- * @desc_reserved_size: Size to be reserved for housekeeping info
- * 			in allocated memory for each descriptor
- * @page_divider: Number of bits to shift to get page number from descriptor ID
- * @offset_filter: Bit mask to get offset from descriptor ID
- * @num_allocated: Number of allocated (in use) descriptors in the pool
  * @elem_size: Size of each descriptor in the pool
  * @elem_count: Total number of descriptors in the pool
+ * @num_allocated: Number of used descriptors
+ * @num_free: Number of free descriptors
  * @freelist: Chain of free descriptors
- * @desc_pages: multiple page allocation information
+ * @desc_pages: multiple page allocation information for actual descriptors
  * @lock- Lock for descriptor allocation/free from/to the pool
  */
 struct dp_tx_desc_pool_s {
-	uint16_t desc_reserved_size;
-	uint8_t page_divider;
-	uint32_t offset_filter;
-	uint32_t num_allocated;
 	uint16_t elem_size;
 	uint16_t elem_count;
+	uint32_t num_allocated;
+	uint32_t num_free;
 	struct dp_tx_desc_s *freelist;
 	struct qdf_mem_multi_page_t desc_pages;
 	qdf_spinlock_t lock;
 };
+
 
 struct dp_srng {
 	void *hal_srng;
@@ -319,6 +331,9 @@ struct dp_soc {
 
 	/* Tx MSDU Extension descriptor pool */
 	struct dp_tx_ext_desc_pool_s tx_ext_desc[MAX_TXDESC_POOLS];
+
+	/* Tx TSO descriptor pool */
+	struct dp_tx_tso_seg_pool_s tx_tso_desc[MAX_TXDESC_POOLS];
 
 	/* Tx H/W queues lock */
 	qdf_spinlock_t tx_queue_lock[MAX_TX_HW_QUEUES];

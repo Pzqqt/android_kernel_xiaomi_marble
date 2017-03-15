@@ -48,6 +48,9 @@ QDF_STATUS dp_tx_desc_pool_free(struct dp_soc *soc, uint8_t pool_id);
 QDF_STATUS dp_tx_ext_desc_pool_alloc(struct dp_soc *soc, uint8_t pool_id,
 		uint16_t num_elem);
 QDF_STATUS dp_tx_ext_desc_pool_free(struct dp_soc *soc, uint8_t pool_id);
+QDF_STATUS dp_tx_tso_desc_pool_alloc(struct dp_soc *soc, uint8_t pool_id,
+		uint16_t num_elem);
+void dp_tx_tso_desc_pool_free(struct dp_soc *soc, uint8_t pool_id);
 
 /**
  * dp_tx_desc_alloc() - Allocate a Software Tx Descriptor from given pool
@@ -74,6 +77,7 @@ static inline struct dp_tx_desc_s *dp_tx_desc_alloc(struct dp_soc *soc,
 		soc->tx_desc[desc_pool_id].freelist =
 			soc->tx_desc[desc_pool_id].freelist->next;
 		soc->tx_desc[desc_pool_id].num_allocated++;
+		soc->tx_desc[desc_pool_id].num_free--;
 	}
 
 	DP_STATS_INC(soc, tx.desc_in_use, 1);
@@ -83,6 +87,53 @@ static inline struct dp_tx_desc_s *dp_tx_desc_alloc(struct dp_soc *soc,
 	return tx_desc;
 }
 
+/**
+ * dp_tx_desc_alloc_multiple() - Allocate batch of software Tx Descriptors
+ *                            from given pool
+ * @soc: Handle to DP SoC structure
+ * @pool_id: pool id should pick up
+ * @num_requested: number of required descriptor
+ *
+ * allocate multiple tx descriptor and make a link
+ *
+ * Return: h_desc first descriptor pointer
+ */
+static inline struct dp_tx_desc_s *dp_tx_desc_alloc_multiple(
+		struct dp_soc *soc, uint8_t desc_pool_id, uint8_t num_requested)
+{
+	struct dp_tx_desc_s *c_desc = NULL, *h_desc = NULL;
+	uint8_t count;
+
+	TX_DESC_LOCK_LOCK(&soc->tx_desc[desc_pool_id].lock);
+
+	if ((num_requested == 0) ||
+			(soc->tx_desc[desc_pool_id].num_free < num_requested)) {
+		TX_DESC_LOCK_UNLOCK(&soc->tx_desc[desc_pool_id].lock);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			"%s, No Free Desc: Available(%d) num_requested(%d)",
+			__func__, soc->tx_desc[desc_pool_id].num_free,
+			num_requested);
+		return NULL;
+	}
+
+	h_desc = soc->tx_desc[desc_pool_id].freelist;
+
+	/* h_desc should never be NULL since num_free > requested */
+	qdf_assert_always(h_desc);
+
+	c_desc = h_desc;
+	for (count = 0; count < (num_requested - 1); count++) {
+		c_desc->flags = DP_TX_DESC_FLAG_ALLOCATED;
+		c_desc = c_desc->next;
+	}
+	soc->tx_desc[desc_pool_id].num_free -= count;
+	soc->tx_desc[desc_pool_id].num_allocated += count;
+	soc->tx_desc[desc_pool_id].freelist = c_desc->next;
+	c_desc->next = NULL;
+
+	TX_DESC_LOCK_UNLOCK(&soc->tx_desc[desc_pool_id].lock);
+	return h_desc;
+}
 
 /**
  * dp_tx_desc_free() - Fee a tx descriptor and attach it to free list
@@ -101,6 +152,9 @@ dp_tx_desc_free(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc,
 	tx_desc->next = soc->tx_desc[desc_pool_id].freelist;
 	soc->tx_desc[desc_pool_id].freelist = tx_desc;
 	DP_STATS_DEC(soc, tx.desc_in_use, 1);
+	soc->tx_desc[desc_pool_id].num_allocated--;
+	soc->tx_desc[desc_pool_id].num_free++;
+
 
 	TX_DESC_LOCK_UNLOCK(&soc->tx_desc[desc_pool_id].lock);
 }
@@ -158,5 +212,95 @@ static inline void dp_tx_ext_desc_free(struct dp_soc *soc,
 	soc->tx_ext_desc[desc_pool_id].freelist = elem;
 	TX_DESC_LOCK_UNLOCK(&soc->tx_ext_desc[desc_pool_id].lock);
 	return;
+}
+
+/**
+ * dp_tx_ext_desc_free_multiple() - Fee multiple tx extension descriptor and
+ *                           attach it to free list
+ * @soc: Handle to DP SoC structure
+ * @desc_pool_id: pool id should pick up
+ * @elem: tx descriptor should be freed
+ * @num_free: number of descriptors should be freed
+ *
+ * Return: none
+ */
+static inline void dp_tx_ext_desc_free_multiple(struct dp_soc *soc,
+		struct dp_tx_ext_desc_elem_s *elem, uint8_t desc_pool_id,
+		uint8_t num_free)
+{
+	struct dp_tx_ext_desc_elem_s *head, *tail, *c_elem;
+	uint8_t freed = num_free;
+
+	/* caller should always guarantee atleast list of num_free nodes */
+	qdf_assert_always(head);
+
+	head = elem;
+	c_elem = head;
+	tail = head;
+	while (c_elem && freed) {
+		tail = c_elem;
+		c_elem = c_elem->next;
+		freed--;
+	}
+
+	/* caller should always guarantee atleast list of num_free nodes */
+	qdf_assert_always(tail);
+
+	TX_DESC_LOCK_LOCK(&soc->tx_ext_desc[desc_pool_id].lock);
+	tail->next = soc->tx_ext_desc[desc_pool_id].freelist;
+	soc->tx_ext_desc[desc_pool_id].freelist = head;
+	soc->tx_ext_desc[desc_pool_id].num_free += num_free;
+	TX_DESC_LOCK_UNLOCK(&soc->tx_ext_desc[desc_pool_id].lock);
+
+	return;
+}
+
+/**
+ * dp_tx_tso_desc_alloc() - function to allocate a TSO segment
+ * @soc: device soc instance
+ * @pool_id: pool id should pick up tso descriptor
+ *
+ * Allocates a TSO segment element from the free list held in
+ * the soc
+ *
+ * Return: tso_seg, tso segment memory pointer
+ */
+static inline struct qdf_tso_seg_elem_t *dp_tx_tso_desc_alloc(
+		struct dp_soc *soc, uint8_t pool_id)
+{
+	struct qdf_tso_seg_elem_t *tso_seg = NULL;
+
+	TX_DESC_LOCK_LOCK(&soc->tx_tso_desc[pool_id].lock);
+	if (soc->tx_tso_desc[pool_id].freelist) {
+		soc->tx_tso_desc[pool_id].num_free--;
+		tso_seg = soc->tx_tso_desc[pool_id].freelist;
+		soc->tx_tso_desc[pool_id].freelist =
+			soc->tx_tso_desc[pool_id].freelist->next;
+	}
+	TX_DESC_LOCK_UNLOCK(&soc->tx_tso_desc[pool_id].lock);
+
+	return tso_seg;
+}
+
+/**
+ * dp_tx_tso_desc_free() - function to free a TSO segment
+ * @soc: device soc instance
+ * @pool_id: pool id should pick up tso descriptor
+ * @tso_seg: tso segment memory pointer
+ *
+ * Returns a TSO segment element to the free list held in the
+ * HTT pdev
+ *
+ * Return: none
+ */
+
+static inline void dp_tx_tso_desc_free(struct dp_soc *soc,
+		uint8_t pool_id, struct qdf_tso_seg_elem_t *tso_seg)
+{
+	TX_DESC_LOCK_LOCK(&soc->tx_tso_desc[pool_id].lock);
+	tso_seg->next = soc->tx_tso_desc[pool_id].freelist;
+	soc->tx_tso_desc[pool_id].freelist = tso_seg;
+	soc->tx_tso_desc[pool_id].num_free++;
+	TX_DESC_LOCK_UNLOCK(&soc->tx_tso_desc[pool_id].lock);
 }
 #endif /* DP_TX_DESC_H */

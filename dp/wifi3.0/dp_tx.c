@@ -196,6 +196,120 @@ static uint8_t dp_tx_prepare_htt_metadata(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 }
 
 /**
+ * dp_tx_prepare_tso_ext_desc() - Prepare MSDU extension descriptor for TSO
+ * @tso_seg: TSO segment to process
+ * @ext_desc: Pointer to MSDU extension descriptor
+ *
+ * Return: void
+ */
+#if defined(FEATURE_TSO)
+static void dp_tx_prepare_tso_ext_desc(struct qdf_tso_seg_t *tso_seg,
+		void *ext_desc)
+{
+	uint8_t num_frag;
+	uint32_t *buf_ptr;
+	uint32_t tso_flags;
+
+	/*
+	 * Set tso_en, tcp_flags(NS, CWR, ECE, URG, ACK, PSH, RST, SYN, FIN),
+	 * tcp_flag_mask
+	 *
+	 * Checksum enable flags are set in TCL descriptor and not in Extension
+	 * Descriptor (H/W ignores checksum_en flags in MSDU ext descriptor)
+	 */
+	tso_flags = *(uint32_t *) &tso_seg->tso_flags;
+
+	hal_tx_ext_desc_set_tso_flags(ext_desc, tso_flags);
+
+	hal_tx_ext_desc_set_msdu_length(ext_desc, tso_seg->tso_flags.l2_len,
+		tso_seg->tso_flags.ip_len);
+
+	hal_tx_ext_desc_set_tcp_seq(ext_desc, tso_seg->tso_flags.tcp_seq_num);
+	hal_tx_ext_desc_set_ip_id(ext_desc, tso_seg->tso_flags.ip_id);
+
+
+	for (num_frag = 0; num_frag < tso_seg->num_frags; num_frag++) {
+		uint32_t lo = 0;
+		uint32_t hi = 0;
+
+		qdf_dmaaddr_to_32s(
+			tso_seg->tso_frags[num_frag].paddr, &lo, &hi);
+		hal_tx_ext_desc_set_buffer(ext_desc, num_frag, lo, hi,
+			tso_seg->tso_frags[num_frag].length);
+	}
+
+	return;
+}
+#else
+static void dp_tx_prepare_tso_ext_desc(struct qdf_tso_seg_t *tso_seg,
+		void *ext_desc)
+{
+	return;
+}
+#endif
+
+/**
+ * dp_tx_prepare_tso() - Given a jumbo msdu, prepare the TSO info
+ * @vdev: virtual device handle
+ * @msdu: network buffer
+ * @msdu_info: meta data associated with the msdu
+ *
+ * Return: QDF_STATUS_SUCCESS success
+ */
+#if defined(FEATURE_TSO)
+static QDF_STATUS dp_tx_prepare_tso(struct dp_vdev *vdev,
+		qdf_nbuf_t msdu, struct dp_tx_msdu_info_s *msdu_info)
+{
+	struct qdf_tso_seg_elem_t *tso_seg;
+	int num_seg = qdf_nbuf_get_tso_num_seg(msdu);
+	struct dp_soc *soc = vdev->pdev->soc;
+	struct qdf_tso_info_t *tso_info;
+
+	tso_info = &msdu_info->u.tso_info;
+	tso_info->curr_seg = NULL;
+	tso_info->tso_seg_list = NULL;
+	tso_info->num_segs = num_seg;
+	msdu_info->frm_type = dp_tx_frm_tso;
+
+	while (num_seg) {
+		tso_seg = dp_tx_tso_desc_alloc(
+				soc, msdu_info->tx_queue.desc_pool_id);
+		if (tso_seg) {
+			tso_seg->next = tso_info->tso_seg_list;
+			tso_info->tso_seg_list = tso_seg;
+			num_seg--;
+		} else {
+			struct qdf_tso_seg_elem_t *next_seg;
+			struct qdf_tso_seg_elem_t *free_seg =
+				tso_info->tso_seg_list;
+
+			while (free_seg) {
+				next_seg = free_seg->next;
+				dp_tx_tso_desc_free(soc,
+					msdu_info->tx_queue.desc_pool_id,
+					free_seg);
+				free_seg = next_seg;
+			}
+			return QDF_STATUS_E_NOMEM;
+		}
+	}
+
+	msdu_info->num_seg =
+		qdf_nbuf_get_tso_info(soc->osdev, msdu, tso_info);
+
+	tso_info->curr_seg = tso_info->tso_seg_list;
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static QDF_STATUS dp_tx_prepare_tso(struct dp_vdev *vdev,
+		qdf_nbuf_t msdu, struct dp_tx_msdu_info_s *msdu_info)
+{
+	return QDF_STATUS_E_NOMEM;
+}
+#endif
+
+/**
  * dp_tx_prepare_ext_desc() - Allocate and prepare MSDU extension descriptor
  * @vdev: DP Vdev handle
  * @msdu_info: MSDU info to be setup in MSDU extension descriptor
@@ -216,6 +330,7 @@ struct dp_tx_ext_desc_elem_s *dp_tx_prepare_ext_desc(struct dp_vdev *vdev,
 	/* Allocate an extension descriptor */
 	msdu_ext_desc = dp_tx_ext_desc_alloc(soc, desc_pool_id);
 	qdf_mem_zero(&cached_ext_desc[0], HAL_TX_EXT_DESC_WITH_META_DATA);
+
 	if (!msdu_ext_desc)
 		return NULL;
 
@@ -239,17 +354,23 @@ struct dp_tx_ext_desc_elem_s *dp_tx_prepare_ext_desc(struct dp_vdev *vdev,
 				seg_info->frags[i].len);
 		}
 
-		hal_tx_ext_desc_sync(&cached_ext_desc[0],
-			msdu_ext_desc->vaddr);
 		break;
 
 	case dp_tx_frm_tso:
-		/* Todo add support for TSO */
+		dp_tx_prepare_tso_ext_desc(&msdu_info->u.tso_info.curr_seg->seg,
+				&cached_ext_desc[0]);
 		break;
+
 
 	default:
 		break;
 	}
+
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+			cached_ext_desc, HAL_TX_EXT_DESC_WITH_META_DATA);
+
+	hal_tx_ext_desc_sync(&cached_ext_desc[0],
+			msdu_ext_desc->vaddr);
 
 	return msdu_ext_desc;
 }
@@ -362,7 +483,7 @@ failure:
 }
 
 /**
- * dp_tx_desc_prepare- Allocate and prepare Tx descriptor for multisegment frame
+ * dp_tx_prepare_desc() - Allocate and prepare Tx descriptor for multisegment frame
  * @vdev: DP vdev handle
  * @nbuf: skb
  * @msdu_info: Info to be setup in MSDU descriptor and MSDU extension descriptor
@@ -395,6 +516,7 @@ static struct dp_tx_desc_s *dp_tx_prepare_desc(struct dp_vdev *vdev,
 
 	/* Allocate software Tx descriptor */
 	tx_desc = dp_tx_desc_alloc(soc, desc_pool_id);
+
 	if (!tx_desc)
 		return NULL;
 
@@ -564,8 +686,11 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	hal_tx_desc_set_addr_search_flags(hal_tx_desc_cached,
 			HAL_TX_DESC_ADDRX_EN | HAL_TX_DESC_ADDRY_EN);
 
-	if (qdf_nbuf_get_tx_cksum(tx_desc->nbuf) == QDF_NBUF_TX_CKSUM_TCP_UDP)
+	if ((qdf_nbuf_get_tx_cksum(tx_desc->nbuf) == QDF_NBUF_TX_CKSUM_TCP_UDP)
+		|| qdf_nbuf_is_tso(tx_desc->nbuf))  {
+		hal_tx_desc_set_l3_checksum_en(hal_tx_desc_cached, 1);
 		hal_tx_desc_set_l4_checksum_en(hal_tx_desc_cached, 1);
+	}
 
 	if (tid != HTT_TX_EXT_TID_INVALID)
 		hal_tx_desc_set_hlos_tid(hal_tx_desc_cached, tid);
@@ -776,8 +901,17 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 			if (msdu_info->u.tso_info.curr_seg->next) {
 				msdu_info->u.tso_info.curr_seg =
 					msdu_info->u.tso_info.curr_seg->next;
+
+				/*
+				 * If this is a jumbo nbuf, then increment the number of
+				 * nbuf users for each additional segment of the msdu.
+				 * This will ensure that the skb is freed only after
+				 * receiving tx completion for all segments of an nbuf
+				 */
+				qdf_nbuf_inc_users(nbuf);
+
 				/* Check with MCL if this is needed */
-			/* nbuf = msdu_info->u.tso_info.curr_seg->nbuf; */
+				/* nbuf = msdu_info->u.tso_info.curr_seg->nbuf; */
 			}
 		}
 
@@ -1018,11 +1152,17 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 	 * SW and HW descriptors.
 	 */
 	if (qdf_nbuf_is_tso(nbuf)) {
-		/* dp_tx_prepare_tso(vdev, nbuf, &seg_info, &msdu_info); */
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s TSO frame %p\n", __func__, vdev);
 		DP_STATS_INC_PKT(vdev, tx_i.tso.tso_pkt, 1,
 				qdf_nbuf_len(nbuf));
+
+		if (dp_tx_prepare_tso(vdev, nbuf, &msdu_info)) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+					"%s tso_prepare fail vdev_id:%d\n",
+					__func__, vdev->vdev_id);
+			return nbuf;
+		}
 
 		goto send_multiple;
 	}
@@ -1746,6 +1886,14 @@ QDF_STATUS dp_tx_soc_detach(struct dp_soc *soc)
 			"%s MSDU Ext Desc Pool %d Free descs = %d\n",
 			__func__, num_pool, num_ext_desc);
 
+	for (i = 0; i < num_pool; i++) {
+		dp_tx_tso_desc_pool_free(soc, i);
+	}
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+			"%s TSO Desc Pool %d Free descs = %d\n",
+			__func__, num_pool, num_desc);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1798,6 +1946,20 @@ QDF_STATUS dp_tx_soc_attach(struct dp_soc *soc)
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 			"%s MSDU Ext Desc Alloc %d, descs = %d\n",
 			__func__, num_pool, num_ext_desc);
+
+	for (i = 0; i < num_pool; i++) {
+		if (dp_tx_tso_desc_pool_alloc(soc, i, num_desc)) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"TSO Desc Pool alloc %d failed %p\n",
+				i, soc);
+
+			goto fail;
+		}
+	}
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+			"%s TSO Desc Alloc %d, descs = %d\n",
+			__func__, num_pool, num_desc);
 
 	/* Initialize descriptors in TCL Rings */
 	if (!wlan_cfg_per_pdev_tx_ring(soc->wlan_cfg_ctx)) {
