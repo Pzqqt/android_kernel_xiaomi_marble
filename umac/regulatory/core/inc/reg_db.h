@@ -22,3 +22,125 @@
  * This file contains regulatory component data structures
  */
 
+#include "qdf_types.h"
+#include "qdf_trace.h"
+
+#define REGULATORY_CHAN_DISABLED     (1<<0)
+#define REGULATORY_CHAN_NO_IR        (1<<1)
+#define REGULATORY_CHAN_RADAR        (1<<3)
+#define REGULATORY_CHAN_NO_OFDM      (1<<6)
+#define REGULATORY_CHAN_INDOOR_ONLY  (1<<9)
+
+#define REGULATORY_CHAN_NO_HT40      (1<<4)
+#define REGULATORY_CHAN_NO_80MHZ     (1<<7)
+#define REGULATORY_CHAN_NO_160MHZ    (1<<8)
+#define REGULATORY_CHAN_NO_20MHZ     (1<<11)
+#define REGULATORY_CHAN_NO_10MHZ     (1<<12)
+
+#define REGULATORY_PHYMODE_NO11A     (1<<0)
+#define REGULATORY_PHYMODE_NO11B     (1<<1)
+#define REGULATORY_PHYMODE_NO11G     (1<<2)
+#define REGULATORY_CHAN_NO11N        (1<<3)
+#define REGULATORY_PHYMODE_NO11AC    (1<<4)
+#define REGULATORY_PHYMODE_NO11AX    (1<<5)
+
+#define MAX_REG_RULES 10
+#define REG_ALPHA2_LEN 2
+
+/**
+ * enum dfs_region - DFS region
+ * @DFS_UNINIT_REGION: un-initialized region
+ * @DFS_FCC_REGION: FCC region
+ * @DFS_ETSI_REGION: ETSI region
+ * @DFS_MKK_REGION: MKK region
+ * @DFS_CN_REGION: China region
+ * @DFS_KR_REGION: Korea region
+ * @DFS_UNDEF_REGION: Undefined region
+ */
+enum dfs_region {
+	DFS_UNINIT_REGION = 0,
+	DFS_FCC_REGION = 1,
+	DFS_ETSI_REGION = 2,
+	DFS_MKK_REGION = 3,
+	DFS_CN_REGION = 4,
+	DFS_KR_REGION = 5,
+	DFS_UNDEF_REGION
+};
+
+/**
+ * struct regulatory_rule
+ * @start_freq: start frequency
+ * @end_freq: end frequency
+ * @max_bw: maximum bandwidth
+ * @reg_power: regulatory power
+ * @flags: regulatory flags
+ */
+struct regulatory_rule {
+	uint16_t start_freq;
+	uint16_t end_freq;
+	uint16_t max_bw;
+	uint8_t reg_power;
+	uint16_t flags;
+};
+
+/**
+ * struct regdomain
+ * @ctl_val: CTL value
+ * @dfs_region: dfs region
+ * @min_bw: minimum bandwidth
+ * @num_reg_rules: number of regulatory rules
+ * @reg_rules_id: regulatory rule index
+ */
+struct regdomain   {
+	uint8_t ctl_val;
+	uint8_t dfs_region;
+	uint16_t min_bw;
+	uint8_t num_reg_rules;
+	uint8_t reg_rule_id[MAX_REG_RULES];
+};
+
+/**
+ * struct country_code_to_reg_domain
+ * @country_code: country code
+ * @reg_dmn_pair_id: reg domainpair id
+ * @alpha2: internal alpha2(unique)
+ * @alpha2_11d: iso-3166 alpha2
+ * @max_bw_2g: maximum 2g bandwidth
+ * @max_bw_5g: maximum 5g bandwidth
+ * @phymode_bitmap: phymodes not supported
+ */
+struct country_code_to_reg_domain   {
+	uint16_t country_code;
+	uint16_t reg_dmn_pair_id;
+	uint8_t alpha2[REG_ALPHA2_LEN + 1];
+	uint8_t alpha2_11d[REG_ALPHA2_LEN + 1];
+	uint16_t max_bw_2g;
+	uint16_t max_bw_5g;
+	uint16_t phymode_bitmap;
+};
+
+/**
+ * struct reg_domain_pair
+ * @reg_dmn_pair_id: reg domainpiar value
+ * @dmn_id_5g: 5g reg domain value
+ * @dmn_id_2g: 2g regdomain value
+ */
+struct reg_domain_pair {
+	uint16_t reg_dmn_pair_id;
+	uint8_t dmn_id_5g;
+	uint8_t dmn_id_2g;
+};
+
+/**
+ * enum ctl_val - CTL value
+ * @FCC: FCC
+ * @MKK: MKK
+ * @ETSI: ETSI
+ * @NO_CTL: no CTL
+ */
+enum ctl_val {
+	FCC = 0x10,
+	MKK = 0x40,
+	ETSI = 0x30,
+	NO_CTL = 0xff
+};
