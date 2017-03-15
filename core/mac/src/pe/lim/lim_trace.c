@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -96,6 +96,7 @@ static uint8_t *__lim_trace_get_mgmt_drop_reason_string(uint16_t dropReason)
 		CASE_RETURN_STRING(eMGMT_DROP_NOT_LAST_IBSS_BCN);
 		CASE_RETURN_STRING(eMGMT_DROP_NO_DROP);
 		CASE_RETURN_STRING(eMGMT_DROP_SCAN_MODE_FRAME);
+		CASE_RETURN_STRING(eMGMT_DROP_SPURIOUS_FRAME);
 
 	default:
 		return "UNKNOWN";

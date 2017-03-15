@@ -96,6 +96,7 @@ static uint8_t *sme_trace_get_rx_msg_string(uint32_t code)
 		CASE_RETURN_STRING(TRACE_CODE_SME_RX_HDD_ENTER_WOWL);
 		CASE_RETURN_STRING(TRACE_CODE_SME_RX_HDD_EXIT_WOWL);
 		CASE_RETURN_STRING(TRACE_CODE_SME_RX_HDD_SET_KEY);
+		CASE_RETURN_STRING(TRACE_CODE_SME_RX_HDD_REMOVE_KEY);
 		CASE_RETURN_STRING(TRACE_CODE_SME_RX_HDD_GET_STATS);
 		CASE_RETURN_STRING(TRACE_CODE_SME_RX_HDD_GET_RSSI);
 		CASE_RETURN_STRING(TRACE_CODE_SME_RX_HDD_GET_CNTRYCODE);
@@ -192,11 +193,19 @@ static uint8_t *sme_trace_get_command_string(uint32_t command)
 		CASE_RETURN_STRING(eSmeCommandExitBmps);
 		CASE_RETURN_STRING(eSmeCommandEnterUapsd);
 		CASE_RETURN_STRING(eSmeCommandExitUapsd);
+		CASE_RETURN_STRING(eSmeCommandExitWowl);
 		CASE_RETURN_STRING(eSmeCommandEnterStandby);
 		CASE_RETURN_STRING(eSmeQosCommandMask);
 		CASE_RETURN_STRING(eSmeCommandAddTs);
 		CASE_RETURN_STRING(eSmeCommandDelTs);
 		CASE_RETURN_STRING(eSmeCommandRemainOnChannel);
+		CASE_RETURN_STRING(e_sme_command_set_hw_mode);
+		CASE_RETURN_STRING(e_sme_command_nss_update);
+		CASE_RETURN_STRING(e_sme_command_set_dual_mac_config);
+		CASE_RETURN_STRING(e_sme_command_set_antenna_mode);
+		CASE_RETURN_STRING(eSmeCommandNdpInitiatorRequest);
+		CASE_RETURN_STRING(eSmeCommandNdpResponderRequest);
+		CASE_RETURN_STRING(eSmeCommandNdpDataEndInitiatorRequest);
 	default:
 		return "UNKNOWN";
 		break;
