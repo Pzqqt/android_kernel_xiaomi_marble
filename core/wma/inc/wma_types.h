@@ -739,7 +739,7 @@ QDF_STATUS wma_register_mgmt_frm_client(void);
 QDF_STATUS wma_de_register_mgmt_frm_client(void);
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS wma_register_roaming_callbacks(void *cds_ctx,
-		void (*csr_roam_synch_cb)(tpAniSirGlobal mac,
+		QDF_STATUS (*csr_roam_synch_cb)(tpAniSirGlobal mac,
 			roam_offload_synch_ind *roam_synch_data,
 			tpSirBssDescription  bss_desc_ptr,
 			enum sir_roam_op_code reason),
@@ -748,7 +748,7 @@ QDF_STATUS wma_register_roaming_callbacks(void *cds_ctx,
 			tpSirBssDescription  bss_desc_ptr));
 #else
 static inline QDF_STATUS wma_register_roaming_callbacks(void *cds_ctx,
-		void (*csr_roam_synch_cb)(tpAniSirGlobal mac,
+		QDF_STATUS (*csr_roam_synch_cb)(tpAniSirGlobal mac,
 			roam_offload_synch_ind *roam_synch_data,
 			tpSirBssDescription  bss_desc_ptr,
 			enum sir_roam_op_code reason),

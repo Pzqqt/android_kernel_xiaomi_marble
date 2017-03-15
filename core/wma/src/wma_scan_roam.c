@@ -2133,9 +2133,9 @@ void wma_process_roam_synch_fail(WMA_HANDLE handle,
  * parameters are parsed and filled into the roam synch indication
  * buffer which will be used at different layers for propagation.
  *
- * Return: None
+ * Return: Success or Failure
  */
-static void wma_fill_roam_synch_buffer(tp_wma_handle wma,
+static QDF_STATUS wma_fill_roam_synch_buffer(tp_wma_handle wma,
 				roam_offload_synch_ind *roam_synch_ind_ptr,
 				WMI_ROAM_SYNCH_EVENTID_param_tlvs *param_buf)
 {
@@ -2145,6 +2145,7 @@ static void wma_fill_roam_synch_buffer(tp_wma_handle wma,
 	uint8_t *reassoc_req_ptr;
 	wmi_channel *chan;
 	wmi_key_material *key;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	synch_event = param_buf->fixed_param;
 	roam_synch_ind_ptr->roamedVdevId = synch_event->vdev_id;
@@ -2163,8 +2164,12 @@ static void wma_fill_roam_synch_buffer(tp_wma_handle wma,
 		roam_synch_ind_ptr->rssi,
 		roam_synch_ind_ptr->isBeacon);
 
-	wma->csr_roam_synch_cb((tpAniSirGlobal)wma->mac_context,
-		roam_synch_ind_ptr, NULL, SIR_ROAMING_DEREGISTER_STA);
+	if (!QDF_IS_STATUS_SUCCESS(
+		wma->csr_roam_synch_cb((tpAniSirGlobal)wma->mac_context,
+		roam_synch_ind_ptr, NULL, SIR_ROAMING_DEREGISTER_STA))) {
+		WMA_LOGE("LFR3: CSR Roam synch cb failed");
+		return QDF_STATUS_E_FAILURE;
+	}
 	/* Beacon/Probe Rsp data */
 	roam_synch_ind_ptr->beaconProbeRespOffset =
 		sizeof(roam_offload_synch_ind);
@@ -2223,6 +2228,8 @@ static void wma_fill_roam_synch_buffer(tp_wma_handle wma,
 		    &roam_synch_ind_ptr->hw_mode_trans_ind);
 	else
 		WMA_LOGD(FL("hw_mode transition fixed param is NULL"));
+
+	return status;
 }
 
 /**
@@ -2357,7 +2364,9 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 		goto cleanup_label;
 	}
 	qdf_mem_zero(roam_synch_ind_ptr, len);
-	wma_fill_roam_synch_buffer(wma, roam_synch_ind_ptr, param_buf);
+	status = wma_fill_roam_synch_buffer(wma, roam_synch_ind_ptr, param_buf);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		goto cleanup_label;
 	/* 24 byte MAC header and 12 byte to ssid IE */
 	if (roam_synch_ind_ptr->beaconProbeRespLength >
 			(SIR_MAC_HDR_LEN_3A + SIR_MAC_B_PR_SSID_OFFSET)) {

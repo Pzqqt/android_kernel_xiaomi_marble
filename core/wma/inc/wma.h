@@ -1537,7 +1537,7 @@ typedef struct {
 	 * the serialized MC thread context with a timer.
 	 */
 	qdf_mc_timer_t service_ready_ext_timer;
-	void (*csr_roam_synch_cb)(tpAniSirGlobal mac,
+	QDF_STATUS (*csr_roam_synch_cb)(tpAniSirGlobal mac,
 		roam_offload_synch_ind *roam_synch_data,
 		tpSirBssDescription  bss_desc_ptr,
 		enum sir_roam_op_code reason);

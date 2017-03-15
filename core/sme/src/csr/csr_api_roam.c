@@ -20044,9 +20044,9 @@ void csr_roam_fill_tdls_info(tpAniSirGlobal mac_ctx, tCsrRoamInfo *roam_info,
  * is achieved through the already defined callback for assoc completion
  * handler.
  *
- * Return: None.
+ * Return: Success or Failure.
  */
-void csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
+QDF_STATUS csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 		roam_offload_synch_ind *roam_synch_data,
 		tpSirBssDescription  bss_desc, enum sir_roam_op_code reason)
 {
@@ -20068,12 +20068,12 @@ void csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(mac_ctx, LOGE, FL("LFR3: Locking failed, bailing out"));
-		return;
+		return status;
 	}
 	if (!session) {
 		sms_log(mac_ctx, LOGE, FL("LFR3: Session not found"));
 		sme_release_global_lock(&mac_ctx->sme);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	sms_log(mac_ctx, LOG1, FL("LFR3: reason: %d"), reason);
@@ -20085,10 +20085,15 @@ void csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 		 */
 		csr_roam_roaming_offload_timer_action(mac_ctx,
 				0, session_id, ROAMING_OFFLOAD_TIMER_STOP);
+		if (!CSR_IS_ROAM_JOINED(mac_ctx, session_id)) {
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
+				FL("LFR3: Session not in connected state"));
+			return QDF_STATUS_E_FAILURE;
+		}
 		csr_roam_call_callback(mac_ctx, session_id, NULL, 0,
 				eCSR_ROAM_FT_START, eSIR_SME_SUCCESS);
 		sme_release_global_lock(&mac_ctx->sme);
-		return;
+		return status;
 	case SIR_ROAMING_START:
 		csr_roam_roaming_offload_timer_action(mac_ctx,
 				CSR_ROAMING_OFFLOAD_TIMEOUT_PERIOD, session_id,
@@ -20096,19 +20101,19 @@ void csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 		csr_roam_call_callback(mac_ctx, session_id, NULL, 0,
 				eCSR_ROAM_START, eSIR_SME_SUCCESS);
 		sme_release_global_lock(&mac_ctx->sme);
-		return;
+		return status;
 	case SIR_ROAMING_ABORT:
 		csr_roam_roaming_offload_timer_action(mac_ctx,
 				0, session_id, ROAMING_OFFLOAD_TIMER_STOP);
 		csr_roam_call_callback(mac_ctx, session_id, NULL, 0,
 				eCSR_ROAM_ABORT, eSIR_SME_SUCCESS);
 		sme_release_global_lock(&mac_ctx->sme);
-		return;
+		return status;
 	case SIR_ROAM_SYNCH_NAPI_OFF:
 		csr_roam_call_callback(mac_ctx, session_id, NULL, 0,
 				eCSR_ROAM_NAPI_OFF, eSIR_SME_SUCCESS);
 		sme_release_global_lock(&mac_ctx->sme);
-		return;
+		return status;
 	case SIR_ROAM_SYNCH_PROPAGATION:
 		break;
 	case SIR_ROAM_SYNCH_COMPLETE:
@@ -20133,20 +20138,21 @@ void csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 		session->roam_synch_in_progress = false;
 		cds_check_concurrent_intf_and_restart_sap(session->pContext);
 		sme_release_global_lock(&mac_ctx->sme);
-		return;
+		return status;
 	default:
 		sms_log(mac_ctx, LOGE, FL("LFR3: callback reason %d"), reason);
 		sme_release_global_lock(&mac_ctx->sme);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 	session->roam_synch_in_progress = true;
 	session->roam_synch_data = roam_synch_data;
-	if (!QDF_IS_STATUS_SUCCESS(csr_get_parsed_bss_description_ies(mac_ctx,
-			bss_desc, &ies_local))) {
+	status = csr_get_parsed_bss_description_ies(
+			mac_ctx, bss_desc, &ies_local);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(mac_ctx, LOGE, FL("LFR3: fail to parse IEs"));
 		session->roam_synch_in_progress = false;
 		sme_release_global_lock(&mac_ctx->sme);
-		return;
+		return status;
 	}
 	conn_profile = &session->connectedProfile;
 	csr_roam_stop_network(mac_ctx, session_id,
@@ -20162,7 +20168,7 @@ void csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 		session->roam_synch_in_progress = false;
 		qdf_mem_free(ies_local);
 		sme_release_global_lock(&mac_ctx->sme);
-		return;
+		return QDF_STATUS_E_NOMEM;
 	}
 	csr_scan_save_roam_offload_ap_to_scan_cache(mac_ctx, roam_synch_data,
 			bss_desc);
@@ -20236,7 +20242,7 @@ void csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 			qdf_mem_free(roam_info);
 		qdf_mem_free(ies_local);
 		sme_release_global_lock(&mac_ctx->sme);
-		return;
+		return QDF_STATUS_E_NOMEM;
 	}
 	qdf_mem_copy(roam_info->pbFrames,
 			(uint8_t *)roam_synch_data +
@@ -20376,5 +20382,7 @@ void csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 	qdf_mem_free(roam_info);
 	qdf_mem_free(ies_local);
 	sme_release_global_lock(&mac_ctx->sme);
+
+	return status;
 }
 #endif

@@ -3587,7 +3587,7 @@ QDF_STATUS wma_de_register_mgmt_frm_client(void)
  * Return: Success or Failure Status
  */
 QDF_STATUS wma_register_roaming_callbacks(void *cds_ctx,
-	void (*csr_roam_synch_cb)(tpAniSirGlobal mac,
+	QDF_STATUS (*csr_roam_synch_cb)(tpAniSirGlobal mac,
 		roam_offload_synch_ind *roam_synch_data,
 		tpSirBssDescription  bss_desc_ptr,
 		enum sir_roam_op_code reason),
