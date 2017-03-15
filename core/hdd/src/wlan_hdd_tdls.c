@@ -1903,14 +1903,14 @@ int wlan_hdd_tdls_set_params(struct net_device *dev,
  */
 static hdd_adapter_t *wlan_hdd_tdls_get_adapter(hdd_context_t *hdd_ctx)
 {
-	if (cds_get_connection_count() > 1)
+	if (policy_mgr_get_connection_count(hdd_ctx->hdd_psoc) > 1)
 		return NULL;
-	if (cds_mode_specific_connection_count(QDF_STA_MODE,
-					       NULL) == 1)
+	if (policy_mgr_mode_specific_connection_count(hdd_ctx->hdd_psoc,
+		QDF_STA_MODE, NULL) == 1)
 		return hdd_get_adapter(hdd_ctx,
 				       QDF_STA_MODE);
-	if (cds_mode_specific_connection_count(QDF_P2P_CLIENT_MODE,
-					       NULL) == 1)
+	if (policy_mgr_mode_specific_connection_count(hdd_ctx->hdd_psoc,
+		QDF_P2P_CLIENT_MODE, NULL) == 1)
 		return hdd_get_adapter(hdd_ctx,
 				       QDF_P2P_CLIENT_MODE);
 	return NULL;
@@ -6302,5 +6302,71 @@ void hdd_tdls_notify_p2p_roc(hdd_context_t *hdd_ctx,
 			   hdd_ctx->config->tdls_enable_defer_time);
 
 	return;
+}
+
+bool cds_check_is_tdls_allowed(enum tQDF_ADAPTER_MODE device_mode)
+{
+	bool state = false;
+	uint32_t count;
+	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	count = policy_mgr_get_connection_count(hdd_ctx->hdd_psoc);
+
+	if (count > 1)
+		state = false;
+	else if (device_mode == QDF_STA_MODE ||
+		device_mode == QDF_P2P_CLIENT_MODE)
+		state = true;
+
+	/* If any concurrency is detected */
+	if (!state)
+		hdd_ipa_set_tx_flow_info();
+
+	return state;
+}
+
+void cds_set_tdls_ct_mode(hdd_context_t *hdd_ctx)
+{
+	bool state = false;
+
+	/* If any concurrency is detected, skip tdls pkt tracker */
+	if (policy_mgr_get_connection_count(hdd_ctx->hdd_psoc) > 1) {
+		state = false;
+		goto set_state;
+	}
+
+	if (eTDLS_SUPPORT_DISABLED == hdd_ctx->tdls_mode ||
+		eTDLS_SUPPORT_NOT_ENABLED == hdd_ctx->tdls_mode ||
+		(!hdd_ctx->config->fEnableTDLSImplicitTrigger)) {
+		state = false;
+		goto set_state;
+	} else if (policy_mgr_mode_specific_connection_count(hdd_ctx->hdd_psoc,
+		QDF_STA_MODE, NULL) == 1) {
+		state = true;
+	} else if (policy_mgr_mode_specific_connection_count(hdd_ctx->hdd_psoc,
+		QDF_P2P_CLIENT_MODE, NULL) == 1){
+		state = true;
+	} else {
+		state = false;
+		goto set_state;
+	}
+
+	/* In case of TDLS external control, peer should be added
+	 * by the user space to start connection tracker.
+	 */
+	if (hdd_ctx->config->fTDLSExternalControl) {
+		if (hdd_ctx->tdls_external_peer_count)
+			state = true;
+		else
+			state = false;
+	}
+
+set_state:
+	mutex_lock(&hdd_ctx->tdls_lock);
+	hdd_ctx->enable_tdls_connection_tracker = state;
+	mutex_unlock(&hdd_ctx->tdls_lock);
+
+	hdd_info("enable_tdls_connection_tracker %d",
+		hdd_ctx->enable_tdls_connection_tracker);
 }
 

@@ -866,5 +866,6 @@ void hdd_wlan_tdls_enable_link_event(const uint8_t *peer_mac,
 	uint8_t is_off_chan_established) {}
 static inline void hdd_wlan_block_scan_by_tdls_event(void) {}
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
-
+bool cds_check_is_tdls_allowed(enum tQDF_ADAPTER_MODE device_mode);
+void cds_set_tdls_ct_mode(hdd_context_t *hdd_ctx);
 #endif /* __HDD_TDLS_H */
