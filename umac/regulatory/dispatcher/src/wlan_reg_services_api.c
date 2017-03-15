@@ -22,16 +22,12 @@
  * @brief contains regulatory service functions
  */
 
-#include "qdf_types.h"
-#include "qdf_status.h"
-#include "wlan_objmgr_cmn.h"
-#include "wlan_objmgr_global_obj.h"
-#include "wlan_objmgr_psoc_obj.h"
-#include "wlan_objmgr_pdev_obj.h"
-#include "scheduler_api.h"
-#include "reg_db.h"
-#include "reg_services.h"
-#include "wlan_reg_services_api.h"
+
+#include <qdf_status.h>
+#include <qdf_types.h>
+#include <wlan_reg_services_api.h>
+#include "../../core/src/reg_services.h"
+#include "../../core/src/reg_priv.h"
 
 /**
  * wlan_reg_get_channel_list_with_power() - Provide the channel list with power
@@ -121,7 +117,7 @@ enum channel_state wlan_reg_get_2g_bonded_channel_state(
  * Return: None
  */
 void wlan_reg_set_channel_params(struct wlan_objmgr_psoc *psoc, uint8_t ch,
-		struct ch_params *ch_params)
+		struct ch_params_s *ch_params)
 {
 	/*
 	 * Set channel parameters like center frequency for a bonded channel
@@ -137,7 +133,7 @@ void wlan_reg_set_channel_params(struct wlan_objmgr_psoc *psoc, uint8_t ch,
  * Return: None
  */
 void wlan_reg_get_dfs_region(struct wlan_objmgr_psoc *psoc,
-		enum dfs_region *dfs_reg)
+		enum dfs_reg *dfs_reg)
 {
 	/*
 	 * Get the current dfs region
@@ -158,3 +154,69 @@ bool wlan_reg_is_dfs_ch(struct wlan_objmgr_psoc *psoc, uint8_t ch)
 	 */
 	return reg_is_dfs_ch(psoc, ch);
 }
+
+/**
+ * wlan_regulatory_init() - init regulatory component
+ *
+ * Return: Success or Failure
+ */
+QDF_STATUS wlan_regulatory_init(void)
+{
+	QDF_STATUS status;
+
+	status = wlan_objmgr_register_psoc_create_handler(
+			WLAN_UMAC_COMP_REGULATORY,
+			wlan_regulatory_psoc_obj_created_notification, NULL);
+	if (status != QDF_STATUS_SUCCESS) {
+		reg_err("Failed to register reg obj create handler");
+		return status;
+	}
+
+	status = wlan_objmgr_register_psoc_destroy_handler(
+			WLAN_UMAC_COMP_REGULATORY,
+			wlan_regulatory_psoc_obj_destroyed_notification, NULL);
+	if (status != QDF_STATUS_SUCCESS) {
+		reg_err("Failed to register reg obj delete handler");
+		wlan_objmgr_unregister_psoc_create_handler(
+				WLAN_UMAC_COMP_REGULATORY,
+				wlan_regulatory_psoc_obj_created_notification,
+				NULL);
+		return status;
+	}
+
+	reg_info("regulatory handlers registered with obj mgr");
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wlan_regulatory_deinit() - deinit regulatory component
+ *
+ * Return: Success or Failure
+ */
+QDF_STATUS wlan_regulatory_deinit(void)
+{
+	QDF_STATUS status;
+
+	status = wlan_objmgr_unregister_psoc_create_handler(
+			WLAN_UMAC_COMP_REGULATORY,
+			wlan_regulatory_psoc_obj_created_notification,
+			NULL);
+	if (status != QDF_STATUS_SUCCESS)
+		reg_err("deregister fail for psoc create notif:%d",
+				status);
+	status = wlan_objmgr_unregister_psoc_destroy_handler(
+			WLAN_UMAC_COMP_REGULATORY,
+			wlan_regulatory_psoc_obj_destroyed_notification,
+			NULL);
+	if (status != QDF_STATUS_SUCCESS) {
+		reg_err("deregister fail for psoc delete notif:%d",
+				status);
+		return status;
+	}
+	reg_alert("deregistered callbacks with obj mgr successfully");
+
+	return QDF_STATUS_SUCCESS;
+}
+
+

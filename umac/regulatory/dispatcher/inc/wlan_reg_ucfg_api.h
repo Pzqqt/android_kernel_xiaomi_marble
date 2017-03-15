@@ -17,14 +17,18 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <qdf_types.h>
-#include <qdf_trace.h>
-
 /**
  * DOC: wlan_reg_ucfg_api.h
  * This file provides prototypes of the regulatory component user
  * config interface routines
  */
+
+#ifndef __WLAN_REG_UCFG_API_H
+#define __WLAN_REG_UCFG_API_H
+
+#include <qdf_types.h>
+#include <qdf_status.h>
+#include <reg_services_public_struct.h>
 
 typedef QDF_STATUS (*reg_event_cb)(void *status_struct);
 
@@ -40,3 +44,5 @@ QDF_STATUS ucfg_reg_register_event_handler(uint8_t vdev_id, reg_event_cb cb,
 QDF_STATUS ucfg_reg_unregister_event_handler(uint8_t vdev_id, reg_event_cb cb,
 		void *arg);
 QDF_STATUS ucfg_reg_init_handler(uint8_t pdev_id);
+
+#endif

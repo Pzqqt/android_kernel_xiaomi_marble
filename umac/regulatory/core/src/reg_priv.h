@@ -22,6 +22,12 @@
  * This file contains regulatory component private data structures.
  */
 
+#ifndef __REG_PRIV_H
+#define __REG_PRIV_H
+
+#include "reg_db.h"
+#include "reg_services.h"
+
 #define reg_log(level, args...) \
 	QDF_TRACE(QDF_MODULE_ID_REGULATORY, level, ## args)
 #define reg_logfl(level, format, args...) reg_log(level, FL(format), ## args)
@@ -46,9 +52,9 @@ struct wlan_regulatory_psoc_priv_obj {
 	enum channel_enum nol_list[NUM_CHANNELS];
 	char default_country[REG_ALPHA2_LEN + 1];
 	char current_country[REG_ALPHA2_LEN + 1];
-	struct wlan_objmgr_psoc psoc_ptr;
+	struct wlan_objmgr_psoc *psoc_ptr;
 	uint32_t phybitmap;
-	enum dfs_region dfs_region;
+	enum dfs_reg dfs_region;
 	char country_11d[REG_ALPHA2_LEN + 1];
 	bool dfs_disable;
 	bool set_fcc_channel;
@@ -58,3 +64,5 @@ struct wlan_regulatory_psoc_priv_obj {
 	bool enable_11d_supp_current;
 	bool userspace_country_priority;
 };
+
+#endif

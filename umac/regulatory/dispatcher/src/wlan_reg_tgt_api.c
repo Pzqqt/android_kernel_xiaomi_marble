@@ -22,39 +22,19 @@
  * @brief contains regulatory target interface definations
  */
 
-#include "wlan_reg_tgt_api.h"
-/**
- * tgt_reg_country_code_update_handler() - tgt country code update handler
- * @handle: pointer to the tgt handle
- * @event: pointer to the event msg
- * @len: event msg length
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS tgt_reg_country_code_update_handler(void *handle, uint8_t *event,
-	uint32_t len)
-{
-	/*
-	 * Convert the tlv/non tlv data to struct coutry_code_update
-	 * and Post msg to target_if queue
-	 */
-	return 0;
-}
+#include <qdf_status.h>
+#include <qdf_types.h>
+#include <wlan_reg_tgt_api.h>
+#include "../../core/src/reg_services.h"
 
 /**
- * tgt_reg_country_code_update_handler() - tgt country code update handler
- * @handle: pointer to the tgt handle
- * @event: pointer to the event msg
- * @len: event msg length
+ * tgt_process_master_chan_list() - process master channel list
+ * @reg_info: regulatory info
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS tgt_reg_ch_list_update_handler(void *handle, uint8_t *event,
-	uint32_t len)
+QDF_STATUS tgt_reg_process_master_chan_list(struct cur_regulatory_info
+					    *reg_info)
 {
-	/*
-	 * Convert the tlv/non tlv data to struct ch_list_update
-	 * and Post msg to target_if queue
-	 */
-	return 0;
+	return reg_process_master_chan_list(reg_info);
 }

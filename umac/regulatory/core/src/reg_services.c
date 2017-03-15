@@ -30,16 +30,9 @@
  * This file defines regulatory component service functions
  */
 
-#include "qdf_status.h"
-#include "qdf_types.h"
-#include "wlan_objmgr_cmn.h"
-#include "wlan_objmgr_global_obj.h"
-#include "wlan_objmgr_psoc_obj.h"
-#include "wlan_objmgr_pdev_obj.h"
-#include "scheduler_api.h"
-#include "reg_db.h"
 #include "reg_services.h"
 #include "reg_priv.h"
+
 
 const struct bonded_channel bonded_chan_40mhz_list[] = {
 	{36, 40},
@@ -368,23 +361,23 @@ enum channel_state reg_get_5g_bonded_channel_state(
 	if (CH_WIDTH_5MHZ == bw)
 		bw_enabled = true;
 	else if (CH_WIDTH_10MHZ == bw)
-		bw_enabled = !(reg_channels[ch_indx].chan_flags &
-				REGULATORY_CHAN_NO_10MHZ);
+		bw_enabled = (reg_channels[ch_indx].min_bw <= 10) &&
+			(reg_channels[ch_indx].max_bw >= 10);
 	else if (CH_WIDTH_20MHZ == bw)
-		bw_enabled = !(reg_channels[ch_indx].chan_flags &
-				REGULATORY_CHAN_NO_20MHZ);
+		bw_enabled = (reg_channels[ch_indx].min_bw <= 20) &&
+			(reg_channels[ch_indx].max_bw >= 20);
 	else if (CH_WIDTH_40MHZ == bw)
-		bw_enabled = !((reg_channels[ch_indx].chan_flags &
-			REGULATORY_CHAN_NO_HT40) == REGULATORY_CHAN_NO_HT40);
+		bw_enabled = (reg_channels[ch_indx].min_bw <= 40) &&
+			(reg_channels[ch_indx].max_bw >= 40);
 	else if (CH_WIDTH_80MHZ == bw)
-		bw_enabled = !(reg_channels[ch_indx].chan_flags &
-				REGULATORY_CHAN_NO_80MHZ);
+		bw_enabled = (reg_channels[ch_indx].min_bw <= 80) &&
+			(reg_channels[ch_indx].max_bw >= 80);
 	else if (CH_WIDTH_160MHZ == bw)
-		bw_enabled = !(reg_channels[ch_indx].chan_flags &
-				REGULATORY_CHAN_NO_160MHZ);
+		bw_enabled = (reg_channels[ch_indx].min_bw <= 160) &&
+			(reg_channels[ch_indx].max_bw >= 160);
 	else if (CH_WIDTH_80P80MHZ == bw)
-		bw_enabled = !(reg_channels[ch_indx].chan_flags &
-				REGULATORY_CHAN_NO_80MHZ);
+		bw_enabled = (reg_channels[ch_indx].min_bw <= 80) &&
+			(reg_channels[ch_indx].max_bw >= 80);
 
 	if (bw_enabled)
 		return chan_state;
@@ -446,15 +439,14 @@ enum channel_state reg_get_2g_bonded_channel_state(
 	if (CH_WIDTH_5MHZ == bw)
 		bw_enabled = true;
 	else if (CH_WIDTH_10MHZ == bw)
-		bw_enabled = !(reg_channels[chan_idx].chan_flags &
-			       REGULATORY_CHAN_NO_10MHZ);
+		bw_enabled = (reg_channels[chan_idx].min_bw <= 10) &&
+			(reg_channels[chan_idx].max_bw >= 10);
 	else if (CH_WIDTH_20MHZ == bw)
-		bw_enabled = !(reg_channels[chan_idx].chan_flags &
-			       REGULATORY_CHAN_NO_20MHZ);
+		bw_enabled = (reg_channels[chan_idx].min_bw <= 20) &&
+			(reg_channels[chan_idx].max_bw >= 20);
 	else if (CH_WIDTH_40MHZ == bw)
-		bw_enabled = !((reg_channels[chan_idx].chan_flags &
-				REGULATORY_CHAN_NO_HT40) ==
-				REGULATORY_CHAN_NO_HT40);
+		bw_enabled = (reg_channels[chan_idx].min_bw <= 40) &&
+			(reg_channels[chan_idx].max_bw >= 40);
 
 	if (bw_enabled)
 		return chan_state;
@@ -482,7 +474,7 @@ static enum channel_state reg_combine_channel_states(
  * Return: None
  */
 void reg_set_channel_params(struct wlan_objmgr_psoc *psoc,
-		uint8_t ch, struct ch_params *ch_params)
+		uint8_t ch, struct ch_params_s *ch_params)
 {
 	/*
 	 * Set channel parameters like center frequency for a bonded channel
@@ -572,7 +564,7 @@ void reg_set_channel_params(struct wlan_objmgr_psoc *psoc,
  * Return: None
  */
 void reg_get_dfs_region(struct wlan_objmgr_psoc *psoc,
-		enum dfs_region *dfs_reg)
+		enum dfs_reg *dfs_reg)
 {
 	/*
 	 * Get the current dfs region
@@ -593,3 +585,276 @@ bool reg_is_dfs_ch(struct wlan_objmgr_psoc *psoc, uint8_t ch)
 
 	return ch_state == CHANNEL_STATE_DFS;
 }
+
+
+static void reg_fill_channel_info(enum channel_enum chan_enum,
+				  struct regulatory_rule *reg_rule,
+				  struct regulatory_channel *master_list,
+				  uint16_t min_bw)
+{
+
+	master_list[chan_enum].chan_flags &=
+		~REGULATORY_CHAN_DISABLED;
+
+	master_list[chan_enum].state = CHANNEL_STATE_ENABLE;
+
+	if (reg_rule->flags & REGULATORY_CHAN_NO_IR) {
+
+		master_list[chan_enum].chan_flags |=
+			REGULATORY_CHAN_NO_IR;
+
+		master_list[chan_enum].state =
+			CHANNEL_STATE_PASSIVE;
+	}
+
+	if (reg_rule->flags & REGULATORY_CHAN_RADAR) {
+		master_list[chan_enum].chan_flags |=
+			REGULATORY_CHAN_RADAR;
+
+		master_list[chan_enum].state =
+			CHANNEL_STATE_DFS;
+	}
+
+	if (reg_rule->flags & REGULATORY_CHAN_INDOOR_ONLY)
+		master_list[chan_enum].chan_flags |=
+			REGULATORY_CHAN_INDOOR_ONLY;
+
+	if (reg_rule->flags & REGULATORY_CHAN_NO_OFDM)
+		master_list[chan_enum].chan_flags |=
+			REGULATORY_CHAN_NO_OFDM;
+
+	master_list[chan_enum].min_bw = min_bw;
+	if (20 == master_list[chan_enum].max_bw)
+		master_list[chan_enum].max_bw = reg_rule->max_bw;
+
+}
+
+
+static void populate_band_channels(enum channel_enum start_chan,
+				   enum channel_enum end_chan,
+				   struct regulatory_rule *rule_start_ptr,
+				   uint32_t num_reg_rules,
+				   uint16_t min_bw,
+				   struct regulatory_channel *mas_chan_list)
+{
+	struct regulatory_rule *found_rule_ptr;
+	struct regulatory_rule *cur_rule_ptr;
+	struct regulatory_channel;
+	enum channel_enum chan_enum;
+	uint32_t rule_num, bw;
+
+	for (chan_enum = start_chan; chan_enum <= end_chan; chan_enum++) {
+		found_rule_ptr = NULL;
+		for (bw = 20; ((bw >= 5) && (NULL == found_rule_ptr));
+		     bw = bw/2) {
+			for (rule_num = 0, cur_rule_ptr =
+				     rule_start_ptr;
+			     rule_num < num_reg_rules;
+			     cur_rule_ptr++, rule_num++) {
+				if ((cur_rule_ptr->start_freq <=
+				     channel_map[chan_enum].center_freq -
+				     bw/2) &&
+				    (cur_rule_ptr->end_freq >=
+				     channel_map[chan_enum].center_freq +
+				     bw/2) && (min_bw <= bw)) {
+					found_rule_ptr = cur_rule_ptr;
+					break;
+				}
+			}
+			break;
+		}
+
+		if (found_rule_ptr) {
+			mas_chan_list[chan_enum].max_bw = bw;
+			reg_fill_channel_info(chan_enum, found_rule_ptr,
+					      mas_chan_list, min_bw);
+		}
+	}
+
+}
+
+static void update_max_bw_per_rule(uint32_t num_reg_rules,
+				   struct regulatory_rule *reg_rule_start,
+				   uint16_t max_bw)
+{
+	uint32_t count;
+
+	for (count = 0; count < num_reg_rules; count++)
+		reg_rule_start[count].max_bw =
+			min(reg_rule_start[count].max_bw, max_bw);
+}
+
+static void do_auto_bw_correction(uint32_t num_reg_rules,
+				  struct regulatory_rule *reg_rule_ptr,
+				  uint16_t max_bw)
+{
+	uint32_t count;
+	uint16_t new_bw;
+
+	for (count = 0; count < num_reg_rules - 1; count++) {
+		if ((reg_rule_ptr[count].end_freq ==
+		     reg_rule_ptr[count+1].start_freq) &&
+		    ((reg_rule_ptr[count].max_bw + reg_rule_ptr[count+1].max_bw)
+		     <= max_bw)) {
+			new_bw = reg_rule_ptr[count].max_bw +
+				reg_rule_ptr[count+1].max_bw;
+			reg_rule_ptr[count].max_bw = new_bw;
+			reg_rule_ptr[count+1].max_bw = new_bw;
+		}
+	}
+}
+
+
+QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info
+					*regulat_info)
+{
+	struct wlan_regulatory_psoc_priv_obj *soc_reg;
+	uint32_t num_2g_reg_rules, num_5g_reg_rules;
+	struct regulatory_rule *reg_rule_2g, *reg_rule_5g;
+	uint16_t min_bw_2g, max_bw_2g, min_bw_5g, max_bw_5g;
+	struct regulatory_channel *mas_chan_list, *cur_chan_list;
+
+	reg_info("%s: process reg chan list", __func__);
+
+	soc_reg = (struct wlan_regulatory_psoc_priv_obj *)
+		wlan_objmgr_psoc_get_comp_private_obj(regulat_info->psoc,
+						  WLAN_UMAC_COMP_REGULATORY);
+
+	if (NULL == soc_reg) {
+		reg_err("soc_reg is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	soc_reg->offload_enabled = true;
+
+	soc_reg->phybitmap = regulat_info->phybitmap;
+	soc_reg->dfs_region = regulat_info->dfs_region;
+	qdf_mem_copy(soc_reg->default_country, regulat_info->alpha2,
+		     REG_ALPHA2_LEN);
+	qdf_mem_copy(soc_reg->current_country, regulat_info->alpha2,
+		     REG_ALPHA2_LEN);
+
+	mas_chan_list = soc_reg->master_ch_list;
+	cur_chan_list = soc_reg->current_ch_list;
+
+	min_bw_2g = regulat_info->min_bw_2g;
+	max_bw_2g = regulat_info->max_bw_2g;
+	reg_rule_2g = regulat_info->reg_rules_2g_ptr;
+	num_2g_reg_rules = regulat_info->num_2g_reg_rules;
+	update_max_bw_per_rule(num_2g_reg_rules,
+			       reg_rule_2g, max_bw_2g);
+
+	min_bw_5g = regulat_info->min_bw_5g;
+	max_bw_5g = regulat_info->max_bw_5g;
+	reg_rule_5g = regulat_info->reg_rules_5g_ptr;
+	num_5g_reg_rules = regulat_info->num_5g_reg_rules;
+	update_max_bw_per_rule(num_5g_reg_rules,
+			       reg_rule_5g, max_bw_5g);
+
+	do_auto_bw_correction(num_5g_reg_rules, reg_rule_5g, max_bw_5g);
+
+	populate_band_channels(CHAN_ENUM_1, CHAN_ENUM_14,
+			       reg_rule_2g, num_2g_reg_rules,
+			       min_bw_2g, mas_chan_list);
+
+	populate_band_channels(CHAN_ENUM_36, CHAN_ENUM_196,
+			       reg_rule_5g,
+			       num_5g_reg_rules,
+			       min_bw_5g, mas_chan_list);
+
+	qdf_mem_copy((void *)cur_chan_list, (void *)mas_chan_list,
+		     NUM_CHANNELS * sizeof(struct regulatory_channel));
+
+	qdf_mem_free(regulat_info->reg_rules_2g_ptr);
+	qdf_mem_free(regulat_info->reg_rules_5g_ptr);
+	qdf_mem_free(regulat_info);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wlan_regulatory_psoc_obj_created_notification() - PSOC obj create callback
+ * @psoc: PSOC object
+ * @arg_list: Variable argument list
+ *
+ * This callback is registered with object manager during initialization to
+ * get notified when the object is created.
+ *
+ * Return: Success or Failure
+ */
+QDF_STATUS wlan_regulatory_psoc_obj_created_notification(
+		struct wlan_objmgr_psoc *psoc, void *arg_list)
+{
+	struct wlan_regulatory_psoc_priv_obj *soc_reg_obj;
+	struct regulatory_channel *mas_chan_list;
+	enum channel_enum chan_enum;
+	QDF_STATUS status;
+
+	soc_reg_obj =
+		qdf_mem_malloc(sizeof(*soc_reg_obj));
+
+	if (NULL == soc_reg_obj) {
+		reg_alert("Mem alloc failed for reg psoc priv obj");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	soc_reg_obj->offload_enabled  = false;
+	soc_reg_obj->psoc_ptr = psoc;
+
+	mas_chan_list = soc_reg_obj->master_ch_list;
+
+	for (chan_enum = CHAN_ENUM_1; chan_enum <= CHAN_ENUM_196;
+	     chan_enum++) {
+		mas_chan_list[chan_enum].chan_num =
+			channel_map[chan_enum].chan_num;
+		mas_chan_list[chan_enum].center_freq =
+			channel_map[chan_enum].center_freq;
+		mas_chan_list[chan_enum].chan_flags |=
+			REGULATORY_CHAN_DISABLED;
+		mas_chan_list[chan_enum].state =
+			CHANNEL_STATE_DISABLE;
+	}
+
+	status = wlan_objmgr_psoc_component_obj_attach(psoc,
+			WLAN_UMAC_COMP_REGULATORY, soc_reg_obj,
+			QDF_STATUS_SUCCESS);
+	reg_info("reg psoc obj created with status %d", status);
+
+	return status;
+}
+
+/**
+ * wlan_regulatory_psoc_obj_destroyed_notification() - PSOC obj delete callback
+ * @psoc: PSOC object
+ * @arg_list: Variable argument list
+ *
+ * This callback is registered with object manager during initialization to
+ * get notified when the object is deleted.
+ *
+ * Return: Success or Failure
+ */
+QDF_STATUS  wlan_regulatory_psoc_obj_destroyed_notification(
+		struct wlan_objmgr_psoc *psoc, void *arg_list)
+{
+	QDF_STATUS status;
+	struct wlan_regulatory_psoc_priv_obj *soc_reg =
+		wlan_objmgr_psoc_get_comp_private_obj(psoc,
+				WLAN_UMAC_COMP_REGULATORY);
+	if (NULL == soc_reg) {
+		reg_err("reg psoc private obj is NULL");
+		return QDF_STATUS_E_FAULT;
+	}
+
+	soc_reg->psoc_ptr = NULL;
+
+	status = wlan_objmgr_psoc_component_obj_detach(psoc,
+			WLAN_UMAC_COMP_REGULATORY,
+			soc_reg);
+	if (status != QDF_STATUS_SUCCESS)
+		reg_err("soc_reg private obj detach failed");
+	reg_info("reg psoc obj deleted with status %d", status);
+	qdf_mem_free(soc_reg);
+
+	return status;
+}
+

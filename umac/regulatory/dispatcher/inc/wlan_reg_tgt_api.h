@@ -23,10 +23,14 @@
  * interface routines
  */
 
-#include "qdf_types.h"
-#include "qdf_trace.h"
+#ifndef __WLAN_REG_TGT_API_H
+#define __WLAN_REG_TGT_API_H
 
-QDF_STATUS tgt_reg_country_code_update_handler(void *handle, uint8_t *event,
-		uint32_t len);
-QDF_STATUS tgt_reg_ch_list_update_handler(void *handle, uint8_t *event,
-		uint32_t len);
+#include <qdf_types.h>
+#include <qdf_status.h>
+#include <reg_services_public_struct.h>
+
+QDF_STATUS tgt_reg_process_master_chan_list(struct cur_regulatory_info
+					    *reg_info);
+
+#endif

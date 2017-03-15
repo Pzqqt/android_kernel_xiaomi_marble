@@ -22,8 +22,8 @@
  * This file contains regulatory component data structures
  */
 
-#include "qdf_types.h"
-#include "qdf_trace.h"
+#ifndef __REG_DB_H
+#define __REG_DB_H
 
 #define REGULATORY_CHAN_DISABLED     (1<<0)
 #define REGULATORY_CHAN_NO_IR        (1<<1)
@@ -48,23 +48,23 @@
 #define REG_ALPHA2_LEN 2
 
 /**
- * enum dfs_region - DFS region
- * @DFS_UNINIT_REGION: un-initialized region
- * @DFS_FCC_REGION: FCC region
- * @DFS_ETSI_REGION: ETSI region
- * @DFS_MKK_REGION: MKK region
- * @DFS_CN_REGION: China region
- * @DFS_KR_REGION: Korea region
- * @DFS_UNDEF_REGION: Undefined region
+ * enum dfs_reg - DFS region
+ * @DFS_UNINIT_REG: un-initialized region
+ * @DFS_FCC_REG: FCC region
+ * @DFS_ETSI_REG: ETSI region
+ * @DFS_MKK_REG: MKK region
+ * @DFS_CN_REG: China region
+ * @DFS_KR_REG: Korea region
+ * @DFS_UNDEF_REG: Undefined region
  */
-enum dfs_region {
-	DFS_UNINIT_REGION = 0,
-	DFS_FCC_REGION = 1,
-	DFS_ETSI_REGION = 2,
-	DFS_MKK_REGION = 3,
-	DFS_CN_REGION = 4,
-	DFS_KR_REGION = 5,
-	DFS_UNDEF_REGION
+enum dfs_reg {
+	DFS_UNINIT_REG = 0,
+	DFS_FCC_REG = 1,
+	DFS_ETSI_REG = 2,
+	DFS_MKK_REG = 3,
+	DFS_CN_REG = 4,
+	DFS_KR_REG = 5,
+	DFS_UNDEF_REG
 };
 
 /**
@@ -93,7 +93,7 @@ struct regulatory_rule {
  */
 struct regdomain   {
 	uint8_t ctl_val;
-	uint8_t dfs_region;
+	enum dfs_reg dfs_region;
 	uint16_t min_bw;
 	uint8_t num_reg_rules;
 	uint8_t reg_rule_id[MAX_REG_RULES];
@@ -132,15 +132,17 @@ struct reg_domain_pair {
 };
 
 /**
- * enum ctl_val - CTL value
- * @FCC: FCC
- * @MKK: MKK
- * @ETSI: ETSI
- * @NO_CTL: no CTL
+ * enum ctl_value - CTL value
+ * @CTL_FCC: FCC
+ * @CTL_MKK: MKK
+ * @CTL_ETSI: ETSI
+ * @CTL_NONE: no CTL
  */
-enum ctl_val {
-	FCC = 0x10,
-	MKK = 0x40,
-	ETSI = 0x30,
-	NO_CTL = 0xff
+enum ctl_value {
+	CTL_FCC = 0x10,
+	CTL_MKK = 0x40,
+	CTL_ETSI = 0x30,
+	CTL_NONE = 0xff
 };
+
+#endif

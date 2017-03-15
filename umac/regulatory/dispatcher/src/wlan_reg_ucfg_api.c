@@ -22,16 +22,9 @@
  * @brief contains regulatory user config interface definations
  */
 
-#include "qdf_types.h"
-#include "qdf_status.h"
-#include "wlan_objmgr_cmn.h"
-#include "wlan_objmgr_global_obj.h"
-#include "wlan_objmgr_psoc_obj.h"
-#include "wlan_objmgr_pdev_obj.h"
-#include "scheduler_api.h"
-#include "reg_db.h"
-#include "reg_services.h"
-#include "wlan_reg_ucfg_api.h"
+#include <wlan_reg_ucfg_api.h>
+#include "../../core/src/reg_services.h"
+
 
 /**
  * ucfg_reg_set_band () - set band req handler
@@ -42,7 +35,7 @@
  * Return: QDF_STATUS
  */
 QDF_STATUS ucfg_reg_set_band(uint8_t vdev_id, uint8_t pdev_id,
-		struct set_band_req *req)
+			     struct set_band_req *req)
 {
 	/* Handle the set band request */
 	return QDF_STATUS_SUCCESS;
@@ -63,7 +56,7 @@ QDF_STATUS ucfg_reg_reset_country(uint8_t vdev_id, uint8_t pdev_id)
 }
 
 QDF_STATUS ucfg_reg_set_default_country(uint8_t vdev_id, uint8_t pdev_id,
-		struct country_info *cc_info)
+					struct country_info *cc_info)
 {
 	/* sets the default country info */
 	return QDF_STATUS_SUCCESS;

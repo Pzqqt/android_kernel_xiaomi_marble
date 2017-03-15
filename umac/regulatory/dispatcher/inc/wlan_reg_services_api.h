@@ -23,6 +23,13 @@
  * regulatory component.
  */
 
+#ifndef __WLAN_REG_SERVICES_API_H
+#define __WLAN_REG_SERVICES_API_H
+
+#include "../../core/src/reg_services.h"
+#include <reg_services_public_struct.h>
+
+
 /**
  * wlan_reg_get_channel_list_with_power() - Provide the channel list with power
  * @ch_list: pointer to the channel list.
@@ -40,7 +47,7 @@ QDF_STATUS wlan_reg_get_channel_list_with_power(struct wlan_objmgr_psoc *psoc,
  * Return: None
  */
 void wlan_reg_read_default_country(struct wlan_objmgr_psoc *psoc,
-		uint8_t *country);
+				   uint8_t *country);
 
 /**
  * wlan_reg_get_channel_state() - Get channel state from regulatory
@@ -49,7 +56,7 @@ void wlan_reg_read_default_country(struct wlan_objmgr_psoc *psoc,
  * Return: channel state
  */
 enum channel_state wlan_reg_get_channel_state(struct wlan_objmgr_psoc *psoc,
-		uint32_t ch);
+					      uint32_t ch);
 
 /**
  * wlan_reg_get_5g_bonded_channel_state() - Get 5G bonded channel state
@@ -59,8 +66,8 @@ enum channel_state wlan_reg_get_channel_state(struct wlan_objmgr_psoc *psoc,
  * Return: channel state
  */
 enum channel_state wlan_reg_get_5g_bonded_channel_state(
-		struct wlan_objmgr_psoc *psoc, uint8_t ch,
-		enum phy_ch_width bw);
+	struct wlan_objmgr_psoc *psoc, uint8_t ch,
+	enum phy_ch_width bw);
 
 /**
  * wlan_reg_get_2g_bonded_channel_state() - Get 2G bonded channel state
@@ -81,7 +88,7 @@ enum channel_state wlan_reg_get_2g_bonded_channel_state(
  * Return: None
  */
 void wlan_reg_set_channel_params(struct wlan_objmgr_psoc *psoc, uint8_t ch,
-		struct ch_params *ch_params);
+		struct ch_params_s *ch_params);
 
 /**
  * wlan_reg_get_dfs_region () - Get the current dfs region
@@ -90,7 +97,7 @@ void wlan_reg_set_channel_params(struct wlan_objmgr_psoc *psoc, uint8_t ch,
  * Return: None
  */
 void wlan_reg_get_dfs_region(struct wlan_objmgr_psoc *psoc,
-		enum dfs_region *dfs_reg);
+		enum dfs_reg *dfs_reg);
 
 /**
  * wlan_reg_is_dfs_ch () - Checks the channel state for DFS
@@ -99,3 +106,19 @@ void wlan_reg_get_dfs_region(struct wlan_objmgr_psoc *psoc,
  * Return: true or false
  */
 bool wlan_reg_is_dfs_ch(struct wlan_objmgr_psoc *psoc, uint8_t ch);
+
+/**
+ * wlan_regulatory_init() - init regulatory component
+ *
+ * Return: Success or Failure
+ */
+QDF_STATUS wlan_regulatory_init(void);
+
+/**
+ * wlan_regulatory_deinit() - deinit regulatory component
+ *
+ * Return: Success or Failure
+ */
+QDF_STATUS wlan_regulatory_deinit(void);
+
+#endif
