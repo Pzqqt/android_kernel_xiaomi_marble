@@ -34,6 +34,9 @@
 #define _WMI_UNIFIED_PARAM_H_
 
 #include <wlan_scan_public_structs.h>
+#ifdef CONVERGED_TDLS_ENABLE
+#include <wlan_tdls_public_structs.h>
+#endif
 
 #define MAC_MAX_KEY_LENGTH 32
 #define MAC_PN_LENGTH 8
@@ -1352,6 +1355,22 @@ struct p2p_ps_params {
 	uint8_t session_id;
 };
 
+#ifndef CONVERGED_TDLS_ENABLE
+/**
+ * struct sta_uapsd_params - uapsd auto trig params
+ * @wmm_ac: WMM access category from 0 to 3
+ * @user_priority: User priority to use in trigger frames
+ * @service_interval: service interval
+ * @suspend_interval: suspend interval
+ * @delay_interval: delay interval
+ */
+struct sta_uapsd_params {
+	uint32_t wmm_ac;
+	uint32_t user_priority;
+	uint32_t service_interval;
+	uint32_t suspend_interval;
+	uint32_t delay_interval;
+};
 
 /**
  * struct ta_uapsd_trig_params - uapsd trigger parameter
@@ -1363,9 +1382,10 @@ struct p2p_ps_params {
 struct sta_uapsd_trig_params {
 		uint32_t vdevid;
 		uint8_t peer_addr[IEEE80211_ADDR_LEN];
-		uint8_t *auto_triggerparam;
+		struct sta_uapsd_params *auto_triggerparam;
 		uint32_t num_ac;
 };
+#endif
 
 /**
  * struct ocb_utc_param
@@ -2795,6 +2815,7 @@ struct wmi_tdls_params {
 	uint32_t tdls_peer_kickout_threshold;
 };
 
+#ifndef CONVERGED_TDLS_ENABLE
 /**
  * struct tdls_chan_switch_params - channel switch parameter structure
  * @vdev_id: vdev ID
@@ -2813,6 +2834,7 @@ struct tdls_channel_switch_params {
 	uint8_t     oper_class;
 	uint8_t     is_responder;
 };
+#endif
 
 /**
  * struct dhcp_offload_info_params - dhcp offload parameters

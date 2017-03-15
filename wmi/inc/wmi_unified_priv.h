@@ -1060,6 +1060,11 @@ QDF_STATUS (*extract_vdev_roam_param)(wmi_unified_t wmi_handle, void *evt_buf,
 QDF_STATUS (*extract_vdev_scan_ev_param)(wmi_unified_t wmi_handle,
 		void *evt_buf, struct scan_event *param);
 
+#ifdef CONVERGED_TDLS_ENABLE
+QDF_STATUS (*extract_vdev_tdls_ev_param)(wmi_unified_t wmi_handle,
+		void *evt_buf, struct tdls_event_info *param);
+#endif
+
 QDF_STATUS (*extract_mu_ev_param)(wmi_unified_t wmi_handle, void *evt_buf,
 	wmi_host_mu_report_event *param);
 

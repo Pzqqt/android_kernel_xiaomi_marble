@@ -5174,6 +5174,20 @@ QDF_STATUS wmi_extract_vdev_scan_ev_param(void *wmi_hdl, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef CONVERGED_TDLS_ENABLE
+QDF_STATUS wmi_extract_vdev_tdls_ev_param(void *wmi_hdl, void *evt_buf,
+					  struct tdls_event_info *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
+
+	if (wmi_handle->ops->extract_vdev_tdls_ev_param)
+		return wmi_handle->ops->extract_vdev_tdls_ev_param(wmi_handle,
+				evt_buf, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
+
 /**
  * wmi_extract_mu_ev_param() - extract mu param from event
  * @wmi_handle: wmi handle
