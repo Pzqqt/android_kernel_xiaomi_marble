@@ -289,7 +289,7 @@ void hdd_get_tx_resource(hdd_adapter_t *adapter,
  *
  * Return: pointer to skb structure
  */
-static struct sk_buff *hdd_skb_orphan(hdd_adapter_t *pAdapter,
+static inline struct sk_buff *hdd_skb_orphan(hdd_adapter_t *pAdapter,
 		struct sk_buff *skb) {
 
 	struct sk_buff *nskb;
