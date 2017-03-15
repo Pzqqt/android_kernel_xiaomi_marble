@@ -7730,6 +7730,26 @@ QDF_STATUS csr_scan_save_preferred_network_found(tpAniSirGlobal pMac,
 	qdf_mem_copy((uint8_t *) &pBssDescr->bssId,
 		     (uint8_t *) macHeader->bssId, sizeof(tSirMacAddr));
 	pBssDescr->received_time = (uint64_t)qdf_mc_timer_get_system_time();
+
+	/* MobilityDomain */
+	pBssDescr->mdie[0] = 0;
+	pBssDescr->mdie[1] = 0;
+	pBssDescr->mdie[2] = 0;
+	pBssDescr->mdiePresent = false;
+	/*
+	 * If mdie is present in the probe rsp we fill it in the bss description
+	 */
+	if (parsed_frm->mdiePresent) {
+		pBssDescr->mdiePresent = true;
+		pBssDescr->mdie[0] = parsed_frm->mdie[0];
+		pBssDescr->mdie[1] = parsed_frm->mdie[1];
+		pBssDescr->mdie[2] = parsed_frm->mdie[2];
+	}
+	sms_log(pMac, LOG1, FL("mdie=%02x%02x%02x"),
+		(unsigned int)pBssDescr->mdie[0],
+		(unsigned int)pBssDescr->mdie[1],
+		(unsigned int)pBssDescr->mdie[2]);
+
 	sms_log(pMac, LOG2, FL("Bssid= "MAC_ADDRESS_STR" chan= %d, rssi = %d"),
 		MAC_ADDR_ARRAY(pBssDescr->bssId), pBssDescr->channelId,
 		pBssDescr->rssi);
