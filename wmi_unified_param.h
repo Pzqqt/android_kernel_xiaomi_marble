@@ -5023,6 +5023,7 @@ typedef enum {
 	wmi_roam_synch_event_id,
 	wmi_p2p_disc_event_id,
 	wmi_p2p_noa_event_id,
+	wmi_p2p_lo_stop_event_id,
 	wmi_pdev_resume_event_id,
 	wmi_do_wow_disable_ack_event_id,
 	wmi_wow_initial_wakeup_event_id,
