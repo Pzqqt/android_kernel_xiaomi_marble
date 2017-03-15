@@ -3130,6 +3130,8 @@ static QDF_STATUS send_set_sta_uapsd_auto_trig_cmd_tlv(wmi_unified_t wmi_handle,
 	uint32_t i;
 	wmi_buf_t buf;
 	uint8_t *buf_ptr;
+	struct sta_uapsd_params *uapsd_param;
+	wmi_sta_uapsd_auto_trig_param *trig_param;
 
 	buf = wmi_buf_alloc(wmi_handle, cmd_len);
 	if (!buf) {
@@ -3152,18 +3154,26 @@ static QDF_STATUS send_set_sta_uapsd_auto_trig_cmd_tlv(wmi_unified_t wmi_handle,
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, param_len);
 
 	buf_ptr += WMI_TLV_HDR_SIZE;
-	qdf_mem_copy(buf_ptr, param->auto_triggerparam, param_len);
 
 	/*
 	 * Update tag and length for uapsd auto trigger params (this will take
 	 * care of updating tag and length if it is not pre-filled by caller).
 	 */
+	uapsd_param = (struct sta_uapsd_params *)param->auto_triggerparam;
+	trig_param = (wmi_sta_uapsd_auto_trig_param *)buf_ptr;
 	for (i = 0; i < param->num_ac; i++) {
 		WMITLV_SET_HDR((buf_ptr +
 				(i * sizeof(wmi_sta_uapsd_auto_trig_param))),
 			       WMITLV_TAG_STRUC_wmi_sta_uapsd_auto_trig_param,
 			       WMITLV_GET_STRUCT_TLVLEN
 				       (wmi_sta_uapsd_auto_trig_param));
+		trig_param->wmm_ac = uapsd_param->wmm_ac;
+		trig_param->user_priority = uapsd_param->user_priority;
+		trig_param->service_interval = uapsd_param->service_interval;
+		trig_param->suspend_interval = uapsd_param->suspend_interval;
+		trig_param->delay_interval = uapsd_param->delay_interval;
+		trig_param++;
+		uapsd_param++;
 	}
 
 	ret = wmi_unified_cmd_send(wmi_handle, buf, cmd_len,
@@ -15333,6 +15343,108 @@ static QDF_STATUS extract_vdev_scan_ev_param_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef CONVERGED_TDLS_ENABLE
+/**
+ * extract_vdev_tdls_ev_param_tlv() - extract vdev tdls param from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param param: Pointer to hold vdev tdls param
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_vdev_tdls_ev_param_tlv(wmi_unified_t wmi_handle,
+	void *evt_buf, struct tdls_event_info *param)
+{
+	WMI_TDLS_PEER_EVENTID_param_tlvs *param_buf;
+	wmi_tdls_peer_event_fixed_param *evt;
+
+	param_buf = (WMI_TDLS_PEER_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		WMI_LOGE("%s: NULL param_buf", __func__);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	evt = param_buf->fixed_param;
+
+	qdf_mem_zero(param, sizeof(*param));
+
+	param->vdev_id = evt->vdev_id;
+	WMI_MAC_ADDR_TO_CHAR_ARRAY(&evt->peer_macaddr,
+				   param->peermac.bytes);
+	switch (evt->peer_status) {
+	case WMI_TDLS_SHOULD_DISCOVER:
+		param->message_type = TDLS_SHOULD_DISCOVER;
+		break;
+	case WMI_TDLS_SHOULD_TEARDOWN:
+		param->message_type = TDLS_SHOULD_TEARDOWN;
+		break;
+	case WMI_TDLS_PEER_DISCONNECTED:
+		param->message_type = TDLS_PEER_DISCONNECTED;
+		break;
+	case WMI_TDLS_CONNECTION_TRACKER_NOTIFICATION:
+		param->message_type = TDLS_CONNECTION_TRACKER_NOTIFY;
+		break;
+	default:
+		WMI_LOGE("%s: Discarding unknown tdls event %d from target",
+			 __func__, evt->peer_status);
+		return QDF_STATUS_E_INVAL;
+	};
+
+	switch (evt->peer_reason) {
+	case WMI_TDLS_TEARDOWN_REASON_TX:
+		param->peer_reason = TDLS_TEARDOWN_TX;
+		break;
+	case WMI_TDLS_TEARDOWN_REASON_RSSI:
+		param->peer_reason = TDLS_TEARDOWN_RSSI;
+		break;
+	case WMI_TDLS_TEARDOWN_REASON_SCAN:
+		param->peer_reason = TDLS_TEARDOWN_SCAN;
+		break;
+	case WMI_TDLS_DISCONNECTED_REASON_PEER_DELETE:
+		param->peer_reason = TDLS_DISCONNECTED_PEER_DELETE;
+		break;
+	case WMI_TDLS_TEARDOWN_REASON_PTR_TIMEOUT:
+		param->peer_reason = TDLS_TEARDOWN_PTR_TIMEOUT;
+		break;
+	case WMI_TDLS_TEARDOWN_REASON_BAD_PTR:
+		param->peer_reason = TDLS_TEARDOWN_BAD_PTR;
+		break;
+	case WMI_TDLS_TEARDOWN_REASON_NO_RESPONSE:
+		param->peer_reason = TDLS_TEARDOWN_NO_RSP;
+		break;
+	case WMI_TDLS_ENTER_BUF_STA:
+		param->peer_reason = TDLS_PEER_ENTER_BUF_STA;
+		break;
+	case WMI_TDLS_EXIT_BUF_STA:
+		param->peer_reason = TDLS_PEER_EXIT_BUF_STA;
+		break;
+	case WMI_TDLS_ENTER_BT_BUSY_MODE:
+		param->peer_reason = TDLS_ENTER_BT_BUSY;
+		break;
+	case WMI_TDLS_EXIT_BT_BUSY_MODE:
+		param->peer_reason = TDLS_EXIT_BT_BUSY;
+		break;
+	case WMI_TDLS_SCAN_STARTED_EVENT:
+		param->peer_reason = TDLS_SCAN_STARTED;
+		break;
+	case WMI_TDLS_SCAN_COMPLETED_EVENT:
+		param->peer_reason = TDLS_SCAN_COMPLETED;
+		break;
+
+	default:
+		WMI_LOGE("%s: unknown reason %d in tdls event %d from target",
+			 __func__, evt->peer_reason, evt->peer_status);
+		return QDF_STATUS_E_INVAL;
+	};
+
+	WMI_LOGD("%s: tdls event, peer: %pM, type: 0x%x, reason: %d, vdev: %d",
+		 __func__, param->peermac.bytes, param->message_type,
+		 param->peer_reason, param->vdev_id);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /**
  * extract_mgmt_tx_compl_param_tlv() - extract MGMT tx completion event params
  * @wmi_handle: wmi handle
@@ -17236,6 +17348,9 @@ struct wmi_ops tlv_ops =  {
 	.extract_vdev_stopped_param = extract_vdev_stopped_param_tlv,
 	.extract_vdev_roam_param = extract_vdev_roam_param_tlv,
 	.extract_vdev_scan_ev_param = extract_vdev_scan_ev_param_tlv,
+#ifdef CONVERGED_TDLS_ENABLE
+	.extract_vdev_tdls_ev_param = extract_vdev_tdls_ev_param_tlv,
+#endif
 	.extract_mgmt_tx_compl_param = extract_mgmt_tx_compl_param_tlv,
 	.extract_swba_vdev_map = extract_swba_vdev_map_tlv,
 	.extract_swba_tim_info = extract_swba_tim_info_tlv,
