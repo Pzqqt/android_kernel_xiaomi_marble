@@ -306,6 +306,13 @@ static int __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 				  "%s: STA %d is unregistered", __func__,
 				  STAId);
 			goto drop_pkt;
+		} else if (true == pAdapter->aStaInfo[STAId].
+							isDeauthInProgress) {
+			QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA,
+				  QDF_TRACE_LEVEL_WARN,
+				  "%s: STA %d deauth in progress", __func__,
+				  STAId);
+			goto drop_pkt;
 		}
 
 		if ((OL_TXRX_PEER_STATE_CONN !=
