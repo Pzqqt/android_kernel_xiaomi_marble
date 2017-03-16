@@ -3060,7 +3060,7 @@ static void csr_purge_old_scan_results(tpAniSirGlobal mac_ctx)
 	uint64_t oldest_entry = 0;
 	uint64_t curr_time = (uint64_t)qdf_mc_timer_get_system_time();
 
-	csr_ll_unlock(&mac_ctx->scan.scanResultList);
+	csr_ll_lock(&mac_ctx->scan.scanResultList);
 	pentry = csr_ll_peek_head(&mac_ctx->scan.scanResultList,
 					LL_ACCESS_NOLOCK);
 	while (pentry) {
