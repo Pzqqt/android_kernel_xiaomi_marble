@@ -1675,8 +1675,6 @@ static void wma_update_rssi_stats(tp_wma_handle wma,
 			stats_buf += sizeof(tCsrGlobalClassAStatsInfo);
 		if (temp_mask & (1 << eCsrGlobalClassBStats))
 			stats_buf += sizeof(tCsrGlobalClassBStatsInfo);
-		if (temp_mask & (1 << eCsrGlobalClassCStats))
-			stats_buf += sizeof(tCsrGlobalClassCStatsInfo);
 		if (temp_mask & (1 << eCsrGlobalClassDStats))
 			stats_buf += sizeof(tCsrGlobalClassDStatsInfo);
 
@@ -2271,9 +2269,6 @@ static tAniGetPEStatsRsp *wma_get_stats_rsp_buf
 
 	if (temp_mask & (1 << eCsrGlobalClassBStats))
 		len += sizeof(tCsrGlobalClassBStatsInfo);
-
-	if (temp_mask & (1 << eCsrGlobalClassCStats))
-		len += sizeof(tCsrGlobalClassCStatsInfo);
 
 	if (temp_mask & (1 << eCsrGlobalClassDStats))
 		len += sizeof(tCsrGlobalClassDStatsInfo);
