@@ -281,6 +281,7 @@ void wlan_hdd_cancel_existing_remain_on_channel(hdd_adapter_t *pAdapter)
 	hdd_remain_on_chan_ctx_t *pRemainChanCtx;
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	unsigned long rc;
+	uint32_t roc_scan_id;
 
 	mutex_lock(&cfgState->remain_on_chan_ctx_lock);
 	if (cfgState->remain_on_chan_ctx != NULL) {
@@ -308,6 +309,7 @@ void wlan_hdd_cancel_existing_remain_on_channel(hdd_adapter_t *pAdapter)
 			return;
 		}
 		pRemainChanCtx->hdd_remain_on_chan_cancel_in_progress = true;
+		roc_scan_id = pRemainChanCtx->scan_id;
 		mutex_unlock(&cfgState->remain_on_chan_ctx_lock);
 		/* Wait till remain on channel ready indication before issuing cancel
 		 * remain on channel request, otherwise if remain on channel not
@@ -338,14 +340,12 @@ void wlan_hdd_cancel_existing_remain_on_channel(hdd_adapter_t *pAdapter)
 		    ) {
 			sme_cancel_remain_on_channel(WLAN_HDD_GET_HAL_CTX
 							     (pAdapter),
-				pAdapter->sessionId,
-				pRemainChanCtx->scan_id);
+				pAdapter->sessionId, roc_scan_id);
 		} else if ((QDF_SAP_MODE == pAdapter->device_mode)
 			   || (QDF_P2P_GO_MODE == pAdapter->device_mode)
 			   ) {
 			wlansap_cancel_remain_on_channel(
-				WLAN_HDD_GET_SAP_CTX_PTR(pAdapter),
-				pRemainChanCtx->scan_id);
+				WLAN_HDD_GET_SAP_CTX_PTR(pAdapter), roc_scan_id);
 		}
 
 		rc = wait_for_completion_timeout(&pAdapter->
@@ -397,6 +397,7 @@ static void wlan_hdd_cancel_pending_roc(hdd_adapter_t *adapter)
 	hdd_remain_on_chan_ctx_t *roc_ctx;
 	unsigned long rc;
 	hdd_cfg80211_state_t *cfg_state = WLAN_HDD_GET_CFG_STATE_PTR(adapter);
+	uint32_t roc_scan_id;
 
 	hdd_err("ROC completion is not received !!!");
 
@@ -414,19 +415,18 @@ static void wlan_hdd_cancel_pending_roc(hdd_adapter_t *adapter)
 		 */
 		goto wait;
 	}
+	roc_scan_id = roc_ctx->scan_id;
 	mutex_unlock(&cfg_state->remain_on_chan_ctx_lock);
 
 	if (adapter->device_mode == QDF_P2P_GO_MODE) {
 		wlansap_cancel_remain_on_channel((WLAN_HDD_GET_CTX
-					(adapter))->pcds_context,
-					cfg_state->remain_on_chan_ctx->scan_id);
+					(adapter))->pcds_context, roc_scan_id);
 	} else if (adapter->device_mode == QDF_P2P_CLIENT_MODE
 			|| adapter->device_mode ==
 			QDF_P2P_DEVICE_MODE) {
 		sme_cancel_remain_on_channel(WLAN_HDD_GET_HAL_CTX
 				(adapter),
-				adapter->sessionId,
-				cfg_state->remain_on_chan_ctx->scan_id);
+				adapter->sessionId, roc_scan_id);
 	}
 
 wait:
