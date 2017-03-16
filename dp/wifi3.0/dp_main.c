@@ -2506,10 +2506,6 @@ dp_print_pdev_rx_stats(struct dp_pdev *pdev)
 	DP_TRACE(NONE, "Buffers Added To Freelist = %d",
 			pdev->stats.buf_freelist);
 	DP_TRACE(NONE, "Dropped:\n");
-	DP_TRACE(NONE, "Total Packets With No Peer = %d",
-			pdev->stats.dropped.no_peer.num);
-	DP_TRACE(NONE, "Bytes Sent With No Peer = %d",
-			pdev->stats.dropped.no_peer.bytes);
 	DP_TRACE(NONE, "Total Packets With Msdu Not Done = %d",
 			pdev->stats.dropped.msdu_not_done.num);
 	DP_TRACE(NONE, "Bytes Sent With Msdu Not Done = %d",
@@ -2538,6 +2534,10 @@ dp_print_soc_tx_stats(struct dp_soc *soc)
 	DP_TRACE(NONE, "SOC Tx Stats:\n");
 	DP_TRACE(NONE, "Tx Descriptors In Use = %d",
 			soc->stats.tx.desc_in_use);
+	DP_TRACE(NONE, "Total Packets With No Peer = %d",
+			soc->stats.tx.tx_invalid_peer.num);
+	DP_TRACE(NONE, "Bytes Sent With No Peer = %d",
+			soc->stats.tx.tx_invalid_peer.bytes);
 }
 
 
@@ -2563,6 +2563,8 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
 			soc->stats.rx.err.invalid_vdev);
 	DP_TRACE(NONE, "Invalid Pdev = %d",
 			soc->stats.rx.err.invalid_pdev);
+	DP_TRACE(NONE, "Invalid Peer = %d",
+			soc->stats.rx.err.rx_invalid_peer.num);
 	DP_TRACE(NONE, "HAL Ring Access Fail = %d",
 			soc->stats.rx.err.hal_ring_access_fail);
 	for (i = 0; i < MAX_RXDMA_ERRORS; i++) {
@@ -2714,6 +2716,23 @@ dp_print_tx_rates(struct dp_vdev *vdev)
 			mcs[4]);
 	DP_TRACE(NONE, "Packet Type 11AX MCS Invalid = %d",
 			pdev->stats.tx.pkt_type[DOT11_AX].mcs_count[MAX_MCS]);
+	DP_TRACE(NONE, "SGI:"
+			" 0.8us %d,"
+			" 0.4us %d,"
+			" 1.6us %d,"
+			" 3.2us %d,",
+			pdev->stats.tx.sgi_count[0],
+			pdev->stats.tx.sgi_count[1],
+			pdev->stats.tx.sgi_count[2],
+			pdev->stats.tx.sgi_count[3]);
+	DP_TRACE(NONE, "BW Counts: 20MHZ %d, 40MHZ %d, 80MHZ %d, 160MHZ %d",
+			pdev->stats.tx.bw[0], pdev->stats.tx.bw[1],
+			pdev->stats.tx.bw[2], pdev->stats.tx.bw[3]);
+	DP_TRACE(NONE, "Aggregation:\n");
+	DP_TRACE(NONE, "Number of Msdu's Part of Amsdu: %d",
+			pdev->stats.tx.amsdu_cnt);
+	DP_TRACE(NONE, "Number of Msdu's With No Msdu Level Aggregation: %d",
+			pdev->stats.tx.non_amsdu_cnt);
 }
 
 /**
@@ -2816,6 +2835,11 @@ static inline void dp_print_peer_stats(struct dp_peer *peer)
 	DP_TRACE(NONE, "BW Counts: 20MHZ %d, 40MHZ %d, 80MHZ %d, 160MHZ %d",
 			peer->stats.tx.bw[0], peer->stats.tx.bw[1],
 			peer->stats.tx.bw[2], peer->stats.tx.bw[3]);
+	DP_TRACE(NONE, "Aggregation:\n");
+	DP_TRACE(NONE, "Number of Msdu's Part of Amsdu: %d",
+			peer->stats.tx.amsdu_cnt);
+	DP_TRACE(NONE, "Number of Msdu's With No Msdu Level Aggregation: %d",
+			peer->stats.tx.non_amsdu_cnt);
 
 	DP_TRACE(NONE, "Node Rx Stats:\n");
 	DP_TRACE(NONE, "Packets Sent To Stack %d",
@@ -2892,6 +2916,15 @@ static inline void dp_print_peer_stats(struct dp_peer *peer)
 	}
 	DP_TRACE(NONE, "NSS(0-7):%s",
 			nss);
+	DP_TRACE(NONE, "Aggregation:\n");
+	DP_TRACE(NONE, "Number of Msdu's Part of Ampdu = %d",
+			peer->stats.rx.ampdu_cnt);
+	DP_TRACE(NONE, "Number of Msdu's With No Mpdu Level Aggregation : %d",
+			peer->stats.rx.non_ampdu_cnt);
+	DP_TRACE(NONE, "Number of Msdu's Part of Amsdu: %d",
+			peer->stats.rx.amsdu_cnt);
+	DP_TRACE(NONE, "Number of Msdu's With No Msdu Level Aggregation: %d",
+			peer->stats.rx.non_amsdu_cnt);
 }
 
 /**

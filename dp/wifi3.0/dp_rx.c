@@ -790,6 +790,8 @@ done:
 			if (!peer && !vdev) {
 
 				dp_rx_process_invalid_peer(soc, nbuf);
+				DP_STATS_INC_PKT(soc, rx.err.rx_invalid_peer, 1,
+						qdf_nbuf_len(nbuf));
 				/* Drop & free packet */
 				qdf_nbuf_free(nbuf);
 

@@ -486,6 +486,7 @@ dp_rx_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 			/* TODO */
 			/* Call appropriate handler */
 
+			DP_STATS_INC(soc, rx.err.invalid_rbm, 1);
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			FL("Invalid RBM %d"), rbm);
 			continue;
@@ -642,6 +643,9 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 				uint8_t reo_error_code =
 				   HAL_RX_WBM_REO_ERROR_CODE_GET(ring_desc);
 
+				DP_STATS_INC(soc, rx.err.reo_error[
+						reo_error_code], 1);
+
 				switch (reo_error_code) {
 				/*
 				 * Handling for packets which have NULL REO
@@ -677,6 +681,9 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 
 				uint8_t rxdma_error_code =
 				   HAL_RX_WBM_RXDMA_ERROR_CODE_GET(ring_desc);
+
+				DP_STATS_INC(soc, rx.err.rxdma_error[
+						rxdma_error_code], 1);
 
 				switch (rxdma_error_code) {
 

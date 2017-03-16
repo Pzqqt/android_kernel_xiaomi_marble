@@ -635,6 +635,8 @@ struct dp_soc {
 	struct {
 		/* SOC level TX stats */
 		struct {
+			/* packets dropped on tx because of no peer */
+			struct cdp_pkt_info tx_invalid_peer;
 			/* descriptors in each tcl ring */
 			uint32_t tcl_ring_full[MAX_TCL_RING];
 			/* Descriptors in use at soc */
@@ -650,6 +652,8 @@ struct dp_soc {
 				uint32_t invalid_vdev;
 				/* Invalid PDEV error count */
 				uint32_t invalid_pdev;
+				/* Invalid PEER Error count */
+				struct cdp_pkt_info rx_invalid_peer;
 				/* HAL ring access Fail error count */
 				uint32_t hal_ring_access_fail;
 				/* RX DMA error count */

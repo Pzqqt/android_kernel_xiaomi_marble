@@ -962,7 +962,7 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		DP_STATS_INC(vdev, tx_i.dropped.ring_full, 1);
 		DP_STATS_INC_PKT(vdev,
 				tx_i.dropped.dropped_pkt, 1,
-				qdf_nbuf_len(tx_desc->nbuf));
+				qdf_nbuf_len(nbuf));
 		return nbuf;
 	}
 
@@ -987,7 +987,7 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 			DP_STATS_INC(vdev, tx_i.dropped.desc_na, 1);
 			DP_STATS_INC_PKT(vdev,
 					tx_i.dropped.dropped_pkt, 1,
-					qdf_nbuf_len(tx_desc->nbuf));
+					qdf_nbuf_len(nbuf));
 
 			goto done;
 		}
@@ -1006,7 +1006,7 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 			DP_STATS_INC(vdev, tx_i.dropped.enqueue_fail, 1);
 			DP_STATS_INC_PKT(pdev,
 					tx_i.dropped.dropped_pkt, 1,
-					qdf_nbuf_len(tx_desc->nbuf));
+					qdf_nbuf_len(nbuf));
 			dp_tx_desc_release(tx_desc, tx_q->desc_pool_id);
 			goto done;
 		}
@@ -1277,7 +1277,7 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 	 * (TID override disabled)
 	 */
 	msdu_info.tid = HTT_TX_EXT_TID_INVALID;
-	DP_STATS_INC_PKT(vdev->pdev, tx_i.rcvd, 1, qdf_nbuf_len(nbuf));
+	DP_STATS_INC_PKT(vdev, tx_i.rcvd, 1, qdf_nbuf_len(nbuf));
 
 	if (qdf_unlikely(vdev->mesh_vdev))
 		dp_tx_extract_mesh_meta_data(vdev, nbuf, &msdu_info);
@@ -1622,7 +1622,7 @@ static inline void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 	if (!peer) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 				"invalid peer");
-		DP_STATS_INC_PKT(vdev->pdev, dropped.no_peer, 1, length);
+		DP_STATS_INC_PKT(soc, tx.tx_invalid_peer, 1, length);
 		goto out;
 	}
 

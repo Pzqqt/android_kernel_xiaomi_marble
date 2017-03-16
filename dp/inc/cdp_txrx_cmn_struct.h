@@ -704,8 +704,6 @@ struct cdp_peer_stats {
 struct cdp_pdev_stats {
 	/* packets dropped on rx */
 	struct {
-		/* packets dropped because of no peer */
-		struct cdp_pkt_info no_peer;
 		/* packets dropped because nsdu_done bit not set */
 		struct cdp_pkt_info msdu_not_done;
 	} dropped;
