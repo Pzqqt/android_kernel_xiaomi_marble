@@ -227,7 +227,6 @@ typedef enum {
 	eCsrSummaryStats = 0,
 	eCsrGlobalClassAStats,
 	eCsrGlobalClassBStats,
-	eCsrGlobalClassCStats,
 	eCsrGlobalClassDStats,
 	csr_per_chain_rssi_stats,
 	eCsrMaxStats
@@ -1020,7 +1019,6 @@ typedef struct tagCsrRoamStruct {
 	tCsrSummaryStatsInfo summaryStatsInfo;
 	tCsrGlobalClassAStatsInfo classAStatsInfo;
 	tCsrGlobalClassBStatsInfo classBStatsInfo;
-	tCsrGlobalClassCStatsInfo classCStatsInfo;
 	tCsrGlobalClassDStatsInfo classDStatsInfo;
 	struct csr_per_chain_rssi_stats_info  per_chain_rssi_stats;
 	tDblLinkList statsClientReqList;

@@ -1528,16 +1528,6 @@ typedef struct tagCsrGlobalClassBStatsInfo {
 
 } tCsrGlobalClassBStatsInfo;
 
-typedef struct tagCsrGlobalClassCStatsInfo {
-	uint32_t rx_amsdu_cnt;
-	uint32_t rx_ampdu_cnt;
-	uint32_t tx_20_frm_cnt;
-	uint32_t rx_20_frm_cnt;
-	uint32_t rx_mpdu_in_ampdu_cnt;
-	uint32_t ampdu_delimiter_crc_err;
-
-} tCsrGlobalClassCStatsInfo;
-
 typedef struct tagCsrGlobalClassDStatsInfo {
 	uint32_t tx_uc_frm_cnt;
 	uint32_t tx_mc_frm_cnt;
