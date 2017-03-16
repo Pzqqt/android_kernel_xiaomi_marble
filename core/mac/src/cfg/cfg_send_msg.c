@@ -38,7 +38,6 @@
 #include "cds_api.h"
 #include "cfg_priv.h"
 #include "lim_trace.h"
-#include "cfg_debug.h"
 
 /*--------------------------------------------------------------------*/
 /* ATTENTION:  The functions contained in this module are to be used  */

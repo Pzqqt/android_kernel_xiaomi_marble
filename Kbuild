@@ -532,7 +532,6 @@ MAC_INC := 	-I$(WLAN_ROOT)/$(MAC_INC_DIR) \
 		-I$(WLAN_ROOT)/$(MAC_SRC_DIR)/pe/nan
 
 MAC_CFG_OBJS := $(MAC_SRC_DIR)/cfg/cfg_api.o \
-		$(MAC_SRC_DIR)/cfg/cfg_debug.o \
 		$(MAC_SRC_DIR)/cfg/cfg_param_name.o \
 		$(MAC_SRC_DIR)/cfg/cfg_proc_msg.o \
 		$(MAC_SRC_DIR)/cfg/cfg_send_msg.o

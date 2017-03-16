@@ -31,8 +31,8 @@
 #include "cds_api.h"
 #include "ani_global.h"
 #include "cfg_priv.h"
-#include "cfg_debug.h"
 #include "wma_types.h"
+#include "lim_trace.h"
 
 cgstatic cfg_static[CFG_PARAM_MAX_NUM] = {
 	{WNI_CFG_STA_ID,

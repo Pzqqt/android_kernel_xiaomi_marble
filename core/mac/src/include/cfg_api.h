@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2015-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2015-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -127,5 +127,7 @@ uint8_t *cfg_get_vendor_ie_ptr_from_oui(tpAniSirGlobal mac_ctx,
 					uint8_t oui_size,
 					uint8_t *ie,
 					uint16_t ie_len);
+void cfg_log(tpAniSirGlobal pMac, uint32_t loglevel,
+		const char *pString, ...);
 
 #endif /* __CFGAPI_H */

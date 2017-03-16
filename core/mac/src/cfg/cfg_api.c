@@ -38,7 +38,6 @@
 
 #include "cds_api.h"
 #include "cfg_priv.h"
-#include "cfg_debug.h"
 #include "wma_types.h"
 #include "cfg_api.h"
 
@@ -978,4 +977,16 @@ uint8_t *cfg_get_vendor_ie_ptr_from_oui(tpAniSirGlobal mac_ctx,
 	}
 	return NULL;
 }
+
+void cfg_log(tpAniSirGlobal pMac, uint32_t loglevel, const char *pString, ...)
+{
+#ifdef WLAN_DEBUG
+	va_list marker;
+
+	va_start(marker, pString);
+	log_debug(pMac, SIR_CFG_MODULE_ID, loglevel, pString, marker);
+	va_end(marker);
+#endif
+}
+
 /* --------------------------------------------------------------------- */
