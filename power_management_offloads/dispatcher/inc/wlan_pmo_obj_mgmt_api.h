@@ -65,7 +65,7 @@ QDF_STATUS pmo_psoc_object_created_notification(
  *
  * Return QDF_STATUS status in case of success else return error
  */
-QDF_STATUS  pmo_psoc_object_destroyed_notification(
+QDF_STATUS pmo_psoc_object_destroyed_notification(
 		struct wlan_objmgr_psoc *psoc, void *arg);
 
 /**
@@ -79,6 +79,18 @@ QDF_STATUS  pmo_psoc_object_destroyed_notification(
  */
 QDF_STATUS pmo_vdev_object_created_notification(
 		struct wlan_objmgr_vdev *vdev, void *arg);
+
+/**
+ * pmo_vdev_ready() - handles vdev ready in firmware event
+ * @vdev: vdev which is ready in firmware
+ *
+ * Objmgr vdev_create event does not guarantee vdev creation in firmware.
+ * Any logic that would normally go in the vdev_create event, but needs to
+ * communicate with firmware, needs to go here instead.
+ *
+ * Return QDF_STATUS
+ */
+QDF_STATUS pmo_vdev_ready(struct wlan_objmgr_vdev *vdev);
 
 /**
  * pmo_vdev_object_destroyed_notification(): pmo vdev delete handler

@@ -270,14 +270,29 @@ QDF_STATUS pmo_vdev_object_created_notification(
 	vdev_ctx->pmo_psoc_ctx = psoc_ctx;
 	qdf_atomic_init(&vdev_ctx->gtk_err_enable);
 
-	/* Register static configuration with firmware */
-	pmo_register_wow_wakeup_events(vdev);
-	pmo_register_action_frame_patterns(vdev);
-	/* Register default wow patterns with firmware */
-	pmo_register_wow_default_patterns(vdev);
 out:
 	PMO_EXIT();
 
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS pmo_vdev_ready(struct wlan_objmgr_vdev *vdev)
+{
+	PMO_ENTER();
+
+	/* Register static configuration with firmware */
+	pmo_register_wow_wakeup_events(vdev);
+	pmo_register_action_frame_patterns(vdev);
+
+	/* Register default wow patterns with firmware */
+	pmo_register_wow_default_patterns(vdev);
+
+	PMO_EXIT();
+
+	/*
+	 * The above APIs should return a status but don't.
+	 * Just return success for now.
+	 */
 	return QDF_STATUS_SUCCESS;
 }
 

@@ -28,6 +28,7 @@
 #include "wlan_pmo_mc_addr_filtering_public_struct.h"
 #include "wlan_pmo_wow_public_struct.h"
 #include "wlan_pmo_common_public_struct.h"
+#include "wlan_pmo_obj_mgmt_api.h"
 
 /**
  * pmo_ucfg_is_ap_mode_supports_arp_ns() - Check ap mode support arp&ns offload
