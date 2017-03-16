@@ -588,13 +588,18 @@ static inline struct wlan_objmgr_psoc *wlan_vdev_get_psoc(
 				struct wlan_objmgr_vdev *vdev)
 {
 	struct wlan_objmgr_pdev *pdev;
+	struct wlan_objmgr_psoc *psoc = NULL;
 
 	/* This API is invoked with lock acquired, do not add log prints */
 	pdev = wlan_vdev_get_pdev(vdev);
 	if (pdev == NULL)
 		return NULL;
 
-	return wlan_pdev_get_psoc(pdev);
+	wlan_pdev_obj_lock(pdev);
+	psoc = wlan_pdev_get_psoc(pdev);
+	wlan_pdev_obj_unlock(pdev);
+
+	return psoc;
 }
 
 /**
