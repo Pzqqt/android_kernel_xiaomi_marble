@@ -37,7 +37,6 @@
 #include "sch_global.h"
 #include "sys_global.h"
 #include "cfg_global.h"
-#include "utils_global.h"
 #include "sir_api.h"
 
 #include "csr_api.h"

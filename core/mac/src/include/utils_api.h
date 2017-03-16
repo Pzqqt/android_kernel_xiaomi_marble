@@ -31,7 +31,6 @@
 #include <stdarg.h>
 #include <sir_common.h>
 #include "ani_global.h"
-#include "utils_global.h"
 #include "sys_wrapper.h"
 
 /* / System role definition on a per BSS */
@@ -47,6 +46,7 @@ typedef enum eBssSystemRole {
 	eSYSTEM_MULTI_BSS_ROLE = eSYSTEM_LAST_ROLE
 } tBssSystemRole;
 
+#define LOG_FIRST_MODULE_ID    SIR_FIRST_MODULE_ID
 #define LOG_INDEX_FOR_MODULE(modId) ((modId) - LOG_FIRST_MODULE_ID)
 #define GET_MIN_VALUE(__val1, __val2) ((__val1 < __val2) ? __val1 : __val2)
 

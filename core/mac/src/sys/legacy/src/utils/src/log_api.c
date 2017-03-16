@@ -42,7 +42,6 @@
 #include <wma_types.h>
 
 #include <stdarg.h>
-#include "utils_global.h"
 #include "mac_init_api.h"
 
 #include "qdf_trace.h"
