@@ -1742,7 +1742,8 @@ void dp_peer_unref_delete(void *peer_handle)
 {
 	struct dp_peer *peer = (struct dp_peer *)peer_handle;
 	struct dp_vdev *vdev = peer->vdev;
-	struct dp_soc *soc = vdev->pdev->soc;
+	struct dp_pdev *pdev = vdev->pdev;
+	struct dp_soc *soc = pdev->soc;
 	struct dp_peer *tmppeer;
 	int found = 0;
 	uint16_t peer_id;
@@ -1832,7 +1833,7 @@ void dp_peer_unref_delete(void *peer_handle)
 		qdf_mem_free(peer);
 #endif
 		if (soc->cdp_soc.ol_ops->peer_unref_delete) {
-			soc->cdp_soc.ol_ops->peer_unref_delete(soc->osif_soc,
+			soc->cdp_soc.ol_ops->peer_unref_delete(pdev->osif_pdev,
 					vdev->vdev_id, peer->mac_addr.raw);
 		}
 
