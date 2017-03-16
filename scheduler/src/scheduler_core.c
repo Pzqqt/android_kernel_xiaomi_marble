@@ -27,32 +27,20 @@
 
 #include <scheduler_core.h>
 
+static struct scheduler_ctx g_sched_ctx;
 static struct scheduler_ctx *gp_sched_ctx;
 
 QDF_STATUS scheduler_create_ctx(void)
 {
-	if (gp_sched_ctx) {
-		QDF_ASSERT(0);
-		QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
-			  FL("there is a already gp_sched_ctx mem allocated"));
-		return QDF_STATUS_E_FAILURE;
-	}
+	gp_sched_ctx = &g_sched_ctx;
 
-	gp_sched_ctx = qdf_mem_malloc(sizeof(struct scheduler_ctx));
-	if (!gp_sched_ctx) {
-		QDF_ASSERT(0);
-		QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
-			  FL("gp_sched_ctx can't alloc mememory"));
-		return QDF_STATUS_E_FAILURE;
-	}
 	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS scheduler_destroy_ctx(void)
 {
-	if (gp_sched_ctx)
-		qdf_mem_free(gp_sched_ctx);
 	gp_sched_ctx = NULL;
+
 	return QDF_STATUS_SUCCESS;
 }
 
