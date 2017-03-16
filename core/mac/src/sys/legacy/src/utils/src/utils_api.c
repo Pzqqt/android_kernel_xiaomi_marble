@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -63,9 +63,6 @@ sir_dump_buf(tpAniSirGlobal pMac, uint8_t modId, uint32_t level, uint8_t *buf,
 	     uint32_t size)
 {
 	uint32_t i;
-
-	if (level > pMac->utils.gLogDbgLevel[LOG_INDEX_FOR_MODULE(modId)])
-		return;
 
 	log_dbg(pMac, modId, level, FL("Dumping %d bytes in host order\n"),
 		size);

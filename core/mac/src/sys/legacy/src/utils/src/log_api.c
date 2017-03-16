@@ -51,47 +51,6 @@
 #include <linux/kernel.h>
 #endif
 
-/* --------------------------------------------------------------------- */
-/**
- * log_init()
- *
- * FUNCTION:
- * This function is called to prepare the logging utility.
- *
- * LOGIC:
- *
- * ASSUMPTIONS:
- * None.
- *
- * NOTE:
- *
- * @param tpAniSirGlobal Sirius software parameter strucutre pointer
- * @return None
- */
-tSirRetStatus log_init(tpAniSirGlobal pMac)
-{
-	uint32_t i;
-
-	/* Add code to initialize debug level from CFG module */
-	/* For now, enable all logging */
-	for (i = 0; i < LOG_ENTRY_NUM; i++) {
-#ifdef SIR_DEBUG
-		pMac->utils.gLogEvtLevel[i] = pMac->utils.gLogDbgLevel[i] =
-						      LOG1;
-#else
-		pMac->utils.gLogEvtLevel[i] = pMac->utils.gLogDbgLevel[i] =
-						      LOGW;
-#endif
-	}
-	return eSIR_SUCCESS;
-
-} /*** log_init() ***/
-
-void log_deinit(tpAniSirGlobal pMac)
-{
-	return;
-}
-
 /**
  * log_dbg()
  *
@@ -189,7 +148,5 @@ void log_debug(tpAniSirGlobal pMac, uint8_t modId, uint32_t debugLevel,
 	QDF_TRACE(qdf_module_id, qdf_debug_level, "%s", logBuffer);
 
 	/* The caller must check loglevel */
-	QDF_ASSERT((debugLevel <=
-		    pMac->utils.gLogDbgLevel[LOG_INDEX_FOR_MODULE(modId)])
-		   && (LOGP != debugLevel));
+	QDF_ASSERT((LOGP != debugLevel));
 } /*** end log_debug() ***/

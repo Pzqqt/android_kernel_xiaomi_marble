@@ -371,11 +371,6 @@ cgstatic cfg_static[CFG_PARAM_MAX_NUM] = {
 	WNI_CFG_WT_CNF_TIMEOUT_STAMIN,
 	WNI_CFG_WT_CNF_TIMEOUT_STAMAX,
 	WNI_CFG_WT_CNF_TIMEOUT_STADEF},
-	{WNI_CFG_LOG_LEVEL,
-	CFG_CTL_VALID | CFG_CTL_RE | CFG_CTL_WE | CFG_CTL_INT,
-	WNI_CFG_LOG_LEVEL_STAMIN,
-	WNI_CFG_LOG_LEVEL_STAMAX,
-	WNI_CFG_LOG_LEVEL_STADEF},
 	{WNI_CFG_OLBC_DETECT_TIMEOUT,
 	CFG_CTL_VALID | CFG_CTL_RE | CFG_CTL_WE | CFG_CTL_INT,
 	WNI_CFG_OLBC_DETECT_TIMEOUT_STAMIN,
@@ -1738,7 +1733,6 @@ static void proc_dnld_rsp(tpAniSirGlobal pMac, uint16_t length, uint32_t *pParam
 	uint32_t strSize, j;
 	uint8_t pStr[CFG_MAX_STR_LEN];
 	tpCfgBinHdr pHdr;
-	uint32_t logLevel;
 	struct scheduler_msg mmhMsg;
 
 	/* First Dword must contain the AP or STA magic dword */
@@ -1920,12 +1914,6 @@ static void proc_dnld_rsp(tpAniSirGlobal pMac, uint16_t length, uint32_t *pParam
 			goto end;
 		}
 	}
-
-	/* Set the default log level based on config */
-	wlan_cfg_get_int(pMac, WNI_CFG_LOG_LEVEL, &logLevel);
-	for (i = 0; i < LOG_ENTRY_NUM; i++)
-		pMac->utils.gLogEvtLevel[i] = pMac->utils.gLogDbgLevel[i] =
-						      logLevel;
 
 	/* Set status to READY */
 	pMac->cfg.gCfgStatus = CFG_SUCCESS;
@@ -2367,7 +2355,7 @@ process_cfg_download_req(tpAniSirGlobal pMac)
 	uint8_t     len;
 	cfgstatic_string * pStrCfg;
 	uint32_t    bufStart, bufEnd;
-	uint32_t    logLevel, retVal;
+	uint32_t    retVal;
 	uint32_t    iCount = 0;
 	uint32_t    sCount = 0;
 
@@ -2444,12 +2432,6 @@ process_cfg_download_req(tpAniSirGlobal pMac)
 			}
 		}
 	}
-
-	/* Set the default log level based on config */
-	wlan_cfg_get_int(pMac, WNI_CFG_LOG_LEVEL, &logLevel);
-	for (i = 0; i < LOG_ENTRY_NUM; i++)
-		pMac->utils.gLogEvtLevel[i] = pMac->utils.gLogDbgLevel[i] =
-						      logLevel;
 
 	/* Set status to READY */
 	pMac->cfg.gCfgStatus = CFG_SUCCESS;

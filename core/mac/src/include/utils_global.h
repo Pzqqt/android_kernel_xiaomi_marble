@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2014, 2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -46,11 +46,5 @@
 #define LOG_FIRST_MODULE_ID    SIR_FIRST_MODULE_ID
 #define LOG_LAST_MODULE_ID     SIR_LAST_MODULE_ID
 #define LOG_ENTRY_NUM          (LOG_LAST_MODULE_ID - LOG_FIRST_MODULE_ID + 1)
-
-typedef struct sAniSirUtils {
-	uint32_t gLogEvtLevel[LOG_ENTRY_NUM];
-	uint32_t gLogDbgLevel[LOG_ENTRY_NUM];
-
-} tAniSirUtils, *tpAniSirUtils;
 
 #endif

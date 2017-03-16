@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -60,11 +60,6 @@ extern void log_dbg(tpAniSirGlobal pMac, uint8_t modId, uint32_t debugLevel,
 extern uint32_t gPktAllocCnt, gPktFreeCnt;
 
 extern QDF_TRACE_LEVEL get_vos_debug_level(uint32_t debugLevel);
-
-/* / Log initialization */
-extern tSirRetStatus log_init(tpAniSirGlobal);
-
-extern void log_deinit(tpAniSirGlobal);
 
 extern tSirRetStatus cfg_init(tpAniSirGlobal);
 extern void cfg_de_init(tpAniSirGlobal);

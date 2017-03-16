@@ -908,7 +908,6 @@ typedef struct sAniSirGlobal {
 	tAniSirLim lim;
 	tAniSirSch sch;
 	tAniSirSys sys;
-	tAniSirUtils utils;
 
 	/* PAL/HDD handle */
 	tHddHandle hHdd;

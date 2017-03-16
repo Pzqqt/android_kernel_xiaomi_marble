@@ -1400,18 +1400,6 @@ HAL
 #ENUM ON       1
 
 *
-* Default LOG level
-*
-
-WNI_CFG_LOG_LEVEL    I    4    12
-V   RW    NP
-NONE
-0   7   4
-V   RW    NP
-NONE
-0   7   4
-
-*
 * OLBC detection timeout
 *
 
