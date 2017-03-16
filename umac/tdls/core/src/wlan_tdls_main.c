@@ -239,3 +239,44 @@ QDF_STATUS tdls_process_cmd(struct scheduler_msg *msg)
 
 	return status;
 }
+
+QDF_STATUS tdls_process_evt(struct scheduler_msg *msg)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct tdls_event_notify *notify;
+	struct tdls_event_info *event;
+
+	if (!msg || !msg->bodyptr) {
+		tdls_err("msg: %p", msg);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	notify = msg->bodyptr;
+	vdev = notify->vdev;
+	if (!vdev) {
+		tdls_err("NULL vdev object");
+		qdf_mem_free(notify);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	event = &notify->event;
+
+	tdls_debug("evt type: %d", event->message_type);
+	switch (event->message_type) {
+	case TDLS_SHOULD_DISCOVER:
+		tdls_process_should_discover(vdev, event);
+		break;
+	case TDLS_SHOULD_TEARDOWN:
+	case TDLS_PEER_DISCONNECTED:
+		tdls_process_should_teardown(vdev, event);
+		break;
+	case TDLS_CONNECTION_TRACKER_NOTIFY:
+		tdls_process_connection_tracker_notify(vdev, event);
+		break;
+	default:
+		break;
+	}
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_SB_ID);
+	qdf_mem_free(notify);
+
+	return QDF_STATUS_SUCCESS;
+}
