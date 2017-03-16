@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -41,8 +41,7 @@
 #include "cfg_api.h"
 #include "sch_api.h"
 #include "dph_global.h"
-#include "lim_debug.h"
-
+#include "lim_api.h"
 #include "wma_if.h"
 
 /* --------------------------------------------------------------------- */

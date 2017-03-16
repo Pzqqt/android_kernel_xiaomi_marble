@@ -37,7 +37,6 @@
 #include <cds_api.h>
 #include <lim_global.h>
 #include <ani_global.h>
-#include <lim_debug.h>
 #include <lim_ser_des_utils.h>
 
 /*-------------------------------------------------------------------------

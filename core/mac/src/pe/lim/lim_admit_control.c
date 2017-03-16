@@ -36,7 +36,6 @@
  * --------------------------------------------------------------------
  *
  */
-#include "lim_debug.h"
 #include "sys_def.h"
 #include "lim_api.h"
 #include "cfg_api.h"             /* wlan_cfg_get_int() */

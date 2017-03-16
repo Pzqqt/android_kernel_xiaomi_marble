@@ -45,7 +45,6 @@
 #include "utils_api.h"
 
 #include "lim_api.h"
-#include "lim_debug.h"
 #include "lim_trace.h"
 #include "lim_send_sme_rsp_messages.h"
 #include "sys_global.h"

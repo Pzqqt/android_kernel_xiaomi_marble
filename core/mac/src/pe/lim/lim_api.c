@@ -2485,3 +2485,14 @@ QDF_STATUS lim_update_ext_cap_ie(tpAniSirGlobal mac_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
+void lim_log(tpAniSirGlobal pMac, uint32_t loglevel, const char *pString, ...)
+{
+#ifdef WLAN_DEBUG
+	va_list marker;
+
+	va_start(marker, pString);
+	log_debug(pMac, SIR_LIM_MODULE_ID, loglevel, pString, marker);
+	va_end(marker);
+#endif
+}
+

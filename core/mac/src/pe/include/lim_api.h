@@ -379,5 +379,7 @@ QDF_STATUS lim_update_ext_cap_ie(tpAniSirGlobal mac_ctx,
 			  LIM_HE_MU_BEAMFORMER_BIT_POS)
 #endif
 
+void lim_log(tpAniSirGlobal pMac, uint32_t loglevel,
+		const char *pString, ...);
 /************************************************************/
 #endif /* __LIM_API_H */

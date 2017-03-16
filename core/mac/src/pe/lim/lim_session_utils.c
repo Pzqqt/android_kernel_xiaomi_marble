@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -36,7 +36,6 @@
    Include Files
    ------------------------------------------------------------------------*/
 #include "ani_global.h"
-#include "lim_debug.h"
 #include "lim_ft_defs.h"
 #include "lim_session.h"
 #include "lim_session_utils.h"

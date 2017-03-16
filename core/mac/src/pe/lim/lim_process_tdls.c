@@ -170,8 +170,6 @@ enum tdls_peer_capability {
 		CLEAR_BIT(peer_bitmap[1], ((aid) - (sizeof(uint32_t) << 3)));\
 	} while (0);
 
-#ifdef LIM_DEBUG_TDLS
-
 #ifdef FEATURE_WLAN_TDLS
 #define WNI_CFG_TDLS_LINK_SETUP_RSP_TIMEOUT         (800)
 #define WNI_CFG_TDLS_LINK_SETUP_CNF_TIMEOUT         (200)
@@ -201,7 +199,7 @@ static const uint8_t *lim_trace_tdls_action_string(uint8_t tdlsActionCode)
 	}
 	return (const uint8_t *)"UNKNOWN";
 }
-#endif
+
 /*
  * initialize TDLS setup list and related data structures.
  */
