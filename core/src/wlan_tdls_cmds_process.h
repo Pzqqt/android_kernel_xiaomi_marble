@@ -220,4 +220,34 @@ QDF_STATUS tdls_process_add_peer_rsp(struct tdls_add_sta_rsp *rsp);
  * Return: QDF status
  */
 QDF_STATUS tdls_process_del_peer_rsp(struct tdls_del_sta_rsp *rsp);
+
+/**
+ * tdls_process_should_discover() - handle tdls should_discover event
+ * @vdev: vdev object
+ * @evt: event info
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS tdls_process_should_discover(struct wlan_objmgr_vdev *vdev,
+					struct tdls_event_info *evt);
+
+/**
+ * tdls_process_should_teardown() - handle tdls should_teardown event
+ * @vdev: vdev object
+ * @evt: event info
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS tdls_process_should_teardown(struct wlan_objmgr_vdev *vdev,
+					struct tdls_event_info *evt);
+
+/**
+ * tdls_process_connection_tracker_notify() -handle tdls connect tracker notify
+ * @vdev: vdev object
+ * @evt: event info
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS tdls_process_connection_tracker_notify(struct wlan_objmgr_vdev *vdev,
+						  struct tdls_event_info *evt);
 #endif

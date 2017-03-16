@@ -49,6 +49,11 @@
 #define TDLS_SEC_OFFCHAN_OFFSET_40MINUS  (-40)
 #define TDLS_SEC_OFFCHAN_OFFSET_80       80
 #define TDLS_SEC_OFFCHAN_OFFSET_160      160
+/*
+ * Before UpdateTimer expires, we want to timeout discovery response
+ * should not be more than 2000.
+ */
+#define TDLS_DISCOVERY_TIMEOUT_BEFORE_UPDATE     1000
 
 #define tdls_log(level, args...) \
 	QDF_TRACE(QDF_MODULE_ID_TDLS, level, ## args)

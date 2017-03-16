@@ -1611,3 +1611,241 @@ error:
 
 	return status;
 }
+
+static const char *tdls_evt_to_str(enum tdls_event_msg_type type)
+{
+	switch (type) {
+	case TDLS_SHOULD_DISCOVER:
+		return "SHOULD_DISCOVER";
+	case TDLS_SHOULD_TEARDOWN:
+		return "SHOULD_TEARDOWN";
+	case TDLS_PEER_DISCONNECTED:
+		return "SHOULD_PEER_DISCONNECTED";
+	case TDLS_CONNECTION_TRACKER_NOTIFY:
+		return "CONNECTION_TRACKER_NOTIFICATION";
+	default:
+		return "INVALID_TYPE";
+	}
+}
+
+static void
+tdls_implicit_send_discovery_request(struct tdls_vdev_priv_obj *vdev_obj)
+{
+	struct tdls_soc_priv_obj *soc_obj;
+	struct tdls_peer *curr_peer, *temp_peer;
+	struct tdls_osif_indication ind;
+
+	if (!vdev_obj) {
+		tdls_err("vdev_obj is NULL");
+		return;
+	}
+
+	soc_obj = wlan_vdev_get_tdls_soc_obj(vdev_obj->vdev);
+	if (!soc_obj) {
+		tdls_err("soc_obj is NULL");
+		return;
+	}
+
+	curr_peer = vdev_obj->curr_candidate;
+	if (!curr_peer) {
+		tdls_err("curr_peer is NULL");
+		return;
+	}
+
+	temp_peer = tdls_is_progress(vdev_obj, NULL, 0);
+	if (temp_peer) {
+		tdls_notice(QDF_MAC_ADDRESS_STR " ongoing. pre_setup ignored",
+			    QDF_MAC_ADDR_ARRAY(temp_peer->peer_mac.bytes));
+		goto done;
+	}
+
+	if (TDLS_CAP_UNKNOWN != curr_peer->tdls_support)
+		tdls_set_peer_link_status(curr_peer, TDLS_LINK_DISCOVERING,
+					  TDLS_LINK_SUCCESS);
+
+	tdls_debug("Implicit TDLS, Send Discovery request event");
+
+	qdf_mem_copy(ind.peer_mac, curr_peer->peer_mac.bytes,
+		     QDF_MAC_ADDR_SIZE);
+	ind.vdev = vdev_obj->vdev;
+
+	if (soc_obj->tdls_event_cb)
+		soc_obj->tdls_event_cb(soc_obj->tdls_evt_cb_data,
+				       TDLS_EVENT_DISCOVERY_REQ, &ind);
+
+	vdev_obj->discovery_sent_cnt++;
+	/*TODO restart peer discovery timeout*/
+
+	tdls_debug("discovery count %u, timeout %u msec",
+		   vdev_obj->discovery_sent_cnt,
+		   vdev_obj->threshold_config.tx_period_t -
+		   TDLS_DISCOVERY_TIMEOUT_BEFORE_UPDATE);
+done:
+	vdev_obj->curr_candidate = NULL;
+	vdev_obj->magic = 0;
+}
+
+QDF_STATUS tdls_process_should_discover(struct wlan_objmgr_vdev *vdev,
+					struct tdls_event_info *evt)
+{
+	struct tdls_soc_priv_obj *soc_obj;
+	struct tdls_vdev_priv_obj *vdev_obj;
+	struct tdls_peer *curr_peer;
+	uint32_t feature;
+	uint16_t type;
+
+	/*TODO ignore this if any concurrency detected*/
+	soc_obj = wlan_vdev_get_tdls_soc_obj(vdev);
+	vdev_obj = wlan_vdev_get_tdls_vdev_obj(vdev);
+	type = evt->message_type;
+
+	tdls_debug("TDLS %s: " QDF_MAC_ADDRESS_STR "reason %d",
+		   tdls_evt_to_str(type),
+		   QDF_MAC_ADDR_ARRAY(evt->peermac.bytes),
+		   evt->peer_reason);
+	if (!soc_obj || !vdev_obj) {
+		tdls_err("soc_obj: %p, vdev_obj: %p, ignore %s",
+			 soc_obj, vdev_obj, tdls_evt_to_str(type));
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	if (soc_obj->tdls_nss_switch_in_progress) {
+		tdls_err("TDLS antenna switching, ignore %s",
+			 tdls_evt_to_str(type));
+		return QDF_STATUS_SUCCESS;
+	}
+
+	curr_peer = tdls_get_peer(vdev_obj, evt->peermac.bytes);
+	if (!curr_peer) {
+		tdls_notice("curr_peer is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (TDLS_LINK_CONNECTED == curr_peer->link_status) {
+		tdls_err("TDLS link status is connected, ignore");
+		return QDF_STATUS_SUCCESS;
+	}
+
+	feature = soc_obj->tdls_configs.tdls_feature_flags;
+	if (TDLS_IS_EXTERNAL_CONTROL_ENABLED(feature) &&
+	    !curr_peer->is_forced_peer) {
+		tdls_debug("curr_peer is not forced, ignore %s",
+			   tdls_evt_to_str(type));
+		return QDF_STATUS_SUCCESS;
+	}
+
+	tdls_debug("initiate TDLS setup on %s, ext: %d, force: %d, reason: %d",
+		   tdls_evt_to_str(type),
+		   TDLS_IS_EXTERNAL_CONTROL_ENABLED(feature),
+		   curr_peer->is_forced_peer, evt->peer_reason);
+	vdev_obj->curr_candidate = curr_peer;
+	tdls_implicit_send_discovery_request(vdev_obj);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static void
+tdls_indicate_teardown(struct tdls_vdev_priv_obj *vdev_obj,
+		       struct tdls_peer *curr_peer, uint16_t reason)
+{
+	struct tdls_soc_priv_obj *soc_obj;
+	struct tdls_osif_indication ind;
+
+	soc_obj = wlan_vdev_get_tdls_soc_obj(vdev_obj->vdev);
+	if (!soc_obj || !vdev_obj || !curr_peer) {
+		tdls_err("soc_obj: %p, vdev_obj: %p, curr_peer: %p",
+			 soc_obj, vdev_obj, curr_peer);
+		return;
+	}
+
+	if (TDLS_LINK_CONNECTED != curr_peer->link_status) {
+		tdls_debug("peer not connected");
+		return;
+	}
+
+	tdls_set_peer_link_status(curr_peer, TDLS_LINK_TEARING,
+				  TDLS_LINK_UNSPECIFIED);
+
+	tdls_debug("Teardown peer " QDF_MAC_ADDRESS_STR "reason %d",
+		   QDF_MAC_ADDR_ARRAY(curr_peer->peer_mac.bytes), reason);
+
+	qdf_mem_copy(ind.peer_mac, curr_peer->peer_mac.bytes,
+		     QDF_MAC_ADDR_SIZE);
+	ind.reason = reason;
+	ind.vdev = vdev_obj->vdev;
+
+	if (soc_obj->tdls_event_cb)
+		soc_obj->tdls_event_cb(soc_obj->tdls_evt_cb_data,
+				       TDLS_EVENT_TEARDOWN_REQ, &ind);
+}
+
+QDF_STATUS tdls_process_should_teardown(struct wlan_objmgr_vdev *vdev,
+					struct tdls_event_info *evt)
+{
+	struct tdls_soc_priv_obj *soc_obj;
+	struct tdls_vdev_priv_obj *vdev_obj;
+	struct tdls_peer *curr_peer;
+	uint32_t reason;
+	uint16_t type;
+
+	type = evt->message_type;
+	soc_obj = wlan_vdev_get_tdls_soc_obj(vdev);
+	vdev_obj = wlan_vdev_get_tdls_vdev_obj(vdev);
+
+	tdls_debug("TDLS %s: " QDF_MAC_ADDRESS_STR "reason %d",
+		   tdls_evt_to_str(type),
+		   QDF_MAC_ADDR_ARRAY(evt->peermac.bytes), evt->peer_reason);
+
+	if (!soc_obj || !vdev_obj) {
+		tdls_err("soc_obj: %p, vdev_obj: %p, ignore %s",
+			 soc_obj, vdev_obj, tdls_evt_to_str(type));
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	curr_peer = tdls_find_peer(vdev_obj, evt->peermac.bytes);
+	if (!curr_peer) {
+		tdls_notice("curr_peer is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	reason = evt->peer_reason;
+	if (TDLS_LINK_CONNECTED == curr_peer->link_status) {
+		tdls_err("%s reason: %d for" QDF_MAC_ADDRESS_STR,
+			 tdls_evt_to_str(type), evt->peer_reason,
+			 QDF_MAC_ADDR_ARRAY(evt->peermac.bytes));
+		if (reason == TDLS_TEARDOWN_RSSI ||
+		    reason == TDLS_DISCONNECTED_PEER_DELETE ||
+		    reason == TDLS_TEARDOWN_PTR_TIMEOUT ||
+		    reason == TDLS_TEARDOWN_NO_RSP)
+			reason = TDLS_TEARDOWN_PEER_UNREACHABLE;
+		else
+			reason = TDLS_TEARDOWN_PEER_UNSPEC_REASON;
+
+		tdls_indicate_teardown(vdev_obj, curr_peer, reason);
+	} else {
+		tdls_err("TDLS link is not connected, ignore %s",
+			 tdls_evt_to_str(type));
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS tdls_process_connection_tracker_notify(struct wlan_objmgr_vdev *vdev,
+						  struct tdls_event_info *evt)
+{
+	struct tdls_soc_priv_obj *soc_obj;
+	struct tdls_vdev_priv_obj *vdev_obj;
+	uint16_t type;
+
+	type = evt->message_type;
+	soc_obj = wlan_vdev_get_tdls_soc_obj(vdev);
+	vdev_obj = wlan_vdev_get_tdls_vdev_obj(vdev);
+
+	if (!soc_obj || !vdev_obj) {
+		tdls_err("soc_obj: %p, vdev_obj: %p, ignore %s",
+			 soc_obj, vdev_obj, tdls_evt_to_str(type));
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	/*TODO connection tracker update*/
+	return QDF_STATUS_SUCCESS;
+}
