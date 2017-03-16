@@ -53,18 +53,11 @@
 void dot11f_log(tpAniSirGlobal pMac, int loglevel, const char *pString, ...)
 {
 #ifdef WLAN_DEBUG
-	if ((uint32_t) loglevel >
-	    pMac->utils.gLogDbgLevel[LOG_INDEX_FOR_MODULE(SIR_DBG_MODULE_ID)]) {
-		return;
-	} else {
-		va_list marker;
+	va_list marker;
 
-		va_start(marker, pString);      /* Initialize variable arguments. */
-
-		log_debug(pMac, SIR_DBG_MODULE_ID, loglevel, pString, marker);
-
-		va_end(marker); /* Reset variable arguments.      */
-	}
+	va_start(marker, pString);
+	log_debug(pMac, SIR_DBG_MODULE_ID, loglevel, pString, marker);
+	va_end(marker);
 #endif
 }
 

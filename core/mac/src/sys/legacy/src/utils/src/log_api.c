@@ -118,17 +118,11 @@ void log_dbg(tpAniSirGlobal pMac, uint8_t modId, uint32_t debugLevel,
 	     const char *pStr, ...)
 {
 #ifdef WLAN_DEBUG
-	if (debugLevel > pMac->utils.gLogDbgLevel[LOG_INDEX_FOR_MODULE(modId)])
-		return;
-	else {
-		va_list marker;
+	va_list marker;
 
-		va_start(marker, pStr); /* Initialize variable arguments. */
-
-		log_debug(pMac, modId, debugLevel, pStr, marker);
-
-		va_end(marker); /* Reset variable arguments.      */
-	}
+	va_start(marker, pStr);
+	log_debug(pMac, modId, debugLevel, pStr, marker);
+	va_end(marker);
 #endif
 }
 

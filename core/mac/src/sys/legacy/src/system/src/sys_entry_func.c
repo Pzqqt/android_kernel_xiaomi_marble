@@ -218,17 +218,11 @@ fail:
 
 void sys_log(tpAniSirGlobal pMac, uint32_t loglevel, const char *pString, ...)
 {
-	/* Verify against current log level */
-	if (loglevel >
-	    pMac->utils.gLogDbgLevel[LOG_INDEX_FOR_MODULE(SIR_SYS_MODULE_ID)])
-		return;
-	else {
-		va_list marker;
+#ifdef WLAN_DEBUG
+	va_list marker;
 
-		va_start(marker, pString);      /* Initialize variable arguments. */
-
-		log_debug(pMac, SIR_SYS_MODULE_ID, loglevel, pString, marker);
-
-		va_end(marker); /* Reset variable arguments.      */
-	}
+	va_start(marker, pString);
+	log_debug(pMac, SIR_SYS_MODULE_ID, loglevel, pString, marker);
+	va_end(marker);
+#endif
 }

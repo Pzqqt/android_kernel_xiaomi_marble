@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014, 2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -40,18 +40,10 @@
 void cfg_log(tpAniSirGlobal pMac, uint32_t loglevel, const char *pString, ...)
 {
 #ifdef WLAN_DEBUG
-	/* Verify against current log level */
-	if (loglevel >
-	    pMac->utils.gLogDbgLevel[LOG_INDEX_FOR_MODULE(SIR_CFG_MODULE_ID)])
-		return;
-	else {
-		va_list marker;
+	va_list marker;
 
-		va_start(marker, pString);      /* Initialize variable arguments. */
-
-		log_debug(pMac, SIR_CFG_MODULE_ID, loglevel, pString, marker);
-
-		va_end(marker); /* Reset variable arguments.      */
-	}
+	va_start(marker, pString);
+	log_debug(pMac, SIR_CFG_MODULE_ID, loglevel, pString, marker);
+	va_end(marker);
 #endif
 }
