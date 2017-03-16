@@ -45,7 +45,6 @@
 #include "sch_api.h"
 #include "utils_api.h"
 
-#include "sys_debug.h"
 #include "sys_def.h"
 #include "sys_entry_func.h"
 #include "sys_startup.h"

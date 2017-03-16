@@ -41,7 +41,6 @@
 #include "cfg_api.h"             /* cfg_cleanup */
 #include "lim_api.h"             /* lim_cleanup */
 #include "sir_types.h"
-#include "sys_debug.h"
 #include "sys_entry_func.h"
 #include "mac_init_api.h"
 
@@ -65,8 +64,6 @@ tSirRetStatus mac_start(tHalHandle hHal, void *pHalMacStartParams)
 
 	pMac->gDriverType =
 		((tHalMacStartParameters *) pHalMacStartParams)->driverType;
-
-	sys_log(pMac, LOG2, FL("called\n"));
 
 	if (ANI_DRIVER_TYPE(pMac) != eDRIVER_TYPE_MFG) {
 		status = pe_start(pMac);

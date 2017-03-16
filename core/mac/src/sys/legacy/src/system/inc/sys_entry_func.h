@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2014, 2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -49,5 +49,6 @@ extern void sysMmhEntry(uint32_t dummy);
 extern void sysMntEntry(uint32_t dummy);
 extern void sysHalEntry(uint32_t dummy);
 extern void sysNimPttEntry(uint32_t dummy);
+void sys_log(tpAniSirGlobal pMac, uint32_t loglevel, const char *pString, ...);
 
 #endif /* __SYS_ENTRY_FUNC_H */
