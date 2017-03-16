@@ -58,7 +58,6 @@
 
 #define SME_SUMMARY_STATS         (1 << eCsrSummaryStats)
 #define SME_GLOBAL_CLASSA_STATS   (1 << eCsrGlobalClassAStats)
-#define SME_GLOBAL_CLASSB_STATS   (1 << eCsrGlobalClassBStats)
 #define SME_GLOBAL_CLASSD_STATS   (1 << eCsrGlobalClassDStats)
 #define SME_PER_CHAIN_RSSI_STATS  (1 << csr_per_chain_rssi_stats)
 

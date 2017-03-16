@@ -1504,30 +1504,6 @@ typedef struct tagCsrGlobalClassAStatsInfo {
 
 } tCsrGlobalClassAStatsInfo;
 
-typedef struct tagCsrGlobalClassBStatsInfo {
-	uint32_t uc_rx_wep_unencrypted_frm_cnt;
-	uint32_t uc_rx_mic_fail_cnt;
-	uint32_t uc_tkip_icv_err;
-	uint32_t uc_aes_ccmp_format_err;
-	uint32_t uc_aes_ccmp_replay_cnt;
-	uint32_t uc_aes_ccmp_decrpt_err;
-	uint32_t uc_wep_undecryptable_cnt;
-	uint32_t uc_wep_icv_err;
-	uint32_t uc_rx_decrypt_succ_cnt;
-	uint32_t uc_rx_decrypt_fail_cnt;
-	uint32_t mcbc_rx_wep_unencrypted_frm_cnt;
-	uint32_t mcbc_rx_mic_fail_cnt;
-	uint32_t mcbc_tkip_icv_err;
-	uint32_t mcbc_aes_ccmp_format_err;
-	uint32_t mcbc_aes_ccmp_replay_cnt;
-	uint32_t mcbc_aes_ccmp_decrpt_err;
-	uint32_t mcbc_wep_undecryptable_cnt;
-	uint32_t mcbc_wep_icv_err;
-	uint32_t mcbc_rx_decrypt_succ_cnt;
-	uint32_t mcbc_rx_decrypt_fail_cnt;
-
-} tCsrGlobalClassBStatsInfo;
-
 typedef struct tagCsrGlobalClassDStatsInfo {
 	uint32_t tx_uc_frm_cnt;
 	uint32_t tx_mc_frm_cnt;
