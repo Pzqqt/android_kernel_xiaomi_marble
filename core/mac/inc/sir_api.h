@@ -5006,6 +5006,10 @@ typedef struct {
 	 *  a data frame with PM bit set.
 	 */
 	uint32_t rx_leak_window;
+	uint32_t rts_succ_cnt;
+	uint32_t rts_fail_cnt;
+	uint32_t ppdu_succ_cnt;
+	uint32_t ppdu_fail_cnt;
 	/* per ac data packet statistics */
 	tSirWifiWmmAcStat AccessclassStats[WIFI_AC_MAX];
 } tSirWifiIfaceStat, *tpSirWifiIfaceStat;
