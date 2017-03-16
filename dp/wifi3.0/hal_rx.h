@@ -529,6 +529,15 @@ struct rx_pkt_tlvs {
 
 #define RX_PKT_TLVS_LEN		(sizeof(struct rx_pkt_tlvs))
 
+static inline uint8_t
+*hal_rx_pkt_hdr_get(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+
+	return pkt_tlvs->pkt_hdr_tlv.rx_pkt_hdr;
+
+}
+
 /*
  * Get msdu_done bit from the RX_ATTENTION TLV
  */
@@ -1416,6 +1425,55 @@ hal_rx_msdu_end_da_is_mcbc_get(uint8_t *buf)
 	return da_is_mcbc;
 }
 
+#define HAL_RX_MSDU_END_FIRST_MSDU_GET(_rx_msdu_end)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,	\
+		RX_MSDU_END_5_FIRST_MSDU_OFFSET)),	\
+		RX_MSDU_END_5_FIRST_MSDU_MASK,		\
+		RX_MSDU_END_5_FIRST_MSDU_LSB))
+
+ /**
+ * hal_rx_msdu_end_first_msdu_get: API to get first msdu status
+ * from rx_msdu_end TLV
+ *
+ * @ buf: pointer to the start of RX PKT TLV headers
+ * Return: first_msdu
+ */
+static inline uint8_t
+hal_rx_msdu_end_first_msdu_get(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+	uint8_t first_msdu;
+
+	first_msdu = HAL_RX_MSDU_END_FIRST_MSDU_GET(msdu_end);
+
+	return first_msdu;
+}
+
+#define HAL_RX_MSDU_END_LAST_MSDU_GET(_rx_msdu_end)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,	\
+		RX_MSDU_END_5_LAST_MSDU_OFFSET)),	\
+		RX_MSDU_END_5_LAST_MSDU_MASK,		\
+		RX_MSDU_END_5_LAST_MSDU_LSB))
+
+ /**
+ * hal_rx_msdu_end_last_msdu_get: API to get last msdu status
+ * from rx_msdu_end TLV
+ *
+ * @ buf: pointer to the start of RX PKT TLV headers
+ * Return: last_msdu
+ */
+static inline uint8_t
+hal_rx_msdu_end_last_msdu_get(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+	uint8_t last_msdu;
+
+	last_msdu = HAL_RX_MSDU_END_LAST_MSDU_GET(msdu_end);
+
+	return last_msdu;
+}
 /*******************************************************************************
  * RX ERROR APIS
  ******************************************************************************/
@@ -1838,6 +1896,22 @@ enum hal_rx_wbm_rxdma_push_reason {
 	(WBM_RELEASE_RING_2_RXDMA_ERROR_CODE_OFFSET >> 2))) & \
 	WBM_RELEASE_RING_2_RXDMA_ERROR_CODE_MASK) >>	\
 	WBM_RELEASE_RING_2_RXDMA_ERROR_CODE_LSB)
+
+#define HAL_RX_WBM_FIRST_MSDU_GET(wbm_desc)		\
+	(((*(((uint32_t *) wbm_desc) +			\
+	(WBM_RELEASE_RING_4_FIRST_MSDU_OFFSET >> 2))) & \
+	WBM_RELEASE_RING_4_FIRST_MSDU_MASK) >>		\
+	WBM_RELEASE_RING_4_FIRST_MSDU_LSB)
+
+#define HAL_RX_WBM_LAST_MSDU_GET(wbm_desc)		\
+	(((*(((uint32_t *) wbm_desc) +			\
+	(WBM_RELEASE_RING_4_LAST_MSDU_OFFSET >> 2))) & 	\
+	WBM_RELEASE_RING_4_LAST_MSDU_MASK) >>		\
+	WBM_RELEASE_RING_4_LAST_MSDU_LSB)
+
+#define HAL_RX_WBM_BUF_COOKIE_GET(wbm_desc) \
+	HAL_RX_BUF_COOKIE_GET(&((struct wbm_release_ring *) \
+	wbm_desc)->released_buff_or_desc_addr_info)
 
 #define HAL_RX_WBM_BUF_COOKIE_GET(wbm_desc) \
 	HAL_RX_BUF_COOKIE_GET(&((struct wbm_release_ring *) \

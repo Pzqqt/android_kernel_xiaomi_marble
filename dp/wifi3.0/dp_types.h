@@ -679,6 +679,9 @@ struct dp_soc {
 
 	/* Obj Mgr SoC */
 	struct wlan_objmgr_psoc *psoc;
+
+	qdf_nbuf_t invalid_peer_head_msdu;
+	qdf_nbuf_t invalid_peer_tail_msdu;
 };
 
 #define MAX_RX_MAC_RINGS 2

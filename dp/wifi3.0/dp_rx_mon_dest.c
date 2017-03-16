@@ -609,7 +609,6 @@ void dp_rx_extract_radiotap_info(struct cdp_mon_status *rx_status,
 	/* TODO: rx_mon_status->vht_flag_values1 */
 }
 
-static inline
 QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
 	qdf_nbuf_t head_msdu, qdf_nbuf_t tail_msdu)
 {
@@ -728,7 +727,6 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 						&head_msdu, &tail_msdu,
 						&npackets, &ppdu_id,
 						&head, &tail);
-
 #if 0
 			/* Temporary only handle destination ring */
 			if (ppdu_id != pdev->mon_ppdu_id) {

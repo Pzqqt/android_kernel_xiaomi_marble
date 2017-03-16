@@ -27,6 +27,7 @@
 #include "if_meta_hdr.h"
 #endif
 #include "dp_internal.h"
+#include "dp_rx_mon.h"
 
 /*
  * dp_rx_buffers_replenish() - replenish rxdma ring with rx nbufs
@@ -498,13 +499,55 @@ QDF_STATUS dp_rx_filter_mesh_packets(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
 
 #ifdef CONFIG_WIN
 /**
+ * dp_rx_nac_filter(): Function to perform filtering of non-associated
+ * clients
+ * @pdev: DP pdev handle
+ * @rx_pkt_hdr: Rx packet Header
+ *
+ * return: dp_vdev*
+ */
+static
+struct dp_vdev *dp_rx_nac_filter(struct dp_pdev *pdev,
+		uint8_t *rx_pkt_hdr)
+{
+	struct ieee80211_frame *wh;
+	struct dp_neighbour_peer *peer = NULL;
+
+	wh = (struct ieee80211_frame *)rx_pkt_hdr;
+
+	if ((wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) != IEEE80211_FC1_DIR_TODS)
+		return NULL;
+
+	qdf_spin_lock_bh(&pdev->neighbour_peer_mutex);
+	TAILQ_FOREACH(peer, &pdev->neighbour_peers_list,
+				neighbour_peer_list_elem) {
+		if (qdf_mem_cmp(&peer->neighbour_peers_macaddr.raw[0],
+				wh->i_addr2, DP_MAC_ADDR_LEN) == 0) {
+			QDF_TRACE(
+				QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+				FL("NAC configuration matched for mac-%2x:%2x:%2x:%2x:%2x:%2x"),
+				peer->neighbour_peers_macaddr.raw[0],
+				peer->neighbour_peers_macaddr.raw[1],
+				peer->neighbour_peers_macaddr.raw[2],
+				peer->neighbour_peers_macaddr.raw[3],
+				peer->neighbour_peers_macaddr.raw[4],
+				peer->neighbour_peers_macaddr.raw[5]);
+			return pdev->monitor_vdev;
+		}
+	}
+	qdf_spin_unlock_bh(&pdev->neighbour_peer_mutex);
+
+	return NULL;
+}
+
+/**
  * dp_rx_process_invalid_peer(): Function to pass invalid peer list to umac
  * @soc: DP SOC handle
- * @nbuf: nbuf for which peer is invalid
+ * @mpdu: mpdu for which peer is invalid
  *
  * return: integer type
  */
-uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t nbuf)
+uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu)
 {
 	struct dp_invalid_peer_msg msg;
 	struct dp_vdev *vdev = NULL;
@@ -513,7 +556,7 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t nbuf)
 	uint8_t i;
 	uint8_t *rx_pkt_hdr;
 
-	rx_pkt_hdr = qdf_nbuf_data(nbuf);
+	rx_pkt_hdr = hal_rx_pkt_hdr_get(qdf_nbuf_data(mpdu));
 	wh = (struct ieee80211_frame *)rx_pkt_hdr;
 
 	if (!DP_FRAME_IS_DATA(wh)) {
@@ -522,7 +565,7 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t nbuf)
 		return 1;
 	}
 
-	if (qdf_nbuf_len(nbuf) < sizeof(struct ieee80211_frame)) {
+	if (qdf_nbuf_len(mpdu) < sizeof(struct ieee80211_frame)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				"Invalid nbuf length");
 		return 1;
@@ -537,6 +580,16 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t nbuf)
 			continue;
 		}
 
+		if (pdev->filter_neighbour_peers) {
+			/* Next Hop scenario not yet handle */
+			vdev = dp_rx_nac_filter(pdev, rx_pkt_hdr);
+			if (vdev) {
+				dp_rx_mon_deliver(soc, i,
+						soc->invalid_peer_head_msdu,
+						soc->invalid_peer_tail_msdu);
+				return 0;
+			}
+		}
 		TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
 			if (qdf_mem_cmp(wh->i_addr1, vdev->mac_addr.raw,
 						DP_MAC_ADDR_LEN) == 0) {
@@ -553,7 +606,8 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t nbuf)
 
 out:
 	msg.wh = wh;
-	msg.nbuf = nbuf;
+	qdf_nbuf_pull_head(mpdu, RX_PKT_TLVS_LEN);
+	msg.nbuf = mpdu;
 	msg.vdev_id = vdev->vdev_id;
 	if (pdev->soc->cdp_soc.ol_ops->rx_invalid_peer)
 		return pdev->soc->cdp_soc.ol_ops->rx_invalid_peer(
@@ -562,7 +616,7 @@ out:
 	return 0;
 }
 #else
-uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t nbuf)
+uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu)
 {
 	return 0;
 }
@@ -863,7 +917,6 @@ done:
 			 */
 			/* Peer lookup failed */
 			if (!peer && !vdev) {
-
 				dp_rx_process_invalid_peer(soc, nbuf);
 				DP_STATS_INC_PKT(soc, rx.err.rx_invalid_peer, 1,
 						qdf_nbuf_len(nbuf));

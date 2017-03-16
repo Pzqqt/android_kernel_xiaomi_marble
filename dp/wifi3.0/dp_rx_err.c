@@ -199,6 +199,30 @@ dp_rx_2k_jump_handle(struct dp_soc *soc, void *ring_desc,
 				head, tail, quota);
 }
 
+static bool
+dp_rx_chain_msdus(struct dp_soc *soc, qdf_nbuf_t nbuf,
+		struct dp_rx_desc *rx_desc)
+{
+	bool mpdu_done = false;
+
+	if (hal_rx_msdu_end_first_msdu_get(rx_desc->rx_buf_start)) {
+		qdf_nbuf_set_chfrag_start(rx_desc->nbuf, 1);
+		soc->invalid_peer_head_msdu = NULL;
+		soc->invalid_peer_tail_msdu = NULL;
+	}
+
+	if (hal_rx_msdu_end_last_msdu_get(rx_desc->rx_buf_start)) {
+		qdf_nbuf_set_chfrag_end(rx_desc->nbuf, 1);
+		mpdu_done = true;
+	}
+
+	DP_RX_LIST_APPEND(soc->invalid_peer_head_msdu,
+				soc->invalid_peer_tail_msdu,
+				nbuf);
+
+	return mpdu_done;
+}
+
 /**
 * dp_rx_null_q_desc_handle() - Function to handle NULL Queue
 *                              descriptor violation on either a
@@ -271,11 +295,17 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 	peer = dp_peer_find_by_id(soc, peer_id);
 
 	if (!peer) {
+		bool mpdu_done = false;
+
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 		FL("peer is NULL"));
-		qdf_nbuf_pull_head(nbuf, RX_PKT_TLVS_LEN);
-		dp_rx_process_invalid_peer(soc, nbuf);
-		goto fail;
+
+		mpdu_done = dp_rx_chain_msdus(soc, nbuf, rx_desc);
+		if (mpdu_done)
+			dp_rx_process_invalid_peer(soc, nbuf);
+
+		dp_rx_add_to_free_desc_list(head, tail, rx_desc);
+		return rx_bufs_used;
 	}
 
 	vdev = peer->vdev;
