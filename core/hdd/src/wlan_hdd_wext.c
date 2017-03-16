@@ -3614,7 +3614,6 @@ static void hdd_statistics_cb(void *pStats, void *pContext)
 	tCsrSummaryStatsInfo *pSummaryStats = NULL;
 	tCsrGlobalClassAStatsInfo *pClassAStats = NULL;
 	tCsrGlobalClassBStatsInfo *pClassBStats = NULL;
-	tCsrGlobalClassCStatsInfo *pClassCStats = NULL;
 	tCsrGlobalClassDStatsInfo *pClassDStats = NULL;
 
 	if (pAdapter != NULL)
@@ -3623,8 +3622,7 @@ static void hdd_statistics_cb(void *pStats, void *pContext)
 	pSummaryStats = (tCsrSummaryStatsInfo *) pStats;
 	pClassAStats = (tCsrGlobalClassAStatsInfo *) (pSummaryStats + 1);
 	pClassBStats = (tCsrGlobalClassBStatsInfo *) (pClassAStats + 1);
-	pClassCStats = (tCsrGlobalClassCStatsInfo *) (pClassBStats + 1);
-	pClassDStats = (tCsrGlobalClassDStatsInfo *) (pClassCStats + 1);
+	pClassDStats = (tCsrGlobalClassDStatsInfo *) (pClassBStats + 1);
 
 	if (pStatsCache != NULL) {
 		/* copy the stats into the cache we keep in the
@@ -3636,8 +3634,6 @@ static void hdd_statistics_cb(void *pStats, void *pContext)
 			     sizeof(pStatsCache->ClassA_stat));
 		qdf_mem_copy(&pStatsCache->ClassB_stat, pClassBStats,
 			     sizeof(pStatsCache->ClassB_stat));
-		qdf_mem_copy(&pStatsCache->ClassC_stat, pClassCStats,
-			     sizeof(pStatsCache->ClassC_stat));
 		qdf_mem_copy(&pStatsCache->ClassD_stat, pClassDStats,
 			     sizeof(pStatsCache->ClassD_stat));
 	}
@@ -4638,7 +4634,6 @@ static int __iw_get_bitrate(struct net_device *dev,
 					   SME_SUMMARY_STATS |
 					   SME_GLOBAL_CLASSA_STATS |
 					   SME_GLOBAL_CLASSB_STATS |
-					   SME_GLOBAL_CLASSC_STATS |
 					   SME_GLOBAL_CLASSD_STATS,
 					   hdd_statistics_cb, 0,
 					   false,
@@ -11475,7 +11470,6 @@ static int __iw_get_statistics(struct net_device *dev,
 					    SME_SUMMARY_STATS |
 					    SME_GLOBAL_CLASSA_STATS |
 					    SME_GLOBAL_CLASSB_STATS |
-					    SME_GLOBAL_CLASSC_STATS |
 					    SME_GLOBAL_CLASSD_STATS,
 					    hdd_statistics_cb, 0, false,
 					    (WLAN_HDD_GET_STATION_CTX_PTR
@@ -11499,7 +11493,6 @@ static int __iw_get_statistics(struct net_device *dev,
 						    SME_SUMMARY_STATS |
 						    SME_GLOBAL_CLASSA_STATS |
 						    SME_GLOBAL_CLASSB_STATS |
-						    SME_GLOBAL_CLASSC_STATS |
 						    SME_GLOBAL_CLASSD_STATS,
 						    NULL, 0, false,
 						    (WLAN_HDD_GET_STATION_CTX_PTR
