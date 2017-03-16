@@ -7649,7 +7649,7 @@ static int hdd_update_user_config(hdd_context_t *hdd_ctx)
 		hdd_ctx->config->goptimize_chan_avoid_event;
 	user_config->skip_dfs_chnl_in_p2p_search =
 		hdd_ctx->config->skipDfsChnlInP2pSearch;
-
+	user_config->band_capability = hdd_ctx->config->nBandCapability;
 	wlan_objmgr_psoc_set_user_config(hdd_ctx->hdd_psoc, user_config);
 
 	qdf_mem_free(user_config);
