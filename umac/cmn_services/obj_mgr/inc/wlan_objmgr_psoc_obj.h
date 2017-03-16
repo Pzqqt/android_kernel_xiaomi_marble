@@ -176,6 +176,7 @@ struct wlan_objmgr_psoc_regulatory {
  * @indoor_channel_support: Enable/disable sap on indoor channel
  * @optimize_chan_avoid_event: Optimize channel avoidance
  *                           indication coming from firmware
+ * @band_capability: Preferred band (0:Both,  1:2G only,  2:5G only)
  */
 struct wlan_objmgr_psoc_user_config {
 	bool is_11d_support_enabled;
@@ -185,6 +186,7 @@ struct wlan_objmgr_psoc_user_config {
 	uint32_t dual_mac_feature_disable;
 	bool indoor_channel_support;
 	bool optimize_chan_avoid_event;
+	uint8_t band_capability;
 };
 
 /**
@@ -1175,6 +1177,23 @@ static inline uint32_t wlan_objmgr_psoc_get_dual_mac_disable(
 	if (psoc == NULL)
 		return 0;
 	return psoc->soc_nif.user_config.dual_mac_feature_disable;
+}
+
+/**
+* wlan_objmgr_psoc_get_band_capability () - get user config
+* data for band capability
+* @psoc: psoc object pointer
+*
+* Return: band_capability
+*/
+static inline uint8_t wlan_objmgr_psoc_get_band_capability(
+		struct wlan_objmgr_psoc *psoc)
+{
+	/* This API is invoked with lock acquired, do not add log prints */
+	if (psoc == NULL)
+		return 0;
+
+	return psoc->soc_nif.user_config.band_capability;
 }
 
 #endif /* _WLAN_OBJMGR_PSOC_OBJ_H_*/
