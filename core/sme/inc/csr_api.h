@@ -1493,16 +1493,12 @@ typedef struct tagCsrSummaryStatsInfo {
 } tCsrSummaryStatsInfo;
 
 typedef struct tagCsrGlobalClassAStatsInfo {
-	uint32_t rx_frag_cnt;
-	uint32_t promiscuous_rx_frag_cnt;
-	/* uint32_t rx_fcs_err; */
-	uint32_t rx_input_sensitivity;
+	uint32_t nss;
 	uint32_t max_pwr;
-	/* uint32_t default_pwr; */
-	uint32_t sync_fail_cnt;
 	uint32_t tx_rate;
 	/* mcs index for HT20 and HT40 rates */
 	uint32_t mcs_index;
+	uint32_t mcs_rate_flags;
 	/* to diff between HT20 & HT40 rates;short & long guard interval */
 	uint32_t tx_rate_flags;
 

@@ -1555,13 +1555,8 @@ static void wma_update_peer_stats(tp_wma_handle wma,
 					wma_get_mcs_idx((peer_stats->peer_tx_rate /
 							 100), node->rate_flags,
 							node->nss, &mcsRateFlags);
-				/* rx_frag_cnt and promiscuous_rx_frag_cnt
-				 * parameter is currently not used. lets use the
-				 * same parameter to hold the nss value and mcs
-				 * rate flags */
-				classa_stats->rx_frag_cnt = node->nss;
-				classa_stats->promiscuous_rx_frag_cnt =
-					mcsRateFlags;
+				classa_stats->nss = node->nss;
+				classa_stats->mcs_rate_flags = mcsRateFlags;
 			}
 			/* FW returns tx power in intervals of 0.5 dBm
 			   Convert it back to intervals of 1 dBm */
