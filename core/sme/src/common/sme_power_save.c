@@ -153,8 +153,7 @@ static QDF_STATUS sme_ps_enable_ps_req_params(tpAniSirGlobal mac_ctx,
 
 	enable_ps_req_params =  qdf_mem_malloc(sizeof(*enable_ps_req_params));
 	if (NULL == enable_ps_req_params) {
-		sms_log(mac_ctx, LOGE,
-			FL("Memory allocation failed for enable_ps_req_params"));
+		sme_err("Memory allocation failed for enable_ps_req_params");
 		return QDF_STATUS_E_NOMEM;
 	}
 	if (ps_param->uapsd_per_ac_bit_mask) {
@@ -194,8 +193,7 @@ static QDF_STATUS sme_ps_disable_ps_req_params(tpAniSirGlobal mac_ctx,
 
 	disable_ps_req_params = qdf_mem_malloc(sizeof(*disable_ps_req_params));
 	if (NULL == disable_ps_req_params) {
-		sms_log(mac_ctx, LOGE,
-			FL("Memory allocation failed for sDisablePsParams"));
+		sme_err("Memory allocation failed for sDisablePsParams");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -229,8 +227,7 @@ static QDF_STATUS sme_ps_enable_uapsd_req_params(tpAniSirGlobal mac_ctx,
 	enable_uapsd_req_params =
 		qdf_mem_malloc(sizeof(*enable_uapsd_req_params));
 	if (NULL == enable_uapsd_req_params) {
-		sms_log(mac_ctx, LOGE,
-			FL("Memory allocation failed for enable_uapsd_req_params"));
+		sme_err("Memory allocation failed for enable_uapsd_req_params");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -266,14 +263,13 @@ static QDF_STATUS sme_ps_disable_uapsd_req_params(tpAniSirGlobal mac_ctx,
 
 	sme_get_ps_state(mac_ctx, session_id, &ps_state);
 	if (ps_state != UAPSD_MODE) {
-		sms_log(mac_ctx, LOGE, FL("UAPSD is already disabled"));
+		sme_err("UAPSD is already disabled");
 		return QDF_STATUS_SUCCESS;
 	}
 	disable_uapsd_req_params =
 		qdf_mem_malloc(sizeof(*disable_uapsd_req_params));
 	if (NULL == disable_uapsd_req_params) {
-		sms_log(mac_ctx, LOGE,
-			FL("Mem alloc failed for disable_uapsd_req_params"));
+		sme_err("Mem alloc failed for disable_uapsd_req_params");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -309,8 +305,7 @@ static QDF_STATUS sme_ps_enter_wowl_req_params(tpAniSirGlobal mac_ctx,
 
 	hal_wowl_params = qdf_mem_malloc(sizeof(*hal_wowl_params));
 	if (NULL == hal_wowl_params) {
-		sms_log(mac_ctx, LOGP,
-			FL("Fail to allocate memory for Enter Wowl Request"));
+		sme_err("Fail to allocate memory for Enter Wowl Request");
 		return  QDF_STATUS_E_NOMEM;
 	}
 
@@ -337,8 +332,7 @@ static QDF_STATUS sme_ps_enter_wowl_req_params(tpAniSirGlobal mac_ctx,
 	if (wlan_cfg_get_int
 			(mac_ctx, WNI_CFG_WOWLAN_UCAST_PATTERN_FILTER_ENABLE,
 			 &cfg_value) != eSIR_SUCCESS) {
-		sms_log(mac_ctx, LOGP,
-			FL("cfgGet failed for WNI_CFG_WOWLAN_UCAST_PATTERN_FILTER_ENABLE"));
+		sme_err("cfgGet failed for WNI_CFG_WOWLAN_UCAST_PATTERN_FILTER_ENABLE");
 		goto end;
 	}
 	hal_wowl_params->ucUcastPatternFilteringEnable = (uint8_t) cfg_value;
@@ -346,8 +340,7 @@ static QDF_STATUS sme_ps_enter_wowl_req_params(tpAniSirGlobal mac_ctx,
 	if (wlan_cfg_get_int
 			(mac_ctx, WNI_CFG_WOWLAN_CHANNEL_SWITCH_ENABLE,
 			 &cfg_value) != eSIR_SUCCESS) {
-		sms_log(mac_ctx, LOGP,
-			FL("cfgGet failed for WNI_CFG_WOWLAN_CHANNEL_SWITCH_ENABLE"));
+		sme_err("cfgGet failed for WNI_CFG_WOWLAN_CHANNEL_SWITCH_ENABLE");
 		goto end;
 	}
 	hal_wowl_params->ucWowChnlSwitchRcv = (uint8_t) cfg_value;
@@ -355,8 +348,7 @@ static QDF_STATUS sme_ps_enter_wowl_req_params(tpAniSirGlobal mac_ctx,
 	if (wlan_cfg_get_int
 			(mac_ctx, WNI_CFG_WOWLAN_DEAUTH_ENABLE, &cfg_value) !=
 			eSIR_SUCCESS) {
-		sms_log(mac_ctx, LOGP,
-			FL("cfgGet failed for WNI_CFG_WOWLAN_DEAUTH_ENABLE "));
+		sme_err("cfgGet failed for WNI_CFG_WOWLAN_DEAUTH_ENABLE");
 		goto end;
 	}
 	hal_wowl_params->ucWowDeauthRcv = (uint8_t) cfg_value;
@@ -364,24 +356,21 @@ static QDF_STATUS sme_ps_enter_wowl_req_params(tpAniSirGlobal mac_ctx,
 	if (wlan_cfg_get_int
 			(mac_ctx, WNI_CFG_WOWLAN_DISASSOC_ENABLE, &cfg_value) !=
 			eSIR_SUCCESS) {
-		sms_log(mac_ctx, LOGP,
-		      FL("cfgGet failed for WNI_CFG_WOWLAN_DISASSOC_ENABLE "));
+		sme_err("cfgGet failed for WNI_CFG_WOWLAN_DISASSOC_ENABLE");
 		goto end;
 	}
 	hal_wowl_params->ucWowDisassocRcv = (uint8_t) cfg_value;
 
 	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_WOWLAN_MAX_MISSED_BEACON,
 				&cfg_value) !=	eSIR_SUCCESS) {
-		sms_log(mac_ctx, LOGP,
-		    FL("cfgGet failed for WNI_CFG_WOWLAN_MAX_MISSED_BEACON "));
+		sme_err("cfgGet failed for WNI_CFG_WOWLAN_MAX_MISSED_BEACON");
 		goto end;
 	}
 	hal_wowl_params->ucWowMaxMissedBeacons = (uint8_t) cfg_value;
 
 	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_WOWLAN_MAX_SLEEP_PERIOD,
 				&cfg_value) != eSIR_SUCCESS) {
-		sms_log(mac_ctx, LOGP,
-		     FL("cfgGet failed for WNI_CFG_WOWLAN_MAX_SLEEP_PERIOD "));
+		sme_err("cfgGet failed for WNI_CFG_WOWLAN_MAX_SLEEP_PERIOD");
 		goto end;
 	}
 	hal_wowl_params->ucWowMaxSleepUsec = (uint8_t) cfg_value;
@@ -416,8 +405,7 @@ static QDF_STATUS sme_ps_exit_wowl_req_params(tpAniSirGlobal mac_ctx,
 	struct sSirHalWowlExitParams *hal_wowl_msg;
 	hal_wowl_msg = qdf_mem_malloc(sizeof(*hal_wowl_msg));
 	if (NULL == hal_wowl_msg) {
-		sms_log(mac_ctx, LOGP,
-			FL("Fail to allocate memory for WoWLAN Add Bcast Pattern "));
+		sme_err("Fail to allocate memory for WoWLAN Add Bcast Pattern");
 		return  QDF_STATUS_E_NOMEM;
 	}
 	hal_wowl_msg->sessionId = session_id;
@@ -447,7 +435,7 @@ QDF_STATUS sme_ps_process_command(tpAniSirGlobal mac_ctx, uint32_t session_id,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
-		sms_log(mac_ctx, LOGE, "Invalid Session_id %x", session_id);
+		sme_err("Invalid Session_id: %d", session_id);
 		return eSIR_FAILURE;
 	}
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
@@ -473,8 +461,7 @@ QDF_STATUS sme_ps_process_command(tpAniSirGlobal mac_ctx, uint32_t session_id,
 		break;
 
 	default:
-		sms_log(mac_ctx, LOGE, FL("Invalid command type %d"),
-				command);
+		sme_err("Invalid command type: %d", command);
 		status = QDF_STATUS_E_FAILURE;
 		break;
 	}
@@ -502,14 +489,13 @@ QDF_STATUS sme_enable_sta_ps_check(tpAniSirGlobal mac_ctx, uint32_t session_id)
 
 	/* Check if Sta Ps is enabled. */
 	if (!ps_global_info->ps_enabled) {
-		sms_log(mac_ctx, LOG1,
-			"Cannot initiate PS. PS is disabled in ini");
+		sme_debug("Cannot initiate PS. PS is disabled in ini");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* Check whether the given session is Infra and in Connected State */
 	if (!csr_is_conn_state_connected_infra(mac_ctx, session_id)) {
-		sms_log(mac_ctx, LOGE, "Sta not infra/connected state %d",
+		sme_err("STA not infra/connected state Session_id: %d",
 				session_id);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -600,8 +586,9 @@ void sme_set_tspec_uapsd_mask_per_session(tpAniSirGlobal mac_ctx,
 	uint8_t ac = upToAc(user_prio);
 	struct ps_global_info *ps_global_info = &mac_ctx->sme.ps_global_info;
 	struct ps_params *ps_param = &ps_global_info->ps_params[session_id];
-	sms_log(mac_ctx, LOGE, FL("Set UAPSD mask for AC %d, dir %d, action=%d")
-			, ac, direction, ts_info->traffic.psb);
+
+	sme_err("Set UAPSD mask for AC: %d dir: %d action: %d",
+		ac, direction, ts_info->traffic.psb);
 
 	/* Converting AC to appropriate Uapsd Bit Mask
 	 * AC_BE(0) --> UAPSD_BITOFFSET_ACVO(3)
@@ -658,14 +645,11 @@ void sme_set_tspec_uapsd_mask_per_session(tpAniSirGlobal mac_ctx,
 			(1 << ac);
 	}
 
-	sms_log(mac_ctx, LOG1,
-		FL("New ps_param->uapsd_per_ac_trigger_enable_mask = 0x%x "),
+	sme_debug("New ps_param->uapsd_per_ac_trigger_enable_mask: 0x%x",
 		ps_param->uapsd_per_ac_trigger_enable_mask);
-	sms_log(mac_ctx, LOG1,
-		FL("New  ps_param->uapsd_per_ac_delivery_enable_mask = 0x%x "),
+	sme_debug("New  ps_param->uapsd_per_ac_delivery_enable_mask: 0x%x",
 		ps_param->uapsd_per_ac_delivery_enable_mask);
-	sms_log(mac_ctx, LOG1,
-		FL("New ps_param->ac_admit_mask[SIR_MAC_DIRECTION_UPLINK] = 0x%x "),
+	sme_debug("New ps_param->ac_admit_mask[SIR_MAC_DIRECTION_UPLINK]: 0x%x",
 		ps_param->ac_admit_mask[SIR_MAC_DIRECTION_UPLINK]);
 	return;
 }
@@ -925,7 +909,7 @@ QDF_STATUS sme_set_ps_ns_offload(tHalHandle hal_ctx,
 	tCsrRoamSession *session = CSR_GET_SESSION(mac_ctx, session_id);
 
 	if (NULL == session) {
-		sms_log(mac_ctx, LOGE, FL("Session not found "));
+		sme_err("Session not found");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -980,8 +964,7 @@ tSirRetStatus sme_post_pe_message(tpAniSirGlobal mac_ctx,
 	qdf_status = scheduler_post_msg(QDF_MODULE_ID_PE,
 					 msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		sms_log(mac_ctx, LOGP,
-			FL("scheduler_post_msg failed with status code %d"),
+		sme_err("scheduler_post_msg failed with status: %d",
 			qdf_status);
 		return eSIR_FAILURE;
 	}
@@ -1006,23 +989,20 @@ QDF_STATUS sme_ps_enable_auto_ps_timer(tHalHandle hal_ctx,
 	QDF_STATUS qdf_status;
 
 	if (!ps_global_info->auto_bmps_timer_val) {
-		sms_log(mac_ctx, LOGD, FL("auto_ps_timer is disabled in INI"));
+		sme_debug("auto_ps_timer is disabled in INI");
 		return QDF_STATUS_SUCCESS;
 	}
 
-	sms_log(mac_ctx, LOGE, FL("Start auto_ps_timer for %d ms"),
-		timeout);
+	sme_err("Start auto_ps_timer for %d ms", timeout);
 
 	qdf_status = qdf_mc_timer_start(&ps_param->auto_ps_enable_timer,
 		timeout);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		if (QDF_STATUS_E_ALREADY == qdf_status) {
 			/* Consider this ok since the timer is already started*/
-			sms_log(mac_ctx, LOGW,
-					FL("auto_ps_timer is already started"));
+			sme_warn("auto_ps_timer is already started");
 		} else {
-			sms_log(mac_ctx, LOGP,
-					FL("Cannot start auto_ps_timer"));
+			sme_err("Cannot start auto_ps_timer");
 			return QDF_STATUS_E_FAILURE;
 		}
 	}
@@ -1041,8 +1021,7 @@ QDF_STATUS sme_ps_disable_auto_ps_timer(tHalHandle hal_ctx,
 	if (QDF_TIMER_STATE_RUNNING ==
 			qdf_mc_timer_get_current_state(
 				&ps_param->auto_ps_enable_timer)) {
-		sms_log(mac_ctx, LOGE,
-				FL("Stop auto_ps_enable_timer Timer for session ID:%d "),
+		sme_err("Stop auto_ps_enable_timer Timer for session ID: %d",
 				session_id);
 		qdf_mc_timer_stop(&ps_param->auto_ps_enable_timer);
 	}
@@ -1054,14 +1033,10 @@ QDF_STATUS sme_ps_open(tHalHandle hal_ctx)
 {
 
 	uint32_t i;
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_ctx);
-
-	sms_log(mac_ctx, LOG1, FL("Enter"));
 
 	for (i = 0; i < MAX_SME_SESSIONS; i++) {
 		if (QDF_STATUS_SUCCESS != sme_ps_open_per_session(hal_ctx, i)) {
-			sms_log(mac_ctx, LOGE,
-				FL("PMC Init Failed for session %d"), i);
+			sme_err("PMC Init Failed for session: %d", i);
 			return QDF_STATUS_E_FAILURE;
 		}
 	}
@@ -1077,15 +1052,13 @@ QDF_STATUS sme_ps_open_per_session(tHalHandle hal_ctx, uint32_t session_id)
 	ps_param->session_id = session_id;
 	ps_param->mac_ctx = mac_ctx;
 
-	sms_log(mac_ctx, LOG1, FL("Enter"));
 	/* Allocate a timer to enable ps automatically */
 	if (!QDF_IS_STATUS_SUCCESS(qdf_mc_timer_init(
 					&ps_param->auto_ps_enable_timer,
 					QDF_TIMER_TYPE_SW,
 					sme_auto_ps_entry_timer_expired,
 					ps_param)))     {
-		sms_log(mac_ctx, LOGE,
-				FL("Cannot allocate timer for auto ps entry"));
+		sme_err("Cannot allocate timer for auto ps entry");
 		return QDF_STATUS_E_FAILURE;
 	}
 	return QDF_STATUS_SUCCESS;
@@ -1109,8 +1082,7 @@ void sme_auto_ps_entry_timer_expired(void *data)
 					AUTO_PS_ENTRY_TIMER_DEFAULT_VALUE);
 		if (!QDF_IS_STATUS_SUCCESS(status)
 				&& (QDF_STATUS_E_ALREADY != status)) {
-			sms_log(mac_ctx, LOGP,
-					FL("Cannot start traffic timer"));
+			sme_err("Cannot start traffic timer");
 		}
 	}
 }
@@ -1118,12 +1090,10 @@ void sme_auto_ps_entry_timer_expired(void *data)
 QDF_STATUS sme_ps_close(tHalHandle hal_ctx)
 {
 	uint32_t i;
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_ctx);
-
-	sms_log(mac_ctx, LOG2, FL("Enter"));
 
 	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++)
 		sme_ps_close_per_session(hal_ctx, i);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1146,7 +1116,7 @@ QDF_STATUS sme_ps_close_per_session(tHalHandle hal_ctx, uint32_t session_id)
 	qdf_status =
 		qdf_mc_timer_destroy(&ps_param->auto_ps_enable_timer);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-		sms_log(mac_ctx, LOGE, FL("Cannot deallocate suto PS timer"));
+		sme_err("Cannot deallocate suto PS timer");
 	return qdf_status;
 }
 
