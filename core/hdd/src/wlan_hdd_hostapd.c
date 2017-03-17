@@ -891,6 +891,40 @@ static int wlan_hdd_set_pre_cac_complete_status(hdd_adapter_t *ap_adapter,
 }
 
 /**
+ * __wlan_hdd_sap_pre_cac_failure() - Process the pre cac failure
+ * @data: AP adapter
+ *
+ * Deletes the pre cac adapter
+ *
+ * Return: None
+ */
+static void __wlan_hdd_sap_pre_cac_failure(void *data)
+{
+	hdd_adapter_t *adapter;
+	hdd_context_t *hdd_ctx;
+
+	ENTER();
+
+	adapter = (hdd_adapter_t *) data;
+	if (!adapter ||
+	    adapter->magic != WLAN_HDD_ADAPTER_MAGIC) {
+		hdd_err("SAP Pre CAC adapter invalid");
+		return;
+	}
+
+	hdd_ctx = (hdd_context_t *) (adapter->pHddCtx);
+	if (wlan_hdd_validate_context(hdd_ctx)) {
+		hdd_err("HDD context is null");
+		return;
+	}
+
+	wlan_hdd_release_intf_addr(hdd_ctx,
+				   adapter->macAddressCurrent.bytes);
+	hdd_stop_adapter(hdd_ctx, adapter, true);
+	hdd_close_adapter(hdd_ctx, adapter, false);
+}
+
+/**
  * wlan_hdd_sap_pre_cac_failure() - Process the pre cac failure
  * @data: AP adapter
  *
@@ -900,31 +934,10 @@ static int wlan_hdd_set_pre_cac_complete_status(hdd_adapter_t *ap_adapter,
  */
 void wlan_hdd_sap_pre_cac_failure(void *data)
 {
-	hdd_adapter_t *pHostapdAdapter;
-	hdd_context_t *hdd_ctx;
-
-	ENTER();
-
-	pHostapdAdapter = (hdd_adapter_t *) data;
-	if (!pHostapdAdapter) {
-		hdd_err("AP adapter is NULL");
-		return;
-	}
-
-	hdd_ctx = (hdd_context_t *) (pHostapdAdapter->pHddCtx);
-	if (!hdd_ctx) {
-		hdd_err("HDD context is null");
-		return;
-	}
-
 	cds_ssr_protect(__func__);
-	wlan_hdd_release_intf_addr(hdd_ctx,
-				   pHostapdAdapter->macAddressCurrent.bytes);
-	hdd_stop_adapter(hdd_ctx, pHostapdAdapter, true);
-	hdd_close_adapter(hdd_ctx, pHostapdAdapter, false);
+	__wlan_hdd_sap_pre_cac_failure(data);
 	cds_ssr_unprotect(__func__);
 }
-
 
 /**
  * wlan_hdd_sap_pre_cac_success() - Process the pre cac result
