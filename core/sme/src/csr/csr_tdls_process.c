@@ -112,8 +112,7 @@ QDF_STATUS csr_tdls_send_mgmt_req(tHalHandle hHal, uint8_t sessionId,
 		tdlsSendMgmtCmdInfo->buf = qdf_mem_malloc(tdlsSendMgmt->len);
 		if (NULL == tdlsSendMgmtCmdInfo->buf) {
 			status = QDF_STATUS_E_NOMEM;
-			sms_log(pMac, LOGE, FL("Alloc Failed"));
-			QDF_ASSERT(0);
+			sme_err("Alloc Failed");
 			return status;
 		}
 		qdf_mem_copy(tdlsSendMgmtCmdInfo->buf, tdlsSendMgmt->buf,
@@ -128,8 +127,7 @@ QDF_STATUS csr_tdls_send_mgmt_req(tHalHandle hHal, uint8_t sessionId,
 	tdlsSendMgmtCmd->u.tdlsCmd.size = sizeof(tTdlsSendMgmtCmdInfo);
 	csr_queue_sme_command(pMac, tdlsSendMgmtCmd, false);
 	status = QDF_STATUS_SUCCESS;
-	sms_log(pMac, LOG1,
-		FL("Successfully posted eSmeCommandTdlsSendMgmt to SME"));
+
 	return status;
 }
 
@@ -202,8 +200,6 @@ QDF_STATUS csr_tdls_change_peer_sta(tHalHandle hHal, uint8_t sessionId,
 				sizeof(tTdlsAddStaCmdInfo);
 			csr_queue_sme_command(pMac, tdlsAddStaCmd, false);
 			status = QDF_STATUS_SUCCESS;
-			sms_log(pMac, LOG1,
-			FL("Successfully posted eSmeCommandTdlsAddPeer to SME to modify peer "));
 		}
 	}
 
@@ -275,8 +271,6 @@ QDF_STATUS csr_tdls_send_link_establish_params(tHalHandle hHal,
 			csr_queue_sme_command(pMac, tdlsLinkEstablishCmd,
 						false);
 			status = QDF_STATUS_SUCCESS;
-			sms_log(pMac, LOG1,
-			FL("Successfully posted eSmeCommandTdlsLinkEstablish to SME"));
 		}
 	}
 
@@ -314,8 +308,6 @@ QDF_STATUS csr_tdls_add_peer_sta(tHalHandle hHal, uint8_t sessionId,
 				sizeof(tTdlsAddStaCmdInfo);
 			csr_queue_sme_command(pMac, tdlsAddStaCmd, false);
 			status = QDF_STATUS_SUCCESS;
-			sms_log(pMac, LOG1,
-			FL("Successfully posted eSmeCommandTdlsAddPeer to SME"));
 		}
 	}
 
@@ -352,8 +344,6 @@ QDF_STATUS csr_tdls_del_peer_sta(tHalHandle hHal, uint8_t sessionId,
 				sizeof(tTdlsDelStaCmdInfo);
 			csr_queue_sme_command(pMac, tdlsDelStaCmd, false);
 			status = QDF_STATUS_SUCCESS;
-			sms_log(pMac, LOG1,
-			FL("Successfully posted eSmeCommandTdlsDelPeer to SME"));
 		}
 	}
 
@@ -373,9 +363,8 @@ static QDF_STATUS tdls_send_message(tpAniSirGlobal pMac, uint16_t msg_type,
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 		  ("sending msg = %d"), pMsg->type);
-	/* Send message. */
 	if (umac_send_mb_message_to_mac(pMsg) != QDF_STATUS_SUCCESS) {
-		sms_log(pMac, LOGE, FL("Cannot send message"));
+		sme_err("Cannot send message");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -391,11 +380,11 @@ static QDF_STATUS csr_tdls_process_send_mgmt(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	if (NULL == pSession) {
-		sms_log(pMac, LOGE, FL("pSession is NULL"));
+		sme_err("pSession is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 	if (NULL == pSession->pConnectBssDesc) {
-		sms_log(pMac, LOGE, FL("BSS Description is not present"));
+		sme_err("BSS Description is not present");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -408,8 +397,7 @@ static QDF_STATUS csr_tdls_process_send_mgmt(tpAniSirGlobal pMac, tSmeCmd *cmd)
 		status = QDF_STATUS_SUCCESS;
 
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sms_log(pMac, LOGE, FL("alloc failed"));
-		QDF_ASSERT(0);
+		sme_err("alloc failed");
 		return status;
 	}
 	tdlsSendMgmtReq->sessionId = cmd->sessionId;
@@ -433,13 +421,13 @@ static QDF_STATUS csr_tdls_process_send_mgmt(tpAniSirGlobal pMac, tSmeCmd *cmd)
 
 	}
 	/* Send the request to PE. */
-	sms_log(pMac, LOG1, FL("sending TDLS Mgmt Frame req to PE "));
+	sme_debug("sending TDLS Mgmt Frame req to PE");
 	status = tdls_send_message(pMac, eWNI_SME_TDLS_SEND_MGMT_REQ,
 				   (void *)tdlsSendMgmtReq,
 				   sizeof(tSirTdlsSendMgmtReq) +
 				   tdlsSendMgmtCmdInfo->len);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sms_log(pMac, LOGE, FL("Failed to send request to MAC"));
+		sme_err("Failed to send request to MAC");
 	}
 	if (tdlsSendMgmtCmdInfo->len && tdlsSendMgmtCmdInfo->buf) {
 		/* Done with the buf. Free it. */
@@ -460,12 +448,12 @@ static QDF_STATUS csr_tdls_process_add_sta(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	if (NULL == pSession) {
-		sms_log(pMac, LOGE, FL("pSession is NULL"));
+		sme_err("pSession is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (NULL == pSession->pConnectBssDesc) {
-		sms_log(pMac, LOGE, FL("BSS description is not present"));
+		sme_err("BSS description is not present");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -476,8 +464,7 @@ static QDF_STATUS csr_tdls_process_add_sta(tpAniSirGlobal pMac, tSmeCmd *cmd)
 		status = QDF_STATUS_SUCCESS;
 
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sms_log(pMac, LOGE, FL("alloc failed"));
-		QDF_ASSERT(0);
+		sme_err("alloc failed");
 		return status;
 	}
 	tdlsAddStaReq->sessionId = cmd->sessionId;
@@ -511,13 +498,12 @@ static QDF_STATUS csr_tdls_process_add_sta(tpAniSirGlobal pMac, tSmeCmd *cmd)
 		     tdlsAddStaCmdInfo->supportedRates,
 		     tdlsAddStaCmdInfo->supportedRatesLen);
 
-	/* Send the request to PE. */
-	sms_log(pMac, LOGE, "sending TDLS Add Sta req to PE ");
+	sme_debug("sending TDLS Add Sta req to PE");
 	status = tdls_send_message(pMac, eWNI_SME_TDLS_ADD_STA_REQ,
 				   (void *)tdlsAddStaReq,
 				   sizeof(tSirTdlsAddStaReq));
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sms_log(pMac, LOGE, FL("Failed to send request to MAC"));
+		sme_err("Failed to send request to MAC");
 	}
 	return status;
 }
@@ -531,12 +517,12 @@ static QDF_STATUS csr_tdls_process_del_sta(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	if (NULL == pSession) {
-		sms_log(pMac, LOGE, FL("pSession is NULL"));
+		sme_err("pSession is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (NULL == pSession->pConnectBssDesc) {
-		sms_log(pMac, LOGE, FL("BSS description is not present"));
+		sme_err("BSS description is not present");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -547,8 +533,7 @@ static QDF_STATUS csr_tdls_process_del_sta(tpAniSirGlobal pMac, tSmeCmd *cmd)
 		status = QDF_STATUS_SUCCESS;
 
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sms_log(pMac, LOGE, FL("alloc failed"));
-		QDF_ASSERT(0);
+		sme_err("alloc failed");
 		return status;
 	}
 	tdlsDelStaReq->sessionId = cmd->sessionId;
@@ -561,15 +546,13 @@ static QDF_STATUS csr_tdls_process_del_sta(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	qdf_copy_macaddr(&tdlsDelStaReq->peermac,
 			 &tdlsDelStaCmdInfo->peermac);
 
-	/* Send the request to PE. */
-	sms_log(pMac, LOG1,
-		"sending TDLS Del Sta " MAC_ADDRESS_STR " req to PE",
+	sme_debug("sending TDLS Del Sta " MAC_ADDRESS_STR " req to PE",
 		MAC_ADDR_ARRAY(tdlsDelStaCmdInfo->peermac.bytes));
 	status = tdls_send_message(pMac, eWNI_SME_TDLS_DEL_STA_REQ,
 				   (void *)tdlsDelStaReq,
 				   sizeof(tSirTdlsDelStaReq));
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sms_log(pMac, LOGE, FL("Failed to send request to MAC"));
+		sme_err("Failed to send request to MAC");
 	}
 	return status;
 }
@@ -633,15 +616,14 @@ QDF_STATUS csr_tdls_process_link_establish(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, cmd->sessionId);
 
 	if (NULL == pSession) {
-		sms_log(pMac, LOGE, FL("pSession is NULL"));
+		sme_err("pSession is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	tdlsLinkEstablishReq = qdf_mem_malloc(sizeof(tSirTdlsLinkEstablishReq));
 
 	if (tdlsLinkEstablishReq == NULL) {
-		sms_log(pMac, LOGE, FL("alloc failed"));
-		QDF_ASSERT(0);
+		sme_err("alloc failed");
 		return QDF_STATUS_E_NOMEM;
 	}
 	tdlsLinkEstablishReq->sessionId = cmd->sessionId;
@@ -668,15 +650,14 @@ QDF_STATUS csr_tdls_process_link_establish(tpAniSirGlobal pMac, tSmeCmd *cmd)
 		tdlsLinkEstablishCmdInfo->uapsdQueues;
 	tdlsLinkEstablishReq->maxSp = tdlsLinkEstablishCmdInfo->maxSp;
 
-	/* Send the request to PE. */
-	sms_log(pMac, LOGE, "sending TDLS Link Establish Request to PE \n");
+	sme_debug("sending TDLS Link Establish Request to PE");
 	status = tdls_send_message(pMac, eWNI_SME_TDLS_LINK_ESTABLISH_REQ,
 				   (void *)tdlsLinkEstablishReq,
 				   sizeof(tSirTdlsLinkEstablishReq));
-				   if (!QDF_IS_STATUS_SUCCESS(status)) {
-					   sms_log(pMac, LOGE, FL("Failed to send request to MAC\n"));
-				   }
-				   return status;
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		sme_err("Failed to send request to MAC");
+
+	return status;
 }
 
 /*
