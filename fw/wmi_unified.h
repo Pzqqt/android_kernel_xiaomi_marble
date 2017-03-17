@@ -501,6 +501,8 @@ typedef enum {
     WMI_PRB_TMPL_CMDID,
     /** Transmit Mgmt frame by reference */
     WMI_MGMT_TX_SEND_CMDID,
+    /** Transmit data frame by reference */
+    WMI_OFFCHAN_DATA_TX_SEND_CMDID,
 
     /** commands to directly control ba negotiation directly from host. only used in test mode */
 
@@ -1209,8 +1211,10 @@ typedef enum {
      *   Use this event if number of vdevs > 32.
      */
     WMI_TBTTOFFSET_EXT_UPDATE_EVENTID,
+    /** Event for offchan data TX completion event */
+    WMI_OFFCHAN_DATA_TX_COMPLETION_EVENTID,
 
-    /*ADDBA Related WMI Events*/
+    /* ADDBA Related WMI Events*/
     /** Indication the completion of the prior
      WMI_PEER_TID_DELBA_CMDID(initiator) */
     WMI_TX_DELBA_COMPLETE_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_BA_NEG),
@@ -3393,6 +3397,167 @@ typedef struct {
  */
 } wmi_mgmt_tx_hdr;
 
+#define WMI_TX_SEND_PARAM_PWR_GET(tx_param_dword0) WMI_GET_BITS(tx_param_dword0, 0, 8)
+#define WMI_TX_SEND_PARAM_PWR_SET(tx_param_dword0, value) WMI_SET_BITS(tx_param_dword0, 0, 8, value)
+
+#define WMI_TX_SEND_PARAM_MCS_MASK_GET(tx_param_dword0) WMI_GET_BITS(tx_param_dword0, 8, 12)
+#define WMI_TX_SEND_PARAM_MCS_MASK_SET(tx_param_dword0, value) WMI_SET_BITS(tx_param_dword0, 8, 12, value)
+
+#define WMI_TX_SEND_PARAM_NSS_MASK_GET(tx_param_dword0) WMI_GET_BITS(tx_param_dword0, 20, 8)
+#define WMI_TX_SEND_PARAM_NSS_MASK_SET(tx_param_dword0, value) WMI_SET_BITS(tx_param_dword0, 20, 8, value)
+
+#define WMI_TX_SEND_PARAM_RETRY_LIMIT_GET(tx_param_dword0) WMI_GET_BITS(tx_param_dword0, 28, 4)
+#define WMI_TX_SEND_PARAM_RETRY_LIMIT_SET(tx_param_dword0, value) WMI_SET_BITS(tx_param_dword0, 28, 4, value)
+
+#define WMI_TX_SEND_PARAM_CHAIN_MASK_GET(tx_param_dword1) WMI_GET_BITS(tx_param_dword1, 0, 8)
+#define WMI_TX_SEND_PARAM_CHAIN_MASK_SET(tx_param_dword1, value) WMI_SET_BITS(tx_param_dword1, 0, 8, value)
+
+#define WMI_TX_SEND_PARAM_BW_MASK_GET(tx_param_dword1) WMI_GET_BITS(tx_param_dword1, 8, 7)
+#define WMI_TX_SEND_PARAM_BW_MASK_SET(tx_param_dword1, value) WMI_SET_BITS(tx_param_dword1, 8, 7, value)
+
+#define WMI_TX_SEND_PARAM_PREAMBLE_GET(tx_param_dword1) WMI_GET_BITS(tx_param_dword1, 15, 5)
+#define WMI_TX_SEND_PARAM_PREAMBLE_SET(tx_param_dword1, value) WMI_SET_BITS(tx_param_dword1, 15, 5, value)
+
+#define WMI_TX_SEND_PARAM_FRAME_TYPE_GET(tx_param_dword1) WMI_GET_BITS(tx_param_dword1, 20, 1)
+#define WMI_TX_SEND_PARAM_FRAME_TYPE_SET(tx_param_dword1, value) WMI_SET_BITS(tx_param_dword1, 20, 1, value)
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_tx_send_params */
+
+    union {
+        struct {
+            /* DWORD 0: tx power, tx rate, retry_limit */
+            A_UINT32
+                /* pwr -
+                 * Specify what power the tx frame needs to be transmitted at.
+                 * The power a signed (two's complement) value is in units of 0.5 dBm.
+                 * The value needs to be appropriately sign-extended when extracting
+                 * the value from the message and storing it in a variable that is
+                 * larger than A_INT8.  (fw automatically handles this sign-extension.)
+                 * If the transmission uses multiple tx chains, this power spec is
+                 * the total transmit power, assuming incoherent combination of
+                 * per-chain power to produce the total power.
+                 */
+                 pwr: 8,
+
+                /* mcs_mask -
+                 * Specify the allowable values for MCS index (modulation and coding)
+                 * to use for transmitting the frame.
+                 *
+                 * For HT / VHT preamble types, this mask directly corresponds to
+                 * the HT or VHT MCS indices that are allowed.  For each bit N set
+                 * within the mask, MCS index N is allowed for transmitting the frame.
+                 * For legacy CCK and OFDM rates, separate bits are provided for CCK
+                 * rates versus OFDM rates, so the host has the option of specifying
+                 * that the target must transmit the frame with CCK or OFDM rates
+                 * (not HT or VHT), but leaving the decision to the target whether
+                 * to use CCK or OFDM.
+                 *
+                 * For CCK and OFDM, the bits within this mask are interpreted as
+                 * follows:
+                 *     bit  0 -> CCK 1 Mbps rate is allowed
+                 *     bit  1 -> CCK 2 Mbps rate is allowed
+                 *     bit  2 -> CCK 5.5 Mbps rate is allowed
+                 *     bit  3 -> CCK 11 Mbps rate is allowed
+                 *     bit  4 -> OFDM BPSK modulation, 1/2 coding rate is allowed
+                 *     bit  5 -> OFDM BPSK modulation, 3/4 coding rate is allowed
+                 *     bit  6 -> OFDM QPSK modulation, 1/2 coding rate is allowed
+                 *     bit  7 -> OFDM QPSK modulation, 3/4 coding rate is allowed
+                 *     bit  8 -> OFDM 16-QAM modulation, 1/2 coding rate is allowed
+                 *     bit  9 -> OFDM 16-QAM modulation, 3/4 coding rate is allowed
+                 *     bit 10 -> OFDM 64-QAM modulation, 2/3 coding rate is allowed
+                 *     bit 11 -> OFDM 64-QAM modulation, 3/4 coding rate is allowed
+                 *
+                 * The MCS index specification needs to be compatible with the
+                 * bandwidth mask specification.  For example, a MCS index == 9
+                 * specification is inconsistent with a preamble type == VHT,
+                 * Nss == 1, and channel bandwidth == 20 MHz.
+                 *
+                 * Furthermore, the host has only a limited ability to specify to
+                 * the target to select from HT + legacy rates, or VHT + legacy rates,
+                 * since this mcs_mask can specify either HT/VHT rates or legacy rates.
+                 * If no bits are set, target can choose what MCS type to use.
+                 */
+                 mcs_mask: 12,
+
+                /* nss_mask -
+                 * Specify which numbers of spatial streams (MIMO factor) are permitted.
+                 * Each bit in this mask corresponds to a Nss value:
+                 *     bit 0: if set, Nss = 1 (non-MIMO) is permitted
+                 *     bit 1: if set, Nss = 2 (2x2 MIMO) is permitted
+                 *     bit 2: if set, Nss = 3 (3x3 MIMO) is permitted
+                 *     bit 3: if set, Nss = 4 (4x4 MIMO) is permitted
+                 *     bit 4: if set, Nss = 5 (5x5 MIMO) is permitted
+                 *     bit 5: if set, Nss = 6 (6x6 MIMO) is permitted
+                 *     bit 6: if set, Nss = 7 (7x7 MIMO) is permitted
+                 *     bit 7: if set, Nss = 8 (8x8 MIMO) is permitted
+                 * The values in the Nss mask must be suitable for the recipient, e.g.
+                 * a value of 0x4 (Nss = 3) cannot be specified for a tx frame to a
+                 * recipient which only supports 2x2 MIMO.
+                 * If no bits are set, target can choose what NSS type to use.
+                 */
+                 nss_mask: 8,
+
+                /* retry_limit -
+                 * Specify the maximum number of transmissions, including the
+                 * initial transmission, to attempt before giving up if no ack
+                 * is received.
+                 * If the tx rate is specified, then all retries shall use the
+                 * same rate as the initial transmission.
+                 * If no tx rate is specified, the target can choose whether to
+                 * retain the original rate during the retransmissions, or to
+                 * fall back to a more robust rate.
+                 */
+                 retry_limit: 4;
+
+       };
+       A_UINT32 tx_param_dword0;
+    };
+
+    union {
+        struct {
+            /* DWORD 1: tx chain mask, preamble_type, tx BW */
+            A_UINT32
+                /* chain_mask - specify which chains to transmit from
+                 * If not set, target will choose what chain_mask to use.
+                 */
+                 chain_mask: 8,
+
+                /* The bits in this mask correspond to the values as below
+                 *     bit  0 -> 5MHz
+                 *     bit  1 -> 10MHz
+                 *     bit  2 -> 20MHz
+                 *     bit  3 -> 40MHz
+                 *     bit  4 -> 80MHz
+                 *     bit  5 -> 160MHz
+                 *     bit  6 -> 80_80MHz
+                 * If no bits are set, target can choose what BW to use.
+                 */
+                 bw_mask: 7,
+
+                /* preamble_type_mask -
+                 * Specify which preamble types (CCK, OFDM, HT, VHT) the target
+                 * may choose from for transmitting this frame.
+                 * Each bit in this mask corresponds to a preamble_type value:
+                 *     bit 0: if set, OFDM
+                 *     bit 1: if set, CCK
+                 *     bit 2: if set, HT
+                 *     bit 3: if set, VHT
+                 *     bit 4: if set, HE
+                 * If no bits are set, target can choose what preamble type to use.
+                 */
+                 preamble_type: 5,
+
+                /* Data:1 Mgmt:0
+                 */
+                 frame_type: 1,
+
+                 reserved1_31_21: 11;
+       };
+       A_UINT32 tx_param_dword1;
+    };
+} wmi_tx_send_params;
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_mgmt_tx_send_cmd_fixed_param */
     A_UINT32 vdev_id;
@@ -3402,10 +3567,40 @@ typedef struct {
     A_UINT32 paddr_hi;
     A_UINT32 frame_len;
     A_UINT32 buf_len;  /** Buffer length in bytes */
+    /*
+     * The frame which will have tx_params_valid set will be always be RAW
+     * frame, as it will be tx'ed on non-pause tid
+     */
+    A_UINT32 tx_params_valid;
 /* This TLV is followed by array of bytes: First 64 bytes of management frame
  *   A_UINT8 bufp[];
  */
+/* This TLV is followed by wmi_tx_send_params
+ * wmi_tx_send_params tx_send_params;
+ */
 } wmi_mgmt_tx_send_cmd_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_offchan_data_tx_send_cmd_fixed_param */
+    A_UINT32 vdev_id;
+    A_UINT32 desc_id;  /* echoed in tx_compl_event */
+    A_UINT32 chanfreq; /* MHz units */
+    A_UINT32 paddr_lo;
+    A_UINT32 paddr_hi;
+    A_UINT32 frame_len;
+    A_UINT32 buf_len;  /** Buffer length in bytes */
+    /* The frame which will have tx_params_valid set will be always be RAW
+     * frame, as it will be tx'ed on non-pause tid
+     */
+    A_UINT32 tx_params_valid;
+
+/* This TLV is followed by array of bytes: First 64 bytes of frame
+ *   A_UINT8 bufp[];
+ */
+/* This TLV is followed by wmi_tx_send_params
+ * wmi_tx_send_params tx_send_params;
+ */
+} wmi_offchan_data_tx_send_cmd_fixed_param;
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_echo_event_fixed_param */
@@ -4197,6 +4392,16 @@ typedef struct {
      */
     A_UINT32    pdev_id;
 } wmi_mgmt_tx_compl_event_fixed_param;
+
+typedef struct {
+    A_UINT32    tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_offchan_data_tx_compl_event_fixed_param */
+    A_UINT32    desc_id; /* from tx_send_cmd */
+    A_UINT32    status;  /* same status as WMI_MGMT_TX_COMP_STATUS_TYPE */
+    /** pdev_id for identifying the MAC that transmitted the mgmt frame
+     * See macros starting with WMI_PDEV_ID_ for values.
+     */
+    A_UINT32    pdev_id;
+} wmi_offchan_data_tx_compl_event_fixed_param;
 
 typedef struct {
     A_UINT32    tlv_header;
@@ -18459,6 +18664,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_VDEV_SET_ARP_STAT_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_GET_ARP_STAT_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_GET_TX_POWER_CMDID);
+        WMI_RETURN_STRING(WMI_OFFCHAN_DATA_TX_SEND_CMDID);
     }
 
     return "Invalid WMI cmd";

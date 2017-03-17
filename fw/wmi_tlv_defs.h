@@ -814,6 +814,9 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_coex_bt_activity_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_vdev_get_tx_power_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_vdev_tx_power_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_offchan_data_tx_compl_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_offchan_data_tx_send_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_tx_send_params,
 } WMITLV_TAG_ID;
 
 /*
@@ -1142,6 +1145,7 @@ typedef enum {
     OP(WMI_VDEV_SET_ARP_STAT_CMDID) \
     OP(WMI_VDEV_GET_ARP_STAT_CMDID) \
     OP(WMI_VDEV_GET_TX_POWER_CMDID) \
+    OP(WMI_OFFCHAN_DATA_TX_SEND_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -1323,6 +1327,7 @@ typedef enum {
     OP(WMI_VDEV_GET_ARP_STAT_EVENTID) \
     OP(WMI_WLAN_COEX_BT_ACTIVITY_EVENTID) \
     OP(WMI_VDEV_GET_TX_POWER_EVENTID) \
+    OP(WMI_OFFCHAN_DATA_TX_COMPLETION_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -2049,9 +2054,18 @@ WMITLV_CREATE_PARAM_STRUC(WMI_MGMT_TX_CMDID);
 /* Management tx send cmd */
 #define WMITLV_TABLE_WMI_MGMT_TX_SEND_CMDID(id,op,buf,len)  \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mgmt_tx_send_cmd_fixed_param, wmi_mgmt_tx_send_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, bufp, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, bufp, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_tx_send_params, wmi_tx_send_params, tx_send_params, WMITLV_SIZE_FIX)
 
 WMITLV_CREATE_PARAM_STRUC(WMI_MGMT_TX_SEND_CMDID);
+
+/* offchan data tx send cmd */
+#define WMITLV_TABLE_WMI_OFFCHAN_DATA_TX_SEND_CMDID(id,op,buf,len)  \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_offchan_data_tx_send_cmd_fixed_param, wmi_offchan_data_tx_send_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, bufp, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_tx_send_params, wmi_tx_send_params, tx_send_params, WMITLV_SIZE_FIX)
+
+WMITLV_CREATE_PARAM_STRUC(WMI_OFFCHAN_DATA_TX_SEND_CMDID);
 
 /* ADD clear response Cmd */
 #define WMITLV_TABLE_WMI_ADDBA_CLEAR_RESP_CMDID(id,op,buf,len) \
@@ -3408,6 +3422,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_TX_PAUSE_EVENTID);
 #define WMITLV_TABLE_WMI_MGMT_TX_COMPLETION_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mgmt_tx_compl_event_fixed_param, wmi_mgmt_tx_compl_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_MGMT_TX_COMPLETION_EVENTID);
+
+/* offchan data TX completion event */
+#define WMITLV_TABLE_WMI_OFFCHAN_DATA_TX_COMPLETION_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_offchan_data_tx_compl_event_fixed_param, wmi_offchan_data_tx_compl_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_OFFCHAN_DATA_TX_COMPLETION_EVENTID);
 
 /* Bundled Mgmt TX completion event */
 #define WMITLV_TABLE_WMI_MGMT_TX_BUNDLE_COMPLETION_EVENTID(id,op,buf,len) \
