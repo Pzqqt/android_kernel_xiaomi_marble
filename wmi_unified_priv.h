@@ -1275,6 +1275,11 @@ QDF_STATUS (*send_dfs_phyerr_offload_en_cmd)(wmi_unified_t wmi_handle,
 		uint32_t pdev_id);
 QDF_STATUS (*send_dfs_phyerr_offload_dis_cmd)(wmi_unified_t wmi_handle,
 		uint32_t pdev_id);
+QDF_STATUS (*extract_reg_chan_list_update_event)(wmi_unified_t wmi_handle,
+						 uint8_t *evt_buf,
+						 struct cur_regulatory_info
+						 *reg_info,
+						 uint32_t len);
 };
 
 struct target_abi_version {
