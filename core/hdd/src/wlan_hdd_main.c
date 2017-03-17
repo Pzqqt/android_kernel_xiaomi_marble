@@ -7069,7 +7069,8 @@ static hdd_context_t *hdd_context_create(struct device *dev)
 		[QDF_MODULE_ID_SCHEDULER] = {QDF_TRACE_LEVEL_ALL},
 		[QDF_MODULE_ID_MGMT_TXRX] = {QDF_TRACE_LEVEL_ALL},
 		[QDF_MODULE_ID_PMO] = {QDF_TRACE_LEVEL_ALL},
-		[QDF_MODULE_ID_SCAN] = {QDF_TRACE_LEVEL_ALL}
+		[QDF_MODULE_ID_SCAN] = {QDF_TRACE_LEVEL_ALL},
+		[QDF_MODULE_ID_POLICY_MGR] = {QDF_TRACE_LEVEL_ALL},
 		};
 
 	status = qdf_print_setup();
