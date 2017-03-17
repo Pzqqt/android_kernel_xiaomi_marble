@@ -59,8 +59,7 @@ QDF_STATUS csr_msg_processor(tpAniSirGlobal mac_ctx, void *msg_buf)
 	uint8_t session_id = sme_rsp->sessionId;
 	eCsrRoamState cur_state = mac_ctx->roam.curState[session_id];
 
-	sms_log(mac_ctx, LOG2,
-		FL("msg %d[0x%04X] recvd in curstate %s & substate %s id(%d)"),
+	sme_debug("msg %d[0x%04X] recvd in curstate %s & substate %s id(%d)",
 		sme_rsp->messageType, sme_rsp->messageType,
 		mac_trace_getcsr_roam_state(cur_state),
 		mac_trace_getcsr_roam_sub_state(
@@ -78,7 +77,7 @@ QDF_STATUS csr_msg_processor(tpAniSirGlobal mac_ctx, void *msg_buf)
 	 */
 	session = CSR_GET_SESSION(mac_ctx, session_id);
 	if (!session) {
-		sms_log(mac_ctx, LOGE, FL("session %d not found, msgType : %d"),
+		sme_err("session %d not found, msgType: %d",
 			session_id, msg->type);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -86,8 +85,7 @@ QDF_STATUS csr_msg_processor(tpAniSirGlobal mac_ctx, void *msg_buf)
 	if (eWNI_SME_SCAN_RSP == msg->type) {
 		status = csr_scanning_state_msg_processor(mac_ctx, msg_buf);
 		if (QDF_STATUS_SUCCESS != status)
-			sms_log(mac_ctx, LOGE,
-				FL("handling PNO scan resp 0x%X CSR state %d"),
+			sme_err("handling PNO scan resp 0x%X CSR state %d",
 				sme_rsp->messageType, cur_state);
 		return status;
 	}
@@ -119,8 +117,7 @@ QDF_STATUS csr_msg_processor(tpAniSirGlobal mac_ctx, void *msg_buf)
 			 * SAP and infra/IBSS requirement.
 			 */
 			if (eWNI_SME_SETCONTEXT_RSP == sme_rsp->messageType) {
-				sms_log(mac_ctx, LOGW,
-					FL("handling msg 0x%X CSR state is %d"),
+				sme_warn("handling msg 0x%X CSR state is %d",
 					sme_rsp->messageType, cur_state);
 				csr_roam_check_for_link_status_change(mac_ctx,
 						sme_rsp);
@@ -129,33 +126,26 @@ QDF_STATUS csr_msg_processor(tpAniSirGlobal mac_ctx, void *msg_buf)
 				tAniGetRssiReq *pGetRssiReq =
 					(tAniGetRssiReq *) msg_buf;
 				if (NULL == pGetRssiReq->rssiCallback) {
-					sms_log(mac_ctx, LOGE,
-						FL("rssiCallback is NULL"));
+					sme_err("rssiCallback is NULL");
 					return status;
 				}
-				sms_log(mac_ctx, LOGW,
-						FL("msg eWNI_SME_GET_RSSI_REQ is not handled by CSR in state %d. calling RSSI callback"),
-						cur_state);
 				((tCsrRssiCallback)(pGetRssiReq->rssiCallback))(
 						pGetRssiReq->lastRSSI,
 						pGetRssiReq->staId,
 						pGetRssiReq->pDevContext);
 			} else {
-				sms_log(mac_ctx, LOGE,
-					FL("Message 0x%04X is not handled by CSR state is %d session Id %d"),
+				sme_err("Message 0x%04X is not handled by CSR state is %d session Id %d",
 					sme_rsp->messageType, cur_state,
 					session_id);
 
 				if (eWNI_SME_FT_PRE_AUTH_RSP ==
 						sme_rsp->messageType) {
-					sms_log(mac_ctx, LOGE,
-						FL("Dequeue eSmeCommandRoam command with reason eCsrPerformPreauth"));
+					sme_err("Dequeue eSmeCommandRoam command with reason eCsrPerformPreauth");
 					csr_dequeue_roam_command(mac_ctx,
 						eCsrPerformPreauth, session_id);
 				} else if (eWNI_SME_REASSOC_RSP ==
 						sme_rsp->messageType) {
-					sms_log(mac_ctx, LOGE,
-						FL("Dequeue eSmeCommandRoam command with reason eCsrSmeIssuedFTReassoc"));
+					sme_err("Dequeue eSmeCommandRoam command with reason eCsrSmeIssuedFTReassoc");
 					csr_dequeue_roam_command(mac_ctx,
 						eCsrSmeIssuedFTReassoc,
 						session_id);
