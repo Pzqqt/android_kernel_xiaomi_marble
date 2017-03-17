@@ -1787,6 +1787,7 @@ struct category_name_info g_qdf_category_name[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_SCHEDULER] = {"SCH"},
 	[QDF_MODULE_ID_MGMT_TXRX] = {"MGMT_TXRX"},
 	[QDF_MODULE_ID_PMO] = {"PMO"},
+	[QDF_MODULE_ID_POLICY_MGR] = {"POLICY_MGR"},
 	[QDF_MODULE_ID_ANY] = {"ANY"},
 };
 
