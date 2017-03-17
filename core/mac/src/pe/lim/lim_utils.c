@@ -6638,7 +6638,6 @@ QDF_STATUS lim_send_ext_cap_ie(tpAniSirGlobal mac_ctx,
 	struct vdev_ie_info *vdev_ie;
 	struct scheduler_msg msg = {0};
 	tSirRetStatus status;
-	uint8_t *temp, i;
 
 	wlan_cfg_get_int(mac_ctx, WNI_CFG_DOT11_MODE, &dot11mode);
 	if (IS_DOT11_MODE_VHT(dot11mode))
@@ -6670,12 +6669,6 @@ QDF_STATUS lim_send_ext_cap_ie(tpAniSirGlobal mac_ctx,
 	vdev_ie->ie_id = DOT11F_EID_EXTCAP;
 	vdev_ie->length = num_bytes;
 	vdev_ie->band = 0;
-
-	lim_log(mac_ctx, LOG1, FL("vdev %d ieid %d len %d"), session_id,
-			DOT11F_EID_EXTCAP, num_bytes);
-	temp = ext_cap_data.bytes;
-	for (i = 0; i < num_bytes; i++, temp++)
-		lim_log(mac_ctx, LOG1, FL("%d byte is %02x"), i+1, *temp);
 
 	vdev_ie->data = (uint8_t *)vdev_ie + sizeof(*vdev_ie);
 	qdf_mem_copy(vdev_ie->data, ext_cap_data.bytes, num_bytes);

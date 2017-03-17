@@ -1728,9 +1728,6 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 	uint32_t mode = 0;
 	struct wma_txrx_node *intr = NULL;
 
-	WMA_LOGD("%s: command 0x%x, reason %d", __func__, roam_req->Command,
-		 roam_req->reason);
-
 	if (NULL == pMac) {
 		WMA_LOGE("%s: pMac is NULL", __func__);
 		qdf_mem_free(roam_req);

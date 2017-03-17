@@ -4361,7 +4361,6 @@ int wlan_hdd_send_roam_auth_event(hdd_adapter_t *adapter, uint8_t *bssid,
 		hdd_err("nla put fail");
 		goto nla_put_failure;
 	}
-	hdd_debug("Auth Status = %d", roam_info_ptr->synchAuthStatus);
 	if (roam_info_ptr->synchAuthStatus ==
 			CSR_ROAM_AUTH_STATUS_AUTHENTICATED) {
 		hdd_debug("Include Auth Params TLV's");
@@ -4402,8 +4401,9 @@ int wlan_hdd_send_roam_auth_event(hdd_adapter_t *adapter, uint8_t *bssid,
 		}
 	}
 
-	hdd_debug("Subnet Change Status = %d",
-		roam_info_ptr->subnet_change_status);
+	hdd_debug("Auth Status = %d Subnet Change Status = %d",
+		  roam_info_ptr->synchAuthStatus,
+		  roam_info_ptr->subnet_change_status);
 
 	/*
 	 * Add subnet change status if subnet has changed
