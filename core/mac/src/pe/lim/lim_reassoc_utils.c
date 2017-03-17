@@ -517,7 +517,8 @@ lim_restore_pre_reassoc_state(tpAniSirGlobal pMac,
 			psessionEntry->ch_center_freq_seg1,
 			psessionEntry->ch_width,
 			psessionEntry->maxTxPower,
-			psessionEntry->peSessionId);
+			psessionEntry->peSessionId,
+			0, 0);
 
 	/* @ToDo:Need to Integrate the STOP the Dataxfer to AP from 11H code */
 

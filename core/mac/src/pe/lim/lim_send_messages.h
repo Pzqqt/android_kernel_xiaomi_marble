@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -70,7 +70,9 @@ tSirRetStatus lim_send_switch_chnl_params(tpAniSirGlobal pMac,
 					  enum phy_ch_width ch_width,
 					  int8_t maxTxPower,
 					  uint8_t peSessionId,
-					  uint8_t is_restart);
+					  uint8_t is_restart,
+					  uint32_t cac_duration_ms,
+					  uint32_t dfs_regdomain);
 
 tSirRetStatus lim_send_edca_params(tpAniSirGlobal pMac,
 				   tSirMacEdcaParamRecord *pUpdatedEdcaParams,

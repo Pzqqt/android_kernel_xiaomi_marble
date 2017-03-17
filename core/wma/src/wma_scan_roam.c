@@ -2955,6 +2955,8 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 	req.beacon_intval = 100;
 	req.dtim_period = 1;
 	req.is_dfs = params->isDfsChannel;
+	req.cac_duration_ms = params->cac_duration_ms;
+	req.dfs_regdomain = params->dfs_regdomain;
 
 	/* In case of AP mode, once radar is detected, we need to
 	 * issuse VDEV RESTART, so we making is_channel_switch as

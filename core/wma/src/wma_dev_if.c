@@ -1984,6 +1984,8 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 	 */
 	params.is_dfs = req->is_dfs;
 	params.is_restart = isRestart;
+	params.cac_duration_ms = req->cac_duration_ms;
+	params.regdomain = req->dfs_regdomain;
 	if ((QDF_GLOBAL_MONITOR_MODE != cds_get_conparam()) && req->is_dfs) {
 		params.flag_dfs = WMI_CHAN_FLAG_DFS;
 		temp_chan_info |=  (1 << WMI_CHAN_FLAG_DFS);
@@ -2966,6 +2968,8 @@ static void wma_add_bss_ap_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	req.is_dfs = add_bss->bSpectrumMgtEnabled;
 	req.oper_mode = BSS_OPERATIONAL_MODE_AP;
 	req.ssid.length = add_bss->ssId.length;
+	req.cac_duration_ms = add_bss->cac_duration_ms;
+	req.dfs_regdomain = add_bss->dfs_regdomain;
 	if (req.ssid.length > 0)
 		qdf_mem_copy(req.ssid.ssId, add_bss->ssId.ssId,
 			     add_bss->ssId.length);

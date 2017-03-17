@@ -1047,7 +1047,10 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		mlm_start_req->cbMode = sme_start_bss_req->cbMode;
 		mlm_start_req->beaconPeriod =
 			session->beaconParams.beaconInterval;
-
+		mlm_start_req->cac_duration_ms =
+			sme_start_bss_req->cac_duration_ms;
+		mlm_start_req->dfs_regdomain =
+			sme_start_bss_req->dfs_regdomain;
 		if (LIM_IS_AP_ROLE(session)) {
 			mlm_start_req->dtimPeriod = session->dtimPeriod;
 			mlm_start_req->wps_state = session->wps_state;
@@ -5574,7 +5577,9 @@ static void lim_process_sme_channel_change_request(tpAniSirGlobal mac_ctx,
 			session_entry->ch_center_freq_seg0,
 			session_entry->ch_center_freq_seg1,
 			session_entry->ch_width,
-			max_tx_pwr, session_entry->peSessionId);
+			max_tx_pwr, session_entry->peSessionId,
+			ch_change_req->cac_duration_ms,
+			ch_change_req->dfs_regdomain);
 }
 
 /******************************************************************************

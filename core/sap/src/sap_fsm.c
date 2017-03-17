@@ -1088,6 +1088,71 @@ sap_mark_leaking_ch(ptSapContext sap_ctx,
 }
 #endif /* end of WLAN_ENABLE_CHNL_MATRIX_RESTRICTION */
 
+/**
+ * sap_is_channel_bonding_etsi_weather_channel() - check weather chan bonding.
+ * @sap_ctx: sap context
+ *
+ * Check if the current SAP operating channel is bonded to weather radar
+ * channel in ETSI domain.
+ *
+ * Return: True if bonded to weather channel in ETSI
+ */
+static bool sap_is_channel_bonding_etsi_weather_channel(ptSapContext sap_ctx)
+{
+	if (IS_CH_BONDING_WITH_WEATHER_CH(sap_ctx->channel) &&
+	    (sap_ctx->ch_params.ch_width != CH_WIDTH_20MHZ))
+		return true;
+
+	return false;
+}
+
+/**
+ * sap_get_cac_dur_dfs_region() - get cac duration and dfs region.
+ * @sap_ctxt: sap context
+ * @cac_duration_ms: pointer to cac duration
+ * @dfs_region: pointer to dfs region
+ *
+ * Get cac duration and dfs region.
+ *
+ * Return: None
+ */
+static void sap_get_cac_dur_dfs_region(ptSapContext sap_ctx,
+		uint32_t *cac_duration_ms,
+		uint32_t *dfs_region)
+{
+	tHalHandle hal = NULL;
+	tpAniSirGlobal mac = NULL;
+
+	cds_get_dfs_region(dfs_region);
+	if (!sap_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: null sap_ctx", __func__);
+		return;
+	}
+
+	hal = CDS_GET_HAL_CB(sap_ctx->p_cds_gctx);
+	if (!hal) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: null hal", __func__);
+		return;
+	}
+
+	mac = PMAC_STRUCT(hal);
+	if (mac->sap.SapDfsInfo.ignore_cac) {
+		*cac_duration_ms = 0;
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: ignore_cac is set", __func__);
+		return;
+	}
+
+	if ((*dfs_region == DFS_ETSI_REGION) &&
+	    ((IS_ETSI_WEATHER_CH(sap_ctx->channel)) ||
+	    (sap_is_channel_bonding_etsi_weather_channel(sap_ctx))))
+		*cac_duration_ms = ETSI_WEATHER_CH_CAC_TIMEOUT;
+	else
+		*cac_duration_ms = DEFAULT_CAC_TIMEOUT;
+}
+
 /*
  * This function adds availabe channel to bitmap
  *
@@ -3796,6 +3861,9 @@ static QDF_STATUS sap_fsm_state_ch_select(ptSapContext sap_ctx,
 				sap_ctx->ch_params.center_freq_seg1;
 		sap_ctx->csr_roamProfile.ch_params.sec_ch_offset =
 				sap_ctx->ch_params.sec_ch_offset;
+		sap_get_cac_dur_dfs_region(sap_ctx,
+				&sap_ctx->csr_roamProfile.cac_duration_ms,
+				&sap_ctx->csr_roamProfile.dfs_regdomain);
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		    FL("notify hostapd about channel selection: %d"),
 		    sap_ctx->channel);
@@ -4175,6 +4243,10 @@ static QDF_STATUS sap_fsm_state_disconnecting(ptSapContext sap_ctx,
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
 			  FL("sapdfs: Send channel change request on sapctx[%p]"),
 			  sap_ctx);
+
+		sap_get_cac_dur_dfs_region(sap_ctx,
+				&sap_ctx->csr_roamProfile.cac_duration_ms,
+				&sap_ctx->csr_roamProfile.dfs_regdomain);
 		/*
 		 * Most likely, radar has been detected and SAP wants to
 		 * change the channel
@@ -5095,87 +5167,58 @@ static int sap_stop_dfs_cac_timer(ptSapContext sapContext)
 }
 
 
-/**
- * sap_is_channel_bonding_etsi_weather_channel() - check weather chan bonding.
- * @sap_context:                                   SAP context
- *
- * Check if the current SAP operating channel is bonded to weather radar
- * channel in ETSI domain.
- *
- * Return: True if bonded to weather channel in ETSI
- */
-static bool
-sap_is_channel_bonding_etsi_weather_channel(ptSapContext sap_context)
-{
-	if (IS_CH_BONDING_WITH_WEATHER_CH(sap_context->channel) &&
-	  (sap_context->ch_params.ch_width != CH_WIDTH_20MHZ))
-		return true;
-
-	return false;
-}
-
 /*
  * Function to start the DFS CAC Timer
  * when SAP is started on a DFS channel
  */
-int sap_start_dfs_cac_timer(ptSapContext sapContext)
+int sap_start_dfs_cac_timer(ptSapContext sap_ctx)
 {
 	QDF_STATUS status;
-	uint32_t cacTimeOut;
-	tHalHandle hHal = NULL;
-	tpAniSirGlobal pMac = NULL;
+	uint32_t cac_dur;
+	tHalHandle hal = NULL;
+	tpAniSirGlobal mac = NULL;
 	enum dfs_region dfs_region;
 
-	if (sapContext == NULL) {
-		return 0;
-	}
-	hHal = CDS_GET_HAL_CB(sapContext->p_cds_gctx);
-
-	if (NULL == hHal) {
+	if (!sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "In %s invalid hHal", __func__);
+			  "%s: null sap_ctx", __func__);
 		return 0;
 	}
-	pMac = PMAC_STRUCT(hHal);
 
-	if (pMac->sap.SapDfsInfo.ignore_cac) {
-		/*
-		 * If User has set to ignore the CAC
-		 * so, continue without CAC Timer.
-		 */
-		return 2;
+	hal = CDS_GET_HAL_CB(sap_ctx->p_cds_gctx);
+	if (!hal) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: null hal", __func__);
+		return 0;
 	}
-	cacTimeOut = DEFAULT_CAC_TIMEOUT;
 
-	cds_get_dfs_region(&dfs_region);
-
-	if ((dfs_region == DFS_ETSI_REGION)
-	    && ((IS_ETSI_WEATHER_CH(sapContext->channel)) ||
-		(sap_is_channel_bonding_etsi_weather_channel(sapContext)))) {
-		cacTimeOut = ETSI_WEATHER_CH_CAC_TIMEOUT;
-	}
+	mac = PMAC_STRUCT(hal);
+	sap_get_cac_dur_dfs_region(sap_ctx, &cac_dur, &dfs_region);
+	if (0 == cac_dur)
+		return 0;
 
 #ifdef QCA_WIFI_NAPIER_EMULATION
-	cacTimeOut = cacTimeOut / 100;
+	cac_dur = cac_dur / 100;
 #endif
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
-		  "sapdfs: SAP_DFS_CHANNEL_CAC_START on CH - %d, CAC TIMEOUT - %d sec",
-		  sapContext->channel, cacTimeOut / 1000);
+		  "sapdfs: SAP_DFS_CHANNEL_CAC_START on CH-%d, CAC_DUR-%d sec",
+		  sap_ctx->channel, cac_dur / 1000);
 
-	qdf_mc_timer_init(&pMac->sap.SapDfsInfo.sap_dfs_cac_timer,
+	qdf_mc_timer_init(&mac->sap.SapDfsInfo.sap_dfs_cac_timer,
 			  QDF_TIMER_TYPE_SW,
-			  sap_dfs_cac_timer_callback, (void *) hHal);
+			  sap_dfs_cac_timer_callback, (void *)hal);
 
-	/*Start the CAC timer */
-	status =
-		qdf_mc_timer_start(&pMac->sap.SapDfsInfo.sap_dfs_cac_timer,
-				   cacTimeOut);
+	/* Start the CAC timer */
+	status = qdf_mc_timer_start(&mac->sap.SapDfsInfo.sap_dfs_cac_timer,
+			cac_dur);
 	if (status == QDF_STATUS_SUCCESS) {
-		pMac->sap.SapDfsInfo.is_dfs_cac_timer_running = true;
+		mac->sap.SapDfsInfo.is_dfs_cac_timer_running = true;
 		return 1;
 	} else {
-		pMac->sap.SapDfsInfo.is_dfs_cac_timer_running = false;
-		qdf_mc_timer_destroy(&pMac->sap.SapDfsInfo.sap_dfs_cac_timer);
+		mac->sap.SapDfsInfo.is_dfs_cac_timer_running = false;
+		qdf_mc_timer_destroy(&mac->sap.SapDfsInfo.sap_dfs_cac_timer);
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: failed to start cac timer", __func__);
 		return 0;
 	}
 }

@@ -693,6 +693,8 @@ typedef struct sSirSmeStartBssReq {
 	uint8_t sap_dot11mc;
 	uint8_t beacon_tx_rate;
 	bool vendor_vht_sap;
+	uint32_t cac_duration_ms;
+	uint32_t dfs_regdomain;
 
 } tSirSmeStartBssReq, *tpSirSmeStartBssReq;
 
@@ -3952,6 +3954,8 @@ typedef struct sSirChanChangeRequest {
 	uint32_t dot11mode;
 	tSirMacRateSet operational_rateset;
 	tSirMacRateSet extended_rateset;
+	uint32_t cac_duration_ms;
+	uint32_t dfs_regdomain;
 } tSirChanChangeRequest, *tpSirChanChangeRequest;
 
 typedef struct sSirChanChangeResponse {

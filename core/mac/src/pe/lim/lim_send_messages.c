@@ -209,7 +209,9 @@ tSirRetStatus lim_send_switch_chnl_params(tpAniSirGlobal pMac,
 					  enum phy_ch_width ch_width,
 					  int8_t maxTxPower,
 					  uint8_t peSessionId,
-					  uint8_t is_restart)
+					  uint8_t is_restart,
+					  uint32_t cac_duration_ms,
+					  uint32_t dfs_regdomain)
 {
 	tpSwitchChannelParams pChnlParams = NULL;
 	struct scheduler_msg msgQ;
@@ -264,6 +266,8 @@ tSirRetStatus lim_send_switch_chnl_params(tpAniSirGlobal pMac,
 	}
 
 	pChnlParams->restart_on_chan_switch = is_restart;
+	pChnlParams->cac_duration_ms = cac_duration_ms;
+	pChnlParams->dfs_regdomain = dfs_regdomain;
 
 	if (cds_is_5_mhz_enabled())
 		pChnlParams->ch_width = CH_WIDTH_5MHZ;

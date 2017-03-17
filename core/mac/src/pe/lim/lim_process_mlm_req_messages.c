@@ -201,7 +201,7 @@ lim_change_channel_with_callback(tpAniSirGlobal mac_ctx, uint8_t new_chan,
 
 	lim_send_switch_chnl_params(mac_ctx, new_chan, 0, 0,
 		CH_WIDTH_20MHZ, session_entry->maxTxPower,
-		session_entry->peSessionId, false);
+		session_entry->peSessionId, false, 0, 0);
 
 	return;
 }
@@ -603,6 +603,8 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 
 	addbss_param->dot11_mode = session->dot11mode;
 	addbss_param->nss = session->nss;
+	addbss_param->cac_duration_ms = mlm_start_req->cac_duration_ms;
+	addbss_param->dfs_regdomain = mlm_start_req->dfs_regdomain;
 	if (QDF_IBSS_MODE == addbss_param->halPersona) {
 		addbss_param->nss_2g = mac_ctx->vdev_type_nss_2g.ibss;
 		addbss_param->nss_5g = mac_ctx->vdev_type_nss_5g.ibss;
@@ -764,7 +766,7 @@ static void lim_post_join_set_link_state_callback(tpAniSirGlobal mac,
 		session_entry->ch_center_freq_seg1,
 		session_entry->ch_width,
 		session_entry->maxTxPower,
-		session_entry->peSessionId);
+		session_entry->peSessionId, 0, 0);
 	return;
 
 failure:
@@ -2698,7 +2700,8 @@ void lim_complete_mlm_scan(tpAniSirGlobal mac_ctx, tSirResultCodes ret_code)
 void lim_set_channel(tpAniSirGlobal mac_ctx, uint8_t channel,
 		     uint8_t ch_center_freq_seg0, uint8_t ch_center_freq_seg1,
 		     enum phy_ch_width ch_width, int8_t max_tx_power,
-		     uint8_t pe_session_id)
+		     uint8_t pe_session_id, uint32_t cac_duration_ms,
+		     uint32_t dfs_regdomain)
 {
 	tpPESession pe_session;
 	pe_session = pe_find_session_by_session_id(mac_ctx, pe_session_id);
@@ -2710,5 +2713,6 @@ void lim_set_channel(tpAniSirGlobal mac_ctx, uint8_t channel,
 	}
 	lim_send_switch_chnl_params(mac_ctx, channel, ch_center_freq_seg0,
 				    ch_center_freq_seg1, ch_width,
-				    max_tx_power, pe_session_id, false);
+				    max_tx_power, pe_session_id, false,
+				    cac_duration_ms, dfs_regdomain);
 }

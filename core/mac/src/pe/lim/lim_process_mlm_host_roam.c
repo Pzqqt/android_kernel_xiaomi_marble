@@ -157,7 +157,7 @@ void lim_process_mlm_reassoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 			session->ch_center_freq_seg1,
 			session->ch_width,
 			session->maxTxPower,
-			session->peSessionId);
+			session->peSessionId, 0, 0);
 
 	return;
 end:

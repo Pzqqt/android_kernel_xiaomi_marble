@@ -1667,6 +1667,8 @@ struct wma_target_req {
  *			number of receive streams
  * @he_capable: HE capability
  * @he_ops: HE operation
+ * @cac_duration_ms: cac duration in milliseconds
+ * @dfs_regdomain: dfs region
  */
 struct wma_vdev_start_req {
 	uint32_t beacon_intval;
@@ -1695,6 +1697,8 @@ struct wma_vdev_start_req {
 	bool he_capable;
 	uint32_t he_ops;
 #endif
+	uint32_t cac_duration_ms;
+	uint32_t dfs_regdomain;
 };
 
 /**

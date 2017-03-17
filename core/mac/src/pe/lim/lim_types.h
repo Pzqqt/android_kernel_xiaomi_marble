@@ -199,6 +199,8 @@ typedef struct sLimMlmStartReq {
 	uint8_t wps_state;
 	uint8_t obssProtEnabled;
 	uint8_t beacon_tx_rate;
+	uint32_t cac_duration_ms;
+	uint32_t dfs_regdomain;
 } tLimMlmStartReq, *tpLimMlmStartReq;
 
 typedef struct sLimMlmStartCnf {
@@ -586,7 +588,8 @@ uint32_t lim_defer_msg(tpAniSirGlobal, struct scheduler_msg *);
 void lim_set_channel(tpAniSirGlobal pMac, uint8_t channel,
 		uint8_t ch_center_freq_seg0, uint8_t ch_center_freq_seg1,
 		enum phy_ch_width ch_width, int8_t maxTxPower,
-		uint8_t peSessionId);
+		uint8_t peSessionId, uint32_t cac_duration_ms,
+		uint32_t dfs_regdomain);
 
 
 /* / Function that completes channel scan */

@@ -7657,6 +7657,8 @@ QDF_STATUS csr_roam_copy_profile(tpAniSirGlobal pMac,
 		pDstProfile->extended_rates.numRates =
 			pSrcProfile->extended_rates.numRates;
 	}
+	pDstProfile->cac_duration_ms = pSrcProfile->cac_duration_ms;
+	pDstProfile->dfs_regdomain   = pSrcProfile->dfs_regdomain;
 end:
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		csr_release_profile(pMac, pDstProfile);
@@ -13343,6 +13345,8 @@ QDF_STATUS csr_roam_issue_start_bss(tpAniSirGlobal pMac, uint32_t sessionId,
 			pProfile->addIeParams.probeRespBCNData_buff;
 	}
 	pParam->sap_dot11mc = pProfile->sap_dot11mc;
+	pParam->cac_duration_ms = pProfile->cac_duration_ms;
+	pParam->dfs_regdomain = pProfile->dfs_regdomain;
 
 	/* When starting an IBSS, start on the channel from the Profile. */
 	status =
@@ -15503,6 +15507,8 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(tpAniSirGlobal pMac, uint32_t sessionId
 	pMsg->sap_dot11mc = pParam->sap_dot11mc;
 	pMsg->vendor_vht_sap =
 			pMac->roam.configParam.vendor_vht_sap;
+	pMsg->cac_duration_ms = pParam->cac_duration_ms;
+	pMsg->dfs_regdomain = pParam->dfs_regdomain;
 
 	return umac_send_mb_message_to_mac(pMsg);
 }
@@ -19231,6 +19237,8 @@ QDF_STATUS csr_roam_channel_change_req(tpAniSirGlobal pMac,
 
 	pMsg->center_freq_seg_0 = ch_params->center_freq_seg0;
 	pMsg->center_freq_seg_1 = ch_params->center_freq_seg1;
+	pMsg->cac_duration_ms = profile->cac_duration_ms;
+	pMsg->dfs_regdomain = profile->dfs_regdomain;
 	qdf_mem_copy(pMsg->bssid, bssid.bytes, QDF_MAC_ADDR_SIZE);
 	qdf_mem_copy(&pMsg->operational_rateset,
 		&param.operationalRateSet, sizeof(pMsg->operational_rateset));

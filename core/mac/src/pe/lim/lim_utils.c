@@ -2714,7 +2714,7 @@ void lim_switch_primary_channel(tpAniSirGlobal pMac, uint8_t newChannel,
 
 	lim_send_switch_chnl_params(pMac, newChannel, 0, 0, CH_WIDTH_20MHZ,
 				    psessionEntry->maxTxPower,
-				    psessionEntry->peSessionId, false);
+				    psessionEntry->peSessionId, false, 0, 0);
 	return;
 }
 
@@ -2757,7 +2757,7 @@ void lim_switch_primary_secondary_channel(tpAniSirGlobal pMac,
 					ch_center_freq_seg1, ch_width,
 					psessionEntry->maxTxPower,
 					psessionEntry->peSessionId,
-					false);
+					false, 0, 0);
 
 	/* Store the new primary and secondary channel in session entries if different */
 	if (psessionEntry->currentOperChannel != newChannel) {
@@ -4559,7 +4559,7 @@ void lim_update_sta_run_time_ht_switch_chnl_params(tpAniSirGlobal pMac,
 					    psessionEntry->htRecommendedTxWidthSet,
 					    psessionEntry->maxTxPower,
 					    psessionEntry->peSessionId,
-					    true);
+					    true, 0, 0);
 
 		/* In case of IBSS, if STA should update HT Info IE in its beacons. */
 		if (LIM_IS_IBSS_ROLE(psessionEntry)) {

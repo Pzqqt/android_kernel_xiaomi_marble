@@ -974,6 +974,8 @@ typedef struct tagCsrRoamProfile {
 	tSirMacRateSet  extended_rates;
 	struct qdf_mac_addr bssid_hint;
 	bool do_not_roam;
+	uint32_t cac_duration_ms;
+	uint32_t dfs_regdomain;
 
 } tCsrRoamProfile;
 
