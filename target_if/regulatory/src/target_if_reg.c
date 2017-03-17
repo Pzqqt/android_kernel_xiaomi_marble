@@ -24,116 +24,75 @@
 
 
 #include <wmi_unified_api.h>
-#include <wmi.h>
-#include <osdep.h>
 #include <reg_services_public_struct.h>
 #include <wlan_reg_tgt_api.h>
 #include <target_if.h>
 #include <target_if_reg.h>
+#include <wmi_unified_reg_api.h>
 
-static struct cur_reg_rule
-*create_reg_rules_from_wmi(uint32_t num_reg_rules,
-			   wmi_regulatory_rule_struct *wmi_reg_rule)
+#ifdef CONFIG_MCL
+static inline uint32_t get_chan_list_cc_event_id(void)
 {
-	struct cur_reg_rule *reg_rule_ptr;
-	uint32_t count;
+	return WMI_REG_CHAN_LIST_CC_EVENTID;
+}
+#else
+static inline uint32_t get_chan_list_cc_event_id(void)
+{
+	return wmi_reg_chan_list_cc_event_id;
+}
+#endif
 
-	reg_rule_ptr = qdf_mem_malloc(num_reg_rules * sizeof(*reg_rule_ptr));
-
-	if (NULL == reg_rule_ptr) {
-		target_if_err("memory allocation failure");
-		return NULL;
-	}
-
-	for (count = 0; count < num_reg_rules; count++) {
-		reg_rule_ptr[count].start_freq =
-			WMI_REG_RULE_START_FREQ_GET(
-				wmi_reg_rule[count].freq_info);
-		reg_rule_ptr[count].end_freq =
-			WMI_REG_RULE_END_FREQ_GET(
-				wmi_reg_rule[count].freq_info);
-		reg_rule_ptr[count].max_bw =
-			WMI_REG_RULE_MAX_BW_GET(
-				wmi_reg_rule[count].bw_info);
-		reg_rule_ptr[count].reg_power =
-			WMI_REG_RULE_REG_POWER_GET(
-				wmi_reg_rule[count].bw_info);
-		reg_rule_ptr[count].flags =
-			WMI_REG_RULE_FLAGS_GET(
-				wmi_reg_rule[count].power_flag_info);
-	}
-
-	return reg_rule_ptr;
+static inline struct wlan_lmac_if_reg_rx_ops *
+target_if_regulatory_get_rx_ops(struct wlan_objmgr_psoc *psoc)
+{
+	return &psoc->soc_cb.rx_ops.reg_rx_ops;
 }
 
-
-/**
- * reg_chan_list_update_handler() - function to update channel list
- * @handle: wma handle
- * @event_buf: event buffer
- * @len: length of buffer
- *
- * Return: 0 for success or error code
- */
-static int reg_chan_list_update_handler(ol_scn_t handle, uint8_t *event_buf,
-				 uint32_t len)
+static int tgt_reg_chan_list_update_handler(ol_scn_t handle,
+					    uint8_t *event_buf,
+					    uint32_t len)
 {
-	WMI_REG_CHAN_LIST_CC_EVENTID_param_tlvs *param_buf;
-	struct cur_regulatory_info *reg_info;
-	wmi_reg_chan_list_cc_event_fixed_param *chan_list_event_hdr;
-	wmi_regulatory_rule_struct *wmi_reg_rule;
-	uint32_t num_2g_reg_rules, num_5g_reg_rules;
 	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_reg_rx_ops *reg_rx_ops;
+	struct cur_regulatory_info *reg_info;
 	QDF_STATUS status;
 
-	target_if_info("processing regulatory channel list");
+	TARGET_IF_ENTER();
 
-	param_buf = (WMI_REG_CHAN_LIST_CC_EVENTID_param_tlvs *)event_buf;
-	if (!param_buf) {
-		target_if_err("invalid channel list event buf");
+	psoc = target_if_get_psoc_from_scn_hdl(handle);
+	if (!psoc) {
+		target_if_err("psoc ptr is NULL");
 		return -EINVAL;
 	}
 
-	chan_list_event_hdr = param_buf->fixed_param;
+	reg_rx_ops = target_if_regulatory_get_rx_ops(psoc);
+	if (!reg_rx_ops->master_list_handler) {
+		target_if_err("master_list_handler is NULL");
+		return -EINVAL;
+	}
 
 	reg_info = qdf_mem_malloc(sizeof(*reg_info));
-
-	if (NULL == reg_info) {
-		target_if_err("memory allocation failure");
+	if (!reg_info) {
+		target_if_err("memory allocation failed");
 		return -ENOMEM;
 	}
 
-	psoc = target_if_get_psoc_from_scn_hdl(handle);
+	if (wmi_extract_reg_chan_list_update_event(GET_WMI_HDL_FROM_PSOC(psoc),
+						   event_buf, reg_info, len)
+	    != QDF_STATUS_SUCCESS) {
+
+		target_if_err("Extraction of channel list event failed");
+		qdf_mem_free(reg_info->reg_rules_2g_ptr);
+		qdf_mem_free(reg_info->reg_rules_5g_ptr);
+		qdf_mem_free(reg_info);
+		return -EFAULT;
+	}
 
 	reg_info->psoc = psoc;
-	reg_info->num_2g_reg_rules = chan_list_event_hdr->num_2g_reg_rules;
-	reg_info->num_5g_reg_rules = chan_list_event_hdr->num_5g_reg_rules;
-	qdf_mem_copy(reg_info->alpha2, &(chan_list_event_hdr->alpha2),
-		     REG_ALPHA2_LEN);
-	reg_info->dfs_region = chan_list_event_hdr->dfs_region;
-	reg_info->phybitmap = chan_list_event_hdr->phybitmap;
-	reg_info->min_bw_2g = chan_list_event_hdr->min_bw_2g;
-	reg_info->max_bw_2g = chan_list_event_hdr->max_bw_2g;
-	reg_info->min_bw_5g = chan_list_event_hdr->min_bw_5g;
-	reg_info->max_bw_5g = chan_list_event_hdr->max_bw_5g;
 
-	num_2g_reg_rules = reg_info->num_2g_reg_rules;
-	num_5g_reg_rules = reg_info->num_5g_reg_rules;
-
-	wmi_reg_rule = (wmi_regulatory_rule_struct *)(chan_list_event_hdr
-			    + sizeof(wmi_reg_chan_list_cc_event_fixed_param));
-
-	reg_info->reg_rules_2g_ptr = create_reg_rules_from_wmi(num_2g_reg_rules,
-							       wmi_reg_rule);
-	wmi_reg_rule += num_2g_reg_rules;
-
-	reg_info->reg_rules_5g_ptr = create_reg_rules_from_wmi(num_5g_reg_rules,
-							       wmi_reg_rule);
-
-	status = psoc->soc_cb.rx_ops.reg_rx_ops.master_list_handler(reg_info);
-
+	status = reg_rx_ops->master_list_handler(reg_info);
 	if (status != QDF_STATUS_SUCCESS) {
-		target_if_err("component could not process regulatory message");
+		target_if_err("Failed to process master channel list handler");
 		qdf_mem_free(reg_info->reg_rules_2g_ptr);
 		qdf_mem_free(reg_info->reg_rules_5g_ptr);
 		qdf_mem_free(reg_info);
@@ -149,16 +108,15 @@ static int reg_chan_list_update_handler(ol_scn_t handle, uint8_t *event_buf,
 	return 0;
 }
 
-
 static QDF_STATUS tgt_if_regulatory_register_master_list_handler(
 	struct wlan_objmgr_psoc *psoc, void *arg)
 {
 	wmi_unified_t wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
 
 	return wmi_unified_register_event_handler(wmi_handle,
-						  WMI_REG_CHAN_LIST_CC_EVENTID,
-						  reg_chan_list_update_handler,
-						  WMI_RX_UMAC_CTX);
+					       get_chan_list_cc_event_id(),
+					       tgt_reg_chan_list_update_handler,
+					       WMI_RX_UMAC_CTX);
 
 }
 
@@ -168,8 +126,7 @@ static QDF_STATUS tgt_if_regulatory_unregister_master_list_handler(
 	wmi_unified_t wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
 
 	return wmi_unified_unregister_event_handler(wmi_handle,
-					    WMI_REG_CHAN_LIST_CC_EVENTID);
-
+					       get_chan_list_cc_event_id());
 }
 
 QDF_STATUS target_if_register_regulatory_tx_ops(struct wlan_lmac_if_tx_ops

@@ -16020,6 +16020,89 @@ static QDF_STATUS extract_inst_rssi_stats_event_tlv(
 	return QDF_STATUS_SUCCESS;
 }
 
+static struct cur_reg_rule
+*create_reg_rules_from_wmi(uint32_t num_reg_rules,
+		wmi_regulatory_rule_struct *wmi_reg_rule)
+{
+	struct cur_reg_rule *reg_rule_ptr;
+	uint32_t count;
+
+	reg_rule_ptr = qdf_mem_malloc(num_reg_rules * sizeof(*reg_rule_ptr));
+
+	if (NULL == reg_rule_ptr) {
+		WMI_LOGE("memory allocation failure");
+		return NULL;
+	}
+
+	for (count = 0; count < num_reg_rules; count++) {
+		reg_rule_ptr[count].start_freq =
+			WMI_REG_RULE_START_FREQ_GET(
+					wmi_reg_rule[count].freq_info);
+		reg_rule_ptr[count].end_freq =
+			WMI_REG_RULE_END_FREQ_GET(
+					wmi_reg_rule[count].freq_info);
+		reg_rule_ptr[count].max_bw =
+			WMI_REG_RULE_MAX_BW_GET(
+					wmi_reg_rule[count].bw_info);
+		reg_rule_ptr[count].reg_power =
+			WMI_REG_RULE_REG_POWER_GET(
+					wmi_reg_rule[count].bw_info);
+		reg_rule_ptr[count].flags =
+			WMI_REG_RULE_FLAGS_GET(
+					wmi_reg_rule[count].power_flag_info);
+	}
+
+	return reg_rule_ptr;
+}
+
+static QDF_STATUS extract_reg_chan_list_update_event_tlv(
+	wmi_unified_t wmi_handle, uint8_t *evt_buf,
+	struct cur_regulatory_info *reg_info, uint32_t len)
+{
+	WMI_REG_CHAN_LIST_CC_EVENTID_param_tlvs *param_buf;
+	wmi_reg_chan_list_cc_event_fixed_param *chan_list_event_hdr;
+	wmi_regulatory_rule_struct *wmi_reg_rule;
+	uint32_t num_2g_reg_rules, num_5g_reg_rules;
+
+	WMI_LOGD("processing regulatory channel list");
+
+	param_buf = (WMI_REG_CHAN_LIST_CC_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		WMI_LOGE("invalid channel list event buf");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	chan_list_event_hdr = param_buf->fixed_param;
+
+	reg_info->num_2g_reg_rules = chan_list_event_hdr->num_2g_reg_rules;
+	reg_info->num_5g_reg_rules = chan_list_event_hdr->num_5g_reg_rules;
+	qdf_mem_copy(reg_info->alpha2, &(chan_list_event_hdr->alpha2),
+			REG_ALPHA2_LEN);
+	reg_info->dfs_region = chan_list_event_hdr->dfs_region;
+	reg_info->phybitmap = chan_list_event_hdr->phybitmap;
+	reg_info->min_bw_2g = chan_list_event_hdr->min_bw_2g;
+	reg_info->max_bw_2g = chan_list_event_hdr->max_bw_2g;
+	reg_info->min_bw_5g = chan_list_event_hdr->min_bw_5g;
+	reg_info->max_bw_5g = chan_list_event_hdr->max_bw_5g;
+
+	num_2g_reg_rules = reg_info->num_2g_reg_rules;
+	num_5g_reg_rules = reg_info->num_5g_reg_rules;
+
+	wmi_reg_rule = (wmi_regulatory_rule_struct *)(chan_list_event_hdr
+			+ sizeof(wmi_reg_chan_list_cc_event_fixed_param));
+
+	reg_info->reg_rules_2g_ptr = create_reg_rules_from_wmi(num_2g_reg_rules,
+			wmi_reg_rule);
+	wmi_reg_rule += num_2g_reg_rules;
+
+	reg_info->reg_rules_5g_ptr = create_reg_rules_from_wmi(num_5g_reg_rules,
+			wmi_reg_rule);
+
+	WMI_LOGD("processed regulatory channel list");
+
+	return QDF_STATUS_SUCCESS;
+}
+
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_tlv,
@@ -16343,7 +16426,7 @@ struct wmi_ops tlv_ops =  {
 	.extract_fips_event_data = extract_fips_event_data_tlv,
 	.send_pdev_fips_cmd = send_pdev_fips_cmd_tlv,
 	.extract_peer_delete_response_event =
-				extract_peer_delete_response_event_tlv,
+	extract_peer_delete_response_event_tlv,
 	.is_management_record = is_management_record_tlv,
 	.extract_pdev_csa_switch_count_status =
 				extract_pdev_csa_switch_count_status_tlv,
@@ -16355,6 +16438,8 @@ struct wmi_ops tlv_ops =  {
 	.send_per_roam_config_cmd = send_per_roam_config_cmd_tlv,
 	.send_dfs_phyerr_offload_en_cmd = send_dfs_phyerr_offload_en_cmd_tlv,
 	.send_dfs_phyerr_offload_dis_cmd = send_dfs_phyerr_offload_dis_cmd_tlv,
+	.extract_reg_chan_list_update_event =
+	extract_reg_chan_list_update_event_tlv,
 };
 
 /**
@@ -16569,6 +16654,7 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_pdev_fips_event_id] = WMI_PDEV_FIPS_EVENTID;
 	event_ids[wmi_pdev_csa_switch_count_status_event_id] =
 				WMI_PDEV_CSA_SWITCH_COUNT_STATUS_EVENTID;
+	event_ids[wmi_reg_chan_list_cc_event_id] = WMI_REG_CHAN_LIST_CC_EVENTID;
 }
 
 #ifndef CONFIG_MCL
