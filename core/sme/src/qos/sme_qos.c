@@ -4195,9 +4195,8 @@ QDF_STATUS sme_qos_process_add_ts_rsp(tpAniSirGlobal pMac, void *pMsgBuf)
 	}
 	pACInfo = &pSession->ac_info[ac];
 	if (SME_QOS_HANDOFF == pACInfo->curr_state) {
-		sms_log(pMac, LOGD,
-			FL
-				("ADDTS Response received for AC %d in HANDOFF State.. Dropping"),
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
+			FL("ADDTS Rsp received for AC %d in HANDOFF State. Dropping"),
 			ac);
 		pSession->readyForPowerSave = true;
 		return QDF_STATUS_SUCCESS;
