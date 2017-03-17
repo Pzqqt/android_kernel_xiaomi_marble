@@ -85,14 +85,13 @@ QDF_STATUS sme_ndp_initiator_req_handler(tHalHandle hal,
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 
 	if (NULL == req_params) {
-		sms_log(mac_ctx, LOGE, FL("Invalid req_params"));
+		sme_err("Invalid req_params");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (QDF_STATUS_SUCCESS != status) {
-		sms_log(mac_ctx, LOGE,
-		       FL("SME lock failed, status:%d"), status);
+		sme_err("SME lock failed, status: %d", status);
 		return status;
 	}
 	cmd = csr_get_command_buffer(mac_ctx);
@@ -150,8 +149,7 @@ QDF_STATUS sme_ndp_initiator_req_handler(tHalHandle hal,
 
 	status = csr_queue_sme_command(mac_ctx, cmd, true);
 	if (QDF_STATUS_SUCCESS != status) {
-		sms_log(mac_ctx, LOGE, FL("SME enqueue failed, status:%d"),
-			status);
+		sme_err("SME enqueue failed, status: %d", status);
 		csr_release_command(mac_ctx, cmd);
 	}
 
@@ -173,14 +171,13 @@ QDF_STATUS sme_ndp_responder_req_handler(tHalHandle hal,
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 
 	if (NULL == req_params) {
-		sms_log(mac_ctx, LOGE, FL("Invalid req_params"));
+		sme_err("Invalid req_params");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (QDF_STATUS_SUCCESS != status) {
-		sms_log(mac_ctx, LOGE,
-			FL("SME lock failed, status:%d"), status);
+		sme_err("SME lock failed, status: %d", status);
 		return status;
 	}
 	cmd = csr_get_command_buffer(mac_ctx);
@@ -242,8 +239,7 @@ QDF_STATUS sme_ndp_responder_req_handler(tHalHandle hal,
 
 	status = csr_queue_sme_command(mac_ctx, cmd, true);
 	if (QDF_STATUS_SUCCESS != status) {
-		sms_log(mac_ctx, LOGE,
-			FL("SME enqueue failed, status:%d"), status);
+		sme_err("SME enqueue failed, status: %d", status);
 		csr_release_command(mac_ctx, cmd);
 	}
 
@@ -266,14 +262,13 @@ QDF_STATUS sme_ndp_end_req_handler(tHalHandle hal, struct ndp_end_req *req)
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 
 	if (NULL == req) {
-		sms_log(mac_ctx, LOGE, FL("Invalid ndp end req"));
+		sme_err("Invalid ndp end req");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (QDF_STATUS_SUCCESS != status) {
-		sms_log(mac_ctx, LOGE,
-		       FL("SME lock failed, status:%d"), status);
+		sme_err("SME lock failed, status: %d", status);
 		return QDF_STATUS_E_RESOURCES;
 	}
 	cmd = csr_get_command_buffer(mac_ctx);
@@ -299,8 +294,7 @@ QDF_STATUS sme_ndp_end_req_handler(tHalHandle hal, struct ndp_end_req *req)
 
 	status = csr_queue_sme_command(mac_ctx, cmd, true);
 	if (QDF_STATUS_SUCCESS != status) {
-		sms_log(mac_ctx, LOGE, FL("SME enqueue failed, status:%d"),
-			status);
+		sme_err("SME enqueue failed, status: %d", status);
 		ret = QDF_STATUS_E_FAILURE;
 		csr_release_command(mac_ctx, cmd);
 	}
@@ -341,7 +335,7 @@ QDF_STATUS csr_roam_start_ndi(tpAniSirGlobal mac_ctx, uint32_t session,
 						NULL, &bss_cfg, NULL, false);
 	}
 
-	sms_log(mac_ctx, LOGD, FL("profile config validity: %d"), status);
+	sme_debug("profile config validity: %d", status);
 
 	return status;
 }
@@ -447,8 +441,7 @@ void csr_roam_update_ndp_return_params(tpAniSirGlobal mac_ctx,
 		*roam_result = eCSR_ROAM_RESULT_NDI_DELETE_RSP;
 		break;
 	default:
-		sms_log(mac_ctx, LOGE,
-			FL("Invalid CSR Roam result code: %d"), result);
+		sme_err("Invalid CSR Roam result code: %d", result);
 		break;
 	}
 }
@@ -471,7 +464,7 @@ QDF_STATUS csr_process_ndp_initiator_request(tpAniSirGlobal mac_ctx,
 	struct ndp_initiator_req *req;
 
 	if (NULL == cmd) {
-		sms_log(mac_ctx, LOGE, FL("Invalid req_params"));
+		sme_err("Invalid req_params");
 		return QDF_STATUS_E_INVAL;
 	}
 	req = &cmd->u.initiator_req;
@@ -494,7 +487,7 @@ QDF_STATUS csr_process_ndp_initiator_request(tpAniSirGlobal mac_ctx,
 	qdf_mem_copy(&lim_msg->req, req, sizeof(struct ndp_initiator_req));
 
 	self_mac_addr = lim_msg->req.self_ndi_mac_addr.bytes;
-	sms_log(mac_ctx, LOGD, FL("selfMac = "MAC_ADDRESS_STR),
+	sme_debug("selfMac = "MAC_ADDRESS_STR,
 		MAC_ADDR_ARRAY(self_mac_addr));
 
 	status = umac_send_mb_message_to_mac(lim_msg);
@@ -523,7 +516,7 @@ QDF_STATUS csr_process_ndp_responder_request(tpAniSirGlobal mac_ctx,
 	QDF_STATUS status;
 
 	if (!cmd) {
-		sms_log(mac_ctx, LOGE, FL("Invalid req_params"));
+		sme_err("Invalid req_params");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -531,7 +524,7 @@ QDF_STATUS csr_process_ndp_responder_request(tpAniSirGlobal mac_ctx,
 	lim_msg = qdf_mem_malloc(msg_len);
 
 	if (!lim_msg) {
-		sms_log(mac_ctx, LOGE, FL("Mem alloc fail"));
+		sme_err("Mem alloc fail");
 		status = QDF_STATUS_E_NOMEM;
 		goto free_config;
 	}
@@ -547,8 +540,7 @@ QDF_STATUS csr_process_ndp_responder_request(tpAniSirGlobal mac_ctx,
 	qdf_mem_copy(&lim_msg->req, &cmd->u.responder_req,
 			sizeof(struct ndp_responder_req));
 
-	sms_log(mac_ctx, LOGD,
-		FL("vdev_id %d ndp_rsp = %d Instance id %d"),
+	sme_debug("vdev_id: %d ndp_rsp: %d Instance id: %d",
 		lim_msg->req.vdev_id,
 		lim_msg->req.ndp_rsp,
 		lim_msg->req.ndp_instance_id);
@@ -577,14 +569,14 @@ QDF_STATUS csr_process_ndp_data_end_request(tpAniSirGlobal mac_ctx,
 	uint16_t msg_len;
 
 	if (NULL == cmd) {
-		sms_log(mac_ctx, LOGE, FL("NULL sme cmd"));
+		sme_err("NULL sme cmd");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	msg_len  = sizeof(*lim_msg);
 	lim_msg = qdf_mem_malloc(msg_len);
 	if (NULL == lim_msg) {
-		sms_log(mac_ctx, LOGE, FL("Malloc failed"));
+		sme_err("Malloc failed");
 		qdf_mem_free(cmd->u.data_end_req);
 		cmd->u.data_end_req = NULL;
 		return QDF_STATUS_E_NOMEM;
@@ -728,7 +720,7 @@ void sme_ndp_msg_processor(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg)
 			((struct sme_ndp_peer_ind *)msg->bodyptr)->session_id;
 		break;
 	default:
-		sms_log(mac_ctx, LOGE, FL("Unhandled NDP rsp"));
+		sme_err("Unhandled NDP rsp");
 		qdf_mem_free(msg->bodyptr);
 		return;
 	}
