@@ -1179,6 +1179,11 @@ bool cds_wait_for_external_threads_completion(const char *caller_func)
 	return true;
 }
 
+int cds_return_external_threads_count(void)
+{
+	return  atomic_read(&ssr_protect_entry_count);
+}
+
 /**
  * cds_get_gfp_flags(): get GFP flags
  *

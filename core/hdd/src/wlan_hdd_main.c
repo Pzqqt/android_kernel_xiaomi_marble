@@ -8735,6 +8735,16 @@ int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx)
 	mutex_lock(&hdd_ctx->iface_change_lock);
 	hdd_ctx->stop_modules_in_progress = true;
 
+	if (cds_return_external_threads_count() || hdd_ctx->isWiphySuspended) {
+		mutex_unlock(&hdd_ctx->iface_change_lock);
+		hdd_warn("External threads %d wiphy suspend %d",
+			cds_return_external_threads_count(),
+			hdd_ctx->isWiphySuspended);
+		qdf_mc_timer_start(&hdd_ctx->iface_change_timer,
+				   hdd_ctx->config->iface_change_wait_time);
+		return 0;
+	}
+
 	hdd_info("Present Driver Status: %d", hdd_ctx->driver_status);
 
 	switch (hdd_ctx->driver_status) {

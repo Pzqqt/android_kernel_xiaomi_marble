@@ -468,6 +468,13 @@ bool cds_wait_for_external_threads_completion(const char *caller_func);
 int cds_get_gfp_flags(void);
 
 /**
+ * cds_return_external_threads_count() - return active external thread calls
+ *
+ * Return: total number of active extrenal threads in driver
+ */
+int cds_return_external_threads_count(void);
+
+/**
  * cds_shutdown_notifier_register() - Register for shutdown notification
  * @cb          : Call back to be called
  * @priv        : Private pointer to be passed back to call back
