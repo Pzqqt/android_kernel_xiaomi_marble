@@ -77,8 +77,7 @@ enum cds_driver_state {
 /**
  * struct cds_sme_cbacks - list of sme functions registered with
  * CDS
- * @sme_get_valid_channels: gets the valid channel list for
- *  				   current reg domain
+ * @sme_get_valid_channels: gets the valid channel list for current reg domain
  * @sme_get_nss_for_vdev: gets the nss allowed for the vdev type
  */
 struct cds_sme_cbacks {

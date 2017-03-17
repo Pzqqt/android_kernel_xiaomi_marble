@@ -7290,7 +7290,7 @@ void lim_send_set_dtim_period(tpAniSirGlobal mac_ctx, uint8_t dtim_period,
  *
  * Frame treat as duplicate:
  * if retry bit is set and
- * 	 if source address and seq number matches with the last processed frame
+ *	 if source address and seq number matches with the last processed frame
  *
  * Return: false if duplicate frame, else true.
  */
