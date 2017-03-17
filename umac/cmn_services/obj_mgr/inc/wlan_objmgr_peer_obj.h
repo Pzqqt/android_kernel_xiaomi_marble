@@ -121,6 +121,7 @@ enum wlan_peer_state {
  * @phymode:         phy mode of station
  * @rssi:            Last received RSSI value
  * @max_rate:        Max Rate supported
+ * @seq_num:         Sequence number
  * @state:           State of the peer
  */
 struct wlan_objmgr_peer_mlme {
@@ -130,6 +131,7 @@ struct wlan_objmgr_peer_mlme {
 	enum wlan_phymode phymode;
 	int8_t rssi;
 	uint32_t max_rate;
+	uint16_t seq_num;
 	enum wlan_peer_state state;
 };
 
@@ -746,4 +748,61 @@ static inline enum wlan_peer_state wlan_peer_mlme_get_state(
 	/* This API is invoked with lock acquired, do not add log prints */
 	return peer->peer_mlme.state;
 }
+
+/**
+ * wlan_peer_mlme_get_next_seq_num() - get peer mlme next sequence number
+ * @peer: PEER object
+ *
+ * API to get mlme peer next sequence number
+ *
+ * Caller need to acquire lock with wlan_peer_obj_lock()
+ *
+ * Return: peer mlme next sequence number
+ */
+static inline uint32_t wlan_peer_mlme_get_next_seq_num(
+				struct wlan_objmgr_peer *peer)
+{
+	/* This API is invoked with lock acquired, do not add log prints */
+	if (peer->peer_mlme.seq_num < WLAN_MAX_SEQ_NUM)
+		peer->peer_mlme.seq_num++;
+	else
+		peer->peer_mlme.seq_num = 0;
+
+	return peer->peer_mlme.seq_num;
+}
+
+/**
+ * wlan_peer_mlme_get_seq_num() - get peer mlme sequence number
+ * @peer: PEER object
+ *
+ * API to get mlme peer sequence number
+ *
+ * Caller need to acquire lock with wlan_peer_obj_lock()
+ *
+ * Return: peer mlme sequence number
+ */
+static inline uint32_t wlan_peer_mlme_get_seq_num(
+				struct wlan_objmgr_peer *peer)
+{
+	/* This API is invoked with lock acquired, do not add log prints */
+	return peer->peer_mlme.seq_num;
+}
+
+/**
+ * wlan_peer_mlme_reset_seq_num() - reset peer mlme sequence number
+ * @peer: PEER object
+ *
+ * API to reset peer sequence number
+ *
+ * Caller need to acquire lock with wlan_peer_obj_lock()
+ *
+ * Return: void
+ */
+static inline void wlan_peer_mlme_reset_seq_num(
+				struct wlan_objmgr_peer *peer)
+{
+	/* This API is invoked with lock acquired, do not add log prints */
+	peer->peer_mlme.seq_num = 0;
+}
+
 #endif /* _WLAN_OBJMGR_PEER_OBJ_H_*/

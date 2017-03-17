@@ -143,6 +143,7 @@ struct wlan_objmgr_peer *wlan_objmgr_peer_obj_create(
 	wlan_peer_set_macaddr(peer, macaddr);
 	/* initialize peer state */
 	wlan_peer_mlme_set_state(peer, WLAN_INIT_STATE);
+	wlan_peer_mlme_reset_seq_num(peer);
 	qdf_atomic_init(&peer->peer_objmgr.ref_cnt);
 	/* Attach peer to psoc, psoc maintains the node table for the device */
 	if (wlan_objmgr_psoc_peer_attach(psoc, peer) !=
