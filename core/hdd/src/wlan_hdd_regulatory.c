@@ -525,7 +525,7 @@ void hdd_program_country_code(hdd_context_t *hdd_ctx)
 	struct wiphy *wiphy = hdd_ctx->wiphy;
 	uint8_t *country_alpha2 = hdd_ctx->reg.alpha2;
 
-	if (false == init_by_reg_core) {
+	if (!init_by_reg_core && !init_by_driver) {
 		init_by_driver = true;
 		if (('0' != country_alpha2[0]) ||
 		    ('0' != country_alpha2[1]))
