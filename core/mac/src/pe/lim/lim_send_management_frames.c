@@ -2375,9 +2375,10 @@ alloc_packet:
 					ft_ies_length);
 				lim_log(mac_ctx, LOG2,
 					FL("Auth1 Frame FTIE is: "));
-				sir_dump_buf(mac_ctx, SIR_LIM_MODULE_ID, LOG2,
-					(uint8_t *) body,
-					ft_ies_length);
+				QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE,
+						   QDF_TRACE_LEVEL_DEBUG,
+						   (uint8_t *) body,
+						   ft_ies_length);
 			} else if (NULL != session->ftPEContext.
 					pFTPreAuthReq->pbssDescription) {
 				/* MDID attr is 54 */
@@ -2401,7 +2402,9 @@ alloc_packet:
 				eSIR_MAC_SUCCESS_STATUS),
 			MAC_ADDR_ARRAY(mac_hdr->da));
 	}
-	sir_dump_buf(mac_ctx, SIR_LIM_MODULE_ID, LOG2, frame, frame_len);
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE,
+			   QDF_TRACE_LEVEL_DEBUG,
+			   frame, frame_len);
 
 	if ((NULL != session->ftPEContext.pFTPreAuthReq) &&
 	    (SIR_BAND_5_GHZ == lim_get_rf_band(

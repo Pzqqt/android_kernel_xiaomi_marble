@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -76,7 +76,7 @@
 	dot11f_log((ctx), (sev), (fmt), (p1), (p2), (p3));
 
 #define FRAMES_DUMP(ctx, sev, p, n) \
-	sir_dump_buf((pCtx), SIR_DBG_MODULE_ID, (sev), (p), (n));
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, (sev), (p), (n);
 
 #endif /* #if defined( DOT11F_ENABLE_LOGGING ) */
 

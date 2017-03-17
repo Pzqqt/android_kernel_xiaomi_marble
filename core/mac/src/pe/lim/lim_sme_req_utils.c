@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -447,8 +447,10 @@ lim_is_sme_start_bss_req_valid(tpAniSirGlobal mac_ctx,
 
 			lim_log(mac_ctx, LOGW,
 				FL("Invalid operational 11A rates"));
-			sir_dump_buf(mac_ctx, SIR_LIM_MODULE_ID, LOG2,
-				     opr_rates->rate, opr_rates->numRates);
+			QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE,
+					   QDF_TRACE_LEVEL_WARN,
+					   opr_rates->rate,
+					   opr_rates->numRates);
 			return false;
 		}
 		return true;
@@ -461,8 +463,10 @@ lim_is_sme_start_bss_req_valid(tpAniSirGlobal mac_ctx,
 
 			lim_log(mac_ctx, LOGW,
 				FL("Invalid operational 11G rates"));
-			sir_dump_buf(mac_ctx, SIR_LIM_MODULE_ID, LOG2,
-				     opr_rates->rate, opr_rates->numRates);
+			QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE,
+					   QDF_TRACE_LEVEL_WARN,
+					   opr_rates->rate,
+					   opr_rates->numRates);
 			return false;
 		}
 		return true;
@@ -474,8 +478,10 @@ lim_is_sme_start_bss_req_valid(tpAniSirGlobal mac_ctx,
 
 		lim_log(mac_ctx, LOGW,
 			FL("Invalid operational 11B rates"));
-		sir_dump_buf(mac_ctx, SIR_LIM_MODULE_ID, LOG2,
-			     opr_rates->rate, opr_rates->numRates);
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE,
+				   QDF_TRACE_LEVEL_WARN,
+				   opr_rates->rate,
+				   opr_rates->numRates);
 		return false;
 	}
 	return true;

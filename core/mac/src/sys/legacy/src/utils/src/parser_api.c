@@ -2200,17 +2200,15 @@ sir_convert_probe_req_frame2_struct(tpAniSirGlobal pMac,
 		lim_log(pMac, LOGE,
 			FL("Failed to parse a Probe Request (0x%08x, %d bytes):"),
 			status, nFrame);
-		PELOG2(sir_dump_buf
-			       (pMac, SIR_DBG_MODULE_ID, LOG2, pFrame, nFrame);
-		       )
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
+				   pFrame, nFrame);
 		return eSIR_FAILURE;
 	} else if (DOT11F_WARNED(status)) {
 		lim_log(pMac, LOGW,
 			FL("There were warnings while unpacking a Probe Request (0x%08x, %d bytes):"),
 			status, nFrame);
-		PELOG2(sir_dump_buf
-			       (pMac, SIR_DBG_MODULE_ID, LOG2, pFrame, nFrame);
-		       )
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_WARN,
+				   pFrame, nFrame);
 	}
 	/* & "transliterate" from a 'tDot11fProbeRequestto' a 'tSirProbeReq'... */
 	if (!pr.SSID.present) {
@@ -2352,18 +2350,16 @@ tSirRetStatus sir_convert_probe_frame2_struct(tpAniSirGlobal pMac,
 		lim_log(pMac, LOGE,
 			FL("Failed to parse a Probe Response (0x%08x, %d bytes):"),
 			status, nFrame);
-		PELOG2(sir_dump_buf
-			       (pMac, SIR_DBG_MODULE_ID, LOG2, pFrame, nFrame);
-		       )
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
+				   pFrame, nFrame);
 		qdf_mem_free(pr);
 		return eSIR_FAILURE;
 	} else if (DOT11F_WARNED(status)) {
 		lim_log(pMac, LOGW,
 			FL("There were warnings while unpacking a Probe Response (0x%08x, %d bytes):"),
 			status, nFrame);
-		PELOG2(sir_dump_buf
-			       (pMac, SIR_DBG_MODULE_ID, LOG2, pFrame, nFrame);
-		       )
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_WARN,
+				   pFrame, nFrame);
 	}
 	/* & "transliterate" from a 'tDot11fProbeResponse' to a 'tSirProbeRespBeacon'... */
 
@@ -2670,18 +2666,16 @@ sir_convert_assoc_req_frame2_struct(tpAniSirGlobal pMac,
 		lim_log(pMac, LOGE,
 			FL("Failed to parse an Association Request (0x%08x, %d bytes):"),
 			status, nFrame);
-		PELOG2(sir_dump_buf
-			       (pMac, SIR_DBG_MODULE_ID, LOG2, pFrame, nFrame);
-		       )
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
+				   pFrame, nFrame);
 		qdf_mem_free(ar);
 		return eSIR_FAILURE;
 	} else if (DOT11F_WARNED(status)) {
 		lim_log(pMac, LOGW,
 			FL("There were warnings while unpacking an Assoication Request (0x%08x, %d bytes):"),
 			status, nFrame);
-		PELOG2(sir_dump_buf
-			       (pMac, SIR_DBG_MODULE_ID, LOG2, pFrame, nFrame);
-		       )
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_WARN,
+				   pFrame, nFrame);
 	}
 	/* & "transliterate" from a 'tDot11fAssocRequest' to a 'tSirAssocReq'... */
 
@@ -2880,17 +2874,15 @@ sir_convert_assoc_resp_frame2_struct(tpAniSirGlobal pMac,
 		lim_log(pMac, LOGE,
 			FL("Failed to parse an Association Response (0x%08x, %d bytes):"),
 			status, nFrame);
-		PELOG2(sir_dump_buf
-			       (pMac, SIR_DBG_MODULE_ID, LOG2, pFrame, nFrame);
-		       )
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
+				   pFrame, nFrame);
 		return eSIR_FAILURE;
 	} else if (DOT11F_WARNED(status)) {
 		lim_log(pMac, LOGW,
 			FL("There were warnings while unpacking an Association Response (0x%08x, %d bytes):"),
 			status, nFrame);
-		PELOG2(sir_dump_buf
-			       (pMac, SIR_DBG_MODULE_ID, LOG2, pFrame, nFrame);
-		       )
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_WARN,
+				   pFrame, nFrame);
 	}
 	/* & "transliterate" from a 'tDot11fAssocResponse' a 'tSirAssocRsp'... */
 
@@ -3115,17 +3107,15 @@ sir_convert_reassoc_req_frame2_struct(tpAniSirGlobal pMac,
 		lim_log(pMac, LOGE,
 			FL("Failed to parse a Re-association Request (0x%08x, %d bytes):"),
 			status, nFrame);
-		PELOG2(sir_dump_buf
-			       (pMac, SIR_DBG_MODULE_ID, LOG2, pFrame, nFrame);
-		       )
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
+				   pFrame, nFrame);
 		return eSIR_FAILURE;
 	} else if (DOT11F_WARNED(status)) {
 		lim_log(pMac, LOGW,
 			FL("There were warnings while unpacking a Re-association Request (0x%08x, %d bytes):"),
 			status, nFrame);
-		PELOG2(sir_dump_buf
-			       (pMac, SIR_DBG_MODULE_ID, LOG2, pFrame, nFrame);
-		       )
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_WARN,
+				   pFrame, nFrame);
 	}
 	/* & "transliterate" from a 'tDot11fReAssocRequest' to a 'tSirAssocReq'... */
 
@@ -3316,9 +3306,8 @@ sir_beacon_ie_ese_bcn_report(tpAniSirGlobal pMac,
 		lim_log(pMac, LOGW,
 			FL("There were warnings while unpacking Beacon IEs (0x%08x, %d bytes):"),
 			status, nPayload);
-		PELOG2(sir_dump_buf
-			       (pMac, SIR_DBG_MODULE_ID, LOG2, pPayload, nPayload);
-		       )
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_WARN,
+				   pPayload, nPayload);
 	}
 	/* & "transliterate" from a 'tDot11fBeaconIEs' to a 'eseBcnReportMandatoryIe'... */
 	if (!pBies->SSID.present) {
@@ -3605,18 +3594,16 @@ sir_parse_beacon_ie(tpAniSirGlobal pMac,
 		lim_log(pMac, LOGE,
 			FL("Failed to parse Beacon IEs (0x%08x, %d bytes):"),
 			status, nPayload);
-		PELOG2(sir_dump_buf
-			       (pMac, SIR_DBG_MODULE_ID, LOG2, pPayload, nPayload);
-		       )
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
+				   pPayload, nPayload);
 		qdf_mem_free(pBies);
 		return eSIR_FAILURE;
 	} else if (DOT11F_WARNED(status)) {
 		lim_log(pMac, LOGW,
 			FL("There were warnings while unpacking Beacon IEs (0x%08x, %d bytes):"),
 			status, nPayload);
-		PELOG2(sir_dump_buf
-			       (pMac, SIR_DBG_MODULE_ID, LOG2, pPayload, nPayload);
-		       )
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_WARN,
+				   pPayload, nPayload);
 	}
 	/* & "transliterate" from a 'tDot11fBeaconIEs' to a 'tSirProbeRespBeacon'... */
 	if (!pBies->SSID.present) {
@@ -3921,18 +3908,16 @@ sir_convert_beacon_frame2_struct(tpAniSirGlobal pMac,
 		lim_log(pMac, LOGE,
 			FL("Failed to parse Beacon IEs (0x%08x, %d bytes):"),
 			status, nPayload);
-		PELOG2(sir_dump_buf
-			       (pMac, SIR_DBG_MODULE_ID, LOG2, pPayload, nPayload);
-		       )
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
+				   pPayload, nPayload);
 		qdf_mem_free(pBeacon);
 		return eSIR_FAILURE;
 	} else if (DOT11F_WARNED(status)) {
 		lim_log(pMac, LOGW,
 			FL("There were warnings while unpacking Beacon IEs (0x%08x, %d bytes):"),
 			status, nPayload);
-		PELOG2(sir_dump_buf
-			       (pMac, SIR_DBG_MODULE_ID, LOG2, pPayload, nPayload);
-		       )
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_WARN,
+				   pPayload, nPayload);
 	}
 	/* & "transliterate" from a 'tDot11fBeacon' to a 'tSirProbeRespBeacon'... */
 	/* Timestamp */
@@ -4294,17 +4279,15 @@ sir_convert_auth_frame2_struct(tpAniSirGlobal pMac,
 		lim_log(pMac, LOGE,
 			FL("Failed to parse an Authentication frame (0x%08x, %d bytes):"),
 			status, nFrame);
-		PELOG2(sir_dump_buf
-			       (pMac, SIR_DBG_MODULE_ID, LOG2, pFrame, nFrame);
-		       )
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
+				   pFrame, nFrame);
 		return eSIR_FAILURE;
 	} else if (DOT11F_WARNED(status)) {
 		lim_log(pMac, LOGW,
 			FL("There were warnings while unpacking an Authentication frame (0x%08x, %d bytes):"),
 			status, nFrame);
-		PELOG2(sir_dump_buf
-			       (pMac, SIR_DBG_MODULE_ID, LOG2, pFrame, nFrame);
-		       )
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_WARN,
+				   pFrame, nFrame);
 	}
 	/* & "transliterate" from a 'tDot11fAuthentication' to a 'tSirMacAuthFrameBody'... */
 	pAuth->authAlgoNumber = auth.AuthAlgo.algo;
@@ -4365,17 +4348,15 @@ sir_convert_addts_req2_struct(tpAniSirGlobal pMac,
 		lim_log(pMac, LOGE,
 			FL("Failed to parse an Add TS Request frame (0x%08x, %d bytes):"),
 			status, nFrame);
-		PELOG2(sir_dump_buf
-			       (pMac, SIR_DBG_MODULE_ID, LOG2, pFrame, nFrame);
-		       )
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
+				   pFrame, nFrame);
 		return eSIR_FAILURE;
 	} else if (DOT11F_WARNED(status)) {
 		lim_log(pMac, LOGW,
 			FL("There were warnings while unpacking an Add TS Request frame (0x%08x,%d bytes):"),
 			status, nFrame);
-		PELOG2(sir_dump_buf
-			       (pMac, SIR_DBG_MODULE_ID, LOG2, pFrame, nFrame);
-		       )
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_WARN,
+				   pFrame, nFrame);
 	}
 	/* & "transliterate" from a 'tDot11fAddTSRequest' or a */
 	/* 'tDot11WMMAddTSRequest' to a 'tSirMacAddtsReqInfo'... */
@@ -4506,17 +4487,15 @@ sir_convert_addts_rsp2_struct(tpAniSirGlobal pMac,
 		lim_log(pMac, LOGE,
 			FL("Failed to parse an Add TS Response frame (0x%08x, %d bytes):"),
 			status, nFrame);
-		PELOG2(sir_dump_buf
-			       (pMac, SIR_DBG_MODULE_ID, LOG2, pFrame, nFrame);
-		       )
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
+				   pFrame, nFrame);
 		return eSIR_FAILURE;
 	} else if (DOT11F_WARNED(status)) {
 		lim_log(pMac, LOGW,
 			FL("There were warnings while unpacking an Add TS Response frame (0x%08x,%d bytes):"),
 			status, nFrame);
-		PELOG2(sir_dump_buf
-			       (pMac, SIR_DBG_MODULE_ID, LOG2, pFrame, nFrame);
-		       )
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_WARN,
+				   pFrame, nFrame);
 	}
 	/* & "transliterate" from a 'tDot11fAddTSResponse' or a */
 	/* 'tDot11WMMAddTSResponse' to a 'tSirMacAddtsRspInfo'... */
@@ -4681,17 +4660,15 @@ sir_convert_delts_req2_struct(tpAniSirGlobal pMac,
 		lim_log(pMac, LOGE,
 			FL("Failed to parse an Del TS Request frame (0x%08x, %d bytes):"),
 			status, nFrame);
-		PELOG2(sir_dump_buf
-			       (pMac, SIR_DBG_MODULE_ID, LOG2, pFrame, nFrame);
-		       )
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
+				   pFrame, nFrame);
 		return eSIR_FAILURE;
 	} else if (DOT11F_WARNED(status)) {
 		dot11f_log(pMac, LOGW,
 			   FL("There were warnings while unpacking an Del TS Request frame (0x%08x,%d bytes):"),
 			   status, nFrame);
-		PELOG2(sir_dump_buf
-			       (pMac, SIR_DBG_MODULE_ID, LOG2, pFrame, nFrame);
-		       )
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_WARN,
+				   pFrame, nFrame);
 	}
 	/* & "transliterate" from a 'tDot11fDelTSResponse' or a */
 	/* 'tDot11WMMDelTSResponse' to a 'tSirMacDeltsReqInfo'... */
@@ -4743,17 +4720,15 @@ sir_convert_qos_map_configure_frame2_struct(tpAniSirGlobal pMac,
 		dot11f_log(pMac, LOGE,
 			   FL("Failed to parse Qos Map Configure frame (0x%08x, %d bytes):"),
 			   status, nFrame);
-		PELOG2(sir_dump_buf
-			       (pMac, SIR_DBG_MODULE_ID, LOG2, pFrame, nFrame);
-		       )
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
+				   pFrame, nFrame);
 		return eSIR_FAILURE;
 	} else if (DOT11F_WARNED(status)) {
 		dot11f_log(pMac, LOGW,
 			   FL("There were warnings while unpacking Qos Map Configure frame (0x%08x, %d bytes):"),
 			   status, nFrame);
-		PELOG2(sir_dump_buf
-			       (pMac, SIR_DBG_MODULE_ID, LOG2, pFrame, nFrame);
-		       )
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_WARN,
+				   pFrame, nFrame);
 	}
 	pQosMapSet->present = mapConfigure.QosMapSet.present;
 	convert_qos_mapset_frame(pMac->hHdd, pQosMapSet, &mapConfigure.QosMapSet);
@@ -4777,17 +4752,15 @@ sir_convert_tpc_req_frame2_struct(tpAniSirGlobal pMac,
 		dot11f_log(pMac, LOGE,
 			   FL("Failed to parse a TPC Request frame (0x%08x, %d bytes):"),
 			   status, nFrame);
-		PELOG2(sir_dump_buf
-			       (pMac, SIR_DBG_MODULE_ID, LOG2, pFrame, nFrame);
-		       )
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
+				   pFrame, nFrame);
 		return eSIR_FAILURE;
 	} else if (DOT11F_WARNED(status)) {
 		dot11f_log(pMac, LOGW,
 			   FL("There were warnings while unpacking a TPC Request frame (0x%08x, %d bytes):"),
 			   status, nFrame);
-		PELOG2(sir_dump_buf
-			       (pMac, SIR_DBG_MODULE_ID, LOG2, pFrame, nFrame);
-		       )
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_WARN,
+				   pFrame, nFrame);
 	}
 	/* & "transliterate" from a 'tDot11fTPCRequest' to a */
 	/* 'tSirMacTpcReqActionFrame'... */
@@ -4822,17 +4795,15 @@ sir_convert_meas_req_frame2_struct(tpAniSirGlobal pMac,
 		dot11f_log(pMac, LOGE,
 			   FL("Failed to parse a Measurement Request frame (0x%08x, %d bytes):"),
 			   status, nFrame);
-		PELOG2(sir_dump_buf
-			       (pMac, SIR_DBG_MODULE_ID, LOG2, pFrame, nFrame);
-		       )
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
+				   pFrame, nFrame);
 		return eSIR_FAILURE;
 	} else if (DOT11F_WARNED(status)) {
 		dot11f_log(pMac, LOGW,
 			   FL("There were warnings while unpacking a Measurement Request frame (0x%08x, %d bytes):"),
 			   status, nFrame);
-		PELOG2(sir_dump_buf
-			       (pMac, SIR_DBG_MODULE_ID, LOG2, pFrame, nFrame);
-		       )
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_WARN,
+				   pFrame, nFrame);
 	}
 	/* & "transliterate" from a 'tDot11fMeasurementRequest' to a */
 	/* 'tpSirMacMeasReqActionFrame'... */

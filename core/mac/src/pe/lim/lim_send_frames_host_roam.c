@@ -412,9 +412,9 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 			body++;
 		}
 	}
-	lim_log(mac_ctx, LOG1, FL("Re-assoc Req Frame is: "));
-	       sir_dump_buf(mac_ctx, SIR_LIM_MODULE_ID, LOG1,
-			    (uint8_t *) frame, (bytes + ft_ies_length));
+	lim_log(mac_ctx, LOGD, FL("Re-assoc Req Frame is: "));
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+			   (uint8_t *) frame, (bytes + ft_ies_length));
 
 	if ((NULL != pe_session->ftPEContext.pFTPreAuthReq) &&
 	    (SIR_BAND_5_GHZ == lim_get_rf_band(

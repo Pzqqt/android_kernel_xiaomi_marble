@@ -114,14 +114,6 @@ sys_bbt_process_message_core(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg,
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		goto fail;
 
-	sys_log(mac_ctx, LOG3, FL("Rx Mgmt Frame Subtype: %d\n"), subtype);
-	sir_dump_buf(mac_ctx, SIR_SYS_MODULE_ID, LOG3,
-		(uint8_t *) WMA_GET_RX_MAC_HEADER(bd_ptr),
-		WMA_GET_RX_MPDU_LEN(bd_ptr));
-	sir_dump_buf(mac_ctx, SIR_SYS_MODULE_ID, LOG3,
-		WMA_GET_RX_MPDU_DATA(bd_ptr),
-		WMA_GET_RX_PAYLOAD_LEN(bd_ptr));
-
 	mac_ctx->sys.gSysFrameCount[type][subtype]++;
 	framecount = mac_ctx->sys.gSysFrameCount[type][subtype];
 

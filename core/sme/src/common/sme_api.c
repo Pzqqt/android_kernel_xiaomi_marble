@@ -6488,10 +6488,6 @@ QDF_STATUS sme_update_p2p_ie(tHalHandle hHal, void *p2pIe, uint32_t p2pIeLength)
 			status = QDF_STATUS_E_NOMEM;
 		} else {
 			pMac->p2pContext.probeRspIeLength = p2pIeLength;
-
-			sir_dump_buf(pMac, SIR_LIM_MODULE_ID, LOG2,
-				     pMac->p2pContext.probeRspIe,
-				     pMac->p2pContext.probeRspIeLength);
 			qdf_mem_copy((uint8_t *) pMac->p2pContext.probeRspIe,
 				     p2pIe, p2pIeLength);
 		}

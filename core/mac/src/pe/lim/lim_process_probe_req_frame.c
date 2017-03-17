@@ -101,11 +101,11 @@ void lim_get_wpspbc_sessions(tpAniSirGlobal mac_ctx, struct qdf_mac_addr addr,
 		/* One WPS probe request in 120 second */
 		*overlap = eSAP_WPSPBC_ONE_WPSPBC_PROBE_REQ_IN120S;
 
-	lim_log(mac_ctx, LOGE, FL("overlap = %d"), *overlap);
-	sir_dump_buf(mac_ctx, SIR_LIM_MODULE_ID, LOGE, addr.bytes,
-			QDF_MAC_ADDR_SIZE);
-	sir_dump_buf(mac_ctx, SIR_LIM_MODULE_ID, LOGE, uuid_e,
-			SIR_WPS_UUID_LEN);
+	lim_log(mac_ctx, LOGD, FL("overlap = %d"), *overlap);
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+			   addr.bytes, QDF_MAC_ADDR_SIZE);
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+			   uuid_e, SIR_WPS_UUID_LEN);
 	return;
 }
 
@@ -127,16 +127,11 @@ static void lim_remove_timeout_pbc_sessions(tpAniSirGlobal pMac,
 	while (pbc) {
 		prev = pbc;
 		pbc = pbc->next;
-
-		PELOG4(lim_log(pMac, LOG4, FL("WPS PBC sessions remove"));)
-		PELOG4(sir_dump_buf
-			       (pMac, SIR_LIM_MODULE_ID, LOG4, prev->addr,
-			       sizeof(tSirMacAddr));
-		       )
-		PELOG4(sir_dump_buf
-			       (pMac, SIR_LIM_MODULE_ID, LOG4, prev->uuid_e,
-			       SIR_WPS_UUID_LEN);
-		       )
+		lim_log(pMac, LOGD, FL("WPS PBC sessions remove"));
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+			   prev->addr.bytes, QDF_MAC_ADDR_SIZE);
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+			   prev->uuid_e, SIR_WPS_UUID_LEN);
 
 		qdf_mem_free(prev);
 	}
@@ -205,15 +200,11 @@ static void lim_update_pbc_session_entry(tpAniSirGlobal pMac,
 		(uint32_t) (qdf_mc_timer_get_system_ticks() /
 			    QDF_TICKS_PER_SECOND);
 
-	PELOG4(lim_log
-		       (pMac, LOG4, FL("Receive WPS probe reques curTime=%d"), curTime);
-	       )
-	PELOG4(sir_dump_buf
-		       (pMac, SIR_LIM_MODULE_ID, LOG4, addr, sizeof(tSirMacAddr));
-	       )
-	PELOG4(sir_dump_buf
-		       (pMac, SIR_LIM_MODULE_ID, LOG4, uuid_e, SIR_WPS_UUID_LEN);
-	       )
+	lim_log(pMac, LOGD, FL("Receive WPS probe reques curTime=%d"), curTime);
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+			   addr, QDF_MAC_ADDR_SIZE);
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+			   uuid_e, SIR_WPS_UUID_LEN);
 
 	pbc = psessionEntry->pAPWPSPBCSession;
 
@@ -446,10 +437,13 @@ lim_process_probe_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 				WSC_PASSWD_ID_PUSH_BUTTON)
 			&& (probe_req.probeReqWscIeInfo.UUID_E.present == 1))) {
 			if (session->fwdWPSPBCProbeReq) {
-				sir_dump_buf(mac_ctx, SIR_LIM_MODULE_ID,
-					LOG4, mac_hdr->sa, sizeof(tSirMacAddr));
-				sir_dump_buf(mac_ctx, SIR_LIM_MODULE_ID,
-					LOG4, body_ptr, frame_len);
+				QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE,
+						   QDF_TRACE_LEVEL_DEBUG,
+						   mac_hdr->sa,
+						   QDF_MAC_ADDR_SIZE);
+				QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE,
+						   QDF_TRACE_LEVEL_DEBUG,
+						   body_ptr, frame_len);
 				lim_send_sme_probe_req_ind(mac_ctx, mac_hdr->sa,
 					body_ptr, frame_len, session);
 			} else {

@@ -3314,11 +3314,10 @@ tSirRetStatus lim_extract_ap_capabilities(tpAniSirGlobal pMac,
 {
 	qdf_mem_set((uint8_t *) beaconStruct, sizeof(tSirProbeRespBeacon), 0);
 
-	PELOG3(lim_log(pMac, LOG3,
-		       FL
-			       ("In lim_extract_ap_capabilities: The IE's being received are:"));
-	       sir_dump_buf(pMac, SIR_LIM_MODULE_ID, LOG3, pIE, ieLen);
-	       )
+	lim_log(pMac, LOGD,
+		FL("In lim_extract_ap_capabilities: The IE's being received are:"));
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+				pIE, ieLen);
 	/* Parse the Beacon IE's, Don't try to parse if we dont have anything in IE */
 	if (ieLen > 0) {
 		if (eSIR_SUCCESS !=

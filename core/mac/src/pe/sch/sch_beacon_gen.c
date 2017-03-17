@@ -824,13 +824,6 @@ static void write_beacon_to_memory(tpAniSirGlobal pMac, uint16_t size,
 	} else
 		pBeacon->beaconLength = (uint32_t) size - sizeof(uint32_t);
 
-	/* write size bytes from pSchBeaconFrameBegin */
-	PELOG2(sch_log(pMac, LOG2, FL("Beacon size - %d bytes"), size);)
-	PELOG2(sir_dump_buf
-		       (pMac, SIR_SCH_MODULE_ID, LOG2,
-		       psessionEntry->pSchBeaconFrameBegin, size);
-	       )
-
 	if (!pMac->sch.schObject.fBeaconChanged)
 		return;
 
@@ -906,9 +899,6 @@ void sch_generate_tim(tpAniSirGlobal pMac, uint8_t **pPtr, uint16_t *timLength,
 	*ptr++ = 0xFF;
 	ptr += (N2 - N1 + 1);
 
-	PELOG2(sir_dump_buf
-		       (pMac, SIR_SCH_MODULE_ID, LOG2, *pPtr, (*timLength) + 2);
-	       )
 	* pPtr = ptr;
 }
 /* -------------------------------------------------------------------- */

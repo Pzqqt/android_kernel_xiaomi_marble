@@ -64,9 +64,6 @@ extern QDF_TRACE_LEVEL get_vos_debug_level(uint32_t debugLevel);
 extern tSirRetStatus cfg_init(tpAniSirGlobal);
 extern void cfg_de_init(tpAniSirGlobal);
 
-void sir_dump_buf(tpAniSirGlobal pMac, uint8_t modId, uint32_t level,
-		  uint8_t *buf, uint32_t size);
-
 /**
  * sir_swap_u16()
  *
