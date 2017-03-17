@@ -128,7 +128,7 @@ static void rrm_indicate_neighbor_report_result(tpAniSirGlobal pMac,
 	    qdf_mc_timer_get_current_state(&pMac->rrm.rrmSmeContext.
 					   neighborReqControlInfo.
 					   neighborRspWaitTimer)) {
-		sms_log(pMac, LOG1, FL("No entry in neighbor report cache"));
+		sme_debug("No entry in neighbor report cache");
 		qdf_mc_timer_stop(&pMac->rrm.rrmSmeContext.
 				  neighborReqControlInfo.neighborRspWaitTimer);
 	}
@@ -180,7 +180,7 @@ sme_rrm_send_beacon_report_xmit_ind(tpAniSirGlobal mac_ctx,
 	tpRrmSMEContext rrm_ctx = &mac_ctx->rrm.rrmSmeContext;
 
 	if (NULL == result_arr && !msrmnt_status) {
-		sms_log(mac_ctx, LOGE, "Beacon report xmit Ind to PE Failed");
+		sme_err("Beacon report xmit Ind to PE Failed");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -191,8 +191,7 @@ sme_rrm_send_beacon_report_xmit_ind(tpAniSirGlobal mac_ctx,
 		length = sizeof(tSirBeaconReportXmitInd);
 		beacon_rep = qdf_mem_malloc(length);
 		if (NULL == beacon_rep) {
-			sms_log(mac_ctx, LOGE,
-				"Unable to allocate memory for beacon report");
+			sme_err("Unable to allocate memory for beacon report");
 			return QDF_STATUS_E_NOMEM;
 		}
 		beacon_rep->messageType = eWNI_SME_BEACON_REPORT_RESP_XMIT_IND;
@@ -220,8 +219,7 @@ sme_rrm_send_beacon_report_xmit_ind(tpAniSirGlobal mac_ctx,
 			qdf_mem_copy(
 				&beacon_rep->pBssDescription[i]->ieFields[0],
 				bss_desc->ieFields, ie_len);
-			sms_log(mac_ctx, LOG1,
-				".RRM Result Bssid = " MAC_ADDRESS_STR
+			sme_debug("RRM Result Bssid = " MAC_ADDRESS_STR
 				" chan= %d, rssi = -%d",
 				MAC_ADDR_ARRAY(
 				beacon_rep->pBssDescription[i]->bssId),
@@ -238,17 +236,14 @@ sme_rrm_send_beacon_report_xmit_ind(tpAniSirGlobal mac_ctx,
 		if (!result_arr || (cur_result == NULL)
 			|| (j >= bss_count)) {
 			cur_result = NULL;
-			sms_log(mac_ctx, LOG1,
-				"Reached to  max/last BSS in cur_result list");
+			sme_debug("Reached to  max/last BSS in cur_result list");
 		} else {
 			cur_result = result_arr[j];
-			sms_log(mac_ctx, LOG1,
-				"Move to the next BSS set in cur_result list");
+			sme_debug("Move to the next BSS set in cur_result list");
 		}
 		beacon_rep->fMeasureDone =
 			(cur_result) ? false : msrmnt_status;
-		sms_log(mac_ctx, LOG1,
-			"SME Sending BcnRepXmit to PE numBss %d i %d j %d",
+		sme_debug("SME Sending BcnRepXmit to PE numBss %d i %d j %d",
 			beacon_rep->numBssDesc, i, j);
 		status = umac_send_mb_message_to_mac(beacon_rep);
 	} while (cur_result);
@@ -294,12 +289,12 @@ static QDF_STATUS sme_ese_send_beacon_req_scan_results(
 	tBcnReportFields *bcn_rpt_fields;
 
 	if (NULL == rrm_ctx) {
-		sms_log(mac_ctx, LOGE, "rrm_ctx is NULL");
+		sme_err("rrm_ctx is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (NULL == result_arr && !msrmnt_status) {
-		sms_log(mac_ctx, LOGE, "Beacon report xmit Ind to HDD Failed");
+		sme_err("Beacon report xmit Ind to HDD Failed");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -320,7 +315,7 @@ static QDF_STATUS sme_ese_send_beacon_req_scan_results(
 		if (NULL != cur_meas_req)
 			bcn_report->measurementToken =
 				cur_meas_req->measurementToken;
-		sms_log(mac_ctx, LOG1, "Channel(%d) MeasToken(%d)", channel,
+		sme_debug("Channel: %d MeasToken: %d", channel,
 			bcn_report->measurementToken);
 
 		j = 0;
@@ -360,7 +355,7 @@ static QDF_STATUS sme_ese_send_beacon_req_scan_results(
 				continue;
 			bcn_report->bcnRepBssInfo[j].ieLen = out_ie_len;
 
-			sms_log(mac_ctx, LOG1, "Bssid(" MAC_ADDRESS_STR")"
+			sme_debug("Bssid(" MAC_ADDRESS_STR")"
 				"Channel=%d Rssi=%d",
 				MAC_ADDR_ARRAY(bss_desc->bssId),
 			bss_desc->channelId, (-1) * bss_desc->rssi);
@@ -374,18 +369,16 @@ static QDF_STATUS sme_ese_send_beacon_req_scan_results(
 		if (!result_arr || !cur_result
 		|| (bss_counter >= SIR_BCN_REPORT_MAX_BSS_DESC)) {
 			cur_result = NULL;
-			sms_log(mac_ctx, LOGE,
-				"Reached to the max/last BSS in cur_result list");
+			sme_err("Reached to the max/last BSS in cur_result list");
 		} else {
 			cur_result = result_arr[bss_counter];
-			sms_log(mac_ctx, LOGE,
-				"Move to the next BSS set in cur_result list");
+			sme_err("Move to the next BSS set in cur_result list");
 		}
 
 		bcn_report->flag =
 			(msrmnt_status << 1) | ((cur_result) ? true : false);
 
-		sms_log(mac_ctx, LOG1, "SME Sending BcnRep to HDD numBss(%d)"
+		sme_debug("SME Sending BcnRep to HDD numBss(%d)"
 			" j(%d) bss_counter(%d) flag(%d)",
 			bcn_report->numBss, j, bss_counter,
 			bcn_report->flag);
@@ -441,7 +434,7 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 		filter.SSIDs.SSIDList =
 			(tCsrSSIDInfo *) qdf_mem_malloc(sizeof(tCsrSSIDInfo));
 		if (filter.SSIDs.SSIDList == NULL) {
-			sms_log(mac_ctx, LOGE, FL("qdf_mem_malloc failed"));
+			sme_err("qdf_mem_malloc failed");
 			return QDF_STATUS_E_NOMEM;
 		}
 
@@ -465,8 +458,7 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 	 */
 	if (QDF_STATUS_E_FAILURE == csr_roam_get_session_id_from_bssid(mac_ctx,
 			&rrm_ctx->sessionBssId, &session_id)) {
-		sms_log(mac_ctx, LOG1,
-			FL("BSSID mismatch, using current session_id"));
+		sme_debug("BSSID mismatch, using current session_id");
 		session_id = mac_ctx->roam.roamSession->sessionId;
 	}
 	status = sme_scan_get_result(mac_ctx, (uint8_t) session_id,
@@ -475,7 +467,7 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 	if (filter.SSIDs.SSIDList)
 		qdf_mem_free(filter.SSIDs.SSIDList);
 
-	sms_log(mac_ctx, LOG1, FL("RRM Measurement Done %d"), measurementdone);
+	sme_debug("RRM Measurement Done %d", measurementdone);
 	if (NULL == result_handle) {
 		/*
 		 * no scan results
@@ -522,14 +514,14 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 
 	roam_info = qdf_mem_malloc(sizeof(*roam_info));
 	if (NULL == roam_info) {
-		sms_log(mac_ctx, LOGE, FL("vos_mem_malloc failed"));
+		sme_err("vos_mem_malloc failed");
 		status = QDF_STATUS_E_NOMEM;
 		goto rrm_send_scan_results_done;
 	}
 
 	while (scan_results) {
 		next_result = sme_scan_result_get_next(mac_ctx, result_handle);
-		sms_log(mac_ctx, LOG1, "Scan res timer:%lu, rrm scan timer:%llu",
+		sme_debug("Scan res timer:%lu, rrm scan timer:%llu",
 				scan_results->timer, rrm_scan_timer);
 		if (scan_results->timer >= rrm_scan_timer) {
 			roam_info->pBssDesc = &scan_results->BssDescriptor;
@@ -553,8 +545,7 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 	 * The next level routine does a check for the measurementDone to
 	 * determine whether to send a report or not.
 	 */
-	sms_log(mac_ctx, LOG1, FL(" Number of BSS Desc with RRM Scan %d "),
-			counter);
+	sme_debug("Number of BSS Desc with RRM Scan %d", counter);
 	if (counter || measurementdone) {
 #ifdef FEATURE_WLAN_ESE
 		if (eRRM_MSG_SOURCE_ESE_UPLOAD == rrm_ctx->msgSource)
@@ -617,7 +608,7 @@ static QDF_STATUS sme_rrm_scan_request_callback(tHalHandle halHandle,
 		interval =
 			time_tick % (pSmeRrmContext->randnIntvl - 10 + 1) + 10;
 
-		sms_log(pMac, LOG1, "Set timer for interval %d ", interval);
+		sme_debug("Set timer for interval %d ", interval);
 		qdf_mc_timer_start(&pSmeRrmContext->IterMeasTimer, interval);
 
 	} else {
@@ -657,7 +648,7 @@ static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 	status = csr_roam_get_session_id_from_bssid(mac_ctx,
 			&sme_rrm_ctx->sessionBssId, &session_id);
 	if (status != QDF_STATUS_SUCCESS) {
-		sms_log(mac_ctx, LOGE, FL("Invalid sme Session ID"));
+		sme_err("Invalid sme Session ID");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -685,8 +676,7 @@ static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 				(tCsrSSIDInfo *)qdf_mem_malloc(
 					sizeof(tCsrSSIDInfo));
 			if (NULL == scan_req.SSIDs.SSIDList) {
-				sms_log(mac_ctx, LOGE,
-					FL("qdf_mem_malloc failed"));
+				sme_err("qdf_mem_malloc failed");
 				return QDF_STATUS_E_NOMEM;
 			}
 			scan_req.SSIDs.SSIDList->SSID.length =
@@ -708,7 +698,7 @@ static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 		else
 			scan_req.maxChnTime = sme_rrm_ctx->duration[0];
 
-		sms_log(mac_ctx, LOG1, FL("Scan Type(%d) Max Dwell Time(%d)"),
+		sme_debug(FL("Scan Type(%d) Max Dwell Time(%d)"),
 				scan_req.scanType, scan_req.maxChnTime);
 		/*
 		 * Use gPassive/gActiveMaxChannelTime if maxChanTime is less
@@ -723,8 +713,7 @@ static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 
 		if (scan_req.maxChnTime < max_chan_time) {
 			scan_req.maxChnTime = max_chan_time;
-			sms_log(mac_ctx, LOG1,
-				FL("Setting default max %d ChanTime"),
+			sme_debug("Setting default max %d ChanTime",
 				max_chan_time);
 		}
 
@@ -739,7 +728,7 @@ static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 		 * 1 second apart.
 		 */
 		current_time = (uint64_t)qdf_mc_timer_get_system_time();
-		sms_log(mac_ctx, LOG1, "prev scan triggered before %llu ms, totalchannels %d",
+		sme_debug("prev scan triggered before %llu ms, totalchannels %d",
 				current_time - rrm_scan_timer,
 				sme_rrm_ctx->channelList.numOfChannels);
 		if ((abs(current_time - rrm_scan_timer) > 1000) &&
@@ -758,7 +747,7 @@ static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 		scan_req.ChannelInfo.ChannelList =
 			&sme_rrm_ctx->channelList.ChannelList[
 				sme_rrm_ctx->currentIndex];
-		sms_log(mac_ctx, LOG1, FL("Duration %d On channel %d "),
+		sme_debug(FL("Duration %d On channel %d "),
 			scan_req.maxChnTime,
 			sme_rrm_ctx->channelList.ChannelList[
 				sme_rrm_ctx->currentIndex]);
@@ -801,8 +790,7 @@ static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 			qdf_mem_free(sme_rrm_ctx->channelList.ChannelList);
 		}
 	} else {
-		sms_log(mac_ctx, LOGE, FL("Unknown beacon report req mode(%d)"),
-			scan_type);
+		sme_err("Unknown beacon report req mode(%d)", scan_type);
 		/*
 		 * Indicate measurement completion to PE
 		 * If this is not done, pCurrentReq pointer will not be freed
@@ -832,7 +820,7 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal pMac, void *pMsg
 	uint32_t len = 0, i = 0;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	sms_log(pMac, LOG1, "Received Beacon report request ind Channel = %d",
+	sme_debug("Received Beacon report request ind Channel = %d",
 		pBeaconReq->channelInfo.channelNum);
 	/* section 11.10.8.1 (IEEE Std 802.11k-2008) */
 	/* channel 0 and 255 has special meaning. */
@@ -843,7 +831,7 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal pMac, void *pMsg
 		wlan_cfg_get_str_len(pMac, WNI_CFG_VALID_CHANNEL_LIST, &len);
 		pSmeRrmContext->channelList.ChannelList = qdf_mem_malloc(len);
 		if (pSmeRrmContext->channelList.ChannelList == NULL) {
-			sms_log(pMac, LOGE, FL("qdf_mem_malloc failed"));
+			sme_err("qdf_mem_malloc failed");
 			return QDF_STATUS_E_NOMEM;
 		}
 		csr_get_cfg_valid_channels(pMac,
@@ -863,7 +851,7 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal pMac, void *pMsg
 
 		pSmeRrmContext->channelList.ChannelList = qdf_mem_malloc(len);
 		if (pSmeRrmContext->channelList.ChannelList == NULL) {
-			sms_log(pMac, LOGE, FL("qdf_mem_malloc failed"));
+			sme_err("qdf_mem_malloc failed");
 			return QDF_STATUS_E_NOMEM;
 		}
 
@@ -875,7 +863,8 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal pMac, void *pMsg
 					    numOfChannels++] =
 					pBeaconReq->channelInfo.channelNum;
 			else
-				sms_log(pMac, LOGE, "Invalid channel");
+				sme_err("Invalid channel: %d",
+					pBeaconReq->channelInfo.channelNum);
 		}
 
 		for (i = 0; i < pBeaconReq->channelList.numChannels; i++) {
@@ -916,8 +905,7 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal pMac, void *pMsg
 		     (uint8_t *) &pBeaconReq->measurementDuration,
 		     SIR_ESE_MAX_MEAS_IE_REQS);
 
-	sms_log(pMac, LOG1,
-		FL("token %d regClass %d randnIntvl %d msgSource %d"),
+	sme_debug("token %d regClass %d randnIntvl %d msgSource %d",
 		pSmeRrmContext->token, pSmeRrmContext->regClass,
 		pSmeRrmContext->randnIntvl, pSmeRrmContext->msgSource);
 
@@ -945,10 +933,9 @@ QDF_STATUS sme_rrm_neighbor_report_request(tpAniSirGlobal pMac, uint8_t sessionI
 	tpSirNeighborReportReqInd pMsg;
 	tCsrRoamSession *pSession;
 
-	sms_log(pMac, LOG1,
-		FL("Request to send Neighbor report request received "));
+	sme_debug("Request to send Neighbor report request received ");
 	if (!CSR_IS_SESSION_VALID(pMac, sessionId)) {
-		sms_log(pMac, LOGE, FL("Invalid session %d"), sessionId);
+		sme_err("Invalid session %d", sessionId);
 		return QDF_STATUS_E_INVAL;
 	}
 	pSession = CSR_GET_SESSION(pMac, sessionId);
@@ -957,15 +944,13 @@ QDF_STATUS sme_rrm_neighbor_report_request(tpAniSirGlobal pMac, uint8_t sessionI
 	if (true ==
 	    pMac->rrm.rrmSmeContext.neighborReqControlInfo.
 	    isNeighborRspPending) {
-		sms_log(pMac, LOGE,
-			FL("Neighbor request already pending.. Not allowed"));
+		sme_err("Neighbor request already pending.. Not allowed");
 		return QDF_STATUS_E_AGAIN;
 	}
 
 	pMsg = qdf_mem_malloc(sizeof(tSirNeighborReportReqInd));
 	if (NULL == pMsg) {
-		sms_log(pMac, LOGE,
-			"Unable to allocate memory for Neighbor request");
+		sme_err("Unable to allocate memory for Neighbor request");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -1113,9 +1098,7 @@ static void rrm_store_neighbor_rpt_by_roam_score(tpAniSirGlobal pMac,
 
 	if (csr_ll_is_list_empty
 		    (&pSmeRrmContext->neighborReportCache, LL_ACCESS_LOCK)) {
-		sms_log(pMac, LOGE,
-			FL
-				("Neighbor report cache is empty.. Adding a entry now"));
+		sme_err("Neighbor report cache is empty.. Adding a entry now");
 		/* Neighbor list cache is empty. Insert this entry in the tail */
 		csr_ll_insert_tail(&pSmeRrmContext->neighborReportCache,
 				   &pNeighborReportDesc->List, LL_ACCESS_LOCK);
@@ -1192,8 +1175,7 @@ static QDF_STATUS sme_rrm_process_neighbor_report(tpAniSirGlobal pMac,
 		pNeighborReportDesc =
 			qdf_mem_malloc(sizeof(tRrmNeighborReportDesc));
 		if (NULL == pNeighborReportDesc) {
-			sms_log(pMac, LOGE,
-				"Failed to alloc memory for RRM report desc");
+			sme_err("Failed to alloc memory for RRM report desc");
 			status = QDF_STATUS_E_NOMEM;
 			goto end;
 
@@ -1202,8 +1184,7 @@ static QDF_STATUS sme_rrm_process_neighbor_report(tpAniSirGlobal pMac,
 		pNeighborReportDesc->pNeighborBssDescription =
 			qdf_mem_malloc(sizeof(tSirNeighborBssDescription));
 		if (NULL == pNeighborReportDesc->pNeighborBssDescription) {
-			sms_log(pMac, LOGE,
-				"Failed to alloc mem for RRM BSS Description");
+			sme_err("Failed to alloc mem for RRM BSS Description");
 			qdf_mem_free(pNeighborReportDesc);
 			status = QDF_STATUS_E_NOMEM;
 			goto end;
@@ -1212,8 +1193,7 @@ static QDF_STATUS sme_rrm_process_neighbor_report(tpAniSirGlobal pMac,
 			     &pNeighborRpt->sNeighborBssDescription[i],
 			     sizeof(tSirNeighborBssDescription));
 
-		sms_log(pMac, LOG1,
-			"Received neighbor report with Neighbor BSSID: "
+		sme_debug("Received neighbor report with Neighbor BSSID: "
 			MAC_ADDRESS_STR,
 			MAC_ADDR_ARRAY(
 			       pNeighborRpt->sNeighborBssDescription[i].bssId));
@@ -1224,9 +1204,8 @@ static QDF_STATUS sme_rrm_process_neighbor_report(tpAniSirGlobal pMac,
 			rrm_store_neighbor_rpt_by_roam_score(pMac,
 				     pNeighborReportDesc);
 		} else {
-			sms_log(pMac, LOGE,
-				FL("Roam score of BSSID  " MAC_ADDRESS_STR
-				   " is 0, Ignoring.."),
+			sme_err("Roam score of BSSID  " MAC_ADDRESS_STR
+				" is 0, Ignoring..",
 				MAC_ADDR_ARRAY(pNeighborRpt->
 					       sNeighborBssDescription[i].
 					       bssId));
@@ -1298,8 +1277,8 @@ QDF_STATUS sme_rrm_msg_processor(tpAniSirGlobal pMac, uint16_t msg_type,
 static void rrm_iter_meas_timer_handle(void *userData)
 {
 	tpAniSirGlobal pMac = (tpAniSirGlobal) userData;
-	sms_log(pMac, LOGE,
-		"Randomization timer expired...send on next channel ");
+
+	sme_warn("Randomization timer expired...send on next channel");
 	/* Issue a scan req for next channel. */
 	sme_rrm_issue_scan_req(pMac);
 }
@@ -1315,7 +1294,8 @@ static void rrm_iter_meas_timer_handle(void *userData)
 static void rrm_neighbor_rsp_timeout_handler(void *userData)
 {
 	tpAniSirGlobal pMac = (tpAniSirGlobal) userData;
-	sms_log(pMac, LOGE, "Neighbor Response timed out ");
+
+	sme_warn("Neighbor Response timed out");
 	rrm_indicate_neighbor_report_result(pMac, QDF_STATUS_E_FAILURE);
 	return;
 }
