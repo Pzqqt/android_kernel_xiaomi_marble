@@ -5863,7 +5863,6 @@ QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter, bool reinit)
 	v_CONTEXT_t sapContext = NULL;
 	int ret;
 	enum tQDF_ADAPTER_MODE mode;
-	uint32_t session_id = CSR_SESSION_ID_INVALID;
 	enum dfs_mode acs_dfs_mode;
 
 	ENTER();
@@ -5896,19 +5895,37 @@ QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter, bool reinit)
 		return QDF_STATUS_E_FAULT;
 	}
 
+	/*
+	 * This is a special case of hdd_vdev_create(). In phase 4 convergence,
+	 * this special case will be properly addressed.
+	 */
+	ret = hdd_create_and_store_vdev(pHddCtx->hdd_pdev, pAdapter);
+	if (ret) {
+		hdd_err("failed to create objmgr vdev: %d", ret);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	status = wlansap_start(sapContext, mode,
-			pAdapter->macAddressCurrent.bytes,
-			&session_id);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hdd_err("ERROR: wlansap_start failed!!");
+			       pAdapter->macAddressCurrent.bytes,
+			       pAdapter->sessionId);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("failed to open sem sap session: %d", status);
 		pAdapter->sessionCtx.ap.sapContext = NULL;
+
+		/*
+		 * In this case, we need to cleanup in the same order as create.
+		 * See hdd_vdev_create() for more details.
+		 */
+		QDF_BUG(!hdd_release_and_destroy_vdev(pAdapter));
+
 		return status;
 	}
-	pAdapter->sessionId = session_id;
 
-	ret = hdd_create_and_store_vdev(pHddCtx->hdd_pdev, pAdapter);
-	if (ret)
-		goto error_vdev_create;
+	ret = hdd_vdev_ready(pAdapter);
+	if (ret) {
+		hdd_err("failed to raise vdev ready event: %d", ret);
+		goto error_init_ap_mode;
+	}
 
 	/* Allocate the Wireless Extensions state structure */
 	phostapdBuf = WLAN_HDD_GET_HOSTAP_STATE_PTR(pAdapter);
@@ -5985,17 +6002,18 @@ QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter, bool reinit)
 			     sizeof(struct sap_acs_cfg));
 	}
 
+	EXIT();
+
 	return status;
 
 error_wmm_init:
 	hdd_softap_deinit_tx_rx(pAdapter);
+
 error_init_ap_mode:
-	ret = hdd_release_and_destroy_vdev(pAdapter);
-	if (ret)
-		hdd_err("vdev delete failed");
-error_vdev_create:
+	QDF_BUG(!hdd_release_and_destroy_vdev(pAdapter));
 	wlansap_close(sapContext);
 	pAdapter->sessionCtx.ap.sapContext = NULL;
+
 	EXIT();
 	return status;
 }

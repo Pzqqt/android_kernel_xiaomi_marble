@@ -111,9 +111,7 @@ int hdd_release_and_destroy_pdev(hdd_context_t *hdd_ctx);
  * @adapter: hdd adapter
  *
  * This API creates the vdev object and store the vdev reference to the
- * given @adapter. Also, creates a self peer for the vdev. If the adapter
- * session id and vdev id of the new vdev object doesnot match, destroys the
- * created vdev object and returns failure
+ * given @adapter. Also, creates a self peer for the vdev.
  *
  * Return: 0 for success, negative error code for failure
  */

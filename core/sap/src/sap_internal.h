@@ -435,7 +435,7 @@ void sap_config_acs_result(tHalHandle hal, ptSapContext sap_ctx,
 bool
 sap_check_in_avoid_ch_list(ptSapContext sap_ctx, uint8_t channel);
 QDF_STATUS sap_open_session(tHalHandle hHal, ptSapContext sapContext,
-				uint32_t *session_id);
+				uint32_t session_id);
 QDF_STATUS sap_close_session(tHalHandle hHal,
 			     ptSapContext sapContext,
 			     csr_roamSessionCloseCallback callback, bool valid);

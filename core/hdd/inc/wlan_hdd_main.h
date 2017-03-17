@@ -1733,6 +1733,11 @@ hdd_adapter_t *hdd_get_adapter_by_vdev(hdd_context_t *pHddCtx,
 				       uint32_t vdev_id);
 hdd_adapter_t *hdd_get_adapter_by_macaddr(hdd_context_t *pHddCtx,
 					  tSirMacAddr macAddr);
+
+int hdd_vdev_create(hdd_adapter_t *adapter);
+int hdd_vdev_destroy(hdd_adapter_t *adapter);
+int hdd_vdev_ready(hdd_adapter_t *adapter);
+
 QDF_STATUS hdd_init_station_mode(hdd_adapter_t *pAdapter);
 hdd_adapter_t *hdd_get_adapter(hdd_context_t *pHddCtx,
 			enum tQDF_ADAPTER_MODE mode);

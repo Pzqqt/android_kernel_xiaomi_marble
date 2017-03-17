@@ -1955,43 +1955,15 @@ int hdd_init_nan_data_mode(struct hdd_adapter_s *adapter)
 	struct nan_datapath_ctx *ndp_ctx = WLAN_HDD_GET_NDP_CTX_PTR(adapter);
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	QDF_STATUS status;
-	uint32_t type, sub_type;
 	int32_t ret_val = 0;
-	unsigned long rc;
-	uint32_t timeout = WLAN_WAIT_TIME_SESSIONOPENCLOSE;
 
-	INIT_COMPLETION(adapter->session_open_comp_var);
 	sme_set_curr_device_mode(hdd_ctx->hHal, adapter->device_mode);
-	status = cds_get_vdev_types(adapter->device_mode, &type, &sub_type);
-	if (QDF_STATUS_SUCCESS != status) {
-		hdd_err("failed to get vdev type");
-		goto error_sme_open;
-	}
 
-	/* open sme session for future use */
-	status = sme_open_session(hdd_ctx->hHal, hdd_sme_roam_callback,
-			adapter, (uint8_t *)&adapter->macAddressCurrent,
-			&adapter->sessionId, type, sub_type);
-	if (QDF_STATUS_SUCCESS != status) {
-		hdd_err("sme_open_session() failed with status code %d",
-			status);
-		ret_val = -EAGAIN;
-		goto error_sme_open;
+	ret_val = hdd_vdev_create(adapter);
+	if (ret_val) {
+		hdd_err("failed to create vdev: %d", ret_val);
+		return ret_val;
 	}
-
-	/* Block on a completion variable. Can't wait forever though */
-	rc = wait_for_completion_timeout(
-			&adapter->session_open_comp_var,
-			msecs_to_jiffies(timeout));
-	if (!rc) {
-		hdd_err("Failed to open session, timeout code: %ld", rc);
-		ret_val = -ETIMEDOUT;
-		goto error_sme_open;
-	}
-
-	ret_val = hdd_create_and_store_vdev(hdd_ctx->hdd_pdev, adapter);
-	if (ret_val)
-		goto error_vdev_create;
 
 	/* Register wireless extensions */
 	ret_val = hdd_register_wext(wlan_dev);
@@ -2039,27 +2011,7 @@ error_init_txrx:
 	hdd_unregister_wext(wlan_dev);
 
 error_register_wext:
-	status = hdd_release_and_destroy_vdev(adapter);
-	if (QDF_IS_STATUS_ERROR(status))
-		hdd_err("vdev delete failed");
-error_vdev_create:
-	if (test_bit(SME_SESSION_OPENED, &adapter->event_flags)) {
-		INIT_COMPLETION(adapter->session_close_comp_var);
-		if (QDF_STATUS_SUCCESS ==
-				sme_close_session(hdd_ctx->hHal,
-					adapter->sessionId,
-					hdd_sme_close_session_callback,
-					adapter)) {
-			rc = wait_for_completion_timeout(
-					&adapter->session_close_comp_var,
-					msecs_to_jiffies(timeout));
-			if (rc <= 0) {
-				hdd_err("Session close failed status %ld", rc);
-				ret_val = -ETIMEDOUT;
-			}
-		}
-	}
+	QDF_BUG(!hdd_vdev_destroy(adapter));
 
-error_sme_open:
 	return ret_val;
 }

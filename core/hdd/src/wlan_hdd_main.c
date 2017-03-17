@@ -2841,7 +2841,6 @@ QDF_STATUS hdd_sme_close_session_callback(void *pContext)
 /**
  * hdd_check_and_init_tdls() - check and init TDLS operation for desired mode
  * @adapter: pointer to device adapter
- * @type: type of interface
  *
  * This routine will check the mode of adapter and if it is required then it
  * will initialize the TDLS operations
@@ -2849,78 +2848,183 @@ QDF_STATUS hdd_sme_close_session_callback(void *pContext)
  * Return: QDF_STATUS
  */
 #ifdef FEATURE_WLAN_TDLS
-static QDF_STATUS hdd_check_and_init_tdls(hdd_adapter_t *adapter, uint32_t type)
+static QDF_STATUS hdd_check_and_init_tdls(hdd_adapter_t *adapter)
 {
-	if (QDF_IBSS_MODE != type) {
-		if (0 != wlan_hdd_tdls_init(adapter)) {
-			hdd_err("wlan_hdd_tdls_init failed");
-			return QDF_STATUS_E_FAILURE;
-		}
-		set_bit(TDLS_INIT_DONE, &adapter->event_flags);
+	if (adapter->device_mode == QDF_IBSS_MODE)
+		return QDF_STATUS_SUCCESS;
+
+	if (wlan_hdd_tdls_init(adapter)) {
+		hdd_err("wlan_hdd_tdls_init failed");
+		return QDF_STATUS_E_FAILURE;
 	}
+	set_bit(TDLS_INIT_DONE, &adapter->event_flags);
+
 	return QDF_STATUS_SUCCESS;
 }
 #else
-static QDF_STATUS hdd_check_and_init_tdls(hdd_adapter_t *adapter, uint32_t type)
+static QDF_STATUS hdd_check_and_init_tdls(hdd_adapter_t *adapter)
 {
 	return QDF_STATUS_SUCCESS;
 }
 #endif
 
-QDF_STATUS hdd_init_station_mode(hdd_adapter_t *adapter)
+int hdd_vdev_ready(hdd_adapter_t *adapter)
 {
-	struct net_device *pWlanDev = adapter->dev;
-	hdd_station_ctx_t *pHddStaCtx = &adapter->sessionCtx.station;
-	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	uint32_t type, subType;
-	unsigned long rc;
-	int ret_val;
+	QDF_STATUS status;
 
-	INIT_COMPLETION(adapter->session_open_comp_var);
-	sme_set_curr_device_mode(hdd_ctx->hHal, adapter->device_mode);
-	sme_set_pdev_ht_vht_ies(hdd_ctx->hHal, hdd_ctx->config->enable2x2);
-	status = cds_get_vdev_types(adapter->device_mode, &type, &subType);
+	status = pmo_vdev_ready(adapter->hdd_vdev);
+
+	return qdf_status_to_os_return(status);
+}
+
+int hdd_vdev_destroy(hdd_adapter_t *adapter)
+{
+	QDF_STATUS status;
+	int errno;
+	hdd_context_t *hdd_ctx;
+	unsigned long rc;
+
+	hdd_info("destroying vdev %d", adapter->sessionId);
+
+	/* vdev created sanity check */
+	if (!test_bit(SME_SESSION_OPENED, &adapter->event_flags)) {
+		hdd_err("vdev for Id %d does not exist", adapter->sessionId);
+		return -EINVAL;
+	}
+
+	/* do vdev create via objmgr */
+	errno = hdd_release_and_destroy_vdev(adapter);
+	if (errno) {
+		hdd_err("failed to destroy objmgr vdev: %d", errno);
+		return errno;
+	}
+
+	/* close sme session (destroy vdev in firmware via legacy API) */
+	INIT_COMPLETION(adapter->session_close_comp_var);
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	status = sme_close_session(hdd_ctx->hHal, adapter->sessionId,
+				   hdd_sme_close_session_callback, adapter);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("failed to close sme session: %d", status);
+		return qdf_status_to_os_return(status);
+	}
+
+	/* block on a completion variable until sme session is closed */
+	rc = wait_for_completion_timeout(
+		&adapter->session_close_comp_var,
+		msecs_to_jiffies(WLAN_WAIT_TIME_SESSIONOPENCLOSE));
+	if (!rc) {
+		hdd_err("timed out waiting for close sme session: %ld", rc);
+		if (adapter->device_mode == QDF_NDI_MODE)
+			hdd_ndp_session_end_handler(adapter);
+		clear_bit(SME_SESSION_OPENED, &adapter->event_flags);
+		return -ETIMEDOUT;
+	}
+
+	hdd_info("vdev destroyed successfully");
+
+	return 0;
+}
+
+int hdd_vdev_create(hdd_adapter_t *adapter)
+{
+	QDF_STATUS status;
+	int errno;
+	hdd_context_t *hdd_ctx;
+	uint32_t type;
+	uint32_t sub_type;
+	unsigned long rc;
+
+	hdd_info("creating new vdev");
+
+	/* determine vdev (sub)type */
+	status = cds_get_vdev_types(adapter->device_mode, &type, &sub_type);
 	if (QDF_STATUS_SUCCESS != status) {
-		hdd_err("failed to get vdev type");
-		goto error_sme_open;
+		hdd_err("failed to get vdev type: %d", status);
+		return qdf_status_to_os_return(status);
 	}
-	/* Open a SME session for future operation */
-	qdf_ret_status =
-		sme_open_session(hdd_ctx->hHal, hdd_sme_roam_callback, adapter,
-				 (uint8_t *) &adapter->macAddressCurrent,
-				 &adapter->sessionId, type, subType);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
-		hdd_alert("sme_open_session() failed, status code %08d [x%08x]",
-		       qdf_ret_status, qdf_ret_status);
-		status = QDF_STATUS_E_FAILURE;
-		goto error_sme_open;
+
+	/* do vdev create via objmgr */
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	errno = hdd_create_and_store_vdev(hdd_ctx->hdd_pdev, adapter);
+	if (errno) {
+		hdd_err("failed to create objmgr vdev: %d", errno);
+		return errno;
 	}
-	/* Block on a completion variable. Can't wait forever though. */
+
+	/* Open a SME session (prepare vdev in firmware via legacy API) */
+	INIT_COMPLETION(adapter->session_open_comp_var);
+	status = sme_open_session(hdd_ctx->hHal, hdd_sme_roam_callback, adapter,
+				  (uint8_t *)&adapter->macAddressCurrent,
+				  adapter->sessionId, type, sub_type);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("failed to open sme session: %d", status);
+		errno = qdf_status_to_os_return(status);
+		goto objmgr_vdev_destroy;
+	}
+
+	/* block on a completion variable until sme session is opened */
 	rc = wait_for_completion_timeout(
 		&adapter->session_open_comp_var,
 		msecs_to_jiffies(WLAN_WAIT_TIME_SESSIONOPENCLOSE));
 	if (!rc) {
-		hdd_alert("Session is not opened within timeout period code %ld",
-			rc);
-		adapter->sessionId = HDD_SESSION_ID_INVALID;
+		hdd_err("timed out waiting for open sme session: %ld", rc);
+		errno = -ETIMEDOUT;
+		goto objmgr_vdev_destroy;
+	}
+
+	/* firmware ready for component communication, raise vdev_ready event */
+	errno = hdd_vdev_ready(adapter);
+	if (errno) {
+		hdd_err("failed to dispatch vdev ready event: %d", errno);
+		goto hdd_vdev_destroy;
+	}
+
+	hdd_info("vdev %d created successfully", adapter->sessionId);
+
+	return 0;
+
+	/*
+	 * Due to legacy constraints, we need to destroy in the same order as
+	 * create. So, split error handling into 2 cases to accommodate.
+	 */
+
+objmgr_vdev_destroy:
+	QDF_BUG(!hdd_release_and_destroy_vdev(adapter));
+
+	return errno;
+
+hdd_vdev_destroy:
+	QDF_BUG(!hdd_vdev_destroy(adapter));
+
+	return errno;
+}
+
+QDF_STATUS hdd_init_station_mode(hdd_adapter_t *adapter)
+{
+	hdd_station_ctx_t *pHddStaCtx = &adapter->sessionCtx.station;
+	hdd_context_t *hdd_ctx;
+	QDF_STATUS status;
+	int ret_val;
+
+	ret_val = hdd_vdev_create(adapter);
+	if (ret_val) {
+		hdd_err("failed to create vdev: %d", ret_val);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	ret_val = hdd_create_and_store_vdev(hdd_ctx->hdd_pdev, adapter);
-	if (ret_val)
-		goto error_vdev_create;
-
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	sme_set_curr_device_mode(hdd_ctx->hHal, adapter->device_mode);
+	sme_set_pdev_ht_vht_ies(hdd_ctx->hHal, hdd_ctx->config->enable2x2);
 	sme_set_vdev_ies_per_band(hdd_ctx->hHal, adapter->sessionId);
+
 	/* Register wireless extensions */
-	qdf_ret_status = hdd_register_wext(pWlanDev);
-	if (QDF_STATUS_SUCCESS != qdf_ret_status) {
-		hdd_alert("hdd_register_wext() failed, status code %08d [x%08x]",
-		       qdf_ret_status, qdf_ret_status);
-		status = QDF_STATUS_E_FAILURE;
+	status = hdd_register_wext(adapter->dev);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("failed to register wireless extensions: %d", status);
 		goto error_register_wext;
 	}
+
 	/* Set the Connection State to Not Connected */
 	hdd_notice("Set HDD connState to eConnectionState_NotConnected");
 	pHddStaCtx->conn_info.connState = eConnectionState_NotConnected;
@@ -2957,12 +3061,10 @@ QDF_STATUS hdd_init_station_mode(hdd_adapter_t *adapter)
 				      WMI_PDEV_PARAM_BURST_ENABLE,
 				      hdd_ctx->config->enableSifsBurst,
 				      PDEV_CMD);
+	if (ret_val)
+		hdd_err("WMI_PDEV_PARAM_BURST_ENABLE set failed %d", ret_val);
 
-	if (0 != ret_val) {
-		hdd_err("WMI_PDEV_PARAM_BURST_ENABLE set failed %d",
-		       ret_val);
-	}
-	status = hdd_check_and_init_tdls(adapter, type);
+	status = hdd_check_and_init_tdls(adapter);
 	if (status != QDF_STATUS_SUCCESS)
 		goto error_tdls_init;
 
@@ -2981,34 +3083,10 @@ error_wmm_init:
 	clear_bit(INIT_TX_RX_SUCCESS, &adapter->event_flags);
 	hdd_deinit_tx_rx(adapter);
 error_init_txrx:
-	hdd_unregister_wext(pWlanDev);
+	hdd_unregister_wext(adapter->dev);
 error_register_wext:
-	ret_val = hdd_release_and_destroy_vdev(adapter);
-	if (ret_val)
-		hdd_err("vdev delete failed");
-error_vdev_create:
-	if (test_bit(SME_SESSION_OPENED, &adapter->event_flags)) {
-		INIT_COMPLETION(adapter->session_close_comp_var);
-		if (QDF_STATUS_SUCCESS == sme_close_session(hdd_ctx->hHal,
-							    adapter->sessionId,
-							    hdd_sme_close_session_callback,
-							    adapter)) {
-			unsigned long rc;
+	QDF_BUG(!hdd_vdev_destroy(adapter));
 
-			/*
-			 * Block on a completion variable.
-			 * Can't wait forever though.
-			 */
-			rc = wait_for_completion_timeout(
-				&adapter->session_close_comp_var,
-				msecs_to_jiffies
-					(WLAN_WAIT_TIME_SESSIONOPENCLOSE));
-			if (rc <= 0)
-				hdd_err("Session is not opened within timeout period code %ld",
-				       rc);
-		}
-	}
-error_sme_open:
 	return status;
 }
 

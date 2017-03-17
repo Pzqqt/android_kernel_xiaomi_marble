@@ -2536,7 +2536,7 @@ QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
  * Return: QDF_STATUS
  */
 QDF_STATUS sap_open_session(tHalHandle hHal, ptSapContext sapContext,
-			    uint32_t *session_id)
+			    uint32_t session_id)
 {
 	uint32_t type, subType;
 	QDF_STATUS qdf_ret_status;
@@ -2560,7 +2560,7 @@ QDF_STATUS sap_open_session(tHalHandle hHal, ptSapContext sapContext,
 					  &wlansap_roam_callback,
 					  sapContext,
 					  sapContext->self_mac_addr,
-					  &sapContext->sessionId, type, subType);
+					  session_id, type, subType);
 
 	if (QDF_STATUS_SUCCESS != qdf_ret_status) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -2570,6 +2570,7 @@ QDF_STATUS sap_open_session(tHalHandle hHal, ptSapContext sapContext,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	sapContext->sessionId = session_id;
 	status = qdf_wait_single_event(&sapContext->sap_session_opened_evt,
 					SME_CMD_TIMEOUT_VALUE);
 
@@ -2584,7 +2585,6 @@ QDF_STATUS sap_open_session(tHalHandle hHal, ptSapContext sapContext,
 	pMac->sap.sapCtxList[sapContext->sessionId].pSapContext = sapContext;
 	pMac->sap.sapCtxList[sapContext->sessionId].sapPersona =
 		sapContext->csr_roamProfile.csrPersona;
-	*session_id = sapContext->sessionId;
 	sapContext->isSapSessionOpen = eSAP_TRUE;
 	sapContext->is_pre_cac_on = false;
 	sapContext->pre_cac_complete = false;
@@ -3604,10 +3604,12 @@ static QDF_STATUS sap_fsm_state_disconnected(ptSapContext sap_ctx,
 						"failed to get vdev type");
 				return QDF_STATUS_E_FAILURE;
 			}
+
+			/* recycle old session Id */
 			qdf_status = sme_open_session(hal,
 					&wlansap_roam_callback,
 					sap_ctx, sap_ctx->self_mac_addr,
-					&sap_ctx->sessionId, type, subtype);
+					sap_ctx->sessionId, type, subtype);
 			if (QDF_STATUS_SUCCESS != qdf_status) {
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					 QDF_TRACE_LEVEL_ERROR,

@@ -141,7 +141,6 @@ int hdd_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
 	struct wlan_objmgr_peer *peer;
 	struct vdev_osif_priv *osif_priv;
 	struct wlan_vdev_create_params vdev_params;
-	uint8_t vdev_id;
 
 	vdev_params.opmode = adapter->device_mode;
 	qdf_mem_copy(vdev_params.macaddr, adapter->macAddressCurrent.bytes,
@@ -166,17 +165,6 @@ int hdd_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
 		return -ENOMEM;
 	}
 
-	vdev_id = wlan_vdev_get_id(vdev);
-	if (vdev_id != adapter->sessionId) {
-		hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-		hdd_err("session id (%d) and vdev id (%d) mismatch\n"
-			"likely, a component leaked a vdev reference",
-			adapter->sessionId, vdev_id);
-		wlan_objmgr_print_ref_all_objects_per_psoc(hdd_ctx->hdd_psoc);
-		QDF_BUG(0);
-		return -EINVAL;
-	}
-
 	peer = wlan_objmgr_peer_obj_create(vdev, WLAN_PEER_SELF,
 					vdev_params.macaddr);
 	if (!peer) {
@@ -187,26 +175,28 @@ int hdd_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
 	}
 
 	adapter->hdd_vdev = vdev;
+	adapter->sessionId = wlan_vdev_get_id(vdev);
 
 	return 0;
 }
 
 int hdd_release_and_destroy_vdev(hdd_adapter_t *adapter)
 {
-	struct wlan_objmgr_vdev *vdev = adapter->hdd_vdev;
+	struct wlan_objmgr_vdev *vdev;
 	struct vdev_osif_priv *osif_priv;
 
-	adapter->hdd_vdev = NULL;
+	vdev = adapter->hdd_vdev;
 	if (!vdev)
-		return -EFAULT;
+		return -EINVAL;
 
 	osif_priv = wlan_vdev_get_ospriv(vdev);
 	vdev->vdev_nif.osdev = NULL;
 	qdf_mem_free(osif_priv);
 
-	if (hdd_remove_peer_object(vdev,
-			wlan_vdev_mlme_get_macaddr(vdev))) {
-		hdd_err("Self peer delete fails");
+	adapter->hdd_vdev = NULL;
+	adapter->sessionId = HDD_SESSION_ID_INVALID;
+	if (hdd_remove_peer_object(vdev, wlan_vdev_mlme_get_macaddr(vdev))) {
+		hdd_err("Self peer delete failed");
 		return -EINVAL;
 	}
 

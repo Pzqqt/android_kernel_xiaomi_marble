@@ -213,7 +213,7 @@ QDF_STATUS sme_start(tHalHandle hHal);
 QDF_STATUS sme_stop(tHalHandle hHal, tHalStopType stopType);
 QDF_STATUS sme_open_session(tHalHandle hHal, csr_roam_completeCallback callback,
 		void *pContext, uint8_t *pSelfMacAddr,
-		uint8_t *pbSessionId, uint32_t type,
+		uint8_t session_id, uint32_t type,
 		uint32_t subType);
 void sme_set_curr_device_mode(tHalHandle hHal,
 		enum tQDF_ADAPTER_MODE currDeviceMode);

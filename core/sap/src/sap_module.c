@@ -310,7 +310,7 @@ void *wlansap_open(void *p_cds_gctx)
  *         QDF_STATUS_SUCCESS: Success
  */
 QDF_STATUS wlansap_start(void *pCtx, enum tQDF_ADAPTER_MODE mode,
-			 uint8_t *addr, uint32_t *session_id)
+			 uint8_t *addr, uint32_t session_id)
 {
 	ptSapContext pSapCtx = NULL;
 	QDF_STATUS qdf_ret_status;

@@ -5766,19 +5766,17 @@ QDF_STATUS sme_oem_data_req(tHalHandle hal, struct oem_data_req *hdd_oem_req)
    \param pContext - The context passed with callback
    \param pSelfMacAddr - Caller allocated memory filled with self MAC address
 			 (6 bytes)
-   \param pbSessionId - pointer to a caller allocated buffer for returned session ID
+   \param session_id - the Id to use for the newly opened session
 
    \return QDF_STATUS_SUCCESS - session is opened. sessionId returned.
 
 		Other status means SME is failed to open the session.
-		QDF_STATUS_E_RESOURCES - no more session available.
    \sa
 
    --------------------------------------------------------------------------*/
 QDF_STATUS sme_open_session(tHalHandle hHal, csr_roam_completeCallback callback,
-			    void *pContext,
-			    uint8_t *pSelfMacAddr, uint8_t *pbSessionId,
-			    uint32_t type, uint32_t subType)
+			    void *pContext, uint8_t *pSelfMacAddr,
+			    uint8_t session_id, uint32_t type, uint32_t subType)
 {
 	QDF_STATUS status;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
@@ -5787,23 +5785,16 @@ QDF_STATUS sme_open_session(tHalHandle hHal, csr_roam_completeCallback callback,
 		  "%s: type=%d, subType=%d addr:%pM",
 		  __func__, type, subType, pSelfMacAddr);
 
-	if (NULL == pbSessionId) {
-		status = QDF_STATUS_E_INVAL;
-	} else {
-		status = sme_acquire_global_lock(&pMac->sme);
-		if (QDF_IS_STATUS_SUCCESS(status)) {
-			status = csr_roam_open_session(pMac, callback, pContext,
-						       pSelfMacAddr,
-						       pbSessionId, type,
-						       subType);
+	status = sme_acquire_global_lock(&pMac->sme);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
 
-			sme_release_global_lock(&pMac->sme);
-		}
-	}
-	if (NULL != pbSessionId)
-		MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-				 TRACE_CODE_SME_RX_HDD_OPEN_SESSION,
-				 *pbSessionId, 0));
+	status = csr_roam_open_session(pMac, callback, pContext, pSelfMacAddr,
+				       session_id, type, subType);
+	sme_release_global_lock(&pMac->sme);
+
+	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_RX_HDD_OPEN_SESSION,
+			 session_id, 0));
 
 	return status;
 }

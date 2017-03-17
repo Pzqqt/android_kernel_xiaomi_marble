@@ -15669,9 +15669,8 @@ QDF_STATUS csr_issue_add_sta_for_session_req(tpAniSirGlobal pMac,
 	add_sta_self_req = qdf_mem_malloc(sizeof(struct add_sta_self_params));
 	if (NULL == add_sta_self_req) {
 		sms_log(pMac, LOGP,
-			FL
-			("Unable to allocate memory for tAddSelfStaParams"));
-		return status;
+			FL("Unable to allocate memory for tAddSelfStaParams"));
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	csr_get_vdev_type_nss(pMac, pMac->sme.currDeviceMode,
@@ -15713,218 +15712,182 @@ QDF_STATUS csr_issue_add_sta_for_session_req(tpAniSirGlobal pMac,
 QDF_STATUS csr_roam_open_session(tpAniSirGlobal mac_ctx,
 				 csr_roam_completeCallback callback,
 				 void *pContext,
-				 uint8_t *pSelfMacAddr, uint8_t *pbSessionId,
+				 uint8_t *pSelfMacAddr,
+				 uint8_t session_id,
 				 uint32_t type, uint32_t subType)
 {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	uint32_t i, value = 0, session_id;
+	QDF_STATUS status;
+	uint32_t existing_session_id;
 	union {
 		uint16_t nCfgValue16;
 		tSirMacHTCapabilityInfo htCapInfo;
 	} uHTCapabilityInfo;
-	uint32_t nCfgValue = 0;
+	uint32_t nCfgValue;
 	tCsrRoamSession *session;
-	*pbSessionId = CSR_SESSION_ID_INVALID;
 
-	if (QDF_STATUS_SUCCESS == csr_roam_get_session_id_from_bssid(mac_ctx,
-				(struct qdf_mac_addr *)pSelfMacAddr,
-				&session_id)) {
+	/* check to see if the mac address already belongs to a session */
+	status = csr_roam_get_session_id_from_bssid(mac_ctx,
+					(struct qdf_mac_addr *)pSelfMacAddr,
+					&existing_session_id);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(mac_ctx, LOGE,
-			FL("Session %d exists with mac address"
-			MAC_ADDRESS_STR),
-			session_id, MAC_ADDR_ARRAY(pSelfMacAddr));
+			FL("Session %d exists with mac address "
+			   MAC_ADDRESS_STR),
+			existing_session_id, MAC_ADDR_ARRAY(pSelfMacAddr));
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	for (i = 0; i < mac_ctx->sme.max_intf_count; i++) {
-		sms_log(mac_ctx, LOG1, FL("session:%d active:%d"), i,
-			mac_ctx->roam.roamSession[i].sessionActive);
-		if (!CSR_IS_SESSION_VALID(mac_ctx, i)) {
-			session = CSR_GET_SESSION(mac_ctx, i);
-			if (!session) {
-				sms_log(mac_ctx, LOGE,
-					FL("Session does not exist for interface %d"),
-					i);
-				break;
-			}
-			status = QDF_STATUS_SUCCESS;
-			session->sessionActive = true;
-			session->sessionId = (uint8_t) i;
-
-			/* Initialize FT related data structures only in STA mode */
-			sme_ft_open(mac_ctx, session->sessionId);
-
-			session->callback = callback;
-			session->pContext = pContext;
-			qdf_mem_copy(&session->selfMacAddr, pSelfMacAddr,
-				     sizeof(struct qdf_mac_addr));
-			*pbSessionId = (uint8_t) i;
-			status =
-				qdf_mc_timer_init(&session->hTimerRoaming,
-						  QDF_TIMER_TYPE_SW,
-						  csr_roam_roaming_timer_handler,
-						  &session->roamingTimerInfo);
-			if (!QDF_IS_STATUS_SUCCESS(status)) {
-				sms_log(mac_ctx, LOGE,
-					FL("cannot allocate memory for Roaming timer"));
-				break;
-			}
-			status = qdf_mc_timer_init(
-					&session->roaming_offload_timer,
-					QDF_TIMER_TYPE_SW,
-					csr_roam_roaming_offload_timeout_handler,
-					&session->roamingTimerInfo);
-			if (!QDF_IS_STATUS_SUCCESS(status)) {
-				sms_log(mac_ctx, LOGE,
-					FL("mem fail for roaming timer"));
-				break;
-			}
-			/* get the HT capability info */
-			if (wlan_cfg_get_int(mac_ctx, WNI_CFG_HT_CAP_INFO, &value)
-					!= eSIR_SUCCESS) {
-				QDF_TRACE(QDF_MODULE_ID_QDF,
-					  QDF_TRACE_LEVEL_ERROR,
-					  "%s: could not get HT capability info",
-					  __func__);
-				break;
-			}
-#ifdef FEATURE_WLAN_BTAMP_UT_RF
-			status = qdf_mc_timer_init(&session->hTimerJoinRetry,
-						   QDF_TIMER_TYPE_SW,
-						   csr_roam_join_retry_timer_handler,
-						   &session->
-						   joinRetryTimerInfo);
-			if (!QDF_IS_STATUS_SUCCESS(status)) {
-				sms_log(mac_ctx, LOGE,
-					FL
-						("cannot allocate memory for join retry timer"));
-				break;
-			}
-#endif
-			uHTCapabilityInfo.nCfgValue16 = 0xFFFF & value;
-			session->htConfig.ht_rx_ldpc =
-				uHTCapabilityInfo.htCapInfo.advCodingCap;
-			session->htConfig.ht_tx_stbc =
-				uHTCapabilityInfo.htCapInfo.txSTBC;
-			session->htConfig.ht_rx_stbc =
-				uHTCapabilityInfo.htCapInfo.rxSTBC;
-			session->htConfig.ht_sgi20 =
-				uHTCapabilityInfo.htCapInfo.shortGI20MHz;
-			session->htConfig.ht_sgi40 =
-				uHTCapabilityInfo.htCapInfo.shortGI40MHz;
-
-			wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_MAX_MPDU_LENGTH,
-					 &nCfgValue);
-			session->vht_config.max_mpdu_len = nCfgValue;
-
-			nCfgValue = 0;
-			wlan_cfg_get_int(mac_ctx,
-					 WNI_CFG_VHT_SUPPORTED_CHAN_WIDTH_SET,
-					 &nCfgValue);
-			session->vht_config.supported_channel_widthset =
-								nCfgValue;
-
-			nCfgValue = 0;
-			wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_LDPC_CODING_CAP,
-					 &nCfgValue);
-			session->vht_config.ldpc_coding = nCfgValue;
-
-			nCfgValue = 0;
-			wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_SHORT_GI_80MHZ,
-					 &nCfgValue);
-			session->vht_config.shortgi80 = nCfgValue;
-
-			nCfgValue = 0;
-			wlan_cfg_get_int(mac_ctx,
-				WNI_CFG_VHT_SHORT_GI_160_AND_80_PLUS_80MHZ,
-				&nCfgValue);
-			session->vht_config.shortgi160and80plus80 = nCfgValue;
-
-			nCfgValue = 0;
-			wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_TXSTBC,
-					&nCfgValue);
-			session->vht_config.tx_stbc = nCfgValue;
-
-			nCfgValue = 0;
-			wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_RXSTBC,
-					&nCfgValue);
-			session->vht_config.rx_stbc = nCfgValue;
-
-			nCfgValue = 0;
-			wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_SU_BEAMFORMER_CAP,
-						&nCfgValue);
-			session->vht_config.su_beam_former = nCfgValue;
-
-			nCfgValue = 0;
-			wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_SU_BEAMFORMEE_CAP,
-						&nCfgValue);
-			session->vht_config.su_beam_formee = nCfgValue;
-
-			nCfgValue = 0;
-			wlan_cfg_get_int(mac_ctx,
-				WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED,
-				&nCfgValue);
-			session->vht_config.csnof_beamformer_antSup =
-								nCfgValue;
-
-			nCfgValue = 0;
-			wlan_cfg_get_int(mac_ctx,
-					WNI_CFG_VHT_NUM_SOUNDING_DIMENSIONS,
-					&nCfgValue);
-			session->vht_config.num_soundingdim = nCfgValue;
-
-			nCfgValue = 0;
-			wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_MU_BEAMFORMER_CAP,
-						&nCfgValue);
-			session->vht_config.mu_beam_former = nCfgValue;
-
-			nCfgValue = 0;
-			wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_MU_BEAMFORMEE_CAP,
-						&nCfgValue);
-			session->vht_config.mu_beam_formee = nCfgValue;
-
-			nCfgValue = 0;
-			wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_TXOP_PS,
-					 &nCfgValue);
-			session->vht_config.vht_txops = nCfgValue;
-
-			nCfgValue = 0;
-			wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_HTC_VHTC_CAP,
-					 &nCfgValue);
-			session->vht_config.htc_vhtcap = nCfgValue;
-
-			nCfgValue = 0;
-			wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_RX_ANT_PATTERN,
-					 &nCfgValue);
-			session->vht_config.rx_antpattern = nCfgValue;
-
-			nCfgValue = 0;
-			wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_TX_ANT_PATTERN,
-					 &nCfgValue);
-			session->vht_config.tx_antpattern = nCfgValue;
-
-			nCfgValue = 0;
-			wlan_cfg_get_int(mac_ctx,
-					 WNI_CFG_VHT_AMPDU_LEN_EXPONENT,
-					 &nCfgValue);
-			session->vht_config.max_ampdu_lenexp = nCfgValue;
-
-			csr_update_session_he_cap(mac_ctx, session);
-
-			status = csr_issue_add_sta_for_session_req(mac_ctx, i,
-								pSelfMacAddr,
-								type, subType);
-			break;
-		}
-	}
-	if (mac_ctx->sme.max_intf_count == i) {
-		/* No session is available */
+	/* attempt to retrieve session for Id */
+	session = CSR_GET_SESSION(mac_ctx, session_id);
+	if (!session) {
 		sms_log(mac_ctx, LOGE,
-			"%s: Reached max interfaces: %d! Session creation will fail",
-			__func__, mac_ctx->sme.max_intf_count);
-		status = QDF_STATUS_E_RESOURCES;
+			FL("Session does not exist for interface %d"),
+			session_id);
+		return QDF_STATUS_E_FAILURE;
 	}
-	return status;
+
+	/* check to see if the session is already active */
+	if (session->sessionActive) {
+		sms_log(mac_ctx, LOGE,
+			FL("Cannot re-open active session with Id %d"),
+			session_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	session->sessionActive = true;
+	session->sessionId = session_id;
+
+	/* Initialize FT related data structures only in STA mode */
+	sme_ft_open(mac_ctx, session->sessionId);
+
+	session->callback = callback;
+	session->pContext = pContext;
+	qdf_mem_copy(&session->selfMacAddr, pSelfMacAddr,
+		     sizeof(struct qdf_mac_addr));
+	status = qdf_mc_timer_init(&session->hTimerRoaming,
+				   QDF_TIMER_TYPE_SW,
+				   csr_roam_roaming_timer_handler,
+				   &session->roamingTimerInfo);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sms_log(mac_ctx, LOGE,
+			FL("cannot allocate memory for Roaming timer"));
+		return status;
+	}
+
+	status = qdf_mc_timer_init(&session->roaming_offload_timer,
+				   QDF_TIMER_TYPE_SW,
+				   csr_roam_roaming_offload_timeout_handler,
+				   &session->roamingTimerInfo);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sms_log(mac_ctx, LOGE, FL("mem fail for roaming timer"));
+		return status;
+	}
+
+	/* get the HT capability info */
+	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_HT_CAP_INFO, &nCfgValue) !=
+	    eSIR_SUCCESS) {
+		sms_log(mac_ctx, LOG1, FL("could not get HT capability info"));
+		return QDF_STATUS_SUCCESS;
+	}
+
+	uHTCapabilityInfo.nCfgValue16 = 0xFFFF & nCfgValue;
+	session->htConfig.ht_rx_ldpc = uHTCapabilityInfo.htCapInfo.advCodingCap;
+	session->htConfig.ht_tx_stbc = uHTCapabilityInfo.htCapInfo.txSTBC;
+	session->htConfig.ht_rx_stbc = uHTCapabilityInfo.htCapInfo.rxSTBC;
+	session->htConfig.ht_sgi20 = uHTCapabilityInfo.htCapInfo.shortGI20MHz;
+	session->htConfig.ht_sgi40 = uHTCapabilityInfo.htCapInfo.shortGI40MHz;
+
+#ifdef FEATURE_WLAN_BTAMP_UT_RF
+	status = qdf_mc_timer_init(&session->hTimerJoinRetry, QDF_TIMER_TYPE_SW,
+				   csr_roam_join_retry_timer_handler,
+				   &session->joinRetryTimerInfo);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sms_log(mac_ctx, LOGE,
+			FL("cannot allocate memory for join retry timer"));
+		return status;
+	}
+#endif /* FEATURE_WLAN_BTAMP_UT_RF */
+
+	nCfgValue = 0;
+	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_MAX_MPDU_LENGTH, &nCfgValue);
+	session->vht_config.max_mpdu_len = nCfgValue;
+
+	nCfgValue = 0;
+	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_SUPPORTED_CHAN_WIDTH_SET,
+			 &nCfgValue);
+	session->vht_config.supported_channel_widthset = nCfgValue;
+
+	nCfgValue = 0;
+	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_LDPC_CODING_CAP, &nCfgValue);
+	session->vht_config.ldpc_coding = nCfgValue;
+
+	nCfgValue = 0;
+	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_SHORT_GI_80MHZ, &nCfgValue);
+	session->vht_config.shortgi80 = nCfgValue;
+
+	nCfgValue = 0;
+	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_SHORT_GI_160_AND_80_PLUS_80MHZ,
+			 &nCfgValue);
+	session->vht_config.shortgi160and80plus80 = nCfgValue;
+
+	nCfgValue = 0;
+	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_TXSTBC, &nCfgValue);
+	session->vht_config.tx_stbc = nCfgValue;
+
+	nCfgValue = 0;
+	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_RXSTBC, &nCfgValue);
+	session->vht_config.rx_stbc = nCfgValue;
+
+	nCfgValue = 0;
+	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_SU_BEAMFORMER_CAP, &nCfgValue);
+	session->vht_config.su_beam_former = nCfgValue;
+
+	nCfgValue = 0;
+	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_SU_BEAMFORMEE_CAP, &nCfgValue);
+	session->vht_config.su_beam_formee = nCfgValue;
+
+	nCfgValue = 0;
+	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED,
+			 &nCfgValue);
+	session->vht_config.csnof_beamformer_antSup = nCfgValue;
+
+	nCfgValue = 0;
+	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_NUM_SOUNDING_DIMENSIONS,
+			 &nCfgValue);
+	session->vht_config.num_soundingdim = nCfgValue;
+
+	nCfgValue = 0;
+	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_MU_BEAMFORMER_CAP, &nCfgValue);
+	session->vht_config.mu_beam_former = nCfgValue;
+
+	nCfgValue = 0;
+	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_MU_BEAMFORMEE_CAP, &nCfgValue);
+	session->vht_config.mu_beam_formee = nCfgValue;
+
+	nCfgValue = 0;
+	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_TXOP_PS, &nCfgValue);
+	session->vht_config.vht_txops = nCfgValue;
+
+	nCfgValue = 0;
+	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_HTC_VHTC_CAP, &nCfgValue);
+	session->vht_config.htc_vhtcap = nCfgValue;
+
+	nCfgValue = 0;
+	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_RX_ANT_PATTERN, &nCfgValue);
+	session->vht_config.rx_antpattern = nCfgValue;
+
+	nCfgValue = 0;
+	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_TX_ANT_PATTERN, &nCfgValue);
+	session->vht_config.tx_antpattern = nCfgValue;
+
+	nCfgValue = 0;
+	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_AMPDU_LEN_EXPONENT, &nCfgValue);
+	session->vht_config.max_ampdu_lenexp = nCfgValue;
+
+	csr_update_session_he_cap(mac_ctx, session);
+
+	return csr_issue_add_sta_for_session_req(mac_ctx, session_id,
+						 pSelfMacAddr, type, subType);
 }
 
 QDF_STATUS csr_process_del_sta_session_rsp(tpAniSirGlobal pMac, uint8_t *pMsg)
