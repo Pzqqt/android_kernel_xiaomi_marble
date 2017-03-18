@@ -24,8 +24,8 @@
  * under proprietary terms before Copyright ownership was assigned
  * to the Linux Foundation.
  */
-
-#include <sms_debug.h>
+#include <sir_common.h>
+#include <ani_global.h>
 #include <csr_inside_api.h>
 #include <csr_neighbor_roam.h>
 #include <sir_api.h>

@@ -26,7 +26,8 @@
  */
 
 #include "sme_api.h"
-#include "sms_debug.h"
+#include <sir_common.h>
+#include <ani_global.h>
 #include "csr_inside_api.h"
 #include "sme_inside.h"
 #include "p2p_api.h"
@@ -270,8 +271,6 @@ QDF_STATUS p2p_remain_on_channel(tHalHandle hHal, uint8_t sessionId,
 		/* Put it at the head of the Q if we just finish finding the peer and ready to send a frame */
 		status = csr_queue_sme_command(pMac, pRemainChlCmd, false);
 	} while (0);
-
-	sms_log(pMac, LOGW, "exiting function %s", __func__);
 
 	return status;
 }

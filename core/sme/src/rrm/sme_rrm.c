@@ -41,7 +41,6 @@
 #include "ani_global.h"
 #include "sme_inside.h"
 #include "sme_api.h"
-#include "sms_debug.h"
 #include "cfg_api.h"
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT

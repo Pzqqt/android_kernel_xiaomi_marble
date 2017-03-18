@@ -44,7 +44,6 @@
 #include "host_diag_core_event.h"
 #include "host_diag_core_log.h"
 
-#include "sms_debug.h"
 #include "utils_parser.h"
 #include "sme_power_save_api.h"
 

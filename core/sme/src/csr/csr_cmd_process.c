@@ -36,7 +36,6 @@
 
 #include "csr_inside_api.h"
 #include "sme_inside.h"
-#include "sms_debug.h"
 #include "mac_trace.h"
 
 /**

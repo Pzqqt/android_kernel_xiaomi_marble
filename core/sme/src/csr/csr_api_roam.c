@@ -36,7 +36,6 @@
 #include "wma_types.h"
 #include "wma_if.h"          /* for STA_INVALID_IDX. */
 #include "csr_inside_api.h"
-#include "sms_debug.h"
 #include "sme_trace.h"
 #include "sme_qos_internal.h"
 #include "sme_inside.h"
@@ -6030,8 +6029,7 @@ void csr_roam_complete(tpAniSirGlobal mac_ctx, eCsrRoamCompleteResult Result,
 	}
 	sme_cmd = cmd->umac_cmd;
 	if (!sme_cmd) {
-		sms_log(mac_ctx, LOGE,
-			FL("sme_cmd is NULL"));
+		sme_err("sme_cmd is NULL");
 		return;
 	}
 	if (eSmeCommandRoam == sme_cmd->command) {
@@ -6045,7 +6043,7 @@ void csr_reset_pmkid_candidate_list(tpAniSirGlobal pMac, uint32_t sessionId)
 {
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
 	if (!pSession) {
-		sme_err("  session %d not found ", sessionId);
+		sme_err("session %d not found ", sessionId);
 		return;
 	}
 	qdf_mem_set(&(pSession->PmkidCandidateInfo[0]),
@@ -6058,7 +6056,7 @@ void csr_reset_bkid_candidate_list(tpAniSirGlobal pMac, uint32_t sessionId)
 {
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
 	if (!pSession) {
-		sme_err("  session %d not found ", sessionId);
+		sme_err("session %d not found ", sessionId);
 		return;
 	}
 	qdf_mem_set(&(pSession->BkidCandidateInfo[0]),
@@ -12378,7 +12376,7 @@ csr_roam_get_phy_mode_band_for_bss(tpAniSirGlobal mac_ctx,
 		else
 			cfg_dot11_mode = eCSR_CFG_DOT11_MODE_11A;
 	}
-	sms_log(mac_ctx, LOG1, FL("dot11mode: %d"), cfg_dot11_mode);
+	sme_debug("dot11mode: %d", cfg_dot11_mode);
 	return cfg_dot11_mode;
 }
 
@@ -18451,7 +18449,7 @@ tSmeCmd *csr_get_command_buffer(tpAniSirGlobal pMac)
 static void csr_free_cmd_memory(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 {
 	if (!pCommand) {
-		sms_log(pMac, LOGE, "pCommand is NULL");
+		sme_err("pCommand is NULL");
 		return;
 	}
 	switch (pCommand->command) {
@@ -18799,7 +18797,7 @@ QDF_STATUS csr_set_serialization_params_to_cmd(tpAniSirGlobal mac_ctx,
 	sme_debug("filled cmd_type[%d] cmd_id[%d]",
 		cmd->cmd_type, cmd->cmd_id);
 	if (cmd->cmd_type == WLAN_SER_CMD_MAX) {
-		sms_log(mac_ctx, LOGE, FL("serialization enum not found"));
+		sme_err("serialization enum not found");
 		return status;
 	}
 	cmd->vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc,
@@ -18845,14 +18843,14 @@ QDF_STATUS csr_queue_sme_command(tpAniSirGlobal mac_ctx, tSmeCmd *sme_cmd,
 	if (QDF_STATUS_SUCCESS == status) {
 		if (WLAN_SER_CMD_DENIED_UNSPECIFIED ==
 				wlan_serialization_request(&cmd)) {
-			sms_log(mac_ctx, LOGE, FL("failed to enq to req"));
+			sme_err("failed to enq to req");
 			status = QDF_STATUS_E_FAILURE;
 		}
 		if (cmd.vdev)
 			wlan_objmgr_vdev_release_ref(cmd.vdev,
 						WLAN_LEGACY_SME_ID);
 	} else {
-		sms_log(mac_ctx, LOGE, FL("failed to set ser params"));
+		sme_err("failed to set ser params");
 		status = QDF_STATUS_E_FAILURE;
 	}
 	return status;
@@ -19772,7 +19770,7 @@ void csr_process_set_hw_mode(tpAniSirGlobal mac, tSmeCmd *command)
 			mac->psoc, command->u.set_hw_mode_cmd.hw_mode_index);
 
 	if (POLICY_MGR_HW_MODE_NOT_IN_PROGRESS == hw_mode) {
-		sms_log(mac, LOGE, FL("hw_mode %d, failing"), hw_mode);
+		sme_err("hw_mode %d, failing", hw_mode);
 		goto fail;
 	}
 

@@ -24,9 +24,9 @@
  * under proprietary terms before Copyright ownership was assigned
  * to the Linux Foundation.
  */
-
+#include <sir_common.h>
+#include <ani_global.h>
 #include "sme_api.h"
-#include "sms_debug.h"
 #include "csr_inside_api.h"
 #include "sme_inside.h"
 #include "nan_api.h"

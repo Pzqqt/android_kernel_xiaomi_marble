@@ -34,7 +34,6 @@
 
    ========================================================================*/
 #include "ani_global.h"          /* for tpAniSirGlobal */
-#include "sms_debug.h"
 #include "mac_trace.h"
 #include "sme_trace.h"
 #include "sme_internal.h"

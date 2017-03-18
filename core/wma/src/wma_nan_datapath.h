@@ -27,6 +27,8 @@
 #ifndef __WMA_NAN_DATAPATH_H
 #define __WMA_NAN_DATAPATH_H
 
+#include <sir_common.h>
+#include <ani_global.h>
 #include "wma.h"
 #include "sir_api.h"
 #include "sme_nan_datapath.h"

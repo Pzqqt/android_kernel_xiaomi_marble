@@ -27,7 +27,9 @@
 
 #include "sme_power_save.h"
 #include "sme_power_save_api.h"
-#include "sms_debug.h"
+#include <sir_common.h>
+#include <ani_global.h>
+#include <utils_api.h>
 #include "sme_trace.h"
 #include "qdf_mem.h"
 #include "qdf_types.h"

@@ -37,7 +37,6 @@
 
 #include "csr_inside_api.h"
 #include "sme_inside.h"
-#include "sms_debug.h"
 
 #include "csr_support.h"
 
@@ -1518,8 +1517,7 @@ static void csr_scan_add_result(tpAniSirGlobal mac_ctx, tCsrScanResult *pResult,
 	buf = qdf_nbuf_alloc(NULL, qdf_roundup(buf_len, 4),
 				0, 4, false);
 	if (!buf) {
-		sms_log(mac_ctx, LOGE,
-			FL("Failed to allocate wbuf for mgmt rx len (%u)"),
+		sme_err("Failed to allocate wbuf for mgmt rx len (%u)",
 			buf_len);
 		return;
 	}

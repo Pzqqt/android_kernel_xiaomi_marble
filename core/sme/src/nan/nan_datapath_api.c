@@ -23,7 +23,8 @@
  *
  * SME NAN Data path API implementation
  */
-#include "sms_debug.h"
+#include <sir_common.h>
+#include <ani_global.h>
 #include "sme_api.h"
 #include "sme_inside.h"
 #include "csr_internal.h"
