@@ -11225,6 +11225,34 @@ bool hdd_set_connection_in_progress(bool value)
 	return status;
 }
 
+int wlan_hdd_send_p2p_quota(hdd_adapter_t *adapter, int set_value)
+{
+	if (!adapter) {
+		hdd_err("Invalid adapter");
+		return -EINVAL;
+	}
+	hdd_info("Send MCC P2P QUOTA to WMA: %d", set_value);
+	wma_cli_set_command(adapter->sessionId,
+			    WMA_VDEV_MCC_SET_TIME_QUOTA,
+			    set_value, VDEV_CMD);
+	return 0;
+
+}
+
+int wlan_hdd_send_mcc_latency(hdd_adapter_t *adapter, int set_value)
+{
+	if (!adapter) {
+		hdd_err("Invalid adapter");
+		return -EINVAL;
+	}
+
+	hdd_info("Send MCC latency WMA: %d", set_value);
+	wma_cli_set_command(adapter->sessionId,
+			    WMA_VDEV_MCC_SET_TIME_LATENCY,
+			    set_value, VDEV_CMD);
+	return 0;
+}
+
 /* Register the module init/exit functions */
 module_init(hdd_module_init);
 module_exit(hdd_module_exit);

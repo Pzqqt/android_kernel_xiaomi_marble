@@ -2288,4 +2288,24 @@ static inline void hdd_send_peer_status_ind_to_app(
 }
 #endif /* WIFI_POS_CONVERGENCE */
 
+/**
+ * wlan_hdd_send_p2p_quota()- Send P2P Quota value to FW
+ * @adapter: Adapter data
+ * @sval:    P2P quota value
+ *
+ * Send P2P quota value to FW
+ *
+ * Return: 0 sucess else failure
+ */
+int wlan_hdd_send_p2p_quota(hdd_adapter_t *adapter, int sval);
+/**
+ * wlan_hdd_send_p2p_quota()- Send MCC latency to FW
+ * @adapter: Adapter data
+ * @sval:    MCC latency value
+ *
+ * Send MCC latency value to FW
+ *
+ * Return: 0 sucess else failure
+ */
+int wlan_hdd_send_mcc_latency(hdd_adapter_t *adapter, int sval);
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

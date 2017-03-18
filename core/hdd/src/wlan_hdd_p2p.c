@@ -2961,3 +2961,307 @@ int wlan_hdd_listen_offload_stop(hdd_adapter_t *adapter)
 	return qdf_status_to_os_return(status);
 }
 #endif
+
+/**
+ * wlan_hdd_update_mcc_adaptive_scheduler() - Function to update
+ * MAS value to FW
+ * @adapter:            adapter object data
+ * @is_enable:          0-Disable, 1-Enable MAS
+ *
+ * This function passes down the value of MAS to UMAC
+ *
+ * Return: 0 for success else non zero
+ *
+ */
+static int32_t wlan_hdd_update_mcc_adaptive_scheduler(
+		hdd_adapter_t *adapter, bool is_enable)
+{
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	if (hdd_ctx == NULL) {
+		hdd_err("HDD context is null");
+		return -EINVAL;
+	}
+
+	hdd_info("enable/disable MAS :%d", is_enable);
+	if (hdd_ctx->config &&
+	    hdd_ctx->config->enableMCCAdaptiveScheduler) {
+		/* Todo check where to set the MCC apative SCHED for read */
+
+		if (QDF_STATUS_SUCCESS != sme_set_mas(is_enable)) {
+			hdd_err("Failed to enable/disable MAS");
+			return -EAGAIN;
+		}
+	}
+
+	return 0;
+}
+
+/**
+ * wlan_hdd_update_mcc_p2p_quota() - Function to Update P2P
+ * quota to FW
+ * @adapter:            Pointer to HDD adapter
+ * @is_set:             0-reset, 1-set
+ *
+ * This function passes down the value of MAS to UMAC
+ *
+ * Return: none
+ *
+ */
+static void wlan_hdd_update_mcc_p2p_quota(hdd_adapter_t *adapter,
+					  bool is_set)
+{
+
+	hdd_info("Set/reset P2P quota: %d", is_set);
+	if (is_set) {
+		if (adapter->device_mode == QDF_STA_MODE)
+			wlan_hdd_set_mcc_p2p_quota(adapter,
+				100 - HDD_DEFAULT_MCC_P2P_QUOTA
+			);
+		else if (adapter->device_mode == QDF_P2P_GO_MODE)
+			wlan_hdd_go_set_mcc_p2p_quota(adapter,
+				HDD_DEFAULT_MCC_P2P_QUOTA);
+		else
+			wlan_hdd_set_mcc_p2p_quota(adapter,
+				HDD_DEFAULT_MCC_P2P_QUOTA);
+	} else {
+		if (adapter->device_mode == QDF_P2P_GO_MODE)
+			wlan_hdd_go_set_mcc_p2p_quota(adapter,
+				HDD_RESET_MCC_P2P_QUOTA);
+		else
+			wlan_hdd_set_mcc_p2p_quota(adapter,
+				HDD_RESET_MCC_P2P_QUOTA);
+	}
+}
+
+int32_t wlan_hdd_set_mas(hdd_adapter_t *adapter, uint8_t mas_value)
+{
+	int32_t ret = 0;
+
+	if (!adapter) {
+		hdd_err("Adapter is NULL");
+		return -EINVAL;
+	}
+
+	if (mas_value) {
+		hdd_info("Miracast is ON. Disable MAS and configure P2P quota");
+		ret = wlan_hdd_update_mcc_adaptive_scheduler(
+			adapter, false);
+		if (0 != ret) {
+			hdd_err("Failed to disable MAS");
+			goto done;
+		}
+
+		/* Config p2p quota */
+		wlan_hdd_update_mcc_p2p_quota(adapter, true);
+	} else {
+		hdd_info("Miracast is OFF. Enable MAS and reset P2P quota");
+		wlan_hdd_update_mcc_p2p_quota(adapter, false);
+
+		ret = wlan_hdd_update_mcc_adaptive_scheduler(
+			adapter, true);
+		if (0 != ret) {
+			hdd_err("Failed to enable MAS");
+			goto done;
+		}
+	}
+
+done:
+	return ret;
+}
+
+/**
+ * set_first_connection_operating_channel() - Function to set
+ * first connection oerating channel
+ * @adapter:   adapter data
+ * @set_value: Quota value for the interface
+ * @dev_mode:  Device mode
+ * This function is used to set the first adapter operating
+ * channel
+ *
+ * Return: operating channel updated in set value
+ *
+ */
+static uint32_t set_first_connection_operating_channel(
+		hdd_context_t *hdd_ctx, uint32_t set_value,
+		enum tQDF_ADAPTER_MODE dev_mode)
+{
+	uint8_t operating_channel;
+
+	operating_channel = hdd_get_operating_channel(
+					hdd_ctx, dev_mode);
+	if (!operating_channel) {
+		hdd_err(" First adpter operating channel is invalid");
+		return -EINVAL;
+	}
+
+	hdd_info("First connection channel No.:%d and quota:%dms",
+			operating_channel, set_value);
+	/* Move the time quota for first channel to bits 15-8 */
+	set_value = set_value << 8;
+
+	/*
+	* Store the channel number of 1st channel at bits 7-0
+	* of the bit vector
+	*/
+	return set_value | operating_channel;
+}
+
+/**
+ * set_second_connection_operating_channel() - Function to set
+ * second connection oerating channel
+ * @adapter:   adapter data
+ * @set_value: Quota value for the interface
+ * @vdev_id:  vdev id
+ *
+ * This function is used to set the first adapter operating
+ * channel
+ *
+ * Return: operating channel updated in set value
+ *
+ */
+static uint32_t set_second_connection_operating_channel(
+		hdd_context_t *hdd_ctx, uint32_t set_value,
+		uint8_t vdev_id)
+{
+	uint8_t operating_channel;
+
+	operating_channel = policy_mgr_get_mcc_operating_channel(
+		hdd_ctx->hdd_psoc, vdev_id);
+
+	if (operating_channel == 0) {
+		hdd_err("Second adapter operating channel is invalid");
+		return -EINVAL;
+	}
+
+	hdd_info("Second connection channel No.:%d and quota:%dms",
+			operating_channel, set_value);
+	/*
+	* Now move the time quota and channel number of the
+	* 1st adapter to bits 23-16 and bits 15-8 of the bit
+	* vector, respectively.
+	*/
+	set_value = set_value << 8;
+
+	/*
+	* Set the channel number for 2nd MCC vdev at bits
+	* 7-0 of set_value
+	*/
+	return set_value | operating_channel;
+}
+
+/**
+ * wlan_hdd_set_mcc_p2p_quota() - Function to set quota for P2P
+ * @psoc: PSOC object information
+ * @set_value:          Qouta value for the interface
+ * @operating_channel   First adapter operating channel
+ * @vdev_id             vdev id
+ *
+ * This function is used to set the quota for P2P cases
+ *
+ * Return: Configuration message posting status, SUCCESS or Fail
+ *
+ */
+int wlan_hdd_set_mcc_p2p_quota(hdd_adapter_t *adapter,
+			       uint32_t set_value)
+{
+	int32_t ret = 0;
+	uint32_t concurrent_state;
+	hdd_context_t *hdd_ctx;
+
+	if (!adapter) {
+		hdd_err("Invalid adapter");
+		return -EFAULT;
+	}
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	if (hdd_ctx == NULL) {
+		hdd_err("HDD context is null");
+		return -EINVAL;
+	}
+
+	concurrent_state = policy_mgr_get_concurrency_mode(
+		hdd_ctx->hdd_psoc);
+	/*
+	 * Check if concurrency mode is active.
+	 * Need to modify this code to support MCC modes other than STA/P2P
+	 */
+	if ((concurrent_state ==
+	     (QDF_STA_MASK | QDF_P2P_CLIENT_MASK)) ||
+	    (concurrent_state == (QDF_STA_MASK | QDF_P2P_GO_MASK))) {
+		hdd_info("STA & P2P are both enabled");
+
+		/*
+		 * The channel numbers for both adapters and the time
+		 * quota for the 1st adapter, i.e., one specified in cmd
+		 * are formatted as a bit vector then passed on to WMA
+		 * +***********************************************************+
+		 * |bit 31-24  | bit 23-16  |   bits 15-8   |   bits 7-0       |
+		 * |  Unused   | Quota for  | chan. # for   |   chan. # for    |
+		 * |           | 1st chan.  | 1st chan.     |   2nd chan.      |
+		 * +***********************************************************+
+		 */
+
+		set_value = set_first_connection_operating_channel(
+			hdd_ctx, set_value, adapter->device_mode);
+
+
+		set_value = set_second_connection_operating_channel(
+			hdd_ctx, set_value, adapter->sessionId);
+
+
+		ret = wlan_hdd_send_p2p_quota(adapter, set_value);
+	} else {
+		hdd_info("MCC is not active. Exit w/o setting latency");
+	}
+
+	return ret;
+}
+
+int wlan_hdd_go_set_mcc_p2p_quota(hdd_adapter_t *hostapd_adapter,
+				  uint32_t set_value)
+{
+	return wlan_hdd_set_mcc_p2p_quota(hostapd_adapter, set_value);
+}
+
+void wlan_hdd_set_mcc_latency(hdd_adapter_t *adapter, int set_value)
+{
+	uint32_t concurrent_state;
+	hdd_context_t *hdd_ctx;
+
+	if (!adapter) {
+		hdd_err("Invalid adapter");
+		return;
+	}
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	if (hdd_ctx == NULL) {
+		hdd_err("HDD context is null");
+		return;
+	}
+
+	concurrent_state = policy_mgr_get_concurrency_mode(
+		hdd_ctx->hdd_psoc);
+	/**
+	 * Check if concurrency mode is active.
+	 * Need to modify this code to support MCC modes other than STA/P2P
+	 */
+	if ((concurrent_state ==
+	     (QDF_STA_MASK | QDF_P2P_CLIENT_MASK)) ||
+	    (concurrent_state == (QDF_STA_MASK | QDF_P2P_GO_MASK))) {
+		hdd_info("STA & P2P are both enabled");
+		/*
+		 * The channel number and latency are formatted in
+		 * a bit vector then passed on to WMA layer.
+		 * +**********************************************+
+		 * |bits 31-16 |      bits 15-8    |  bits 7-0    |
+		 * |  Unused   | latency - Chan. 1 |  channel no. |
+		 * +**********************************************+
+		 */
+		set_value = set_first_connection_operating_channel(
+			hdd_ctx, set_value, adapter->device_mode);
+
+		wlan_hdd_send_mcc_latency(adapter, set_value);
+	} else {
+		hdd_info("MCC is not active. Exit w/o setting latency");
+	}
+}

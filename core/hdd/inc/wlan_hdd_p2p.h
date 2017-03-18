@@ -197,4 +197,53 @@ int wlan_hdd_listen_offload_start(hdd_adapter_t *adapter,
  */
 int wlan_hdd_listen_offload_stop(hdd_adapter_t *adapter);
 
+/**
+ * wlan_hdd_set_mas() - Function to set MAS value to FW
+ * @adapter:            Pointer to HDD adapter
+ * @mas_value:          0-Disable, 1-Enable MAS
+ *
+ * This function passes down the value of MAS to FW
+ *
+ * Return: Configuration message posting status, SUCCESS or Fail
+ *
+ */
+int32_t wlan_hdd_set_mas(hdd_adapter_t *adapter, uint8_t mas_value);
+
+/**
+ * wlan_hdd_set_mcc_p2p_quota() - Function to set quota for P2P
+ * to FW
+ * @adapter:            Pointer to HDD adapter
+ * @set_value:          Quota value for the interface
+ *
+ * This function is used to set the quota for P2P cases
+ *
+ * Return: Configuration message posting status, SUCCESS or Fail
+ *
+ */
+int wlan_hdd_set_mcc_p2p_quota(hdd_adapter_t *adapter,
+			       uint32_t set_value);
+
+/**
+ * wlan_hdd_go_set_mcc_p2p_quota() - Function to set quota for
+ * P2P GO to FW
+ * @hostapd_adapter:    Pointer to HDD adapter
+ * @set_value:          Quota value for the interface
+ *
+ * This function is used to set the quota for P2P GO cases
+ *
+ * Return: Configuration message posting status, SUCCESS or Fail
+ *
+ */
+int wlan_hdd_go_set_mcc_p2p_quota(hdd_adapter_t *hostapd_adapter,
+				  uint32_t set_value);
+/**
+ * wlan_hdd_set_mcc_latency() - Set MCC latency to FW
+ * @adapter: Pointer to HDD adapter
+ * @set_value: Latency value
+ *
+ * Sets the MCC latency value during STA-P2P concurrency
+ *
+ * Return: None
+ */
+void wlan_hdd_set_mcc_latency(hdd_adapter_t *adapter, int set_value);
 #endif /* __P2P_H */
