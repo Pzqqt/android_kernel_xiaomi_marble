@@ -34,6 +34,8 @@
 
 /* Include files */
 #include "qdf_types.h"
+#include "qdf_status.h"
+#include "qdf_trace.h"
 
 /* forward reference */
 struct wlan_objmgr_psoc;
@@ -133,6 +135,19 @@ struct wifi_pos_req_msg {
 	struct wifi_pos_field_info *field_info_buf;
 	uint32_t field_info_buf_len;
 };
+
+/**
+ * ucfg_wifi_pos_process_req: ucfg API to be called from HDD/OS_IF to process a
+ * wifi_pos request from userspace
+ * @psoc: pointer to psoc object
+ * @req: wifi_pos request msg
+ * @send_rsp_cb: callback pointer required to send msg to userspace
+ *
+ * Return: status of operation
+ */
+QDF_STATUS ucfg_wifi_pos_process_req(struct wlan_objmgr_psoc *psoc,
+		struct wifi_pos_req_msg *req,
+		void (*send_rsp_cb)(uint32_t, uint32_t, uint32_t, uint8_t *));
 
 /**
  * wifi_pos_init: initializes WIFI POS component, called by dispatcher init
@@ -275,6 +290,40 @@ void wifi_pos_set_current_dwell_time_max(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS wifi_pos_populate_caps(struct wlan_objmgr_psoc *psoc,
 			   struct wifi_pos_driver_caps *caps);
+
+/**
+ * wifi_pos_set_ftm_cap: API to set fine timing measurement caps
+ * @psoc: psoc object
+ * @val: value to set
+ *
+ * Return: None
+ */
+void wifi_pos_set_ftm_cap(struct wlan_objmgr_psoc *psoc, uint32_t val);
+
+/**
+ * wifi_pos_get_app_pid: returns oem app pid.
+ * @psoc: pointer to psoc object
+ *
+ * Return: oem app pid
+ */
+uint32_t wifi_pos_get_app_pid(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wifi_pos_is_app_registered: indicates if oem app is registered.
+ * @psoc: pointer to psoc object
+ *
+ * Return: true if app is registered, false otherwise
+ */
+bool wifi_pos_is_app_registered(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wifi_pos_get_psoc: API to get global PSOC object
+ *
+ * Since request from userspace is not associated with any vdev/pdev/psoc, this
+ * API is used to get global psoc object.
+ * Return: global psoc object.
+ */
+struct wlan_objmgr_psoc *wifi_pos_get_psoc(void);
 
 #else
 static inline QDF_STATUS wifi_pos_init(void)

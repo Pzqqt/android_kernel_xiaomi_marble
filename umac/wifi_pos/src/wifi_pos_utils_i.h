@@ -41,6 +41,7 @@
 #include "qdf_trace.h"
 
 struct wlan_objmgr_psoc;
+struct wifi_pos_req_msg;
 
 #define wifi_pos_log(level, args...) \
 	QDF_TRACE(QDF_MODULE_ID_WIFIPOS, level, ## args)
@@ -71,6 +72,28 @@ struct wlan_objmgr_psoc;
 #endif
 
 /**
+ * struct app_reg_rsp_vdev_info - vdev info struct
+ * @dev_mode: device mode
+ * @vdev_id: vdev id
+ *
+ */
+struct qdf_packed app_reg_rsp_vdev_info {
+	uint8_t dev_mode;
+	uint8_t vdev_id;
+};
+
+/**
+ * struct wifi_app_reg_rsp - app registration response struct
+ * @num_inf: number of interfaces active
+ * @vdevs: array indicating all active vdev's information
+ *
+ */
+struct qdf_packed wifi_app_reg_rsp {
+	uint8_t num_inf;
+	struct app_reg_rsp_vdev_info vdevs[1];
+};
+
+/**
  * struct oem_data_req - data request to be sent to firmware
  * @data_len: len of data
  * @data: buffer containing data
@@ -93,7 +116,7 @@ struct oem_data_rsp {
 };
 
 /**
- * typedef wifi_pos_driver_version - Driver version identifier (w.x.y.z)
+ * struct wifi_pos_driver_version - Driver version identifier (w.x.y.z)
  * @major: Version ID major number
  * @minor: Version ID minor number
  * @patch: Version ID patch number
@@ -134,13 +157,29 @@ struct qdf_packed wifi_pos_driver_caps {
 	uint8_t channel_list[OEM_CAP_MAX_NUM_CHANNELS];
 };
 
-struct wifi_pos_req_msg {
-	uint32_t msg_type;
-	uint32_t pid;
-	uint8_t *buf;
-	uint32_t buf_len;
-	struct wifi_pos_field_info *field_info_buf;
-	uint32_t field_info_buf_len;
+/**
+ * struct wifi_pos_user_defined_caps - OEM capability to be exchanged between host
+ * and userspace
+ * @ftm_rr: FTM range report capability bit
+ * @lci_capability: LCI capability bit
+ * @reserved1: reserved
+ * @reserved2: reserved
+ */
+struct wifi_pos_user_defined_caps {
+	uint32_t ftm_rr:1;
+	uint32_t lci_capability:1;
+	uint32_t reserved1:30;
+	uint32_t reserved2;
+};
+
+/**
+ * struct wifi_pos_oem_get_cap_rsp - capabilites set by userspace and target.
+ * @driver_cap: target capabilities
+ * @user_defined_cap: capabilities set by userspace via set request
+ */
+struct qdf_packed wifi_pos_oem_get_cap_rsp {
+	struct wifi_pos_driver_caps driver_cap;
+	struct wifi_pos_user_defined_caps user_defined_cap;
 };
 
 /**
@@ -184,9 +223,7 @@ struct wifi_pos_psoc_priv_obj {
 
 	QDF_STATUS (*wifi_pos_req_handler)(struct wlan_objmgr_psoc *psoc,
 				    struct wifi_pos_req_msg *req);
-	void (*wifi_pos_send_rsp)(struct wlan_objmgr_psoc *psoc,
-				  uint32_t rsp_msg_type, uint32_t buf_len,
-				  uint8_t *buf);
+	void (*wifi_pos_send_rsp)(uint32_t, uint32_t, uint32_t, uint8_t *);
 };
 
 /**
@@ -236,14 +273,6 @@ QDF_STATUS wifi_pos_populate_caps(struct wlan_objmgr_psoc *psoc,
 				  struct wifi_pos_driver_caps *caps);
 
 /**
- * wifi_pos_is_app_registered: indicates if oem app is registered.
- * @psoc: pointer to psoc object
- *
- * Return: true if app is registered, false otherwise
- */
-bool wifi_pos_is_app_registered(struct wlan_objmgr_psoc *psoc);
-
-/**
  * wifi_pos_get_app_pid: returns oem app pid.
  * @psoc: pointer to psoc object
  *
@@ -252,20 +281,12 @@ bool wifi_pos_is_app_registered(struct wlan_objmgr_psoc *psoc);
 uint32_t wifi_pos_get_app_pid(struct wlan_objmgr_psoc *psoc);
 
 /**
- * wifi_pos_lock: acquires wifi_pos lock
+ * wifi_pos_is_app_registered: indicates if oem app is registered.
  * @psoc: pointer to psoc object
  *
- * Return: None
+ * Return: true if app is registered, false otherwise
  */
-void wifi_pos_lock(struct wlan_objmgr_psoc *psoc);
-
-/**
- * wifi_pos_unlock: releases wifi_pos lock
- * @psoc: pointer to psoc object
- *
- * Return: None
- */
-void wifi_pos_unlock(struct wlan_objmgr_psoc *psoc);
+bool wifi_pos_is_app_registered(struct wlan_objmgr_psoc *psoc);
 
 #endif /* _WIFI_POS_UTILS_H_ */
 #endif /* WIFI_POS_CONVERGED */

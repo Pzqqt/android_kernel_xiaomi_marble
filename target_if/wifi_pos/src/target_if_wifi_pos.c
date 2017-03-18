@@ -49,17 +49,44 @@ static int wifi_pos_oem_rsp_ev_handler(ol_scn_t scn,
 					uint8_t *data_buf,
 					uint32_t data_len)
 {
-	struct oem_data_rsp *oem_rsp = NULL;
-	struct wlan_objmgr_psoc *psoc = NULL;
+	int ret;
+	struct oem_data_rsp oem_rsp = {0};
+	struct wifi_pos_psoc_priv_obj *wifi_pos_psoc;
+	struct wlan_objmgr_psoc *psoc = wifi_pos_get_psoc();
 	struct wlan_lmac_if_wifi_pos_rx_ops *wifi_pos_rx_ops = NULL;
+	WMI_OEM_RESPONSE_EVENTID_param_tlvs *param_buf =
+		(WMI_OEM_RESPONSE_EVENTID_param_tlvs *)data_buf;
 
+	if (!psoc) {
+		wifi_pos_err("psoc is null");
+		return QDF_STATUS_NOT_INITIALIZED;
+	}
+	wifi_pos_psoc = wifi_pos_get_psoc_priv_obj(psoc);
+	if (!wifi_pos_psoc) {
+		wifi_pos_err("wifi_pos_psoc is null");
+		return QDF_STATUS_NOT_INITIALIZED;
+	}
+	qdf_spin_lock_bh(&wifi_pos_psoc->wifi_pos_lock);
+	wlan_objmgr_psoc_get_ref(psoc, WLAN_WIFI_POS_ID);
+
+	wifi_pos_rx_ops = target_if_wifi_pos_get_rxops(psoc);
 	/* this will be implemented later */
 	if (!wifi_pos_rx_ops || !wifi_pos_rx_ops->oem_rsp_event_rx) {
 		wifi_pos_err("lmac callbacks not registered");
-		return QDF_STATUS_NOT_INITIALIZED;
+		ret = QDF_STATUS_NOT_INITIALIZED;
+		goto release_psoc_ref;
 	}
 
-	return wifi_pos_rx_ops->oem_rsp_event_rx(psoc, oem_rsp);
+	oem_rsp.rsp_len = param_buf->num_data;
+	oem_rsp.data = param_buf->data;
+
+	ret = wifi_pos_rx_ops->oem_rsp_event_rx(psoc, &oem_rsp);
+
+release_psoc_ref:
+	wlan_objmgr_psoc_release_ref(psoc, WLAN_WIFI_POS_ID);
+	qdf_spin_unlock_bh(&wifi_pos_psoc->wifi_pos_lock);
+
+	return ret;
 }
 
 /**

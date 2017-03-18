@@ -42,7 +42,6 @@ struct wifi_pos_req_msg;
  */
 QDF_STATUS ucfg_wifi_pos_process_req(struct wlan_objmgr_psoc *psoc,
 		struct wifi_pos_req_msg *req,
-		void (*send_rsp_cb)(struct wlan_objmgr_psoc *,
-			uint32_t, uint32_t, uint8_t *));
+		void (*send_rsp_cb)(uint32_t, uint32_t, uint32_t, uint8_t *));
 
 #endif /* _WIFI_POS_UCFG_H_ */

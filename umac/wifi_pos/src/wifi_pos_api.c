@@ -204,3 +204,56 @@ void wifi_pos_set_current_dwell_time_min(struct wlan_objmgr_psoc *psoc,
 	wifi_pos_psoc->current_dwell_time_max = val;
 	qdf_spin_unlock_bh(&wifi_pos_psoc->wifi_pos_lock);
 }
+
+void wifi_pos_set_ftm_cap(struct wlan_objmgr_psoc *psoc, uint32_t val)
+{
+	struct wifi_pos_psoc_priv_obj *wifi_pos_psoc =
+			wifi_pos_get_psoc_priv_obj(psoc);
+
+	if (!wifi_pos_psoc) {
+		wifi_pos_alert("unable to get wifi_pos psoc obj");
+		return;
+	}
+
+	qdf_spin_lock_bh(&wifi_pos_psoc->wifi_pos_lock);
+	wifi_pos_psoc->fine_time_meas_cap = val;
+	qdf_spin_unlock_bh(&wifi_pos_psoc->wifi_pos_lock);
+}
+
+uint32_t wifi_pos_get_app_pid(struct wlan_objmgr_psoc *psoc)
+{
+	uint32_t app_pid;
+	struct wifi_pos_psoc_priv_obj *wifi_pos_psoc =
+				wifi_pos_get_psoc_priv_obj(psoc);
+
+	if (!wifi_pos_psoc) {
+		wifi_pos_err("wifi_pos priv obj is null");
+		return 0;
+	}
+
+	qdf_spin_lock_bh(&wifi_pos_psoc->wifi_pos_lock);
+	app_pid = wifi_pos_psoc->app_pid;
+	qdf_spin_unlock_bh(&wifi_pos_psoc->wifi_pos_lock);
+
+	return app_pid;
+
+}
+
+bool wifi_pos_is_app_registered(struct wlan_objmgr_psoc *psoc)
+{
+	bool is_app_registered;
+	struct wifi_pos_psoc_priv_obj *wifi_pos_psoc =
+				wifi_pos_get_psoc_priv_obj(psoc);
+
+	if (!wifi_pos_psoc) {
+		wifi_pos_err("wifi_pos priv obj is null");
+		return false;
+	}
+
+	qdf_spin_lock_bh(&wifi_pos_psoc->wifi_pos_lock);
+	is_app_registered = wifi_pos_psoc->is_app_registered;
+	qdf_spin_unlock_bh(&wifi_pos_psoc->wifi_pos_lock);
+
+	return is_app_registered;
+}
+

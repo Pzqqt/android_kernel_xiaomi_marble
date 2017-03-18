@@ -31,7 +31,7 @@
  * wifi positioning to initialize and de-initialize the component.
  */
 #include "target_if_wifi_pos.h"
-#include "os_if_wifi_pos.h"
+#include "wifi_pos_oem_interface_i.h"
 #include "wifi_pos_utils_i.h"
 #include "wifi_pos_api.h"
 #include "wifi_pos_main_i.h"
@@ -39,6 +39,9 @@
 #include "wlan_objmgr_cmn.h"
 #include "wlan_objmgr_global_obj.h"
 #include "wlan_objmgr_psoc_obj.h"
+#include "wlan_objmgr_pdev_obj.h"
+#include "wlan_objmgr_vdev_obj.h"
+#include "wlan_ptt_sock_svc.h"
 
 #ifdef UMAC_REG_COMPONENT
 /* enable this when regulatory component gets merged */
@@ -46,6 +49,15 @@
 /* forward declartion */
 struct regulatory_channel;
 #endif
+
+/*
+ * obj mgr api to iterate over vdevs does not provide a direct array or vdevs,
+ * rather takes a callback that is called for every vdev. wifi pos needs to
+ * store device mode and vdev id of all active vdevs and provide this info to
+ * user space as part of APP registration response. due to this, vdev_idx is
+ * used to identify how many vdevs have been populated by obj manager API.
+ */
+static uint32_t vdev_idx;
 
 /**
  * wifi_pos_get_tlv_support: indicates if firmware supports TLV wifi pos msg
@@ -59,6 +71,263 @@ static bool wifi_pos_get_tlv_support(struct wlan_objmgr_psoc *psoc)
 	return true;
 }
 
+static int wifi_pos_process_data_req(struct wlan_objmgr_psoc *psoc,
+					struct wifi_pos_req_msg *req)
+{
+	uint8_t idx;
+	uint32_t sub_type = 0;
+	uint32_t channel_mhz = 0;
+	void *pdev_id = NULL;
+	uint32_t offset;
+	struct oem_data_req data_req;
+	struct wlan_lmac_if_wifi_pos_tx_ops *tx_ops;
+
+	wifi_pos_debug("Received data req pid(%d), len(%d)",
+			req->pid, req->buf_len);
+
+	/* look for fields */
+	if (req->field_info_buf)
+		for (idx = 0; idx < req->field_info_buf->count; idx++) {
+			offset = req->field_info_buf->fields[idx].offset;
+			/*
+			 * replace following reads with read_api based on
+			 * length
+			 */
+			if (req->field_info_buf->fields[idx].id ==
+					WMIRTT_FIELD_ID_oem_data_sub_type) {
+				sub_type = *((uint32_t *)&req->buf[offset]);
+				continue;
+			}
+
+			if (req->field_info_buf->fields[idx].id ==
+					WMIRTT_FIELD_ID_channel_mhz) {
+				channel_mhz = *((uint32_t *)&req->buf[offset]);
+				continue;
+			}
+
+			if (req->field_info_buf->fields[idx].id ==
+					WMIRTT_FIELD_ID_pdev) {
+				pdev_id = &req->buf[offset];
+				continue;
+			}
+		}
+
+	switch (sub_type) {
+	case TARGET_OEM_CAPABILITY_REQ:
+		/* TBD */
+		break;
+	case TARGET_OEM_CONFIGURE_LCR:
+		/* TBD */
+		break;
+	case TARGET_OEM_CONFIGURE_LCI:
+		/* TBD */
+		break;
+	case TARGET_OEM_MEASUREMENT_REQ:
+		/* TBD */
+		break;
+	case TARGET_OEM_CONFIGURE_FTMRR:
+		/* TBD */
+		break;
+	case TARGET_OEM_CONFIGURE_WRU:
+		/* TBD */
+		break;
+	default:
+		wifi_pos_debug("invalid sub type or not passed");
+		/*
+		 * this is legacy MCL operation. pass whole msg to firmware as
+		 * it is.
+		 */
+		tx_ops = target_if_wifi_pos_get_txops(psoc);
+		data_req.data_len = req->buf_len;
+		data_req.data = req->buf;
+		tx_ops->data_req_tx(psoc, &data_req);
+		break;
+	}
+
+	return 0;
+}
+
+static int wifi_pos_process_set_cap_req(struct wlan_objmgr_psoc *psoc,
+					struct wifi_pos_req_msg *req)
+{
+	int error_code;
+	struct wifi_pos_psoc_priv_obj *wifi_pos_obj =
+				wifi_pos_get_psoc_priv_obj(psoc);
+	struct wifi_pos_user_defined_caps *caps =
+				(struct wifi_pos_user_defined_caps *)req->buf;
+
+	wifi_pos_debug("Received set cap req pid(%d), len(%d)",
+			req->pid, req->buf_len);
+
+	wifi_pos_obj->ftm_rr = caps->ftm_rr;
+	wifi_pos_obj->lci_capability = caps->lci_capability;
+	error_code = qdf_status_to_os_return(QDF_STATUS_SUCCESS);
+	wifi_pos_obj->wifi_pos_send_rsp(wifi_pos_obj->app_pid,
+					ANI_MSG_SET_OEM_CAP_RSP,
+					sizeof(error_code),
+					(uint8_t *)&error_code);
+
+	return 0;
+}
+
+static int wifi_pos_process_get_cap_req(struct wlan_objmgr_psoc *psoc,
+					struct wifi_pos_req_msg *req)
+{
+	struct wifi_pos_oem_get_cap_rsp cap_rsp = { { {0} } };
+	struct wifi_pos_psoc_priv_obj *wifi_pos_obj =
+					wifi_pos_get_psoc_priv_obj(psoc);
+
+	wifi_pos_debug("Received get cap req pid(%d), len(%d)",
+			req->pid, req->buf_len);
+
+	wifi_pos_populate_caps(psoc, &cap_rsp.driver_cap);
+	cap_rsp.user_defined_cap.ftm_rr = wifi_pos_obj->ftm_rr;
+	cap_rsp.user_defined_cap.lci_capability = wifi_pos_obj->lci_capability;
+	wifi_pos_obj->wifi_pos_send_rsp(wifi_pos_obj->app_pid,
+					ANI_MSG_GET_OEM_CAP_RSP,
+					sizeof(cap_rsp),
+					(uint8_t *)&cap_rsp);
+
+	return 0;
+}
+
+static int wifi_pos_process_ch_info_req(struct wlan_objmgr_psoc *psoc,
+					struct wifi_pos_req_msg *req)
+{
+	uint8_t idx;
+	uint8_t *buf;
+	uint32_t len;
+	uint8_t *channels = req->buf;
+	uint32_t num_ch = req->buf_len;
+	struct wifi_pos_ch_info_rsp *ch_info;
+	struct wifi_pos_psoc_priv_obj *wifi_pos_obj =
+					wifi_pos_get_psoc_priv_obj(psoc);
+
+	wifi_pos_debug("Received ch info req pid(%d), len(%d)",
+			req->pid, req->buf_len);
+
+	len = sizeof(uint8_t) + sizeof(struct wifi_pos_ch_info_rsp) * num_ch;
+	buf = qdf_mem_malloc(len);
+	if (!buf) {
+		wifi_pos_alert("malloc failed");
+		return -ENOMEM;
+	}
+
+	/* First byte of message body will have num of channels */
+	buf[0] = num_ch;
+	ch_info = (struct wifi_pos_ch_info_rsp *)&buf[1];
+	for (idx = 0; idx < num_ch; idx++) {
+		ch_info[idx].chan_id = channels[idx];
+		ch_info[idx].reserved0 = 0;
+#ifdef UMAC_REG_COMPONENT
+		/*
+		 * please note that this is feature macro temp and will go away
+		 * once regulatory component gets merged:
+		 * identify regulatory API to get following information
+		 */
+		ch_info[idx].mhz = cds_chan_to_freq(channels[idx]);
+		ch_info[idx].band_center_freq1 = ch_info[idx].mhz;
+#endif
+		ch_info[idx].band_center_freq2 = 0;
+		ch_info[idx].info = 0;
+#ifdef UMAC_REG_COMPONENT
+		/*
+		 * please note that this is feature macro temp and will go away
+		 * once regulatory component gets merged:
+		 * identify regulatory API to replace update_channel_bw_info
+		 * and to get following information
+		 */
+		if (CHANNEL_STATE_DFS == cds_get_channel_state(channels[idx]))
+			WMI_SET_CHANNEL_FLAG(&ch_info[idx], WMI_CHAN_FLAG_DFS);
+#endif
+		ch_info[idx].reg_info_1 = 0;
+		ch_info[idx].reg_info_2 = 0;
+	}
+
+	wifi_pos_obj->wifi_pos_send_rsp(wifi_pos_obj->app_pid,
+					ANI_MSG_CHANNEL_INFO_RSP,
+					len, buf);
+	qdf_mem_free(buf);
+	return 0;
+}
+
+static void wifi_pos_populate_vdev_info(struct wlan_objmgr_psoc *psoc,
+					void *vdev, void *arg)
+{
+	struct app_reg_rsp_vdev_info *vdev_info = arg;
+
+	wlan_vdev_obj_lock(vdev);
+	vdev_info[vdev_idx].dev_mode = wlan_vdev_mlme_get_opmode(vdev);
+	vdev_info[vdev_idx].vdev_id = wlan_vdev_get_id(vdev);
+	wlan_vdev_obj_unlock(vdev);
+	vdev_idx++;
+}
+
+static int wifi_pos_process_app_reg_req(struct wlan_objmgr_psoc *psoc,
+					struct wifi_pos_req_msg *req)
+{
+	int ret = 0;
+	uint8_t err = 0;
+	uint32_t rsp_len;
+	char *sign_str = NULL;
+	struct wifi_app_reg_rsp *app_reg_rsp;
+	struct app_reg_rsp_vdev_info vdevs_info[WLAN_UMAC_PSOC_MAX_VDEVS]
+								= { { 0 } };
+	struct wifi_pos_psoc_priv_obj *wifi_pos_obj =
+			wifi_pos_get_psoc_priv_obj(psoc);
+
+	wifi_pos_err("Received App Req Req pid(%d), len(%d)",
+			req->pid, req->buf_len);
+
+	sign_str = (char *)req->buf;
+	/* Registration request is only allowed for Qualcomm Application */
+	if ((OEM_APP_SIGNATURE_LEN != req->buf_len) ||
+		(strncmp(sign_str, OEM_APP_SIGNATURE_STR,
+			 OEM_APP_SIGNATURE_LEN))) {
+		wifi_pos_err("Invalid signature pid(%d)", req->pid);
+		ret = -EPERM;
+		err = OEM_ERR_INVALID_SIGNATURE;
+		goto app_reg_failed;
+	}
+
+	wifi_pos_debug("Valid App Req Req from pid(%d)", req->pid);
+	wifi_pos_obj->is_app_registered = true;
+	wifi_pos_obj->app_pid = req->pid;
+
+	vdev_idx = 0;
+	wlan_objmgr_iterate_obj_list(psoc, WLAN_VDEV_OP,
+				     wifi_pos_populate_vdev_info,
+				     vdevs_info, 1, WLAN_WIFI_POS_ID);
+	rsp_len = (sizeof(struct app_reg_rsp_vdev_info) * vdev_idx)
+			+ sizeof(uint8_t);
+	app_reg_rsp = qdf_mem_malloc(rsp_len);
+	if (!app_reg_rsp) {
+		wifi_pos_alert("malloc failed");
+		ret = -ENOMEM;
+		err = OEM_ERR_NULL_CONTEXT;
+		goto app_reg_failed;
+	}
+
+	app_reg_rsp->num_inf = vdev_idx;
+	qdf_mem_copy(&app_reg_rsp->vdevs, vdevs_info,
+		     sizeof(struct app_reg_rsp_vdev_info) * vdev_idx);
+	if (!vdev_idx)
+		wifi_pos_debug("no active vdev");
+
+	vdev_idx = 0;
+	wifi_pos_obj->wifi_pos_send_rsp(req->pid, ANI_MSG_APP_REG_RSP,
+					rsp_len, (uint8_t *)app_reg_rsp);
+
+	qdf_mem_free(app_reg_rsp);
+	return ret;
+
+app_reg_failed:
+
+	wifi_pos_obj->wifi_pos_send_rsp(req->pid, ANI_MSG_OEM_ERROR,
+					sizeof(err), &err);
+	return ret;
+}
+
 /**
  * wifi_pos_tlv_callback: wifi pos msg handler registered for TLV type req
  * @wmi_msg: wmi type request msg
@@ -68,9 +337,23 @@ static bool wifi_pos_get_tlv_support(struct wlan_objmgr_psoc *psoc)
 static QDF_STATUS wifi_pos_tlv_callback(struct wlan_objmgr_psoc *psoc,
 					struct wifi_pos_req_msg *req)
 {
-	/* actual implementation of cmds start here */
-	/* TBD - decide if ANI_MSG_OEM_DATA_REQ goest to MC thread or not */
-	return QDF_STATUS_SUCCESS;
+	wifi_pos_debug("enter: msg_type: %d", req->msg_type);
+	switch (req->msg_type) {
+	case ANI_MSG_APP_REG_REQ:
+		return wifi_pos_process_app_reg_req(psoc, req);
+	case ANI_MSG_OEM_DATA_REQ:
+		return wifi_pos_process_data_req(psoc, req);
+	case ANI_MSG_CHANNEL_INFO_REQ:
+		return wifi_pos_process_ch_info_req(psoc, req);
+	case ANI_MSG_SET_OEM_CAP_REQ:
+		return wifi_pos_process_set_cap_req(psoc, req);
+	case ANI_MSG_GET_OEM_CAP_REQ:
+		return wifi_pos_process_get_cap_req(psoc, req);
+	default:
+		wifi_pos_err("invalid request type");
+		break;
+	}
+	return 0;
 }
 
 /**
@@ -190,8 +473,10 @@ int wifi_pos_oem_rsp_handler(struct wlan_objmgr_psoc *psoc,
 
 	wifi_pos_debug("sending oem data rsp, len: %d to pid: %d",
 			oem_rsp->rsp_len, wifi_pos_obj->app_pid);
-	wifi_pos_obj->wifi_pos_send_rsp(psoc, ANI_MSG_OEM_DATA_RSP,
-					oem_rsp->rsp_len, oem_rsp->data);
+	wifi_pos_obj->wifi_pos_send_rsp(wifi_pos_obj->app_pid,
+					ANI_MSG_OEM_DATA_RSP,
+					oem_rsp->rsp_len,
+					oem_rsp->data);
 	return 0;
 }
 
