@@ -2072,6 +2072,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *cds_context,
 	void *wmi_handle;
 	QDF_STATUS qdf_status;
 	struct wmi_rx_ops ops;
+	struct policy_mgr_wma_cbacks wma_cbacks;
 
 	bool use_cookie = false;
 
@@ -2541,6 +2542,12 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *cds_context,
 		wma_vdev_update_pause_bitmap);
 	pmo_register_get_pause_bitmap(wma_handle->psoc,
 		wma_vdev_get_pause_bitmap);
+	wma_cbacks.wma_get_connection_info = wma_get_connection_info;
+	wma_cbacks.wma_is_service_enabled = wma_is_service_enabled;
+	qdf_status = policy_mgr_register_wma_cb(wma_handle->psoc, &wma_cbacks);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		WMA_LOGE("Failed to register wma cb with Policy Manager");
+	}
 
 	return QDF_STATUS_SUCCESS;
 
@@ -3021,6 +3028,7 @@ QDF_STATUS wma_start(void *cds_ctx)
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tp_wma_handle wma_handle;
 	int status;
+
 	WMA_LOGD("%s: Enter", __func__);
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);

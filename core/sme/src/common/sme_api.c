@@ -1319,12 +1319,27 @@ QDF_STATUS sme_start(tHalHandle hHal)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	struct policy_mgr_sme_cbacks sme_cbacks;
 
 	do {
 		status = csr_start(pMac);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			sms_log(pMac, LOGE,
 				"csr_start failed during smeStart with status=%d",
+				status);
+			break;
+		}
+		sme_cbacks.sme_get_nss_for_vdev = sme_get_vdev_type_nss;
+		sme_cbacks.sme_get_valid_channels = sme_get_cfg_valid_channels;
+		sme_cbacks.sme_nss_update_request = sme_nss_update_request;
+		sme_cbacks.sme_pdev_set_hw_mode = sme_pdev_set_hw_mode;
+		sme_cbacks.sme_pdev_set_pcl = sme_pdev_set_pcl;
+		sme_cbacks.sme_soc_set_dual_mac_config =
+			sme_soc_set_dual_mac_config;
+		status = policy_mgr_register_sme_cb(pMac->psoc, &sme_cbacks);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			sms_log(pMac, LOGE,
+				"Failed to register sme cb with Policy Manager: %d",
 				status);
 			break;
 		}
