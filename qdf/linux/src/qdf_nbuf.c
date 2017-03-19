@@ -1456,9 +1456,7 @@ void qdf_net_buf_debug_add_node(qdf_nbuf_t net_buf, size_t size,
 		qdf_print("Double allocation of skb ! Already allocated from %p %s %d current alloc from %p %s %d",
 			  p_node->net_buf, p_node->file_name, p_node->line_num,
 			  net_buf, file_name, line_num);
-		QDF_ASSERT(0);
 		qdf_nbuf_track_free(new_node);
-		goto done;
 	} else {
 		p_node = new_node;
 		if (p_node) {
@@ -1468,15 +1466,11 @@ void qdf_net_buf_debug_add_node(qdf_nbuf_t net_buf, size_t size,
 			p_node->size = size;
 			p_node->p_next = gp_qdf_net_buf_track_tbl[i];
 			gp_qdf_net_buf_track_tbl[i] = p_node;
-		} else {
+		} else
 			qdf_print(
 				  "Mem alloc failed ! Could not track skb from %s %d of size %zu",
 				  file_name, line_num, size);
-			QDF_ASSERT(0);
-		}
 	}
-
-done:
 	spin_unlock_irqrestore(&g_qdf_net_buf_track_lock[i], irq_flag);
 
 	return;

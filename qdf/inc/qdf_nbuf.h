@@ -638,7 +638,6 @@ void qdf_net_buf_debug_exit(void);
 void qdf_net_buf_debug_clean(void);
 void qdf_net_buf_debug_add_node(qdf_nbuf_t net_buf, size_t size,
 			uint8_t *file_name, uint32_t line_num);
-void qdf_net_buf_debug_delete_node(qdf_nbuf_t net_buf);
 void qdf_net_buf_debug_release_skb(qdf_nbuf_t net_buf);
 
 /* nbuf allocation rouines */
