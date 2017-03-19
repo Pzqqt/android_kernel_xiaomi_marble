@@ -1628,28 +1628,7 @@ void htt_push_ext_header(qdf_nbuf_t msdu,
 	}
 }
 
-/**
- * htt_tx_desc_init() - Initialize the per packet HTT Tx descriptor
- * @pdev:		  The handle of the physical device sending the
- *			  tx data
- * @htt_tx_desc:	  Abstract handle to the tx descriptor
- * @htt_tx_desc_paddr_lo: Physical address of the HTT tx descriptor
- * @msdu_id:		  ID to tag the descriptor with.
- *			  The FW sends this ID back to host as a cookie
- *			  during Tx completion, which the host uses to
- *			  identify the MSDU.
- *			  This ID is an index into the OL Tx desc. array.
- * @msdu:		  The MSDU that is being prepared for transmission
- * @msdu_info:		  Tx MSDU meta-data
- * @tso_info:		  Storage for TSO meta-data
- * @ext_header_data:      extension header data
- * @type:                 extension header type
- *
- * This function initializes the HTT tx descriptor.
- * HTT Tx descriptor is a host-f/w interface structure, and meta-data
- * accompanying every packet downloaded to f/w via the HTT interface.
- */
-void
+QDF_STATUS
 htt_tx_desc_init(htt_pdev_handle pdev,
 		 void *htt_tx_desc,
 		 qdf_dma_addr_t htt_tx_desc_paddr,
@@ -1679,17 +1658,17 @@ htt_tx_desc_init(htt_pdev_handle pdev,
 	if (qdf_unlikely(!qdf_ctx)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"%s: qdf_ctx is NULL", __func__);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 	if (qdf_unlikely(!msdu_info)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"%s: bad arg: msdu_info is NULL", __func__);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 	if (qdf_unlikely(!tso_info)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"%s: bad arg: tso_info is NULL", __func__);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	word0 = (uint32_t *) htt_tx_desc;
@@ -1716,7 +1695,7 @@ htt_tx_desc_init(htt_pdev_handle pdev,
 		if (0xffffffff == ce_pkt_type) {
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
 			"Invalid HTT pkt type %d\n", pkt_type);
-			return;
+			return QDF_STATUS_E_INVAL;
 		}
 	}
 
@@ -1803,7 +1782,7 @@ htt_tx_desc_init(htt_pdev_handle pdev,
 		if (qdf_unlikely(status != QDF_STATUS_SUCCESS)) {
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 				"%s: nbuf map failed", __func__);
-			return;
+			return QDF_STATUS_E_NOMEM;
 		}
 	}
 
@@ -1832,6 +1811,7 @@ htt_tx_desc_init(htt_pdev_handle pdev,
 	}
 
 	qdf_nbuf_data_attr_set(msdu, data_attr);
+	return QDF_STATUS_SUCCESS;
 }
 
 #ifdef FEATURE_HL_GROUP_CREDIT_FLOW_CONTROL

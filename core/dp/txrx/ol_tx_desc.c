@@ -537,10 +537,17 @@ struct ol_tx_desc_t *ol_tx_desc_ll(struct ol_txrx_pdev_t *pdev,
 	type = ol_tx_get_ext_header_type(vdev, netbuf);
 
 	/* initialize the HW tx descriptor */
-	htt_tx_desc_init(pdev->htt_pdev, tx_desc->htt_tx_desc,
+	if (qdf_unlikely(htt_tx_desc_init(pdev->htt_pdev, tx_desc->htt_tx_desc,
 			 tx_desc->htt_tx_desc_paddr,
 			 ol_tx_desc_id(pdev, tx_desc), netbuf, &msdu_info->htt,
-			 &msdu_info->tso_info, NULL, type);
+			 &msdu_info->tso_info, NULL, type))) {
+		/*
+		 * HTT Tx descriptor initialization failed.
+		 * therefore, free the tx desc
+		 */
+		ol_tx_desc_free(pdev, tx_desc);
+		return NULL;
+	}
 
 	/*
 	 * Initialize the fragmentation descriptor.

@@ -485,10 +485,17 @@ ol_tx_prepare_ll_fast(struct ol_txrx_pdev_t *pdev,
 	/* TODO: Precompute and store paddr in ol_tx_desc_t */
 	/* Virtual address of the HTT/HTC header, added by driver */
 	htc_hdr_vaddr = (char *)htt_tx_desc - HTC_HEADER_LEN;
-	htt_tx_desc_init(pdev->htt_pdev, htt_tx_desc,
+	if (qdf_unlikely(htt_tx_desc_init(pdev->htt_pdev, htt_tx_desc,
 			 tx_desc->htt_tx_desc_paddr, tx_desc->id, msdu,
 			 &msdu_info->htt, &msdu_info->tso_info,
-			 NULL, type);
+			 NULL, type))) {
+		/*
+		 * HTT Tx descriptor initialization failed.
+		 * therefore, free the tx desc
+		 */
+		ol_tx_desc_free(pdev, tx_desc);
+		return NULL;
+	}
 
 	num_frags = qdf_nbuf_get_num_frags(msdu);
 	/* num_frags are expected to be 2 max */
@@ -1385,12 +1392,13 @@ int ol_txrx_mgmt_send_frame(
 	 * an added L2 header.
 	 */
 	htt_tx_desc_mpdu_header(tx_desc->htt_tx_desc, 0);
-	htt_tx_desc_init(
+	if (qdf_unlikely(htt_tx_desc_init(
 			pdev->htt_pdev, tx_desc->htt_tx_desc,
 			tx_desc->htt_tx_desc_paddr,
 			ol_tx_desc_id(pdev, tx_desc),
 			tx_mgmt_frm,
-			&tx_msdu_info->htt, &tx_msdu_info->tso_info, NULL, 0);
+			&tx_msdu_info->htt, &tx_msdu_info->tso_info, NULL, 0)))
+		return 1;
 	htt_tx_desc_display(tx_desc->htt_tx_desc);
 	htt_tx_desc_set_chanfreq(tx_desc->htt_tx_desc, chanfreq);
 
