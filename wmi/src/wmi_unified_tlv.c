@@ -2541,6 +2541,72 @@ err1:
 }
 
 /**
+ *  send_offchan_data_tx_send_cmd_tlv() - Send off-chan tx data
+ *  @wmi_handle      : handle to WMI.
+ *  @param    : pointer to offchan data tx cmd parameter
+ *
+ *  Return: QDF_STATUS_SUCCESS  on success and error on failure.
+ */
+static QDF_STATUS send_offchan_data_tx_cmd_tlv(wmi_unified_t wmi_handle,
+				struct wmi_offchan_data_tx_params *param)
+{
+	wmi_buf_t buf;
+	wmi_offchan_data_tx_send_cmd_fixed_param *cmd;
+	int32_t cmd_len;
+	uint64_t dma_addr;
+	void *qdf_ctx = param->qdf_ctx;
+	uint8_t *bufp;
+	int32_t bufp_len = (param->frm_len < mgmt_tx_dl_frm_len) ?
+					param->frm_len : mgmt_tx_dl_frm_len;
+
+	cmd_len = sizeof(wmi_offchan_data_tx_send_cmd_fixed_param) +
+		WMI_TLV_HDR_SIZE + roundup(bufp_len, sizeof(uint32_t));
+
+	buf = wmi_buf_alloc(wmi_handle, cmd_len);
+	if (!buf) {
+		WMI_LOGE("%s:wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_offchan_data_tx_send_cmd_fixed_param *) wmi_buf_data(buf);
+	bufp = (uint8_t *) cmd;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_offchan_data_tx_send_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN
+		(wmi_offchan_data_tx_send_cmd_fixed_param));
+
+	cmd->vdev_id = param->vdev_id;
+
+	cmd->desc_id = param->desc_id;
+	cmd->chanfreq = param->chanfreq;
+	bufp += sizeof(wmi_offchan_data_tx_send_cmd_fixed_param);
+	WMITLV_SET_HDR(bufp, WMITLV_TAG_ARRAY_BYTE, roundup(bufp_len,
+							    sizeof(uint32_t)));
+	bufp += WMI_TLV_HDR_SIZE;
+	qdf_mem_copy(bufp, param->pdata, bufp_len);
+	qdf_nbuf_map_single(qdf_ctx, param->tx_frame, QDF_DMA_TO_DEVICE);
+	dma_addr = qdf_nbuf_get_frag_paddr(param->tx_frame, 0);
+	cmd->paddr_lo = (uint32_t)(dma_addr & 0xffffffff);
+#if defined(HTT_PADDR64)
+	cmd->paddr_hi = (uint32_t)((dma_addr >> 32) & 0x1F);
+#endif
+	cmd->frame_len = param->frm_len;
+	cmd->buf_len = bufp_len;
+
+	wmi_mgmt_cmd_record(wmi_handle, WMI_OFFCHAN_DATA_TX_SEND_CMDID,
+			bufp, cmd->vdev_id, cmd->chanfreq);
+
+	if (wmi_unified_cmd_send(wmi_handle, buf, cmd_len,
+				WMI_OFFCHAN_DATA_TX_SEND_CMDID)) {
+		WMI_LOGE("%s: Failed to offchan data Tx", __func__);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * send_modem_power_state_cmd_tlv() - set modem power state to fw
  * @wmi_handle: wmi handle
  * @param_value: parameter value
@@ -15281,6 +15347,37 @@ static QDF_STATUS extract_mgmt_tx_compl_param_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * extract_offchan_data_tx_compl_param_tlv() -
+ *            extract Offchan data tx completion event params
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param param: Pointer to hold offchan data TX completion params
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_offchan_data_tx_compl_param_tlv(
+		wmi_unified_t wmi_handle, void *evt_buf,
+		struct wmi_host_offchan_data_tx_compl_event *param)
+{
+	WMI_OFFCHAN_DATA_TX_COMPLETION_EVENTID_param_tlvs *param_buf;
+	wmi_offchan_data_tx_compl_event_fixed_param *cmpl_params;
+
+	param_buf = (WMI_OFFCHAN_DATA_TX_COMPLETION_EVENTID_param_tlvs *)
+		evt_buf;
+	if (!param_buf) {
+		WMI_LOGE("%s: Invalid offchan data Tx compl event", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+	cmpl_params = param_buf->fixed_param;
+
+	param->pdev_id = cmpl_params->pdev_id;
+	param->desc_id = cmpl_params->desc_id;
+	param->status = cmpl_params->status;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * extract_pdev_csa_switch_count_status_tlv() - extract pdev csa switch count
  *                                              status tlv
  * @wmi_handle: wmi handle
@@ -16768,6 +16865,7 @@ struct wmi_ops tlv_ops =  {
 	.send_scan_stop_cmd = send_scan_stop_cmd_tlv,
 	.send_scan_chan_list_cmd = send_scan_chan_list_cmd_tlv,
 	.send_mgmt_cmd = send_mgmt_cmd_tlv,
+	.send_offchan_data_tx_cmd = send_offchan_data_tx_cmd_tlv,
 	.send_modem_power_state_cmd = send_modem_power_state_cmd_tlv,
 	.send_set_sta_ps_mode_cmd = send_set_sta_ps_mode_cmd_tlv,
 	.send_set_sta_uapsd_auto_trig_cmd =
@@ -17023,6 +17121,8 @@ struct wmi_ops tlv_ops =  {
 	.extract_p2p_lo_stop_ev_param =
 				extract_p2p_lo_stop_ev_param_tlv,
 #endif
+	.extract_offchan_data_tx_compl_param =
+				extract_offchan_data_tx_compl_param_tlv,
 	.extract_peer_sta_kickout_ev = extract_peer_sta_kickout_ev_tlv,
 	.extract_all_stats_count = extract_all_stats_counts_tlv,
 	.extract_pdev_stats = extract_pdev_stats_tlv,
@@ -17058,7 +17158,7 @@ struct wmi_ops tlv_ops =  {
 	.extract_fips_event_data = extract_fips_event_data_tlv,
 	.send_pdev_fips_cmd = send_pdev_fips_cmd_tlv,
 	.extract_peer_delete_response_event =
-	extract_peer_delete_response_event_tlv,
+				extract_peer_delete_response_event_tlv,
 	.is_management_record = is_management_record_tlv,
 	.extract_pdev_csa_switch_count_status =
 				extract_pdev_csa_switch_count_status_tlv,
@@ -17071,7 +17171,7 @@ struct wmi_ops tlv_ops =  {
 	.send_dfs_phyerr_offload_en_cmd = send_dfs_phyerr_offload_en_cmd_tlv,
 	.send_dfs_phyerr_offload_dis_cmd = send_dfs_phyerr_offload_dis_cmd_tlv,
 	.extract_reg_chan_list_update_event =
-	extract_reg_chan_list_update_event_tlv,
+				extract_reg_chan_list_update_event_tlv,
 };
 
 /**
@@ -17294,6 +17394,8 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_pdev_channel_hopping_event_id] =
 					WMI_PDEV_CHANNEL_HOPPING_EVENTID;
 	event_ids[wmi_wds_peer_event_id] = WMI_WDS_PEER_EVENTID;
+	event_ids[wmi_offchan_data_tx_completion_event] =
+				WMI_OFFCHAN_DATA_TX_COMPLETION_EVENTID;
 }
 
 #ifndef CONFIG_MCL

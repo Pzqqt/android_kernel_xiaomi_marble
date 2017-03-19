@@ -293,6 +293,9 @@ QDF_STATUS (*send_scan_chan_list_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_mgmt_cmd)(wmi_unified_t wmi_handle,
 				struct wmi_mgmt_params *param);
 
+QDF_STATUS (*send_offchan_data_tx_cmd)(wmi_unified_t wmi_handle,
+				struct wmi_offchan_data_tx_params *param);
+
 QDF_STATUS (*send_modem_power_state_cmd)(wmi_unified_t wmi_handle,
 		uint32_t param_value);
 
@@ -1097,6 +1100,10 @@ QDF_STATUS (*extract_pdev_generic_buffer_ev_param)(wmi_unified_t wmi_handle,
 
 QDF_STATUS (*extract_mgmt_tx_compl_param)(wmi_unified_t wmi_handle,
 		void *evt_buf, wmi_host_mgmt_tx_compl_event *param);
+
+QDF_STATUS (*extract_offchan_data_tx_compl_param)(wmi_unified_t wmi_handle,
+		void *evt_buf,
+		struct wmi_host_offchan_data_tx_compl_event *param);
 
 QDF_STATUS (*extract_pdev_csa_switch_count_status)(wmi_unified_t wmi_handle,
 		void *evt_buf, struct pdev_csa_switch_count_status *param);

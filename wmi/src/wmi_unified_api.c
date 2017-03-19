@@ -816,6 +816,25 @@ QDF_STATUS wmi_mgmt_unified_cmd_send(void *wmi_hdl,
 }
 
 /**
+ *  wmi_offchan_data_tx_cmd_send() - Send offchan data tx cmd over wmi layer
+ *  @wmi_hdl      : handle to WMI.
+ *  @param    : pointer to hold offchan data cmd parameter
+ *
+ *  Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_offchan_data_tx_cmd_send(void *wmi_hdl,
+				struct wmi_offchan_data_tx_params *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_offchan_data_tx_cmd)
+		return wmi_handle->ops->send_offchan_data_tx_cmd(wmi_handle,
+				  param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
  * wmi_unified_modem_power_state() - set modem power state to fw
  * @wmi_hdl: wmi handle
  * @param_value: parameter value
@@ -5404,9 +5423,9 @@ QDF_STATUS wmi_extract_pdev_generic_buffer_ev_param(void *wmi_hdl,
 /**
  * wmi_extract_mgmt_tx_compl_param() - extract mgmt tx completion param
  * from event
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param param: Pointer to mgmt tx completion param
+ * @wmi_hdl: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @param: Pointer to mgmt tx completion param
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
@@ -5418,6 +5437,28 @@ QDF_STATUS wmi_extract_mgmt_tx_compl_param(void *wmi_hdl, void *evt_buf,
 	if (wmi_handle->ops->extract_mgmt_tx_compl_param)
 		return wmi_handle->ops->extract_mgmt_tx_compl_param(wmi_handle,
 				evt_buf, param);
+
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_extract_offchan_data_tx_compl_param() -
+ *            extract offchan data tx completion param from event
+ * @wmi_hdl: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @param: Pointer to offchan data tx completion param
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_offchan_data_tx_compl_param(void *wmi_hdl, void *evt_buf,
+	struct wmi_host_offchan_data_tx_compl_event *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->extract_offchan_data_tx_compl_param)
+		return wmi_handle->ops->extract_offchan_data_tx_compl_param(
+				wmi_handle, evt_buf, param);
 
 
 	return QDF_STATUS_E_FAILURE;
