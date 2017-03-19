@@ -1291,15 +1291,35 @@ struct seg_hdr_info {
  * @tx_frame: management tx frame
  * @frm_len: frame length
  * @vdev_id: vdev id
- * @tx_complete_cb: tx download callback handler
- * @tx_ota_post_proc_cb: OTA complition handler
  * @chanfreq: channel frequency
  * @pdata: frame data
- * @wmi_desc: command descriptor
  * @desc_id: descriptor id relyaed back by target
  * @macaddr - macaddr of peer
+ * @qdf_ctx: qdf context for qdf_nbuf_map
  */
 struct wmi_mgmt_params {
+	void *tx_frame;
+	uint16_t frm_len;
+	uint8_t vdev_id;
+	uint16_t chanfreq;
+	void *pdata;
+	uint16_t desc_id;
+	uint8_t *macaddr;
+	void *qdf_ctx;
+};
+
+/**
+ * struct wmi_offchan_data_tx_params - wmi offchan data tx cmd paramters
+ * @tx_frame: management tx frame
+ * @frm_len: frame length
+ * @vdev_id: vdev id
+ * @chanfreq: channel frequency
+ * @pdata: frame data
+ * @desc_id: descriptor id relyaed back by target
+ * @macaddr: macaddr of peer
+ * @qdf_ctx: qdf context for qdf_nbuf_map
+ */
+struct wmi_offchan_data_tx_params {
 	void *tx_frame;
 	uint16_t frm_len;
 	uint8_t vdev_id;
@@ -4981,6 +5001,7 @@ typedef enum {
 	wmi_peer_delete_response_event_id,
 	wmi_pdev_csa_switch_count_status_event_id,
 	wmi_reg_chan_list_cc_event_id,
+	wmi_offchan_data_tx_completion_event,
 
 	wmi_events_max,
 } wmi_conv_event_id;
@@ -5832,6 +5853,18 @@ typedef struct {
 	uint32_t	status;
 	uint32_t	pdev_id;
 } wmi_host_mgmt_tx_compl_event;
+
+/**
+ * struct wmi_host_offchan_data_tx_compl_event - TX completion event
+ * @desc_id: from tx_send_cmd
+ * @status: VWMI_MGMT_TX_COMP_STATUS_TYPE
+ * @pdev_id: pdev_id
+ */
+struct wmi_host_offchan_data_tx_compl_event {
+	uint32_t desc_id;
+	uint32_t status;
+	uint32_t pdev_id;
+};
 
 #define WMI_HOST_TIM_BITMAP_ARRAY_SIZE 17
 
