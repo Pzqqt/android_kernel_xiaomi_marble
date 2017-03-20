@@ -25,6 +25,7 @@
 #include <wlan_serialization_api.h>
 #include "wlan_tdls_main.h"
 #include "wlan_tdls_peer.h"
+#include "wlan_tdls_ct.h"
 #include "wlan_tdls_cmds_process.h"
 #include "wlan_tdls_tgt_api.h"
 
@@ -1628,63 +1629,6 @@ static const char *tdls_evt_to_str(enum tdls_event_msg_type type)
 	}
 }
 
-static void
-tdls_implicit_send_discovery_request(struct tdls_vdev_priv_obj *vdev_obj)
-{
-	struct tdls_soc_priv_obj *soc_obj;
-	struct tdls_peer *curr_peer, *temp_peer;
-	struct tdls_osif_indication ind;
-
-	if (!vdev_obj) {
-		tdls_err("vdev_obj is NULL");
-		return;
-	}
-
-	soc_obj = wlan_vdev_get_tdls_soc_obj(vdev_obj->vdev);
-	if (!soc_obj) {
-		tdls_err("soc_obj is NULL");
-		return;
-	}
-
-	curr_peer = vdev_obj->curr_candidate;
-	if (!curr_peer) {
-		tdls_err("curr_peer is NULL");
-		return;
-	}
-
-	temp_peer = tdls_is_progress(vdev_obj, NULL, 0);
-	if (temp_peer) {
-		tdls_notice(QDF_MAC_ADDRESS_STR " ongoing. pre_setup ignored",
-			    QDF_MAC_ADDR_ARRAY(temp_peer->peer_mac.bytes));
-		goto done;
-	}
-
-	if (TDLS_CAP_UNKNOWN != curr_peer->tdls_support)
-		tdls_set_peer_link_status(curr_peer, TDLS_LINK_DISCOVERING,
-					  TDLS_LINK_SUCCESS);
-
-	tdls_debug("Implicit TDLS, Send Discovery request event");
-
-	qdf_mem_copy(ind.peer_mac, curr_peer->peer_mac.bytes,
-		     QDF_MAC_ADDR_SIZE);
-	ind.vdev = vdev_obj->vdev;
-
-	if (soc_obj->tdls_event_cb)
-		soc_obj->tdls_event_cb(soc_obj->tdls_evt_cb_data,
-				       TDLS_EVENT_DISCOVERY_REQ, &ind);
-
-	vdev_obj->discovery_sent_cnt++;
-	/*TODO restart peer discovery timeout*/
-
-	tdls_debug("discovery count %u, timeout %u msec",
-		   vdev_obj->discovery_sent_cnt,
-		   vdev_obj->threshold_config.tx_period_t -
-		   TDLS_DISCOVERY_TIMEOUT_BEFORE_UPDATE);
-done:
-	vdev_obj->curr_candidate = NULL;
-	vdev_obj->magic = 0;
-}
-
 QDF_STATUS tdls_process_should_discover(struct wlan_objmgr_vdev *vdev,
 					struct tdls_event_info *evt)
 {
@@ -1741,41 +1685,6 @@ QDF_STATUS tdls_process_should_discover(struct wlan_objmgr_vdev *vdev,
 	tdls_implicit_send_discovery_request(vdev_obj);
 
 	return QDF_STATUS_SUCCESS;
-}
-
-static void
-tdls_indicate_teardown(struct tdls_vdev_priv_obj *vdev_obj,
-		       struct tdls_peer *curr_peer, uint16_t reason)
-{
-	struct tdls_soc_priv_obj *soc_obj;
-	struct tdls_osif_indication ind;
-
-	soc_obj = wlan_vdev_get_tdls_soc_obj(vdev_obj->vdev);
-	if (!soc_obj || !vdev_obj || !curr_peer) {
-		tdls_err("soc_obj: %p, vdev_obj: %p, curr_peer: %p",
-			 soc_obj, vdev_obj, curr_peer);
-		return;
-	}
-
-	if (TDLS_LINK_CONNECTED != curr_peer->link_status) {
-		tdls_debug("peer not connected");
-		return;
-	}
-
-	tdls_set_peer_link_status(curr_peer, TDLS_LINK_TEARING,
-				  TDLS_LINK_UNSPECIFIED);
-
-	tdls_debug("Teardown peer " QDF_MAC_ADDRESS_STR "reason %d",
-		   QDF_MAC_ADDR_ARRAY(curr_peer->peer_mac.bytes), reason);
-
-	qdf_mem_copy(ind.peer_mac, curr_peer->peer_mac.bytes,
-		     QDF_MAC_ADDR_SIZE);
-	ind.reason = reason;
-	ind.vdev = vdev_obj->vdev;
-
-	if (soc_obj->tdls_event_cb)
-		soc_obj->tdls_event_cb(soc_obj->tdls_evt_cb_data,
-				       TDLS_EVENT_TEARDOWN_REQ, &ind);
 }
 
 QDF_STATUS tdls_process_should_teardown(struct wlan_objmgr_vdev *vdev,

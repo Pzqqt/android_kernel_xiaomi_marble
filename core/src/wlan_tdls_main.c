@@ -25,6 +25,7 @@
 #include "wlan_tdls_main.h"
 #include "wlan_tdls_cmds_process.h"
 #include "wlan_tdls_peer.h"
+#include "wlan_tdls_ct.h"
 
 QDF_STATUS tdls_psoc_obj_create_notification(struct wlan_objmgr_psoc *psoc,
 					     void *arg_list)
@@ -111,9 +112,10 @@ static QDF_STATUS tdls_vdev_init(struct tdls_vdev_priv_obj *vdev_obj)
 				WLAN_TDLS_PEER_SUB_LIST_SIZE);
 	}
 	qdf_mc_timer_init(&vdev_obj->peer_update_timer, QDF_TIMER_TYPE_SW,
-			  NULL, vdev_obj);
+			  tdls_ct_handler, vdev_obj->vdev);
 	qdf_mc_timer_init(&vdev_obj->peer_discovery_timer, QDF_TIMER_TYPE_SW,
-			  NULL, vdev_obj);
+			  tdls_discovery_timeout_peer_cb, vdev_obj);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -247,7 +249,7 @@ QDF_STATUS tdls_process_evt(struct scheduler_msg *msg)
 	struct tdls_event_info *event;
 
 	if (!msg || !msg->bodyptr) {
-		tdls_err("msg: %p", msg);
+		tdls_err("msg is not valid: %p", msg);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 	notify = msg->bodyptr;
@@ -354,4 +356,32 @@ void tdls_timers_stop(struct tdls_vdev_priv_obj *tdls_vdev)
 {
 	tdls_monitor_timers_stop(tdls_vdev);
 	tdls_ct_timers_stop(tdls_vdev);
+}
+
+QDF_STATUS tdls_get_vdev_objects(struct wlan_objmgr_vdev *vdev,
+				   struct tdls_vdev_priv_obj **tdls_vdev_obj,
+				   struct tdls_soc_priv_obj **tdls_soc_obj)
+{
+	enum tQDF_ADAPTER_MODE device_mode;
+
+	if (NULL == vdev)
+		return QDF_STATUS_E_FAILURE;
+
+	*tdls_vdev_obj = wlan_vdev_get_tdls_vdev_obj(vdev);
+	if (NULL == (*tdls_vdev_obj))
+		return QDF_STATUS_E_FAILURE;
+
+	*tdls_soc_obj = wlan_vdev_get_tdls_soc_obj(vdev);
+	if (NULL == (*tdls_soc_obj))
+		return QDF_STATUS_E_FAILURE;
+
+	wlan_vdev_obj_lock(vdev);
+	device_mode = wlan_vdev_mlme_get_opmode(vdev);
+	wlan_vdev_obj_unlock(vdev);
+
+	if (device_mode != QDF_STA_MODE &&
+	    device_mode != QDF_P2P_CLIENT_MODE)
+		return QDF_STATUS_E_FAILURE;
+
+	return QDF_STATUS_SUCCESS;
 }
