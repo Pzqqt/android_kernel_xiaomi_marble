@@ -1294,7 +1294,6 @@ struct wmi_unified {
 	uint32_t *event_id;
 	wmi_unified_event_handler *event_handler;
 	enum wmi_rx_exec_ctx *ctx;
-	uint32_t max_event_idx;
 	void *htc_handle;
 	qdf_spinlock_t eventq_lock;
 	qdf_nbuf_queue_t event_queue;
@@ -1328,7 +1327,6 @@ struct wmi_unified {
 	struct wmi_ops *ops;
 	bool use_cookie;
 	bool wmi_stopinprogress;
-	qdf_spinlock_t ctx_lock;
 #ifndef CONFIG_MCL
 	/* WMI service bitmap recieved from target */
 	uint32_t *wmi_service_bitmap;
@@ -1349,7 +1347,9 @@ struct wmi_soc {
 	void *htc_handle;
 	uint32_t event_id[WMI_UNIFIED_MAX_EVENT];
 	wmi_unified_event_handler event_handler[WMI_UNIFIED_MAX_EVENT];
+	uint32_t max_event_idx;
 	enum wmi_rx_exec_ctx ctx[WMI_UNIFIED_MAX_EVENT];
+	qdf_spinlock_t ctx_lock;
 	struct wmi_unified *wmi_pdev[WMI_MAX_RADIOS];
 	HTC_ENDPOINT_ID wmi_endpoint_id[WMI_MAX_RADIOS];
 	uint16_t max_msg_len[WMI_MAX_RADIOS];
