@@ -289,6 +289,8 @@ QDF_STATUS hdd_roam_register_tdlssta(hdd_adapter_t *pAdapter,
 				     uint8_t ucastSig, uint8_t qos);
 #endif
 
+QDF_STATUS hdd_roam_deregister_tdlssta(hdd_adapter_t *pAdapter, uint8_t staId);
+
 /**
  * hdd_perform_roam_set_key_complete() - perform set key complete
  * @pAdapter: pointer to adapter

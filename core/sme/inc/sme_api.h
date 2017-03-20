@@ -1435,4 +1435,6 @@ QDF_STATUS sme_get_beacon_frm(tHalHandle hal, tCsrRoamProfile *profile,
 			    const tSirMacAddr bssid,
 			    uint8_t **frame_buf, uint32_t *frame_len);
 
+QDF_STATUS sme_delete_all_tdls_peers(tHalHandle hal, uint8_t session_id);
+
 #endif /* #if !defined( __SME_API_H ) */

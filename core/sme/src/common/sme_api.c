@@ -16458,3 +16458,43 @@ free_scan_flter:
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * sme_delete_all_tdls_peers(): send request to delete tdls peers
+ * @hal: handler for HAL
+ * @session_id: session id
+ *
+ * This function sends request to lim to delete tdls peers
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_delete_all_tdls_peers(tHalHandle hal, uint8_t session_id)
+{
+	struct sir_del_all_tdls_peers *msg;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tpAniSirGlobal p_mac = PMAC_STRUCT(hal);
+	tCsrRoamSession *session = CSR_GET_SESSION(p_mac, session_id);
+
+	msg = qdf_mem_malloc(sizeof(*msg));
+	if (NULL == msg) {
+		sms_log(p_mac, LOGE, FL("memory alloc failed"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_mem_zero(msg, sizeof(*msg));
+
+	msg->msg_type = eWNI_SME_DEL_ALL_TDLS_PEERS;
+	msg->msg_len = (uint16_t) sizeof(*msg);
+
+	qdf_mem_copy(msg->bssid.bytes, session->connectedProfile.bssid.bytes,
+		     sizeof(struct qdf_mac_addr));
+
+	status = umac_send_mb_message_to_mac(msg);
+
+	if (status != QDF_STATUS_SUCCESS) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  FL("cds_send_mb_message_to_mac Failed"));
+		status = QDF_STATUS_E_FAILURE;
+	}
+
+	return status;
+}
