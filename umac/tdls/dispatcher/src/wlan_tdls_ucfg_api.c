@@ -332,3 +332,67 @@ dec_ref:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
 	return status;
 }
+
+static char *tdls_get_oper_str(enum tdls_command_type cmd_type)
+{
+	switch (cmd_type) {
+	case TDLS_CMD_ENABLE_LINK:
+		return "Enable_TDLS_LINK";
+	case TDLS_CMD_DISABLE_LINK:
+		return "DISABLE_TDLS_LINK";
+	case TDLS_CMD_REMOVE_FORCE_PEER:
+		return "REMOVE_FORCE_PEER";
+	case TDLS_CMD_CONFIG_FORCE_PEER:
+		return "CONFIG_FORCE_PEER";
+	default:
+		return "ERR:UNKNOWN OPER";
+	}
+}
+
+QDF_STATUS ucfg_tdls_oper(struct wlan_objmgr_vdev *vdev,
+			  const uint8_t *macaddr, enum tdls_command_type cmd)
+{
+	struct scheduler_msg msg = {0,};
+	struct tdls_oper_request *req;
+	QDF_STATUS status;
+
+	if (!vdev || !macaddr) {
+		tdls_err("vdev: %p, mac %p", vdev, macaddr);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	tdls_debug("%s for peer " QDF_MAC_ADDRESS_STR,
+		   tdls_get_oper_str(cmd),
+		   QDF_MAC_ADDR_ARRAY(macaddr));
+
+	req = qdf_mem_malloc(sizeof(*req));
+	if (!req) {
+		tdls_err("%s: mem allocate fail", tdls_get_oper_str(cmd));
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	status = wlan_objmgr_vdev_try_get_ref(vdev, WLAN_TDLS_NB_ID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		tdls_err("can't get vdev");
+		goto error;
+	}
+
+	qdf_mem_copy(req->peer_addr, macaddr, QDF_MAC_ADDR_SIZE);
+	req->vdev = vdev;
+
+	msg.bodyptr = req;
+	msg.callback = tdls_process_cmd;
+	msg.type = cmd;
+	status = scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		tdls_err("post msg for %s fail", tdls_get_oper_str(cmd));
+		goto dec_ref;
+	}
+
+	return status;
+dec_ref:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
+error:
+	qdf_mem_free(req);
+	return status;
+}
