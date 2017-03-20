@@ -21,6 +21,7 @@
 #define _WLAN_OSIF_PRIV_H_
 
 struct osif_scan_pdev;
+struct osif_tdls_vdev;
 
 /**
  *  struct pdev_osif_priv - OS private structure
@@ -42,6 +43,7 @@ struct pdev_osif_priv {
 struct vdev_osif_priv {
 	struct wireless_dev *wdev;
 	void *legacy_osif_priv;
+	struct osif_tdls_vdev *osif_tdls;
 };
 
 #endif
