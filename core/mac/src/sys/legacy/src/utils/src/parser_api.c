@@ -151,8 +151,7 @@ int find_ie_location(tpAniSirGlobal pMac, tpSirRSNie pRsnIe, uint8_t EID)
 		} else if (EID != pRsnIe->rsnIEdata[idx] &&
 			/* & if no more IE, */
 			   bytesLeft <= (uint16_t) (ieLen)) {
-			dot11f_log(pMac, LOG3,
-				   FL("No IE (%d) in find_ie_location."), EID);
+			pe_debug("No IE (%d) in find_ie_location", EID);
 			return ret_val;
 		}
 		bytesLeft -= ieLen;
@@ -173,8 +172,7 @@ populate_dot11f_capabilities(tpAniSirGlobal pMac,
 
 	nSirStatus = cfg_get_capability_info(pMac, &cfg, psessionEntry);
 	if (eSIR_SUCCESS != nSirStatus) {
-		dot11f_log(pMac, LOGP,
-			   FL("Failed to retrieve the Capabilities bitfield from CFG (%d)."),
+		pe_err("Failed to retrieve the Capabilities bitfield from CFG status: %d",
 			   nSirStatus);
 		return nSirStatus;
 	}
@@ -216,8 +214,7 @@ void populate_dot_11_f_ext_chann_switch_ann(tpAniSirGlobal mac_ptr,
 		session_entry->gLimChannelSwitch.switchCount;
 	dot_11_ptr->present = 1;
 
-	dot11f_log(mac_ptr, LOG1,
-			FL("country:%s chan:%d width:%d reg:%d off:%d"),
+	pe_debug("country:%s chan:%d width:%d reg:%d off:%d",
 			mac_ptr->scan.countryCodeCurrent,
 			session_entry->gLimChannelSwitch.primaryChannel,
 			session_entry->gLimChannelSwitch.ch_width,
@@ -397,9 +394,7 @@ populate_dot11f_country(tpAniSirGlobal pMac,
 		qdf_mem_copy(pDot11f->country, code, codelen);
 
 		if (len > MAX_SIZE_OF_TRIPLETS_IN_COUNTRY_IE) {
-			dot11f_log(pMac, LOGE,
-				   FL("len:%d is out of bounds, resetting."),
-				   len);
+			pe_err("len:%d is out of bounds, resetting", len);
 			len = MAX_SIZE_OF_TRIPLETS_IN_COUNTRY_IE;
 		}
 
@@ -546,9 +541,8 @@ populate_dot11f_erp_info(tpAniSirGlobal pMac,
 
 		val = psessionEntry->cfgProtection.fromllb;
 		if (!val) {
-			dot11f_log(pMac, LOGE,
-				   FL("11B protection not enabled. Not populating ERP IE %d"),
-				   val);
+			pe_err("11B protection not enabled. Not populating ERP IE %d",
+				val);
 			return eSIR_SUCCESS;
 		}
 
@@ -600,8 +594,7 @@ populate_dot11f_ext_supp_rates(tpAniSirGlobal pMac, uint8_t nChannelNum,
 			qdf_mem_copy(rates, psessionEntry->extRateSet.rate,
 				     nRates);
 		} else {
-			dot11f_log(pMac, LOGE,
-				   FL("no session context exists while populating Operational Rate Set"));
+			pe_err("no session context exists while populating Operational Rate Set");
 		}
 	} else if (HIGHEST_24GHZ_CHANNEL_NUM >= nChannelNum) {
 		CFG_GET_STR(nSirStatus, pMac,
@@ -1565,13 +1558,11 @@ populate_dot11f_rsn(tpAniSirGlobal pMac,
 						      pRsnIe->rsnIEdata[idx + 1],
 						      pDot11f);
 			if (DOT11F_FAILED(status)) {
-				dot11f_log(pMac, LOGE,
-					   FL("Parse failure in Populate Dot11fRSN (0x%08x)."),
-					   status);
+				pe_err("Parse failure in Populate Dot11fRSN (0x%08x)",
+					status);
 				return eSIR_FAILURE;
 			}
-			dot11f_log(pMac, LOG2,
-				   FL("dot11f_unpack_ie_rsn returned 0x%08x in populate_dot11f_rsn."),
+			pe_debug("dot11f_unpack_ie_rsn returned 0x%08x in populate_dot11f_rsn",
 				   status);
 		}
 
@@ -1616,13 +1607,11 @@ populate_dot11f_wapi(tpAniSirGlobal pMac,
 						       pRsnIe->rsnIEdata[idx + 1],
 						       pDot11f);
 			if (DOT11F_FAILED(status)) {
-				dot11f_log(pMac, LOGE,
-					   FL("Parse failure in populate_dot11f_wapi (0x%08x)."),
-					   status);
+				pe_err("Parse failure in populate_dot11f_wapi (0x%08x)",
+					status);
 				return eSIR_FAILURE;
 			}
-			dot11f_log(pMac, LOG2,
-				   FL("dot11f_unpack_ie_rsn returned 0x%08x in populate_dot11f_wapi."),
+			pe_debug("dot11f_unpack_ie_rsn returned 0x%08x in populate_dot11f_wapi",
 				   status);
 		}
 	}
@@ -1742,8 +1731,7 @@ populate_dot11f_supp_rates(tpAniSirGlobal pMac,
 			qdf_mem_copy(rates, psessionEntry->rateSet.rate,
 				     nRates);
 		} else {
-			dot11f_log(pMac, LOGE,
-				   FL("no session context exists while populating Operational Rate Set"));
+			pe_err("no session context exists while populating Operational Rate Set");
 			nRates = 0;
 		}
 	} else if (14 >= nChannelNum) {
@@ -1881,9 +1869,8 @@ populate_dot11f_tpc_report(tpAniSirGlobal pMac,
 
 	nSirStatus = lim_get_mgmt_staid(pMac, &staid, psessionEntry);
 	if (eSIR_SUCCESS != nSirStatus) {
-		dot11f_log(pMac, LOG1,
-			   FL("Failed to get the STAID in Populate Dot11fTPCReport; lim_get_mgmt_staid returned status %d."),
-				nSirStatus);
+		pe_err("Failed to get the STAID in Populate Dot11fTPCReport; lim_get_mgmt_staid returned status %d",
+			nSirStatus);
 		return eSIR_FAILURE;
 	}
 	/* FramesToDo: This function was "misplaced" in the move to Gen4_TVM... */
@@ -2150,9 +2137,8 @@ populate_dot11f_wpa(tpAniSirGlobal pMac,
 						      pRsnIe->rsnIEdata[idx + 1] - 4,   /* OUI */
 						      pDot11f);
 			if (DOT11F_FAILED(status)) {
-				dot11f_log(pMac, LOGE,
-					   FL("Parse failure in Populate Dot11fWPA (0x%08x)."),
-						status);
+				pe_err("Parse failure in Populate Dot11fWPA (0x%08x)",
+					status);
 				return eSIR_FAILURE;
 			}
 		}
@@ -4664,8 +4650,7 @@ sir_convert_delts_req2_struct(tpAniSirGlobal pMac,
 				   pFrame, nFrame);
 		return eSIR_FAILURE;
 	} else if (DOT11F_WARNED(status)) {
-		dot11f_log(pMac, LOGW,
-			   FL("There were warnings while unpacking an Del TS Request frame (0x%08x,%d bytes):"),
+		pe_warn("There were warnings while unpacking an Del TS Request frame (0x%08x,%d bytes):",
 			   status, nFrame);
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_WARN,
 				   pFrame, nFrame);
@@ -4696,8 +4681,7 @@ sir_convert_delts_req2_struct(tpAniSirGlobal pMac,
 			convert_wmmtspec(pMac, &pDelTs->tspec,
 					 &wmmdelts.WMMTSPEC);
 		} else {
-			dot11f_log(pMac, LOGE,
-				   FL("Mandatory WME TSPEC element missing!"));
+			pe_err("Mandatory WME TSPEC element missing!");
 			return eSIR_FAILURE;
 		}
 	}
@@ -4717,15 +4701,13 @@ sir_convert_qos_map_configure_frame2_struct(tpAniSirGlobal pMac,
 	status =
 		dot11f_unpack_qos_map_configure(pMac, pFrame, nFrame, &mapConfigure);
 	if (DOT11F_FAILED(status) || !mapConfigure.QosMapSet.present) {
-		dot11f_log(pMac, LOGE,
-			   FL("Failed to parse Qos Map Configure frame (0x%08x, %d bytes):"),
+		pe_err("Failed to parse Qos Map Configure frame (0x%08x, %d bytes):",
 			   status, nFrame);
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
 				   pFrame, nFrame);
 		return eSIR_FAILURE;
 	} else if (DOT11F_WARNED(status)) {
-		dot11f_log(pMac, LOGW,
-			   FL("There were warnings while unpacking Qos Map Configure frame (0x%08x, %d bytes):"),
+		pe_warn("There were warnings while unpacking Qos Map Configure frame (0x%08x, %d bytes):",
 			   status, nFrame);
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_WARN,
 				   pFrame, nFrame);
@@ -4749,15 +4731,13 @@ sir_convert_tpc_req_frame2_struct(tpAniSirGlobal pMac,
 		    0);
 	status = dot11f_unpack_tpc_request(pMac, pFrame, nFrame, &req);
 	if (DOT11F_FAILED(status)) {
-		dot11f_log(pMac, LOGE,
-			   FL("Failed to parse a TPC Request frame (0x%08x, %d bytes):"),
+		pe_err("Failed to parse a TPC Request frame (0x%08x, %d bytes):",
 			   status, nFrame);
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
 				   pFrame, nFrame);
 		return eSIR_FAILURE;
 	} else if (DOT11F_WARNED(status)) {
-		dot11f_log(pMac, LOGW,
-			   FL("There were warnings while unpacking a TPC Request frame (0x%08x, %d bytes):"),
+		pe_warn("There were warnings while unpacking a TPC Request frame (0x%08x, %d bytes):",
 			   status, nFrame);
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_WARN,
 				   pFrame, nFrame);
@@ -4771,7 +4751,7 @@ sir_convert_tpc_req_frame2_struct(tpAniSirGlobal pMac,
 		pTpcReqFrame->type = DOT11F_EID_TPCREQUEST;
 		pTpcReqFrame->length = 0;
 	} else {
-		dot11f_log(pMac, LOGW, FL("!!!Rcv TPC Req of inalid type!"));
+		pe_warn("!!!Rcv TPC Req of inalid type!");
 		return eSIR_FAILURE;
 	}
 	return eSIR_SUCCESS;
@@ -4792,15 +4772,13 @@ sir_convert_meas_req_frame2_struct(tpAniSirGlobal pMac,
 	/* delegate to the framesc-generated code, */
 	status = dot11f_unpack_measurement_request(pMac, pFrame, nFrame, &mr);
 	if (DOT11F_FAILED(status)) {
-		dot11f_log(pMac, LOGE,
-			   FL("Failed to parse a Measurement Request frame (0x%08x, %d bytes):"),
+		pe_err("Failed to parse a Measurement Request frame (0x%08x, %d bytes):",
 			   status, nFrame);
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
 				   pFrame, nFrame);
 		return eSIR_FAILURE;
 	} else if (DOT11F_WARNED(status)) {
-		dot11f_log(pMac, LOGW,
-			   FL("There were warnings while unpacking a Measurement Request frame (0x%08x, %d bytes):"),
+		pe_warn("There were warnings while unpacking a Measurement Request frame (0x%08x, %d bytes):",
 			   status, nFrame);
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_WARN,
 				   pFrame, nFrame);
@@ -4812,8 +4790,7 @@ sir_convert_meas_req_frame2_struct(tpAniSirGlobal pMac,
 	pMeasReqFrame->actionHeader.dialogToken = mr.DialogToken.token;
 
 	if (0 == mr.num_MeasurementRequest) {
-		dot11f_log(pMac, LOGE,
-			   FL("Missing mandatory IE in Measurement Request Frame."));
+		pe_err("Missing mandatory IE in Measurement Request Frame");
 		return eSIR_FAILURE;
 	} else if (1 < mr.num_MeasurementRequest) {
 		lim_log(pMac, LOGW,
