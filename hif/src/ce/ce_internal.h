@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -495,4 +495,13 @@ static inline void ce_t2h_msg_ce_cleanup(struct CE_handle *ce_hdl)
 
 /* Additional internal-only ce_send flags */
 #define CE_SEND_FLAG_GATHER             0x00010000      /* Use Gather */
+
+/**
+ * hif_get_wake_ce_id() - gets the copy engine id used for waking up
+ * @scn: The hif context to use
+ * @ce_id: a pointer where the copy engine Id should be populated
+ *
+ * Return: errno
+ */
+int hif_get_wake_ce_id(struct hif_softc *scn, uint8_t *ce_id);
 #endif /* __COPY_ENGINE_INTERNAL_H__ */

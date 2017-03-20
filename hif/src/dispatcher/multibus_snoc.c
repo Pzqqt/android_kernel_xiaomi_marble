@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -81,6 +81,7 @@ QDF_STATUS hif_initialize_snoc_ops(struct hif_bus_ops *bus_ops)
 		&hif_snoc_clear_stats;
 	bus_ops->hif_grp_irq_disable = &hif_dummy_grp_irq_disable;
 	bus_ops->hif_grp_irq_enable = &hif_dummy_grp_irq_enable;
+	bus_ops->hif_map_ce_to_irq = &hif_snoc_map_ce_to_irq;
 
 	return QDF_STATUS_SUCCESS;
 }

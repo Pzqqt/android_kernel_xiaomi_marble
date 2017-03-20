@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -46,4 +46,5 @@ void hif_snoc_irq_enable(struct hif_softc *scn, int ce_id);
 int hif_snoc_dump_registers(struct hif_softc *scn);
 void hif_snoc_display_stats(struct hif_softc *hif_ctx);
 void hif_snoc_clear_stats(struct hif_softc *hif_ctx);
+int hif_snoc_map_ce_to_irq(struct hif_softc *scn, int ce_id);
 #endif /* _SNOC_API_H_ */

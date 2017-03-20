@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -89,6 +89,9 @@ QDF_STATUS hif_initialize_pci_ops(struct hif_softc *hif_sc)
 		&hif_pci_clear_stats;
 	bus_ops->hif_grp_irq_disable = &hif_dummy_grp_irq_disable;
 	bus_ops->hif_grp_irq_enable = &hif_dummy_grp_irq_enable;
+
+	/* default to legacy mapping handler; override as needed */
+	bus_ops->hif_map_ce_to_irq = &hif_pci_legacy_map_ce_to_irq;
 
 	return QDF_STATUS_SUCCESS;
 }

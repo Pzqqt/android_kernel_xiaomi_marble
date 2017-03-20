@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -335,25 +335,20 @@ static bool hif_interrupt_is_fake_apps_resume(struct hif_opaque_softc *hif_ctx,
 					      int ce_id)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-	uint8_t ul_pipe, dl_pipe;
-	int ul_is_polled, dl_is_polled;
-	QDF_STATUS status;
+	int errno;
+	uint8_t wake_ce_id;
 
 	if (!test_bit(HIF_FA_SUSPENDED_BIT, &scn->fake_apps_ctx.state))
 		return false;
 
-	/* ensure passed ce_id matches wake irq */
-	/* dl_pipe will be populated with the wake irq number */
-	status = hif_map_service_to_pipe(hif_ctx, HTC_CTRL_RSVD_SVC,
-					 &ul_pipe, &dl_pipe,
-					 &ul_is_polled, &dl_is_polled);
-
-	if (status) {
-		HIF_ERROR("%s: pipe_mapping failure", __func__);
+	/* ensure passed ce_id matches wake ce_id */
+	errno = hif_get_wake_ce_id(scn, &wake_ce_id);
+	if (errno) {
+		HIF_ERROR("%s: failed to get wake CE Id: %d", __func__, errno);
 		return false;
 	}
 
-	return ce_id == dl_pipe;
+	return ce_id == wake_ce_id;
 }
 
 /**

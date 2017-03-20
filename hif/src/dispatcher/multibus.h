@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -81,6 +81,7 @@ struct hif_bus_ops {
 	void (*hif_set_bundle_mode) (struct hif_softc *hif_ctx, bool enabled,
 					int rx_bundle_cnt);
 	int (*hif_bus_reset_resume)(struct hif_softc *hif_ctx);
+	int (*hif_map_ce_to_irq)(struct hif_softc *hif_sc, int ce_id);
 };
 
 #ifdef HIF_SNOC

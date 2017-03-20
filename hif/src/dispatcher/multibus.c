@@ -35,6 +35,8 @@
 #include "dummy.h"
 #if defined(HIF_PCI) || defined(HIF_SNOC) || defined(HIF_AHB)
 #include "ce_main.h"
+#include "ce_api.h"
+#include "ce_internal.h"
 #endif
 #include "htc_services.h"
 #include "a_types.h"
@@ -411,4 +413,84 @@ int hif_bus_reset_resume(struct hif_opaque_softc *scn)
 {
 	struct hif_softc *hif_sc = HIF_GET_SOFTC(scn);
 	return hif_sc->bus_ops.hif_bus_reset_resume(hif_sc);
+}
+
+int hif_apps_irqs_disable(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *scn;
+	int i;
+
+	scn = HIF_GET_SOFTC(hif_ctx);
+	if (!scn) {
+		QDF_BUG(0);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < scn->ce_count; ++i)
+		disable_irq(scn->bus_ops.hif_map_ce_to_irq(scn, i));
+
+	return 0;
+}
+
+int hif_apps_irqs_enable(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *scn;
+	int i;
+
+	scn = HIF_GET_SOFTC(hif_ctx);
+	if (!scn) {
+		QDF_BUG(0);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < scn->ce_count; ++i)
+		enable_irq(scn->bus_ops.hif_map_ce_to_irq(scn, i));
+
+	return 0;
+}
+
+int hif_apps_wake_irq_disable(struct hif_opaque_softc *hif_ctx)
+{
+	int errno;
+	struct hif_softc *scn;
+	uint8_t wake_ce_id;
+
+	scn = HIF_GET_SOFTC(hif_ctx);
+	if (!scn) {
+		QDF_BUG(0);
+		return -EINVAL;
+	}
+
+	errno = hif_get_wake_ce_id(scn, &wake_ce_id);
+	if (errno) {
+		HIF_ERROR("%s: failed to get wake CE Id: %d", __func__, errno);
+		return errno;
+	}
+
+	disable_irq(scn->bus_ops.hif_map_ce_to_irq(scn, wake_ce_id));
+
+	return 0;
+}
+
+int hif_apps_wake_irq_enable(struct hif_opaque_softc *hif_ctx)
+{
+	int errno;
+	struct hif_softc *scn;
+	uint8_t wake_ce_id;
+
+	scn = HIF_GET_SOFTC(hif_ctx);
+	if (!scn) {
+		QDF_BUG(0);
+		return -EINVAL;
+	}
+
+	errno = hif_get_wake_ce_id(scn, &wake_ce_id);
+	if (errno) {
+		HIF_ERROR("%s: failed to get wake CE Id: %d", __func__, errno);
+		return errno;
+	}
+
+	enable_irq(scn->bus_ops.hif_map_ce_to_irq(scn, wake_ce_id));
+
+	return 0;
 }

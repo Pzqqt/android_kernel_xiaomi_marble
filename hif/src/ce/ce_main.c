@@ -3177,3 +3177,23 @@ void hif_wlan_disable(struct hif_softc *scn)
 	pld_wlan_disable(scn->qdf_dev->dev, mode);
 }
 
+int hif_get_wake_ce_id(struct hif_softc *scn, uint8_t *ce_id)
+{
+	QDF_STATUS status;
+	uint8_t ul_pipe, dl_pipe;
+	int ul_is_polled, dl_is_polled;
+
+	/* DL pipe for HTC_CTRL_RSVD_SVC should map to the wake CE */
+	status = hif_map_service_to_pipe(GET_HIF_OPAQUE_HDL(scn),
+					 HTC_CTRL_RSVD_SVC,
+					 &ul_pipe, &dl_pipe,
+					 &ul_is_polled, &dl_is_polled);
+	if (status) {
+		HIF_ERROR("%s: failed to map pipe: %d", __func__, status);
+		return qdf_status_to_os_return(status);
+	}
+
+	*ce_id = dl_pipe;
+
+	return 0;
+}

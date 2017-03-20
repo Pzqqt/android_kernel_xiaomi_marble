@@ -2730,30 +2730,21 @@ void hif_pci_prevent_linkdown(struct hif_softc *scn, bool flag)
 }
 #endif
 
-/**
- * hif_pci_bus_enable_wake_irq() - enable pci bus wake irq
- *
- * Configures the pci irq line as a wakeup source.
- *
- * Return: 0 for success and non-zero for failure
- */
-static int hif_pci_bus_enable_wake_irq(struct hif_softc *scn)
+static int hif_mark_wake_irq_wakeable(struct hif_softc *scn)
 {
-	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
+	int errno;
+	uint8_t ce_id;
 
-	if (!sc) {
-		HIF_ERROR("%s: sc is null", __func__);
-		return -EFAULT;
+	errno = hif_get_wake_ce_id(scn, &ce_id);
+	if (errno) {
+		HIF_ERROR("%s: failed to get wake CE Id: %d", __func__, errno);
+		return errno;
 	}
 
-	if (!sc->pdev) {
-		HIF_ERROR("%s: pdev is null", __func__);
-		return -EFAULT;
-	}
-
-	if (unlikely(enable_irq_wake(sc->pdev->irq))) {
-		HIF_ERROR("%s: Failed to enable wake IRQ", __func__);
-		return -EINVAL;
+	errno = enable_irq_wake(scn->bus_ops.hif_map_ce_to_irq(scn, ce_id));
+	if (errno) {
+		HIF_ERROR("%s: Failed to mark wake IRQ: %d", __func__, errno);
+		return errno;
 	}
 
 	return 0;
@@ -2768,11 +2759,19 @@ static int hif_pci_bus_enable_wake_irq(struct hif_softc *scn)
  */
 int hif_pci_bus_suspend(struct hif_softc *scn)
 {
+	/*
+	 * This is a workaround to a spurious wake interrupt issue. The
+	 * proper fix is being worked on, and this should be removed as
+	 * soon as possible.
+	 */
+	HIF_ERROR("%s: Pausing bus suspend for 200ms", __func__);
+	msleep(200);
+
 	if (hif_can_suspend_link(GET_HIF_OPAQUE_HDL(scn)))
 		return 0;
 
 	/* pci link is staying up; enable wake irq */
-	return hif_pci_bus_enable_wake_irq(scn);
+	return hif_mark_wake_irq_wakeable(scn);
 }
 
 /**
@@ -2814,30 +2813,21 @@ static int __hif_check_link_status(struct hif_softc *scn)
 	return -EACCES;
 }
 
-/**
- * hif_pci_bus_disable_wake_irq() - disable pci bus wake irq
- *
- * Deconfigures the pci irq line as a wakeup source.
- *
- * Return: 0 for success and non-zero for failure
- */
-static int hif_pci_bus_disable_wake_irq(struct hif_softc *scn)
+static int hif_unmark_wake_irq_wakeable(struct hif_softc *scn)
 {
-	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
+	int errno;
+	uint8_t ce_id;
 
-	if (!sc) {
-		HIF_ERROR("%s: sc is null", __func__);
-		return -EFAULT;
+	errno = hif_get_wake_ce_id(scn, &ce_id);
+	if (errno) {
+		HIF_ERROR("%s: failed to get wake CE Id: %d", __func__, errno);
+		return errno;
 	}
 
-	if (!sc->pdev) {
-		HIF_ERROR("%s: pdev is null", __func__);
-		return -EFAULT;
-	}
-
-	if (unlikely(disable_irq_wake(sc->pdev->irq))) {
-		HIF_ERROR("%s: Failed to disable wake IRQ", __func__);
-		return -EFAULT;
+	errno = disable_irq_wake(scn->bus_ops.hif_map_ce_to_irq(scn, ce_id));
+	if (errno) {
+		HIF_ERROR("%s: Failed to unmark wake IRQ: %d", __func__, errno);
+		return errno;
 	}
 
 	return 0;
@@ -2862,7 +2852,7 @@ int hif_pci_bus_resume(struct hif_softc *scn)
 		return 0;
 
 	/* pci link is up; disable wake irq */
-	return hif_pci_bus_disable_wake_irq(scn);
+	return hif_unmark_wake_irq_wakeable(scn);
 }
 
 /**
@@ -3093,30 +3083,39 @@ int hif_runtime_suspend(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
-	int err;
+	int errno;
 
-	err = hif_pci_bus_suspend(scn);
-	if (err)
-		goto exit_with_error;
+	errno = hif_bus_suspend(hif_ctx);
+	if (errno) {
+		HIF_ERROR("%s: failed bus suspend: %d", __func__, errno);
+		return errno;
+	}
 
-	/*
-	 * normal 3-stage suspend from CNSS disables irqs before calling
-	 * noirq stage
-	 */
-	disable_irq(sc->pdev->irq);
-
-	err = hif_pci_bus_suspend_noirq(scn);
-	if (err)
+	errno = hif_apps_irqs_disable(hif_ctx);
+	if (errno) {
+		HIF_ERROR("%s: failed disable irqs: %d", __func__, errno);
 		goto bus_resume;
+	}
+
+	errno = hif_bus_suspend_noirq(hif_ctx);
+	if (errno) {
+		HIF_ERROR("%s: failed bus suspend noirq: %d", __func__, errno);
+		goto irqs_enable;
+	}
+
+	/* link should always be down; skip enable wake irq */
 
 	return 0;
 
-bus_resume:
-	enable_irq(sc->pdev->irq);
-	err = hif_pci_bus_resume(scn);
-	QDF_BUG(err == 0);
+bus_resume_noirq:
+	QDF_BUG(!hif_bus_resume_noirq(hif_ctx));
 
-exit_with_error:
+irq_enable:
+	QDF_BUG(!hif_apps_irqs_enable(hif_ctx));
+
+bus_resume:
+	QDF_BUG(!hif_bus_resume(hif_ctx));
+
 	return err;
 }
 
@@ -3154,7 +3153,6 @@ static void hif_fastpath_resume(struct hif_opaque_softc *hif_ctx)
 static void hif_fastpath_resume(struct hif_opaque_softc *hif_ctx) {}
 #endif
 
-
 /**
  * hif_runtime_resume() - do the bus resume part of a runtime resume
  *
@@ -3162,35 +3160,14 @@ static void hif_fastpath_resume(struct hif_opaque_softc *hif_ctx) {}
  */
 int hif_runtime_resume(struct hif_opaque_softc *hif_ctx)
 {
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
-	int err;
+	/* link should always be down; skip disable wake irq */
 
-	err = hif_pci_bus_resume_noirq(scn);
-	if (err)
-		goto exit_with_error;
-
-	/*
-	 * normal 3-stage resume from CNSS enables irqs after calling
-	 * noirq stage
-	 */
-	enable_irq(sc->pdev->irq);
-
-	err = hif_pci_bus_resume(scn);
-	if (err)
-		goto bus_suspend_noirq;
-
+	QDF_BUG(!hif_bus_resume_noirq(hif_ctx));
+	QDF_BUG(!hif_apps_irqs_enable(hif_ctx));
+	QDF_BUG(!hif_bus_resume(hif_ctx));
 	hif_fastpath_resume(hif_ctx);
 
 	return 0;
-
-bus_suspend_noirq:
-	disable_irq(sc->pdev->irq);
-	err = hif_pci_bus_suspend_noirq(scn);
-	QDF_BUG(err == 0);
-
-exit_with_error:
-	return err;
 }
 #endif /* #ifdef FEATURE_RUNTIME_PM */
 
@@ -3580,6 +3557,13 @@ static irqreturn_t hif_ce_interrupt_handler(int irq, void *context)
 }
 extern const char *ce_name[];
 
+static int hif_ce_msi_map_ce_to_irq(struct hif_softc *scn, int ce_id)
+{
+	struct hif_pci_softc *pci_scn = HIF_GET_PCI_SOFTC(scn);
+
+	return pci_scn->ce_msi_irq_num[ce_id];
+}
+
 /* hif_srng_msi_irq_disable() - disable the irq for msi
  * @hif_sc: hif context
  * @ce_id: which ce to disable copy complete interrupts for
@@ -3590,16 +3574,12 @@ extern const char *ce_name[];
  */
 static void hif_ce_srng_msi_irq_disable(struct hif_softc *hif_sc, int ce_id)
 {
-	struct hif_pci_softc *pci_sc = HIF_GET_PCI_SOFTC(hif_sc);
-
-	disable_irq_nosync(pci_sc->ce_msi_irq_num[ce_id]);
+	disable_irq_nosync(hif_ce_msi_map_ce_to_irq(hif_sc, ce_id));
 }
 
 static void hif_ce_srng_msi_irq_enable(struct hif_softc *hif_sc, int ce_id)
 {
-	struct hif_pci_softc *pci_sc = HIF_GET_PCI_SOFTC(hif_sc);
-
-	enable_irq(pci_sc->ce_msi_irq_num[ce_id]);
+	enable_irq(hif_ce_msi_map_ce_to_irq(hif_sc, ce_id));
 }
 
 static void hif_ce_legacy_msi_irq_disable(struct hif_softc *hif_sc, int ce_id)
@@ -3625,16 +3605,14 @@ static int hif_ce_msi_configure_irq(struct hif_softc *scn)
 		return ret;
 
 	if (ce_srng_based(scn)) {
-		scn->bus_ops.hif_irq_disable =
-			&hif_ce_srng_msi_irq_disable;
-		scn->bus_ops.hif_irq_enable =
-			&hif_ce_srng_msi_irq_enable;
+		scn->bus_ops.hif_irq_disable = &hif_ce_srng_msi_irq_disable;
+		scn->bus_ops.hif_irq_enable = &hif_ce_srng_msi_irq_enable;
 	} else {
-		scn->bus_ops.hif_irq_disable =
-			&hif_ce_legacy_msi_irq_disable;
-		scn->bus_ops.hif_irq_enable =
-			&hif_ce_legacy_msi_irq_enable;
+		scn->bus_ops.hif_irq_disable = &hif_ce_legacy_msi_irq_disable;
+		scn->bus_ops.hif_irq_enable = &hif_ce_legacy_msi_irq_enable;
 	}
+
+	scn->bus_ops.hif_map_ce_to_irq = &hif_ce_msi_map_ce_to_irq;
 
 	/* needs to match the ce_id -> irq data mapping
 	 * used in the srng parameter configuration
@@ -3955,6 +3933,7 @@ void hif_pci_irq_enable(struct hif_softc *scn, int ce_id)
 	/* check for missed firmware crash */
 	hif_fw_interrupt_handler(0, scn);
 }
+
 /**
  * hif_pci_irq_disable() - ce_irq_disable
  * @scn: hif_softc
@@ -4436,3 +4415,11 @@ void hif_runtime_lock_deinit(struct hif_opaque_softc *hif_ctx,
 	qdf_mem_free(context);
 }
 #endif /* FEATURE_RUNTIME_PM */
+
+int hif_pci_legacy_map_ce_to_irq(struct hif_softc *scn, int ce_id)
+{
+	struct hif_pci_softc *pci_scn = HIF_GET_PCI_SOFTC(scn);
+
+	/* legacy case only has one irq */
+	return pci_scn->irq;
+}

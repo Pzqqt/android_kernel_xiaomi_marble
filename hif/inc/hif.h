@@ -722,6 +722,50 @@ int hif_bus_suspend(struct hif_opaque_softc *);
 int hif_bus_resume_noirq(struct hif_opaque_softc *);
 int hif_bus_suspend_noirq(struct hif_opaque_softc *);
 
+/**
+ * hif_apps_irqs_enable() - Enables all irqs from the APPS side
+ * @hif_ctx: an opaque HIF handle to use
+ *
+ * As opposed to the standard hif_irq_enable, this function always applies to
+ * the APPS side kernel interrupt handling.
+ *
+ * Return: errno
+ */
+int hif_apps_irqs_enable(struct hif_opaque_softc *hif_ctx);
+
+/**
+ * hif_apps_irqs_disable() - Disables all irqs from the APPS side
+ * @hif_ctx: an opaque HIF handle to use
+ *
+ * As opposed to the standard hif_irq_disable, this function always applies to
+ * the APPS side kernel interrupt handling.
+ *
+ * Return: errno
+ */
+int hif_apps_irqs_disable(struct hif_opaque_softc *hif_ctx);
+
+/**
+ * hif_apps_wake_irq_enable() - Enables the wake irq from the APPS side
+ * @hif_ctx: an opaque HIF handle to use
+ *
+ * As opposed to the standard hif_irq_enable, this function always applies to
+ * the APPS side kernel interrupt handling.
+ *
+ * Return: errno
+ */
+int hif_apps_wake_irq_enable(struct hif_opaque_softc *hif_ctx);
+
+/**
+ * hif_apps_wake_irq_disable() - Disables the wake irq from the APPS side
+ * @hif_ctx: an opaque HIF handle to use
+ *
+ * As opposed to the standard hif_irq_disable, this function always applies to
+ * the APPS side kernel interrupt handling.
+ *
+ * Return: errno
+ */
+int hif_apps_wake_irq_disable(struct hif_opaque_softc *hif_ctx);
+
 #ifdef FEATURE_RUNTIME_PM
 int hif_pre_runtime_suspend(struct hif_opaque_softc *hif_ctx);
 void hif_pre_runtime_resume(struct hif_opaque_softc *hif_ctx);

@@ -457,3 +457,7 @@ int hif_snoc_bus_suspend_noirq(struct hif_softc *scn)
 	return 0;
 }
 
+int hif_snoc_map_ce_to_irq(struct hif_softc *scn, int ce_id)
+{
+	return icnss_get_irq(ce_id);
+}
