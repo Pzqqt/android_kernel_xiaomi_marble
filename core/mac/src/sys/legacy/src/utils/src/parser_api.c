@@ -50,17 +50,6 @@
 #include "cds_regdomain.h"
 
 /* ////////////////////////////////////////////////////////////////////// */
-void dot11f_log(tpAniSirGlobal pMac, int loglevel, const char *pString, ...)
-{
-#ifdef WLAN_DEBUG
-	va_list marker;
-
-	va_start(marker, pString);
-	log_debug(pMac, SIR_DBG_MODULE_ID, loglevel, pString, marker);
-	va_end(marker);
-#endif
-}
-
 void swap_bit_field16(uint16_t in, uint16_t *out)
 {
 #ifdef ANI_LITTLE_BIT_ENDIAN

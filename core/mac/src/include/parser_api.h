@@ -430,12 +430,10 @@ struct s_ext_cap {
 
 uint8_t sirIsPropCapabilityEnabled(struct sAniSirGlobal *pMac, uint32_t bitnum);
 
-void dot11f_log(tpAniSirGlobal pMac, int nSev, const char *lpszFormat, ...);
-
 #define CFG_GET_INT(nStatus, pMac, nItem, cfg)  do { \
 		(nStatus) = wlan_cfg_get_int((pMac), (nItem), &(cfg)); \
 		if (eSIR_SUCCESS != (nStatus)) { \
-			dot11f_log((pMac), LOGP, FL("Failed to retrieve nItem from CFG (%d)."), (nStatus)); \
+			pe_err("Failed to retrieve nItem from CFG status: %d", (nStatus)); \
 			return nStatus; \
 		} \
 } while (0)
@@ -443,7 +441,7 @@ void dot11f_log(tpAniSirGlobal pMac, int nSev, const char *lpszFormat, ...);
 #define CFG_GET_INT_NO_STATUS(nStatus, pMac, nItem, cfg) do { \
 		(nStatus) = wlan_cfg_get_int((pMac), (nItem), &(cfg)); \
 		if (eSIR_SUCCESS != (nStatus)) { \
-			dot11f_log((pMac), LOGP, FL("Failed to retrieve nItem  from CFG (%d)."), (nStatus)); \
+			pe_err("Failed to retrieve nItem from CFG status: %d", (nStatus)); \
 			return; \
 		} \
 } while (0)
@@ -452,7 +450,7 @@ void dot11f_log(tpAniSirGlobal pMac, int nSev, const char *lpszFormat, ...);
 		(nCfg) = (nMaxCfg); \
 		(nStatus) = wlan_cfg_get_str((pMac), (nItem), (cfg), &(nCfg)); \
 		if (eSIR_SUCCESS != (nStatus)) { \
-			dot11f_log((pMac), LOGP, FL("Failed to retrieve nItem  from CFG (%d)."), (nStatus)); \
+			pe_err("Failed to retrieve nItem from CFG status: %d", (nStatus)); \
 			return nStatus; \
 		} \
 } while (0)
@@ -461,7 +459,7 @@ void dot11f_log(tpAniSirGlobal pMac, int nSev, const char *lpszFormat, ...);
 		(nCfg) = (nMaxCfg); \
 		(nStatus) = wlan_cfg_get_str((pMac), (nItem), (cfg), &(nCfg)); \
 		if (eSIR_SUCCESS != (nStatus)) { \
-			dot11f_log((pMac), LOGP, FL("Failed to retrieve nItem  from CFG (%d)."), (nStatus)); \
+			pe_err("Failed to retrieve nItem from CFG status: %d", (nStatus)); \
 			return; \
 		} \
 } while (0)

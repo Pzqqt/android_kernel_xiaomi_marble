@@ -64,16 +64,16 @@
 #define DOT11F_HAVE_LOG_MACROS
 
 #define FRAMES_LOG0(ctx, sev, fmt) \
-	dot11f_log((ctx), (sev), (fmt));
+	QDF_TRACE(QDF_MODULE_ID_PE, (sev), (fmt));
 
 #define FRAMES_LOG1(ctx, sev, fmt, p1) \
-	dot11f_log((ctx), (sev), (fmt), (p1));
+	QDF_TRACE(QDF_MODULE_ID_PE, (sev), (fmt), (p1));
 
 #define FRAMES_LOG2(ctx, sev, fmt, p1, p2) \
-	dot11f_log((ctx), (sev), (fmt), (p1), (p2));
+	QDF_TRACE(QDF_MODULE_ID_PE, (sev), (fmt), (p1), (p2));
 
 #define FRAMES_LOG3(ctx, sev, fmt, p1, p2, p3) \
-	dot11f_log((ctx), (sev), (fmt), (p1), (p2), (p3));
+	QDF_TRACE(QDF_MODULE_ID_PE, (sev), (fmt), (p1), (p2), (p3));
 
 #define FRAMES_DUMP(ctx, sev, p, n) \
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, (sev), (p), (n);
