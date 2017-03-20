@@ -1164,6 +1164,7 @@ typedef struct {
 } wmi_channel_param;
 
 struct scan_chan_list_params {
+	uint32_t pdev_id;
 	uint8_t num_scan_chans;
 	wmi_channel_param *chan_info;
 };

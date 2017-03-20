@@ -2029,6 +2029,37 @@ static inline void scan_copy_ie_buffer(uint8_t *buf_ptr,
 	qdf_mem_copy(buf_ptr, params->extraie.ptr, params->extraie.len);
 }
 
+/*
+ * get_pdev_wmi_handle() - Helper func to derive pdev wmi handle from vdev_id
+ * @param wmi_handle : Handle to WMI
+ * @param vdev_id : vdev identifier
+ *
+ * Return : void *
+ */
+static inline void *get_pdev_wmi_handle(wmi_unified_t wmi_handle, uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev = NULL;
+	struct wlan_objmgr_pdev *pdev = NULL;
+	uint8_t pdev_id = 0;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(
+			(struct wlan_objmgr_psoc *)wmi_handle->soc->wmi_psoc,
+			vdev_id, WLAN_SCAN_ID);
+	if (vdev) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_SCAN_ID);
+		pdev = wlan_vdev_get_pdev(vdev);
+		if (pdev)
+			pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+		else {
+			qdf_print("%s : Invalid PDEV, forcing pdev_id to 0\n", __func__);
+		}
+	} else {
+		qdf_print("%s : Invalid VDEV, forcing pdev_id to 0\n", __func__);
+	}
+
+	return wmi_unified_get_pdev_handle(wmi_handle->soc, pdev_id);
+}
+
 /**
  *  send_scan_start_cmd_tlv() - WMI scan start function
  *  @param wmi_handle      : handle to WMI.
@@ -2159,7 +2190,8 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 
 	buf_ptr += WMI_TLV_HDR_SIZE + extraie_len_with_pad;
 
-	ret = wmi_unified_cmd_send(wmi_handle, wmi_buf,
+	ret = wmi_unified_cmd_send(
+			get_pdev_wmi_handle(wmi_handle, cmd->vdev_id), wmi_buf,
 				      len, WMI_START_SCAN_CMDID);
 	if (ret) {
 		WMI_LOGE("%s: Failed to start scan: %d", __func__, ret);
@@ -2202,7 +2234,7 @@ static QDF_STATUS send_scan_stop_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->vdev_id = param->vdev_id;
 	cmd->requestor = param->requester;
 	cmd->scan_id = param->scan_id;
-	cmd->pdev_id = param->pdev_id;
+	cmd->pdev_id = param->pdev_id + 1;
 	/* stop the scan with the corresponding scan_id */
 	if (param->req_type == WLAN_SCAN_CANCEL_PDEV_ALL) {
 		/* Cancelling all scans */
@@ -2213,9 +2245,13 @@ static QDF_STATUS send_scan_stop_cmd_tlv(wmi_unified_t wmi_handle,
 	} else if (param->req_type == WLAN_SCAN_CANCEL_SINGLE) {
 		/* Cancelling specific scan */
 		cmd->req_type = WMI_SCAN_STOP_ONE;
+	} else {
+		WMI_LOGE("%s: Invalid Command : ", __func__);
+		wmi_buf_free(wmi_buf);
+		return QDF_STATUS_E_INVAL;
 	}
 
-	ret = wmi_unified_cmd_send(wmi_handle, wmi_buf,
+	ret = wmi_unified_cmd_send(get_pdev_wmi_handle(wmi_handle, cmd->vdev_id), wmi_buf,
 				      len, WMI_STOP_SCAN_CMDID);
 	if (ret) {
 		WMI_LOGE("%s: Failed to send stop scan: %d", __func__, ret);
@@ -2290,9 +2326,10 @@ static QDF_STATUS send_scan_chan_list_cmd_tlv(wmi_unified_t wmi_handle,
 		tchan_info++;
 		chan_info++;
 	}
+	cmd->pdev_id = chan_list->pdev_id + 1;
 
-	qdf_status = wmi_unified_cmd_send(wmi_handle, buf, len,
-				      WMI_SCAN_CHAN_LIST_CMDID);
+	qdf_status = wmi_unified_cmd_send(wmi_handle,
+			buf, len, WMI_SCAN_CHAN_LIST_CMDID);
 
 	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		WMI_LOGE("Failed to send WMI_SCAN_CHAN_LIST_CMDID");
@@ -2384,9 +2421,11 @@ static QDF_STATUS send_scan_chan_list_cmd_tlv(wmi_unified_t wmi_handle,
 		tchan_info++;
 		chan_info++;
 	}
+	cmd->pdev_id = chan_list->pdev_id + 1;
 
-	qdf_status = wmi_unified_cmd_send(wmi_handle, buf, len,
-				      WMI_SCAN_CHAN_LIST_CMDID);
+	qdf_status = wmi_unified_cmd_send(
+			wmi_handle,
+			buf, len, WMI_SCAN_CHAN_LIST_CMDID);
 
 	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		WMI_LOGE("Failed to send WMI_SCAN_CHAN_LIST_CMDID");
