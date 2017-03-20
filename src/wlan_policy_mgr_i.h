@@ -34,6 +34,34 @@
 #include "qdf_lock.h"
 #include "qdf_defer.h"
 
+#include <cds_reg_service.h>
+
+enum cds_band_type {
+	CDS_BAND_ALL = 0,
+	CDS_BAND_2GHZ = 1,
+	CDS_BAND_5GHZ = 2
+};
+
+extern uint32_t cds_chan_to_freq(uint8_t chan);
+extern uint8_t cds_freq_to_chan(uint32_t freq);
+extern enum cds_band_type cds_chan_to_band(uint32_t chan);
+
+#define WLAN_REG_IS_24GHZ_CH(ch) CDS_IS_CHANNEL_24GHZ(ch)
+#define WLAN_REG_IS_5GHZ_CH(ch) CDS_IS_CHANNEL_5GHZ(ch)
+#define WLAN_REG_IS_SAME_BAND_CHANNELS(ch1, ch2) \
+	CDS_IS_SAME_BAND_CHANNELS(ch1, ch2)
+#define WLAN_REG_IS_CHANNEL_VALID_5G_SBS(curchan, newchan) \
+	CDS_IS_CHANNEL_VALID_5G_SBS(curchan, newchan)
+#define wlan_reg_is_dfs_ch(psoc, ch) CDS_IS_DFS_CH(ch)
+#define WLAN_REG_MAX_24GHZ_CH_NUM CDS_MAX_24GHZ_CHANNEL_NUMBER
+#define reg_chan_to_freq(chan_num) cds_chan_to_freq(chan_num)
+#define reg_freq_to_chan(freq) cds_freq_to_chan(freq)
+#define reg_chan_to_band(chan_num) cds_chan_to_band(chan_num)
+#define BAND_2G CDS_BAND_2GHZ
+#define BAND_5G CDS_BAND_5GHZ
+#define BAND_ALL CDS_BAND_ALL
+
+
 #define MAX_NUMBER_OF_CONC_CONNECTIONS 3
 #define DBS_OPPORTUNISTIC_TIME    10
 #ifdef QCA_WIFI_3_0_EMU
@@ -381,4 +409,18 @@ enum policy_mgr_conc_next_action
 		struct wlan_objmgr_psoc *psoc);
 QDF_STATUS policy_mgr_reset_sap_mandatory_channels(
 		struct policy_mgr_psoc_priv_obj *pm_ctx);
+
+/**
+ * policy_mgr_get_sap_conn_info() - Get active SAP channel and
+ * vdev id
+ * @psoc: PSOC object information
+ * @channel: SAP channel
+ * @vdev_id: SAP vdev id
+ *
+ * Get active SAP channel and vdev id
+ *
+ * Return: true for success, else false
+ */
+bool policy_mgr_get_sap_conn_info(struct wlan_objmgr_psoc *psoc,
+				uint8_t *channel, uint8_t *vdev_id);
 #endif

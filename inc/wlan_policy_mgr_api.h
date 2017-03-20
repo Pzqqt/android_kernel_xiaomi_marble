@@ -39,33 +39,6 @@
 #include "qdf_status.h"
 #include "wlan_objmgr_psoc_obj.h"
 #include "wlan_policy_mgr_public_struct.h"
-#include <cds_reg_service.h>
-
-enum cds_band_type {
-	CDS_BAND_ALL = 0,
-	CDS_BAND_2GHZ = 1,
-	CDS_BAND_5GHZ = 2
-};
-extern uint32_t cds_chan_to_freq(uint8_t chan);
-extern uint8_t cds_freq_to_chan(uint32_t freq);
-extern enum cds_band_type cds_chan_to_band(uint32_t chan);
-
-#define WLAN_REG_IS_24GHZ_CH(ch) CDS_IS_CHANNEL_24GHZ(ch)
-#define WLAN_REG_IS_5GHZ_CH(ch) CDS_IS_CHANNEL_5GHZ(ch)
-#define WLAN_REG_IS_SAME_BAND_CHANNELS(ch1, ch2) \
-	CDS_IS_SAME_BAND_CHANNELS(ch1, ch2)
-#define WLAN_REG_IS_CHANNEL_VALID_5G_SBS(curchan, newchan) \
-	CDS_IS_CHANNEL_VALID_5G_SBS(curchan, newchan)
-#define wlan_reg_is_dfs_ch(psoc, ch) CDS_IS_DFS_CH(ch)
-#define WLAN_REG_MAX_24GHZ_CH_NUM CDS_MAX_24GHZ_CHANNEL_NUMBER
-#define reg_chan_to_freq(chan_num) cds_chan_to_freq(chan_num)
-#define reg_freq_to_chan(freq) cds_freq_to_chan(freq)
-#define reg_chan_to_band(chan_num) cds_chan_to_band(chan_num)
-#define BAND_2G CDS_BAND_2GHZ
-#define BAND_5G CDS_BAND_5GHZ
-#define BAND_ALL CDS_BAND_ALL
-#define wlan_reg_set_channel_params(channel, sec_ch, ch_params) \
-	cds_set_channel_params(channel, sec_ch, ch_params)
 
 typedef const enum policy_mgr_pcl_type
 	pm_dbs_pcl_second_connection_table_type
@@ -186,14 +159,10 @@ QDF_STATUS policy_mgr_handle_conc_multiport(
  * Return: None
  */
 void policy_mgr_check_concurrent_intf_and_restart_sap(
-		struct wlan_objmgr_psoc *psoc,
-		uint8_t vdev_id,
-		uint8_t operation_channel);
+		struct wlan_objmgr_psoc *psoc);
 #else
 static inline void policy_mgr_check_concurrent_intf_and_restart_sap(
-		struct wlan_objmgr_psoc *psoc,
-		uint8_t vdev_id,
-		uint8_t operation_channel)
+		struct wlan_objmgr_psoc *psoc)
 {
 
 }
@@ -764,17 +733,6 @@ typedef void (*policy_mgr_nss_update_cback)(struct wlan_objmgr_psoc *psoc,
 		enum policy_mgr_conn_update_reason reason);
 
 /**
- * struct check_cc_channel_work - Check concurrent interface
- * channel to restart SAP work data
- * @wlan_objmgr_psoc: PSOC object data
- * @vdev_id: vdev id of sap
- */
-struct check_cc_channel_work {
-	struct wlan_objmgr_psoc *psoc;
-	uint8_t vdev_id;
-};
-
-/**
  * struct policy_mgr_sme_cbacks - SME Callbacks to be invoked
  * from policy manager
  * @sme_get_valid_channels: Get valid channel list
@@ -822,8 +780,7 @@ struct policy_mgr_hdd_cbacks {
 	QDF_STATUS (*wlan_hdd_get_channel_for_sap_restart)(
 				struct wlan_objmgr_psoc *psoc,
 				uint8_t vdev_id, uint8_t *channel,
-				uint8_t *sec_ch,
-				struct ch_params_s *ch_params);
+				uint8_t *sec_ch, bool is_restart_sap);
 };
 
 
@@ -1199,33 +1156,6 @@ QDF_STATUS policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS policy_mgr_set_sap_mandatory_channels(struct wlan_objmgr_psoc *psoc,
 		uint8_t *channels, uint32_t len);
-#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-/**
- * policy_mgr_register_sap_restart_channel_switch_cb() -
- * Register callback for SAP channel switch without restart
- * @psoc: PSOC object information
- * @sap_restart_chan_switch_cb: Callback to perform channel switch
- *
- * Registers callback to perform channel switch without having to actually
- * restart the beaconing entity
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS policy_mgr_register_sap_restart_channel_switch_cb(
-		struct wlan_objmgr_psoc *psoc,
-		void (*sap_restart_chan_switch_cb)(uint8_t, uint32_t, uint32_t));
-
-/**
- * policy_mgr_deregister_sap_restart_channel_switch_cb() -
- * De-Register callback for SAP channel switch without restart
- * @psoc: PSOC object information
- * De Registers callback to perform channel switch
- *
- * Return: QDF_STATUS Enumeration
- */
-QDF_STATUS policy_mgr_deregister_sap_restart_channel_switch_cb(
-		struct wlan_objmgr_psoc *psoc);
-#endif
 
 /**
  * policy_mgr_is_any_mode_active_on_band_along_with_session() -

@@ -929,6 +929,52 @@ bool policy_mgr_is_ibss_conn_exist(struct wlan_objmgr_psoc *psoc,
 	return status;
 }
 
+bool policy_mgr_get_sap_conn_info(struct wlan_objmgr_psoc *psoc,
+				  uint8_t *channel, uint8_t *vdev_id)
+{
+	uint32_t count, index = 0;
+	uint32_t list[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	bool status = false;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return false;
+	}
+	if (NULL == channel || NULL == vdev_id) {
+		policy_mgr_err("Null pointer error");
+		return false;
+	}
+
+	count = policy_mgr_mode_specific_connection_count(
+				psoc, PM_SAP_MODE, list);
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	if (count == 0) {
+		policy_mgr_err("No SAP connection");
+		status = false;
+	} else if (count == 1) {
+		*channel = pm_conc_connection_list[list[index]].chan;
+		*vdev_id =
+			pm_conc_connection_list[list[index]].vdev_id;
+		status = true;
+	} else {
+		/*
+		 * Todo Currently the first SAP connection info is
+		 * returned. Modify this to accommodate SAP+SAP+STA
+		 * and SAP+SAP+P2P
+		 */
+		*channel = pm_conc_connection_list[list[index]].chan;
+		*vdev_id =
+			pm_conc_connection_list[list[index]].vdev_id;
+		policy_mgr_notice("Multiple SAP connections, picking first one");
+		status = true;
+	}
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+
+	return status;
+}
+
 bool policy_mgr_max_concurrent_connections_reached(
 		struct wlan_objmgr_psoc *psoc)
 {
