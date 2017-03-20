@@ -19,5 +19,140 @@
 /**
  * DOC: wlan_tdls_ct.h
  *
- * TDLS connection tracker api declaration
+ * TDLS connection tracker declarations
  */
+
+#ifndef _WLAN_TDLS_CT_H_
+#define _WLAN_TDLS_CT_H_
+
+ /*
+  * Before UpdateTimer expires, we want to timeout discovery response
+  * should not be more than 2000.
+  */
+#define TDLS_DISCOVERY_TIMEOUT_ERE_UPDATE     1000
+
+/**
+ * tdls_is_vdev_connected() - check the vdev is connected to ap
+ * @vdev: vdev object manager
+ *
+ * This function will check the vdev connection status and return
+ * true or false
+ *
+ * Return: true - Connected, false - Not connected
+ */
+bool tdls_is_vdev_connected(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * tdls_implicit_enable() - enable implicit tdls triggering
+ * @tdls_vdev: TDLS vdev
+ *
+ * Return: Void
+ */
+void tdls_implicit_enable(struct tdls_vdev_priv_obj *tdls_vdev);
+
+/**
+ * tdls_update_rx_pkt_cnt() - Update rx packet count
+ * @vdev: vdev object manager
+ * @mac_addr: mac address of the data
+ *
+ * Increase the rx packet count, if the sender is not bssid and the packet is
+ * not broadcast and muticast packet
+ *
+ * This sampling information will be used in TDLS connection tracker
+ *
+ * This function expected to be called in an atomic context so blocking APIs
+ * not allowed
+ *
+ * Return: None
+ */
+void tdls_update_rx_pkt_cnt(struct wlan_objmgr_vdev *vdev,
+				     struct qdf_mac_addr *mac_addr);
+
+/**
+ * tdls_update_tx_pkt_cnt() - update tx packet
+ * @vdev: vdev object
+ * @mac_addr: mac address of the data
+ *
+ * Increase the tx packet count, if the sender is not bssid and the packet is
+ * not broadcast and muticast packet
+ *
+ * This sampling information will be used in TDLS connection tracker
+ *
+ * This function expected to be called in an atomic context so blocking APIs
+ * not allowed
+ *
+ * Return: None
+ */
+void tdls_update_tx_pkt_cnt(struct wlan_objmgr_vdev *vdev,
+				     struct qdf_mac_addr *mac_addr);
+
+/**
+ * wlan_hdd_tdls_implicit_send_discovery_request() - send discovery request
+ * @tdls_vdev_obj: tdls vdev object
+ *
+ * Return: None
+ */
+void tdls_implicit_send_discovery_request(
+				struct tdls_vdev_priv_obj *tdls_vdev_obj);
+
+/**
+ * tdls_recv_discovery_resp() - handling of tdls discovery response
+ * @soc: object manager
+ * @mac: mac address of peer from which the response was received
+ *
+ * Return: 0 for success or negative errno otherwise
+ */
+int tdls_recv_discovery_resp(struct tdls_vdev_priv_obj *tdls_vdev,
+				   const uint8_t *mac);
+
+/**
+ * tdls_indicate_teardown() - indicate teardown to upper layer
+ * @tdls_vdev: tdls vdev object
+ * @curr_peer: teardown peer
+ * @reason: teardown reason
+ *
+ * Return: Void
+ */
+void tdls_indicate_teardown(struct tdls_vdev_priv_obj *tdls_vdev,
+				struct tdls_peer *curr_peer,
+				uint16_t reason);
+
+/**
+ * tdls_ct_handler() - TDLS connection tracker handler
+ * @user_data: user data from timer
+ *
+ * tdls connection tracker timer starts, when the STA connected to AP
+ * and it's scan the traffic between two STA peers and make TDLS
+ * connection and teardown, based on the traffic threshold
+ *
+ * Return: None
+ */
+void tdls_ct_handler(void *user_data);
+
+/**
+ * tdls_ct_idle_handler() - Check tdls idle traffic
+ * @user_data: data from tdls idle timer
+ *
+ * Function to check the tdls idle traffic and make a decision about
+ * tdls teardown
+ *
+ * Return: None
+ */
+void tdls_ct_idle_handler(void *user_data);
+
+/**
+ * tdls_discovery_timeout_peer_cb() - tdls discovery timeout callback
+ * @userData: tdls vdev
+ *
+ * Return: None
+ */
+void tdls_discovery_timeout_peer_cb(void *user_data);
+
+/**
+ * tdls_implicit_disable() - disable implicit tdls triggering
+ * @pHddTdlsCtx: TDLS context
+ *
+ * Return: Void
+ */
+void tdls_implicit_disable(struct tdls_vdev_priv_obj *tdls_vdev);
+#endif

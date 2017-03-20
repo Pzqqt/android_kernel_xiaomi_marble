@@ -142,7 +142,16 @@ static QDF_STATUS tdls_global_init(struct tdls_soc_priv_obj *soc_obj)
 	}
 	soc_obj->enable_tdls_connection_tracker = false;
 	soc_obj->tdls_external_peer_count = 0;
+	soc_obj->tdls_disable_in_progress = false;
 
+	qdf_spinlock_create(&soc_obj->tdls_ct_spinlock);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS tdls_global_deinit(struct tdls_soc_priv_obj *soc_obj)
+{
+	qdf_spinlock_destroy(&soc_obj->tdls_ct_spinlock);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -259,8 +268,17 @@ QDF_STATUS ucfg_tdls_psoc_disable(struct wlan_objmgr_psoc *psoc)
 QDF_STATUS ucfg_tdls_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct tdls_soc_priv_obj *tdls_soc;
 
 	tdls_notice("tdls psoc close");
+	tdls_soc = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+							WLAN_UMAC_COMP_TDLS);
+	if (!tdls_soc) {
+		tdls_err("Failed to get tdls psoc component");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = tdls_global_deinit(tdls_soc);
 
 	return status;
 }

@@ -117,6 +117,16 @@ struct tdls_conn_tracker_mac_table {
 };
 
 /**
+ * struct tdls_ct_idle_peer_data - connection tracker idle peer info
+ * @vdev: vdev object
+ * @tdls_info: tdls connection info
+ */
+struct tdls_ct_idle_peer_data {
+	struct wlan_objmgr_vdev *vdev;
+	struct tdls_conn_info *tdls_info;
+};
+
+/**
  * struct tdls_set_state_db - to record set tdls state command, we need to
  * set correct tdls state to firmware:
  * 1. enable tdls in firmware before tdls connection;
@@ -164,6 +174,8 @@ struct tdls_set_state_info {
  * @tdls_add_sta_req: store eWNI_SME_TDLS_ADD_STA_REQ value
  * @tdls_del_sta_req: store eWNI_SME_TDLS_DEL_STA_REQ value
  * @tdls_update_peer_state: store WMA_UPDATE_TDLS_PEER_STATE value
+ * @tdls_idle_peer_data: provide information about idle peer
+ * @tdls_ct_spinlock: connection tracker spin lock
  */
 struct tdls_soc_priv_obj {
 	struct wlan_objmgr_psoc *soc;
@@ -196,6 +208,8 @@ struct tdls_soc_priv_obj {
 	uint16_t tdls_add_sta_req;
 	uint16_t tdls_del_sta_req;
 	uint16_t tdls_update_peer_state;
+	struct tdls_ct_idle_peer_data tdls_idle_peer_data;
+	qdf_spinlock_t tdls_ct_spinlock;
 };
 
 /**
@@ -474,5 +488,17 @@ void tdls_timer_restart(struct wlan_objmgr_vdev *vdev,
  * Return: none
  */
 void tdls_timers_stop(struct tdls_vdev_priv_obj *tdls_vdev);
+
+/**
+ * tdls_get_vdev_objects() - Get TDLS private objects
+ * @vdev: VDEV object manager
+ * @tdls_vdev_obj: tdls vdev object
+ * @tdls_soc_obj: tdls soc object
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS tdls_get_vdev_objects(struct wlan_objmgr_vdev *vdev,
+				   struct tdls_vdev_priv_obj **tdls_vdev_obj,
+				   struct tdls_soc_priv_obj **tdls_soc_obj);
 
 #endif
