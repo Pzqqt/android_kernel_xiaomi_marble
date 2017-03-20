@@ -131,7 +131,7 @@ tSirRetStatus mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
 
 	qdf_status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_LEGACY_MAC_ID);
 	if (QDF_IS_STATUS_ERROR(qdf_status)) {
-		sys_log(p_mac, LOGE, FL("PSOC get ref failure\n"));
+		pe_err("PSOC get ref failure");
 		return eSIR_FAILURE;
 	}
 

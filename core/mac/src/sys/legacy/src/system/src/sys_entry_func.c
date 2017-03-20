@@ -207,13 +207,3 @@ fail:
 	return eSIR_FAILURE;
 }
 
-void sys_log(tpAniSirGlobal pMac, uint32_t loglevel, const char *pString, ...)
-{
-#ifdef WLAN_DEBUG
-	va_list marker;
-
-	va_start(marker, pString);
-	log_debug(pMac, SIR_SYS_MODULE_ID, loglevel, pString, marker);
-	va_end(marker);
-#endif
-}
