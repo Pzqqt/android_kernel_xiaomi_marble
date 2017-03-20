@@ -137,16 +137,14 @@ sys_bbt_process_message_core(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg,
 			(!lim_is_system_in_scan_state(mac_ctx)) &&
 			(GET_LIM_PROCESS_DEFD_MESGS(mac_ctx) != true) &&
 			!mac_ctx->lim.gLimSystemInScanLearnMode) {
-			sys_log(mac_ctx, LOG1,
-				FL("dropping received beacon in deffered state"));
+			pe_debug("dropping received beacon in deffered state");
 			goto fail;
 		}
 
 		dropreason = lim_is_pkt_candidate_for_drop(mac_ctx, bd_ptr,
 				subtype);
 		if (eMGMT_DROP_NO_DROP != dropreason) {
-			sys_log(mac_ctx, LOG1,
-				FL("Mgmt Frame %d being dropped, reason: %d\n"),
+			pe_debug("Mgmt Frame %d being dropped, reason: %d\n",
 				subtype, dropreason);
 				MTRACE(mac_trace(mac_ctx,
 					TRACE_CODE_RX_MGMT_DROP, NO_SESSION,
@@ -156,24 +154,21 @@ sys_bbt_process_message_core(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg,
 
 		mac_hdr = WMA_GET_RX_MAC_HEADER(bd_ptr);
 		if (subtype == SIR_MAC_MGMT_ASSOC_REQ) {
-			sys_log(mac_ctx, LOG1,
-				FL("ASSOC REQ frame allowed: da: " MAC_ADDRESS_STR ", sa: " MAC_ADDRESS_STR ", bssid: " MAC_ADDRESS_STR ", Assoc Req count so far: %d\n"),
+			pe_info("ASSOC REQ frame allowed: da: " MAC_ADDRESS_STR ", sa: " MAC_ADDRESS_STR ", bssid: " MAC_ADDRESS_STR ", Assoc Req count so far: %d",
 				MAC_ADDR_ARRAY(mac_hdr->da),
 				MAC_ADDR_ARRAY(mac_hdr->sa),
 				MAC_ADDR_ARRAY(mac_hdr->bssId),
 				mac_ctx->sys.gSysFrameCount[type][subtype]);
 		}
 		if (subtype == SIR_MAC_MGMT_DEAUTH) {
-			sys_log(mac_ctx, LOG1,
-				FL("DEAUTH frame allowed: da: " MAC_ADDRESS_STR ", sa: " MAC_ADDRESS_STR ", bssid: " MAC_ADDRESS_STR ", DEAUTH count so far: %d\n"),
+			pe_info("DEAUTH frame allowed: da: " MAC_ADDRESS_STR ", sa: " MAC_ADDRESS_STR ", bssid: " MAC_ADDRESS_STR ", DEAUTH count so far: %d",
 				MAC_ADDR_ARRAY(mac_hdr->da),
 				MAC_ADDR_ARRAY(mac_hdr->sa),
 				MAC_ADDR_ARRAY(mac_hdr->bssId),
 				mac_ctx->sys.gSysFrameCount[type][subtype]);
 		}
 		if (subtype == SIR_MAC_MGMT_DISASSOC) {
-			sys_log(mac_ctx, LOG1,
-				FL("DISASSOC frame allowed: da: " MAC_ADDRESS_STR ", sa: " MAC_ADDRESS_STR ", bssid: " MAC_ADDRESS_STR ", DISASSOC count so far: %d\n"),
+			pe_info("DISASSOC frame allowed: da: " MAC_ADDRESS_STR ", sa: " MAC_ADDRESS_STR ", bssid: " MAC_ADDRESS_STR ", DISASSOC count so far: %d",
 				MAC_ADDR_ARRAY(mac_hdr->da),
 				MAC_ADDR_ARRAY(mac_hdr->sa),
 				MAC_ADDR_ARRAY(mac_hdr->bssId),
@@ -194,27 +189,24 @@ sys_bbt_process_message_core(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg,
 		else
 			ret = (tSirRetStatus) lim_post_msg_api(mac_ctx, msg);
 		if (ret != eSIR_SUCCESS) {
-			sys_log(mac_ctx, LOGE,
-				FL("posting to LIM2 failed, ret %d\n"), ret);
-				goto fail;
+			pe_err("posting to LIM2 failed, ret %d\n", ret);
+			goto fail;
 		}
 		mac_ctx->sys.gSysBbtPostedToLim++;
 	} else if (type == SIR_MAC_DATA_FRAME) {
 #ifdef FEATURE_WLAN_ESE
-		PELOGW(sys_log(mac_ctx, LOGW, FL("IAPP Frame...\n")););
+		pe_debug("IAPP Frame...");
 		/* Post the message to PE Queue */
 		ret = (tSirRetStatus) lim_post_msg_api(mac_ctx, msg);
 		if (ret != eSIR_SUCCESS) {
-			sys_log(mac_ctx, LOGE,
-				FL("posting to LIM2 failed, ret %d\n"), ret);
+			pe_err("posting to LIM2 failed, ret: %d", ret);
 			goto fail;
 		}
 		mac_ctx->sys.gSysBbtPostedToLim++;
 #endif
 	} else {
-		sys_log(mac_ctx, LOG3,
-			"BBT received Invalid type %d subtype %d "
-			"LIM state %X. BD dump is:\n", type, subtype,
+		pe_debug("BBT received Invalid type: %d subtype: %d "
+			"LIM state %X", type, subtype,
 			lim_get_sme_state(mac_ctx));
 		goto fail;
 	}
