@@ -319,6 +319,38 @@ void htt_clear_bundle_stats(htt_pdev_handle pdev)
 }
 #endif
 
+#if defined(QCA_WIFI_3_0_ADRASTEA)
+/**
+ * htt_htc_attach_all() - Connect to HTC service for HTT
+ * @pdev: pdev ptr
+ *
+ * Return: 0 for success or error code.
+ */
+static int
+htt_htc_attach_all(struct htt_pdev_t *pdev)
+{
+	if (htt_htc_attach(pdev, HTT_DATA_MSG_SVC))
+		return -EIO;
+	if (htt_htc_attach(pdev, HTT_DATA2_MSG_SVC))
+		return -EIO;
+	if (htt_htc_attach(pdev, HTT_DATA3_MSG_SVC))
+		return -EIO;
+	return 0;
+}
+#else
+/**
+ * htt_htc_attach_all() - Connect to HTC service for HTT
+ * @pdev: pdev ptr
+ *
+ * Return: 0 for success or error code.
+ */
+static int
+htt_htc_attach_all(struct htt_pdev_t *pdev)
+{
+	return htt_htc_attach(pdev, HTT_DATA_MSG_SVC);
+}
+#endif
+
 /**
  * htt_pdev_alloc() - allocate HTT pdev
  * @txrx_pdev: txrx pdev
@@ -390,23 +422,15 @@ htt_pdev_alloc(ol_txrx_pdev_handle txrx_pdev,
 	 * since htt_rx_attach involves sending a rx ring configure
 	 * message to the target.
 	 */
-	if (htt_htc_attach(pdev, HTT_DATA_MSG_SVC))
-		goto fail2;
-	if (htt_htc_attach(pdev, HTT_DATA2_MSG_SVC))
-		;
-	/* TODO: enable the following line once FW is ready */
-	/* goto fail2; */
-	if (htt_htc_attach(pdev, HTT_DATA3_MSG_SVC))
-		;
-	/* TODO: enable the following line once FW is ready */
-	/* goto fail2; */
+	if (htt_htc_attach_all(pdev))
+		goto htt_htc_attach_fail;
 	if (hif_ce_fastpath_cb_register(osc, htt_t2h_msg_handler_fast, pdev))
 		qdf_print("failed to register fastpath callback\n");
 
 success:
 	return pdev;
 
-fail2:
+htt_htc_attach_fail:
 	qdf_mem_free(pdev);
 
 fail1:
