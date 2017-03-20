@@ -4516,7 +4516,7 @@ static QDF_STATUS find_cfg_item(tCfgIniEntry *iniTable, unsigned long entries,
 	for (i = 0; i < entries; i++) {
 		if (strcmp(iniTable[i].name, name) == 0) {
 			*value = iniTable[i].value;
-			hdd_info("Found %s entry for Name=[%s] Value=[%s] ",
+			hdd_debug("Found %s entry for Name=[%s] Value=[%s] ",
 				  WLAN_INI_FILE, name, *value);
 			return QDF_STATUS_SUCCESS;
 		}
@@ -4641,7 +4641,7 @@ static QDF_STATUS hdd_apply_cfg_ini(hdd_context_t *pHddCtx,
 			    && (WLAN_PARAM_Integer == pRegEntry->RegType)) {
 				rv = kstrtou32(value_str, 10, &value);
 				if (rv < 0) {
-					hdd_err("Reg Parameter %s invalid. Enforcing default", pRegEntry->RegName);
+					hdd_warn("Reg Parameter %s invalid. Enforcing default", pRegEntry->RegName);
 					value = pRegEntry->VarDefault;
 				}
 			} else if (match_status == QDF_STATUS_SUCCESS
@@ -4649,7 +4649,7 @@ static QDF_STATUS hdd_apply_cfg_ini(hdd_context_t *pHddCtx,
 				       pRegEntry->RegType)) {
 				rv = kstrtou32(value_str, 16, &value);
 				if (rv < 0) {
-					hdd_err("Reg paramter %s invalid. Enforcing default", pRegEntry->RegName);
+					hdd_warn("Reg paramter %s invalid. Enforcing default", pRegEntry->RegName);
 					value = pRegEntry->VarDefault;
 				}
 			} else {
@@ -4660,13 +4660,13 @@ static QDF_STATUS hdd_apply_cfg_ini(hdd_context_t *pHddCtx,
 			if (match_status == QDF_STATUS_SUCCESS &&
 			    pRegEntry->Flags & VAR_FLAGS_RANGE_CHECK) {
 				if (value > pRegEntry->VarMax) {
-					hdd_err("Reg Parameter %s > allowed Maximum [%u > %lu]. Enforcing Maximum", pRegEntry->RegName,
+					hdd_warn("Reg Parameter %s > allowed Maximum [%u > %lu]. Enforcing Maximum", pRegEntry->RegName,
 					       value, pRegEntry->VarMax);
 					value = pRegEntry->VarMax;
 				}
 
 				if (value < pRegEntry->VarMin) {
-					hdd_err("Reg Parameter %s < allowed Minimum [%u < %lu]. Enforcing Minimum", pRegEntry->RegName,
+					hdd_warn("Reg Parameter %s < allowed Minimum [%u < %lu]. Enforcing Minimum", pRegEntry->RegName,
 					       value, pRegEntry->VarMin);
 					value = pRegEntry->VarMin;
 				}
@@ -4676,14 +4676,14 @@ static QDF_STATUS hdd_apply_cfg_ini(hdd_context_t *pHddCtx,
 				 pRegEntry->Flags &
 					VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT) {
 				if (value > pRegEntry->VarMax) {
-					hdd_err("Reg Parameter %s > allowed Maximum [%u > %lu]. Enforcing Default= %lu", pRegEntry->RegName,
+					hdd_warn("Reg Parameter %s > allowed Maximum [%u > %lu]. Enforcing Default: %lu", pRegEntry->RegName,
 					       value, pRegEntry->VarMax,
 					       pRegEntry->VarDefault);
 					value = pRegEntry->VarDefault;
 				}
 
 				if (value < pRegEntry->VarMin) {
-					hdd_err("Reg Parameter %s < allowed Minimum [%u < %lu]. Enforcing Default= %lu", pRegEntry->RegName,
+					hdd_warn("Reg Parameter %s < allowed Minimum [%u < %lu]. Enforcing Default: %lu", pRegEntry->RegName,
 					       value, pRegEntry->VarMin,
 					       pRegEntry->VarDefault);
 					value = pRegEntry->VarDefault;
@@ -4710,14 +4710,14 @@ static QDF_STATUS hdd_apply_cfg_ini(hdd_context_t *pHddCtx,
 			if (match_status == QDF_STATUS_SUCCESS &&
 			    pRegEntry->Flags & VAR_FLAGS_RANGE_CHECK) {
 				if (svalue > (int32_t) pRegEntry->VarMax) {
-					hdd_err("Reg Parameter %s > allowed Maximum "
+					hdd_warn("Reg Parameter %s > allowed Maximum "
 					       "[%d > %d]. Enforcing Maximum", pRegEntry->RegName,
 					       svalue, (int)pRegEntry->VarMax);
 					svalue = (int32_t) pRegEntry->VarMax;
 				}
 
 				if (svalue < (int32_t) pRegEntry->VarMin) {
-					hdd_err("Reg Parameter %s < allowed Minimum "
+					hdd_warn("Reg Parameter %s < allowed Minimum "
 					       "[%d < %d]. Enforcing Minimum", pRegEntry->RegName,
 					       svalue, (int)pRegEntry->VarMin);
 					svalue = (int32_t) pRegEntry->VarMin;
@@ -4728,8 +4728,8 @@ static QDF_STATUS hdd_apply_cfg_ini(hdd_context_t *pHddCtx,
 				 pRegEntry->Flags &
 					VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT) {
 				if (svalue > (int32_t) pRegEntry->VarMax) {
-					hdd_err("Reg Parameter %s > allowed Maximum "
-					       "[%d > %d]. Enforcing Default= %d", pRegEntry->RegName,
+					hdd_warn("Reg Parameter %s > allowed Maximum "
+					       "[%d > %d]. Enforcing Default: %d", pRegEntry->RegName,
 					       svalue, (int)pRegEntry->VarMax,
 					       (int)pRegEntry->VarDefault);
 					svalue =
@@ -4737,8 +4737,8 @@ static QDF_STATUS hdd_apply_cfg_ini(hdd_context_t *pHddCtx,
 				}
 
 				if (svalue < (int32_t) pRegEntry->VarMin) {
-					hdd_err("Reg Parameter %s < allowed Minimum "
-					       "[%d < %d]. Enforcing Default= %d", pRegEntry->RegName,
+					hdd_warn("Reg Parameter %s < allowed Minimum "
+					       "[%d < %d]. Enforcing Default: %d", pRegEntry->RegName,
 					       svalue, (int)pRegEntry->VarMin,
 					       (int)pRegEntry->VarDefault);
 					svalue = pRegEntry->VarDefault;
@@ -4750,7 +4750,7 @@ static QDF_STATUS hdd_apply_cfg_ini(hdd_context_t *pHddCtx,
 		/* Handle string parameters */
 		else if (WLAN_PARAM_String == pRegEntry->RegType) {
 #ifdef WLAN_CFG_DEBUG
-			hdd_info("RegName = %s, VarOffset %u VarSize %u VarDefault %s",
+			hdd_debug("RegName = %s, VarOffset %u VarSize %u VarDefault %s",
 				  pRegEntry->RegName, pRegEntry->VarOffset,
 				  pRegEntry->VarSize,
 				  (char *)pRegEntry->VarDefault);
@@ -4790,7 +4790,7 @@ static QDF_STATUS hdd_apply_cfg_ini(hdd_context_t *pHddCtx,
 			}
 		} else if (WLAN_PARAM_MacAddr == pRegEntry->RegType) {
 			if (pRegEntry->VarSize != QDF_MAC_ADDR_SIZE) {
-				hdd_err("Invalid VarSize %u for Name=[%s]", pRegEntry->VarSize,
+				hdd_warn("Invalid VarSize %u for Name=[%s]", pRegEntry->VarSize,
 				       pRegEntry->RegName);
 				continue;
 			}
@@ -4812,7 +4812,7 @@ static QDF_STATUS hdd_apply_cfg_ini(hdd_context_t *pHddCtx,
 					       parse_hex_digit(candidate[i * 2 + 1]));
 			}
 		} else {
-			hdd_err("Unknown param type for name[%s] in registry table", pRegEntry->RegName);
+			hdd_warn("Unknown param type for name[%s] in registry table", pRegEntry->RegName);
 		}
 
 		/* did we successfully parse a cfg item for this parameter? */
@@ -4918,7 +4918,7 @@ static QDF_STATUS hdd_execute_config_command(REG_TABLE_ENTRY *reg_table,
 	pRegEntry = &reg_table[idx];
 	if (!(pRegEntry->Flags & VAR_FLAGS_DYNAMIC_CFG)) {
 		/* does not support dynamic configuration */
-		hdd_err("Global_Registry_Table.%s does not support "
+		hdd_err("Global_Registry_Table. %s does not support "
 		       "dynamic configuration", name);
 		vstatus = QDF_STATUS_E_PERM;
 		goto done;
@@ -4933,12 +4933,12 @@ static QDF_STATUS hdd_execute_config_command(REG_TABLE_ENTRY *reg_table,
 			goto done;
 		if (value < pRegEntry->VarMin) {
 			/* out of range */
-			hdd_err("invalid command, value %u < min value %lu", value, pRegEntry->VarMin);
+			hdd_err("Invalid command, value %u < min value %lu", value, pRegEntry->VarMin);
 			goto done;
 		}
 		if (value > pRegEntry->VarMax) {
 			/* out of range */
-			hdd_err("invalid command, value %u > max value %lu", value, pRegEntry->VarMax);
+			hdd_err("Invalid command, value %u > max value %lu", value, pRegEntry->VarMax);
 			goto done;
 		}
 		memcpy(pField, &value, pRegEntry->VarSize);
@@ -4950,12 +4950,12 @@ static QDF_STATUS hdd_execute_config_command(REG_TABLE_ENTRY *reg_table,
 			goto done;
 		if (value < pRegEntry->VarMin) {
 			/* out of range */
-			hdd_err("invalid command, value %x < min value %lx", value, pRegEntry->VarMin);
+			hdd_err("Invalid command, value %x < min value %lx", value, pRegEntry->VarMin);
 			goto done;
 		}
 		if (value > pRegEntry->VarMax) {
 			/* out of range */
-			hdd_err("invalid command, value %x > max value %lx", value, pRegEntry->VarMax);
+			hdd_err("Invalid command, value %x > max value %lx", value, pRegEntry->VarMax);
 			goto done;
 		}
 		memcpy(pField, &value, pRegEntry->VarSize);
@@ -4967,12 +4967,12 @@ static QDF_STATUS hdd_execute_config_command(REG_TABLE_ENTRY *reg_table,
 			goto done;
 		if (svalue < (int32_t) pRegEntry->VarMin) {
 			/* out of range */
-			hdd_err("invalid command, value %d < min value %d", svalue, (int)pRegEntry->VarMin);
+			hdd_err("Invalid command, value %d < min value %d", svalue, (int)pRegEntry->VarMin);
 			goto done;
 		}
 		if (svalue > (int32_t) pRegEntry->VarMax) {
 			/* out of range */
-			hdd_err("invalid command, value %d > max value %d", svalue, (int)pRegEntry->VarMax);
+			hdd_err("Invalid command, value %d > max value %d", svalue, (int)pRegEntry->VarMax);
 			goto done;
 		}
 		memcpy(pField, &svalue, pRegEntry->VarSize);
@@ -4982,7 +4982,7 @@ static QDF_STATUS hdd_execute_config_command(REG_TABLE_ENTRY *reg_table,
 		len_value_str = strlen(value_str);
 		if (len_value_str > (pRegEntry->VarSize - 1)) {
 			/* too big */
-			hdd_err("invalid command, string [%s] length "
+			hdd_err("Invalid command, string [%s] length "
 			       "%zu exceeds maximum length %u", value_str,
 			       len_value_str, (pRegEntry->VarSize - 1));
 			goto done;
@@ -4995,7 +4995,7 @@ static QDF_STATUS hdd_execute_config_command(REG_TABLE_ENTRY *reg_table,
 		len_value_str = strlen(value_str);
 		if (len_value_str != (QDF_MAC_ADDR_SIZE * 2)) {
 			/* out of range */
-			hdd_err("invalid command, MAC address [%s] length "
+			hdd_err("Invalid command, MAC address [%s] length "
 			       "%zu is not expected length %u", value_str,
 			       len_value_str, (QDF_MAC_ADDR_SIZE * 2));
 			goto done;
@@ -5067,10 +5067,10 @@ static void hdd_set_power_save_offload_config(hdd_context_t *pHddCtx)
 #ifdef FEATURE_RUNTIME_PM
 static void hdd_cfg_print_runtime_pm(hdd_context_t *hdd_ctx)
 {
-	hdd_info("Name = [gRuntimePM] Value = [%u] ",
+	hdd_debug("Name = [gRuntimePM] Value = [%u] ",
 		 hdd_ctx->config->runtime_pm);
 
-	hdd_info("Name = [gRuntimePMDelay] Value = [%u] ",
+	hdd_debug("Name = [gRuntimePMDelay] Value = [%u] ",
 		 hdd_ctx->config->runtime_pm_delay);
 }
 #else
@@ -5087,22 +5087,22 @@ static void hdd_cfg_print_runtime_pm(hdd_context_t *hdd_ctx)
  */
 static void hdd_per_roam_print_ini_config(hdd_context_t *hdd_ctx)
 {
-	hdd_info("Name = [%s] Value = [%u]",
+	hdd_debug("Name = [%s] Value = [%u]",
 		CFG_PER_ROAM_ENABLE_NAME,
 		hdd_ctx->config->is_per_roam_enabled);
-	hdd_info("Name = [%s] Value = [%u]",
+	hdd_debug("Name = [%s] Value = [%u]",
 		CFG_PER_ROAM_CONFIG_HIGH_RATE_TH_NAME,
 		hdd_ctx->config->per_roam_high_rate_threshold);
-	hdd_info("Name = [%s] Value = [%u]",
+	hdd_debug("Name = [%s] Value = [%u]",
 		CFG_PER_ROAM_CONFIG_LOW_RATE_TH_NAME,
 		hdd_ctx->config->per_roam_low_rate_threshold);
-	hdd_info("Name = [%s] Value = [%u]",
+	hdd_debug("Name = [%s] Value = [%u]",
 		CFG_PER_ROAM_CONFIG_RATE_TH_PERCENT_NAME,
 		hdd_ctx->config->per_roam_th_percent);
-	hdd_info("Name = [%s] Value = [%u]",
+	hdd_debug("Name = [%s] Value = [%u]",
 		CFG_PER_ROAM_REST_TIME_NAME,
 		hdd_ctx->config->per_roam_rest_time);
-	hdd_info("Name = [%s] Value = [%u]",
+	hdd_debug("Name = [%s] Value = [%u]",
 		CFG_PER_ROAM_MONITOR_TIME,
 		hdd_ctx->config->per_roam_mon_time);
 
@@ -5814,7 +5814,7 @@ QDF_STATUS hdd_update_mac_config(hdd_context_t *pHddCtx)
 	status = request_firmware(&fw, WLAN_MAC_FILE, pHddCtx->parent_dev);
 
 	if (status) {
-		hdd_warn("request_firmware failed %d", status);
+		hdd_err("request_firmware failed %d", status);
 		qdf_status = QDF_STATUS_E_FAILURE;
 		return qdf_status;
 	}
@@ -5872,7 +5872,7 @@ QDF_STATUS hdd_update_mac_config(hdd_context_t *pHddCtx)
 		buffer = line;
 	}
 	if (i <= QDF_MAX_CONCURRENCY_PERSONA) {
-		hdd_notice("%d Mac addresses provided", i);
+		hdd_debug("%d Mac addresses provided", i);
 	} else {
 		hdd_err("invalid number of Mac address provided, nMac = %d", i);
 		qdf_status = QDF_STATUS_E_INVAL;
@@ -5962,7 +5962,7 @@ static void hdd_set_rx_mode_value(hdd_context_t *hdd_ctx)
 {
 	if (hdd_ctx->config->rx_mode & CFG_ENABLE_RX_THREAD &&
 		 hdd_ctx->config->rx_mode & CFG_ENABLE_RPS) {
-		hdd_err("rx_mode wrong configuration. Make it default");
+		hdd_warn("rx_mode wrong configuration. Make it default");
 		hdd_ctx->config->rx_mode = CFG_RX_MODE_DEFAULT;
 	}
 
@@ -6013,12 +6013,12 @@ QDF_STATUS hdd_parse_config_ini(hdd_context_t *pHddCtx)
 		goto config_exit;
 	}
 
-	hdd_notice("qcom_cfg.ini Size %zu", fw->size);
+	hdd_debug("qcom_cfg.ini Size %zu", fw->size);
 
 	buffer = (char *)qdf_mem_malloc(fw->size);
 
 	if (NULL == buffer) {
-		hdd_alert("qdf_mem_malloc failure");
+		hdd_err("qdf_mem_malloc failure");
 		release_firmware(fw);
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -6031,7 +6031,7 @@ QDF_STATUS hdd_parse_config_ini(hdd_context_t *pHddCtx)
 		line = get_next_line(buffer);
 		buffer = i_trim(buffer);
 
-		hdd_notice("%s: item", buffer);
+		hdd_debug("%s: item", buffer);
 
 		if (strlen((char *)buffer) == 0 || *buffer == '#') {
 			buffer = line;
@@ -6138,7 +6138,7 @@ QDF_STATUS hdd_set_idle_ps_config(hdd_context_t *pHddCtx, uint32_t val)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	hdd_notice("hdd_set_idle_ps_config: Enter Val %d", val);
+	hdd_debug("hdd_set_idle_ps_config: Enter Val %d", val);
 
 	status = sme_set_idle_powersave_config(pHddCtx->pcds_context,
 			pHddCtx->hHal, val);
@@ -6168,7 +6168,7 @@ static void hdd_set_fine_time_meas_cap(hdd_context_t *hdd_ctx,
 	capability &= CFG_FINE_TIME_MEAS_CAPABILITY_MAX;
 	sme_config->csrConfig.fine_time_meas_cap = capability;
 
-	hdd_notice("fine time meas capability - INI: %04x Enabled: %04x",
+	hdd_debug("fine time meas capability - INI: %04x Enabled: %04x",
 		config->fine_time_meas_cap,
 		sme_config->csrConfig.fine_time_meas_cap);
 
@@ -6283,7 +6283,7 @@ QDF_STATUS hdd_hex_string_to_u16_array(char *str,
 	if (str == NULL || int_array == NULL || len == NULL)
 		return QDF_STATUS_E_INVAL;
 
-	hdd_err("str %p intArray %p intArrayMaxLen %d",
+	hdd_debug("str %p intArray %p intArrayMaxLen %d",
 		s, int_array, int_array_max_len);
 
 	*len = 0;
@@ -7040,7 +7040,7 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	hdd_info("%s bWmmIsEnabled=%d 802_11e_enabled=%d dot11Mode=%d",
+	hdd_debug("%s bWmmIsEnabled=%d 802_11e_enabled=%d dot11Mode=%d",
 		  __func__, pConfig->WmmMode, pConfig->b80211eIsEnabled,
 		  pConfig->dot11Mode);
 
@@ -7390,10 +7390,8 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 	hdd_he_set_sme_config(smeConfig, pConfig);
 
 	status = sme_update_config(pHddCtx->hHal, smeConfig);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hdd_err("sme_update_config() return failure %d",
-		       status);
-	}
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("sme_update_config() failure: %d", status);
 
 	qdf_mem_free(smeConfig);
 	return status;
@@ -7482,7 +7480,7 @@ QDF_STATUS hdd_update_nss(hdd_context_t *hdd_ctx, uint8_t nss)
 	enable2x2 = (nss == 1) ? 0 : 1;
 
 	if (hdd_config->enable2x2 == enable2x2) {
-		hdd_err("NSS same as requested");
+		hdd_debug("NSS same as requested");
 		return QDF_STATUS_SUCCESS;
 	}
 
@@ -7526,7 +7524,7 @@ QDF_STATUS hdd_update_nss(hdd_context_t *hdd_ctx, uint8_t nss)
 		ht_cap_info->txSTBC = 0;
 	} else {
 		sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_VHT_TXSTBC, &val32);
-		hdd_notice("STBC %d", val32);
+		hdd_debug("STBC %d", val32);
 		ht_cap_info->txSTBC = val32;
 	}
 	temp = val16;
