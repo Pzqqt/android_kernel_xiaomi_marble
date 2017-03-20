@@ -5402,6 +5402,7 @@ static QDF_STATUS __hdd_ipa_init(struct hdd_context *hdd_ctx)
 	int ret, i;
 	struct hdd_ipa_iface_context *iface_context = NULL;
 	struct ol_txrx_pdev_t *pdev = NULL;
+	struct ipa_rm_perf_profile profile;
 
 	if (!hdd_ipa_is_enabled(hdd_ctx))
 		return QDF_STATUS_SUCCESS;
@@ -5485,6 +5486,27 @@ static QDF_STATUS __hdd_ipa_init(struct hdd_context *hdd_ctx)
 		ret = hdd_ipa_setup_sys_pipe(hdd_ipa);
 		if (ret)
 			goto fail_create_sys_pipe;
+	}
+
+	/* When IPA clock scaling is disabled, initialze maximum clock */
+	if (!hdd_ipa_is_clk_scaling_enabled(hdd_ctx)) {
+		profile.max_supported_bandwidth_mbps = 800;
+		hdd_debug("IPA clock scaling is disabled.");
+		hdd_debug("Set initial CONS/PROD perf: %d",
+			  profile.max_supported_bandwidth_mbps);
+		ret = ipa_rm_set_perf_profile(IPA_RM_RESOURCE_WLAN_CONS,
+					      &profile);
+		if (ret) {
+			hdd_err("RM CONS set perf profile failed: %d", ret);
+			goto fail_create_sys_pipe;
+		}
+
+		ret = ipa_rm_set_perf_profile(IPA_RM_RESOURCE_WLAN_PROD,
+					      &profile);
+		if (ret) {
+			hdd_err("RM PROD set perf profile failed: %d", ret);
+			goto fail_create_sys_pipe;
+		}
 	}
 
 	EXIT();
