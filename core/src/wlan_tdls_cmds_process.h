@@ -164,6 +164,32 @@ QDF_STATUS tdls_process_add_peer(struct tdls_add_peer_request *req);
 QDF_STATUS tdls_process_del_peer(struct tdls_oper_request *req);
 
 /**
+ * tdls_process_enable_link() - enable TDLS link
+ * @req: TDLS enable link request
+ *
+ * Return: QDF_STATUS_SUCCESS if success; other value if failed
+ */
+QDF_STATUS tdls_process_enable_link(struct tdls_oper_request *req);
+
+/**
+ * tdls_process_setup_peer() - process configure an externally
+ *                                    controllable TDLS peer
+ * @req: TDLS configure force peer request
+ *
+ * Return: QDF_STATUS_SUCCESS if success; other values if failed
+ */
+QDF_STATUS tdls_process_setup_peer(struct tdls_oper_request *req);
+
+/**
+ * tdls_process_remove_force_peer() - process remove an externally controllable
+ *                                    TDLS peer
+ * @req: TDLS operation request
+ *
+ * Return: QDF_STATUS_SUCCESS if success; other values if failed
+ */
+QDF_STATUS tdls_process_remove_force_peer(struct tdls_oper_request *req);
+
+/**
  * tdls_process_update_peer() - update TDLS peer
  * @req: TDLS update peer request
  *

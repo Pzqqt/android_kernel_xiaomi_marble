@@ -98,30 +98,6 @@ enum tdls_nss_transition_state {
 };
 
 /**
- * enum tdls_command_type - TDLS command type
- * @TDLS_CMD_TX_ACTION: send tdls action frame
- * @TDLS_CMD_ADD_STA: add tdls peer
- * @TDLS_CMD_CHANGE_STA: change tdls peer
- * @TDLS_CMD_ENABLE_LINK: enable tdls link
- * @TDLS_CMD_DISABLE_LINK: disable tdls link
- * @TDLS_CMD_CONFIG_FORCE_PEER: config external peer
- * @TDLS_CMD_REMOVE_FORCE_PEER: remove external peer
- * @TDLS_CMD_STATS_UPDATE: update tdls stats
- * @TDLS_CMD_CONFIG_UPDATE: config tdls
- */
-enum tdls_commmand_type {
-	TDLS_CMD_TX_ACTION = 1,
-	TDLS_CMD_ADD_STA,
-	TDLS_CMD_CHANGE_STA,
-	TDLS_CMD_ENABLE_LINK,
-	TDLS_CMD_DISABLE_LINK,
-	TDLS_CMD_CONFIG_FORCE_PEER,
-	TDLS_CMD_REMOVE_FORCE_PEER,
-	TDLS_CMD_STATS_UPDATE,
-	TDLS_CMD_CONFIG_UPDATE
-};
-
-/**
  * struct tdls_conn_tracker_mac_table - connection tracker peer table
  * @mac_address: peer mac address
  * @tx_packet_cnt: number of tx pkts

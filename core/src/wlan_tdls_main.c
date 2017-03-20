@@ -202,10 +202,11 @@ QDF_STATUS tdls_process_cmd(struct scheduler_msg *msg)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!msg || !msg->bodyptr) {
-		tdls_err("msg: 0x%p, bodyptr: 0x%p", msg, msg->bodyptr);
+		tdls_err("msg: 0x%p", msg);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
+	tdls_debug("TDLS process command: %d", msg->type);
 
 	switch (msg->type) {
 	case TDLS_CMD_TX_ACTION:
@@ -217,13 +218,16 @@ QDF_STATUS tdls_process_cmd(struct scheduler_msg *msg)
 		tdls_process_update_peer(msg->bodyptr);
 		break;
 	case TDLS_CMD_ENABLE_LINK:
+		tdls_process_enable_link(msg->bodyptr);
 		break;
 	case TDLS_CMD_DISABLE_LINK:
 		tdls_process_del_peer(msg->bodyptr);
 		break;
 	case TDLS_CMD_CONFIG_FORCE_PEER:
+		tdls_process_setup_peer(msg->bodyptr);
 		break;
 	case TDLS_CMD_REMOVE_FORCE_PEER:
+		tdls_process_remove_force_peer(msg->bodyptr);
 		break;
 	case TDLS_CMD_STATS_UPDATE:
 		break;

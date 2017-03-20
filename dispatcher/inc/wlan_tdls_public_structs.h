@@ -37,6 +37,7 @@
 #define WLAN_TDLS_PEER_SUB_LIST_SIZE                 10
 #define WLAN_MAC_MAX_EXTN_CAP                        8
 #define WLAN_MAC_MAX_SUPP_CHANNELS                   100
+#define WLAN_MAC_WMI_MAX_SUPP_CHANNELS               128
 #define WLAN_MAX_SUPP_OPER_CLASSES                   32
 #define WLAN_MAC_MAX_SUPP_RATES                      32
 #define WLAN_CHANNEL_14                              14
@@ -45,6 +46,8 @@
 #define WLAN_TDLS_PREFERRED_OFF_CHANNEL_NUM_MIN      1
 #define WLAN_TDLS_PREFERRED_OFF_CHANNEL_NUM_MAX      165
 #define WLAN_TDLS_PREFERRED_OFF_CHANNEL_NUM_DEF      36
+
+#define AC_PRIORITY_NUM                 4
 
 /** Maximum time(ms) to wait for tdls add sta to complete **/
 #define WAIT_TIME_TDLS_ADD_STA      1500
@@ -152,6 +155,30 @@ enum tdls_feature_mode {
 	TDLS_SUPPORT_EXP_TRIG_ONLY,
 	TDLS_SUPPORT_IMP_MODE,
 	TDLS_SUPPORT_EXT_CONTROL,
+};
+
+/**
+ * enum tdls_command_type - TDLS command type
+ * @TDLS_CMD_TX_ACTION: send tdls action frame
+ * @TDLS_CMD_ADD_STA: add tdls peer
+ * @TDLS_CMD_CHANGE_STA: change tdls peer
+ * @TDLS_CMD_ENABLE_LINK: enable tdls link
+ * @TDLS_CMD_DISABLE_LINK: disable tdls link
+ * @TDLS_CMD_CONFIG_FORCE_PEER: config external peer
+ * @TDLS_CMD_REMOVE_FORCE_PEER: remove external peer
+ * @TDLS_CMD_STATS_UPDATE: update tdls stats
+ * @TDLS_CMD_CONFIG_UPDATE: config tdls
+ */
+enum tdls_command_type {
+	TDLS_CMD_TX_ACTION = 1,
+	TDLS_CMD_ADD_STA,
+	TDLS_CMD_CHANGE_STA,
+	TDLS_CMD_ENABLE_LINK,
+	TDLS_CMD_DISABLE_LINK,
+	TDLS_CMD_CONFIG_FORCE_PEER,
+	TDLS_CMD_REMOVE_FORCE_PEER,
+	TDLS_CMD_STATS_UPDATE,
+	TDLS_CMD_CONFIG_UPDATE
 };
 
 /**
@@ -676,7 +703,7 @@ struct tdls_peer_params {
 	uint8_t peer_curr_operclass;
 	uint8_t self_curr_operclass;
 	uint8_t peer_chanlen;
-	struct tdls_ch_params peer_chan[WLAN_MAC_MAX_SUPP_CHANNELS];
+	struct tdls_ch_params peer_chan[WLAN_MAC_WMI_MAX_SUPP_CHANNELS];
 	uint8_t peer_oper_classlen;
 	uint8_t peer_oper_class[WLAN_MAX_SUPP_OPER_CLASSES];
 	uint8_t pref_off_channum;

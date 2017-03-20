@@ -99,4 +99,15 @@ QDF_STATUS ucfg_tdls_add_peer(struct wlan_objmgr_vdev *vdev,
  */
 QDF_STATUS ucfg_tdls_update_peer(struct wlan_objmgr_vdev *vdev,
 				 struct tdls_update_peer_params *update_peer);
+
+/**
+ * ucfg_tdls_oper() - handle TDLS oper functions
+ * @vdev: vdev object
+ * @macaddr: MAC address of TDLS peer
+ * @cmd: oper cmd
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_tdls_oper(struct wlan_objmgr_vdev *vdev,
+			  const uint8_t *macaddr, enum tdls_command_type cmd);
 #endif
