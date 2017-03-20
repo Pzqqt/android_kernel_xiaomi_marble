@@ -1879,6 +1879,27 @@ hdd_update_cds_ac_specs_params(hdd_context_t *hdd_ctx)
 	}
 }
 
+#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
+static void hdd_register_policy_manager_callback(
+			struct wlan_objmgr_psoc *psoc)
+{
+	struct policy_mgr_hdd_cbacks hdd_cbacks;
+	hdd_cbacks.sap_restart_chan_switch_cb =
+		sap_restart_chan_switch_cb;
+	hdd_cbacks.wlan_hdd_get_channel_for_sap_restart =
+		wlan_hdd_get_channel_for_sap_restart;
+	if (QDF_STATUS_SUCCESS !=
+	    policy_mgr_register_hdd_cb(psoc, &hdd_cbacks)) {
+		hdd_err("HDD callback registration with policy manager failed");
+	}
+}
+#else
+static void hdd_register_policy_manager_callback(
+			struct wlan_objmgr_psoc *psoc)
+{
+}
+#endif
+
 /**
  * hdd_wlan_start_modules() - Single driver state machine for starting modules
  * @hdd_ctx: HDD context
@@ -1999,6 +2020,9 @@ int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			hdd_err("Failed to pre-enable CDS: %d", status);
 			goto close;
 		}
+
+		hdd_register_policy_manager_callback(
+			hdd_ctx->hdd_psoc);
 
 		hdd_update_hw_sw_info(hdd_ctx);
 		hdd_ctx->driver_status = DRIVER_MODULES_OPENED;
@@ -8008,37 +8032,6 @@ int hdd_pktlog_enable_disable(hdd_context_t *hdd_ctx, bool enable,
 }
 #endif /* REMOVE_PKT_LOG */
 
-
-#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-/**
- * hdd_register_for_sap_restart_with_channel_switch() - Register for SAP channel
- * switch without restart
- *
- * Registers callback function to change the operating channel of SAP by using
- * channel switch announcements instead of restarting SAP.
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS hdd_register_for_sap_restart_with_channel_switch(void)
-{
-	QDF_STATUS status;
-	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		hdd_err("hdd ctx is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-
-	status = policy_mgr_register_sap_restart_channel_switch_cb(
-			hdd_ctx->hdd_psoc,
-			(void *)hdd_sap_restart_with_channel_switch);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		hdd_err("restart cb registration failed");
-
-	return status;
-}
-#endif
-
 /**
  * hdd_get_platform_wlan_mac_buff() - API to query platform driver
  *                                    for MAC address
@@ -8688,6 +8681,21 @@ static int hdd_deconfigure_cds(hdd_context_t *hdd_ctx)
 	return ret;
 }
 
+#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
+static void hdd_deregister_policy_manager_callback(
+			struct wlan_objmgr_psoc *psoc)
+{
+	if (QDF_STATUS_SUCCESS !=
+	    policy_mgr_deregister_hdd_cb(psoc)) {
+		hdd_err("HDD callback deregister with policy manager failed");
+	}
+}
+#else
+static void hdd_deregister_policy_manager_callback(
+			struct wlan_objmgr_psoc *psoc)
+{
+}
+#endif
 
 /**
  * hdd_wlan_stop_modules - Single driver state machine for stoping modules
@@ -8708,6 +8716,8 @@ int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx)
 	p_cds_sched_context cds_sched_context = NULL;
 
 	ENTER();
+
+	hdd_deregister_policy_manager_callback(hdd_ctx->hdd_psoc);
 
 	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	if (!qdf_ctx) {
@@ -9147,15 +9157,6 @@ int hdd_register_cb(hdd_context_t *hdd_ctx)
 	sme_ext_scan_register_callback(hdd_ctx->hHal,
 				       wlan_hdd_cfg80211_extscan_callback);
 
-	status = policy_mgr_register_sap_restart_channel_switch_cb(
-			hdd_ctx->hdd_psoc,
-			(void *)hdd_sap_restart_with_channel_switch);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hdd_err("restart cb registration failed");
-		ret = -EINVAL;
-		return ret;
-	}
-
 	sme_set_rssi_threshold_breached_cb(hdd_ctx->hHal,
 				hdd_rssi_threshold_breached);
 
@@ -9199,12 +9200,6 @@ void hdd_deregister_cb(hdd_context_t *hdd_ctx)
 
 	sme_reset_link_layer_stats_ind_cb(hdd_ctx->hHal);
 	sme_reset_rssi_threshold_breached_cb(hdd_ctx->hHal);
-
-	status = policy_mgr_deregister_sap_restart_channel_switch_cb(
-		hdd_ctx->hdd_psoc);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		hdd_err("De-register restart cb registration failed: %d",
-			status);
 
 	sme_stats_ext_register_callback(hdd_ctx->hHal,
 					wlan_hdd_cfg80211_stats_ext_callback);
@@ -11251,6 +11246,25 @@ int wlan_hdd_send_mcc_latency(hdd_adapter_t *adapter, int set_value)
 			    WMA_VDEV_MCC_SET_TIME_LATENCY,
 			    set_value, VDEV_CMD);
 	return 0;
+}
+
+hdd_adapter_t *wlan_hdd_get_adapter_from_vdev(struct wlan_objmgr_psoc
+					      *psoc, uint8_t vdev_id)
+{
+	hdd_adapter_t *adapter = NULL;
+	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	/*
+	 * Currently PSOC is not being used. But this logic will
+	 * change once we have the converged implementation of
+	 * HDD context per PSOC in place. This would break if
+	 * multiple vdev objects reuse the vdev id.
+	 */
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	if (!adapter)
+		hdd_err("Get adapter by vdev id failed");
+
+	return adapter;
 }
 
 /* Register the module init/exit functions */

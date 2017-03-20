@@ -2354,6 +2354,81 @@ void hdd_sap_restart_with_channel_switch(hdd_adapter_t *ap_adapter,
 		return;
 	}
 }
+
+void sap_restart_chan_switch_cb (struct wlan_objmgr_psoc *psoc,
+				uint8_t vdev_id, uint32_t channel,
+				uint32_t channel_bw)
+{
+	hdd_adapter_t *ap_adapter = wlan_hdd_get_adapter_from_vdev(
+					psoc, vdev_id);
+	if (!ap_adapter) {
+		hdd_err("Adapter is NULL");
+		return;
+	}
+	hdd_sap_restart_with_channel_switch(ap_adapter, channel,
+					    channel_bw);
+}
+
+QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
+				struct wlan_objmgr_psoc *psoc,
+				uint8_t vdev_id, uint8_t *channel,
+				uint8_t *sec_ch, bool restart_sap)
+{
+	tHalHandle *hal_handle;
+	hdd_ap_ctx_t *hdd_ap_ctx;
+	uint16_t intf_ch = 0;
+
+	hdd_adapter_t *ap_adapter = wlan_hdd_get_adapter_from_vdev(
+					psoc, vdev_id);
+	if (!ap_adapter) {
+		hdd_err("Adapter is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (NULL == channel || NULL == sec_ch) {
+		hdd_err("Null parameters");
+	}
+
+	if (!test_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags))
+		return QDF_STATUS_E_FAILURE;
+
+	hdd_ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(ap_adapter);
+	hal_handle = WLAN_HDD_GET_HAL_CTX(ap_adapter);
+
+	if (!hal_handle)
+		return QDF_STATUS_E_FAILURE;
+
+	intf_ch = wlansap_check_cc_intf(hdd_ap_ctx->sapContext);
+	hdd_info("intf_ch: %d", intf_ch);
+
+	if (intf_ch == 0) {
+		hdd_err("interface channel is 0");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	hdd_info("SAP restart orig chan: %d, new chan: %d",
+		 hdd_ap_ctx->sapConfig.channel, intf_ch);
+	hdd_ap_ctx->sapConfig.channel = intf_ch;
+	hdd_ap_ctx->sapConfig.ch_params.ch_width =
+		hdd_ap_ctx->sapConfig.ch_width_orig;
+	hdd_ap_ctx->bss_stop_reason = BSS_STOP_DUE_TO_MCC_SCC_SWITCH;
+
+	cds_set_channel_params(hdd_ap_ctx->sapConfig.channel,
+			       hdd_ap_ctx->sapConfig.sec_ch,
+			       &hdd_ap_ctx->sapConfig.ch_params);
+	*channel = hdd_ap_ctx->sapConfig.channel;
+	*sec_ch = hdd_ap_ctx->sapConfig.sec_ch;
+
+	if (restart_sap) {
+		hdd_info("Restart SAP as a part of channel switch");
+		sap_restart_chan_switch_cb(psoc, vdev_id,
+			hdd_ap_ctx->sapConfig.channel,
+			hdd_ap_ctx->sapConfig.ch_params.ch_width);
+
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
 #endif
 
 int

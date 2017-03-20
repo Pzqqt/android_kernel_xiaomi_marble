@@ -1973,14 +1973,6 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 		enum nl80211_hidden_ssid hidden_ssid,
 		bool check_for_concurrency,
 		bool update_beacon);
-#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-QDF_STATUS hdd_register_for_sap_restart_with_channel_switch(void);
-#else
-static inline QDF_STATUS hdd_register_for_sap_restart_with_channel_switch(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 
 #if !defined(REMOVE_PKT_LOG)
 int hdd_process_pktlog_command(hdd_context_t *hdd_ctx, uint32_t set_value,
@@ -2298,6 +2290,7 @@ static inline void hdd_send_peer_status_ind_to_app(
  * Return: 0 sucess else failure
  */
 int wlan_hdd_send_p2p_quota(hdd_adapter_t *adapter, int sval);
+
 /**
  * wlan_hdd_send_p2p_quota()- Send MCC latency to FW
  * @adapter: Adapter data
@@ -2308,4 +2301,17 @@ int wlan_hdd_send_p2p_quota(hdd_adapter_t *adapter, int sval);
  * Return: 0 sucess else failure
  */
 int wlan_hdd_send_mcc_latency(hdd_adapter_t *adapter, int sval);
+
+/**
+ * wlan_hdd_get_adapter_from_vdev()- Get adapter from vdev id
+ * and PSOC object data
+ * @psoc: Psoc object data
+ * @vdev_id: vdev id
+ *
+ * Get adapter from vdev id and PSOC object data
+ *
+ * Return: adapter pointer
+ */
+hdd_adapter_t *wlan_hdd_get_adapter_from_vdev(struct wlan_objmgr_psoc
+					*psoc, uint8_t vdev_id);
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

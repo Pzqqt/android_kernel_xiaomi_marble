@@ -67,6 +67,39 @@ int hdd_softap_set_channel_change(struct net_device *dev,
 void hdd_sap_restart_with_channel_switch(hdd_adapter_t *adapter,
 				uint32_t target_channel,
 				uint32_t target_bw);
+/**
+ * sap_restart_chan_switch_cb() - Function to restart SAP with
+ * a different channel
+ * @psoc: PSOC object information
+ * @vdev_id: vdev id
+ * @channel: channel to switch
+ *
+ * This function restarts SAP with a different channel
+ *
+ * Return: None
+ *
+ */
+void sap_restart_chan_switch_cb (struct wlan_objmgr_psoc *psoc,
+				uint8_t vdev_id, uint32_t channel,
+				uint32_t channel_bw);
+/**
+ * wlan_hdd_get_channel_for_sap_restart() - Function to get
+ * suitable channel and restart SAP
+ * @psoc: PSOC object information
+ * @vdev_id: vdev id
+ * @channel: channel to be returned
+ * @sec_ch: secondary channel to be returned
+ * @restart_sap: restsart SAP as a part of channel switch
+ *
+ * This function gets the channel parameters to restart SAP
+ *
+ * Return: None
+ *
+ */
+QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
+				struct wlan_objmgr_psoc *psoc,
+				uint8_t vdev_id, uint8_t *channel,
+				uint8_t *sec_ch, bool restart_sap);
 #endif
 
 eCsrEncryptionType
