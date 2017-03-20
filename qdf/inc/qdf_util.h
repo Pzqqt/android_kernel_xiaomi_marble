@@ -433,6 +433,11 @@ static inline uint8_t *qdf_get_u32(uint8_t *ptr, uint32_t *value)
 #define qdf_function             __qdf_function
 
 /**
+ * qdf_min - minimum of two numbers
+ */
+#define qdf_min(a, b)   __qdf_min(a, b)
+
+/**
  * qdf_get_pwr2() - get next power of 2 integer from input value
  * @value: input value to find next power of 2 integer
  *

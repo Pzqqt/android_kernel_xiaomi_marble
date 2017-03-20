@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -191,7 +191,7 @@ static inline uint32_t qdf_str_lcopy(char *dest, const char *src, uint32_t bytes
  */
 static inline uint32_t qdf_mem_map_nbytes_single(qdf_device_t osdev, void *buf,
 						 qdf_dma_dir_t dir, int nbytes,
-						 uint32_t *phy_addr)
+						 qdf_dma_addr_t *phy_addr)
 {
 #if defined(HIF_PCI)
 	return __qdf_mem_map_nbytes_single(osdev, buf, dir, nbytes, phy_addr);

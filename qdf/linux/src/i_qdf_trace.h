@@ -63,7 +63,7 @@
 		do {	\
 			extern int qdf_dbg_mask; \
 			if (qdf_dbg_mask >= log_level) { \
-				printk("qdf: "args); \
+				printk(args); \
 				printk("\n"); \
 			} \
 		} while (0)
