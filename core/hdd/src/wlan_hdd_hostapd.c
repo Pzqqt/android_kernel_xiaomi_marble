@@ -7421,6 +7421,7 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 	pMgmt_frame = (struct ieee80211_mgmt *)pBeacon->head;
 
 	pConfig->beacon_int = pMgmt_frame->u.beacon.beacon_int;
+	pConfig->dfs_cac_offload = pHddCtx->dfs_cac_offload;
 
 	pConfig->disableDFSChSwitch = iniConfig->disableDFSChSwitch;
 

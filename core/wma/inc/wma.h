@@ -1347,6 +1347,7 @@ struct hw_mode_idx_to_mac_cap_idx {
  * @wmi_cmd_rsp_wake_lock: wmi command response wake lock
  * @wmi_cmd_rsp_runtime_lock: wmi command response bus lock
  * @saved_chan: saved channel list sent as part of WMI_SCAN_CHAN_LIST_CMDID
+ * @dfs_cac_offload: dfs and cac timer offload
  */
 typedef struct {
 	void *wmi_handle;
@@ -1525,6 +1526,7 @@ typedef struct {
 					   struct scheduler_msg *msg);
 	bool fw_timeout_crash;
 	bool sub_20_support;
+	bool dfs_cac_offload;
 	tp_wma_packetdump_cb wma_mgmt_tx_packetdump_cb;
 	tp_wma_packetdump_cb wma_mgmt_rx_packetdump_cb;
 	tSirLLStatsResults *link_stats_results;

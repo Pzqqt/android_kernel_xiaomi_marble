@@ -1602,6 +1602,7 @@ struct hdd_context_s {
 	uint8_t last_scan_reject_session_id;
 	enum scan_reject_states last_scan_reject_reason;
 	unsigned long last_scan_reject_timestamp;
+	bool dfs_cac_offload;
 };
 
 /**

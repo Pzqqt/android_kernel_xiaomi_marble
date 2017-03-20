@@ -4363,6 +4363,7 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 #endif /* WLAN_FEATURE_LPSS */
 	tgt_cfg.ap_arpns_support = wma_handle->ap_arpns_support;
 	tgt_cfg.bpf_enabled = wma_handle->bpf_enabled;
+	tgt_cfg.dfs_cac_offload = wma_handle->dfs_cac_offload;
 	wma_update_ra_rate_limit(wma_handle, &tgt_cfg);
 	tgt_cfg.fine_time_measurement_cap =
 		wma_handle->fine_time_measurement_cap;
@@ -4774,7 +4775,9 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	cdp_mark_first_wakeup_packet(soc,
 		WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
 			WMI_SERVICE_MARK_FIRST_WAKEUP_PACKET));
-
+	wma_handle->dfs_cac_offload =
+		WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
+			WMI_SERVICE_DFS_PHYERR_OFFLOAD);
 	wma_handle->nan_datapath_enabled =
 		WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
 			WMI_SERVICE_NAN_DATA);

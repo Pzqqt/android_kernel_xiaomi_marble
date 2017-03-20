@@ -1519,6 +1519,7 @@ void hdd_update_tgt_cfg(void *context, void *param)
 
 	/* Configure NAN datapath features */
 	hdd_nan_datapath_target_config(hdd_ctx, cfg);
+	hdd_ctx->dfs_cac_offload = cfg->dfs_cac_offload;
 }
 
 /**

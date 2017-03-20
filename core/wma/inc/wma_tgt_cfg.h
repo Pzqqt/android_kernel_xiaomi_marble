@@ -152,6 +152,7 @@ struct wma_dfs_radar_ind {
  * @nan_datapath_enabled: nan data path support
  * @bool is_ra_rate_limit_enabled: RA filter support
  * @he_cap: HE capability received from FW
+ * @dfs_cac_offload: dfs and cac timer offloaded
  */
 struct wma_tgt_cfg {
 	uint32_t target_fw_version;
@@ -184,5 +185,6 @@ struct wma_tgt_cfg {
 #ifdef WLAN_FEATURE_11AX
 	tDot11fIEvendor_he_cap he_cap;
 #endif
+	bool dfs_cac_offload;
 };
 #endif /* WMA_TGT_CFG_H */

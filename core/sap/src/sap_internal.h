@@ -280,6 +280,7 @@ typedef struct sSapContext {
 	wlan_scan_requester req_id;
 	uint8_t sap_acs_pre_start_bss;
 	uint8_t sap_sta_id;
+	bool dfs_cac_offload;
 } *ptSapContext;
 
 /*----------------------------------------------------------------------------

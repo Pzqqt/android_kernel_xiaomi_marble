@@ -5116,7 +5116,9 @@ void sap_dfs_cac_timer_callback(void *data)
 	 * destroy timer here.
 	 */
 	if (pMac->sap.SapDfsInfo.is_dfs_cac_timer_running == true) {
-		qdf_mc_timer_destroy(&pMac->sap.SapDfsInfo.sap_dfs_cac_timer);
+		if (!sapContext->dfs_cac_offload)
+			qdf_mc_timer_destroy(
+				&pMac->sap.SapDfsInfo.sap_dfs_cac_timer);
 		pMac->sap.SapDfsInfo.is_dfs_cac_timer_running = false;
 	}
 
@@ -5193,6 +5195,13 @@ int sap_start_dfs_cac_timer(ptSapContext sap_ctx)
 	}
 
 	mac = PMAC_STRUCT(hal);
+	if (sap_ctx->dfs_cac_offload) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: cac timer offloaded to firmware", __func__);
+		mac->sap.SapDfsInfo.is_dfs_cac_timer_running = true;
+		return 1;
+	}
+
 	sap_get_cac_dur_dfs_region(sap_ctx, &cac_dur, &dfs_region);
 	if (0 == cac_dur)
 		return 0;
