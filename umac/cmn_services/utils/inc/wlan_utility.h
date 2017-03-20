@@ -64,4 +64,11 @@ uint8_t wlan_freq_to_chan(uint32_t freq);
 uint8_t *wlan_get_vendor_ie_ptr_from_oui(uint8_t *oui,
 	uint8_t oui_size, uint8_t *ie, uint16_t ie_len);
 
+/**
+ * wlan_is_emulation_platform() - check if platform is emulation based
+ * @phy_version - psoc nif phy_version
+ *
+ * Return: boolean value based on platform type
+ */
+bool wlan_is_emulation_platform(uint32_t phy_version);
 #endif /* _WLAN_UTILITY_H_ */

@@ -94,3 +94,13 @@ uint8_t *wlan_get_vendor_ie_ptr_from_oui(uint8_t *oui,
 
 	return NULL;
 }
+
+bool wlan_is_emulation_platform(uint32_t phy_version)
+{
+	if ((phy_version == 0xABC0) || (phy_version == 0xABC1) ||
+		(phy_version == 0xABC2) || (phy_version == 0xABC3) ||
+		(phy_version == 0xFFFF) || (phy_version == 0xABCD))
+		return true;
+
+	return false;
+}

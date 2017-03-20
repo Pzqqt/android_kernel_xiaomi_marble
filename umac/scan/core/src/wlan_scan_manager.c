@@ -25,6 +25,7 @@
 #include <wlan_scan_tgt_api.h>
 #include "wlan_scan_main.h"
 #include "wlan_scan_manager.h"
+#include "wlan_utility.h"
 
 static QDF_STATUS
 scm_free_scan_request_mem(struct scan_start_request *req)
@@ -339,6 +340,7 @@ scm_scan_start_req(struct scheduler_msg *msg)
 	struct wlan_serialization_command cmd = {0, };
 	enum wlan_serialization_status ser_cmd_status;
 	struct scan_start_request *req;
+	struct wlan_objmgr_psoc *psoc;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!msg || !msg->bodyptr) {
@@ -357,6 +359,18 @@ scm_scan_start_req(struct scheduler_msg *msg)
 	cmd.cmd_timeout_duration = req->scan_req.max_scan_time +
 		SCAN_TIMEOUT_GRACE_PERIOD;
 	cmd.vdev = req->vdev;
+
+	wlan_vdev_obj_lock(cmd.vdev);
+	psoc = wlan_vdev_get_psoc(cmd.vdev);
+	wlan_vdev_obj_unlock(cmd.vdev);
+	/*
+	 * Temp Hack to disable Serialization Timer
+	 * Modified Serialization module to ignore timeout of 0 value
+	 */
+	if (wlan_is_emulation_platform(wlan_psoc_get_nif_phy_version(psoc))) {
+		cmd.cmd_timeout_duration = 0;
+		scm_info("[SCAN-EMULATION]: Disabling Serialization Timer for Emulation\n");
+	}
 
 	scm_info("req: 0x%p, reqid: %d, scanid: %d, vdevid: %d",
 		req, req->scan_req.scan_req_id, req->scan_req.scan_id,

@@ -26,6 +26,7 @@
 #include "wlan_objmgr_vdev_obj.h"
 #include "wlan_objmgr_pdev_obj.h"
 #include "qdf_mc_timer.h"
+#include "wlan_utility.h"
 
 QDF_STATUS
 wlan_serialization_put_back_to_global_list(qdf_list_t *queue,
@@ -243,6 +244,13 @@ wlan_serialization_find_and_stop_timer(struct wlan_objmgr_psoc *psoc,
 		return status;
 	}
 
+	if ((cmd->cmd_timeout_duration == 0) &&
+		(wlan_is_emulation_platform(wlan_psoc_get_nif_phy_version(psoc)
+	))) {
+		serialization_err("[SCAN-EMULATION]: Not performing timer functions\n");
+		return QDF_STATUS_SUCCESS;
+	}
+
 	psoc_ser_obj = wlan_serialization_get_psoc_priv_obj(psoc);
 	/*
 	 * Here cmd_id and cmd_type are used to locate the timer being
@@ -285,6 +293,14 @@ wlan_serialization_find_and_start_timer(struct wlan_objmgr_psoc *psoc,
 		serialization_err("invalid param");
 		return status;
 	}
+
+	if ((cmd->cmd_timeout_duration == 0) &&
+		(wlan_is_emulation_platform(wlan_psoc_get_nif_phy_version(psoc)
+	))) {
+		serialization_err("[SCAN-EMULATION]: Not performing timer functions\n");
+		return QDF_STATUS_SUCCESS;
+	}
+
 
 	psoc_ser_obj = wlan_serialization_get_psoc_priv_obj(psoc);
 	for (i = 0; psoc_ser_obj->max_active_cmds > i; i++) {
