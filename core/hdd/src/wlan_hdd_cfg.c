@@ -4318,12 +4318,14 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_REG_OFFLOAD_DEFAULT,
 		     CFG_ENABLE_REG_OFFLOAD_MIN,
 		     CFG_ENABLE_REG_OFFLOAD_MAX),
+
 	REG_VARIABLE(CFG_FILS_MAX_CHAN_GUARD_TIME_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, fils_max_chan_guard_time,
 		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
 		CFG_FILS_MAX_CHAN_GUARD_TIME_DEFAULT,
 		CFG_FILS_MAX_CHAN_GUARD_TIME_MIN,
 		CFG_FILS_MAX_CHAN_GUARD_TIME_MAX),
+
 	REG_VARIABLE(CFG_EXTERNAL_ACS_POLICY, WLAN_PARAM_Integer,
 		     struct hdd_config, external_acs_policy,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -4337,6 +4339,13 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_EXTERNAL_ACS_FREQ_BAND_DEFAULT,
 		     CFG_EXTERNAL_ACS_FREQ_BAND_MIN,
 		     CFG_EXTERNAL_ACS_FREQ_BAND_MAX),
+
+	REG_VARIABLE(CFG_DROPPED_PKT_DISCONNECT_TH_NAME, WLAN_PARAM_Integer,
+		struct hdd_config, pkt_err_disconn_th,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_DROPPED_PKT_DISCONNECT_TH_DEFAULT,
+		CFG_DROPPED_PKT_DISCONNECT_TH_MIN,
+		CFG_DROPPED_PKT_DISCONNECT_TH_MAX),
 };
 
 
@@ -5847,6 +5856,9 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	hdd_info("Name = [%s] Value = [%d]",
 		 CFG_EXTERNAL_ACS_FREQ_BAND,
 		 pHddCtx->config->external_acs_freq_band);
+	hdd_info("Name = [%s] value = [%u]",
+		 CFG_DROPPED_PKT_DISCONNECT_TH_NAME,
+		 pHddCtx->config->pkt_err_disconn_th);
 }
 
 
@@ -7431,6 +7443,8 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 
 	hdd_he_set_sme_config(smeConfig, pConfig);
 
+	smeConfig->csrConfig.pkt_err_disconn_th =
+			pHddCtx->config->pkt_err_disconn_th;
 	status = sme_update_config(pHddCtx->hHal, smeConfig);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("sme_update_config() failure: %d", status);

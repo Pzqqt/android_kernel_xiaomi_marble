@@ -1171,6 +1171,7 @@ typedef struct sMaxTxPowerPerBandParams {
  * @rx_aggregation_size: Rx aggregation size
  * @enable_bcast_probe_rsp: enable broadcast probe response
  * @fils_max_chan_guard_time: FILS max channel guard time
+ * @pkt_err_disconn_th: packet drop threshold
  */
 struct add_sta_self_params {
 	tSirMacAddr self_mac_addr;
@@ -1185,6 +1186,7 @@ struct add_sta_self_params {
 	uint32_t rx_aggregation_size;
 	bool enable_bcast_probe_rsp;
 	uint8_t fils_max_chan_guard_time;
+	uint16_t pkt_err_disconn_th;
 };
 
 /**

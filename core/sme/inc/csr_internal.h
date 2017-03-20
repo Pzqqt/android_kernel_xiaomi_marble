@@ -624,6 +624,7 @@ typedef struct tagCsrConfig {
 #endif
 	bool qcn_ie_support;
 	uint8_t fils_max_chan_guard_time;
+	uint16_t pkt_err_disconn_th;
 } tCsrConfig;
 
 typedef struct tagCsrChannelPowerInfo {

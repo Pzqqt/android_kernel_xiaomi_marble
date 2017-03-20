@@ -1762,6 +1762,15 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 		}
 	}
 
+	WMA_LOGD("Setting WMI_VDEV_PARAM_DISCONNECT_TH: %d",
+		self_sta_req->pkt_err_disconn_th);
+	ret = wma_vdev_set_param(wma_handle->wmi_handle,
+				self_sta_req->session_id,
+				WMI_VDEV_PARAM_DISCONNECT_TH,
+				self_sta_req->pkt_err_disconn_th);
+	if (ret)
+		WMA_LOGE("Failed to set WMI_VDEV_PARAM_DISCONNECT_TH");
+
 	wma_handle->interfaces[vdev_id].is_vdev_valid = true;
 	ret = wma_vdev_set_param(wma_handle->wmi_handle,
 				self_sta_req->session_id,

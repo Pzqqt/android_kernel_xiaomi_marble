@@ -2352,6 +2352,8 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (pParam) {
+		pMac->roam.configParam.pkt_err_disconn_th =
+			pParam->pkt_err_disconn_th;
 		pMac->roam.configParam.WMMSupportMode = pParam->WMMSupportMode;
 		cfg_set_int(pMac, WNI_CFG_WME_ENABLED,
 			(pParam->WMMSupportMode == eCsrRoamWmmNoQos) ? 0 : 1);
@@ -2818,6 +2820,7 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	if (!pParam)
 		return QDF_STATUS_E_INVAL;
 
+	pParam->pkt_err_disconn_th = cfg_params->pkt_err_disconn_th;
 	pParam->WMMSupportMode = cfg_params->WMMSupportMode;
 	pParam->Is11eSupportEnabled = cfg_params->Is11eSupportEnabled;
 	pParam->FragmentationThreshold = cfg_params->FragmentationThreshold;
@@ -15513,7 +15516,8 @@ QDF_STATUS csr_issue_add_sta_for_session_req(tpAniSirGlobal pMac,
 			pMac->roam.configParam.enable_bcast_probe_rsp;
 	add_sta_self_req->fils_max_chan_guard_time =
 			pMac->roam.configParam.fils_max_chan_guard_time;
-
+	add_sta_self_req->pkt_err_disconn_th =
+			pMac->roam.configParam.pkt_err_disconn_th;
 	msg.type = WMA_ADD_STA_SELF_REQ;
 	msg.reserved = 0;
 	msg.bodyptr = add_sta_self_req;
