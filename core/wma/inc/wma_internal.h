@@ -926,12 +926,6 @@ wma_process_ftm_command(tp_wma_handle wma_handle,
 void wma_process_link_status_req(tp_wma_handle wma,
 				 tAniGetLinkStatus *pGetLinkStatus);
 
-#ifdef FEATURE_WLAN_LPHB
-QDF_STATUS wma_process_lphb_conf_req(tp_wma_handle wma_handle,
-				     tSirLPHBReq *lphb_conf_req);
-
-#endif
-
 QDF_STATUS wma_process_dhcp_ind(tp_wma_handle wma_handle,
 				tAniDHCPInd *ta_dhcp_ind);
 

@@ -2397,16 +2397,6 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, struct scheduler_msg *pMsg)
 							pMsg->bodyptr);
 		qdf_mem_free(pMsg->bodyptr);
 		break;
-#ifdef FEATURE_WLAN_LPHB
-	/* LPHB timeout indication arrived, send IND to client */
-	case eWNI_SME_LPHB_IND:
-		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_RX_WMA_MSG,
-				 NO_SESSION, pMsg->type));
-		if (pMac->sme.pLphbIndCb)
-			pMac->sme.pLphbIndCb(pMac->hHdd, pMsg->bodyptr);
-		qdf_mem_free(pMsg->bodyptr);
-		break;
-#endif /* FEATURE_WLAN_LPHB */
 	case eWNI_SME_IBSS_PEER_INFO_RSP:
 		if (pMsg->bodyptr) {
 			sme_ibss_peer_info_response_handler(pMac,
@@ -10300,59 +10290,6 @@ QDF_STATUS sme_is_sta_p2p_client_connected(tHalHandle hHal)
 	return QDF_STATUS_E_FAILURE;
 }
 
-#ifdef FEATURE_WLAN_LPHB
-/* ---------------------------------------------------------------------------
-    \fn sme_lphb_config_req
-    \API to make configuration LPHB within FW.
-    \param hHal - The handle returned by mac_open
-    \param lphdReq - LPHB request argument by client
-    \param pCallbackfn - LPHB timeout notification callback function pointer
-   \- return Configuration message posting status, SUCCESS or Fail
-    -------------------------------------------------------------------------*/
-QDF_STATUS sme_lphb_config_req
-	(tHalHandle hHal,
-	tSirLPHBReq *lphdReq,
-	void (*pCallbackfn)(void *pHddCtx, tSirLPHBInd * indParam)
-	) {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	struct scheduler_msg message;
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_LPHB_CONFIG_REQ,
-			 NO_SESSION, lphdReq->cmd));
-	status = sme_acquire_global_lock(&pMac->sme);
-	if (QDF_STATUS_SUCCESS == status) {
-		if ((LPHB_SET_EN_PARAMS_INDID == lphdReq->cmd) &&
-		    (NULL == pCallbackfn) && (NULL == pMac->sme.pLphbIndCb)) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Indication Call back did not registered",
-				  __func__);
-			sme_release_global_lock(&pMac->sme);
-			return QDF_STATUS_E_FAILURE;
-		} else if (NULL != pCallbackfn) {
-			pMac->sme.pLphbIndCb = pCallbackfn;
-		}
-
-		/* serialize the req through MC thread */
-		message.bodyptr = lphdReq;
-		message.type = WMA_LPHB_CONF_REQ;
-		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
-				 NO_SESSION, message.type));
-		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
-						 &message);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Post Config LPHB MSG fail", __func__);
-			status = QDF_STATUS_E_FAILURE;
-		}
-		sme_release_global_lock(&pMac->sme);
-	}
-
-	return status;
-}
-#endif /* FEATURE_WLAN_LPHB */
 /*--------------------------------------------------------------------------
    \brief sme_enable_disable_split_scan() - a wrapper function to set the split
 					    scan parameter.

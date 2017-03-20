@@ -713,12 +713,6 @@ eCsrPhyMode sme_get_phy_mode(tHalHandle hHal);
 QDF_STATUS sme_handoff_request(tHalHandle hHal, uint8_t sessionId,
 			       tCsrHandoffRequest *pHandoffInfo);
 QDF_STATUS sme_is_sta_p2p_client_connected(tHalHandle hHal);
-#ifdef FEATURE_WLAN_LPHB
-QDF_STATUS sme_lphb_config_req(tHalHandle hHal,
-		tSirLPHBReq * lphdReq,
-		void (*pCallbackfn)(void *pHddCtx,
-			tSirLPHBInd * indParam));
-#endif /* FEATURE_WLAN_LPHB */
 QDF_STATUS sme_add_periodic_tx_ptrn(tHalHandle hHal, tSirAddPeriodicTxPtrn
 		*addPeriodicTxPtrnParams);
 QDF_STATUS sme_del_periodic_tx_ptrn(tHalHandle hHal, tSirDelPeriodicTxPtrn

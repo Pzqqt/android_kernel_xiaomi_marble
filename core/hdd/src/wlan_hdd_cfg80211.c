@@ -16125,7 +16125,7 @@ wlan_hdd_cfg80211_set_mac_acl(struct wiphy *wiphy,
  * Return: none
  */
 static void wlan_hdd_cfg80211_lphb_ind_handler(void *pHddCtx,
-					       tSirLPHBInd *lphbInd)
+		struct pmo_lphb_rsp *lphb_ind)
 {
 	struct sk_buff *skb;
 
@@ -16134,14 +16134,13 @@ static void wlan_hdd_cfg80211_lphb_ind_handler(void *pHddCtx,
 	if (0 != wlan_hdd_validate_context((hdd_context_t *) pHddCtx))
 		return;
 
-	if (NULL == lphbInd) {
+	if (!lphb_ind) {
 		hdd_err("invalid argument lphbInd");
 		return;
 	}
 
 	skb = cfg80211_testmode_alloc_event_skb(((hdd_context_t *) pHddCtx)->
-						wiphy, sizeof(tSirLPHBInd),
-						GFP_ATOMIC);
+			wiphy, sizeof(*lphb_ind), GFP_ATOMIC);
 	if (!skb) {
 		hdd_err("LPHB timeout, NL buffer alloc fail");
 		return;
@@ -16151,11 +16150,12 @@ static void wlan_hdd_cfg80211_lphb_ind_handler(void *pHddCtx,
 		hdd_err("WLAN_HDD_TM_ATTR_CMD put fail");
 		goto nla_put_failure;
 	}
-	if (nla_put_u32(skb, WLAN_HDD_TM_ATTR_TYPE, lphbInd->protocolType)) {
+	if (nla_put_u32(skb, WLAN_HDD_TM_ATTR_TYPE, lphb_ind->protocol_type)) {
 		hdd_err("WLAN_HDD_TM_ATTR_TYPE put fail");
 		goto nla_put_failure;
 	}
-	if (nla_put(skb, WLAN_HDD_TM_ATTR_DATA, sizeof(tSirLPHBInd), lphbInd)) {
+	if (nla_put(skb, WLAN_HDD_TM_ATTR_DATA, sizeof(*lphb_ind),
+			lphb_ind)) {
 		hdd_err("WLAN_HDD_TM_ATTR_DATA put fail");
 		goto nla_put_failure;
 	}
@@ -16213,9 +16213,9 @@ static int __wlan_hdd_cfg80211_testmode(struct wiphy *wiphy,
 	{
 		int buf_len;
 		void *buf;
-		tSirLPHBReq *hb_params = NULL;
-		tSirLPHBReq *hb_params_temp = NULL;
-		QDF_STATUS smeStatus;
+		struct pmo_lphb_req *hb_params = NULL;
+		struct pmo_lphb_req *hb_params_temp = NULL;
+		QDF_STATUS status;
 
 		if (!tb[WLAN_HDD_TM_ATTR_DATA]) {
 			hdd_err("Testmode INV DATA");
@@ -16225,28 +16225,27 @@ static int __wlan_hdd_cfg80211_testmode(struct wiphy *wiphy,
 		buf = nla_data(tb[WLAN_HDD_TM_ATTR_DATA]);
 		buf_len = nla_len(tb[WLAN_HDD_TM_ATTR_DATA]);
 
-		hb_params_temp = (tSirLPHBReq *) buf;
-		if ((hb_params_temp->cmd == LPHB_SET_TCP_PARAMS_INDID)
-		    && (hb_params_temp->params.lphbTcpParamReq.
-			timePeriodSec == 0))
+		hb_params_temp = (struct pmo_lphb_req *) buf;
+		if ((hb_params_temp->cmd == pmo_lphb_set_tcp_pararm_indid)
+		    && (hb_params_temp->params.lphb_tcp_params.
+			time_period_sec == 0))
 			return -EINVAL;
 
-		hb_params =
-			(tSirLPHBReq *) qdf_mem_malloc(sizeof(tSirLPHBReq));
+		hb_params = (struct pmo_lphb_req *)qdf_mem_malloc(
+				sizeof(*hb_params));
 		if (NULL == hb_params) {
 			hdd_err("Request Buffer Alloc Fail");
 			return -ENOMEM;
 		}
 
 		qdf_mem_copy(hb_params, buf, buf_len);
-		smeStatus =
-			sme_lphb_config_req((tHalHandle) (pHddCtx->hHal),
-					    hb_params,
+		status = pmo_ucfg_lphb_config_req(pHddCtx->hdd_psoc,
+					hb_params, (void *)pHddCtx,
 					    wlan_hdd_cfg80211_lphb_ind_handler);
-		if (QDF_STATUS_SUCCESS != smeStatus) {
+		if (status != QDF_STATUS_SUCCESS)
 			hdd_err("LPHB Config Fail, disable");
-			qdf_mem_free(hb_params);
-		}
+
+		qdf_mem_free(hb_params);
 		return 0;
 	}
 #endif /* FEATURE_WLAN_LPHB */

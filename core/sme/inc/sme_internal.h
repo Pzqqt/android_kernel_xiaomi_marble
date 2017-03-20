@@ -176,9 +176,6 @@ typedef struct tagSmeStruct {
 	void **pSmeCmdBufAddr;
 	tDblLinkList smeCmdFreeList;    /* preallocated roam cmd list */
 	enum tQDF_ADAPTER_MODE currDeviceMode;
-#ifdef FEATURE_WLAN_LPHB
-	void (*pLphbIndCb)(void *pHddCtx, tSirLPHBInd *indParam);
-#endif /* FEATURE_WLAN_LPHB */
 	tSmePeerInfoHddCbkInfo peerInfoParams;
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 	host_event_wlan_status_payload_type eventPayload;

@@ -162,10 +162,6 @@ static uint8_t *sme_trace_get_rx_msg_string(uint32_t code)
 		CASE_RETURN_STRING(TRACE_CODE_SME_RX_HDD_TDLS_DEL_PEER_STA);
 #endif
 		CASE_RETURN_STRING(TRACE_CODE_SME_RX_HDD_PREF_NET_LIST);
-#ifdef FEATURE_WLAN_LPHB
-		CASE_RETURN_STRING(TRACE_CODE_SME_RX_HDD_LPHB_CONFIG_REQ);
-#endif /* FEATURE_WLAN_LPHB */
-
 	default:
 		return "UNKNOWN";
 		break;

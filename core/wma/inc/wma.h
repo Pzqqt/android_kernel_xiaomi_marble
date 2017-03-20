@@ -898,12 +898,6 @@ struct wma_wow {
 	bool disassoc_enable;
 	bool bmiss_enable;
 	bool gtk_err_enable[WMA_MAX_SUPPORTED_BSS];
-#ifdef FEATURE_WLAN_LPHB
-	/* currently supports only vdev 0.
-	 * cache has two entries: one for TCP and one for UDP.
-	 */
-	tSirLPHBReq lphb_cache[2];
-#endif
 };
 
 #ifdef WLAN_FEATURE_11W

@@ -6658,13 +6658,6 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, struct scheduler_msg *msg)
 					    (tSirTxPowerLimit *) msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
-#ifdef FEATURE_WLAN_LPHB
-	case WMA_LPHB_CONF_REQ:
-		wma_process_lphb_conf_req(wma_handle,
-					  (tSirLPHBReq *) msg->bodyptr);
-		break;
-#endif /* FEATURE_WLAN_LPHB */
-
 #ifdef FEATURE_WLAN_CH_AVOID
 	case WMA_CH_AVOID_UPDATE_REQ:
 		wma_process_ch_avoid_update_req(wma_handle,
