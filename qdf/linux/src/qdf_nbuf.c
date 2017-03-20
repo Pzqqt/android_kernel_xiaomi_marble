@@ -366,8 +366,9 @@ void __qdf_nbuf_unmap_single(qdf_device_t osdev, qdf_nbuf_t buf,
 void __qdf_nbuf_unmap_single(qdf_device_t osdev, qdf_nbuf_t buf,
 					qdf_dma_dir_t dir)
 {
-	dma_unmap_single(osdev->dev, QDF_NBUF_CB_PADDR(buf),
-			 skb_end_pointer(buf) - buf->data, dir);
+	if (QDF_NBUF_CB_PADDR(buf))
+		dma_unmap_single(osdev->dev, QDF_NBUF_CB_PADDR(buf),
+			skb_end_pointer(buf) - buf->data, dir);
 }
 #endif
 EXPORT_SYMBOL(__qdf_nbuf_unmap_single);
