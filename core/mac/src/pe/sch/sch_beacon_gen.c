@@ -127,8 +127,7 @@ sch_append_addn_ie(tpAniSirGlobal mac_ctx, tpPESession session,
 				addn_ielen += noa_len;
 				p2p_ie[1] += noa_len;
 			} else {
-				sch_log(mac_ctx, LOGE,
-					FL("Not able to insert NoA because of length constraint"));
+				pe_err("Not able to insert NoA because of length constraint");
 			}
 		}
 	}
@@ -136,8 +135,7 @@ sch_append_addn_ie(tpAniSirGlobal mac_ctx, tpPESession session,
 		qdf_mem_copy(frm, &add_ie[0], addn_ielen);
 		*num_bytes = *num_bytes + addn_ielen;
 	} else {
-		sch_log(mac_ctx, LOGW,
-			FL("Not able to insert because of len constraint %d"),
+		pe_warn("Not able to insert because of len constraint %d",
 			addn_ielen);
 	}
 	return status;
@@ -179,26 +177,26 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 
 	bcn_1 = qdf_mem_malloc(sizeof(tDot11fBeacon1));
 	if (NULL == bcn_1) {
-		sch_log(mac_ctx, LOGE, FL("Failed to allocate memory"));
+		pe_err("Failed to allocate memory");
 		return eSIR_MEM_ALLOC_FAILED;
 	}
 
 	bcn_2 = qdf_mem_malloc(sizeof(tDot11fBeacon2));
 	if (NULL == bcn_2) {
-		sch_log(mac_ctx, LOGE, FL("Failed to allocate memory"));
+		pe_err("Failed to allocate memory");
 		qdf_mem_free(bcn_1);
 		return eSIR_MEM_ALLOC_FAILED;
 	}
 
 	wsc_prb_res = qdf_mem_malloc(sizeof(tDot11fIEWscProbeRes));
 	if (NULL == wsc_prb_res) {
-		sch_log(mac_ctx, LOGE, FL("Failed to allocate memory"));
+		pe_err("Failed to allocate memory");
 		qdf_mem_free(bcn_1);
 		qdf_mem_free(bcn_2);
 		return eSIR_MEM_ALLOC_FAILED;
 	}
 
-	sch_log(mac_ctx, LOGD, FL("Setting fixed beacon fields"));
+	pe_debug("Setting fixed beacon fields");
 
 	/*
 	 * First set the fixed fields:
@@ -257,28 +255,24 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 		 */
 		if (lim_update_probe_rsp_template_ie_bitmap_beacon1(mac_ctx,
 					bcn_1, session) != eSIR_SUCCESS)
-			sch_log(mac_ctx, LOGE,
-				FL("Failed to build ProbeRsp template"));
+			pe_err("Failed to build ProbeRsp template");
 	}
 
 	n_status = dot11f_pack_beacon1(mac_ctx, bcn_1, ptr,
 				      SCH_MAX_BEACON_SIZE - offset, &n_bytes);
 	if (DOT11F_FAILED(n_status)) {
-		sch_log(mac_ctx, LOGE,
-			FL("Failed to packed a tDot11fBeacon1 (0x%08x.)."),
+		pe_err("Failed to packed a tDot11fBeacon1 (0x%08x)",
 			n_status);
 		qdf_mem_free(bcn_1);
 		qdf_mem_free(bcn_2);
 		qdf_mem_free(wsc_prb_res);
 		return eSIR_FAILURE;
 	} else if (DOT11F_WARNED(n_status)) {
-		sch_log(mac_ctx, LOGE,
-			FL("Warnings while packing a tDot11fBeacon1(0x%08x.)."),
+		pe_warn("Warnings while packing a tDot11fBeacon1(0x%08x)",
 			n_status);
 	}
 	session->schBeaconOffsetBegin = offset + (uint16_t) n_bytes;
-	sch_log(mac_ctx, LOGD, FL("Initialized beacon begin, offset %d"),
-		offset);
+	pe_debug("Initialized beacon begin, offset %d", offset);
 
 	/* Initialize the 'new' fields at the end of the beacon */
 
@@ -287,8 +281,7 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 		populate_dot_11_f_ext_chann_switch_ann(mac_ctx,
 				&bcn_2->ext_chan_switch_ann,
 				session);
-		sch_log(mac_ctx, LOG1,
-			FL("ecsa: mode:%d reg:%d chan:%d count:%d"),
+		pe_info("ecsa: mode:%d reg:%d chan:%d count:%d",
 			bcn_2->ext_chan_switch_ann.switch_mode,
 			bcn_2->ext_chan_switch_ann.new_reg_class,
 			bcn_2->ext_chan_switch_ann.new_channel,
@@ -317,8 +310,7 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 			 */
 			populate_dot11f_chan_switch_ann(mac_ctx,
 						&bcn_2->ChanSwitchAnn, session);
-			sch_log(mac_ctx, LOGD,
-				FL("csa: mode:%d chan:%d count:%d"),
+			pe_debug("csa: mode:%d chan:%d count:%d",
 				bcn_2->ChanSwitchAnn.switchMode,
 				bcn_2->ChanSwitchAnn.newChannel,
 				bcn_2->ChanSwitchAnn.switchCount);
@@ -346,8 +338,7 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 			if (true == session->dfsIncludeChanWrapperIe) {
 				populate_dot11f_chan_switch_wrapper(mac_ctx,
 					&bcn_2->ChannelSwitchWrapper, session);
-				sch_log(mac_ctx, LOGD,
-				    FL("wrapper: width:%d f0:%d f1:%d"),
+				pe_debug("wrapper: width:%d f0:%d f1:%d",
 				      bcn_2->ChannelSwitchWrapper.
 					WiderBWChanSwitchAnn.newChanWidth,
 				      bcn_2->ChannelSwitchWrapper.
@@ -373,7 +364,7 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 		populate_dot11f_ht_info(mac_ctx, &bcn_2->HTInfo, session);
 	}
 	if (session->vhtCapability) {
-		sch_log(mac_ctx, LOGD, FL("Populate VHT IEs in Beacon"));
+		pe_debug("Populate VHT IEs in Beacon");
 		populate_dot11f_vht_caps(mac_ctx, session, &bcn_2->VHTCaps);
 		populate_dot11f_vht_operation(mac_ctx, session,
 					      &bcn_2->VHTOperation);
@@ -421,8 +412,7 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 	} else {
 		if (wlan_cfg_get_int(mac_ctx,
 			(uint16_t) WNI_CFG_WPS_ENABLE, &tmp) != eSIR_SUCCESS)
-			sch_log(mac_ctx, LOGP, FL("Failed to cfg get id %d"),
-				WNI_CFG_WPS_ENABLE);
+			pe_err("Failed to cfg get id %d", WNI_CFG_WPS_ENABLE);
 
 		wps_ap_enable = tmp & WNI_CFG_WPS_ENABLE_AP;
 
@@ -480,7 +470,7 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 		addn_ielen = session->addIeParams.probeRespBCNDataLen;
 		addn_ie = qdf_mem_malloc(addn_ielen);
 		if (!addn_ie) {
-			sch_log(mac_ctx, LOGE, FL("addn_ie malloc failed"));
+			pe_err("addn_ie malloc failed");
 			qdf_mem_free(bcn_1);
 			qdf_mem_free(bcn_2);
 			qdf_mem_free(wsc_prb_res);
@@ -496,7 +486,7 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 				&addn_ielen, &extracted_extcap);
 		if (eSIR_SUCCESS != status) {
 			extcap_present = false;
-			sch_log(mac_ctx, LOG1, FL("extcap not extracted"));
+			pe_debug("extcap not extracted");
 		}
 		/* merge extcap IE */
 		if (extcap_present &&
@@ -511,8 +501,7 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 				      session->pSchBeaconFrameEnd,
 				      SCH_MAX_BEACON_SIZE, &n_bytes);
 	if (DOT11F_FAILED(n_status)) {
-		sch_log(mac_ctx, LOGE,
-			FL("Failed to packed a tDot11fBeacon2 (0x%08x.)."),
+		pe_err("Failed to packed a tDot11fBeacon2 (0x%08x)",
 			n_status);
 		qdf_mem_free(bcn_1);
 		qdf_mem_free(bcn_2);
@@ -520,8 +509,7 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 		qdf_mem_free(addn_ie);
 		return eSIR_FAILURE;
 	} else if (DOT11F_WARNED(n_status)) {
-		sch_log(mac_ctx, LOGE,
-			FL("Warnings while packing a tDot11fBeacon2(0x%08x.)."),
+		pe_err("Warnings while packing a tDot11fBeacon2(0x%08x)",
 			n_status);
 	}
 
@@ -546,7 +534,7 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 	else
 		mac_ctx->sch.schObject.p2pIeOffset = 0;
 
-	sch_log(mac_ctx, LOGD, FL("Initialized beacon end, offset %d"),
+	pe_debug("Initialized beacon end, offset %d",
 		session->schBeaconOffsetEnd);
 	mac_ctx->sch.schObject.fBeaconChanged = 1;
 	qdf_mem_free(bcn_1);
@@ -564,7 +552,7 @@ tSirRetStatus lim_update_probe_rsp_template_ie_bitmap_beacon1(tpAniSirGlobal pMa
 	uint32_t *DefProbeRspIeBitmap;
 	tDot11fProbeResponse *prb_rsp;
 	if (!psessionEntry) {
-		sch_log(pMac, LOGE, FL("PESession is null!"));
+		pe_debug("PESession is null!");
 		return eSIR_FAILURE;
 	}
 	DefProbeRspIeBitmap = &psessionEntry->DefProbeRspIeBitmap[0];
@@ -860,12 +848,8 @@ static void write_beacon_to_memory(tpAniSirGlobal pMac, uint16_t size,
 		if (eSIR_SUCCESS !=
 		    sch_send_beacon_req(pMac, psessionEntry->pSchBeaconFrameBegin,
 					size, psessionEntry))
-			PELOGE(sch_log
-				       (pMac, LOGE,
-				       FL
-					       ("sch_send_beacon_req() returned an error (zsize %d)"),
-				       size);
-			       )
+			pe_err("sch_send_beacon_req() returned an error (zsize %d)",
+			       size);
 			else {
 				pMac->sch.gSchBeaconsWritten++;
 			}
@@ -953,7 +937,7 @@ void sch_process_pre_beacon_ind(tpAniSirGlobal pMac,
 
 	psessionEntry = pe_find_session_by_bssid(pMac, pMsg->bssId, &sessionId);
 	if (psessionEntry == NULL) {
-		PELOGE(sch_log(pMac, LOGE, FL("session lookup fails"));)
+		pe_err("session lookup fails");
 		goto end;
 	}
 
@@ -961,11 +945,8 @@ void sch_process_pre_beacon_ind(tpAniSirGlobal pMac,
 
 	/* If SME is not in normal mode, no need to generate beacon */
 	if (psessionEntry->limSmeState != eLIM_SME_NORMAL_STATE) {
-		PELOGE(sch_log
-			       (pMac, LOG1,
-			       FL("PreBeaconInd received in invalid state: %d"),
-			       psessionEntry->limSmeState);
-		       )
+		pe_err("PreBeaconInd received in invalid state: %d",
+		       psessionEntry->limSmeState);
 		goto end;
 	}
 
@@ -978,11 +959,7 @@ void sch_process_pre_beacon_ind(tpAniSirGlobal pMac,
 					       (uint16_t) beaconSize,
 					       psessionEntry);
 		else
-			PELOGE(sch_log
-				       (pMac, LOGE,
-				       FL
-					       ("can not send beacon for PEER session entry"));
-			       )
+			pe_err("can not send beacon for PEER session entry");
 			break;
 
 	case eLIM_AP_ROLE: {
@@ -998,21 +975,13 @@ void sch_process_pre_beacon_ind(tpAniSirGlobal pMac,
 					       (uint16_t) beaconSize,
 					       psessionEntry);
 		} else
-			PELOGE(sch_log
-				       (pMac, LOGE,
-				       FL
-					       ("can not send beacon for PEER session entry"));
-			       )
+			pe_err("can not send beacon for PEER session entry");
 			}
 			break;
 
 	default:
-		PELOGE(sch_log
-			       (pMac, LOGE,
-			       FL
-				       ("Error-PE has Receive PreBeconGenIndication when System is in %d role"),
-			       GET_LIM_SYSTEM_ROLE(psessionEntry));
-		       )
+		pe_err("Error-PE has Receive PreBeconGenIndication when System is in %d role",
+		       GET_LIM_SYSTEM_ROLE(psessionEntry));
 	}
 
 end:
