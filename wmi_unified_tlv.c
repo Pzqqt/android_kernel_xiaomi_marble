@@ -14629,6 +14629,7 @@ static QDF_STATUS extract_vdev_scan_ev_param_tlv(wmi_unified_t wmi_handle,
 	evt = param_buf->fixed_param;
 
 	qdf_mem_zero(param, sizeof(*param));
+
 	switch (evt->event) {
 	case WMI_SCAN_EVENT_STARTED:
 		param->type = SCAN_EVENT_TYPE_STARTED;
@@ -14682,7 +14683,12 @@ static QDF_STATUS extract_vdev_scan_ev_param_tlv(wmi_unified_t wmi_handle,
 	case WMI_SCAN_REASON_INTERNAL_FAILURE:
 		param->reason = SCAN_REASON_INTERNAL_FAILURE;
 		break;
+	case WMI_SCAN_REASON_SUSPENDED:
+		param->reason = SCAN_REASON_SUSPENDED;
+		break;
 	case WMI_SCAN_REASON_MAX:
+		param->reason = SCAN_REASON_MAX;
+		break;
 	default:
 		param->reason = SCAN_REASON_MAX;
 		break;
