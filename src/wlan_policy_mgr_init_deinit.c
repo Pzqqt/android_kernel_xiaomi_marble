@@ -436,6 +436,22 @@ QDF_STATUS policy_mgr_register_hdd_cb(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS policy_mgr_deregister_hdd_cb(struct wlan_objmgr_psoc *psoc)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	pm_ctx->hdd_cbacks.sap_restart_chan_switch_cb = NULL;
+	pm_ctx->hdd_cbacks.wlan_hdd_get_channel_for_sap_restart = NULL;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS policy_mgr_register_wma_cb(struct wlan_objmgr_psoc *psoc,
 		struct policy_mgr_wma_cbacks *wma_cbacks)
 {

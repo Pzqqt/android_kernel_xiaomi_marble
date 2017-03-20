@@ -659,8 +659,13 @@ void policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
 	if (!policy_mgr_is_restart_sap_allowed(psoc, mcc_to_scc_switch))
 		goto work_done;
 
+	if (!pm_ctx->hdd_cbacks.wlan_hdd_get_channel_for_sap_restart) {
+		policy_mgr_err("SAP restart get channel callback in NULL");
+		goto work_done;
+	}
+
 	status = pm_ctx->hdd_cbacks.
-		wlan_hdd_get_channel_for_sap_restart(
+		wlan_hdd_get_channel_for_sap_restart(psoc,
 			cc_intf_work->vdev_id, &channel,
 			&sec_ch, &ch_params);
 	if (status != QDF_STATUS_SUCCESS) {
@@ -680,7 +685,7 @@ void policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
 	if (policy_mgr_is_sap_channel_change_without_restart(
 		mcc_to_scc_switch) &&
 	    pm_ctx->hdd_cbacks.sap_restart_chan_switch_cb) {
-		pm_ctx->hdd_cbacks.sap_restart_chan_switch_cb(
+		pm_ctx->hdd_cbacks.sap_restart_chan_switch_cb(psoc,
 			cc_intf_work->vdev_id, channel,
 			ch_params.ch_width);
 	}
@@ -789,8 +794,8 @@ void policy_mgr_change_sap_channel_with_csa(struct wlan_objmgr_psoc *psoc,
 
 	if (pm_ctx->hdd_cbacks.sap_restart_chan_switch_cb) {
 		policy_mgr_info("SAP change change without restart");
-		pm_ctx->hdd_cbacks.sap_restart_chan_switch_cb(vdev_id,
-				channel, ch_width);
+		pm_ctx->hdd_cbacks.sap_restart_chan_switch_cb(psoc,
+				vdev_id, channel, ch_width);
 	}
 }
 #endif
@@ -891,43 +896,6 @@ QDF_STATUS policy_mgr_restart_opportunistic_timer(
 
 	return status;
 }
-
-#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-QDF_STATUS policy_mgr_register_sap_restart_channel_switch_cb(
-	struct wlan_objmgr_psoc *psoc,
-	void (*sap_restart_chan_switch_cb)(uint8_t, uint32_t, uint32_t))
-{
-	struct policy_mgr_psoc_priv_obj *policy_mgr_ctx;
-
-	policy_mgr_ctx = policy_mgr_get_context(psoc);
-	if (!policy_mgr_ctx) {
-		policy_mgr_err("Invalid context");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	policy_mgr_ctx->hdd_cbacks.sap_restart_chan_switch_cb =
-		sap_restart_chan_switch_cb;
-
-	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS policy_mgr_deregister_sap_restart_channel_switch_cb(
-		struct wlan_objmgr_psoc *psoc)
-{
-	struct policy_mgr_psoc_priv_obj *policy_mgr_ctx;
-
-	policy_mgr_ctx = policy_mgr_get_context(psoc);
-	if (!policy_mgr_ctx) {
-		policy_mgr_err("Invalid context");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	policy_mgr_ctx->hdd_cbacks.sap_restart_chan_switch_cb = NULL;
-
-	return QDF_STATUS_SUCCESS;
-}
-
-#endif
 
 QDF_STATUS policy_mgr_set_hw_mode_on_channel_switch(
 			struct wlan_objmgr_psoc *psoc, uint8_t session_id)
