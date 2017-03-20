@@ -947,7 +947,7 @@ is_p2p_oui(const uint8_t *frm)
 }
 
 /**
- * is_qca_whc_oui() - If vendor IE is QCA WHC type
+ * is_qca_son_oui() - If vendor IE is QCA WHC type
  * @frm: vendor IE pointer
  * @whc_subtype: subtype
  *
@@ -956,7 +956,7 @@ is_p2p_oui(const uint8_t *frm)
  * Return: true if its QCA WHC IE
  */
 static inline bool
-is_qca_whc_oui(uint8_t *frm, uint8_t whc_subtype)
+is_qca_son_oui(uint8_t *frm, uint8_t whc_subtype)
 {
 	return (frm[1] > 4) && (LE_READ_4(frm + 2) ==
 		((QCA_OUI_WHC_TYPE << 24) | QCA_OUI)) &&

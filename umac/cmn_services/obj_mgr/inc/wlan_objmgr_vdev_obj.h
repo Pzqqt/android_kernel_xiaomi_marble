@@ -134,6 +134,10 @@
 #define WLAN_VDEV_FEXT_NO_MULCHAN           0x00200000
 	/*non-beaconing AP VAP*/
 #define WLAN_VDEV_FEXT_NON_BEACON           0x00400000
+/* SPL repeater enabled for SON*/
+#define WLAN_VDEV_FEXT_SON_SPL_RPT          0x00800000
+/* SON IE update in MGMT frame */
+#define WLAN_VDEV_FEXT_SON_INFO_UPDATE      0x01000000
 
 /* VDEV OP flags  */
   /* if the vap destroyed by user */

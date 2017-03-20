@@ -89,11 +89,6 @@ static int dp_peer_find_map_attach(struct dp_soc *soc)
 	 * that are not in use set to 0.
 	 */
 	qdf_mem_zero(soc->peer_id_to_obj_map, peer_map_size);
-#ifdef notyet /* ATH_BAND_STEERING */
-		OS_INIT_TIMER(soc->osdev, &(soc->bs_inact_timer),
-			dp_peer_find_inact_timeout_handler, (void *)soc,
-			QDF_TIMER_TYPE_WAKE_APPS);
-#endif
 	return 0; /* success */
 }
 
@@ -308,9 +303,6 @@ void dp_peer_find_hash_erase(struct dp_soc *soc)
 
 static void dp_peer_find_map_detach(struct dp_soc *soc)
 {
-#ifdef notyet /* ATH_BAND_STEERING */
-	OS_FREE_TIMER(&(soc->bs_inact_timer));
-#endif
 	qdf_mem_free(soc->peer_id_to_obj_map);
 }
 

@@ -45,9 +45,11 @@
 #ifdef WLAN_FEATURE_NAN_CONVERGENCE
 #include "target_if_nan.h"
 #endif /* WLAN_FEATURE_NAN_CONVERGENCE */
-
 #ifdef CONVERGED_TDLS_ENABLE
 #include "target_if_tdls.h"
+#endif
+#ifdef QCA_SUPPORT_SON
+#include <target_if_son.h>
 #endif
 
 static struct target_if_ctx *g_target_if_ctx;
@@ -129,6 +131,20 @@ static void target_if_wifi_pos_tx_ops_register(
 {
 }
 #endif
+#ifdef QCA_SUPPORT_SON
+static void target_if_son_tx_ops_register(
+			struct wlan_lmac_if_tx_ops *tx_ops)
+{
+	target_if_son_register_tx_ops(tx_ops);
+	return;
+}
+#else
+static void target_if_son_tx_ops_register(
+			struct wlan_lmac_if_tx_ops *tx_ops)
+{
+	return;
+}
+#endif
 
 #ifdef WLAN_FEATURE_NAN_CONVERGENCE
 static void target_if_nan_tx_ops_register(
@@ -186,6 +202,8 @@ QDF_STATUS target_if_register_umac_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 
 	/* call regulatory callback to register tx ops */
 	target_if_register_regulatory_tx_ops(tx_ops);
+
+	target_if_son_tx_ops_register(tx_ops);
 
 	target_if_tdls_tx_ops_register(tx_ops);
 	/* Converged UMAC components to register their TX-ops here */
