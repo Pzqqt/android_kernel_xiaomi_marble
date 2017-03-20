@@ -587,7 +587,7 @@ void lim_send_p2p_action_frame(tpAniSirGlobal mac_ctx,
 	uint8_t sme_session_id = 0;
 
 	msg_len = mb_msg->msgLen - sizeof(tSirMbMsgP2p);
-	lim_log(mac_ctx, LOG1, FL("sending fc->type=%d fc->subType=%d"),
+	lim_log(mac_ctx, LOGD, FL("sending fc->type=%d fc->subType=%d"),
 		fc->type, fc->subType);
 
 	if ((!mac_ctx->lim.gpLimRemainOnChanReq) && (0 != mb_msg->wait)) {
@@ -692,9 +692,9 @@ void lim_send_p2p_action_frame(tpAniSirGlobal mac_ctx,
 				p2p_ie[1] += noa_len;
 			}
 			msg_len += noa_len;
-			lim_log(mac_ctx, LOGE,
-				FL("noa_len=%d orig_len=%d p2p_ie=%p"
-				" msg_len=%d nBytesToCopy=%zu "),
+			lim_log(mac_ctx, LOGD,
+				FL("noa_len: %d orig_len: %d p2p_ie: %p"
+				" msg_len: %d nBytesToCopy: %zu "),
 				noa_len, orig_len, p2p_ie, msg_len,
 				((p2p_ie + orig_len + 2) -
 				 (uint8_t *) mb_msg->data));

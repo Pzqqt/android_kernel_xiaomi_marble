@@ -222,7 +222,7 @@ uint32_t lim_create_timers(tpAniSirGlobal pMac)
 	uint32_t cfgValue, i = 0;
 	uint32_t cfgValue1;
 
-	lim_log(pMac, LOG1,
+	lim_log(pMac, LOGD,
 	       FL("Creating Timers used by LIM module in Role %d"),
 	       pMac->lim.gLimSystemRole);
 	/* Create timers required for host roaming feature */
@@ -857,7 +857,7 @@ void lim_deactivate_and_change_timer(tpAniSirGlobal pMac, uint32_t timerId)
 			lim_log(pMac, LOGP,
 				FL("unable to deactivate probeAfterHBTimer"));
 		} else {
-			lim_log(pMac, LOG1,
+			lim_log(pMac, LOGD,
 				FL("Deactivated probe after hb timer"));
 		}
 
@@ -881,7 +881,7 @@ void lim_deactivate_and_change_timer(tpAniSirGlobal pMac, uint32_t timerId)
 			lim_log(pMac, LOGP,
 				FL("unable to change ProbeAfterHBTimer"));
 		} else {
-			lim_log(pMac, LOGW,
+			lim_log(pMac, LOGD,
 				FL("Probe after HB timer value is changed = %u"),
 				val);
 		}

@@ -1307,7 +1307,7 @@ void lim_process_mlm_set_keys_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 		return;
 	}
 	psessionEntry->is_key_installed = 0;
-	lim_log(pMac, LOG1,
+	lim_log(pMac, LOGD,
 		FL("Received MLM_SETKEYS_CNF with resultCode = %d"),
 		pMlmSetKeysCnf->resultCode);
 	/* if the status is success keys are installed in the
@@ -1688,7 +1688,7 @@ void lim_process_sta_mlm_del_bss_rsp(tpAniSirGlobal pMac,
 		goto end;
 	}
 	if (QDF_STATUS_SUCCESS == pDelBssParams->status) {
-		PELOGW(lim_log(pMac, LOGW,
+		PELOGW(lim_log(pMac, LOGD,
 			       FL("STA received the DEL_BSS_RSP for BSSID: %X."),
 			       pDelBssParams->bssIdx);
 		       )
@@ -2564,8 +2564,8 @@ lim_process_sta_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 		/* to know the session  started for self or for  peer  */
 		session_entry->statypeForBss = STA_ENTRY_PEER;
 		/* Now, send WMA_ADD_STA_REQ */
-		lim_log(mac_ctx, LOGW,
-			FL("SessionId:%d On STA: ADD_BSS was successful"),
+		lim_log(mac_ctx, LOG1,
+			FL("SessionId: %d On STA: ADD_BSS was successful"),
 			session_entry->peSessionId);
 		sta_ds =
 			dph_get_hash_entry(mac_ctx, DPH_STA_HASH_INDEX_PEER,

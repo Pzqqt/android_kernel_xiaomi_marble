@@ -698,7 +698,7 @@ lim_send_del_sta_cnf(tpAniSirGlobal pMac, struct qdf_mac_addr sta_dsaddr,
 		 * Host or LMM driven Disassociation.
 		 * Issue Disassoc Confirm to SME.
 		 */
-		lim_log(pMac, LOGW,
+		lim_log(pMac, LOGD,
 			FL("Lim Posting DISASSOC_CNF to Sme. Trigger: %d"),
 			mlmStaContext.cleanupTrigger);
 
@@ -720,7 +720,7 @@ lim_send_del_sta_cnf(tpAniSirGlobal pMac, struct qdf_mac_addr sta_dsaddr,
 		 * Host or LMM driven Deauthentication.
 		 * Issue Deauth Confirm to SME.
 		 */
-		lim_log(pMac, LOGW,
+		lim_log(pMac, LOGD,
 			FL("Lim Posting DEAUTH_CNF to Sme. Trigger: %d"),
 			mlmStaContext.cleanupTrigger);
 		qdf_copy_macaddr(&mlmDeauthCnf.peer_macaddr, &sta_dsaddr);
@@ -739,7 +739,7 @@ lim_send_del_sta_cnf(tpAniSirGlobal pMac, struct qdf_mac_addr sta_dsaddr,
 		 * Received Disassociation/Deauthentication from peer.
 		 * Issue Purge Ind to SME.
 		 */
-		lim_log(pMac, LOGW,
+		lim_log(pMac, LOGD,
 			FL("Lim Posting PURGE_STA_IND to Sme. Trigger: %d"),
 			mlmStaContext.cleanupTrigger);
 		qdf_mem_copy((uint8_t *) &mlmPurgeStaInd.peerMacAddr,
@@ -820,7 +820,7 @@ lim_send_del_sta_cnf(tpAniSirGlobal pMac, struct qdf_mac_addr sta_dsaddr,
 		 * LIM driven Disassociation.
 		 * Issue Disassoc Confirm to SME.
 		 */
-		lim_log(pMac, LOGW,
+		lim_log(pMac, LOGD,
 			FL("Lim Posting DISASSOC_CNF to Sme. Trigger: %d"),
 			mlmStaContext.cleanupTrigger);
 
@@ -2311,7 +2311,7 @@ lim_add_sta(tpAniSirGlobal mac_ctx,
 			sta_ds->vht_su_bfee_capable;
 	}
 
-	lim_log(mac_ctx, LOGE, FL("TxChWidth %d vhtTxBFCap %d, su_bfer %d"),
+	lim_log(mac_ctx, LOGD, FL("TxChWidth %d vhtTxBFCap %d, su_bfer %d"),
 		add_sta_params->ch_width, add_sta_params->vhtTxBFCapable,
 		add_sta_params->enable_su_tx_bformer);
 #ifdef FEATURE_WLAN_TDLS
@@ -2984,7 +2984,7 @@ void lim_handle_cnf_wait_timeout(tpAniSirGlobal pMac, uint16_t staId)
 				       ("Did not receive Assoc Cnf in eLIM_MLM_WT_ASSOC_CNF_STATE sta Assoc id %d"),
 			       pStaDs->assocId);
 		       )
-		lim_print_mac_addr(pMac, pStaDs->staAddr, LOGW);
+		lim_print_mac_addr(pMac, pStaDs->staAddr, LOGD);
 
 		if (LIM_IS_AP_ROLE(psessionEntry)) {
 			lim_reject_association(pMac, pStaDs->staAddr,
@@ -3043,7 +3043,7 @@ lim_delete_dph_hash_entry(tpAniSirGlobal mac_ctx, tSirMacAddr sta_addr,
 		return;
 	}
 
-	lim_log(mac_ctx, LOGW, FL("Deleting DPH Hash entry for STAID: %X"),
+	lim_log(mac_ctx, LOGD, FL("Deleting DPH Hash entry for STAID: %X"),
 		 sta_id);
 	/*
 	 * update the station count and perform associated actions
@@ -3069,7 +3069,7 @@ lim_delete_dph_hash_entry(tpAniSirGlobal mac_ctx, tSirMacAddr sta_addr,
 				      session_entry);
 
 		/* Send message to HAL about beacon parameter change. */
-		lim_log(mac_ctx, LOGW, FL("param bitmap = %d "),
+		lim_log(mac_ctx, LOGD, FL("param bitmap = %d "),
 				 beacon_params.paramChangeBitmap);
 		if (beacon_params.paramChangeBitmap &&
 			(false ==
@@ -3399,7 +3399,7 @@ lim_del_bss(tpAniSirGlobal pMac, tpDphHashNode pStaDs, uint16_t bssIdx,
 		     sizeof(tSirMacAddr));
 	pDelBssParams->smesessionId = psessionEntry->smeSessionId;
 	PELOGW(lim_log
-		       (pMac, LOGW,
+		       (pMac, LOGD,
 		       FL("Sessionid %d : Sending HAL_DELETE_BSS_REQ "
 			  "for bss idx: %X BSSID:" MAC_ADDRESS_STR),
 		       pDelBssParams->sessionId, pDelBssParams->bssIdx,
@@ -3408,7 +3408,7 @@ lim_del_bss(tpAniSirGlobal pMac, tpDphHashNode pStaDs, uint16_t bssIdx,
 	/* we need to defer the message until we get the response back from HAL. */
 	SET_LIM_PROCESS_DEFD_MESGS(pMac, false);
 
-	lim_log(pMac, LOGW, FL("process_ho_fail = %d"),
+	lim_log(pMac, LOGD, FL("process_ho_fail = %d"),
 		psessionEntry->process_ho_fail);
 	if (psessionEntry->process_ho_fail)
 		msgQ.type = WMA_DELETE_BSS_HO_FAIL_REQ;

@@ -2497,7 +2497,7 @@ QDF_STATUS lim_send_deauth_cnf(tpAniSirGlobal pMac)
 #endif
 				 (psessionEntry->isFastRoamIniFeatureEnabled) ||
 				 (psessionEntry->is11Rconnection))) {
-			lim_log(pMac, LOGE,
+			lim_log(pMac, LOGD,
 				FL("FT Preauth (%p,%d) Deauth rc %d src = %d"),
 					psessionEntry,
 					psessionEntry->peSessionId,
@@ -2505,7 +2505,7 @@ QDF_STATUS lim_send_deauth_cnf(tpAniSirGlobal pMac)
 					pMlmDeauthReq->deauthTrigger);
 			lim_ft_cleanup(pMac, psessionEntry);
 		} else {
-			lim_log(pMac, LOGE,
+			lim_log(pMac, LOGD,
 				FL("No FT Preauth Session Cleanup in role %d"
 #ifdef FEATURE_WLAN_ESE
 				" isESE %d"
@@ -4700,8 +4700,8 @@ tSirRetStatus lim_send_sa_query_response_frame(tpAniSirGlobal pMac,
 			nStatus);
 	}
 
-	lim_log(pMac, LOG1, FL("Sending a SA Query Response to "));
-	lim_print_mac_addr(pMac, peer, LOGW);
+	lim_log(pMac, LOGD, FL("Sending a SA Query Response to "));
+	lim_print_mac_addr(pMac, peer, LOGD);
 
 	if ((SIR_BAND_5_GHZ == lim_get_rf_band(psessionEntry->currentOperChannel))
 #ifdef WLAN_FEATURE_P2P

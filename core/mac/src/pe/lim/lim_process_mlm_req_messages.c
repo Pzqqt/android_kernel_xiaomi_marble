@@ -457,7 +457,7 @@ static void mlm_add_sta(tpAniSirGlobal mac_ctx, tpAddStaParams sta_param,
 	lim_populate_own_rate_set(mac_ctx, &sta_param->supportedRates, NULL,
 				  false, session_entry, NULL, NULL);
 
-	lim_log(mac_ctx, LOGE, FL(
+	lim_log(mac_ctx, LOGD, FL(
 		"GF: %d, ChnlWidth: %d, MimoPS: %d, lsigTXOP: %d, dsssCCK: %d,"
 		" SGI20: %d, SGI40%d"), sta_param->greenFieldCapable,
 		sta_param->ch_width, sta_param->mimoPS,
@@ -559,7 +559,7 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 		     mlm_start_req->ssId.ssId, mlm_start_req->ssId.length);
 	addbss_param->ssId.length = mlm_start_req->ssId.length;
 	addbss_param->bHiddenSSIDEn = mlm_start_req->ssidHidden;
-	lim_log(mac_ctx, LOGE, FL("TRYING TO HIDE SSID %d"),
+	lim_log(mac_ctx, LOGD, FL("TRYING TO HIDE SSID %d"),
 		addbss_param->bHiddenSSIDEn);
 	/* CR309183. Disable Proxy Probe Rsp.  Host handles Probe Requests.  Until FW fixed. */
 	addbss_param->bProxyProbeRespEn = 0;
@@ -1987,7 +1987,7 @@ lim_process_mlm_set_keys_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		   "AID [%d], ED Type [%d], # Keys [%d] & Peer MAC Addr - "),
 		mlm_set_keys_req->aid, mlm_set_keys_req->edType,
 		mlm_set_keys_req->numKeys);
-	lim_print_mac_addr(mac_ctx, mlm_set_keys_req->peer_macaddr.bytes, LOGW);
+	lim_print_mac_addr(mac_ctx, mlm_set_keys_req->peer_macaddr.bytes, LOGD);
 	qdf_mem_copy(curr_bssid.bytes, session->bssId, QDF_MAC_ADDR_SIZE);
 
 	switch (GET_LIM_SYSTEM_ROLE(session)) {

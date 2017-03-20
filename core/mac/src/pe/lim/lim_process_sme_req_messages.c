@@ -2444,7 +2444,7 @@ static void __lim_process_sme_disassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBu
 
 	psessionEntry->smeSessionId = smesessionId;
 	psessionEntry->transactionId = smetransactionId;
-	lim_log(pMac, LOGW, FL("ho_fail: %d "), smeDisassocReq.process_ho_fail);
+	lim_log(pMac, LOGD, FL("ho_fail: %d "), smeDisassocReq.process_ho_fail);
 	psessionEntry->process_ho_fail = smeDisassocReq.process_ho_fail;
 
 	switch (GET_LIM_SYSTEM_ROLE(psessionEntry)) {

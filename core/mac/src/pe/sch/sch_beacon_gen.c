@@ -198,7 +198,7 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 		return eSIR_MEM_ALLOC_FAILED;
 	}
 
-	sch_log(mac_ctx, LOG1, FL("Setting fixed beacon fields"));
+	sch_log(mac_ctx, LOGD, FL("Setting fixed beacon fields"));
 
 	/*
 	 * First set the fixed fields:
@@ -277,7 +277,7 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 			n_status);
 	}
 	session->schBeaconOffsetBegin = offset + (uint16_t) n_bytes;
-	sch_log(mac_ctx, LOG1, FL("Initialized beacon begin, offset %d"),
+	sch_log(mac_ctx, LOGD, FL("Initialized beacon begin, offset %d"),
 		offset);
 
 	/* Initialize the 'new' fields at the end of the beacon */
@@ -317,7 +317,7 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 			 */
 			populate_dot11f_chan_switch_ann(mac_ctx,
 						&bcn_2->ChanSwitchAnn, session);
-			sch_log(mac_ctx, LOG1,
+			sch_log(mac_ctx, LOGD,
 				FL("csa: mode:%d chan:%d count:%d"),
 				bcn_2->ChanSwitchAnn.switchMode,
 				bcn_2->ChanSwitchAnn.newChannel,
@@ -346,7 +346,7 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 			if (true == session->dfsIncludeChanWrapperIe) {
 				populate_dot11f_chan_switch_wrapper(mac_ctx,
 					&bcn_2->ChannelSwitchWrapper, session);
-				sch_log(mac_ctx, LOG1,
+				sch_log(mac_ctx, LOGD,
 				    FL("wrapper: width:%d f0:%d f1:%d"),
 				      bcn_2->ChannelSwitchWrapper.
 					WiderBWChanSwitchAnn.newChanWidth,
@@ -373,7 +373,7 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 		populate_dot11f_ht_info(mac_ctx, &bcn_2->HTInfo, session);
 	}
 	if (session->vhtCapability) {
-		sch_log(mac_ctx, LOGW, FL("Populate VHT IEs in Beacon"));
+		sch_log(mac_ctx, LOGD, FL("Populate VHT IEs in Beacon"));
 		populate_dot11f_vht_caps(mac_ctx, session, &bcn_2->VHTCaps);
 		populate_dot11f_vht_operation(mac_ctx, session,
 					      &bcn_2->VHTOperation);
@@ -546,7 +546,7 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 	else
 		mac_ctx->sch.schObject.p2pIeOffset = 0;
 
-	sch_log(mac_ctx, LOG1, FL("Initialized beacon end, offset %d"),
+	sch_log(mac_ctx, LOGD, FL("Initialized beacon end, offset %d"),
 		session->schBeaconOffsetEnd);
 	mac_ctx->sch.schObject.fBeaconChanged = 1;
 	qdf_mem_free(bcn_1);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -232,7 +232,7 @@ static void lim_process_auth_open_system_algo(tpAniSirGlobal mac_ctx,
 {
 	struct tLimPreAuthNode *auth_node;
 
-	lim_log(mac_ctx, LOGW, FL("=======> eSIR_OPEN_SYSTEM  ..."));
+	lim_log(mac_ctx, LOGD, FL("=======> eSIR_OPEN_SYSTEM  ..."));
 	/* Create entry for this STA in pre-auth list */
 	auth_node = lim_acquire_free_pre_auth_node(mac_ctx,
 				&mac_ctx->lim.gLimPreAuthTimerTable);
@@ -1336,7 +1336,7 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 
 	rx_auth_frm_body = &rx_auth_frame;
 
-	lim_log(mac_ctx, LOGW,
+	lim_log(mac_ctx, LOGD,
 		FL("Received Auth frame with type=%d seqnum=%d, status=%d (%d)"),
 		(uint32_t) rx_auth_frm_body->authAlgoNumber,
 		(uint32_t) rx_auth_frm_body->authTransactionSeqNumber,

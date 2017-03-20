@@ -452,7 +452,6 @@ void lim_handle_ft_pre_auth_rsp(tpAniSirGlobal pMac, tSirRetStatus status,
 	if (psessionEntry->ftPEContext.ftPreAuthStatus == eSIR_SUCCESS) {
 		pbssDescription =
 		      psessionEntry->ftPEContext.pFTPreAuthReq->pbssDescription;
-		lim_print_mac_addr(pMac, pbssDescription->bssId, LOG1);
 		pftSessionEntry =
 			pe_create_session(pMac, pbssDescription->bssId,
 					&sessionId, pMac->lim.maxStation,
@@ -488,13 +487,13 @@ void lim_handle_ft_pre_auth_rsp(tpAniSirGlobal pMac, tSirRetStatus status,
 		else
 			pftSessionEntry->vdev_nss = pMac->vdev_type_nss_2g.sta;
 
-		lim_log(pMac, LOG1, FL("created session (%p) with id = %d"),
+		lim_log(pMac, LOGD, FL("created session (%p) with id = %d"),
 			pftSessionEntry, pftSessionEntry->peSessionId);
 
 		/* Update the ReAssoc BSSID of the current session */
 		sir_copy_mac_addr(psessionEntry->limReAssocbssId,
 				  pbssDescription->bssId);
-		lim_print_mac_addr(pMac, psessionEntry->limReAssocbssId, LOG1);
+		lim_print_mac_addr(pMac, psessionEntry->limReAssocbssId, LOGD);
 	}
 send_rsp:
 	if (psessionEntry->currentOperChannel !=

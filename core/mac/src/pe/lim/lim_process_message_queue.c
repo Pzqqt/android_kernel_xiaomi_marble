@@ -907,7 +907,7 @@ lim_handle80211_frames(tpAniSirGlobal pMac, struct scheduler_msg *limMsg,
 	}
 
 #ifdef WLAN_DUMP_MGMTFRAMES
-	lim_log(pMac, LOGE,
+	lim_log(pMac, LOGD,
 		FL("ProtVersion %d, Type %d, Subtype %d rateIndex=%d"),
 		fc.protVer, fc.type, fc.subType,
 		WMA_GET_RX_MAC_RATE_IDX(pRxPacketInfo));
@@ -919,7 +919,7 @@ lim_handle80211_frames(tpAniSirGlobal pMac, struct scheduler_msg *limMsg,
 		    (fc.subType != SIR_MAC_MGMT_PROBE_REQ) &&
 		    (fc.subType != SIR_MAC_MGMT_PROBE_RSP) &&
 		    (fc.subType != SIR_MAC_MGMT_BEACON)) {
-			lim_log(pMac, LOGE,
+			lim_log(pMac, LOGD,
 				FL("RX MGMT - Type %hu, SubType %hu, seq num[%d]"),
 				   fc.type,
 				   fc.subType,

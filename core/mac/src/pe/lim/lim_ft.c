@@ -506,7 +506,6 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 	}
 
 	/* Retrieve the session that was already created and update the entry */
-	lim_print_mac_addr(pMac, pbssDescription->bssId, LOG1);
 	pftSessionEntry->limWmeEnabled = psessionEntry->limWmeEnabled;
 	pftSessionEntry->limQosEnabled = psessionEntry->limQosEnabled;
 	pftSessionEntry->limWsmEnabled = psessionEntry->limWsmEnabled;
@@ -606,7 +605,6 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 	sir_copy_mac_addr(pftSessionEntry->limReAssocbssId,
 			  pbssDescription->bssId);
 	sir_copy_mac_addr(pftSessionEntry->prev_ap_bssid, psessionEntry->bssId);
-	lim_print_mac_addr(pMac, pftSessionEntry->limReAssocbssId, LOG1);
 
 	/* Store beaconInterval */
 	pftSessionEntry->beaconParams.beaconInterval =

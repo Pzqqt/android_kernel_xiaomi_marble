@@ -409,16 +409,16 @@ void lim_set_active_edca_params(tpAniSirGlobal mac_ctx,
 	 *   such that: BE_ACM=1, BK_ACM=1, VI_ACM=1, VO_ACM=0
 	 *   then all AC will be downgraded to AC_BE.
 	 */
-	lim_log(mac_ctx, LOG1, FL("adAdmitMask[UPLINK] = 0x%x "),
+	lim_log(mac_ctx, LOGD, FL("adAdmitMask[UPLINK] = 0x%x "),
 		pe_session->gAcAdmitMask[SIR_MAC_DIRECTION_UPLINK]);
-	lim_log(mac_ctx, LOG1, FL("adAdmitMask[DOWNLINK] = 0x%x "),
+	lim_log(mac_ctx, LOGD, FL("adAdmitMask[DOWNLINK] = 0x%x "),
 		pe_session->gAcAdmitMask[SIR_MAC_DIRECTION_DNLINK]);
 	for (ac = EDCA_AC_BK; ac <= EDCA_AC_VO; ac++) {
 		ac_admitted =
 			((pe_session->gAcAdmitMask[SIR_MAC_DIRECTION_UPLINK] &
 			 (1 << ac)) >> ac);
 
-		lim_log(mac_ctx, LOG1,
+		lim_log(mac_ctx, LOGD,
 			FL("For AC[%d]: acm=%d,  ac_admitted=%d "),
 			ac, edca_params[ac].aci.acm, ac_admitted);
 		if ((edca_params[ac].aci.acm == 1) && (ac_admitted == 0)) {
@@ -434,7 +434,7 @@ void lim_set_active_edca_params(tpAniSirGlobal mac_ctx,
 			     i--)
 				;
 			new_ac = i;
-			lim_log(mac_ctx, LOGW,
+			lim_log(mac_ctx, LOG1,
 				FL("Downgrading AC %d ---> AC %d "),
 				ac, new_ac);
 			pe_session->gLimEdcaParamsActive[ac] =

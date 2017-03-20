@@ -122,7 +122,7 @@ lim_process_probe_rsp_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_Packet_info,
 		lim_log(mac_ctx, LOGE, FL("session_entry is NULL"));
 		return;
 	}
-	lim_log(mac_ctx, LOG1, "SessionId:%d ProbeRsp Frame is received",
+	lim_log(mac_ctx, LOGD, "SessionId: %d ProbeRsp Frame is received",
 		session_entry->peSessionId);
 
 	probe_rsp = qdf_mem_malloc(sizeof(tSirProbeRespBeacon));
@@ -154,7 +154,7 @@ lim_process_probe_rsp_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_Packet_info,
 	}
 
 	frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_Packet_info);
-	QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 		FL("Probe Resp Frame Received: BSSID "
 		MAC_ADDRESS_STR " (RSSI %d)"),
 		MAC_ADDR_ARRAY(header->bssId),
@@ -376,7 +376,7 @@ lim_process_probe_rsp_frame_no_session(tpAniSirGlobal mac_ctx,
 	}
 
 	frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_packet_info);
-	lim_log(mac_ctx, LOG2,
+	lim_log(mac_ctx, LOGD,
 		  FL("Probe Resp Frame Received: BSSID "
 		  MAC_ADDRESS_STR " (RSSI %d)"),
 		  MAC_ADDR_ARRAY(header->bssId),

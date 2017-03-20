@@ -884,7 +884,7 @@ void lim_send_set_bss_key_req(tpAniSirGlobal pMac,
 	msgQ.bodyptr = pSetBssKeyParams;
 	msgQ.bodyval = 0;
 
-	lim_log(pMac, LOGW, FL("Sending WMA_SET_BSSKEY_REQ..."));
+	lim_log(pMac, LOGD, FL("Sending WMA_SET_BSSKEY_REQ..."));
 	MTRACE(mac_trace_msg_tx(pMac, psessionEntry->peSessionId, msgQ.type));
 	retCode = wma_post_ctrl_msg(pMac, &msgQ);
 	if (eSIR_SUCCESS != retCode) {
@@ -1057,7 +1057,7 @@ void lim_send_set_sta_key_req(tpAniSirGlobal pMac,
 	msgQ.bodyptr = pSetStaKeyParams;
 	msgQ.bodyval = 0;
 
-	lim_log(pMac, LOG1, FL("Sending WMA_SET_STAKEY_REQ..."));
+	lim_log(pMac, LOGD, FL("Sending WMA_SET_STAKEY_REQ..."));
 	MTRACE(mac_trace_msg_tx(pMac, sessionEntry->peSessionId, msgQ.type));
 	retCode = wma_post_ctrl_msg(pMac, &msgQ);
 	if (eSIR_SUCCESS != retCode) {

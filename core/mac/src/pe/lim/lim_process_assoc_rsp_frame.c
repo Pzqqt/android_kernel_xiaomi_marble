@@ -232,7 +232,7 @@ void lim_update_assoc_sta_datas(tpAniSirGlobal mac_ctx,
 			status =
 				sch_beacon_edca_process(mac_ctx,
 					&assoc_rsp->edca, session_entry);
-			lim_log(mac_ctx, LOG2,
+			lim_log(mac_ctx, LOGD,
 				"Edca set update based on AssocRsp: status %d",
 				status);
 			if (status != eSIR_SUCCESS) {
@@ -252,7 +252,7 @@ void lim_update_assoc_sta_datas(tpAniSirGlobal mac_ctx,
 		tSirRetStatus status;
 		status = sch_beacon_edca_process(mac_ctx, &assoc_rsp->edca,
 				session_entry);
-		lim_log(mac_ctx, LOGW,
+		lim_log(mac_ctx, LOGD,
 			"WME Edca set update based on AssocRsp: status %d",
 			status);
 
@@ -379,7 +379,7 @@ static void lim_update_ese_tspec(tpAniSirGlobal mac_ctx,
 	} else {
 		session_entry->tspecLen = 0;
 		session_entry->tspecIes = NULL;
-		lim_log(mac_ctx, LOG1,
+		lim_log(mac_ctx, LOGD,
 			FL("Tspec EID *NOT* present in assoc rsp"));
 	}
 	return;
@@ -467,8 +467,8 @@ static void lim_update_stads_ext_cap(tpAniSirGlobal mac_ctx,
 	session_entry->tdls_prohibited = ext_cap->tdls_prohibited;
 	session_entry->tdls_chan_swit_prohibited =
 		ext_cap->tdls_chan_swit_prohibited;
-	lim_log(mac_ctx, LOG1,
-		FL("ExtCap: tdls_prohibited:%d, tdls_chan_swit_prohibited: %d"),
+	lim_log(mac_ctx, LOGD,
+		FL("ExtCap: tdls_prohibited: %d, tdls_chan_swit_prohibited: %d"),
 		ext_cap->tdls_prohibited,
 		ext_cap->tdls_chan_swit_prohibited);
 #endif

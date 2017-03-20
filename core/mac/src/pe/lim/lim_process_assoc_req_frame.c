@@ -723,10 +723,9 @@ static void lim_print_ht_cap(tpAniSirGlobal mac_ctx, tpPESession session,
 	if (!session->htCapability)
 		return;
 
-	/* There are; are they turned on in the STA? */
 	if (assoc_req->HTCaps.present) {
 		/* The station *does* support 802.11n HT capability... */
-		lim_log(mac_ctx, LOG1,
+		lim_log(mac_ctx, LOGD,
 			FL("AdvCodingCap:%d ChaWidthSet:%d PowerSave:%d greenField:%d shortGI20:%d shortGI40:%d txSTBC:%d rxSTBC:%d delayBA:%d maxAMSDUsize:%d DSSS/CCK:%d  PSMP:%d stbcCntl:%d lsigTXProt:%d"),
 			assoc_req->HTCaps.advCodingCap,
 			assoc_req->HTCaps.supportedChannelWidthSet,
@@ -786,7 +785,7 @@ static bool lim_chk_n_process_wpa_rsn_ie(tpAniSirGlobal mac_ctx,
 		wps_ie = limGetWscIEPtr(mac_ctx, assoc_req->addIE.addIEdata,
 					assoc_req->addIE.length);
 	else
-		lim_log(mac_ctx, LOG1,
+		lim_log(mac_ctx, LOGD,
 			FL("Assoc req addIEPresent = %d addIE length = %d"),
 			assoc_req->addIEPresent, assoc_req->addIE.length);
 
@@ -1203,7 +1202,7 @@ static bool lim_chk_wmm(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 			return false;
 		}
 		/* else all ok */
-		lim_log(mac_ctx, LOG1, FL("AdmitControl: Sta OK!"));
+		lim_log(mac_ctx, LOGD, FL("AdmitControl: Sta OK!"));
 	}
 	return true;
 }

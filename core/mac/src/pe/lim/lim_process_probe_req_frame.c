@@ -567,7 +567,7 @@ lim_indicate_probe_req_to_hdd(tpAniSirGlobal pMac, uint8_t *pBd,
 	tpSirMacMgmtHdr pHdr;
 	uint32_t frameLen;
 
-	lim_log(pMac, LOG1, "Received a probe request frame");
+	lim_log(pMac, LOGD, "Received a probe request frame");
 
 	pHdr = WMA_GET_RX_MAC_HEADER(pBd);
 	frameLen = WMA_GET_RX_PAYLOAD_LEN(pBd);

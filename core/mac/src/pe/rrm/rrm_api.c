@@ -92,7 +92,7 @@ void
 rrm_cache_mgmt_tx_power(tpAniSirGlobal pMac, int8_t txPower,
 			tpPESession pSessionEntry)
 {
-	lim_log(pMac, LOG1, "Cache Mgmt Tx Power = %d", txPower);
+	lim_log(pMac, LOGD, "Cache Mgmt Tx Power: %d", txPower);
 
 	if (pSessionEntry == NULL) {
 		lim_log(pMac, LOG3, "%s: pSessionEntry is NULL", __func__);
@@ -124,7 +124,7 @@ int8_t rrm_get_mgmt_tx_power(tpAniSirGlobal pMac, tpPESession pSessionEntry)
 		return pMac->rrm.rrmPEContext.txMgmtPower;
 	}
 
-	lim_log(pMac, LOG1, FL("tx mgmt pwr %d"), pSessionEntry->txMgmtPower);
+	lim_log(pMac, LOGD, FL("tx mgmt pwr %d"), pSessionEntry->txMgmtPower);
 
 	return pSessionEntry->txMgmtPower;
 }

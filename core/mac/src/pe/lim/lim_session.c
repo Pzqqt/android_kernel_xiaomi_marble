@@ -202,7 +202,7 @@ static void pe_reset_protection_callback(void *ptr)
 		pe_session_entry->old_protection_state) &&
 		(false == mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running)) {
 		QDF_TRACE(QDF_MODULE_ID_PE,
-			  QDF_TRACE_LEVEL_ERROR,
+			  QDF_TRACE_LEVEL_DEBUG,
 			  FL("protection changed, update beacon template"));
 		/* update beacon fix params and send update to FW */
 		qdf_mem_zero(&beacon_params, sizeof(tUpdateBeaconParams));

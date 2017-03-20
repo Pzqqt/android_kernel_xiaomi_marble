@@ -626,8 +626,6 @@ void lim_cleanup(tpAniSirGlobal pMac)
 			&pMac->lim.gLimMgmtFrameRegistratinQueue,
 			(qdf_list_node_t **) &pLimMgmtRegistration) ==
 			QDF_STATUS_SUCCESS) {
-			QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
-			FL("Fixing leak! Deallocating pLimMgmtRegistration node"));
 			qdf_mem_free(pLimMgmtRegistration);
 		}
 		qdf_mutex_release(&pMac->lim.lim_frame_register_lock);
@@ -1488,10 +1486,10 @@ lim_enc_type_matched(tpAniSirGlobal mac_ctx,
 	if (!bcn || !session)
 		return false;
 
-	lim_log(mac_ctx, LOG1,
+	lim_log(mac_ctx, LOGD,
 		FL("Beacon/Probe:: Privacy :%d WPA Present:%d RSN Present: %d"),
 		bcn->capabilityInfo.privacy, bcn->wpaPresent, bcn->rsnPresent);
-	lim_log(mac_ctx, LOG1,
+	lim_log(mac_ctx, LOGD,
 		FL("session:: Privacy :%d EncyptionType: %d OSEN %d WPS %d"),
 		SIR_MAC_GET_PRIVACY(session->limCurrentBssCaps),
 		session->encryptType, session->isOSENConnection,
@@ -2376,7 +2374,7 @@ void lim_update_lost_link_info(tpAniSirGlobal mac, tpPESession session,
 	mmh_msg.type = eWNI_SME_LOST_LINK_INFO_IND;
 	mmh_msg.bodyptr = lost_link_info;
 	mmh_msg.bodyval = 0;
-	lim_log(mac, LOG1,
+	lim_log(mac, LOGD,
 		FL("post eWNI_SME_LOST_LINK_INFO_IND, bss_idx %d, rssi %d"),
 		lost_link_info->vdev_id, lost_link_info->rssi);
 
@@ -2421,7 +2419,6 @@ void lim_mon_init_session(tpAniSirGlobal mac_ptr,
 	tpPESession psession_entry;
 	uint8_t session_id;
 
-	lim_print_mac_addr(mac_ptr, msg->bss_id.bytes, LOGE);
 	psession_entry = pe_create_session(mac_ptr, msg->bss_id.bytes,
 					   &session_id,
 					   mac_ptr->lim.maxStation,

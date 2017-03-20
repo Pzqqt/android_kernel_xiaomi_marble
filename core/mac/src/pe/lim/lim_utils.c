@@ -881,7 +881,7 @@ uint8_t lim_write_deferred_msg_q(tpAniSirGlobal mac_ctx,
 	 * happen.
 	 */
 	if (mac_ctx->lim.gLimDeferredMsgQ.size > 0)
-		lim_log(mac_ctx, LOGW,
+		lim_log(mac_ctx, LOGD,
 			FL("%d Deferred Msg (type 0x%x, scan %d, global sme %d, global mlme %d, addts %d)"),
 			mac_ctx->lim.gLimDeferredMsgQ.size,
 			lim_msg->type,

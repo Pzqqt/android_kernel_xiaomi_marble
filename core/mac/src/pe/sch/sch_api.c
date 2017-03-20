@@ -498,7 +498,7 @@ uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal pMac,
 				nBytes, retCode);
 			qdf_mem_free(pprobeRespParams);
 		} else {
-			sch_log(pMac, LOG1,
+			sch_log(pMac, LOGD,
 				FL
 					("lim_send_probe_rsp_template_to_hal: Probe response template msg posted to HAL of bytes %d"),
 				nBytes);

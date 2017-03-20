@@ -242,7 +242,7 @@ sch_get_params(tpAniSirGlobal pMac,
 		val = WNI_CFG_EDCA_PROFILE_ANI;
 	}
 
-	sch_log(pMac, LOGW, FL("EdcaProfile: Using %d (%s)"), val,
+	sch_log(pMac, LOGD, FL("EdcaProfile: Using %d (%s)"), val,
 		((val == WNI_CFG_EDCA_PROFILE_WMM) ? "WMM" : "HiPerf"));
 
 	if (local) {

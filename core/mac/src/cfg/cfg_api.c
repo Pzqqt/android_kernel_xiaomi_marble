@@ -139,10 +139,10 @@ tSirRetStatus cfg_init(tpAniSirGlobal pMac)
 	/* Allocate a combined memory */
 	combined_buff_size = max_s_count + (3 * sizeof(uint32_t) * max_i_count);
 
-	cfg_log(pMac, LOGE, FL("Size of cfg I buffer:%d  S buffer: %d"),
+	cfg_log(pMac, LOG1, FL("Size of cfg I buffer:%d  S buffer: %d"),
 		max_i_count, max_s_count);
 
-	cfg_log(pMac, LOGE, FL("Allocation for cfg buffers: %d bytes"),
+	cfg_log(pMac, LOG1, FL("Allocation for cfg buffers: %d bytes"),
 		combined_buff_size);
 
 	if (combined_buff_size > 4 * PAGE_SIZE) {
@@ -818,7 +818,7 @@ tSirRetStatus cfg_get_capability_info(tpAniSirGlobal pMac, uint16_t *pCap,
 		pCapInfo->apsd = 1;
 
 	pCapInfo->rrm = pMac->rrm.rrmSmeContext.rrmConfig.rrm_enabled;
-	cfg_log(pMac, LOG1, FL("RRM = %d"), pCapInfo->rrm);
+	cfg_log(pMac, LOGD, FL("RRM: %d"), pCapInfo->rrm);
 	/* DSSS-OFDM */
 	/* FIXME : no config defined yet. */
 
