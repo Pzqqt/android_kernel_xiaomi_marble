@@ -1851,8 +1851,9 @@ static int wmi_unified_get_event_handler_ix(wmi_unified_t wmi_handle,
 {
 	uint32_t idx = 0;
 	int32_t invalid_idx = -1;
+	struct wmi_soc *soc = wmi_handle->soc;
 
-	for (idx = 0; (idx < wmi_handle->max_event_idx &&
+	for (idx = 0; (idx < soc->max_event_idx &&
 		       idx < WMI_UNIFIED_MAX_EVENT); ++idx) {
 		if (wmi_handle->event_id[idx] == event_id &&
 		    wmi_handle->event_handler[idx] != NULL) {
@@ -1879,6 +1880,7 @@ int wmi_unified_register_event_handler(wmi_unified_t wmi_handle,
 {
 	uint32_t idx = 0;
 	uint32_t evt_id;
+	struct wmi_soc *soc = wmi_handle->soc;
 
 #ifndef CONFIG_MCL
 	if (event_id >= wmi_events_max ||
@@ -1896,18 +1898,18 @@ int wmi_unified_register_event_handler(wmi_unified_t wmi_handle,
 		       __func__, evt_id);
 		return QDF_STATUS_E_FAILURE;
 	}
-	if (wmi_handle->max_event_idx == WMI_UNIFIED_MAX_EVENT) {
+	if (soc->max_event_idx == WMI_UNIFIED_MAX_EVENT) {
 		qdf_print("%s : no more event handlers 0x%x\n",
 		       __func__, evt_id);
 		return QDF_STATUS_E_FAILURE;
 	}
-	idx = wmi_handle->max_event_idx;
+	idx = soc->max_event_idx;
 	wmi_handle->event_handler[idx] = handler_func;
 	wmi_handle->event_id[idx] = evt_id;
-	qdf_spin_lock_bh(&wmi_handle->ctx_lock);
+	qdf_spin_lock_bh(&soc->ctx_lock);
 	wmi_handle->ctx[idx] = rx_ctx;
-	qdf_spin_unlock_bh(&wmi_handle->ctx_lock);
-	wmi_handle->max_event_idx++;
+	qdf_spin_unlock_bh(&soc->ctx_lock);
+	soc->max_event_idx++;
 
 	return 0;
 }
@@ -1924,6 +1926,7 @@ int wmi_unified_unregister_event_handler(wmi_unified_t wmi_handle,
 {
 	uint32_t idx = 0;
 	uint32_t evt_id;
+	struct wmi_soc *soc = wmi_handle->soc;
 
 #ifndef CONFIG_MCL
 	if (event_id >= wmi_events_max ||
@@ -1945,11 +1948,11 @@ int wmi_unified_unregister_event_handler(wmi_unified_t wmi_handle,
 	}
 	wmi_handle->event_handler[idx] = NULL;
 	wmi_handle->event_id[idx] = 0;
-	--wmi_handle->max_event_idx;
+	--soc->max_event_idx;
 	wmi_handle->event_handler[idx] =
-		wmi_handle->event_handler[wmi_handle->max_event_idx];
+		wmi_handle->event_handler[soc->max_event_idx];
 	wmi_handle->event_id[idx] =
-		wmi_handle->event_id[wmi_handle->max_event_idx];
+		wmi_handle->event_id[soc->max_event_idx];
 
 	return 0;
 }
@@ -2078,9 +2081,9 @@ static void wmi_control_rx(void *ctx, HTC_PACKET *htc_packet)
 		qdf_nbuf_free(evt_buf);
 		return;
 	}
-	qdf_spin_lock_bh(&wmi_handle->ctx_lock);
+	qdf_spin_lock_bh(&soc->ctx_lock);
 	exec_ctx = wmi_handle->ctx[idx];
-	qdf_spin_unlock_bh(&wmi_handle->ctx_lock);
+	qdf_spin_unlock_bh(&soc->ctx_lock);
 
 	if (exec_ctx == WMI_RX_WORK_CTX) {
 		wmi_process_fw_event_worker_thread_ctx
@@ -2347,10 +2350,10 @@ void *wmi_unified_get_pdev_handle(struct wmi_soc *soc, uint32_t pdev_idx)
 	qdf_atomic_init(&wmi_handle->is_target_suspended);
 	wmi_handle->target_type = soc->target_type;
 	wmi_handle->wmi_stopinprogress = 0;
-	qdf_spinlock_create(&wmi_handle->ctx_lock);
 	wmi_handle->wmi_endpoint_id = soc->wmi_endpoint_id[pdev_idx];
 	wmi_handle->htc_handle = soc->htc_handle;
 	wmi_handle->max_msg_len = soc->max_msg_len[pdev_idx];
+	wmi_handle->soc = soc;
 
 	soc->wmi_pdev[pdev_idx] = wmi_handle;
 
@@ -2427,7 +2430,7 @@ void *wmi_unified_attach(void *scn_handle,
 	wmi_handle->wmi_stopinprogress = 0;
 	/* Increase the ref count once refcount infra is present */
 	soc->wmi_psoc = psoc;
-	qdf_spinlock_create(&wmi_handle->ctx_lock);
+	qdf_spinlock_create(&soc->ctx_lock);
 
 	soc->ops = wmi_handle->ops;
 	soc->wmi_pdev[0] = wmi_handle;
@@ -2463,10 +2466,10 @@ void wmi_unified_detach(struct wmi_unified *wmi_handle)
 
 			wmi_log_buffer_free(soc->wmi_pdev[i]);
 			qdf_spinlock_destroy(&soc->wmi_pdev[i]->eventq_lock);
-			qdf_spinlock_destroy(&soc->wmi_pdev[i]->ctx_lock);
 			qdf_mem_free(soc->wmi_pdev[i]);
 		}
 	}
+	qdf_spinlock_destroy(&soc->ctx_lock);
 	/* Decrease the ref count once refcount infra is present */
 	soc->wmi_psoc = NULL;
 	qdf_mem_free(soc);
