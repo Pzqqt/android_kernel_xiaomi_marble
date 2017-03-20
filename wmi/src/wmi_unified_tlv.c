@@ -286,6 +286,9 @@ static inline void copy_channel_info(
 		cmd->disable_hw_ack = req->disable_hw_ack;
 	}
 
+	if (req->channel.dfs_set_cfreq2)
+		WMI_SET_CHANNEL_FLAG(chan, WMI_CHAN_FLAG_DFS_CFREQ2);
+
 	/* FIXME: Find out min, max and regulatory power levels */
 	WMI_SET_CHANNEL_REG_POWER(chan, req->channel.maxregpower);
 	WMI_SET_CHANNEL_MAX_TX_POWER(chan, req->channel.maxpower);
@@ -1917,6 +1920,11 @@ static QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_GET_STRUCT_TLVLEN(wmi_vht_rate_set));
 
 	cmd->peer_nss = param->peer_nss;
+
+	/* Update bandwidth-NSS mapping */
+	cmd->peer_bw_rxnss_override = 0;
+	cmd->peer_bw_rxnss_override |= param->peer_bw_rxnss_override;
+
 	mcs = (wmi_vht_rate_set *) buf_ptr;
 	if (param->vht_capable) {
 		mcs->rx_max_rate = param->rx_max_rate;
@@ -1951,7 +1959,8 @@ static QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 		 "nss %d phymode %d peer_mpdu_density %d "
 		 "cmd->peer_vht_caps %x "
 		 "HE cap_info %x ops %x "
-		 "HE phy %x  %x  %x  ", __func__,
+		 "HE phy %x  %x  %x  "
+		 "peer_bw_rxnss_override %x", __func__,
 		 cmd->vdev_id, cmd->peer_associd, cmd->peer_flags,
 		 cmd->peer_rate_caps, cmd->peer_caps,
 		 cmd->peer_listen_intval, cmd->peer_ht_caps,
@@ -1959,7 +1968,8 @@ static QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 		 cmd->peer_mpdu_density,
 		 cmd->peer_vht_caps, cmd->peer_he_cap_info,
 		 cmd->peer_he_ops, cmd->peer_he_cap_phy[0],
-		 cmd->peer_he_cap_phy[1], cmd->peer_he_cap_phy[2]);
+		 cmd->peer_he_cap_phy[1], cmd->peer_he_cap_phy[2],
+		 cmd->peer_bw_rxnss_override);
 
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_PEER_ASSOC_CMDID);

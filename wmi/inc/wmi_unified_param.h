@@ -1080,9 +1080,9 @@ struct peer_assoc_params {
 	uint32_t tx_max_rate;
 	uint32_t tx_mcs_set;
 	uint8_t vht_capable;
+	uint32_t peer_bw_rxnss_override;
 #ifndef CONFIG_MCL
 	uint32_t tx_max_mcs_nss;
-	uint32_t peer_bw_rxnss_override;
 	bool is_pmf_enabled;
 	bool is_wme_set;
 	bool qos_flag;
