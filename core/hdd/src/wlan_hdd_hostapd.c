@@ -1832,15 +1832,6 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 						NULL,
 						pHostapdAdapter->device_mode);
 		}
-		ret = hdd_remove_peer_object(pHostapdAdapter->hdd_vdev,
-					     pSapEvent->sapevt.
-					     sapStationDisassocCompleteEvent.
-					     staMac.bytes);
-		if (ret)
-			hdd_err("Peer obj "MAC_ADDRESS_STR" delete fails",
-					MAC_ADDR_ARRAY(pSapEvent->sapevt.
-					sapStationDisassocCompleteEvent.
-					staMac.bytes));
 #ifdef MSM_PLATFORM
 		/*stop timer in sap/p2p_go */
 		if (pHddApCtx->bApActive == false) {
