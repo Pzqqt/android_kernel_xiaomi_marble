@@ -78,8 +78,7 @@ void sch_set_beacon_interval(tpAniSirGlobal pMac, tpPESession psessionEntry)
 	bi = psessionEntry->beaconParams.beaconInterval;
 
 	if (bi < SCH_BEACON_INTERVAL_MIN || bi > SCH_BEACON_INTERVAL_MAX) {
-		sch_log(pMac, LOGE,
-			FL("Invalid beacon interval %d (should be [%d,%d]"), bi,
+		pe_debug("Invalid beacon interval %d (should be [%d,%d]", bi,
 			SCH_BEACON_INTERVAL_MIN, SCH_BEACON_INTERVAL_MAX);
 		return;
 	}
@@ -108,12 +107,11 @@ void sch_process_message(tpAniSirGlobal pMac, struct scheduler_msg *pSchMsg)
 	uint32_t val;
 
 	tpPESession psessionEntry = &pMac->lim.gpSession[0];
-	PELOG3(sch_log(pMac, LOG3, FL("Received message (%x) "), pSchMsg->type);)
 
 	switch (pSchMsg->type) {
 
 	case SIR_SCH_CHANNEL_SWITCH_REQUEST:
-		sch_log(pMac, LOGE, FL("Channel switch request not handled"));
+		pe_debug("Channel switch request not handled");
 		break;
 
 	case SIR_SCH_START_SCAN_REQ:
@@ -122,11 +120,8 @@ void sch_process_message(tpAniSirGlobal pMac, struct scheduler_msg *pSchMsg)
 			/* In HCF mode, wait for TFP to stop before sending a response */
 			if (pMac->sch.schObject.gSchCFBInitiated ||
 			    pMac->sch.schObject.gSchCFPInitiated) {
-				PELOG1(sch_log(pMac, LOG1,
-					       FL
-						       ("Waiting for TFP to halt before sending "
-						       "start scan response"));
-				       )
+				pe_debug("Waiting for TFP to halt before sending "
+					 "start scan response");
 			} else
 				sch_send_start_scan_rsp(pMac);
 		} else {
@@ -136,9 +131,7 @@ void sch_process_message(tpAniSirGlobal pMac, struct scheduler_msg *pSchMsg)
 		break;
 
 	case SIR_SCH_END_SCAN_NTF:
-		PELOG3(sch_log(pMac, LOG3,
-			       FL("Received STOP_SCAN_NTF from LIM"));
-		       )
+		pe_debug("Received STOP_SCAN_NTF from LIM");
 		pMac->sch.gSchScanReqRcvd = false;
 		break;
 
@@ -146,8 +139,7 @@ void sch_process_message(tpAniSirGlobal pMac, struct scheduler_msg *pSchMsg)
 
 		if (wlan_cfg_get_int(pMac, (uint16_t) pSchMsg->bodyval, &val) !=
 		    eSIR_SUCCESS)
-			sch_log(pMac, LOGP, FL("failed to cfg get id %d"),
-				pSchMsg->bodyval);
+			pe_err("failed to cfg get id %d", pSchMsg->bodyval);
 
 		switch (pSchMsg->bodyval) {
 		case WNI_CFG_BEACON_INTERVAL:
@@ -194,15 +186,13 @@ void sch_process_message(tpAniSirGlobal pMac, struct scheduler_msg *pSchMsg)
 			break;
 
 		default:
-			sch_log(pMac, LOGE,
-				FL("Cfg param %d indication not handled"),
+			pe_err("Cfg param %d indication not handled",
 				pSchMsg->bodyval);
 		}
 		break;
 
 	default:
-		sch_log(pMac, LOGE, FL("Unknown message in schMsgQ type %d"),
-			pSchMsg->type);
+		pe_err("Unknown message in schMsgQ type %d", pSchMsg->type);
 	}
 
 }
@@ -230,19 +220,18 @@ sch_get_params(tpAniSirGlobal pMac,
 			     WNI_CFG_EDCA_WME_ACVI, WNI_CFG_EDCA_WME_ACVO};
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_EDCA_PROFILE, &val) != eSIR_SUCCESS) {
-		sch_log(pMac, LOGP, FL("failed to cfg get EDCA_PROFILE id %d"),
+		pe_err("failed to cfg get EDCA_PROFILE id %d",
 			WNI_CFG_EDCA_PROFILE);
 		return eSIR_FAILURE;
 	}
 
 	if (val >= WNI_CFG_EDCA_PROFILE_MAX) {
-		sch_log(pMac, LOGE,
-			FL("Invalid EDCA_PROFILE %d, using %d instead"), val,
+		pe_warn("Invalid EDCA_PROFILE %d, using %d instead", val,
 			WNI_CFG_EDCA_PROFILE_ANI);
 		val = WNI_CFG_EDCA_PROFILE_ANI;
 	}
 
-	sch_log(pMac, LOGD, FL("EdcaProfile: Using %d (%s)"), val,
+	pe_debug("EdcaProfile: Using %d (%s)", val,
 		((val == WNI_CFG_EDCA_PROFILE_WMM) ? "WMM" : "HiPerf"));
 
 	if (local) {
@@ -273,22 +262,19 @@ sch_get_params(tpAniSirGlobal pMac,
 		if (wlan_cfg_get_str
 			    (pMac, (uint16_t) prf[i], (uint8_t *) &data[0],
 			    &len) != eSIR_SUCCESS) {
-			sch_log(pMac, LOGP, FL("cfgGet failed for %d"), prf[i]);
+			pe_err("cfgGet failed for %d", prf[i]);
 			return eSIR_FAILURE;
 		}
 		if (len > WNI_CFG_EDCA_ANI_ACBK_LOCAL_LEN) {
-			sch_log(pMac, LOGE,
-				FL("cfgGet for %d: length is %d instead of %d"),
+			pe_err("cfgGet for %d: length is %d instead of %d",
 				prf[i], len, WNI_CFG_EDCA_ANI_ACBK_LOCAL_LEN);
 			return eSIR_FAILURE;
 		}
 		for (idx = 0; idx < len; idx++)
 			params[i][idx] = (uint32_t) data[idx];
 	}
-	PELOG1(sch_log
-		       (pMac, LOG1, FL("GetParams: local=%d, profile = %d Done"), local,
-		       val);
-	       )
+	pe_debug("GetParams: local=%d, profile = %d Done", local, val);
+
 	return eSIR_SUCCESS;
 }
 
@@ -348,13 +334,12 @@ broadcast_wmm_of_concurrent_sta_session(tpAniSirGlobal mac_ctx,
 			concurrent_session->gLimEdcaParams[j].cw.max;
 		session->gLimEdcaParamsBC[j].txoplimit =
 			concurrent_session->gLimEdcaParams[j].txoplimit;
-		PELOG1(sch_log(mac_ctx, LOG1,
-		       FL("QoSUpdateBCast changed again due to concurrent INFRA STA session: AC :%d: AIFSN: %d, ACM %d, CWmin %d, CWmax %d, TxOp %d"),
+		pe_debug("QoSUpdateBCast changed again due to concurrent INFRA STA session: AC :%d: AIFSN: %d, ACM %d, CWmin %d, CWmax %d, TxOp %d",
 		       j, session->gLimEdcaParamsBC[j].aci.aifsn,
 		       session->gLimEdcaParamsBC[j].aci.acm,
 		       session->gLimEdcaParamsBC[j].cw.min,
 		       session->gLimEdcaParamsBC[j].cw.max,
-		       session->gLimEdcaParamsBC[j].txoplimit);)
+		       session->gLimEdcaParamsBC[j].txoplimit);
 	}
 	return true;
 }
@@ -368,12 +353,12 @@ void sch_qos_update_broadcast(tpAniSirGlobal pMac, tpPESession psessionEntry)
 	bool updated = false;
 
 	if (sch_get_params(pMac, params, false) != eSIR_SUCCESS) {
-		PELOGE(sch_log(pMac, LOGE, FL("QosUpdateBroadcast: failed"));)
+		pe_debug("QosUpdateBroadcast: failed");
 		return;
 	}
 	lim_get_phy_mode(pMac, &phyMode, psessionEntry);
 
-	PELOG1(sch_log(pMac, LOG1, "QosUpdBcast: mode %d", phyMode);)
+	pe_debug("QosUpdBcast: mode %d", phyMode);
 
 	if (phyMode == WNI_CFG_PHY_MODE_11G) {
 		cwminidx = WNI_CFG_EDCA_PROFILE_CWMING_IDX;
@@ -422,15 +407,12 @@ void sch_qos_update_broadcast(tpAniSirGlobal pMac, tpPESession psessionEntry)
 			updated = true;
 		}
 
-		PELOG1(sch_log
-			       (pMac, LOG1,
-			       "QoSUpdateBCast: AC :%d: AIFSN: %d, ACM %d, CWmin %d, CWmax %d, TxOp %d",
+		pe_debug("QoSUpdateBCast: AC :%d: AIFSN: %d, ACM %d, CWmin %d, CWmax %d, TxOp %d",
 			       i, psessionEntry->gLimEdcaParamsBC[i].aci.aifsn,
 			       psessionEntry->gLimEdcaParamsBC[i].aci.acm,
 			       psessionEntry->gLimEdcaParamsBC[i].cw.min,
 			       psessionEntry->gLimEdcaParamsBC[i].cw.max,
 			       psessionEntry->gLimEdcaParamsBC[i].txoplimit);
-		       )
 
 	}
 
@@ -441,7 +423,7 @@ void sch_qos_update_broadcast(tpAniSirGlobal pMac, tpPESession psessionEntry)
 		psessionEntry->gLimEdcaParamSetCount++;
 
 	if (sch_set_fixed_beacon_fields(pMac, psessionEntry) != eSIR_SUCCESS)
-		PELOGE(sch_log(pMac, LOGE, "Unable to set beacon fields!");)
+		pe_err("Unable to set beacon fields!");
 }
 
 void sch_qos_update_local(tpAniSirGlobal pMac, tpPESession psessionEntry)
@@ -450,7 +432,7 @@ void sch_qos_update_local(tpAniSirGlobal pMac, tpPESession psessionEntry)
 	uint32_t params[4][WNI_CFG_EDCA_ANI_ACBK_LOCAL_LEN];
 
 	if (sch_get_params(pMac, params, true /*local */) != eSIR_SUCCESS) {
-		PELOGE(sch_log(pMac, LOGE, FL("sch_get_params(local) failed"));)
+		pe_err("sch_get_params(local) failed");
 		return;
 	}
 
@@ -473,7 +455,7 @@ void sch_set_default_edca_params(tpAniSirGlobal pMac, tpPESession psessionEntry)
 	uint32_t params[4][WNI_CFG_EDCA_ANI_ACBK_LOCAL_LEN];
 
 	if (get_wmm_local_params(pMac, params) != eSIR_SUCCESS) {
-		PELOGE(sch_log(pMac, LOGE, FL("get_wmm_local_params() failed"));)
+		pe_err("get_wmm_local_params() failed");
 		return;
 	}
 
@@ -499,7 +481,7 @@ set_sch_edca_params(tpAniSirGlobal pMac,
 
 	lim_get_phy_mode(pMac, &phyMode, psessionEntry);
 
-	PELOG1(sch_log(pMac, LOG1, FL("lim_get_phy_mode() = %d"), phyMode);)
+	pe_debug("lim_get_phy_mode() = %d", phyMode);
 	/* if (pMac->lim.gLimPhyMode == WNI_CFG_PHY_MODE_11G) */
 	if (phyMode == WNI_CFG_PHY_MODE_11G) {
 		cwminidx = WNI_CFG_EDCA_PROFILE_CWMING_IDX;
@@ -530,16 +512,12 @@ set_sch_edca_params(tpAniSirGlobal pMac,
 		psessionEntry->gLimEdcaParams[i].txoplimit =
 			(uint16_t) params[i][txopidx];
 
-		PELOG1(sch_log
-			       (pMac, LOG1,
-			       FL
-				       ("AC :%d: AIFSN: %d, ACM %d, CWmin %d, CWmax %d, TxOp %d"),
+		pe_debug("AC :%d: AIFSN: %d, ACM %d, CWmin %d, CWmax %d, TxOp %d",
 			       i, psessionEntry->gLimEdcaParams[i].aci.aifsn,
 			       psessionEntry->gLimEdcaParams[i].aci.acm,
 			       psessionEntry->gLimEdcaParams[i].cw.min,
 			       psessionEntry->gLimEdcaParams[i].cw.max,
 			       psessionEntry->gLimEdcaParams[i].txoplimit);
-		       )
 
 	}
 	return;
@@ -569,12 +547,11 @@ get_wmm_local_params(tpAniSirGlobal pMac,
 		if (wlan_cfg_get_str
 			    (pMac, (uint16_t) prf[i], (uint8_t *) &data[0],
 			    &len) != eSIR_SUCCESS) {
-			sch_log(pMac, LOGP, FL("cfgGet failed for %d"), prf[i]);
+			pe_err("cfgGet failed for %d", prf[i]);
 			return eSIR_FAILURE;
 		}
 		if (len > WNI_CFG_EDCA_ANI_ACBK_LOCAL_LEN) {
-			sch_log(pMac, LOGE,
-				FL("cfgGet for %d: length is %d instead of %d"),
+			pe_err("cfgGet for %d: length is %d instead of %d",
 				prf[i], len, WNI_CFG_EDCA_ANI_ACBK_LOCAL_LEN);
 			return eSIR_FAILURE;
 		}
