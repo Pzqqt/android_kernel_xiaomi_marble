@@ -816,9 +816,11 @@ struct policy_mgr_sme_cbacks {
  *      				SAP
  */
 struct policy_mgr_hdd_cbacks {
-	void (*sap_restart_chan_switch_cb)(uint8_t,
-				uint32_t, uint32_t);
+	void (*sap_restart_chan_switch_cb)(struct wlan_objmgr_psoc *psoc,
+				uint8_t vdev_id, uint32_t channel,
+				uint32_t channel_bw);
 	QDF_STATUS (*wlan_hdd_get_channel_for_sap_restart)(
+				struct wlan_objmgr_psoc *psoc,
 				uint8_t vdev_id, uint8_t *channel,
 				uint8_t *sec_ch,
 				struct ch_params_s *ch_params);
@@ -1453,6 +1455,17 @@ QDF_STATUS policy_mgr_register_sme_cb(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS policy_mgr_register_hdd_cb(struct wlan_objmgr_psoc *psoc,
 		struct policy_mgr_hdd_cbacks *hdd_cbacks);
+
+/**
+ * policy_mgr_deregister_hdd_cb() - Deregister HDD callbacks
+ * @psoc: PSOC object information
+ *
+ * API, allows HDD to deregister callbacks
+ *
+ * Return: SUCCESS,
+ *         Failure (if de-registration fails)
+ */
+QDF_STATUS policy_mgr_deregister_hdd_cb(struct wlan_objmgr_psoc *psoc);
 
 /**
  * policy_mgr_register_tdls_cb() - register TDLS callbacks
