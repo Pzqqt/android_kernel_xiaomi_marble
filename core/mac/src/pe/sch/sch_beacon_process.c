@@ -43,7 +43,6 @@
 #include "cfg_api.h"
 #include "lim_api.h"
 #include "utils_api.h"
-#include "sch_debug.h"
 #include "sch_api.h"
 
 #include "lim_utils.h"

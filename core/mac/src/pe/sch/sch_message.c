@@ -35,7 +35,6 @@
 #include "lim_send_messages.h"
 
 #include "sch_api.h"
-#include "sch_debug.h"
 
 /* / Minimum beacon interval allowed (in Kus) */
 #define SCH_BEACON_INTERVAL_MIN  10

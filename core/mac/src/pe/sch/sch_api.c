@@ -50,7 +50,6 @@
 #include "lim_api.h"
 
 #include "sch_api.h"
-#include "sch_debug.h"
 
 #include "sch_sys_params.h"
 #include "lim_trace.h"

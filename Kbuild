@@ -596,7 +596,6 @@ endif
 MAC_SCH_OBJS := $(MAC_SRC_DIR)/pe/sch/sch_api.o \
 		$(MAC_SRC_DIR)/pe/sch/sch_beacon_gen.o \
 		$(MAC_SRC_DIR)/pe/sch/sch_beacon_process.o \
-		$(MAC_SRC_DIR)/pe/sch/sch_debug.o \
 		$(MAC_SRC_DIR)/pe/sch/sch_message.o
 
 MAC_RRM_OBJS :=	$(MAC_SRC_DIR)/pe/rrm/rrm_api.o

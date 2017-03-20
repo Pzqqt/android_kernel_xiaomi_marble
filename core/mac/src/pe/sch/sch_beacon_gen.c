@@ -51,7 +51,6 @@
 
 #include "parser_api.h"
 
-#include "sch_debug.h"
 
 const uint8_t p2p_oui[] = { 0x50, 0x6F, 0x9A, 0x9 };
 
@@ -379,7 +378,7 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 	}
 
 	if (lim_is_session_he_capable(session)) {
-		sch_log(mac_ctx, LOGW, FL("Populate HE IEs"));
+		pe_warn("Populate HE IEs");
 		populate_dot11f_he_caps(mac_ctx, session,
 					&bcn_2->vendor_he_cap);
 		populate_dot11f_he_operation(mac_ctx, session,
