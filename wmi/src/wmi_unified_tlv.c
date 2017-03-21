@@ -364,6 +364,7 @@ static QDF_STATUS send_vdev_start_cmd_tlv(wmi_unified_t wmi_handle,
 			cmd->flags |= WMI_UNIFIED_VDEV_START_PMF_ENABLED;
 	}
 
+	cmd->flags |= WMI_UNIFIED_VDEV_START_LDPC_RX_ENABLED;
 	cmd->num_noa_descriptors = req->num_noa_descriptors;
 	cmd->preferred_rx_streams = req->preferred_rx_streams;
 	cmd->preferred_tx_streams = req->preferred_tx_streams;
@@ -379,13 +380,14 @@ static QDF_STATUS send_vdev_start_cmd_tlv(wmi_unified_t wmi_handle,
 	WMI_LOGI("%s: vdev_id %d freq %d chanmode %d ch_info: 0x%x is_dfs %d "
 		"beacon interval %d dtim %d center_chan %d center_freq2 %d "
 		"reg_info_1: 0x%x reg_info_2: 0x%x, req->max_txpow: 0x%x "
-		"Tx SS %d, Rx SS %d, cac %d, regd %d, HE ops: %d",
+		"Tx SS %d, Rx SS %d, ldpc_rx: %d, cac %d, regd %d, HE ops: %d",
 		__func__, req->vdev_id, chan->mhz, req->chan_mode, chan->info,
 		req->is_dfs, req->beacon_intval, cmd->dtim_period,
 		chan->band_center_freq1, chan->band_center_freq2,
 		chan->reg_info_1, chan->reg_info_2, req->max_txpow,
 		req->preferred_tx_streams, req->preferred_rx_streams,
-		req->cac_duration_ms, req->regdomain, req->he_ops);
+		req->ldpc_rx_enabled, req->cac_duration_ms,
+		req->regdomain, req->he_ops);
 
 	if (req->is_restart)
 		ret = wmi_unified_cmd_send(wmi_handle, buf, len,
