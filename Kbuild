@@ -1080,7 +1080,7 @@ UMAC_SER_OBJS := $(UMAC_SER_OBJ_DIR)/wlan_serialization_dequeue.o \
 		 $(UMAC_SER_OBJ_DIR)/wlan_serialization_rules.o
 
 ###### WIFI POS ########
-CONFIG_WIFI_POS_CONVERGED := n
+CONFIG_WIFI_POS_CONVERGED := y
 
 WIFI_POS_OS_IF_DIR := $(WLAN_COMMON_ROOT)/os_if/linux/wifi_pos/src
 WIFI_POS_OS_IF_INC := -I$(WLAN_COMMON_INC)/os_if/linux/wifi_pos/inc
