@@ -26,6 +26,7 @@
 #include <qdf_trace.h>
 #include <qdf_types.h>
 #include <qdf_event.h>
+#include <qdf_list.h>
 
 #define MAX_QUEUE_LENGTH 20
 #define P2P_NOA_ATTR_IND 0x1090

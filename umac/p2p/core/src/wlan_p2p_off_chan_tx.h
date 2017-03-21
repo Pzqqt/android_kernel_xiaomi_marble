@@ -25,6 +25,7 @@
 
 #include <qdf_types.h>
 #include <qdf_mc_timer.h>
+#include <qdf_list.h>
 
 #define P2P_EID_VENDOR                          0xdd
 #define P2P_ACTION_VENDOR_SPECIFIC_CATEGORY     0x7F
