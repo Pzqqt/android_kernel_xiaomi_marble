@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -146,9 +146,21 @@
  *      targets).
  * 3.30 Add pktlog flag inside HTT_T2H RX_IN_ORD_PADDR_IND message
  * 3.31 Add HTT_H2T_MSG_TYPE_RFS_CONFIG
+ * 3.32 Add HTT_WDI_IPA_OPCODE_SHARING_STATS, HTT_WDI_IPA_OPCODE_SET_QUOTA and
+ *      HTT_WDI_IPA_OPCODE_IND_QUOTA for getting quota and reporting WiFi
+ *      sharing stats
+ * 3.33 Add HTT_TX_COMPL_IND_STAT_DROP and HTT_TX_COMPL_IND_STAT_HOST_INSPECT
+ * 3.34 Add HW_PEER_ID field to PEER_MAP
+ * 3.35 Revise bitfield defs of HTT_SRING_SETUP message
+ *      (changes are not backwards compatible, but HTT_SRING_SETUP message is
+ *      not yet in use)
+ * 3.36 Add HTT_H2T_MSG_TYPE_EXT_STATS_REQ and HTT_T2H_MSG_TYPE_EXT_STATS_CONF
+ * 3.37 Add HTT_PEER_TYPE and htt_mac_addr defs
+ * 3.38 Add holes_no_filled field to rx_reorder_stats
+ * 3.39 Add host_inspected flag to htt_tx_tcl_vdev_metadata
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 31
+#define HTT_CURRENT_VERSION_MINOR 39
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -486,6 +498,7 @@ enum htt_h2t_msg_type {
 	HTT_H2T_MSG_TYPE_ADD_WDS_ENTRY         = 0xd,
 	HTT_H2T_MSG_TYPE_DELETE_WDS_ENTRY      = 0xe,
 	HTT_H2T_MSG_TYPE_RFS_CONFIG  = 0xf,
+	HTT_H2T_MSG_TYPE_EXT_STATS_REQ         = 0x10,
 
 	/* keep this last */
 	HTT_H2T_NUM_MSGS
@@ -507,7 +520,7 @@ enum htt_h2t_msg_type {
 	(((word) & HTT_H2T_MSG_TYPE_M) >> HTT_H2T_MSG_TYPE_S)
 
 /**
- * @brief target -> host version number request message definition
+ * @brief host -> target version number request message definition
  *
  *     |31            24|23            16|15             8|7              0|
  *     |----------------+----------------+----------------+----------------|
@@ -1533,9 +1546,9 @@ PREPACK struct htt_tx_msdu_desc_ext2_t {
 	valid_nss_mask       : 1, /* if set, tx Nss mask is valid */
 	valid_preamble_type  : 1, /* if set, tx preamble spec is valid */
 	valid_retries        : 1, /* if set, tx retries spec is valid */
-	valid_guard_interval : 1, /* if set, tx guard intv spec is valid */
 	/*  if set, tx dyn_bw and bw_mask are valid */
 	valid_bw_info        : 1,
+	valid_guard_interval : 1, /* if set, tx guard intv spec is valid */
 	valid_chainmask      : 1, /* if set, tx chainmask is valid */
 	valid_encrypt_type   : 1, /* if set, encrypt type is valid */
 	valid_key_flags      : 1, /* if set, key flags is valid */
@@ -1989,7 +2002,8 @@ typedef struct {
 	valid_htt_ext: 1, /* If set, tcl_exit_base->host_meta_info is valid */
 	vdev_id:       8,
 	pdev_id:       2,
-	rsvd:          20;
+	host_inspected:1,
+	rsvd:          19;
 } htt_tx_tcl_vdev_metadata;
 
 typedef struct {
@@ -2013,10 +2027,16 @@ PREPACK struct htt_tx_tcl_metadata {
 #define HTT_TX_TCL_METADATA_TYPE_S                0
 #define HTT_TX_TCL_METADATA_VALID_HTT_M           0x00000002
 #define HTT_TX_TCL_METADATA_VALID_HTT_S           1
+
+/* VDEV metadata */
 #define HTT_TX_TCL_METADATA_VDEV_ID_M             0x000003fc
 #define HTT_TX_TCL_METADATA_VDEV_ID_S             2
 #define HTT_TX_TCL_METADATA_PDEV_ID_M             0x00000c00
 #define HTT_TX_TCL_METADATA_PDEV_ID_S             10
+#define HTT_TX_TCL_METADATA_HOST_INSPECTED_M      0x00001000
+#define HTT_TX_TCL_METADATA_HOST_INSPECTED_S      12
+
+/* PEER metadata */
 #define HTT_TX_TCL_METADATA_PEER_ID_M             0x0000fffc
 #define HTT_TX_TCL_METADATA_PEER_ID_S             2
 
@@ -2054,6 +2074,17 @@ PREPACK struct htt_tx_tcl_metadata {
 	do {							\
 		HTT_CHECK_SET_VAL(HTT_TX_TCL_METADATA_PDEV_ID, _val);\
 		((_var) |= ((_val) << HTT_TX_TCL_METADATA_PDEV_ID_S));\
+	} while (0)
+
+#define HTT_TX_TCL_METADATA_HOST_INSPECTED_GET(_var) \
+	(((_var) & HTT_TX_TCL_METADATA_HOST_INSPECTED_M) >> \
+	HTT_TX_TCL_METADATA_HOST_INSPECTED_S)
+#define HTT_TX_TCL_METADATA_HOST_INSPECTED_SET(_var, _val) \
+	do { \
+		HTT_CHECK_SET_VAL(HTT_TX_TCL_METADATA_HOST_INSPECTED,\
+			_val); \
+		((_var) |= ((_val) <<\
+		HTT_TX_TCL_METADATA_HOST_INSPECTED_S)); \
 	} while (0)
 
 #define HTT_TX_TCL_METADATA_PEER_ID_GET(_var)			\
@@ -3921,7 +3952,7 @@ PREPACK struct htt_wdi_ipa_op_request_t {
 		op_code:16;
 } POSTPACK;
 
-#define HTT_WDI_IPA_OP_REQUEST_SZ                    4
+#define HTT_WDI_IPA_OP_REQUEST_SZ                    4 /* bytes */
 
 #define HTT_WDI_IPA_OP_REQUEST_OP_CODE_M             0xffff0000
 #define HTT_WDI_IPA_OP_REQUEST_OP_CODE_S             16
@@ -5376,6 +5407,129 @@ HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_##flag##_##mode##_##type##_##subtype)
 		((_var) |= ((_val) << HTT_H2T_RFS_CONFIG_S));	\
 	} while (0)
 
+
+
+
+/**
+ * @brief host -> target FW extended statistics retrieve
+ *
+ * @details
+ * The following field definitions describe the format of the HTT host
+ * to target FW extended stats retrieve message.
+ * The message specifies the type of stats the host wants to retrieve.
+ *
+ * |31          24|23          16|15           8|7            0|
+ * |-----------------------------------------------------------|
+ * |   reserved   | stats type   |   pdev_mask  |   msg type   |
+ * |-----------------------------------------------------------|
+ * |                   config param [0]                        |
+ * |-----------------------------------------------------------|
+ * |                   config param [1]                        |
+ * |-----------------------------------------------------------|
+ * |                   config param [2]                        |
+ * |-----------------------------------------------------------|
+ * |                   config param [3]                        |
+ * |-----------------------------------------------------------|
+ * |                         reserved                          |
+ * |-----------------------------------------------------------|
+ * |                        cookie LSBs                        |
+ * |-----------------------------------------------------------|
+ * |                        cookie MSBs                        |
+ * |-----------------------------------------------------------|
+ * Header fields:
+ *  - MSG_TYPE
+ *    Bits 7:0
+ *    Purpose: identifies this is a extended stats upload request message
+ *    Value: 0x10
+ *  - PDEV_MASK
+ *    Bits 8:15
+ *    Purpose: identifies the mask of PDEVs to retrieve stats from
+ *    Value: This is a overloaded field, refer to usage and interpretation of
+ *           PDEV in interface document.
+ *           Bit   8    :  Reserved for SOC stats
+ *           Bit 9 - 15 :  Indicates PDEV_MASK in DBDC
+ *                         Indicates MACID_MASK in DBS
+ *  - STATS_TYPE
+ *    Bits 23:16
+ *    Purpose: identifies which FW statistics to upload
+ *    Value: Defined by htt_dbg_ext_stats_type (see htt_stats.h)
+ *  - Reserved
+ *    Bits 31:24
+ *  - CONFIG_PARAM [0]
+ *    Bits 31:0
+ *    Purpose: give an opaque configuration value to the specified stats type
+ *    Value: stats-type specific configuration value
+ *           Refer to htt_stats.h for interpretation for each stats sub_type
+ *  - CONFIG_PARAM [1]
+ *    Bits 31:0
+ *    Purpose: give an opaque configuration value to the specified stats type
+ *    Value: stats-type specific configuration value
+ *           Refer to htt_stats.h for interpretation for each stats sub_type
+ *  - CONFIG_PARAM [2]
+ *    Bits 31:0
+ *    Purpose: give an opaque configuration value to the specified stats type
+ *    Value: stats-type specific configuration value
+ *           Refer to htt_stats.h for interpretation for each stats sub_type
+ *  - CONFIG_PARAM [3]
+ *    Bits 31:0
+ *    Purpose: give an opaque configuration value to the specified stats type
+ *    Value: stats-type specific configuration value
+ *           Refer to htt_stats.h for interpretation for each stats sub_type
+ *  - Reserved [31:0] for future use.
+ *  - COOKIE_LSBS
+ *    Bits 31:0
+ *    Purpose: Provide a mechanism to match a target->host stats confirmation
+ *        message with its preceding host->target stats request message.
+ *    Value: LSBs of the opaque cookie specified by the host-side requestor
+ *  - COOKIE_MSBS
+ *    Bits 31:0
+ *    Purpose: Provide a mechanism to match a target->host stats confirmation
+ *        message with its preceding host->target stats request message.
+ *    Value: MSBs of the opaque cookie specified by the host-side requestor
+ */
+
+#define HTT_H2T_EXT_STATS_REQ_MSG_SZ                32 /* bytes */
+
+#define HTT_H2T_EXT_STATS_REQ_PDEV_MASK_M           0x0000ff00
+#define HTT_H2T_EXT_STATS_REQ_PDEV_MASK_S           8
+
+#define HTT_H2T_EXT_STATS_REQ_STATS_TYPE_M          0x00ff0000
+#define HTT_H2T_EXT_STATS_REQ_STATS_TYPE_S          16
+
+#define HTT_H2T_EXT_STATS_REQ_CONFIG_PARAM_M        0xffffffff
+#define HTT_H2T_EXT_STATS_REQ_CONFIG_PARAM_S        0
+
+#define HTT_H2T_EXT_STATS_REQ_PDEV_MASK_GET(_var)	\
+	(((_var) & HTT_H2T_EXT_STATS_REQ_PDEV_MASK_M) >>  \
+	HTT_H2T_EXT_STATS_REQ_PDEV_MASK_S)
+#define HTT_H2T_EXT_STATS_REQ_PDEV_MASK_SET(_var, _val)		\
+	do {							\
+		HTT_CHECK_SET_VAL(HTT_H2T_EXT_STATS_REQ_PDEV_MASK, _val); \
+		((_var) |= ((_val) << HTT_H2T_EXT_STATS_REQ_PDEV_MASK_S));\
+	} while (0)
+
+#define HTT_H2T_EXT_STATS_REQ_STATS_TYPE_GET(_var)     \
+	(((_var) & HTT_H2T_EXT_STATS_REQ_STATS_TYPE_M) >>  \
+	HTT_H2T_EXT_STATS_REQ_STATS_TYPE_S)
+#define HTT_H2T_EXT_STATS_REQ_STATS_TYPE_SET(_var, _val)		\
+	do {								\
+		HTT_CHECK_SET_VAL(HTT_H2T_EXT_STATS_REQ_STATS_TYPE, _val);\
+		((_var) |= ((_val) <<					\
+				HTT_H2T_EXT_STATS_REQ_STATS_TYPE_S));	\
+	} while (0)
+
+#define HTT_H2T_EXT_STATS_REQ_CONFIG_PARAM_GET(_var)		\
+	(((_var) & HTT_H2T_EXT_STATS_REQ_CONFIG_PARAM_M) >>	\
+	HTT_H2T_EXT_STATS_REQ_CONFIG_PARAM_S)
+#define HTT_H2T_EXT_STATS_REQ_CONFIG_PARAM_SET(_var, _val)	\
+	do {								\
+		HTT_CHECK_SET_VAL(HTT_H2T_EXT_STATS_REQ_CONFIG_PARAM,	\
+				_val);					\
+		((_var) |= ((_val) <<					\
+				HTT_H2T_EXT_STATS_REQ_CONFIG_PARAM_S));	\
+	} while (0)
+
+
 /*=== target -> host messages ===============================================*/
 
 
@@ -5409,6 +5563,7 @@ enum htt_t2h_msg_type {
 	HTT_T2H_MSG_TYPE_FLOW_POOL_UNMAP = 0x19,
 	HTT_T2H_MSG_TYPE_SRING_SETUP_DONE         = 0x1a,
 	HTT_T2H_MSG_TYPE_MAP_FLOW_INFO            = 0x1b,
+	HTT_T2H_MSG_TYPE_EXT_STATS_CONF           = 0x1c,
 
 	HTT_T2H_MSG_TYPE_TEST,
 	/* keep this last */
@@ -7163,13 +7318,32 @@ do {								\
  * from the target to the host.  This layout assumes the target operates
  * as little-endian.
  *
+ * This message always contains a SW peer ID.  The main purpose of the
+ * SW peer ID is to tell the host what peer ID rx packets will be tagged
+ * with, so that the host can use that peer ID to determine which peer
+ * transmitted the rx frame.  This SW peer ID is sometimes also used for
+ * other purposes, such as identifying during tx completions which peer
+ * the tx frames in question were transmitted to.
+ *
+ * In certain generations of chips, the peer map message also contains
+ * a HW peer ID.  This HW peer ID is used during rx --> tx frame forwarding
+ * to identify which peer the frame needs to be forwarded to (i.e. the
+ * peer assocated with the Destination MAC Address within the packet),
+ * and particularly which vdev needs to transmit the frame (for cases
+ * of inter-vdev rx --> tx forwarding).
+ * This DA-based peer ID that is provided for certain rx frames
+ * (the rx frames that need to be re-transmitted as tx frames)
+ * is the ID that the HW uses for referring to the peer in question,
+ * rather than the peer ID that the SW+FW use to refer to the peer.
+ *
+ *
  * |31             24|23             16|15              8|7               0|
  * |-----------------------------------------------------------------------|
- * |              peer ID              |     VDEV ID     |     msg type    |
+ * |            SW peer ID             |     VDEV ID     |     msg type    |
  * |-----------------------------------------------------------------------|
  * |    MAC addr 3   |    MAC addr 2   |    MAC addr 1   |    MAC addr 0   |
  * |-----------------------------------------------------------------------|
- * |              reserved             |    MAC addr 5   |    MAC addr 4   |
+ * |            HW peer ID             |    MAC addr 5   |    MAC addr 4   |
  * |-----------------------------------------------------------------------|
  *
  *
@@ -7178,7 +7352,7 @@ do {								\
  *
  * |31             24|23             16|15              8|7               0|
  * |-----------------------------------------------------------------------|
- * |              peer ID              |     VDEV ID     |     msg type    |
+ * |            SW peer ID             |     VDEV ID     |     msg type    |
  * |-----------------------------------------------------------------------|
  *
  * The following field definitions describe the format of the rx peer map
@@ -7192,7 +7366,7 @@ do {								\
  *     Purpose: Indicates which virtual device the peer is associated
  *         with.
  *     Value: vdev ID (used in the host to look up the vdev object)
- *   - PEER_ID
+ *   - PEER_ID (a.k.a. SW_PEER_ID)
  *     Bits 31:16
  *     Purpose: The peer ID (index) that WAL is allocating (map) or
  *         freeing (unmap)
@@ -7205,15 +7379,26 @@ do {								\
  *     Bits 15:0
  *     Purpose: Identifies which peer node the peer ID is for.
  *     Value: upper 2 bytes of peer node's MAC address
+ *   - HW_PEER_ID
+ *     Bits 31:16
+ *     Purpose: Identifies the HW peer ID corresponding to the peer MAC
+ *         address, so for rx frames marked for rx --> tx forwarding, the
+ *         host can determine from the HW peer ID provided as meta-data with
+ *         the rx frame which peer the frame is supposed to be forwarded to.
+ *     Value: ID used by the MAC HW to identify the peer
  */
 #define HTT_RX_PEER_MAP_VDEV_ID_M       0xff00
 #define HTT_RX_PEER_MAP_VDEV_ID_S       8
 #define HTT_RX_PEER_MAP_PEER_ID_M      0xffff0000
 #define HTT_RX_PEER_MAP_PEER_ID_S      16
+#define HTT_RX_PEER_MAP_SW_PEER_ID_M HTT_RX_PEER_MAP_PEER_ID_M /* alias */
+#define HTT_RX_PEER_MAP_SW_PEER_ID_S HTT_RX_PEER_MAP_PEER_ID_S /* alias */
 #define HTT_RX_PEER_MAP_MAC_ADDR_L32_M 0xffffffff
 #define HTT_RX_PEER_MAP_MAC_ADDR_L32_S 0
 #define HTT_RX_PEER_MAP_MAC_ADDR_U16_M 0xffff
 #define HTT_RX_PEER_MAP_MAC_ADDR_U16_S 0
+#define HTT_RX_PEER_MAP_HW_PEER_ID_M   0xffff0000
+#define HTT_RX_PEER_MAP_HW_PEER_ID_S   16
 
 #define HTT_RX_PEER_MAP_VAP_ID_SET HTT_RX_PEER_MAP_VDEV_ID_SET	/* deprecated */
 #define HTT_RX_PEER_MAP_VDEV_ID_SET(word, value)			\
@@ -7232,14 +7417,28 @@ do {								\
 	} while (0)
 #define HTT_RX_PEER_MAP_PEER_ID_GET(word)				\
 	(((word) & HTT_RX_PEER_MAP_PEER_ID_M) >> HTT_RX_PEER_MAP_PEER_ID_S)
+#define HTT_RX_PEER_MAP_SW_PEER_ID_SET HTT_RX_PEER_MAP_PEER_ID_SET /* alias */
+#define HTT_RX_PEER_MAP_SW_PEER_ID_GET HTT_RX_PEER_MAP_PEER_ID_GET /* alias */
+
+#define HTT_RX_PEER_MAP_HW_PEER_ID_SET(word, value)			\
+	do {								\
+		HTT_CHECK_SET_VAL(HTT_RX_PEER_MAP_HW_PEER_ID, value);	\
+		(word) |= (value)  << HTT_RX_PEER_MAP_HW_PEER_ID_S;	\
+	} while (0)
+#define HTT_RX_PEER_MAP_HW_PEER_ID_GET(word) \
+	(((word) & HTT_RX_PEER_MAP_HW_PEER_ID_M) >>			\
+			HTT_RX_PEER_MAP_HW_PEER_ID_S)
 
 #define HTT_RX_PEER_MAP_MAC_ADDR_OFFSET 4	/* bytes */
+#define HTT_RX_PEER_MAP_HW_PEER_ID_OFFSET 8 /* bytes */
 
 #define HTT_RX_PEER_MAP_BYTES 12
 
 
 #define HTT_RX_PEER_UNMAP_PEER_ID_M   HTT_RX_PEER_MAP_PEER_ID_M
 #define HTT_RX_PEER_UNMAP_PEER_ID_S   HTT_RX_PEER_MAP_PEER_ID_S
+#define HTT_RX_PEER_UNMAP_SW_PEER_ID_M   HTT_RX_PEER_MAP_SW_PEER_ID_M
+#define HTT_RX_PEER_UNMAP_SW_PEER_ID_S   HTT_RX_PEER_MAP_SW_PEER_ID_S
 
 #define HTT_RX_PEER_UNMAP_PEER_ID_SET HTT_RX_PEER_MAP_PEER_ID_SET
 #define HTT_RX_PEER_UNMAP_PEER_ID_GET HTT_RX_PEER_MAP_PEER_ID_GET
@@ -7711,8 +7910,24 @@ PREPACK struct htt_txq_group {
 #define HTT_TX_COMPL_INV_MSDU_ID            0xffff
 
 #define HTT_TX_COMPL_IND_STAT_OK          0
+/* DISCARD:
+ * current meaning:
+ *     MSDUs were queued for transmission but filtered by HW or SW
+ *     without any over the air attempts
+ * legacy meaning (HL Rome):
+ *     MSDUs were discarded by the target FW without any over the air
+ *     attempts due to lack of space
+ */
 #define HTT_TX_COMPL_IND_STAT_DISCARD     1
+/* NO_ACK:
+ * MSDUs were transmitted (repeatedly) but no ACK was received from the peer
+ */
 #define HTT_TX_COMPL_IND_STAT_NO_ACK      2
+/* POSTPONE:
+ * temporarily-undeliverable MSDUs were deleted to free up space, but should
+ * be downloaded again later (in the appropriate order), when they are
+ * deliverable.
+ */
 #define HTT_TX_COMPL_IND_STAT_POSTPONE    3
 /*
  * The PEER_DEL tx completion status is used for HL cases
@@ -7721,6 +7936,9 @@ PREPACK struct htt_txq_group {
  * it still needs the tx completion to restore its credit.
  */
 #define HTT_TX_COMPL_IND_STAT_PEER_DEL    4
+/* DROP: MSDUs dropped due to lack of space (congestion control) */
+#define HTT_TX_COMPL_IND_STAT_DROP          5
+#define HTT_TX_COMPL_IND_STAT_HOST_INSPECT  6
 
 
 #define HTT_TX_COMPL_IND_APPEND_SET_MORE_RETRY(f)  ((f) |= 0x1)
@@ -8140,6 +8358,8 @@ struct rx_reorder_stats {
 	A_UINT32 rxdesc_err_decrypt_mic;
 	/* Number of data MSDUs received on both local and remote rings */
 	A_UINT32 data_msdus_on_both_rings;
+	/* MPDUs never filled */
+	A_UINT32 holes_not_filled;
 };
 
 
@@ -9623,6 +9843,193 @@ PREPACK struct htt_tx_map_flow_info {
 	do { \
 		HTT_CHECK_SET_VAL(HTT_TX_MAP_FLOW_INFO_TID_IDX, _val); \
 		((_var) |= ((_val) << HTT_TX_MAP_FLOW_INFO_TID_S)); \
+	} while (0)
+
+
+/*
+ * htt_dbg_ext_stats_status -
+ * present -     The requested stats have been delivered in full.
+ *               This indicates that either the stats information was contained
+ *               in its entirety within this message, or else this message
+ *               completes the delivery of the requested stats info that was
+ *               partially delivered through earlier STATS_CONF messages.
+ * partial -     The requested stats have been delivered in part.
+ *               One or more subsequent STATS_CONF messages with the same
+ *               cookie value will be sent to deliver the remainder of the
+ *               information.
+ * error -       The requested stats could not be delivered, for example due
+ *               to a shortage of memory to construct a message holding the
+ *               requested stats.
+ * invalid -     The requested stat type is either not recognized, or the
+ *               target is configured to not gather the stats type in question.
+ */
+enum htt_dbg_ext_stats_status {
+	HTT_DBG_EXT_STATS_STATUS_PRESENT = 0,
+	HTT_DBG_EXT_STATS_STATUS_PARTIAL = 1,
+	HTT_DBG_EXT_STATS_STATUS_ERROR   = 2,
+	HTT_DBG_EXT_STATS_STATUS_INVALID = 3,
+};
+
+/**
+ * @brief target -> host extended statistics upload
+ *
+ * @details
+ * The following field definitions describe the format of the HTT target
+ * to host stats upload confirmation message.
+ * The message contains a cookie echoed from the HTT host->target stats
+ * upload request, which identifies which request the confirmation is
+ * for, and a single stats can span over multiple HTT stats indication
+ * due to the HTT message size limitation so every HTT ext stats indication
+ * will have tag-length-value stats information elements.
+ * The tag-length header for each HTT stats IND message also includes a
+ * status field, to indicate whether the request for the stat type in
+ * question was fully met, partially met, unable to be met, or invalid
+ * (if the stat type in question is disabled in the target).
+ * A Done bit 1's indicate the end of the of stats info elements.
+ *
+ *
+ * |31                         16|15    12|11|10 8|7   5|4       0|
+ * |--------------------------------------------------------------|
+ * |                   reserved                   |    msg type   |
+ * |--------------------------------------------------------------|
+ * |                         cookie LSBs                          |
+ * |--------------------------------------------------------------|
+ * |                         cookie MSBs                          |
+ * |--------------------------------------------------------------|
+ * |      stats entry length     | rsvd   | D|  S |   stat type   |
+ * |--------------------------------------------------------------|
+ * |                   type-specific stats info                   |
+ * |                      (see htt_stats.h)                       |
+ * |--------------------------------------------------------------|
+ * Header fields:
+ *  - MSG_TYPE
+ *    Bits 7:0
+ *    Purpose: Identifies this is a extended statistics upload confirmation
+ *             message.
+ *    Value: 0x1c
+ *  - COOKIE_LSBS
+ *    Bits 31:0
+ *    Purpose: Provide a mechanism to match a target->host stats confirmation
+ *        message with its preceding host->target stats request message.
+ *    Value: LSBs of the opaque cookie specified by the host-side requestor
+ *  - COOKIE_MSBS
+ *    Bits 31:0
+ *    Purpose: Provide a mechanism to match a target->host stats confirmation
+ *        message with its preceding host->target stats request message.
+ *    Value: MSBs of the opaque cookie specified by the host-side requestor
+ *
+ * Stats Information Element tag-length header fields:
+ *  - STAT_TYPE
+ *    Bits 7:0
+ *    Purpose: identifies the type of statistics info held in the
+ *        following information element
+ *    Value: htt_dbg_ext_stats_type
+ *  - STATUS
+ *    Bits 10:8
+ *    Purpose: indicate whether the requested stats are present
+ *    Value: htt_dbg_ext_stats_status
+ *  - DONE
+ *    Bits 11
+ *    Purpose:
+ *        Indicates the completion of the stats entry, this will be the last
+ *        stats conf HTT segment for the requested stats type.
+ *    Value:
+ *        0 -> the stats retrieval is ongoing
+ *        1 -> the stats retrieval is complete
+ *  - LENGTH
+ *    Bits 31:16
+ *    Purpose: indicate the stats information size
+ *    Value: This field specifies the number of bytes of stats information
+ *       that follows the element tag-length header.
+ *       It is expected but not required that this length is a multiple of
+ *       4 bytes.
+ */
+#define HTT_T2H_EXT_STATS_COOKIE_SIZE         8
+
+#define HTT_T2H_EXT_STATS_CONF_HDR_SIZE       4
+
+#define HTT_T2H_EXT_STATS_CONF_TLV_HDR_SIZE   4
+
+#define HTT_T2H_EXT_STATS_CONF_TLV_TYPE_M     0x000000ff
+#define HTT_T2H_EXT_STATS_CONF_TLV_TYPE_S     0
+#define HTT_T2H_EXT_STATS_CONF_TLV_STATUS_M   0x00000700
+#define HTT_T2H_EXT_STATS_CONF_TLV_STATUS_S   8
+#define HTT_T2H_EXT_STATS_CONF_TLV_DONE_M     0x00000800
+#define HTT_T2H_EXT_STATS_CONF_TLV_DONE_S     11
+#define HTT_T2H_EXT_STATS_CONF_TLV_LENGTH_M   0xffff0000
+#define HTT_T2H_EXT_STATS_CONF_TLV_LENGTH_S   16
+
+#define HTT_T2H_EXT_STATS_CONF_TLV_TYPE_SET(word, value)		\
+	do {								\
+		HTT_CHECK_SET_VAL(HTT_T2H_EXT_STATS_CONF_TLV_TYPE, value);\
+		(word) |= (value)  << HTT_T2H_EXT_STATS_CONF_TLV_TYPE_S; \
+	} while (0)
+#define HTT_T2H_EXT_STATS_CONF_TLV_TYPE_GET(word) \
+	(((word) & HTT_T2H_EXT_STATS_CONF_TLV_TYPE_M) >> \
+	HTT_T2H_EXT_STATS_CONF_TLV_TYPE_S)
+
+#define HTT_T2H_EXT_STATS_CONF_TLV_STATUS_SET(word, value)		\
+	do {								\
+		HTT_CHECK_SET_VAL(HTT_T2H_EXT_STATS_CONF_TLV_STATUS,	\
+								value);	\
+		(word) |= (value)  <<					\
+				HTT_T2H_EXT_STATS_CONF_TLV_STATUS_S;	\
+	} while (0)
+#define HTT_T2H_EXT_STATS_CONF_TLV_STATUS_GET(word) \
+	(((word) & HTT_T2H_EXT_STATS_CONF_TLV_STATUS_M) >> \
+	HTT_T2H_EXT_STATS_CONF_TLV_STATUS_S)
+
+#define HTT_T2H_EXT_STATS_CONF_TLV_DONE_SET(word, value)		\
+	do {								\
+		HTT_CHECK_SET_VAL(HTT_T2H_EXT_STATS_CONF_TLV_DONE, value);\
+		(word) |= (value)  << HTT_T2H_EXT_STATS_CONF_TLV_DONE_S;\
+	} while (0)
+#define HTT_T2H_EXT_STATS_CONF_TLV_DONE_GET(word) \
+	(((word) & HTT_T2H_EXT_STATS_CONF_TLV_DONE_M) >> \
+	HTT_T2H_EXT_STATS_CONF_TLV_DONE_S)
+
+#define HTT_T2H_EXT_STATS_CONF_TLV_LENGTH_SET(word, value)		\
+	do {								\
+		HTT_CHECK_SET_VAL(HTT_T2H_EXT_STATS_CONF_TLV_LENGTH,	\
+								value);	\
+		(word) |= (value)  <<					\
+				HTT_T2H_EXT_STATS_CONF_TLV_LENGTH_S;	\
+	} while (0)
+#define HTT_T2H_EXT_STATS_CONF_TLV_LENGTH_GET(word) \
+	(((word) & HTT_T2H_EXT_STATS_CONF_TLV_LENGTH_M) >> \
+	HTT_T2H_EXT_STATS_CONF_TLV_LENGTH_S)
+
+typedef enum {
+	HTT_PEER_TYPE_DEFAULT = 0,    /* Generic/Non-BSS/Self Peer */
+	HTT_PEER_TYPE_BSS = 1,        /* Peer is BSS Peer entry */
+	HTT_PEER_TYPE_TDLS = 2,       /* Peer is a TDLS Peer */
+	HTT_PEER_TYPE_OCB = 3,        /* Peer is a OCB Peer */
+	HTT_PEER_TYPE_NAN_DATA = 4,   /* Peer is NAN DATA */
+	/* Host <-> Target Peer type is assigned up to 127 */
+	HTT_PEER_TYPE_HOST_MAX = 127,
+	/* Reserved from 128 - 255 for target internal use.*/
+	/* Temporarily created during offload roam */
+	HTT_PEER_TYPE_ROAMOFFLOAD_TEMP = 128,
+} HTT_PEER_TYPE;
+
+/** 2 word representation of MAC addr */
+typedef struct {
+	/** upper 4 bytes of  MAC address */
+	A_UINT32 mac_addr31to0;
+	/** lower 2 bytes of  MAC address */
+	A_UINT32 mac_addr47to32;
+} htt_mac_addr;
+
+/** macro to convert MAC address from char array to HTT word format */
+#define HTT_CHAR_ARRAY_TO_MAC_ADDR(c_macaddr, phtt_mac_addr)		\
+	do { \
+		(phtt_mac_addr)->mac_addr31to0 = \
+			(((c_macaddr)[0] <<  0) | \
+			((c_macaddr)[1] <<  8) | \
+			((c_macaddr)[2] << 16) | \
+			((c_macaddr)[3] << 24)); \
+			(phtt_mac_addr)->mac_addr47to32 =		\
+			((c_macaddr)[4] | ((c_macaddr)[5] << 8));	\
 	} while (0)
 
 #endif
