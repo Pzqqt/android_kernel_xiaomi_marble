@@ -5804,7 +5804,7 @@ static void send_extended_chan_switch_action_frame(tpAniSirGlobal mac_ctx,
 	uint16_t op_class;
 	uint8_t switch_mode = 0, i;
 	tpDphHashNode psta;
-
+	uint8_t switch_count;
 
 	op_class = wlan_reg_dmn_get_opclass_from_channel(
 				mac_ctx->scan.countryCodeCurrent,
@@ -5815,6 +5815,8 @@ static void send_extended_chan_switch_action_frame(tpAniSirGlobal mac_ctx,
 		(mac_ctx->sap.SapDfsInfo.disable_dfs_ch_switch == false))
 		switch_mode = 1;
 
+	switch_count = session_entry->gLimChannelSwitch.switchCount;
+
 	if (LIM_IS_AP_ROLE(session_entry)) {
 		for (i = 0; i <= mac_ctx->lim.maxStation; i++) {
 			psta =
@@ -5824,13 +5826,13 @@ static void send_extended_chan_switch_action_frame(tpAniSirGlobal mac_ctx,
 					mac_ctx,
 					psta->staAddr,
 					switch_mode, op_class, new_channel,
-					LIM_MAX_CSA_IE_UPDATES, session_entry);
+					switch_count, session_entry);
 		}
 	} else if (LIM_IS_STA_ROLE(session_entry)) {
 		lim_send_extended_chan_switch_action_frame(mac_ctx,
 					session_entry->bssId,
 					switch_mode, op_class, new_channel,
-					LIM_MAX_CSA_IE_UPDATES, session_entry);
+					switch_count, session_entry);
 	}
 
 }
@@ -5881,7 +5883,8 @@ static void lim_process_sme_dfs_csa_ie_request(tpAniSirGlobal mac_ctx,
 
 	/* Channel switch announcement needs to be included in beacon */
 	session_entry->dfsIncludeChanSwIe = true;
-	session_entry->gLimChannelSwitch.switchCount = LIM_MAX_CSA_IE_UPDATES;
+	session_entry->gLimChannelSwitch.switchCount =
+		 dfs_csa_ie_req->ch_switch_beacon_cnt;
 	session_entry->gLimChannelSwitch.ch_width =
 				 dfs_csa_ie_req->ch_params.ch_width;
 	session_entry->gLimChannelSwitch.sec_ch_offset =

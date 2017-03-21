@@ -628,6 +628,8 @@ typedef struct sap_Config {
 	struct hdd_channel_info *channel_info;
 	uint32_t channel_info_count;
 	bool dfs_cac_offload;
+	/* beacon count before channel switch */
+	uint8_t sap_chanswitch_beacon_cnt;
 } tsap_Config_t;
 
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
@@ -734,6 +736,8 @@ typedef struct sSapDfsInfo {
 	 */
 	uint8_t disable_dfs_ch_switch;
 	uint16_t tx_leakage_threshold;
+	/* beacon count before channel switch */
+	uint8_t sap_ch_switch_beacon_cnt;
 } tSapDfsInfo;
 
 typedef struct tagSapCtxList {

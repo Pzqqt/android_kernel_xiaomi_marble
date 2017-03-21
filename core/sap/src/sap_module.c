@@ -947,6 +947,9 @@ QDF_STATUS wlansap_start_bss(void *pCtx,     /* pwextCtx */
 	 */
 	pmac->sap.SapDfsInfo.disable_dfs_ch_switch =
 				pConfig->disableDFSChSwitch;
+	pmac->sap.SapDfsInfo.sap_ch_switch_beacon_cnt =
+				pConfig->sap_chanswitch_beacon_cnt;
+
 	pmac->sap.sapCtxList[pSapCtx->sessionId].pSapContext = pSapCtx;
 	pmac->sap.sapCtxList[pSapCtx->sessionId].sapPersona =
 		pSapCtx->csr_roamProfile.csrPersona;
