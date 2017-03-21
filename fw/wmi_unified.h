@@ -13227,15 +13227,21 @@ typedef struct {
     A_UINT32 ndp_channel_cfg;
     /**  NAN Cipher Suite Shared Key */
     A_UINT32 nan_csid;
-    /** Actual number of bytes in TLV nan_pmk */
+    /** Actual number of bytes in TLV ndp_pmk */
     A_UINT32 nan_pmk_len;
+    /** Actual number of bytes in TLV ndp_passphrase */
+    A_UINT32 nan_passphrase_len;
+    /** Actual number of bytes in TLV nan_servicename */
+    A_UINT32 nan_servicename_len;
     /**
      * TLV (tag length value) parameters follow the ndp_initiator_req
      * structure. The TLV's are:
      * wmi_channel channel;
      * A_UINT8 ndp_cfg[];
      * A_UINT8 ndp_app_info[];
-     * A_UINT8 nan_pmk[];
+     * A_UINT8 ndp_pmk[];
+     * A_INT8 ndp_passphrase[];
+     * A_INT8 nan_servicename[];
      */
 } wmi_ndp_initiator_req_fixed_param_PROTOTYPE;
 
@@ -13265,14 +13271,20 @@ typedef struct {
     A_UINT32 ndp_app_info_len;
     /**  NAN Cipher Suite Shared Key */
     A_UINT32 nan_csid;
-    /** Actual number of bytes in TLV nan_pmk */
+    /** Actual number of bytes in TLV ndp_pmk */
     A_UINT32 nan_pmk_len;
+    /** Actual number of bytes in TLV ndp_passphrase */
+    A_UINT32 nan_passphrase_len;
+    /** Actual number of bytes in TLV nan_servicename */
+    A_UINT32 nan_servicename_len;
     /**
      * TLV (tag length value) parameters follow the ndp_responder_req
      * structure. The TLV's are:
      * A_UINT8 ndp_cfg[];
      * A_UINT8 ndp_app_info[];
-     * A_UINT8 nan_pmk[];
+     * A_UINT8 ndp_pmk[];
+     * A_INT8 ndp_passphrase[];
+     * A_INT8 nan_servicename[];
      */
 } wmi_ndp_responder_req_fixed_param_PROTOTYPE;
 
