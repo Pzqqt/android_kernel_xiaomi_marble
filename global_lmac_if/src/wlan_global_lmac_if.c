@@ -126,8 +126,8 @@ EXPORT_SYMBOL(wlan_global_lmac_if_open);
  */
 QDF_STATUS wlan_global_lmac_if_close(struct wlan_objmgr_psoc *psoc)
 {
-	qdf_mem_set(&psoc->soc_cb.tx_ops, 0, sizeof(psoc->soc_cb.tx_ops));
-	qdf_mem_set(&psoc->soc_cb.rx_ops, 0, sizeof(psoc->soc_cb.rx_ops));
+	qdf_mem_set(&psoc->soc_cb.tx_ops, sizeof(psoc->soc_cb.tx_ops), 0);
+	qdf_mem_set(&psoc->soc_cb.rx_ops, sizeof(psoc->soc_cb.rx_ops), 0);
 
 	return QDF_STATUS_SUCCESS;
 }
