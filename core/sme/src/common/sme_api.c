@@ -16149,3 +16149,21 @@ void sme_store_pdev(tHalHandle hal, struct wlan_objmgr_pdev *pdev)
 	wma_store_pdev(wma_handle, pdev);
 }
 
+QDF_STATUS sme_congestion_register_callback(tHalHandle hal,
+	void (*congestion_cb)(void *, uint32_t congestion, uint32_t vdev_id))
+{
+	QDF_STATUS status;
+	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		mac->sme.congestion_cb = congestion_cb;
+		sme_release_global_lock(&mac->sme);
+		sms_log(mac, LOG1, FL("congestion callback set"));
+	} else {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			FL("Aquiring lock failed %d"), status);
+	}
+
+	return status;
+}

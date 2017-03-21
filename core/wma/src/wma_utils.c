@@ -1960,6 +1960,8 @@ int wma_stats_event_handler(void *handle, uint8_t *cmd_param_info,
 	wmi_per_chain_rssi_stats *rssi_event;
 	struct wma_txrx_node *node;
 	uint8_t i, *temp;
+	wmi_congestion_stats *congestion_stats;
+	tpAniSirGlobal mac;
 
 	param_buf = (WMI_UPDATE_STATS_EVENTID_param_tlvs *) cmd_param_info;
 	if (!param_buf) {
@@ -2014,6 +2016,30 @@ int wma_stats_event_handler(void *handle, uint8_t *cmd_param_info,
 					temp += sizeof(wmi_rssi_stats);
 				}
 			}
+		}
+	}
+
+	congestion_stats = (wmi_congestion_stats *) param_buf->congestion_stats;
+	if (congestion_stats) {
+		if (((congestion_stats->tlv_header & 0xFFFF0000) >> 16 ==
+			  WMITLV_TAG_STRUC_wmi_congestion_stats) &&
+			  ((congestion_stats->tlv_header & 0x0000FFFF) ==
+			  WMITLV_GET_STRUCT_TLVLEN(wmi_congestion_stats))) {
+			mac = cds_get_context(QDF_MODULE_ID_PE);
+			if (!mac) {
+				WMA_LOGE("%s: Invalid mac", __func__);
+				return -EINVAL;
+			}
+			if (!mac->sme.congestion_cb) {
+				WMA_LOGE("%s: Callback not registered",
+					__func__);
+				return -EINVAL;
+			}
+			WMA_LOGI("%s: congestion %d", __func__,
+				congestion_stats->congestion);
+			mac->sme.congestion_cb(mac->hHdd,
+				congestion_stats->congestion,
+				congestion_stats->vdev_id);
 		}
 	}
 
@@ -2542,6 +2568,24 @@ end:
 	qdf_mem_free(get_stats_param);
 	WMA_LOGD("%s: Exit", __func__);
 	return;
+}
+
+/**
+ * wma_get_cca_stats() - send request to fw to get CCA
+ * @wma_handle: wma handle
+ * @vdev_id: vdev id
+ *
+ * Return: QDF status
+ */
+QDF_STATUS wma_get_cca_stats(tp_wma_handle wma_handle,
+				uint8_t vdev_id)
+{
+	if (wmi_unified_congestion_request_cmd(wma_handle->wmi_handle,
+			vdev_id)) {
+		WMA_LOGE("Failed to congestion request to fw");
+		return QDF_STATUS_E_FAILURE;
+	}
+	return QDF_STATUS_SUCCESS;
 }
 
 /**

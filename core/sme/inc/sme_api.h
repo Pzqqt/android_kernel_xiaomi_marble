@@ -1437,6 +1437,16 @@ QDF_STATUS sme_get_beacon_frm(tHalHandle hal, tCsrRoamProfile *profile,
 			    const tSirMacAddr bssid,
 			    uint8_t **frame_buf, uint32_t *frame_len);
 
+/**
+ * sme_congestion_register_callback(): registers congestion callback
+ * @hal: handler for HAL
+ * @congestion_cb: congestion callback
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_congestion_register_callback(tHalHandle hal,
+	void (*congestion_cb)(void *, uint32_t congestion, uint32_t vdev_id));
+
 QDF_STATUS sme_delete_all_tdls_peers(tHalHandle hal, uint8_t session_id);
 
 /**

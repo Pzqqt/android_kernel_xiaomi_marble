@@ -1510,6 +1510,10 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 			goto free_req_msg;
 		}
 
+		/* CCA is required only for sta interface */
+		if (iface->type == WMI_VDEV_TYPE_STA)
+			wma_get_cca_stats(wma, resp_event->vdev_id);
+
 		/* Clear arp and ns offload cache */
 		qdf_mem_zero(&iface->ns_offload_req,
 			sizeof(iface->ns_offload_req));

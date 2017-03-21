@@ -9358,6 +9358,12 @@ int hdd_register_cb(hdd_context_t *hdd_ctx)
 	sme_register_set_connection_info_cb(hdd_ctx->hHal,
 				hdd_set_connection_in_progress,
 				hdd_is_connection_in_progress);
+
+	status = sme_congestion_register_callback(hdd_ctx->hHal,
+					     hdd_update_cca_info_cb);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("set congestion callback failed");
+
 	EXIT();
 
 	return ret;
