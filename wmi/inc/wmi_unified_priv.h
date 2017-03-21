@@ -477,6 +477,9 @@ QDF_STATUS (*send_get_stats_cmd)(wmi_unified_t wmi_handle,
 		       struct pe_stats_req  *get_stats_param,
 			   uint8_t addr[IEEE80211_ADDR_LEN]);
 
+QDF_STATUS (*send_congestion_cmd)(wmi_unified_t wmi_handle,
+			A_UINT8 vdev_id);
+
 QDF_STATUS (*send_snr_request_cmd)(wmi_unified_t wmi_handle);
 
 QDF_STATUS (*send_snr_cmd)(wmi_unified_t wmi_handle, uint8_t vdev_id);
