@@ -1462,6 +1462,8 @@ typedef struct tagCsrRoamInfo {
 	uint8_t max_mcs_idx;
 	uint8_t rx_mcs_map;
 	uint8_t tx_mcs_map;
+	/* Extended capabilities of STA */
+	uint8_t ecsa_capable;
 } tCsrRoamInfo;
 
 typedef struct tagCsrFreqScanInfo {
@@ -1500,6 +1502,8 @@ typedef struct sSirSmeAssocIndToUpperLayerCnf {
 	uint8_t max_mcs_idx;
 	uint8_t rx_mcs_map;
 	uint8_t tx_mcs_map;
+	/* Extended capabilities of STA */
+	uint8_t              ecsa_capable;
 } tSirSmeAssocIndToUpperLayerCnf, *tpSirSmeAssocIndToUpperLayerCnf;
 
 typedef struct tagCsrSummaryStatsInfo {

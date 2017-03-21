@@ -752,6 +752,8 @@ typedef struct {
 
 	/** Rate Flags for this connection */
 	uint32_t  rate_flags;
+	/** Extended CSA */
+	uint8_t   ecsa_capable;
 } hdd_station_info_t;
 
 struct hdd_ap_ctx_s {

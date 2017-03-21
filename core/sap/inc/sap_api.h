@@ -266,6 +266,7 @@ typedef struct sap_StationAssocIndication_s {
 	eCsrEncryptionType negotiatedUCEncryptionType;
 	eCsrEncryptionType negotiatedMCEncryptionType;
 	bool fAuthRequired;
+	uint8_t ecsa_capable;
 } tSap_StationAssocIndication;
 
 typedef struct sap_StationAssocReassocCompleteEvent_s {
@@ -298,6 +299,7 @@ typedef struct sap_StationAssocReassocCompleteEvent_s {
 	uint8_t max_mcs_idx;
 	uint8_t rx_mcs_map;
 	uint8_t tx_mcs_map;
+	uint8_t ecsa_capable;
 } tSap_StationAssocReassocCompleteEvent;
 
 typedef struct sap_StationDisassocCompleteEvent_s {
