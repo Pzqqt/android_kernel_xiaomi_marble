@@ -29,7 +29,6 @@
 #include "a_types.h"
 #include "a_debug.h"
 #include "ol_if_athvar.h"
-#include "ol_defines.h"
 #include "wmi_unified_priv.h"
 #include "wmi_unified_param.h"
 

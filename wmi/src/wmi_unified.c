@@ -33,7 +33,6 @@
 #include "a_types.h"
 #include "a_debug.h"
 #include "ol_if_athvar.h"
-#include "ol_defines.h"
 #include "htc_api.h"
 #include "htc_api.h"
 #include "dbglog_host.h"

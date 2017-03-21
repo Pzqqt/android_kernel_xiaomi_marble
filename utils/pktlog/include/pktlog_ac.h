@@ -37,6 +37,7 @@
 #include <wmi_unified_api.h>
 #include <wdi_event_api.h>
 #include "hif.h"
+#include <ol_defines.h>
 
 #define NO_REG_FUNCS    4
 
