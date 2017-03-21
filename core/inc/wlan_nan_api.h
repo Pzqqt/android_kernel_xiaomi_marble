@@ -23,4 +23,38 @@
 #ifndef _WLAN_NAN_API_H_
 #define _WLAN_NAN_API_H_
 
+#include "qdf_status.h"
+
+struct wlan_objmgr_psoc;
+
+/**
+ * nan_init: initializes NAN component, called by dispatcher init
+ *
+ * Return: status of operation
+ */
+QDF_STATUS nan_init(void);
+
+/**
+ * nan_deinit: de-initializes NAN component, called by dispatcher init
+ *
+ * Return: status of operation
+ */
+QDF_STATUS nan_deinit(void);
+
+/**
+ * nan_psoc_enable: psoc enable API for NANitioning component
+ * @psoc: pointer to PSOC
+ *
+ * Return: status of operation
+ */
+QDF_STATUS nan_psoc_enable(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * nan_psoc_disable: psoc disable API for NANitioning component
+ * @psoc: pointer to PSOC
+ *
+ * Return: status of operation
+ */
+QDF_STATUS nan_psoc_disable(struct wlan_objmgr_psoc *psoc);
+
 #endif
