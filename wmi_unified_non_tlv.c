@@ -25,14 +25,9 @@
  * to the Linux Foundation.
  */
 
-#include "athdefs.h"
-#include "osapi_linux.h"
-#include "a_types.h"
-#include "a_debug.h"
-#include "wlan_defs.h"
-#include "ol_if_athvar.h"
 #include "wmi_unified_api.h"
 #include "wmi_unified_priv.h"
+#include "hif.h"
 
 #if defined(WMI_NON_TLV_SUPPORT) || defined(WMI_TLV_AND_NON_TLV_SUPPORT)
 #include "wmi.h"
