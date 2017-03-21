@@ -177,6 +177,9 @@ typedef void (*wlan_objmgr_peer_status_handler)(
  * @WLAN_REGULATORY_NB_ID:      NB regulatory operations
  * @WLAN_REF_ID_MAX:            Max id used to generate ref count tracking array
  */
+ /* New value added to the enum must also be reflected in function
+  * string_from_dbgid()
+  */
 typedef enum {
 	WLAN_OBJMGR_ID        = 0,
 	WLAN_MLME_SB_ID       = 1,
@@ -203,6 +206,42 @@ typedef enum {
 	WLAN_REGULATORY_NB_ID = 22,
 	WLAN_REF_ID_MAX,
 } wlan_objmgr_ref_dbgid;
+
+/**
+ * string_from_dbgid() - Convert Refcnt dbgid to respective string
+ * @id - Reference count debug id
+ *
+ * Debug support function to convert refcnt dbgid to string.
+ * Please note to add new string in the array at index equal to
+ * its enum value in wlan_objmgr_ref_dbgid.
+ */
+static inline char *string_from_dbgid(wlan_objmgr_ref_dbgid id)
+{
+    static const char *strings[] = { "WLAN_OBJMGR_ID",
+					"WLAN_MLME_SB_ID",
+					"WLAN_MLME_NB_ID",
+					"WLAN_MGMT_SB_ID",
+					"WLAN_MGMT_NB_ID",
+					"WLAN_HDD_ID_OBJ_MGR",
+					"WLAN_OSIF_ID",
+					"WLAN_LEGACY_MAC_ID",
+					"WLAN_LEGACY_WMA_ID",
+					"WLAN_SERIALIZATION_ID",
+					"WLAN_PMO_ID",
+					"WLAN_LEGACY_SME_ID",
+					"WLAN_SCAN_ID",
+					"WLAN_WIFI_POS_ID",
+					"WLAN_DFS_ID",
+					"WLAN_P2P_ID",
+					"WLAN_TDLS_SB_ID",
+					"WLAN_TDLS_NB_ID",
+					"WLAN_ATF_ID",
+					"WLAN_CRYPTO_ID",
+					"WLAN_NAN_ID",
+					"WLAN_REF_ID_MAX" };
+
+    return (char *)strings[id];
+}
 
 #ifdef WLAN_OBJMGR_DEBUG
 #define WLAN_OBJMGR_BUG(val) QDF_BUG(val)
