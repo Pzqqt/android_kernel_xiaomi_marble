@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -29,7 +29,6 @@
  * LMAC offload interface functions for WMI TLV Interface
  */
 
-#include "ol_if_athvar.h"
 #include <qdf_mem.h>         /* qdf_mem_malloc,free, etc. */
 #include <osdep.h>
 #include "htc_api.h"
