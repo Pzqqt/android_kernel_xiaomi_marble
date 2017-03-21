@@ -471,6 +471,8 @@ enum wmi_dwelltime_adaptive_mode {
 
 #define MAX_NUM_CHAN 128
 
+#define ATH_EXPONENT_TO_VALUE(v)	((1<<v)-1)
+#define ATH_TXOP_TO_US(v)		   (v<<5)
 /* WME stream classes */
 #define WMI_HOST_AC_BE                          0    /* best effort */
 #define WMI_HOST_AC_BK                          1    /* background */
