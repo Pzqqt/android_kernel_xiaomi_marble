@@ -2091,7 +2091,7 @@ sap_dfs_is_channel_in_nol_list(ptSapContext sap_context,
 			       uint8_t channel_number,
 			       ePhyChanBondState chan_bondState)
 {
-	int i, j;
+	int i = 0, j;
 	tHalHandle h_hal = CDS_GET_HAL_CB(sap_context->p_cds_gctx);
 	tpAniSirGlobal mac_ctx;
 	uint8_t channels[MAX_BONDED_CHANNELS];
