@@ -105,6 +105,7 @@
  * @WLAN_UMAC_COMP_WIFI_POS:    WIFI Positioning
  * @WLAN_UMAC_COMP_TDLS:     TDLS
  * @WLAN_UMAC_COMP_ATF:      Airtime Fairness
+ * @WLAN_UMAC_COMP_CRYPTO:      CRYPTO
  * @WLAN_UMAC_COMP_ID_MAX: Maximum components in UMAC
  *
  * This id is static.
@@ -123,6 +124,7 @@ enum wlan_umac_comp_id {
 	WLAN_UMAC_COMP_TDLS           = 9,
 	WLAN_UMAC_COMP_ATF            = 10,
 	WLAN_UMAC_COMP_REGULATORY     = 11,
+	WLAN_UMAC_COMP_CRYPTO         = 12,
 	WLAN_UMAC_COMP_ID_MAX,
 };
 
