@@ -3505,12 +3505,6 @@ static QDF_STATUS
 send_wmm_update_cmd_non_tlv(wmi_unified_t wmi_handle,
 				struct wmm_update_params *param)
 {
-#define ATH_EXPONENT_TO_VALUE(v)	((1<<v)-1)
-#define ATH_TXOP_TO_US(v)		   (v<<5)
-#define WME_AC_BE			  0	/* best effort */
-#define WME_AC_BK			  1	/* background */
-#define WME_AC_VI			  2	/* video */
-#define WME_AC_VO			  3	/* voice */
 	wmi_buf_t buf;
 	wmi_pdev_set_wmm_params_cmd *cmd;
 	wmi_wmm_params *wmi_param = 0;
@@ -3529,16 +3523,16 @@ send_wmm_update_cmd_non_tlv(wmi_unified_t wmi_handle,
 	for (ac = 0; ac < WME_NUM_AC; ac++) {
 		wmep = &param->wmep_array[ac];
 		switch (ac) {
-		case WME_AC_BE:
+		case WMI_HOST_AC_BE:
 			wmi_param = &cmd->wmm_params_ac_be;
 			break;
-		case WME_AC_BK:
+		case WMI_HOST_AC_BK:
 			wmi_param = &cmd->wmm_params_ac_bk;
 			break;
-		case WME_AC_VI:
+		case WMI_HOST_AC_VI:
 			wmi_param = &cmd->wmm_params_ac_vi;
 			break;
-		case WME_AC_VO:
+		case WMI_HOST_AC_VO:
 			wmi_param = &cmd->wmm_params_ac_vo;
 			break;
 		default:
@@ -4308,6 +4302,7 @@ send_mcast_group_update_cmd_non_tlv(wmi_unified_t wmi_handle,
 	ASSERT((((size_t) cmd) & 0x3) == 0);
 	OS_MEMZERO(cmd, sizeof(wmi_peer_mcast_group_cmd));
 
+	cmd->vdev_id = param->vap_id;
 	/* construct the message assuming our endianness matches the target */
 	cmd->flags |= WMI_PEER_MCAST_GROUP_FLAG_ACTION_M &
 		(param->action << WMI_PEER_MCAST_GROUP_FLAG_ACTION_S);

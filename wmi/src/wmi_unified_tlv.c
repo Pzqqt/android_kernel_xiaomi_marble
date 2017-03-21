@@ -10678,6 +10678,519 @@ send_set_vht_ie_cmd_tlv(wmi_unified_t wmi_handle,
 	return ret;
 }
 
+/**
+ * send_set_quiet_mode_cmd_tlv() - send set quiet mode command to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to quiet mode params
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS
+send_set_quiet_mode_cmd_tlv(wmi_unified_t wmi_handle,
+			    struct set_quiet_mode_params *param)
+{
+	wmi_pdev_set_quiet_cmd_fixed_param *quiet_cmd;
+	wmi_buf_t buf;
+	QDF_STATUS ret;
+	int32_t len;
+
+	len = sizeof(*quiet_cmd);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s: wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	quiet_cmd = (wmi_pdev_set_quiet_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&quiet_cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_pdev_set_quiet_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(
+				wmi_pdev_set_quiet_cmd_fixed_param));
+	quiet_cmd = (wmi_pdev_set_quiet_cmd_fixed_param *)wmi_buf_data(buf);
+	quiet_cmd->enabled = param->enabled;
+	quiet_cmd->period = (param->period)*(param->intval);
+	quiet_cmd->duration = param->duration;
+	quiet_cmd->next_start = param->offset;
+	quiet_cmd->pdev_id = WMI_PDEV_ID_SOC;
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_PDEV_SET_QUIET_MODE_CMDID);
+
+	if (ret != 0) {
+		WMI_LOGE("Sending set quiet cmd failed\n");
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+
+/**
+ * send_set_bwf_cmd_tlv() - send set bwf command to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to set bwf param
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS
+send_set_bwf_cmd_tlv(wmi_unified_t wmi_handle,
+		     struct set_bwf_params *param)
+{
+	wmi_bwf_peer_info *peer_info;
+	wmi_peer_bwf_request_fixed_param *cmd;
+	wmi_buf_t buf;
+	QDF_STATUS retval;
+	int32_t len;
+	uint8_t *buf_ptr;
+	int i;
+
+	len = sizeof(*cmd) + WMI_TLV_HDR_SIZE;
+	len += param->num_peers * sizeof(wmi_bwf_peer_info);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s:wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	buf_ptr = (uint8_t *)wmi_buf_data(buf);
+	cmd = (wmi_peer_bwf_request_fixed_param *)buf_ptr;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_peer_bwf_request_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(
+				wmi_peer_bwf_request_fixed_param));
+	cmd->num_peers = param->num_peers;
+
+	buf_ptr += sizeof(*cmd);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		       sizeof(wmi_bwf_peer_info) *
+		       cmd->num_peers);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	peer_info = (wmi_bwf_peer_info *)buf_ptr;
+
+	for (i = 0; i < cmd->num_peers; i++) {
+		WMITLV_SET_HDR(&peer_info->tlv_header,
+			       WMITLV_TAG_STRUC_wmi_bwf_peer_info,
+			       WMITLV_GET_STRUCT_TLVLEN(wmi_bwf_peer_info));
+		peer_info->bwf_guaranteed_bandwidth =
+				param->peer_info[i].throughput;
+		peer_info->bwf_max_airtime =
+				param->peer_info[i].max_airtime;
+		peer_info->bwf_peer_priority =
+				param->peer_info[i].priority;
+		qdf_mem_copy(&peer_info->peer_macaddr,
+			     &param->peer_info[i].peer_macaddr,
+			     sizeof(param->peer_info[i].peer_macaddr));
+		peer_info++;
+	}
+
+	retval = wmi_unified_cmd_send(wmi_handle, buf, len,
+				      WMI_PEER_BWF_REQUEST_CMDID);
+
+	if (retval != QDF_STATUS_SUCCESS) {
+		WMI_LOGE("%s : WMI Failed\n", __func__);
+		wmi_buf_free(buf);
+	}
+
+	return retval;
+}
+
+/**
+ * send_mcast_group_update_cmd_tlv() - send mcast group update cmd to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to hold mcast update param
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS
+send_mcast_group_update_cmd_tlv(wmi_unified_t wmi_handle,
+				struct mcast_group_update_params *param)
+{
+	wmi_peer_mcast_group_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	QDF_STATUS ret;
+	int32_t len;
+	int offset = 0;
+	static char dummymask[4] = { 0xFF, 0xFF, 0xFF, 0xFF};
+
+	len = sizeof(*cmd);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s: wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	cmd = (wmi_peer_mcast_group_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_peer_mcast_group_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(
+				wmi_peer_mcast_group_cmd_fixed_param));
+	/* confirm the buffer is 4-byte aligned */
+	QDF_ASSERT((((size_t) cmd) & 0x3) == 0);
+	qdf_mem_zero(cmd, sizeof(*cmd));
+
+	cmd->vdev_id = param->vap_id;
+	/* construct the message assuming our endianness matches the target */
+	cmd->flags |= WMI_PEER_MCAST_GROUP_FLAG_ACTION_M &
+		(param->action << WMI_PEER_MCAST_GROUP_FLAG_ACTION_S);
+	cmd->flags |= WMI_PEER_MCAST_GROUP_FLAG_WILDCARD_M &
+		(param->wildcard << WMI_PEER_MCAST_GROUP_FLAG_WILDCARD_S);
+	if (param->is_action_delete)
+		cmd->flags |= WMI_PEER_MCAST_GROUP_FLAG_DELETEALL_M;
+
+	if (param->is_mcast_addr_len)
+		cmd->flags |=  WMI_PEER_MCAST_GROUP_FLAG_IPV6_M;
+
+	if (param->is_filter_mode_snoop)
+		cmd->flags |= WMI_PEER_MCAST_GROUP_FLAG_SRC_FILTER_EXCLUDE_M;
+
+	/* unicast address spec only applies for non-wildcard cases */
+	if (!param->wildcard && param->ucast_mac_addr) {
+		WMI_CHAR_ARRAY_TO_MAC_ADDR(param->ucast_mac_addr,
+					   &cmd->ucast_mac_addr);
+	}
+	if (param->mcast_ip_addr) {
+		QDF_ASSERT(param->mcast_ip_addr_bytes <=
+			   sizeof(cmd->mcast_ip_addr));
+		offset = sizeof(cmd->mcast_ip_addr) -
+			 param->mcast_ip_addr_bytes;
+		qdf_mem_copy(((uint8_t *)&cmd->mcast_ip_addr) + offset,
+			     param->mcast_ip_addr,
+			     param->mcast_ip_addr_bytes);
+	}
+	if (!param->mask)
+		param->mask = &dummymask[0];
+
+	qdf_mem_copy(((uint8_t *)&cmd->mcast_ip_mask) + offset,
+		     param->mask,
+		     param->mcast_ip_addr_bytes);
+
+	if (param->srcs && param->nsrcs) {
+		cmd->num_filter_addr = param->nsrcs;
+		QDF_ASSERT((param->nsrcs * param->mcast_ip_addr_bytes) <=
+			sizeof(cmd->filter_addr));
+
+		qdf_mem_copy(((uint8_t *) &cmd->filter_addr), param->srcs,
+			     param->nsrcs * param->mcast_ip_addr_bytes);
+	}
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				      WMI_PEER_MCAST_GROUP_CMDID);
+
+	if (ret != QDF_STATUS_SUCCESS) {
+		WMI_LOGE("%s : WMI Failed\n", __func__);
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+
+/**
+ * send_vdev_spectral_configure_cmd_tlv() - send VDEV spectral configure
+ * command to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to hold spectral config parameter
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS send_vdev_spectral_configure_cmd_tlv(wmi_unified_t wmi_handle,
+				struct vdev_spectral_configure_params *param)
+{
+	wmi_vdev_spectral_configure_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	QDF_STATUS ret;
+	int32_t len;
+
+	len = sizeof(*cmd);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s: wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cmd = (wmi_vdev_spectral_configure_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_vdev_spectral_configure_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(
+		WMITLV_TAG_STRUC_wmi_vdev_spectral_configure_cmd_fixed_param));
+
+	cmd->vdev_id = param->vdev_id;
+	cmd->spectral_scan_count = param->count;
+	cmd->spectral_scan_period = param->period;
+	cmd->spectral_scan_priority = param->spectral_pri;
+	cmd->spectral_scan_fft_size = param->fft_size;
+	cmd->spectral_scan_gc_ena = param->gc_enable;
+	cmd->spectral_scan_restart_ena = param->restart_enable;
+	cmd->spectral_scan_noise_floor_ref = param->noise_floor_ref;
+	cmd->spectral_scan_init_delay = param->init_delay;
+	cmd->spectral_scan_nb_tone_thr = param->nb_tone_thr;
+	cmd->spectral_scan_str_bin_thr = param->str_bin_thr;
+	cmd->spectral_scan_wb_rpt_mode = param->wb_rpt_mode;
+	cmd->spectral_scan_rssi_rpt_mode = param->rssi_rpt_mode;
+	cmd->spectral_scan_rssi_thr = param->rssi_thr;
+	cmd->spectral_scan_pwr_format = param->pwr_format;
+	cmd->spectral_scan_rpt_mode = param->rpt_mode;
+	cmd->spectral_scan_bin_scale = param->bin_scale;
+	cmd->spectral_scan_dBm_adj = param->dBm_adj;
+	cmd->spectral_scan_chn_mask = param->chn_mask;
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_VDEV_SPECTRAL_SCAN_CONFIGURE_CMDID);
+
+	if (ret != 0) {
+		WMI_LOGE("Sending set quiet cmd failed\n");
+		wmi_buf_free(buf);
+	}
+
+	WMI_LOGI("%s: Sent WMI_VDEV_SPECTRAL_SCAN_CONFIGURE_CMDID\n",
+		 __func__);
+
+	WMI_LOGI("vdev_id = %u\n"
+		 "spectral_scan_count = %u\n"
+		 "spectral_scan_period = %u\n"
+		 "spectral_scan_priority = %u\n"
+		 "spectral_scan_fft_size = %u\n"
+		 "spectral_scan_gc_ena = %u\n"
+		 "spectral_scan_restart_ena = %u\n"
+		 "spectral_scan_noise_floor_ref = %u\n"
+		 "spectral_scan_init_delay = %u\n"
+		 "spectral_scan_nb_tone_thr = %u\n"
+		 "spectral_scan_str_bin_thr = %u\n"
+		 "spectral_scan_wb_rpt_mode = %u\n"
+		 "spectral_scan_rssi_rpt_mode = %u\n"
+		 "spectral_scan_rssi_thr = %u\n"
+		 "spectral_scan_pwr_format = %u\n"
+		 "spectral_scan_rpt_mode = %u\n"
+		 "spectral_scan_bin_scale = %u\n"
+		 "spectral_scan_dBm_adj = %u\n"
+		 "spectral_scan_chn_mask = %u\n",
+		 param->vdev_id,
+		 param->count,
+		 param->period,
+		 param->spectral_pri,
+		 param->fft_size,
+		 param->gc_enable,
+		 param->restart_enable,
+		 param->noise_floor_ref,
+		 param->init_delay,
+		 param->nb_tone_thr,
+		 param->str_bin_thr,
+		 param->wb_rpt_mode,
+		 param->rssi_rpt_mode,
+		 param->rssi_thr,
+		 param->pwr_format,
+		 param->rpt_mode,
+		 param->bin_scale,
+		 param->dBm_adj,
+		 param->chn_mask);
+	WMI_LOGI("%s: Status: %d\n\n", __func__, ret);
+
+	return ret;
+}
+
+/**
+ * send_vdev_spectral_enable_cmd_tlv() - send VDEV spectral configure
+ * command to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to hold spectral enable parameter
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS send_vdev_spectral_enable_cmd_tlv(wmi_unified_t wmi_handle,
+				struct vdev_spectral_enable_params *param)
+{
+	wmi_vdev_spectral_enable_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	QDF_STATUS ret;
+	int32_t len;
+
+	len = sizeof(*cmd);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s: wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cmd = (wmi_vdev_spectral_enable_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_vdev_spectral_enable_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(
+		WMITLV_TAG_STRUC_wmi_vdev_spectral_enable_cmd_fixed_param));
+
+	cmd->vdev_id = param->vdev_id;
+
+	if (param->active_valid) {
+		cmd->trigger_cmd = param->active ? 1 : 2;
+		/* 1: Trigger, 2: Clear Trigger */
+	} else {
+		cmd->trigger_cmd = 0; /* 0: Ignore */
+	}
+
+	if (param->enabled_valid) {
+		cmd->enable_cmd = param->enabled ? 1 : 2;
+		/* 1: Enable 2: Disable */
+	} else {
+		cmd->enable_cmd = 0; /* 0: Ignore */
+	}
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_VDEV_SPECTRAL_SCAN_ENABLE_CMDID);
+
+	if (ret != 0) {
+		WMI_LOGE("Sending scan enable CMD failed\n");
+		wmi_buf_free(buf);
+	}
+
+	WMI_LOGI("%s: Sent WMI_VDEV_SPECTRAL_SCAN_ENABLE_CMDID\n", __func__);
+
+	WMI_LOGI("vdev_id = %u\n"
+				 "trigger_cmd = %u\n"
+				 "enable_cmd = %u\n",
+				 cmd->vdev_id,
+				 cmd->trigger_cmd,
+				 cmd->enable_cmd);
+
+	WMI_LOGI("%s: Status: %d\n\n", __func__, ret);
+
+	return ret;
+}
+
+/**
+ * send_pdev_qvit_cmd_tlv() - send qvit command to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to pdev_qvit_params
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS
+send_pdev_qvit_cmd_tlv(wmi_unified_t wmi_handle,
+		       struct pdev_qvit_params *param)
+{
+	wmi_buf_t buf;
+	QDF_STATUS ret;
+	uint8_t *cmd;
+	static uint8_t msgref = 1;
+	uint8_t segnumber = 0, seginfo, numsegments;
+	uint16_t chunk_len, total_bytes;
+	uint8_t *bufpos;
+	QVIT_SEG_HDR_INFO_STRUCT seghdrinfo;
+
+	bufpos = param->utf_payload;
+	total_bytes = param->len;
+	ASSERT(total_bytes / MAX_WMI_QVIT_LEN ==
+	       (uint8_t) (total_bytes / MAX_WMI_QVIT_LEN));
+	numsegments = (uint8_t) (total_bytes / MAX_WMI_QVIT_LEN);
+
+	if (param->len - (numsegments * MAX_WMI_QVIT_LEN))
+		numsegments++;
+
+	while (param->len) {
+		if (param->len > MAX_WMI_QVIT_LEN)
+			chunk_len = MAX_WMI_QVIT_LEN;    /* MAX messsage */
+		else
+			chunk_len = param->len;
+
+		buf = wmi_buf_alloc(wmi_handle,
+				    (chunk_len + sizeof(seghdrinfo) +
+				     WMI_TLV_HDR_SIZE));
+		if (!buf) {
+			WMI_LOGE("%s:wmi_buf_alloc failed", __func__);
+			return QDF_STATUS_E_NOMEM;
+		}
+
+		cmd = (uint8_t *) wmi_buf_data(buf);
+
+		seghdrinfo.len = total_bytes;
+		seghdrinfo.msgref = msgref;
+		seginfo = ((numsegments << 4) & 0xF0) | (segnumber & 0xF);
+		seghdrinfo.segmentInfo = seginfo;
+
+		segnumber++;
+
+		WMITLV_SET_HDR(cmd, WMITLV_TAG_ARRAY_BYTE,
+			       (chunk_len + sizeof(seghdrinfo)));
+		cmd += WMI_TLV_HDR_SIZE;
+		qdf_mem_copy(cmd, &seghdrinfo, sizeof(seghdrinfo));
+		qdf_mem_copy(&cmd[sizeof(seghdrinfo)], bufpos, chunk_len);
+
+		ret = wmi_unified_cmd_send(wmi_handle, buf,
+					   (chunk_len + sizeof(seghdrinfo) +
+					    WMI_TLV_HDR_SIZE),
+					   WMI_PDEV_QVIT_CMDID);
+
+		if (ret != 0) {
+			WMI_LOGE("Failed to send WMI_PDEV_QVIT_CMDID command");
+			wmi_buf_free(buf);
+			break;
+		}
+
+		param->len -= chunk_len;
+		bufpos += chunk_len;
+	}
+	msgref++;
+
+	return ret;
+}
+
+/**
+ * send_wmm_update_cmd_tlv() - send wmm update command to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to wmm update param
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS
+send_wmm_update_cmd_tlv(wmi_unified_t wmi_handle,
+			struct wmm_update_params *param)
+{
+	wmi_pdev_set_wmm_params_cmd_fixed_param *cmd;
+	wmi_wmm_params *wmm_param;
+	wmi_buf_t buf;
+	QDF_STATUS ret;
+	int32_t len;
+	int ac = 0;
+	struct wmi_host_wmeParams *wmep;
+	uint8_t *buf_ptr;
+
+	len = sizeof(*cmd) + (WME_NUM_AC * sizeof(*wmm_param));
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s: wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+	cmd = (wmi_pdev_set_wmm_params_cmd_fixed_param *) buf_ptr;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_pdev_set_wmm_params_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_pdev_set_wmm_params_cmd_fixed_param));
+
+	cmd->reserved0 = WMI_PDEV_ID_SOC;
+
+	buf_ptr += sizeof(wmi_pdev_set_wmm_params_cmd_fixed_param);
+
+	for (ac = 0; ac < WME_NUM_AC; ac++) {
+		wmep = &param->wmep_array[ac];
+		wmm_param = (wmi_wmm_params *)buf_ptr;
+		WMITLV_SET_HDR(&wmm_param->tlv_header,
+			WMITLV_TAG_STRUC_wmi_wmm_params,
+			WMITLV_GET_STRUCT_TLVLEN(wmi_wmm_params));
+		wmm_param->aifs = wmep->wmep_aifsn;
+		wmm_param->cwmin = ATH_EXPONENT_TO_VALUE(wmep->wmep_logcwmin);
+		wmm_param->cwmax = ATH_EXPONENT_TO_VALUE(wmep->wmep_logcwmax);
+		wmm_param->txoplimit = ATH_TXOP_TO_US(wmep->wmep_txopLimit);
+		wmm_param->acm = wmep->wmep_acm;
+		wmm_param->no_ack = wmep->wmep_noackPolicy;
+		buf_ptr += sizeof(wmi_wmm_params);
+	}
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_PDEV_SET_WMM_PARAMS_CMDID);
+
+	if (ret != 0) {
+		WMI_LOGE("Sending WMM update CMD failed\n");
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+
 static
 void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 				target_resource_config *tgt_res_cfg)
@@ -16468,6 +16981,15 @@ struct wmi_ops tlv_ops =  {
 	.send_nf_dbr_dbm_info_get_cmd = send_nf_dbr_dbm_info_get_cmd_tlv,
 	.send_set_ht_ie_cmd = send_set_ht_ie_cmd_tlv,
 	.send_set_vht_ie_cmd = send_set_vht_ie_cmd_tlv,
+	.send_set_quiet_mode_cmd = send_set_quiet_mode_cmd_tlv,
+	.send_set_bwf_cmd = send_set_bwf_cmd_tlv,
+	.send_mcast_group_update_cmd = send_mcast_group_update_cmd_tlv,
+	.send_vdev_spectral_configure_cmd =
+				send_vdev_spectral_configure_cmd_tlv,
+	.send_vdev_spectral_enable_cmd =
+				send_vdev_spectral_enable_cmd_tlv,
+	.send_pdev_qvit_cmd = send_pdev_qvit_cmd_tlv,
+	.send_wmm_update_cmd = send_wmm_update_cmd_tlv,
 	.get_target_cap_from_service_ready = extract_service_ready_tlv,
 	.extract_hal_reg_cap = extract_hal_reg_cap_tlv,
 	.extract_host_mem_req = extract_host_mem_req_tlv,
