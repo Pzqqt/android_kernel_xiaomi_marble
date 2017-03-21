@@ -4130,6 +4130,25 @@ enum station_keepalive_method {
 
 /*
  * <ini>
+ * g_enable_non_arp_bc_hw_filter - Enable HW broadcast filtering
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini support to dynamically enable/disable Broadast filter
+ * when target goes to wow suspend/resume mode
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_HW_BC_FILTER_NAME     "g_enable_non_arp_bc_hw_filter"
+#define CFG_HW_FILTER_DEFAULT         (0)
+#define CFG_HW_FILTER_MIN             (0)
+#define CFG_HW_FILTER_MAX             (1)
+
+/*
+ * <ini>
  * BandCapability - Preferred band (0: Both,  1: 2.4G only,  2: 5G only)
  * @Min: 0
  * @Max: 2
@@ -10016,6 +10035,7 @@ struct hdd_config {
 	bool bSingleTidRc;
 	uint8_t mcastBcastFilterSetting;
 	bool fhostArpOffload;
+	bool hw_broadcast_filter;
 	bool ssdp;
 
 #ifdef FEATURE_RUNTIME_PM
