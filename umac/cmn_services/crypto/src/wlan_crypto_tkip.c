@@ -42,17 +42,6 @@ static QDF_STATUS tkip_demic(struct wlan_crypto_key *key, qdf_nbuf_t wbuf,
 
 static QDF_STATUS tkip_setkey(struct wlan_crypto_key *key)
 {
-/*	struct wlan_crypto_tkip_ctx *ctx;
-
-	if (key->private == NULL) {
-		key->private = qdf_mem_malloc(
-					sizeof(struct wlan_crypto_tkip_ctx));
-		if (key->private == NULL)
-			return QDF_STATUS_E_NOMEM;
-	}
-
-	ctx = key->private;
-*/
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -86,13 +75,6 @@ static QDF_STATUS tkip_encap(struct wlan_crypto_key *key,
 	ivp[6] = key->keytsc >> 32;           /* PN4 */
 	ivp[7] = key->keytsc >> 40;           /* PN5 */
 
-/*	wbuf0 = wbuf;
-	pktlen = qdf_nbuf_len(wbuf);
-	while (qdf_nbuf_queue_next(wbuf0) != NULL) {
-		wbuf = qdf_nbuf_queue_next(wbuf0);
-		pktlen += qdf_nbuf_len(wbuf0);
-	}
-*/
 	/*
 	 * Finally, do software encrypt if neeed.
 	 */
@@ -155,8 +137,6 @@ static QDF_STATUS tkip_decap(struct wlan_crypto_key *key,
 	qdf_mem_move(origHdr + cipher_table->header, origHdr, hdrlen);
 
 	qdf_nbuf_pull_head(wbuf, cipher_table->header);
-	/*while (qdf_nbuf_queue_next(wbuf) != NULL)
-		wbuf = qdf_nbuf_queue_next(wbuf);*/
 	qdf_nbuf_trim_tail(wbuf, cipher_table->trailer);
 
 	return QDF_STATUS_SUCCESS;

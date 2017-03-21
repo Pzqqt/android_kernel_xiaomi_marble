@@ -64,7 +64,8 @@ cipher2cap(int cipher)
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
 QDF_STATUS wlan_crypto_set_authmode(struct wlan_crypto_params *crypto_params,
-					uint32_t authmode){
+					uint32_t authmode)
+{
 	crypto_params->authmodeset = authmode;
 	return QDF_STATUS_SUCCESS;
 }
@@ -94,7 +95,8 @@ int32_t wlan_crypto_get_authmode(struct wlan_crypto_params *crypto_params)
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
 QDF_STATUS wlan_crypto_set_mcastcipher(struct wlan_crypto_params *crypto_params,
-					wlan_crypto_cipher_type cipher){
+					wlan_crypto_cipher_type cipher)
+{
 	uint16_t i;
 	uint32_t cap;
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
@@ -140,9 +142,10 @@ int32_t wlan_crypto_get_mcastcipher(struct wlan_crypto_params *crypto_params)
  */
 QDF_STATUS wlan_crypto_set_ucastciphers(
 				struct wlan_crypto_params *crypto_params,
-				uint32_t cipher){
-				uint16_t i;
-				uint32_t cap;
+				uint32_t cipher)
+{
+	uint16_t i;
+	uint32_t cap;
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
 
 	RESET_UCAST_CIPHERS(crypto_params);
@@ -157,6 +160,7 @@ QDF_STATUS wlan_crypto_set_ucastciphers(
 		}
 		CLEAR_PARAM(cipher, i);
 	}
+
 	return status;
 }
 
@@ -187,7 +191,8 @@ int32_t wlan_crypto_get_ucastciphers(struct wlan_crypto_params *crypto_params)
  */
 QDF_STATUS wlan_crypto_set_mgmtcipher(
 				struct wlan_crypto_params *crypto_params,
-				uint32_t value){
+				uint32_t value)
+{
 
 	if (HAS_CIPHER_CAP(crypto_params, WLAN_CRYPTO_CAP_PMF) ||
 		HAS_CIPHER_CAP(crypto_params, WLAN_CRYPTO_CAP_PMF_OFFLOAD)) {
@@ -225,8 +230,10 @@ int32_t wlan_crypto_get_mgmtciphers(struct wlan_crypto_params *crypto_params)
  */
 QDF_STATUS wlan_crypto_set_cipher_cap(
 				struct wlan_crypto_params *crypto_params,
-				uint32_t value){
+				uint32_t value)
+{
 	crypto_params->cipher_caps = value;
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -257,8 +264,10 @@ int32_t wlan_crypto_get_cipher_cap(struct wlan_crypto_params *crypto_params)
  */
 QDF_STATUS wlan_crypto_set_rsn_cap(
 				struct wlan_crypto_params *crypto_params,
-				uint32_t value){
+				uint32_t value)
+{
 	crypto_params->rsn_caps = value;
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -290,8 +299,10 @@ int32_t wlan_crypto_get_rsn_cap(struct wlan_crypto_params *crypto_params)
  */
 QDF_STATUS wlan_crypto_set_key_mgmt(
 				struct wlan_crypto_params *crypto_params,
-				uint32_t value){
+				uint32_t value)
+{
 	crypto_params->key_mgmt = value;
+
 	return QDF_STATUS_SUCCESS;
 }
 
