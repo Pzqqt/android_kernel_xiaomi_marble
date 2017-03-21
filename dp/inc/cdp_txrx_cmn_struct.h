@@ -130,11 +130,11 @@ enum htt_cmn_dbg_stats_type {
 */
 enum cdp_host_txrx_stats {
 	TXRX_HOST_STATS_INVALID  = -1,
-	TXRX_RX_RATE_STATS  = 0,
-	TXRX_TX_RATE_STATS  = 1,
-	TXRX_TX_HOST_STATS  = 2,
-	TXRX_RX_HOST_STATS  = 3,
-	TXRX_CLEAR_STATS    = 4,
+	TXRX_CLEAR_STATS    = 0,
+	TXRX_RX_RATE_STATS  = 1,
+	TXRX_TX_RATE_STATS  = 2,
+	TXRX_TX_HOST_STATS  = 3,
+	TXRX_RX_HOST_STATS  = 4,
 	TXRX_HOST_STATS_MAX,
 };
 
@@ -517,7 +517,8 @@ enum cdp_stats {
 	CDP_TXRX_STATS_25,
 	CDP_TXRX_STATS_26,
 	CDP_TXRX_STATS_27,
-	CDP_TXRX_MAX_STATS,
+	CDP_TXRX_STATS_HTT_MAX = 256,
+	CDP_TXRX_MAX_STATS = 512,
 };
 
 /* Different Packet Types */

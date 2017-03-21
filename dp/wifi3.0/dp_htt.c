@@ -23,12 +23,16 @@
 #include "dp_types.h"
 #include "dp_internal.h"
 #include "dp_rx_mon.h"
+#include "htt_stats.h"
+
+#define HTT_TLV_HDR_LEN HTT_T2H_EXT_STATS_CONF_TLV_HDR_SIZE
 
 #define HTT_HTC_PKT_POOL_INIT_SIZE 64
 
 #define HTT_MSG_BUF_SIZE(msg_bytes) \
 	((msg_bytes) + HTC_HEADER_LEN + HTC_HDR_ALIGNMENT_PADDING)
 
+#define DP_EXT_MSG_LENGTH 2048
 /*
  * htt_htc_pkt_alloc() - Allocate HTC packet buffer
  * @htt_soc:	HTT SOC handle
@@ -853,6 +857,210 @@ fail0:
 	return QDF_STATUS_E_FAILURE;
 }
 
+/**
+ * dp_process_htt_stat_msg(): Process the list of buffers of HTT EXT stats
+ * @soc: DP SOC handle
+ *
+ * The FW sends the HTT EXT STATS as a stream of T2H messages. Each T2H message
+ * contains sub messages which are identified by a TLV header.
+ * In this function we will process the stream of T2H messages and read all the
+ * TLV contained in the message.
+ *
+ * THe following cases have been taken care of
+ * Case 1: When the tlv_remain_length <= msg_remain_length of HTT MSG buffer
+ *		In this case the buffer will contain multiple tlvs.
+ * Case 2: When the tlv_remain_length > msg_remain_length of HTT MSG buffer.
+ *		Only one tlv will be contained in the HTT message and this tag
+ *		will extend onto the next buffer.
+ * Case 3: When the buffer is the continuation of the previous message
+ * Case 4: tlv length is 0. which will indicate the end of message
+ *
+ * return: void
+ */
+static inline void dp_process_htt_stat_msg(struct dp_soc *soc)
+{
+	htt_tlv_tag_t tlv_type = 0xff;
+	qdf_nbuf_t htt_msg = NULL;
+	uint32_t *msg_word;
+	uint8_t *tlv_buf_head = NULL;
+	uint8_t *tlv_buf_tail = NULL;
+	uint32_t msg_remain_len = 0;
+	uint32_t tlv_remain_len = 0;
+	uint32_t *tlv_start;
+
+	/* Process node in the HTT message queue */
+	while ((htt_msg = qdf_nbuf_queue_remove(&soc->htt_stats_msg)) != NULL) {
+		msg_word = (uint32_t *) qdf_nbuf_data(htt_msg);
+		/* read 5th word */
+		msg_word = msg_word + 4;
+		msg_remain_len = qdf_min(soc->htt_msg_len,
+				(uint32_t)DP_EXT_MSG_LENGTH);
+
+		/* Keep processing the node till node length is 0 */
+		while (msg_remain_len) {
+			/*
+			 * if message is not a continuation of previous message
+			 * read the tlv type and tlv length
+			 */
+			if (!tlv_buf_head) {
+				tlv_type = HTT_STATS_TLV_TAG_GET(
+						*msg_word);
+				tlv_remain_len = HTT_STATS_TLV_LENGTH_GET(
+						*msg_word);
+			}
+
+			if (tlv_remain_len == 0) {
+				msg_remain_len = 0;
+
+				if (tlv_buf_head) {
+					qdf_mem_free(tlv_buf_head);
+					tlv_buf_head = NULL;
+					tlv_buf_tail = NULL;
+				}
+
+				goto error;
+			}
+
+			tlv_remain_len += HTT_TLV_HDR_LEN;
+
+			if ((tlv_remain_len <= msg_remain_len)) {
+				/* Case 3 */
+				if (tlv_buf_head) {
+					qdf_mem_copy(tlv_buf_tail,
+							(uint8_t *)msg_word,
+							tlv_remain_len);
+					tlv_start = (uint32_t *)tlv_buf_head;
+				} else {
+					/* Case 1 */
+					tlv_start = msg_word;
+				}
+
+				dp_htt_stats_print_tag(tlv_type, tlv_start);
+
+				msg_remain_len -= tlv_remain_len;
+
+				msg_word = (uint32_t *)
+					(((uint8_t *)msg_word) +
+					tlv_remain_len);
+
+				tlv_remain_len = 0;
+
+				if (tlv_buf_head) {
+					qdf_mem_free(tlv_buf_head);
+					tlv_buf_head = NULL;
+					tlv_buf_tail = NULL;
+				}
+
+			} else { /* tlv_remain_len > msg_remain_len */
+				/* Case 2 & 3 */
+				if (!tlv_buf_head) {
+					tlv_buf_head = qdf_mem_malloc(
+							tlv_remain_len);
+
+					if (!tlv_buf_head) {
+						QDF_TRACE(QDF_MODULE_ID_TXRX,
+								QDF_TRACE_LEVEL_ERROR,
+								"Alloc failed");
+						goto error;
+					}
+
+					tlv_buf_tail = tlv_buf_head;
+				}
+
+				qdf_mem_copy(tlv_buf_tail, (uint8_t *)msg_word,
+						msg_remain_len);
+				tlv_remain_len -= msg_remain_len;
+				tlv_buf_tail += msg_remain_len;
+				msg_remain_len = 0;
+			}
+		}
+
+		if (soc->htt_msg_len >= DP_EXT_MSG_LENGTH) {
+			soc->htt_msg_len -= DP_EXT_MSG_LENGTH;
+		}
+
+		qdf_nbuf_free(htt_msg);
+	}
+	soc->htt_msg_len = 0;
+	return;
+
+error:
+	qdf_nbuf_free(htt_msg);
+	soc->htt_msg_len = 0;
+	while ((htt_msg = qdf_nbuf_queue_remove(&soc->htt_stats_msg))
+			!= NULL)
+		qdf_nbuf_free(htt_msg);
+}
+
+/**
+ * dp_txrx_fw_stats_handler():Function to process HTT EXT stats
+ * @soc: DP SOC handle
+ * @htt_t2h_msg: HTT message nbuf
+ *
+ * return:void
+ */
+static inline void dp_txrx_fw_stats_handler(struct dp_soc *soc,
+		qdf_nbuf_t htt_t2h_msg)
+{
+	uint32_t length;
+	uint8_t done;
+	qdf_nbuf_t msg_copy;
+	uint32_t *msg_word;
+
+	msg_word = (uint32_t *) qdf_nbuf_data(htt_t2h_msg);
+	msg_word = msg_word + 3;
+	done = 0;
+	length = HTT_T2H_EXT_STATS_CONF_TLV_LENGTH_GET(*msg_word);
+	done = HTT_T2H_EXT_STATS_CONF_TLV_DONE_GET(*msg_word);
+
+	/*
+	 * HTT EXT stats response comes as stream of TLVs which span over
+	 * multiple T2H messages.
+	 * The first message will carry length of the response.
+	 * For rest of the messages length will be zero.
+	 */
+	if (soc->htt_msg_len && length)
+		goto error;
+
+	if (length)
+		soc->htt_msg_len = length;
+
+	/*
+	 * Clone the T2H message buffer and store it in a list to process
+	 * it later.
+	 *
+	 * The original T2H message buffers gets freed in the T2H HTT event
+	 * handler
+	 */
+	msg_copy = qdf_nbuf_clone(htt_t2h_msg);
+
+	if (!msg_copy) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+				"T2H messge clone failed for HTT EXT STATS");
+		soc->htt_msg_len = 0;
+		goto error;
+	}
+
+	qdf_nbuf_queue_add(&soc->htt_stats_msg, msg_copy);
+
+	/*
+	 * Done bit signifies that this is the last T2H buffer in the stream of
+	 * HTT EXT STATS message
+	 */
+	if (done)
+		dp_process_htt_stat_msg(soc);
+
+	return;
+
+error:
+	while ((msg_copy = qdf_nbuf_queue_remove(&soc->htt_stats_msg))
+			!= NULL) {
+		qdf_nbuf_free(msg_copy);
+	}
+	return;
+
+}
+
 /*
  * htt_soc_attach_target() - SOC level HTT setup
  * @htt_soc:	HTT SOC handle
@@ -1015,8 +1223,11 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 			}
 			break;
 		}
-
-
+	case HTT_T2H_MSG_TYPE_EXT_STATS_CONF:
+		{
+			dp_txrx_fw_stats_handler(soc->dp_soc, htt_t2h_msg);
+			break;
+		}
 	default:
 		break;
 	};
@@ -1166,3 +1377,100 @@ htt_soc_detach(void *htt_soc)
 	qdf_mem_free(soc);
 }
 
+/**
+ * dp_h2t_ext_stats_msg_send(): function to contruct HTT message to pass to FW
+ * @pdev: DP PDEV handle
+ * @stats_type_upload_mask: stats type requested by user
+ * @config_param_0: extra configuration parameters
+ * @config_param_1: extra configuration parameters
+ * @config_param_2: extra configuration parameters
+ * @config_param_3: extra configuration parameters
+ *
+ * return: QDF STATUS
+ */
+QDF_STATUS dp_h2t_ext_stats_msg_send(struct dp_pdev *pdev,
+		uint32_t stats_type_upload_mask, uint32_t config_param_0,
+		uint32_t config_param_1, uint32_t config_param_2,
+		uint32_t config_param_3)
+{
+	struct htt_soc *soc = pdev->soc->htt_handle;
+	struct dp_htt_htc_pkt *pkt;
+	qdf_nbuf_t msg;
+	uint32_t *msg_word;
+	uint8_t pdev_mask;
+
+	msg = qdf_nbuf_alloc(
+			soc->osdev,
+			HTT_MSG_BUF_SIZE(HTT_H2T_EXT_STATS_REQ_MSG_SZ),
+			HTC_HEADER_LEN + HTC_HDR_ALIGNMENT_PADDING, 4, TRUE);
+
+	if (!msg)
+		return QDF_STATUS_E_NOMEM;
+
+	/*TODO:Add support for SOC stats
+	 * Bit 0: SOC Stats
+	 * Bit 1: Pdev stats for pdev id 0
+	 * Bit 2: Pdev stats for pdev id 1
+	 * Bit 3: Pdev stats for pdev id 2
+	 */
+	pdev_mask = 1 << (pdev->pdev_id + 1);
+
+	/*
+	 * Set the length of the message.
+	 * The contribution from the HTC_HDR_ALIGNMENT_PADDING is added
+	 * separately during the below call to qdf_nbuf_push_head.
+	 * The contribution from the HTC header is added separately inside HTC.
+	 */
+	if (qdf_nbuf_put_tail(msg, HTT_H2T_EXT_STATS_REQ_MSG_SZ) == NULL) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+				"Failed to expand head for HTT_EXT_STATS");
+		qdf_nbuf_free(msg);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	msg_word = (uint32_t *) qdf_nbuf_data(msg);
+
+	qdf_nbuf_push_head(msg, HTC_HDR_ALIGNMENT_PADDING);
+	*msg_word = 0;
+	HTT_H2T_MSG_TYPE_SET(*msg_word, HTT_H2T_MSG_TYPE_EXT_STATS_REQ);
+	HTT_H2T_EXT_STATS_REQ_PDEV_MASK_SET(*msg_word, pdev_mask);
+	HTT_H2T_EXT_STATS_REQ_STATS_TYPE_SET(*msg_word, stats_type_upload_mask);
+
+	/* word 1 */
+	msg_word++;
+	*msg_word = 0;
+	HTT_H2T_EXT_STATS_REQ_CONFIG_PARAM_SET(*msg_word, config_param_0);
+
+	/* word 2 */
+	msg_word++;
+	*msg_word = 0;
+	HTT_H2T_EXT_STATS_REQ_CONFIG_PARAM_SET(*msg_word, config_param_1);
+
+	/* word 3 */
+	msg_word++;
+	*msg_word = 0;
+	HTT_H2T_EXT_STATS_REQ_CONFIG_PARAM_SET(*msg_word, config_param_2);
+
+	/* word 4 */
+	msg_word++;
+	*msg_word = 0;
+	HTT_H2T_EXT_STATS_REQ_CONFIG_PARAM_SET(*msg_word, config_param_3);
+
+	HTT_H2T_EXT_STATS_REQ_CONFIG_PARAM_SET(*msg_word, 0);
+	pkt = htt_htc_pkt_alloc(soc);
+	if (!pkt) {
+		qdf_nbuf_free(msg);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	pkt->soc_ctxt = NULL; /* not used during send-done callback */
+
+	SET_HTC_PACKET_INFO_TX(&pkt->htc_pkt,
+			dp_htt_h2t_send_complete_free_netbuf,
+			qdf_nbuf_data(msg), qdf_nbuf_len(msg),
+			soc->htc_endpoint,
+			1); /* tag - not relevant here */
+
+	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
+	return htc_send_pkt(soc->htc_soc, &pkt->htc_pkt);
+}

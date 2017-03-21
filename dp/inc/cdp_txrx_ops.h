@@ -199,8 +199,7 @@ struct cdp_cmn_ops {
 	void (*set_pdev_dscp_tid_map)(struct cdp_pdev *pdev, uint8_t map_id,
 			uint8_t tos, uint8_t tid);
 
-	A_STATUS(*txrx_stats)(struct cdp_vdev *vdev,
-		struct ol_txrx_stats_req *req, enum cdp_stats stats);
+	int (*txrx_stats)(struct cdp_vdev *vdev, enum cdp_stats stats);
 
 	QDF_STATUS (*display_stats)(void *psoc, uint16_t value);
 
@@ -466,8 +465,9 @@ struct cdp_mon_ops {
 
 struct cdp_host_stats_ops {
 	int (*txrx_host_stats_get)(struct cdp_vdev *vdev,
-			struct ol_txrx_stats_req *req,
-			enum cdp_host_txrx_stats type);
+			struct ol_txrx_stats_req *req);
+
+	void (*txrx_host_stats_clr)(struct cdp_vdev *vdev);
 
 	void (*txrx_host_ce_stats)(struct cdp_vdev *vdev);
 
@@ -529,6 +529,10 @@ struct cdp_host_stats_ops {
 
 	void
 		(*reset_lro_stats)(struct cdp_vdev *vdev);
+
+	void
+		(*get_fw_peer_stats)(struct cdp_pdev *pdev, uint8_t *addr,
+				uint32_t cap);
 
 };
 

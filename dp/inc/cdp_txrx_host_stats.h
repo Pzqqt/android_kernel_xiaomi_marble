@@ -32,27 +32,34 @@
 #ifndef _CDP_TXRX_HOST_STATS_H_
 #define _CDP_TXRX_HOST_STATS_H_
 #include "cdp_txrx_handle.h"
-/* WIN */
-/* Need to remove the "req" parameter */
-/* Need to rename the function to reflect the functionality "show" / "display"
- * WIN -- to figure out whether to change OSIF to converge (not an immediate AI)
- * */
 /**
  * cdp_host_stats_get: cdp call to get host stats
  * @soc: SOC handle
  * @req: Requirement type
- * @type: Host stat type
  *
  * return: 0 for Success, Failure returns error message
  */
 static inline int cdp_host_stats_get(ol_txrx_soc_handle soc,
-	struct cdp_vdev *vdev,
-	struct ol_txrx_stats_req *req, enum cdp_host_txrx_stats type)
+		struct cdp_vdev *vdev,
+		struct ol_txrx_stats_req *req)
 {
 	if (soc->ops->host_stats_ops->txrx_host_stats_get)
-		return soc->ops->host_stats_ops->txrx_host_stats_get(vdev, req,
-				type);
+		return soc->ops->host_stats_ops->txrx_host_stats_get(vdev, req);
 	return 0;
+}
+
+/**
+ * cdp_host_stats_clr: cdp call to clear host stats
+ * @vdev: vdev handle
+ *
+ * return: void
+ */
+static inline void
+cdp_host_stats_clr(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
+{
+	if (soc->ops->host_stats_ops->txrx_host_stats_clr)
+		return soc->ops->host_stats_ops->txrx_host_stats_clr(vdev);
+	return;
 }
 
 static inline void
@@ -210,6 +217,15 @@ cdp_reset_lro_stats(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 {
 	if (soc->ops->host_stats_ops->reset_lro_stats)
 		return soc->ops->host_stats_ops->reset_lro_stats(vdev);
+	return;
+}
+
+static inline void cdp_get_dp_fw_peer_stats(ol_txrx_soc_handle soc,
+		struct cdp_pdev *pdev, uint8_t *mac, uint32_t caps)
+{
+	if (soc->ops->host_stats_ops->get_fw_peer_stats)
+		return soc->ops->host_stats_ops->get_fw_peer_stats
+			(pdev, mac, caps);
 	return;
 }
 

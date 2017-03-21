@@ -633,6 +633,10 @@ struct dp_soc {
 	u_int16_t pdev_bs_inact_interval;
 	/* Inactivity timer */
 #endif /* QCA_SUPPORT_SON */
+	/* T2H Ext stats message queue */
+	qdf_nbuf_queue_t htt_stats_msg;
+	/* T2H Ext stats message length */
+	uint32_t htt_msg_len;
 };
 #define MAX_RX_MAC_RINGS 2
 /* Same as NAC_MAX_CLENT */

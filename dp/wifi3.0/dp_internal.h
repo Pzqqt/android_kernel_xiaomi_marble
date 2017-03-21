@@ -279,4 +279,9 @@ uint16_t dp_tx_me_send_convert_ucast(struct cdp_vdev *vdev_handle,
 void dp_tx_me_alloc_descriptor(struct cdp_pdev *pdev);
 
 void dp_tx_me_free_descriptor(struct cdp_pdev *pdev);
+QDF_STATUS dp_h2t_ext_stats_msg_send(struct dp_pdev *pdev,
+		uint32_t stats_type_upload_mask, uint32_t config_param_0,
+		uint32_t config_param_1, uint32_t config_param_2,
+		uint32_t config_param_3);
+void dp_htt_stats_print_tag(uint8_t tag_type, uint32_t *tag_buf);
 #endif /* #ifndef _DP_INTERNAL_H_ */

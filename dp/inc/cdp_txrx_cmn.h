@@ -494,17 +494,16 @@ static inline void cdp_flush_cache_rx_queue(ol_txrx_soc_handle soc)
  * cdp_txrx_stats(): function to map to host and firmware statistics
  * @soc: soc handle
  * @vdev: virtual device
- * @req: statistics request handle
  * @stats: statistics option
  *
  * return: status
  */
 static inline
 int cdp_txrx_stats(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
-		struct ol_txrx_stats_req *req, enum cdp_stats stats)
+		enum cdp_stats stats)
 {
 	if (soc->ops->cmn_drv_ops->txrx_stats)
-		return soc->ops->cmn_drv_ops->txrx_stats(vdev, req, stats);
+		return soc->ops->cmn_drv_ops->txrx_stats(vdev, stats);
 	return 0;
 }
 

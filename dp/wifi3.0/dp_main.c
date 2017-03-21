@@ -36,12 +36,15 @@
 #include <qdf_util.h>
 #include "dp_peer.h"
 #include "dp_rx_mon.h"
+#include "htt_stats.h"
 
 #define DP_INTR_POLL_TIMER_MS	10
 #define DP_MCS_LENGTH (6*MAX_MCS)
 #define DP_NSS_LENGTH (6*SS_COUNT)
 #define DP_RXDMA_ERR_LENGTH (6*MAX_RXDMA_ERRORS)
 #define DP_REO_ERR_LENGTH (6*REO_ERROR_TYPE_MAX)
+#define DP_CURR_FW_STATS_AVAIL 19
+#define DP_HTT_DBG_EXT_STATS_MAX 256
 
 /**
  * default_dscp_tid_map - Default DSCP-TID mapping
@@ -89,33 +92,31 @@ enum dp_fw_stats {
  * currently supported
  */
 const int dp_stats_mapping_table[][STATS_TYPE_MAX] = {
+	{HTT_DBG_EXT_STATS_RESET, TXRX_HOST_STATS_INVALID},
+	{HTT_DBG_EXT_STATS_PDEV_TX, TXRX_HOST_STATS_INVALID},
+	{HTT_DBG_EXT_STATS_PDEV_RX, TXRX_HOST_STATS_INVALID},
+	{HTT_DBG_EXT_STATS_PDEV_TX_HWQ, TXRX_HOST_STATS_INVALID},
+	{HTT_DBG_EXT_STATS_PDEV_TX_SCHED, TXRX_HOST_STATS_INVALID},
+	{HTT_DBG_EXT_STATS_PDEV_ERROR, TXRX_HOST_STATS_INVALID},
+	{HTT_DBG_EXT_STATS_PDEV_TQM, TXRX_HOST_STATS_INVALID},
+	{HTT_DBG_EXT_STATS_TQM_CMDQ, TXRX_HOST_STATS_INVALID},
+	{HTT_DBG_EXT_STATS_TX_DE_INFO, TXRX_HOST_STATS_INVALID},
+	{HTT_DBG_EXT_STATS_PDEV_TX_RATE, TXRX_HOST_STATS_INVALID},
+	{HTT_DBG_EXT_STATS_PDEV_RX_RATE, TXRX_HOST_STATS_INVALID},
 	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
-	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
-	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
-	{TXRX_FW_STATS_INVALID, TXRX_RX_RATE_STATS},
-	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
-	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
-	{TXRX_FW_STATS_INVALID, TXRX_TX_RATE_STATS},
-	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
-	{TXRX_FW_STATS_INVALID, TXRX_TX_HOST_STATS},
+	{HTT_DBG_EXT_STATS_TX_SELFGEN_INFO, TXRX_HOST_STATS_INVALID},
+	{HTT_DBG_EXT_STATS_TX_MU_HWQ, TXRX_HOST_STATS_INVALID},
+	{HTT_DBG_EXT_STATS_RING_IF_INFO, TXRX_HOST_STATS_INVALID},
+	{HTT_DBG_EXT_STATS_SRNG_INFO, TXRX_HOST_STATS_INVALID},
+	{HTT_DBG_EXT_STATS_SFM_INFO, TXRX_HOST_STATS_INVALID},
+	{HTT_DBG_EXT_STATS_PDEV_TX_MU, TXRX_HOST_STATS_INVALID},
+	{HTT_DBG_EXT_STATS_ACTIVE_PEERS_LIST, TXRX_HOST_STATS_INVALID},
+	/* Last ENUM for HTT FW STATS */
+	{DP_HTT_DBG_EXT_STATS_MAX, TXRX_HOST_STATS_INVALID},
 	{TXRX_FW_STATS_INVALID, TXRX_CLEAR_STATS},
-	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
-	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
-	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
-	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
-	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
-	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
-	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
-	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
-	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
-	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
-	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
-	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
-	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
-	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
-	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
-	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
-	{TXRX_FW_STATS_INVALID, TXRX_HOST_STATS_INVALID},
+	{TXRX_FW_STATS_INVALID, TXRX_RX_RATE_STATS},
+	{TXRX_FW_STATS_INVALID, TXRX_TX_RATE_STATS},
+	{TXRX_FW_STATS_INVALID, TXRX_TX_HOST_STATS},
 	{TXRX_FW_STATS_INVALID, TXRX_RX_HOST_STATS},
 };
 
@@ -975,6 +976,7 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 	hal_reo_setup(soc->hal_soc, &reo_params);
 
 	qdf_atomic_set(&soc->cmn_init_done, 1);
+	qdf_nbuf_queue_init(&soc->htt_stats_msg);
 	return 0;
 fail1:
 	/*
@@ -3289,27 +3291,28 @@ static inline void dp_print_peer_stats(struct dp_peer *peer)
 /**
  * dp_print_host_stats()- Function to print the stats aggregated at host
  * @vdev_handle: DP_VDEV handle
- * @req: ol_txrx_stats_req
  * @type: host stats type
  *
  * Available Stat types
+ * TXRX_CLEAR_STATS  : Clear the stats
  * TXRX_RX_RATE_STATS: Print Rx Rate Info
  * TXRX_TX_RATE_STATS: Print Tx Rate Info
  * TXRX_TX_HOST_STATS: Print Tx Stats
  * TXRX_RX_HOST_STATS: Print Rx Stats
- * TXRX_CLEAR_STATS  : Clear the stats
  *
  * Return: 0 on success, print error message in case of failure
  */
 static int
-dp_print_host_stats(struct cdp_vdev *vdev_handle, struct ol_txrx_stats_req *req,
-		enum cdp_host_txrx_stats type)
+dp_print_host_stats(struct cdp_vdev *vdev_handle, enum cdp_host_txrx_stats type)
 {
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
 	struct dp_pdev *pdev = (struct dp_pdev *)vdev->pdev;
 
 	dp_aggregate_pdev_stats(pdev);
 	switch (type) {
+	case TXRX_CLEAR_STATS:
+		dp_txrx_host_stats_clr(vdev);
+		break;
 	case TXRX_RX_RATE_STATS:
 		dp_print_rx_rates(vdev);
 		break;
@@ -3324,9 +3327,6 @@ dp_print_host_stats(struct cdp_vdev *vdev_handle, struct ol_txrx_stats_req *req,
 		dp_print_pdev_rx_stats(pdev);
 		dp_print_soc_rx_stats(pdev->soc);
 		break;
-	case TXRX_CLEAR_STATS:
-		dp_txrx_host_stats_clr(vdev);
-		break;
 	default:
 		DP_TRACE(FATAL, "Wrong Input For TxRx Host Stats");
 		break;
@@ -3335,23 +3335,65 @@ dp_print_host_stats(struct cdp_vdev *vdev_handle, struct ol_txrx_stats_req *req,
 }
 
 /*
- * dp_get_peer_stats()- function to print peer stats
+ * dp_get_host_peer_stats()- function to print peer stats
  * @pdev_handle: DP_PDEV handle
  * @mac_addr: mac address of the peer
  *
  * Return: void
  */
 static void
-dp_get_peer_stats(struct cdp_pdev *pdev_handle, char *mac_addr)
+dp_get_host_peer_stats(struct cdp_pdev *pdev_handle, char *mac_addr)
 {
 	struct dp_peer *peer;
 	uint8_t local_id;
 	peer = (struct dp_peer *)dp_find_peer_by_addr(pdev_handle, mac_addr,
 			&local_id);
 
-		dp_print_peer_stats(peer);
-		return;
+	dp_print_peer_stats(peer);
+	return;
 }
+
+/*
+ * dp_get_fw_peer_stats()- function to print peer stats
+ * @pdev_handle: DP_PDEV handle
+ * @mac_addr: mac address of the peer
+ * @cap: Type of htt stats requested
+ *
+ * Currently Supporting only MAC ID based requests Only
+ *	1: HTT_PEER_STATS_REQ_MODE_NO_QUERY
+ *	2: HTT_PEER_STATS_REQ_MODE_QUERY_TQM
+ *	3: HTT_PEER_STATS_REQ_MODE_FLUSH_TQM
+ *
+ * Return: void
+ */
+static void
+dp_get_fw_peer_stats(struct cdp_pdev *pdev_handle, uint8_t *mac_addr,
+		uint32_t cap)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	uint32_t config_param0 = 0;
+	uint32_t config_param1 = 0;
+	uint32_t config_param2 = 0;
+	uint32_t config_param3 = 0;
+
+	HTT_DBG_EXT_STATS_PEER_INFO_IS_MAC_ADDR_SET(config_param0, 1);
+	config_param0 |= (1 << (cap + 1));
+
+	config_param1 = 0x8f;
+
+	config_param2 |= (mac_addr[0] & 0x000000ff);
+	config_param2 |= ((mac_addr[1] << 8) & 0x0000ff00);
+	config_param2 |= ((mac_addr[2] << 16) & 0x00ff0000);
+	config_param2 |= ((mac_addr[3] << 24) & 0xff000000);
+
+	config_param3 |= (mac_addr[4] & 0x000000ff);
+	config_param3 |= ((mac_addr[5] << 8) & 0x0000ff00);
+
+	dp_h2t_ext_stats_msg_send(pdev, HTT_DBG_EXT_STATS_PEER_INFO,
+			config_param0, config_param1, config_param2,
+			config_param3);
+}
+
 /*
  * dp_set_vdev_param: function to set parameters in vdev
  * @param: parameter type to be set
@@ -3436,16 +3478,35 @@ static void dp_set_pdev_dscp_tid_map_wifi3(struct cdp_pdev *pdev_handle,
 	return;
 }
 
+/**
+ * dp_fw_stats_process(): Process TxRX FW stats request
+ * @vdev_handle: DP VDEV handle
+ * @val: value passed by user
+ *
+ * return: int
+ */
+static int dp_fw_stats_process(struct cdp_vdev *vdev_handle, uint32_t val)
+{
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
+	struct dp_pdev *pdev = NULL;
+
+	if (!vdev) {
+		DP_TRACE(NONE, "VDEV not found");
+		return 1;
+	}
+
+	pdev = vdev->pdev;
+	return dp_h2t_ext_stats_msg_send(pdev, val, 0, 0, 0, 0);
+}
+
 /*
  * dp_txrx_stats() - function to map to firmware and host stats
  * @vdev: virtual handle
- * @req: statistics request handle
  * @stats: type of statistics requested
  *
  * Return: integer
  */
-static int dp_txrx_stats(struct cdp_vdev *vdev,
-			struct ol_txrx_stats_req *req, enum cdp_stats stats)
+static int dp_txrx_stats(struct cdp_vdev *vdev, enum cdp_stats stats)
 {
 	int host_stats;
 	int fw_stats;
@@ -3453,6 +3514,12 @@ static int dp_txrx_stats(struct cdp_vdev *vdev,
 	if (stats >= CDP_TXRX_MAX_STATS)
 		return 0;
 
+	/*
+	 * DP_CURR_FW_STATS_AVAIL: no of FW stats currently available
+	 *			has to be updated if new FW HTT stats added
+	 */
+	if (stats > CDP_TXRX_STATS_HTT_MAX)
+		stats = stats + DP_CURR_FW_STATS_AVAIL - DP_HTT_DBG_EXT_STATS_MAX;
 	fw_stats = dp_stats_mapping_table[stats][STATS_FW];
 	host_stats = dp_stats_mapping_table[stats][STATS_HOST];
 
@@ -3460,11 +3527,12 @@ static int dp_txrx_stats(struct cdp_vdev *vdev,
 		 "stats: %u fw_stats_type: %d host_stats_type: %d",
 		  stats, fw_stats, host_stats);
 
-	/* TODO: Firmware Mapping not implemented */
+	if (fw_stats != TXRX_FW_STATS_INVALID)
+		return dp_fw_stats_process(vdev, fw_stats);
 
 	if ((host_stats != TXRX_HOST_STATS_INVALID) &&
 			(host_stats <= TXRX_HOST_STATS_MAX))
-		return dp_print_host_stats(vdev, req, host_stats);
+		return dp_print_host_stats(vdev, host_stats);
 	else
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 				"Wrong Input for TxRx Stats");
@@ -3751,8 +3819,8 @@ static struct cdp_mon_ops dp_ops_mon = {
 };
 
 static struct cdp_host_stats_ops dp_ops_host_stats = {
-	.txrx_host_stats_get = dp_print_host_stats,
-	.txrx_per_peer_stats = dp_get_peer_stats,
+	.txrx_per_peer_stats = dp_get_host_peer_stats,
+	.get_fw_peer_stats = dp_get_fw_peer_stats,
 	/* TODO */
 };
 
