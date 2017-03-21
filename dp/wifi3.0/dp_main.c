@@ -1235,7 +1235,6 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	/* MCL */
 	dp_local_peer_id_pool_init(pdev);
 #endif
-	dp_lro_hash_setup(soc);
 	dp_dscp_tid_map_setup(pdev);
 
 	/* Rx monitor mode specific init */
@@ -1608,6 +1607,8 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 	if (pdev->vdev_count == 1)
 		qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
 #endif
+
+	dp_lro_hash_setup(soc);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 		"Created vdev %p (%pM)", vdev, vdev->mac_addr.raw);

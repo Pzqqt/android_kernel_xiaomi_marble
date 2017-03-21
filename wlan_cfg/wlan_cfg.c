@@ -85,7 +85,11 @@
 #define NUM_RXDMA_RINGS_PER_PDEV 1
 #endif
 
+#ifdef WLAN_RX_HASH
+#define WLAN_RX_HASH_ENABLE 1
+#else
 #define WLAN_RX_HASH_ENABLE 0
+#endif
 #define WLAN_LRO_ENABLE 0
 
 static const int tx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
