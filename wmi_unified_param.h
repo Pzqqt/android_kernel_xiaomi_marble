@@ -642,6 +642,7 @@ struct mac_ssid {
  * @dot11_mode: Phy mode (VHT20/VHT80...)
  * @disable_hw_ack: Disable hw ack if chan is dfs channel for cac
  * @channel_param: Channel params required by target.
+ * @ldpc_rx_enabled: Enable/Disable LDPC RX for this vdev
  */
 struct vdev_start_params {
 	uint8_t vdev_id;
@@ -675,6 +676,7 @@ struct vdev_start_params {
 	uint8_t disable_hw_ack;
 	struct channel_param channel;
 #endif
+	bool ldpc_rx_enabled;
 };
 
 /**
