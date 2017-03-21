@@ -3841,7 +3841,9 @@ again:
 	hif_target_register_tbl_attach(ol_sc, target_type);
 
 	if ((id->device == RUMIM2M_DEVICE_ID_NODE0) ||
-		(id->device == RUMIM2M_DEVICE_ID_NODE1))
+	    (id->device == RUMIM2M_DEVICE_ID_NODE1) ||
+	    (id->device == RUMIM2M_DEVICE_ID_NODE2) ||
+	    (id->device == RUMIM2M_DEVICE_ID_NODE3))
 		HIF_TRACE("%s:Skip tgt_wake up for PCI based 8074\n", __func__);
 	else {
 #ifndef QCA_WIFI_NAPIER_EMULATION
@@ -3866,7 +3868,9 @@ again:
 	}
 
 	if ((id->device != RUMIM2M_DEVICE_ID_NODE0) &&
-		(id->device != RUMIM2M_DEVICE_ID_NODE1)) {
+	    (id->device != RUMIM2M_DEVICE_ID_NODE1) &&
+	    (id->device != RUMIM2M_DEVICE_ID_NODE2) &&
+	    (id->device != RUMIM2M_DEVICE_ID_NODE3)) {
 #ifndef QCA_WIFI_NAPIER_EMULATION
 		hif_target_sync(ol_sc);
 #endif
