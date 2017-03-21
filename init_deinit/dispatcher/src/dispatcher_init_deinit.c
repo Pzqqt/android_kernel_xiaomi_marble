@@ -35,6 +35,9 @@
 #ifdef WIFI_POS_CONVERGED
 #include "wifi_pos_api.h"
 #endif /* WIFI_POS_CONVERGED */
+#ifdef WLAN_FEATURE_NAN_CONVERGENCE
+#include "wlan_nan_api.h"
+#endif /* WLAN_FEATURE_NAN_CONVERGENCE */
 
 /**
  * DOC: This file provides various init/deinit trigger point for new
@@ -312,6 +315,48 @@ static QDF_STATUS dispatcher_wifi_pos_disable(struct wlan_objmgr_psoc *psoc)
 }
 #endif
 
+#ifdef WLAN_FEATURE_NAN_CONVERGENCE
+static QDF_STATUS dispatcher_init_nan(void)
+{
+	return nan_init();
+}
+
+static QDF_STATUS dispatcher_deinit_nan(void)
+{
+	return nan_deinit();
+}
+
+static QDF_STATUS dispatcher_nan_psoc_enable(struct wlan_objmgr_psoc *psoc)
+{
+	return nan_psoc_enable(psoc);
+}
+
+static QDF_STATUS dispatcher_nan_psoc_disable(struct wlan_objmgr_psoc *psoc)
+{
+	return nan_psoc_disable(psoc);
+}
+#else
+static QDF_STATUS dispatcher_init_nan(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS dispatcher_deinit_nan(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS dispatcher_nan_psoc_enable(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS dispatcher_nan_psoc_disable(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 QDF_STATUS dispatcher_init(void)
 {
 	if (QDF_STATUS_SUCCESS != wlan_objmgr_global_obj_init())
@@ -347,8 +392,13 @@ QDF_STATUS dispatcher_init(void)
 	if (QDF_STATUS_SUCCESS != dispatcher_init_wifi_pos())
 		goto wifi_pos_init_fail;
 
+	if (QDF_STATUS_SUCCESS != dispatcher_init_nan())
+		goto nan_init_fail;
+
 	return QDF_STATUS_SUCCESS;
 
+nan_init_fail:
+	dispatcher_deinit_wifi_pos();
 wifi_pos_init_fail:
 	dispatcher_deinit_atf();
 atf_init_fail:
@@ -377,6 +427,8 @@ EXPORT_SYMBOL(dispatcher_init);
 
 QDF_STATUS dispatcher_deinit(void)
 {
+	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_deinit_nan());
+
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_deinit_wifi_pos());
 
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_deinit_atf());
@@ -472,8 +524,13 @@ QDF_STATUS dispatcher_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	if (QDF_STATUS_SUCCESS != dispatcher_wifi_pos_enable(psoc))
 		goto wifi_pos_psoc_enable_fail;
 
+	if (QDF_STATUS_SUCCESS != dispatcher_nan_psoc_enable(psoc))
+		goto nan_psoc_enable_fail;
+
 	return QDF_STATUS_SUCCESS;
 
+nan_psoc_enable_fail:
+	dispatcher_wifi_pos_disable(psoc);
 wifi_pos_psoc_enable_fail:
 	atf_psoc_disable(psoc);
 atf_psoc_enable_fail:
@@ -492,6 +549,8 @@ EXPORT_SYMBOL(dispatcher_psoc_enable);
 
 QDF_STATUS dispatcher_psoc_disable(struct wlan_objmgr_psoc *psoc)
 {
+	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_nan_psoc_disable(psoc));
+
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_wifi_pos_disable(psoc));
 
 	QDF_BUG(QDF_STATUS_SUCCESS == atf_psoc_disable(psoc));
