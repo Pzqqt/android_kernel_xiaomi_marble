@@ -5071,8 +5071,9 @@ static int drv_cmd_get_ibss_peer_info_all(hdd_adapter_t *adapter,
 			goto exit;
 		}
 
-		priv_data->buf[numOfBytestoPrint] = '\0';
-		hdd_debug("%s", priv_data->buf);
+		/* This overwrites the last space, which we already copied */
+		extra[numOfBytestoPrint - 1] = '\0';
+		hdd_debug("%s", extra);
 
 		if (length > numOfBytestoPrint) {
 			if (copy_to_user
@@ -5083,7 +5084,7 @@ static int drv_cmd_get_ibss_peer_info_all(hdd_adapter_t *adapter,
 				ret = -EFAULT;
 				goto exit;
 			}
-			hdd_debug("%s", &priv_data->buf[numOfBytestoPrint]);
+			hdd_debug("%s", &extra[numOfBytestoPrint]);
 		}
 
 		/* Free temporary buffer */
