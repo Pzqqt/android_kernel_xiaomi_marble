@@ -25,6 +25,7 @@
 
 #include <qdf_types.h>
 #include <qdf_mc_timer.h>
+#include <qdf_list.h>
 
 #define P2P_EVENT_PROPOGATE_TIME 10
 #define P2P_WAIT_CANCEL_ROC      1000

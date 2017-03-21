@@ -24,6 +24,7 @@
 #define _WLAN_P2P_TGT_API_H_
 
 #include <qdf_types.h>
+#include <qdf_nbuf.h>
 
 struct scan_event;
 struct wlan_objmgr_psoc;
