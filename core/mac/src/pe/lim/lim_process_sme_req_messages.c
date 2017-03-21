@@ -1078,8 +1078,9 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 
 		/* Initialize 11h Enable Flag */
 		session->lim11hEnable = 0;
-		if ((mlm_start_req->bssType != eSIR_IBSS_MODE) &&
-		    (SIR_BAND_5_GHZ == session->limRFBand)) {
+		if (mlm_start_req->bssType != eSIR_IBSS_MODE &&
+		    (CHAN_HOP_ALL_BANDS_ENABLE ||
+		     SIR_BAND_5_GHZ == session->limRFBand)) {
 			if (wlan_cfg_get_int(mac_ctx,
 				WNI_CFG_11H_ENABLED, &val) != eSIR_SUCCESS)
 				pe_err("Fail to get WNI_CFG_11H_ENABLED");
@@ -5387,7 +5388,8 @@ static void lim_process_sme_channel_change_request(tpAniSirGlobal mac_ctx,
 	session_entry->limRFBand =
 		lim_get_rf_band(session_entry->currentOperChannel);
 	/* Initialize 11h Enable Flag */
-	if (SIR_BAND_5_GHZ == session_entry->limRFBand) {
+	if (CHAN_HOP_ALL_BANDS_ENABLE ||
+	    SIR_BAND_5_GHZ == session_entry->limRFBand) {
 		if (wlan_cfg_get_int(mac_ctx, WNI_CFG_11H_ENABLED, &val) !=
 				eSIR_SUCCESS)
 			pe_err("Fail to get WNI_CFG_11H_ENABLED");
@@ -5813,7 +5815,7 @@ static void send_extended_chan_switch_action_frame(tpAniSirGlobal mac_ctx,
 
 	if (LIM_IS_AP_ROLE(session_entry) &&
 		(mac_ctx->sap.SapDfsInfo.disable_dfs_ch_switch == false))
-		switch_mode = 1;
+		switch_mode = session_entry->gLimChannelSwitch.switchMode;
 
 	switch_count = session_entry->gLimChannelSwitch.switchCount;
 
@@ -5835,6 +5837,65 @@ static void send_extended_chan_switch_action_frame(tpAniSirGlobal mac_ctx,
 					switch_count, session_entry);
 	}
 
+}
+
+/**
+ * lim_send_chan_switch_action_frame()- Send an action frame
+ * containing CSA IE or ECSA IE depending on the connected
+ * sta capability.
+ *
+ * @mac_ctx: pointer to global mac structure
+ * @new_channel: new channel to switch to.
+ * @ch_bandwidth: BW of channel to calculate op_class
+ * @session_entry: pe session
+ *
+ * Return: void
+ */
+static
+void lim_send_chan_switch_action_frame(tpAniSirGlobal mac_ctx,
+				       uint16_t new_channel,
+				       uint8_t ch_bandwidth,
+				       tpPESession session_entry)
+{
+	uint16_t op_class;
+	uint8_t switch_mode = 0, i;
+	uint8_t switch_count;
+	tpDphHashNode psta;
+	tpDphHashNode dph_node_array_ptr;
+
+	dph_node_array_ptr = session_entry->dph.dphHashTable.pDphNodeArray;
+
+	op_class = wlan_reg_dmn_get_opclass_from_channel(
+			mac_ctx->scan.countryCodeCurrent,
+			new_channel, ch_bandwidth);
+
+	if (LIM_IS_AP_ROLE(session_entry) &&
+	    (false == mac_ctx->sap.SapDfsInfo.disable_dfs_ch_switch))
+		switch_mode = session_entry->gLimChannelSwitch.switchMode;
+
+	switch_count = session_entry->gLimChannelSwitch.switchCount;
+
+	if (LIM_IS_AP_ROLE(session_entry)) {
+		for (i = 0; i < mac_ctx->lim.maxStation; i++) {
+			psta = dph_node_array_ptr + i;
+			if (!(psta && psta->added))
+				continue;
+			if (session_entry->lim_non_ecsa_cap_num == 0)
+				lim_send_extended_chan_switch_action_frame
+					(mac_ctx, psta->staAddr, switch_mode,
+					 op_class, new_channel, switch_count,
+					 session_entry);
+			else
+				lim_send_channel_switch_mgmt_frame
+					(mac_ctx, psta->staAddr, switch_mode,
+					 new_channel, switch_count,
+					 session_entry);
+		}
+	} else if (LIM_IS_STA_ROLE(session_entry)) {
+		lim_send_extended_chan_switch_action_frame
+			(mac_ctx, session_entry->bssId, switch_mode, op_class,
+			 new_channel, switch_count, session_entry);
+	}
 }
 
 /**
@@ -5890,7 +5951,8 @@ static void lim_process_sme_dfs_csa_ie_request(tpAniSirGlobal mac_ctx,
 	session_entry->gLimChannelSwitch.sec_ch_offset =
 				 dfs_csa_ie_req->ch_params.sec_ch_offset;
 	if (mac_ctx->sap.SapDfsInfo.disable_dfs_ch_switch == false)
-		session_entry->gLimChannelSwitch.switchMode = 1;
+		session_entry->gLimChannelSwitch.switchMode =
+			 dfs_csa_ie_req->ch_switch_mode;
 
 	/*
 	 * Validate if SAP is operating HT or VHT mode and set the Channel
@@ -5980,10 +6042,15 @@ skip_vht:
 			session_entry->dfsIncludeChanWrapperIe,
 			ch_offset);
 
-	/* Send ECSA Action frame after updating the beacon */
-	send_extended_chan_switch_action_frame(mac_ctx,
-		session_entry->gLimChannelSwitch.primaryChannel,
-		ch_offset, session_entry);
+	/* Send ECSA/CSA Action frame after updating the beacon */
+	if (CHAN_HOP_ALL_BANDS_ENABLE)
+		lim_send_chan_switch_action_frame(mac_ctx,
+			session_entry->gLimChannelSwitch.primaryChannel,
+			ch_offset, session_entry);
+	else
+		send_extended_chan_switch_action_frame(mac_ctx,
+			session_entry->gLimChannelSwitch.primaryChannel,
+			ch_offset, session_entry);
 	session_entry->gLimChannelSwitch.switchCount--;
 }
 
