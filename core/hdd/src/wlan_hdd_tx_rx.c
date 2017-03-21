@@ -552,7 +552,7 @@ static int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	hdd_get_transmit_sta_id(pAdapter, skb, &STAId);
 	if (STAId >= WLAN_MAX_STA_COUNT) {
-		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO_HIGH,
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO,
 			  "Invalid station id, transmit operation suspended");
 		goto drop_pkt;
 	}
