@@ -290,6 +290,7 @@ typedef void (*qdf_timer_func_t)(void *);
  * @QDF_MODULE_ID_POLICY_MGR: Policy Manager module ID
  * @QDF_MODULE_ID_CONFIG: CONFIG module ID
  * @QDF_MODULE_ID_REGULATORY    : REGULATORY module ID
+ * @QDF_MODULE_ID_NAN: NAN module ID
  * @QDF_MODULE_ID_ANY: anything
  * @QDF_MODULE_ID_MAX: Max place holder module ID
  */
@@ -375,6 +376,7 @@ typedef enum {
 	QDF_MODULE_ID_POLICY_MGR,
 	QDF_MODULE_ID_CONFIG,
 	QDF_MODULE_ID_REGULATORY,
+	QDF_MODULE_ID_NAN,
 	QDF_MODULE_ID_ANY,
 	QDF_MODULE_ID_MAX,
 } QDF_MODULE_ID;
