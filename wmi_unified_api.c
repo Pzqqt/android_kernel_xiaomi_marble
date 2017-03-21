@@ -2052,6 +2052,25 @@ QDF_STATUS wmi_unified_get_stats_cmd(void *wmi_hdl,
 }
 
 /**
+ * wmi_unified_congestion_request_cmd() - send request to fw to get CCA
+ * @wmi_hdl: wma handle
+ * @vdev_id: vdev id
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_congestion_request_cmd(void *wmi_hdl,
+		uint8_t vdev_id)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_congestion_cmd)
+		return wmi_handle->ops->send_congestion_cmd(wmi_handle,
+			   vdev_id);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
  * wmi_unified_process_ll_stats_set_cmd() - link layer stats set request
  * @wmi_handle:       wmi handle
  * @set_req:  ll stats set request command params
