@@ -675,6 +675,16 @@ QDF_STATUS wmi_unified_get_stats_cmd(void *wmi_hdl,
 		       struct pe_stats_req  *get_stats_param,
 			   uint8_t addr[IEEE80211_ADDR_LEN]);
 
+/**
+ * wmi_unified_congestion_request_cmd() - send request to fw to get CCA
+ * @wmi_hdl: wma handle
+ * @vdev_id: vdev id
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_congestion_request_cmd(void *wmi_hdl,
+		uint8_t vdev_id);
+
 QDF_STATUS wmi_unified_snr_request_cmd(void *wmi_hdl);
 
 QDF_STATUS wmi_unified_snr_cmd(void *wmi_hdl, uint8_t vdev_id);
