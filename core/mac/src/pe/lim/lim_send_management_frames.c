@@ -1275,6 +1275,10 @@ lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 			populate_dot11f_vht_operation(mac_ctx, pe_session,
 					&frm.VHTOperation);
 			is_vht = true;
+		} else {
+			/* Advertise 1x1 if either is HT-STA */
+			if (frm.HTCaps.present && mac_ctx->hw_dbs_capable)
+				frm.HTCaps.supportedMCSSet[1] = 0;
 		}
 		if (pe_session->vhtCapability &&
 		    pe_session->vendor_vht_sap &&

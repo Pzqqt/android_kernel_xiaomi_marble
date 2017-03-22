@@ -15897,6 +15897,21 @@ void sme_update_vdev_type_nss(tHalHandle hal, uint8_t max_supp_nss,
 }
 
 /**
+ * sme_update_hw_dbs_capable() - sets the HW DBS capability
+ * @hal: Pointer to HAL
+ * @hw_dbs_capable: HW DBS capability
+ *
+ * Sets HW DBS capability based on INI and fw capability.
+ *
+ * Return: None
+ */
+void sme_update_hw_dbs_capable(tHalHandle hal, uint8_t hw_dbs_capable)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	mac_ctx->hw_dbs_capable = hw_dbs_capable;
+}
+
+/**
  * sme_register_p2p_lo_event() - Register for the p2p lo event
  * @hHal: reference to the HAL
  * @context: the context of the call
