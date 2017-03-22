@@ -34,14 +34,18 @@
 #include <wlan_osif_priv.h>
 
 #ifdef NAPIER_SCAN
+#define hdd_init_scan_priv(x) wlan_cfg80211_scan_priv_init(x)
+#else
+#define hdd_init_scan_priv(x)
+#endif
+
 static void hdd_init_pdev_os_priv(hdd_context_t *hdd_ctx,
 	struct pdev_osif_priv *os_priv)
 {
 	/* Initialize the OS private structure*/
 	os_priv->wiphy = hdd_ctx->wiphy;
-	wlan_cfg80211_scan_priv_init(hdd_ctx->hdd_pdev);
+	hdd_init_scan_priv(hdd_ctx->hdd_pdev);
 }
-#endif
 
 static void hdd_init_vdev_os_priv(hdd_adapter_t *adapter,
 	struct vdev_osif_priv *os_priv)
@@ -112,9 +116,7 @@ int hdd_objmgr_create_and_store_pdev(hdd_context_t *hdd_ctx)
 		return -ENOMEM;
 	}
 	hdd_ctx->hdd_pdev = pdev;
-#ifdef NAPIER_SCAN
 	hdd_init_pdev_os_priv(hdd_ctx, priv);
-#endif
 	return 0;
 }
 

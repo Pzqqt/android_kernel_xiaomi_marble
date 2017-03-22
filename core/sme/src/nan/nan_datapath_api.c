@@ -308,6 +308,7 @@ QDF_STATUS sme_ndp_end_req_handler(tHalHandle hal, struct ndp_end_req *req)
 	sme_release_global_lock(&mac_ctx->sme);
 	return ret;
 }
+#endif /* WLAN_FEATURE_NAN_CONVERGENCE */
 
 /**
  * csr_roam_start_ndi() - Start connection for NAN datapath
@@ -456,6 +457,7 @@ void csr_roam_update_ndp_return_params(tpAniSirGlobal mac_ctx,
 	}
 }
 
+#ifndef WLAN_FEATURE_NAN_CONVERGENCE
 /**
  * csr_process_ndp_initiator_request() - process ndp initiator request
  * @mac_ctx: Global MAC context

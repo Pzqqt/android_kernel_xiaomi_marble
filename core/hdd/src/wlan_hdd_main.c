@@ -117,6 +117,8 @@
 #include "wifi_pos_api.h"
 #include "wlan_hdd_oemdata.h"
 #include "wlan_hdd_he.h"
+#include "os_if_nan.h"
+#include "nan_public_structs.h"
 
 #ifdef CNSS_GENL
 #include <net/cnss_nl.h>
@@ -1925,6 +1927,26 @@ static void hdd_register_policy_manager_callback(
 }
 #endif
 
+#ifdef WLAN_FEATURE_NAN_CONVERGENCE
+static void hdd_nan_register_callbacks(hdd_context_t *hdd_ctx)
+{
+	struct nan_callbacks cb_obj = {0};
+
+	cb_obj.ndi_open = hdd_ndi_open;
+	cb_obj.ndi_close = hdd_ndi_close;
+	cb_obj.ndi_start = hdd_ndi_start;
+	cb_obj.ndi_delete = hdd_ndi_delete;
+	cb_obj.drv_ndi_create_rsp_handler = hdd_ndi_drv_ndi_create_rsp_handler;
+	cb_obj.drv_ndi_delete_rsp_handler = hdd_ndi_drv_ndi_delete_rsp_handler;
+
+	os_if_nan_register_hdd_callbacks(hdd_ctx->hdd_psoc, &cb_obj);
+}
+#else
+static void hdd_nan_register_callbacks(hdd_context_t *hdd_ctx)
+{
+}
+#endif
+
 /**
  * hdd_wlan_start_modules() - Single driver state machine for starting modules
  * @hdd_ctx: HDD context
@@ -2030,6 +2052,13 @@ int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 				ret);
 			goto close;
 		}
+
+		/*
+		 * NAN compoenet requires certian operations like, open adapter,
+		 * close adapter, etc. to be initiated by HDD, for those
+		 * register HDD callbacks with UMAC's NAN componenet.
+		 */
+		hdd_nan_register_callbacks(hdd_ctx);
 
 		hdd_ctx->hHal = cds_get_context(QDF_MODULE_ID_SME);
 

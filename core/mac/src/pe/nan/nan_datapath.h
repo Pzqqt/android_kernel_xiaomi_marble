@@ -27,7 +27,7 @@
 #ifndef __MAC_NAN_DATAPATH_H
 #define __MAC_NAN_DATAPATH_H
 
-#ifdef WLAN_FEATURE_NAN_DATAPATH
+#if defined(WLAN_FEATURE_NAN_DATAPATH) || defined(WLAN_FEATURE_NAN_CONVERGENCE)
 
 #include "sir_common.h"
 #include "ani_global.h"
@@ -100,12 +100,6 @@ struct ndp_peer_node {
 #endif
 };
 
-/* Function to process NDP requests */
-QDF_STATUS lim_handle_ndp_request_message(tpAniSirGlobal mac_ctx,
-					struct scheduler_msg *msg);
-/* Function to process NDP events */
-QDF_STATUS lim_handle_ndp_event_message(tpAniSirGlobal mac_ctx,
-					struct scheduler_msg *msg);
 void lim_process_ndi_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 				     struct scheduler_msg *lim_msg_q,
 				     tpPESession session_entry);
@@ -121,22 +115,6 @@ void lim_process_ndi_del_sta_rsp(tpAniSirGlobal mac_ctx,
 				 tpPESession pe_session);
 
 #else
-
-/* Function to process NDP requests */
-static inline QDF_STATUS lim_handle_ndp_request_message(tpAniSirGlobal mac_ctx,
-					struct scheduler_msg *msg)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-/* Function to process NDP events */
-static inline QDF_STATUS lim_handle_ndp_event_message(tpAniSirGlobal mac_ctx,
-						      struct scheduler_msg *msg)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-/* Function to process NDP events */
 static inline void lim_process_ndi_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 					struct scheduler_msg *lim_msg_q,
 					tpPESession session_entry)
@@ -158,7 +136,28 @@ static inline void lim_ndp_add_sta_rsp(tpAniSirGlobal mac_ctx,
 {
 }
 
-#endif /* WLAN_FEATURE_NAN_DATAPATH */
+#endif /* WLAN_FEATURE_NAN_DATAPATH || WLAN_FEATURE_NAN_CONVERGENCE */
+
+#if defined(WLAN_FEATURE_NAN_DATAPATH) && !defined(WLAN_FEATURE_NAN_CONVERGENCE)
+/* Function to process NDP requests */
+QDF_STATUS lim_handle_ndp_request_message(tpAniSirGlobal mac_ctx,
+					struct scheduler_msg *msg);
+/* Function to process NDP events */
+QDF_STATUS lim_handle_ndp_event_message(tpAniSirGlobal mac_ctx,
+				      struct scheduler_msg *msg);
+#else
+static inline QDF_STATUS lim_handle_ndp_request_message(tpAniSirGlobal mac_ctx,
+					struct scheduler_msg *msg)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS lim_handle_ndp_event_message(tpAniSirGlobal mac_ctx,
+						      struct scheduler_msg *msg)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_FEATURE_NAN_DATAPATH && !WLAN_FEATURE_NAN_CONVERGENCE */
 
 #endif /* __MAC_NAN_DATAPATH_H */
 

@@ -246,4 +246,15 @@ static inline void hdd_ndp_session_end_handler(hdd_adapter_t *adapter)
 }
 #endif /* WLAN_FEATURE_NAN_DATAPATH */
 
+enum nan_datapath_state;
+struct nan_datapath_inf_create_rsp;
+
+struct wlan_objmgr_vdev *hdd_ndi_open(char *iface_name);
+int hdd_ndi_start(uint8_t vdev_id);
+int hdd_ndi_delete(uint8_t vdev_id, char *iface_name, uint16_t transaction_id);
+void hdd_ndi_close(uint8_t vdev_id);
+void hdd_ndi_drv_ndi_create_rsp_handler(uint8_t vdev_id,
+			       struct nan_datapath_inf_create_rsp *ndi_rsp);
+void hdd_ndi_drv_ndi_delete_rsp_handler(uint8_t vdev_id);
+
 #endif /* __WLAN_HDD_NAN_DATAPATH_H */

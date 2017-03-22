@@ -202,7 +202,7 @@ static inline QDF_STATUS wma_send_egap_conf_params(WMA_HANDLE handle,
 QDF_STATUS wma_set_tx_power_scale(uint8_t vdev_id, int value);
 QDF_STATUS wma_set_tx_power_scale_decr_db(uint8_t vdev_id, int value);
 
-#ifdef WLAN_FEATURE_NAN_DATAPATH
+#if defined(WLAN_FEATURE_NAN_DATAPATH) && !defined(WLAN_FEATURE_NAN_CONVERGENCE)
 QDF_STATUS wma_register_ndp_cb(QDF_STATUS (*pe_ndp_event_handler)
 					  (tpAniSirGlobal mac_ctx,
 					  struct scheduler_msg *msg));
@@ -213,7 +213,7 @@ static inline QDF_STATUS wma_register_ndp_cb(QDF_STATUS (*pe_ndp_event_handler)
 {
 	return QDF_STATUS_SUCCESS;
 }
-#endif
+#endif /* WLAN_FEATURE_NAN_DATAPATH && !WLAN_FEATURE_NAN_CONVERGENCE */
 
 bool wma_is_p2p_lo_capable(void);
 QDF_STATUS wma_p2p_lo_start(struct sir_p2p_lo_start *params);

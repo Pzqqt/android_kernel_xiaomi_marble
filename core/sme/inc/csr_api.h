@@ -1425,7 +1425,7 @@ typedef struct tagCsrRoamInfo {
 	tSirSmeChanInfo chan_info;
 	uint8_t target_channel;
 
-#if defined(WLAN_FEATURE_NAN_DATAPATH) && !defined(WLAN_FEATURE_NAN_CONVERGENCE)
+#ifdef WLAN_FEATURE_NAN_DATAPATH
 	union {
 		struct sme_ndp_peer_ind ndp_peer_ind_params;
 		struct ndp_schedule_update_rsp ndp_sched_upd_rsp_params;

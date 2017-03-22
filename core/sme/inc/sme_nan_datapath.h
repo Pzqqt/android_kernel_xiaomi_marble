@@ -29,7 +29,7 @@
 
 #include "csr_inside_api.h"
 
-#ifdef WLAN_FEATURE_NAN_DATAPATH
+#if defined(WLAN_FEATURE_NAN_DATAPATH) && !defined(WLAN_FEATURE_NAN_CONVERGENCE)
 #include "qdf_types.h"
 #include "sir_api.h"
 #include "ani_global.h"
@@ -86,20 +86,6 @@ QDF_STATUS sme_ndp_responder_req_handler(tHalHandle hal,
 /* NAN indication response handler */
 QDF_STATUS sme_ndp_end_req_handler(tHalHandle hal, struct ndp_end_req *req);
 
-/* Start NDI BSS */
-QDF_STATUS csr_roam_start_ndi(tpAniSirGlobal mac_ctx, uint32_t session_id,
-			      tCsrRoamProfile *profile);
-
-void csr_roam_save_ndi_connected_info(tpAniSirGlobal mac_ctx,
-				      uint32_t session_id,
-				      tCsrRoamProfile *roam_profile,
-				      tSirBssDescription *bss_desc);
-
-void csr_roam_update_ndp_return_params(tpAniSirGlobal mac_ctx,
-					uint32_t result,
-					uint32_t *roam_status,
-					uint32_t *roam_result,
-					struct tagCsrRoamInfo *roam_info);
 QDF_STATUS csr_process_ndp_initiator_request(tpAniSirGlobal mac_ctx,
 					     tSmeCmd *cmd);
 QDF_STATUS csr_process_ndp_data_end_request(tpAniSirGlobal mac_ctx,
@@ -126,29 +112,6 @@ static inline QDF_STATUS sme_ndp_initiator_req_handler(tHalHandle hal,
 static inline QDF_STATUS sme_ndp_responder_req_handler(tHalHandle hal,
 					void *req_params) {
 	return QDF_STATUS_SUCCESS;
-}
-
-/* Start NDI BSS */
-static inline QDF_STATUS csr_roam_start_ndi(tpAniSirGlobal mac_ctx,
-					uint32_t session_id,
-					tCsrRoamProfile *profile)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline void csr_roam_save_ndi_connected_info(tpAniSirGlobal mac_ctx,
-					uint32_t session_id,
-					tCsrRoamProfile *roam_profile,
-					tSirBssDescription *bss_desc)
-{
-}
-
-static inline void csr_roam_update_ndp_return_params(tpAniSirGlobal mac_ctx,
-					uint32_t result,
-					uint32_t *roam_status,
-					uint32_t *roam_result,
-					struct tagCsrRoamInfo *roam_info)
-{
 }
 
 /* NAN indication response handler */
@@ -188,4 +151,47 @@ static inline void csr_release_ndp_data_end_req(tpAniSirGlobal mac_ctx,
 						tSmeCmd *cmd) {}
 
 #endif /* WLAN_FEATURE_NAN_DATAPATH */
+
+#ifdef WLAN_FEATURE_NAN_DATAPATH
+/* Start NDI BSS */
+QDF_STATUS csr_roam_start_ndi(tpAniSirGlobal mac_ctx, uint32_t session_id,
+			      tCsrRoamProfile *profile);
+
+void csr_roam_save_ndi_connected_info(tpAniSirGlobal mac_ctx,
+				      uint32_t session_id,
+				      tCsrRoamProfile *roam_profile,
+				      tSirBssDescription *bss_desc);
+
+void csr_roam_update_ndp_return_params(tpAniSirGlobal mac_ctx,
+					uint32_t result,
+					uint32_t *roam_status,
+					uint32_t *roam_result,
+					struct tagCsrRoamInfo *roam_info);
+
+#else
+/* Start NDI BSS */
+static inline QDF_STATUS csr_roam_start_ndi(tpAniSirGlobal mac_ctx,
+					uint32_t session_id,
+					tCsrRoamProfile *profile)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void csr_roam_save_ndi_connected_info(tpAniSirGlobal mac_ctx,
+					uint32_t session_id,
+					tCsrRoamProfile *roam_profile,
+					tSirBssDescription *bss_desc)
+{
+}
+
+static inline void csr_roam_update_ndp_return_params(tpAniSirGlobal mac_ctx,
+					uint32_t result,
+					uint32_t *roam_status,
+					uint32_t *roam_result,
+					struct tagCsrRoamInfo *roam_info)
+{
+}
+
+#endif /* WLAN_FEATURE_NAN_DATAPATH */
+
 #endif /* __SME_NAN_DATAPATH_H */

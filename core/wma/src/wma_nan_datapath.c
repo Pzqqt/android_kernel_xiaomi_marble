@@ -946,6 +946,7 @@ void wma_ndp_wow_event_callback(void *handle, void *event, uint32_t len,
 		break;
 	}
 }
+#endif /* WLAN_FEATURE_NAN_CONVERGENCE */
 
 /**
  * wma_add_bss_ndi_mode() - Process BSS creation request while adding NaN
@@ -1036,6 +1037,7 @@ send_fail_resp:
 	wma_send_msg(wma, WMA_ADD_BSS_RSP, (void *)add_bss, 0);
 }
 
+#ifndef WLAN_FEATURE_NAN_CONVERGENCE
 /**
  * wma_register_ndp_cb() - Register NDP callbacks
  * @pe_ndp_event_handler: PE NDP callback routine pointer

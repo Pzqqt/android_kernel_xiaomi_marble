@@ -31,8 +31,11 @@
 #include "lim_types.h"
 #include "lim_send_messages.h"
 #include "wma_nan_datapath.h"
+#ifdef WLAN_FEATURE_NAN_CONVERGENCE
+#include "os_if_nan.h"
+#include "nan_public_structs.h"
+#endif
 
-#ifndef WLAN_FEATURE_NAN_CONVERGENCE
 /**
  * lim_send_ndp_event_to_sme() - generic function to prepare and send NDP
  * message to SME.
@@ -62,8 +65,8 @@ static void lim_send_ndp_event_to_sme(tpAniSirGlobal mac_ctx, uint32_t msg_type,
 	}
 	lim_sys_process_mmh_msg_api(mac_ctx, &mmh_msg, ePROT);
 }
-#endif
 
+#ifndef WLAN_FEATURE_NAN_CONVERGENCE
 /**
  * lim_add_ndi_peer() - Function to add ndi peer
  * @mac_ctx: handle to mac structure
@@ -119,7 +122,6 @@ static QDF_STATUS lim_add_ndi_peer(tpAniSirGlobal mac_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifndef WLAN_FEATURE_NAN_CONVERGENCE
 /**
  * lim_handle_ndp_indication_event() - Function to handle SIR_HAL_NDP_INDICATION
  * event from WMA
@@ -218,7 +220,6 @@ responder_rsp:
 				bodyval ? 0 : sizeof(*rsp_ind), bodyval);
 	return ret_val;
 }
-#endif
 
 /**
  * lim_ndp_delete_peer_by_addr() - Delete NAN data peer, given addr and vdev_id
@@ -349,6 +350,7 @@ static void lim_ndp_delete_peers(tpAniSirGlobal mac_ctx,
 	}
 	qdf_mem_free(deleted_peers);
 }
+#endif
 
 #ifndef WLAN_FEATURE_NAN_CONVERGENCE
 /**
@@ -824,6 +826,7 @@ end:
 	}
 }
 
+#ifndef WLAN_FEATURE_NAN_CONVERGENCE
 /**
  * lim_send_sme_ndp_add_sta_rsp() - prepares and send new peer ind to SME
  * @mac_ctx: handle to mac structure
@@ -865,6 +868,38 @@ static QDF_STATUS lim_send_sme_ndp_add_sta_rsp(tpAniSirGlobal mac_ctx,
 	lim_sys_process_mmh_msg_api(mac_ctx, &mmh_msg, ePROT);
 	return QDF_STATUS_SUCCESS;
 }
+#else
+static QDF_STATUS lim_send_sme_ndp_add_sta_rsp(tpAniSirGlobal mac_ctx,
+						tpPESession session,
+						tAddStaParams *add_sta_rsp)
+{
+	struct nan_datapath_peer_ind *new_peer_ind;
+	struct wlan_objmgr_psoc *psoc = mac_ctx->psoc;
+	struct wlan_objmgr_vdev *vdev =
+			wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
+					add_sta_rsp->smesessionId, WLAN_NAN_ID);
+
+	if (!add_sta_rsp) {
+		lim_log(mac_ctx, LOGE, FL("Invalid add_sta_rsp"));
+		return QDF_STATUS_E_INVAL;
+	}
+
+	new_peer_ind = qdf_mem_malloc(sizeof(*new_peer_ind));
+	if (!new_peer_ind) {
+		lim_log(mac_ctx, LOGE, FL("Failed to allocate memory"));
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	/* this message is going to os_if, fill in sme session id */
+	new_peer_ind->session_id = add_sta_rsp->smesessionId;
+	qdf_mem_copy(new_peer_ind->peer_mac_addr.bytes, add_sta_rsp->staMac,
+		     sizeof(tSirMacAddr));
+	new_peer_ind->sta_id = add_sta_rsp->staIdx;
+
+	ucfg_nan_event_handler(psoc, vdev, NDP_NEW_PEER, new_peer_ind);
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * lim_ndp_add_sta_rsp() - handles add sta rsp for NDP from WMA

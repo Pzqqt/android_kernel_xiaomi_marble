@@ -36,6 +36,8 @@
 #include "wlan_hdd_object_manager.h"
 #include <qca_vendor.h>
 #include "os_if_nan.h"
+#include "wlan_nan_api.h"
+#include "nan_public_structs.h"
 
 #ifndef WLAN_FEATURE_NAN_CONVERGENCE
 /* NLA policy */
@@ -103,7 +105,10 @@ void hdd_nan_datapath_target_config(hdd_context_t *hdd_ctx,
 	hdd_ctx->nan_datapath_enabled =
 		hdd_ctx->config->enable_nan_datapath &&
 			cfg->nan_datapath_enabled;
-	hdd_info("enable_nan_datapath: %d", hdd_ctx->nan_datapath_enabled);
+	hdd_info("enable_nan_datapath: final: %d, host: %d, fw: %d",
+		hdd_ctx->nan_datapath_enabled,
+		hdd_ctx->config->enable_nan_datapath,
+		cfg->nan_datapath_enabled);
 }
 
 /**
@@ -1820,6 +1825,35 @@ void hdd_ndp_event_handler(hdd_adapter_t *adapter,
 	tCsrRoamInfo *roam_info, uint32_t roam_id, eRoamCmdStatus roam_status,
 	eCsrRoamResult roam_result)
 {
+	bool success;
+	struct wlan_objmgr_psoc *psoc = wlan_vdev_get_psoc(adapter->hdd_vdev);
+
+	if (roam_status == eCSR_ROAM_NDP_STATUS_UPDATE) {
+		switch (roam_result) {
+		case eCSR_ROAM_RESULT_NDI_CREATE_RSP:
+			success = (roam_info->ndp.ndi_create_params.status ==
+					NAN_DATAPATH_RSP_STATUS_SUCCESS);
+			hdd_debug("posting ndi create status: %d to umac",
+				success);
+			os_if_nan_post_ndi_create_rsp(psoc, adapter->sessionId,
+							success);
+			return;
+		case eCSR_ROAM_RESULT_NDI_DELETE_RSP:
+			success = (roam_info->ndp.ndi_create_params.status ==
+					NAN_DATAPATH_RSP_STATUS_SUCCESS);
+			hdd_debug("posting ndi delete status: %d to umac",
+				success);
+			os_if_nan_post_ndi_delete_rsp(psoc, adapter->sessionId,
+							success);
+			return;
+		default:
+			hdd_err("in correct roam_result: %d", roam_result);
+			return;
+		}
+	} else {
+		hdd_err("in correct roam_status: %d", roam_status);
+		return;
+	}
 }
 #endif
 
@@ -1976,6 +2010,21 @@ int wlan_hdd_cfg80211_process_ndp_cmd(struct wiphy *wiphy,
 	return ret;
 }
 
+#ifndef WLAN_FEATURE_NAN_CONVERGENCE
+static int update_ndi_state(struct hdd_adapter_s *adapter, uint32_t state)
+{
+	struct nan_datapath_ctx *ndp_ctx = WLAN_HDD_GET_NDP_CTX_PTR(adapter);
+
+	ndp_ctx->state = state;
+	return 0;
+}
+#else
+static int update_ndi_state(struct hdd_adapter_s *adapter, uint32_t state)
+{
+	return os_if_nan_set_ndi_state(adapter->hdd_vdev, state);
+}
+#endif
+
 /**
  * hdd_init_nan_data_mode() - initialize nan data mode
  * @adapter: adapter context
@@ -1985,7 +2034,6 @@ int wlan_hdd_cfg80211_process_ndp_cmd(struct wiphy *wiphy,
 int hdd_init_nan_data_mode(struct hdd_adapter_s *adapter)
 {
 	struct net_device *wlan_dev = adapter->dev;
-	struct nan_datapath_ctx *ndp_ctx = WLAN_HDD_GET_NDP_CTX_PTR(adapter);
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	QDF_STATUS status;
 	int32_t ret_val = 0;
@@ -2033,7 +2081,7 @@ int hdd_init_nan_data_mode(struct hdd_adapter_s *adapter)
 		hdd_err("WMI_PDEV_PARAM_BURST_ENABLE set failed %d", ret_val);
 	}
 
-	ndp_ctx->state = NAN_DATA_NDI_CREATING_STATE;
+	update_ndi_state(adapter, NAN_DATA_NDI_CREATING_STATE);
 	return ret_val;
 
 error_wmm_init:
@@ -2048,3 +2096,155 @@ error_register_wext:
 
 	return ret_val;
 }
+
+#ifdef WLAN_FEATURE_NAN_CONVERGENCE
+struct wlan_objmgr_vdev *hdd_ndi_open(char *iface_name)
+{
+	hdd_adapter_t *adapter;
+	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	ENTER();
+	/* Check for an existing interface of NDI type */
+	adapter = hdd_get_adapter(hdd_ctx, QDF_NDI_MODE);
+	if (adapter) {
+		hdd_err("Cannot support more than one NDI");
+		return NULL;
+	}
+
+	adapter = hdd_open_adapter(hdd_ctx, QDF_NDI_MODE, iface_name,
+			wlan_hdd_get_intf_addr(hdd_ctx), NET_NAME_UNKNOWN,
+			true);
+	if (!adapter) {
+		hdd_err("hdd_open_adapter failed");
+		return NULL;
+	}
+
+	EXIT();
+	return adapter->hdd_vdev;
+}
+
+int hdd_ndi_start(uint8_t vdev_id)
+{
+	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	uint8_t op_channel = hdd_ctx->config->nan_datapath_ndi_channel;
+	hdd_adapter_t *adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+
+	ENTER();
+	/*
+	 * The NAN data interface has been created at this point.
+	 * Unlike traditional device modes, where the higher application
+	 * layer initiates connect / join / start, the NAN data
+	 * interface does not have any such formal requests. The NDI
+	 * create request is responsible for starting the BSS as well.
+	 */
+	if (op_channel != NAN_SOCIAL_CHANNEL_2_4GHZ ||
+		op_channel != NAN_SOCIAL_CHANNEL_5GHZ_LOWER_BAND ||
+		op_channel != NAN_SOCIAL_CHANNEL_5GHZ_UPPER_BAND) {
+		/* start NDI on the default 2.4 GHz social channel */
+		op_channel = NAN_SOCIAL_CHANNEL_2_4GHZ;
+	}
+	if (hdd_ndi_start_bss(adapter, op_channel)) {
+		hdd_err("NDI start bss failed");
+		/* Start BSS failed, delete the interface */
+		hdd_close_ndi(adapter);
+		EXIT();
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+int hdd_ndi_delete(uint8_t vdev_id, char *iface_name, uint16_t transaction_id)
+{
+	int ret;
+	hdd_adapter_t *adapter;
+	hdd_station_ctx_t *sta_ctx;
+	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	/* Check if there is already an existing inteface with the same name */
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	if (!adapter || !WLAN_HDD_IS_NDI(adapter)) {
+		hdd_err("NAN data interface %s is not available", iface_name);
+		return -EINVAL;
+	}
+
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	if (!sta_ctx) {
+		hdd_err("sta_ctx is NULL");
+		return -EINVAL;
+	}
+
+	/* Since, the interface is being deleted, remove the broadcast id. */
+	hdd_ctx->sta_to_adapter[sta_ctx->broadcast_staid] = 0;
+	sta_ctx->broadcast_staid = HDD_WLAN_INVALID_STA_ID;
+
+	os_if_nan_set_ndp_delete_transaction_id(adapter->hdd_vdev,
+						transaction_id);
+	os_if_nan_set_ndi_state(adapter->hdd_vdev, NAN_DATA_NDI_DELETING_STATE);
+
+	/* Delete the interface */
+	ret = __wlan_hdd_del_virtual_intf(hdd_ctx->wiphy, &adapter->wdev);
+	if (ret)
+		hdd_err("NDI delete request failed");
+	else
+		hdd_err("NDI delete request successfully issued");
+
+	return ret;
+}
+
+void hdd_ndi_drv_ndi_create_rsp_handler(uint8_t vdev_id,
+				struct nan_datapath_inf_create_rsp *ndi_rsp)
+{
+	tCsrRoamInfo roam_info = {0};
+	tSirBssDescription tmp_bss_descp = {0};
+	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	hdd_adapter_t *adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	struct qdf_mac_addr bc_mac_addr = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
+	hdd_station_ctx_t *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+
+	if (ndi_rsp->status == QDF_STATUS_SUCCESS) {
+		hdd_alert("NDI interface successfully created");
+		os_if_nan_set_ndp_create_transaction_id(adapter->hdd_vdev, 0);
+		os_if_nan_set_ndi_state(adapter->hdd_vdev,
+					NAN_DATA_NDI_CREATED_STATE);
+		wlan_hdd_netif_queue_control(adapter,
+					WLAN_START_ALL_NETIF_QUEUE_N_CARRIER,
+					WLAN_CONTROL_PATH);
+	} else {
+		hdd_alert("NDI interface creation failed with reason %d",
+			ndi_rsp->reason /* create_reason */);
+	}
+
+	sta_ctx->broadcast_staid = ndi_rsp->sta_id;
+	hdd_save_peer(sta_ctx, sta_ctx->broadcast_staid, &bc_mac_addr);
+	hdd_roam_register_sta(adapter, &roam_info,
+				sta_ctx->broadcast_staid,
+				&bc_mac_addr, &tmp_bss_descp);
+	hdd_ctx->sta_to_adapter[sta_ctx->broadcast_staid] = adapter;
+}
+
+void hdd_ndi_close(uint8_t vdev_id)
+{
+	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	hdd_adapter_t *adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	hdd_close_ndi(adapter);
+}
+
+void hdd_ndi_drv_ndi_delete_rsp_handler(uint8_t vdev_id)
+{
+	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	hdd_adapter_t *adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+
+	wlan_hdd_netif_queue_control(adapter,
+				     WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
+				     WLAN_CONTROL_PATH);
+
+	complete(&adapter->disconnect_comp_var);
+}
+
+void hdd_ndp_session_end_handler(hdd_adapter_t *adapter)
+{
+	os_if_nan_ndi_session_end(adapter->hdd_vdev);
+}
+
+#endif
