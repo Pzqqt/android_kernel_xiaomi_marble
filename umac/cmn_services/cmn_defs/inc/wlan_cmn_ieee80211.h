@@ -462,6 +462,24 @@ struct wlan_frame_hdr {
 	uint8_t i_seq[2];
 } qdf_packed;
 
+/* sequence number offset base on begin of mac header */
+#define WLAN_SEQ_CTL_OFFSET         22
+#define WLAN_LOW_SEQ_NUM_MASK       0x000F
+#define WLAN_HIGH_SEQ_NUM_MASK      0x0FF0
+#define WLAN_HIGH_SEQ_NUM_OFFSET    4
+
+/**
+ * struct wlan_seq_ctl: sequence number control
+ * @frag_num: frag number
+ * @seq_num_lo: sequence number low byte
+ * @seq_num_hi: sequence number high byte
+ */
+struct wlan_seq_ctl {
+	uint8_t frag_num:4;
+	uint8_t seq_num_lo:4;
+	uint8_t seq_num_hi:8;
+} qdf_packed;
+
 /**
  * union wlan_capability : wlan_capability info
  * @value: capability value
@@ -726,7 +744,6 @@ struct rsn_mdie {
 	uint8_t mobility_domain[3];
 	uint8_t ft_capab;
 } qdf_packed;
-
 
 /**
  * is_wpa_oui() - If vendor IE is WPA type

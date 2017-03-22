@@ -419,6 +419,7 @@ static QDF_STATUS p2p_process_ready_on_channel_evt(
 		p2p_debug("roc for off chan tx, ready to send frame");
 		cookie = (uintptr_t)roc_ctx;
 		/* ready to tx frame */
+		p2p_ready_to_tx_frame(p2p_soc_obj, cookie);
 	}
 
 	return status;

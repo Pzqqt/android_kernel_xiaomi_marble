@@ -49,4 +49,19 @@ bool wlan_is_dsrc_channel(uint16_t center_freq);
  */
 uint8_t wlan_freq_to_chan(uint32_t freq);
 
+/**
+ * wlan_get_vendor_ie_ptr_from_oui() - Find out vendor ie
+ * @oui: oui buffer
+ * @oui_size: oui size
+ * @ie: source ie address
+ * @ie_len: source ie length
+ *
+ * This function find out vendor ie by pass source ie and vendor oui.
+ *
+ * Return: vendor ie address - success
+ *         NULL - failure
+ */
+uint8_t *wlan_get_vendor_ie_ptr_from_oui(uint8_t *oui,
+	uint8_t oui_size, uint8_t *ie, uint16_t ie_len);
+
 #endif /* _WLAN_UTILITY_H_ */

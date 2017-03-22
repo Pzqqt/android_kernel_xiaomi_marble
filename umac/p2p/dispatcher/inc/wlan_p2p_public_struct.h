@@ -111,6 +111,7 @@ struct p2p_tx_cnf {
  * @len:                 Length of tx buffer
  * @no_cck:              Required cck or not
  * @dont_wait_for_ack:   Wait for ack or not
+ * @off_chan:            Off channel tx or not
  * @buf:                 TX buffer
  */
 struct p2p_mgmt_tx {
@@ -120,6 +121,7 @@ struct p2p_mgmt_tx {
 	uint32_t len;
 	uint32_t no_cck;
 	uint32_t dont_wait_for_ack;
+	uint32_t off_chan;
 	const uint8_t *buf;
 };
 

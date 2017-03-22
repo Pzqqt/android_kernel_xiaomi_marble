@@ -89,6 +89,8 @@
 #define WLAN_CHAN_15_FREQ       (2512)
 #define WLAN_CHAN_170_FREQ      (5852)
 
+#define WLAN_MAC_EID_VENDOR     221
+
 /**
  * enum wlan_umac_comp_id - UMAC component id
  * @WLAN_UMAC_COMP_MLME:     MLME

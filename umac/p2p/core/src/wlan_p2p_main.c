@@ -579,6 +579,7 @@ QDF_STATUS p2p_psoc_stop(struct wlan_objmgr_psoc *soc)
 	}
 
 	/* clean up queue of p2p psoc private object */
+	p2p_cleanup_tx_queue(p2p_soc_obj);
 	p2p_cleanup_roc_queue(p2p_soc_obj);
 
 	/* unrgister scan request id*/

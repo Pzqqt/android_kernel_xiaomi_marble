@@ -127,6 +127,7 @@ static void wlan_p2p_action_tx_cnf_callback(void *user_data,
 	struct wlan_objmgr_vdev *vdev;
 	struct vdev_osif_priv *osif_priv;
 	struct wireless_dev *wdev;
+	bool is_success;
 
 	cfg80211_info("user data:%p, action cookie:%llx, buf:%p, len:%d, tx status:%d",
 		user_data, tx_cnf->action_cookie, tx_cnf->buf,
@@ -159,11 +160,12 @@ static void wlan_p2p_action_tx_cnf_callback(void *user_data,
 		goto fail;
 	}
 
+	is_success = tx_cnf->status ? false : true;
 	cfg80211_mgmt_tx_status(
 		wdev,
 		tx_cnf->action_cookie,
 		tx_cnf->buf, tx_cnf->buf_len,
-		(bool)tx_cnf->status, GFP_KERNEL);
+		is_success, GFP_KERNEL);
 fail:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_P2P_ID);
 }
@@ -360,7 +362,7 @@ int wlan_cfg80211_roc(struct wlan_objmgr_vdev *vdev,
 	wlan_vdev_obj_unlock(vdev);
 	if (!psoc) {
 		cfg80211_err("psoc handle is NULL");
-		return QDF_STATUS_E_INVAL;
+		return -EINVAL;
 	}
 
 	roc_req.chan = (uint32_t)wlan_freq_to_chan(chan->center_freq);
@@ -386,7 +388,7 @@ int wlan_cfg80211_cancel_roc(struct wlan_objmgr_vdev *vdev,
 	wlan_vdev_obj_unlock(vdev);
 	if (!psoc) {
 		cfg80211_err("psoc handle is NULL");
-		return QDF_STATUS_E_INVAL;
+		return -EINVAL;
 	}
 
 	return qdf_status_to_os_return(
@@ -419,7 +421,7 @@ int wlan_cfg80211_mgmt_tx(struct wlan_objmgr_vdev *vdev,
 	wlan_vdev_obj_unlock(vdev);
 	if (!psoc) {
 		cfg80211_err("psoc handle is NULL");
-		return QDF_STATUS_E_INVAL;
+		return -EINVAL;
 	}
 
 	mgmt_tx.vdev_id = (uint32_t)vdev_id;
@@ -428,6 +430,7 @@ int wlan_cfg80211_mgmt_tx(struct wlan_objmgr_vdev *vdev,
 	mgmt_tx.len = len;
 	mgmt_tx.no_cck = (uint32_t)no_cck;
 	mgmt_tx.dont_wait_for_ack = (uint32_t)dont_wait_for_ack;
+	mgmt_tx.off_chan = (uint32_t)offchan;
 	mgmt_tx.buf = buf;
 
 	return qdf_status_to_os_return(
@@ -449,7 +452,7 @@ int wlan_cfg80211_mgmt_tx_cancel(struct wlan_objmgr_vdev *vdev,
 	wlan_vdev_obj_unlock(vdev);
 	if (!psoc) {
 		cfg80211_err("psoc handle is NULL");
-		return QDF_STATUS_E_INVAL;
+		return -EINVAL;
 	}
 
 	return qdf_status_to_os_return(
