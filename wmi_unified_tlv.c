@@ -16357,147 +16357,6 @@ struct wmi_ops tlv_ops =  {
 	.send_dfs_phyerr_offload_dis_cmd = send_dfs_phyerr_offload_dis_cmd_tlv,
 };
 
-#ifndef CONFIG_MCL
-/**
- * populate_tlv_service() - populates wmi services
- *
- * @param wmi_service: Pointer to hold wmi_service
- * Return: None
- */
-static void populate_tlv_service(uint32_t *wmi_service)
-{
-	wmi_service[wmi_service_beacon_offload] = WMI_SERVICE_BEACON_OFFLOAD;
-	wmi_service[wmi_service_scan_offload] = WMI_SERVICE_SCAN_OFFLOAD;
-	wmi_service[wmi_service_roam_scan_offload] =
-					WMI_SERVICE_ROAM_SCAN_OFFLOAD;
-	wmi_service[wmi_service_bcn_miss_offload] =
-					WMI_SERVICE_BCN_MISS_OFFLOAD;
-	wmi_service[wmi_service_sta_pwrsave] = WMI_SERVICE_STA_PWRSAVE;
-	wmi_service[wmi_service_sta_advanced_pwrsave] =
-				WMI_SERVICE_STA_ADVANCED_PWRSAVE;
-	wmi_service[wmi_service_ap_uapsd] = WMI_SERVICE_AP_UAPSD;
-	wmi_service[wmi_service_ap_dfs] = WMI_SERVICE_AP_DFS;
-	wmi_service[wmi_service_11ac] = WMI_SERVICE_11AC;
-	wmi_service[wmi_service_blockack] = WMI_SERVICE_BLOCKACK;
-	wmi_service[wmi_service_phyerr] = WMI_SERVICE_PHYERR;
-	wmi_service[wmi_service_bcn_filter] = WMI_SERVICE_BCN_FILTER;
-	wmi_service[wmi_service_rtt] = WMI_SERVICE_RTT;
-	wmi_service[wmi_service_wow] = WMI_SERVICE_WOW;
-	wmi_service[wmi_service_ratectrl_cache] = WMI_SERVICE_RATECTRL_CACHE;
-	wmi_service[wmi_service_iram_tids] = WMI_SERVICE_IRAM_TIDS;
-	wmi_service[wmi_service_arpns_offload] = WMI_SERVICE_ARPNS_OFFLOAD;
-	wmi_service[wmi_service_nlo] = WMI_SERVICE_NLO;
-	wmi_service[wmi_service_gtk_offload] = WMI_SERVICE_GTK_OFFLOAD;
-	wmi_service[wmi_service_scan_sch] = WMI_SERVICE_SCAN_SCH;
-	wmi_service[wmi_service_csa_offload] = WMI_SERVICE_CSA_OFFLOAD;
-	wmi_service[wmi_service_chatter] = WMI_SERVICE_CHATTER;
-	wmi_service[wmi_service_coex_freqavoid] = WMI_SERVICE_COEX_FREQAVOID;
-	wmi_service[wmi_service_packet_power_save] =
-					WMI_SERVICE_PACKET_POWER_SAVE;
-	wmi_service[wmi_service_force_fw_hang] = WMI_SERVICE_FORCE_FW_HANG;
-	wmi_service[wmi_service_gpio] = WMI_SERVICE_GPIO;
-	wmi_service[wmi_service_sta_dtim_ps_modulated_dtim] =
-				WMI_SERVICE_STA_DTIM_PS_MODULATED_DTIM;
-	wmi_service[wmi_sta_uapsd_basic_auto_trig] =
-					WMI_STA_UAPSD_BASIC_AUTO_TRIG;
-	wmi_service[wmi_sta_uapsd_var_auto_trig] = WMI_STA_UAPSD_VAR_AUTO_TRIG;
-	wmi_service[wmi_service_sta_keep_alive] = WMI_SERVICE_STA_KEEP_ALIVE;
-	wmi_service[wmi_service_tx_encap] = WMI_SERVICE_TX_ENCAP;
-	wmi_service[wmi_service_ap_ps_detect_out_of_sync] =
-				WMI_SERVICE_AP_PS_DETECT_OUT_OF_SYNC;
-	wmi_service[wmi_service_early_rx] = WMI_SERVICE_EARLY_RX;
-	wmi_service[wmi_service_sta_smps] = WMI_SERVICE_STA_SMPS;
-	wmi_service[wmi_service_fwtest] = WMI_SERVICE_FWTEST;
-	wmi_service[wmi_service_sta_wmmac] = WMI_SERVICE_STA_WMMAC;
-	wmi_service[wmi_service_tdls] = WMI_SERVICE_TDLS;
-	wmi_service[wmi_service_burst] = WMI_SERVICE_BURST;
-	wmi_service[wmi_service_mcc_bcn_interval_change] =
-				WMI_SERVICE_MCC_BCN_INTERVAL_CHANGE;
-	wmi_service[wmi_service_adaptive_ocs] = WMI_SERVICE_ADAPTIVE_OCS;
-	wmi_service[wmi_service_ba_ssn_support] = WMI_SERVICE_BA_SSN_SUPPORT;
-	wmi_service[wmi_service_filter_ipsec_natkeepalive] =
-				WMI_SERVICE_FILTER_IPSEC_NATKEEPALIVE;
-	wmi_service[wmi_service_wlan_hb] = WMI_SERVICE_WLAN_HB;
-	wmi_service[wmi_service_lte_ant_share_support] =
-				WMI_SERVICE_LTE_ANT_SHARE_SUPPORT;
-	wmi_service[wmi_service_batch_scan] = WMI_SERVICE_BATCH_SCAN;
-	wmi_service[wmi_service_qpower] = WMI_SERVICE_QPOWER;
-	wmi_service[wmi_service_plmreq] = WMI_SERVICE_PLMREQ;
-	wmi_service[wmi_service_thermal_mgmt] = WMI_SERVICE_THERMAL_MGMT;
-	wmi_service[wmi_service_rmc] = WMI_SERVICE_RMC;
-	wmi_service[wmi_service_mhf_offload] = WMI_SERVICE_MHF_OFFLOAD;
-	wmi_service[wmi_service_coex_sar] = WMI_SERVICE_COEX_SAR;
-	wmi_service[wmi_service_bcn_txrate_override] =
-				WMI_SERVICE_BCN_TXRATE_OVERRIDE;
-	wmi_service[wmi_service_nan] = WMI_SERVICE_NAN;
-	wmi_service[wmi_service_l1ss_stat] = WMI_SERVICE_L1SS_STAT;
-	wmi_service[wmi_service_estimate_linkspeed] =
-				WMI_SERVICE_ESTIMATE_LINKSPEED;
-	wmi_service[wmi_service_obss_scan] = WMI_SERVICE_OBSS_SCAN;
-	wmi_service[wmi_service_tdls_offchan] = WMI_SERVICE_TDLS_OFFCHAN;
-	wmi_service[wmi_service_tdls_uapsd_buffer_sta] =
-				WMI_SERVICE_TDLS_UAPSD_BUFFER_STA;
-	wmi_service[wmi_service_tdls_uapsd_sleep_sta] =
-				WMI_SERVICE_TDLS_UAPSD_SLEEP_STA;
-	wmi_service[wmi_service_ibss_pwrsave] = WMI_SERVICE_IBSS_PWRSAVE;
-	wmi_service[wmi_service_lpass] = WMI_SERVICE_LPASS;
-	wmi_service[wmi_service_extscan] = WMI_SERVICE_EXTSCAN;
-	wmi_service[wmi_service_d0wow] = WMI_SERVICE_D0WOW;
-	wmi_service[wmi_service_hsoffload] = WMI_SERVICE_HSOFFLOAD;
-	wmi_service[wmi_service_roam_ho_offload] = WMI_SERVICE_ROAM_HO_OFFLOAD;
-	wmi_service[wmi_service_rx_full_reorder] = WMI_SERVICE_RX_FULL_REORDER;
-	wmi_service[wmi_service_dhcp_offload] = WMI_SERVICE_DHCP_OFFLOAD;
-	wmi_service[wmi_service_sta_rx_ipa_offload_support] =
-				WMI_SERVICE_STA_RX_IPA_OFFLOAD_SUPPORT;
-	wmi_service[wmi_service_mdns_offload] = WMI_SERVICE_MDNS_OFFLOAD;
-	wmi_service[wmi_service_sap_auth_offload] =
-					WMI_SERVICE_SAP_AUTH_OFFLOAD;
-	wmi_service[wmi_service_dual_band_simultaneous_support] =
-				WMI_SERVICE_DUAL_BAND_SIMULTANEOUS_SUPPORT;
-	wmi_service[wmi_service_ocb] = WMI_SERVICE_OCB;
-	wmi_service[wmi_service_ap_arpns_offload] =
-					WMI_SERVICE_AP_ARPNS_OFFLOAD;
-	wmi_service[wmi_service_per_band_chainmask_support] =
-				WMI_SERVICE_PER_BAND_CHAINMASK_SUPPORT;
-	wmi_service[wmi_service_packet_filter_offload] =
-				WMI_SERVICE_PACKET_FILTER_OFFLOAD;
-	wmi_service[wmi_service_mgmt_tx_htt] = WMI_SERVICE_MGMT_TX_HTT;
-	wmi_service[wmi_service_mgmt_tx_wmi] = WMI_SERVICE_MGMT_TX_WMI;
-	wmi_service[wmi_service_ext_msg] = WMI_SERVICE_EXT_MSG;
-	wmi_service[wmi_service_mawc] = WMI_SERVICE_MAWC;
-	wmi_service[wmi_service_multiple_vdev_restart] =
-			WMI_SERVICE_MULTIPLE_VDEV_RESTART;
-
-	wmi_service[wmi_service_roam_offload] = WMI_SERVICE_UNAVAILABLE;
-	wmi_service[wmi_service_ratectrl] = WMI_SERVICE_UNAVAILABLE;
-	wmi_service[wmi_service_smart_antenna_sw_support] =
-				WMI_SERVICE_UNAVAILABLE;
-	wmi_service[wmi_service_smart_antenna_hw_support] =
-				WMI_SERVICE_UNAVAILABLE;
-	wmi_service[wmi_service_enhanced_proxy_sta] = WMI_SERVICE_UNAVAILABLE;
-	wmi_service[wmi_service_tt] = WMI_SERVICE_UNAVAILABLE;
-	wmi_service[wmi_service_atf] = WMI_SERVICE_UNAVAILABLE;
-	wmi_service[wmi_service_peer_caching] = WMI_SERVICE_UNAVAILABLE;
-	wmi_service[wmi_service_coex_gpio] = WMI_SERVICE_UNAVAILABLE;
-	wmi_service[wmi_service_aux_spectral_intf] = WMI_SERVICE_UNAVAILABLE;
-	wmi_service[wmi_service_aux_chan_load_intf] = WMI_SERVICE_UNAVAILABLE;
-	wmi_service[wmi_service_bss_channel_info_64] = WMI_SERVICE_UNAVAILABLE;
-	wmi_service[wmi_service_ext_res_cfg_support] = WMI_SERVICE_UNAVAILABLE;
-	wmi_service[wmi_service_mesh] = WMI_SERVICE_UNAVAILABLE;
-	wmi_service[wmi_service_restrt_chnl_support] = WMI_SERVICE_UNAVAILABLE;
-
-	wmi_service[wmi_service_peer_stats] = WMI_SERVICE_UNAVAILABLE;
-	wmi_service[wmi_service_mesh_11s] = WMI_SERVICE_UNAVAILABLE;
-	wmi_service[wmi_service_periodic_chan_stat_support] =
-			WMI_SERVICE_UNAVAILABLE;
-	wmi_service[wmi_service_tx_mode_push_only] = WMI_SERVICE_UNAVAILABLE;
-	wmi_service[wmi_service_tx_mode_push_pull] = WMI_SERVICE_UNAVAILABLE;
-	wmi_service[wmi_service_tx_mode_dynamic] = WMI_SERVICE_UNAVAILABLE;
-	wmi_service[wmi_service_btcoex_duty_cycle] = WMI_SERVICE_UNAVAILABLE;
-	wmi_service[wmi_service_4_wire_coex_support] = WMI_SERVICE_UNAVAILABLE;
-	wmi_service[wmi_service_mesh] = WMI_SERVICE_ENTERPRISE_MESH;
-}
-
 /**
  * populate_tlv_event_id() - populates wmi event ids
  *
@@ -16710,6 +16569,147 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_pdev_fips_event_id] = WMI_PDEV_FIPS_EVENTID;
 	event_ids[wmi_pdev_csa_switch_count_status_event_id] =
 				WMI_PDEV_CSA_SWITCH_COUNT_STATUS_EVENTID;
+}
+
+#ifndef CONFIG_MCL
+/**
+ * populate_tlv_service() - populates wmi services
+ *
+ * @param wmi_service: Pointer to hold wmi_service
+ * Return: None
+ */
+static void populate_tlv_service(uint32_t *wmi_service)
+{
+	wmi_service[wmi_service_beacon_offload] = WMI_SERVICE_BEACON_OFFLOAD;
+	wmi_service[wmi_service_scan_offload] = WMI_SERVICE_SCAN_OFFLOAD;
+	wmi_service[wmi_service_roam_scan_offload] =
+					WMI_SERVICE_ROAM_SCAN_OFFLOAD;
+	wmi_service[wmi_service_bcn_miss_offload] =
+					WMI_SERVICE_BCN_MISS_OFFLOAD;
+	wmi_service[wmi_service_sta_pwrsave] = WMI_SERVICE_STA_PWRSAVE;
+	wmi_service[wmi_service_sta_advanced_pwrsave] =
+				WMI_SERVICE_STA_ADVANCED_PWRSAVE;
+	wmi_service[wmi_service_ap_uapsd] = WMI_SERVICE_AP_UAPSD;
+	wmi_service[wmi_service_ap_dfs] = WMI_SERVICE_AP_DFS;
+	wmi_service[wmi_service_11ac] = WMI_SERVICE_11AC;
+	wmi_service[wmi_service_blockack] = WMI_SERVICE_BLOCKACK;
+	wmi_service[wmi_service_phyerr] = WMI_SERVICE_PHYERR;
+	wmi_service[wmi_service_bcn_filter] = WMI_SERVICE_BCN_FILTER;
+	wmi_service[wmi_service_rtt] = WMI_SERVICE_RTT;
+	wmi_service[wmi_service_wow] = WMI_SERVICE_WOW;
+	wmi_service[wmi_service_ratectrl_cache] = WMI_SERVICE_RATECTRL_CACHE;
+	wmi_service[wmi_service_iram_tids] = WMI_SERVICE_IRAM_TIDS;
+	wmi_service[wmi_service_arpns_offload] = WMI_SERVICE_ARPNS_OFFLOAD;
+	wmi_service[wmi_service_nlo] = WMI_SERVICE_NLO;
+	wmi_service[wmi_service_gtk_offload] = WMI_SERVICE_GTK_OFFLOAD;
+	wmi_service[wmi_service_scan_sch] = WMI_SERVICE_SCAN_SCH;
+	wmi_service[wmi_service_csa_offload] = WMI_SERVICE_CSA_OFFLOAD;
+	wmi_service[wmi_service_chatter] = WMI_SERVICE_CHATTER;
+	wmi_service[wmi_service_coex_freqavoid] = WMI_SERVICE_COEX_FREQAVOID;
+	wmi_service[wmi_service_packet_power_save] =
+					WMI_SERVICE_PACKET_POWER_SAVE;
+	wmi_service[wmi_service_force_fw_hang] = WMI_SERVICE_FORCE_FW_HANG;
+	wmi_service[wmi_service_gpio] = WMI_SERVICE_GPIO;
+	wmi_service[wmi_service_sta_dtim_ps_modulated_dtim] =
+				WMI_SERVICE_STA_DTIM_PS_MODULATED_DTIM;
+	wmi_service[wmi_sta_uapsd_basic_auto_trig] =
+					WMI_STA_UAPSD_BASIC_AUTO_TRIG;
+	wmi_service[wmi_sta_uapsd_var_auto_trig] = WMI_STA_UAPSD_VAR_AUTO_TRIG;
+	wmi_service[wmi_service_sta_keep_alive] = WMI_SERVICE_STA_KEEP_ALIVE;
+	wmi_service[wmi_service_tx_encap] = WMI_SERVICE_TX_ENCAP;
+	wmi_service[wmi_service_ap_ps_detect_out_of_sync] =
+				WMI_SERVICE_AP_PS_DETECT_OUT_OF_SYNC;
+	wmi_service[wmi_service_early_rx] = WMI_SERVICE_EARLY_RX;
+	wmi_service[wmi_service_sta_smps] = WMI_SERVICE_STA_SMPS;
+	wmi_service[wmi_service_fwtest] = WMI_SERVICE_FWTEST;
+	wmi_service[wmi_service_sta_wmmac] = WMI_SERVICE_STA_WMMAC;
+	wmi_service[wmi_service_tdls] = WMI_SERVICE_TDLS;
+	wmi_service[wmi_service_burst] = WMI_SERVICE_BURST;
+	wmi_service[wmi_service_mcc_bcn_interval_change] =
+				WMI_SERVICE_MCC_BCN_INTERVAL_CHANGE;
+	wmi_service[wmi_service_adaptive_ocs] = WMI_SERVICE_ADAPTIVE_OCS;
+	wmi_service[wmi_service_ba_ssn_support] = WMI_SERVICE_BA_SSN_SUPPORT;
+	wmi_service[wmi_service_filter_ipsec_natkeepalive] =
+				WMI_SERVICE_FILTER_IPSEC_NATKEEPALIVE;
+	wmi_service[wmi_service_wlan_hb] = WMI_SERVICE_WLAN_HB;
+	wmi_service[wmi_service_lte_ant_share_support] =
+				WMI_SERVICE_LTE_ANT_SHARE_SUPPORT;
+	wmi_service[wmi_service_batch_scan] = WMI_SERVICE_BATCH_SCAN;
+	wmi_service[wmi_service_qpower] = WMI_SERVICE_QPOWER;
+	wmi_service[wmi_service_plmreq] = WMI_SERVICE_PLMREQ;
+	wmi_service[wmi_service_thermal_mgmt] = WMI_SERVICE_THERMAL_MGMT;
+	wmi_service[wmi_service_rmc] = WMI_SERVICE_RMC;
+	wmi_service[wmi_service_mhf_offload] = WMI_SERVICE_MHF_OFFLOAD;
+	wmi_service[wmi_service_coex_sar] = WMI_SERVICE_COEX_SAR;
+	wmi_service[wmi_service_bcn_txrate_override] =
+				WMI_SERVICE_BCN_TXRATE_OVERRIDE;
+	wmi_service[wmi_service_nan] = WMI_SERVICE_NAN;
+	wmi_service[wmi_service_l1ss_stat] = WMI_SERVICE_L1SS_STAT;
+	wmi_service[wmi_service_estimate_linkspeed] =
+				WMI_SERVICE_ESTIMATE_LINKSPEED;
+	wmi_service[wmi_service_obss_scan] = WMI_SERVICE_OBSS_SCAN;
+	wmi_service[wmi_service_tdls_offchan] = WMI_SERVICE_TDLS_OFFCHAN;
+	wmi_service[wmi_service_tdls_uapsd_buffer_sta] =
+				WMI_SERVICE_TDLS_UAPSD_BUFFER_STA;
+	wmi_service[wmi_service_tdls_uapsd_sleep_sta] =
+				WMI_SERVICE_TDLS_UAPSD_SLEEP_STA;
+	wmi_service[wmi_service_ibss_pwrsave] = WMI_SERVICE_IBSS_PWRSAVE;
+	wmi_service[wmi_service_lpass] = WMI_SERVICE_LPASS;
+	wmi_service[wmi_service_extscan] = WMI_SERVICE_EXTSCAN;
+	wmi_service[wmi_service_d0wow] = WMI_SERVICE_D0WOW;
+	wmi_service[wmi_service_hsoffload] = WMI_SERVICE_HSOFFLOAD;
+	wmi_service[wmi_service_roam_ho_offload] = WMI_SERVICE_ROAM_HO_OFFLOAD;
+	wmi_service[wmi_service_rx_full_reorder] = WMI_SERVICE_RX_FULL_REORDER;
+	wmi_service[wmi_service_dhcp_offload] = WMI_SERVICE_DHCP_OFFLOAD;
+	wmi_service[wmi_service_sta_rx_ipa_offload_support] =
+				WMI_SERVICE_STA_RX_IPA_OFFLOAD_SUPPORT;
+	wmi_service[wmi_service_mdns_offload] = WMI_SERVICE_MDNS_OFFLOAD;
+	wmi_service[wmi_service_sap_auth_offload] =
+					WMI_SERVICE_SAP_AUTH_OFFLOAD;
+	wmi_service[wmi_service_dual_band_simultaneous_support] =
+				WMI_SERVICE_DUAL_BAND_SIMULTANEOUS_SUPPORT;
+	wmi_service[wmi_service_ocb] = WMI_SERVICE_OCB;
+	wmi_service[wmi_service_ap_arpns_offload] =
+					WMI_SERVICE_AP_ARPNS_OFFLOAD;
+	wmi_service[wmi_service_per_band_chainmask_support] =
+				WMI_SERVICE_PER_BAND_CHAINMASK_SUPPORT;
+	wmi_service[wmi_service_packet_filter_offload] =
+				WMI_SERVICE_PACKET_FILTER_OFFLOAD;
+	wmi_service[wmi_service_mgmt_tx_htt] = WMI_SERVICE_MGMT_TX_HTT;
+	wmi_service[wmi_service_mgmt_tx_wmi] = WMI_SERVICE_MGMT_TX_WMI;
+	wmi_service[wmi_service_ext_msg] = WMI_SERVICE_EXT_MSG;
+	wmi_service[wmi_service_mawc] = WMI_SERVICE_MAWC;
+	wmi_service[wmi_service_multiple_vdev_restart] =
+			WMI_SERVICE_MULTIPLE_VDEV_RESTART;
+
+	wmi_service[wmi_service_roam_offload] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_ratectrl] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_smart_antenna_sw_support] =
+				WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_smart_antenna_hw_support] =
+				WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_enhanced_proxy_sta] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_tt] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_atf] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_peer_caching] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_coex_gpio] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_aux_spectral_intf] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_aux_chan_load_intf] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_bss_channel_info_64] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_ext_res_cfg_support] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_mesh] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_restrt_chnl_support] = WMI_SERVICE_UNAVAILABLE;
+
+	wmi_service[wmi_service_peer_stats] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_mesh_11s] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_periodic_chan_stat_support] =
+			WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_tx_mode_push_only] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_tx_mode_push_pull] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_tx_mode_dynamic] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_btcoex_duty_cycle] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_4_wire_coex_support] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_mesh] = WMI_SERVICE_ENTERPRISE_MESH;
 }
 
 /**
@@ -17066,7 +17066,6 @@ static void populate_vdev_param_tlv(uint32_t *vdev_param)
 static void populate_target_defines_tlv(struct wmi_unified *wmi_handle)
 {
 	populate_tlv_service(wmi_handle->services);
-	populate_tlv_events_id(wmi_handle->wmi_events);
 	populate_pdev_param_tlv(wmi_handle->pdev_param);
 	populate_vdev_param_tlv(wmi_handle->vdev_param);
 }
@@ -17087,5 +17086,6 @@ void wmi_tlv_attach(wmi_unified_t wmi_handle)
 	wmi_handle->log_info.buf_offset_command = 2;
 	wmi_handle->log_info.buf_offset_event = 4;
 #endif
+	populate_tlv_events_id(wmi_handle->wmi_events);
 	populate_target_defines_tlv(wmi_handle);
 }
