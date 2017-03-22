@@ -17258,6 +17258,20 @@ static void populate_vdev_param_tlv(uint32_t *vdev_param)
 					WMI_VDEV_PARAM_ATF_SSID_SCHED_POLICY;
 	vdev_param[wmi_vdev_param_disable_dyn_bw_rts] =
 					WMI_VDEV_PARAM_DISABLE_DYN_BW_RTS;
+	vdev_param[wmi_vdev_param_mcast2ucast_set] =
+					WMI_VDEV_PARAM_MCAST2UCAST_SET;
+	vdev_param[wmi_vdev_param_rc_num_retries] =
+					WMI_VDEV_PARAM_RC_NUM_RETRIES;
+	vdev_param[wmi_vdev_param_cabq_maxdur] = WMI_VDEV_PARAM_CABQ_MAXDUR;
+	vdev_param[wmi_vdev_param_mfptest_set] = WMI_VDEV_PARAM_MFPTEST_SET;
+	vdev_param[wmi_vdev_param_rts_fixed_rate] =
+					WMI_VDEV_PARAM_RTS_FIXED_RATE;
+	vdev_param[wmi_vdev_param_vht_sgimask] = WMI_VDEV_PARAM_VHT_SGIMASK;
+	vdev_param[wmi_vdev_param_vht80_ratemask] =
+					WMI_VDEV_PARAM_VHT80_RATEMASK;
+	vdev_param[wmi_vdev_param_proxy_sta] = WMI_VDEV_PARAM_PROXY_STA;
+	vdev_param[wmi_vdev_param_bw_nss_ratemask] =
+					WMI_VDEV_PARAM_BW_NSS_RATEMASK;
 }
 #endif
 
