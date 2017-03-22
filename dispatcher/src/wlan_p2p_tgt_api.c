@@ -23,10 +23,19 @@
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_mgmt_txrx_utils_api.h>
 #include <scheduler_api.h>
+#include <wlan_objmgr_psoc_obj.h>
+#include <wlan_objmgr_global_obj.h>
+#include <wlan_objmgr_pdev_obj.h>
+#include <wlan_objmgr_vdev_obj.h>
+#include <wlan_objmgr_peer_obj.h>
 #include "wlan_p2p_tgt_api.h"
 #include "wlan_p2p_public_struct.h"
 #include "../../core/src/wlan_p2p_main.h"
 #include "../../core/src/wlan_p2p_roc.h"
+#include "../../core/src/wlan_p2p_off_chan_tx.h"
+
+#define IEEE80211_FC0_TYPE_MASK              0x0c
+#define P2P_NOISE_FLOOR_DBM_DEFAULT          (-96)
 
 static inline struct wlan_lmac_if_p2p_tx_ops *
 wlan_psoc_get_p2p_tx_ops(struct wlan_objmgr_psoc *psoc)
@@ -103,12 +112,59 @@ void tgt_p2p_scan_event_cb(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS tgt_p2p_mgmt_download_comp_cb(void *context,
 	qdf_nbuf_t buf, bool free)
 {
+	p2p_debug("conext:%p, buf:%p, free:%d", context,
+		qdf_nbuf_data(buf), free);
+
+	qdf_nbuf_free(buf);
+
 	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS tgt_p2p_mgmt_ota_comp_cb(void *context, qdf_nbuf_t buf,
 	uint32_t status, void *tx_compl_params)
 {
+	struct p2p_tx_cnf *tx_cnf;
+	struct p2p_tx_conf_event *tx_conf_event;
+	struct p2p_soc_priv_obj *p2p_soc_obj;
+	struct tx_action_context *tx_ctx;
+	struct scheduler_msg msg;
+
+	p2p_debug("context:%p, buf:%p, status:%d, tx complete params:%p",
+		context, buf, status, tx_compl_params);
+
+	if (!context) {
+		p2p_err("invalid context");
+		return QDF_STATUS_E_INVAL;
+	}
+	tx_ctx = (struct tx_action_context *)context;
+	p2p_soc_obj = tx_ctx->p2p_soc_obj;
+
+	tx_conf_event = qdf_mem_malloc(sizeof(*tx_conf_event));
+	if (tx_conf_event == NULL) {
+		p2p_err("Failed to allocate tx cnf event");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	tx_cnf = qdf_mem_malloc(sizeof(*tx_cnf));
+	if (tx_cnf == NULL) {
+		p2p_err("Failed to allocate tx cnf");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	qdf_nbuf_free(buf);
+	tx_cnf->vdev_id = tx_ctx->vdev_id;
+	tx_cnf->action_cookie = (uintptr_t)tx_ctx;
+	tx_cnf->buf = tx_ctx->buf;
+	tx_cnf->buf_len = tx_ctx->buf_len;
+	tx_cnf->status = status;
+	tx_conf_event->p2p_soc_obj = p2p_soc_obj;
+	tx_conf_event->tx_cnf = tx_cnf;
+	tx_conf_event->tx_ctx = tx_ctx;
+	msg.type = P2P_EVENT_MGMT_TX_ACK_CNF;
+	msg.bodyptr = tx_conf_event;
+	msg.callback = p2p_process_evt;
+	scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -117,6 +173,83 @@ QDF_STATUS tgt_p2p_mgmt_frame_rx_cb(struct wlan_objmgr_psoc *psoc,
 	struct mgmt_rx_event_params *mgmt_rx_params,
 	enum mgmt_frame_type frm_type)
 {
+	struct p2p_rx_mgmt_frame *rx_mgmt;
+	struct p2p_rx_mgmt_event *rx_mgmt_event;
+	struct p2p_soc_priv_obj *p2p_soc_obj;
+	struct scheduler_msg msg;
+	struct wlan_frame_hdr *wh;
+	struct wlan_objmgr_vdev *vdev;
+	struct p2p_roc_context *roc_ctx;
+	uint32_t vdev_id;
+	uint8_t *pdata;
+
+	p2p_debug("psoc:%p, peer:%p, type:%d", psoc, peer, frm_type);
+
+	if (!mgmt_rx_params) {
+		p2p_err("mgmt rx params is NULL");
+		qdf_nbuf_free(buf);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	p2p_soc_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+			WLAN_UMAC_COMP_P2P);
+	if (p2p_soc_obj == NULL) {
+		p2p_err("p2p ctx is NULL, drop this frame");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (peer == NULL) {
+		roc_ctx = p2p_find_current_roc_ctx(p2p_soc_obj);
+		if (roc_ctx == NULL) {
+			p2p_err("current roc ctx is null, can't get vdev id");
+			return QDF_STATUS_E_FAILURE;
+		} else {
+			vdev_id = roc_ctx->vdev_id;
+		}
+	} else {
+		wlan_peer_obj_lock(peer);
+		vdev = wlan_peer_get_vdev(peer);
+		wlan_peer_obj_unlock(peer);
+		if (vdev == NULL) {
+			p2p_err("vdev is NULL in peer, drop this frame");
+			return QDF_STATUS_E_FAILURE;
+		}
+		wlan_vdev_obj_lock(vdev);
+		vdev_id = wlan_vdev_get_id(vdev);
+		wlan_vdev_obj_unlock(vdev);
+	}
+
+	rx_mgmt_event = qdf_mem_malloc(sizeof(*rx_mgmt_event));
+	if (rx_mgmt_event == NULL) {
+		p2p_err("Failed to allocate rx mgmt event");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	rx_mgmt = qdf_mem_malloc(sizeof(*rx_mgmt) +
+			mgmt_rx_params->buf_len);
+	if (rx_mgmt == NULL) {
+		p2p_err("Failed to allocate rx mgmt frame");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	wh = (struct wlan_frame_hdr *)qdf_nbuf_data(buf);
+	pdata = (uint8_t *)qdf_nbuf_data(buf);
+	rx_mgmt->frame_len = mgmt_rx_params->buf_len;
+	rx_mgmt->rx_chan = mgmt_rx_params->channel;
+	rx_mgmt->vdev_id = vdev_id;
+	rx_mgmt->frm_type = (wh)->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
+	rx_mgmt->rx_rssi = mgmt_rx_params->snr +
+				P2P_NOISE_FLOOR_DBM_DEFAULT;
+	rx_mgmt_event->rx_mgmt = rx_mgmt;
+	rx_mgmt_event->p2p_soc_obj = p2p_soc_obj;
+	qdf_mem_copy(rx_mgmt->buf, pdata, mgmt_rx_params->buf_len);
+	msg.type = P2P_EVENT_RX_MGMT;
+	msg.bodyptr = rx_mgmt_event;
+	msg.callback = p2p_process_evt;
+	scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+
+	qdf_nbuf_free(buf);
+
 	return QDF_STATUS_SUCCESS;
 }
 

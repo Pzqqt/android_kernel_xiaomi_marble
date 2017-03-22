@@ -53,6 +53,7 @@ struct p2p_rx_mgmt_frame;
 struct p2p_lo_event;
 struct p2p_start_param;
 struct p2p_noa_info;
+struct tx_action_context;
 
 /**
  * enum p2p_cmd_type - P2P request type
@@ -88,10 +89,12 @@ enum p2p_event_type {
  * struct p2p_tx_conf_event - p2p tx confirm event
  * @p2p_soc_obj:        p2p soc private object
  * @tx_cnf:             p2p tx confirm structure
+ * @tx_ctx:             tx context
  */
 struct p2p_tx_conf_event {
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 	struct p2p_tx_cnf *tx_cnf;
+	struct tx_action_context *tx_ctx;
 };
 
 /**
