@@ -3368,6 +3368,67 @@ lim_tdls_link_establish_error:
 }
 
 /**
+ * lim_check_aid_and_delete_peer() - Funtion to check aid and delete peer
+ * @p_mac: pointer to mac context
+ * @session_entry: pointer to PE session
+ *
+ * This function verifies aid and delete's peer with that aid from hash table
+ *
+ * Return: None
+ */
+static void lim_check_aid_and_delete_peer(tpAniSirGlobal p_mac,
+					  tpPESession session_entry)
+{
+	tpDphHashNode stads = NULL;
+	int i, aid;
+	size_t aid_bitmap_size = sizeof(session_entry->peerAIDBitmap);
+	struct qdf_mac_addr mac_addr;
+
+	/*
+	 * Check all the set bit in peerAIDBitmap and delete the peer
+	 * (with that aid) entry from the hash table and add the aid
+	 * in free pool
+	 */
+	lim_log(p_mac, LOG1, FL("Delete all the TDLS peer connected"));
+	for (i = 0; i < aid_bitmap_size / sizeof(uint32_t); i++) {
+		for (aid = 0; aid < (sizeof(uint32_t) << 3); aid++) {
+			if (!CHECK_BIT(session_entry->peerAIDBitmap[i], aid))
+				continue;
+			stads = dph_get_hash_entry(p_mac,
+					(aid + i * (sizeof(uint32_t) << 3)),
+					&session_entry->dph.dphHashTable);
+
+			if (NULL == stads)
+				goto skip;
+
+			lim_log(p_mac, LOG1,
+				FL("Deleting "MAC_ADDRESS_STR),
+				MAC_ADDR_ARRAY(stads->staAddr));
+
+			lim_send_deauth_mgmt_frame(p_mac,
+				eSIR_MAC_DEAUTH_LEAVING_BSS_REASON,
+				stads->staAddr, session_entry, false);
+
+			/* Delete TDLS peer */
+			qdf_mem_copy(mac_addr.bytes, stads->staAddr,
+				     QDF_MAC_ADDR_SIZE);
+
+			lim_tdls_del_sta(p_mac, mac_addr,
+					 session_entry, false);
+
+			dph_delete_hash_entry(p_mac,
+				stads->staAddr, stads->assocId,
+				&session_entry->dph.dphHashTable);
+skip:
+			lim_release_peer_idx(p_mac,
+				(aid + i * (sizeof(uint32_t) << 3)),
+				session_entry);
+			CLEAR_BIT(session_entry->peerAIDBitmap[i], aid);
+		}
+	}
+}
+
+/**
  * lim_delete_tdls_peers() - delete tdls peers
  *
  * @mac_ctx - global MAC context
@@ -3380,59 +3441,49 @@ lim_tdls_link_establish_error:
 tSirRetStatus lim_delete_tdls_peers(tpAniSirGlobal mac_ctx,
 				    tpPESession session_entry)
 {
-	tpDphHashNode stads = NULL;
-	int i, aid;
-	size_t aid_bitmap_size = sizeof(session_entry->peerAIDBitmap);
-	struct qdf_mac_addr mac_addr;
-
 	if (NULL == session_entry) {
 		lim_log(mac_ctx, LOGE, FL("NULL session_entry"));
 		return eSIR_FAILURE;
 	}
 
-	/*
-	 * Check all the set bit in peerAIDBitmap and delete the peer
-	 * (with that aid) entry from the hash table and add the aid
-	 * in free pool
-	 */
-	lim_log(mac_ctx, LOGE, FL("Delete all the TDLS peer connected."));
-	for (i = 0; i < aid_bitmap_size / sizeof(uint32_t); i++) {
-		for (aid = 0; aid < (sizeof(uint32_t) << 3); aid++) {
-			if (!CHECK_BIT(session_entry->peerAIDBitmap[i], aid))
-				continue;
-			stads = dph_get_hash_entry(mac_ctx,
-					(aid + i * (sizeof(uint32_t) << 3)),
-					&session_entry->dph.dphHashTable);
-
-			if (NULL != stads) {
-				lim_log(mac_ctx, LOGE,
-					FL("Deleting "MAC_ADDRESS_STR),
-					MAC_ADDR_ARRAY(stads->staAddr));
-
-				lim_send_deauth_mgmt_frame(mac_ctx,
-					eSIR_MAC_DEAUTH_LEAVING_BSS_REASON,
-					stads->staAddr, session_entry, false);
-
-				/* Delete TDLS peer */
-				qdf_mem_copy(mac_addr.bytes, stads->staAddr,
-						QDF_MAC_ADDR_SIZE);
-
-				lim_tdls_del_sta(mac_ctx, mac_addr,
-						session_entry, false);
-
-				dph_delete_hash_entry(mac_ctx,
-					stads->staAddr, stads->assocId,
-					&session_entry->dph.dphHashTable);
-			}
-			lim_release_peer_idx(mac_ctx,
-				(aid + i * (sizeof(uint32_t) << 3)),
-				session_entry);
-			CLEAR_BIT(session_entry->peerAIDBitmap[i], aid);
-		}
-	}
+	lim_check_aid_and_delete_peer(mac_ctx, session_entry);
 	if (lim_is_roam_synch_in_progress(session_entry))
 		return eSIR_SUCCESS;
 	lim_send_sme_tdls_delete_all_peer_ind(mac_ctx, session_entry);
+
+	return eSIR_SUCCESS;
+}
+
+/**
+ * lim_process_sme_del_all_tdls_peers(): process delete tdls peers
+ * @p_mac: pointer to mac context
+ * @msg_buf: message buffer
+ *
+ * This function processes request to delete tdls peers
+ *
+ * Return: Success: eSIR_SUCCESS Failure: Error value
+ */
+tSirRetStatus lim_process_sme_del_all_tdls_peers(tpAniSirGlobal p_mac,
+						 uint32_t *msg_buf)
+{
+	struct sir_del_all_tdls_peers *msg;
+	tpPESession session_entry;
+	uint8_t session_id;
+
+	msg = (struct sir_del_all_tdls_peers *)msg_buf;
+	if (msg == NULL) {
+		lim_log(p_mac, LOGE, FL("NULL msg"));
+		return eSIR_FAILURE;
+	}
+
+	session_entry = pe_find_session_by_bssid(p_mac,
+						 msg->bssid.bytes, &session_id);
+	if (NULL == session_entry) {
+		lim_log(p_mac, LOGE, FL("NULL psessionEntry"));
+		return eSIR_FAILURE;
+	}
+
+	lim_check_aid_and_delete_peer(p_mac, session_entry);
 
 	return eSIR_SUCCESS;
 }
