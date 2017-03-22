@@ -1347,10 +1347,10 @@ struct wmi_unified {
 	struct wmi_ops *ops;
 	bool use_cookie;
 	bool wmi_stopinprogress;
+	uint32_t *wmi_events;
 #ifndef CONFIG_MCL
 	/* WMI service bitmap recieved from target */
 	uint32_t *wmi_service_bitmap;
-	uint32_t *wmi_events;
 	uint32_t *pdev_param;
 	uint32_t *vdev_param;
 	uint32_t *services;
@@ -1374,10 +1374,10 @@ struct wmi_soc {
 	HTC_ENDPOINT_ID wmi_endpoint_id[WMI_MAX_RADIOS];
 	uint16_t max_msg_len[WMI_MAX_RADIOS];
 	struct wmi_ops *ops;
+	uint32_t wmi_events[wmi_events_max];
 #ifndef CONFIG_MCL
 	/* WMI service bitmap recieved from target */
 	uint32_t wmi_service_bitmap[wmi_services_max];
-	uint32_t wmi_events[wmi_events_max];
 	uint32_t pdev_param[wmi_pdev_param_max];
 	uint32_t vdev_param[wmi_vdev_param_max];
 	uint32_t services[wmi_services_max];
