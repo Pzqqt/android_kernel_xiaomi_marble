@@ -56,13 +56,13 @@
   Preprocessor definitions and constants
   ------------------------------------------------------------------------*/
 
-#define SME_SUMMARY_STATS         1
-#define SME_GLOBAL_CLASSA_STATS   2
-#define SME_GLOBAL_CLASSB_STATS   4
-#define SME_GLOBAL_CLASSC_STATS   8
-#define SME_GLOBAL_CLASSD_STATS  16
-#define SME_PER_STA_STATS        32
-#define SME_PER_CHAIN_RSSI_STATS 64
+#define SME_SUMMARY_STATS         (1 << eCsrSummaryStats)
+#define SME_GLOBAL_CLASSA_STATS   (1 << eCsrGlobalClassAStats)
+#define SME_GLOBAL_CLASSB_STATS   (1 << eCsrGlobalClassBStats)
+#define SME_GLOBAL_CLASSC_STATS   (1 << eCsrGlobalClassCStats)
+#define SME_GLOBAL_CLASSD_STATS   (1 << eCsrGlobalClassDStats)
+#define SME_PER_STA_STATS         (1 << eCsrPerStaStats)
+#define SME_PER_CHAIN_RSSI_STATS  (1 << csr_per_chain_rssi_stats)
 
 #define SME_SESSION_ID_ANY        50
 
