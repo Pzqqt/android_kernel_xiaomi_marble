@@ -330,6 +330,17 @@ struct wlan_lmac_if_wifi_pos_tx_ops {
 };
 #endif
 
+#ifdef WLAN_FEATURE_NAN_CONVERGENCE
+/**
+ * struct wlan_lmac_if_nan_tx_ops - structure of firwware tx function
+ * pointers for nan component
+ * @data_req_tx: function pointer to send nan req to firmware
+ */
+struct wlan_lmac_if_nan_tx_ops {
+	QDF_STATUS (*nan_req_tx)(struct wlan_objmgr_vdev *vdev, void *req);
+};
+#endif
+
 /**
  * struct wlan_lmac_if_tx_ops - south bound tx function pointers
  * @mgmt_txrx_tx_ops: mgmt txrx tx ops
@@ -359,6 +370,9 @@ struct wlan_lmac_if_tx_ops {
 #endif
 #ifdef WIFI_POS_CONVERGED
 	struct wlan_lmac_if_wifi_pos_tx_ops wifi_pos_tx_ops;
+#endif
+#ifdef WLAN_FEATURE_NAN_CONVERGENCE
+	struct wlan_lmac_if_nan_tx_ops nan_tx_ops;
 #endif
 };
 
@@ -539,6 +553,17 @@ struct wlan_lmac_if_wifi_pos_rx_ops {
 };
 #endif
 
+#ifdef WLAN_FEATURE_NAN_CONVERGENCE
+/**
+ * struct wlan_lmac_if_nan_rx_ops - structure of rx function
+ * pointers for nan component
+ * @oem_rsp_event_rx: callback for WMI_OEM_RESPONSE_EVENTID
+ */
+struct wlan_lmac_if_nan_rx_ops {
+	int (*nan_event_rx)(struct wlan_objmgr_vdev *vdev, void *ev);
+};
+#endif
+
 /**
  * struct wlan_lmac_if_rx_ops - south bound rx function pointers
  * @arg1
@@ -566,6 +591,9 @@ struct wlan_lmac_if_rx_ops {
 #endif
 #ifdef WIFI_POS_CONVERGED
 	struct wlan_lmac_if_wifi_pos_rx_ops wifi_pos_rx_ops;
+#endif
+#ifdef WLAN_FEATURE_NAN_CONVERGENCE
+	struct wlan_lmac_if_nan_rx_ops nan_rx_ops;
 #endif
 };
 

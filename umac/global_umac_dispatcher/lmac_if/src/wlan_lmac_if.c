@@ -28,6 +28,9 @@
 #ifdef WIFI_POS_CONVERGED
 #include "target_if_wifi_pos.h"
 #endif /* WIFI_POS_CONVERGED */
+#ifdef WLAN_FEATURE_NAN_CONVERGENCE
+#include "target_if_nan.h"
+#endif /* WLAN_FEATURE_NAN_CONVERGENCE */
 
 /* Function pointer for OL/WMA specific UMAC tx_ops
  * registration.
@@ -106,6 +109,17 @@ static void wlan_lmac_if_umac_rx_ops_register_wifi_pos(
 }
 #endif /* WIFI_POS_CONVERGED */
 
+#ifdef WLAN_FEATURE_NAN_CONVERGENCE
+static void wlan_lmac_if_register_nan_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+	target_if_nan_register_rx_ops(rx_ops);
+}
+#else
+static void wlan_lmac_if_register_nan_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+}
+#endif /* WLAN_FEATURE_NAN_CONVERGENCE */
+
 /**
  * wlan_lmac_if_umac_rx_ops_register() - UMAC rx handler register
  * @rx_ops: Pointer to rx_ops structure to be populated
@@ -147,6 +161,8 @@ wlan_lmac_if_umac_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 
 	/* wifi_pos rx ops */
 	wlan_lmac_if_umac_rx_ops_register_wifi_pos(rx_ops);
+
+	wlan_lmac_if_register_nan_rx_ops(rx_ops);
 
 	return QDF_STATUS_SUCCESS;
 }

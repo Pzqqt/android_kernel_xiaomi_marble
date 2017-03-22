@@ -37,6 +37,10 @@
 #include "target_if_wifi_pos.h"
 #endif
 
+#ifdef WLAN_FEATURE_NAN_CONVERGENCE
+#include "target_if_nan.h"
+#endif /* WLAN_FEATURE_NAN_CONVERGENCE */
+
 static struct target_if_ctx *g_target_if_ctx;
 
 struct target_if_ctx *target_if_get_ctx()
@@ -117,6 +121,19 @@ static void target_if_wifi_pos_tx_ops_register(
 }
 #endif
 
+#ifdef WLAN_FEATURE_NAN_CONVERGENCE
+static void target_if_nan_tx_ops_register(
+				struct wlan_lmac_if_tx_ops *tx_ops)
+{
+	target_if_nan_register_tx_ops(tx_ops);
+}
+#else
+static void target_if_nan_tx_ops_register(
+				struct wlan_lmac_if_tx_ops *tx_ops)
+{
+}
+#endif /* WLAN_FEATURE_NAN_CONVERGENCE */
+
 static
 QDF_STATUS target_if_register_umac_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {
@@ -126,6 +143,9 @@ QDF_STATUS target_if_register_umac_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	target_if_atf_tx_ops_register(tx_ops);
 
 	target_if_wifi_pos_tx_ops_register(tx_ops);
+
+	target_if_nan_tx_ops_register(tx_ops);
+
 	/* Converged UMAC components to register their TX-ops here */
 	return QDF_STATUS_SUCCESS;
 }
