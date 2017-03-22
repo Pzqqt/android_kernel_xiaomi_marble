@@ -17091,6 +17091,23 @@ static void populate_pdev_param_tlv(uint32_t *pdev_param)
 	pdev_param[wmi_pdev_param_en_stats] = WMI_UNAVAILABLE_PARAM;
 	pdev_param[wmi_pdev_param_mesh_mcast_enable] =
 					WMI_PDEV_PARAM_MESH_MCAST_ENABLE;
+	pdev_param[wmi_pdev_param_set_promisc_mode_cmdid] =
+					WMI_PDEV_PARAM_SET_PROMISC_MODE_CMDID;
+	pdev_param[wmi_pdev_param_set_ppdu_duration_cmdid] =
+					WMI_PDEV_PARAM_SET_PPDU_DURATION_CMDID;
+	pdev_param[wmi_pdev_param_igmpmld_ac_override] =
+					WMI_PDEV_PARAM_IGMPMLD_AC_OVERRIDE;
+	pdev_param[wmi_pdev_param_remove_mcast2ucast_buffer] =
+				WMI_PDEV_PARAM_REMOVE_MCAST2UCAST_BUFFER;
+	pdev_param[wmi_pdev_param_set_mcast2ucast_buffer] =
+				WMI_PDEV_PARAM_SET_MCAST2UCAST_BUFFER;
+	pdev_param[wmi_pdev_param_set_mcast2ucast_mode] =
+				WMI_PDEV_PARAM_SET_MCAST2UCAST_MODE;
+	pdev_param[wmi_pdev_param_smart_antenna_default_antenna] =
+				WMI_PDEV_PARAM_SMART_ANTENNA_DEFAULT_ANTENNA;
+	pdev_param[wmi_pdev_param_fast_channel_reset] =
+				WMI_PDEV_PARAM_FAST_CHANNEL_RESET;
+	pdev_param[wmi_pdev_param_rx_decap_mode] = WMI_PDEV_PARAM_RX_DECAP_MODE;
 }
 
 /**
