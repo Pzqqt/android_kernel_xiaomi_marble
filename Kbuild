@@ -167,6 +167,7 @@ ifeq ($(KERNEL_BUILD), 0)
 	ifneq ($(CONFIG_MOBILE_ROUTER), y)
 		#Flag to enable NAN Data path
 		CONFIG_WLAN_FEATURE_NAN_DATAPATH := y
+		CONFIG_NAN_CONVERGENCE := n
 	endif
 
 	#Flag to enable Linux QCMBR feature as default feature
@@ -1116,6 +1117,26 @@ WIFI_POS_OBJS := $(WIFI_POS_CORE_DIR)/wifi_pos_api.o \
 		 $(WIFI_POS_TGT_DIR)/target_if_wifi_pos.o
 endif
 
+######################### NAN #########################
+NAN_CORE_DIR := $(WLAN_COMMON_ROOT)/umac/nan/core/src
+NAN_CORE_INC := -I$(WLAN_COMMON_INC)/umac/nan/core/inc
+NAN_UCFG_DIR := $(WLAN_COMMON_ROOT)/umac/nan/dispatcher/src
+NAN_UCFG_INC := -I$(WLAN_COMMON_INC)/umac/nan/dispatcher/inc
+NAN_TGT_DIR  := $(WLAN_COMMON_ROOT)/target_if/nan/src
+NAN_TGT_INC  := -I$(WLAN_COMMON_INC)/target_if/nan/inc
+NAN_OS_IF_DIR  := $(WLAN_COMMON_ROOT)/os_if/linux/nan/src
+NAN_OS_IF_INC  := -I$(WLAN_COMMON_INC)/os_if/linux/nan/inc
+
+ifeq ($(CONFIG_NAN_CONVERGENCE), y)
+WLAN_NAN_OBJS := $(NAN_CORE_DIR)/nan_main.o \
+		 $(NAN_CORE_DIR)/nan_api.o \
+		 $(NAN_CORE_DIR)/nan_utils.o \
+		 $(NAN_UCFG_DIR)/nan_ucfg_api.o \
+		 $(NAN_TGT_DIR)/target_if_nan.o \
+		 $(NAN_OS_IF_DIR)/os_if_nan.o
+endif
+#######################################################
+
 ############## HTC ##########
 HTC_DIR := htc
 HTC_INC := -I$(WLAN_COMMON_INC)/$(HTC_DIR)
@@ -1355,6 +1376,12 @@ INCS +=		$(WIFI_POS_TGT_INC)
 INCS +=		$(WIFI_POS_OS_IF_INC)
 ##########################################
 
+################ NAN POS ################
+INCS +=		$(NAN_CORE_INC)
+INCS +=		$(NAN_UCFG_INC)
+INCS +=		$(NAN_TGT_INC)
+INCS +=		$(NAN_OS_IF_INC)
+##########################################
 INCS +=		$(UMAC_OBJMGR_INC)
 INCS +=		$(UMAC_MGMT_TXRX_INC)
 INCS +=		$(PMO_INC)
@@ -1414,6 +1441,7 @@ endif
 
 OBJS +=		$(UMAC_OBJMGR_OBJS)
 OBJS +=		$(WIFI_POS_OBJS)
+OBJS +=		$(WLAN_NAN_OBJS)
 OBJS +=		$(UMAC_MGMT_TXRX_OBJS)
 OBJS +=		$(PMO_OBJS)
 OBJS +=		$(UMAC_P2P_OBJS)
@@ -1991,6 +2019,10 @@ endif
 
 ifeq ($(CONFIG_WLAN_FEATURE_NAN_DATAPATH), y)
 CDEFINES += -DWLAN_FEATURE_NAN_DATAPATH
+endif
+
+ifeq ($(CONFIG_NAN_CONVERGENCE), y)
+CDEFINES += -DWLAN_FEATURE_NAN_CONVERGENCE
 endif
 
 ifeq ($(CONFIG_LITHIUM),y)
