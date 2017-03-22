@@ -29,7 +29,7 @@
 #include "target_if_atf.h"
 #endif
 
-#ifdef WLAN_P2P_ENABLE
+#ifdef CONVERGED_P2P_ENABLE
 #include "target_if_p2p.h"
 #endif
 
@@ -145,7 +145,7 @@ QDF_STATUS target_if_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	/* Components parallel to UMAC to register their TX-ops here */
 	target_if_pmo_register_tx_ops_req(tx_ops);
 
-#ifdef WLAN_P2P_ENABLE
+#ifdef CONVERGED_P2P_ENABLE
 	/* Converged UMAC components to register P2P TX-ops */
 	target_if_p2p_register_tx_ops(tx_ops);
 #endif

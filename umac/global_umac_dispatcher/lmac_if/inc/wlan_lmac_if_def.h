@@ -202,7 +202,7 @@ struct wlan_lmac_if_pmo_tx_ops {
 };
 #endif
 
-#ifdef WLAN_P2P_ENABLE
+#ifdef CONVERGED_P2P_ENABLE
 
 /* forward declarations for p2p tx ops */
 struct p2p_ps_config;
@@ -333,7 +333,7 @@ struct wlan_lmac_if_tx_ops {
 #ifdef WLAN_PMO_ENABLE
 	 struct wlan_lmac_if_pmo_tx_ops pmo_tx_ops;
 #endif
-#ifdef WLAN_P2P_ENABLE
+#ifdef CONVERGED_P2P_ENABLE
 	struct wlan_lmac_if_p2p_tx_ops p2p;
 #endif
 #ifdef WLAN_ATF_ENABLE
@@ -391,7 +391,7 @@ struct wlan_lmac_if_pmo_rx_ops {
 };
 #endif
 
-#ifdef WLAN_P2P_ENABLE
+#ifdef CONVERGED_P2P_ENABLE
 
 /* forward declarations for p2p rx ops */
 struct p2p_noa_info;
@@ -525,7 +525,7 @@ struct wlan_lmac_if_rx_ops {
 #ifdef WLAN_PMO_ENABLE
 	 struct wlan_lmac_if_pmo_rx_ops pmo_rx_ops;
 #endif
-#ifdef WLAN_P2P_ENABLE
+#ifdef CONVERGED_P2P_ENABLE
 	struct wlan_lmac_if_p2p_rx_ops p2p;
 #endif
 #ifdef WLAN_ATF_ENABLE
