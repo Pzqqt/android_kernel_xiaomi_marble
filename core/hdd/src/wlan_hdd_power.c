@@ -1246,6 +1246,7 @@ QDF_STATUS hdd_wlan_shutdown(void)
 	hdd_context_t *pHddCtx;
 	p_cds_sched_context cds_sched_context = NULL;
 	QDF_STATUS qdf_status;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	hdd_alert("WLAN driver shutting down!");
 
@@ -1280,7 +1281,8 @@ QDF_STATUS hdd_wlan_shutdown(void)
 	hdd_reset_all_adapters(pHddCtx);
 
 	/* Flush cached rx frame queue */
-	ol_txrx_flush_cache_rx_queue();
+	if (soc)
+		cdp_flush_cache_rx_queue(soc);
 
 	/* De-register the HDD callbacks */
 	hdd_deregister_cb(pHddCtx);
