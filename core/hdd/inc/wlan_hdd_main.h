@@ -69,7 +69,12 @@
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_objmgr_peer_obj.h>
 #include "wlan_pmo_ucfg_api.h"
-
+#ifdef WIFI_POS_CONVERGED
+#include "os_if_wifi_pos.h"
+#include "wifi_pos_api.h"
+#else
+#include "wlan_hdd_oemdata.h"
+#endif
 /*
  * Preprocessor definitions and constants
  */
@@ -2218,6 +2223,7 @@ void wlan_hdd_init_chan_info(hdd_context_t *hdd_ctx);
  */
 void wlan_hdd_deinit_chan_info(hdd_context_t *hdd_ctx);
 void wlan_hdd_start_sap(hdd_adapter_t *ap_adapter, bool reinit);
+
 /**
  * hdd_check_for_opened_interfaces()- Check for interface up
  * @hdd_ctx: HDD context
@@ -2228,4 +2234,57 @@ void wlan_hdd_start_sap(hdd_adapter_t *ap_adapter, bool reinit);
  * Return: 0 if interface was opened else false
  */
 bool hdd_check_for_opened_interfaces(hdd_context_t *hdd_ctx);
+
+#ifdef WIFI_POS_CONVERGED
+/**
+ * hdd_send_peer_status_ind_to_app() - wrapper to call legacy or new wifi_pos
+ * function to send peer status to a registered application
+ * @peer_mac: MAC address of peer
+ * @peer_status: ePeerConnected or ePeerDisconnected
+ * @peer_timing_meas_cap: 0: RTT/RTT2, 1: RTT3. Default is 0
+ * @sessionId: SME session id, i.e. vdev_id
+ * @chan_info: operating channel information
+ * @dev_mode: dev mode for which indication is sent
+ *
+ * Return: none
+ */
+static inline void hdd_send_peer_status_ind_to_app(
+					struct qdf_mac_addr *peer_mac,
+					uint8_t peer_status,
+					uint8_t peer_timing_meas_cap,
+					uint8_t sessionId,
+					tSirSmeChanInfo *chan_info,
+					enum tQDF_ADAPTER_MODE dev_mode)
+{
+	struct wifi_pos_ch_info ch_info;
+
+	ch_info.chan_id = chan_info->chan_id;
+	ch_info.mhz = chan_info->mhz;
+	ch_info.band_center_freq1 = chan_info->band_center_freq1;
+	ch_info.band_center_freq2 = chan_info->band_center_freq2;
+	ch_info.info = chan_info->info;
+	ch_info.reg_info_1 = chan_info->reg_info_1;
+	ch_info.reg_info_2 = chan_info->reg_info_2;
+	ch_info.nss = chan_info->nss;
+	ch_info.rate_flags = chan_info->rate_flags;
+	ch_info.sec_ch_offset = chan_info->sec_ch_offset;
+	ch_info.ch_width = chan_info->ch_width;
+	os_if_wifi_pos_send_peer_status(peer_mac, peer_status,
+					peer_timing_meas_cap, sessionId,
+					&ch_info, dev_mode);
+}
+#else
+static inline void hdd_send_peer_status_ind_to_app(
+					struct qdf_mac_addr *peer_mac,
+					uint8_t peer_status,
+					uint8_t peer_timing_meas_cap,
+					uint8_t sessionId,
+					tSirSmeChanInfo *chan_info,
+					enum tQDF_ADAPTER_MODE dev_mode)
+{
+	hdd_send_peer_status_ind_to_oem_app(peer_mac, peer_status,
+			peer_timing_meas_cap, sessionId, chan_info, dev_mode);
+}
+#endif /* WIFI_POS_CONVERGENCE */
+
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

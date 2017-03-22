@@ -1207,7 +1207,7 @@ static void hdd_send_association_event(struct net_device *dev,
 		}
 #endif
 	if (eConnectionState_Associated == pHddStaCtx->conn_info.connState) {
-		tSirSmeChanInfo chan_info;
+		tSirSmeChanInfo chan_info = {0};
 
 		if (!pCsrRoamInfo) {
 			hdd_err("STA in associated state but pCsrRoamInfo is null");
@@ -1287,13 +1287,11 @@ static void hdd_send_association_event(struct net_device *dev,
 					peerMacAddr.bytes);
 
 		/* send peer status indication to oem app */
-		hdd_send_peer_status_ind_to_oem_app(&peerMacAddr,
-							ePeerConnected,
-							pCsrRoamInfo->
-							timingMeasCap,
-							pAdapter->sessionId,
-							&chan_info,
-							pAdapter->device_mode);
+		hdd_send_peer_status_ind_to_app(&peerMacAddr,
+						ePeerConnected,
+						pCsrRoamInfo->timingMeasCap,
+						pAdapter->sessionId, &chan_info,
+						pAdapter->device_mode);
 		/* Update tdls module about connection event */
 		wlan_hdd_tdls_notify_connect(pAdapter, pCsrRoamInfo);
 
@@ -1347,7 +1345,7 @@ static void hdd_send_association_event(struct net_device *dev,
 					 &pHddStaCtx->conn_info.bssId);
 
 			/* send peer status indication to oem app */
-			hdd_send_peer_status_ind_to_oem_app(&peerMacAddr,
+			hdd_send_peer_status_ind_to_app(&peerMacAddr,
 							ePeerDisconnected, 0,
 							pAdapter->sessionId,
 							NULL,

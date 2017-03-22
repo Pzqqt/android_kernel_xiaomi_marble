@@ -388,8 +388,8 @@ extern QDF_STATUS sme_register_oem_data_rsp_callback(tHalHandle h_hal,
 void sme_deregister_oem_data_rsp_callback(tHalHandle h_hal);
 
 #else
-static inline QDF_STATUS sme_register_oem_data_rsp_callback(tHalHandle h_hal,
-		sme_send_oem_data_rsp_msg callback)
+static inline QDF_STATUS sme_register_oem_data_rsp_callback(tHalHandle hal,
+		void *callback)
 {
 	return QDF_STATUS_SUCCESS;
 }

@@ -4512,7 +4512,6 @@ void  sme_deregister_oem_data_rsp_callback(tHalHandle h_hal)
 
 	pmac->sme.oem_data_rsp_callback = NULL;
 }
-#endif
 
 /**
  * sme_oem_update_capability() - update UMAC's oem related capability.
@@ -4567,6 +4566,7 @@ QDF_STATUS sme_oem_get_capability(tHalHandle hal,
 
 	return status;
 }
+#endif
 
 /**
  * sme_register_ftm_msg_processor() - registers hdd ftm message processor
