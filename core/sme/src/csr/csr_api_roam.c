@@ -205,8 +205,10 @@ static QDF_STATUS csr_roam_start_roaming_timer(tpAniSirGlobal pMac,
 static QDF_STATUS csr_roam_stop_roaming_timer(tpAniSirGlobal pMac,
 					      uint32_t sessionId);
 static void csr_roam_roaming_timer_handler(void *pv);
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 static void csr_roam_roaming_offload_timer_action(tpAniSirGlobal mac_ctx,
 		uint32_t interval, uint8_t session_id, uint8_t action);
+#endif
 static void csr_roam_roaming_offload_timeout_handler(void *timer_data);
 static QDF_STATUS csr_roam_start_wait_for_key_timer(tpAniSirGlobal pMac,
 						uint32_t interval);
@@ -11919,6 +11921,7 @@ void csr_roam_wait_for_key_time_out_handler(void *pv)
 
 }
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * csr_roam_roaming_offload_timer_action() - API to start/stop the timer
  * @mac_ctx: MAC Context
@@ -11959,6 +11962,7 @@ void csr_roam_roaming_offload_timer_action(tpAniSirGlobal mac_ctx,
 		qdf_mc_timer_stop(&csr_session->roaming_offload_timer);
 
 }
+#endif
 
 static QDF_STATUS csr_roam_start_wait_for_key_timer(tpAniSirGlobal pMac,
 							uint32_t interval)
