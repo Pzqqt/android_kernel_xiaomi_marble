@@ -35,6 +35,7 @@
 #include "sme_nan_datapath.h"
 #include "wlan_hdd_object_manager.h"
 #include <qca_vendor.h>
+#include "os_if_nan.h"
 
 #ifndef WLAN_FEATURE_NAN_CONVERGENCE
 /* NLA policy */
@@ -1833,6 +1834,44 @@ void hdd_ndp_event_handler(hdd_adapter_t *adapter,
  *
  * Return: 0 on success, negative errno on failure
  */
+#ifdef WLAN_FEATURE_NAN_CONVERGENCE
+static int __wlan_hdd_cfg80211_process_ndp_cmd(struct wiphy *wiphy,
+	struct wireless_dev *wdev, const void *data, int data_len)
+{
+	int ret_val;
+	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+
+	ENTER();
+
+	ret_val = wlan_hdd_validate_context(hdd_ctx);
+	if (ret_val)
+		return ret_val;
+
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+		hdd_err("Command not allowed in FTM mode");
+		return -EPERM;
+	}
+
+	if (!WLAN_HDD_IS_NDP_ENABLED(hdd_ctx)) {
+		hdd_err("NAN datapath is not enabled");
+		return -EPERM;
+	}
+	/* NAN data path coexists only with STA interface */
+	if (false == hdd_is_ndp_allowed(hdd_ctx)) {
+		hdd_err("Unsupported concurrency for NAN datapath");
+		return -EPERM;
+	}
+
+	/* NAN data path coexists only with STA interface */
+	if (false == hdd_is_ndp_allowed(hdd_ctx)) {
+		hdd_err("Unsupported concurrency for NAN datapath");
+		return -EPERM;
+	}
+
+	return os_if_nan_process_ndp_cmd(hdd_ctx->hdd_psoc,
+					 data, data_len);
+}
+#else
 static int __wlan_hdd_cfg80211_process_ndp_cmd(struct wiphy *wiphy,
 	struct wireless_dev *wdev, const void *data, int data_len)
 {
@@ -1911,6 +1950,7 @@ static int __wlan_hdd_cfg80211_process_ndp_cmd(struct wiphy *wiphy,
 
 	return ret_val;
 }
+#endif
 
 /**
  * wlan_hdd_cfg80211_process_ndp_cmd() - handle NDP request
