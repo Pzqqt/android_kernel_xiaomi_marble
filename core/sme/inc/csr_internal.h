@@ -44,8 +44,6 @@
 
 #include "sir_types.h"
 
-#define CSR_MAX_STA (HAL_NUM_STA)
-
 /* define scan return criteria. LIM should use these define as well */
 #define CSR_SCAN_RETURN_AFTER_ALL_CHANNELS          (0)
 #define CSR_SCAN_RETURN_AFTER_FIRST_MATCH           (0x01)
@@ -229,7 +227,6 @@ typedef enum {
 	eCsrGlobalClassBStats,
 	eCsrGlobalClassCStats,
 	eCsrGlobalClassDStats,
-	eCsrPerStaStats,
 	csr_per_chain_rssi_stats,
 	eCsrMaxStats
 } eCsrRoamStatsClassTypes;
@@ -1016,7 +1013,6 @@ typedef struct tagCsrRoamStruct {
 	tCsrGlobalClassBStatsInfo classBStatsInfo;
 	tCsrGlobalClassCStatsInfo classCStatsInfo;
 	tCsrGlobalClassDStatsInfo classDStatsInfo;
-	tCsrPerStaStatsInfo perStaStatsInfo[CSR_MAX_STA];
 	struct csr_per_chain_rssi_stats_info  per_chain_rssi_stats;
 	tDblLinkList statsClientReqList;
 	tDblLinkList peStatsReqList;

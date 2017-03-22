@@ -1555,12 +1555,6 @@ typedef struct tagCsrGlobalClassDStatsInfo {
 
 } tCsrGlobalClassDStatsInfo;
 
-typedef struct tagCsrPerStaStatsInfo {
-	uint32_t tx_frag_cnt[4];
-	uint32_t tx_ampdu_cnt;
-	uint32_t tx_mpdu_in_ampdu_cnt;
-} tCsrPerStaStatsInfo;
-
 /**
  * struct csr_per_chain_rssi_stats_info - stores chain rssi
  * @rssi: array containing rssi for all chains
