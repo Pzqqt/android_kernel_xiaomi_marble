@@ -1832,14 +1832,14 @@ next_adapter:
 
 	/* Suspend control path scheduler */
 	scheduler_register_hdd_suspend_callback(hdd_suspend_cb);
-	scheduler_set_event_mask(MC_SUSPEND_EVENT_MASK);
+	scheduler_set_event_mask(MC_SUSPEND_EVENT);
 	scheduler_wake_up_controller_thread();
 
 	/* Wait for suspend confirmation from scheduler */
 	rc = wait_for_completion_timeout(&pHddCtx->mc_sus_event_var,
 		msecs_to_jiffies(WLAN_WAIT_TIME_MCTHREAD_SUSPEND));
 	if (!rc) {
-		scheduler_clear_event_mask(MC_SUSPEND_EVENT_MASK);
+		scheduler_clear_event_mask(MC_SUSPEND_EVENT);
 		hdd_err("Failed to stop mc thread");
 		goto resume_tx;
 	}
@@ -1847,14 +1847,14 @@ next_adapter:
 
 #ifdef QCA_CONFIG_SMP
 	/* Suspend tlshim rx thread */
-	set_bit(RX_SUSPEND_EVENT_MASK, &cds_sched_context->ol_rx_event_flag);
+	set_bit(RX_SUSPEND_EVENT, &cds_sched_context->ol_rx_event_flag);
 	wake_up_interruptible(&cds_sched_context->ol_rx_wait_queue);
 	rc = wait_for_completion_timeout(&cds_sched_context->
 					 ol_suspend_rx_event,
 					 msecs_to_jiffies
 						 (RX_TLSHIM_SUSPEND_TIMEOUT));
 	if (!rc) {
-		clear_bit(RX_SUSPEND_EVENT_MASK,
+		clear_bit(RX_SUSPEND_EVENT,
 			  &cds_sched_context->ol_rx_event_flag);
 		hdd_err("Failed to stop tl_shim rx thread");
 		goto resume_all;
