@@ -4727,8 +4727,10 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 	pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD, TRACE_CODE_HDD_RX_SME_MSG,
-				pAdapter->sessionId, roamStatus));
+	/* Omitting eCSR_ROAM_UPDATE_SCAN_RESULT as this is too frequent */
+	if (eCSR_ROAM_UPDATE_SCAN_RESULT != roamStatus)
+		MTRACE(qdf_trace(QDF_MODULE_ID_HDD, TRACE_CODE_HDD_RX_SME_MSG,
+				 pAdapter->sessionId, roamStatus));
 
 	switch (roamStatus) {
 	case eCSR_ROAM_SESSION_OPENED:

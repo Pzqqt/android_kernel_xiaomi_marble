@@ -1312,8 +1312,9 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 	 * SME enums (eWNI_SME_START_REQ) starts with 0x16xx.
 	 * Compare received SME events with SIR_SME_MODULE_ID
 	 */
-	if (SIR_SME_MODULE_ID ==
-	    (uint8_t)MAC_TRACE_GET_MODULE_ID(msg->type)) {
+	if ((SIR_SME_MODULE_ID ==
+	    (uint8_t)MAC_TRACE_GET_MODULE_ID(msg->type)) &&
+	    (msg->type != eWNI_SME_REGISTER_MGMT_FRAME_REQ)) {
 		MTRACE(mac_trace(mac_ctx, TRACE_CODE_RX_SME_MSG,
 				 NO_SESSION, msg->type));
 	} else {
@@ -1323,7 +1324,8 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 		 * if these are also logged
 		 */
 		if (msg->type != SIR_CFG_PARAM_UPDATE_IND &&
-		    msg->type != SIR_BB_XPORT_MGMT_MSG)
+		    msg->type != SIR_BB_XPORT_MGMT_MSG &&
+		    msg->type != WMA_RX_SCAN_EVENT)
 			MTRACE(mac_trace_msg_rx(mac_ctx, NO_SESSION,
 				LIM_TRACE_MAKE_RXMSG(msg->type,
 				LIM_MSG_PROCESSED));)
