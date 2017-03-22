@@ -37,12 +37,6 @@ struct wireless_dev;
 #define NAN_SOCIAL_CHANNEL_5GHZ_LOWER_BAND 44
 #define NAN_SOCIAL_CHANNEL_5GHZ_UPPER_BAND 149
 
-#define NDP_APP_INFO_LEN 255
-#define NDP_QOS_INFO_LEN 255
-#define NDP_PMK_LEN 32
-#define NDP_SCID_BUF_LEN 256
-#define NDP_NUM_INSTANCE_ID 255
-
 #define NDP_BROADCAST_STAID           (0)
 
 #ifdef WLAN_FEATURE_NAN_DATAPATH
@@ -55,6 +49,14 @@ struct wireless_dev;
 #define WLAN_HDD_IS_NDI(adapter)	(false)
 #define WLAN_HDD_IS_NDI_CONNECTED(adapter) (false)
 #endif /* WLAN_FEATURE_NAN_DATAPATH */
+
+#ifndef WLAN_FEATURE_NAN_CONVERGENCE
+
+#define NDP_QOS_INFO_LEN 255
+#define NDP_APP_INFO_LEN 255
+#define NDP_PMK_LEN 32
+#define NDP_SCID_BUF_LEN 256
+#define NDP_NUM_INSTANCE_ID 255
 
 /**
  * enum qca_wlan_vendor_attr_ndp_params - vendor attribute parameters
@@ -204,6 +206,7 @@ struct nan_datapath_ctx {
 	uint32_t ndi_delete_rsp_reason;
 	uint32_t ndi_delete_rsp_status;
 };
+#endif
 
 #ifdef WLAN_FEATURE_NAN_DATAPATH
 void hdd_ndp_print_ini_config(struct hdd_context_s *hdd_ctx);

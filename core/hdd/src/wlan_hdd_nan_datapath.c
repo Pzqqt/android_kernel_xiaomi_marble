@@ -36,6 +36,7 @@
 #include "wlan_hdd_object_manager.h"
 #include <qca_vendor.h>
 
+#ifndef WLAN_FEATURE_NAN_CONVERGENCE
 /* NLA policy */
 static const struct nla_policy
 qca_wlan_vendor_ndp_policy[QCA_WLAN_VENDOR_ATTR_NDP_PARAMS_MAX + 1] = {
@@ -69,6 +70,7 @@ qca_wlan_vendor_ndp_policy[QCA_WLAN_VENDOR_ATTR_NDP_PARAMS_MAX + 1] = {
 					NLA_U32 },
 	[QCA_WLAN_VENDOR_ATTR_NDP_DRV_RETURN_VALUE] = { .type = NLA_U32 },
 };
+#endif
 
 /**
  * hdd_ndp_print_ini_config()- Print nan datapath specific INI configuration
@@ -272,7 +274,7 @@ static int hdd_ndi_start_bss(hdd_adapter_t *adapter,
 	return ret;
 }
 
-
+#ifndef WLAN_FEATURE_NAN_CONVERGENCE
 /**
  * hdd_ndi_create_req_handler() - NDI create request handler
  * @hdd_ctx: hdd context
@@ -1812,6 +1814,13 @@ void hdd_ndp_event_handler(hdd_adapter_t *adapter,
 		}
 	}
 }
+#else
+void hdd_ndp_event_handler(hdd_adapter_t *adapter,
+	tCsrRoamInfo *roam_info, uint32_t roam_id, eRoamCmdStatus roam_status,
+	eCsrRoamResult roam_result)
+{
+}
+#endif
 
 /**
  * __wlan_hdd_cfg80211_process_ndp_cmds() - handle NDP request

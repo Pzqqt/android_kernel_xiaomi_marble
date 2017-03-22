@@ -32,6 +32,7 @@
 #include "lim_send_messages.h"
 #include "wma_nan_datapath.h"
 
+#ifndef WLAN_FEATURE_NAN_CONVERGENCE
 /**
  * lim_send_ndp_event_to_sme() - generic function to prepare and send NDP
  * message to SME.
@@ -61,6 +62,7 @@ static void lim_send_ndp_event_to_sme(tpAniSirGlobal mac_ctx, uint32_t msg_type,
 	}
 	lim_sys_process_mmh_msg_api(mac_ctx, &mmh_msg, ePROT);
 }
+#endif
 
 /**
  * lim_add_ndi_peer() - Function to add ndi peer
@@ -117,6 +119,7 @@ static QDF_STATUS lim_add_ndi_peer(tpAniSirGlobal mac_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifndef WLAN_FEATURE_NAN_CONVERGENCE
 /**
  * lim_handle_ndp_indication_event() - Function to handle SIR_HAL_NDP_INDICATION
  * event from WMA
@@ -215,6 +218,7 @@ responder_rsp:
 				bodyval ? 0 : sizeof(*rsp_ind), bodyval);
 	return ret_val;
 }
+#endif
 
 /**
  * lim_ndp_delete_peer_by_addr() - Delete NAN data peer, given addr and vdev_id
@@ -346,6 +350,7 @@ static void lim_ndp_delete_peers(tpAniSirGlobal mac_ctx,
 	qdf_mem_free(deleted_peers);
 }
 
+#ifndef WLAN_FEATURE_NAN_CONVERGENCE
 /**
  * lim_ndp_end_indication_handler() - Handler for NDP end indication
  * @mac_ctx: handle to mac context
@@ -380,6 +385,7 @@ static QDF_STATUS lim_ndp_end_indication_handler(tpAniSirGlobal mac_ctx,
 
 	return QDF_STATUS_SUCCESS;
 }
+#endif
 
 /**
  * lim_process_ndi_del_sta_rsp() - Handle WDA_DELETE_STA_RSP in eLIM_NDI_ROLE
@@ -454,6 +460,7 @@ skip_event:
 	lim_msg->bodyptr = NULL;
 }
 
+#ifndef WLAN_FEATURE_NAN_CONVERGENCE
 /**
  * lim_handle_ndp_event_message() - Handler for NDP events/RSP from WMA
  * @mac_ctx: handle to mac structure
@@ -706,6 +713,7 @@ QDF_STATUS lim_handle_ndp_request_message(tpAniSirGlobal mac_ctx,
 	}
 	return status;
 }
+#endif
 
 /**
  * lim_process_ndi_mlm_add_bss_rsp() - Process ADD_BSS response for NDI

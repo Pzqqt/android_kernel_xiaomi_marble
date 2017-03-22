@@ -31,7 +31,7 @@
 #include "sir_api.h"
 #include "sme_nan_datapath.h"
 
-#ifdef WLAN_FEATURE_NAN_DATAPATH
+#if defined(WLAN_FEATURE_NAN_DATAPATH) && !defined(WLAN_FEATURE_NAN_CONVERGENCE)
 #define WMA_IS_VDEV_IN_NDI_MODE(intf, vdev_id) \
 				(WMI_VDEV_TYPE_NDI == intf[vdev_id].type)
 /**

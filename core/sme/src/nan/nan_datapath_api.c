@@ -29,6 +29,7 @@
 #include "csr_internal.h"
 #include "sme_nan_datapath.h"
 
+#ifndef WLAN_FEATURE_NAN_CONVERGENCE
 /**
  * csr_free_ndp_initiator_req() - free resouces from sme command for ndp
  * initiator request
@@ -821,3 +822,4 @@ void csr_release_ndp_data_end_req(tpAniSirGlobal mac_ctx, tSmeCmd *cmd)
 	qdf_mem_free(cmd->u.data_end_req);
 	cmd->u.data_end_req = NULL;
 }
+#endif /* WLAN_FEATURE_NAN_CONVERGENCE */

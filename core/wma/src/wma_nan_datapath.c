@@ -35,6 +35,8 @@
 #include "cdp_txrx_tx_delay.h"
 #include "cdp_txrx_misc.h"
 #include <cdp_txrx_handle.h>
+
+#ifndef WLAN_FEATURE_NAN_CONVERGENCE
 /**
  * wma_handle_ndp_initiator_req() - NDP initiator request handler
  * @wma_handle: wma handle
@@ -1200,4 +1202,4 @@ send_del_rsp:
 		wma_send_msg(wma, WMA_DELETE_STA_RSP, del_sta, 0);
 	}
 }
-
+#endif /* WLAN_FEATURE_NAN_CONVERGENCE */

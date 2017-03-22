@@ -672,7 +672,7 @@ struct hdd_station_ctx {
 	uint8_t broadcast_staid;
 
 	struct hdd_mon_set_ch_info ch_info;
-#ifdef WLAN_FEATURE_NAN_DATAPATH
+#if defined(WLAN_FEATURE_NAN_DATAPATH) && !defined(WLAN_FEATURE_NAN_CONVERGENCE)
 	struct nan_datapath_ctx ndp_ctx;
 #endif
 };
@@ -1173,8 +1173,10 @@ struct hdd_adapter_s {
 #endif
 
 #ifdef WLAN_FEATURE_NAN_DATAPATH
+#ifndef WLAN_FEATURE_NAN_CONVERGENCE
 #define WLAN_HDD_GET_NDP_CTX_PTR(adapter) \
 		(&(adapter)->sessionCtx.station.ndp_ctx)
+#endif /* WLAN_FEATURE_NAN_CONVERGENCE */
 #define WLAN_HDD_IS_NDP_ENABLED(hdd_ctx) ((hdd_ctx)->nan_datapath_enabled)
 #else
 /* WLAN_HDD_GET_NDP_CTX_PTR and WLAN_HDD_GET_NDP_WEXT_STATE_PTR are not defined
