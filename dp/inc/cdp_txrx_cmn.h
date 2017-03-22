@@ -446,6 +446,17 @@ static inline void cdp_set_pdev_dscp_tid_map(ol_txrx_soc_handle soc,
 }
 
 /**
+ * cdp_flush_cache_rx_queue() - flush cache rx queue frame
+ *
+ * Return: None
+ */
+static inline void cdp_flush_cache_rx_queue(ol_txrx_soc_handle soc)
+{
+	if (soc->ops->cmn_drv_ops->flush_cache_rx_queue)
+		soc->ops->cmn_drv_ops->flush_cache_rx_queue();
+}
+
+/**
  * cdp_txrx_stats(): function to map to host and firmware statistics
  * @soc: soc handle
  * @vdev: virtual device

@@ -192,6 +192,7 @@ struct cdp_cmn_ops {
 	void (*set_vdev_dscp_tid_map)(struct cdp_vdev *vdev_handle,
 			uint8_t map_id);
 
+	void (*flush_cache_rx_queue)(void);
 	void (*set_pdev_dscp_tid_map)(struct cdp_pdev *pdev, uint8_t map_id,
 			uint8_t tos, uint8_t tid);
 
