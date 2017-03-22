@@ -3046,17 +3046,16 @@ bool wma_is_hw_sbs_capable(void)
 		return false;
 	}
 
-	WMA_LOGI("%s: SBS service bit map: %d", __func__,
-		WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-		WMI_SERVICE_DUAL_BAND_SIMULTANEOUS_SUPPORT));
-
 	/* The agreement with FW is that: To know if the target is SBS
 	 * capable, SBS needs to be supported both in the HW mode list
 	 * and DBS needs to be supported in the service ready event
 	 */
 	if (!(WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-			WMI_SERVICE_DUAL_BAND_SIMULTANEOUS_SUPPORT)))
+			WMI_SERVICE_DUAL_BAND_SIMULTANEOUS_SUPPORT))) {
+		WMA_LOGE("%s: SBS cannot be supported since DBS is disabled",
+			 __func__);
 		return false;
+	}
 
 	for (i = 0; i < wma->num_dbs_hw_modes; i++) {
 		param = wma->hw_mode.hw_mode_list[i];
@@ -3071,7 +3070,7 @@ bool wma_is_hw_sbs_capable(void)
 	if (found)
 		return true;
 
-	return true;
+	return false;
 }
 
 /*
