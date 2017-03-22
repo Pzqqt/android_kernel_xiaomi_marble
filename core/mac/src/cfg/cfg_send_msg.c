@@ -76,24 +76,17 @@ cfg_send_host_msg(tpAniSirGlobal pMac, uint16_t msgType, uint32_t msgLen,
 	uint32_t *pMsg, *pEnd;
 	struct scheduler_msg mmhMsg = {0};
 
-	/* sanity */
 	if ((paramNum > 0) && (NULL == pParamList)) {
-		PELOGE(cfg_log(pMac, LOGE,
-			       FL
-				       ("pParamList NULL when paramNum greater than 0!"));
-		       )
+		pe_err("pParamList NULL when paramNum greater than 0!");
 		return;
 	}
 	if ((dataLen > 0) && (NULL == pData)) {
-		PELOGE(cfg_log(pMac, LOGE,
-			       FL("pData NULL when dataLen greater than 0!"));
-		       )
+		pe_err("pData NULL when dataLen greater than 0!");
 		return;
 	}
-	/* Allocate message buffer */
 	pMsg = qdf_mem_malloc(msgLen);
 	if (NULL == pMsg) {
-		PELOGE(cfg_log(pMac, LOGE, FL("Memory allocation failure!"));)
+		pe_err("Memory allocation failure!");
 		return;
 	}
 	/* Fill in message details */
@@ -127,7 +120,7 @@ cfg_send_host_msg(tpAniSirGlobal pMac, uint16_t msgType, uint32_t msgLen,
 		break;
 
 	default:
-		PELOGE(cfg_log(pMac, LOGE, FL("Unknown msg %d!"), (int)msgType);)
+		pe_warn("Unknown msg: %d!", (int)msgType);
 		qdf_mem_free(pMsg);
 		return;
 	}
