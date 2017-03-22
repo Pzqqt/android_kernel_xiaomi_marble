@@ -22,6 +22,7 @@
 
 #include "nan_main_i.h"
 #include "wlan_nan_api.h"
+#include "target_if_nan.h"
 #include "nan_public_structs.h"
 #include "wlan_objmgr_cmn.h"
 #include "wlan_objmgr_global_obj.h"
@@ -251,14 +252,20 @@ QDF_STATUS nan_deinit(void)
 
 QDF_STATUS nan_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
-	/* TBD */
+	QDF_STATUS status = target_if_nan_register_events(psoc);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		nan_err("target_if_nan_register_events failed");
 
 	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS nan_psoc_disable(struct wlan_objmgr_psoc *psoc)
 {
-	/* TBD */
+	QDF_STATUS status = target_if_nan_deregister_events(psoc);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		nan_err("target_if_nan_deregister_events failed");
 
 	return QDF_STATUS_SUCCESS;
 }
