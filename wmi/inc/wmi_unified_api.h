@@ -73,11 +73,6 @@ typedef qdf_nbuf_t wmi_buf_t;
 #define WMI_LOGA(args ...)
 #endif
 
-/* wrapper to keep WMI agnostic of event handler execution context */
-#define wmi_unified_register_event(wmi_handle, event_id, handler_func) \
-		wmi_unified_register_event_handler(wmi_handle, \
-		 event_id, handler_func, WMI_RX_UMAC_CTX)
-
 struct wmi_soc;
 /**
  * struct wmi_ops - service callbacks to upper layer
@@ -191,6 +186,21 @@ void wmi_buf_free(wmi_buf_t net_buf);
 QDF_STATUS
 wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, uint32_t buflen,
 			uint32_t cmd_id);
+
+/**
+ * wmi_unified_register_event() - WMI event handler
+ * registration function for converged components
+ *
+ * @wmi_handle:   handle to WMI.
+ * @event_id:     WMI event ID
+ * @handler_func: Event handler call back function
+ *
+ *  @return 0  on success and -ve on failure.
+ */
+int
+wmi_unified_register_event(wmi_unified_t wmi_handle,
+				   uint32_t event_id,
+				   wmi_unified_event_handler handler_func);
 
 /**
  * wmi_unified_register_event_handler() - WMI event handler

@@ -1865,12 +1865,57 @@ static int wmi_unified_get_event_handler_ix(wmi_unified_t wmi_handle,
 }
 
 /**
+ * wmi_unified_register_event() - register wmi event handler
+ * @wmi_handle: handle to wmi
+ * @event_id: wmi event id
+ * @handler_func: wmi event handler function
+ *
+ * Return: 0 on success
+ */
+int wmi_unified_register_event(wmi_unified_t wmi_handle,
+				       uint32_t event_id,
+				       wmi_unified_event_handler handler_func)
+{
+	uint32_t idx = 0;
+	uint32_t evt_id;
+	struct wmi_soc *soc = wmi_handle->soc;
+
+	if (event_id >= wmi_events_max ||
+		wmi_handle->wmi_events[event_id] == WMI_EVENT_ID_INVALID) {
+		qdf_print("%s: Event id %d is unavailable\n",
+				 __func__, event_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+	evt_id = wmi_handle->wmi_events[event_id];
+	if (wmi_unified_get_event_handler_ix(wmi_handle, evt_id) != -1) {
+		qdf_print("%s : event handler already registered 0x%x\n",
+		       __func__, evt_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+	if (soc->max_event_idx == WMI_UNIFIED_MAX_EVENT) {
+		qdf_print("%s : no more event handlers 0x%x\n",
+		       __func__, evt_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+	idx = soc->max_event_idx;
+	wmi_handle->event_handler[idx] = handler_func;
+	wmi_handle->event_id[idx] = evt_id;
+	qdf_spin_lock_bh(&soc->ctx_lock);
+	wmi_handle->ctx[idx] = WMI_RX_UMAC_CTX;
+	qdf_spin_unlock_bh(&soc->ctx_lock);
+	soc->max_event_idx++;
+
+	return 0;
+}
+
+/**
  * wmi_unified_register_event_handler() - register wmi event handler
  * @wmi_handle: handle to wmi
  * @event_id: wmi event id
  * @handler_func: wmi event handler function
  * @rx_ctx: rx execution context for wmi rx events
  *
+ * This API is to support legacy requirements. Will be deprecated in future.
  * Return: 0 on success
  */
 int wmi_unified_register_event_handler(wmi_unified_t wmi_handle,
@@ -2297,7 +2342,6 @@ static inline void wmi_target_params_init(struct wmi_soc *soc,
 {
 	/* WMI service bitmap recieved from target */
 	wmi_handle->wmi_service_bitmap = soc->wmi_service_bitmap;
-	wmi_handle->wmi_events = soc->wmi_events;
 	wmi_handle->pdev_param = soc->pdev_param;
 	wmi_handle->vdev_param = soc->vdev_param;
 	wmi_handle->services   = soc->services;
@@ -2344,6 +2388,7 @@ void *wmi_unified_get_pdev_handle(struct wmi_soc *soc, uint32_t pdev_idx)
 	qdf_spinlock_create(&wmi_handle->eventq_lock);
 	qdf_nbuf_queue_init(&wmi_handle->event_queue);
 	INIT_WORK(&wmi_handle->rx_event_work, wmi_rx_event_work);
+	wmi_handle->wmi_events = soc->wmi_events;
 	wmi_target_params_init(soc, wmi_handle);
 	wmi_interface_logging_init(wmi_handle);
 	qdf_atomic_init(&wmi_handle->pending_cmds);
@@ -2405,6 +2450,7 @@ void *wmi_unified_attach(void *scn_handle,
 	wmi_handle->event_id = soc->event_id;
 	wmi_handle->event_handler = soc->event_handler;
 	wmi_handle->ctx = soc->ctx;
+	wmi_handle->wmi_events = soc->wmi_events;
 	wmi_target_params_init(soc, wmi_handle);
 	wmi_handle->scn_handle = scn_handle;
 	soc->scn_handle = scn_handle;
