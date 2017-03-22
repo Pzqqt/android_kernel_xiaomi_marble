@@ -17279,6 +17279,13 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_pdev_csa_switch_count_status_event_id] =
 				WMI_PDEV_CSA_SWITCH_COUNT_STATUS_EVENTID;
 	event_ids[wmi_reg_chan_list_cc_event_id] = WMI_REG_CHAN_LIST_CC_EVENTID;
+	event_ids[wmi_inst_rssi_stats_event_id] = WMI_INST_RSSI_STATS_EVENTID;
+	event_ids[wmi_pdev_tpc_config_event_id] = WMI_PDEV_TPC_CONFIG_EVENTID;
+	event_ids[wmi_peer_sta_ps_statechg_event_id] =
+					WMI_PEER_STA_PS_STATECHG_EVENTID;
+	event_ids[wmi_pdev_channel_hopping_event_id] =
+					WMI_PDEV_CHANNEL_HOPPING_EVENTID;
+	event_ids[wmi_wds_peer_event_id] = WMI_WDS_PEER_EVENTID;
 }
 
 #ifndef CONFIG_MCL
