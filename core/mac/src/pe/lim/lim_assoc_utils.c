@@ -63,6 +63,12 @@
 #include "lim_types.h"
 #include "wlan_utility.h"
 
+#ifdef FEATURE_WLAN_TDLS
+#define IS_TDLS_PEER(type)  ((type) == STA_ENTRY_TDLS_PEER)
+#else
+#define IS_TDLS_PEER(type) 0
+#endif
+
 /**
  * lim_cmp_ssid() - utility function to compare SSIDs
  * @rx_ssid: Received SSID
@@ -2582,7 +2588,7 @@ lim_del_sta(tpAniSirGlobal pMac,
 	if (!fRespReqd)
 		pDelStaParams->respReqd = 0;
 	else {
-		if (pStaDs->staType != STA_ENTRY_TDLS_PEER) {
+		if (!(IS_TDLS_PEER(pStaDs->staType))) {
 			/* when lim_del_sta is called from processSmeAssocCnf
 			 * then mlmState is already set properly. */
 			if (eLIM_MLM_WT_ASSOC_DEL_STA_RSP_STATE !=
