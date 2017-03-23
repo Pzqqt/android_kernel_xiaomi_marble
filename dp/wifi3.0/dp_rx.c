@@ -569,6 +569,66 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t nbuf)
 #endif
 
 /**
+ * dp_rx_lro() - LRO related processing
+ * @rx_tlv: TLV data extracted from the rx packet
+ * @peer: destination peer of the msdu
+ * @msdu: network buffer
+ * @ctx: LRO context
+ *
+ * This function performs the LRO related processing of the msdu
+ *
+ * Return: true: LRO enabled false: LRO is not enabled
+ */
+#if defined(FEATURE_LRO)
+static bool dp_rx_lro(uint8_t *rx_tlv, struct dp_peer *peer,
+	 qdf_nbuf_t msdu, qdf_lro_ctx_t ctx)
+{
+	qdf_assert(rx_tlv);
+	if (peer->vdev->lro_enable &&
+	 HAL_RX_TLV_GET_TCP_PROTO(rx_tlv)) {
+		QDF_NBUF_CB_RX_LRO_ELIGIBLE(msdu) =
+			 HAL_RX_TLV_GET_LRO_ELIGIBLE(rx_tlv) &&
+			 !HAL_RX_TLV_GET_TCP_PURE_ACK(rx_tlv);
+
+		if (QDF_NBUF_CB_RX_LRO_ELIGIBLE(msdu)) {
+			QDF_NBUF_CB_RX_LRO_CTX(msdu) = ctx;
+			QDF_NBUF_CB_RX_TCP_ACK_NUM(msdu) =
+				 HAL_RX_TLV_GET_TCP_ACK(rx_tlv);
+			QDF_NBUF_CB_RX_TCP_WIN(msdu) =
+				 HAL_RX_TLV_GET_TCP_WIN(rx_tlv);
+			QDF_NBUF_CB_RX_TCP_SEQ_NUM(msdu) =
+				 HAL_RX_TLV_GET_TCP_SEQ(rx_tlv);
+			QDF_NBUF_CB_RX_TCP_CHKSUM(msdu) =
+				 HAL_RX_TLV_GET_TCP_CHKSUM
+					(rx_tlv);
+			QDF_NBUF_CB_RX_FLOW_ID_TOEPLITZ(msdu) =
+				 HAL_RX_TLV_GET_FLOW_ID_TOEPLITZ
+					(rx_tlv);
+			QDF_NBUF_CB_RX_TCP_OFFSET(msdu) =
+				 HAL_RX_TLV_GET_TCP_OFFSET
+					(rx_tlv);
+			QDF_NBUF_CB_RX_IPV6_PROTO(msdu) =
+				 HAL_RX_TLV_GET_IPV6(rx_tlv);
+
+			QDF_NBUF_CB_RX_LRO_ELIGIBLE(msdu) =
+				 qdf_lro_update_info(ctx, msdu);
+		}
+		/* LRO 'enabled' packet, it may not be LRO 'eligible' */
+		return true;
+	}
+
+	/* LRO not supported on this vdev or a non-TCP packet */
+	return false;
+}
+#else
+static bool dp_rx_lro(uint8_t *rx_tlv, struct dp_peer *peer,
+	 qdf_nbuf_t msdu, qdf_lro_ctx_t ctx)
+{
+	return false;
+}
+#endif
+
+/**
  * dp_rx_process() - Brain of the Rx processing functionality
  *		     Called from the bottom half (tasklet/NET_RX_SOFTIRQ)
  * @soc: core txrx main context
@@ -581,11 +641,11 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t nbuf)
  * Return: uint32_t: No. of elements processed
  */
 uint32_t
-dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
+dp_rx_process(struct dp_intr *int_ctx, void *hal_ring, uint32_t quota)
 {
 	void *hal_soc;
 	void *ring_desc;
-	struct dp_rx_desc *rx_desc;
+	struct dp_rx_desc *rx_desc = NULL;
 	qdf_nbuf_t nbuf;
 	union dp_rx_desc_list_elem_t *head[MAX_PDEV_CNT] = { NULL };
 	union dp_rx_desc_list_elem_t *tail[MAX_PDEV_CNT] = { NULL };
@@ -611,6 +671,7 @@ dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 	struct dp_pdev *pdev;
 	struct dp_srng *dp_rxdma_srng;
 	struct rx_desc_pool *rx_desc_pool;
+	struct dp_soc *soc = int_ctx->soc;
 
 	DP_HIST_INIT();
 	/* Debug -- Remove later */
@@ -915,6 +976,10 @@ done:
 					continue; /* Get next descriptor */
 
 			rx_bufs_used++;
+
+			if (!dp_rx_lro(rx_tlv_hdr, peer, nbuf, int_ctx->lro_ctx))
+				QDF_NBUF_CB_RX_LRO_CTX(nbuf) = NULL;
+
 			DP_RX_LIST_APPEND(deliver_list_head,
 						deliver_list_tail,
 						nbuf);
@@ -951,8 +1016,8 @@ done:
 			dp_rx_deliver_raw(vdev, deliver_list_head);
 		else if (qdf_likely(vdev->osif_rx) && deliver_list_head)
 			vdev->osif_rx(vdev->osif_vdev, deliver_list_head);
-
 	}
+
 	return rx_bufs_used; /* Assume no scale factor for now */
 }
 

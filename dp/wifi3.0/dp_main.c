@@ -19,6 +19,7 @@
 #include <qdf_types.h>
 #include <qdf_lock.h>
 #include <qdf_net_types.h>
+#include <qdf_lro.h>
 #include <hal_api.h>
 #include <hif.h>
 #include <htt.h>
@@ -284,7 +285,7 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 		for (ring = 0; ring < soc->num_reo_dest_rings; ring++) {
 			if (rx_mask & (1 << ring)) {
 				work_done =
-					dp_rx_process(soc,
+					dp_rx_process(int_ctx,
 					    soc->reo_dest_ring[ring].hal_srng,
 					    budget);
 				budget -=  work_done;
@@ -311,6 +312,8 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 			budget -=  work_done;
 		}
 	}
+
+	qdf_lro_flush(int_ctx->lro_ctx);
 
 budget_done:
 	return dp_budget - budget;
@@ -361,6 +364,7 @@ static QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
 		soc->intr_ctx[i].rx_wbm_rel_ring_mask = 0x1;
 		soc->intr_ctx[i].reo_status_ring_mask = 0x1;
 		soc->intr_ctx[i].soc = soc;
+		soc->intr_ctx[i].lro_ctx = qdf_lro_init();
 	}
 
 	qdf_timer_init(soc->osdev, &soc->int_timer,
@@ -455,6 +459,7 @@ static QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
 
 			return QDF_STATUS_E_FAILURE;
 		}
+		soc->intr_ctx[i].lro_ctx = qdf_lro_init();
 	}
 
 	hif_configure_ext_group_interrupts(soc->hif_handle);
@@ -477,6 +482,7 @@ static void dp_soc_interrupt_detach(void *txrx_soc)
 		soc->intr_ctx[i].tx_ring_mask = 0;
 		soc->intr_ctx[i].rx_ring_mask = 0;
 		soc->intr_ctx[i].rx_mon_ring_mask = 0;
+		qdf_lro_deinit(soc->intr_ctx[i].lro_ctx);
 	}
 }
 #endif
@@ -1622,6 +1628,14 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 #endif
 
 	dp_lro_hash_setup(soc);
+
+	/* LRO */
+	if (wlan_cfg_is_lro_enabled(soc->wlan_cfg_ctx) &&
+		wlan_op_mode_sta == vdev->opmode)
+		vdev->lro_enable = true;
+
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		 "LRO: vdev_id %d lro_enable %d", vdev_id, vdev->lro_enable);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 		"Created vdev %p (%pM)", vdev, vdev->mac_addr.raw);

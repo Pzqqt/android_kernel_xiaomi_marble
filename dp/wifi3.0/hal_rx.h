@@ -614,6 +614,97 @@ hal_rx_mpdu_peer_meta_data_get(uint8_t *buf)
 		RX_MSDU_END_9_L3_HEADER_PADDING_LSB))
 #endif
 
+/**
+* LRO information needed from the TLVs
+*/
+#define HAL_RX_TLV_GET_LRO_ELIGIBLE(buf) \
+	(_HAL_MS( \
+		 (*_OFFSET_TO_WORD_PTR(&(((struct rx_pkt_tlvs *)(buf))->\
+			 msdu_end_tlv.rx_msdu_end), \
+			 RX_MSDU_END_9_LRO_ELIGIBLE_OFFSET)), \
+		RX_MSDU_END_9_LRO_ELIGIBLE_MASK, \
+		RX_MSDU_END_9_LRO_ELIGIBLE_LSB))
+
+#define HAL_RX_TLV_GET_TCP_CHKSUM(buf) \
+	(_HAL_MS( \
+		 (*_OFFSET_TO_WORD_PTR(&(((struct rx_pkt_tlvs *)(buf))->\
+			 msdu_end_tlv.rx_msdu_end), \
+			 RX_MSDU_END_1_TCP_UDP_CHKSUM_OFFSET)), \
+		RX_MSDU_END_1_TCP_UDP_CHKSUM_MASK, \
+		RX_MSDU_END_1_TCP_UDP_CHKSUM_LSB))
+
+#define HAL_RX_TLV_GET_TCP_ACK(buf) \
+	(_HAL_MS( \
+		 (*_OFFSET_TO_WORD_PTR(&(((struct rx_pkt_tlvs *)(buf))->\
+			 msdu_end_tlv.rx_msdu_end), \
+			 RX_MSDU_END_8_TCP_ACK_NUMBER_OFFSET)), \
+		RX_MSDU_END_8_TCP_ACK_NUMBER_MASK, \
+		RX_MSDU_END_8_TCP_ACK_NUMBER_LSB))
+
+#define HAL_RX_TLV_GET_TCP_SEQ(buf) \
+	(_HAL_MS( \
+		 (*_OFFSET_TO_WORD_PTR(&(((struct rx_pkt_tlvs *)(buf))->\
+			 msdu_end_tlv.rx_msdu_end), \
+			 RX_MSDU_END_7_TCP_SEQ_NUMBER_OFFSET)), \
+		RX_MSDU_END_7_TCP_SEQ_NUMBER_MASK, \
+		RX_MSDU_END_7_TCP_SEQ_NUMBER_LSB))
+
+#define HAL_RX_TLV_GET_TCP_WIN(buf) \
+	(_HAL_MS( \
+		 (*_OFFSET_TO_WORD_PTR(&(((struct rx_pkt_tlvs *)(buf))->\
+			 msdu_end_tlv.rx_msdu_end), \
+			 RX_MSDU_END_9_WINDOW_SIZE_OFFSET)), \
+		RX_MSDU_END_9_WINDOW_SIZE_MASK, \
+		RX_MSDU_END_9_WINDOW_SIZE_LSB))
+
+#define HAL_RX_TLV_GET_TCP_PURE_ACK(buf) \
+	(_HAL_MS( \
+		 (*_OFFSET_TO_WORD_PTR(&(((struct rx_pkt_tlvs *)(buf))->\
+			 msdu_start_tlv.rx_msdu_start), \
+			 RX_MSDU_START_2_TCP_ONLY_ACK_OFFSET)), \
+		RX_MSDU_START_2_TCP_ONLY_ACK_MASK, \
+		RX_MSDU_START_2_TCP_ONLY_ACK_LSB))
+
+#define HAL_RX_TLV_GET_TCP_PROTO(buf) \
+	(_HAL_MS( \
+		 (*_OFFSET_TO_WORD_PTR(&(((struct rx_pkt_tlvs *)(buf))->\
+			 msdu_start_tlv.rx_msdu_start), \
+			 RX_MSDU_START_2_TCP_PROTO_OFFSET)), \
+		RX_MSDU_START_2_TCP_PROTO_MASK, \
+		RX_MSDU_START_2_TCP_PROTO_LSB))
+
+#define HAL_RX_TLV_GET_IPV6(buf) \
+	(_HAL_MS( \
+		 (*_OFFSET_TO_WORD_PTR(&(((struct rx_pkt_tlvs *)(buf))->\
+			 msdu_start_tlv.rx_msdu_start), \
+			 RX_MSDU_START_2_IPV6_PROTO_OFFSET)), \
+		RX_MSDU_START_2_IPV6_PROTO_MASK, \
+		RX_MSDU_START_2_IPV6_PROTO_LSB))
+
+#define HAL_RX_TLV_GET_IP_OFFSET(buf) \
+	(_HAL_MS( \
+		 (*_OFFSET_TO_WORD_PTR(&(((struct rx_pkt_tlvs *)(buf))->\
+			 msdu_start_tlv.rx_msdu_start), \
+			 RX_MSDU_START_1_L3_OFFSET_OFFSET)), \
+		RX_MSDU_START_1_L3_OFFSET_MASK, \
+		RX_MSDU_START_1_L3_OFFSET_LSB))
+
+#define HAL_RX_TLV_GET_TCP_OFFSET(buf) \
+	(_HAL_MS( \
+		 (*_OFFSET_TO_WORD_PTR(&(((struct rx_pkt_tlvs *)(buf))->\
+			 msdu_start_tlv.rx_msdu_start), \
+			 RX_MSDU_START_1_L4_OFFSET_OFFSET)), \
+		RX_MSDU_START_1_L4_OFFSET_MASK, \
+		RX_MSDU_START_1_L4_OFFSET_LSB))
+
+#define HAL_RX_TLV_GET_FLOW_ID_TOEPLITZ(buf) \
+	(_HAL_MS( \
+		 (*_OFFSET_TO_WORD_PTR(&(((struct rx_pkt_tlvs *)(buf))->\
+			 msdu_start_tlv.rx_msdu_start), \
+			 RX_MSDU_START_4_FLOW_ID_TOEPLITZ_OFFSET)), \
+		RX_MSDU_START_4_FLOW_ID_TOEPLITZ_MASK, \
+		RX_MSDU_START_4_FLOW_ID_TOEPLITZ_LSB))
+
  /**
  * hal_rx_msdu_end_l3_hdr_padding_get(): API to get the
  * l3_header padding from rx_msdu_end TLV

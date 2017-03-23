@@ -25,6 +25,7 @@
 #include <qdf_atomic.h>
 #include <qdf_util.h>
 #include <qdf_list.h>
+#include <qdf_lro.h>
 #include <queue.h>
 #include <htt_common.h>
 
@@ -321,6 +322,7 @@ struct dp_intr {
 	uint8_t reo_status_ring_mask; /* REO command response ring */
 	struct dp_soc *soc;    /* Reference to SoC structure ,
 				to get DMA ring handles */
+	qdf_lro_ctx_t lro_ctx;
 };
 
 #define REO_DESC_FREELIST_SIZE 64
@@ -919,6 +921,7 @@ struct dp_vdev {
 
 	/* VDEV Stats */
 	struct cdp_vdev_stats stats;
+	bool lro_enable;
 };
 
 
