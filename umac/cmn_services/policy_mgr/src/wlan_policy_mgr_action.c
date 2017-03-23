@@ -135,6 +135,7 @@ QDF_STATUS policy_mgr_pdev_set_hw_mode(struct wlan_objmgr_psoc *psoc,
 	msg.set_hw_mode_cb = (void *)policy_mgr_pdev_set_hw_mode_cb;
 	msg.reason = reason;
 	msg.session_id = session_id;
+	msg.context = psoc;
 
 	policy_mgr_notice("set hw mode to sme: hw_mode_index: %d session:%d reason:%d",
 		msg.hw_mode_index, msg.session_id, msg.reason);
@@ -938,18 +939,76 @@ void policy_mgr_checkn_update_hw_mode_single_mac_mode(
 void policy_mgr_set_hw_mode_change_in_progress(
 	struct wlan_objmgr_psoc *psoc, enum policy_mgr_hw_mode_change value)
 {
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
+
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	pm_ctx->hw_mode_change_in_progress = value;
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+
+	policy_mgr_debug("hw_mode_change_in_progress:%d", value);
 }
 
 enum policy_mgr_hw_mode_change policy_mgr_is_hw_mode_change_in_progress(
 	struct wlan_objmgr_psoc *psoc)
 {
-	return POLICY_MGR_HW_MODE_NOT_IN_PROGRESS;
+	enum policy_mgr_hw_mode_change value;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	value = POLICY_MGR_HW_MODE_NOT_IN_PROGRESS;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return value;
+	}
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	value = pm_ctx->hw_mode_change_in_progress;
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+
+	return value;
 }
 
 enum policy_mgr_hw_mode_change policy_mgr_get_hw_mode_change_from_hw_mode_index(
 	struct wlan_objmgr_psoc *psoc, uint32_t hw_mode_index)
 {
-	return POLICY_MGR_HW_MODE_NOT_IN_PROGRESS;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint32_t param = 0;
+	enum policy_mgr_hw_mode_change value
+		= POLICY_MGR_HW_MODE_NOT_IN_PROGRESS;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return value;
+	}
+
+	policy_mgr_info("HW param: %x", param);
+	param = pm_ctx->hw_mode.hw_mode_list[hw_mode_index];
+	if (POLICY_MGR_HW_MODE_DBS_MODE_GET(param)) {
+		policy_mgr_info("DBS is requested with HW (%d)",
+		hw_mode_index);
+		value = POLICY_MGR_DBS_IN_PROGRESS;
+		goto ret_value;
+	}
+
+	if (POLICY_MGR_HW_MODE_SBS_MODE_GET(param)) {
+		policy_mgr_info("SBS is requested with HW (%d)",
+		hw_mode_index);
+		value = POLICY_MGR_SBS_IN_PROGRESS;
+		goto ret_value;
+	}
+
+	value = POLICY_MGR_SMM_IN_PROGRESS;
+	policy_mgr_info("SMM is requested with HW (%d)", hw_mode_index);
+
+ret_value:
+	return value;
 }
 
 #ifdef MPC_UT_FRAMEWORK
