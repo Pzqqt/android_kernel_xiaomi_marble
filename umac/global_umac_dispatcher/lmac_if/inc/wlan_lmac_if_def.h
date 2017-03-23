@@ -201,10 +201,10 @@ struct wlan_lmac_if_pmo_tx_ops {
 						*pmo_clr_pkt_fltr_param);
 	QDF_STATUS (*send_enable_wow_wakeup_event_req)(
 			struct wlan_objmgr_vdev *vdev,
-			uint32_t bitmap);
+			uint32_t *bitmap);
 	QDF_STATUS (*send_disable_wow_wakeup_event_req)(
 			struct wlan_objmgr_vdev *vdev,
-			uint32_t bitmap);
+			uint32_t *bitmap);
 	QDF_STATUS (*send_add_wow_pattern)(
 			struct wlan_objmgr_vdev *vdev,
 			uint8_t ptrn_id, const uint8_t *ptrn, uint8_t ptrn_len,

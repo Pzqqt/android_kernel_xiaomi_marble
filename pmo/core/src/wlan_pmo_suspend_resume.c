@@ -32,7 +32,8 @@
 #include "htc_api.h"
 #include "wlan_pmo_obj_mgmt_api.h"
 #include <wlan_scan_ucfg_api.h>
-
+#include "cds_api.h"
+#include "wlan_pmo_static_config.h"
 
 /**
  * pmo_core_calculate_listen_interval() - Calculate vdev listen interval
@@ -208,43 +209,75 @@ void pmo_core_update_wow_bus_suspend(struct wlan_objmgr_psoc *psoc,
 	pmo_tgt_psoc_update_wow_bus_suspend_state(psoc, val);
 }
 
+/* Define for conciseness */
+#define BM_LEN PMO_WOW_MAX_EVENT_BM_LEN
+#define EV_NLO WOW_NLO_SCAN_COMPLETE_EVENT
+#define EV_PWR WOW_CHIP_POWER_FAILURE_DETECT_EVENT
+
 void pmo_core_configure_dynamic_wake_events(struct wlan_objmgr_psoc *psoc)
 {
 	int vdev_id;
-	int enable_mask;
-	int disable_mask;
-	struct wlan_objmgr_psoc_objmgr *objmgr;
+	uint32_t adapter_type;
+	uint32_t enable_mask[BM_LEN];
+	uint32_t disable_mask[BM_LEN];
 	struct wlan_objmgr_vdev *vdev;
+	struct pmo_psoc_priv_obj *psoc_ctx;
+	bool enable_configured;
+	bool disable_configured;
 
 	/* Iterate through VDEV list */
 	for (vdev_id = 0; vdev_id < WLAN_UMAC_PSOC_MAX_VDEVS; vdev_id++) {
-		wlan_psoc_obj_lock(psoc);
-		objmgr = &psoc->soc_objmgr;
-		if (!objmgr->wlan_vdev_list[vdev_id]) {
-			wlan_psoc_obj_unlock(psoc);
+
+		enable_configured = false;
+		disable_configured = false;
+
+		qdf_mem_set(enable_mask,  sizeof(uint32_t) * BM_LEN, 0);
+		qdf_mem_set(disable_mask, sizeof(uint32_t) * BM_LEN, 0);
+
+		vdev = pmo_psoc_get_vdev(psoc, vdev_id);
+		if (!vdev)
 			continue;
-		}
-		vdev = objmgr->wlan_vdev_list[vdev_id];
-		wlan_psoc_obj_unlock(psoc);
 
-		enable_mask = 0;
-		disable_mask = 0;
 		if (ucfg_scan_get_pno_in_progress(vdev)) {
-			if (ucfg_scan_get_pno_match(vdev))
-				enable_mask |=
-					(1 << WOW_NLO_SCAN_COMPLETE_EVENT);
-			else
-				disable_mask |=
-					(1 << WOW_NLO_SCAN_COMPLETE_EVENT);
+			if (ucfg_scan_get_pno_match(vdev)) {
+				pmo_set_wow_event_bitmap(EV_NLO,
+							 BM_LEN,
+							 enable_mask);
+				enable_configured = true;
+			} else {
+				pmo_set_wow_event_bitmap(EV_NLO,
+							 BM_LEN,
+							 disable_mask);
+				disable_configured = true;
+			}
 		}
 
-		if (enable_mask != 0)
+		adapter_type = pmo_get_vdev_opmode(vdev);
+
+		psoc_ctx = pmo_psoc_get_priv(psoc);
+
+		if (psoc_ctx->psoc_cfg.auto_power_save_fail_mode &&
+		    (adapter_type == QDF_STA_MODE ||
+		     adapter_type == QDF_P2P_CLIENT_MODE)
+		   ) {
+			if (psoc_ctx->is_device_in_low_pwr_mode &&
+				psoc_ctx->is_device_in_low_pwr_mode(vdev_id))
+				pmo_set_wow_event_bitmap(EV_PWR,
+						 BM_LEN,
+						 enable_mask);
+				pmo_core_enable_wakeup_event(psoc, vdev_id,
+					enable_mask);
+				enable_configured = true;
+		}
+		if (enable_configured)
 			pmo_core_enable_wakeup_event(psoc, vdev_id,
 				enable_mask);
-		if (disable_mask != 0)
+
+		if (disable_configured)
 			pmo_core_disable_wakeup_event(psoc, vdev_id,
 					disable_mask);
 	}
+
 }
 
 /**
@@ -266,6 +299,7 @@ static QDF_STATUS pmo_core_psoc_configure_suspend(struct wlan_objmgr_psoc *psoc)
 	if (pmo_core_is_wow_applicable(psoc)) {
 		pmo_info("WOW Suspend");
 		pmo_core_apply_lphb(psoc);
+
 		pmo_core_configure_dynamic_wake_events(psoc);
 		pmo_core_update_wow_enable(psoc_ctx, true);
 		pmo_core_update_wow_enable_cmd_sent(psoc_ctx, false);

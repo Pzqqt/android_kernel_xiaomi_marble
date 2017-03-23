@@ -25,7 +25,7 @@
 
 QDF_STATUS pmo_tgt_enable_wow_wakeup_event(
 		struct wlan_objmgr_vdev *vdev,
-		uint32_t bitmap)
+		uint32_t *bitmap)
 {
 	QDF_STATUS status;
 	struct wlan_objmgr_psoc *psoc;
@@ -52,7 +52,7 @@ out:
 
 QDF_STATUS pmo_tgt_disable_wow_wakeup_event(
 		struct wlan_objmgr_vdev *vdev,
-		uint32_t bitmap)
+		uint32_t *bitmap)
 {
 	QDF_STATUS status;
 	struct wlan_objmgr_psoc *psoc;

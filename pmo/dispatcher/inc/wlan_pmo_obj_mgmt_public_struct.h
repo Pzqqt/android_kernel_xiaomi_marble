@@ -45,6 +45,11 @@ typedef void (*pmo_notify_pause_bitmap)(
 typedef  uint16_t(*pmo_get_pause_bitmap)(uint8_t vdev_id);
 
 /**
+ * typedef to know is deviec is in power save mode
+ */
+typedef  bool (*pmo_is_device_in_low_pwr_mode)(uint8_t vdev_id);
+
+/**
  * struct pmo_psoc_priv_obj - psoc related data require for pmo
  * @psoc_cfg: place holder for psoc configuration
  * @wow: wow configuration
@@ -65,6 +70,7 @@ struct pmo_psoc_priv_obj {
 	void *txrx_hdl;
 	pmo_notify_pause_bitmap pause_bitmap_notifier;
 	pmo_get_pause_bitmap get_pause_bitmap;
+	pmo_is_device_in_low_pwr_mode is_device_in_low_pwr_mode;
 	qdf_spinlock_t lock;
 };
 

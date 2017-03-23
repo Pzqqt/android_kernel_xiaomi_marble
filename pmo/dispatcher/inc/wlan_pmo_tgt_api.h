@@ -112,7 +112,7 @@ QDF_STATUS pmo_tgt_disable_ns_offload_req(struct wlan_objmgr_vdev *vdev,
  * Return: QDF status
  */
 QDF_STATUS pmo_tgt_enable_wow_wakeup_event(struct wlan_objmgr_vdev *vdev,
-		uint32_t bitmap);
+		uint32_t *bitmap);
 
 /**
  * pmo_tgt_disable_wow_wakeup_event() - Send Disable wow wakeup events to fwr
@@ -122,7 +122,7 @@ QDF_STATUS pmo_tgt_enable_wow_wakeup_event(struct wlan_objmgr_vdev *vdev,
  * Return: QDF status
  */
 QDF_STATUS pmo_tgt_disable_wow_wakeup_event(struct wlan_objmgr_vdev *vdev,
-		uint32_t bitmap);
+		uint32_t *bitmap);
 
 /**
  * pmo_tgt_send_wow_patterns_to_fw() - Sends WOW patterns to FW.

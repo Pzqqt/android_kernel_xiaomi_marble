@@ -264,6 +264,7 @@ enum pmo_offload_trigger {
  * @sta_mod_dtim: station modulated DTIM value
  * @sta_max_li_mod_dtim: station max listen interval DTIM value
  * @power_save_mode: power save mode for psoc
+ * @auto_power_save_fail_mode: auto detect power save failure
  */
 struct pmo_psoc_cfg {
 	bool ptrn_match_enable_all_vdev;
@@ -289,6 +290,7 @@ struct pmo_psoc_cfg {
 	uint8_t sta_mod_dtim;
 	uint8_t sta_max_li_mod_dtim;
 	uint8_t power_save_mode;
+	bool auto_power_save_fail_mode;
 };
 
 #endif /* end  of _WLAN_PMO_COMMONP_STRUCT_H_ */

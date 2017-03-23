@@ -91,7 +91,7 @@ QDF_STATUS pmo_ucfg_update_psoc_config(struct wlan_objmgr_psoc *psoc,
  * Return: none
  */
 void pmo_ucfg_enable_wakeup_event(struct wlan_objmgr_psoc *psoc,
-	uint32_t vdev_id, uint32_t bitmap);
+	uint32_t vdev_id, uint32_t *bitmap);
 
 /**
  * pmo_ucfg_disable_wakeup_event() -  disable wow wakeup events

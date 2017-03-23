@@ -27,7 +27,7 @@
 
 QDF_STATUS wmi_unified_add_wow_wakeup_event_cmd(void *wmi_hdl,
 					uint32_t vdev_id,
-					uint32_t bitmap,
+					uint32_t *bitmap,
 					bool enable)
 {
 	struct wmi_unified *wmi_handle = (struct wmi_unified *) wmi_hdl;

@@ -726,6 +726,7 @@ enum qca_nl80211_vendor_subcmds_index {
 	QCA_NL80211_VENDOR_SUBCMD_P2P_LO_EVENT_INDEX,
 	QCA_NL80211_VENDOR_SUBCMD_SAP_CONDITIONAL_CHAN_SWITCH_INDEX,
 	QCA_NL80211_VENDOR_SUBCMD_UPDATE_EXTERNAL_ACS_CONFIG,
+	QCA_NL80211_VENDOR_SUBCMD_PWR_SAVE_FAIL_DETECTED_INDEX,
 };
 
 /**
@@ -771,6 +772,40 @@ enum qca_wlan_vendor_attr_tdls_disable {
 	QCA_WLAN_VENDOR_ATTR_TDLS_DISABLE_MAX =
 		QCA_WLAN_VENDOR_ATTR_TDLS_DISABLE_AFTER_LAST - 1,
 };
+
+/**
+ * qca_chip_power_save_failure_reason: Power save failure reason
+ * @QCA_CHIP_POWER_SAVE_FAILURE_REASON_PROTOCOL: Indicates power save failure
+ * due to protocol/module.
+ * @QCA_CHIP_POWER_SAVE_FAILURE_REASON_HARDWARE: power save failure
+ * due to hardware
+ */
+enum qca_chip_power_save_failure_reason {
+	QCA_CHIP_POWER_SAVE_FAILURE_REASON_PROTOCOL = 0,
+	QCA_CHIP_POWER_SAVE_FAILURE_REASON_HARDWARE = 1,
+};
+
+/**
+ * qca_attr_chip_power_save_failure: attributes to vendor subcmd
+ * @QCA_NL80211_VENDOR_SUBCMD_CHIP_PWRSAVE_FAILURE. This carry the requisite
+ * information leading to the power save failure.
+ * @QCA_ATTR_CHIP_POWER_SAVE_FAILURE_INVALID : invalid
+ * @QCA_ATTR_CHIP_POWER_SAVE_FAILURE_REASON : power save failure reason
+ * represented by enum qca_chip_power_save_failure_reason
+ * @QCA_ATTR_CHIP_POWER_SAVE_FAILURE_LAST : Last
+ * @QCA_ATTR_CHIP_POWER_SAVE_FAILURE_MAX : Max value
+ */
+enum qca_attr_chip_power_save_failure {
+	QCA_ATTR_CHIP_POWER_SAVE_FAILURE_INVALID = 0,
+
+	QCA_ATTR_CHIP_POWER_SAVE_FAILURE_REASON = 1,
+
+	/* keep last */
+	QCA_ATTR_CHIP_POWER_SAVE_FAILURE_LAST,
+	QCA_ATTR_CHIP_POWER_SAVE_FAILURE_MAX =
+		QCA_ATTR_CHIP_POWER_SAVE_FAILURE_LAST - 1,
+};
+
 
 /**
  * enum qca_wlan_vendor_attr_tdls_get_status - tdls get status attribute
@@ -2401,38 +2436,6 @@ enum qca_wlan_vendor_channel_prop_flags_ext {
 	QCA_WLAN_VENDOR_CHANNEL_PROP_FLAG_EXT_HISTORY_RADAR   = 1 << 8,
 	/* DFS CAC valid for slave device (STA mode) */
 	QCA_WLAN_VENDOR_CHANNEL_PROP_FLAG_EXT_CAC_VALID       = 1 << 9,
-};
-
-enum qca_chip_power_save_failure_reason {
-	/*
-	 * Indicates if the reason for the failure is due to a protocol
-	 * layer/module.
-	 */
-	QCA_CHIP_POWER_SAVE_FAILURE_REASON_PROTOCOL = 0,
-	/*
-	 * Indicates if the reason for the failure is due to a hardware issue.
-	 */
-	QCA_CHIP_POWER_SAVE_FAILURE_REASON_HARDWARE = 1,
-};
-
-/**
- * qca_attr_chip_power_save_failure: Attributes to vendor subcmd
- * QCA_NL80211_VENDOR_SUBCMD_CHIP_PWRSAVE_FAILURE. This carries the requisite
- * information leading to the power save failure.
- */
-enum qca_attr_chip_power_save_failure {
-	QCA_ATTR_CHIP_POWER_SAVE_FAILURE_INVALID = 0,
-	/*
-	 * Reason to cause the power save failure.
-	 * These reasons are represented by
-	 * enum qca_chip_power_save_failure_reason.
-	 */
-	QCA_ATTR_CHIP_POWER_SAVE_FAILURE_REASON = 1,
-
-	/* keep last */
-	QCA_ATTR_CHIP_POWER_SAVE_FAILURE_LAST,
-	QCA_ATTR_CHIP_POWER_SAVE_FAILURE_MAX =
-		QCA_ATTR_CHIP_POWER_SAVE_FAILURE_LAST - 1,
 };
 
 /**

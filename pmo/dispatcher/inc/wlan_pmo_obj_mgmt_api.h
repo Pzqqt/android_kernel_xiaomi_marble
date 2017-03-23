@@ -215,4 +215,27 @@ QDF_STATUS pmo_unregister_get_pause_bitmap(struct wlan_objmgr_psoc *psoc,
 		pmo_get_pause_bitmap handler);
 
 
+/**
+ * pmo_register_is_device_in_low_pwr_mode(): API to get register device  power
+ * save check notifier.
+ * @psoc: objmgr psoc handle
+ * @handler: device power save check notifier
+ *
+ * Return QDF_STATUS status - in case of success else return error
+ */
+QDF_STATUS pmo_register_is_device_in_low_pwr_mode(struct wlan_objmgr_psoc *psoc,
+		pmo_is_device_in_low_pwr_mode handler);
+
+/**
+ * pmo_unregister_is_device_in_low_pwr_mode(): API to unregister device  power
+ * save check notifier.
+ * @psoc: objmgr psoc handle
+ * @handler: device power save check notifier
+ *
+ * Return QDF_STATUS status - in case of success else return error
+ */
+QDF_STATUS pmo_unregister_is_device_in_low_pwr_mode(
+			struct wlan_objmgr_psoc *psoc,
+			pmo_is_device_in_low_pwr_mode handler);
+
 #endif /* end  of _WLAN_PMO_OBJ_MGMT_API_H_ */

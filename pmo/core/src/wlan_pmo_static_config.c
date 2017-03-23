@@ -25,31 +25,6 @@
 #include "wlan_pmo_wow.h"
 #include "wlan_pmo_obj_mgmt_public_struct.h"
 
-#define PMO_WOW_STA_WAKE_UP_EVENTS ((1 << WOW_CSA_IE_EVENT) |\
-				(1 << WOW_CLIENT_KICKOUT_EVENT) |\
-				(1 << WOW_PATTERN_MATCH_EVENT) |\
-				(1 << WOW_MAGIC_PKT_RECVD_EVENT) |\
-				(1 << WOW_DEAUTH_RECVD_EVENT) |\
-				(1 << WOW_DISASSOC_RECVD_EVENT) |\
-				(1 << WOW_BMISS_EVENT) |\
-				(1 << WOW_GTK_ERR_EVENT) |\
-				(1 << WOW_BETTER_AP_EVENT) |\
-				(1 << WOW_HTT_EVENT) |\
-				(1 << WOW_RA_MATCH_EVENT) |\
-				(1 << WOW_NLO_DETECTED_EVENT) |\
-				(1 << WOW_EXTSCAN_EVENT) |\
-				(1 << WOW_OEM_RESPONSE_EVENT)|\
-				(1 << WOW_TDLS_CONN_TRACKER_EVENT)) \
-
-#define PMO_WOW_SAP_WAKE_UP_EVENTS ((1 << WOW_PROBE_REQ_WPS_IE_EVENT) |\
-				(1 << WOW_CLIENT_KICKOUT_EVENT) |\
-				(1 << WOW_PATTERN_MATCH_EVENT) |\
-				(1 << WOW_AUTH_REQ_EVENT) |\
-				(1 << WOW_ASSOC_REQ_EVENT) |\
-				(1 << WOW_DEAUTH_RECVD_EVENT) |\
-				(1 << WOW_DISASSOC_RECVD_EVENT) |\
-				(1 << WOW_HTT_EVENT)) \
-
 static const uint8_t arp_ptrn[] = {0x08, 0x06};
 static const uint8_t arp_mask[] = {0xff, 0xff};
 static const uint8_t ns_ptrn[] = {0x86, 0xDD};
@@ -58,12 +33,9 @@ static const uint8_t discvr_mask[] = {0xf0, 0x00, 0x00, 0xf8};
 
 void pmo_register_wow_wakeup_events(struct wlan_objmgr_vdev *vdev)
 {
-	uint32_t event_bitmap;
+	uint32_t event_bitmap[PMO_WOW_MAX_EVENT_BM_LEN] = {0};
 	uint8_t vdev_id;
-	struct wlan_objmgr_psoc *psoc;
 	enum tQDF_ADAPTER_MODE  vdev_opmode = QDF_MAX_NO_OF_MODE;
-
-	psoc = pmo_vdev_get_psoc(vdev);
 
 	vdev_opmode = pmo_get_vdev_opmode(vdev);
 	vdev_id = pmo_vdev_get_id(vdev);
@@ -73,22 +45,28 @@ void pmo_register_wow_wakeup_events(struct wlan_objmgr_vdev *vdev)
 	case QDF_STA_MODE:
 	case QDF_P2P_DEVICE_MODE:
 		/* Configure STA/P2P CLI mode specific default wake up events */
-		event_bitmap = PMO_WOW_STA_WAKE_UP_EVENTS;
-		pmo_info("STA specific default wake up event 0x%x vdev id %d",
-			event_bitmap, vdev_id);
+		pmo_set_sta_wow_bitmask(event_bitmap, PMO_WOW_MAX_EVENT_BM_LEN);
+
+		pmo_info("STA specific default wake up event 0x%x%x%x%x vdev id %d",
+			event_bitmap[0], event_bitmap[1], event_bitmap[2],
+			event_bitmap[3], vdev_id);
 		break;
 	case QDF_IBSS_MODE:
 		/* Configure IBSS mode specific default wake up events */
-		event_bitmap = (PMO_WOW_STA_WAKE_UP_EVENTS |
-				(1 << WOW_BEACON_EVENT));
-		pmo_info("IBSS specific default wake up event 0x%x vdev id %d",
-			event_bitmap, vdev_id);
+		pmo_set_sta_wow_bitmask(event_bitmap, PMO_WOW_MAX_EVENT_BM_LEN);
+		pmo_set_wow_event_bitmap(WOW_BEACON_EVENT,
+					 PMO_WOW_MAX_EVENT_BM_LEN,
+					 event_bitmap);
+		pmo_info("IBSS specific default wake up event 0x%x%x%x%x vdev id %d",
+			event_bitmap[0], event_bitmap[1], event_bitmap[2],
+			event_bitmap[3], vdev_id);
 		break;
 	case QDF_SAP_MODE:
 		/* Configure SAP/GO mode specific default wake up events */
-		event_bitmap = PMO_WOW_SAP_WAKE_UP_EVENTS;
-		pmo_info("SAP specific default wake up event 0x%x vdev id %d",
-			event_bitmap, vdev_id);
+		pmo_set_sap_wow_bitmask(event_bitmap, PMO_WOW_MAX_EVENT_BM_LEN);
+		pmo_info("IBSS specific default wake up event 0x%x%x%x%x vdev id %d",
+			event_bitmap[0], event_bitmap[1], event_bitmap[2],
+			event_bitmap[3], vdev_id);
 		break;
 	case QDF_NDI_MODE:
 		/*
@@ -96,9 +74,12 @@ void pmo_register_wow_wakeup_events(struct wlan_objmgr_vdev *vdev)
 		 * Following routine sends the command to firmware.
 		 */
 #ifdef WLAN_FEATURE_NAN_DATAPATH
-		event_bitmap = (1 << WOW_NAN_DATA_EVENT);
-		pmo_info("NDI specific default wake up event 0x%x vdev id %d",
-			event_bitmap, vdev_id);
+		pmo_set_wow_event_bitmap(WOW_NAN_DATA_EVENT,
+					 PMO_WOW_MAX_EVENT_BM_LEN,
+					 event_bitmap);
+		pmo_info("IBSS specific default wake up event 0x%x%x%x%x vdev id %d",
+			event_bitmap[0], event_bitmap[1], event_bitmap[2],
+			event_bitmap[3], vdev_id);
 #endif
 		break;
 	default:

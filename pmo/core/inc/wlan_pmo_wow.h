@@ -103,6 +103,8 @@
  * attempt to BMPS fails, request for WoWL will be rejected.
  */
 
+#define PMO_WOW_MAX_EVENT_BM_LEN 4
+
 /**
  * pmo_get_and_increment_wow_default_ptrn() -Get and increment wow default ptrn
  * @vdev_ctx: pmo vdev priv ctx
@@ -241,7 +243,7 @@ QDF_STATUS pmo_core_wow_exit(struct wlan_objmgr_vdev *vdev);
  * Return: none
  */
 void pmo_core_enable_wakeup_event(struct wlan_objmgr_psoc *psoc,
-	uint32_t vdev_id, uint32_t bitmap);
+	uint32_t vdev_id, uint32_t *bitmap);
 
 /**
  * pmo_core_disable_wakeup_event() -  disable wow wakeup events
@@ -252,7 +254,7 @@ void pmo_core_enable_wakeup_event(struct wlan_objmgr_psoc *psoc,
  * Return: none
  */
 void pmo_core_disable_wakeup_event(struct wlan_objmgr_psoc *psoc,
-	uint32_t vdev_id, uint32_t bitmap);
+	uint32_t vdev_id, uint32_t *bitmap);
 
 /**
  * pmo_is_wow_applicable(): should enable wow
@@ -573,4 +575,31 @@ bool pmo_core_is_nan_enabled(struct wlan_objmgr_vdev *vdev)
 }
 #endif
 
+/**
+ * pmo_get_event_bitmap_idx() - get indices for extended wow bitmaps
+ * @event: wow event
+ * @wow_bitmap_size: WOW bitmap size
+ * @bit_idx: bit index
+ * @idx: byte index
+ *
+ * Return: none
+ */
+static inline void pmo_get_event_bitmap_idx(WOW_WAKE_EVENT_TYPE event,
+			      uint32_t wow_bitmap_size,
+			      uint32_t *bit_idx,
+			      uint32_t *idx)
+{
+
+	if (!bit_idx || !idx || wow_bitmap_size == 0) {
+		pmo_err("bit_idx:%p idx:%p wow_bitmap_size:%u",
+			 bit_idx, idx, wow_bitmap_size);
+		return;
+	}
+	if (event == 0) {
+		*idx = *bit_idx = 0;
+	} else {
+		*idx = event / (wow_bitmap_size * 8);
+		*bit_idx = event % (wow_bitmap_size * 8);
+	}
+}
 #endif /* end  of _WLAN_PMO_WOW_H_ */

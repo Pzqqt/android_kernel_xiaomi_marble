@@ -84,4 +84,34 @@ void pmo_update_target_service(struct wlan_objmgr_psoc *psoc,
 void pmo_update_ra_limit(struct wlan_objmgr_psoc *psoc,
 	bool bpf_enabled);
 
+/**
+ * pmo_set_wow_event_bitmap() - Assign bitmask with wow event
+ * @event: wow event
+ * @wow_bitmap_size: wow bitmask size
+ * @bitmask: wow bitmask field
+ *
+ * Return: none
+ */
+void pmo_set_wow_event_bitmap(WOW_WAKE_EVENT_TYPE event,
+			      uint32_t wow_bitmap_size,
+			      uint32_t *bitmask);
+
+/**
+ * pmo_set_sta_wow_bitmask() - set predefined STA wow wakeup events
+ * @bitmask: bitmask field
+ * @wow_bitmask_size: bitmask field size
+ *
+ * Return: none
+ */
+void pmo_set_sta_wow_bitmask(uint32_t *bitmask, uint32_t wow_bitmask_size);
+
+/**
+ * pmo_set_sap_wow_bitmask() - set predefined SAP wow wakeup events
+ * @bitmask: bitmask field
+ * @wow_bitmask_size: bitmask field size
+ *
+ * Return: none
+ */
+void pmo_set_sap_wow_bitmask(uint32_t *bitmask, uint32_t wow_bitmask_size);
+
 #endif /* end  of _WLAN_PMO_STATIC_CONFIG_H_ */

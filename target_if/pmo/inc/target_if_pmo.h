@@ -36,7 +36,7 @@
  * Return: QDF status
  */
 QDF_STATUS target_if_pmo_enable_wow_wakeup_event(struct wlan_objmgr_vdev *vdev,
-		uint32_t bitmap);
+		uint32_t *bitmap);
 
 /**
  * target_if_pmo_disable_wow_wakeup_event() -  Disable wow wakeup events.
@@ -47,7 +47,7 @@ QDF_STATUS target_if_pmo_enable_wow_wakeup_event(struct wlan_objmgr_vdev *vdev,
  * Return: QDF status
  */
 QDF_STATUS target_if_pmo_disable_wow_wakeup_event(
-		struct wlan_objmgr_vdev *vdev, uint32_t bitmap);
+		struct wlan_objmgr_vdev *vdev, uint32_t *bitmap);
 
 /**
  * target_if_pmo_send_wow_patterns_to_fw() - Sends WOW patterns to FW.

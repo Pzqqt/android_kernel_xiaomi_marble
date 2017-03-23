@@ -28,7 +28,7 @@
 #include "wmi_unified_api.h"
 
 QDF_STATUS target_if_pmo_enable_wow_wakeup_event(struct wlan_objmgr_vdev *vdev,
-		uint32_t bitmap)
+		uint32_t *bitmap)
 {
 	uint8_t vdev_id;
 	struct wlan_objmgr_psoc *psoc;
@@ -55,7 +55,7 @@ QDF_STATUS target_if_pmo_enable_wow_wakeup_event(struct wlan_objmgr_vdev *vdev,
 }
 
 QDF_STATUS target_if_pmo_disable_wow_wakeup_event(struct wlan_objmgr_vdev *vdev,
-		uint32_t bitmap)
+		uint32_t *bitmap)
 {
 	uint8_t vdev_id;
 	struct wlan_objmgr_psoc *psoc;

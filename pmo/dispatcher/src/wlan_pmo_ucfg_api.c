@@ -59,7 +59,7 @@ bool pmo_ucfg_is_vdev_supports_offload(struct wlan_objmgr_vdev *vdev)
 }
 
 void pmo_ucfg_enable_wakeup_event(struct wlan_objmgr_psoc *psoc,
-	uint32_t vdev_id, uint32_t bitmap)
+	uint32_t vdev_id, uint32_t *bitmap)
 {
 	pmo_core_enable_wakeup_event(psoc, vdev_id, bitmap);
 }
@@ -67,7 +67,7 @@ void pmo_ucfg_enable_wakeup_event(struct wlan_objmgr_psoc *psoc,
 void pmo_ucfg_disable_wakeup_event(struct wlan_objmgr_psoc *psoc,
 	uint32_t vdev_id, uint32_t bitmap)
 {
-	pmo_core_disable_wakeup_event(psoc, vdev_id, bitmap);
+	pmo_core_disable_wakeup_event(psoc, vdev_id, &bitmap);
 }
 
 QDF_STATUS pmo_ucfg_cache_arp_offload_req(struct pmo_arp_req *arp_req)

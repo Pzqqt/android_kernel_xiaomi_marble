@@ -24,7 +24,7 @@
 #include "wlan_pmo_main.h"
 #include "wlan_pmo_obj_mgmt_public_struct.h"
 #include <wlan_scan_ucfg_api.h>
-
+#include "wlan_pmo_static_config.h"
 
 static inline int pmo_find_wow_ptrn_len(const char *ptrn)
 {
@@ -62,7 +62,7 @@ QDF_STATUS pmo_core_wow_exit(struct wlan_objmgr_vdev *vdev)
 }
 
 void pmo_core_enable_wakeup_event(struct wlan_objmgr_psoc *psoc,
-	uint32_t vdev_id, uint32_t bitmap)
+	uint32_t vdev_id, uint32_t *bitmap)
 {
 	QDF_STATUS status;
 	struct wlan_objmgr_vdev *vdev;
@@ -83,8 +83,8 @@ void pmo_core_enable_wakeup_event(struct wlan_objmgr_psoc *psoc,
 	if (QDF_IS_STATUS_ERROR(status))
 		goto out;
 
-	pmo_info("enable wakeup event vdev_id %d wake up event 0x%x",
-		vdev_id, bitmap);
+	pmo_info("enable wakeup event vdev_id %d wake up event 0x%x%x%x%x",
+		vdev_id, bitmap[0], bitmap[1], bitmap[2], bitmap[3]);
 	pmo_tgt_enable_wow_wakeup_event(vdev, bitmap);
 
 	pmo_vdev_put_ref(vdev);
@@ -94,7 +94,7 @@ out:
 }
 
 void pmo_core_disable_wakeup_event(struct wlan_objmgr_psoc *psoc,
-	uint32_t vdev_id, uint32_t bitmap)
+	uint32_t vdev_id, uint32_t *bitmap)
 {
 	QDF_STATUS status;
 	struct wlan_objmgr_vdev *vdev;
@@ -115,8 +115,8 @@ void pmo_core_disable_wakeup_event(struct wlan_objmgr_psoc *psoc,
 	if (QDF_IS_STATUS_ERROR(status))
 		goto out;
 
-	pmo_info("Disable wakeup eventvdev_id %d wake up event 0x%x",
-		vdev_id, bitmap);
+	pmo_info("Disable wakeup event vdev_id %d wake up event 0x%x%x%x%x",
+		vdev_id, bitmap[0], bitmap[1], bitmap[2], bitmap[3]);
 	pmo_tgt_disable_wow_wakeup_event(vdev, bitmap);
 
 	pmo_vdev_put_ref(vdev);
@@ -245,3 +245,100 @@ bool pmo_core_is_wow_applicable(struct wlan_objmgr_psoc *psoc)
 	return false;
 }
 
+void pmo_set_wow_event_bitmap(WOW_WAKE_EVENT_TYPE event,
+			      uint32_t wow_bitmap_size,
+			      uint32_t *bitmask)
+{
+	uint32_t bit_idx = 0, idx = 0;
+
+	if (!bitmask || wow_bitmap_size < PMO_WOW_MAX_EVENT_BM_LEN) {
+		pmo_err("wow bitmask length shorter than %d",
+			 PMO_WOW_MAX_EVENT_BM_LEN);
+		return;
+	}
+	pmo_get_event_bitmap_idx(event, wow_bitmap_size, &bit_idx, &idx);
+	bitmask[idx] |= 1 << bit_idx;
+
+	pmo_debug("%s: bitmask updated %x%x%x%x",
+		 __func__, bitmask[0], bitmask[1], bitmask[2], bitmask[3]);
+}
+
+void pmo_set_sta_wow_bitmask(uint32_t *bitmask, uint32_t wow_bitmap_size)
+{
+
+	pmo_set_wow_event_bitmap(WOW_CSA_IE_EVENT,
+			     wow_bitmap_size,
+			     bitmask);
+	pmo_set_wow_event_bitmap(WOW_CLIENT_KICKOUT_EVENT,
+			     wow_bitmap_size,
+			     bitmask);
+	pmo_set_wow_event_bitmap(WOW_PATTERN_MATCH_EVENT,
+			     wow_bitmap_size,
+			     bitmask);
+	pmo_set_wow_event_bitmap(WOW_MAGIC_PKT_RECVD_EVENT,
+			     wow_bitmap_size,
+			     bitmask);
+	pmo_set_wow_event_bitmap(WOW_DEAUTH_RECVD_EVENT,
+			     wow_bitmap_size,
+			     bitmask);
+	pmo_set_wow_event_bitmap(WOW_DISASSOC_RECVD_EVENT,
+			     wow_bitmap_size,
+			     bitmask);
+	pmo_set_wow_event_bitmap(WOW_BMISS_EVENT,
+			     wow_bitmap_size,
+			     bitmask);
+	pmo_set_wow_event_bitmap(WOW_GTK_ERR_EVENT,
+			     wow_bitmap_size,
+			     bitmask);
+	pmo_set_wow_event_bitmap(WOW_BETTER_AP_EVENT,
+			     wow_bitmap_size,
+			     bitmask);
+	pmo_set_wow_event_bitmap(WOW_HTT_EVENT,
+			     wow_bitmap_size,
+			     bitmask);
+	pmo_set_wow_event_bitmap(WOW_RA_MATCH_EVENT,
+			     wow_bitmap_size,
+			     bitmask);
+	pmo_set_wow_event_bitmap(WOW_NLO_DETECTED_EVENT,
+			     wow_bitmap_size,
+			     bitmask);
+	pmo_set_wow_event_bitmap(WOW_EXTSCAN_EVENT,
+			     wow_bitmap_size,
+			     bitmask);
+	pmo_set_wow_event_bitmap(WOW_OEM_RESPONSE_EVENT,
+			     wow_bitmap_size,
+			     bitmask);
+	pmo_set_wow_event_bitmap(WOW_TDLS_CONN_TRACKER_EVENT,
+			     wow_bitmap_size,
+			     bitmask);
+	pmo_set_wow_event_bitmap(WOW_11D_SCAN_EVENT,
+				 wow_bitmap_size,
+				 bitmask);
+
+}
+
+void pmo_set_sap_wow_bitmask(uint32_t *bitmask, uint32_t wow_bitmap_size)
+{
+
+	pmo_set_wow_event_bitmap(WOW_PROBE_REQ_WPS_IE_EVENT,
+			     wow_bitmap_size,
+			     bitmask);
+	pmo_set_wow_event_bitmap(WOW_PATTERN_MATCH_EVENT,
+			     wow_bitmap_size,
+			     bitmask);
+	pmo_set_wow_event_bitmap(WOW_AUTH_REQ_EVENT,
+			     wow_bitmap_size,
+			     bitmask);
+	pmo_set_wow_event_bitmap(WOW_ASSOC_REQ_EVENT,
+			     wow_bitmap_size,
+			     bitmask);
+	pmo_set_wow_event_bitmap(WOW_DEAUTH_RECVD_EVENT,
+			     wow_bitmap_size,
+			     bitmask);
+	pmo_set_wow_event_bitmap(WOW_DISASSOC_RECVD_EVENT,
+			     wow_bitmap_size,
+			     bitmask);
+	pmo_set_wow_event_bitmap(WOW_HTT_EVENT,
+			     wow_bitmap_size,
+			     bitmask);
+}
