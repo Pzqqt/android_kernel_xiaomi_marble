@@ -570,6 +570,11 @@ void policy_mgr_store_and_del_conn_info(struct wlan_objmgr_psoc *psoc,
 	bool found = false;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 
+	if (!info) {
+		policy_mgr_err("Invalid connection info");
+		return;
+	}
+	qdf_mem_zero(info, sizeof(*info));
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
 		policy_mgr_err("Invalid Context");
@@ -2135,44 +2140,6 @@ bool policy_mgr_allow_new_home_channel(struct wlan_objmgr_psoc *psoc,
 				(pm_conc_connection_list[1].chan)))) {
 			policy_mgr_err("don't allow 3rd home channel on same MAC");
 			status = false;
-		}
-	}
-	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
-
-	return status;
-}
-
-/**
- * policy_mgr_vht160_conn_exist() - to check if we have a connection
- * already using vht160 or vht80+80
- *
- * This routine will check if vht160 connection already exist or
- * no. If it exist then this routine will return true.
- *
- * Return: true if vht160 connection exist else false
- */
-bool policy_mgr_vht160_conn_exist(struct wlan_objmgr_psoc *psoc)
-{
-	uint32_t conn_index;
-	bool status = false;
-	struct policy_mgr_psoc_priv_obj *pm_ctx;
-
-	pm_ctx = policy_mgr_get_context(psoc);
-	if (!pm_ctx) {
-		policy_mgr_err("Invalid Context");
-		return status;
-	}
-
-	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
-	for (conn_index = 0; conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
-		conn_index++) {
-		if (pm_conc_connection_list[conn_index].in_use &&
-			((pm_conc_connection_list[conn_index].bw ==
-			HW_MODE_80_PLUS_80_MHZ) ||
-			(pm_conc_connection_list[conn_index].bw ==
-			HW_MODE_160_MHZ))) {
-			status = true;
-			break;
 		}
 	}
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);

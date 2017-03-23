@@ -389,7 +389,6 @@ bool policy_mgr_disallow_mcc(struct wlan_objmgr_psoc *psoc,
 		uint8_t channel);
 bool policy_mgr_allow_new_home_channel(struct wlan_objmgr_psoc *psoc,
 			uint8_t channel, uint32_t num_connections);
-bool policy_mgr_vht160_conn_exist(struct wlan_objmgr_psoc *psoc);
 bool policy_mgr_is_5g_channel_allowed(struct wlan_objmgr_psoc *psoc,
 				uint8_t channel, uint32_t *list,
 				enum policy_mgr_con_mode mode);
