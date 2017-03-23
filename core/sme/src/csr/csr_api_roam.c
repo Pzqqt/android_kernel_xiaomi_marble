@@ -2167,6 +2167,46 @@ uint32_t csr_convert_phy_cb_state_to_ini_value(ePhyChanBondState phyCbState)
 	return cbIniValue;
 }
 
+#ifdef WLAN_FEATURE_11AX
+/**
+ * csr_update_he_config_param() - Update MAC context with HE config param
+ * @mac_ctx: pointer to MAC context
+ * @param: pointer to CSR config params
+ *
+ * Return: None
+ */
+static void csr_update_he_config_param(tpAniSirGlobal mac_ctx,
+				       tCsrConfigParam *param)
+{
+	mac_ctx->roam.configParam.enable_ul_ofdma = param->enable_ul_ofdma;
+	mac_ctx->roam.configParam.enable_ul_mimo = param->enable_ul_mimo;
+}
+
+/**
+ * csr_get_he_config_param() - Get HE config param from MAC context
+ * @param: pointer to CSR config params
+ * @mac_ctx: pointer to MAC context
+ *
+ * Return: None
+ */
+static void csr_get_he_config_param(tCsrConfigParam *param,
+				    tpAniSirGlobal mac_ctx)
+{
+	param->enable_ul_ofdma = mac_ctx->roam.configParam.enable_ul_ofdma;
+	param->enable_ul_mimo = mac_ctx->roam.configParam.enable_ul_mimo;
+}
+#else
+static inline void csr_update_he_config_param(tpAniSirGlobal mac_ctx,
+					      tCsrConfigParam *param)
+{
+}
+
+static inline void csr_get_he_config_param(tCsrConfigParam *param,
+					   tpAniSirGlobal mac_ctx)
+{
+}
+#endif
+
 QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 					   tCsrConfigParam *pParam)
 {
@@ -2624,6 +2664,7 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->roam.configParam.enable_bcast_probe_rsp =
 			pParam->enable_bcast_probe_rsp;
 
+		csr_update_he_config_param(pMac, pParam);
 	}
 	return status;
 }
@@ -2859,6 +2900,8 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 		pMac->roam.configParam.rx_aggregation_size;
 	pParam->enable_bcast_probe_rsp =
 		pMac->roam.configParam.enable_bcast_probe_rsp;
+
+	csr_get_he_config_param(pParam, pMac);
 
 	return QDF_STATUS_SUCCESS;
 }

@@ -8923,7 +8923,6 @@ enum hdd_wext_control {
 #define CFG_EXTWOW_TCP_RX_TIMEOUT_DEFAULT          (200)
 #endif
 
-
 /*
  * <ini>
  * gper_roam_enabled - To enabled/disable PER based roaming in FW
@@ -9081,10 +9080,6 @@ enum hdd_wext_control {
 #define CFG_ENABLE_BCAST_PROBE_RESP_DEFAULT (0)
 
 /*
- * Type declarations
- */
-
-/*
  * <ini>
  * gActiveBpfMode - Control active BPF mode
  * @Min: 0 (disabled)
@@ -9108,6 +9103,58 @@ enum hdd_wext_control {
 #define CFG_ACTIVE_BPF_MODE_MAX     (ACTIVE_BPF_MODE_COUNT - 1)
 #define CFG_ACTIVE_BPF_MODE_DEFAULT (ACTIVE_BPF_DISABLED)
 
+#ifdef WLAN_FEATURE_11AX
+/* 11AX related INI configuration */
+/*
+ * <ini>
+ * enable_ul_mimo- Enable UL MIMO.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable or disable UL MIMO.
+ *
+ * Related: NA
+ *
+ * Supported Feature: 11AX
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+
+#define CFG_ENABLE_UL_MIMO_NAME    "enable_ul_mimo"
+#define CFG_ENABLE_UL_MIMO_MIN     (0)
+#define CFG_ENABLE_UL_MIMO_MAX     (1)
+#define CFG_ENABLE_UL_MIMO_DEFAULT (0)
+
+/*
+ * <ini>
+ * enable_ul_ofdma- Enable UL OFDMA.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable or disable UL OFDMA.
+ *
+ * Related: NA
+ *
+ * Supported Feature: 11AX
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_UL_OFDMA_NAME    "enable_ul_ofdma"
+#define CFG_ENABLE_UL_OFDMA_MIN     (0)
+#define CFG_ENABLE_UL_OFDMA_MAX     (1)
+#define CFG_ENABLE_UL_OFDMA_DEFAULT (0)
+
+#endif /* WLAN_FEATURE_11AX */
+
+/*
+ * Type declarations
+ */
 struct hdd_config {
 	/* Bitmap to track what is explicitly configured */
 	DECLARE_BITMAP(bExplicitCfg, MAX_CFG_INI_ITEMS);
@@ -9815,6 +9862,10 @@ struct hdd_config {
 	uint32_t per_roam_mon_time;
 	enum active_bpf_mode active_bpf_mode;
 	bool enable_bcast_probe_rsp;
+#ifdef WLAN_FEATURE_11AX
+	bool enable_ul_mimo;
+	bool enable_ul_ofdma;
+#endif
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

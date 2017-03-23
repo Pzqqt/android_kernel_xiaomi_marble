@@ -39,6 +39,10 @@ void hdd_update_tgt_he_cap(struct hdd_context_s *hdd_ctx,
 			   struct wma_tgt_cfg *cfg);
 void wlan_hdd_check_11ax_support(struct beacon_data_s *beacon,
 				 struct sap_Config *config);
+void hdd_he_print_ini_config(hdd_context_t *hdd_ctx);
+int hdd_update_he_cap_in_cfg(hdd_context_t *hdd_ctx);
+void hdd_he_set_sme_config(tSmeConfigParams *sme_config,
+			   struct hdd_config *config);
 #else
 static inline void hdd_update_tgt_he_cap(struct hdd_context_s *hdd_ctx,
 					 struct wma_tgt_cfg *cfg)
@@ -47,6 +51,20 @@ static inline void hdd_update_tgt_he_cap(struct hdd_context_s *hdd_ctx,
 
 static inline void wlan_hdd_check_11ax_support(struct beacon_data_s *beacon,
 					       struct sap_Config *config)
+{
+}
+
+static inline void hdd_he_print_ini_config(hdd_context_t *hdd_ctx)
+{
+}
+
+static inline int hdd_update_he_cap_in_cfg(hdd_context_t *hdd_ctx)
+{
+	return 0;
+}
+
+static inline void hdd_he_set_sme_config(tSmeConfigParams *sme_config,
+					 struct hdd_config *config)
 {
 }
 #endif
