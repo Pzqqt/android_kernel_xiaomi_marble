@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2015, 2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -49,11 +49,20 @@
 	  (dot11Mode ==  WNI_CFG_DOT11_MODE_11N_ONLY) || \
 	  (dot11Mode ==  WNI_CFG_DOT11_MODE_11AC) || \
 	  (dot11Mode ==  WNI_CFG_DOT11_MODE_11AC_ONLY) || \
+	  (dot11Mode ==  WNI_CFG_DOT11_MODE_11AX) || \
+	  (dot11Mode ==  WNI_CFG_DOT11_MODE_11AX_ONLY) || \
 	  (dot11Mode ==  WNI_CFG_DOT11_MODE_ALL)) ? true:false)
 
 #define IS_DOT11_MODE_VHT(dot11Mode) \
 	(((dot11Mode == WNI_CFG_DOT11_MODE_11AC) || \
 	  (dot11Mode ==  WNI_CFG_DOT11_MODE_11AC_ONLY) || \
+	  (dot11Mode ==  WNI_CFG_DOT11_MODE_11AX) || \
+	  (dot11Mode ==  WNI_CFG_DOT11_MODE_11AX_ONLY) || \
+	  (dot11Mode ==  WNI_CFG_DOT11_MODE_ALL)) ? true:false)
+
+#define IS_DOT11_MODE_HE(dot11Mode) \
+	(((dot11Mode == WNI_CFG_DOT11_MODE_11AX) || \
+	  (dot11Mode ==  WNI_CFG_DOT11_MODE_11AX_ONLY) || \
 	  (dot11Mode ==  WNI_CFG_DOT11_MODE_ALL)) ? true:false)
 
 #define IS_DOT11_MODE_11B(dot11Mode)  \

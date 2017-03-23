@@ -28,13 +28,25 @@
 
 struct hdd_context_s;
 struct wma_tgt_cfg;
+struct beacon_data_s;
+struct sap_Config;
+
+#define HE_CAP_OUI_TYPE "\x00\x13\x74\x01"
+#define HE_CAP_OUI_SIZE 4
 
 #ifdef WLAN_FEATURE_11AX
 void hdd_update_tgt_he_cap(struct hdd_context_s *hdd_ctx,
 			   struct wma_tgt_cfg *cfg);
+void wlan_hdd_check_11ax_support(struct beacon_data_s *beacon,
+				 struct sap_Config *config);
 #else
 static inline void hdd_update_tgt_he_cap(struct hdd_context_s *hdd_ctx,
 					 struct wma_tgt_cfg *cfg)
+{
+}
+
+static inline void wlan_hdd_check_11ax_support(struct beacon_data_s *beacon,
+					       struct sap_Config *config)
 {
 }
 #endif

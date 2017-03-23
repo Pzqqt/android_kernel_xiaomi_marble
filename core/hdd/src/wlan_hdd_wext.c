@@ -9850,6 +9850,26 @@ static int __iw_get_char_setnone(struct net_device *dev,
 				snprintf(extra, WE_MAX_STR_LEN,
 					 "11ACVHT160");
 			break;
+		case eCSR_DOT11_MODE_11ax:
+		case eCSR_DOT11_MODE_11ax_ONLY:
+			/* currently using vhtChannelWidth */
+			if (hddctx->config->vhtChannelWidth ==
+			    eHT_CHANNEL_WIDTH_20MHZ)
+				snprintf(extra, WE_MAX_STR_LEN,
+					 "11AX_HE_20");
+			else if (hddctx->config->vhtChannelWidth ==
+				 eHT_CHANNEL_WIDTH_40MHZ)
+				snprintf(extra, WE_MAX_STR_LEN,
+					 "11AX_HE_40");
+			else if (hddctx->config->vhtChannelWidth ==
+				 eHT_CHANNEL_WIDTH_80MHZ)
+				snprintf(extra, WE_MAX_STR_LEN,
+					 "11AX_HE_80");
+			else if (hddctx->config->vhtChannelWidth ==
+				 eHT_CHANNEL_WIDTH_160MHZ)
+				snprintf(extra, WE_MAX_STR_LEN,
+					 "11AX_HE_160");
+			break;
 		}
 
 		wrqu->data.length = strlen(extra) + 1;

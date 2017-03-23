@@ -1695,6 +1695,7 @@ struct wma_target_req {
  *			number of transmit streams
  * @preferred_rx_streams: policy manager indicates the preferred
  *			number of receive streams
+ * @he_capable: HE capability
  */
 struct wma_vdev_start_req {
 	uint32_t beacon_intval;
@@ -1719,6 +1720,7 @@ struct wma_vdev_start_req {
 	uint32_t preferred_tx_streams;
 	uint32_t preferred_rx_streams;
 	uint8_t beacon_tx_rate;
+	bool he_capable;
 };
 
 /**

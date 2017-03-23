@@ -547,6 +547,7 @@ typedef enum eSirNwType {
 	eSIR_11G_NW_TYPE,
 	eSIR_11N_NW_TYPE,
 	eSIR_11AC_NW_TYPE,
+	eSIR_11AX_NW_TYPE,
 	eSIR_DONOT_USE_NW_TYPE = SIR_MAX_ENUM_SIZE
 } tSirNwType;
 

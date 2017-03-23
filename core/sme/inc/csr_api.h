@@ -132,6 +132,8 @@ typedef enum {
 	 * It is for CSR internal use
 	 */
 	eCSR_DOT11_MODE_AUTO = 0x0400,
+	eCSR_DOT11_MODE_11ax = 0x0800,
+	eCSR_DOT11_MODE_11ax_ONLY = 0x1000,
 
 	/* specify the number of maximum bits for phyMode */
 	eCSR_NUM_PHY_MODE = 16,

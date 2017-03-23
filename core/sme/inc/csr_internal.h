@@ -110,6 +110,8 @@ typedef enum {
 	eCSR_CFG_DOT11_MODE_11AC_ONLY,
 	/* This value can never set to CFG. Its for CSR's internal use */
 	eCSR_CFG_DOT11_MODE_AUTO,
+	eCSR_CFG_DOT11_MODE_11AX,
+	eCSR_CFG_DOT11_MODE_11AX_ONLY,
 } eCsrCfgDot11Mode;
 
 typedef enum {
@@ -1115,17 +1117,9 @@ typedef struct tagCsrRoamStruct {
 	((eCSR_DOT11_MODE_abg & (phyMode)) || \
 	 (eCSR_DOT11_MODE_11n & (phyMode)) || \
 	 (eCSR_DOT11_MODE_11ac & (phyMode)) || \
+	 (eCSR_DOT11_MODE_11ax & (phyMode)) || \
 	 (eCSR_DOT11_MODE_AUTO & (phyMode)))
 
-#define CSR_IS_PHY_MODE_11n(phy_mode) \
-	((eCSR_DOT11_MODE_11n == phy_mode) || \
-	 (eCSR_DOT11_MODE_11n_ONLY == phy_mode) || \
-	 (eCSR_DOT11_MODE_11ac == phy_mode) || \
-	 (eCSR_DOT11_MODE_11ac_ONLY == phy_mode))
-
-#define CSR_IS_PHY_MODE_11ac(phy_mode) \
-	((eCSR_DOT11_MODE_11ac == phy_mode) || \
-	 (eCSR_DOT11_MODE_11ac_ONLY == phy_mode))
 /*
  * this function returns true if the NIC is operating exclusively in
  * the 2.4 GHz band, meaning. it is NOT operating in the 5.0 GHz band.

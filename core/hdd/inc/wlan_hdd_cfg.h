@@ -244,6 +244,8 @@ typedef enum {
 	eHDD_DOT11_MODE_11ac_ONLY,
 	eHDD_DOT11_MODE_11ac,
 	eHDD_DOT11_MODE_11a,
+	eHDD_DOT11_MODE_11ax_ONLY,
+	eHDD_DOT11_MODE_11ax,
 } eHddDot11Mode;
 
 /*
@@ -1702,11 +1704,11 @@ typedef enum {
  * <ini>
  * gDot11Mode - SAP phy mode
  * @Min: 0
- * @Max: 10 (11a)
- * @Default: 9 (11ac)
+ * @Max: 12 (11ax)
+ * @Default: 12 (11ax)
  *
  * This ini is used to set Phy Mode (auto, b, g, n, etc/) Valid values are
- * 0-10, with 0 = Auto, 10 = 11a.
+ * 0-12, with 0 = Auto, 12 = 11ax.
  *
  * Related: None.
  *
@@ -1718,8 +1720,8 @@ typedef enum {
  */
 #define CFG_DOT11_MODE_NAME                    "gDot11Mode"
 #define CFG_DOT11_MODE_MIN                     eHDD_DOT11_MODE_AUTO
-#define CFG_DOT11_MODE_DEFAULT                 eHDD_DOT11_MODE_11ac
-#define CFG_DOT11_MODE_MAX                     eHDD_DOT11_MODE_11a
+#define CFG_DOT11_MODE_DEFAULT                 eHDD_DOT11_MODE_11ax
+#define CFG_DOT11_MODE_MAX                     eHDD_DOT11_MODE_11ax
 
 /*
  * <ini>

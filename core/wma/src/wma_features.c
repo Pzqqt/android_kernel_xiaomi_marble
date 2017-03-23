@@ -906,7 +906,8 @@ WLAN_PHY_MODE wma_chan_phy_mode(u8 chan, enum phy_ch_width chan_width,
 		     (WNI_CFG_DOT11_MODE_11G == dot11_mode) ||
 		     (WNI_CFG_DOT11_MODE_11N == dot11_mode) ||
 		     (WNI_CFG_DOT11_MODE_ALL == dot11_mode) ||
-		     (WNI_CFG_DOT11_MODE_11AC == dot11_mode)))
+		     (WNI_CFG_DOT11_MODE_11AC == dot11_mode) ||
+		     (WNI_CFG_DOT11_MODE_11AX == dot11_mode)))
 			phymode = MODE_11G;
 		else {
 			switch (dot11_mode) {
@@ -940,6 +941,13 @@ WLAN_PHY_MODE wma_chan_phy_mode(u8 chan, enum phy_ch_width chan_width,
 				else if (40 == bw_val)
 					phymode = MODE_11AC_VHT40_2G;
 				break;
+			case WNI_CFG_DOT11_MODE_11AX:
+			case WNI_CFG_DOT11_MODE_11AX_ONLY:
+				if (20 == bw_val)
+					phymode = MODE_11AX_HE20_2G;
+				else if (40 == bw_val)
+					phymode = MODE_11AX_HE40_2G;
+				break;
 			default:
 				break;
 			}
@@ -952,7 +960,8 @@ WLAN_PHY_MODE wma_chan_phy_mode(u8 chan, enum phy_ch_width chan_width,
 		    ((WNI_CFG_DOT11_MODE_11A == dot11_mode) ||
 		     (WNI_CFG_DOT11_MODE_11N == dot11_mode) ||
 		     (WNI_CFG_DOT11_MODE_ALL == dot11_mode) ||
-		     (WNI_CFG_DOT11_MODE_11AC == dot11_mode)))
+		     (WNI_CFG_DOT11_MODE_11AC == dot11_mode) ||
+		     (WNI_CFG_DOT11_MODE_11AX == dot11_mode)))
 			phymode = MODE_11A;
 		else {
 			switch (dot11_mode) {
@@ -980,6 +989,19 @@ WLAN_PHY_MODE wma_chan_phy_mode(u8 chan, enum phy_ch_width chan_width,
 					phymode = MODE_11AC_VHT160;
 				else if (CH_WIDTH_80P80MHZ == chan_width)
 					phymode = MODE_11AC_VHT80_80;
+				break;
+			case WNI_CFG_DOT11_MODE_11AX:
+			case WNI_CFG_DOT11_MODE_11AX_ONLY:
+				if (20 == bw_val)
+					phymode = MODE_11AX_HE20;
+				else if (40 == bw_val)
+					phymode = MODE_11AX_HE40;
+				else if (80 == bw_val)
+					phymode = MODE_11AX_HE80;
+				else if (CH_WIDTH_160MHZ == chan_width)
+					phymode = MODE_11AX_HE160;
+				else if (CH_WIDTH_80P80MHZ == chan_width)
+					phymode = MODE_11AX_HE80_80;
 				break;
 			default:
 				break;

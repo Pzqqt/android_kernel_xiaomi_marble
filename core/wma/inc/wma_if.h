@@ -450,6 +450,7 @@ typedef struct sLimMlmSetKeysReq {
  * @chainMask: chain mask
  * @smpsMode: SMPS mode
  * @dot11_mode: 802.11 mode
+ * @he_capable: HE Capability
  */
 typedef struct {
 	tSirMacAddr bssId;
@@ -516,6 +517,7 @@ typedef struct {
 	uint8_t beacon_tx_rate;
 	uint32_t tx_aggregation_size;
 	uint32_t rx_aggregation_size;
+	bool he_capable;
 } tAddBssParams, *tpAddBssParams;
 
 /**
@@ -910,6 +912,7 @@ typedef struct {
 
 	uint8_t restart_on_chan_switch;
 	uint8_t nss;
+	bool he_capable;
 } tSwitchChannelParams, *tpSwitchChannelParams;
 
 typedef void (*tpSetLinkStateCallback)(tpAniSirGlobal pMac, void *msgParam,
