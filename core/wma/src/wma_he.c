@@ -361,16 +361,6 @@ static void wma_derive_ext_he_cap(t_wma_handle *wma_handle,
 	}
 }
 
-/**
- * @wma_print_he_cap() - Print HE capabilities
- * @he_cap: pointer to HE Capability
- *
- * Received HE capabilities are converted into dot11f structure.
- * This function will print all the HE capabilities as stored
- * in the dot11f structure.
- *
- * Return: None
- */
 void wma_print_he_cap(tDot11fIEvendor_he_cap *he_cap)
 {
 	if (!he_cap->present) {
@@ -467,16 +457,6 @@ void wma_print_he_cap(tDot11fIEvendor_he_cap *he_cap)
 		he_cap->ppe_threshold.ppet, he_cap->ppe_threshold.num_ppet);
 }
 
-/**
- * wma_print_he_ppet() - Prints HE PPE Threshold
- * @he_ppet: PPE Threshold
- *
- * This function prints HE PPE Threshold as received from FW.
- * Refer to the definition of wmi_ppe_threshold to understand
- * how PPE thresholds are packed by FW for a given NSS and RU.
- *
- * Return: none
- */
 void wma_print_he_ppet(void *he_ppet)
 {
 	int numss, ru_count, ru_bit_mask, i, j;
@@ -521,14 +501,6 @@ void wma_print_he_ppet(void *he_ppet)
 
 }
 
-/**
- * wma_print_he_phy_cap() - Print HE PHY Capability
- * @phy_cap: pointer to PHY Capability
- *
- * This function prints HE PHY Capability received from FW.
- *
- * Return: none
- */
 void wma_print_he_phy_cap(uint32_t *phy_cap)
 {
 	WMA_LOGI(FL("HE PHY Capabilities:"));
@@ -595,14 +567,6 @@ void wma_print_he_phy_cap(uint32_t *phy_cap)
 		WMI_HECAP_PHY_4XLTFAND800NSECSGI_GET(phy_cap));
 }
 
-/**
- * wma_print_he_mac_cap() - Print HE MAC Capability
- * @mac_cap: MAC Capability
- *
- * This function prints HE MAC Capability received from FW.
- *
- * Return: none
- */
 void wma_print_he_mac_cap(uint32_t mac_cap)
 {
 	WMA_LOGI(FL("HE MAC Capabilities:"));
@@ -659,18 +623,6 @@ void wma_print_he_mac_cap(uint32_t mac_cap)
 	WMA_LOGI("\tA-BQR support: 0x%01x", WMI_HECAP_MAC_ABQR_GET(mac_cap));
 }
 
-/**
- * wma_update_target_ext_he_cap() - Update HE caps with given extended cap
- * @wma_handle: pointer to wma_handle
- * @tgt_cfg: Target config
- *
- * This function loop through each hardware mode and for each hardware mode
- * again it loop through each MAC/PHY and pull the caps 2G and 5G specific
- * HE caps and derives the final cap.
- *
- * Return: none
- *
- */
 void wma_update_target_ext_he_cap(tp_wma_handle wma_handle,
 				  struct wma_tgt_cfg *tgt_cfg)
 {
@@ -742,16 +694,6 @@ void wma_update_target_ext_he_cap(tp_wma_handle wma_handle,
 	wma_print_he_cap(he_cap);
 }
 
-/*
- * wma_he_update_tgt_services() - update tgt cfg to indicate 11ax support
- * @wma: pointer to WMA handle
- * @cfg: pointer to WMA target services
- *
- * Based on WMI SERVICES information, enable 11ax support and set DOT11AX bit
- * in feature caps bitmap.
- *
- * Return: None
- */
 void wma_he_update_tgt_services(tp_wma_handle wma, struct wma_tgt_services *cfg)
 {
 	if (WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap, WMI_SERVICE_11AX)) {
@@ -763,14 +705,6 @@ void wma_he_update_tgt_services(tp_wma_handle wma, struct wma_tgt_services *cfg)
 	}
 }
 
-/**
- * @wma_print_he_op() - Print HE Operation
- * @he_cap: pointer to HE Operation
- *
- * Print HE operation stored as dot11f structure
- *
- * Return: None
- */
 void wma_print_he_op(tDot11fIEvendor_he_op *he_ops)
 {
 	WMA_LOGI(FL("bss_color: %0x, default_pe_duration: %0x, twt_required: %0x, rts_threshold: %0x"),
@@ -791,6 +725,8 @@ void wma_print_he_op(tDot11fIEvendor_he_op *he_ops)
  * This function converts the sequence of PPET stored in the host in OTA type
  * structure into FW understandable structure to be sent as part of peer assoc
  * command.
+ *
+ * Return: None
  */
 static void wma_parse_he_ppet(tDot11fIEppe_threshold *dot11f_ppet,
 			      struct wmi_host_ppe_threshold *peer_ppet)
@@ -887,13 +823,6 @@ static void wma_parse_he_ppet(tDot11fIEppe_threshold *dot11f_ppet,
 	qdf_mem_free(rcvd_ppet);
 }
 
-/**
- * wma_populate_peer_he_cap() - populate peer HE capabilities in peer assoc cmd
- * @peer: pointer to peer assoc params
- * @params: pointer to ADD STA params
- *
- * Return: None
- */
 void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 			      tpAddStaParams params)
 {
@@ -1005,13 +934,6 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 	return;
 }
 
-/**
- * wma_update_vdev_he_ops() - update he ops in vdev start request
- * @req: pointer to vdev start request
- * @add_bss: pointer to ADD BSS params
- *
- * Return: None
- */
 void wma_update_vdev_he_ops(struct wma_vdev_start_req *req,
 		tpAddBssParams add_bss)
 {
@@ -1031,13 +953,6 @@ void wma_update_vdev_he_ops(struct wma_vdev_start_req *req,
 	WMI_HEOPS_DUALBEACON_SET(he_ops, he_op->dual_beacon);
 }
 
-/**
- * wma_copy_txrxnode_he_ops() - copy HE ops from vdev start req to txrx node
- * @node: pointer to txrx node
- * @req: pointer to vdev start request
- *
- * Return: None
- */
 void wma_copy_txrxnode_he_ops(struct wma_txrx_node *node,
 		struct wma_vdev_start_req *req)
 {
@@ -1045,27 +960,12 @@ void wma_copy_txrxnode_he_ops(struct wma_txrx_node *node,
 	node->he_ops = req->he_ops;
 }
 
-/**
- * wma_copy_vdev_start_he_ops() - copy HE ops from vdev start req to vdev start
- * @params: pointer to vdev_start_params
- * @req: pointer to vdev start request
- *
- * Return: None
- */
 void wma_copy_vdev_start_he_ops(struct vdev_start_params *params,
 		struct wma_vdev_start_req *req)
 {
 	params->he_ops = req->he_ops;
 }
 
-/**
- * wma_vdev_set_he_bss_params() - set HE OPs in vdev start
- * @wma: pointer to wma handle
- * @vdev_id: VDEV id
- * @req: pointer to vdev start request
- *
- * Return: None
- */
 void wma_vdev_set_he_bss_params(tp_wma_handle wma, uint8_t vdev_id,
 				struct wma_vdev_start_req *req)
 {
@@ -1084,13 +984,6 @@ void wma_vdev_set_he_bss_params(tp_wma_handle wma, uint8_t vdev_id,
 		intr[vdev_id].he_ops = req->he_ops;
 }
 
-/**
- * wma_update_vdev_he_capable() - update vdev start request he capability
- * @req: pointer to vdev start request
- * @params: pointer to chan switch params
- *
- * Return: None
- */
 void wma_update_vdev_he_capable(struct wma_vdev_start_req *req,
 		tpSwitchChannelParams params)
 {

@@ -23,23 +23,135 @@
 #include "sir_api.h"
 
 #ifdef WLAN_FEATURE_11AX
+/**
+ * @wma_print_he_cap() - Print HE capabilities
+ * @he_cap: pointer to HE Capability
+ *
+ * Received HE capabilities are converted into dot11f structure.
+ * This function will print all the HE capabilities as stored
+ * in the dot11f structure.
+ *
+ * Return: None
+ */
 void wma_print_he_cap(tDot11fIEvendor_he_cap *he_cap);
+
+/**
+ * wma_print_he_ppet() - Prints HE PPE Threshold
+ * @he_ppet: PPE Threshold
+ *
+ * This function prints HE PPE Threshold as received from FW.
+ * Refer to the definition of wmi_ppe_threshold to understand
+ * how PPE thresholds are packed by FW for a given NSS and RU.
+ *
+ * Return: none
+ */
 void wma_print_he_ppet(void *ppet);
+
+/**
+ * wma_print_he_phy_cap() - Print HE PHY Capability
+ * @phy_cap: pointer to PHY Capability
+ *
+ * This function prints HE PHY Capability received from FW.
+ *
+ * Return: none
+ */
 void wma_print_he_phy_cap(uint32_t *phy_cap);
+
+/**
+ * wma_print_he_mac_cap() - Print HE MAC Capability
+ * @mac_cap: MAC Capability
+ *
+ * This function prints HE MAC Capability received from FW.
+ *
+ * Return: none
+ */
 void wma_print_he_mac_cap(uint32_t mac_cap);
+
+/**
+ * @wma_print_he_op() - Print HE Operation
+ * @he_cap: pointer to HE Operation
+ *
+ * Print HE operation stored as dot11f structure
+ *
+ * Return: None
+ */
 void wma_print_he_op(tDot11fIEvendor_he_op *he_ops);
+
+/**
+ * wma_update_target_ext_he_cap() - Update HE caps with given extended cap
+ * @wma_handle: pointer to wma_handle
+ * @tgt_cfg: Target config
+ *
+ * This function loop through each hardware mode and for each hardware mode
+ * again it loop through each MAC/PHY and pull the caps 2G and 5G specific
+ * HE caps and derives the final cap.
+ *
+ * Return: None
+ */
 void wma_update_target_ext_he_cap(tp_wma_handle wma_handle,
 	struct wma_tgt_cfg *tgt_cfg);
+
+/*
+ * wma_he_update_tgt_services() - update tgt cfg to indicate 11ax support
+ * @wma: pointer to WMA handle
+ * @cfg: pointer to WMA target services
+ *
+ * Based on WMI SERVICES information, enable 11ax support and set DOT11AX bit
+ * in feature caps bitmap.
+ *
+ * Return: None
+ */
 void wma_he_update_tgt_services(tp_wma_handle wma,
 				struct wma_tgt_services *cfg);
+
+/**
+ * wma_populate_peer_he_cap() - populate peer HE capabilities in peer assoc cmd
+ * @peer: pointer to peer assoc params
+ * @params: pointer to ADD STA params
+ *
+ * Return: None
+ */
 void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 			      tpAddStaParams params);
+
+/**
+ * wma_update_vdev_he_ops() - update he ops in vdev start request
+ * @req: pointer to vdev start request
+ * @add_bss: pointer to ADD BSS params
+ *
+ * Return: None
+ */
 void wma_update_vdev_he_ops(struct wma_vdev_start_req *req,
 		tpAddBssParams add_bss);
+
+/**
+ * wma_copy_txrxnode_he_ops() - copy HE ops from vdev start req to txrx node
+ * @node: pointer to txrx node
+ * @req: pointer to vdev start request
+ *
+ * Return: None
+ */
 void wma_copy_txrxnode_he_ops(struct wma_txrx_node *node,
 		struct wma_vdev_start_req *req);
+
+/**
+ * wma_copy_vdev_start_he_ops() - copy HE ops from vdev start req to vdev start
+ * @params: pointer to vdev_start_params
+ * @req: pointer to vdev start request
+ *
+ * Return: None
+ */
 void wma_copy_vdev_start_he_ops(struct vdev_start_params *params,
 		struct wma_vdev_start_req *req);
+
+/**
+ * wma_vdev_set_he_bss_params() - set HE OPs in vdev start
+ * @wma: pointer to wma handle
+ * @vdev_id: VDEV id
+ * @req: pointer to vdev start request
+ *
+ * Return: None
+ */
 void wma_vdev_set_he_bss_params(tp_wma_handle wma, uint8_t vdev_id,
 				struct wma_vdev_start_req *req);
 
@@ -48,6 +160,13 @@ static inline bool wma_is_peer_he_capable(tpAddStaParams params)
 	return params->he_capable;
 }
 
+/**
+ * wma_update_vdev_he_capable() - update vdev start request he capability
+ * @req: pointer to vdev start request
+ * @params: pointer to chan switch params
+ *
+ * Return: None
+ */
 void wma_update_vdev_he_capable(struct wma_vdev_start_req *req,
 		tpSwitchChannelParams params);
 
