@@ -279,7 +279,8 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 
 	if (!fw_entry || !fw_entry->data) {
 		BMI_ERR("Invalid fw_entries");
-		return QDF_STATUS_E_FAILURE;
+		status = -ENOENT;
+		goto release_fw;
 	}
 
 	fw_entry_size = fw_entry->size;
@@ -289,7 +290,7 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 
 	if (ol_check_fw_hash(qdf_dev->dev, fw_entry->data, fw_entry_size, file)) {
 		BMI_ERR("Hash Check failed for file:%s", filename);
-		status = QDF_STATUS_E_FAILURE;
+		status = -EINVAL;
 		goto end;
 	}
 #endif
@@ -302,7 +303,7 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 		if (!temp_eeprom) {
 			BMI_ERR("%s: Memory allocation failed", __func__);
 			release_firmware(fw_entry);
-			return QDF_STATUS_E_NOMEM;
+			return -ENOMEM;
 		}
 
 		qdf_mem_copy(temp_eeprom, (uint8_t *) fw_entry->data,
@@ -363,7 +364,7 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 
 		if (fw_entry_size < sizeof(SIGN_HEADER_T)) {
 			BMI_ERR("Invalid binary size %d", fw_entry_size);
-			status = QDF_STATUS_E_FAILURE;
+			status = -EINVAL;
 			goto end;
 		}
 
@@ -379,7 +380,7 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 						sizeof(SIGN_HEADER_T), ol_ctx);
 			if (status != EOK) {
 				BMI_ERR("unable to start sign stream");
-				status = QDF_STATUS_E_FAILURE;
+				status = -EINVAL;
 				goto end;
 			}
 
@@ -429,17 +430,15 @@ end:
 	if (temp_eeprom)
 		qdf_mem_free(temp_eeprom);
 
-	if (status != EOK) {
-		BMI_ERR("%s, BMI operation failed: %d", __func__, __LINE__);
+release_fw:
+	if (fw_entry)
 		release_firmware(fw_entry);
-		return QDF_STATUS_E_FAILURE;
-	}
 
-	release_firmware(fw_entry);
-
-	BMI_INFO("transferring file: %s size %d bytes done!",
-		(filename != NULL) ? filename : " ", fw_entry_size);
-
+	if (status != EOK)
+		BMI_ERR("%s, BMI operation failed: %d", __func__, __LINE__);
+	else
+		BMI_INFO("transferring file: %s size %d bytes done!",
+			 (filename != NULL) ? filename : " ", fw_entry_size);
 	return status;
 }
 
