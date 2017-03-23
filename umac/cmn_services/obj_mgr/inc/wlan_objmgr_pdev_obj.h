@@ -615,6 +615,22 @@ static inline struct pdev_osif_priv *wlan_pdev_get_ospriv(struct wlan_objmgr_pde
 }
 
 /**
+ * wlan_pdev_reset_ospriv() - reset os priv pointer
+ * @pdev: PDEV object
+ *
+ * API to reset OS private pointer in PDEV
+ *
+ * Caller need to acquire lock with wlan_pdev_obj_lock()
+ *
+ * Return: void
+ */
+static inline void wlan_pdev_reset_ospriv(struct wlan_objmgr_pdev *pdev)
+{
+	/* This API is invoked with lock acquired, do not add log prints */
+	pdev->pdev_nif.pdev_ospriv = NULL;
+}
+
+/**
  * wlan_pdev_set_max_vdev_count() - set pdev max vdev count
  * @pdev: PDEV object
  * @vdev count: Max vdev count
