@@ -66,12 +66,59 @@ enum qca_wlan_vendor_attr_get_he_capabilities {
 	QCA_WLAN_VENDOR_ATTR_HE_CAPABILITIES_AFTER_LAST - 1,
 };
 
+/**
+ * hdd_update_tgt_he_cap() - Update HE related capabilities
+ * @hdd_ctx: HDD context
+ * @he_cap: Target HE capabilities
+ *
+ * This function updaates WNI CFG with Target capabilities received as part of
+ * Default values present in WNI CFG are the values supported by FW/HW.
+ * INI should be introduced if user control is required to control the value.
+ *
+ * Return: None
+ */
 void hdd_update_tgt_he_cap(struct hdd_context_s *hdd_ctx,
 			   struct wma_tgt_cfg *cfg);
+
+/**
+ * wlan_hdd_check_11ax_support() - check if beacon IE and update hw mode
+ * @beacon: beacon IE buffer
+ * @config: pointer to sap config
+ *
+ * Check if HE cap IE is present in beacon IE, if present update hw mode
+ * to 11ax.
+ *
+ * Return: None
+ */
 void wlan_hdd_check_11ax_support(struct beacon_data_s *beacon,
 				 struct sap_Config *config);
+
+/**
+ * hdd_he_print_ini_config()- Print 11AX(HE) specific INI configuration
+ * @hdd_ctx: handle to hdd context
+ *
+ * Return: None
+ */
 void hdd_he_print_ini_config(hdd_context_t *hdd_ctx);
+
+/**
+ * hdd_update_he_cap_in_cfg() - update HE cap in global CFG
+ * @hdd_ctx: pointer to hdd context
+ *
+ * This API will update the HE config in CFG after taking intersection
+ * of INI and firmware capabilities provided reading CFG
+ *
+ * Return: 0 on success and errno on failure
+ */
 int hdd_update_he_cap_in_cfg(hdd_context_t *hdd_ctx);
+
+/**
+ * hdd_he_set_sme_config() - set HE related SME config param
+ * @sme_config: pointer to SME config
+ * @config: pointer to INI config
+ *
+ * Return: None
+ */
 void hdd_he_set_sme_config(tSmeConfigParams *sme_config,
 			   struct hdd_config *config);
 

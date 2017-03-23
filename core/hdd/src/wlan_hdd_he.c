@@ -128,17 +128,6 @@ static int hdd_he_set_wni_cfg(struct hdd_context_s *hdd_ctx,
 	return qdf_status_to_os_return(status);
 }
 
-/**
- * hdd_update_tgt_he_cap() - Update HE related capabilities
- * @hdd_ctx: HDD context
- * @he_cap: Target HE capabilities
- *
- * This function updaates WNI CFG with Target capabilities received as part of
- * Default values present in WNI CFG are the values supported by FW/HW.
- * INI should be introduced if user control is required to control the value.
- *
- * Return: None
- */
 void hdd_update_tgt_he_cap(struct hdd_context_s *hdd_ctx,
 			   struct wma_tgt_cfg *cfg)
 {
@@ -253,16 +242,6 @@ void hdd_update_tgt_he_cap(struct hdd_context_s *hdd_ctx,
 		hdd_alert("could not set HE PPET");
 }
 
-/**
- * wlan_hdd_check_11ax_support() - check if beacon IE and update hw mode
- * @beacon: beacon IE buffer
- * @config: pointer to sap config
- *
- * Check if HE cap IE is present in beacon IE, if present update hw mode
- * to 11ax.
- *
- * Return: None
- */
 void wlan_hdd_check_11ax_support(beacon_data_t *beacon, tsap_Config_t *config)
 {
 	uint8_t *ie;
@@ -273,12 +252,6 @@ void wlan_hdd_check_11ax_support(beacon_data_t *beacon, tsap_Config_t *config)
 		config->SapHw_mode = eCSR_DOT11_MODE_11ax;
 }
 
-/**
- * hdd_he_print_ini_config()- Print 11AX(HE) specific INI configuration
- * @hdd_ctx: handle to hdd context
- *
- * Return: None
- */
 void hdd_he_print_ini_config(hdd_context_t *hdd_ctx)
 {
 	hdd_info("Name = [%s] Value = [%d]", CFG_ENABLE_UL_MIMO_NAME,
@@ -287,15 +260,6 @@ void hdd_he_print_ini_config(hdd_context_t *hdd_ctx)
 		hdd_ctx->config->enable_ul_ofdma);
 }
 
-/**
- * hdd_update_he_cap_in_cfg() - update HE cap in global CFG
- * @hdd_ctx: pointer to hdd context
- *
- * This API will update the HE config in CFG after taking intersection
- * of INI and firmware capabilities provided reading CFG
- *
- * Return: 0 on success and errno on failure
- */
 int hdd_update_he_cap_in_cfg(hdd_context_t *hdd_ctx)
 {
 	uint32_t val, val1 = 0;
@@ -324,13 +288,6 @@ int hdd_update_he_cap_in_cfg(hdd_context_t *hdd_ctx)
 	return ret;
 }
 
-/**
- * hdd_he_set_sme_config() - set HE related SME config param
- * @sme_config: pointer to SME config
- * @config: pointer to INI config
- *
- * Return: None
- */
 void hdd_he_set_sme_config(tSmeConfigParams *sme_config,
 			   struct hdd_config *config)
 {
