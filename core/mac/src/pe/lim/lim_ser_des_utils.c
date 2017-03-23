@@ -64,7 +64,7 @@ lim_get_session_info(tpAniSirGlobal pMac, uint8_t *pBuf, uint8_t *sessionId,
 		     uint16_t *transactionId)
 {
 	if (!pBuf) {
-		lim_log(pMac, LOGE, FL("NULL ptr received. "));
+		pe_err("NULL ptr received");
 		return;
 	}
 
