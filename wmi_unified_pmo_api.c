@@ -170,6 +170,18 @@ QDF_STATUS wmi_unified_enable_arp_ns_offload_cmd(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
+QDF_STATUS wmi_unified_configure_broadcast_filter_cmd(void *wmi_hdl,
+			   uint8_t vdev_id, bool bc_filter)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_enable_broadcast_filter_cmd)
+		return wmi_handle->ops->send_enable_broadcast_filter_cmd(
+				wmi_handle, vdev_id, bc_filter);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 #ifdef FEATURE_WLAN_LPHB
 QDF_STATUS wmi_unified_lphb_config_hbenable_cmd(void *wmi_hdl,
 				wmi_hb_set_enable_cmd_fixed_param *params)

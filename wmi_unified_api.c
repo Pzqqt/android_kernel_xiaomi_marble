@@ -2991,18 +2991,6 @@ QDF_STATUS wmi_unified_pdev_set_dual_mac_config_cmd(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-QDF_STATUS wmi_unified_configure_broadcast_filter_cmd(void *wmi_hdl,
-			   uint8_t vdev_id, bool bc_filter)
-{
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
-	if (wmi_handle->ops->send_enable_broadcast_filter_cmd)
-		return wmi_handle->ops->send_enable_broadcast_filter_cmd(
-				wmi_handle, vdev_id, bc_filter);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
 /**
  * wmi_unified_set_led_flashing_cmd() - set led flashing in fw
  * @wmi_hdl: wmi handle

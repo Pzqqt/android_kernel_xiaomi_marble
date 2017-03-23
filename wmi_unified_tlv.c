@@ -13348,7 +13348,6 @@ QDF_STATUS send_lphb_config_udp_pkt_filter_cmd_tlv(wmi_unified_t wmi_handle,
 	return status;
 }
 #endif /* FEATURE_WLAN_LPHB */
-#endif /* End of WLAN_PMO_ENABLE */
 
 static QDF_STATUS send_enable_broadcast_filter_cmd_tlv(wmi_unified_t wmi_handle,
 			   uint8_t vdev_id, bool enable)
@@ -13392,6 +13391,7 @@ static QDF_STATUS send_enable_broadcast_filter_cmd_tlv(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_SUCCESS;
 }
+#endif /* End of WLAN_PMO_ENABLE */
 
 /**
  * send_set_ssid_hotlist_cmd_tlv() - Handle an SSID hotlist set request
@@ -17079,6 +17079,8 @@ struct wmi_ops tlv_ops =  {
 	.send_wow_patterns_to_fw_cmd = send_wow_patterns_to_fw_cmd_tlv,
 	.send_enable_arp_ns_offload_cmd = send_enable_arp_ns_offload_cmd_tlv,
 	.send_add_clear_mcbc_filter_cmd = send_add_clear_mcbc_filter_cmd_tlv,
+	.send_enable_broadcast_filter_cmd =
+		 send_enable_broadcast_filter_cmd_tlv,
 	.send_gtk_offload_cmd = send_gtk_offload_cmd_tlv,
 	.send_process_gtk_offload_getinfo_cmd =
 		send_process_gtk_offload_getinfo_cmd_tlv,
@@ -17165,8 +17167,6 @@ struct wmi_ops tlv_ops =  {
 	.send_pdev_set_hw_mode_cmd = send_pdev_set_hw_mode_cmd_tlv,
 	.send_pdev_set_dual_mac_config_cmd =
 		 send_pdev_set_dual_mac_config_cmd_tlv,
-	.send_enable_broadcast_filter_cmd =
-		 send_enable_broadcast_filter_cmd_tlv,
 	.send_app_type1_params_in_fw_cmd =
 		 send_app_type1_params_in_fw_cmd_tlv,
 	.send_set_ssid_hotlist_cmd = send_set_ssid_hotlist_cmd_tlv,
