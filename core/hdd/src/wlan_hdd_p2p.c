@@ -1138,13 +1138,53 @@ __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 	 */
 	mutex_lock(&cfgState->remain_on_chan_ctx_lock);
 	pRemainChanCtx = cfgState->remain_on_chan_ctx;
-	if ((cfgState->remain_on_chan_ctx == NULL) ||
-	    (cfgState->remain_on_chan_ctx->cookie != cookie)) {
-		mutex_unlock(&cfgState->remain_on_chan_ctx_lock);
-		hdd_err("No Remain on channel pending with specified cookie value");
-		return -EINVAL;
-	}
 
+	if (pRemainChanCtx) {
+		hdd_notice("action_cookie = %08llx, roc cookie = %08llx, cookie = %08llx",
+				cfgState->action_cookie, pRemainChanCtx->cookie,
+				cookie);
+
+		if (pRemainChanCtx->cookie == cookie) {
+			/* request to cancel on-going roc */
+			if (cfgState->buf) {
+				/* Tx frame pending */
+				if (cfgState->action_cookie != cookie) {
+					hdd_debug("Cookie matched with RoC cookie but not with tx cookie, indicate expired event for roc");
+					/* RoC was extended to accomodate the tx frame */
+					if (REMAIN_ON_CHANNEL_REQUEST ==
+							pRemainChanCtx->
+							rem_on_chan_request) {
+					cfg80211_remain_on_channel_expired(
+							pRemainChanCtx->dev->
+							ieee80211_ptr,
+							pRemainChanCtx->cookie,
+							&pRemainChanCtx->chan,
+							GFP_KERNEL);
+					}
+					pRemainChanCtx->rem_on_chan_request =
+						OFF_CHANNEL_ACTION_TX;
+					pRemainChanCtx->cookie =
+						cfgState->action_cookie;
+					return 0;
+				}
+			}
+		} else if (cfgState->buf && cfgState->action_cookie ==
+				cookie) {
+			mutex_unlock(&cfgState->remain_on_chan_ctx_lock);
+			hdd_debug("Cookie not matched with RoC cookie but matched with tx cookie, cleanup action frame");
+			/*free the buf and return 0*/
+			hdd_cleanup_actionframe(pHddCtx, pAdapter);
+			return 0;
+		} else {
+			mutex_unlock(&cfgState->remain_on_chan_ctx_lock);
+			hdd_debug("No matching cookie");
+			return -EINVAL;
+		}
+	} else {
+		mutex_unlock(&cfgState->remain_on_chan_ctx_lock);
+		hdd_debug("RoC context is NULL, return success");
+		return 0;
+	}
 	if (NULL != cfgState->remain_on_chan_ctx) {
 		if (qdf_mc_timer_stop(&cfgState->remain_on_chan_ctx->
 					hdd_remain_on_chan_timer)
