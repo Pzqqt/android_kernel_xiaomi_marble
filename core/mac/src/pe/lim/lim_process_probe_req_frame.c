@@ -101,7 +101,7 @@ void lim_get_wpspbc_sessions(tpAniSirGlobal mac_ctx, struct qdf_mac_addr addr,
 		/* One WPS probe request in 120 second */
 		*overlap = eSAP_WPSPBC_ONE_WPSPBC_PROBE_REQ_IN120S;
 
-	lim_log(mac_ctx, LOGD, FL("overlap = %d"), *overlap);
+	pe_debug("overlap: %d", *overlap);
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			   addr.bytes, QDF_MAC_ADDR_SIZE);
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
@@ -127,7 +127,7 @@ static void lim_remove_timeout_pbc_sessions(tpAniSirGlobal pMac,
 	while (pbc) {
 		prev = pbc;
 		pbc = pbc->next;
-		lim_log(pMac, LOGD, FL("WPS PBC sessions remove"));
+		pe_debug("WPS PBC sessions remove");
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			   prev->addr.bytes, QDF_MAC_ADDR_SIZE);
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
@@ -200,7 +200,7 @@ static void lim_update_pbc_session_entry(tpAniSirGlobal pMac,
 		(uint32_t) (qdf_mc_timer_get_system_ticks() /
 			    QDF_TICKS_PER_SECOND);
 
-	lim_log(pMac, LOGD, FL("Receive WPS probe reques curTime=%d"), curTime);
+	pe_debug("Receive WPS probe reques curTime: %d", curTime);
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			   addr, QDF_MAC_ADDR_SIZE);
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
@@ -227,7 +227,7 @@ static void lim_update_pbc_session_entry(tpAniSirGlobal pMac,
 	if (!pbc) {
 		pbc = qdf_mem_malloc(sizeof(tSirWPSPBCSession));
 		if (NULL == pbc) {
-			lim_log(pMac, LOGE, FL("memory allocate failed!"));
+			pe_err("memory allocate failed!");
 			return;
 		}
 		qdf_mem_copy((uint8_t *) pbc->addr.bytes, (uint8_t *) addr,
@@ -356,8 +356,7 @@ lim_process_probe_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	if ((session->pePersona == QDF_P2P_GO_MODE) &&
 		((mac_ctx->lim.gpLimRemainOnChanReq) ||
 		 (mac_ctx->lim.gLimHalScanState != eLIM_HAL_IDLE_SCAN_STATE))) {
-		lim_log(mac_ctx, LOGD,
-			FL("GO is scanning, don't send probersp on diff chnl"));
+		pe_debug("GO is scanning, don't send probersp on diff chnl");
 		return;
 	}
 	mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
@@ -366,8 +365,7 @@ lim_process_probe_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			 (WMA_GET_RX_BEACON_SENT(rx_pkt_info)))) {
 		frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
 
-		lim_log(mac_ctx, LOGD,
-			FL("Received Probe Request %d bytes from "),
+		pe_debug("Received Probe Request: %d bytes from",
 			frame_len);
 			lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOGD);
 		/* Get pointer to Probe Request frame body */
@@ -380,8 +378,7 @@ lim_process_probe_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			if (!cfg_get_vendor_ie_ptr_from_oui(mac_ctx,
 				&session->access_policy_vendor_ie[2],
 				3, body_ptr, frame_len)) {
-				lim_log(mac_ctx, LOGW, FL(
-					"Vendor IE is not present and access policy is %x, dropping probe request"),
+				pe_warn("Vendor IE is not present and access policy is: %x dropping probe request",
 					session->access_policy);
 				return;
 			}
@@ -390,9 +387,8 @@ lim_process_probe_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		/* Parse Probe Request frame */
 		if (sir_convert_probe_req_frame2_struct(mac_ctx, body_ptr,
 				frame_len, &probe_req) == eSIR_FAILURE) {
-			lim_log(mac_ctx, LOGE,
-				FL("Parse error ProbeReq, length=%d, SA is: "
-					MAC_ADDRESS_STR), frame_len,
+			pe_err("Parse error ProbeReq, length: %d, SA is: "
+					MAC_ADDRESS_STR, frame_len,
 					MAC_ADDR_ARRAY(mac_hdr->sa));
 			mac_ctx->sys.probeError++;
 			return;
@@ -420,8 +416,7 @@ lim_process_probe_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			}
 
 			if ((rate_11b > 0) && (other_rates == 0)) {
-				lim_log(mac_ctx, LOGD,
-					FL("Received a probe req frame with only 11b rates, SA is: "));
+				pe_debug("Received a probe req frame with only 11b rates, SA is: ");
 					lim_print_mac_addr(mac_ctx,
 						mac_hdr->sa, LOGD);
 					return;
@@ -491,8 +486,7 @@ lim_process_probe_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 					return;
 				}
 			} else {
-				lim_log(mac_ctx, LOGD,
-					FL("Ignore ProbeReq frm with unmatch SSID received from "));
+				pe_debug("Ignore ProbeReq frm with unmatch SSID received from");
 					lim_print_mac_addr(mac_ctx, mac_hdr->sa,
 						LOGD);
 					mac_ctx->sys.probeBadSsid++;
@@ -520,14 +514,12 @@ lim_process_probe_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			return;
 		}
 multipleSSIDcheck:
-		lim_log(mac_ctx, LOGD,
-			FL("Ignore ProbeReq frm with unmatch SSID rcved from"));
+		pe_debug("Ignore ProbeReq frm with unmatch SSID rcved from");
 			lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOGD);
 		mac_ctx->sys.probeBadSsid++;
 	} else {
 		/* Ignore received Probe Request frame */
-		lim_log(mac_ctx, LOGD,
-			FL("Ignoring Probe Request frame received from "));
+		pe_debug("Ignoring Probe Request frame received from");
 		lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOGD);
 		mac_ctx->sys.probeIgnore++;
 	}
@@ -559,7 +551,7 @@ lim_indicate_probe_req_to_hdd(tpAniSirGlobal pMac, uint8_t *pBd,
 	tpSirMacMgmtHdr pHdr;
 	uint32_t frameLen;
 
-	lim_log(pMac, LOGD, "Received a probe request frame");
+	pe_debug("Received a probe request frame");
 
 	pHdr = WMA_GET_RX_MAC_HEADER(pBd);
 	frameLen = WMA_GET_RX_PAYLOAD_LEN(pBd);
@@ -654,8 +646,7 @@ lim_send_sme_probe_req_ind(tpAniSirGlobal pMac,
 	pSirSmeProbeReqInd = qdf_mem_malloc(sizeof(tSirSmeProbeReqInd));
 	if (NULL == pSirSmeProbeReqInd) {
 		/* Log error */
-		lim_log(pMac, LOGE,
-			FL("call to AllocateMemory failed for eWNI_SME_PROBE_REQ_IND"));
+		pe_err("call to AllocateMemory failed for eWNI_SME_PROBE_REQ_IND");
 		return;
 	}
 
@@ -680,6 +671,6 @@ lim_send_sme_probe_req_ind(tpAniSirGlobal pMac,
 		     ProbeReqIELen);
 
 	if (lim_sys_process_mmh_msg_api(pMac, &msgQ, ePROT) != eSIR_SUCCESS)
-		lim_log(pMac, LOGE, FL("couldnt send the probe req to hdd"));
+		pe_err("couldnt send the probe req to hdd");
 
 } /*** end lim_send_sme_probe_req_ind() ***/
