@@ -39,6 +39,10 @@
 #ifdef WLAN_FEATURE_NAN_CONVERGENCE
 #include "wlan_nan_api.h"
 #endif /* WLAN_FEATURE_NAN_CONVERGENCE */
+#ifdef CONVERGED_P2P_ENABLE
+#include <wlan_cfg80211_p2p.h>
+#include <wlan_p2p_ucfg_api.h>
+#endif
 
 #ifdef WLAN_CONV_CRYPTO_SUPPORTED
 #include "wlan_crypto_main.h"
@@ -53,23 +57,43 @@
  * thier actual handlers are ready
  */
 
+#ifdef CONVERGED_P2P_ENABLE
+static QDF_STATUS p2p_init(void)
+{
+	return ucfg_p2p_init();
+}
+
+static QDF_STATUS p2p_deinit(void)
+{
+	return ucfg_p2p_deinit();
+}
+
+static QDF_STATUS p2p_psoc_open(struct wlan_objmgr_psoc *psoc)
+{
+	return ucfg_p2p_psoc_open(psoc);
+}
+
+static QDF_STATUS p2p_psoc_close(struct wlan_objmgr_psoc *psoc)
+{
+	return ucfg_p2p_psoc_close(psoc);
+}
+
+static QDF_STATUS p2p_psoc_enable(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_p2p_start(psoc);
+}
+
+static QDF_STATUS p2p_psoc_disable(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_p2p_stop(psoc);
+}
+#else
 static QDF_STATUS p2p_init(void)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
 static QDF_STATUS p2p_deinit(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-
-static QDF_STATUS tdls_init(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS tdls_deinit(void)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -84,16 +108,6 @@ static QDF_STATUS p2p_psoc_close(struct wlan_objmgr_psoc *psoc)
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS tdls_psoc_open(struct wlan_objmgr_psoc *psoc)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS tdls_psoc_close(struct wlan_objmgr_psoc *psoc)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
 static QDF_STATUS p2p_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	return QDF_STATUS_SUCCESS;
@@ -103,7 +117,27 @@ static QDF_STATUS p2p_psoc_disable(struct wlan_objmgr_psoc *psoc)
 {
 	return QDF_STATUS_SUCCESS;
 }
+#endif /* END of CONVERGED_P2P_ENABLE */
 
+static QDF_STATUS tdls_init(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS tdls_deinit(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS tdls_psoc_open(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS tdls_psoc_close(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
 
 static QDF_STATUS tdls_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {

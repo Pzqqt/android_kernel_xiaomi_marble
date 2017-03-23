@@ -32,6 +32,9 @@
 #include "target_if_nan.h"
 #endif /* WLAN_FEATURE_NAN_CONVERGENCE */
 #include "wlan_reg_tgt_api.h"
+#ifdef CONVERGED_P2P_ENABLE
+#include "wlan_p2p_tgt_api.h"
+#endif
 
 #ifdef WLAN_CONV_CRYPTO_SUPPORTED
 #include "wlan_crypto_global_api.h"
@@ -137,6 +140,20 @@ static void wlan_lmac_if_register_nan_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
 }
 #endif /* WLAN_FEATURE_NAN_CONVERGENCE */
 
+#ifdef CONVERGED_P2P_ENABLE
+static void wlan_lmac_if_umac_rx_ops_register_p2p(
+				struct wlan_lmac_if_rx_ops *rx_ops)
+{
+	rx_ops->p2p.lo_ev_handler = tgt_p2p_lo_event_cb;
+	rx_ops->p2p.noa_ev_handler = tgt_p2p_noa_event_cb;
+}
+#else
+static void wlan_lmac_if_umac_rx_ops_register_p2p(
+				struct wlan_lmac_if_rx_ops *rx_ops)
+{
+}
+#endif
+
 /**
  * wlan_lmac_if_umac_rx_ops_register() - UMAC rx handler register
  * @rx_ops: Pointer to rx_ops structure to be populated
@@ -186,6 +203,9 @@ wlan_lmac_if_umac_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 
 	rx_ops->reg_rx_ops.master_list_handler =
 		tgt_reg_process_master_chan_list;
+
+	/* p2p rx ops */
+	wlan_lmac_if_umac_rx_ops_register_p2p(rx_ops);
 
 	return QDF_STATUS_SUCCESS;
 }
