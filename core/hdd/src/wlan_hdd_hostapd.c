@@ -2566,6 +2566,7 @@ static int __iw_softap_set_two_ints_getnone(struct net_device *dev,
 					WMI_WLAN_PROFILE_SET_HIST_INTVL_CMDID,
 					value[1], value[2], DBG_CMD);
 	case QCSAP_SET_WLAN_SUSPEND:
+		hdd_info("SAP unit-test suspend(%d, %d)", value[1], value[2]);
 		ret = hdd_wlan_fake_apps_suspend(hdd_ctx->wiphy, dev,
 						 value[1], value[2]);
 		break;
