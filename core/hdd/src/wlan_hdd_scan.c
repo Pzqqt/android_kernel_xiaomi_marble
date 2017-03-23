@@ -1254,7 +1254,7 @@ static QDF_STATUS hdd_cfg80211_scan_done_callback(tHalHandle halHandle,
 				cds_flush_logs(WLAN_LOG_TYPE_NON_FATAL,
 						WLAN_LOG_INDICATOR_HOST_DRIVER,
 						WLAN_LOG_REASON_NO_SCAN_RESULTS,
-						true, true);
+						true, false);
 				hddctx->last_nil_scan_bug_report_timestamp =
 					current_timestamp;
 			}
