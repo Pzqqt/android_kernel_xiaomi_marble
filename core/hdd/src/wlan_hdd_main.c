@@ -9697,6 +9697,11 @@ int hdd_register_cb(hdd_context_t *hdd_ctx)
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("set congestion callback failed");
 
+	status = sme_set_bt_activity_info_cb(hdd_ctx->hHal,
+					     hdd_bt_activity_cb);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("set bt activity info callback failed");
+
 	EXIT();
 
 	return ret;

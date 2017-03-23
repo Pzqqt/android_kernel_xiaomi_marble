@@ -1617,4 +1617,14 @@ QDF_STATUS sme_set_chip_pwr_save_fail_cb(tHalHandle hal, void (*cb)(void *,
  */
 int sme_cli_set_command(int vdev_id, int param_id, int sval, int vpdev);
 
+/**
+ * sme_set_bt_activity_info_cb - set the callback handler for bt events
+ * @hal: handle returned by mac_open
+ * @cb: callback handler
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_set_bt_activity_info_cb(tHalHandle hal,
+				void (*cb)(void *, uint32_t profile_info));
+
 #endif /* #if !defined( __SME_API_H ) */

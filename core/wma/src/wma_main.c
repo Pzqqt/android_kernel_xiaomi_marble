@@ -3343,6 +3343,16 @@ QDF_STATUS wma_start(void *cds_ctx)
 	}
 #endif
 
+	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
+			WMI_WLAN_COEX_BT_ACTIVITY_EVENTID,
+			wma_wlan_bt_activity_evt_handler,
+			WMA_RX_SERIALIZER_CTX);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		WMA_LOGE("Failed to register coex bt activity event handler");
+		qdf_status = QDF_STATUS_E_FAILURE;
+		goto end;
+	}
+
 end:
 	WMA_LOGD("%s: Exit", __func__);
 	return qdf_status;

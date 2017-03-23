@@ -1637,6 +1637,8 @@ struct hdd_context_s {
 	/* the context that is capturing tsf */
 	hdd_adapter_t *cap_tsf_context;
 #endif
+	uint8_t bt_a2dp_active:1;
+	uint8_t bt_vo_active:1;
 };
 
 /**

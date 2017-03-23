@@ -5406,3 +5406,38 @@ int wma_rx_aggr_failure_event_handler(void *handle, u_int8_t *event_buf,
 
 	return 0;
 }
+
+int wma_wlan_bt_activity_evt_handler(void *handle, uint8_t *event, uint32_t len)
+{
+	wmi_coex_bt_activity_event_fixed_param *fixed_param;
+	WMI_WLAN_COEX_BT_ACTIVITY_EVENTID_param_tlvs *param_buf =
+		(WMI_WLAN_COEX_BT_ACTIVITY_EVENTID_param_tlvs *)event;
+	struct scheduler_msg sme_msg = {0};
+	QDF_STATUS qdf_status;
+
+	if (!param_buf) {
+		WMA_LOGE(FL("Invalid BT activity event buffer"));
+		return -EINVAL;
+	}
+
+	fixed_param = param_buf->fixed_param;
+	if (!fixed_param) {
+		WMA_LOGE(FL("Invalid BT activity event fixed param buffer"));
+		return -EINVAL;
+	}
+
+	WMA_LOGI(FL("Received BT activity event %u"),
+		    fixed_param->coex_profile_evt);
+
+	sme_msg.type = eWNI_SME_BT_ACTIVITY_INFO_IND;
+	sme_msg.bodyptr = NULL;
+	sme_msg.bodyval = fixed_param->coex_profile_evt;
+
+	qdf_status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		WMA_LOGE(FL("Failed to post msg to SME"));
+		return -EINVAL;
+	}
+
+	return 0;
+}

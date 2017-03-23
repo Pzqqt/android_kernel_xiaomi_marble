@@ -566,4 +566,13 @@ int wlan_hdd_get_adjacent_chan(uint8_t chan, bool upper);
  */
 int wlan_hdd_merge_avoid_freqs(tHddAvoidFreqList *destFreqList,
 		tHddAvoidFreqList *srcFreqList);
+
+/**
+ * hdd_bt_activity_cb() - callback function to receive bt activity
+ * @context: HDD context
+ * @bt_activity: specifies the kind of bt activity
+ *
+ * Return: none
+ */
+void hdd_bt_activity_cb(void *context, uint32_t bt_activity);
 #endif

@@ -1254,4 +1254,17 @@ QDF_STATUS wma_send_vdev_stop_to_fw(t_wma_handle *wma, uint8_t vdev_id);
 int wma_rx_aggr_failure_event_handler(void *handle, u_int8_t *event_buf,
 							u_int32_t len);
 
+/**
+ * wma_wlan_bt_activity_evt_handler - event handler to handle bt activity
+ * @handle: the WMA handle
+ * @event: buffer with the event parameters
+ * @len: length of the buffer
+ *
+ * This function receives BT activity event from firmware and passes the event
+ * information to upper layers
+ *
+ * Return: 0 on success
+ */
+int wma_wlan_bt_activity_evt_handler(void *handle, uint8_t *event,
+				     uint32_t len);
 #endif
