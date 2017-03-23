@@ -341,6 +341,11 @@ enum phy_ch_width {
 	CH_WIDTH_MAX
 };
 
+#define HT40PLUS_2G_FCC_CH_END       7
+#define HT40PLUS_2G_EURJAP_CH_END    9
+#define HT40MINUS_2G_CH_START        5
+#define HT40MINUS_2G_CH_END          13
+
 /**
  * struct ch_params_s
  * @ch_width: channel width
@@ -381,6 +386,13 @@ extern struct regulatory_channel reg_channels[NUM_CHANNELS];
 QDF_STATUS cds_get_reg_domain_from_country_code(v_REGDOMAIN_t *pRegDomain,
 						const uint8_t *country_alpha2,
 						enum country_src source);
+
+/**
+ * cds_is_fcc_regdomian() - is the regdomain FCC
+ *
+ * Return: true on FCC regdomain, false otherwise
+ */
+bool cds_is_fcc_regdomain(void);
 
 QDF_STATUS cds_read_default_country(uint8_t *default_country);
 

@@ -39,6 +39,7 @@
 #include "cds_regdomain.h"
 #include "cds_ieee80211_common_i.h"
 #include "sme_api.h"
+#include "wlan_hdd_main.h"
 
 const struct chan_map chan_mapping[NUM_CHANNELS] = {
 	[CHAN_ENUM_1] = {2412, 1},
@@ -805,6 +806,26 @@ QDF_STATUS cds_get_reg_domain_from_country_code(v_REGDOMAIN_t *reg_domain_ptr,
 				     NL80211_USER_REG_HINT_USER);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * cds_is_fcc_regdomian() - is the regdomain FCC
+ *
+ * Return: true on FCC regdomain, false otherwise
+ */
+bool cds_is_fcc_regdomain(void)
+{
+	v_REGDOMAIN_t domainId;
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (wlan_hdd_validate_context(hdd_ctx))
+		return false;
+	cds_get_reg_domain_from_country_code(&domainId,
+			hdd_ctx->reg.alpha2, SOURCE_QUERY);
+	if (REGDOMAIN_FCC == domainId)
+		return true;
+	return false;
 }
 
 /*
