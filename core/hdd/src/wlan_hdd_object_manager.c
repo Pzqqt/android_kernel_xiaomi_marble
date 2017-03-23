@@ -197,7 +197,7 @@ int hdd_objmgr_destroy_vdev(hdd_adapter_t *adapter)
 		return -EINVAL;
 
 	osif_priv = wlan_vdev_get_ospriv(vdev);
-	vdev->vdev_nif.osdev = NULL;
+	wlan_vdev_reset_ospriv(vdev);
 	qdf_mem_free(osif_priv);
 
 	if (hdd_objmgr_remove_peer_object(vdev,
