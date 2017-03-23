@@ -104,6 +104,7 @@ struct wlan_lmac_if_scan_rx_ops {
 /* fwd declarations for pmo tx ops */
 struct pmo_arp_offload_params;
 struct pmo_ns_offload_params;
+struct pmo_bcast_filter_params;
 struct pmo_gtk_req;
 struct pmo_action_wakeup_set_params;
 struct pmo_lphb_enable_req;
@@ -119,6 +120,7 @@ struct pmo_suspend_params;
  *					pointers for pmo component
  * @send_arp_offload_req: fp to send arp offload request
  * @send_ns_offload_req: fp to send ns offload request
+ * @send_non_arp_bcast_filter_req: for enable/disable  broadcast filter
  * @send_enable_wakeup_event_req: fp to send enable wow wakeup events req
  * @send_disable_wakeup_event_req: fp to send disable wow wakeup events req
  * @send_add_wow_pattern: fp to send wow pattern request
@@ -150,6 +152,9 @@ struct wlan_lmac_if_pmo_tx_ops {
 	QDF_STATUS(*send_arp_offload_req)(struct wlan_objmgr_vdev *vdev,
 			struct pmo_arp_offload_params *arp_offload_req,
 			struct pmo_ns_offload_params *ns_offload_req);
+	QDF_STATUS(*send_non_arp_bcast_filter_req)(
+			struct wlan_objmgr_vdev *vdev,
+			struct pmo_bcast_filter_params *bcast_req);
 	QDF_STATUS(*send_ns_offload_req)(struct wlan_objmgr_vdev *vdev,
 			struct pmo_arp_offload_params *arp_offload_req,
 			struct pmo_ns_offload_params *ns_offload_req);
