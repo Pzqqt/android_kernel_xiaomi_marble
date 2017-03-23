@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -251,6 +251,7 @@ enum {
 	QCASAP_PARAM_TX_STBC,
 	QCASAP_PARAM_RX_STBC,
 	QCSAP_PARAM_CHAN_WIDTH,
+	QCSAP_PARAM_SET_TXRX_STATS,
 };
 
 int iw_get_channel_list(struct net_device *dev,

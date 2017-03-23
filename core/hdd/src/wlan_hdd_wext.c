@@ -41,6 +41,7 @@
 #include <cds_api.h>
 #include "scheduler_api.h"
 #include <net/arp.h>
+#include <cdp_txrx_cmn.h>
 #include <cdp_txrx_stats.h>
 #include "sir_params.h"
 #include "csr_api.h"
@@ -96,7 +97,8 @@
 #include "cds_utils.h"
 #include "wlan_hdd_request_manager.h"
 #include "os_if_wifi_pos.h"
-
+#include <cdp_txrx_stats.h>
+#include <cds_api.h>
 #define HDD_FINISH_ULA_TIME_OUT         800
 #define HDD_SET_MCBC_FILTERS_TO_FW      1
 #define HDD_DELETE_MCBC_FILTERS_FROM_FW 0
@@ -1007,6 +1009,7 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
  */
 #define WE_SET_CHANNEL                        88
 #define WE_SET_CONC_SYSTEM_PREF               89
+#define WE_SET_TXRX_STATS                     90
 
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_SET_NONE_GET_INT    (SIOCIWFIRSTPRIV + 1)
@@ -7344,6 +7347,10 @@ static int __iw_setint_getnone(struct net_device *dev,
 	int ret;
 	int enable_pbm, enable_mp;
 	QDF_STATUS status;
+	void *soc = NULL;
+	struct ol_txrx_stats_req req;
+	struct cdp_pdev *pdev = NULL;
+	struct cdp_vdev *vdev = NULL;
 
 	ENTER_DEV(dev);
 
@@ -8072,6 +8079,20 @@ static int __iw_setint_getnone(struct net_device *dev,
 		ret = wma_cli_set_command(pAdapter->sessionId,
 					  WMA_VDEV_TXRX_FWSTATS_ENABLE_CMDID,
 					  set_value, VDEV_CMD);
+		break;
+	}
+
+	case WE_SET_TXRX_STATS:
+	{
+		hdd_notice("WE_SET_TXRX_STATS val %d", set_value);
+		ret = cds_get_datapath_handles(&soc, &pdev, &vdev,
+				       pAdapter->sessionId);
+
+		if (ret != 0)
+			break;
+
+		qdf_mem_zero(&req, sizeof(req));
+		ret = cdp_txrx_stats(soc, vdev, &req, set_value);
 		break;
 	}
 
@@ -12627,6 +12648,11 @@ static const struct iw_priv_args we_private_args[] = {
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 0,
 	 "txrx_fw_stats"},
+
+	{WE_SET_TXRX_STATS,
+	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+	 0,
+	 "txrx_stats"},
 
 	{WE_TXRX_FWSTATS_RESET,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,

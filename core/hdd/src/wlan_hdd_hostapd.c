@@ -41,6 +41,7 @@
 #include <linux/semaphore.h>
 #include <linux/compat.h>
 #include <cdp_txrx_stats.h>
+#include <cdp_txrx_cmn.h>
 #include <cds_api.h>
 #include <cds_sched.h>
 #include <linux/etherdevice.h>
@@ -79,6 +80,8 @@
 #include "wlan_hdd_power.h"
 #include "wlan_hdd_object_manager.h"
 #include <qca_vendor.h>
+#include <cds_api.h>
+#include <cdp_txrx_stats.h>
 
 #include "wlan_hdd_he.h"
 
@@ -2666,6 +2669,10 @@ static __iw_softap_setparam(struct net_device *dev,
 	QDF_STATUS status;
 	int ret = 0;            /* success */
 	hdd_context_t *hdd_ctx;
+	struct cdp_vdev *vdev = NULL;
+	struct cdp_pdev *pdev = NULL;
+	void *soc = NULL;
+	struct ol_txrx_stats_req req;
 
 	ENTER_DEV(dev);
 
@@ -2806,6 +2813,19 @@ static __iw_softap_setparam(struct net_device *dev,
 					  set_value, VDEV_CMD);
 		break;
 	}
+
+	case QCSAP_PARAM_SET_TXRX_STATS:
+	{
+		ret = cds_get_datapath_handles(&soc, &pdev, &vdev,
+				 pHostapdAdapter->sessionId);
+		if (ret != 0)
+			break;
+		hdd_notice("QCSAP_PARAM_SET_TXRX_STATS val %d", set_value);
+		qdf_mem_zero(&req, sizeof(req));
+		ret = cdp_txrx_stats(soc, vdev, &req, set_value);
+		break;
+	}
+
 	/* Firmware debug log */
 	case QCSAP_DBGLOG_LOG_LEVEL:
 	{
@@ -5281,11 +5301,14 @@ static const struct iw_priv_args hostapd_private_args[] = {
 	}, {
 		QCSAP_PARAM_SET_MC_RATE,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "setMcRate"
-	},
-	{
+	}, {
 		QCSAP_PARAM_SET_TXRX_FW_STATS,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0,
 		"txrx_fw_stats"
+	}, {
+		QCSAP_PARAM_SET_TXRX_STATS,
+		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0,
+		"txrx_stats"
 	}, {
 		QCSAP_PARAM_SET_MCC_CHANNEL_LATENCY,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0,
