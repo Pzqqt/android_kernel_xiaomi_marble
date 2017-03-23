@@ -102,7 +102,7 @@ struct htt_list_node {
 };
 
 struct htt_rx_hash_entry {
-	A_UINT32 paddr;
+	qdf_dma_addr_t paddr;
 	qdf_nbuf_t netbuf;
 	A_UINT8 fromlist;
 	struct htt_list_node listnode;

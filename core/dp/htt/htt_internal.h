@@ -540,10 +540,12 @@ void htt_htc_misc_pkt_pool_free(struct htt_pdev_t *pdev);
 #endif
 
 int
-htt_rx_hash_list_insert(struct htt_pdev_t *pdev, uint32_t paddr,
+htt_rx_hash_list_insert(struct htt_pdev_t *pdev,
+			qdf_dma_addr_t paddr,
 			qdf_nbuf_t netbuf);
 
-qdf_nbuf_t htt_rx_hash_list_lookup(struct htt_pdev_t *pdev, uint32_t paddr);
+qdf_nbuf_t
+htt_rx_hash_list_lookup(struct htt_pdev_t *pdev, qdf_dma_addr_t paddr);
 
 #ifdef IPA_OFFLOAD
 int
