@@ -35,8 +35,6 @@ inline uint32_t get_scan_event_id(void)
 {
 	return WMI_SCAN_EVENTID;
 }
-extern int wma_scan_event_callback(ol_scn_t handle, uint8_t *data,
-	uint32_t len);
 #else
 inline uint32_t get_scan_event_id(void)
 {
@@ -83,15 +81,6 @@ target_if_scan_event_handler(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 		qdf_mem_free(event_info);
 		return -EINVAL;
 	}
-
-#ifdef CONFIG_MCL
-	/* temp change for p2p ROC*/
-#define ROC_SCAN_REQUESTOR_ID   0xB000
-	if (ROC_SCAN_REQUESTOR_ID == event_info->event.requester) {
-		qdf_mem_free(event_info);
-		return wma_scan_event_callback(scn, data, datalen);
-	}
-#endif
 
 	scan_rx_ops = target_if_scan_get_rx_ops(psoc);
 	if (scan_rx_ops->scan_ev_handler) {
