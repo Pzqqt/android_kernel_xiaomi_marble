@@ -29,6 +29,36 @@
 #include "../../core/src/reg_services.h"
 #include <reg_services_public_struct.h>
 
+#define WLAN_REG_MIN_24GHZ_CH_NUM REG_MIN_24GHZ_CH_NUM
+#define WLAN_REG_MAX_24GHZ_CH_NUM REG_MAX_24GHZ_CH_NUM
+#define WLAN_REG_MIN_5GHZ_CH_NUM REG_MIN_5GHZ_CH_NUM
+#define WLAN_REG_MAX_5GHZ_CH_NUM REG_MAX_5GHZ_CH_NUM
+
+#define WLAN_REG_IS_24GHZ_CH(ch) REG_IS_24GHZ_CH(ch)
+#define WLAN_REG_IS_5GHZ_CH(ch) REG_IS_5GHZ_CH(ch)
+
+#define WLAN_REG_CH_NUM(ch_enum) REG_CH_NUM(ch_enum)
+#define WLAN_REG_CH_TO_FREQ(ch_enum) REG_CH_TO_FREQ(ch_enum)
+
+#define WLAN_REG_IS_SAME_BAND_CHANNELS(chan_num1, chan_num2) \
+	(chan_num1 && chan_num2 &&					\
+	(WLAN_REG_IS_5GHZ_CH(chan_num1) == WLAN_REG_IS_5GHZ_CH(chan_num2)))
+
+
+#define WLAN_REG_IS_CHANNEL_VALID_5G_SBS(curchan, newchan) \
+	(curchan > newchan ?				   \
+	 REG_CH_TO_FREQ(reg_get_chan_enum(curchan))	   \
+	 - REG_CH_TO_FREQ(reg_get_chan_enum(newchan))	   \
+	 > REG_SBS_SEPARATION_THRESHOLD :		   \
+	 REG_CH_TO_FREQ(reg_get_chan_enum(newchan))	   \
+	 - REG_CH_TO_FREQ(reg_get_chan_enum(curchan))	   \
+	 > REG_SBS_SEPARATION_THRESHOLD)
+
+#define WLAN_REG_INVALID_CHANNEL_ID
+#define WLAN_REG_GET_24_END_CHAN_NUM 14
+
+#define WLAN_REG_CHAN_TO_BAND(chan_num)  reg_chan_to_band(chan_num)
+
 
 /**
  * wlan_reg_get_channel_list_with_power() - Provide the channel list with power
@@ -36,7 +66,7 @@
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_reg_get_channel_list_with_power(struct wlan_objmgr_psoc *psoc,
+QDF_STATUS wlan_reg_get_channel_list_with_power(struct wlan_objmgr_pdev *pdev,
 						struct channel_power *ch_list,
 						uint8_t *num_chan);
 
@@ -44,9 +74,9 @@ QDF_STATUS wlan_reg_get_channel_list_with_power(struct wlan_objmgr_psoc *psoc,
  * wlan_reg_read_default_country() - Read the default country for the regdomain
  * @country: pointer to the country code.
  *
- * Return: None
+ * Return: QDF_STATUS
  */
-void wlan_reg_read_default_country(struct wlan_objmgr_psoc *psoc,
+QDF_STATUS wlan_reg_read_default_country(struct wlan_objmgr_psoc *psoc,
 				   uint8_t *country);
 
 /**
@@ -55,7 +85,7 @@ void wlan_reg_read_default_country(struct wlan_objmgr_psoc *psoc,
  *
  * Return: channel state
  */
-enum channel_state wlan_reg_get_channel_state(struct wlan_objmgr_psoc *psoc,
+enum channel_state wlan_reg_get_channel_state(struct wlan_objmgr_pdev *pdev,
 					      uint32_t ch);
 
 /**
@@ -65,9 +95,10 @@ enum channel_state wlan_reg_get_channel_state(struct wlan_objmgr_psoc *psoc,
  *
  * Return: channel state
  */
-enum channel_state wlan_reg_get_5g_bonded_channel_state(
-	struct wlan_objmgr_psoc *psoc, uint8_t ch,
-	enum phy_ch_width bw);
+enum channel_state wlan_reg_get_5g_bonded_channel_state(struct wlan_objmgr_pdev
+							*pdev,
+							uint8_t ch,
+							enum phy_ch_width bw);
 
 /**
  * wlan_reg_get_2g_bonded_channel_state() - Get 2G bonded channel state
@@ -77,8 +108,10 @@ enum channel_state wlan_reg_get_5g_bonded_channel_state(
  * Return: channel state
  */
 enum channel_state wlan_reg_get_2g_bonded_channel_state(
-		struct wlan_objmgr_psoc *psoc, uint8_t ch, uint8_t sec_ch,
-		enum phy_ch_width bw);
+							struct wlan_objmgr_pdev
+							*pdev, uint8_t ch,
+							uint8_t sec_ch,
+							enum phy_ch_width bw);
 
 /**
  * wlan_reg_set_channel_params () - Sets channel parameteres for given bandwidth
@@ -87,8 +120,9 @@ enum channel_state wlan_reg_get_2g_bonded_channel_state(
  *
  * Return: None
  */
-void wlan_reg_set_channel_params(struct wlan_objmgr_psoc *psoc, uint8_t ch,
-		struct ch_params_s *ch_params);
+void wlan_reg_set_channel_params(struct wlan_objmgr_pdev *pdev, uint8_t ch,
+				 uint8_t sec_ch_2g,
+				 struct ch_params *ch_params);
 
 /**
  * wlan_reg_get_dfs_region () - Get the current dfs region
@@ -97,7 +131,7 @@ void wlan_reg_set_channel_params(struct wlan_objmgr_psoc *psoc, uint8_t ch,
  * Return: None
  */
 void wlan_reg_get_dfs_region(struct wlan_objmgr_psoc *psoc,
-		enum dfs_reg *dfs_reg);
+			     enum dfs_reg *dfs_reg);
 
 /**
  * wlan_reg_is_dfs_ch () - Checks the channel state for DFS
@@ -105,7 +139,123 @@ void wlan_reg_get_dfs_region(struct wlan_objmgr_psoc *psoc,
  *
  * Return: true or false
  */
-bool wlan_reg_is_dfs_ch(struct wlan_objmgr_psoc *psoc, uint8_t ch);
+bool wlan_reg_is_dfs_ch(struct wlan_objmgr_pdev *pdev, uint8_t ch);
+
+/**
+ * wlan_reg_get_channel_reg_power() - Provide the channel regulatory power
+ * @chan_num: chennal number
+ *
+ * Return: int
+ */
+uint32_t wlan_reg_get_channel_reg_power(struct wlan_objmgr_pdev *pdev,
+					uint32_t chan_num);
+
+/**
+ * wlan_reg_get_channel_freq() - provide the channel center freq
+ * @chan_num: chennal number
+ *
+ * Return: int
+ */
+uint32_t wlan_reg_get_channel_freq(struct wlan_objmgr_pdev *pdev,
+				   uint32_t chan_num);
+
+/**
+ * wlan_reg_get_bonded_channel_state() - get bonded channel state
+ * @pdev: pdev ptr
+ * @ch: chennal number
+ * @bw: chennal number
+ * @sec_ch: secondary channel
+ *
+ * Return: enum channel_state
+ */
+enum channel_state wlan_reg_get_bonded_channel_state(
+	struct wlan_objmgr_pdev *pdev, uint8_t ch,
+	enum phy_ch_width bw, uint8_t sec_ch);
+
+/**
+ * wlan_reg_set_default_country() - set default country
+ * @psoc: psoc ptr
+ * @country: country alpha2
+ *
+ * Return: void
+ */
+void wlan_reg_set_default_country(struct wlan_objmgr_psoc *psoc,
+				  uint8_t *country);
+
+/**
+ * wlan_reg_set_dfs_region() - set the dfs region
+ * @psoc: psoc ptr
+ * @dfs_reg: dfs region
+ *
+ * Return: void
+ */
+void wlan_reg_set_dfs_region(struct wlan_objmgr_psoc *psoc,
+			     enum dfs_reg dfs_reg);
+
+/**
+ * wlan_reg_get_bw_value() - provide the channel center freq
+ * @chan_num: chennal number
+ *
+ * Return: int
+ */
+uint16_t wlan_reg_get_bw_value(enum phy_ch_width bw);
+
+/**
+ * wlan_reg_get_domain_from_country_code() - provide the channel center freq
+ * @reg_domain_ptr: regulatory domain ptr
+ * @country_alpha2: country alpha2
+ * @source: alpha2 source
+ *
+ * Return: int
+ */
+QDF_STATUS wlan_reg_get_domain_from_country_code(v_REGDOMAIN_t *reg_domain_ptr,
+						 const uint8_t *country_alpha2,
+						 enum country_src source);
+
+/**
+ * wlan_reg_dmn_get_opclass_from_channel() - provide the channel center freq
+ * @country: country alpha2
+ * @channel: channel number
+ * @offset: offset
+ *
+ * Return: int
+ */
+uint16_t wlan_reg_dmn_get_opclass_from_channel(uint8_t *country,
+					       uint8_t channel,
+					       uint8_t offset);
+
+/**
+ * wlan_reg_dmn_get_chanwidth_from_opclass() - get channel width from
+ *                                             operating class
+ * @country: country alpha2
+ * @channel: channel number
+ * @opclass: operating class
+ *
+ * Return: int
+ */
+uint16_t wlan_reg_dmn_get_chanwidth_from_opclass(uint8_t *country,
+						 uint8_t channel,
+						 uint8_t opclass);
+/**
+ * wlan_reg_dmn_set_curr_opclasses() - set operating class
+ * @num_classes: number of classes
+ * @class: operating class
+ *
+ * Return: int
+ */
+uint16_t wlan_reg_dmn_set_curr_opclasses(uint8_t num_classes,
+					 uint8_t *class);
+
+/**
+ * wlan_reg_dmn_get_curr_opclasses() - get current oper classes
+ * @num_classes: number of classes
+ * @class: operating class
+ *
+ * Return: int
+ */
+uint16_t wlan_reg_dmn_get_curr_opclasses(uint8_t *num_classes,
+					 uint8_t *class);
+
 
 /**
  * wlan_regulatory_init() - init regulatory component

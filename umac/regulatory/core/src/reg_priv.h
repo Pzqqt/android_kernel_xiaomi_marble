@@ -46,8 +46,7 @@
 		reg_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
 
 struct wlan_regulatory_psoc_priv_obj {
-	struct regulatory_channel master_ch_list[NUM_CHANNELS];
-	struct regulatory_channel current_ch_list[NUM_CHANNELS];
+	struct regulatory_channel mas_chan_list[NUM_CHANNELS];
 	bool offload_enabled;
 	enum channel_enum nol_list[NUM_CHANNELS];
 	char default_country[REG_ALPHA2_LEN + 1];

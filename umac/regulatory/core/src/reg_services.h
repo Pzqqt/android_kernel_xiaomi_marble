@@ -35,6 +35,36 @@
 #include "reg_db.h"
 #include <reg_services_public_struct.h>
 
+#define REG_MAX_CHANNELS_PER_OPERATING_CLASS  25
+#define REG_MAX_SUPP_OPER_CLASSES 32
+
+#define REG_MIN_24GHZ_CH_NUM channel_map[MIN_24GHZ_CHANNEL].chan_num
+#define REG_MAX_24GHZ_CH_NUM channel_map[MAX_24GHZ_CHANNEL].chan_num
+#define REG_MIN_5GHZ_CH_NUM channel_map[MIN_5GHZ_CHANNEL].chan_num
+#define REG_MAX_5GHZ_CH_NUM channel_map[MAX_5GHZ_CHANNEL].chan_num
+
+#define REG_IS_5GHZ_CH(chan_num) \
+	((chan_num >= REG_MIN_5GHZ_CH_NUM) &&	\
+	 (chan_num <= REG_MAX_5GHZ_CH_NUM))
+
+#define REG_IS_24GHZ_CH(chan_num) \
+	((chan_num >= REG_MIN_24GHZ_CH_NUM) &&	\
+	 (chan_num <= REG_MAX_24GHZ_CH_NUM))
+
+#define REG_CH_NUM(ch_enum) channel_map[ch_enum].chan_num
+#define REG_CH_TO_FREQ(ch_enum) channel_map[ch_enum].center_freq
+
+#define REG_SBS_SEPARATION_THRESHOLD 100
+
+#define REG_IS_CHANNEL_VALID_5G_SBS(curchan, newchan)	\
+	(curchan > newchan ?				\
+	 REG_CH_TO_FREQ(reg_get_chan_enum(curchan))	\
+	 - REG_CH_TO_FREQ(reg_get_chan_enum(newchan))	\
+	 > REG_SBS_SEPARATION_THRESHOLD :		\
+	 REG_CH_TO_FREQ(reg_get_chan_enum(newchan))	\
+	 - REG_CH_TO_FREQ(reg_get_chan_enum(curchan))	\
+	 > REG_SBS_SEPARATION_THRESHOLD)
+
 /**
  * enum channel_state - channel state
  * @CHANNEL_STATE_DISABLE: disabled state
@@ -50,15 +80,6 @@ enum channel_state {
 	CHANNEL_STATE_ENABLE,
 	CHANNEL_STATE_INVALID,
 };
-
-typedef enum {
-	REGDOMAIN_FCC,
-	REGDOMAIN_ETSI,
-	REGDOMAIN_JAPAN,
-	REGDOMAIN_WORLD,
-	REGDOMAIN_COUNT
-} v_REGDOMAIN_t;
-
 
 /**
  * enum phy_ch_width - channel width
@@ -91,7 +112,7 @@ enum phy_ch_width {
  * @center_freq_seg0: center freq for segment 0
  * @center_freq_seg1: center freq for segment 1
  */
-struct ch_params_s {
+struct ch_params {
 	enum phy_ch_width ch_width;
 	uint8_t sec_ch_offset;
 	uint8_t center_freq_seg0;
@@ -124,6 +145,79 @@ struct regulatory_channel {
 struct channel_power {
 	uint32_t chan_num;
 	uint32_t tx_power;
+};
+
+/**
+ * enum offset_t: channel offset
+ * @BW20: 20 mhz channel
+ * @BW40_LOW_PRIMARY: lower channel in 40 mhz
+ * @BW40_HIGH_PRIMARY: higher channel in 40 mhz
+ * @BW80: 80 mhz channel
+ * @BWALL: unknown bandwidth
+ */
+enum offset_t {
+	BW20 = 0,
+	BW40_LOW_PRIMARY = 1,
+	BW40_HIGH_PRIMARY = 3,
+	BW80,
+	BWALL
+};
+
+/**
+ * struct reg_dmn_op_class_map_t: operating class
+ * @op_class: operating class number
+ * @ch_spacing: channel spacing
+ * @offset: offset
+ * @channels: channel set
+ */
+struct reg_dmn_op_class_map_t {
+	uint8_t op_class;
+	uint8_t ch_spacing;
+	enum offset_t offset;
+	uint8_t channels[REG_MAX_CHANNELS_PER_OPERATING_CLASS];
+};
+
+/**
+ * struct reg_dmn_supp_op_classes: operating classes
+ * @num_classes: number of classes
+ * @classes: classes
+ */
+struct reg_dmn_supp_op_classes {
+	uint8_t num_classes;
+	uint8_t classes[REG_MAX_SUPP_OPER_CLASSES];
+};
+
+/**
+ * enum reg_domain: reg domain
+ * @REGDOMAIN_FCC: FCC domain
+ * @REGDOMAIN_ETSI: ETSI domain
+ * @REGDOMAIN_JAPAN: JAPAN domain
+ * @REGDOMAIN_WORLD: WORLD domain
+ * @REGDOMAIN_COUNT: Max domain
+ */
+typedef enum {
+	REGDOMAIN_FCC,
+	REGDOMAIN_ETSI,
+	REGDOMAIN_JAPAN,
+	REGDOMAIN_WORLD,
+	REGDOMAIN_COUNT
+} v_REGDOMAIN_t;
+
+/**
+ * enum country_src: country source
+ * @SOURCE_QUERY: source query
+ * @SOURCE_CORE: source regulatory core
+ * @SOURCE_DRIVER: source driver
+ * @SOURCE_USERSPACE: source userspace
+ * @SOURCE_11D: source 11D
+ */
+enum country_src {
+	SOURCE_UNKNOWN,
+	SOURCE_QUERY,
+	SOURCE_CORE,
+	SOURCE_DRIVER,
+	SOURCE_USERSPACE,
+	SOURCE_11D
 };
 
 /**
@@ -246,23 +340,6 @@ enum channel_enum {
 };
 
 /**
- * enum country_src: country source
- * @SOURCE_QUERY: source query
- * @SOURCE_CORE: source regulatory core
- * @SOURCE_DRIVER: source driver
- * @SOURCE_USERSPACE: source userspace
- * @SOURCE_11D: source 11D
- */
-enum country_src {
-	SOURCE_UNKNOWN,
-	SOURCE_QUERY,
-	SOURCE_CORE,
-	SOURCE_DRIVER,
-	SOURCE_USERSPACE,
-	SOURCE_11D
-};
-
-/**
  * struct regulatory: regulatory information
  * @reg_domain: regulatory domain pair
  * @eeprom_rd_ext: eeprom value
@@ -287,7 +364,6 @@ struct regulatory {
 	enum country_src cc_src;
 	uint32_t reg_flags;
 };
-
 
 /**
  * struct chan_map
@@ -321,33 +397,74 @@ enum ht_sec_ch_offset {
 	HIGH_PRIMARY_CH = 3,
 };
 
-
 extern const struct chan_map channel_map[NUM_CHANNELS];
 
-QDF_STATUS reg_get_channel_list_with_power(struct wlan_objmgr_psoc *psoc,
+enum channel_enum reg_get_chan_enum(uint32_t chan_num);
+
+QDF_STATUS reg_get_channel_list_with_power(struct wlan_objmgr_pdev *pdev,
 					   struct channel_power *ch_list,
 					   uint8_t *num_chan);
 
-void reg_read_default_country(struct wlan_objmgr_psoc *psoc,
-		uint8_t *country);
-enum channel_state reg_get_channel_state(struct wlan_objmgr_psoc *psoc,
+QDF_STATUS reg_read_default_country(struct wlan_objmgr_psoc *psoc,
+				    uint8_t *country);
+
+enum channel_state reg_get_channel_state(struct wlan_objmgr_pdev *pdev,
 					 uint32_t ch);
-enum channel_state reg_get_5g_bonded_channel_state(struct wlan_objmgr_psoc
-						   *psoc,
+
+enum channel_state reg_get_5g_bonded_channel_state(struct wlan_objmgr_pdev
+						   *pdev,
 						   uint8_t ch,
 						   enum phy_ch_width bw);
-enum channel_state reg_get_2g_bonded_channel_state(struct wlan_objmgr_psoc
-						   *psoc,
+
+enum channel_state reg_get_2g_bonded_channel_state(struct wlan_objmgr_pdev
+						   *pdev,
 						   uint8_t oper_ch,
 						   uint8_t sec_ch,
 						   enum phy_ch_width bw);
 
-void reg_set_channel_params(struct wlan_objmgr_psoc *psoc,
-		uint8_t ch, struct ch_params_s *ch_params);
+void reg_set_channel_params(struct wlan_objmgr_pdev *pdev,
+			    uint8_t ch, uint8_t sec_ch_2g,
+			    struct ch_params *ch_params);
+
 void reg_get_dfs_region(struct wlan_objmgr_psoc *psoc,
 			enum dfs_reg *dfs_reg);
 
-bool reg_is_dfs_ch(struct wlan_objmgr_psoc *psoc, uint8_t ch);
+bool reg_is_dfs_ch(struct wlan_objmgr_pdev *pdev, uint8_t ch);
+
+uint32_t reg_get_channel_reg_power(struct wlan_objmgr_pdev *pdev,
+				   uint32_t chan_num);
+
+uint32_t reg_get_channel_freq(struct wlan_objmgr_pdev *pdev,
+			      uint32_t chan_num);
+
+QDF_STATUS reg_read_default_country(struct wlan_objmgr_psoc *psoc,
+				    uint8_t *country);
+
+void reg_set_default_country(struct wlan_objmgr_psoc *psoc, uint8_t *country);
+
+uint16_t reg_get_bw_value(enum phy_ch_width bw);
+
+void reg_set_dfs_region(struct wlan_objmgr_psoc *psoc,
+			enum dfs_reg dfs_reg);
+
+QDF_STATUS reg_get_domain_from_country_code(v_REGDOMAIN_t *reg_domain_ptr,
+					    const uint8_t *country_alpha2,
+					    enum country_src source);
+
+enum band_info reg_chan_to_band(uint32_t chan_num);
+
+uint16_t reg_dmn_get_chanwidth_from_opclass(uint8_t *country,
+					    uint8_t channel,
+					    uint8_t opclass);
+
+uint16_t reg_dmn_get_opclass_from_channel(uint8_t *country,
+					  uint8_t channel,
+					  uint8_t offset);
+
+uint16_t reg_dmn_set_curr_opclasses(uint8_t num_classes, uint8_t *class);
+
+uint16_t reg_dmn_get_curr_opclasses(uint8_t *num_classes, uint8_t *class);
+
 
 QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info *reg_info);
 
