@@ -830,20 +830,6 @@ QDF_STATUS wmi_unified_soc_set_hw_mode_cmd(void *wmi_hdl,
 QDF_STATUS wmi_unified_pdev_set_dual_mac_config_cmd(void *wmi_hdl,
 		struct wmi_dual_mac_config *msg);
 
-/**
- * wmi_unified_configure_broadcast_filter_cmd() - Enable/Disable Broadcast
- * filter
- * when target goes to wow suspend/resume mode
- * @wmi_hdl: wmi handle
- * @vdev_id: device identifier
- * @bc_filter: enable/disable Broadcast filter
- *
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_configure_broadcast_filter_cmd(void *wmi_hdl,
-			   uint8_t vdev_id, bool bc_filter);
-
 QDF_STATUS wmi_unified_set_led_flashing_cmd(void *wmi_hdl,
 				struct flashing_req_params *flashing);
 
