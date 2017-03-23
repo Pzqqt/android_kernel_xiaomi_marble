@@ -717,6 +717,9 @@ void policy_mgr_pdev_set_hw_mode_cb(uint32_t status,
 	struct policy_mgr_hw_mode_params hw_mode;
 	uint32_t i;
 
+	policy_mgr_set_hw_mode_change_in_progress(context,
+		POLICY_MGR_HW_MODE_NOT_IN_PROGRESS);
+
 	if (status != SET_HW_MODE_STATUS_OK) {
 		policy_mgr_err("Set HW mode failed with status %d", status);
 		return;

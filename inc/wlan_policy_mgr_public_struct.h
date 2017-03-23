@@ -869,12 +869,14 @@ struct policy_mgr_dual_mac_config {
  * @set_hw_mode_cb: HDD set HW mode callback
  * @reason: Reason for HW mode change
  * @session_id: Session id
+ * @context: psoc context
  */
 struct policy_mgr_hw_mode {
 	uint32_t hw_mode_index;
 	void *set_hw_mode_cb;
 	enum policy_mgr_conn_update_reason reason;
 	uint32_t session_id;
+	struct wlan_objmgr_psoc *context;
 };
 
 /**
@@ -975,8 +977,13 @@ struct dual_mac_config {
 /**
  * struct policy_mgr_user_cfg - Policy manager user config variables
  * @enable_mcc_adaptive_scheduler: Enable MCC adaptive scheduler
+ * @max_concurrent_active_sessions: User allowed maximum active
+ *                              connections
+ * @conc_system_pref: System preference for PCL table
  */
 struct policy_mgr_user_cfg {
 	uint8_t enable_mcc_adaptive_scheduler;
+	uint8_t max_concurrent_active_sessions;
+	uint8_t conc_system_pref;
 };
 #endif /* __WLAN_POLICY_MGR_PUBLIC_STRUCT_H */

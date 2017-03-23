@@ -279,13 +279,22 @@ struct policy_mgr_psoc_priv_obj {
 		struct dbs_hw_mode_info hw_mode;
 		uint32_t old_hw_mode_index;
 		uint32_t new_hw_mode_index;
-		struct extended_caps phy_caps;
 		bool enable2x2;
-		uint8_t gMaxConcurrentActiveSessions;
-		uint8_t conc_system_pref;
 		struct dual_mac_config dual_mac_cfg;
 		uint32_t hw_mode_change_in_progress;
 		struct policy_mgr_user_cfg user_cfg;
+};
+
+/**
+ * struct policy_mgr_mac_ss_bw_info - hw_mode_list PHY/MAC params for each MAC
+ * @mac_tx_stream: Max TX stream
+ * @mac_rx_stream: Max RX stream
+ * @mac_bw: Max bandwidth
+ */
+struct policy_mgr_mac_ss_bw_info {
+	uint32_t mac_tx_stream;
+	uint32_t mac_rx_stream;
+	uint32_t mac_bw;
 };
 
 struct policy_mgr_psoc_priv_obj *policy_mgr_get_context(

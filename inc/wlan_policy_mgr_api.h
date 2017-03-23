@@ -771,7 +771,9 @@ struct policy_mgr_sme_cbacks {
  * from policy manager
  * @sap_restart_chan_switch_cb: Restart SAP
  * @wlan_hdd_get_channel_for_sap_restart: Get channel to restart
- *      				SAP
+ *                      SAP
+ * @get_mode_for_non_connected_vdev: Get the mode for a non
+ *                                 connected vdev
  */
 struct policy_mgr_hdd_cbacks {
 	void (*sap_restart_chan_switch_cb)(struct wlan_objmgr_psoc *psoc,
@@ -781,6 +783,9 @@ struct policy_mgr_hdd_cbacks {
 				struct wlan_objmgr_psoc *psoc,
 				uint8_t vdev_id, uint8_t *channel,
 				uint8_t *sec_ch, bool is_restart_sap);
+	enum policy_mgr_con_mode (*get_mode_for_non_connected_vdev)(
+				struct wlan_objmgr_psoc *psoc,
+				uint8_t vdev_id);
 };
 
 
@@ -1696,4 +1701,148 @@ bool policy_mgr_is_mcc_adaptive_scheduler_enabled(
  */
 QDF_STATUS policy_mgr_set_user_cfg(struct wlan_objmgr_psoc *psoc,
 				struct policy_mgr_user_cfg *user_cfg);
+
+/**
+ * policy_mgr_init_dbs_config() - Function to initialize DBS
+ * config in policy manager component
+ * @psoc: PSOC object information
+ * @scan_config: DBS scan config
+ * @fw_config: DBS FW config
+ *
+ * This function sets the DBS configurations required by policy
+ * manager
+ *
+ * Return: SUCCESS or FAILURE
+ *
+ */
+void policy_mgr_init_dbs_config(struct wlan_objmgr_psoc *psoc,
+		uint32_t scan_config, uint32_t fw_config);
+
+/**
+ * policy_mgr_update_dbs_scan_config() - Function to update
+ * DBS scan config in policy manager component
+ * @psoc: PSOC object information
+ *
+ * This function updates the DBS scan configurations required by
+ * policy manager
+ *
+ * Return: SUCCESS or FAILURE
+ *
+ */
+void policy_mgr_update_dbs_scan_config(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * policy_mgr_update_dbs_fw_config() - Function to update DBS FW
+ * config in policy manager component
+ * @psoc: PSOC object information
+ *
+ * This function updates the DBS FW configurations required by
+ * policy manager
+ *
+ * Return: SUCCESS or FAILURE
+ *
+ */
+void policy_mgr_update_dbs_fw_config(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * policy_mgr_update_dbs_req_config() - Function to update DBS
+ * request config in policy manager component
+ * @psoc: PSOC object information
+ * @scan_config: DBS scan config
+ * @fw_config: DBS FW config
+ *
+ * This function updates DBS request configurations required by
+ * policy manager
+ *
+ * Return: SUCCESS or FAILURE
+ *
+ */
+void policy_mgr_update_dbs_req_config(struct wlan_objmgr_psoc *psoc,
+		uint32_t scan_config, uint32_t fw_mode_config);
+
+/**
+ * policy_mgr_dump_dbs_hw_mode() - Function to dump DBS config
+ * @psoc: PSOC object information
+ *
+ * This function dumps the DBS configurations
+ *
+ * Return: SUCCESS or FAILURE
+ *
+ */
+void policy_mgr_dump_dbs_hw_mode(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * policy_mgr_init_dbs_hw_mode() - Function to initialize DBS HW
+ * modes in policy manager component
+ * @psoc: PSOC object information
+ * @num_dbs_hw_modes: Number of HW modes
+ * @ev_wlan_dbs_hw_mode_list: HW list
+ *
+ * This function to initialize the DBS HW modes in policy
+ * manager
+ *
+ * Return: SUCCESS or FAILURE
+ *
+ */
+void policy_mgr_init_dbs_hw_mode(struct wlan_objmgr_psoc *psoc,
+				uint32_t num_dbs_hw_modes,
+				uint32_t *ev_wlan_dbs_hw_mode_list);
+
+/**
+ * policy_mgr_update_hw_mode_list() - Function to initialize DBS
+ * HW modes in policy manager component
+ * @psoc: PSOC object information
+ * @num_dbs_hw_modes: Number of HW modes
+ * @ev_wlan_dbs_hw_mode_list: HW list
+ *
+ * This function to initialize the DBS HW modes in policy
+ * manager
+ *
+ * Return: SUCCESS or FAILURE
+ *
+ */
+QDF_STATUS policy_mgr_update_hw_mode_list(struct wlan_objmgr_psoc *psoc,
+				struct extended_caps *phy_caps);
+
+/**
+ * policy_mgr_update_hw_mode_index() - Function to update
+ * current HW mode in policy manager component
+ * @psoc: PSOC object information
+ * @new_hw_mode_index: index to new HW mode
+ *
+ * This function to update the current HW mode in policy manager
+ *
+ * Return: SUCCESS or FAILURE
+ *
+ */
+void policy_mgr_update_hw_mode_index(struct wlan_objmgr_psoc *psoc,
+		uint32_t new_hw_mode_index);
+
+/**
+ * policy_mgr_update_old_hw_mode_index() - Function to update
+ * old HW mode in policy manager component
+ * @psoc: PSOC object information
+ * @new_hw_mode_index: index to old HW mode
+ *
+ * This function to update the old HW mode in policy manager
+ *
+ * Return: SUCCESS or FAILURE
+ *
+ */
+void policy_mgr_update_old_hw_mode_index(struct wlan_objmgr_psoc *psoc,
+		uint32_t old_hw_mode_index);
+
+/**
+ * policy_mgr_update_new_hw_mode_index() - Function to update
+ * new HW mode in policy manager component
+ * @psoc: PSOC object information
+ * @new_hw_mode_index: index to new HW mode
+ *
+ * This function to update the new HW mode in policy manager
+ *
+ * Return: SUCCESS or FAILURE
+ *
+ */
+void policy_mgr_update_new_hw_mode_index(struct wlan_objmgr_psoc *psoc,
+		uint32_t new_hw_mode_index);
 #endif /* __WLAN_POLICY_MGR_API_H */

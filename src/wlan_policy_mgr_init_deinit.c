@@ -55,6 +55,8 @@ static QDF_STATUS policy_mgr_psoc_obj_create_cb(struct wlan_objmgr_psoc *psoc,
 	}
 
 	policy_mgr_ctx->psoc = psoc;
+	policy_mgr_ctx->old_hw_mode_index = POLICY_MGR_DEFAULT_HW_MODE_INDEX;
+	policy_mgr_ctx->new_hw_mode_index = POLICY_MGR_DEFAULT_HW_MODE_INDEX;
 
 	wlan_objmgr_psoc_component_obj_attach(psoc,
 			WLAN_UMAC_COMP_POLICY_MGR,
@@ -278,8 +280,15 @@ QDF_STATUS policy_mgr_psoc_enable(struct wlan_objmgr_psoc *psoc)
 		return status;
 	}
 
-	pm_ctx->do_hw_mode_change = false;
+	if (!QDF_IS_STATUS_SUCCESS(qdf_mutex_create(
+		&pm_ctx->qdf_conc_list_lock))) {
+		policy_mgr_err("Failed to init qdf_conc_list_lock");
+		QDF_ASSERT(0);
+		return status;
+	}
 
+	pm_ctx->do_hw_mode_change = false;
+	pm_ctx->hw_mode_change_in_progress = POLICY_MGR_HW_MODE_NOT_IN_PROGRESS;
 	/* reset sap mandatory channels */
 	status = policy_mgr_reset_sap_mandatory_channels(pm_ctx);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -335,6 +344,19 @@ QDF_STATUS policy_mgr_psoc_disable(struct wlan_objmgr_psoc *psoc)
 	if (!pm_ctx) {
 		policy_mgr_err("Invalid Context");
 		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (pm_ctx->hw_mode.hw_mode_list) {
+		qdf_mem_free(pm_ctx->hw_mode.hw_mode_list);
+		pm_ctx->hw_mode.hw_mode_list = NULL;
+		policy_mgr_info("HW list is freed");
+	}
+
+	if (!QDF_IS_STATUS_SUCCESS(qdf_mutex_destroy(
+		&pm_ctx->qdf_conc_list_lock))) {
+		policy_mgr_err("Failed to destroy qdf_conc_list_lock");
+		status = QDF_STATUS_E_FAILURE;
+		QDF_ASSERT(0);
 	}
 
 	/* destroy connection_update_done_evt */
@@ -432,6 +454,8 @@ QDF_STATUS policy_mgr_register_hdd_cb(struct wlan_objmgr_psoc *psoc,
 		hdd_cbacks->sap_restart_chan_switch_cb;
 	pm_ctx->hdd_cbacks.wlan_hdd_get_channel_for_sap_restart =
 		hdd_cbacks->wlan_hdd_get_channel_for_sap_restart;
+	pm_ctx->hdd_cbacks.get_mode_for_non_connected_vdev =
+		hdd_cbacks->get_mode_for_non_connected_vdev;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -448,6 +472,7 @@ QDF_STATUS policy_mgr_deregister_hdd_cb(struct wlan_objmgr_psoc *psoc)
 
 	pm_ctx->hdd_cbacks.sap_restart_chan_switch_cb = NULL;
 	pm_ctx->hdd_cbacks.wlan_hdd_get_channel_for_sap_restart = NULL;
+	pm_ctx->hdd_cbacks.get_mode_for_non_connected_vdev = NULL;
 
 	return QDF_STATUS_SUCCESS;
 }

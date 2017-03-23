@@ -43,6 +43,418 @@
 /* invalid channel id. */
 #define INVALID_CHANNEL_ID 0
 
+void policy_mgr_update_new_hw_mode_index(struct wlan_objmgr_psoc *psoc,
+		uint32_t new_hw_mode_index)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
+	pm_ctx->new_hw_mode_index = new_hw_mode_index;
+}
+
+void policy_mgr_update_old_hw_mode_index(struct wlan_objmgr_psoc *psoc,
+		uint32_t old_hw_mode_index)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
+	pm_ctx->old_hw_mode_index = old_hw_mode_index;
+}
+
+void policy_mgr_update_hw_mode_index(struct wlan_objmgr_psoc *psoc,
+		uint32_t new_hw_mode_index)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
+	if (POLICY_MGR_DEFAULT_HW_MODE_INDEX == pm_ctx->new_hw_mode_index) {
+		pm_ctx->new_hw_mode_index = new_hw_mode_index;
+	} else {
+		pm_ctx->old_hw_mode_index = pm_ctx->new_hw_mode_index;
+		pm_ctx->new_hw_mode_index = new_hw_mode_index;
+	}
+	policy_mgr_debug("Updated: old_hw_mode_index:%d new_hw_mode_index:%d",
+		pm_ctx->old_hw_mode_index, pm_ctx->new_hw_mode_index);
+}
+
+/**
+ * policy_mgr_get_num_of_setbits_from_bitmask() - to get num of
+ * setbits from bitmask
+ * @mask: given bitmask
+ *
+ * This helper function should return number of setbits from bitmask
+ *
+ * Return: number of setbits from bitmask
+ */
+static uint32_t policy_mgr_get_num_of_setbits_from_bitmask(uint32_t mask)
+{
+	uint32_t num_of_setbits = 0;
+
+	while (mask) {
+		mask &= (mask - 1);
+		num_of_setbits++;
+	}
+	return num_of_setbits;
+}
+
+/**
+ * policy_mgr_map_wmi_channel_width_to_hw_mode_bw() - returns
+ * bandwidth in terms of hw_mode_bandwidth
+ * @width: bandwidth in terms of wmi_channel_width
+ *
+ * This function returns the bandwidth in terms of hw_mode_bandwidth.
+ *
+ * Return: BW in terms of hw_mode_bandwidth.
+ */
+static enum hw_mode_bandwidth policy_mgr_map_wmi_channel_width_to_hw_mode_bw(
+		wmi_channel_width width)
+{
+	switch (width) {
+	case WMI_CHAN_WIDTH_20:
+		return HW_MODE_20_MHZ;
+	case WMI_CHAN_WIDTH_40:
+		return HW_MODE_40_MHZ;
+	case WMI_CHAN_WIDTH_80:
+		return HW_MODE_80_MHZ;
+	case WMI_CHAN_WIDTH_160:
+		return HW_MODE_160_MHZ;
+	case WMI_CHAN_WIDTH_80P80:
+		return HW_MODE_80_PLUS_80_MHZ;
+	case WMI_CHAN_WIDTH_5:
+		return HW_MODE_5_MHZ;
+	case WMI_CHAN_WIDTH_10:
+		return HW_MODE_10_MHZ;
+	default:
+		return HW_MODE_BW_NONE;
+	}
+
+	return HW_MODE_BW_NONE;
+}
+
+static void policy_mgr_get_hw_mode_params(WMI_MAC_PHY_CAPABILITIES *caps,
+		struct policy_mgr_mac_ss_bw_info *info)
+{
+	if (!caps) {
+		policy_mgr_err("Invalid capabilities");
+		return;
+	}
+
+	info->mac_tx_stream = policy_mgr_get_num_of_setbits_from_bitmask(
+		QDF_MAX(caps->tx_chain_mask_2G,
+		caps->tx_chain_mask_5G));
+	info->mac_rx_stream = policy_mgr_get_num_of_setbits_from_bitmask(
+		QDF_MAX(caps->rx_chain_mask_2G,
+		caps->rx_chain_mask_5G));
+	info->mac_bw = policy_mgr_map_wmi_channel_width_to_hw_mode_bw(
+		QDF_MAX(caps->max_bw_supported_2G,
+		caps->max_bw_supported_5G));
+}
+
+/**
+ * policy_mgr_set_hw_mode_params() - sets TX-RX stream,
+ * bandwidth and DBS in hw_mode_list
+ * @wma_handle: pointer to wma global structure
+ * @mac0_ss_bw_info: TX-RX streams, BW for MAC0
+ * @mac1_ss_bw_info: TX-RX streams, BW for MAC1
+ * @pos: refers to hw_mode_index
+ * @dbs_mode: dbs_mode for the dbs_hw_mode
+ * @sbs_mode: sbs_mode for the sbs_hw_mode
+ *
+ * This function sets TX-RX stream, bandwidth and DBS mode in
+ * hw_mode_list.
+ *
+ * Return: none
+ */
+static void policy_mgr_set_hw_mode_params(struct wlan_objmgr_psoc *psoc,
+			struct policy_mgr_mac_ss_bw_info mac0_ss_bw_info,
+			struct policy_mgr_mac_ss_bw_info mac1_ss_bw_info,
+			uint32_t pos, uint32_t dbs_mode,
+			uint32_t sbs_mode)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
+
+	POLICY_MGR_HW_MODE_MAC0_TX_STREAMS_SET(
+		pm_ctx->hw_mode.hw_mode_list[pos],
+		mac0_ss_bw_info.mac_tx_stream);
+	POLICY_MGR_HW_MODE_MAC0_RX_STREAMS_SET(
+		pm_ctx->hw_mode.hw_mode_list[pos],
+		mac0_ss_bw_info.mac_rx_stream);
+	POLICY_MGR_HW_MODE_MAC0_BANDWIDTH_SET(
+		pm_ctx->hw_mode.hw_mode_list[pos],
+		mac0_ss_bw_info.mac_bw);
+	POLICY_MGR_HW_MODE_MAC1_TX_STREAMS_SET(
+		pm_ctx->hw_mode.hw_mode_list[pos],
+		mac1_ss_bw_info.mac_tx_stream);
+	POLICY_MGR_HW_MODE_MAC1_RX_STREAMS_SET(
+		pm_ctx->hw_mode.hw_mode_list[pos],
+		mac1_ss_bw_info.mac_rx_stream);
+	POLICY_MGR_HW_MODE_MAC1_BANDWIDTH_SET(
+		pm_ctx->hw_mode.hw_mode_list[pos],
+		mac1_ss_bw_info.mac_bw);
+	POLICY_MGR_HW_MODE_DBS_MODE_SET(
+		pm_ctx->hw_mode.hw_mode_list[pos],
+		dbs_mode);
+	POLICY_MGR_HW_MODE_AGILE_DFS_SET(
+		pm_ctx->hw_mode.hw_mode_list[pos],
+		HW_MODE_AGILE_DFS_NONE);
+	POLICY_MGR_HW_MODE_SBS_MODE_SET(
+		pm_ctx->hw_mode.hw_mode_list[pos],
+		sbs_mode);
+}
+
+QDF_STATUS policy_mgr_update_hw_mode_list(struct wlan_objmgr_psoc *psoc,
+		struct extended_caps *phy_caps)
+{
+	WMI_MAC_PHY_CAPABILITIES *tmp;
+	uint32_t i, hw_config_type, j = 0;
+	uint32_t dbs_mode, sbs_mode;
+	struct policy_mgr_mac_ss_bw_info mac0_ss_bw_info = {0};
+	struct policy_mgr_mac_ss_bw_info mac1_ss_bw_info = {0};
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!phy_caps) {
+		policy_mgr_err("Invalid phy capabilities");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!phy_caps->num_hw_modes.num_hw_modes) {
+		policy_mgr_err("Number of HW modes: %d",
+		phy_caps->num_hw_modes.num_hw_modes);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/*
+	 * This list was updated as part of service ready event. Re-populate
+	 * HW mode list from the device capabilities.
+	 */
+	if (pm_ctx->hw_mode.hw_mode_list) {
+		qdf_mem_free(pm_ctx->hw_mode.hw_mode_list);
+		pm_ctx->hw_mode.hw_mode_list = NULL;
+		policy_mgr_err("DBS list is freed");
+	}
+
+	pm_ctx->num_dbs_hw_modes = phy_caps->num_hw_modes.num_hw_modes;
+	pm_ctx->hw_mode.hw_mode_list =
+		qdf_mem_malloc(sizeof(*pm_ctx->hw_mode.hw_mode_list) *
+		pm_ctx->num_dbs_hw_modes);
+	if (!pm_ctx->hw_mode.hw_mode_list) {
+		policy_mgr_err("Memory allocation failed for DBS");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	policy_mgr_err("Updated HW mode list: Num modes:%d",
+		pm_ctx->num_dbs_hw_modes);
+
+	for (i = 0; i < pm_ctx->num_dbs_hw_modes; i++) {
+		/* Update for MAC0 */
+		tmp = &phy_caps->each_phy_cap_per_hwmode[j++];
+		policy_mgr_get_hw_mode_params(tmp, &mac0_ss_bw_info);
+		hw_config_type =
+		phy_caps->each_hw_mode_cap[i].hw_mode_config_type;
+		dbs_mode = HW_MODE_DBS_NONE;
+		sbs_mode = HW_MODE_SBS_NONE;
+		mac1_ss_bw_info.mac_tx_stream = 0;
+		mac1_ss_bw_info.mac_rx_stream = 0;
+		mac1_ss_bw_info.mac_bw = 0;
+
+		/* SBS and DBS have dual MAC. Upto 2 MACs are considered. */
+		if ((hw_config_type == WMI_HW_MODE_DBS) ||
+			(hw_config_type == WMI_HW_MODE_SBS_PASSIVE) ||
+			(hw_config_type == WMI_HW_MODE_SBS)) {
+			/* Update for MAC1 */
+			tmp = &phy_caps->each_phy_cap_per_hwmode[j++];
+			policy_mgr_get_hw_mode_params(tmp, &mac1_ss_bw_info);
+			if (hw_config_type == WMI_HW_MODE_DBS)
+				dbs_mode = HW_MODE_DBS;
+			if ((hw_config_type == WMI_HW_MODE_SBS_PASSIVE) ||
+				(hw_config_type == WMI_HW_MODE_SBS))
+				sbs_mode = HW_MODE_SBS;
+		}
+
+		/* Updating HW mode list */
+		policy_mgr_set_hw_mode_params(psoc, mac0_ss_bw_info,
+			mac1_ss_bw_info, i, dbs_mode, sbs_mode);
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
+void policy_mgr_init_dbs_hw_mode(struct wlan_objmgr_psoc *psoc,
+		uint32_t num_dbs_hw_modes,
+		uint32_t *ev_wlan_dbs_hw_mode_list)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
+
+	pm_ctx->num_dbs_hw_modes = num_dbs_hw_modes;
+	pm_ctx->hw_mode.hw_mode_list =
+		qdf_mem_malloc(sizeof(*pm_ctx->hw_mode.hw_mode_list) *
+		pm_ctx->num_dbs_hw_modes);
+	if (!pm_ctx->hw_mode.hw_mode_list) {
+		policy_mgr_err("Memory allocation failed for DBS");
+		return;
+	}
+	qdf_mem_copy(pm_ctx->hw_mode.hw_mode_list,
+		ev_wlan_dbs_hw_mode_list,
+		(sizeof(*pm_ctx->hw_mode.hw_mode_list) *
+		pm_ctx->num_dbs_hw_modes));
+}
+
+void policy_mgr_dump_dbs_hw_mode(struct wlan_objmgr_psoc *psoc)
+{
+	uint32_t i, param;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
+
+	for (i = 0; i < pm_ctx->num_dbs_hw_modes; i++) {
+		param = pm_ctx->hw_mode.hw_mode_list[i];
+		policy_mgr_err("[%d]-MAC0: tx_ss:%d rx_ss:%d bw_idx:%d",
+			i,
+			POLICY_MGR_HW_MODE_MAC0_TX_STREAMS_GET(param),
+			POLICY_MGR_HW_MODE_MAC0_RX_STREAMS_GET(param),
+			POLICY_MGR_HW_MODE_MAC0_BANDWIDTH_GET(param));
+		policy_mgr_err("[%d]-MAC1: tx_ss:%d rx_ss:%d bw_idx:%d",
+			i,
+			POLICY_MGR_HW_MODE_MAC1_TX_STREAMS_GET(param),
+			POLICY_MGR_HW_MODE_MAC1_RX_STREAMS_GET(param),
+			POLICY_MGR_HW_MODE_MAC1_BANDWIDTH_GET(param));
+		policy_mgr_err("[%d] DBS:%d SBS:%d", i,
+			POLICY_MGR_HW_MODE_DBS_MODE_GET(param),
+			POLICY_MGR_HW_MODE_SBS_MODE_GET(param));
+	}
+}
+
+void policy_mgr_init_dbs_config(struct wlan_objmgr_psoc *psoc,
+		uint32_t scan_config, uint32_t fw_config)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
+	pm_ctx->dual_mac_cfg.cur_scan_config = 0;
+	pm_ctx->dual_mac_cfg.cur_fw_mode_config = 0;
+
+	/* If dual mac features are disabled in the INI, we
+	 * need not proceed further
+	 */
+	if (policy_mgr_is_dual_mac_disabled_in_ini(psoc)) {
+		policy_mgr_err("Disabling dual mac capabilities");
+		/* All capabilites are initialized to 0. We can return */
+		goto done;
+	}
+
+	/* Initialize concurrent_scan_config_bits with default FW value */
+	WMI_DBS_CONC_SCAN_CFG_DBS_SCAN_SET(
+		pm_ctx->dual_mac_cfg.cur_scan_config,
+		WMI_DBS_CONC_SCAN_CFG_DBS_SCAN_GET(scan_config));
+	WMI_DBS_CONC_SCAN_CFG_AGILE_SCAN_SET(
+		pm_ctx->dual_mac_cfg.cur_scan_config,
+		WMI_DBS_CONC_SCAN_CFG_AGILE_SCAN_GET(scan_config));
+	WMI_DBS_CONC_SCAN_CFG_AGILE_DFS_SCAN_SET(
+		pm_ctx->dual_mac_cfg.cur_scan_config,
+		WMI_DBS_CONC_SCAN_CFG_AGILE_DFS_SCAN_GET(scan_config));
+
+	/* Initialize fw_mode_config_bits with default FW value */
+	WMI_DBS_FW_MODE_CFG_DBS_SET(
+		pm_ctx->dual_mac_cfg.cur_fw_mode_config,
+		WMI_DBS_FW_MODE_CFG_DBS_GET(fw_config));
+	WMI_DBS_FW_MODE_CFG_AGILE_DFS_SET(
+		pm_ctx->dual_mac_cfg.cur_fw_mode_config,
+		WMI_DBS_FW_MODE_CFG_AGILE_DFS_GET(fw_config));
+done:
+	/* Initialize the previous scan/fw mode config */
+	pm_ctx->dual_mac_cfg.prev_scan_config =
+		pm_ctx->dual_mac_cfg.cur_scan_config;
+	pm_ctx->dual_mac_cfg.prev_fw_mode_config =
+		pm_ctx->dual_mac_cfg.cur_fw_mode_config;
+
+	policy_mgr_debug("cur_scan_config:%x cur_fw_mode_config:%x",
+		pm_ctx->dual_mac_cfg.cur_scan_config,
+		pm_ctx->dual_mac_cfg.cur_fw_mode_config);
+}
+
+void policy_mgr_update_dbs_scan_config(struct wlan_objmgr_psoc *psoc)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
+
+	pm_ctx->dual_mac_cfg.prev_scan_config =
+		pm_ctx->dual_mac_cfg.cur_scan_config;
+	pm_ctx->dual_mac_cfg.cur_scan_config =
+		pm_ctx->dual_mac_cfg.req_scan_config;
+}
+
+void policy_mgr_update_dbs_fw_config(struct wlan_objmgr_psoc *psoc)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
+
+	pm_ctx->dual_mac_cfg.prev_fw_mode_config =
+		pm_ctx->dual_mac_cfg.cur_fw_mode_config;
+	pm_ctx->dual_mac_cfg.cur_fw_mode_config =
+		pm_ctx->dual_mac_cfg.req_fw_mode_config;
+}
+
+void policy_mgr_update_dbs_req_config(struct wlan_objmgr_psoc *psoc,
+		uint32_t scan_config, uint32_t fw_mode_config)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
+	pm_ctx->dual_mac_cfg.req_scan_config = scan_config;
+	pm_ctx->dual_mac_cfg.req_fw_mode_config = fw_mode_config;
+}
+
 bool policy_mgr_get_dbs_plus_agile_scan_config(struct wlan_objmgr_psoc *psoc)
 {
 	uint32_t scan_config;
@@ -310,8 +722,10 @@ bool policy_mgr_is_dbs_enable(struct wlan_objmgr_psoc *psoc)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 
-	if (policy_mgr_is_dual_mac_disabled_in_ini(psoc))
+	if (policy_mgr_is_dual_mac_disabled_in_ini(psoc)) {
+		policy_mgr_err("DBS is disabled from ini");
 		return false;
+	}
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -697,7 +1111,8 @@ void policy_mgr_incr_active_session(struct wlan_objmgr_psoc *psoc,
 	}
 
 	/* set tdls connection tracker state */
-	pm_ctx->tdls_cbacks.set_tdls_ct_mode(psoc);
+	if (pm_ctx->tdls_cbacks.set_tdls_ct_mode)
+		pm_ctx->tdls_cbacks.set_tdls_ct_mode(psoc);
 	policy_mgr_dump_current_concurrency(psoc);
 
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
@@ -734,7 +1149,8 @@ void policy_mgr_decr_active_session(struct wlan_objmgr_psoc *psoc,
 	policy_mgr_decr_connection_count(psoc, session_id);
 
 	/* set tdls connection tracker state */
-	pm_ctx->tdls_cbacks.set_tdls_ct_mode(psoc);
+	if (pm_ctx->tdls_cbacks.set_tdls_ct_mode)
+		pm_ctx->tdls_cbacks.set_tdls_ct_mode(psoc);
 
 	policy_mgr_dump_current_concurrency(psoc);
 }
@@ -759,9 +1175,9 @@ QDF_STATUS policy_mgr_incr_connection_count(
 	}
 
 	conn_index = policy_mgr_get_connection_count(psoc);
-	if (pm_ctx->gMaxConcurrentActiveSessions < conn_index) {
+	if (pm_ctx->user_cfg.max_concurrent_active_sessions < conn_index) {
 		policy_mgr_err("exceeded max connection limit %d",
-			pm_ctx->gMaxConcurrentActiveSessions);
+			pm_ctx->user_cfg.max_concurrent_active_sessions);
 		return status;
 	}
 
@@ -986,8 +1402,8 @@ bool policy_mgr_max_concurrent_connections_reached(
 		for (i = 0; i < QDF_MAX_NO_OF_MODE; i++)
 			j += pm_ctx->no_of_active_sessions[i];
 		return j >
-			(pm_ctx->
-			 gMaxConcurrentActiveSessions - 1);
+			(pm_ctx->user_cfg.
+			 max_concurrent_active_sessions - 1);
 	}
 
 	return false;
@@ -1035,7 +1451,7 @@ bool policy_mgr_allow_concurrency(struct wlan_objmgr_psoc *psoc,
 
 	if (policy_mgr_max_concurrent_connections_reached(psoc)) {
 		policy_mgr_err("Reached max concurrent connections: %d",
-			pm_ctx->gMaxConcurrentActiveSessions);
+			pm_ctx->user_cfg.max_concurrent_active_sessions);
 		goto done;
 	}
 
@@ -1258,14 +1674,20 @@ QDF_STATUS policy_mgr_get_channel_from_scan_result(
 		return QDF_STATUS_E_INVAL;
 	}
 
-	status = pm_ctx->sme_cbacks.sme_get_ap_channel_from_scan_cache
-		(roam_profile, &scan_cache, channel);
-	if (status != QDF_STATUS_SUCCESS) {
-		policy_mgr_err("Get AP channel failed");
-		return status;
-	}
+	if (pm_ctx->sme_cbacks.sme_get_ap_channel_from_scan_cache) {
+		status = pm_ctx->sme_cbacks.sme_get_ap_channel_from_scan_cache
+			(roam_profile, &scan_cache, channel);
+		if (status != QDF_STATUS_SUCCESS) {
+			policy_mgr_err("Get AP channel failed");
+			return status;
+		}
+	} else
+		policy_mgr_err("sme_get_ap_channel_from_scan_cache NULL");
 
-	status = pm_ctx->sme_cbacks.sme_scan_result_purge(scan_cache);
+	if (pm_ctx->sme_cbacks.sme_scan_result_purge)
+		status = pm_ctx->sme_cbacks.sme_scan_result_purge(scan_cache);
+	else
+		policy_mgr_err("sme_scan_result_purge NULL");
 
 	return status;
 }
@@ -1401,12 +1823,23 @@ bool policy_mgr_check_for_session_conc(struct wlan_objmgr_psoc *psoc,
 {
 	enum policy_mgr_con_mode mode;
 	bool ret;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
 
-	mode = policy_mgr_get_mode_by_vdev_id(psoc, session_id);
-	if (PM_MAX_NUM_OF_MODE == mode) {
-		policy_mgr_err("Invalid mode");
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
 		return false;
 	}
+
+	if (pm_ctx->hdd_cbacks.get_mode_for_non_connected_vdev) {
+		mode = pm_ctx->hdd_cbacks.get_mode_for_non_connected_vdev(
+			psoc, session_id);
+		if (PM_MAX_NUM_OF_MODE == mode) {
+			policy_mgr_err("Invalid mode");
+			return false;
+		}
+	} else
+		return false;
 
 	if (channel == 0) {
 		policy_mgr_err("Invalid channel number 0");

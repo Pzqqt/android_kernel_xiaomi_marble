@@ -196,9 +196,9 @@ QDF_STATUS policy_mgr_get_pcl(struct wlan_objmgr_psoc *psoc,
 	/* find the current connection state from pm_conc_connection_list*/
 	num_connections = policy_mgr_get_connection_count(psoc);
 	policy_mgr_debug("connections:%d pref:%d requested mode:%d",
-		num_connections, pm_ctx->conc_system_pref, mode);
+		num_connections, pm_ctx->user_cfg.conc_system_pref, mode);
 
-	switch (pm_ctx->conc_system_pref) {
+	switch (pm_ctx->user_cfg.conc_system_pref) {
 	case 0:
 		conc_system_pref = PM_THROUGHPUT;
 		break;
@@ -210,7 +210,7 @@ QDF_STATUS policy_mgr_get_pcl(struct wlan_objmgr_psoc *psoc,
 		break;
 	default:
 		policy_mgr_err("unknown conc_system_pref value %d",
-			pm_ctx->conc_system_pref);
+			pm_ctx->user_cfg.conc_system_pref);
 		break;
 	}
 
@@ -308,10 +308,10 @@ enum policy_mgr_conc_priority_mode
 		return PM_THROUGHPUT;
 	}
 
-	if (pm_ctx->conc_system_pref >= PM_MAX_CONC_PRIORITY_MODE)
+	if (pm_ctx->user_cfg.conc_system_pref >= PM_MAX_CONC_PRIORITY_MODE)
 		return PM_THROUGHPUT;
 
-	return pm_ctx->conc_system_pref;
+	return pm_ctx->user_cfg.conc_system_pref;
 }
 
 enum policy_mgr_one_connection_mode
