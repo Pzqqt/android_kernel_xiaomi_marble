@@ -91,22 +91,19 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 	if (lim_is_group_addr(pHdr->sa)) {
 		/* Received Disassoc frame from a BC/MC address */
 		/* Log error and ignore it */
-		lim_log(pMac, LOGE,
-			FL("received Disassoc frame from a BC/MC address"));
+		pe_err("received Disassoc frame from a BC/MC address");
 		return;
 	}
 
 	if (lim_is_group_addr(pHdr->da) && !lim_is_addr_bc(pHdr->da)) {
 		/* Received Disassoc frame for a MC address */
 		/* Log error and ignore it */
-		lim_log(pMac, LOGE,
-			FL("received Disassoc frame for a MC address"));
+		pe_err("received Disassoc frame for a MC address");
 		return;
 	}
 	if (!lim_validate_received_frame_a1_addr(pMac,
 			pHdr->da, psessionEntry)) {
-		lim_log(pMac, LOGE,
-			FL("rx frame doesn't have valid a1 address, drop it"));
+		pe_err("rx frame doesn't have valid a1 address, drop it");
 		return;
 	}
 
@@ -118,8 +115,7 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 			 * but ACK from this STA is lost, in this case 2nd
 			 * disassoc frame is already in transmission queue
 			 */
-			lim_log(pMac, LOGE,
-				FL("AP is sending disassoc after ACK lost..."));
+			pe_err("AP is sending disassoc after ACK lost");
 			return;
 		}
 	}
@@ -128,16 +124,13 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 	if (psessionEntry->limRmfEnabled
 	    && (WMA_GET_RX_DPU_FEEDBACK(pRxPacketInfo) &
 		DPU_FEEDBACK_UNPROTECTED_ERROR)) {
-		lim_log(pMac, LOGE,
-			FL("received an unprotected disassoc from AP"));
+		pe_err("received an unprotected disassoc from AP");
 		/*
 		 * When 11w offload is enabled then
 		 * firmware should not fwd this frame
 		 */
 		if (LIM_IS_STA_ROLE(psessionEntry) &&  pMac->pmf_offload) {
-			lim_log(pMac, LOGE,
-				FL("11w offload is enable,unprotected disassoc is not expected")
-				);
+			pe_err("11w offload is enable,unprotected disassoc is not expected");
 			return;
 		}
 
@@ -158,10 +151,9 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 	/* Get reasonCode from Disassociation frame body */
 	reasonCode = sir_read_u16(pBody);
 
-	lim_log(pMac, LOG1,
-		FL("Received Disassoc frame for Addr: " MAC_ADDRESS_STR
+	pe_err("Received Disassoc frame for Addr: " MAC_ADDRESS_STR
 			  "(mlm state=%s, sme state=%d RSSI=%d),"
-			  "with reason code %d [%s] from " MAC_ADDRESS_STR),
+			  "with reason code %d [%s] from " MAC_ADDRESS_STR,
 		       MAC_ADDR_ARRAY(pHdr->da),
 		       lim_mlm_state_str(psessionEntry->limMlmState),
 		       psessionEntry->limSmeState, frame_rssi, reasonCode,
@@ -181,17 +173,14 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		 * Disassociating STA is not associated.
 		 * Log error.
 		 */
-		lim_log(pMac, LOGE,
-			FL("received Disassoc frame from STA that does not have context "
-			"reasonCode=%d, addr " MAC_ADDRESS_STR),
+		pe_err("received Disassoc frame from STA that does not have context"
+			"reasonCode=%d, addr " MAC_ADDRESS_STR,
 			reasonCode, MAC_ADDR_ARRAY(pHdr->sa));
 		return;
 	}
 
 	if (lim_check_disassoc_deauth_ack_pending(pMac, (uint8_t *) pHdr->sa)) {
-		lim_log(pMac, LOGE,
-			FL("Ignore the DisAssoc received, while waiting "
-			"for ack of disassoc/deauth"));
+		pe_err("Ignore the DisAssoc received, while waiting for ack of disassoc/deauth");
 		lim_clean_up_disassoc_deauth_req(pMac, (uint8_t *) pHdr->sa, 1);
 		return;
 	}
@@ -204,17 +193,14 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		 *   drop/ignore the DisAssoc received
 		 */
 		if (!IS_REASSOC_BSSID(pMac, pHdr->sa, psessionEntry)) {
-			lim_log(pMac, LOGE,
-				FL("Ignore the DisAssoc received, while "
-				"Processing ReAssoc with different/unknown AP"));
+			pe_err("Ignore the DisAssoc received, while Processing ReAssoc with different/unknown AP");
 			return;
 		}
 		/** If the Disassoc is received from the new AP to which we tried to ReAssociate
 		 *  Drop ReAssoc and Restore the Previous context( current connected AP).
 		 */
 		if (!IS_CURRENT_BSSID(pMac, pHdr->sa, psessionEntry)) {
-			lim_log(pMac, LOGW,
-				FL("received Disassoc from the New AP to which ReAssoc is sent "));
+			pe_debug("received Disassoc from the New AP to which ReAssoc is sent");
 			lim_restore_pre_reassoc_state(pMac,
 						      eSIR_SME_REASSOC_REFUSED,
 						      reasonCode,
@@ -238,10 +224,8 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 
 		default:
 			/* Invalid reasonCode in received Disassociation frame */
-			lim_log(pMac, LOGE,
-				FL("received Disassoc frame with invalid reasonCode "
-				"%d from " MAC_ADDRESS_STR), reasonCode,
-				       MAC_ADDR_ARRAY(pHdr->sa));
+			pe_warn("received Disassoc frame with invalid reasonCode: %d from " MAC_ADDRESS_STR,
+				reasonCode, MAC_ADDR_ARRAY(pHdr->sa));
 			break;
 		}
 	} else if (LIM_IS_STA_ROLE(psessionEntry) &&
@@ -256,11 +240,7 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 			/* as long as we're not about to channel switch */
 			if (psessionEntry->gLimChannelSwitch.state !=
 			    eLIM_CHANNEL_SWITCH_IDLE) {
-				lim_log(pMac, LOGE,
-					FL
-						("Ignoring disassoc frame due to upcoming "
-						"channel switch, from "
-						MAC_ADDRESS_STR),
+				pe_err("Ignoring disassoc frame due to upcoming channel switch, from "MAC_ADDRESS_STR,
 					MAC_ADDR_ARRAY(pHdr->sa));
 				return;
 			}
@@ -272,9 +252,8 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 	} else {
 		/* Received Disassociation frame in either IBSS */
 		/* or un-known role. Log and ignore it */
-		lim_log(pMac, LOG1,
-			FL("received Disassoc frame with invalid reasonCode %d in role "
-				"%d in sme state %d from " MAC_ADDRESS_STR), reasonCode,
+		pe_err("received Disassoc frame with invalid reasonCode: %d in role:"
+				"%d in sme state: %d from " MAC_ADDRESS_STR, reasonCode,
 			GET_LIM_SYSTEM_ROLE(psessionEntry), psessionEntry->limSmeState,
 			MAC_ADDR_ARRAY(pHdr->sa));
 
@@ -287,9 +266,8 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		 * Already in the process of deleting context for the peer
 		 * and received Disassociation frame. Log and Ignore.
 		 */
-		lim_log(pMac, LOG1,
-			FL("received Disassoc frame in state %d from "
-			MAC_ADDRESS_STR), pStaDs->mlmStaContext.mlmState,
+		pe_err("received Disassoc frame in state: %d from"
+			MAC_ADDRESS_STR, pStaDs->mlmStaContext.mlmState,
 			MAC_ADDR_ARRAY(pHdr->sa));
 		return;
 	}
@@ -316,9 +294,8 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		    eLIM_MLM_WT_ASSOC_CNF_STATE)
 			pStaDs->mlmStaContext.updateContext = 1;
 
-		lim_log(pMac, LOG1,
-			FL("received Disassoc frame from peer that is in state %X, addr "
-			MAC_ADDRESS_STR), pStaDs->mlmStaContext.mlmState,
+		pe_err("received Disassoc frame from peer that is in state: %X, addr "MAC_ADDRESS_STR,
+			pStaDs->mlmStaContext.mlmState,
 			       MAC_ADDR_ARRAY(pHdr->sa));
 
 	} /* if (pStaDs->mlmStaContext.mlmState != eLIM_MLM_LINK_ESTABLISHED_STATE) */
@@ -343,8 +320,7 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		 * failure result code. By design, SME will then issue "Disassoc"
 		 * and cleanup will happen at that time.
 		 */
-		lim_log(pMac, LOGD,
-			FL("received Disassoc from AP while waiting for Reassoc Rsp"));
+		pe_debug("received Disassoc from AP while waiting for Reassoc Rsp");
 
 		if (psessionEntry->limAssocResponseData) {
 			qdf_mem_free(psessionEntry->limAssocResponseData);
