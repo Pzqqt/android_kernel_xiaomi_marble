@@ -11172,7 +11172,13 @@ static int hdd_update_scan_config(hdd_context_t *hdd_ctx)
 	scan_cfg.conc_max_rest_time = cfg->nRestTimeConc;
 	scan_cfg.conc_min_rest_time = cfg->min_rest_time_conc;
 	scan_cfg.conc_idle_time = cfg->idle_time_conc;
-	scan_cfg.scan_cache_aging_time = cfg->scanAgingTimeout;
+	/* convert to ms */
+	scan_cfg.scan_cache_aging_time =
+		cfg->scanAgingTimeout * 1000;
+	scan_cfg.prefer_5ghz = cfg->nRoamPrefer5GHz;
+	scan_cfg.select_5ghz_margin = cfg->nSelect5GHzMargin;
+	scan_cfg.scan_bucket_threshold = cfg->first_scan_bucket_threshold;
+	scan_cfg.rssi_cat_gap = cfg->nRssiCatGap;
 	scan_cfg.scan_dwell_time_mode = cfg->scan_adaptive_dwell_mode;
 	scan_cfg.is_snr_monitoring_enabled = cfg->fEnableSNRMonitoring;
 

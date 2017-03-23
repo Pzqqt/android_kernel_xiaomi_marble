@@ -5762,7 +5762,6 @@ static QDF_STATUS csr_prepare_scan_filter(tpAniSirGlobal mac_ctx,
 	QDF_STATUS status;
 	enum policy_mgr_con_mode new_mode;
 	uint8_t weight_list[QDF_MAX_NUM_CHAN];
-	struct roam_ext_params *roam_params = NULL;
 
 	filter->num_of_bssid = pFilter->BSSIDs.numOfBSSIDs;
 	if (filter->num_of_bssid > WLAN_SCAN_FILTER_NUM_BSSID)
@@ -5851,55 +5850,6 @@ static QDF_STATUS csr_prepare_scan_filter(tpAniSirGlobal mac_ctx,
 			filter->num_of_pcl_channels = (uint8_t)len;
 		}
 	}
-	filter->strict_sel_5g = CSR_IS_SELECT_5GHZ_MARGIN(mac_ctx);
-
-	qdf_mem_copy(filter->bss_prefer_val,
-		  mac_ctx->roam.configParam.BssPreferValue,
-		  sizeof(uint32_t) * SCM_NUM_RSSI_CAT);
-	qdf_mem_copy(filter->rssi_cat,
-		  mac_ctx->roam.configParam.RSSICat,
-		  sizeof(int) * SCM_NUM_RSSI_CAT);
-
-	roam_params = &mac_ctx->roam.configParam.roam_params;
-
-	filter->roam_params.num_bssid_avoid_list =
-		roam_params->num_bssid_avoid_list;
-	if (filter->roam_params.num_bssid_avoid_list > MAX_BSSID_AVOID_LIST)
-		filter->roam_params.num_bssid_avoid_list = MAX_BSSID_AVOID_LIST;
-	for (i = 0; i < filter->roam_params.num_bssid_avoid_list; i++)
-		qdf_mem_copy(filter->roam_params.bssid_avoid_list[i].bytes,
-		  roam_params->bssid_avoid_list[i].bytes,
-		  QDF_MAC_ADDR_SIZE);
-
-	filter->roam_params.num_bssid_favored =
-		roam_params->num_bssid_favored;
-	if (filter->roam_params.num_bssid_favored > MAX_FAVORED_BSSID)
-		filter->roam_params.num_bssid_favored = MAX_FAVORED_BSSID;
-	for (i = 0; i < filter->roam_params.num_bssid_favored; i++) {
-		qdf_mem_copy(filter->roam_params.bssid_favored[i].bytes,
-			roam_params->bssid_favored[i].bytes,
-			QDF_MAC_ADDR_SIZE);
-	}
-
-	qdf_mem_copy(filter->roam_params.
-		  bssid_favored_factor,
-		  roam_params->bssid_favored_factor,
-		  filter->roam_params.num_bssid_favored);
-
-	filter->roam_params.raise_rssi_thresh_5g =
-		roam_params->raise_rssi_thresh_5g;
-	filter->roam_params.drop_rssi_thresh_5g =
-		roam_params->drop_rssi_thresh_5g;
-	filter->roam_params.raise_factor_5g =
-		roam_params->raise_factor_5g;
-	filter->roam_params.drop_factor_5g =
-		roam_params->drop_factor_5g;
-	filter->roam_params.max_raise_rssi_5g =
-		roam_params->max_raise_rssi_5g;
-	filter->roam_params.max_drop_rssi_5g =
-		roam_params->max_drop_rssi_5g;
-	filter->roam_params.is_5g_pref_enabled =
-		roam_params->is_5g_pref_enabled;
 
 	return QDF_STATUS_SUCCESS;
 }
