@@ -124,9 +124,8 @@ lim_collect_bss_description(tpAniSirGlobal pMac,
 		lim_get_u16((uint8_t *) &pBPR->capabilityInfo);
 
 	if (!pBssDescr->beaconInterval) {
-		lim_log(pMac, LOGW,
-			FL("Beacon Interval is ZERO, making it to default 100 "
-			   MAC_ADDRESS_STR), MAC_ADDR_ARRAY(pHdr->bssId));
+		pe_warn("Beacon Interval is ZERO, making it to default 100 "
+			   MAC_ADDRESS_STR, MAC_ADDR_ARRAY(pHdr->bssId));
 		pBssDescr->beaconInterval = 100;
 	}
 	/*
@@ -166,8 +165,7 @@ lim_collect_bss_description(tpAniSirGlobal pMac,
 
 	/* SINR no longer reported by HW */
 	pBssDescr->sinr = 0;
-	lim_log(pMac, LOG3,
-		FL(MAC_ADDRESS_STR " rssi: normalized = %d, absolute = %d"),
+	pe_debug(MAC_ADDRESS_STR " rssi: normalized: %d, absolute: %d",
 		MAC_ADDR_ARRAY(pHdr->bssId), pBssDescr->rssi,
 		pBssDescr->rssi_raw);
 
@@ -175,13 +173,12 @@ lim_collect_bss_description(tpAniSirGlobal pMac,
 	pBssDescr->tsf_delta = WMA_GET_RX_TSF_DELTA(pRxPacketInfo);
 	pBssDescr->seq_ctrl = pHdr->seqControl;
 
-	lim_log(pMac, LOG1,
-		  FL("BSSID: "MAC_ADDRESS_STR " tsf_delta = %u ReceivedTime = %llu ssid = %s"),
+	pe_debug("BSSID: "MAC_ADDRESS_STR " tsf_delta: %u ReceivedTime: %llu ssid: %s",
 		  MAC_ADDR_ARRAY(pHdr->bssId), pBssDescr->tsf_delta,
 		  pBssDescr->received_time,
 		  ((pBPR->ssidPresent) ? (char *)pBPR->ssId.ssId : ""));
 
-	lim_log(pMac, LOG1, FL("Seq Ctrl: Frag Num: %d, Seq Num: LO:%02x HI:%02x"),
+	pe_debug("Seq Ctrl: Frag Num: %d Seq Num: LO: %02x HI: %02x",
 		pBssDescr->seq_ctrl.fragNum, pBssDescr->seq_ctrl.seqNumLo,
 		pBssDescr->seq_ctrl.seqNumHi);
 
@@ -219,8 +216,7 @@ lim_collect_bss_description(tpAniSirGlobal pMac,
 	/*set channel number in beacon in case it is not present */
 	pBPR->channelNumber = pBssDescr->channelId;
 
-	lim_log(pMac, LOG3,
-		FL("Collected BSS Description for Channel(%1d), length(%u), IE Fields(%u)"),
+	pe_debug("Collected BSS Description for Channel: %1d length: %u IE Fields: %u",
 		pBssDescr->channelId, pBssDescr->length, ieLen);
 	pMac->lim.beacon_probe_rsp_cnt_per_scan++;
 
