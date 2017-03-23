@@ -563,17 +563,15 @@ bool policy_mgr_is_hw_sbs_capable(struct wlan_objmgr_psoc *psoc)
 		return false;
 	}
 
-	policy_mgr_notice("SBS service bit map: %d",
-		pm_ctx->wma_cbacks.wma_is_service_enabled(
-		WMI_SERVICE_DUAL_BAND_SIMULTANEOUS_SUPPORT));
-
 	/* The agreement with FW is that: To know if the target is SBS
 	 * capable, SBS needs to be supported both in the HW mode list
 	 * and DBS needs to be supported in the service ready event
 	 */
 	if (!(pm_ctx->wma_cbacks.wma_is_service_enabled(
-			WMI_SERVICE_DUAL_BAND_SIMULTANEOUS_SUPPORT)))
+			WMI_SERVICE_DUAL_BAND_SIMULTANEOUS_SUPPORT))) {
+		policy_mgr_err("SBS cannot be supported since DBS is disabled");
 		return false;
+	}
 
 	for (i = 0; i < pm_ctx->num_dbs_hw_modes; i++) {
 		param = pm_ctx->hw_mode.hw_mode_list[i];
@@ -588,7 +586,7 @@ bool policy_mgr_is_hw_sbs_capable(struct wlan_objmgr_psoc *psoc)
 	if (found)
 		return true;
 
-	return true;
+	return false;
 }
 
 QDF_STATUS policy_mgr_get_dbs_hw_modes(struct wlan_objmgr_psoc *psoc,
@@ -1599,20 +1597,6 @@ bool policy_mgr_allow_concurrency(struct wlan_objmgr_psoc *psoc,
 		}
 		qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 	}
-
-	/* don't allow concurrency on vht160 or vht 80+80 */
-	if (num_connections &&
-			((bw == HW_MODE_80_PLUS_80_MHZ) ||
-				(bw == HW_MODE_160_MHZ))) {
-		policy_mgr_err("No VHT160, we have one connection already");
-		goto done;
-	}
-
-	if (policy_mgr_vht160_conn_exist(psoc)) {
-		policy_mgr_err("VHT160/80+80 connection exists, no concurrency");
-		goto done;
-	}
-
 
 	status = true;
 
