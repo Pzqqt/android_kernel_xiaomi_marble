@@ -1051,6 +1051,25 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
  */
 #define WE_SET_DCM                            92
 
+/*
+ * <ioctl>
+ * enable_range_ext - enable Range extension
+ *
+ * @INPUT: 0/1
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL enables/disables Range extension.
+ *
+ * @E.g: iwpriv wlan0 enable_range_ext <0/1>
+ *
+ * Supported Feature: STA/SAP
+ *
+ * Usage: Internal
+ *
+ * </ioctl>
+ */
+#define WE_SET_RANGE_EXT                      93
 
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_SET_NONE_GET_INT    (SIOCIWFIRSTPRIV + 1)
@@ -1731,6 +1750,25 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
  * </ioctl>
  */
 #define WE_GET_DCM                      60
+
+/*
+ * <ioctl>
+ * get_dcm - Get range extension enablement value
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: 0/1
+ * wlan0     get_range_ext
+ *
+ * This IOCTL is used get range_extension value
+ *
+ * Supported Feature: STA/SAP
+ *
+ * Usage: Internal
+ *
+ * </ioctl>
+ */
+#define WE_GET_RANGE_EXT                61
 
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_SET_INT_GET_INT     (SIOCIWFIRSTPRIV + 2)
@@ -8619,6 +8657,12 @@ static int __iw_setint_getnone(struct net_device *dev,
 					  WMI_VDEV_PARAM_HE_DCM, set_value,
 					  VDEV_CMD);
 		break;
+	case WE_SET_RANGE_EXT:
+		hdd_notice("Set WMI_VDEV_PARAM_HE_RANGE_EXT: %d", set_value);
+		ret = wma_cli_set_command(pAdapter->sessionId,
+					  WMI_VDEV_PARAM_HE_RANGE_EXT,
+					  set_value, VDEV_CMD);
+		break;
 	default:
 	{
 		hdd_err("Invalid sub command %d",
@@ -9332,6 +9376,12 @@ static int __iw_setnone_getint(struct net_device *dev,
 		hdd_notice("GET WMI_VDEV_PARAM_HE_DCM");
 		*value = wma_cli_get_command(pAdapter->sessionId,
 					     WMI_VDEV_PARAM_HE_DCM,
+					     VDEV_CMD);
+		break;
+	case WE_GET_RANGE_EXT:
+		hdd_notice("GET WMI_VDEV_PARAM_HE_RANGE_EXT");
+		*value = wma_cli_get_command(pAdapter->sessionId,
+					     WMI_VDEV_PARAM_HE_RANGE_EXT,
 					     VDEV_CMD);
 		break;
 	default:
@@ -13214,6 +13264,10 @@ static const struct iw_priv_args we_private_args[] = {
 	 0,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 "get_dcm"},
+	{WE_GET_RANGE_EXT,
+	 0,
+	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+	 "get_range_ext"},
 	/* handlers for main ioctl */
 	{WLAN_PRIV_SET_CHAR_GET_NONE,
 	 IW_PRIV_TYPE_CHAR | 512,
@@ -13654,6 +13708,11 @@ static const struct iw_priv_args we_private_args[] = {
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 0,
 	 "enable_dcm"}
+	,
+	{WE_SET_RANGE_EXT,
+	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+	 0,
+	 "enable_range_ext"}
 	,
 };
 

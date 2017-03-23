@@ -377,6 +377,7 @@ int wma_cli_get_command(int vdev_id, int param_id, int vpdev)
 			ret = intr[vdev_id].config.tx_rate;
 			break;
 		case WMI_VDEV_PARAM_HE_DCM:
+		case WMI_VDEV_PARAM_HE_RANGE_EXT:
 			ret = wma_get_he_vdev_param(&intr[vdev_id], param_id);
 			break;
 		default:
@@ -1411,6 +1412,7 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 			intr[vid].config.erx_dri_sample = privcmd->param_value;
 			break;
 		case WMI_VDEV_PARAM_HE_DCM:
+		case WMI_VDEV_PARAM_HE_RANGE_EXT:
 			wma_set_he_vdev_param(&intr[vid], privcmd->param_id,
 					      privcmd->param_value);
 			break;

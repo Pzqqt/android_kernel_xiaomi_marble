@@ -3321,6 +3321,12 @@ static __iw_softap_setparam(struct net_device *dev,
 					  WMI_VDEV_PARAM_HE_DCM, set_value,
 					  VDEV_CMD);
 		break;
+	case QCASAP_PARAM_RANGE_EXT:
+		hdd_notice("Set WMI_VDEV_PARAM_HE_RANGE_EXT: %d", set_value);
+		ret = wma_cli_set_command(pHostapdAdapter->sessionId,
+					  WMI_VDEV_PARAM_HE_RANGE_EXT,
+					  set_value, VDEV_CMD);
+		break;
 	default:
 		hdd_err("Invalid setparam command %d value %d",
 		       sub_cmd, set_value);
@@ -3631,6 +3637,13 @@ static __iw_softap_getparam(struct net_device *dev,
 	{
 		*value = wma_cli_get_command(pHostapdAdapter->sessionId,
 					     WMI_VDEV_PARAM_HE_DCM,
+					     VDEV_CMD);
+		break;
+	}
+	case QCASAP_PARAM_RANGE_EXT:
+	{
+		*value = wma_cli_get_command(pHostapdAdapter->sessionId,
+					     WMI_VDEV_PARAM_HE_RANGE_EXT,
 					     VDEV_CMD);
 		break;
 	}
@@ -5804,6 +5817,12 @@ static const struct iw_priv_args hostapd_private_args[] = {
 		QCASAP_PARAM_DCM,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 		0, "enable_dcm"
+	}
+	,
+	{
+		QCASAP_PARAM_RANGE_EXT,
+		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+		0, "enable_range_ext"
 	}
 	,
 };

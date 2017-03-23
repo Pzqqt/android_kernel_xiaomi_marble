@@ -828,6 +828,7 @@ typedef struct {
  * @qpower_params: qpower parameters
  * @gtx_info: GTX offload info
  * @dcm: DCM enable/disable
+ * @range_ext: HE range extension enable/disable
  *
  * This structure stores vdev parameters.
  * Some of these parameters are set in fw and some
@@ -856,6 +857,7 @@ typedef struct {
 	gtx_config_t gtx_info;
 #ifdef WLAN_FEATURE_11AX
 	uint8_t dcm;
+	uint8_t range_ext;
 #endif
 } vdev_cli_config_t;
 
