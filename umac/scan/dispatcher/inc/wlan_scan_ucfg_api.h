@@ -387,6 +387,16 @@ QDF_STATUS ucfg_scan_register_bcn_cb(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS ucfg_scan_update_user_config(struct wlan_objmgr_psoc *psoc,
 	struct scan_user_cfg *scan_cfg);
 
+/**
+ * ucfg_scan_update_roam_params() - Store/Update the roam params
+ * @psoc: psoc
+ * @roam_params: roam params
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_scan_update_roam_params(struct wlan_objmgr_psoc *psoc,
+	struct roam_filter_params *roam_params);
+
 /*
  * ucfg_scan_init() - Scan module initialization API
  *

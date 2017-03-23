@@ -73,11 +73,13 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg);
 
 /**
  * scm_age_out_entries() - Age out entries older than aging time
+ * @psoc: psoc pointer
  * @scan_db: scan database
  *
  * Return: void.
  */
-void scm_age_out_entries(struct scan_dbs *scan_db);
+void scm_age_out_entries(struct wlan_objmgr_psoc *psoc,
+	struct scan_dbs *scan_db);
 
 /**
  * scm_get_scan_result() - fetches scan result

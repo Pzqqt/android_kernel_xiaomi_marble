@@ -37,7 +37,6 @@ typedef uint32_t wlan_scan_id;
 
 #define SCM_PCL_ADVANTAGE       30
 #define SCM_PCL_RSSI_THRESHOLD -75
-#define SCM_NUM_RSSI_CAT        15
 
 #define SCM_BSS_CAP_VALUE_NONE  0/* not much value */
 #define SCM_BSS_CAP_VALUE_HT    1
@@ -336,11 +335,7 @@ struct roam_filter_params {
  * @num_of_mc_enc_type: number of multicast enc type
  * @pmf_cap: Pmf capability
  * @num_of_pcl_channels: number of pcl channels
- * @bss_prefer_val: bss prefer value for the RSSI category
- * @rssi_cat: RSSI category
- * @strict_sel_5g: only 5G AP
  * @bss_type: bss type BSS/IBSS etc
- * @country[3]: Ap with specific country code
  * @dot11_mode: operating modes 0 mean any
  *              11a , 11g, 11n , 11ac , 11b etc
  * @band: to get specific band 2.4G, 5G or 4.9 G
@@ -350,13 +345,13 @@ struct roam_filter_params {
  * @ignore_auth_enc_type: Ignore enc type if
  *                        this is set (For WPS/OSEN connection)
  * @mobility_domain: Mobility domain for 11r
- * @roam_params: roam related params
+ * @country[3]: Ap with specific country code
  * @bssid_list: bssid list
  * @ssid_list: ssid list
  * @channel_list: channel list
- * @auth_type_list: auth type list
- * @enc_type_list: unicast enc type list
- * @mc_enc_type_list: multicast cast enc type list
+ * @auth_type: auth type list
+ * @enc_type: unicast enc type list
+ * @mc_enc_type: multicast cast enc type list
  * @pcl_channel_list: PCL channel list
  */
 struct scan_filter {
@@ -371,10 +366,6 @@ struct scan_filter {
 	uint32_t num_of_mc_enc_type;
 	enum wlan_pmf_cap pmf_cap;
 	uint32_t num_of_pcl_channels;
-	/* each RSSI category has one value */
-	uint32_t bss_prefer_val[SCM_NUM_RSSI_CAT];
-	int rssi_cat[SCM_NUM_RSSI_CAT];
-	uint32_t strict_sel_5g;
 	enum wlan_bss_type bss_type;
 	enum wlan_phymode dot11_mode;
 	enum wlan_band band;
@@ -384,7 +375,6 @@ struct scan_filter {
 	uint32_t mobility_domain;
 	/* Variable params list */
 	uint8_t country[3];
-	struct roam_filter_params roam_params;
 	struct qdf_mac_addr bssid_list[WLAN_SCAN_FILTER_NUM_BSSID];
 	struct wlan_ssid ssid_list[WLAN_SCAN_FILTER_NUM_SSID];
 	uint8_t channel_list[QDF_MAX_NUM_CHAN];
@@ -937,6 +927,15 @@ struct pno_user_cfg {
  * @conc_idle_time: default concurrent idle time
  * @scan_cache_aging_time: default scan cache aging time
  * @is_snr_monitoring_enabled: whether snr monitoring enabled or not
+ * @prefer_5ghz: Prefer 5ghz AP over 2.4Ghz AP
+ * @select_5gh_margin: Prefer connecting to 5G AP even if
+ *    its RSSI is lower by select_5gh_margin dbm than 2.4G AP.
+ *    applicable if prefer_5ghz is set.
+ * @scan_bucket_threshold: first scan bucket
+ * threshold to the mentioned value and all the AP's which
+ * have RSSI under this threshold will fall under this
+ * bucket
+ * @rssi_cat_gap: set rssi category gap
  * @scan_dwell_time_mode: Adaptive dweltime mode
  * @pno_cfg: Pno related config params
  */
@@ -950,6 +949,10 @@ struct scan_user_cfg {
 	uint32_t conc_idle_time;
 	uint32_t scan_cache_aging_time;
 	bool is_snr_monitoring_enabled;
+	uint32_t prefer_5ghz;
+	uint32_t select_5ghz_margin;
+	int32_t scan_bucket_threshold;
+	uint32_t rssi_cat_gap;
 	enum scan_dwelltime_adaptive_mode scan_dwell_time_mode;
 	struct pno_user_cfg pno_cfg;
 };

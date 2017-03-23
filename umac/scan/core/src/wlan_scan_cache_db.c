@@ -206,32 +206,39 @@ scm_get_next_node(struct scan_dbs *scan_db,
  * scm_check_and_age_out() - check and age out the old entries
  * @scan_db: scan db
  * @scan_node: node to check for age out
+ * @scan_aging_time: scan cache aging time
  *
  * Return: void
  */
 static void scm_check_and_age_out(struct scan_dbs *scan_db,
-	struct scan_cache_node *node)
+	struct scan_cache_node *node,
+	uint32_t scan_aging_time)
 {
 	if (util_scan_entry_age(node->entry) >=
-	   SCAN_CACHE_AGING_TIME) {
-		scm_err("Aging out BSSID: %pM with age %d ms",
+	   scan_aging_time) {
+		scm_info("Aging out BSSID: %pM with age %d ms",
 			node->entry->bssid.bytes,
 			util_scan_entry_age(node->entry));
 		scm_scan_entry_put_ref(scan_db, node, true);
 	}
 }
 
-void scm_age_out_entries(struct scan_dbs *scan_db)
+void scm_age_out_entries(struct wlan_objmgr_psoc *psoc,
+	struct scan_dbs *scan_db)
 {
 	int i;
 	struct scan_cache_node *cur_node = NULL;
 	struct scan_cache_node *next_node = NULL;
+	struct scan_default_params *def_param;
+
+	def_param = wlan_scan_psoc_get_def_params(psoc);
 
 	for (i = 0 ; i < SCAN_HASH_SIZE; i++) {
 		cur_node = scm_get_next_node(scan_db,
 			&scan_db->scan_hash_tbl[i], NULL);
 		while (cur_node) {
-			scm_check_and_age_out(scan_db, cur_node);
+			scm_check_and_age_out(scan_db, cur_node,
+					def_param->scan_cache_aging_time);
 			next_node = scm_get_next_node(scan_db,
 				&scan_db->scan_hash_tbl[i], cur_node);
 			cur_node = next_node;
@@ -597,6 +604,7 @@ free_nbuf:
 
 /**
  * scm_list_insert_sorted() - add the entries in scan_list in sorted way
+ * @psoc: psoc ptr
  * @filter: scan filter
  * @scan_node: node entry to be inserted
  * @scan_list: Temp scan list
@@ -607,21 +615,19 @@ free_nbuf:
  *
  * Return: void
  */
-static void scm_list_insert_sorted(struct scan_filter *filter,
+static void scm_list_insert_sorted(struct wlan_objmgr_psoc *psoc,
+	struct scan_filter *filter,
 	struct scan_cache_node *scan_node,
 	qdf_list_t *scan_list)
 {
 	struct scan_cache_node *cur_node;
 	qdf_list_node_t *cur_lst = NULL, *next_lst = NULL;
+	struct scan_default_params *params;
 
-	scan_node->entry->cap_val =
-		scm_get_bss_cap_value(filter, scan_node->entry);
+	params = wlan_scan_psoc_get_def_params(psoc);
 
-	scan_node->entry->prefer_value =
-		scm_get_bss_prefer_value(filter, scan_node->entry);
-
-	if (filter->num_of_pcl_channels)
-		scm_calc_pref_val_by_pcl(filter, scan_node->entry);
+	scm_calculate_bss_score(params, filter,
+			scan_node->entry);
 
 	if (qdf_list_empty(scan_list)) {
 		qdf_list_insert_front(scan_list, &scan_node->node);
@@ -633,7 +639,7 @@ static void scm_list_insert_sorted(struct scan_filter *filter,
 	while (cur_lst) {
 		cur_node = qdf_container_of(cur_lst,
 				struct scan_cache_node, node);
-		if (scm_is_better_bss(filter,
+		if (scm_is_better_bss(params,
 		   scan_node->entry, cur_node->entry)) {
 			qdf_list_insert_before(scan_list,
 				&scan_node->node,
@@ -655,6 +661,7 @@ static void scm_list_insert_sorted(struct scan_filter *filter,
 /**
  * scm_scan_apply_filter_get_entry() - apply filter and get the
  * scan entry
+ * @psoc: psoc pointer
  * @db_entry: scan entry
  * @filter: filter to be applied
  * @scan_list: scan list to which entry is added
@@ -662,7 +669,8 @@ static void scm_list_insert_sorted(struct scan_filter *filter,
  * Return: QDF_STATUS
  */
 static QDF_STATUS
-scm_scan_apply_filter_get_entry(struct scan_cache_entry *db_entry,
+scm_scan_apply_filter_get_entry(struct wlan_objmgr_psoc *psoc,
+	struct scan_cache_entry *db_entry,
 	struct scan_filter *filter,
 	qdf_list_t *scan_list)
 {
@@ -673,7 +681,8 @@ scm_scan_apply_filter_get_entry(struct scan_cache_entry *db_entry,
 	if (!filter)
 		match = true;
 	else
-		match = scm_filter_match(db_entry, filter, &security);
+		match = scm_filter_match(psoc, db_entry,
+					filter, &security);
 
 	if (!match)
 		return QDF_STATUS_SUCCESS;
@@ -697,21 +706,22 @@ scm_scan_apply_filter_get_entry(struct scan_cache_entry *db_entry,
 		qdf_list_insert_front(scan_list,
 			&scan_node->node);
 	else
-		scm_list_insert_sorted(filter, scan_node, scan_list);
+		scm_list_insert_sorted(psoc, filter, scan_node, scan_list);
 
 	return QDF_STATUS_SUCCESS;
 }
 
 /**
  * scm_get_results() - Iterate and get scan results
+ * @psoc: psoc ptr
  * @scan_db: scan db
  * @filter: filter to be applied
  * @scan_list: scan list to which entry is added
  *
  * Return: void
  */
-static void scm_get_results(struct scan_dbs *scan_db,
-	struct scan_filter *filter,
+static void scm_get_results(struct wlan_objmgr_psoc *psoc,
+	struct scan_dbs *scan_db, struct scan_filter *filter,
 	qdf_list_t *scan_list)
 {
 	int i, count;
@@ -725,7 +735,7 @@ static void scm_get_results(struct scan_dbs *scan_db,
 		if (!count)
 			continue;
 		while (cur_node) {
-			scm_scan_apply_filter_get_entry(
+			scm_scan_apply_filter_get_entry(psoc,
 				cur_node->entry, filter, scan_list);
 			next_node = scm_get_next_node(scan_db,
 				&scan_db->scan_hash_tbl[i], cur_node);
@@ -787,6 +797,7 @@ qdf_list_t *scm_get_scan_result(struct wlan_objmgr_pdev *pdev,
 		scm_err("psoc is NULL");
 		return NULL;
 	}
+
 	scan_db = wlan_pdev_get_scan_db(psoc, pdev);
 	if (!scan_db) {
 		scm_err("scan_db is NULL");
@@ -801,8 +812,8 @@ qdf_list_t *scm_get_scan_result(struct wlan_objmgr_pdev *pdev,
 	qdf_list_create(tmp_list,
 			MAX_SCAN_CACHE_SIZE);
 
-	scm_age_out_entries(scan_db);
-	scm_get_results(scan_db, filter, tmp_list);
+	scm_age_out_entries(psoc, scan_db);
+	scm_get_results(psoc, scan_db, filter, tmp_list);
 
 	return tmp_list;
 }
@@ -877,7 +888,7 @@ scm_iterate_scan_db(struct wlan_objmgr_pdev *pdev,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	scm_age_out_entries(scan_db);
+	scm_age_out_entries(psoc, scan_db);
 	status = scm_iterate_db_and_call_func(scan_db, func, arg);
 
 	return status;
@@ -886,6 +897,7 @@ scm_iterate_scan_db(struct wlan_objmgr_pdev *pdev,
 /**
  * scm_scan_apply_filter_flush_entry() -flush scan entries depending
  * on filter
+ * @psoc: psoc ptr
  * @scan_db: scan db
  * @db_node: node on which filters are applied
  * @filter: filter to be applied
@@ -893,7 +905,8 @@ scm_iterate_scan_db(struct wlan_objmgr_pdev *pdev,
  * Return: QDF_STATUS
  */
 static QDF_STATUS
-scm_scan_apply_filter_flush_entry(struct scan_dbs *scan_db,
+scm_scan_apply_filter_flush_entry(struct wlan_objmgr_psoc *psoc,
+	struct scan_dbs *scan_db,
 	struct scan_cache_node *db_node,
 	struct scan_filter *filter)
 {
@@ -903,7 +916,8 @@ scm_scan_apply_filter_flush_entry(struct scan_dbs *scan_db,
 	if (!filter)
 		match = true;
 	else
-		match = scm_filter_match(db_node->entry, filter, &security);
+		match = scm_filter_match(psoc, db_node->entry,
+					filter, &security);
 
 	if (!match)
 		return QDF_STATUS_SUCCESS;
@@ -915,12 +929,14 @@ scm_scan_apply_filter_flush_entry(struct scan_dbs *scan_db,
 
 /**
  * scm_flush_scan_entries() - API to flush scan entries depending on filters
+ * @psoc: psoc ptr
  * @scan_db: scan db
  * @filter: filter
  *
  * Return: void
  */
-static void scm_flush_scan_entries(struct scan_dbs *scan_db,
+static void scm_flush_scan_entries(struct wlan_objmgr_psoc *psoc,
+	struct scan_dbs *scan_db,
 	struct scan_filter *filter)
 {
 	int i;
@@ -931,7 +947,7 @@ static void scm_flush_scan_entries(struct scan_dbs *scan_db,
 		cur_node = scm_get_next_node(scan_db,
 			   &scan_db->scan_hash_tbl[i], NULL);
 		while (cur_node) {
-			scm_scan_apply_filter_flush_entry(scan_db,
+			scm_scan_apply_filter_flush_entry(psoc, scan_db,
 				cur_node, filter);
 			next_node = scm_get_next_node(scan_db,
 				&scan_db->scan_hash_tbl[i], cur_node);
@@ -966,7 +982,7 @@ QDF_STATUS scm_flush_results(struct wlan_objmgr_pdev *pdev,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	scm_flush_scan_entries(scan_db, filter);
+	scm_flush_scan_entries(psoc, scan_db, filter);
 
 	return status;
 }
@@ -1112,7 +1128,7 @@ QDF_STATUS scm_db_deinit(struct wlan_objmgr_psoc *psoc)
 			continue;
 		}
 
-		scm_flush_scan_entries(scan_db, NULL);
+		scm_flush_scan_entries(psoc, scan_db, NULL);
 		for (j = 0; j < SCAN_HASH_SIZE; j++)
 			qdf_list_destroy(&scan_db->scan_hash_tbl[j]);
 		qdf_spinlock_destroy(&scan_db->scan_db_lock);

@@ -28,7 +28,7 @@
 
 /**
  * scm_get_altered_rssi() - Artificially increase/decrease RSSI
- * @filter: scan filter
+ * @params: scan params
  * @rssi: Actual RSSI of the AP.
  * @channel_id: Channel on which the AP is parked.
  * @bssid: BSSID of the AP to connect to.
@@ -40,7 +40,7 @@
  *
  * Return: The modified RSSI Value
  */
-static int scm_get_altered_rssi(struct scan_filter *filter,
+static int scm_get_altered_rssi(struct scan_default_params *params,
 	int rssi, uint8_t channel_id, struct qdf_mac_addr *bssid)
 {
 	int modified_rssi;
@@ -49,7 +49,7 @@ static int scm_get_altered_rssi(struct scan_filter *filter,
 	int i;
 	struct roam_filter_params *roam_params;
 
-	roam_params = &filter->roam_params;
+	roam_params = &params->roam_params;
 	modified_rssi = rssi;
 
 	/*
@@ -94,7 +94,7 @@ static int scm_get_altered_rssi(struct scan_filter *filter,
 
 /**
  * scm_is_better_rssi() - Is bss1 better than bss2
- * @filter: scan filter
+ * @params: scan params
  * @bss1: Pointer to the first BSS.
  * @bss2: Pointer to the second BSS.
  *
@@ -105,7 +105,7 @@ static int scm_get_altered_rssi(struct scan_filter *filter,
  * Return: true, if bss1 is better than bss2
  *         false, if bss2 is better than bss1.
  */
-static bool scm_is_better_rssi(struct scan_filter *filter,
+static bool scm_is_better_rssi(struct scan_default_params *params,
 	struct scan_cache_entry *bss1, struct scan_cache_entry *bss2)
 {
 	bool ret;
@@ -120,12 +120,12 @@ static bool scm_is_better_rssi(struct scan_filter *filter,
 	 */
 	qdf_mem_copy(local_mac.bytes,
 		bss1->bssid.bytes, QDF_MAC_ADDR_SIZE);
-	rssi1 = scm_get_altered_rssi(filter, rssi1,
+	rssi1 = scm_get_altered_rssi(params, rssi1,
 			bss1->channel.chan_idx,
 			&local_mac);
 	qdf_mem_copy(local_mac.bytes,
 			bss2->bssid.bytes, QDF_MAC_ADDR_SIZE);
-	rssi2 = scm_get_altered_rssi(filter, rssi2,
+	rssi2 = scm_get_altered_rssi(params, rssi2,
 			bss2->channel.chan_idx,
 			&local_mac);
 	if (rssi1 > rssi2)
@@ -136,7 +136,7 @@ static bool scm_is_better_rssi(struct scan_filter *filter,
 	return ret;
 }
 
-bool scm_is_better_bss(struct scan_filter *filter,
+bool scm_is_better_bss(struct scan_default_params *params,
 	struct scan_cache_entry *bss1,
 	struct scan_cache_entry *bss2)
 {
@@ -149,7 +149,7 @@ bool scm_is_better_bss(struct scan_filter *filter,
 		if (bss1->cap_val > bss2->cap_val)
 			ret = true;
 		else if (bss1->cap_val == bss2->cap_val) {
-			if (scm_is_better_rssi(filter, bss1, bss2))
+			if (scm_is_better_rssi(params, bss1, bss2))
 				ret = true;
 			else
 				ret = false;
@@ -163,7 +163,18 @@ bool scm_is_better_bss(struct scan_filter *filter,
 	return ret;
 }
 
-uint32_t scm_get_bss_prefer_value(struct scan_filter *filter,
+/**
+ * scm_get_bss_prefer_value() - Get the preference value for BSS
+ * @params: scan params
+ * @entry: entry
+ *
+ * Each entry should be assigned a preference value ranging from
+ * 14-0, which will be used as an RSSI bucket score while sorting the
+ * scan results.
+ *
+ * Return: Preference value for the BSSID
+ */
+static uint32_t scm_get_bss_prefer_value(struct scan_default_params *params,
 			struct scan_cache_entry *entry)
 {
 	uint32_t ret = 0;
@@ -173,27 +184,35 @@ uint32_t scm_get_bss_prefer_value(struct scan_filter *filter,
 	 * The RSSI does not get modified in case the 5G
 	 * preference or preferred BSSID is not applicable
 	 */
-	modified_rssi = scm_get_altered_rssi(filter,
+	modified_rssi = scm_get_altered_rssi(params,
 		entry->rssi_raw, entry->channel.chan_idx,
 		&entry->bssid);
-	ret = scm_derive_prefer_value_from_rssi(filter, modified_rssi);
+	ret = scm_derive_prefer_value_from_rssi(params, modified_rssi);
 
 	return ret;
 }
 
-uint32_t scm_get_bss_cap_value(struct scan_filter *filter,
+/**
+ * scm_get_bss_cap_value() - get bss capability value
+ * @params: def scan params
+ * @entry: scan entry entry
+ *
+ * Return: CapValue base on the capabilities of a BSS
+ */
+static uint32_t scm_get_bss_cap_value(struct scan_default_params *params,
 	struct scan_cache_entry *entry)
 {
 	uint32_t ret = SCM_BSS_CAP_VALUE_NONE;
 
-	if (filter->roam_params.is_5g_pref_enabled)
+	if (params->prefer_5ghz ||
+	   params->roam_params.is_5g_pref_enabled)
 		if (WLAN_CHAN_IS_5GHZ(entry->channel.chan_idx))
 			ret += SCM_BSS_CAP_VALUE_5GHZ;
 	/*
 	 * if strict select 5GHz is set then ignore
 	 * the capability checking
 	 */
-	if (!filter->strict_sel_5g) {
+	if (!params->select_5ghz_margin) {
 		/* We only care about 11N capability */
 		if (entry->ie_list.vhtcap)
 			ret += SCM_BSS_CAP_VALUE_VHT;
@@ -209,7 +228,20 @@ uint32_t scm_get_bss_cap_value(struct scan_filter *filter,
 	return ret;
 }
 
-QDF_STATUS scm_calc_pref_val_by_pcl(struct scan_filter *filter,
+/**
+ * scm_calc_pref_val_by_pcl() - to calculate preferred value
+ * @params: scan params
+ * @filter: filter to find match from scan result
+ * @entry: scan entry for which score needs to be calculated
+ *
+ * this routine calculates the new preferred value to be given to
+ * provided bss if its channel falls under preferred channel list.
+ * Thump rule is higer the RSSI better the boost.
+ *
+ * Return: success or failure
+ */
+static QDF_STATUS scm_calc_pref_val_by_pcl(struct scan_default_params *params,
+	struct scan_filter *filter,
 	struct scan_cache_entry *entry)
 {
 	int temp_rssi = 0, new_pref_val = 0;
@@ -225,14 +257,14 @@ QDF_STATUS scm_calc_pref_val_by_pcl(struct scan_filter *filter,
 
 	if (is_channel_found_in_pcl(entry->channel.chan_idx, filter) &&
 		(entry->rssi_raw > SCM_PCL_RSSI_THRESHOLD)) {
-		orig_pref_val = scm_derive_prefer_value_from_rssi(filter,
+		orig_pref_val = scm_derive_prefer_value_from_rssi(params,
 					entry->rssi_raw);
 		temp_rssi = entry->rssi_raw +
 				(SCM_PCL_ADVANTAGE/(SCM_NUM_RSSI_CAT -
 							orig_pref_val));
 		if (temp_rssi > 0)
 			temp_rssi = 0;
-		new_pref_val = scm_derive_prefer_value_from_rssi(filter,
+		new_pref_val = scm_derive_prefer_value_from_rssi(params,
 					temp_rssi);
 
 		entry->prefer_value =
@@ -242,6 +274,18 @@ QDF_STATUS scm_calc_pref_val_by_pcl(struct scan_filter *filter,
 	return QDF_STATUS_SUCCESS;
 }
 
+void scm_calculate_bss_score(struct scan_default_params *params,
+	struct scan_filter *filter, struct scan_cache_entry *entry)
+{
+	entry->cap_val =
+		scm_get_bss_cap_value(params, entry);
+
+	entry->prefer_value =
+		scm_get_bss_prefer_value(params, entry);
+
+	if (filter->num_of_pcl_channels)
+		scm_calc_pref_val_by_pcl(params, filter, entry);
+}
 
 /**
  * scm_is_open_security() - Check if scan entry support open security
@@ -933,15 +977,18 @@ static bool scm_is_security_match(struct scan_filter *filter,
 	return match;
 }
 
-bool scm_filter_match(struct scan_cache_entry *db_entry,
+bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
+	struct scan_cache_entry *db_entry,
 	struct scan_filter *filter,
 	struct security_info *security)
 {
 	int i;
 	bool match = false;
 	struct roam_filter_params *roam_params;
+	struct scan_default_params *def_param;
 
-	roam_params = &filter->roam_params;
+	def_param = wlan_scan_psoc_get_def_params(psoc);
+	roam_params = &def_param->roam_params;
 
 	if (filter->p2p_results && !db_entry->is_p2p)
 		return false;

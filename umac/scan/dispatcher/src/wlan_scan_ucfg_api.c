@@ -926,6 +926,22 @@ ucfg_scan_register_unregister_bcn_cb(struct wlan_objmgr_psoc *psoc,
 			enable ? "Registering" : "Deregistering");
 }
 
+static void ucfg_scan_assign_rssi_category(struct scan_default_params *params,
+	int32_t best_ap_rssi, uint32_t cat_offset)
+{
+	int i;
+
+	scm_info("best AP RSSI:%d, cat offset: %d", best_ap_rssi, cat_offset);
+	if (cat_offset)
+		for (i = 0; i < SCM_NUM_RSSI_CAT; i++) {
+			params->rssi_cat[SCM_NUM_RSSI_CAT - i - 1] =
+				(best_ap_rssi -
+				params->select_5ghz_margin -
+				(int)(i * cat_offset));
+		params->bss_prefer_val[i] = i;
+	}
+}
+
 QDF_STATUS ucfg_scan_update_user_config(struct wlan_objmgr_psoc *psoc,
 	struct scan_user_cfg *scan_cfg)
 {
@@ -951,11 +967,38 @@ QDF_STATUS ucfg_scan_update_user_config(struct wlan_objmgr_psoc *psoc,
 	scan_def->conc_min_rest_time = scan_cfg->conc_min_rest_time;
 	scan_def->conc_idle_time = scan_cfg->conc_idle_time;
 	scan_def->scan_cache_aging_time = scan_cfg->scan_cache_aging_time;
+	scan_def->prefer_5ghz = scan_cfg->prefer_5ghz;
+	scan_def->select_5ghz_margin = scan_cfg->select_5ghz_margin;
 	scan_def->adaptive_dwell_time_mode = scan_cfg->scan_dwell_time_mode;
 	scan_def->scan_f_chan_stat_evnt = scan_cfg->is_snr_monitoring_enabled;
 
+	ucfg_scan_assign_rssi_category(scan_def,
+			scan_cfg->scan_bucket_threshold,
+			scan_cfg->rssi_cat_gap);
+
 	return ucfg_scan_update_pno_config(&scan_obj->pno_cfg,
 		&scan_cfg->pno_cfg);
+}
+
+QDF_STATUS ucfg_scan_update_roam_params(struct wlan_objmgr_psoc *psoc,
+	struct roam_filter_params *roam_params)
+{
+	struct scan_default_params *scan_def;
+
+	if (!psoc) {
+		scm_err("null psoc");
+		return QDF_STATUS_E_FAILURE;
+	}
+	scan_def = wlan_scan_psoc_get_def_params(psoc);
+	if (!scan_def) {
+		scm_err("Failed to get scan object");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_mem_copy(&scan_def->roam_params, roam_params,
+		sizeof(struct roam_filter_params));
+
+	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS

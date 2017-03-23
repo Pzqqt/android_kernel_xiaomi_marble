@@ -25,33 +25,21 @@
 
 /**
  * scm_filter_match() - private API to check if entry is match to filter
+ * psoc: psoc ptr;
  * @db_entry: db entry
  * @filter: filter
  * @security: negotiated security if match is found
  *
  * Return: true if entry match filter
  */
-bool scm_filter_match(struct scan_cache_entry *db_entry,
+bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
+	struct scan_cache_entry *db_entry,
 	struct scan_filter *filter,
 	struct security_info *security);
 
 /**
- * scm_get_bss_prefer_value() - Get the preference value for BSS
- * @filter: scan filter
- * @entry: entry
- *
- * Each BSS should be assigned a preference value ranging from
- * 14-0, which will be used as an RSSI bucket score while sorting the
- * scan results.
- *
- * Return: Preference value for the BSSID
- */
-uint32_t scm_get_bss_prefer_value(struct scan_filter *filter,
-	struct scan_cache_entry *entry);
-
-/**
  * scm_is_better_bss() - Is bss1 better than bss2
- * @filter: scan filter
+ * @params: scan params
  * @bss1: Pointer to the first BSS.
  * @bss2: Pointer to the second BSS.
  *
@@ -62,19 +50,9 @@ uint32_t scm_get_bss_prefer_value(struct scan_filter *filter,
  * Return: true, if bss1 is better than bss2
  *         false, if bss2 is better than bss1.
  */
-bool scm_is_better_bss(struct scan_filter *filter,
+bool scm_is_better_bss(struct scan_default_params *params,
 	struct scan_cache_entry *bss1,
 	struct scan_cache_entry *bss2);
-
-/**
- * scm_get_bss_cap_value() - get bss capability value
- * @filter: filter
- * @entry: scan entry entry
- *
- * Return: CapValue base on the capabilities of a BSS
- */
-uint32_t scm_get_bss_cap_value(struct scan_filter *filter,
-	struct scan_cache_entry *entry);
 
 /**
  * is_channel_found_in_pcl() - to check if channel is present in pcl
@@ -106,6 +84,7 @@ static inline bool is_channel_found_in_pcl(int channel_id,
 
 /**
  * scm_derive_prefer_value_from_rssi() - to derive prefer value
+ * @params: scan params
  * @filter: filter
  * @rssi: RSSI of the BSS
  *
@@ -113,14 +92,15 @@ static inline bool is_channel_found_in_pcl(int channel_id,
  *
  * Return: value between 0 to 14
  */
-static inline int scm_derive_prefer_value_from_rssi(struct scan_filter *filter,
+static inline int
+scm_derive_prefer_value_from_rssi(struct scan_default_params *params,
 	int rssi)
 {
 	int i = SCM_NUM_RSSI_CAT - 1, pref_val = 0;
 
 	while (i >= 0) {
-		if (rssi >= filter->rssi_cat[i]) {
-			pref_val = filter->bss_prefer_val[i];
+		if (rssi >= params->rssi_cat[i]) {
+			pref_val = params->bss_prefer_val[i];
 			break;
 		}
 		i--;
@@ -130,17 +110,16 @@ static inline int scm_derive_prefer_value_from_rssi(struct scan_filter *filter,
 }
 
 /**
- * scm_calc_pref_val_by_pcl() - to calculate preferred value
+ * scm_calculate_bss_score() - calculate BSS score used to get
+ * the preference
+ * @params: scan params
  * @filter: filter to find match from scan result
- * @bss_descr: pointer to bss descriptor
+ * @entry: scan entry for which score needs to be calculated
  *
- * this routine calculates the new preferred value to be given to
- * provided bss if its channel falls under preferred channel list.
- * Thump rule is higer the RSSI better the boost.
- *
- * Return: success or failure
+ * Return: scan db for the pdev id
  */
-QDF_STATUS scm_calc_pref_val_by_pcl(struct scan_filter *filter,
+void scm_calculate_bss_score(struct scan_default_params *params,
+	struct scan_filter *filter,
 	struct scan_cache_entry *entry);
 
 /**

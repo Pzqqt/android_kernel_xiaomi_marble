@@ -54,6 +54,8 @@
 #define WLAN_HOST_SCAN_REQ_ID_PREFIX 0x0000A000
 #define WLAN_SCAN_REQUESTER_ID_PREFIX 0x0000A000
 
+#define SCM_NUM_RSSI_CAT        15
+
 #ifdef CONFIG_MCL
 #define SCAN_ACTIVE_DWELL_TIME 40
 #define SCAN_PASSIVE_DWELL_TIME 110
@@ -92,7 +94,7 @@
 
 #define SCAN_TIMEOUT_GRACE_PERIOD 10
 /* scan age time in millisec */
-#define SCAN_CACHE_AGING_TIME (300*1000)
+#define SCAN_CACHE_AGING_TIME (30 * 1000)
 #define SCAN_MAX_BSS_PDEV 100
 #define SCAN_PRIORITY SCAN_PRIORITY_LOW
 
@@ -198,6 +200,12 @@ struct pno_def_config {
  * @max_scan_time: default max scan time
  * @num_probes: default maximum number of probes to sent
  * @cache_aging_time: default scan cache aging time
+ * @prefer_5ghz: Prefer 5ghz AP over 2.4Ghz AP
+ * @select_5gh_margin: Prefer connecting to 5G AP even if
+ *      its RSSI is lower by select_5gh_margin dbm than 2.4G AP.
+ *      applicable if prefer_5ghz is set.
+ * @bss_prefer_val: bss prefer value for the RSSI category
+ * @rssi_cat: RSSI category
  * @max_bss_per_pdev: maximum number of bss entries to be maintained per pdev
  * @max_active_scans_allowed: maximum number of active parallel scan allowed
  *                            per psoc
@@ -240,6 +248,7 @@ struct pno_def_config {
  * @scan_ev_resumed: notify scan resumed event
  * @scan_events: variable to read and set scan_ev_* flags in one shot
  *               can be used to dump all scan_ev_* flags for debug
+ * @roam_params: roam related params
  */
 struct scan_default_params {
 	uint32_t active_dwell;
@@ -259,6 +268,11 @@ struct scan_default_params {
 	uint32_t max_scan_time;
 	uint32_t num_probes;
 	uint32_t scan_cache_aging_time;
+	uint32_t prefer_5ghz;
+	uint32_t select_5ghz_margin;
+	/* each RSSI category has one value */
+	uint32_t bss_prefer_val[SCM_NUM_RSSI_CAT];
+	int rssi_cat[SCM_NUM_RSSI_CAT];
 	uint16_t max_bss_per_pdev;
 	uint32_t max_active_scans_allowed;
 	enum scan_priority scan_priority;
@@ -311,6 +325,7 @@ struct scan_default_params {
 		};
 		uint32_t scan_events;
 	};
+	struct roam_filter_params roam_params;
 };
 
 /**
