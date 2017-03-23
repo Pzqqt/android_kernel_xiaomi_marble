@@ -6965,6 +6965,37 @@ static void hdd_update_per_config_to_sme(hdd_context_t *hdd_ctx,
 }
 
 /**
+ * hdd_set_policy_mgr_user_cfg() -initializes the policy manager
+ * configuration parameters
+ *
+ * @pHddCtx: the pointer to hdd context
+ *
+ * Return: QDF_STATUS_SUCCESS if configuration is correctly applied,
+ *		otherwise the appropriate QDF_STATUS would be returned
+ */
+QDF_STATUS hdd_set_policy_mgr_user_cfg(hdd_context_t *hdd_ctx)
+{
+	QDF_STATUS status;
+	struct policy_mgr_user_cfg *user_cfg;
+
+	user_cfg = qdf_mem_malloc(sizeof(*user_cfg));
+	if (NULL == user_cfg) {
+		hdd_err("unable to allocate user_cfg");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	user_cfg->conc_system_pref = hdd_ctx->config->conc_system_pref;
+	user_cfg->enable_mcc_adaptive_scheduler =
+		hdd_ctx->config->enableMCCAdaptiveScheduler;
+	user_cfg->max_concurrent_active_sessions =
+		hdd_ctx->config->gMaxConcurrentActiveSessions;
+	status = policy_mgr_set_user_cfg(hdd_ctx->hdd_psoc, user_cfg);
+
+	qdf_mem_free(user_cfg);
+
+	return status;
+}
+/**
  * hdd_set_sme_config() -initializes the sme configuration parameters
  *
  * @pHddCtx: the pointer to hdd context

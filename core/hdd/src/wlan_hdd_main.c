@@ -8284,6 +8284,13 @@ static int hdd_pre_enable_configure(hdd_context_t *hdd_ctx)
 		goto out;
 	}
 
+	status = hdd_set_policy_mgr_user_cfg(hdd_ctx);
+	if (QDF_STATUS_SUCCESS != status) {
+		hdd_alert("Failed hdd_set_policy_mgr_user_cfg: %d", status);
+		ret = qdf_status_to_os_return(status);
+		goto out;
+	}
+
 	ret = wma_cli_set_command(0, WMI_PDEV_PARAM_TX_CHAIN_MASK_1SS,
 				  hdd_ctx->config->tx_chain_mask_1ss,
 				  PDEV_CMD);
