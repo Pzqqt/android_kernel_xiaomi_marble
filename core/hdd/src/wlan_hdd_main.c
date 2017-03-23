@@ -1880,6 +1880,22 @@ hdd_update_cds_ac_specs_params(hdd_context_t *hdd_ctx)
 }
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
+static enum policy_mgr_con_mode wlan_hdd_get_mode_for_non_connected_vdev(
+			struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
+{
+	hdd_adapter_t *adapter = NULL;
+	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	if (!adapter) {
+		hdd_err("Adapter is NULL");
+		return PM_MAX_NUM_OF_MODE;
+	}
+
+	return	policy_mgr_convert_device_mode_to_qdf_type(
+			adapter->device_mode);
+}
+
 static void hdd_register_policy_manager_callback(
 			struct wlan_objmgr_psoc *psoc)
 {
@@ -1888,6 +1904,9 @@ static void hdd_register_policy_manager_callback(
 		sap_restart_chan_switch_cb;
 	hdd_cbacks.wlan_hdd_get_channel_for_sap_restart =
 		wlan_hdd_get_channel_for_sap_restart;
+	hdd_cbacks.get_mode_for_non_connected_vdev =
+		wlan_hdd_get_mode_for_non_connected_vdev;
+
 	if (QDF_STATUS_SUCCESS !=
 	    policy_mgr_register_hdd_cb(psoc, &hdd_cbacks)) {
 		hdd_err("HDD callback registration with policy manager failed");
