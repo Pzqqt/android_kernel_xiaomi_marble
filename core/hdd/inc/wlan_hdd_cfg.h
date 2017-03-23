@@ -8744,6 +8744,29 @@ enum dot11p_mode {
 #define CFG_SAP_INTERNAL_RESTART_DEFAULT (1)
 
 /*
+ * <ini>
+ * sap_restart_on_ch_avoid - control SAP restart on channel avoidance
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to control SAP restart on channel avoidance
+ * sap_restart_on_ch_avoid=0: Don't restart SAP on channel avoidance indication
+ * sap_restart_on_ch_avoid=1: restart SAP on channel avoidance indication
+ *
+ * Related: None
+ *
+ * Supported Feature: channel avoidance
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_SAP_RESTART_ON_CH_AVOID_NAME    "sap_restart_on_ch_avoid"
+#define CFG_SAP_RESTART_ON_CH_AVOID_MIN     (0)
+#define CFG_SAP_RESTART_ON_CH_AVOID_MAX     (1)
+#define CFG_SAP_RESTART_ON_CH_AVOID_DEFAULT (1)
+/*
  * This parameter will avoid updating ap_sta_inactivity from hostapd.conf
  * file. If a station does not send anything in ap_max_inactivity seconds, an
  * empty data frame is sent to it in order to verify whether it is
@@ -11057,6 +11080,7 @@ struct hdd_config {
 	enum hdd_wext_control standard_wext_control;
 	enum hdd_wext_control private_wext_control;
 	bool sap_internal_restart;
+	bool sap_restart_on_ch_avoid;
 	uint8_t is_per_roam_enabled;
 	uint32_t per_roam_high_rate_threshold;
 	uint32_t per_roam_low_rate_threshold;
