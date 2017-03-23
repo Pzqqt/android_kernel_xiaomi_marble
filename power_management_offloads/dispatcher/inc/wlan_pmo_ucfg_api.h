@@ -182,6 +182,30 @@ QDF_STATUS pmo_ucfg_disable_ns_offload_in_fwr(struct wlan_objmgr_vdev *vdev,
 		enum pmo_offload_trigger trigger);
 
 /**
+ * pmo_ucfg_enable_non_arp_bcast_filter_in_fwr(): API to enable
+ * hw broadcast filter in fwr
+ * @vdev: objmgr vdev param
+ *
+ *  API to enable hw broadcast filter from pmo vdev priv ctx
+ *
+ * Return QDF_STATUS -in case of success else return error
+ */
+QDF_STATUS pmo_ucfg_enable_non_arp_bcast_filter_in_fwr(
+		struct wlan_objmgr_vdev *vdev);
+
+/**
+ * pmo_ucfg_disable_non_arp_bcast_filter_in_fwr(): API to disable
+ * hw broadcast filter in fwr
+ * @vdev: objmgr vdev param
+ *
+ *  API to disable hw broadcast filter from pmo vdev priv ctx
+ *
+ * Return QDF_STATUS -in case of success else return error
+ */
+QDF_STATUS pmo_ucfg_disable_non_arp_bcast_filter_in_fwr(
+		struct wlan_objmgr_vdev *vdev);
+
+/**
  * pmo_ucfg_max_mc_addr_supported() -  to get max support mc address
  * @psoc: objmgr psoc
  *

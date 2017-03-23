@@ -125,6 +125,19 @@ QDF_STATUS target_if_pmo_send_action_frame_patterns(
 		struct pmo_action_wakeup_set_params *ip_cmd);
 
 /**
+ * target_if_pmo_send_non_arp_bcast_filter_req() -  Enable/Disable Broadcast
+ * @vdev: objmgr vdev
+ * @bcast_req: enable/disable hw bcast filter
+ *
+ * This functions enable/disable non arp hw bcast filter.
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS target_if_pmo_send_non_arp_bcast_filter_req(
+		struct wlan_objmgr_vdev *vdev,
+		struct pmo_bcast_filter_params *bcast_req);
+
+/**
  * target_if_pmo_send_arp_offload_req() - sends arp request to fwr
  * @vdev: objmgr vdev
  * @arp_offload_req: arp offload req
