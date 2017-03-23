@@ -67,7 +67,7 @@ void lim_process_mlm_reassoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 	tpPESession session;
 
 	if (msg == NULL) {
-		lim_log(mac_ctx, LOGE, FL("Buffer is Pointing to NULL"));
+		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
 
@@ -75,15 +75,13 @@ void lim_process_mlm_reassoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 	session = pe_find_session_by_session_id(mac_ctx,
 			reassoc_req->sessionId);
 	if (NULL == session) {
-		lim_log(mac_ctx, LOGE,
-			FL("Session Does not exist for given sessionId %d"),
+		pe_err("Session Does not exist for given sessionId: %d",
 			reassoc_req->sessionId);
 		qdf_mem_free(reassoc_req);
 		return;
 	}
 
-	lim_log(mac_ctx, LOGD,
-		FL("ReAssoc Req on session %d role %d mlm %d " MAC_ADDRESS_STR),
+	pe_debug("ReAssoc Req on session: %d role: %d mlm: %d " MAC_ADDRESS_STR,
 		reassoc_req->sessionId, GET_LIM_SYSTEM_ROLE(session),
 		session->limMlmState, MAC_ADDR_ARRAY(reassoc_req->peerMacAddr));
 
@@ -96,8 +94,7 @@ void lim_process_mlm_reassoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 		 * parameters code.
 		 */
 
-		lim_log(mac_ctx, LOGW,
-			FL("unexpect msg,state %Xrole %d,MAC" MAC_ADDRESS_STR),
+		pe_warn("unexpect msg state: %X role: %d MAC" MAC_ADDRESS_STR,
 			session->limMlmState, GET_LIM_SYSTEM_ROLE(session),
 			MAC_ADDR_ARRAY(reassoc_req->peerMacAddr));
 		lim_print_mlm_state(mac_ctx, LOGW, session->limMlmState);
@@ -193,7 +190,7 @@ static void lim_handle_sme_reaasoc_result(tpAniSirGlobal pMac,
 	uint16_t smetransactionId;
 
 	if (psessionEntry == NULL) {
-		lim_log(pMac, LOGE, FL("psessionEntry is NULL "));
+		pe_err("psessionEntry is NULL");
 		return;
 	}
 	smesessionId = psessionEntry->smeSessionId;
@@ -249,15 +246,14 @@ void lim_process_mlm_reassoc_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	tLimMlmReassocCnf *lim_mlm_reassoc_cnf;
 
 	if (msg_buf == NULL) {
-		lim_log(mac_ctx, LOGE, FL("Buffer is Pointing to NULL"));
+		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
 	lim_mlm_reassoc_cnf = (tLimMlmReassocCnf *) msg_buf;
 	session = pe_find_session_by_session_id(mac_ctx,
 				lim_mlm_reassoc_cnf->sessionId);
 	if (session == NULL) {
-		lim_log(mac_ctx, LOGE,
-			FL("session Does not exist for given session Id"));
+		pe_err("session Does not exist for given session Id");
 		return;
 	}
 	if ((session->limSmeState != eLIM_SME_WT_REASSOC_STATE) ||
@@ -266,8 +262,7 @@ void lim_process_mlm_reassoc_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		 * Should not have received Reassocication confirm
 		 * from MLM in other states OR on AP.
 		 */
-		lim_log(mac_ctx, LOGE,
-			FL("Rcv unexpected MLM_REASSOC_CNF role %d, sme 0x%X"),
+		pe_err("Rcv unexpected MLM_REASSOC_CNF role: %d sme 0x%X",
 			GET_LIM_SYSTEM_ROLE(session), session->limSmeState);
 		return;
 	}
@@ -282,7 +277,7 @@ void lim_process_mlm_reassoc_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	 * HT params.
 	 */
 	if (session->ftPEContext.pFTPreAuthReq) {
-		lim_log(mac_ctx, LOGD, FL("Freeing pFTPreAuthReq= %p"),
+		pe_debug("Freeing pFTPreAuthReq: %p",
 			session->ftPEContext.pFTPreAuthReq);
 		if (session->ftPEContext.pFTPreAuthReq->pbssDescription) {
 			qdf_mem_free(
@@ -297,18 +292,16 @@ void lim_process_mlm_reassoc_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	if (session->bRoamSynchInProgress) {
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
-			FL("LFR3:Re-set the LIM Ctxt Roam Synch In Progress"));
+		pe_debug("LFR3:Re-set the LIM Ctxt Roam Synch In Progress");
 		session->bRoamSynchInProgress = false;
 	}
 #endif
 
-	lim_log(mac_ctx, LOGD, FL("Rcv MLM_REASSOC_CNF with result code %d"),
+	pe_debug("Rcv MLM_REASSOC_CNF with result code: %d",
 		lim_mlm_reassoc_cnf->resultCode);
 	if (lim_mlm_reassoc_cnf->resultCode == eSIR_SME_SUCCESS) {
 		/* Successful Reassociation */
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
-			  FL("*** Reassociated with new BSS ***"));
+		pe_debug("*** Reassociated with new BSS ***");
 
 		session->limSmeState = eLIM_SME_LINK_EST_STATE;
 		MTRACE(mac_trace(mac_ctx, TRACE_CODE_SME_STATE,
@@ -340,7 +333,7 @@ void lim_process_mlm_reassoc_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		/* Reassociation failure */
 		session->limSmeState = eLIM_SME_JOIN_FAILURE_STATE;
 		MTRACE(mac_trace(mac_ctx, TRACE_CODE_SME_STATE,
-		       session->peSessionId, session->limSmeState));
+					   session->peSessionId, session->limSmeState));
 		/* Need to send Reassoc rsp with Assoc failure to Host. */
 		lim_handle_sme_reaasoc_result(mac_ctx,
 					lim_mlm_reassoc_cnf->resultCode,
@@ -373,7 +366,7 @@ void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 	/* Sanity Checks */
 
 	if (pAddBssParams == NULL) {
-		lim_log(pMac, LOGE, FL("Invalid parameters"));
+		pe_err("Invalid parameters");
 		goto end;
 	}
 	if (eLIM_MLM_WT_ADD_BSS_RSP_FT_REASSOC_STATE !=
@@ -386,7 +379,7 @@ void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 					&psessionEntry->dph.dphHashTable);
 	if (pStaDs == NULL) {
 		/* Could not add hash table entry */
-		lim_log(pMac, LOGE, FL("could not add hash entry at DPH for"));
+		pe_err("could not add hash entry at DPH for");
 		lim_print_mac_addr(pMac, pAddBssParams->staContext.staMac,
 				   LOGE);
 		goto end;
@@ -407,8 +400,7 @@ void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 			!= TX_SUCCESS) {
 			/* / Could not start reassoc failure timer. */
 			/* Log error */
-			lim_log(pMac, LOGE,
-				FL("could not start Reassoc failure timer"));
+			pe_err("could not start Reassoc failure timer");
 			/* Return Reassoc confirm with */
 			/* Resources Unavailable */
 			mlmReassocCnf.resultCode =
@@ -437,8 +429,7 @@ void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 				psessionEntry);
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	} else {
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
-			"LFR3:Do not activate timer and dont send the reassoc");
+		pe_debug("LFR3:Do not activate timer and dont send the reassoc");
 	}
 #endif
 	psessionEntry->limPrevMlmState = psessionEntry->limMlmState;
@@ -446,7 +437,7 @@ void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 	MTRACE(mac_trace
 		       (pMac, TRACE_CODE_MLM_STATE, psessionEntry->peSessionId,
 		       eLIM_MLM_WT_FT_REASSOC_RSP_STATE));
-	lim_log(pMac, LOGD, FL("Set the mlm state to %d session=%d"),
+	pe_debug("Set the mlm state: %d session: %d",
 		       psessionEntry->limMlmState, psessionEntry->peSessionId);
 
 	psessionEntry->bssIdx = (uint8_t) pAddBssParams->bssIdx;
@@ -463,8 +454,7 @@ void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 
 	pAddStaParams = qdf_mem_malloc(sizeof(tAddStaParams));
 	if (NULL == pAddStaParams) {
-		lim_log(pMac, LOGE,
-			FL("Unable to allocate memory during ADD_STA"));
+		pe_err("Unable to allocate memory during ADD_STA");
 		goto end;
 	}
 
@@ -534,7 +524,7 @@ void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_LISTEN_INTERVAL, &listenInterval) !=
 	    eSIR_SUCCESS)
-		lim_log(pMac, LOGE, FL("Couldn't get LISTEN_INTERVAL"));
+		pe_err("Couldn't get LISTEN_INTERVAL");
 	pAddStaParams->listenInterval = (uint16_t) listenInterval;
 
 	wlan_cfg_get_int(pMac, WNI_CFG_DOT11_MODE, &selfStaDot11Mode);
@@ -551,8 +541,7 @@ void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 	}
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	if (psessionEntry->bRoamSynchInProgress) {
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
-			  "LFR3:Prep and save AddStaReq for post-assoc-rsp");
+		pe_debug("LFR3:Prep and save AddStaReq for post-assoc-rsp");
 		lim_process_assoc_rsp_frame(pMac, pMac->roam.pReassocResp,
 					    LIM_REASSOC, psessionEntry);
 	}
@@ -621,18 +610,17 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 
 	/* Nothing to be done if the session is not in STA mode */
 	if (!LIM_IS_STA_ROLE(psessionEntry)) {
-		lim_log(pMac, LOGE, FL("psessionEntry is not in STA mode"));
+		pe_err("psessionEntry is not in STA mode");
 		return;
 	}
 
 	if (NULL == psessionEntry->ftPEContext.pAddBssReq) {
-		lim_log(pMac, LOGE, FL("pAddBssReq is NULL"));
+		pe_err("pAddBssReq is NULL");
 		return;
 	}
 	pMlmReassocReq = qdf_mem_malloc(sizeof(tLimMlmReassocReq));
 	if (NULL == pMlmReassocReq) {
-		lim_log(pMac, LOGE,
-			FL("call to AllocateMemory failed for mlmReassocReq"));
+		pe_err("call to AllocateMemory failed for mlmReassocReq");
 		return;
 	}
 
@@ -646,8 +634,7 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 		 * Could not get ReassocFailureTimeout value
 		 * from CFG. Log error.
 		 */
-		lim_log(pMac, LOGE,
-			FL("could not retrieve ReassocFailureTimeout value"));
+		pe_err("could not retrieve ReassocFailureTimeout value");
 		qdf_mem_free(pMlmReassocReq);
 		return;
 	}
@@ -658,14 +645,14 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 		 * Could not get Capabilities value
 		 * from CFG. Log error.
 		 */
-		lim_log(pMac, LOGE, FL("could not get Capabilities value"));
+		pe_err("could not get Capabilities value");
 		qdf_mem_free(pMlmReassocReq);
 		return;
 	}
 
 	lim_update_caps_info_for_bss(pMac, &caps,
 		psessionEntry->pLimReAssocReq->bssDescription.capabilityInfo);
-	lim_log(pMac, LOGD, FL("Capabilities info FT Reassoc: 0x%X"), caps);
+	pe_debug("Capabilities info FT Reassoc: 0x%X", caps);
 
 	pMlmReassocReq->capabilityInfo = caps;
 
@@ -677,8 +664,7 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 	 */
 	if (wlan_cfg_get_int(pMac, WNI_CFG_TELE_BCN_WAKEUP_EN, &teleBcnEn) !=
 	    eSIR_SUCCESS) {
-		lim_log(pMac, LOGE,
-			FL("Couldn't get WNI_CFG_TELE_BCN_WAKEUP_EN"));
+		pe_err("Couldn't get WNI_CFG_TELE_BCN_WAKEUP_EN");
 		qdf_mem_free(pMlmReassocReq);
 		return;
 	}
@@ -690,8 +676,7 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 			 * Could not get ListenInterval value
 			 * from CFG. Log error.
 			 */
-			lim_log(pMac, LOGE,
-				FL("could not retrieve ListenInterval"));
+			pe_err("could not retrieve ListenInterval");
 			qdf_mem_free(pMlmReassocReq);
 			return;
 		}
@@ -702,8 +687,7 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 			 * Could not get ListenInterval value
 			 * from CFG. Log error.
 			 */
-			lim_log(pMac, LOGE,
-				FL("could not retrieve ListenInterval"));
+			pe_err("could not retrieve ListenInterval");
 			qdf_mem_free(pMlmReassocReq);
 			return;
 		}
@@ -726,13 +710,12 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 	msgQ.bodyptr = psessionEntry->ftPEContext.pAddBssReq;
 	msgQ.bodyval = 0;
 
-	lim_log(pMac, LOGD, FL("Sending SIR_HAL_ADD_BSS_REQ..."));
+	pe_debug("Sending SIR_HAL_ADD_BSS_REQ");
 	MTRACE(mac_trace_msg_tx(pMac, psessionEntry->peSessionId, msgQ.type));
 	retCode = wma_post_ctrl_msg(pMac, &msgQ);
 	if (eSIR_SUCCESS != retCode) {
 		qdf_mem_free(psessionEntry->ftPEContext.pAddBssReq);
-		lim_log(pMac, LOGE,
-			FL("Posting ADD_BSS_REQ to HAL failed, reason=%X"),
+		pe_err("Posting ADD_BSS_REQ to HAL failed, reason: %X",
 			retCode);
 	}
 
