@@ -7355,13 +7355,6 @@ void lim_update_last_processed_frame(last_processed_msg *last_processed_frm,
 }
 
 #ifdef WLAN_FEATURE_11AX
-/**
- * lim_add_he_cap() - Copy HE capability into Add sta params
- * @add_sta_params: pointer to add sta params
- * @assoc_req: pointer to Assoc request
- *
- * Return: None
- */
 void lim_add_he_cap(tpAddStaParams add_sta_params, tpSirAssocReq assoc_req)
 {
 	if (!add_sta_params->he_capable || !assoc_req)
@@ -7371,13 +7364,6 @@ void lim_add_he_cap(tpAddStaParams add_sta_params, tpSirAssocReq assoc_req)
 		     sizeof(add_sta_params->he_config));
 }
 
-/**
- * lim_add_self_he_cap() - Copy HE capability into add sta from PE session
- * @add_sta_params: pointer to add sta params
- * @session: pointer to PE Session
- *
- * Return: None
- */
 void lim_add_self_he_cap(tpAddStaParams add_sta_params, tpPESession session)
 {
 	if (!session)
@@ -7443,14 +7429,6 @@ static void lim_intersect_he_caps(tDot11fIEvendor_he_cap *rcvd_he,
 					peer_he->twt_responder : 0;
 }
 
-/**
- * lim_intersect_sta_he_caps() - Intersect STA capability with SAP capability
- * @assoc_req: pointer to assoc request
- * @session: pointer to PE session
- * @sta_ds: pointer to STA dph hash table entry
- *
- * Return: None
- */
 void lim_intersect_sta_he_caps(tpSirAssocReq assoc_req, tpPESession session,
 		tpDphHashNode sta_ds)
 {
@@ -7462,15 +7440,6 @@ void lim_intersect_sta_he_caps(tpSirAssocReq assoc_req, tpPESession session,
 		lim_intersect_he_caps(rcvd_he, session_he, peer_he);
 }
 
-/**
- * lim_intersect_ap_he_caps() - Intersect AP capability with self STA capability
- * @session: pointer to PE session
- * @add_bss: pointer to ADD BSS params
- * @beacon: pointer to beacon
- * @assoc_rsp: pointer to assoc response
- *
- * Return: None
- */
 void lim_intersect_ap_he_caps(tpPESession session, tpAddBssParams add_bss,
 		tSchBeaconStruct *beacon, tpSirAssocRsp assoc_rsp)
 {
@@ -7487,13 +7456,6 @@ void lim_intersect_ap_he_caps(tpPESession session, tpAddBssParams add_bss,
 	add_bss->staContext.he_capable = true;
 }
 
-/**
- * lim_add_bss_he_cap() - Copy HE capability into ADD BSS params
- * @add_bss: pointer to add bss params
- * @assoc_rsp: pointer to assoc response
- *
- * Return: None
- */
 void lim_add_bss_he_cap(tpAddBssParams add_bss, tpSirAssocRsp assoc_rsp)
 {
 	tDot11fIEvendor_he_cap *he_cap;
@@ -7510,15 +7472,6 @@ void lim_add_bss_he_cap(tpAddBssParams add_bss, tpSirAssocRsp assoc_rsp)
 			     he_op, sizeof(*he_op));
 }
 
-
-/**
- * lim_update_stads_he_caps() - Copy HE capability into STA DPH hash table entry
- * @sta_ds: pointer to sta dph hash table entry
- * @assoc_rsp: pointer to assoc response
- * @session_entry: pointer to PE session
- *
- * Return: None
- */
 void lim_update_stads_he_caps(tpDphHashNode sta_ds, tpSirAssocRsp assoc_rsp,
 			      tpPESession session_entry)
 {
@@ -7534,14 +7487,6 @@ void lim_update_stads_he_caps(tpDphHashNode sta_ds, tpSirAssocRsp assoc_rsp,
 
 }
 
-/**
- * lim_update_usr_he_cap() - Update HE capability based on userspace
- * @mac_ctx: global mac context
- * @session: PE session entry
- *
- * Parse the HE Capability IE and populate the fields to be
- * sent to FW as part of add bss and update PE session.
- */
 void lim_update_usr_he_cap(tpAniSirGlobal mac_ctx, tpPESession session)
 {
 	uint8_t *vendor_ie;
@@ -7574,15 +7519,6 @@ void lim_update_usr_he_cap(tpAniSirGlobal mac_ctx, tpPESession session)
 		he_cap->su_beamformer, he_cap->su_beamformee, he_cap->mu_beamformer);
 }
 
-/**
- * lim_decide_he_op() - Determine HE operation elements
- * @mac_ctx: global mac context
- * @he_ops: pointer to HE operation IE
- * @session: PE session entry
- *
- * Parse the HE Operation IE and populate the fields to be
- * sent to FW as part of add bss.
- */
 void lim_decide_he_op(tpAniSirGlobal mac_ctx, tpAddBssParams add_bss,
 		      tpPESession session)
 {
@@ -7632,13 +7568,6 @@ void lim_decide_he_op(tpAniSirGlobal mac_ctx, tpAddBssParams add_bss,
 		he_ops->dual_beacon);
 }
 
-/**
- * lim_copy_bss_he_cap() - Copy HE capability into PE session from start bss
- * @session: pointer to PE session
- * @sme_start_bss_req: pointer to start BSS request
- *
- * Return: None
- */
 void lim_copy_bss_he_cap(tpPESession session,
 			 tpSirSmeStartBssReq sme_start_bss_req)
 {
@@ -7646,13 +7575,6 @@ void lim_copy_bss_he_cap(tpPESession session,
 		     sizeof(session->he_config));
 }
 
-/**
- * lim_copy_join_req_he_cap() - Copy HE capability to PE session from Join req
- * @session: pointer to PE session
- * @sme_join_req: pointer to SME join request
- *
- * Return: None
- */
 void lim_copy_join_req_he_cap(tpPESession session,
 			      tpSirSmeJoinReq sme_join_req)
 {
@@ -7660,17 +7582,6 @@ void lim_copy_join_req_he_cap(tpPESession session,
 		     sizeof(session->he_config));
 }
 
-/**
- * lim_log_he_cap() - Print HE capabilities
- * @mac: pointer to MAC context
- * @he_cap: pointer to HE Capability
- *
- * Received HE capabilities are converted into dot11f structure.
- * This function will print all the HE capabilities as stored
- * in the dot11f structure.
- *
- * Return: None
- */
 void lim_log_he_cap(tpAniSirGlobal mac, tDot11fIEvendor_he_cap *he_cap)
 {
 	if (!he_cap->present)
@@ -7798,15 +7709,6 @@ void lim_log_he_cap(tpAniSirGlobal mac, tDot11fIEvendor_he_cap *he_cap)
 		he_cap->ppe_threshold.ppet, he_cap->ppe_threshold.num_ppet);
 }
 
-/**
- * lim_log_he_op() - Print HE Operation
- * @mac: pointer to MAC context
- * @he_op: pointer to HE Operation
- *
- * Print HE operation stored as dot11f structure
- *
- * Return: None
- */
 void lim_log_he_op(tpAniSirGlobal mac, tDot11fIEvendor_he_op *he_ops)
 {
 	tDot11fIEvht_info *vht_info = &he_ops->vht_info;
@@ -7827,15 +7729,6 @@ void lim_log_he_op(tpAniSirGlobal mac, tDot11fIEvendor_he_op *he_ops)
 			vht_info->center_freq_seg1);
 }
 
-/**
- * lim_update_sta_he_capable(): Update he_capable in add sta params
- * @mac: pointer to MAC context
- * @add_sta_params: pointer to add sta params
- * @sta_ds: pointer to dph hash table entry
- * @session_entry: pointer to PE session
- *
- * Return: None
- */
 void lim_update_sta_he_capable(tpAniSirGlobal mac,
 	tpAddStaParams add_sta_params, tpDphHashNode sta_ds,
 	tpPESession session_entry)
@@ -7848,51 +7741,23 @@ void lim_update_sta_he_capable(tpAniSirGlobal mac,
 	lim_log(mac, LOG1, FL("he_capable: %d"), add_sta_params->he_capable);
 }
 
-/**
- * lim_update_bss_he_capable(): Update he_capable in add BSS params
- * @mac: pointer to MAC context
- * @add_bss: pointer to add BSS params
- *
- * Return: None
- */
 void lim_update_bss_he_capable(tpAniSirGlobal mac, tpAddBssParams add_bss)
 {
 	add_bss->he_capable = true;
 	lim_log(mac, LOG1, FL("he_capable: %d"), add_bss->he_capable);
 }
 
-/**
- * lim_update_stads_he_capable() - Update he_capable in sta ds context
- * @sta_ds: pointer to sta ds
- * @assoc_req: pointer to assoc request
- *
- * Return: None
- */
 void lim_update_stads_he_capable(tpDphHashNode sta_ds, tpSirAssocReq assoc_req)
 {
 	sta_ds->mlmStaContext.he_capable = assoc_req->he_cap.present;
 }
 
-/**
- * lim_update_session_he_capable(): Update he_capable in PE session
- * @mac: pointer to MAC context
- * @session: pointer to PE session
- *
- * Return: None
- */
 void lim_update_session_he_capable(tpAniSirGlobal mac, tpPESession session)
 {
 	session->he_capable = true;
 	lim_log(mac, LOG1, FL("he_capable: %d"), session->he_capable);
 }
 
-/**
- * lim_update_chan_he_capable(): Update he_capable in chan switch params
- * @mac: pointer to MAC context
- * @chan: pointer to channel switch params
- *
- * Return: None
- */
 void lim_update_chan_he_capable(tpAniSirGlobal mac, tpSwitchChannelParams chan)
 {
 	chan->he_capable = true;
