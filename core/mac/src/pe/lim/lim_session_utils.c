@@ -54,7 +54,7 @@ uint8_t is_lim_session_off_channel(tpAniSirGlobal mac_ctx, uint8_t session_id)
 	uint8_t i;
 
 	if (session_id >= mac_ctx->lim.maxBssId) {
-		lim_log(mac_ctx, LOGE, FL("Invalid session_id:%d"), session_id);
+		pe_warn("Invalid session_id: %d", session_id);
 		return false;
 	}
 
