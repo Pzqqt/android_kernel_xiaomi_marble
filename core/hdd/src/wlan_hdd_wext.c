@@ -1031,6 +1031,27 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
  */
 #define WE_SET_11AX_RATE                      91
 
+/*
+ * <ioctl>
+ * enable_dcm - enable Dual Carrier Modulation(DCM)
+ *
+ * @INPUT: 0/1
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL enables/disables DCM.
+ *
+ * @E.g: iwpriv wlan0 enable_dcm <0/1>
+ *
+ * Supported Feature: STA/SAP
+ *
+ * Usage: Internal
+ *
+ * </ioctl>
+ */
+#define WE_SET_DCM                            92
+
+
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_SET_NONE_GET_INT    (SIOCIWFIRSTPRIV + 1)
 #define WE_GET_11D_STATE     1
@@ -1691,6 +1712,25 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WE_GET_TEMPERATURE              56
 #define WE_CAP_TSF                      58
 #define WE_GET_ROAM_SYNCH_DELAY         59
+
+/*
+ * <ioctl>
+ * get_dcm - Get dcm enablement value
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: 0/1
+ * wlan0     get_dcm
+ *
+ * This IOCTL is used get dcm value
+ *
+ * Supported Feature: STA/SAP
+ *
+ * Usage: Internal
+ *
+ * </ioctl>
+ */
+#define WE_GET_DCM                      60
 
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_SET_INT_GET_INT     (SIOCIWFIRSTPRIV + 2)
@@ -8573,6 +8613,12 @@ static int __iw_setint_getnone(struct net_device *dev,
 	case WE_SET_11AX_RATE:
 		ret = hdd_set_11ax_rate(pAdapter, set_value, NULL);
 		break;
+	case WE_SET_DCM:
+		hdd_notice("Set WMI_VDEV_PARAM_HE_DCM: %d", set_value);
+		ret = wma_cli_set_command(pAdapter->sessionId,
+					  WMI_VDEV_PARAM_HE_DCM, set_value,
+					  VDEV_CMD);
+		break;
 	default:
 	{
 		hdd_err("Invalid sub command %d",
@@ -9282,6 +9328,12 @@ static int __iw_setnone_getint(struct net_device *dev,
 		ret = wlan_hdd_get_temperature(pAdapter, value);
 		break;
 	}
+	case WE_GET_DCM:
+		hdd_notice("GET WMI_VDEV_PARAM_HE_DCM");
+		*value = wma_cli_get_command(pAdapter->sessionId,
+					     WMI_VDEV_PARAM_HE_DCM,
+					     VDEV_CMD);
+		break;
 	default:
 	{
 		hdd_err("Invalid IOCTL get_value command %d",
@@ -13158,6 +13210,10 @@ static const struct iw_priv_args we_private_args[] = {
 	 0,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 "get_temp"},
+	{WE_GET_DCM,
+	 0,
+	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+	 "get_dcm"},
 	/* handlers for main ioctl */
 	{WLAN_PRIV_SET_CHAR_GET_NONE,
 	 IW_PRIV_TYPE_CHAR | 512,
@@ -13593,6 +13649,11 @@ static const struct iw_priv_args we_private_args[] = {
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 0,
 	 "set_11ax_rate"}
+	,
+	{WE_SET_DCM,
+	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+	 0,
+	 "enable_dcm"}
 	,
 };
 

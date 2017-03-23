@@ -64,6 +64,27 @@ void wma_update_vdev_he_capable(struct wma_vdev_start_req *req,
  */
 QDF_STATUS wma_get_he_capabilities(struct he_capability *he_cap);
 
+/**
+ * wma_set_he_vdev_param() - update he vdev param in wma
+ * @intr: pointer to wma_txrx_node
+ * @param_id: vdev param id
+ * @value: value of vdev param
+ *
+ * Result: None
+ */
+void wma_set_he_vdev_param(struct wma_txrx_node *intr, WMI_VDEV_PARAM param_id,
+			   uint32_t value);
+
+/**
+ * wma_get_he_vdev_param() - retrieve he vdev param from wma
+ * @intr: pointer to wma_txrx_node
+ * @param_id: vdev param id
+ *
+ * Result: param value
+ */
+uint32_t wma_get_he_vdev_param(struct wma_txrx_node *intr,
+			       WMI_VDEV_PARAM param_id);
+
 #else
 static inline void wma_print_he_cap(tDot11fIEvendor_he_cap *he_cap)
 {
@@ -130,6 +151,20 @@ static inline void wma_update_vdev_he_capable(struct wma_vdev_start_req *req,
 					      tpSwitchChannelParams params)
 {
 }
+
+static inline void wma_set_he_vdev_param(struct wma_txrx_node *intr,
+			WMI_VDEV_PARAM param_id, uint32_t value)
+{
+	WMA_LOGI(FL("Unable to update WMI_VDEV_PARAM: %0x"), param_id);
+}
+
+static inline uint32_t wma_get_he_vdev_param(struct wma_txrx_node *intr,
+					     WMI_VDEV_PARAM param_id)
+{
+	WMA_LOGI(FL("Unable to update WMI_VDEV_PARAM: %0x"), param_id);
+	return 0;
+}
+
 #endif
 
 #endif /* __WMA_HE_H */

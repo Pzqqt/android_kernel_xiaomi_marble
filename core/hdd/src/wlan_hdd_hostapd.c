@@ -3315,6 +3315,12 @@ static __iw_softap_setparam(struct net_device *dev,
 	case QCASAP_SET_PEER_RATE:
 		ret = hdd_set_peer_rate(pHostapdAdapter, set_value);
 		break;
+	case QCASAP_PARAM_DCM:
+		hdd_notice("Set WMI_VDEV_PARAM_HE_DCM: %d", set_value);
+		ret = wma_cli_set_command(pHostapdAdapter->sessionId,
+					  WMI_VDEV_PARAM_HE_DCM, set_value,
+					  VDEV_CMD);
+		break;
 	default:
 		hdd_err("Invalid setparam command %d value %d",
 		       sub_cmd, set_value);
@@ -3619,6 +3625,13 @@ static __iw_softap_getparam(struct net_device *dev,
 	case QCSAP_PARAM_CHAN_WIDTH:
 	{
 		ret = hdd_sap_get_chan_width(pHostapdAdapter, value);
+		break;
+	}
+	case QCASAP_PARAM_DCM:
+	{
+		*value = wma_cli_get_command(pHostapdAdapter->sessionId,
+					     WMI_VDEV_PARAM_HE_DCM,
+					     VDEV_CMD);
 		break;
 	}
 	default:
@@ -5785,6 +5798,12 @@ static const struct iw_priv_args hostapd_private_args[] = {
 		QCASAP_SET_PEER_RATE,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 		0, "set_peer_rate"
+	}
+	,
+	{
+		QCASAP_PARAM_DCM,
+		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+		0, "enable_dcm"
 	}
 	,
 };

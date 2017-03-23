@@ -1121,3 +1121,29 @@ QDF_STATUS wma_get_he_capabilities(struct he_capability *he_cap)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+void wma_set_he_vdev_param(struct wma_txrx_node *intr, WMI_VDEV_PARAM param_id,
+			   uint32_t value)
+{
+	switch (param_id) {
+	case WMI_VDEV_PARAM_HE_DCM:
+		intr->config.dcm = value;
+		break;
+	default:
+		WMA_LOGE(FL("Unhandled HE vdev param: %0x"), param_id);
+		break;
+	}
+}
+
+uint32_t wma_get_he_vdev_param(struct wma_txrx_node *intr,
+			       WMI_VDEV_PARAM param_id)
+{
+	switch (param_id) {
+	case WMI_VDEV_PARAM_HE_DCM:
+		return intr->config.dcm;
+	default:
+		WMA_LOGE(FL("Unhandled HE vdev param: %0x"), param_id);
+		break;
+	}
+	return 0;
+}

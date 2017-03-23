@@ -257,6 +257,7 @@ enum {
 	QCSAP_PARAM_SET_TXRX_STATS,
 	QCASAP_SET_11AX_RATE,
 	QCASAP_SET_PEER_RATE,
+	QCASAP_PARAM_DCM,
 };
 
 int iw_get_channel_list(struct net_device *dev,

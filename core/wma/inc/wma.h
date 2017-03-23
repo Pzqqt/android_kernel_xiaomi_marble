@@ -827,6 +827,7 @@ typedef struct {
  * @pps_params: packet power save parameters
  * @qpower_params: qpower parameters
  * @gtx_info: GTX offload info
+ * @dcm: DCM enable/disable
  *
  * This structure stores vdev parameters.
  * Some of these parameters are set in fw and some
@@ -853,6 +854,9 @@ typedef struct {
 	struct pps pps_params;
 	struct qpower_params qpower_params;
 	gtx_config_t gtx_info;
+#ifdef WLAN_FEATURE_11AX
+	uint8_t dcm;
+#endif
 } vdev_cli_config_t;
 
 /**

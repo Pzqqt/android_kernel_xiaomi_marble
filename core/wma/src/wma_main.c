@@ -376,6 +376,9 @@ int wma_cli_get_command(int vdev_id, int param_id, int vpdev)
 		case WMI_VDEV_PARAM_FIXED_RATE:
 			ret = intr[vdev_id].config.tx_rate;
 			break;
+		case WMI_VDEV_PARAM_HE_DCM:
+			ret = wma_get_he_vdev_param(&intr[vdev_id], param_id);
+			break;
 		default:
 			WMA_LOGE("Invalid cli_get vdev command/Not"
 				 " yet implemented 0x%x", param_id);
@@ -1406,6 +1409,10 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 			break;
 		case WMI_VDEV_PARAM_EARLY_RX_DRIFT_SAMPLE:
 			intr[vid].config.erx_dri_sample = privcmd->param_value;
+			break;
+		case WMI_VDEV_PARAM_HE_DCM:
+			wma_set_he_vdev_param(&intr[vid], privcmd->param_id,
+					      privcmd->param_value);
 			break;
 		default:
 			WMA_LOGE("Invalid wma_cli_set vdev command/Not"
