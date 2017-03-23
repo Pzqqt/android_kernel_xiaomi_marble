@@ -3681,6 +3681,9 @@ static void __lim_process_sme_addts_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 						 &sessionId);
 	if (psessionEntry == NULL) {
 		lim_log(pMac, LOGE, "Session Does not exist for given bssId");
+		lim_send_sme_addts_rsp(pMac, pSirAddts->rspReqd, eSIR_FAILURE,
+				       NULL, pSirAddts->req.tspec,
+				       smesessionId, smetransactionId);
 		return;
 	}
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
