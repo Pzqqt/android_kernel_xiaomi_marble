@@ -127,8 +127,8 @@ int hdd_objmgr_release_and_destroy_pdev(hdd_context_t *hdd_ctx)
 	if (!pdev)
 		return -EINVAL;
 
-	osif_priv = pdev->pdev_nif.pdev_ospriv;
-	pdev->pdev_nif.pdev_ospriv = NULL;
+	osif_priv = wlan_pdev_get_ospriv(pdev);
+	wlan_pdev_reset_ospriv(pdev);
 	qdf_mem_free(osif_priv);
 
 	return qdf_status_to_os_return(wlan_objmgr_pdev_obj_delete(pdev));
