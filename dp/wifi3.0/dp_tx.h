@@ -35,7 +35,7 @@
 
 #define DP_TX_FREE_SINGLE_BUF(soc, buf)                  \
 do {                                                           \
-	qdf_nbuf_unmap(soc->osdev, buf, QDF_DMA_FROM_DEVICE);  \
+	qdf_nbuf_unmap(soc->osdev, buf, QDF_DMA_TO_DEVICE);  \
 	qdf_nbuf_free(buf);                                    \
 } while (0)
 

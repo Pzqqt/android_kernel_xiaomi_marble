@@ -556,9 +556,8 @@ static qdf_nbuf_t dp_tx_prepare_raw(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 	struct dp_tx_sg_info_s *sg_info = &msdu_info->u.sg_info;
 
-	if (QDF_STATUS_SUCCESS != qdf_nbuf_map_nbytes_single(vdev->osdev, nbuf,
-				QDF_DMA_TO_DEVICE,
-				qdf_nbuf_len(nbuf))) {
+	if (QDF_STATUS_SUCCESS != qdf_nbuf_map(vdev->osdev, nbuf,
+				QDF_DMA_TO_DEVICE)) {
 		qdf_print("dma map error\n");
 		qdf_nbuf_free(nbuf);
 		return NULL;
@@ -618,7 +617,7 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	qdf_mem_zero_outline(hal_tx_desc_cached, HAL_TX_DESC_LEN_BYTES);
 
 	if (tx_desc->flags & DP_TX_DESC_FLAG_FRAG) {
-		length = HAL_TX_EXTENSION_DESC_LEN_BYTES;
+		length = HAL_TX_EXT_DESC_WITH_META_DATA;
 		type = HAL_TX_BUF_TYPE_EXT_DESC;
 		dma_addr = tx_desc->msdu_ext_desc->paddr;
 	} else {
@@ -634,8 +633,7 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 		 * Alignment padding is already accounted in pkt_offset
 		 *
 		 */
-		dma_addr = (qdf_nbuf_mapped_paddr_get(tx_desc->nbuf) -
-				tx_desc->pkt_offset);
+		dma_addr = (qdf_nbuf_mapped_paddr_get(tx_desc->nbuf) & ~0x7);
 	}
 
 
@@ -1045,9 +1043,8 @@ static qdf_nbuf_t dp_tx_prepare_sg(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	sg_info = &msdu_info->u.sg_info;
 	nr_frags = qdf_nbuf_get_nr_frags(nbuf);
 
-	if (QDF_STATUS_SUCCESS != qdf_nbuf_map_nbytes_single(vdev->osdev, nbuf,
-				QDF_DMA_TO_DEVICE,
-				qdf_nbuf_headlen(nbuf))) {
+	if (QDF_STATUS_SUCCESS != qdf_nbuf_map(vdev->osdev, nbuf,
+				QDF_DMA_TO_DEVICE)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				"dma map error\n");
 
