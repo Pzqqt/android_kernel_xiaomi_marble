@@ -1734,9 +1734,9 @@ static void dp_vdev_register_wifi3(struct cdp_vdev *vdev_handle,
 #if ATH_SUPPORT_WAPI
 	vdev->osif_check_wai = txrx_ops->rx.wai_check;
 #endif
-#if UMAC_SUPPORT_PROXY_ARP
-	vdev->osif_proxy_arp = txrx_ops->proxy_arp;
 #endif
+#ifdef UMAC_SUPPORT_PROXY_ARP
+	vdev->osif_proxy_arp = txrx_ops->proxy_arp;
 #endif
 	vdev->me_convert = txrx_ops->me_convert;
 

@@ -1423,10 +1423,19 @@ static
 void dp_tx_reinject_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 {
 	struct dp_vdev *vdev;
+	struct dp_peer *peer = NULL;
+	uint32_t peer_id = HTT_INVALID_PEER;
+	qdf_nbuf_t nbuf = tx_desc->nbuf;
+	qdf_nbuf_t nbuf_copy = NULL;
+	struct dp_tx_msdu_info_s msdu_info;
 
 	vdev = tx_desc->vdev;
 
 	qdf_assert(vdev);
+
+	qdf_mem_set(&msdu_info, sizeof(msdu_info), 0x0);
+
+	dp_tx_get_queue(vdev, nbuf, &msdu_info.tx_queue);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 			"%s Tx reinject path\n", __func__);
@@ -1434,11 +1443,51 @@ void dp_tx_reinject_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 	DP_STATS_INC_PKT(vdev, tx_i.reinject_pkts, 1,
 			qdf_nbuf_len(tx_desc->nbuf));
 
+	if (!vdev->osif_proxy_arp) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"function pointer to proxy arp not present\n");
+		return;
+	}
+
 	if (qdf_unlikely(vdev->mesh_vdev)) {
 		DP_TX_FREE_SINGLE_BUF(vdev->pdev->soc, tx_desc->nbuf);
-	} else
-		dp_tx_send(vdev, tx_desc->nbuf);
+	} else {
+		TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
+			if ((peer->peer_ids[0] != HTT_INVALID_PEER) &&
+					(peer->bss_peer || peer->nawds_enabled)
+					&& !(vdev->osif_proxy_arp(
+							vdev->osif_vdev,
+							nbuf))) {
+				nbuf_copy = qdf_nbuf_copy(nbuf);
 
+				if (!nbuf_copy) {
+					QDF_TRACE(QDF_MODULE_ID_DP,
+							QDF_TRACE_LEVEL_ERROR,
+							FL("nbuf copy failed"));
+					break;
+				}
+
+				if (peer->nawds_enabled)
+					peer_id = peer->peer_ids[0];
+				else
+					peer_id = HTT_INVALID_PEER;
+
+				nbuf_copy = dp_tx_send_msdu_single(vdev,
+						nbuf_copy, msdu_info.tid,
+						&msdu_info.tx_queue,
+						msdu_info.meta_data, peer_id);
+
+				if (nbuf_copy) {
+					QDF_TRACE(QDF_MODULE_ID_DP,
+							QDF_TRACE_LEVEL_ERROR,
+							FL("pkt send failed"));
+					qdf_nbuf_free(nbuf_copy);
+				}
+			}
+		}
+	}
+
+	qdf_nbuf_free(nbuf);
 	dp_tx_desc_release(tx_desc, tx_desc->pool_id);
 }
 
