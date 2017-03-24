@@ -1285,7 +1285,7 @@ ol_txrx_pdev_post_attach(struct cdp_pdev *ppdev)
 
 	ret = htt_attach(pdev->htt_pdev, desc_pool_size);
 	if (ret)
-		goto ol_attach_fail;
+		goto htt_attach_fail;
 
 	/* Attach micro controller data path offload resource */
 	if (ol_cfg_ipa_uc_offload_enabled(pdev->ctrl_pdev))
@@ -1675,6 +1675,7 @@ reorder_trace_attach_fail:
 	qdf_spinlock_destroy(&pdev->peer_ref_mutex);
 	qdf_spinlock_destroy(&pdev->rx.mutex);
 	qdf_spinlock_destroy(&pdev->last_real_peer_mutex);
+	qdf_spinlock_destroy(&pdev->peer_map_unmap_lock);
 	OL_TXRX_PEER_STATS_MUTEX_DESTROY(pdev);
 
 control_init_fail:
@@ -1691,7 +1692,8 @@ page_alloc_fail:
 		htt_ipa_uc_detach(pdev->htt_pdev);
 uc_attach_fail:
 	htt_detach(pdev->htt_pdev);
-
+htt_attach_fail:
+	ol_tx_desc_dup_detect_deinit(pdev);
 ol_attach_fail:
 	return ret;            /* fail */
 }
