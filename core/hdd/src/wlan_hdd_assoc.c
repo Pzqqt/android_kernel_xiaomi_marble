@@ -4826,7 +4826,7 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 	{
 		hdd_info("****eCSR_ROAM_DISASSOCIATED****");
 		hdd_napi_serialize(0);
-		cds_set_connection_in_progress(false);
+		hdd_set_connection_in_progress(false);
 		hdd_set_roaming_in_progress(false);
 		pAdapter->defer_disconnect = 0;
 
