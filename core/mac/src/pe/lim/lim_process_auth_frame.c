@@ -111,17 +111,16 @@ static void lim_process_auth_shared_system_algo(tpAniSirGlobal mac_ctx,
 	uint8_t cfg_privacy_opt_imp, *challenge;
 	struct tLimPreAuthNode *auth_node;
 
-	lim_log(mac_ctx, LOGD, FL("=======> eSIR_SHARED_KEY  ..."));
+	pe_debug("=======> eSIR_SHARED_KEY");
 	if (LIM_IS_AP_ROLE(pe_session))
 		val = pe_session->privacy;
 	else if (wlan_cfg_get_int(mac_ctx,
 			WNI_CFG_PRIVACY_ENABLED, &val) != eSIR_SUCCESS)
-		lim_log(mac_ctx, LOGW, FL("couldnt retrieve Privacy option"));
+		pe_warn("couldnt retrieve Privacy option");
 	cfg_privacy_opt_imp = (uint8_t) val;
 	if (!cfg_privacy_opt_imp) {
-		lim_log(mac_ctx, LOGE,
-			FL("rx Auth frame for unsupported auth algorithm %d "
-			MAC_ADDRESS_STR),
+		pe_err("rx Auth frame for unsupported auth algorithm %d "
+			MAC_ADDRESS_STR,
 			rx_auth_frm_body->authAlgoNumber,
 			MAC_ADDR_ARRAY(mac_hdr->sa));
 
@@ -147,7 +146,7 @@ static void lim_process_auth_shared_system_algo(tpAniSirGlobal mac_ctx,
 		auth_node = lim_acquire_free_pre_auth_node(mac_ctx,
 					&mac_ctx->lim.gLimPreAuthTimerTable);
 		if (auth_node == NULL) {
-			lim_log(mac_ctx, LOGW, FL("Max preauth-nodes reached"));
+			pe_warn("Max preauth-nodes reached");
 			lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOGW);
 			return;
 		}
@@ -164,15 +163,14 @@ static void lim_process_auth_shared_system_algo(tpAniSirGlobal mac_ctx,
 		auth_node->timestamp = qdf_mc_timer_get_system_ticks();
 		lim_add_pre_auth_node(mac_ctx, auth_node);
 
-		lim_log(mac_ctx, LOG1, FL("Alloc new data: %p id %d peer "),
+		pe_debug("Alloc new data: %p id: %d peer ",
 			auth_node, auth_node->authNodeIdx);
 		lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOG1);
 		/* / Create and activate Auth Response timer */
 		if (tx_timer_change_context(&auth_node->timer,
 				auth_node->authNodeIdx) != TX_SUCCESS) {
 			/* Could not start Auth response timer. Log error */
-			lim_log(mac_ctx, LOGW,
-				FL("Unable to chg context auth response timer for peer "));
+			pe_warn("Unable to chg context auth response timer for peer");
 			lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOGW);
 
 			/*
@@ -201,8 +199,7 @@ static void lim_process_auth_shared_system_algo(tpAniSirGlobal mac_ctx,
 		if (!QDF_IS_STATUS_SUCCESS(cds_rand_get_bytes(0,
 				(uint8_t *) challenge_txt_arr,
 				SIR_MAC_AUTH_CHALLENGE_LENGTH)))
-			lim_log(mac_ctx, LOGE,
-				FL("Challenge text preparation failed"));
+			pe_err("Challenge text preparation failed");
 		challenge = auth_node->challengeText;
 		qdf_mem_copy(challenge, (uint8_t *)challenge_txt_arr,
 				sizeof(challenge_txt_arr));
@@ -232,18 +229,17 @@ static void lim_process_auth_open_system_algo(tpAniSirGlobal mac_ctx,
 {
 	struct tLimPreAuthNode *auth_node;
 
-	lim_log(mac_ctx, LOGD, FL("=======> eSIR_OPEN_SYSTEM  ..."));
+	pe_debug("=======> eSIR_OPEN_SYSTEM");
 	/* Create entry for this STA in pre-auth list */
 	auth_node = lim_acquire_free_pre_auth_node(mac_ctx,
 				&mac_ctx->lim.gLimPreAuthTimerTable);
 	if (auth_node == NULL) {
-		lim_log(mac_ctx, LOGW,
-			FL("Max pre-auth nodes reached "));
+		pe_warn("Max pre-auth nodes reached ");
 		lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOGW);
 		return;
 	}
-	lim_log(mac_ctx, LOG1, FL("Alloc new data: %p peer "), auth_node);
-	lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOG1);
+	pe_debug("Alloc new data: %p peer", auth_node);
+	lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOGD);
 	qdf_mem_copy((uint8_t *) auth_node->peerMacAddr,
 			mac_hdr->sa, sizeof(tSirMacAddr));
 	auth_node->mlmState = eLIM_MLM_AUTHENTICATED_STATE;
@@ -293,9 +289,8 @@ static void lim_process_auth_frame_type1(tpAniSirGlobal mac_ctx,
 			(!qdf_mem_cmp((uint8_t *) mac_hdr->sa, (uint8_t *)
 				&pMlmDisassocReq->peer_macaddr.bytes,
 				QDF_MAC_ADDR_SIZE))) {
-			lim_log(mac_ctx, LOGE,
-				FL("TODO:Ack for disassoc frame is pending Issue delsta for "
-				MAC_ADDRESS_STR),
+			pe_debug("TODO:Ack for disassoc frame is pending Issue delsta for "
+				MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(
 					pMlmDisassocReq->peer_macaddr.bytes));
 			lim_process_disassoc_ack_timeout(mac_ctx);
@@ -307,9 +302,8 @@ static void lim_process_auth_frame_type1(tpAniSirGlobal mac_ctx,
 			(!qdf_mem_cmp((uint8_t *) mac_hdr->sa, (uint8_t *)
 				&pMlmDeauthReq->peer_macaddr.bytes,
 				QDF_MAC_ADDR_SIZE))) {
-			lim_log(mac_ctx, LOGE,
-				FL("TODO:Ack for deauth frame is pending Issue delsta for "
-				MAC_ADDRESS_STR),
+			pe_debug("TODO:Ack for deauth frame is pending Issue delsta for "
+				MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(
 					pMlmDeauthReq->peer_macaddr.bytes));
 			lim_process_deauth_ack_timeout(mac_ctx);
@@ -332,10 +326,9 @@ static void lim_process_auth_frame_type1(tpAniSirGlobal mac_ctx,
 			&& !sta_ds_ptr->rmfEnabled
 #endif
 		   ) {
-			lim_log(mac_ctx, LOGE,
-				FL("STA is already connected but received auth frame"
+			pe_err("STA is already connected but received auth frame"
 					"Send the Deauth and lim Delete Station Context"
-					"(staId: %d, associd: %d) "),
+					"(staId: %d, associd: %d) ",
 				sta_ds_ptr->staIndex, associd);
 			lim_send_deauth_mgmt_frame(mac_ctx,
 				eSIR_MAC_UNSPEC_FAILURE_REASON,
@@ -357,8 +350,7 @@ static void lim_process_auth_frame_type1(tpAniSirGlobal mac_ctx,
 			 * received but ACK lost at STA side, in this case 2nd
 			 * auth frame is already in transmission queue
 			 */
-			lim_log(mac_ctx, LOGW,
-				FL("STA is initiating Auth after ACK lost"));
+			pe_warn("STA is initiating Auth after ACK lost");
 			return;
 		}
 		/*
@@ -371,7 +363,7 @@ static void lim_process_auth_frame_type1(tpAniSirGlobal mac_ctx,
 			lim_deactivate_and_change_per_sta_id_timer(
 					mac_ctx, eLIM_AUTH_RSP_TIMER,
 					auth_node->authNodeIdx);
-		lim_log(mac_ctx, LOGE, FL("STA is initiating brand-new Auth"));
+		pe_debug("STA is initiating brand-new Auth");
 		lim_delete_pre_auth_node(mac_ctx, mac_hdr->sa);
 		/*
 		 *  SAP Mode:Disassociate the station and
@@ -399,8 +391,7 @@ static void lim_process_auth_frame_type1(tpAniSirGlobal mac_ctx,
 			&& !sta_ds_ptr->rmfEnabled
 #endif
 		   ) {
-			lim_log(mac_ctx, LOGE,
-				FL("lim Delete Station Context (staId: %d, associd: %d) "),
+			pe_debug("lim Delete Station Context staId: %d associd: %d",
 				sta_ds_ptr->staIndex, associd);
 			lim_send_deauth_mgmt_frame(mac_ctx,
 				eSIR_MAC_UNSPEC_FAILURE_REASON,
@@ -413,11 +404,11 @@ static void lim_process_auth_frame_type1(tpAniSirGlobal mac_ctx,
 	}
 	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_MAX_NUM_PRE_AUTH,
 				(uint32_t *) &maxnum_preauth) != eSIR_SUCCESS)
-		lim_log(mac_ctx, LOGW, FL("could not retrieve MaxNumPreAuth"));
+		pe_warn("could not retrieve MaxNumPreAuth");
 
 	if (mac_ctx->lim.gLimNumPreAuthContexts == maxnum_preauth &&
 			!lim_delete_open_auth_pre_auth_node(mac_ctx)) {
-		lim_log(mac_ctx, LOGE, FL("Max no of preauth context reached"));
+		pe_err("Max no of preauth context reached");
 		/*
 		 * Maximum number of pre-auth contexts reached.
 		 * Send Authentication frame with unspecified failure
@@ -449,9 +440,8 @@ static void lim_process_auth_frame_type1(tpAniSirGlobal mac_ctx,
 				challenge_txt_arr, pe_session);
 			break;
 		default:
-			lim_log(mac_ctx, LOGE,
-				FL("rx Auth frm for unsupported auth algo %d "
-				MAC_ADDRESS_STR),
+			pe_err("rx Auth frm for unsupported auth algo %d "
+				MAC_ADDRESS_STR,
 				rx_auth_frm_body->authAlgoNumber,
 				MAC_ADDR_ARRAY(mac_hdr->sa));
 
@@ -474,9 +464,8 @@ static void lim_process_auth_frame_type1(tpAniSirGlobal mac_ctx,
 			return;
 		}
 	} else {
-		lim_log(mac_ctx, LOGE,
-			FL("received Authentication frame for unsupported auth algorithm %d "
-			MAC_ADDRESS_STR),
+		pe_err("received Authentication frame for unsupported auth algorithm %d "
+			MAC_ADDRESS_STR,
 			rx_auth_frm_body->authAlgoNumber,
 			MAC_ADDR_ARRAY(mac_hdr->sa));
 
@@ -529,8 +518,7 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 			mac_hdr->sa, sizeof(tSirMacAddr)))) {
 
 			/* Update the FTIEs in the saved auth response */
-			lim_log(mac_ctx, LOGW,
-				FL("rx PreAuth frm2 in smestate %d from %pM"),
+			pe_warn("rx PreAuth frm2 in smestate: %d from: %pM",
 				pe_session->limSmeState, mac_hdr->sa);
 			pe_session->ftPEContext.saved_auth_rsp_length = 0;
 
@@ -546,8 +534,7 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 			 * Received Auth frame2 in an unexpected state.
 			 * Log error and ignore the frame.
 			 */
-			lim_log(mac_ctx, LOG1,
-				FL("rx Auth frm2 from peer in state %d, addr "),
+			pe_debug("rx Auth frm2 from peer in state: %d addr",
 				pe_session->limMlmState);
 			lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOG1);
 		}
@@ -563,9 +550,8 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 		 * Wait until Authentication Failure Timeout.
 		 */
 
-		lim_log(mac_ctx, LOGW,
-			FL("received Auth frame2 from unexpected peer "
-			MAC_ADDRESS_STR), MAC_ADDR_ARRAY(mac_hdr->sa));
+		pe_warn("received Auth frame2 from unexpected peer"
+			MAC_ADDRESS_STR, MAC_ADDR_ARRAY(mac_hdr->sa));
 		return;
 	}
 
@@ -593,9 +579,8 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 		 * Wait until Authentication Failure Timeout.
 		 */
 
-		lim_log(mac_ctx, LOGW,
-			FL("rx Auth frame2 for unexpected auth algo number %d "
-			MAC_ADDRESS_STR),
+		pe_warn("rx Auth frame2 for unexpected auth algo number %d "
+			MAC_ADDRESS_STR,
 			rx_auth_frm_body->authAlgoNumber,
 			MAC_ADDR_ARRAY(mac_hdr->sa));
 		return;
@@ -606,9 +591,8 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 		 * Authentication failure.
 		 * Return Auth confirm with received failure code to SME
 		 */
-		lim_log(mac_ctx, LOGE,
-			FL("rx Auth frame from peer with failure code %d "
-			MAC_ADDRESS_STR),
+		pe_err("rx Auth frame from peer with failure code %d "
+			MAC_ADDRESS_STR,
 			rx_auth_frm_body->authStatusCode,
 			MAC_ADDR_ARRAY(mac_hdr->sa));
 		lim_restore_from_auth_state(mac_ctx, eSIR_SME_AUTH_REFUSED,
@@ -622,15 +606,13 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 		auth_node = lim_acquire_free_pre_auth_node(mac_ctx,
 				&mac_ctx->lim.gLimPreAuthTimerTable);
 		if (auth_node == NULL) {
-			lim_log(mac_ctx, LOGW,
-					FL("Max pre-auth nodes reached "));
+			pe_warn("Max pre-auth nodes reached");
 			lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOGW);
 			return;
 		}
 
-		lim_log(mac_ctx, LOG1,
-			FL("Alloc new data: %p peer"), auth_node);
-		lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOG1);
+		pe_debug("Alloc new data: %p peer", auth_node);
+		lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOGD);
 		qdf_mem_copy((uint8_t *) auth_node->peerMacAddr,
 				mac_ctx->lim.gpLimMlmAuthReq->peerMacAddr,
 				sizeof(tSirMacAddr));
@@ -651,8 +633,7 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 		else if (wlan_cfg_get_int(mac_ctx,
 					WNI_CFG_PRIVACY_ENABLED,
 					&val) != eSIR_SUCCESS)
-			lim_log(mac_ctx, LOGW,
-					FL("couldnt retrieve Privacy option"));
+			pe_warn("couldnt retrieve Privacy option");
 		cfg_privacy_opt_imp = (uint8_t) val;
 		if (!cfg_privacy_opt_imp) {
 			/*
@@ -661,9 +642,8 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 			 * Status code & wait until auth failure timeout
 			 */
 
-			lim_log(mac_ctx, LOGE,
-					FL("rx Auth frm from peer for unsupported auth algo %d "
-						MAC_ADDRESS_STR),
+			pe_err("rx Auth frm from peer for unsupported auth algo %d "
+						MAC_ADDRESS_STR,
 					rx_auth_frm_body->authAlgoNumber,
 					MAC_ADDR_ARRAY(mac_hdr->sa));
 
@@ -679,14 +659,12 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 			return;
 		}
 		if (rx_auth_frm_body->type != SIR_MAC_CHALLENGE_TEXT_EID) {
-			lim_log(mac_ctx, LOGE,
-				FL("rx auth frm with invalid challenge txtie"));
+			pe_err("rx auth frm with invalid challenge txtie");
 			return;
 		}
 		if (wlan_cfg_get_int(mac_ctx, WNI_CFG_WEP_DEFAULT_KEYID,
 					&val) != eSIR_SUCCESS)
-			lim_log(mac_ctx, LOGW,
-				FL("could not retrieve Default key_id"));
+			pe_warn("could not retrieve Default key_id");
 		key_id = (uint8_t) val;
 		val = SIR_MAC_KEY_LENGTH;
 		if (LIM_IS_AP_ROLE(pe_session)) {
@@ -698,8 +676,7 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 				(uint16_t)(WNI_CFG_WEP_DEFAULT_KEY_1 + key_id),
 				defaultkey, &val) != eSIR_SUCCESS) {
 			/* Couldnt get Default key from CFG. */
-			lim_log(mac_ctx, LOGW,
-				FL("cant retrieve Defaultkey"));
+			pe_warn("cant retrieve Defaultkey");
 			auth_frame->authAlgoNumber =
 				rx_auth_frm_body->authAlgoNumber;
 			auth_frame->authTransactionSeqNumber =
@@ -759,9 +736,8 @@ static void lim_process_auth_frame_type3(tpAniSirGlobal mac_ctx,
 
 	/* AuthFrame 3 */
 	if (rx_auth_frm_body->authAlgoNumber != eSIR_SHARED_KEY) {
-		lim_log(mac_ctx, LOGE,
-			FL("rx Auth frame3 from peer with auth algo number %d "
-			MAC_ADDRESS_STR),
+		pe_err("rx Auth frame3 from peer with auth algo number %d "
+			MAC_ADDRESS_STR,
 			rx_auth_frm_body->authAlgoNumber,
 			MAC_ADDR_ARRAY(mac_hdr->sa));
 		/*
@@ -787,9 +763,8 @@ static void lim_process_auth_frame_type3(tpAniSirGlobal mac_ctx,
 		 * 'challenge failure' status code.
 		 */
 		if (!mac_hdr->fc.wep) {
-			lim_log(mac_ctx, LOGE,
-				FL("received Auth frame3 from peer with no WEP bit set "
-				MAC_ADDRESS_STR),
+			pe_err("received Auth frame3 from peer with no WEP bit set "
+				MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(mac_hdr->sa));
 			/* WEP bit is not set in FC of Auth Frame3 */
 			auth_frame->authAlgoNumber = eSIR_SHARED_KEY;
@@ -806,9 +781,8 @@ static void lim_process_auth_frame_type3(tpAniSirGlobal mac_ctx,
 
 		auth_node = lim_search_pre_auth_list(mac_ctx, mac_hdr->sa);
 		if (auth_node == NULL) {
-			lim_log(mac_ctx, LOGW,
-				FL("received AuthFrame3 from peer that has no preauth context "
-				MAC_ADDRESS_STR),
+			pe_warn("received AuthFrame3 from peer that has no preauth context "
+				MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(mac_hdr->sa));
 			/*
 			 * No 'pre-auth' context exists for this STA that sent
@@ -827,9 +801,8 @@ static void lim_process_auth_frame_type3(tpAniSirGlobal mac_ctx,
 		}
 
 		if (auth_node->mlmState == eLIM_MLM_AUTH_RSP_TIMEOUT_STATE) {
-			lim_log(mac_ctx, LOGW,
-				FL("auth response timer timedout for peer "
-				MAC_ADDRESS_STR),
+			pe_warn("auth response timer timedout for peer "
+				MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(mac_hdr->sa));
 			/*
 			 * Received Auth Frame3 after Auth Response timeout.
@@ -856,9 +829,8 @@ static void lim_process_auth_frame_type3(tpAniSirGlobal mac_ctx,
 			 * other than success. Wait until Auth response timeout
 			 * to delete STA context.
 			 */
-			lim_log(mac_ctx, LOGE,
-				FL("rx Auth frm3 from peer with status code %d "
-				MAC_ADDRESS_STR),
+			pe_err("rx Auth frm3 from peer with status code %d "
+				MAC_ADDRESS_STR,
 				rx_auth_frm_body->authStatusCode,
 				MAC_ADDR_ARRAY(mac_hdr->sa));
 				return;
@@ -893,9 +865,7 @@ static void lim_process_auth_frame_type3(tpAniSirGlobal mac_ctx,
 				pe_session, false);
 			return;
 		} else {
-			lim_log(mac_ctx, LOGW,
-				FL("Challenge failure for peer "
-				MAC_ADDRESS_STR),
+			pe_warn("Challenge failure for peer "MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(mac_hdr->sa));
 			/*
 			 * Challenge Failure.
@@ -929,10 +899,8 @@ static void lim_process_auth_frame_type4(tpAniSirGlobal mac_ctx,
 		 * Received Authentication frame4 in an unexpected state.
 		 * Log error and ignore the frame.
 		 */
-
-		lim_log(mac_ctx, LOG1,
-			FL("received unexpected Auth frame4 from peer in state %d, addr "
-			MAC_ADDRESS_STR),
+		pe_warn("received unexpected Auth frame4 from peer in state %d, addr "
+			MAC_ADDRESS_STR,
 			pe_session->limMlmState,
 			MAC_ADDR_ARRAY(mac_hdr->sa));
 		return;
@@ -945,9 +913,8 @@ static void lim_process_auth_frame_type4(tpAniSirGlobal mac_ctx,
 		 * Wait until Auth failure timeout to report authentication
 		 * failure to SME.
 		 */
-		lim_log(mac_ctx, LOGE,
-			FL("received Auth frame4 from peer with invalid auth algo %d "
-			MAC_ADDRESS_STR),
+		pe_err("received Auth frame4 from peer with invalid auth algo %d"
+			MAC_ADDRESS_STR,
 			rx_auth_frm_body->authAlgoNumber,
 			MAC_ADDR_ARRAY(mac_hdr->sa));
 		return;
@@ -962,9 +929,7 @@ static void lim_process_auth_frame_type4(tpAniSirGlobal mac_ctx,
 		 * Wait until Authentication Failure Timeout.
 		 */
 
-		lim_log(mac_ctx, LOGW,
-			FL("received Auth frame4 from unexpected peer "
-			MAC_ADDRESS_STR),
+		pe_warn("received Auth frame4 from unexpected peer "MAC_ADDRESS_STR,
 			MAC_ADDR_ARRAY(mac_hdr->sa));
 		return;
 	}
@@ -977,9 +942,8 @@ static void lim_process_auth_frame_type4(tpAniSirGlobal mac_ctx,
 		 * Wait until Authentication Failure Timeout.
 		 */
 
-		lim_log(mac_ctx, LOGE,
-			FL("received Authentication frame from peer with invalid auth seq number %d "
-			MAC_ADDRESS_STR),
+		pe_err("received Authentication frame from peer with invalid auth seq number %d "
+			MAC_ADDRESS_STR,
 			rx_auth_frm_body->authTransactionSeqNumber,
 			MAC_ADDR_ARRAY(mac_hdr->sa));
 		return;
@@ -993,14 +957,12 @@ static void lim_process_auth_frame_type4(tpAniSirGlobal mac_ctx,
 		auth_node = lim_acquire_free_pre_auth_node(mac_ctx,
 					&mac_ctx->lim.gLimPreAuthTimerTable);
 		if (auth_node == NULL) {
-			lim_log(mac_ctx, LOGW,
-				FL("Max pre-auth nodes reached "));
+			pe_warn("Max pre-auth nodes reached");
 			lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOGW);
 			return;
 		}
-		lim_log(mac_ctx, LOG1, FL("Alloc new data: %p peer "),
-			auth_node);
-		lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOG1);
+		pe_debug("Alloc new data: %p peer", auth_node);
+		lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOGD);
 		qdf_mem_copy((uint8_t *) auth_node->peerMacAddr,
 				mac_ctx->lim.gpLimMlmAuthReq->peerMacAddr,
 				sizeof(tSirMacAddr));
@@ -1017,10 +979,8 @@ static void lim_process_auth_frame_type4(tpAniSirGlobal mac_ctx,
 		 * Authentication failure.
 		 * Return Auth confirm with received failure code to SME
 		 */
-
-		lim_log(mac_ctx, LOGE,
-			FL("Authentication failure from peer "
-			MAC_ADDRESS_STR), MAC_ADDR_ARRAY(mac_hdr->sa));
+		pe_err("Authentication failure from peer "MAC_ADDRESS_STR,
+			MAC_ADDR_ARRAY(mac_hdr->sa));
 		lim_restore_from_auth_state(mac_ctx, eSIR_SME_AUTH_REFUSED,
 				rx_auth_frm_body->authStatusCode,
 				pe_session);
@@ -1080,8 +1040,7 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 
 	if (!frame_len) {
 		/* Log error */
-		lim_log(mac_ctx, LOGE,
-			FL("received Auth frame with no body from %pM"),
+		pe_err("received Auth frame with no body from: %pM",
 			mac_hdr->sa);
 		return;
 	}
@@ -1091,8 +1050,7 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		 * Received Auth frame from a BC/MC address
 		 * Log error and ignore it
 		 */
-		lim_log(mac_ctx, LOGE,
-			FL("received Auth frame from a BC/MC addr %pM"),
+		pe_err("received Auth frame from a BC/MC addr: %pM",
 			mac_hdr->sa);
 		return;
 	}
@@ -1109,7 +1067,7 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	/* Restore default failure timeout */
 	if (QDF_P2P_CLIENT_MODE == pe_session->pePersona &&
 			pe_session->defaultAuthFailureTimeout) {
-		lim_log(mac_ctx, LOG1, FL("Restore default failure timeout"));
+		pe_debug("Restore default failure timeout");
 		cfg_set_int(mac_ctx, WNI_CFG_AUTHENTICATE_FAILURE_TIMEOUT,
 				pe_session->defaultAuthFailureTimeout);
 	}
@@ -1124,8 +1082,7 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		 */
 		if (pe_session->bTkipCntrMeasActive &&
 				LIM_IS_AP_ROLE(pe_session)) {
-			lim_log(mac_ctx, LOGE,
-				FL("Tkip counter enabled, send deauth to %pM"),
+			pe_err("Tkip counter enabled, send deauth to: %pM",
 				mac_hdr->sa);
 			lim_send_deauth_mgmt_frame(mac_ctx,
 					eSIR_MAC_MIC_FAILURE_REASON,
@@ -1150,8 +1107,7 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			auth_frame.authStatusCode =
 				eSIR_MAC_CHALLENGE_FAILURE_STATUS;
 			/* Log error */
-			lim_log(mac_ctx, LOGE,
-				FL("rx Auth frm with wep bit set role=%d %pM"),
+			pe_err("rx Auth frm with wep bit set role: %d %pM",
 				GET_LIM_SYSTEM_ROLE(pe_session), mac_hdr->sa);
 			lim_send_auth_mgmt_frame(mac_ctx, &auth_frame,
 				mac_hdr->sa, LIM_NO_WEP_IN_FC,
@@ -1161,8 +1117,7 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 
 		if (frame_len < LIM_ENCR_AUTH_BODY_LEN) {
 			/* Log error */
-			lim_log(mac_ctx, LOGE,
-				FL("Not enough size [%d] to decry rx Auth frm"),
+			pe_err("Not enough size: %d to decry rx Auth frm",
 				frame_len);
 			lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOGE);
 			return;
@@ -1176,15 +1131,13 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			 * implemented, if Could not get Privacy option
 			 * from CFG then Log fatal error
 			 */
-			lim_log(mac_ctx, LOGW,
-				FL("could not retrieve Privacy option"));
+			pe_warn("could not retrieve Privacy option");
 		}
 		cfg_privacy_opt_imp = (uint8_t) val;
 
 		if (!cfg_privacy_opt_imp) {
-			lim_log(mac_ctx, LOGE,
-				FL("received Authentication frame3 from peer that while privacy option is turned OFF "
-				MAC_ADDRESS_STR),
+			pe_err("received Authentication frame3 from peer that while privacy option is turned OFF "
+				MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(mac_hdr->sa));
 			/*
 			 * Privacy option is not implemented.
@@ -1212,9 +1165,8 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		 */
 		auth_node = lim_search_pre_auth_list(mac_ctx, mac_hdr->sa);
 		if (auth_node == NULL) {
-			lim_log(mac_ctx, LOGE,
-				FL("rx Auth frame with no preauth ctx with WEP bit set "
-				MAC_ADDRESS_STR),
+			pe_err("rx Auth frame with no preauth ctx with WEP bit set "
+				MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(mac_hdr->sa));
 			/*
 			 * No 'pre-auth' context exists for this STA
@@ -1240,9 +1192,8 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		if ((auth_node->mlmState != eLIM_MLM_WT_AUTH_FRAME3_STATE) &&
 			(auth_node->mlmState !=
 				eLIM_MLM_AUTH_RSP_TIMEOUT_STATE)) {
-			lim_log(mac_ctx, LOGE,
-				FL("received Authentication frame from peer that is in state %d "
-				MAC_ADDRESS_STR),
+			pe_err("received Authentication frame from peer that is in state %d "
+				MAC_ADDRESS_STR,
 				auth_node->mlmState,
 				MAC_ADDR_ARRAY(mac_hdr->sa));
 			/*
@@ -1274,8 +1225,7 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		} else if (wlan_cfg_get_str(mac_ctx,
 				(uint16_t) (WNI_CFG_WEP_DEFAULT_KEY_1 + key_id),
 				defaultkey, &val) != eSIR_SUCCESS) {
-			lim_log(mac_ctx, LOGW,
-				FL("could not retrieve Default key"));
+			pe_warn("could not retrieve Default key");
 
 			/*
 			 * Send Authentication frame
@@ -1298,9 +1248,8 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 					(uint16_t) (frame_len -
 							SIR_MAC_WEP_IV_LENGTH));
 		if (decrypt_result == LIM_DECRYPT_ICV_FAIL) {
-			lim_log(mac_ctx, LOGE,
-				FL("received Authentication frame from peer that failed decryption: "
-				MAC_ADDRESS_STR),
+			pe_err("received Authentication frame from peer that failed decryption: "
+				MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(mac_hdr->sa));
 			/* ICV failure */
 			lim_delete_pre_auth_node(mac_ctx, mac_hdr->sa);
@@ -1319,23 +1268,20 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 				frame_len - 8, &rx_auth_frame) != eSIR_SUCCESS)
 				|| (!is_auth_valid(mac_ctx, &rx_auth_frame,
 							pe_session))) {
-			lim_log(mac_ctx, LOGE,
-				FL("failed to convert Auth Frame to structure or Auth is not valid "));
+			pe_err("failed to convert Auth Frame to structure or Auth is not valid");
 			return;
 		}
 	} else if ((sir_convert_auth_frame2_struct(mac_ctx, body_ptr,
 				frame_len, &rx_auth_frame) != eSIR_SUCCESS)
 				|| (!is_auth_valid(mac_ctx, &rx_auth_frame,
 						pe_session))) {
-			lim_log(mac_ctx, LOGE,
-				FL("failed to convert Auth Frame to structure or Auth is not valid "));
+			pe_err("failed to convert Auth Frame to structure or Auth is not valid");
 			return;
 	}
 
 	rx_auth_frm_body = &rx_auth_frame;
 
-	lim_log(mac_ctx, LOGD,
-		FL("Received Auth frame with type=%d seqnum=%d, status=%d (%d)"),
+	pe_debug("Received Auth frame with type: %d seqnum: %d status: %d %d",
 		(uint32_t) rx_auth_frm_body->authAlgoNumber,
 		(uint32_t) rx_auth_frm_body->authTransactionSeqNumber,
 		(uint32_t) rx_auth_frm_body->authStatusCode,
@@ -1356,8 +1302,7 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		SIR_MAC_AUTH_FRAME_2) &&
 		(rx_auth_frm_body->authTransactionSeqNumber !=
 		SIR_MAC_AUTH_FRAME_3)) {
-		lim_log(mac_ctx, LOGW,
-			FL("Override AuthFrame 4's seqNumber to 4."));
+		pe_warn("Override AuthFrame 4's seqNumber to 4");
 		rx_auth_frm_body->authTransactionSeqNumber =
 			SIR_MAC_AUTH_FRAME_4;
 	}
@@ -1384,8 +1329,7 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		break;
 	default:
 		/* Invalid Authentication Frame received. Ignore it. */
-		lim_log(mac_ctx, LOGW,
-			FL("rx auth frm with invalid authseq no %d from: %pM"),
+		pe_warn("rx auth frm with invalid authseq no: %d from: %pM",
 			rx_auth_frm_body->authTransactionSeqNumber,
 			mac_hdr->sa);
 		break;
@@ -1419,8 +1363,7 @@ tSirRetStatus lim_process_auth_frame_no_session(tpAniSirGlobal pMac, uint8_t *pB
 	pBody = WMA_GET_RX_MPDU_DATA(pBd);
 	frameLen = WMA_GET_RX_PAYLOAD_LEN(pBd);
 
-	lim_log(pMac, LOG1,
-		FL("Auth Frame Received: BSSID " MAC_ADDRESS_STR " (RSSI %d)"),
+	pe_info("Auth Frame Received: BSSID " MAC_ADDRESS_STR " (RSSI %d)",
 		MAC_ADDR_ARRAY(pHdr->bssId),
 		(uint) abs((int8_t) WMA_GET_RX_RSSI_NORMALIZED(pBd)));
 
@@ -1440,27 +1383,25 @@ tSirRetStatus lim_process_auth_frame_no_session(tpAniSirGlobal pMac, uint8_t *pB
 	}
 
 	if (psessionEntry == NULL) {
-		lim_log(pMac, LOGE,
-			FL
-				("Error: Unable to find session id while in pre-auth phase for FT"));
+		pe_err("Error: Unable to find session id while in pre-auth phase for FT");
 		return eSIR_FAILURE;
 	}
 
 	if (psessionEntry->ftPEContext.pFTPreAuthReq == NULL) {
-		lim_log(pMac, LOGE, FL("Error: No FT"));
+		pe_err("Error: No FT");
 		/* No FT in progress. */
 		return eSIR_FAILURE;
 	}
 
 	if (frameLen == 0) {
-		lim_log(pMac, LOGE, FL("Error: Frame len = 0"));
+		pe_err("Error: Frame len = 0");
 		return eSIR_FAILURE;
 	}
 	lim_print_mac_addr(pMac, pHdr->bssId, LOGD);
 	lim_print_mac_addr(pMac,
 			   psessionEntry->ftPEContext.pFTPreAuthReq->preAuthbssId,
 			   LOGD);
-	lim_log(pMac, LOGD, FL("seqControl 0x%X"),
+	pe_debug("seqControl: 0x%X",
 		((pHdr->seqControl.seqNumHi << 8) |
 		 (pHdr->seqControl.seqNumLo << 4) |
 		 (pHdr->seqControl.fragNum)));
@@ -1469,7 +1410,7 @@ tSirRetStatus lim_process_auth_frame_no_session(tpAniSirGlobal pMac, uint8_t *pB
 	if (qdf_mem_cmp
 		    (psessionEntry->ftPEContext.pFTPreAuthReq->preAuthbssId,
 		    pHdr->bssId, sizeof(tSirMacAddr))) {
-		lim_log(pMac, LOGE, FL("Error: Same bssid as preauth BSSID"));
+		pe_err("Error: Same bssid as preauth BSSID");
 		/* In this case SME if indeed has triggered a */
 		/* pre auth it will time out. */
 		return eSIR_FAILURE;
@@ -1494,22 +1435,20 @@ tSirRetStatus lim_process_auth_frame_no_session(tpAniSirGlobal pMac, uint8_t *pB
 		 * as this was indeed a response from the BSSID we tried to
 		 * pre-auth.
 		 */
-		PELOGE(lim_log(pMac, LOG1, "Auth rsp already posted to SME"
+		pe_debug("Auth rsp already posted to SME"
 			       " (session %p, FT session %p)", psessionEntry,
 			       psessionEntry);
-		       );
 		return eSIR_SUCCESS;
 	} else {
-		PELOGE(lim_log(pMac, LOGW, "Auth rsp not yet posted to SME"
+		pe_warn("Auth rsp not yet posted to SME"
 			       " (session %p, FT session %p)", psessionEntry,
 			       psessionEntry);
-		       );
 		psessionEntry->ftPEContext.pFTPreAuthReq->bPreAuthRspProcessed =
 			true;
 	}
 
-	lim_log(pMac, LOG1, FL("Pre-Auth response received from neighbor"));
-	lim_log(pMac, LOG1, FL("Pre-Auth done state"));
+	pe_debug("Pre-Auth response received from neighbor");
+	pe_debug("Pre-Auth done state");
 	/* Stopping timer now, that we have our unicast from the AP */
 	/* of our choice. */
 	lim_deactivate_and_change_timer(pMac, eLIM_FT_PREAUTH_RSP_TIMER);
@@ -1517,26 +1456,22 @@ tSirRetStatus lim_process_auth_frame_no_session(tpAniSirGlobal pMac, uint8_t *pB
 	/* Save off the auth resp. */
 	if ((sir_convert_auth_frame2_struct(pMac, pBody, frameLen, &rxAuthFrame) !=
 	     eSIR_SUCCESS)) {
-		lim_log(pMac, LOGE,
-			FL("failed to convert Auth frame to struct"));
+		pe_err("failed to convert Auth frame to struct");
 		lim_handle_ft_pre_auth_rsp(pMac, eSIR_FAILURE, NULL, 0,
 					   psessionEntry);
 		return eSIR_FAILURE;
 	}
 	pRxAuthFrameBody = &rxAuthFrame;
 
-	PELOGE(lim_log(pMac, LOG1,
-		       FL
-			       ("Received Auth frame with type=%d seqnum=%d, status=%d (%d)"),
+	pe_debug("Received Auth frame with type: %d seqnum: %d status: %d %d",
 		       (uint32_t) pRxAuthFrameBody->authAlgoNumber,
 		       (uint32_t) pRxAuthFrameBody->authTransactionSeqNumber,
 		       (uint32_t) pRxAuthFrameBody->authStatusCode,
 		       (uint32_t) pMac->lim.gLimNumPreAuthContexts);
-	       )
 	switch (pRxAuthFrameBody->authTransactionSeqNumber) {
 	case SIR_MAC_AUTH_FRAME_2:
 		if (pRxAuthFrameBody->authStatusCode != eSIR_MAC_SUCCESS_STATUS) {
-			lim_log(pMac, LOGE, "Auth status code received is %d",
+			pe_err("Auth status code received is %d",
 				(uint32_t) pRxAuthFrameBody->authStatusCode);
 			if (eSIR_MAC_MAX_ASSOC_STA_REACHED_STATUS ==
 			    pRxAuthFrameBody->authStatusCode)
@@ -1547,7 +1482,7 @@ tSirRetStatus lim_process_auth_frame_no_session(tpAniSirGlobal pMac, uint8_t *pB
 		break;
 
 	default:
-		lim_log(pMac, LOGW, "Seq. no incorrect expected 2 received %d",
+		pe_warn("Seq. no incorrect expected 2 received %d",
 			(uint32_t) pRxAuthFrameBody->authTransactionSeqNumber);
 		break;
 	}
