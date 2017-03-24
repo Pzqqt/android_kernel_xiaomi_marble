@@ -171,8 +171,6 @@ static void hdd_deinit_cds_hif_context(void)
 
 	if (status)
 		hdd_err("Failed to reset CDS HIF Context");
-
-	return;
 }
 
 /**
@@ -513,7 +511,8 @@ static void wlan_hdd_crash_shutdown(void)
 static void wlan_hdd_notify_handler(int state)
 {
 	if (!QDF_IS_EPPING_ENABLED(cds_get_conparam())) {
-		int ret = 0;
+		int ret;
+
 		ret = hdd_wlan_notify_modem_power_state(state);
 		if (ret < 0)
 			hdd_err("Fail to send notify");
