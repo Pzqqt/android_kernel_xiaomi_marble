@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -178,7 +178,11 @@ struct _NIC_DEV {
 	void *bdev;
 	struct net_device *netdev;
 	qdf_bh_t intr_tq;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 36)
+	struct rtnl_link_stats64 devstats;
+#else
 	struct net_device_stats devstats;
+#endif
 	QDF_BUS_CONTEXT bc;
 #ifdef ATH_PERF_PWR_OFFLOAD
 	struct device *device;

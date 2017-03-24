@@ -52,13 +52,13 @@
 
 #ifndef BIG_ENDIAN_HOST
 typedef struct {
-	u_int32_t pkts;
-	u_int32_t bytes;
+	uint64_t pkts;
+	uint64_t bytes;
 } ol_txrx_stats_elem;
 #else
 struct ol_txrx_elem_t {
-	u_int32_t pkts;
-	u_int32_t bytes;
+	uint64_t pkts;
+	uint64_t bytes;
 };
 typedef struct ol_txrx_elem_t ol_txrx_stats_elem;
 #endif
