@@ -969,6 +969,7 @@ static int __wlan_hdd_runtime_suspend(struct device *dev)
 	void *htc_ctx = cds_get_context(QDF_MODULE_ID_HTC);
 	int status = wlan_hdd_validate_context(hdd_ctx);
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct wow_enable_params wow_params = {0};
 
 	if (0 != status)
 		goto process_failure;
@@ -986,7 +987,7 @@ static int __wlan_hdd_runtime_suspend(struct device *dev)
 	if (status)
 		goto resume_txrx;
 
-	status = wma_runtime_suspend(0);
+	status = wma_runtime_suspend(wow_params);
 	if (status)
 		goto resume_htc;
 
