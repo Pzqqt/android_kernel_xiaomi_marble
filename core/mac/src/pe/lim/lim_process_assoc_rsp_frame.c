@@ -208,8 +208,7 @@ void lim_update_assoc_sta_datas(tpAniSirGlobal mac_ctx,
 				assoc_rsp->HTCaps.supportedMCSSet,
 				false, session_entry,
 				vht_caps, he_cap) != eSIR_SUCCESS) {
-		lim_log(mac_ctx, LOGP,
-			FL("could not get rateset and extended rate set"));
+		pe_err("could not get rateset and extended rate set");
 		return;
 	}
 	sta_ds->vhtSupportedRxNss =
@@ -232,12 +231,10 @@ void lim_update_assoc_sta_datas(tpAniSirGlobal mac_ctx,
 			status =
 				sch_beacon_edca_process(mac_ctx,
 					&assoc_rsp->edca, session_entry);
-			lim_log(mac_ctx, LOGD,
-				"Edca set update based on AssocRsp: status %d",
+			pe_debug("Edca set update based on AssocRsp: status %d",
 				status);
 			if (status != eSIR_SUCCESS) {
-				lim_log(mac_ctx, LOGE,
-					FL("Edca error in AssocResp "));
+				pe_err("Edca error in AssocResp");
 			} else {
 				/* update default tidmap based on ACM */
 				sta_ds->qosMode = 1;
@@ -252,13 +249,11 @@ void lim_update_assoc_sta_datas(tpAniSirGlobal mac_ctx,
 		tSirRetStatus status;
 		status = sch_beacon_edca_process(mac_ctx, &assoc_rsp->edca,
 				session_entry);
-		lim_log(mac_ctx, LOGD,
-			"WME Edca set update based on AssocRsp: status %d",
+		pe_debug("WME Edca set update based on AssocRsp: status %d",
 			status);
 
 		if (status != eSIR_SUCCESS)
-			lim_log(mac_ctx, LOGE,
-				FL("WME Edca error in AssocResp - ignoring"));
+			pe_err("WME Edca error in AssocResp - ignoring");
 
 			else {
 				/* update default tidmap based on HashACM */
@@ -317,8 +312,7 @@ static void lim_update_ric_data(tpAniSirGlobal mac_ctx,
 			session_entry->ricData =
 				qdf_mem_malloc(session_entry->RICDataLen);
 			if (NULL == session_entry->ricData) {
-				lim_log(mac_ctx, LOGE,
-					FL("No memory for RIC data"));
+				pe_err("No memory for RIC data");
 				session_entry->RICDataLen = 0;
 			} else {
 				qdf_mem_copy(session_entry->ricData,
@@ -326,11 +320,10 @@ static void lim_update_ric_data(tpAniSirGlobal mac_ctx,
 					session_entry->RICDataLen);
 			}
 		} else {
-			pe_debug("RIC data not present");
+			pe_err("RIC data not present");
 		}
 	} else {
-		lim_log(mac_ctx, LOG1,
-				FL("Ric is not present"));
+		pe_debug("Ric is not present");
 		session_entry->RICDataLen = 0;
 		session_entry->ricData = NULL;
 	}
@@ -358,15 +351,14 @@ static void lim_update_ese_tspec(tpAniSirGlobal mac_ctx,
 		session_entry->tspecLen = 0;
 	}
 	if (assoc_rsp->tspecPresent) {
-		lim_log(mac_ctx, LOG1, FL("Tspec EID present in assoc rsp"));
+		pe_debug("Tspec EID present in assoc rsp");
 		session_entry->tspecLen =
 			assoc_rsp->num_tspecs * sizeof(tDot11fIEWMMTSPEC);
 		if (session_entry->tspecLen) {
 			session_entry->tspecIes =
 				qdf_mem_malloc(session_entry->tspecLen);
 			if (NULL == session_entry->tspecIes) {
-				lim_log(mac_ctx, LOGE,
-					FL("Tspec IE:Fail to allocate memory"));
+				pe_err("Tspec IE:Fail to allocate memory");
 				session_entry->tspecLen = 0;
 			} else {
 				qdf_mem_copy(session_entry->tspecIes,
@@ -374,13 +366,12 @@ static void lim_update_ese_tspec(tpAniSirGlobal mac_ctx,
 						session_entry->tspecLen);
 			}
 		} else {
-			lim_log(mac_ctx, LOGE, FL("TSPEC has Zero length"));
+			pe_err("TSPEC has Zero length");
 		}
 	} else {
 		session_entry->tspecLen = 0;
 		session_entry->tspecIes = NULL;
-		lim_log(mac_ctx, LOGD,
-			FL("Tspec EID *NOT* present in assoc rsp"));
+		pe_debug("Tspec EID *NOT* present in assoc rsp");
 	}
 	return;
 }
@@ -403,15 +394,13 @@ static void lim_update_ese_tsm(tpAniSirGlobal mac_ctx,
 	uint8_t cnt = 0;
 	tpEseTSMContext tsm_ctx;
 
-	lim_log(mac_ctx, LOG1,
-		FL("TSM IE Present in Reassoc Rsp"));
+	pe_debug("TSM IE Present in Reassoc Rsp");
 	/*
 	 * Start the TSM  timer only if the TSPEC
 	 * Ie is present in the reassoc rsp
 	 */
 	if (!assoc_rsp->tspecPresent) {
-		lim_log(mac_ctx, LOGE,
-			FL("TSM present but TSPEC IE not present"));
+		pe_err("TSM present but TSPEC IE not present");
 		return;
 	}
 	tsm_ctx = &session_entry->eseContext.tsm;
@@ -457,7 +446,7 @@ static void lim_update_stads_ext_cap(tpAniSirGlobal mac_ctx,
 		session_entry->tdls_prohibited = false;
 		session_entry->tdls_chan_swit_prohibited = false;
 #endif
-		lim_log(mac_ctx, LOG1, FL("ExtCap not present"));
+		pe_debug("ExtCap not present");
 		return;
 	}
 
@@ -467,8 +456,7 @@ static void lim_update_stads_ext_cap(tpAniSirGlobal mac_ctx,
 	session_entry->tdls_prohibited = ext_cap->tdls_prohibited;
 	session_entry->tdls_chan_swit_prohibited =
 		ext_cap->tdls_chan_swit_prohibited;
-	lim_log(mac_ctx, LOGD,
-		FL("ExtCap: tdls_prohibited: %d, tdls_chan_swit_prohibited: %d"),
+	pe_debug("ExtCap: tdls_prohibited: %d tdls_chan_swit_prohibited: %d",
 		ext_cap->tdls_prohibited,
 		ext_cap->tdls_chan_swit_prohibited);
 #endif
@@ -539,8 +527,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 	/* Update PE session Id */
 	assoc_cnf.sessionId = session_entry->peSessionId;
 	if (hdr == NULL) {
-		lim_log(mac_ctx, LOGE,
-			FL("LFR3: Reassoc response packet header is NULL"));
+		pe_err("LFR3: Reassoc response packet header is NULL");
 		return;
 	}
 
@@ -553,7 +540,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 
 	beacon = qdf_mem_malloc(sizeof(tSchBeaconStruct));
 	if (NULL == beacon) {
-		lim_log(mac_ctx, LOGE, FL("Unable to allocate memory"));
+		pe_err("Unable to allocate memory");
 		return;
 	}
 
@@ -562,8 +549,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		 * Should not have received Re/Association
 		 * Response frame on AP. Log error
 		 */
-		lim_log(mac_ctx, LOGE,
-			FL("Should not recieved Re/Assoc Response in role %d "),
+		pe_err("Should not recieved Re/Assoc Response in role: %d",
 			GET_LIM_SYSTEM_ROLE(session_entry));
 		qdf_mem_free(beacon);
 		return;
@@ -584,15 +570,11 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		eLIM_MLM_WT_FT_REASSOC_RSP_STATE)
 		))) {
 		/* Received unexpected Re/Association Response frame */
-
-		lim_log(mac_ctx, LOG1,
-			FL("Recieved Re/Assoc rsp in unexpected "
-			"state %d on session=%d"),
+		pe_debug("Recieved Re/Assoc rsp in unexpected state: %d on session: %d",
 			session_entry->limMlmState, session_entry->peSessionId);
 		if (!hdr->fc.retry) {
 			if (!(mac_ctx->lim.retry_packet_cnt & 0xf)) {
-				lim_log(mac_ctx, LOGE,
-				    FL("recvd Re/Assoc rsp:not a retry frame"));
+				pe_err("recvd Re/Assoc rsp:not a retry frame");
 				lim_print_mlm_state(mac_ctx, LOGE,
 						session_entry->limMlmState);
 			} else {
@@ -611,9 +593,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 			 * other than one to which request was initiated.
 			 * Ignore this and wait until Assoc Failure Timeout
 			 */
-			lim_log(mac_ctx, LOGW,
-				 FL("received AssocRsp from unexpected peer "
-				MAC_ADDRESS_STR),
+			pe_warn("received AssocRsp from unexpected peer "MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(hdr->sa));
 			qdf_mem_free(beacon);
 			return;
@@ -627,9 +607,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 			 * other than one to which request was initiated.
 			 * Ignore this and wait until Reassoc Failure Timeout.
 			 */
-			lim_log(mac_ctx, LOGW,
-				FL("received ReassocRsp from unexpected peer "
-				MAC_ADDRESS_STR),
+			pe_warn("received ReassocRsp from unexpected peer "MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(hdr->sa));
 			qdf_mem_free(beacon);
 			return;
@@ -638,8 +616,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 
 	assoc_rsp = qdf_mem_malloc(sizeof(*assoc_rsp));
 	if (NULL == assoc_rsp) {
-		lim_log(mac_ctx, LOGP,
-			FL("Allocate Memory failed in AssocRsp"));
+		pe_err("Allocate Memory failed in AssocRsp");
 		qdf_mem_free(beacon);
 		return;
 	}
@@ -652,16 +629,14 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 	if (sir_convert_assoc_resp_frame2_struct(mac_ctx, body,
 		frame_len, assoc_rsp) == eSIR_FAILURE) {
 		qdf_mem_free(assoc_rsp);
-		lim_log(mac_ctx, LOGE,
-			FL("Parse error Assoc resp subtype %d," "length=%d"),
+		pe_err("Parse error Assoc resp subtype: %d" "length: %d",
 			frame_len, subtype);
 		qdf_mem_free(beacon);
 		return;
 	}
 
 	if (!assoc_rsp->suppRatesPresent) {
-		lim_log(mac_ctx, LOGE,
-		FL("assoc response does not have supported rate set"));
+		pe_err("assoc response does not have supported rate set");
 		qdf_mem_copy(&assoc_rsp->supportedRates,
 			&session_entry->rateSet,
 			sizeof(tSirMacRateSet));
@@ -669,9 +644,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 
 	assoc_cnf.protStatusCode = assoc_rsp->statusCode;
 	if (session_entry->assocRsp != NULL) {
-		lim_log(mac_ctx, LOGW,
-			FL("session_entry->assocRsp is not NULL freeing it "
-			 "and setting NULL"));
+		pe_warn("session_entry->assocRsp is not NULL freeing it and setting NULL");
 		qdf_mem_free(session_entry->assocRsp);
 		session_entry->assocRsp = NULL;
 		session_entry->assocRspLen = 0;
@@ -679,8 +652,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 
 	session_entry->assocRsp = qdf_mem_malloc(frame_len);
 	if (NULL == session_entry->assocRsp) {
-		lim_log(mac_ctx, LOGE,
-			FL("Unable to allocate memory for assoc res,len=%d"),
+		pe_err("Unable to allocate memory for assoc res,len: %d",
 			 frame_len);
 	} else {
 		/*
@@ -720,8 +692,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		 * Ignore the frame and wait until Re/assoc
 		 * failure timeout.
 		 */
-		lim_log(mac_ctx, LOGE,
-			FL("received Re/AssocRsp frame with IBSS capability"));
+		pe_err("received Re/AssocRsp frame with IBSS capability");
 		qdf_mem_free(assoc_rsp);
 		qdf_mem_free(beacon);
 		return;
@@ -731,7 +702,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		!= eSIR_SUCCESS) {
 		qdf_mem_free(assoc_rsp);
 		qdf_mem_free(beacon);
-		lim_log(mac_ctx, LOGP, FL("could not retrieve Capabilities "));
+		pe_err("could not retrieve Capabilities");
 		return;
 	}
 	lim_copy_u16((uint8_t *) &mac_capab, caps);
@@ -752,8 +723,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		 *Re/Association response was received
 		 * either with failure code.
 		*/
-		lim_log(mac_ctx, LOGE,
-			FL("received Re/AssocRsp frame failure code %d"),
+		pe_err("received Re/AssocRsp frame failure code: %d",
 			 assoc_rsp->statusCode);
 		/*
 		 * Need to update 'association failure' error counter
@@ -770,8 +740,8 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		 * Re/Association response was received
 		 * with invalid AID value
 		*/
-		lim_log(mac_ctx, LOGE, FL("received Re/AssocRsp frame with"
-			"invalid aid %X"), assoc_rsp->aid);
+		pe_err("received Re/AssocRsp frame with invalid aid: %X",
+			assoc_rsp->aid);
 		assoc_cnf.resultCode = eSIR_SME_INVALID_ASSOC_RSP_RXED;
 		assoc_cnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
 		/* Send advisory Disassociation frame to AP */
@@ -804,16 +774,13 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 				 */
 				timeout_value = 10;
 			}
-			lim_log(mac_ctx, LOG1,
-				FL("ASSOC res with eSIR_MAC_TRY_AGAIN_LATER "
-				" recvd.Starting timer to wait timeout=%d."),
+			pe_debug("ASSOC res with eSIR_MAC_TRY_AGAIN_LATER recvd.Starting timer to wait timeout: %d",
 				timeout_value);
 			if (QDF_STATUS_SUCCESS !=
 				qdf_mc_timer_start(
 					&session_entry->pmfComebackTimer,
 					timeout_value)) {
-				lim_log(mac_ctx, LOGE,
-					FL("Failed to start comeback timer."));
+				pe_err("Failed to start comeback timer");
 
 				assoc_cnf.resultCode = eSIR_SME_ASSOC_REFUSED;
 				assoc_cnf.protStatusCode =
@@ -830,8 +797,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 				goto assocReject;
 			}
 		} else {
-			lim_log(mac_ctx, LOGW,
-				FL("ASSOC resp with try again event recvd, but try again time interval IE is wrong"));
+			pe_warn("ASSOC resp with try again event recvd, but try again time interval IE is wrong");
 
 			assoc_cnf.resultCode = eSIR_SME_ASSOC_REFUSED;
 			assoc_cnf.protStatusCode =
@@ -854,8 +820,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 			session_entry->bssId,
 			session_entry->selfMacAddr, NULL,
 			NULL) != eSIR_SUCCESS) {
-			lim_log(mac_ctx, LOGE,
-				FL("Set link state to POSTASSOC failed"));
+			pe_err("Set link state to POSTASSOC failed");
 			qdf_mem_free(beacon);
 			qdf_mem_free(assoc_rsp);
 			return;
@@ -873,8 +838,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 				&assoc_rsp->obss_scanparams);
 
 	if (subtype == LIM_REASSOC) {
-		lim_log
-		(mac_ctx, LOG1, FL("Successfully Reassociated with BSS"));
+		pe_debug("Successfully Reassociated with BSS");
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_ROAM_ASSOC_COMP_EVENT,
 			      session_entry, eSIR_SUCCESS, eSIR_SUCCESS);
@@ -899,8 +863,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 				&session_entry->dph.dphHashTable);
 
 		if (!sta_ds) {
-			lim_log(mac_ctx, LOGE,
-				FL("could not get hash entry at DPH for"));
+			pe_err("could not get hash entry at DPH for");
 			lim_print_mac_addr(mac_ctx, hdr->sa, LOGE);
 			assoc_cnf.resultCode =
 				eSIR_SME_INVALID_ASSOC_RSP_RXED;
@@ -916,7 +879,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		if ((session_entry->limMlmState ==
 		    eLIM_MLM_WT_FT_REASSOC_RSP_STATE) ||
 			lim_is_roam_synch_in_progress(session_entry)) {
-			lim_log(mac_ctx, LOG1, FL("Sending self sta"));
+			pe_debug("Sending self sta");
 			lim_update_assoc_sta_datas(mac_ctx, sta_ds, assoc_rsp,
 				session_entry);
 			lim_update_stads_ext_cap(mac_ctx, session_entry,
@@ -964,16 +927,14 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 
 			if (lim_cleanup_rx_path(mac_ctx, sta_ds, session_entry)
 				!= eSIR_SUCCESS) {
-				lim_log(mac_ctx, LOGE,
-					FL("Could not cleanup the rx path"));
+				pe_err("Could not cleanup the rx path");
 				goto assocReject;
 			}
 		}
 		qdf_mem_free(beacon);
 		return;
 	}
-	lim_log(mac_ctx, LOG1,
-		FL("Successfully Associated with BSS " MAC_ADDRESS_STR),
+	pe_debug("Successfully Associated with BSS " MAC_ADDRESS_STR,
 		 MAC_ADDR_ARRAY(hdr->sa));
 #ifdef FEATURE_WLAN_ESE
 	if (session_entry->eseContext.tsm.tsmInfo.state)
@@ -987,7 +948,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 			&session_entry->dph.dphHashTable);
 	if (sta_ds == NULL) {
 		/* Could not add hash table entry */
-		lim_log(mac_ctx, LOGE, FL("could not get hash entry at DPH "));
+		pe_err("could not get hash entry at DPH");
 		lim_print_mac_addr(mac_ctx, hdr->sa, LOGE);
 		assoc_cnf.resultCode = eSIR_SME_RESOURCES_UNAVAILABLE;
 		assoc_cnf.protStatusCode = eSIR_SME_SUCCESS;
@@ -1050,7 +1011,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		qdf_mem_free(beacon);
 		return;
 	} else {
-		lim_log(mac_ctx, LOGE, FL("could not update the bss entry"));
+		pe_err("could not update the bss entry");
 		assoc_cnf.resultCode = eSIR_SME_RESOURCES_UNAVAILABLE;
 		assoc_cnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
 	}
@@ -1060,9 +1021,8 @@ assocReject:
 		|| ((subtype == LIM_REASSOC)
 		&& (session_entry->limMlmState ==
 		    eLIM_MLM_WT_FT_REASSOC_RSP_STATE))) {
-		lim_log(mac_ctx, LOGE, FL("Assoc Rejected by the peer. "
-			"mlmestate: %d sessionid %d Reason: %d MACADDR:"
-			MAC_ADDRESS_STR),
+		pe_err("Assoc Rejected by the peer mlmestate: %d sessionid: %d Reason: %d MACADDR:"
+			MAC_ADDRESS_STR,
 			session_entry->limMlmState,
 			session_entry->peSessionId,
 			assoc_cnf.resultCode, MAC_ADDR_ARRAY(hdr->sa));
