@@ -174,13 +174,20 @@ int hdd_objmgr_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
 		return -ENOMEM;
 	}
 
+	/*
+	 * To enable legacy use cases, we need to delay physical vdev destroy
+	 * until after the sme session has been closed. We accomplish this by
+	 * getting an additional reference here.
+	 */
+	wlan_objmgr_vdev_get_ref(vdev, WLAN_HDD_ID_OBJ_MGR);
+
 	adapter->hdd_vdev = vdev;
 	adapter->sessionId = wlan_vdev_get_id(vdev);
 
 	return 0;
 }
 
-int hdd_objmgr_release_and_destroy_vdev(hdd_adapter_t *adapter)
+int hdd_objmgr_destroy_vdev(hdd_adapter_t *adapter)
 {
 	struct wlan_objmgr_vdev *vdev;
 	struct vdev_osif_priv *osif_priv;
@@ -193,8 +200,6 @@ int hdd_objmgr_release_and_destroy_vdev(hdd_adapter_t *adapter)
 	vdev->vdev_nif.osdev = NULL;
 	qdf_mem_free(osif_priv);
 
-	adapter->hdd_vdev = NULL;
-	adapter->sessionId = HDD_SESSION_ID_INVALID;
 	if (hdd_objmgr_remove_peer_object(vdev,
 					  wlan_vdev_mlme_get_macaddr(vdev))) {
 		hdd_err("Self peer delete failed");
@@ -202,6 +207,28 @@ int hdd_objmgr_release_and_destroy_vdev(hdd_adapter_t *adapter)
 	}
 
 	return qdf_status_to_os_return(wlan_objmgr_vdev_obj_delete(vdev));
+}
+
+int hdd_objmgr_release_vdev(hdd_adapter_t *adapter)
+{
+	/* allow physical vdev destroy by releasing the hdd reference */
+	wlan_objmgr_vdev_release_ref(adapter->hdd_vdev, WLAN_HDD_ID_OBJ_MGR);
+
+	adapter->hdd_vdev = NULL;
+	adapter->sessionId = HDD_SESSION_ID_INVALID;
+
+	return 0;
+}
+
+int hdd_objmgr_release_and_destroy_vdev(hdd_adapter_t *adapter)
+{
+	int errno;
+
+	errno = hdd_objmgr_destroy_vdev(adapter);
+	if (errno)
+		return errno;
+
+	return hdd_objmgr_release_vdev(adapter);
 }
 
 int hdd_objmgr_add_peer_object(struct wlan_objmgr_vdev *vdev,

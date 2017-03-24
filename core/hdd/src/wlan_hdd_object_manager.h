@@ -119,8 +119,34 @@ int hdd_objmgr_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
 			      hdd_adapter_t *adapter);
 
 /**
+ * hdd_objmgr_destroy_vdev() - Delete vdev
+ * @adapter: hdd adapter
+ *
+ * This function logically destroys the vdev in object manager. Physical
+ * deletion is prevented until the vdev is released via a call to
+ * hdd_objmgr_release_vdev(). E.g.
+ *
+ *	hdd_objmgr_destroy_vdev(...);
+ *	sme_close_session(...);
+ *	hdd_objmgr_release_vdev(...);
+ *
+ * Return: 0 for success, negative error code for failure
+ */
+int hdd_objmgr_destroy_vdev(hdd_adapter_t *adapter);
+
+/**
+ * hdd_objmgr_release_vdev() - releases the vdev from adapter
+ * @adapter: hdd adapter
+ *
+ * See also hdd_objmgr_destroy_vdev()
+ *
+ * Return: 0 for success, negative error code for failure
+ */
+int hdd_objmgr_release_vdev(hdd_adapter_t *adapter);
+
+/**
  * hdd_objmgr_release_and_destroy_vdev() - Delete vdev and remove from adapter
- * @hdd_ctx: Hdd context
+ * @adapter: hdd adapter
  *
  * This API deletes vdev object and release its reference from hdd adapter
  *

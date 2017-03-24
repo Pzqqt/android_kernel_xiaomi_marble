@@ -113,9 +113,8 @@ void hdd_nan_datapath_target_config(hdd_context_t *hdd_ctx,
  */
 static int hdd_close_ndi(hdd_adapter_t *adapter)
 {
-	int rc;
+	int errno;
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	uint32_t timeout = WLAN_WAIT_TIME_SESSIONOPENCLOSE;
 
 	ENTER();
 
@@ -138,24 +137,9 @@ static int hdd_close_ndi(hdd_adapter_t *adapter)
 	cancel_work_sync(&adapter->ipv6NotifierWorkQueue);
 #endif
 #endif
-	/* check if the session is open */
-	if (test_bit(SME_SESSION_OPENED, &adapter->event_flags)) {
-		INIT_COMPLETION(adapter->session_close_comp_var);
-		if (QDF_STATUS_SUCCESS == sme_close_session(hdd_ctx->hHal,
-				adapter->sessionId,
-				hdd_sme_close_session_callback, adapter)) {
-			/* Block on a timed completion variable */
-			rc = wait_for_completion_timeout(
-				&adapter->session_close_comp_var,
-				msecs_to_jiffies(timeout));
-			if (!rc)
-				hdd_err("session close timeout");
-
-			rc = hdd_objmgr_release_and_destroy_vdev(adapter);
-			if (rc)
-				hdd_err("vdev delete failed");
-		}
-	}
+	errno = hdd_vdev_destroy(adapter);
+	if (errno)
+		hdd_err("failed to destroy vdev: %d", errno);
 
 	/* We are good to close the adapter */
 	hdd_close_adapter(hdd_ctx, adapter, true);

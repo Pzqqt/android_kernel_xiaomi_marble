@@ -2915,8 +2915,8 @@ int hdd_vdev_destroy(hdd_adapter_t *adapter)
 		return -EINVAL;
 	}
 
-	/* do vdev create via objmgr */
-	errno = hdd_objmgr_release_and_destroy_vdev(adapter);
+	/* do vdev logical destroy via objmgr */
+	errno = hdd_objmgr_destroy_vdev(adapter);
 	if (errno) {
 		hdd_err("failed to destroy objmgr vdev: %d", errno);
 		return errno;
@@ -2942,6 +2942,13 @@ int hdd_vdev_destroy(hdd_adapter_t *adapter)
 			hdd_ndp_session_end_handler(adapter);
 		clear_bit(SME_SESSION_OPENED, &adapter->event_flags);
 		return -ETIMEDOUT;
+	}
+
+	/* now that sme session is closed, allow physical vdev destroy */
+	errno = hdd_objmgr_release_vdev(adapter);
+	if (errno) {
+		hdd_err("failed to release objmgr vdev: %d", errno);
+		return errno;
 	}
 
 	hdd_info("vdev destroyed successfully");
@@ -3239,7 +3246,6 @@ void hdd_deinit_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 static void hdd_cleanup_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 				bool rtnl_held)
 {
-	int ret;
 	struct net_device *pWlanDev = NULL;
 
 	if (adapter)
@@ -3248,10 +3254,6 @@ static void hdd_cleanup_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 		hdd_err("adapter is Null");
 		return;
 	}
-
-	ret = hdd_objmgr_release_and_destroy_vdev(adapter);
-	if (ret)
-		hdd_err("vdev delete failed");
 
 	hdd_debugfs_exit(adapter);
 
@@ -3851,54 +3853,6 @@ void wlan_hdd_reset_prob_rspies(hdd_adapter_t *pHostapdAdapter)
 	}
 }
 
-/**
- * hdd_wait_for_sme_close_sesion() - Close and wait for SME session close
- * @hdd_ctx: HDD context which is already NULL validated
- * @adapter: HDD adapter which is already NULL validated
- *
- * Close the SME session and wait for its completion, if needed.
- *
- * Return: None
- */
-static void hdd_wait_for_sme_close_sesion(hdd_context_t *hdd_ctx,
-					hdd_adapter_t *adapter)
-{
-	int ret;
-	unsigned long rc;
-
-	if (!test_bit(SME_SESSION_OPENED, &adapter->event_flags)) {
-		hdd_err("session is not opened:%d", adapter->sessionId);
-		return;
-	}
-
-	INIT_COMPLETION(adapter->session_close_comp_var);
-	if (QDF_STATUS_SUCCESS ==
-			sme_close_session(hdd_ctx->hHal, adapter->sessionId,
-				hdd_sme_close_session_callback,
-				adapter)) {
-		/*
-		 * Block on a completion variable. Can't wait
-		 * forever though.
-		 */
-		rc = wait_for_completion_timeout(
-				&adapter->session_close_comp_var,
-				msecs_to_jiffies
-				(WLAN_WAIT_TIME_SESSIONOPENCLOSE));
-		if (!rc) {
-			hdd_err("failure waiting for session_close_comp_var");
-			if (adapter->device_mode == QDF_NDI_MODE)
-				hdd_ndp_session_end_handler(adapter);
-			clear_bit(SME_SESSION_OPENED, &adapter->event_flags);
-			return;
-		}
-		ret = hdd_objmgr_release_and_destroy_vdev(adapter);
-		if (ret)
-			hdd_err("vdev delete failed");
-
-		adapter->sessionId = HDD_SESSION_ID_INVALID;
-	}
-}
-
 QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			    const bool bCloseSession)
 {
@@ -3992,7 +3946,7 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 				hdd_err("Error: Can't disconnect adapter");
 				return QDF_STATUS_E_FAILURE;
 			}
-			hdd_wait_for_sme_close_sesion(hdd_ctx, adapter);
+			hdd_vdev_destroy(adapter);
 		}
 		break;
 
@@ -4071,7 +4025,7 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			adapter->sessionCtx.ap.beacon = NULL;
 		}
 		if (true == bCloseSession)
-			hdd_wait_for_sme_close_sesion(hdd_ctx, adapter);
+			hdd_vdev_destroy(adapter);
 		mutex_unlock(&hdd_ctx->sap_lock);
 		break;
 	case QDF_OCB_MODE:
