@@ -10583,6 +10583,57 @@ void wlan_hdd_cfg80211_update_wiphy_caps(struct wiphy *wiphy)
 }
 
 /* This function registers for all frame which supplicant is interested in */
+#ifdef CONVERGED_P2P_ENABLE
+void wlan_hdd_cfg80211_register_frames(hdd_adapter_t *pAdapter)
+{
+	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
+	/* Register for all P2P action, public action etc frames */
+	uint16_t type = (SIR_MAC_MGMT_FRAME << 2) | (SIR_MAC_MGMT_ACTION << 4);
+
+	ENTER();
+
+	/* Register frame indication call back */
+	sme_register_mgmt_frame_ind_callback(hHal, hdd_indicate_mgmt_frame);
+
+	/* Register for p2p ack indication */
+	sme_register_p2p_ack_ind_callback(hHal, hdd_send_action_cnf_cb);
+
+	/* Right now we are registering these frame when driver is getting
+	 * initialized. Once we will move to 2.6.37 kernel, in which we have
+	 * frame register ops, we will move this code as a part of that
+	 */
+
+	/* GAS Initial Request */
+	sme_register_mgmt_frame(hHal, SME_SESSION_ID_ANY, type,
+				(uint8_t *) GAS_INITIAL_REQ,
+				GAS_INITIAL_REQ_SIZE);
+
+	/* GAS Initial Response */
+	sme_register_mgmt_frame(hHal, SME_SESSION_ID_ANY, type,
+				(uint8_t *) GAS_INITIAL_RSP,
+				GAS_INITIAL_RSP_SIZE);
+
+	/* GAS Comeback Request */
+	sme_register_mgmt_frame(hHal, SME_SESSION_ID_ANY, type,
+				(uint8_t *) GAS_COMEBACK_REQ,
+				GAS_COMEBACK_REQ_SIZE);
+
+	/* GAS Comeback Response */
+	sme_register_mgmt_frame(hHal, SME_SESSION_ID_ANY, type,
+				(uint8_t *) GAS_COMEBACK_RSP,
+				GAS_COMEBACK_RSP_SIZE);
+
+	/* WNM BSS Transition Request frame */
+	sme_register_mgmt_frame(hHal, SME_SESSION_ID_ANY, type,
+				(uint8_t *) WNM_BSS_ACTION_FRAME,
+				WNM_BSS_ACTION_FRAME_SIZE);
+
+	/* WNM-Notification */
+	sme_register_mgmt_frame(hHal, pAdapter->sessionId, type,
+				(uint8_t *) WNM_NOTIFICATION_FRAME,
+				WNM_NOTIFICATION_FRAME_SIZE);
+}
+#else
 void wlan_hdd_cfg80211_register_frames(hdd_adapter_t *pAdapter)
 {
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
@@ -10642,6 +10693,7 @@ void wlan_hdd_cfg80211_register_frames(hdd_adapter_t *pAdapter)
 				(uint8_t *) WNM_NOTIFICATION_FRAME,
 				WNM_NOTIFICATION_FRAME_SIZE);
 }
+#endif
 
 void wlan_hdd_cfg80211_deregister_frames(hdd_adapter_t *pAdapter)
 {

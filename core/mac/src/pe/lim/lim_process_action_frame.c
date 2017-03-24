@@ -1895,9 +1895,10 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 	uint32_t frame_len;
 	tpSirMacVendorSpecificFrameHdr vendor_specific;
 	uint8_t oui[] = { 0x00, 0x00, 0xf0 };
+#ifndef CONVERGED_P2P_ENABLE
 	tpSirMacVendorSpecificPublicActionFrameHdr pub_action;
 	uint8_t p2p_oui[] = { 0x50, 0x6F, 0x9A, 0x09 };
-
+#endif
 #ifdef WLAN_FEATURE_11W
 	if (lim_is_robust_mgmt_action_frame(action_hdr->category) &&
 	   lim_drop_unprotected_action_frame(mac_ctx, session,
@@ -2152,6 +2153,7 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 	break;
 	case SIR_MAC_ACTION_PUBLIC_USAGE:
 		switch (action_hdr->actionID) {
+#ifndef CONVERGED_P2P_ENABLE
 		case SIR_MAC_ACTION_VENDOR_SPECIFIC:
 			pub_action =
 				(tpSirMacVendorSpecificPublicActionFrameHdr)
@@ -2182,6 +2184,7 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 					pub_action->Oui[2], pub_action->Oui[3]);
 			}
 		break;
+#endif
 		/* Handle vendor specific action */
 		case SIR_MAC_ACTION_VENDOR_SPECIFIC_CATEGORY:
 		{
@@ -2367,7 +2370,7 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
  * @param  *pBd - A pointer to Buffer descriptor + associated PDUs
  * @return None
  */
-
+#ifndef CONVERGED_P2P_ENABLE
 void lim_process_action_frame_no_session(tpAniSirGlobal pMac, uint8_t *pBd)
 {
 	uint8_t *pBody = WMA_GET_RX_MPDU_DATA(pBd);
@@ -2431,3 +2434,8 @@ void lim_process_action_frame_no_session(tpAniSirGlobal pMac, uint8_t *pBd)
 
 	}
 }
+#else
+void lim_process_action_frame_no_session(tpAniSirGlobal pMac, uint8_t *pBd)
+{
+}
+#endif
