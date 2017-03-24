@@ -3525,10 +3525,10 @@ static void ol_txrx_peer_detach(void *ppeer)
  * ol_txrx_peer_detach_force_delete() - Detach and delete a peer's data object
  * @peer - the object to detach
  *
- * Detach a peer and force the peer object to be removed. It is called during
+ * Detach a peer and force peer object to be removed. It is called during
  * roaming scenario when the firmware has already deleted a peer.
- * Peer object is freed immediately to avoid duplicate peers during roam sync
- * indication processing.
+ * Remove it from the peer_id_to_object map. Peer object is actually freed
+ * when last reference is deleted.
  *
  * Return: None
  */
@@ -3541,18 +3541,7 @@ static void ol_txrx_peer_detach_force_delete(void *ppeer)
 		__func__, peer, qdf_atomic_read(&peer->ref_cnt));
 
 	/* Clear the peer_id_to_obj map entries */
-	qdf_spin_lock_bh(&pdev->peer_map_unmap_lock);
 	ol_txrx_peer_remove_obj_map_entries(pdev, peer);
-	qdf_spin_unlock_bh(&pdev->peer_map_unmap_lock);
-
-	/*
-	 * Set ref_cnt = 1 so that OL_TXRX_PEER_UNREF_DELETE() called by
-	 * ol_txrx_peer_detach() will actually delete this peer entry properly.
-	 */
-	qdf_spin_lock_bh(&pdev->peer_ref_mutex);
-	qdf_atomic_set(&peer->ref_cnt, 1);
-	qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
-
 	ol_txrx_peer_detach(peer);
 }
 
