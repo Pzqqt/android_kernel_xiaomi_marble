@@ -237,14 +237,16 @@ qdf_sysctl_decl(ath_sysctl_pktlog_enable, ctl, write, filp, buffer, lenp, ppos)
 					(struct hif_opaque_softc *)scn, enable,
 					cds_is_packet_log_enabled(), 0, 1);
 		else
-			printk(PKTLOG_TAG "%s:proc_dointvec failed\n",
-			       __func__);
+			QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_DEBUG,
+				  "Line:%d %s:proc_dointvec failed reason %d",
+				   __LINE__, __func__, ret);
 	} else {
 		ret = QDF_SYSCTL_PROC_DOINTVEC(ctl, write, filp, buffer,
 					       lenp, ppos);
 		if (ret)
-			printk(PKTLOG_TAG "%s:proc_dointvec failed\n",
-			       __func__);
+			QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_DEBUG,
+				  "Line:%d %s:proc_dointvec failed reason %d",
+				   __LINE__, __func__, ret);
 	}
 
 	ctl->data = NULL;
