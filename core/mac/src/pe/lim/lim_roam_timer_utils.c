@@ -42,8 +42,7 @@ uint32_t lim_create_timers_host_roam(tpAniSirGlobal mac_ctx)
 	uint32_t cfg_value;
 	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_REASSOCIATION_FAILURE_TIMEOUT,
 			     &cfg_value) != eSIR_SUCCESS)
-		lim_log(mac_ctx, LOGW,
-			FL("could not retrieve ReassocFailureTimeout value"));
+		pe_warn("could not retrieve ReassocFailureTimeout value");
 
 	cfg_value = SYS_MS_TO_TICKS(cfg_value);
 	/* Create Association failure timer and activate it later */
@@ -61,7 +60,7 @@ uint32_t lim_create_timers_host_roam(tpAniSirGlobal mac_ctx)
 			"FT PREAUTH RSP TIMEOUT",
 			lim_timer_handler, SIR_LIM_FT_PREAUTH_RSP_TIMEOUT,
 			cfg_value, 0, TX_NO_ACTIVATE) != TX_SUCCESS) {
-		lim_log(mac_ctx, LOGE, FL("failed to create Join fail timer"));
+		pe_err("failed to create Join fail timer");
 		goto err_roam_timer;
 	}
 	return TX_SUCCESS;
@@ -112,29 +111,25 @@ void lim_deactivate_and_change_timer_host_roam(tpAniSirGlobal mac_ctx,
 		if (tx_timer_deactivate
 			(&mac_ctx->lim.limTimers.gLimReassocFailureTimer) !=
 				TX_SUCCESS)
-			lim_log(mac_ctx, LOGW,
-				FL("unable to deactivate Reassoc fail timer"));
+			pe_warn("unable to deactivate Reassoc fail timer");
 
 		if (wlan_cfg_get_int(mac_ctx,
 				WNI_CFG_REASSOCIATION_FAILURE_TIMEOUT,
 				&val) != eSIR_SUCCESS)
-			lim_log(mac_ctx, LOGW,
-				FL("could not get ReassocFailureTimeout val"));
+			pe_warn("could not get ReassocFailureTimeout val");
 
 		val = SYS_MS_TO_TICKS(val);
 		if (tx_timer_change
 			(&mac_ctx->lim.limTimers.gLimReassocFailureTimer, val,
 			 0) != TX_SUCCESS)
-			lim_log(mac_ctx, LOGW,
-				FL("unable to change Reassoc fail timer"));
+			pe_warn("unable to change Reassoc fail timer");
 		break;
 
 	case eLIM_FT_PREAUTH_RSP_TIMER:
 		if (tx_timer_deactivate
 			(&mac_ctx->lim.limTimers.gLimFTPreAuthRspTimer) !=
 			TX_SUCCESS) {
-			lim_log(mac_ctx, LOGE,
-				FL("Unable to deactivate Preauth Fail timer"));
+			pe_err("Unable to deactivate Preauth Fail timer");
 			return;
 		}
 		val = 1000;
@@ -142,8 +137,7 @@ void lim_deactivate_and_change_timer_host_roam(tpAniSirGlobal mac_ctx,
 		if (tx_timer_change(
 				&mac_ctx->lim.limTimers.gLimFTPreAuthRspTimer,
 				val, 0) != TX_SUCCESS) {
-			lim_log(mac_ctx, LOGE,
-				FL("Unable to change Join Failure timer"));
+			pe_err("Unable to change Join Failure timer");
 			return;
 		}
 		break;
