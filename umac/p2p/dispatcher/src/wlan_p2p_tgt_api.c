@@ -140,13 +140,13 @@ QDF_STATUS tgt_p2p_mgmt_ota_comp_cb(void *context, qdf_nbuf_t buf,
 	p2p_soc_obj = tx_ctx->p2p_soc_obj;
 
 	tx_conf_event = qdf_mem_malloc(sizeof(*tx_conf_event));
-	if (tx_conf_event == NULL) {
+	if (!tx_conf_event) {
 		p2p_err("Failed to allocate tx cnf event");
 		return QDF_STATUS_E_NOMEM;
 	}
 
 	tx_cnf = qdf_mem_malloc(sizeof(*tx_cnf));
-	if (tx_cnf == NULL) {
+	if (!tx_cnf) {
 		p2p_err("Failed to allocate tx cnf");
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -193,14 +193,14 @@ QDF_STATUS tgt_p2p_mgmt_frame_rx_cb(struct wlan_objmgr_psoc *psoc,
 
 	p2p_soc_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
 			WLAN_UMAC_COMP_P2P);
-	if (p2p_soc_obj == NULL) {
+	if (!p2p_soc_obj) {
 		p2p_err("p2p ctx is NULL, drop this frame");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (peer == NULL) {
+	if (!peer) {
 		roc_ctx = p2p_find_current_roc_ctx(p2p_soc_obj);
-		if (roc_ctx == NULL) {
+		if (!roc_ctx) {
 			p2p_err("current roc ctx is null, can't get vdev id");
 			return QDF_STATUS_E_FAILURE;
 		} else {
@@ -210,7 +210,7 @@ QDF_STATUS tgt_p2p_mgmt_frame_rx_cb(struct wlan_objmgr_psoc *psoc,
 		wlan_peer_obj_lock(peer);
 		vdev = wlan_peer_get_vdev(peer);
 		wlan_peer_obj_unlock(peer);
-		if (vdev == NULL) {
+		if (!vdev) {
 			p2p_err("vdev is NULL in peer, drop this frame");
 			return QDF_STATUS_E_FAILURE;
 		}
@@ -220,14 +220,14 @@ QDF_STATUS tgt_p2p_mgmt_frame_rx_cb(struct wlan_objmgr_psoc *psoc,
 	}
 
 	rx_mgmt_event = qdf_mem_malloc(sizeof(*rx_mgmt_event));
-	if (rx_mgmt_event == NULL) {
+	if (!rx_mgmt_event) {
 		p2p_err("Failed to allocate rx mgmt event");
 		return QDF_STATUS_E_NOMEM;
 	}
 
 	rx_mgmt = qdf_mem_malloc(sizeof(*rx_mgmt) +
 			mgmt_rx_params->buf_len);
-	if (rx_mgmt == NULL) {
+	if (!rx_mgmt) {
 		p2p_err("Failed to allocate rx mgmt frame");
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -237,7 +237,7 @@ QDF_STATUS tgt_p2p_mgmt_frame_rx_cb(struct wlan_objmgr_psoc *psoc,
 	rx_mgmt->frame_len = mgmt_rx_params->buf_len;
 	rx_mgmt->rx_chan = mgmt_rx_params->channel;
 	rx_mgmt->vdev_id = vdev_id;
-	rx_mgmt->frm_type = (wh)->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
+	rx_mgmt->frm_type = frm_type;
 	rx_mgmt->rx_rssi = mgmt_rx_params->snr +
 				P2P_NOISE_FLOOR_DBM_DEFAULT;
 	rx_mgmt_event->rx_mgmt = rx_mgmt;
