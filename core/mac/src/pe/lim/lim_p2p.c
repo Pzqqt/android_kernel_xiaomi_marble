@@ -85,8 +85,7 @@ static QDF_STATUS lim_send_hal_req_remain_on_chan_offload(tpAniSirGlobal pMac,
 
 	pScanOffloadReq = qdf_mem_malloc(sizeof(tSirScanOffloadReq));
 	if (NULL == pScanOffloadReq) {
-		lim_log(pMac, LOGE,
-			FL("Memory allocation failed for pScanOffloadReq"));
+		pe_err("Memory allocation failed for pScanOffloadReq");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -108,15 +107,13 @@ static QDF_STATUS lim_send_hal_req_remain_on_chan_offload(tpAniSirGlobal pMac,
 	pScanOffloadReq->scan_id = pRemOnChnReq->scan_id;
 	pScanOffloadReq->scan_requestor_id = ROC_SCAN_REQUESTOR_ID;
 
-	lim_log(pMac, LOGD,
-		FL("Req-rem-on-channel: duration %u, session %hu, chan %hu"),
+	pe_debug("Req-rem-on-channel: duration: %u session: %hu chan: %hu",
 		pRemOnChnReq->duration, pRemOnChnReq->sessionId,
 		pRemOnChnReq->chnNum);
 
 	rc = wma_post_ctrl_msg(pMac, &msg);
 	if (rc != eSIR_SUCCESS) {
-		lim_log(pMac, LOGE, FL("wma_post_ctrl_msg() return failure %u"),
-			rc);
+		pe_err("wma_post_ctrl_msg() return failure: %u", rc);
 		qdf_mem_free(pScanOffloadReq);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -201,9 +198,7 @@ void lim_convert_active_channel_to_passive_channel(tpAniSirGlobal pMac)
 		if (tx_timer_activate
 			    (&pMac->lim.limTimers.gLimActiveToPassiveChannelTimer)
 		    != TX_SUCCESS) {
-			lim_log(pMac, LOGE,
-				FL
-					("Could not activate Active to Passive Channel  timer"));
+			pe_err("Could not activate Active to Passive Channel  timer");
 		}
 	}
 
@@ -233,21 +228,20 @@ void lim_process_remain_on_chn_timeout(tpAniSirGlobal mac_ctx)
 	 * In that case don't process Channel Timeout
 	 */
 	if (tx_timer_running(roc_timer)) {
-		lim_log(mac_ctx, LOGE,
-			FL("already timer is running and not processing "));
+		pe_err("already timer is running and not processing ");
 		return;
 	}
 
 	lim_deactivate_and_change_timer(mac_ctx, eLIM_REMAIN_CHN_TIMER);
 	if (NULL == mac_ctx->lim.gpLimRemainOnChanReq) {
-		lim_log(mac_ctx, LOGE, FL("No Remain on channel pending"));
+		pe_err("No Remain on channel pending");
 		return;
 	}
 
 	/* get the previous valid LINK state */
 	if (lim_set_link_state(mac_ctx, eSIR_LINK_IDLE_STATE, null_bssid,
 		mac_ctx->lim.gSelfMacAddr, NULL, NULL) != eSIR_SUCCESS) {
-		lim_log(mac_ctx, LOGE, FL("Unable to change link state"));
+		pe_err("Unable to change link state");
 		return;
 	}
 
@@ -258,8 +252,7 @@ void lim_process_remain_on_chn_timeout(tpAniSirGlobal mac_ctx)
 			roc_timer->sessionId);
 		/* get the session */
 		if (session == NULL) {
-			lim_log(mac_ctx, LOGE,
-				FL("Session Does not exist sessionID %d"),
+			pe_err("Session Does not exist sessionID: %d",
 				roc_timer->sessionId);
 			goto error;
 		}
@@ -285,7 +278,7 @@ void lim_exit_remain_on_channel(tpAniSirGlobal pMac, QDF_STATUS status,
 {
 
 	if (status != QDF_STATUS_SUCCESS) {
-		lim_log(pMac, LOGE, "Remain on Channel Failed");
+		pe_err("Remain on Channel Failed");
 		goto error;
 	}
 	/* Set the resume channel to Any valid channel (invalid). */
@@ -311,9 +304,7 @@ void lim_remain_on_chn_rsp(tpAniSirGlobal pMac, QDF_STATUS status, uint32_t *dat
 	tSirMacAddr nullBssid = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 	if (NULL == MsgRemainonChannel) {
-		lim_log(pMac, LOGE,
-			       "%s: No Pointer for Remain on Channel Req",
-			       __func__);
+		pe_err("%s: No Pointer for Remain on Channel Req", __func__);
 		return;
 	}
 	/* Incase of the Remain on Channel Failure Case */
@@ -327,7 +318,7 @@ void lim_remain_on_chn_rsp(tpAniSirGlobal pMac, QDF_STATUS status, uint32_t *dat
 		if (lim_set_link_state(pMac, eSIR_LINK_IDLE_STATE, nullBssid,
 				       pMac->lim.gSelfMacAddr, NULL,
 				       NULL) != eSIR_SUCCESS) {
-			lim_log(pMac, LOGE, "Unable to change link state");
+			pe_err("Unable to change link state");
 		}
 
 		pMac->lim.gLimSystemInScanLearnMode = 0;
@@ -382,8 +373,7 @@ void lim_send_sme_mgmt_frame_ind(tpAniSirGlobal pMac, uint8_t frameType,
 
 	pSirSmeMgmtFrame = qdf_mem_malloc(length);
 	if (NULL == pSirSmeMgmtFrame) {
-		lim_log(pMac, LOGE,
-			FL("AllocateMemory failed for eWNI_SME_LISTEN_RSP"));
+		pe_err("AllocateMemory failed for eWNI_SME_LISTEN_RSP");
 		return;
 	}
 
@@ -399,8 +389,7 @@ void lim_send_sme_mgmt_frame_ind(tpAniSirGlobal pMac, uint8_t frameType,
 	if (pMac->mgmt_frame_ind_cb)
 		pMac->mgmt_frame_ind_cb(pSirSmeMgmtFrame);
 	else
-		lim_log(pMac, LOGW,
-			FL("Management indication callback not registered!!"));
+		pe_warn("Management indication callback not registered!!");
 	qdf_mem_free(pSirSmeMgmtFrame);
 	return;
 }
@@ -425,8 +414,7 @@ QDF_STATUS lim_p2p_action_cnf(void *context, qdf_nbuf_t buf,
 			 * action confirmation received after
 			 * remain on channel timer expired.
 			 */
-			lim_log(pMac, LOGD,
-				FL("mgmt_frame_sessionId %d"),
+			pe_debug("mgmt_frame_sessionId: %d",
 					 mgmt_frame_sessionId);
 			if (pMac->p2p_ack_ind_cb)
 				pMac->p2p_ack_ind_cb(mgmt_frame_sessionId,
@@ -495,14 +483,12 @@ static void lim_tx_action_frame(tpAniSirGlobal mac_ctx,
 				channel_freq);
 
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			lim_log(mac_ctx, LOGE,
-				FL("couldn't send action frame"));
+			pe_err("couldn't send action frame");
 			lim_p2p_action_cnf(mac_ctx, packet, false, NULL);
 			mac_ctx->lim.mgmtFrameSessionId = 0xff;
 		} else {
 			mac_ctx->lim.mgmtFrameSessionId = mb_msg->sessionId;
-			lim_log(mac_ctx, LOGD,
-				FL("lim.actionFrameSessionId = %u"),
+			pe_debug("lim.actionFrameSessionId: %u",
 				mac_ctx->lim.mgmtFrameSessionId);
 		}
 	}
@@ -586,12 +572,11 @@ void lim_send_p2p_action_frame(tpAniSirGlobal mac_ctx,
 	uint8_t sme_session_id = 0;
 
 	msg_len = mb_msg->msgLen - sizeof(tSirMbMsgP2p);
-	lim_log(mac_ctx, LOGD, FL("sending fc->type=%d fc->subType=%d"),
+	pe_debug("sending fc->type: %d fc->subType: %d",
 		fc->type, fc->subType);
 
 	if ((!mac_ctx->lim.gpLimRemainOnChanReq) && (0 != mb_msg->wait)) {
-		lim_log(mac_ctx, LOGE,
-			FL("RemainOnChannel is not running"));
+		pe_err("RemainOnChannel is not running");
 		mac_ctx->lim.mgmtFrameSessionId = mb_msg->sessionId;
 		lim_p2p_action_cnf(mac_ctx, NULL, false, NULL);
 		mac_ctx->lim.mgmtFrameSessionId = 0xff;
@@ -691,9 +676,7 @@ void lim_send_p2p_action_frame(tpAniSirGlobal mac_ctx,
 				p2p_ie[1] += noa_len;
 			}
 			msg_len += noa_len;
-			lim_log(mac_ctx, LOGD,
-				FL("noa_len: %d orig_len: %d p2p_ie: %p"
-				" msg_len: %d nBytesToCopy: %zu "),
+			pe_debug("noa_len: %d orig_len: %d p2p_ie: %p msg_len: %d nBytesToCopy: %zu ",
 				noa_len, orig_len, p2p_ie, msg_len,
 				((p2p_ie + orig_len + 2) -
 				 (uint8_t *) mb_msg->data));
@@ -709,8 +692,7 @@ void lim_send_p2p_action_frame(tpAniSirGlobal mac_ctx,
 	qdf_status = cds_packet_alloc((uint16_t) msg_len, (void **)&frame,
 		(void **)&packet);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		lim_log(mac_ctx, LOGE,
-			FL("Failed to allocate %d bytes for a Probe Request."),
+		pe_err("Failed to allocate: %d bytes for a Probe Request",
 			msg_len);
 		return;
 	}
@@ -755,8 +737,7 @@ tSirRetStatus __lim_process_sme_no_a_update(tpAniSirGlobal pMac, uint32_t *pMsgB
 
 	pMsgNoA = qdf_mem_malloc(sizeof(tP2pPsConfig));
 	if (NULL == pMsgNoA) {
-		lim_log(pMac, LOGE,
-			FL("Unable to allocate memory during NoA Update"));
+		pe_err("Unable to allocate memory during NoA Update");
 		return eSIR_MEM_ALLOC_FAILED;
 	}
 
@@ -775,7 +756,7 @@ tSirRetStatus __lim_process_sme_no_a_update(tpAniSirGlobal pMac, uint32_t *pMsgB
 	msg.bodyval = 0;
 
 	if (eSIR_SUCCESS != wma_post_ctrl_msg(pMac, &msg)) {
-		lim_log(pMac, LOGE, FL("halPostMsgApi failed"));
+		pe_err("halPostMsgApi failed");
 		return eSIR_FAILURE;
 	}
 
