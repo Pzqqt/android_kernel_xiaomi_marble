@@ -244,13 +244,6 @@ extern enum policy_mgr_conc_next_action
  * @hw_mode: List of HW modes supported
  * @old_hw_mode_index: Old HW mode from hw_mode table
  * @new_hw_mode_index: New HW mode from hw_mode table
- * @phy_caps: PHY capability advertised by FW
- * @enable2x2: 2x2 chain mask user config
- * @gMaxConcurrentActiveSessions: Max concurrenct active
- *                              connections user config
- * @conc_system_pref: System preference of t/p, power or latancy
- *                  for Preferred Channel List table, user
- *                  config
  * @dual_mac_cfg: DBS configuration currenctly used by FW for
  *              scan & connections
  * @hw_mode_change_in_progress: This is to track if HW mode
@@ -279,7 +272,6 @@ struct policy_mgr_psoc_priv_obj {
 		struct dbs_hw_mode_info hw_mode;
 		uint32_t old_hw_mode_index;
 		uint32_t new_hw_mode_index;
-		bool enable2x2;
 		struct dual_mac_config dual_mac_cfg;
 		uint32_t hw_mode_change_in_progress;
 		struct policy_mgr_user_cfg user_cfg;
