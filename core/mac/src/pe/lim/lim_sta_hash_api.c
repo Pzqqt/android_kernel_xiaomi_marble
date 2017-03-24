@@ -67,7 +67,7 @@ tSirRetStatus lim_get_sta_hash_bssidx(tpAniSirGlobal pMac, uint16_t assocId,
 		dph_get_hash_entry(pMac, assocId, &psessionEntry->dph.dphHashTable);
 
 	if (pSta == NULL) {
-		lim_log(pMac, LOGE, FL("invalid STA %d"), assocId);
+		pe_err("invalid STA: %d", assocId);
 		return eSIR_LIM_INVALID_STA;
 	}
 
