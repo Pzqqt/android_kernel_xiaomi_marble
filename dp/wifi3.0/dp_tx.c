@@ -403,15 +403,6 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	tx_desc->pdev = pdev;
 	tx_desc->msdu_ext_desc = NULL;
 
-	if (qdf_unlikely(QDF_STATUS_SUCCESS !=
-				qdf_nbuf_map_nbytes_single(soc->osdev, nbuf,
-				QDF_DMA_TO_DEVICE, qdf_nbuf_len(nbuf)))) {
-		/* Handle failure */
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				"qdf_nbuf_map_nbytes_single failed\n");
-		goto failure;
-	}
-
 	align_pad = ((unsigned long) qdf_nbuf_mapped_paddr_get(nbuf)) & 0x7;
 	tx_desc->pkt_offset = align_pad;
 
@@ -446,6 +437,15 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 		/* Temporary WAR due to TQM VP issues */
 		tx_desc->flags |= DP_TX_DESC_FLAG_TO_FW;
 		qdf_atomic_inc(&pdev->num_tx_exception);
+	}
+
+	if (qdf_unlikely(QDF_STATUS_SUCCESS !=
+				qdf_nbuf_map(soc->osdev, nbuf,
+				QDF_DMA_TO_DEVICE))) {
+		/* Handle failure */
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"qdf_nbuf_map failed\n");
+		goto failure;
 	}
 
 	return tx_desc;
