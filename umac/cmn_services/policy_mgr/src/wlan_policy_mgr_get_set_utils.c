@@ -1674,15 +1674,16 @@ QDF_STATUS policy_mgr_get_channel_from_scan_result(
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (pm_ctx->sme_cbacks.sme_get_ap_channel_from_scan_cache) {
-		status = pm_ctx->sme_cbacks.sme_get_ap_channel_from_scan_cache
+	if (pm_ctx->sme_cbacks.sme_get_ap_channel_from_scan) {
+		status = pm_ctx->sme_cbacks.sme_get_ap_channel_from_scan
 			(roam_profile, &scan_cache, channel);
 		if (status != QDF_STATUS_SUCCESS) {
 			policy_mgr_err("Get AP channel failed");
 			return status;
 		}
-	} else
+	} else {
 		policy_mgr_err("sme_get_ap_channel_from_scan_cache NULL");
+	}
 
 	if (pm_ctx->sme_cbacks.sme_scan_result_purge)
 		status = pm_ctx->sme_cbacks.sme_scan_result_purge(scan_cache);
@@ -1907,15 +1908,16 @@ QDF_STATUS policy_mgr_change_mcc_go_beacon_interval(
 	policy_mgr_info("UPDATE Beacon Params");
 
 	if (QDF_SAP_MODE == dev_mode) {
-		if (!pm_ctx->
-		    sme_cbacks.sme_change_mcc_beacon_interval) {
+		if (pm_ctx->sme_cbacks.sme_change_mcc_beacon_interval
+		    ) {
+			status = pm_ctx->sme_cbacks.
+				sme_change_mcc_beacon_interval(vdev_id);
+			if (status == QDF_STATUS_E_FAILURE) {
+				policy_mgr_err("Failed to update Beacon Params");
+				return QDF_STATUS_E_FAILURE;
+			}
+		} else {
 			policy_mgr_err("sme_change_mcc_beacon_interval callback is NULL");
-			return QDF_STATUS_E_FAILURE;
-		}
-		status = pm_ctx->sme_cbacks.
-			sme_change_mcc_beacon_interval(vdev_id);
-		if (status == QDF_STATUS_E_FAILURE) {
-			policy_mgr_err("Failed to update Beacon Params");
 			return QDF_STATUS_E_FAILURE;
 		}
 	}
@@ -2137,13 +2139,14 @@ QDF_STATUS policy_mgr_get_nss_for_vdev(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!pm_ctx->sme_cbacks.sme_get_nss_for_vdev) {
+	if (pm_ctx->sme_cbacks.sme_get_nss_for_vdev) {
+		pm_ctx->sme_cbacks.sme_get_nss_for_vdev(
+			dev_mode, nss_2g, nss_5g);
+
+	} else {
 		policy_mgr_err("sme_get_nss_for_vdev callback is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	pm_ctx->sme_cbacks.sme_get_nss_for_vdev(
-					dev_mode, nss_2g, nss_5g);
 
 	return QDF_STATUS_SUCCESS;
 }

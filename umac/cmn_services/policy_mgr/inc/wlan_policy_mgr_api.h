@@ -758,7 +758,7 @@ struct policy_mgr_sme_cbacks {
 		uint8_t next_action, struct wlan_objmgr_psoc *psoc,
 		enum policy_mgr_conn_update_reason reason);
 	QDF_STATUS (*sme_change_mcc_beacon_interval) (uint8_t session_id);
-	QDF_STATUS (*sme_get_ap_channel_from_scan_cache) (
+	QDF_STATUS (*sme_get_ap_channel_from_scan) (
 		void *roam_profile,
 		void **scan_cache,
 		uint8_t *channel);
