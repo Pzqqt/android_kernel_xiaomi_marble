@@ -49,21 +49,22 @@
 static QDF_STATUS p2p_mgmt_rx_ops(struct wlan_objmgr_psoc *psoc,
 	bool isregister)
 {
-	struct mgmt_txrx_mgmt_frame_cb_info frm_cb_info;
+	struct mgmt_txrx_mgmt_frame_cb_info frm_cb_info[2];
 	QDF_STATUS status;
 
 	p2p_debug("psoc:%p, is register rx:%d", psoc, isregister);
 
-	frm_cb_info.frm_type = MGMT_PROBE_REQ;
-	frm_cb_info.mgmt_rx_cb = (mgmt_frame_rx_callback)
-				tgt_p2p_mgmt_frame_rx_cb;
+	frm_cb_info[0].frm_type = MGMT_PROBE_REQ;
+	frm_cb_info[0].mgmt_rx_cb = tgt_p2p_mgmt_frame_rx_cb;
+	frm_cb_info[1].frm_type = MGMT_ACTION_VENDOR_SPECIFIC;
+	frm_cb_info[1].mgmt_rx_cb = tgt_p2p_mgmt_frame_rx_cb;
 
 	if (isregister)
 		status = wlan_mgmt_txrx_register_rx_cb(psoc,
-				WLAN_UMAC_COMP_P2P, &frm_cb_info, 1);
+				WLAN_UMAC_COMP_P2P, frm_cb_info, 2);
 	else
 		status = wlan_mgmt_txrx_deregister_rx_cb(psoc,
-				WLAN_UMAC_COMP_P2P, &frm_cb_info, 1);
+				WLAN_UMAC_COMP_P2P, frm_cb_info, 2);
 
 	return status;
 }
@@ -107,6 +108,8 @@ static QDF_STATUS p2p_scan_start(struct p2p_roc_context *roc_ctx)
 	req->scan_req.chan_list[0] = wlan_chan_to_freq(roc_ctx->chan);
 	req->scan_req.dwell_time_passive = roc_ctx->duration;
 	req->scan_req.dwell_time_active = 0;
+	req->scan_req.scan_priority = SCAN_PRIORITY_HIGH;
+	req->scan_req.num_bssid = 1;
 	qdf_set_macaddr_broadcast(&req->scan_req.bssid_list[0]);
 
 	status = ucfg_scan_start(req);

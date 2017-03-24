@@ -589,23 +589,26 @@ static void p2p_init_frame_info(struct p2p_frame_info *frame_info)
 
 /**
  * p2p_get_frame_info() - get frame information from packet
- * @tx_ctx:         tx context
+ * @data_buf:          data buffer address
+ * @length:            buffer length
+ * @frame_info:        frame information
  *
  * This function gets frame information from packet.
  *
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
-static QDF_STATUS p2p_get_frame_info(struct tx_action_context *tx_ctx)
+static QDF_STATUS p2p_get_frame_info(uint8_t *data_buf, uint32_t length,
+	struct p2p_frame_info *frame_info)
 {
 	uint8_t type;
 	uint8_t sub_type;
 	uint8_t action_type;
-	uint8_t *buf = tx_ctx->buf;
-	struct p2p_frame_info *frame_info = &(tx_ctx->frame_info);
+	uint8_t *buf = data_buf;
+
+	p2p_init_frame_info(frame_info);
 
 	type = P2P_GET_TYPE_FRM_FC(buf[0]);
 	sub_type = P2P_GET_SUBTYPE_FRM_FC(buf[0]);
-	p2p_init_frame_info(frame_info);
 	if (type != P2P_FRAME_MGMT) {
 		p2p_err("just support mgmt frame");
 		return QDF_STATUS_E_FAILURE;
@@ -635,17 +638,17 @@ static QDF_STATUS p2p_get_frame_info(struct tx_action_context *tx_ctx)
 	if (buf[0] == P2P_PUBLIC_ACTION_FRAME &&
 	    buf[1] == P2P_PUBLIC_ACTION_VENDOR_SPECIFIC &&
 	    !qdf_mem_cmp(&buf[2], P2P_OUI, P2P_OUI_SIZE)) {
-		buf = tx_ctx->buf +
+		buf = data_buf +
 			P2P_PUBLIC_ACTION_FRAME_TYPE_OFFSET;
 		action_type = buf[0];
-		if (action_type >= P2P_PUBLIC_ACTION_NOT_SUPPORT)
+		if (action_type > P2P_PUBLIC_ACTION_PROV_DIS_RSP)
 			frame_info->public_action_type =
 				P2P_PUBLIC_ACTION_NOT_SUPPORT;
 		else
 			frame_info->public_action_type = action_type;
 	} else if (buf[0] == P2P_ACTION_VENDOR_SPECIFIC_CATEGORY &&
 		!qdf_mem_cmp(&buf[1], P2P_OUI, P2P_OUI_SIZE)) {
-		buf = tx_ctx->buf +
+		buf = data_buf +
 			P2P_ACTION_FRAME_TYPE_OFFSET;
 		action_type = buf[0];
 		if (action_type == P2P_ACTION_PRESENCE_RSP)
@@ -1001,6 +1004,56 @@ static QDF_STATUS p2p_move_tx_context_to_ack_queue(
 		status);
 
 	return status;
+}
+
+/**
+ * p2p_extend_roc_timer() - extend roc timer
+ * @p2p_soc_obj:   p2p soc private object
+ * @frame_info:    pointer to frame information
+ *
+ * This function extends roc timer for some of p2p public action frame.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+static QDF_STATUS p2p_extend_roc_timer(
+	struct p2p_soc_priv_obj *p2p_soc_obj,
+	struct p2p_frame_info *frame_info)
+{
+	struct p2p_roc_context *curr_roc_ctx;
+	uint32_t extend_time;
+
+	curr_roc_ctx = p2p_find_current_roc_ctx(p2p_soc_obj);
+	if (!curr_roc_ctx) {
+		p2p_debug("no running roc request currently");
+		return QDF_STATUS_SUCCESS;
+	}
+
+	if (!frame_info) {
+		p2p_err("invalid frame information");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	switch (frame_info->public_action_type) {
+	case P2P_PUBLIC_ACTION_NEG_REQ:
+	case P2P_PUBLIC_ACTION_NEG_RSP:
+		extend_time = 2 * P2P_ACTION_FRAME_DEFAULT_WAIT;
+		break;
+	case P2P_PUBLIC_ACTION_INVIT_REQ:
+	case P2P_PUBLIC_ACTION_DEV_DIS_REQ:
+		extend_time = P2P_ACTION_FRAME_DEFAULT_WAIT;
+		break;
+	default:
+		extend_time = 0;
+		break;
+	}
+
+	if (extend_time) {
+		p2p_debug("extend roc timer, duration:%d", extend_time);
+		curr_roc_ctx->duration = extend_time;
+		return p2p_restart_roc_timer(curr_roc_ctx);
+	}
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -1397,7 +1450,8 @@ QDF_STATUS p2p_process_mgmt_tx(struct tx_action_context *tx_ctx)
 		tx_ctx->buf, tx_ctx->buf_len, tx_ctx->off_chan,
 		tx_ctx->no_cck, tx_ctx->no_ack, tx_ctx->duration);
 
-	status = p2p_get_frame_info(tx_ctx);
+	status = p2p_get_frame_info(tx_ctx->buf, tx_ctx->buf_len,
+			&(tx_ctx->frame_info));
 	if (status != QDF_STATUS_SUCCESS) {
 		p2p_err("unsupport frame");
 		status = QDF_STATUS_E_INVAL;
@@ -1547,6 +1601,7 @@ QDF_STATUS p2p_process_rx_mgmt(
 	struct p2p_rx_mgmt_frame *rx_mgmt;
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 	struct p2p_start_param *start_param;
+	struct p2p_frame_info frame_info;
 
 	p2p_soc_obj = rx_mgmt_event->p2p_soc_obj;
 	rx_mgmt = rx_mgmt_event->rx_mgmt;
@@ -1561,6 +1616,27 @@ QDF_STATUS p2p_process_rx_mgmt(
 		p2p_soc_obj->soc, rx_mgmt->frame_len,
 		rx_mgmt->rx_chan, rx_mgmt->vdev_id, rx_mgmt->frm_type,
 		rx_mgmt->rx_rssi, rx_mgmt->buf);
+
+	if (rx_mgmt->frm_type == MGMT_ACTION_VENDOR_SPECIFIC) {
+		p2p_get_frame_info(rx_mgmt->buf, rx_mgmt->frame_len,
+				&frame_info);
+
+		p2p_debug("action_sub_type %u, action_type %d",
+				frame_info.public_action_type,
+				frame_info.action_type);
+
+		if ((frame_info.public_action_type ==
+			P2P_PUBLIC_ACTION_NOT_SUPPORT) &&
+		   (frame_info.action_type ==
+			P2P_ACTION_NOT_SUPPORT)) {
+			p2p_debug("non-p2p frame, drop it");
+			qdf_mem_free(rx_mgmt);
+			return QDF_STATUS_SUCCESS;
+		} else {
+			p2p_debug("p2p frame, extend roc accordingly");
+			p2p_extend_roc_timer(p2p_soc_obj, &frame_info);
+		}
+	}
 
 	start_param = p2p_soc_obj->start_param;
 	if (start_param->rx_cb)
