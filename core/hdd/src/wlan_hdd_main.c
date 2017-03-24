@@ -9762,8 +9762,7 @@ QDF_STATUS wlan_hdd_check_custom_con_channel_rules(hdd_adapter_t *sta_adapter,
 
 	hdd_ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(ap_adapter);
 	status =
-	 sme_get_ap_channel_from_scan_cache(WLAN_HDD_GET_HAL_CTX(sta_adapter),
-					    roam_profile,
+	 sme_get_ap_channel_from_scan_cache(roam_profile,
 					    scan_cache,
 					    &channel_id);
 	if ((QDF_STATUS_SUCCESS == status)) {

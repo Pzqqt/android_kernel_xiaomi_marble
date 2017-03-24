@@ -124,6 +124,28 @@ QDF_STATUS sme_release_global_lock(tSmeStruct *psSme)
 	return status;
 }
 
+static tpAniSirGlobal sme_get_mac_context(void)
+{
+	tpAniSirGlobal mac_ctx;
+	tHalHandle h_hal;
+
+	h_hal = cds_get_context(QDF_MODULE_ID_SME);
+	if (NULL == h_hal) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
+		FL("invalid h_hal"));
+		return NULL;
+	}
+
+	mac_ctx = PMAC_STRUCT(h_hal);
+	if (NULL == mac_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+		FL("Invalid MAC context"));
+		return NULL;
+	}
+
+	return mac_ctx;
+}
+
 /**
  * sme_process_set_hw_mode_resp() - Process set HW mode response
  * @mac: Global MAC pointer
@@ -1336,6 +1358,11 @@ QDF_STATUS sme_start(tHalHandle hHal)
 		sme_cbacks.sme_pdev_set_pcl = sme_pdev_set_pcl;
 		sme_cbacks.sme_soc_set_dual_mac_config =
 			sme_soc_set_dual_mac_config;
+		sme_cbacks.sme_change_mcc_beacon_interval =
+			sme_change_mcc_beacon_interval;
+		sme_cbacks.sme_get_ap_channel_from_scan =
+			sme_get_ap_channel_from_scan;
+		sme_cbacks.sme_scan_result_purge = sme_scan_result_purge;
 		status = policy_mgr_register_sme_cb(pMac->psoc, &sme_cbacks);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			sms_log(pMac, LOGE,
@@ -3088,6 +3115,31 @@ QDF_STATUS sme_scan_get_result(tHalHandle hHal, uint8_t sessionId,
 }
 
 /**
+ * sme_get_ap_channel_from_scan() - a wrapper function to get
+ *      				  AP's channel id from
+ *      				  CSR by filtering the
+ *      				  result which matches
+ *      				  our roam profile.
+ * @profile: SAP profile
+ * @ap_chnl_id: pointer to channel id of SAP. Fill the value after finding the
+ *              best ap from scan cache.
+ *
+ * This function is written to get AP's channel id from CSR by filtering
+ * the result which matches our roam profile. This is a synchronous call.
+ *
+ * Return: QDF_STATUS.
+ */
+QDF_STATUS sme_get_ap_channel_from_scan(void *profile,
+					tScanResultHandle *scan_cache,
+					uint8_t *ap_chnl_id)
+{
+	return sme_get_ap_channel_from_scan_cache((tCsrRoamProfile *)
+						  profile,
+						  scan_cache,
+						  ap_chnl_id);
+}
+
+/**
  * sme_get_ap_channel_from_scan_cache() - a wrapper function to get AP's
  *                                        channel id from CSR by filtering the
  *                                        result which matches our roam profile.
@@ -3100,13 +3152,12 @@ QDF_STATUS sme_scan_get_result(tHalHandle hHal, uint8_t sessionId,
  *
  * Return: QDF_STATUS.
  */
-QDF_STATUS sme_get_ap_channel_from_scan_cache(tHalHandle hal_handle,
-					tCsrRoamProfile *profile,
-					tScanResultHandle *scan_cache,
-					uint8_t *ap_chnl_id)
+QDF_STATUS sme_get_ap_channel_from_scan_cache(
+	tCsrRoamProfile *profile, tScanResultHandle *scan_cache,
+	uint8_t *ap_chnl_id)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_handle);
+	tpAniSirGlobal mac_ctx = sme_get_mac_context();
 	tCsrScanResultFilter *scan_filter = NULL;
 	tScanResultHandle filtered_scan_result = NULL;
 	tSirBssDescription first_ap_profile;
@@ -3155,7 +3206,7 @@ QDF_STATUS sme_get_ap_channel_from_scan_cache(tHalHandle hal_handle,
 	}
 	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (QDF_STATUS_SUCCESS == status) {
-		status = csr_scan_get_result(hal_handle, scan_filter,
+		status = csr_scan_get_result(mac_ctx, scan_filter,
 					  &filtered_scan_result);
 		if (QDF_STATUS_SUCCESS == status) {
 			csr_get_bssdescr_from_scan_handle(filtered_scan_result,
@@ -3437,18 +3488,18 @@ tCsrScanResultInfo *sme_scan_result_get_next(tHalHandle hHal,
     calling this function and even before this function reutrns.
     \return QDF_STATUS
    ---------------------------------------------------------------------------*/
-QDF_STATUS sme_scan_result_purge(tHalHandle hHal, tScanResultHandle hScanResult)
+QDF_STATUS sme_scan_result_purge(tScanResultHandle hScanResult)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	tpAniSirGlobal mac_ctx = sme_get_mac_context();
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
 			 TRACE_CODE_SME_RX_HDD_MSG_SCAN_RESULT_PURGE,
 			 NO_SESSION, 0));
-	status = sme_acquire_global_lock(&pMac->sme);
+	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_scan_result_purge(hHal, hScanResult);
-		sme_release_global_lock(&pMac->sme);
+		status = csr_scan_result_purge(mac_ctx, hScanResult);
+		sme_release_global_lock(&mac_ctx->sme);
 	}
 
 	return status;
@@ -5926,16 +5977,17 @@ QDF_STATUS sme_roam_update_apwparsni_es(tHalHandle hHal, uint8_t sessionId,
 			The API finished and failed.
 
    -------------------------------------------------------------------------------*/
-QDF_STATUS sme_change_mcc_beacon_interval(tHalHandle hHal, uint8_t sessionId)
+QDF_STATUS sme_change_mcc_beacon_interval(uint8_t sessionId)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	tpAniSirGlobal mac_ctx = sme_get_mac_context();
 
-	sms_log(pMac, LOG1, FL("Update Beacon PARAMS "));
-	status = sme_acquire_global_lock(&pMac->sme);
+	sms_log(mac_ctx, LOG1, FL("Update Beacon PARAMS "));
+	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_send_chng_mcc_beacon_interval(pMac, sessionId);
-		sme_release_global_lock(&pMac->sme);
+		status = csr_send_chng_mcc_beacon_interval(mac_ctx,
+							   sessionId);
+		sme_release_global_lock(&mac_ctx->sme);
 	}
 	return status;
 }
@@ -6996,28 +7048,6 @@ QDF_STATUS sme_set_tsf_gpio(tHalHandle h_hal, uint32_t pinvalue)
 	return status;
 }
 #endif
-
-static tpAniSirGlobal sme_get_mac_context(void)
-{
-	tpAniSirGlobal mac_ctx;
-	tHalHandle h_hal;
-
-	h_hal = cds_get_context(QDF_MODULE_ID_SME);
-	if (NULL == h_hal) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
-		FL("invalid h_hal"));
-		return NULL;
-	}
-
-	mac_ctx = PMAC_STRUCT(h_hal);
-	if (NULL == mac_ctx) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-		FL("Invalid MAC context"));
-		return NULL;
-	}
-
-	return mac_ctx;
-}
 
 QDF_STATUS sme_get_cfg_valid_channels(uint8_t *aValidChannels,
 				      uint32_t *len)

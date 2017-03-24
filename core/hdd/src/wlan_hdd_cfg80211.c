@@ -12559,7 +12559,7 @@ int wlan_hdd_cfg80211_update_bss(struct wiphy *wiphy,
 		pScanResult = sme_scan_result_get_next(hHal, pResult);
 	}
 
-	sme_scan_result_purge(hHal, pResult);
+	sme_scan_result_purge(pResult);
 	/*
 	 * For SAP mode, scan is invoked by hostapd during SAP start
 	 * if hostapd is restarted, we need to flush previous scan

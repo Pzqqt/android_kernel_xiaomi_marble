@@ -261,8 +261,11 @@ QDF_STATUS sme_scan_request(tHalHandle hHal, uint8_t sessionId,
 QDF_STATUS sme_scan_get_result(tHalHandle hHal, uint8_t sessionId,
 		tCsrScanResultFilter *pFilter,
 		tScanResultHandle *phResult);
-QDF_STATUS sme_get_ap_channel_from_scan_cache(tHalHandle hHal,
+QDF_STATUS sme_get_ap_channel_from_scan_cache(
 		tCsrRoamProfile *profile,
+		tScanResultHandle *scan_cache,
+		uint8_t *ap_chnl_id);
+QDF_STATUS sme_get_ap_channel_from_scan(void *profile,
 		tScanResultHandle *scan_cache,
 		uint8_t *ap_chnl_id);
 bool sme_store_joinreq_param(tHalHandle hal_handle,
@@ -282,8 +285,7 @@ tCsrScanResultInfo *sme_scan_result_get_first(tHalHandle,
 		tScanResultHandle hScanResult);
 tCsrScanResultInfo *sme_scan_result_get_next(tHalHandle,
 		tScanResultHandle hScanResult);
-QDF_STATUS sme_scan_result_purge(tHalHandle hHal,
-		tScanResultHandle hScanResult);
+QDF_STATUS sme_scan_result_purge(tScanResultHandle hScanResult);
 QDF_STATUS sme_scan_get_pmkid_candidate_list(tHalHandle hHal, uint8_t sessionId,
 		tPmkidCandidateInfo *pPmkidList,
 		uint32_t *pNumItems);
@@ -481,7 +483,7 @@ QDF_STATUS sme_roam_update_apwpsie(tHalHandle, uint8_t sessionId,
 		tSirAPWPSIEs * pAPWPSIES);
 QDF_STATUS sme_roam_update_apwparsni_es(tHalHandle hHal, uint8_t sessionId,
 		tSirRSNie *pAPSirRSNie);
-QDF_STATUS sme_change_mcc_beacon_interval(tHalHandle hHal, uint8_t sessionId);
+QDF_STATUS sme_change_mcc_beacon_interval(uint8_t sessionId);
 QDF_STATUS sme_set_host_offload(tHalHandle hHal, uint8_t sessionId,
 		tpSirHostOffloadReq pRequest);
 QDF_STATUS sme_set_keep_alive(tHalHandle hHal, uint8_t sessionId,

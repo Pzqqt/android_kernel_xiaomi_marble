@@ -984,7 +984,7 @@ static int __iw_get_scan(struct net_device *dev,
 		pScanResult = sme_scan_result_get_next(hHal, pResult);
 	}
 
-	sme_scan_result_purge(hHal, pResult);
+	sme_scan_result_purge(pResult);
 
 	hdd_notice("exit total %d BSS reported !!!", i);
 	EXIT();

@@ -570,7 +570,7 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 	}
 
 rrm_send_scan_results_done:
-	sme_scan_result_purge(mac_ctx, result_handle);
+	sme_scan_result_purge(result_handle);
 	return status;
 }
 

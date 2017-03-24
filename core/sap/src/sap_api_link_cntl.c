@@ -169,7 +169,7 @@ QDF_STATUS wlansap_scan_callback(tHalHandle hal_handle,
 				"Selecting operating channel as starting channel from preferred channel list: %d",
 				operChannel);
 		}
-		sme_scan_result_purge(hal_handle, result);
+		sme_scan_result_purge(result);
 		break;
 
 	default:
@@ -378,7 +378,7 @@ wlansap_pre_start_bss_acs_scan_callback(tHalHandle hal_handle, void *pcontext,
 				"Selecting operating channel as starting channel from preferred channel list: %d",
 				oper_channel);
 		}
-		sme_scan_result_purge(hal_handle, presult);
+		sme_scan_result_purge(presult);
 	}
 
 	if (oper_channel == SAP_CHANNEL_NOT_SELECTED) {
