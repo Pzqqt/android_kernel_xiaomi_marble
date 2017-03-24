@@ -1722,12 +1722,23 @@ uint8_t policy_mgr_search_and_check_for_session_conc(
 	QDF_STATUS status;
 	enum policy_mgr_con_mode mode;
 	bool ret;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
 
-	mode = policy_mgr_get_mode_by_vdev_id(psoc, session_id);
-	if (PM_MAX_NUM_OF_MODE == mode) {
-		policy_mgr_err("Invalid mode");
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
 		return channel;
 	}
+
+	if (pm_ctx->hdd_cbacks.get_mode_for_non_connected_vdev) {
+		mode = pm_ctx->hdd_cbacks.get_mode_for_non_connected_vdev(
+			psoc, session_id);
+		if (PM_MAX_NUM_OF_MODE == mode) {
+			policy_mgr_err("Invalid mode");
+			return channel;
+		}
+	} else
+		return channel;
 
 	status = policy_mgr_get_channel_from_scan_result(psoc,
 			roam_profile, &channel);
