@@ -980,10 +980,12 @@ struct dual_mac_config {
  * @max_concurrent_active_sessions: User allowed maximum active
  *                              connections
  * @conc_system_pref: System preference for PCL table
+ * @enable2x2: 2x2 chain mask user config
  */
 struct policy_mgr_user_cfg {
 	uint8_t enable_mcc_adaptive_scheduler;
 	uint8_t max_concurrent_active_sessions;
 	uint8_t conc_system_pref;
+	bool enable2x2;
 };
 #endif /* __WLAN_POLICY_MGR_PUBLIC_STRUCT_H */
