@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -388,7 +388,9 @@ void hif_ahb_disable_bus(struct hif_softc *scn)
 	struct platform_device *pdev = (struct platform_device *)sc->pdev;
 	struct resource *memres = NULL;
 	int mem_pa_size = 0;
+	struct hif_target_info *tgt_info = NULL;
 
+	tgt_info = &scn->target_info;
 	/*Disable WIFI clock input*/
 	if (sc->mem) {
 		memres = platform_get_resource(pdev, IORESOURCE_MEM, 0);
@@ -399,9 +401,12 @@ void hif_ahb_disable_bus(struct hif_softc *scn)
 		}
 		mem_pa_size = memres->end - memres->start + 1;
 
-		hif_ahb_clk_enable_disable(&pdev->dev, 0);
+		/* Should not be executed on 8074 platform */
+		if (tgt_info->target_type != TARGET_TYPE_QCA8074) {
+			hif_ahb_clk_enable_disable(&pdev->dev, 0);
 
-		hif_ahb_device_reset(scn);
+			hif_ahb_device_reset(scn);
+		}
 		mem = (void __iomem *)sc->mem;
 		if (mem) {
 			devm_iounmap(&pdev->dev, mem);
@@ -574,7 +579,7 @@ void hif_ahb_nointrs(struct hif_softc *scn)
 		} else {
 			for (i = 0; i < scn->ce_count; i++) {
 				free_irq(ic_irqnum[HIF_IC_CE0_IRQ_OFFSET + i],
-						sc);
+						&hif_state->tasklets[i]);
 			}
 		}
 	}
