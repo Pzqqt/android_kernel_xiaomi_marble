@@ -7913,6 +7913,8 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 		}
 	}
 #endif
+	/* Check and restart SAP if it is on unsafe channel */
+	hdd_unsafe_channel_restart_sap(pHddCtx);
 
 	cds_set_connection_in_progress(false);
 	pHostapdState->bCommit = true;
