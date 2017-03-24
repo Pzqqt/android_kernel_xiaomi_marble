@@ -32,7 +32,7 @@
 #include "target_if_nan.h"
 #endif /* WLAN_FEATURE_NAN_CONVERGENCE */
 
-#if WLAN_CONV_CRYPTO_SUPPORTED
+#ifdef WLAN_CONV_CRYPTO_SUPPORTED
 #include "wlan_crypto_global_api.h"
 #endif
 /* Function pointer for OL/WMA specific UMAC tx_ops
@@ -95,6 +95,19 @@ wlan_lmac_if_atf_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 #else
 static void
 wlan_lmac_if_atf_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+}
+#endif
+
+#ifdef WLAN_CONV_CRYPTO_SUPPORTED
+static void
+wlan_lmac_if_crypto_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+	wlan_crypto_register_crypto_rx_ops(&rx_ops->crypto_rx_ops);
+}
+#else
+static void
+wlan_lmac_if_crypto_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 {
 }
 #endif
@@ -162,9 +175,7 @@ wlan_lmac_if_umac_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 	rx_ops->scan.scan_ev_handler = tgt_scan_event_handler;
 	wlan_lmac_if_atf_rx_ops_register(rx_ops);
 
-#if WLAN_CONV_CRYPTO_SUPPORTED
-	wlan_crypto_register_crypto_rx_ops(&rx_ops->crypto_rx_ops);
-#endif
+	wlan_lmac_if_crypto_rx_ops_register(rx_ops);
 	/* wifi_pos rx ops */
 	wlan_lmac_if_umac_rx_ops_register_wifi_pos(rx_ops);
 

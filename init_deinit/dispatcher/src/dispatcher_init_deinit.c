@@ -39,6 +39,9 @@
 #include "wlan_nan_api.h"
 #endif /* WLAN_FEATURE_NAN_CONVERGENCE */
 
+#ifdef WLAN_CONV_CRYPTO_SUPPORTED
+#include "wlan_crypto_main.h"
+#endif
 /**
  * DOC: This file provides various init/deinit trigger point for new
  * components.
@@ -273,6 +276,28 @@ static QDF_STATUS atf_psoc_disable(struct wlan_objmgr_psoc *psoc)
 }
 #endif /* END of WLAN_ATF_ENABLE */
 
+#ifdef WLAN_CONV_CRYPTO_SUPPORTED
+static QDF_STATUS dispatcher_init_crypto(void)
+{
+	return wlan_crypto_init();
+}
+
+static QDF_STATUS dispatcher_deinit_crypto(void)
+{
+	return wlan_crypto_deinit();
+}
+#else
+static QDF_STATUS dispatcher_init_crypto(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS dispatcher_deinit_crypto(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* END of WLAN_CONV_CRYPTO_SUPPORTED */
+
 #ifdef WIFI_POS_CONVERGED
 static QDF_STATUS dispatcher_init_wifi_pos(void)
 {
@@ -383,6 +408,9 @@ QDF_STATUS dispatcher_init(void)
 	if (QDF_STATUS_SUCCESS != dispatcher_init_pmo())
 		goto pmo_init_fail;
 
+	if (QDF_STATUS_SUCCESS != dispatcher_init_crypto())
+		goto crypto_init_fail;
+
 	if (QDF_STATUS_SUCCESS != dispatcher_policy_mgr_init())
 		goto policy_mgr_init_fail;
 
@@ -404,6 +432,8 @@ wifi_pos_init_fail:
 atf_init_fail:
 	dispatcher_policy_mgr_deinit();
 policy_mgr_init_fail:
+	dispatcher_deinit_crypto();
+crypto_init_fail:
 	dispatcher_deinit_pmo();
 pmo_init_fail:
 	scheduler_deinit();
@@ -434,6 +464,8 @@ QDF_STATUS dispatcher_deinit(void)
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_deinit_atf());
 
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_policy_mgr_deinit());
+
+	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_deinit_crypto());
 
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_deinit_pmo());
 
