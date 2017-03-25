@@ -1317,6 +1317,7 @@ typedef struct tagCsrConfigParam {
 	bool enable_ul_ofdma;
 	bool enable_ul_mimo;
 #endif
+	bool qcn_ie_support;
 } tCsrConfigParam;
 
 /* Tush */

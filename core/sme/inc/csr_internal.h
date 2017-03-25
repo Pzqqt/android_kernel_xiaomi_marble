@@ -643,6 +643,7 @@ typedef struct tagCsrConfig {
 	bool enable_ul_ofdma;
 	bool enable_ul_mimo;
 #endif
+	bool qcn_ie_support;
 } tCsrConfig;
 
 typedef struct tagCsrChannelPowerInfo {

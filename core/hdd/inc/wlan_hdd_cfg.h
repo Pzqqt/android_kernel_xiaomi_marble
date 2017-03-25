@@ -9439,6 +9439,29 @@ enum l1ss_sleep_allowed {
 #define CFG_ENABLE_ANI_DEFAULT           (1)
 
 /*
+ * <ini>
+ * g_qcn_ie_support - QCN IE Support
+ * @Min: 0 (disabled)
+ * @Max: 1 (enabled)
+ * @Default: 0 (disabled)
+ *
+ * This config item is used to support QCN IE in probe/assoc/reassoc request
+ * for STA mode. QCN IE support is not added for SAP mode.
+ *
+ * Related: N/A
+ *
+ * Supported Feature: N/A
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QCN_IE_SUPPORT_NAME    "g_qcn_ie_support"
+#define CFG_QCN_IE_SUPPORT_MIN      0
+#define CFG_QCN_IE_SUPPORT_MAX      1
+#define CFG_QCN_IE_SUPPORT_DEFAULT  0
+
+/*
  * Type declarations
  */
 struct hdd_config {
@@ -10155,6 +10178,7 @@ struct hdd_config {
 	enum l1ss_sleep_allowed l1ss_sleep_allowed;
 	uint32_t arp_ac_category;
 	bool ani_enabled;
+	bool qcn_ie_support;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

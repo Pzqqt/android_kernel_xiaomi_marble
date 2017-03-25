@@ -347,7 +347,8 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 		populate_dot11f_ext_cap(mac_ctx, is_vht_enabled, &pr.ExtCap,
 			pesession);
 
-	populate_dot11f_qcn_ie(&pr.QCN_IE);
+	if (mac_ctx->roam.configParam.qcn_ie_support)
+		populate_dot11f_qcn_ie(&pr.QCN_IE);
 
 	if (IS_DOT11_MODE_HE(dot11mode) && NULL != pesession)
 		lim_update_session_he_capable(mac_ctx, pesession);
@@ -1903,7 +1904,9 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 		populate_dot11f_ext_cap(mac_ctx, vht_enabled,
 				&frm->ExtCap, pe_session);
 
-	populate_dot11f_qcn_ie(&frm->QCN_IE);
+	if (mac_ctx->roam.configParam.qcn_ie_support)
+		populate_dot11f_qcn_ie(&frm->QCN_IE);
+
 	if (lim_is_session_he_capable(pe_session)) {
 		lim_log(mac_ctx, LOG1, FL("Populate HE IEs"));
 		populate_dot11f_he_caps(mac_ctx, pe_session,
