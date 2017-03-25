@@ -80,9 +80,9 @@ static int __wlan_hdd_cfg80211_nan_request(struct wiphy *wiphy,
 	nan_req.request_data = data;
 
 	status = sme_nan_request(&nan_req);
-	if (QDF_STATUS_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status)
 		ret_val = -EINVAL;
-	}
+
 	return ret_val;
 }
 
