@@ -1456,7 +1456,7 @@ void ol_rx_pkt_dump_call(
 
 	peer = ol_txrx_peer_find_by_id(pdev, peer_id);
 	if (!peer) {
-		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+		TXRX_PRINT(TXRX_PRINT_LEVEL_INFO1,
 			"%s: peer with peer id %d is NULL", __func__,
 			peer_id);
 		return;
