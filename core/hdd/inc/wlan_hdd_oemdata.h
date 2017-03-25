@@ -61,31 +61,31 @@
  * @OEM_ERR_INVALID_MESSAGE_TYPE: Invalid message type
  * @OEM_ERR_INVALID_MESSAGE_LENGTH: Invalid length in message body
  */
-typedef enum {
+enum oem_err_code {
 	OEM_ERR_NULL_CONTEXT = 1,
 	OEM_ERR_APP_NOT_REGISTERED,
 	OEM_ERR_INVALID_SIGNATURE,
 	OEM_ERR_NULL_MESSAGE_HEADER,
 	OEM_ERR_INVALID_MESSAGE_TYPE,
 	OEM_ERR_INVALID_MESSAGE_LENGTH
-} eOemErrorCode;
+};
 
 /**
- * typedef tDriverVersion - Driver version identifier (w.x.y.z)
+ * struct driver_version - Driver version identifier (w.x.y.z)
  * @major: Version ID major number
  * @minor: Version ID minor number
  * @patch: Version ID patch number
  * @build: Version ID build number
  */
-typedef struct qdf_packed {
+struct driver_version {
 	uint8_t major;
 	uint8_t minor;
 	uint8_t patch;
 	uint8_t build;
-} tDriverVersion;
+};
 
 /**
- * typedef t_iw_oem_data_cap - OEM Data Capabilities
+ * struct oem_data_cap - OEM Data Capabilities
  * @oem_target_signature: Signature of chipset vendor, e.g. QUALCOMM
  * @oem_target_type: Chip type
  * @oem_fw_version: Firmware version
@@ -98,11 +98,11 @@ typedef struct qdf_packed {
  * @num_channels: Num of channels IDs to follow
  * @channel_list: List of channel IDs
  */
-typedef struct qdf_packed {
+struct oem_data_cap {
 	uint8_t oem_target_signature[OEM_TARGET_SIGNATURE_LEN];
 	uint32_t oem_target_type;
 	uint32_t oem_fw_version;
-	tDriverVersion driver_version;
+	struct driver_version driver_version;
 	uint16_t allowed_dwell_time_min;
 	uint16_t allowed_dwell_time_max;
 	uint16_t curr_dwell_time_min;
@@ -110,10 +110,10 @@ typedef struct qdf_packed {
 	uint16_t supported_bands;
 	uint16_t num_channels;
 	uint8_t channel_list[OEM_CAP_MAX_NUM_CHANNELS];
-} t_iw_oem_data_cap;
+};
 
 /**
- * typedef tHddChannelInfo - Channel information
+ * struct hdd_channel_info - Channel information
  * @chan_id: channel id
  * @reserved0: reserved for padding and future use
  * @mhz: primary 20 MHz channel frequency in mhz
@@ -125,7 +125,7 @@ typedef struct qdf_packed {
  *	max power, reg power and reg class id
  * @reg_info_2: regulatory information field 2 which contains antennamax
  */
-typedef struct qdf_packed {
+struct hdd_channel_info {
 	uint32_t chan_id;
 	uint32_t reserved0;
 	uint32_t mhz;
@@ -134,10 +134,10 @@ typedef struct qdf_packed {
 	uint32_t info;
 	uint32_t reg_info_1;
 	uint32_t reg_info_2;
-} tHddChannelInfo;
+};
 
 /**
- * typedef tPeerStatusInfo - Status information for a given peer
+ * struct peer_status_info - Status information for a given peer
  * @peer_mac_addr: peer mac address
  * @peer_status: peer status: 1: CONNECTED, 2: DISCONNECTED
  * @vdev_id: vdev_id for the peer mac
@@ -145,14 +145,14 @@ typedef struct qdf_packed {
  * @reserved0: reserved0
  * @peer_chan_info: channel info on which peer is connected
  */
-typedef struct qdf_packed {
+struct peer_status_info {
 	uint8_t peer_mac_addr[ETH_ALEN];
 	uint8_t peer_status;
 	uint8_t vdev_id;
 	uint32_t peer_capability;
 	uint32_t reserved0;
-	tHddChannelInfo peer_chan_info;
-} tPeerStatusInfo;
+	struct hdd_channel_info peer_chan_info;
+};
 
 /**
  * enum oem_capability_mask - mask field for userspace client capabilities
@@ -170,7 +170,7 @@ enum oem_capability_mask {
  * @client_capabilities: capabilities set by userspace via set request
  */
 struct oem_get_capability_rsp {
-	t_iw_oem_data_cap target_cap;
+	struct oem_data_cap target_cap;
 	struct sme_oem_capability cap;
 };
 
