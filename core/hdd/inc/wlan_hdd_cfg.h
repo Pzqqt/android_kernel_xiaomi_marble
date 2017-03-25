@@ -232,7 +232,7 @@
 #define CFG_ADVERTISE_CONCURRENT_OPERATION_MIN     (0)
 #define CFG_ADVERTISE_CONCURRENT_OPERATION_MAX     (1)
 
-typedef enum {
+enum hdd_dot11_mode {
 	eHDD_DOT11_MODE_AUTO = 0,       /* covers all things we support */
 	eHDD_DOT11_MODE_abg,    /* 11a/b/g only, no HT, no proprietary */
 	eHDD_DOT11_MODE_11b,
@@ -246,7 +246,7 @@ typedef enum {
 	eHDD_DOT11_MODE_11a,
 	eHDD_DOT11_MODE_11ax_ONLY,
 	eHDD_DOT11_MODE_11ax,
-} eHddDot11Mode;
+};
 
 /*
  * <ini>
@@ -3799,11 +3799,11 @@ enum station_keepalive_method {
 #define CFG_ENABLE_RAMDUMP_COLLECTION_MAX          (1)
 #define CFG_ENABLE_RAMDUMP_COLLECTION_DEFAULT      (1)
 
-typedef enum {
+enum hdd_link_speed_rpt_type {
 	eHDD_LINK_SPEED_REPORT_ACTUAL = 0,
 	eHDD_LINK_SPEED_REPORT_MAX = 1,
 	eHDD_LINK_SPEED_REPORT_MAX_SCALED = 2,
-} eHddLinkSpeedReportType;
+};
 
 /*
  * <ini>
@@ -9461,7 +9461,7 @@ struct hdd_config {
 	uint32_t nBmpsModListenInterval;
 	uint32_t nBmpsMaxListenInterval;
 	uint32_t nBmpsMinListenInterval;
-	eHddDot11Mode dot11Mode;
+	enum hdd_dot11_mode dot11Mode;
 	uint32_t nChannelBondingMode24GHz;
 	uint32_t nChannelBondingMode5GHz;
 	uint32_t MaxRxAmpduFactor;
@@ -9543,9 +9543,9 @@ struct hdd_config {
 	uint32_t       min_rest_time_conc;
 	/* In units of milliseconds */
 	uint32_t       idle_time_conc;
-	uint8_t nNumStaChanCombinedConc;        /* number of channels combined for */
+	uint8_t nNumStaChanCombinedConc;
 	/* STA in each split scan operation */
-	uint8_t nNumP2PChanCombinedConc;        /* number of channels combined for */
+	uint8_t nNumP2PChanCombinedConc;
 	/* P2P in each split scan operation */
 #endif
 
@@ -9620,8 +9620,8 @@ struct hdd_config {
 	/* Wowl pattern */
 	char wowlPattern[1024];
 
-	/* Control for Replay counter. value 1 means single replay
-	 * counter for all TID
+	/* Control for Replay counetr. value 1 means
+	 * single replay counter for all TID
 	 */
 	bool bSingleTidRc;
 	uint8_t mcastBcastFilterSetting;
@@ -9690,7 +9690,7 @@ struct hdd_config {
 	uint8_t enable_dfs_pno_chnl_scan;
 	uint8_t enableDynamicDTIM;
 	uint8_t ShortGI40MhzEnable;
-	eHddLinkSpeedReportType reportMaxLinkSpeed;
+	enum hdd_link_speed_rpt_type reportMaxLinkSpeed;
 	int32_t linkSpeedRssiHigh;
 	int32_t linkSpeedRssiMid;
 	int32_t linkSpeedRssiLow;
@@ -9806,7 +9806,6 @@ struct hdd_config {
 	uint32_t cfgMaxMediumTime;
 	bool enableVhtFor24GHzBand;
 	bool enable_sap_vendor_vht;
-	/* Flag indicating whether legacy fast roam during concurrency is enabled in cfg.ini or not */
 	bool bFastRoamInConIniFeatureEnabled;
 	bool fEnableAdaptRxDrain;
 	bool enableIbssHeartBeatOffload;
@@ -10188,13 +10187,13 @@ struct hdd_config {
  */
 #define VAR_FLAGS_DYNAMIC_CFG (1 << 3)
 
-typedef enum {
+enum wlan_parameter_type {
 	WLAN_PARAM_Integer,
 	WLAN_PARAM_SignedInteger,
 	WLAN_PARAM_HexInteger,
 	WLAN_PARAM_String,
 	WLAN_PARAM_MacAddr,
-} WLAN_PARAMETER_TYPE;
+};
 
 #define REG_VARIABLE(_Name, _Type,  _Struct, _VarName,		\
 		      _Flags, _Default, _Min, _Max)		\
@@ -10242,10 +10241,9 @@ typedef enum {
 		0						\
 	}
 
-typedef struct tREG_TABLE_ENTRY {
-
+struct reg_table_entry {
 	char *RegName;          /* variable name in the qcom_cfg.ini file */
-	WLAN_PARAMETER_TYPE RegType;    /* variable type in hdd_config struct */
+	enum wlan_parameter_type RegType;    /* variable type in hdd_config struct */
 	unsigned long Flags;    /* Specify optional parms and if RangeCheck is performed */
 	unsigned short VarOffset;       /* offset to field from the base address of the structure */
 	unsigned short VarSize; /* size (in bytes) of the field */
@@ -10256,15 +10254,7 @@ typedef struct tREG_TABLE_ENTRY {
 	void (*pfnDynamicnotify)(hdd_context_t *pHddCtx,
 				 unsigned long notifyId);
 	unsigned long notifyId; /* Dynamic modification identifier */
-} REG_TABLE_ENTRY;
-
-static __inline unsigned long util_min(unsigned long a, unsigned long b)
-{
-	unsigned long r;
-
-	r = ((a < b) ? a : b);
-	return r;
-}
+};
 
 /* Function declarations and documenation */
 QDF_STATUS hdd_parse_config_ini(hdd_context_t *pHddCtx);
@@ -10276,7 +10266,7 @@ bool hdd_update_config_cfg(hdd_context_t *pHddCtx);
 QDF_STATUS hdd_cfg_get_global_config(hdd_context_t *pHddCtx, char *pBuf,
 				     int buflen);
 
-eCsrPhyMode hdd_cfg_xlate_to_csr_phy_mode(eHddDot11Mode dot11Mode);
+eCsrPhyMode hdd_cfg_xlate_to_csr_phy_mode(enum hdd_dot11_mode dot11Mode);
 QDF_STATUS hdd_execute_global_config_command(hdd_context_t *pHddCtx,
 					     char *command);
 

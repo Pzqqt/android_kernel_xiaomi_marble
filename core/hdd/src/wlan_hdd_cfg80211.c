@@ -12743,7 +12743,7 @@ void hdd_select_cbmode(hdd_adapter_t *pAdapter, uint8_t operationChannel,
 	cds_set_channel_params(operationChannel, sec_ch, ch_params);
 
 	if (QDF_GLOBAL_MONITOR_MODE == cds_get_conparam()) {
-		eHddDot11Mode hdd_dot11_mode;
+		enum hdd_dot11_mode hdd_dot11_mode;
 		uint8_t iniDot11Mode =
 			(WLAN_HDD_GET_CTX(pAdapter))->config->dot11Mode;
 

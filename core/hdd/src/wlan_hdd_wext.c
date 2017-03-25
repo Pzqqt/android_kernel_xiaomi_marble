@@ -7236,7 +7236,7 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 	uint32_t chwidth = WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
 	uint32_t vhtchanwidth;
 	eCsrPhyMode phymode = -EIO, old_phymode;
-	eHddDot11Mode hdd_dot11mode = phddctx->config->dot11Mode;
+	enum hdd_dot11_mode hdd_dot11mode = phddctx->config->dot11Mode;
 	eCsrBand curr_band = eCSR_BAND_ALL;
 
 	old_phymode = sme_get_phy_mode(hal);

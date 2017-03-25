@@ -368,7 +368,7 @@ cb_notify_set_roam_scan_hi_rssi_scan_params(hdd_context_t *hdd_ctx,
 }
 
 
-REG_TABLE_ENTRY g_registry_table[] = {
+struct reg_table_entry g_registry_table[] = {
 	REG_VARIABLE(CFG_RTS_THRESHOLD_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, RTSThreshold,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -4405,14 +4405,14 @@ static char *i_trim(char *str)
  * Return: QDF_STATUS_SUCCESS if the configuration and buffer size can carry
  *		the content, otherwise QDF_STATUS_E_RESOURCES
  */
-static QDF_STATUS hdd_cfg_get_config(REG_TABLE_ENTRY *reg_table,
+static QDF_STATUS hdd_cfg_get_config(struct reg_table_entry *reg_table,
 				     unsigned long cRegTableEntries,
 				     uint8_t *ini_struct,
 				     hdd_context_t *pHddCtx, char *pBuf,
 				     int buflen)
 {
 	unsigned int idx;
-	REG_TABLE_ENTRY *pRegEntry = reg_table;
+	struct reg_table_entry *pRegEntry = reg_table;
 	uint32_t value;
 	char valueStr[CFG_VALUE_MAX_LEN];
 	char configStr[CFG_ENTRY_MAX_LEN];
@@ -4611,7 +4611,7 @@ static QDF_STATUS hdd_apply_cfg_ini(hdd_context_t *pHddCtx,
 	uint32_t value;
 	int32_t svalue;
 	void *pStructBase = pHddCtx->config;
-	REG_TABLE_ENTRY *pRegEntry = g_registry_table;
+	struct reg_table_entry *pRegEntry = g_registry_table;
 	unsigned long cRegTableEntries = QDF_ARRAY_SIZE(g_registry_table);
 	uint32_t cbOutString;
 	int i;
@@ -4771,8 +4771,8 @@ static QDF_STATUS hdd_apply_cfg_ini(hdd_context_t *pHddCtx,
 					       pRegEntry->RegName,
 					       WLAN_INI_FILE);
 					cbOutString =
-						util_min(strlen
-								 ((char *)pRegEntry->
+						QDF_MIN(strlen
+							 ((char *)pRegEntry->
 								 VarDefault),
 							 pRegEntry->VarSize - 1);
 					memcpy(pField,
@@ -4789,7 +4789,7 @@ static QDF_STATUS hdd_apply_cfg_ini(hdd_context_t *pHddCtx,
 			} else {
 				/* Failed to read the string parameter from the registry.  Use the default. */
 				cbOutString =
-					util_min(strlen((char *)pRegEntry->VarDefault),
+					QDF_MIN(strlen((char *)pRegEntry->VarDefault),
 						 pRegEntry->VarSize - 1);
 				memcpy(pField, (void *)(pRegEntry->VarDefault),
 				       cbOutString);
@@ -4843,13 +4843,13 @@ static QDF_STATUS hdd_apply_cfg_ini(hdd_context_t *pHddCtx,
  * Return: QDF_STATUS_SUCCESS if the command is found and able to execute,
  *		otherwise the appropriate QDF_STATUS will be returned
  */
-static QDF_STATUS hdd_execute_config_command(REG_TABLE_ENTRY *reg_table,
+static QDF_STATUS hdd_execute_config_command(struct reg_table_entry *reg_table,
 					     unsigned long tableSize,
 					     uint8_t *ini_struct,
 					     hdd_context_t *pHddCtx,
 					     char *command)
 {
-	REG_TABLE_ENTRY *pRegEntry;
+	struct reg_table_entry *pRegEntry;
 	char *clone;
 	char *pCmd;
 	void *pField;
@@ -6096,7 +6096,7 @@ config_exit:
  *
  * Return: the CSR phy mode value
  */
-eCsrPhyMode hdd_cfg_xlate_to_csr_phy_mode(eHddDot11Mode dot11Mode)
+eCsrPhyMode hdd_cfg_xlate_to_csr_phy_mode(enum hdd_dot11_mode dot11Mode)
 {
 	if (cds_is_sub_20_mhz_enabled())
 		return eCSR_DOT11_MODE_abg;
