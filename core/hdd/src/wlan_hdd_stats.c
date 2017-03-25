@@ -453,7 +453,7 @@ static bool put_wifi_iface_stats(tpSirWifiIfaceStat pWifiIfaceStat,
 
 	average_tsf_offset =  pWifiIfaceStat->avg_bcn_spread_offset_high;
 	average_tsf_offset =  (average_tsf_offset << 32) |
-		pWifiIfaceStat->avg_bcn_spread_offset_low ;
+		pWifiIfaceStat->avg_bcn_spread_offset_low;
 
 	if (nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_TYPE,
@@ -685,6 +685,7 @@ static void hdd_link_layer_process_peer_stats(hdd_adapter_t *pAdapter,
 
 	if (pWifiPeerStat->numPeers) {
 		struct nlattr *peerInfo;
+
 		peerInfo = nla_nest_start(vendor_event,
 					  QCA_WLAN_VENDOR_ATTR_LL_STATS_PEER_INFO);
 		if (peerInfo == NULL) {
@@ -724,9 +725,9 @@ static void hdd_link_layer_process_peer_stats(hdd_adapter_t *pAdapter,
 		}
 		nla_nest_end(vendor_event, peerInfo);
 	}
+
 	cfg80211_vendor_cmd_reply(vendor_event);
 	EXIT();
-	return;
 }
 
 /**
@@ -790,7 +791,6 @@ static void hdd_link_layer_process_iface_stats(hdd_adapter_t *pAdapter,
 
 	cfg80211_vendor_cmd_reply(vendor_event);
 	EXIT();
-	return;
 }
 
 /**
@@ -1024,8 +1024,8 @@ static void hdd_link_layer_process_radio_stats(hdd_adapter_t *pAdapter,
 
 		pWifiRadioStat++;
 	}
+
 	EXIT();
-	return;
 }
 
 /**
@@ -1144,8 +1144,6 @@ void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
 		hdd_warn("invalid event type %d", indType);
 		break;
 	}
-
-	return;
 }
 
 void hdd_lost_link_info_cb(void *context,
@@ -2591,8 +2589,6 @@ inline void hdd_init_ll_stats_ctx(void)
 	spin_lock_init(&ll_stats_context.context_lock);
 	init_completion(&ll_stats_context.response_event);
 	ll_stats_context.request_bitmap = 0;
-
-	return;
 }
 
 /**
@@ -2607,6 +2603,7 @@ void hdd_display_hif_stats(void)
 
 	if (!hif_ctx)
 		return;
+
 	hif_display_stats(hif_ctx);
 }
 
