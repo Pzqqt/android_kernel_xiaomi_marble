@@ -83,14 +83,14 @@ typedef enum {
 } eConnectionState;
 
 /**
- * typedef ePeerStatus - Peer status
+ * enum peer_status - Peer status
  * @ePeerConnected: peer connected
  * @ePeerDisconnected: peer disconnected
  */
-typedef enum {
+enum peer_status {
 	ePeerConnected = 1,
 	ePeerDisconnected
-} ePeerStatus;
+};
 
 /**
  * struct hdd_conn_flag - connection flags
@@ -211,7 +211,6 @@ typedef struct hdd_adapter_s hdd_adapter_t;
 typedef struct hdd_context_s hdd_context_t;
 typedef struct hdd_station_ctx hdd_station_ctx_t;
 typedef struct hdd_ap_ctx_s hdd_ap_ctx_t;
-typedef struct hdd_mon_ctx_s hdd_mon_ctx_t;
 
 /**
  * hdd_is_connecting() - Function to check connection progress
