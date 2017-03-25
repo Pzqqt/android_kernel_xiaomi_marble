@@ -121,6 +121,7 @@ static int hdd_tsf_reset_gpio(struct hdd_adapter_s *adapter)
 static int hdd_tsf_reset_gpio(struct hdd_adapter_s *adapter)
 {
 	int ret;
+
 	ret = wma_cli_set_command((int)adapter->sessionId,
 			(int)GEN_PARAM_RESET_TSF_GPIO, adapter->sessionId,
 			GEN_CMD);
@@ -216,9 +217,8 @@ int hdd_get_tsf_cb(void *pcb_cxt, struct stsf *ptsf)
 
 	hddctx = (struct hdd_context_s *)pcb_cxt;
 	status = wlan_hdd_validate_context(hddctx);
-	if (0 != status) {
+	if (0 != status)
 		return -EINVAL;
-	}
 
 	adapter = hdd_get_adapter_by_vdev(hddctx, ptsf->vdev_id);
 
