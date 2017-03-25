@@ -153,7 +153,7 @@ static bool wlan_hdd_is_type_p2p_action(const u8 *buf)
 
 static bool hdd_p2p_is_action_type_rsp(const u8 *buf)
 {
-	tActionFrmType actionFrmType;
+	enum action_frm_type actionFrmType;
 
 	if (wlan_hdd_is_type_p2p_action(buf)) {
 		actionFrmType =
@@ -177,7 +177,7 @@ QDF_STATUS wlan_hdd_remain_on_channel_callback(tHalHandle hHal, void *pCtx,
 	hdd_cfg80211_state_t *cfgState = WLAN_HDD_GET_CFG_STATE_PTR(pAdapter);
 	hdd_remain_on_chan_ctx_t *pRemainChanCtx;
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
-	rem_on_channel_request_type_t req_type;
+	enum rem_on_channel_request_type req_type;
 
 	if (!hdd_ctx) {
 		hdd_err("Invalid HDD context");
@@ -842,7 +842,7 @@ static int wlan_hdd_request_remain_on_channel(struct wiphy *wiphy,
 					      struct ieee80211_channel *chan,
 					      unsigned int duration,
 					      u64 *cookie,
-					      rem_on_channel_request_type_t
+					      enum rem_on_channel_request_type
 					      request_type)
 {
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
@@ -1398,7 +1398,7 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 	uint16_t extendedWait = 0;
 	uint8_t type = WLAN_HDD_GET_TYPE_FRM_FC(buf[0]);
 	uint8_t subType = WLAN_HDD_GET_SUBTYPE_FRM_FC(buf[0]);
-	tActionFrmType actionFrmType;
+	enum action_frm_type actionFrmType;
 	bool noack = 0;
 	int status;
 	unsigned long rc;
@@ -1577,7 +1577,7 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 
 	if (offchan && wait && chan) {
 		int status;
-		rem_on_channel_request_type_t req_type = OFF_CHANNEL_ACTION_TX;
+		enum rem_on_channel_request_type req_type = OFF_CHANNEL_ACTION_TX;
 		/* In case of P2P Client mode if we are already */
 		/* on the same channel then send the frame directly */
 
@@ -2464,8 +2464,8 @@ int wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
  *
  * return: void
  */
-static void wlan_hdd_p2p_action_debug(tActionFrmType actionFrmType,
-						uint8_t *macFrom)
+static void wlan_hdd_p2p_action_debug(enum action_frm_type actionFrmType,
+					uint8_t *macFrom)
 {
 	if (actionFrmType >= MAX_P2P_ACTION_FRAME_TYPE) {
 		hdd_debug("[P2P] unknown[%d] <--- OTA from " MAC_ADDRESS_STR,
@@ -2499,8 +2499,8 @@ static void wlan_hdd_p2p_action_debug(tActionFrmType actionFrmType,
  *
  * return: void
  */
-static void wlan_hdd_p2p_action_debug(tActionFrmType actionFrmType,
-						uint8_t *macFrom)
+static void wlan_hdd_p2p_action_debug(enum action_frm_type actionFrmType,
+					uint8_t *macFrom)
 {
 
 }
@@ -2515,7 +2515,7 @@ void __hdd_indicate_mgmt_frame(hdd_adapter_t *pAdapter,
 	uint16_t extend_time;
 	uint8_t type = 0;
 	uint8_t subType = 0;
-	tActionFrmType actionFrmType;
+	enum action_frm_type actionFrmType;
 	hdd_cfg80211_state_t *cfgState = NULL;
 	QDF_STATUS status;
 	hdd_remain_on_chan_ctx_t *pRemainChanCtx = NULL;
