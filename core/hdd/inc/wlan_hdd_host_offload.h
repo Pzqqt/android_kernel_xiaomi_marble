@@ -42,10 +42,11 @@
 #define WLAN_OFFLOAD_DISABLE                     0
 #define WLAN_OFFLOAD_ENABLE                      0x1
 #define WLAN_OFFLOAD_BC_FILTER_ENABLE            0x2
-#define WLAN_OFFLOAD_ARP_AND_BC_FILTER_ENABLE    (WLAN_OFFLOAD_ENABLE | WLAN_OFFLOAD_BC_FILTER_ENABLE)
+#define WLAN_OFFLOAD_ARP_AND_BC_FILTER_ENABLE    \
+			(WLAN_OFFLOAD_ENABLE | WLAN_OFFLOAD_BC_FILTER_ENABLE)
 
 /* Offload request. */
-typedef struct {
+struct host_offload_req {
 	uint8_t offloadType;
 	uint8_t enableOrDisable;
 	union {
@@ -53,7 +54,7 @@ typedef struct {
 		uint8_t hostIpv6Addr[SIR_MAC_IPV6_ADDR_LEN];
 	} params;
 	struct qdf_mac_addr bssId;
-} tHostOffloadRequest, *tpHostOffloadRequest;
+};
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 void hdd_wlan_offload_event(uint8_t type, uint8_t state);

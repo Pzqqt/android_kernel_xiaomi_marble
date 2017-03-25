@@ -11344,7 +11344,7 @@ static int __iw_set_host_offload(struct net_device *dev,
 				 union iwreq_data *wrqu, char *extra)
 {
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	tpHostOffloadRequest pRequest = (tpHostOffloadRequest) extra;
+	struct host_offload_req *pRequest = (struct host_offload_req *) extra;
 	tSirHostOffloadReq offloadRequest;
 	hdd_context_t *hdd_ctx;
 	int ret;
@@ -13746,7 +13746,7 @@ static const struct iw_priv_args we_private_args[] = {
 	/* handlers for main ioctl - host offload */
 	{
 		WLAN_PRIV_SET_HOST_OFFLOAD,
-		IW_PRIV_TYPE_BYTE | sizeof(tHostOffloadRequest),
+		IW_PRIV_TYPE_BYTE | sizeof(struct host_offload_req),
 		0,
 		"setHostOffload"
 	}
