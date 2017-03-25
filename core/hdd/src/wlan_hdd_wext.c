@@ -2049,6 +2049,25 @@ static const struct ccp_freq_chan_map freq_chan_map[] = {
 
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_SET_NONE_GET_NONE   (SIOCIWFIRSTPRIV + 6)
+
+/*
+ * <ioctl>
+ * reassoc - Trigger STA re-association to the connected AP
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL is used to trigger STA reassociation to the connected AP.
+ *
+ * @E.g: iwpriv wlan0 reassoc
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: Internal
+ *
+ * </ioctl>
+ */
 #define WE_SET_REASSOC_TRIGGER     8
 /*
  * <ioctl>
