@@ -132,25 +132,21 @@ static bool wlan_hdd_is_type_p2p_action(const u8 *buf)
 	const u8 *ouiPtr;
 
 	if (buf[WLAN_HDD_PUBLIC_ACTION_FRAME_CATEGORY_OFFSET] !=
-	    WLAN_HDD_PUBLIC_ACTION_FRAME) {
+	    WLAN_HDD_PUBLIC_ACTION_FRAME)
 		return false;
-	}
 
 	if (buf[WLAN_HDD_PUBLIC_ACTION_FRAME_ACTION_OFFSET] !=
-	    WLAN_HDD_VENDOR_SPECIFIC_ACTION) {
+	    WLAN_HDD_VENDOR_SPECIFIC_ACTION)
 		return false;
-	}
 
 	ouiPtr = &buf[WLAN_HDD_PUBLIC_ACTION_FRAME_OUI_OFFSET];
 
-	if (WPA_GET_BE24(ouiPtr) != WLAN_HDD_WFA_OUI) {
+	if (WPA_GET_BE24(ouiPtr) != WLAN_HDD_WFA_OUI)
 		return false;
-	}
 
 	if (buf[WLAN_HDD_PUBLIC_ACTION_FRAME_OUI_TYPE_OFFSET] !=
-	    WLAN_HDD_WFA_P2P_OUI_TYPE) {
+	    WLAN_HDD_WFA_P2P_OUI_TYPE)
 		return false;
-	}
 
 	return true;
 }
@@ -221,9 +217,9 @@ QDF_STATUS wlan_hdd_remain_on_channel_callback(tHalHandle hHal, void *pCtx,
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_ROC);
 
 	if (REMAIN_ON_CHANNEL_REQUEST == pRemainChanCtx->rem_on_chan_request) {
-		if (cfgState->buf) {
-			hdd_debug("We need to receive yet an ack from one of tx packet");
-		}
+		if (cfgState->buf)
+			hdd_debug("Yet to rcv an ack for one of the tx pkt");
+
 		cfg80211_remain_on_channel_expired(
 			pRemainChanCtx->dev->
 			ieee80211_ptr,
@@ -242,6 +238,7 @@ QDF_STATUS wlan_hdd_remain_on_channel_callback(tHalHandle hHal, void *pCtx,
 	    (QDF_P2P_DEVICE_MODE == pAdapter->device_mode)
 	    ) {
 		uint8_t sessionId = pAdapter->sessionId;
+
 		if (REMAIN_ON_CHANNEL_REQUEST == req_type) {
 			sme_deregister_mgmt_frame(hHal, sessionId,
 						  (SIR_MAC_MGMT_FRAME << 2) |
@@ -315,18 +312,18 @@ void wlan_hdd_cancel_existing_remain_on_channel(hdd_adapter_t *pAdapter)
 							 cancel_rem_on_chan_var,
 							 msecs_to_jiffies
 								 (WAIT_CANCEL_REM_CHAN));
-			if (!rc) {
+			if (!rc)
 				hdd_err("wait on cancel_rem_on_chan_var timed out");
-			}
+
 			return;
 		}
 		pRemainChanCtx->hdd_remain_on_chan_cancel_in_progress = true;
 		roc_scan_id = pRemainChanCtx->scan_id;
 		mutex_unlock(&cfgState->remain_on_chan_ctx_lock);
-		/* Wait till remain on channel ready indication before issuing cancel
-		 * remain on channel request, otherwise if remain on channel not
-		 * received and if the driver issues cancel remain on channel then lim
-		 * will be in unknown state.
+		/* Wait till remain on channel ready indication before
+		 * issuing cancel remain on channel request, otherwise
+		 * if remain on channel not received and if the driver issues
+		 * cancel remain on channel then lim will be in unknown state.
 		 */
 		rc = wait_for_completion_timeout(&pAdapter->
 						 rem_on_chan_ready_event,
@@ -343,8 +340,8 @@ void wlan_hdd_cancel_existing_remain_on_channel(hdd_adapter_t *pAdapter)
 		INIT_COMPLETION(pAdapter->cancel_rem_on_chan_var);
 
 		/* Issue abort remain on chan request to sme.
-		 * The remain on channel callback will make sure the remain_on_chan
-		 * expired event is sent.
+		 * The remain on channel callback will make sure the
+		 * remain_on_chan expired event is sent.
 		 */
 		if ((QDF_STA_MODE == pAdapter->device_mode) ||
 		    (QDF_P2P_CLIENT_MODE == pAdapter->device_mode) ||
@@ -365,9 +362,9 @@ void wlan_hdd_cancel_existing_remain_on_channel(hdd_adapter_t *pAdapter)
 						 msecs_to_jiffies
 							 (WAIT_CANCEL_REM_CHAN));
 
-		if (!rc) {
+		if (!rc)
 			hdd_err("timeout waiting for cancel remain on channel ready indication");
-		}
+
 		qdf_runtime_pm_allow_suspend(hdd_ctx->runtime_context.roc);
 		hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_ROC);
 	} else
@@ -1082,9 +1079,8 @@ void hdd_remain_chan_ready_handler(hdd_adapter_t *pAdapter,
 					   hdd_remain_on_chan_timer,
 					   (pRemainChanCtx->duration +
 					    COMPLETE_EVENT_PROPOGATE_TIME));
-		if (status != QDF_STATUS_SUCCESS) {
+		if (status != QDF_STATUS_SUCCESS)
 			hdd_err("Remain on Channel timer start failed");
-		}
 
 		if (REMAIN_ON_CHANNEL_REQUEST ==
 		    pRemainChanCtx->rem_on_chan_request) {
@@ -1135,7 +1131,6 @@ void hdd_remain_chan_ready_handler(hdd_adapter_t *pAdapter,
 		hdd_debug("No Pending Remain on channel Request");
 	}
 	mutex_unlock(&cfgState->remain_on_chan_ctx_lock);
-	return;
 }
 
 #ifdef CONVERGED_P2P_ENABLE
@@ -1277,9 +1272,9 @@ __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 							 cancel_rem_on_chan_var,
 							 msecs_to_jiffies
 								 (WAIT_CANCEL_REM_CHAN));
-			if (!rc) {
+			if (!rc)
 				hdd_err("wait on cancel_rem_on_chan_var timed out");
-			}
+
 			return 0;
 		}
 		pRemainChanCtx->hdd_remain_on_chan_cancel_in_progress = true;
@@ -1287,8 +1282,7 @@ __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 	roc_scan_id = pRemainChanCtx->scan_id;
 	mutex_unlock(&cfgState->remain_on_chan_ctx_lock);
 
-	/*
-	 * wait until remain on channel ready event received
+	/* wait until remain on channel ready event received
 	 * for already issued remain on channel request
 	 */
 	rc = wait_for_completion_timeout(&pAdapter->rem_on_chan_ready_event,
@@ -1315,8 +1309,8 @@ __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 	    (QDF_P2P_CLIENT_MODE == pAdapter->device_mode) ||
 	    (QDF_P2P_DEVICE_MODE == pAdapter->device_mode)
 	    ) {
-
 		uint8_t sessionId = pAdapter->sessionId;
+
 		sme_cancel_remain_on_channel(WLAN_HDD_GET_HAL_CTX(pAdapter),
 			sessionId, roc_scan_id);
 	} else if ((QDF_SAP_MODE == pAdapter->device_mode) ||
@@ -1334,10 +1328,11 @@ __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 	rc = wait_for_completion_timeout(&pAdapter->cancel_rem_on_chan_var,
 					 msecs_to_jiffies
 						 (WAIT_CANCEL_REM_CHAN));
-	if (!rc) {
+	if (!rc)
 		hdd_err("wait on cancel_rem_on_chan_var timed out");
-	}
+
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_ROC);
+
 	EXIT();
 	return 0;
 }
@@ -1477,7 +1472,6 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 		wait = ACTION_FRAME_DEFAULT_WAIT;
 		mutex_lock(&cfgState->remain_on_chan_ctx_lock);
 		if (cfgState->remain_on_chan_ctx) {
-
 			uint64_t current_time =
 				(uint64_t)qdf_mc_timer_get_system_time();
 			int remaining_roc_time =
@@ -1510,10 +1504,9 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 	    ) {
 		if (type == SIR_MAC_MGMT_FRAME) {
 			if (subType == SIR_MAC_MGMT_PROBE_RSP) {
-				/*
-				 * Drop Probe response received from
-				 * supplicant, as for GO and SAP PE
-				 * itself sends probe response
+				/* Drop Probe response recieved from supplicant,
+				 * as for GO and SAP PE itself
+				 * sends probe response
 				 */
 				goto err_rem_channel;
 			} else if ((subType == SIR_MAC_MGMT_DISASSOC) ||
@@ -1530,6 +1523,7 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 				 * supplicant.
 				 */
 				uint8_t dstMac[ETH_ALEN] = { 0 };
+
 				memcpy(&dstMac,
 				       &buf[WLAN_HDD_80211_FRM_DA_OFFSET],
 				       ETH_ALEN);
@@ -1638,9 +1632,9 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 							   remain_on_chan_ctx->
 							   hdd_remain_on_chan_timer,
 							   wait);
-				if (status != QDF_STATUS_SUCCESS) {
-					hdd_err("Remain on Channel timer start failed");
-				}
+				if (status != QDF_STATUS_SUCCESS)
+					hdd_warn("Remain on Channel timer start failed");
+
 				mutex_unlock(&cfgState->
 					     remain_on_chan_ctx_lock);
 				goto send_frame;
@@ -1656,10 +1650,8 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 						     (&pAdapter->cancel_rem_on_chan_var,
 						     msecs_to_jiffies
 							     (WAIT_CANCEL_REM_CHAN));
-					if (!rc) {
-						hdd_err("wait on cancel_rem_on_chan_var timed out");
-					}
-
+					if (!rc)
+						hdd_warn("wait on cancel_rem_on_chan_var timed out");
 				} else
 					mutex_unlock(&cfgState->
 						     remain_on_chan_ctx_lock);
@@ -1726,10 +1718,8 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 		 * Check before sending action frame
 		 * whether we already remain on channel
 		 */
-		if (NULL == cfgState->remain_on_chan_ctx) {
+		if (NULL == cfgState->remain_on_chan_ctx)
 			goto err_rem_channel;
-		}
-	}
 send_frame:
 
 	if (!noack) {
@@ -1912,10 +1902,8 @@ void hdd_send_action_cnf(hdd_adapter_t *pAdapter, bool actionSendSuccess)
 
 	cfgState->actionFrmState = HDD_IDLE;
 
-
-	if (NULL == cfgState->buf) {
+	if (NULL == cfgState->buf)
 		return;
-	}
 
 	if (cfgState->is_go_neg_ack_received) {
 
@@ -2128,8 +2116,8 @@ int hdd_set_p2p_opps(struct net_device *dev, uint8_t *command)
 	 * Opportunistic Power Save (1)
 	 */
 
-	/* From wpa_cli user need to use separate command to set ctWindow and Opps
-	 * When user want to set ctWindow during that time other parameters
+	/* From wpa_cli user need to use separate command to set ctWindow and
+	 * Opps when user want to set ctWindow during that time other parameters
 	 * values are coming from wpa_supplicant as -1.
 	 * Example : User want to set ctWindow with 30 then wpa_cli command :
 	 * P2P_SET ctwindow 30
@@ -2417,6 +2405,7 @@ int __wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
 	hdd_context_t *pHddCtx = (hdd_context_t *) wiphy_priv(wiphy);
 	hdd_adapter_t *pVirtAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	int status;
+
 	ENTER();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
