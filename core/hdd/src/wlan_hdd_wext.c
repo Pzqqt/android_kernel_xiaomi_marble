@@ -104,7 +104,7 @@
 #define HDD_DELETE_MCBC_FILTERS_FROM_FW 0
 
 /* To Validate Channel against the Frequency and Vice-Versa */
-static const hdd_freq_chan_map_t freq_chan_map[] = {
+static const struct ccp_freq_chan_map freq_chan_map[] = {
 	{2412, 1}, {2417, 2}, {2422, 3}, {2427, 4}, {2432, 5}, {2437, 6},
 	{2442, 7}, {2447, 8}, {2452, 9}, {2457, 10}, {2462, 11}, {2467, 12},
 	{2472, 13}, {2484, 14}, {4920, 240}, {4940, 244}, {4960, 248},

@@ -72,23 +72,27 @@ struct sap_Config;
 /* 012345678 */
 #define WLAN_HDD_UI_SET_BAND_VALUE_OFFSET              8
 
-typedef enum {
+enum hdd_wlan_wmm_direction {
 	HDD_WLAN_WMM_DIRECTION_UPSTREAM = 0,
 	HDD_WLAN_WMM_DIRECTION_DOWNSTREAM = 1,
 	HDD_WLAN_WMM_DIRECTION_BIDIRECTIONAL = 2,
-} hdd_wlan_wmm_direction_e;
+};
 
-typedef enum {
+enum hdd_wlan_wmm_power_save {
 	HDD_WLAN_WMM_POWER_SAVE_LEGACY = 0,
 	HDD_WLAN_WMM_POWER_SAVE_UAPSD = 1,
-} hdd_wlan_wmm_power_save_e;
+};
 
 typedef enum {
 	/* TSPEC/re-assoc done, async */
 	HDD_WLAN_WMM_STATUS_SETUP_SUCCESS = 0,
-	/* no need to setup TSPEC since ACM=0 and no UAPSD desired, sync + async */
+	/* no need to setup TSPEC since ACM=0 and no UAPSD desired,
+	 * sync + async
+	 */
 	HDD_WLAN_WMM_STATUS_SETUP_SUCCESS_NO_ACM_NO_UAPSD = 1,
-	/* no need to setup TSPEC since ACM=0 and UAPSD already exists, sync + async */
+	/* no need to setup TSPEC since ACM=0 and UAPSD already exists,
+	 * sync + async
+	 */
 	HDD_WLAN_WMM_STATUS_SETUP_SUCCESS_NO_ACM_UAPSD_EXISTING = 2,
 	/* TSPEC result pending, sync */
 	HDD_WLAN_WMM_STATUS_SETUP_PENDING = 3,
@@ -101,15 +105,21 @@ typedef enum {
 
 	/* TSPEC modification/re-assoc successful, async */
 	HDD_WLAN_WMM_STATUS_MODIFY_SUCCESS = 7,
-	/* TSPEC modification a no-op since ACM=0 and no change in UAPSD, sync + async */
+	/* TSPEC modification a no-op since ACM=0 and
+	 * no change in UAPSD, sync + async
+	 */
 	HDD_WLAN_WMM_STATUS_MODIFY_SUCCESS_NO_ACM_NO_UAPSD = 8,
-	/* TSPEC modification a no-op since ACM=0 and requested U-APSD already exists, sync + async */
+	/* TSPEC modification a no-op since ACM=0 and
+	 * requested U-APSD already exists, sync + async
+	 */
 	HDD_WLAN_WMM_STATUS_MODIFY_SUCCESS_NO_ACM_UAPSD_EXISTING = 9,
 	/* TSPEC result pending, sync */
 	HDD_WLAN_WMM_STATUS_MODIFY_PENDING = 10,
 	/* TSPEC modification failed, prev TSPEC in effect, sync + async */
 	HDD_WLAN_WMM_STATUS_MODIFY_FAILED = 11,
-	/* TSPEC modification request rejected due to invalid params, sync + async */
+	/* TSPEC modification request rejected due to invalid params,
+	 * sync + async
+	 */
 	HDD_WLAN_WMM_STATUS_MODIFY_FAILED_BAD_PARAM = 12,
 
 	/* TSPEC release successful, sync and also async */
@@ -128,19 +138,21 @@ typedef enum {
 	/* some internal failure like memory allocation failure, etc, sync */
 	HDD_WLAN_WMM_STATUS_INTERNAL_FAILURE = 19,
 
-	/* U-APSD failed during setup but OTA setup (whether TSPEC exchnage or */
-	/* re-assoc) was done so app should release this QoS, async */
+	/* U-APSD failed during setup but OTA setup (whether TSPEC exchnage or
+	 * re-assoc) was done so app should release this QoS, async
+	 */
 	HDD_WLAN_WMM_STATUS_SETUP_UAPSD_SET_FAILED = 20,
-	/* U-APSD failed during modify, but OTA setup (whether TSPEC exchnage or */
-	/* re-assoc) was done so app should release this QoS, async */
+	/* U-APSD failed during modify, but OTA setup (whether TSPEC exchnage or
+	 * re-assoc) was done so app should release this QoS, async
+	 */
 	HDD_WLAN_WMM_STATUS_MODIFY_UAPSD_SET_FAILED = 21
 } hdd_wlan_wmm_status_e;
 
 /** TS Info Ack Policy */
-typedef enum {
+enum hdd_wlan_wmm_ts_info_ack_policy {
 	HDD_WLAN_WMM_TS_INFO_ACK_POLICY_NORMAL_ACK = 0,
 	HDD_WLAN_WMM_TS_INFO_ACK_POLICY_HT_IMMEDIATE_BLOCK_ACK = 1,
-} hdd_wlan_wmm_ts_info_ack_policy_e;
+};
 
 /** Maximum Length of WPA/RSN IE */
 #define MAX_WPA_RSN_IE_LEN 40
@@ -152,9 +164,10 @@ typedef enum {
 #define DISABLE_11D 0
 
 /*
- * refer wpa.h in wpa supplicant code for REASON_MICHAEL_MIC_FAILURE.
- * supplicant sets REASON_MICHAEL_MIC_FAILURE as the reason code when
- * it sends the MLME deauth IOCTL for TKIP counter measures
+ * refer wpa.h in wpa supplicant code for REASON_MICHAEL_MIC_FAILURE
+ *
+ * supplicant sets REASON_MICHAEL_MIC_FAILURE as the reason code when it
+ * sends the MLME deauth IOCTL for TKIP counter measures
  */
 #define HDD_REASON_MICHAEL_MIC_FAILURE 14
 
@@ -219,10 +232,10 @@ typedef enum {
 #define MBO_OUI_TYPE   "\x50\x6f\x9a\x16"
 #define MBO_OUI_TYPE_SIZE  4
 
-typedef enum {
+enum hdd_wps_mode {
 	eWEXT_WPS_OFF = 0,
 	eWEXT_WPS_ON = 1,
-} hdd_wps_mode_e;
+};
 
 /*
  * This structure contains the interface level (granularity)
@@ -265,29 +278,33 @@ typedef struct hdd_wext_state_s {
 #endif
 } hdd_wext_state_t;
 
-typedef struct ccp_freq_chan_map_s {
+struct ccp_freq_chan_map {
 	/* List of frequencies */
 	uint32_t freq;
 	uint32_t chan;
-} hdd_freq_chan_map_t;
+};
 
 /* Packet Types. */
 #define WLAN_KEEP_ALIVE_UNSOLICIT_ARP_RSP     2
 #define WLAN_KEEP_ALIVE_NULL_PKT              1
 
 #define wlan_hdd_get_wps_ie_ptr(ie, ie_len) \
-	wlan_hdd_get_vendor_oui_ie_ptr(WPS_OUI_TYPE, WPS_OUI_TYPE_SIZE, ie, ie_len)
+	wlan_hdd_get_vendor_oui_ie_ptr(WPS_OUI_TYPE, WPS_OUI_TYPE_SIZE, \
+	ie, ie_len)
 
 #define wlan_hdd_get_p2p_ie_ptr(ie, ie_len) \
-	wlan_hdd_get_vendor_oui_ie_ptr(P2P_OUI_TYPE, P2P_OUI_TYPE_SIZE, ie, ie_len)
+	wlan_hdd_get_vendor_oui_ie_ptr(P2P_OUI_TYPE, P2P_OUI_TYPE_SIZE, \
+	ie, ie_len)
 
 #ifdef WLAN_FEATURE_WFD
 #define wlan_hdd_get_wfd_ie_ptr(ie, ie_len) \
-	wlan_hdd_get_vendor_oui_ie_ptr(WFD_OUI_TYPE, WFD_OUI_TYPE_SIZE, ie, ie_len)
+	wlan_hdd_get_vendor_oui_ie_ptr(WFD_OUI_TYPE, WFD_OUI_TYPE_SIZE, \
+	ie, ie_len)
 #endif
 
 #define wlan_hdd_get_mbo_ie_ptr(ie, ie_len) \
-	wlan_hdd_get_vendor_oui_ie_ptr(MBO_OUI_TYPE, MBO_OUI_TYPE_SIZE, ie, ie_len)
+	wlan_hdd_get_vendor_oui_ie_ptr(MBO_OUI_TYPE, MBO_OUI_TYPE_SIZE, \
+	ie, ie_len)
 /*
  * Defines for fw_test command
  */
