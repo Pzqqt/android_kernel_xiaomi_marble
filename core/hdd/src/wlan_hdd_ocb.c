@@ -365,7 +365,7 @@ static void hdd_ocb_set_config_callback(void *context_ptr, void *response_ptr)
 	priv = hdd_request_priv(hdd_request);
 
 	if (response && response->status)
-		hdd_err("Operation failed: %d", response->status);
+		hdd_warn("Operation failed: %d", response->status);
 
 	if (response && (0 == response->status))
 		priv->status = 0;
