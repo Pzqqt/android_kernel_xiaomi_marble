@@ -55,8 +55,6 @@
 #include <cdp_txrx_ops.h>
 
 #ifdef FEATURE_OEM_DATA_SUPPORT
-/*include for oem data req specific structures*/
-/*and function declarations*/
 #include "wlan_hdd_oemdata.h"
 #endif
 
