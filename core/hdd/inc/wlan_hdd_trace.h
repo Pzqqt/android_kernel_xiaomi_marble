@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -132,7 +132,6 @@ static inline const char *hdd_trace_event_string(uint32_t code)
 	switch (code) {
 	default:
 		return "UNKNOWN";
-		break;
 #undef ENUM
 #define ENUM(enum) CASE_RETURN_STRING(enum)
 	ENUMS
