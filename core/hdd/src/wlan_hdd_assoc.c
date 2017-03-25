@@ -1657,6 +1657,7 @@ static QDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
 
 	if (eCSR_ROAM_IBSS_LEAVE == roamStatus) {
 		uint8_t i;
+
 		sta_id = pHddStaCtx->broadcast_staid;
 		vstatus = hdd_roam_deregister_sta(pAdapter, sta_id);
 		if (!QDF_IS_STATUS_SUCCESS(vstatus)) {
@@ -1816,9 +1817,9 @@ QDF_STATUS hdd_change_peer_state(hdd_adapter_t *pAdapter,
 			rc = wait_for_completion_timeout(
 				&pAdapter->sta_authorized_event,
 				msecs_to_jiffies(HDD_PEER_AUTHORIZE_WAIT));
-			if (!rc) {
+			if (!rc)
 				hdd_debug("timeout waiting for sta_authorized_event");
-			}
+
 			vdev = (void *)cdp_peer_get_vdev(soc, peer);
 			cdp_fc_vdev_unpause(soc, (struct cdp_vdev *)vdev,
 					OL_TXQ_PAUSE_REASON_PEER_UNAUTHORIZED);
@@ -2332,6 +2333,7 @@ void hdd_perform_roam_set_key_complete(hdd_adapter_t *pAdapter)
 	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	tCsrRoamInfo roamInfo;
+
 	roamInfo.fAuthRequired = false;
 	qdf_mem_copy(roamInfo.bssid.bytes,
 		     pHddStaCtx->roam_info.bssid, QDF_MAC_ADDR_SIZE);
@@ -3129,8 +3131,6 @@ static void hdd_roam_ibss_indication_handler(hdd_adapter_t *pAdapter,
 			pAdapter->dev->name, (int)roamResult);
 		break;
 	}
-
-	return;
 }
 
 /**
@@ -3316,6 +3316,7 @@ hdd_roam_mic_error_indication_handler(hdd_adapter_t *pAdapter,
 	    pHddStaCtx->WextState.mTKIPCounterMeasures) {
 		struct iw_michaelmicfailure msg;
 		union iwreq_data wreq;
+
 		memset(&msg, '\0', sizeof(msg));
 		msg.src_addr.sa_family = ARPHRD_ETHER;
 		memcpy(msg.src_addr.sa_data,
