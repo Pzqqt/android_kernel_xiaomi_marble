@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -72,7 +72,6 @@ int hdd_get_tsf_cb(void *pcb_cxt, struct stsf *ptsf);
 #else
 static inline void wlan_hdd_tsf_init(struct hdd_context_s *hdd_ctx)
 {
-	return;
 }
 
 static inline int hdd_indicate_tsf(struct hdd_adapter_s *adapter, uint32_t *buf,
