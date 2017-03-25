@@ -117,10 +117,10 @@ typedef int (*hdd_drv_cmd_handler_t)(hdd_adapter_t *adapter,
 				     uint8_t cmd_name_len,
 				     hdd_priv_data_t *priv_data);
 
-typedef struct {
+struct hdd_drv_cmd {
 	const char *cmd;
 	hdd_drv_cmd_handler_t handler;
-} hdd_drv_cmd_t;
+};
 
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
 #define WLAN_WAIT_TIME_READY_TO_EXTWOW   2000
@@ -128,7 +128,6 @@ typedef struct {
 #endif
 
 static uint16_t cesium_pid;
-extern struct sock *cesium_nl_srv_sock;
 
 #ifdef FEATURE_WLAN_ESE
 struct tsm_priv {
@@ -223,26 +222,24 @@ static int hdd_parse_setrmcenable_command(uint8_t *pValue,
 
 	inPtr = strnchr(pValue, strlen(pValue), SPACE_ASCII_VALUE);
 
-	if (NULL == inPtr) {
+	if (NULL == inPtr)
 		return 0;
-	}
-
-	else if (SPACE_ASCII_VALUE != *inPtr) {
+	else if (SPACE_ASCII_VALUE != *inPtr)
 		return 0;
-	}
 
 	while ((SPACE_ASCII_VALUE == *inPtr) && ('\0' != *inPtr))
 		inPtr++;
 
-	if ('\0' == *inPtr) {
+	if ('\0' == *inPtr)
 		return 0;
-	}
 
-	sscanf(inPtr, "%32s ", buf);
-	v = kstrtos32(buf, 10, &tempInt);
-	if (v < 0) {
+	v = sscanf(inPtr, "%32s ", buf);
+	if (1 != v)
 		return -EINVAL;
-	}
+
+	v = kstrtos32(buf, 10, &tempInt);
+	if (v < 0)
+		return -EINVAL;
 
 	*pRmcEnable = tempInt;
 
@@ -263,31 +260,28 @@ static int hdd_parse_setrmcactionperiod_command(uint8_t *pValue,
 
 	inPtr = strnchr(pValue, strlen(pValue), SPACE_ASCII_VALUE);
 
-	if (NULL == inPtr) {
+	if (NULL == inPtr)
 		return -EINVAL;
-	}
-
-	else if (SPACE_ASCII_VALUE != *inPtr) {
+	else if (SPACE_ASCII_VALUE != *inPtr)
 		return -EINVAL;
-	}
 
 	while ((SPACE_ASCII_VALUE == *inPtr) && ('\0' != *inPtr))
 		inPtr++;
 
-	if ('\0' == *inPtr) {
+	if ('\0' == *inPtr)
 		return 0;
-	}
 
-	sscanf(inPtr, "%32s ", buf);
-	v = kstrtos32(buf, 10, &tempInt);
-	if (v < 0) {
+	v = sscanf(inPtr, "%32s ", buf);
+	if (1 != v)
 		return -EINVAL;
-	}
+
+	v = kstrtos32(buf, 10, &tempInt);
+	if (v < 0)
+		return -EINVAL;
 
 	if ((tempInt < WNI_CFG_RMC_ACTION_PERIOD_FREQUENCY_STAMIN) ||
-	    (tempInt > WNI_CFG_RMC_ACTION_PERIOD_FREQUENCY_STAMAX)) {
+	    (tempInt > WNI_CFG_RMC_ACTION_PERIOD_FREQUENCY_STAMAX))
 		return -EINVAL;
-	}
 
 	*pActionPeriod = tempInt;
 
@@ -310,26 +304,24 @@ static int hdd_parse_setrmcrate_command(uint8_t *pValue,
 
 	inPtr = strnchr(pValue, strlen(pValue), SPACE_ASCII_VALUE);
 
-	if (NULL == inPtr) {
+	if (NULL == inPtr)
 		return -EINVAL;
-	}
-
-	else if (SPACE_ASCII_VALUE != *inPtr) {
+	else if (SPACE_ASCII_VALUE != *inPtr)
 		return -EINVAL;
-	}
 
 	while ((SPACE_ASCII_VALUE == *inPtr) && ('\0' != *inPtr))
 		inPtr++;
 
-	if ('\0' == *inPtr) {
+	if ('\0' == *inPtr)
 		return 0;
-	}
 
-	sscanf(inPtr, "%32s ", buf);
-	v = kstrtos32(buf, 10, &tempInt);
-	if (v < 0) {
+	v = sscanf(inPtr, "%32s ", buf);
+	if (1 != v)
 		return -EINVAL;
-	}
+
+	v = kstrtos32(buf, 10, &tempInt);
+	if (v < 0)
+		return -EINVAL;
 
 	switch (tempInt) {
 	default:
@@ -496,26 +488,23 @@ static QDF_STATUS
 hdd_parse_get_ibss_peer_info(uint8_t *pValue, struct qdf_mac_addr *pPeerMacAddr)
 {
 	uint8_t *inPtr = pValue;
+
 	inPtr = strnchr(pValue, strlen(pValue), SPACE_ASCII_VALUE);
 
-	if (NULL == inPtr) {
-		return QDF_STATUS_E_FAILURE;;
-	}
-
-	else if (SPACE_ASCII_VALUE != *inPtr) {
-		return QDF_STATUS_E_FAILURE;;
-	}
+	if (NULL == inPtr)
+		return QDF_STATUS_E_FAILURE;
+	else if (SPACE_ASCII_VALUE != *inPtr)
+		return QDF_STATUS_E_FAILURE;
 
 	while ((SPACE_ASCII_VALUE == *inPtr) && ('\0' != *inPtr))
 		inPtr++;
 
-	if ('\0' == *inPtr) {
-		return QDF_STATUS_E_FAILURE;;
-	}
+	if ('\0' == *inPtr)
+		return QDF_STATUS_E_FAILURE;
 
 	if (inPtr[2] != ':' || inPtr[5] != ':' || inPtr[8] != ':' ||
 	    inPtr[11] != ':' || inPtr[14] != ':') {
-		return QDF_STATUS_E_FAILURE;;
+		return QDF_STATUS_E_FAILURE;
 	}
 	sscanf(inPtr, "%2x:%2x:%2x:%2x:%2x:%2x",
 	       (unsigned int *)&pPeerMacAddr->bytes[0],
@@ -531,6 +520,7 @@ hdd_parse_get_ibss_peer_info(uint8_t *pValue, struct qdf_mac_addr *pPeerMacAddr)
 static void hdd_get_band_helper(hdd_context_t *hdd_ctx, int *pBand)
 {
 	eCsrBand band = -1;
+
 	sme_get_freq_band((tHalHandle) (hdd_ctx->hHal), &band);
 	switch (band) {
 	case eCSR_BAND_ALL:
@@ -688,9 +678,8 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *pValue,
 		inPtr++;
 
 	/* no argument followed by spaces */
-	if ('\0' == *inPtr) {
+	if ('\0' == *inPtr)
 		return -EINVAL;
-	}
 
 	/* getting the next argument ie the dwell time */
 	v = sscanf(inPtr, "%31s ", tempBuf);
@@ -713,15 +702,14 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *pValue,
 		inPtr++;
 
 	/* no argument followed by spaces */
-	if ('\0' == *inPtr) {
+	if ('\0' == *inPtr)
 		return -EINVAL;
-	}
 
 	/* find the length of data */
 	dataEnd = inPtr;
-	while (('\0' != *dataEnd)) {
+	while (('\0' != *dataEnd))
 		dataEnd++;
-	}
+
 	*pBufLen = dataEnd - inPtr;
 	if (*pBufLen <= 0)
 		return -EINVAL;
@@ -926,11 +914,11 @@ static int hdd_parse_reassoc_v1(hdd_adapter_t *adapter, const char *command)
 	int ret;
 
 	ret = hdd_parse_reassoc_command_v1_data(command, bssid, &channel);
-	if (ret) {
+	if (ret)
 		hdd_err("Failed to parse reassoc command data");
-	} else {
+	else
 		ret = hdd_reassoc(adapter, bssid, channel, REASSOC);
-	}
+
 	return ret;
 }
 
@@ -995,11 +983,10 @@ static int hdd_parse_reassoc(hdd_adapter_t *adapter, const char *command)
 	 *           1111111111222222
 	 * 01234567890123456789012345
 	 */
-	if (command[25]) {
+	if (command[25])
 		ret = hdd_parse_reassoc_v1(adapter, command);
-	} else {
+	else
 		ret = hdd_parse_reassoc_v2(adapter, command);
-	}
 
 	return ret;
 }
@@ -1068,6 +1055,7 @@ hdd_sendactionframe(hdd_adapter_t *adapter, const uint8_t *bssid,
 	if (pVendorSpecific->category ==
 	    SIR_MAC_ACTION_VENDOR_SPECIFIC_CATEGORY) {
 		static const uint8_t Oui[] = { 0x00, 0x00, 0xf0 };
+
 		if (!qdf_mem_cmp(pVendorSpecific->Oui, (void *)Oui, 3)) {
 			/*
 			 * if the channel number is different from operating
@@ -1286,11 +1274,10 @@ hdd_parse_sendactionframe(hdd_adapter_t *adapter, const char *command,
 		return -EINVAL;
 	}
 
-	if (command[33]) {
+	if (command[33])
 		ret = hdd_parse_sendactionframe_v1(adapter, command);
-	} else {
+	else
 		ret = hdd_parse_sendactionframe_v2(adapter, command, total_len);
-	}
 
 	return ret;
 }
@@ -1303,7 +1290,8 @@ hdd_parse_sendactionframe(hdd_adapter_t *adapter, const char *command,
  * @pNumChannels:	Pointer to number of roam scan channels
  *
  * This function parses the channel list passed in the format
- * SETROAMSCANCHANNELS<space><Number of channels><space>Channel 1<space>Channel 2<space>Channel N
+ * SETROAMSCANCHANNELS<space><Number of channels><space>Channel 1<space>
+ * Channel 2<space>Channel N
  * if the Number of channels (N) does not match with the actual number
  * of channels passed then take the minimum of N and count of
  * (Ch1, Ch2, ...Ch M). For example, if SETROAMSCANCHANNELS 3 36 40 44 48,
@@ -1325,23 +1313,18 @@ hdd_parse_channellist(const uint8_t *pValue, uint8_t *pChannelList,
 
 	inPtr = strnchr(pValue, strlen(pValue), SPACE_ASCII_VALUE);
 	/* no argument after the command */
-	if (NULL == inPtr) {
+	if (NULL == inPtr)
 		return -EINVAL;
-	}
-
-	/* no space after the command */
-	else if (SPACE_ASCII_VALUE != *inPtr) {
+	else if (SPACE_ASCII_VALUE != *inPtr) /* no space after the command */
 		return -EINVAL;
-	}
 
 	/* remove empty spaces */
 	while ((SPACE_ASCII_VALUE == *inPtr) && ('\0' != *inPtr))
 		inPtr++;
 
 	/* no argument followed by spaces */
-	if ('\0' == *inPtr) {
+	if ('\0' == *inPtr)
 		return -EINVAL;
-	}
 
 	/* get the first argument ie the number of channels */
 	v = sscanf(inPtr, "%31s ", buf);
@@ -1350,9 +1333,8 @@ hdd_parse_channellist(const uint8_t *pValue, uint8_t *pChannelList,
 
 	v = kstrtos32(buf, 10, &tempInt);
 	if ((v < 0) ||
-	    (tempInt <= 0) || (tempInt > WNI_CFG_VALID_CHANNEL_LIST_LEN)) {
+	    (tempInt <= 0) || (tempInt > WNI_CFG_VALID_CHANNEL_LIST_LEN))
 		return -EINVAL;
-	}
 
 	*pNumChannels = tempInt;
 
@@ -1567,15 +1549,14 @@ hdd_parse_set_roam_scan_channels(hdd_adapter_t *adapter, const char *command)
 
 	/* v1 params will only contain ASCII digits and space */
 	while ((ch = *cursor++) && v1) {
-		if (!(isdigit(ch) || isspace(ch))) {
+		if (!(isdigit(ch) || isspace(ch)))
 			v1 = false;
-		}
 	}
-	if (v1) {
+
+	if (v1)
 		ret = hdd_parse_set_roam_scan_channels_v1(adapter, command);
-	} else {
+	else
 		ret = hdd_parse_set_roam_scan_channels_v2(adapter, command);
-	}
 
 	return ret;
 }
@@ -2081,10 +2062,9 @@ static int hdd_set_app_type2_parser(hdd_adapter_t *adapter,
 		return -EINVAL;
 	}
 
-	if (6 !=
-	    sscanf(mac_addr, "%02x:%02x:%02x:%02x:%02x:%02x", &gateway_mac[0],
-		   &gateway_mac[1], &gateway_mac[2], &gateway_mac[3],
-		   &gateway_mac[4], &gateway_mac[5])) {
+	if (6 != sscanf(mac_addr, "%02x:%02x:%02x:%02x:%02x:%02x",
+			&gateway_mac[0], &gateway_mac[1], &gateway_mac[2],
+			&gateway_mac[3], &gateway_mac[4], &gateway_mac[5])) {
 		hdd_err("Invalid MacAddress Input %s", mac_addr);
 		return -EINVAL;
 	}
@@ -2165,30 +2145,24 @@ static int hdd_parse_setmaxtxpower_command(uint8_t *pValue, int *pTxPower)
 
 	inPtr = strnchr(pValue, strlen(pValue), SPACE_ASCII_VALUE);
 	/* no argument after the command */
-	if (NULL == inPtr) {
+	if (NULL == inPtr)
 		return -EINVAL;
-	}
-
-	/* no space after the command */
-	else if (SPACE_ASCII_VALUE != *inPtr) {
+	else if (SPACE_ASCII_VALUE != *inPtr) /* no space after the command */
 		return -EINVAL;
-	}
 
 	/* remove empty spaces */
 	while ((SPACE_ASCII_VALUE == *inPtr) && ('\0' != *inPtr))
 		inPtr++;
 
 	/* no argument followed by spaces */
-	if ('\0' == *inPtr) {
+	if ('\0' == *inPtr)
 		return 0;
-	}
 
 	v = kstrtos32(inPtr, 10, &tempInt);
 
 	/* Range checking for passed parameter */
-	if ((tempInt < HDD_MIN_TX_POWER) || (tempInt > HDD_MAX_TX_POWER)) {
+	if ((tempInt < HDD_MIN_TX_POWER) || (tempInt > HDD_MAX_TX_POWER))
 		return -EINVAL;
-	}
 
 	*pTxPower = tempInt;
 
@@ -2200,42 +2174,38 @@ static int hdd_parse_setmaxtxpower_command(uint8_t *pValue, int *pTxPower)
 static int hdd_get_dwell_time(struct hdd_config *pCfg, uint8_t *command,
 			      char *extra, uint8_t n, uint8_t *len)
 {
-	int ret;
-
 	if (!pCfg || !command || !extra || !len) {
 		hdd_err("argument passed for GETDWELLTIME is incorrect");
-		ret = -EINVAL;
-		return ret;
+		return -EINVAL;
 	}
 
 	if (strncmp(command, "GETDWELLTIME ACTIVE MAX", 23) == 0) {
 		*len = scnprintf(extra, n, "GETDWELLTIME ACTIVE MAX %u\n",
 				 (int)pCfg->nActiveMaxChnTime);
-		return ret;
+		return 0;
 	}
 	if (strncmp(command, "GETDWELLTIME ACTIVE MIN", 23) == 0) {
 		*len = scnprintf(extra, n, "GETDWELLTIME ACTIVE MIN %u\n",
 				 (int)pCfg->nActiveMinChnTime);
-		return ret;
+		return 0;
 	}
 	if (strncmp(command, "GETDWELLTIME PASSIVE MAX", 24) == 0) {
 		*len = scnprintf(extra, n, "GETDWELLTIME PASSIVE MAX %u\n",
 				 (int)pCfg->nPassiveMaxChnTime);
-		return ret;
+		return 0;
 	}
 	if (strncmp(command, "GETDWELLTIME PASSIVE MIN", 24) == 0) {
 		*len = scnprintf(extra, n, "GETDWELLTIME PASSIVE MIN %u\n",
 				 (int)pCfg->nPassiveMinChnTime);
-		return ret;
+		return 0;
 	}
 	if (strncmp(command, "GETDWELLTIME", 12) == 0) {
 		*len = scnprintf(extra, n, "GETDWELLTIME %u \n",
 				 (int)pCfg->nActiveMaxChnTime);
-		return ret;
+		return 0;
 	}
-	ret = -EINVAL;
 
-	return ret;
+	return -EINVAL;
 }
 
 static int hdd_set_dwell_time(hdd_adapter_t *adapter, uint8_t *command)
@@ -2464,8 +2434,6 @@ static void hdd_tx_fail_ind_callback(uint8_t *MacAddr, uint8_t seqNo)
 		hdd_err("nlmsg_unicast() failed for msg size[%d]",
 			 NLMSG_SPACE(payload_len));
 	}
-
-	return;
 }
 
 
@@ -2485,25 +2453,20 @@ static int hdd_parse_user_params(uint8_t *pValue, uint8_t **ppArg)
 
 	pVal = strnchr(pValue, strlen(pValue), ' ');
 
-	if (NULL == pVal) {
-		/* no argument remains */
+	if (NULL == pVal) /* no argument remains */
 		return -EINVAL;
-	} else if (SPACE_ASCII_VALUE != *pVal) {
-		/* no space after the current argument */
+	else if (SPACE_ASCII_VALUE != *pVal)/* no space after the current arg */
 		return -EINVAL;
-	}
 
 	pVal++;
 
 	/* remove empty spaces */
-	while ((SPACE_ASCII_VALUE == *pVal) && ('\0' != *pVal)) {
+	while ((SPACE_ASCII_VALUE == *pVal) && ('\0' != *pVal))
 		pVal++;
-	}
 
 	/* no argument followed by spaces */
-	if ('\0' == *pVal) {
+	if ('\0' == *pVal)
 		return -EINVAL;
-	}
 
 	*ppArg = pVal;
 
@@ -2590,14 +2553,10 @@ static int hdd_parse_ese_beacon_req(uint8_t *pValue,
 	char buf[32];
 
 	inPtr = strnchr(pValue, strlen(pValue), SPACE_ASCII_VALUE);
-	/* no argument after the command */
-	if (NULL == inPtr) {
+	if (NULL == inPtr) /* no argument after the command */
 		return -EINVAL;
-	}
-	/* no space after the command */
-	else if (SPACE_ASCII_VALUE != *inPtr) {
+	else if (SPACE_ASCII_VALUE != *inPtr) /* no space after the command */
 		return -EINVAL;
-	}
 
 	/* remove empty spaces */
 	while ((SPACE_ASCII_VALUE == *inPtr) && ('\0' != *inPtr))
@@ -2732,22 +2691,21 @@ static int hdd_parse_get_cckm_ie(uint8_t *pValue, uint8_t **pCckmIe,
 	int j = 0;
 	int i = 0;
 	uint8_t tempByte = 0;
+
 	inPtr = strnchr(pValue, strlen(pValue), SPACE_ASCII_VALUE);
 	/* no argument after the command */
-	if (NULL == inPtr) {
+	if (NULL == inPtr)
 		return -EINVAL;
-	}
-	/* no space after the command */
-	else if (SPACE_ASCII_VALUE != *inPtr) {
+	else if (SPACE_ASCII_VALUE != *inPtr) /* no space after the command */
 		return -EINVAL;
-	}
+
 	/* remove empty spaces */
 	while ((SPACE_ASCII_VALUE == *inPtr) && ('\0' != *inPtr))
 		inPtr++;
 	/* no argument followed by spaces */
-	if ('\0' == *inPtr) {
+	if ('\0' == *inPtr)
 		return -EINVAL;
-	}
+
 	/* find the length of data */
 	dataEnd = inPtr;
 	while (('\0' != *dataEnd)) {
@@ -2837,7 +2795,7 @@ static int drv_cmd_p2p_dev_addr(hdd_adapter_t *adapter,
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_P2P_DEV_ADDR_IOCTL,
 			 adapter->sessionId,
-			(unsigned)(*(hdd_ctx->p2pDeviceAddress.bytes + 2)
+			(unsigned int)(*(hdd_ctx->p2pDeviceAddress.bytes + 2)
 				<< 24 | *(hdd_ctx->p2pDeviceAddress.bytes
 				+ 3) << 16 | *(hdd_ctx->
 				p2pDeviceAddress.bytes + 4) << 8 |
@@ -6781,7 +6739,7 @@ static int drv_cmd_set_channel_switch(hdd_adapter_t *adapter,
  * The following table contains all supported WLAN HDD
  * IOCTL driver commands and the handler for each of them.
  */
-static const hdd_drv_cmd_t hdd_drv_cmds[] = {
+static const struct hdd_drv_cmd hdd_drv_cmds[] = {
 	{"P2P_DEV_ADDR",              drv_cmd_p2p_dev_addr},
 	{"P2P_SET_NOA",               drv_cmd_p2p_set_noa},
 	{"P2P_SET_PS",                drv_cmd_p2p_set_ps},
