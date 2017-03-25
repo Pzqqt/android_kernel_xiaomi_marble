@@ -10623,7 +10623,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 
 	case WE_P2P_NOA_CMD:
 	{
-		p2p_app_setP2pPs_t p2pNoA;
+		struct p2p_app_set_ps p2pNoA;
 
 		if (pAdapter->device_mode != QDF_P2P_GO_MODE) {
 			hdd_err("Setting NoA is not allowed in Device mode %s(%d)",

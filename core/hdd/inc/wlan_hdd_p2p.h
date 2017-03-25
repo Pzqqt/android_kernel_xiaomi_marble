@@ -33,7 +33,6 @@
  *
  * Linux HDD P2P include file
  */
-
 #define ACTION_FRAME_TX_TIMEOUT 2000
 #define WAIT_CANCEL_REM_CHAN    1000
 #define WAIT_REM_CHAN_READY     1000
@@ -74,20 +73,22 @@
 #define ACTION_FRAME_ACK_WAIT 300
 
 #ifdef WLAN_FEATURE_P2P_DEBUG
-typedef enum { P2P_NOT_ACTIVE,
-	       P2P_GO_NEG_PROCESS,
-	       P2P_GO_NEG_COMPLETED,
-	       P2P_CLIENT_CONNECTING_STATE_1,
-	       P2P_GO_COMPLETED_STATE,
-	       P2P_CLIENT_CONNECTED_STATE_1,
-	       P2P_CLIENT_DISCONNECTED_STATE,
-	       P2P_CLIENT_CONNECTING_STATE_2,
-	       P2P_CLIENT_COMPLETED_STATE} tP2PConnectionStatus;
+enum p2p_connection_status {
+	P2P_NOT_ACTIVE,
+	P2P_GO_NEG_PROCESS,
+	P2P_GO_NEG_COMPLETED,
+	P2P_CLIENT_CONNECTING_STATE_1,
+	P2P_GO_COMPLETED_STATE,
+	P2P_CLIENT_CONNECTED_STATE_1,
+	P2P_CLIENT_DISCONNECTED_STATE,
+	P2P_CLIENT_CONNECTING_STATE_2,
+	P2P_CLIENT_COMPLETED_STATE
+};
 
-extern tP2PConnectionStatus global_p2p_connection_status;
+extern enum p2p_connection_status global_p2p_connection_status;
 #endif
 
-typedef struct p2p_app_setP2pPs {
+struct p2p_app_set_ps {
 	uint8_t opp_ps;
 	uint32_t ctWindow;
 	uint8_t count;
@@ -95,7 +96,7 @@ typedef struct p2p_app_setP2pPs {
 	uint32_t interval;
 	uint32_t single_noa_duration;
 	uint8_t psSelection;
-} p2p_app_setP2pPs_t;
+};
 
 int wlan_hdd_cfg80211_remain_on_channel(struct wiphy *wiphy,
 					struct wireless_dev *wdev,

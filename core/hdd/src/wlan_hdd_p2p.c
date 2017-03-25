@@ -110,7 +110,7 @@ const char *p2p_action_frame_type[] = { "GO Negotiation Request",
  * and also not make any complicating the code
  * just for debugging log
  */
-tP2PConnectionStatus global_p2p_connection_status = P2P_NOT_ACTIVE;
+enum p2p_connection_status global_p2p_connection_status = P2P_NOT_ACTIVE;
 
 #endif
 #define MAX_TDLS_ACTION_FRAME_TYPE 11
@@ -2180,7 +2180,7 @@ int hdd_set_p2p_ps(struct net_device *dev, void *msgData)
 {
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	tP2pPsConfig NoA;
-	p2p_app_setP2pPs_t *pappNoA = (p2p_app_setP2pPs_t *) msgData;
+	struct p2p_app_set_ps *pappNoA = (struct p2p_app_set_ps *) msgData;
 
 	NoA.opp_ps = pappNoA->opp_ps;
 	NoA.ctWindow = pappNoA->ctWindow;
