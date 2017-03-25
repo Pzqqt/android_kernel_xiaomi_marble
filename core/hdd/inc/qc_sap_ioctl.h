@@ -40,34 +40,6 @@
 #define QCSAP_MAX_OPT_IE        256
 #define QCSAP_MAX_WSC_IE        256
 #define QCSAP_MAX_GET_STA_INFO  512
-
-typedef struct sSSID {
-	uint8_t length;
-	uint8_t ssId[32];
-} tSSID;
-
-typedef struct sSSIDInfo {
-	tSSID ssid;
-	uint8_t ssidHidden;
-} tSSIDInfo;
-
-typedef enum {
-	eQC_DOT11_MODE_ALL = 0,
-	eQC_DOT11_MODE_ABG = 0x0001,    /* 11a/b/g only, no HT, no proprietary */
-	eQC_DOT11_MODE_11A = 0x0002,
-	eQC_DOT11_MODE_11B = 0x0004,
-	eQC_DOT11_MODE_11G = 0x0008,
-	eQC_DOT11_MODE_11N = 0x0010,
-	eQC_DOT11_MODE_11G_ONLY = 0x0020,
-	eQC_DOT11_MODE_11N_ONLY = 0x0040,
-	eQC_DOT11_MODE_11B_ONLY = 0x0080,
-	eQC_DOT11_MODE_11A_ONLY = 0x0100,
-	/* This is for WIFI test. It is same as eWNIAPI_MAC_PROTOCOL_ALL except when it starts IBSS in 11B of 2.4GHz */
-	/* It is for CSR internal use */
-	eQC_DOT11_MODE_AUTO = 0x0200,
-
-} tQcPhyMode;
-
 #define QCSAP_ADDR_LEN  6
 
 typedef uint8_t qcmacaddr[QCSAP_ADDR_LEN];
@@ -76,18 +48,6 @@ struct qc_mac_acl_entry {
 	qcmacaddr addr;
 	int vlan_id;
 };
-
-typedef enum {
-	eQC_AUTH_TYPE_OPEN_SYSTEM,
-	eQC_AUTH_TYPE_SHARED_KEY,
-	eQC_AUTH_TYPE_AUTO_SWITCH
-} eQcAuthType;
-
-typedef enum {
-	eQC_WPS_BEACON_IE,
-	eQC_WPS_PROBE_RSP_IE,
-	eQC_WPS_ASSOC_RSP_IE
-} eQCWPSType;
 
 /*
  * Retrieve the WPA/RSN information element for an associated station.
@@ -108,20 +68,20 @@ struct sQcSapreq_wscie {
 /*
  * Retrieve the WPS PBC Probe Request IEs.
  */
-typedef struct sQcSapreq_WPSPBCProbeReqIES {
+struct sap_wpspbc_probe_reqies {
 	struct qdf_mac_addr macaddr;
 	uint16_t probeReqIELen;
 	uint8_t probeReqIE[512];
-} sQcSapreq_WPSPBCProbeReqIES_t;
+};
 
 /*
  * Channel List Info
  */
 
-typedef struct {
+struct channel_list_info {
 	uint8_t num_channels;
 	uint8_t channels[WNI_CFG_VALID_CHANNEL_LIST_LEN];
-} tChannelListInfo, *tpChannelListInfo;
+};
 
 #ifdef __linux__
 /*

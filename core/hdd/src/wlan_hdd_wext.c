@@ -9991,7 +9991,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		uint8_t ubuf_len = WNI_CFG_COUNTRY_CODE_LEN;
 		hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 
-		tChannelListInfo channel_list;
+		struct channel_list_info channel_list;
 
 		memset(&channel_list, 0, sizeof(channel_list));
 		status = iw_get_channel_list(dev, info, wrqu,

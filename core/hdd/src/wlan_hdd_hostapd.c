@@ -4258,7 +4258,8 @@ static int __iw_get_channel_list(struct net_device *dev,
 	uint8_t band_end_channel = CHAN_ENUM_184;
 	hdd_adapter_t *hostapd_adapter = (netdev_priv(dev));
 	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(hostapd_adapter);
-	tpChannelListInfo channel_list = (tpChannelListInfo) extra;
+	struct channel_list_info *channel_list =
+					(struct channel_list_info *) extra;
 	eCsrBand cur_band = eCSR_BAND_ALL;
 	hdd_context_t *hdd_ctx;
 	int ret;
@@ -4279,7 +4280,7 @@ static int __iw_get_channel_list(struct net_device *dev,
 		hdd_err("not able get the current frequency band");
 		return -EIO;
 	}
-	wrqu->data.length = sizeof(tChannelListInfo);
+	wrqu->data.length = sizeof(struct channel_list_info);
 
 	if (eCSR_BAND_24 == cur_band) {
 		band_start_channel = CHAN_ENUM_1;
@@ -4406,7 +4407,7 @@ int __iw_get_wpspbc_probe_req_ies(struct net_device *dev,
 				  union iwreq_data *wrqu, char *extra)
 {
 	hdd_adapter_t *pHostapdAdapter = (netdev_priv(dev));
-	sQcSapreq_WPSPBCProbeReqIES_t WPSPBCProbeReqIEs;
+	struct sap_wpspbc_probe_reqies WPSPBCProbeReqIEs;
 	hdd_ap_ctx_t *pHddApCtx = WLAN_HDD_GET_AP_CTX_PTR(pHostapdAdapter);
 	hdd_context_t *hdd_ctx;
 	int ret;
@@ -5673,7 +5674,7 @@ static const struct iw_priv_args hostapd_private_args[] = {
 	}, {
 		QCSAP_IOCTL_GET_WPS_PBC_PROBE_REQ_IES,
 		IW_PRIV_TYPE_BYTE |
-		sizeof(sQcSapreq_WPSPBCProbeReqIES_t) |
+		sizeof(struct sap_wpspbc_probe_reqies) |
 		IW_PRIV_SIZE_FIXED, 0, "getProbeReqIEs"
 	}
 	, {
@@ -5747,7 +5748,7 @@ static const struct iw_priv_args hostapd_private_args[] = {
 	{
 		QCSAP_IOCTL_GET_CHANNEL_LIST,
 		0,
-		IW_PRIV_TYPE_BYTE | sizeof(tChannelListInfo),
+		IW_PRIV_TYPE_BYTE | sizeof(struct channel_list_info),
 		"getChannelList"
 	}
 	,
