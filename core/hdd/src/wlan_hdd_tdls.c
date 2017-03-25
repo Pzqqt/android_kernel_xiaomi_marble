@@ -1054,7 +1054,7 @@ hddTdlsPeer_t *wlan_hdd_tdls_get_peer(hdd_adapter_t *pAdapter, const u8 *mac)
  * Return: 0 if successful or negative errno otherwise
  */
 int wlan_hdd_tdls_set_cap(hdd_adapter_t *pAdapter, const uint8_t *mac,
-			  tTDLSCapType cap)
+			  enum tdls_cap_type cap)
 {
 	hddTdlsPeer_t *curr_peer;
 	hdd_context_t *hdd_ctx;
@@ -1090,8 +1090,8 @@ ret_status:
  * Return: Void
  */
 void wlan_hdd_tdls_set_peer_link_status(hddTdlsPeer_t *curr_peer,
-					tTDLSLinkStatus status,
-					tTDLSLinkReason reason)
+					enum tdls_link_status status,
+					enum tdls_link_reason reason)
 {
 	uint32_t state = 0;
 	int32_t res = 0;
@@ -1152,8 +1152,8 @@ void wlan_hdd_tdls_set_peer_link_status(hddTdlsPeer_t *curr_peer,
  */
 void wlan_hdd_tdls_set_link_status(hdd_adapter_t *pAdapter,
 				   const uint8_t *mac,
-				   tTDLSLinkStatus linkStatus,
-				   tTDLSLinkReason reason)
+				   enum tdls_link_status linkStatus,
+				   enum tdls_link_reason reason)
 {
 	uint32_t state = 0;
 	int32_t res = 0;
@@ -1674,7 +1674,7 @@ static void wlan_hdd_tdls_implicit_enable(tdlsCtx_t *pHddTdlsCtx)
  * Return: Void
  */
 static void wlan_hdd_tdls_set_mode(hdd_context_t *pHddCtx,
-				   eTDLSSupportMode tdls_mode,
+				   enum tdls_support_mode tdls_mode,
 				   bool bUpdateLast,
 				   enum tdls_disable_source source)
 {
@@ -1804,7 +1804,7 @@ int wlan_hdd_tdls_set_params(struct net_device *dev,
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	tdlsCtx_t *pHddTdlsCtx;
-	eTDLSSupportMode req_tdls_mode;
+	enum tdls_support_mode req_tdls_mode;
 	tdlsInfo_t *tdlsParams;
 	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 
@@ -3381,7 +3381,7 @@ __wlan_hdd_cfg80211_configure_tdls_mode(struct wiphy *wiphy,
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_MAX + 1];
 	int ret;
-	eTDLSSupportMode tdls_mode;
+	enum tdls_support_mode tdls_mode;
 	uint32_t trigger_mode;
 	tdlsCtx_t *hdd_tdls_ctx;
 
@@ -3821,7 +3821,7 @@ int wlan_hdd_tdls_add_station(struct wiphy *wiphy,
 	hdd_context_t *pHddCtx = wiphy_priv(wiphy);
 	QDF_STATUS status;
 	hddTdlsPeer_t *pTdlsPeer;
-	tTDLSLinkStatus link_status;
+	enum tdls_link_status link_status;
 	uint16_t numCurrTdlsPeers;
 	unsigned long rc;
 	int ret;
@@ -4703,7 +4703,7 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 	tSmeTdlsPeerStateParams smeTdlsPeerStateParams;
 	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 	hddTdlsPeer_t *pTdlsPeer;
-	tTDLSLinkStatus peer_status = eTDLS_LINK_IDLE;
+	enum tdls_link_status peer_status = eTDLS_LINK_IDLE;
 	uint16_t peer_staid;
 	uint8_t peer_offchannelsupp;
 
@@ -6289,7 +6289,7 @@ void wlan_hdd_change_tdls_mode(void *data)
 void hdd_tdls_notify_p2p_roc(hdd_context_t *hdd_ctx,
 				enum tdls_concerned_external_events event)
 {
-	eTDLSSupportMode tdls_mode;
+	enum tdls_support_mode tdls_mode;
 
 	qdf_mc_timer_stop(&hdd_ctx->tdls_source_timer);
 

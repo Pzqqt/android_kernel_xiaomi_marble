@@ -1391,8 +1391,8 @@ struct hdd_context_s {
 	qdf_wake_lock_t sap_wake_lock;
 
 #ifdef FEATURE_WLAN_TDLS
-	eTDLSSupportMode tdls_mode;
-	eTDLSSupportMode tdls_mode_last;
+	enum tdls_support_mode tdls_mode;
+	enum tdls_support_mode tdls_mode_last;
 	tdlsConnInfo_t tdlsConnInfo[HDD_MAX_NUM_TDLS_STA];
 	/* maximum TDLS station number allowed upon runtime condition */
 	uint16_t max_num_tdls_sta;

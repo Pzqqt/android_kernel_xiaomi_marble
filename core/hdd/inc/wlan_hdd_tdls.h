@@ -33,7 +33,7 @@
  */
 
 /*
- * enum eTDLSSupportMode - TDLS support modes
+ * enum tdls_support_mode - TDLS support modes
  * @eTDLS_SUPPORT_NOT_ENABLED: TDLS support not enabled
  * @eTDLS_SUPPORT_DISABLED: suppress implicit trigger and not respond
  *     to the peer
@@ -43,13 +43,13 @@
  * @eTDLS_SUPPORT_EXTERNAL_CONTROL: implicit trigger but only to a
  *     peer mac configured by user space.
  */
-typedef enum {
+enum tdls_support_mode {
 	eTDLS_SUPPORT_NOT_ENABLED = 0,
 	eTDLS_SUPPORT_DISABLED,
 	eTDLS_SUPPORT_EXPLICIT_TRIGGER_ONLY,
 	eTDLS_SUPPORT_ENABLED,
 	eTDLS_SUPPORT_EXTERNAL_CONTROL,
-} eTDLSSupportMode;
+};
 
 /**
  * enum tdls_concerned_external_events - External events that affect TDLS
@@ -187,20 +187,20 @@ enum tdls_nss_transition_type {
 };
 
 /**
- * enum tTDLSCapType - tdls capability type
+ * enum tdls_cap_type - tdls capability type
  *
  * @eTDLS_CAP_NOT_SUPPORTED: tdls not supported
  * @eTDLS_CAP_UNKNOWN: unknown capability
  * @eTDLS_CAP_SUPPORTED: tdls capability supported
  */
-typedef enum eTDLSCapType {
+enum tdls_cap_type {
 	eTDLS_CAP_NOT_SUPPORTED = -1,
 	eTDLS_CAP_UNKNOWN = 0,
 	eTDLS_CAP_SUPPORTED = 1,
-} tTDLSCapType;
+};
 
 /**
- * enum tTDLSLinkStatus - tdls link status
+ * enum tdls_link_status - tdls link status
  *
  * @eTDLS_LINK_IDLE: tdls link idle
  * @eTDLS_LINK_DISCOVERING: tdls link discovering
@@ -209,14 +209,14 @@ typedef enum eTDLSCapType {
  * @eTDLS_LINK_CONNECTED: tdls link connected
  * @eTDLS_LINK_TEARING: tdls link tearing
  */
-typedef enum eTDLSLinkStatus {
+enum tdls_link_status {
 	eTDLS_LINK_IDLE = 0,
 	eTDLS_LINK_DISCOVERING,
 	eTDLS_LINK_DISCOVERED,
 	eTDLS_LINK_CONNECTING,
 	eTDLS_LINK_CONNECTED,
 	eTDLS_LINK_TEARING,
-} tTDLSLinkStatus;
+};
 
 /**
  * enum tdls_teardown_reason - Reason for TDLS teardown
@@ -243,7 +243,7 @@ enum tdls_teardown_reason {
 };
 
 /**
- * enum tTDLSLinkReason - tdls link reason
+ * enum tdls_link_reason - tdls link reason
  *
  * @eTDLS_LINK_SUCCESS: Success
  * @eTDLS_LINK_UNSPECIFIED: Unspecified reason
@@ -252,14 +252,14 @@ enum tdls_teardown_reason {
  * @eTDLS_LINK_NOT_BENEFICIAL: Going to AP is better than direct
  * @eTDLS_LINK_DROPPED_BY_REMOTE: Remote side doesn't want it anymore
  */
-typedef enum {
+enum tdls_link_reason {
 	eTDLS_LINK_SUCCESS,
 	eTDLS_LINK_UNSPECIFIED = -1,
 	eTDLS_LINK_NOT_SUPPORTED = -2,
 	eTDLS_LINK_UNSUPPORTED_BAND = -3,
 	eTDLS_LINK_NOT_BENEFICIAL = -4,
 	eTDLS_LINK_DROPPED_BY_REMOTE = -5
-} tTDLSLinkReason;
+};
 
 /**
  * struct tdls_req_params_t - tdls request parameters
@@ -277,7 +277,7 @@ typedef struct {
 } tdls_req_params_t;
 
 /**
- * enum tdls_state_t - tdls state
+ * enum tdls_state - tdls state
  *
  * @QCA_WIFI_HAL_TDLS_DISABLED: TDLS is not enabled, or is disabled now
  * @QCA_WIFI_HAL_TDLS_ENABLED: TDLS is enabled, but not yet tried
@@ -286,14 +286,14 @@ typedef struct {
  * @QCA_WIFI_HAL_TDLS_DROPPED: Direct link was established, but is now dropped
  * @QCA_WIFI_HAL_TDLS_FAILED: Direct link failed
  */
-typedef enum {
+enum tdls_state {
 	QCA_WIFI_HAL_TDLS_DISABLED = 1,
 	QCA_WIFI_HAL_TDLS_ENABLED,
 	QCA_WIFI_HAL_TDLS_ESTABLISHED,
 	QCA_WIFI_HAL_TDLS_ESTABLISHED_OFF_CHANNEL,
 	QCA_WIFI_HAL_TDLS_DROPPED,
 	QCA_WIFI_HAL_TDLS_FAILED
-} tdls_state_t;
+};
 
 typedef int (*cfg80211_exttdls_callback)(const uint8_t *mac,
 					 uint32_t opclass,
@@ -439,8 +439,8 @@ typedef struct _hddTdlsPeer_t {
 	tSirMacAddr peerMac;
 	uint16_t staId;
 	int8_t rssi;
-	tTDLSCapType tdls_support;
-	tTDLSLinkStatus link_status;
+	enum tdls_cap_type tdls_support;
+	enum tdls_link_status link_status;
 	uint8_t signature;
 	uint8_t is_responder;
 	uint8_t discovery_processed;
@@ -462,7 +462,7 @@ typedef struct _hddTdlsPeer_t {
 	qdf_mc_timer_t peer_idle_timer;
 	bool is_peer_idle_timer_initialised;
 	uint8_t spatial_streams;
-	tTDLSLinkReason reason;
+	enum tdls_link_reason reason;
 	cfg80211_exttdls_callback state_change_notification;
 	uint8_t qos;
 } hddTdlsPeer_t;
@@ -541,15 +541,15 @@ hddTdlsPeer_t *wlan_hdd_tdls_get_peer(hdd_adapter_t *pAdapter,
 				      const uint8_t *mac);
 
 int wlan_hdd_tdls_set_cap(hdd_adapter_t *pAdapter, const uint8_t *mac,
-			  tTDLSCapType cap);
+			  enum tdls_cap_type cap);
 
 void wlan_hdd_tdls_set_peer_link_status(hddTdlsPeer_t *curr_peer,
-					tTDLSLinkStatus status,
-					tTDLSLinkReason reason);
+					enum tdls_link_status status,
+					enum tdls_link_reason reason);
 void wlan_hdd_tdls_set_link_status(hdd_adapter_t *pAdapter,
 				   const uint8_t *mac,
-				   tTDLSLinkStatus linkStatus,
-				   tTDLSLinkReason reason);
+				   enum tdls_link_status linkStatus,
+				   enum tdls_link_reason reason);
 
 int wlan_hdd_tdls_recv_discovery_resp(hdd_adapter_t *pAdapter,
 				      const uint8_t *mac);
