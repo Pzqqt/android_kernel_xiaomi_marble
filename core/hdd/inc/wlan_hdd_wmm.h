@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012,2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012,2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -74,14 +74,6 @@
 /* Type Declarations */
 
 /**
- * enum hdd_wmm_classification: types of classification supported
- */
-typedef enum hdd_wmm_classification {
-	HDD_WMM_CLASSIFICATION_DSCP = 0,
-	HDD_WMM_CLASSIFICATION_802_1Q = 1
-} hdd_wmm_classification_t;
-
-/**
  * enum hdd_wmm_user_mode - WMM modes of operation
  *
  * @HDD_WMM_USER_MODE_AUTO: STA can associate with any AP, & HDD looks at
@@ -91,11 +83,11 @@ typedef enum hdd_wmm_classification {
  *	STA associates with a QAP only
  * @HDD_WMM_USER_MODE_NO_QOS - Join any AP, but uapsd is disabled
  */
-typedef enum hdd_wmm_user_mode {
+enum hdd_wmm_user_mode {
 	HDD_WMM_USER_MODE_AUTO = 0,
 	HDD_WMM_USER_MODE_QBSS_ONLY = 1,
 	HDD_WMM_USER_MODE_NO_QOS = 2,
-} hdd_wmm_user_mode_t;
+};
 
 /* UAPSD Mask bits */
 /* (Bit0:VO; Bit1:VI; Bit2:BK; Bit3:BE all other bits are ignored) */
@@ -123,7 +115,7 @@ typedef enum hdd_wmm_user_mode {
  * @magic: magic number used to verify that this is a valid context when
  *	referenced anonymously
  */
-typedef struct hdd_wmm_qos_context {
+struct hdd_wmm_qos_context {
 	struct list_head node;
 	uint32_t handle;
 	uint32_t qosFlowId;
@@ -133,7 +125,7 @@ typedef struct hdd_wmm_qos_context {
 	struct work_struct wmmAcSetupImplicitQos;
 	uint32_t magic;
 	bool is_inactivity_timer_running;
-} hdd_wmm_qos_context_t;
+};
 
 /**
  * struct hdd_wmm_ac_status - WMM related per-AC state & status info
@@ -157,7 +149,7 @@ typedef struct hdd_wmm_qos_context {
  * @wmmPrevTrafficCnt - TX counter used for inactivity detection
  * @wmmInactivityTimer - timer used for inactivity detection
  */
-typedef struct hdd_wmm_ac_status {
+struct hdd_wmm_ac_status {
 	bool wmmAcAccessRequired;
 	bool wmmAcAccessNeeded;
 	bool wmmAcAccessPending;
@@ -177,8 +169,7 @@ typedef struct hdd_wmm_ac_status {
 	uint32_t wmmPrevTrafficCnt;
 	qdf_mc_timer_t wmmInactivityTimer;
 #endif
-
-} hdd_wmm_ac_status_t;
+};
 
 /**
  * struct hdd_wmm_status - WMM status maintained per-adapter
@@ -188,13 +179,13 @@ typedef struct hdd_wmm_ac_status {
  * @wmmQap - is this connected to a QoS-enabled AP?
  * @wmmQosConnection - is this a QoS connection?
  */
-typedef struct hdd_wmm_status {
+struct hdd_wmm_status {
 	struct list_head wmmContextList;
 	struct mutex wmmLock;
-	hdd_wmm_ac_status_t wmmAcStatus[WLAN_MAX_AC];
+	struct hdd_wmm_ac_status wmmAcStatus[WLAN_MAX_AC];
 	bool wmmQap;
 	bool wmmQosConnection;
-} hdd_wmm_status_t;
+};
 
 extern const uint8_t hdd_qdisc_ac_to_tl_ac[];
 extern const uint8_t hdd_wmm_up_to_ac_map[];

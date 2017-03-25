@@ -9563,7 +9563,7 @@ struct hdd_config {
 	uint8_t nDataInactivityTimeout;
 
 	/* WMM QoS Configuration */
-	hdd_wmm_user_mode_t WmmMode;
+	enum hdd_wmm_user_mode WmmMode;
 	bool b80211eIsEnabled;
 	uint8_t UapsdMask;      /* what ACs to setup U-APSD for at assoc */
 	uint32_t InfraUapsdVoSrvIntv;

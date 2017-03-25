@@ -1000,7 +1000,7 @@ struct hdd_adapter_s {
 	uint32_t mgmtTxCompletionStatus;
 
 	/* WMM Status */
-	hdd_wmm_status_t hddWmmStatus;
+	struct hdd_wmm_status hddWmmStatus;
 /*************************************************************
  */
 /*************************************************************
