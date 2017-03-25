@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -82,12 +82,10 @@ void hdd_softap_tx_resume_cb(void *adapter_context, bool tx_resume);
 static inline
 void hdd_softap_tx_resume_timer_expired_handler(void *adapter_context)
 {
-	return;
 }
 static inline
 void hdd_softap_tx_resume_cb(void *adapter_context, bool tx_resume)
 {
-	return;
 }
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 
