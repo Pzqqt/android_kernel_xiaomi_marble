@@ -19,3 +19,40 @@
 /**
  * DOC: contains core nan function definitions
  */
+
+#include "nan_main_i.h"
+#include "wlan_objmgr_psoc_obj.h"
+#include "wlan_objmgr_pdev_obj.h"
+#include "wlan_objmgr_vdev_obj.h"
+
+struct nan_vdev_priv_obj *nan_get_vdev_priv_obj(
+				struct wlan_objmgr_vdev *vdev)
+{
+	struct nan_vdev_priv_obj *obj;
+
+	if (!vdev) {
+		nan_err("vdev is null");
+		return NULL;
+	}
+	wlan_vdev_obj_lock(vdev);
+	obj = wlan_objmgr_vdev_get_comp_private_obj(vdev, WLAN_UMAC_COMP_NAN);
+	wlan_vdev_obj_unlock(vdev);
+
+	return obj;
+}
+
+struct nan_psoc_priv_obj *nan_get_psoc_priv_obj(
+				struct wlan_objmgr_psoc *psoc)
+{
+	struct nan_psoc_priv_obj *obj;
+
+	if (!psoc) {
+		nan_err("psoc is null");
+		return NULL;
+	}
+	wlan_psoc_obj_lock(psoc);
+	obj = wlan_objmgr_psoc_get_comp_private_obj(psoc, WLAN_UMAC_COMP_NAN);
+	wlan_psoc_obj_unlock(psoc);
+
+	return obj;
+}
