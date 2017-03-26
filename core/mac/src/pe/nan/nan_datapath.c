@@ -58,7 +58,7 @@ static void lim_send_ndp_event_to_sme(tpAniSirGlobal mac_ctx, uint32_t msg_type,
 	if (len && body_ptr) {
 		mmh_msg.bodyptr = qdf_mem_malloc(len);
 		if (NULL == mmh_msg.bodyptr) {
-			lim_log(mac_ctx, LOGE, FL("Malloc failed"));
+			pe_err("Malloc failed");
 			return;
 		}
 		qdf_mem_copy(mmh_msg.bodyptr, body_ptr, len);
@@ -115,18 +115,16 @@ static QDF_STATUS lim_add_ndi_peer(tpAniSirGlobal mac_ctx,
 				&assoc_id, &session->dph.dphHashTable);
 	/* peer exists, don't do anything */
 	if (sta_ds != NULL) {
-		lim_log(mac_ctx, LOGE, FL("NDI Peer already exists!!"));
+		pe_err("NDI Peer already exists!!");
 		return QDF_STATUS_SUCCESS;
 	}
-	lim_log(mac_ctx, LOG1,
-		FL("Need to create NDI Peer :" MAC_ADDRESS_STR),
+	pe_info("Need to create NDI Peer :" MAC_ADDRESS_STR,
 		MAC_ADDR_ARRAY(peer_mac_addr.bytes));
 	peer_idx = lim_assign_peer_idx(mac_ctx, session);
 	sta_ds = dph_add_hash_entry(mac_ctx, peer_mac_addr.bytes, peer_idx,
 			&session->dph.dphHashTable);
 	if (sta_ds == NULL) {
-		lim_log(mac_ctx, LOGE,
-			FL("Couldn't add dph entry"));
+		pe_err("Couldn't add dph entry");
 		/* couldn't add dph entry */
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -135,8 +133,7 @@ static QDF_STATUS lim_add_ndi_peer(tpAniSirGlobal mac_ctx,
 	status = lim_add_sta(mac_ctx, sta_ds, false, session);
 	if (eSIR_SUCCESS != status) {
 		/* couldn't add peer */
-		lim_log(mac_ctx, LOGE,
-			FL("limAddSta failed status: %d"),
+		pe_err("limAddSta failed status: %d",
 			status);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -168,9 +165,8 @@ static QDF_STATUS lim_handle_ndp_indication_event(tpAniSirGlobal mac_ctx,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	lim_log(mac_ctx, LOG1,
-		FL("role: %d, vdev: %d, csid: %d, peer_mac_addr "
-			MAC_ADDRESS_STR),
+	pe_info("role: %d, vdev: %d, csid: %d, peer_mac_addr "
+			MAC_ADDRESS_STR,
 		ndp_ind->role, ndp_ind->vdev_id, ndp_ind->ncs_sk_type,
 		MAC_ADDR_ARRAY(ndp_ind->peer_mac_addr.bytes));
 
@@ -180,8 +176,7 @@ static QDF_STATUS lim_handle_ndp_indication_event(tpAniSirGlobal mac_ctx,
 		status = lim_add_ndi_peer(mac_ctx, ndp_ind->vdev_id,
 				ndp_ind->peer_mac_addr);
 		if (QDF_STATUS_SUCCESS != status) {
-			lim_log(mac_ctx, LOGE,
-				FL("Couldn't add ndi peer, ndp_role: %d"),
+			pe_err("Couldn't add ndi peer, ndp_role: %d",
 				ndp_ind->role);
 			goto ndp_indication_failed;
 		}
@@ -227,8 +222,7 @@ static QDF_STATUS lim_ndp_responder_rsp_handler(tpAniSirGlobal mac_ctx,
 	QDF_STATUS ret_val = QDF_STATUS_SUCCESS;
 
 	if ((NULL == rsp_ind) || bodyval) {
-		lim_log(mac_ctx, LOGE,
-			FL("rsp_ind is NULL or bodyval %d"), bodyval);
+		pe_err("rsp_ind is NULL or bodyval %d", bodyval);
 		/* msg to unblock SME, but not send rsp to HDD */
 		bodyval = true;
 		ret_val = QDF_STATUS_E_INVAL;
@@ -240,8 +234,7 @@ static QDF_STATUS lim_ndp_responder_rsp_handler(tpAniSirGlobal mac_ctx,
 		ret_val = lim_add_ndi_peer(mac_ctx, rsp_ind->vdev_id,
 				rsp_ind->peer_mac_addr);
 		if (QDF_STATUS_SUCCESS != ret_val) {
-			lim_log(mac_ctx, LOGE,
-				FL("Couldn't add ndi peer"));
+			pe_err("Couldn't add ndi peer");
 			rsp_ind->status = QDF_STATUS_E_FAILURE;
 		}
 	}
@@ -271,14 +264,12 @@ static void lim_ndp_delete_peer_by_addr(tpAniSirGlobal mac_ctx, uint8_t vdev_id,
 	tpDphHashNode sta_ds;
 	uint16_t peer_idx;
 
-	lim_log(mac_ctx, LOG1,
-		FL("deleting peer: "MAC_ADDRESS_STR" confirm rejected"),
+	pe_info("deleting peer: "MAC_ADDRESS_STR" confirm rejected",
 		MAC_ADDR_ARRAY(peer_ndi_mac_addr.bytes));
 
 	session = pe_find_session_by_sme_session_id(mac_ctx, vdev_id);
 	if (!session || (session->bssType != eSIR_NDI_MODE)) {
-		lim_log(mac_ctx, LOGE,
-			FL("PE session is NULL or non-NDI for sme session %d"),
+		pe_err("PE session is NULL or non-NDI for sme session %d",
 			vdev_id);
 		return;
 	}
@@ -286,11 +277,11 @@ static void lim_ndp_delete_peer_by_addr(tpAniSirGlobal mac_ctx, uint8_t vdev_id,
 	sta_ds = dph_lookup_hash_entry(mac_ctx, peer_ndi_mac_addr.bytes,
 				    &peer_idx, &session->dph.dphHashTable);
 	if (!sta_ds) {
-		lim_log(mac_ctx, LOGE, FL("Unknown NDI Peer"));
+		pe_err("Unknown NDI Peer");
 		return;
 	}
 	if (sta_ds->staType != STA_ENTRY_NDI_PEER) {
-		lim_log(mac_ctx, LOGE, FL("Non-NDI Peer ignored"));
+		pe_err("Non-NDI Peer ignored");
 		return;
 	}
 	/*
@@ -334,13 +325,12 @@ static void lim_ndp_delete_peers(tpAniSirGlobal mac_ctx,
 
 	deleted_peers = qdf_mem_malloc(num_peers * sizeof(*deleted_peers));
 	if (!deleted_peers) {
-		lim_log(mac_ctx, LOGE, FL("Memory allocation failed"));
+		pe_err("Memory allocation failed");
 		return;
 	}
 
 	for (i = 0; i < num_peers; i++) {
-		lim_log(mac_ctx, LOG1,
-			FL("ndp_map[%d]: MAC: " MAC_ADDRESS_STR " num_active %d"),
+		pe_info("ndp_map[%d]: MAC: " MAC_ADDRESS_STR " num_active %d",
 			i,
 			MAC_ADDR_ARRAY(ndp_map[i].peer_ndi_mac_addr.bytes),
 			ndp_map[i].num_active_ndp_sessions);
@@ -352,8 +342,7 @@ static void lim_ndp_delete_peers(tpAniSirGlobal mac_ctx,
 		session = pe_find_session_by_sme_session_id(mac_ctx,
 						ndp_map[i].vdev_id);
 		if (!session || (session->bssType != eSIR_NDI_MODE)) {
-			lim_log(mac_ctx, LOGE,
-				FL("PE session is NULL or non-NDI for sme session %d"),
+			pe_err("PE session is NULL or non-NDI for sme session %d",
 				ndp_map[i].vdev_id);
 			continue;
 		}
@@ -376,12 +365,11 @@ static void lim_ndp_delete_peers(tpAniSirGlobal mac_ctx,
 				ndp_map[i].peer_ndi_mac_addr.bytes,
 				&peer_idx, &session->dph.dphHashTable);
 		if (!sta_ds) {
-			lim_log(mac_ctx, LOGE, FL("Unknown NDI Peer"));
+			pe_err("Unknown NDI Peer");
 			continue;
 		}
 		if (sta_ds->staType != STA_ENTRY_NDI_PEER) {
-			lim_log(mac_ctx, LOGE,
-				FL("Non-NDI Peer ignored"));
+			pe_err("Non-NDI Peer ignored");
 			continue;
 		}
 		/*
@@ -430,7 +418,7 @@ static QDF_STATUS lim_ndp_end_indication_handler(tpAniSirGlobal mac_ctx,
 	int buf_size;
 
 	if (!ind_buf) {
-		lim_log(mac_ctx, LOGE, FL("NDP end indication buffer is NULL"));
+		pe_err("NDP end indication buffer is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 	lim_ndp_delete_peers(mac_ctx, ndp_event_buf->ndp_map,
@@ -463,13 +451,11 @@ void lim_process_ndi_del_sta_rsp(tpAniSirGlobal mac_ctx,
 	struct sme_ndp_peer_ind peer_ind;
 
 	if (!del_sta_params) {
-		lim_log(mac_ctx, LOGE,
-			FL("del_sta_params is NULL"));
+		pe_err("del_sta_params is NULL");
 		return;
 	}
 	if (!LIM_IS_NDI_ROLE(pe_session)) {
-		lim_log(mac_ctx, LOGE,
-		FL("Session %d is not NDI role"), del_sta_params->assocId);
+		pe_err("Session %d is not NDI role", del_sta_params->assocId);
 		status = eSIR_SME_REFUSED;
 		goto skip_event;
 	}
@@ -477,20 +463,18 @@ void lim_process_ndi_del_sta_rsp(tpAniSirGlobal mac_ctx,
 	sta_ds = dph_get_hash_entry(mac_ctx, del_sta_params->assocId,
 			&pe_session->dph.dphHashTable);
 	if (!sta_ds) {
-		lim_log(mac_ctx, LOGE,
-			FL("DPH Entry for STA %X is missing."),
+		pe_err("DPH Entry for STA %X is missing",
 			del_sta_params->assocId);
 		status = eSIR_SME_REFUSED;
 		goto skip_event;
 	}
 
 	if (QDF_STATUS_SUCCESS != del_sta_params->status) {
-		lim_log(mac_ctx, LOGE, FL("DEL STA failed!"));
+		pe_err("DEL STA failed!");
 		status = eSIR_SME_REFUSED;
 		goto skip_event;
 	}
-	lim_log(mac_ctx, LOG1,
-		FL("Deleted STA AssocID %d staId %d MAC " MAC_ADDRESS_STR),
+	pe_info("Deleted STA AssocID %d staId %d MAC " MAC_ADDRESS_STR,
 		sta_ds->assocId, sta_ds->staIndex,
 		MAC_ADDR_ARRAY(sta_ds->staAddr));
 
@@ -540,8 +524,7 @@ QDF_STATUS lim_handle_ndp_event_message(tpAniSirGlobal mac_ctx,
 			 * This peer was created at ndp_indication but
 			 * ndp_confirm failed, so it needs to be deleted
 			 */
-			lim_log(mac_ctx, LOGE,
-				FL("NDP confirm with reject and no active ndp sessions. deleting peer: "MAC_ADDRESS_STR" on vdev_id: %d"),
+			pe_err("NDP confirm with reject and no active ndp sessions. deleting peer: "MAC_ADDRESS_STR" on vdev_id: %d",
 				MAC_ADDR_ARRAY(
 					ndp_confirm->peer_ndi_mac_addr.bytes),
 				ndp_confirm->vdev_id);
@@ -579,8 +562,7 @@ QDF_STATUS lim_handle_ndp_event_message(tpAniSirGlobal mac_ctx,
 		status = lim_ndp_end_indication_handler(mac_ctx, msg->bodyptr);
 		break;
 	default:
-		lim_log(mac_ctx, LOGE,
-			FL("Unhandled NDP event: %d"), msg->type);
+		pe_err("Unhandled NDP event: %d", msg->type);
 		status = QDF_STATUS_E_NOSUPPORT;
 		break;
 	}
@@ -610,13 +592,13 @@ static QDF_STATUS lim_process_sme_ndp_initiator_req(tpAniSirGlobal mac_ctx,
 	struct ndp_initiator_req *wma_req;
 
 	if (NULL == ndp_msg) {
-		lim_log(mac_ctx, LOGE, FL("invalid ndp_req"));
+		pe_err("invalid ndp_req");
 		status = QDF_STATUS_E_INVAL;
 		goto send_initiator_rsp;
 	}
 	wma_req = qdf_mem_malloc(sizeof(*wma_req));
 	if (wma_req == NULL) {
-		lim_log(mac_ctx, LOGE, FL("malloc failed"));
+		pe_err("malloc failed");
 		status = QDF_STATUS_E_NOMEM;
 		goto send_initiator_rsp;
 	}
@@ -627,11 +609,11 @@ static QDF_STATUS lim_process_sme_ndp_initiator_req(tpAniSirGlobal mac_ctx,
 	msg.bodyptr = wma_req;
 	msg.bodyval = 0;
 
-	lim_log(mac_ctx, LOG1, FL("sending WDA_NDP_INITIATOR_REQ to WMA"));
+	pe_debug("sending WDA_NDP_INITIATOR_REQ to WMA");
 	MTRACE(mac_trace_msg_tx(mac_ctx, NO_SESSION, msg.type));
 
 	if (eSIR_SUCCESS != wma_post_ctrl_msg(mac_ctx, &msg))
-		lim_log(mac_ctx, LOGP, FL("wma_post_ctrl_msg failed"));
+		pe_err("wma_post_ctrl_msg failed");
 
 	return QDF_STATUS_SUCCESS;
 send_initiator_rsp:
@@ -656,14 +638,13 @@ static QDF_STATUS lim_process_sme_ndp_responder_req(tpAniSirGlobal mac_ctx,
 	struct ndp_responder_req *responder_req;
 
 	if (NULL == lim_msg) {
-		lim_log(mac_ctx, LOGE, FL("ndp_msg is NULL"));
+		pe_err("ndp_msg is NULL");
 		status = QDF_STATUS_E_INVAL;
 		goto send_failure_rsp;
 	}
 	responder_req = qdf_mem_malloc(sizeof(*responder_req));
 	if (NULL == responder_req) {
-		lim_log(mac_ctx, LOGE,
-			FL("Unable to allocate memory for responder_req"));
+		pe_err("Unable to allocate memory for responder_req");
 		status = QDF_STATUS_E_NOMEM;
 		goto send_failure_rsp;
 	}
@@ -673,11 +654,11 @@ static QDF_STATUS lim_process_sme_ndp_responder_req(tpAniSirGlobal mac_ctx,
 	msg.bodyptr = responder_req;
 	msg.bodyval = 0;
 
-	lim_log(mac_ctx, LOG1, FL("sending SIR_HAL_NDP_RESPONDER_REQ to WMA"));
+	pe_debug("sending SIR_HAL_NDP_RESPONDER_REQ to WMA");
 	MTRACE(mac_trace_msg_tx(mac_ctx, NO_SESSION, msg.type));
 
 	if (eSIR_SUCCESS != wma_post_ctrl_msg(mac_ctx, &msg)) {
-		lim_log(mac_ctx, LOGP, FL("wma_post_ctrl_msg failed"));
+		pe_err("wma_post_ctrl_msg failed");
 		status = QDF_STATUS_E_FAILURE;
 		qdf_mem_free(responder_req);
 		goto send_failure_rsp;
@@ -706,7 +687,7 @@ static QDF_STATUS lim_process_sme_ndp_data_end_req(tpAniSirGlobal mac_ctx,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (NULL == sme_msg) {
-		lim_log(mac_ctx, LOGE, FL("invalid ndp_req"));
+		pe_err("invalid ndp_req");
 		/* msg to unblock SME, but not send rsp to HDD */
 		lim_send_ndp_event_to_sme(mac_ctx, eWNI_SME_NDP_END_RSP, NULL,
 					  0, true);
@@ -727,11 +708,11 @@ static QDF_STATUS lim_process_sme_ndp_data_end_req(tpAniSirGlobal mac_ctx,
 	qdf_mem_copy(msg.bodyptr, sme_msg->req, len);
 	msg.bodyval = 0;
 
-	lim_log(mac_ctx, LOG1, FL("sending SIR_HAL_NDP_END_REQ to WMA"));
+	pe_debug("sending SIR_HAL_NDP_END_REQ to WMA");
 	MTRACE(mac_trace_msg_tx(mac_ctx, NO_SESSION, msg.type));
 
 	if (eSIR_SUCCESS != wma_post_ctrl_msg(mac_ctx, &msg)) {
-		lim_log(mac_ctx, LOGP, FL("wma_post_ctrl_msg failed"));
+		pe_err("wma_post_ctrl_msg failed");
 		status = QDF_STATUS_E_FAILURE;
 	}
 
@@ -764,8 +745,7 @@ QDF_STATUS lim_handle_ndp_request_message(tpAniSirGlobal mac_ctx,
 							 msg->bodyptr);
 		break;
 	default:
-		lim_log(mac_ctx, LOGE, FL("Unhandled NDP request: %d"),
-		       msg->type);
+		pe_err("Unhandled NDP request: %d", msg->type);
 		status = QDF_STATUS_E_NOSUPPORT;
 		break;
 	}
@@ -789,13 +769,12 @@ void lim_process_ndi_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 	tpAddBssParams add_bss_params = (tpAddBssParams) lim_msgq->bodyptr;
 
 	if (NULL == add_bss_params) {
-		lim_log(mac_ctx, LOGE, FL("Invalid body pointer in message"));
+		pe_err("Invalid body pointer in message");
 		goto end;
 	}
-	lim_log(mac_ctx, LOG1, FL("Status %d"), add_bss_params->status);
+	pe_debug("Status %d", add_bss_params->status);
 	if (QDF_STATUS_SUCCESS == add_bss_params->status) {
-		lim_log(mac_ctx, LOG1,
-		       FL("WDA_ADD_BSS_RSP returned QDF_STATUS_SUCCESS"));
+		pe_debug("WDA_ADD_BSS_RSP returned QDF_STATUS_SUCCESS");
 		session_entry->limMlmState = eLIM_MLM_BSS_STARTED_STATE;
 		MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE,
 			session_entry->peSessionId,
@@ -808,8 +787,7 @@ void lim_process_ndi_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 		lim_apply_configuration(mac_ctx, session_entry);
 		mlm_start_cnf.resultCode = eSIR_SME_SUCCESS;
 	} else {
-		lim_log(mac_ctx, LOGE,
-			FL("WDA_ADD_BSS_REQ failed with status %d"),
+		pe_err("WDA_ADD_BSS_REQ failed with status %d",
 			add_bss_params->status);
 		mlm_start_cnf.resultCode = eSIR_SME_HAL_SEND_MESSAGE_FAIL;
 	}
@@ -837,22 +815,19 @@ void lim_ndi_del_bss_rsp(tpAniSirGlobal  mac_ctx,
 
 	SET_LIM_PROCESS_DEFD_MESGS(mac_ctx, true);
 	if (del_bss == NULL) {
-		lim_log(mac_ctx, LOGE,
-			FL("NDI: DEL_BSS_RSP with no body!"));
+		pe_err("NDI: DEL_BSS_RSP with no body!");
 		rc = eSIR_SME_STOP_BSS_FAILURE;
 		goto end;
 	}
 	session_entry =
 		pe_find_session_by_session_id(mac_ctx, del_bss->sessionId);
 	if (!session_entry) {
-		lim_log(mac_ctx, LOGE,
-			FL("Session Does not exist for given sessionID"));
+		pe_err("Session Does not exist for given sessionID");
 		goto end;
 	}
 
 	if (del_bss->status != QDF_STATUS_SUCCESS) {
-		lim_log(mac_ctx, LOGE,
-			FL("NDI: DEL_BSS_RSP error (%x) Bss %d "),
+		pe_err("NDI: DEL_BSS_RSP error (%x) Bss %d",
 			del_bss->status, del_bss->bssIdx);
 		rc = eSIR_SME_STOP_BSS_FAILURE;
 		goto end;
@@ -862,8 +837,7 @@ void lim_ndi_del_bss_rsp(tpAniSirGlobal  mac_ctx,
 			session_entry->selfMacAddr,
 			session_entry->selfMacAddr, NULL, NULL)
 			!= eSIR_SUCCESS) {
-		lim_log(mac_ctx, LOGE,
-			FL("NDI: DEL_BSS_RSP setLinkState failed"));
+		pe_err("NDI: DEL_BSS_RSP setLinkState failed");
 		goto end;
 	}
 
@@ -901,13 +875,13 @@ static QDF_STATUS lim_send_sme_ndp_add_sta_rsp(tpAniSirGlobal mac_ctx,
 	mmh_msg.type = eWNI_SME_NDP_NEW_PEER_IND;
 
 	if (NULL == add_sta_rsp) {
-		lim_log(mac_ctx, LOGE, FL("Invalid add_sta_rsp"));
+		pe_err("Invalid add_sta_rsp");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	new_peer_ind = qdf_mem_malloc(sizeof(*new_peer_ind));
 	if (NULL == new_peer_ind) {
-		lim_log(mac_ctx, LOGE, FL("Failed to allocate memory"));
+		pe_err("Failed to allocate memory");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -972,7 +946,7 @@ void lim_ndp_add_sta_rsp(tpAniSirGlobal mac_ctx, tpPESession session,
 	uint16_t peer_idx;
 
 	if (NULL == add_sta_rsp) {
-		lim_log(mac_ctx, LOGE, FL("Invalid add_sta_rsp"));
+		pe_err("Invalid add_sta_rsp");
 		qdf_mem_free(add_sta_rsp);
 		return;
 	}
@@ -981,17 +955,15 @@ void lim_ndp_add_sta_rsp(tpAniSirGlobal mac_ctx, tpPESession session,
 	sta_ds = dph_lookup_hash_entry(mac_ctx, add_sta_rsp->staMac, &peer_idx,
 				    &session->dph.dphHashTable);
 	if (sta_ds == NULL) {
-		lim_log(mac_ctx, LOGE,
-			FL("NAN: ADD_STA_RSP for unknown MAC addr "
-			MAC_ADDRESS_STR),
+		pe_err("NAN: ADD_STA_RSP for unknown MAC addr "
+			MAC_ADDRESS_STR,
 			MAC_ADDR_ARRAY(add_sta_rsp->staMac));
 		qdf_mem_free(add_sta_rsp);
 		return;
 	}
 
 	if (add_sta_rsp->status != QDF_STATUS_SUCCESS) {
-		lim_log(mac_ctx, LOGE,
-			FL("NAN: ADD_STA_RSP error %x for MAC addr: %pM"),
+		pe_err("NAN: ADD_STA_RSP error %x for MAC addr: %pM",
 			add_sta_rsp->status, add_sta_rsp->staMac);
 		/* delete the sta_ds allocated during ADD STA */
 		lim_delete_dph_hash_entry(mac_ctx, add_sta_rsp->staMac,
