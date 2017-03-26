@@ -97,12 +97,7 @@ lim_is_auth_algo_supported(tpAniSirGlobal pMac, tAniAuthType authType,
 
 		if (wlan_cfg_get_int(pMac, WNI_CFG_OPEN_SYSTEM_AUTH_ENABLE,
 				     &algoEnable) != eSIR_SUCCESS) {
-			/**
-			 * Could not get AuthAlgo1 Enable value
-			 * from CFG. Log error.
-			 */
-			lim_log(pMac, LOGE,
-				FL("could not retrieve AuthAlgo1 Enable value"));
+			pe_err("could not retrieve AuthAlgo1 Enable value");
 
 			return false;
 		} else
@@ -121,12 +116,7 @@ lim_is_auth_algo_supported(tpAniSirGlobal pMac, tAniAuthType authType,
 		if (wlan_cfg_get_int
 			    (pMac, WNI_CFG_SHARED_KEY_AUTH_ENABLE,
 			    &algoEnable) != eSIR_SUCCESS) {
-			/**
-			 * Could not get AuthAlgo2 Enable value
-			 * from CFG. Log error.
-			 */
-			lim_log(pMac, LOGE,
-				FL("could not retrieve AuthAlgo2 Enable value"));
+			pe_err("could not retrieve AuthAlgo2 Enable value");
 
 			return false;
 		}
@@ -137,13 +127,7 @@ lim_is_auth_algo_supported(tpAniSirGlobal pMac, tAniAuthType authType,
 
 		if (wlan_cfg_get_int(pMac, WNI_CFG_PRIVACY_ENABLED,
 				     &privacyOptImp) != eSIR_SUCCESS) {
-			/**
-			 * Could not get PrivacyOptionImplemented value
-			 * from CFG. Log error.
-			 */
-			lim_log(pMac, LOGE,
-				FL
-					("could not retrieve PrivacyOptImplemented value"));
+			pe_err("could not retrieve PrivacyOptImplemented value");
 
 			return false;
 		}
@@ -200,8 +184,6 @@ void lim_delete_pre_auth_list(tpAniSirGlobal pMac)
 	pCurrNode = pTempNode = pMac->lim.pLimPreAuthList;
 	while (pCurrNode != NULL) {
 		pTempNode = pCurrNode->next;
-
-		PELOG1(lim_log(pMac, LOG1, FL("=====> lim_delete_pre_auth_list "));)
 		lim_release_pre_auth_node(pMac, pCurrNode);
 
 		pCurrNode = pTempNode;
@@ -393,17 +375,9 @@ void lim_delete_pre_auth_node(tpAniSirGlobal pMac, tSirMacAddr macAddr)
 
 		pMac->lim.pLimPreAuthList = pTempNode->next;
 
-		PELOG1(lim_log
-			       (pMac, LOG1,
-			       FL
-				       ("=====> lim_delete_pre_auth_node : first node to delete"));
-		       )
-		PELOG1(lim_log
-			       (pMac, LOG1,
-			       FL("Release data entry: %x id %d peer "), pTempNode,
-			       pTempNode->authNodeIdx);
-		       lim_print_mac_addr(pMac, macAddr, LOG1);
-		       )
+		pe_debug("first node to delete, Release data entry: %p id %d peer",
+			       pTempNode, pTempNode->authNodeIdx);
+		lim_print_mac_addr(pMac, macAddr, LOGD);
 		lim_release_pre_auth_node(pMac, pTempNode);
 
 		return;
@@ -419,15 +393,9 @@ void lim_delete_pre_auth_node(tpAniSirGlobal pMac, tSirMacAddr macAddr)
 
 			pPrevNode->next = pTempNode->next;
 
-			PELOG1(lim_log
-				       (pMac, LOG1,
-				       FL
-					       ("=====> lim_delete_pre_auth_node : subsequent node to delete"));
-			       lim_log(pMac, LOG1,
-				       FL("Release data entry: %x id %d peer "),
+			pe_debug("subsequent node to delete, Release data entry: %p id %d peer",
 				       pTempNode, pTempNode->authNodeIdx);
 			       lim_print_mac_addr(pMac, macAddr, LOG1);
-			       )
 			lim_release_pre_auth_node(pMac, pTempNode);
 
 			return;
@@ -437,10 +405,8 @@ void lim_delete_pre_auth_node(tpAniSirGlobal pMac, tSirMacAddr macAddr)
 		pTempNode = pTempNode->next;
 	}
 
-	/* Should not be here */
-	/* Log error */
-	lim_log(pMac, LOGP, FL("peer not found in pre-auth list, addr= "));
-	lim_print_mac_addr(pMac, macAddr, LOGP);
+	pe_err("peer not found in pre-auth list, addr= ");
+	lim_print_mac_addr(pMac, macAddr, LOGE);
 
 } /*** end lim_delete_pre_auth_node() ***/
 
@@ -755,11 +721,10 @@ lim_decrypt_auth_frame(tpAniSirGlobal pMac, uint8_t *pKey, uint8_t *pEncrBody,
 
 	/* Compare RX_ICV with computed ICV */
 	for (i = 0; i < SIR_MAC_WEP_ICV_LENGTH; i++) {
-		PELOG4(lim_log
-			       (pMac, LOG4, FL(" computed ICV%d[%x], rxed ICV%d[%x]"),
-			       i, icv[i], i,
-			       pPlainBody[frameLen - SIR_MAC_WEP_ICV_LENGTH + i]);
-		       )
+		pe_debug("computed ICV%d[%x], rxed ICV%d[%x]",
+			i, icv[i], i,
+			pPlainBody[frameLen - SIR_MAC_WEP_ICV_LENGTH + i]);
+
 		if (icv[i] !=
 		    pPlainBody[frameLen - SIR_MAC_WEP_ICV_LENGTH + i])
 			return LIM_DECRYPT_ICV_FAIL;
@@ -820,9 +785,7 @@ void lim_send_set_bss_key_req(tpAniSirGlobal pMac,
 	uint32_t val = 0;
 
 	if (pMlmSetKeysReq->numKeys > SIR_MAC_MAX_NUM_OF_DEFAULT_KEYS) {
-		lim_log(pMac, LOG1,
-			FL
-				("numKeys = %d is more than SIR_MAC_MAX_NUM_OF_DEFAULT_KEYS"),
+		pe_debug("numKeys = %d is more than SIR_MAC_MAX_NUM_OF_DEFAULT_KEYS",
 			pMlmSetKeysReq->numKeys);
 
 		/* Respond to SME with error code */
@@ -833,8 +796,7 @@ void lim_send_set_bss_key_req(tpAniSirGlobal pMac,
 
 	pSetBssKeyParams = qdf_mem_malloc(sizeof(tSetBssKeyParams));
 	if (NULL == pSetBssKeyParams) {
-		lim_log(pMac, LOGE,
-			FL("Unable to allocate memory during SET_BSSKEY"));
+		pe_err("Unable to allocate memory during SET_BSSKEY");
 
 		/* Respond to SME with error code */
 		mlmSetKeysCnf.resultCode = eSIR_SME_RESOURCES_UNAVAILABLE;
@@ -845,9 +807,8 @@ void lim_send_set_bss_key_req(tpAniSirGlobal pMac,
 	pSetBssKeyParams->bssIdx = psessionEntry->bssIdx;
 	pSetBssKeyParams->encType = pMlmSetKeysReq->edType;
 
-	if (eSIR_SUCCESS != wlan_cfg_get_int(pMac, WNI_CFG_SINGLE_TID_RC, &val)) {
-		lim_log(pMac, LOGP, FL("Unable to read WNI_CFG_SINGLE_TID_RC"));
-	}
+	if (eSIR_SUCCESS != wlan_cfg_get_int(pMac, WNI_CFG_SINGLE_TID_RC, &val))
+		pe_warn("Unable to read WNI_CFG_SINGLE_TID_RC");
 
 	pSetBssKeyParams->singleTidRc = (uint8_t) val;
 
@@ -881,12 +842,11 @@ void lim_send_set_bss_key_req(tpAniSirGlobal pMac,
 	msgQ.bodyptr = pSetBssKeyParams;
 	msgQ.bodyval = 0;
 
-	lim_log(pMac, LOGD, FL("Sending WMA_SET_BSSKEY_REQ..."));
+	pe_debug("Sending WMA_SET_BSSKEY_REQ...");
 	MTRACE(mac_trace_msg_tx(pMac, psessionEntry->peSessionId, msgQ.type));
 	retCode = wma_post_ctrl_msg(pMac, &msgQ);
 	if (eSIR_SUCCESS != retCode) {
-		lim_log(pMac, LOGE,
-			FL("Posting SET_BSSKEY to HAL failed, reason=%X"),
+		pe_err("Posting SET_BSSKEY to HAL failed, reason=%X",
 			retCode);
 
 		/* Respond to SME with LIM_MLM_SETKEYS_CNF */
@@ -935,8 +895,7 @@ void lim_send_set_sta_key_req(tpAniSirGlobal pMac,
 	/* Package WMA_SET_STAKEY_REQ message parameters */
 	pSetStaKeyParams = qdf_mem_malloc(sizeof(tSetStaKeyParams));
 	if (NULL == pSetStaKeyParams) {
-		lim_log(pMac, LOGP,
-			FL("Unable to allocate memory during SET_BSSKEY"));
+		pe_err("Unable to allocate memory during SET_BSSKEY");
 		return;
 	}
 
@@ -944,9 +903,8 @@ void lim_send_set_sta_key_req(tpAniSirGlobal pMac,
 	pSetStaKeyParams->staIdx = staIdx;
 	pSetStaKeyParams->encType = pMlmSetKeysReq->edType;
 
-	if (eSIR_SUCCESS != wlan_cfg_get_int(pMac, WNI_CFG_SINGLE_TID_RC, &val)) {
-		lim_log(pMac, LOGP, FL("Unable to read WNI_CFG_SINGLE_TID_RC"));
-	}
+	if (eSIR_SUCCESS != wlan_cfg_get_int(pMac, WNI_CFG_SINGLE_TID_RC, &val))
+		pe_warn("Unable to read WNI_CFG_SINGLE_TID_RC");
 
 	pSetStaKeyParams->singleTidRc = (uint8_t) val;
 
@@ -1026,8 +984,7 @@ void lim_send_set_sta_key_req(tpAniSirGlobal pMac,
 				pMlmSetKeysReq->numKeys =
 					SIR_MAC_MAX_NUM_OF_DEFAULT_KEYS;
 			} else {
-				lim_log(pMac, LOGE, FL("Wrong Key Index %d"),
-					defWEPIdx);
+				pe_err("Wrong Key Index %d", defWEPIdx);
 				qdf_mem_free(pSetStaKeyParams);
 				return;
 			}
@@ -1054,12 +1011,11 @@ void lim_send_set_sta_key_req(tpAniSirGlobal pMac,
 	msgQ.bodyptr = pSetStaKeyParams;
 	msgQ.bodyval = 0;
 
-	lim_log(pMac, LOGD, FL("Sending WMA_SET_STAKEY_REQ..."));
+	pe_debug("Sending WMA_SET_STAKEY_REQ...");
 	MTRACE(mac_trace_msg_tx(pMac, sessionEntry->peSessionId, msgQ.type));
 	retCode = wma_post_ctrl_msg(pMac, &msgQ);
 	if (eSIR_SUCCESS != retCode) {
-		lim_log(pMac, LOGE,
-			FL("Posting SET_STAKEY to HAL failed, reason=%X"),
+		pe_err("Posting SET_STAKEY to HAL failed, reason=%X",
 			retCode);
 		/* Respond to SME with LIM_MLM_SETKEYS_CNF */
 		mlmSetKeysCnf.resultCode = eSIR_SME_HAL_SEND_MESSAGE_FAIL;
