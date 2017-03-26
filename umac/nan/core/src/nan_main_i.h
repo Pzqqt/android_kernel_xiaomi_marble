@@ -88,4 +88,20 @@ struct nan_vdev_priv_obj {
 	uint32_t ndi_delete_rsp_status;
 };
 
+/**
+ * nan_get_vdev_priv_obj: get NAN priv object from vdev object
+ * @vdev: pointer to vdev object
+ *
+ * Return: pointer to NAN vdev private object
+ */
+struct nan_vdev_priv_obj *nan_get_vdev_priv_obj(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * nan_get_psoc_priv_obj: get NAN priv object from psoc object
+ * @psoc: pointer to psoc object
+ *
+ * Return: pointer to NAN psoc private object
+ */
+struct nan_psoc_priv_obj *nan_get_psoc_priv_obj(struct wlan_objmgr_psoc *psoc);
+
 #endif
