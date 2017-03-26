@@ -42,6 +42,10 @@ struct oem_data_req;
 struct oem_data_rsp;
 #endif /* WIFI_POS_CONVERGED */
 
+#ifdef WLAN_FEATURE_NAN_CONVERGENCE
+struct scheduler_msg;
+#endif
+
 /**
  * struct wlan_lmac_if_mgmt_txrx_tx_ops - structure of tx function
  *                  pointers for mgmt txrx component
@@ -342,7 +346,7 @@ struct wlan_lmac_if_wifi_pos_tx_ops {
  * @data_req_tx: function pointer to send nan req to firmware
  */
 struct wlan_lmac_if_nan_tx_ops {
-	QDF_STATUS (*nan_req_tx)(struct wlan_objmgr_vdev *vdev, void *req);
+	QDF_STATUS (*nan_req_tx)(void *req, uint32_t req_id);
 };
 #endif
 
@@ -665,7 +669,7 @@ struct wlan_lmac_if_wifi_pos_rx_ops {
  * @oem_rsp_event_rx: callback for WMI_OEM_RESPONSE_EVENTID
  */
 struct wlan_lmac_if_nan_rx_ops {
-	int (*nan_event_rx)(struct wlan_objmgr_vdev *vdev, void *ev);
+	QDF_STATUS (*nan_event_rx)(struct scheduler_msg *event);
 };
 #endif
 
