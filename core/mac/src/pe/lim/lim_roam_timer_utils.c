@@ -51,7 +51,7 @@ uint32_t lim_create_timers_host_roam(tpAniSirGlobal mac_ctx)
 			&mac_ctx->lim.limTimers.gLimReassocFailureTimer,
 		    "REASSOC FAILURE TIMEOUT", lim_assoc_failure_timer_handler,
 		    LIM_REASSOC, cfg_value, 0, TX_NO_ACTIVATE) != TX_SUCCESS) {
-		lim_log(mac_ctx, LOGE, FL("failed to create Reassoc timer"));
+		pe_err("failed to create Reassoc timer");
 		return TX_TIMER_ERROR;
 	}
 	cfg_value = 1000;
