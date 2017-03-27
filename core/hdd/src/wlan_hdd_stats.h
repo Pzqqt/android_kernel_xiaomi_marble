@@ -140,6 +140,19 @@ static inline bool hdd_link_layer_stats_supported(void)
 	return true;
 }
 
+/**
+ * __wlan_hdd_cfg80211_ll_stats_ext_set_param - config monitor parameters
+ * @wiphy: wiphy handle
+ * @wdev: wdev handle
+ * @data: user layer input
+ * @data_len: length of user layer input
+ *
+ * return: 0 success, einval failure
+ */
+int wlan_hdd_cfg80211_ll_stats_ext_set_param(struct wiphy *wiphy,
+					     struct wireless_dev *wdev,
+					     const void *data,
+					     int data_len);
 #else
 
 static inline void hdd_init_ll_stats_ctx(void)
@@ -149,6 +162,15 @@ static inline void hdd_init_ll_stats_ctx(void)
 static inline bool hdd_link_layer_stats_supported(void)
 {
 	return false;
+}
+
+static inline int
+wlan_hdd_cfg80211_ll_stats_ext_set_param(struct wiphy *wiphy,
+					 struct wireless_dev *wdev,
+					 const void *data,
+					 int data_len)
+{
+	return -EINVAL;
 }
 
 #endif /* End of WLAN_FEATURE_LINK_LAYER_STATS */
