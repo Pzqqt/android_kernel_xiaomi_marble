@@ -64,7 +64,7 @@ void wlan_hdd_unregister_driver(void);
  * This function is called by the platform driver to suspend the
  * wlan bus
  *
- * Return: QDF_STATUS
+ * Return: 0 on success, negative errno on error
  */
 int wlan_hdd_bus_suspend(void);
 
@@ -81,17 +81,17 @@ int wlan_hdd_bus_suspend(void);
 int wlan_hdd_bus_suspend_noirq(void);
 
 /**
- * wlan_hdd_bus_resume(): wake up the bus
+ * wlan_hdd_bus_resume() - wake up the bus
  *
  * This function is called by the platform driver to resume wlan
  * bus
  *
- * Return: void
+ * Return: 0 for success and negative errno if failure
  */
 int wlan_hdd_bus_resume(void);
 
 /**
- * wlan_hdd_bus_resume_noirq(): handle bus resume no irq
+ * wlan_hdd_bus_resume_noirq() - handle bus resume no irq
  *
  * This function is called by the platform driver to do bus
  * resume no IRQ before calling resume callback. Call WMA and HIF

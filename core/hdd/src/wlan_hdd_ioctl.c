@@ -1883,7 +1883,7 @@ static int hdd_enable_ext_wow(hdd_adapter_t *adapter,
 			      tpSirExtWoWParams arg_params)
 {
 	tSirExtWoWParams params;
-	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_ret_status;
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
 	int rc;
@@ -1908,27 +1908,27 @@ static int hdd_enable_ext_wow(hdd_adapter_t *adapter,
 		return -EPERM;
 	}
 
-	if (hdd_ctx->ext_wow_should_suspend) {
-		if (hdd_ctx->config->extWowGotoSuspend) {
-			hdd_info("Received ready to ExtWoW. Going to suspend");
-
-			rc = wlan_hdd_cfg80211_suspend_wlan(hdd_ctx->wiphy, NULL);
-			if (rc < 0) {
-				hdd_err("wlan_hdd_cfg80211_suspend_wlan failed, error = %d",
-					 rc);
-				return rc;
-			}
-			qdf_ret_status = wlan_hdd_bus_suspend();
-			if (qdf_ret_status != QDF_STATUS_SUCCESS) {
-				hdd_err("wlan_hdd_suspend failed, status = %d",
-					 qdf_ret_status);
-				wlan_hdd_cfg80211_resume_wlan(hdd_ctx->wiphy);
-				return -EPERM;
-			}
-		}
-	} else {
+	if (!hdd_ctx->ext_wow_should_suspend) {
 		hdd_err("Received ready to ExtWoW failure");
 		return -EPERM;
+	}
+
+	if (hdd_ctx->config->extWowGotoSuspend) {
+		hdd_info("Received ready to ExtWoW. Going to suspend");
+
+		rc = wlan_hdd_cfg80211_suspend_wlan(hdd_ctx->wiphy, NULL);
+		if (rc < 0) {
+			hdd_err("wlan_hdd_cfg80211_suspend_wlan failed, error = %d",
+				rc);
+			return rc;
+		}
+		rc = wlan_hdd_bus_suspend();
+		if (rc) {
+			hdd_err("wlan_hdd_bus_suspend failed, status = %d",
+				rc);
+			wlan_hdd_cfg80211_resume_wlan(hdd_ctx->wiphy);
+			return rc;
+		}
 	}
 
 	return 0;
