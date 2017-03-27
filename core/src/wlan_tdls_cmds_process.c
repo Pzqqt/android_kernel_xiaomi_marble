@@ -26,6 +26,7 @@
 #include "wlan_tdls_main.h"
 #include "wlan_tdls_peer.h"
 #include "wlan_tdls_ct.h"
+#include "wlan_tdls_mgmt.h"
 #include "wlan_tdls_cmds_process.h"
 #include "wlan_tdls_tgt_api.h"
 

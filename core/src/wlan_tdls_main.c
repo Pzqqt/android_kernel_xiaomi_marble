@@ -26,6 +26,7 @@
 #include "wlan_tdls_cmds_process.h"
 #include "wlan_tdls_peer.h"
 #include "wlan_tdls_ct.h"
+#include "wlan_tdls_mgmt.h"
 
 QDF_STATUS tdls_psoc_obj_create_notification(struct wlan_objmgr_psoc *psoc,
 					     void *arg_list)
@@ -212,6 +213,7 @@ QDF_STATUS tdls_process_cmd(struct scheduler_msg *msg)
 
 	switch (msg->type) {
 	case TDLS_CMD_TX_ACTION:
+		tdls_process_mgmt_req(msg->bodyptr);
 		break;
 	case TDLS_CMD_ADD_STA:
 		tdls_process_add_peer(msg->bodyptr);
