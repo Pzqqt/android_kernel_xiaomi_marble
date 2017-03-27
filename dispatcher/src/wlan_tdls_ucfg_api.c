@@ -194,6 +194,12 @@ QDF_STATUS ucfg_tdls_update_config(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	soc_obj->tdls_rx_cb = req->tdls_rx_cb;
+	soc_obj->tdls_rx_cb_data = req->tdls_rx_cb_data;
+
+	soc_obj->tdls_wmm_cb = req->tdls_wmm_cb;
+	soc_obj->tdls_wmm_cb_data = req->tdls_wmm_cb_data;
+
 	soc_obj->tdls_event_cb = req->tdls_event_cb;
 	soc_obj->tdls_evt_cb_data = req->tdls_evt_cb_data;
 
@@ -256,9 +262,14 @@ QDF_STATUS ucfg_tdls_psoc_enable(struct wlan_objmgr_psoc *psoc)
 					tdls_scan_serialization_comp_info_cb);
 	if (QDF_STATUS_SUCCESS != status) {
 		tdls_err("Serialize scan cmd register failed ");
-		status = QDF_STATUS_E_FAILURE;
+		return status;
 	}
 
+	/* register callbacks with tx/rx mgmt */
+	status = tdls_mgmt_rx_ops(psoc, true);
+	if (status != QDF_STATUS_SUCCESS)
+		tdls_err("Failed to register mgmt rx callback, status:%d",
+			status);
 	return status;
 }
 
@@ -647,4 +658,6 @@ void ucfg_tdls_update_tx_pkt_cnt(struct wlan_objmgr_vdev *vdev,
 	tdls_update_tx_pkt_cnt(vdev, mac_addr);
 
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
+
 }
+

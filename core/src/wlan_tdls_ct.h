@@ -155,4 +155,21 @@ void tdls_discovery_timeout_peer_cb(void *user_data);
  * Return: Void
  */
 void tdls_implicit_disable(struct tdls_vdev_priv_obj *tdls_vdev);
+
+/**
+ * tdls_is_vdev_connected() -check the vdev connection
+ * @vdev: vdev oobject
+ *
+ * Return: true or false
+ */
+bool tdls_is_vdev_connected(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * tdls_is_vdev_authenticated() -check the vdev authentication state
+ * @vdev: vdev oobject
+ *
+ * Return: true or false
+ */
+bool tdls_is_vdev_authenticated(struct wlan_objmgr_vdev *vdev);
+
 #endif

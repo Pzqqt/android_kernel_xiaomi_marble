@@ -25,6 +25,11 @@
 #ifndef _WLAN_TDLS_CMDS_PROCESS_H_
 #define _WLAN_TDLS_CMDS_PROCESS_H_
 
+#define TDLS_IS_SETUP_ACTION(action) \
+	((TDLS_SETUP_REQUEST <= action) && \
+	(TDLS_SETUP_CONFIRM >= action))
+
+
 /**
  * enum tdls_add_oper - add peer type
  * @TDLS_OPER_NONE: none
@@ -35,6 +40,53 @@ enum tdls_add_oper {
 	TDLS_OPER_NONE,
 	TDLS_OPER_ADD,
 	TDLS_OPER_UPDATE
+};
+
+/**
+ * enum legacy_result_code - defined to comply with tSirResultCodes, need refine
+ *                           when mlme converged.
+ * @legacy_result_success: success
+ * @legacy_result_max: max result value
+ */
+enum legacy_result_code {
+	legacy_result_success,
+	legacy_result_max = 0x7FFFFFFF
+};
+
+/**
+ * struct tdls_send_mgmt_rsp - TDLS Response struct PE --> TDLS module
+ *                           same as struct tSirSmeRsp
+ * @message_type: message type eWNI_SME_TDLS_SEND_MGMT_RSP
+ * @length: message length
+ * @session_id: session id
+ * @transaction_id: transaction id
+ * @status_code: status code as tSirResultCodes
+ * @psoc: soc object
+ */
+struct tdls_send_mgmt_rsp {
+	uint16_t message_type;
+	uint16_t length;
+	uint8_t session_id;
+	uint16_t transaction_id;
+	enum legacy_result_code status_code;
+	struct wlan_objmgr_psoc *psoc;
+};
+
+/**
+ * struct tdls_mgmt_tx_completion_ind - TDLS TX completion PE --> TDLS module
+ *                           same as struct sSirMgmtTxCompletionInd
+ * @message_type: message type eWNI_SME_MGMT_FRM_TX_COMPLETION_IND
+ * @length: message length
+ * @session_id: session id
+ * @tx_complete_status: tx complete status
+ * @psoc: soc object
+ */
+struct tdls_mgmt_tx_completion_ind {
+	uint16_t message_type;
+	uint16_t length;
+	uint8_t session_id;      /* Session ID */
+	uint32_t tx_complete_status;
+	struct wlan_objmgr_psoc *psoc;
 };
 
 /**
@@ -212,6 +264,52 @@ QDF_STATUS tdls_pe_del_peer(struct tdls_del_peer_request *req);
  * Return: QDF status
  */
 QDF_STATUS tdls_process_add_peer_rsp(struct tdls_add_sta_rsp *rsp);
+
+/**
+ * tdls_reset_nss() - reset tdls nss parameters
+ * @tdls_soc: TDLS soc object
+ * @action_code: action code
+ *
+ * Return: None
+ */
+void tdls_reset_nss(struct tdls_soc_priv_obj *tdls_soc,
+				  uint8_t action_code);
+
+/**
+ * tdls_set_cap() - set TDLS capability type
+ * @tdls_vdev: tdls vdev object
+ * @mac: peer mac address
+ * @cap: TDLS capability type
+ *
+ * Return: 0 if successful or negative errno otherwise
+ */
+int tdls_set_cap(struct tdls_vdev_priv_obj *tdls_vdev, const uint8_t *mac,
+			  enum tdls_peer_capab cap);
+
+/**
+ * tdls_validate_mgmt_request() -validate mgmt request
+ * @tdls_validate: action frame request
+ *
+ * Return: 0 for success or -EINVAL otherwise
+ */
+int tdls_validate_mgmt_request(struct tdls_validate_action_req *tdls_validate);
+
+/**
+ * tdls_process_send_mgmt_rsp() - handle response for send mgmt
+ * @rsp: TDLS send mgmt response
+ *
+ * Return: QDF_STATUS_SUCCESS for success; other values if failed
+ */
+QDF_STATUS tdls_process_send_mgmt_rsp(struct tdls_send_mgmt_rsp *rsp);
+
+/**
+ * tdls_send_mgmt_tx_completion() - process tx completion
+ * @tx_complete: TDLS mgmt completion info
+ *
+ * Return: QDF_STATUS_SUCCESS for success; other values if failed
+ */
+QDF_STATUS tdls_send_mgmt_tx_completion(
+			struct tdls_mgmt_tx_completion_ind *tx_complete);
 
 /**
  * tdls_process_add_peer_rsp() - handle response for delete TDLS peer

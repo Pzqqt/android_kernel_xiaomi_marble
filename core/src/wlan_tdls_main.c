@@ -30,6 +30,8 @@
 #include "wlan_tdls_tgt_api.h"
 #include "wlan_policy_mgr_public_struct.h"
 #include "wlan_policy_mgr_api.h"
+#include "wlan_scan_ucfg_api.h"
+
 
 /* Global tdls soc pvt object
  * this is useful for some functions which does not receive either vdev or psoc

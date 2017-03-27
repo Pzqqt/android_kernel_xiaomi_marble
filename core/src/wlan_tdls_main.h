@@ -34,6 +34,7 @@
 #include <wlan_tdls_public_structs.h>
 #include <scheduler_api.h>
 #include "wlan_serialization_api.h"
+#include "wlan_tdls_mgmt.h"
 
 /* Bit mask flag for tdls_option to FW */
 #define ENA_TDLS_OFFCHAN      (1 << 0)  /* TDLS Off Channel support */
@@ -74,7 +75,7 @@
 #define tdls_alert(format, args...) \
 	tdls_logfl(QDF_TRACE_LEVEL_FATAL, format, ## args)
 
-#define TDLS_IS_CONNECTED(peer)  \
+#define TDLS_IS_LINK_CONNECTED(peer)  \
 	((TDLS_LINK_CONNECTED == (peer)->link_status) || \
 	 (TDLS_LINK_TEARING == (peer)->link_status))
 
@@ -203,6 +204,10 @@ struct tdls_soc_priv_obj {
 	enum tdls_nss_transition_state tdls_nss_transition_mode;
 	int32_t tdls_teardown_peers_cnt;
 	struct tdls_set_state_info set_state_info;
+	tdls_rx_callback tdls_rx_cb;
+	void *tdls_rx_cb_data;
+	tdls_wmm_check tdls_wmm_cb;
+	void *tdls_wmm_cb_data;
 	tdls_tx_ack_cnf_callback tdls_tx_cnf_cb;
 	void *tx_ack_cnf_cb_data;
 	tdls_evt_callback tdls_event_cb;

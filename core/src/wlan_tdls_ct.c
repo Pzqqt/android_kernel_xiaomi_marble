@@ -52,6 +52,27 @@ bool tdls_is_vdev_connected(struct wlan_objmgr_vdev *vdev)
 	return true;
 }
 
+bool tdls_is_vdev_authenticated(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_objmgr_peer *peer;
+	bool is_authenticated = false;
+
+	wlan_vdev_obj_lock(vdev);
+	peer = wlan_vdev_get_bsspeer(vdev);
+	wlan_vdev_obj_unlock(vdev);
+
+	if (!peer) {
+		tdls_err("peer is null");
+		return false;
+	}
+
+	wlan_peer_obj_lock(peer);
+	is_authenticated = wlan_peer_mlme_get_auth_state(peer);
+	wlan_peer_obj_unlock(peer);
+
+	return is_authenticated;
+}
+
 /**
  * tdls_peer_reset_discovery_processed() - reset discovery status
  * @tdls_vdev: TDLS vdev object

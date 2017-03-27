@@ -28,6 +28,24 @@
 /* default tdls serialize timeout is set to 10 secs */
 #define TDLS_DEFAULT_SERIALIZE_CMD_TIMEOUT  10000
 
+#define TDLS_PUBLIC_ACTION_FRAME_OFFSET 24
+#define TDLS_PUBLIC_ACTION_FRAME 4
+#define TDLS_PUBLIC_ACTION_DISC_RESP 14
+#define TDLS_ACTION_FRAME 12
+#define TDLS_80211_PEER_ADDR_OFFSET (TDLS_PUBLIC_ACTION_FRAME + \
+				     QDF_MAC_ADDR_SIZE)
+#define TDLS_ACTION_FRAME_TYPE_MAX 11
+
+/**
+ * struct tdls_rx_mgmt_event - tdls rx mgmt frame event
+ * @tdls_soc_obj: tdls soc private object
+ * @rx_mgmt: tdls rx mgmt frame structure
+ */
+struct tdls_rx_mgmt_event {
+	struct tdls_soc_priv_obj *tdls_soc_obj;
+	struct tdls_rx_mgmt_frame *rx_mgmt;
+};
+
 /*
  * struct tdls_send_mgmt_request - tdls management request
  * @message_type: type of pe message
@@ -70,5 +88,26 @@ struct tdls_send_mgmt_request {
  */
 QDF_STATUS tdls_process_mgmt_req(
 			struct tdls_action_frame_request *tdls_mgmt_req);
+
+/**
+ * tdls_mgmt_rx_ops() - register or unregister rx callback
+ * @psoc: psoc object
+ * @isregister: register if true, unregister if false
+ *
+ * This function registers or unregisters rx callback to mgmt txrx
+ * component.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS tdls_mgmt_rx_ops(struct wlan_objmgr_psoc *psoc,
+	bool isregister);
+
+/**
+ * tdls_process_rx_frame() - process tdls rx frames
+ * @msg: scheduler msg
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS tdls_process_rx_frame(struct scheduler_msg *msg);
 #endif
 
