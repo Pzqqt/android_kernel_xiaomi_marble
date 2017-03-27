@@ -2140,6 +2140,7 @@ void dp_aggregate_vdev_stats(struct dp_vdev *vdev)
 		DP_STATS_AGGR(vdev, peer, rx.err.mic_err);
 		DP_STATS_AGGR(vdev, peer, rx.err.decrypt_err);
 		DP_STATS_AGGR(vdev, peer, rx.non_ampdu_cnt);
+		DP_STATS_AGGR(vdev, peer, rx.ampdu_cnt);
 		DP_STATS_AGGR(vdev, peer, rx.non_amsdu_cnt);
 		DP_STATS_AGGR(vdev, peer, rx.amsdu_cnt);
 		DP_STATS_AGGR_PKT(vdev, peer, rx.to_stack);
@@ -2526,7 +2527,7 @@ dp_print_rx_rates(struct dp_vdev *vdev)
 			pdev->stats.rx.reception_type[2],
 			pdev->stats.rx.reception_type[3]);
 	DP_TRACE(NONE, "Aggregation:\n");
-	DP_TRACE(NONE, "Number of Msdu's Part of Ampdu = %d",
+	DP_TRACE(NONE, "Number of Msdu's Part of Ampdus = %d",
 			pdev->stats.rx.ampdu_cnt);
 	DP_TRACE(NONE, "Number of Msdu's With No Mpdu Level Aggregation : %d",
 			pdev->stats.rx.non_ampdu_cnt);

@@ -617,8 +617,8 @@ dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 
 		ampdu_flag = (mpdu_desc_info.mpdu_flags &
 				HAL_MPDU_F_AMPDU_FLAG);
-		DP_STATS_INCC(vdev->pdev, rx.ampdu_cnt, 1, ampdu_flag);
-		DP_STATS_INCC(vdev->pdev, rx.non_ampdu_cnt, 1, !(ampdu_flag));
+		DP_STATS_INCC(peer, rx.ampdu_cnt, 1, ampdu_flag);
+		DP_STATS_INCC(peer, rx.non_ampdu_cnt, 1, !(ampdu_flag));
 
 		hal_rx_msdu_desc_info_get(ring_desc, &msdu_desc_info);
 		amsdu_flag = ((msdu_desc_info.msdu_flags &
@@ -626,9 +626,9 @@ dp_rx_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 				(msdu_desc_info.msdu_flags &
 					HAL_MSDU_F_LAST_MSDU_IN_MPDU));
 
-		DP_STATS_INCC(vdev->pdev, rx.non_amsdu_cnt, 1,
+		DP_STATS_INCC(peer, rx.non_amsdu_cnt, 1,
 				amsdu_flag);
-		DP_STATS_INCC(vdev->pdev, rx.amsdu_cnt, 1,
+		DP_STATS_INCC(peer, rx.amsdu_cnt, 1,
 				!(amsdu_flag));
 
 		qdf_nbuf_queue_add(&vdev->rxq, rx_desc->nbuf);
