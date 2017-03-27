@@ -113,7 +113,6 @@ static QDF_STATUS tdls_process_rx_mgmt(
 			tdls_set_rssi(tdls_vdev, mac, rx_mgmt->rx_rssi);
 	}
 
-
 	if (rx_mgmt->buf[TDLS_PUBLIC_ACTION_FRAME_OFFSET] ==
 	    TDLS_ACTION_FRAME) {
 		action_frame_type =
@@ -127,7 +126,7 @@ static QDF_STATUS tdls_process_rx_mgmt(
 		}
 	}
 
-	/* tdls_soc_obj->tdls_rx_cb ==> wlan_tdls_rx_callback() */
+	/* tdls_soc_obj->tdls_rx_cb ==> wlan_cfg80211_tdls_rx_callback() */
 	if (tdls_soc_obj && tdls_soc_obj->tdls_rx_cb)
 		tdls_soc_obj->tdls_rx_cb(tdls_soc_obj->tdls_rx_cb_data,
 					 rx_mgmt);
@@ -157,7 +156,6 @@ QDF_STATUS tdls_process_rx_frame(struct scheduler_msg *msg)
 
 	if (vdev) {
 		tdls_debug("tdls rx mgmt frame received");
-
 		tdls_vdev = wlan_objmgr_vdev_get_comp_private_obj(vdev,
 							WLAN_UMAC_COMP_TDLS);
 		if (tdls_vdev)
@@ -175,6 +173,7 @@ QDF_STATUS tdls_mgmt_rx_ops(struct wlan_objmgr_psoc *psoc,
 	bool isregister)
 {
 	struct mgmt_txrx_mgmt_frame_cb_info frm_cb_info[3];
+
 	QDF_STATUS status;
 	int num_of_entries;
 

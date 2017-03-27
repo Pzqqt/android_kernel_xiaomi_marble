@@ -133,6 +133,7 @@ struct wlan_objmgr_peer_mlme {
 	uint32_t max_rate;
 	uint16_t seq_num;
 	enum wlan_peer_state state;
+	bool is_authenticated;
 };
 
 /**
@@ -733,6 +734,25 @@ static inline void wlan_peer_mlme_set_state(
 }
 
 /**
+ * wlan_peer_mlme_set_auth_state() - peer mlme auth state
+ * @peer: PEER object
+ * @is_authenticated: true or false
+ *
+ * API to update the current peer auth state
+ *
+ * Caller need to acquire lock with wlan_peer_obj_lock()
+ *
+ * Return: void
+ */
+static inline void wlan_peer_mlme_set_auth_state(
+				struct wlan_objmgr_peer *peer,
+				bool is_authenticated)
+{
+	/* This API is invoked with lock acquired, do not add log prints */
+	peer->peer_mlme.is_authenticated = is_authenticated;
+}
+
+/**
  * wlan_peer_mlme_get_state() - peer mlme state
  * @peer: PEER object
  *
@@ -747,6 +767,23 @@ static inline enum wlan_peer_state wlan_peer_mlme_get_state(
 {
 	/* This API is invoked with lock acquired, do not add log prints */
 	return peer->peer_mlme.state;
+}
+
+/**
+ * wlan_peer_mlme_get_auth_state() - peer mlme auth state
+ * @peer: PEER object
+ *
+ * API to get peer auth state
+ *
+ * Caller need to acquire lock with wlan_peer_obj_lock()
+ *
+ * Return: auth state true/false
+ */
+static inline bool wlan_peer_mlme_get_auth_state(
+				struct wlan_objmgr_peer *peer)
+{
+	/* This API is invoked with lock acquired, do not add log prints */
+	return peer->peer_mlme.is_authenticated;
 }
 
 /**

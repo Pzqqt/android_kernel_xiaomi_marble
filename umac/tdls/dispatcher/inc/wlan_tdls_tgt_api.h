@@ -68,6 +68,22 @@ QDF_STATUS tgt_tdls_set_uapsd(struct wlan_objmgr_psoc *psoc,
 			      struct sta_uapsd_trig_params *params);
 
 /**
+ * tgt_tdls_send_mgmt_rsp() - process tdls mgmt response
+ * @pmsg: sheduler msg
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS tgt_tdls_send_mgmt_rsp(struct scheduler_msg *pmsg);
+
+/**
+ * tgt_tdls_send_mgmt_tx_completion() -process tx completion message
+ * @pmsg: sheduler msg
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS tgt_tdls_send_mgmt_tx_completion(struct scheduler_msg *pmsg);
+
+/**
  * tgt_tdls_del_peer_rsp() - handle TDLS del peer response
  * @pmsg: sheduler msg
  *
@@ -111,4 +127,23 @@ QDF_STATUS tgt_tdls_unregister_ev_handler(struct wlan_objmgr_psoc *psoc);
 QDF_STATUS
 tgt_tdls_event_handler(struct wlan_objmgr_psoc *psoc,
 		       struct tdls_event_info *info);
+
+/**
+ * tgt_tdls_mgmt_frame_rx_cb() - callback for rx mgmt frame
+ * @psoc: soc context
+ * @peer: peer context
+ * @buf: rx buffer
+ * @mgmt_rx_params: mgmt rx parameters
+ * @frm_type: frame type
+ *
+ * This function gets called from mgmt tx/rx component when rx mgmt
+ * received.
+ *
+ * Return: QDF_STATUS_SUCCESS
+ */
+QDF_STATUS tgt_tdls_mgmt_frame_rx_cb(struct wlan_objmgr_psoc *psoc,
+	struct wlan_objmgr_peer *peer, qdf_nbuf_t buf,
+	struct mgmt_rx_event_params *mgmt_rx_params,
+	enum mgmt_frame_type frm_type);
+
 #endif

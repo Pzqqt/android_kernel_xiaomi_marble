@@ -29,6 +29,8 @@
 #include <qdf_mc_timer.h>
 #include <wlan_cmn.h>
 #include <wlan_cmn_ieee80211.h>
+#include <wlan_objmgr_psoc_obj.h>
+
 
 #define WLAN_TDLS_STA_MAX_NUM                        8
 #define WLAN_TDLS_STA_P_UAPSD_OFFCHAN_MAX_NUM        1
@@ -59,7 +61,7 @@
 #define WAIT_TIME_TDLS_LINK_ESTABLISH_REQ      1500
 
 /** Maximum time(ms) to wait for tdls mgmt to complete **/
-#define WAIT_TIME_TDLS_MGMT         11000
+#define WAIT_TIME_FOR_TDLS_MGMT         11000
 
 #define TDLS_TEARDOWN_PEER_UNREACHABLE   25
 #define TDLS_TEARDOWN_PEER_UNSPEC_REASON 26
@@ -252,7 +254,7 @@ enum tdls_event_msg_type {
 	TDLS_SHOULD_DISCOVER = 0,
 	TDLS_SHOULD_TEARDOWN,
 	TDLS_PEER_DISCONNECTED,
-	TDLS_CONNECTION_TRACKER_NOTIFY,
+	TDLS_CONNECTION_TRACKER_NOTIFY
 };
 
 /**
