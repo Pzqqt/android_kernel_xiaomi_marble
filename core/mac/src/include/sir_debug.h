@@ -43,64 +43,6 @@
 #define LOG4    7
 #define LOGD    8
 
-#ifdef WLAN_MDM_CODE_REDUCTION_OPT
-#ifdef PE_DEBUG_LOGE
-#define PELOGE(p) { p }
-#else
-#define PELOGE(p) { }
-#endif
-
-#ifdef PE_DEBUG_LOGW
-#define PELOGW(p) { p }
-#else
-#define PELOGW(p) { }
-#endif
-
-#define PELOG1(p) { }
-#define PELOG2(p) { }
-#define PELOG3(p) { }
-#define PELOG4(p) { }
-
-#else                           /* WLAN_MDM_CODE_REDUCTION_OPT */
-
-#ifdef PE_DEBUG_LOGE
-#define PELOGE(p) { p }
-#else
-#define PELOGE(p) { }
-#endif
-
-#ifdef PE_DEBUG_LOGW
-#define PELOGW(p) { p }
-#else
-#define PELOGW(p) { }
-#endif
-
-#ifdef PE_DEBUG_LOG1
-#define PELOG1(p) { p }
-#else
-#define PELOG1(p) { }
-#endif
-
-#ifdef PE_DEBUG_LOG2
-#define PELOG2(p) { p }
-#else
-#define PELOG2(p) { }
-#endif
-
-#ifdef PE_DEBUG_LOG3
-#define PELOG3(p) { p }
-#else
-#define PELOG3(p) { }
-#endif
-
-#ifdef PE_DEBUG_LOG4
-#define PELOG4(p) { p }
-#else
-#define PELOG4(p) { }
-#endif
-
-#endif /* WLAN_MDM_CODE_REDUCTION_OPT */
-
 #define MAC_ADDR_ARRAY(a) (a)[0], (a)[1], (a)[2], (a)[3], (a)[4], (a)[5]
 #define MAC_ADDRESS_STR "%02x:%02x:%02x:%02x:%02x:%02x"
 
