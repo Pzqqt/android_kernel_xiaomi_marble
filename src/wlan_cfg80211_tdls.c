@@ -36,6 +36,9 @@
 
 #define MAX_CHANNEL (NUM_24GHZ_CHANNELS + NUM_5GHZ_CHANNELS)
 
+
+#define TDLS_MAX_NO_OF_2_4_CHANNELS 14
+
 QDF_STATUS wlan_cfg80211_tdls_priv_init(struct vdev_osif_priv *osif_priv)
 {
 	struct osif_tdls_vdev *tdls_priv;
@@ -370,6 +373,41 @@ static enum tdls_command_type tdls_oper_to_cmd(enum nl80211_tdls_operation oper)
 		return 0;
 }
 
+int wlan_cfg80211_tdls_configure_mode(struct wlan_objmgr_vdev *vdev,
+						uint32_t trigger_mode)
+{
+	enum tdls_feature_mode tdls_mode;
+	struct tdls_set_mode_params set_mode_params;
+	int status;
+
+	if (!vdev)
+		return -EINVAL;
+
+	switch (trigger_mode) {
+	case WLAN_VENDOR_TDLS_TRIGGER_MODE_EXPLICIT:
+		tdls_mode = TDLS_SUPPORT_IMP_MODE;
+		break;
+	case WLAN_VENDOR_TDLS_TRIGGER_MODE_EXTERNAL:
+		tdls_mode = TDLS_SUPPORT_EXT_CONTROL;
+		break;
+	case WLAN_VENDOR_TDLS_TRIGGER_MODE_IMPLICIT:
+		tdls_mode = TDLS_SUPPORT_IMP_MODE;
+		break;
+	default:
+		cfg80211_err("Invalid TDLS trigger mode");
+		return -EINVAL;
+	}
+
+	cfg80211_notice("cfg80211 tdls trigger mode %d", trigger_mode);
+	set_mode_params.source = TDLS_SET_MODE_SOURCE_USER;
+	set_mode_params.tdls_mode = tdls_mode;
+	set_mode_params.update_last = false;
+	set_mode_params.vdev = vdev;
+
+	status = ucfg_tdls_set_operating_mode(&set_mode_params);
+	return status;
+}
+
 int wlan_cfg80211_tdls_oper(struct wlan_objmgr_pdev *pdev,
 			    struct net_device *dev,
 			    const uint8_t *peer,
@@ -442,6 +480,196 @@ error:
 	return status;
 }
 
+void wlan_cfg80211_tdls_rx_callback(void *user_data,
+	struct tdls_rx_mgmt_frame *rx_frame)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_vdev *vdev;
+	struct vdev_osif_priv *osif_priv;
+	struct wireless_dev *wdev;
+	uint16_t freq;
+
+	cfg80211_debug("user data:%p, vdev id:%d, rssi:%d, buf:%p, len:%d",
+		user_data, rx_frame->vdev_id, rx_frame->rx_rssi,
+		rx_frame->buf, rx_frame->frame_len);
+
+	psoc = user_data;
+	if (!psoc) {
+		cfg80211_err("psoc is null");
+		return;
+	}
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
+		rx_frame->vdev_id, WLAN_TDLS_NB_ID);
+	if (!vdev) {
+		cfg80211_err("vdev is null");
+		return;
+	}
+
+	wlan_vdev_obj_lock(vdev);
+	osif_priv = wlan_vdev_get_ospriv(vdev);
+	wlan_vdev_obj_unlock(vdev);
+	if (!osif_priv) {
+		cfg80211_err("osif_priv is null");
+		goto fail;
+	}
+
+	wdev = osif_priv->wdev;
+	if (!wdev) {
+		cfg80211_err("wdev is null");
+		goto fail;
+	}
+
+	if (rx_frame->rx_chan <= TDLS_MAX_NO_OF_2_4_CHANNELS)
+		freq = ieee80211_channel_to_frequency(
+			rx_frame->rx_chan, NL80211_BAND_2GHZ);
+	else
+		freq = ieee80211_channel_to_frequency(
+			rx_frame->rx_chan, NL80211_BAND_5GHZ);
+
+	cfg80211_notice("Indicate frame over nl80211, vdev id:%d, idx:%d",
+		   rx_frame->vdev_id, wdev->netdev->ifindex);
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 18, 0))
+	cfg80211_rx_mgmt(wdev, freq, rx_frame->rx_rssi * 100,
+		rx_frame->buf, rx_frame->frame_len,
+		NL80211_RXMGMT_FLAG_ANSWERED);
+#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 12, 0))
+	cfg80211_rx_mgmt(wdev, freq, rx_frame->rx_rssi * 100,
+		rx_frame->buf, rx_frame->frame_len,
+		NL80211_RXMGMT_FLAG_ANSWERED, GFP_ATOMIC);
+#else
+	cfg80211_rx_mgmt(wdev, freq, rx_frame->rx_rssi * 100,
+		rx_frame->buf, rx_frame->frame_len, GFP_ATOMIC);
+#endif /* LINUX_VERSION_CODE */
+fail:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
+}
+
+int wlan_cfg80211_tdls_mgmt(struct wlan_objmgr_pdev *pdev,
+				struct net_device *dev, const uint8_t *peer_mac,
+				uint8_t action_code, uint8_t dialog_token,
+				uint16_t status_code, uint32_t peer_capability,
+				const uint8_t *buf, size_t len)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct tdls_action_frame_request mgmt_req;
+	struct vdev_osif_priv *osif_priv;
+	struct osif_tdls_vdev *tdls_priv;
+	int status;
+	unsigned long rc;
+	int max_sta_failed = 0;
+	struct tdls_validate_action_req chk_frame;
+	struct tdls_set_responder_req set_responder;
+
+	vdev = wlan_objmgr_get_vdev_by_macaddr_from_pdev(pdev,
+							 dev->dev_addr,
+							 WLAN_OSIF_ID);
+	if (vdev == NULL) {
+		cfg80211_err("vdev object is NULL");
+		return -EIO;
+	}
+
+	wlan_vdev_obj_lock(vdev);
+	osif_priv = wlan_vdev_get_ospriv(vdev);
+	wlan_vdev_obj_unlock(vdev);
+
+	tdls_priv = osif_priv->osif_tdls;
+
+	/* make sure doesn't call send_mgmt() while it is pending */
+	if (TDLS_VDEV_MAGIC == tdls_priv->mgmt_tx_completion_status) {
+		cfg80211_err(QDF_MAC_ADDRESS_STR " action %d couldn't sent, as one is pending. return EBUSY",
+			     QDF_MAC_ADDR_ARRAY(peer_mac), action_code);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
+		return -EBUSY;
+	}
+
+	/* Reset TDLS VDEV magic */
+	tdls_priv->mgmt_tx_completion_status = TDLS_VDEV_MAGIC;
+
+
+	/*prepare the request */
+
+	/* Validate the management Request */
+	chk_frame.vdev = vdev;
+	chk_frame.action_code = action_code;
+	qdf_mem_copy(chk_frame.peer_mac, peer_mac, QDF_MAC_ADDR_SIZE);
+	chk_frame.dialog_token = dialog_token;
+	chk_frame.action_code = action_code;
+	chk_frame.status_code = status_code;
+	chk_frame.len = len;
+	chk_frame.max_sta_failed = max_sta_failed;
+
+	mgmt_req.chk_frame = &chk_frame;
+
+	mgmt_req.vdev = vdev;
+	mgmt_req.vdev_id = wlan_vdev_get_id(vdev);
+	mgmt_req.session_id = mgmt_req.vdev_id;
+	/* populate management req params */
+	qdf_mem_copy(mgmt_req.tdls_mgmt.peer_mac.bytes,
+		     peer_mac, QDF_MAC_ADDR_SIZE);
+	mgmt_req.tdls_mgmt.dialog = dialog_token;
+	mgmt_req.tdls_mgmt.frame_type = action_code;
+	mgmt_req.tdls_mgmt.len = len;
+	mgmt_req.tdls_mgmt.peer_capability = peer_capability;
+	mgmt_req.tdls_mgmt.status_code = chk_frame.status_code;
+
+	/*populate the additional IE's */
+	mgmt_req.cmd_buf = buf;
+	mgmt_req.len = len;
+
+	reinit_completion(&tdls_priv->tdls_mgmt_comp);
+	status = ucfg_tdls_send_mgmt_frame(&mgmt_req);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cfg80211_err("ucfg_tdls_send_mgmt failed err %d", status);
+		status = -EIO;
+		tdls_priv->mgmt_tx_completion_status = false;
+		goto error_mgmt_req;
+	}
+
+	cfg80211_info("Wait for tdls_mgmt_comp. Timeout %u ms",
+		WAIT_TIME_FOR_TDLS_MGMT);
+
+	rc = wait_for_completion_timeout(
+		&tdls_priv->tdls_mgmt_comp,
+		msecs_to_jiffies(WAIT_TIME_FOR_TDLS_MGMT));
+
+	if ((0 == rc) || (true != tdls_priv->mgmt_tx_completion_status)) {
+		cfg80211_err("%s rc %ld mgmtTxCompletionStatus %u",
+			     !rc ? "Mgmt Tx Completion timed out" :
+			     "Mgmt Tx Completion failed",
+			     rc, tdls_priv->mgmt_tx_completion_status);
+
+		tdls_priv->mgmt_tx_completion_status = false;
+		status = -EINVAL;
+		goto error_mgmt_req;
+	}
+
+	cfg80211_info("Mgmt Tx Completion status %ld TxCompletion %u",
+		rc, tdls_priv->mgmt_tx_completion_status);
+
+	if (chk_frame.max_sta_failed) {
+		status = max_sta_failed;
+		goto error_mgmt_req;
+	}
+
+	if (TDLS_SETUP_RESPONSE == action_code ||
+	    TDLS_SETUP_CONFIRM == action_code) {
+		qdf_mem_copy(set_responder.peer_mac, peer_mac,
+			     QDF_MAC_ADDR_SIZE);
+		set_responder.vdev = vdev;
+		if (TDLS_SETUP_RESPONSE == action_code)
+			set_responder.responder = false;
+		if (TDLS_SETUP_CONFIRM == action_code)
+			set_responder.responder = true;
+		ucfg_tdls_responder(&set_responder);
+	}
+
+error_mgmt_req:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
+	return status;
+}
+
 static void
 wlan_cfg80211_tdls_indicate_discovery(struct tdls_osif_indication *ind)
 {
@@ -504,6 +732,10 @@ void wlan_cfg80211_tdls_event_callback(void *user_data,
 	wlan_vdev_obj_unlock(ind->vdev);
 
 	switch (type) {
+	case TDLS_EVENT_MGMT_TX_ACK_CNF:
+		tdls_priv->mgmt_tx_completion_status = ind->status;
+		complete(&tdls_priv->tdls_mgmt_comp);
+		break;
 	case TDLS_EVENT_ADD_PEER:
 		tdls_priv->tdls_add_peer_status = ind->status;
 		complete(&tdls_priv->tdls_add_peer_comp);

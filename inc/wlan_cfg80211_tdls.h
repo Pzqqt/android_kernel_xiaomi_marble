@@ -33,6 +33,9 @@
 #include <qdf_types.h>
 #include <wlan_tdls_ucfg_api.h>
 
+
+#define TDLS_VDEV_MAGIC 0x54444c53       /* "TDLS" */
+
 /**
  * struct osif_tdls_vdev - OS tdls vdev private structure
  * @tdls_add_peer_comp: Completion to add tdls peer
@@ -50,6 +53,26 @@ struct osif_tdls_vdev {
 	struct completion tdls_link_establish_req_comp;
 	QDF_STATUS tdls_add_peer_status;
 	uint32_t mgmt_tx_completion_status;
+};
+
+/**
+ * enum qca_wlan_vendor_tdls_trigger_mode_vdev_map: Maps the user space TDLS
+ *	trigger mode in the host driver.
+ * @WLAN_VENDOR_TDLS_TRIGGER_MODE_EXPLICIT: TDLS Connection and
+ *	disconnection handled by user space.
+ * @WLAN_VENDOR_TDLS_TRIGGER_MODE_IMPLICIT: TDLS connection and
+ *	disconnection controlled by host driver based on data traffic.
+ * @WLAN_VENDOR_TDLS_TRIGGER_MODE_EXTERNAL: TDLS connection and
+ *	disconnection jointly controlled by user space and host driver.
+ */
+enum qca_wlan_vendor_tdls_trigger_mode_vdev_map {
+	WLAN_VENDOR_TDLS_TRIGGER_MODE_EXPLICIT =
+		QCA_WLAN_VENDOR_TDLS_TRIGGER_MODE_EXPLICIT,
+	WLAN_VENDOR_TDLS_TRIGGER_MODE_IMPLICIT =
+		QCA_WLAN_VENDOR_TDLS_TRIGGER_MODE_IMPLICIT,
+	WLAN_VENDOR_TDLS_TRIGGER_MODE_EXTERNAL =
+		((QCA_WLAN_VENDOR_TDLS_TRIGGER_MODE_EXPLICIT |
+		  QCA_WLAN_VENDOR_TDLS_TRIGGER_MODE_IMPLICIT) << 1),
 };
 
 /**
@@ -96,6 +119,17 @@ int wlan_cfg80211_tdls_update_peer(struct wlan_objmgr_pdev *pdev,
 				   struct net_device *dev,
 				   const uint8_t *mac,
 				   struct station_parameters *params);
+
+/**
+ * wlan_cfg80211_tdls_configure_mode() - configure tdls mode
+ * @vdev: vdev obj manager
+ * @trigger_mode: tdls trgger mode
+ *
+ * Return: 0 for success; negative errno otherwise
+ */
+int wlan_cfg80211_tdls_configure_mode(struct wlan_objmgr_vdev *vdev,
+						uint32_t trigger_mode);
+
 /**
  * wlan_cfg80211_tdls_oper() - process cfg80211 operation on an TDLS peer
  * @pdev: pdev object
@@ -111,6 +145,27 @@ int wlan_cfg80211_tdls_oper(struct wlan_objmgr_pdev *pdev,
 			    enum nl80211_tdls_operation oper);
 
 /**
+ * wlan_cfg80211_tdls_mgmt() - process tdls management frames from the supplicant
+ * @pdev: pdev object
+ * @dev: net device
+ * @peer: MAC address of the TDLS peer
+ * @action_code: type of TDLS mgmt frame to be sent
+ * @dialog_token: dialog token used in the frame
+ * @status_code: status to be incuded in the frame
+ * @peer_capability: peer capability information
+ * @buf: additional IEs to be included
+ * @len: lenght of additional Ies
+ * @oper: cfg80211 TDLS operation
+ *
+ * Return: 0 on success; negative errno otherwise
+ */
+int wlan_cfg80211_tdls_mgmt(struct wlan_objmgr_pdev *pdev,
+				struct net_device *dev, const uint8_t *peer,
+				uint8_t action_code, uint8_t dialog_token,
+				uint16_t status_code, uint32_t peer_capability,
+				const uint8_t *buf, size_t len);
+
+/**
  * wlan_cfg80211_tdls_event_callback() - callback for tdls module
  * @userdata: user data
  * @type: request callback type
@@ -123,4 +178,17 @@ int wlan_cfg80211_tdls_oper(struct wlan_objmgr_pdev *pdev,
 void wlan_cfg80211_tdls_event_callback(void *userdata,
 				       enum tdls_event_type type,
 				       struct tdls_osif_indication *param);
+
+/**
+ * wlan_cfg80211_tdls_rx_callback() - Callback for rx mgmt frame
+ * @user_data: pointer to soc object
+ * @rx_frame: RX mgmt frame information
+ *
+ * This callback will be used to rx frames in os interface.
+ *
+ * Return: None
+ */
+void wlan_cfg80211_tdls_rx_callback(void *user_data,
+	struct tdls_rx_mgmt_frame *rx_frame);
+
 #endif
