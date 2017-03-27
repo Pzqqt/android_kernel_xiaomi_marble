@@ -788,8 +788,9 @@ QDF_STATUS hdd_softap_deregister_sta(hdd_adapter_t *pAdapter, uint8_t staId)
 			staId, qdf_status, qdf_status);
 	}
 
-	ret = hdd_remove_peer_object(pAdapter->hdd_vdev,
-			pAdapter->aStaInfo[staId].macAddrSTA.bytes);
+	ret = hdd_objmgr_remove_peer_object(pAdapter->hdd_vdev,
+					    pAdapter->aStaInfo[staId].
+						macAddrSTA.bytes);
 	if (ret)
 		hdd_err("Peer obj %pM delete fails",
 			pAdapter->aStaInfo[staId].macAddrSTA.bytes);

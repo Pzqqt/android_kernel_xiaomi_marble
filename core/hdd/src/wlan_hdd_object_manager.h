@@ -64,7 +64,7 @@
 #include <wlan_objmgr_peer_obj.h>
 
 /**
- * hdd_create_and_store_psoc() - Create psoc object and store in hdd context
+ * hdd_objmgr_create_and_store_psoc() - Create psoc and store in hdd context
  * @hdd_ctx: Hdd context
  * @psoc_id: Psoc Id
  *
@@ -73,40 +73,40 @@
  *
  * Return: 0 for success, negative error code for failure
  */
-int hdd_create_and_store_psoc(hdd_context_t *hdd_ctx, uint8_t psoc_id);
+int hdd_objmgr_create_and_store_psoc(hdd_context_t *hdd_ctx, uint8_t psoc_id);
 
 /**
- * hdd_release_and_destroy_psoc() - Deletes the psoc object
+ * hdd_objmgr_release_and_destroy_psoc() - Deletes the psoc object
  * @hdd_ctx: Hdd context
  *
  * This API deletes psoc object and release its reference from hdd context
  *
  * Return: 0 for success, negative error code for failure
  */
-int hdd_release_and_destroy_psoc(hdd_context_t *hdd_ctx);
+int hdd_objmgr_release_and_destroy_psoc(hdd_context_t *hdd_ctx);
 
 /**
- * hdd_create_and_store_pdev() - Create pdev object and store in hdd context
+ * hdd_objmgr_create_and_store_pdev() - Create pdev and store in hdd context
  * @hdd_ctx: Hdd context
  *
  * This API creates the pdev object and store the pdev reference to hdd context
  *
  * Return: 0 for success, negative error code for failure
  */
-int hdd_create_and_store_pdev(hdd_context_t *hdd_ctx);
+int hdd_objmgr_create_and_store_pdev(hdd_context_t *hdd_ctx);
 
 /**
- * hdd_release_and_destroy_pdev() - Deletes the pdev object
+ * hdd_objmgr_release_and_destroy_pdev() - Deletes the pdev object
  * @hdd_ctx: Hdd context
  *
  * This API deletes pdev object and release its reference from hdd context
  *
  * Return: 0 for success, negative error code for failure
  */
-int hdd_release_and_destroy_pdev(hdd_context_t *hdd_ctx);
+int hdd_objmgr_release_and_destroy_pdev(hdd_context_t *hdd_ctx);
 
 /**
- * hdd_create_and_store_vdev() - Create vdev object and store in hdd adapter
+ * hdd_objmgr_create_and_store_vdev() - Create vdev and store in hdd adapter
  * @pdev: pdev pointer
  * @adapter: hdd adapter
  *
@@ -115,21 +115,21 @@ int hdd_release_and_destroy_pdev(hdd_context_t *hdd_ctx);
  *
  * Return: 0 for success, negative error code for failure
  */
-int hdd_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
+int hdd_objmgr_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
 			      hdd_adapter_t *adapter);
 
 /**
- * hdd_release_and_destroy_vdev() - Delete the vdev object
+ * hdd_objmgr_release_and_destroy_vdev() - Delete vdev and remove from adapter
  * @hdd_ctx: Hdd context
  *
  * This API deletes vdev object and release its reference from hdd adapter
  *
  * Return: 0 for success, negative error code for failure
  */
-int hdd_release_and_destroy_vdev(hdd_adapter_t *adapter);
+int hdd_objmgr_release_and_destroy_vdev(hdd_adapter_t *adapter);
 
 /**
- * hdd_add_peer_object() - Create and add the peer object to the vdev
+ * hdd_objmgr_add_peer_object() - Create and add the peer to the vdev
  * @vdev: vdev pointer
  * @adapter_mode: adapter mode
  * @mac_addr: Peer mac address
@@ -140,12 +140,12 @@ int hdd_release_and_destroy_vdev(hdd_adapter_t *adapter);
  *
  * Return: 0 for success, negative error code for failure
  */
-int hdd_add_peer_object(struct wlan_objmgr_vdev *vdev,
-			enum tQDF_ADAPTER_MODE adapter_mode,
-			uint8_t *mac_addr);
+int hdd_objmgr_add_peer_object(struct wlan_objmgr_vdev *vdev,
+			       enum tQDF_ADAPTER_MODE adapter_mode,
+			       uint8_t *mac_addr);
 
 /**
- * hdd_remove_peer_object() - Delete and remove the peer from vdev
+ * hdd_objmgr_remove_peer_object() - Delete and remove the peer from vdev
  * @vdev: vdev pointer
  * @mac_addr: Peer Mac address
  *
@@ -153,11 +153,11 @@ int hdd_add_peer_object(struct wlan_objmgr_vdev *vdev,
  *
  * Return: 0 for success, negative error code for failure
  */
-int hdd_remove_peer_object(struct wlan_objmgr_vdev *vdev,
-			   uint8_t *mac_addr);
+int hdd_objmgr_remove_peer_object(struct wlan_objmgr_vdev *vdev,
+				  uint8_t *mac_addr);
 
 /**
- * hdd_set_peer_mlme_state() - set the peer mlme state
+ * hdd_objmgr_set_peer_mlme_state() - set the peer mlme state
  * @vdev: vdev pointer
  * @peer_state: Peer mlme state
  *
@@ -165,7 +165,7 @@ int hdd_remove_peer_object(struct wlan_objmgr_vdev *vdev,
  *
  * Return: 0 for success, negative error code for failure
  */
-int hdd_set_peer_mlme_state(struct wlan_objmgr_vdev *vdev,
-	enum wlan_peer_state peer_state);
+int hdd_objmgr_set_peer_mlme_state(struct wlan_objmgr_vdev *vdev,
+				   enum wlan_peer_state peer_state);
 
 #endif /* end #if !defined(WLAN_HDD_OBJECT_MANAGER_H) */

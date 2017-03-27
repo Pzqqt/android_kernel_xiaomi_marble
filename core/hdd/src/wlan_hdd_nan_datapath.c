@@ -151,7 +151,7 @@ static int hdd_close_ndi(hdd_adapter_t *adapter)
 			if (!rc)
 				hdd_err("session close timeout");
 
-			rc = hdd_release_and_destroy_vdev(adapter);
+			rc = hdd_objmgr_release_and_destroy_vdev(adapter);
 			if (rc)
 				hdd_err("vdev delete failed");
 		}

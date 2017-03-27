@@ -1721,11 +1721,11 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 					pHostapdAdapter->device_mode);
 		}
 
-		ret = hdd_add_peer_object(pHostapdAdapter->hdd_vdev,
-					  pHostapdAdapter->device_mode,
-					  pSapEvent->sapevt.
-					  sapStationAssocReassocCompleteEvent.
-					  staMac.bytes);
+		ret = hdd_objmgr_add_peer_object(
+			pHostapdAdapter->hdd_vdev,
+			pHostapdAdapter->device_mode,
+			pSapEvent->sapevt.sapStationAssocReassocCompleteEvent.
+				staMac.bytes);
 		if (ret)
 			hdd_err("Peer object "MAC_ADDRESS_STR" add fails!",
 					MAC_ADDR_ARRAY(pSapEvent->sapevt.
@@ -5959,7 +5959,7 @@ QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter, bool reinit)
 	 * This is a special case of hdd_vdev_create(). In phase 4 convergence,
 	 * this special case will be properly addressed.
 	 */
-	ret = hdd_create_and_store_vdev(pHddCtx->hdd_pdev, pAdapter);
+	ret = hdd_objmgr_create_and_store_vdev(pHddCtx->hdd_pdev, pAdapter);
 	if (ret) {
 		hdd_err("failed to create objmgr vdev: %d", ret);
 		return QDF_STATUS_E_FAILURE;
@@ -5976,7 +5976,7 @@ QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter, bool reinit)
 		 * In this case, we need to cleanup in the same order as create.
 		 * See hdd_vdev_create() for more details.
 		 */
-		QDF_BUG(!hdd_release_and_destroy_vdev(pAdapter));
+		QDF_BUG(!hdd_objmgr_release_and_destroy_vdev(pAdapter));
 
 		return status;
 	}
@@ -6070,7 +6070,7 @@ error_wmm_init:
 	hdd_softap_deinit_tx_rx(pAdapter);
 
 error_init_ap_mode:
-	QDF_BUG(!hdd_release_and_destroy_vdev(pAdapter));
+	QDF_BUG(!hdd_objmgr_release_and_destroy_vdev(pAdapter));
 	wlansap_close(sapContext);
 	pAdapter->sessionCtx.ap.sapContext = NULL;
 
@@ -6246,7 +6246,7 @@ QDF_STATUS hdd_unregister_hostapd(hdd_adapter_t *pAdapter, bool rtnl_held)
 		hdd_err("Failed:WLANSAP_close");
 	pAdapter->sessionCtx.ap.sapContext = NULL;
 
-	ret = hdd_release_and_destroy_vdev(pAdapter);
+	ret = hdd_objmgr_release_and_destroy_vdev(pAdapter);
 	if (ret)
 		hdd_err("vdev delete failed");
 

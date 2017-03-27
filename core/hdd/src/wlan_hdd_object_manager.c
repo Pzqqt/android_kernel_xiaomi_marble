@@ -63,7 +63,7 @@ static void hdd_init_psoc_qdf_ctx(struct wlan_objmgr_psoc *psoc)
 	wlan_psoc_set_qdf_dev(psoc, qdf_ctx);
 }
 
-int hdd_create_and_store_psoc(hdd_context_t *hdd_ctx, uint8_t psoc_id)
+int hdd_objmgr_create_and_store_psoc(hdd_context_t *hdd_ctx, uint8_t psoc_id)
 {
 	struct wlan_objmgr_psoc *psoc;
 
@@ -77,7 +77,7 @@ int hdd_create_and_store_psoc(hdd_context_t *hdd_ctx, uint8_t psoc_id)
 	return 0;
 }
 
-int hdd_release_and_destroy_psoc(hdd_context_t *hdd_ctx)
+int hdd_objmgr_release_and_destroy_psoc(hdd_context_t *hdd_ctx)
 {
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
 
@@ -90,7 +90,7 @@ int hdd_release_and_destroy_psoc(hdd_context_t *hdd_ctx)
 	return qdf_status_to_os_return(wlan_objmgr_psoc_obj_delete(psoc));
 }
 
-int hdd_create_and_store_pdev(hdd_context_t *hdd_ctx)
+int hdd_objmgr_create_and_store_pdev(hdd_context_t *hdd_ctx)
 {
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
 	struct wlan_objmgr_pdev *pdev;
@@ -118,7 +118,7 @@ int hdd_create_and_store_pdev(hdd_context_t *hdd_ctx)
 	return 0;
 }
 
-int hdd_release_and_destroy_pdev(hdd_context_t *hdd_ctx)
+int hdd_objmgr_release_and_destroy_pdev(hdd_context_t *hdd_ctx)
 {
 	struct wlan_objmgr_pdev *pdev = hdd_ctx->hdd_pdev;
 	struct pdev_osif_priv *osif_priv;
@@ -134,8 +134,8 @@ int hdd_release_and_destroy_pdev(hdd_context_t *hdd_ctx)
 	return qdf_status_to_os_return(wlan_objmgr_pdev_obj_delete(pdev));
 }
 
-int hdd_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
-			      hdd_adapter_t *adapter)
+int hdd_objmgr_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
+				     hdd_adapter_t *adapter)
 {
 	struct wlan_objmgr_vdev *vdev;
 	struct wlan_objmgr_peer *peer;
@@ -180,7 +180,7 @@ int hdd_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
 	return 0;
 }
 
-int hdd_release_and_destroy_vdev(hdd_adapter_t *adapter)
+int hdd_objmgr_release_and_destroy_vdev(hdd_adapter_t *adapter)
 {
 	struct wlan_objmgr_vdev *vdev;
 	struct vdev_osif_priv *osif_priv;
@@ -195,7 +195,8 @@ int hdd_release_and_destroy_vdev(hdd_adapter_t *adapter)
 
 	adapter->hdd_vdev = NULL;
 	adapter->sessionId = HDD_SESSION_ID_INVALID;
-	if (hdd_remove_peer_object(vdev, wlan_vdev_mlme_get_macaddr(vdev))) {
+	if (hdd_objmgr_remove_peer_object(vdev,
+					  wlan_vdev_mlme_get_macaddr(vdev))) {
 		hdd_err("Self peer delete failed");
 		return -EINVAL;
 	}
@@ -203,9 +204,9 @@ int hdd_release_and_destroy_vdev(hdd_adapter_t *adapter)
 	return qdf_status_to_os_return(wlan_objmgr_vdev_obj_delete(vdev));
 }
 
-int hdd_add_peer_object(struct wlan_objmgr_vdev *vdev,
-			enum tQDF_ADAPTER_MODE adapter_mode,
-			uint8_t *mac_addr)
+int hdd_objmgr_add_peer_object(struct wlan_objmgr_vdev *vdev,
+			       enum tQDF_ADAPTER_MODE adapter_mode,
+			       uint8_t *mac_addr)
 {
 	enum wlan_peer_type peer_type;
 	struct wlan_objmgr_peer *peer;
@@ -234,13 +235,13 @@ int hdd_add_peer_object(struct wlan_objmgr_vdev *vdev,
 		return -ENOMEM;
 
 	hdd_info("Peer object "MAC_ADDRESS_STR" add success!",
-					MAC_ADDR_ARRAY(mac_addr));
+		 MAC_ADDR_ARRAY(mac_addr));
 
 	return 0;
 }
 
-int hdd_remove_peer_object(struct wlan_objmgr_vdev *vdev,
-			   uint8_t *mac_addr)
+int hdd_objmgr_remove_peer_object(struct wlan_objmgr_vdev *vdev,
+				  uint8_t *mac_addr)
 {
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_peer *peer;
@@ -276,8 +277,8 @@ int hdd_remove_peer_object(struct wlan_objmgr_vdev *vdev,
 	return -EINVAL;
 }
 
-int hdd_set_peer_mlme_state(struct wlan_objmgr_vdev *vdev,
-	enum wlan_peer_state peer_state)
+int hdd_objmgr_set_peer_mlme_state(struct wlan_objmgr_vdev *vdev,
+				   enum wlan_peer_state peer_state)
 {
 	struct wlan_objmgr_peer *peer;
 

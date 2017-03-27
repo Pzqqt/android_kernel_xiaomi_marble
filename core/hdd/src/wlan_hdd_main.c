@@ -1400,7 +1400,7 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	uint8_t temp_band_cap;
 	struct cds_config_info *cds_cfg = cds_get_ini_config();
 
-	ret = hdd_create_and_store_pdev(hdd_ctx);
+	ret = hdd_objmgr_create_and_store_pdev(hdd_ctx);
 	if (ret) {
 		hdd_err("pdev creation fails!");
 		QDF_BUG(0);
@@ -1963,7 +1963,8 @@ int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			goto hif_close;
 		}
 
-		ret = hdd_create_and_store_psoc(hdd_ctx, DEFAULT_PSOC_ID);
+		ret = hdd_objmgr_create_and_store_psoc(hdd_ctx,
+						       DEFAULT_PSOC_ID);
 		if (ret) {
 			hdd_err("Psoc creation fails!");
 			goto ol_cds_free;
@@ -2054,7 +2055,7 @@ close:
 	cds_close(hdd_ctx->hdd_psoc, p_cds_context);
 
 destroy_psoc_object:
-	hdd_release_and_destroy_psoc(hdd_ctx);
+	hdd_objmgr_release_and_destroy_psoc(hdd_ctx);
 
 ol_cds_free:
 	ol_cds_free();
@@ -2915,7 +2916,7 @@ int hdd_vdev_destroy(hdd_adapter_t *adapter)
 	}
 
 	/* do vdev create via objmgr */
-	errno = hdd_release_and_destroy_vdev(adapter);
+	errno = hdd_objmgr_release_and_destroy_vdev(adapter);
 	if (errno) {
 		hdd_err("failed to destroy objmgr vdev: %d", errno);
 		return errno;
@@ -2968,7 +2969,7 @@ int hdd_vdev_create(hdd_adapter_t *adapter)
 
 	/* do vdev create via objmgr */
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	errno = hdd_create_and_store_vdev(hdd_ctx->hdd_pdev, adapter);
+	errno = hdd_objmgr_create_and_store_vdev(hdd_ctx->hdd_pdev, adapter);
 	if (errno) {
 		hdd_err("failed to create objmgr vdev: %d", errno);
 		return errno;
@@ -3012,7 +3013,7 @@ int hdd_vdev_create(hdd_adapter_t *adapter)
 	 */
 
 objmgr_vdev_destroy:
-	QDF_BUG(!hdd_release_and_destroy_vdev(adapter));
+	QDF_BUG(!hdd_objmgr_release_and_destroy_vdev(adapter));
 
 	return errno;
 
@@ -3248,7 +3249,7 @@ static void hdd_cleanup_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 		return;
 	}
 
-	ret = hdd_release_and_destroy_vdev(adapter);
+	ret = hdd_objmgr_release_and_destroy_vdev(adapter);
 	if (ret)
 		hdd_err("vdev delete failed");
 
@@ -3890,7 +3891,7 @@ static void hdd_wait_for_sme_close_sesion(hdd_context_t *hdd_ctx,
 			clear_bit(SME_SESSION_OPENED, &adapter->event_flags);
 			return;
 		}
-		ret = hdd_release_and_destroy_vdev(adapter);
+		ret = hdd_objmgr_release_and_destroy_vdev(adapter);
 		if (ret)
 			hdd_err("vdev delete failed");
 
@@ -8824,11 +8825,11 @@ int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx)
 		QDF_ASSERT(0);
 	}
 
-	ret = hdd_release_and_destroy_pdev(hdd_ctx);
+	ret = hdd_objmgr_release_and_destroy_pdev(hdd_ctx);
 	if (ret)
 		hdd_err("Pdev delete failed");
 
-	ret = hdd_release_and_destroy_psoc(hdd_ctx);
+	ret = hdd_objmgr_release_and_destroy_psoc(hdd_ctx);
 	if (ret)
 		hdd_err("Psoc delete failed");
 

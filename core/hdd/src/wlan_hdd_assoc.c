@@ -1274,14 +1274,14 @@ static void hdd_send_association_event(struct net_device *dev,
 		chan_info.reg_info_2 =
 			pCsrRoamInfo->chan_info.reg_info_2;
 
-		ret = hdd_add_peer_object(pAdapter->hdd_vdev,
-					  pAdapter->device_mode,
-					  peerMacAddr.bytes);
+		ret = hdd_objmgr_add_peer_object(pAdapter->hdd_vdev,
+						 pAdapter->device_mode,
+						 peerMacAddr.bytes);
 		if (ret)
 			hdd_err("Peer object "MAC_ADDRESS_STR" add fails!",
 					MAC_ADDR_ARRAY(peerMacAddr.bytes));
-		ret = hdd_set_peer_mlme_state(pAdapter->hdd_vdev,
-						WLAN_ASSOC_STATE);
+		ret = hdd_objmgr_set_peer_mlme_state(pAdapter->hdd_vdev,
+						     WLAN_ASSOC_STATE);
 		if (ret)
 			hdd_err("Peer object %pM fail to set associated state",
 					peerMacAddr.bytes);
@@ -1317,14 +1317,14 @@ static void hdd_send_association_event(struct net_device *dev,
 		hdd_err("wlan: new IBSS connection to " MAC_ADDRESS_STR,
 			 MAC_ADDR_ARRAY(pHddStaCtx->conn_info.bssId.bytes));
 
-		ret = hdd_add_peer_object(pAdapter->hdd_vdev,
-					  QDF_IBSS_MODE,
-					  pCsrRoamInfo->bssid.bytes);
+		ret = hdd_objmgr_add_peer_object(pAdapter->hdd_vdev,
+						 QDF_IBSS_MODE,
+						 pCsrRoamInfo->bssid.bytes);
 		if (ret)
 			hdd_err("Peer object "MAC_ADDRESS_STR" add fails!",
 				MAC_ADDR_ARRAY(pCsrRoamInfo->bssid.bytes));
-		ret = hdd_set_peer_mlme_state(pAdapter->hdd_vdev,
-				WLAN_ASSOC_STATE);
+		ret = hdd_objmgr_set_peer_mlme_state(pAdapter->hdd_vdev,
+						     WLAN_ASSOC_STATE);
 		if (ret)
 			hdd_err("Peer object %pM fail to set associated state",
 					peerMacAddr.bytes);
@@ -1352,8 +1352,8 @@ static void hdd_send_association_event(struct net_device *dev,
 							pAdapter->device_mode);
 		}
 
-		ret = hdd_remove_peer_object(pAdapter->hdd_vdev,
-					     peerMacAddr.bytes);
+		ret = hdd_objmgr_remove_peer_object(pAdapter->hdd_vdev,
+						    peerMacAddr.bytes);
 		if (ret)
 			hdd_err("Peer obj "MAC_ADDRESS_STR" delete fails",
 					MAC_ADDR_ARRAY(peerMacAddr.bytes));
@@ -1466,8 +1466,7 @@ QDF_STATUS hdd_roam_deregister_sta(hdd_adapter_t *adapter, uint8_t staid)
 					peerMacAddress[staid].bytes;
 	}
 
-	ret = hdd_remove_peer_object(adapter->hdd_vdev,
-				peer_mac);
+	ret = hdd_objmgr_remove_peer_object(adapter->hdd_vdev, peer_mac);
 	if (ret) {
 		hdd_err("Peer obj %pM delete fails", peer_mac);
 		return QDF_STATUS_E_FAILURE;
