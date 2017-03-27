@@ -197,18 +197,6 @@ static enum qdf_bus_type to_bus_type(enum pld_bus_type bus_type)
 	}
 }
 
-/**
- * hdd_hif_open() - HIF open helper
- * @dev: wlan device structure
- * @bdev: bus device structure
- * @bid: bus identifier for shared busses
- * @bus_type: underlying bus type
- * @reinit: true if we are reinitializing the driver during recovery phase
- *
- * This function brings-up HIF layer during load/recovery phase.
- *
- * Return: 0 on success and errno on failure.
- */
 int hdd_hif_open(struct device *dev, void *bdev, const hif_bus_id *bid,
 			enum qdf_bus_type bus_type, bool reinit)
 {
@@ -271,12 +259,6 @@ err_hif_close:
 	return ret;
 }
 
-/**
- * hdd_hif_close() - HIF close helper
- * @hif_ctx:	HIF context
- *
- * Helper function to close HIF
- */
 void hdd_hif_close(void *hif_ctx)
 {
 	if (hif_ctx == NULL)
@@ -1325,21 +1307,11 @@ struct pld_driver_ops wlan_drv_ops = {
 #endif
 };
 
-/**
- * wlan_hdd_register_driver() - wlan_hdd_register_driver
- *
- * Return: int
- */
 int wlan_hdd_register_driver(void)
 {
 	return pld_register_driver(&wlan_drv_ops);
 }
 
-/**
- * wlan_hdd_unregister_driver() - wlan_hdd_unregister_driver
- *
- * Return: void
- */
 void wlan_hdd_unregister_driver(void)
 {
 	pld_unregister_driver();

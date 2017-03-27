@@ -35,7 +35,27 @@
  *
  * Functions to register the wlan driver.
  */
+
+/**
+ * wlan_hdd_register_driver() - Register with platform layer
+ *
+ * This function is used to register HDD callbacks with the platform
+ * layer.
+ *
+ * Return: 0 if registration is successful, negative errno if
+ * registration fails
+ */
 int wlan_hdd_register_driver(void);
+
+/**
+ * wlan_hdd_unregister_driver() - Unregister from platform layer
+ *
+ * This function is used to unregister HDD callbacks from the platform
+ * layer.
+ *
+ * Return: void
+ */
+
 void wlan_hdd_unregister_driver(void);
 
 /**
@@ -80,7 +100,28 @@ int wlan_hdd_bus_resume(void);
  * Return: 0 for success and negative error code for failure
  */
 int wlan_hdd_bus_resume_noirq(void);
+
+/**
+ * hdd_hif_close() - HIF close helper
+ * @hif_ctx: HIF context
+ *
+ * Helper function to close HIF
+ */
 void hdd_hif_close(void *hif_ctx);
+
+/**
+ * hdd_hif_open() - HIF open helper
+ * @dev: wlan device structure
+ * @bdev: bus device structure
+ * @bid: bus identifier for shared busses
+ * @bus_type: underlying bus type
+ * @reinit: true if we are reinitializing the driver during recovery phase
+ *
+ * This function brings-up HIF layer during load/recovery phase.
+ *
+ * Return: 0 on success and errno on failure.
+ */
 int hdd_hif_open(struct device *dev, void *bdev, const hif_bus_id *bid,
 		 enum qdf_bus_type bus_type, bool reinit);
+
 #endif /* __WLAN_HDD_DRIVER_OPS_H__ */
