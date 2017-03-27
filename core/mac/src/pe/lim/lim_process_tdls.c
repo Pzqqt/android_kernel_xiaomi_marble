@@ -3333,7 +3333,7 @@ tSirRetStatus lim_delete_tdls_peers(tpAniSirGlobal mac_ctx,
 				    tpPESession session_entry)
 {
 	if (NULL == session_entry) {
-		lim_log(mac_ctx, LOGE, FL("NULL session_entry"));
+		pe_err("NULL session_entry");
 		return eSIR_FAILURE;
 	}
 
@@ -3363,14 +3363,14 @@ tSirRetStatus lim_process_sme_del_all_tdls_peers(tpAniSirGlobal p_mac,
 
 	msg = (struct sir_del_all_tdls_peers *)msg_buf;
 	if (msg == NULL) {
-		lim_log(p_mac, LOGE, FL("NULL msg"));
+		pe_err("NULL msg");
 		return eSIR_FAILURE;
 	}
 
 	session_entry = pe_find_session_by_bssid(p_mac,
 						 msg->bssid.bytes, &session_id);
 	if (NULL == session_entry) {
-		lim_log(p_mac, LOGE, FL("NULL psessionEntry"));
+		pe_err("NULL psessionEntry");
 		return eSIR_FAILURE;
 	}
 
