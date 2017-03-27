@@ -58,6 +58,7 @@
 #include "wma.h"
 #include "pktlog_ac.h"
 #include "wlan_hdd_ipa.h"
+#include "wlan_policy_mgr_api.h"
 
 #include <cdp_txrx_cmn_reg.h>
 #include <cdp_txrx_cfg.h>
@@ -78,6 +79,7 @@ static struct ol_if_ops  dp_ol_if_ops = {
 	.peer_set_default_routing = wma_peer_set_default_routing,
 	.peer_rx_reorder_queue_setup = wma_peer_rx_reorder_queue_setup,
 	.peer_rx_reorder_queue_remove = wma_peer_rx_reorder_queue_remove,
+	.is_hw_dbs_2x2_capable = policy_mgr_is_hw_dbs_2x2_capable
     /* TODO: Add any other control path calls required to OL_IF/WMA layer */
 };
 
@@ -537,12 +539,12 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 		gp_cds_context->dp_soc = cdp_soc_attach(LITHIUM_DP,
 			gp_cds_context->pHIFContext, scn,
 			gp_cds_context->htc_ctx, gp_cds_context->qdf_ctx,
-			&dp_ol_if_ops);
+			&dp_ol_if_ops, psoc);
 	else
 		gp_cds_context->dp_soc = cdp_soc_attach(MOB_DRV_LEGACY_DP,
 			gp_cds_context->pHIFContext, scn,
 			gp_cds_context->htc_ctx, gp_cds_context->qdf_ctx,
-			&dp_ol_if_ops);
+			&dp_ol_if_ops, psoc);
 
 	cds_set_ac_specs_params(cds_cfg);
 
