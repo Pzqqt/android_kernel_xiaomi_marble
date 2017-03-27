@@ -170,10 +170,9 @@ QDF_STATUS target_if_p2p_register_lo_event_handler(
 		return QDF_STATUS_E_INVAL;
 	}
 
-	status = wmi_unified_register_event_handler(wmi_handle,
-		WMI_P2P_LISTEN_OFFLOAD_STOPPED_EVENTID,
-		target_p2p_lo_event_handler,
-		WMI_RX_UMAC_CTX);
+	status = wmi_unified_register_event(wmi_handle,
+			wmi_p2p_lo_stop_event_id,
+			target_p2p_lo_event_handler);
 
 	target_if_debug("wmi register lo event handle, status:%d",
 		status);
@@ -194,9 +193,9 @@ QDF_STATUS target_if_p2p_register_noa_event_handler(
 		return QDF_STATUS_E_INVAL;
 	}
 
-	status = wmi_unified_register_event_handler(wmi_handle,
-		WMI_P2P_NOA_EVENTID, target_p2p_noa_event_handler,
-		WMI_RX_UMAC_CTX);
+	status = wmi_unified_register_event(wmi_handle,
+			wmi_p2p_noa_event_id,
+			target_p2p_noa_event_handler);
 
 	target_if_debug("wmi register noa event handle, status:%d",
 		status);
@@ -217,8 +216,8 @@ QDF_STATUS target_if_p2p_unregister_lo_event_handler(
 		return QDF_STATUS_E_INVAL;
 	}
 
-	status = wmi_unified_unregister_event_handler(wmi_handle,
-		WMI_P2P_LISTEN_OFFLOAD_STOPPED_EVENTID);
+	status = wmi_unified_unregister_event(wmi_handle,
+			wmi_p2p_lo_stop_event_id);
 
 	target_if_debug("wmi unregister lo event handle, status:%d",
 		status);
@@ -239,8 +238,8 @@ QDF_STATUS target_if_p2p_unregister_noa_event_handler(
 		return QDF_STATUS_E_INVAL;
 	}
 
-	status = wmi_unified_unregister_event_handler(wmi_handle,
-		WMI_P2P_NOA_EVENTID);
+	status = wmi_unified_unregister_event(wmi_handle,
+			wmi_p2p_noa_event_id);
 
 	target_if_debug("wmi unregister noa event handle, status:%d",
 		status);
