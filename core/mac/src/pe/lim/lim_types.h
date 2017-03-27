@@ -679,7 +679,7 @@ lim_post_sme_message(tpAniSirGlobal pMac, uint32_t msgType, uint32_t *pMsgBuf)
 	struct scheduler_msg msg = {0};
 
 	if (pMsgBuf == NULL) {
-		lim_log(pMac, LOGE, FL("Buffer is Pointing to NULL"));
+		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
 
@@ -723,10 +723,10 @@ lim_post_sme_message(tpAniSirGlobal pMac, uint32_t msgType, uint32_t *pMsgBuf)
 static inline void
 lim_post_mlm_message(tpAniSirGlobal pMac, uint32_t msgType, uint32_t *pMsgBuf)
 {
-
 	struct scheduler_msg msg = {0};
+
 	if (pMsgBuf == NULL) {
-		lim_log(pMac, LOGE, FL("Buffer is Pointing to NULL"));
+		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
 	msg.type = (uint16_t) msgType;
