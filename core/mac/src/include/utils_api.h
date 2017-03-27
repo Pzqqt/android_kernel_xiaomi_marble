@@ -50,13 +50,6 @@ typedef enum eBssSystemRole {
 #define LOG_INDEX_FOR_MODULE(modId) ((modId) - LOG_FIRST_MODULE_ID)
 #define GET_MIN_VALUE(__val1, __val2) ((__val1 < __val2) ? __val1 : __val2)
 
-/* The caller must check loglevel. This API assumes loglevel is good */
-extern void log_debug(tpAniSirGlobal pMac, uint8_t modId, uint32_t debugLevel,
-		      const char *pStr, va_list marker);
-
-extern void log_dbg(tpAniSirGlobal pMac, uint8_t modId, uint32_t debugLevel,
-		    const char *pStr, ...);
-
 extern uint32_t gPktAllocCnt, gPktFreeCnt;
 
 extern QDF_TRACE_LEVEL get_vos_debug_level(uint32_t debugLevel);

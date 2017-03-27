@@ -754,7 +754,6 @@ SYS_OBJS :=	$(SYS_COMMON_SRC_DIR)/wlan_qct_sys.o \
 		$(SYS_LEGACY_SRC_DIR)/system/src/mac_init_api.o \
 		$(SYS_LEGACY_SRC_DIR)/system/src/sys_entry_func.o \
 		$(SYS_LEGACY_SRC_DIR)/utils/src/dot11f.o \
-		$(SYS_LEGACY_SRC_DIR)/utils/src/log_api.o \
 		$(SYS_LEGACY_SRC_DIR)/utils/src/mac_trace.o \
 		$(SYS_LEGACY_SRC_DIR)/utils/src/parser_api.o \
 		$(SYS_LEGACY_SRC_DIR)/utils/src/utils_parser.o
