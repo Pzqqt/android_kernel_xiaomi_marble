@@ -2796,8 +2796,11 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 				(qdf_nbuf_t)tx_frame,
 				NULL, tx_frm_ota_comp_cb,
 				WLAN_UMAC_COMP_MLME, &mgmt_param);
+
+		wlan_objmgr_peer_release_ref(peer, WLAN_MGMT_NB_ID);
 		if (status != QDF_STATUS_SUCCESS) {
 			WMA_LOGE("%s: mgmt tx failed", __func__);
+			qdf_nbuf_free((qdf_nbuf_t)tx_frame);
 			goto error;
 		}
 	} else {
