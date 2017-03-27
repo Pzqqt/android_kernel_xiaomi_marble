@@ -3173,7 +3173,7 @@ int htt_rx_attach(struct htt_pdev_t *pdev)
 				 &paddr);
 
 		if (!pdev->rx_ring.target_idx.vaddr)
-			goto fail1;
+			goto fail2;
 
 		pdev->rx_ring.target_idx.paddr = paddr;
 		*pdev->rx_ring.target_idx.vaddr = 0;
@@ -3193,7 +3193,7 @@ int htt_rx_attach(struct htt_pdev_t *pdev)
 			 pdev->rx_ring.size * ring_elem_size,
 			 &paddr);
 	if (!pdev->rx_ring.buf.paddrs_ring)
-		goto fail2;
+		goto fail3;
 
 	pdev->rx_ring.base_paddr = paddr;
 	pdev->rx_ring.alloc_idx.vaddr =
@@ -3202,7 +3202,7 @@ int htt_rx_attach(struct htt_pdev_t *pdev)
 			 sizeof(uint32_t), &paddr);
 
 	if (!pdev->rx_ring.alloc_idx.vaddr)
-		goto fail3;
+		goto fail4;
 
 	pdev->rx_ring.alloc_idx.paddr = paddr;
 	*pdev->rx_ring.alloc_idx.vaddr = 0;
@@ -3266,7 +3266,7 @@ int htt_rx_attach(struct htt_pdev_t *pdev)
 
 	return 0;               /* success */
 
-fail3:
+fail4:
 	qdf_mem_free_consistent(pdev->osdev, pdev->osdev->dev,
 				   pdev->rx_ring.size * sizeof(qdf_dma_addr_t),
 				   pdev->rx_ring.buf.paddrs_ring,
@@ -3274,8 +3274,8 @@ fail3:
 				   qdf_get_dma_mem_context((&pdev->rx_ring.buf),
 							   memctx));
 
-fail2:
-	if (pdev->cfg.is_full_reorder_offload) {
+fail3:
+	if (pdev->cfg.is_full_reorder_offload)
 		qdf_mem_free_consistent(pdev->osdev, pdev->osdev->dev,
 					   sizeof(uint32_t),
 					   pdev->rx_ring.target_idx.vaddr,
@@ -3284,10 +3284,12 @@ fail2:
 								    rx_ring.
 								    target_idx),
 								   memctx));
-		htt_rx_hash_deinit(pdev);
-	} else {
+	else
 		qdf_mem_free(pdev->rx_ring.buf.netbufs_ring);
-	}
+
+fail2:
+	if (pdev->cfg.is_full_reorder_offload)
+		htt_rx_hash_deinit(pdev);
 
 fail1:
 	return 1;               /* failure */
