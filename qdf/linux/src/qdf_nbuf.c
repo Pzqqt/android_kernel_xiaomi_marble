@@ -2752,7 +2752,7 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 		qdf_print("ERROR: not enough space to update radiotap\n");
 		return 0;
 	}
-	qdf_nbuf_pull_head(nbuf, headroom_sz  - rtap_len);
+	qdf_nbuf_push_head(nbuf, rtap_len);
 	qdf_mem_copy(qdf_nbuf_data(nbuf), rtap_buf, rtap_len);
 	return rtap_len;
 }

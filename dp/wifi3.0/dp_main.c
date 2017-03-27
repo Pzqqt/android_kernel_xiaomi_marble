@@ -2389,8 +2389,8 @@ static int dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle,
 	htt_tlv_filter.enable_mo = 1;
 
 	htt_h2t_rx_ring_cfg(soc->htt_handle, pdev_id,
-		pdev->rxdma_mon_dst_ring.hal_srng,
-		RXDMA_MONITOR_BUF,  RX_BUFFER_SIZE, &htt_tlv_filter);
+		pdev->rxdma_mon_buf_ring.hal_srng,
+		RXDMA_MONITOR_BUF, RX_BUFFER_SIZE, &htt_tlv_filter);
 
 	htt_tlv_filter.mpdu_start = 1;
 	htt_tlv_filter.msdu_start = 1;
@@ -2405,13 +2405,12 @@ static int dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle,
 	htt_tlv_filter.ppdu_end_user_stats_ext = 1;
 	htt_tlv_filter.ppdu_end_status_done = 1;
 	htt_tlv_filter.enable_fp = 1;
-	htt_tlv_filter.enable_md = 1;
+	htt_tlv_filter.enable_md = 0;
 	htt_tlv_filter.enable_mo = 1;
-	/*
-	 * htt_h2t_rx_ring_cfg(soc->htt_handle, pdev_id,
-	 * pdev->rxdma_mon_status_ring.hal_srng,
-	 * RXDMA_MONITOR_STATUS, RX_BUFFER_SIZE, &htt_tlv_filter);
-	 */
+
+	htt_h2t_rx_ring_cfg(soc->htt_handle, pdev_id,
+		pdev->rxdma_mon_status_ring.hal_srng, RXDMA_MONITOR_STATUS,
+		RX_BUFFER_SIZE, &htt_tlv_filter);
 
 	return QDF_STATUS_SUCCESS;
 }

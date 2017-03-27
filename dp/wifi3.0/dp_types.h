@@ -791,7 +791,6 @@ struct dp_pdev {
 	uint8_t operating_channel;
 
 	qdf_nbuf_queue_t rx_status_q;
-	uint32_t mon_ppdu_id;
 	uint32_t mon_ppdu_status;
 	struct cdp_mon_status rx_mon_recv_status;
 
