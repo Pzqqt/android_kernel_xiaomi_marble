@@ -994,9 +994,14 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 			win_sz = HTT_RX_ADDBA_WIN_SIZE_GET(*msg_word);
 			peer = dp_peer_find_by_id(soc->dp_soc, peer_id);
 
+			/*
+			 * Window size needs to be incremented by 1
+			 * since fw needs to represent a value of 256
+			 * using just 8 bits
+			 */
 			if (peer) {
 				status = dp_addba_requestprocess_wifi3(peer,
-						0, tid, 0, win_sz, 0xffff);
+						0, tid, 0, win_sz + 1, 0xffff);
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					QDF_TRACE_LEVEL_INFO,
 					FL("PeerID %d BAW %d TID %d stat %d\n"),
