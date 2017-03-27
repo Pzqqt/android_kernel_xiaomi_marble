@@ -191,8 +191,7 @@ lim_change_channel_with_callback(tpAniSirGlobal mac_ctx, uint8_t new_chan,
 				 CHANGE_CHANNEL_CALLBACK callback,
 				 uint32_t *cbdata, tpPESession session_entry)
 {
-	/* Sanity checks for the current and new channel */
-	lim_log(mac_ctx, LOGD, FL("Switching channel to %d"), new_chan);
+	pe_debug("Switching channel to %d", new_chan);
 	session_entry->channelChangeReasonCode =
 		LIM_SWITCH_CHANNEL_OPERATION;
 
@@ -232,12 +231,11 @@ void lim_covert_channel_scan_type(tpAniSirGlobal mac_ctx, uint8_t chan_num,
 	status  = wlan_cfg_get_str(mac_ctx, WNI_CFG_SCAN_CONTROL_LIST,
 				   chan_pair, &len);
 	if (eSIR_SUCCESS != status) {
-		lim_log(mac_ctx, LOGE, FL("Unable to get scan control list"));
+		pe_err("Unable to get scan control list");
 		return;
 	}
 	if (len > WNI_CFG_SCAN_CONTROL_LIST_LEN) {
-		lim_log(mac_ctx, LOGE,
-			FL("Invalid scan control list length:%d"), len);
+		pe_err("Invalid scan control list length: %d", len);
 		return;
 	}
 	for (i = 0; (i + 1) < len; i += 2) {
@@ -245,16 +243,14 @@ void lim_covert_channel_scan_type(tpAniSirGlobal mac_ctx, uint8_t chan_num,
 			continue;
 		if ((eSIR_PASSIVE_SCAN == chan_pair[i + 1]) &&
 		     true == passive_to_active) {
-			lim_log(mac_ctx, LOGD, FL
-				("Channel %d changed from Passive to Active"),
+			pe_debug("Channel %d changed from Passive to Active",
 				chan_num);
 			chan_pair[i + 1] = eSIR_ACTIVE_SCAN;
 			break;
 		}
 		if ((eSIR_ACTIVE_SCAN == chan_pair[i + 1]) &&
 		     false == passive_to_active) {
-			lim_log(mac_ctx, LOGD, FL
-				("Channel %d changed from Active to Passive"),
+			pe_debug("Channel %d changed from Active to Passive",
 				chan_num);
 			chan_pair[i + 1] = eSIR_PASSIVE_SCAN;
 			break;
@@ -288,7 +284,7 @@ void lim_set_dfs_channel_list(tpAniSirGlobal mac_ctx, uint8_t chan_num,
 	bool pass_to_active = true;
 
 	if (!((1 <= chan_num) && (165 >= chan_num))) {
-		lim_log(mac_ctx, LOGE, FL("Invalid Channel: %d"), chan_num);
+		pe_err("Invalid Channel: %d", chan_num);
 		return;
 	}
 
@@ -298,8 +294,7 @@ void lim_set_dfs_channel_list(tpAniSirGlobal mac_ctx, uint8_t chan_num,
 			 * Received first beacon;
 			 * Convert DFS channel to Active channel.
 			 */
-			lim_log(mac_ctx, LOGD,
-				FL("Received first beacon on DFS channel: %d"),
+			pe_debug("Received first beacon on DFS channel: %d",
 				chan_num);
 			lim_covert_channel_scan_type(mac_ctx, chan_num,
 						     pass_to_active);
@@ -336,7 +331,7 @@ void lim_restore_pre_scan_state(tpAniSirGlobal mac_ctx)
 	lim_deactivate_and_change_timer(mac_ctx, eLIM_MAX_CHANNEL_TIMER);
 
 	mac_ctx->lim.gLimSystemInScanLearnMode = 0;
-	lim_log(mac_ctx, LOGD, FL("Scan ended, took %llu tu"),
+	pe_debug("Scan ended, took %llu tu",
 		(tx_time_get() - mac_ctx->lim.scanStartTime));
 }
 
@@ -369,12 +364,12 @@ static void mlm_add_sta(tpAniSirGlobal mac_ctx, tpAddStaParams sta_param,
 
 	if (eSIR_SUCCESS != wlan_cfg_get_int(mac_ctx, WNI_CFG_LISTEN_INTERVAL,
 					     &val))
-		lim_log(mac_ctx, LOGP, FL("Couldn't get LISTEN_INTERVAL"));
+		pe_warn("Couldn't get LISTEN_INTERVAL");
 	sta_param->listenInterval = (uint16_t) val;
 
 	if (eSIR_SUCCESS != wlan_cfg_get_int(mac_ctx, WNI_CFG_SHORT_PREAMBLE,
 					     &val))
-		lim_log(mac_ctx, LOGP, FL("Couldn't get SHORT_PREAMBLE"));
+		pe_warn("Couldn't get SHORT_PREAMBLE");
 	sta_param->shortPreambleSupported = (uint8_t) val;
 
 	sta_param->assocId = 0;      /* Is SMAC OK with this? */
@@ -444,8 +439,7 @@ static void mlm_add_sta(tpAniSirGlobal mac_ctx, tpAddStaParams sta_param,
 		val = 0;        /* Default 8K AMPDU size */
 		if (eSIR_SUCCESS != wlan_cfg_get_int(mac_ctx,
 					WNI_CFG_VHT_AMPDU_LEN_EXPONENT, &val))
-			lim_log(mac_ctx, LOGE, FL
-			    ("Couldn't get WNI_CFG_VHT_AMPDU_LEN_EXPONENT"));
+			pe_err("Couldn't get WNI_CFG_VHT_AMPDU_LEN_EXPONENT");
 		sta_param->maxAmpduSize = (uint8_t) val;
 	}
 	sta_param->enableVhtpAid = session_entry->enableVhtpAid;
@@ -457,9 +451,8 @@ static void mlm_add_sta(tpAniSirGlobal mac_ctx, tpAddStaParams sta_param,
 	lim_populate_own_rate_set(mac_ctx, &sta_param->supportedRates, NULL,
 				  false, session_entry, NULL, NULL);
 
-	lim_log(mac_ctx, LOGD, FL(
-		"GF: %d, ChnlWidth: %d, MimoPS: %d, lsigTXOP: %d, dsssCCK: %d,"
-		" SGI20: %d, SGI40%d"), sta_param->greenFieldCapable,
+	pe_debug("GF: %d, ChnlWidth: %d, MimoPS: %d, lsigTXOP: %d, dsssCCK: %d,"
+		" SGI20: %d, SGI40%d", sta_param->greenFieldCapable,
 		sta_param->ch_width, sta_param->mimoPS,
 		sta_param->lsigTxopProtection, sta_param->fDsssCckMode40Mhz,
 		sta_param->fShortGI20Mhz, sta_param->fShortGI40Mhz);
@@ -490,8 +483,7 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 	/* Package WMA_ADD_BSS_REQ message parameters */
 	addbss_param = qdf_mem_malloc(sizeof(tAddBssParams));
 	if (NULL == addbss_param) {
-		lim_log(mac_ctx, LOGE,
-			FL("Unable to allocate memory during ADD_BSS"));
+		pe_err("Unable to allocate memory during ADD_BSS");
 		/* Respond to SME with LIM_MLM_START_CNF */
 		return eSIR_MEM_ALLOC_FAILED;
 	}
@@ -559,8 +551,7 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 		     mlm_start_req->ssId.ssId, mlm_start_req->ssId.length);
 	addbss_param->ssId.length = mlm_start_req->ssId.length;
 	addbss_param->bHiddenSSIDEn = mlm_start_req->ssidHidden;
-	lim_log(mac_ctx, LOGD, FL("TRYING TO HIDE SSID %d"),
-		addbss_param->bHiddenSSIDEn);
+	pe_debug("TRYING TO HIDE SSID %d", addbss_param->bHiddenSSIDEn);
 	/* CR309183. Disable Proxy Probe Rsp.  Host handles Probe Requests.  Until FW fixed. */
 	addbss_param->bProxyProbeRespEn = 0;
 	addbss_param->obssProtEnabled = mlm_start_req->obssProtEnabled;
@@ -613,7 +604,7 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 		addbss_param->rx_aggregation_size =
 			mac_ctx->roam.configParam.rx_aggregation_size;
 	}
-	lim_log(mac_ctx, LOGD, FL("dot11_mode:%d nss value:%d"),
+	pe_debug("dot11_mode:%d nss value:%d",
 			addbss_param->dot11_mode, addbss_param->nss);
 
 	if (cds_is_5_mhz_enabled()) {
@@ -630,11 +621,10 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 	msg_buf.bodyval = 0;
 	MTRACE(mac_trace_msg_tx(mac_ctx, session->peSessionId, msg_buf.type));
 
-	lim_log(mac_ctx, LOGW, FL("Sending WMA_ADD_BSS_REQ..."));
+	pe_debug("Sending WMA_ADD_BSS_REQ...");
 	retcode = wma_post_ctrl_msg(mac_ctx, &msg_buf);
 	if (eSIR_SUCCESS != retcode) {
-		lim_log(mac_ctx, LOGE,
-			FL("Posting ADD_BSS_REQ to HAL failed, reason=%X"),
+		pe_err("Posting ADD_BSS_REQ to HAL failed, reason=%X",
 			retcode);
 		qdf_mem_free(addbss_param);
 		return eSIR_SME_HAL_SEND_MESSAGE_FAIL;
@@ -665,7 +655,7 @@ static void lim_process_mlm_start_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	tpPESession session = NULL;
 
 	if (msg_buf == NULL) {
-		lim_log(mac_ctx, LOGE, FL("Buffer is Pointing to NULL"));
+		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
 
@@ -673,8 +663,7 @@ static void lim_process_mlm_start_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	session = pe_find_session_by_session_id(mac_ctx,
 				mlm_start_req->sessionId);
 	if (NULL == session) {
-		lim_log(mac_ctx, LOGP,
-			FL("Session Does not exist for given sessionID"));
+		pe_err("Session Does not exist for given sessionID");
 		mlm_start_cnf.resultCode = eSIR_SME_REFUSED;
 		goto end;
 	}
@@ -684,8 +673,7 @@ static void lim_process_mlm_start_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		 * Should not have received Start req in states other than idle.
 		 * Return Start confirm with failure code.
 		 */
-		lim_log(mac_ctx, LOGE,
-			FL("received unexpected MLM_START_REQ in state %X"),
+		pe_err("received unexpected MLM_START_REQ in state %X",
 			session->limMlmState);
 		lim_print_mlm_state(mac_ctx, LOGE, session->limMlmState);
 		mlm_start_cnf.resultCode =
@@ -734,13 +722,12 @@ static void lim_post_join_set_link_state_callback(tpAniSirGlobal mac,
 	tpPESession session_entry = (tpPESession) callback_arg;
 	tLimMlmJoinCnf mlm_join_cnf;
 
-	lim_log(mac, LOGD, FL("Sessionid %d set link state(%d) cb status:%d"),
+	pe_debug("Sessionid %d set link state(%d) cb status: %d",
 			session_entry->peSessionId, session_entry->limMlmState,
 			status);
 
 	if (!status) {
-		lim_log(mac, LOGE,
-			FL("failed to find pe session for session id:%d"),
+		pe_err("failed to find pe session for session id:%d",
 			session_entry->peSessionId);
 		goto failure;
 	}
@@ -754,10 +741,9 @@ static void lim_post_join_set_link_state_callback(tpAniSirGlobal mac,
 	session_entry->channelChangeReasonCode =
 			 LIM_SWITCH_CHANNEL_JOIN;
 	session_entry->pLimMlmReassocRetryReq = NULL;
-	lim_log(mac, LOGD,
-		FL("[lim_process_mlm_join_req]: suspend link success(%d) "
+	pe_debug("[lim_process_mlm_join_req]: suspend link success(%d) "
 		"on sessionid: %d setting channel to: %d with ch_width :%d "
-		"and maxtxPower: %d"), status, session_entry->peSessionId,
+		"and maxtxPower: %d", status, session_entry->peSessionId,
 		session_entry->currentOperChannel,
 		session_entry->ch_width,
 		session_entry->maxTxPower);
@@ -806,8 +792,7 @@ lim_process_mlm_post_join_suspend_link(tpAniSirGlobal mac_ctx,
 	tSirLinkState lnk_state;
 
 	if (QDF_STATUS_SUCCESS != status) {
-		lim_log(mac_ctx, LOGE,
-			FL("Sessionid %d Suspend link(NOTIFY_BSS) failed. Still proceeding with join"),
+		pe_err("Sessionid %d Suspend link(NOTIFY_BSS) failed. Still proceeding with join",
 			session->peSessionId);
 	}
 	lim_deactivate_and_change_timer(mac_ctx, eLIM_JOIN_FAIL_TIMER);
@@ -817,7 +802,7 @@ lim_process_mlm_post_join_suspend_link(tpAniSirGlobal mac_ctx,
 		session->peSessionId;
 
 	lnk_state = eSIR_LINK_PREASSOC_STATE;
-	lim_log(mac_ctx, LOGD, FL("[lim_process_mlm_join_req]: lnk_state:%d"),
+	pe_debug("[lim_process_mlm_join_req]: lnk_state: %d",
 		lnk_state);
 
 	if (lim_set_link_state(mac_ctx, lnk_state,
@@ -825,8 +810,7 @@ lim_process_mlm_post_join_suspend_link(tpAniSirGlobal mac_ctx,
 			session->selfMacAddr,
 			lim_post_join_set_link_state_callback,
 			session) != eSIR_SUCCESS) {
-		lim_log(mac_ctx, LOGE,
-			FL("SessionId:%d lim_set_link_state to eSIR_LINK_PREASSOC_STATE Failed!!"),
+		pe_err("SessionId:%d lim_set_link_state to eSIR_LINK_PREASSOC_STATE Failed!!",
 			session->peSessionId);
 		lim_print_mac_addr(mac_ctx,
 			session->pLimMlmJoinReq->bssDescription.bssId, LOGE);
@@ -882,8 +866,7 @@ static void lim_process_mlm_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 
 	session = pe_find_session_by_session_id(mac_ctx, sessionid);
 	if (NULL == session) {
-		lim_log(mac_ctx, LOGE, FL("SessionId:%d does not exist"),
-			sessionid);
+		pe_err("SessionId:%d does not exist", sessionid);
 		goto error;
 	}
 
@@ -898,31 +881,27 @@ static void lim_process_mlm_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 
 		session->pLimMlmJoinReq = (tpLimMlmJoinReq) msg;
 		if (is_lim_session_off_channel(mac_ctx, sessionid)) {
-			lim_log(mac_ctx, LOGD,
-				"SessionId:%d LimSession is on OffChannel",
+			pe_debug("SessionId:%d LimSession is on OffChannel",
 				sessionid);
 			/* suspend link */
-			lim_log(mac_ctx, LOGD,
-				FL("Suspend link, sessionid %d is off channel"),
+			pe_debug("Suspend link, sessionid %d is off channel",
 				sessionid);
 			if (lim_is_link_suspended(mac_ctx)) {
-				lim_log(mac_ctx, LOGE, FL(
-					"link is already suspended, session %d"
-					), sessionid);
+				pe_err("link is already suspended, session %d",
+					sessionid);
 				goto error;
 			}
 			lim_process_mlm_post_join_suspend_link(mac_ctx,
 				QDF_STATUS_SUCCESS, (uint32_t *)session);
 		} else {
-			lim_log(mac_ctx, LOGD, FL("No need to Suspend link"));
+			pe_debug("No need to Suspend link");
 			 /*
 			  * No need to Suspend link as LimSession is not
 			  * off channel, calling
 			  * lim_process_mlm_post_join_suspend_link with
 			  * status as SUCCESS.
 			  */
-			lim_log(mac_ctx, LOGD,
-				FL("SessionId:%d Join req on current chan"),
+			pe_debug("SessionId:%d Join req on current chan",
 				sessionid);
 			lim_process_mlm_post_join_suspend_link(mac_ctx,
 				QDF_STATUS_SUCCESS, (uint32_t *)session);
@@ -934,8 +913,7 @@ static void lim_process_mlm_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 		 * Idle state or on AP.
 		 * Return join confirm with invalid parameters code.
 		 */
-		lim_log(mac_ctx, LOGE,
-			FL("Session:%d Unexpected Join req, role %d state %X"),
+		pe_err("Session:%d Unexpected Join req, role %d state %X",
 			session->peSessionId, GET_LIM_SYSTEM_ROLE(session),
 			session->limMlmState);
 		lim_print_mlm_state(mac_ctx, LOGE, session->limMlmState);
@@ -1055,7 +1033,7 @@ static void lim_process_mlm_auth_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 	tpPESession session;
 
 	if (msg == NULL) {
-		lim_log(mac_ctx, LOGE, FL("Buffer is Pointing to NULL"));
+		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
 
@@ -1063,14 +1041,13 @@ static void lim_process_mlm_auth_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 	session_id = mac_ctx->lim.gpLimMlmAuthReq->sessionId;
 	session = pe_find_session_by_session_id(mac_ctx, session_id);
 	if (NULL == session) {
-		lim_log(mac_ctx, LOGP, FL("SessionId:%d does not exist"),
-			session_id);
+		pe_err("SessionId:%d does not exist", session_id);
 		return;
 	}
 
-	lim_log(mac_ctx, LOGD, FL("Process Auth Req sessionID %d Systemrole %d"
-			       "mlmstate %d from: " MAC_ADDRESS_STR
-			       " with authtype %d"), session_id,
+	pe_debug("Process Auth Req sessionID %d Systemrole %d"
+		       "mlmstate %d from: " MAC_ADDRESS_STR
+		       " with authtype %d", session_id,
 		GET_LIM_SYSTEM_ROLE(session), session->limMlmState,
 		MAC_ADDR_ARRAY(mac_ctx->lim.gpLimMlmAuthReq->peerMacAddr),
 		mac_ctx->lim.gpLimMlmAuthReq->authType);
@@ -1094,9 +1071,8 @@ static void lim_process_mlm_auth_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 	 * requested auth type is same as the one used before.
 	 */
 	if (lim_is_preauth_ctx_exists(mac_ctx, session, &preauth_node)) {
-		lim_log(mac_ctx, LOGD,
-		    FL("Already have pre-auth context with peer: "
-		    MAC_ADDRESS_STR),
+		pe_debug("Already have pre-auth context with peer: "
+		    MAC_ADDRESS_STR,
 		    MAC_ADDR_ARRAY(mac_ctx->lim.gpLimMlmAuthReq->peerMacAddr));
 		mlm_auth_cnf.resultCode = (tSirResultCodes)
 						eSIR_MAC_SUCCESS_STATUS;
@@ -1104,12 +1080,10 @@ static void lim_process_mlm_auth_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 	} else {
 		if (wlan_cfg_get_int(mac_ctx, WNI_CFG_MAX_NUM_PRE_AUTH,
 			(uint32_t *) &num_preauth_ctx) != eSIR_SUCCESS)
-			lim_log(mac_ctx, LOGP,
-			    FL("Could not retrieve NumPreAuthLimit from CFG"));
+			pe_warn("Could not retrieve NumPreAuthLimit from CFG");
 
 		if (mac_ctx->lim.gLimNumPreAuthContexts == num_preauth_ctx) {
-			lim_log(mac_ctx, LOGW,
-				FL("Number of pre-auth reached max limit"));
+			pe_warn("Number of pre-auth reached max limit");
 			/* Return Auth confirm with reject code */
 			mlm_auth_cnf.resultCode =
 				eSIR_SME_MAX_NUM_OF_PRE_AUTH_REACHED;
@@ -1153,9 +1127,7 @@ static void lim_process_mlm_auth_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 			 session->peSessionId, eLIM_AUTH_FAIL_TIMER));
 	if (tx_timer_activate(&mac_ctx->lim.limTimers.gLimAuthFailureTimer)
 	    != TX_SUCCESS) {
-		/* Could not start Auth failure timer. */
-		lim_log(mac_ctx, LOGE,
-			FL("could not start Auth failure timer"));
+		pe_err("could not start Auth failure timer");
 		/* Cleanup as if auth timer expired */
 		lim_process_auth_failure_timeout(mac_ctx);
 	} else {
@@ -1165,8 +1137,7 @@ static void lim_process_mlm_auth_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 		if (tx_timer_activate
 		    (&mac_ctx->lim.limTimers.g_lim_periodic_auth_retry_timer)
 							      != TX_SUCCESS)
-			lim_log(mac_ctx, LOGE,
-			    FL("could not activate Auth Retry timer"));
+			pe_err("could not activate Auth Retry timer");
 	}
 
 	return;
@@ -1180,7 +1151,7 @@ end:
 
 	qdf_mem_free(mac_ctx->lim.gpLimMlmAuthReq);
 	mac_ctx->lim.gpLimMlmAuthReq = NULL;
-	lim_log(mac_ctx, LOGD, "SessionId:%d LimPostSme LIM_MLM_AUTH_CNF ",
+	pe_debug("SessionId:%d LimPostSme LIM_MLM_AUTH_CNF",
 		session_id);
 	lim_post_sme_message(mac_ctx, LIM_MLM_AUTH_CNF,
 			     (uint32_t *) &mlm_auth_cnf);
@@ -1206,7 +1177,7 @@ static void lim_process_mlm_assoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	tpPESession session_entry;
 
 	if (msg_buf == NULL) {
-		lim_log(mac_ctx, LOGE, FL("Buffer is Pointing to NULL"));
+		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
 
@@ -1214,8 +1185,7 @@ static void lim_process_mlm_assoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	session_entry = pe_find_session_by_session_id(mac_ctx,
 						      mlm_assoc_req->sessionId);
 	if (session_entry == NULL) {
-		lim_log(mac_ctx, LOGP,
-			FL("SessionId:%d Session Does not exist"),
+		pe_err("SessionId:%d Session Does not exist",
 			mlm_assoc_req->sessionId);
 		qdf_mem_free(mlm_assoc_req);
 		return;
@@ -1234,9 +1204,8 @@ static void lim_process_mlm_assoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		 * from one that STA is currently joined with or on AP.
 		 * Return Assoc confirm with Invalid parameters code.
 		 */
-		lim_log(mac_ctx, LOGW,
-			FL("received unexpected MLM_ASSOC_CNF in state %X for role=%d, MAC addr= "
-			   MAC_ADDRESS_STR), session_entry->limMlmState,
+		pe_warn("received unexpected MLM_ASSOC_CNF in state %X for role=%d, MAC addr= "
+			   MAC_ADDRESS_STR, session_entry->limMlmState,
 			GET_LIM_SYSTEM_ROLE(session_entry),
 			MAC_ADDR_ARRAY(mlm_assoc_req->peerMacAddr));
 		lim_print_mlm_state(mac_ctx, LOGW, session_entry->limMlmState);
@@ -1266,7 +1235,7 @@ static void lim_process_mlm_assoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE,
 			 session_entry->peSessionId,
 			 session_entry->limMlmState));
-	lim_log(mac_ctx, LOGD, FL("SessionId:%d Sending Assoc_Req Frame"),
+	pe_debug("SessionId:%d Sending Assoc_Req Frame",
 		session_entry->peSessionId);
 
 	/* Prepare and send Association request frame */
@@ -1277,8 +1246,7 @@ static void lim_process_mlm_assoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			 session_entry->peSessionId, eLIM_ASSOC_FAIL_TIMER));
 	if (tx_timer_activate(&mac_ctx->lim.limTimers.gLimAssocFailureTimer)
 	    != TX_SUCCESS) {
-		lim_log(mac_ctx, LOGP,
-			FL("SessionId:%d couldn't start Assoc failure timer"),
+		pe_warn("SessionId:%d couldn't start Assoc failure timer",
 			session_entry->peSessionId);
 		/* Cleanup as if assoc timer expired */
 		lim_process_assoc_failure_timeout(mac_ctx, LIM_ASSOC);
@@ -1320,7 +1288,7 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 	tSirSmeDisassocRsp *sme_disassoc_rsp;
 
 	if (QDF_STATUS_SUCCESS != suspend_status)
-		lim_log(mac_ctx, LOGE, FL("Suspend Status is not success %X"),
+		pe_err("Suspend Status is not success %X",
 			suspend_status);
 
 	mlm_disassocreq = (tLimMlmDisassocReq *) msg;
@@ -1328,16 +1296,14 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 	session = pe_find_session_by_session_id(mac_ctx,
 				mlm_disassocreq->sessionId);
 	if (NULL == session) {
-		lim_log(mac_ctx, LOGE,
-			FL("session does not exist for given sessionId %d"),
+		pe_err("session does not exist for given sessionId %d",
 			mlm_disassocreq->sessionId);
 		mlm_disassoccnf.resultCode = eSIR_SME_INVALID_PARAMETERS;
 		goto end;
 	}
 
-	lim_log(mac_ctx, LOGD,
-		FL("Process DisAssoc Req on sessionID %d Systemrole %d"
-		   "mlmstate %d from: " MAC_ADDRESS_STR),
+	pe_debug("Process DisAssoc Req on sessionID %d Systemrole %d"
+		   "mlmstate %d from: " MAC_ADDRESS_STR,
 		mlm_disassocreq->sessionId, GET_LIM_SYSTEM_ROLE(session),
 		session->limMlmState,
 		MAC_ADDR_ARRAY(mlm_disassocreq->peer_macaddr.bytes));
@@ -1348,8 +1314,7 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 	case eLIM_STA_ROLE:
 		if (!qdf_is_macaddr_equal(&mlm_disassocreq->peer_macaddr,
 				     &curr_bssid)) {
-			lim_log(mac_ctx, LOGW,
-			  FL("received MLM_DISASSOC_REQ with invalid BSS id"));
+			pe_warn("received MLM_DISASSOC_REQ with invalid BSS id");
 			lim_print_mac_addr(mac_ctx,
 				mlm_disassocreq->peer_macaddr.bytes, LOGW);
 
@@ -1360,13 +1325,11 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 			sme_disassoc_rsp =
 				qdf_mem_malloc(sizeof(tSirSmeDisassocRsp));
 			if (NULL == sme_disassoc_rsp) {
-				lim_log(mac_ctx, LOGP,
-					FL("memory allocation failed for disassoc rsp"));
+				pe_err("memory allocation failed for disassoc rsp");
 				return;
 			}
 
-			lim_log(mac_ctx, LOGD,
-				FL("send disassoc rsp with ret code %d for" MAC_ADDRESS_STR),
+			pe_debug("send disassoc rsp with ret code %d for" MAC_ADDRESS_STR,
 				eSIR_SME_DEAUTH_STATUS,
 				MAC_ADDR_ARRAY(
 					mlm_disassocreq->peer_macaddr.bytes));
@@ -1394,8 +1357,7 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 	case eLIM_P2P_DEVICE_GO:
 		if (true ==
 			 mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running) {
-			lim_log(mac_ctx, LOGE,
-				FL("CAC timer is running, drop disassoc from going out"));
+			pe_err("CAC timer is running, drop disassoc from going out");
 			mlm_disassoccnf.resultCode = eSIR_SME_SUCCESS;
 			goto end;
 		}
@@ -1423,12 +1385,10 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 		 * Received LIM_MLM_DISASSOC_REQ for STA that does not
 		 * have context or in some transit state.
 		 */
-		lim_log(mac_ctx, LOGW,
-			FL("Invalid MLM_DISASSOC_REQ, Addr= " MAC_ADDRESS_STR),
+		pe_warn("Invalid MLM_DISASSOC_REQ, Addr= " MAC_ADDRESS_STR,
 			MAC_ADDR_ARRAY(mlm_disassocreq->peer_macaddr.bytes));
 		if (stads != NULL)
-			lim_log(mac_ctx, LOGE, FL("Sta MlmState : %d"),
-				stads->mlmStaContext.mlmState);
+			pe_err("Sta MlmState: %d", stads->mlmStaContext.mlmState);
 
 		/* Prepare and Send LIM_MLM_DISASSOC_CNF */
 		mlm_disassoccnf.resultCode = eSIR_SME_INVALID_PARAMETERS;
@@ -1526,11 +1486,10 @@ bool lim_check_disassoc_deauth_ack_pending(tpAniSirGlobal mac_ctx,
 	    (deauth_req && (!qdf_mem_cmp((uint8_t *) sta_mac,
 			      (uint8_t *) &deauth_req->peer_macaddr.bytes,
 			       QDF_MAC_ADDR_SIZE)))) {
-		lim_log(mac_ctx, LOGD, FL("Disassoc/Deauth ack pending"));
+		pe_debug("Disassoc/Deauth ack pending");
 		return true;
 	} else {
-		lim_log(mac_ctx, LOGD,
-			FL("Disassoc/Deauth Ack not pending"));
+		pe_debug("Disassoc/Deauth Ack not pending");
 		return false;
 	}
 }
@@ -1602,7 +1561,6 @@ void lim_clean_up_disassoc_deauth_req(tpAniSirGlobal mac_ctx,
  */
 void lim_process_disassoc_ack_timeout(tpAniSirGlobal mac_ctx)
 {
-	lim_log(mac_ctx, LOGD, FL(""));
 	lim_send_disassoc_cnf(mac_ctx);
 }
 
@@ -1623,14 +1581,12 @@ lim_process_mlm_disassoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	tLimMlmDisassocReq *mlm_disassoc_req;
 
 	if (msg_buf == NULL) {
-		lim_log(mac_ctx, LOGE,
-			FL("Buffer is Pointing to NULL"));
+		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
 
 	mlm_disassoc_req = (tLimMlmDisassocReq *) msg_buf;
-	lim_log(mac_ctx, LOGD,
-		FL("Process disassoc req, sessionID %d from: "MAC_ADDRESS_STR),
+	pe_debug("Process disassoc req, sessionID %d from: "MAC_ADDRESS_STR,
 		mlm_disassoc_req->sessionId,
 		MAC_ADDR_ARRAY(mlm_disassoc_req->peer_macaddr.bytes));
 
@@ -1664,21 +1620,20 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 	tSirSmeDeauthRsp *sme_deauth_rsp;
 
 	if (QDF_STATUS_SUCCESS != suspend_status)
-		lim_log(mac_ctx, LOGE, FL("Suspend Status is not success %X"),
+		pe_err("Suspend Status is not success %X",
 			suspend_status);
 
 	mlm_deauth_req = (tLimMlmDeauthReq *) msg_buf;
 	session = pe_find_session_by_session_id(mac_ctx,
 				mlm_deauth_req->sessionId);
 	if (NULL == session) {
-		lim_log(mac_ctx, LOGE,
-			FL("session does not exist for given sessionId %d"),
+		pe_err("session does not exist for given sessionId %d",
 			mlm_deauth_req->sessionId);
 		qdf_mem_free(mlm_deauth_req);
 		return;
 	}
-	lim_log(mac_ctx, LOGD, FL("Process Deauth Req on sessionID %d Systemrole %d"
-			       "mlmstate %d from: " MAC_ADDRESS_STR),
+	pe_debug("Process Deauth Req on sessionID %d Systemrole %d"
+		       "mlmstate %d from: " MAC_ADDRESS_STR,
 		mlm_deauth_req->sessionId,
 		GET_LIM_SYSTEM_ROLE(session),
 		session->limMlmState,
@@ -1700,10 +1655,9 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 		case eLIM_MLM_LINK_ESTABLISHED_STATE:
 			if (qdf_mem_cmp(mlm_deauth_req->peer_macaddr.bytes,
 					curr_bssId, QDF_MAC_ADDR_SIZE)) {
-				lim_log(mac_ctx, LOGE,
-					FL("received MLM_DEAUTH_REQ with invalid BSS id "
+				pe_err("received MLM_DEAUTH_REQ with invalid BSS id "
 					   "Peer MAC: "MAC_ADDRESS_STR
-					   " CFG BSSID Addr : "MAC_ADDRESS_STR),
+					   " CFG BSSID Addr : "MAC_ADDRESS_STR,
 					MAC_ADDR_ARRAY(
 						mlm_deauth_req->peer_macaddr.bytes),
 					MAC_ADDR_ARRAY(curr_bssId));
@@ -1714,13 +1668,11 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 				sme_deauth_rsp =
 				    qdf_mem_malloc(sizeof(tSirSmeDeauthRsp));
 				if (NULL == sme_deauth_rsp) {
-					lim_log(mac_ctx, LOGP,
-						FL("memory allocation failed for deauth rsp"));
+					pe_err("memory allocation failed for deauth rsp");
 					return;
 				}
 
-				lim_log(mac_ctx, LOGD,
-					FL("send deauth rsp with ret code %d for" MAC_ADDRESS_STR),
+				pe_debug("send deauth rsp with ret code %d for" MAC_ADDRESS_STR,
 					eSIR_SME_DEAUTH_STATUS,
 					MAC_ADDR_ARRAY(
 					  mlm_deauth_req->peer_macaddr.bytes));
@@ -1765,9 +1717,8 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 			}
 			break;
 		default:
-			lim_log(mac_ctx, LOGW,
-				FL("received MLM_DEAUTH_REQ with in state %d for peer "
-				   MAC_ADDRESS_STR),
+			pe_warn("received MLM_DEAUTH_REQ with in state %d for peer "
+				   MAC_ADDRESS_STR,
 				session->limMlmState,
 				MAC_ADDR_ARRAY(
 					mlm_deauth_req->peer_macaddr.bytes));
@@ -1781,15 +1732,14 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 		}
 		break;
 	case eLIM_STA_IN_IBSS_ROLE:
-		lim_log(mac_ctx, LOGE, FL("received MLM_DEAUTH_REQ IBSS Mode"));
+		pe_err("received MLM_DEAUTH_REQ IBSS Mode");
 		mlm_deauth_cnf.resultCode = eSIR_SME_INVALID_PARAMETERS;
 		goto end;
 	case eLIM_AP_ROLE:
 	case eLIM_P2P_DEVICE_GO:
 		if (true ==
 			mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running) {
-			lim_log(mac_ctx, LOGE,
-				FL("CAC timer is running, drop disassoc from going out"));
+			pe_err("CAC timer is running, drop disassoc from going out");
 			mlm_deauth_cnf.resultCode = eSIR_SME_SUCCESS;
 			goto end;
 		}
@@ -1817,10 +1767,9 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 			 * Associated nor Pre-authenticated. Log error,
 			 * Prepare and Send LIM_MLM_DEAUTH_CNF
 			 */
-			lim_log(mac_ctx, LOGW,
-				FL("received MLM_DEAUTH_REQ in mlme state %d for STA that "
+			pe_warn("received MLM_DEAUTH_REQ in mlme state %d for STA that "
 				   "does not have context, Addr="
-				   MAC_ADDRESS_STR),
+				   MAC_ADDRESS_STR,
 				session->limMlmState,
 				MAC_ADDR_ARRAY(
 					mlm_deauth_req->peer_macaddr.bytes));
@@ -1846,8 +1795,7 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 		 * received MLM_DEAUTH_REQ for STA that either has no context or
 		 * in some transit state
 		 */
-		lim_log(mac_ctx, LOGW,
-			FL("Invalid MLM_DEAUTH_REQ, Addr="MAC_ADDRESS_STR),
+		pe_warn("Invalid MLM_DEAUTH_REQ, Addr="MAC_ADDRESS_STR,
 			MAC_ADDR_ARRAY(mlm_deauth_req->peer_macaddr.bytes));
 		/* Prepare and Send LIM_MLM_DEAUTH_CNF */
 		mlm_deauth_cnf.resultCode = eSIR_SME_INVALID_PARAMETERS;
@@ -1897,7 +1845,6 @@ end:
  */
 void lim_process_deauth_ack_timeout(tpAniSirGlobal mac_ctx)
 {
-	lim_log(mac_ctx, LOGD, FL(""));
 	lim_send_deauth_cnf(mac_ctx);
 }
 
@@ -1919,22 +1866,20 @@ lim_process_mlm_deauth_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	tpPESession session;
 
 	if (msg_buf == NULL) {
-		PELOGE(lim_log(mac_ctx, LOGE, FL("Buffer is Pointing to NULL"));)
+		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
 
 	mlm_deauth_req = (tLimMlmDeauthReq *) msg_buf;
-	lim_log(mac_ctx, LOGD,
-		FL("Process Deauth Req on sessionID %d from: "
-		   MAC_ADDRESS_STR),
+	pe_debug("Process Deauth Req on sessionID %d from: "
+		   MAC_ADDRESS_STR,
 		mlm_deauth_req->sessionId,
 		MAC_ADDR_ARRAY(mlm_deauth_req->peer_macaddr.bytes));
 
 	session = pe_find_session_by_session_id(mac_ctx,
 				mlm_deauth_req->sessionId);
 	if (NULL == session) {
-		lim_log(mac_ctx, LOGE,
-			FL("session does not exist for given sessionId %d"),
+		pe_err("session does not exist for given sessionId %d",
 			mlm_deauth_req->sessionId);
 		return;
 	}
@@ -1966,7 +1911,7 @@ lim_process_mlm_set_keys_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	tpPESession session;
 
 	if (msg_buf == NULL) {
-		lim_log(mac_ctx, LOGE, FL("Buffer is Pointing to NULL"));
+		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
 
@@ -1976,14 +1921,12 @@ lim_process_mlm_set_keys_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	session = pe_find_session_by_session_id(mac_ctx,
 				mlm_set_keys_req->sessionId);
 	if (NULL == session) {
-		lim_log(mac_ctx, LOGE,
-			FL("session does not exist for given sessionId"));
+		pe_err("session does not exist for given sessionId");
 		return;
 	}
 
-	lim_log(mac_ctx, LOGW,
-		FL("Received MLM_SETKEYS_REQ with parameters:"
-		   "AID [%d], ED Type [%d], # Keys [%d] & Peer MAC Addr - "),
+	pe_debug("Received MLM_SETKEYS_REQ with parameters:"
+		   "AID [%d], ED Type [%d], # Keys [%d] & Peer MAC Addr - ",
 		mlm_set_keys_req->aid, mlm_set_keys_req->edType,
 		mlm_set_keys_req->numKeys);
 	lim_print_mac_addr(mac_ctx, mlm_set_keys_req->peer_macaddr.bytes, LOGD);
@@ -2000,9 +1943,8 @@ lim_process_mlm_set_keys_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 				&mlm_set_keys_req->peer_macaddr)) &&
 		    (!qdf_is_macaddr_equal(&mlm_set_keys_req->peer_macaddr,
 					   &curr_bssid))) {
-			lim_log(mac_ctx, LOGW,
-				FL("Received MLM_SETKEYS_REQ with invalid BSSID"
-				MAC_ADDRESS_STR),
+			pe_debug("Received MLM_SETKEYS_REQ with invalid BSSID"
+				MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(mlm_set_keys_req->
 						peer_macaddr.bytes));
 			/*
@@ -2032,7 +1974,7 @@ lim_process_mlm_set_keys_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	 * mlm_set_keys_req->key.unicast - 1 -> Unicast keys are being set
 	 */
 	if (qdf_is_macaddr_broadcast(&mlm_set_keys_req->peer_macaddr)) {
-		lim_log(mac_ctx, LOGD, FL("Trying to set Group Keys...%d "),
+		pe_debug("Trying to set Group Keys...%d",
 			mlm_set_keys_req->sessionId);
 		/*
 		 * When trying to set Group Keys for any security mode other
@@ -2049,7 +1991,7 @@ lim_process_mlm_set_keys_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			break;
 		}
 	} else {
-		lim_log(mac_ctx, LOGD, FL("Trying to set Unicast Keys..."));
+		pe_debug("Trying to set Unicast Keys...");
 		/*
 		 * Check if there exists a context for the
 		 * peer entity for which keys need to be set.
@@ -2065,9 +2007,8 @@ lim_process_mlm_set_keys_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			 * Received LIM_MLM_SETKEYS_REQ for STA that does not
 			 * have context or in some transit state.
 			 */
-			lim_log(mac_ctx, LOGD,
-				FL("Invalid MLM_SETKEYS_REQ, Addr = "
-				   MAC_ADDRESS_STR),
+			pe_debug("Invalid MLM_SETKEYS_REQ, Addr = "
+				   MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(mlm_set_keys_req->
 						peer_macaddr.bytes));
 			/* Prepare and Send LIM_MLM_SETKEYS_CNF */
@@ -2100,8 +2041,7 @@ lim_process_mlm_set_keys_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	} else {
 		default_key_id = 0;
 	}
-	lim_log(mac_ctx, LOGD,
-		FL("Trying to set keys for STA Index [%d], using default_key_id [%d]"),
+	pe_debug("Trying to set keys for STA Index [%d], using default_key_id [%d]",
 		sta_idx, default_key_id);
 
 	if (qdf_is_macaddr_broadcast(&mlm_set_keys_req->peer_macaddr)) {
@@ -2109,7 +2049,7 @@ lim_process_mlm_set_keys_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		session->limMlmState = eLIM_MLM_WT_SET_BSS_KEY_STATE;
 		MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE,
 				 session->peSessionId, session->limMlmState));
-		lim_log(mac_ctx, LOGD, FL("Trying to set Group Keys...%d "),
+		pe_debug("Trying to set Group Keys...%d",
 			session->peSessionId);
 		/* Package WMA_SET_BSSKEY_REQ message parameters */
 		lim_send_set_bss_key_req(mac_ctx, mlm_set_keys_req, session);
@@ -2150,15 +2090,14 @@ static void lim_process_periodic_probe_req_timer(tpAniSirGlobal mac_ctx)
 
 	if (qdf_mc_timer_get_current_state(&probe_req_timer->qdf_timer)
 					   != QDF_TIMER_STATE_STOPPED) {
-		lim_log(mac_ctx, LOGD, FL("Invalid state of timer"));
+		pe_debug("Invalid state of timer");
 		return;
 	}
 
 	if (!((mac_ctx->lim.gLimMlmState == eLIM_MLM_WT_PROBE_RESP_STATE)
 	    && (probe_req_timer->sessionId != 0xff)
 	    && (mac_ctx->lim.probeCounter < mac_ctx->lim.maxProbe))) {
-		lim_log(mac_ctx, LOGD,
-			FL("received unexpected Periodic scan timeout in state %X"),
+		pe_debug("received unexpected Periodic scan timeout in state %X",
 			mac_ctx->lim.gLimMlmState);
 		return;
 	}
@@ -2180,8 +2119,7 @@ static void lim_process_periodic_probe_req_timer(tpAniSirGlobal mac_ctx)
 				(uint8_t *) (mlm_scan_req) +
 					mlm_scan_req->uIEFieldOffset);
 		if (status != eSIR_SUCCESS) {
-			lim_log(mac_ctx, LOGE,
-				FL("send ProbeReq failed for SSID %s on channel: %d"),
+			pe_err("send ProbeReq failed for SSID %s on channel: %d",
 				mlm_scan_req->ssId[i].ssId, channel_num);
 			return;
 		}
@@ -2189,8 +2127,7 @@ static void lim_process_periodic_probe_req_timer(tpAniSirGlobal mac_ctx)
 	} while (i < mlm_scan_req->numSsid);
 	/* Activate timer again */
 	if (tx_timer_activate(probe_req_timer) != TX_SUCCESS) {
-		lim_log(mac_ctx, LOGP,
-			FL("could not start periodic probe req timer"));
+		pe_warn("could not start periodic probe req timer");
 		return;
 	}
 }
@@ -2217,8 +2154,7 @@ static void lim_process_join_failure_timeout(tpAniSirGlobal mac_ctx)
 	session = pe_find_session_by_session_id(mac_ctx,
 			mac_ctx->lim.limTimers.gLimJoinFailureTimer.sessionId);
 	if (NULL == session) {
-		lim_log(mac_ctx, LOGE,
-			FL("Session Does not exist for given sessionID"));
+		pe_err("Session Does not exist for given sessionID");
 		return;
 	}
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM
@@ -2237,9 +2173,8 @@ static void lim_process_join_failure_timeout(tpAniSirGlobal mac_ctx)
 		lim_deactivate_and_change_timer(mac_ctx,
 					eLIM_PERIODIC_JOIN_PROBE_REQ_TIMER);
 		/* Issue MLM join confirm with timeout reason code */
-		lim_log(mac_ctx, LOGE,
-			FL("Join Failure Timeout, In eLIM_MLM_WT_JOIN_BEACON_STATE session:%d "
-			   MAC_ADDRESS_STR),
+		pe_err("Join Failure Timeout, In eLIM_MLM_WT_JOIN_BEACON_STATE session:%d "
+			   MAC_ADDRESS_STR,
 			session->peSessionId, MAC_ADDR_ARRAY(session->bssId));
 
 		mlm_join_cnf.resultCode = eSIR_SME_JOIN_TIMEOUT_RESULT_CODE;
@@ -2258,8 +2193,7 @@ static void lim_process_join_failure_timeout(tpAniSirGlobal mac_ctx)
 				     (uint32_t *) &mlm_join_cnf);
 		return;
 	} else {
-		lim_log(mac_ctx, LOGW,
-			FL("received unexpected JOIN failure timeout in state %X"),
+		pe_warn("received unexpected JOIN failure timeout in state %X",
 			session->limMlmState);
 		lim_print_mlm_state(mac_ctx, LOGW, session->limMlmState);
 	}
@@ -2284,8 +2218,7 @@ static void lim_process_periodic_join_probe_req_timer(tpAniSirGlobal mac_ctx)
 	session = pe_find_session_by_session_id(mac_ctx,
 		mac_ctx->lim.limTimers.gLimPeriodicJoinProbeReqTimer.sessionId);
 	if (NULL == session) {
-		lim_log(mac_ctx, LOGE,
-			FL("session does not exist for given SessionId : %d"),
+		pe_err("session does not exist for given SessionId: %d",
 			mac_ctx->lim.limTimers.gLimPeriodicJoinProbeReqTimer.
 			sessionId);
 		return;
@@ -2309,8 +2242,7 @@ static void lim_process_periodic_join_probe_req_timer(tpAniSirGlobal mac_ctx)
 		if (tx_timer_activate(
 		    &mac_ctx->lim.limTimers.gLimPeriodicJoinProbeReqTimer) !=
 		    TX_SUCCESS) {
-			lim_log(mac_ctx, LOGP,
-				FL("could not activate Periodic Join req failure timer"));
+			pe_warn("could not activate Periodic Join req failure timer");
 			return;
 		}
 	}
@@ -2327,14 +2259,11 @@ static void lim_process_auth_retry_timer(tpAniSirGlobal mac_ctx)
 {
 	tpPESession  session_entry;
 
-	lim_log(mac_ctx, LOGD, FL("ENTER"));
-
 	session_entry =
 	  pe_find_session_by_session_id(mac_ctx,
 	  mac_ctx->lim.limTimers.g_lim_periodic_auth_retry_timer.sessionId);
 	if (NULL == session_entry) {
-		lim_log(mac_ctx, LOGE,
-		  FL("session does not exist for given SessionId : %d"),
+		pe_err("session does not exist for given SessionId: %d",
 		  mac_ctx->lim.limTimers.
 			g_lim_periodic_auth_retry_timer.sessionId);
 		return;
@@ -2356,7 +2285,7 @@ static void lim_process_auth_retry_timer(tpAniSirGlobal mac_ctx)
 			auth_frame.authTransactionSeqNumber =
 						SIR_MAC_AUTH_FRAME_1;
 			auth_frame.authStatusCode = 0;
-			lim_log(mac_ctx, LOGW, FL("Retry Auth "));
+			pe_warn("Retry Auth");
 			mac_ctx->auth_ack_status = LIM_AUTH_ACK_NOT_RCD;
 			lim_send_auth_mgmt_frame(mac_ctx,
 				&auth_frame,
@@ -2370,8 +2299,7 @@ static void lim_process_auth_retry_timer(tpAniSirGlobal mac_ctx)
 		if (tx_timer_activate
 		     (&mac_ctx->lim.limTimers.g_lim_periodic_auth_retry_timer)
 			 != TX_SUCCESS) {
-			lim_log(mac_ctx, LOGE,
-			  FL("could not activate Auth Retry failure timer"));
+			pe_err("could not activate Auth Retry failure timer");
 			return;
 		}
 	}
@@ -2399,14 +2327,12 @@ static void lim_process_auth_failure_timeout(tpAniSirGlobal mac_ctx)
 	session = pe_find_session_by_session_id(mac_ctx,
 			mac_ctx->lim.limTimers.gLimAuthFailureTimer.sessionId);
 	if (NULL == session) {
-		lim_log(mac_ctx, LOGP,
-			FL("Session Does not exist for given sessionID"));
+		pe_err("Session Does not exist for given sessionID");
 		return;
 	}
 
-	lim_log(mac_ctx, LOGE,
-		FL("received AUTH failure timeout in sessionid %d "
-		   "limMlmstate %X limSmeState %X"),
+	pe_warn("received AUTH failure timeout in sessionid %d "
+		   "limMlmstate %X limSmeState %X",
 		session->peSessionId, session->limMlmState,
 		session->limSmeState);
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM
@@ -2442,8 +2368,7 @@ static void lim_process_auth_failure_timeout(tpAniSirGlobal mac_ctx)
 		 * Auth failure timer should not have timed out
 		 * in states other than wt_auth_frame2/4
 		 */
-		lim_log(mac_ctx, LOGE,
-			FL("received unexpected AUTH failure timeout in state %X"),
+		pe_err("received unexpected AUTH failure timeout in state %X",
 			session->limMlmState);
 		lim_print_mlm_state(mac_ctx, LOGE, session->limMlmState);
 		break;
@@ -2470,15 +2395,14 @@ lim_process_auth_rsp_timeout(tpAniSirGlobal mac_ctx, uint32_t auth_idx)
 	auth_node = lim_get_pre_auth_node_from_index(mac_ctx,
 				&mac_ctx->lim.gLimPreAuthTimerTable, auth_idx);
 	if (NULL == auth_node) {
-		lim_log(mac_ctx, LOGW, FL("Invalid auth node"));
+		pe_warn("Invalid auth node");
 		return;
 	}
 
 	session = pe_find_session_by_bssid(mac_ctx, auth_node->peerMacAddr,
 					   &session_id);
 	if (NULL == session) {
-		lim_log(mac_ctx, LOGW,
-			FL("session does not exist for given BSSID "));
+		pe_warn("session does not exist for given BSSID");
 		return;
 	}
 
@@ -2489,16 +2413,14 @@ lim_process_auth_rsp_timeout(tpAniSirGlobal mac_ctx, uint32_t auth_idx)
 
 	if (LIM_IS_AP_ROLE(session) || LIM_IS_IBSS_ROLE(session)) {
 		if (auth_node->mlmState != eLIM_MLM_WT_AUTH_FRAME3_STATE) {
-			lim_log(mac_ctx, LOGE,
-				FL("received AUTH rsp timeout in unexpected "
-				   "state for MAC address: " MAC_ADDRESS_STR),
+			pe_err("received AUTH rsp timeout in unexpected "
+				   "state for MAC address: " MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(auth_node->peerMacAddr));
 		} else {
 			auth_node->mlmState = eLIM_MLM_AUTH_RSP_TIMEOUT_STATE;
 			auth_node->fTimerStarted = 0;
-			lim_log(mac_ctx, LOGD,
-				FL("AUTH rsp timedout for MAC address "
-				   MAC_ADDRESS_STR),
+			pe_debug("AUTH rsp timedout for MAC address "
+				   MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(auth_node->peerMacAddr));
 			/* Change timer to reactivate it in future */
 			lim_deactivate_and_change_per_sta_id_timer(mac_ctx,
@@ -2543,8 +2465,7 @@ lim_process_assoc_failure_timeout(tpAniSirGlobal mac_ctx, uint32_t msg_type)
 
 	session = pe_find_session_by_session_id(mac_ctx, session_id);
 	if (NULL == session) {
-		lim_log(mac_ctx, LOGP,
-			FL("Session Does not exist for given sessionID"));
+		pe_err("Session Does not exist for given sessionID");
 		return;
 	}
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM
@@ -2559,17 +2480,15 @@ lim_process_assoc_failure_timeout(tpAniSirGlobal mac_ctx, uint32_t msg_type)
 	WLAN_HOST_DIAG_LOG_REPORT(rssi_log);
 #endif
 
-	lim_log(mac_ctx, LOGD,
-		FL("Re/Association Response not received before timeout "));
+	pe_debug("Re/Association Response not received before timeout");
 
 	/*
 	 * Send Deauth to handle the scenareo where association timeout happened
 	 * when device has missed the assoc resp sent by peer.
 	 * By sending deauth try to clear the session created on peer device.
 	 */
-	lim_log(mac_ctx, LOGE,
-		FL("Sessionid: %d try sending deauth on channel %d to BSSID: "
-		MAC_ADDRESS_STR), session->peSessionId,
+	pe_info("Sessionid: %d try sending deauth on channel %d to BSSID: "
+		MAC_ADDRESS_STR, session->peSessionId,
 		session->currentOperChannel,
 		MAC_ADDR_ARRAY(session->bssId));
 	lim_send_deauth_mgmt_frame(mac_ctx, eSIR_MAC_UNSPEC_FAILURE_REASON,
@@ -2583,8 +2502,7 @@ lim_process_assoc_failure_timeout(tpAniSirGlobal mac_ctx, uint32_t msg_type)
 		 * Re/Assoc failure timer should not have timedout on AP
 		 * or in a state other than wt_re/assoc_response.
 		 */
-		lim_log(mac_ctx, LOGW,
-			FL("received unexpected REASSOC failure timeout in state %X for role %d"),
+		pe_warn("received unexpected REASSOC failure timeout in state %X for role %d",
 			session->limMlmState,
 			GET_LIM_SYSTEM_ROLE(session));
 		lim_print_mlm_state(mac_ctx, LOGW, session->limMlmState);
@@ -2593,8 +2511,7 @@ lim_process_assoc_failure_timeout(tpAniSirGlobal mac_ctx, uint32_t msg_type)
 
 	if ((msg_type == LIM_ASSOC) || ((msg_type == LIM_REASSOC)
 	     && (session->limMlmState == eLIM_MLM_WT_FT_REASSOC_RSP_STATE))) {
-		lim_log(mac_ctx, LOGE,
-			FL("(Re)Assoc Failure Timeout occurred."));
+		pe_err("(Re)Assoc Failure Timeout occurred");
 		session->limMlmState = eLIM_MLM_IDLE_STATE;
 		MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE,
 			session->peSessionId, session->limMlmState));
@@ -2610,8 +2527,7 @@ lim_process_assoc_failure_timeout(tpAniSirGlobal mac_ctx, uint32_t msg_type)
 		}
 		/* To remove the preauth node in case of fail to associate */
 		if (lim_search_pre_auth_list(mac_ctx, session->bssId)) {
-			lim_log(mac_ctx, LOGD,
-				FL(" delete pre auth node for "MAC_ADDRESS_STR),
+			pe_debug("delete pre auth node for "MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(session->bssId));
 			lim_delete_pre_auth_node(mac_ctx,
 						 session->bssId);
@@ -2706,8 +2622,7 @@ void lim_set_channel(tpAniSirGlobal mac_ctx, uint8_t channel,
 	pe_session = pe_find_session_by_session_id(mac_ctx, pe_session_id);
 
 	if (NULL == pe_session) {
-		lim_log(mac_ctx, LOGP, FL("Invalid PE session = %d"),
-			pe_session_id);
+		pe_err("Invalid PE session: %d", pe_session_id);
 		return;
 	}
 	lim_send_switch_chnl_params(mac_ctx, channel, ch_center_freq_seg0,
