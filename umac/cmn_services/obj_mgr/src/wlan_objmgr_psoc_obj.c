@@ -951,19 +951,21 @@ static struct wlan_objmgr_peer *
 	/* Iterate through hash list to get the peer */
 	peer = wlan_psoc_peer_list_peek_head(obj_list);
 	while (peer != NULL) {
-		wlan_objmgr_peer_get_ref(peer, dbg_id);
 		/* For peer, macaddr is key */
 		if (WLAN_ADDR_EQ(wlan_peer_get_macaddr(peer), macaddr)
 			== QDF_STATUS_SUCCESS) {
 			/* Return peer in logically deleted state */
-			if (peer->obj_state == WLAN_OBJ_STATE_LOGICALLY_DELETED)
+			if (peer->obj_state ==
+					WLAN_OBJ_STATE_LOGICALLY_DELETED) {
+				wlan_objmgr_peer_get_ref(peer, dbg_id);
+
 				return peer;
+			}
 
 		}
 		/* Move to next peer */
 		peer_temp = peer;
 		peer = wlan_peer_get_next_peer_of_psoc(obj_list, peer_temp);
-		wlan_objmgr_peer_release_ref(peer_temp, dbg_id);
 	}
 
 	/* Not found, return NULL */
@@ -1061,7 +1063,6 @@ static struct wlan_objmgr_peer
 	/* Iterate through hash list to get the peer */
 	peer = wlan_psoc_peer_list_peek_head(obj_list);
 	while (peer != NULL) {
-		wlan_objmgr_peer_get_ref(peer, dbg_id);
 		/* For peer, macaddr is key */
 		if (WLAN_ADDR_EQ(wlan_peer_get_macaddr(peer), macaddr)
 			== QDF_STATUS_SUCCESS) {
@@ -1074,14 +1075,16 @@ static struct wlan_objmgr_peer
 							QDF_STATUS_SUCCESS) {
 				/* Return peer in logically deleted state */
 				if (peer->obj_state ==
-					WLAN_OBJ_STATE_LOGICALLY_DELETED)
+					WLAN_OBJ_STATE_LOGICALLY_DELETED) {
+					wlan_objmgr_peer_get_ref(peer, dbg_id);
+
 					return peer;
+				}
 			}
 		}
 		/* Move to next peer */
 		peer_temp = peer;
 		peer = wlan_peer_get_next_peer_of_psoc(obj_list, peer_temp);
-		wlan_objmgr_peer_release_ref(peer_temp, dbg_id);
 	}
 
 	/* Not found, return NULL */
@@ -1113,7 +1116,6 @@ static struct wlan_objmgr_peer *wlan_obj_psoc_peerlist_get_peer_by_mac_n_bssid(
 	/* Iterate through hash list to get the peer */
 	peer = wlan_psoc_peer_list_peek_head(obj_list);
 	while (peer != NULL) {
-		wlan_objmgr_peer_get_ref(peer, dbg_id);
 		/* For peer, macaddr is key */
 		if (WLAN_ADDR_EQ(wlan_peer_get_macaddr(peer), macaddr)
 			== QDF_STATUS_SUCCESS) {
@@ -1124,26 +1126,16 @@ static struct wlan_objmgr_peer *wlan_obj_psoc_peerlist_get_peer_by_mac_n_bssid(
 			 */
 			if (wlan_peer_bssid_match(peer, bssid) ==
 							QDF_STATUS_SUCCESS) {
-				/*
-				 * Release ref, and return NULL, if peer state
-				 * is logically deleted
-				 */
-				if (peer->obj_state ==
-					WLAN_OBJ_STATE_LOGICALLY_DELETED) {
-					wlan_objmgr_peer_release_ref(peer,
-									dbg_id);
-					peer = NULL;
+				if (wlan_objmgr_peer_try_get_ref(peer, dbg_id)
+					== QDF_STATUS_SUCCESS) {
+					return peer;
 				}
-
-				return peer;
 			}
 		}
 		/* Move to next peer */
 		peer_temp = peer;
 		peer = wlan_peer_get_next_peer_of_psoc(obj_list, peer_temp);
-		wlan_objmgr_peer_release_ref(peer_temp, dbg_id);
 	}
-
 	/* Not found, return NULL */
 	return NULL;
 }
@@ -1281,6 +1273,7 @@ struct wlan_objmgr_peer *wlan_objmgr_get_peer_logically_deleted(
 
 	return peer;
 }
+
 struct wlan_objmgr_peer *wlan_objmgr_get_peer(
 			struct wlan_objmgr_psoc *psoc, uint8_t *macaddr,
 			wlan_objmgr_ref_dbgid dbg_id)
@@ -1311,6 +1304,33 @@ struct wlan_objmgr_peer *wlan_objmgr_get_peer(
 	return peer;
 }
 EXPORT_SYMBOL(wlan_objmgr_get_peer);
+
+struct wlan_objmgr_peer *wlan_objmgr_get_peer_nolock(
+			struct wlan_objmgr_psoc *psoc, uint8_t *macaddr,
+			wlan_objmgr_ref_dbgid dbg_id)
+{
+	struct wlan_objmgr_psoc_objmgr *objmgr;
+	uint8_t hash_index;
+	struct wlan_objmgr_peer *peer = NULL;
+	struct wlan_peer_list *peer_list;
+
+	/* psoc lock should be taken before peer list lock */
+	objmgr = &psoc->soc_objmgr;
+	/* List is empty, return NULL */
+	if (objmgr->wlan_peer_count == 0)
+		return NULL;
+
+	/* reduce the search window, with hash key */
+	hash_index = WLAN_PEER_HASH(macaddr);
+	peer_list = &objmgr->peer_list;
+	/* Iterate through peer list, get peer */
+	peer = wlan_obj_psoc_peerlist_get_peer(
+		&peer_list->peer_hash[hash_index], macaddr, dbg_id);
+
+	return peer;
+}
+EXPORT_SYMBOL(wlan_objmgr_get_peer_nolock);
+
 
 struct wlan_objmgr_peer *wlan_objmgr_get_peer_no_state(
 			struct wlan_objmgr_psoc *psoc, uint8_t *macaddr,
