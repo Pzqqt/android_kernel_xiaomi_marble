@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -49,7 +49,6 @@
 QDF_STATUS sme_rrm_msg_processor(tpAniSirGlobal pMac, uint16_t msg_type,
 		void *pMsgBuf);
 QDF_STATUS rrm_close(tpAniSirGlobal pMac);
-QDF_STATUS rrm_ready(tpAniSirGlobal pMac);
 QDF_STATUS rrm_open(tpAniSirGlobal pMac);
 QDF_STATUS rrm_change_default_config_param(tpAniSirGlobal pMac,
 		struct rrm_config_param *rrm_config);

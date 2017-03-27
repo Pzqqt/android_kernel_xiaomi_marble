@@ -1347,11 +1347,6 @@ QDF_STATUS sme_hdd_ready_ind(tHalHandle hHal)
 			break;
 		}
 
-		if (QDF_STATUS_SUCCESS != rrm_ready(hHal)) {
-			status = QDF_STATUS_E_FAILURE;
-			sme_err("rrm_ready failed");
-			break;
-		}
 		pMac->sme.state = SME_STATE_READY;
 	} while (0);
 

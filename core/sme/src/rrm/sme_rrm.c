@@ -25,19 +25,12 @@
  * to the Linux Foundation.
  */
 
-/**=========================================================================
+/*
+ * DOC: sme_rrm.c
+ *
+ * Implementation for SME RRM APIs
+ */
 
-   \file  sme_Rrm.c
-
-   \brief implementation for SME RRM APIs
-
-   ========================================================================*/
-
-/* $Header$ */
-
-/*--------------------------------------------------------------------------
-   Include Files
-   ------------------------------------------------------------------------*/
 #include "ani_global.h"
 #include "sme_inside.h"
 #include "sme_api.h"
@@ -52,17 +45,21 @@
 
 #include "rrm_global.h"
 
-
-/* Roam score for a neighbor AP will be calculated based on the below definitions.
-    The calculated roam score will be used to select the roamable candidate from neighbor AP list */
-#define RRM_ROAM_SCORE_NEIGHBOR_REPORT_REACHABILITY             0       /* When we support 11r over the DS, this should have a non-zero value */
+/* Roam score for a neighbor AP will be calculated based on the below
+ * definitions. The calculated roam score will be used to select the
+ * roamable candidate from neighbor AP list
+ */
+#define RRM_ROAM_SCORE_NEIGHBOR_REPORT_REACHABILITY             0
+/* When we support 11r over the DS, this should have a non-zero value */
 #define RRM_ROAM_SCORE_NEIGHBOR_REPORT_SECURITY                 10
 #define RRM_ROAM_SCORE_NEIGHBOR_REPORT_KEY_SCOPE                20
-#define RRM_ROAM_SCORE_NEIGHBOR_REPORT_CAPABILITY_SPECTRUM_MGMT 0       /* Not used */
+#define RRM_ROAM_SCORE_NEIGHBOR_REPORT_CAPABILITY_SPECTRUM_MGMT 0
+/* Not used */
 #define RRM_ROAM_SCORE_NEIGHBOR_REPORT_CAPABILITY_QOS           5
 #define RRM_ROAM_SCORE_NEIGHBOR_REPORT_CAPABILITY_APSD          3
 #define RRM_ROAM_SCORE_NEIGHBOR_REPORT_CAPABILITY_RRM           8
-#define RRM_ROAM_SCORE_NEIGHBOR_REPORT_CAPABILITY_DELAYED_BA    0       /* We dont support delayed BA */
+#define RRM_ROAM_SCORE_NEIGHBOR_REPORT_CAPABILITY_DELAYED_BA    0
+/* We dont support delayed BA */
 #define RRM_ROAM_SCORE_NEIGHBOR_REPORT_CAPABILITY_IMMEDIATE_BA  3
 #define RRM_ROAM_SCORE_NEIGHBOR_REPORT_MOBILITY_DOMAIN          30
 
@@ -88,6 +85,7 @@ static void rrm_ll_purge_neighbor_cache(tpAniSirGlobal pMac,
 {
 	tListElem *pEntry;
 	tRrmNeighborReportDesc *pNeighborReportDesc;
+
 	csr_ll_lock(pList);
 	while ((pEntry = csr_ll_remove_head(pList, LL_ACCESS_NOLOCK)) != NULL) {
 		pNeighborReportDesc =
@@ -96,7 +94,6 @@ static void rrm_ll_purge_neighbor_cache(tpAniSirGlobal pMac,
 		qdf_mem_free(pNeighborReportDesc);
 	}
 	csr_ll_unlock(pList);
-	return;
 }
 
 /**
@@ -122,7 +119,9 @@ static void rrm_indicate_neighbor_report_result(tpAniSirGlobal pMac,
 	pMac->rrm.rrmSmeContext.neighborReqControlInfo.isNeighborRspPending =
 		false;
 
-	/* Stop the timer if it is already running. The timer should be running only in the SUCCESS case. */
+	/* Stop the timer if it is already running.
+	 *  The timer should be running only in the SUCCESS case.
+	 */
 	if (QDF_TIMER_STATE_RUNNING ==
 	    qdf_mc_timer_get_current_state(&pMac->rrm.rrmSmeContext.
 					   neighborReqControlInfo.
@@ -138,8 +137,10 @@ static void rrm_indicate_neighbor_report_result(tpAniSirGlobal pMac,
 		pMac->rrm.rrmSmeContext.neighborReqControlInfo.
 		neighborRspCallbackInfo.neighborRspCallbackContext;
 
-	/* Reset the callback and the callback context before calling the callback. It is very likely that there may be a registration in
-	   callback itself. */
+	/* Reset the callback and the callback context before calling the
+	 * callback. It is very likely that there may be a registration in
+	 * callback itself.
+	 */
 	pMac->rrm.rrmSmeContext.neighborReqControlInfo.neighborRspCallbackInfo.
 	neighborRspCallback = NULL;
 	pMac->rrm.rrmSmeContext.neighborReqControlInfo.neighborRspCallbackInfo.
@@ -149,7 +150,6 @@ static void rrm_indicate_neighbor_report_result(tpAniSirGlobal pMac,
 	if (callback)
 		callback(callbackContext, qdf_status);
 
-	return;
 
 }
 
@@ -348,16 +348,16 @@ static QDF_STATUS sme_ese_send_beacon_req_scan_results(
 					sir_beacon_ie_ese_bcn_report(mac_ctx,
 						(uint8_t *) bss_desc->ieFields,
 						ie_len,
-						&(bcn_report->bcnRepBssInfo[j].pBuf),
+						&(bcn_report->bcnRepBssInfo[j].
+						pBuf),
 						&out_ie_len);
 			if (eSIR_FAILURE == fill_ie_status)
 				continue;
 			bcn_report->bcnRepBssInfo[j].ieLen = out_ie_len;
 
-			sme_debug("Bssid(" MAC_ADDRESS_STR")"
-				"Channel=%d Rssi=%d",
+			sme_debug("Bssid"MAC_ADDRESS_STR" Channel: %d Rssi: %d",
 				MAC_ADDR_ARRAY(bss_desc->bssId),
-			bss_desc->channelId, (-1) * bss_desc->rssi);
+				bss_desc->channelId, (-1) * bss_desc->rssi);
 			bcn_report->numBss++;
 			if (++j >= SIR_BCN_REPORT_MAX_BSS_DESC)
 				break;
@@ -377,8 +377,7 @@ static QDF_STATUS sme_ese_send_beacon_req_scan_results(
 		bcn_report->flag =
 			(msrmnt_status << 1) | ((cur_result) ? true : false);
 
-		sme_debug("SME Sending BcnRep to HDD numBss(%d)"
-			" j(%d) bss_counter(%d) flag(%d)",
+		sme_debug("SME Sending BcnRep to HDD numBss: %d j: %d bss_counter: %d flag: %d",
 			bcn_report->numBss, j, bss_counter,
 			bcn_report->flag);
 
@@ -590,19 +589,22 @@ static QDF_STATUS sme_rrm_scan_request_callback(tHalHandle halHandle,
 	tpRrmSMEContext pSmeRrmContext = &pMac->rrm.rrmSmeContext;
 	uint32_t time_tick;
 
-	/* if any more channels are pending, start a timer of a random value within randomization interval. */
-	/* */
-	/* */
+	/* if any more channels are pending, start a timer of a random value
+	 * within randomization interval.
+	 */
 	if ((pSmeRrmContext->currentIndex + 1) <
 	    pSmeRrmContext->channelList.numOfChannels) {
 		sme_rrm_send_scan_result(pMac, 1,
 					 &pSmeRrmContext->channelList.
-					 ChannelList[pSmeRrmContext->currentIndex],
+					 ChannelList[pSmeRrmContext
+					->currentIndex],
 					 false);
-
-		pSmeRrmContext->currentIndex++; /* Advance the current index. */
+		/* Advance the current index. */
+		pSmeRrmContext->currentIndex++;
 		/* start the timer to issue next request. */
-		/* From timer tick get a random number within 10ms and max randmization interval. */
+		/* From timer tick get a random number within 10ms and max
+		 * randmization interval.
+		 */
 		time_tick = qdf_mc_timer_get_system_ticks();
 		interval =
 			time_tick % (pSmeRrmContext->randnIntvl - 10 + 1) + 10;
@@ -611,10 +613,13 @@ static QDF_STATUS sme_rrm_scan_request_callback(tHalHandle halHandle,
 		qdf_mc_timer_start(&pSmeRrmContext->IterMeasTimer, interval);
 
 	} else {
-		/* Done with the measurement. Clean up all context and send a message to PE with measurement done flag set. */
+		/* Done with the measurement. Clean up all context and send a
+		 * message to PE with measurement done flag set.
+		 */
 		sme_rrm_send_scan_result(pMac, 1,
 					 &pSmeRrmContext->channelList.
-					 ChannelList[pSmeRrmContext->currentIndex],
+					 ChannelList[pSmeRrmContext
+					->currentIndex],
 					 true);
 		qdf_mem_free(pSmeRrmContext->channelList.ChannelList);
 #ifdef FEATURE_WLAN_ESE
@@ -812,7 +817,8 @@ static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
  *
  * Return : QDF_STATUS_SUCCESS - Validation is successful.
  */
-QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal pMac, void *pMsgBuf)
+QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal pMac,
+						void *pMsgBuf)
 {
 	tpSirBeaconReportReqInd pBeaconReq = (tpSirBeaconReportReqInd) pMsgBuf;
 	tpRrmSMEContext pSmeRrmContext = &pMac->rrm.rrmSmeContext;
@@ -833,16 +839,17 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal pMac, void *pMsg
 			sme_err("qdf_mem_malloc failed");
 			return QDF_STATUS_E_NOMEM;
 		}
-		csr_get_cfg_valid_channels(pMac,
-					   pSmeRrmContext->channelList.ChannelList,
-					   &len);
+		csr_get_cfg_valid_channels(pMac, pSmeRrmContext->channelList.
+					ChannelList, &len);
 		pSmeRrmContext->channelList.numOfChannels = (uint8_t) len;
 	} else {
 		len = 0;
 		pSmeRrmContext->channelList.numOfChannels = 0;
 
-		/* If valid channel is present. We first Measure on the given channel. and */
-		/* if there are additional channels present in APchannelreport, measure on these also. */
+		/* If valid channel is present. We first Measure on the given
+		 * channel and if there are additional channels present in
+		 * APchannelreport, measure on these also.
+		 */
 		if (pBeaconReq->channelInfo.channelNum != 255)
 			len = 1;
 
@@ -867,12 +874,12 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal pMac, void *pMsg
 		}
 
 		for (i = 0; i < pBeaconReq->channelList.numChannels; i++) {
-			if (csr_roam_is_channel_valid
-				    (pMac, pBeaconReq->channelList.channelNumber[i])) {
+			if (csr_roam_is_channel_valid(pMac, pBeaconReq->
+					channelList.channelNumber[i])) {
 				pSmeRrmContext->channelList.
-				ChannelList[pSmeRrmContext->channelList.
-					    numOfChannels] =
-					pBeaconReq->channelList.channelNumber[i];
+					ChannelList[pSmeRrmContext->channelList.
+				numOfChannels] = pBeaconReq->channelList.
+					channelNumber[i];
 				pSmeRrmContext->channelList.numOfChannels++;
 			}
 		}
@@ -904,7 +911,7 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal pMac, void *pMsg
 		     (uint8_t *) &pBeaconReq->measurementDuration,
 		     SIR_ESE_MAX_MEAS_IE_REQS);
 
-	sme_debug("token %d regClass %d randnIntvl %d msgSource %d",
+	sme_debug("token: %d regClass: %d randnIntvl: %d msgSource: %d",
 		pSmeRrmContext->token, pSmeRrmContext->regClass,
 		pSmeRrmContext->randnIntvl, pSmeRrmContext->msgSource);
 
@@ -923,10 +930,11 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal pMac, void *pMsg
  *
  * Return: QDF_STATUS_SUCCESS - Validation is successful.
  */
-QDF_STATUS sme_rrm_neighbor_report_request(tpAniSirGlobal pMac, uint8_t sessionId,
-					   tpRrmNeighborReq pNeighborReq,
-					   tpRrmNeighborRspCallbackInfo
-					   callbackInfo)
+QDF_STATUS sme_rrm_neighbor_report_request(tpAniSirGlobal pMac, uint8_t
+					sessionId, tpRrmNeighborReq
+					pNeighborReq,
+					tpRrmNeighborRspCallbackInfo
+					callbackInfo)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpSirNeighborReportReqInd pMsg;
@@ -967,7 +975,9 @@ QDF_STATUS sme_rrm_neighbor_report_request(tpAniSirGlobal pMac, uint8_t sessionI
 	if (status != QDF_STATUS_SUCCESS)
 		return QDF_STATUS_E_FAILURE;
 
-	/* Neighbor report request message sent successfully to PE. Now register the callbacks */
+	/* Neighbor report request message sent successfully to PE.
+	 * Now register the callbacks
+	 */
 	pMac->rrm.rrmSmeContext.neighborReqControlInfo.neighborRspCallbackInfo.
 	neighborRspCallback = callbackInfo->neighborRspCallback;
 	pMac->rrm.rrmSmeContext.neighborReqControlInfo.neighborRspCallbackInfo.
@@ -1098,39 +1108,43 @@ static void rrm_store_neighbor_rpt_by_roam_score(tpAniSirGlobal pMac,
 	if (csr_ll_is_list_empty
 		    (&pSmeRrmContext->neighborReportCache, LL_ACCESS_LOCK)) {
 		sme_err("Neighbor report cache is empty.. Adding a entry now");
-		/* Neighbor list cache is empty. Insert this entry in the tail */
+		/* Neighbor list cache is empty. Insert this entry
+		 * in the tail
+		 */
 		csr_ll_insert_tail(&pSmeRrmContext->neighborReportCache,
 				   &pNeighborReportDesc->List, LL_ACCESS_LOCK);
 		return;
-	} else {
-		/* Should store the neighbor BSS description in the order sorted by roamScore in descending
-		   order. APs with highest roamScore should be the 1st entry in the list */
-		pEntry =
-			csr_ll_peek_head(&pSmeRrmContext->neighborReportCache,
-					 LL_ACCESS_LOCK);
-		while (pEntry != NULL) {
-			pTempNeighborReportDesc =
-				GET_BASE_ADDR(pEntry, tRrmNeighborReportDesc, List);
-			if (pTempNeighborReportDesc->roamScore <
-			    pNeighborReportDesc->roamScore)
-				break;
-			pEntry =
-				csr_ll_next(&pSmeRrmContext->neighborReportCache,
-					    pEntry, LL_ACCESS_LOCK);
+	}
+	/* Should store the neighbor BSS description in the order
+	 * sorted by roamScore in descending order. APs with highest
+	 * roamScore should be the 1st entry in the list
+	 */
+	pEntry = csr_ll_peek_head(&pSmeRrmContext->neighborReportCache,
+				LL_ACCESS_LOCK);
+	while (pEntry != NULL) {
+		pTempNeighborReportDesc = GET_BASE_ADDR(pEntry,
+					tRrmNeighborReportDesc, List);
+		if (pTempNeighborReportDesc->roamScore <
+				pNeighborReportDesc->roamScore)
+			break;
+		pEntry = csr_ll_next(&pSmeRrmContext->
+				neighborReportCache, pEntry, LL_ACCESS_LOCK);
 		}
 
-		if (pEntry)
-			/* This BSS roamscore is better than something in the list. Insert this before that one */
-			csr_ll_insert_entry(&pSmeRrmContext->neighborReportCache,
-					    pEntry, &pNeighborReportDesc->List,
-					    LL_ACCESS_LOCK);
-		else
-			/* All the entries in the list has a better roam Score than this one. Insert this at the last */
-			csr_ll_insert_tail(&pSmeRrmContext->neighborReportCache,
-					   &pNeighborReportDesc->List,
-					   LL_ACCESS_LOCK);
-	}
-	return;
+	if (pEntry)
+		/* This BSS roamscore is better than something in the
+		 * list. Insert this before that one
+		 */
+		csr_ll_insert_entry(&pSmeRrmContext->neighborReportCache,
+					pEntry, &pNeighborReportDesc->List,
+					LL_ACCESS_LOCK);
+	else
+		/* All the entries in the list has a better roam Score
+		 * than this one. Insert this at the last
+		 */
+		csr_ll_insert_tail(&pSmeRrmContext->neighborReportCache,
+					&pNeighborReportDesc->List,
+					LL_ACCESS_LOCK);
 }
 
 /**
@@ -1296,7 +1310,6 @@ static void rrm_neighbor_rsp_timeout_handler(void *userData)
 
 	sme_warn("Neighbor Response timed out");
 	rrm_indicate_neighbor_report_result(pMac, QDF_STATUS_E_FAILURE);
-	return;
 }
 
 /**
@@ -1318,7 +1331,8 @@ QDF_STATUS rrm_open(tpAniSirGlobal pMac)
 
 	qdf_status = qdf_mc_timer_init(&pSmeRrmContext->IterMeasTimer,
 				       QDF_TIMER_TYPE_SW,
-				       rrm_iter_meas_timer_handle, (void *)pMac);
+				       rrm_iter_meas_timer_handle,
+					(void *)pMac);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 
@@ -1331,7 +1345,8 @@ QDF_STATUS rrm_open(tpAniSirGlobal pMac)
 	qdf_status =
 		qdf_mc_timer_init(&pSmeRrmContext->neighborReqControlInfo.
 				  neighborRspWaitTimer, QDF_TIMER_TYPE_SW,
-				  rrm_neighbor_rsp_timeout_handler, (void *)pMac);
+				  rrm_neighbor_rsp_timeout_handler,
+					(void *)pMac);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 
@@ -1392,8 +1407,8 @@ QDF_STATUS rrm_close(tpAniSirGlobal pMac)
 	    qdf_mc_timer_get_current_state(&pSmeRrmContext->
 					   neighborReqControlInfo.
 					   neighborRspWaitTimer)) {
-		qdf_status =
-			qdf_mc_timer_stop(&pSmeRrmContext->neighborReqControlInfo.
+		qdf_status = qdf_mc_timer_stop(&pSmeRrmContext->
+					neighborReqControlInfo.
 					  neighborRspWaitTimer);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -1418,35 +1433,14 @@ QDF_STATUS rrm_close(tpAniSirGlobal pMac)
 
 }
 
-/* ---------------------------------------------------------------------------
-
-    \fn rrm_ready
-
-    \brief  fn
-
-    \param  pMac - The handle returned by mac_open.
-
-    \return QDF_STATUS
-
-   ---------------------------------------------------------------------------*/
-
-QDF_STATUS rrm_ready(tpAniSirGlobal pMac)
-{
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/* ---------------------------------------------------------------------------
-
-    \fn rrm_change_default_config_param
-    \brief  fn
-
-    \param  pMac - The handle returned by mac_open.
-    \param  pRrmConfig - pointer to new rrm configs.
-
-    \return QDF_STATUS
-
-   ---------------------------------------------------------------------------*/
+/**
+ * rrm_change_default_config_param() - Changing default config param to new
+ * @pMac - The handle returned by mac_open.
+ * param  pRrmConfig - pointer to new rrm configs.
+ *
+ * Return: QDF_STATUS
+ *           QDF_STATUS_SUCCESS  success
+ */
 QDF_STATUS rrm_change_default_config_param(tpAniSirGlobal pMac,
 					   struct rrm_config_param *rrm_config)
 {
