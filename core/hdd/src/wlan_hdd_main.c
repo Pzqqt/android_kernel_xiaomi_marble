@@ -1939,6 +1939,9 @@ static void hdd_nan_register_callbacks(hdd_context_t *hdd_ctx)
 	cb_obj.drv_ndi_create_rsp_handler = hdd_ndi_drv_ndi_create_rsp_handler;
 	cb_obj.drv_ndi_delete_rsp_handler = hdd_ndi_drv_ndi_delete_rsp_handler;
 
+	cb_obj.new_peer_ind = hdd_ndp_new_peer_handler;
+	cb_obj.get_peer_idx = hdd_ndp_get_peer_idx;
+
 	os_if_nan_register_hdd_callbacks(hdd_ctx->hdd_psoc, &cb_obj);
 }
 #else

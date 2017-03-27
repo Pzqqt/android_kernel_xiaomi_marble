@@ -34,6 +34,7 @@
 #ifdef WLAN_FEATURE_NAN_CONVERGENCE
 #include "os_if_nan.h"
 #include "nan_public_structs.h"
+#include "nan_ucfg_api.h"
 #endif
 
 /**
@@ -66,7 +67,6 @@ static void lim_send_ndp_event_to_sme(tpAniSirGlobal mac_ctx, uint32_t msg_type,
 	lim_sys_process_mmh_msg_api(mac_ctx, &mmh_msg, ePROT);
 }
 
-#ifndef WLAN_FEATURE_NAN_CONVERGENCE
 /**
  * lim_add_ndi_peer() - Function to add ndi peer
  * @mac_ctx: handle to mac structure
@@ -122,6 +122,18 @@ static QDF_STATUS lim_add_ndi_peer(tpAniSirGlobal mac_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS lim_add_ndi_peer_converged(uint32_t vdev_id,
+				struct qdf_mac_addr peer_mac_addr)
+{
+	tpAniSirGlobal mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+
+	if (!mac_ctx)
+		return QDF_STATUS_E_NULL_VALUE;
+
+	return lim_add_ndi_peer(mac_ctx, vdev_id, peer_mac_addr);
+}
+
+#ifndef WLAN_FEATURE_NAN_CONVERGENCE
 /**
  * lim_handle_ndp_indication_event() - Function to handle SIR_HAL_NDP_INDICATION
  * event from WMA

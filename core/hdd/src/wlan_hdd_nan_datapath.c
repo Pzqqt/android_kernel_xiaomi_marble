@@ -2247,4 +2247,51 @@ void hdd_ndp_session_end_handler(hdd_adapter_t *adapter)
 	os_if_nan_ndi_session_end(adapter->hdd_vdev);
 }
 
+int hdd_ndp_get_peer_idx(uint8_t vdev_id, struct qdf_mac_addr *addr)
+{
+	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	hdd_adapter_t *adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	hdd_station_ctx_t *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	return hdd_get_peer_idx(sta_ctx, addr);
+}
+
+/**
+ * hdd_ndp_new_peer_handler() - NDP new peer indication handler
+ * @adapter: pointer to adapter context
+ * @ind_params: indication parameters
+ *
+ * Return: none
+ */
+int hdd_ndp_new_peer_handler(uint8_t vdev_id, uint16_t sta_id,
+			struct qdf_mac_addr *peer_mac_addr, bool fist_peer)
+{
+	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	hdd_adapter_t *adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	tSirBssDescription tmp_bss_descp = {0};
+	tCsrRoamInfo roam_info = {0};
+	hdd_station_ctx_t *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+
+	ENTER();
+	/* save peer in ndp ctx */
+	if (false == hdd_save_peer(sta_ctx, sta_id, peer_mac_addr)) {
+		hdd_err("Ndp peer table full. cannot save new peer");
+		return -EPERM;
+	}
+
+	/* this function is called for each new peer */
+	hdd_roam_register_sta(adapter, &roam_info, sta_id,
+				peer_mac_addr, &tmp_bss_descp);
+	hdd_ctx->sta_to_adapter[sta_id] = adapter;
+	/* perform following steps for first new peer ind */
+	if (fist_peer) {
+		hdd_info("Set ctx connection state to connected");
+		sta_ctx->conn_info.connState = eConnectionState_NdiConnected;
+		hdd_wmm_connect(adapter, &roam_info, eCSR_BSS_TYPE_NDI);
+		wlan_hdd_netif_queue_control(adapter,
+				WLAN_WAKE_ALL_NETIF_QUEUE, WLAN_CONTROL_PATH);
+	}
+	EXIT();
+	return 0;
+}
+
 #endif

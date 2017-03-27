@@ -74,6 +74,7 @@
 #include "wma.h"
 #include "wlan_mgmt_txrx_utils_api.h"
 #include "wlan_objmgr_psoc_obj.h"
+#include "os_if_nan.h"
 
 static void __lim_init_scan_vars(tpAniSirGlobal pMac)
 {
@@ -739,6 +740,21 @@ static void lim_register_debug_callback(void)
 	qdf_register_debug_callback(QDF_MODULE_ID_PE, &lim_state_info_dump);
 }
 
+#ifdef WLAN_FEATURE_NAN_CONVERGENCE
+static void lim_nan_register_callbacks(tpAniSirGlobal mac_ctx)
+{
+	struct nan_callbacks cb_obj = {0};
+
+	cb_obj.add_ndi_peer = lim_add_ndi_peer_converged;
+
+	ucfg_nan_register_lim_callbacks(mac_ctx->psoc, &cb_obj);
+}
+#else
+static void lim_nan_register_callbacks(tpAniSirGlobal mac_ctx)
+{
+}
+#endif
+
 /** -------------------------------------------------------------
    \fn pe_open
    \brief will be called in Open sequence from mac_open
@@ -803,6 +819,7 @@ tSirRetStatus pe_open(tpAniSirGlobal pMac, struct cds_config_info *cds_cfg)
 	MTRACE(lim_trace_init(pMac));
 #endif
 	lim_register_debug_callback();
+	lim_nan_register_callbacks(pMac);
 
 	return status; /* status here will be eSIR_SUCCESS */
 

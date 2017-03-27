@@ -1061,6 +1061,7 @@ QDF_STATUS wma_register_ndp_cb(QDF_STATUS (*pe_ndp_event_handler)
 	WMA_LOGD("Registered NDP callbacks with WMA successfully");
 	return QDF_STATUS_SUCCESS;
 }
+#endif /* WLAN_FEATURE_NAN_CONVERGENCE */
 
 /**
  * wma_add_sta_ndi_mode() - Process ADD_STA for NaN Data path
@@ -1204,4 +1205,3 @@ send_del_rsp:
 		wma_send_msg(wma, WMA_DELETE_STA_RSP, del_sta, 0);
 	}
 }
-#endif /* WLAN_FEATURE_NAN_CONVERGENCE */

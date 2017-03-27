@@ -114,6 +114,8 @@ void lim_process_ndi_del_sta_rsp(tpAniSirGlobal mac_ctx,
 				 struct scheduler_msg *lim_msg,
 				 tpPESession pe_session);
 
+QDF_STATUS lim_add_ndi_peer_converged(uint32_t vdev_id,
+				struct qdf_mac_addr peer_mac_addr);
 #else
 static inline void lim_process_ndi_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 					struct scheduler_msg *lim_msg_q,
