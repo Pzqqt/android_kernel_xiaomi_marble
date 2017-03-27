@@ -1960,6 +1960,45 @@ int wmi_unified_register_event_handler(wmi_unified_t wmi_handle,
 }
 
 /**
+ * wmi_unified_unregister_event() - unregister wmi event handler
+ * @wmi_handle: handle to wmi
+ * @event_id: wmi event id
+ *
+ * Return: 0 on success
+ */
+int wmi_unified_unregister_event(wmi_unified_t wmi_handle,
+					 uint32_t event_id)
+{
+	uint32_t idx = 0;
+	uint32_t evt_id;
+	struct wmi_soc *soc = wmi_handle->soc;
+
+	if (event_id >= wmi_events_max ||
+		wmi_handle->wmi_events[event_id] == WMI_EVENT_ID_INVALID) {
+		qdf_print("%s: Event id %d is unavailable\n",
+				 __func__, event_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+	evt_id = wmi_handle->wmi_events[event_id];
+
+	idx = wmi_unified_get_event_handler_ix(wmi_handle, evt_id);
+	if (idx == -1) {
+		qdf_print("%s : event handler is not registered: evt id 0x%x\n",
+		       __func__, evt_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+	wmi_handle->event_handler[idx] = NULL;
+	wmi_handle->event_id[idx] = 0;
+	--soc->max_event_idx;
+	wmi_handle->event_handler[idx] =
+		wmi_handle->event_handler[soc->max_event_idx];
+	wmi_handle->event_id[idx] =
+		wmi_handle->event_id[soc->max_event_idx];
+
+	return 0;
+}
+
+/**
  * wmi_unified_unregister_event_handler() - unregister wmi event handler
  * @wmi_handle: handle to wmi
  * @event_id: wmi event id
