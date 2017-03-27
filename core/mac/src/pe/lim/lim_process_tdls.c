@@ -2762,7 +2762,7 @@ lim_send_tdls_comp_mgmt_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
 	struct scheduler_msg msg = {0};
 	tSirSmeRsp *sme_rsp;
 
-	lim_log(mac_ctx, LOG1, FL("Sending message %s with reasonCode %s"),
+	pe_debug("Sending message %s with reasonCode %s",
 		lim_msg_str(msg_type), lim_result_code_str(result_code));
 
 	sme_rsp = qdf_mem_malloc(sizeof(tSirSmeRsp));
@@ -3292,8 +3292,7 @@ static void lim_check_aid_and_delete_peer(tpAniSirGlobal p_mac,
 			if (NULL == stads)
 				goto skip;
 
-			lim_log(p_mac, LOG1,
-				FL("Deleting "MAC_ADDRESS_STR),
+			pe_debug("Deleting "MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(stads->staAddr));
 
 			lim_send_deauth_mgmt_frame(p_mac,

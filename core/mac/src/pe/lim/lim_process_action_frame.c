@@ -1644,7 +1644,7 @@ static void lim_process_addba_req(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev) {
-		lim_log(mac_ctx, LOGE, FL("pdev is NULL"));
+		pe_err("pdev is NULL");
 		return;
 	}
 
@@ -1657,7 +1657,7 @@ static void lim_process_addba_req(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 
 	addba_req = qdf_mem_malloc(sizeof(*addba_req));
 	if (NULL == addba_req) {
-		lim_log(mac_ctx, LOGE, FL("memory allocation failed"));
+		pe_err("memory allocation failed");
 		return;
 	}
 
@@ -1666,19 +1666,17 @@ static void lim_process_addba_req(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 					 addba_req, false);
 
 	if (DOT11F_FAILED(status)) {
-		lim_log(mac_ctx, LOGE,
-			FL("Failed to unpack and parse (0x%08x, %d bytes)"),
+		pe_err("Failed to unpack and parse (0x%08x, %d bytes)",
 			status, frame_len);
 		goto error;
 	} else if (DOT11F_WARNED(status)) {
-		lim_log(mac_ctx, LOGW,
-			FL("warning: unpack addba Req(0x%08x, %d bytes)"),
+		pe_warn("warning: unpack addba Req(0x%08x, %d bytes)",
 			status, frame_len);
 	}
 
 	peer = cdp_peer_find_by_addr(soc, pdev, mac_hdr->sa, &peer_id);
 	if (!peer) {
-		lim_log(mac_ctx, LOGE, FL("PEER [%pM] not found"), mac_hdr->sa);
+		pe_err("PEER [%pM] not found", mac_hdr->sa);
 		goto error;
 	}
 
@@ -1693,7 +1691,7 @@ static void lim_process_addba_req(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		lim_send_addba_response_frame(mac_ctx, mac_hdr->sa,
 			addba_req->addba_param_set.tid, session);
 	} else {
-		lim_log(mac_ctx, LOGE, FL("Failed to process addba request"));
+		pe_err("Failed to process addba request");
 	}
 
 error:
@@ -1725,7 +1723,7 @@ static void lim_process_delba_req(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev) {
-		lim_log(mac_ctx, LOGE, FL("pdev is NULL"));
+		pe_err("pdev is NULL");
 		return;
 	}
 
@@ -1738,7 +1736,7 @@ static void lim_process_delba_req(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 
 	delba_req = qdf_mem_malloc(sizeof(*delba_req));
 	if (NULL == delba_req) {
-		lim_log(mac_ctx, LOGE, FL("memory allocation failed"));
+		pe_err("memory allocation failed");
 		return;
 	}
 
@@ -1747,19 +1745,17 @@ static void lim_process_delba_req(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 					 delba_req, false);
 
 	if (DOT11F_FAILED(status)) {
-		lim_log(mac_ctx, LOGE,
-			FL("Failed to unpack and parse (0x%08x, %d bytes)"),
+		pe_err("Failed to unpack and parse (0x%08x, %d bytes)",
 			status, frame_len);
 		goto error;
 	} else if (DOT11F_WARNED(status)) {
-		lim_log(mac_ctx, LOGW,
-			FL("warning: unpack addba Req(0x%08x, %d bytes)"),
+		pe_warn("warning: unpack addba Req(0x%08x, %d bytes)",
 			status, frame_len);
 	}
 
 	peer = cdp_peer_find_by_addr(soc, pdev, mac_hdr->sa, &peer_id);
 	if (!peer) {
-		lim_log(mac_ctx, LOGE, FL("PEER [%pM] not found"), mac_hdr->sa);
+		pe_err("PEER [%pM] not found", mac_hdr->sa);
 		goto error;
 	}
 
@@ -1767,7 +1763,7 @@ static void lim_process_delba_req(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			delba_req->delba_param_set.tid, delba_req->Reason.code);
 
 	if (QDF_STATUS_SUCCESS != qdf_status)
-		lim_log(mac_ctx, LOGE, FL("Failed to process delba request"));
+		pe_err("Failed to process delba request");
 
 error:
 	qdf_mem_free(delba_req);
@@ -2217,7 +2213,7 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 		}
 		break;
 	case SIR_MAC_ACTION_BLKACK:
-		lim_log(mac_ctx, LOG1, FL("Rcvd Block Ack for %pM; action: %d"),
+		pe_debug("Rcvd Block Ack for %pM; action: %d",
 			session->selfMacAddr, action_hdr->actionID);
 		switch (action_hdr->actionID) {
 		case SIR_MAC_ADDBA_REQ:
@@ -2227,7 +2223,7 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 			lim_process_delba_req(mac_ctx, rx_pkt_info, session);
 			break;
 		default:
-			lim_log(mac_ctx, LOGE, FL("Unhandle BA action frame"));
+			pe_err("Unhandle BA action frame");
 			break;
 		}
 		break;

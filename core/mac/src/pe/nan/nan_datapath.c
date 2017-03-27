@@ -910,13 +910,13 @@ static QDF_STATUS lim_send_sme_ndp_add_sta_rsp(tpAniSirGlobal mac_ctx,
 					add_sta_rsp->smesessionId, WLAN_NAN_ID);
 
 	if (!add_sta_rsp) {
-		lim_log(mac_ctx, LOGE, FL("Invalid add_sta_rsp"));
+		pe_debug("Invalid add_sta_rsp");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	new_peer_ind = qdf_mem_malloc(sizeof(*new_peer_ind));
 	if (!new_peer_ind) {
-		lim_log(mac_ctx, LOGE, FL("Failed to allocate memory"));
+		pe_debug("Failed to allocate memory");
 		return QDF_STATUS_E_NOMEM;
 	}
 

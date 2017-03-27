@@ -314,7 +314,7 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 	}
 
 	if (lim_is_session_he_capable(pe_session)) {
-		lim_log(mac_ctx, LOG1, FL("Populate HE IEs"));
+		pe_debug("Populate HE IEs");
 		populate_dot11f_he_caps(mac_ctx, pe_session,
 					&frm.vendor_he_cap);
 	}
@@ -687,7 +687,7 @@ void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 	populate_dot11f_ext_cap(pMac, isVHTEnabled, &frm.ExtCap, psessionEntry);
 
 	if (lim_is_session_he_capable(psessionEntry)) {
-		lim_log(pMac, LOG1, FL("Populate HE IEs"));
+		pe_debug("Populate HE IEs");
 		populate_dot11f_he_caps(pMac, psessionEntry,
 					&frm.vendor_he_cap);
 	}

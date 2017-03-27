@@ -353,7 +353,7 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	if (IS_DOT11_MODE_HE(dot11mode) && NULL != pesession)
 		lim_update_session_he_capable(mac_ctx, pesession);
 
-	lim_log(mac_ctx, LOG1, FL("Populate HE IEs"));
+	pe_debug("Populate HE IEs");
 	populate_dot11f_he_caps(mac_ctx, pesession, &pr.vendor_he_cap);
 
 	if (addn_ielen) {
@@ -685,7 +685,7 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 	}
 
 	if (lim_is_session_he_capable(pe_session)) {
-		lim_log(mac_ctx, LOG1, FL("Populate HE IEs"));
+		pe_debug("Populate HE IEs");
 		populate_dot11f_he_caps(mac_ctx, pe_session,
 					&frm->vendor_he_cap);
 		populate_dot11f_he_operation(mac_ctx, pe_session,
@@ -1263,7 +1263,7 @@ lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 
 		if (lim_is_sta_he_capable(sta) &&
 		    lim_is_session_he_capable(pe_session)) {
-			lim_log(mac_ctx, LOG1, FL("Populate HE IEs"));
+			pe_debug("Populate HE IEs");
 			populate_dot11f_he_caps(mac_ctx, pe_session,
 						&frm.vendor_he_cap);
 			populate_dot11f_he_operation(mac_ctx, pe_session,
@@ -1835,7 +1835,7 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 		populate_dot11f_qcn_ie(&frm->QCN_IE);
 
 	if (lim_is_session_he_capable(pe_session)) {
-		lim_log(mac_ctx, LOG1, FL("Populate HE IEs"));
+		pe_debug("Populate HE IEs");
 		populate_dot11f_he_caps(mac_ctx, pe_session,
 					&frm->vendor_he_cap);
 	}
@@ -4565,13 +4565,13 @@ QDF_STATUS lim_send_addba_response_frame(tpAniSirGlobal mac_ctx,
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev) {
-		lim_log(mac_ctx, LOGE, FL("pdev is NULL"));
+		pe_err("pdev is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	peer = cdp_peer_find_by_addr(soc, pdev, peer_mac, &peer_id);
 	if (!peer) {
-		lim_log(mac_ctx, LOGE, FL("PEER [%pM] not found"), peer_mac);
+		pe_err("PEER [%pM] not found", peer_mac);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -4590,28 +4590,28 @@ QDF_STATUS lim_send_addba_response_frame(tpAniSirGlobal mac_ctx,
 	frm.addba_param_set.policy = SIR_MAC_BA_AMSDU_SUPPORTED;
 	frm.ba_timeout.timeout = batimeout;
 
-	lim_log(mac_ctx, LOG1, FL("Sending a ADDBA Response from %pM to %pM"),
+	pe_debug("Sending a ADDBA Response from %pM to %pM",
 		session->selfMacAddr, peer_mac);
-	lim_log(mac_ctx, LOG1, FL("tid: %d, dialog_token: %d, status: %d, buff_size: %d"),
+	pe_debug("tid: %d, dialog_token: %d, status: %d, buff_size: %d",
 		tid, frm.DialogToken.token, frm.Status.status,
 		frm.addba_param_set.buff_size);
 
 	status = dot11f_get_packed_addba_rsp_size(mac_ctx, &frm, &payload_size);
 	if (DOT11F_FAILED(status)) {
-		lim_log(mac_ctx, LOGP, FL("Failed to calculate the packed size for a ADDBA Response (0x%08x)."),
+		pe_err("Failed to calculate the packed size for a ADDBA Response (0x%08x).",
 			status);
 		/* We'll fall back on the worst case scenario: */
 		payload_size = sizeof(tDot11faddba_rsp);
 	} else if (DOT11F_WARNED(status)) {
-		lim_log(mac_ctx, LOGW, FL("There were warnings while calculating the packed size for a ADDBA Response (0x%08x)."), status);
+		pe_warn("There were warnings while calculating the packed size for a ADDBA Response (0x%08x).", status);
 	}
 
 	num_bytes = payload_size + sizeof(*mgmt_hdr);
 	qdf_status = cds_packet_alloc(num_bytes, (void **)&frame_ptr,
 				      (void **)&pkt_ptr);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		lim_log(mac_ctx, LOGP,
-			FL("Failed to allocate %d bytes for a ADDBA response action frame"), num_bytes);
+		pe_err("Failed to allocate %d bytes for a ADDBA response action frame",
+			num_bytes);
 		return QDF_STATUS_E_FAILURE;
 	}
 	qdf_mem_set(frame_ptr, num_bytes, 0);
@@ -4633,13 +4633,12 @@ QDF_STATUS lim_send_addba_response_frame(tpAniSirGlobal mac_ctx,
 			&payload_size);
 
 	if (DOT11F_FAILED(status)) {
-		lim_log(mac_ctx, LOGE,
-			FL("Failed to pack a ADDBA Response (0x%08x)."),
+		pe_err("Failed to pack a ADDBA Response (0x%08x)",
 			status);
 		qdf_status = QDF_STATUS_E_FAILURE;
 		goto error_addba_rsp;
 	} else if (DOT11F_WARNED(status)) {
-		lim_log(mac_ctx, LOGW, FL("There were warnings while packing ADDBA Response (0x%08x)."),
+		pe_warn("There were warnings while packing ADDBA Response (0x%08x)",
 			status);
 	}
 
@@ -4661,7 +4660,7 @@ QDF_STATUS lim_send_addba_response_frame(tpAniSirGlobal mac_ctx,
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
 			 session->peSessionId, qdf_status));
 	if (QDF_STATUS_SUCCESS != qdf_status) {
-		lim_log(mac_ctx, LOGE, FL("wma_tx_frame FAILED! Status [%d]"),
+		pe_err("wma_tx_frame FAILED! Status [%d]",
 			qdf_status);
 		qdf_status = QDF_STATUS_E_FAILURE;
 		/*

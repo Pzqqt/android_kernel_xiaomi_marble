@@ -781,7 +781,7 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		session->vhtCapability =
 			IS_DOT11_MODE_VHT(session->dot11mode);
 
-		lim_log(mac_ctx, LOG1, FL("HT[%d], VHT[%d]"),
+		pe_debug("HT[%d], VHT[%d]",
 			session->htCapability, session->vhtCapability);
 
 		if (IS_DOT11_MODE_HE(session->dot11mode)) {
@@ -4022,7 +4022,7 @@ static void lim_handle_update_ssid_hidden(tpAniSirGlobal mac_ctx,
 	if (ssid_hidden != session->ssidHidden)
 		session->ssidHidden = ssid_hidden;
 	else {
-		lim_log(mac_ctx, LOG1, FL("Same config already present!"));
+		pe_debug("Same config already present!");
 		return;
 	}
 
@@ -5024,27 +5024,23 @@ bool lim_process_sme_req_messages(tpAniSirGlobal pMac,
 
 	case eWNI_SME_ASSOC_CNF:
 		if (pMsg->type == eWNI_SME_ASSOC_CNF)
-			PELOG1(lim_log(pMac,
-				LOG1, FL("Received ASSOC_CNF message"));)
+			pe_debug("Received ASSOC_CNF message");
 			__lim_process_sme_assoc_cnf_new(pMac, pMsg->type,
 							pMsgBuf);
 		break;
 
 	case eWNI_SME_ADDTS_REQ:
-		PELOG1(lim_log(pMac, LOG1, FL("Received ADDTS_REQ message"));)
+		pe_debug("Received ADDTS_REQ message");
 		__lim_process_sme_addts_req(pMac, pMsgBuf);
 		break;
 
 	case eWNI_SME_DELTS_REQ:
-		PELOG1(lim_log(pMac, LOG1, FL("Received DELTS_REQ message"));)
+		pe_debug("Received DELTS_REQ message");
 		__lim_process_sme_delts_req(pMac, pMsgBuf);
 		break;
 
 	case SIR_LIM_ADDTS_RSP_TIMEOUT:
-		PELOG1(lim_log
-			       (pMac, LOG1,
-			       FL("Received SIR_LIM_ADDTS_RSP_TIMEOUT message "));
-		       )
+		pe_debug("Received SIR_LIM_ADDTS_RSP_TIMEOUT message");
 		lim_process_sme_addts_rsp_timeout(pMac, pMsg->bodyval);
 		break;
 
