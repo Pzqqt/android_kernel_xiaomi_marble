@@ -673,6 +673,9 @@ struct dp_soc {
 #endif
 	qdf_list_t reo_desc_freelist;
 	qdf_spinlock_t reo_desc_freelist_lock;
+
+	/* Obj Mgr SoC */
+	struct wlan_objmgr_psoc *psoc;
 };
 
 /* PDEV level structure for data path */

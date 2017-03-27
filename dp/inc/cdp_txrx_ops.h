@@ -32,6 +32,7 @@
 #endif
 #include "cdp_txrx_handle.h"
 #include <cdp_txrx_mon_struct.h>
+#include "wlan_objmgr_psoc_obj.h"
 
 /******************************************************************************
  *
@@ -574,7 +575,7 @@ struct ol_if_ops {
 			uint32_t tid_mask);
 	int (*peer_unref_delete)(void *scn_handle, uint8_t vdev_id,
 			uint8_t *peer_macaddr);
-	bool (*is_hw_dbs_2x2_capable)(void);
+	bool (*is_hw_dbs_2x2_capable)(struct wlan_objmgr_psoc *psoc);
 	int (*peer_add_wds_entry)(void *ol_soc_handle,
 			const uint8_t *dest_macaddr, uint8_t *peer_macaddr,
 			uint32_t flags);

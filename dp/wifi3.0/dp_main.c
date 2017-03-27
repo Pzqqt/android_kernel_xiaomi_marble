@@ -1484,7 +1484,7 @@ static void dp_rxdma_ring_config(struct dp_soc *soc)
 			if (soc->cdp_soc.ol_ops->
 				is_hw_dbs_2x2_capable) {
 				dbs_enable = soc->cdp_soc.ol_ops->
-					is_hw_dbs_2x2_capable();
+					is_hw_dbs_2x2_capable(soc->psoc);
 			}
 
 			if (dbs_enable) {
@@ -3542,10 +3542,10 @@ static struct cdp_ops dp_txrx_ops = {
  */
 void *dp_soc_attach_wifi3(void *osif_soc, void *hif_handle,
 	HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
-	struct ol_if_ops *ol_ops);
+	struct ol_if_ops *ol_ops, struct wlan_objmgr_psoc *psoc);
 void *dp_soc_attach_wifi3(void *osif_soc, void *hif_handle,
 	HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
-	struct ol_if_ops *ol_ops)
+	struct ol_if_ops *ol_ops, struct wlan_objmgr_psoc *psoc)
 {
 	struct dp_soc *soc = qdf_mem_malloc(sizeof(*soc));
 
@@ -3560,6 +3560,7 @@ void *dp_soc_attach_wifi3(void *osif_soc, void *hif_handle,
 	soc->osif_soc = osif_soc;
 	soc->osdev = qdf_osdev;
 	soc->hif_handle = hif_handle;
+	soc->psoc = psoc;
 
 	soc->hal_soc = hif_get_hal_handle(hif_handle);
 	soc->htt_handle = htt_soc_attach(soc, osif_soc, htc_handle,
