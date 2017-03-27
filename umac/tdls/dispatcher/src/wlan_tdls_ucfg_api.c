@@ -436,3 +436,42 @@ error:
 	qdf_mem_free(req);
 	return status;
 }
+
+QDF_STATUS ucfg_tdls_send_mgmt_frame(
+				struct tdls_action_frame_request *req)
+{
+	struct scheduler_msg msg = {0, };
+	struct tdls_action_frame_request *mgmt_req;
+
+	if (!req || !req->vdev) {
+		tdls_err("Invalid mgmt req params %p", req);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	mgmt_req = qdf_mem_malloc(sizeof(*mgmt_req) +
+					req->len);
+	if (!mgmt_req) {
+		tdls_err("mem allocate fail");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	qdf_mem_copy(mgmt_req, req, sizeof(*req));
+
+	/*populate the additional IE's */
+	if ((0 != req->len) && (NULL != req->cmd_buf)) {
+		qdf_mem_copy(mgmt_req->tdls_mgmt.buf, req->cmd_buf,
+				req->len);
+		mgmt_req->tdls_mgmt.len = req->len;
+	} else {
+		mgmt_req->tdls_mgmt.len = 0;
+	}
+
+	tdls_notice("vdev id: %d, session id : %d", mgmt_req->vdev_id,
+		    mgmt_req->session_id);
+	msg.bodyptr = mgmt_req;
+	msg.callback = tdls_process_cmd;
+	msg.type = TDLS_CMD_TX_ACTION;
+	scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
+
+	return QDF_STATUS_SUCCESS;
+}

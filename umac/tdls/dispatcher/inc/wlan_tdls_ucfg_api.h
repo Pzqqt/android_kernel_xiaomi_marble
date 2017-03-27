@@ -118,4 +118,16 @@ QDF_STATUS ucfg_tdls_update_peer(struct wlan_objmgr_vdev *vdev,
  */
 QDF_STATUS ucfg_tdls_oper(struct wlan_objmgr_vdev *vdev,
 			  const uint8_t *macaddr, enum tdls_command_type cmd);
+
+/**
+ * ucfg_tdls_send_mgmt_frame() - send TDLS mgmt frame
+ * @mgmt_req: pointer to TDLS action frame request struct
+ *
+ * This will TDLS action frames to peer
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_tdls_send_mgmt_frame(
+				struct tdls_action_frame_request *mgmt_req);
+
 #endif

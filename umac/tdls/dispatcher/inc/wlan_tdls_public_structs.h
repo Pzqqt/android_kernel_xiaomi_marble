@@ -824,4 +824,44 @@ struct tdls_event_notify {
 	struct wlan_objmgr_vdev *vdev;
 	struct tdls_event_info event;
 };
+
+/**
+ * struct tdls_event_notify - tdls event notify
+ * @peer_mac: peer's mac address
+ * @frame_type: Type of TDLS mgmt frame to be sent
+ * @dialog: dialog token used in the frame.
+ * @status_code: status to be incuded in the frame
+ * @responder: Tdls request type
+ * @peer_capability: peer cpabilities
+ * @len: lenght of additional Ies
+ * @buf: additional IEs to be included
+ */
+struct tdls_send_mgmt {
+	struct qdf_mac_addr peer_mac;
+	uint8_t frame_type;
+	uint8_t dialog;
+	uint16_t status_code;
+	uint8_t responder;
+	uint32_t peer_capability;
+	uint8_t len;
+	/* Variable length, do not add anything after this */
+	uint8_t *buf;
+};
+
+/**
+ * struct tdls_send_action_frame_request - tdls send mgmt request
+ * @vdev: vdev object
+ * @session_id: session id
+ * @vdev_id: vdev id
+ * @tdls_mgmt: tdls managment
+ */
+struct tdls_action_frame_request {
+	struct wlan_objmgr_vdev *vdev;
+	uint8_t session_id;
+	uint8_t vdev_id;
+	const uint8_t *cmd_buf;
+	uint8_t len;
+	struct tdls_send_mgmt tdls_mgmt;
+};
+
 #endif

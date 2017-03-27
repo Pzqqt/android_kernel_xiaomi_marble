@@ -250,4 +250,13 @@ QDF_STATUS tdls_process_should_teardown(struct wlan_objmgr_vdev *vdev,
  */
 QDF_STATUS tdls_process_connection_tracker_notify(struct wlan_objmgr_vdev *vdev,
 						  struct tdls_event_info *evt);
+
+/**
+ * tdls_validate_mgmt_request() -validate mgmt request
+ * @tdls_validate: action frame request
+ *
+ * Return: 0 for success or -EINVAL otherwise
+ */
+int tdls_validate_mgmt_request(struct tdls_validate_action_req *tdls_validate);
+
 #endif
