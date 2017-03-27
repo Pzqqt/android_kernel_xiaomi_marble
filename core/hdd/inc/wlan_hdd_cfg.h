@@ -9152,6 +9152,46 @@ enum hdd_wext_control {
 
 #endif /* WLAN_FEATURE_11AX */
 
+/**
+ * enum l1ss_sleep_allowed - when L1ss Sleep is allowed on capable platforms
+ * @L1SS_SLEEP_ALLOWED_NEVER: never allow L1ss Sleep
+ * @L1SS_SLEEP_ALLOWED_STA_CONNECTED: allow in station mode (connected)
+ * @L1SS_SLEEP_ALLOWED_STA_DISCONNECTED: allow in station mode (disconnected)
+ * @L1SS_SLEEP_ALLOWED_ALWAYS: always allow L1ss Sleep
+ */
+enum l1ss_sleep_allowed {
+	L1SS_SLEEP_ALLOWED_NEVER = 0,
+	L1SS_SLEEP_ALLOWED_STA_CONNECTED = BIT(0),
+	L1SS_SLEEP_ALLOWED_STA_DISCONNECTED = BIT(1),
+	L1SS_SLEEP_ALLOWED_ALWAYS = 0xff
+};
+
+/*
+ * <ini>
+ * gL1ssSleepAllowed - Control when L1ss Sleep is allowed on capable platforms
+ * @Min: 0 (disabled)
+ * @Max: 255 (always allow)
+ * @Default: 1 (station mode - connected)
+ *
+ * This config item controls when L1ss Sleep is allowed on capable platforms.
+ * The default is connected station mode to support DTIM power savings.
+ *	0) never allow
+ *	1) station mode (connected)
+ *	2) station mode (disconnected)
+ *	255) always allow
+ *
+ * Related: N/A
+ *
+ * Supported Feature: L1ss Sleep
+ *
+ * Usage: Internal/External
+ * </ini>
+ */
+#define CFG_L1SS_SLEEP_ALLOWED_NAME    "gL1ssSleepAllowed"
+#define CFG_L1SS_SLEEP_ALLOWED_MIN     (L1SS_SLEEP_ALLOWED_NEVER)
+#define CFG_L1SS_SLEEP_ALLOWED_MAX     (L1SS_SLEEP_ALLOWED_ALWAYS)
+#define CFG_L1SS_SLEEP_ALLOWED_DEFAULT (L1SS_SLEEP_ALLOWED_STA_CONNECTED)
+
 /*
  * Type declarations
  */
@@ -9866,6 +9906,7 @@ struct hdd_config {
 	bool enable_ul_mimo;
 	bool enable_ul_ofdma;
 #endif
+	enum l1ss_sleep_allowed l1ss_sleep_allowed;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))
