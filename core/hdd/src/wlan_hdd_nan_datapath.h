@@ -259,5 +259,7 @@ void hdd_ndi_drv_ndi_delete_rsp_handler(uint8_t vdev_id);
 int hdd_ndp_get_peer_idx(uint8_t vdev_id, struct qdf_mac_addr *addr);
 int hdd_ndp_new_peer_handler(uint8_t vdev_id, uint16_t sta_id,
 			struct qdf_mac_addr *peer_mac_addr, bool fist_peer);
+void hdd_ndp_peer_departed_handler(uint8_t vdev_id, uint16_t sta_id,
+			struct qdf_mac_addr *peer_mac_addr, bool last_peer);
 
 #endif /* __WLAN_HDD_NAN_DATAPATH_H */

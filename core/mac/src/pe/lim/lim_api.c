@@ -746,6 +746,8 @@ static void lim_nan_register_callbacks(tpAniSirGlobal mac_ctx)
 	struct nan_callbacks cb_obj = {0};
 
 	cb_obj.add_ndi_peer = lim_add_ndi_peer_converged;
+	cb_obj.ndp_delete_peers = lim_ndp_delete_peers_converged;
+	cb_obj.delete_peers_by_addr = lim_ndp_delete_peers_by_addr_converged;
 
 	ucfg_nan_register_lim_callbacks(mac_ctx->psoc, &cb_obj);
 }

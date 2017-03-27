@@ -33,6 +33,8 @@
 #include "ani_global.h"
 #include "sir_params.h"
 
+struct peer_nan_datapath_map;
+
 /**
  * struct ndp_peer_node - structure for holding per-peer context
  * @next: pointer to the next peer
@@ -116,6 +118,13 @@ void lim_process_ndi_del_sta_rsp(tpAniSirGlobal mac_ctx,
 
 QDF_STATUS lim_add_ndi_peer_converged(uint32_t vdev_id,
 				struct qdf_mac_addr peer_mac_addr);
+
+void lim_ndp_delete_peers_converged(struct peer_nan_datapath_map *ndp_map,
+				    uint8_t num_peers);
+
+void lim_ndp_delete_peers_by_addr_converged(uint8_t vdev_id,
+					struct qdf_mac_addr peer_ndi_mac_addr);
+
 #else
 static inline void lim_process_ndi_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 					struct scheduler_msg *lim_msg_q,

@@ -1941,6 +1941,7 @@ static void hdd_nan_register_callbacks(hdd_context_t *hdd_ctx)
 
 	cb_obj.new_peer_ind = hdd_ndp_new_peer_handler;
 	cb_obj.get_peer_idx = hdd_ndp_get_peer_idx;
+	cb_obj.peer_departed_ind = hdd_ndp_peer_departed_handler;
 
 	os_if_nan_register_hdd_callbacks(hdd_ctx->hdd_psoc, &cb_obj);
 }

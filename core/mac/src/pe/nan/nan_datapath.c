@@ -37,6 +37,7 @@
 #include "nan_ucfg_api.h"
 #endif
 
+#ifndef WLAN_FEATURE_NAN_CONVERGENCE
 /**
  * lim_send_ndp_event_to_sme() - generic function to prepare and send NDP
  * message to SME.
@@ -66,6 +67,26 @@ static void lim_send_ndp_event_to_sme(tpAniSirGlobal mac_ctx, uint32_t msg_type,
 	}
 	lim_sys_process_mmh_msg_api(mac_ctx, &mmh_msg, ePROT);
 }
+
+static void lim_send_peer_departed(tpAniSirGlobal mac_ctx, uint8_t vdev_id,
+				uint32_t msg_type, void *body_ptr, uint32_t len,
+				uint32_t body_val)
+{
+	lim_send_ndp_event_to_sme(mac_ctx, msg_type, body_ptr, len, body_val);
+}
+#else
+static void lim_send_peer_departed(tpAniSirGlobal mac_ctx, uint8_t vdev_id,
+				uint32_t msg_type, void *body_ptr, uint32_t len,
+				uint32_t body_val)
+{
+	struct wlan_objmgr_psoc *psoc = mac_ctx->psoc;
+	struct wlan_objmgr_vdev *vdev =
+			wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+							     WLAN_NAN_ID);
+
+	ucfg_nan_event_handler(psoc, vdev, NDP_PEER_DEPARTED, body_ptr);
+}
+#endif
 
 /**
  * lim_add_ndi_peer() - Function to add ndi peer
@@ -232,6 +253,7 @@ responder_rsp:
 				bodyval ? 0 : sizeof(*rsp_ind), bodyval);
 	return ret_val;
 }
+#endif /* WLAN_FEATURE_NAN_CONVERGENCE */
 
 /**
  * lim_ndp_delete_peer_by_addr() - Delete NAN data peer, given addr and vdev_id
@@ -277,6 +299,17 @@ static void lim_ndp_delete_peer_by_addr(tpAniSirGlobal mac_ctx, uint8_t vdev_id,
 	 */
 
 	lim_del_sta(mac_ctx, sta_ds, true, session);
+}
+
+void lim_ndp_delete_peers_by_addr_converged(uint8_t vdev_id,
+					struct qdf_mac_addr peer_ndi_mac_addr)
+{
+	tpAniSirGlobal mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+
+	if (!mac_ctx)
+		return;
+
+	lim_ndp_delete_peer_by_addr(mac_ctx, vdev_id, peer_ndi_mac_addr);
 }
 
 /**
@@ -362,7 +395,18 @@ static void lim_ndp_delete_peers(tpAniSirGlobal mac_ctx,
 	}
 	qdf_mem_free(deleted_peers);
 }
-#endif
+
+void lim_ndp_delete_peers_converged(struct peer_nan_datapath_map *ndp_map,
+				    uint8_t num_peers)
+{
+	tpAniSirGlobal mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+
+	if (!mac_ctx)
+		return;
+
+	lim_ndp_delete_peers(mac_ctx, (struct peer_ndp_map *)ndp_map,
+			     num_peers);
+}
 
 #ifndef WLAN_FEATURE_NAN_CONVERGENCE
 /**
@@ -465,8 +509,8 @@ void lim_process_ndi_del_sta_rsp(tpAniSirGlobal mac_ctx,
 	lim_delete_dph_hash_entry(mac_ctx, sta_ds->staAddr, sta_ds->assocId,
 			pe_session);
 	pe_session->limMlmState = eLIM_MLM_IDLE_STATE;
-
-	lim_send_ndp_event_to_sme(mac_ctx, eWNI_SME_NDP_PEER_DEPARTED_IND,
+	lim_send_peer_departed(mac_ctx, peer_ind.session_id,
+				eWNI_SME_NDP_PEER_DEPARTED_IND,
 				&peer_ind, sizeof(peer_ind), false);
 
 skip_event:

@@ -2294,4 +2294,35 @@ int hdd_ndp_new_peer_handler(uint8_t vdev_id, uint16_t sta_id,
 	return 0;
 }
 
+
+/**
+ * hdd_ndp_peer_departed_handler() - Handle NDP peer departed indication
+ * @adapter: pointer to adapter context
+ * @ind_params: indication parameters
+ *
+ * Return: none
+ */
+void hdd_ndp_peer_departed_handler(uint8_t vdev_id, uint16_t sta_id,
+			struct qdf_mac_addr *peer_mac_addr, bool last_peer)
+{
+	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	hdd_adapter_t *adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	hdd_station_ctx_t *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+
+	ENTER();
+	hdd_roam_deregister_sta(adapter, sta_id);
+	hdd_delete_peer(sta_ctx, sta_id);
+	hdd_ctx->sta_to_adapter[sta_id] = NULL;
+
+	if (last_peer) {
+		hdd_info("No more ndp peers.");
+		sta_ctx->conn_info.connState = eConnectionState_NdiDisconnected;
+		hdd_conn_set_connection_state(adapter,
+			eConnectionState_NdiDisconnected);
+		hdd_info("Stop netif tx queues.");
+		wlan_hdd_netif_queue_control(adapter, WLAN_STOP_ALL_NETIF_QUEUE,
+					     WLAN_CONTROL_PATH);
+	}
+	EXIT();
+}
 #endif
