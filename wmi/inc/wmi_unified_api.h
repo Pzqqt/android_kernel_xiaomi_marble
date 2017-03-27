@@ -221,6 +221,17 @@ wmi_unified_register_event_handler(wmi_unified_t wmi_handle,
 				   uint8_t rx_ctx);
 
 /**
+ * WMI event handler unregister function for converged componets
+ *
+ *  @param wmi_handle      : handle to WMI.
+ *  @param event_id        : WMI event ID
+ *  @return 0  on success and -ve on failure.
+ */
+int
+wmi_unified_unregister_event(wmi_unified_t wmi_handle,
+					 uint32_t event_id);
+
+/**
  * WMI event handler unregister function
  *
  *  @param wmi_handle      : handle to WMI.
