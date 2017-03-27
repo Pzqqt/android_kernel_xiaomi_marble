@@ -1769,6 +1769,13 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_QDF_TRACE_ENABLE_MIN,
 		     CFG_QDF_TRACE_ENABLE_MAX),
 
+	REG_VARIABLE(CFG_QDF_TRACE_ENABLE_NAN, WLAN_PARAM_Integer,
+		     struct hdd_config, qdf_trace_enable_nan,
+		     VAR_FLAGS_OPTIONAL,
+		     CFG_QDF_TRACE_ENABLE_DEFAULT,
+		     CFG_QDF_TRACE_ENABLE_MIN,
+		     CFG_QDF_TRACE_ENABLE_MAX),
+
 	REG_VARIABLE(CFG_TELE_BCN_TRANS_LI_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, nTeleBcnTransListenInterval,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,

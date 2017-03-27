@@ -4648,6 +4648,7 @@ typedef enum {
 #define CFG_CDR_TRACE_ENABLE_HDD_SAP_DATA_NAME   "qdf_trace_enable_hdd_sap_data"
 #define CFG_QDF_TRACE_ENABLE_HDD_DATA_NAME       "qdf_trace_enable_hdd_data"
 #define CFG_QDF_TRACE_ENABLE_WIFI_POS     "qdf_trace_enable_wifi_pos"
+#define CFG_QDF_TRACE_ENABLE_NAN          "qdf_trace_enable_nan"
 
 #define CFG_QDF_TRACE_ENABLE_MIN          (0)
 #define CFG_QDF_TRACE_ENABLE_MAX          (0xff)
@@ -9678,6 +9679,7 @@ struct hdd_config {
 	uint16_t qdf_trace_enable_epping;
 	uint16_t qdf_trace_enable_qdf_devices;
 	uint16_t qdf_trace_enable_wifi_pos;
+	uint16_t qdf_trace_enable_nan;
 
 	uint16_t nTeleBcnTransListenInterval;
 	uint16_t nTeleBcnMaxListenInterval;
