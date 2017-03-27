@@ -4427,6 +4427,14 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_TX_ORPHAN_ENABLE_DEFAULT,
 		CFG_TX_ORPHAN_ENABLE_MIN,
 		CFG_TX_ORPHAN_ENABLE_MAX),
+
+	REG_VARIABLE(CFG_AUTO_DETECT_POWER_FAIL_MODE_NAME, WLAN_PARAM_Integer,
+		struct hdd_config, auto_pwr_save_fail_mode,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_AUTO_DETECT_POWER_FAIL_MODE_DEFAULT,
+		CFG_AUTO_DETECT_POWER_FAIL_MODE_MIN,
+		CFG_AUTO_DETECT_POWER_FAIL_MODE_MAX),
+
 };
 
 
@@ -5928,6 +5936,10 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	hdd_info("Name = [%s] Value = [%d]",
 		CFG_SAP_INTERNAL_RESTART_NAME,
 		pHddCtx->config->sap_internal_restart);
+	hdd_debug("Name = [%s] Value = [%u]",
+		CFG_AUTO_DETECT_POWER_FAIL_MODE_NAME,
+		pHddCtx->config->auto_pwr_save_fail_mode);
+
 	hdd_per_roam_print_ini_config(pHddCtx);
 	hdd_he_print_ini_config(pHddCtx);
 	hdd_info("Name = [%s] Value = [%d]",

@@ -1015,6 +1015,7 @@ typedef struct {
  * @ns_offload_req: cached ns offload request
  * @wow_stats: stat counters for WoW related events
  * It stores parameters per vdev in wma.
+ * @in_bmps : Whether bmps for this interface has been enabled
  */
 struct wma_txrx_node {
 	uint8_t addr[IEEE80211_ADDR_LEN];
@@ -1092,6 +1093,7 @@ struct wma_txrx_node {
 	bool he_capable;
 	uint32_t he_ops;
 #endif
+	bool in_bmps;
 };
 
 #if defined(QCA_WIFI_FTM)
@@ -1519,6 +1521,7 @@ typedef struct {
 	struct he_capability he_cap;
 #endif
 	bool tx_bfee_8ss_enabled;
+	bool in_imps;
 } t_wma_handle, *tp_wma_handle;
 
 /**
@@ -2349,6 +2352,32 @@ uint16_t wma_vdev_get_pause_bitmap(uint8_t vdev_id)
 }
 
 /**
+ * wma_vdev_is_device_in_low_pwr_mode - is device in power save mode
+ * @vdev_id: the Id of the vdev to configure
+ *
+ * Return: true if device is in low power mode else false
+ */
+static inline bool wma_vdev_is_device_in_low_pwr_mode(uint8_t vdev_id)
+{
+	tp_wma_handle wma = (tp_wma_handle)cds_get_context(QDF_MODULE_ID_WMA);
+	struct wma_txrx_node *iface;
+
+	if (!wma) {
+		WMA_LOGE("%s: WMA context is invald!", __func__);
+		return 0;
+	}
+
+	iface = &wma->interfaces[vdev_id];
+	if (!iface || !iface->handle) {
+		WMA_LOGE("%s: Failed to get iface handle: %p",
+			 __func__, iface->handle);
+		return 0;
+	}
+
+	return iface->in_bmps || wma->in_imps;
+}
+
+/**
  * wma_vdev_set_pause_bit() - Set a bit in vdev pause bitmap
  * @vdev_id: the Id of the vdev to configure
  * @bit_pos: set bit position in pause bitmap
@@ -2521,4 +2550,16 @@ QDF_STATUS wma_set_rx_reorder_timeout_val(tp_wma_handle wma_handle,
 QDF_STATUS wma_set_rx_blocksize(tp_wma_handle wma_handle,
 	struct sir_peer_set_rx_blocksize *peer_rx_blocksize);
 
+/*
+ * wma_chip_power_save_failure_detected_handler() - chip pwr save fail detected
+ * event handler
+ * @handle: wma handle
+ * @cmd_param_info: event handler data
+ * @len: length of @cmd_param_info
+ *
+ * Return: QDF_STATUS_SUCCESS on success; error code otherwise
+ */
+int wma_chip_power_save_failure_detected_handler(void *handle,
+						 uint8_t *cmd_param_info,
+						 uint32_t len);
 #endif

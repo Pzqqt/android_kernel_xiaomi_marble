@@ -2555,6 +2555,14 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *cds_context,
 				wma_rx_aggr_failure_event_handler,
 				WMA_RX_SERIALIZER_CTX);
 
+	/* Register PWR_SAVE_FAIL event only in case of recovery(1) */
+	if (cds_cfg->auto_power_save_fail_mode) {
+		wmi_unified_register_event_handler(wma_handle->wmi_handle,
+			WMI_PDEV_CHIP_POWER_SAVE_FAILURE_DETECTED_EVENTID,
+			wma_chip_power_save_failure_detected_handler,
+			WMA_RX_WORK_CTX);
+	}
+
 	wma_ndp_register_all_event_handlers(wma_handle);
 
 	wma_register_debug_callback();
@@ -2563,6 +2571,8 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *cds_context,
 		wma_vdev_update_pause_bitmap);
 	pmo_register_get_pause_bitmap(wma_handle->psoc,
 		wma_vdev_get_pause_bitmap);
+	pmo_register_is_device_in_low_pwr_mode(wma_handle->psoc,
+		wma_vdev_is_device_in_low_pwr_mode);
 	wma_cbacks.wma_get_connection_info = wma_get_connection_info;
 	wma_cbacks.wma_is_service_enabled = wma_is_service_enabled;
 	qdf_status = policy_mgr_register_wma_cb(wma_handle->psoc, &wma_cbacks);
@@ -3612,16 +3622,17 @@ QDF_STATUS wma_close(void *cds_ctx)
 		wlan_psoc_set_tgt_if_handle(wma_handle->psoc, NULL);
 	}
 
-	wlan_objmgr_psoc_release_ref(wma_handle->psoc, WLAN_LEGACY_WMA_ID);
-	wma_handle->psoc = NULL;
-	target_if_close();
-	wma_target_if_close(wma_handle);
-
 	pmo_unregister_pause_bitmap_notifier(wma_handle->psoc,
 		wma_vdev_update_pause_bitmap);
 	pmo_unregister_get_pause_bitmap(wma_handle->psoc,
 		wma_vdev_get_pause_bitmap);
+	pmo_unregister_is_device_in_low_pwr_mode(wma_handle->psoc,
+		wma_vdev_is_device_in_low_pwr_mode);
 
+	wlan_objmgr_psoc_release_ref(wma_handle->psoc, WLAN_LEGACY_WMA_ID);
+	wma_handle->psoc = NULL;
+	target_if_close();
+	wma_target_if_close(wma_handle);
 
 	WMA_LOGD("%s: Exit", __func__);
 	return QDF_STATUS_SUCCESS;

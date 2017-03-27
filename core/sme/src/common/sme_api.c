@@ -14161,6 +14161,23 @@ bool sme_is_any_session_in_connected_state(tHalHandle h_hal)
 	return ret;
 }
 
+QDF_STATUS sme_set_chip_pwr_save_fail_cb(tHalHandle hal,
+		 void (*cb)(void *,
+		 struct chip_pwr_save_fail_detected_params *)) {
+
+	QDF_STATUS status  = QDF_STATUS_SUCCESS;
+	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (status != QDF_STATUS_SUCCESS) {
+		sme_err("sme_AcquireGlobalLock failed!(status=%d)", status);
+		return status;
+	}
+	mac->sme.chip_power_save_fail_cb = cb;
+	sme_release_global_lock(&mac->sme);
+	return status;
+}
+
 /**
  * sme_set_rssi_monitoring() - set rssi monitoring
  * @hal: global hal handle

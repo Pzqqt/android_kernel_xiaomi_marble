@@ -1555,4 +1555,17 @@ QDF_STATUS sme_set_reorder_timeout(tHalHandle hal,
 QDF_STATUS sme_set_rx_set_blocksize(tHalHandle hal,
 		struct sir_peer_set_rx_blocksize *req);
 
+/*
+ * sme_set_chip_pwr_save_fail_cb() - set chip power save failure callback
+ * @hal: global hal handle
+ * @cb: callback function pointer
+ *
+ * This function stores the chip power save failure callback function.
+ *
+ * Return: QDF_STATUS enumeration.
+ */
+
+QDF_STATUS sme_set_chip_pwr_save_fail_cb(tHalHandle hal, void (*cb)(void *,
+				 struct chip_pwr_save_fail_detected_params *));
+
 #endif /* #if !defined( __SME_API_H ) */

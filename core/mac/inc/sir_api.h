@@ -5676,6 +5676,17 @@ struct rssi_breach_event {
 	struct qdf_mac_addr  curr_bssid;
 };
 
+/**
+ * struct chip_pwr_save_fail_detected_params - chip power save failure detected
+ * event params
+ * @failure_reason_code:failure reason code
+ * @wake_lock_bitmap:bitmap for modules voting against sleep for long duration.
+ */
+struct chip_pwr_save_fail_detected_params {
+	uint32_t     failure_reason_code;
+	uint32_t     wake_lock_bitmap[4];
+};
+
 #define MAX_NUM_FW_SEGMENTS 4
 
 /**
@@ -6356,6 +6367,7 @@ struct sir_bpf_get_offload {
  * @wow_pno_complete_wake_up_count: pno complete wakeup count
  * @wow_pno_match_wake_up_count: pno match wakeup count
  * @wow_oem_response_wake_up_count: oem response wakeup count
+ * @pwr_save_fail_detected: pwr save fail detected wakeup count
  */
 struct sir_wake_lock_stats {
 	uint32_t wow_unspecified_wake_up_count;
@@ -6374,6 +6386,7 @@ struct sir_wake_lock_stats {
 	uint32_t wow_pno_complete_wake_up_count;
 	uint32_t wow_pno_match_wake_up_count;
 	uint32_t wow_oem_response_wake_up_count;
+	uint32_t pwr_save_fail_detected;
 };
 
 /**
@@ -6410,6 +6423,7 @@ struct sir_vdev_wow_stats {
 	uint32_t pno_complete;
 	uint32_t pno_match;
 	uint32_t oem_response;
+	uint32_t pwr_save_fail_detected;
 };
 
 /**

@@ -1480,6 +1480,9 @@ QDF_STATUS hdd_wlan_re_init(void)
 
 	/* Allow the phone to go to sleep */
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_REINIT);
+	/* set chip power save failure detected callback */
+	sme_set_chip_pwr_save_fail_cb(pHddCtx->hHal,
+				      hdd_chip_pwr_save_fail_detected_cb);
 
 	ret = hdd_register_cb(pHddCtx);
 	if (ret) {

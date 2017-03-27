@@ -1461,6 +1461,8 @@ static const u8 *wma_wow_wake_reason_str(A_INT32 wake_reason)
 		return "NAN_EVENT_WAKE_HOST";
 	case WOW_REASON_DEBUG_TEST:
 		return "DEBUG_TEST";
+	case WOW_REASON_CHIP_POWER_FAILURE_DETECT:
+		return "CHIP_POWER_FAILURE_DETECT";
 	default:
 		return "unknown";
 	}
@@ -1507,6 +1509,7 @@ static void wma_print_wow_stats(t_wma_handle *wma,
 	case WOW_REASON_EXTSCAN:
 	case WOW_REASON_RSSI_BREACH_EVENT:
 	case WOW_REASON_OEM_RESPONSE_EVENT:
+	case WOW_REASON_CHIP_POWER_FAILURE_DETECT:
 		break;
 	default:
 		return;
@@ -1557,6 +1560,9 @@ static void wma_inc_wow_stats(t_wma_handle *wma,
 		break;
 	case WOW_REASON_OEM_RESPONSE_EVENT:
 		stats->oem_response++;
+		break;
+	case WOW_REASON_CHIP_POWER_FAILURE_DETECT:
+		stats->pwr_save_fail_detected++;
 		break;
 	}
 }
