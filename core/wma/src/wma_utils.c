@@ -2169,10 +2169,10 @@ int32_t wma_txrx_fw_stats_reset(tp_wma_handle wma_handle,
 }
 
 #ifdef HELIUMPLUS
-#define SET_UPLOAD_MASK(_mask, _rate_info) 	\
+#define SET_UPLOAD_MASK(_mask, _rate_info)	\
 	((_mask) = 1 << (_rate_info ## _V2))
 #else  /* !HELIUMPLUS */
-#define SET_UPLOAD_MASK(_mask, _rate_info) 	\
+#define SET_UPLOAD_MASK(_mask, _rate_info)	\
 	((_mask) = 1 << (_rate_info))
 #endif
 

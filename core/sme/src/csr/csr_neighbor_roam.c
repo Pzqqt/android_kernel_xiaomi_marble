@@ -515,7 +515,7 @@ csr_neighbor_roam_prepare_scan_profile_filter(tpAniSirGlobal pMac,
  * @output_ch_list: The output channel list
  * @output_num_of_ch: The number of channels in output channel list
  * @merged_output_num_of_ch: The final number of channels in the
- * 				output channel list.
+ *				output channel list.
  *
  * This function is used to filter out the channels based on the
  * currently associated AP channel
@@ -571,13 +571,13 @@ QDF_STATUS csr_neighbor_roam_channels_filter_by_current_band(tpAniSirGlobal pMac
  * @mac_ctx: Pointer to Global MAC structure
  * @session_id: Session ID
  * @input_ch_list: The additional channels to merge in to the
- * 			"merged" channels list.
+ *			"merged" channels list.
  * @input_num_of_ch: The number of additional channels.
  * @output_ch_list: The place to put the "merged" channel list.
  * @output_num_of_ch: The original number of channels in the
- * 			"merged" channels list.
+ *			"merged" channels list.
  * @merged_output_num_of_ch: The final number of channels in the
- * 				"merged" channel list.
+ *				"merged" channel list.
  *
  * This function is used to merge two channel list.
  * NB: If called with outputNumOfChannels == 0, this routines simply

@@ -278,7 +278,7 @@ ol_rx_mpdu_list_next(struct ol_txrx_pdev_t *pdev,
 			break;                                                 \
 		case htt_tx_status_no_ack:                                     \
 			TXRX_STATS_ADD(_pdev, pub.tx.dropped.no_ack.pkts,      \
-				 _p_cntrs);            			       \
+				 _p_cntrs);				       \
 			TXRX_STATS_ADD(_pdev, pub.tx.dropped.no_ack.bytes,     \
 				 _b_cntrs);				       \
 			break;                                                 \
