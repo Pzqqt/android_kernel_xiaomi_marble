@@ -523,17 +523,19 @@ bool policy_mgr_is_hw_dbs_capable(struct wlan_objmgr_psoc *psoc)
 		policy_mgr_notice("DBS is disabled");
 		return false;
 	}
+	if (pm_ctx->wma_cbacks.wma_is_service_enabled) {
+		policy_mgr_notice("DBS service bit map: %d",
+			pm_ctx->wma_cbacks.wma_is_service_enabled(
+			WMI_SERVICE_DUAL_BAND_SIMULTANEOUS_SUPPORT));
 
-	policy_mgr_notice("DBS service bit map: %d",
-		pm_ctx->wma_cbacks.wma_is_service_enabled(
-		WMI_SERVICE_DUAL_BAND_SIMULTANEOUS_SUPPORT));
-
-	/* The agreement with FW is that: To know if the target is DBS
-	 * capable, DBS needs to be supported both in the HW mode list
-	 * and in the service ready event
-	 */
-	if (!(pm_ctx->wma_cbacks.wma_is_service_enabled(
+		/* The agreement with FW is that: To know if the target is DBS
+		 * capable, DBS needs to be supported both in the HW mode list
+		 * and in the service ready event
+		 */
+		if (!(pm_ctx->wma_cbacks.wma_is_service_enabled(
 			WMI_SERVICE_DUAL_BAND_SIMULTANEOUS_SUPPORT)))
+			return false;
+	} else
 		return false;
 
 	for (i = 0; i < pm_ctx->num_dbs_hw_modes; i++) {
@@ -562,16 +564,20 @@ bool policy_mgr_is_hw_sbs_capable(struct wlan_objmgr_psoc *psoc)
 		policy_mgr_err("Invalid Context");
 		return false;
 	}
+	if (pm_ctx->wma_cbacks.wma_is_service_enabled) {
+		policy_mgr_notice("DBS service bit map: %d",
+			pm_ctx->wma_cbacks.wma_is_service_enabled(
+			WMI_SERVICE_DUAL_BAND_SIMULTANEOUS_SUPPORT));
 
-	/* The agreement with FW is that: To know if the target is SBS
-	 * capable, SBS needs to be supported both in the HW mode list
-	 * and DBS needs to be supported in the service ready event
-	 */
-	if (!(pm_ctx->wma_cbacks.wma_is_service_enabled(
-			WMI_SERVICE_DUAL_BAND_SIMULTANEOUS_SUPPORT))) {
-		policy_mgr_err("SBS cannot be supported since DBS is disabled");
+		/* The agreement with FW is that: To know if the target is SBS
+		 * capable, SBS needs to be supported both in the HW mode list
+		 * and DBS needs to be supported in the service ready event
+		 */
+		if (!(pm_ctx->wma_cbacks.wma_is_service_enabled(
+			WMI_SERVICE_DUAL_BAND_SIMULTANEOUS_SUPPORT)))
+			return false;
+	} else
 		return false;
-	}
 
 	for (i = 0; i < pm_ctx->num_dbs_hw_modes; i++) {
 		param = pm_ctx->hw_mode.hw_mode_list[i];
@@ -1178,14 +1184,19 @@ QDF_STATUS policy_mgr_incr_connection_count(
 			pm_ctx->user_cfg.max_concurrent_active_sessions);
 		return status;
 	}
-
-	status = pm_ctx->wma_cbacks.wma_get_connection_info(
+	if (pm_ctx->wma_cbacks.wma_get_connection_info) {
+		status = pm_ctx->wma_cbacks.wma_get_connection_info(
 				vdev_id, &conn_table_entry);
-	if (QDF_STATUS_SUCCESS != status) {
-		policy_mgr_err("can't find vdev_id %d in connection table",
+		if (QDF_STATUS_SUCCESS != status) {
+			policy_mgr_err("can't find vdev_id %d in connection table",
 			vdev_id);
-		return status;
+			return status;
+		}
+	} else {
+		policy_mgr_err("wma_get_connection_info is NULL");
+		return QDF_STATUS_E_FAILURE;
 	}
+
 	mode = policy_mgr_get_mode(conn_table_entry.type,
 					conn_table_entry.sub_type);
 	chan = reg_freq_to_chan(conn_table_entry.mhz);
