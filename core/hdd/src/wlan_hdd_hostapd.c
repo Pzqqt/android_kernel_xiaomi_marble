@@ -8486,8 +8486,6 @@ void hdd_sap_indicate_disconnect_for_sta(hdd_adapter_t *adapter)
 		}
 	}
 
-	clear_bit(SOFTAP_BSS_STARTED, &adapter->event_flags);
-
 	EXIT();
 }
 
