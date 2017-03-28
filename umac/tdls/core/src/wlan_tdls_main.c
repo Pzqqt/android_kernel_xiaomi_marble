@@ -31,6 +31,11 @@
 #include "wlan_policy_mgr_public_struct.h"
 #include "wlan_policy_mgr_api.h"
 
+/* Global tdls soc pvt object
+ * this is useful for some functions which does not receive either vdev or psoc
+ * objects.
+ */
+static struct tdls_soc_priv_obj *tdls_soc_global;
 
 QDF_STATUS tdls_psoc_obj_create_notification(struct wlan_objmgr_psoc *psoc,
 					     void *arg_list)
@@ -56,6 +61,7 @@ QDF_STATUS tdls_psoc_obj_create_notification(struct wlan_objmgr_psoc *psoc,
 		qdf_mem_free(tdls_soc_obj);
 	}
 
+	tdls_soc_global = tdls_soc_obj;
 	tdls_notice("TDLS obj attach to psoc successfully");
 
 	return status;
@@ -141,6 +147,8 @@ QDF_STATUS tdls_vdev_obj_create_notification(struct wlan_objmgr_vdev *vdev,
 {
 	QDF_STATUS status;
 	struct tdls_vdev_priv_obj *tdls_vdev_obj;
+	struct wlan_objmgr_pdev *pdev;
+	struct tdls_soc_priv_obj *tdls_soc;
 
 	tdls_notice("tdls vdev mode %d", wlan_vdev_mlme_get_opmode(vdev));
 	if (wlan_vdev_mlme_get_opmode(vdev) != QDF_STA_MODE &&
@@ -168,6 +176,23 @@ QDF_STATUS tdls_vdev_obj_create_notification(struct wlan_objmgr_vdev *vdev,
 	status = tdls_vdev_init(tdls_vdev_obj);
 	if (QDF_IS_STATUS_ERROR(status))
 		goto out;
+
+	tdls_soc = wlan_vdev_get_tdls_soc_obj(vdev);
+	if (!tdls_soc) {
+		tdls_err("get soc by vdev failed ");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	pdev = wlan_vdev_get_pdev(vdev);
+
+	status = ucfg_scan_register_event_handler(pdev,
+				tdls_scan_complete_event_handler,
+				tdls_soc);
+
+	if (QDF_STATUS_SUCCESS != status) {
+		tdls_err("scan event register failed ");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	tdls_notice("tdls object attach to vdev successfully");
 out:
@@ -244,6 +269,9 @@ QDF_STATUS tdls_process_cmd(struct scheduler_msg *msg)
 	case TDLS_CMD_SET_RESPONDER:
 		tdls_set_responder(msg->bodyptr);
 		break;
+	case TDLS_CMD_SCAN_DONE:
+		tdls_scan_done_callback(msg->bodyptr);
+		break;
 	case TDLS_NOTIFY_STA_CONNECTION:
 		tdls_notify_sta_connect(msg->bodyptr);
 		break;
@@ -257,7 +285,6 @@ QDF_STATUS tdls_process_cmd(struct scheduler_msg *msg)
 	case TDLS_CMD_SESSION_DECREMENT:
 		tdls_process_policy_mgr_notification(msg->bodyptr);
 		break;
-
 	default:
 		break;
 	}
@@ -1101,4 +1128,140 @@ release_mode_ref:
 	qdf_mem_free(tdls_set_mode);
 	return status;
 }
+
+/**
+ * wlan_hdd_tdls_scan_done_callback() - callback for tdls scan done event
+ * @pAdapter: HDD adapter
+ *
+ * Return: Void
+ */
+void tdls_scan_done_callback(struct tdls_soc_priv_obj *tdls_soc)
+{
+	if (!tdls_soc)
+		return;
+
+	if (TDLS_SUPPORT_DISABLED == tdls_soc->tdls_current_mode) {
+		tdls_notice("TDLS mode is disabled OR not enabled");
+		return;
+	}
+
+	/* if tdls was enabled before scan, re-enable tdls mode */
+	if (TDLS_SUPPORT_IMP_MODE == tdls_soc->tdls_last_mode ||
+	    TDLS_SUPPORT_EXT_CONTROL == tdls_soc->tdls_last_mode ||
+	    TDLS_SUPPORT_EXP_TRIG_ONLY == tdls_soc->tdls_last_mode) {
+		tdls_notice("revert tdls mode %d",
+			   tdls_soc->tdls_last_mode);
+
+		tdls_set_current_mode(tdls_soc, tdls_soc->tdls_last_mode,
+				      false,
+				      TDLS_SET_MODE_SOURCE_SCAN);
+	}
+}
+
+/**
+ * tdls_post_scan_done_msg() - post scan done message to tdls cmd queue
+ * @tdls_soc: tdls soc object
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_E_NULL_VALUE
+ */
+static QDF_STATUS tdls_post_scan_done_msg(struct tdls_soc_priv_obj *tdls_soc)
+{
+	struct scheduler_msg msg = {0, };
+
+	if (!tdls_soc) {
+		tdls_err("tdls_soc: %p ", tdls_soc);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	msg.bodyptr = tdls_soc;
+	msg.callback = tdls_process_cmd;
+	msg.type = TDLS_CMD_SCAN_DONE;
+	scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+void tdls_scan_complete_event_handler(struct wlan_objmgr_vdev *vdev,
+			struct scan_event *event,
+			void *arg)
+{
+	enum tQDF_ADAPTER_MODE device_mode;
+	struct tdls_soc_priv_obj *tdls_soc;
+
+	if (!vdev || !event || !arg)
+		return;
+
+	if (SCAN_EVENT_TYPE_COMPLETED != event->type)
+		return;
+
+	device_mode = wlan_vdev_mlme_get_opmode(vdev);
+
+	if (device_mode != QDF_STA_MODE &&
+	    device_mode != QDF_P2P_CLIENT_MODE)
+		return;
+	tdls_soc = (struct tdls_soc_priv_obj *) arg;
+	tdls_post_scan_done_msg(tdls_soc);
+}
+
+QDF_STATUS tdls_scan_callback(struct tdls_soc_priv_obj *tdls_soc)
+{
+	struct tdls_peer *curr_peer;
+	struct tdls_vdev_priv_obj *tdls_vdev;
+	struct wlan_objmgr_vdev *vdev;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	/* if tdls is not enabled, then continue scan */
+	if (TDLS_SUPPORT_DISABLED == tdls_soc->tdls_current_mode)
+		return status;
+
+	/* Get the vdev based on vdev operating mode*/
+	vdev = tdls_get_vdev(tdls_soc->soc, WLAN_TDLS_NB_ID);
+	if (!vdev)
+		return status;
+
+	tdls_vdev = wlan_vdev_get_tdls_vdev_obj(vdev);
+	if (!tdls_vdev)
+		goto  return_success;
+
+	curr_peer = tdls_is_progress(tdls_vdev, NULL, 0);
+	if (NULL != curr_peer) {
+		if (tdls_soc->scan_reject_count++ >= TDLS_SCAN_REJECT_MAX) {
+			tdls_notice(QDF_MAC_ADDRESS_STR
+				    ". scan rejected %d. force it to idle",
+				    QDF_MAC_ADDR_ARRAY(
+						curr_peer->peer_mac.bytes),
+				    tdls_soc->scan_reject_count);
+			tdls_soc->scan_reject_count = 0;
+
+			tdls_set_peer_link_status(curr_peer,
+						  TDLS_LINK_IDLE,
+						  TDLS_LINK_UNSPECIFIED);
+			status = QDF_STATUS_SUCCESS;
+		} else {
+			tdls_warn("tdls in progress. scan rejected %d",
+				  tdls_soc->scan_reject_count);
+			status = QDF_STATUS_E_BUSY;
+		}
+	}
+return_success:
+	wlan_objmgr_vdev_release_ref(vdev,
+				     WLAN_TDLS_NB_ID);
+	return status;
+}
+
+void tdls_scan_serialization_comp_info_cb(
+		union wlan_serialization_rules_info *comp_info)
+{
+	struct tdls_soc_priv_obj *tdls_soc;
+	QDF_STATUS status;
+	if (!comp_info)
+		return;
+
+	tdls_soc = tdls_soc_global;
+	comp_info->scan_info.is_tdls_in_progress = false;
+	status = tdls_scan_callback(tdls_soc);
+	if (QDF_STATUS_E_BUSY == status)
+		comp_info->scan_info.is_tdls_in_progress = true;
+}
+
 
