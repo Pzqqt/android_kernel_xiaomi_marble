@@ -147,15 +147,14 @@ int nl_srv_ucast(struct sk_buff *skb, int dst_pid, int flag)
 
 	if (nl_srv_is_initialized() == 0) {
 		err = cnss_logger_nl_ucast(skb, dst_pid, flag);
-		if (err < 0) {
+		if (err < 0)
 			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_WARN,
 				  "NLINK: netlink_unicast to pid[%d] failed, ret[%d]",
 				  dst_pid, err);
-			dev_kfree_skb(skb);
-		}
-	}
-	else
+	} else {
 		dev_kfree_skb(skb);
+	}
+
 	return err;
 }
 
@@ -567,14 +566,14 @@ int nl_srv_ucast(struct sk_buff *skb, int dst_pid, int flag)
 
 	if (nl_srv_sock) {
 		err = netlink_unicast(nl_srv_sock, skb, dst_pid, flag);
-		if (err < 0) {
+		if (err < 0)
 			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_WARN,
 				  "NLINK: netlink_unicast to pid[%d] failed, ret[%d]",
 				  dst_pid, err);
-			dev_kfree_skb(skb);
-		}
-	} else
+	} else {
 		dev_kfree_skb(skb);
+	}
+
 	return err;
 }
 
