@@ -2275,7 +2275,7 @@ void ol_txrx_flush_rx_frames(struct ol_txrx_peer_t *peer,
 	qdf_atomic_dec(&peer->flush_in_progress);
 }
 
-void ol_txrx_flush_cache_rx_queue(void)
+static void ol_txrx_flush_cache_rx_queue(void)
 {
 	uint8_t sta_id;
 	struct ol_txrx_peer_t *peer;
@@ -5316,6 +5316,7 @@ static struct cdp_cmn_ops ol_ops_cmn = {
 	.txrx_mgmt_tx_cb_set = ol_txrx_mgmt_tx_cb_set,
 	.txrx_data_tx_cb_set = ol_txrx_data_tx_cb_set,
 	.txrx_get_tx_pending = ol_txrx_get_tx_pending,
+	.flush_cache_rx_queue = ol_txrx_flush_cache_rx_queue,
 	.txrx_fw_stats_get = ol_txrx_fw_stats_get
 	/* TODO: Add other functions */
 };
