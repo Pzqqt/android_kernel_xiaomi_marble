@@ -1432,11 +1432,14 @@ static void hdd_conn_remove_connect_info(hdd_station_ctx_t *pHddStaCtx)
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS hdd_roam_deregister_sta(hdd_adapter_t *pAdapter, uint8_t staId)
+QDF_STATUS hdd_roam_deregister_sta(hdd_adapter_t *adapter, uint8_t staid)
 {
 	QDF_STATUS qdf_status;
-	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
-
+	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	int ret = 0;
+	uint8_t *peer_mac = NULL;
+	struct qdf_mac_addr broadcastMacAddr =
+				QDF_MAC_ADDR_BROADCAST_INITIALIZER;
 	if (eConnectionState_IbssDisconnected ==
 	    pHddStaCtx->conn_info.connState) {
 		/*
@@ -1447,10 +1450,27 @@ QDF_STATUS hdd_roam_deregister_sta(hdd_adapter_t *pAdapter, uint8_t staId)
 
 	qdf_status = cdp_clear_peer(cds_get_context(QDF_MODULE_ID_SOC),
 			(struct cdp_pdev *)cds_get_context(QDF_MODULE_ID_TXRX),
-			staId);
+			staid);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		hdd_err("cdp_clear_peer() failed for staID %d. Status(%d) [0x%08X]",
-			staId, qdf_status, qdf_status);
+		hdd_err("cdp_clear_peer() failed for staid %d. Status(%d) [0x%08X]",
+			staid, qdf_status, qdf_status);
+	}
+
+	if (adapter->device_mode == QDF_STA_MODE) {
+		peer_mac = pHddStaCtx->conn_info.bssId.bytes;
+	} else if (adapter->device_mode == QDF_IBSS_MODE) {
+		if (pHddStaCtx->broadcast_staid == staid)
+			peer_mac = broadcastMacAddr.bytes;
+		else
+			peer_mac = pHddStaCtx->conn_info.
+					peerMacAddress[staid].bytes;
+	}
+
+	ret = hdd_remove_peer_object(adapter->hdd_vdev,
+				peer_mac);
+	if (ret) {
+		hdd_err("Peer obj %pM delete fails", peer_mac);
+		return QDF_STATUS_E_FAILURE;
 	}
 	return qdf_status;
 }
@@ -2389,6 +2409,7 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 			hdd_conn_set_connection_state(pAdapter,
 						   eConnectionState_Associated);
 		}
+
 		/* Save the connection info from CSR... */
 		hdd_conn_save_connect_info(pAdapter, pRoamInfo,
 					   eCSR_BSS_TYPE_INFRASTRUCTURE);
@@ -2405,7 +2426,6 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 			pAdapter->wapi_info.fIsWapiSta = 0;
 		}
 #endif /* FEATURE_WLAN_WAPI */
-
 		/* Indicate 'connect' status to user space */
 		hdd_send_association_event(dev, pRoamInfo);
 
@@ -3358,7 +3378,6 @@ roam_roam_connect_status_update_handler(hdd_adapter_t *pAdapter,
 					eRoamCmdStatus roamStatus,
 					eCsrRoamResult roamResult)
 {
-	int ret;
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	QDF_STATUS qdf_status;
 
@@ -3469,12 +3488,6 @@ roam_roam_connect_status_update_handler(hdd_adapter_t *pAdapter,
 
 		pHddCtx->sta_to_adapter[pRoamInfo->staId] = NULL;
 		pHddStaCtx->ibss_sta_generation++;
-
-		ret = hdd_remove_peer_object(pAdapter->hdd_vdev,
-					     pRoamInfo->peerMac.bytes);
-		if (ret)
-			hdd_err("Peer obj "MAC_ADDRESS_STR" delete fails",
-				MAC_ADDR_ARRAY(pRoamInfo->peerMac.bytes));
 
 		cfg80211_del_sta(pAdapter->dev,
 				 (const u8 *)&pRoamInfo->peerMac.bytes,

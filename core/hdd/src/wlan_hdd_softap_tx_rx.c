@@ -46,7 +46,7 @@
 #include <cds_utils.h>
 #include <cdp_txrx_flow_ctrl_v2.h>
 #include <cdp_txrx_handle.h>
-
+#include <wlan_hdd_object_manager.h>
 #ifdef IPA_OFFLOAD
 #include <wlan_hdd_ipa.h>
 #endif
@@ -763,6 +763,7 @@ QDF_STATUS hdd_softap_deregister_sta(hdd_adapter_t *pAdapter, uint8_t staId)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	hdd_context_t *pHddCtx;
+	int ret;
 
 	if (NULL == pAdapter) {
 		hdd_err("NULL adapter");
@@ -787,12 +788,19 @@ QDF_STATUS hdd_softap_deregister_sta(hdd_adapter_t *pAdapter, uint8_t staId)
 			staId, qdf_status, qdf_status);
 	}
 
+	ret = hdd_remove_peer_object(pAdapter->hdd_vdev,
+			pAdapter->aStaInfo[staId].macAddrSTA.bytes);
+	if (ret)
+		hdd_err("Peer obj %pM delete fails",
+			pAdapter->aStaInfo[staId].macAddrSTA.bytes);
+
 	if (pAdapter->aStaInfo[staId].isUsed) {
 		spin_lock_bh(&pAdapter->staInfo_lock);
 		qdf_mem_zero(&pAdapter->aStaInfo[staId],
 			     sizeof(hdd_station_info_t));
 		spin_unlock_bh(&pAdapter->staInfo_lock);
 	}
+
 	pHddCtx->sta_to_adapter[staId] = NULL;
 
 	return qdf_status;
