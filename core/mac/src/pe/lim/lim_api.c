@@ -755,6 +755,7 @@ tSirRetStatus pe_open(tpAniSirGlobal pMac, struct cds_config_info *cds_cfg)
 
 	pMac->lim.maxBssId = cds_cfg->max_bssid;
 	pMac->lim.maxStation = cds_cfg->max_station;
+	qdf_spinlock_create(&pMac->sys.bbt_mgmt_lock);
 
 	if ((pMac->lim.maxBssId == 0) || (pMac->lim.maxStation == 0)) {
 		PELOGE(lim_log(pMac, LOGE,
@@ -828,6 +829,7 @@ tSirRetStatus pe_close(tpAniSirGlobal pMac)
 	if (ANI_DRIVER_TYPE(pMac) == eDRIVER_TYPE_MFG)
 		return eSIR_SUCCESS;
 
+	qdf_spinlock_destroy(&pMac->sys.bbt_mgmt_lock);
 	for (i = 0; i < pMac->lim.maxBssId; i++) {
 		if (pMac->lim.gpSession[i].valid == true) {
 			pe_delete_session(pMac, &pMac->lim.gpSession[i]);
@@ -1010,6 +1012,52 @@ QDF_STATUS pe_mc_process_handler(struct scheduler_msg *msg)
 	return QDF_STATUS_E_FAILURE;
 }
 
+/**
+ * pe_drop_pending_rx_mgmt_frames: To drop pending RX mgmt frames
+ * @mac_ctx: Pointer to global MAC structure
+ * @hdr: Management header
+ * @cds_pkt: Packet
+ *
+ * This function is used to drop RX pending mgmt frames if pe mgmt queue
+ * reaches threshold
+ *
+ * Return: QDF_STATUS_SUCCESS on success or QDF_STATUS_E_FAILURE on failure
+ */
+static QDF_STATUS pe_drop_pending_rx_mgmt_frames(tpAniSirGlobal mac_ctx,
+				tpSirMacMgmtHdr hdr, cds_pkt_t *cds_pkt)
+{
+	qdf_spin_lock(&mac_ctx->sys.bbt_mgmt_lock);
+	if (mac_ctx->sys.sys_bbt_pending_mgmt_count >=
+	     MGMT_RX_PACKETS_THRESHOLD) {
+		qdf_spin_unlock(&mac_ctx->sys.bbt_mgmt_lock);
+		lim_log(mac_ctx, LOGE,
+			FL("No.of pending RX management frames reaches to threshold, dropping management frames"));
+		cds_pkt_return_packet(cds_pkt);
+		cds_pkt = NULL;
+		return QDF_STATUS_E_FAILURE;
+	} else if (mac_ctx->sys.sys_bbt_pending_mgmt_count >
+		   (MGMT_RX_PACKETS_THRESHOLD / 2)) {
+		/* drop all probereq, proberesp and beacons */
+		if (hdr->fc.subType == SIR_MAC_MGMT_BEACON ||
+		    hdr->fc.subType == SIR_MAC_MGMT_PROBE_REQ ||
+		    hdr->fc.subType == SIR_MAC_MGMT_PROBE_RSP) {
+			qdf_spin_unlock(&mac_ctx->sys.bbt_mgmt_lock);
+			lim_log(mac_ctx, LOGE,
+				FL("No.of pending RX management frames reaches to half of threshold, dropping probe req, probe resp or beacon frames"));
+			cds_pkt_return_packet(cds_pkt);
+			cds_pkt = NULL;
+			return QDF_STATUS_E_FAILURE;
+		}
+	}
+	mac_ctx->sys.sys_bbt_pending_mgmt_count++;
+	qdf_spin_unlock(&mac_ctx->sys.bbt_mgmt_lock);
+	if (mac_ctx->sys.sys_bbt_pending_mgmt_count ==
+	    (MGMT_RX_PACKETS_THRESHOLD / 4))
+		lim_log(mac_ctx, LOGW,
+			FL("No.of pending RX management frames reaches to 1/4th of threshold"));
+	return QDF_STATUS_SUCCESS;
+}
+
 /* --------------------------------------------------------------------------- */
 /**
  * pe_handle_mgmt_frame() - Process the Management frames from TXRX
@@ -1094,6 +1142,10 @@ static QDF_STATUS pe_handle_mgmt_frame(struct wlan_objmgr_psoc *psoc,
 				 WMA_GET_OFFLOADSCANLEARN(pRxPacketInfo));
 	}
 
+	if (QDF_STATUS_SUCCESS !=
+	    pe_drop_pending_rx_mgmt_frames(pMac, mHdr, pVosPkt))
+		return QDF_STATUS_E_FAILURE;
+
 	/* Forward to MAC via mesg = SIR_BB_XPORT_MGMT_MSG */
 	msg.type = SIR_BB_XPORT_MGMT_MSG;
 	msg.bodyptr = pVosPkt;
@@ -1105,6 +1157,11 @@ static QDF_STATUS pe_handle_mgmt_frame(struct wlan_objmgr_psoc *psoc,
 							 mHdr->fc.subType)) {
 		cds_pkt_return_packet(pVosPkt);
 		pVosPkt = NULL;
+		/*
+		 * Decrement sys_bbt_pending_mgmt_count if packet
+		 * is dropped before posting to LIM
+		 */
+		lim_decrement_pending_mgmt_count(pMac);
 		return QDF_STATUS_E_FAILURE;
 	}
 

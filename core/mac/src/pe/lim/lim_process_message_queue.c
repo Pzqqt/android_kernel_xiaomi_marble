@@ -1387,6 +1387,7 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 			(void **) &new_msg.bodyptr, false);
 
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			lim_decrement_pending_mgmt_count(mac_ctx);
 			cds_pkt_return_packet(body_ptr);
 			break;
 		}
@@ -1408,15 +1409,18 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 				QDF_TRACE(QDF_MODULE_ID_PE, LOGE,
 						FL("Unable to Defer Msg"));
 				lim_log_session_states(mac_ctx);
+				lim_decrement_pending_mgmt_count(mac_ctx);
 				cds_pkt_return_packet(body_ptr);
 			}
-		} else
+		} else {
 			/* PE is not deferring this 802.11 frame so we need to
 			 * call cds_pkt_return. Asumption here is when Rx mgmt
 			 * frame processing is done, cds packet could be
 			 * freed here.
 			 */
+			lim_decrement_pending_mgmt_count(mac_ctx);
 			cds_pkt_return_packet(body_ptr);
+		}
 		break;
 	case eWNI_SME_SCAN_REQ:
 	case eWNI_SME_REMAIN_ON_CHANNEL_REQ:

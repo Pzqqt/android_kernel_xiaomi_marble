@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -32,6 +32,7 @@ typedef struct sAniSirSys {
 
 	uint32_t gSysFrameCount[4][16];
 	uint32_t gSysBbtReceived;
+	uint32_t sys_bbt_pending_mgmt_count;
 	uint32_t gSysBbtPostedToLim;
 	uint32_t gSysBbtPostedToSch;
 	uint32_t gSysBbtPostedToPmm;
@@ -47,6 +48,7 @@ typedef struct sAniSirSys {
 	uint32_t gSysEnableLearnMode;
 	uint32_t gSysEnableScanMode;
 	uint32_t gSysEnableLinkMonitorMode;
+	qdf_spinlock_t bbt_mgmt_lock;
 } tAniSirSys, *tpAniSirSys;
 
 #endif

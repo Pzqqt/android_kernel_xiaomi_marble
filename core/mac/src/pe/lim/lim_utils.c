@@ -5776,6 +5776,7 @@ void lim_handle_defer_msg_error(tpAniSirGlobal pMac,
 				struct scheduler_msg *pLimMsg)
 {
 	if (SIR_BB_XPORT_MGMT_MSG == pLimMsg->type) {
+		lim_decrement_pending_mgmt_count(pMac);
 		cds_pkt_return_packet((cds_pkt_t *) pLimMsg->bodyptr);
 		pLimMsg->bodyptr = NULL;
 	} else if (pLimMsg->bodyptr != NULL) {
@@ -7896,3 +7897,16 @@ QDF_STATUS lim_send_he_caps_ie(tpAniSirGlobal mac_ctx, tpPESession session,
 	return QDF_STATUS_E_FAILURE;
 }
 #endif
+
+void lim_decrement_pending_mgmt_count(tpAniSirGlobal mac_ctx)
+{
+	qdf_spin_lock(&mac_ctx->sys.bbt_mgmt_lock);
+	if (!mac_ctx->sys.sys_bbt_pending_mgmt_count) {
+		qdf_spin_unlock(&mac_ctx->sys.bbt_mgmt_lock);
+		lim_log(mac_ctx, LOGW,
+			FL("sys_bbt_pending_mgmt_count value is 0"));
+		return;
+	}
+	mac_ctx->sys.sys_bbt_pending_mgmt_count--;
+	qdf_spin_unlock(&mac_ctx->sys.bbt_mgmt_lock);
+}
