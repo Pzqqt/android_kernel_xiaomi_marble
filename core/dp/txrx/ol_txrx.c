@@ -1714,41 +1714,27 @@ static A_STATUS ol_txrx_pdev_attach_target(struct cdp_pdev *ppdev)
 }
 
 /**
- * ol_txrx_pdev_detach() - delete the data SW state
- *
+ * ol_txrx_pdev_pre_detach() - detach the data SW state
  * @pdev - the data physical device object being removed
  * @force - delete the pdev (and its vdevs and peers) even if
  * there are outstanding references by the target to the vdevs
  * and peers within the pdev
  *
  * This function is used when the WLAN driver is being removed to
- * remove the host data component within the driver.
- * All virtual devices within the physical device need to be deleted
- * (ol_txrx_vdev_detach) before the physical device itself is deleted.
+ * detach the host data component within the driver.
  *
+ * Return: None
  */
-static void ol_txrx_pdev_detach(struct cdp_pdev *ppdev, int force)
+static void ol_txrx_pdev_pre_detach(struct cdp_pdev *ppdev, int force)
 {
 	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	int i;
 
-	/*checking to ensure txrx pdev structure is not NULL */
-	if (!pdev) {
-		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "NULL pdev passed to %s\n", __func__);
-		return;
-	}
 	/* preconditions */
 	TXRX_ASSERT2(pdev);
 
 	/* check that the pdev has no vdevs allocated */
 	TXRX_ASSERT1(TAILQ_EMPTY(&pdev->vdev_list));
-
-	htt_pktlogmod_exit(pdev);
-
-	OL_RX_REORDER_TIMEOUT_CLEANUP(pdev);
-
-	if (pdev->cfg.is_high_latency)
-		ol_tx_sched_detach(pdev);
 
 #ifdef QCA_SUPPORT_TX_THROTTLE
 	/* Thermal Mitigation */
@@ -1805,7 +1791,6 @@ static void ol_txrx_pdev_detach(struct cdp_pdev *ppdev, int force)
 		htt_tx_desc_free(pdev->htt_pdev, htt_tx_desc);
 	}
 
-	htt_deregister_rx_pkt_dump_callback(pdev->htt_pdev);
 	ol_tx_deregister_flow_control(pdev);
 	/* Stop the communication between HTT and target at first */
 	htt_detach_target(pdev->htt_pdev);
@@ -1819,13 +1804,7 @@ static void ol_txrx_pdev_detach(struct cdp_pdev *ppdev, int force)
 		htt_ipa_uc_detach(pdev->htt_pdev);
 
 	htt_detach(pdev->htt_pdev);
-	htt_pdev_free(pdev->htt_pdev);
-
 	ol_tx_desc_dup_detect_deinit(pdev);
-
-	ol_txrx_peer_find_detach(pdev);
-
-	ol_txrx_tso_stats_deinit(pdev);
 
 	qdf_spinlock_destroy(&pdev->tx_mutex);
 	qdf_spinlock_destroy(&pdev->peer_ref_mutex);
@@ -1845,18 +1824,59 @@ static void ol_txrx_pdev_detach(struct cdp_pdev *ppdev, int force)
 	OL_RX_REORDER_TRACE_DETACH(pdev);
 	OL_RX_PN_TRACE_DETACH(pdev);
 
-	ol_txrx_pdev_txq_log_destroy(pdev);
-	ol_txrx_pdev_grp_stat_destroy(pdev);
 	/*
 	 * WDI event detach
 	 */
 	wdi_event_detach(pdev);
+
 	ol_txrx_local_peer_id_cleanup(pdev);
 
 #ifdef QCA_COMPUTE_TX_DELAY
 	qdf_spinlock_destroy(&pdev->tx_delay.mutex);
 #endif
 	qdf_mem_free(ppdev);
+}
+
+/**
+ * ol_txrx_pdev_detach() - delete the data SW state
+ * @ppdev - the data physical device object being removed
+ * @force - delete the pdev (and its vdevs and peers) even if
+ * there are outstanding references by the target to the vdevs
+ * and peers within the pdev
+ *
+ * This function is used when the WLAN driver is being removed to
+ * remove the host data component within the driver.
+ * All virtual devices within the physical device need to be deleted
+ * (ol_txrx_vdev_detach) before the physical device itself is deleted.
+ *
+ * Return: None
+ */
+static void ol_txrx_pdev_detach(struct cdp_pdev *ppdev, int force)
+{
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
+
+	/*checking to ensure txrx pdev structure is not NULL */
+	if (!pdev) {
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+			   "NULL pdev passed to %s\n", __func__);
+		return;
+	}
+
+	htt_pktlogmod_exit(pdev);
+
+	OL_RX_REORDER_TIMEOUT_CLEANUP(pdev);
+
+	if (pdev->cfg.is_high_latency)
+		ol_tx_sched_detach(pdev);
+
+	htt_deregister_rx_pkt_dump_callback(pdev->htt_pdev);
+
+	htt_pdev_free(pdev->htt_pdev);
+	ol_txrx_peer_find_detach(pdev);
+	ol_txrx_tso_stats_deinit(pdev);
+
+	ol_txrx_pdev_txq_log_destroy(pdev);
+	ol_txrx_pdev_grp_stat_destroy(pdev);
 }
 
 #if defined(CONFIG_PER_VDEV_TX_DESC_POOL)
@@ -5281,6 +5301,7 @@ static struct cdp_cmn_ops ol_ops_cmn = {
 	.txrx_pdev_attach = ol_txrx_pdev_attach,
 	.txrx_pdev_attach_target = ol_txrx_pdev_attach_target,
 	.txrx_pdev_post_attach = ol_txrx_pdev_post_attach,
+	.txrx_pdev_pre_detach = ol_txrx_pdev_pre_detach,
 	.txrx_pdev_detach = ol_txrx_pdev_detach,
 	.txrx_peer_create = ol_txrx_peer_attach,
 	.txrx_peer_setup = NULL,
