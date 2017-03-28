@@ -1277,7 +1277,8 @@ lim_send_sme_tdls_delete_all_peer_ind(tpAniSirGlobal pMac, tpPESession psessionE
  */
 void
 lim_send_sme_mgmt_tx_completion(tpAniSirGlobal pMac,
-				tpPESession psessionEntry, uint32_t txCompleteStatus)
+				uint32_t sme_session_id,
+				uint32_t txCompleteStatus)
 {
 	struct scheduler_msg mmhMsg;
 	tSirMgmtTxCompletionInd *pSirMgmtTxCompletionInd;
@@ -1296,7 +1297,7 @@ lim_send_sme_mgmt_tx_completion(tpAniSirGlobal pMac,
 	pSirMgmtTxCompletionInd->length = sizeof(tSirMgmtTxCompletionInd);
 
 	/* sessionId */
-	pSirMgmtTxCompletionInd->sessionId = psessionEntry->smeSessionId;
+	pSirMgmtTxCompletionInd->sessionId = sme_session_id;
 
 	pSirMgmtTxCompletionInd->txCompleteStatus = txCompleteStatus;
 

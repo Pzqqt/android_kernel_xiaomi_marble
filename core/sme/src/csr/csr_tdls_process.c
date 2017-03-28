@@ -702,13 +702,28 @@ QDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msgType,
 
 	switch (msgType) {
 	case eWNI_SME_TDLS_SEND_MGMT_RSP:
+	{
+		tSirSmeRsp *msg = (tSirSmeRsp *) pMsgBuf;
+		tCsrRoamInfo roam_info = {0};
+
 		/* remove pending eSmeCommandTdlsDiscovery command */
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 			FL("sme_rsp->sessionId[%d] eSmeCommandTdlsSendMgmt"),
 			sme_rsp->sessionId);
 		csr_tdls_remove_sme_cmd(pMac, eSmeCommandTdlsSendMgmt,
-					sme_rsp->sessionId);
+				sme_rsp->sessionId);
+
+		if (eSIR_SME_SUCCESS != msg->statusCode) {
+			/* Tx failed, so there wont be any ack confirmation*/
+			/* Indicate ack failure to upper layer */
+			roamInfo.reasonCode = 0;
+			csr_roam_call_callback(pMac, msg->sessionId,
+					&roam_info, 0,
+					eCSR_ROAM_RESULT_MGMT_TX_COMPLETE_IND,
+					0);
+		}
 		break;
+	}
 	case eWNI_SME_TDLS_ADD_STA_RSP:
 		qdf_copy_macaddr(&roamInfo.peerMac, &addStaRsp->peermac);
 		roamInfo.staId = addStaRsp->staId;
