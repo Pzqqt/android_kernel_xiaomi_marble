@@ -2257,6 +2257,13 @@ static inline void hdd_send_peer_status_ind_to_app(
 {
 	struct wifi_pos_ch_info ch_info;
 
+	if (!chan_info) {
+		os_if_wifi_pos_send_peer_status(peer_mac, peer_status,
+					peer_timing_meas_cap, sessionId,
+					NULL, dev_mode);
+		return;
+	}
+
 	ch_info.chan_id = chan_info->chan_id;
 	ch_info.mhz = chan_info->mhz;
 	ch_info.band_center_freq1 = chan_info->band_center_freq1;
