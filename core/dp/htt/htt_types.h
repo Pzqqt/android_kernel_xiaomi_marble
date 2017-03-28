@@ -48,6 +48,7 @@
 #endif
 #endif /* QCA_TX_HTT2_SUPPORT */
 
+#define HTT_HTC_PKT_MISCLIST_SIZE           32
 
 struct htt_htc_pkt {
 	void *pdev_ctxt;
