@@ -429,15 +429,27 @@ static void hdd_update_channel_bw_info(hdd_context_t *hdd_ctx,
 	ch_params.ch_width = CH_WIDTH_MAX;
 
 	cds_set_channel_params(chan, sec_ch_2g, &ch_params);
+
 	if (ch_params.center_freq_seg0)
 		hdd_chan_info->band_center_freq1 =
 			cds_chan_to_freq(ch_params.center_freq_seg0);
 
-	hdd_info("chan %d dot11_mode %d ch_width %d sec offset %d freq_seg0 %d",
-		chan, wni_dot11_mode, ch_params.ch_width,
-		ch_params.sec_ch_offset, hdd_chan_info->band_center_freq1);
+	if (ch_params.ch_width < CH_WIDTH_INVALID)
+		phy_mode = wma_chan_phy_mode(chan,
+				ch_params.ch_width, wni_dot11_mode);
+	else
+		/*
+		 * If channel width is CH_WIDTH_INVALID, It mean channel is
+		 * invalid and should not have been received in channel info
+		 * req. Set invalid phymode in this case.
+		 */
+		phy_mode = MODE_UNKNOWN;
 
-	phy_mode = wma_chan_phy_mode(chan, ch_params.ch_width, wni_dot11_mode);
+	hdd_info("chan %d dot11_mode %d ch_width %d sec offset %d freq_seg0 %d phy_mode %d",
+		chan, wni_dot11_mode, ch_params.ch_width,
+		ch_params.sec_ch_offset,
+		hdd_chan_info->band_center_freq1, phy_mode);
+
 	WMI_SET_CHANNEL_MODE(hdd_chan_info, phy_mode);
 }
 
