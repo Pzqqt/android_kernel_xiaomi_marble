@@ -1988,6 +1988,10 @@ __wlan_hdd_cfg80211_extscan_set_bssid_hotlist(struct wiphy *wiphy,
 	hdd_debug("Lost ap sample size %d",
 			pReqMsg->lost_ap_sample_size);
 
+	if (!tb[QCA_WLAN_VENDOR_ATTR_EXTSCAN_AP_THRESHOLD_PARAM]) {
+		hdd_err("attr ap threshold failed");
+		goto fail;
+	}
 	i = 0;
 	nla_for_each_nested(apTh,
 			    tb[QCA_WLAN_VENDOR_ATTR_EXTSCAN_AP_THRESHOLD_PARAM],
