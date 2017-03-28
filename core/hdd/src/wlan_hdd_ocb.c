@@ -824,10 +824,18 @@ static int __wlan_hdd_cfg80211_ocb_set_config(struct wiphy *wiphy,
 		tb[QCA_WLAN_VENDOR_ATTR_OCB_SET_CONFIG_SCHEDULE_SIZE]);
 
 	/* Get the ndl chan array and the ndl active state array. */
+	if (!tb[QCA_WLAN_VENDOR_ATTR_OCB_SET_CONFIG_NDL_CHANNEL_ARRAY]) {
+		hdd_err("NDL_CHANNEL_ARRAY is not present");
+		return -EINVAL;
+	}
 	ndl_chan_list =
 		tb[QCA_WLAN_VENDOR_ATTR_OCB_SET_CONFIG_NDL_CHANNEL_ARRAY];
 	ndl_chan_list_len = (ndl_chan_list ? nla_len(ndl_chan_list) : 0);
 
+	if (!tb[QCA_WLAN_VENDOR_ATTR_OCB_SET_CONFIG_NDL_ACTIVE_STATE_ARRAY]) {
+		hdd_err("NDL_ACTIVE_STATE_ARRAY is not present");
+		return -EINVAL;
+	}
 	ndl_active_state_list =
 		tb[QCA_WLAN_VENDOR_ATTR_OCB_SET_CONFIG_NDL_ACTIVE_STATE_ARRAY];
 	ndl_active_state_list_len = (ndl_active_state_list ?
@@ -851,6 +859,10 @@ static int __wlan_hdd_cfg80211_ocb_set_config(struct wiphy *wiphy,
 	config->flags = flags;
 
 	/* Read the channel array */
+	if (!tb[QCA_WLAN_VENDOR_ATTR_OCB_SET_CONFIG_CHANNEL_ARRAY]) {
+		hdd_err("CHANNEL_ARRAY is not present");
+		return -EINVAL;
+	}
 	channel_array = tb[QCA_WLAN_VENDOR_ATTR_OCB_SET_CONFIG_CHANNEL_ARRAY];
 	if (!channel_array) {
 		hdd_err("No channel present");
