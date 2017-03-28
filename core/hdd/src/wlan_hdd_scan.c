@@ -1601,8 +1601,9 @@ static int __wlan_hdd_cfg80211_vendor_scan(struct wiphy *wiphy,
 	/* Check if external acs was requested on this adapter */
 	hdd_process_vendor_acs_response(adapter);
 
-	request->no_cck =
-		nla_get_flag(tb[QCA_WLAN_VENDOR_ATTR_SCAN_TX_NO_CCK_RATE]);
+	if (tb[QCA_WLAN_VENDOR_ATTR_SCAN_TX_NO_CCK_RATE])
+		request->no_cck =
+		   nla_get_flag(tb[QCA_WLAN_VENDOR_ATTR_SCAN_TX_NO_CCK_RATE]);
 	request->wdev = wdev;
 	request->wiphy = wiphy;
 	request->scan_start = jiffies;
