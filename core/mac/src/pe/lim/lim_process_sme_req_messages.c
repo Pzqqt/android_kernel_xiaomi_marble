@@ -794,12 +794,15 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			IS_DOT11_MODE_HT(session->dot11mode);
 		session->vhtCapability =
 			IS_DOT11_MODE_VHT(session->dot11mode);
-		session->he_capable =
-			IS_DOT11_MODE_HE(session->dot11mode);
 
-		lim_log(mac_ctx, LOG1, FL("HT[%d], VHT[%d], HE[%d]"),
-			session->htCapability, session->vhtCapability,
-			session->he_capable);
+		lim_log(mac_ctx, LOG1, FL("HT[%d], VHT[%d]"),
+			session->htCapability, session->vhtCapability);
+
+		if (IS_DOT11_MODE_HE(session->dot11mode)) {
+			lim_update_session_he_capable(mac_ctx, session);
+			lim_copy_bss_he_cap(session, sme_start_bss_req);
+		}
+
 		session->txLdpcIniFeatureEnabled =
 			sme_start_bss_req->txLdpcIniFeatureEnabled;
 #ifdef WLAN_FEATURE_11W
@@ -902,8 +905,8 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			(session->htSecondaryChannelOffset) ? 1 : 0;
 		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
 			  FL("cbMode %u"), sme_start_bss_req->cbMode);
-		if (session->he_capable || session->vhtCapability ||
-		    session->htCapability) {
+		if (lim_is_session_he_capable(session) ||
+		    session->vhtCapability || session->htCapability) {
 			chanwidth = sme_start_bss_req->vht_channel_width;
 			lim_log(mac_ctx, LOG1,
 				FL("vht_channel_width %u htSupportedChannelWidthSet %d"),
@@ -1736,16 +1739,17 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 					session->vht_config.su_beam_former);
 		}
 
-		session->he_capable =
-			IS_DOT11_MODE_HE(session->dot11mode);
+		if (IS_DOT11_MODE_HE(session->dot11mode)) {
+			lim_update_session_he_capable(mac_ctx, session);
+			lim_copy_join_req_he_cap(session, sme_join_req);
+		}
 
 		lim_log(mac_ctx, LOG1,
-				FL("vhtCapability: %d su_beam_formee: %d txbf_csn_value: %d su_tx_bformer %d he_capable: %d"),
+				FL("vhtCapability: %d su_beam_formee: %d txbf_csn_value: %d su_tx_bformer %d"),
 				session->vhtCapability,
 				session->vht_config.su_beam_formee,
 				session->vht_config.csnof_beamformer_antSup,
-				session->vht_config.su_beam_former,
-				session->he_capable);
+				session->vht_config.su_beam_former);
 		/*Phy mode */
 		session->gLimPhyMode = bss_desc->nwType;
 		handle_ht_capabilityand_ht_info(mac_ctx, session);

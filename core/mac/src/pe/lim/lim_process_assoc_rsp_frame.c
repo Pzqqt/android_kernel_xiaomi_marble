@@ -207,6 +207,10 @@ void lim_update_assoc_sta_datas(tpAniSirGlobal mac_ctx,
 	sta_ds->vhtSupportedRxNss =
 		((sta_ds->supportedRates.vhtRxMCSMap & MCSMAPMASK2x2)
 		 == MCSMAPMASK2x2) ? 1 : 2;
+
+	if (IS_DOT11_MODE_HE(session_entry->dot11mode))
+		lim_update_stads_he_caps(sta_ds, assoc_rsp, session_entry);
+
 	/* If one of the rates is 11g rates, set the ERP mode. */
 	if ((phy_mode == WNI_CFG_PHY_MODE_11G) &&
 		sirIsArate(sta_ds->supportedRates.llaRates[0] & 0x7f))

@@ -2112,6 +2112,7 @@ static uint32_t lim_populate_vht_caps(tDot11fIEVHTCaps input_caps)
 
 	return vht_caps;
 }
+
 /**
  * lim_add_sta()- called to add an STA context at hardware
  * @mac_ctx: pointer to global mac structure
@@ -2240,13 +2241,14 @@ lim_add_sta(tpAniSirGlobal mac_ctx,
 	else {
 		add_sta_params->htCapable = session_entry->htCapability;
 		add_sta_params->vhtCapable = session_entry->vhtCapability;
-
 	}
-	lim_log(mac_ctx, LOG2, FL("vhtCapable: %d "),
-		 add_sta_params->vhtCapable);
-	lim_log(mac_ctx, LOG2, FL(" StaIdx: %d updateSta = %d htcapable = %d "),
+
+	lim_update_sta_he_capable(mac_ctx, add_sta_params, sta_ds,
+				  session_entry);
+
+	lim_log(mac_ctx, LOG1, FL("StaIdx: %d updateSta = %d htcapable = %d vhtCapable: %d"),
 		add_sta_params->staIdx, add_sta_params->updateSta,
-		add_sta_params->htCapable);
+		add_sta_params->htCapable, add_sta_params->vhtCapable);
 
 	add_sta_params->greenFieldCapable = sta_ds->htGreenfield;
 	add_sta_params->maxAmpduDensity = sta_ds->htAMpduDensity;
@@ -2371,6 +2373,9 @@ lim_add_sta(tpAniSirGlobal mac_ctx,
 		if (assoc_req && add_sta_params->vhtCapable)
 			add_sta_params->vht_caps =
 				 lim_populate_vht_caps(assoc_req->VHTCaps);
+
+		lim_add_he_cap(add_sta_params, assoc_req);
+
 	} else if (LIM_IS_IBSS_ROLE(session_entry)) {
 
 		/*
@@ -2868,6 +2873,9 @@ lim_add_sta_self(tpAniSirGlobal pMac, uint16_t staIdx, uint8_t updateSta,
 		psessionEntry->smeSessionId, pAddStaParams->assocId,
 		pAddStaParams->listenInterval,
 		pAddStaParams->shortPreambleSupported);
+
+	if (IS_DOT11_MODE_HE(selfStaDot11Mode))
+		lim_add_self_he_cap(pAddStaParams, psessionEntry);
 
 	msgQ.type = WMA_ADD_STA_REQ;
 	msgQ.reserved = 0;
@@ -3506,7 +3514,6 @@ static void lim_update_vht_oper_assoc_resp(tpAniSirGlobal mac_ctx,
 		FL("Updating VHT Operation in assoc Response"));
 }
 
-
 /**
  * limSendAddBss()
  *
@@ -3722,6 +3729,10 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 			pAddBssParams->ch_center_freq_seg0,
 			pAddBssParams->ch_center_freq_seg1);
 
+	if (lim_is_session_he_capable(psessionEntry) &&
+			(pAssocRsp->vendor_he_cap.present))
+		lim_add_bss_he_cap(pAddBssParams, pAssocRsp);
+
 	/*
 	 * Populate the STA-related parameters here
 	 * Note that the STA here refers to the AP
@@ -3803,6 +3814,10 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 				psessionEntry->vht_config.su_beam_former)
 				sta_context->enable_su_tx_bformer = 1;
 		}
+		if (lim_is_session_he_capable(psessionEntry) &&
+			pAssocRsp->vendor_he_cap.present)
+			lim_intersect_ap_he_caps(psessionEntry, pAddBssParams,
+					      NULL, pAssocRsp);
 
 		if ((pAssocRsp->HTCaps.supportedChannelWidthSet) &&
 				(chanWidthSupp)) {
@@ -4271,11 +4286,15 @@ tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t update
 	} else {
 		pAddBssParams->vhtCapable = 0;
 	}
+
+	if (lim_is_session_he_capable(psessionEntry) &&
+	    pBeaconStruct->vendor_he_cap.present)
+		lim_update_bss_he_capable(pMac, pAddBssParams);
+
 	lim_log(pMac, LOGE, FL("vhtCapable %d vhtTxChannelWidthSet %d center_freq_seg0 - %d, center_freq_seg1 - %d"),
 		pAddBssParams->vhtCapable, pAddBssParams->ch_width,
 		pAddBssParams->ch_center_freq_seg0,
 		pAddBssParams->ch_center_freq_seg1);
-
 	/*
 	 * Populate the STA-related parameters here
 	 * Note that the STA here refers to the AP
@@ -4346,6 +4365,11 @@ tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t update
 			lim_log(pMac, LOG2, FL("StaContext: su_tx_bfer %d"),
 				pAddBssParams->staContext.enable_su_tx_bformer);
 		}
+		if (lim_is_session_he_capable(psessionEntry) &&
+			pBeaconStruct->vendor_he_cap.present)
+			lim_intersect_ap_he_caps(psessionEntry, pAddBssParams,
+					      pBeaconStruct, NULL);
+
 		if ((pBeaconStruct->HTCaps.supportedChannelWidthSet) &&
 				(chanWidthSupp)) {
 			pAddBssParams->staContext.ch_width =

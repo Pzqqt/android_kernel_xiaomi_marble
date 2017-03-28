@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -265,6 +265,10 @@ typedef struct sDphHashNode {
 	int8_t del_sta_ctx_rssi;
 	bool sta_deletion_in_progress;
 	struct parsed_ies parsed_ies;
+
+#ifdef WLAN_FEATURE_11AX
+	tDot11fIEvendor_he_cap he_config;
+#endif
 
 	/*
 	 * When a station with already an existing dph entry tries to

@@ -42,6 +42,7 @@
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
 #include "host_diag_core_log.h"
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
+#include "lim_utils.h"
 
 /* When beacon filtering is enabled, firmware will
  * analyze the selected beacons received during BMPS,
@@ -237,12 +238,13 @@ tSirRetStatus lim_send_switch_chnl_params(tpAniSirGlobal pMac,
 		     sizeof(tSirMacAddr));
 	pChnlParams->peSessionId = peSessionId;
 	pChnlParams->vhtCapable = pSessionEntry->vhtCapability;
-	pChnlParams->he_capable = pSessionEntry->he_capable;
+	if (lim_is_session_he_capable(pSessionEntry))
+		lim_update_chan_he_capable(pMac, pChnlParams);
 	pChnlParams->dot11_mode = pSessionEntry->dot11mode;
 	pChnlParams->nss = pSessionEntry->nss;
-	lim_log(pMac, LOG1, FL("dot11mode: %d, he_capable: %d, vht_capable: %d nss value: %d"),
-		pChnlParams->dot11_mode, pChnlParams->he_capable,
-		pChnlParams->vhtCapable, pChnlParams->nss);
+	lim_log(pMac, LOG1, FL("dot11mode: %d, vht_capable: %d nss value: %d"),
+		pChnlParams->dot11_mode, pChnlParams->vhtCapable,
+		pChnlParams->nss);
 
 	/*Set DFS flag for DFS channel */
 	if (ch_width == CH_WIDTH_160MHZ) {

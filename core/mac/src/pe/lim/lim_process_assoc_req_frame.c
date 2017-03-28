@@ -1275,6 +1275,7 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 		sta_ds->mlmStaContext.vhtCapability = vht_caps->present;
 	else
 		sta_ds->mlmStaContext.vhtCapability = false;
+	lim_update_stads_he_capable(sta_ds, assoc_req);
 	sta_ds->qos.addtsPresent =
 		(assoc_req->addtsPresent == 0) ? false : true;
 	sta_ds->qos.addts = assoc_req->addtsReq;
@@ -1417,6 +1418,9 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 		else
 			sta_ds->vht_su_bfee_capable = 0;
 	}
+
+	lim_intersect_sta_he_caps(assoc_req, session, sta_ds);
+
 	if (lim_populate_matching_rate_set(mac_ctx, sta_ds,
 			&(assoc_req->supportedRates),
 			&(assoc_req->extendedRates),

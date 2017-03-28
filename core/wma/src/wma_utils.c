@@ -2075,44 +2075,54 @@ bool wma_is_sta_active(tp_wma_handle wma_handle)
  * @nw_type: nw type
  * @sta_type: sta type
  * @is_ht: is ht supported
- * @is_cw40: is channel width 40 supported
+ * @ch_width: supported channel width
  * @is_vht: is vht supported
- * @is_cw_vht: is channel width 80 supported
+ * @is_he: is HE supported
  *
  * Return: WLAN_PHY_MODE
  */
 WLAN_PHY_MODE wma_peer_phymode(tSirNwType nw_type, uint8_t sta_type,
 			       uint8_t is_ht, uint8_t ch_width,
-			       uint8_t is_vht)
+			       uint8_t is_vht, bool is_he)
 {
 	WLAN_PHY_MODE phymode = MODE_UNKNOWN;
 
 	switch (nw_type) {
 	case eSIR_11B_NW_TYPE:
 		phymode = MODE_11B;
-		if (is_ht || is_vht)
+		if (is_ht || is_vht || is_he)
 			WMA_LOGE("HT/VHT is enabled with 11B NW type");
 		break;
 	case eSIR_11G_NW_TYPE:
-		if (!(is_ht || is_vht)) {
+		if (!(is_ht || is_vht || is_he)) {
 			phymode = MODE_11G;
 			break;
 		}
 		if (CH_WIDTH_40MHZ < ch_width)
 			WMA_LOGE("80/160 MHz BW sent in 11G, configured 40MHz");
 		if (ch_width)
-			phymode = (is_vht) ?
-				MODE_11AC_VHT40_2G : MODE_11NG_HT40;
+			phymode = (is_he) ? MODE_11AX_HE40_2G : (is_vht) ?
+					MODE_11AC_VHT40_2G : MODE_11NG_HT40;
 		else
-			phymode = (is_vht) ?
-				MODE_11AC_VHT20_2G : MODE_11NG_HT20;
+			phymode = (is_he) ? MODE_11AX_HE20_2G : (is_vht) ?
+					MODE_11AC_VHT20_2G : MODE_11NG_HT20;
 		break;
 	case eSIR_11A_NW_TYPE:
-		if (!(is_ht || is_vht)) {
+		if (!(is_ht || is_vht || is_he)) {
 			phymode = MODE_11A;
 			break;
 		}
-		if (is_vht) {
+		if (is_he) {
+			if (ch_width == CH_WIDTH_160MHZ)
+				phymode = MODE_11AX_HE160;
+			else if (ch_width == CH_WIDTH_80P80MHZ)
+				phymode = MODE_11AX_HE80_80;
+			else if (ch_width == CH_WIDTH_80MHZ)
+				phymode = MODE_11AX_HE80;
+			else
+				phymode = (ch_width) ?
+					  MODE_11AX_HE40 : MODE_11AX_HE20;
+		} else if (is_vht) {
 			if (ch_width == CH_WIDTH_160MHZ)
 				phymode = MODE_11AC_VHT160;
 			else if (ch_width == CH_WIDTH_80P80MHZ)
@@ -2129,8 +2139,8 @@ WLAN_PHY_MODE wma_peer_phymode(tSirNwType nw_type, uint8_t sta_type,
 		WMA_LOGP("%s: Invalid nw type %d", __func__, nw_type);
 		break;
 	}
-	WMA_LOGD("%s: nw_type %d is_ht %d ch_width %d is_vht %d phymode %d",
-		  __func__, nw_type, is_ht, ch_width, is_vht, phymode);
+	WMA_LOGD(FL("nw_type %d is_ht %d ch_width %d is_vht %d is_he %d phymode %d"),
+		 nw_type, is_ht, ch_width, is_vht, is_he, phymode);
 
 	return phymode;
 }

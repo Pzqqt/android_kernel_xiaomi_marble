@@ -386,6 +386,15 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 			populate_dot11f_operating_mode(mac_ctx,
 						&bcn_2->OperatingMode, session);
 	}
+
+	if (lim_is_session_he_capable(session)) {
+		sch_log(mac_ctx, LOGW, FL("Populate HE IEs"));
+		populate_dot11f_he_caps(mac_ctx, session,
+					&bcn_2->vendor_he_cap);
+		populate_dot11f_he_operation(mac_ctx, session,
+					&bcn_2->vendor_he_op);
+	}
+
 	if (session->limSystemRole != eLIM_STA_IN_IBSS_ROLE)
 		populate_dot11f_ext_cap(mac_ctx, is_vht_enabled, &bcn_2->ExtCap,
 					session);
@@ -754,6 +763,21 @@ void lim_update_probe_rsp_template_ie_bitmap_beacon2(tpAniSirGlobal pMac,
 		qdf_mem_copy((void *)&prb_rsp->ExtCap,
 			     (void *)&beacon2->ExtCap,
 			     sizeof(beacon2->ExtCap));
+	}
+
+	if (beacon2->vendor_he_cap.present) {
+		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap,
+					DOT11F_EID_VENDOR_HE_CAP);
+		qdf_mem_copy((void *)&prb_rsp->vendor_he_cap,
+			     (void *)&beacon2->vendor_he_cap,
+			     sizeof(beacon2->vendor_he_cap));
+	}
+	if (beacon2->vendor_he_op.present) {
+		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap,
+					DOT11F_EID_VENDOR_HE_OP);
+		qdf_mem_copy((void *)&prb_rsp->vendor_he_op,
+			     (void *)&beacon2->vendor_he_op,
+			     sizeof(beacon2->vendor_he_op));
 	}
 
 }

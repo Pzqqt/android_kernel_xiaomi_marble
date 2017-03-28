@@ -77,6 +77,7 @@
 #include "wlan_objmgr_vdev_obj.h"
 #include "wlan_lmac_if_api.h"
 #include <cdp_txrx_handle.h>
+#include "wma_he.h"
 
 /**
  * wma_send_bcn_buf_ll() - prepare and send beacon buffer to fw for LL
@@ -948,6 +949,7 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 	uint32_t peer_nss = 1;
 	uint32_t disable_abg_rate;
 	struct wma_txrx_node *intr = NULL;
+	bool is_he;
 	QDF_STATUS status;
 
 	cmd = qdf_mem_malloc(sizeof(struct peer_assoc_params));
@@ -972,10 +974,10 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 	qdf_mem_zero(&peer_ht_rates, sizeof(wmi_rate_set));
 	qdf_mem_zero(cmd, sizeof(struct peer_assoc_params));
 
+	is_he = wma_is_peer_he_capable(params);
 	phymode = wma_peer_phymode(nw_type, params->staType,
-				   params->htCapable,
-				   params->ch_width,
-				   params->vhtCapable);
+				   params->htCapable, params->ch_width,
+				   params->vhtCapable, is_he);
 
 	if (wlan_cfg_get_int(wma->mac_context,
 			     WNI_CFG_DISABLE_ABG_RATE_FOR_TX_DATA,
@@ -1234,6 +1236,8 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 	 * Otherwise Fw will crash
 	 */
 	wma_update_txrx_chainmask(wma->num_rf_chains, &cmd->peer_nss);
+
+	wma_populate_peer_he_cap(cmd, params);
 
 	intr->nss = cmd->peer_nss;
 	cmd->peer_phymode = phymode;

@@ -78,6 +78,8 @@
 #include <cdp_txrx_handle.h>
 #include "wlan_pmo_ucfg_api.h"
 
+#include "wma_he.h"
+
 /**
  * wma_find_vdev_by_addr() - find vdev_id from mac address
  * @wma: wma handle
@@ -1928,6 +1930,7 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 		CFG_TGT_DEFAULT_GTX_BW_MASK;
 	intr[params.vdev_id].mhz = params.chan_freq;
 	intr[params.vdev_id].chan_width = req->chan_width;
+	wma_copy_txrxnode_he_ops(&intr[params.vdev_id], req);
 
 	temp_chan_info &= 0xffffffc0;
 	temp_chan_info |= params.chan_mode;
@@ -2063,6 +2066,8 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 	params.num_noa_descriptors = 0;
 	params.preferred_rx_streams = req->preferred_rx_streams;
 	params.preferred_tx_streams = req->preferred_tx_streams;
+
+	wma_copy_vdev_start_he_ops(&params, req);
 
 	/* Store vdev params in SAP mode which can be used in vdev restart */
 	if (intr[req->vdev_id].type == WMI_VDEV_TYPE_AP &&
@@ -2830,6 +2835,7 @@ wma_vdev_set_bss_params(tp_wma_handle wma, int vdev_id,
 
 	/* Initialize protection mode in case of coexistence */
 	wma_update_protection_mode(wma, vdev_id, llbCoexist);
+
 }
 
 #ifdef WLAN_FEATURE_11W
@@ -2935,7 +2941,8 @@ static void wma_add_bss_ap_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	req.ch_center_freq_seg0 = add_bss->ch_center_freq_seg0;
 	req.ch_center_freq_seg1 = add_bss->ch_center_freq_seg1;
 	req.vht_capable = add_bss->vhtCapable;
-	req.he_capable = add_bss->he_capable;
+	wma_update_vdev_he_ops(&req, add_bss);
+
 	req.max_txpow = add_bss->maxTxPower;
 	maxTxPower = add_bss->maxTxPower;
 
@@ -2974,6 +2981,8 @@ static void wma_add_bss_ap_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 				add_bss->beaconInterval, add_bss->dtimPeriod,
 				add_bss->shortSlotTimeSupported,
 				add_bss->llbCoexist, maxTxPower);
+
+	wma_vdev_set_he_bss_params(wma, vdev_id, &req);
 
 	return;
 
