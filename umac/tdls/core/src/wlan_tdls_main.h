@@ -454,4 +454,25 @@ QDF_STATUS tdls_process_cmd(struct scheduler_msg *msg);
  * Return: QDF_STATUS
  */
 QDF_STATUS tdls_process_evt(struct scheduler_msg *msg);
+
+/**
+ * tdls_timer_restart() - restart TDLS timer
+ * @vdev: VDEV object manager
+ * @timer: timer to restart
+ * @expiration_time: new expiration time to set for the timer
+ *
+ * Return: Void
+ */
+void tdls_timer_restart(struct wlan_objmgr_vdev *vdev,
+				 qdf_mc_timer_t *timer,
+				 uint32_t expiration_time);
+
+/**
+ * wlan_hdd_tdls_timers_stop() - stop all the tdls timers running
+ * @tdls_vdev: TDLS vdev
+ *
+ * Return: none
+ */
+void tdls_timers_stop(struct tdls_vdev_priv_obj *tdls_vdev);
+
 #endif

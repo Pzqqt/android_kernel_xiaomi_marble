@@ -280,3 +280,78 @@ QDF_STATUS tdls_process_evt(struct scheduler_msg *msg)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+void tdls_timer_restart(struct wlan_objmgr_vdev *vdev,
+				 qdf_mc_timer_t *timer,
+				 uint32_t expiration_time)
+{
+	qdf_mc_timer_stop(timer);
+	qdf_mc_timer_start(timer, expiration_time);
+}
+
+/**
+ * wlan_hdd_tdls_monitor_timers_stop() - stop all monitoring timers
+ * @hdd_tdls_ctx: TDLS context
+ *
+ * Return: none
+ */
+static void tdls_monitor_timers_stop(struct tdls_vdev_priv_obj *tdls_vdev)
+{
+	qdf_mc_timer_stop(&tdls_vdev->peer_discovery_timer);
+}
+
+/**
+ * tdls_peer_idle_timers_stop() - stop peer idle timers
+ * @tdls_vdev: TDLS vdev object
+ *
+ * Loop through the idle peer list and stop their timers
+ *
+ * Return: None
+ */
+static void tdls_peer_idle_timers_stop(struct tdls_vdev_priv_obj *tdls_vdev)
+{
+	int i;
+	qdf_list_t *head;
+	qdf_list_node_t *p_node;
+	struct tdls_peer *curr_peer;
+	QDF_STATUS status;
+
+	tdls_vdev->discovery_peer_cnt = 0;
+
+	for (i = 0; i < WLAN_TDLS_PEER_LIST_SIZE; i++) {
+		head = &tdls_vdev->peer_list[i];
+		status = qdf_list_peek_front(head, &p_node);
+		while (QDF_IS_STATUS_SUCCESS(status)) {
+			curr_peer = qdf_container_of(p_node, struct tdls_peer,
+						     node);
+			if (curr_peer->is_peer_idle_timer_initialised)
+				qdf_mc_timer_stop(&curr_peer->peer_idle_timer);
+			status = qdf_list_peek_next(head, p_node, &p_node);
+		}
+	}
+
+}
+
+/**
+ * wlan_hdd_tdls_ct_timers_stop() - stop tdls connection tracker timers
+ * @tdls_vdev: TDLS vdev
+ *
+ * Return: None
+ */
+static void tdls_ct_timers_stop(struct tdls_vdev_priv_obj *tdls_vdev)
+{
+	qdf_mc_timer_stop(&tdls_vdev->peer_update_timer);
+	tdls_peer_idle_timers_stop(tdls_vdev);
+}
+
+/**
+ * wlan_hdd_tdls_timers_stop() - stop all the tdls timers running
+ * @tdls_vdev: TDLS vdev
+ *
+ * Return: none
+ */
+void tdls_timers_stop(struct tdls_vdev_priv_obj *tdls_vdev)
+{
+	tdls_monitor_timers_stop(tdls_vdev);
+	tdls_ct_timers_stop(tdls_vdev);
+}
