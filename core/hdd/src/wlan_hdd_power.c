@@ -1432,21 +1432,25 @@ err_cds_disable:
 	hdd_wlan_stop_modules(pHddCtx, false);
 
 err_wiphy_unregister:
+	if (bug_on_reinit_failure)
+		QDF_BUG(0);
+
 	if (pHddCtx) {
-		/* Unregister the Net Device Notifier */
-		unregister_netdevice_notifier(&hdd_netdev_notifier);
+		/* Unregister the Notifier's */
+		hdd_unregister_notifiers(pHddCtx);
 		ptt_sock_deactivate_svc();
 		nl_srv_exit();
 
-		/* Free up dynamically allocated members inside HDD Adapter */
-		qdf_mem_free(pHddCtx->config);
-		pHddCtx->config = NULL;
+		hdd_close_all_adapters(pHddCtx, false);
+		wlan_hdd_cfg80211_deinit(pHddCtx->wiphy);
+		hdd_lpass_notify_stop(pHddCtx);
 		wlan_hdd_deinit_tx_rx_histogram(pHddCtx);
 		wiphy_unregister(pHddCtx->wiphy);
-		wiphy_free(pHddCtx->wiphy);
+
 	}
 
 err_re_init:
+	hdd_ssr_timer_del();
 	/* Allow the phone to go to sleep */
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_REINIT);
 	if (bug_on_reinit_failure)

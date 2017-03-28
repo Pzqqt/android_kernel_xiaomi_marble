@@ -2361,4 +2361,12 @@ int wlan_hdd_send_mcc_latency(hdd_adapter_t *adapter, int sval);
  */
 hdd_adapter_t *wlan_hdd_get_adapter_from_vdev(struct wlan_objmgr_psoc
 					*psoc, uint8_t vdev_id);
+/**
+ * hdd_unregister_notifiers()- unregister kernel notifiers
+ * @hdd_ctx: Hdd Context
+ *
+ * Unregister netdev notifiers like Netdevice,IPv4 and IPv6.
+ *
+ */
+void hdd_unregister_notifiers(hdd_context_t *hdd_ctx);
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

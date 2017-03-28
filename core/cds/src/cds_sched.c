@@ -877,6 +877,7 @@ QDF_STATUS cds_sched_close(void *p_cds_context)
 	unregister_hotcpu_notifier(&cds_cpu_hotplug_notifier);
 	gp_cds_sched_context->cpu_hot_plug_notifier = NULL;
 #endif
+	gp_cds_sched_context = NULL;
 	return QDF_STATUS_SUCCESS;
 } /* cds_sched_close() */
 
