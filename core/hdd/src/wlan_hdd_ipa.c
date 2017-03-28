@@ -2734,10 +2734,11 @@ static int __hdd_ipa_uc_ssr_deinit(void)
 	for (idx = 0; (hdd_ipa->num_iface > 0) &&
 		(idx < HDD_IPA_MAX_IFACE); idx++) {
 		iface_context = &hdd_ipa->iface_context[idx];
-		if (iface_context && iface_context->adapter)
+		if (iface_context->adapter && iface_context->adapter->magic ==
+					      WLAN_HDD_ADAPTER_MAGIC)
 			hdd_ipa_cleanup_iface(iface_context);
 	}
-
+	hdd_ipa->num_iface = 0;
 	/* After SSR, wlan driver reloads FW again. But we need to protect
 	 * IPA submodule during SSR transient state. So deinit basic IPA
 	 * UC host side to be in sync with reloaded FW during SSR
