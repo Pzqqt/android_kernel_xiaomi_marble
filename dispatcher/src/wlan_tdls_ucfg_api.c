@@ -30,6 +30,7 @@
 #include <wlan_objmgr_global_obj.h>
 #include <wlan_objmgr_cmn.h>
 #include "wlan_policy_mgr_api.h"
+#include "wlan_scan_ucfg_api.h"
 
 QDF_STATUS ucfg_tdls_init(void)
 {
@@ -133,7 +134,6 @@ static QDF_STATUS tdls_global_init(struct tdls_soc_priv_obj *soc_obj)
 			WLAN_TDLS_STA_P_UAPSD_OFFCHAN_MAX_NUM;
 		else
 			soc_obj->max_num_tdls_sta = WLAN_TDLS_STA_MAX_NUM;
-
 
 	for (sta_idx = 0; sta_idx < soc_obj->max_num_tdls_sta; sta_idx++) {
 		soc_obj->tdls_conn_info[sta_idx].sta_id = 0;
@@ -246,6 +246,18 @@ QDF_STATUS ucfg_tdls_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	}
 
 	status = tgt_tdls_register_ev_handler(psoc);
+
+	if (status != QDF_STATUS_SUCCESS)
+		return status;
+
+	status = wlan_serialization_register_comp_info_cb(psoc,
+					WLAN_UMAC_COMP_TDLS,
+					WLAN_SER_CMD_SCAN,
+					tdls_scan_serialization_comp_info_cb);
+	if (QDF_STATUS_SUCCESS != status) {
+		tdls_err("Serialize scan cmd register failed ");
+		status = QDF_STATUS_E_FAILURE;
+	}
 
 	return status;
 }

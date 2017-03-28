@@ -33,6 +33,7 @@
 #include <wlan_objmgr_peer_obj.h>
 #include <wlan_tdls_public_structs.h>
 #include <scheduler_api.h>
+#include "wlan_serialization_api.h"
 
 /* Bit mask flag for tdls_option to FW */
 #define ENA_TDLS_OFFCHAN      (1 << 0)  /* TDLS Off Channel support */
@@ -54,6 +55,8 @@
  * should not be more than 2000.
  */
 #define TDLS_DISCOVERY_TIMEOUT_BEFORE_UPDATE     1000
+#define TDLS_SCAN_REJECT_MAX            5
+
 
 #define tdls_log(level, args...) \
 	QDF_TRACE(QDF_MODULE_ID_TDLS, level, ## args)
@@ -146,6 +149,7 @@ struct tdls_set_state_info {
  * @soc: objmgr psoc
  * @tdls_current_mode: current tdls mode
  * @tdls_last_mode: last tdls mode
+ * @scan_reject_count: number of times scan rejected due to TDLS
  * @tdls_source_bitmap: bit map to set/reset TDLS by different sources
  * @tdls_conn_info: this tdls_conn_info can be removed and we can use peer type
  *                of peer object to get the active tdls peers
@@ -182,6 +186,7 @@ struct tdls_soc_priv_obj {
 	struct wlan_objmgr_psoc *soc;
 	enum tdls_feature_mode tdls_current_mode;
 	enum tdls_feature_mode tdls_last_mode;
+	int scan_reject_count;
 	unsigned long tdls_source_bitmap;
 	struct tdls_conn_info tdls_conn_info[WLAN_TDLS_STA_MAX_NUM];
 	struct tdls_user_config tdls_configs;
@@ -618,5 +623,43 @@ struct wlan_objmgr_vdev *tdls_get_vdev(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS
 tdls_process_policy_mgr_notification(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * tdls_scan_complete_event_handler() - scan complete event handler for tdls
+ * @vdev: vdev object
+ * @event: scan event
+ * @arg: tdls soc object
+ *
+ * Return: None
+ */
+void tdls_scan_complete_event_handler(struct wlan_objmgr_vdev *vdev,
+			struct scan_event *event,
+			void *arg);
+
+/**
+ * tdls_scan_callback() - callback for TDLS scan operation
+ * @soc: tdls soc pvt object
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS tdls_scan_callback(struct tdls_soc_priv_obj *tdls_soc);
+
+/**
+ * wlan_hdd_tdls_scan_done_callback() - callback for tdls scan done event
+ * @tdls_soc: tdls soc object
+ *
+ * Return: Void
+ */
+void tdls_scan_done_callback(struct tdls_soc_priv_obj *tdls_soc);
+
+/**
+ * tdls_scan_serialization_comp_info_cb() - callback for scan start
+ * @comp_info: serialize rules info
+ *
+ * Return: negative = caller should stop and return error code immediately
+ *         1 = caller can continue to scan
+ */
+void tdls_scan_serialization_comp_info_cb(
+		union wlan_serialization_rules_info *comp_info);
 
 #endif
