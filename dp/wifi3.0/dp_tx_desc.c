@@ -363,7 +363,7 @@ void dp_tx_tso_desc_pool_free(struct dp_soc *soc, uint8_t pool_id)
 
 	if (!c_element) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			FL("Desc Pool Corrupt %d", pool_id);
+			FL("Desc Pool Corrupt %d"), pool_id);
 			return;
 	}
 
