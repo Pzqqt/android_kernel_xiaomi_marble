@@ -1834,22 +1834,26 @@ static QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 {
 	wmi_peer_assoc_complete_cmd_fixed_param *cmd;
 	wmi_vht_rate_set *mcs;
+	wmi_he_rate_set *he_mcs;
 	wmi_buf_t buf;
 	int32_t len;
 	uint8_t *buf_ptr;
 	QDF_STATUS ret;
 	uint32_t peer_legacy_rates_align;
 	uint32_t peer_ht_rates_align;
+	int32_t i;
 
 
 	peer_legacy_rates_align = wmi_align(param->peer_legacy_rates.num_rates);
 	peer_ht_rates_align = wmi_align(param->peer_ht_rates.num_rates);
 
 	len = sizeof(*cmd) + WMI_TLV_HDR_SIZE +
-	      (peer_legacy_rates_align * sizeof(uint8_t)) +
-	      WMI_TLV_HDR_SIZE +
-	      (peer_ht_rates_align * sizeof(uint8_t)) +
-	      sizeof(wmi_vht_rate_set);
+		(peer_legacy_rates_align * sizeof(uint8_t)) +
+		WMI_TLV_HDR_SIZE +
+		(peer_ht_rates_align * sizeof(uint8_t)) +
+		sizeof(wmi_vht_rate_set) +
+		(sizeof(wmi_he_rate_set) * param->peer_he_mcs_count
+		+ WMI_TLV_HDR_SIZE);
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
@@ -1884,7 +1888,6 @@ static QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 	/* Update 11ax capabilities */
 	cmd->peer_he_cap_info = param->peer_he_cap_macinfo;
 	cmd->peer_he_ops = param->peer_he_ops;
-	cmd->peer_he_mcs = param->peer_he_mcs;
 	qdf_mem_copy(&cmd->peer_he_cap_phy, &param->peer_he_cap_phyinfo,
 				sizeof(param->peer_he_cap_phyinfo));
 	qdf_mem_copy(&cmd->peer_ppet, &param->peer_ppet,
@@ -1922,16 +1925,41 @@ static QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 		mcs->tx_mcs_set = param->tx_mcs_set;
 	}
 
+	/* HE Rates */
+	cmd->peer_he_mcs = param->peer_he_mcs_count;
+	buf_ptr += sizeof(wmi_vht_rate_set);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		(param->peer_he_mcs_count * sizeof(wmi_he_rate_set)));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	/* Loop through the HE rate set */
+	for (i = 0; i < param->peer_he_mcs_count; i++) {
+		he_mcs = (wmi_he_rate_set *) buf_ptr;
+		WMITLV_SET_HDR(he_mcs, WMITLV_TAG_STRUC_wmi_he_rate_set,
+			WMITLV_GET_STRUCT_TLVLEN(wmi_he_rate_set));
+
+		he_mcs->rx_mcs_set = param->peer_he_rx_mcs_set[i];
+		he_mcs->tx_mcs_set = param->peer_he_tx_mcs_set[i];
+		WMI_LOGD("%s:HE idx %d RxMCSmap %x TxMCSmap %x ", __func__,
+			i, he_mcs->rx_mcs_set, he_mcs->tx_mcs_set);
+		buf_ptr += sizeof(wmi_he_rate_set);
+	}
+
+
 	WMI_LOGD("%s: vdev_id %d associd %d peer_flags %x rate_caps %x "
 		 "peer_caps %x listen_intval %d ht_caps %x max_mpdu %d "
 		 "nss %d phymode %d peer_mpdu_density %d "
-		 "cmd->peer_vht_caps %x", __func__,
+		 "cmd->peer_vht_caps %x "
+		 "HE cap_info %x ops %x "
+		 "HE phy %x  %x  %x  ", __func__,
 		 cmd->vdev_id, cmd->peer_associd, cmd->peer_flags,
 		 cmd->peer_rate_caps, cmd->peer_caps,
 		 cmd->peer_listen_intval, cmd->peer_ht_caps,
 		 cmd->peer_max_mpdu, cmd->peer_nss, cmd->peer_phymode,
 		 cmd->peer_mpdu_density,
-		 cmd->peer_vht_caps);
+		 cmd->peer_vht_caps, cmd->peer_he_cap_info,
+		 cmd->peer_he_ops, cmd->peer_he_cap_phy[0],
+		 cmd->peer_he_cap_phy[1], cmd->peer_he_cap_phy[2]);
 
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_PEER_ASSOC_CMDID);
