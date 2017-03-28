@@ -815,11 +815,10 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 	struct vdev_up_params param = {0};
 	QDF_STATUS status;
 
-	wma_release_wmi_resp_wakelock(wma);
-
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	tpAniSirGlobal mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 	if (NULL == mac_ctx) {
+		wma_release_wmi_resp_wakelock(wma);
 		WMA_LOGE("%s: Failed to get mac_ctx", __func__);
 		cds_set_do_hw_mode_change_flag(false);
 		return -EINVAL;
@@ -827,6 +826,9 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 
 	WMA_LOGD("%s: Enter", __func__);
+
+	wma_release_wmi_resp_wakelock(wma);
+
 	param_buf = (WMI_VDEV_START_RESP_EVENTID_param_tlvs *) cmd_param_info;
 	if (!param_buf) {
 		WMA_LOGE("Invalid start response event buffer");
@@ -1417,17 +1419,19 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 	int32_t status = 0;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
-	wma_release_wmi_resp_wakelock(wma);
-
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	tpAniSirGlobal mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 	if (NULL == mac_ctx) {
+		wma_release_wmi_resp_wakelock(wma);
 		WMA_LOGE("%s: Failed to get mac_ctx", __func__);
 		return -EINVAL;
 	}
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 
 	WMA_LOGI("%s: Enter", __func__);
+
+	wma_release_wmi_resp_wakelock(wma);
+
 	param_buf = (WMI_VDEV_STOPPED_EVENTID_param_tlvs *) cmd_param_info;
 	if (!param_buf) {
 		WMA_LOGE("Invalid event buffer");
