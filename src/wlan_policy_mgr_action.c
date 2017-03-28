@@ -260,14 +260,19 @@ QDF_STATUS policy_mgr_update_connection_info(struct wlan_objmgr_psoc *psoc,
 			vdev_id);
 		return status;
 	}
-
-	status = pm_ctx->wma_cbacks.wma_get_connection_info(
+	if (pm_ctx->wma_cbacks.wma_get_connection_info) {
+		status = pm_ctx->wma_cbacks.wma_get_connection_info(
 				vdev_id, &conn_table_entry);
-	if (QDF_STATUS_SUCCESS != status) {
-		policy_mgr_err("can't find vdev_id %d in connection table",
+		if (QDF_STATUS_SUCCESS != status) {
+			policy_mgr_err("can't find vdev_id %d in connection table",
 			vdev_id);
-		return status;
+			return status;
+		}
+	} else {
+		policy_mgr_err("wma_get_connection_info is NULL");
+		return QDF_STATUS_E_FAILURE;
 	}
+
 	mode = policy_mgr_get_mode(conn_table_entry.type,
 					conn_table_entry.sub_type);
 	chan = reg_freq_to_chan(conn_table_entry.mhz);
