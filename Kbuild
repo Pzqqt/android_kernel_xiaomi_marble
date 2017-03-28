@@ -167,7 +167,7 @@ ifeq ($(KERNEL_BUILD), 0)
 	ifneq ($(CONFIG_MOBILE_ROUTER), y)
 		#Flag to enable NAN Data path
 		CONFIG_WLAN_FEATURE_NAN_DATAPATH := y
-		CONFIG_NAN_CONVERGENCE := n
+		CONFIG_NAN_CONVERGENCE := y
 	endif
 
 	#Flag to enable Linux QCMBR feature as default feature
