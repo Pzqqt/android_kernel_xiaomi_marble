@@ -975,8 +975,9 @@ typedef struct {
 } target_rate_set;
 
 
-#define WMI_HOST_MAX_NUM_SS                    8
-#define WMI_HOST_MAX_HECAP_PHY_SIZE            3
+#define WMI_HOST_MAX_NUM_SS		8
+#define WMI_HOST_MAX_HECAP_PHY_SIZE	3
+#define WMI_HOST_MAX_HE_RATE_SET	1
 /**
  * struct wmi_host_ppe_threshold -PPE threshold
  * @numss_m1: NSS - 1
@@ -988,7 +989,6 @@ struct wmi_host_ppe_threshold {
 	uint32_t ru_bit_mask;
 	uint32_t ppet16_ppet8_ru3_ru0[WMI_HOST_MAX_NUM_SS];
 };
-
 
 /**
  * struct wmi_host_mac_addr - host mac addr 2 word representation of MAC addr
@@ -1050,7 +1050,9 @@ typedef struct {
  * @peer_he_cap_macinfo: Peer HE Cap MAC info
  * @peer_he_ops: Peer HE operation info
  * @peer_he_cap_phyinfo: Peer HE Cap PHY info
- * @peer_he_mcs: Peer HE MCS MAP
+ * @peer_he_mcs_count: Peer HE MCS TX/RX MAP count
+ * @peer_he_rx_mcs_set: Peer HE RX MCS MAP
+ * @peer_he_tx_mcs_set: Peer HE TX MCS MAP
  * @peer_ppet: Peer HE PPET info
  */
 struct peer_assoc_params {
@@ -1106,7 +1108,9 @@ struct peer_assoc_params {
 	uint32_t peer_he_cap_macinfo;
 	uint32_t peer_he_ops;
 	uint32_t peer_he_cap_phyinfo[WMI_HOST_MAX_HECAP_PHY_SIZE];
-	uint32_t peer_he_mcs;
+	uint32_t peer_he_mcs_count;
+	uint32_t peer_he_rx_mcs_set[WMI_HOST_MAX_HE_RATE_SET];
+	uint32_t peer_he_tx_mcs_set[WMI_HOST_MAX_HE_RATE_SET];
 	struct wmi_host_ppe_threshold peer_ppet;
 };
 
