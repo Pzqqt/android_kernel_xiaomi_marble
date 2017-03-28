@@ -2455,10 +2455,8 @@ static void __lim_process_sme_disassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBu
 			psessionEntry->limPrevSmeState =
 				psessionEntry->limSmeState;
 			psessionEntry->limSmeState = eLIM_SME_WT_DISASSOC_STATE;
-#ifdef FEATURE_WLAN_TDLS
 			/* Delete all TDLS peers connected before leaving BSS */
 			lim_delete_tdls_peers(pMac, psessionEntry);
-#endif
 			MTRACE(mac_trace(pMac, TRACE_CODE_SME_STATE,
 				psessionEntry->peSessionId,
 				psessionEntry->limSmeState));
@@ -2784,6 +2782,8 @@ static void __lim_process_sme_deauth_req(tpAniSirGlobal mac_ctx,
 		switch (session_entry->limSmeState) {
 		case eLIM_SME_ASSOCIATED_STATE:
 		case eLIM_SME_LINK_EST_STATE:
+			/* Delete all TDLS peers connected before leaving BSS */
+			lim_delete_tdls_peers(mac_ctx, session_entry);
 		case eLIM_SME_WT_ASSOC_STATE:
 		case eLIM_SME_JOIN_FAILURE_STATE:
 		case eLIM_SME_IDLE_STATE:
