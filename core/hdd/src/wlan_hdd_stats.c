@@ -1834,13 +1834,12 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	/* convert to the UI units of 100kbps */
 	myRate = pAdapter->hdd_stats.ClassA_stat.tx_rate * 5;
 	if (!(rate_flags & eHAL_TX_RATE_LEGACY)) {
-		nss = pAdapter->hdd_stats.ClassA_stat.rx_frag_cnt;
+		nss = pAdapter->hdd_stats.ClassA_stat.nss;
 
 		if (eHDD_LINK_SPEED_REPORT_ACTUAL == pCfg->reportMaxLinkSpeed) {
 			/* Get current rate flags if report actual */
 			rate_flags =
-				pAdapter->hdd_stats.ClassA_stat.
-				promiscuous_rx_frag_cnt;
+				pAdapter->hdd_stats.ClassA_stat.mcs_rate_flags;
 		}
 
 		if (mcs_index == INVALID_MCS_IDX)
