@@ -2293,9 +2293,12 @@ static int __wlan_hdd_cfg80211_vendor_scan(struct wiphy *wiphy,
 	request->wiphy = wiphy;
 	request->scan_start = jiffies;
 
-	if (0 != __wlan_hdd_cfg80211_scan(wiphy, request, VENDOR_SCAN))
-		goto error;
-
+	ret = __wlan_hdd_cfg80211_scan(wiphy, request, VENDOR_SCAN);
+	if (0 != ret) {
+		hdd_err("Scan Failed. Ret = %d", ret);
+		qdf_mem_free(request);
+		return ret;
+	}
 	ret = wlan_hdd_send_scan_start_event(wiphy, wdev, (uintptr_t)request);
 
 	return ret;
