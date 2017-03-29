@@ -76,6 +76,7 @@ QDF_STATUS csr_roam_issue_reassociate_cmd(tpAniSirGlobal pMac,
 	bool fHighPriority = true;
 	bool fRemoveCmd = false;
 	tListElem *pEntry;
+
 	pEntry = csr_nonscan_active_ll_peek_head(pMac, LL_ACCESS_LOCK);
 	if (pEntry) {
 		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
@@ -398,9 +399,8 @@ QDF_STATUS csr_neighbor_roam_process_scan_complete(tpAniSirGlobal pMac,
 		return QDF_STATUS_E_FAILURE;
 	}
 	hstatus = csr_scan_get_result(pMac, &scanFilter, &scanResult);
-	if (hstatus != QDF_STATUS_SUCCESS) {
+	if (hstatus != QDF_STATUS_SUCCESS)
 		sme_err("Get Scan Result status code %d", hstatus);
-	}
 	/* Process the scan results and update roamable AP list */
 	csr_neighbor_roam_process_scan_results(pMac, sessionId, &scanResult);
 
@@ -422,7 +422,8 @@ QDF_STATUS csr_neighbor_roam_process_scan_complete(tpAniSirGlobal pMac,
 			pNeighborRoamInfo->uOsRequestedHandoff = 0;
 		} else {
 			/* There is no candidate or We are not roaming Now.
-			 * Inform the FW to restart Roam Offload Scan  */
+			 * Inform the FW to restart Roam Offload Scan
+			 */
 			csr_roam_offload_scan(pMac, sessionId,
 				ROAM_SCAN_OFFLOAD_RESTART,
 				REASON_NO_CAND_FOUND_OR_NOT_ROAMING_NOW);
@@ -509,7 +510,6 @@ void csr_neighbor_roam_free_roamable_bss_list(tpAniSirGlobal mac_ctx,
 			llist, result);
 		csr_neighbor_roam_free_neighbor_roam_bss_node(mac_ctx, result);
 	}
-	return;
 }
 
 /**
@@ -665,7 +665,6 @@ void csr_neighbor_roam_request_handoff(tpAniSirGlobal mac_ctx,
 	csr_roam_call_callback(mac_ctx, session_id, &roam_info, 0,
 			       eCSR_ROAM_ROAMING_START, eCSR_ROAM_RESULT_NONE);
 
-	return;
 }
 
 
@@ -784,7 +783,5 @@ void csr_neighbor_roam_free_neighbor_roam_bss_node(tpAniSirGlobal pMac,
 		qdf_mem_free(neighborRoamBSSNode);
 		neighborRoamBSSNode = NULL;
 	}
-
-	return;
 }
 
