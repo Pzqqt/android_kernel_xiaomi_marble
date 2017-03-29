@@ -41,7 +41,8 @@ INCS += -I$(obj)/$(HOST_CMN_CONVG_PTT)/inc \
         -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/cmn_defs/inc \
         -I$(obj)/$(DEPTH)/cmn_dev/umac/scan/dispatcher/inc \
         -I$(obj)/$(DEPTH)/hal/linux \
-        -I$(obj)/$(DEPTH)/lmac/ath_dev
+        -I$(obj)/$(DEPTH)/lmac/ath_dev \
+        -I$(obj)/$(DEPTH)/cmn_dev/umac/regulatory/dispatcher/inc
 
 
 
