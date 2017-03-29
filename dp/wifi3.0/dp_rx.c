@@ -76,7 +76,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 		"requested %d buffers for replenish", num_req_buffers);
 
 	/*
@@ -98,7 +98,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 			return QDF_STATUS_E_NOMEM;
 		}
 
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%d rx desc allocated", num_alloc_desc);
 		num_req_buffers = num_alloc_desc;
 	}
@@ -108,7 +108,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 						   rxdma_srng,
 						   sync_hw_ptr);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"no of availble entries in rxdma ring: %d",
 			num_entries_avail);
 
@@ -169,9 +169,9 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 
 	hal_srng_access_end(dp_soc->hal_soc, rxdma_srng);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 		"successfully replenished %d buffers", num_req_buffers);
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 		"%d rx desc added back to free list", num_desc_to_free);
 	DP_STATS_INC(dp_pdev, buf_freelist, num_desc_to_free);
 

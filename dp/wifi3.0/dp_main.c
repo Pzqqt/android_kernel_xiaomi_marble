@@ -36,7 +36,7 @@
 #include "dp_peer.h"
 #include "dp_rx_mon.h"
 
-#define DP_INTR_POLL_TIMER_MS	100
+#define DP_INTR_POLL_TIMER_MS	10
 #define DP_MCS_LENGTH (6*MAX_MCS)
 #define DP_NSS_LENGTH (6*SS_COUNT)
 #define DP_RXDMA_ERR_LENGTH (6*MAX_RXDMA_ERRORS)
