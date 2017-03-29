@@ -286,8 +286,7 @@ qdf_nbuf_t ol_tx_data(void *data_vdev, qdf_nbuf_t skb)
 }
 
 #ifdef IPA_OFFLOAD
-qdf_nbuf_t ol_tx_send_ipa_data_frame(struct cdp_vdev *vdev,
-			qdf_nbuf_t skb)
+qdf_nbuf_t ol_tx_send_ipa_data_frame(struct cdp_vdev *vdev, qdf_nbuf_t skb)
 {
 	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	qdf_nbuf_t ret;

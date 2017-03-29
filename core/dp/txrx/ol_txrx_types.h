@@ -406,7 +406,7 @@ enum throttle_phase {
 
 #define THROTTLE_TX_THRESHOLD (100)
 
-typedef void (*ipa_uc_op_cb_type)(uint8_t *op_msg, void *osif_ctxt);
+typedef void (*ipa_uc_op_cb_type)(uint8_t *op_msg, void *usr_ctxt);
 
 struct ol_tx_queue_group_t {
 	qdf_atomic_t credit;
@@ -918,11 +918,6 @@ struct ol_txrx_pdev_t {
 		bool is_paused;
 	} tx_throttle;
 
-#ifdef IPA_OFFLOAD
-	ipa_uc_op_cb_type ipa_uc_op_cb;
-	void *osif_dev;
-#endif /* IPA_UC_OFFLOAD */
-
 #if defined(FEATURE_TSO)
 	struct {
 		uint16_t pool_size;
@@ -979,6 +974,12 @@ struct ol_txrx_pdev_t {
 	} lro_info;
 	struct ol_txrx_peer_t *self_peer;
 	qdf_work_t peer_unmap_timer_work;
+
+#ifdef IPA_OFFLOAD
+	ipa_uc_op_cb_type ipa_uc_op_cb;
+	void *usr_ctxt;
+	struct ol_txrx_ipa_resources ipa_resource;
+#endif /* IPA_UC_OFFLOAD */
 };
 
 struct ol_txrx_vdev_t {

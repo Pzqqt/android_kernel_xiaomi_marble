@@ -606,6 +606,99 @@ int wma_cli_set_command(int vdev_id, int param_id, int sval, int vpdev)
 }
 
 /**
+ * wma_ipa_get_stat() - get IPA data path stats from FW
+ *
+ * Return: 0 on success, errno on failure
+ */
+#ifdef IPA_OFFLOAD
+static int wma_ipa_get_stat(void)
+{
+	struct cdp_pdev *pdev;
+
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	if (!pdev) {
+		WMA_LOGE("pdev NULL for uc stat");
+		return -EINVAL;
+	}
+	cdp_ipa_get_stat(cds_get_context(QDF_MODULE_ID_SOC), pdev);
+
+	return 0;
+}
+#else
+static int wma_ipa_get_stat(void)
+{
+	return 0;
+}
+#endif
+
+/**
+ * wma_ipa_uc_get_share_stats() - get Tx/Rx byte stats from FW
+ * @privcmd: private command
+ *
+ * Return: 0 on success, errno on failure
+ */
+#if defined(IPA_OFFLOAD) && defined(FEATURE_METERING)
+static int wma_ipa_uc_get_share_stats(wma_cli_set_cmd_t *privcmd)
+{
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct cdp_pdev *pdev;
+	uint8_t reset_stats = privcmd->param_value;
+
+	WMA_LOGD("%s: reset_stats=%d",
+			"WMA_VDEV_TXRX_GET_IPA_UC_SHARING_STATS_CMDID",
+			reset_stats);
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	if (!pdev) {
+		WMA_LOGE("pdev NULL for uc get share stats");
+		return -EINVAL;
+	}
+	cdp_ipa_uc_get_share_stats(soc, pdev, reset_stats);
+
+	return 0;
+}
+#else
+static int wma_ipa_uc_get_share_stats(wma_cli_set_cmd_t *privcmd)
+{
+	return 0;
+}
+#endif
+
+/**
+ * wma_ipa_uc_set_quota() - set quota limit to FW
+ * @privcmd: private command
+ *
+ * Return: 0 on success, errno on failure
+ */
+#if defined(IPA_OFFLOAD) && defined(FEATURE_METERING)
+static int wma_ipa_uc_set_quota(wma_cli_set_cmd_t *privcmd)
+{
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct cdp_pdev *pdev;
+	uint64_t quota_bytes = privcmd->param_sec_value;
+
+	quota_bytes <<= 32;
+	quota_bytes |= privcmd->param_value;
+
+	WMA_LOGD("%s: quota_bytes=%llu",
+			"WMA_VDEV_TXRX_SET_IPA_UC_QUOTA_CMDID",
+			quota_bytes);
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	if (!pdev) {
+		WMA_LOGE("pdev NULL for uc set quota");
+		return -EINVAL;
+	}
+	cdp_ipa_uc_set_quota(soc, pdev, quota_bytes);
+
+	return 0;
+}
+#else
+static int wma_ipa_uc_set_quota(wma_cli_set_cmd_t *privcmd)
+{
+	return 0;
+}
+#endif
+
+/**
  * wma_set_priv_cfg() - set private config parameters
  * @wma_handle: wma handle
  * @privcmd: private command
@@ -751,54 +844,20 @@ static int32_t wma_set_priv_cfg(tp_wma_handle wma_handle,
 
 	case WMA_VDEV_TXRX_GET_IPA_UC_FW_STATS_CMDID:
 	{
-		void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-		struct cdp_pdev *pdev;
-
-		pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-		if (!pdev) {
-			WMA_LOGE("pdev NULL for uc stat");
-			return -EINVAL;
-		}
-		cdp_ipa_get_stat(soc, pdev);
+		wma_ipa_get_stat();
 	}
 		break;
 
 	case WMA_VDEV_TXRX_GET_IPA_UC_SHARING_STATS_CMDID:
 	{
-		void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-		struct cdp_pdev *pdev;
-		uint8_t reset_stats = privcmd->param_value;
-
-		WMA_LOGE("%s: reset_stats=%d",
-			 "WMA_VDEV_TXRX_GET_IPA_UC_SHARING_STATS_CMDID",
-			 reset_stats);
-		pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-		if (!pdev) {
-			WMA_LOGE("pdev NULL for uc stat");
-			return -EINVAL;
-		}
-		cdp_ipa_uc_get_share_stats(soc, pdev, reset_stats);
+		wma_ipa_uc_get_share_stats(privcmd);
 	}
 		break;
 
 	case WMA_VDEV_TXRX_SET_IPA_UC_QUOTA_CMDID:
 	{
-		void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-		struct cdp_pdev *pdev;
-		uint64_t quota_bytes = privcmd->param_sec_value;
+		wma_ipa_uc_set_quota(privcmd);
 
-		quota_bytes <<= 32;
-		quota_bytes |= privcmd->param_value;
-
-		WMA_LOGE("%s: quota_bytes=%llu",
-			 "WMA_VDEV_TXRX_SET_IPA_UC_QUOTA_CMDID",
-			 quota_bytes);
-		pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-		if (!pdev) {
-			WMA_LOGE("pdev NULL for uc stat");
-			return -EINVAL;
-		}
-		cdp_ipa_uc_set_quota(soc, pdev, quota_bytes);
 	}
 		break;
 
@@ -3827,6 +3886,28 @@ static void wma_alloc_host_mem(tp_wma_handle wma_handle, uint32_t req_id,
 }
 
 /**
+ * wma_set_tx_partition_base() - set TX MSDU ID partition base for IPA
+ * @value:  TX MSDU ID partition base
+ *
+ * Return: none
+ */
+#ifdef IPA_OFFLOAD
+static void wma_set_tx_partition_base(uint32_t value)
+{
+	cdp_ipa_set_uc_tx_partition_base(
+			cds_get_context(QDF_MODULE_ID_SOC),
+			(struct cdp_cfg *)cds_get_context(QDF_MODULE_ID_CFG),
+			value);
+	WMA_LOGD("%s: TX_MSDU_ID_PARTITION=%d", __func__,
+			value);
+}
+#else
+static void wma_set_tx_partition_base(uint32_t value)
+{
+}
+#endif
+
+/**
  * wma_update_target_services() - update target services from wma handle
  * @wh: wma handle
  * @cfg: target services
@@ -3920,19 +4001,9 @@ static inline void wma_update_target_services(tp_wma_handle wh,
 
 	if (WMI_SERVICE_IS_ENABLED(wh->wmi_service_bitmap,
 			WMI_SERVICE_TX_MSDU_ID_NEW_PARTITION_SUPPORT)) {
-		cdp_ipa_set_uc_tx_partition_base(
-			cds_get_context(QDF_MODULE_ID_SOC),
-			(struct cdp_cfg *)cds_get_context(QDF_MODULE_ID_CFG),
-			HTT_TX_IPA_NEW_MSDU_ID_SPACE_BEGIN);
-		WMA_LOGD("%s: TX_MSDU_ID_NEW_PARTITION=%d", __func__,
-				HTT_TX_IPA_NEW_MSDU_ID_SPACE_BEGIN);
+		wma_set_tx_partition_base(HTT_TX_IPA_NEW_MSDU_ID_SPACE_BEGIN);
 	} else {
-		cdp_ipa_set_uc_tx_partition_base(
-			cds_get_context(QDF_MODULE_ID_SOC),
-			(struct cdp_cfg *)cds_get_context(QDF_MODULE_ID_CFG),
-			HTT_TX_IPA_MSDU_ID_SPACE_BEGIN);
-		WMA_LOGD("%s: TX_MSDU_ID_OLD_PARTITION=%d", __func__,
-				HTT_TX_IPA_MSDU_ID_SPACE_BEGIN);
+		wma_set_tx_partition_base(HTT_TX_IPA_MSDU_ID_SPACE_BEGIN);
 	}
 
 	wma_he_update_tgt_services(wh, cfg);

@@ -9,6 +9,7 @@ endif
 ifeq ($(CONFIG_CNSS_QCA6290), y)
 	CONFIG_LITHIUM := y
 	CONFIG_WLAN_FEATURE_11AX := y
+	CONFIG_IPA := n
 endif
 
 ifeq ($(CONFIG_CLD_HL_SDIO_CORE), y)
@@ -1061,6 +1062,10 @@ ifeq ($(CONFIG_WLAN_TX_FLOW_CONTROL_V2), y)
 TXRX_OBJS +=     $(TXRX_DIR)/ol_txrx_flow_control.o
 endif
 
+ifeq ($(CONFIG_IPA_OFFLOAD), 1)
+TXRX_OBJS +=     $(TXRX_DIR)/ol_txrx_ipa.o
+endif
+
 ifeq ($(CONFIG_LITHIUM), y)
 ############ DP 3.0 ############
 DP_INC := -I$(WLAN_COMMON_ROOT)/dp/inc \
@@ -1083,6 +1088,10 @@ DP_OBJS := $(DP_SRC)/dp_main.o \
 ifeq ($(CONFIG_WLAN_TX_FLOW_CONTROL_V2), y)
 DP_OBJS += $(DP_SRC)/dp_tx_flow_control.o
 endif
+endif
+
+ifeq ($(CONFIG_IPA_OFFLOAD), 1)
+DP_OBJS +=     $(DP_SRC)/dp_ipa.o
 endif
 
 ############ CFG ############
@@ -1998,8 +2007,10 @@ CDEFINES += -DFEATURE_GREEN_AP
 endif
 
 #Stats & Quota Metering feature
+ifeq ($(CONFIG_IPA),y)
 ifeq ($(CONFIG_QCACLD_FEATURE_METERING),y)
 CDEFINES += -DFEATURE_METERING
+endif
 endif
 
 #Enable RX Full re-order OL feature only "LL and NON-MDM9630 platform"

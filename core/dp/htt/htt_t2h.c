@@ -151,6 +151,50 @@ static uint8_t *htt_t2h_mac_addr_deswizzle(uint8_t *tgt_mac_addr,
 #endif
 }
 
+/**
+ * htt_ipa_op_response() - invoke an event handler from FW
+ * @pdev: Handle (pointer) to HTT pdev.
+ * @msg_word: htt msg
+ *
+ * Return: None
+ */
+#ifdef IPA_OFFLOAD
+static void htt_ipa_op_response(struct htt_pdev_t *pdev, uint32_t *msg_word)
+{
+	uint8_t op_code;
+	uint16_t len;
+	uint8_t *op_msg_buffer;
+	uint8_t *msg_start_ptr;
+
+	htc_pm_runtime_put(pdev->htc_pdev);
+	msg_start_ptr = (uint8_t *) msg_word;
+	op_code =
+		HTT_WDI_IPA_OP_RESPONSE_OP_CODE_GET(*msg_word);
+	msg_word++;
+	len = HTT_WDI_IPA_OP_RESPONSE_RSP_LEN_GET(*msg_word);
+
+	op_msg_buffer =
+		qdf_mem_malloc(sizeof
+				(struct htt_wdi_ipa_op_response_t) +
+				len);
+	if (!op_msg_buffer) {
+		qdf_print("OPCODE messsage buffer alloc fail");
+		return;
+	}
+	qdf_mem_copy(op_msg_buffer,
+			msg_start_ptr,
+			sizeof(struct htt_wdi_ipa_op_response_t) +
+			len);
+	cdp_ipa_op_response(cds_get_context(QDF_MODULE_ID_SOC),
+			(struct cdp_pdev *)pdev->txrx_pdev,
+			op_msg_buffer);
+}
+#else
+static void htt_ipa_op_response(struct htt_pdev_t *pdev, uint32_t *msg_word)
+{
+}
+#endif
+
 /* Target to host Msg/event  handler  for low priority messages*/
 static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 				   bool free_msg_buf)
@@ -426,33 +470,7 @@ static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 
 	case HTT_T2H_MSG_TYPE_WDI_IPA_OP_RESPONSE:
 	{
-		uint8_t op_code;
-		uint16_t len;
-		uint8_t *op_msg_buffer;
-		uint8_t *msg_start_ptr;
-
-		htc_pm_runtime_put(pdev->htc_pdev);
-		msg_start_ptr = (uint8_t *) msg_word;
-		op_code =
-			HTT_WDI_IPA_OP_RESPONSE_OP_CODE_GET(*msg_word);
-		msg_word++;
-		len = HTT_WDI_IPA_OP_RESPONSE_RSP_LEN_GET(*msg_word);
-
-		op_msg_buffer =
-			qdf_mem_malloc(sizeof
-				       (struct htt_wdi_ipa_op_response_t) +
-				       len);
-		if (!op_msg_buffer) {
-			qdf_print("OPCODE messsage buffer alloc fail");
-			break;
-		}
-		qdf_mem_copy(op_msg_buffer,
-			     msg_start_ptr,
-			     sizeof(struct htt_wdi_ipa_op_response_t) +
-			     len);
-		cdp_ipa_op_response(cds_get_context(QDF_MODULE_ID_SOC),
-				(struct cdp_pdev *)pdev->txrx_pdev,
-				op_msg_buffer);
+		htt_ipa_op_response(pdev, msg_word);
 		break;
 	}
 

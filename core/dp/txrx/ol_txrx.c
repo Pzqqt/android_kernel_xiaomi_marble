@@ -86,6 +86,8 @@
 #include <a_types.h>
 #include <cdp_txrx_handle.h>
 #include <htt_internal.h>
+#include <ol_txrx_ipa.h>
+
 #ifdef QCA_SUPPORT_TXRX_LOCAL_PEER_ID
 ol_txrx_peer_handle
 ol_txrx_peer_find_by_local_id(struct cdp_pdev *pdev,
@@ -4519,159 +4521,7 @@ ol_txrx_ll_set_tx_pause_q_depth(uint8_t vdev_id, int pause_q_depth)
 }
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 
-#ifdef IPA_OFFLOAD
 /**
- * ol_txrx_ipa_uc_get_resource() - Client request resource information
- * @pdev: handle to the HTT instance
- * @ce_sr_base_paddr: copy engine source ring base physical address
- * @ce_sr_ring_size: copy engine source ring size
- * @ce_reg_paddr: copy engine register physical address
- * @tx_comp_ring_base_paddr: tx comp ring base physical address
- * @tx_comp_ring_size: tx comp ring size
- * @tx_num_alloc_buffer: number of allocated tx buffer
- * @rx_rdy_ring_base_paddr: rx ready ring base physical address
- * @rx_rdy_ring_size: rx ready ring size
- * @rx_proc_done_idx_paddr: rx process done index physical address
- * @rx_proc_done_idx_vaddr: rx process done index virtual address
- * @rx2_rdy_ring_base_paddr: rx done ring base physical address
- * @rx2_rdy_ring_size: rx done ring size
- * @rx2_proc_done_idx_paddr: rx done index physical address
- * @rx2_proc_done_idx_vaddr: rx done index virtual address
- *
- *  OL client will reuqest IPA UC related resource information
- *  Resource information will be distributted to IPA module
- *  All of the required resources should be pre-allocated
- *
- * Return: none
- */
-static void
-ol_txrx_ipa_uc_get_resource(struct cdp_pdev *ppdev,
-		struct ol_txrx_ipa_resources *ipa_res)
-{
-	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
-
-	htt_ipa_uc_get_resource(pdev->htt_pdev,
-				&ipa_res->ce_sr_base_paddr,
-				&ipa_res->ce_sr_ring_size,
-				&ipa_res->ce_reg_paddr,
-				&ipa_res->tx_comp_ring_base_paddr,
-				&ipa_res->tx_comp_ring_size,
-				&ipa_res->tx_num_alloc_buffer,
-				&ipa_res->rx_rdy_ring_base_paddr,
-				&ipa_res->rx_rdy_ring_size,
-				&ipa_res->rx_proc_done_idx_paddr,
-				&ipa_res->rx_proc_done_idx_vaddr,
-				&ipa_res->rx2_rdy_ring_base_paddr,
-				&ipa_res->rx2_rdy_ring_size,
-				&ipa_res->rx2_proc_done_idx_paddr,
-				&ipa_res->rx2_proc_done_idx_vaddr);
-}
-
-/**
- * ol_txrx_ipa_uc_set_doorbell_paddr() - Client set IPA UC doorbell register
- * @pdev: handle to the HTT instance
- * @ipa_uc_tx_doorbell_paddr: tx comp doorbell physical address
- * @ipa_uc_rx_doorbell_paddr: rx ready doorbell physical address
- *
- *  IPA UC let know doorbell register physical address
- *  WLAN firmware will use this physical address to notify IPA UC
- *
- * Return: none
- */
-static void
-ol_txrx_ipa_uc_set_doorbell_paddr(struct cdp_pdev *ppdev,
-				  qdf_dma_addr_t ipa_tx_uc_doorbell_paddr,
-				  qdf_dma_addr_t ipa_rx_uc_doorbell_paddr)
-{
-	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
-	htt_ipa_uc_set_doorbell_paddr(pdev->htt_pdev,
-				      ipa_tx_uc_doorbell_paddr,
-				      ipa_rx_uc_doorbell_paddr);
-}
-
-/**
- * ol_txrx_ipa_uc_set_active() - Client notify IPA UC data path active or not
- * @pdev: handle to the HTT instance
- * @ipa_uc_tx_doorbell_paddr: tx comp doorbell physical address
- * @ipa_uc_rx_doorbell_paddr: rx ready doorbell physical address
- *
- *  IPA UC let know doorbell register physical address
- *  WLAN firmware will use this physical address to notify IPA UC
- *
- * Return: none
- */
-static void
-ol_txrx_ipa_uc_set_active(struct cdp_pdev *ppdev, bool uc_active, bool is_tx)
-{
-	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
-	htt_h2t_ipa_uc_set_active(pdev->htt_pdev, uc_active, is_tx);
-}
-
-/**
- * ol_txrx_ipa_uc_op_response() - Handle OP command response from firmware
- * @pdev: handle to the HTT instance
- * @op_msg: op response message from firmware
- *
- * Return: none
- */
-static void ol_txrx_ipa_uc_op_response(struct cdp_pdev *ppdev, uint8_t *op_msg)
-{
-	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
-	if (pdev->ipa_uc_op_cb) {
-		pdev->ipa_uc_op_cb(op_msg, pdev->osif_dev);
-	} else {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		    "%s: IPA callback function is not registered", __func__);
-		qdf_mem_free(op_msg);
-		return;
-	}
-}
-
-/**
- * ol_txrx_ipa_uc_register_op_cb() - Register OP handler function
- * @pdev: handle to the HTT instance
- * @op_cb: handler function pointer
- * @osif_dev: register client context
- *
- * Return: none
- */
-static void
-ol_txrx_ipa_uc_register_op_cb(struct cdp_pdev *ppdev,
-				   ipa_uc_op_cb_type op_cb, void *osif_dev)
-{
-	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
-	pdev->ipa_uc_op_cb = op_cb;
-	pdev->osif_dev = osif_dev;
-}
-
-/**
- * ol_txrx_ipa_uc_get_stat() - Get firmware wdi status
- * @pdev: handle to the HTT instance
- *
- * Return: none
- */
-static void ol_txrx_ipa_uc_get_stat(struct cdp_pdev *ppdev)
-{
-	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
-	htt_h2t_ipa_uc_get_stats(pdev->htt_pdev);
-}
-
-static void ol_txrx_ipa_uc_get_share_stats(struct cdp_pdev *ppdev,
-					   uint8_t reset_stats)
-{
-	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
-	htt_h2t_ipa_uc_get_share_stats(pdev->htt_pdev, reset_stats);
-}
-
-static void ol_txrx_ipa_uc_set_quota(struct cdp_pdev *ppdev,
-				     uint64_t quota_bytes)
-{
-	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
-	htt_h2t_ipa_uc_set_quota(pdev->htt_pdev, quota_bytes);
-}
-#endif /* IPA_UC_OFFLOAD */
-
-/*
  * ol_txrx_display_stats() - Display OL TXRX display stats
  * @value: Module id for which stats needs to be displayed
  *
@@ -5566,8 +5416,8 @@ static struct cdp_lflowctl_ops ol_ops_l_flowctl = {
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 };
 
-static struct cdp_ipa_ops ol_ops_ipa = {
 #ifdef IPA_OFFLOAD
+static struct cdp_ipa_ops ol_ops_ipa = {
 	.ipa_get_resource = ol_txrx_ipa_uc_get_resource,
 	.ipa_set_doorbell_paddr = ol_txrx_ipa_uc_set_doorbell_paddr,
 	.ipa_set_active = ol_txrx_ipa_uc_set_active,
@@ -5576,10 +5426,21 @@ static struct cdp_ipa_ops ol_ops_ipa = {
 	.ipa_get_stat = ol_txrx_ipa_uc_get_stat,
 	.ipa_tx_data_frame = ol_tx_send_ipa_data_frame,
 	.ipa_set_uc_tx_partition_base = ol_cfg_set_ipa_uc_tx_partition_base,
+	.ipa_enable_autonomy = ol_txrx_ipa_enable_autonomy,
+	.ipa_disable_autonomy = ol_txrx_ipa_disable_autonomy,
+	.ipa_setup = ol_txrx_ipa_setup,
+	.ipa_cleanup = ol_txrx_ipa_cleanup,
+	.ipa_setup_iface = ol_txrx_ipa_setup_iface,
+	.ipa_cleanup_iface = ol_txrx_ipa_cleanup_iface,
+	.ipa_enable_pipes = ol_txrx_ipa_enable_pipes,
+	.ipa_disable_pipes = ol_txrx_ipa_disable_pipes,
+	.ipa_set_perf_level = ol_txrx_ipa_set_perf_level,
+#ifdef FEATURE_METERING
 	.ipa_uc_get_share_stats = ol_txrx_ipa_uc_get_share_stats,
 	.ipa_uc_set_quota = ol_txrx_ipa_uc_set_quota
-#endif /* IPA_OFFLOAD */
+#endif
 };
+#endif
 
 static struct cdp_bus_ops ol_ops_bus = {
 	.bus_suspend = ol_txrx_bus_suspend,
@@ -5696,7 +5557,9 @@ static struct cdp_ops ol_txrx_ops = {
 	.cfg_ops = &ol_ops_cfg,
 	.flowctl_ops = &ol_ops_flowctl,
 	.l_flowctl_ops = &ol_ops_l_flowctl,
+#ifdef IPA_OFFLOAD
 	.ipa_ops = &ol_ops_ipa,
+#endif
 	.bus_ops = &ol_ops_bus,
 	.ocb_ops = &ol_ops_ocb,
 	.peer_ops = &ol_ops_peer,

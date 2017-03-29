@@ -572,7 +572,7 @@ unsigned int ol_cfg_ipa_uc_rx_ind_ring_size(struct cdp_cfg *cfg_pdev);
  */
 unsigned int ol_cfg_ipa_uc_tx_partition_base(struct cdp_cfg *cfg_pdev);
 void ol_cfg_set_ipa_uc_tx_partition_base(struct cdp_cfg *cfg_pdev,
-					uint32_t value);
+					 uint32_t value);
 #else
 static inline unsigned int ol_cfg_ipa_uc_offload_enabled(
 	struct cdp_cfg *cfg_pdev)
@@ -605,7 +605,7 @@ static inline unsigned int ol_cfg_ipa_uc_tx_partition_base(
 }
 
 static inline void ol_cfg_set_ipa_uc_tx_partition_base(
-	struct cdp_cfg *cfg_pdev, uint32_t value)
+	void *cfg_pdev, uint32_t value)
 {
 }
 #endif /* IPA_OFFLOAD */

@@ -269,7 +269,7 @@ static inline void hdd_ipa_set_tx_flow_info(void)
  *
  * Return: 0 on success, negativer errno on error
  */
-static int hdd_ipa_uc_ol_deinit(hdd_context_t *hdd_ctx)
+static inline int hdd_ipa_uc_ol_deinit(hdd_context_t *hdd_ctx)
 {
 	return 0;
 }
