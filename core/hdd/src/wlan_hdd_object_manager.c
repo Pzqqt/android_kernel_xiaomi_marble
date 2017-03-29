@@ -52,6 +52,9 @@ static void hdd_init_vdev_os_priv(hdd_adapter_t *adapter,
 {
 	/* Initialize the vdev OS private structure*/
 	os_priv->wdev = adapter->dev->ieee80211_ptr;
+#ifdef CONVERGED_TDLS_ENABLE
+	wlan_cfg80211_tdls_priv_init(os_priv);
+#endif
 }
 
 static void hdd_init_psoc_qdf_ctx(struct wlan_objmgr_psoc *psoc)
@@ -204,6 +207,9 @@ int hdd_objmgr_destroy_vdev(hdd_adapter_t *adapter)
 
 	osif_priv = wlan_vdev_get_ospriv(vdev);
 	wlan_vdev_reset_ospriv(vdev);
+#ifdef CONVERGED_TDLS_ENABLE
+	wlan_cfg80211_tdls_priv_deinit(osif_priv);
+#endif
 	qdf_mem_free(osif_priv);
 
 	if (hdd_objmgr_remove_peer_object(vdev,

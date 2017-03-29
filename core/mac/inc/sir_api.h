@@ -3369,6 +3369,9 @@ typedef struct sSirTdlsAddStaRsp {
 	uint8_t ucastSig;
 	uint8_t bcastSig;
 	eTdlsAddOper tdlsAddOper;
+#ifdef CONVERGED_TDLS_ENABLE
+	struct wlan_objmgr_psoc *psoc;
+#endif
 } tSirTdlsAddStaRsp;
 
 /* TDLS Request struct SME-->PE */
@@ -3420,6 +3423,9 @@ typedef struct sSirTdlsDelStaRsp {
 	tSirResultCodes statusCode;
 	struct qdf_mac_addr peermac;
 	uint16_t staId;
+#ifdef CONVERGED_TDLS_ENABLE
+	struct wlan_objmgr_psoc *psoc;
+#endif
 } tSirTdlsDelStaRsp, *tpSirTdlsDelStaRsp;
 /* TDLS Delete Indication struct PE-->SME */
 typedef struct sSirTdlsDelStaInd {

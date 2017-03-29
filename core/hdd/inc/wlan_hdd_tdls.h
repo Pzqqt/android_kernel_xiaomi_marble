@@ -787,6 +787,13 @@ int wlan_hdd_cfg80211_configure_tdls_mode(struct wiphy *wiphy,
 					const void *data,
 					int data_len);
 
+QDF_STATUS hdd_tdls_register_tdls_peer(void *userdata, uint32_t vdev_id,
+				       const uint8_t *mac, uint16_t sta_id,
+				       uint8_t ucastsig, uint8_t qos);
+
+QDF_STATUS hdd_tdls_deregister_tdl_peer(void *userdata,
+					uint32_t vdev_id, uint8_t sta_id);
+
 #else
 static inline void hdd_update_tdls_ct_and_teardown_links(hdd_context_t *hdd_ctx)
 {
@@ -843,6 +850,21 @@ static inline void wlan_hdd_change_tdls_mode(void *hdd_ctx)
 static inline void
 hdd_tdls_notify_p2p_roc(hdd_context_t *hdd_ctx,
 			enum tdls_concerned_external_events event)
+{
+}
+
+static QDF_STATUS hdd_tdls_register_tdls_peer(void *userdata,
+					      uint32_t vdev_id,
+					      const uint8_t *mac,
+					      uint16_t sta_id,
+					      uint8_t ucastsig,
+					      uint8_t qos)
+{
+}
+
+static QDF_STATUS hdd_tdls_deregister_tdl_peer(void *userdata,
+					       uint32_t vdev_id, uint8_t sta_id)
+
 {
 }
 #endif /* End of FEATURE_WLAN_TDLS */

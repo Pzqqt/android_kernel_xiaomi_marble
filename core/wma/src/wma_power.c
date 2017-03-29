@@ -973,7 +973,7 @@ void wma_disable_uapsd_mode(tp_wma_handle wma,
  * @wmi_handle: wma handle
  * @vdevid: vdev id
  * @peer_addr: peer mac address
- * @autoTriggerparam: auto trigger parameters
+ * @trig_param: auto trigger parameters
  * @num_ac: number of access category
  *
  * This function sets the trigger
@@ -987,14 +987,14 @@ void wma_disable_uapsd_mode(tp_wma_handle wma,
 static QDF_STATUS wma_set_sta_uapsd_auto_trig_cmd(wmi_unified_t wmi_handle,
 					uint32_t vdevid,
 					uint8_t peer_addr[IEEE80211_ADDR_LEN],
-					uint8_t *autoTriggerparam,
+					struct sta_uapsd_params *trig_param,
 					uint32_t num_ac)
 {
 	QDF_STATUS ret;
 	struct sta_uapsd_trig_params cmd = {0};
 
 	cmd.vdevid = vdevid;
-	cmd.auto_triggerparam = autoTriggerparam;
+	cmd.auto_triggerparam = trig_param;
 	cmd.num_ac = num_ac;
 
 	qdf_mem_copy((uint8_t *) cmd.peer_addr, (uint8_t *) peer_addr,
@@ -1027,7 +1027,7 @@ QDF_STATUS wma_trigger_uapsd_params(tp_wma_handle wma_handle, uint32_t vdev_id,
 				    trigger_uapsd_params)
 {
 	QDF_STATUS ret;
-	wmi_sta_uapsd_auto_trig_param uapsd_trigger_param;
+	struct sta_uapsd_params uapsd_trigger_param;
 
 	WMA_LOGD("Trigger uapsd params vdev id %d", vdev_id);
 
@@ -1057,7 +1057,7 @@ QDF_STATUS wma_trigger_uapsd_params(tp_wma_handle wma_handle, uint32_t vdev_id,
 
 	ret = wma_set_sta_uapsd_auto_trig_cmd(wma_handle->wmi_handle,
 			vdev_id, wma_handle->interfaces[vdev_id].bssid,
-			(uint8_t *) (&uapsd_trigger_param), 1);
+			&uapsd_trigger_param, 1);
 	if (QDF_IS_STATUS_ERROR(ret)) {
 		WMA_LOGE("Fail to send uapsd param cmd for vdevid %d ret = %d",
 			 ret, vdev_id);
@@ -1080,7 +1080,7 @@ QDF_STATUS wma_disable_uapsd_per_ac(tp_wma_handle wma_handle,
 {
 	QDF_STATUS ret;
 	struct wma_txrx_node *iface = &wma_handle->interfaces[vdev_id];
-	wmi_sta_uapsd_auto_trig_param uapsd_trigger_param;
+	struct sta_uapsd_params uapsd_trigger_param;
 	enum uapsd_up user_priority;
 
 	WMA_LOGD("Disable Uapsd per ac vdevId %d ac %d", vdev_id, ac);
@@ -1127,7 +1127,7 @@ QDF_STATUS wma_disable_uapsd_per_ac(tp_wma_handle wma_handle,
 
 	ret = wma_set_sta_uapsd_auto_trig_cmd(wma_handle->wmi_handle,
 		vdev_id, wma_handle->interfaces[vdev_id].bssid,
-		(uint8_t *)(&uapsd_trigger_param), 1);
+		&uapsd_trigger_param, 1);
 	if (QDF_IS_STATUS_ERROR(ret)) {
 		WMA_LOGE("Fail to send auto trig cmd for vdevid %d ret = %d",
 			 ret, vdev_id);

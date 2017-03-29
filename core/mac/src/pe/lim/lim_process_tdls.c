@@ -79,6 +79,10 @@
 #include "cds_regdomain.h"
 #include "cds_utils.h"
 
+#ifdef CONVERGED_TDLS_ENABLE
+#include "wlan_tdls_tgt_api.h"
+#endif
+
 /* define NO_PAD_TDLS_MIN_8023_SIZE to NOT padding: See CR#447630
    There was IOT issue with cisco 1252 open mode, where it pads
    discovery req/teardown frame with some junk value up to min size.
@@ -2822,11 +2826,17 @@ static QDF_STATUS lim_send_sme_tdls_add_sta_rsp(tpAniSirGlobal pMac,
 
 	addStaRsp->length = sizeof(tSirTdlsAddStaRsp);
 	addStaRsp->messageType = eWNI_SME_TDLS_ADD_STA_RSP;
+#ifdef CONVERGED_TDLS_ENABLE
+	addStaRsp->psoc = pMac->psoc;
+	mmhMsg.bodyptr = addStaRsp;
+	mmhMsg.callback = tgt_tdls_add_peer_rsp;
 
+	return scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &mmhMsg);
+#else
 	mmhMsg.bodyptr = addStaRsp;
 	mmhMsg.bodyval = 0;
 	lim_sys_process_mmh_msg_api(pMac, &mmhMsg, ePROT);
-
+#endif
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -3060,10 +3070,16 @@ static QDF_STATUS lim_send_sme_tdls_del_sta_rsp(tpAniSirGlobal pMac,
 
 	pDelSta->length = sizeof(tSirTdlsDelStaRsp);
 	pDelSta->messageType = eWNI_SME_TDLS_DEL_STA_RSP;
-
+#ifdef CONVERGED_TDLS_ENABLE
+	pDelSta->psoc = pMac->psoc;
+	mmhMsg.bodyptr = pDelSta;
+	mmhMsg.callback = tgt_tdls_del_peer_rsp;
+	return scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &mmhMsg);
+#else
 	mmhMsg.bodyptr = pDelSta;
 
 	mmhMsg.bodyval = 0;
+#endif
 	lim_sys_process_mmh_msg_api(pMac, &mmhMsg, ePROT);
 	return QDF_STATUS_SUCCESS;
 

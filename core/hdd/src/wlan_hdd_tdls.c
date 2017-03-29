@@ -4679,6 +4679,58 @@ ret_status:
 	return status;
 }
 
+#if defined(CONVERGED_TDLS_ENABLE)
+/**
+ * __wlan_hdd_cfg80211_tdls_oper() - helper function to handle cfg80211 operation
+ *                                   on an TDLS peer
+ * @wiphy: wiphy
+ * @dev: net device
+ * @peer: MAC address of the TDLS peer
+ * @oper: cfg80211 TDLS operation
+ *
+ * Return: 0 on success; negative errno otherwise
+ */
+static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
+					 struct net_device *dev,
+					 const uint8_t *peer,
+					 enum nl80211_tdls_operation oper)
+{
+	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	hdd_context_t *pHddCtx = wiphy_priv(wiphy);
+	int status;
+
+	ENTER();
+
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+		hdd_err("Command not allowed in FTM mode");
+		return -EINVAL;
+	}
+
+	if (wlan_hdd_validate_session_id(pAdapter->sessionId)) {
+		hdd_err("invalid session id: %d", pAdapter->sessionId);
+		return -EINVAL;
+	}
+
+	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
+			 TRACE_CODE_HDD_CFG80211_TDLS_OPER,
+			 pAdapter->sessionId, oper));
+	if (NULL == peer) {
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid arguments", __func__);
+		return -EINVAL;
+	}
+
+	status = wlan_hdd_validate_context(pHddCtx);
+
+	if (0 != status)
+		return status;
+
+	status = wlan_cfg80211_tdls_oper(pHddCtx->hdd_pdev, dev, peer, oper);
+
+	EXIT();
+	return status;
+}
+#else
 /**
  * __wlan_hdd_cfg80211_tdls_oper() - helper function to handle cfg80211
  *                                   operation on an TDLS peer
@@ -5146,9 +5198,11 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 			  "%s: unsupported event %d", __func__, oper);
 		return -ENOTSUPP;
 	}
+
 	EXIT();
 	return 0;
 }
+#endif
 
 /**
  * wlan_hdd_cfg80211_tdls_oper() - handle cfg80211 operation on an TDLS peer
@@ -6367,3 +6421,43 @@ set_state:
 		hdd_ctx->enable_tdls_connection_tracker);
 }
 
+QDF_STATUS hdd_tdls_register_tdls_peer(void *userdata, uint32_t vdev_id,
+				       const uint8_t *mac, uint16_t sta_id,
+				       uint8_t ucastsig, uint8_t qos)
+{
+	hdd_adapter_t *adapter;
+	hdd_context_t *hddctx;
+
+	hddctx = userdata;
+	if (!hddctx) {
+		hdd_err("Invalid hddctx");
+		return QDF_STATUS_E_INVAL;
+	}
+	adapter = hdd_get_adapter_by_vdev(hddctx, vdev_id);
+	if (!adapter) {
+		hdd_err("Invalid adapter");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return hdd_roam_register_tdlssta(adapter, mac, sta_id, ucastsig, qos);
+}
+
+QDF_STATUS hdd_tdls_deregister_tdl_peer(void *userdata,
+					uint32_t vdev_id, uint8_t sta_id)
+{
+	hdd_adapter_t *adapter;
+	hdd_context_t *hddctx;
+
+	hddctx = userdata;
+	if (!hddctx) {
+		hdd_err("Invalid hddctx");
+		return QDF_STATUS_E_INVAL;
+	}
+	adapter = hdd_get_adapter_by_vdev(hddctx, vdev_id);
+	if (!adapter) {
+		hdd_err("Invalid adapter");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return hdd_roam_deregister_tdlssta(adapter, sta_id);
+}

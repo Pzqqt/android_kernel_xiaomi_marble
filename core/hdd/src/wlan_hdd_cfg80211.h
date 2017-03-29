@@ -36,6 +36,9 @@
 
 #include <wlan_cfg80211_scan.h>
 #include <wlan_cfg80211.h>
+#ifdef CONVERGED_TDLS_ENABLE
+#include <wlan_cfg80211_tdls.h>
+#endif
 
 /* value for initial part of frames and number of bytes to be compared */
 #define GAS_INITIAL_REQ "\x04\x0a"

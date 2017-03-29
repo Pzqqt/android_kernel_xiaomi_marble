@@ -11288,7 +11288,7 @@ static int wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 	return ret;
 }
 
-#ifdef FEATURE_WLAN_TDLS
+#if defined(FEATURE_WLAN_TDLS) && !defined(CONVERGED_TDLS_ENABLE)
 static bool wlan_hdd_is_duplicate_channel(uint8_t *arr,
 					  int index, uint8_t match)
 {
@@ -11327,7 +11327,7 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 	hdd_context_t *pHddCtx;
 	hdd_station_ctx_t *pHddStaCtx;
 	struct qdf_mac_addr STAMacAddress;
-#ifdef FEATURE_WLAN_TDLS
+#if defined(FEATURE_WLAN_TDLS) && !defined(CONVERGED_TDLS_ENABLE)
 	tCsrStaParams StaParams = { 0 };
 	uint8_t isBufSta = 0;
 	uint8_t isOffChannelSupported = 0;
@@ -11375,8 +11375,11 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 		}
 	} else if ((pAdapter->device_mode == QDF_STA_MODE) ||
 		   (pAdapter->device_mode == QDF_P2P_CLIENT_MODE)) {
-#ifdef FEATURE_WLAN_TDLS
 		if (params->sta_flags_set & BIT(NL80211_STA_FLAG_TDLS_PEER)) {
+#if defined(FEATURE_WLAN_TDLS) && defined(CONVERGED_TDLS_ENABLE)
+			ret = wlan_cfg80211_tdls_update_peer(pHddCtx->hdd_pdev,
+							     dev, mac, params);
+#else
 
 			if (cds_is_sub_20_mhz_enabled()) {
 				hdd_err("TDLS not allowed with sub 20 MHz");
@@ -11552,8 +11555,8 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 				hdd_err("wlan_hdd_tdls_add_station failed!");
 				return -EINVAL;
 			}
-		}
 #endif
+		}
 	}
 	EXIT();
 	return ret;
@@ -15492,8 +15495,13 @@ static int __wlan_hdd_cfg80211_add_station(struct wiphy *wiphy,
 
 	if (mask & BIT(NL80211_STA_FLAG_TDLS_PEER)) {
 		if (set & BIT(NL80211_STA_FLAG_TDLS_PEER)) {
+#if defined(CONVERGED_TDLS_ENABLE)
+			status = wlan_cfg80211_tdls_add_peer(pHddCtx->hdd_pdev,
+							     dev, mac);
+#else
 			status =
 				wlan_hdd_tdls_add_station(wiphy, dev, mac, 0, NULL);
+#endif
 		}
 	}
 #endif
