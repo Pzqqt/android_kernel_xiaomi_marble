@@ -44,16 +44,17 @@ void lmac_get_caps(struct wlan_objmgr_pdev *pdev,
 
 	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
 
-	dfs_tx_ops->dfs_get_caps(pdev,
-		ext_chan,
-		combined_rssi,
-		use_enhancement,
-		strong_signal_diversiry,
-		chip_is_bb_tlv,
-		chip_is_over_sampled,
-		chip_is_ht160,
-		chip_is_false_detect,
-		fastdiv_val);
+	if (dfs_tx_ops->dfs_get_caps)
+		dfs_tx_ops->dfs_get_caps(pdev,
+				ext_chan,
+				combined_rssi,
+				use_enhancement,
+				strong_signal_diversiry,
+				chip_is_bb_tlv,
+				chip_is_over_sampled,
+				chip_is_ht160,
+				chip_is_false_detect,
+				fastdiv_val);
 }
 
 uint64_t lmac_get_tsf64(struct wlan_objmgr_pdev *pdev)
@@ -68,7 +69,8 @@ uint64_t lmac_get_tsf64(struct wlan_objmgr_pdev *pdev)
 
 	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
 
-	dfs_tx_ops->dfs_gettsf64(pdev, &tsf64);
+	if (dfs_tx_ops->dfs_gettsf64)
+		dfs_tx_ops->dfs_gettsf64(pdev, &tsf64);
 
 	return tsf64;
 }
@@ -100,7 +102,8 @@ int lmac_get_dfsdomain(struct wlan_objmgr_pdev *pdev)
 
 	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
 
-	dfs_tx_ops->dfs_get_dfsdomain(pdev, &dfsdomain);
+	if (dfs_tx_ops->dfs_get_dfsdomain)
+		dfs_tx_ops->dfs_get_dfsdomain(pdev, &dfsdomain);
 
 	return dfsdomain;
 }
@@ -126,17 +129,18 @@ void lmac_dfs_enable(struct wlan_objmgr_pdev *pdev,
 
 	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
 
-	dfs_tx_ops->dfs_enable(pdev,
-			is_fastclk,
-			pe_firpwr,
-			pe_rrssi,
-			pe_height,
-			pe_prssi,
-			pe_inband,
-			pe_relpwr,
-			pe_relstep,
-			pe_maxlen,
-			dfsdomain);
+	if (dfs_tx_ops->dfs_enable)
+		dfs_tx_ops->dfs_enable(pdev,
+				is_fastclk,
+				pe_firpwr,
+				pe_rrssi,
+				pe_height,
+				pe_prssi,
+				pe_inband,
+				pe_relpwr,
+				pe_relstep,
+				pe_maxlen,
+				dfsdomain);
 }
 
 void lmac_dfs_get_thresholds(struct wlan_objmgr_pdev *pdev,
@@ -158,15 +162,16 @@ void lmac_dfs_get_thresholds(struct wlan_objmgr_pdev *pdev,
 
 	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
 
-	dfs_tx_ops->dfs_get_thresholds(pdev,
-			pe_firpwr,
-			pe_rrssi,
-			pe_height,
-			pe_prssi,
-			pe_inband,
-			pe_relpwr,
-			pe_relstep,
-			pe_maxlen);
+	if (dfs_tx_ops->dfs_get_thresholds)
+		dfs_tx_ops->dfs_get_thresholds(pdev,
+				pe_firpwr,
+				pe_rrssi,
+				pe_height,
+				pe_prssi,
+				pe_inband,
+				pe_relpwr,
+				pe_relstep,
+				pe_maxlen);
 }
 
 bool lmac_is_mode_offload(struct wlan_objmgr_pdev *pdev)
@@ -181,7 +186,8 @@ bool lmac_is_mode_offload(struct wlan_objmgr_pdev *pdev)
 
 	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
 
-	dfs_tx_ops->dfs_is_mode_offload(pdev, &is_offload);
+	if (dfs_tx_ops->dfs_is_mode_offload)
+		dfs_tx_ops->dfs_is_mode_offload(pdev, &is_offload);
 
 	return is_offload;
 }
@@ -198,7 +204,8 @@ uint16_t lmac_get_ah_devid(struct wlan_objmgr_pdev *pdev)
 
 	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
 
-	dfs_tx_ops->dfs_get_ah_devid(pdev, &devid);
+	if (dfs_tx_ops->dfs_get_ah_devid)
+		dfs_tx_ops->dfs_get_ah_devid(pdev, &devid);
 
 	return devid;
 }
@@ -215,7 +222,8 @@ uint32_t lmac_get_ext_busy(struct wlan_objmgr_pdev *pdev)
 
 	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
 
-	dfs_tx_ops->dfs_get_ext_busy(pdev, &ext_chan_busy);
+	if (dfs_tx_ops->dfs_get_ext_busy)
+		dfs_tx_ops->dfs_get_ext_busy(pdev, &ext_chan_busy);
 
 	return ext_chan_busy;
 }
@@ -232,8 +240,9 @@ bool lmac_is_countryCode_KOREA_ROC3(struct wlan_objmgr_pdev *pdev)
 
 	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
 
-	dfs_tx_ops->dfs_is_countryCode_KOREA_ROC3(pdev,
-			&ctry_korea);
+	if (dfs_tx_ops->dfs_is_countryCode_KOREA_ROC3)
+		dfs_tx_ops->dfs_is_countryCode_KOREA_ROC3(pdev,
+				&ctry_korea);
 
 	return ctry_korea;
 
@@ -250,7 +259,8 @@ void lmac_set_use_cac_prssi(struct wlan_objmgr_pdev *pdev)
 
 	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
 
-	dfs_tx_ops->dfs_set_use_cac_prssi(pdev);
+	if (dfs_tx_ops->dfs_set_use_cac_prssi)
+		dfs_tx_ops->dfs_set_use_cac_prssi(pdev);
 }
 
 uint32_t lmac_get_target_type(struct wlan_objmgr_pdev *pdev)
@@ -265,7 +275,8 @@ uint32_t lmac_get_target_type(struct wlan_objmgr_pdev *pdev)
 
 	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
 
-	dfs_tx_ops->dfs_get_target_type(pdev, &target_type);
+	if (dfs_tx_ops->dfs_get_target_type)
+		dfs_tx_ops->dfs_get_target_type(pdev, &target_type);
 
 	return target_type;
 }
@@ -282,7 +293,8 @@ bool lmac_is_countryCode_CHINA(struct wlan_objmgr_pdev *pdev)
 
 	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
 
-	dfs_tx_ops->dfs_is_countryCode_CHINA(pdev, &country_china);
+	if (dfs_tx_ops->dfs_is_countryCode_CHINA)
+		dfs_tx_ops->dfs_is_countryCode_CHINA(pdev, &country_china);
 
 	return country_china;
 }
@@ -300,7 +312,8 @@ uint32_t lmac_get_phymode_info(struct wlan_objmgr_pdev *pdev,
 
 	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
 
-	dfs_tx_ops->dfs_get_phymode_info(pdev, chan_mode, &mode_info);
+	if (dfs_tx_ops->dfs_get_phymode_info)
+		dfs_tx_ops->dfs_get_phymode_info(pdev, chan_mode, &mode_info);
 
 	return mode_info;
 }
