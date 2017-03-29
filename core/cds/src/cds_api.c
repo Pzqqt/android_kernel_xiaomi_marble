@@ -593,6 +593,9 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 
 	pmo_ucfg_psoc_update_dp_handle(psoc, gp_cds_context->dp_soc);
 
+	if (gp_cds_context->dp_soc == NULL)
+		goto err_wma_close;
+
 	cds_set_ac_specs_params(cds_cfg);
 
 	cds_cdp_cfg_attach(cds_cfg);
@@ -607,7 +610,7 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Failed to open MAC", __func__);
 		QDF_ASSERT(0);
-		goto err_wma_close;
+		goto err_soc_detach;
 	}
 
 	/* Now proceed to open the SME */
@@ -645,6 +648,8 @@ err_sme_close:
 err_mac_close:
 	mac_close(gp_cds_context->pMACContext);
 
+err_soc_detach:
+	/* todo: add propper error handling */
 err_wma_close:
 	cds_shutdown_notifier_purge();
 	wma_close();
