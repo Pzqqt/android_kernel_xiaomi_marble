@@ -25,14 +25,12 @@
  * to the Linux Foundation.
  */
 
-/** ------------------------------------------------------------------------- *
-    ------------------------------------------------------------------------- *
-
-    \file csr_neighbor_roam.c
-
-	Implementation for the simple roaming algorithm for 802.11r Fast
-	transitions and Legacy roaming for Android platform.
-   ========================================================================== */
+/*
+ * DOC: csr_neighbor_roam.c
+ *
+ * Implementation for the simple roaming algorithm for 802.11r Fast
+ * transitions and Legacy roaming for Android platform.
+ */
 
 #include "wma_types.h"
 #include "csr_inside_api.h"
@@ -62,9 +60,6 @@ static const char *lfr_get_config_item_string(uint8_t reason)
 
 static void csr_neighbor_roam_reset_channel_info(tpCsrNeighborRoamChannelInfo
 						 rChInfo);
-
-QDF_STATUS csr_roam_copy_connected_profile(tpAniSirGlobal pMac, uint32_t sessionId,
-					   tCsrRoamProfile *pDstProfile);
 
 void csr_neighbor_roam_state_transition(tpAniSirGlobal mac_ctx,
 		uint8_t newstate, uint8_t session)
@@ -279,9 +274,10 @@ static void csr_neighbor_roam_reset_connected_state_control_info(
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
 		&pMac->roam.neighborRoamInfo[sessionId];
 
-	csr_neighbor_roam_reset_channel_info(&pNeighborRoamInfo->roamChannelInfo);
+	csr_neighbor_roam_reset_channel_info(&pNeighborRoamInfo->
+					roamChannelInfo);
 	csr_neighbor_roam_free_roamable_bss_list(pMac,
-						 &pNeighborRoamInfo->roamableAPList);
+					&pNeighborRoamInfo->roamableAPList);
 
 	/* Do not free up the preauth done list here */
 	pNeighborRoamInfo->FTRoamInfo.currentNeighborRptRetryNum = 0;
@@ -313,8 +309,7 @@ static void csr_neighbor_roam_reset_report_scan_state_control_info(
 
 	/* Purge roamable AP list */
 	csr_neighbor_roam_free_roamable_bss_list(pMac,
-						 &pNeighborRoamInfo->roamableAPList);
-	return;
+					&pNeighborRoamInfo->roamableAPList);
 }
 
 /**
@@ -335,7 +330,8 @@ static void csr_neighbor_roam_reset_init_state_control_info(tpAniSirGlobal pMac,
 	csr_neighbor_roam_reset_connected_state_control_info(pMac, sessionId);
 
 	/* In addition to the above resets,
-	   we should clear off the curAPBssId/Session ID in the timers */
+	 * we should clear off the curAPBssId/Session ID in the timers
+	 */
 	csr_neighbor_roam_reset_report_scan_state_control_info(pMac, sessionId);
 }
 
@@ -511,16 +507,14 @@ csr_neighbor_roam_prepare_scan_profile_filter(tpAniSirGlobal pMac,
  *
  * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_FAILURE otherwise
  */
-QDF_STATUS csr_neighbor_roam_channels_filter_by_current_band(tpAniSirGlobal pMac,
-							     uint8_t sessionId,
-							     uint8_t *
-							     pInputChannelList,
-							     uint8_t
-							     inputNumOfChannels,
-							     uint8_t *
-							     pOutputChannelList,
-							     uint8_t *
-							     pMergedOutputNumOfChannels)
+QDF_STATUS csr_neighbor_roam_channels_filter_by_current_band(tpAniSirGlobal
+						pMac,
+						uint8_t sessionId,
+						uint8_t *pInputChannelList,
+						uint8_t inputNumOfChannels,
+						uint8_t *pOutputChannelList,
+						uint8_t *
+						pMergedOutputNumOfChannels)
 {
 	uint8_t i = 0;
 	uint8_t numChannels = 0;
@@ -607,7 +601,9 @@ QDF_STATUS csr_neighbor_roam_merge_channel_lists(tpAniSirGlobal pMac,
 			  __func__, outputNumOfChannels);
 		return QDF_STATUS_E_INVAL;
 	}
-	/* Add the "new" channels in the input list to the end of the output list. */
+	/* Add the "new" channels in the input list to the end of the
+	 * output list.
+	 */
 	for (i = 0; i < inputNumOfChannels; i++) {
 		for (j = 0; j < outputNumOfChannels; j++) {
 			if (pInputChannelList[i] == pOutputChannelList[j])
@@ -626,8 +622,8 @@ QDF_STATUS csr_neighbor_roam_merge_channel_lists(tpAniSirGlobal pMac,
 		}
 		if (numChannels >= WNI_CFG_VALID_CHANNEL_LIST_LEN) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-				  "%s: Merge Neighbor channel list reached Max "
-				  "limit %d", __func__, numChannels);
+				  "%s: Merge Neighbor channel list reached Max limit %d",
+				__func__, numChannels);
 			break;
 		}
 	}
@@ -720,19 +716,16 @@ bool csr_neighbor_roam_is_new_connected_profile(tpAniSirGlobal pMac,
 	tSirBssDescription *pBssDesc = NULL;
 	bool fNew = true;
 
-	if (!(pMac->roam.roamSession && CSR_IS_SESSION_VALID(pMac, sessionId))) {
+	if (!(pMac->roam.roamSession && CSR_IS_SESSION_VALID(pMac, sessionId)))
 		return fNew;
-	}
 
 	pCurrProfile = &pMac->roam.roamSession[sessionId].connectedProfile;
-	if (!pCurrProfile) {
+	if (!pCurrProfile)
 		return fNew;
-	}
 
 	pPrevProfile = &pNeighborRoamInfo->prevConnProfile;
-	if (!pPrevProfile) {
+	if (!pPrevProfile)
 		return fNew;
-	}
 
 	pBssDesc = pPrevProfile->pBssDesc;
 	if (pBssDesc) {
@@ -742,9 +735,8 @@ bool csr_neighbor_roam_is_new_connected_profile(tpAniSirGlobal pMac,
 					pCurrProfile, pBssDesc, pIes)) {
 			fNew = false;
 		}
-		if (pIes) {
+		if (pIes)
 			qdf_mem_free(pIes);
-		}
 	}
 
 	sme_debug("roam profile match: %d", !fNew);
@@ -760,15 +752,13 @@ bool csr_neighbor_roam_connected_profile_match(tpAniSirGlobal pMac,
 	tCsrRoamConnectedProfile *pCurProfile = NULL;
 	tSirBssDescription *pBssDesc = &pResult->Result.BssDescriptor;
 
-	if (!(pMac->roam.roamSession && CSR_IS_SESSION_VALID(pMac, sessionId))) {
+	if (!(pMac->roam.roamSession && CSR_IS_SESSION_VALID(pMac, sessionId)))
 		return false;
-	}
 
 	pCurProfile = &pMac->roam.roamSession[sessionId].connectedProfile;
 
-	if (!pCurProfile) {
+	if (!pCurProfile)
 		return false;
-	}
 
 	return csr_neighbor_roam_is_ssid_and_security_match(pMac, pCurProfile,
 							    pBssDesc, pIes);
@@ -847,8 +837,7 @@ QDF_STATUS csr_neighbor_roam_indicate_disconnect(tpAniSirGlobal pMac,
 		roam_session = &pMac->roam.roamSession[sessionId];
 		if (NULL != pSession->pCurRoamProfile && (QDF_STA_MODE !=
 			roam_session->pCurRoamProfile->csrPersona)) {
-			sme_err("Ignore disconn ind rcvd from nonSTA persona"
-					"sessionId: %d, csrPersonna %d",
+			sme_err("Ignore disconn ind rcvd from nonSTA persona sessionId: %d csrPersonna %d",
 				sessionId,
 				(int)roam_session->pCurRoamProfile->csrPersona);
 			return QDF_STATUS_SUCCESS;
@@ -988,9 +977,10 @@ static void csr_neighbor_roam_info_ctx_init(
 	ngbr_roam_info->currentRoamBeaconRssiWeight =
 		ngbr_roam_info->cfgParams.nRoamBeaconRssiWeight;
 
-	/**
+	/*
 	 * Now we can clear the preauthDone that
-	 * was saved as we are connected afresh */
+	 * was saved as we are connected afresh
+	 */
 	csr_neighbor_roam_free_roamable_bss_list(pMac,
 		&ngbr_roam_info->FTRoamInfo.preAuthDoneList);
 
@@ -1031,7 +1021,8 @@ static void csr_neighbor_roam_info_ctx_init(
 		/*
 		 * If this is not a INFRA type BSS, then do not send the command
 		 * down to firmware.Do not send the START command for
-		 * other session connections.*/
+		 * other session connections.
+		 */
 		if (!csr_roam_is_sta_mode(pMac, session_id)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				"Wrong Mode %d",
@@ -1094,8 +1085,8 @@ QDF_STATUS csr_neighbor_roam_indicate_connect(
 	/* Bail out if this is NOT a STA persona */
 	if (pMac->roam.roamSession[session_id].pCurRoamProfile->csrPersona !=
 	QDF_STA_MODE) {
-		sme_err("Ignoring Connect ind received from a non STA."
-			"session_id: %d, csrPersonna %d", session_id,
+		sme_err("Ignoring Connect ind received from a non STA. session_id: %d, csrPersonna %d",
+			session_id,
 			(int)session->pCurRoamProfile->csrPersona);
 		return QDF_STATUS_SUCCESS;
 	}
@@ -1149,8 +1140,8 @@ QDF_STATUS csr_neighbor_roam_indicate_connect(
 			 */
 			csr_neighbor_roam_state_transition(pMac,
 				eCSR_NEIGHBOR_ROAM_STATE_INIT, session_id);
-			ngbr_roam_info->roamChannelInfo.IAPPNeighborListReceived =
-				false;
+			ngbr_roam_info->roamChannelInfo.
+					IAPPNeighborListReceived = false;
 			ngbr_roam_info->uOsRequestedHandoff = 0;
 			break;
 		}
@@ -1170,17 +1161,14 @@ QDF_STATUS csr_neighbor_roam_indicate_connect(
 	return status;
 }
 
-/* ---------------------------------------------------------------------------
-
-    \fn csr_neighbor_roam_init11r_assoc_info
-
-    \brief  This function initializes 11r related neighbor roam data structures
-
-    \param  pMac - The handle returned by mac_open.
-
-    \return QDF_STATUS_SUCCESS on success, corresponding error code otherwise
-
-   ---------------------------------------------------------------------------*/
+/*
+ * csr_neighbor_roam_init11r_assoc_info -
+ * This function initializes 11r related neighbor roam data structures
+ *
+ * @pMac: The handle returned by mac_open.
+ *
+ * return QDF_STATUS_SUCCESS on success, corresponding error code otherwise
+ */
 static QDF_STATUS csr_neighbor_roam_init11r_assoc_info(tpAniSirGlobal pMac)
 {
 	QDF_STATUS status;
@@ -1221,17 +1209,15 @@ static QDF_STATUS csr_neighbor_roam_init11r_assoc_info(tpAniSirGlobal pMac)
 	return status;
 }
 
-/* ---------------------------------------------------------------------------
-
-    \fn csr_neighbor_roam_init
-
-    \brief  This function initializes neighbor roam data structures
-
-    \param  pMac - The handle returned by mac_open.
-
-    \return QDF_STATUS_SUCCESS on success, corresponding error code otherwise
-
-   ---------------------------------------------------------------------------*/
+/*
+ * csr_neighbor_roam_init() -
+ * This function initializes neighbor roam data structures
+ *
+ * @pMac: The handle returned by mac_open.
+ * sessionId: Session identifier
+ *
+ * Return QDF_STATUS_SUCCESS on success, corresponding error code otherwise
+ */
 QDF_STATUS csr_neighbor_roam_init(tpAniSirGlobal pMac, uint8_t sessionId)
 {
 	QDF_STATUS status;
@@ -1242,9 +1228,11 @@ QDF_STATUS csr_neighbor_roam_init(tpAniSirGlobal pMac, uint8_t sessionId)
 	pNeighborRoamInfo->prevNeighborRoamState =
 		eCSR_NEIGHBOR_ROAM_STATE_CLOSED;
 	pNeighborRoamInfo->cfgParams.maxChannelScanTime =
-		pMac->roam.configParam.neighborRoamConfig.nNeighborScanMaxChanTime;
+		pMac->roam.configParam.neighborRoamConfig.
+		nNeighborScanMaxChanTime;
 	pNeighborRoamInfo->cfgParams.minChannelScanTime =
-		pMac->roam.configParam.neighborRoamConfig.nNeighborScanMinChanTime;
+		pMac->roam.configParam.neighborRoamConfig.
+		nNeighborScanMinChanTime;
 	pNeighborRoamInfo->cfgParams.maxNeighborRetries = 0;
 	pNeighborRoamInfo->cfgParams.neighborLookupThreshold =
 		pMac->roam.configParam.neighborRoamConfig.
@@ -1264,12 +1252,14 @@ QDF_STATUS csr_neighbor_roam_init(tpAniSirGlobal pMac, uint8_t sessionId)
 	pNeighborRoamInfo->cfgParams.nRoamBeaconRssiWeight =
 		pMac->roam.configParam.neighborRoamConfig.nRoamBeaconRssiWeight;
 	pNeighborRoamInfo->cfgParams.neighborScanPeriod =
-		pMac->roam.configParam.neighborRoamConfig.nNeighborScanTimerPeriod;
+		pMac->roam.configParam.neighborRoamConfig.
+		nNeighborScanTimerPeriod;
 	pNeighborRoamInfo->cfgParams.neighborResultsRefreshPeriod =
 		pMac->roam.configParam.neighborRoamConfig.
 		nNeighborResultsRefreshPeriod;
 	pNeighborRoamInfo->cfgParams.emptyScanRefreshPeriod =
-		pMac->roam.configParam.neighborRoamConfig.nEmptyScanRefreshPeriod;
+		pMac->roam.configParam.neighborRoamConfig.
+		nEmptyScanRefreshPeriod;
 
 	pNeighborRoamInfo->cfgParams.channelInfo.numOfChannels =
 		pMac->roam.configParam.neighborRoamConfig.neighborScanChanList.
@@ -1361,17 +1351,15 @@ QDF_STATUS csr_neighbor_roam_init(tpAniSirGlobal pMac, uint8_t sessionId)
 	return QDF_STATUS_SUCCESS;
 }
 
-/* ---------------------------------------------------------------------------
-
-    \fn csr_neighbor_roam_close
-
-    \brief  This function closes/frees all the neighbor roam data structures
-
-    \param  pMac - The handle returned by mac_open.
-    \param  sessionId - Session identifier
-    \return VOID
-
-   ---------------------------------------------------------------------------*/
+/*
+ * csr_neighbor_roam_close() -
+ * This function closes/frees all the neighbor roam data structures
+ *
+ * @pMac: The handle returned by mac_open.
+ * @sessionId: Session identifier
+ *
+ * Return VOID
+ */
 void csr_neighbor_roam_close(tpAniSirGlobal pMac, uint8_t sessionId)
 {
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
@@ -1389,9 +1377,11 @@ void csr_neighbor_roam_close(tpAniSirGlobal pMac, uint8_t sessionId)
 
 	pNeighborRoamInfo->cfgParams.channelInfo.ChannelList = NULL;
 
-	/* Should free up the nodes in the list before closing the double Linked list */
+	/* Should free up the nodes in the list before closing the
+	 * double Linked list
+	 */
 	csr_neighbor_roam_free_roamable_bss_list(pMac,
-						 &pNeighborRoamInfo->roamableAPList);
+					&pNeighborRoamInfo->roamableAPList);
 	csr_ll_close(&pNeighborRoamInfo->roamableAPList);
 
 	if (pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.
@@ -1424,7 +1414,6 @@ void csr_neighbor_roam_close(tpAniSirGlobal pMac, uint8_t sessionId)
 	csr_neighbor_roam_state_transition(pMac,
 		eCSR_NEIGHBOR_ROAM_STATE_CLOSED, sessionId);
 
-	return;
 }
 
 /**
@@ -1439,15 +1428,15 @@ bool csr_neighbor_roam_is11r_assoc(tpAniSirGlobal mac_ctx, uint8_t session_id)
 	return mac_ctx->roam.neighborRoamInfo[session_id].is11rAssoc;
 }
 
-/* ---------------------------------------------------------------------------
-    \brief  This function returns true if STA is in the middle of roaming states
-
-    \param  halHandle - The handle from HDD context.
-    \param  sessionId - Session identifier
-
-    \return bool
-
-   ---------------------------------------------------------------------------*/
+/*
+ * csr_neighbor_middle_of_roaming() -
+ * This function returns true if STA is in the middle of roaming states
+ *
+ * @halHandle: The handle from HDD context.
+ * @sessionId: Session identifier
+ *
+ * Return bool
+ */
 bool csr_neighbor_middle_of_roaming(tpAniSirGlobal pMac, uint8_t sessionId)
 {
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
@@ -1579,21 +1568,19 @@ end:
 	return status;
 }
 
-/* ---------------------------------------------------------------------------
+/*
+ * csr_neighbor_roam_sssid_scan_done() -
+ * This function is called once SSID scan is done. If SSID scan failed
+ * to find our candidate add an entry to csr scan cache ourself before starting
+ * the handoff process
 
-    \fn csr_neighbor_roam_sssid_scan_done
-
-    \brief  This function is called once SSID scan is done. If SSID scan failed
-    to find our candidate add an entry to csr scan cache ourself before starting
-    the handoff process
-
-    \param  pMac - The handle returned by mac_open.
-
-    \return QDF_STATUS_SUCCESS on success, corresponding error code otherwise
-
-   ---------------------------------------------------------------------------*/
+ * @pMac: The handle returned by mac_open.
+ * @session_id  SME session id
+ *
+ * Return QDF_STATUS_SUCCESS on success, corresponding error code otherwise
+ */
 QDF_STATUS csr_neighbor_roam_sssid_scan_done(tpAniSirGlobal pMac,
-					     uint8_t sessionId, QDF_STATUS status)
+					   uint8_t sessionId, QDF_STATUS status)
 {
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
 		&pMac->roam.neighborRoamInfo[sessionId];
@@ -1605,14 +1592,16 @@ QDF_STATUS csr_neighbor_roam_sssid_scan_done(tpAniSirGlobal pMac,
 		sme_err("Received in not CONNECTED state. Ignore it");
 		return QDF_STATUS_E_FAILURE;
 	}
-	/* if SSID scan failed to find our candidate add an entry to csr scan cache ourself */
+	/* if SSID scan failed to find our candidate add an entry to
+	 * csr scan cache ourself
+	 */
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sme_err("Add an entry to csr scan cache");
 		hstatus = csr_scan_create_entry_in_scan_cache(pMac, sessionId,
-							      pNeighborRoamInfo->
-							      handoffReqInfo.bssid,
-							      pNeighborRoamInfo->
-							      handoffReqInfo.channel);
+							pNeighborRoamInfo->
+							handoffReqInfo.bssid,
+							pNeighborRoamInfo->
+							handoffReqInfo.channel);
 		if (QDF_STATUS_SUCCESS != hstatus) {
 			sme_err(
 				"csr_scan_create_entry_in_scan_cache failed with status %d",
@@ -1621,7 +1610,9 @@ QDF_STATUS csr_neighbor_roam_sssid_scan_done(tpAniSirGlobal pMac,
 		}
 	}
 
-	/* Now we have completed scanning for the candidate provided by HDD. Let move on to HO */
+	/* Now we have completed scanning for the candidate provided by HDD.
+	 * Let move on to HO
+	 */
 	hstatus = csr_neighbor_roam_process_scan_complete(pMac, sessionId);
 
 	if (QDF_STATUS_SUCCESS != hstatus) {
@@ -1716,38 +1707,41 @@ QDF_STATUS csr_neighbor_roam_proceed_with_handoff_req(tpAniSirGlobal pMac,
 			pNeighborRoamInfo->neighborRoamState,
 			pNeighborRoamInfo->uOsRequestedHandoff);
 		status = QDF_STATUS_E_FAILURE;
-	} else {
+	} else
 		/* Let's go ahead with handoff */
 		status = csr_neighbor_roam_process_handoff_req(pMac, sessionId);
-	}
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
+
+	if (!QDF_IS_STATUS_SUCCESS(status))
 		pNeighborRoamInfo->uOsRequestedHandoff = 0;
-	}
+
 	return status;
 }
 
-/* ---------------------------------------------------------------------------
+/*
+ * csr_neighbor_roam_start_lfr_scan() -
+ * This function is called if HDD requested handoff failed for some
+ * reason. start the LFR logic at that point.By the time, this function is
+ * called, a STOP command has already been issued.
 
-    \fn csr_neighbor_roam_start_lfr_scan
-
-    \brief  This function is called if HDD requested handoff failed for some
-    reason. start the LFR logic at that point.By the time, this function is
-    called, a STOP command has already been issued.
-
-    \param  pMac - The handle returned by mac_open.
-
-    \return QDF_STATUS_SUCCESS on success, corresponding error code otherwise
-
-   ---------------------------------------------------------------------------*/
-QDF_STATUS csr_neighbor_roam_start_lfr_scan(tpAniSirGlobal pMac, uint8_t sessionId)
+ * @pMac: The handle returned by mac_open.
+ * @session_id: Session ID
+ *
+ * Return QDF_STATUS_SUCCESS on success, corresponding error code otherwise
+ */
+QDF_STATUS csr_neighbor_roam_start_lfr_scan(tpAniSirGlobal pMac,
+						uint8_t sessionId)
 {
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
 		&pMac->roam.neighborRoamInfo[sessionId];
 	pNeighborRoamInfo->uOsRequestedHandoff = 0;
 	/* There is no candidate or We are not roaming Now.
-	 * Inform the FW to restart Roam Offload Scan  */
+	 * Inform the FW to restart Roam Offload Scan
+	 */
 	csr_roam_offload_scan(pMac, sessionId, ROAM_SCAN_OFFLOAD_START,
 			      REASON_NO_CAND_FOUND_OR_NOT_ROAMING_NOW);
 
 	return QDF_STATUS_SUCCESS;
+
+
+
 }
