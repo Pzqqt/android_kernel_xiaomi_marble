@@ -634,6 +634,7 @@ void csr_roam_ft_pre_auth_rsp_processor(tHalHandle hal,
 	if (csr_roam_is11r_assoc(mac_ctx, preauth_rsp->smeSessionId) &&
 			(conn_Auth_type == eCSR_AUTH_TYPE_OPEN_SYSTEM)) {
 		uint16_t ft_ies_length;
+
 		ft_ies_length = preauth_rsp->ric_ies_length;
 
 		if ((csr_session->ftSmeContext.reassoc_ft_ies) &&
@@ -666,16 +667,14 @@ void csr_roam_ft_pre_auth_rsp_processor(tHalHandle hal,
 		if (NULL == csr_session->ftSmeContext.reassoc_ft_ies) {
 			sme_err("Memory allocation failed for ft_ies");
 			return;
-		} else {
-			/* Copy the RIC IEs to reassoc IEs */
-			qdf_mem_copy(((uint8_t *) csr_session->ftSmeContext.
-						reassoc_ft_ies),
+		}
+		/* Copy the RIC IEs to reassoc IEs */
+		qdf_mem_copy(((uint8_t *) csr_session->ftSmeContext.
+					reassoc_ft_ies),
 					(uint8_t *) preauth_rsp->ric_ies,
 					preauth_rsp->ric_ies_length);
-			csr_session->ftSmeContext.reassoc_ft_ies_length =
-				ft_ies_length;
-			csr_session->ftSmeContext.addMDIE = true;
-		}
+		csr_session->ftSmeContext.reassoc_ft_ies_length = ft_ies_length;
+		csr_session->ftSmeContext.addMDIE = true;
 	}
 }
 
@@ -718,24 +717,23 @@ QDF_STATUS csr_neighbor_roam_issue_preauth_req(tpAniSirGlobal mac_ctx,
 	if (NULL == neighbor_bss_node) {
 		sme_err("Roamable AP list is empty");
 		return QDF_STATUS_E_FAILURE;
-	} else {
-		csr_neighbor_roam_send_lfr_metric_event(mac_ctx, session_id,
+	}
+	csr_neighbor_roam_send_lfr_metric_event(mac_ctx, session_id,
 			neighbor_bss_node->pBssDescription->bssId,
 			eCSR_ROAM_PREAUTH_INIT_NOTIFY);
-		status = csr_roam_enqueue_preauth(mac_ctx, session_id,
+	status = csr_roam_enqueue_preauth(mac_ctx, session_id,
 				neighbor_bss_node->pBssDescription,
 				eCsrPerformPreauth, true);
 
-		sme_debug("Before Pre-Auth: BSSID " MAC_ADDRESS_STR ", Ch:%d",
+	sme_debug("Before Pre-Auth: BSSID " MAC_ADDRESS_STR ", Ch:%d",
 			MAC_ADDR_ARRAY(
 				neighbor_bss_node->pBssDescription->bssId),
 			(int)neighbor_bss_node->pBssDescription->channelId);
 
-		if (QDF_STATUS_SUCCESS != status) {
-			sme_err("Return failed preauth request status %d",
-				status);
-			return status;
-		}
+	if (QDF_STATUS_SUCCESS != status) {
+		sme_err("Return failed preauth request status %d",
+			status);
+		return status;
 	}
 
 	neighbor_roam_info->FTRoamInfo.preauthRspPending = true;
