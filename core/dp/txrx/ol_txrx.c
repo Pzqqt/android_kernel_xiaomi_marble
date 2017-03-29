@@ -4389,13 +4389,13 @@ static void ol_txrx_ipa_uc_get_stat(struct cdp_pdev *ppdev)
 }
 #endif /* IPA_UC_OFFLOAD */
 
-/**
+/*
  * ol_txrx_display_stats() - Display OL TXRX display stats
  * @value: Module id for which stats needs to be displayed
  *
- * Return: None
+ * Return: status
  */
-static QDF_STATUS ol_txrx_display_stats(uint16_t value)
+static QDF_STATUS ol_txrx_display_stats(void *soc, uint16_t value)
 {
 	ol_txrx_pdev_handle pdev;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -4408,34 +4408,34 @@ static QDF_STATUS ol_txrx_display_stats(uint16_t value)
 	}
 
 	switch (value) {
-	case WLAN_TXRX_STATS:
+	case CDP_TXRX_PATH_STATS:
 		ol_txrx_stats_display(pdev);
 		break;
-	case WLAN_TXRX_TSO_STATS:
+	case CDP_TXRX_TSO_STATS:
 		ol_txrx_stats_display_tso(pdev);
 		break;
-	case WLAN_DUMP_TX_FLOW_POOL_INFO:
+	case CDP_DUMP_TX_FLOW_POOL_INFO:
 		ol_tx_dump_flow_pool_info();
 		break;
-	case WLAN_TXRX_DESC_STATS:
+	case CDP_TXRX_DESC_STATS:
 		qdf_nbuf_tx_desc_count_display();
 		break;
 #ifdef CONFIG_HL_SUPPORT
-	case WLAN_SCHEDULER_STATS:
+	case CDP_SCHEDULER_STATS:
 		ol_tx_sched_cur_state_display(pdev);
 		ol_tx_sched_stats_display(pdev);
 		break;
-	case WLAN_TX_QUEUE_STATS:
+	case CDP_TX_QUEUE_STATS:
 		ol_tx_queue_log_display(pdev);
 		break;
 #ifdef FEATURE_HL_GROUP_CREDIT_FLOW_CONTROL
-	case WLAN_CREDIT_STATS:
+	case CDP_CREDIT_STATS:
 		ol_tx_dump_group_credit_stats(pdev);
 		break;
 #endif
 
 #ifdef DEBUG_HL_LOGGING
-	case WLAN_BUNDLE_STATS:
+	case CDP__BUNDLE_STATS:
 		htt_dump_bundle_stats(pdev->htt_pdev);
 		break;
 #endif
@@ -4466,28 +4466,28 @@ static void ol_txrx_clear_stats(uint16_t value)
 	}
 
 	switch (value) {
-	case WLAN_TXRX_STATS:
+	case CDP_TXRX_PATH_STATS:
 		ol_txrx_stats_clear(pdev);
 		break;
-	case WLAN_DUMP_TX_FLOW_POOL_INFO:
+	case CDP_DUMP_TX_FLOW_POOL_INFO:
 		ol_tx_clear_flow_pool_stats();
 		break;
-	case WLAN_TXRX_DESC_STATS:
+	case CDP_TXRX_DESC_STATS:
 		qdf_nbuf_tx_desc_count_clear();
 		break;
 #ifdef CONFIG_HL_SUPPORT
-	case WLAN_SCHEDULER_STATS:
+	case CDP_SCHEDULER_STATS:
 		ol_tx_sched_stats_clear(pdev);
 		break;
-	case WLAN_TX_QUEUE_STATS:
+	case CDP_TX_QUEUE_STATS:
 		ol_tx_queue_log_clear(pdev);
 		break;
 #ifdef FEATURE_HL_GROUP_CREDIT_FLOW_CONTROL
-	case WLAN_CREDIT_STATS:
+	case CDP_CREDIT_STATS:
 		ol_tx_clear_group_credit_stats(pdev);
 		break;
 #endif
-	case WLAN_BUNDLE_STATS:
+	case CDP_BUNDLE_STATS:
 		htt_clear_bundle_stats(pdev->htt_pdev);
 		break;
 #endif
@@ -5315,7 +5315,8 @@ static struct cdp_cmn_ops ol_ops_cmn = {
 	.txrx_data_tx_cb_set = ol_txrx_data_tx_cb_set,
 	.txrx_get_tx_pending = ol_txrx_get_tx_pending,
 	.flush_cache_rx_queue = ol_txrx_flush_cache_rx_queue,
-	.txrx_fw_stats_get = ol_txrx_fw_stats_get
+	.txrx_fw_stats_get = ol_txrx_fw_stats_get,
+	.display_stats = ol_txrx_display_stats,
 	/* TODO: Add other functions */
 };
 
@@ -5404,7 +5405,6 @@ static struct cdp_throttle_ops ol_ops_throttle = {
 };
 
 static struct cdp_mob_stats_ops ol_ops_mob_stats = {
-	.display_stats = ol_txrx_display_stats,
 	.clear_stats = ol_txrx_clear_stats,
 	.stats = ol_txrx_stats
 };

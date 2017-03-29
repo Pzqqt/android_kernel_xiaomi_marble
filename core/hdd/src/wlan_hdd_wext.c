@@ -3100,8 +3100,8 @@ void hdd_display_stats_help(void)
 	hdd_err("iwpriv wlan0 dumpStats [option] - dump statistics");
 	hdd_err("iwpriv wlan0 clearStats [option] - clear statistics");
 	hdd_err("options:");
-	hdd_err("  1 -- TXRX Layer statistics");
-	hdd_err("  2 -- Bandwidth compute timer stats");
+	hdd_err("  1 -- TXRX PATH statistics");
+	hdd_err("  2 -- TXRX HIST statistics");
 	hdd_err("  3 -- TSO statistics");
 	hdd_err("  4 -- Network queue statistics");
 	hdd_err("  5 -- Flow control statistics");
@@ -3125,18 +3125,18 @@ int hdd_wlan_dump_stats(hdd_adapter_t *adapter, int value)
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	switch (value) {
-	case WLAN_TXRX_HIST_STATS:
+	case CDP_TXRX_HIST_STATS:
 		wlan_hdd_display_tx_rx_histogram(hdd_ctx);
 		break;
-	case WLAN_HDD_NETIF_OPER_HISTORY:
+	case CDP_HDD_NETIF_OPER_HISTORY:
 		wlan_hdd_display_netif_queue_history(hdd_ctx);
 		break;
-	case WLAN_HIF_STATS:
+	case CDP_HIF_STATS:
 		hdd_display_hif_stats();
 		break;
-	case WLAN_LRO_STATS:
+	case CDP_LRO_STATS:
 		hdd_lro_display_stats(hdd_ctx);
-	case WLAN_NAPI_STATS:
+	case CDP_NAPI_STATS:
 		if (hdd_display_napi_stats()) {
 			hdd_err("error displaying napi stats");
 			ret = EFAULT;
@@ -8407,18 +8407,18 @@ static int __iw_setint_getnone(struct net_device *dev,
 	{
 		hdd_notice("WE_CLEAR_STATS val %d", set_value);
 		switch (set_value) {
-		case WLAN_HDD_STATS:
+		case CDP_HDD_STATS:
 			memset(&pAdapter->stats, 0, sizeof(pAdapter->stats));
 			memset(&pAdapter->hdd_stats, 0,
 					sizeof(pAdapter->hdd_stats));
 			break;
-		case WLAN_TXRX_HIST_STATS:
+		case CDP_TXRX_HIST_STATS:
 			wlan_hdd_clear_tx_rx_histogram(hdd_ctx);
 			break;
-		case WLAN_HDD_NETIF_OPER_HISTORY:
+		case CDP_HDD_NETIF_OPER_HISTORY:
 			wlan_hdd_clear_netif_queue_history(hdd_ctx);
 			break;
-		case WLAN_HIF_STATS:
+		case CDP_HIF_STATS:
 			hdd_clear_hif_stats();
 			break;
 		default:

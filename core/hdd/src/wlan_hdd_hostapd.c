@@ -3306,19 +3306,19 @@ static __iw_softap_setparam(struct net_device *dev,
 		void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 		hdd_debug("QCASAP_CLEAR_STATS val %d", set_value);
 		switch (set_value) {
-		case WLAN_HDD_STATS:
+		case CDP_HDD_STATS:
 			memset(&pHostapdAdapter->stats, 0,
 						sizeof(pHostapdAdapter->stats));
 			memset(&pHostapdAdapter->hdd_stats, 0,
 					sizeof(pHostapdAdapter->hdd_stats));
 			break;
-		case WLAN_TXRX_HIST_STATS:
+		case CDP_TXRX_HIST_STATS:
 			wlan_hdd_clear_tx_rx_histogram(hdd_ctx);
 			break;
-		case WLAN_HDD_NETIF_OPER_HISTORY:
+		case CDP_HDD_NETIF_OPER_HISTORY:
 			wlan_hdd_clear_netif_queue_history(hdd_ctx);
 			break;
-		case WLAN_HIF_STATS:
+		case CDP_HIF_STATS:
 			hdd_clear_hif_stats();
 			break;
 		default:
