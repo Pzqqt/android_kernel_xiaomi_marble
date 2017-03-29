@@ -23,6 +23,7 @@
  */
 
 #include <wlan_tdls_ucfg_api.h>
+#include <wlan_tdls_tgt_api.h>
 #include "../../core/src/wlan_tdls_main.h"
 #include "../../core/src/wlan_tdls_cmds_process.h"
 #include <wlan_objmgr_global_obj.h>
@@ -213,11 +214,32 @@ QDF_STATUS ucfg_tdls_update_config(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS ucfg_tdls_psoc_stop(struct wlan_objmgr_psoc *psoc)
+QDF_STATUS ucfg_tdls_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
+	QDF_STATUS status;
+
+	tdls_notice("psoc tdls enable: 0x%p", psoc);
+	if (!psoc) {
+		tdls_err("NULL psoc");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = tgt_tdls_register_ev_handler(psoc);
+
+	return status;
+}
+
+QDF_STATUS ucfg_tdls_psoc_disable(struct wlan_objmgr_psoc *psoc)
+{
+	QDF_STATUS status;
 	struct tdls_soc_priv_obj *soc_obj = NULL;
 
-	tdls_notice("tdls psoc stop");
+	tdls_notice("psoc tdls disable: 0x%p", psoc);
+	if (!psoc) {
+		tdls_err("NULL psoc");
+		return QDF_STATUS_E_FAILURE;
+	}
+	status = tgt_tdls_unregister_ev_handler(psoc);
 	soc_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
 							WLAN_UMAC_COMP_TDLS);
 	if (!soc_obj) {
@@ -231,7 +253,7 @@ QDF_STATUS ucfg_tdls_psoc_stop(struct wlan_objmgr_psoc *psoc)
 	soc_obj->tdls_tx_cnf_cb = NULL;
 	soc_obj->tx_ack_cnf_cb_data = NULL;
 
-	return QDF_STATUS_SUCCESS;
+	return status;
 }
 
 QDF_STATUS ucfg_tdls_psoc_close(struct wlan_objmgr_psoc *psoc)

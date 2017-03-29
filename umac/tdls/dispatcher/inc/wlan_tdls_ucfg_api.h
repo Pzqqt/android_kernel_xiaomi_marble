@@ -73,12 +73,20 @@ QDF_STATUS ucfg_tdls_update_config(struct wlan_objmgr_psoc *psoc,
 				   struct tdls_start_params *req);
 
 /**
- * ucfg_tdls_psoc_stop() - TDLS module stop
+ * ucfg_tdls_psoc_enable() - TDLS module enable API
  * @psoc: psoc object
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS ucfg_tdls_psoc_stop(struct wlan_objmgr_psoc *psoc);
+QDF_STATUS ucfg_tdls_psoc_enable(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_tdls_psoc_disable() - TDLS moudle disable API
+ * @psoc: psoc object
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_tdls_psoc_disable(struct wlan_objmgr_psoc *psoc);
 
 /**
  * ucfg_tdls_add_peer() - handle TDLS add peer

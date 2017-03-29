@@ -55,6 +55,10 @@
 #ifdef WLAN_OFFCHAN_TXRX_ENABLE
 #include <wlan_offchan_txrx_api.h>
 #endif
+
+#ifdef CONVERGED_TDLS_ENABLE
+#include "wlan_tdls_ucfg_api.h"
+#endif
 /**
  * DOC: This file provides various init/deinit trigger point for new
  * components.
@@ -127,6 +131,37 @@ static QDF_STATUS p2p_psoc_disable(struct wlan_objmgr_psoc *psoc)
 }
 #endif /* END of CONVERGED_P2P_ENABLE */
 
+#ifdef CONVERGED_TDLS_ENABLE
+static QDF_STATUS tdls_init(void)
+{
+	return ucfg_tdls_init();
+}
+
+static QDF_STATUS tdls_deinit(void)
+{
+	return ucfg_tdls_deinit();
+}
+
+static QDF_STATUS tdls_psoc_open(struct wlan_objmgr_psoc *psoc)
+{
+	return ucfg_tdls_psoc_open(psoc);
+}
+
+static QDF_STATUS tdls_psoc_close(struct wlan_objmgr_psoc *psoc)
+{
+	return ucfg_tdls_psoc_close(psoc);
+}
+
+static QDF_STATUS tdls_psoc_enable(struct wlan_objmgr_psoc *psoc)
+{
+	return ucfg_tdls_psoc_enable(psoc);
+}
+
+static QDF_STATUS tdls_psoc_disable(struct wlan_objmgr_psoc *psoc)
+{
+	return ucfg_tdls_psoc_disable(psoc);
+}
+#else
 static QDF_STATUS tdls_init(void)
 {
 	return QDF_STATUS_SUCCESS;
@@ -157,6 +192,7 @@ static QDF_STATUS tdls_psoc_disable(struct wlan_objmgr_psoc *psoc)
 {
 	return QDF_STATUS_SUCCESS;
 }
+#endif
 
 #ifdef WLAN_PMO_ENABLE
 static QDF_STATUS dispatcher_init_pmo(void)
