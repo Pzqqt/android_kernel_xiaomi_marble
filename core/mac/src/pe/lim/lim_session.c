@@ -790,6 +790,7 @@ tpPESession pe_find_session_by_sme_session_id(tpAniSirGlobal mac_ctx,
 					      uint8_t sme_session_id)
 {
 	uint8_t i;
+
 	for (i = 0; i < mac_ctx->lim.maxBssId; i++) {
 		if ((mac_ctx->lim.gpSession[i].valid) &&
 		     (mac_ctx->lim.gpSession[i].smeSessionId ==
@@ -797,9 +798,6 @@ tpPESession pe_find_session_by_sme_session_id(tpAniSirGlobal mac_ctx,
 			return &mac_ctx->lim.gpSession[i];
 		}
 	}
-	lim_log(mac_ctx, LOG4,
-		FL("Session lookup fails for smeSessionID: %d"),
-		sme_session_id);
 	return NULL;
 }
 

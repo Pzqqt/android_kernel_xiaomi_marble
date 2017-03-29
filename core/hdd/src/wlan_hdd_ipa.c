@@ -776,7 +776,7 @@ static int hdd_ipa_uc_register_uc_ready(struct hdd_ipa_priv *hdd_ipa)
 		return -EPERM;
 	}
 	if (true == uc_ready_param.is_uC_ready) {
-		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "UC Ready");
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "UC Ready");
 		hdd_ipa->uc_loaded = true;
 	} else {
 		ret = hdd_ipa_uc_send_wdi_control_msg(false);
