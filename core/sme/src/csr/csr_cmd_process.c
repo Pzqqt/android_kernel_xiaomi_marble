@@ -25,15 +25,12 @@
  * to the Linux Foundation.
  */
 
-/** ------------------------------------------------------------------------- *
-    ------------------------------------------------------------------------- *
-    \file csr_cmd_process.c
-
-    Implementation for processing various commands.
-   ========================================================================== */
-
+/*
+ * DOC: csr_cmd_process.c
+ *
+ * Implementation for processing various commands.
+ */
 #include "ani_global.h"
-
 #include "csr_inside_api.h"
 #include "sme_inside.h"
 #include "mac_trace.h"
