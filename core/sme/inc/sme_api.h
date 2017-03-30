@@ -45,6 +45,7 @@
 #include "cds_regdomain.h"
 #include "sme_internal.h"
 #include "wma_tgt_cfg.h"
+#include "wma_fips_public_structs.h"
 
 #include "sme_rrm_internal.h"
 #include "sir_types.h"
@@ -1321,6 +1322,28 @@ QDF_STATUS sme_encrypt_decrypt_msg(tHalHandle hal,
 		sme_encrypt_decrypt_callback callback,
 		void *context);
 #endif
+
+#ifdef WLAN_FEATURE_FIPS
+/**
+ * sme_fips_request() - Perform a FIPS certification operation
+ * @hal: Hal handle for the object being certified
+ * @param: The FIPS certification parameters
+ * @callback: Callback function to invoke with the results
+ * @context: Opaque context to pass back to caller in the callback
+ *
+ * Return: QDF_STATUS_SUCCESS if the request is successfully sent
+ * to firmware for processing, otherwise an error status.
+ */
+QDF_STATUS sme_fips_request(tHalHandle hal, struct fips_params *param,
+			    wma_fips_cb callback, void *context);
+#else
+static inline
+QDF_STATUS sme_fips_request(tHalHandle hal, struct fips_params *param,
+			    wma_fips_cb callback, void *context)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif /* WLAN_FEATURE_FIPS */
 
 /**
  * sme_set_cts2self_for_p2p_go() - sme function to set ini parms to FW.

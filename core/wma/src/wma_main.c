@@ -78,6 +78,7 @@
 #include "cdp_txrx_flow_ctrl_v2.h"
 #include "cdp_txrx_ipa.h"
 #include "cdp_txrx_misc.h"
+#include "wma_fips_api.h"
 #include "wma_nan_datapath.h"
 #include "wlan_lmac_if_def.h"
 #include "wlan_lmac_if_api.h"
@@ -3062,7 +3063,6 @@ QDF_STATUS wma_start(void *cds_ctx)
 
 	WMA_LOGD("%s: Enter", __func__);
 
-	WMA_LOGD("%s: Enter", __func__);
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 	/* validate the wma_handle */
 	if (NULL == wma_handle) {
@@ -3216,6 +3216,13 @@ QDF_STATUS wma_start(void *cds_ctx)
 			wma_handle);
 	if (qdf_status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Failed to initialize log completion timeout");
+		goto end;
+	}
+
+	status = wma_fips_register_event_handlers(wma_handle);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		WMA_LOGE("Failed to register FIPS event handler");
+		qdf_status = QDF_STATUS_E_FAILURE;
 		goto end;
 	}
 

@@ -45,6 +45,7 @@
 #include "csr_internal.h"
 #include "wma_types.h"
 #include "wma_if.h"
+#include "wma_fips_api.h"
 #include "qdf_trace.h"
 #include "sme_trace.h"
 #include "qdf_types.h"
@@ -15753,6 +15754,22 @@ QDF_STATUS sme_encrypt_decrypt_msg(tHalHandle hal,
 	}
 	return status;
 
+}
+#endif
+
+#ifdef WLAN_FEATURE_FIPS
+QDF_STATUS sme_fips_request(tHalHandle hal, struct fips_params *param,
+			    wma_fips_cb callback, void *context)
+{
+	void *wma_handle;
+
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma_handle) {
+		sme_err("wma handle is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return wma_fips_request(wma_handle, param, callback, context);
 }
 #endif
 
