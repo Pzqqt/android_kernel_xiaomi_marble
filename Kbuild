@@ -1052,7 +1052,8 @@ DP_OBJS := $(DP_SRC)/dp_main.o \
 		$(DP_SRC)/dp_reo.o \
 		$(DP_SRC)/dp_rx_mon_dest.o \
 		$(DP_SRC)/dp_rx_mon_status.o \
-		$(DP_SRC)/dp_rx_defrag.o
+		$(DP_SRC)/dp_rx_defrag.o \
+		$(DP_SRC)/dp_stats.o
 endif
 
 ############ CFG ############

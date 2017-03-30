@@ -7671,7 +7671,6 @@ static int __iw_setint_getnone(struct net_device *dev,
 	int enable_pbm, enable_mp;
 	QDF_STATUS status;
 	void *soc = NULL;
-	struct ol_txrx_stats_req req;
 	struct cdp_pdev *pdev = NULL;
 	struct cdp_vdev *vdev = NULL;
 
@@ -8432,11 +8431,12 @@ static int __iw_setint_getnone(struct net_device *dev,
 		ret = cds_get_datapath_handles(&soc, &pdev, &vdev,
 				       pAdapter->sessionId);
 
-		if (ret != 0)
+		if (ret != 0) {
+			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
+				"Invalid handles");
 			break;
-
-		qdf_mem_zero(&req, sizeof(req));
-		ret = cdp_txrx_stats(soc, vdev, &req, set_value);
+		}
+		ret = cdp_txrx_stats(soc, vdev, set_value);
 		break;
 	}
 

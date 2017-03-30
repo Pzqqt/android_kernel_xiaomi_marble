@@ -2733,7 +2733,6 @@ static __iw_softap_setparam(struct net_device *dev,
 	struct cdp_vdev *vdev = NULL;
 	struct cdp_pdev *pdev = NULL;
 	void *soc = NULL;
-	struct ol_txrx_stats_req req;
 
 	ENTER_DEV(dev);
 
@@ -2879,11 +2878,14 @@ static __iw_softap_setparam(struct net_device *dev,
 	{
 		ret = cds_get_datapath_handles(&soc, &pdev, &vdev,
 				 pHostapdAdapter->sessionId);
-		if (ret != 0)
+		if (ret != 0) {
+			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
+				"Invalid Handles");
 			break;
+		}
+
 		hdd_notice("QCSAP_PARAM_SET_TXRX_STATS val %d", set_value);
-		qdf_mem_zero(&req, sizeof(req));
-		ret = cdp_txrx_stats(soc, vdev, &req, set_value);
+		ret = cdp_txrx_stats(soc, vdev, set_value);
 		break;
 	}
 
