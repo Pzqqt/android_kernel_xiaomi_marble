@@ -359,6 +359,10 @@ struct cdp_ctrl_ops {
 
 	int (*txrx_is_target_ar900b)(struct cdp_vdev *vdev);
 
+	void (*txrx_set_vdev_param)(struct cdp_vdev *vdev,
+			enum cdp_vdev_param_type param, uint32_t val);
+
+	void (*txrx_peer_set_nawds)(void *peer, uint8_t value);
 };
 
 struct cdp_me_ops {
@@ -557,6 +561,7 @@ struct ol_if_ops {
 			struct cdp_lro_hash_config *lro_hash);
 	void (*update_dp_stats)(void *soc, void *stats, uint16_t id,
 			uint8_t type);
+	uint8_t (*rx_invalid_peer)(void *osif_pdev, void *msg);
 
 	/* TODO: Add any other control path calls required to OL_IF/WMA layer */
 };

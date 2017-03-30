@@ -288,4 +288,22 @@ static inline void cdp_tx_flush_buffers
 	return;
 }
 
+static inline void cdp_txrx_set_vdev_param(ol_txrx_soc_handle soc,
+		struct cdp_vdev *vdev, enum cdp_vdev_param_type type,
+		uint32_t val)
+{
+	if (soc->ops->ctrl_ops->txrx_set_vdev_param)
+		return soc->ops->ctrl_ops->txrx_set_vdev_param(vdev, type, val);
+	return;
+}
+
+static inline void
+cdp_peer_set_nawds(ol_txrx_soc_handle soc,
+		struct ol_txrx_peer_t *peer, uint8_t value)
+{
+	if (soc->ops->ctrl_ops->txrx_peer_set_nawds)
+		return soc->ops->ctrl_ops->txrx_peer_set_nawds
+			(peer, value);
+	return;
+}
 #endif

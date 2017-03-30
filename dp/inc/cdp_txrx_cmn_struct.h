@@ -401,7 +401,17 @@ struct cdp_soc_t {
 	struct ol_if_ops *ol_ops;
 };
 
-
+/*
+ * cdp_vdev_param_type: different types of parameters
+ *			to set values in vdev
+ * @CDP_ENABLE_NAWDS: set nawds enable/disable
+ * @CDP_ENABLE_MCAST_EN: enable/disable multicast enhancement
+ *
+ */
+enum cdp_vdev_param_type {
+	CDP_ENABLE_NAWDS,
+	CDP_ENABLE_MCAST_EN,
+};
 
 #define TXRX_FW_STATS_TXSTATS                     1
 #define TXRX_FW_STATS_RXSTATS                     2

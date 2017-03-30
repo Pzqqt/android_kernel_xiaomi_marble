@@ -830,20 +830,23 @@ static void dp_tx_classify_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
  * @nbuf: skb
  * @tid: TID from HLOS for overriding default DSCP-TID mapping
  * @tx_q: Tx queue to be used for this Tx frame
+ * @peer_id: peer_id of the peer in case of NAWDS frames
  *
  * Return: NULL on success,
  *         nbuf when it fails to send
  */
 static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		uint8_t tid, struct dp_tx_queue *tx_q,
-		uint32_t *meta_data)
+		uint32_t *meta_data, uint16_t peer_id)
 {
 	struct dp_pdev *pdev = vdev->pdev;
 	struct dp_soc *soc = pdev->soc;
 	struct dp_tx_desc_s *tx_desc;
 	QDF_STATUS status;
 	void *hal_srng = soc->tcl_data_ring[tx_q->ring_id].hal_srng;
+	uint16_t htt_tcl_metadata = 0;
 
+	HTT_TX_TCL_METADATA_VALID_HTT_SET(htt_tcl_metadata, 0);
 	/* Setup Tx descriptor for an MSDU, and MSDU extension descriptor */
 	tx_desc = dp_tx_prepare_desc_single(vdev, nbuf, tx_q->desc_pool_id, meta_data);
 	if (!tx_desc) {
@@ -862,9 +865,17 @@ static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		goto fail_return;
 	}
 
+	if (qdf_unlikely(peer_id != HTT_INVALID_PEER)) {
+		HTT_TX_TCL_METADATA_TYPE_SET(htt_tcl_metadata,
+				HTT_TCL_METADATA_TYPE_PEER_BASED);
+		HTT_TX_TCL_METADATA_PEER_ID_SET(htt_tcl_metadata,
+				peer_id);
+	} else
+		htt_tcl_metadata = vdev->htt_tcl_metadata;
+
 	/* Enqueue the Tx MSDU descriptor to HW for transmit */
 	status = dp_tx_hw_enqueue(soc, vdev, tx_desc, tid,
-		vdev->htt_tcl_metadata,	tx_q->ring_id);
+			htt_tcl_metadata, tx_q->ring_id);
 
 	if (status != QDF_STATUS_SUCCESS) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -1161,6 +1172,49 @@ void dp_tx_extract_mesh_meta_data(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 #endif
 
 /**
+ * dp_tx_prepare_nawds(): Tramit NAWDS frames
+ * @vdev: dp_vdev handle
+ * @nbuf: skb
+ * @tid: TID from HLOS for overriding default DSCP-TID mapping
+ * @tx_q: Tx queue to be used for this Tx frame
+ * @meta_data: Meta date for mesh
+ * @peer_id: peer_id of the peer in case of NAWDS frames
+ *
+ * return: NULL on success nbuf on failure
+ */
+static qdf_nbuf_t dp_tx_prepare_nawds(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
+		uint8_t tid, struct dp_tx_queue *tx_q, uint32_t *meta_data,
+		uint32_t peer_id)
+{
+	struct dp_peer *peer = NULL;
+	qdf_nbuf_t nbuf_copy;
+	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
+		if ((peer->peer_ids[0] != HTT_INVALID_PEER) &&
+				(peer->nawds_enabled || peer->bss_peer)) {
+			nbuf_copy = qdf_nbuf_copy(nbuf);
+			if (!nbuf_copy) {
+				QDF_TRACE(QDF_MODULE_ID_DP,
+						QDF_TRACE_LEVEL_ERROR,
+						"nbuf copy failed");
+			}
+
+			peer_id = peer->peer_ids[0];
+			nbuf_copy = dp_tx_send_msdu_single(vdev, nbuf_copy, tid,
+					tx_q, meta_data, peer_id);
+			if (nbuf_copy != NULL) {
+				qdf_nbuf_free(nbuf);
+				return nbuf_copy;
+			}
+		}
+	}
+	if (peer_id == HTT_INVALID_PEER)
+		return nbuf;
+
+	qdf_nbuf_free(nbuf);
+	return NULL;
+}
+
+/**
  * dp_tx_send() - Transmit a frame on a given VAP
  * @vap_dev: DP vdev handle
  * @nbuf: skb
@@ -1174,10 +1228,11 @@ void dp_tx_extract_mesh_meta_data(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
  */
 qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 {
-	struct ether_header *eh;
+	struct ether_header *eh = NULL;
 	struct dp_tx_msdu_info_s msdu_info;
 	struct dp_tx_seg_info_s seg_info;
 	struct dp_vdev *vdev = (struct dp_vdev *) vap_dev;
+	uint16_t peer_id = HTT_INVALID_PEER;
 
 	qdf_mem_set(&msdu_info, sizeof(msdu_info), 0x0);
 	qdf_mem_set(&seg_info, sizeof(seg_info), 0x0);
@@ -1294,6 +1349,16 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 
 	}
 
+	if (vdev->nawds_enabled) {
+		eh = (struct ether_header *)qdf_nbuf_data(nbuf);
+		if (DP_FRAME_IS_MULTICAST((eh)->ether_dhost)) {
+			nbuf = dp_tx_prepare_nawds(vdev, nbuf, msdu_info.tid,
+					&msdu_info.tx_queue,
+					msdu_info.meta_data, peer_id);
+			return nbuf;
+		}
+	}
+
 	/*  Single linear frame */
 	/*
 	 * If nbuf is a simple linear frame, use send_single function to
@@ -1301,7 +1366,7 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 	 * SRNG. There is no need to setup a MSDU extension descriptor.
 	 */
 	nbuf = dp_tx_send_msdu_single(vdev, nbuf, msdu_info.tid,
-			&msdu_info.tx_queue, msdu_info.meta_data);
+			&msdu_info.tx_queue, msdu_info.meta_data, peer_id);
 
 	return nbuf;
 

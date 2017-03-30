@@ -274,7 +274,8 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 	if (!peer) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 		FL("peer is NULL"));
-		qdf_nbuf_free(nbuf);
+		qdf_nbuf_pull_head(nbuf, RX_PKT_TLVS_LEN);
+		dp_rx_process_invalid_peer(soc, nbuf);
 		goto fail;
 	}
 

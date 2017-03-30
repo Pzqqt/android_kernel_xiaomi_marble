@@ -495,6 +495,78 @@ QDF_STATUS dp_rx_filter_mesh_packets(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
 
 #endif
 
+#ifdef CONFIG_WIN
+/**
+ * dp_rx_process_invalid_peer(): Function to pass invalid peer list to umac
+ * @soc: DP SOC handle
+ * @nbuf: nbuf for which peer is invalid
+ *
+ * return: integer type
+ */
+uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t nbuf)
+{
+	struct dp_invalid_peer_msg msg;
+	struct dp_vdev *vdev = NULL;
+	struct dp_pdev *pdev = NULL;
+	struct ieee80211_frame *wh;
+	uint8_t i;
+	uint8_t *rx_pkt_hdr;
+
+	rx_pkt_hdr = qdf_nbuf_data(nbuf);
+	wh = (struct ieee80211_frame *)rx_pkt_hdr;
+
+	if (!DP_FRAME_IS_DATA(wh)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+				"NAWDS valid only for data frames");
+		return 1;
+	}
+
+	if (qdf_nbuf_len(nbuf) < sizeof(struct ieee80211_frame)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"Invalid nbuf length");
+		return 1;
+	}
+
+
+	for (i = 0; i < MAX_PDEV_CNT; i++) {
+		pdev = soc->pdev_list[i];
+		if (!pdev) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+					"PDEV not found");
+			continue;
+		}
+
+		TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+			if (qdf_mem_cmp(wh->i_addr1, vdev->mac_addr.raw,
+						DP_MAC_ADDR_LEN) == 0) {
+				goto out;
+			}
+		}
+	}
+
+	if (!vdev) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"VDEV not found");
+		return 1;
+	}
+
+out:
+	msg.wh = wh;
+	msg.nbuf = nbuf;
+	msg.vdev_id = vdev->vdev_id;
+	if (pdev->soc->cdp_soc.ol_ops->rx_invalid_peer)
+		return pdev->soc->cdp_soc.ol_ops->rx_invalid_peer(
+				pdev->osif_pdev, &msg);
+
+	return 0;
+}
+#else
+uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t nbuf)
+{
+	return 0;
+}
+#endif
+
 /**
  * dp_rx_process() - Brain of the Rx processing functionality
  *		     Called from the bottom half (tasklet/NET_RX_SOFTIRQ)
@@ -717,6 +789,7 @@ done:
 			/* Peer lookup failed */
 			if (!peer && !vdev) {
 
+				dp_rx_process_invalid_peer(soc, nbuf);
 				/* Drop & free packet */
 				qdf_nbuf_free(nbuf);
 

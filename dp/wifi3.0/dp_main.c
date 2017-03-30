@@ -2960,6 +2960,38 @@ dp_get_peer_stats(struct cdp_pdev *pdev_handle, char *mac_addr)
 		dp_print_peer_stats(peer);
 		return;
 }
+/*
+ * dp_set_vdev_param: function to set parameters in vdev
+ * @param: parameter type to be set
+ * @val: value of parameter to be set
+ *
+ * return: void
+ */
+static void dp_set_vdev_param(struct cdp_vdev *vdev_handle,
+		enum cdp_vdev_param_type param, uint32_t val)
+{
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
+
+	switch (param) {
+	case CDP_ENABLE_NAWDS:
+		vdev->nawds_enabled = val;
+	default:
+		break;
+	}
+}
+
+/**
+ * dp_peer_set_nawds: set nawds bit in peer
+ * @peer_handle: pointer to peer
+ * @value: enable/disable nawds
+ *
+ * return: void
+ */
+static void dp_peer_set_nawds(void *peer_handle, uint8_t value)
+{
+	struct dp_peer *peer = (struct dp_peer *)peer_handle;
+	peer->nawds_enabled = value;
+}
 
 /*
  * dp_set_vdev_dscp_tid_map_wifi3(): Update Map ID selected for particular vdev
@@ -3065,6 +3097,8 @@ static struct cdp_ctrl_ops dp_ops_ctrl = {
 	.txrx_set_mesh_mode  = dp_peer_set_mesh_mode,
 	.txrx_set_mesh_rx_filter = dp_peer_set_mesh_rx_filter,
 #endif
+	.txrx_set_vdev_param = dp_set_vdev_param,
+	.txrx_peer_set_nawds = dp_peer_set_nawds,
 	/* TODO: Add other functions */
 };
 

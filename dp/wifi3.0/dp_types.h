@@ -104,6 +104,10 @@ union dp_rx_desc_list_elem_t;
      (_a)[4] == 0xff &&                         \
      (_a)[5] == 0xff)
 #define IS_LLC_PRESENT(typeorlen) ((typeorlen) >= 0x600)
+#define DP_FRAME_FC0_TYPE_MASK 0x0c
+#define DP_FRAME_FC0_TYPE_DATA 0x08
+#define DP_FRAME_IS_DATA(_frame) \
+	(((_frame)->i_fc[0] & DP_FRAME_FC0_TYPE_MASK) == DP_FRAME_FC0_TYPE_DATA)
 
 /**
  * macros to convert hw mac id to sw mac id:
@@ -968,4 +972,18 @@ struct dp_peer {
 	TAILQ_HEAD(, dp_ast_entry) ast_entry_list;
 	/* TBD */
 };
+
+#ifdef CONFIG_WIN
+/*
+ * dp_invalid_peer_msg
+ * @nbuf: data buffer
+ * @wh: 802.11 header
+ * @vdev_id: id of vdev
+ */
+struct dp_invalid_peer_msg {
+	qdf_nbuf_t nbuf;
+	struct ieee80211_frame *wh;
+	uint8_t vdev_id;
+};
+#endif
 #endif /* _DP_TYPES_H_ */
