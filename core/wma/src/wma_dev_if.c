@@ -2540,6 +2540,9 @@ static inline bool wma_crash_on_fw_timeout(bool crash_enabled)
 	if (cds_is_driver_recovering())
 		return false;
 
+	if (!cds_is_fw_down())
+		return false;
+
 	return crash_enabled;
 }
 
@@ -2794,7 +2797,10 @@ void wma_vdev_resp_timer(void *data)
 		params->status = QDF_STATUS_E_TIMEOUT;
 		WMA_LOGA("%s: WMA_SWITCH_CHANNEL_REQ timedout", __func__);
 
-		/* Trigger host crash if the flag is set */
+		/*
+		 * Trigger host crash if the flag is set or if the timeout
+		 * is not due to fw down
+		 */
 		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash) == true)
 			QDF_BUG(0);
 		else
@@ -2826,7 +2832,10 @@ void wma_vdev_resp_timer(void *data)
 			qdf_mc_timer_stop(&tgt_req->event_timeout);
 			goto free_tgt_req;
 		}
-		/* Trigger host crash when vdev response timesout */
+		/*
+		 * Trigger host crash if the flag is set or if the timeout
+		 * is not due to fw down
+		 */
 		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash) == true) {
 			QDF_BUG(0);
 			return;

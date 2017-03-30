@@ -187,6 +187,7 @@ typedef struct _cds_context_type {
 	qdf_event_t ProbeEvent;
 
 	uint32_t driver_state;
+	unsigned long fw_state;
 
 	qdf_event_t wmaCompleteEvent;
 

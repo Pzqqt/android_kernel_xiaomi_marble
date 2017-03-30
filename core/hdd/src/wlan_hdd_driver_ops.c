@@ -233,6 +233,9 @@ int hdd_hif_open(struct device *dev, void *bdev, const struct hif_bus_id *bid,
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("hif_enable failed status: %d, reinit: %d",
 			status, reinit);
+		if (!cds_is_fw_down())
+			QDF_BUG(0);
+
 		ret = qdf_status_to_os_return(status);
 		goto err_hif_close;
 	} else {
@@ -365,6 +368,8 @@ static int wlan_hdd_probe(struct device *dev, void *bdev,
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_INIT);
 	hdd_remove_pm_qos(dev);
 
+	cds_set_fw_down(false);
+
 	return 0;
 
 
@@ -375,6 +380,9 @@ err_hdd_deinit:
 		cds_set_load_in_progress(false);
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_INIT);
 	hdd_remove_pm_qos(dev);
+
+	cds_set_fw_down(false);
+
 	return ret;
 }
 
@@ -1282,6 +1290,8 @@ static void wlan_hdd_pld_uevent(struct device *dev,
 {
 	if (uevent->uevent == PLD_RECOVERY)
 		cds_set_recovery_in_progress(true);
+	else if (uevent->uevent == PLD_FW_DOWN)
+		cds_set_fw_state(CDS_FW_STATE_DOWN);
 }
 
 #ifdef FEATURE_RUNTIME_PM

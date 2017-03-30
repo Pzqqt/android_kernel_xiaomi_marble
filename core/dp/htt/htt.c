@@ -726,8 +726,12 @@ int htt_htc_attach(struct htt_pdev_t *pdev, uint16_t service_id)
 
 	status = htc_connect_service(pdev->htc_pdev, &connect, &response);
 
-	if (status != A_OK)
+	if (status != A_OK) {
+		if (!cds_is_fw_down())
+			QDF_BUG(0);
+
 		return -EIO;       /* failure */
+	}
 
 	htt_update_endpoint(pdev, service_id, response.Endpoint);
 

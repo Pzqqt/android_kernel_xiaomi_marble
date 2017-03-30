@@ -526,6 +526,10 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	if (htc_wait_target(HTCHandle)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Failed to complete BMI phase", __func__);
+
+		if (!cds_is_fw_down())
+			QDF_BUG(0);
+
 		goto err_wma_close;
 	}
 	bmi_target_ready(scn, gp_cds_context->cfg_ctx);
@@ -728,12 +732,13 @@ QDF_STATUS cds_pre_enable(v_CONTEXT_t cds_context)
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "Failed to get ready event from target firmware");
+
 		/*
-		 * Panic only if recovery is disabled, else return failure so
-		 * that driver load can fail gracefully. We cannot trigger self
-		 * recovery here because driver is not fully loaded yet.
+		 * Panic when the failure is not because the FW is down,
+		 * fail gracefully if FW is down allowing re-probing from
+		 * from the platform driver
 		 */
-		if (!cds_is_self_recovery_enabled())
+		if (!cds_is_fw_down())
 			QDF_BUG(0);
 
 		htc_stop(gp_cds_context->htc_ctx);
@@ -1299,6 +1304,44 @@ void cds_clear_driver_state(enum cds_driver_state state)
 	}
 
 	gp_cds_context->driver_state &= ~state;
+}
+
+enum cds_fw_state cds_get_fw_state(void)
+{
+	if (gp_cds_context == NULL) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "%s: global cds context is NULL", __func__);
+
+		return CDS_FW_STATE_UNINITIALIZED;
+	}
+
+	return gp_cds_context->fw_state;
+}
+
+void cds_set_fw_state(enum cds_fw_state state)
+{
+	if (gp_cds_context == NULL) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "%s: global cds context is NULL: %d", __func__,
+			  state);
+
+		return;
+	}
+
+	qdf_atomic_set_bit(state, &gp_cds_context->fw_state);
+}
+
+void cds_clear_fw_state(enum cds_fw_state state)
+{
+	if (gp_cds_context == NULL) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "%s: global cds context is NULL: %d", __func__,
+			  state);
+
+		return;
+	}
+
+	qdf_atomic_clear_bit(state, &gp_cds_context->fw_state);
 }
 
 /**
