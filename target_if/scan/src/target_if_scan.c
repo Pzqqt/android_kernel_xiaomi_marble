@@ -30,18 +30,6 @@
 #include <target_if.h>
 #include <target_if_scan.h>
 
-#ifdef CONFIG_MCL
-inline uint32_t get_scan_event_id(void)
-{
-	return WMI_SCAN_EVENTID;
-}
-#else
-inline uint32_t get_scan_event_id(void)
-{
-	return wmi_scan_event_id;
-}
-#endif
-
 static inline struct wlan_lmac_if_scan_rx_ops *
 target_if_scan_get_rx_ops(struct wlan_objmgr_psoc *psoc)
 {
@@ -97,23 +85,16 @@ target_if_scan_event_handler(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 QDF_STATUS
 target_if_scan_register_event_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 {
-	uint32_t scan_event_id;
-
-	scan_event_id = get_scan_event_id();
-	return wmi_unified_register_event_handler(psoc->tgt_if_handle,
-		scan_event_id, target_if_scan_event_handler,
-		WMI_RX_UMAC_CTX);
+	return wmi_unified_register_event(psoc->tgt_if_handle,
+		wmi_scan_event_id, target_if_scan_event_handler);
 }
 
 QDF_STATUS
 target_if_scan_unregister_event_handler(struct wlan_objmgr_psoc *psoc,
 		void *arg)
 {
-	uint32_t scan_event_id;
-
-	scan_event_id = get_scan_event_id();
-	return wmi_unified_unregister_event_handler(psoc->tgt_if_handle,
-		scan_event_id);
+	return wmi_unified_unregister_event(psoc->tgt_if_handle,
+		wmi_scan_event_id);
 }
 
 QDF_STATUS
