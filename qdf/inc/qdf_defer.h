@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -104,12 +104,13 @@ static inline void qdf_destroy_bh(qdf_handle_t hdl, qdf_bh_t *bh)
  * @work: pointer to work
  * @func: deferred function to run at bottom half non-interrupt context.
  * @arg: argument for the deferred function
- * Return: none
+ *
+ * Return: QDF status
  */
-static inline void qdf_create_work(qdf_handle_t hdl, qdf_work_t  *work,
+static inline QDF_STATUS qdf_create_work(qdf_handle_t hdl, qdf_work_t  *work,
 				   qdf_defer_fn_t  func, void  *arg)
 {
-	__qdf_init_work(hdl, work, func, arg);
+	return __qdf_init_work(hdl, work, func, arg);
 }
 
 /**
