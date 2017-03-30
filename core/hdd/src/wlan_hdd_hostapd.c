@@ -1126,6 +1126,24 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 
 		pHostapdState->qdf_status =
 			pSapEvent->sapevt.sapStartBssCompleteEvent.status;
+
+		qdf_atomic_set(&pHddCtx->dfs_radar_found, 0);
+		wlansap_get_dfs_ignore_cac(pHddCtx->hHal, &ignoreCAC);
+
+		/* DFS requirement: DO NOT transmit during CAC. */
+		if ((CHANNEL_STATE_DFS !=
+			wlan_reg_get_channel_state(pHddCtx->hdd_pdev,
+				pHddApCtx->operatingChannel))
+			|| ignoreCAC
+			|| pHddCtx->dev_dfs_cac_status == DFS_CAC_ALREADY_DONE)
+			pHddApCtx->dfs_cac_block_tx = false;
+		else
+			pHddApCtx->dfs_cac_block_tx = true;
+
+		hdd_debug("The value of dfs_cac_block_tx[%d] for ApCtx[%p]:%d",
+				pHddApCtx->dfs_cac_block_tx, pHddApCtx,
+				pHostapdAdapter->sessionId);
+
 		if (pHostapdState->qdf_status) {
 			hdd_err("startbss event failed!!");
 			/*
@@ -1242,24 +1260,6 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 					hdd_err("set_key failed idx: %d", i);
 			}
 		}
-
-		qdf_atomic_set(&pHddCtx->dfs_radar_found, 0);
-
-		wlansap_get_dfs_ignore_cac(pHddCtx->hHal, &ignoreCAC);
-
-		/* DFS requirement: DO NOT transmit during CAC. */
-		if ((CHANNEL_STATE_DFS !=
-			wlan_reg_get_channel_state(pHddCtx->hdd_pdev,
-				pHddApCtx->operatingChannel))
-			|| ignoreCAC
-			|| pHddCtx->dev_dfs_cac_status == DFS_CAC_ALREADY_DONE)
-			pHddApCtx->dfs_cac_block_tx = false;
-		else
-			pHddApCtx->dfs_cac_block_tx = true;
-
-		hdd_debug("The value of dfs_cac_block_tx[%d] for ApCtx[%p]:%d",
-				pHddApCtx->dfs_cac_block_tx, pHddApCtx,
-				pHostapdAdapter->sessionId);
 
 		if ((CHANNEL_STATE_DFS == wlan_reg_get_channel_state(
 						pHddCtx->hdd_pdev,
