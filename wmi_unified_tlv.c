@@ -15763,6 +15763,7 @@ static QDF_STATUS extract_fips_event_data_tlv(wmi_unified_t wmi_handle,
 	param->data = (uint32_t *)param_buf->data;
 	param->data_len = event->data_len;
 	param->error_status = event->error_status;
+	param->pdev_id = event->pdev_id;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -15938,6 +15939,7 @@ static QDF_STATUS extract_channel_hopping_event_tlv(
 
 	ch_hopping->noise_floor_report_iter = event->noise_floor_report_iter;
 	ch_hopping->noise_floor_total_iter = event->noise_floor_total_iter;
+	ch_hopping->pdev_id = event->pdev_id;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -15960,6 +15962,7 @@ static QDF_STATUS extract_pdev_tpc_ev_param_tlv(wmi_unified_t wmi_handle,
 	param_buf = (WMI_PDEV_TPC_EVENTID_param_tlvs *)evt_buf;
 	event = (wmi_pdev_tpc_event_fixed_param *)param_buf->fixed_param;
 
+	param->pdev_id = event->pdev_id;
 	qdf_mem_copy(param->tpc, param_buf->tpc, sizeof(param->tpc));
 
 	return QDF_STATUS_SUCCESS;
