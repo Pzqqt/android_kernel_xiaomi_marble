@@ -3081,8 +3081,6 @@ void hif_process_runtime_resume_success(struct hif_opaque_softc *hif_ctx)
  */
 int hif_runtime_suspend(struct hif_opaque_softc *hif_ctx)
 {
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 	int errno;
 
 	errno = hif_bus_suspend(hif_ctx);
@@ -3107,16 +3105,13 @@ int hif_runtime_suspend(struct hif_opaque_softc *hif_ctx)
 
 	return 0;
 
-bus_resume_noirq:
-	QDF_BUG(!hif_bus_resume_noirq(hif_ctx));
-
-irq_enable:
+irqs_enable:
 	QDF_BUG(!hif_apps_irqs_enable(hif_ctx));
 
 bus_resume:
 	QDF_BUG(!hif_bus_resume(hif_ctx));
 
-	return err;
+	return errno;
 }
 
 #ifdef WLAN_FEATURE_FASTPATH
