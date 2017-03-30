@@ -1329,7 +1329,8 @@ struct wmi_unified {
 	void *htc_handle;
 	qdf_spinlock_t eventq_lock;
 	qdf_nbuf_queue_t event_queue;
-	struct work_struct rx_event_work;
+	qdf_work_t rx_event_work;
+	qdf_workqueue_t *wmi_rx_work_queue;
 	int wmi_stop_in_progress;
 #ifdef CONFIG_MCL
 	struct _wmi_abi_version fw_abi_version;
