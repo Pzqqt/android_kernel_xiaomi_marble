@@ -531,7 +531,33 @@ void ol_tx_flow_pool_unmap_handler(uint8_t flow_id, uint8_t flow_type,
 				   uint8_t flow_pool_id);
 struct ol_tx_flow_pool_t *ol_tx_create_flow_pool(uint8_t flow_pool_id,
 						 uint16_t flow_pool_size);
-int ol_tx_delete_flow_pool(struct ol_tx_flow_pool_t *pool, bool force);
+
+/**
+ * ol_tx_inc_pool_ref() - increment pool ref count
+ * @pool: flow pool pointer
+ *
+ * Increments pool's ref count, used to make sure that no one is using
+ * pool when it is being deleted.
+ * As this function is taking pool->flow_pool_lock inside it, it should
+ * always be called outside this spinlock.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS ol_tx_inc_pool_ref(struct ol_tx_flow_pool_t *pool);
+
+/**
+ * ol_tx_dec_pool_ref() - decrement pool ref count
+ * @pool: flow pool pointer
+ * @force: free pool forcefully
+ *
+ * Decrements pool's ref count and deletes the pool if ref count gets 0.
+ * As this function is taking pdev->tx_desc.flow_pool_list_lock and
+ * pool->flow_pool_lock inside it, it should always be called outside
+ * these two spinlocks.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS ol_tx_dec_pool_ref(struct ol_tx_flow_pool_t *pool, bool force);
 #else
 
 static inline void ol_tx_register_flow_control(struct ol_txrx_pdev_t *pdev)
@@ -565,10 +591,15 @@ static inline struct ol_tx_flow_pool_t *ol_tx_create_flow_pool(
 {
 	return NULL;
 }
-static inline int ol_tx_delete_flow_pool(struct ol_tx_flow_pool_t *pool,
-		bool force)
+static inline QDF_STATUS
+ol_tx_inc_pool_ref(struct ol_tx_flow_pool_t *pool)
 {
-	return 0;
+	return QDF_STATUS_SUCCESS;
+}
+static inline QDF_STATUS
+ol_tx_dec_pool_ref(struct ol_tx_flow_pool_t *pool, bool force)
+{
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 

@@ -452,6 +452,7 @@ struct ol_txrx_pool_stats {
  * @start_th: start threshold
  * @freelist: tx descriptor freelist
  * @pkt_drop_no_desc: drop due to no descriptors
+ * @ref_cnt: pool's ref count
  */
 struct ol_tx_flow_pool_t {
 	TAILQ_ENTRY(ol_tx_flow_pool_t) flow_pool_list_elem;
@@ -467,6 +468,7 @@ struct ol_tx_flow_pool_t {
 	uint16_t start_th;
 	union ol_tx_desc_list_elem_t *freelist;
 	uint16_t pkt_drop_no_desc;
+	qdf_atomic_t ref_cnt;
 };
 
 #endif
