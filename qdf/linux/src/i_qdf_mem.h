@@ -97,6 +97,8 @@ typedef struct __qdf_mempool_ctxt {
 
 #endif /* __KERNEL__ */
 
+#define __qdf_align(a, mask) ALIGN(a, mask)
+
 /* typedef for dma_data_direction */
 typedef enum dma_data_direction __dma_data_direction;
 
