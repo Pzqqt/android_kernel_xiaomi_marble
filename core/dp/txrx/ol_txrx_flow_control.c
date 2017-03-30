@@ -314,7 +314,17 @@ ol_tx_distribute_descs_to_deficient_pools(struct ol_tx_flow_pool_t *src_pool)
 			desc_move_count = ol_tx_move_desc_n(src_pool,
 						dst_pool, desc_move_count);
 			desc_count -= desc_move_count;
+
 			qdf_spin_lock_bh(&dst_pool->flow_pool_lock);
+			if (dst_pool->status == FLOW_POOL_ACTIVE_PAUSED) {
+				if (dst_pool->avail_desc > dst_pool->start_th) {
+					pdev->pause_cb(dst_pool->member_flow_id,
+						      WLAN_WAKE_ALL_NETIF_QUEUE,
+						      WLAN_DATA_FLOW_CONTROL);
+					dst_pool->status =
+						FLOW_POOL_ACTIVE_UNPAUSED;
+				}
+			}
 		}
 		qdf_spin_unlock_bh(&dst_pool->flow_pool_lock);
 		if (desc_count == 0)
@@ -654,6 +664,11 @@ void ol_tx_flow_pool_map_handler(uint8_t flow_id, uint8_t flow_type,
 
 	case FLOW_TYPE_VDEV:
 		ol_tx_flow_pool_vdev_map(pool, flow_id);
+		qdf_spin_lock_bh(&pool->flow_pool_lock);
+		pdev->pause_cb(flow_id,
+			       WLAN_WAKE_ALL_NETIF_QUEUE,
+			       WLAN_DATA_FLOW_CONTROL);
+		qdf_spin_unlock_bh(&pool->flow_pool_lock);
 		break;
 	default:
 		if (pool_create)
