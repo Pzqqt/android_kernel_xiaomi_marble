@@ -194,7 +194,7 @@ struct sk_buff *__qdf_nbuf_alloc(qdf_device_t osdev, size_t size, int reserve,
 	skb = dev_alloc_skb(size);
 
 	if (!skb) {
-		pr_err("ERROR:NBUF alloc failed\n");
+		pr_info("ERROR:NBUF alloc failed\n");
 		return NULL;
 	}
 	memset(skb->cb, 0x0, sizeof(skb->cb));
