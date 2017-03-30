@@ -3963,6 +3963,9 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 					hdd_ctx->hHal,
 					adapter->sessionId,
 					eCSR_DISCONNECT_REASON_IBSS_LEAVE);
+			else if (QDF_STA_MODE == adapter->device_mode)
+				qdf_ret_status =
+					wlan_hdd_try_disconnect(adapter);
 			else
 				qdf_ret_status = sme_roam_disconnect(
 					hdd_ctx->hHal,
@@ -3971,16 +3974,17 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			/* success implies disconnect command got
 			 * queued up successfully
 			 */
-			if (qdf_ret_status == QDF_STATUS_SUCCESS) {
+			if (qdf_ret_status == QDF_STATUS_SUCCESS &&
+					QDF_STA_MODE != adapter->device_mode) {
 				rc = wait_for_completion_timeout(
 					&adapter->disconnect_comp_var,
 					msecs_to_jiffies
 						(WLAN_WAIT_TIME_DISCONNECT));
 				if (!rc)
-					hdd_warn("wait on disconnect_comp_var failed");
-			} else {
-				hdd_err("failed to post disconnect event to SME");
+					hdd_warn("disconn_comp_var wait fail");
 			}
+			if (qdf_ret_status != QDF_STATUS_SUCCESS)
+				hdd_warn("failed to post disconnect");
 			memset(&wrqu, '\0', sizeof(wrqu));
 			wrqu.ap_addr.sa_family = ARPHRD_ETHER;
 			memset(wrqu.ap_addr.sa_data, '\0', ETH_ALEN);
