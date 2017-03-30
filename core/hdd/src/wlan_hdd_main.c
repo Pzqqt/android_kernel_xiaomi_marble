@@ -8754,6 +8754,9 @@ int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx)
 	QDF_STATUS qdf_status;
 	int ret = 0;
 	p_cds_sched_context cds_sched_context = NULL;
+	bool is_idle_stop = !cds_is_driver_unloading() &&
+		!cds_is_driver_recovering();
+	int active_threads;
 
 	ENTER();
 
@@ -8773,14 +8776,19 @@ int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx)
 	mutex_lock(&hdd_ctx->iface_change_lock);
 	hdd_ctx->stop_modules_in_progress = true;
 
-	if (cds_return_external_threads_count() || hdd_ctx->isWiphySuspended) {
-		mutex_unlock(&hdd_ctx->iface_change_lock);
+	active_threads = cds_return_external_threads_count();
+	if (active_threads > 0 || hdd_ctx->isWiphySuspended) {
 		hdd_warn("External threads %d wiphy suspend %d",
-			cds_return_external_threads_count(),
-			hdd_ctx->isWiphySuspended);
-		qdf_mc_timer_start(&hdd_ctx->iface_change_timer,
-				   hdd_ctx->config->iface_change_wait_time);
-		return 0;
+			 active_threads, hdd_ctx->isWiphySuspended);
+
+		cds_print_external_threads();
+
+		if (is_idle_stop) {
+			mutex_unlock(&hdd_ctx->iface_change_lock);
+			qdf_mc_timer_start(&hdd_ctx->iface_change_timer,
+				       hdd_ctx->config->iface_change_wait_time);
+			return 0;
+		}
 	}
 
 	hdd_info("Present Driver Status: %d", hdd_ctx->driver_status);
@@ -8837,7 +8845,7 @@ int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx)
 
 	ol_cds_free();
 
-	if (!cds_is_driver_recovering() && !cds_is_driver_unloading()) {
+	if (is_idle_stop) {
 		ret = pld_power_off(qdf_ctx->dev);
 		if (ret)
 			hdd_err("CNSS power down failed put device into Low power mode:%d",
