@@ -10611,6 +10611,58 @@ enum hdd_wext_control {
 #define CFG_ACTIVE_MC_BC_BPF_MODE_MAX     (ACTIVE_BPF_ENABLED)
 #define CFG_ACTIVE_MC_BC_BPF_MODE_DEFAULT (ACTIVE_BPF_DISABLED)
 
+/*
+ * <ini>
+ * acs_with_more_param- Enable acs calculation with more param.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable acs calculation with more param.
+ *
+ * Related: NA
+ *
+ * Supported Feature: ACS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
+#define CFG_ACS_WITH_MORE_PARAM_NAME    "acs_with_more_param"
+#define CFG_ACS_WITH_MORE_PARAM_MIN     (0)
+#define CFG_ACS_WITH_MORE_PARAM_MAX     (1)
+#define CFG_ACS_WITH_MORE_PARAM_DEFAULT (0)
+
+/*
+ * <ini>
+ * AutoChannelSelectWeight - ACS channel weight
+ * @Min: 0x1
+ * @Max: 0xFFFFFFFF
+ * @Default: 0x000000FF
+ *
+ * This ini is used to adjust weight of factors in
+ * acs algorithm.
+ *
+ * Supported Feature: ACS
+ *
+ * Usage: Internal/External
+ *
+ * bits 0-3:   rssi weight
+ * bits 4-7:   bss count weight
+ * bits 8-11:  noise floor weight
+ * bits 12-15: channel free weight
+ * bits 16-19: tx power range weight
+ * bits 20-23: tx power throughput weight
+ * bits 24-31: reserved
+ *
+ * </ini>
+ */
+#define CFG_AUTO_CHANNEL_SELECT_WEIGHT            "AutoChannelSelectWeight"
+#define CFG_AUTO_CHANNEL_SELECT_WEIGHT_MIN        (0x1)
+#define CFG_AUTO_CHANNEL_SELECT_WEIGHT_MAX        (0xFFFFFFFF)
+#define CFG_AUTO_CHANNEL_SELECT_WEIGHT_DEFAULT    (0x000000FF)
+
 #ifdef WLAN_FEATURE_11AX
 /* 11AX related INI configuration */
 /*
@@ -12021,6 +12073,8 @@ struct hdd_config {
 	uint8_t gDisableDfsJapanW53;
 	bool gEnableOverLapCh;
 	bool fRegChangeDefCountry;
+	bool acs_with_more_param;
+	uint32_t auto_channel_select_weight;
 	uint16_t max_ht_mcs_txdata;
 	bool sap_get_peer_info;
 	bool disable_abg_rate_txdata;

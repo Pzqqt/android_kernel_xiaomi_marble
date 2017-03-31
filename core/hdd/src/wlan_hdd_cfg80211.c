@@ -2399,6 +2399,10 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		sap_config->acs_cfg.start_ch, sap_config->acs_cfg.end_ch,
 		sap_config->acs_cfg.band);
 
+	if (hdd_ctx->config->auto_channel_select_weight)
+		sap_config->auto_channel_select_weight =
+		    hdd_ctx->config->auto_channel_select_weight;
+
 	sap_config->acs_cfg.is_ht_enabled = ht_enabled;
 	sap_config->acs_cfg.is_vht_enabled = vht_enabled;
 

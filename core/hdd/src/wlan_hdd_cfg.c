@@ -2918,6 +2918,20 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_REG_CHANGE_DEF_COUNTRY_MIN,
 		     CFG_REG_CHANGE_DEF_COUNTRY_MAX),
 
+	REG_VARIABLE(CFG_ACS_WITH_MORE_PARAM_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, acs_with_more_param,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_ACS_WITH_MORE_PARAM_DEFAULT,
+		     CFG_ACS_WITH_MORE_PARAM_MIN,
+		     CFG_ACS_WITH_MORE_PARAM_MAX),
+
+	REG_VARIABLE(CFG_AUTO_CHANNEL_SELECT_WEIGHT, WLAN_PARAM_HexInteger,
+		     struct hdd_config, auto_channel_select_weight,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_AUTO_CHANNEL_SELECT_WEIGHT_DEFAULT,
+		     CFG_AUTO_CHANNEL_SELECT_WEIGHT_MIN,
+		     CFG_AUTO_CHANNEL_SELECT_WEIGHT_MAX),
+
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 	REG_VARIABLE(CFG_LL_TX_FLOW_LWM, WLAN_PARAM_Integer,
 		     struct hdd_config, TxFlowLowWaterMark,
@@ -6286,6 +6300,9 @@ void hdd_cfg_print(struct hdd_context *pHddCtx)
 	hdd_debug("Name = [%s] Value = [%d]",
 		CFG_SAP_INTERNAL_RESTART_NAME,
 		pHddCtx->config->sap_internal_restart);
+	hdd_debug("Name = [%s] Value = [%d]",
+		  CFG_ACS_WITH_MORE_PARAM_NAME,
+		  pHddCtx->config->acs_with_more_param);
 	hdd_debug("Name = [%s] Value = [%u]",
 		CFG_AUTO_DETECT_POWER_FAIL_MODE_NAME,
 		pHddCtx->config->auto_pwr_save_fail_mode);
@@ -7897,6 +7914,8 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *pHddCtx)
 	smeConfig->csrConfig.sap_channel_avoidance =
 		pHddCtx->config->sap_channel_avoidance;
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
+	smeConfig->csrConfig.acs_with_more_param =
+		pHddCtx->config->acs_with_more_param;
 
 	smeConfig->csrConfig.f_prefer_non_dfs_on_radar =
 		pHddCtx->config->prefer_non_dfs_on_radar;

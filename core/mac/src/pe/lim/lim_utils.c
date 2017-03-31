@@ -4971,6 +4971,60 @@ void lim_resset_scan_channel_info(tpAniSirGlobal pMac)
 	qdf_mem_set(&pMac->lim.scanChnInfo, sizeof(tLimScanChnInfo), 0);
 }
 
+void lim_add_channel_status_info(tpAniSirGlobal p_mac,
+				 struct lim_channel_status *channel_stat,
+				 uint8_t channel_id)
+{
+	uint8_t i;
+	bool found = false;
+	struct lim_scan_channel_status *channel_info =
+		&p_mac->lim.scan_channel_status;
+	struct lim_channel_status *channel_status_list =
+		channel_info->channel_status_list;
+	uint8_t total_channel = channel_info->total_channel;
+
+	if (!p_mac->sap.acs_with_more_param)
+		return;
+
+	for (i = 0; i < total_channel; i++) {
+		if (channel_status_list[i].channel_id == channel_id) {
+			if (channel_stat->cmd_flags ==
+			    WMI_CHAN_InFO_END_RESP &&
+			    channel_status_list[i].cmd_flags ==
+			    WMI_CHAN_InFO_START_RESP) {
+				/* adjust to delta value for counts */
+				channel_stat->rx_clear_count -=
+				    channel_status_list[i].rx_clear_count;
+				channel_stat->cycle_count -=
+				    channel_status_list[i].cycle_count;
+				channel_stat->rx_frame_count -=
+				    channel_status_list[i].rx_frame_count;
+				channel_stat->tx_frame_count -=
+				    channel_status_list[i].tx_frame_count;
+				channel_stat->bss_rx_cycle_count -=
+				    channel_status_list[i].bss_rx_cycle_count;
+			}
+			qdf_mem_copy(&channel_status_list[i], channel_stat,
+				     sizeof(*channel_status_list));
+			found = true;
+			break;
+		}
+	}
+
+	if (!found) {
+		if (total_channel < SIR_MAX_SUPPORTED_CHANNEL_LIST) {
+			qdf_mem_copy(&channel_status_list[total_channel++],
+				     channel_stat,
+				     sizeof(*channel_status_list));
+			channel_info->total_channel = total_channel;
+		} else {
+			pe_warn("Chan cnt exceed, channel_id=%d", channel_id);
+		}
+	}
+
+	return;
+}
+
 /**
  * @function :  lim_is_channel_valid_for_channel_switch()
  *

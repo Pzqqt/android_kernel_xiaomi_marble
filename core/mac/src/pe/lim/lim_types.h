@@ -940,6 +940,16 @@ tSirRetStatus lim_process_sme_del_all_tdls_peers(tpAniSirGlobal p_mac,
 }
 #endif
 
+/**
+ * lim_process_rx_channel_status_event() - processes
+ * event WDA_RX_CHN_STATUS_EVENT
+ * @mac_ctx Pointer to Global MAC structure
+ * @buf: Received message info
+ *
+ * Return: None
+ */
+void lim_process_rx_channel_status_event(tpAniSirGlobal mac_ctx, void *buf);
+
 /* / Bit value data structure */
 typedef enum sHalBitVal         /* For Bit operations */
 {

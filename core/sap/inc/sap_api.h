@@ -72,7 +72,7 @@ extern "C" {
 #define       QDF_MAX_NO_OF_SAP_MODE       2    /* max # of SAP */
 #define       SAP_MAX_NUM_SESSION          5
 #define       SAP_MAX_OBSS_STA_CNT         1    /* max # of OBSS STA */
-#define       SAP_ACS_WEIGHT_MAX           (4444)
+#define       SAP_ACS_WEIGHT_MAX           (26664)
 
 /*--------------------------------------------------------------------------
  * reasonCode taken from 802.11 standard.
@@ -603,6 +603,7 @@ typedef struct sap_Config {
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	uint8_t cc_switch_mode;
 #endif
+	uint32_t auto_channel_select_weight;
 	struct sap_acs_cfg acs_cfg;
 	uint16_t probeRespIEsBufferLen;
 	/* buffer for addn ies comes from hostapd */
@@ -755,6 +756,7 @@ typedef struct tagSapStruct {
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	bool sap_channel_avoidance;
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
+	bool acs_with_more_param;
 	bool enable_dfs_phy_error_logs;
 } tSapStruct, *tpSapStruct;
 

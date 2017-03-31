@@ -224,7 +224,7 @@ typedef struct sSapContext {
 	 * on a DFS channel and a RADAR is detected on the channel.
 	 */
 	tAll5GChannelList SapAllChnlList;
-
+	uint32_t auto_channel_select_weight;
 	tSapAcsChannelInfo acsBestChannelInfo;
 	bool enableOverLapCh;
 	struct sap_acs_cfg *acs_cfg;

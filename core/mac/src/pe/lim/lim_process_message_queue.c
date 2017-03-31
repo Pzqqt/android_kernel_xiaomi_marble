@@ -1790,6 +1790,9 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 	case WMA_RX_SCAN_EVENT:
 		lim_process_rx_scan_event(mac_ctx, msg->bodyptr);
 		break;
+	case WMA_RX_CHN_STATUS_EVENT:
+		lim_process_rx_channel_status_event(mac_ctx, msg->bodyptr);
+		break;
 	case WMA_IBSS_PEER_INACTIVITY_IND:
 		lim_process_ibss_peer_inactivity(mac_ctx, msg->bodyptr);
 		qdf_mem_free((void *)(msg->bodyptr));

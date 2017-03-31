@@ -3275,3 +3275,26 @@ void lim_process_rx_scan_event(tpAniSirGlobal pMac, void *buf)
 	}
 	qdf_mem_free(buf);
 }
+
+void lim_process_rx_channel_status_event(tpAniSirGlobal mac_ctx, void *buf)
+{
+	struct lim_channel_status *chan_status = buf;
+
+	if (NULL == chan_status) {
+		QDF_TRACE(QDF_MODULE_ID_PE,
+			  QDF_TRACE_LEVEL_ERROR,
+			  "%s: ACS evt report buf NULL", __func__);
+		return;
+	}
+
+	if (mac_ctx->sap.acs_with_more_param)
+		lim_add_channel_status_info(mac_ctx, chan_status,
+					    chan_status->channel_id);
+	else
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_WARN,
+			  "%s: Error evt report", __func__);
+
+	qdf_mem_free(buf);
+
+	return;
+}

@@ -303,6 +303,14 @@ QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 		cmd->scan_f_add_tpc_ie_in_probe = true;
 		cmd->scan_f_filter_prb_req = true;
 
+		if (pMac->sap.acs_with_more_param) {
+			/* add chan stat info report tag */
+			if (pMac->sme.currDeviceMode == QDF_SAP_MODE) {
+				cmd->scan_f_chan_stat_evnt = true;
+				WMA_LOGD("set ACS ctrl BIT");
+			}
+		}
+
 		/*
 		 * Decide burst_duration and dwell_time_active based on
 		 * what type of devices are active.
