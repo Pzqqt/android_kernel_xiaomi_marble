@@ -93,42 +93,44 @@
 
 /**
  * enum wlan_umac_comp_id - UMAC component id
- * @WLAN_UMAC_COMP_MLME:     MLME
- * @WLAN_UMAC_COMP_REGULATORY: REGULATORY
- * @WLAN_UMAC_COMP_MGMT_TXRX:   MGMT Tx/Rx
+ * @WLAN_UMAC_COMP_MLME:          MLME
+ * @WLAN_UMAC_COMP_MGMT_TXRX:     MGMT Tx/Rx
  * @WLAN_UMAC_COMP_SERIALIZATION: Serialization
- * @WLAN_UMAC_COMP_SCAN: SCAN - as scan module uses services provided by
- *                       MLME, MGMT_TXRX and SERIALIZATION, SCAN module
- *                       must be initializes after above modules.
- * @WLAN_UMAC_COMP_PMO:         PMO component
- * @WLAN_UMAC_COMP_P2P:      P2P
- * @WLAN_UMAC_COMP_POLICY_MGR:     Policy Manager
- * @WLAN_UMAC_COMP_CONFIG:     Configuration
- * @WLAN_UMAC_COMP_WIFI_POS:    WIFI Positioning
- * @WLAN_UMAC_COMP_TDLS:     TDLS
- * @WLAN_UMAC_COMP_ATF:      Airtime Fairness
- * @WLAN_UMAC_COMP_CRYPTO:      CRYPTO
- * @WLAN_UMAC_COMP_NAN: Neighbor Aware Networking
- * @WLAN_UMAC_COMP_ID_MAX: Maximum components in UMAC
+ * @WLAN_UMAC_COMP_SCAN: SCAN -   as scan module uses services provided by
+ *                                MLME, MGMT_TXRX and SERIALIZATION, SCAN module
+ *                                must be initializes after above modules.
+ * @WLAN_UMAC_COMP_PMO:           PMO component
+ * @WLAN_UMAC_COMP_P2P:           P2P
+ * @WLAN_UMAC_COMP_POLICY_MGR:    Policy Manager
+ * @WLAN_UMAC_COMP_CONFIG:        Configuration
+ * @WLAN_UMAC_COMP_WIFI_POS:      WIFI Positioning
+ * @WLAN_UMAC_COMP_TDLS:          TDLS
+ * @WLAN_UMAC_COMP_ATF:           Airtime Fairness
+ * @WLAN_UMAC_COMP_REGULATORY:    REGULATORY
+ * @WLAN_UMAC_COMP_CRYPTO:        CRYPTO
+ * @WLAN_UMAC_COMP_NAN:           Neighbor Aware Networking
+ * @WLAN_UMAC_COMP_DFS:           DFS
+ * @WLAN_UMAC_COMP_ID_MAX:        Maximum components in UMAC
  *
  * This id is static.
  * On Adding new component, new id has to be assigned
  */
 enum wlan_umac_comp_id {
-	WLAN_UMAC_COMP_MLME           = 0,
-	WLAN_UMAC_COMP_MGMT_TXRX      = 1,
-	WLAN_UMAC_COMP_SERIALIZATION  = 2,
-	WLAN_UMAC_COMP_SCAN           = 3,
-	WLAN_UMAC_COMP_PMO            = 4,
-	WLAN_UMAC_COMP_P2P            = 5,
-	WLAN_UMAC_COMP_POLICY_MGR     = 6,
-	WLAN_UMAC_COMP_CONFIG         = 7,
-	WLAN_UMAC_COMP_WIFI_POS       = 8,
-	WLAN_UMAC_COMP_TDLS           = 9,
-	WLAN_UMAC_COMP_ATF            = 10,
-	WLAN_UMAC_COMP_REGULATORY     = 11,
-	WLAN_UMAC_COMP_CRYPTO         = 12,
-	WLAN_UMAC_COMP_NAN            = 13,
+	WLAN_UMAC_COMP_MLME,
+	WLAN_UMAC_COMP_MGMT_TXRX,
+	WLAN_UMAC_COMP_SERIALIZATION,
+	WLAN_UMAC_COMP_SCAN,
+	WLAN_UMAC_COMP_PMO,
+	WLAN_UMAC_COMP_P2P,
+	WLAN_UMAC_COMP_POLICY_MGR,
+	WLAN_UMAC_COMP_CONFIG,
+	WLAN_UMAC_COMP_WIFI_POS,
+	WLAN_UMAC_COMP_TDLS,
+	WLAN_UMAC_COMP_ATF,
+	WLAN_UMAC_COMP_REGULATORY,
+	WLAN_UMAC_COMP_CRYPTO,
+	WLAN_UMAC_COMP_NAN,
+	WLAN_UMAC_COMP_DFS,
 	WLAN_UMAC_COMP_ID_MAX,
 };
 

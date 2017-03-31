@@ -360,10 +360,85 @@ struct wlan_lmac_if_reg_tx_ops {
 };
 
 /**
+ * struct wlan_lmac_if_dfs_tx_ops - Function pointer to call offload/lmac
+ *                                  functions from DFS module.
+ * @dfs_enable:                    Enable DFS.
+ * @dfs_get_caps:                  Get DFS capabilities.
+ * @dfs_disable:                   Disable DFS
+ * @dfs_gettsf64:                  Get tsf64 value.
+ * @dfs_set_use_cac_prssi:         Set use_cac_prssi value.
+ * @dfs_get_dfsdomain:             Get DFS domain.
+ * @dfs_is_countryCode_CHINA:      Check is country code CHINA.
+ * @dfs_get_thresholds:            Get thresholds.
+ * @dfs_get_ext_busy:              Get ext_busy.
+ * @dfs_get_target_type:           Get target type.
+ * @dfs_is_countryCode_KOREA_ROC3: Check is county code Korea.
+ * @dfs_is_mode_offload:           Check the radio for offload.
+ * @dfs_get_ah_devid:              Get ah devid.
+ * @dfs_get_phymode_info:          Get phymode info.
+ */
+
+struct wlan_lmac_if_dfs_tx_ops {
+	QDF_STATUS (*dfs_enable)(struct wlan_objmgr_pdev *pdev,
+			int *is_fastclk,
+			int32_t pe_firpwr,
+			int32_t pe_rrssi,
+			int32_t pe_height,
+			int32_t pe_prssi,
+			int32_t pe_inband,
+			uint32_t pe_relpwr,
+			uint32_t pe_relstep,
+			uint32_t pe_maxlen,
+			uint32_t dfsdomain);
+	QDF_STATUS (*dfs_get_caps)(struct wlan_objmgr_pdev *pdev,
+			bool *wlan_dfs_ext_chan_ok,
+			bool *wlan_dfs_combined_rssi_ok,
+			bool *wlan_dfs_use_enhancement,
+			bool *wlan_strong_signal_diversiry,
+			bool *wlan_chip_is_bb_tlv,
+			bool *wlan_chip_is_over_sampled,
+			bool *wlan_chip_is_ht160,
+			bool *wlan_chip_is_false_detect,
+			uint32_t *wlan_fastdiv_val);
+	QDF_STATUS (*dfs_disable)(struct wlan_objmgr_pdev *pdev,
+			int no_cac);
+	QDF_STATUS (*dfs_gettsf64)(struct wlan_objmgr_pdev *pdev,
+			uint64_t *tsf64);
+	QDF_STATUS (*dfs_set_use_cac_prssi)(struct wlan_objmgr_pdev *pdev);
+	QDF_STATUS (*dfs_get_dfsdomain)(struct wlan_objmgr_pdev *pdev,
+			int *country_china);
+	QDF_STATUS (*dfs_is_countryCode_CHINA)(struct wlan_objmgr_pdev *pdev,
+			bool *status);
+	QDF_STATUS (*dfs_get_thresholds)(struct wlan_objmgr_pdev *pdev,
+			int32_t *pe_firpwr,
+			int32_t *pe_rrssi,
+			int32_t *pe_height,
+			int32_t *pe_prssi,
+			int32_t *pe_inband,
+			uint32_t *pe_relpwr,
+			uint32_t *pe_relstep,
+			uint32_t *pe_maxlen);
+	QDF_STATUS (*dfs_get_ext_busy)(struct wlan_objmgr_pdev *pdev,
+			int *dfs_ext_chan_busy);
+	QDF_STATUS (*dfs_get_target_type)(struct wlan_objmgr_pdev *pdev,
+			uint32_t *target_type);
+	QDF_STATUS (*dfs_is_countryCode_KOREA_ROC3)(
+			struct wlan_objmgr_pdev *pdev,
+			bool *ctry_korea);
+	QDF_STATUS (*dfs_is_mode_offload)(struct wlan_objmgr_pdev *pdev,
+			bool *is_offload);
+	QDF_STATUS (*dfs_get_ah_devid)(struct wlan_objmgr_pdev *pdev,
+			uint16_t *devid);
+	QDF_STATUS (*dfs_get_phymode_info)(struct wlan_objmgr_pdev *pdev,
+			uint32_t chan_mode,
+			uint32_t *mode_info);
+};
+
+/**
  * struct wlan_lmac_if_tx_ops - south bound tx function pointers
  * @mgmt_txrx_tx_ops: mgmt txrx tx ops
  * @scan: scan tx ops
- * @set_chan_list: tx func for configuring scan channel
+ * @dfs_tx_ops: dfs tx ops.
  *
  * Callback function tabled to be registered with umac.
  * umac will use the functional table to send events/frames to lmac/wmi
@@ -399,6 +474,7 @@ struct wlan_lmac_if_tx_ops {
 	struct wlan_lmac_if_nan_tx_ops nan_tx_ops;
 #endif
 	struct wlan_lmac_if_reg_tx_ops reg_ops;
+	struct wlan_lmac_if_dfs_tx_ops dfs_tx_ops;
 };
 
 /**
@@ -594,9 +670,85 @@ struct wlan_lmac_if_nan_rx_ops {
 #endif
 
 /**
+ * struct wlan_lmac_if_dfs_rx_ops - Function pointers to call dfs functions
+ *                                  from lmac/offload.
+ * @dfs_reset:                        Reset dfs.
+ * @dfs_get_radars:                   Calls init radar table functions.
+ * @dfs_process_phyerr:               Process phyerr.
+ * @dfs_destroy_object:               Destroys the DFS object.
+ * @dfs_radar_enable:                 Enables the radar.
+ * @dfs_attach:                       Allocates memory for wlan_dfs members.
+ * @dfs_sif_dfs_detach:               DFS detach.
+ * @dfs_control:                      Used to process ioctls related to DFS.
+ * @dfs_nif_dfs_reset:                DFS reset.
+ * @dfs_is_precac_timer_running:      Check whether precac timer is running.
+ * @dfs_find_vht80_chan_for_precac:   Find VHT80 channel for precac.
+ * @dfs_cancel_precac_timer:          Cancel the precac timer.
+ * @dfs_override_precac_timeout:      Override the default precac timeout.
+ * @dfs_set_precac_enable:            Set precac enable flag.
+ * @dfs_get_precac_enable:            Get precac enable flag.
+ * @dfs_get_override_precac_timeout:  Get precac timeout.
+ * @dfs_set_current_channel:          Set DFS current channel.
+ */
+struct wlan_lmac_if_dfs_rx_ops {
+	QDF_STATUS (*dfs_reset)(struct wlan_objmgr_pdev *pdev);
+	QDF_STATUS (*dfs_get_radars)(struct wlan_objmgr_pdev *pdev);
+	QDF_STATUS (*dfs_process_phyerr)(struct wlan_objmgr_pdev *pdev,
+			void *buf,
+			uint16_t datalen,
+			uint8_t r_rssi,
+			uint8_t r_ext_rssi,
+			uint32_t r_rs_tstamp,
+			uint64_t r_fulltsf);
+	QDF_STATUS (*dfs_destroy_object)(struct wlan_objmgr_pdev *pdev);
+	QDF_STATUS (*dfs_radar_enable)(struct wlan_objmgr_pdev *pdev,
+			int no_cac,
+			uint32_t opmode);
+	QDF_STATUS (*dfs_attach)(struct wlan_objmgr_pdev *pdev);
+	QDF_STATUS (*dfs_sif_dfs_detach)(struct wlan_objmgr_pdev *pdev);
+	QDF_STATUS (*dfs_control)(struct wlan_objmgr_pdev *pdev,
+			u_int id,
+			void *indata,
+			uint32_t insize,
+			void *outdata,
+			uint32_t *outsize,
+			int *error);
+	QDF_STATUS (*dfs_nif_dfs_reset)(struct wlan_objmgr_pdev *pdev);
+	QDF_STATUS (*dfs_is_precac_timer_running)(struct wlan_objmgr_pdev *pdev,
+			bool *is_precac_timer_running);
+	QDF_STATUS (*dfs_find_vht80_chan_for_precac)(struct wlan_objmgr_pdev *pdev,
+			uint32_t chan_mode,
+			uint8_t ch_freq_seg1,
+			uint32_t *cfreq1,
+			uint32_t *cfreq2,
+			uint32_t *phy_mode,
+			bool *dfs_set_cfreq2,
+			bool *set_agile);
+	QDF_STATUS (*dfs_cancel_precac_timer)(struct wlan_objmgr_pdev *pdev);
+	QDF_STATUS (*dfs_override_precac_timeout)(
+			struct wlan_objmgr_pdev *pdev,
+			int precac_timeout);
+	QDF_STATUS (*dfs_set_precac_enable)(struct wlan_objmgr_pdev *pdev,
+			uint32_t value);
+	QDF_STATUS (*dfs_get_precac_enable)(struct wlan_objmgr_pdev *pdev,
+			int *buff);
+	QDF_STATUS (*dfs_get_override_precac_timeout)(
+			struct wlan_objmgr_pdev *pdev,
+			int *precac_timeout);
+	QDF_STATUS (*dfs_set_current_channel)(struct wlan_objmgr_pdev *pdev,
+			uint16_t ic_freq,
+			uint32_t ic_flags,
+			uint16_t ic_flagext,
+			uint8_t ic_ieee,
+			uint8_t ic_vhtop_ch_freq_seg1,
+			uint8_t ic_vhtop_ch_freq_seg2);
+};
+
+/**
  * struct wlan_lmac_if_rx_ops - south bound rx function pointers
- * @arg1
- * @arg2
+ * @mgmt_txrx_tx_ops: mgmt txrx rx ops
+ * @scan: scan rx ops
+ * @dfs_rx_ops: dfs rx ops.
  *
  * Callback function tabled to be registered with lmac/wmi.
  * lmac will use the functional table to send events/frames to umac
@@ -629,6 +781,7 @@ struct wlan_lmac_if_rx_ops {
 	struct wlan_lmac_if_nan_rx_ops nan_rx_ops;
 #endif
 	struct wlan_lmac_if_reg_rx_ops reg_rx_ops;
+	struct wlan_lmac_if_dfs_rx_ops dfs_rx_ops;
 };
 
 /* Function pointer to call legacy tx_ops registration in OL/WMA.

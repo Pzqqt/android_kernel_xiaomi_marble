@@ -39,6 +39,11 @@
 #ifdef WLAN_CONV_CRYPTO_SUPPORTED
 #include "wlan_crypto_global_api.h"
 #endif
+#ifdef DFS_COMPONENT_ENABLE
+#include <wlan_dfs_tgt_api.h>
+#include <wlan_dfs_utils_api.h>
+#endif
+
 /* Function pointer for OL/WMA specific UMAC tx_ops
  * registration.
  */
@@ -154,6 +159,46 @@ static void wlan_lmac_if_umac_rx_ops_register_p2p(
 }
 #endif
 
+#ifdef DFS_COMPONENT_ENABLE
+static QDF_STATUS
+wlan_lmac_if_umac_dfs_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+	struct wlan_lmac_if_dfs_rx_ops *dfs_rx_ops;
+
+	dfs_rx_ops = &rx_ops->dfs_rx_ops;
+
+	dfs_rx_ops->dfs_reset = tgt_dfs_reset;
+	dfs_rx_ops->dfs_get_radars = tgt_dfs_get_radars;
+	dfs_rx_ops->dfs_process_phyerr = tgt_dfs_process_phyerr;
+	dfs_rx_ops->dfs_destroy_object = tgt_dfs_destroy_object;
+	dfs_rx_ops->dfs_radar_enable = tgt_dfs_radar_enable;
+	dfs_rx_ops->dfs_attach = tgt_dfs_attach;
+	dfs_rx_ops->dfs_sif_dfs_detach = tgt_sif_dfs_detach;
+	dfs_rx_ops->dfs_control = tgt_dfs_control;
+	dfs_rx_ops->dfs_nif_dfs_reset = tgt_nif_dfs_reset;
+	dfs_rx_ops->dfs_is_precac_timer_running =
+		tgt_dfs_is_precac_timer_running;
+	dfs_rx_ops->dfs_find_vht80_chan_for_precac =
+		tgt_dfs_find_vht80_chan_for_precac;
+	dfs_rx_ops->dfs_cancel_precac_timer = utils_dfs_cancel_precac_timer;
+	dfs_rx_ops->dfs_override_precac_timeout =
+		ucfg_dfs_override_precac_timeout;
+	dfs_rx_ops->dfs_set_precac_enable = ucfg_dfs_set_precac_enable;
+	dfs_rx_ops->dfs_get_precac_enable = ucfg_dfs_get_precac_enable;
+	dfs_rx_ops->dfs_get_override_precac_timeout =
+		ucfg_dfs_get_override_precac_timeout;
+	dfs_rx_ops->dfs_set_current_channel = tgt_dfs_set_current_channel;
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static QDF_STATUS
+wlan_lmac_if_umac_dfs_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /**
  * wlan_lmac_if_umac_rx_ops_register() - UMAC rx handler register
  * @rx_ops: Pointer to rx_ops structure to be populated
@@ -206,6 +251,9 @@ wlan_lmac_if_umac_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 
 	/* p2p rx ops */
 	wlan_lmac_if_umac_rx_ops_register_p2p(rx_ops);
+
+	/* DFS rx_ops */
+	wlan_lmac_if_umac_dfs_rx_ops_register(rx_ops);
 
 	return QDF_STATUS_SUCCESS;
 }

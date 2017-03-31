@@ -47,6 +47,10 @@
 #ifdef WLAN_CONV_CRYPTO_SUPPORTED
 #include "wlan_crypto_main.h"
 #endif
+#ifdef DFS_COMPONENT_ENABLE
+#include <wlan_dfs_init_deinit_api.h>
+#endif
+
 /**
  * DOC: This file provides various init/deinit trigger point for new
  * components.
@@ -386,6 +390,28 @@ static QDF_STATUS dispatcher_nan_psoc_disable(struct wlan_objmgr_psoc *psoc)
 }
 #endif
 
+#ifdef DFS_COMPONENT_ENABLE
+static QDF_STATUS dispatcher_init_dfs(void)
+{
+	return dfs_init();
+}
+
+static QDF_STATUS dispatcher_deinit_dfs(void)
+{
+	return dfs_deinit();
+}
+#else
+static QDF_STATUS dispatcher_init_dfs(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS dispatcher_deinit_dfs(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 QDF_STATUS dispatcher_init(void)
 {
 	if (QDF_STATUS_SUCCESS != wlan_objmgr_global_obj_init())
@@ -427,8 +453,13 @@ QDF_STATUS dispatcher_init(void)
 	if (QDF_STATUS_SUCCESS != dispatcher_init_nan())
 		goto nan_init_fail;
 
+	if (QDF_STATUS_SUCCESS != dispatcher_init_dfs())
+		goto dfs_init_fail;
+
 	return QDF_STATUS_SUCCESS;
 
+dfs_init_fail:
+	dispatcher_deinit_nan();
 nan_init_fail:
 	dispatcher_deinit_wifi_pos();
 wifi_pos_init_fail:
@@ -461,6 +492,8 @@ EXPORT_SYMBOL(dispatcher_init);
 
 QDF_STATUS dispatcher_deinit(void)
 {
+	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_deinit_dfs());
+
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_deinit_nan());
 
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_deinit_wifi_pos());
