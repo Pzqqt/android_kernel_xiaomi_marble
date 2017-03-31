@@ -1736,14 +1736,15 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 	if (!peer)
 		return NULL; /* failure */
 
+	qdf_mem_zero(peer, sizeof(struct dp_peer));
+
 	TAILQ_INIT(&peer->ast_entry_list);
 	qdf_mem_copy(&peer->self_ast_entry.mac_addr, peer_mac_addr,
 			DP_MAC_ADDR_LEN);
 	peer->self_ast_entry.peer = peer;
-	TAILQ_INSERT_HEAD(&peer->ast_entry_list, &peer->self_ast_entry,
+	TAILQ_INSERT_TAIL(&peer->ast_entry_list, &peer->self_ast_entry,
 				ast_entry_elem);
 
-	qdf_mem_zero(peer, sizeof(struct dp_peer));
 	qdf_spinlock_create(&peer->peer_info_lock);
 
 	/* store provided params */

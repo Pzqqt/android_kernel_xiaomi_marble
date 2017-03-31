@@ -295,9 +295,6 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 		goto fail;
 	}
 
-	/* WDS Source Port Learning */
-	dp_rx_wds_srcport_learn(soc, rx_desc->rx_buf_start, peer, nbuf);
-
 	/*
 	 * Advance the packet start pointer by total size of
 	 * pre-header TLV's
@@ -306,6 +303,9 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 
 	if (l2_hdr_offset)
 		qdf_nbuf_pull_head(nbuf, l2_hdr_offset);
+
+	/* WDS Source Port Learning */
+	dp_rx_wds_srcport_learn(soc, rx_desc->rx_buf_start, peer, nbuf);
 
 	if (hal_rx_mpdu_start_mpdu_qos_control_valid_get(
 		rx_desc->rx_buf_start)) {
