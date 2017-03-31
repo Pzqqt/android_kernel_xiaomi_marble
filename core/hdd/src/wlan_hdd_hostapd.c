@@ -1601,7 +1601,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 				&pHostapdAdapter->prev_fwd_rx_packets);
 
 			spin_unlock_bh(&pHddCtx->bus_bw_lock);
-			hdd_start_bus_bw_compute_timer(pHostapdAdapter);
+			hdd_bus_bw_compute_timer_start(pHddCtx);
 		}
 #endif
 		pHddApCtx->bApActive = true;
@@ -1815,7 +1815,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			pHostapdAdapter->prev_fwd_tx_packets = 0;
 			pHostapdAdapter->prev_fwd_rx_packets = 0;
 			spin_unlock_bh(&pHddCtx->bus_bw_lock);
-			hdd_stop_bus_bw_compute_timer(pHostapdAdapter);
+			hdd_bus_bw_compute_timer_try_stop(pHddCtx);
 		}
 #endif
 		hdd_green_ap_del_sta(pHddCtx);

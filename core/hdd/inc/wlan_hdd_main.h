@@ -1762,8 +1762,43 @@ hdd_wlan_get_ibss_mac_addr_from_staid(hdd_adapter_t *pAdapter,
 				      uint8_t staIdx);
 void hdd_checkandupdate_phymode(hdd_context_t *pHddCtx);
 #ifdef MSM_PLATFORM
-void hdd_start_bus_bw_compute_timer(hdd_adapter_t *pAdapter);
-void hdd_stop_bus_bw_compute_timer(hdd_adapter_t *pAdapter);
+/**
+ * hdd_bus_bw_compute_timer_start() - start the bandwidth timer
+ * @hdd_ctx: the global hdd context
+ *
+ * Return: None
+ */
+void hdd_bus_bw_compute_timer_start(hdd_context_t *hdd_ctx);
+
+/**
+ * hdd_bus_bw_compute_timer_try_start() - try to start the bandwidth timer
+ * @hdd_ctx: the global hdd context
+ *
+ * This function ensures there is at least one adapter in the associated state
+ * before starting the bandwidth timer.
+ *
+ * Return: None
+ */
+void hdd_bus_bw_compute_timer_try_start(hdd_context_t *hdd_ctx);
+
+/**
+ * hdd_bus_bw_compute_timer_stop() - stop the bandwidth timer
+ * @hdd_ctx: the global hdd context
+ *
+ * Return: None
+ */
+void hdd_bus_bw_compute_timer_stop(hdd_context_t *hdd_ctx);
+
+/**
+ * hdd_bus_bw_compute_timer_try_stop() - try to stop the bandwidth timer
+ * @hdd_ctx: the global hdd context
+ *
+ * This function ensures there are no adapters in the associated state before
+ * stopping the bandwidth timer.
+ *
+ * Return: None
+ */
+void hdd_bus_bw_compute_timer_try_stop(hdd_context_t *hdd_ctx);
 
 /**
  * hdd_bus_bandwidth_init() - Initialize bus bandwidth data structures.
@@ -1785,14 +1820,25 @@ int hdd_bus_bandwidth_init(hdd_context_t *hdd_ctx);
  */
 void hdd_bus_bandwidth_destroy(hdd_context_t *hdd_ctx);
 #else
-static inline void hdd_start_bus_bw_compute_timer(hdd_adapter_t *pAdapter)
+
+static inline void hdd_bus_bw_compute_timer_start(hdd_context_t *hdd_ctx)
 {
-	return;
+}
+
+static inline void hdd_bus_bw_compute_timer_try_start(hdd_context_t *hdd_ctx)
+{
+}
+
+static inline void hdd_bus_bw_compute_timer_stop(hdd_context_t *hdd_ctx)
+{
+}
+
+static inline void hdd_bus_bw_compute_timer_try_stop(hdd_context_t *hdd_ctx)
+{
 }
 
 static inline void hdd_stop_bus_bw_computer_timer(hdd_adapter_t *pAdapter)
 {
-	return;
 }
 
 static inline int hdd_bus_bandwidth_init(hdd_context_t *hdd_ctx)
@@ -1802,7 +1848,6 @@ static inline int hdd_bus_bandwidth_init(hdd_context_t *hdd_ctx)
 
 static inline void hdd_bus_bandwidth_destroy(hdd_context_t *hdd_ctx)
 {
-	return;
 }
 #endif
 

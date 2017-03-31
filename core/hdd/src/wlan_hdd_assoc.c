@@ -1306,7 +1306,7 @@ static void hdd_send_association_event(struct net_device *dev,
 			&pAdapter->prev_fwd_tx_packets,
 			&pAdapter->prev_fwd_rx_packets);
 		spin_unlock_bh(&pHddCtx->bus_bw_lock);
-		hdd_start_bus_bw_compute_timer(pAdapter);
+		hdd_bus_bw_compute_timer_start(pHddCtx);
 #endif
 #endif
 	} else if (eConnectionState_IbssConnected ==    /* IBss Associated */
@@ -1371,7 +1371,7 @@ static void hdd_send_association_event(struct net_device *dev,
 		pAdapter->prev_fwd_tx_packets = 0;
 		pAdapter->prev_fwd_rx_packets = 0;
 		spin_unlock_bh(&pHddCtx->bus_bw_lock);
-		hdd_stop_bus_bw_compute_timer(pAdapter);
+		hdd_bus_bw_compute_timer_try_stop(pHddCtx);
 #endif
 	}
 	hdd_ipa_set_tx_flow_info();
