@@ -1468,17 +1468,20 @@ static void dp_rxdma_ring_config(struct dp_soc *soc)
 				 pdev->rx_refill_buf_ring.hal_srng,
 				 RXDMA_BUF);
 
-			if (!soc->cdp_soc.ol_ops->
-				is_hw_dbs_2x2_capable()) {
-				max_mac_rings = 1;
-				QDF_TRACE(QDF_MODULE_ID_TXRX,
-					 QDF_TRACE_LEVEL_ERROR,
-					 FL("DBS enabled, max_mac_rings %d\n"),
-					 max_mac_rings);
+			if (soc->cdp_soc.ol_ops->
+				is_hw_dbs_2x2_capable) {
+				if (!soc->cdp_soc.ol_ops->
+					is_hw_dbs_2x2_capable()) {
+					max_mac_rings = 1;
+					QDF_TRACE(QDF_MODULE_ID_TXRX,
+						 QDF_TRACE_LEVEL_ERROR,
+						 FL("DBS disabled, max_mac_rings %d\n"),
+						 max_mac_rings);
+				}
 			} else {
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					 QDF_TRACE_LEVEL_ERROR,
-					 FL("DBS disabled max_mac_rings %d\n"),
+					 FL("DBS enabled max_mac_rings %d\n"),
 					 max_mac_rings);
 			}
 
