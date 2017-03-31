@@ -91,15 +91,6 @@ const struct chan_map channel_map[NUM_CHANNELS] = {
 	[CHAN_ENUM_13] = {2472, 13},
 	[CHAN_ENUM_14] = {2484, 14},
 
-	[CHAN_ENUM_183] = {4915, 183},
-	[CHAN_ENUM_184] = {4920, 184},
-	[CHAN_ENUM_185] = {4925, 185},
-	[CHAN_ENUM_187] = {4935, 187},
-	[CHAN_ENUM_188] = {4940, 188},
-	[CHAN_ENUM_189] = {4945, 189},
-	[CHAN_ENUM_192] = {4960, 192},
-	[CHAN_ENUM_196] = {4980, 196},
-
 	[CHAN_ENUM_36] = {5180, 36},
 	[CHAN_ENUM_40] = {5200, 40},
 	[CHAN_ENUM_44] = {5220, 44},
@@ -1247,7 +1238,7 @@ QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info
 			       reg_rule_2g, num_2g_reg_rules,
 			       min_bw_2g, mas_chan_list);
 
-	populate_band_channels(CHAN_ENUM_36, CHAN_ENUM_196,
+	populate_band_channels(CHAN_ENUM_36, CHAN_ENUM_165,
 			       reg_rule_5g,
 			       num_5g_reg_rules,
 			       min_bw_5g, mas_chan_list);
@@ -1290,7 +1281,7 @@ QDF_STATUS wlan_regulatory_psoc_obj_created_notification(
 
 	mas_chan_list = soc_reg_obj->mas_chan_list;
 
-	for (chan_enum = CHAN_ENUM_1; chan_enum <= CHAN_ENUM_196;
+	for (chan_enum = 0; chan_enum < NUM_CHANNELS;
 	     chan_enum++) {
 		mas_chan_list[chan_enum].chan_num =
 			channel_map[chan_enum].chan_num;
@@ -1401,7 +1392,8 @@ modify_chan_list_for_band(struct regulatory_channel
 	enum channel_enum chan_enum;
 
 	if (BAND_2G == band_val) {
-		for (chan_enum = CHAN_ENUM_36; chan_enum <= CHAN_ENUM_165;
+		for (chan_enum = MIN_5GHZ_CHANNEL;
+		     chan_enum <= MAX_5GHZ_CHANNEL;
 		     chan_enum++) {
 			chan_list[chan_enum].chan_flags |=
 				REGULATORY_CHAN_DISABLED;
@@ -1411,7 +1403,8 @@ modify_chan_list_for_band(struct regulatory_channel
 	}
 
 	if (BAND_5G == band_val) {
-		for (chan_enum = CHAN_ENUM_1; chan_enum <= CHAN_ENUM_14;
+		for (chan_enum = MIN_24GHZ_CHANNEL;
+		     chan_enum <= MAX_24GHZ_CHANNEL;
 		     chan_enum++) {
 			chan_list[chan_enum].chan_flags |=
 				REGULATORY_CHAN_DISABLED;
