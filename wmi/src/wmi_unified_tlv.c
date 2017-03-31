@@ -16188,9 +16188,11 @@ static QDF_STATUS extract_reg_chan_list_update_event_tlv(
 	num_2g_reg_rules = reg_info->num_2g_reg_rules;
 	num_5g_reg_rules = reg_info->num_5g_reg_rules;
 
-	wmi_reg_rule = (wmi_regulatory_rule_struct *)(chan_list_event_hdr
-			+ sizeof(wmi_reg_chan_list_cc_event_fixed_param));
 
+	wmi_reg_rule =
+		(wmi_regulatory_rule_struct *)((uint8_t *)chan_list_event_hdr
+			+ sizeof(wmi_reg_chan_list_cc_event_fixed_param)
+			+ WMI_TLV_HDR_SIZE);
 	reg_info->reg_rules_2g_ptr = create_reg_rules_from_wmi(num_2g_reg_rules,
 			wmi_reg_rule);
 	wmi_reg_rule += num_2g_reg_rules;

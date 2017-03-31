@@ -1076,6 +1076,7 @@ static void reg_fill_channel_info(enum channel_enum chan_enum,
 	master_list[chan_enum].chan_flags &=
 		~REGULATORY_CHAN_DISABLED;
 
+	master_list[chan_enum].tx_power = reg_rule->reg_power;
 	master_list[chan_enum].state = CHANNEL_STATE_ENABLE;
 
 	if (reg_rule->flags & REGULATORY_CHAN_NO_IR) {
@@ -1437,32 +1438,32 @@ modify_chan_list_for_freq_range(struct regulatory_channel
 		low_limit_5g = 0, high_limit_5g = 0, chan_enum;
 	bool chan_in_range;
 
-	for (chan_enum = 0; chan_enum < NUM_CHANNELS && !low_limit_2g;
-	     chan_enum++) {
-		if ((chan_list[chan_enum].center_freq - 10) >=
-		    low_freq_2g)
+	for (chan_enum = 0; chan_enum < NUM_CHANNELS; chan_enum++) {
+		if ((chan_list[chan_enum].center_freq - 10) >= low_freq_2g) {
 			low_limit_2g = chan_enum;
+			break;
+		}
 	}
 
-	for (chan_enum = 0; chan_enum < NUM_CHANNELS && !low_limit_5g;
-	     chan_enum++) {
-		if ((chan_list[chan_enum].center_freq - 10) >=
-		    low_freq_5g)
+	for (chan_enum = 0; chan_enum < NUM_CHANNELS; chan_enum++) {
+		if ((chan_list[chan_enum].center_freq - 10) >= low_freq_5g) {
 			low_limit_5g = chan_enum;
+			break;
+		}
 	}
 
-	for (chan_enum = NUM_CHANNELS - 1; chan_enum >= 0 &&
-		     !high_limit_2g; chan_enum--) {
-		if (chan_list[chan_enum].center_freq + 10 <=
-		    high_freq_2g)
+	for (chan_enum = NUM_CHANNELS - 1; chan_enum >= 0; chan_enum--) {
+		if (chan_list[chan_enum].center_freq + 10 <= high_freq_2g) {
 			high_limit_2g = chan_enum;
+			break;
+		}
 	}
 
-	for (chan_enum = NUM_CHANNELS - 1; chan_enum >= 0 &&
-		     !high_limit_5g; chan_enum--) {
-		if (chan_list[chan_enum].center_freq + 10 <=
-		    high_freq_5g)
+	for (chan_enum = NUM_CHANNELS - 1; chan_enum >= 0; chan_enum--) {
+		if (chan_list[chan_enum].center_freq + 10 <= high_freq_5g) {
 			high_limit_5g = chan_enum;
+			break;
+		}
 	}
 
 	for (chan_enum = 0; chan_enum < NUM_CHANNELS; chan_enum++) {
