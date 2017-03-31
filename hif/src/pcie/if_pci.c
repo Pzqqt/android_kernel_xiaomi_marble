@@ -1759,7 +1759,7 @@ static int hif_set_hia(struct hif_softc *scn)
 	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(hif_hdl);
 	uint32_t target_type = tgt_info->target_type;
-	int target_ce_config_sz, target_service_to_ce_map_sz;
+	uint32_t target_ce_config_sz, target_service_to_ce_map_sz;
 	static struct CE_pipe_config *target_ce_config;
 	struct service_to_pipe *target_service_to_ce_map;
 
