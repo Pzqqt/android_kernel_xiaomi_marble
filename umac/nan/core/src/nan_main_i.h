@@ -17,10 +17,11 @@
  */
 
 /**
- * DOC: contains declaration of common utility APIs to be used in NAN modules
+ * DOC: contains declaration of common utility APIs and private structs to be
+ * used in NAN modules
  */
 
-#ifndef _WLAN_NAN_UTILS_H_
-#define _WLAN_NAN_UTILS_H_
+#ifndef _WLAN_NAN_MAIN_I_H_
+#define _WLAN_NAN_MAIN_I_H_
 
 #endif
