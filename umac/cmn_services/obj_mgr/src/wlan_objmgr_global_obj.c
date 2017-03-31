@@ -45,6 +45,7 @@ QDF_STATUS wlan_objmgr_global_obj_init(void)
 		qdf_print("%s: Global object is already created\n", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
+
 	/* Allocation of memory for Global object */
 	umac_global_obj = (struct wlan_objmgr_global *)qdf_mem_malloc(
 				sizeof(*umac_global_obj));
@@ -69,15 +70,15 @@ QDF_STATUS wlan_objmgr_global_obj_deinit(void)
 		qdf_print("%s: Global object is not allocated\n", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
-	/* TODO: Do we need to check, if any object
-	*  is not freed before this is called ??
-	*  ideally, init/deinit module should take care of freeing */
-	/* Initialize spinlock */
-	qdf_spinlock_destroy(&g_umac_glb_obj->global_lock);
-	/* Free Global object memory */
-	qdf_mem_free(g_umac_glb_obj);
-	/* Reset Global variable to NULL */
-	g_umac_glb_obj = NULL;
+
+	if (QDF_STATUS_SUCCESS == wlan_objmgr_global_obj_can_destroyed()) {
+		qdf_spinlock_destroy(&g_umac_glb_obj->global_lock);
+		qdf_mem_free(g_umac_glb_obj);
+		g_umac_glb_obj = NULL;
+	} else {
+		qdf_print("PSOCs are leaked can't free global objmgr ctx\n");
+	}
+
 	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(wlan_objmgr_global_obj_deinit);
@@ -769,6 +770,7 @@ QDF_STATUS wlan_objmgr_global_obj_can_destroyed(void)
 		index++;
 	}
 	qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
+
 	return status;
 }
 EXPORT_SYMBOL(wlan_objmgr_global_obj_can_destroyed);
