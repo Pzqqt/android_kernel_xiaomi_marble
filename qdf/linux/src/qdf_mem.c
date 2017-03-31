@@ -959,7 +959,6 @@ void *qdf_mem_malloc_debug(size_t size,
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: called with invalid arg; passed in %zu !!!",
 			  __func__, size);
-		host_log_low_resource_failure(WIFI_EVENT_MEMORY_FAILURE);
 		return NULL;
 	}
 
