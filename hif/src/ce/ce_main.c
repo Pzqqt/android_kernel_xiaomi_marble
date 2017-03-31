@@ -1003,17 +1003,7 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 				 */
 				HIF_ERROR("%s: dest ring has no mem",
 					  __func__);
-				if (malloc_src_ring) {
-					qdf_mem_free(CE_state->src_ring);
-					CE_state->src_ring = NULL;
-					malloc_src_ring = false;
-				}
-				if (malloc_CE_state) {
-					/* allocated CE_state locally */
-					qdf_mem_free(CE_state);
-					malloc_CE_state = false;
-				}
-				return NULL;
+				goto error_no_dma_mem;
 			}
 
 			if (Q_TARGET_ACCESS_BEGIN(scn) < 0)

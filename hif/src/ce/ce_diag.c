@@ -242,14 +242,18 @@ QDF_STATUS hif_diag_read_mem(struct hif_opaque_softc *hif_ctx,
 				goto done;
 		}
 
-		if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
-			return QDF_STATUS_E_FAILURE;
+		if (Q_TARGET_ACCESS_BEGIN(scn) < 0) {
+			status = QDF_STATUS_E_FAILURE;
+			goto done;
+		}
 
 		/* convert soc virtual address to physical address */
 		ce_phy_addr = get_ce_phy_addr(scn, address, target_type);
 
-		if (Q_TARGET_ACCESS_END(scn) < 0)
-			return QDF_STATUS_E_FAILURE;
+		if (Q_TARGET_ACCESS_END(scn) < 0) {
+			status = QDF_STATUS_E_FAILURE;
+			goto done;
+		}
 
 		/* Request CE to send from Target(!)
 		 * address to Host buffer */
@@ -402,14 +406,18 @@ QDF_STATUS hif_diag_write_mem(struct hif_opaque_softc *hif_ctx,
 
 	target_type = (hif_get_target_info_handle(hif_ctx))->target_type;
 
-	if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
-		return QDF_STATUS_E_FAILURE;
+	if (Q_TARGET_ACCESS_BEGIN(scn) < 0) {
+		status = QDF_STATUS_E_FAILURE;
+		goto done;
+	}
 
 	/* convert soc virtual address to physical address */
 	ce_phy_addr = get_ce_phy_addr(scn, address, target_type);
 
-	if (Q_TARGET_ACCESS_END(scn) < 0)
-		return QDF_STATUS_E_FAILURE;
+	if (Q_TARGET_ACCESS_END(scn) < 0) {
+		status = QDF_STATUS_E_FAILURE;
+		goto done;
+	}
 
 	remaining_bytes = orig_nbytes;
 	CE_data = CE_data_base;
