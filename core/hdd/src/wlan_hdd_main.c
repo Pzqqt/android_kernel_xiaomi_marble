@@ -2003,17 +2003,10 @@ int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			goto hif_close;
 		}
 
-		ret = hdd_objmgr_create_and_store_psoc(hdd_ctx,
-						       DEFAULT_PSOC_ID);
-		if (ret) {
-			hdd_err("Psoc creation fails!");
-			goto ol_cds_free;
-		}
-
 		ret = hdd_update_config(hdd_ctx);
 		if (ret) {
 			hdd_err("Failed to update configuration :%d", ret);
-			goto destroy_psoc_object;
+			goto ol_cds_free;
 		}
 
 		hdd_update_cds_ac_specs_params(hdd_ctx);
@@ -2021,7 +2014,7 @@ int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 		status = cds_open(hdd_ctx->hdd_psoc);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("Failed to Open CDS: %d", status);
-			goto destroy_psoc_object;
+			goto ol_cds_free;
 		}
 
 		/* initalize components configurations  after psoc open */
@@ -2096,9 +2089,6 @@ int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 
 close:
 	cds_close(hdd_ctx->hdd_psoc, p_cds_context);
-
-destroy_psoc_object:
-	hdd_objmgr_release_and_destroy_psoc(hdd_ctx);
 
 ol_cds_free:
 	ol_cds_free();
@@ -5403,6 +5393,14 @@ static void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 
 	hdd_exit_netlink_services(hdd_ctx);
 	mutex_destroy(&hdd_ctx->iface_change_lock);
+
+	driver_status = hdd_objmgr_release_and_destroy_pdev(hdd_ctx);
+	if (driver_status)
+		hdd_err("Pdev delete failed");
+
+	driver_status = hdd_objmgr_release_and_destroy_psoc(hdd_ctx);
+	if (driver_status)
+		hdd_err("Psoc delete failed");
 	hdd_context_destroy(hdd_ctx);
 }
 
@@ -8813,14 +8811,6 @@ int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx)
 		QDF_ASSERT(0);
 	}
 
-	ret = hdd_objmgr_release_and_destroy_pdev(hdd_ctx);
-	if (ret)
-		hdd_err("Pdev delete failed");
-
-	ret = hdd_objmgr_release_and_destroy_psoc(hdd_ctx);
-	if (ret)
-		hdd_err("Psoc delete failed");
-
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!hif_ctx) {
 		hdd_err("Hif context is Null");
@@ -8969,6 +8959,14 @@ int hdd_wlan_startup(struct device *dev)
 
 	if (IS_ERR(hdd_ctx))
 		return PTR_ERR(hdd_ctx);
+
+	ret = hdd_objmgr_create_and_store_psoc(hdd_ctx,
+					   DEFAULT_PSOC_ID);
+	if (ret) {
+		hdd_err("Psoc creation fails!");
+		QDF_BUG(0);
+		goto err_hdd_free_context;
+	}
 
 	qdf_mc_timer_init(&hdd_ctx->iface_change_timer, QDF_TIMER_TYPE_SW,
 			  hdd_iface_change_callback, (void *)hdd_ctx);
