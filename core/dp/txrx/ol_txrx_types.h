@@ -1229,7 +1229,7 @@ struct ol_txrx_peer_t {
 	qdf_time_t last_disassoc_rcvd;
 	qdf_time_t last_deauth_rcvd;
 	qdf_atomic_t fw_create_pending;
-	qdf_mc_timer_t peer_unmap_timer;
+	qdf_timer_t peer_unmap_timer;
 };
 
 struct ol_rx_remote_data {
