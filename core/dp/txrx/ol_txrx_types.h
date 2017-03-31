@@ -48,7 +48,7 @@
 #include "ol_htt_tx_api.h"
 #include "ol_htt_rx_api.h"
 #include "ol_txrx_ctrl_api.h" /* WLAN_MAX_STA_COUNT */
-#include "ol_txrx_osif_api.h" /* ol_rx_callback_fp */
+#include "ol_txrx_osif_api.h" /* ol_rx_callback */
 #include "cdp_txrx_flow_ctrl_v2.h"
 #include "cdp_txrx_peer_ops.h"
 
@@ -967,7 +967,7 @@ struct ol_txrx_pdev_t {
 	int tid_to_ac[OL_TX_NUM_TIDS + OL_TX_VDEV_NUM_QUEUES];
 	uint8_t ocb_peer_valid;
 	struct ol_txrx_peer_t *ocb_peer;
-	ol_tx_pause_callback_fp pause_cb;
+	tx_pause_callback pause_cb;
 
 	struct {
 		void (*lro_flush_cb)(void *);
