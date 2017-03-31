@@ -5805,7 +5805,7 @@ QDF_STATUS hdd_update_mac_config(hdd_context_t *pHddCtx)
 
 	hdd_debug("wlan_mac.bin size %zu", fw->size);
 
-	temp = qdf_mem_malloc(fw->size);
+	temp = qdf_mem_malloc(fw->size + 1);
 
 	if (temp == NULL) {
 		hdd_err("fail to alloc memory");
@@ -5814,6 +5814,7 @@ QDF_STATUS hdd_update_mac_config(hdd_context_t *pHddCtx)
 	}
 	buffer = temp;
 	qdf_mem_copy(buffer, fw->data, fw->size);
+	buffer[fw->size + 1] = 0x0;
 
 	/* data format:
 	 * Intf0MacAddress=00AA00BB00CC
