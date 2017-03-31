@@ -438,12 +438,14 @@ static void wlan_hdd_tdls_discovery_timeout_peer_cb(void *userData)
 	pHddTdlsCtx = (tdlsCtx_t *) userData;
 
 	if ((NULL == pHddTdlsCtx) || (NULL == pHddTdlsCtx->pAdapter)) {
+		mutex_unlock(&pHddCtx->tdls_lock);
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  FL("pHddTdlsCtx or pAdapter points to NULL"));
 		return;
 	}
 
 	if (WLAN_HDD_ADAPTER_MAGIC != pHddTdlsCtx->pAdapter->magic) {
+		mutex_unlock(&pHddCtx->tdls_lock);
 		hdd_err("pAdapter has invalid magic");
 		return;
 	}
@@ -3846,7 +3848,7 @@ int wlan_hdd_tdls_add_station(struct wiphy *wiphy,
 		hdd_err(MAC_ADDRESS_STR " update %d not exist. return invalid",
 			MAC_ADDR_ARRAY(mac), update);
 		ret = -EINVAL;
-		goto rel_lock;
+		goto ret_status;
 	}
 
 	link_status = pTdlsPeer->link_status;

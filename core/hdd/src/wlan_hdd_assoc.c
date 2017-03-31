@@ -3829,7 +3829,8 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 					hdd_roam_deregister_tdlssta
 						(pAdapter,
 						pRoamInfo->staId);
-				    }
+				    } else
+					mutex_unlock(&pHddCtx->tdls_lock);
 				} else
 				    mutex_unlock(&pHddCtx->tdls_lock);
 
