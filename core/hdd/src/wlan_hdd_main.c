@@ -5417,7 +5417,7 @@ static void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 	 * If there is re_init failure wiphy would have already de-registered
 	 * check the wiphy status before un-registering again
 	 */
-	if (!wiphy && wiphy->registered) {
+	if (wiphy && wiphy->registered) {
 		wiphy_unregister(wiphy);
 		wlan_hdd_cfg80211_deinit(wiphy);
 		hdd_lpass_notify_stop(hdd_ctx);
