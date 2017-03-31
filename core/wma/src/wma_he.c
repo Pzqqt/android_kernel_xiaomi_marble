@@ -937,7 +937,7 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 void wma_update_vdev_he_ops(struct wma_vdev_start_req *req,
 		tpAddBssParams add_bss)
 {
-	uint32_t he_ops = req->he_ops;
+	uint32_t he_ops = 0;
 	tDot11fIEvendor_he_op *he_op = &add_bss->he_op;
 
 	req->he_capable = add_bss->he_capable;
@@ -951,6 +951,8 @@ void wma_update_vdev_he_ops(struct wma_vdev_start_req *req,
 	WMI_HEOPS_TXBSSID_SET(he_ops, he_op->tx_bssid_ind);
 	WMI_HEOPS_BSSCOLORDISABLE_SET(he_ops, he_op->bss_col_disabled);
 	WMI_HEOPS_DUALBEACON_SET(he_ops, he_op->dual_beacon);
+
+	req->he_ops = he_ops;
 }
 
 void wma_copy_txrxnode_he_ops(struct wma_txrx_node *node,
