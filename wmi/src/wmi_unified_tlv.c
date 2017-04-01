@@ -16143,13 +16143,13 @@ static struct cur_reg_rule
 					wmi_reg_rule[count].freq_info);
 		reg_rule_ptr[count].max_bw =
 			WMI_REG_RULE_MAX_BW_GET(
-					wmi_reg_rule[count].bw_info);
+					wmi_reg_rule[count].bw_pwr_info);
 		reg_rule_ptr[count].reg_power =
 			WMI_REG_RULE_REG_POWER_GET(
-					wmi_reg_rule[count].bw_info);
+					wmi_reg_rule[count].bw_pwr_info);
 		reg_rule_ptr[count].flags =
 			WMI_REG_RULE_FLAGS_GET(
-					wmi_reg_rule[count].power_flag_info);
+					wmi_reg_rule[count].flag_info);
 	}
 
 	return reg_rule_ptr;
