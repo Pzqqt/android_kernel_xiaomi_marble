@@ -105,6 +105,9 @@ ol_txrx_set_wmm_param(struct cdp_pdev *data_pdev,
 extern void ol_txrx_get_pn_info(void *ppeer, uint8_t **last_pn_valid,
 		    uint64_t **last_pn, uint32_t **rmf_pn_replays);
 
+/* thresh for peer's cached buf queue beyond which the elements are dropped */
+#define OL_TXRX_CACHED_BUFQ_THRESH 128
+
 #if defined(CONFIG_HL_SUPPORT) && defined(FEATURE_WLAN_TDLS)
 
 /**
@@ -2331,6 +2334,7 @@ ol_txrx_vdev_detach(struct cdp_vdev *pvdev,
 void ol_txrx_flush_rx_frames(struct ol_txrx_peer_t *peer,
 			     bool drop)
 {
+	struct ol_txrx_cached_bufq_t *bufqi;
 	struct ol_rx_cached_buf *cache_buf;
 	QDF_STATUS ret;
 	ol_txrx_rx_fp data_rx = NULL;
@@ -2341,8 +2345,8 @@ void ol_txrx_flush_rx_frames(struct ol_txrx_peer_t *peer,
 	}
 
 	qdf_assert(peer->vdev);
-
 	qdf_spin_lock_bh(&peer->peer_info_lock);
+	bufqi = &peer->bufq_info;
 
 	if (peer->state >= OL_TXRX_PEER_STATE_CONN && peer->vdev->rx)
 		data_rx = peer->vdev->rx;
@@ -2350,12 +2354,14 @@ void ol_txrx_flush_rx_frames(struct ol_txrx_peer_t *peer,
 		drop = true;
 	qdf_spin_unlock_bh(&peer->peer_info_lock);
 
-	qdf_spin_lock_bh(&peer->bufq_lock);
-	cache_buf = list_entry((&peer->cached_bufq)->next,
+	qdf_spin_lock_bh(&bufqi->bufq_lock);
+	cache_buf = list_entry((&bufqi->cached_bufq)->next,
 				typeof(*cache_buf), list);
-	while (!list_empty(&peer->cached_bufq)) {
+	while (!list_empty(&bufqi->cached_bufq)) {
 		list_del(&cache_buf->list);
-		qdf_spin_unlock_bh(&peer->bufq_lock);
+		bufqi->curr--;
+		qdf_assert(bufqi->curr >= 0);
+		qdf_spin_unlock_bh(&bufqi->bufq_lock);
 		if (drop) {
 			qdf_nbuf_free(cache_buf->buf);
 		} else {
@@ -2365,11 +2371,12 @@ void ol_txrx_flush_rx_frames(struct ol_txrx_peer_t *peer,
 				qdf_nbuf_free(cache_buf->buf);
 		}
 		qdf_mem_free(cache_buf);
-		qdf_spin_lock_bh(&peer->bufq_lock);
-		cache_buf = list_entry((&peer->cached_bufq)->next,
+		qdf_spin_lock_bh(&bufqi->bufq_lock);
+		cache_buf = list_entry((&bufqi->cached_bufq)->next,
 				typeof(*cache_buf), list);
 	}
-	qdf_spin_unlock_bh(&peer->bufq_lock);
+	bufqi->qdepth_no_thresh = bufqi->curr;
+	qdf_spin_unlock_bh(&bufqi->bufq_lock);
 	qdf_atomic_dec(&peer->flush_in_progress);
 }
 
@@ -2523,7 +2530,7 @@ ol_txrx_peer_attach(struct cdp_vdev *pvdev, uint8_t *peer_mac_addr)
 
 	ol_txrx_peer_txqs_init(pdev, peer);
 
-	INIT_LIST_HEAD(&peer->cached_bufq);
+	INIT_LIST_HEAD(&peer->bufq_info.cached_bufq);
 	qdf_spin_lock_bh(&pdev->peer_ref_mutex);
 	/* add this peer into the vdev's list */
 	TAILQ_INSERT_TAIL(&vdev->peer_list, peer, peer_list_elem);
@@ -2541,7 +2548,9 @@ ol_txrx_peer_attach(struct cdp_vdev *pvdev, uint8_t *peer_mac_addr)
 		peer->peer_ids[i] = HTT_INVALID_PEER;
 
 	qdf_spinlock_create(&peer->peer_info_lock);
-	qdf_spinlock_create(&peer->bufq_lock);
+	qdf_spinlock_create(&peer->bufq_info.bufq_lock);
+
+	peer->bufq_info.thresh = OL_TXRX_CACHED_BUFQ_THRESH;
 
 	qdf_atomic_init(&peer->delete_in_progress);
 	qdf_atomic_init(&peer->flush_in_progress);
@@ -3480,7 +3489,7 @@ static void ol_txrx_peer_detach(void *ppeer)
 	htt_rx_reorder_log_print(peer->vdev->pdev->htt_pdev);
 
 	qdf_spinlock_destroy(&peer->peer_info_lock);
-	qdf_spinlock_destroy(&peer->bufq_lock);
+	qdf_spinlock_destroy(&peer->bufq_info.bufq_lock);
 	/*
 	 * set delete_in_progress to identify that wma
 	 * is waiting for unmap massage for this peer
@@ -4145,6 +4154,61 @@ ol_txrx_stats(uint8_t vdev_id, char *buffer, unsigned int buf_len)
 	return len;
 }
 
+#ifdef QCA_SUPPORT_TXRX_LOCAL_PEER_ID
+/**
+ * ol_txrx_disp_peer_cached_bufq_stats() - display peer cached_bufq stats
+ * @peer: peer pointer
+ *
+ * Return: None
+ */
+static void ol_txrx_disp_peer_cached_bufq_stats(struct ol_txrx_peer_t *peer)
+{
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		"cached_bufq: curr %d drops %d hwm %d whatifs %d thresh %d",
+		peer->bufq_info.curr,
+		peer->bufq_info.dropped,
+		peer->bufq_info.high_water_mark,
+		peer->bufq_info.qdepth_no_thresh,
+		peer->bufq_info.thresh);
+}
+
+/**
+ * ol_txrx_disp_peer_stats() - display peer stats
+ * @pdev: pdev pointer
+ *
+ * Return: None
+ */
+static void ol_txrx_disp_peer_stats(ol_txrx_pdev_handle pdev)
+{	int i;
+	struct ol_txrx_peer_t *peer;
+	struct hif_opaque_softc *osc =  cds_get_context(QDF_MODULE_ID_HIF);
+
+	if (osc && hif_is_load_or_unload_in_progress(HIF_GET_SOFTC(osc)))
+		return;
+
+	for (i = 0; i < OL_TXRX_NUM_LOCAL_PEER_IDS; i++) {
+		qdf_spin_lock_bh(&pdev->local_peer_ids.lock);
+		peer = pdev->local_peer_ids.map[i];
+		if (peer)
+			OL_TXRX_PEER_INC_REF_CNT(peer);
+		qdf_spin_unlock_bh(&pdev->local_peer_ids.lock);
+
+		if (peer) {
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+				"stats: peer 0x%p local peer id %d", peer, i);
+			ol_txrx_disp_peer_cached_bufq_stats(peer);
+			OL_TXRX_PEER_UNREF_DELETE(peer);
+		}
+	}
+}
+#else
+static void ol_txrx_disp_peer_stats(ol_txrx_pdev_handle pdev)
+{
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		"peer stats not supported w/o QCA_SUPPORT_TXRX_LOCAL_PEER_ID");
+}
+#endif
+
 void ol_txrx_stats_display(ol_txrx_pdev_handle pdev)
 {
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
@@ -4233,6 +4297,8 @@ void ol_txrx_stats_display(ol_txrx_pdev_handle pdev)
 		  pdev->stats.pub.rx.rx_ind_histogram.pkts_41_50,
 		  pdev->stats.pub.rx.rx_ind_histogram.pkts_51_60,
 		  pdev->stats.pub.rx.rx_ind_histogram.pkts_61_plus);
+
+	ol_txrx_disp_peer_stats(pdev);
 }
 
 void ol_txrx_stats_clear(ol_txrx_pdev_handle pdev)
@@ -4726,6 +4792,31 @@ static void ol_txrx_clear_stats(uint16_t value)
 }
 
 /**
+ * ol_txrx_drop_nbuf_list() - drop an nbuf list
+ * @buf_list: buffer list to be dropepd
+ *
+ * Return: int (number of bufs dropped)
+ */
+static inline int ol_txrx_drop_nbuf_list(qdf_nbuf_t buf_list)
+{
+	int num_dropped = 0;
+	qdf_nbuf_t buf, next_buf;
+	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+
+	buf = buf_list;
+	while (buf) {
+		next_buf = qdf_nbuf_queue_next(buf);
+		if (pdev)
+			TXRX_STATS_MSDU_INCR(pdev,
+				 rx.dropped_peer_invalid, buf);
+		qdf_nbuf_free(buf);
+		buf = next_buf;
+		num_dropped++;
+	}
+	return num_dropped;
+}
+
+/**
  * ol_rx_data_cb() - data rx callback
  * @peer: peer
  * @buf_list: buffer list
@@ -4738,6 +4829,7 @@ static void ol_rx_data_cb(struct ol_txrx_pdev_t *pdev,
 {
 	void *cds_ctx = cds_get_global_context();
 	void *osif_dev;
+	uint8_t drop_count = 0;
 	qdf_nbuf_t buf, next_buf;
 	QDF_STATUS ret;
 	ol_txrx_rx_fp data_rx = NULL;
@@ -4764,13 +4856,13 @@ static void ol_rx_data_cb(struct ol_txrx_pdev_t *pdev,
 	osif_dev = peer->vdev->osif_dev;
 	qdf_spin_unlock_bh(&peer->peer_info_lock);
 
-	qdf_spin_lock_bh(&peer->bufq_lock);
-	if (!list_empty(&peer->cached_bufq)) {
-		qdf_spin_unlock_bh(&peer->bufq_lock);
+	qdf_spin_lock_bh(&peer->bufq_info.bufq_lock);
+	if (!list_empty(&peer->bufq_info.cached_bufq)) {
+		qdf_spin_unlock_bh(&peer->bufq_info.bufq_lock);
 		/* Flush the cached frames to HDD before passing new rx frame */
 		ol_txrx_flush_rx_frames(peer, 0);
 	} else
-		qdf_spin_unlock_bh(&peer->bufq_lock);
+		qdf_spin_unlock_bh(&peer->bufq_info.bufq_lock);
 
 	buf = buf_list;
 	while (buf) {
@@ -4788,18 +4880,71 @@ static void ol_rx_data_cb(struct ol_txrx_pdev_t *pdev,
 	return;
 
 free_buf:
-	ol_txrx_warn("%s:Dropping frames", __func__);
-	buf = buf_list;
-	while (buf) {
-		next_buf = qdf_nbuf_queue_next(buf);
-		if (pdev)
-			TXRX_STATS_MSDU_INCR(pdev,
-				 rx.dropped_peer_invalid, buf);
-		qdf_nbuf_free(buf);
-		buf = next_buf;
-	}
+	drop_count = ol_txrx_drop_nbuf_list(buf_list);
+	ol_txrx_warn("%s:Dropped frames %u", __func__, drop_count);
 }
 
+/* print for every 16th packet */
+#define OL_TXRX_PRINT_RATE_LIMIT_THRESH 0x0f
+struct ol_rx_cached_buf *cache_buf;
+static QDF_STATUS ol_txrx_enqueue_rx_frames(
+					struct ol_txrx_cached_bufq_t *bufqi,
+					qdf_nbuf_t rx_buf_list)
+{
+	struct ol_rx_cached_buf *cache_buf;
+	qdf_nbuf_t buf, next_buf;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	int dropped = 0;
+	static uint32_t count;
+	bool thresh_crossed = false;
+
+
+	if ((count++ & OL_TXRX_PRINT_RATE_LIMIT_THRESH) == 0)
+		ol_txrx_info_high(
+		   "Data on the peer before it is registered bufq->curr %d bufq->drops %d",
+		   bufqi->curr, bufqi->dropped);
+
+	qdf_spin_lock_bh(&bufqi->bufq_lock);
+	if (bufqi->curr >= bufqi->thresh) {
+		status = QDF_STATUS_E_FAULT;
+		dropped = ol_txrx_drop_nbuf_list(rx_buf_list);
+		bufqi->dropped += dropped;
+		bufqi->qdepth_no_thresh += dropped;
+
+		if (bufqi->qdepth_no_thresh > bufqi->high_water_mark)
+			bufqi->high_water_mark = bufqi->qdepth_no_thresh;
+
+		thresh_crossed = true;
+	}
+
+	qdf_spin_unlock_bh(&bufqi->bufq_lock);
+
+	if (thresh_crossed)
+		goto end;
+
+	buf = rx_buf_list;
+	while (buf) {
+		next_buf = qdf_nbuf_queue_next(buf);
+		cache_buf = qdf_mem_malloc(sizeof(*cache_buf));
+		if (!cache_buf) {
+			ol_txrx_err(
+				"Failed to allocate buf to cache the rx frames");
+			qdf_nbuf_free(buf);
+		} else {
+			/* Add NULL terminator */
+			qdf_nbuf_set_next(buf, NULL);
+			cache_buf->buf = buf;
+			qdf_spin_lock_bh(&bufqi->bufq_lock);
+			list_add_tail(&cache_buf->list,
+				      &bufqi->cached_bufq);
+			bufqi->curr++;
+			qdf_spin_unlock_bh(&bufqi->bufq_lock);
+		}
+		buf = next_buf;
+	}
+end:
+	return status;
+}
 /**
  * ol_rx_data_process() - process rx frame
  * @peer: peer
@@ -4815,9 +4960,9 @@ void ol_rx_data_process(struct ol_txrx_peer_t *peer,
 	 * T2H MSG running on SIRQ context,
 	 * IPA kernel module API should not be called on SIRQ CTXT
 	 */
-	qdf_nbuf_t buf, next_buf;
 	ol_txrx_rx_fp data_rx = NULL;
 	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	uint8_t drop_count;
 
 	if ((!peer) || (!pdev)) {
 		ol_txrx_err("peer/pdev is NULL");
@@ -4837,29 +4982,9 @@ void ol_rx_data_process(struct ol_txrx_peer_t *peer,
 	 * which will be flushed to HDD once that station is registered.
 	 */
 	if (!data_rx) {
-		struct ol_rx_cached_buf *cache_buf;
-
-		ol_txrx_info_high(
-			   "Data on the peer before it is registered!!!");
-		buf = rx_buf_list;
-		while (buf) {
-			next_buf = qdf_nbuf_queue_next(buf);
-			cache_buf = qdf_mem_malloc(sizeof(*cache_buf));
-			if (!cache_buf) {
-				ol_txrx_err(
-					"Failed to allocate buf to cache the rx frames");
-				qdf_nbuf_free(buf);
-			} else {
-				/* Add NULL terminator */
-				qdf_nbuf_set_next(buf, NULL);
-				cache_buf->buf = buf;
-				qdf_spin_lock_bh(&peer->bufq_lock);
-				list_add_tail(&cache_buf->list,
-					      &peer->cached_bufq);
-				qdf_spin_unlock_bh(&peer->bufq_lock);
-			}
-			buf = next_buf;
-		}
+		if (ol_txrx_enqueue_rx_frames(&peer->bufq_info, rx_buf_list)
+				!= QDF_STATUS_SUCCESS)
+			ol_txrx_err("failed to enqueue rx frm to cached_bufq");
 	} else {
 #ifdef QCA_CONFIG_SMP
 		/*
@@ -4897,16 +5022,8 @@ void ol_rx_data_process(struct ol_txrx_peer_t *peer,
 	return;
 
 drop_rx_buf:
-	ol_txrx_info_high("Dropping rx packets");
-	buf = rx_buf_list;
-	while (buf) {
-		next_buf = qdf_nbuf_queue_next(buf);
-		if (pdev)
-			TXRX_STATS_MSDU_INCR(pdev,
-				rx.dropped_peer_invalid, buf);
-		qdf_nbuf_free(buf);
-		buf = next_buf;
-	}
+	drop_count = ol_txrx_drop_nbuf_list(rx_buf_list);
+	ol_txrx_info_high("Dropped rx packets %u", drop_count);
 }
 
 /**
