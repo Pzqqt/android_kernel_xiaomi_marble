@@ -79,10 +79,6 @@ QDF_STATUS sme_handle_generic_change_country_code(tpAniSirGlobal pMac,
 
 QDF_STATUS sme_process_nss_update_resp(tpAniSirGlobal mac, uint8_t *msg);
 
-#ifdef FEATURE_WLAN_ESE
-bool csr_is_supported_channel(tpAniSirGlobal pMac, uint8_t channelId);
-#endif
-
 #ifdef WLAN_FEATURE_11W
 QDF_STATUS sme_unprotected_mgmt_frm_ind(tHalHandle hHal,
 					tpSirSmeUnprotMgmtFrameInd pSmeMgmtFrm);

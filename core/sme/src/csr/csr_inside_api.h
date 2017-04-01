@@ -107,6 +107,7 @@ extern void wlan_objmgr_vdev_release_ref(struct wlan_objmgr_vdev *vdev,
 #define CSR_MAX_BSSID_COUNT     ((SME_ACTIVE_LIST_CMD_TIMEOUT_VALUE/4000) * 3)
 #define CSR_CUSTOM_CONC_GO_BI    100
 extern uint8_t csr_wpa_oui[][CSR_WPA_OUI_SIZE];
+bool csr_is_supported_channel(tpAniSirGlobal pMac, uint8_t channelId);
 
 typedef enum {
 	eCsrNextScanNothing,
