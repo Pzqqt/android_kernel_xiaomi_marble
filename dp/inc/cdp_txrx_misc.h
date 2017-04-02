@@ -24,7 +24,7 @@
  * under proprietary terms before Copyright ownership was assigned
  * to the Linux Foundation.
  */
- /**
+/**
  * @file cdp_txrx_misc.h
  * @brief Define the host data path miscelleneous API functions
  * called by the host control SW and the OS interface module
@@ -461,4 +461,3 @@ static inline void cdp_pkt_log_con_service(ol_txrx_soc_handle soc,
 	return;
 }
 #endif /* _CDP_TXRX_MISC_H_ */
-
