@@ -340,7 +340,7 @@ static int hdd_indicate_scan_result(hdd_scan_info_t *scanInfo,
 
 		dot11f_unpack_beacon_i_es((tpAniSirGlobal)
 					  hHal, (uint8_t *) descriptor->ieFields,
-					  ie_length, &dot11BeaconIEs);
+					  ie_length, &dot11BeaconIEs, false);
 
 		pDot11SSID = &dot11BeaconIEs.SSID;
 

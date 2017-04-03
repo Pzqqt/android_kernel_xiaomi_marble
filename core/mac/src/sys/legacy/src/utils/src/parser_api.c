@@ -1545,7 +1545,7 @@ populate_dot11f_rsn(tpAniSirGlobal pMac,
 		if (0 <= idx) {
 			status = dot11f_unpack_ie_rsn(pMac, pRsnIe->rsnIEdata + idx + 2,   /* EID, length */
 						      pRsnIe->rsnIEdata[idx + 1],
-						      pDot11f);
+						      pDot11f, false);
 			if (DOT11F_FAILED(status)) {
 				pe_err("Parse failure in Populate Dot11fRSN (0x%08x)",
 					status);
@@ -1594,7 +1594,7 @@ populate_dot11f_wapi(tpAniSirGlobal pMac,
 		if (0 <= idx) {
 			status = dot11f_unpack_ie_wapi(pMac, pRsnIe->rsnIEdata + idx + 2,  /* EID, length */
 						       pRsnIe->rsnIEdata[idx + 1],
-						       pDot11f);
+						       pDot11f, false);
 			if (DOT11F_FAILED(status)) {
 				pe_err("Parse failure in populate_dot11f_wapi (0x%08x)",
 					status);
@@ -2124,7 +2124,7 @@ populate_dot11f_wpa(tpAniSirGlobal pMac,
 		if (0 <= idx) {
 			status = dot11f_unpack_ie_wpa(pMac, pRsnIe->rsnIEdata + idx + 2 + 4,       /* EID, length, OUI */
 						      pRsnIe->rsnIEdata[idx + 1] - 4,   /* OUI */
-						      pDot11f);
+						      pDot11f, false);
 			if (DOT11F_FAILED(status)) {
 				pe_err("Parse failure in Populate Dot11fWPA (0x%08x)",
 					status);
@@ -2170,7 +2170,7 @@ sir_convert_probe_req_frame2_struct(tpAniSirGlobal pMac,
 	qdf_mem_set((uint8_t *) pProbeReq, sizeof(tSirProbeReq), 0);
 
 	/* delegate to the framesc-generated code, */
-	status = dot11f_unpack_probe_request(pMac, pFrame, nFrame, &pr);
+	status = dot11f_unpack_probe_request(pMac, pFrame, nFrame, &pr, false);
 	if (DOT11F_FAILED(status)) {
 		lim_log(pMac, LOGE,
 			FL("Failed to parse a Probe Request (0x%08x, %d bytes):"),
@@ -2320,7 +2320,7 @@ tSirRetStatus sir_convert_probe_frame2_struct(tpAniSirGlobal pMac,
 	}
 
 	/* delegate to the framesc-generated code, */
-	status = dot11f_unpack_probe_response(pMac, pFrame, nFrame, pr);
+	status = dot11f_unpack_probe_response(pMac, pFrame, nFrame, pr, false);
 	if (DOT11F_FAILED(status)) {
 		lim_log(pMac, LOGE,
 			FL("Failed to parse a Probe Response (0x%08x, %d bytes):"),
@@ -2636,7 +2636,7 @@ sir_convert_assoc_req_frame2_struct(tpAniSirGlobal pMac,
 	qdf_mem_set((uint8_t *) pAssocReq, sizeof(tSirAssocReq), 0);
 
 	/* delegate to the framesc-generated code, */
-	status = dot11f_unpack_assoc_request(pMac, pFrame, nFrame, ar);
+	status = dot11f_unpack_assoc_request(pMac, pFrame, nFrame, ar, false);
 	if (DOT11F_FAILED(status)) {
 		lim_log(pMac, LOGE,
 			FL("Failed to parse an Association Request (0x%08x, %d bytes):"),
@@ -2844,7 +2844,7 @@ sir_convert_assoc_resp_frame2_struct(tpAniSirGlobal pMac,
 	qdf_mem_set((uint8_t *) pAssocRsp, sizeof(tSirAssocRsp), 0);
 
 	/* delegate to the framesc-generated code, */
-	status = dot11f_unpack_assoc_response(pMac, pFrame, nFrame, &ar);
+	status = dot11f_unpack_assoc_response(pMac, pFrame, nFrame, &ar, false);
 	if (DOT11F_FAILED(status)) {
 		lim_log(pMac, LOGE,
 			FL("Failed to parse an Association Response (0x%08x, %d bytes):"),
@@ -3077,7 +3077,8 @@ sir_convert_reassoc_req_frame2_struct(tpAniSirGlobal pMac,
 	qdf_mem_set((uint8_t *) pAssocReq, sizeof(tSirAssocReq), 0);
 
 	/* delegate to the framesc-generated code, */
-	status = dot11f_unpack_re_assoc_request(pMac, pFrame, nFrame, &ar);
+	status = dot11f_unpack_re_assoc_request(pMac, pFrame, nFrame,
+						&ar, false);
 	if (DOT11F_FAILED(status)) {
 		lim_log(pMac, LOGE,
 			FL("Failed to parse a Re-association Request (0x%08x, %d bytes):"),
@@ -3269,7 +3270,8 @@ sir_beacon_ie_ese_bcn_report(tpAniSirGlobal pMac,
 	}
 	qdf_mem_zero(pBies, sizeof(tDot11fBeaconIEs));
 	/* delegate to the framesc-generated code, */
-	status = dot11f_unpack_beacon_i_es(pMac, pPayload, nPayload, pBies);
+	status = dot11f_unpack_beacon_i_es(pMac, pPayload, nPayload,
+					   pBies, false);
 
 	if (DOT11F_FAILED(status)) {
 		lim_log(pMac, LOGE,
@@ -3563,7 +3565,8 @@ sir_parse_beacon_ie(tpAniSirGlobal pMac,
 	}
 	qdf_mem_zero(pBies, sizeof(tDot11fBeaconIEs));
 	/* delegate to the framesc-generated code, */
-	status = dot11f_unpack_beacon_i_es(pMac, pPayload, nPayload, pBies);
+	status = dot11f_unpack_beacon_i_es(pMac, pPayload, nPayload,
+					   pBies, false);
 
 	if (DOT11F_FAILED(status)) {
 		lim_log(pMac, LOGE,
@@ -3878,7 +3881,7 @@ sir_convert_beacon_frame2_struct(tpAniSirGlobal pMac,
 	qdf_mem_copy(pBeaconStruct->bssid, pHdr->sa, 6);
 
 	/* delegate to the framesc-generated code, */
-	status = dot11f_unpack_beacon(pMac, pPayload, nPayload, pBeacon);
+	status = dot11f_unpack_beacon(pMac, pPayload, nPayload, pBeacon, false);
 	if (DOT11F_FAILED(status)) {
 		lim_log(pMac, LOGE,
 			FL("Failed to parse Beacon IEs (0x%08x, %d bytes):"),
@@ -4249,7 +4252,8 @@ sir_convert_auth_frame2_struct(tpAniSirGlobal pMac,
 	qdf_mem_set((uint8_t *) pAuth, sizeof(tSirMacAuthFrameBody), 0);
 
 	/* delegate to the framesc-generated code, */
-	status = dot11f_unpack_authentication(pMac, pFrame, nFrame, &auth);
+	status = dot11f_unpack_authentication(pMac, pFrame, nFrame,
+					      &auth, false);
 	if (DOT11F_FAILED(status)) {
 		lim_log(pMac, LOGE,
 			FL("Failed to parse an Authentication frame (0x%08x, %d bytes):"),
@@ -4304,12 +4308,13 @@ sir_convert_addts_req2_struct(tpAniSirGlobal pMac,
 	/* delegate to the framesc-generated code, */
 	switch (*pFrame) {
 	case SIR_MAC_ACTION_QOS_MGMT:
-		status = dot11f_unpack_add_ts_request(pMac, pFrame, nFrame, &addts);
+		status = dot11f_unpack_add_ts_request(pMac, pFrame, nFrame,
+						      &addts, false);
 		break;
 	case SIR_MAC_ACTION_WME:
 		status =
 			dot11f_unpack_wmm_add_ts_request(pMac, pFrame, nFrame,
-							 &wmmaddts);
+							 &wmmaddts, false);
 		break;
 	default:
 		lim_log(pMac, LOGE, FL("sir_convert_addts_req2_struct invoked "
@@ -4443,12 +4448,13 @@ sir_convert_addts_rsp2_struct(tpAniSirGlobal pMac,
 	switch (*pFrame) {
 	case SIR_MAC_ACTION_QOS_MGMT:
 		status =
-			dot11f_unpack_add_ts_response(pMac, pFrame, nFrame, &addts);
+			dot11f_unpack_add_ts_response(pMac, pFrame, nFrame,
+						      &addts, false);
 		break;
 	case SIR_MAC_ACTION_WME:
 		status =
 			dot11f_unpack_wmm_add_ts_response(pMac, pFrame, nFrame,
-							  &wmmaddts);
+							  &wmmaddts, false);
 		break;
 	default:
 		lim_log(pMac, LOGE, FL("sir_convert_addts_rsp2_struct invoked "
@@ -4618,10 +4624,12 @@ sir_convert_delts_req2_struct(tpAniSirGlobal pMac,
 	/* delegate to the framesc-generated code, */
 	switch (*pFrame) {
 	case SIR_MAC_ACTION_QOS_MGMT:
-		status = dot11f_unpack_del_ts(pMac, pFrame, nFrame, &delts);
+		status = dot11f_unpack_del_ts(pMac, pFrame, nFrame,
+					      &delts, false);
 		break;
 	case SIR_MAC_ACTION_WME:
-		status = dot11f_unpack_wmm_del_ts(pMac, pFrame, nFrame, &wmmdelts);
+		status = dot11f_unpack_wmm_del_ts(pMac, pFrame, nFrame,
+						  &wmmdelts, false);
 		break;
 	default:
 		lim_log(pMac, LOGE, FL("sirConvertDeltsRsp2Struct invoked "
@@ -4688,7 +4696,8 @@ sir_convert_qos_map_configure_frame2_struct(tpAniSirGlobal pMac,
 	tDot11fQosMapConfigure mapConfigure;
 	uint32_t status;
 	status =
-		dot11f_unpack_qos_map_configure(pMac, pFrame, nFrame, &mapConfigure);
+		dot11f_unpack_qos_map_configure(pMac, pFrame, nFrame,
+						&mapConfigure, false);
 	if (DOT11F_FAILED(status) || !mapConfigure.QosMapSet.present) {
 		pe_err("Failed to parse Qos Map Configure frame (0x%08x, %d bytes):",
 			   status, nFrame);
@@ -4718,7 +4727,7 @@ sir_convert_tpc_req_frame2_struct(tpAniSirGlobal pMac,
 	uint32_t status;
 	qdf_mem_set((uint8_t *) pTpcReqFrame, sizeof(tSirMacTpcReqActionFrame),
 		    0);
-	status = dot11f_unpack_tpc_request(pMac, pFrame, nFrame, &req);
+	status = dot11f_unpack_tpc_request(pMac, pFrame, nFrame, &req, false);
 	if (DOT11F_FAILED(status)) {
 		pe_err("Failed to parse a TPC Request frame (0x%08x, %d bytes):",
 			   status, nFrame);
@@ -4759,7 +4768,8 @@ sir_convert_meas_req_frame2_struct(tpAniSirGlobal pMac,
 		    sizeof(tpSirMacMeasReqActionFrame), 0);
 
 	/* delegate to the framesc-generated code, */
-	status = dot11f_unpack_measurement_request(pMac, pFrame, nFrame, &mr);
+	status = dot11f_unpack_measurement_request(pMac, pFrame,
+						   nFrame, &mr, false);
 	if (DOT11F_FAILED(status)) {
 		pe_err("Failed to parse a Measurement Request frame (0x%08x, %d bytes):",
 			   status, nFrame);
@@ -5632,7 +5642,7 @@ tSirRetStatus populate_dot11f_assoc_res_wsc_ie(tpAniSirGlobal pMac,
 		/* retreive WSC IE from given AssocReq */
 		dot11f_unpack_ie_wsc_assoc_req(pMac, wscIe + 2 + 4,     /* EID, length, OUI */
 					       wscIe[1] - 4, /* length without OUI */
-					       &parsedWscAssocReq);
+					       &parsedWscAssocReq, false);
 		pDot11f->present = 1;
 		/* version has to be 0x10 */
 		pDot11f->Version.present = 1;

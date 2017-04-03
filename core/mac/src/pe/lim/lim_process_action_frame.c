@@ -239,7 +239,7 @@ static void __lim_process_channel_switch_action_frame(tpAniSirGlobal mac_ctx,
 
 	/* Unpack channel switch frame */
 	status = dot11f_unpack_channel_switch(mac_ctx, body_ptr, frame_len,
-			chnl_switch_frame);
+			chnl_switch_frame, false);
 
 	if (DOT11F_FAILED(status)) {
 		lim_log(mac_ctx, LOGE,
@@ -378,7 +378,7 @@ lim_process_ext_channel_switch_action_frame(tpAniSirGlobal mac_ctx,
 
 	/* Unpack channel switch frame */
 	status = dot11f_unpack_ext_channel_switch_action_frame(mac_ctx,
-			body, frame_len, ext_channel_switch_frame);
+			body, frame_len, ext_channel_switch_frame, false);
 
 	if (DOT11F_FAILED(status)) {
 
@@ -492,7 +492,7 @@ static void __lim_process_operating_mode_action_frame(tpAniSirGlobal mac_ctx,
 	}
 	/* Unpack channel switch frame */
 	status = dot11f_unpack_operating_mode(mac_ctx, body_ptr, frame_len,
-			operating_mode_frm);
+			operating_mode_frm, false);
 	if (DOT11F_FAILED(status)) {
 		lim_log(mac_ctx, LOGE,
 			FL("Failed to unpack and parse (0x%08x, %d bytes)"),
@@ -625,7 +625,7 @@ static void __lim_process_gid_management_action_frame(tpAniSirGlobal mac_ctx,
 
 	/* Unpack Gid Mangement Action frame */
 	status = dot11f_unpack_vht_gid_management_action_frame(mac_ctx,
-			body_ptr, frame_len, gid_mgmt_frame);
+			body_ptr, frame_len, gid_mgmt_frame, false);
 	if (DOT11F_FAILED(status)) {
 		lim_log(mac_ctx, LOGE,
 			FL("Fail to parse an Grp id frame (0x%08x, %d bytes):"),
@@ -1295,7 +1295,8 @@ __lim_process_sm_power_save_update(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 	}
 
 	/**Unpack the received frame */
-	nStatus = dot11f_unpack_sm_power_save(pMac, pBody, frameLen, &frmSMPower);
+	nStatus = dot11f_unpack_sm_power_save(pMac, pBody, frameLen,
+					      &frmSMPower, false);
 
 	if (DOT11F_FAILED(nStatus)) {
 		lim_log(pMac, LOGE,
@@ -1382,9 +1383,8 @@ __lim_process_radio_measure_request(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 	}
 
 	/**Unpack the received frame */
-	nStatus = dot11f_unpack_radio_measurement_request(pMac,
-								pBody,
-								frameLen, frm);
+	nStatus = dot11f_unpack_radio_measurement_request(pMac, pBody,
+							  frameLen, frm, false);
 
 	if (DOT11F_FAILED(nStatus)) {
 		lim_log(pMac, LOGE,
@@ -1427,7 +1427,8 @@ __lim_process_link_measurement_req(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 
 	/**Unpack the received frame */
 	nStatus =
-		dot11f_unpack_link_measurement_request(pMac, pBody, frameLen, &frm);
+		dot11f_unpack_link_measurement_request(pMac, pBody, frameLen,
+						       &frm, false);
 
 	if (DOT11F_FAILED(nStatus)) {
 		lim_log(pMac, LOGE,
@@ -1480,7 +1481,8 @@ __lim_process_neighbor_report(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 
 	/**Unpack the received frame */
 	nStatus =
-		dot11f_unpack_neighbor_report_response(pMac, pBody, frameLen, pFrm);
+		dot11f_unpack_neighbor_report_response(pMac, pBody,
+						       frameLen, pFrm, false);
 
 	if (DOT11F_FAILED(nStatus)) {
 		lim_log(pMac, LOGE,
@@ -1755,7 +1757,7 @@ static void lim_process_addba_req(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 
 	/* Unpack ADDBA request frame */
 	status = dot11f_unpack_addba_req(mac_ctx, body_ptr, frame_len,
-					 addba_req);
+					 addba_req, false);
 
 	if (DOT11F_FAILED(status)) {
 		lim_log(mac_ctx, LOGE,
@@ -1836,7 +1838,7 @@ static void lim_process_delba_req(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 
 	/* Unpack DELBA request frame */
 	status = dot11f_unpack_delba_req(mac_ctx, body_ptr, frame_len,
-					 delba_req);
+					 delba_req, false);
 
 	if (DOT11F_FAILED(status)) {
 		lim_log(mac_ctx, LOGE,

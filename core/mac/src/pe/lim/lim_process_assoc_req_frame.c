@@ -805,7 +805,7 @@ static bool lim_chk_n_process_wpa_rsn_ie(tpAniSirGlobal mac_ctx,
 					dot11f_unpack_ie_rsn(mac_ctx,
 						&assoc_req->rsn.info[0],
 						assoc_req->rsn.length,
-						&dot11f_ie_rsn);
+						&dot11f_ie_rsn, false);
 
 					/* Check RSN version is supported */
 					if (SIR_MAC_OUI_VERSION_1 ==
@@ -880,7 +880,7 @@ static bool lim_chk_n_process_wpa_rsn_ie(tpAniSirGlobal mac_ctx,
 					dot11f_unpack_ie_wpa(mac_ctx,
 						&assoc_req->wpa.info[4],
 						assoc_req->wpa.length,
-						&dot11f_ie_wpa);
+						&dot11f_ie_wpa, false);
 					/*
 					 * check the groupwise and pairwise
 					 * cipher suites

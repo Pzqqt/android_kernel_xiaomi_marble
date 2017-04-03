@@ -6815,7 +6815,7 @@ tSirRetStatus lim_strip_supp_op_class_update_struct(tpAniSirGlobal mac_ctx,
 
 	/* update the extracted supp op class to struct*/
 	if (DOT11F_PARSE_SUCCESS != dot11f_unpack_ie_supp_operating_classes(
-	    mac_ctx, &extracted_buff[2], extracted_buff[1], dst)) {
+	    mac_ctx, &extracted_buff[2], extracted_buff[1], dst, false)) {
 		lim_log(mac_ctx, LOGE, FL("dot11f_unpack Parse Error "));
 		return eSIR_FAILURE;
 	}
@@ -6859,7 +6859,7 @@ void lim_update_extcap_struct(tpAniSirGlobal mac_ctx,
 	qdf_mem_copy(&out[0], &buf[2], buf[1]);
 
 	if (DOT11F_PARSE_SUCCESS != dot11f_unpack_ie_ext_cap(mac_ctx, &out[0],
-					buf[1], dst))
+							buf[1], dst, false))
 		lim_log(mac_ctx, LOGE, FL("dot11f_unpack Parse Error "));
 }
 

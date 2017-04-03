@@ -651,7 +651,7 @@ void csr_roam_ft_pre_auth_rsp_processor(tHalHandle hal,
 
 		status = dot11f_unpack_authentication(mac_ctx,
 				preauth_rsp->ft_ies,
-				preauth_rsp->ft_ies_length, p_auth);
+				preauth_rsp->ft_ies_length, p_auth, false);
 		if (DOT11F_FAILED(status))
 			sme_err("Failed to parse an Authentication frame");
 		else if (p_auth->MobilityDomain.present)
