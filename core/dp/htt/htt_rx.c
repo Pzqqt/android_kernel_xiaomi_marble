@@ -478,8 +478,10 @@ moretofill:
 #define MAGIC_PATTERN 0xDEADBEEF
 		*(uint32_t *) &rx_desc->msdu_start = MAGIC_PATTERN;
 
-		/* To ensure that attention bit is reset and msdu_end is set
-		   before calling dma_map */
+		/*
+		 * To ensure that attention bit is reset and msdu_end is set
+		 * before calling dma_map
+		 */
 		smp_mb();
 #endif
 		/*
@@ -633,7 +635,7 @@ static void htt_rx_ring_refill_retry(void *arg)
 }
 #endif
 
-static inline unsigned htt_rx_ring_elems(struct htt_pdev_t *pdev)
+static inline unsigned int htt_rx_ring_elems(struct htt_pdev_t *pdev)
 {
 	return
 		(*pdev->rx_ring.alloc_idx.vaddr -
@@ -863,8 +865,10 @@ static int htt_rx_msdu_has_wlan_mcast_flag_ll(htt_pdev_handle pdev,
 {
 	struct htt_host_rx_desc_base *rx_desc =
 		(struct htt_host_rx_desc_base *)msdu_desc;
-	/* HW rx desc: the mcast_bcast flag is only valid
-	   if first_msdu is set */
+	/*
+	 * HW rx desc: the mcast_bcast flag is only valid
+	 * if first_msdu is set
+	 */
 	return
 		((*(((uint32_t *) &rx_desc->msdu_end) + 4)) &
 		 RX_MSDU_END_4_FIRST_MSDU_MASK) >> RX_MSDU_END_4_FIRST_MSDU_LSB;
@@ -971,8 +975,10 @@ htt_rx_in_order_netbuf_pop(htt_pdev_handle pdev, qdf_dma_addr_t paddr)
 	return htt_rx_hash_list_lookup(pdev, paddr);
 }
 
-/* FIX ME: this function applies only to LL rx descs.
-   An equivalent for HL rx descs is needed. */
+/*
+ * FIX ME: this function applies only to LL rx descs.
+ * An equivalent for HL rx descs is needed.
+ */
 #ifdef CHECKSUM_OFFLOAD
 static inline
 void
@@ -1082,7 +1088,6 @@ static inline
 void htt_set_checksum_result_ll(htt_pdev_handle pdev, qdf_nbuf_t msdu,
 			   struct htt_host_rx_desc_base *rx_desc)
 {
-	return;
 }
 
 #if defined(CONFIG_HL_SUPPORT)
@@ -1091,7 +1096,6 @@ static inline
 void htt_set_checksum_result_hl(qdf_nbuf_t msdu,
 			   struct htt_host_rx_desc_base *rx_desc)
 {
-	return;
 }
 #endif
 
@@ -1134,6 +1138,7 @@ htt_rx_amsdu_pop_ll(htt_pdev_handle pdev,
 	while (1) {
 		int last_msdu, msdu_len_invalid, msdu_chained;
 		int byte_offset;
+		qdf_nbuf_t next;
 
 		/*
 		 * Set the netbuf length to be the entire buffer length
@@ -1272,8 +1277,10 @@ htt_rx_amsdu_pop_ll(htt_pdev_handle pdev,
 			 * the RX_IND message format, then the following
 			 * assertion can be restored.
 			 */
-			/* qdf_assert((rx_ind_data[byte_offset] &
-			   FW_RX_DESC_EXT_M) == 0); */
+			/*
+			 * qdf_assert((rx_ind_data[byte_offset] &
+			 * FW_RX_DESC_EXT_M) == 0);
+			 */
 			pdev->rx_ind_msdu_byte_idx += 1;
 			/* or more, if there's ext data */
 		} else {
@@ -1320,7 +1327,7 @@ htt_rx_amsdu_pop_ll(htt_pdev_handle pdev,
 		} while (0);
 
 		while (msdu_chained--) {
-			qdf_nbuf_t next = htt_rx_netbuf_pop(pdev);
+			next = htt_rx_netbuf_pop(pdev);
 			qdf_nbuf_set_pktlen(next, HTT_RX_BUF_SIZE);
 			msdu_len -= HTT_RX_BUF_SIZE;
 			qdf_nbuf_set_next(msdu, next);
@@ -1332,8 +1339,8 @@ htt_rx_amsdu_pop_ll(htt_pdev_handle pdev,
 				 * accounting for inconsistent HW lengths
 				 * causing length overflows and underflows
 				 */
-				if (((unsigned)msdu_len) >
-				    ((unsigned)
+				if (((unsigned int)msdu_len) >
+				    ((unsigned int)
 				     (HTT_RX_BUF_SIZE - RX_STD_DESC_SIZE))) {
 					msdu_len =
 						(HTT_RX_BUF_SIZE -
@@ -1355,11 +1362,11 @@ htt_rx_amsdu_pop_ll(htt_pdev_handle pdev,
 		if (last_msdu) {
 			qdf_nbuf_set_next(msdu, NULL);
 			break;
-		} else {
-			qdf_nbuf_t next = htt_rx_netbuf_pop(pdev);
-			qdf_nbuf_set_next(msdu, next);
-			msdu = next;
 		}
+
+		next = htt_rx_netbuf_pop(pdev);
+		qdf_nbuf_set_next(msdu, next);
+		msdu = next;
 	}
 	*tail_msdu = msdu;
 
@@ -1458,7 +1465,7 @@ htt_rx_offload_msdu_pop_hl(htt_pdev_handle pdev,
 	*tid = HTT_RX_OFFLOAD_DELIVER_IND_MSDU_TID_GET(*msdu_hdr);
 	*fw_desc = HTT_RX_OFFLOAD_DELIVER_IND_MSDU_DESC_GET(*msdu_hdr);
 
-	qdf_nbuf_pull_head(buf, HTT_RX_OFFLOAD_DELIVER_IND_MSDU_HDR_BYTES \
+	qdf_nbuf_pull_head(buf, HTT_RX_OFFLOAD_DELIVER_IND_MSDU_HDR_BYTES
 			+ HTT_RX_OFFLOAD_DELIVER_IND_HDR_BYTES);
 
 	if (msdu_len <= qdf_nbuf_len(buf)) {
@@ -2197,12 +2204,13 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 				   HTT_RX_BUF_SIZE -
 				   (RX_STD_DESC_SIZE +
 				    HTT_RX_IN_ORD_PADDR_IND_MSDU_LEN_GET(
-					    *(msg_word + NEXT_FIELD_OFFSET_IN32))));
+				    *(msg_word + NEXT_FIELD_OFFSET_IN32))));
 #if defined(HELIUMPLUS_DEBUG)
 		ol_txrx_dump_pkt(msdu, 0, 64);
 #endif
 		*((uint8_t *) &rx_desc->fw_desc.u.val) =
-			HTT_RX_IN_ORD_PADDR_IND_FW_DESC_GET(*(msg_word + NEXT_FIELD_OFFSET_IN32));
+			HTT_RX_IN_ORD_PADDR_IND_FW_DESC_GET(*(msg_word +
+						NEXT_FIELD_OFFSET_IN32));
 #undef NEXT_FIELD_OFFSET_IN32
 
 		msdu_count--;
@@ -2231,11 +2239,10 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 				if (!prev) {
 					*head_msdu = *tail_msdu = NULL;
 					return 0;
-				} else {
-					*tail_msdu = prev;
-					qdf_nbuf_set_next(prev, NULL);
-					return 1;
 				}
+				*tail_msdu = prev;
+				qdf_nbuf_set_next(prev, NULL);
+				return 1;
 			} else { /* if this is not the last msdu */
 				/* get the next msdu */
 				msg_word += HTT_RX_IN_ORD_PADDR_IND_MSDU_DWORDS;
@@ -2254,9 +2261,9 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 				if (prev) {
 					qdf_nbuf_set_next(prev, next);
 				} else {
-				/* if this is the first msdu, update the
-				 * head pointer
-				 */
+					/* if this is the first msdu, update the
+					 * head pointer
+					 */
 					*head_msdu = next;
 				}
 				msdu = next;
@@ -2312,22 +2319,22 @@ htt_rx_parse_ppdu_start_status(struct htt_host_rx_desc_base *rx_desc,
 	rs->rs_rssi = ppdu_start->rssi_comb;
 
 	/* PHY rate */
-	/* rs_ratephy coding
-	   [b3 - b0]
-	   0 -> OFDM
-	   1 -> CCK
-	   2 -> HT
-	   3 -> VHT
-	   OFDM / CCK
-	   [b7  - b4 ] => LSIG rate
-	   [b23 - b8 ] => service field
-	   (b'12 static/dynamic,
-	   b'14..b'13 BW for VHT)
-	   [b31 - b24 ] => Reserved
-	   HT / VHT
-	   [b15 - b4 ] => SIG A_2 12 LSBs
-	   [b31 - b16] => SIG A_1 16 LSBs
-
+	/*
+	 * rs_ratephy coding
+	 * [b3 - b0]
+	 * 0 -> OFDM
+	 * 1 -> CCK
+	 * 2 -> HT
+	 * 3 -> VHT
+	 * OFDM / CCK
+	 * [b7  - b4 ] => LSIG rate
+	 * [b23 - b8 ] => service field
+	 * (b'12 static/dynamic,
+	 * b'14..b'13 BW for VHT)
+	 * [b31 - b24 ] => Reserved
+	 * HT / VHT
+	 * [b15 - b4 ] => SIG A_2 12 LSBs
+	 * [b31 - b16] => SIG A_1 16 LSBs
 	 */
 	if (ppdu_start->preamble_type == 0x4) {
 		rs->rs_ratephy = ppdu_start->l_sig_rate_select;
@@ -2346,8 +2353,6 @@ htt_rx_parse_ppdu_start_status(struct htt_host_rx_desc_base *rx_desc,
 			(ppdu_start->ht_sig_vht_sig_a_1 & 0xFFFF) << 16;
 #endif
 	}
-
-	return;
 }
 
 /* Util fake function that has same prototype as qdf_nbuf_clone that just
@@ -2365,11 +2370,11 @@ qdf_nbuf_t
 htt_rx_restitch_mpdu_from_msdus(htt_pdev_handle pdev,
 				qdf_nbuf_t head_msdu,
 				struct ieee80211_rx_status *rx_status,
-				unsigned clone_not_reqd)
+				unsigned int clone_not_reqd)
 {
 
 	qdf_nbuf_t msdu, mpdu_buf, prev_buf, msdu_orig, head_frag_list_cloned;
-	unsigned decap_format, wifi_hdr_len, sec_hdr_len, msdu_llc_len,
+	unsigned int decap_format, wifi_hdr_len, sec_hdr_len, msdu_llc_len,
 		 mpdu_buf_len, decap_hdr_pull_bytes, frag_list_sum_len, dir,
 		 is_amsdu, is_first_frag, amsdu_pad, msdu_len;
 	struct htt_host_rx_desc_base *rx_desc;
@@ -2584,12 +2589,15 @@ htt_rx_restitch_mpdu_from_msdus(htt_pdev_handle pdev,
 		frag_list_sum_len +=
 			msdu_llc_len + qdf_nbuf_len(msdu) + amsdu_pad;
 
-		/* Set up intra-AMSDU pad to be added to start of next buffer -
-		 * AMSDU pad is 4 byte pad on AMSDU subframe */
+		/*
+		 * Set up intra-AMSDU pad to be added to start of next buffer -
+		 * AMSDU pad is 4 byte pad on AMSDU subframe
+		 */
 		amsdu_pad = (msdu_llc_len + qdf_nbuf_len(msdu)) & 0x3;
 		amsdu_pad = amsdu_pad ? (4 - amsdu_pad) : 0;
 
-		/* TODO FIXME How do we handle MSDUs that have fraglist - Should
+		/*
+		 * TODO FIXME How do we handle MSDUs that have fraglist - Should
 		 * probably iterate all the frags cloning them along the way and
 		 * and also updating the prev_buf pointer
 		 */
@@ -2708,8 +2716,7 @@ int
 void * (*htt_rx_mpdu_desc_list_next)(htt_pdev_handle pdev,
 				    qdf_nbuf_t rx_ind_msg);
 
-bool (*htt_rx_mpdu_desc_retry)(
-    htt_pdev_handle pdev, void *mpdu_desc);
+bool (*htt_rx_mpdu_desc_retry)(htt_pdev_handle pdev, void *mpdu_desc);
 
 uint16_t (*htt_rx_mpdu_desc_seq_num)(htt_pdev_handle pdev, void *mpdu_desc);
 
@@ -2717,8 +2724,7 @@ void (*htt_rx_mpdu_desc_pn)(htt_pdev_handle pdev,
 			    void *mpdu_desc,
 			    union htt_rx_pn_t *pn, int pn_len_bits);
 
-uint8_t (*htt_rx_mpdu_desc_tid)(
-    htt_pdev_handle pdev, void *mpdu_desc);
+uint8_t (*htt_rx_mpdu_desc_tid)(htt_pdev_handle pdev, void *mpdu_desc);
 
 bool (*htt_rx_msdu_desc_completes_mpdu)(htt_pdev_handle pdev, void *msdu_desc);
 
@@ -2742,6 +2748,7 @@ void *htt_rx_mpdu_desc_list_next_ll(htt_pdev_handle pdev, qdf_nbuf_t rx_ind_msg)
 {
 	int idx = pdev->rx_ring.sw_rd_idx.msdu_desc;
 	qdf_nbuf_t netbuf = pdev->rx_ring.buf.netbufs_ring[idx];
+
 	pdev->rx_ring.sw_rd_idx.msdu_desc = pdev->rx_ring.sw_rd_idx.msdu_payld;
 	return (void *)htt_rx_desc(netbuf);
 }
@@ -2994,13 +3001,13 @@ void htt_rx_msdu_desc_free(htt_pdev_handle htt_pdev, qdf_nbuf_t msdu)
  */
 static inline void htt_rx_fill_ring_count(htt_pdev_handle pdev)
 {
-	return;
 }
 #else
 
 static void htt_rx_fill_ring_count(htt_pdev_handle pdev)
 {
 	int num_to_fill;
+
 	num_to_fill = pdev->rx_ring.fill_level - pdev->rx_ring.fill_cnt;
 	htt_rx_ring_fill_n(pdev, num_to_fill /* okay if <= 0 */);
 }
@@ -3121,15 +3128,17 @@ static inline void htt_list_remove(struct htt_list_node *node)
 #define HTT_RX_HASH_COUNT_RESET(hash_bucket)    /* no-op */
 #endif /* RX_HASH_DEBUG */
 
-/* Inserts the given "physical address - network buffer" pair into the
-   hash table for the given pdev. This function will do the following:
-   1. Determine which bucket to insert the pair into
-   2. First try to allocate the hash entry for this pair from the pre-allocated
-      entries list
-   3. If there are no more entries in the pre-allocated entries list, allocate
-      the hash entry from the hash memory pool
-   Note: this function is not thread-safe
-   Returns 0 - success, 1 - failure */
+/*
+ * Inserts the given "physical address - network buffer" pair into the
+ * hash table for the given pdev. This function will do the following:
+ * 1. Determine which bucket to insert the pair into
+ * 2. First try to allocate the hash entry for this pair from the pre-allocated
+ *    entries list
+ * 3. If there are no more entries in the pre-allocated entries list, allocate
+ *    the hash entry from the hash memory pool
+ * Note: this function is not thread-safe
+ * Returns 0 - success, 1 - failure
+ */
 int
 htt_rx_hash_list_insert(struct htt_pdev_t *pdev,
 			qdf_dma_addr_t paddr,
@@ -3219,11 +3228,14 @@ qdf_nbuf_t htt_rx_hash_list_lookup(struct htt_pdev_t *pdev,
 			netbuf = hash_entry->netbuf;
 			htt_list_remove(&hash_entry->listnode);
 			HTT_RX_HASH_COUNT_DECR(pdev->rx_ring.hash_table[i]);
-			/* if the rx entry is from the pre-allocated list,
-			   return it */
+			/*
+			 * if the rx entry is from the pre-allocated list,
+			 * return it
+			 */
 			if (hash_entry->fromlist)
-				htt_list_add_tail(&pdev->rx_ring.hash_table[i]->freepool,
-						  &hash_entry->listnode);
+				htt_list_add_tail(
+					&pdev->rx_ring.hash_table[i]->freepool,
+					&hash_entry->listnode);
 			else
 				qdf_mem_free(hash_entry);
 
@@ -3247,9 +3259,11 @@ qdf_nbuf_t htt_rx_hash_list_lookup(struct htt_pdev_t *pdev,
 	return netbuf;
 }
 
-/* Initialization function of the rx buffer hash table. This function will
-   allocate a hash table of a certain pre-determined size and initialize all
-   the elements */
+/*
+ * Initialization function of the rx buffer hash table. This function will
+ * allocate a hash table of a certain pre-determined size and initialize all
+ * the elements
+ */
 static int htt_rx_hash_init(struct htt_pdev_t *pdev)
 {
 	int i, j;
@@ -3311,9 +3325,10 @@ static int htt_rx_hash_init(struct htt_pdev_t *pdev)
 		/* initialize the free list with pre-allocated entries */
 		for (j = 0; j < RX_ENTRIES_SIZE; j++) {
 			pdev->rx_ring.hash_table[i]->entries[j].fromlist = 1;
-			htt_list_add_tail(&pdev->rx_ring.hash_table[i]->freepool,
-					  &pdev->rx_ring.hash_table[i]->
-					  entries[j].listnode);
+			htt_list_add_tail(
+				&pdev->rx_ring.hash_table[i]->freepool,
+				&pdev->rx_ring.hash_table[i]->entries[j].
+				listnode);
 		}
 	}
 
@@ -3385,13 +3400,13 @@ int htt_rx_attach(struct htt_pdev_t *pdev)
 	pdev->rx_ring.size_mask = pdev->rx_ring.size - 1;
 
 	/*
-	* Set the initial value for the level to which the rx ring
-	* should be filled, based on the max throughput and the worst
-	* likely latency for the host to fill the rx ring.
-	* In theory, this fill level can be dynamically adjusted from
-	* the initial value set here to reflect the actual host latency
-	* rather than a conservative assumption.
-	*/
+	 * Set the initial value for the level to which the rx ring
+	 * should be filled, based on the max throughput and the worst
+	 * likely latency for the host to fill the rx ring.
+	 * In theory, this fill level can be dynamically adjusted from
+	 * the initial value set here to reflect the actual host latency
+	 * rather than a conservative assumption.
+	 */
 	pdev->rx_ring.fill_level = htt_rx_ring_fill_level(pdev);
 
 	if (pdev->cfg.is_full_reorder_offload) {
@@ -3440,9 +3455,9 @@ int htt_rx_attach(struct htt_pdev_t *pdev)
 	*pdev->rx_ring.alloc_idx.vaddr = 0;
 
 	/*
-	* Initialize the Rx refill reference counter to be one so that
-	* only one thread is allowed to refill the Rx ring.
-	*/
+	 * Initialize the Rx refill reference counter to be one so that
+	 * only one thread is allowed to refill the Rx ring.
+	 */
 	qdf_atomic_init(&pdev->rx_ring.refill_ref_cnt);
 	qdf_atomic_inc(&pdev->rx_ring.refill_ref_cnt);
 
@@ -3546,12 +3561,15 @@ fail1:
 static int htt_rx_ipa_uc_alloc_wdi2_rsc(struct htt_pdev_t *pdev,
 			 unsigned int rx_ind_ring_elements)
 {
-	/* Allocate RX2 indication ring */
-	/* RX2 IND ring element
+	/*
+	 * Allocate RX2 indication ring
+	 * RX2 IND ring element
 	 *   4bytes: pointer
 	 *   2bytes: VDEV ID
-	 *   2bytes: length */
-	/* RX indication ring size, by bytes */
+	 *   2bytes: length
+	 *
+	 * RX indication ring size, by bytes
+	 */
 	pdev->ipa_uc_rx_rsc.rx2_ind_ring_size =
 		rx_ind_ring_elements * sizeof(target_paddr_t);
 	pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.vaddr =
@@ -3607,11 +3625,13 @@ int htt_rx_ipa_uc_attach(struct htt_pdev_t *pdev,
 {
 	int ret = 0;
 
-	/* Allocate RX indication ring */
-	/* RX IND ring element
+	/*
+	 * Allocate RX indication ring
+	 * RX IND ring element
 	 *   4bytes: pointer
 	 *   2bytes: VDEV ID
-	 *   2bytes: length */
+	 *   2bytes: length
+	 */
 	pdev->ipa_uc_rx_rsc.rx_ind_ring_base.vaddr =
 		qdf_mem_alloc_consistent(
 			pdev->osdev,
@@ -3688,7 +3708,6 @@ static void htt_rx_ipa_uc_free_wdi2_rsc(struct htt_pdev_t *pdev)
 #else
 static void htt_rx_ipa_uc_free_wdi2_rsc(struct htt_pdev_t *pdev)
 {
-	return;
 }
 #endif
 
@@ -3740,8 +3759,10 @@ void htt_register_rx_pkt_dump_callback(struct htt_pdev_t *pdev,
 				tp_rx_pkt_dump_cb callback)
 {
 	if (!pdev) {
-		qdf_print("%s: htt pdev is NULL, rx packet status callback register unsuccessful\n",
-						__func__);
+		qdf_print("%s: %s, %s",
+			__func__,
+			"htt pdev is NULL",
+			"rx packet status callback register unsuccessful\n");
 		return;
 	}
 	pdev->rx_pkt_dump_cb = callback;
@@ -3762,8 +3783,10 @@ void htt_register_rx_pkt_dump_callback(struct htt_pdev_t *pdev,
 void htt_deregister_rx_pkt_dump_callback(struct htt_pdev_t *pdev)
 {
 	if (!pdev) {
-		qdf_print("%s: htt pdev is NULL, rx packet status callback deregister unsuccessful\n",
-						__func__);
+		qdf_print("%s: %s, %s",
+			__func__,
+			"htt pdev is NULL",
+			"rx packet status callback deregister unsuccessful\n");
 		return;
 	}
 	pdev->rx_pkt_dump_cb = NULL;
