@@ -23,6 +23,7 @@
 #include "nan_ucfg_api.h"
 #include "nan_public_structs.h"
 #include "../../core/src/nan_main_i.h"
+#include "scheduler_api.h"
 
 inline QDF_STATUS ucfg_nan_set_ndi_state(struct wlan_objmgr_vdev *vdev,
 					 uint32_t state)
@@ -293,4 +294,26 @@ inline QDF_STATUS ucfg_nan_get_callbacks(struct wlan_objmgr_psoc *psoc,
 	qdf_spin_unlock_bh(&psoc_obj->lock);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ucfg_nan_req_processor(void *in_req, uint32_t req_type)
+{
+	QDF_STATUS status;
+	struct scheduler_msg msg = {0};
+
+	if (!in_req) {
+		nan_alert("req is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	msg.type = req_type;
+	msg.bodyptr = in_req;
+	msg.callback = nan_scheduled_msg_handler;
+	status = scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		nan_err("faild to post msg to NAN component, status: %d",
+			status);
+	}
+
+	return status;
 }

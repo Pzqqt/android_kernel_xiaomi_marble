@@ -104,4 +104,22 @@ struct nan_vdev_priv_obj *nan_get_vdev_priv_obj(struct wlan_objmgr_vdev *vdev);
  */
 struct nan_psoc_priv_obj *nan_get_psoc_priv_obj(struct wlan_objmgr_psoc *psoc);
 
+/**
+ * nan_release_cmd: frees resources for NAN command.
+ * @in_req: pointer to msg buffer to be freed
+ * @req_type: type of request
+ *
+ * Return: None
+ */
+void nan_release_cmd(void *in_req, uint32_t req_type);
+
+/**
+ * nan_scheduled_msg_handler: callback pointer to be called when scheduler
+ * starts executing enqueued NAN command.
+ * @msg: pointer to msg
+ *
+ * Return: status of operation
+ */
+QDF_STATUS nan_scheduled_msg_handler(struct scheduler_msg *msg);
+
 #endif
