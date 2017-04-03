@@ -809,18 +809,6 @@ static inline void hal_srng_src_hw_init(struct hal_soc *hal,
 #endif
 	SRNG_SRC_REG_WRITE(srng, ID, reg_val);
 
-	reg_val = ((srng->flags & HAL_SRNG_DATA_TLV_SWAP) ?
-			SRNG_SM(SRNG_SRC_FLD(MISC, DATA_TLV_SWAP_BIT), 1) : 0) |
-			((srng->flags & HAL_SRNG_RING_PTR_SWAP) ?
-			SRNG_SM(SRNG_SRC_FLD(MISC, HOST_FW_SWAP_BIT), 1) : 0) |
-			((srng->flags & HAL_SRNG_MSI_SWAP) ?
-			SRNG_SM(SRNG_SRC_FLD(MISC, MSI_SWAP_BIT), 1) : 0);
-
-	/* Loop count is not used for SRC rings */
-	reg_val |= SRNG_SM(SRNG_SRC_FLD(MISC, LOOPCNT_DISABLE), 1);
-
-	SRNG_SRC_REG_WRITE(srng, MISC, reg_val);
-
 	/**
 	 * Interrupt setup:
 	 * Default interrupt mode is 'pulse'. Need to setup SW_INTERRUPT_MODE
@@ -864,6 +852,27 @@ static inline void hal_srng_src_hw_init(struct hal_soc *hal,
 	SRNG_SRC_REG_WRITE(srng, HP, 0);
 	SRNG_SRC_REG_WRITE(srng, TP, 0);
 	*(srng->u.src_ring.tp_addr) = 0;
+
+	reg_val = ((srng->flags & HAL_SRNG_DATA_TLV_SWAP) ?
+			SRNG_SM(SRNG_SRC_FLD(MISC, DATA_TLV_SWAP_BIT), 1) : 0) |
+			((srng->flags & HAL_SRNG_RING_PTR_SWAP) ?
+			SRNG_SM(SRNG_SRC_FLD(MISC, HOST_FW_SWAP_BIT), 1) : 0) |
+			((srng->flags & HAL_SRNG_MSI_SWAP) ?
+			SRNG_SM(SRNG_SRC_FLD(MISC, MSI_SWAP_BIT), 1) : 0);
+
+	/* Loop count is not used for SRC rings */
+	reg_val |= SRNG_SM(SRNG_SRC_FLD(MISC, LOOPCNT_DISABLE), 1);
+
+	/*
+	 * reg_val |= SRNG_SM(SRNG_SRC_FLD(MISC, SRNG_ENABLE), 1);
+	 * todo: update fw_api and replace with above line
+	 * (when SRNG_ENABLE field for the MISC register is available in fw_api)
+	 * (WCSS_UMAC_CE_0_SRC_WFSS_CE_CHANNEL_SRC_R0_SRC_RING_MISC)
+	 */
+	reg_val |= 0x40;
+
+	SRNG_SRC_REG_WRITE(srng, MISC, reg_val);
+
 }
 
 /**
@@ -929,14 +938,6 @@ static inline void hal_srng_dst_hw_init(struct hal_soc *hal,
 		SRNG_SM(SRNG_DST_FLD(ID, ENTRY_SIZE), srng->entry_size);
 	SRNG_DST_REG_WRITE(srng, ID, reg_val);
 
-	reg_val = ((srng->flags & HAL_SRNG_DATA_TLV_SWAP) ?
-			SRNG_SM(SRNG_DST_FLD(MISC, DATA_TLV_SWAP_BIT), 1) : 0) |
-			((srng->flags & HAL_SRNG_RING_PTR_SWAP) ?
-			SRNG_SM(SRNG_DST_FLD(MISC, HOST_FW_SWAP_BIT), 1) : 0) |
-			((srng->flags & HAL_SRNG_MSI_SWAP) ?
-			SRNG_SM(SRNG_DST_FLD(MISC, MSI_SWAP_BIT), 1) : 0);
-
-	SRNG_DST_REG_WRITE(srng, MISC, reg_val);
 
 	/**
 	 * Interrupt setup:
@@ -968,6 +969,24 @@ static inline void hal_srng_dst_hw_init(struct hal_soc *hal,
 	SRNG_DST_REG_WRITE(srng, HP, 0);
 	SRNG_DST_REG_WRITE(srng, TP, 0);
 	*(srng->u.dst_ring.hp_addr) = 0;
+
+	reg_val = ((srng->flags & HAL_SRNG_DATA_TLV_SWAP) ?
+			SRNG_SM(SRNG_DST_FLD(MISC, DATA_TLV_SWAP_BIT), 1) : 0) |
+			((srng->flags & HAL_SRNG_RING_PTR_SWAP) ?
+			SRNG_SM(SRNG_DST_FLD(MISC, HOST_FW_SWAP_BIT), 1) : 0) |
+			((srng->flags & HAL_SRNG_MSI_SWAP) ?
+			SRNG_SM(SRNG_DST_FLD(MISC, MSI_SWAP_BIT), 1) : 0);
+
+	/*
+	 * reg_val |= SRNG_SM(SRNG_SRC_FLD(MISC, SRNG_ENABLE), 1);
+	 * todo: update fw_api and replace with above line
+	 * (when SRNG_ENABLE field for the MISC register is available in fw_api)
+	 * (WCSS_UMAC_CE_0_SRC_WFSS_CE_CHANNEL_SRC_R0_SRC_RING_MISC)
+	 */
+	reg_val |= 0x40;
+
+	SRNG_DST_REG_WRITE(srng, MISC, reg_val);
+
 }
 
 /**
