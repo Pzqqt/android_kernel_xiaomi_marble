@@ -24,7 +24,7 @@
  * under proprietary terms before Copyright ownership was assigned
  * to the Linux Foundation.
  */
- /**
+/**
  * @file cdp_txrx_flow_ctrl_legacy.h
  * @brief Define the host data path legacy flow control API
  * functions
