@@ -2971,6 +2971,7 @@ static inline void hif_config_rri_on_ddr(struct hif_softc *scn)
 		scn->qdf_dev->dev, (CE_COUNT*sizeof(uint32_t)),
 		&paddr_rri_on_ddr);
 
+	scn->paddr_rri_on_ddr = paddr_rri_on_ddr;
 	low_paddr  = BITS0_TO_31(paddr_rri_on_ddr);
 	high_paddr = BITS32_TO_35(paddr_rri_on_ddr);
 

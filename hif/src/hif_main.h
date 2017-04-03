@@ -150,6 +150,7 @@ struct hif_softc {
 	atomic_t active_grp_tasklet_cnt;
 	atomic_t link_suspended;
 	uint32_t *vaddr_rri_on_ddr;
+	qdf_dma_addr_t paddr_rri_on_ddr;
 	int linkstate_vote;
 	bool fastpath_mode_on;
 	atomic_t tasklet_from_intr;
