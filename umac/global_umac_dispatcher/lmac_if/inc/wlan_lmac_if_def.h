@@ -604,7 +604,7 @@ struct wlan_lmac_if_p2p_rx_ops {
  * @atf_set_token_utilized:            Set atf token utilized
  */
 struct wlan_lmac_if_atf_rx_ops {
-	uint32_t (*atf_get_atf_commit)(struct wlan_objmgr_pdev *pdev);
+	uint8_t (*atf_get_atf_commit)(struct wlan_objmgr_pdev *pdev);
 	uint32_t (*atf_get_fmcap)(struct wlan_objmgr_psoc *psoc);
 	uint32_t (*atf_get_obss_scale)(struct wlan_objmgr_pdev *pdev);
 	uint32_t (*atf_get_mode)(struct wlan_objmgr_psoc *psoc);
@@ -613,9 +613,9 @@ struct wlan_lmac_if_atf_rx_ops {
 	uint32_t (*atf_get_peers)(struct wlan_objmgr_psoc *psoc);
 	uint32_t (*atf_get_tput_based)(struct wlan_objmgr_pdev *pdev);
 	uint32_t (*atf_get_logging)(struct wlan_objmgr_pdev *pdev);
-	uint32_t (*atf_get_txbuf_share)(struct wlan_objmgr_pdev *pdev);
-	uint32_t (*atf_get_txbuf_max)(struct wlan_objmgr_pdev *pdev);
-	uint32_t (*atf_get_txbuf_min)(struct wlan_objmgr_pdev *pdev);
+	uint8_t (*atf_get_txbuf_share)(struct wlan_objmgr_pdev *pdev);
+	uint16_t (*atf_get_txbuf_max)(struct wlan_objmgr_pdev *pdev);
+	uint16_t (*atf_get_txbuf_min)(struct wlan_objmgr_pdev *pdev);
 	uint32_t (*atf_get_ssidgroup)(struct wlan_objmgr_pdev *pdev);
 	uint32_t (*atf_get_tx_block_count)(struct wlan_objmgr_vdev *vdev);
 	uint8_t (*atf_get_peer_blk_txtraffic)(struct wlan_objmgr_peer *peer);
