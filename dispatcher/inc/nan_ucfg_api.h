@@ -25,10 +25,13 @@
 
 #include "qdf_types.h"
 #include "qdf_status.h"
+#include "wlan_objmgr_cmn.h"
 
 struct nan_callbacks;
 struct wlan_objmgr_vdev;
 struct wlan_objmgr_psoc;
+struct wlan_objmgr_vdev;
+struct nan_callbacks;
 
 /**
  * ucfg_nan_set_ndi_state: set ndi state
@@ -171,14 +174,52 @@ QDF_STATUS ucfg_nan_get_callbacks(struct wlan_objmgr_psoc *psoc,
 				  struct nan_callbacks *cb_obj);
 
 /**
+ * ucfg_nan_get_ndi_vdev: ucfg API get ndi vdev from psoc
+ * @psoc: psoc obj pointer
+ * @dbg_id: component id that will be owner of reference
+ *
+ * Return: vdev object pointer on success, null otherwise
+ */
+struct wlan_objmgr_vdev *ucfg_nan_get_ndi_vdev(struct wlan_objmgr_psoc *psoc,
+						wlan_objmgr_ref_dbgid dbg_id);
+
+/**
  * ucfg_nan_req_processor: ucfg API to be called from HDD/OS_IF to
  * process nan datapath initiator request from userspace
+ * @vdev: nan vdev pointer
  * @in_req: NDP request
  * @psoc: pointer to psoc object
  * @req_type: type of request
  *
  * Return: status of operation
  */
-QDF_STATUS ucfg_nan_req_processor(void *in_req, uint32_t req_type);
+QDF_STATUS ucfg_nan_req_processor(struct wlan_objmgr_vdev *vdev,
+				  void *in_req, uint32_t req_type);
+
+/**
+ * ucfg_nan_register_hdd_callbacks: ucfg API to set hdd callbacks
+ * @psoc: pointer to psoc object
+ * @cb_obj: structs containing callbacks
+ * @os_if_event_handler: os if event handler callback
+ *
+ * Return: status of operation
+ */
+int ucfg_nan_register_hdd_callbacks(struct wlan_objmgr_psoc *psoc,
+				    struct nan_callbacks *cb_obj,
+				    void (os_if_event_handler)(
+				    struct wlan_objmgr_psoc *,
+				    struct wlan_objmgr_vdev *,
+				    uint32_t, void *));
+
+/**
+ * ucfg_nan_get_callbacks: ucfg API to return callbacks
+ * @psoc: pointer to psoc object
+ * @cb_obj: callback struct to populate
+ *
+ * Return: callback struct on sucess, NULL otherwise
+ */
+QDF_STATUS ucfg_nan_get_callbacks(struct wlan_objmgr_psoc *psoc,
+				  struct nan_callbacks *cb_obj);
 
 #endif /* _NAN_UCFG_API_H_ */
+

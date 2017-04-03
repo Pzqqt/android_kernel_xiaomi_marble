@@ -24,6 +24,12 @@
 #include "nan_public_structs.h"
 #include "../../core/src/nan_main_i.h"
 #include "scheduler_api.h"
+#include "wlan_objmgr_psoc_obj.h"
+#include "wlan_objmgr_pdev_obj.h"
+#include "wlan_objmgr_vdev_obj.h"
+
+struct wlan_objmgr_psoc;
+struct wlan_objmgr_vdev;
 
 inline QDF_STATUS ucfg_nan_set_ndi_state(struct wlan_objmgr_vdev *vdev,
 					 uint32_t state)
@@ -296,7 +302,28 @@ inline QDF_STATUS ucfg_nan_get_callbacks(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS ucfg_nan_req_processor(void *in_req, uint32_t req_type)
+struct wlan_objmgr_vdev *ucfg_nan_get_ndi_vdev(struct wlan_objmgr_psoc *psoc,
+						wlan_objmgr_ref_dbgid dbg_id)
+{
+	QDF_STATUS status;
+	struct nan_psoc_priv_obj *psoc_obj = nan_get_psoc_priv_obj(psoc);
+
+	if (!psoc_obj) {
+		nan_err("nan psoc priv object is NULL");
+		return NULL;
+	}
+
+	status = wlan_objmgr_vdev_try_get_ref(psoc_obj->vdev, dbg_id);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		nan_err("could not get vdev ref. vdev may have been deleted");
+		return NULL;
+	}
+
+	return psoc_obj->vdev;
+}
+
+QDF_STATUS ucfg_nan_req_processor(struct wlan_objmgr_vdev *vdev,
+				  void *in_req, uint32_t req_type)
 {
 	QDF_STATUS status;
 	struct scheduler_msg msg = {0};
@@ -316,4 +343,32 @@ QDF_STATUS ucfg_nan_req_processor(void *in_req, uint32_t req_type)
 	}
 
 	return status;
+}
+
+int ucfg_nan_register_hdd_callbacks(struct wlan_objmgr_psoc *psoc,
+				    struct nan_callbacks *cb_obj,
+				    void (os_if_event_handler)(
+				    struct wlan_objmgr_psoc *,
+				    struct wlan_objmgr_vdev *,
+				    uint32_t, void *))
+{
+	struct nan_psoc_priv_obj *psoc_obj = nan_get_psoc_priv_obj(psoc);
+
+	if (!psoc_obj) {
+		nan_err("nan psoc priv object is NULL");
+		return -EINVAL;
+	}
+
+	psoc_obj->cb_obj.os_if_event_handler = os_if_event_handler;
+
+	psoc_obj->cb_obj.ndi_open = cb_obj->ndi_open;
+	psoc_obj->cb_obj.ndi_start = cb_obj->ndi_start;
+	psoc_obj->cb_obj.ndi_delete = cb_obj->ndi_delete;
+	psoc_obj->cb_obj.ndi_close = cb_obj->ndi_close;
+	psoc_obj->cb_obj.drv_ndi_create_rsp_handler =
+				cb_obj->drv_ndi_create_rsp_handler;
+	psoc_obj->cb_obj.drv_ndi_delete_rsp_handler =
+				cb_obj->drv_ndi_delete_rsp_handler;
+
+	return 0;
 }

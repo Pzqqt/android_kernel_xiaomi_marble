@@ -484,6 +484,14 @@ struct nan_callbacks {
 	void (*os_if_event_handler)(struct wlan_objmgr_psoc *psoc,
 				   struct wlan_objmgr_vdev *vdev,
 				   uint32_t type, void *msg);
+
+	struct wlan_objmgr_vdev* (*ndi_open)(char *iface_name);
+	int (*ndi_start)(uint8_t);
+	void (*ndi_close)(uint8_t);
+	int (*ndi_delete)(uint8_t, char *iface_name, uint16_t transaction_id);
+	void (*drv_ndi_create_rsp_handler)(uint8_t,
+					struct nan_datapath_inf_create_rsp *);
+	void (*drv_ndi_delete_rsp_handler)(uint8_t);
 };
 
 #endif
