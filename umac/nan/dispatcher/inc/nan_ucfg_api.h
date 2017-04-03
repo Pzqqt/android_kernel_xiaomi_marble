@@ -170,4 +170,15 @@ uint32_t ucfg_nan_get_ndi_delete_rsp_status(struct wlan_objmgr_vdev *vdev);
 QDF_STATUS ucfg_nan_get_callbacks(struct wlan_objmgr_psoc *psoc,
 				  struct nan_callbacks *cb_obj);
 
+/**
+ * ucfg_nan_req_processor: ucfg API to be called from HDD/OS_IF to
+ * process nan datapath initiator request from userspace
+ * @in_req: NDP request
+ * @psoc: pointer to psoc object
+ * @req_type: type of request
+ *
+ * Return: status of operation
+ */
+QDF_STATUS ucfg_nan_req_processor(void *in_req, uint32_t req_type);
+
 #endif /* _NAN_UCFG_API_H_ */
