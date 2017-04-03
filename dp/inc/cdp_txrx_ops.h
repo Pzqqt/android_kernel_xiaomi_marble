@@ -556,7 +556,7 @@ struct cdp_raw_ops {
 #ifdef CONFIG_WIN
 struct cdp_pflow_ops {
 	uint32_t(*pflow_update_pdev_params)(void *,
-			ol_ath_param_t, uint32_t, void *);
+			enum _ol_ath_param_t, uint32_t, void *);
 };
 #endif /* CONFIG_WIN */
 
