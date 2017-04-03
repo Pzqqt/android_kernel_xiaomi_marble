@@ -24,7 +24,7 @@
  * under proprietary terms before Copyright ownership was assigned
  * to the Linux Foundation.
  */
- /**
+/**
  * @file cdp_txrx_raw.h
  * @brief Define the host data path raw mode API functions
  * called by the host control SW and the OS interface module
