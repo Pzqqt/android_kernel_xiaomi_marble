@@ -39,6 +39,8 @@
 #include "csr_api.h"
 #include "wlan_hdd_main.h"
 #include "wma.h"
+#include "ol_txrx_api.h"
+#include "pktlog_ac.h"
 #endif
 #include <wlan_logging_sock_svc.h>
 #include <kthread.h>
@@ -48,8 +50,6 @@
 #include <wlan_ptt_sock_svc.h>
 #include <host_diag_core_event.h>
 #include "host_diag_core_log.h"
-#include "ol_txrx_api.h"
-#include "pktlog_ac.h"
 
 #ifdef CNSS_GENL
 #include <net/cnss_nl.h>

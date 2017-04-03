@@ -26,25 +26,7 @@ INCS += -I$(obj)/$(HOST_CMN_CONVG_PTT)/inc \
         -I$(obj)/$(HOST_CMN_CONVG_LOGGING)/inc \
         -I$(obj)/$(DEPTH)/cmn_dev/utils/host_diag_log/inc \
         -I$(obj)/$(DEPTH)/cmn_dev/utils/host_diag_log/src \
-        -I$(obj)/$(DEPTH)/cmn_dev/utils/ptt/inc \
-        -I$(obj)/$(DEPTH)/hal \
-        -I$(obj)/$(DEPTH)/offload/wlan/txrx/include \
-        -I$(obj)/$(DEPTH)/offload/wlan/ath_pktlog/include \
-        -I$(obj)/$(DEPTH)/offload/wlan/include \
-        -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/obj_mgr/inc \
-        -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/inc \
-        -I$(obj)/$(DEPTH)/cmn_dev/wmi/inc \
-        -I$(obj)/$(DEPTH)/cmn_dev/umac/global_umac_dispatcher/lmac_if/inc \
-        -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/mgmt_txrx/dispatcher/inc \
-        -I$(obj)/$(DEPTH)/offload/hw/include \
-        -I$(obj)/$(DEPTH)/umac/base \
-        -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/cmn_defs/inc \
-        -I$(obj)/$(DEPTH)/cmn_dev/umac/scan/dispatcher/inc \
-        -I$(obj)/$(DEPTH)/hal/linux \
-        -I$(obj)/$(DEPTH)/lmac/ath_dev \
-        -I$(obj)/$(DEPTH)/cmn_dev/umac/regulatory/dispatcher/inc
-
-
+        -I$(obj)/$(DEPTH)/cmn_dev/utils/ptt/inc
 
 obj-m += qdf.o
 
