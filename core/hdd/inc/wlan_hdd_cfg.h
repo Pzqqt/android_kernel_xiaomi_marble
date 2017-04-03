@@ -59,6 +59,10 @@
 #define IPADDR_STRING_LENGTH   (16)
 #endif
 
+#define CFG_DBS_SCAN_CLIENTS_MAX           (7)
+#define CFG_DBS_SCAN_PARAM_PER_CLIENT      (3)
+#define CFG_DBS_SCAN_PARAM_LENGTH          (42)
+
 /* Number of items that can be configured */
 #define MAX_CFG_INI_ITEMS   1024
 
@@ -8005,6 +8009,30 @@ enum dot11p_mode {
 #define CFG_DUAL_MAC_FEATURE_DISABLE_DEFAULT      (0)
 
 /*
+ * <ini>
+ * gdbs_scan_selection - DBS Scan Selection.
+ * @Default: 5,2,2,16,2,2
+ *
+ * This ini is used to enable DBS scan selection.
+ * 1st argument is module_id, 2nd argument is number of DBS scan,
+ * 3rd argument is number of non-DBS scan,
+ * and other arguments follows.
+ * 5,2,2,16,2,2 means:
+ * 5 is module id, 2 is num of DBS scan, 2 is num of non-DBS scan.
+ * 16 is module id, 2 is num of DBS scan, 2 is num of non-DBS scan.
+ *
+ * Related: None.
+ *
+ * Supported Feature: DBS Scan
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_DBS_SCAN_SELECTION_NAME          "gdbs_scan_selection"
+#define CFG_DBS_SCAN_SELECTION_DEFAULT       "5,2,2,16,2,2"
+
+/*
  * gPNOChannelPrediction will allow user to enable/disable the
  * PNO channel prediction feature.
  * In current PNO implementation, scan is always done until all configured
@@ -10604,6 +10632,7 @@ struct hdd_config {
 #endif
 	bool ce_classify_enabled;
 	uint32_t dual_mac_feature_disable;
+	uint8_t dbs_scan_selection[CFG_DBS_SCAN_PARAM_LENGTH];
 	bool     tx_chain_mask_cck;
 	uint8_t  tx_chain_mask_1ss;
 	bool smart_chainmask_enabled;

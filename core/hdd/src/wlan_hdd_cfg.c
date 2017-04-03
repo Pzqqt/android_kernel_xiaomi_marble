@@ -3624,6 +3624,12 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_DUAL_MAC_FEATURE_DISABLE_DEFAULT,
 		     CFG_DUAL_MAC_FEATURE_DISABLE_MIN,
 		     CFG_DUAL_MAC_FEATURE_DISABLE_MAX),
+
+	REG_VARIABLE_STRING(CFG_DBS_SCAN_SELECTION_NAME, WLAN_PARAM_String,
+		     struct hdd_config, dbs_scan_selection,
+		     VAR_FLAGS_OPTIONAL,
+		     (void *)CFG_DBS_SCAN_SELECTION_DEFAULT),
+
 #ifdef FEATURE_WLAN_SCAN_PNO
 	REG_VARIABLE(CFG_PNO_CHANNEL_PREDICTION_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, pno_channel_prediction,
@@ -5634,6 +5640,9 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	hdd_notice("Name = [%s] value = [%u]",
 		  CFG_DUAL_MAC_FEATURE_DISABLE,
 		  pHddCtx->config->dual_mac_feature_disable);
+	hdd_notice("Name = [%s] Value = [%s]",
+		  CFG_DBS_SCAN_SELECTION_NAME,
+		  pHddCtx->config->dbs_scan_selection);
 #ifdef FEATURE_WLAN_SCAN_PNO
 	hdd_notice("Name = [%s] Value = [%u]",
 		   CFG_PNO_CHANNEL_PREDICTION_NAME,
