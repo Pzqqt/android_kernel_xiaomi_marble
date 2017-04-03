@@ -3801,10 +3801,14 @@ struct wmi_macaddr_t {
  * struct atf_peer_info - ATF peer info params
  * @peer_macaddr: peer mac addr
  * @percentage_peer: percentage of air time for this peer
+ * @vdev_id: Associated vdev id
+ * @pdev_id: Associated pdev id
  */
 typedef struct {
 	struct wmi_macaddr_t peer_macaddr;
 	uint32_t percentage_peer;
+	uint32_t vdev_id;
+	uint32_t pdev_id;
 } atf_peer_info;
 
 /**
@@ -3814,6 +3818,8 @@ typedef struct {
  * @max_airtime: Max airtime
  * @priority: Priority level
  * @reserved: Reserved array
+ * @vdev_id: Associated vdev id
+ * @pdev_id: Associated pdev id
  */
 typedef struct {
 	struct wmi_macaddr_t peer_macaddr;
@@ -3821,6 +3827,8 @@ typedef struct {
 	uint32_t     max_airtime;
 	uint32_t     priority;
 	uint32_t     reserved[4];
+	uint32_t     vdev_id;
+	uint32_t     pdev_id;
 } bwf_peer_info;
 
 /**
@@ -3838,11 +3846,15 @@ struct set_bwf_params {
  * @peer_macaddr: peer mac address
  * @group_index: group index
  * @atf_index_reserved: ATF index rsvd
+ * @vdev_id: Associated vdev id
+ * @pdev_id: Associated pdev id
  */
 typedef struct {
 	struct wmi_macaddr_t peer_macaddr;
 	uint32_t group_index;
 	uint32_t atf_index_reserved;
+	uint16_t vdev_id;
+	uint16_t pdev_id;
 } atf_peer_ext_info;
 
 /**
@@ -3869,10 +3881,12 @@ struct atf_peer_request_params {
  * struct atf_group_info - ATF group info params
  * @percentage_group: Percentage AT for group
  * @atf_group_units_reserved: ATF group information
+ * @pdev_id: Associated pdev id
  */
 typedef struct {
 	uint32_t percentage_group;
 	uint32_t atf_group_units_reserved;
+	uint32_t pdev_id;
 } atf_group_info;
 
 /**
