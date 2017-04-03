@@ -24,7 +24,7 @@
  * under proprietary terms before Copyright ownership was assigned
  * to the Linux Foundation.
  */
- /**
+/**
  * @file cdp_txrx_stats.h
  * @brief Define the host data path statistics API functions
  * called by the host control SW and the OS interface module
@@ -43,7 +43,7 @@ cdp_clear_stats(ol_txrx_soc_handle soc, uint16_t bitmap)
 
 static inline int
 cdp_stats(ol_txrx_soc_handle soc, uint8_t vdev_id, char *buffer,
-		unsigned buf_len)
+		unsigned int buf_len)
 {
 	if (soc->ops->mob_stats_ops->stats)
 		return soc->ops->mob_stats_ops->stats(vdev_id, buffer, buf_len);
