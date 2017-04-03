@@ -111,6 +111,7 @@
  * @WLAN_UMAC_COMP_NAN:           Neighbor Aware Networking
  * @WLAN_UMAC_COMP_DFS:           DFS
  * @WLAN_UMAC_COMP_ID_MAX:        Maximum components in UMAC
+ * @WLAN_UMAC_COMP_OFFCHAN_TXRX:  Offchan TxRx
  *
  * This id is static.
  * On Adding new component, new id has to be assigned
@@ -131,6 +132,7 @@ enum wlan_umac_comp_id {
 	WLAN_UMAC_COMP_CRYPTO,
 	WLAN_UMAC_COMP_NAN,
 	WLAN_UMAC_COMP_DFS,
+	WLAN_UMAC_COMP_OFFCHAN_TXRX,
 	WLAN_UMAC_COMP_ID_MAX,
 };
 

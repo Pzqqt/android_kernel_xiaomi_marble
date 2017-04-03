@@ -52,6 +52,9 @@
 #include <wlan_dfs_init_deinit_api.h>
 #endif
 
+#ifdef WLAN_OFFCHAN_TXRX_ENABLE
+#include <wlan_offchan_txrx_api.h>
+#endif
 /**
  * DOC: This file provides various init/deinit trigger point for new
  * components.
@@ -461,6 +464,28 @@ static QDF_STATUS dispatcher_deinit_dfs(void)
 }
 #endif
 
+#ifdef WLAN_OFFCHAN_TXRX_ENABLE
+static QDF_STATUS dispatcher_offchan_txrx_init(void)
+{
+	return wlan_offchan_txrx_init();
+}
+
+static QDF_STATUS dispatcher_offchan_txrx_deinit(void)
+{
+	return wlan_offchan_txrx_deinit();
+}
+#else
+static QDF_STATUS dispatcher_offchan_txrx_init(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS dispatcher_offchan_txrx_deinit(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /*WLAN_OFFCHAN_TXRX_ENABLE*/
+
 QDF_STATUS dispatcher_init(void)
 {
 	if (QDF_STATUS_SUCCESS != wlan_objmgr_global_obj_init())
@@ -508,8 +533,13 @@ QDF_STATUS dispatcher_init(void)
 	if (QDF_STATUS_SUCCESS != dispatcher_regulatory_init())
 		goto regulatory_init_fail;
 
+	if (QDF_STATUS_SUCCESS != dispatcher_offchan_txrx_init())
+		goto offchan_init_fail;
+
 	return QDF_STATUS_SUCCESS;
 
+offchan_init_fail:
+	dispatcher_regulatory_deinit();
 regulatory_init_fail:
 	dispatcher_deinit_dfs();
 dfs_init_fail:
@@ -546,6 +576,8 @@ EXPORT_SYMBOL(dispatcher_init);
 
 QDF_STATUS dispatcher_deinit(void)
 {
+	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_offchan_txrx_deinit());
+
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_regulatory_deinit());
 
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_deinit_dfs());
