@@ -24,7 +24,7 @@
  * under proprietary terms before Copyright ownership was assigned
  * to the Linux Foundation.
  */
- /**
+/**
  * @file cdp_txrx_cmn.h
  * @brief Define the host data path converged API functions
  * called by the host control SW and the OS interface module
@@ -508,9 +508,9 @@ int cdp_txrx_stats(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 }
 
 /**
-  * cdp_txrx_intr_attach(): function to attach and configure interrupt
-  * @soc: soc handle
-  */
+ * cdp_txrx_intr_attach(): function to attach and configure interrupt
+ * @soc: soc handle
+ */
 static inline QDF_STATUS cdp_txrx_intr_attach(ol_txrx_soc_handle soc)
 {
 	if (soc->ops->cmn_drv_ops->txrx_intr_attach)
@@ -520,9 +520,9 @@ static inline QDF_STATUS cdp_txrx_intr_attach(ol_txrx_soc_handle soc)
 }
 
 /**
-  * cdp_txrx_intr_detach(): function to detach interrupt
-  * @soc: soc handle
-  */
+ * cdp_txrx_intr_detach(): function to detach interrupt
+ * @soc: soc handle
+ */
 static inline void cdp_txrx_intr_detach(ol_txrx_soc_handle soc)
 {
 	if (soc->ops->cmn_drv_ops->txrx_intr_detach)
@@ -530,10 +530,10 @@ static inline void cdp_txrx_intr_detach(ol_txrx_soc_handle soc)
 }
 
 /**
-  * cdp_display_stats(): function to map to dump stats
-  * @soc: soc handle
-  * @value: statistics option
-  */
+ * cdp_display_stats(): function to map to dump stats
+ * @soc: soc handle
+ * @value: statistics option
+ */
 static inline QDF_STATUS
 cdp_display_stats(ol_txrx_soc_handle soc, uint16_t value)
 {
