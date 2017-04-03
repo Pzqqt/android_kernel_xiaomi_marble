@@ -2436,24 +2436,23 @@ int __wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
 	if (0 != status)
 		return status;
 
-	/*
-	 * check state machine state and kickstart modules if they are closed.
-	 */
+	/* check state machine state and kickstart modules if they are closed */
 	status = hdd_wlan_start_modules(pHddCtx, pVirtAdapter, false);
 	if (status)
 		return status;
 
-	wlan_hdd_release_intf_addr(pHddCtx,
-				   pVirtAdapter->macAddressCurrent.bytes);
-
-	if ((pVirtAdapter->device_mode == QDF_SAP_MODE) &&
-		wlan_sap_is_pre_cac_active(pHddCtx->hHal)) {
+	if (pVirtAdapter->device_mode == QDF_SAP_MODE &&
+	    wlan_sap_is_pre_cac_active(pHddCtx->hHal)) {
 		hdd_clean_up_pre_cac_interface(pHddCtx);
+	} else {
+		wlan_hdd_release_intf_addr(pHddCtx,
+					 pVirtAdapter->macAddressCurrent.bytes);
+		hdd_stop_adapter(pHddCtx, pVirtAdapter, true);
+		hdd_close_adapter(pHddCtx, pVirtAdapter, true);
 	}
 
-	hdd_stop_adapter(pHddCtx, pVirtAdapter, true);
-	hdd_close_adapter(pHddCtx, pVirtAdapter, true);
 	EXIT();
+
 	return 0;
 }
 
