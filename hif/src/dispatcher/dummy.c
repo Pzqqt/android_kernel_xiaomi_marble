@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -355,3 +355,12 @@ int hif_dummy_bus_reset_resume(struct hif_softc *hif_ctx)
 {
 	return 0;
 }
+
+int hif_dummy_map_ce_to_irq(struct hif_softc *scn, int ce_id)
+{
+	HIF_ERROR("%s: hif_map_ce_to_irq is not implemented on this platform",
+		  __func__);
+	QDF_BUG(0);
+	return -(1);
+}
+

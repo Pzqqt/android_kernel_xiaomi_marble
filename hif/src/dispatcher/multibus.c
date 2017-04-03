@@ -66,6 +66,7 @@ static void hif_intialize_default_ops(struct hif_softc *hif_sc)
 	bus_ops->hif_bus_late_resume = &hif_dummy_bus_resume;
 	bus_ops->hif_grp_irq_disable = &hif_dummy_grp_irq_disable;
 	bus_ops->hif_grp_irq_enable = &hif_dummy_grp_irq_enable;
+	bus_ops->hif_map_ce_to_irq = &hif_dummy_map_ce_to_irq;
 }
 
 #define NUM_OPS (sizeof(struct hif_bus_ops) / sizeof(void *))
