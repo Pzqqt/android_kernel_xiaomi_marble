@@ -233,7 +233,7 @@ void hdd_disable_and_flush_mc_addr_list(hdd_adapter_t *adapter,
 	enum pmo_offload_trigger trigger);
 
 /**
- * wlan_hdd_cfg80211_update_replay_counter_callback() - replay counter callback
+ * wlan_hdd_cfg80211_update_replay_counter_cb() - replay counter callback
  * @cb_ctx: Callback context as void* as PMO do not about HDD adapter type
  * @gtk_rsp_param: Pointer to gtk offload response parameter
  *
@@ -241,7 +241,7 @@ void hdd_disable_and_flush_mc_addr_list(hdd_adapter_t *adapter,
  *
  * Return: none
  */
-void wlan_hdd_cfg80211_update_replay_counter_callback(
+void wlan_hdd_cfg80211_update_replay_counter_cb(
 	void *cb_ctx,
 	struct pmo_gtk_rsp_params *gtk_rsp_param);
 

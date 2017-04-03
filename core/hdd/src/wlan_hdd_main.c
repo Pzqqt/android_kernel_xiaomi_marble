@@ -217,6 +217,7 @@ static const struct wiphy_wowlan_support wowlan_support_reg_init = {
 #endif
 
 /* internal function declaration */
+struct notifier_block hdd_netdev_notifier;
 
 struct sock *cesium_nl_srv_sock;
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN

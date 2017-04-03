@@ -166,7 +166,7 @@ static void hdd_disable_gtk_offload(hdd_adapter_t *adapter)
 
 	/* ensure to get gtk rsp first before disable it*/
 	gtk_rsp_request.callback =
-		wlan_hdd_cfg80211_update_replay_counter_callback;
+		wlan_hdd_cfg80211_update_replay_counter_cb;
 	/* Passing as void* as PMO does not know legacy HDD adapter type */
 	gtk_rsp_request.callback_context =
 		(void *)adapter;
@@ -397,8 +397,7 @@ void hdd_enable_ns_offload(hdd_adapter_t *adapter,
 		ns_req->ipv6_addr_type, &ns_req->count);
 	if (err) {
 		hdd_disable_ns_offload(adapter, trigger);
-		hdd_debug("Reached max supported addresses and not enabling "
-			"NS offload");
+		hdd_debug("Max supported addresses: disabling NS offload");
 		goto out;
 	}
 
@@ -407,8 +406,7 @@ void hdd_enable_ns_offload(hdd_adapter_t *adapter,
 		ns_req->ipv6_addr_type, &ns_req->count);
 	if (err) {
 		hdd_disable_ns_offload(adapter, trigger);
-		hdd_debug("Reached max supported addresses and not enabling "
-			"NS offload");
+		hdd_debug("Max supported addresses: disabling NS offload");
 		goto out;
 	}
 
@@ -1046,7 +1044,9 @@ hdd_update_conn_state_mask(hdd_adapter_t *adapter, uint32_t *conn_state_mask)
 
 	eConnectionState connState;
 	hdd_station_ctx_t *sta_ctx;
+
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+
 	connState = sta_ctx->conn_info.connState;
 
 	if (connState == eConnectionState_Associated ||
@@ -1314,12 +1314,12 @@ QDF_STATUS hdd_wlan_shutdown(void)
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 /**
-* hdd_wlan_ssr_reinit_event()- send ssr reinit state
-*
-* This Function send send ssr reinit state diag event
-*
-* Return: void.
-*/
+ * hdd_wlan_ssr_reinit_event()- send ssr reinit state
+ *
+ * This Function send send ssr reinit state diag event
+ *
+ * Return: void.
+ */
 static void hdd_wlan_ssr_reinit_event(void)
 {
 	WLAN_HOST_DIAG_EVENT_DEF(ssr_reinit, struct host_event_wlan_ssr_reinit);
@@ -1377,9 +1377,9 @@ QDF_STATUS hdd_wlan_re_init(void)
 		pAdapter = hdd_get_adapter(pHddCtx, QDF_SAP_MODE);
 		if (!pAdapter) {
 			pAdapter = hdd_get_adapter(pHddCtx, QDF_IBSS_MODE);
-			if (!pAdapter) {
+			if (!pAdapter)
 				hdd_err("Failed to get Adapter!");
-			}
+
 		}
 	}
 
@@ -1518,6 +1518,7 @@ int wlan_hdd_set_powersave(hdd_adapter_t *adapter,
 static void wlan_hdd_print_suspend_fail_stats(hdd_context_t *hdd_ctx)
 {
 	struct suspend_resume_stats *stats = &hdd_ctx->suspend_resume_stats;
+
 	hdd_err("ipa:%d, radar:%d, roam:%d, scan:%d, initial_wakeup:%d",
 		stats->suspend_fail[SUSPEND_FAIL_IPA],
 		stats->suspend_fail[SUSPEND_FAIL_RADAR],
@@ -2063,7 +2064,8 @@ static int __wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 	/* Automatically determine transmit power */
 	case NL80211_TX_POWER_AUTOMATIC:
 	/* Fall through */
-	case NL80211_TX_POWER_LIMITED:  /* Limit TX power by the mBm parameter */
+	case NL80211_TX_POWER_LIMITED:
+	/* Limit TX power by the mBm parameter */
 		if (sme_set_max_tx_power(hHal, bssid, selfMac, dbm) !=
 		    QDF_STATUS_SUCCESS) {
 			hdd_err("Setting maximum tx power failed");
@@ -2074,7 +2076,6 @@ static int __wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 	case NL80211_TX_POWER_FIXED:    /* Fix TX power to the mBm parameter */
 		hdd_err("NL80211_TX_POWER_FIXED not supported");
 		return -EOPNOTSUPP;
-		break;
 
 	default:
 		hdd_err("Invalid power setting type %d", type);
@@ -2100,6 +2101,7 @@ int wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 				  int dbm)
 {
 	int ret;
+
 	cds_ssr_protect(__func__);
 	ret = __wlan_hdd_cfg80211_set_txpower(wiphy,
 					      wdev,
