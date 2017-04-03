@@ -990,12 +990,11 @@ QDF_STATUS tgt_mgmt_txrx_tx_completion_handler(
 		ota_comp_cb(cb_context, nbuf, status, tx_compl_params);
 
 no_registered_cb:
-	/**
-	 * decremneting the peer ref count that has been incremented while
-	 * passing peer in wlan_mgmt_txrx_mgmt_frame_tx or
-	 * wlan_mgmt_txrx_beacon_frame_tx APIs.
+	/*
+	 * decrementing the peer ref count that was incremented while
+	 * accessing peer in wlan_mgmt_txrx_mgmt_frame_tx
 	 */
-	wlan_objmgr_peer_release_ref(mgmt_desc->peer, WLAN_MGMT_NB_ID);
+	wlan_objmgr_peer_release_ref(mgmt_desc->peer, WLAN_MGMT_SB_ID);
 	wlan_mgmt_txrx_desc_put(mgmt_txrx_ctx, desc_id);
 	return QDF_STATUS_SUCCESS;
 }
