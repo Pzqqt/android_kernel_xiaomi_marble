@@ -23,6 +23,11 @@
 #ifndef _OS_IF_NAN_H_
 #define _OS_IF_NAN_H_
 
+#include "qdf_types.h"
+
+struct wlan_objmgr_psoc;
+struct wlan_objmgr_vdev;
+
 #ifdef WLAN_FEATURE_NAN_CONVERGENCE
 
 #define NDP_QOS_INFO_LEN 255
@@ -113,5 +118,29 @@ enum qca_wlan_vendor_attr_ndp_sub_cmd_value {
 };
 
 #endif /* WLAN_FEATURE_NAN_CONVERGENCE */
+
+/**
+ * os_if_nan_process_ndp_cmd: os_if api to handle nan request message
+ * @psoc: pointer to psoc object
+ * @data: request data. contains vendor cmd tlvs
+ * @data_len: length of data
+ *
+ * Return: status of operation
+ */
+int os_if_nan_process_ndp_cmd(struct wlan_objmgr_psoc *psoc,
+				const void *data, int data_len);
+
+/**
+ * os_if_nan_event_handler: os_if handler api for nan response messages
+ * @psoc: pointer to psoc object
+ * @vdev: pointer to vdev object
+ * @type: message type
+ * @msg: msg buffer
+ *
+ * Return: None
+ */
+void os_if_nan_event_handler(struct wlan_objmgr_psoc *psoc,
+			     struct wlan_objmgr_vdev *vdev,
+			     uint32_t type, void *msg);
 
 #endif
