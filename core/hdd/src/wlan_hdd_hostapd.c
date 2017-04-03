@@ -7399,6 +7399,8 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 		return -EINVAL;
 	}
 
+	wlan_hdd_tdls_disable_offchan_and_teardown_links(pHddCtx);
+
 	if (policy_mgr_is_hw_mode_change_in_progress(pHddCtx->hdd_psoc)) {
 		status = policy_mgr_wait_for_connection_update(
 			pHddCtx->hdd_psoc);
