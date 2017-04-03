@@ -151,14 +151,14 @@ QDF_STATUS qdf_mutex_acquire(qdf_mutex_t *lock)
 		lock->refcount++;
 		lock->state = LOCK_ACQUIRED;
 		return QDF_STATUS_SUCCESS;
-	} else {
-		/* lock is already destroyed */
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Lock is already destroyed", __func__);
-		mutex_unlock(&lock->m_lock);
-		QDF_ASSERT(0);
-		return QDF_STATUS_E_FAILURE;
 	}
+
+	/* lock is already destroyed */
+	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+		  "%s: Lock is already destroyed", __func__);
+	mutex_unlock(&lock->m_lock);
+	QDF_ASSERT(0);
+	return QDF_STATUS_E_FAILURE;
 }
 EXPORT_SYMBOL(qdf_mutex_acquire);
 
@@ -504,8 +504,8 @@ QDF_STATUS qdf_runtime_pm_allow_suspend(qdf_runtime_lock_t lock)
 {
 	void *ol_sc;
 	int ret;
-	ol_sc = cds_get_context(QDF_MODULE_ID_HIF);
 
+	ol_sc = cds_get_context(QDF_MODULE_ID_HIF);
 	if (ol_sc == NULL) {
 		QDF_ASSERT(0);
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
@@ -516,6 +516,7 @@ QDF_STATUS qdf_runtime_pm_allow_suspend(qdf_runtime_lock_t lock)
 	ret = hif_pm_runtime_allow_suspend(ol_sc, lock);
 	if (ret)
 		return QDF_STATUS_E_FAILURE;
+
 	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(qdf_runtime_pm_allow_suspend);
@@ -801,8 +802,9 @@ void qdf_lock_stats_init(void)
 		__qdf_put_lock_cookie(&lock_cookies[i]);
 
 	/* stats must be allocated for the spinlock before the cookie,
-	   otherwise this qdf_lock_list_spinlock wouldnt get intialized
-	   propperly */
+	 * otherwise this qdf_lock_list_spinlock wouldnt get initialized
+	 * properly
+	 */
 	qdf_spinlock_create(&qdf_lock_list_spinlock);
 	qdf_atomic_init(&lock_cookie_get_failures);
 	qdf_atomic_init(&lock_cookie_untracked_num);
@@ -823,8 +825,9 @@ void qdf_lock_stats_deinit(void)
 }
 
 /* allocated separate memory in case the lock memory is freed without
-	   running the deinitialization code.  The cookie list will not be
-	   corrupted. */
+ * running the deinitialization code.  The cookie list will not be
+ * corrupted.
+ */
 void qdf_lock_stats_cookie_create(struct lock_stats *stats,
 				  const char *func, int line)
 {
@@ -832,6 +835,7 @@ void qdf_lock_stats_cookie_create(struct lock_stats *stats,
 
 	if (cookie == NULL) {
 		int count;
+
 		qdf_atomic_inc(&lock_cookie_get_failures);
 		count = qdf_atomic_inc_return(&lock_cookie_untracked_num);
 		stats->cookie = (void *) DUMMY_LOCK_COOKIE;

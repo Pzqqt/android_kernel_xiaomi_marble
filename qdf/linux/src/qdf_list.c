@@ -213,6 +213,7 @@ EXPORT_SYMBOL(qdf_list_remove_node);
 QDF_STATUS qdf_list_peek_front(qdf_list_t *list, qdf_list_node_t **node2)
 {
 	struct list_head *listptr;
+
 	if (list_empty(&list->anchor))
 		return QDF_STATUS_E_EMPTY;
 

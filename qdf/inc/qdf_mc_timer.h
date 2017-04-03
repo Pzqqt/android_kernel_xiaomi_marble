@@ -50,7 +50,8 @@
 
 /* Type declarations */
 /* qdf Timer callback function prototype (well, actually a prototype for
-   a pointer to this callback function) */
+ * a pointer to this callback function)
+ */
 typedef void (*qdf_mc_timer_callback_t)(void *user_data);
 
 typedef enum {
@@ -250,10 +251,10 @@ unsigned long qdf_mc_timer_get_system_ticks(void);
 unsigned long qdf_mc_timer_get_system_time(void);
 
 /**
-  * qdf_get_monotonic_boottime_ns() - Get kernel boottime in ns
-  *
-  * Return: kernel boottime in nano sec
-  */
+ * qdf_get_monotonic_boottime_ns() - Get kernel boottime in ns
+ *
+ * Return: kernel boottime in nano sec
+ */
 s64 qdf_get_monotonic_boottime_ns(void);
 
 /**

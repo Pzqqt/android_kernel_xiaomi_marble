@@ -56,7 +56,7 @@
 #endif
 
 #include <qdf_types.h>
-#include <asm/io.h>
+#include <linux/io.h>
 #include <asm/byteorder.h>
 
 #ifdef QCA_PARTNER_PLATFORM
@@ -320,6 +320,7 @@ static inline uint64_t
 __qdf_get_totalramsize(void)
 {
 	struct sysinfo meminfo;
+
 	si_meminfo(&meminfo);
 	return MEMINFO_KB(meminfo.totalram);
 }

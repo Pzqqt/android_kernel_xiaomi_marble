@@ -838,6 +838,7 @@ static void qdf_handle_leaked_memory(qdf_list_node_t *node)
 static void qdf_mem_debug_clean(void)
 {
 	uint32_t list_size;
+
 	list_size = qdf_list_size(&qdf_mem_list);
 	if (list_size) {
 		qdf_list_node_t *node;
@@ -861,7 +862,8 @@ static void qdf_mem_debug_clean(void)
 			if (QDF_STATUS_SUCCESS == qdf_status) {
 				mem_struct = (struct s_qdf_mem_struct *)node;
 				/* Take care to log only once multiple memory
-				   leaks from the same place */
+				 * leaks from the same place
+				 */
 				if (strcmp(prev_mleak_file,
 					mem_struct->file_name)
 				    || (prev_mleak_line_num !=

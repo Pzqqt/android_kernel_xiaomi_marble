@@ -427,9 +427,7 @@ struct qdf_nbuf_cb {
 	(QDF_NBUF_CB_TX_NUM_EXTRA_FRAGS(skb) + 1)
 
 #define __qdf_nbuf_reset_num_frags(skb) \
-	do { \
-		QDF_NBUF_CB_TX_NUM_EXTRA_FRAGS(skb) = 0; \
-	} while (0)
+	(QDF_NBUF_CB_TX_NUM_EXTRA_FRAGS(skb) = 0)
 
 /**
  *   end of nbuf->cb access macros
@@ -441,9 +439,7 @@ typedef void (*qdf_nbuf_free_t)(__qdf_nbuf_t);
 #define __qdf_nbuf_mapped_paddr_get(skb) QDF_NBUF_CB_PADDR(skb)
 
 #define __qdf_nbuf_mapped_paddr_set(skb, paddr)	\
-	do { \
-		QDF_NBUF_CB_PADDR(skb) = paddr; \
-	} while (0)
+	(QDF_NBUF_CB_PADDR(skb) = paddr)
 
 #define __qdf_nbuf_frag_push_head(					\
 	skb, frag_len, frag_vaddr, frag_paddr)				\
@@ -489,9 +485,7 @@ typedef void (*qdf_nbuf_free_t)(__qdf_nbuf_t);
 	} while (0)
 
 #define __qdf_nbuf_set_vdev_ctx(skb, vdev_ctx) \
-	do { \
-		QDF_NBUF_CB_TX_VDEV_CTX((skb)) = (vdev_ctx); \
-	} while (0)
+	(QDF_NBUF_CB_TX_VDEV_CTX((skb)) = (vdev_ctx))
 
 #define __qdf_nbuf_get_vdev_ctx(skb) \
 	QDF_NBUF_CB_TX_VDEV_CTX((skb))
@@ -514,9 +508,7 @@ typedef void (*qdf_nbuf_free_t)(__qdf_nbuf_t);
 		 QDF_NBUF_CB_TX_FTYPE((skb))
 
 #define __qdf_nbuf_set_chfrag_start(skb, val) \
-	do { \
-		(QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_CHFRAG_START((skb))) = val; \
-	} while (0)
+	((QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_CHFRAG_START((skb))) = val)
 
 #define __qdf_nbuf_is_chfrag_start(skb) \
 	(QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_CHFRAG_START((skb)))
@@ -530,17 +522,13 @@ typedef void (*qdf_nbuf_free_t)(__qdf_nbuf_t);
 	(QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_CHFRAG_CONT((skb)))
 
 #define __qdf_nbuf_set_chfrag_end(skb, val) \
-	do { \
-		(QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_CHFRAG_END((skb))) = val; \
-	} while (0)
+	((QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_CHFRAG_END((skb))) = val)
 
 #define __qdf_nbuf_is_chfrag_end(skb) \
 	(QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_CHFRAG_END((skb)))
 
-#define __qdf_nbuf_trace_set_proto_type(skb, proto_type)	\
-	do { \
-		QDF_NBUF_CB_TX_PROTO_TYPE(skb) = (proto_type); \
-	} while (0)
+#define __qdf_nbuf_trace_set_proto_type(skb, proto_type)  \
+	(QDF_NBUF_CB_TX_PROTO_TYPE(skb) = (proto_type))
 
 #define __qdf_nbuf_trace_get_proto_type(skb) \
 	QDF_NBUF_CB_TX_PROTO_TYPE(skb)
@@ -548,25 +536,19 @@ typedef void (*qdf_nbuf_free_t)(__qdf_nbuf_t);
 #define __qdf_nbuf_data_attr_get(skb)		\
 	QDF_NBUF_CB_TX_DATA_ATTR(skb)
 #define __qdf_nbuf_data_attr_set(skb, data_attr) \
-	do { \
-		QDF_NBUF_CB_TX_DATA_ATTR(skb) = (data_attr); \
-	} while (0)
+	(QDF_NBUF_CB_TX_DATA_ATTR(skb) = (data_attr))
 
 #define __qdf_nbuf_ipa_owned_get(skb) \
 	QDF_NBUF_CB_TX_IPA_OWNED(skb)
 
 #define __qdf_nbuf_ipa_owned_set(skb) \
-	do { \
-		QDF_NBUF_CB_TX_IPA_OWNED(skb) = 1; \
-	} while (0)
+	(QDF_NBUF_CB_TX_IPA_OWNED(skb) = 1)
 
 #define __qdf_nbuf_ipa_priv_get(skb)	\
 	QDF_NBUF_CB_TX_IPA_PRIV(skb)
 
 #define __qdf_nbuf_ipa_priv_set(skb, priv) \
-	do { \
-		QDF_NBUF_CB_TX_IPA_PRIV(skb) = (priv); \
-	} while (0)
+	(QDF_NBUF_CB_TX_IPA_PRIV(skb) = (priv))
 
 /**
  * __qdf_nbuf_num_frags_init() - init extra frags
@@ -1138,9 +1120,7 @@ __qdf_nbuf_set_protocol(struct sk_buff *skb, uint16_t protocol)
 }
 
 #define __qdf_nbuf_set_tx_htt2_frm(skb, candi) \
-	do { \
-		QDF_NBUF_CB_TX_HL_HTT2_FRM(skb) = (candi); \
-	} while (0)
+	(QDF_NBUF_CB_TX_HL_HTT2_FRM(skb) = (candi))
 
 #define __qdf_nbuf_get_tx_htt2_frm(skb)	\
 	QDF_NBUF_CB_TX_HL_HTT2_FRM(skb)
@@ -1449,7 +1429,6 @@ static inline bool __qdf_nbuf_is_queue_empty(__qdf_nbuf_queue_t *qhead)
 static inline void
 __qdf_nbuf_set_send_complete_flag(struct sk_buff *skb, bool flag)
 {
-	return;
 }
 
 /**
@@ -1608,7 +1587,8 @@ static inline void *__qdf_nbuf_transport_header(__qdf_nbuf_t buf)
  * @skb: sk buff
  *
  * Return: TCP MSS size
- * */
+ *
+ */
 static inline size_t __qdf_nbuf_tcp_tso_size(struct sk_buff *skb)
 {
 	return skb_shinfo(skb)->gso_size;
@@ -1659,6 +1639,7 @@ static inline void *
 __qdf_nbuf_get_rx_info(__qdf_nbuf_t nbuf)
 {
 	uint8_t offset = sizeof(struct qdf_nbuf_cb);
+
 	return (void *)((uint8_t *)(nbuf->cb) + offset);
 }
 
@@ -1786,9 +1767,9 @@ static inline void __qdf_invalidate_range(void *start, void *end)
 static inline void __qdf_invalidate_range(void *start, void *end)
 {
 	/* TODO figure out how to invalidate cache on x86 and other
-	   non-MSM platform */
+	 * non-MSM platform
+	 */
 	pr_err("Cache invalidate not yet implemneted for non-MSM platforms\n");
-	return;
 }
 #endif
 

@@ -296,6 +296,7 @@ static inline int qdf_spin_is_locked(qdf_spinlock_t *lock)
 static inline int qdf_spin_trylock_bh(qdf_spinlock_t *lock, const char *func)
 {
 	int trylock_return;
+
 	BEFORE_TRYLOCK(lock);
 	trylock_return = __qdf_spin_trylock_bh(&lock->lock);
 	AFTER_TRYLOCK(lock, trylock_return, func);

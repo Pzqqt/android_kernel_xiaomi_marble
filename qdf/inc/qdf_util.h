@@ -218,6 +218,7 @@ static inline bool qdf_is_macaddr_equal(struct qdf_mac_addr *mac_addr1,
 static inline bool qdf_is_macaddr_zero(struct qdf_mac_addr *mac_addr)
 {
 	struct qdf_mac_addr zero_mac_addr = QDF_MAC_ADDR_ZERO_INITIALIZER;
+
 	return qdf_is_macaddr_equal(mac_addr, &zero_mac_addr);
 }
 
@@ -508,6 +509,7 @@ static inline uint8_t *qdf_get_u32(uint8_t *ptr, uint32_t *value)
 static inline int qdf_get_pwr2(int value)
 {
 	int log2;
+
 	if (QDF_IS_PWR2(value))
 		return value;
 

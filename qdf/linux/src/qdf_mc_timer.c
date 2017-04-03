@@ -93,9 +93,9 @@ void qdf_try_allowing_sleep(QDF_TIMER_TYPE type)
 		persistent_timer_count--;
 		if (0 == persistent_timer_count) {
 			/* since the number of persistent timers has
-			   decreased from 1 to 0, the timer should allow
-			   sleep
-			  */
+			 * decreased from 1 to 0, the timer should allow
+			 * sleep
+			 */
 		}
 	}
 }
@@ -162,7 +162,6 @@ void qdf_mc_timer_manager_init(void)
 {
 	qdf_list_create(&qdf_timer_list, 1000);
 	qdf_spinlock_create(&qdf_timer_list_lock);
-	return;
 }
 EXPORT_SYMBOL(qdf_mc_timer_manager_init);
 
@@ -705,6 +704,7 @@ EXPORT_SYMBOL(qdf_mc_timer_get_system_ticks);
 unsigned long qdf_mc_timer_get_system_time(void)
 {
 	struct timeval tv;
+
 	do_gettimeofday(&tv);
 	return tv.tv_sec * 1000 + tv.tv_usec / 1000;
 }

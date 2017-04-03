@@ -97,7 +97,7 @@ struct CE_ring_state {
 	unsigned int high_water_mark_nentries;
 	void *srng_ctx;
 	void **per_transfer_context;
-	OS_DMA_MEM_CONTEXT(ce_dmacontext) /* OS Specific DMA context */
+	OS_DMA_MEM_CONTEXT(ce_dmacontext); /* OS Specific DMA context */
 };
 
 /* Copy Engine internal state */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -144,7 +144,7 @@ static inline unsigned char *os_malloc(osdev_t nic_dev,
 #define OS_FREE(_p)                     qdf_mem_free(_p)
 
 #define OS_DMA_MEM_CONTEXT(context)	    \
-		dma_addr_t context;
+		dma_addr_t context
 
 #define OS_GET_DMA_MEM_CONTEXT(var, field)  \
 		&(var->field)
