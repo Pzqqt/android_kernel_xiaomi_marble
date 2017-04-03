@@ -10120,7 +10120,11 @@ void hdd_deinit(void)
 #endif
 }
 
+#ifdef QCA_WIFI_NAPIER_EMULATION
+#define HDD_WLAN_START_WAIT_TIME ((CDS_WMA_TIMEOUT + 5000) * 100)
+#else
 #define HDD_WLAN_START_WAIT_TIME (CDS_WMA_TIMEOUT + 5000)
+#endif
 
 /**
  * __hdd_module_init - Module init helper
