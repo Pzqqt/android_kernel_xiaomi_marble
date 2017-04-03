@@ -326,6 +326,34 @@ static void ol_txrx_peer_find_map_detach(struct ol_txrx_pdev_t *pdev)
 	qdf_mem_free(pdev->peer_id_to_obj_map);
 }
 
+/**
+ * ol_txrx_peer_clear_map_peer() - Remove map entries that refer to a peer.
+ * @pdev: pdev handle
+ * @peer: peer for removing obj map entries
+ *
+ * Run through the entire peer_id_to_obj map and nullify all the entries
+ * that map to a particular peer. Called before deleting the peer object.
+ *
+ * Return: None
+ */
+void ol_txrx_peer_clear_map_peer(ol_txrx_pdev_handle pdev,
+				 struct ol_txrx_peer_t *peer)
+{
+	int max_peers;
+	int i;
+
+	max_peers = ol_cfg_max_peer_id(pdev->ctrl_pdev) + 1;
+
+	qdf_spin_lock_bh(&pdev->peer_map_unmap_lock);
+	for (i = 0; i < max_peers; i++) {
+		if (pdev->peer_id_to_obj_map[i].peer == peer) {
+			/* Found a map entry for this peer, clear it. */
+			pdev->peer_id_to_obj_map[i].peer = NULL;
+		}
+	}
+	qdf_spin_unlock_bh(&pdev->peer_map_unmap_lock);
+}
+
 /*
  * ol_txrx_peer_find_add_id() - Add peer_id entry to peer
  *
@@ -684,6 +712,7 @@ struct ol_txrx_peer_t *ol_txrx_assoc_peer_find(struct ol_txrx_vdev_t *vdev)
 	qdf_spin_unlock_bh(&vdev->pdev->last_real_peer_mutex);
 	return peer;
 }
+
 
 /*=== function definitions for debug ========================================*/
 
