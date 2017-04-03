@@ -3214,14 +3214,16 @@ send_set_bwf_cmd_non_tlv(wmi_unified_t wmi_handle,
 		return QDF_STATUS_E_FAILURE;
 	}
 	cmd = (wmi_peer_bwf_request *)wmi_buf_data(buf);
-	qdf_mem_copy((void *)&(cmd->num_peers),
-			(void *)&(param->num_peers),
-			sizeof(u_int32_t));
+	qdf_mem_copy(&(cmd->num_peers), &(param->num_peers), sizeof(uint32_t));
 	peer_info = (struct wmi_bwf_peer_info *)&(cmd->peer_info[0]);
 	for (i = 0; i < param->num_peers; i++) {
-		qdf_mem_copy((void *)&(peer_info[i]),
-				(void *)&(param->peer_info[i]),
-				sizeof(struct wmi_bwf_peer_info));
+		qdf_mem_copy(&(peer_info[i].peer_macaddr),
+			&(param->peer_info[i].peer_macaddr),
+			sizeof(wmi_mac_addr));
+		peer_info[i].bwf_guaranteed_bandwidth =
+			param->peer_info[i].throughput;
+		peer_info[i].bwf_max_airtime = param->peer_info[i].max_airtime;
+		peer_info[i].bwf_peer_priority = param->peer_info[i].priority;
 	}
 
 	retval = wmi_unified_cmd_send(wmi_handle, buf, len,
@@ -3258,13 +3260,13 @@ send_set_atf_cmd_non_tlv(wmi_unified_t wmi_handle,
 	}
 
 	cmd = (wmi_peer_atf_request *)wmi_buf_data(buf);
-	qdf_mem_copy((void *)&(cmd->num_peers), (void *)&(param->num_peers),
-		sizeof(uint32_t));
+	qdf_mem_copy(&(cmd->num_peers), &(param->num_peers), sizeof(uint32_t));
 	peer_info = (struct wmi_atf_peer_info *)&(cmd->peer_info[0]);
 	for (i = 0; i < param->num_peers; i++) {
-		qdf_mem_copy((void *)&(peer_info[i]),
-			(void *)&(param->peer_info[i]),
-			sizeof(struct wmi_atf_peer_info));
+		qdf_mem_copy(&(peer_info[i].peer_macaddr),
+			&(param->peer_info[i].peer_macaddr),
+			sizeof(wmi_mac_addr));
+		peer_info[i].atf_units = param->peer_info[i].percentage_peer;
 	}
 /*	qdf_print("wmi_unified_pdev_set_atf peer_num=%d\n", cmd->num_peers); */
 	retval = wmi_unified_cmd_send(wmi_handle, buf, len,
@@ -3297,17 +3299,21 @@ send_atf_peer_request_cmd_non_tlv(wmi_unified_t wmi_handle,
 	}
 
 	cmd = (wmi_peer_atf_ext_request *)wmi_buf_data(buf);
-	qdf_mem_copy((void *)&(cmd->num_peers), (void *)&(param->num_peers),
-		sizeof(uint32_t));
+	qdf_mem_copy(&(cmd->num_peers), &(param->num_peers), sizeof(uint32_t));
 	peer_ext_info =
 	    (struct wmi_atf_peer_ext_info *)&(cmd->peer_ext_info[0]);
 	for (i = 0; i < param->num_peers; i++) {
-		qdf_mem_copy((void *)&(peer_ext_info[i]),
-				(void *)&(param->peer_ext_info[i]),
-				sizeof(struct wmi_atf_peer_ext_info));
+		qdf_mem_copy(&(peer_ext_info[i].peer_macaddr),
+			&(param->peer_ext_info[i].peer_macaddr),
+			sizeof(wmi_mac_addr));
+		peer_ext_info[i].atf_groupid =
+			param->peer_ext_info[i].group_index;
+		peer_ext_info[i].atf_units_reserved =
+			param->peer_ext_info[i].atf_index_reserved;
 	}
 	retval = wmi_unified_cmd_send(wmi_handle, buf, len,
 		WMI_PEER_ATF_EXT_REQUEST_CMDID);
+
 	return retval;
 }
 
@@ -3336,16 +3342,18 @@ send_set_atf_grouping_cmd_non_tlv(wmi_unified_t wmi_handle,
 	}
 
 	cmd = (wmi_atf_ssid_grp_request *)wmi_buf_data(buf);
-	qdf_mem_copy((void *)&(cmd->num_groups), (void *)&(param->num_groups),
+	qdf_mem_copy(&(cmd->num_groups), &(param->num_groups),
 		sizeof(uint32_t));
 	group_info = (struct wmi_atf_group_info *)&(cmd->group_info[0]);
 	for (i = 0; i < param->num_groups; i++)	{
-		qdf_mem_copy((void *)&(group_info[i]),
-			(void *)&(param->group_info[i]),
-			sizeof(struct wmi_atf_group_info));
+		group_info[i].atf_group_units =
+			param->group_info[i].percentage_group;
+		group_info[i].atf_group_units_reserved =
+			param->group_info[i].atf_group_units_reserved;
 	}
 	retval = wmi_unified_cmd_send(wmi_handle, buf, len,
 		WMI_ATF_SSID_GROUPING_REQUEST_CMDID);
+
 	return retval;
 }
 

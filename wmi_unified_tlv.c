@@ -10464,7 +10464,14 @@ send_set_atf_cmd_tlv(wmi_unified_t wmi_handle,
 			    WMITLV_TAG_STRUC_wmi_atf_peer_info,
 			    WMITLV_GET_STRUCT_TLVLEN(
 				wmi_atf_peer_info));
+		qdf_mem_copy(&(peer_info->peer_macaddr),
+				&(param->peer_info[i].peer_macaddr),
+				sizeof(wmi_mac_addr));
 		peer_info->atf_units = param->peer_info[i].percentage_peer;
+		peer_info->vdev_id = param->peer_info[i].vdev_id;
+		peer_info->pdev_id =
+			wmi_handle->ops->convert_pdev_id_host_to_target(
+				param->peer_info[i].pdev_id);
 		/*
 		 * TLV definition for peer atf request fixed param combines
 		 * extension stats. Legacy FW for WIN (Non-TLV) has peer atf
@@ -10987,6 +10994,11 @@ send_set_bwf_cmd_tlv(wmi_unified_t wmi_handle,
 		qdf_mem_copy(&peer_info->peer_macaddr,
 			     &param->peer_info[i].peer_macaddr,
 			     sizeof(param->peer_info[i].peer_macaddr));
+		peer_info->vdev_id =
+				param->peer_info[i].vdev_id;
+		peer_info->pdev_id =
+			wmi_handle->ops->convert_pdev_id_host_to_target(
+				param->peer_info[i].pdev_id);
 		peer_info++;
 	}
 
@@ -11586,6 +11598,9 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 	resource_cfg->bpf_instruction_size = tgt_res_cfg->bpf_instruction_size;
 	resource_cfg->max_bssid_rx_filters = tgt_res_cfg->max_bssid_rx_filters;
 	resource_cfg->use_pdev_id = tgt_res_cfg->use_pdev_id;
+
+	WMI_RSRC_CFG_FLAG_ATF_CONFIG_ENABLE_SET(resource_cfg->flag1,
+						tgt_res_cfg->atf_config);
 }
 #ifdef CONFIG_MCL
 /**
@@ -18272,7 +18287,7 @@ static void populate_tlv_service(uint32_t *wmi_service)
 				WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_enhanced_proxy_sta] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_tt] = WMI_SERVICE_UNAVAILABLE;
-	wmi_service[wmi_service_atf] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_atf] = WMI_SERVICE_ATF;
 	wmi_service[wmi_service_peer_caching] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_coex_gpio] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_aux_spectral_intf] = WMI_SERVICE_UNAVAILABLE;
@@ -18494,8 +18509,10 @@ static void populate_pdev_param_tlv(uint32_t *pdev_param)
 	pdev_param[wmi_pdev_param_noise_threshold] = WMI_UNAVAILABLE_PARAM;
 	pdev_param[wmi_pdev_param_dpd_enable] = WMI_UNAVAILABLE_PARAM;
 	pdev_param[wmi_pdev_param_set_mcast_bcast_echo] = WMI_UNAVAILABLE_PARAM;
-	pdev_param[wmi_pdev_param_atf_strict_sch] = WMI_UNAVAILABLE_PARAM;
-	pdev_param[wmi_pdev_param_atf_sched_duration] = WMI_UNAVAILABLE_PARAM;
+	pdev_param[wmi_pdev_param_atf_strict_sch] =
+		WMI_PDEV_PARAM_ATF_STRICT_SCH;
+	pdev_param[wmi_pdev_param_atf_sched_duration] =
+		WMI_PDEV_PARAM_ATF_SCHED_DURATION;
 	pdev_param[wmi_pdev_param_ant_plzn] = WMI_UNAVAILABLE_PARAM;
 	pdev_param[wmi_pdev_param_sensitivity_level] = WMI_UNAVAILABLE_PARAM;
 	pdev_param[wmi_pdev_param_signed_txpower_2g] = WMI_UNAVAILABLE_PARAM;
@@ -18512,11 +18529,13 @@ static void populate_pdev_param_tlv(uint32_t *pdev_param)
 	pdev_param[wmi_pdev_param_txpower_decr_db] = WMI_UNAVAILABLE_PARAM;
 	pdev_param[wmi_pdev_param_rx_batchmode] = WMI_UNAVAILABLE_PARAM;
 	pdev_param[wmi_pdev_param_packet_aggr_delay] = WMI_UNAVAILABLE_PARAM;
-	pdev_param[wmi_pdev_param_atf_obss_noise_sch] = WMI_UNAVAILABLE_PARAM;
+	pdev_param[wmi_pdev_param_atf_obss_noise_sch] =
+		WMI_PDEV_PARAM_ATF_OBSS_NOISE_SCH;
 	pdev_param[wmi_pdev_param_atf_obss_noise_scaling_factor] =
-						WMI_UNAVAILABLE_PARAM;
+		WMI_PDEV_PARAM_ATF_OBSS_NOISE_SCALING_FACTOR;
 	pdev_param[wmi_pdev_param_cust_txpower_scale] = WMI_UNAVAILABLE_PARAM;
-	pdev_param[wmi_pdev_param_atf_dynamic_enable] = WMI_UNAVAILABLE_PARAM;
+	pdev_param[wmi_pdev_param_atf_dynamic_enable] =
+		WMI_PDEV_PARAM_ATF_DYNAMIC_ENABLE;
 	pdev_param[wmi_pdev_param_atf_ssid_group_policy] =
 						WMI_UNAVAILABLE_PARAM;
 	pdev_param[wmi_pdev_param_igmpmld_override] = WMI_UNAVAILABLE_PARAM;
