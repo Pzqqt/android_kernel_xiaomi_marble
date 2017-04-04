@@ -76,30 +76,30 @@ struct cur_regulatory_info {
 
 /**
  * enum band_info
+ * @BAND_ALL:all bands
  * @BAND_2G: 2G band
  * @BAND_5G: 5G band
- * @BAND_ALL: both bands
  */
 enum band_info {
+	BAND_ALL,
 	BAND_2G,
 	BAND_5G,
-	BAND_ALL,
 };
 
 /**
- * struct reg_ini_vars
+ * struct reg_config_vars
  * @enable_11d_support: enable 11d support
  * @userspace_ctry_priority: user priority
  * @band_capability: band capability
  * @dfs_disable: dfs disabled
  * @indoor_channel_support: indoor channel support
  */
-struct reg_ini_vars {
+struct reg_config_vars {
 	uint32_t enable_11d_support;
 	uint32_t userspace_ctry_priority;
 	enum band_info band_capability;
-	uint32_t dfs_disable;
-	uint32_t indoor_channel_support;
+	uint32_t dfs_enabled;
+	uint32_t indoor_chan_enabled;
 };
 
 struct set_band_req {

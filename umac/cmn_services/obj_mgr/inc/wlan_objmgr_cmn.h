@@ -173,6 +173,8 @@ typedef void (*wlan_objmgr_peer_status_handler)(
  * @WLAN_ATF_ID:                Airtime Fairness operations
  * @WLAN_CRYPTO_ID:             Crypto service operation
  * @WLAN_NAN_ID:                nan operations
+ * @WLAN_REGULATORY_SB_ID:      SB regulatory operations
+ * @WLAN_REGULATORY_NB_ID:      NB regulatory operations
  * @WLAN_REF_ID_MAX:            Max id used to generate ref count tracking array
  */
 typedef enum {
@@ -197,6 +199,8 @@ typedef enum {
 	WLAN_ATF_ID           = 18,
 	WLAN_CRYPTO_ID        = 19,
 	WLAN_NAN_ID           = 20,
+	WLAN_REGULATORY_SB_ID = 21,
+	WLAN_REGULATORY_NB_ID = 22,
 	WLAN_REF_ID_MAX,
 } wlan_objmgr_ref_dbgid;
 

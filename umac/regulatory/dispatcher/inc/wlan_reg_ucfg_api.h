@@ -46,4 +46,46 @@ QDF_STATUS ucfg_reg_unregister_event_handler(uint8_t vdev_id, reg_event_cb cb,
 		void *arg);
 QDF_STATUS ucfg_reg_init_handler(uint8_t pdev_id);
 
+/**
+ * ucfg_reg_set_config_vars () - Set the config vars in reg component
+ * @psoc: psoc ptr
+ * @config_vars: config variables structure
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_reg_set_config_vars(struct wlan_objmgr_psoc *psoc,
+				    struct reg_config_vars config_vars);
+
+/**
+ * ucfg_reg_get_current_chan_list () - get current channel list
+ * @pdev: pdev ptr
+ * @chan_list: channel list
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_reg_get_current_chan_list(struct wlan_objmgr_pdev *pdev,
+				    struct regulatory_channel *chan_list);
+
+/**
+ * ucfg_reg_is_regdb_offloaded () - is regulatory database offloaded
+ * @psoc: psoc ptr
+ *
+ * Return: bool
+ */
+bool ucfg_reg_is_regdb_offloaded(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_reg_program_mas_chan_list () - program master channel list
+ * @psoc: psoc ptr
+ * @reg_channels: regulatory channels
+ * @alpha2: country code
+ * @dfs_region: dfs region
+ *
+ * Return: void
+ */
+void ucfg_reg_program_mas_chan_list(struct wlan_objmgr_psoc *psoc,
+				    struct regulatory_channel *reg_channels,
+				    uint8_t *alpha2,
+				    enum dfs_reg dfs_region);
+
 #endif

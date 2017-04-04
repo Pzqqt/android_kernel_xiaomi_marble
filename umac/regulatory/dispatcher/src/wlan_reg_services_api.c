@@ -142,12 +142,6 @@ void wlan_reg_get_dfs_region(struct wlan_objmgr_psoc *psoc,
 	reg_get_dfs_region(psoc, dfs_reg);
 }
 
-/**
- * wlan_reg_get_channel_reg_power() - get regulatory power for channel
- * @chan_num: channel number
- *
- * Return: int
- */
 uint32_t wlan_reg_get_channel_reg_power(struct wlan_objmgr_pdev *pdev,
 					uint32_t chan_num)
 {
@@ -382,7 +376,8 @@ void wlan_reg_update_nol_ch(struct wlan_objmgr_pdev *pdev, uint8_t *ch_list,
 	reg_update_nol_ch(pdev, ch_list, num_ch, nol_ch);
 }
 
-bool wlan_reg_is_dfs_ch(struct wlan_objmgr_pdev *pdev, uint32_t chan)
+bool wlan_reg_is_dfs_ch(struct wlan_objmgr_pdev *pdev,
+			uint32_t chan)
 {
 	return reg_is_dfs_ch(pdev, chan);
 }
@@ -404,7 +399,3 @@ uint32_t wlan_reg_chan_to_freq(struct wlan_objmgr_pdev *pdev,
 {
 	return reg_chan_to_freq(pdev, chan_num);
 }
-
-
-
-

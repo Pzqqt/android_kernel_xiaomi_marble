@@ -33,9 +33,12 @@
 #define WLAN_REG_MAX_24GHZ_CH_NUM REG_MAX_24GHZ_CH_NUM
 #define WLAN_REG_MIN_5GHZ_CH_NUM REG_MIN_5GHZ_CH_NUM
 #define WLAN_REG_MAX_5GHZ_CH_NUM REG_MAX_5GHZ_CH_NUM
+#define WLAN_REG_MIN_11P_CH_NUM REG_MIN_11P_CH_NUM
+#define WLAN_REG_MAX_11P_CH_NUM REG_MAX_11P_CH_NUM
 
-#define WLAN_REG_IS_24GHZ_CH(ch) REG_IS_24GHZ_CH(ch)
-#define WLAN_REG_IS_5GHZ_CH(ch) REG_IS_5GHZ_CH(ch)
+#define WLAN_REG_IS_24GHZ_CH(chan) REG_IS_24GHZ_CH(chan)
+#define WLAN_REG_IS_5GHZ_CH(chan) REG_IS_5GHZ_CH(chan)
+#define WLAN_REG_IS_11P_CH(chan) REG_IS_11P_CH(chan)
 
 #define WLAN_REG_CH_NUM(ch_enum) REG_CH_NUM(ch_enum)
 #define WLAN_REG_CH_TO_FREQ(ch_enum) REG_CH_TO_FREQ(ch_enum)
@@ -290,21 +293,34 @@ QDF_STATUS wlan_reg_get_current_chan_list(struct wlan_objmgr_pdev
 					  *pdev,
 					  struct regulatory_channel
 					  *chan_list);
-void wlan_reg_update_nol_ch(struct wlan_objmgr_pdev *pdev, uint8_t *ch_list,
-		uint8_t num_ch, bool nol_ch);
+
+/**
+ * wlan_reg_update_nol_ch () - set nol channel
+ * @pdev: pdev ptr
+ * @ch_list: channel list to be returned
+ * @num_ch: number of channels
+ * @nol_ch: nol flag
+ *
+ * Return: void
+ */
+void wlan_reg_update_nol_ch(struct wlan_objmgr_pdev *pdev,
+			    uint8_t *ch_list,
+			    uint8_t num_ch,
+			    bool nol_ch);
 
 /**
  * wlan_reg_is_dfs_ch () - Checks the channel state for DFS
+ * @pdev: pdev ptr
  * @chan: channel
  *
  * Return: true or false
  */
-bool wlan_reg_is_dfs_ch(struct wlan_objmgr_pdev *pdev,
-			uint32_t chan);
+bool wlan_reg_is_dfs_ch(struct wlan_objmgr_pdev *pdev, uint32_t chan);
 
 /**
  * wlan_reg_is_passive_or_disable_ch () - Checks chan state for passive
  * and disabled
+ * @pdev: pdev ptr
  * @chan: channel
  *
  * Return: true or false

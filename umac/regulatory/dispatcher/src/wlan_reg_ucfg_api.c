@@ -88,3 +88,28 @@ QDF_STATUS ucfg_reg_init_handler(uint8_t pdev_id)
 	/* regulatory initialization handler */
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS ucfg_reg_get_current_chan_list(struct wlan_objmgr_pdev *pdev,
+					  struct regulatory_channel *chan_list)
+{
+	return reg_get_current_chan_list(pdev, chan_list);
+}
+
+QDF_STATUS ucfg_reg_set_config_vars(struct wlan_objmgr_psoc *psoc,
+				 struct reg_config_vars config_vars)
+{
+	return reg_set_config_vars(psoc, config_vars);
+}
+
+bool ucfg_reg_is_regdb_offloaded(struct wlan_objmgr_psoc *psoc)
+{
+	return reg_is_regdb_offloaded(psoc);
+}
+
+void ucfg_reg_program_mas_chan_list(struct wlan_objmgr_psoc *psoc,
+				    struct regulatory_channel *reg_channels,
+				    uint8_t *alpha2,
+				    enum dfs_reg dfs_region)
+{
+	reg_program_mas_chan_list(psoc, reg_channels, alpha2, dfs_region);
+}
