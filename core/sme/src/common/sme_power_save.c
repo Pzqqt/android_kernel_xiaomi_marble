@@ -127,6 +127,7 @@ static void sme_set_ps_state(tpAniSirGlobal mac_ctx,
 {
 	struct ps_global_info *ps_global_info = &mac_ctx->sme.ps_global_info;
 	struct ps_params *ps_param = &ps_global_info->ps_params[session_id];
+
 	ps_param->ps_state = ps_state;
 }
 
@@ -405,6 +406,7 @@ static QDF_STATUS sme_ps_exit_wowl_req_params(tpAniSirGlobal mac_ctx,
 		uint32_t session_id)
 {
 	struct sSirHalWowlExitParams *hal_wowl_msg;
+
 	hal_wowl_msg = qdf_mem_malloc(sizeof(*hal_wowl_msg));
 	if (NULL == hal_wowl_msg) {
 		sme_err("Fail to allocate memory for WoWLAN Add Bcast Pattern");
@@ -518,6 +520,7 @@ QDF_STATUS sme_ps_enable_disable(tHalHandle hal_ctx, uint32_t session_id,
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_ctx);
+
 	status =  sme_enable_sta_ps_check(mac_ctx, session_id);
 	if (status != QDF_STATUS_SUCCESS)
 		return status;
@@ -537,6 +540,7 @@ QDF_STATUS sme_ps_uapsd_enable(tHalHandle hal_ctx, uint32_t session_id)
 
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_ctx);
+
 	status =  sme_enable_sta_ps_check(mac_ctx, session_id);
 	if (status != QDF_STATUS_SUCCESS)
 		return status;
@@ -560,6 +564,7 @@ QDF_STATUS sme_ps_uapsd_disable(tHalHandle hal_ctx, uint32_t session_id)
 
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_ctx);
+
 	status =  sme_enable_sta_ps_check(mac_ctx, session_id);
 	if (status != QDF_STATUS_SUCCESS)
 		return status;
@@ -653,7 +658,6 @@ void sme_set_tspec_uapsd_mask_per_session(tpAniSirGlobal mac_ctx,
 		ps_param->uapsd_per_ac_delivery_enable_mask);
 	sme_debug("New ps_param->ac_admit_mask[SIR_MAC_DIRECTION_UPLINK]: 0x%x",
 		ps_param->ac_admit_mask[SIR_MAC_DIRECTION_UPLINK]);
-	return;
 }
 
 /**
@@ -670,6 +674,7 @@ QDF_STATUS sme_ps_start_uapsd(tHalHandle hal_ctx, uint32_t session_id,
 		void *callback_context)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
 	status = sme_ps_uapsd_enable(hal_ctx, session_id);
 	return status;
 }
@@ -761,7 +766,7 @@ QDF_STATUS sme_set_ps_ns_offload(tHalHandle hal_ctx,
 	request_buf = qdf_mem_malloc(sizeof(*request_buf));
 	if (NULL == request_buf) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			FL("Not able to allocate memory for NS offload request"));
+			"Not able to allocate memory for NS offload request");
 		return QDF_STATUS_E_NOMEM;
 	}
 	*request_buf = *request;
@@ -774,7 +779,7 @@ QDF_STATUS sme_set_ps_ns_offload(tHalHandle hal_ctx,
 	if (QDF_STATUS_SUCCESS !=
 			scheduler_post_msg(QDF_MODULE_ID_WMA, &msg)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			FL("Not able to post SIR_HAL_SET_HOST_OFFLOAD message to HAL"));
+			"Not able to post SIR_HAL_SET_HOST_OFFLOAD message to HAL");
 		qdf_mem_free(request_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -783,7 +788,6 @@ QDF_STATUS sme_set_ps_ns_offload(tHalHandle hal_ctx,
 }
 
 #endif /* WLAN_NS_OFFLOAD */
-/* -------------------------------------------------------------------- */
 /**
  * sme_post_pe_message
  *
@@ -804,6 +808,7 @@ tSirRetStatus sme_post_pe_message(tpAniSirGlobal mac_ctx,
 				  struct scheduler_msg *msg)
 {
 	QDF_STATUS qdf_status;
+
 	qdf_status = scheduler_post_msg(QDF_MODULE_ID_PE,
 					 msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -892,9 +897,9 @@ QDF_STATUS sme_ps_open_per_session(tHalHandle hal_ctx, uint32_t session_id)
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_ctx);
 	struct ps_global_info *ps_global_info = &mac_ctx->sme.ps_global_info;
 	struct ps_params *ps_param = &ps_global_info->ps_params[session_id];
+
 	ps_param->session_id = session_id;
 	ps_param->mac_ctx = mac_ctx;
-
 	/* Allocate a timer to enable ps automatically */
 	if (!QDF_IS_STATUS_SUCCESS(qdf_mc_timer_init(
 					&ps_param->auto_ps_enable_timer,
@@ -914,19 +919,18 @@ void sme_auto_ps_entry_timer_expired(void *data)
 	tpAniSirGlobal mac_ctx = (tpAniSirGlobal)ps_params->mac_ctx;
 	uint32_t session_id = ps_params->session_id;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	status = sme_enable_sta_ps_check(mac_ctx, session_id);
 
-	if (QDF_STATUS_SUCCESS == status) {
+	status = sme_enable_sta_ps_check(mac_ctx, session_id);
+	if (QDF_STATUS_SUCCESS == status)
 		sme_ps_enable_disable((tHalHandle)mac_ctx, session_id,
 				SME_PS_ENABLE);
-	} else {
+	else {
 		status =
 			qdf_mc_timer_start(&ps_params->auto_ps_enable_timer,
 					AUTO_PS_ENTRY_TIMER_DEFAULT_VALUE);
 		if (!QDF_IS_STATUS_SUCCESS(status)
-				&& (QDF_STATUS_E_ALREADY != status)) {
+				&& (QDF_STATUS_E_ALREADY != status))
 			sme_err("Cannot start traffic timer");
-		}
 	}
 }
 
@@ -953,9 +957,9 @@ QDF_STATUS sme_ps_close_per_session(tHalHandle hal_ctx, uint32_t session_id)
 	 */
 	if (QDF_TIMER_STATE_RUNNING ==
 			qdf_mc_timer_get_current_state(
-				&ps_param->auto_ps_enable_timer)) {
+				&ps_param->auto_ps_enable_timer))
 		qdf_mc_timer_stop(&ps_param->auto_ps_enable_timer);
-	}
+
 	qdf_status =
 		qdf_mc_timer_destroy(&ps_param->auto_ps_enable_timer);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
@@ -975,9 +979,9 @@ bool sme_is_auto_ps_timer_running(tHalHandle hal_ctx,
 	 */
 	if (QDF_TIMER_STATE_RUNNING ==
 			qdf_mc_timer_get_current_state(
-				&ps_param->auto_ps_enable_timer)) {
+				&ps_param->auto_ps_enable_timer))
 		status = true;
-	}
+
 	return status;
 }
 
