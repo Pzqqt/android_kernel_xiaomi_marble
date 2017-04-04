@@ -1174,6 +1174,7 @@ static int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 	uint32_t *header_ptr;
 	uint32_t *ring_vaddr;
 	uint16_t idx;
+	QDF_STATUS status;
 
 	ring_vaddr = pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr;
 	/* Allocate TX buffers as many as possible */
@@ -1199,7 +1200,16 @@ static int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 		*header_ptr |= ((uint16_t) uc_tx_partition_base +
 				tx_buffer_count) << 16;
 
-		qdf_nbuf_map(pdev->osdev, buffer_vaddr, QDF_DMA_BIDIRECTIONAL);
+		status = qdf_nbuf_map(pdev->osdev, buffer_vaddr,
+				      QDF_DMA_BIDIRECTIONAL);
+		if (status != QDF_STATUS_SUCCESS) {
+			QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_ERROR,
+			  "%s: nbuf map failed, loop index: %d",
+			  __func__, tx_buffer_count);
+			qdf_nbuf_free(buffer_vaddr);
+			return tx_buffer_count;
+		}
+
 		buffer_paddr = qdf_nbuf_get_frag_paddr(buffer_vaddr, 0);
 		header_ptr++;
 		*header_ptr = (uint32_t) (buffer_paddr +
