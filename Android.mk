@@ -14,27 +14,13 @@ endif
 # Build/Package only in case of supported target
 ifneq ($(WLAN_CHIPSET),)
 
-# If kernel version is not defined, using default kernel path, otherwise
-# kernel path offset should come from top level Android makefiles.
-ifeq ($(TARGET_KERNEL_VERSION),)
-$(info "$(WLAN_CHIPSET): TARGET_KERNEL_VERSION not defined, assuming default")
-TARGET_KERNEL_SOURCE := kernel
-KERNEL_TO_BUILD_ROOT_OFFSET := ../
-endif
-
-# If kernel path offset is not defined, assume old kernel structure
-ifeq ($(KERNEL_TO_BUILD_ROOT_OFFSET),)
-$(info "$(WLAN_CHIPSET): KERNEL_TO_BUILD_ROOT_OFFSET not defined, assuming default")
-KERNEL_TO_BUILD_ROOT_OFFSET := ../
-endif
-
 LOCAL_PATH := $(call my-dir)
 
 # This makefile is only for DLKM
 ifneq ($(findstring vendor,$(LOCAL_PATH)),)
 
 ifneq ($(findstring opensource,$(LOCAL_PATH)),)
-	WLAN_BLD_DIR := vendor/qcom/opensource/wlan
+	WLAN_BLD_DIR := $(ANDROID_BUILD_TOP)/vendor/qcom/opensource/wlan
 endif # opensource
 
 # DLKM_DIR was moved for JELLY_BEAN (PLATFORM_SDK 16)
@@ -47,9 +33,9 @@ endif # platform-sdk-version
 # Build wlan.ko as $(WLAN_CHIPSET)_wlan.ko
 ###########################################################
 # This is set once per LOCAL_PATH, not per (kernel) module
-KBUILD_OPTIONS := WLAN_ROOT=$(KERNEL_TO_BUILD_ROOT_OFFSET)$(WLAN_BLD_DIR)/qcacld-3.0
+KBUILD_OPTIONS := WLAN_ROOT=$(WLAN_BLD_DIR)/qcacld-3.0
 KBUILD_OPTIONS += WLAN_COMMON_ROOT=../qca-wifi-host-cmn
-KBUILD_OPTIONS += WLAN_COMMON_INC=$(KERNEL_TO_BUILD_ROOT_OFFSET)$(WLAN_BLD_DIR)/qca-wifi-host-cmn
+KBUILD_OPTIONS += WLAN_COMMON_INC=$(WLAN_BLD_DIR)/qca-wifi-host-cmn
 
 # We are actually building wlan.ko here, as per the
 # requirement we are specifying <chipset>_wlan.ko as LOCAL_MODULE.
