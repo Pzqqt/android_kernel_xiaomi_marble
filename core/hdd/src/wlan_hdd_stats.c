@@ -2485,7 +2485,7 @@ static bool wlan_hdd_update_survey_info(struct wiphy *wiphy,
 
 	mutex_lock(&pHddCtx->chan_info_lock);
 
-	for (i = 0; i < IEEE80211_NUM_BANDS && !filled; i++) {
+	for (i = 0; i < NUM_NL80211_BANDS && !filled; i++) {
 		if (wiphy->bands[i] == NULL)
 			continue;
 
