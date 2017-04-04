@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -59,80 +59,83 @@ static char *bw_str_arr[] = {"20MHz", "40MHz", "80MHz", "160MHz"};
  * trick to use to avoid the code duplication.
  */
 #define tx_rate_stats_print_cmn(_tx_rate_info, _concise) \
-{							 \
-	qdf_print("TX Rate Info:");			 \
-							 \
-	/* MCS */					 \
-	qdf_print("MCS counts (0..9): %d, %d, %d, %d, %d, %d, %d, %d, %d, %d",\
-		  _tx_rate_info->mcs[0],		 \
-		  _tx_rate_info->mcs[1],		 \
-		  _tx_rate_info->mcs[2],		 \
-		  _tx_rate_info->mcs[3],		 \
-		  _tx_rate_info->mcs[4],		 \
-		  _tx_rate_info->mcs[5],		 \
-		  _tx_rate_info->mcs[6],		 \
-		  _tx_rate_info->mcs[7],		 \
-		  _tx_rate_info->mcs[8],		 \
-		  _tx_rate_info->mcs[9]);		 \
-							 \
-	/* SGI */					 \
-	qdf_print("SGI counts (0..9): %d, %d, %d, %d, %d, %d, %d, %d, %d, %d",\
-		  _tx_rate_info->sgi[0],		 \
-		  _tx_rate_info->sgi[1],		 \
-		  _tx_rate_info->sgi[2],		 \
-		  _tx_rate_info->sgi[3],		 \
-		  _tx_rate_info->sgi[4],		 \
-		  _tx_rate_info->sgi[5],		 \
-		  _tx_rate_info->sgi[6],		 \
-		  _tx_rate_info->sgi[7],		 \
-		  _tx_rate_info->sgi[8],		 \
-		  _tx_rate_info->sgi[9]);		 \
-							 \
-	/* NSS */					 \
-	qdf_print("NSS  counts: 1x1 %d, 2x2 %d, 3x3 %d", \
-		  _tx_rate_info->nss[0],		 \
-		  _tx_rate_info->nss[1], _tx_rate_info->nss[2]);\
-							 \
-	/* BW */					 \
-	if (sizeof(_tx_rate_info->bw) / sizeof(_tx_rate_info->bw[0]) == 3)\
-		qdf_print("BW counts: %s %d, %s %d, %s %d", \
-			bw_str_arr[0], _tx_rate_info->bw[0],	 \
-			bw_str_arr[1], _tx_rate_info->bw[1],	 \
-			bw_str_arr[2], _tx_rate_info->bw[2]);	 \
-	else if (sizeof(_tx_rate_info->bw) / sizeof(_tx_rate_info->bw[0]) == 4)\
-		qdf_print("BW counts: %s %d, %s %d, %s %d, %s %d", \
-			bw_str_arr[0], _tx_rate_info->bw[0],	 \
-			bw_str_arr[1], _tx_rate_info->bw[1],	 \
-			bw_str_arr[2], _tx_rate_info->bw[2],     \
-			bw_str_arr[3], _tx_rate_info->bw[3]);	 \
-							 \
-							 \
-	/* Preamble */					 \
-	qdf_print("Preamble (O C H V) counts: %d, %d, %d, %d",\
-		  _tx_rate_info->pream[0],		 \
-		  _tx_rate_info->pream[1],		 \
-		  _tx_rate_info->pream[2],		 \
-		  _tx_rate_info->pream[3]);		 \
-							 \
-	/* STBC rate counts */				 \
-	qdf_print("STBC rate counts (0..9): %d, %d, %d, %d, %d, %d, %d, %d, %d, %d",\
-		  _tx_rate_info->stbc[0],		 \
-		  _tx_rate_info->stbc[1],		 \
-		  _tx_rate_info->stbc[2],		 \
-		  _tx_rate_info->stbc[3],		 \
-		  _tx_rate_info->stbc[4],		 \
-		  _tx_rate_info->stbc[5],		 \
-		  _tx_rate_info->stbc[6],		 \
-		  _tx_rate_info->stbc[7],		 \
-		  _tx_rate_info->stbc[8],		 \
-		  _tx_rate_info->stbc[9]);		 \
-							 \
-	/* LDPC and TxBF counts */			 \
-	qdf_print("LDPC Counts: %d", _tx_rate_info->ldpc);\
-	qdf_print("RTS Counts: %d", _tx_rate_info->rts_cnt);\
-	/* RSSI Values for last ack frames */		\
-	qdf_print("Ack RSSI: %d", _tx_rate_info->ack_rssi);\
-}
+	do {							 \
+		qdf_print("TX Rate Info:");			 \
+		\
+		/* MCS */					 \
+		qdf_print("%s: %d, %d, %d, %d, %d, %d, %d, %d, %d, %d",\
+				"MCS counts (0..9)",		 \
+				_tx_rate_info->mcs[0],		 \
+				_tx_rate_info->mcs[1],		 \
+				_tx_rate_info->mcs[2],		 \
+				_tx_rate_info->mcs[3],		 \
+				_tx_rate_info->mcs[4],		 \
+				_tx_rate_info->mcs[5],		 \
+				_tx_rate_info->mcs[6],		 \
+				_tx_rate_info->mcs[7],		 \
+				_tx_rate_info->mcs[8],		 \
+				_tx_rate_info->mcs[9]);		 \
+		\
+		/* SGI */					 \
+		qdf_print("%s: %d, %d, %d, %d, %d, %d, %d, %d, %d, %d",\
+				"SGI counts (0..9)",		 \
+				_tx_rate_info->sgi[0],		 \
+				_tx_rate_info->sgi[1],		 \
+				_tx_rate_info->sgi[2],		 \
+				_tx_rate_info->sgi[3],		 \
+				_tx_rate_info->sgi[4],		 \
+				_tx_rate_info->sgi[5],		 \
+				_tx_rate_info->sgi[6],		 \
+				_tx_rate_info->sgi[7],		 \
+				_tx_rate_info->sgi[8],		 \
+				_tx_rate_info->sgi[9]);		 \
+		\
+		/* NSS */					 \
+		qdf_print("NSS  counts: 1x1 %d, 2x2 %d, 3x3 %d", \
+				_tx_rate_info->nss[0],		 \
+				_tx_rate_info->nss[1], _tx_rate_info->nss[2]);\
+		\
+		/* BW */					 \
+		if (ARRAY_SIZE(_tx_rate_info->bw) == 3) \
+			qdf_print("BW counts: %s %d, %s %d, %s %d", \
+				bw_str_arr[0], _tx_rate_info->bw[0],	 \
+				bw_str_arr[1], _tx_rate_info->bw[1],	 \
+				bw_str_arr[2], _tx_rate_info->bw[2]);	 \
+		else if (ARRAY_SIZE(_tx_rate_info->bw) == 4) \
+			qdf_print("BW counts: %s %d, %s %d, %s %d, %s %d", \
+				bw_str_arr[0], _tx_rate_info->bw[0],	 \
+				bw_str_arr[1], _tx_rate_info->bw[1],	 \
+				bw_str_arr[2], _tx_rate_info->bw[2],     \
+				bw_str_arr[3], _tx_rate_info->bw[3]);	 \
+		\
+		\
+		/* Preamble */					 \
+		qdf_print("Preamble (O C H V) counts: %d, %d, %d, %d",\
+				_tx_rate_info->pream[0],		 \
+				_tx_rate_info->pream[1],		 \
+				_tx_rate_info->pream[2],		 \
+				_tx_rate_info->pream[3]);		 \
+		\
+		/* STBC rate counts */				 \
+		qdf_print("%s: %d, %d, %d, %d, %d, %d, %d, %d, %d, %d",\
+				"STBC rate counts (0..9)",	 \
+				_tx_rate_info->stbc[0],		 \
+				_tx_rate_info->stbc[1],		 \
+				_tx_rate_info->stbc[2],		 \
+				_tx_rate_info->stbc[3],		 \
+				_tx_rate_info->stbc[4],		 \
+				_tx_rate_info->stbc[5],		 \
+				_tx_rate_info->stbc[6],		 \
+				_tx_rate_info->stbc[7],		 \
+				_tx_rate_info->stbc[8],		 \
+				_tx_rate_info->stbc[9]);	 \
+			\
+		/* LDPC and TxBF counts */			 \
+		qdf_print("LDPC Counts: %d", _tx_rate_info->ldpc);\
+		qdf_print("RTS Counts: %d", _tx_rate_info->rts_cnt);\
+		/* RSSI Values for last ack frames */		\
+		qdf_print("Ack RSSI: %d", _tx_rate_info->ack_rssi);\
+	} while (0)
 
 static void htt_t2h_stats_tx_rate_stats_print(wlan_dbg_tx_rate_info_t *
 					      tx_rate_info, int concise)
@@ -157,112 +160,118 @@ static void htt_t2h_stats_tx_rate_stats_print_v2(wlan_dbg_tx_rate_info_v2_t *
  * trick to use to avoid the code duplication.
  */
 #define rx_rate_stats_print_cmn(_rx_phy_info, _concise) \
-{							\
-	qdf_print("RX Rate Info:");			\
-							\
-	/* MCS */					\
-	qdf_print("MCS counts (0..9): %d, %d, %d, %d, %d, %d, %d, %d, %d, %d",\
-		  _rx_phy_info->mcs[0],			\
-		  _rx_phy_info->mcs[1],			\
-		  _rx_phy_info->mcs[2],			\
-		  _rx_phy_info->mcs[3],			\
-		  _rx_phy_info->mcs[4],			\
-		  _rx_phy_info->mcs[5],			\
-		  _rx_phy_info->mcs[6],			\
-		  _rx_phy_info->mcs[7],			\
-		  _rx_phy_info->mcs[8],			\
-		  _rx_phy_info->mcs[9]);		\
-							\
-	/* SGI */					\
-	qdf_print("SGI counts (0..9): %d, %d, %d, %d, %d, %d, %d, %d, %d, %d",\
-		  _rx_phy_info->sgi[0],			\
-		  _rx_phy_info->sgi[1],			\
-		  _rx_phy_info->sgi[2],			\
-		  _rx_phy_info->sgi[3],			\
-		  _rx_phy_info->sgi[4],			\
-		  _rx_phy_info->sgi[5],			\
-		  _rx_phy_info->sgi[6],			\
-		  _rx_phy_info->sgi[7],			\
-		  _rx_phy_info->sgi[8],			\
-		  _rx_phy_info->sgi[9]);		\
-							\
-	/* NSS */					\
-	/* nss[0] just holds the count of non-stbc frames that were sent at 1x1 \
-	 * rates and nsts holds the count of frames sent with stbc.	\
-	 * It was decided to not include PPDUs sent w/ STBC in nss[0]\
-	 * since it would be easier to change the value that needs to be\
-	 * printed (from "stbc+non-stbc count to only non-stbc count")\
-	 * if needed in the future. Hence the addition in the host code\
-	 * at this line. */				\
-	qdf_print("NSS  counts: 1x1 %d, 2x2 %d, 3x3 %d, 4x4 %d",\
-		  _rx_phy_info->nss[0] + _rx_phy_info->nsts,	\
-		  _rx_phy_info->nss[1],			\
-		  _rx_phy_info->nss[2],			\
-		  _rx_phy_info->nss[3]);		\
-							\
-	/* NSTS */					\
-	qdf_print("NSTS count: %d", _rx_phy_info->nsts);	\
-							\
-	/* BW */					\
-	if (sizeof(_rx_phy_info->bw) / sizeof(_rx_phy_info->bw[0]) == 3)\
-		qdf_print("BW counts: %s %d, %s %d, %s %d",	\
-			bw_str_arr[0], _rx_phy_info->bw[0],	\
-			bw_str_arr[1], _rx_phy_info->bw[1],	\
-			bw_str_arr[2], _rx_phy_info->bw[2]);	\
-	else if (sizeof(_rx_phy_info->bw) / sizeof(_rx_phy_info->bw[0]) == 4) \
-		qdf_print("BW counts: %s %d, %s %d, %s %d, %s %d", \
-			bw_str_arr[0], _rx_phy_info->bw[0],	\
-			bw_str_arr[1], _rx_phy_info->bw[1],	\
-			bw_str_arr[2], _rx_phy_info->bw[2],    \
-			bw_str_arr[3], _rx_phy_info->bw[3]);	\
-							\
-	/* Preamble */					\
-	qdf_print("Preamble counts: %d, %d, %d, %d, %d, %d",\
-		  _rx_phy_info->pream[0],		\
-		  _rx_phy_info->pream[1],		\
-		  _rx_phy_info->pream[2],		\
-		  _rx_phy_info->pream[3],		\
-		  _rx_phy_info->pream[4],		\
-		  _rx_phy_info->pream[5]);		\
-							\
-	/* STBC rate counts */				\
-	qdf_print("STBC rate counts (0..9): %d, %d, %d, %d, %d, %d, %d, %d, %d, %d",\
-		  _rx_phy_info->stbc[0],		\
-		  _rx_phy_info->stbc[1],		\
-		  _rx_phy_info->stbc[2],		\
-		  _rx_phy_info->stbc[3],		\
-		  _rx_phy_info->stbc[4],		\
-		  _rx_phy_info->stbc[5],		\
-		  _rx_phy_info->stbc[6],		\
-		  _rx_phy_info->stbc[7],		\
-		  _rx_phy_info->stbc[8],		\
-		  _rx_phy_info->stbc[9]);		\
-							\
-	/* LDPC and TxBF counts */			\
-	qdf_print("LDPC TXBF Counts: %d, %d",		\
-		 _rx_phy_info->ldpc, _rx_phy_info->txbf);\
-	/* RSSI Values for last received frames */	\
-	qdf_print("RSSI (data, mgmt): %d, %d", _rx_phy_info->data_rssi,\
-		  _rx_phy_info->mgmt_rssi);		\
-							\
-	qdf_print("RSSI Chain 0 (0x%02x 0x%02x 0x%02x 0x%02x)",\
-		  ((_rx_phy_info->rssi_chain0 >> 24) & 0xff),	\
-		  ((_rx_phy_info->rssi_chain0 >> 16) & 0xff),	\
-		  ((_rx_phy_info->rssi_chain0 >> 8) & 0xff),	\
-		  ((_rx_phy_info->rssi_chain0 >> 0) & 0xff));	\
-							\
-	qdf_print("RSSI Chain 1 (0x%02x 0x%02x 0x%02x 0x%02x)",\
-		  ((_rx_phy_info->rssi_chain1 >> 24) & 0xff),	\
-		  ((_rx_phy_info->rssi_chain1 >> 16) & 0xff),	\
-		  ((_rx_phy_info->rssi_chain1 >> 8) & 0xff),	\
-		  ((_rx_phy_info->rssi_chain1 >> 0) & 0xff));	\
-							\
-	qdf_print("RSSI Chain 2 (0x%02x 0x%02x 0x%02x 0x%02x)",\
-		  ((_rx_phy_info->rssi_chain2 >> 24) & 0xff),	\
-		  ((_rx_phy_info->rssi_chain2 >> 16) & 0xff),	\
-		  ((_rx_phy_info->rssi_chain2 >> 8) & 0xff),	\
-		  ((_rx_phy_info->rssi_chain2 >> 0) & 0xff));	\
-}
+	do {							\
+		qdf_print("RX Rate Info:");			\
+		\
+		/* MCS */					\
+		qdf_print("%s: %d, %d, %d, %d, %d, %d, %d, %d, %d, %d",\
+				"MCS counts (0..9)",		 \
+				_rx_phy_info->mcs[0],			\
+				_rx_phy_info->mcs[1],			\
+				_rx_phy_info->mcs[2],			\
+				_rx_phy_info->mcs[3],			\
+				_rx_phy_info->mcs[4],			\
+				_rx_phy_info->mcs[5],			\
+				_rx_phy_info->mcs[6],			\
+				_rx_phy_info->mcs[7],			\
+				_rx_phy_info->mcs[8],			\
+				_rx_phy_info->mcs[9]);			\
+		\
+		/* SGI */						\
+		qdf_print("%s: %d, %d, %d, %d, %d, %d, %d, %d, %d, %d",\
+				"SGI counts (0..9)",		 \
+				_rx_phy_info->sgi[0],			\
+				_rx_phy_info->sgi[1],			\
+				_rx_phy_info->sgi[2],			\
+				_rx_phy_info->sgi[3],			\
+				_rx_phy_info->sgi[4],			\
+				_rx_phy_info->sgi[5],			\
+				_rx_phy_info->sgi[6],			\
+				_rx_phy_info->sgi[7],			\
+				_rx_phy_info->sgi[8],			\
+				_rx_phy_info->sgi[9]);			\
+		\
+		/*
+		 * NSS							       \
+		 * nss[0] just holds the count of non-stbc frames that were    \
+		 * sent at 1x1 rates and nsts holds the count of frames sent   \
+		 * with stbc.						       \
+		 * It was decided to not include PPDUs sent w/ STBC in nss[0]  \
+		 * since it would be easier to change the value that needs to  \
+		 * be printed (from stbc+non-stbc count to only non-stbc count)\
+		 * if needed in the future. Hence the addition in the host code\
+		 * at this line.
+		 */							       \
+		qdf_print("NSS  counts: 1x1 %d, 2x2 %d, 3x3 %d, 4x4 %d",\
+				_rx_phy_info->nss[0] + _rx_phy_info->nsts,\
+				_rx_phy_info->nss[1],			\
+				_rx_phy_info->nss[2],			\
+				_rx_phy_info->nss[3]);		\
+		\
+		/* NSTS */					\
+		qdf_print("NSTS count: %d", _rx_phy_info->nsts);	\
+		\
+		/* BW */					\
+		if (ARRAY_SIZE(_rx_phy_info->bw) == 3) \
+			qdf_print("BW counts: %s %d, %s %d, %s %d",	\
+				bw_str_arr[0], _rx_phy_info->bw[0],	\
+				bw_str_arr[1], _rx_phy_info->bw[1],	\
+				bw_str_arr[2], _rx_phy_info->bw[2]);	\
+		else if (ARRAY_SIZE(_rx_phy_info->bw) == 4) \
+			qdf_print("BW counts: %s %d, %s %d, %s %d, %s %d", \
+				bw_str_arr[0], _rx_phy_info->bw[0],	\
+				bw_str_arr[1], _rx_phy_info->bw[1],	\
+				bw_str_arr[2], _rx_phy_info->bw[2],    \
+				bw_str_arr[3], _rx_phy_info->bw[3]);	\
+		\
+		/* Preamble */					\
+		qdf_print("Preamble counts: %d, %d, %d, %d, %d, %d",\
+				_rx_phy_info->pream[0],		\
+				_rx_phy_info->pream[1],		\
+				_rx_phy_info->pream[2],		\
+				_rx_phy_info->pream[3],		\
+				_rx_phy_info->pream[4],		\
+				_rx_phy_info->pream[5]);		\
+		\
+		/* STBC rate counts */				\
+		qdf_print("%s: %d, %d, %d, %d, %d, %d, %d, %d, %d, %d",\
+				"STBC rate counts (0..9)",	\
+				_rx_phy_info->stbc[0],		\
+				_rx_phy_info->stbc[1],		\
+				_rx_phy_info->stbc[2],		\
+				_rx_phy_info->stbc[3],		\
+				_rx_phy_info->stbc[4],		\
+				_rx_phy_info->stbc[5],		\
+				_rx_phy_info->stbc[6],		\
+				_rx_phy_info->stbc[7],		\
+				_rx_phy_info->stbc[8],		\
+				_rx_phy_info->stbc[9]);		\
+		\
+		/* LDPC and TxBF counts */			\
+		qdf_print("LDPC TXBF Counts: %d, %d",		\
+				_rx_phy_info->ldpc, _rx_phy_info->txbf);\
+		/* RSSI Values for last received frames */	\
+		qdf_print("RSSI (data, mgmt): %d, %d", _rx_phy_info->data_rssi,\
+				_rx_phy_info->mgmt_rssi);		\
+		\
+		qdf_print("RSSI Chain 0 (0x%02x 0x%02x 0x%02x 0x%02x)",\
+				((_rx_phy_info->rssi_chain0 >> 24) & 0xff),\
+				((_rx_phy_info->rssi_chain0 >> 16) & 0xff),\
+				((_rx_phy_info->rssi_chain0 >> 8) & 0xff),\
+				((_rx_phy_info->rssi_chain0 >> 0) & 0xff));\
+		\
+		qdf_print("RSSI Chain 1 (0x%02x 0x%02x 0x%02x 0x%02x)",\
+				((_rx_phy_info->rssi_chain1 >> 24) & 0xff),\
+				((_rx_phy_info->rssi_chain1 >> 16) & 0xff),\
+				((_rx_phy_info->rssi_chain1 >> 8) & 0xff),\
+				((_rx_phy_info->rssi_chain1 >> 0) & 0xff));\
+		\
+		qdf_print("RSSI Chain 2 (0x%02x 0x%02x 0x%02x 0x%02x)",\
+				((_rx_phy_info->rssi_chain2 >> 24) & 0xff),\
+				((_rx_phy_info->rssi_chain2 >> 16) & 0xff),\
+				((_rx_phy_info->rssi_chain2 >> 8) & 0xff),\
+				((_rx_phy_info->rssi_chain2 >> 0) & 0xff));\
+	} while (0)
 
 static void htt_t2h_stats_rx_rate_stats_print(wlan_dbg_rx_rate_info_t *
 					      rx_phy_info, int concise)
@@ -447,7 +456,7 @@ htt_t2h_stats_rx_reorder_stats_print(struct rx_reorder_stats *stats_ptr,
 			stats_ptr->rxdesc_err_fcs);
 	qdf_print("  %u Unicast frames with invalid peer handler",
 			stats_ptr->rxdesc_uc_msdus_inv_peer);
-	qdf_print("  %u unicast frame directly to DUT with invalid peer handler",
+	qdf_print("  %u unicast frame to DUT with invalid peer handler",
 			stats_ptr->rxdesc_direct_msdus_inv_peer);
 	qdf_print("  %u Broadcast/Multicast frames with invalid peer handler",
 			stats_ptr->rxdesc_bmc_msdus_inv_peer);
@@ -473,7 +482,7 @@ htt_t2h_stats_rx_reorder_stats_print(struct rx_reorder_stats *stats_ptr,
 
 static void
 htt_t2h_stats_rx_rem_buf_stats_print(
-    struct rx_remote_buffer_mgmt_stats *stats_ptr, int concise)
+	struct rx_remote_buffer_mgmt_stats *stats_ptr, int concise)
 {
 	qdf_print("Rx Remote Buffer Statistics:");
 	qdf_print("  %u MSDU's reaped for Rx processing",
@@ -712,6 +721,7 @@ htt_t2h_tx_ppdu_bitmaps_pr(uint32_t *queued_ptr, uint32_t *acked_ptr)
 	for (word = 0; word < 2; word++) {
 		uint32_t queued = *(queued_ptr + word);
 		uint32_t acked = *(acked_ptr + word);
+
 		for (j = 0; j < 32; j++, i++) {
 			if (queued & (1 << j)) {
 				queued_str[i] = '1';
@@ -770,6 +780,7 @@ static void htt_make_u8_list_str(uint32_t *aligned_data,
 {
 	uint8_t *p8 = (uint8_t *) aligned_data;
 	char *buf_p = buffer;
+
 	while (max_elems-- > 0) {
 		int bytes;
 		uint8_t val;
@@ -799,6 +810,7 @@ static void htt_make_u16_list_str(uint32_t *aligned_data,
 {
 	uint16_t *p16 = (uint16_t *) aligned_data;
 	char *buf_p = buffer;
+
 	while (max_elems-- > 0) {
 		int bytes;
 		uint16_t val;
@@ -868,6 +880,7 @@ htt_t2h_tx_ppdu_log_print(struct ol_fw_tx_dbg_ppdu_msg_hdr *hdr,
 #define BUF_SIZE 80
 			char buf[BUF_SIZE];
 			uint8_t *p8;
+
 			time_enqueue_us =
 				HTT_TICK_TO_USEC(record->timestamp_enqueue,
 						 hdr->microsec_per_tick);
@@ -876,34 +889,39 @@ htt_t2h_tx_ppdu_log_print(struct ol_fw_tx_dbg_ppdu_msg_hdr *hdr,
 						 hdr->microsec_per_tick);
 
 			start_pn_lsbs =
-				((*
-				  (msg_word +
-				   OL_FW_TX_DBG_PPDU_START_PN_LSBS_WORD)) &
-				 OL_FW_TX_DBG_PPDU_START_PN_LSBS_M) >>
+				((*(msg_word +
+				OL_FW_TX_DBG_PPDU_START_PN_LSBS_WORD)) &
+				OL_FW_TX_DBG_PPDU_START_PN_LSBS_M) >>
 				OL_FW_TX_DBG_PPDU_START_PN_LSBS_S;
 			num_mpdus =
-				((*(msg_word + OL_FW_TX_DBG_PPDU_NUM_MPDUS_WORD))&
-				 OL_FW_TX_DBG_PPDU_NUM_MPDUS_M) >>
+				((*(msg_word +
+				OL_FW_TX_DBG_PPDU_NUM_MPDUS_WORD))&
+				OL_FW_TX_DBG_PPDU_NUM_MPDUS_M) >>
 				OL_FW_TX_DBG_PPDU_NUM_MPDUS_S;
 			peer_id =
-				((*(msg_word + OL_FW_TX_DBG_PPDU_PEER_ID_WORD)) &
-				 OL_FW_TX_DBG_PPDU_PEER_ID_M) >>
+				((*(msg_word +
+				OL_FW_TX_DBG_PPDU_PEER_ID_WORD)) &
+				OL_FW_TX_DBG_PPDU_PEER_ID_M) >>
 				OL_FW_TX_DBG_PPDU_PEER_ID_S;
 			ext_tid =
-				((*(msg_word + OL_FW_TX_DBG_PPDU_EXT_TID_WORD)) &
-				 OL_FW_TX_DBG_PPDU_EXT_TID_M) >>
+				((*(msg_word +
+				OL_FW_TX_DBG_PPDU_EXT_TID_WORD)) &
+				OL_FW_TX_DBG_PPDU_EXT_TID_M) >>
 				OL_FW_TX_DBG_PPDU_EXT_TID_S;
 			rate_code =
-				((*(msg_word + OL_FW_TX_DBG_PPDU_RATE_CODE_WORD))&
-				 OL_FW_TX_DBG_PPDU_RATE_CODE_M) >>
+				((*(msg_word +
+				OL_FW_TX_DBG_PPDU_RATE_CODE_WORD))&
+				OL_FW_TX_DBG_PPDU_RATE_CODE_M) >>
 				OL_FW_TX_DBG_PPDU_RATE_CODE_S;
 			rate_flags =
-				((*(msg_word + OL_FW_TX_DBG_PPDU_RATE_FLAGS_WORD))&
-				 OL_FW_TX_DBG_PPDU_RATE_FLAGS_M) >>
+				((*(msg_word +
+				OL_FW_TX_DBG_PPDU_RATE_FLAGS_WORD))&
+				OL_FW_TX_DBG_PPDU_RATE_FLAGS_M) >>
 				OL_FW_TX_DBG_PPDU_RATE_FLAGS_S;
 			tries =
-				((*(msg_word + OL_FW_TX_DBG_PPDU_TRIES_WORD)) &
-				 OL_FW_TX_DBG_PPDU_TRIES_M) >>
+				((*(msg_word +
+				OL_FW_TX_DBG_PPDU_TRIES_WORD)) &
+				OL_FW_TX_DBG_PPDU_TRIES_M) >>
 				OL_FW_TX_DBG_PPDU_TRIES_S;
 
 			qdf_print(" - PPDU tx to peer %d, TID %d", peer_id,
@@ -918,23 +936,22 @@ htt_t2h_tx_ppdu_log_print(struct ol_fw_tx_dbg_ppdu_msg_hdr *hdr,
 				record->num_bytes);
 			if (complete) {
 				qdf_print
-				      ("   enqueued: %u, completed: %u usec)",
+					("   enqueued: %u, completed: %u usec)",
 				       time_enqueue_us, time_completion_us);
 				qdf_print
 					("   %d tries, last tx used rate %d ",
-					 tries, rate_code);
+					tries, rate_code);
 				qdf_print("on %d MHz chan (flags = %#x)",
-					  htt_rate_flags_to_mhz
-					  (rate_flags), rate_flags);
-				qdf_print
-				      ("  enqueued and acked MPDU bitmaps:");
+					htt_rate_flags_to_mhz
+					(rate_flags), rate_flags);
+				qdf_print("  enqueued and acked MPDU bitmaps:");
 				htt_t2h_tx_ppdu_bitmaps_pr(msg_word +
-					   OL_FW_TX_DBG_PPDU_ENQUEUED_LSBS_WORD,
-							   msg_word +
-					   OL_FW_TX_DBG_PPDU_BLOCK_ACK_LSBS_WORD);
+					OL_FW_TX_DBG_PPDU_ENQUEUED_LSBS_WORD,
+					msg_word +
+					OL_FW_TX_DBG_PPDU_BLOCK_ACK_LSBS_WORD);
 			} else {
-				qdf_print
-				      ("  enqueued: %d us, not yet completed",
+				qdf_print(
+					"  enqueued: %d us, not yet completed",
 					time_enqueue_us);
 			}
 			/* skip the regular msg fields to reach the tail area */
@@ -1157,18 +1174,16 @@ void htt_t2h_stats_print(uint8_t *stats_data, int concise)
 	case HTT_DBG_STATS_RX_RATE_INFO:
 	{
 		wlan_dbg_rx_rate_info_t *rx_phy_info;
-		rx_phy_info =
-			(wlan_dbg_rx_rate_info_t *) (msg_word + 1);
 
+		rx_phy_info = (wlan_dbg_rx_rate_info_t *) (msg_word + 1);
 		htt_t2h_stats_rx_rate_stats_print(rx_phy_info, concise);
-
 		break;
 	}
 	case HTT_DBG_STATS_RX_RATE_INFO_V2:
 	{
 		wlan_dbg_rx_rate_info_v2_t *rx_phy_info;
-		rx_phy_info =
-			(wlan_dbg_rx_rate_info_v2_t *) (msg_word + 1);
+
+		rx_phy_info = (wlan_dbg_rx_rate_info_v2_t *) (msg_word + 1);
 		htt_t2h_stats_rx_rate_stats_print_v2(rx_phy_info, concise);
 		break;
 	}
@@ -1183,8 +1198,7 @@ void htt_t2h_stats_print(uint8_t *stats_data, int concise)
 				("HTT_DBG_STATS_TX_PPDU_LOG -- length = 0!");
 			break;
 		}
-		hdr =
-			(struct ol_fw_tx_dbg_ppdu_msg_hdr *)(msg_word + 1);
+		hdr = (struct ol_fw_tx_dbg_ppdu_msg_hdr *)(msg_word + 1);
 		record = (struct ol_fw_tx_dbg_ppdu_base *)(hdr + 1);
 		htt_t2h_tx_ppdu_log_print(hdr, record, length, concise);
 	}
@@ -1192,18 +1206,16 @@ void htt_t2h_stats_print(uint8_t *stats_data, int concise)
 	case HTT_DBG_STATS_TX_RATE_INFO:
 	{
 		wlan_dbg_tx_rate_info_t *tx_rate_info;
-		tx_rate_info =
-			(wlan_dbg_tx_rate_info_t *) (msg_word + 1);
 
+		tx_rate_info = (wlan_dbg_tx_rate_info_t *) (msg_word + 1);
 		htt_t2h_stats_tx_rate_stats_print(tx_rate_info, concise);
-
 		break;
 	}
 	case HTT_DBG_STATS_TX_RATE_INFO_V2:
 	{
 		wlan_dbg_tx_rate_info_v2_t *tx_rate_info;
-		tx_rate_info =
-			(wlan_dbg_tx_rate_info_v2_t *) (msg_word + 1);
+
+		tx_rate_info = (wlan_dbg_tx_rate_info_v2_t *) (msg_word + 1);
 		htt_t2h_stats_tx_rate_stats_print_v2(tx_rate_info, concise);
 		break;
 	}
@@ -1211,7 +1223,8 @@ void htt_t2h_stats_print(uint8_t *stats_data, int concise)
 	{
 		struct rx_remote_buffer_mgmt_stats *rx_rem_buf;
 
-		rx_rem_buf = (struct rx_remote_buffer_mgmt_stats *)(msg_word + 1);
+		rx_rem_buf =
+			(struct rx_remote_buffer_mgmt_stats *)(msg_word + 1);
 		htt_t2h_stats_rx_rem_buf_stats_print(rx_rem_buf, concise);
 		break;
 	}
@@ -1228,8 +1241,7 @@ void htt_t2h_stats_print(uint8_t *stats_data, int concise)
 	{
 		struct wlan_dbg_txbf_snd_stats *txbf_snd_buf;
 
-		txbf_snd_buf =
-			(struct wlan_dbg_txbf_snd_stats *)(msg_word + 1);
+		txbf_snd_buf = (struct wlan_dbg_txbf_snd_stats *)(msg_word + 1);
 		htt_t2h_stats_txbf_snd_buf_stats_print(txbf_snd_buf);
 		break;
 	}
@@ -1263,24 +1275,24 @@ void htt_t2h_stats_print(uint8_t *stats_data, int concise)
 	case HTT_DBG_STATS_TIDQ:
 	{
 		struct wlan_dbg_tidq_stats *tidq_stats;
-		tidq_stats = (struct wlan_dbg_tidq_stats *)(msg_word + 1);
 
+		tidq_stats = (struct wlan_dbg_tidq_stats *)(msg_word + 1);
 		htt_t2h_stats_tidq_stats_print(tidq_stats, concise);
 		break;
 	}
 	case HTT_DBG_STATS_TX_MU_INFO:
 	{
 		struct wlan_dbg_tx_mu_stats *tx_mu_stats;
-		tx_mu_stats = (struct wlan_dbg_tx_mu_stats *)(msg_word + 1);
 
+		tx_mu_stats = (struct wlan_dbg_tx_mu_stats *)(msg_word + 1);
 		htt_t2h_stats_tx_mu_stats_print(tx_mu_stats, concise);
 		break;
 	}
 	case HTT_DBG_STATS_SIFS_RESP_INFO:
 	{
 		struct wlan_dbg_sifs_resp_stats *sifs_stats;
-		sifs_stats = (struct wlan_dbg_sifs_resp_stats *)(msg_word + 1);
 
+		sifs_stats = (struct wlan_dbg_sifs_resp_stats *)(msg_word + 1);
 		htt_t2h_stats_sifs_resp_stats_print(sifs_stats, concise);
 		break;
 	}
