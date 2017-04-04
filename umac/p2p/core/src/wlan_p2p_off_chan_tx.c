@@ -784,11 +784,11 @@ static QDF_STATUS p2p_mgmt_tx(struct tx_action_context *tx_ctx,
 
 	wh = (struct wlan_frame_hdr *)frame;
 	mac_addr = wh->i_addr1;
-	peer = wlan_objmgr_get_peer(psoc, mac_addr, WLAN_MGMT_NB_ID);
+	peer = wlan_objmgr_get_peer(psoc, mac_addr, WLAN_P2P_ID);
 	if (!peer) {
 		mac_addr = wh->i_addr2;
 		peer = wlan_objmgr_get_peer(psoc, mac_addr,
-					WLAN_MGMT_NB_ID);
+					WLAN_P2P_ID);
 	}
 
 	if (!peer) {
@@ -812,6 +812,8 @@ static QDF_STATUS p2p_mgmt_tx(struct tx_action_context *tx_ctx,
 			(qdf_nbuf_t)packet,
 			tx_comp_cb, tx_ota_comp_cb,
 			WLAN_UMAC_COMP_P2P, &mgmt_param);
+
+	wlan_objmgr_peer_release_ref(peer, WLAN_P2P_ID);
 
 	return status;
 }
