@@ -1400,12 +1400,17 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	uint8_t temp_band_cap;
 	struct cds_config_info *cds_cfg = cds_get_ini_config();
 
-	ret = hdd_objmgr_create_and_store_pdev(hdd_ctx);
-	if (ret) {
-		hdd_err("pdev creation fails!");
-		QDF_BUG(0);
+	/* Reuse same pdev for module stop and start */
+	if ((hdd_get_conparam() == QDF_GLOBAL_FTM_MODE) ||
+		(!cds_is_driver_loading())) {
+		hdd_err("Reuse pdev for module start/stop");
+	} else {
+		ret = hdd_objmgr_create_and_store_pdev(hdd_ctx);
+		if (ret) {
+			hdd_err("pdev creation fails!");
+			QDF_BUG(0);
+		}
 	}
-
 	if (cds_cfg) {
 		if (hdd_ctx->config->enable_sub_20_channel_width !=
 			WLAN_SUB_20_CH_WIDTH_NONE && !cfg->sub_20_support) {
@@ -8854,6 +8859,12 @@ int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx, bool ftm_mode)
 				ret);
 	}
 	hdd_ctx->driver_status = DRIVER_MODULES_CLOSED;
+	/*
+	 * Reset total mac phy during module stop such that during
+	 * next module start same psoc is used to populate new service
+	 * ready data
+	 */
+	hdd_ctx->hdd_psoc->total_mac_phy = 0;
 
 done:
 	hdd_ctx->stop_modules_in_progress = false;
