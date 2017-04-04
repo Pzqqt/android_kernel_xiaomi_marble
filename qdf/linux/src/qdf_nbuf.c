@@ -1477,6 +1477,7 @@ void qdf_net_buf_debug_add_node(qdf_nbuf_t net_buf, size_t size,
 				  "Mem alloc failed ! Could not track skb from %s %d of size %zu",
 				  file_name, line_num, size);
 	}
+
 	spin_unlock_irqrestore(&g_qdf_net_buf_track_lock[i], irq_flag);
 
 	return;
@@ -1540,6 +1541,26 @@ done:
 }
 EXPORT_SYMBOL(qdf_net_buf_debug_delete_node);
 
+void qdf_net_buf_debug_acquire_skb(qdf_nbuf_t net_buf,
+			uint8_t *file_name, uint32_t line_num)
+{
+	qdf_nbuf_t ext_list = qdf_nbuf_get_ext_list(net_buf);
+
+	while (ext_list) {
+		/*
+		 * Take care to add if it is Jumbo packet connected using
+		 * frag_list
+		 */
+		qdf_nbuf_t next;
+
+		next = qdf_nbuf_queue_next(ext_list);
+		qdf_net_buf_debug_add_node(ext_list, 0, file_name, line_num);
+		ext_list = next;
+	}
+	qdf_net_buf_debug_add_node(net_buf, 0, file_name, line_num);
+}
+EXPORT_SYMBOL(qdf_net_buf_debug_acquire_skb);
+
 /**
  * qdf_net_buf_debug_release_skb() - release skb to avoid memory leak
  * @net_buf: Network buf holding head segment (single)
@@ -1569,13 +1590,7 @@ void qdf_net_buf_debug_release_skb(qdf_nbuf_t net_buf)
 }
 EXPORT_SYMBOL(qdf_net_buf_debug_release_skb);
 
-#else
-void qdf_net_buf_debug_delete_node(qdf_nbuf_t net_buf)
-{
-}
-EXPORT_SYMBOL(qdf_net_buf_debug_delete_node);
 #endif /*MEMORY_DEBUG */
-
 #if defined(FEATURE_TSO)
 
 /**

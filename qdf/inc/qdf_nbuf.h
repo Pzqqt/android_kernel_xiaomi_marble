@@ -630,11 +630,65 @@ qdf_nbuf_dma_map_info(qdf_dma_map_t bmap, qdf_dmamap_info_t *sg)
 	__qdf_nbuf_dma_map_info(bmap, sg);
 }
 
+/**
+ * qdf_nbuf_is_tso() - is the network buffer a jumbo packet?
+ * @buf: Network buffer
+ *
+ * Return: 1 - this is a jumbo packet 0 - not a jumbo packet
+ */
+static inline uint8_t qdf_nbuf_is_tso(qdf_nbuf_t nbuf)
+{
+	return __qdf_nbuf_is_tso(nbuf);
+}
+
+/**
+ * qdf_nbuf_get_users() - function to get the number of users referencing this
+ * network buffer
+ *
+ * @nbuf:   network buffer
+ *
+ * Return: number of user references to nbuf.
+ */
+static inline int qdf_nbuf_get_users(qdf_nbuf_t nbuf)
+{
+	return __qdf_nbuf_get_users(nbuf);
+}
+
+/**
+ * qdf_nbuf_next() - get the next packet in the linked list
+ * @buf: Network buffer
+ *
+ * This function can be used when nbufs are directly linked into a list,
+ * rather than using a separate network buffer queue object.
+ *
+ * Return: next network buffer in the linked list
+ */
+static inline qdf_nbuf_t qdf_nbuf_next(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_next(buf);
+}
+
 #ifdef MEMORY_DEBUG
 void qdf_net_buf_debug_init(void);
 void qdf_net_buf_debug_exit(void);
 void qdf_net_buf_debug_clean(void);
 void qdf_net_buf_debug_add_node(qdf_nbuf_t net_buf, size_t size,
+			uint8_t *file_name, uint32_t line_num);
+void qdf_net_buf_debug_delete_node(qdf_nbuf_t net_buf);
+
+/**
+ * qdf_net_buf_debug_acquire_skb() - acquire skb to avoid memory leak
+ * @net_buf: Network buf holding head segment (single)
+ * @file_name: pointer to file name
+ * @line_num: line number
+ *
+ * WLAN driver module's SKB which are allocated by network stack are
+ * suppose to call this API before freeing it such that the SKB
+ * is not reported as memory leak.
+ *
+ * Return: none
+ */
+void qdf_net_buf_debug_acquire_skb(qdf_nbuf_t net_buf,
 			uint8_t *file_name, uint32_t line_num);
 void qdf_net_buf_debug_release_skb(qdf_nbuf_t net_buf);
 
@@ -659,10 +713,15 @@ qdf_nbuf_alloc_debug(qdf_device_t osdev, qdf_size_t size, int reserve,
 
 static inline void qdf_nbuf_free(qdf_nbuf_t net_buf)
 {
+	if (qdf_nbuf_is_tso(net_buf) &&
+			qdf_nbuf_get_users(net_buf) > 1)
+		goto free_buf;
+
 	/* Remove SKB from internal QDF tracking table */
 	if (qdf_likely(net_buf))
 		qdf_net_buf_debug_delete_node(net_buf);
 
+free_buf:
 	__qdf_nbuf_free(net_buf);
 }
 
@@ -726,6 +785,11 @@ qdf_nbuf_copy_debug(qdf_nbuf_t buf, uint8_t *file_name,
 }
 
 #else
+
+static inline void qdf_net_buf_debug_acquire_skb(qdf_nbuf_t net_buf,
+			uint8_t *file_name, uint32_t line_num)
+{
+}
 
 static inline void qdf_net_buf_debug_release_skb(qdf_nbuf_t net_buf)
 {
@@ -795,7 +859,12 @@ static inline void qdf_nbuf_init_fast(qdf_nbuf_t nbuf)
 
 static inline void qdf_nbuf_tx_free(qdf_nbuf_t buf_list, int tx_err)
 {
-	__qdf_nbuf_tx_free(buf_list, tx_err);
+	while (buf_list) {
+		qdf_nbuf_t next = qdf_nbuf_next(buf_list);
+
+		qdf_nbuf_free(buf_list);
+		buf_list = next;
+	}
 }
 
 static inline void qdf_nbuf_ref(qdf_nbuf_t buf)
@@ -1085,20 +1154,6 @@ static inline qdf_nbuf_t
 qdf_nbuf_queue_first(qdf_nbuf_queue_t *head)
 {
 	return __qdf_nbuf_queue_first(head);
-}
-
-/**
- * qdf_nbuf_next() - get the next packet in the linked list
- * @buf: Network buffer
- *
- * This function can be used when nbufs are directly linked into a list,
- * rather than using a separate network buffer queue object.
- *
- * Return: next network buffer in the linked list
- */
-static inline qdf_nbuf_t qdf_nbuf_next(qdf_nbuf_t buf)
-{
-	return __qdf_nbuf_next(buf);
 }
 
 /**
@@ -1930,17 +1985,6 @@ static inline void qdf_dmaaddr_to_32s(qdf_dma_addr_t dmaaddr,
 }
 
 /**
- * qdf_nbuf_is_tso() - is the network buffer a jumbo packet?
- * @buf: Network buffer
- *
- * Return: 1 - this is a jumbo packet 0 - not a jumbo packet
- */
-static inline uint8_t qdf_nbuf_is_tso(qdf_nbuf_t nbuf)
-{
-	return __qdf_nbuf_is_tso(nbuf);
-}
-
-/**
  * qdf_nbuf_get_tso_info() - function to divide a jumbo TSO
  * network buffer into segments
  * @nbuf:   network buffer to be segmented
@@ -2004,19 +2048,6 @@ static inline uint32_t qdf_nbuf_get_tso_num_seg(qdf_nbuf_t nbuf)
 static inline qdf_nbuf_t qdf_nbuf_inc_users(qdf_nbuf_t nbuf)
 {
 	return __qdf_nbuf_inc_users(nbuf);
-}
-
-/**
- * qdf_nbuf_get_users() - function to get the number of users referencing this
- * network buffer
- *
- * @nbuf:   network buffer
- *
- * Return: number of user references to nbuf.
- */
-static inline int qdf_nbuf_get_users(qdf_nbuf_t nbuf)
-{
-	return __qdf_nbuf_get_users(nbuf);
 }
 
 /**
