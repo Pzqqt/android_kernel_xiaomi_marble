@@ -194,24 +194,24 @@ ucfg_scan_update_mlme_info(struct wlan_objmgr_vdev *vdev, struct bss_info *bss,
 /**
  * ucfg_scan_register_event_handler() - The Public API to register
  * an event cb handler
- * @vdev: vdev object
+ * @pdev: pdev object
  * @event_cb: callback function to register
  * @arg: component specific priv argument to @event_cb callback function
  *
  * The Public API to register a event cb handler. This cb is called whenever
- * any scan event is received.
+ * any scan event is received on @pdev.
  *
  * Return: 0 for success or error code.
  */
 
 QDF_STATUS
-ucfg_scan_register_event_handler(struct wlan_objmgr_vdev *vdev,
+ucfg_scan_register_event_handler(struct wlan_objmgr_pdev *pdev,
 	scan_event_handler event_cb, void *arg);
 
 /**
  * ucfg_scan_unregister_event_handler() - Public API to unregister
  * event cb handler
- * @vdev: vdev object
+ * @pdev: pdev object
  * @event_cb: callback function to unregister
  * @arg: component specific priv argument to @event_cb callback function
  *
@@ -222,7 +222,7 @@ ucfg_scan_register_event_handler(struct wlan_objmgr_vdev *vdev,
  */
 
 void
-ucfg_scan_unregister_event_handler(struct wlan_objmgr_vdev *vdev,
+ucfg_scan_unregister_event_handler(struct wlan_objmgr_pdev *pdev,
 	scan_event_handler event_cb, void *arg);
 
 /**

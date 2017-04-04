@@ -287,7 +287,7 @@ scm_add_scan_event_handler(struct pdev_scan_ev_handler *pdev_ev_handler,
 }
 
 QDF_STATUS
-ucfg_scan_register_event_handler(struct wlan_objmgr_vdev *vdev,
+ucfg_scan_register_event_handler(struct wlan_objmgr_pdev *pdev,
 	scan_event_handler event_cb, void *arg)
 {
 	uint32_t idx;
@@ -296,15 +296,15 @@ ucfg_scan_register_event_handler(struct wlan_objmgr_vdev *vdev,
 	struct cb_handler *cb_handler;
 
 	/* scan event handler call back can't be NULL */
-	if (!vdev || !event_cb) {
-		scm_err("vdev: %p, event_cb: %p", vdev, event_cb);
+	if (!pdev || !event_cb) {
+		scm_err("pdev: %p, event_cb: %p", pdev, event_cb);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	scm_info("vdev: %p, event_cb: %p, arg: %p\n", vdev, event_cb, arg);
+	scm_info("pdev: %p, event_cb: %p, arg: %p\n", pdev, event_cb, arg);
 
-	scan = wlan_vdev_get_scan_obj(vdev);
-	pdev_ev_handler = wlan_vdev_get_pdev_scan_ev_handlers(vdev);
+	scan = wlan_pdev_get_scan_obj(pdev);
+	pdev_ev_handler = wlan_pdev_get_pdev_scan_ev_handlers(pdev);
 	cb_handler = &(pdev_ev_handler->cb_handlers[0]);
 
 	qdf_spin_lock_bh(&scan->lock);
@@ -404,7 +404,7 @@ scm_remove_scan_event_handler(struct pdev_scan_ev_handler *pdev_ev_handler,
 }
 
 void
-ucfg_scan_unregister_event_handler(struct wlan_objmgr_vdev *vdev,
+ucfg_scan_unregister_event_handler(struct wlan_objmgr_pdev *pdev,
 	scan_event_handler event_cb, void *arg)
 {
 	uint8_t found = false;
@@ -414,13 +414,13 @@ ucfg_scan_unregister_event_handler(struct wlan_objmgr_vdev *vdev,
 	struct cb_handler *cb_handler;
 	struct pdev_scan_ev_handler *pdev_ev_handler;
 
-	scm_info("vdev: %p, event_cb: 0x%p, arg: 0x%p", vdev, event_cb, arg);
-	if (!vdev) {
-		scm_err("null vdev");
+	scm_info("pdev: %p, event_cb: 0x%p, arg: 0x%p", pdev, event_cb, arg);
+	if (!pdev) {
+		scm_err("null pdev");
 		return;
 	}
-	scan = wlan_vdev_get_scan_obj(vdev);
-	pdev_ev_handler = wlan_vdev_get_pdev_scan_ev_handlers(vdev);
+	scan = wlan_pdev_get_scan_obj(pdev);
+	pdev_ev_handler = wlan_pdev_get_pdev_scan_ev_handlers(pdev);
 	cb_handler = &(pdev_ev_handler->cb_handlers[0]);
 
 	qdf_spin_lock_bh(&scan->lock);

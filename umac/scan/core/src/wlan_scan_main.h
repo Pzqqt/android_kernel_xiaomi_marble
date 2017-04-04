@@ -313,23 +313,6 @@ struct wlan_scan_obj {
 };
 
 /**
- * wlan_vdev_get_scan_obj() - private API to get scan object from vdev
- * @psoc: vdev object
- *
- * Return: scan object
- */
-static inline struct wlan_scan_obj *
-wlan_vdev_get_scan_obj(struct wlan_objmgr_vdev *vdev)
-{
-	struct wlan_objmgr_psoc *psoc =
-		wlan_pdev_get_psoc(wlan_vdev_get_pdev(vdev));
-
-	return (struct wlan_scan_obj *)
-		wlan_objmgr_psoc_get_comp_private_obj(psoc,
-				WLAN_UMAC_COMP_SCAN);
-}
-
-/**
  * wlan_psoc_get_scan_obj() - private API to get scan object from psoc
  * @psoc: psoc object
  *
@@ -341,6 +324,34 @@ wlan_psoc_get_scan_obj(struct wlan_objmgr_psoc *psoc)
 	return (struct wlan_scan_obj *)
 		wlan_objmgr_psoc_get_comp_private_obj(psoc,
 				WLAN_UMAC_COMP_SCAN);
+}
+
+/**
+ * wlan_pdev_get_scan_obj() - private API to get scan object from pdev
+ * @psoc: pdev object
+ *
+ * Return: scan object
+ */
+static inline struct wlan_scan_obj *
+wlan_pdev_get_scan_obj(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
+
+	return wlan_psoc_get_scan_obj(psoc);
+}
+
+/**
+ * wlan_vdev_get_scan_obj() - private API to get scan object from vdev
+ * @psoc: vdev object
+ *
+ * Return: scan object
+ */
+static inline struct wlan_scan_obj *
+wlan_vdev_get_scan_obj(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
+
+	return wlan_pdev_get_scan_obj(pdev);
 }
 
 /**
@@ -358,6 +369,24 @@ wlan_scan_vdev_get_pdev_id(struct wlan_objmgr_vdev *vdev)
 }
 
 /**
+ * wlan_pdev_get_pdev_scan_ev_handlers() - private API to get
+ * pdev scan event handlers
+ * @vdev: pdev object
+ *
+ * Return: pdev_scan_ev_handler object
+ */
+static inline struct pdev_scan_ev_handler*
+wlan_pdev_get_pdev_scan_ev_handlers(struct wlan_objmgr_pdev *pdev)
+{
+	uint8_t pdevid = wlan_objmgr_pdev_get_pdev_id(pdev);
+	struct wlan_scan_obj *scan = wlan_pdev_get_scan_obj(pdev);
+	struct pdev_scan_ev_handler *pdev_ev_handler =
+		&scan->global_evhandlers.pdev_ev_handlers[pdevid];
+
+	return pdev_ev_handler;
+}
+
+/**
  * wlan_vdev_get_pdev_scan_ev_handlers() - private API to get
  * pdev scan event handlers
  * @vdev: vdev object
@@ -367,12 +396,9 @@ wlan_scan_vdev_get_pdev_id(struct wlan_objmgr_vdev *vdev)
 static inline struct pdev_scan_ev_handler*
 wlan_vdev_get_pdev_scan_ev_handlers(struct wlan_objmgr_vdev *vdev)
 {
-	uint8_t pdevid = wlan_scan_vdev_get_pdev_id(vdev);
-	struct wlan_scan_obj *scan = wlan_vdev_get_scan_obj(vdev);
-	struct pdev_scan_ev_handler *pdev_ev_handler =
-		&scan->global_evhandlers.pdev_ev_handlers[pdevid];
+	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
 
-	return pdev_ev_handler;
+	return wlan_pdev_get_pdev_scan_ev_handlers(pdev);
 }
 
 /**
