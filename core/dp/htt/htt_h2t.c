@@ -68,7 +68,8 @@ do {                                                             \
 		htt_htc_misc_pkt_list_add(pdev, pkt);            \
 } while (0)
 #else
-#define HTT_SEND_HTC_PKT(pdev, ppkt) htc_send_pkt(pdev->htc_pdev, &pkt->htc_pkt);
+#define HTT_SEND_HTC_PKT(pdev, ppkt) \
+	htc_send_pkt(pdev->htc_pdev, &pkt->htc_pkt);
 #endif
 
 
@@ -389,9 +390,10 @@ QDF_STATUS htt_h2t_rx_ring_cfg_msg_ll(struct htt_pdev_t *pdev)
 	if (!pkt)
 		return A_ERROR; /* failure */
 
-	/* show that this is not a tx frame download
-	   (not required, but helpful)
-	*/
+	/*
+	 * show that this is not a tx frame download
+	 *  (not required, but helpful)
+	 */
 	pkt->msdu_id = HTT_TX_COMPL_INV_MSDU_ID;
 	pkt->pdev_ctxt = NULL;  /* not used during send-done callback */
 
@@ -512,7 +514,8 @@ QDF_STATUS htt_h2t_rx_ring_cfg_msg_ll(struct htt_pdev_t *pdev)
 		enable_ppdu_end   = 1;
 		/* Disable ASPM for monitor mode */
 		QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_INFO,
-			  "%s : %d Monitor mode is enabled\n",  __func__, __LINE__);
+			  "%s : %d Monitor mode is enabled\n",
+			  __func__, __LINE__);
 	}
 
 	HTT_RX_RING_CFG_ENABLED_802_11_HDR_SET(*msg_word, enable_hdr);
@@ -596,8 +599,10 @@ htt_h2t_rx_ring_cfg_msg_hl(struct htt_pdev_t *pdev)
 	if (!pkt)
 		return A_ERROR; /* failure */
 
-	/* show that this is not a tx frame download
-	 * (not required, but helpful) */
+	/*
+	 * show that this is not a tx frame download
+	 * (not required, but helpful)
+	 */
 	pkt->msdu_id = HTT_TX_COMPL_INV_MSDU_ID;
 	pkt->pdev_ctxt = NULL; /* not used during send-done callback */
 
