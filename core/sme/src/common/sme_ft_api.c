@@ -30,9 +30,7 @@
 #include <csr_neighbor_roam.h>
 #include <sir_api.h>
 
-/*--------------------------------------------------------------------------
-   Initialize the FT context.
-   ------------------------------------------------------------------------*/
+/* Initialize the FT context. */
 void sme_ft_open(tHalHandle hHal, uint32_t sessionId)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
@@ -57,8 +55,8 @@ void sme_ft_open(tHalHandle hHal, uint32_t sessionId)
 			qdf_mc_timer_init(&pSession->ftSmeContext.
 					  preAuthReassocIntvlTimer,
 					  QDF_TIMER_TYPE_SW,
-					  sme_preauth_reassoc_intvl_timer_callback,
-					  (void *)pSession->ftSmeContext.pUsrCtx);
+				sme_preauth_reassoc_intvl_timer_callback,
+					(void *)pSession->ftSmeContext.pUsrCtx);
 
 		if (QDF_STATUS_SUCCESS != status) {
 			sme_err("Preauth Reassoc interval Timer allocation failed");
@@ -69,9 +67,7 @@ void sme_ft_open(tHalHandle hHal, uint32_t sessionId)
 	}
 }
 
-/*--------------------------------------------------------------------------
-   Cleanup the SME FT Global context.
-   ------------------------------------------------------------------------*/
+/* Cleanup the SME FT Global context. */
 void sme_ft_close(tHalHandle hHal, uint32_t sessionId)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
@@ -90,10 +86,8 @@ void sme_ft_close(tHalHandle hHal, uint32_t sessionId)
 					  preAuthReassocIntvlTimer);
 		}
 
-		if (QDF_STATUS_SUCCESS !=
-		    qdf_mc_timer_destroy(&pSession->ftSmeContext.
-					 preAuthReassocIntvlTimer)) {
-		}
+		qdf_mc_timer_destroy(&pSession->ftSmeContext.
+					preAuthReassocIntvlTimer);
 
 		if (pSession->ftSmeContext.pUsrCtx != NULL) {
 			qdf_mem_free(pSession->ftSmeContext.pUsrCtx);
@@ -106,6 +100,7 @@ void sme_set_ft_pre_auth_state(tHalHandle hHal, uint32_t sessionId, bool state)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
+
 	if (pSession)
 		pSession->ftSmeContext.setFTPreAuthState = state;
 }
@@ -113,8 +108,8 @@ void sme_set_ft_pre_auth_state(tHalHandle hHal, uint32_t sessionId, bool state)
 bool sme_get_ft_pre_auth_state(tHalHandle hHal, uint32_t sessionId)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
+
 	if (pSession)
 		return pSession->ftSmeContext.setFTPreAuthState;
 
@@ -337,9 +332,9 @@ QDF_STATUS sme_ft_update_key(tHalHandle hHal, uint32_t sessionId,
 	}
 
 	status = sme_acquire_global_lock(&pMac->sme);
-	if (!(QDF_IS_STATUS_SUCCESS(status))) {
+	if (!(QDF_IS_STATUS_SUCCESS(status)))
 		return QDF_STATUS_E_FAILURE;
-	}
+
 	sme_debug("sme_ft_update_key is received in state %d",
 		  pSession->ftSmeContext.FTState);
 
@@ -347,8 +342,8 @@ QDF_STATUS sme_ft_update_key(tHalHandle hHal, uint32_t sessionId,
 	switch (pSession->ftSmeContext.FTState) {
 	case eFT_SET_KEY_WAIT:
 		if (sme_get_ft_pre_auth_state(hHal, sessionId) == true) {
-			status =
-				sme_ft_send_update_key_ind(pMac, sessionId, pFTKeyInfo);
+			status = sme_ft_send_update_key_ind(pMac, sessionId,
+								pFTKeyInfo);
 			if (status != 0) {
 				sme_err("Key set failure: %d", status);
 				pSession->ftSmeContext.setFTPTKState = false;
@@ -376,13 +371,11 @@ QDF_STATUS sme_ft_update_key(tHalHandle hHal, uint32_t sessionId,
 	return status;
 }
 
-/*--------------------------------------------------------------------------
- *
- * HDD Interface to SME. SME now sends the Auth 2 and RIC IEs up to the supplicant.
- * The supplicant will then proceed to send down the
+/*
+ * HDD Interface to SME. SME now sends the Auth 2 and RIC IEs up to the
+ * supplicant. The supplicant will then proceed to send down the
  * Reassoc Req.
- *
- *------------------------------------------------------------------------*/
+ */
 void sme_get_ft_pre_auth_response(tHalHandle hHal, uint32_t sessionId,
 				  uint8_t *ft_ies, uint32_t ft_ies_ip_len,
 				  uint16_t *ft_ies_length)
@@ -420,22 +413,19 @@ void sme_get_ft_pre_auth_response(tHalHandle hHal, uint32_t sessionId,
 		     pSession->ftSmeContext.psavedFTPreAuthRsp->ft_ies_length);
 
 	*ft_ies_length = QDF_MAC_ADDR_SIZE +
-			 pSession->ftSmeContext.psavedFTPreAuthRsp->ft_ies_length;
+		pSession->ftSmeContext.psavedFTPreAuthRsp->ft_ies_length;
 
 	pSession->ftSmeContext.FTState = eFT_REASSOC_REQ_WAIT;
 
 	sme_debug("Filled auth resp: %d", *ft_ies_length);
 	sme_release_global_lock(&pMac->sme);
-	return;
 }
 
-/*--------------------------------------------------------------------------
- *
+/*
  * SME now sends the RIC IEs up to the supplicant.
  * The supplicant will then proceed to send down the
  * Reassoc Req.
- *
- *------------------------------------------------------------------------*/
+ */
 void sme_get_rici_es(tHalHandle hHal, uint32_t sessionId, uint8_t *ric_ies,
 		     uint32_t ric_ies_ip_len, uint32_t *ric_ies_length)
 {
@@ -471,31 +461,24 @@ void sme_get_rici_es(tHalHandle hHal, uint32_t sessionId, uint8_t *ric_ies,
 	sme_debug("Filled ric ies: %d", *ric_ies_length);
 
 	sme_release_global_lock(&pMac->sme);
-	return;
 }
 
-/*--------------------------------------------------------------------------
- *
- * Timer callback for the timer that is started between the preauth completion and
- * reassoc request to the PE. In this interval, it is expected that the pre-auth response
- * and RIC IEs are passed up to the WPA supplicant and received back the necessary FTIEs
- * required to be sent in the reassoc request
- *
- *------------------------------------------------------------------------*/
+/*
+ * Timer callback for the timer that is started between the preauth completion
+ * and reassoc request to the PE. In this interval, it is expected that the
+ * pre-auth response and RIC IEs are passed up to the WPA supplicant and
+ * received back the necessary FTIEs required to be sent in the reassoc request
+ */
 void sme_preauth_reassoc_intvl_timer_callback(void *context)
 {
 	tFTRoamCallbackUsrCtx *pUsrCtx = (tFTRoamCallbackUsrCtx *) context;
 
-	if (pUsrCtx) {
+	if (pUsrCtx)
 		csr_neighbor_roam_request_handoff(pUsrCtx->pMac,
 						  pUsrCtx->sessionId);
-	}
-	return;
 }
 
-/*--------------------------------------------------------------------------
-   Reset the FT context.
-   ------------------------------------------------------------------------*/
+/* Reset the FT context. */
 void sme_ft_reset(tHalHandle hHal, uint32_t sessionId)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
