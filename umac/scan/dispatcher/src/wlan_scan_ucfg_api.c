@@ -1115,6 +1115,31 @@ ucfg_scan_psoc_close(struct wlan_objmgr_psoc *psoc)
 	return QDF_STATUS_SUCCESS;
 }
 
+static bool scm_serialization_scan_rules_cb(
+		union wlan_serialization_rules_info *comp_info,
+		uint8_t comp_id)
+{
+	switch (comp_id) {
+	case QDF_MODULE_ID_TDLS:
+		if (comp_info->scan_info.is_tdls_in_progress) {
+			scm_info("Cancel scan. Tdls in progress");
+			return false;
+		}
+		break;
+	case QDF_MODULE_ID_DFS:
+		if (comp_info->scan_info.is_cac_in_progress) {
+			scm_info("Cancel scan. CAC in progress");
+			return false;
+		}
+		break;
+	default:
+		scm_info("not handled comp_id %d", comp_id);
+		break;
+	}
+
+	return true;
+}
+
 QDF_STATUS
 ucfg_scan_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
@@ -1130,7 +1155,10 @@ ucfg_scan_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	QDF_ASSERT(status == QDF_STATUS_SUCCESS);
 	scm_db_init(psoc);
 	ucfg_scan_register_unregister_bcn_cb(psoc, true);
-
+	status = wlan_serialization_register_apply_rules_cb(psoc,
+				WLAN_SER_CMD_SCAN,
+				scm_serialization_scan_rules_cb);
+	QDF_ASSERT(status == QDF_STATUS_SUCCESS);
 	return status;
 }
 
