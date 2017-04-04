@@ -2616,12 +2616,6 @@ csr_diag_scan_complete(tpAniSirGlobal mac_ctx,
 	ucfg_scan_purge_results(list);
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_LEGACY_MAC_ID);
 	WLAN_HOST_DIAG_LOG_REPORT(pScanLog);
-
-	csr_diag_event_report(mac_ctx, eCSR_EVENT_SCAN_COMPLETE, eSIR_SUCCESS,
-			      eSIR_SUCCESS);
-	if (c > 0)
-		csr_diag_event_report(mac_ctx, eCSR_EVENT_SCAN_RES_FOUND,
-				      eSIR_SUCCESS, eSIR_SUCCESS);
 }
 #endif /* #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR */
 

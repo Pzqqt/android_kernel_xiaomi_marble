@@ -250,17 +250,6 @@ typedef enum {
 
 } eCsrDiagWlanStatusEventReason;
 
-/**
- * enum eCSR_WLAN_DIAG_EVENT_TYPE - enum for DIAG events
- * @eCSR_EVENT_SCAN_COMPLETE - scan complete
- * @eCSR_EVENT_SCAN_RES_FOUND - scan result found
- */
-typedef enum {
-	eCSR_EVENT_TYPE_INVALID = 0,
-	eCSR_EVENT_SCAN_COMPLETE = 64,
-	eCSR_EVENT_SCAN_RES_FOUND = 65,
-} eCSR_WLAN_DIAG_EVENT_TYPE;
-
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
 typedef struct tagCsrChannel {
@@ -1364,10 +1353,6 @@ bool csr_clear_joinreq_param(tpAniSirGlobal mac_ctx,
 QDF_STATUS csr_issue_stored_joinreq(tpAniSirGlobal mac_ctx,
 		uint32_t *roam_id,
 		uint32_t session_id);
-#ifdef FEATURE_WLAN_DIAG_SUPPORT
-void csr_diag_event_report(tpAniSirGlobal pmac, uint16_t event_type,
-			   uint16_t status, uint16_t reasoncode);
-#endif
 QDF_STATUS csr_get_channels_and_power(tpAniSirGlobal pMac);
 
 /* csr_scan_process_single_bssdescr() - Add a bssdescriptor to scan table

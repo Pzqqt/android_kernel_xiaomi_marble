@@ -6104,36 +6104,6 @@ QDF_STATUS csr_add_to_channel_list_front(uint8_t *pChannelList,
 
 	return QDF_STATUS_SUCCESS;
 }
-#ifdef FEATURE_WLAN_DIAG_SUPPORT
-/**
- * csr_diag_event_report() - send PE diag event
- * @pmac:        pointer to global MAC context.
- * @event_typev: sub event type for DIAG event.
- * @status:      status of the event
- * @reasoncode:  reasoncode for the given status
- *
- * This function is called to send diag event
- *
- * Return:   NA
- */
-void csr_diag_event_report(tpAniSirGlobal pmac, uint16_t event_type,
-			   uint16_t status, uint16_t reasoncode)
-{
-	WLAN_HOST_DIAG_EVENT_DEF(diag_event, host_event_wlan_pe_payload_type);
-
-	qdf_mem_zero(&diag_event, sizeof(host_event_wlan_pe_payload_type));
-
-	/* diag_event.bssid is already all zeroes */
-	diag_event.sme_state = sme_get_lim_sme_state(pmac);
-	diag_event.mlm_state = sme_get_lim_mlm_state(pmac);
-	diag_event.event_type = event_type;
-	diag_event.status = status;
-	diag_event.reason_code = reasoncode;
-
-	WLAN_HOST_DIAG_EVENT_REPORT(&diag_event, EVENT_WLAN_PE);
-	return;
-}
-#endif
 
 /**
  * csr_wait_for_connection_update() - Wait for hw mode update
