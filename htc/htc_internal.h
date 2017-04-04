@@ -92,6 +92,25 @@ typedef enum {
 	HTC_INITIAL_WAKE_UP,
 } htc_credit_exchange_type;
 
+static inline const char*
+htc_credit_exchange_type_str(htc_credit_exchange_type type)
+{
+	switch (type) {
+	case HTC_REQUEST_CREDIT:
+		return "HTC_REQUEST_CREDIT";
+	case HTC_PROCESS_CREDIT_REPORT:
+		return "HTC_PROCESS_CREDIT_REPORT";
+	case HTC_SUSPEND_ACK:
+		return "HTC_SUSPEND_ACK";
+	case HTC_SUSPEND_NACK:
+		return "HTC_SUSPEND_NACK";
+	case HTC_INITIAL_WAKE_UP:
+		return "HTC_INITIAL_WAKE_UP";
+	default:
+		return "Unknown htc_credit_exchange_type";
+	}
+}
+
 typedef struct {
 	htc_credit_exchange_type type;
 	uint64_t time;

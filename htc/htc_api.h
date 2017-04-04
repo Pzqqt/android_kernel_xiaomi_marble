@@ -802,4 +802,10 @@ void htc_set_wmi_endpoint_count(HTC_HANDLE htc_handle, uint8_t wmi_ep_count);
  * return: WMI enpoint count
  */
 uint8_t  htc_get_wmi_endpoint_count(HTC_HANDLE htc_handle);
+
+#ifdef WMI_INTERFACE_EVENT_LOGGING
+void htc_print_credit_history(HTC_HANDLE htc, uint32_t count,
+			      qdf_abstract_print * print, void *print_priv);
+#endif
+
 #endif /* _HTC_API_H_ */

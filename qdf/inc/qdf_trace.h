@@ -53,6 +53,8 @@
 #define QDF_DEFAULT_TRACE_LEVEL (1 << QDF_TRACE_LEVEL_INFO)
 #endif
 
+typedef int (qdf_abstract_print)(void *priv, const char *fmt, ...);
+
 /*
  * Log levels
  */
