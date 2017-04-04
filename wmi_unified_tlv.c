@@ -2480,6 +2480,7 @@ static QDF_STATUS send_mgmt_cmd_tlv(wmi_unified_t wmi_handle,
 	uint64_t dma_addr;
 	void *qdf_ctx = param->qdf_ctx;
 	uint8_t *bufp;
+	QDF_STATUS status;
 	int32_t bufp_len = (param->frm_len < mgmt_tx_dl_frm_len) ? param->frm_len :
 		mgmt_tx_dl_frm_len;
 
@@ -2508,7 +2509,14 @@ static QDF_STATUS send_mgmt_cmd_tlv(wmi_unified_t wmi_handle,
 							    sizeof(uint32_t)));
 	bufp += WMI_TLV_HDR_SIZE;
 	qdf_mem_copy(bufp, param->pdata, bufp_len);
-	qdf_nbuf_map_single(qdf_ctx, param->tx_frame, QDF_DMA_TO_DEVICE);
+
+	status = qdf_nbuf_map_single(qdf_ctx, param->tx_frame,
+				     QDF_DMA_TO_DEVICE);
+	if (status != QDF_STATUS_SUCCESS) {
+		WMI_LOGE("%s: wmi buf map failed", __func__);
+		goto err1;
+	}
+
 	dma_addr = qdf_nbuf_get_frag_paddr(param->tx_frame, 0);
 	cmd->paddr_lo = (uint32_t)(dma_addr & 0xffffffff);
 #if defined(HTT_PADDR64)
