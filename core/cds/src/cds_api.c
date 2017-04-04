@@ -2459,3 +2459,13 @@ enum tQDF_GLOBAL_CON_MODE cds_get_conparam(void)
 
 	return con_mode;
 }
+
+#ifdef WMI_INTERFACE_EVENT_LOGGING
+inline void
+cds_print_htc_credit_history(uint32_t count, qdf_abstract_print *print,
+			     void *print_priv)
+{
+	htc_print_credit_history(gp_cds_context->htc_ctx, count,
+				 print, print_priv);
+}
+#endif

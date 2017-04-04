@@ -2673,6 +2673,49 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WE_SET_WLAN_SUSPEND    6
 #define WE_SET_WLAN_RESUME    7
 
+/*
+ * <ioctl>
+ * log_buffer - prints host/target related communication logs via dmesg
+ *
+ * @INPUT: Log Id, Count
+ *
+ * Log Id:
+ *	0) HTC_CREDIT_HISTORY_LOG
+ *	1) COMMAND_LOG,
+ *	2) COMMAND_TX_CMP_LOG,
+ *	3) MGMT_COMMAND_LOG,
+ *	4) MGMT_COMMAND_TX_CMP_LOG,
+ *	5) EVENT_LOG,
+ *	6) RX_EVENT_LOG,
+ *	7) MGMT_EVENT_LOG
+ *
+ * @OUTPUT: None
+ *
+ * @E.g:
+ * # print up to 10 of the most recent records from HTC Credit History
+ *	iwpriv wlan0 log_buffer 0 10
+ * # print up to 3 of the most recent records from Event Log
+ *	iwpriv wlan0 log_buffer 5 3
+ *
+ * Supported Feature: WLAN Trace
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
+#define WE_LOG_BUFFER			8
+
+enum host_target_comm_log {
+	HTC_CREDIT_HISTORY_LOG = 0,
+	COMMAND_LOG,
+	COMMAND_TX_CMP_LOG,
+	MGMT_COMMAND_LOG,
+	MGMT_COMMAND_TX_CMP_LOG,
+	EVENT_LOG,
+	RX_EVENT_LOG,
+	MGMT_EVENT_LOG
+};
+
 /* (SIOCIWFIRSTPRIV + 29) is currently unused */
 
 /* 802.11p IOCTL */
@@ -12375,6 +12418,69 @@ static int wlan_hdd_set_mon_chan(hdd_adapter_t *adapter, uint32_t chan,
 	return qdf_status_to_os_return(status);
 }
 
+static int printk_adapter(void *priv, const char *fmt, ...)
+{
+	int ret;
+	va_list args;
+
+	va_start(args, fmt);
+	ret = vprintk(fmt, args);
+	ret += printk("\n");
+	va_end(args);
+
+	return ret;
+}
+
+#ifdef WMI_INTERFACE_EVENT_LOGGING
+static void hdd_ioctl_log_buffer(int log_id, uint32_t count)
+{
+	qdf_abstract_print *print = &printk_adapter;
+
+	switch (log_id) {
+	case HTC_CREDIT_HISTORY_LOG:
+		print(NULL, "HTC Credit History (count %u)", count);
+		cds_print_htc_credit_history(count, print, NULL);
+		break;
+	case COMMAND_LOG:
+		print(NULL, "Command Log (count %u)", count);
+		wma_print_wmi_cmd_log(count, print, NULL);
+		break;
+	case COMMAND_TX_CMP_LOG:
+		print(NULL, "Command Tx Complete Log (count %u)", count);
+		wma_print_wmi_cmd_tx_cmp_log(count, print, NULL);
+		break;
+	case MGMT_COMMAND_LOG:
+		print(NULL, "Management Command Log (count %u)", count);
+		wma_print_wmi_mgmt_cmd_log(count, print, NULL);
+		break;
+	case MGMT_COMMAND_TX_CMP_LOG:
+		print(NULL, "Management Command Tx Complete Log (count %u)",
+		      count);
+		wma_print_wmi_mgmt_cmd_tx_cmp_log(count, print, NULL);
+		break;
+	case EVENT_LOG:
+		print(NULL, "Event Log (count %u)", count);
+		wma_print_wmi_event_log(count, print, NULL);
+		break;
+	case RX_EVENT_LOG:
+		print(NULL, "Rx Event Log (count %u)", count);
+		wma_print_wmi_rx_event_log(count, print, NULL);
+		break;
+	case MGMT_EVENT_LOG:
+		print(NULL, "Management Event Log (count %u)", count);
+		wma_print_wmi_mgmt_event_log(count, print, NULL);
+		break;
+	default:
+		print(NULL, "Invalid Log Id %d", log_id);
+		break;
+	}
+}
+#else
+static inline void hdd_ioctl_log_buffer(int log_id, uint32_t count)
+{
+}
+#endif /* WMI_INTERFACE_EVENT_LOGGING */
+
 static int __iw_set_two_ints_getnone(struct net_device *dev,
 				     struct iw_request_info *info,
 				     union iwreq_data *wrqu, char *extra)
@@ -12461,6 +12567,14 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 	case WE_SET_WLAN_RESUME:
 		ret = hdd_wlan_fake_apps_resume(hdd_ctx->wiphy, dev);
 		break;
+	case WE_LOG_BUFFER: {
+		int log_id = value[1];
+		uint32_t count = value[2] < 0 ? 0 : value[2];
+
+		hdd_ioctl_log_buffer(log_id, count);
+
+		break;
+	}
 	default:
 		hdd_err("Invalid IOCTL command %d", sub_cmd);
 		break;
@@ -13681,6 +13795,10 @@ static const struct iw_priv_args we_private_args[] = {
 	{WE_SET_FW_CRASH_INJECT,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
 	 0, "crash_inject"}
+	,
+	{WE_LOG_BUFFER,
+	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
+	 0, "log_buffer"}
 	,
 #endif
 #ifdef WLAN_SUSPEND_RESUME_TEST
