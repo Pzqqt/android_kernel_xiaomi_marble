@@ -249,7 +249,7 @@ extern enum policy_mgr_conc_next_action
  * @hw_mode_change_in_progress: This is to track if HW mode
  *                            change is in progress
  * @enable_mcc_adaptive_scheduler: Enable MCC adaptive scheduler
- *      			 value from INI
+ *      value from INI
  */
 struct policy_mgr_psoc_priv_obj {
 		struct wlan_objmgr_psoc *psoc;
