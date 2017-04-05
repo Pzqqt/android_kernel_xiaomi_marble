@@ -66,10 +66,8 @@ ol_tx_register_global_mgmt_pool(struct ol_txrx_pdev_t *pdev)
 {
 	pdev->mgmt_pool = ol_tx_create_flow_pool(TX_FLOW_MGMT_POOL_ID,
 						 TX_FLOW_MGMT_POOL_SIZE);
-	if (!pdev->mgmt_pool) {
+	if (!pdev->mgmt_pool)
 		ol_txrx_err("Management pool creation failed\n");
-	}
-	return;
 }
 
 /**
@@ -82,18 +80,15 @@ static void
 ol_tx_deregister_global_mgmt_pool(struct ol_txrx_pdev_t *pdev)
 {
 	ol_tx_dec_pool_ref(pdev->mgmt_pool, false);
-	return;
 }
 #else
 static inline void
 ol_tx_register_global_mgmt_pool(struct ol_txrx_pdev_t *pdev)
 {
-	return;
 }
 static inline void
 ol_tx_deregister_global_mgmt_pool(struct ol_txrx_pdev_t *pdev)
 {
-	return;
 }
 #endif
 
@@ -348,7 +343,6 @@ void ol_tx_dump_flow_pool_info(void)
 	if (pool_prev)
 		ol_tx_dec_pool_ref(pool_prev, false);
 
-	return;
 }
 
 /**
@@ -642,8 +636,6 @@ static void ol_tx_flow_pool_vdev_map(struct ol_tx_flow_pool_t *pool,
 	qdf_spin_lock_bh(&pool->flow_pool_lock);
 	pool->member_flow_id = vdev_id;
 	qdf_spin_unlock_bh(&pool->flow_pool_lock);
-
-	return;
 }
 
 /**
@@ -670,8 +662,6 @@ static void ol_tx_flow_pool_vdev_unmap(struct ol_tx_flow_pool_t *pool,
 	qdf_spin_lock_bh(&pool->flow_pool_lock);
 	pool->member_flow_id = INVALID_FLOW_ID;
 	qdf_spin_unlock_bh(&pool->flow_pool_lock);
-
-	return;
 }
 
 /**
@@ -733,8 +723,6 @@ void ol_tx_flow_pool_map_handler(uint8_t flow_id, uint8_t flow_type,
 		   __func__, type);
 		break;
 	}
-
-	return;
 }
 
 /**
@@ -791,8 +779,6 @@ void ol_tx_flow_pool_unmap_handler(uint8_t flow_id, uint8_t flow_type,
 	 * and pool ref count becomes 0
 	 */
 	ol_tx_dec_pool_ref(pool, false);
-
-	return;
 }
 
 
