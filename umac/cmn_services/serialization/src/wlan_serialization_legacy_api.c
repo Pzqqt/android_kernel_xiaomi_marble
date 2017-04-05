@@ -465,7 +465,9 @@ void wlan_serialization_purge_cmd_list(struct wlan_objmgr_psoc *psoc,
 	}
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_SERIALIZATION_ID);
 release_vdev_ref:
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_SERIALIZATION_ID);
+	/* vdev could be NULL if vdev_id passed is NULL */
+	if (vdev)
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_SERIALIZATION_ID);
 
 	return;
 }
