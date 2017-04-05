@@ -200,7 +200,6 @@ static inline void ol_txrx_peer_link_status_handler(
 	u_int16_t peer_num,
 	struct rate_report_t *peer_link_status)
 {
-	return;
 }
 #endif
 
@@ -277,17 +276,14 @@ ol_tx_clear_group_credit_stats(ol_txrx_pdev_handle pdev);
 
 static inline void ol_tx_update_group_credit_stats(ol_txrx_pdev_handle pdev)
 {
-	return;
 }
 
 static inline void ol_tx_dump_group_credit_stats(ol_txrx_pdev_handle pdev)
 {
-	return;
 }
 
 static inline void ol_tx_clear_group_credit_stats(ol_txrx_pdev_handle pdev)
 {
-	return;
 }
 #endif
 
@@ -298,7 +294,6 @@ ol_tx_desc_update_group_credit(
 	u_int16_t tx_desc_id,
 	int credit, u_int8_t absolute, enum htt_tx_status status)
 {
-	return;
 }
 #endif
 
@@ -396,8 +391,9 @@ ol_rx_indication_handler(ol_txrx_pdev_handle pdev,
  *  invoke the rx fragment data processing on the new fragment.
  *
  * @param pdev - the data physical device that received the frames
- *      (registered with HTT as a context pointer during attach time)
- * @param rx_frag_ind_msg - the network buffer holding the rx fragment indication message
+ *               (registered with HTT as a context pointer during attach time)
+ * @param rx_frag_ind_msg - the network buffer holding the rx fragment
+ *                          indication message
  * @param peer_id - which peer sent this rx data
  * @param tid - what (extended) traffic type the rx data is
  */
