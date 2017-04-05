@@ -126,30 +126,6 @@ dp_tx_desc_release(struct dp_tx_desc_s *tx_desc, uint8_t desc_pool_id)
  * dp_tx_htt_metadata_prepare() - Prepare HTT metadata for special frames
  * @vdev: DP vdev Handle
  * @nbuf: skb
- * @align_pad: Alignment Pad bytes to be pushed in headroom before adding
- * HTT metadata
- *
- *  |-----------------------------|
- *  |                             |
- *  |-----------------------------| <-----Buffer Pointer Address given
- *  |                             |  ^    in HW descriptor (aligned)
- *  |                             |  |
- *  |       HTT Metadata          |  |
- *  |                             |  |
- *  |                             |  | Packet Offset given in descriptor
- *  |                             |  |
- *  |                             |  |
- *  |-----------------------------|  |
- *  |       Alignment Pad         |  v
- *  |-----------------------------| <----- Actual buffer start address
- *  |        SKB Data             |           (Unaligned)
- *  |                             |
- *  |                             |
- *  |                             |
- *  |                             |
- *  |                             |
- *  |                             |
- *  |-----------------------------|
  *
  * Prepares and fills HTT metadata in the frame pre-header for special frames
  * that should be transmitted using varying transmit parameters.
@@ -161,11 +137,15 @@ dp_tx_desc_release(struct dp_tx_desc_s *tx_desc, uint8_t desc_pool_id)
  *
  */
 static uint8_t dp_tx_prepare_htt_metadata(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
-		uint8_t align_pad, uint32_t *meta_data)
+		uint32_t *meta_data)
 {
 	struct htt_tx_msdu_desc_ext2_t *desc_ext =
 				(struct htt_tx_msdu_desc_ext2_t *) meta_data;
-	uint8_t htt_desc_size  = 0;
+
+	uint8_t htt_desc_size;
+
+	/* Size rounded of multiple of 8 bytes */
+	uint8_t htt_desc_size_aligned;
 
 	uint8_t *hdr = NULL;
 
@@ -177,30 +157,19 @@ static uint8_t dp_tx_prepare_htt_metadata(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	 * Metadata - HTT MSDU Extension header
 	 */
 	htt_desc_size = sizeof(struct htt_tx_msdu_desc_ext2_t);
+	htt_desc_size_aligned = (htt_desc_size + 7) & ~0x7;
 
 	if (vdev->mesh_vdev) {
+
 		/* Fill and add HTT metaheader */
-		hdr = qdf_nbuf_push_head(nbuf, htt_desc_size + align_pad);
+		hdr = qdf_nbuf_push_head(nbuf, htt_desc_size_aligned);
 		qdf_mem_copy(hdr, desc_ext, htt_desc_size);
-
-		if (qdf_unlikely(QDF_STATUS_SUCCESS !=
-					qdf_nbuf_map_nbytes_single(
-						vdev->pdev->soc->osdev, nbuf,
-						QDF_DMA_TO_DEVICE,
-						(htt_desc_size + align_pad)))) {
-
-			/* Handle failure */
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-					"htt qdf_nbuf_map failed\n");
-
-			return 0;
-		}
 
 	} else if (vdev->opmode == wlan_op_mode_ocb) {
 		/* Todo - Add support for DSRC */
 	}
 
-	return htt_desc_size;
+	return htt_desc_size_aligned;
 }
 
 /**
@@ -434,16 +403,17 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	tx_desc->pdev = pdev;
 	tx_desc->msdu_ext_desc = NULL;
 
-	if (qdf_unlikely(QDF_STATUS_SUCCESS !=
-				qdf_nbuf_map(soc->osdev, nbuf,
-				QDF_DMA_TO_DEVICE))) {
-		/* Handle failure */
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				"qdf_nbuf_map failed\n");
-		goto failure;
-	}
-
-	align_pad = ((unsigned long) qdf_nbuf_mapped_paddr_get(nbuf)) & 0x7;
+	/**
+	 * For non-scatter regular frames, buffer pointer is directly
+	 * programmed in TCL input descriptor instead of using an MSDU
+	 * extension descriptor.For this cass, HW requirement is that
+	 * descriptor should always point to a 8-byte aligned address.
+	 *
+	 * So we add alignment pad to start of buffer, and specify the actual
+	 * start of data through pkt_offset
+	 */
+	align_pad = ((unsigned long) qdf_nbuf_data(nbuf)) & 0x7;
+	qdf_nbuf_push_head(nbuf, align_pad);
 	tx_desc->pkt_offset = align_pad;
 
 	/*
@@ -452,14 +422,45 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	 * transmit rate, power, priority, channel, channel bandwidth , nss etc.
 	 * These are filled in HTT MSDU descriptor and sent in frame pre-header.
 	 * These frames are sent as exception packets to firmware.
+	 *
+	 *  HTT Metadata should be ensured to be multiple of 8-bytes,
+	 *  to get 8-byte aligned start address along with align_pad added above
+	 *
+	 *  |-----------------------------|
+	 *  |                             |
+	 *  |-----------------------------| <-----Buffer Pointer Address given
+	 *  |                             |  ^    in HW descriptor (aligned)
+	 *  |       HTT Metadata          |  |
+	 *  |                             |  |
+	 *  |                             |  | Packet Offset given in descriptor
+	 *  |                             |  |
+	 *  |-----------------------------|  |
+	 *  |       Alignment Pad         |  v
+	 *  |-----------------------------| <----- Actual buffer start address
+	 *  |        SKB Data             |           (Unaligned)
+	 *  |                             |
+	 *  |                             |
+	 *  |                             |
+	 *  |                             |
+	 *  |                             |
+	 *  |-----------------------------|
 	 */
 	if (qdf_unlikely(vdev->mesh_vdev ||
 				(vdev->opmode == wlan_op_mode_ocb))) {
 		htt_hdr_size = dp_tx_prepare_htt_metadata(vdev, nbuf,
-				align_pad, meta_data);
+				meta_data);
 		tx_desc->pkt_offset += htt_hdr_size;
 		tx_desc->flags |= DP_TX_DESC_FLAG_TO_FW;
 		is_exception = 1;
+	}
+
+	if (qdf_unlikely(QDF_STATUS_SUCCESS !=
+				qdf_nbuf_map(soc->osdev, nbuf,
+					QDF_DMA_TO_DEVICE))) {
+		/* Handle failure */
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"qdf_nbuf_map failed\n");
+		goto failure;
 	}
 
 	if (qdf_unlikely(vdev->nawds_enabled)) {
@@ -652,21 +653,10 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 		type = HAL_TX_BUF_TYPE_EXT_DESC;
 		dma_addr = tx_desc->msdu_ext_desc->paddr;
 	} else {
-		length = qdf_nbuf_len(tx_desc->nbuf);
+		length = qdf_nbuf_len(tx_desc->nbuf) - tx_desc->pkt_offset;
 		type = HAL_TX_BUF_TYPE_BUFFER;
-
-		/**
-		 * For non-scatter regular frames, buffer pointer is directly
-		 * programmed in TCL input descriptor instead of using an MSDU
-		 * extension descriptor.For the direct buffer pointer case, HW
-		 * requirement is that descriptor should always point to a
-		 * 8-byte aligned address.
-		 * Alignment padding is already accounted in pkt_offset
-		 *
-		 */
-		dma_addr = (qdf_nbuf_mapped_paddr_get(tx_desc->nbuf) & ~0x7);
+		dma_addr = qdf_nbuf_mapped_paddr_get(tx_desc->nbuf);
 	}
-
 
 	hal_tx_desc_set_fw_metadata(hal_tx_desc_cached, fw_metadata);
 	hal_tx_desc_set_buf_addr(hal_tx_desc_cached,
