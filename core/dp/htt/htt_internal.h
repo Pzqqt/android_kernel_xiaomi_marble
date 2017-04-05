@@ -163,7 +163,7 @@ struct htt_host_rx_desc_base {
  *    @ndata : msdu_cnt
  *    @posted: time-stamp when HTT message is recived
  *    @recvd : 0x48545452584D5367 ('HTTRXMSG')
-*/
+ */
 #define HTT_RX_RING_BUFF_DBG_LIST          (2 * 1024)
 struct rx_buf_debug {
 	qdf_dma_addr_t paddr;
@@ -239,14 +239,22 @@ static inline void htt_rx_extract_lro_info(qdf_nbuf_t msdu,
 {
 	QDF_NBUF_CB_RX_LRO_ELIGIBLE(msdu) = rx_desc->msdu_end.lro_eligible;
 	if (rx_desc->msdu_end.lro_eligible) {
-		QDF_NBUF_CB_RX_TCP_PURE_ACK(msdu) = rx_desc->msdu_start.tcp_only_ack;
-		QDF_NBUF_CB_RX_TCP_CHKSUM(msdu) = rx_desc->msdu_end.tcp_udp_chksum;
-		QDF_NBUF_CB_RX_TCP_SEQ_NUM(msdu) = rx_desc->msdu_end.tcp_seq_number;
-		QDF_NBUF_CB_RX_TCP_ACK_NUM(msdu) = rx_desc->msdu_end.tcp_ack_number;
-		QDF_NBUF_CB_RX_TCP_WIN(msdu) = rx_desc->msdu_end.window_size;
-		QDF_NBUF_CB_RX_TCP_PROTO(msdu) = rx_desc->msdu_start.tcp_proto;
-		QDF_NBUF_CB_RX_IPV6_PROTO(msdu) = rx_desc->msdu_start.ipv6_proto;
-		QDF_NBUF_CB_RX_TCP_OFFSET(msdu) = rx_desc->msdu_start.l4_offset;
+		QDF_NBUF_CB_RX_TCP_PURE_ACK(msdu) =
+			rx_desc->msdu_start.tcp_only_ack;
+		QDF_NBUF_CB_RX_TCP_CHKSUM(msdu) =
+			rx_desc->msdu_end.tcp_udp_chksum;
+		QDF_NBUF_CB_RX_TCP_SEQ_NUM(msdu) =
+			rx_desc->msdu_end.tcp_seq_number;
+		QDF_NBUF_CB_RX_TCP_ACK_NUM(msdu) =
+			rx_desc->msdu_end.tcp_ack_number;
+		QDF_NBUF_CB_RX_TCP_WIN(msdu) =
+			rx_desc->msdu_end.window_size;
+		QDF_NBUF_CB_RX_TCP_PROTO(msdu) =
+			rx_desc->msdu_start.tcp_proto;
+		QDF_NBUF_CB_RX_IPV6_PROTO(msdu) =
+			rx_desc->msdu_start.ipv6_proto;
+		QDF_NBUF_CB_RX_TCP_OFFSET(msdu) =
+			rx_desc->msdu_start.l4_offset;
 		QDF_NBUF_CB_RX_FLOW_ID_TOEPLITZ(msdu) =
 			 rx_desc->msdu_start.flow_id_toeplitz;
 	}
@@ -282,7 +290,7 @@ static inline void htt_print_rx_desc(struct htt_host_rx_desc_base *rx_desc)
 		  (unsigned int)(((uint32_t *) &rx_desc->msdu_end)[4]));
 	qdf_print("mpdu_end: %#010x\n",
 		  (unsigned int)(*(uint32_t *) &rx_desc->mpdu_end));
-	qdf_print("ppdu_start: " "%#010x %#010x %#010x %#010x %#010x\n"
+	qdf_print("ppdu_start: %#010x %#010x %#010x %#010x %#010x\n"
 		  "%#010x %#010x %#010x %#010x %#010x\n",
 		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_start)[0]),
 		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_start)[1]),
@@ -294,7 +302,7 @@ static inline void htt_print_rx_desc(struct htt_host_rx_desc_base *rx_desc)
 		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_start)[7]),
 		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_start)[8]),
 		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_start)[9]));
-	qdf_print("ppdu_end:" "%#010x %#010x %#010x %#010x %#010x\n"
+	qdf_print("ppdu_end: %#010x %#010x %#010x %#010x %#010x\n"
 		  "%#010x %#010x %#010x %#010x %#010x\n"
 		  "%#010x,%#010x %#010x %#010x %#010x\n"
 		  "%#010x %#010x %#010x %#010x %#010x\n" "%#010x %#010x\n",
@@ -460,11 +468,10 @@ static inline void htt_print_rx_desc(struct htt_host_rx_desc_base *rx_desc)
 
 static inline void htt_tx_resume_handler(void *context)
 {
-	return;
 }
 #else
 
-void htt_tx_resume_handler(void *);
+void htt_tx_resume_handler(void *context);
 #endif
 
 #ifdef ATH_11AC_TXCOMPACT
@@ -483,7 +490,6 @@ int htt_rx_attach(struct htt_pdev_t *pdev);
 
 static inline void htt_rx_detach(struct htt_pdev_t *pdev)
 {
-	return;
 }
 #else
 
@@ -638,7 +644,6 @@ void htt_tx_group_credit_process(struct htt_pdev_t *pdev, u_int32_t *msg_word);
 static inline
 void htt_tx_group_credit_process(struct htt_pdev_t *pdev, u_int32_t *msg_word)
 {
-	return;
 }
 #endif
 
@@ -838,32 +843,27 @@ void htt_rx_dbg_rxbuf_deinit(struct htt_pdev_t *pdev)
 static inline
 void htt_rx_dbg_rxbuf_init(struct htt_pdev_t *pdev)
 {
-	return;
 }
 static inline
 void htt_rx_dbg_rxbuf_set(struct htt_pdev_t *pdev,
 				uint32_t paddr,
 				qdf_nbuf_t rx_netbuf)
 {
-	return;
 }
 static inline
 void htt_rx_dbg_rxbuf_reset(struct htt_pdev_t *pdev,
 				qdf_nbuf_t netbuf)
 {
-	return;
 }
 static inline
 void htt_rx_dbg_rxbuf_indupd(struct htt_pdev_t *pdev,
 			     int    alloc_index)
 {
-	return;
 }
 static inline
 void htt_rx_dbg_rxbuf_httrxind(struct htt_pdev_t *pdev,
 			       unsigned int msdu_cnt)
 {
-	return;
 }
 static inline
 void htt_rx_dbg_rxbuf_deinit(struct htt_pdev_t *pdev)
