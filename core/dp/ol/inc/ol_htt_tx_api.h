@@ -269,8 +269,8 @@ struct htt_msdu_info_t {
 	} info;
 	/* the action sub-struct specifies how to process the MSDU */
 	struct {
-		uint8_t use_6mbps;      /* mgmt frames: option to force
-					   6 Mbps rate */
+		/* mgmt frames: option to force 6 Mbps rate */
+		uint8_t use_6mbps;
 		uint8_t do_encrypt;
 		uint8_t do_tx_complete;
 		uint8_t tx_comp_req;
@@ -409,7 +409,6 @@ static inline int htt_tx_frag_alloc(htt_pdev_handle pdev,
  */
 static inline void htt_tx_pending_discard(htt_pdev_handle pdev)
 {
-	return;
 }
 #else
 
@@ -484,8 +483,8 @@ htt_tx_send_nonstd(htt_pdev_handle htt_pdev,
 int
 htt_pkt_dl_len_get(struct htt_pdev_t *pdev);
 
-#define HTT_TX_CLASSIFY_BIT_S	4  /* Used to set
-				    * classify bit in HTT desc.*/
+/* Used to set classify bit in HTT desc.*/
+#define HTT_TX_CLASSIFY_BIT_S	4
 
 /**
  * enum htt_ce_tx_pkt_type - enum of packet types to be set in CE
@@ -699,8 +698,10 @@ htt_tx_desc_frag(htt_pdev_handle pdev,
 		word32 += (frag_num << 1);
 		word64 = (uint64_t *)word32;
 		*word64 = frag_phys_addr;
-		/* The frag_phys address is 37 bits. So, the higher 16 bits will be
-		   for len */
+		/*
+		 * The frag_phys address is 37 bits. So, the higher 16 bits will
+		 * be for len
+		 */
 		word32++;
 		*word32 &= 0x0000ffff;
 		*word32 |= (frag_len << 16);
@@ -715,7 +716,8 @@ htt_tx_desc_frag(htt_pdev_handle pdev,
 		uint32_t u32h = (uint32_t)((u64 >> 32) & 0x1f);
 		uint64_t *word64;
 
-		word32 = (uint32_t *) (((char *)desc) + HTT_TX_DESC_LEN + frag_num * 8);
+		word32 = (uint32_t *) (((char *)desc) +
+			 HTT_TX_DESC_LEN + frag_num * 8);
 		word64 = (uint64_t *)word32;
 		*word32 = u32l;
 		word32++;
@@ -826,10 +828,13 @@ void htt_tx_desc_set_chanfreq(void *htt_tx_desc, uint16_t chanfreq)
 {
 	uint16_t *chanfreq_field_ptr;
 
-	/* The reason we dont use CHAN_FREQ_OFFSET_BYTES is because
-	   it uses DWORD as unit */
-	/* The reason we dont use the SET macro in htt.h is because
-	   htt_tx_desc is incomplete type */
+	/*
+	 * The reason we dont use CHAN_FREQ_OFFSET_BYTES is because
+	 * it uses DWORD as unit
+	 *
+	 * The reason we dont use the SET macro in htt.h is because
+	 * htt_tx_desc is incomplete type
+	 */
 	chanfreq_field_ptr = (uint16_t *)
 		(htt_tx_desc +
 		 HTT_TX_DESC_PEERID_DESC_PADDR_OFFSET_BYTES
