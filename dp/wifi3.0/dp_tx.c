@@ -687,10 +687,15 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 
 	/*
 	 * TODO
-	 * Fix this , this should be based on vdev opmode (AP or STA)
-	 * Enable both AddrX and AddrY flags for now
+	 * For AP mode, enable AddrX flag only
+	 * For all other modes, enable both AddrX and AddrY
+	 * flags for now
 	 */
-	hal_tx_desc_set_addr_search_flags(hal_tx_desc_cached,
+	if (vdev->opmode == wlan_op_mode_ap)
+		hal_tx_desc_set_addr_search_flags(hal_tx_desc_cached,
+			HAL_TX_DESC_ADDRX_EN);
+	else
+		hal_tx_desc_set_addr_search_flags(hal_tx_desc_cached,
 			HAL_TX_DESC_ADDRX_EN | HAL_TX_DESC_ADDRY_EN);
 
 	if ((qdf_nbuf_get_tx_cksum(tx_desc->nbuf) == QDF_NBUF_TX_CKSUM_TCP_UDP)
