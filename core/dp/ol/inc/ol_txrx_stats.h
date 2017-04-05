@@ -76,11 +76,15 @@ struct ol_txrx_stats_tx_dropped {
 	struct ol_txrx_stats_elem host_reject;
 	/* MSDUs which could not be downloaded to the target */
 	struct ol_txrx_stats_elem download_fail;
-	/* MSDUs which the target discarded
-	   (lack of memory or old age) */
+	/*
+	 * MSDUs which the target discarded
+	 * (lack of memory or old age)
+	 */
 	struct ol_txrx_stats_elem target_discard;
-	/* MSDUs which the target sent but
-	   couldn't get an ack for */
+	/*
+	 * MSDUs which the target sent but
+	 * couldn't get an ack for
+	 */
 	struct ol_txrx_stats_elem no_ack;
 };
 
