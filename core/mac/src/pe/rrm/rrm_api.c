@@ -269,8 +269,8 @@ rrm_process_link_measurement_request(tpAniSirGlobal pMac,
 	}
 	pHdr = WMA_GET_RX_MAC_HEADER(pRxPacketInfo);
 
-	LinkReport.txPower = lim_get_max_tx_power(pLinkReq->MaxTxPower.maxTxPower,
-						  MAX_RRM_TX_PWR_CAP,
+	LinkReport.txPower = lim_get_max_tx_power(pSessionEntry->maxTxPower,
+						pLinkReq->MaxTxPower.maxTxPower,
 						  pMac->roam.configParam.
 						  nTxPowerCap);
 
