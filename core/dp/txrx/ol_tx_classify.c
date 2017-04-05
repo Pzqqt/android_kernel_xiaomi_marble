@@ -87,7 +87,7 @@ ol_tx_classify_htt2_frm(
 }
 
 #define OL_TX_CLASSIFY_HTT2_EXTENSION(vdev, netbuf, msdu_info)      \
-	ol_tx_classify_htt2_frm(vdev, netbuf, msdu_info);
+	ol_tx_classify_htt2_frm(vdev, netbuf, msdu_info)
 #else
 #define OL_TX_CLASSIFY_HTT2_EXTENSION(vdev, netbuf, msdu_info)      /* no-op */
 #endif /* QCA_TX_HTT2_SUPPORT */
@@ -372,6 +372,7 @@ struct ol_txrx_peer_t *ol_tx_tdls_peer_find(struct ol_txrx_pdev_t *pdev,
 						uint8_t *peer_id)
 {
 	struct ol_txrx_peer_t *peer = NULL;
+
 	peer = ol_txrx_assoc_peer_find(vdev);
 
 	return peer;
@@ -445,8 +446,10 @@ ol_tx_classify(
 			tx_msdu_info->htt.info.peer_id = peer->peer_ids[0];
 		} else if (vdev->opmode == wlan_op_mode_ocb) {
 			tx_msdu_info->htt.info.peer_id = HTT_INVALID_PEER_ID;
-			/* In OCB mode, don't worry about the peer.
-			 *We don't need it. */
+			/*
+			 * In OCB mode, don't worry about the peer.
+			 * We don't need it.
+			 */
 			peer = NULL;
 		} else {
 			tx_msdu_info->htt.info.peer_id = HTT_INVALID_PEER_ID;
@@ -512,26 +515,6 @@ ol_tx_classify(
 			 * then the frame is either for the AP itself, or is
 			 * supposed to be sent to the AP for forwarding.
 			 */
-#if 0
-			if (vdev->num_tdls_peers > 0) {
-				peer = NULL;
-				for (i = 0; i < vdev->num_tdls_peers; i++) {
-					int differs = adf_os_mem_cmp(
-							vdev->tdls_peers[i]->
-							mac_addr.raw,
-							dest_addr,
-							OL_TXRX_MAC_ADDR_LEN);
-					if (!differs) {
-						peer = vdev->tdls_peers[i];
-						break;
-					}
-				}
-			} else {
-				/* send to AP */
-				peer = ol_txrx_assoc_peer_find(vdev);
-			}
-#endif
-
 			peer = ol_tx_tdls_peer_find(pdev, vdev, &peer_id);
 		} else {
 			peer = ol_txrx_peer_find_hash_find(pdev, dest_addr,
@@ -704,7 +687,7 @@ ol_tx_classify_mgmt(
 		} else {
 			/* find the peer and increment its reference count */
 			peer = ol_txrx_peer_find_hash_find(pdev, dest_addr,
-									0, 1);
+							   0, 1);
 		}
 		tx_msdu_info->peer = peer;
 		if (!peer) {
