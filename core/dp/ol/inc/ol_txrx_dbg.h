@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -141,16 +141,14 @@ ol_tx_queue_log_display(ol_txrx_pdev_handle pdev);
 void ol_tx_queue_log_clear(ol_txrx_pdev_handle pdev);
 #else
 
-static inline void
-ol_tx_queue_log_display(ol_txrx_pdev_handle pdev)
+static inline
+void ol_tx_queue_log_display(ol_txrx_pdev_handle pdev)
 {
-	return;
 }
 
 static inline
 void ol_tx_queue_log_clear(ol_txrx_pdev_handle pdev)
 {
-	return;
 }
 #endif /* defined(DEBUG_HL_LOGGING) && defined(CONFIG_HL_SUPPORT) */
 
