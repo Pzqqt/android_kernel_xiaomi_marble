@@ -1154,6 +1154,20 @@ void policy_mgr_incr_active_session(struct wlan_objmgr_psoc *psoc,
 	if (pm_ctx->tdls_cbacks.tdls_notify_increment_session)
 		pm_ctx->tdls_cbacks.tdls_notify_increment_session(psoc);
 
+	/*
+	 * Disable LRO if P2P or IBSS or SAP connection has come up or
+	 * there are more than one STA connections
+	 */
+	if ((policy_mgr_mode_specific_connection_count(psoc, PM_STA_MODE, NULL) > 1) ||
+	    (policy_mgr_mode_specific_connection_count(psoc, PM_SAP_MODE, NULL) > 0) ||
+	    (policy_mgr_mode_specific_connection_count(psoc, PM_P2P_CLIENT_MODE, NULL) >
+									0) ||
+	    (policy_mgr_mode_specific_connection_count(psoc, PM_P2P_GO_MODE, NULL) > 0) ||
+	    (policy_mgr_mode_specific_connection_count(psoc, PM_IBSS_MODE, NULL) > 0)) {
+		if (pm_ctx->dp_cbacks.hdd_disable_lro_in_concurrency != NULL)
+			pm_ctx->dp_cbacks.hdd_disable_lro_in_concurrency(true);
+	};
+
 	policy_mgr_dump_current_concurrency(psoc);
 
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
@@ -1203,6 +1217,16 @@ QDF_STATUS policy_mgr_decr_active_session(struct wlan_objmgr_psoc *psoc,
 	/* Notify tdls */
 	if (pm_ctx->tdls_cbacks.tdls_notify_decrement_session)
 		pm_ctx->tdls_cbacks.tdls_notify_decrement_session(psoc);
+	/* Enable LRO if there no concurrency */
+	if ((policy_mgr_mode_specific_connection_count(psoc, PM_STA_MODE, NULL) == 1) &&
+	    (policy_mgr_mode_specific_connection_count(psoc, PM_SAP_MODE, NULL) == 0) &&
+	    (policy_mgr_mode_specific_connection_count(psoc, PM_P2P_CLIENT_MODE, NULL) ==
+									0) &&
+	    (policy_mgr_mode_specific_connection_count(psoc, PM_P2P_GO_MODE, NULL) == 0) &&
+	    (policy_mgr_mode_specific_connection_count(psoc, PM_IBSS_MODE, NULL) == 0)) {
+		if (pm_ctx->dp_cbacks.hdd_disable_lro_in_concurrency != NULL)
+			pm_ctx->dp_cbacks.hdd_disable_lro_in_concurrency(false);
+	};
 
 	policy_mgr_dump_current_concurrency(psoc);
 
