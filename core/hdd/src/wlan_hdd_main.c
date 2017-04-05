@@ -5791,8 +5791,12 @@ static int hdd_wiphy_init(hdd_context_t *hdd_ctx)
 
 	/* registration of wiphy dev with cfg80211 */
 	ret_val = wlan_hdd_cfg80211_register(wiphy);
-	if (0 > ret_val)
+	if (0 > ret_val) {
 		hdd_err("wiphy registration failed");
+		return ret_val;
+	}
+
+	hdd_program_country_code(hdd_ctx);
 
 	return ret_val;
 }
@@ -8391,8 +8395,6 @@ static int hdd_pre_enable_configure(hdd_context_t *hdd_ctx)
 	ret = hdd_set_ani_enabled(hdd_ctx);
 	if (ret)
 		goto out;
-
-	hdd_program_country_code(hdd_ctx);
 
 	ret = wma_cli_set_command(0, WMI_PDEV_PARAM_ARP_AC_OVERRIDE,
 				  hdd_ctx->config->arp_ac_category,
