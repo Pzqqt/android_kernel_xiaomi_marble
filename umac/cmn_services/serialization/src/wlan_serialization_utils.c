@@ -156,20 +156,21 @@ static void wlan_serialization_generic_timer_callback(void *arg)
 	}
 
 	serialization_err("active command timeout for cmd_id[%d]", cmd->cmd_id);
-	if (cmd->cmd_cb) {
+	if (cmd->cmd_cb)
 		cmd->cmd_cb(cmd, WLAN_SER_CB_ACTIVE_CMD_TIMEOUT);
-		cmd->cmd_cb(cmd, WLAN_SER_CB_RELEASE_MEM_CMD);
-	}
 
 	serialization_err("active command timeout for cmd_id[%d]", cmd->cmd_id);
 	if (cmd->cmd_type >= WLAN_SER_CMD_NONSCAN)
 		QDF_BUG(0);
 	/*
 	 * dequeue cmd API will cleanup and destroy the timer. If it fails to
-	 * dequeue command then we have to destroy the timer.
+	 * dequeue command then we have to destroy the timer. It will also call
+	 * cmd callback with WLAN_SER_CB_RELEASE_MEM_CMD to free the memory.
 	 */
 	if (WLAN_SER_CMD_NOT_FOUND == wlan_serialization_dequeue_cmd(cmd, true))
 		wlan_serialization_timer_destroy(timer);
+	if (cmd->cmd_cb)
+		cmd->cmd_cb(cmd, WLAN_SER_CB_RELEASE_MEM_CMD);
 }
 
 /**
