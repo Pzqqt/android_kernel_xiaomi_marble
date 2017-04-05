@@ -641,7 +641,9 @@ static void wlan_cfg80211_scan_done_callback(
 	struct wlan_objmgr_pdev *pdev;
 	QDF_STATUS status;
 
-	if (event->type != SCAN_EVENT_TYPE_COMPLETED)
+	if ((event->type != SCAN_EVENT_TYPE_COMPLETED) &&
+	    (event->type != SCAN_EVENT_TYPE_DEQUEUED) &&
+	    (event->type != SCAN_EVENT_TYPE_START_FAILED))
 		return;
 
 	cfg80211_info("scan ID = %d vdev id = %d, event type %s(%d) reason = %s(%d)",
@@ -656,13 +658,19 @@ static void wlan_cfg80211_scan_done_callback(
 	 * of scanning
 	 */
 	if ((event->type == SCAN_EVENT_TYPE_COMPLETED) &&
-		((event->reason == SCAN_REASON_CANCELLED) ||
-		(event->reason == SCAN_REASON_TIMEDOUT) ||
-		(event->reason == SCAN_REASON_INTERNAL_FAILURE))) {
+	    ((event->reason == SCAN_REASON_CANCELLED) ||
+	     (event->reason == SCAN_REASON_TIMEDOUT) ||
+	     (event->reason == SCAN_REASON_INTERNAL_FAILURE))) {
 		aborted = true;
 	} else if ((event->type == SCAN_EVENT_TYPE_COMPLETED) &&
-			(event->reason == SCAN_REASON_COMPLETED))
+		   (event->reason == SCAN_REASON_COMPLETED))
 		aborted = false;
+	else if ((event->type == SCAN_EVENT_TYPE_DEQUEUED) &&
+		 (event->reason == SCAN_REASON_CANCELLED))
+		aborted = true;
+	else if ((event->type == SCAN_EVENT_TYPE_START_FAILED) &&
+		 (event->reason == SCAN_REASON_COMPLETED))
+		aborted = true;
 	else
 		/* cfg80211 is not interested on all other scan events */
 		return;
