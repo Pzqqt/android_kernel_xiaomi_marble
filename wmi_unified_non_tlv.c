@@ -7008,7 +7008,7 @@ static QDF_STATUS extract_single_phyerr_non_tlv(wmi_unified_t wmi_handle,
 		phyerr->rf_info.rssi_comb =
 			WMI_UNIFIED_RSSI_COMB_GET(&ev->hdr);
 
-#if ATH_SUPPORT_SPECTRAL
+#ifdef WLAN_CONV_SPECTRAL_ENABLE
 
 	   /*
 		* If required, pass spectral events to the spectral module
@@ -7077,7 +7077,7 @@ static QDF_STATUS extract_single_phyerr_non_tlv(wmi_unified_t wmi_handle,
 
 			}
 		}
-#endif  /* ATH_SUPPORT_SPECTRAL */
+#endif  /* WLAN_CONV_SPECTRAL_ENABLE */
 
 		/*
 		 * Advance the buffer pointer to the next PHY error.
@@ -7138,7 +7138,7 @@ static QDF_STATUS extract_composite_phyerr_non_tlv(wmi_unified_t wmi_handle,
 
 	/* Handle Spectral PHY Error */
 	if ((ph->phy_err_mask0 & WMI_HOST_AR900B_SPECTRAL_PHYERR_MASK)) {
-#if ATH_SUPPORT_SPECTRAL
+#ifdef WLAN_CONV_SPECTRAL_ENABLE
 		if (ph->buf_len > 0) {
 
 			/* Initialize the NF values to Zero. */
@@ -7199,7 +7199,7 @@ static QDF_STATUS extract_composite_phyerr_non_tlv(wmi_unified_t wmi_handle,
 			    WMI_UNIFIED_FREQ_INFO_GET(ph, 2);
 
 		}
-#endif  /* ATH_SUPPORT_SPECTRAL */
+#endif  /* WLAN_CONV_SPECTRAL_ENABLE */
 
 	}
 	return QDF_STATUS_SUCCESS;
