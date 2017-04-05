@@ -1529,7 +1529,7 @@ QDF_STATUS policy_mgr_get_connection_channels(struct wlan_objmgr_psoc *psoc,
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	if (POLICY_MGR_PCL_ORDER_NONE == order) {
 		while (PM_CONC_CONNECTION_LIST_VALID_INDEX(conn_index)) {
-			if (skip_dfs_channel && wlan_reg_is_dfs_ch(psoc,
+			if (skip_dfs_channel && wlan_reg_is_dfs_ch(pm_ctx->pdev,
 				    pm_conc_connection_list[conn_index].chan)) {
 				conn_index++;
 			} else if (*index < weight_len) {
@@ -1555,7 +1555,7 @@ QDF_STATUS policy_mgr_get_connection_channels(struct wlan_objmgr_psoc *psoc,
 		}
 		conn_index = 0;
 		while (PM_CONC_CONNECTION_LIST_VALID_INDEX(conn_index)) {
-			if (skip_dfs_channel && wlan_reg_is_dfs_ch(psoc,
+			if (skip_dfs_channel && wlan_reg_is_dfs_ch(pm_ctx->pdev,
 				    pm_conc_connection_list[conn_index].chan)) {
 				conn_index++;
 			} else if (WLAN_REG_IS_5GHZ_CH(
@@ -1571,7 +1571,7 @@ QDF_STATUS policy_mgr_get_connection_channels(struct wlan_objmgr_psoc *psoc,
 		*len = num_channels;
 	} else if (POLICY_MGR_PCL_ORDER_5G_THEN_2G == order) {
 		while (PM_CONC_CONNECTION_LIST_VALID_INDEX(conn_index)) {
-			if (skip_dfs_channel && wlan_reg_is_dfs_ch(psoc,
+			if (skip_dfs_channel && wlan_reg_is_dfs_ch(pm_ctx->pdev,
 				pm_conc_connection_list[conn_index].chan)) {
 				conn_index++;
 			} else if (WLAN_REG_IS_5GHZ_CH(
@@ -1639,6 +1639,13 @@ QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
 	uint8_t sbs_channel_list[QDF_MAX_NUM_CHAN] = {0};
 	bool skip_dfs_channel = false;
 	uint32_t i = 0, j = 0;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return status;
+	}
 
 	if ((NULL == pcl_channels) || (NULL == len)) {
 		policy_mgr_err("pcl_channels or len is NULL");
@@ -1699,7 +1706,8 @@ QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
 	while ((chan_index < num_channels) &&
 		(chan_index_5 < QDF_MAX_NUM_CHAN)) {
 		if ((true == skip_dfs_channel) &&
-		    wlan_reg_is_dfs_ch(psoc, channel_list[chan_index])) {
+		    wlan_reg_is_dfs_ch(pm_ctx->pdev,
+				       channel_list[chan_index])) {
 			chan_index++;
 			continue;
 		}
@@ -2177,11 +2185,11 @@ bool policy_mgr_is_5g_channel_allowed(struct wlan_objmgr_psoc *psoc,
 	count = policy_mgr_mode_specific_connection_count(psoc, mode, list);
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	while (index < count) {
-		if (wlan_reg_is_dfs_ch(psoc,
+		if (wlan_reg_is_dfs_ch(
+			pm_ctx->pdev,
 			pm_conc_connection_list[list[index]].chan) &&
-			WLAN_REG_IS_5GHZ_CH(channel) &&
-			(channel !=
-			pm_conc_connection_list[list[index]].chan)) {
+		    WLAN_REG_IS_5GHZ_CH(channel) &&
+		    (channel != pm_conc_connection_list[list[index]].chan)) {
 			qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 			policy_mgr_err("don't allow MCC if SAP/GO on DFS channel");
 			return false;

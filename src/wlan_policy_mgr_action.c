@@ -275,7 +275,7 @@ QDF_STATUS policy_mgr_update_connection_info(struct wlan_objmgr_psoc *psoc,
 
 	mode = policy_mgr_get_mode(conn_table_entry.type,
 					conn_table_entry.sub_type);
-	chan = reg_freq_to_chan(conn_table_entry.mhz);
+	chan = wlan_reg_freq_to_chan(pm_ctx->pdev, conn_table_entry.mhz);
 	status = policy_mgr_get_nss_for_vdev(psoc, mode, &nss_2g, &nss_5g);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		if ((WLAN_REG_IS_24GHZ_CH(chan) && (nss_2g > 1)) ||
@@ -723,7 +723,7 @@ void policy_mgr_check_concurrent_intf_and_restart_sap(
 			mcc_to_scc_switch, operating_channel);
 	if ((mcc_to_scc_switch != QDF_MCC_TO_SCC_SWITCH_DISABLE)
 #ifdef FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE
-		 && !wlan_reg_is_dfs_ch(psoc,
+		 && !wlan_reg_is_dfs_ch(pm_ctx->pdev,
 					 operating_channel)
 #endif
 	    ) {
