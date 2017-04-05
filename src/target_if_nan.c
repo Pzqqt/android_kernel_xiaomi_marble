@@ -49,6 +49,11 @@ static QDF_STATUS target_if_nan_event_dispatcher(struct scheduler_msg *msg)
 		vdev = confirm->vdev;
 		break;
 	}
+	case NDP_RESPONDER_RSP: {
+		struct nan_datapath_responder_rsp *rsp = msg->bodyptr;
+		vdev = rsp->vdev;
+		break;
+	}
 	default:
 		target_if_err("invalid msg type %d", msg->type);
 		qdf_mem_free(msg->bodyptr);
@@ -516,12 +521,224 @@ static int target_if_ndp_confirm_handler(ol_scn_t scn, uint8_t *data,
 	return 0;
 }
 
+static QDF_STATUS target_if_nan_ndp_responder_req(
+				struct nan_datapath_responder_req *req)
+{
+	int ret;
+	uint16_t len;
+	wmi_buf_t buf;
+	uint8_t *tlv_ptr;
+	QDF_STATUS status;
+	wmi_unified_t wmi_handle;
+	struct wlan_objmgr_psoc *psoc;
+	struct scheduler_msg pe_msg = {0};
+	wmi_ndp_responder_req_fixed_param *cmd;
+	struct wlan_lmac_if_nan_rx_ops *nan_rx_ops;
+	struct nan_datapath_responder_rsp rsp = {0};
+	uint32_t vdev_id = 0, ndp_cfg_len, ndp_app_info_len, pmk_len;
+
+	if (!req) {
+		target_if_err("Invalid req.");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc = wlan_vdev_get_psoc(req->vdev);
+	if (!psoc) {
+		target_if_err("psoc is null.");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
+	if (!wmi_handle) {
+		target_if_err("wmi_handle is null.");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	nan_rx_ops = target_if_nan_get_rx_ops(psoc);
+	if (!nan_rx_ops) {
+		target_if_err("nan_rx_ops is null.");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	vdev_id = wlan_vdev_get_id(req->vdev);
+	target_if_debug("vdev_id: %d, transaction_id: %d, ndp_rsp %d, ndp_instance_id: %d, ndp_app_info_len: %d",
+			vdev_id, req->transaction_id,
+			req->ndp_rsp,
+			req->ndp_instance_id,
+			req->ndp_info.ndp_app_info_len);
+
+	/*
+	 * WMI command expects 4 byte alligned len:
+	 * round up ndp_cfg_len and ndp_app_info_len to 4 bytes
+	 */
+	ndp_cfg_len = qdf_roundup(req->ndp_config.ndp_cfg_len, 4);
+	ndp_app_info_len = qdf_roundup(req->ndp_info.ndp_app_info_len, 4);
+	pmk_len = qdf_roundup(req->pmk.pmk_len, 4);
+	/* allocated memory for fixed params as well as variable size data */
+	len = sizeof(*cmd) + 3*WMI_TLV_HDR_SIZE + ndp_cfg_len + ndp_app_info_len
+		+ pmk_len;
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		target_if_err("wmi_buf_alloc failed");
+		status = QDF_STATUS_E_NOMEM;
+		goto send_ndp_responder_fail;
+	}
+	cmd = (wmi_ndp_responder_req_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+			WMITLV_TAG_STRUC_wmi_ndp_responder_req_fixed_param,
+			WMITLV_GET_STRUCT_TLVLEN(
+				wmi_ndp_responder_req_fixed_param));
+	cmd->vdev_id = vdev_id;
+	cmd->transaction_id = req->transaction_id;
+	cmd->ndp_instance_id = req->ndp_instance_id;
+	cmd->rsp_code = req->ndp_rsp;
+	cmd->ndp_cfg_len = req->ndp_config.ndp_cfg_len;
+	cmd->ndp_app_info_len = req->ndp_info.ndp_app_info_len;
+	cmd->nan_pmk_len = req->pmk.pmk_len;
+	cmd->nan_csid = req->ncs_sk_type;
+
+	tlv_ptr = (uint8_t *)&cmd[1];
+	WMITLV_SET_HDR(tlv_ptr, WMITLV_TAG_ARRAY_BYTE, ndp_cfg_len);
+	qdf_mem_copy(&tlv_ptr[WMI_TLV_HDR_SIZE],
+		req->ndp_config.ndp_cfg, cmd->ndp_cfg_len);
+
+	tlv_ptr = tlv_ptr + WMI_TLV_HDR_SIZE + ndp_cfg_len;
+	WMITLV_SET_HDR(tlv_ptr, WMITLV_TAG_ARRAY_BYTE, ndp_app_info_len);
+	qdf_mem_copy(&tlv_ptr[WMI_TLV_HDR_SIZE],
+		     req->ndp_info.ndp_app_info,
+		     req->ndp_info.ndp_app_info_len);
+
+	tlv_ptr = tlv_ptr + WMI_TLV_HDR_SIZE + ndp_app_info_len;
+	WMITLV_SET_HDR(tlv_ptr, WMITLV_TAG_ARRAY_BYTE, pmk_len);
+	qdf_mem_copy(&tlv_ptr[WMI_TLV_HDR_SIZE], req->pmk.pmk,
+		     cmd->nan_pmk_len);
+
+	tlv_ptr = tlv_ptr + WMI_TLV_HDR_SIZE + pmk_len;
+	target_if_debug("vdev_id = %d, transaction_id: %d, csid: %d",
+		cmd->vdev_id, cmd->transaction_id, cmd->nan_csid);
+
+	target_if_debug("ndp_config len: %d",
+		req->ndp_config.ndp_cfg_len);
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+			req->ndp_config.ndp_cfg,
+			req->ndp_config.ndp_cfg_len);
+
+	target_if_debug("ndp_app_info len: %d",
+		req->ndp_info.ndp_app_info_len);
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+			req->ndp_info.ndp_app_info,
+			req->ndp_info.ndp_app_info_len);
+
+	target_if_debug("pmk len: %d", cmd->nan_pmk_len);
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+			   req->pmk.pmk, cmd->nan_pmk_len);
+
+	target_if_debug("sending WMI_NDP_RESPONDER_REQ_CMDID(0x%X)",
+		WMI_NDP_RESPONDER_REQ_CMDID);
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_NDP_RESPONDER_REQ_CMDID);
+	if (ret < 0) {
+		target_if_err("WMI_NDP_RESPONDER_REQ_CMDID failed, ret: %d",
+				ret);
+		wmi_buf_free(buf);
+		status = QDF_STATUS_E_FAILURE;
+		goto send_ndp_responder_fail;
+	}
+	return QDF_STATUS_SUCCESS;
+
+send_ndp_responder_fail:
+	rsp.vdev = req->vdev;
+	rsp.transaction_id = req->transaction_id;
+	rsp.status = NAN_DATAPATH_RSP_STATUS_ERROR;
+	rsp.reason = NAN_DATAPATH_DATA_RESPONDER_REQ_FAILED;
+	pe_msg.bodyptr = &rsp;
+	pe_msg.type = NDP_RESPONDER_RSP;
+	if (nan_rx_ops && nan_rx_ops->nan_event_rx)
+		nan_rx_ops->nan_event_rx(&pe_msg);
+
+	return status;
+}
+
+static int target_if_ndp_responder_rsp_handler(ol_scn_t scn, uint8_t *data,
+						uint32_t len)
+{
+	QDF_STATUS status;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_vdev *vdev;
+	struct scheduler_msg msg = {0};
+	struct wlan_lmac_if_nan_rx_ops *nan_rx_ops;
+	struct nan_datapath_responder_rsp *rsp;
+	WMI_NDP_RESPONDER_RSP_EVENTID_param_tlvs *event;
+	wmi_ndp_responder_rsp_event_fixed_param  *fixed_params;
+
+	psoc = target_if_get_psoc_from_scn_hdl(scn);
+	if (!psoc) {
+		target_if_err("psoc is null");
+		return -EINVAL;
+	}
+
+	nan_rx_ops = target_if_nan_get_rx_ops(psoc);
+	/* process even here and call callback */
+	if (!nan_rx_ops || !nan_rx_ops->nan_event_rx) {
+		target_if_err("lmac callbacks not registered");
+		return -EINVAL;
+	}
+
+	event = (WMI_NDP_RESPONDER_RSP_EVENTID_param_tlvs *)data;
+	fixed_params = event->fixed_param;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
+					fixed_params->vdev_id, WLAN_NAN_ID);
+	if (!vdev) {
+		target_if_err("vdev is null");
+		return -EINVAL;
+	}
+
+	rsp = qdf_mem_malloc(sizeof(*rsp));
+	if (!rsp) {
+		target_if_err("malloc failed");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_NAN_ID);
+		return -ENOMEM;
+	}
+
+	rsp->vdev = vdev;
+	rsp->transaction_id = fixed_params->transaction_id;
+	rsp->reason = fixed_params->reason_code;
+	rsp->status = fixed_params->rsp_status;
+	rsp->create_peer = fixed_params->create_peer;
+	WMI_MAC_ADDR_TO_CHAR_ARRAY(&fixed_params->peer_ndi_mac_addr,
+				rsp->peer_mac_addr.bytes);
+
+	target_if_debug("WMI_NDP_RESPONDER_RSP_EVENTID(0x%X) received. vdev_id: %d, peer_mac_addr: %pM,transaction_id: %d, status_code %d, reason_code: %d, create_peer: %d",
+			WMI_NDP_RESPONDER_RSP_EVENTID, fixed_params->vdev_id,
+			rsp->peer_mac_addr.bytes, rsp->transaction_id,
+			rsp->status, rsp->reason, rsp->create_peer);
+	msg.bodyptr = rsp;
+	msg.type = NDP_RESPONDER_RSP;
+	msg.callback = target_if_nan_event_dispatcher;
+
+	target_if_debug("NDP_INITIATOR_RSP sent: %d", msg.type);
+	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_NAN_ID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("failed to post msg, status: %d", status);
+		qdf_mem_free(rsp);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 static QDF_STATUS target_if_nan_req(void *req, uint32_t req_type)
 {
 	/* send cmd to fw */
 	switch (req_type) {
 	case NDP_INITIATOR_REQ:
 		target_if_nan_ndp_intiaitor_req(req);
+		break;
+	case NDP_RESPONDER_REQ:
+		target_if_nan_ndp_responder_req(req);
 		break;
 	default:
 		target_if_err("invalid req type");
@@ -596,6 +813,16 @@ QDF_STATUS target_if_nan_register_events(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	ret = wmi_unified_register_event_handler(handle,
+		WMI_NDP_RESPONDER_RSP_EVENTID,
+		target_if_ndp_responder_rsp_handler,
+		WMI_RX_UMAC_CTX);
+	if (ret) {
+		target_if_err("wmi event registration failed, ret: %d", ret);
+		target_if_nan_deregister_events(psoc);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -620,6 +847,13 @@ QDF_STATUS target_if_nan_deregister_events(struct wlan_objmgr_psoc *psoc)
 
 	ret = wmi_unified_unregister_event_handler(handle,
 				WMI_NDP_CONFIRM_EVENTID);
+	if (ret) {
+		target_if_err("wmi event deregistration failed, ret: %d", ret);
+		status = ret;
+	}
+
+	ret = wmi_unified_unregister_event_handler(handle,
+				WMI_NDP_RESPONDER_RSP_EVENTID);
 	if (ret) {
 		target_if_err("wmi event deregistration failed, ret: %d", ret);
 		status = ret;
