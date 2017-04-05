@@ -381,6 +381,65 @@ free_resources:
 	return NULL;
 }
 
+static struct nan_datapath_responder_req *ucfg_nan_copy_responder_req(
+				struct wlan_objmgr_vdev *vdev,
+				struct nan_datapath_responder_req *in_req)
+{
+	struct nan_datapath_responder_req *req;
+
+	req = qdf_mem_malloc(sizeof(*req));
+	if (!req) {
+		nan_alert("malloc failed");
+		return NULL;
+	}
+
+	qdf_mem_copy(req, in_req, sizeof(*req));
+	if (in_req->ndp_config.ndp_cfg_len) {
+		req->ndp_config.ndp_cfg =
+			qdf_mem_malloc(in_req->ndp_config.ndp_cfg_len);
+		if (!req->ndp_config.ndp_cfg) {
+			nan_alert("malloc failed");
+			goto free_resources;
+		}
+		qdf_mem_copy(req->ndp_config.ndp_cfg,
+			     in_req->ndp_config.ndp_cfg,
+			     in_req->ndp_config.ndp_cfg_len);
+	}
+
+	if (in_req->ndp_info.ndp_app_info_len) {
+		req->ndp_info.ndp_app_info =
+			qdf_mem_malloc(in_req->ndp_info.ndp_app_info_len);
+		if (!req->ndp_info.ndp_app_info) {
+			nan_alert("malloc failed");
+			goto free_resources;
+		}
+		qdf_mem_copy(req->ndp_info.ndp_app_info,
+			     in_req->ndp_info.ndp_app_info,
+			     in_req->ndp_info.ndp_app_info_len);
+	}
+
+	if (in_req->pmk.pmk_len) {
+		req->pmk.pmk = qdf_mem_malloc(in_req->pmk.pmk_len);
+		if (!req->pmk.pmk) {
+			nan_alert("malloc failed");
+			goto free_resources;
+		}
+		qdf_mem_copy(req->pmk.pmk, in_req->pmk.pmk,
+				in_req->pmk.pmk_len);
+	}
+
+	/* do not get ref here, rather take ref when request is activated */
+	req->vdev = vdev;
+	return req;
+
+free_resources:
+	qdf_mem_free(req->pmk.pmk);
+	qdf_mem_free(req->ndp_info.ndp_app_info);
+	qdf_mem_free(req->ndp_config.ndp_cfg);
+	qdf_mem_free(req);
+	return NULL;
+}
+
 QDF_STATUS ucfg_nan_req_processor(struct wlan_objmgr_vdev *vdev,
 				  void *in_req, uint32_t req_type)
 {
@@ -396,6 +455,9 @@ QDF_STATUS ucfg_nan_req_processor(struct wlan_objmgr_vdev *vdev,
 	switch (req_type) {
 	case NDP_INITIATOR_REQ:
 		req = ucfg_nan_copy_intiator_req(vdev, in_req);
+		break;
+	case NDP_RESPONDER_REQ:
+		req = ucfg_nan_copy_responder_req(vdev, in_req);
 		break;
 	default:
 		nan_err("in correct message req type: %d", req_type);

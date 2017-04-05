@@ -377,6 +377,42 @@ ndp_indication_failed:
 	return status;
 }
 
+static QDF_STATUS nan_handle_responder_rsp(
+				struct nan_datapath_responder_rsp *rsp,
+				struct wlan_objmgr_vdev **vdev)
+{
+	struct wlan_objmgr_psoc *psoc;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct nan_psoc_priv_obj *psoc_nan_obj;
+
+	*vdev = rsp->vdev;
+	psoc = wlan_vdev_get_psoc(rsp->vdev);
+	if (!psoc) {
+		nan_err("psoc is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	psoc_nan_obj = nan_get_psoc_priv_obj(psoc);
+	if (!psoc_nan_obj) {
+		nan_err("psoc_nan_obj is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (QDF_IS_STATUS_SUCCESS(rsp->status) && rsp->create_peer == true) {
+		status = psoc_nan_obj->cb_obj.add_ndi_peer(
+						wlan_vdev_get_id(rsp->vdev),
+						rsp->peer_mac_addr);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			nan_err("Couldn't add ndi peer");
+			rsp->status = QDF_STATUS_E_FAILURE;
+		}
+	}
+	psoc_nan_obj->cb_obj.os_if_event_handler(psoc, rsp->vdev,
+						 NDP_RESPONDER_RSP, rsp);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS nan_event_handler(struct scheduler_msg *pe_msg)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -407,6 +443,11 @@ QDF_STATUS nan_event_handler(struct scheduler_msg *pe_msg)
 		nan_handle_ndp_ind(pe_msg->bodyptr);
 		break;
 	}
+	case NDP_RESPONDER_RSP:
+		nan_handle_responder_rsp(pe_msg->bodyptr, &cmd.vdev);
+		cmd.cmd_type = WLAN_SER_CMD_NDP_RESP_REQ;
+		wlan_serialization_remove_cmd(&cmd);
+		break;
 	default:
 		nan_alert("Unhandled NDP event: %d", pe_msg->type);
 		status = QDF_STATUS_E_NOSUPPORT;
