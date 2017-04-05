@@ -1944,7 +1944,10 @@ void __qdf_nbuf_unmap_tso_segment(qdf_device_t osdev,
 			  struct qdf_tso_seg_elem_t *tso_seg,
 			  bool is_last_seg)
 {
-	uint32_t num_frags = tso_seg->seg.num_frags - 1;
+	uint32_t num_frags = 0;
+
+	if (tso_seg->seg.num_frags > 0)
+		num_frags = tso_seg->seg.num_frags - 1;
 
 	/*Num of frags in a tso seg cannot be less than 2 */
 	if (num_frags < 1) {
