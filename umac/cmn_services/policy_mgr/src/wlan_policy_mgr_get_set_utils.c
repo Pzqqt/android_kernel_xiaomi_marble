@@ -1199,7 +1199,7 @@ QDF_STATUS policy_mgr_incr_connection_count(
 
 	mode = policy_mgr_get_mode(conn_table_entry.type,
 					conn_table_entry.sub_type);
-	chan = reg_freq_to_chan(conn_table_entry.mhz);
+	chan = wlan_reg_freq_to_chan(pm_ctx->pdev, conn_table_entry.mhz);
 	status = policy_mgr_get_nss_for_vdev(psoc, mode, &nss_2g, &nss_5g);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		if ((WLAN_REG_IS_24GHZ_CH(chan) && (nss_2g > 1)) ||
@@ -1488,7 +1488,7 @@ bool policy_mgr_allow_concurrency(struct wlan_objmgr_psoc *psoc,
 			goto done;
 
 		if ((PM_P2P_GO_MODE == mode) || (PM_SAP_MODE == mode)) {
-			if (wlan_reg_is_dfs_ch(psoc, channel))
+			if (wlan_reg_is_dfs_ch(pm_ctx->pdev, channel))
 				match = policy_mgr_disallow_mcc(psoc, channel);
 		}
 		if (true == match) {
@@ -1512,7 +1512,7 @@ bool policy_mgr_allow_concurrency(struct wlan_objmgr_psoc *psoc,
 		goto done;
 	}
 	if ((PM_IBSS_MODE == mode) &&
-		(wlan_reg_is_dfs_ch(psoc, channel)) && count) {
+		(wlan_reg_is_dfs_ch(pm_ctx->pdev, channel)) && count) {
 		policy_mgr_err("No IBSS + STA SCC/MCC, IBSS is on DFS channel");
 		goto done;
 	}
@@ -1565,7 +1565,7 @@ bool policy_mgr_allow_concurrency(struct wlan_objmgr_psoc *psoc,
 			}
 			qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 			if (channel &&
-				(wlan_reg_is_dfs_ch(psoc,
+				(wlan_reg_is_dfs_ch(pm_ctx->pdev,
 				pm_conc_connection_list[0].chan))
 				&& (WLAN_REG_IS_5GHZ_CH(channel))) {
 				qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
@@ -2059,7 +2059,7 @@ bool policy_mgr_is_any_nondfs_chnl_present(struct wlan_objmgr_psoc *psoc,
 	for (conn_index = 0; conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
 			conn_index++) {
 		if (pm_conc_connection_list[conn_index].in_use &&
-		    !wlan_reg_is_dfs_ch(psoc,
+		    !wlan_reg_is_dfs_ch(pm_ctx->pdev,
 			pm_conc_connection_list[conn_index].chan)) {
 			*channel = pm_conc_connection_list[conn_index].chan;
 			status = true;
@@ -2088,7 +2088,7 @@ bool policy_mgr_is_any_dfs_beaconing_session_present(
 			conn_index++) {
 		conn_info = &pm_conc_connection_list[conn_index];
 		if (conn_info->in_use &&
-			wlan_reg_is_dfs_ch(psoc, conn_info->chan) &&
+			wlan_reg_is_dfs_ch(pm_ctx->pdev, conn_info->chan) &&
 		    (PM_SAP_MODE == conn_info->mode ||
 		     PM_P2P_GO_MODE == conn_info->mode)) {
 			*channel = pm_conc_connection_list[conn_index].chan;

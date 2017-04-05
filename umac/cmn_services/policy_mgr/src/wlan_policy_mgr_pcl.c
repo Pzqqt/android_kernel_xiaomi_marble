@@ -140,16 +140,18 @@ void policy_mgr_update_with_safe_channel_list(uint8_t *pcl_channels,
 }
 
 static QDF_STATUS policy_mgr_modify_pcl_based_on_enabled_channels(
-						uint8_t *pcl_list_org,
-						uint8_t *weight_list_org,
-						uint32_t *pcl_len_org)
+					struct policy_mgr_psoc_priv_obj *pm_ctx,
+					uint8_t *pcl_list_org,
+					uint8_t *weight_list_org,
+					uint32_t *pcl_len_org)
 {
 	uint32_t i, pcl_len = 0;
 	uint8_t pcl_list[QDF_MAX_NUM_CHAN];
 	uint8_t weight_list[QDF_MAX_NUM_CHAN];
 
 	for (i = 0; i < *pcl_len_org; i++) {
-		if (!wlan_reg_is_passive_or_disable_ch(pcl_list_org[i])) {
+		if (!wlan_reg_is_passive_or_disable_ch(
+			pm_ctx->pdev, pcl_list_org[i])) {
 			pcl_list[pcl_len] = pcl_list_org[i];
 			weight_list[pcl_len++] = weight_list_org[i];
 		}
@@ -320,7 +322,7 @@ QDF_STATUS policy_mgr_get_pcl(struct wlan_objmgr_psoc *psoc,
 
 	if (mode == PM_P2P_GO_MODE) {
 		status = policy_mgr_modify_pcl_based_on_enabled_channels(
-		pcl_channels, pcl_weight, len);
+		pm_ctx, pcl_channels, pcl_weight, len);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			policy_mgr_err("failed to get modified pcl for GO");
 			return status;
@@ -1104,6 +1106,7 @@ policy_mgr_get_nondfs_preferred_channel(struct wlan_objmgr_psoc *psoc,
 {
 	uint8_t pcl_channels[QDF_MAX_NUM_CHAN];
 	uint8_t pcl_weight[QDF_MAX_NUM_CHAN];
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
 
 	/*
 	 * in worst case if we can't find any channel at all
@@ -1112,6 +1115,12 @@ policy_mgr_get_nondfs_preferred_channel(struct wlan_objmgr_psoc *psoc,
 	 */
 	uint8_t channel = PM_24_GHZ_CHANNEL_6;
 	uint32_t i, pcl_len;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return channel;
+	}
 
 	if (true == for_existing_conn) {
 		/*
@@ -1136,7 +1145,7 @@ policy_mgr_get_nondfs_preferred_channel(struct wlan_objmgr_psoc *psoc,
 	}
 
 	for (i = 0; i < pcl_len; i++) {
-		if (wlan_reg_is_dfs_ch(psoc, pcl_channels[i])) {
+		if (wlan_reg_is_dfs_ch(pm_ctx->pdev, pcl_channels[i])) {
 			continue;
 		} else {
 			channel = pcl_channels[i];

@@ -86,6 +86,42 @@ static void policy_mgr_psoc_obj_status_cb(struct wlan_objmgr_psoc *psoc,
 	return;
 }
 
+static QDF_STATUS policy_mgr_pdev_obj_create_cb(struct wlan_objmgr_pdev *pdev,
+		void *data)
+{
+	struct policy_mgr_psoc_priv_obj *policy_mgr_ctx;
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	policy_mgr_ctx = policy_mgr_get_context(psoc);
+	if (!policy_mgr_ctx) {
+		policy_mgr_err("invalid context");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	policy_mgr_ctx->pdev = pdev;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS policy_mgr_pdev_obj_destroy_cb(struct wlan_objmgr_pdev *pdev,
+		void *data)
+{
+	struct policy_mgr_psoc_priv_obj *policy_mgr_ctx;
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	policy_mgr_ctx = policy_mgr_get_context(psoc);
+	if (!policy_mgr_ctx) {
+		policy_mgr_err("invalid context");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	policy_mgr_ctx->pdev = NULL;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 static QDF_STATUS policy_mgr_vdev_obj_create_cb(struct wlan_objmgr_vdev *vdev,
 		void *data)
 {
@@ -134,6 +170,24 @@ QDF_STATUS policy_mgr_init(void)
 		goto err_psoc_status;
 	}
 
+	status = wlan_objmgr_register_pdev_create_handler(
+				WLAN_UMAC_COMP_POLICY_MGR,
+				policy_mgr_pdev_obj_create_cb,
+				NULL);
+	if (status != QDF_STATUS_SUCCESS) {
+		policy_mgr_err("Failed to register pdev obj create cback");
+		goto err_pdev_create;
+	}
+
+	status = wlan_objmgr_register_pdev_destroy_handler(
+				WLAN_UMAC_COMP_POLICY_MGR,
+				policy_mgr_pdev_obj_destroy_cb,
+				NULL);
+	if (status != QDF_STATUS_SUCCESS) {
+		policy_mgr_err("Failed to register pdev obj delete cback");
+		goto err_pdev_delete;
+	}
+
 	status = wlan_objmgr_register_vdev_create_handler(
 				WLAN_UMAC_COMP_POLICY_MGR,
 				policy_mgr_vdev_obj_create_cb,
@@ -167,19 +221,32 @@ QDF_STATUS policy_mgr_init(void)
 
 err_vdev_status:
 	wlan_objmgr_unregister_vdev_destroy_handler(WLAN_UMAC_COMP_POLICY_MGR,
-			policy_mgr_vdev_obj_destroy_cb, NULL);
+						policy_mgr_vdev_obj_destroy_cb,
+						NULL);
 err_vdev_delete:
 	wlan_objmgr_unregister_vdev_create_handler(WLAN_UMAC_COMP_POLICY_MGR,
-			policy_mgr_vdev_obj_create_cb, NULL);
+						policy_mgr_vdev_obj_create_cb,
+						NULL);
 err_vdev_create:
+	wlan_objmgr_unregister_pdev_destroy_handler(WLAN_UMAC_COMP_POLICY_MGR,
+						policy_mgr_pdev_obj_destroy_cb,
+						NULL);
+err_pdev_delete:
+	wlan_objmgr_unregister_pdev_create_handler(WLAN_UMAC_COMP_POLICY_MGR,
+						policy_mgr_pdev_obj_create_cb,
+						NULL);
+err_pdev_create:
 	wlan_objmgr_unregister_psoc_status_handler(WLAN_UMAC_COMP_POLICY_MGR,
-			policy_mgr_psoc_obj_status_cb, NULL);
+						policy_mgr_psoc_obj_status_cb,
+						NULL);
 err_psoc_status:
 	wlan_objmgr_unregister_psoc_destroy_handler(WLAN_UMAC_COMP_POLICY_MGR,
-			policy_mgr_psoc_obj_destroy_cb, NULL);
+						policy_mgr_psoc_obj_destroy_cb,
+						NULL);
 err_psoc_delete:
 	wlan_objmgr_unregister_psoc_create_handler(WLAN_UMAC_COMP_POLICY_MGR,
-			policy_mgr_psoc_obj_create_cb, NULL);
+						policy_mgr_psoc_obj_create_cb,
+						NULL);
 err_psoc_create:
 	return status;
 }
@@ -188,12 +255,12 @@ QDF_STATUS policy_mgr_deinit(void)
 {
 	QDF_STATUS status;
 
-	status = wlan_objmgr_unregister_psoc_create_handler(
+	status = wlan_objmgr_unregister_psoc_status_handler(
 				WLAN_UMAC_COMP_POLICY_MGR,
-				policy_mgr_psoc_obj_create_cb,
+				policy_mgr_psoc_obj_status_cb,
 				NULL);
 	if (status != QDF_STATUS_SUCCESS)
-		policy_mgr_err("Failed to deregister psoc obj create cback");
+		policy_mgr_err("Failed to deregister psoc obj status cback");
 
 	status = wlan_objmgr_unregister_psoc_destroy_handler(
 				WLAN_UMAC_COMP_POLICY_MGR,
@@ -202,19 +269,33 @@ QDF_STATUS policy_mgr_deinit(void)
 	if (status != QDF_STATUS_SUCCESS)
 		policy_mgr_err("Failed to deregister psoc obj delete cback");
 
-	status = wlan_objmgr_unregister_psoc_status_handler(
+	status = wlan_objmgr_unregister_psoc_create_handler(
 				WLAN_UMAC_COMP_POLICY_MGR,
-				policy_mgr_psoc_obj_status_cb,
+				policy_mgr_psoc_obj_create_cb,
 				NULL);
 	if (status != QDF_STATUS_SUCCESS)
-		policy_mgr_err("Failed to deregister psoc obj status cback");
+		policy_mgr_err("Failed to deregister psoc obj create cback");
 
-	status = wlan_objmgr_unregister_vdev_create_handler(
+	status = wlan_objmgr_unregister_pdev_destroy_handler(
 				WLAN_UMAC_COMP_POLICY_MGR,
-				policy_mgr_vdev_obj_create_cb,
+				policy_mgr_pdev_obj_destroy_cb,
 				NULL);
 	if (status != QDF_STATUS_SUCCESS)
-		policy_mgr_err("Failed to deregister vdev obj create cback");
+		policy_mgr_err("Failed to deregister pdev obj delete cback");
+
+	status = wlan_objmgr_unregister_pdev_create_handler(
+				WLAN_UMAC_COMP_POLICY_MGR,
+				policy_mgr_pdev_obj_create_cb,
+				NULL);
+	if (status != QDF_STATUS_SUCCESS)
+		policy_mgr_err("Failed to deregister pdev obj create cback");
+
+	status = wlan_objmgr_unregister_vdev_status_handler(
+				WLAN_UMAC_COMP_POLICY_MGR,
+				policy_mgr_vdev_obj_status_cb,
+				NULL);
+	if (status != QDF_STATUS_SUCCESS)
+		policy_mgr_err("Failed to deregister vdev obj status cback");
 
 	status = wlan_objmgr_unregister_vdev_destroy_handler(
 				WLAN_UMAC_COMP_POLICY_MGR,
@@ -223,12 +304,12 @@ QDF_STATUS policy_mgr_deinit(void)
 	if (status != QDF_STATUS_SUCCESS)
 		policy_mgr_err("Failed to deregister vdev obj delete cback");
 
-	status = wlan_objmgr_unregister_vdev_status_handler(
+	status = wlan_objmgr_unregister_vdev_create_handler(
 				WLAN_UMAC_COMP_POLICY_MGR,
-				policy_mgr_vdev_obj_status_cb,
+				policy_mgr_vdev_obj_create_cb,
 				NULL);
 	if (status != QDF_STATUS_SUCCESS)
-		policy_mgr_err("Failed to deregister vdev obj status cback");
+		policy_mgr_err("Failed to deregister vdev obj create cback");
 
 	policy_mgr_info("deregistered callbacks with obj mgr successfully");
 
