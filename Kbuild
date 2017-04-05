@@ -431,6 +431,10 @@ ifeq ($(CONFIG_WLAN_FEATURE_DSRC), y)
 HDD_OBJS+=	$(HDD_SRC_DIR)/wlan_hdd_ocb.o
 endif
 
+ifeq ($(CONFIG_WLAN_FEATURE_FIPS), y)
+HDD_OBJS+=	$(HDD_SRC_DIR)/wlan_hdd_fips.o
+endif
+
 ifeq ($(CONFIG_WLAN_FEATURE_LPSS),y)
 HDD_OBJS +=	$(HDD_SRC_DIR)/wlan_hdd_lpass.o
 endif

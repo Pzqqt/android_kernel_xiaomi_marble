@@ -82,6 +82,7 @@
 #include "sme_power_save_api.h"
 #include "wlan_policy_mgr_api.h"
 #include "wlan_hdd_conc_ut.h"
+#include "wlan_hdd_fips.h"
 #include "wlan_hdd_tsf.h"
 #include "wlan_hdd_ocb.h"
 #include "wlan_hdd_napi.h"
@@ -2534,6 +2535,28 @@ static const struct ccp_freq_chan_map freq_chan_map[] = {
 #define MAX_VAR_ARGS         9
 #endif
 
+/*
+ * <ioctl>
+ * fips_test - Perform a FIPS test
+ *
+ * @INPUT: Binary representation of the following packed structure
+ *
+ * @OUTPUT: Binary representation of the following packed structure
+ *
+ * This IOCTL is used to perform FIPS certification testing
+ *
+ * @E.g: iwpriv wlan0 fips_test <test vector>
+ *
+ * iwpriv wlan0 fips_test <tbd>
+ *
+ * Supported Feature: FIPS
+ *
+ * Usage: Internal
+ *
+ * </ioctl>
+ */
+#define WLAN_PRIV_FIPS_TEST (SIOCIWFIRSTPRIV +  8)
+
 /* Private ioctls (with no sub-ioctls) */
 /* note that they must be odd so that they have "get" semantics */
 /*
@@ -2627,7 +2650,6 @@ static const struct ccp_freq_chan_map freq_chan_map[] = {
  */
 #define WLAN_PRIV_GET_TSPEC (SIOCIWFIRSTPRIV + 13)
 
-/* (SIOCIWFIRSTPRIV + 8)  is currently unused */
 /* (SIOCIWFIRSTPRIV + 10) is currently unused */
 /* (SIOCIWFIRSTPRIV + 12) is currently unused */
 /* (SIOCIWFIRSTPRIV + 14) is currently unused */
@@ -12818,6 +12840,7 @@ static const iw_handler we_private[] = {
 		iw_hdd_set_var_ints_getnone,
 	[WLAN_PRIV_SET_NONE_GET_THREE_INT - SIOCIWFIRSTPRIV] =
 							iw_setnone_get_threeint,
+	[WLAN_PRIV_FIPS_TEST - SIOCIWFIRSTPRIV] = hdd_fips_test,
 	[WLAN_PRIV_ADD_TSPEC - SIOCIWFIRSTPRIV] = iw_add_tspec,
 	[WLAN_PRIV_DEL_TSPEC - SIOCIWFIRSTPRIV] = iw_del_tspec,
 	[WLAN_PRIV_GET_TSPEC - SIOCIWFIRSTPRIV] = iw_get_tspec,
@@ -13841,6 +13864,12 @@ static const struct iw_priv_args we_private_args[] = {
 	 0,
 	 "gpio_control"},
 #endif
+	/* handlers for main ioctl */
+	{WLAN_PRIV_FIPS_TEST,
+	 IW_PRIV_TYPE_BYTE | WE_MAX_STR_LEN,
+	 IW_PRIV_TYPE_BYTE | WE_MAX_STR_LEN,
+	 "fips_test"},
+
 	/* handlers for main ioctl */
 	{WLAN_PRIV_ADD_TSPEC,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | HDD_WLAN_WMM_PARAM_COUNT,
