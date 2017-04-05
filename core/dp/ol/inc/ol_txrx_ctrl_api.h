@@ -188,7 +188,6 @@ ol_txrx_throttle_unpause(ol_txrx_pdev_handle data_pdev);
 static inline void
 ol_txrx_peer_tid_unpause(ol_txrx_peer_handle data_peer, int tid)
 {
-	return;
 }
 
 static inline void
@@ -196,19 +195,16 @@ ol_txrx_tx_release(ol_txrx_peer_handle peer,
 		   u_int32_t tid_mask,
 		   int max_frms)
 {
-	return;
 }
 
 static inline void
 ol_txrx_throttle_pause(ol_txrx_pdev_handle data_pdev)
 {
-	return;
 }
 
 static inline void
 ol_txrx_throttle_unpause(ol_txrx_pdev_handle data_pdev)
 {
-	return;
 }
 
 #endif /* CONFIG_HL_SUPPORT */
@@ -229,7 +225,6 @@ ol_txrx_throttle_unpause(ol_txrx_pdev_handle data_pdev)
  */
 static inline void ol_txrx_peer_pause(struct ol_txrx_peer_t *data_peer)
 {
-	return;
 }
 
 /**
@@ -252,7 +247,6 @@ void ol_txrx_pdev_pause(struct ol_txrx_pdev_t *data_pdev, uint32_t reason);
 static inline
 void ol_txrx_pdev_pause(struct ol_txrx_pdev_t *data_pdev, uint32_t reason)
 {
-	return;
 }
 #endif
 
@@ -272,7 +266,6 @@ void ol_txrx_pdev_unpause(struct ol_txrx_pdev_t *pdev, uint32_t reason);
 static inline
 void ol_txrx_pdev_unpause(struct ol_txrx_pdev_t *pdev, uint32_t reason)
 {
-	return;
 }
 #endif
 
@@ -487,7 +480,6 @@ ol_txrx_bad_peer_txctl_set_setting(
 	int period,
 	int txq_limit)
 {
-	return;
 }
 
 static inline void
@@ -497,7 +489,6 @@ ol_txrx_bad_peer_txctl_update_threshold(
 	int tput_thresh,
 	int tx_limit)
 {
-	return;
 }
 #endif /* defined(CONFIG_HL_SUPPORT) && defined(QCA_BAD_PEER_TX_FLOW_CL) */
 
@@ -562,29 +553,23 @@ QDF_STATUS ol_tx_dec_pool_ref(struct ol_tx_flow_pool_t *pool, bool force);
 
 static inline void ol_tx_register_flow_control(struct ol_txrx_pdev_t *pdev)
 {
-	return;
 }
 static inline void ol_tx_deregister_flow_control(struct ol_txrx_pdev_t *pdev)
 {
-	return;
 }
 static inline void ol_tx_dump_flow_pool_info(void)
 {
-	return;
 }
 static inline void ol_tx_clear_flow_pool_stats(void)
 {
-	return;
 }
 static inline void ol_tx_flow_pool_map_handler(uint8_t flow_id,
 	uint8_t flow_type, uint8_t flow_pool_id, uint16_t flow_pool_size)
 {
-	return;
 }
 static inline void ol_tx_flow_pool_unmap_handler(uint8_t flow_id,
 	 uint8_t flow_type, uint8_t flow_pool_id)
 {
-	return;
 }
 static inline struct ol_tx_flow_pool_t *ol_tx_create_flow_pool(
 		uint8_t flow_pool_id, uint16_t flow_pool_size)
