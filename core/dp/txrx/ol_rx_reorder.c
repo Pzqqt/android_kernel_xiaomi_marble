@@ -107,11 +107,11 @@ void ol_rx_reorder_init(struct ol_rx_reorder_t *rx_reorder, uint8_t tid)
 
 static enum htt_rx_status
 ol_rx_reorder_seq_num_check(
-				struct ol_txrx_pdev_t *pdev,
+			    struct ol_txrx_pdev_t *pdev,
 			    struct ol_txrx_peer_t *peer,
-			    unsigned tid, unsigned seq_num)
+			    unsigned int tid, unsigned int seq_num)
 {
-	unsigned seq_num_delta;
+	unsigned int seq_num_delta;
 
 	/* don't check the new seq_num against last_seq
 	   if last_seq is not valid */
@@ -189,30 +189,33 @@ ol_rx_seq_num_check(struct ol_txrx_pdev_t *pdev,
 		retry = htt_rx_mpdu_desc_retry(pdev->htt_pdev, rx_mpdu_desc);
 
 		/*
-		 * At this point, we define frames to be duplicate if they arrive
-		 * "ONLY" in succession with the same sequence number and the last
-		 * one has the retry bit set. For an older frame, we consider that
-		 * as an out of order frame, and hence do not perform the dup-detection
-		 * or out-of-order check for multicast frames as per discussions & spec
+		 * At this point, we define frames to be duplicate if they
+		 * arrive "ONLY" in succession with the same sequence number
+		 * and the last one has the retry bit set. For an older frame,
+		 * we consider that as an out of order frame, and hence do not
+		 * perform the dup-detection or out-of-order check for multicast
+		 * frames as per discussions & spec.
 		 * Hence "seq_num <= last_seq_num" check is not necessary.
 		 */
 		if (qdf_unlikely(retry &&
-			(seq_num == peer->tids_mcast_last_seq[pkt_tid]))) {/* drop mcast */
+			(seq_num == peer->tids_mcast_last_seq[pkt_tid]))) {
+			/* drop mcast */
 			TXRX_STATS_INCR(pdev, priv.rx.err.msdu_mc_dup_drop);
 			return htt_rx_status_err_replay;
-		} else {
-			/*
-			 * This is a multicast packet likely to be passed on...
-			 * Set the mcast last seq number here
-			 * This is fairly accurate since:
-			 * a) f/w sends multicast as separate PPDU/HTT messages
-			 * b) Mcast packets are not aggregated & hence single
-			 * c) Result of b) is that, flush / release bit is set always
-			 *	on the mcast packets, so likely to be immediatedly released.
-			 */
-			peer->tids_mcast_last_seq[pkt_tid] = seq_num;
-			return htt_rx_status_ok;
 		}
+
+		/*
+		 * This is a multicast packet likely to be passed on...
+		 * Set the mcast last seq number here
+		 * This is fairly accurate since:
+		 * a) f/w sends multicast as separate PPDU/HTT messages
+		 * b) Mcast packets are not aggregated & hence single
+		 * c) Result of b) is that, flush / release bit is set
+		 *    always on the mcast packets, so likely to be
+		 *    immediatedly released.
+		 */
+		peer->tids_mcast_last_seq[pkt_tid] = seq_num;
+		return htt_rx_status_ok;
 	} else
 		return ol_rx_reorder_seq_num_check(pdev, peer, tid, seq_num);
 }
@@ -221,8 +224,9 @@ ol_rx_seq_num_check(struct ol_txrx_pdev_t *pdev,
 void
 ol_rx_reorder_store(struct ol_txrx_pdev_t *pdev,
 		    struct ol_txrx_peer_t *peer,
-		    unsigned tid,
-		    unsigned idx, qdf_nbuf_t head_msdu, qdf_nbuf_t tail_msdu)
+		    unsigned int tid,
+		    unsigned int idx, qdf_nbuf_t head_msdu,
+		    qdf_nbuf_t tail_msdu)
 {
 	struct ol_rx_reorder_array_elem_t *rx_reorder_array_elem;
 
@@ -240,10 +244,11 @@ ol_rx_reorder_store(struct ol_txrx_pdev_t *pdev,
 void
 ol_rx_reorder_release(struct ol_txrx_vdev_t *vdev,
 		      struct ol_txrx_peer_t *peer,
-		      unsigned tid, unsigned idx_start, unsigned idx_end)
+		      unsigned int tid, unsigned int idx_start,
+		      unsigned int idx_end)
 {
-	unsigned idx;
-	unsigned win_sz, win_sz_mask;
+	unsigned int idx;
+	unsigned int win_sz, win_sz_mask;
 	struct ol_rx_reorder_array_elem_t *rx_reorder_array_elem;
 	qdf_nbuf_t head_msdu;
 	qdf_nbuf_t tail_msdu;
@@ -317,12 +322,12 @@ ol_rx_reorder_release(struct ol_txrx_vdev_t *vdev,
 void
 ol_rx_reorder_flush(struct ol_txrx_vdev_t *vdev,
 		    struct ol_txrx_peer_t *peer,
-		    unsigned tid,
-		    unsigned idx_start,
-		    unsigned idx_end, enum htt_rx_flush_action action)
+		    unsigned int tid,
+		    unsigned int idx_start,
+		    unsigned int idx_end, enum htt_rx_flush_action action)
 {
 	struct ol_txrx_pdev_t *pdev;
-	unsigned win_sz;
+	unsigned int win_sz;
 	uint8_t win_sz_mask;
 	struct ol_rx_reorder_array_elem_t *rx_reorder_array_elem;
 	qdf_nbuf_t head_msdu = NULL;
@@ -394,6 +399,7 @@ ol_rx_reorder_flush(struct ol_txrx_vdev_t *vdev,
 		} else {
 			do {
 				qdf_nbuf_t next;
+
 				next = qdf_nbuf_next(head_msdu);
 				htt_rx_desc_frame_free(pdev->htt_pdev,
 						       head_msdu);
@@ -414,10 +420,10 @@ ol_rx_reorder_flush(struct ol_txrx_vdev_t *vdev,
 
 void
 ol_rx_reorder_first_hole(struct ol_txrx_peer_t *peer,
-			 unsigned tid, unsigned *idx_end)
+			 unsigned int tid, unsigned int *idx_end)
 {
-	unsigned win_sz, win_sz_mask;
-	unsigned idx_start = 0, tmp_idx = 0;
+	unsigned int win_sz, win_sz_mask;
+	unsigned int idx_start = 0, tmp_idx = 0;
 
 	win_sz = peer->tids_rx_reorder[tid].win_sz;
 	win_sz_mask = peer->tids_rx_reorder[tid].win_sz_mask;
@@ -451,6 +457,7 @@ ol_rx_reorder_peer_cleanup(struct ol_txrx_vdev_t *vdev,
 			   struct ol_txrx_peer_t *peer)
 {
 	int tid;
+
 	for (tid = 0; tid < OL_TXRX_NUM_EXT_TIDS; tid++) {
 		ol_rx_reorder_flush(vdev, peer, tid, 0, 0,
 				    htt_rx_flush_discard);
@@ -467,7 +474,7 @@ ol_rx_addba_handler(ol_txrx_pdev_handle pdev,
 		    uint8_t win_sz, uint16_t start_seq_num, uint8_t failed)
 {
 	uint8_t round_pwr2_win_sz;
-	unsigned array_size;
+	unsigned int array_size;
 	struct ol_txrx_peer_t *peer;
 	struct ol_rx_reorder_t *rx_reorder;
 
@@ -592,7 +599,7 @@ ol_rx_pn_ind_handler(ol_txrx_pdev_handle pdev,
 	void *rx_desc;
 	struct ol_txrx_peer_t *peer;
 	struct ol_rx_reorder_array_elem_t *rx_reorder_array_elem;
-	unsigned win_sz_mask;
+	unsigned int win_sz_mask;
 	qdf_nbuf_t head_msdu = NULL;
 	qdf_nbuf_t tail_msdu = NULL;
 	htt_pdev_handle htt_pdev = pdev->htt_pdev;
@@ -705,8 +712,7 @@ ol_rx_pn_ind_handler(ol_txrx_pdev_handle pdev,
 					htt_rx_desc_frame_free(htt_pdev, msdu);
 					if (msdu == mpdu_tail)
 						break;
-					else
-						msdu = next_msdu;
+					msdu = next_msdu;
 				} while (1);
 
 			} else {
@@ -801,6 +807,7 @@ ol_rx_reorder_trace_display(ol_txrx_pdev_handle pdev, int just_once, int limit)
 	elems = (end - 1 - start) & pdev->rx_reorder_trace.mask;
 	if (limit > 0 && elems > limit) {
 		int delta;
+
 		delta = elems - limit;
 		start += delta;
 		start &= pdev->rx_reorder_trace.mask;
@@ -814,6 +821,7 @@ ol_rx_reorder_trace_display(ol_txrx_pdev_handle pdev, int just_once, int limit)
 		  "   count   idx  tid   idx  num (LSBs)");
 	do {
 		uint16_t seq_num, reorder_idx;
+
 		seq_num = pdev->rx_reorder_trace.data[i].seq_num;
 		reorder_idx = pdev->rx_reorder_trace.data[i].reorder_idx;
 		if (seq_num < (1 << 14)) {
@@ -823,6 +831,7 @@ ol_rx_reorder_trace_display(ol_txrx_pdev_handle pdev, int just_once, int limit)
 				  reorder_idx, seq_num, seq_num & 63);
 		} else {
 			int err = TXRX_SEQ_NUM_ERR(seq_num);
+
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
 				  "  %6lld  %4d err %d (%d MPDUs)",
 				  cnt, i, err,
