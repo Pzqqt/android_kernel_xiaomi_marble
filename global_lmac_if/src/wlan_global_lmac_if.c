@@ -29,6 +29,43 @@
 QDF_STATUS (*wlan_global_lmac_if_tx_ops_register[MAX_DEV_TYPE])
 				(struct wlan_lmac_if_tx_ops *tx_ops);
 
+#ifdef WLAN_CONV_SPECTRAL_ENABLE
+/* Function pointer for spectral rx_ops registration function */
+void (*wlan_lmac_if_sptrl_rx_ops)(struct wlan_lmac_if_rx_ops *rx_ops);
+
+QDF_STATUS wlan_lmac_if_sptrl_set_rx_ops_register_cb(void (*handler)
+				(struct wlan_lmac_if_rx_ops *))
+{
+	wlan_lmac_if_sptrl_rx_ops = handler;
+
+	return QDF_STATUS_SUCCESS;
+}
+EXPORT_SYMBOL(wlan_lmac_if_sptrl_set_rx_ops_register_cb);
+#endif /* WLAN_CONV_SPECTRAL_ENABLE */
+
+#ifdef WLAN_CONV_SPECTRAL_ENABLE
+/**
+ * wlan_spectral_register_rx_ops() - Register spectral component RX OPS
+ * @rx_ops: lmac if receive ops
+ *
+ * Return: None
+ */
+static void wlan_spectral_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+	wlan_lmac_if_sptrl_rx_ops(rx_ops);
+}
+#else
+/**
+ * wlan_spectral_register_rx_ops() - Dummy api to register spectral RX OPS
+ * @rx_ops: lmac if receive ops
+ *
+ * Return: None
+ */
+static void wlan_spectral_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+}
+#endif
+
 #ifdef WLAN_PMO_ENABLE
 /**
  * wlan_pmo_register_rx_ops() - Register PMO component RX OPS
@@ -79,8 +116,11 @@ wlan_global_lmac_if_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 	/* Registeration for UMAC componets */
 	wlan_lmac_if_umac_rx_ops_register(rx_ops);
 
-       /* Registeration for componets outside UMAC */
+	/* Registeration for componets outside UMAC */
 	wlan_pmo_register_rx_ops(rx_ops);
+
+	/* spectral rx_ops registration*/
+	wlan_spectral_register_rx_ops(rx_ops);
 
 	return QDF_STATUS_SUCCESS;
 }

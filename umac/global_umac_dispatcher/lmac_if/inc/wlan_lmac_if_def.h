@@ -37,6 +37,9 @@
 #ifdef WLAN_SA_API_ENABLE
 #include "wlan_sa_api_utils_defs.h"
 #endif
+#ifdef WLAN_CONV_SPECTRAL_ENABLE
+#include "wlan_spectral_public_structs.h"
+#endif
 #include <reg_services_public_struct.h>
 
 #ifdef WLAN_CONV_CRYPTO_SUPPORTED
@@ -398,6 +401,58 @@ struct wlan_lmac_if_sa_api_tx_ops {
 
 #endif
 
+#ifdef WLAN_CONV_SPECTRAL_ENABLE
+/**
+ * struct wlan_lmac_if_sptrl_tx_ops - Spectral south bound Tx operations
+ * @sptrlto_spectral_init:          Initialize LMAC/target_if Spectral
+ * @sptrlto_spectral_deinit:        De-initialize LMAC/target_if Spectral
+ * @sptrlto_set_spectral_config:    Set Spectral configuration
+ * @sptrlto_get_spectral_config:    Get Spectral configuration
+ * @sptrlto_start_spectral_scan:    Start Spectral Scan
+ * @sptrlto_stop_spectral_scan:     Stop Spectral Scan
+ * @sptrlto_is_spectral_active:     Get whether Spectral is active
+ * @sptrlto_is_spectral_enabled:    Get whether Spectral is enabled
+ * @sptrlto_set_icm_active:         Set whether ICM is active or inactive
+ * @sptrlto_get_icm_active:         Get whether ICM is active or inactive
+ * @sptrlto_get_nominal_nf:         Get Nominal Noise Floor for the current
+ *                                  frequency band
+ * @sptrlto_set_debug_level:        Set Spectral debug level
+ * @sptrlto_get_debug_level:        Get Spectral debug level
+ * @sptrlto_get_chaninfo:           Get channel information
+ * @sptrlto_clear_chaninfo:         Clear channel information
+ * @sptrlto_get_spectral_capinfo:   Get Spectral capability information
+ * @sptrlto_get_spectral_diagstats: Get Spectral diagnostic statistics
+ **/
+struct wlan_lmac_if_sptrl_tx_ops {
+	void * (*sptrlto_pdev_spectral_init)(struct wlan_objmgr_pdev *pdev);
+	void (*sptrlto_pdev_spectral_deinit)(struct wlan_objmgr_pdev *pdev);
+	int (*sptrlto_set_spectral_config)(struct wlan_objmgr_pdev *pdev,
+					   const u_int32_t threshtype,
+					   const u_int32_t value);
+	void (*sptrlto_get_spectral_config)(struct wlan_objmgr_pdev *pdev,
+					    struct spectral_config *sptrl_config
+					    );
+	int (*sptrlto_start_spectral_scan)(struct wlan_objmgr_pdev *pdev);
+	void (*sptrlto_stop_spectral_scan)(struct wlan_objmgr_pdev *pdev);
+	bool (*sptrlto_is_spectral_active)(struct wlan_objmgr_pdev *pdev);
+	bool (*sptrlto_is_spectral_enabled)(struct wlan_objmgr_pdev *pdev);
+	int (*sptrlto_set_icm_active)(struct wlan_objmgr_pdev *pdev,
+				      bool isactive);
+	bool (*sptrlto_get_icm_active)(struct wlan_objmgr_pdev *pdev);
+	int16_t (*sptrlto_get_nominal_nf)(struct wlan_objmgr_pdev *pdev);
+	int (*sptrlto_set_debug_level)(struct wlan_objmgr_pdev *pdev,
+				       u_int32_t debug_level);
+	u_int32_t (*sptrlto_get_debug_level)(struct wlan_objmgr_pdev *pdev);
+	void (*sptrlto_get_chaninfo)(struct wlan_objmgr_pdev *pdev,
+				     void *outdata);
+	void (*sptrlto_clear_chaninfo)(struct wlan_objmgr_pdev *pdev);
+	void (*sptrlto_get_spectral_capinfo)(struct wlan_objmgr_pdev *pdev,
+					     void *outdata);
+	void (*sptrlto_get_spectral_diagstats)(struct wlan_objmgr_pdev *pdev,
+					       void *outdata);
+};
+#endif /* WLAN_CONV_SPECTRAL_ENABLE */
+
 #ifdef WIFI_POS_CONVERGED
 /*
  * struct wlan_lmac_if_wifi_pos_tx_ops - structure of firmware tx function
@@ -591,6 +646,10 @@ struct wlan_lmac_if_tx_ops {
 #endif
 #ifdef WLAN_SA_API_ENABLE
 	struct wlan_lmac_if_sa_api_tx_ops sa_api_tx_ops;
+#endif
+
+#ifdef WLAN_CONV_SPECTRAL_ENABLE
+	struct wlan_lmac_if_sptrl_tx_ops sptrl_tx_ops;
 #endif
 
 #ifdef WLAN_CONV_CRYPTO_SUPPORTED
@@ -815,6 +874,19 @@ struct wlan_lmac_if_sa_api_rx_ops {
 };
 #endif
 
+#ifdef WLAN_CONV_SPECTRAL_ENABLE
+/**
+ * struct wlan_lmac_if_sptrl_rx_ops - Spectral south bound Rx operations
+ *
+ * @sptrl_send_phydata:        Send Spectral PHY Data
+ * @sptrlro_get_target_handle: Get Spectral handle for target/LMAC private data
+ */
+struct wlan_lmac_if_sptrl_rx_ops {
+	int (*sptrlro_send_phydata)(struct wlan_objmgr_pdev *pdev,
+				    struct sock *sock, qdf_nbuf_t nbuf);
+	void * (*sptrlro_get_target_handle)(struct wlan_objmgr_pdev *pdev);
+};
+#endif /* WLAN_CONV_SPECTRAL_ENABLE */
 
 #ifdef WIFI_POS_CONVERGED
 /**
@@ -1010,6 +1082,11 @@ struct wlan_lmac_if_rx_ops {
 #ifdef WLAN_SA_API_ENABLE
 	struct wlan_lmac_if_sa_api_rx_ops sa_api_rx_ops;
 #endif
+
+#ifdef WLAN_CONV_SPECTRAL_ENABLE
+	struct wlan_lmac_if_sptrl_rx_ops sptrl_rx_ops;
+#endif
+
 #ifdef WLAN_CONV_CRYPTO_SUPPORTED
 	struct wlan_lmac_if_crypto_rx_ops crypto_rx_ops;
 #endif

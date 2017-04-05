@@ -111,6 +111,7 @@
  * @WLAN_UMAC_COMP_CRYPTO:        CRYPTO
  * @WLAN_UMAC_COMP_NAN:           Neighbor Aware Networking
  * @WLAN_UMAC_COMP_DFS:           DFS
+ * @WLAN_UMAC_COMP_SPECTRAL:      Spectral
  * @WLAN_UMAC_COMP_ID_MAX:        Maximum components in UMAC
  * @WLAN_UMAC_COMP_OFFCHAN_TXRX:  Offchan TxRx
  *
@@ -136,6 +137,7 @@ enum wlan_umac_comp_id {
 	WLAN_UMAC_COMP_DFS,
 	WLAN_UMAC_COMP_OFFCHAN_TXRX,
 	WLAN_UMAC_COMP_SON,
+	WLAN_UMAC_COMP_SPECTRAL,
 	WLAN_UMAC_COMP_ID_MAX,
 };
 

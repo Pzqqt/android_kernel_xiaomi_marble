@@ -288,6 +288,7 @@ QDF_STATUS wlan_objmgr_pdev_component_obj_attach(
 	}
 	return QDF_STATUS_SUCCESS;
 }
+EXPORT_SYMBOL(wlan_objmgr_pdev_component_obj_attach);
 
 QDF_STATUS wlan_objmgr_pdev_component_obj_detach(
 		struct wlan_objmgr_pdev *pdev,
@@ -355,6 +356,7 @@ QDF_STATUS wlan_objmgr_pdev_component_obj_detach(
 	}
 	return QDF_STATUS_SUCCESS;
 }
+EXPORT_SYMBOL(wlan_objmgr_pdev_component_obj_detach);
 
 /**
  ** APIs to operations on pdev objects

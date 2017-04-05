@@ -31,6 +31,9 @@
 #ifdef WLAN_SA_API_ENABLE
 #include "target_if_sa_api.h"
 #endif
+#ifdef WLAN_CONV_SPECTRAL_ENABLE
+#include "target_if_spectral.h"
+#endif
 #include <target_if_reg.h>
 #include <target_if_scan.h>
 #ifdef DFS_COMPONENT_ENABLE
@@ -192,6 +195,19 @@ static void target_if_dfs_tx_ops_register(
 }
 #endif /* DFS_COMPONENT_ENABLE */
 
+#ifdef WLAN_CONV_SPECTRAL_ENABLE
+static void target_if_sptrl_tx_ops_register(
+				struct wlan_lmac_if_tx_ops *tx_ops)
+{
+	target_if_sptrl_register_tx_ops(tx_ops);
+}
+#else
+static void target_if_sptrl_tx_ops_register(
+				struct wlan_lmac_if_tx_ops *tx_ops)
+{
+}
+#endif /* WLAN_CONV_SPECTRAL_ENABLE */
+
 static
 QDF_STATUS target_if_register_umac_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {
@@ -253,6 +269,7 @@ QDF_STATUS target_if_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 
 	/* Components parallel to UMAC to register their TX-ops here */
 	target_if_pmo_register_tx_ops_req(tx_ops);
+	target_if_sptrl_tx_ops_register(tx_ops);
 
 #ifdef CONVERGED_P2P_ENABLE
 	/* Converged UMAC components to register P2P TX-ops */

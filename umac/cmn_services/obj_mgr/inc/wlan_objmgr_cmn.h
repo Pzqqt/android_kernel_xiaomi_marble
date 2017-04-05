@@ -176,6 +176,7 @@ typedef void (*wlan_objmgr_peer_status_handler)(
  * @WLAN_REGULATORY_SB_ID:      SB regulatory operations
  * @WLAN_REGULATORY_NB_ID:      NB regulatory operations
  * @WLAN_POLICY_MGR_ID:         Policy Manager operations
+ * @WLAN_SPECTRAL_ID:           Spectral operations
  * @WLAN_REF_ID_MAX:            Max id used to generate ref count tracking array
  */
  /* New value added to the enum must also be reflected in function
@@ -209,6 +210,7 @@ typedef enum {
 	WLAN_POLICY_MGR_ID    = 24,
 	WLAN_SON_ID           = 25,
 	WLAN_SA_API_ID        = 26,
+	WLAN_SPECTRAL_ID      = 27,
 	WLAN_REF_ID_MAX,
 } wlan_objmgr_ref_dbgid;
 
@@ -246,6 +248,7 @@ static inline char *string_from_dbgid(wlan_objmgr_ref_dbgid id)
 					"WLAN_REGULATORY_SB_ID",
 					"WLAN_REGULATORY_NB_ID",
 					"WLAN_SON_ID",
+					"WLAN_SPECTRAL_ID",
 					"WLAN_REF_ID_MAX" };
 
     return (char *)strings[id];

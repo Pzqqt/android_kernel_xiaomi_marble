@@ -311,6 +311,7 @@ QDF_STATUS wlan_objmgr_psoc_component_obj_attach(
 
 	return QDF_STATUS_SUCCESS;
 }
+EXPORT_SYMBOL(wlan_objmgr_psoc_component_obj_attach);
 
 QDF_STATUS wlan_objmgr_psoc_component_obj_detach(
 		struct wlan_objmgr_psoc *psoc,
@@ -382,6 +383,7 @@ QDF_STATUS wlan_objmgr_psoc_component_obj_detach(
 
 	return QDF_STATUS_SUCCESS;
 }
+EXPORT_SYMBOL(wlan_objmgr_psoc_component_obj_detach);
 
 QDF_STATUS wlan_objmgr_iterate_obj_list(
 		struct wlan_objmgr_psoc *psoc,

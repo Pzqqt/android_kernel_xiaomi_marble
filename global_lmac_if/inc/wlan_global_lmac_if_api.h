@@ -69,4 +69,17 @@ QDF_STATUS wlan_global_lmac_if_close(struct wlan_objmgr_psoc *psoc);
 QDF_STATUS wlan_global_lmac_if_set_txops_registration_cb(WLAN_DEV_TYPE dev_type,
 		QDF_STATUS (*handler)(struct wlan_lmac_if_tx_ops *));
 
+#ifdef WLAN_CONV_SPECTRAL_ENABLE
+/**
+ * wlan_lmac_if_sptrl_set_rx_ops_register_cb ()- Spectral LMAC Rx ops
+ * registration callback assignment
+ * @handler: Handler to be called for spectral LMAC rx ops registration
+ *
+ * API to assign appropriate Spectral LMAC rx ops registration callback handler
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS wlan_lmac_if_sptrl_set_rx_ops_register_cb(void (*handler)
+				(struct wlan_lmac_if_rx_ops *));
+#endif /* WLAN_CONV_SPECTRAL_ENABLE */
 #endif /* _WLAN_LMAC_IF_API_H */
