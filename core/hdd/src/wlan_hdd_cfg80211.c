@@ -203,6 +203,12 @@
 #define MAX_TXPOWER_SCALE 4
 #define CDS_MAX_FEATURE_SET   8
 
+/*
+ * Number of DPTRACE records to dump when a cfg80211 disconnect with reason
+ * WLAN_REASON_DEAUTH_LEAVING DEAUTH is received from user-space.
+ */
+#define WLAN_DEAUTH_DPTRACE_DUMP_COUNT 100
+
 static const u32 hdd_cipher_suites[] = {
 	WLAN_CIPHER_SUITE_WEP40,
 	WLAN_CIPHER_SUITE_WEP104,
@@ -15762,6 +15768,9 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 				gEnableDeauthToDisassocMap ?
 				eCSR_DISCONNECT_REASON_STA_HAS_LEFT :
 				eCSR_DISCONNECT_REASON_DEAUTH;
+			qdf_dp_trace_dump_all(
+				WLAN_DEAUTH_DPTRACE_DUMP_COUNT,
+				QDF_TRACE_DEFAULT_PDEV_ID);
 			break;
 		case WLAN_REASON_DISASSOC_STA_HAS_LEFT:
 			reasonCode = eCSR_DISCONNECT_REASON_STA_HAS_LEFT;
