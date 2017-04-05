@@ -436,6 +436,7 @@ static inline
 int ol_cfg_is_ip_tcp_udp_checksum_offload_enabled(struct cdp_cfg *cfg_pdev)
 {
 	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)cfg_pdev;
+
 	return cfg->ip_tcp_udp_checksum_offload;
 }
 
@@ -606,7 +607,6 @@ static inline unsigned int ol_cfg_ipa_uc_tx_partition_base(
 static inline void ol_cfg_set_ipa_uc_tx_partition_base(
 	struct cdp_cfg *cfg_pdev, uint32_t value)
 {
-	return;
 }
 #endif /* IPA_OFFLOAD */
 
