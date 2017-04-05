@@ -442,6 +442,61 @@ responder_req_failed:
 
 }
 
+/**
+ * os_if_nan_process_ndp_end_req() - NDP end request handler
+ * @psoc: pointer to psoc object
+ *
+ * @tb: parsed NL attribute list
+ * tb includes following vendor attributes:
+ * QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID
+ *
+ * Return: 0 on success or error code on failure
+ */
+static int os_if_nan_process_ndp_end_req(struct wlan_objmgr_psoc *psoc,
+					 struct nlattr **tb)
+{
+	int ret = 0;
+	QDF_STATUS status;
+	struct wlan_objmgr_vdev *nan_vdev;
+	struct nan_datapath_end_req req = {0};
+
+	if (!tb[QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID]) {
+		cfg80211_err("Transaction ID is unavailable");
+		return -EINVAL;
+	}
+	req.transaction_id =
+		nla_get_u16(tb[QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID]);
+
+	if (!tb[QCA_WLAN_VENDOR_ATTR_NDP_INSTANCE_ID_ARRAY]) {
+		cfg80211_err("NDP instance ID array is unavailable");
+		return -EINVAL;
+	}
+
+	req.num_ndp_instances =
+		nla_len(tb[QCA_WLAN_VENDOR_ATTR_NDP_INSTANCE_ID_ARRAY]) /
+			sizeof(uint32_t);
+	if (0 >= req.num_ndp_instances) {
+		cfg80211_err("Num NDP instances is 0");
+		return -EINVAL;
+	}
+	req.ndp_ids = nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_INSTANCE_ID_ARRAY]);
+
+	cfg80211_debug("sending ndp_end_req to SME, transaction_id: %d",
+		req.transaction_id);
+
+	nan_vdev = ucfg_nan_get_ndi_vdev(psoc, WLAN_NAN_ID);
+	if (!nan_vdev) {
+		cfg80211_err("NAN data interface is not available");
+		return -EINVAL;
+	}
+
+	status = ucfg_nan_req_processor(nan_vdev, &req, NDP_END_REQ);
+	ret = qdf_status_to_os_return(status);
+	wlan_objmgr_vdev_release_ref(nan_vdev, WLAN_NAN_ID);
+
+	return ret;
+}
+
 int os_if_nan_process_ndp_cmd(struct wlan_objmgr_psoc *psoc,
 			      const void *data, int data_len)
 {
@@ -489,6 +544,8 @@ int os_if_nan_process_ndp_cmd(struct wlan_objmgr_psoc *psoc,
 		return os_if_nan_process_ndp_initiator_req(psoc, tb);
 	case QCA_WLAN_VENDOR_ATTR_NDP_RESPONDER_REQUEST:
 		return os_if_nan_process_ndp_responder_req(psoc, tb);
+	case QCA_WLAN_VENDOR_ATTR_NDP_END_REQUEST:
+		return os_if_nan_process_ndp_end_req(psoc, tb);
 	default:
 		cfg80211_err("Unrecognized NDP vendor cmd %d", ndp_cmd_type);
 		return -EINVAL;
@@ -882,6 +939,169 @@ ndp_confirm_nla_failed:
 }
 
 /**
+ * os_if_ndp_end_rsp_handler() - NDP end response handler
+ * @vdev: pointer to vdev object
+ * @rsp_params: response parameters
+ *
+ * Following vendor event is sent to cfg80211:
+ * QCA_WLAN_VENDOR_ATTR_NDP_SUBCMD =
+ *         QCA_WLAN_VENDOR_ATTR_NDP_END_RESPONSE(4 bytest)
+ * QCA_WLAN_VENDOR_ATTR_NDP_DRV_RESPONSE_STATUS_TYPE (4 bytes)
+ * QCA_WLAN_VENDOR_ATTR_NDP_DRV_RETURN_VALUE (4 bytes)
+ * QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID (2 bytes)
+ *
+ * Return: none
+ */
+static void os_if_ndp_end_rsp_handler(struct wlan_objmgr_vdev *vdev,
+				struct nan_datapath_end_rsp_event *rsp)
+{
+	uint32_t data_len;
+	struct sk_buff *vendor_event;
+	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
+	struct pdev_osif_priv *os_priv = wlan_pdev_get_ospriv(pdev);
+
+	if (!rsp) {
+		cfg80211_err("Invalid ndp end response");
+		return;
+	}
+
+	data_len = NLMSG_HDRLEN + (4 * NLA_HDRLEN) + (3 * sizeof(uint32_t)) +
+		   sizeof(uint16_t);
+
+	vendor_event = cfg80211_vendor_event_alloc(os_priv->wiphy, NULL,
+				data_len, QCA_NL80211_VENDOR_SUBCMD_NDP_INDEX,
+				GFP_ATOMIC);
+	if (!vendor_event) {
+		cfg80211_err("cfg80211_vendor_event_alloc failed");
+		return;
+	}
+
+	if (nla_put_u32(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_SUBCMD,
+			QCA_WLAN_VENDOR_ATTR_NDP_END_RESPONSE))
+		goto ndp_end_rsp_nla_failed;
+
+	if (nla_put_u32(vendor_event,
+			QCA_WLAN_VENDOR_ATTR_NDP_DRV_RESPONSE_STATUS_TYPE,
+			rsp->status))
+		goto ndp_end_rsp_nla_failed;
+
+	if (nla_put_u32(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_DRV_RETURN_VALUE,
+			rsp->reason))
+		goto ndp_end_rsp_nla_failed;
+
+	if (nla_put_u16(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID,
+			rsp->transaction_id))
+		goto ndp_end_rsp_nla_failed;
+
+	cfg80211_debug("NDP End rsp sent, transaction id: %d, status: %d, reason: %d",
+	       rsp->transaction_id, rsp->status, rsp->reason);
+	cfg80211_vendor_event(vendor_event, GFP_ATOMIC);
+	return;
+
+ndp_end_rsp_nla_failed:
+	cfg80211_err("nla_put api failed");
+	kfree_skb(vendor_event);
+}
+
+/**
+ * os_if_ndp_end_ind_handler() - NDP end indication handler
+ * @vdev: pointer to vdev object
+ * @ind_params: indication parameters
+ *
+ * Following vendor event is sent to cfg80211:
+ * QCA_WLAN_VENDOR_ATTR_NDP_SUBCMD =
+ *         QCA_WLAN_VENDOR_ATTR_NDP_END_IND (4 bytes)
+ * QCA_WLAN_VENDOR_ATTR_NDP_INSTANCE_ID_ARRAY (4 * num of NDP Instances)
+ *
+ * Return: none
+ */
+static void os_if_ndp_end_ind_handler(struct wlan_objmgr_vdev *vdev,
+			struct nan_datapath_end_indication_event *end_ind)
+{
+	QDF_STATUS status;
+	uint32_t data_len, i;
+	struct nan_callbacks cb_obj;
+	uint32_t *ndp_instance_array;
+	struct sk_buff *vendor_event;
+	struct wlan_objmgr_vdev *vdev_itr;
+	struct wlan_objmgr_psoc *psoc = wlan_vdev_get_psoc(vdev);
+	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
+	struct pdev_osif_priv *os_priv = wlan_pdev_get_ospriv(pdev);
+
+	status = ucfg_nan_get_callbacks(psoc, &cb_obj);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cfg80211_err("failed to get callbacks");
+		return;
+	}
+
+	if (!end_ind) {
+		cfg80211_err("Invalid ndp end indication");
+		return;
+	}
+
+	ndp_instance_array = qdf_mem_malloc(end_ind->num_ndp_ids *
+		sizeof(*ndp_instance_array));
+	if (!ndp_instance_array) {
+		cfg80211_err("Failed to allocate ndp_instance_array");
+		return;
+	}
+	for (i = 0; i < end_ind->num_ndp_ids; i++) {
+		int idx = 0;
+
+		ndp_instance_array[i] = end_ind->ndp_map[i].ndp_instance_id;
+		vdev_itr = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
+				end_ind->ndp_map[i].vdev_id, WLAN_NAN_ID);
+
+		if (vdev_itr == NULL) {
+			cfg80211_err("vdev not found for vdev_id: %d",
+				end_ind->ndp_map[i].vdev_id);
+			continue;
+		}
+
+		idx = cb_obj.get_peer_idx(wlan_vdev_get_id(vdev),
+				&end_ind->ndp_map[i].peer_ndi_mac_addr);
+		if (idx < 0) {
+			cfg80211_err("can't find addr: %pM in sta_ctx.",
+				&end_ind->ndp_map[i].peer_ndi_mac_addr);
+			continue;
+		}
+		/* save the value of active sessions on each peer */
+		ucfg_nan_set_active_ndp_sessions(vdev,
+				end_ind->ndp_map[i].num_active_ndp_sessions,
+				idx);
+	}
+
+	data_len = (sizeof(uint32_t)) + NLMSG_HDRLEN + (2 * NLA_HDRLEN) +
+			end_ind->num_ndp_ids * sizeof(*ndp_instance_array);
+
+	vendor_event = cfg80211_vendor_event_alloc(os_priv->wiphy, NULL,
+				data_len, QCA_NL80211_VENDOR_SUBCMD_NDP_INDEX,
+				GFP_ATOMIC);
+	if (!vendor_event) {
+		cfg80211_err("cfg80211_vendor_event_alloc failed");
+		return;
+	}
+
+	if (nla_put_u32(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_SUBCMD,
+			QCA_WLAN_VENDOR_ATTR_NDP_END_IND))
+		goto ndp_end_ind_nla_failed;
+
+	if (nla_put(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_INSTANCE_ID_ARRAY,
+			end_ind->num_ndp_ids * sizeof(*ndp_instance_array),
+			ndp_instance_array))
+		goto ndp_end_ind_nla_failed;
+
+	cfg80211_vendor_event(vendor_event, GFP_ATOMIC);
+	qdf_mem_free(ndp_instance_array);
+	return;
+
+ndp_end_ind_nla_failed:
+	cfg80211_err("nla_put api failed");
+	kfree_skb(vendor_event);
+	qdf_mem_free(ndp_instance_array);
+}
+
+/**
  * os_if_new_peer_ind_handler() - NDP new peer indication handler
  * @adapter: pointer to adapter context
  * @ind_params: indication parameters
@@ -923,6 +1143,42 @@ static void os_if_new_peer_ind_handler(struct wlan_objmgr_vdev *vdev,
 	active_peers++;
 	ucfg_nan_set_active_peers(vdev, active_peers);
 	cfg80211_debug("vdev_id: %d, num_peers: %d", vdev_id, active_peers);
+}
+
+/**
+ * os_if_peer_departed_ind_handler() - Handle NDP peer departed indication
+ * @adapter: pointer to adapter context
+ * @ind_params: indication parameters
+ *
+ * Return: none
+ */
+static void os_if_peer_departed_ind_handler(struct wlan_objmgr_vdev *vdev,
+			struct nan_datapath_peer_ind *peer_ind)
+{
+	QDF_STATUS status;
+	struct nan_callbacks cb_obj;
+	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+	struct wlan_objmgr_psoc *psoc = wlan_vdev_get_psoc(vdev);
+	uint32_t active_peers = ucfg_nan_get_active_peers(vdev);
+
+	status = ucfg_nan_get_callbacks(psoc, &cb_obj);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cfg80211_err("failed to get callbacks");
+		return;
+	}
+
+	if (NULL == peer_ind) {
+		cfg80211_err("Invalid new NDP peer params");
+		return;
+	}
+	cfg80211_debug("session_id: %d, peer_mac: %pM, sta_id: %d",
+		peer_ind->session_id, peer_ind->peer_mac_addr.bytes,
+		peer_ind->sta_id);
+	active_peers--;
+	ucfg_nan_set_active_peers(vdev, active_peers);
+	cb_obj.peer_departed_ind(vdev_id, peer_ind->sta_id,
+				&peer_ind->peer_mac_addr,
+				(active_peers == 0 ? true : false));
 }
 
 /**
@@ -1113,6 +1369,15 @@ void os_if_nan_event_handler(struct wlan_objmgr_psoc *psoc,
 		break;
 	case NDP_RESPONDER_RSP:
 		os_if_ndp_responder_rsp_handler(vdev, msg);
+		break;
+	case NDP_END_RSP:
+		os_if_ndp_end_rsp_handler(vdev, msg);
+		break;
+	case NDP_END_IND:
+		os_if_ndp_end_ind_handler(vdev, msg);
+		break;
+	case NDP_PEER_DEPARTED:
+		os_if_peer_departed_ind_handler(vdev, msg);
 		break;
 	default:
 		break;

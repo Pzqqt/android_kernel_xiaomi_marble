@@ -22,6 +22,7 @@
 
 #include "../../../umac/nan/core/src/nan_main_i.h"
 #include "nan_public_structs.h"
+#include "nan_ucfg_api.h"
 #include "target_if_nan.h"
 #include "wmi_unified_api.h"
 #include "scheduler_api.h"
@@ -51,6 +52,16 @@ static QDF_STATUS target_if_nan_event_dispatcher(struct scheduler_msg *msg)
 	}
 	case NDP_RESPONDER_RSP: {
 		struct nan_datapath_responder_rsp *rsp = msg->bodyptr;
+		vdev = rsp->vdev;
+		break;
+	}
+	case NDP_END_RSP: {
+		struct nan_datapath_end_rsp_event *rsp = msg->bodyptr;
+		vdev = rsp->vdev;
+		break;
+	}
+	case NDP_END_IND: {
+		struct nan_datapath_end_indication_event *rsp = msg->bodyptr;
 		vdev = rsp->vdev;
 		break;
 	}
@@ -730,6 +741,258 @@ static int target_if_ndp_responder_rsp_handler(ol_scn_t scn, uint8_t *data,
 	return 0;
 }
 
+static QDF_STATUS target_if_nan_ndp_end_req(struct nan_datapath_end_req *req)
+{
+	int ret;
+	uint16_t len;
+	wmi_buf_t buf;
+	QDF_STATUS status;
+	wmi_unified_t wmi_handle;
+	uint32_t ndp_end_req_len, i;
+	struct wlan_objmgr_psoc *psoc;
+	struct scheduler_msg msg = {0};
+	wmi_ndp_end_req *ndp_end_req_lst;
+	wmi_ndp_end_req_fixed_param *cmd;
+	struct wlan_lmac_if_nan_rx_ops *nan_rx_ops;
+	struct nan_datapath_end_rsp_event end_rsp = {0};
+
+	if (!req) {
+		target_if_err("req is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc = wlan_vdev_get_psoc(req->vdev);
+	if (!psoc) {
+		target_if_err("psoc is null.");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
+	if (!wmi_handle) {
+		target_if_err("wmi_handle is null.");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	nan_rx_ops = target_if_nan_get_rx_ops(psoc);
+	if (!nan_rx_ops) {
+		target_if_err("nan_rx_ops is null.");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	/* len of tlv following fixed param  */
+	ndp_end_req_len = sizeof(wmi_ndp_end_req) * req->num_ndp_instances;
+	/* above comes out to 4 byte alligned already, no need of padding */
+	len = sizeof(*cmd) + ndp_end_req_len + WMI_TLV_HDR_SIZE;
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		target_if_err("Malloc failed");
+		status = QDF_STATUS_E_NOMEM;
+		goto send_ndp_end_fail;
+	}
+	cmd = (wmi_ndp_end_req_fixed_param *) wmi_buf_data(buf);
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_ndp_end_req_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_ndp_end_req_fixed_param));
+
+	cmd->transaction_id = req->transaction_id;
+
+	/* set tlv pointer to end of fixed param */
+	WMITLV_SET_HDR((uint8_t *)&cmd[1], WMITLV_TAG_ARRAY_STRUC,
+			ndp_end_req_len);
+
+	ndp_end_req_lst = (wmi_ndp_end_req *)((uint8_t *)&cmd[1] +
+						WMI_TLV_HDR_SIZE);
+	for (i = 0; i < req->num_ndp_instances; i++) {
+		WMITLV_SET_HDR(&ndp_end_req_lst[i],
+				WMITLV_TAG_ARRAY_FIXED_STRUC,
+				(sizeof(*ndp_end_req_lst) - WMI_TLV_HDR_SIZE));
+
+		ndp_end_req_lst[i].ndp_instance_id = req->ndp_ids[i];
+	}
+
+	target_if_debug("Sending WMI_NDP_END_REQ_CMDID to FW");
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_NDP_END_REQ_CMDID);
+	if (ret < 0) {
+		target_if_err("WMI_NDP_END_REQ_CMDID failed, ret: %d", ret);
+		wmi_buf_free(buf);
+		status = QDF_STATUS_E_FAILURE;
+		goto send_ndp_end_fail;
+	}
+	return QDF_STATUS_SUCCESS;
+
+send_ndp_end_fail:
+	end_rsp.vdev = req->vdev;
+	msg.type = NDP_END_RSP;
+	end_rsp.status = NAN_DATAPATH_RSP_STATUS_ERROR;
+	end_rsp.reason = NAN_DATAPATH_END_FAILED;
+	end_rsp.transaction_id = req->transaction_id;
+	msg.bodyptr = &end_rsp;
+
+	if (nan_rx_ops && nan_rx_ops->nan_event_rx)
+		nan_rx_ops->nan_event_rx(&msg);
+
+	return status;
+}
+
+static int target_if_ndp_end_rsp_handler(ol_scn_t scn, uint8_t *data,
+					 uint32_t data_len)
+{
+	int ret = 0;
+	QDF_STATUS status;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_vdev *vdev;
+	struct scheduler_msg msg = {0};
+	WMI_NDP_END_RSP_EVENTID_param_tlvs *event;
+	struct nan_datapath_end_rsp_event *end_rsp;
+	struct wlan_lmac_if_nan_rx_ops *nan_rx_ops;
+	wmi_ndp_end_rsp_event_fixed_param *fixed_params = NULL;
+
+	psoc = target_if_get_psoc_from_scn_hdl(scn);
+	if (!psoc) {
+		target_if_err("psoc is null");
+		return -EINVAL;
+	}
+
+	nan_rx_ops = target_if_nan_get_rx_ops(psoc);
+	/* process even here and call callback */
+	if (!nan_rx_ops || !nan_rx_ops->nan_event_rx) {
+		target_if_err("lmac callbacks not registered");
+		return -EINVAL;
+	}
+
+	event = (WMI_NDP_END_RSP_EVENTID_param_tlvs *) data;
+	fixed_params = (wmi_ndp_end_rsp_event_fixed_param *)event->fixed_param;
+	target_if_debug("WMI_NDP_END_RSP_EVENTID(0x%X) recieved. transaction_id: %d, rsp_status: %d, reason_code: %d",
+		 WMI_NDP_END_RSP_EVENTID, fixed_params->transaction_id,
+		 fixed_params->rsp_status, fixed_params->reason_code);
+
+	vdev = ucfg_nan_get_ndi_vdev(psoc, WLAN_NAN_ID);
+	if (!vdev) {
+		target_if_err("vdev is null");
+		return -EINVAL;
+	}
+
+	end_rsp = qdf_mem_malloc(sizeof(*end_rsp));
+	if (!end_rsp) {
+		target_if_err("malloc failed");
+		ret = -ENOMEM;
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_NAN_ID);
+		goto send_ndp_end_rsp;
+	}
+
+	end_rsp->vdev = vdev;
+	end_rsp->transaction_id = fixed_params->transaction_id;
+	end_rsp->reason = fixed_params->reason_code;
+	end_rsp->status = fixed_params->rsp_status;
+
+send_ndp_end_rsp:
+	msg.bodyptr = end_rsp;
+	msg.type = NDP_END_RSP;
+	msg.callback = target_if_nan_event_dispatcher;
+	target_if_err("NDP_END_RSP sent: %d", msg.type);
+	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_NAN_ID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("failed to post msg, status: %d", status);
+		qdf_mem_free(end_rsp);
+		return -EINVAL;
+	}
+	return ret;
+}
+
+static int target_if_ndp_end_ind_handler(ol_scn_t scn, uint8_t *data,
+					 uint32_t data_len)
+{
+	int i, buf_size;
+	QDF_STATUS status;
+	struct scheduler_msg msg;
+	wmi_ndp_end_indication *ind;
+	struct qdf_mac_addr peer_addr;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_lmac_if_nan_rx_ops *nan_rx_ops;
+	WMI_NDP_END_INDICATION_EVENTID_param_tlvs *event;
+	struct nan_datapath_end_indication_event *rsp;
+
+	psoc = target_if_get_psoc_from_scn_hdl(scn);
+	if (!psoc) {
+		target_if_err("psoc is null");
+		return -EINVAL;
+	}
+
+	nan_rx_ops = target_if_nan_get_rx_ops(psoc);
+	if (!nan_rx_ops || !nan_rx_ops->nan_event_rx) {
+		target_if_err("lmac callbacks not registered");
+		return -EINVAL;
+	}
+
+	event = (WMI_NDP_END_INDICATION_EVENTID_param_tlvs *) data;
+	if (event->num_ndp_end_indication_list == 0) {
+		target_if_err("Error: Event ignored, 0 ndp instances");
+		return -EINVAL;
+	}
+
+	vdev = ucfg_nan_get_ndi_vdev(psoc, WLAN_NAN_ID);
+	if (!vdev) {
+		target_if_err("vdev is null");
+		return -EINVAL;
+	}
+
+	target_if_debug("number of ndp instances = %d",
+			event->num_ndp_end_indication_list);
+	buf_size = sizeof(*rsp) + event->num_ndp_end_indication_list *
+			sizeof(rsp->ndp_map[0]);
+	rsp = qdf_mem_malloc(buf_size);
+	if (!rsp) {
+		target_if_err("Failed to allocate memory");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_NAN_ID);
+		return -ENOMEM;
+	}
+
+	rsp->vdev = vdev;
+	rsp->num_ndp_ids = event->num_ndp_end_indication_list;
+
+	ind = event->ndp_end_indication_list;
+	for (i = 0; i < rsp->num_ndp_ids; i++) {
+		WMI_MAC_ADDR_TO_CHAR_ARRAY(
+			&ind[i].peer_ndi_mac_addr,
+			peer_addr.bytes);
+		/* add mac address print - TBD */
+		target_if_debug(
+			"ind[%d]: type %d, reason_code %d, instance_id %d num_active %d ",
+			i, ind[i].type, ind[i].reason_code,
+			ind[i].ndp_instance_id, ind[i].num_active_ndps_on_peer);
+
+		/* Add each instance entry to the list */
+		rsp->ndp_map[i].ndp_instance_id =
+			ind[i].ndp_instance_id;
+		rsp->ndp_map[i].vdev_id = ind[i].vdev_id;
+		WMI_MAC_ADDR_TO_CHAR_ARRAY(&ind[i].peer_ndi_mac_addr,
+			rsp->ndp_map[i].peer_ndi_mac_addr.bytes);
+		rsp->ndp_map[i].num_active_ndp_sessions =
+			ind[i].num_active_ndps_on_peer;
+		rsp->ndp_map[i].type = ind[i].type;
+		rsp->ndp_map[i].reason_code =
+			ind[i].reason_code;
+	}
+
+	msg.type = NDP_END_IND;
+	msg.bodyptr = rsp;
+	msg.callback = target_if_nan_event_dispatcher;
+
+	target_if_err("NDP_END_IND sent: %d", msg.type);
+	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_NAN_ID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("failed to post msg, status: %d", status);
+		qdf_mem_free(rsp);
+		return -EINVAL;
+	}
+	return 0;
+}
+
 static QDF_STATUS target_if_nan_req(void *req, uint32_t req_type)
 {
 	/* send cmd to fw */
@@ -739,6 +1002,9 @@ static QDF_STATUS target_if_nan_req(void *req, uint32_t req_type)
 		break;
 	case NDP_RESPONDER_REQ:
 		target_if_nan_ndp_responder_req(req);
+		break;
+	case NDP_END_REQ:
+		target_if_nan_ndp_end_req(req);
 		break;
 	default:
 		target_if_err("invalid req type");
@@ -823,6 +1089,26 @@ QDF_STATUS target_if_nan_register_events(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	ret = wmi_unified_register_event_handler(handle,
+		WMI_NDP_END_INDICATION_EVENTID,
+		target_if_ndp_end_ind_handler,
+		WMI_RX_UMAC_CTX);
+	if (ret) {
+		target_if_err("wmi event registration failed, ret: %d", ret);
+		target_if_nan_deregister_events(psoc);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	ret = wmi_unified_register_event_handler(handle,
+		WMI_NDP_END_RSP_EVENTID,
+		target_if_ndp_end_rsp_handler,
+		WMI_RX_UMAC_CTX);
+	if (ret) {
+		target_if_err("wmi event registration failed, ret: %d", ret);
+		target_if_nan_deregister_events(psoc);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -854,6 +1140,20 @@ QDF_STATUS target_if_nan_deregister_events(struct wlan_objmgr_psoc *psoc)
 
 	ret = wmi_unified_unregister_event_handler(handle,
 				WMI_NDP_RESPONDER_RSP_EVENTID);
+	if (ret) {
+		target_if_err("wmi event deregistration failed, ret: %d", ret);
+		status = ret;
+	}
+
+	ret = wmi_unified_unregister_event_handler(handle,
+				WMI_NDP_END_INDICATION_EVENTID);
+	if (ret) {
+		target_if_err("wmi event deregistration failed, ret: %d", ret);
+		status = ret;
+	}
+
+	ret = wmi_unified_unregister_event_handler(handle,
+				WMI_NDP_END_RSP_EVENTID);
 	if (ret) {
 		target_if_err("wmi event deregistration failed, ret: %d", ret);
 		status = ret;

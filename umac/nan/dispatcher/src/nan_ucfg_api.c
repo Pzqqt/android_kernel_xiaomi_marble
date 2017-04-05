@@ -440,6 +440,40 @@ free_resources:
 	return NULL;
 }
 
+static struct nan_datapath_end_req *ucfg_nan_copy_end_req(
+			struct wlan_objmgr_vdev *vdev,
+			struct nan_datapath_end_req *in_req)
+{
+	struct nan_datapath_end_req *req;
+
+	req = qdf_mem_malloc(sizeof(*req));
+	if (!req) {
+		nan_alert("malloc failed");
+		return NULL;
+	}
+
+	qdf_mem_copy(req, in_req, sizeof(*req));
+	if (in_req->num_ndp_instances) {
+		req->ndp_ids = qdf_mem_malloc(sizeof(uint32_t) *
+						in_req->num_ndp_instances);
+		if (!req->ndp_ids) {
+			nan_alert("malloc failed");
+			goto free_resources;
+		}
+		qdf_mem_copy(req->ndp_ids, in_req->ndp_ids,
+			     sizeof(uint32_t) * in_req->num_ndp_instances);
+	}
+
+	/* do not get ref here, rather take ref when request is activated */
+	req->vdev = vdev;
+	return req;
+
+free_resources:
+	qdf_mem_free(req->ndp_ids);
+	qdf_mem_free(req);
+	return NULL;
+}
+
 QDF_STATUS ucfg_nan_req_processor(struct wlan_objmgr_vdev *vdev,
 				  void *in_req, uint32_t req_type)
 {
@@ -458,6 +492,9 @@ QDF_STATUS ucfg_nan_req_processor(struct wlan_objmgr_vdev *vdev,
 		break;
 	case NDP_RESPONDER_REQ:
 		req = ucfg_nan_copy_responder_req(vdev, in_req);
+		break;
+	case NDP_END_REQ:
+		req = ucfg_nan_copy_end_req(vdev, in_req);
 		break;
 	default:
 		nan_err("in correct message req type: %d", req_type);
@@ -522,6 +559,7 @@ int ucfg_nan_register_hdd_callbacks(struct wlan_objmgr_psoc *psoc,
 
 	psoc_obj->cb_obj.get_peer_idx = cb_obj->get_peer_idx;
 	psoc_obj->cb_obj.new_peer_ind = cb_obj->new_peer_ind;
+	psoc_obj->cb_obj.peer_departed_ind = cb_obj->peer_departed_ind;
 
 	return 0;
 }
@@ -537,6 +575,7 @@ int ucfg_nan_register_lim_callbacks(struct wlan_objmgr_psoc *psoc,
 	}
 
 	psoc_obj->cb_obj.add_ndi_peer = cb_obj->add_ndi_peer;
+	psoc_obj->cb_obj.ndp_delete_peers = cb_obj->ndp_delete_peers;
 	psoc_obj->cb_obj.delete_peers_by_addr = cb_obj->delete_peers_by_addr;
 
 	return 0;

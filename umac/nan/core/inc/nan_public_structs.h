@@ -497,6 +497,9 @@ struct nan_callbacks {
 	int (*get_peer_idx)(uint8_t, struct qdf_mac_addr *);
 	QDF_STATUS (*add_ndi_peer)(uint32_t, struct qdf_mac_addr);
 
+	void (*peer_departed_ind)(uint8_t, uint16_t, struct qdf_mac_addr *,
+				  bool);
+	void (*ndp_delete_peers)(struct peer_nan_datapath_map*, uint8_t);
 	void (*delete_peers_by_addr)(uint8_t, struct qdf_mac_addr);
 };
 
