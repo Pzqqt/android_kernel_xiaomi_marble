@@ -53,6 +53,8 @@ extern enum cds_band_type cds_chan_to_band(uint32_t chan);
 #define WLAN_REG_IS_CHANNEL_VALID_5G_SBS(curchan, newchan) \
 	CDS_IS_CHANNEL_VALID_5G_SBS(curchan, newchan)
 #define wlan_reg_is_dfs_ch(psoc, ch) CDS_IS_DFS_CH(ch)
+#define wlan_reg_is_passive_or_disable_ch(ch) \
+	CDS_IS_PASSIVE_OR_DISABLE_CH(ch)
 #define WLAN_REG_MAX_24GHZ_CH_NUM CDS_MAX_24GHZ_CHANNEL_NUMBER
 #define reg_chan_to_freq(chan_num) cds_chan_to_freq(chan_num)
 #define reg_freq_to_chan(freq) cds_freq_to_chan(freq)
