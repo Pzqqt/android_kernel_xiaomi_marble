@@ -11270,6 +11270,10 @@ static int hdd_update_tdls_config(hdd_context_t *hdd_ctx)
 	tdls_cfg.tdls_tl_peer_data = hdd_ctx;
 	tdls_cfg.tdls_reg_tl_peer = hdd_tdls_register_tdls_peer;
 	tdls_cfg.tdls_dereg_tl_peer = hdd_tdls_deregister_tdl_peer;
+	tdls_cfg.tdls_wmm_cb = hdd_wmm_is_acm_allowed;
+	tdls_cfg.tdls_wmm_cb_data = psoc;
+	tdls_cfg.tdls_rx_cb = wlan_cfg80211_tdls_rx_callback;
+	tdls_cfg.tdls_rx_cb_data = psoc;
 
 	status = ucfg_tdls_update_config(psoc, &tdls_cfg);
 	if (status != QDF_STATUS_SUCCESS) {

@@ -1919,6 +1919,7 @@ QDF_STATUS hdd_roam_register_sta(hdd_adapter_t *pAdapter,
 						);
 
 		hdd_conn_set_authenticated(pAdapter, true);
+		hdd_objmgr_set_peer_mlme_auth_state(pAdapter->hdd_vdev, true);
 	} else {
 		hdd_debug("ULA auth StaId= %d. Changing TL state to CONNECTED at Join time",
 			 pHddStaCtx->conn_info.staId[0]);
@@ -1932,6 +1933,7 @@ QDF_STATUS hdd_roam_register_sta(hdd_adapter_t *pAdapter,
 #endif
 						);
 		hdd_conn_set_authenticated(pAdapter, false);
+		hdd_objmgr_set_peer_mlme_auth_state(pAdapter->hdd_vdev, false);
 	}
 	return qdf_status;
 }
@@ -2164,6 +2166,8 @@ static int hdd_change_sta_state_authenticated(hdd_adapter_t *adapter,
 	status = hdd_change_peer_state(adapter, staid, OL_TXRX_PEER_STATE_AUTH,
 			hdd_is_roam_sync_in_progress(roaminfo));
 	hdd_conn_set_authenticated(adapter, true);
+	hdd_objmgr_set_peer_mlme_auth_state(adapter->hdd_vdev, true);
+
 	if ((QDF_STA_MODE == adapter->device_mode) ||
 		(QDF_P2P_CLIENT_MODE == adapter->device_mode)) {
 		sme_ps_enable_auto_ps_timer(
@@ -2814,6 +2818,9 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 #endif
 						);
 				hdd_conn_set_authenticated(pAdapter, false);
+				hdd_objmgr_set_peer_mlme_auth_state(
+							pAdapter->hdd_vdev,
+							false);
 			} else {
 				hdd_debug("staId: %d Changing TL state to AUTHENTICATED",
 					 pHddStaCtx->conn_info.staId[0]);
@@ -2828,6 +2835,9 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 #endif
 						);
 				hdd_conn_set_authenticated(pAdapter, true);
+				hdd_objmgr_set_peer_mlme_auth_state(
+							pAdapter->hdd_vdev,
+							true);
 			}
 
 			if (QDF_IS_STATUS_SUCCESS(qdf_status)) {

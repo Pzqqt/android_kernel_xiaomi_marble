@@ -183,6 +183,18 @@ int hdd_objmgr_remove_peer_object(struct wlan_objmgr_vdev *vdev,
 				  uint8_t *mac_addr);
 
 /**
+ * hdd_objmgr_set_peer_mlme_auth_state() - set the peer mlme auth state
+ * @vdev: vdev pointer
+ * @is_authenticated: Peer mlme auth state true/false
+ *
+ * This API set the peer mlme auth state
+ *
+ * Return: 0 for success, negative error code for failure
+ */
+int hdd_objmgr_set_peer_mlme_auth_state(struct wlan_objmgr_vdev *vdev,
+					bool is_authenticated);
+
+/**
  * hdd_objmgr_set_peer_mlme_state() - set the peer mlme state
  * @vdev: vdev pointer
  * @peer_state: Peer mlme state

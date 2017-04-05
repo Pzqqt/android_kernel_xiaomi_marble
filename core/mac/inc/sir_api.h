@@ -427,6 +427,9 @@ typedef struct sSirSmeRsp {
 	uint8_t sessionId;      /* To support BT-AMP */
 	uint16_t transactionId; /* To support BT-AMP */
 	tSirResultCodes statusCode;
+#ifdef CONVERGED_TDLS_ENABLE
+	struct wlan_objmgr_psoc *psoc;
+#endif
 } tSirSmeRsp, *tpSirSmeRsp;
 
 /* / Definition for indicating all modules ready on STA */
@@ -3446,6 +3449,9 @@ typedef struct sSirMgmtTxCompletionInd {
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
 	uint32_t txCompleteStatus;
+#ifdef CONVERGED_TDLS_ENABLE
+	struct wlan_objmgr_psoc *psoc;
+#endif
 } tSirMgmtTxCompletionInd, *tpSirMgmtTxCompletionInd;
 
 typedef struct sSirTdlsEventnotify {

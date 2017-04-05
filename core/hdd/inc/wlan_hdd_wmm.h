@@ -343,6 +343,16 @@ QDF_STATUS hdd_wmm_get_uapsd_mask(hdd_adapter_t *pAdapter,
 bool hdd_wmm_is_active(hdd_adapter_t *pAdapter);
 
 /**
+ * hdd_wmm_is_acm_allowed() - Function which will determine if WMM is
+ * active on the current connection
+ *
+ * @vdev: vdev object
+ *
+ * Return: true if WMM is enabled, false if WMM is not enabled
+ */
+bool hdd_wmm_is_acm_allowed(struct wlan_objmgr_vdev **vdev);
+
+/**
  * hdd_wmm_addts() - Function which will add a traffic spec at the
  * request of an application
  *

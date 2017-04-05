@@ -4110,6 +4110,13 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
+#ifdef CONVERGED_TDLS_ENABLE
+	return wlan_cfg80211_tdls_mgmt(pHddCtx->hdd_pdev, dev, peer,
+				       action_code, dialog_token,
+				       status_code, peer_capability,
+				       buf, len);
+#endif
+
 	/*
 	 * STA or P2P client should be connected and authenticated before
 	 *  sending any TDLS frames

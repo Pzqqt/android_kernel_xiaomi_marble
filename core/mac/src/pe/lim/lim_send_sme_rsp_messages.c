@@ -60,6 +60,9 @@
 #include "nan_datapath.h"
 #include "lim_assoc_utils.h"
 
+#include "wlan_tdls_tgt_api.h"
+
+
 static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
 	tpPESession session_entry, tSirResultCodes result_code,
 	tpSirSmeJoinRsp sme_join_rsp);
@@ -1305,8 +1308,15 @@ lim_send_sme_mgmt_tx_completion(tpAniSirGlobal pMac,
 	mmhMsg.bodyptr = pSirMgmtTxCompletionInd;
 	mmhMsg.bodyval = 0;
 
+#ifdef CONVERGED_TDLS_ENABLE
+	pSirMgmtTxCompletionInd->psoc = pMac->psoc;
+	mmhMsg.callback = tgt_tdls_send_mgmt_tx_completion;
+	scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &mmhMsg);
+	return;
+#else
 	lim_sys_process_mmh_msg_api(pMac, &mmhMsg, ePROT);
 	return;
+#endif
 } /*** end lim_send_sme_tdls_delete_all_peer_ind() ***/
 
 void lim_send_sme_tdls_event_notify(tpAniSirGlobal pMac, uint16_t msgType,

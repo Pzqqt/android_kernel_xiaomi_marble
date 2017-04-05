@@ -2065,6 +2065,25 @@ bool hdd_wmm_is_active(hdd_adapter_t *pAdapter)
 	}
 }
 
+bool hdd_wmm_is_acm_allowed(struct wlan_objmgr_vdev **vdev)
+{
+	hdd_adapter_t *adapter;
+	struct hdd_wmm_ac_status *wmm_ac_status;
+
+
+	adapter = container_of(vdev, hdd_adapter_t, hdd_vdev);
+	if (NULL == adapter) {
+		hdd_err("failed, hdd adapter is NULL");
+		return false;
+	}
+	wmm_ac_status = adapter->hddWmmStatus.wmmAcStatus;
+
+	if (hdd_wmm_is_active(adapter) &&
+	    !(wmm_ac_status[OL_TX_WMM_AC_VI].wmmAcAccessAllowed))
+		return false;
+	return true;
+}
+
 /**
  * hdd_wmm_addts() - Function which will add a traffic spec at the
  * request of an application

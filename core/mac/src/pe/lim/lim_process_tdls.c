@@ -2889,6 +2889,56 @@ add_sta_error:
 	return status;
 }
 
+#ifdef CONVERGED_TDLS_ENABLE
+/**
+ * lim_send_tdls_comp_mgmt_rsp() - Send Response to upper layers
+ * @mac_ctx:          Pointer to Global MAC structure
+ * @msg_type:         Indicates message type
+ * @result_code:       Indicates the result of previously issued
+ *                    eWNI_SME_msg_type_REQ message
+ *
+ * This function is called by lim_process_sme_req_messages() to send
+ * eWNI_SME_START_RSP, eWNI_SME_STOP_BSS_RSP
+ * or eWNI_SME_SWITCH_CHL_RSP messages to applications above MAC
+ * Software.
+ *
+ * Return: None
+ */
+
+static void
+lim_send_tdls_comp_mgmt_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
+	 tSirResultCodes result_code, uint8_t sme_session_id,
+	 uint16_t sme_transaction_id)
+{
+	struct scheduler_msg msg;
+	tSirSmeRsp *sme_rsp;
+
+	lim_log(mac_ctx, LOG1, FL("Sending message %s with reasonCode %s"),
+		lim_msg_str(msg_type), lim_result_code_str(result_code));
+
+	sme_rsp = qdf_mem_malloc(sizeof(tSirSmeRsp));
+	if (NULL == sme_rsp) {
+		/* Buffer not available. Log error */
+		QDF_TRACE(QDF_MODULE_ID_PE, LOGP,
+			FL("call to AllocateMemory failed for eWNI_SME_*_RSP"));
+		return;
+	}
+
+	sme_rsp->messageType = msg_type;
+	sme_rsp->length = sizeof(tSirSmeRsp);
+	sme_rsp->statusCode = result_code;
+
+	sme_rsp->sessionId = sme_session_id;
+	sme_rsp->transactionId = sme_transaction_id;
+
+	msg.type = msg_type;
+	sme_rsp->psoc = mac_ctx->psoc;
+	msg.bodyptr = sme_rsp;
+	msg.callback = tgt_tdls_send_mgmt_rsp;
+	scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+
+}
+#endif
 /**
  * lim_process_sme_tdls_mgmt_send_req() - send out tdls management frames
  *
@@ -3005,9 +3055,15 @@ tSirRetStatus lim_process_sme_tdls_mgmt_send_req(tpAniSirGlobal mac_ctx,
 	}
 
 lim_tdls_send_mgmt_error:
+#ifdef CONVERGED_TDLS_ENABLE
+	lim_send_tdls_comp_mgmt_rsp(mac_ctx, eWNI_SME_TDLS_SEND_MGMT_RSP,
+		 result_code, send_req->sessionId,
+		 send_req->transactionId);
+#else
 	lim_send_sme_rsp(mac_ctx, eWNI_SME_TDLS_SEND_MGMT_RSP,
-			 result_code, send_req->sessionId,
-			 send_req->transactionId);
+		 result_code, send_req->sessionId,
+		 send_req->transactionId);
+#endif
 
 	return eSIR_SUCCESS;
 }
