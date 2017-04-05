@@ -813,6 +813,15 @@ struct policy_mgr_cdp_cbacks {
 };
 
 /**
+ * struct policy_mgr_dp_cbacks - CDP Callbacks to be invoked
+ * from policy manager
+ * @hdd_disable_lro_in_concurrency: Callback to disable LRO
+ */
+struct policy_mgr_dp_cbacks {
+	void (*hdd_disable_lro_in_concurrency)(bool);
+};
+
+/**
  * struct policy_mgr_wma_cbacks - WMA Callbacks to be invoked
  * from policy manager
  * @wma_get_connection_info: Get the connection related info
@@ -1475,6 +1484,20 @@ QDF_STATUS policy_mgr_register_tdls_cb(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS policy_mgr_register_cdp_cb(struct wlan_objmgr_psoc *psoc,
 		struct policy_mgr_cdp_cbacks *cdp_cbacks);
+
+/**
+ * policy_mgr_register_dp_cb() - register CDP callbacks
+ * @psoc: PSOC object information
+ * @cdp_cbacks: function pointers from CDP
+ *
+ * API, allows CDP to register callbacks to be invoked by
+ * policy mgr
+ *
+ * Return: SUCCESS,
+ *         Failure (if registration fails)
+ */
+QDF_STATUS policy_mgr_register_dp_cb(struct wlan_objmgr_psoc *psoc,
+		struct policy_mgr_dp_cbacks *dp_cbacks);
 
 /**
  * policy_mgr_register_wma_cb() - register WMA callbacks

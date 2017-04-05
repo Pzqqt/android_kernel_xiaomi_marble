@@ -251,6 +251,7 @@ struct policy_mgr_psoc_priv_obj {
 	struct policy_mgr_wma_cbacks wma_cbacks;
 	struct policy_mgr_tdls_cbacks tdls_cbacks;
 	struct policy_mgr_cdp_cbacks cdp_cbacks;
+	struct policy_mgr_dp_cbacks dp_cbacks;
 	bool enable_sap_mandatory_chan_list;
 	uint8_t sap_mandatory_channels[QDF_MAX_NUM_CHAN];
 	uint32_t sap_mandatory_channels_len;
