@@ -1335,6 +1335,7 @@ static void qdf_nbuf_track_memory_manager_destroy(void)
 
 	spin_unlock_irqrestore(&qdf_net_buf_track_free_list_lock, irq_flag);
 	kmem_cache_destroy(nbuf_tracking_cache);
+	qdf_net_buf_track_free_list = NULL;
 }
 
 /**
