@@ -388,7 +388,6 @@ static inline int htt_ipa_uc_attach(struct htt_pdev_t *pdev)
  */
 static inline void htt_ipa_uc_detach(struct htt_pdev_t *pdev)
 {
-	return;
 }
 #endif /* IPA_OFFLOAD */
 
@@ -404,12 +403,10 @@ void htt_clear_bundle_stats(struct htt_pdev_t *pdev);
 
 static inline void htt_dump_bundle_stats(struct htt_pdev_t *pdev)
 {
-	return;
 }
 
 static inline void htt_clear_bundle_stats(struct htt_pdev_t *pdev)
 {
-	return;
 }
 #endif
 
