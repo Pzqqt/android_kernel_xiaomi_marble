@@ -143,12 +143,12 @@ static inline void ol_rx_fwd_to_tx(struct ol_txrx_vdev_t *vdev, qdf_nbuf_t msdu)
 		 */
 		qdf_nbuf_tx_free(msdu, QDF_NBUF_PKT_ERROR);
 	}
-	return;
 }
 
 void
 ol_rx_fwd_check(struct ol_txrx_vdev_t *vdev,
-		struct ol_txrx_peer_t *peer, unsigned tid, qdf_nbuf_t msdu_list)
+		struct ol_txrx_peer_t *peer,
+		unsigned int tid, qdf_nbuf_t msdu_list)
 {
 	struct ol_txrx_pdev_t *pdev = vdev->pdev;
 	qdf_nbuf_t deliver_list_head = NULL;
@@ -259,7 +259,6 @@ ol_rx_fwd_check(struct ol_txrx_vdev_t *vdev,
 			ol_rx_deliver(vdev, peer, tid, deliver_list_head);
 		}
 	}
-	return;
 }
 
 /*
