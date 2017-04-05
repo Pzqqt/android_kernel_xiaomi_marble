@@ -115,7 +115,6 @@ static void nan_req_incomplete(void *req, uint32_t cmdtype)
 static void nan_req_activated(void *in_req, uint32_t cmdtype)
 {
 	uint32_t req_type;
-	QDF_STATUS status;
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_vdev *vdev;
 	struct wlan_lmac_if_nan_tx_ops *tx_ops;
@@ -413,6 +412,57 @@ static QDF_STATUS nan_handle_responder_rsp(
 	return QDF_STATUS_SUCCESS;
 }
 
+static QDF_STATUS nan_handle_ndp_end_rsp(
+			struct nan_datapath_end_rsp_event *rsp,
+			struct wlan_objmgr_vdev **vdev)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct nan_psoc_priv_obj *psoc_nan_obj;
+
+	*vdev = rsp->vdev;
+	psoc = wlan_vdev_get_psoc(rsp->vdev);
+	if (!psoc) {
+		nan_err("psoc is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	psoc_nan_obj = nan_get_psoc_priv_obj(psoc);
+	if (!psoc_nan_obj) {
+		nan_err("psoc_nan_obj is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	psoc_nan_obj->cb_obj.os_if_event_handler(psoc, rsp->vdev,
+						NDP_END_RSP, rsp);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS nan_handle_end_ind(
+				struct nan_datapath_end_indication_event *ind)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct nan_psoc_priv_obj *psoc_nan_obj;
+
+	psoc = wlan_vdev_get_psoc(ind->vdev);
+	if (!psoc) {
+		nan_err("psoc is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	psoc_nan_obj = nan_get_psoc_priv_obj(psoc);
+	if (!psoc_nan_obj) {
+		nan_err("psoc_nan_obj is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	psoc_nan_obj->cb_obj.ndp_delete_peers(ind->ndp_map, ind->num_ndp_ids);
+	psoc_nan_obj->cb_obj.os_if_event_handler(psoc, ind->vdev,
+						 NDP_END_IND, ind);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS nan_event_handler(struct scheduler_msg *pe_msg)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -447,6 +497,14 @@ QDF_STATUS nan_event_handler(struct scheduler_msg *pe_msg)
 		nan_handle_responder_rsp(pe_msg->bodyptr, &cmd.vdev);
 		cmd.cmd_type = WLAN_SER_CMD_NDP_RESP_REQ;
 		wlan_serialization_remove_cmd(&cmd);
+		break;
+	case NDP_END_RSP:
+		nan_handle_ndp_end_rsp(pe_msg->bodyptr, &cmd.vdev);
+		cmd.cmd_type = WLAN_SER_CMD_NDP_DATA_END_INIT_REQ;
+		wlan_serialization_remove_cmd(&cmd);
+		break;
+	case NDP_END_IND:
+		nan_handle_end_ind(pe_msg->bodyptr);
 		break;
 	default:
 		nan_alert("Unhandled NDP event: %d", pe_msg->type);
