@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -60,7 +60,8 @@ int ol_rx_pn_wapi_cmp(union htt_rx_pn_t *new_pn,
  */
 void
 ol_rx_pn_check(struct ol_txrx_vdev_t *vdev,
-	       struct ol_txrx_peer_t *peer, unsigned tid, qdf_nbuf_t msdu_list);
+	       struct ol_txrx_peer_t *peer, unsigned int tid,
+	       qdf_nbuf_t msdu_list);
 
 /**
  * @brief If applicable, check the Packet Number to detect replays.
@@ -82,7 +83,7 @@ ol_rx_pn_check(struct ol_txrx_vdev_t *vdev,
 void
 ol_rx_pn_check_only(struct ol_txrx_vdev_t *vdev,
 		    struct ol_txrx_peer_t *peer,
-		    unsigned tid, qdf_nbuf_t msdu_list);
+		    unsigned int tid, qdf_nbuf_t msdu_list);
 
 /**
  * @brief If applicable, check the Packet Number to detect replays.
@@ -100,6 +101,6 @@ ol_rx_pn_check_only(struct ol_txrx_vdev_t *vdev,
 qdf_nbuf_t
 ol_rx_pn_check_base(struct ol_txrx_vdev_t *vdev,
 		    struct ol_txrx_peer_t *peer,
-		    unsigned tid, qdf_nbuf_t msdu_list);
+		    unsigned int tid, qdf_nbuf_t msdu_list);
 
 #endif /* _OL_RX_PN_H_ */
