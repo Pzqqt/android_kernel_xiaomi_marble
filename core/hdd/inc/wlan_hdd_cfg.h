@@ -1616,7 +1616,7 @@ enum hdd_dot11_mode {
  */
 #define CFG_DROPPED_PKT_DISCONNECT_TH_NAME      "gDroppedPktDisconnectTh"
 #define CFG_DROPPED_PKT_DISCONNECT_TH_MIN       (0)
-#define CFG_DROPPED_PKT_DISCONNECT_TH_MAX       (512)
+#define CFG_DROPPED_PKT_DISCONNECT_TH_MAX       (65535)
 #define CFG_DROPPED_PKT_DISCONNECT_TH_DEFAULT   (512)
 
 /*
