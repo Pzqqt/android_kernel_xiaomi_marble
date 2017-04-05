@@ -1034,7 +1034,6 @@ void hdd_abort_mac_scan(hdd_context_t *pHddCtx, uint8_t sessionId,
 	wlan_abort_scan(pHddCtx->hdd_pdev, INVAL_PDEV_ID, sessionId, scan_id);
 #endif
 }
-#ifndef NAPIER_SCAN
 /**
  * hdd_vendor_scan_callback() - Scan completed callback event
  * @hddctx: HDD context
@@ -1120,7 +1119,6 @@ nla_put_failure:
 	qdf_mem_free(req);
 	return;
 }
-#endif
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 7, 0))
 /**
  * hdd_cfg80211_scan_done() - Scan completed callback to cfg80211
@@ -1392,7 +1390,10 @@ static void wlan_hdd_cfg80211_scan_block_cb(struct work_struct *work)
 		request->n_channels = 0;
 
 		hdd_err("##In DFS Master mode. Scan aborted. Null result sent");
-		hdd_cfg80211_scan_done(adapter, request, true);
+		if (NL_SCAN == adapter->scan_source)
+			hdd_cfg80211_scan_done(adapter, request, true);
+		else
+			hdd_vendor_scan_callback(adapter, request, true);
 		adapter->request = NULL;
 	}
 }
@@ -1578,6 +1579,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 			 */
 			hdd_err("##In DFS Master mode. Scan aborted");
 			pAdapter->request = request;
+			pAdapter->scan_source = source;
 
 			INIT_WORK(&pAdapter->scan_block_work,
 				  wlan_hdd_cfg80211_scan_block_cb);
@@ -1653,6 +1655,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	   wlan_hdd_sap_skip_scan_check(pHddCtx, request)) {
 		hdd_debug("sap scan skipped");
 		pAdapter->request = request;
+		pAdapter->scan_source = source;
 		INIT_WORK(&pAdapter->scan_block_work,
 			wlan_hdd_cfg80211_scan_block_cb);
 		schedule_work(&pAdapter->scan_block_work);
