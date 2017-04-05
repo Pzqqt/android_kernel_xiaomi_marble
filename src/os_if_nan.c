@@ -310,6 +310,138 @@ initiator_req_failed:
 	return ret;
 }
 
+/**
+ * os_if_nan_process_ndp_responder_req() - NDP responder request handler
+ * @nan_ctx: hdd context
+ * @tb: parsed NL attribute list
+ *
+ * tb includes following vendor attributes:
+ * QCA_WLAN_VENDOR_ATTR_NDP_IFACE_STR
+ * QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID
+ * QCA_WLAN_VENDOR_ATTR_NDP_INSTANCE_ID
+ * QCA_WLAN_VENDOR_ATTR_NDP_RESPONSE_CODE
+ * QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO - optional
+ * QCA_WLAN_VENDOR_ATTR_NDP_CONFIG_QOS - optional
+ * QCA_WLAN_VENDOR_ATTR_NDP_PMK - optional
+ * QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE - optional
+ *
+ * Return: 0 on success or error code on failure
+ */
+static int os_if_nan_process_ndp_responder_req(struct wlan_objmgr_psoc *psoc,
+					       struct nlattr **tb)
+{
+	int ret = 0;
+	char *iface_name;
+	QDF_STATUS status;
+	uint32_t ndp_qos_cfg;
+	enum nan_datapath_state state;
+	struct wlan_objmgr_vdev *nan_vdev;
+	struct nan_datapath_responder_req req = {0};
+
+	if (!tb[QCA_WLAN_VENDOR_ATTR_NDP_IFACE_STR]) {
+		cfg80211_err("Interface name string is unavailable");
+		return -EINVAL;
+	}
+
+	iface_name = nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_IFACE_STR]);
+	/* Check if there is already an existing NAN interface */
+	nan_vdev = ucfg_nan_get_ndi_vdev(psoc, WLAN_NAN_ID);
+	if (!nan_vdev) {
+		cfg80211_err("NAN data interface %s not available", iface_name);
+		return -EINVAL;
+	}
+
+	state = ucfg_nan_get_ndi_state(nan_vdev);
+	if (state == NAN_DATA_NDI_DELETED_STATE ||
+	    state == NAN_DATA_NDI_DELETING_STATE ||
+	    state == NAN_DATA_NDI_CREATING_STATE) {
+		cfg80211_err("Data request not allowed in current NDI state:%d",
+			state);
+		ret = -EAGAIN;
+		goto responder_req_failed;
+	}
+
+	req.vdev = nan_vdev;
+
+	if (!tb[QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID]) {
+		cfg80211_err("Transaction ID is unavailable");
+		ret = -EINVAL;
+		goto responder_req_failed;
+	}
+	req.transaction_id =
+		nla_get_u16(tb[QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID]);
+
+	if (!tb[QCA_WLAN_VENDOR_ATTR_NDP_INSTANCE_ID]) {
+		cfg80211_err("Instance ID is unavailable");
+		ret = -EINVAL;
+		goto responder_req_failed;
+	}
+	req.ndp_instance_id =
+		nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_NDP_INSTANCE_ID]);
+
+	if (!tb[QCA_WLAN_VENDOR_ATTR_NDP_RESPONSE_CODE]) {
+		cfg80211_err("ndp_rsp is unavailable");
+		ret = -EINVAL;
+		goto responder_req_failed;
+	}
+	req.ndp_rsp = nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_NDP_RESPONSE_CODE]);
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO]) {
+		req.ndp_info.ndp_app_info_len =
+			nla_len(tb[QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO]);
+		if (req.ndp_info.ndp_app_info_len) {
+			req.ndp_info.ndp_app_info =
+				nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO]);
+		}
+	} else {
+		cfg80211_debug("NDP app info is unavailable");
+	}
+	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_CONFIG_QOS]) {
+		/* at present ndp config stores 4 bytes QOS info only */
+		req.ndp_config.ndp_cfg_len = 4;
+		ndp_qos_cfg =
+			nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_NDP_CONFIG_QOS]);
+		req.ndp_config.ndp_cfg = (uint8_t *)&ndp_qos_cfg;
+	} else {
+		cfg80211_debug("NDP config data is unavailable");
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE] &&
+		!tb[QCA_WLAN_VENDOR_ATTR_NDP_PMK]) {
+		cfg80211_err("PMK cannot be absent when CSID is present.");
+		ret = -EINVAL;
+		goto responder_req_failed;
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_PMK]) {
+		req.pmk.pmk = nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_PMK]);
+		req.pmk.pmk_len = nla_len(tb[QCA_WLAN_VENDOR_ATTR_NDP_PMK]);
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD,
+				QDF_TRACE_LEVEL_DEBUG,
+				req.pmk.pmk, req.pmk.pmk_len);
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE]) {
+		req.ncs_sk_type =
+			nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE]);
+
+	}
+
+	cfg80211_debug("vdev_id: %d, transaction_id: %d, ndp_rsp %d, ndp_instance_id: %d, ndp_app_info_len: %d, csid: %d",
+		wlan_vdev_get_id(nan_vdev), req.transaction_id, req.ndp_rsp,
+		req.ndp_instance_id, req.ndp_info.ndp_app_info_len,
+		req.ncs_sk_type);
+
+	status = ucfg_nan_req_processor(nan_vdev, &req, NDP_RESPONDER_REQ);
+	ret = qdf_status_to_os_return(status);
+
+responder_req_failed:
+	wlan_objmgr_vdev_release_ref(nan_vdev, WLAN_NAN_ID);
+
+	return ret;
+
+}
+
 int os_if_nan_process_ndp_cmd(struct wlan_objmgr_psoc *psoc,
 			      const void *data, int data_len)
 {
@@ -355,6 +487,8 @@ int os_if_nan_process_ndp_cmd(struct wlan_objmgr_psoc *psoc,
 		return os_if_nan_process_ndi_delete(psoc, tb);
 	case QCA_WLAN_VENDOR_ATTR_NDP_INITIATOR_REQUEST:
 		return os_if_nan_process_ndp_initiator_req(psoc, tb);
+	case QCA_WLAN_VENDOR_ATTR_NDP_RESPONDER_REQUEST:
+		return os_if_nan_process_ndp_responder_req(psoc, tb);
 	default:
 		cfg80211_err("Unrecognized NDP vendor cmd %d", ndp_cmd_type);
 		return -EINVAL;
@@ -429,6 +563,72 @@ static void os_if_ndp_initiator_rsp_handler(struct wlan_objmgr_vdev *vdev,
 	cfg80211_vendor_event(vendor_event, GFP_ATOMIC);
 	return;
 ndp_initiator_rsp_nla_failed:
+	cfg80211_err("nla_put api failed");
+	kfree_skb(vendor_event);
+}
+
+
+/*
+ * os_if_ndp_responder_rsp_handler() - NDP responder response handler
+ * @vdev: pointer to vdev object
+ * @rsp: response parameters
+ *
+ * Following vendor event is sent to cfg80211:
+ * QCA_WLAN_VENDOR_ATTR_NDP_SUBCMD =
+ *         QCA_WLAN_VENDOR_ATTR_NDP_RESPONDER_RESPONSE (4 bytes)
+ * QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID (2 bytes)
+ * QCA_WLAN_VENDOR_ATTR_NDP_DRV_RESPONSE_STATUS_TYPE (4 bytes)
+ * QCA_WLAN_VENDOR_ATTR_NDP_DRV_RETURN_VALUE (4 bytes)
+ *
+ * Return: none
+ */
+static void os_if_ndp_responder_rsp_handler(struct wlan_objmgr_vdev *vdev,
+				      struct nan_datapath_responder_rsp *rsp)
+{
+	uint16_t data_len;
+	struct sk_buff *vendor_event;
+	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
+	struct pdev_osif_priv *os_priv = wlan_pdev_get_ospriv(pdev);
+
+	if (!rsp) {
+		cfg80211_err("Invalid NDP Responder response");
+		return;
+	}
+
+	cfg80211_debug("NDP Responder,vdev id %d transaction_id %d status code: %d reason %d",
+		wlan_vdev_get_id(rsp->vdev), rsp->transaction_id,
+		rsp->status, rsp->reason);
+	data_len = 3 * sizeof(uint32_t) + sizeof(uint16_t) +
+		4 * NLA_HDRLEN + NLMSG_HDRLEN;
+	vendor_event = cfg80211_vendor_event_alloc(os_priv->wiphy, NULL,
+				data_len, QCA_NL80211_VENDOR_SUBCMD_NDP_INDEX,
+				GFP_ATOMIC);
+	if (!vendor_event) {
+		cfg80211_err("cfg80211_vendor_event_alloc failed");
+		return;
+	}
+
+	if (nla_put_u32(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_SUBCMD,
+	   QCA_WLAN_VENDOR_ATTR_NDP_RESPONDER_RESPONSE))
+		goto ndp_responder_rsp_nla_failed;
+
+	if (nla_put_u16(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID,
+	   rsp->transaction_id))
+		goto ndp_responder_rsp_nla_failed;
+
+	if (nla_put_u32(vendor_event,
+			QCA_WLAN_VENDOR_ATTR_NDP_DRV_RESPONSE_STATUS_TYPE,
+	   rsp->status))
+		goto ndp_responder_rsp_nla_failed;
+
+	if (nla_put_u32(vendor_event,
+	   QCA_WLAN_VENDOR_ATTR_NDP_DRV_RETURN_VALUE,
+	   rsp->reason))
+		goto ndp_responder_rsp_nla_failed;
+
+	cfg80211_vendor_event(vendor_event, GFP_ATOMIC);
+	return;
+ndp_responder_rsp_nla_failed:
 	cfg80211_err("nla_put api failed");
 	kfree_skb(vendor_event);
 }
@@ -910,6 +1110,9 @@ void os_if_nan_event_handler(struct wlan_objmgr_psoc *psoc,
 		break;
 	case NDP_NEW_PEER:
 		os_if_new_peer_ind_handler(vdev, msg);
+		break;
+	case NDP_RESPONDER_RSP:
+		os_if_ndp_responder_rsp_handler(vdev, msg);
 		break;
 	default:
 		break;
