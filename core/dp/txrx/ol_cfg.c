@@ -29,7 +29,8 @@
 #include <ol_if_athvar.h>
 #include <cdp_txrx_cfg.h>
 #include <cdp_txrx_handle.h>
-unsigned int vow_config = 0;
+
+unsigned int vow_config;
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 /**
