@@ -10547,23 +10547,23 @@ static ssize_t wlan_hdd_state_ctrl_param_write(struct file *filp,
 						size_t count,
 						loff_t *f_pos)
 {
-	char buf;
+	char buf[3];
 	static const char wlan_off_str[] = "OFF";
 	static const char wlan_on_str[] = "ON";
 	int ret;
 	unsigned long rc;
 
-	if (copy_from_user(&buf, user_buf, 3)) {
+	if (copy_from_user(buf, user_buf, 3)) {
 		pr_err("Failed to read buffer\n");
 		return -EINVAL;
 	}
 
-	if (strncmp(&buf, wlan_off_str, strlen(wlan_off_str)) == 0) {
+	if (strncmp(buf, wlan_off_str, strlen(wlan_off_str)) == 0) {
 		pr_debug("Wifi turning off from UI\n");
 		goto exit;
 	}
 
-	if (strncmp(&buf, wlan_on_str, strlen(wlan_on_str)) != 0) {
+	if (strncmp(buf, wlan_on_str, strlen(wlan_on_str)) != 0) {
 		pr_err("Invalid value received from framework");
 		goto exit;
 	}
