@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013, 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2013, 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -89,13 +89,11 @@ ol_tx_sched_notify(
 		struct ol_txrx_pdev_t *pdev,
 		struct ol_tx_sched_notify_ctx_t *ctx)
 {
-	return;
 }
 
 static inline void
 ol_tx_sched(struct ol_txrx_pdev_t *pdev)
 {
-	return;
 }
 
 static inline u_int16_t
@@ -117,22 +115,18 @@ ol_tx_sched_attach(struct ol_txrx_pdev_t *pdev)
 static inline void
 ol_tx_sched_detach(struct ol_txrx_pdev_t *pdev)
 {
-	return;
 }
 
 static inline void ol_tx_sched_stats_display(struct ol_txrx_pdev_t *pdev)
 {
-	return;
 }
 
 static inline void ol_tx_sched_cur_state_display(struct ol_txrx_pdev_t *pdev)
 {
-	return;
 }
 
 static inline void ol_tx_sched_stats_clear(struct ol_txrx_pdev_t *pdev)
 {
-	return;
 }
 
 #endif /* defined(CONFIG_HL_SUPPORT) */
@@ -180,19 +174,16 @@ ol_tx_target_credit_adjust(int factor,
 			   struct ol_txrx_pdev_t *pdev,
 			   qdf_nbuf_t msdu)
 {
-	return;
 }
 
 static inline void ol_tx_target_credit_decr(struct ol_txrx_pdev_t *pdev,
 					    qdf_nbuf_t msdu)
 {
-	return;
 }
 
 static inline void ol_tx_target_credit_incr(struct ol_txrx_pdev_t *pdev,
 					    qdf_nbuf_t msdu)
 {
-	return;
 }
 #endif
 #endif /* _OL_TX_SCHED__H_ */
