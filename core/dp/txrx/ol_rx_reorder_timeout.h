@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014, 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2014, 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -33,7 +33,8 @@
 
 void ol_rx_reorder_timeout_init(struct ol_txrx_pdev_t *pdev);
 void ol_rx_reorder_timeout_cleanup(struct ol_txrx_pdev_t *pdev);
-void ol_rx_reorder_timeout_remove(struct ol_txrx_peer_t *peer, unsigned tid);
+void ol_rx_reorder_timeout_remove(struct ol_txrx_peer_t *peer,
+				  unsigned int tid);
 void ol_rx_reorder_timeout_update(struct ol_txrx_peer_t *peer, uint8_t tid);
 void ol_rx_reorder_timeout_peer_cleanup(struct ol_txrx_peer_t *peer);
 
