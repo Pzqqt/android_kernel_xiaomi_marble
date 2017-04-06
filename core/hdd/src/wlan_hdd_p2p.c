@@ -284,6 +284,20 @@ QDF_STATUS wlan_hdd_remain_on_channel_callback(tHalHandle hHal, void *pCtx,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef CONVERGED_P2P_ENABLE
+void wlan_hdd_cancel_existing_remain_on_channel(hdd_adapter_t *pAdapter)
+{
+	QDF_STATUS status;
+
+	if (!pAdapter) {
+		hdd_err("null adapter");
+		return;
+	}
+
+	status = ucfg_p2p_cleanup_roc(pAdapter->hdd_vdev);
+	hdd_debug("status:%d", status);
+}
+#else
 void wlan_hdd_cancel_existing_remain_on_channel(hdd_adapter_t *pAdapter)
 {
 	hdd_cfg80211_state_t *cfgState = WLAN_HDD_GET_CFG_STATE_PTR(pAdapter);
@@ -370,6 +384,7 @@ void wlan_hdd_cancel_existing_remain_on_channel(hdd_adapter_t *pAdapter)
 	} else
 		mutex_unlock(&cfgState->remain_on_chan_ctx_lock);
 }
+#endif
 
 int wlan_hdd_check_remain_on_channel(hdd_adapter_t *pAdapter)
 {
@@ -401,6 +416,7 @@ int wlan_hdd_check_remain_on_channel(hdd_adapter_t *pAdapter)
  *
  * Return: None
  */
+#ifndef CONVERGED_P2P_ENABLE
 static void wlan_hdd_cancel_pending_roc(hdd_adapter_t *adapter)
 {
 	hdd_remain_on_chan_ctx_t *roc_ctx;
@@ -469,8 +485,23 @@ wait:
 		mutex_unlock(&cfg_state->remain_on_chan_ctx_lock);
 	}
 }
+#endif
 
 /* Clean up RoC context at hdd_stop_adapter*/
+#ifdef CONVERGED_P2P_ENABLE
+void wlan_hdd_cleanup_remain_on_channel_ctx(hdd_adapter_t *pAdapter)
+{
+	QDF_STATUS status;
+
+	if (!pAdapter) {
+		hdd_err("null adapter");
+		return;
+	}
+
+	status = ucfg_p2p_cleanup_roc(pAdapter->hdd_vdev);
+	hdd_debug("status:%d", status);
+}
+#else
 void wlan_hdd_cleanup_remain_on_channel_ctx(hdd_adapter_t *pAdapter)
 {
 	uint8_t retry = 0;
@@ -493,6 +524,7 @@ void wlan_hdd_cleanup_remain_on_channel_ctx(hdd_adapter_t *pAdapter)
 	mutex_unlock(&cfgState->remain_on_chan_ctx_lock);
 
 }
+#endif
 
 static void wlan_hdd_remain_on_chan_timeout(void *data)
 {
