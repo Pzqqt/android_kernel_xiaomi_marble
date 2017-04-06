@@ -124,4 +124,12 @@ void nan_release_cmd(void *in_req, uint32_t req_type);
  */
 QDF_STATUS nan_scheduled_msg_handler(struct scheduler_msg *msg);
 
+/*
+ * nan_event_handler: function to process events from firmware
+ * @msg: message received from lmac
+ *
+ * Return: status of operation
+ */
+QDF_STATUS nan_event_handler(struct scheduler_msg *msg);
+
 #endif

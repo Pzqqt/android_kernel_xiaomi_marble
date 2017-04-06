@@ -492,6 +492,12 @@ struct nan_callbacks {
 	void (*drv_ndi_create_rsp_handler)(uint8_t,
 					struct nan_datapath_inf_create_rsp *);
 	void (*drv_ndi_delete_rsp_handler)(uint8_t);
+
+	int (*new_peer_ind)(uint8_t, uint16_t, struct qdf_mac_addr *, bool);
+	int (*get_peer_idx)(uint8_t, struct qdf_mac_addr *);
+	QDF_STATUS (*add_ndi_peer)(uint32_t, struct qdf_mac_addr);
+
+	void (*delete_peers_by_addr)(uint8_t, struct qdf_mac_addr);
 };
 
 #endif

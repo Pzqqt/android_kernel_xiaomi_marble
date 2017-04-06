@@ -154,6 +154,16 @@ int os_if_nan_register_hdd_callbacks(struct wlan_objmgr_psoc *psoc,
 				     struct nan_callbacks *cb_obj);
 
 /**
+ * os_if_nan_register_lim_callbacks: os_if api to register lim callbacks
+ * @psoc: pointer to psoc object
+ * @cb_obj: struct pointer containing callbacks
+ *
+ * Return: status of operation
+ */
+int os_if_nan_register_lim_callbacks(struct wlan_objmgr_psoc *psoc,
+				     struct nan_callbacks *cb_obj);
+
+/**
  * os_if_nan_post_ndi_create_rsp: os_if api to pos ndi create rsp to umac nan
  * component
  * @psoc: pointer to psoc object
