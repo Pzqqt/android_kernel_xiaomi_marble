@@ -31,14 +31,6 @@
 * This file contains the definitions specific to the wlan_nlink_srv
 *
 ******************************************************************************/
-/*
- * If MULTI_IF_NAME is not defined, then this is the primary instance of the
- * driver and the diagnostics netlink socket will be available. If
- * MULTI_IF_NAME is defined then this is not the primary instance of the driver
- * and the diagnotics netlink socket will not be available since this
- * diagnostics netlink socket can only be exposed by one instance of the driver.
- */
-#ifndef MULTI_IF_NAME
 
 #include <linux/version.h>
 #include <linux/kernel.h>
@@ -51,13 +43,6 @@
 #include <wlan_nlink_srv.h>
 #include <qdf_trace.h>
 #include <qdf_module.h>
-
-#ifdef CNSS_GENL
-#include <qdf_mem.h>
-#include <wlan_nlink_common.h>
-#include <net/genetlink.h>
-#include <net/cnss_nl.h>
-#endif
 
 #if defined(CONFIG_CNSS_LOGGER)
 
@@ -275,8 +260,21 @@ inline int nl_srv_is_initialized(void)
 }
 qdf_export_symbol(nl_srv_is_initialized);
 
-#else
+/*
+ * If MULTI_IF_NAME is not defined, then this is the primary instance of the
+ * driver and the diagnostics netlink socket will be available. If
+ * MULTI_IF_NAME is defined then this is not the primary instance of the driver
+ * and the diagnotics netlink socket will not be available since this
+ * diagnostics netlink socket can only be exposed by one instance of the driver.
+ */
+#elif !defined(MULTI_IF_NAME)
 
+#ifdef CNSS_GENL
+#include <qdf_mem.h>
+#include <wlan_nlink_common.h>
+#include <net/genetlink.h>
+#include <net/cnss_nl.h>
+#endif
 
 /* Global variables */
 static DEFINE_MUTEX(nl_srv_sem);
@@ -719,10 +717,8 @@ int nl_srv_is_initialized(void)
 	return -EPERM;
 }
 qdf_export_symbol(nl_srv_is_initialized);
-#endif
-#else /* ifndef MULTI_IF_NAME */
 
-#include <wlan_nlink_srv.h>
+#else
 
 int nl_srv_init(void *wiphy)
 {
@@ -745,18 +741,20 @@ int nl_srv_unregister(tWlanNlModTypes msg_type, nl_srv_msg_callback msg_handler)
 
 int nl_srv_ucast(struct sk_buff *skb, int dst_pid, int flag)
 {
+	dev_kfree_skb(skb);
 	return 0;
 }
 
 int nl_srv_bcast(struct sk_buff *skb)
 {
+	dev_kfree_skb(skb);
 	return 0;
 }
 qdf_export_symbol(nl_srv_bcast);
 
 int nl_srv_is_initialized(void)
 {
-	return 0;
+	return -EPERM;
 }
 qdf_export_symbol(nl_srv_is_initialized);
 #endif
