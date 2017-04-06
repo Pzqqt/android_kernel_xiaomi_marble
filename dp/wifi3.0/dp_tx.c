@@ -77,6 +77,57 @@ static inline void dp_tx_get_queue(struct dp_vdev *vdev,
 	return;
 }
 
+#if defined(FEATURE_TSO)
+/**
+ * dp_tx_tso_desc_release() - Release the tso segment
+ *                            after unmapping all the fragments
+ *
+ * @pdev - physical device handle
+ * @tx_desc - Tx software descriptor
+ */
+static void dp_tx_tso_desc_release(struct dp_soc *soc,
+		struct dp_tx_desc_s *tx_desc)
+{
+	TSO_DEBUG("%s: Free the tso descriptor", __func__);
+	if (qdf_unlikely(tx_desc->tso_desc == NULL)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			"%s %d TSO desc is NULL!",
+			__func__, __LINE__);
+		qdf_assert(0);
+	} else if (qdf_unlikely(tx_desc->tso_num_desc == NULL)) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"%s %d TSO common info is NULL!",
+			__func__, __LINE__);
+		qdf_assert(0);
+	} else {
+		struct qdf_tso_num_seg_elem_t *tso_num_desc =
+			(struct qdf_tso_num_seg_elem_t *) tx_desc->tso_num_desc;
+
+		if (tso_num_desc->num_seg.tso_cmn_num_seg > 1) {
+			tso_num_desc->num_seg.tso_cmn_num_seg--;
+			qdf_nbuf_unmap_tso_segment(soc->osdev,
+					tx_desc->tso_desc, false);
+		} else {
+			tso_num_desc->num_seg.tso_cmn_num_seg--;
+			qdf_assert(tso_num_desc->num_seg.tso_cmn_num_seg == 0);
+			qdf_nbuf_unmap_tso_segment(soc->osdev,
+					tx_desc->tso_desc, true);
+			dp_tso_num_seg_free(soc, tx_desc->pool_id,
+					tx_desc->tso_num_desc);
+			tx_desc->tso_num_desc = NULL;
+		}
+		dp_tx_tso_desc_free(soc,
+				tx_desc->pool_id, tx_desc->tso_desc);
+		tx_desc->tso_desc = NULL;
+	}
+}
+#else
+static void dp_tx_tso_desc_release(struct dp_soc *soc,
+		struct dp_tx_desc_s *tx_desc)
+{
+	return;
+}
+#endif
 /**
  * dp_tx_desc_release() - Release Tx Descriptor
  * @tx_desc : Tx Descriptor
@@ -97,6 +148,9 @@ dp_tx_desc_release(struct dp_tx_desc_s *tx_desc, uint8_t desc_pool_id)
 	qdf_assert(pdev);
 
 	soc = pdev->soc;
+
+	if (tx_desc->frm_type == dp_tx_frm_tso)
+		dp_tx_tso_desc_release(soc, tx_desc);
 
 	if (tx_desc->flags & DP_TX_DESC_FLAG_FRAG)
 		dp_tx_ext_desc_free(soc, tx_desc->msdu_ext_desc, desc_pool_id);
@@ -223,6 +277,56 @@ static void dp_tx_prepare_tso_ext_desc(struct qdf_tso_seg_t *tso_seg,
 }
 #endif
 
+#if defined(FEATURE_TSO)
+/**
+ * dp_tx_free_tso_seg() - Loop through the tso segments
+ *                        allocated and free them
+ *
+ * @soc: soc handle
+ * @free_seg: list of tso segments
+ * @msdu_info: msdu descriptor
+ *
+ * Return - void
+ */
+static void dp_tx_free_tso_seg(struct dp_soc *soc,
+	struct qdf_tso_seg_elem_t *free_seg,
+	struct dp_tx_msdu_info_s *msdu_info)
+{
+	struct qdf_tso_seg_elem_t *next_seg;
+
+	while (free_seg) {
+		next_seg = free_seg->next;
+		dp_tx_tso_desc_free(soc,
+			msdu_info->tx_queue.desc_pool_id,
+			free_seg);
+		free_seg = next_seg;
+	}
+}
+
+/**
+ * dp_tx_free_tso_num_seg() - Loop through the tso num segments
+ *                            allocated and free them
+ *
+ * @soc:  soc handle
+ * @free_seg: list of tso segments
+ * @msdu_info: msdu descriptor
+ * Return - void
+ */
+static void dp_tx_free_tso_num_seg(struct dp_soc *soc,
+	struct qdf_tso_num_seg_elem_t *free_seg,
+	struct dp_tx_msdu_info_s *msdu_info)
+{
+	struct qdf_tso_num_seg_elem_t *next_seg;
+
+	while (free_seg) {
+		next_seg = free_seg->next;
+		dp_tso_num_seg_free(soc,
+			msdu_info->tx_queue.desc_pool_id,
+			free_seg);
+		free_seg = next_seg;
+	}
+}
+
 /**
  * dp_tx_prepare_tso() - Given a jumbo msdu, prepare the TSO info
  * @vdev: virtual device handle
@@ -231,7 +335,6 @@ static void dp_tx_prepare_tso_ext_desc(struct qdf_tso_seg_t *tso_seg,
  *
  * Return: QDF_STATUS_SUCCESS success
  */
-#if defined(FEATURE_TSO)
 static QDF_STATUS dp_tx_prepare_tso(struct dp_vdev *vdev,
 		qdf_nbuf_t msdu, struct dp_tx_msdu_info_s *msdu_info)
 {
@@ -239,12 +342,16 @@ static QDF_STATUS dp_tx_prepare_tso(struct dp_vdev *vdev,
 	int num_seg = qdf_nbuf_get_tso_num_seg(msdu);
 	struct dp_soc *soc = vdev->pdev->soc;
 	struct qdf_tso_info_t *tso_info;
+	struct qdf_tso_num_seg_elem_t *tso_num_seg;
 
 	tso_info = &msdu_info->u.tso_info;
 	tso_info->curr_seg = NULL;
 	tso_info->tso_seg_list = NULL;
 	tso_info->num_segs = num_seg;
 	msdu_info->frm_type = dp_tx_frm_tso;
+	tso_info->tso_num_seg_list = NULL;
+
+	TSO_DEBUG(" %s: num_seg: %d", __func__, num_seg);
 
 	while (num_seg) {
 		tso_seg = dp_tx_tso_desc_alloc(
@@ -254,23 +361,48 @@ static QDF_STATUS dp_tx_prepare_tso(struct dp_vdev *vdev,
 			tso_info->tso_seg_list = tso_seg;
 			num_seg--;
 		} else {
-			struct qdf_tso_seg_elem_t *next_seg;
 			struct qdf_tso_seg_elem_t *free_seg =
 				tso_info->tso_seg_list;
 
-			while (free_seg) {
-				next_seg = free_seg->next;
-				dp_tx_tso_desc_free(soc,
-					msdu_info->tx_queue.desc_pool_id,
-					free_seg);
-				free_seg = next_seg;
-			}
+			dp_tx_free_tso_seg(soc, free_seg, msdu_info);
+
 			return QDF_STATUS_E_NOMEM;
 		}
 	}
 
+	TSO_DEBUG(" %s: num_seg: %d", __func__, num_seg);
+
+	tso_num_seg = dp_tso_num_seg_alloc(soc,
+			msdu_info->tx_queue.desc_pool_id);
+
+	if (tso_num_seg) {
+		tso_num_seg->next = tso_info->tso_num_seg_list;
+		tso_info->tso_num_seg_list = tso_num_seg;
+	} else {
+		/* Bug: free tso_num_seg and tso_seg */
+		/* Free the already allocated num of segments */
+		struct qdf_tso_seg_elem_t *free_seg =
+					tso_info->tso_seg_list;
+
+		TSO_DEBUG(" %s: Failed alloc - Number of segs for a TSO packet",
+			__func__);
+		dp_tx_free_tso_seg(soc, free_seg, msdu_info);
+
+		return QDF_STATUS_E_NOMEM;
+	}
+
 	msdu_info->num_seg =
 		qdf_nbuf_get_tso_info(soc->osdev, msdu, tso_info);
+
+	TSO_DEBUG(" %s: msdu_info->num_seg: %d", __func__,
+			msdu_info->num_seg);
+
+	if (!(msdu_info->num_seg)) {
+		dp_tx_free_tso_seg(soc, tso_info->tso_seg_list, msdu_info);
+		dp_tx_free_tso_num_seg(soc, tso_info->tso_num_seg_list,
+					msdu_info);
+		return QDF_STATUS_E_INVAL;
+	}
 
 	tso_info->curr_seg = tso_info->tso_seg_list;
 
@@ -543,6 +675,8 @@ static struct dp_tx_desc_s *dp_tx_prepare_desc(struct dp_vdev *vdev,
 	tx_desc->vdev = vdev;
 	tx_desc->pdev = pdev;
 	tx_desc->pkt_offset = 0;
+	tx_desc->tso_desc = msdu_info->u.tso_info.curr_seg;
+	tx_desc->tso_num_desc = msdu_info->u.tso_info.tso_num_seg_list;
 
 	/* Handle scattered frames - TSO/SG/ME */
 	/* Allocate and prepare an extension descriptor for scattered frames */
@@ -960,7 +1094,7 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		nbuf = msdu_info->u.sg_info.curr_seg->nbuf;
 
 	i = 0;
-
+	/* Print statement to track i and num_seg */
 	/*
 	 * For each segment (maps to 1 MSDU) , prepare software and hardware
 	 * descriptors using information in msdu_info
@@ -2159,6 +2293,15 @@ QDF_STATUS dp_tx_soc_detach(struct dp_soc *soc)
 			"%s TSO Desc Pool %d Free descs = %d\n",
 			__func__, num_pool, num_desc);
 
+
+	for (i = 0; i < num_pool; i++)
+		dp_tx_tso_num_seg_pool_free(soc, i);
+
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+		"%s TSO Num of seg Desc Pool %d Free descs = %d\n",
+		__func__, num_pool, num_desc);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -2224,6 +2367,20 @@ QDF_STATUS dp_tx_soc_attach(struct dp_soc *soc)
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 			"%s TSO Desc Alloc %d, descs = %d\n",
+			__func__, num_pool, num_desc);
+
+	for (i = 0; i < num_pool; i++) {
+		if (dp_tx_tso_num_seg_pool_alloc(soc, i, num_desc)) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"TSO Num of seg Pool alloc %d failed %p\n",
+				i, soc);
+
+			goto fail;
+		}
+	}
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+			"%s TSO Num of seg pool Alloc %d, descs = %d\n",
 			__func__, num_pool, num_desc);
 
 	/* Initialize descriptors in TCL Rings */

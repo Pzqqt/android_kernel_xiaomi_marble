@@ -1740,7 +1740,6 @@ static uint8_t __qdf_nbuf_get_tso_cmn_seg_info(qdf_device_t osdev,
 			 tso_info->ethproto);
 		return 1;
 	}
-
 	tso_info->l2_len = (skb_network_header(skb) - skb_mac_header(skb));
 	tso_info->tcphdr = tcp_hdr(skb);
 	tso_info->tcp_seq_num = ntohl(tcp_hdr(skb)->seq);
@@ -1886,6 +1885,7 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 		qdf_print("TSO: error getting common segment info\n");
 		return 0;
 	}
+
 	total_num_seg = tso_info->tso_num_seg_list;
 	curr_seg = tso_info->tso_seg_list;
 
@@ -1921,6 +1921,7 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 		int i = 1; /* tso fragment index */
 		uint8_t more_tso_frags = 1;
 
+		curr_seg->seg.num_frags = 0;
 		tso_info->num_segs++;
 		total_num_seg->num_seg.tso_cmn_num_seg++;
 
@@ -1943,6 +1944,7 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 			skb_proc = skb_proc - tso_frag_len;
 
 			/* increment the TCP sequence number */
+
 			tso_cmn_info.tcp_seq_num += tso_frag_len;
 			curr_seg->seg.tso_frags[i].paddr = tso_frag_paddr;
 			TSO_DEBUG("%s[%d] frag %d frag len %d total_len %u vaddr %p\n",
@@ -1997,6 +1999,12 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 				__func__, __LINE__, skb_frag_len, tso_frag_len,
 				tso_seg_size);
 
+			if (!(tso_frag_vaddr)) {
+				TSO_DEBUG("%s: Fragment virtual addr is NULL",
+						__func__);
+				return 0;
+			}
+
 			tso_frag_paddr =
 					 dma_map_single(osdev->dev,
 						 tso_frag_vaddr,
@@ -2009,6 +2017,8 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 				return 0;
 			}
 		}
+		TSO_DEBUG("%s tcp_seq_num: %u", __func__,
+				curr_seg->seg.tso_flags.tcp_seq_num);
 		num_seg--;
 		/* if TCP FIN flag was set, set it in the last segment */
 		if (!num_seg)

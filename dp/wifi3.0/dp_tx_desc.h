@@ -52,7 +52,9 @@ QDF_STATUS dp_tx_ext_desc_pool_free(struct dp_soc *soc, uint8_t pool_id);
 QDF_STATUS dp_tx_tso_desc_pool_alloc(struct dp_soc *soc, uint8_t pool_id,
 		uint16_t num_elem);
 void dp_tx_tso_desc_pool_free(struct dp_soc *soc, uint8_t pool_id);
-
+QDF_STATUS dp_tx_tso_num_seg_pool_alloc(struct dp_soc *soc, uint8_t pool_id,
+		uint16_t num_elem);
+void dp_tx_tso_num_seg_pool_free(struct dp_soc *soc, uint8_t pool_id);
 /**
  * dp_tx_desc_alloc() - Allocate a Software Tx Descriptor from given pool
  *
@@ -256,6 +258,7 @@ static inline void dp_tx_ext_desc_free_multiple(struct dp_soc *soc,
 	return;
 }
 
+#if defined(FEATURE_TSO)
 /**
  * dp_tx_tso_desc_alloc() - function to allocate a TSO segment
  * @soc: device soc instance
@@ -294,7 +297,6 @@ static inline struct qdf_tso_seg_elem_t *dp_tx_tso_desc_alloc(
  *
  * Return: none
  */
-
 static inline void dp_tx_tso_desc_free(struct dp_soc *soc,
 		uint8_t pool_id, struct qdf_tso_seg_elem_t *tso_seg)
 {
@@ -304,6 +306,36 @@ static inline void dp_tx_tso_desc_free(struct dp_soc *soc,
 	soc->tx_tso_desc[pool_id].num_free++;
 	TX_DESC_LOCK_UNLOCK(&soc->tx_tso_desc[pool_id].lock);
 }
+
+static inline
+struct qdf_tso_num_seg_elem_t  *dp_tso_num_seg_alloc(struct dp_soc *soc,
+		uint8_t pool_id)
+{
+	struct qdf_tso_num_seg_elem_t *tso_num_seg = NULL;
+
+	TX_DESC_LOCK_LOCK(&soc->tx_tso_num_seg[pool_id].lock);
+	if (soc->tx_tso_num_seg[pool_id].freelist) {
+		soc->tx_tso_num_seg[pool_id].num_free--;
+		tso_num_seg = soc->tx_tso_num_seg[pool_id].freelist;
+		soc->tx_tso_num_seg[pool_id].freelist =
+			soc->tx_tso_num_seg[pool_id].freelist->next;
+	}
+	TX_DESC_LOCK_UNLOCK(&soc->tx_tso_num_seg[pool_id].lock);
+
+	return tso_num_seg;
+}
+
+static inline
+void dp_tso_num_seg_free(struct dp_soc *soc,
+		uint8_t pool_id, struct qdf_tso_num_seg_elem_t *tso_num_seg)
+{
+	TX_DESC_LOCK_LOCK(&soc->tx_tso_num_seg[pool_id].lock);
+	tso_num_seg->next = soc->tx_tso_num_seg[pool_id].freelist;
+	soc->tx_tso_num_seg[pool_id].freelist = tso_num_seg;
+	soc->tx_tso_num_seg[pool_id].num_free++;
+	TX_DESC_LOCK_UNLOCK(&soc->tx_tso_num_seg[pool_id].lock);
+}
+#endif
 /*
  * dp_tx_me_alloc_buf() Alloc descriptor from me pool
  * @pdev DP_PDEV handle for datapath

@@ -103,9 +103,11 @@
 
 /* Enable flag to print TSO specific prints in datapath */
 #ifdef TSO_DEBUG_LOG_ENABLE
-#define TSO_DEBUG(args ...) printk(args)
+#define TSO_DEBUG(fmt, args ...) \
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_NONE, \
+		fmt, ## args)
 #else
-#define TSO_DEBUG(args ...)
+#define TSO_DEBUG(fmt, args ...)
 #endif
 
 /**

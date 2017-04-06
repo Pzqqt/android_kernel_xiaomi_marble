@@ -467,6 +467,14 @@ void __printf(3, 4) qdf_snprintf(char *str_buffer, unsigned int size,
 
 #define QDF_SNPRINTF qdf_snprintf
 
+#else
+
+#define DPTRACE(x)
+#define qdf_trace_hex_dump(x, y, z, q)
+
+#endif /* CONFIG_MCL */
+
+
 #ifdef TSOSEG_DEBUG
 static inline
 int qdf_tso_seg_dbg_record(struct qdf_tso_seg_elem_t *tsoseg,
@@ -522,12 +530,6 @@ qdf_tso_seg_dbg_zero(struct qdf_tso_seg_elem_t *tsoseg)
 };
 
 #endif /* TSOSEG_DEBUG */
-#else
-
-#define DPTRACE(x)
-#define qdf_trace_hex_dump(x, y, z, q)
-
-#endif /* CONFIG_MCL */
 
 #define ERROR_CODE                      -1
 #define QDF_MAX_NAME_SIZE               32
