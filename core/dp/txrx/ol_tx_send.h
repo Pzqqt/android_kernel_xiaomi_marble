@@ -39,7 +39,6 @@
 
 static inline void ol_tx_discard_target_frms(ol_txrx_pdev_handle pdev)
 {
-	return;
 }
 #else
 
