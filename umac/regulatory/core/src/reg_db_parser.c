@@ -1,0 +1,198 @@
+/*
+ * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ *
+ *
+ * Permission to use, copy, modify, and/or distribute this software for
+ * any purpose with or without fee is hereby granted, provided that the
+ * above copyright notice and this permission notice appear in all
+ * copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+ * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+ * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/**
+ * DOC: reg_db_parser.c
+ * This file provides regulatory data base parser functions.
+ */
+
+#include <qdf_types.h>
+#include "reg_db_parser.h"
+#include <qdf_mem.h>
+
+int reg_create_master_chan_list(uint8_t *event_buf)
+{
+	return 0;
+}
+
+QDF_STATUS reg_is_country_code_valid(uint8_t alpha[3])
+{
+	uint16_t i;
+	int num_countries;
+
+	get_num_countries(&num_countries);
+
+	for (i = 0; i < num_countries; i++) {
+		if ((g_all_countries[i].alpha2[0] == alpha[0]) &&
+				(g_all_countries[i].alpha2[1] == alpha[1]) &&
+				(g_all_countries[i].alpha2[2] == alpha[2]))
+			return QDF_STATUS_SUCCESS;
+		else
+			continue;
+	}
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS reg_regrules_assign(uint8_t dmn_id_2g,
+	uint8_t dmn_id_5g,
+	struct cur_regulatory_info *reg_info)
+
+{
+	uint8_t k;
+	uint8_t rule_index;
+	struct cur_reg_rule *r_r_2g = reg_info->reg_rules_2g_ptr;
+	struct cur_reg_rule *r_r_5g = reg_info->reg_rules_5g_ptr;
+
+	for (k = 0; k < reg_info->num_2g_reg_rules; k++) {
+		rule_index = regdomains_2g[dmn_id_2g].reg_rule_id[k];
+		r_r_2g->start_freq = reg_rules_2g[rule_index].start_freq;
+		r_r_2g->end_freq = reg_rules_2g[rule_index].end_freq;
+		r_r_2g->max_bw = reg_rules_2g[rule_index].max_bw;
+		r_r_2g->reg_power = reg_rules_2g[rule_index].reg_power;
+		r_r_2g->flags = reg_rules_2g[rule_index].flags;
+		r_r_2g++;
+	}
+
+	for (k = 0; k < reg_info->num_5g_reg_rules; k++) {
+		rule_index = regdomains_5g[dmn_id_5g].reg_rule_id[k];
+		r_r_5g->start_freq = reg_rules_5g[rule_index].start_freq;
+		r_r_5g->end_freq = reg_rules_5g[rule_index].end_freq;
+		r_r_5g->max_bw = reg_rules_5g[rule_index].max_bw;
+		r_r_5g->reg_power = reg_rules_5g[rule_index].reg_power;
+		r_r_5g->flags = reg_rules_5g[rule_index].flags;
+		r_r_5g++;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/* Given a country code the function
+ * finds current  regulatory information
+ */
+QDF_STATUS reg_get_cur_reginfo(uint8_t *alpha,
+	uint32_t max_rules,
+	struct cur_regulatory_info *reg_info)
+{
+	uint16_t i, j;
+	uint8_t rgalpha[3];
+	int num_countries;
+	int num_reg_dmn;
+	int default_country_2g;
+	int default_country_5g;
+
+	rgalpha[0] = alpha[0];
+	rgalpha[1] = alpha[1];
+	rgalpha[2] = 0;
+
+	get_num_countries(&num_countries);
+	get_num_reg_dmn_pairs(&num_reg_dmn);
+
+	if (reg_is_country_code_valid(rgalpha)) {
+		for (i = 0; i < num_countries; i++) {
+			if ((g_all_countries[i].alpha2[0] == alpha[0]) &&
+				(g_all_countries[i].alpha2[1] == alpha[1]) &&
+				(g_all_countries[i].alpha2[2] == alpha[2]))
+				break;
+			else
+				continue;
+		}
+		for (j = 0; j < num_reg_dmn; j++) {
+			if (g_reg_dmn_pairs[j].reg_dmn_pair_id ==
+				g_all_countries[i].reg_dmn_pair_id)
+				break;
+			else
+				continue;
+		}
+
+		if ((max_rules >= regdomains_2g[
+				g_reg_dmn_pairs[j].dmn_id_2g].num_reg_rules +
+				regdomains_5g[
+				g_reg_dmn_pairs[j].dmn_id_5g].num_reg_rules)) {
+
+			reg_info->dfs_region = regdomains_5g[
+				g_reg_dmn_pairs[j].dmn_id_5g].dfs_region;
+			reg_info->phybitmap = g_all_countries[i].phymode_bitmap;
+			reg_info->max_bw_2g = g_all_countries[i].max_bw_2g;
+			reg_info->max_bw_5g = g_all_countries[i].max_bw_5g;
+			reg_info->min_bw_2g = regdomains_2g[
+			    g_reg_dmn_pairs[j].dmn_id_2g].min_bw;
+			reg_info->min_bw_5g = regdomains_5g[
+			    g_reg_dmn_pairs[j].dmn_id_5g].min_bw;
+			reg_info->num_2g_reg_rules = regdomains_2g[
+			    g_reg_dmn_pairs[j].dmn_id_2g].num_reg_rules;
+			reg_info->num_5g_reg_rules = regdomains_5g[
+			    g_reg_dmn_pairs[j].dmn_id_5g].num_reg_rules;
+			reg_info->reg_rules_2g_ptr = (struct cur_reg_rule *)
+			    qdf_mem_malloc((reg_info->num_2g_reg_rules) *
+				    sizeof(struct cur_reg_rule));
+
+			reg_info->reg_rules_5g_ptr = (struct cur_reg_rule *)
+			    qdf_mem_malloc((reg_info->num_5g_reg_rules) *
+				    sizeof(struct cur_reg_rule));
+
+			reg_regrules_assign(g_reg_dmn_pairs[j].dmn_id_2g,
+					g_reg_dmn_pairs[j].dmn_id_5g, reg_info);
+
+			alpha[0] = g_all_countries[i].alpha2_11d[0];
+			alpha[1] = g_all_countries[i].alpha2_11d[1];
+
+			return QDF_STATUS_SUCCESS;
+		} else if (!((max_rules >= regdomains_2g[
+				g_reg_dmn_pairs[j].dmn_id_2g].num_reg_rules +
+				regdomains_5g[
+				g_reg_dmn_pairs[j].dmn_id_5g].num_reg_rules)))
+			return QDF_STATUS_E_NOMEM;
+	} else {
+		get_default_country_2g(&default_country_2g);
+		get_default_country_5g(&default_country_5g);
+
+		if ((max_rules >=
+			    regdomains_2g[default_country_2g].num_reg_rules +
+			    regdomains_5g[default_country_5g].num_reg_rules)) {
+			reg_info->dfs_region =
+			    regdomains_5g[default_country_5g].dfs_region;
+			reg_info->phybitmap = 0;
+			reg_info->max_bw_2g = 40;
+			reg_info->max_bw_5g = 160;
+			reg_info->min_bw_2g =
+			    regdomains_2g[default_country_2g].min_bw;
+			reg_info->min_bw_5g =
+			    regdomains_5g[default_country_5g].min_bw;
+			reg_info->num_2g_reg_rules =
+			    regdomains_2g[default_country_2g].num_reg_rules;
+			reg_info->num_5g_reg_rules =
+			    regdomains_5g[default_country_5g].num_reg_rules;
+
+			reg_regrules_assign(default_country_2g,
+					default_country_5g, reg_info);
+
+			alpha[0] = '0';
+			alpha[1] = '0';
+
+			return QDF_STATUS_SUCCESS;
+		} else if (!((max_rules >= regdomains_2g[
+				default_country_2g].num_reg_rules +
+				regdomains_5g[default_country_5g].num_reg_rules)
+			    ))
+			return QDF_STATUS_E_NOMEM;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}

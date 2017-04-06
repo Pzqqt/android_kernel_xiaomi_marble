@@ -312,7 +312,7 @@ enum reg_domain {
 	WORLD_6C = 0x6C,
 };
 
-static const struct country_code_to_reg_domain g_all_countries[] = {
+const struct country_code_to_reg_domain g_all_countries[] = {
 	{CTRY_AFGHANISTAN, ETSI1_WORLD, "AF", "AF" , 40, 160, 0},
 	{CTRY_ALBANIA, ETSI1_WORLD, "AL", "AL", 40, 160, 0},
 	{CTRY_ALGERIA, APL13_WORLD, "DZ", "DZ", 40, 160, 0},
@@ -571,7 +571,7 @@ enum reg_domains_5g {
 };
 
 
-static const struct reg_domain_pair g_reg_dmn_pairs[] = {
+const struct reg_domain_pair g_reg_dmn_pairs[] = {
 	{NULL1_WORLD, NULL1, WORLD},
 
 	{FCC1_FCCA, FCC1, FCCA},
@@ -648,7 +648,7 @@ enum reg_rules_2g {
 	CHAN_14_2,
 };
 
-static const struct regulatory_rule reg_rules_2g[] = {
+const struct regulatory_rule reg_rules_2g[] = {
 
 	[CHAN_1_11_1] = {2402, 2472, 40, 30, 0},
 	[CHAN_1_11_2] = {2402, 2472, 40, 20, 0},
@@ -661,7 +661,7 @@ static const struct regulatory_rule reg_rules_2g[] = {
 };
 
 
-static const struct regdomain regdomains_2g[] = {
+const struct regdomain regdomains_2g[] = {
 
 	[FCCA] = {CTL_FCC, DFS_UNINIT_REG, 0, 1, {CHAN_1_11_1} },
 	[WORLD] = {CTL_ETSI, DFS_UNINIT_REG, 0, 1, {CHAN_1_13_1} },
@@ -709,7 +709,7 @@ enum reg_rules_5g {
 	CHAN_5735_5775_1,
 };
 
-static const struct regulatory_rule reg_rules_5g[] = {
+const struct regulatory_rule reg_rules_5g[] = {
 
 	[CHAN_4910_4990_1] = {4910, 4990, 20, 20, 0},
 	[CHAN_4940_4990_1] = {4940, 4990, 20, 33, 0},
@@ -743,7 +743,7 @@ static const struct regulatory_rule reg_rules_5g[] = {
 };
 
 
-static const struct regdomain regdomains_5g[] = {
+const struct regdomain regdomains_5g[] = {
 
 	[FCC1] = {CTL_FCC, DFS_FCC_REG, 2, 3, {CHAN_5170_5250_1,
 					      CHAN_5250_5330_1,
@@ -857,3 +857,31 @@ static const struct regdomain regdomains_5g[] = {
 						       CHAN_5490_5730_3,
 						       CHAN_5735_5835_5} },
 };
+
+QDF_STATUS get_num_countries(int *num_countries)
+{
+	*num_countries = QDF_ARRAY_SIZE(g_all_countries);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS get_num_reg_dmn_pairs(int *num_reg_dmn)
+{
+	*num_reg_dmn = QDF_ARRAY_SIZE(g_reg_dmn_pairs);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS get_default_country_2g(int *default_country)
+{
+	*default_country = WORLD_2G_3;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS get_default_country_5g(int *default_country)
+{
+	*default_country = WORLD_5G_2;
+
+	return QDF_STATUS_SUCCESS;
+}
