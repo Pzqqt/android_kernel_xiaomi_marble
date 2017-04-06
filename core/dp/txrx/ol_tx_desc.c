@@ -77,19 +77,15 @@ static inline void ol_tx_desc_reset_timestamp(struct ol_tx_desc_t *tx_desc)
 static inline void ol_tx_desc_sanity_checks(struct ol_txrx_pdev_t *pdev,
 						struct ol_tx_desc_t *tx_desc)
 {
-	return;
 }
 static inline void ol_tx_desc_reset_pkt_type(struct ol_tx_desc_t *tx_desc)
 {
-	return;
 }
 static inline void ol_tx_desc_compute_delay(struct ol_tx_desc_t *tx_desc)
 {
-	return;
 }
 static inline void ol_tx_desc_reset_timestamp(struct ol_tx_desc_t *tx_desc)
 {
-	return;
 }
 #endif
 
@@ -126,7 +122,6 @@ ol_tx_desc_count_inc(struct ol_txrx_vdev_t *vdev)
 static inline void
 ol_tx_desc_count_inc(struct ol_txrx_vdev_t *vdev)
 {
-	return;
 }
 
 #endif
@@ -300,7 +295,6 @@ ol_tx_desc_vdev_rm(struct ol_tx_desc_t *tx_desc)
 static inline void
 ol_tx_desc_vdev_rm(struct ol_tx_desc_t *tx_desc)
 {
-	return;
 }
 #endif
 
@@ -583,13 +577,14 @@ struct ol_tx_desc_t *ol_tx_desc_ll(struct ol_txrx_pdev_t *pdev,
 			qdf_dma_addr_t frag_paddr;
 #ifdef HELIUMPLUS_DEBUG
 			void *frag_vaddr;
+
 			frag_vaddr = qdf_nbuf_get_frag_vaddr(netbuf, i);
 #endif
 			frag_len = qdf_nbuf_get_frag_len(netbuf, i);
 			frag_paddr = qdf_nbuf_get_frag_paddr(netbuf, i);
 #if defined(HELIUMPLUS)
-			htt_tx_desc_frag(pdev->htt_pdev, tx_desc->htt_frag_desc, i - 1,
-				 frag_paddr, frag_len);
+			htt_tx_desc_frag(pdev->htt_pdev, tx_desc->htt_frag_desc,
+					 i - 1, frag_paddr, frag_len);
 #if defined(HELIUMPLUS_DEBUG)
 			qdf_print("%s:%d: htt_fdesc=%p frag=%d frag_vaddr=0x%p frag_paddr=0x%llx len=%zu\n",
 				  __func__, __LINE__, tx_desc->htt_frag_desc,
@@ -597,8 +592,8 @@ struct ol_tx_desc_t *ol_tx_desc_ll(struct ol_txrx_pdev_t *pdev,
 			ol_txrx_dump_pkt(netbuf, frag_paddr, 64);
 #endif /* HELIUMPLUS_DEBUG */
 #else /* ! defined(HELIUMPLUS) */
-			htt_tx_desc_frag(pdev->htt_pdev, tx_desc->htt_tx_desc, i - 1,
-							 frag_paddr, frag_len);
+			htt_tx_desc_frag(pdev->htt_pdev, tx_desc->htt_tx_desc,
+					 i - 1, frag_paddr, frag_len);
 #endif /* defined(HELIUMPLUS) */
 		}
 	}
@@ -739,6 +734,7 @@ void ol_tx_desc_frame_free_nonstd(struct ol_txrx_pdev_t *pdev,
 		ota_ack_cb = pdev->tx_mgmt.callbacks[mgmt_type].ota_ack_cb;
 		if (ota_ack_cb) {
 			void *ctxt;
+
 			ctxt = pdev->tx_mgmt.callbacks[mgmt_type].ctxt;
 			ota_ack_cb(ctxt, tx_desc->netbuf, had_error);
 		}
