@@ -52,7 +52,7 @@
 /* MAX iteration count to wait for Entry point to exit before
  * we proceed with SSR in WD Thread
  */
-#define MAX_SSR_WAIT_ITERATIONS 200
+#define MAX_SSR_WAIT_ITERATIONS 100
 #define MAX_SSR_PROTECT_LOG (16)
 
 static atomic_t ssr_protect_entry_count;
@@ -1168,6 +1168,13 @@ bool cds_wait_for_external_threads_completion(const char *caller_func)
 				  "%s: Waiting for %d active entry points to exit",
 				  __func__, r);
 			msleep(SSR_WAIT_SLEEP_TIME);
+			if (count == (MAX_SSR_WAIT_ITERATIONS/2)) {
+				QDF_TRACE(QDF_MODULE_ID_QDF,
+					QDF_TRACE_LEVEL_ERROR,
+					"%s: in middle of waiting for active entry points:",
+					__func__);
+				cds_print_external_threads();
+			}
 		}
 	}
 
