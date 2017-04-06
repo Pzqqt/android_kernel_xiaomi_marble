@@ -1296,6 +1296,9 @@ lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 						* retry_int);
 		}
 #endif
+
+		if (LIM_IS_AP_ROLE(pe_session)  && sta->non_ecsa_capable)
+			pe_session->lim_non_ecsa_cap_num++;
 	}
 
 	qdf_mem_set((uint8_t *) &beacon_params, sizeof(beacon_params), 0);
@@ -1305,9 +1308,6 @@ lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 		    WNI_CFG_FORCE_POLICY_PROTECTION_DISABLE))
 			lim_decide_ap_protection(mac_ctx, peer_addr,
 				&beacon_params, pe_session);
-
-	if (LIM_IS_AP_ROLE(pe_session) && sta->non_ecsa_capable)
-		pe_session->lim_non_ecsa_cap_num++;
 
 	lim_update_short_preamble(mac_ctx, peer_addr, &beacon_params,
 		pe_session);
