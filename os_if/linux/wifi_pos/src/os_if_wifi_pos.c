@@ -316,7 +316,7 @@ void os_if_wifi_pos_send_peer_status(struct qdf_mac_addr *peer_mac,
 	os_if_wifi_pos_send_rsp(wifi_pos_get_app_pid(psoc),
 				ANI_MSG_PEER_STATUS_IND,
 				sizeof(*peer_info), (uint8_t *)peer_info);
-	return;
+	qdf_mem_free(peer_info);
 }
 
 void os_if_wifi_pos_set_ftm_cap(struct wlan_objmgr_psoc *psoc, uint32_t val)
