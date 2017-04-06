@@ -33,10 +33,6 @@
 
 #include "dfs.h"
 
-#define DFS_SECOND_SEGMENT_BANGRADAR  23
-#define DFS_SHOW_PRECAC_LISTS         24
-#define DFS_RESET_PRECAC_LISTS        25
-
 #define VHT160_IEEE_FREQ_DIFF 16
 #define TARGET_TYPE_AR900B    9
 #define TARGET_TYPE_QCA9984   10

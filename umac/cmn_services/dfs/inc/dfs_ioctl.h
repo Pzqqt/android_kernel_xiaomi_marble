@@ -48,6 +48,9 @@
 #define DFS_GET_CAC_VALID_TIME   20
 #define DFS_SET_CAC_VALID_TIME   21
 #define DFS_SHOW_NOLHISTORY      22
+#define DFS_SECOND_SEGMENT_BANGRADAR  23
+#define DFS_SHOW_PRECAC_LISTS    24
+#define DFS_RESET_PRECAC_LISTS   25
 
 /*
  * Spectral IOCTLs use DFS_LAST_IOCTL as the base.

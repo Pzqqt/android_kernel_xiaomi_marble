@@ -22,6 +22,7 @@
  * various ioctls to set and get radar detection thresholds.
  */
 
+#include <dfs_ioctl.h>
 #include "../dfs_zero_cac.h"
 #include "wlan_dfs_lmac_api.h"
 #include "wlan_dfs_mlme_api.h"

@@ -30,9 +30,9 @@
 #include <qdf_time.h>
 #include <qdf_timer.h>
 
+#include <dfs_ioctl.h>
 #include "dfs_structs.h"
 #include "dfs_channel.h"
-#include "dfs_ioctl.h"
 #include "dfs_ioctl_private.h"
 #include <i_qdf_types.h>     /* For qdf_packed*/
 #include <queue.h>           /* For STAILQ_ENTRY */

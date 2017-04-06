@@ -26,9 +26,9 @@
  * NOL when its time is up.
  */
 
+#include <dfs_ioctl.h>
 #include "../dfs.h"
 #include "../dfs_channel.h"
-#include "../dfs_ioctl.h"
 #include "../dfs_ioctl_private.h"
 #include "qdf_time.h"
 #include "wlan_dfs_mlme_api.h"
