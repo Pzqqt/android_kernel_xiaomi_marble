@@ -928,6 +928,12 @@ struct dp_vdev {
 	/* VDEV Stats */
 	struct cdp_vdev_stats stats;
 	bool lro_enable;
+
+	/* Is this a proxySTA VAP */
+	bool proxysta_vdev;
+
+	/* Address search flags to be configured in HAL descriptor */
+	uint8_t hal_desc_addr_search_flags;
 };
 
 

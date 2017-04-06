@@ -3082,13 +3082,22 @@ static void dp_set_vdev_param(struct cdp_vdev *vdev_handle,
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
 
 	switch (param) {
+	case CDP_ENABLE_WDS:
+		vdev->wds_enabled = val;
+		break;
 	case CDP_ENABLE_NAWDS:
 		vdev->nawds_enabled = val;
 	case CDP_ENABLE_MCAST_EN:
 		vdev->mcast_enhancement_en = val;
+		break;
+	case CDP_ENABLE_PROXYSTA:
+		vdev->proxysta_vdev = val;
+		break;
 	default:
 		break;
 	}
+
+	dp_tx_vdev_update_search_flags(vdev);
 }
 
 /**

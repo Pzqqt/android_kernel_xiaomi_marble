@@ -143,6 +143,7 @@ struct dp_tx_msdu_info_s {
 
 QDF_STATUS dp_tx_vdev_attach(struct dp_vdev *vdev);
 QDF_STATUS dp_tx_vdev_detach(struct dp_vdev *vdev);
+void dp_tx_vdev_update_search_flags(struct dp_vdev *vdev);
 
 QDF_STATUS dp_tx_soc_attach(struct dp_soc *soc);
 QDF_STATUS dp_tx_soc_detach(struct dp_soc *soc);

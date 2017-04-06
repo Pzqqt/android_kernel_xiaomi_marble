@@ -444,6 +444,8 @@ struct cdp_soc_t {
 enum cdp_vdev_param_type {
 	CDP_ENABLE_NAWDS,
 	CDP_ENABLE_MCAST_EN,
+	CDP_ENABLE_WDS,
+	CDP_ENABLE_PROXYSTA,
 };
 
 #define TXRX_FW_STATS_TXSTATS                     1

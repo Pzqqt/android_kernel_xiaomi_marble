@@ -678,18 +678,8 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	if (tx_desc->flags & DP_TX_DESC_FLAG_TO_FW)
 		hal_tx_desc_set_to_fw(hal_tx_desc_cached, 1);
 
-	/*
-	 * TODO
-	 * For AP mode, enable AddrX flag only
-	 * For all other modes, enable both AddrX and AddrY
-	 * flags for now
-	 */
-	if (vdev->opmode == wlan_op_mode_ap)
-		hal_tx_desc_set_addr_search_flags(hal_tx_desc_cached,
-			HAL_TX_DESC_ADDRX_EN);
-	else
-		hal_tx_desc_set_addr_search_flags(hal_tx_desc_cached,
-			HAL_TX_DESC_ADDRX_EN | HAL_TX_DESC_ADDRY_EN);
+	hal_tx_desc_set_addr_search_flags(hal_tx_desc_cached,
+			vdev->hal_desc_addr_search_flags);
 
 	if ((qdf_nbuf_get_tx_cksum(tx_desc->nbuf) == QDF_NBUF_TX_CKSUM_TCP_UDP)
 		|| qdf_nbuf_is_tso(tx_desc->nbuf))  {
@@ -1973,7 +1963,6 @@ uint32_t dp_tx_comp_handler(struct dp_soc *soc, uint32_t ring_id,
  */
 QDF_STATUS dp_tx_vdev_attach(struct dp_vdev *vdev)
 {
-
 	/*
 	 * Fill HTT TCL Metadata with Vdev ID and MAC ID
 	 */
@@ -1991,7 +1980,32 @@ QDF_STATUS dp_tx_vdev_attach(struct dp_vdev *vdev)
 	 */
 	HTT_TX_TCL_METADATA_VALID_HTT_SET(vdev->htt_tcl_metadata, 0);
 
+	dp_tx_vdev_update_search_flags(vdev);
+
 	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_tx_vdev_update_search_flags() - Update vdev flags as per opmode
+ * @vdev: virtual device instance
+ *
+ * Return: void
+ *
+ */
+void dp_tx_vdev_update_search_flags(struct dp_vdev *vdev)
+{
+	/*
+	 * Enable AddrY (SA based search) only for non-WDS STA and
+	 * ProxySTA VAP modes.
+	 *
+	 * In all other VAP modes, only DA based search should be
+	 * enabled
+	 */
+	if ((vdev->opmode == wlan_op_mode_sta &&
+				(!vdev->wds_enabled || vdev->proxysta_vdev)))
+		vdev->hal_desc_addr_search_flags = HAL_TX_DESC_ADDRY_EN;
+	else
+		vdev->hal_desc_addr_search_flags = HAL_TX_DESC_ADDRX_EN;
 }
 
 /**
