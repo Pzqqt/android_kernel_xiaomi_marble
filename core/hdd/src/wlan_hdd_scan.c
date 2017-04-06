@@ -64,31 +64,31 @@
 #define RATE_MASK 0x7f
 
 /**
- * typedef tSSIDBcastType - SSID broadcast type
+ * enum essid_bcast_type - SSID broadcast type
  * @eBCAST_UNKNOWN: Broadcast unknown
  * @eBCAST_NORMAL: Broadcast normal
  * @eBCAST_HIDDEN: Broadcast hidden
  */
-typedef enum eSSIDBcastType {
+enum essid_bcast_type {
 	eBCAST_UNKNOWN = 0,
 	eBCAST_NORMAL = 1,
 	eBCAST_HIDDEN = 2,
-} tSSIDBcastType;
+};
 
 #ifndef NAPIER_SCAN
 /**
- * typedef hdd_scan_info_t - HDD scan info
+ * hdd_scan_info_t - HDD scan info
  * @dev: Pointer to net device
  * @info: Pointer to request info
  * @start: Start pointer
  * @end: End pointer
  */
-typedef struct hdd_scan_info {
+struct hdd_scan_info {
 	struct net_device *dev;
 	struct iw_request_info *info;
 	char *start;
 	char *end;
-} hdd_scan_info_t, *hdd_scan_info_tp;
+};
 
 /**
  * hdd_translate_abg_rate_to_mbps_rate() - translate abg rate to Mbps rate
@@ -116,7 +116,7 @@ static int32_t hdd_translate_abg_rate_to_mbps_rate(uint8_t *pFcRate)
  * Return: 0 for success, non zero for failure
  */
 static int hdd_add_iw_stream_event(int cmd, int length, char *data,
-				   hdd_scan_info_t *pscanInfo,
+				   struct hdd_scan_info *pscanInfo,
 				   char **last_event,
 				   char **current_event)
 {
@@ -377,9 +377,9 @@ static void hdd_vendor_scan_callback(hdd_adapter_t *adapter,
 		goto nla_put_failure;
 	for (i = 0; i < req->n_channels; i++) {
 		if (nla_put_u32(skb, i, req->channels[i]->center_freq)) {
-				hdd_err("Failed to add channel");
-				goto nla_put_failure;
-			}
+			hdd_err("Failed to add channel");
+			goto nla_put_failure;
+		}
 	}
 	nla_nest_end(skb, attr);
 
@@ -414,7 +414,6 @@ static void hdd_vendor_scan_callback(hdd_adapter_t *adapter,
 nla_put_failure:
 	kfree_skb(skb);
 	qdf_mem_free(req);
-	return;
 }
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 7, 0))
 /**
@@ -526,9 +525,8 @@ static QDF_STATUS hdd_cfg80211_scan_done_callback(tHalHandle halHandle,
 	 * cfg80211_scan_done informing NL80211 about completion
 	 * of scanning
 	 */
-	if (status == eCSR_SCAN_ABORT || status == eCSR_SCAN_FAILURE) {
+	if (status == eCSR_SCAN_ABORT || status == eCSR_SCAN_FAILURE)
 		aborted = true;
-	}
 
 	if (!aborted && !hddctx->beacon_probe_rsp_cnt_per_scan) {
 		hdd_debug("NO SCAN result");
@@ -636,6 +634,7 @@ static bool wlan_hdd_sap_skip_scan_check(hdd_context_t *hdd_ctx,
 	skip = true;
 	for (i = 0; i < request->n_channels ; i++) {
 		bool find = false;
+
 		for (j = 0; j < hdd_ctx->num_of_channels; j++) {
 			if (hdd_ctx->last_acs_channel_list[j] ==
 			   request->channels[i]->hw_value) {
@@ -666,6 +665,7 @@ void wlan_hdd_cfg80211_scan_block_cb(struct work_struct *work)
 	hdd_adapter_t *adapter = container_of(work,
 					      hdd_adapter_t, scan_block_work);
 	struct cfg80211_scan_request *request;
+
 	if (WLAN_HDD_ADAPTER_MAGIC != adapter->magic) {
 		hdd_err("HDD adapter context is invalid");
 		return;
@@ -1013,6 +1013,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	if ((request->ssids) && (0 < request->n_ssids)) {
 		tCsrSSIDInfo *SsidInfo;
 		int j;
+
 		scan_req.SSIDs.numOfSSIDs = request->n_ssids;
 		/* Allocate num_ssid tCsrSSIDInfo structure */
 		SsidInfo = scan_req.SSIDs.SSIDList =
@@ -1071,6 +1072,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	if (request->n_channels) {
 		char chList[(request->n_channels * 5) + 1];
 		int len;
+
 		channelList = qdf_mem_malloc(request->n_channels);
 		if (NULL == channelList) {
 			hdd_err("channelList malloc failed channelList");
@@ -1132,10 +1134,12 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 						 request->ie_len);
 		if (pP2pIe != NULL) {
 #ifdef WLAN_FEATURE_P2P_DEBUG
-			if (((global_p2p_connection_status == P2P_GO_NEG_COMPLETED)
+			if (((global_p2p_connection_status ==
+							P2P_GO_NEG_COMPLETED)
 			     || (global_p2p_connection_status ==
 				 P2P_GO_NEG_PROCESS))
-			    && (QDF_P2P_CLIENT_MODE == pAdapter->device_mode)) {
+			    && (QDF_P2P_CLIENT_MODE ==
+						pAdapter->device_mode)) {
 				global_p2p_connection_status =
 					P2P_CLIENT_CONNECTING_STATE_1;
 				hdd_debug("[P2P State] Changing state from Go nego completed to Connection is started");
@@ -1152,7 +1156,9 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 			}
 #endif
 
-			/* no_cck will be set during p2p find to disable 11b rates */
+			/* no_cck will be set during p2p find to
+			 * disable 11b rates
+			 */
 			if (request->no_cck) {
 				hdd_debug("This is a P2P Search");
 				scan_req.p2pSearch = 1;
@@ -1165,15 +1171,13 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 				}
 
 				/*
-				 * Skip Dfs Channel in case of P2P Search if it is set in
-				 * ini file
+				 * Skip Dfs Channel in case of P2P Search if
+				 * it is set in ini file
 				 */
-				if (cfg_param->skipDfsChnlInP2pSearch) {
+				if (cfg_param->skipDfsChnlInP2pSearch)
 					scan_req.skipDfsChnlInP2pSearch = 1;
-				} else {
+				else
 					scan_req.skipDfsChnlInP2pSearch = 0;
-				}
-
 			}
 		}
 	} else {
@@ -1189,11 +1193,12 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 
 	/* acquire the wakelock to avoid the apps suspend during the scan. To
 	 * address the following issues.
-	 * 1) Disconnected scenario: we are not allowing the suspend as WLAN is not in
-	 * BMPS/IMPS this result in android trying to suspend aggressively and backing off
-	 * for long time, this result in apps running at full power for long time.
-	 * 2) Connected scenario: If we allow the suspend during the scan, RIVA will
-	 * be stuck in full power because of resume BMPS
+	 * 1) Disconnected scenario: we are not allowing the suspend as WLAN
+	 * is not in BMPS/IMPS this result in android trying to suspend
+	 * aggressively and backing off for long time, this result in apps
+	 * running at full power for long time.
+	 * 2) Connected scenario: If we allow the suspend during the scan,
+	 * RIVA will be stuck in full power because of resume BMPS
 	 */
 	hdd_prevent_suspend_timeout(HDD_WAKE_LOCK_SCAN_DURATION,
 				    WIFI_POWER_EVENT_WAKELOCK_SCAN);
@@ -1258,6 +1263,7 @@ int wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 			   struct cfg80211_scan_request *request)
 {
 	int ret;
+
 	cds_ssr_protect(__func__);
 	ret = __wlan_hdd_cfg80211_scan(wiphy,
 				request, NL_SCAN);
@@ -1282,6 +1288,7 @@ int wlan_hdd_cfg80211_tdls_scan(struct wiphy *wiphy,
 				uint8_t source)
 {
 	int ret;
+
 	cds_ssr_protect(__func__);
 	ret = __wlan_hdd_cfg80211_scan(wiphy,
 				request, source);
@@ -1955,11 +1962,12 @@ static int __wlan_hdd_cfg80211_sched_scan_stop(struct net_device *dev)
 	/* The return 0 is intentional when Recovery and Load/Unload in
 	 * progress. We did observe a crash due to a return of
 	 * failure in sched_scan_stop , especially for a case where the unload
-	 * of the happens at the same time. The function __cfg80211_stop_sched_scan
-	 * was clearing rdev->sched_scan_req only when the sched_scan_stop returns
-	 * success. If it returns a failure , then its next invocation due to the
-	 * clean up of the second interface will have the dev pointer corresponding
-	 * to the first one leading to a crash.
+	 * of the happens at the same time. The function
+	 * __cfg80211_stop_sched_scan was clearing rdev->sched_scan_req only
+	 * when the sched_scan_stop returns success. If it returns a failure ,
+	 * then its next invocation due to the clean up of the second interface
+	 * will have the dev pointer corresponding to the first one leading to
+	 * a crash.
 	 */
 	if (cds_is_driver_recovering() || cds_is_driver_in_bad_state()) {
 		hdd_info("Recovery in Progress. State: 0x%x Ignore!!!",
@@ -1993,7 +2001,7 @@ int wlan_hdd_cfg80211_sched_scan_stop(struct wiphy *wiphy,
 #endif /*FEATURE_WLAN_SCAN_PNO */
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 5, 0)) || \
-    defined(CFG80211_ABORT_SCAN)
+	defined(CFG80211_ABORT_SCAN)
 /**
  * __wlan_hdd_cfg80211_abort_scan() - cfg80211 abort scan api
  * @wiphy: Pointer to wiphy
