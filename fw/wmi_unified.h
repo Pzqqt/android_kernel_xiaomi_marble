@@ -271,6 +271,8 @@ typedef enum {
     WMI_SCAN_PROB_REQ_OUI_CMDID,
     /** config adaptive dwell scan */
     WMI_SCAN_ADAPTIVE_DWELL_CONFIG_CMDID,
+    /** Only applicable to DBS capable product */
+    WMI_SET_SCAN_DBS_DUTY_CYCLE_CMDID,
 
     /* PDEV(physical device) specific commands */
     /** set regulatorty ctl id used by FW to determine the exact ctl power limits */
@@ -2071,6 +2073,7 @@ typedef enum {
     WMI_FW_AP_RTT_RESPR =      0x00000080,
     WMI_FW_NAN_RTT_INITR =     0x00000100,
     WMI_FW_NAN_RTT_RESPR =     0x00000200,
+    WMI_FW_SCAN_DBS_POLICY =   0x00000400,
     /*
      * New fw sub feature capabilites before
      * WMI_FW_MAX_SUB_FEAT_CAP
@@ -2505,6 +2508,9 @@ typedef struct {
      * which is using MAC ID. 1 means PDEV ID, 0 means MAC ID.
      */
     A_UINT32 use_pdev_id;
+
+    /** Maximum number of scan clients whose DBS scan duty cycle can be configured */
+    A_UINT32 max_num_dbs_scan_duty_cycle;
 } wmi_resource_config;
 
 #define WMI_RSRC_CFG_FLAG_SET(word32, flag, value) \
@@ -2733,6 +2739,8 @@ typedef struct {
     A_UINT32 ie_bitmap[WMI_IE_BITMAP_SIZE];
     /** Number of vendor OUIs. In the TLV vendor_oui[] **/
     A_UINT32 num_vendor_oui;
+    /** Scan control flags extended **/
+    A_UINT32 scan_ctrl_flags_ext;
 
 /**
  * TLV (tag length value) parameters follow the scan_cmd
@@ -2827,6 +2835,17 @@ typedef enum {
 #define WMI_SCAN_STOP_ONE       0x00000000
 #define WMI_SCN_STOP_VAP_ALL    0x01000000
 #define WMI_SCAN_STOP_ALL       0x04000000
+
+/** extended Scan ctrl flags **/
+#define WMI_SCAN_FLAG_EXT_DBS_SCAN_POLICY_MASK 0x00000003 /* Bit 0-1 reserved for DBS scan selection policy.*/
+
+#define WMI_SCAN_DBS_POLICY_DEFAULT             0x0 /** Select duty cycle if configured, else fall back to whatever
+                                                        policy scan manager computes */
+#define WMI_SCAN_DBS_POLICY_FORCE_NONDBS        0x1 /** Force to select Non-DBS scan */
+#define WMI_SCAN_DBS_POLICY_IGNORE_DUTY         0x2 /** Ignore duty cycle even if configured and fall back to whatever
+                                                        policy scan manager computes*/
+#define WMI_SCAN_DBS_POLICY_RESERVED            0x3
+#define WMI_SCAN_DBS_POLICY_MAX                 0x3
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_stop_scan_cmd_fixed_param */
@@ -18203,6 +18222,33 @@ typedef struct {
  */
 } wmi_scan_adaptive_dwell_config_fixed_param;
 
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_scan_dbs_duty_cycle_param_tlv */
+    /**  module_id **/
+    A_UINT32 module_id;
+   /** number of dbs scans */
+    A_UINT32 num_dbs_scans;
+   /** number of non-dbs scans */
+    A_UINT32 num_non_dbs_scans;
+} wmi_scan_dbs_duty_cycle_tlv_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_scan_dbs_duty_cycle_fixed_param */
+    /* number of scan client dutycycle param elements */
+    A_UINT32 num_clients;
+    /** pdev_id for identifying the MAC
+     * See macros starting with WMI_PDEV_ID_ for values.
+     * In non-DBDC case host should set it to 0
+     */
+    A_UINT32 pdev_id;
+/**
+ * followed by TLV (tag length value) parameters array
+ * The TLV's are:
+ * wmi_scan_selection_duty_cycle_tlv_param[num_clients];
+ */
+} wmi_scan_dbs_duty_cycle_fixed_param;
+
+
 typedef enum {
     WMI_REG_EXT_FCC_MIDBAND = 0,
     WMI_REG_EXT_JAPAN_MIDBAND = 1,
@@ -18812,6 +18858,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_VDEV_GET_TX_POWER_CMDID);
         WMI_RETURN_STRING(WMI_OFFCHAN_DATA_TX_SEND_CMDID);
         WMI_RETURN_STRING(WMI_SET_INIT_COUNTRY_CMDID);
+        WMI_RETURN_STRING(WMI_SET_SCAN_DBS_DUTY_CYCLE_CMDID);
     }
 
     return "Invalid WMI cmd";
