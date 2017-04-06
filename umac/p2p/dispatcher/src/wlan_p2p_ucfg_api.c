@@ -190,6 +190,38 @@ QDF_STATUS ucfg_p2p_roc_cancel_req(struct wlan_objmgr_psoc *soc,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS ucfg_p2p_cleanup_roc(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct p2p_soc_priv_obj *p2p_soc_obj;
+	uint32_t vdev_id;
+
+	p2p_debug("vdev:%p", vdev);
+
+	if (!vdev) {
+		p2p_err("null vdev");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wlan_vdev_obj_lock(vdev);
+	vdev_id = (uint32_t)wlan_vdev_get_id(vdev);
+	psoc = wlan_vdev_get_psoc(vdev);
+	wlan_vdev_obj_unlock(vdev);
+	if (!psoc) {
+		p2p_err("null psoc");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	p2p_soc_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+			WLAN_UMAC_COMP_P2P);
+	if (!p2p_soc_obj) {
+		p2p_err("p2p soc context is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return p2p_cleanup_roc_by_vdev(p2p_soc_obj, vdev_id);
+}
+
 QDF_STATUS ucfg_p2p_mgmt_tx(struct wlan_objmgr_psoc *soc,
 	struct p2p_mgmt_tx *mgmt_frm, uint64_t *cookie)
 {

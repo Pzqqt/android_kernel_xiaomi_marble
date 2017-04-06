@@ -200,6 +200,16 @@ QDF_STATUS ucfg_p2p_roc_cancel_req(struct wlan_objmgr_psoc *soc,
 	uint64_t cookie);
 
 /**
+ * ucfg_p2p_cleanup_roc() - Cleanup roc request by vdev
+ * @vdev: pointer to vdev object
+ *
+ * This function call P2P API to cleanup roc request by vdev.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS ucfg_p2p_cleanup_roc(struct wlan_objmgr_vdev *vdev);
+
+/**
  * ucfg_p2p_mgmt_tx() - Mgmt frame tx request
  * @soc: soc context
  * @mgmt_frm: TX mgmt frame parameters

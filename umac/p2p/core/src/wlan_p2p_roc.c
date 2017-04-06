@@ -663,7 +663,67 @@ QDF_STATUS p2p_cleanup_roc_queue(struct p2p_soc_priv_obj *p2p_soc_obj)
 			status = qdf_wait_single_event(
 				&p2p_soc_obj->cancel_roc_done,
 				P2P_WAIT_CANCEL_ROC);
-			p2p_err("roc cancellation done, status:%d", status);
+			p2p_debug("roc cancellation done, status:%d", status);
+		}
+	}
+
+	return status;
+}
+
+QDF_STATUS p2p_cleanup_roc_by_vdev(
+	struct p2p_soc_priv_obj *p2p_soc_obj, uint32_t vdev_id)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct p2p_roc_context *roc_ctx;
+	qdf_list_node_t *tmp, *pos;
+
+	p2p_debug("clean up idle roc request, roc queue size:%d, vdev id:%d",
+		qdf_list_size(&p2p_soc_obj->roc_q), vdev_id);
+	list_for_each_safe(pos, tmp, &p2p_soc_obj->roc_q.anchor) {
+		roc_ctx = list_entry(pos, struct p2p_roc_context,
+					node);
+
+		p2p_debug("p2p soc obj:%p, roc ctx:%p, vdev_id:%d, scan_id:%d, cookie:%llx, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
+			roc_ctx->p2p_soc_obj, roc_ctx,
+			roc_ctx->vdev_id, roc_ctx->scan_id,
+			roc_ctx->cookie, roc_ctx->chan,
+			roc_ctx->phy_mode, roc_ctx->duration,
+			roc_ctx->roc_type, roc_ctx->roc_state);
+
+		if (roc_ctx->roc_state == ROC_STATE_IDLE &&
+			roc_ctx->vdev_id == vdev_id) {
+			status = qdf_list_remove_node(
+					&p2p_soc_obj->roc_q,
+					(qdf_list_node_t *)roc_ctx);
+			if (status == QDF_STATUS_SUCCESS)
+				qdf_mem_free(roc_ctx);
+			else
+				p2p_err("Failed to remove roc ctx from queue");
+		}
+	}
+
+	p2p_debug("clean up started roc request, roc queue size:%d",
+		qdf_list_size(&p2p_soc_obj->roc_q));
+	list_for_each_safe(pos, tmp, &p2p_soc_obj->roc_q.anchor) {
+		roc_ctx = list_entry(pos, struct p2p_roc_context,
+					node);
+
+	p2p_debug("p2p soc obj:%p, roc ctx:%p, vdev_id:%d, scan_id:%d, cookie:%llx, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
+		roc_ctx->p2p_soc_obj, roc_ctx, roc_ctx->vdev_id,
+		roc_ctx->scan_id, roc_ctx->cookie, roc_ctx->chan,
+		roc_ctx->phy_mode, roc_ctx->duration,
+		roc_ctx->roc_type, roc_ctx->roc_state);
+
+		if (roc_ctx->roc_state != ROC_STATE_IDLE &&
+			roc_ctx->vdev_id == vdev_id) {
+			if (roc_ctx->roc_state !=
+			    ROC_STATE_CANCEL_IN_PROG)
+				p2p_execute_cancel_roc_req(roc_ctx);
+
+			status = qdf_wait_single_event(
+				&p2p_soc_obj->cancel_roc_done,
+				P2P_WAIT_CANCEL_ROC);
+			p2p_debug("RoC cancellation done, status:%d", status);
 		}
 	}
 
@@ -719,7 +779,7 @@ QDF_STATUS p2p_process_cancel_roc_req(
 		p2p_soc_obj, cancel_roc_ctx->cookie, curr_roc_ctx);
 
 	if (!curr_roc_ctx) {
-		p2p_err("Failed to find roc req by cookie, cookie %llx",
+		p2p_debug("Failed to find roc req by cookie, cookie %llx",
 				cancel_roc_ctx->cookie);
 		return QDF_STATUS_E_INVAL;
 	}
