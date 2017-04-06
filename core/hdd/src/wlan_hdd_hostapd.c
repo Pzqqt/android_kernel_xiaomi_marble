@@ -7287,14 +7287,23 @@ static int wlan_hdd_setup_driver_overrides(hdd_adapter_t *ap_adapter)
 		if (sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11n)
 			sap_cfg->SapHw_mode = eCSR_DOT11_MODE_11ac;
 
-		if (sap_cfg->channel >= 36)
+		if (sap_cfg->channel >= 36) {
 			sap_cfg->ch_width_orig =
 					hdd_ctx->config->vhtChannelWidth;
-		else
-			sap_cfg->ch_width_orig =
-				hdd_ctx->config->nChannelBondingMode24GHz ?
-				eHT_CHANNEL_WIDTH_40MHZ :
-				eHT_CHANNEL_WIDTH_20MHZ;
+		} else {
+			/*
+			 * Allow 40 Mhz in 2.4 Ghz only if indicated by
+			 * supplicant after OBSS scan and if 2.4 Ghz channel
+			 * bonding is set in INI
+			 */
+			if (sap_cfg->ch_width_orig >= eHT_CHANNEL_WIDTH_40MHZ &&
+			   hdd_ctx->config->nChannelBondingMode24GHz)
+				sap_cfg->ch_width_orig =
+					eHT_CHANNEL_WIDTH_40MHZ;
+			else
+				sap_cfg->ch_width_orig =
+					eHT_CHANNEL_WIDTH_20MHZ;
+		}
 	}
 	sap_cfg->ch_params.ch_width = sap_cfg->ch_width_orig;
 	wlan_reg_set_channel_params(hdd_ctx->hdd_pdev, sap_cfg->channel,
