@@ -7216,6 +7216,8 @@ typedef enum {
     /* param to specify probe request Tx delay during Fast Initial Link Setup */
     WMI_VDEV_PARAM_FILS_MAX_CHANNEL_GUARD_TIME, /* units = milliseconds */
 
+    /* enable or disable NOA for P2P GO */
+    WMI_VDEV_PARAM_DISABLE_NOA_P2P_GO,
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
