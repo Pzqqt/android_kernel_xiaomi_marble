@@ -5844,8 +5844,8 @@ QDF_STATUS sme_open_session(tHalHandle hHal, csr_roam_completeCallback callback,
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "%s: type=%d, subType=%d addr:%pM",
-		  __func__, type, subType, pSelfMacAddr);
+		  "%s: type=%d, session_id %d subType=%d addr:%pM",
+		  __func__, type, session_id, subType, pSelfMacAddr);
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_ERROR(status))
