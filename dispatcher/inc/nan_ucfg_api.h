@@ -197,6 +197,20 @@ QDF_STATUS ucfg_nan_req_processor(struct wlan_objmgr_vdev *vdev,
 				  void *in_req, uint32_t req_type);
 
 /**
+ * ucfg_nan_event_handler: ucfg API to be called from legacy code to
+ * post events to os_if/hdd layer
+ * @psoc: pointer to psoc object
+ * @vdev: pointer to vdev object
+ * @type: message type
+ * @msg: msg buffer
+ *
+ * Return: None
+ */
+void ucfg_nan_event_handler(struct wlan_objmgr_psoc *psoc,
+			    struct wlan_objmgr_vdev *vdev,
+			    uint32_t type, void *msg);
+
+/**
  * ucfg_nan_register_hdd_callbacks: ucfg API to set hdd callbacks
  * @psoc: pointer to psoc object
  * @cb_obj: structs containing callbacks
@@ -210,6 +224,16 @@ int ucfg_nan_register_hdd_callbacks(struct wlan_objmgr_psoc *psoc,
 				    struct wlan_objmgr_psoc *,
 				    struct wlan_objmgr_vdev *,
 				    uint32_t, void *));
+
+/*
+ * ucfg_nan_register_lim_callbacks: ucfg API to set lim callbacks
+ * @psoc: pointer to psoc object
+ * @cb_obj: structs containing callbacks
+ *
+ * Return: status of operation
+ */
+int ucfg_nan_register_lim_callbacks(struct wlan_objmgr_psoc *psoc,
+				    struct nan_callbacks *cb_obj);
 
 /**
  * ucfg_nan_get_callbacks: ucfg API to return callbacks

@@ -322,9 +322,69 @@ struct wlan_objmgr_vdev *ucfg_nan_get_ndi_vdev(struct wlan_objmgr_psoc *psoc,
 	return psoc_obj->vdev;
 }
 
+static struct nan_datapath_initiator_req *ucfg_nan_copy_intiator_req(
+			struct wlan_objmgr_vdev *vdev,
+			struct nan_datapath_initiator_req *in_req)
+{
+	struct nan_datapath_initiator_req *out_req;
+
+	out_req = qdf_mem_malloc(sizeof(*out_req));
+	if (!out_req) {
+		nan_alert("malloc failed");
+		return NULL;
+	}
+
+	qdf_mem_copy(out_req, in_req, sizeof(*out_req));
+	if (in_req->ndp_config.ndp_cfg_len) {
+		out_req->ndp_config.ndp_cfg =
+			qdf_mem_malloc(in_req->ndp_config.ndp_cfg_len);
+		if (!out_req->ndp_config.ndp_cfg) {
+			nan_alert("malloc failed");
+			goto free_resources;
+		}
+		qdf_mem_copy(out_req->ndp_config.ndp_cfg,
+			     in_req->ndp_config.ndp_cfg,
+			     in_req->ndp_config.ndp_cfg_len);
+	}
+
+	if (in_req->ndp_info.ndp_app_info_len) {
+		out_req->ndp_info.ndp_app_info =
+			qdf_mem_malloc(in_req->ndp_info.ndp_app_info_len);
+		if (!out_req->ndp_info.ndp_app_info) {
+			nan_alert("malloc failed");
+			goto free_resources;
+		}
+		qdf_mem_copy(out_req->ndp_info.ndp_app_info,
+			     in_req->ndp_info.ndp_app_info,
+			     in_req->ndp_info.ndp_app_info_len);
+	}
+
+	if (in_req->pmk.pmk_len) {
+		out_req->pmk.pmk = qdf_mem_malloc(in_req->pmk.pmk_len);
+		if (!out_req->pmk.pmk) {
+			nan_alert("malloc failed");
+			goto free_resources;
+		}
+		qdf_mem_copy(out_req->pmk.pmk, in_req->pmk.pmk,
+			     in_req->pmk.pmk_len);
+	}
+
+	/* do not get ref here, rather take ref when request is activated */
+	out_req->vdev = vdev;
+	return out_req;
+
+free_resources:
+	qdf_mem_free(out_req->pmk.pmk);
+	qdf_mem_free(out_req->ndp_info.ndp_app_info);
+	qdf_mem_free(out_req->ndp_config.ndp_cfg);
+	qdf_mem_free(out_req);
+	return NULL;
+}
+
 QDF_STATUS ucfg_nan_req_processor(struct wlan_objmgr_vdev *vdev,
 				  void *in_req, uint32_t req_type)
 {
+	void *req;
 	QDF_STATUS status;
 	struct scheduler_msg msg = {0};
 
@@ -333,8 +393,22 @@ QDF_STATUS ucfg_nan_req_processor(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
+	switch (req_type) {
+	case NDP_INITIATOR_REQ:
+		req = ucfg_nan_copy_intiator_req(vdev, in_req);
+		break;
+	default:
+		nan_err("in correct message req type: %d", req_type);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!req) {
+		nan_err("failed to create local copy");
+		return QDF_STATUS_E_INVAL;
+	}
+
 	msg.type = req_type;
-	msg.bodyptr = in_req;
+	msg.bodyptr = req;
 	msg.callback = nan_scheduled_msg_handler;
 	status = scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -343,6 +417,20 @@ QDF_STATUS ucfg_nan_req_processor(struct wlan_objmgr_vdev *vdev,
 	}
 
 	return status;
+}
+
+void ucfg_nan_event_handler(struct wlan_objmgr_psoc *psoc,
+			    struct wlan_objmgr_vdev *vdev,
+			    uint32_t type, void *msg)
+{
+	struct nan_psoc_priv_obj *psoc_obj = nan_get_psoc_priv_obj(psoc);
+
+	if (!psoc_obj) {
+		nan_err("nan psoc priv object is NULL");
+		return;
+	}
+
+	psoc_obj->cb_obj.os_if_event_handler(psoc, vdev, type, msg);
 }
 
 int ucfg_nan_register_hdd_callbacks(struct wlan_objmgr_psoc *psoc,
@@ -369,6 +457,25 @@ int ucfg_nan_register_hdd_callbacks(struct wlan_objmgr_psoc *psoc,
 				cb_obj->drv_ndi_create_rsp_handler;
 	psoc_obj->cb_obj.drv_ndi_delete_rsp_handler =
 				cb_obj->drv_ndi_delete_rsp_handler;
+
+	psoc_obj->cb_obj.get_peer_idx = cb_obj->get_peer_idx;
+	psoc_obj->cb_obj.new_peer_ind = cb_obj->new_peer_ind;
+
+	return 0;
+}
+
+int ucfg_nan_register_lim_callbacks(struct wlan_objmgr_psoc *psoc,
+				    struct nan_callbacks *cb_obj)
+{
+	struct nan_psoc_priv_obj *psoc_obj = nan_get_psoc_priv_obj(psoc);
+
+	if (!psoc_obj) {
+		nan_err("nan psoc priv object is NULL");
+		return -EINVAL;
+	}
+
+	psoc_obj->cb_obj.add_ndi_peer = cb_obj->add_ndi_peer;
+	psoc_obj->cb_obj.delete_peers_by_addr = cb_obj->delete_peers_by_addr;
 
 	return 0;
 }

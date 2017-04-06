@@ -256,3 +256,161 @@ QDF_STATUS nan_scheduled_msg_handler(struct scheduler_msg *msg)
 	}
 	return QDF_STATUS_SUCCESS;
 }
+
+static QDF_STATUS nan_handle_confirm(
+				struct nan_datapath_confirm_event *confirm)
+{
+	uint8_t vdev_id;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct wlan_objmgr_psoc *psoc;
+	struct nan_psoc_priv_obj *psoc_nan_obj;
+
+	vdev_id = wlan_vdev_get_id(confirm->vdev);
+	psoc = wlan_vdev_get_psoc(confirm->vdev);
+	if (!psoc) {
+		nan_err("psoc is null");
+		status = QDF_STATUS_E_NULL_VALUE;
+		goto free_resource;
+	}
+
+	psoc_nan_obj = nan_get_psoc_priv_obj(psoc);
+	if (!psoc_nan_obj) {
+		nan_err("psoc_nan_obj is null");
+		status = QDF_STATUS_E_NULL_VALUE;
+		goto free_resource;
+	}
+
+	if (confirm->rsp_code != NAN_DATAPATH_RESPONSE_ACCEPT &&
+		confirm->num_active_ndps_on_peer == 0) {
+		/*
+		 * This peer was created at ndp_indication but
+		 * confirm failed, so it needs to be deleted
+		 */
+		nan_err("NDP confirm with reject and no active ndp sessions. deleting peer: "QDF_MAC_ADDRESS_STR" on vdev_id: %d",
+			QDF_MAC_ADDR_ARRAY(confirm->peer_ndi_mac_addr.bytes),
+			vdev_id);
+		psoc_nan_obj->cb_obj.delete_peers_by_addr(vdev_id,
+						confirm->peer_ndi_mac_addr);
+	}
+	psoc_nan_obj->cb_obj.os_if_event_handler(psoc, confirm->vdev,
+						 NDP_CONFIRM, confirm);
+
+free_resource:
+	qdf_mem_free(confirm->ndp_info.ndp_app_info);
+
+	return status;
+}
+
+static QDF_STATUS nan_handle_initiator_rsp(
+				struct nan_datapath_initiator_rsp *rsp,
+				struct wlan_objmgr_vdev **vdev)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct nan_psoc_priv_obj *psoc_nan_obj;
+
+	*vdev = rsp->vdev;
+	psoc = wlan_vdev_get_psoc(rsp->vdev);
+	if (!psoc) {
+		nan_err("psoc is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	psoc_nan_obj = nan_get_psoc_priv_obj(psoc);
+	if (!psoc_nan_obj) {
+		nan_err("psoc_nan_obj is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	psoc_nan_obj->cb_obj.os_if_event_handler(psoc, rsp->vdev,
+					NDP_INITIATOR_RSP, rsp);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS nan_handle_ndp_ind(
+				struct nan_datapath_indication_event *ndp_ind)
+{
+	uint8_t vdev_id;
+	struct wlan_objmgr_psoc *psoc;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct nan_psoc_priv_obj *psoc_nan_obj;
+
+	vdev_id = wlan_vdev_get_id(ndp_ind->vdev);
+	psoc = wlan_vdev_get_psoc(ndp_ind->vdev);
+	if (!psoc) {
+		nan_err("psoc is null");
+		status = QDF_STATUS_E_NULL_VALUE;
+		goto ndp_indication_failed;
+	}
+
+	psoc_nan_obj = nan_get_psoc_priv_obj(psoc);
+	if (!psoc_nan_obj) {
+		nan_err("psoc_nan_obj is null");
+		status = QDF_STATUS_E_NULL_VALUE;
+		goto ndp_indication_failed;
+	}
+
+	nan_debug("role: %d, vdev: %d, csid: %d, peer_mac_addr "
+		QDF_MAC_ADDRESS_STR,
+		ndp_ind->role, vdev_id, ndp_ind->ncs_sk_type,
+		QDF_MAC_ADDR_ARRAY(ndp_ind->peer_mac_addr.bytes));
+
+	if ((ndp_ind->role == NAN_DATAPATH_ROLE_INITIATOR) ||
+	   ((NAN_DATAPATH_ROLE_RESPONDER == ndp_ind->role) &&
+	   (NAN_DATAPATH_ACCEPT_POLICY_ALL == ndp_ind->policy))) {
+		status = psoc_nan_obj->cb_obj.add_ndi_peer(vdev_id,
+						ndp_ind->peer_mac_addr);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			nan_err("Couldn't add ndi peer, ndp_role: %d",
+				ndp_ind->role);
+			goto ndp_indication_failed;
+		}
+	}
+	if (NAN_DATAPATH_ROLE_RESPONDER == ndp_ind->role)
+		psoc_nan_obj->cb_obj.os_if_event_handler(psoc, ndp_ind->vdev,
+						NDP_INDICATION, ndp_ind);
+ndp_indication_failed:
+	qdf_mem_free(ndp_ind->ndp_config.ndp_cfg);
+	qdf_mem_free(ndp_ind->ndp_info.ndp_app_info);
+	qdf_mem_free(ndp_ind->scid.scid);
+
+	return status;
+}
+
+QDF_STATUS nan_event_handler(struct scheduler_msg *pe_msg)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct wlan_serialization_queued_cmd_info cmd;
+
+	cmd.requestor = WLAN_UMAC_COMP_NAN;
+	cmd.cmd_id = 0;
+	cmd.req_type = WLAN_SER_CANCEL_NON_SCAN_CMD;
+	cmd.queue_type = WLAN_SERIALIZATION_ACTIVE_QUEUE;
+
+	if (!pe_msg->bodyptr) {
+		nan_err("msg body is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	switch (pe_msg->type) {
+	case NDP_CONFIRM: {
+		nan_handle_confirm(pe_msg->bodyptr);
+		break;
+	}
+	case NDP_INITIATOR_RSP: {
+		nan_handle_initiator_rsp(pe_msg->bodyptr, &cmd.vdev);
+		cmd.cmd_type = WLAN_SER_CMD_NDP_INIT_REQ;
+		wlan_serialization_remove_cmd(&cmd);
+		break;
+	}
+	case NDP_INDICATION: {
+		nan_handle_ndp_ind(pe_msg->bodyptr);
+		break;
+	}
+	default:
+		nan_alert("Unhandled NDP event: %d", pe_msg->type);
+		status = QDF_STATUS_E_NOSUPPORT;
+		break;
+	}
+	return status;
+}
