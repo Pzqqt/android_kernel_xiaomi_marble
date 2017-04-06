@@ -879,7 +879,7 @@ static netdev_tx_t __hdd_hard_start_xmit(struct sk_buff *skb,
 	struct qdf_mac_addr *mac_addr;
 	uint8_t pkt_type = 0;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	bool is_arp;
+	bool is_arp = false;
 
 #ifdef QCA_WIFI_FTM
 	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE) {
