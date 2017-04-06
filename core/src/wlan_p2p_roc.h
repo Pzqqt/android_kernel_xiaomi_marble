@@ -158,6 +158,19 @@ QDF_STATUS p2p_cleanup_roc_queue(
 	struct p2p_soc_priv_obj *p2p_soc_obj);
 
 /**
+ * p2p_cleanup_roc_by_vdev() - Cleanup roc context by vdev id
+ * @p2p_soc_obj: p2p psoc private object
+ * @vdev_id:     vdev id
+ *
+ * This function cleanup roc context by vdev id, include the roc
+ * context in progressing.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS p2p_cleanup_roc_by_vdev(
+	struct p2p_soc_priv_obj *p2p_soc_obj, uint32_t vdev_id);
+
+/**
  * p2p_process_roc_req() - Process roc request
  * @roc_ctx: roc request context
  *
