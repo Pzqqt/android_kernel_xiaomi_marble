@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -81,10 +81,14 @@ typedef void (*wdi_event_notify)(enum WDI_EVENT_NOTIFY notify,
  */
 
 typedef struct wdi_event_subscribe_t {
-	wdi_event_cb callback;  /* subscriber event callback structure head */
-	void *context;          /* subscriber object that processes the event callback */
+	/* subscriber event callback structure head */
+	wdi_event_cb callback;
+	/* subscriber object that processes the event callback */
+	void *context;
 	struct {
-		/* private - the event subscriber SW shall not use this struct */
+		/*
+		 * private - the event subscriber SW shall not use this struct
+		 */
 		struct wdi_event_subscribe_t *next;
 		struct wdi_event_subscribe_t *prev;
 	} priv;
