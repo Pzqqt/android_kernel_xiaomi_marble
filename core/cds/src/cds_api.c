@@ -1011,6 +1011,8 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc, v_CONTEXT_t cds_context)
 	QDF_STATUS qdf_status;
 	void *ctx;
 
+	dispatcher_psoc_close(psoc);
+
 	qdf_status = wma_wmi_work_close(cds_context);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
@@ -1089,7 +1091,6 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc, v_CONTEXT_t cds_context)
 
 	cds_deregister_all_modules();
 
-	dispatcher_psoc_close(psoc);
 	return QDF_STATUS_SUCCESS;
 }
 
