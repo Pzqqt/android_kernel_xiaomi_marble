@@ -2194,6 +2194,7 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 					WMA_GET_RX_CH(rx_pkt_info), session, 0);
 		break;
 #ifdef FEATURE_WLAN_TDLS
+#ifndef CONVERGED_TDLS_ENABLE
 		case SIR_MAC_TDLS_DIS_RSP:
 			mac_hdr = NULL;
 			frame_len = 0;
@@ -2210,6 +2211,7 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 				session->smeSessionId,
 				WMA_GET_RX_CH(rx_pkt_info), session, rssi);
 		break;
+#endif
 #endif
 		case SIR_MAC_ACTION_EXT_CHANNEL_SWITCH_ID:
 			lim_process_ext_channel_switch_action_frame(mac_ctx,

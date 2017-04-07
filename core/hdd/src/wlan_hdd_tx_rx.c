@@ -486,6 +486,7 @@ static int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	bool granted;
 	uint8_t STAId;
 	hdd_station_ctx_t *pHddStaCtx = &pAdapter->sessionCtx.station;
+	struct qdf_mac_addr *mac_addr;
 #ifdef QCA_PKT_PROTO_TRACE
 	uint8_t proto_type = 0;
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
@@ -643,6 +644,10 @@ static int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 #endif /* QCA_PKT_PROTO_TRACE */
 
 	pAdapter->stats.tx_bytes += skb->len;
+
+	mac_addr = (struct qdf_mac_addr *)skb->data;
+
+	ucfg_tdls_update_tx_pkt_cnt(pAdapter->hdd_vdev, mac_addr);
 
 	wlan_hdd_tdls_update_tx_pkt_cnt(pAdapter, skb);
 
@@ -1032,6 +1037,8 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 	struct sk_buff *next = NULL;
 	hdd_station_ctx_t *pHddStaCtx = NULL;
 	unsigned int cpu_index;
+	struct qdf_mac_addr *mac_addr;
+
 
 	/* Sanity check on inputs */
 	if (unlikely((NULL == context) || (NULL == rxBuf))) {
@@ -1096,6 +1103,10 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 				(uint8_t *)&skb->data[QDF_DP_TRACE_RECORD_SIZE],
 				(qdf_nbuf_len(skb)-QDF_DP_TRACE_RECORD_SIZE),
 				QDF_RX));
+
+		mac_addr = (struct qdf_mac_addr *)(skb->data+QDF_MAC_ADDR_SIZE);
+
+		ucfg_tdls_update_rx_pkt_cnt(pAdapter->hdd_vdev, mac_addr);
 
 		wlan_hdd_tdls_update_rx_pkt_cnt(pAdapter, skb);
 

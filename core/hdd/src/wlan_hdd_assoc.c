@@ -1201,6 +1201,8 @@ static void hdd_send_association_event(struct net_device *dev,
 			/* change logging before release */
 			hdd_debug("LFR3:hdd_send_association_event");
 			/* Update tdls module about the disconnection event */
+			hdd_notify_sta_disconnect(pAdapter->sessionId,
+						 true, pAdapter->hdd_vdev);
 			wlan_hdd_tdls_notify_disconnect(pAdapter, true);
 		}
 #endif
@@ -1291,7 +1293,13 @@ static void hdd_send_association_event(struct net_device *dev,
 						pAdapter->sessionId, &chan_info,
 						pAdapter->device_mode);
 		/* Update tdls module about connection event */
+		hdd_notify_sta_connect(pAdapter->sessionId,
+				       pCsrRoamInfo->tdls_chan_swit_prohibited,
+				       pCsrRoamInfo->tdls_prohibited,
+				       pAdapter->hdd_vdev);
+
 		wlan_hdd_tdls_notify_connect(pAdapter, pCsrRoamInfo);
+
 
 #ifdef MSM_PLATFORM
 #if defined(CONFIG_ICNSS) || defined(CONFIG_CNSS)
@@ -1359,6 +1367,9 @@ static void hdd_send_association_event(struct net_device *dev,
 
 		hdd_lpass_notify_disconnect(pAdapter);
 		/* Update tdls module about the disconnection event */
+		hdd_notify_sta_disconnect(pAdapter->sessionId,
+					  false,
+					  pAdapter->hdd_vdev);
 		wlan_hdd_tdls_notify_disconnect(pAdapter, false);
 
 #ifdef MSM_PLATFORM

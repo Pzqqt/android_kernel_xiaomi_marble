@@ -10580,7 +10580,8 @@ void wlan_hdd_cfg80211_update_wiphy_caps(struct wiphy *wiphy)
 }
 
 /* This function registers for all frame which supplicant is interested in */
-#ifdef CONVERGED_P2P_ENABLE
+#if defined(CONVERGED_P2P_ENABLE) || defined(CONVERGED_TDLS_ENABLE)
+
 void wlan_hdd_cfg80211_register_frames(hdd_adapter_t *pAdapter)
 {
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
@@ -11121,6 +11122,7 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 	policy_mgr_clear_concurrency_mode(pHddCtx->hdd_psoc,
 		pAdapter->device_mode);
 
+	hdd_notify_teardown_tdls_links(pAdapter->hdd_vdev);
 	hdd_update_tdls_ct_and_teardown_links(pHddCtx);
 	if ((pAdapter->device_mode == QDF_STA_MODE) ||
 	    (pAdapter->device_mode == QDF_P2P_CLIENT_MODE) ||
@@ -13021,6 +13023,7 @@ static int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 		goto ret_status;
 	}
 
+	hdd_notify_teardown_tdls_links(pAdapter->hdd_vdev);
 	wlan_hdd_tdls_disable_offchan_and_teardown_links(pHddCtx);
 
 	pRoamProfile = &pWextState->roamProfile;

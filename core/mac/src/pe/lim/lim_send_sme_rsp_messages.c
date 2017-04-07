@@ -60,8 +60,9 @@
 #include "nan_datapath.h"
 #include "lim_assoc_utils.h"
 
+#ifdef CONVERGED_TDLS_ENABLE
 #include "wlan_tdls_tgt_api.h"
-
+#endif
 
 static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
 	tpPESession session_entry, tSirResultCodes result_code,

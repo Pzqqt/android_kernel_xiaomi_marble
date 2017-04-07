@@ -11265,6 +11265,7 @@ static int hdd_update_tdls_config(hdd_context_t *hdd_ctx)
 	tdls_cfg.tdls_add_sta_req = eWNI_SME_TDLS_ADD_STA_REQ;
 	tdls_cfg.tdls_del_sta_req = eWNI_SME_TDLS_DEL_STA_REQ;
 	tdls_cfg.tdls_update_peer_state = WMA_UPDATE_TDLS_PEER_STATE;
+	tdls_cfg.tdls_del_all_peers = eWNI_SME_DEL_ALL_TDLS_PEERS;
 	tdls_cfg.tdls_event_cb = wlan_cfg80211_tdls_event_callback;
 	tdls_cfg.tdls_evt_cb_data = psoc;
 	tdls_cfg.tdls_tl_peer_data = hdd_ctx;
@@ -11281,11 +11282,14 @@ static int hdd_update_tdls_config(hdd_context_t *hdd_ctx)
 		return -EINVAL;
 	}
 
+	hdd_ctx->tdls_umac_comp_active = true;
+
 	return 0;
 }
 #else
 static int hdd_update_tdls_config(hdd_context_t *hdd_ctx)
 {
+	hdd_ctx->tdls_umac_comp_active = false;
 	return 0;
 }
 #endif

@@ -2910,7 +2910,7 @@ lim_send_tdls_comp_mgmt_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
 	 tSirResultCodes result_code, uint8_t sme_session_id,
 	 uint16_t sme_transaction_id)
 {
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	tSirSmeRsp *sme_rsp;
 
 	lim_log(mac_ctx, LOG1, FL("Sending message %s with reasonCode %s"),
@@ -2939,6 +2939,7 @@ lim_send_tdls_comp_mgmt_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
 
 }
 #endif
+
 /**
  * lim_process_sme_tdls_mgmt_send_req() - send out tdls management frames
  *

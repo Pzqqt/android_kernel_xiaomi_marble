@@ -221,6 +221,9 @@ void wlan_hdd_tdls_disable_offchan_and_teardown_links(hdd_context_t *hddctx)
 	hddTdlsPeer_t *curr_peer = NULL;
 	hdd_adapter_t *adapter = NULL;
 
+	if (hddctx->tdls_umac_comp_active)
+		return;
+
 	if (eTDLS_SUPPORT_NOT_ENABLED == hddctx->tdls_mode) {
 		hdd_notice("TDLS mode is disabled OR not enabled in FW");
 		return;
@@ -746,6 +749,9 @@ int wlan_hdd_tdls_init(hdd_adapter_t *pAdapter)
 		return -EINVAL;
 
 	ENTER();
+
+	if (pHddCtx->tdls_umac_comp_active)
+		return 0;
 
 	mutex_lock(&pHddCtx->tdls_lock);
 
@@ -2081,7 +2087,15 @@ done:
 void wlan_hdd_tdls_notify_connect(hdd_adapter_t *adapter,
 				  tCsrRoamInfo *csr_roam_info)
 {
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
 	hdd_info("Check and update TDLS state");
+
+	if (!hdd_ctx)
+		return;
+
+	if (hdd_ctx->tdls_umac_comp_active)
+		return;
 
 	/* Association event */
 	if (adapter->device_mode == QDF_STA_MODE ||
@@ -2110,6 +2124,13 @@ void wlan_hdd_tdls_notify_disconnect(hdd_adapter_t *adapter, bool lfr_roam)
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	hdd_info("Check and update TDLS state");
+
+	if (!hdd_ctx)
+		return;
+
+	if (hdd_ctx->tdls_umac_comp_active)
+		return;
+
 
 	/* Disassociation event */
 	if (adapter->device_mode == QDF_STA_MODE ||
@@ -2828,6 +2849,9 @@ int wlan_hdd_tdls_scan_callback(hdd_adapter_t *pAdapter, struct wiphy *wiphy,
 	if (ret)
 		return ret;
 
+	if (pHddCtx->tdls_umac_comp_active)
+		return 1;
+
 	/* if tdls is not enabled, then continue scan */
 	if (eTDLS_SUPPORT_NOT_ENABLED == pHddCtx->tdls_mode)
 		return 1;
@@ -2997,6 +3021,9 @@ void wlan_hdd_tdls_scan_done_callback(hdd_adapter_t *pAdapter)
 	ENTER();
 
 	if (0 != (wlan_hdd_validate_context(pHddCtx)))
+		return;
+
+	if (pHddCtx->tdls_umac_comp_active)
 		return;
 
 	if (eTDLS_SUPPORT_NOT_ENABLED == pHddCtx->tdls_mode) {
@@ -3405,6 +3432,12 @@ __wlan_hdd_cfg80211_configure_tdls_mode(struct wiphy *wiphy,
 	}
 	trigger_mode = nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_TRIGGER_MODE]);
 	hdd_notice("TDLS trigger mode %d", trigger_mode);
+
+	if (hdd_ctx->tdls_umac_comp_active) {
+		ret = wlan_cfg80211_tdls_configure_mode(adapter->hdd_vdev,
+						trigger_mode);
+		return ret;
+	}
 
 	switch (trigger_mode) {
 	case WLAN_HDD_VENDOR_TDLS_TRIGGER_MODE_EXPLICIT:
@@ -4110,12 +4143,12 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
-#ifdef CONVERGED_TDLS_ENABLE
-	return wlan_cfg80211_tdls_mgmt(pHddCtx->hdd_pdev, dev, peer,
-				       action_code, dialog_token,
-				       status_code, peer_capability,
-				       buf, len);
-#endif
+	if (pHddCtx->tdls_umac_comp_active)
+		return wlan_cfg80211_tdls_mgmt(pHddCtx->hdd_pdev, dev,
+					       peer,
+					       action_code, dialog_token,
+					       status_code, peer_capability,
+					       buf, len);
 
 	/*
 	 * STA or P2P client should be connected and authenticated before
@@ -5606,6 +5639,9 @@ void wlan_hdd_tdls_update_rx_pkt_cnt(hdd_adapter_t *adapter,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
+	if (hdd_ctx->tdls_umac_comp_active)
+		return;
+
 	if (!hdd_ctx->enable_tdls_connection_tracker)
 		return;
 
@@ -5669,6 +5705,9 @@ void wlan_hdd_tdls_update_tx_pkt_cnt(hdd_adapter_t *adapter,
 	struct qdf_mac_addr *mac_addr;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	if (hdd_ctx->tdls_umac_comp_active)
+		return;
 
 	if (!hdd_ctx->enable_tdls_connection_tracker)
 		return;
