@@ -65,15 +65,17 @@ ol_rx_fraglist_insert(htt_pdev_handle htt_pdev,
 		      qdf_nbuf_t *tail_addr,
 		      qdf_nbuf_t frag, uint8_t *all_frag_present);
 
-void ol_rx_defrag_waitlist_add(struct ol_txrx_peer_t *peer, unsigned tid);
+void ol_rx_defrag_waitlist_add(struct ol_txrx_peer_t *peer, unsigned int tid);
 
-void ol_rx_defrag_waitlist_remove(struct ol_txrx_peer_t *peer, unsigned tid);
+void ol_rx_defrag_waitlist_remove(struct ol_txrx_peer_t *peer,
+				  unsigned int tid);
 
 void ol_rx_defrag_waitlist_flush(struct ol_txrx_pdev_t *pdev);
 
 void
 ol_rx_defrag(ol_txrx_pdev_handle pdev,
-	     struct ol_txrx_peer_t *peer, unsigned tid, qdf_nbuf_t frag_list);
+	     struct ol_txrx_peer_t *peer, unsigned int tid,
+	     qdf_nbuf_t frag_list);
 
 int
 ol_rx_frag_tkip_decap(ol_txrx_pdev_handle pdev,
@@ -108,7 +110,7 @@ void ol_rx_defrag_michdr(const struct ieee80211_frame *wh0, uint8_t hdr[]);
 void
 ol_rx_reorder_store_frag(ol_txrx_pdev_handle pdev,
 			 struct ol_txrx_peer_t *peer,
-			 unsigned tid, uint16_t seq_num, qdf_nbuf_t frag);
+			 unsigned int tid, uint16_t seq_num, qdf_nbuf_t frag);
 
 qdf_nbuf_t
 ol_rx_defrag_decap_recombine(htt_pdev_handle htt_pdev,
@@ -123,7 +125,7 @@ ol_rx_defrag_mic(ol_txrx_pdev_handle pdev,
 void
 ol_rx_reorder_flush_frag(htt_pdev_handle htt_pdev,
 			 struct ol_txrx_peer_t *peer,
-			 unsigned tid, int seq_num);
+			 unsigned int tid, int seq_num);
 
 static inline void xor_block(uint8_t *b, const uint8_t *a, qdf_size_t len)
 {
