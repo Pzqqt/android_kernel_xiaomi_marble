@@ -82,7 +82,7 @@ int ol_rx_pn_wapi_cmp(union htt_rx_pn_t *new_pn,
 qdf_nbuf_t
 ol_rx_pn_check_base(struct ol_txrx_vdev_t *vdev,
 		    struct ol_txrx_peer_t *peer,
-		    unsigned tid, qdf_nbuf_t msdu_list)
+		    unsigned int tid, qdf_nbuf_t msdu_list)
 {
 	struct ol_txrx_pdev_t *pdev = vdev->pdev;
 	union htt_rx_pn_t *last_pn;
@@ -212,14 +212,14 @@ ol_rx_pn_check_base(struct ol_txrx_vdev_t *vdev,
 			/* free all MSDUs within this MPDU */
 			do {
 				qdf_nbuf_t next_msdu;
+
 				OL_RX_ERR_STATISTICS_1(pdev, vdev, peer,
 						       rx_desc, OL_RX_ERR_PN);
 				next_msdu = qdf_nbuf_next(msdu);
 				htt_rx_desc_frame_free(pdev->htt_pdev, msdu);
 				if (msdu == mpdu_tail)
 					break;
-				else
-					msdu = next_msdu;
+				msdu = next_msdu;
 			} while (1);
 		} else {
 			ADD_MPDU_TO_LIST(out_list_head, out_list_tail,
@@ -248,7 +248,8 @@ ol_rx_pn_check_base(struct ol_txrx_vdev_t *vdev,
 
 void
 ol_rx_pn_check(struct ol_txrx_vdev_t *vdev,
-	       struct ol_txrx_peer_t *peer, unsigned tid, qdf_nbuf_t msdu_list)
+	       struct ol_txrx_peer_t *peer, unsigned int tid,
+	       qdf_nbuf_t msdu_list)
 {
 	msdu_list = ol_rx_pn_check_base(vdev, peer, tid, msdu_list);
 	ol_rx_fwd_check(vdev, peer, tid, msdu_list);
@@ -257,7 +258,7 @@ ol_rx_pn_check(struct ol_txrx_vdev_t *vdev,
 void
 ol_rx_pn_check_only(struct ol_txrx_vdev_t *vdev,
 		    struct ol_txrx_peer_t *peer,
-		    unsigned tid, qdf_nbuf_t msdu_list)
+		    unsigned int tid, qdf_nbuf_t msdu_list)
 {
 	msdu_list = ol_rx_pn_check_base(vdev, peer, tid, msdu_list);
 	ol_rx_deliver(vdev, peer, tid, msdu_list);
@@ -335,6 +336,7 @@ void ol_rx_pn_trace_display(ol_txrx_pdev_handle pdev, int just_once)
 	elems = (end - 1 - start) & pdev->rx_pn_trace.mask;
 	if (limit > 0 && elems > limit) {
 		int delta;
+
 		delta = elems - limit;
 		start += delta;
 		start &= pdev->rx_pn_trace.mask;
