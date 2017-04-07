@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014,2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014, 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -40,7 +40,7 @@
  * otherwise we may encouter error in the dump processing.
  */
 
-static const tgt_reg_section ar6320v2_reg_table[] = {
+static const struct tgt_reg_section ar6320v2_reg_table[] = {
 	{0x800, 0x810},
 	{0x820, 0x82C},
 	{0x830, 0x8F4},
@@ -321,7 +321,7 @@ static const tgt_reg_section ar6320v2_reg_table[] = {
 	{0x80010, 0x80020},
 };
 
-static const tgt_reg_section ar6320v3_reg_table[] = {
+static const struct tgt_reg_section ar6320v3_reg_table[] = {
 	{0x800, 0x810},
 	{0x820, 0x82C},
 	{0x830, 0x8F4},

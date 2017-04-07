@@ -854,8 +854,7 @@ ol_check_dataset_patch(struct hif_opaque_softc *scn, uint32_t *address)
 	return 0;
 }
 
-
-static QDF_STATUS ol_fw_populate_clk_settings(A_refclk_speed_t refclk,
+static QDF_STATUS ol_fw_populate_clk_settings(enum a_refclk_speed_t refclk,
 					      struct cmnos_clock_s *clock_s)
 {
 	if (!clock_s)
@@ -1440,7 +1439,7 @@ static int ol_diag_read(struct hif_opaque_softc *scn, uint8_t *buffer,
 }
 
 static int ol_ath_get_reg_table(uint32_t target_version,
-				tgt_reg_table *reg_table)
+				struct tgt_reg_table *reg_table)
 {
 	int section_len = 0;
 
@@ -1452,7 +1451,7 @@ static int ol_ath_get_reg_table(uint32_t target_version,
 	switch (target_version) {
 	case AR6320_REV2_1_VERSION:
 		reg_table->section =
-			(tgt_reg_section *) &ar6320v2_reg_table[0];
+			(struct tgt_reg_section *) &ar6320v2_reg_table[0];
 		reg_table->section_size = sizeof(ar6320v2_reg_table)
 					  / sizeof(ar6320v2_reg_table[0]);
 		section_len = AR6320_REV2_1_REG_SIZE;
@@ -1461,7 +1460,7 @@ static int ol_ath_get_reg_table(uint32_t target_version,
 	case AR6320_REV3_2_VERSION:
 	case QCA9379_REV1_VERSION:
 		reg_table->section =
-			(tgt_reg_section *) &ar6320v3_reg_table[0];
+			(struct tgt_reg_section *) &ar6320v3_reg_table[0];
 		reg_table->section_size = sizeof(ar6320v3_reg_table)
 					  / sizeof(ar6320v3_reg_table[0]);
 		section_len = AR6320_REV3_REG_SIZE;
@@ -1480,8 +1479,8 @@ static int ol_diag_read_reg_loc(struct hif_opaque_softc *scn, uint8_t *buffer,
 {
 	int i, len, section_len, fill_len;
 	int dump_len, result = 0;
-	tgt_reg_table reg_table;
-	tgt_reg_section *curr_sec, *next_sec;
+	struct tgt_reg_table reg_table;
+	struct tgt_reg_section *curr_sec, *next_sec;
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
 	uint32_t target_version =  tgt_info->target_version;
 
@@ -1517,8 +1516,8 @@ static int ol_diag_read_reg_loc(struct hif_opaque_softc *scn, uint8_t *buffer,
 		}
 
 		if (result < section_len) {
-			next_sec = (tgt_reg_section *) ((uint8_t *) curr_sec
-							+ sizeof(*curr_sec));
+			next_sec = (struct tgt_reg_section *) ((uint8_t *)
+						 curr_sec + sizeof(*curr_sec));
 			fill_len = next_sec->start_addr - curr_sec->end_addr;
 			if ((buffer_len - result) < fill_len) {
 				BMI_ERR("No buf to fill regs:%d: 0x%08x-0x%08x",
