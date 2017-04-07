@@ -696,7 +696,7 @@
 #define AR6320V3_CPU_PLL_INIT_DONE_ADDR 0x404020
 #define AR6320V3_CPU_SPEED_ADDR         0x404024
 
-typedef enum {
+enum a_refclk_speed_t {
 	SOC_REFCLK_UNKNOWN = -1, /* Unsupported ref clock -- use PLL Bypass */
 	SOC_REFCLK_48_MHZ = 0,
 	SOC_REFCLK_19_2_MHZ = 1,
@@ -706,7 +706,7 @@ typedef enum {
 	SOC_REFCLK_38_4_MHZ = 5,
 	SOC_REFCLK_40_MHZ = 6,
 	SOC_REFCLK_52_MHZ = 7,
-} A_refclk_speed_t;
+};
 
 #define A_REFCLK_UNKNOWN    SOC_REFCLK_UNKNOWN
 #define A_REFCLK_48_MHZ     SOC_REFCLK_48_MHZ
@@ -728,21 +728,21 @@ struct wlan_pll_s {
 };
 
 struct cmnos_clock_s {
-	A_refclk_speed_t refclk_speed;
+	enum a_refclk_speed_t refclk_speed;
 	uint32_t refclk_hz;
 	uint32_t pll_settling_time;     /* 50us */
 	struct wlan_pll_s wlan_pll;
 };
 
-typedef struct TGT_REG_SECTION {
+struct tgt_reg_section {
 	uint32_t start_addr;
 	uint32_t end_addr;
-} tgt_reg_section;
+};
 
-typedef struct TGT_REG_TABLE {
-	tgt_reg_section *section;
+struct tgt_reg_table {
+	struct tgt_reg_section *section;
 	uint32_t section_size;
-} tgt_reg_table;
+};
 
 struct hif_softc;
 void hif_target_register_tbl_attach(struct hif_softc *scn, u32 target_type);

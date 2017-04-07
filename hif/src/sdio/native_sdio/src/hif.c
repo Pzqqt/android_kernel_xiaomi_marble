@@ -49,7 +49,8 @@
 /* by default setup a bounce buffer for the data packets,
  * if the underlying host controller driver
  * does not use DMA you may be able to skip this step
- * and save the memory allocation and transfer time */
+ * and save the memory allocation and transfer time
+ */
 #define HIF_USE_DMA_BOUNCE_BUFFER 1
 #define ATH_MODULE_NAME hif
 #include "a_debug.h"
@@ -75,74 +76,70 @@
 				request->address < 0x1FFFF))
 #endif
 
-extern struct hif_sdio_softc *sc;
-
-unsigned int mmcbuswidth = 0;
-module_param(mmcbuswidth, uint, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+unsigned int mmcbuswidth;
+/* PERM:S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH */
+module_param(mmcbuswidth, uint, 0644);
 MODULE_PARM_DESC(mmcbuswidth,
 		 "Set MMC driver Bus Width: 1-1Bit, 4-4Bit, 8-8Bit");
 
-unsigned int mmcclock = 0;
-module_param(mmcclock, uint, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+unsigned int mmcclock;
+module_param(mmcclock, uint, 0644);
 MODULE_PARM_DESC(mmcclock, "Set MMC driver Clock value");
 
-unsigned int brokenirq = 0;
-module_param(brokenirq, uint, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+unsigned int brokenirq;
+module_param(brokenirq, uint, 0644);
 MODULE_PARM_DESC(brokenirq,
 		 "Set as 1 to use polling method instead of interrupt mode");
 
-unsigned int forcesleepmode = 0;
-module_param(forcesleepmode, uint, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+unsigned int forcesleepmode;
+module_param(forcesleepmode, uint, 0644);
 MODULE_PARM_DESC(forcesleepmode,
-		"Set sleep mode: 0-host capbility, "
-		"1-force WOW, 2-force DeepSleep, 3-force CutPower");
+		"Set sleep mode: 0-host capbility, 1-force WOW, 2-force DeepSleep, 3-force CutPower");
 
 #ifdef CONFIG_X86
 unsigned int asyncintdelay = 2;
-module_param(asyncintdelay, uint, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+module_param(asyncintdelay, uint, 0644);
 MODULE_PARM_DESC(asyncintdelay,
-		 "Delay clock count for aysnc interrupt, "
-		 "2 is default, vaild values are 1 and 2");
+		 "Delay clock count for async interrupt, 2 is default, valid values are 1 and 2");
 #else
-unsigned int asyncintdelay = 0;
-module_param(asyncintdelay, uint, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+unsigned int asyncintdelay;
+module_param(asyncintdelay, uint, 0644);
 MODULE_PARM_DESC(asyncintdelay,
-		 "Delay clock count for aysnc interrupt, "
-		 "0 is default, vaild values are 1 and 2");
+		 "Delay clock count for async interrupt, 0 is default, valid values are 1 and 2");
 #endif
 
-unsigned int forcecard = 0;
-module_param(forcecard, uint, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+unsigned int forcecard;
+module_param(forcecard, uint, 0644);
 MODULE_PARM_DESC(forcecard,
 		 "Ignore card capabilities information to switch bus mode");
 
 unsigned int debugcccr = 1;
-module_param(debugcccr, uint, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+module_param(debugcccr, uint, 0644);
 MODULE_PARM_DESC(debugcccr, "Output this cccr values");
 
-unsigned int writecccr1 = 0;
-module_param(writecccr1, uint, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-unsigned int writecccr1value = 0;
-module_param(writecccr1value, uint, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+unsigned int writecccr1;
+module_param(writecccr1, uint, 0644);
+unsigned int writecccr1value;
+module_param(writecccr1value, uint, 0644);
 
-unsigned int writecccr2 = 0;
-module_param(writecccr2, uint, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-unsigned int writecccr2value = 0;
-module_param(writecccr2value, uint, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+unsigned int writecccr2;
+module_param(writecccr2, uint, 0644);
+unsigned int writecccr2value;
+module_param(writecccr2value, uint, 0644);
 
-unsigned int writecccr3 = 0;
-module_param(writecccr3, uint, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-unsigned int writecccr3value = 0;
-module_param(writecccr3value, uint, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+unsigned int writecccr3;
+module_param(writecccr3, uint, 0644);
+unsigned int writecccr3value;
+module_param(writecccr3value, uint, 0644);
 
-unsigned int writecccr4 = 0;
-module_param(writecccr4, uint, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+unsigned int writecccr4;
+module_param(writecccr4, uint, 0644);
 
-unsigned int writecccr4value = 0;
-module_param(writecccr4value, uint, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+unsigned int writecccr4value;
+module_param(writecccr4value, uint, 0644);
 
-unsigned int modstrength = 0;
-module_param(modstrength, uint, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+unsigned int modstrength;
+module_param(modstrength, uint, 0644);
 MODULE_PARM_DESC(modstrength, "Adjust internal driver strength");
 
 #define dev_to_sdio_func(d)		container_of(d, struct sdio_func, dev)
@@ -158,7 +155,7 @@ static int func0_cmd52_write_byte(struct mmc_card *card, unsigned int address,
 static int func0_cmd52_read_byte(struct mmc_card *card, unsigned int address,
 				 unsigned char *byte);
 
-int reset_sdio_on_unload = 0;
+int reset_sdio_on_unload;
 module_param(reset_sdio_on_unload, int, 0644);
 
 uint32_t nohifscattersupport = 1;
@@ -315,10 +312,9 @@ QDF_STATUS hif_init(struct osdrv_callbacks *callbacks)
 		AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
 			("%s sdio_register_driver failed!", __func__));
 		return QDF_STATUS_E_FAILURE;
-	} else {
-		AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
-			("%s sdio_register_driver successful", __func__));
 	}
+	AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
+			("%s sdio_register_driver successful", __func__));
 
 	return QDF_STATUS_SUCCESS;
 
@@ -389,6 +385,7 @@ __hif_read_write(struct hif_sdio_dev *device,
 		if (request & HIF_SDIO_WRITE) {
 			struct hif_device_mbox_info MailBoxInfo;
 			unsigned int mboxLength = 0;
+
 			hif_configure_device(device,
 					     HIF_DEVICE_GET_MBOX_ADDR,
 					     &MailBoxInfo, sizeof(MailBoxInfo));
@@ -416,8 +413,7 @@ __hif_read_write(struct hif_sdio_dev *device,
 				break;
 			}
 			AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
-				("address:%08X, Length:0x%08X, Dummy:0x%04X, "
-				 "Final:0x%08X\n",
+				("address:%08X, Length:0x%08X, Dummy:0x%04X, Final:0x%08X\n",
 				 address, length,
 				 (request & HIF_DUMMY_SPACE_MASK) >> 16,
 				 mboxLength ==
@@ -426,8 +422,7 @@ __hif_read_write(struct hif_sdio_dev *device,
 			if (mboxLength != 0) {
 				if (length > mboxLength) {
 					AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
-					("%s: written length(0x%08X) "
-					"larger than mbox len(0x%08x)\n",
+					("%s: written length(0x%08X) larger than mbox len(0x%08x)\n",
 						 __func__, length, mboxLength));
 					break;
 				}
@@ -467,8 +462,8 @@ __hif_read_write(struct hif_sdio_dev *device,
 				AR_DEBUG_ASSERT(length <= HIF_DMA_BUFFER_SIZE);
 				if (length > HIF_DMA_BUFFER_SIZE) {
 					AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
-						("%s: Invalid write length:"
-						 "%d\n", __func__, length));
+						("%s: Invalid write length: %d\n",
+						__func__, length));
 					status = QDF_STATUS_E_INVAL;
 					break;
 				}
@@ -486,8 +481,7 @@ __hif_read_write(struct hif_sdio_dev *device,
 						tbuffer,
 						length);
 				AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
-					("%s: writesb ret=%d address:"
-					 " 0x%X, len: %d, 0x%X\n",
+					("%s: writesb ret=%d address: 0x%X, len: %d, 0x%X\n",
 					 __func__, ret, address, length,
 					 *(int *)tbuffer));
 			} else {
@@ -495,8 +489,7 @@ __hif_read_write(struct hif_sdio_dev *device,
 					sdio_memcpy_toio(device->func, address,
 							 tbuffer, length);
 				AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
-					("%s: writeio ret=%d address: "
-					" 0x%X, len: %d, 0x%X\n",
+					("%s: writeio ret=%d address: 0x%X, len: %d, 0x%X\n",
 					 __func__, ret, address, length,
 					 *(int *)tbuffer));
 			}
@@ -526,8 +519,7 @@ __hif_read_write(struct hif_sdio_dev *device,
 						    address,
 						    length);
 				AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
-					("%s: readsb ret=%d address:"
-					 " 0x%X, len: %d, 0x%X\n",
+					("%s: readsb ret=%d address: 0x%X, len: %d, 0x%X\n",
 					 __func__, ret, address, length,
 					 *(int *)tbuffer));
 			} else {
@@ -536,8 +528,7 @@ __hif_read_write(struct hif_sdio_dev *device,
 							   tbuffer,
 							   address, length);
 				AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
-					("%s: readio ret=%d address: 0x%X,"
-					" len: %d, 0x%X\n",
+					("%s: readio ret=%d address: 0x%X, len: %d, 0x%X\n",
 					 __func__, ret, address, length,
 					 *(int *)tbuffer));
 			}
@@ -555,12 +546,10 @@ __hif_read_write(struct hif_sdio_dev *device,
 
 		if (ret) {
 			AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
-					("%s: SDIO bus operation failed! "
-					"MMC stack returned : %d\n",
+					("%s: SDIO bus operation failed! MMC stack returned : %d\n",
 					 __func__, ret));
 			AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
-				("__hif_read_write, addr:0X%06X, "
-				"len:%08d, %s, %s\n",
+				("__hif_read_write, addr:0X%06X, len:%08d, %s, %s\n",
 				 address, length,
 				 request & HIF_SDIO_READ ? "Read " : "Write",
 				 request & HIF_ASYNCHRONOUS ? "Async" :
@@ -624,8 +613,7 @@ hif_read_write(struct hif_sdio_dev *device,
 	AR_DEBUG_ASSERT(device != NULL);
 	AR_DEBUG_ASSERT(device->func != NULL);
 	AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
-			("%s: device 0x%p addr 0x%X buffer 0x%p "
-			"len %d req 0x%X context 0x%p",
+			("%s: device 0x%p addr 0x%X buffer 0x%p len %d req 0x%X context 0x%p",
 			 __func__, device, address, buffer,
 			 length, request, context));
 
@@ -646,8 +634,7 @@ hif_read_write(struct hif_sdio_dev *device,
 			busrequest = hif_allocate_bus_request(device);
 			if (busrequest == NULL) {
 				AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
-					("no async bus requests "
-					 "available (%s, addr:0x%X, len:%d)\n",
+					("no async bus requests available (%s, addr:0x%X, len:%d)\n",
 					 request & HIF_SDIO_READ ? "READ" :
 					 "WRITE", address, length));
 				return QDF_STATUS_E_FAILURE;
@@ -673,6 +660,7 @@ hif_read_write(struct hif_sdio_dev *device,
 					return QDF_STATUS_E_FAILURE;
 				} else {
 					QDF_STATUS status = busrequest->status;
+
 					AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
 				    ("%s: sync return freeing 0x%lX: 0x%X\n",
 						 __func__,
@@ -741,7 +729,8 @@ static int async_task(void *param)
 		}
 		/* we want to hold the host over multiple cmds
 		 * if possible, but holding the host blocks
-		 * card interrupts */
+		 * card interrupts
+		 */
 		sdio_claim_host(device->func);
 		qdf_spin_lock_irqsave(&device->asynclock);
 		/* pull the request to work on */
@@ -761,7 +750,8 @@ static int async_task(void *param)
 				/* pass the request to scatter routine which
 				 * executes it synchronously, note, no need
 				 * to free the request since scatter requests
-				 * are maintained on a separate list */
+				 * are maintained on a separate list
+				 */
 				status = do_hif_read_write_scatter(device,
 							request);
 			} else {
@@ -777,6 +767,7 @@ static int async_task(void *param)
 							 NULL);
 				if (request->request & HIF_ASYNCHRONOUS) {
 					void *context = request->context;
+
 					AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
 					("%s: freeing req: 0x%lX\n",
 						 __func__, (unsigned long)
@@ -892,8 +883,7 @@ QDF_STATUS reinit_sdio(struct hif_sdio_dev *device)
 						&cmd52_resp);
 			if (err) {
 				AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
-					("%s: CMD52 read to CCCR speed "
-					"register failed  : %d\n",
+					("%s: CMD52 read to CCCR speed register failed  : %d\n",
 					__func__, err));
 				sdio_card_state(card);
 		/* no need to break */
@@ -903,8 +893,7 @@ QDF_STATUS reinit_sdio(struct hif_sdio_dev *device)
 						(cmd52_resp | SDIO_SPEED_EHS));
 				if (err) {
 					AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
-						("%s: CMD52 write to CCCR speed"
-						 " register failed  : %d\n",
+						("%s: CMD52 write to CCCR speed register failed  : %d\n",
 						 __func__, err));
 				break;
 				}
@@ -940,8 +929,7 @@ QDF_STATUS reinit_sdio(struct hif_sdio_dev *device)
 				SDIO_BUS_CD_DISABLE | SDIO_BUS_WIDTH_4BIT);
 		if (err) {
 			AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
-					("%s: CMD52 to set bus mode "
-					"failed : %d\n",
+					("%s: CMD52 to set bus mode failed : %d\n",
 					__func__, err));
 			break;
 		}
@@ -982,7 +970,8 @@ static int sdio_enable4bits(struct hif_sdio_dev *device, int enable)
 			device->id->device & MANUFACTURER_ID_AR6K_BASE_MASK;
 
 		/* Re-enable 4-bit ASYNC interrupt on AR6003x
-		 * after system resume for some host controller */
+		 * after system resume for some host controller
+		 */
 		if (manufacturer_id == MANUFACTURER_ID_AR6003_BASE) {
 			setAsyncIRQ = 1;
 			ret =
@@ -994,6 +983,7 @@ static int sdio_enable4bits(struct hif_sdio_dev *device, int enable)
 		} else if (manufacturer_id == MANUFACTURER_ID_AR6320_BASE
 			   || manufacturer_id == MANUFACTURER_ID_QCA9377_BASE) {
 			unsigned char data = 0;
+
 			setAsyncIRQ = 1;
 			ret =
 				func0_cmd52_read_byte(func->card,
@@ -1001,8 +991,7 @@ static int sdio_enable4bits(struct hif_sdio_dev *device, int enable)
 						   &data);
 			if (ret) {
 				AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
-					("%s: failed to read interrupt "
-					"extension register %d\n",
+					("%s: failed to read interrupt extension register %d\n",
 						 __func__, ret));
 				sdio_release_host(func);
 				return ret;
@@ -1019,13 +1008,11 @@ static int sdio_enable4bits(struct hif_sdio_dev *device, int enable)
 		if (setAsyncIRQ) {
 			if (ret) {
 				AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
-					("%s: failed to setup 4-bit "
-					"ASYNC IRQ mode into %d err %d\n",
+					("%s: failed to setup 4-bit ASYNC IRQ mode into %d err %d\n",
 					 __func__, enable, ret));
 			} else {
 				AR_DEBUG_PRINTF(ATH_DEBUG_INFO,
-					("%s: Setup 4-bit ASYNC "
-					"IRQ mode into %d successfully\n",
+					("%s: Setup 4-bit ASYNC IRQ mode into %d successfully\n",
 					 __func__, enable));
 			}
 		}
@@ -1056,7 +1043,8 @@ power_state_change_notify(struct hif_sdio_dev *device,
 	switch (config) {
 	case HIF_DEVICE_POWER_DOWN:
 		/* Disable 4bits to allow SDIO bus to detect
-		 * DAT1 as interrupt source */
+		 * DAT1 as interrupt source
+		 */
 		sdio_enable4bits(device, 0);
 		break;
 	case HIF_DEVICE_POWER_CUT:
@@ -1075,7 +1063,8 @@ power_state_change_notify(struct hif_sdio_dev *device,
 				status = reinit_sdio(device);
 				/* set power_config before EnableFunc to
 				 * passthrough sdio r/w action when resuming
-				 * from cut power */
+				 * from cut power
+				 */
 				device->power_config = config;
 				if (status == QDF_STATUS_SUCCESS)
 					status = hif_enable_func(device, func);
@@ -1086,6 +1075,7 @@ power_state_change_notify(struct hif_sdio_dev *device,
 			}
 		} else if (device->power_config == HIF_DEVICE_POWER_DOWN) {
 			int ret = sdio_enable4bits(device, 1);
+
 			status = (ret == 0) ? QDF_STATUS_SUCCESS :
 						QDF_STATUS_E_FAILURE;
 		}
@@ -1358,7 +1348,8 @@ void hif_sdio_shutdown(struct hif_softc *hif_ctx)
 		 * externally powered and we are unloading the SDIO
 		 * stack. This avoids the problem when the SDIO stack
 		 * is reloaded and attempts are made to re-enumerate
-		 * a card that is already enumerated */
+		 * a card that is already enumerated
+		 */
 		AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
 				("%s: hif_shut_down_device, resetting\n",
 				__func__));
@@ -1400,13 +1391,15 @@ static void hif_irq_handler(struct sdio_func *func)
 {
 	QDF_STATUS status;
 	struct hif_sdio_dev *device;
+
 	AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
 			("%s: Enter\n", __func__));
 
 	device = get_hif_device(func);
 	atomic_set(&device->irq_handling, 1);
 	/* release the host during intr so we can use
-	 * it when we process cmds */
+	 * it when we process cmds
+	 */
 	sdio_release_host(device->func);
 	status = device->htc_callbacks.dsrHandler(device->htc_callbacks
 						  .context);
@@ -1446,6 +1439,7 @@ static int startup_task(void *param)
 static int enable_task(void *param)
 {
 	struct hif_sdio_dev *device;
+
 	device = (struct hif_sdio_dev *) param;
 	AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
 		("%s: call  from resume_task\n",
@@ -1511,10 +1505,11 @@ static void foce_drive_strength(struct sdio_func *func)
 					(unsigned int) err));
 			} else {
 				value = (value &
-					(~CCCR_SDIO_DRIVER_STRENGTH_ENABLE_MASK))
-					 | CCCR_SDIO_DRIVER_STRENGTH_ENABLE_A
-					 | CCCR_SDIO_DRIVER_STRENGTH_ENABLE_C
-					 | CCCR_SDIO_DRIVER_STRENGTH_ENABLE_D;
+					(~CCCR_SDIO_DRIVER_STRENGTH_ENABLE_MASK)
+					) |
+					CCCR_SDIO_DRIVER_STRENGTH_ENABLE_A |
+					CCCR_SDIO_DRIVER_STRENGTH_ENABLE_C |
+					CCCR_SDIO_DRIVER_STRENGTH_ENABLE_D;
 				err = func0_cmd52_write_byte(func->card,
 						addr, value);
 				if (err) {
@@ -1623,21 +1618,20 @@ static int hif_device_inserted(struct sdio_func *func,
 	uint32_t clock, clock_set = 12500000;
 
 	AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
-			("%s: Function: "
-			"0x%X, Vendor ID: 0x%X, Device ID: 0x%X, "
-			"block size: 0x%X/0x%X\n",
-			 __func__,
-			 func->num, func->vendor, id->device,
-			 func->max_blksize,
-			 func->cur_blksize));
+			("%s: Function: 0x%X, Vendor ID: 0x%X, Device ID: 0x%X, block size: 0x%X/0x%X\n",
+			 __func__, func->num, func->vendor, id->device,
+			 func->max_blksize, func->cur_blksize));
 	/* dma_mask should not be NULL, otherwise dma_map_single
-	 * will crash. TODO: check why dma_mask is NULL here */
+	 * will crash. TODO: check why dma_mask is NULL here
+	 */
 	if (func->dev.dma_mask == NULL) {
 		static u64 dma_mask = 0xFFFFFFFF;
+
 		func->dev.dma_mask = &dma_mask;
 	}
 	for (i = 0; i < MAX_HIF_DEVICES; ++i) {
 		struct hif_sdio_dev *hifdevice = hif_devices[i];
+
 		if (hifdevice && hifdevice->power_config == HIF_DEVICE_POWER_CUT
 		    && hifdevice->host == func->card->host) {
 			hifdevice->func = func;
@@ -1668,15 +1662,16 @@ static int hif_device_inserted(struct sdio_func *func,
 		}
 		if (i == MAX_HIF_DEVICES) {
 			AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
-					("%s: No more hif_devices[] slot for %p",
-					 __func__, device));
+				("%s: No more hif_devices[] slot for %p",
+				 __func__, device));
 		}
 
 		device->id = id;
 		device->host = func->card->host;
 		device->is_disabled = true;
-/* TODO: MMC SDIO3.0 Setting should also be modified in ReInit()
- * function when Power Manage work. */
+		/* TODO: MMC SDIO3.0 Setting should also be modified in ReInit()
+		 * function when Power Manage work.
+		 */
 		sdio_claim_host(func);
 		/* force driver strength to type D */
 		if (forcedriverstrength == 1)
@@ -1723,8 +1718,7 @@ static int hif_device_inserted(struct sdio_func *func,
 				if (ret) {
 					AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 						("%s: CMD52 to set bus width failed: %d\n",
-							 __func__,
-							 ret));
+						 __func__, ret));
 					return ret;
 				}
 				device->host->ios.bus_width =
@@ -1799,7 +1793,8 @@ static int hif_device_inserted(struct sdio_func *func,
 
 	if (!nohifscattersupport) {
 		/* try to allow scatter operation on all instances,
-		 * unless globally overridden */
+		 * unless globally overridden
+		 */
 		device->scatter_enabled = true;
 	} else
 		device->scatter_enabled = false;
@@ -1855,7 +1850,8 @@ void hif_un_mask_interrupt(struct hif_sdio_dev *device)
 	/*
 	 * On HP Elitebook 8460P, interrupt mode is not stable
 	 * in high throughput, so polling method should be used
-	 * instead of interrupt mode. */
+	 * instead of interrupt mode.
+	 */
 	if (brokenirq) {
 		AR_DEBUG_PRINTF(ATH_DEBUG_INFO,
 			("%s: Using broken IRQ mode\n",
@@ -1881,6 +1877,7 @@ void hif_un_mask_interrupt(struct hif_sdio_dev *device)
 void hif_mask_interrupt(struct hif_sdio_dev *device)
 {
 	int ret;
+
 	AR_DEBUG_ASSERT(device != NULL);
 	AR_DEBUG_ASSERT(device->func != NULL);
 
@@ -1986,13 +1983,15 @@ static QDF_STATUS hif_disable_func(struct hif_sdio_dev *device,
 		 * where the card does not need to be removed at the end
 		 * of the test. It is expected that the user will also
 		 * un/reload the host controller driver to force the bus
-		 * driver to re-enumerate the slot */
+		 * driver to re-enumerate the slot
+		 */
 		AR_DEBUG_PRINTF(ATH_DEBUG_WARN,
 				("%s: reseting SDIO card",
 				__func__));
 
 		/* sdio_f0_writeb() cannot be used here, this allows access
-		 * to undefined registers in the range of: 0xF0-0xFF */
+		 * to undefined registers in the range of: 0xF0-0xFF
+		 */
 
 		ret =
 			func0_cmd52_write_byte(device->func->card,
@@ -2050,6 +2049,7 @@ static QDF_STATUS hif_enable_func(struct hif_sdio_dev *device,
 		} else if (manufacturer_id == MANUFACTURER_ID_AR6320_BASE
 			   || manufacturer_id == MANUFACTURER_ID_QCA9377_BASE) {
 			unsigned char data = 0;
+
 			setAsyncIRQ = 1;
 			ret =
 				func0_cmd52_read_byte(func->card,
@@ -2082,13 +2082,14 @@ static QDF_STATUS hif_enable_func(struct hif_sdio_dev *device,
 		}
 
 		/* set CCCR 0xF0[7:6] to increase async interrupt delay clock to
-		 * fix interrupt missing issue on dell 8460p */
+		 * fix interrupt missing issue on dell 8460p
+		 */
 		if (asyncintdelay != 0) {
 			unsigned char data = 0;
-			ret =
-				func0_cmd52_read_byte(func->card,
+
+			ret = func0_cmd52_read_byte(func->card,
 					      CCCR_SDIO_ASYNC_INT_DELAY_ADDRESS,
-						      &data);
+					      &data);
 			if (ret) {
 				AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 				("%s: failed to read CCCR %d, val is %d\n",
@@ -2135,8 +2136,8 @@ static QDF_STATUS hif_enable_func(struct hif_sdio_dev *device,
 		if (modstrength) {
 			unsigned int address = WINDOW_DATA_ADDRESS;
 			unsigned int value = 0x0FFF;
-			ret =
-				sdio_memcpy_toio(device->func, address,
+
+			ret = sdio_memcpy_toio(device->func, address,
 						&value, 4);
 			if (ret) {
 				AR_DEBUG_PRINTF(ATH_DEBUG_INFO,
@@ -2236,9 +2237,8 @@ int hif_device_suspend(struct device *dev)
 	if (device && device->claimed_ctx
 	    && osdrv_callbacks.device_suspend_handler) {
 		device->is_suspend = true;
-		status =
-		osdrv_callbacks.device_suspend_handler(device->claimed_ctx);
-
+		status = osdrv_callbacks.device_suspend_handler(
+							device->claimed_ctx);
 #if defined(MMC_PM_KEEP_POWER)
 		switch (forcesleepmode) {
 		case 0: /* depend on sdio host pm capbility */
@@ -2259,7 +2259,8 @@ int hif_device_suspend(struct device *dev)
 		if (!(pm_flag & MMC_PM_KEEP_POWER)) {
 			/* cut power support */
 			/* setting power_config before hif_configure_device to
-			 * skip sdio r/w when suspending with cut power */
+			 * skip sdio r/w when suspending with cut power
+			 */
 			AR_DEBUG_PRINTF(ATH_DEBUG_INFO,
 				("hif_device_suspend: cut power enter\n"));
 			config = HIF_DEVICE_POWER_CUT;
@@ -2288,70 +2289,65 @@ int hif_device_suspend(struct device *dev)
 			AR_DEBUG_PRINTF(ATH_DEBUG_INFO,
 				("hif_device_suspend: cut power success\n"));
 			return ret;
-		} else {
-			ret = sdio_set_host_pm_flags(func, MMC_PM_KEEP_POWER);
+		}
+		ret = sdio_set_host_pm_flags(func, MMC_PM_KEEP_POWER);
+		if (ret) {
+			AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
+			  ("%s: set sdio pm flags failed %d\n",
+				 __func__, ret));
+			return ret;
+		}
+
+		/* TODO:WOW support */
+		if (pm_flag & MMC_PM_WAKE_SDIO_IRQ) {
+			AR_DEBUG_PRINTF(ATH_DEBUG_INFO,
+				("hif_device_suspend: wow enter\n"));
+			config = HIF_DEVICE_POWER_DOWN;
+			ret = hif_configure_device(device,
+				   HIF_DEVICE_POWER_STATE_CHANGE,
+				   &config,
+				   sizeof
+				   (HIF_DEVICE_POWER_CHANGE_TYPE));
+
 			if (ret) {
 				AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
-				  ("%s: set sdio pm flags failed %d\n",
+				("%s: hif config dev failed: %d\n",
 					 __func__, ret));
 				return ret;
 			}
-
-			/* TODO:WOW support */
-			if (pm_flag & MMC_PM_WAKE_SDIO_IRQ) {
-				AR_DEBUG_PRINTF(ATH_DEBUG_INFO,
-					("hif_device_suspend: wow enter\n"));
-				config = HIF_DEVICE_POWER_DOWN;
-				ret = hif_configure_device(device,
-					   HIF_DEVICE_POWER_STATE_CHANGE,
-					   &config,
-					   sizeof
-					   (HIF_DEVICE_POWER_CHANGE_TYPE));
-
-				if (ret) {
-					AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
-					("%s: hif config dev failed: %d\n",
+			ret =
+				sdio_set_host_pm_flags(func,
+					       MMC_PM_WAKE_SDIO_IRQ);
+			if (ret) {
+				AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
+					("%s: set sdio pm flags %d\n",
 						 __func__, ret));
-					return ret;
-				}
-				ret =
-					sdio_set_host_pm_flags(func,
-						       MMC_PM_WAKE_SDIO_IRQ);
-				if (ret) {
-					AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
-						("%s: set sdio pm flags %d\n",
-							 __func__, ret));
-					return ret;
-				}
-				hif_mask_interrupt(device);
-				device->device_state = HIF_DEVICE_STATE_WOW;
-				AR_DEBUG_PRINTF(ATH_DEBUG_INFO,
-					("hif_device_suspend: wow success\n"));
-				return ret;
-			} else {
-				/* deep sleep support */
-				AR_DEBUG_PRINTF(ATH_DEBUG_INFO,
-					("%s: deep sleep enter\n",
-					 __func__));
-
-				/*
-				 * Wait for some async clean handler finished.
-				 * These handlers are part of vdev disconnect.
-				 * As handlers are async,sleep is not suggested,
-				 * some blocking method may be a good choice.
-				 * But before adding callback function to these
-				 * handler, sleep wait is a simple method.
-				 */
-				msleep(100);
-				hif_mask_interrupt(device);
-				device->device_state =
-					HIF_DEVICE_STATE_DEEPSLEEP;
-				AR_DEBUG_PRINTF(ATH_DEBUG_INFO,
-					("%s: deep sleep done\n",
-					 __func__));
 				return ret;
 			}
+			hif_mask_interrupt(device);
+			device->device_state = HIF_DEVICE_STATE_WOW;
+			AR_DEBUG_PRINTF(ATH_DEBUG_INFO,
+				("hif_device_suspend: wow success\n"));
+			return ret;
 		}
+		/* deep sleep support */
+		AR_DEBUG_PRINTF(ATH_DEBUG_INFO, ("%s: deep sleep enter\n",
+						 __func__));
+
+		/*
+		 * Wait for some async clean handler finished.
+		 * These handlers are part of vdev disconnect.
+		 * As handlers are async,sleep is not suggested,
+		 * some blocking method may be a good choice.
+		 * But before adding callback function to these
+		 * handler, sleep wait is a simple method.
+		 */
+		msleep(100);
+		hif_mask_interrupt(device);
+		device->device_state = HIF_DEVICE_STATE_DEEPSLEEP;
+		AR_DEBUG_PRINTF(ATH_DEBUG_INFO, ("%s: deep sleep done\n",
+						 __func__));
+		return ret;
 #endif
 	}
 
@@ -2442,21 +2438,19 @@ static void hif_device_removed(struct sdio_func *func)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct hif_sdio_dev *device;
+	int i;
+
 	AR_DEBUG_ASSERT(func != NULL);
-
 	HIF_ENTER();
-
 	device = get_hif_device(func);
 
 	if (device->power_config == HIF_DEVICE_POWER_CUT) {
 		device->func = NULL;    /* func will be free by mmc stack */
 		return;         /* Just return for cut-off mode */
-	} else {
-		int i;
-		for (i = 0; i < MAX_HIF_DEVICES; ++i) {
-			if (hif_devices[i] == device)
-				hif_devices[i] = NULL;
-		}
+	}
+	for (i = 0; i < MAX_HIF_DEVICES; ++i) {
+		if (hif_devices[i] == device)
+			hif_devices[i] = NULL;
 	}
 
 	if (device->claimed_ctx != NULL)

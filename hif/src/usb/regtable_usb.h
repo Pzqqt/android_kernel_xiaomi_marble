@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1240,7 +1240,7 @@ typedef struct hostdef_s {
 #define AR6320V3_CPU_PLL_INIT_DONE_ADDR	0x404020
 #define AR6320V3_CPU_SPEED_ADDR		0x404024
 
-typedef enum {
+enum a_refclk_speed_t {
 	/* Unsupported ref clock -- use PLL Bypass */
 	SOC_REFCLK_UNKNOWN   = -1,
 	SOC_REFCLK_48_MHZ    = 0,
@@ -1251,7 +1251,7 @@ typedef enum {
 	SOC_REFCLK_38_4_MHZ  = 5,
 	SOC_REFCLK_40_MHZ    = 6,
 	SOC_REFCLK_52_MHZ    = 7,
-} A_refclk_speed_t;
+};
 
 #define A_REFCLK_UNKNOWN    SOC_REFCLK_UNKNOWN
 #define A_REFCLK_48_MHZ     SOC_REFCLK_48_MHZ
@@ -1273,21 +1273,22 @@ struct wlan_pll_s {
 };
 
 struct cmnos_clock_s {
-	A_refclk_speed_t refclk_speed;
+	enum a_refclk_speed_t refclk_speed;
 	u_int32_t         refclk_hz;
 	u_int32_t         pll_settling_time; /* 50us */
 	struct wlan_pll_s   wlan_pll;
 };
 
-typedef struct TGT_REG_SECTION {
+struct tgt_reg_section {
 	u_int32_t start_addr;
 	u_int32_t end_addr;
-} tgt_reg_section;
+};
 
-typedef struct TGT_REG_TABLE {
-	tgt_reg_section *section;
+struct tgt_reg_table {
+	struct tgt_reg_section *section;
 	u_int32_t section_size;
-} tgt_reg_table;
+};
+
 void target_register_tbl_attach(struct hif_softc *scn,
 					uint32_t target_type);
 void hif_register_tbl_attach(struct hif_softc *scn,

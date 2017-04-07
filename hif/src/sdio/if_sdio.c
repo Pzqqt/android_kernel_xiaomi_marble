@@ -62,11 +62,11 @@
 #endif /* ATH_BUS_PM */
 
 #ifndef REMOVE_PKT_LOG
-struct ol_pl_os_dep_funcs *g_ol_pl_os_dep_funcs = NULL;
+struct ol_pl_os_dep_funcs *g_ol_pl_os_dep_funcs;
 #endif
 #define HIF_SDIO_LOAD_TIMEOUT 1000
 
-struct hif_sdio_softc *scn = NULL;
+struct hif_sdio_softc *scn;
 struct hif_softc *ol_sc;
 static atomic_t hif_sdio_load_state;
 /* Wait queue for MC thread */
@@ -86,8 +86,8 @@ static A_STATUS hif_sdio_probe(void *context, void *hif_handle)
 	struct sdio_func *func = NULL;
 	const struct sdio_device_id *id;
 	uint32_t target_type;
-	HIF_ENTER();
 
+	HIF_ENTER();
 	scn = (struct hif_sdio_softc *)qdf_mem_malloc(sizeof(*scn));
 	if (!scn) {
 		ret = -ENOMEM;
@@ -141,6 +141,7 @@ static A_STATUS hif_sdio_probe(void *context, void *hif_handle)
 		} else if ((id->device & MANUFACTURER_ID_AR6K_BASE_MASK) ==
 				MANUFACTURER_ID_AR6320_BASE) {
 			int ar6kid = id->device & MANUFACTURER_ID_AR6K_REV_MASK;
+
 			if (ar6kid >= 1) {
 				/* v2 or higher silicon */
 				hif_register_tbl_attach(ol_sc,
@@ -304,8 +305,8 @@ static int init_ath_hif_sdio(void)
 	static int probed;
 	QDF_STATUS status;
 	struct osdrv_callbacks osdrv_callbacks;
-	HIF_ENTER();
 
+	HIF_ENTER();
 	qdf_mem_zero(&osdrv_callbacks, sizeof(osdrv_callbacks));
 	osdrv_callbacks.device_inserted_handler = hif_sdio_probe;
 	osdrv_callbacks.device_removed_handler = hif_sdio_remove;
@@ -487,8 +488,7 @@ QDF_STATUS hif_sdio_enable_bus(struct hif_softc *hif_sc,
 
 	init_waitqueue_head(&sync_wait_queue);
 	if (hif_sdio_device_inserted(dev, id)) {
-			HIF_ERROR("wlan: %s hif_sdio_device_inserted"
-					  "failed", __func__);
+		HIF_ERROR("wlan: %s hif_sdio_device_inserted failed", __func__);
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -557,8 +557,8 @@ void hif_sdio_set_mailbox_swap(struct hif_softc *hif_sc)
 {
 	struct hif_sdio_softc *scn = HIF_GET_SDIO_SOFTC(hif_sc);
 	struct hif_sdio_dev *hif_device = scn->hif_handle;
+
 	hif_device->swap_mailbox = true;
-	return;
 }
 
 /**
@@ -571,8 +571,8 @@ void hif_sdio_claim_device(struct hif_softc *hif_sc)
 {
 	struct hif_sdio_softc *scn = HIF_GET_SDIO_SOFTC(hif_sc);
 	struct hif_sdio_dev *hif_device = scn->hif_handle;
+
 	hif_device->claimed_ctx = hif_sc;
-	return;
 }
 
 /**
@@ -585,8 +585,8 @@ void hif_sdio_mask_interrupt_call(struct hif_softc *scn)
 {
 	struct hif_sdio_softc *hif_ctx = HIF_GET_SDIO_SOFTC(scn);
 	struct hif_sdio_dev *hif_device = hif_ctx->hif_handle;
+
 	hif_mask_interrupt(hif_device);
-	return;
 }
 
 /**

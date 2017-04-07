@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -122,7 +122,8 @@ QDF_STATUS hif_dev_send_buffer(struct hif_sdio_device *pdev,
 
 	if (frag_count > 1) {
 		/* header data length should be total sending length substract
-		 * internal data length of netbuf */
+		 * internal data length of netbuf
+		 */
 		head_data_len = sizeof(struct hif_sendContext) +
 			(nbytes - qdf_nbuf_get_frag_len(buf, frag_count - 1));
 	} else {
@@ -162,6 +163,7 @@ QDF_STATUS hif_dev_send_buffer(struct hif_sdio_device *pdev,
 	     i++) {
 		int frag_len = qdf_nbuf_get_frag_len(buf, i);
 		unsigned char *frag_addr = qdf_nbuf_get_frag_vaddr(buf, i);
+
 		if (frag_len > nbytes)
 			frag_len = nbytes;
 		memcpy(pData, frag_addr, frag_len);

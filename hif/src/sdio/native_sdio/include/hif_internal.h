@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -232,30 +232,35 @@ struct hif_mailbox_properties {
 };
 
 struct hif_device_irq_yield_params {
-	int recv_packet_yield_count; /* max number of packets to force DSR
-				   to return */
+	int recv_packet_yield_count;
+	/* max number of packets to force DSR to return */
 };
 
 struct hif_device_mbox_info {
-	u_int32_t mbox_addresses[4]; /*first element for legacy HIFs and
-				  return the address and ARRAY of 32bit words */
+	u_int32_t mbox_addresses[4];
+	/* first element for legacy HIFs and return the address and ARRAY of
+	 * 32bit words
+	 */
 	struct hif_mailbox_properties mbox_prop[4];
 	u_int32_t gmbox_address;
 	u_int32_t gmbox_size;
-	u_int32_t flags;   /* flags to describe mbox behavior or usage */
+	u_int32_t flags;
+	/* flags to describe mbox behavior or usage */
 };
 
 enum hif_device_irq_mode {
-	HIF_DEVICE_IRQ_SYNC_ONLY,   /* DSR to process all
-				     * interrupts before returning */
+	HIF_DEVICE_IRQ_SYNC_ONLY,
+	/* DSR to process all interrupts before returning */
 	HIF_DEVICE_IRQ_ASYNC_SYNC,  /* DSR to process interrupts */
 };
 
 struct osdrv_callbacks {
-	void *context;          /* context to pass for all callbacks
-				 * except device_removed_handler
-				 * the device_removed_handler is only
-				 * called if the device is claimed */
+	void *context;
+	/* context to pass for all callbacks
+	 * except device_removed_handler
+	 * the device_removed_handler is only
+	 * called if the device is claimed
+	 */
 	int (*device_inserted_handler)(void *context, void *hif_handle);
 	int (*device_removed_handler)(void *claimed_ctx,
 				    void *hif_handle);
@@ -349,8 +354,8 @@ struct _HIF_SCATTER_REQ {
 	struct _HIF_SCATTER_ITEM    scatter_list[1]; /* start of scatter list */
 };
 
-typedef struct
-_HIF_SCATTER_REQ * (*HIF_ALLOCATE_SCATTER_REQUEST)(struct hif_sdio_dev *device);
+typedef struct _HIF_SCATTER_REQ * (*HIF_ALLOCATE_SCATTER_REQUEST)(
+						struct hif_sdio_dev *device);
 typedef void (*HIF_FREE_SCATTER_REQUEST)(struct hif_sdio_dev *device,
 				struct _HIF_SCATTER_REQ *request);
 typedef QDF_STATUS (*HIF_READWRITE_SCATTER)(struct hif_sdio_dev *device,

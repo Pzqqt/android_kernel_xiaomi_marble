@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -188,8 +188,6 @@ void hif_post_init(struct hif_opaque_softc *hif_ctx, void *target,
 
 	if (htc_sdio_device)
 		hif_dev_setup(htc_sdio_device);
-
-	return;
 }
 
 /**

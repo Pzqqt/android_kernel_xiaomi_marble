@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -107,7 +107,8 @@
  * requirement, but AR6003 support it, so the register
  * is placed in vendor specific field 0xF0(bit0)
  * In SDIO 3.0, the register is defined in SPEC, and its
- * address is 0x16(bit1) */
+ * address is 0x16(bit1)
+ */
 /* interrupt mode register of AR6003 */
 #define CCCR_SDIO_IRQ_MODE_REG_AR6003         0xF0
 /* mode to enable special 4-bit interrupt assertion without clock */

@@ -100,7 +100,8 @@ static void hif_dev_dump_registers(struct hif_sdio_device *pdev,
 
 		if (pdev->MailBoxInfo.gmbox_address != 0) {
 			/* if the target supports GMBOX hardware,
-			 * dump some additional state */
+			 * dump some additional state
+			 */
 			AR_DEBUG_PRINTF(ATH_DEBUG_ANY,
 					("GMBOX-HostIntStatus2:  0x%x ",
 					 irq_proc_regs->host_int_status2));
@@ -121,6 +122,7 @@ static void hif_dev_dump_registers(struct hif_sdio_device *pdev,
 
 	if (mailbox_counter_registers != NULL) {
 		int i;
+
 		for (i = 0; i < 4; i++) {
 			AR_DEBUG_PRINTF(ATH_DEBUG_ANY,
 					("Counter[%d]:               0x%x\n", i,
@@ -176,17 +178,18 @@ QDF_STATUS hif_dev_alloc_and_prepare_rx_packets(struct hif_sdio_device *pdev,
 		} else {
 			/* HTC header indicates that every packet to follow
 			 * has the same padded length so that it can
-			 * be optimally fetched as a full bundle */
+			 * be optimally fetched as a full bundle
+			 */
 			num_messages =
 				(hdr->Flags & HTC_FLAGS_RECV_BUNDLE_CNT_MASK)
 				>> HTC_FLAGS_RECV_BUNDLE_CNT_SHIFT;
 			/* the count doesn't include the starter frame, just
-			 * a count of frames to follow */
+			 * a count of frames to follow
+			 */
 			num_messages++;
 			/* A_ASSERT(numMessages <= target->MaxMsgPerBundle); */
 			AR_DEBUG_PRINTF(ATH_DEBUG_RECV,
-				("HTC header indicates :%d messages can be"
-				 " fetched as a bundle\n",
+				("HTC header indicates :%d messages can be fetched as a bundle\n",
 				 num_messages));
 		}
 
@@ -197,25 +200,28 @@ QDF_STATUS hif_dev_alloc_and_prepare_rx_packets(struct hif_sdio_device *pdev,
 
 		/* get packet buffers for each message, if there was a
 		 * bundle detected in the header,
-		 * use pHdr as a template to fetch all packets in the bundle */
+		 * use pHdr as a template to fetch all packets in the bundle
+		 */
 		for (j = 0; j < num_messages; j++) {
 
 			/* reset flag, any packets allocated using the
 			 * RecvAlloc() API cannot be recycled on cleanup,
-			 * they must be explicitly returned */
+			 * they must be explicitly returned
+			 */
 			no_recycle = false;
 			packet = hif_dev_alloc_rx_buffer(pdev);
 
 			if (packet == NULL) {
 				/* No error, simply need to mark that
-				 * we are waiting for buffers. */
+				 * we are waiting for buffers.
+				 */
 				pdev->RecvStateFlags |= HTC_RECV_WAIT_BUFFERS;
 				/* pDev->EpWaitingForBuffers = pEndpoint->Id; */
 				status = QDF_STATUS_E_RESOURCES;
 				break;
 			}
-			/* AR_DEBUG_ASSERT(pPacket->Endpoint ==
-					   pEndpoint->Id); */
+			/* AR_DEBUG_ASSERT(pPacket->Endpoint == pEndpoint->Id);
+			 */
 			/* clear flags */
 			packet->PktInfo.AsRx.HTCRxFlags = 0;
 			packet->PktInfo.AsRx.IndicationFlags = 0;
@@ -223,25 +229,25 @@ QDF_STATUS hif_dev_alloc_and_prepare_rx_packets(struct hif_sdio_device *pdev,
 
 			if (no_recycle)
 				/* flag that these packets cannot be recycled,
-				 * they have to be returned to the user */
+				 * they have to be returned to the user
+				 */
 				packet->PktInfo.AsRx.HTCRxFlags |=
 					HTC_RX_PKT_NO_RECYCLE;
 			/* add packet to queue (also incase we need to
-			 * cleanup down below)  */
+			 * cleanup down below)
+			 */
 			HTC_PACKET_ENQUEUE(queue, packet);
 
-			/*
-			   if (HTC_STOPPING(target)) {
-			   status = QDF_STATUS_E_CANCELED;
-			   break;
-			   }
+			/* if (HTC_STOPPING(target)) {
+			 *      status = QDF_STATUS_E_CANCELED;
+			 *      break;
+			 *  }
 			 */
 
 			/* make sure  message can fit in the endpoint buffer */
 			if ((uint32_t) full_length > packet->BufferLength) {
 				AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
-				("Payload Length Error : header reports payload"
-				 " of: %d (%d) endpoint buffer size: %d\n",
+				("Payload Length Error : header reports payload of: %d (%d) endpoint buffer size: %d\n",
 					 hdr->PayloadLen, full_length,
 					 packet->BufferLength));
 				status = QDF_STATUS_E_PROTO;
@@ -252,7 +258,8 @@ QDF_STATUS hif_dev_alloc_and_prepare_rx_packets(struct hif_sdio_device *pdev,
 				/* for messages fetched in a bundle the expected
 				 * lookahead is unknown as we are only using the
 				 * lookahead of the first packet as a template
-				 * of what to expect for lengths */
+				 * of what to expect for lengths
+				 */
 				packet->PktInfo.AsRx.HTCRxFlags |=
 					HTC_RX_PKT_REFRESH_HDR;
 				/* set it to something invalid */
@@ -301,8 +308,7 @@ static inline QDF_STATUS hif_dev_recv_packet(struct hif_sdio_device *pdev,
 
 	if (padded_length > packet->BufferLength) {
 		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
-				("DevRecvPacket, Not enough space for"
-				 " padlen:%d recvlen:%d bufferlen:%d\n",
+				("DevRecvPacket, Not enough space for padlen:%d recvlen:%d bufferlen:%d\n",
 				 padded_length, recv_length,
 				 packet->BufferLength));
 		if (packet->Completion != NULL) {
@@ -314,8 +320,7 @@ static inline QDF_STATUS hif_dev_recv_packet(struct hif_sdio_device *pdev,
 
 	/* mailbox index is saved in Endpoint member */
 	AR_DEBUG_PRINTF(ATH_DEBUG_RECV,
-			("hif_dev_recv_packet (0x%lX : hdr:0x%X) Len:%d,"
-			 " Padded Length: %d Mbox:0x%X\n",
+			("hif_dev_recv_packet (0x%lX : hdr:0x%X) Len:%d, Padded Length: %d Mbox:0x%X\n",
 			 (unsigned long)packet,
 			 packet->PktInfo.AsRx.ExpectedHdr, recv_length,
 			 padded_length,
@@ -343,8 +348,7 @@ static inline QDF_STATUS hif_dev_recv_packet(struct hif_sdio_device *pdev,
 			HTC_FRAME_HDR *hdr =
 				(HTC_FRAME_HDR *) packet->pBuffer;
 			AR_DEBUG_PRINTF(ATH_DEBUG_RECV,
-				("hif_dev_recv_packet "
-				 "EP:%d,Len:%d,Flag:%d,CB:0x%02X,0x%02X\n",
+				("hif_dev_recv_packet EP:%d,Len:%d,Flag:%d,CB:0x%02X,0x%02X\n",
 				 hdr->EndpointID, hdr->PayloadLen,
 				 hdr->Flags, hdr->ControlBytes0,
 				 hdr->ControlBytes1));
@@ -391,8 +395,7 @@ static inline QDF_STATUS hif_dev_process_trailer(struct hif_sdio_device *pdev,
 		if (record->Length > length) {
 			/* no room left in buffer for record */
 			AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
-				(" invalid record len: %d (id:%d) buffer has:"
-				 "%d bytes left\n",
+				(" invalid record len: %d (id:%d) buffer has:%d bytes left\n",
 				 record->Length, record->RecordID,
 				 length));
 			status = QDF_STATUS_E_PROTO;
@@ -414,8 +417,7 @@ static inline QDF_STATUS hif_dev_process_trailer(struct hif_sdio_device *pdev,
 			    && (next_look_aheads != NULL)) {
 
 				AR_DEBUG_PRINTF(ATH_DEBUG_RECV,
-					(" look_ahead Report (pre valid:0x%X,"
-					" post valid:0x%X) %d %d\n",
+					(" look_ahead Report (pre valid:0x%X, post valid:0x%X) %d %d\n",
 					 look_ahead->PreValid,
 					 look_ahead->PostValid,
 					 from_endpoint,
@@ -464,7 +466,8 @@ static inline QDF_STATUS hif_dev_process_trailer(struct hif_sdio_device *pdev,
 				    > HTC_MAX_MSG_PER_BUNDLE) {
 					/* this should never happen, the target
 					 * restricts the number of messages per
-					 * bundle configured by the host */
+					 * bundle configured by the host
+					 */
 					A_ASSERT(false);
 					status = QDF_STATUS_E_PROTO;
 					break;
@@ -515,7 +518,8 @@ static inline QDF_STATUS hif_dev_process_trailer(struct hif_sdio_device *pdev,
 
 /* process a received message (i.e. strip off header,
  * process any trailer data).
- * note : locks must be released when this function is called */
+ * note : locks must be released when this function is called
+ */
 static QDF_STATUS hif_dev_process_recv_header(struct hif_sdio_device *pdev,
 				    HTC_PACKET *packet,
 				    uint32_t *next_look_aheads,
@@ -541,7 +545,8 @@ static QDF_STATUS hif_dev_process_recv_header(struct hif_sdio_device *pdev,
 	do {
 		/* note, we cannot assume the alignment of pBuffer,
 		 * so we use the safe macros to
-		 * retrieve 16 bit fields */
+		 * retrieve 16 bit fields
+		 */
 		payloadLen = HTC_GET_FIELD(buf, HTC_FRAME_HDR,
 					PAYLOADLEN);
 
@@ -553,20 +558,22 @@ static QDF_STATUS hif_dev_process_recv_header(struct hif_sdio_device *pdev,
 		if (packet->PktInfo.AsRx.HTCRxFlags & HTC_RX_PKT_REFRESH_HDR) {
 			/* refresh expected hdr, since this was unknown
 			 * at the time we grabbed the packets
-			 * as part of a bundle */
+			 * as part of a bundle
+			 */
 			packet->PktInfo.AsRx.ExpectedHdr = look_ahead;
 			/* refresh actual length since we now have the
-			 * real header */
+			 * real header
+			 */
 			packet->ActualLength = payloadLen + HTC_HDR_LENGTH;
 
 			/* validate the actual header that was refreshed  */
 			if (packet->ActualLength > packet->BufferLength) {
 				AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
-					("Invalid  HDR payload length (%d)"
-					 " in bundled RECV (hdr: 0x%X)\n",
+					("Invalid  HDR payload length (%d) in bundled RECV (hdr: 0x%X)\n",
 						 payloadLen, look_ahead));
 				/* limit this to max buffer just to print out
-				 * some of the buffer */
+				 * some of the buffer
+				 */
 				packet->ActualLength =
 					min(packet->ActualLength,
 					    packet->BufferLength);
@@ -577,8 +584,7 @@ static QDF_STATUS hif_dev_process_recv_header(struct hif_sdio_device *pdev,
 			if (packet->Endpoint
 			    != HTC_GET_FIELD(buf, HTC_FRAME_HDR, ENDPOINTID)) {
 				AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
-					("Refreshed HDR endpoint (%d) does not "
-					 " match expected endpoint (%d)\n",
+					("Refreshed HDR endpoint (%d) does not match expected endpoint (%d)\n",
 					 HTC_GET_FIELD(buf,
 							       HTC_FRAME_HDR,
 							       ENDPOINTID),
@@ -591,10 +597,10 @@ static QDF_STATUS hif_dev_process_recv_header(struct hif_sdio_device *pdev,
 		if (look_ahead != packet->PktInfo.AsRx.ExpectedHdr) {
 			/* somehow the lookahead that gave us the full read
 			 * length did not reflect the actual header
-			 * in the pending message */
+			 * in the pending message
+			 */
 			AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
-			   ("hif_dev_process_recv_header, lookahead mismatch!"
-			    " (pPkt:0x%lX flags:0x%X), 0x%08X != 0x%08X\n",
+			   ("hif_dev_process_recv_header, lookahead mismatch! (pPkt:0x%lX flags:0x%X), 0x%08X != 0x%08X\n",
 				 (unsigned long)packet,
 				 packet->PktInfo.AsRx.HTCRxFlags,
 				 look_ahead,
@@ -633,8 +639,7 @@ static QDF_STATUS hif_dev_process_recv_header(struct hif_sdio_device *pdev,
 			if ((temp < sizeof(HTC_RECORD_HDR))
 			    || (temp > payloadLen)) {
 				AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
-				("hif_dev_process_recv_header, invalid header"
-				 "(payloadlength should be :%d, CB[0] is:%d)\n",
+				("hif_dev_process_recv_header, invalid header(payloadlength should be :%d, CB[0] is:%d)\n",
 					 payloadLen, temp));
 				status = QDF_STATUS_E_PROTO;
 				break;
@@ -645,13 +650,15 @@ static QDF_STATUS hif_dev_process_recv_header(struct hif_sdio_device *pdev,
 				/* this packet was fetched as part of an HTC
 				 * bundle as the lookahead is not valid.
 				 * Next packet may have already been fetched as
-				 * part of the bundle */
+				 * part of the bundle
+				 */
 				next_look_aheads = NULL;
 				num_look_aheads = NULL;
 			}
 
 			/* process trailer data that follows HDR and
-			 * application payload */
+			 * application payload
+			 */
 			status = hif_dev_process_trailer(pdev,
 						 (buf + HTC_HDR_LENGTH +
 						  payloadLen - temp), temp,
@@ -696,8 +703,8 @@ static QDF_STATUS hif_dev_issue_recv_packet_bundle(struct hif_sdio_device *pdev,
 	HTC_PACKET *packet, *packet_rx_bundle;
 	HTC_TARGET *target = NULL;
 	uint32_t padded_length;
-
 	int bundleSpaceRemaining = 0;
+
 	target = (HTC_TARGET *) pdev->pTarget;
 
 	if ((HTC_PACKET_QUEUE_DEPTH(recv_pkt_queue) - HTC_MAX_MSG_PER_BUNDLE) >
@@ -779,6 +786,24 @@ static QDF_STATUS hif_dev_issue_recv_packet_bundle(struct hif_sdio_device *pdev,
 	return status;
 }
 
+static inline void hif_dev_free_recv_pkt_queue(HTC_PACKET_QUEUE *recv_pkt_queue)
+{
+	HTC_PACKET *packet;
+	qdf_nbuf_t netbuf;
+
+	while (!HTC_QUEUE_EMPTY(recv_pkt_queue)) {
+
+		packet = htc_packet_dequeue(recv_pkt_queue);
+		if (packet == NULL)
+			break;
+		netbuf = (qdf_nbuf_t) packet->
+				pNetBufContext;
+		if (netbuf)
+			qdf_nbuf_free(netbuf);
+	}
+}
+
+static
 QDF_STATUS hif_dev_recv_message_pending_handler(struct hif_sdio_device *pdev,
 				      uint8_t mail_box_index,
 				      uint32_t msg_look_aheads[],
@@ -807,7 +832,8 @@ QDF_STATUS hif_dev_recv_message_pending_handler(struct hif_sdio_device *pdev,
 		/* We use async mode to get the packets if the
 		 * device layer supports it. The device layer
 		 * interfaces with HIF in which HIF may have
-		 * restrictions on how interrupts are processed */
+		 * restrictions on how interrupts are processed
+		 */
 		asyncProc = true;
 	}
 
@@ -832,7 +858,8 @@ QDF_STATUS hif_dev_recv_message_pending_handler(struct hif_sdio_device *pdev,
 		}
 
 		/* first lookahead sets the expected endpoint IDs for
-		 * all packets in a bundle */
+		 * all packets in a bundle
+		 */
 		id = ((HTC_FRAME_HDR *) &look_aheads[0])->EndpointID;
 
 		if (id >= ENDPOINT_MAX) {
@@ -844,7 +871,8 @@ QDF_STATUS hif_dev_recv_message_pending_handler(struct hif_sdio_device *pdev,
 		}
 		/* try to allocate as many HTC RX packets indicated
 		 * by the lookaheads these packets are stored
-		 * in the recvPkt queue */
+		 * in the recvPkt queue
+		 */
 		status = hif_dev_alloc_and_prepare_rx_packets(pdev,
 							      look_aheads,
 							      num_look_aheads,
@@ -854,7 +882,8 @@ QDF_STATUS hif_dev_recv_message_pending_handler(struct hif_sdio_device *pdev,
 		total_fetched += HTC_PACKET_QUEUE_DEPTH(&recv_pkt_queue);
 
 		/* we've got packet buffers for all we can currently fetch,
-		 * this count is not valid anymore  */
+		 * this count is not valid anymore
+		 */
 		num_look_aheads = 0;
 		partial_bundle = false;
 
@@ -864,7 +893,8 @@ QDF_STATUS hif_dev_recv_message_pending_handler(struct hif_sdio_device *pdev,
 			pkts_fetched = 0;
 			if ((HTC_PACKET_QUEUE_DEPTH(&recv_pkt_queue) > 1)) {
 				/* there are enough packets to attempt a bundle
-				 * transfer and recv bundling is allowed  */
+				 * transfer and recv bundling is allowed
+				 */
 				status = hif_dev_issue_recv_packet_bundle(pdev,
 						  &recv_pkt_queue,
 						  asyncProc ?
@@ -874,19 +904,8 @@ QDF_STATUS hif_dev_recv_message_pending_handler(struct hif_sdio_device *pdev,
 						  &pkts_fetched,
 						  partial_bundle);
 				if (QDF_IS_STATUS_ERROR(status)) {
-					while (!HTC_QUEUE_EMPTY(
-							&recv_pkt_queue)) {
-						qdf_nbuf_t netbuf;
-
-						packet = htc_packet_dequeue(
-							 &recv_pkt_queue);
-						if (packet == NULL)
-							break;
-						netbuf = (qdf_nbuf_t) packet->
-								pNetBufContext;
-						if (netbuf)
-							qdf_nbuf_free(netbuf);
-					}
+					hif_dev_free_recv_pkt_queue(
+							&recv_pkt_queue);
 					break;
 				}
 
@@ -894,13 +913,15 @@ QDF_STATUS hif_dev_recv_message_pending_handler(struct hif_sdio_device *pdev,
 					0) {
 					/* we couldn't fetch all packets at one,
 					 * time this creates a broken
-					 * bundle  */
+					 * bundle
+					 */
 					partial_bundle = true;
 				}
 			}
 
 			/* see if the previous operation fetched any
-			 * packets using bundling */
+			 * packets using bundling
+			 */
 			if (0 == pkts_fetched) {
 				/* dequeue one packet */
 				packet = htc_packet_dequeue(&recv_pkt_queue);
@@ -910,7 +931,8 @@ QDF_STATUS hif_dev_recv_message_pending_handler(struct hif_sdio_device *pdev,
 				if (HTC_PACKET_QUEUE_DEPTH(&recv_pkt_queue) >
 				    0) {
 					/* lookaheads in all packets except the
-					 * last one in must be ignored */
+					 * last one in must be ignored
+					 */
 					packet->PktInfo.AsRx.HTCRxFlags |=
 						HTC_RX_PKT_IGNORE_LOOKAHEAD;
 				}
@@ -923,7 +945,8 @@ QDF_STATUS hif_dev_recv_message_pending_handler(struct hif_sdio_device *pdev,
 				if (QDF_IS_STATUS_ERROR(status))
 					break;
 				/* sent synchronously, queue this packet for
-				 * synchronous completion */
+				 * synchronous completion
+				 */
 				HTC_PACKET_ENQUEUE(&sync_completed_pkts_queue,
 						   packet);
 			}
@@ -932,12 +955,14 @@ QDF_STATUS hif_dev_recv_message_pending_handler(struct hif_sdio_device *pdev,
 		/* synchronous handling */
 		if (pdev->DSRCanYield) {
 			/* for the SYNC case, increment count that tracks
-			 * when the DSR should yield */
+			 * when the DSR should yield
+			 */
 			pdev->CurrentDSRRecvCount++;
 		}
 
 		/* in the sync case, all packet buffers are now filled,
-		 * we can process each packet, check lookahead , then repeat */
+		 * we can process each packet, check lookahead , then repeat
+		 */
 
 		/* unload sync completion queue */
 		while (!HTC_QUEUE_EMPTY(&sync_completed_pkts_queue)) {
@@ -980,7 +1005,8 @@ QDF_STATUS hif_dev_recv_message_pending_handler(struct hif_sdio_device *pdev,
 		}
 		/* check whether other OS contexts have queued any WMI
 		 * command/data for WLAN. This check is needed only if WLAN
-		 * Tx and Rx happens in same thread context */
+		 * Tx and Rx happens in same thread context
+		 */
 		/* A_CHECK_DRV_TX(); */
 	}
 	if (num_pkts_fetched != NULL)
@@ -1020,7 +1046,8 @@ static QDF_STATUS hif_dev_service_cpu_interrupt(struct hif_sdio_device *pdev)
 	 * to mitigate issues with host bus interconnects that
 	 * restrict bus transfer lengths to be a multiple of 4-bytes
 	 * set W1C value to clear the interrupt, this hits the register
-	 * first */
+	 * first
+	 */
 	reg_buffer[0] = cpu_int_status;
 	/* the remaining 4 values are set to zero which have no-effect  */
 	reg_buffer[1] = 0;
@@ -1034,17 +1061,18 @@ static QDF_STATUS hif_dev_service_cpu_interrupt(struct hif_sdio_device *pdev)
 	A_ASSERT(status == QDF_STATUS_SUCCESS);
 
 	/* The Interrupt sent to the Host is generated via bit0
-	 * of CPU INT register */
+	 * of CPU INT register
+	 */
 	if (cpu_int_status & 0x1) {
 		if (pdev && pdev->hif_callbacks.fwEventHandler)
 			/* It calls into HTC which propagates this
-			 * to ol_target_failure() */
+			 * to ol_target_failure()
+			 */
 			pdev->hif_callbacks.fwEventHandler(pdev->hif_callbacks.
 						Context, QDF_STATUS_E_FAILURE);
 	} else
 		AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
-				("%s: Unable to call fwEventHandler,"
-				" invalid input arguments\n",
+				("%s: Unable to call fwEventHandler, invalid input arguments\n",
 				 __func__));
 
 	return status;
@@ -1092,7 +1120,8 @@ static QDF_STATUS hif_dev_service_error_interrupt(struct hif_sdio_device *pdev)
 	/* set up the register transfer buffer to hit the register
 	 * 4 times , this is done to make the access 4-byte
 	 * aligned to mitigate issues with host bus interconnects that
-	 * restrict bus transfer lengths to be a multiple of 4-bytes */
+	 * restrict bus transfer lengths to be a multiple of 4-bytes
+	 */
 
 	/* set W1C value to clear the interrupt */
 	reg_buffer[0] = error_int_status;
@@ -1125,9 +1154,9 @@ static QDF_STATUS hif_dev_service_debug_interrupt(struct hif_sdio_device *pdev)
 	/* Send a target failure event to the application */
 	AR_DEBUG_PRINTF(ATH_DEBUG_ERR, ("Target debug interrupt\n"));
 
-	/* clear the interrupt , the debug error interrupt is
-	 * counter 0 */
-	/* read counter to clear interrupt */
+	/* clear the interrupt , the debug error interrupt is counter 0
+	 * read counter to clear interrupt
+	 */
 	status = hif_read_write(pdev->HIFDevice,
 				COUNT_DEC_ADDRESS,
 				(uint8_t *) &dummy,
@@ -1162,7 +1191,8 @@ QDF_STATUS hif_dev_service_counter_interrupt(struct hif_sdio_device *pdev)
 	/* Check if the debug interrupt is pending
 	 * NOTE: other modules like GMBOX may use the counter interrupt
 	 * for credit flow control on other counters, we only need to
-	 * check for the debug assertion counter interrupt */
+	 * check for the debug assertion counter interrupt
+	 */
 	if (counter_int_status & AR6K_TARGET_DEBUG_INTR_MASK)
 		return hif_dev_service_debug_interrupt(pdev);
 
@@ -1196,14 +1226,16 @@ static QDF_STATUS hif_dev_process_pending_irqs(struct hif_sdio_device *pdev,
 	 * of this call allows us to perform SYNCHRONOUS I/O,
 	 * that is we can block, sleep or call any API that
 	 * can block or switch thread/task ontexts.
-	 * This is a fully schedulable context. */
+	 * This is a fully schedulable context.
+	 */
 	do {
 
 		if (pdev->IrqEnableRegisters.int_status_enable == 0) {
 			/* interrupt enables have been cleared, do not try
 			 * to process any pending interrupts that
 			 * may result in more bus transactions.
-			 * The target may be unresponsive at this point. */
+			 * The target may be unresponsive at this point.
+			 */
 			break;
 		}
 		status = hif_read_write(pdev->HIFDevice,
@@ -1228,18 +1260,21 @@ static QDF_STATUS hif_dev_process_pending_irqs(struct hif_sdio_device *pdev,
 
 		/* only look at mailbox status if the HIF layer did not
 		 * provide this function, on some HIF interfaces reading
-		 * the RX lookahead is not valid to do */
+		 * the RX lookahead is not valid to do
+		 */
 		for (i = 0; i < MAILBOX_USED_COUNT; i++) {
 			look_ahead[i] = 0;
 			if (host_int_status & (1 << i)) {
 				/* mask out pending mailbox value, we use
 				 * "lookAhead" as the real flag for
-				 * mailbox processing below */
+				 * mailbox processing below
+				 */
 				host_int_status &= ~(1 << i);
 				if (pdev->IrqProcRegisters.
 				    rx_lookahead_valid & (1 << i)) {
 					/* mailbox has a message and the
-					 * look ahead is valid */
+					 * look ahead is valid
+					 */
 					look_ahead[i] =
 						pdev->
 						IrqProcRegisters.rx_lookahead[
@@ -1265,7 +1300,8 @@ static QDF_STATUS hif_dev_process_pending_irqs(struct hif_sdio_device *pdev,
 
 		if ((0 == host_int_status) && !bLookAheadValid) {
 			/* nothing to process, the caller can use this
-			 * to break out of a loop */
+			 * to break out of a loop
+			 */
 			*done = true;
 			break;
 		}
@@ -1273,6 +1309,7 @@ static QDF_STATUS hif_dev_process_pending_irqs(struct hif_sdio_device *pdev,
 		if (bLookAheadValid) {
 			for (i = 0; i < MAILBOX_USED_COUNT; i++) {
 				int fetched = 0;
+
 				if (look_ahead[i] == 0)
 					continue;
 				AR_DEBUG_PRINTF(ATH_DEBUG_IRQ,
@@ -1285,7 +1322,8 @@ static QDF_STATUS hif_dev_process_pending_irqs(struct hif_sdio_device *pdev,
 				 * routine of the callers read request.
 				 * This can improve performance by reducing
 				 * the  context switching when we rapidly
-				 * pull packets */
+				 * pull packets
+				 */
 				status = hif_dev_recv_message_pending_handler(
 							pdev, i,
 							&look_ahead
@@ -1298,7 +1336,8 @@ static QDF_STATUS hif_dev_process_pending_irqs(struct hif_sdio_device *pdev,
 				if (!fetched) {
 					/* HTC could not pull any messages out
 					 * due to lack of resources force DSR
-					 * handle to ack the interrupt */
+					 * handle to ack the interrupt
+					 */
 					*async_processing = false;
 					pdev->RecheckIRQStatusCnt = 0;
 				}
@@ -1343,7 +1382,8 @@ static QDF_STATUS hif_dev_process_pending_irqs(struct hif_sdio_device *pdev,
 	 * GetPendingEventsFunc, this optimization cannot be used due to
 	 * possible side-effects.  For example, SPI requires the host
 	 * to drain all messages from the mailbox before exiting
-	  * the ISR routine. */
+	 * the ISR routine.
+	 */
 	if (!(*async_processing) && (pdev->RecheckIRQStatusCnt == 0)) {
 		AR_DEBUG_PRINTF(ATH_DEBUG_IRQ,
 			("Bypassing IRQ Status re-check, forcing done\n"));
@@ -1380,10 +1420,12 @@ QDF_STATUS hif_dev_dsr_handler(void *context)
 			 (unsigned long)pdev));
 
 	/* reset the recv counter that tracks when we need
-	 * to yield from the DSR */
+	 * to yield from the DSR
+	 */
 	pdev->CurrentDSRRecvCount = 0;
 	/* reset counter used to flag a re-scan of IRQ
-	 * status registers on the target */
+	 * status registers on the target
+	 */
 	pdev->RecheckIRQStatusCnt = 0;
 
 	while (!done) {
@@ -1393,19 +1435,22 @@ QDF_STATUS hif_dev_dsr_handler(void *context)
 
 		if (HIF_DEVICE_IRQ_SYNC_ONLY == pdev->HifIRQProcessingMode) {
 			/* the HIF layer does not allow async IRQ processing,
-			 * override the asyncProc flag */
+			 * override the asyncProc flag
+			 */
 			async_proc = false;
 			/* this will cause us to re-enter ProcessPendingIRQ()
 			 * and re-read interrupt status registers.
 			 * This has a nice side effect of blocking us until all
 			 * async read requests are completed. This behavior is
 			 * required as we  do not allow ASYNC processing
-			 * in interrupt handlers (like Windows CE) */
+			 * in interrupt handlers (like Windows CE)
+			 */
 
 			if (pdev->DSRCanYield && DEV_CHECK_RECV_YIELD(pdev))
 				/* ProcessPendingIRQs() pulled enough recv
 				 * messages to satisfy the yield count, stop
-				 * checking for more messages and return */
+				 * checking for more messages and return
+				 */
 				break;
 		}
 
@@ -1413,7 +1458,8 @@ QDF_STATUS hif_dev_dsr_handler(void *context)
 			/* the function does some async I/O for performance,
 			 * we need to exit the ISR immediately, the check below
 			 * will prevent the interrupt from being
-			 * Ack'd while we handle it asynchronously */
+			 * Ack'd while we handle it asynchronously
+			 */
 			break;
 		}
 
@@ -1422,11 +1468,13 @@ QDF_STATUS hif_dev_dsr_handler(void *context)
 	if (QDF_IS_STATUS_SUCCESS(status) && !async_proc) {
 		/* Ack the interrupt only if :
 		 *  1. we did not get any errors in processing interrupts
-		 *  2. there are no outstanding async processing requests */
+		 *  2. there are no outstanding async processing requests
+		 */
 		if (pdev->DSRCanYield) {
 			/* if the DSR can yield do not ACK the interrupt, there
 			 * could be more pending messages. The HIF layer
-			 * must ACK the interrupt on behalf of HTC */
+			 * must ACK the interrupt on behalf of HTC
+			 */
 			AR_DEBUG_PRINTF(ATH_DEBUG_IRQ,
 				(" Yield in effect (cur RX count: %d)\n",
 				 pdev->CurrentDSRRecvCount));
@@ -1440,3 +1488,4 @@ QDF_STATUS hif_dev_dsr_handler(void *context)
 	AR_DEBUG_PRINTF(ATH_DEBUG_IRQ, ("-DevDsrHandler\n"));
 	return status;
 }
+

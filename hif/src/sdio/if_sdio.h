@@ -76,7 +76,6 @@ static inline int athdiag_procfs_init(void *scn)
 
 static inline void athdiag_procfs_remove(void)
 {
-	return;
 }
 #endif
 
