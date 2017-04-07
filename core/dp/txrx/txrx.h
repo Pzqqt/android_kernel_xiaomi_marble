@@ -86,12 +86,16 @@ enum wlan_sta_state {
 	/* Transition in this state made upon creation */
 	WLAN_STA_INIT = 0,
 
-	/* Transition happens after Assoc success if second level authentication
-	   is needed */
+	/*
+	 * Transition happens after Assoc success if second level authentication
+	 * is needed
+	 */
 	WLAN_STA_CONNECTED,
 
-	/* Transition happens when second level auth is successful and keys are
-	   properly installed */
+	/*
+	 * Transition happens when second level auth is successful and keys are
+	 * properly installed
+	 */
 	WLAN_STA_AUTHENTICATED,
 
 	/* Transition happens when connectivity is lost */
