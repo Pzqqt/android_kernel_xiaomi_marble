@@ -134,14 +134,6 @@ void wlan_reg_get_dfs_region(struct wlan_objmgr_psoc *psoc,
 			     enum dfs_reg *dfs_reg);
 
 /**
- * wlan_reg_is_dfs_ch () - Checks the channel state for DFS
- * @ch: channel
- *
- * Return: true or false
- */
-bool wlan_reg_is_dfs_ch(struct wlan_objmgr_pdev *pdev, uint8_t ch);
-
-/**
  * wlan_reg_get_channel_reg_power() - Provide the channel regulatory power
  * @chan_num: chennal number
  *
@@ -300,4 +292,42 @@ QDF_STATUS wlan_reg_get_current_chan_list(struct wlan_objmgr_pdev
 					  *chan_list);
 void wlan_reg_update_nol_ch(struct wlan_objmgr_pdev *pdev, uint8_t *ch_list,
 		uint8_t num_ch, bool nol_ch);
+
+/**
+ * wlan_reg_is_dfs_ch () - Checks the channel state for DFS
+ * @chan: channel
+ *
+ * Return: true or false
+ */
+bool wlan_reg_is_dfs_ch(struct wlan_objmgr_pdev *pdev,
+			uint32_t chan);
+
+/**
+ * wlan_reg_is_passive_or_disable_ch () - Checks chan state for passive
+ * and disabled
+ * @chan: channel
+ *
+ * Return: true or false
+ */
+bool wlan_reg_is_passive_or_disable_ch(struct wlan_objmgr_pdev *pdev,
+				       uint32_t chan);
+
+/**
+ * wlan_reg_freq_to_chan () - convert channel freq to channel number
+ * @freq: frequency
+ *
+ * Return: true or false
+ */
+uint32_t wlan_reg_freq_to_chan(struct wlan_objmgr_pdev *pdev,
+			       uint32_t freq);
+
+/**
+ * wlan_reg_chan_to_freq () - convert channel number to frequency
+ * @chan: channel number
+ *
+ * Return: true or false
+ */
+uint32_t wlan_reg_chan_to_freq(struct wlan_objmgr_pdev *pdev,
+			       uint32_t chan);
+
 #endif

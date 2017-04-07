@@ -143,25 +143,11 @@ void wlan_reg_get_dfs_region(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
- * wlan_reg_is_dfs_ch () - Checks the channel state for DFS
- * @ch: channel
+ * wlan_reg_get_channel_reg_power() - get regulatory power for channel
+ * @chan_num: channel number
  *
- * Return: true or false
+ * Return: int
  */
-bool wlan_reg_is_dfs_ch(struct wlan_objmgr_pdev *pdev, uint8_t ch)
-{
-	/*
-	 * Get the current dfs region
-	 */
-	return reg_is_dfs_ch(pdev, ch);
-}
-
- /**
-  * wlan_reg_get_channel_reg_power() - get regulatory power for channel
-  * @chan_num: channel number
-  *
-  * Return: int
-  */
 uint32_t wlan_reg_get_channel_reg_power(struct wlan_objmgr_pdev *pdev,
 					uint32_t chan_num)
 {
@@ -234,12 +220,6 @@ void wlan_reg_set_dfs_region(struct wlan_objmgr_psoc *psoc,
 	reg_set_dfs_region(psoc, dfs_reg);
 }
 
-/**
- * wlan_reg_get_domain_from_country_code() - get the regulatory domain
- * @reg_domain_ptr: ptr to store regulatory domain
- *
- * Return: QDF_STATUS
- */
 QDF_STATUS wlan_reg_get_domain_from_country_code(v_REGDOMAIN_t *reg_domain_ptr,
 		const uint8_t *country_alpha2, enum country_src source)
 {
@@ -277,11 +257,6 @@ uint16_t wlan_reg_dmn_get_curr_opclasses(uint8_t *num_classes,
 	return reg_dmn_get_curr_opclasses(num_classes, class);
 }
 
-/**
- * wlan_regulatory_init() - init regulatory component
- *
- * Return: Success or Failure
- */
 QDF_STATUS wlan_regulatory_init(void)
 {
 	QDF_STATUS status;
@@ -331,11 +306,6 @@ QDF_STATUS wlan_regulatory_init(void)
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * wlan_regulatory_deinit() - deinit regulatory component
- *
- * Return: Success or Failure
- */
 QDF_STATUS wlan_regulatory_deinit(void)
 {
 	QDF_STATUS status;
@@ -406,17 +376,35 @@ QDF_STATUS wlan_reg_get_current_chan_list(struct wlan_objmgr_pdev
 	return reg_get_current_chan_list(pdev, chan_list);
 }
 
-/**
- * wlan_reg_update_nol_ch () - Updates NOL channels in current channel list
- * @pdev: pointer to pdev object
- * @ch_list: pointer to NOL channel list
- * @num_ch: No.of channels in list
- * @nol_ch: set/reset the NOL status
- *
- * Return: None
- */
 void wlan_reg_update_nol_ch(struct wlan_objmgr_pdev *pdev, uint8_t *ch_list,
 		uint8_t num_ch, bool nol_ch)
 {
 	reg_update_nol_ch(pdev, ch_list, num_ch, nol_ch);
 }
+
+bool wlan_reg_is_dfs_ch(struct wlan_objmgr_pdev *pdev, uint32_t chan)
+{
+	return reg_is_dfs_ch(pdev, chan);
+}
+
+bool wlan_reg_is_passive_or_disable_ch(struct wlan_objmgr_pdev *pdev,
+				       uint32_t chan)
+{
+	return reg_is_passive_or_disable_ch(pdev, chan);
+}
+
+uint32_t wlan_reg_freq_to_chan(struct wlan_objmgr_pdev *pdev,
+			       uint32_t freq)
+{
+	return reg_freq_to_chan(pdev, freq);
+}
+
+uint32_t wlan_reg_chan_to_freq(struct wlan_objmgr_pdev *pdev,
+			       uint32_t chan_num)
+{
+	return reg_chan_to_freq(pdev, chan_num);
+}
+
+
+
+

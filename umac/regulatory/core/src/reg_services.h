@@ -421,8 +421,6 @@ void reg_set_channel_params(struct wlan_objmgr_pdev *pdev,
 void reg_get_dfs_region(struct wlan_objmgr_psoc *psoc,
 			enum dfs_reg *dfs_reg);
 
-bool reg_is_dfs_ch(struct wlan_objmgr_pdev *pdev, uint8_t ch);
-
 uint32_t reg_get_channel_reg_power(struct wlan_objmgr_pdev *pdev,
 				   uint32_t chan_num);
 
@@ -488,4 +486,21 @@ QDF_STATUS reg_get_current_chan_list(struct wlan_objmgr_pdev *pdev,
 
 void reg_update_nol_ch(struct wlan_objmgr_pdev *pdev, uint8_t *ch_list,
 		uint8_t num_ch, bool nol_ch);
+
+
+/**
+ * reg_is_dfs_ch () - Checks the channel state for DFS
+ * @chan: channel
+ * @pdev: pdev ptr
+ *
+ * Return: true or false
+ */
+bool reg_is_dfs_ch(struct wlan_objmgr_pdev *pdev, uint32_t chan);
+
+bool reg_is_passive_or_disable_ch(struct wlan_objmgr_pdev *pdev, uint32_t chan);
+
+uint32_t reg_freq_to_chan(struct wlan_objmgr_pdev *pdev, uint32_t freq);
+
+uint32_t reg_chan_to_freq(struct wlan_objmgr_pdev *pdev, uint32_t chan_num);
+
 #endif
