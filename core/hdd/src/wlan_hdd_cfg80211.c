@@ -4551,31 +4551,86 @@ wlan_hdd_wifi_config_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1] = {
 };
 
 /**
- * wlan_hdd_save_default_scan_ies() - API to store the default scan IEs
+ * wlan_hdd_add_qcn_ie() - Add QCN IE to a given IE buffer
+ * @ie_data: IE buffer
+ * @ie_len: length of the @ie_data
  *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS wlan_hdd_add_qcn_ie(uint8_t *ie_data, uint16_t *ie_len)
+{
+	tDot11fIEQCN_IE qcn_ie;
+	uint8_t qcn_ie_hdr[QCN_IE_HDR_LEN]
+		= {IE_EID_VENDOR, DOT11F_IE_QCN_IE_MAX_LEN,
+			0x8C, 0xFD, 0xF0, 0x1};
+
+	if (((*ie_len) + QCN_IE_HDR_LEN +
+		QCN_IE_VERSION_SUBATTR_DATA_LEN) > MAX_DEFAULT_SCAN_IE_LEN) {
+		hdd_err("IE buffer not enough for QCN IE");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* Add QCN IE header */
+	qdf_mem_copy(ie_data + (*ie_len), qcn_ie_hdr, QCN_IE_HDR_LEN);
+	(*ie_len) += QCN_IE_HDR_LEN;
+
+	/* Retrieve Version sub-attribute data */
+	populate_dot11f_qcn_ie(&qcn_ie);
+
+	/* Add QCN IE data[version sub attribute] */
+	qdf_mem_copy(ie_data + (*ie_len), qcn_ie.version,
+				 (QCN_IE_VERSION_SUBATTR_LEN));
+	(*ie_len) += (QCN_IE_VERSION_SUBATTR_LEN);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wlan_hdd_save_default_scan_ies() - API to store the default scan IEs
+ * @hdd_ctx: HDD context
  * @adapter: Pointer to HDD adapter
  * @ie_data: Pointer to Scan IEs buffer
  * @ie_len: Length of Scan IEs
  *
+ * This API is used to store the default scan ies received from
+ * supplicant. Also saves QCN IE if g_qcn_ie_support INI is enabled
+ *
  * Return: 0 on success; error number otherwise
  */
-static int wlan_hdd_save_default_scan_ies(hdd_adapter_t *adapter,
-		uint8_t *ie_data, uint8_t ie_len)
+static int wlan_hdd_save_default_scan_ies(hdd_context_t *hdd_ctx,
+					  hdd_adapter_t *adapter,
+					  uint8_t *ie_data, uint16_t ie_len)
 {
-	hdd_scaninfo_t *scan_info = NULL;
-	scan_info = &adapter->scan_info;
+	hdd_scaninfo_t *scan_info = &adapter->scan_info;
+	bool add_qcn_ie = hdd_ctx->config->qcn_ie_support;
+
+	if (!scan_info)
+		return -EINVAL;
 
 	if (scan_info->default_scan_ies) {
 		qdf_mem_free(scan_info->default_scan_ies);
 		scan_info->default_scan_ies = NULL;
 	}
 
+	if (add_qcn_ie)
+		ie_len += (QCN_IE_HDR_LEN + QCN_IE_VERSION_SUBATTR_DATA_LEN);
+
 	scan_info->default_scan_ies = qdf_mem_malloc(ie_len);
 	if (!scan_info->default_scan_ies)
 		return -ENOMEM;
 
 	memcpy(scan_info->default_scan_ies, ie_data, ie_len);
-	scan_info->default_scan_ies_len = ie_len;
+
+	/* Add QCN IE if g_qcn_ie_support INI is enabled */
+	if (add_qcn_ie)
+		wlan_hdd_add_qcn_ie(scan_info->default_scan_ies,
+					&(scan_info->default_scan_ies_len));
+
+	hdd_debug("Saved default scan IE:");
+	qdf_trace_hex_dump(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
+				(uint8_t *) scan_info->default_scan_ies,
+				scan_info->default_scan_ies_len);
+
 	return 0;
 }
 
@@ -4841,8 +4896,8 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 			scan_ie = (uint8_t *) nla_data(tb
 				[QCA_WLAN_VENDOR_ATTR_CONFIG_SCAN_DEFAULT_IES]);
 
-			if (wlan_hdd_save_default_scan_ies(adapter, scan_ie,
-								scan_ie_len))
+			if (wlan_hdd_save_default_scan_ies(hdd_ctx, adapter,
+							scan_ie, scan_ie_len))
 				hdd_err("Failed to save default scan IEs");
 
 			if (adapter->device_mode == QDF_STA_MODE) {

@@ -229,6 +229,9 @@ enum hdd_wlan_wmm_ts_info_ack_policy {
 #define MBO_OUI_TYPE   "\x50\x6f\x9a\x16"
 #define MBO_OUI_TYPE_SIZE  4
 
+#define QCN_OUI_TYPE   "\x8c\xfd\xf0\x01"
+#define QCN_OUI_TYPE_SIZE  4
+
 enum hdd_wps_mode {
 	eWEXT_WPS_OFF = 0,
 	eWEXT_WPS_ON = 1,

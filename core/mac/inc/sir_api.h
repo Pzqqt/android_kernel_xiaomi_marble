@@ -5684,7 +5684,7 @@ struct fw_dump_rsp {
 #define DEFAULT_SCAN_IE_ID 256
 
  /* MAX_DEFAULT_SCAN_IE_LEN - Maxmimum length of Default Scan IE's */
-#define MAX_DEFAULT_SCAN_IE_LEN 1024
+#define MAX_DEFAULT_SCAN_IE_LEN 2048
 
  /* Extended Capabilities IE header(IE Id + IE Length) length */
 #define EXT_CAP_IE_HDR_LEN 2

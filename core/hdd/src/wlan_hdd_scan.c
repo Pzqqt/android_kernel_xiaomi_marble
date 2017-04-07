@@ -1445,13 +1445,14 @@ static inline void wlan_hdd_copy_bssid_scan_request(tCsrScanRequest *scan_req,
  */
 static int wlan_hdd_update_scan_ies(hdd_adapter_t *adapter,
 			hdd_scaninfo_t *scan_info, uint8_t *scan_ie,
-			uint8_t *scan_ie_len)
+			uint16_t *scan_ie_len)
 {
-	uint8_t rem_len = scan_info->default_scan_ies_len;
+	uint16_t rem_len = scan_info->default_scan_ies_len;
 	uint8_t *temp_ie = scan_info->default_scan_ies;
 	uint8_t *current_ie;
 	uint8_t elem_id;
 	uint16_t elem_len;
+	bool add_ie;
 
 	if (!scan_info->default_scan_ies_len || !scan_info->default_scan_ies)
 		return 0;
@@ -1465,20 +1466,31 @@ static int wlan_hdd_update_scan_ies(hdd_adapter_t *adapter,
 		switch (elem_id) {
 		case DOT11F_EID_EXTCAP:
 			if (!wlan_hdd_cfg80211_get_ie_ptr(scan_ie, *scan_ie_len,
-						DOT11F_EID_EXTCAP)) {
-				qdf_mem_copy(scan_ie + (*scan_ie_len),
-						current_ie, elem_len + 2);
-				(*scan_ie_len) += (elem_len + 2);
-			}
+							DOT11F_EID_EXTCAP))
+				add_ie = true;
 			break;
-		case DOT11F_EID_WPA:
-			if (!wlan_hdd_get_mbo_ie_ptr(scan_ie, *scan_ie_len)) {
-				qdf_mem_copy(scan_ie + (*scan_ie_len),
-						current_ie, elem_len + 2);
-				(*scan_ie_len) += (elem_len + 2);
-			}
+		case IE_EID_VENDOR:
+			if ((0 == qdf_mem_cmp(&temp_ie[0], MBO_OUI_TYPE,
+							MBO_OUI_TYPE_SIZE)) ||
+				(0 == qdf_mem_cmp(&temp_ie[0], QCN_OUI_TYPE,
+							QCN_OUI_TYPE_SIZE)))
+				add_ie = true;
 			break;
 		}
+
+		if (add_ie && (((*scan_ie_len) + elem_len) >
+					SIR_MAC_MAX_ADD_IE_LENGTH)){
+			hdd_err("Not enough buffer to save default scan IE's");
+			return 0;
+		}
+
+		if (add_ie) {
+			qdf_mem_copy(scan_ie + (*scan_ie_len),
+						current_ie, elem_len + 2);
+			(*scan_ie_len) += (elem_len + 2);
+			add_ie = false;
+		}
+
 		temp_ie += elem_len;
 		rem_len -= elem_len;
 	}
@@ -1677,10 +1689,9 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 		       request->ie_len);
 		pScanInfo->scanAddIE.length = request->ie_len;
 
-		if (wlan_hdd_update_scan_ies(pAdapter, pScanInfo,
+		wlan_hdd_update_scan_ies(pAdapter, pScanInfo,
 				pScanInfo->scanAddIE.addIEdata,
-				(uint8_t *)&pScanInfo->scanAddIE.length))
-			hdd_err("Update scan IEs with default Scan IEs failed");
+				&pScanInfo->scanAddIE.length);
 
 		if ((QDF_STA_MODE == pAdapter->device_mode) ||
 		    (QDF_P2P_CLIENT_MODE == pAdapter->device_mode) ||

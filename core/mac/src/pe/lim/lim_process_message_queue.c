@@ -262,7 +262,6 @@ static void lim_process_set_default_scan_ie_request(tpAniSirGlobal mac_ctx,
 	uint16_t local_ie_len;
 	struct scheduler_msg msg_q = {0};
 	tSirRetStatus ret_code;
-	QDF_STATUS qdf_status;
 
 	if (!msg_buf) {
 		pe_err("msg_buf is NULL");
@@ -283,13 +282,6 @@ static void lim_process_set_default_scan_ie_request(tpAniSirGlobal mac_ctx,
 			local_ie_buf, &local_ie_len)) {
 		pe_err("Update ext cap IEs fails");
 		goto scan_ie_send_fail;
-	}
-
-	if (mac_ctx->roam.configParam.qcn_ie_support) {
-		qdf_status = lim_add_qcn_ie(mac_ctx, local_ie_buf,
-							&local_ie_len);
-		if (QDF_IS_STATUS_ERROR(qdf_status))
-			goto scan_ie_send_fail;
 	}
 
 	wma_ie_params = qdf_mem_malloc(sizeof(*wma_ie_params) + local_ie_len);
