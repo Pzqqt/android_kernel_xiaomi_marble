@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -40,22 +40,6 @@
 #include <net.h>                /* struct llc, struct ether_header, etc. */
 #include <ol_txrx_internal.h>   /* TXRX_ASSERT1 */
 #include <ol_txrx_encap.h>      /* struct ol_rx_decap_info_t */
-
-#define OL_TX_COPY_NATIVE_WIFI_HEADER(wh, msdu, hdsize, localbuf)	\
-	do {								\
-		wh = (struct ieee80211_frame *)qdf_nbuf_data(msdu);	\
-		if ((wh->i_fc[1] &					\
-		     IEEE80211_FC1_DIR_MASK) == IEEE80211_FC1_DIR_DSTODS) { \
-			hdsize = sizeof(struct ieee80211_frame_addr4);	\
-		} else {						\
-			hdsize = sizeof(struct ieee80211_frame);	\
-		}							\
-		if (qdf_nbuf_len(msdu) < hdsize) {			\
-			return A_ERROR;					\
-		}							\
-		qdf_mem_copy(localbuf, wh, hdsize);			\
-		wh = (struct ieee80211_frame *)localbuf;		\
-	} while (0)
 
 static inline A_STATUS
 ol_tx_copy_native_wifi_header(qdf_nbuf_t msdu,
@@ -268,8 +252,10 @@ ol_tx_encap_from_8023(struct ol_txrx_vdev_t *vdev,
 			llc_hdr->ethertype[1] = eth_hdr->ethertype[1];
 			new_hdsize += sizeof(struct llc_snap_hdr_t);
 		} else {
-			/*llc ready, and it's in payload pdu,
-			  do we need to move to BD pdu? */
+			/*
+			 * llc ready, and it's in payload pdu,
+			 * do we need to move to BD pdu?
+			 */
 		}
 	}
 	qdf_mem_copy((void *)
@@ -294,10 +280,10 @@ ol_tx_encap(struct ol_txrx_vdev_t *vdev,
 						    msdu_info);
 	} else if (pdev->frame_format == wlan_frm_fmt_802_3) {
 		return ol_tx_encap_from_8023(vdev, tx_desc, msdu, msdu_info);
-	} else {
-		/* todo for other types */
-		return A_ERROR;
 	}
+
+	/* todo for other types */
+	return A_ERROR;
 }
 
 static inline void
@@ -406,8 +392,10 @@ ol_rx_decap_to_8023(struct ol_txrx_vdev_t *vdev,
 
 	/* normal msdu(non-subfrm of A-MSDU) if ethr_hdr is null */
 	if (ethr_hdr == NULL) {
-		/* mpdu hdr should be present in info,
-		   re-create ethr_hdr based on mpdu hdr */
+		/*
+		 * mpdu hdr should be present in info,
+		 * re-create ethr_hdr based on mpdu hdr
+		 */
 		TXRX_ASSERT2(info->hdr_len != 0);
 		wh = (struct ieee80211_frame_addr4 *)info->hdr;
 		ethr_hdr = (struct ethernet_hdr_t *)local_buf;
@@ -495,6 +483,7 @@ ol_rx_decap_msdu(struct ol_txrx_vdev_t *vdev,
 {
 	struct ol_txrx_pdev_t *pdev = vdev->pdev;
 	struct ieee80211_frame *wh;
+
 	wh = (struct ieee80211_frame *)qdf_nbuf_data(msdu);
 
 	if (pdev->frame_format == wlan_frm_fmt_native_wifi) {
@@ -549,8 +538,10 @@ ol_rx_decap(struct ol_txrx_vdev_t *vdev,
 		if (info->is_msdu_cmpl_mpdu && !info->is_first_subfrm) {
 			/* It's normal MSDU. */
 		} else {
-			/* It's a first subfrm of A-MSDU and
-			   may also be the last subfrm of A-MSDU */
+			/*
+			 * It's a first subfrm of A-MSDU and
+			 * may also be the last subfrm of A-MSDU
+			 */
 			info->is_subfrm = 1;
 			info->hdr_len = 0;
 			if (vdev->pdev->sw_subfrm_hdr_recovery_enable) {
