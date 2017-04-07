@@ -133,9 +133,8 @@ ol_tx_desc_find_check(struct ol_txrx_pdev_t *pdev, u_int16_t tx_desc_id)
 
 	tx_desc = ol_tx_desc_find(pdev, tx_desc_id);
 
-	if (tx_desc->pkt_type == ol_tx_frm_freed) {
+	if (tx_desc->pkt_type == ol_tx_frm_freed)
 		return NULL;
-	}
 
 	return tx_desc;
 }
@@ -257,6 +256,7 @@ static inline
 struct ol_tx_desc_t *ol_tx_get_desc_global_pool(struct ol_txrx_pdev_t *pdev)
 {
 	struct ol_tx_desc_t *tx_desc = &pdev->tx_desc.freelist->tx_desc;
+
 	pdev->tx_desc.freelist = pdev->tx_desc.freelist->next;
 	pdev->tx_desc.num_free--;
 	return tx_desc;
@@ -280,7 +280,6 @@ void ol_tx_put_desc_global_pool(struct ol_txrx_pdev_t *pdev,
 	pdev->tx_desc.freelist =
 			 (union ol_tx_desc_list_elem_t *)tx_desc;
 	pdev->tx_desc.num_free++;
-	return;
 }
 
 
@@ -298,6 +297,7 @@ static inline
 struct ol_tx_desc_t *ol_tx_get_desc_flow_pool(struct ol_tx_flow_pool_t *pool)
 {
 	struct ol_tx_desc_t *tx_desc = &pool->freelist->tx_desc;
+
 	pool->freelist = pool->freelist->next;
 	pool->avail_desc--;
 	return tx_desc;
@@ -320,7 +320,6 @@ void ol_tx_put_desc_flow_pool(struct ol_tx_flow_pool_t *pool,
 	((union ol_tx_desc_list_elem_t *)tx_desc)->next = pool->freelist;
 	pool->freelist = (union ol_tx_desc_list_elem_t *)tx_desc;
 	pool->avail_desc++;
-	return;
 }
 
 #else
