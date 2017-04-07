@@ -14510,8 +14510,6 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 			reasonCode = eCSR_DISCONNECT_REASON_UNSPECIFIED;
 			break;
 		}
-		hdd_debug("convert to internal reason %d to reasonCode %d",
-			reason, reasonCode);
 		pScanInfo = &pAdapter->scan_info;
 		if (pScanInfo->mScanPending) {
 			hdd_debug("Disconnect is in progress, Aborting Scan");
@@ -14540,10 +14538,8 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 			}
 		}
 #endif
-		hdd_debug("Disconnecting with reasoncode:%u",
-		       reasonCode);
-		hdd_debug("Disconnect request from user space with reason: %s",
-			hdd_ieee80211_reason_code_to_str(reason));
+		hdd_info("Disconnect request from user space with reason: %d (%s) internal reason code: %d",
+			reason, hdd_ieee80211_reason_code_to_str(reason), reasonCode);
 		status = wlan_hdd_disconnect(pAdapter, reasonCode);
 		if (0 != status) {
 			hdd_err("wlan_hdd_disconnect failed, status: %d", status);
