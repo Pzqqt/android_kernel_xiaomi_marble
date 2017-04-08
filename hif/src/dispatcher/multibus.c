@@ -192,42 +192,49 @@ void hif_bus_prevent_linkdown(struct hif_softc *hif_sc, bool flag)
 void hif_reset_soc(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_ctx);
+
 	hif_sc->bus_ops.hif_reset_soc(hif_sc);
 }
 
 int hif_bus_early_suspend(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_ctx);
+
 	return hif_sc->bus_ops.hif_bus_early_suspend(hif_sc);
 }
 
 int hif_bus_late_resume(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_ctx);
+
 	return hif_sc->bus_ops.hif_bus_late_resume(hif_sc);
 }
 
 int hif_bus_suspend(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_ctx);
+
 	return hif_sc->bus_ops.hif_bus_suspend(hif_sc);
 }
 
 int hif_bus_resume(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_ctx);
+
 	return hif_sc->bus_ops.hif_bus_resume(hif_sc);
 }
 
 int hif_bus_suspend_noirq(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_ctx);
+
 	return hif_sc->bus_ops.hif_bus_suspend_noirq(hif_sc);
 }
 
 int hif_bus_resume_noirq(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_ctx);
+
 	return hif_sc->bus_ops.hif_bus_resume_noirq(hif_sc);
 }
 
@@ -241,6 +248,7 @@ int hif_target_sleep_state_adjust(struct hif_softc *hif_sc,
 void hif_disable_isr(struct hif_opaque_softc *hif_hdl)
 {
 	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_hdl);
+
 	hif_sc->bus_ops.hif_disable_isr(hif_sc);
 }
 
@@ -270,6 +278,7 @@ QDF_STATUS hif_get_config_item(struct hif_opaque_softc *hif_ctx,
 		     int opcode, void *config, uint32_t config_len)
 {
 	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_ctx);
+
 	return hif_sc->bus_ops.hif_get_config_item(hif_sc, opcode, config,
 						 config_len);
 }
@@ -277,24 +286,28 @@ QDF_STATUS hif_get_config_item(struct hif_opaque_softc *hif_ctx,
 void hif_set_mailbox_swap(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_ctx);
+
 	hif_sc->bus_ops.hif_set_mailbox_swap(hif_sc);
 }
 
 void hif_claim_device(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_ctx);
+
 	hif_sc->bus_ops.hif_claim_device(hif_sc);
 }
 
 void hif_shutdown_device(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_ctx);
+
 	hif_sc->bus_ops.hif_shutdown_device(hif_sc);
 }
 
 void hif_stop(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_ctx);
+
 	hif_sc->bus_ops.hif_stop(hif_sc);
 }
 
@@ -331,6 +344,7 @@ int hif_grp_irq_configure(struct hif_softc *hif_sc)
 int hif_dump_registers(struct hif_opaque_softc *hif_hdl)
 {
 	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_hdl);
+
 	return hif_sc->bus_ops.hif_dump_registers(hif_sc);
 }
 
@@ -339,6 +353,7 @@ void hif_dump_target_memory(struct hif_opaque_softc *hif_hdl,
 			    uint32_t address, uint32_t size)
 {
 	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_hdl);
+
 	hif_sc->bus_ops.hif_dump_target_memory(hif_sc, ramdump_base,
 					       address, size);
 }
@@ -349,6 +364,7 @@ void hif_ipa_get_ce_resource(struct hif_opaque_softc *hif_hdl,
 			     qdf_dma_addr_t *ce_reg_paddr)
 {
 	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_hdl);
+
 	hif_sc->bus_ops.hif_ipa_get_ce_resource(hif_sc, ce_sr_base_paddr,
 						ce_sr_ring_size, ce_reg_paddr);
 }
@@ -356,6 +372,7 @@ void hif_ipa_get_ce_resource(struct hif_opaque_softc *hif_hdl,
 void hif_mask_interrupt_call(struct hif_opaque_softc *hif_hdl)
 {
 	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_hdl);
+
 	hif_sc->bus_ops.hif_mask_interrupt_call(hif_sc);
 }
 
@@ -386,6 +403,7 @@ void hif_enable_power_management(struct hif_opaque_softc *hif_hdl,
 				 bool is_packet_log_enabled)
 {
 	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_hdl);
+
 	hif_sc->bus_ops.hif_enable_power_management(hif_sc,
 				    is_packet_log_enabled);
 }
@@ -401,6 +419,7 @@ void hif_enable_power_management(struct hif_opaque_softc *hif_hdl,
 void hif_disable_power_management(struct hif_opaque_softc *hif_hdl)
 {
 	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_hdl);
+
 	hif_sc->bus_ops.hif_disable_power_management(hif_sc);
 }
 
@@ -416,6 +435,7 @@ void hif_set_bundle_mode(struct hif_opaque_softc *scn, bool enabled,
 				int rx_bundle_cnt)
 {
 	struct hif_softc *hif_sc = HIF_GET_SOFTC(scn);
+
 	hif_sc->bus_ops.hif_set_bundle_mode(hif_sc, enabled, rx_bundle_cnt);
 }
 
@@ -433,6 +453,7 @@ int hif_bus_reset_resume(struct hif_opaque_softc *scn)
 
 {
 	struct hif_softc *hif_sc = HIF_GET_SOFTC(scn);
+
 	return hif_sc->bus_ops.hif_bus_reset_resume(hif_sc);
 }
 
