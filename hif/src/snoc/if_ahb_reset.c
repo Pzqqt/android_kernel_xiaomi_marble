@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -155,7 +155,8 @@ int hif_ahb_enable_radio(struct hif_pci_softc *sc,
 	}
 
 	/* TBD: Temporary changes. Frequency should be
-	   retrieved through clk_xxx once kernel GCC driver is available */
+	 * retrieved through clk_xxx once kernel GCC driver is available
+	 */
 	{
 		void __iomem *mem_gcc;
 		uint32_t clk_sel;
@@ -318,7 +319,8 @@ void hif_ahb_device_reset(struct hif_softc *scn)
 	reset_control_assert(core_resetctl);
 
 	/* TBD: Check if we should also assert other bits (radio_cold, radio_
-	warm, radio_srif, cpu_ini) */
+	 * warm, radio_srif, cpu_ini)
+	 */
 	qdf_mdelay(1); /* TBD: Get reqd delay from HW team */
 
 	/* Assert radio cold reset */
