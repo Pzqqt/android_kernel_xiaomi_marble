@@ -671,6 +671,20 @@ error:
 	return;
 }
 
+static void hal_target_based_configure(struct hal_soc *hal)
+{
+	struct hif_target_info *tgt_info =
+		hif_get_target_info_handle(hal->hif_handle);
+
+	switch (tgt_info->target_type) {
+	case TARGET_TYPE_QCA6290:
+		hal->use_register_windowing = true;
+	break;
+	default:
+	break;
+	}
+}
+
 /**
  * hal_attach - Initalize HAL layer
  * @hif_handle: Opaque HIF handle
@@ -723,6 +737,11 @@ void *hal_attach(void *hif_handle, qdf_device_t qdf_dev)
 		hal->srng_list[i].initialized = 0;
 		hal->srng_list[i].ring_id = i;
 	}
+
+	qdf_spinlock_create(&hal->register_access_lock);
+	hal->register_window = 0;
+
+	hal_target_based_configure(hal);
 
 	return (void *)hal;
 

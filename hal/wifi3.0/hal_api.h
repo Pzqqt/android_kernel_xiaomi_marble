@@ -31,11 +31,88 @@
 #define _HAL_API_H_
 
 #include "qdf_types.h"
+#include "qdf_util.h"
 #include "hal_internal.h"
 #include "hif_io32.h"
 #include "rx_msdu_link.h"
 #include "rx_reo_queue.h"
 #include "rx_reo_queue_ext.h"
+
+#define MAX_UNWINDOWED_ADDRESS 0x80000
+#define WINDOW_ENABLE_BIT 0x80000000
+#define WINDOW_REG_ADDRESS 0x310C
+#define WINDOW_SHIFT 19
+#define WINDOW_VALUE_MASK 0x1F
+#define WINDOW_START MAX_UNWINDOWED_ADDRESS
+#define WINDOW_RANGE_MASK 0x7FFFF
+
+static inline void hal_select_window(struct hal_soc *hal_soc, uint32_t offset)
+{
+	uint32_t window = (offset >> WINDOW_SHIFT) & WINDOW_VALUE_MASK;
+	if (window != hal_soc->register_window) {
+		qdf_iowrite32(hal_soc->dev_base_addr + WINDOW_REG_ADDRESS,
+			      WINDOW_ENABLE_BIT | window);
+		hal_soc->register_window = window;
+	}
+}
+
+/**
+ * note1: WINDOW_RANGE_MASK = (1 << WINDOW_SHIFT) -1
+ * note2: 1 << WINDOW_SHIFT = MAX_UNWINDOWED_ADDRESS
+ * note3: WINDOW_VALUE_MASK = big enough that trying to write past that window
+ *				would be a bug
+ */
+static inline void hal_write32_mb(struct hal_soc *hal_soc, uint32_t offset,
+				  uint32_t value)
+{
+
+	if (!hal_soc->use_register_windowing ||
+	    offset < MAX_UNWINDOWED_ADDRESS) {
+		qdf_iowrite32(hal_soc->dev_base_addr + offset, value);
+	} else {
+		qdf_spin_lock_irqsave(&hal_soc->register_access_lock);
+		hal_select_window(hal_soc, offset);
+		qdf_iowrite32(hal_soc->dev_base_addr + WINDOW_START +
+			  (offset & WINDOW_RANGE_MASK), value);
+		qdf_spin_unlock_irqrestore(&hal_soc->register_access_lock);
+	}
+}
+
+/**
+ * hal_write_address_32_mb - write a value to a register
+ *
+ */
+static inline void hal_write_address_32_mb(struct hal_soc *hal_soc,
+					   void __iomem *addr, uint32_t value)
+{
+	uint32_t offset;
+
+	if (!hal_soc->use_register_windowing)
+		return qdf_iowrite32(addr, value);
+
+	offset = addr - hal_soc->dev_base_addr;
+	hal_write32_mb(hal_soc, offset, value);
+}
+
+static inline uint32_t hal_read32_mb(struct hal_soc *hal_soc, uint32_t offset)
+{
+	uint32_t ret;
+
+	if (!hal_soc->use_register_windowing ||
+	    offset < MAX_UNWINDOWED_ADDRESS) {
+		return qdf_ioread32(hal_soc->dev_base_addr + offset);
+	}
+
+	qdf_spin_lock_irqsave(&hal_soc->register_access_lock);
+	hal_select_window(hal_soc, offset);
+	ret = qdf_ioread32(hal_soc->dev_base_addr + WINDOW_START +
+		       (offset & WINDOW_RANGE_MASK));
+	qdf_spin_unlock_irqrestore(&hal_soc->register_access_lock);
+
+	return ret;
+}
+
+#include "hif_io32.h"
 
 /**
  * hal_attach - Initalize HAL layer
