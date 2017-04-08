@@ -1435,7 +1435,7 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 	tp_wma_handle wma = (tp_wma_handle) handle;
 	WMI_VDEV_STOPPED_EVENTID_param_tlvs *param_buf;
 	wmi_vdev_stopped_event_fixed_param *resp_event;
-	struct wma_target_req *req_msg;
+	struct wma_target_req *req_msg, *del_req;
 	struct cdp_pdev *pdev;
 	void *peer;
 	uint8_t peer_id;
@@ -1602,6 +1602,24 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 				 params->bssid, req_msg->vdev_id);
 			wma_remove_peer(wma, params->bssid, req_msg->vdev_id,
 				peer, false);
+			if (WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
+				    WMI_SERVICE_SYNC_DELETE_CMDS)) {
+				WMA_LOGI(FL("Wait for the peer delete. vdev_id %d"),
+						 req_msg->vdev_id);
+				del_req = wma_fill_hold_req(wma,
+						   req_msg->vdev_id,
+						   WMA_DELETE_STA_REQ,
+						   WMA_SET_LINK_PEER_RSP,
+						   params,
+						   WMA_DELETE_STA_TIMEOUT);
+				if (!del_req) {
+					WMA_LOGE(FL("Failed to allocate request. vdev_id %d"),
+						 req_msg->vdev_id);
+					params->status = QDF_STATUS_E_NOMEM;
+				} else {
+					goto free_req_msg;
+				}
+			}
 		}
 		if (wmi_unified_vdev_down_send(wma->wmi_handle,
 					req_msg->vdev_id) !=
@@ -2340,6 +2358,16 @@ int wma_peer_delete_handler(void *handle, uint8_t *cmd_param_info,
 		wma_handle_vdev_detach(wma, data->self_sta_param,
 				data->generate_rsp);
 		qdf_mem_free(data);
+	} else if (req_msg->type == WMA_SET_LINK_PEER_RSP) {
+		tpLinkStateParams params =
+			(tpLinkStateParams) req_msg->user_data;
+		if (wmi_unified_vdev_down_send(wma->wmi_handle,
+				req_msg->vdev_id) !=
+				QDF_STATUS_SUCCESS) {
+			WMA_LOGE("Failed to send vdev down cmd: vdev %d",
+					req_msg->vdev_id);
+		}
+		wma_send_msg(wma, WMA_SET_LINK_STATE_RSP, (void *)params, 0);
 	}
 	qdf_mem_free(req_msg);
 	return status;
@@ -2432,6 +2460,11 @@ void wma_hold_req_timer(void *data)
 		(tgt_req->type == WMA_DEL_P2P_SELF_STA_RSP_START)) {
 		WMA_LOGA(FL("wma delete sta p2p request timed out"));
 		QDF_ASSERT(0);
+	} else if ((tgt_req->msg_type == WMA_DELETE_STA_REQ) &&
+			(tgt_req->type == WMA_SET_LINK_PEER_RSP)) {
+		WMA_LOGA(FL("wma delete peer for set link timed out"));
+		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash) == true)
+			QDF_BUG(0);
 	} else {
 		WMA_LOGE(FL("Unhandled timeout for msg_type:%d and type:%d"),
 				tgt_req->msg_type, tgt_req->type);
