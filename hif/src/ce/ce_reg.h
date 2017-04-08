@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -40,56 +40,71 @@
 #define CURRENT_SRRI_ADDRESS    (scn->target_ce_def->d_CURRENT_SRRI_ADDRESS)
 #define CURRENT_DRRI_ADDRESS    (scn->target_ce_def->d_CURRENT_DRRI_ADDRESS)
 
-#define SHADOW_VALUE0           (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_0)
-#define SHADOW_VALUE1           (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_1)
-#define SHADOW_VALUE2           (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_2)
-#define SHADOW_VALUE3           (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_3)
-#define SHADOW_VALUE4           (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_4)
-#define SHADOW_VALUE5           (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_5)
-#define SHADOW_VALUE6           (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_6)
-#define SHADOW_VALUE7           (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_7)
-#define SHADOW_VALUE8           (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_8)
-#define SHADOW_VALUE9           (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_9)
-#define SHADOW_VALUE10          (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_10)
-#define SHADOW_VALUE11          (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_11)
-#define SHADOW_VALUE12          (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_12)
-#define SHADOW_VALUE13          (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_13)
-#define SHADOW_VALUE14          (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_14)
-#define SHADOW_VALUE15          (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_15)
-#define SHADOW_VALUE16          (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_16)
-#define SHADOW_VALUE17          (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_17)
-#define SHADOW_VALUE18          (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_18)
-#define SHADOW_VALUE19          (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_19)
-#define SHADOW_VALUE20          (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_20)
-#define SHADOW_VALUE21          (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_21)
-#define SHADOW_VALUE22          (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_22)
-#define SHADOW_VALUE23          (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_23)
-#define SHADOW_ADDRESS0         (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_0)
-#define SHADOW_ADDRESS1         (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_1)
-#define SHADOW_ADDRESS2         (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_2)
-#define SHADOW_ADDRESS3         (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_3)
-#define SHADOW_ADDRESS4         (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_4)
-#define SHADOW_ADDRESS5         (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_5)
-#define SHADOW_ADDRESS6         (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_6)
-#define SHADOW_ADDRESS7         (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_7)
-#define SHADOW_ADDRESS8         (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_8)
-#define SHADOW_ADDRESS9         (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_9)
-#define SHADOW_ADDRESS10        (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_10)
-#define SHADOW_ADDRESS11        (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_11)
-#define SHADOW_ADDRESS12        (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_12)
-#define SHADOW_ADDRESS13        (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_13)
-#define SHADOW_ADDRESS14        (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_14)
-#define SHADOW_ADDRESS15        (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_15)
-#define SHADOW_ADDRESS16        (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_16)
-#define SHADOW_ADDRESS17        (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_17)
-#define SHADOW_ADDRESS18        (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_18)
-#define SHADOW_ADDRESS19        (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_19)
-#define SHADOW_ADDRESS20        (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_20)
-#define SHADOW_ADDRESS21        (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_21)
-#define SHADOW_ADDRESS22        (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_22)
-#define SHADOW_ADDRESS23        (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_23)
+#define SHADOW_VALUE0    (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_0)
+#define SHADOW_VALUE1    (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_1)
+#define SHADOW_VALUE2    (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_2)
+#define SHADOW_VALUE3    (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_3)
+#define SHADOW_VALUE4    (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_4)
+#define SHADOW_VALUE5    (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_5)
+#define SHADOW_VALUE6    (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_6)
+#define SHADOW_VALUE7    (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_7)
+#define SHADOW_VALUE8    (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_8)
+#define SHADOW_VALUE9    (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_9)
+#define SHADOW_VALUE10   (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_10)
+#define SHADOW_VALUE11   (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_11)
+#define SHADOW_VALUE12   (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_12)
+#define SHADOW_VALUE13   (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_13)
+#define SHADOW_VALUE14   (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_14)
+#define SHADOW_VALUE15   (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_15)
+#define SHADOW_VALUE16   (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_16)
+#define SHADOW_VALUE17   (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_17)
+#define SHADOW_VALUE18   (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_18)
+#define SHADOW_VALUE19   (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_19)
+#define SHADOW_VALUE20   (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_20)
+#define SHADOW_VALUE21   (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_21)
+#define SHADOW_VALUE22   (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_22)
+#define SHADOW_VALUE23   (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_VALUE_23)
+#define SHADOW_ADDRESS0  (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_0)
+#define SHADOW_ADDRESS1  (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_1)
+#define SHADOW_ADDRESS2  (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_2)
+#define SHADOW_ADDRESS3  (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_3)
+#define SHADOW_ADDRESS4  (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_4)
+#define SHADOW_ADDRESS5  (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_5)
+#define SHADOW_ADDRESS6  (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_6)
+#define SHADOW_ADDRESS7  (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_7)
+#define SHADOW_ADDRESS8  (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_8)
+#define SHADOW_ADDRESS9  (scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_9)
+#define SHADOW_ADDRESS10 \
+			(scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_10)
+#define SHADOW_ADDRESS11 \
+			(scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_11)
+#define SHADOW_ADDRESS12 \
+			(scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_12)
+#define SHADOW_ADDRESS13 \
+			(scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_13)
+#define SHADOW_ADDRESS14 \
+			(scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_14)
+#define SHADOW_ADDRESS15 \
+			(scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_15)
+#define SHADOW_ADDRESS16 \
+			(scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_16)
+#define SHADOW_ADDRESS17 \
+			(scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_17)
+#define SHADOW_ADDRESS18 \
+			(scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_18)
+#define SHADOW_ADDRESS19 \
+			(scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_19)
+#define SHADOW_ADDRESS20 \
+			(scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_20)
+#define SHADOW_ADDRESS21 \
+			(scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_21)
+#define SHADOW_ADDRESS22 \
+			(scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_22)
+#define SHADOW_ADDRESS23 \
+			(scn->host_shadow_regs->d_A_LOCAL_SHADOW_REG_ADDRESS_23)
 
-#define SHADOW_ADDRESS(i) (SHADOW_ADDRESS0 + i*(SHADOW_ADDRESS1-SHADOW_ADDRESS0))
+#define SHADOW_ADDRESS(i) \
+			(SHADOW_ADDRESS0 + i*(SHADOW_ADDRESS1-SHADOW_ADDRESS0))
 
 #define HOST_IS_SRC_RING_HIGH_WATERMARK_MASK \
 	(scn->target_ce_def->d_HOST_IS_SRC_RING_HIGH_WATERMARK_MASK)
@@ -145,7 +160,8 @@
 	(scn->target_ce_def->d_CE_WRAPPER_INTERRUPT_SUMMARY_HOST_MSI_MASK)
 #define CE_WRAPPER_INTERRUPT_SUMMARY_HOST_MSI_LSB  \
 	(scn->target_ce_def->d_CE_WRAPPER_INTERRUPT_SUMMARY_HOST_MSI_LSB)
-#define CE_CTRL1_DMAX_LENGTH_LSB  (scn->target_ce_def->d_CE_CTRL1_DMAX_LENGTH_LSB)
+#define CE_CTRL1_DMAX_LENGTH_LSB \
+				(scn->target_ce_def->d_CE_CTRL1_DMAX_LENGTH_LSB)
 #define CE_CTRL1_IDX_UPD_EN  (scn->target_ce_def->d_CE_CTRL1_IDX_UPD_EN_MASK)
 #define CE_CTRL1_SRC_RING_BYTE_SWAP_EN_MASK \
 	(scn->target_ce_def->d_CE_CTRL1_SRC_RING_BYTE_SWAP_EN_MASK)
@@ -184,10 +200,14 @@
 #define AMBA_DEBUG_BUS_SEL_MSB    (scn->targetdef->d_AMBA_DEBUG_BUS_SEL_MSB)
 #define AMBA_DEBUG_BUS_SEL_LSB    (scn->targetdef->d_AMBA_DEBUG_BUS_SEL_LSB)
 #define AMBA_DEBUG_BUS_SEL_MASK   (scn->targetdef->d_AMBA_DEBUG_BUS_SEL_MASK)
-#define CE_WRAPPER_DEBUG_OFFSET   (scn->target_ce_def->d_CE_WRAPPER_DEBUG_OFFSET)
-#define CE_WRAPPER_DEBUG_SEL_MSB  (scn->target_ce_def->d_CE_WRAPPER_DEBUG_SEL_MSB)
-#define CE_WRAPPER_DEBUG_SEL_LSB  (scn->target_ce_def->d_CE_WRAPPER_DEBUG_SEL_LSB)
-#define CE_WRAPPER_DEBUG_SEL_MASK (scn->target_ce_def->d_CE_WRAPPER_DEBUG_SEL_MASK)
+#define CE_WRAPPER_DEBUG_OFFSET   \
+				(scn->target_ce_def->d_CE_WRAPPER_DEBUG_OFFSET)
+#define CE_WRAPPER_DEBUG_SEL_MSB  \
+				(scn->target_ce_def->d_CE_WRAPPER_DEBUG_SEL_MSB)
+#define CE_WRAPPER_DEBUG_SEL_LSB  \
+				(scn->target_ce_def->d_CE_WRAPPER_DEBUG_SEL_LSB)
+#define CE_WRAPPER_DEBUG_SEL_MASK \
+			(scn->target_ce_def->d_CE_WRAPPER_DEBUG_SEL_MASK)
 #define CE_DEBUG_OFFSET           (scn->target_ce_def->d_CE_DEBUG_OFFSET)
 #define CE_DEBUG_SEL_MSB          (scn->target_ce_def->d_CE_DEBUG_SEL_MSB)
 #define CE_DEBUG_SEL_LSB          (scn->target_ce_def->d_CE_DEBUG_SEL_LSB)

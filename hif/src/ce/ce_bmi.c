@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -95,7 +95,8 @@ void hif_bmi_send_done(struct CE_handle *copyeng, void *ce_context,
 	transaction->bmi_transaction_flags |= BMI_REQ_SEND_DONE;
 
 	/* resp is't needed or has already been received,
-	 * never assume resp comes later then this */
+	 * never assume resp comes later then this
+	 */
 	if (!transaction->bmi_response_CE ||
 	    (transaction->bmi_transaction_flags & BMI_RESP_RECV_DONE)) {
 		qdf_semaphore_release(&transaction->bmi_transaction_sem);
@@ -116,9 +117,8 @@ void hif_bmi_recv_data(struct CE_handle *copyeng, void *ce_context,
 	transaction->bmi_transaction_flags |= BMI_RESP_RECV_DONE;
 
 	/* when both send/recv are done, the sem can be released */
-	if (transaction->bmi_transaction_flags & BMI_REQ_SEND_DONE) {
+	if (transaction->bmi_transaction_flags & BMI_REQ_SEND_DONE)
 		qdf_semaphore_release(&transaction->bmi_transaction_sem);
-	}
 }
 #endif
 
@@ -192,7 +192,8 @@ QDF_STATUS hif_exchange_bmi_msg(struct hif_opaque_softc *hif_ctx,
 		transaction->bmi_response_host = bmi_response;
 		transaction->bmi_response_CE = CE_response;
 		/* dma_cache_sync(dev, bmi_response,
-		    BMI_DATASZ_MAX, DMA_FROM_DEVICE); */
+		 *      BMI_DATASZ_MAX, DMA_FROM_DEVICE);
+		 */
 		qdf_mem_dma_sync_single_for_device(scn->qdf_dev,
 					       CE_response,
 					       BMI_DATASZ_MAX,
@@ -220,7 +221,8 @@ QDF_STATUS hif_exchange_bmi_msg(struct hif_opaque_softc *hif_ctx,
 
 	/* Wait for BMI request/response transaction to complete */
 	/* Always just wait for BMI request here if
-	 * BMI_RSP_POLLING is defined */
+	 * BMI_RSP_POLLING is defined
+	 */
 	while (qdf_semaphore_acquire
 		       (&transaction->bmi_transaction_sem)) {
 		/*need some break out condition(time out?) */
@@ -258,10 +260,11 @@ QDF_STATUS hif_exchange_bmi_msg(struct hif_opaque_softc *hif_ctx,
 	}
 
 	/* dma_unmap_single(dev, transaction->bmi_request_CE,
-		request_length, DMA_TO_DEVICE); */
-	/* bus_unmap_single(scn->sc_osdev,
-		 transaction->bmi_request_CE,
-		request_length, BUS_DMA_TODEVICE); */
+	 *     request_length, DMA_TO_DEVICE);
+	 * bus_unmap_single(scn->sc_osdev,
+	 *     transaction->bmi_request_CE,
+	 *     request_length, BUS_DMA_TODEVICE);
+	 */
 
 	if (status != QDF_STATUS_SUCCESS) {
 		qdf_dma_addr_t unused_buffer;

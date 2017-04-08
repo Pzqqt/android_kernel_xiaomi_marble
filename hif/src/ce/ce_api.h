@@ -191,7 +191,8 @@ void ce_sendlist_init(struct ce_sendlist *sendlist);
 int ce_sendlist_buf_add(struct ce_sendlist *sendlist,
 		qdf_dma_addr_t buffer,
 		unsigned int nbytes,
-		uint32_t flags, /* OR-ed with internal flags */
+		/* OR-ed with internal flags */
+		uint32_t flags,
 		uint32_t user_flags);
 
 /*
@@ -401,18 +402,23 @@ bool ce_get_rx_pending(struct hif_softc *scn);
 #define CE_ATTR_ENABLE_POLL          0x10 /* poll for residue descriptors */
 #define CE_ATTR_DIAG                 0x20 /* Diag CE */
 
-/* Attributes of an instance of a Copy Engine */
+/**
+ * stuct CE_attr - Attributes of an instance of a Copy Engine
+ * @flags:         CE_ATTR_* values
+ * @priority:      TBD
+ * @src_nentries:  #entries in source ring - Must be a power of 2
+ * @src_sz_max:    Max source send size for this CE. This is also the minimum
+ *                 size of a destination buffer
+ * @dest_nentries: #entries in destination ring - Must be a power of 2
+ * @reserved:      Future Use
+ */
 struct CE_attr {
-	unsigned int flags;         /* CE_ATTR_* values */
-	unsigned int priority;      /* TBD */
-	unsigned int src_nentries;  /* #entries in source ring -
-				     * Must be a power of 2 */
-	unsigned int src_sz_max;    /* Max source send size for this CE.
-				     * This is also the minimum size of
-				     * a destination buffer. */
-	unsigned int dest_nentries; /* #entries in destination ring -
-				     * Must be a power of 2 */
-	void *reserved;             /* Future use */
+	unsigned int flags;
+	unsigned int priority;
+	unsigned int src_nentries;
+	unsigned int src_sz_max;
+	unsigned int dest_nentries;
+	void *reserved;
 };
 
 /*
@@ -465,7 +471,6 @@ static inline void ce_ipa_get_resource(struct CE_handle *ce,
 			 uint32_t *ce_sr_ring_size,
 			 qdf_dma_addr_t *ce_reg_paddr)
 {
-	return;
 }
 #endif /* IPA_OFFLOAD */
 
@@ -484,10 +489,10 @@ bool ce_check_rx_pending(struct CE_state *CE_state);
 void *hif_ce_get_lro_ctx(struct hif_opaque_softc *hif_hdl, int ctx_id);
 #if defined(FEATURE_LRO)
 int ce_lro_flush_cb_register(struct hif_opaque_softc *scn,
-			     void (handler)(void *),
+			     void (handler)(void *arg),
 			     void *(lro_init_handler)(void));
 int ce_lro_flush_cb_deregister(struct hif_opaque_softc *hif_hdl,
-			       void (lro_deinit_cb)(void *));
+			       void (lro_deinit_cb)(void *arg));
 #endif
 struct ce_ops *ce_services_srng(void);
 struct ce_ops *ce_services_legacy(void);

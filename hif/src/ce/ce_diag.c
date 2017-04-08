@@ -256,7 +256,8 @@ QDF_STATUS hif_diag_read_mem(struct hif_opaque_softc *hif_ctx,
 		}
 
 		/* Request CE to send from Target(!)
-		 * address to Host buffer */
+		 * address to Host buffer
+		 */
 		status = ce_send(ce_diag, NULL, ce_phy_addr, nbytes,
 				transaction_id, 0, user_flags);
 		if (status != QDF_STATUS_SUCCESS)
@@ -498,7 +499,7 @@ done:
 	}
 
 	if (status != QDF_STATUS_SUCCESS) {
-		HIF_ERROR("%s failure (0x%llu)", __func__,
+		HIF_ERROR("%s failure (0x%llx)", __func__,
 			(uint64_t)ce_phy_addr);
 	}
 

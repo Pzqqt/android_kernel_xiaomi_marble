@@ -83,7 +83,6 @@ static void reschedule_ce_tasklet_work_handler(struct work_struct *work)
 		return;
 	}
 	tasklet_schedule(&hif_ce_state->tasklets[ce_work->id].intr_tq);
-	return;
 }
 
 static struct tasklet_work tasklet_workers[CE_ID_MAX];
@@ -175,9 +174,8 @@ static void ce_tasklet(unsigned long data)
 	qdf_spin_lock_bh(&CE_state->lro_unloading_lock);
 	ce_per_engine_service(scn, tasklet_entry->ce_id);
 
-	if (CE_state->lro_flush_cb != NULL) {
+	if (CE_state->lro_flush_cb != NULL)
 		CE_state->lro_flush_cb(CE_state->lro_data);
-	}
 	qdf_spin_unlock_bh(&CE_state->lro_unloading_lock);
 
 	if (ce_check_rx_pending(CE_state)) {
@@ -600,9 +598,8 @@ QDF_STATUS ce_register_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask)
 					__func__, id, ret);
 				ce_unregister_irq(hif_ce_state, done_mask);
 				return QDF_STATUS_E_FAULT;
-			} else {
-				done_mask |= 1 << id;
 			}
+			done_mask |= 1 << id;
 		}
 	}
 	hif_ce_state->ce_register_irq_done |= done_mask;

@@ -207,7 +207,6 @@ void hif_ce_ipa_get_ce_resource(struct hif_softc *scn,
 			     uint32_t *ce_sr_ring_size,
 			     qdf_dma_addr_t *ce_reg_paddr)
 {
-	return;
 }
 
 #endif
