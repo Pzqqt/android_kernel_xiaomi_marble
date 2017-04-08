@@ -847,7 +847,7 @@ void qdf_mem_clean(void)
 				  prev_mleak_line_num, prev_mleak_sz);
 		}
 #ifdef CONFIG_HALT_KMEMLEAK
-		BUG_ON(0);
+		BUG_ON(1);
 #endif
 	}
 }
