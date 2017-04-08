@@ -82,7 +82,6 @@ ol_txrx_hl_tdls_flag_reset(struct cdp_vdev *vdev, bool flag);
 static inline void
 ol_txrx_hl_tdls_flag_reset(struct cdp_vdev *vdev, bool flag)
 {
-	return;
 }
 #endif
 
