@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2015-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2015-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -62,6 +62,7 @@ struct ol_txrx_peer_t *ol_txrx_peer_find_by_id(struct ol_txrx_pdev_t *pdev,
 					       uint16_t peer_id)
 {
 	struct ol_txrx_peer_t *peer;
+
 	peer = (peer_id > ol_cfg_max_peer_id(pdev->ctrl_pdev)) ? NULL :
 	       pdev->peer_id_to_obj_map[peer_id].peer;
 	/*
