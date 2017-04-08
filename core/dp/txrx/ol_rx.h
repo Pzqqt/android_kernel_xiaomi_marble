@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -34,11 +34,13 @@
 
 void
 ol_rx_deliver(struct ol_txrx_vdev_t *vdev,
-	      struct ol_txrx_peer_t *peer, unsigned tid, qdf_nbuf_t head_msdu);
+	      struct ol_txrx_peer_t *peer, unsigned int tid,
+	      qdf_nbuf_t head_msdu);
 
 void
 ol_rx_discard(struct ol_txrx_vdev_t *vdev,
-	      struct ol_txrx_peer_t *peer, unsigned tid, qdf_nbuf_t head_msdu);
+	      struct ol_txrx_peer_t *peer, unsigned int tid,
+	      qdf_nbuf_t head_msdu);
 
 void ol_rx_frames_free(htt_pdev_handle htt_pdev, qdf_nbuf_t frames);
 
@@ -54,7 +56,7 @@ void ol_rx_send_pktlog_event(struct ol_txrx_pdev_t *pdev,
 void
 ol_rx_in_order_deliver(struct ol_txrx_vdev_t *vdev,
 		       struct ol_txrx_peer_t *peer,
-		       unsigned tid, qdf_nbuf_t head_msdu);
+		       unsigned int tid, qdf_nbuf_t head_msdu);
 
 void ol_rx_log_packet(htt_pdev_handle htt_pdev,
 		 uint8_t peer_id, qdf_nbuf_t msdu);
