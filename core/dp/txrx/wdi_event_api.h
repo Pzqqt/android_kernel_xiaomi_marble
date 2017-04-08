@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2014, 2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -80,7 +80,6 @@ A_STATUS wdi_event_detach(struct ol_txrx_pdev_t *txrx_pdev);
 static inline void wdi_event_handler(enum WDI_EVENT event,
 		       struct ol_txrx_pdev_t *txrx_pdev, void *data)
 {
-	return;
 }
 static inline A_STATUS wdi_event_attach(struct ol_txrx_pdev_t *txrx_pdev)
 {
