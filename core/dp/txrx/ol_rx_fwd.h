@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -70,7 +70,7 @@ ol_rx_fwd_mcast_check_ap(struct ol_txrx_vdev_t *vdev,
 void
 ol_rx_fwd_check(struct ol_txrx_vdev_t *vdev,
 		struct ol_txrx_peer_t *peer,
-		unsigned tid, qdf_nbuf_t msdu_list);
+		unsigned int tid, qdf_nbuf_t msdu_list);
 
 A_STATUS
 ol_get_intra_bss_fwd_pkts_count(
