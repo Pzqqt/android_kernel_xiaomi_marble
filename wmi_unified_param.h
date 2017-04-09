@@ -4925,6 +4925,8 @@ typedef enum {
 	wmi_pdev_csa_switch_count_status_event_id,
 	wmi_reg_chan_list_cc_event_id,
 	wmi_offchan_data_tx_completion_event,
+	wmi_dfs_cac_complete_id,
+	wmi_dfs_radar_detection_event_id,
 
 	wmi_events_max,
 } wmi_conv_event_id;
