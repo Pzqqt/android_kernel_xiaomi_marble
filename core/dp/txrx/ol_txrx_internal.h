@@ -80,8 +80,10 @@
 #include <stdarg.h>             /* va_list */
 #include <qdf_types.h>          /* qdf_vprint */
 
-#define ol_txrx_log(level, args...) QDF_TRACE(QDF_MODULE_ID_TXRX, level, ## args)
-#define ol_txrx_logfl(level, format, args...) ol_txrx_log(level, FL(format), ## args)
+#define ol_txrx_log(level, args...) \
+		QDF_TRACE(QDF_MODULE_ID_TXRX, level, ## args)
+#define ol_txrx_logfl(level, format, args...) \
+		ol_txrx_log(level, FL(format), ## args)
 
 #define ol_txrx_alert(format, args...) \
 		ol_txrx_logfl(QDF_TRACE_LEVEL_FATAL, format, ## args)
@@ -96,8 +98,10 @@
 #define ol_txrx_dbg(format, args...) \
 		ol_txrx_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
 
-/* define PN check failure message print rate
-   as 1 second */
+/*
+ * define PN check failure message print rate
+ * as 1 second
+ */
 #define TXRX_PN_CHECK_FAILURE_PRINT_PERIOD_MS  1000
 
 #else
@@ -391,6 +395,7 @@ ol_txrx_frms_dump(const char *name,
 				}
 			} else {
 				struct llc_snap_hdr_t *llc_hdr;
+
 				/* (generic?) 802.11 */
 				l2_hdr_size = sizeof(struct ieee80211_frame);
 				llc_hdr = (struct llc_snap_hdr_t *)
@@ -401,12 +406,14 @@ ol_txrx_frms_dump(const char *name,
 			}
 			if (ethtype == ETHERTYPE_IPV4) {
 				struct ipv4_hdr_t *ipv4_hdr;
+
 				ipv4_hdr =
 					(struct ipv4_hdr_t *)(p + l2_hdr_size);
 				ip_prot = ipv4_hdr->protocol;
 				tcp_offset = l2_hdr_size + IPV4_HDR_LEN;
 			} else if (ethtype == ETHERTYPE_IPV6) {
 				struct ipv6_hdr_t *ipv6_hdr;
+
 				ipv6_hdr =
 					(struct ipv6_hdr_t *)(p + l2_hdr_size);
 				ip_prot = ipv6_hdr->next_hdr;
@@ -422,6 +429,7 @@ ol_txrx_frms_dump(const char *name,
 #if NEVERDEFINED
 				struct tcp_hdr_t *tcp_hdr;
 				uint32_t tcp_seq_num;
+
 				tcp_hdr = (struct tcp_hdr_t *)(p + tcp_offset);
 				tcp_seq_num =
 					(tcp_hdr->seq_num[0] << 24) |
@@ -451,6 +459,7 @@ ol_txrx_frms_dump(const char *name,
 NOT_IP_TCP:
 		if (display_options & ol_txrx_frm_dump_contents) {
 			int i, frag_num, len_lim;
+
 			len_lim = max_len;
 			if (len_lim > qdf_nbuf_len(frm))
 				len_lim = qdf_nbuf_len(frm);
@@ -465,6 +474,7 @@ NOT_IP_TCP:
 			i = 0;
 			while (i < len_lim) {
 				int frag_bytes;
+
 				frag_bytes =
 					qdf_nbuf_get_frag_len(frm, frag_num);
 				if (frag_bytes > len_lim - i)
@@ -481,7 +491,7 @@ NOT_IP_TCP:
 
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
 				  "frame %p data (%p), hex dump of bytes 0-%d of %d:\n",
-				frm, p, len_lim - 1, (int)qdf_nbuf_len(frm));
+				  frm, p, len_lim - 1, (int)qdf_nbuf_len(frm));
 			p = local_buf;
 			while (len_lim > 16) {
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
@@ -520,7 +530,7 @@ NOT_IP_TCP:
 
 #define OL_RX_ERR_STATISTICS(pdev, vdev, err_type, sec_type, is_mcast) \
 	ol_rx_err_statistics(pdev->ctrl_pdev, vdev->vdev_id, err_type,	   \
-			     sec_type, is_mcast);
+			     sec_type, is_mcast)
 
 #define OL_RX_ERR_STATISTICS_1(pdev, vdev, peer, rx_desc, err_type)	\
 	do {								\
@@ -558,6 +568,7 @@ NOT_IP_TCP:
 		struct ol_pdev_t *pdev, qdf_nbuf_t rx_msdu)
 	{
 		struct ieee80211_frame *wh = NULL;
+
 		if (ol_cfg_frame_type(pdev) == wlan_frm_fmt_native_wifi)
 			/* For windows, it is always native wifi header .*/
 			wh = (struct ieee80211_frame *)qdf_nbuf_data(rx_msdu);
@@ -670,7 +681,7 @@ NOT_IP_TCP:
 	do { \
 		if (_p_cntrs == 1) { \
 			TXRX_STATS_ADD(_pdev, pub.tx.tso.tso_hist.pkts_1, 1); \
-		} else if (_p_cntrs >= 2 && _p_cntrs <= 5) {                   \
+		} else if (_p_cntrs >= 2 && _p_cntrs <= 5) {                  \
 			TXRX_STATS_ADD(_pdev,                                 \
 				pub.tx.tso.tso_hist.pkts_2_5, 1);             \
 		} else if (_p_cntrs > 5 && _p_cntrs <= 10) {                  \
@@ -690,8 +701,10 @@ NOT_IP_TCP:
 
 #define TXRX_STATS_TSO_RESET_MSDU(pdev, idx) \
 	do { \
-		pdev->stats.pub.tx.tso.tso_info.tso_msdu_info[idx].num_seg = 0; \
-		pdev->stats.pub.tx.tso.tso_info.tso_msdu_info[idx].tso_seg_idx = 0; \
+		pdev->stats.pub.tx.tso.tso_info.tso_msdu_info[idx].num_seg     \
+			= 0;						       \
+		pdev->stats.pub.tx.tso.tso_info.tso_msdu_info[idx].tso_seg_idx \
+			= 0;						       \
 	} while (0)
 
 #define TXRX_STATS_TSO_MSDU_IDX(pdev) \
