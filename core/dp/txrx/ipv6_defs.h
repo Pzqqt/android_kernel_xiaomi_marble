@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2014, 2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -60,7 +60,8 @@
 
 #define IPV6_ADDR_LEN 4         /* bytes */
 struct ipv6_hdr_t {
-	A_UINT32 ver_tclass_flowlabel;  /* version, traffic class, and flow label */
+	/* version, traffic class, and flow label */
+	A_UINT32 ver_tclass_flowlabel;
 	A_UINT8 pyld_len[2];    /* payload length */
 	A_UINT8 next_hdr;
 	A_UINT8 hop_limit;
@@ -85,23 +86,20 @@ struct ipv6_hdr_t {
 
 static inline A_UINT8 ipv6_version(struct ipv6_hdr_t *ipv6_hdr)
 {
-	return
-		(BE_TO_CPU32(ipv6_hdr->ver_tclass_flowlabel) &
-		 IPV6_HDR_VERSION_M) >> IPV6_HDR_VERSION_S;
+	return (BE_TO_CPU32(ipv6_hdr->ver_tclass_flowlabel) &
+	       IPV6_HDR_VERSION_M) >> IPV6_HDR_VERSION_S;
 }
 
 static inline A_UINT8 ipv6_traffic_class(struct ipv6_hdr_t *ipv6_hdr)
 {
-	return
-		(A_UINT8) ((BE_TO_CPU32(ipv6_hdr->ver_tclass_flowlabel) &
-			    IPV6_HDR_TRAFFIC_CLASS_M) >> IPV6_HDR_TRAFFIC_CLASS_S);
+	return (A_UINT8)((BE_TO_CPU32(ipv6_hdr->ver_tclass_flowlabel) &
+	       IPV6_HDR_TRAFFIC_CLASS_M) >> IPV6_HDR_TRAFFIC_CLASS_S);
 }
 
 static inline A_UINT32 ipv6_flow_label(struct ipv6_hdr_t *ipv6_hdr)
 {
-	return
-		(BE_TO_CPU32(ipv6_hdr->ver_tclass_flowlabel) &
-		 IPV6_HDR_FLOW_LABEL_M) >> IPV6_HDR_FLOW_LABEL_S;
+	return (BE_TO_CPU32(ipv6_hdr->ver_tclass_flowlabel) &
+	       IPV6_HDR_FLOW_LABEL_M) >> IPV6_HDR_FLOW_LABEL_S;
 }
 
 #endif /* _IPV6__H_ */
