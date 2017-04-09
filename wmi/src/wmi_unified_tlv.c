@@ -17061,6 +17061,77 @@ static QDF_STATUS extract_reg_chan_list_update_event_tlv(
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef DFS_COMPONENT_ENABLE
+/**
+ * extract_dfs_cac_complete_event_tlv() - extract cac complete event
+ * @wmi_handle: wma handle
+ * @evt_buf: event buffer
+ * @vdev_id: vdev id
+ * @len: length of buffer
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS extract_dfs_cac_complete_event_tlv(wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		uint32_t *vdev_id,
+		uint32_t len)
+{
+	WMI_VDEV_DFS_CAC_COMPLETE_EVENTID_param_tlvs *param_tlvs;
+	wmi_vdev_dfs_cac_complete_event_fixed_param  *cac_event;
+
+	param_tlvs = (WMI_VDEV_DFS_CAC_COMPLETE_EVENTID_param_tlvs *) evt_buf;
+	if (!param_tlvs) {
+		WMI_LOGE("invalid cac complete event buf");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cac_event = param_tlvs->fixed_param;
+	*vdev_id = cac_event->vdev_id;
+	WMI_LOGD("processed cac complete event vdev %d", *vdev_id);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * extract_dfs_radar_detection_event_tlv() - extract radar found event
+ * @wmi_handle: wma handle
+ * @evt_buf: event buffer
+ * @radar_found: radar found event info
+ * @len: length of buffer
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS extract_dfs_radar_detection_event_tlv(
+		wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct radar_found_info *radar_found,
+		uint32_t len)
+{
+	WMI_PDEV_DFS_RADAR_DETECTION_EVENTID_param_tlvs *param_tlv;
+	wmi_pdev_dfs_radar_detection_event_fixed_param *radar_event;
+
+	param_tlv = (WMI_PDEV_DFS_RADAR_DETECTION_EVENTID_param_tlvs *) evt_buf;
+	if (!param_tlv) {
+		WMI_LOGE("invalid radar detection event buf");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	radar_event = param_tlv->fixed_param;
+	radar_found->pdev_id = radar_event->pdev_id;
+	radar_found->detection_mode = radar_event->detection_mode;
+	radar_found->freq_offset = radar_event->chan_freq;
+	radar_found->chan_width = radar_event->chan_width;
+	radar_found->detector_id = radar_event->detector_id;
+	radar_found->segment_id = radar_event->segment_id;
+	radar_found->timestamp = radar_event->timestamp;
+	radar_found->is_chirp = radar_event->is_chirp;
+
+	WMI_LOGD("processed radar found event pdev %d", radar_event->pdev_id);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_tlv,
@@ -17413,6 +17484,11 @@ struct wmi_ops tlv_ops =  {
 		extract_reg_chan_list_update_event_tlv,
 	.extract_chainmask_tables =
 		extract_chainmask_tables_tlv,
+#ifdef DFS_COMPONENT_ENABLE
+	.extract_dfs_cac_complete_event = extract_dfs_cac_complete_event_tlv,
+	.extract_dfs_radar_detection_event =
+		extract_dfs_radar_detection_event_tlv,
+#endif
 };
 
 /**
@@ -17637,6 +17713,9 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_wds_peer_event_id] = WMI_WDS_PEER_EVENTID;
 	event_ids[wmi_offchan_data_tx_completion_event] =
 				WMI_OFFCHAN_DATA_TX_COMPLETION_EVENTID;
+	event_ids[wmi_dfs_cac_complete_id] = WMI_VDEV_DFS_CAC_COMPLETE_EVENTID;
+	event_ids[wmi_dfs_radar_detection_event_id] =
+		WMI_PDEV_DFS_RADAR_DETECTION_EVENTID;
 }
 
 #ifndef CONFIG_MCL

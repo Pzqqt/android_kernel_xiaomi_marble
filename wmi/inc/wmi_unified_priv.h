@@ -42,6 +42,10 @@
 #include <wlan_p2p_public_struct.h>
 #endif
 
+#ifdef DFS_COMPONENT_ENABLE
+#include <wlan_dfs_public_struct.h>
+#endif
+
 #define WMI_UNIFIED_MAX_EVENT 0x100
 #ifdef CONFIG_MCL
 #define WMI_MAX_CMDS  256
@@ -1295,6 +1299,17 @@ QDF_STATUS (*extract_reg_chan_list_update_event)(wmi_unified_t wmi_handle,
 QDF_STATUS (*extract_chainmask_tables)(wmi_unified_t wmi_handle,
 		uint8_t *evt_buf,
 		struct wlan_psoc_host_chainmask_table *chainmask_table);
+
+#ifdef DFS_COMPONENT_ENABLE
+QDF_STATUS (*extract_dfs_cac_complete_event)(wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		uint32_t *vdev_id,
+		uint32_t len);
+QDF_STATUS (*extract_dfs_radar_detection_event)(wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct radar_found_info *radar_found,
+		uint32_t len);
+#endif
 };
 
 struct target_abi_version {
