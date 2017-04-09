@@ -194,8 +194,10 @@ struct ol_tx_desc_t {
 	void *txq;
 
 #ifdef QCA_SUPPORT_SW_TXRX_ENCAP
-	/* used by tx encap, to restore the os buf start offset
-	   after tx complete */
+	/*
+	 * used by tx encap, to restore the os buf start offset
+	 * after tx complete
+	 */
 	uint8_t orig_l2_hdr_bytes;
 #endif
 
@@ -609,8 +611,9 @@ struct ol_txrx_pdev_t {
 	struct ol_txrx_peer_id_map *peer_id_to_obj_map;
 
 	struct {
-		unsigned mask;
-		unsigned idx_bits;
+		unsigned int mask;
+		unsigned int idx_bits;
+
 		TAILQ_HEAD(, ol_txrx_peer_t) * bins;
 	} peer_hash;
 
@@ -635,7 +638,7 @@ struct ol_txrx_pdev_t {
 	/* rx proc function */
 	void (*rx_opt_proc)(struct ol_txrx_vdev_t *vdev,
 			    struct ol_txrx_peer_t *peer,
-			    unsigned tid, qdf_nbuf_t msdu_list);
+			    unsigned int tid, qdf_nbuf_t msdu_list);
 
 	/* tx data delivery notification callback function */
 	struct {
@@ -807,8 +810,10 @@ struct ol_txrx_pdev_t {
 		qdf_atomic_t rsrc_cnt;
 		/* threshold_lo - when to start tx desc margin replenishment */
 		uint16_t rsrc_threshold_lo;
-		/* threshold_hi - where to stop during tx desc margin
-		   replenishment */
+		/*
+		 * threshold_hi - where to stop during tx desc margin
+		 * replenishment
+		 */
 		uint16_t rsrc_threshold_hi;
 	} tx_queue;
 
@@ -869,15 +874,18 @@ struct ol_txrx_pdev_t {
 	struct {
 		qdf_spinlock_t mutex;
 		/* timer used to monitor the throttle "on" phase and
-		   "off" phase */
+		 * "off" phase
+		 */
 		qdf_timer_t phase_timer;
 		/* timer used to send tx frames */
 		qdf_timer_t tx_timer;
 		/* This is the time in ms of the throttling window, it will
-		 * include an "on" phase and an "off" phase */
+		 * include an "on" phase and an "off" phase
+		 */
 		uint32_t throttle_period_ms;
 		/* Current throttle level set by the client ex. level 0,
-		   level 1, etc */
+		 * level 1, etc
+		 */
 		enum throttle_level current_throttle_level;
 		/* Index that points to the phase within the throttle period */
 		enum throttle_phase current_throttle_phase;
@@ -924,7 +932,8 @@ struct ol_txrx_pdev_t {
 		/*This is the state of the peer balance timer */
 		enum ol_tx_peer_bal_timer_state peer_bal_timer_state;
 		/*This is the counter about active peers which are under
-		 *tx flow control */
+		 *tx flow control
+		 */
 		u_int32_t peer_num;
 		/*This is peer list which are under tx flow control */
 		struct ol_tx_limit_peer_t limit_list[MAX_NO_PEERS_IN_LIMIT];
@@ -952,18 +961,22 @@ struct ol_txrx_pdev_t {
 
 struct ol_txrx_vdev_t {
 	struct ol_txrx_pdev_t *pdev; /* pdev - the physical device that is
-					the parent of this virtual device */
+				      * the parent of this virtual device
+				      */
 	uint8_t vdev_id;             /* ID used to specify a particular vdev
-					to the target */
+				      * to the target
+				      */
 	void *osif_dev;
 	union ol_txrx_align_mac_addr_t mac_addr; /* MAC address */
 	/* tx paused - NO LONGER NEEDED? */
 	TAILQ_ENTRY(ol_txrx_vdev_t) vdev_list_elem; /* node in the pdev's list
-						       of vdevs */
+						     * of vdevs
+						     */
 	TAILQ_HEAD(peer_list_t, ol_txrx_peer_t) peer_list;
 	struct ol_txrx_peer_t *last_real_peer; /* last real peer created for
-						  this vdev (not "self"
-						  pseudo-peer) */
+						* this vdev (not "self"
+						* pseudo-peer)
+						*/
 	ol_txrx_rx_fp rx; /* receive function used by this vdev */
 
 	struct {
@@ -1087,7 +1100,8 @@ struct ol_rx_reorder_t {
 	TAILQ_ENTRY(ol_rx_reorder_t) defrag_waitlist_elem;
 	uint32_t defrag_timeout_ms;
 	/* get back to parent ol_txrx_peer_t when ol_rx_reorder_t is in a
-	 * waitlist */
+	 * waitlist
+	 */
 	uint16_t tid;
 };
 
@@ -1162,7 +1176,7 @@ struct ol_txrx_peer_t {
 	 */
 	void (*rx_opt_proc)(struct ol_txrx_vdev_t *vdev,
 			    struct ol_txrx_peer_t *peer,
-			    unsigned tid, qdf_nbuf_t msdu_list);
+			    unsigned int tid, qdf_nbuf_t msdu_list);
 
 #if defined(CONFIG_HL_SUPPORT)
 	struct ol_tx_frms_queue_t txqs[OL_TX_NUM_TIDS];
