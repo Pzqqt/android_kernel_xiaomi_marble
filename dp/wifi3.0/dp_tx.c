@@ -126,8 +126,30 @@ dp_tx_desc_release(struct dp_tx_desc_s *tx_desc, uint8_t desc_pool_id)
  * dp_tx_htt_metadata_prepare() - Prepare HTT metadata for special frames
  * @vdev: DP vdev Handle
  * @nbuf: skb
- * @align_pad: Alignment Pad bytes to be added in frame header before adding HTT
- * metadata
+ * @align_pad: Alignment Pad bytes to be pushed in headroom before adding
+ * HTT metadata
+ *
+ *  |-----------------------------|
+ *  |                             |
+ *  |-----------------------------| <-----Buffer Pointer Address given
+ *  |                             |  ^    in HW descriptor (aligned)
+ *  |                             |  |
+ *  |       HTT Metadata          |  |
+ *  |                             |  |
+ *  |                             |  | Packet Offset given in descriptor
+ *  |                             |  |
+ *  |                             |  |
+ *  |-----------------------------|  |
+ *  |       Alignment Pad         |  v
+ *  |-----------------------------| <----- Actual buffer start address
+ *  |        SKB Data             |           (Unaligned)
+ *  |                             |
+ *  |                             |
+ *  |                             |
+ *  |                             |
+ *  |                             |
+ *  |                             |
+ *  |-----------------------------|
  *
  * Prepares and fills HTT metadata in the frame pre-header for special frames
  * that should be transmitted using varying transmit parameters.
@@ -157,15 +179,25 @@ static uint8_t dp_tx_prepare_htt_metadata(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	htt_desc_size = sizeof(struct htt_tx_msdu_desc_ext2_t);
 
 	if (vdev->mesh_vdev) {
-
 		/* Fill and add HTT metaheader */
 		hdr = qdf_nbuf_push_head(nbuf, htt_desc_size + align_pad);
-
 		qdf_mem_copy(hdr, desc_ext, htt_desc_size);
+
+		if (qdf_unlikely(QDF_STATUS_SUCCESS !=
+					qdf_nbuf_map_nbytes_single(
+						vdev->pdev->soc->osdev, nbuf,
+						QDF_DMA_TO_DEVICE,
+						(htt_desc_size + align_pad)))) {
+
+			/* Handle failure */
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+					"htt qdf_nbuf_map failed\n");
+
+			return 0;
+		}
 
 	} else if (vdev->opmode == wlan_op_mode_ocb) {
 		/* Todo - Add support for DSRC */
-
 	}
 
 	return htt_desc_size;
@@ -183,7 +215,6 @@ static void dp_tx_prepare_tso_ext_desc(struct qdf_tso_seg_t *tso_seg,
 		void *ext_desc)
 {
 	uint8_t num_frag;
-	uint32_t *buf_ptr;
 	uint32_t tso_flags;
 
 	/*
@@ -403,6 +434,15 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	tx_desc->pdev = pdev;
 	tx_desc->msdu_ext_desc = NULL;
 
+	if (qdf_unlikely(QDF_STATUS_SUCCESS !=
+				qdf_nbuf_map(soc->osdev, nbuf,
+				QDF_DMA_TO_DEVICE))) {
+		/* Handle failure */
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"qdf_nbuf_map failed\n");
+		goto failure;
+	}
+
 	align_pad = ((unsigned long) qdf_nbuf_mapped_paddr_get(nbuf)) & 0x7;
 	tx_desc->pkt_offset = align_pad;
 
@@ -437,15 +477,6 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 		/* Temporary WAR due to TQM VP issues */
 		tx_desc->flags |= DP_TX_DESC_FLAG_TO_FW;
 		qdf_atomic_inc(&pdev->num_tx_exception);
-	}
-
-	if (qdf_unlikely(QDF_STATUS_SUCCESS !=
-				qdf_nbuf_map(soc->osdev, nbuf,
-				QDF_DMA_TO_DEVICE))) {
-		/* Handle failure */
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				"qdf_nbuf_map failed\n");
-		goto failure;
 	}
 
 	return tx_desc;
