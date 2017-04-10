@@ -930,6 +930,7 @@ QDF_STATUS ucfg_scan_update_user_config(struct wlan_objmgr_psoc *psoc,
 	scan_def->conc_idle_time = scan_cfg->conc_idle_time;
 	scan_def->scan_cache_aging_time = scan_cfg->scan_cache_aging_time;
 	scan_def->adaptive_dwell_time_mode = scan_cfg->scan_dwell_time_mode;
+	scan_def->scan_f_chan_stat_evnt = scan_cfg->is_snr_monitoring_enabled;
 
 	return ucfg_scan_update_pno_config(&scan_obj->pno_cfg,
 		&scan_cfg->pno_cfg);

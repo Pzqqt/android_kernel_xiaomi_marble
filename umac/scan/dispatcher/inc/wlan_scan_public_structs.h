@@ -936,6 +936,7 @@ struct pno_user_cfg {
  * @conc_min_rest_time: default concurrent min rest time
  * @conc_idle_time: default concurrent idle time
  * @scan_cache_aging_time: default scan cache aging time
+ * @is_snr_monitoring_enabled: whether snr monitoring enabled or not
  * @scan_dwell_time_mode: Adaptive dweltime mode
  * @pno_cfg: Pno related config params
  */
@@ -948,6 +949,7 @@ struct scan_user_cfg {
 	uint32_t conc_min_rest_time;
 	uint32_t conc_idle_time;
 	uint32_t scan_cache_aging_time;
+	bool is_snr_monitoring_enabled;
 	enum scan_dwelltime_adaptive_mode scan_dwell_time_mode;
 	struct pno_user_cfg pno_cfg;
 };
