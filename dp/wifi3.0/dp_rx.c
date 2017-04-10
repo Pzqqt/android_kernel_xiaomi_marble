@@ -1012,7 +1012,8 @@ done:
 			}
 		}
 
-		if (qdf_unlikely(vdev->rx_decap_type == htt_cmn_pkt_type_raw))
+		if (qdf_unlikely(vdev->rx_decap_type == htt_cmn_pkt_type_raw) ||
+			(vdev->rx_decap_type == htt_cmn_pkt_type_native_wifi))
 			dp_rx_deliver_raw(vdev, deliver_list_head);
 		else if (qdf_likely(vdev->osif_rx) && deliver_list_head)
 			vdev->osif_rx(vdev->osif_vdev, deliver_list_head);
