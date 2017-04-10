@@ -197,7 +197,7 @@ static enum qdf_bus_type to_bus_type(enum pld_bus_type bus_type)
 	}
 }
 
-int hdd_hif_open(struct device *dev, void *bdev, const hif_bus_id *bid,
+int hdd_hif_open(struct device *dev, void *bdev, const struct hif_bus_id *bid,
 			enum qdf_bus_type bus_type, bool reinit)
 {
 	QDF_STATUS status;
@@ -320,8 +320,9 @@ static void hdd_init_qdf_ctx(struct device *dev, void *bdev,
  *
  * Return: 0 on successfull probe
  */
-static int wlan_hdd_probe(struct device *dev, void *bdev, const hif_bus_id *bid,
-	enum qdf_bus_type bus_type, bool reinit)
+static int wlan_hdd_probe(struct device *dev, void *bdev,
+			  const struct hif_bus_id *bid,
+			  enum qdf_bus_type bus_type, bool reinit)
 {
 	int ret = 0;
 
