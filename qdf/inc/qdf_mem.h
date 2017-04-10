@@ -38,6 +38,15 @@
 #include <i_qdf_mem.h>
 
 /**
+ * qdf_align() - align to the given size.
+ * @a: input that needs to be aligned.
+ * @align_size: boundary on which 'a' has to be alinged.
+ *
+ * Return: aligned value.
+ */
+#define qdf_align(a, align_size)   __qdf_align(a, align_size)
+
+/**
  * struct qdf_mem_dma_page_t - Allocated dmaable page
  * @page_v_addr_start: Page start virtual address
  * @page_v_addr_end: Page end virtual address
