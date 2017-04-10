@@ -19131,6 +19131,11 @@ void csr_process_ho_fail_ind(tpAniSirGlobal mac_ctx, void *pMsgBuf)
 		  "LFR3:Issue Disconnect on session %d", sessionId);
 	csr_roam_disconnect(mac_ctx, sessionId,
 			eCSR_DISCONNECT_REASON_ROAM_HO_FAIL);
+	if (mac_ctx->roam.configParam.enable_fatal_event)
+		cds_flush_logs(WLAN_LOG_TYPE_NON_FATAL,
+				WLAN_LOG_INDICATOR_HOST_DRIVER,
+				WLAN_LOG_REASON_ROAM_HO_FAILURE,
+				true, false);
 }
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
