@@ -588,13 +588,14 @@ wmi_print_cmd_log_buffer(struct wmi_log_buf_t *log_buffer, uint32_t count,
 	while (count) {
 		struct wmi_command_debug *cmd_log = (struct wmi_command_debug *)
 			&((struct wmi_command_debug *)log_buffer->buf)[idx];
-		long long us = qdf_log_timestamp_to_usecs(cmd_log->time);
+		uint64_t secs, usecs;
 		int len = 0;
 		int i;
 
+		qdf_log_timestamp_to_secs(cmd_log->time, &secs, &usecs);
 		len += scnprintf(str + len, sizeof(str) - len,
 				 "% 8lld.%06lld    %6u (0x%06x)    ",
-				 us / 1000000, us % 1000000,
+				 secs, usecs,
 				 cmd_log->command, cmd_log->command);
 		for (i = 0; i < data_len; ++i) {
 			len += scnprintf(str + len, sizeof(str) - len,
@@ -641,13 +642,14 @@ wmi_print_event_log_buffer(struct wmi_log_buf_t *log_buffer, uint32_t count,
 	while (count) {
 		struct wmi_event_debug *event_log = (struct wmi_event_debug *)
 			&((struct wmi_event_debug *)log_buffer->buf)[idx];
-		long long us = qdf_log_timestamp_to_usecs(event_log->time);
+		uint64_t secs, usecs;
 		int len = 0;
 		int i;
 
+		qdf_log_timestamp_to_secs(event_log->time, &secs, &usecs);
 		len += scnprintf(str + len, sizeof(str) - len,
 				 "% 8lld.%06lld    %6u (0x%06x)    ",
-				 us / 1000000, us % 1000000,
+				 secs, usecs,
 				 event_log->event, event_log->event);
 		for (i = 0; i < data_len; ++i) {
 			len += scnprintf(str + len, sizeof(str) - len,

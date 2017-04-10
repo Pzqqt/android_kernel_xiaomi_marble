@@ -168,16 +168,39 @@ enum qdf_timestamp_unit {
 #ifdef QCA_WIFI_3_0_ADRASTEA
 #define QDF_LOG_TIMESTAMP_UNIT QTIMER
 #define QDF_LOG_TIMESTAMP_CYCLES_PER_10_US 192
+
+static inline uint64_t qdf_log_timestamp_to_usecs(uint64_t time)
+{
+	/*
+	 * Try to preserve precision by multiplying by 10 first.
+	 * If that would cause a wrap around, divide first instead.
+	 */
+	if (time * 10 < time) {
+		do_div(time, QDF_LOG_TIMESTAMP_CYCLES_PER_10_US);
+		return time * 10;
+	}
+
+	time = time * 10;
+	do_div(time, QDF_LOG_TIMESTAMP_CYCLES_PER_10_US);
+
+	return time;
+}
 #else
 #define QDF_LOG_TIMESTAMP_UNIT KERNEL_LOG
 #define QDF_LOG_TIMESTAMP_CYCLES_PER_10_US 10
+
+static inline uint64_t qdf_log_timestamp_to_usecs(uint64_t time)
+{
+	/* timestamps are already in micro seconds */
+	return time;
+}
 #endif
 
-static inline unsigned long long qdf_log_timestamp_to_usecs(uint64_t time)
+static inline void qdf_log_timestamp_to_secs(uint64_t time, uint64_t *secs,
+					     uint64_t *usecs)
 {
-	if ((time * 10) < time)
-		return (time / QDF_LOG_TIMESTAMP_CYCLES_PER_10_US) * 10;
-	return (time * 10) / QDF_LOG_TIMESTAMP_CYCLES_PER_10_US;
+	*secs = qdf_log_timestamp_to_usecs(time);
+	*usecs = do_div(*secs, 1000000ul);
 }
 
 static inline uint64_t qdf_usecs_to_log_timestamp(uint64_t usecs)

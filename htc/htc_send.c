@@ -114,11 +114,12 @@ void htc_print_credit_history(HTC_HANDLE htc, uint32_t count,
 	      "Time (seconds)     Type                         Credits    Queue Depth");
 	while (count) {
 		HTC_CREDIT_HISTORY *hist = &htc_credit_history_buffer[idx];
-		long long us = qdf_log_timestamp_to_usecs(hist->time);
+		uint64_t secs, usecs;
 
+		qdf_log_timestamp_to_secs(hist->time, &secs, &usecs);
 		print(print_priv, "% 8lld.%06lld    %-25s    %-7.d    %d",
-		      us / 1000000,
-		      us % 1000000,
+		      secs,
+		      usecs,
 		      htc_credit_exchange_type_str(hist->type),
 		      hist->tx_credit,
 		      hist->htc_tx_queue_depth);
