@@ -61,11 +61,39 @@ void ol_pl_sethandle(ol_pktlog_dev_handle *pl_handle,
 /* Packet log state information */
 #ifndef _PKTLOG_INFO
 #define _PKTLOG_INFO
+
+/**
+ * enum ath_pktlog_state - pktlog status
+ * @PKTLOG_OPR_IN_PROGRESS : pktlog command in progress
+ * @PKTLOG_OPR_IN_PROGRESS_READ_START: pktlog read is issued
+ * @PKTLOG_OPR_IN_PROGRESS_READ_START_PKTLOG_DISABLED:
+ *			as part of pktlog read, pktlog is disabled
+ * @PKTLOG_OPR_IN_PROGRESS_READ_COMPLETE:
+ *		as part of read, till pktlog read is complete
+ * @PKTLOG_OPR_IN_PROGRESS_CLEARBUFF_COMPLETE:
+ *		as part of read, pktlog clear buffer is done
+ * @PKTLOG_OPR_NOT_IN_PROGRESS: no pktlog command in progress
+ */
+enum ath_pktlog_state {
+	PKTLOG_OPR_IN_PROGRESS = 0,
+	PKTLOG_OPR_IN_PROGRESS_READ_START,
+	PKTLOG_OPR_IN_PROGRESS_READ_START_PKTLOG_DISABLED,
+	PKTLOG_OPR_IN_PROGRESS_READ_COMPLETE,
+	PKTLOG_OPR_IN_PROGRESS_CLEARBUFF_COMPLETE,
+	PKTLOG_OPR_NOT_IN_PROGRESS
+};
+
 struct ath_pktlog_info {
 	struct ath_pktlog_buf *buf;
 	uint32_t log_state;
 	uint32_t saved_state;
 	uint32_t options;
+	/* Initial saved state: It will save the log state in pktlog
+	 * open and used in pktlog release after
+	 * pktlog read is complete.
+	 */
+	uint32_t init_saved_state;
+	enum ath_pktlog_state curr_pkt_state;
 
 	/* Size of buffer in bytes */
 	int32_t buf_size;

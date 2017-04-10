@@ -534,13 +534,107 @@ static void pktlog_detach(struct ol_txrx_pdev_t *handle)
 
 static int pktlog_open(struct inode *i, struct file *f)
 {
+	struct hif_opaque_softc *scn;
+	struct ol_pktlog_dev_t *pl_dev;
+	struct ath_pktlog_info *pl_info;
+	int ret = 0;
+
 	PKTLOG_MOD_INC_USE_COUNT;
-	return 0;
+	pl_info = (struct ath_pktlog_info *)
+			PDE_DATA(f->f_path.dentry->d_inode);
+
+	if (!pl_info) {
+		pr_err("%s: pl_info NULL", __func__);
+		return -EINVAL;
+	}
+
+	if (pl_info->curr_pkt_state != PKTLOG_OPR_NOT_IN_PROGRESS) {
+		pr_info("%s: plinfo state (%d) != PKTLOG_OPR_NOT_IN_PROGRESS",
+			__func__, pl_info->curr_pkt_state);
+		return -EBUSY;
+	}
+
+	pl_info->curr_pkt_state = PKTLOG_OPR_IN_PROGRESS_READ_START;
+	scn = cds_get_context(QDF_MODULE_ID_HIF);
+	if (!scn) {
+		pl_info->curr_pkt_state = PKTLOG_OPR_NOT_IN_PROGRESS;
+		qdf_print("%s: Invalid scn context\n", __func__);
+		ASSERT(0);
+		return -EINVAL;
+	}
+
+	pl_dev = cds_get_pl_handle();
+
+	if (!pl_dev) {
+		pl_info->curr_pkt_state = PKTLOG_OPR_NOT_IN_PROGRESS;
+		qdf_print("%s: Invalid pktlog handle\n", __func__);
+		ASSERT(0);
+		return -ENODEV;
+	}
+
+	pl_info->init_saved_state = pl_info->log_state;
+	if (!pl_info->log_state) {
+		/* Pktlog is already disabled.
+		 * Proceed to read directly.
+		 */
+		pl_info->curr_pkt_state =
+			PKTLOG_OPR_IN_PROGRESS_READ_START_PKTLOG_DISABLED;
+		return ret;
+	}
+	/* Disbable the pktlog internally. */
+	ret = pl_dev->pl_funcs->pktlog_disable(scn);
+	pl_info->log_state = 0;
+	pl_info->curr_pkt_state =
+			PKTLOG_OPR_IN_PROGRESS_READ_START_PKTLOG_DISABLED;
+	return ret;
 }
 
 static int pktlog_release(struct inode *i, struct file *f)
 {
+	struct hif_opaque_softc *scn;
+	struct ol_pktlog_dev_t *pl_dev;
+	struct ath_pktlog_info *pl_info;
+	int ret = 0;
+
 	PKTLOG_MOD_DEC_USE_COUNT;
+
+	pl_info = (struct ath_pktlog_info *)
+			PDE_DATA(f->f_path.dentry->d_inode);
+
+	if (!pl_info)
+		return -EINVAL;
+
+	scn = cds_get_context(QDF_MODULE_ID_HIF);
+	if (!scn) {
+		pl_info->curr_pkt_state = PKTLOG_OPR_NOT_IN_PROGRESS;
+		qdf_print("%s: Invalid scn context\n", __func__);
+		ASSERT(0);
+		return -EINVAL;
+	}
+
+	pl_dev = cds_get_pl_handle();
+
+	if (!pl_dev) {
+		pl_info->curr_pkt_state = PKTLOG_OPR_NOT_IN_PROGRESS;
+		qdf_print("%s: Invalid pktlog handle\n", __func__);
+		ASSERT(0);
+		return -ENODEV;
+	}
+
+	pl_info->curr_pkt_state = PKTLOG_OPR_IN_PROGRESS_READ_COMPLETE;
+	/*clear pktlog buffer.*/
+	pktlog_clearbuff(scn, true);
+	pl_info->log_state = pl_info->init_saved_state;
+	pl_info->init_saved_state = 0;
+
+	/*Enable pktlog again*/
+	ret = pl_dev->pl_funcs->pktlog_enable(
+			(struct hif_opaque_softc *)scn, pl_info->log_state,
+			cds_is_packet_log_enabled(), 0, 1);
+	if (ret != 0)
+		pr_warn("%s: pktlog cannot be enabled", __func__);
+
+	pl_info->curr_pkt_state = PKTLOG_OPR_NOT_IN_PROGRESS;
 	return 0;
 }
 
