@@ -4918,6 +4918,7 @@ static int __wlan_hdd_cfg80211_wifi_logger_start(struct wiphy *wiphy,
 
 	/* size is buff size which can be set using iwpriv command*/
 	start_log.size = 0;
+	start_log.is_pktlog_buff_clear = false;
 
 	cds_set_ring_log_level(start_log.ring_id, start_log.verbose_level);
 

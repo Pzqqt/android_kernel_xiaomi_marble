@@ -14215,6 +14215,7 @@ QDF_STATUS sme_wifi_start_logger(tHalHandle hal,
 	req_msg->ini_triggered = start_log.ini_triggered;
 	req_msg->user_triggered = start_log.user_triggered;
 	req_msg->size = start_log.size;
+	req_msg->is_pktlog_buff_clear = start_log.is_pktlog_buff_clear;
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (status != QDF_STATUS_SUCCESS) {

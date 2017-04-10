@@ -7973,6 +7973,7 @@ static inline void hdd_release_rtnl_lock(void) { }
 
 /* MAX iwpriv command support */
 #define PKTLOG_SET_BUFF_SIZE	3
+#define PKTLOG_CLEAR_BUFF	4
 #define MAX_PKTLOG_SIZE		16
 
 /**
@@ -7993,6 +7994,7 @@ static int hdd_pktlog_set_buff_size(hdd_context_t *hdd_ctx, int set_value2)
 	start_log.ini_triggered = cds_is_packet_log_enabled();
 	start_log.user_triggered = 1;
 	start_log.size = set_value2;
+	start_log.is_pktlog_buff_clear = false;
 
 	status = sme_wifi_start_logger(hdd_ctx->hHal, start_log);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -8003,6 +8005,35 @@ static int hdd_pktlog_set_buff_size(hdd_context_t *hdd_ctx, int set_value2)
 
 	return 0;
 }
+
+/**
+ * hdd_pktlog_clear_buff() - clear pktlog buffer
+ * @hdd_ctx: hdd context
+ *
+ * Return: 0 for success or error.
+ */
+static int hdd_pktlog_clear_buff(hdd_context_t *hdd_ctx)
+{
+	struct sir_wifi_start_log start_log;
+	QDF_STATUS status;
+
+	start_log.ring_id = RING_ID_PER_PACKET_STATS;
+	start_log.verbose_level = WLAN_LOG_LEVEL_OFF;
+	start_log.ini_triggered = cds_is_packet_log_enabled();
+	start_log.user_triggered = 1;
+	start_log.size = 0;
+	start_log.is_pktlog_buff_clear = true;
+
+	status = sme_wifi_start_logger(hdd_ctx->hHal, start_log);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("sme_wifi_start_logger failed(err=%d)", status);
+		EXIT();
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 
 /**
  * hdd_process_pktlog_command() - process pktlog command
@@ -8029,7 +8060,7 @@ int hdd_process_pktlog_command(hdd_context_t *hdd_ctx, uint32_t set_value,
 
 	hdd_debug("set pktlog %d, set size %d", set_value, set_value2);
 
-	if (set_value > PKTLOG_SET_BUFF_SIZE) {
+	if (set_value > PKTLOG_CLEAR_BUFF) {
 		hdd_err("invalid pktlog value %d", set_value);
 		return -EINVAL;
 	}
@@ -8043,6 +8074,8 @@ int hdd_process_pktlog_command(hdd_context_t *hdd_ctx, uint32_t set_value,
 			return -EINVAL;
 		}
 		return hdd_pktlog_set_buff_size(hdd_ctx, set_value2);
+	} else if (set_value == PKTLOG_CLEAR_BUFF) {
+		return hdd_pktlog_clear_buff(hdd_ctx);
 	}
 
 	/*
@@ -8082,6 +8115,7 @@ int hdd_pktlog_enable_disable(hdd_context_t *hdd_ctx, bool enable,
 	start_log.ini_triggered = cds_is_packet_log_enabled();
 	start_log.user_triggered = user_triggered;
 	start_log.size = size;
+	start_log.is_pktlog_buff_clear = false;
 	/*
 	 * Use "is_iwpriv_command" flag to distinguish iwpriv command from other
 	 * commands. Host uses this flag to decide whether to send pktlog

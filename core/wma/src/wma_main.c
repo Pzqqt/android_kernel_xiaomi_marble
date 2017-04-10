@@ -5963,6 +5963,9 @@ static void wma_set_wifi_start_packet_stats(void *wma_handle,
 	if (start_log->size != 0) {
 		pktlog_setsize(scn, start_log->size * MEGABYTE);
 		return;
+	} else if (start_log->is_pktlog_buff_clear == true) {
+		pktlog_clearbuff(scn, start_log->is_pktlog_buff_clear);
+		return;
 	}
 
 	if (start_log->verbose_level == WLAN_LOG_LEVEL_ACTIVE) {

@@ -3238,6 +3238,7 @@ typedef struct {
  * @ini_triggered: triggered using ini
  * @user_triggered: triggered by user
  * @size: pktlog buffer size
+ * @is_pktlog_buff_clear: clear the pktlog buffer
  */
 struct sir_wifi_start_log {
 	uint32_t ring_id;
@@ -3246,6 +3247,7 @@ struct sir_wifi_start_log {
 	bool ini_triggered;
 	uint8_t user_triggered;
 	int size;
+	bool is_pktlog_buff_clear;
 };
 
 
