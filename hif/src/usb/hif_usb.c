@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -191,6 +191,7 @@ static QDF_STATUS hif_send_internal(HIF_DEVICE_USB *hif_usb_device,
 	     i < (send_context->new_alloc ? frag_count : frag_count - 1); i++) {
 		int frag_len = qdf_nbuf_get_frag_len(buf, i);
 		unsigned char *frag_addr = qdf_nbuf_get_frag_vaddr(buf, i);
+
 		qdf_mem_copy(data_ptr, frag_addr, frag_len);
 		data_ptr += frag_len;
 	}
@@ -275,6 +276,7 @@ QDF_STATUS hif_send_head(struct hif_opaque_softc *scn, uint8_t pipe_id,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	HIF_DEVICE_USB *device = HIF_GET_USB_DEVICE(scn);
+
 	HIF_TRACE("+%s", __func__);
 	status = hif_send_internal(device, pipe_id, NULL, wbuf, nbytes);
 	HIF_TRACE("-%s", __func__);
@@ -288,7 +290,8 @@ QDF_STATUS hif_send_head(struct hif_opaque_softc *scn, uint8_t pipe_id,
  *
  * Return: # of free resources in pipe_id
  */
-uint16_t hif_get_free_queue_number(struct hif_opaque_softc *scn, uint8_t pipe_id)
+uint16_t hif_get_free_queue_number(struct hif_opaque_softc *scn,
+				   uint8_t pipe_id)
 {
 	HIF_DEVICE_USB *device = HIF_GET_USB_DEVICE(scn);
 
@@ -321,6 +324,7 @@ void hif_post_init(struct hif_opaque_softc *scn, void *target,
 void hif_detach_htc(struct hif_opaque_softc *scn)
 {
 	HIF_DEVICE_USB *device = HIF_GET_USB_DEVICE(scn);
+
 	usb_hif_flush_all(device);
 	qdf_mem_zero(&device->htc_callbacks, sizeof(device->htc_callbacks));
 }
@@ -856,8 +860,8 @@ QDF_STATUS hif_diag_write_mem(struct hif_opaque_softc *scn,
 					   uint8_t *data, int nbytes)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	HIF_TRACE("+%s", __func__);
 
+	HIF_TRACE("+%s", __func__);
 	if ((address & 0x3) || ((uintptr_t)data & 0x3))
 		return QDF_STATUS_E_IO;
 

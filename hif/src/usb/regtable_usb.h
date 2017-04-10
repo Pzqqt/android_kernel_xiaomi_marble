@@ -30,7 +30,7 @@
 
 #define MISSING  0
 
-typedef struct targetdef_s {
+struct targetdef_s {
 	u_int32_t d_RTC_SOC_BASE_ADDRESS;
 	u_int32_t d_RTC_WMAC_BASE_ADDRESS;
 	u_int32_t d_SYSTEM_SLEEP_OFFSET;
@@ -293,7 +293,7 @@ typedef struct targetdef_s {
 	u_int32_t d_SOC_CHIP_ID_REVISION_MASK;
 	u_int32_t d_SOC_CHIP_ID_REVISION_LSB;
 	/* chip id end */
-} TARGET_REGISTER_TABLE;
+};
 
 #define RTC_SOC_BASE_ADDRESS               \
 		(scn->targetdef->d_RTC_SOC_BASE_ADDRESS)
@@ -987,7 +987,7 @@ typedef struct targetdef_s {
 			 SOC_CPU_CLOCK_STANDARD_MASK)
 /* PLL end */
 
-typedef struct hostdef_s {
+struct hostdef_s {
 	uint32_t d_INT_STATUS_ENABLE_ERROR_LSB;
 	uint32_t d_INT_STATUS_ENABLE_ERROR_MASK;
 	uint32_t d_INT_STATUS_ENABLE_CPU_LSB;
@@ -1046,7 +1046,7 @@ typedef struct hostdef_s {
 	uint32_t d_SOC_PCIE_BASE_ADDRESS;
 	uint32_t d_MSI_MAGIC_ADR_ADDRESS;
 	uint32_t d_MSI_MAGIC_ADDRESS;
-} HOST_REGISTER_TABLE;
+};
 
 #define INT_STATUS_ENABLE_ERROR_LSB        \
 		(scn->hostdef->d_INT_STATUS_ENABLE_ERROR_LSB)

@@ -108,7 +108,7 @@
 #define HIF_GET_CE_STATE(scn) ((struct HIF_CE_state *)scn)
 #define HIF_GET_SDIO_SOFTC(scn) ((struct hif_sdio_softc *)scn)
 #define HIF_GET_USB_SOFTC(scn) ((struct hif_usb_softc *)scn)
-#define HIF_GET_USB_DEVICE(scn) ((HIF_DEVICE_USB *)scn)
+#define HIF_GET_USB_DEVICE(scn) ((struct HIF_DEVICE_USB *)scn)
 #define HIF_GET_SOFTC(scn) ((struct hif_softc *)scn)
 #define GET_HIF_OPAQUE_HDL(scn) ((struct hif_opaque_softc *)scn)
 
