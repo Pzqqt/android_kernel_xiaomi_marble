@@ -77,6 +77,7 @@ QDF_STATUS wlan_objmgr_global_obj_deinit(void)
 		g_umac_glb_obj = NULL;
 	} else {
 		qdf_print("PSOCs are leaked can't free global objmgr ctx\n");
+		WLAN_OBJMGR_BUG(0);
 	}
 
 	return QDF_STATUS_SUCCESS;
