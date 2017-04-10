@@ -2441,7 +2441,17 @@ static inline void hal_rx_dump_pkt_tlvs(uint8_t *buf, uint8_t dbg_level)
 	hal_rx_dump_pkt_hdr_tlv(pkt_hdr_tlv, dbg_level);
 }
 
-
+/**
+ * hal_srng_ring_id_get: API to retreive ring id from hal ring
+ *                       structure
+ * @hal_ring: pointer to hal_srng structure
+ *
+ * Return: ring_id
+ */
+static inline uint8_t hal_srng_ring_id_get(void *hal_ring)
+{
+	return ((struct hal_srng *)hal_ring)->ring_id;
+}
 
 #endif /* _HAL_RX_H */
 

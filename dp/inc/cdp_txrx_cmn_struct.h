@@ -63,6 +63,7 @@
 #define CDP_LRO_STATS               8
 #define CDP_NAPI_STATS              9
 #define CDP_WLAN_RX_BUF_DEBUG_STATS 10
+#define CDP_RX_RING_STATS          11
 #define CDP_SCHEDULER_STATS        21
 #define CDP_TX_QUEUE_STATS         22
 #define CDP_BUNDLE_STATS           23

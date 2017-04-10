@@ -659,6 +659,9 @@ struct dp_soc {
 				/* REO Error count */
 				uint32_t reo_error[REO_ERROR_TYPE_MAX];
 			} err;
+
+			/* packet count per core - per ring */
+			uint64_t ring_packets[NR_CPUS][MAX_REO_DEST_RINGS];
 		} rx;
 	} stats;
 

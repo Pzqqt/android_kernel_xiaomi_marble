@@ -3301,6 +3301,29 @@ static int dp_txrx_stats(struct cdp_vdev *vdev,
 }
 
 /*
+ * dp_print_per_ring_stats(): Packet count per ring
+ * @soc - soc handle
+ */
+static void dp_print_per_ring_stats(struct dp_soc *soc)
+{
+	uint8_t core, ring;
+	uint64_t total_packets;
+
+	DP_TRACE(NONE, "Reo packets per ring:");
+	for (ring = 0; ring < MAX_REO_DEST_RINGS; ring++) {
+		total_packets = 0;
+		DP_TRACE(NONE, "Packets on ring %u:", ring);
+		for (core = 0; core < NR_CPUS; core++) {
+			DP_TRACE(NONE, "Packets arriving on core %u: %llu",
+				core, soc->stats.rx.ring_packets[core][ring]);
+			total_packets += soc->stats.rx.ring_packets[core][ring];
+		}
+		DP_TRACE(NONE, "Total packets on ring %u: %llu",
+			ring, total_packets);
+	}
+}
+
+/*
  * dp_txrx_path_stats() - Function to display dump stats
  * @soc - soc handle
  *
@@ -3456,15 +3479,23 @@ static QDF_STATUS dp_txrx_dump_stats(void *psoc, uint16_t value)
 	case CDP_TXRX_PATH_STATS:
 		dp_txrx_path_stats(soc);
 		break;
+
+	case CDP_RX_RING_STATS:
+		dp_print_per_ring_stats(soc);
+		break;
+
 	case CDP_TXRX_TSO_STATS:
 		/* TODO: NOT IMPLEMENTED */
 		break;
+
 	case CDP_DUMP_TX_FLOW_POOL_INFO:
 		/* TODO: NOT IMPLEMENTED */
 		break;
+
 	case CDP_TXRX_DESC_STATS:
 		/* TODO: NOT IMPLEMENTED */
 		break;
+
 	default:
 		status = QDF_STATUS_E_INVAL;
 		break;

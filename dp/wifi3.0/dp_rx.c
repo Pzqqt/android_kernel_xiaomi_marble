@@ -672,6 +672,8 @@ dp_rx_process(struct dp_intr *int_ctx, void *hal_ring, uint32_t quota)
 	struct dp_srng *dp_rxdma_srng;
 	struct rx_desc_pool *rx_desc_pool;
 	struct dp_soc *soc = int_ctx->soc;
+	uint8_t ring_id;
+	uint8_t core_id;
 
 	DP_HIST_INIT();
 	/* Debug -- Remove later */
@@ -727,6 +729,10 @@ dp_rx_process(struct dp_intr *int_ctx, void *hal_ring, uint32_t quota)
 		 */
 		qdf_nbuf_unmap_single(soc->osdev, rx_desc->nbuf,
 					QDF_DMA_BIDIRECTIONAL);
+
+		ring_id = hal_srng_ring_id_get(hal_ring);
+		core_id = smp_processor_id();
+		DP_STATS_INC(soc, rx.ring_packets[core_id][ring_id], 1);
 
 		/* Get MPDU DESC info */
 		hal_rx_mpdu_desc_info_get(ring_desc, &mpdu_desc_info);
