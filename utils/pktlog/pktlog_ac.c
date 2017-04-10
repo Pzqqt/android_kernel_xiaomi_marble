@@ -516,6 +516,51 @@ int pktlog_setsize(struct hif_opaque_softc *scn, int32_t size)
 	return 0;
 }
 
+int pktlog_clearbuff(struct hif_opaque_softc *scn, bool clear_buff)
+{
+	ol_txrx_pdev_handle pdev_txrx_handle =
+		cds_get_context(QDF_MODULE_ID_TXRX);
+	struct ol_pktlog_dev_t *pl_dev;
+	struct ath_pktlog_info *pl_info;
+
+	if (pdev_txrx_handle == NULL ||
+			pdev_txrx_handle->pl_dev == NULL ||
+			pdev_txrx_handle->pl_dev->pl_info == NULL)
+		return -EFAULT;
+
+	pl_dev = pdev_txrx_handle->pl_dev;
+	pl_info = pl_dev->pl_info;
+
+	if (!clear_buff)
+		return -EINVAL;
+
+	if (pl_info->log_state) {
+		qdf_print("%s: Logging should be disabled before clearing "
+			  "pktlog buffer.", __func__);
+		return -EINVAL;
+	}
+
+	if (pl_info->buf != NULL) {
+		if (pl_info->buf_size > 0) {
+			qdf_print("%s: pktlog buffer is cleared.", __func__);
+			memset(pl_info->buf, 0, pl_info->buf_size);
+			pl_dev->is_pktlog_cb_subscribed = false;
+			pl_dev->tgt_pktlog_alloced = false;
+			pl_info->buf->rd_offset = -1;
+		} else {
+			qdf_print("%s: pktlog buffer size is not proper. "
+				  "Existing Buf size %d", __func__,
+				  pl_info->buf_size);
+			return -EFAULT;
+		}
+	} else {
+		qdf_print("%s: pktlog buff is NULL", __func__);
+		return -EFAULT;
+	}
+
+	return 0;
+}
+
 /**
  * pktlog_process_fw_msg() - process packetlog message
  * @buff: buffer

@@ -136,6 +136,7 @@ void pktlog_init(struct hif_opaque_softc *scn);
 int pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state,
 		 bool, uint8_t, uint32_t);
 int pktlog_setsize(struct hif_opaque_softc *scn, int32_t log_state);
+int pktlog_clearbuff(struct hif_opaque_softc *scn, bool clear_buff);
 int pktlog_disable(struct hif_opaque_softc *scn);
 int pktlogmod_init(void *context);
 void pktlogmod_exit(struct ol_txrx_pdev_t *handle);
@@ -169,6 +170,10 @@ static int pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state,
 	return 0;
 }
 static int pktlog_setsize(struct hif_opaque_softc *scn, int32_t log_state)
+{
+	return 0;
+}
+static int pktlog_clearbuff(struct hif_opaque_softc *scn, bool clear_buff)
 {
 	return 0;
 }
