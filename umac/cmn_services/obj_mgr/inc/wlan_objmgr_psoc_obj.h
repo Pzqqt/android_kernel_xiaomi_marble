@@ -459,6 +459,21 @@ struct wlan_objmgr_peer *wlan_objmgr_get_peer(
 			wlan_objmgr_ref_dbgid dbg_id);
 
 /**
+ * wlan_objmgr_get_peer_nolock() - find peer from psoc's peer list (lock free)
+ * @psoc: PSOC object
+ * @macaddr: MAC address
+ * @dbg_id: id of the caller
+ *
+ * API to find peer object pointer by MAC addr
+ *
+ * Return: peer pointer
+ *         NULL on FAILURE
+ */
+struct wlan_objmgr_peer *wlan_objmgr_get_peer_nolock(
+			struct wlan_objmgr_psoc *psoc, uint8_t *macaddr,
+			wlan_objmgr_ref_dbgid dbg_id);
+
+/**
  * wlan_objmgr_get_peer_logically_deleted() - find peer
  * from psoc's peer list
  * @psoc: PSOC object
