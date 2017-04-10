@@ -632,10 +632,11 @@ static int pktlog_release(struct inode *i, struct file *f)
 			(struct hif_opaque_softc *)scn, pl_info->log_state,
 			cds_is_packet_log_enabled(), 0, 1);
 	if (ret != 0)
-		pr_warn("%s: pktlog cannot be enabled", __func__);
+		pr_warn("%s: pktlog cannot be enabled. ret value %d\n",
+			__func__, ret);
 
 	pl_info->curr_pkt_state = PKTLOG_OPR_NOT_IN_PROGRESS;
-	return 0;
+	return ret;
 }
 
 #ifndef MIN
