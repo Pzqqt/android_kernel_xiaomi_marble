@@ -521,6 +521,7 @@ void pld_pcie_unregister_driver(void)
 int pld_pcie_get_ce_id(int irq)
 {
 	int ce_id = irq - 100;
+
 	if (ce_id < CE_COUNT_MAX && ce_id >= 0)
 		return ce_id;
 

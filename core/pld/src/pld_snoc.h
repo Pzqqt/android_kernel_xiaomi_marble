@@ -41,7 +41,6 @@ static inline int pld_snoc_register_driver(void)
 
 static inline void pld_snoc_unregister_driver(void)
 {
-	return;
 }
 static inline int pld_snoc_wlan_enable(struct pld_wlan_enable_cfg *config,
 		    enum pld_driver_mode mode, const char *host_version)
@@ -64,11 +63,9 @@ static inline int pld_snoc_ce_free_irq(unsigned int ce_id, void *ctx)
 }
 static inline void pld_snoc_enable_irq(unsigned int ce_id)
 {
-	return;
 }
 static inline void pld_snoc_disable_irq(unsigned int ce_id)
 {
-	return;
 }
 static inline int pld_snoc_get_soc_info(struct pld_soc_info *info)
 {

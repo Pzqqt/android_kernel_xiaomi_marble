@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -198,8 +198,8 @@ int pld_usb_register_driver(void)
 void pld_usb_unregister_driver(void)
 {
 	struct pld_context *pld_context;
-	pld_context = pld_get_global_context();
 
+	pld_context = pld_get_global_context();
 	if (atomic_read(&pld_usb_reg_done) == false)
 		return;
 
