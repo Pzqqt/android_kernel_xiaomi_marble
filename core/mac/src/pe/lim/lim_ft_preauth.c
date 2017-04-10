@@ -151,10 +151,7 @@ int lim_process_ft_pre_auth_req(tpAniSirGlobal mac_ctx,
 		/* Post the FT Pre Auth Response to SME */
 		lim_post_ft_pre_auth_rsp(mac_ctx, eSIR_FAILURE, NULL, 0,
 					 session);
-		/*
-		 * return FALSE, since the Pre-Auth Req will be freed in
-		 * limPostFTPreAuthRsp on failure
-		 */
+		buf_consumed = true;
 		return buf_consumed;
 	}
 

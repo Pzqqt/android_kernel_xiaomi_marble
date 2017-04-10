@@ -1983,6 +1983,8 @@ void lim_send_sme_pe_ese_tsm_rsp(tpAniSirGlobal pMac,
 		PELOGE(lim_log
 		       (pMac, LOGE, FL("Session not found for the Sta id(%d)"),
 		       pPeStats->staId);)
+		qdf_mem_free(pPeStats->tsmStatsReq);
+		qdf_mem_free(pPeStats);
 		return;
 	}
 

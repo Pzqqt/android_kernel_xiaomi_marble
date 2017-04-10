@@ -4157,6 +4157,7 @@ static void __lim_process_roam_scan_offload_req(tpAniSirGlobal mac_ctx,
 	if (!local_ie_buf) {
 		lim_log(mac_ctx, LOGE,
 			FL("Mem Alloc failed for local_ie_buf"));
+		qdf_mem_free(req_buffer);
 		return;
 	}
 

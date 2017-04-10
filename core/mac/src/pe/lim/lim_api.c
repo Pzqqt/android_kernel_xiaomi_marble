@@ -620,18 +620,16 @@ void lim_cleanup(tpAniSirGlobal pMac)
 
 	pe_deregister_mgmt_rx_frm_callback(pMac);
 
-	if (QDF_GLOBAL_FTM_MODE != cds_get_conparam()) {
-		qdf_mutex_acquire(&pMac->lim.lim_frame_register_lock);
-		while (qdf_list_remove_front(
+	qdf_mutex_acquire(&pMac->lim.lim_frame_register_lock);
+	while (qdf_list_remove_front(
 			&pMac->lim.gLimMgmtFrameRegistratinQueue,
 			(qdf_list_node_t **) &pLimMgmtRegistration) ==
 			QDF_STATUS_SUCCESS) {
-			qdf_mem_free(pLimMgmtRegistration);
-		}
-		qdf_mutex_release(&pMac->lim.lim_frame_register_lock);
-		qdf_list_destroy(&pMac->lim.gLimMgmtFrameRegistratinQueue);
-		qdf_mutex_destroy(&pMac->lim.lim_frame_register_lock);
+		qdf_mem_free(pLimMgmtRegistration);
 	}
+	qdf_mutex_release(&pMac->lim.lim_frame_register_lock);
+	qdf_list_destroy(&pMac->lim.gLimMgmtFrameRegistratinQueue);
+	qdf_mutex_destroy(&pMac->lim.lim_frame_register_lock);
 
 	lim_cleanup_mlm(pMac);
 
