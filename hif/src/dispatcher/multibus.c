@@ -258,7 +258,7 @@ void hif_nointrs(struct hif_softc *hif_sc)
 }
 
 QDF_STATUS hif_enable_bus(struct hif_softc *hif_sc, struct device *dev,
-			  void *bdev, const hif_bus_id *bid,
+			  void *bdev, const struct hif_bus_id *bid,
 			  enum hif_enable_type type)
 {
 	return hif_sc->bus_ops.hif_enable_bus(hif_sc, dev, bdev, bid, type);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -83,6 +83,7 @@ static inline void set_target_reg_bits(void __iomem *mem, uint32_t reg,
 {
 	uint32_t value = hif_read32_mb(mem + (reg));
 	uint32_t shift = 0;
+
 	value &= ~(bitmask);
 	while (!((bitmask >> shift) & 0x01))
 		shift++;
@@ -96,6 +97,7 @@ static inline uint32_t get_target_reg_bits(void __iomem *mem,
 {
 	uint32_t value = hif_read32_mb(mem + (reg));
 	uint32_t shift = 0;
+
 	while (!((bitmask >> shift) & 0x01))
 		shift++;
 
@@ -309,7 +311,6 @@ void priv_dump_agc(struct hif_softc *scn)
 
 	Q_TARGET_ACCESS_END(scn);
 
-	return;
 }
 
 void priv_dump_bbwatchdog(struct hif_softc *scn)

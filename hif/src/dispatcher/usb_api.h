@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -27,7 +27,7 @@ void hif_usb_disable_isr(struct hif_softc *hif_ctx);
 void hif_usb_nointrs(struct hif_softc *scn);
 QDF_STATUS hif_usb_enable_bus(struct hif_softc *ol_sc,
 			  struct device *dev, void *bdev,
-			  const hif_bus_id *bid,
+			  const struct hif_bus_id *bid,
 			  enum hif_enable_type type);
 void hif_usb_disable_bus(struct hif_softc *scn);
 int hif_usb_bus_configure(struct hif_softc *scn);

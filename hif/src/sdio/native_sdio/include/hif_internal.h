@@ -214,7 +214,7 @@ struct hif_sdio_dev {
 	bool is_suspend;
 	bool is_disabled;
 	atomic_t irq_handling;
-	HIF_DEVICE_POWER_CHANGE_TYPE power_config;
+	enum HIF_DEVICE_POWER_CHANGE_TYPE power_config;
 	enum hif_sdio_device_state device_state;
 	const struct sdio_device_id *id;
 	struct mmc_host *host;
@@ -268,7 +268,7 @@ struct osdrv_callbacks {
 	int (*device_resume_handler)(void *context);
 	int (*device_wakeup_handler)(void *context);
 	int (*device_power_change_handler)(void *context,
-					HIF_DEVICE_POWER_CHANGE_TYPE
+					enum HIF_DEVICE_POWER_CHANGE_TYPE
 					config);
 };
 
@@ -306,7 +306,7 @@ QDF_STATUS hif_configure_device(struct hif_sdio_dev *device,
 QDF_STATUS hif_init(struct osdrv_callbacks *callbacks);
 
 QDF_STATUS hif_attach_htc(struct hif_sdio_dev *device,
-			  HTC_CALLBACKS *callbacks);
+			  struct htc_callbacks *callbacks);
 
 QDF_STATUS hif_read_write(struct hif_sdio_dev *device,
 			uint32_t address,

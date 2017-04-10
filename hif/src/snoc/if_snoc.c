@@ -201,7 +201,7 @@ int hif_snoc_bus_configure(struct hif_softc *scn)
  * Return: 0 for success
  */
 static inline int hif_snoc_get_target_type(struct hif_softc *ol_sc,
-	struct device *dev, void *bdev, const hif_bus_id *bid,
+	struct device *dev, void *bdev, const struct hif_bus_id *bid,
 	uint32_t *hif_type, uint32_t *target_type)
 {
 	/* TODO: need to use HW version. Hard code for now */
@@ -245,7 +245,7 @@ static int hif_set_dma_coherent_mask(struct device *dev)
  */
 QDF_STATUS hif_snoc_enable_bus(struct hif_softc *ol_sc,
 			  struct device *dev, void *bdev,
-			  const hif_bus_id *bid,
+			  const struct hif_bus_id *bid,
 			  enum hif_enable_type type)
 {
 	int ret;

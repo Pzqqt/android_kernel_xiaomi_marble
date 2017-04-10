@@ -97,11 +97,11 @@ enum qca_napi_event {
 #define NAPI_PIPE2ID(p) ((p)+1)
 
 int hif_napi_lro_flush_cb_register(struct hif_opaque_softc *hif_hdl,
-				   void (lro_flush_handler)(void *),
+				   void (lro_flush_handler)(void *arg),
 				   void *(lro_init_handler)(void));
 
 void hif_napi_lro_flush_cb_deregister(struct hif_opaque_softc *hif_hdl,
-				      void (lro_deinit_cb)(void *));
+				      void (lro_deinit_cb)(void *arg));
 
 void *hif_napi_get_lro_info(struct hif_opaque_softc *hif_hdl, int napi_id);
 #ifdef FEATURE_NAPI
@@ -157,7 +157,7 @@ static inline void hif_napi_update_yield_stats(struct CE_state *ce_state,
 
 #ifdef FEATURE_NAPI_DEBUG
 #define NAPI_DEBUG(fmt, ...)			\
-	qdf_print("wlan: NAPI: %s:%d "fmt, __func__, __LINE__, ##__VA_ARGS__);
+	qdf_print("wlan: NAPI: %s:%d "fmt, __func__, __LINE__, ##__VA_ARGS__)
 #else
 #define NAPI_DEBUG(fmt, ...) /* NO-OP */
 #endif /* FEATURE NAPI_DEBUG */
@@ -173,7 +173,8 @@ enum qca_blacklist_op {
 	BLACKLIST_ON
 };
 
-int hif_napi_cpu_blacklist(struct qca_napi_data *napid, enum qca_blacklist_op op);
+int hif_napi_cpu_blacklist(struct qca_napi_data *napid,
+			   enum qca_blacklist_op op);
 /**
  * Local interface to HIF implemented functions of NAPI CPU affinity management.
  * Note:

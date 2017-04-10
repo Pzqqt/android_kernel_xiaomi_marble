@@ -184,7 +184,7 @@ exit:
  */
 QDF_STATUS hif_usb_enable_bus(struct hif_softc *scn,
 			struct device *dev, void *bdev,
-			const hif_bus_id *bid,
+			const struct hif_bus_id *bid,
 			enum hif_enable_type type)
 
 {

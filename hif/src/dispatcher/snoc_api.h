@@ -37,7 +37,7 @@ void hif_snoc_disable_isr(struct hif_softc *hif_ctx);
 void hif_snoc_nointrs(struct hif_softc *scn);
 QDF_STATUS hif_snoc_enable_bus(struct hif_softc *ol_sc,
 			  struct device *dev, void *bdev,
-			  const hif_bus_id *bid,
+			  const struct hif_bus_id *bid,
 			  enum hif_enable_type type);
 void hif_snoc_disable_bus(struct hif_softc *scn);
 int hif_snoc_bus_configure(struct hif_softc *scn);

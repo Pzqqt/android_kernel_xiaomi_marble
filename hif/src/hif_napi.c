@@ -547,7 +547,7 @@ int hif_napi_event(struct hif_opaque_softc *hif_ctx, enum qca_napi_event event,
 				   __func__);
 			blacklist_pending = BLACKLIST_OFF_PENDING;
 			/*
-			.*.Ideally we should "collapse" interrupts here, since
+			 * Ideally we should "collapse" interrupts here, since
 			 * we are "dispersing" interrupts in the "else" case.
 			 * This allows the possibility that our interrupts may
 			 * still be on the perf cluster the next time we enter
@@ -721,7 +721,7 @@ bool hif_napi_correct_cpu(struct qca_napi_info *napi_info)
 	bool right_cpu = true;
 	int rc = 0;
 	cpumask_t cpumask;
-	int cpu ;
+	int cpu;
 	struct qca_napi_data *napid;
 
 	napid = hif_napi_get_all(GET_HIF_OPAQUE_HDL(napi_info->hif_ctx));
@@ -743,7 +743,8 @@ bool hif_napi_correct_cpu(struct qca_napi_info *napi_info)
 			irq_modify_status(napi_info->irq, 0, IRQ_NO_BALANCING);
 
 			if (rc)
-				HIF_ERROR("error setting irq affinity hint: %d", rc);
+				HIF_ERROR("error setting irq affinity hint: %d",
+					  rc);
 			else
 				napi_info->stats[cpu].cpu_corrected++;
 		}
@@ -914,12 +915,11 @@ void hif_napi_update_yield_stats(struct CE_state *ce_state,
 	if (unlikely(NULL == hif)) {
 		QDF_ASSERT(NULL != hif);
 		return;
-	} else {
-		napi_data = &(hif->napi_data);
-		if (unlikely(NULL == napi_data)) {
-			QDF_ASSERT(NULL != napi_data);
-			return;
-		}
+	}
+	napi_data = &(hif->napi_data);
+	if (unlikely(NULL == napi_data)) {
+		QDF_ASSERT(NULL != napi_data);
+		return;
 	}
 
 	ce_id = ce_state->id;
@@ -957,9 +957,7 @@ void hif_napi_stats(struct qca_napi_data *napid)
 	qdf_print("lilclhead=%d, bigclhead=%d",
 		  napid->lilcl_head, napid->bigcl_head);
 	for (i = 0; i < NR_CPUS; i++) {
-		qdf_print("CPU[%02d]: state:%d crid=%02d clid=%02d "
-			  "crmk:0x%0lx thmk:0x%0lx frq:%d "
-			  "napi = 0x%08x lnk:%d",
+		qdf_print("CPU[%02d]: state:%d crid=%02d clid=%02d crmk:0x%0lx thmk:0x%0lx frq:%d napi = 0x%08x lnk:%d",
 			  i,
 			  cpu[i].state, cpu[i].core_id, cpu[i].cluster_id,
 			  cpu[i].core_mask.bits[0],
@@ -1038,8 +1036,7 @@ static int hnc_link_clusters(struct qca_napi_data *napid)
 				continue;
 			}
 			if (cl_done & (0x01 << cl)) {
-				NAPI_DEBUG("Cluster already processed. "
-					   "SKIPPED\n");
+				NAPI_DEBUG("Cluster already processed. SKIPPED\n");
 				continue;
 			} else {
 				if (more == 0) {
@@ -1050,8 +1047,7 @@ static int hnc_link_clusters(struct qca_napi_data *napid)
 					prev = -1;
 				};
 				if ((curcl >= 0) && (curcl != cl)) {
-					NAPI_DEBUG("Entry cl(%d) != curcl(%d). "
-						   "SKIPPED\n",
+					NAPI_DEBUG("Entry cl(%d) != curcl(%d). SKIPPED\n",
 						   cl, curcl);
 					continue;
 				}
@@ -1389,9 +1385,8 @@ retry_collapse:
 			if (napid->napi_cpu[i].state == QCA_NAPI_CPU_UP) {
 				destidx = i;
 				break;
-			} else {
-				i = napid->napi_cpu[i].cluster_nxt;
 			}
+			i = napid->napi_cpu[i].cluster_nxt;
 		}
 		if ((destidx < 0) && (head == napid->lilcl_head)) {
 			NAPI_DEBUG("%s: COLLAPSE: no lilcl dest, try bigcl",
@@ -1513,6 +1508,7 @@ hncm_return:
 static inline void hif_napi_bl_irq(struct qca_napi_data *napid, bool bl_flag)
 {
 	int i;
+
 	for (i = 0; i < CE_COUNT_MAX; i++) {
 		/* check if NAPI is enabled on the CE */
 		if (!(napid->ce_map & (0x01 << i)))
@@ -1556,7 +1552,8 @@ static inline int hif_napi_core_ctl_set_boost(bool boost)
  *         for BLACKLIST_ON op    - return value from core_ctl_set_boost API
  *         for BLACKLIST_OFF op   - return value from core_ctl_set_boost API
  */
-int hif_napi_cpu_blacklist(struct qca_napi_data *napid, enum qca_blacklist_op op)
+int hif_napi_cpu_blacklist(struct qca_napi_data *napid,
+			   enum qca_blacklist_op op)
 {
 	int rc = 0;
 	static int ref_count; /* = 0 by the compiler */

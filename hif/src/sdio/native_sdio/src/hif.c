@@ -1031,7 +1031,7 @@ static int sdio_enable4bits(struct hif_sdio_dev *device, int enable)
  */
 QDF_STATUS
 power_state_change_notify(struct hif_sdio_dev *device,
-			HIF_DEVICE_POWER_CHANGE_TYPE config)
+			enum HIF_DEVICE_POWER_CHANGE_TYPE config)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct sdio_func *func = device->func;
@@ -1288,7 +1288,7 @@ hif_configure_device(struct hif_sdio_dev *device,
 	case HIF_DEVICE_POWER_STATE_CHANGE:
 		status =
 			power_state_change_notify(device,
-					  *(HIF_DEVICE_POWER_CHANGE_TYPE *)
+					  *(enum HIF_DEVICE_POWER_CHANGE_TYPE *)
 					   config);
 		break;
 	case HIF_DEVICE_GET_IRQ_YIELD_PARAMS:
@@ -2222,7 +2222,7 @@ int hif_device_suspend(struct device *dev)
 	int ret = QDF_STATUS_SUCCESS;
 #if defined(MMC_PM_KEEP_POWER)
 	mmc_pm_flag_t pm_flag = 0;
-	HIF_DEVICE_POWER_CHANGE_TYPE config;
+	enum HIF_DEVICE_POWER_CHANGE_TYPE config;
 	struct mmc_host *host = NULL;
 #endif
 
@@ -2276,7 +2276,7 @@ int hif_device_suspend(struct device *dev)
 					   HIF_DEVICE_POWER_STATE_CHANGE,
 					   &config,
 					   sizeof
-					   (HIF_DEVICE_POWER_CHANGE_TYPE));
+					   (enum HIF_DEVICE_POWER_CHANGE_TYPE));
 			if (ret) {
 				AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
 				   ("%s: hif config device failed: %d\n",
@@ -2307,7 +2307,7 @@ int hif_device_suspend(struct device *dev)
 				   HIF_DEVICE_POWER_STATE_CHANGE,
 				   &config,
 				   sizeof
-				   (HIF_DEVICE_POWER_CHANGE_TYPE));
+				   (enum HIF_DEVICE_POWER_CHANGE_TYPE));
 
 			if (ret) {
 				AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
@@ -2315,9 +2315,8 @@ int hif_device_suspend(struct device *dev)
 					 __func__, ret));
 				return ret;
 			}
-			ret =
-				sdio_set_host_pm_flags(func,
-					       MMC_PM_WAKE_SDIO_IRQ);
+			ret = sdio_set_host_pm_flags(func,
+						     MMC_PM_WAKE_SDIO_IRQ);
 			if (ret) {
 				AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
 					("%s: set sdio pm flags %d\n",
@@ -2385,7 +2384,7 @@ int hif_device_resume(struct device *dev)
 {
 	struct sdio_func *func = dev_to_sdio_func(dev);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	HIF_DEVICE_POWER_CHANGE_TYPE config;
+	enum HIF_DEVICE_POWER_CHANGE_TYPE config;
 	struct hif_sdio_dev *device;
 
 	device = get_hif_device(func);
@@ -2395,8 +2394,8 @@ int hif_device_resume(struct device *dev)
 		status = hif_configure_device(device,
 					      HIF_DEVICE_POWER_STATE_CHANGE,
 					      &config,
-					      sizeof
-					      (HIF_DEVICE_POWER_CHANGE_TYPE));
+					      sizeof(enum
+						 HIF_DEVICE_POWER_CHANGE_TYPE));
 		if (status) {
 			AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
 				("%s: hif_configure_device failed\n",
@@ -2589,7 +2588,7 @@ void hif_release_device(struct hif_opaque_softc *hif_ctx)
 }
 
 QDF_STATUS hif_attach_htc(struct hif_sdio_dev *device,
-				HTC_CALLBACKS *callbacks)
+				struct htc_callbacks *callbacks)
 {
 	if (device->htc_callbacks.context != NULL)
 		/* already in use! */

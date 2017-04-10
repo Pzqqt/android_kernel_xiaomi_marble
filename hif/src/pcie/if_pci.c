@@ -3781,7 +3781,7 @@ static void hif_pci_get_soc_info(struct hif_pci_softc *sc, struct device *dev)
  */
 QDF_STATUS hif_pci_enable_bus(struct hif_softc *ol_sc,
 			  struct device *dev, void *bdev,
-			  const hif_bus_id *bid,
+			  const struct hif_bus_id *bid,
 			  enum hif_enable_type type)
 {
 	int ret = 0;

@@ -479,7 +479,8 @@ void hif_get_target_revision(struct hif_softc *ol_sc)
  * Return: QDF_STATUS
  */
 QDF_STATUS hif_sdio_enable_bus(struct hif_softc *hif_sc,
-			struct device *dev, void *bdev, const hif_bus_id *bid,
+			struct device *dev, void *bdev,
+			const struct hif_bus_id *bid,
 			enum hif_enable_type type)
 {
 	int ret = 0;

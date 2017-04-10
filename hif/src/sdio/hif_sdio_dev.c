@@ -437,7 +437,7 @@ QDF_STATUS hif_dev_setup(struct hif_sdio_device *pdev)
 {
 	QDF_STATUS status;
 	uint32_t blocksizes[MAILBOX_COUNT];
-	HTC_CALLBACKS htc_callbacks;
+	struct htc_callbacks htc_cbs;
 	struct hif_sdio_dev *hif_device = pdev->HIFDevice;
 
 	HIF_ENTER();
@@ -516,12 +516,12 @@ QDF_STATUS hif_dev_setup(struct hif_sdio_device *pdev)
 
 	status = hif_dev_disable_interrupts(pdev);
 
-	qdf_mem_zero(&htc_callbacks, sizeof(HTC_CALLBACKS));
+	qdf_mem_zero(&htc_cbs, sizeof(struct htc_callbacks));
 	/* the device layer handles these */
-	htc_callbacks.rwCompletionHandler = hif_dev_rw_completion_handler;
-	htc_callbacks.dsrHandler = hif_dev_dsr_handler;
-	htc_callbacks.context = pdev;
-	status = hif_attach_htc(pdev->HIFDevice, &htc_callbacks);
+	htc_cbs.rwCompletionHandler = hif_dev_rw_completion_handler;
+	htc_cbs.dsrHandler = hif_dev_dsr_handler;
+	htc_cbs.context = pdev;
+	status = hif_attach_htc(pdev->HIFDevice, &htc_cbs);
 
 	HIF_EXIT();
 	return status;

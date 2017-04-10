@@ -58,7 +58,7 @@ ATH_DEBUG_INSTANTIATE_MODULE_VAR(hif, "hif", "PCIe Host Interface",
 /* globals are initialized to 0 by the compiler */;
 spinlock_t pcie_access_log_lock;
 unsigned int pcie_access_log_seqnum;
-HIF_ACCESS_LOG pcie_access_log[PCIE_ACCESS_LOG_NUM];
+struct HIF_ACCESS_LOG pcie_access_log[PCIE_ACCESS_LOG_NUM];
 static void hif_target_dump_access_log(void);
 #endif
 

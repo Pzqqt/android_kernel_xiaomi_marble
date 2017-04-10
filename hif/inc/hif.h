@@ -48,7 +48,6 @@ extern "C" {
 #endif
 #define ENABLE_MBOX_DUMMY_SPACE_FEATURE 1
 
-typedef struct htc_callbacks HTC_CALLBACKS;
 typedef void __iomem *A_target_id_t;
 typedef void *hif_handle_t;
 
@@ -181,7 +180,8 @@ struct CE_state;
 #define HIF_NAPI_MAX_RECEIVES (QCA_NAPI_BUDGET * QCA_NAPI_DEF_SCALE)
 
 /* NOTE: "napi->scale" can be changed,
-   but this does not change the number of buckets */
+ * but this does not change the number of buckets
+ */
 #define QCA_NAPI_NUM_BUCKETS 4
 struct qca_napi_stat {
 	uint32_t napi_schedules;
@@ -203,7 +203,7 @@ struct qca_napi_stat {
  */
 struct qca_napi_info {
 	struct net_device    netdev; /* dummy net_dev */
-	void 		     *hif_ctx;
+	void                 *hif_ctx;
 	struct napi_struct   napi;
 	uint8_t              scale;   /* currently same on all instances */
 	uint8_t              id;
@@ -211,7 +211,7 @@ struct qca_napi_info {
 	int                  irq;
 	struct qca_napi_stat stats[NR_CPUS];
 	/* will only be present for data rx CE's */
-	void (*lro_flush_cb)(void *);
+	void (*lro_flush_cb)(void *arg);
 	void                 *lro_ctx;
 	qdf_spinlock_t lro_unloading_lock;
 };
@@ -262,10 +262,10 @@ struct qca_napi_cpu {
 struct qca_napi_data {
 	qdf_spinlock_t           lock;
 	uint32_t             state;
-	uint32_t             ce_map; /* bitmap of created/registered NAPI
-					instances, indexed by pipe_id,
-					not used by clients (clients use an
-					id returned by create) */
+	/* bitmap of created/registered NAPI instances, indexed by pipe_id,
+	 * not used by clients (clients use an id returned by create)
+	 */
+	uint32_t             ce_map;
 	struct qca_napi_info napis[CE_COUNT_MAX];
 	struct qca_napi_cpu  napi_cpu[NR_CPUS];
 	int                  lilcl_head, bigcl_head;
@@ -308,17 +308,22 @@ struct hif_target_info {
 struct hif_opaque_softc {
 };
 
-typedef enum {
-	HIF_DEVICE_POWER_UP,       /* HIF layer should power up interface
-				    * and/or module */
-	HIF_DEVICE_POWER_DOWN,     /* HIF layer should initiate bus-specific
-				    * measures to minimize power */
-	HIF_DEVICE_POWER_CUT       /* HIF layer should initiate bus-specific
-				    * AND/OR platform-specific measures
-				    * to completely power-off the module and
-				    * associated hardware (i.e. cut power
-				    * supplies) */
-} HIF_DEVICE_POWER_CHANGE_TYPE;
+/**
+ * enum HIF_DEVICE_POWER_CHANGE_TYPE: Device Power change type
+ *
+ * @HIF_DEVICE_POWER_UP:   HIF layer should power up interface and/or module
+ * @HIF_DEVICE_POWER_DOWN: HIF layer should initiate bus-specific measures to
+ *                         minimize power
+ * @HIF_DEVICE_POWER_CUT:  HIF layer should initiate bus-specific AND/OR
+ *                         platform-specific measures to completely power-off
+ *                         the module and associated hardware (i.e. cut power
+ *                         supplies)
+ */
+enum HIF_DEVICE_POWER_CHANGE_TYPE {
+	HIF_DEVICE_POWER_UP,
+	HIF_DEVICE_POWER_DOWN,
+	HIF_DEVICE_POWER_CUT
+};
 
 /**
  * enum hif_enable_type: what triggered the enabling of hif
@@ -336,8 +341,7 @@ enum hif_enable_type {
  * enum hif_disable_type: what triggered the disabling of hif
  *
  * @HIF_DISABLE_TYPE_PROBE_ERROR: probe error triggered disable
- * @HIF_DISABLE_TYPE_REINIT_ERROR: reinit error triggered
- *  							 disable
+ * @HIF_DISABLE_TYPE_REINIT_ERROR: reinit error triggered disable
  * @HIF_DISABLE_TYPE_REMOVE: remove triggered disable
  * @HIF_DISABLE_TYPE_SHUTDOWN: shutdown triggered disable
  */
@@ -386,12 +390,12 @@ enum hif_device_config_opcode {
 };
 
 #ifdef CONFIG_ATH_PCIE_ACCESS_DEBUG
-typedef struct _HID_ACCESS_LOG {
+struct HID_ACCESS_LOG {
 	uint32_t seqnum;
 	bool is_write;
 	void *addr;
 	uint32_t value;
-} HIF_ACCESS_LOG;
+};
 #endif
 
 void hif_reg_write(struct hif_opaque_softc *hif_ctx, uint32_t offset,
@@ -399,11 +403,16 @@ void hif_reg_write(struct hif_opaque_softc *hif_ctx, uint32_t offset,
 uint32_t hif_reg_read(struct hif_opaque_softc *hif_ctx, uint32_t offset);
 
 #define HIF_MAX_DEVICES                 1
-
+/**
+ * struct htc_callbacks - Structure for HTC Callbacks methods
+ * @context:             context to pass to the dsrhandler
+ *                       note : rwCompletionHandler is provided the context
+ *                       passed to hif_read_write
+ * @rwCompletionHandler: Read / write completion handler
+ * @dsrHandler:          DSR Handler
+ */
 struct htc_callbacks {
-	void *context;		/* context to pass to the dsrhandler
-				 * note : rwCompletionHandler is provided
-				 * the context passed to hif_read_write  */
+	void *context;
 	QDF_STATUS(*rwCompletionHandler)(void *rwContext, QDF_STATUS status);
 	QDF_STATUS(*dsrHandler)(void *context);
 };
@@ -428,7 +437,7 @@ struct hif_driver_state_callbacks {
 };
 
 /* This API detaches the HTC layer from the HIF device */
-void hif_detach_htc(struct hif_opaque_softc *scn);
+void hif_detach_htc(struct hif_opaque_softc *hif_ctx);
 
 /****************************************************************/
 /* BMI and Diag window abstraction                              */
@@ -438,12 +447,14 @@ void hif_detach_htc(struct hif_opaque_softc *scn);
 
 #define DIAG_TRANSFER_LIMIT 2048U   /* maximum number of bytes that can be
 				     * handled atomically by
-				     * DiagRead/DiagWrite */
+				     * DiagRead/DiagWrite
+				     */
 
 /*
  * API to handle HIF-specific BMI message exchanges, this API is synchronous
- * and only allowed to be called from a context that can block (sleep) */
-QDF_STATUS hif_exchange_bmi_msg(struct hif_opaque_softc *scn,
+ * and only allowed to be called from a context that can block (sleep)
+ */
+QDF_STATUS hif_exchange_bmi_msg(struct hif_opaque_softc *hif_ctx,
 				qdf_dma_addr_t cmd, qdf_dma_addr_t rsp,
 				uint8_t *pSendMessage, uint32_t Length,
 				uint8_t *pResponseMessage,
@@ -459,12 +470,12 @@ QDF_STATUS hif_exchange_bmi_msg(struct hif_opaque_softc *scn,
  *
  * hif_diag_read_mem reads an arbitrary length of arbitrarily aligned memory.
  */
-QDF_STATUS hif_diag_read_access(struct hif_opaque_softc *scn, uint32_t address,
-			 uint32_t *data);
-QDF_STATUS hif_diag_read_mem(struct hif_opaque_softc *scn, uint32_t address,
+QDF_STATUS hif_diag_read_access(struct hif_opaque_softc *hif_ctx,
+				uint32_t address, uint32_t *data);
+QDF_STATUS hif_diag_read_mem(struct hif_opaque_softc *hif_ctx, uint32_t address,
 		      uint8_t *data, int nbytes);
-void hif_dump_target_memory(struct hif_opaque_softc *scn, void *ramdump_base,
-			    uint32_t address, uint32_t size);
+void hif_dump_target_memory(struct hif_opaque_softc *hif_ctx,
+			void *ramdump_base, uint32_t address, uint32_t size);
 /*
  * APIs to handle HIF specific diagnostic write accesses. These APIs are
  * synchronous and only allowed to be called from a context that
@@ -476,10 +487,10 @@ void hif_dump_target_memory(struct hif_opaque_softc *scn, void *ramdump_base,
  *
  * hif_diag_write_mem writes an arbitrary length of arbitrarily aligned memory.
  */
-QDF_STATUS hif_diag_write_access(struct hif_opaque_softc *scn, uint32_t address,
-				 uint32_t data);
-QDF_STATUS hif_diag_write_mem(struct hif_opaque_softc *scn, uint32_t address,
-		       uint8_t *data, int nbytes);
+QDF_STATUS hif_diag_write_access(struct hif_opaque_softc *hif_ctx,
+				 uint32_t address, uint32_t data);
+QDF_STATUS hif_diag_write_mem(struct hif_opaque_softc *hif_ctx,
+			uint32_t address, uint8_t *data, int nbytes);
 
 typedef void (*fastpath_msg_handler)(void *, qdf_nbuf_t *, uint32_t);
 typedef uint32_t (*ext_intr_handler)(void *, uint32_t);
@@ -514,7 +525,7 @@ static inline void *hif_get_ce_handle(struct hif_opaque_softc *hif_ctx, int ret)
  */
 #define CONFIG_DISABLE_CDC_MAX_PERF_WAR 0
 
-void hif_ipa_get_ce_resource(struct hif_opaque_softc *scn,
+void hif_ipa_get_ce_resource(struct hif_opaque_softc *hif_ctx,
 			     qdf_dma_addr_t *ce_sr_base_paddr,
 			     uint32_t *ce_sr_ring_size,
 			     qdf_dma_addr_t *ce_reg_paddr);
@@ -596,52 +607,51 @@ struct hif_pipe_addl_info {
 };
 
 struct hif_bus_id;
-typedef struct hif_bus_id hif_bus_id;
 
 void hif_claim_device(struct hif_opaque_softc *hif_ctx);
 QDF_STATUS hif_get_config_item(struct hif_opaque_softc *hif_ctx,
 		     int opcode, void *config, uint32_t config_len);
 void hif_set_mailbox_swap(struct hif_opaque_softc *hif_ctx);
-void hif_mask_interrupt_call(struct hif_opaque_softc *scn);
-void hif_post_init(struct hif_opaque_softc *scn, void *hHTC,
+void hif_mask_interrupt_call(struct hif_opaque_softc *hif_ctx);
+void hif_post_init(struct hif_opaque_softc *hif_ctx, void *hHTC,
 		   struct hif_msg_callbacks *callbacks);
-QDF_STATUS hif_start(struct hif_opaque_softc *scn);
-void hif_stop(struct hif_opaque_softc *scn);
-void hif_flush_surprise_remove(struct hif_opaque_softc *scn);
-void hif_dump(struct hif_opaque_softc *scn, uint8_t CmdId, bool start);
+QDF_STATUS hif_start(struct hif_opaque_softc *hif_ctx);
+void hif_stop(struct hif_opaque_softc *hif_ctx);
+void hif_flush_surprise_remove(struct hif_opaque_softc *hif_ctx);
+void hif_dump(struct hif_opaque_softc *hif_ctx, uint8_t CmdId, bool start);
 void hif_trigger_dump(struct hif_opaque_softc *hif_ctx,
 		      uint8_t cmd_id, bool start);
 
-QDF_STATUS hif_send_head(struct hif_opaque_softc *scn, uint8_t PipeID,
+QDF_STATUS hif_send_head(struct hif_opaque_softc *hif_ctx, uint8_t PipeID,
 				  uint32_t transferID, uint32_t nbytes,
 				  qdf_nbuf_t wbuf, uint32_t data_attr);
-void hif_send_complete_check(struct hif_opaque_softc *scn, uint8_t PipeID,
+void hif_send_complete_check(struct hif_opaque_softc *hif_ctx, uint8_t PipeID,
 			     int force);
-void hif_shut_down_device(struct hif_opaque_softc *scn);
-void hif_get_default_pipe(struct hif_opaque_softc *scn, uint8_t *ULPipe,
+void hif_shut_down_device(struct hif_opaque_softc *hif_ctx);
+void hif_get_default_pipe(struct hif_opaque_softc *hif_ctx, uint8_t *ULPipe,
 			  uint8_t *DLPipe);
-int hif_map_service_to_pipe(struct hif_opaque_softc *scn, uint16_t svc_id,
+int hif_map_service_to_pipe(struct hif_opaque_softc *hif_ctx, uint16_t svc_id,
 			uint8_t *ul_pipe, uint8_t *dl_pipe, int *ul_is_polled,
 			int *dl_is_polled);
 uint16_t
-hif_get_free_queue_number(struct hif_opaque_softc *scn, uint8_t PipeID);
-void *hif_get_targetdef(struct hif_opaque_softc *scn);
+hif_get_free_queue_number(struct hif_opaque_softc *hif_ctx, uint8_t PipeID);
+void *hif_get_targetdef(struct hif_opaque_softc *hif_ctx);
 uint32_t hif_hia_item_address(uint32_t target_type, uint32_t item_offset);
-void hif_set_target_sleep(struct hif_opaque_softc *scn, bool sleep_ok,
+void hif_set_target_sleep(struct hif_opaque_softc *hif_ctx, bool sleep_ok,
 		     bool wait_for_it);
-int hif_check_fw_reg(struct hif_opaque_softc *scn);
+int hif_check_fw_reg(struct hif_opaque_softc *hif_ctx);
 #ifndef HIF_PCI
-static inline int hif_check_soc_status(struct hif_opaque_softc *scn)
+static inline int hif_check_soc_status(struct hif_opaque_softc *hif_ctx)
 {
 	return 0;
 }
 #else
-int hif_check_soc_status(struct hif_opaque_softc *scn);
+int hif_check_soc_status(struct hif_opaque_softc *hif_ctx);
 #endif
-void hif_get_hw_info(struct hif_opaque_softc *scn, u32 *version, u32 *revision,
-		     const char **target_name);
-void hif_disable_isr(struct hif_opaque_softc *scn);
-void hif_reset_soc(struct hif_opaque_softc *scn);
+void hif_get_hw_info(struct hif_opaque_softc *hif_ctx, u32 *version,
+			u32 *revision, const char **target_name);
+void hif_disable_isr(struct hif_opaque_softc *hif_ctx);
+void hif_reset_soc(struct hif_opaque_softc *hif_ctx);
 void hif_save_htc_htt_config_endpoint(struct hif_opaque_softc *hif_ctx,
 				      int htc_htt_tx_endpoint);
 struct hif_opaque_softc *hif_open(qdf_device_t qdf_ctx, uint32_t mode,
@@ -649,7 +659,7 @@ struct hif_opaque_softc *hif_open(qdf_device_t qdf_ctx, uint32_t mode,
 				  struct hif_driver_state_callbacks *cbk);
 void hif_close(struct hif_opaque_softc *hif_ctx);
 QDF_STATUS hif_enable(struct hif_opaque_softc *hif_ctx, struct device *dev,
-		      void *bdev, const hif_bus_id *bid,
+		      void *bdev, const struct hif_bus_id *bid,
 		      enum qdf_bus_type bus_type,
 		      enum hif_enable_type type);
 void hif_disable(struct hif_opaque_softc *hif_ctx, enum hif_disable_type type);
@@ -705,9 +715,9 @@ void hif_enable_power_management(struct hif_opaque_softc *hif_ctx,
 				 bool is_packet_log_enabled);
 void hif_disable_power_management(struct hif_opaque_softc *hif_ctx);
 
-void hif_vote_link_down(struct hif_opaque_softc *);
-void hif_vote_link_up(struct hif_opaque_softc *);
-bool hif_can_suspend_link(struct hif_opaque_softc *);
+void hif_vote_link_down(struct hif_opaque_softc *hif_ctx);
+void hif_vote_link_up(struct hif_opaque_softc *hif_ctx);
+bool hif_can_suspend_link(struct hif_opaque_softc *hif_ctx);
 
 #ifdef IPA_OFFLOAD
 /**
@@ -723,7 +733,7 @@ enum ipa_hw_type hif_get_ipa_hw_type(void)
 	return ipa_get_hw_type();
 }
 #endif
-int hif_bus_resume(struct hif_opaque_softc *);
+int hif_bus_resume(struct hif_opaque_softc *hif_ctx);
 /**
  * hif_bus_ealry_suspend() - stop non wmi tx traffic
  * @context: hif context
@@ -735,9 +745,9 @@ int hif_bus_early_suspend(struct hif_opaque_softc *hif_ctx);
  * @context: hif context
  */
 int hif_bus_late_resume(struct hif_opaque_softc *hif_ctx);
-int hif_bus_suspend(struct hif_opaque_softc *);
-int hif_bus_resume_noirq(struct hif_opaque_softc *);
-int hif_bus_suspend_noirq(struct hif_opaque_softc *);
+int hif_bus_suspend(struct hif_opaque_softc *hif_ctx);
+int hif_bus_resume_noirq(struct hif_opaque_softc *hif_ctx);
+int hif_bus_suspend_noirq(struct hif_opaque_softc *hif_ctx);
 
 /**
  * hif_apps_irqs_enable() - Enables all irqs from the APPS side
@@ -788,27 +798,27 @@ int hif_pre_runtime_suspend(struct hif_opaque_softc *hif_ctx);
 void hif_pre_runtime_resume(struct hif_opaque_softc *hif_ctx);
 int hif_runtime_suspend(struct hif_opaque_softc *hif_ctx);
 int hif_runtime_resume(struct hif_opaque_softc *hif_ctx);
-void hif_process_runtime_suspend_success(struct hif_opaque_softc *);
-void hif_process_runtime_suspend_failure(struct hif_opaque_softc *);
-void hif_process_runtime_resume_success(struct hif_opaque_softc *);
+void hif_process_runtime_suspend_success(struct hif_opaque_softc *hif_ctx);
+void hif_process_runtime_suspend_failure(struct hif_opaque_softc *hif_ctx);
+void hif_process_runtime_resume_success(struct hif_opaque_softc *hif_ctx);
 #endif
 
 int hif_get_irq_num(struct hif_opaque_softc *scn, int *irq, uint32_t size);
 int hif_dump_registers(struct hif_opaque_softc *scn);
 int ol_copy_ramdump(struct hif_opaque_softc *scn);
 void hif_crash_shutdown(struct hif_opaque_softc *hif_ctx);
-void hif_get_hw_info(struct hif_opaque_softc *scn, u32 *version, u32 *revision,
-		     const char **target_name);
-void hif_lro_flush_cb_register(struct hif_opaque_softc *scn,
-			       void (lro_flush_handler)(void *),
+void hif_get_hw_info(struct hif_opaque_softc *hif_ctx, u32 *version,
+		     u32 *revision, const char **target_name);
+void hif_lro_flush_cb_register(struct hif_opaque_softc *hif_ctx,
+			       void (lro_flush_handler)(void *arg),
 			       void *(lro_init_handler)(void));
-void hif_lro_flush_cb_deregister(struct hif_opaque_softc *scn,
-				 void (lro_deinit_cb)(void *));
-bool hif_needs_bmi(struct hif_opaque_softc *scn);
+void hif_lro_flush_cb_deregister(struct hif_opaque_softc *hif_ctx,
+				 void (lro_deinit_cb)(void *arg));
+bool hif_needs_bmi(struct hif_opaque_softc *hif_ctx);
 enum qdf_bus_type hif_get_bus_type(struct hif_opaque_softc *hif_hdl);
 struct hif_target_info *hif_get_target_info_handle(struct hif_opaque_softc *
 						   scn);
-struct hif_config_info *hif_get_ini_handle(struct hif_opaque_softc *scn);
+struct hif_config_info *hif_get_ini_handle(struct hif_opaque_softc *hif_ctx);
 struct ramdump_info *hif_get_ramdump_ctx(struct hif_opaque_softc *hif_ctx);
 enum hif_target_status hif_get_target_status(struct hif_opaque_softc *hif_ctx);
 void hif_set_target_status(struct hif_opaque_softc *hif_ctx, enum
@@ -834,9 +844,9 @@ uint32_t hif_set_nss_wifiol_mode(struct hif_opaque_softc *osc,
 int32_t hif_get_nss_wifiol_bypass_nw_process(struct hif_opaque_softc *osc);
 #endif /* QCA_NSS_WIFI_OFFLOAD_SUPPORT */
 
-void hif_set_bundle_mode(struct hif_opaque_softc *scn, bool enabled,
+void hif_set_bundle_mode(struct hif_opaque_softc *hif_ctx, bool enabled,
 				int rx_bundle_cnt);
-int hif_bus_reset_resume(struct hif_opaque_softc *scn);
+int hif_bus_reset_resume(struct hif_opaque_softc *hif_ctx);
 
 void hif_set_attribute(struct hif_opaque_softc *osc, uint8_t hif_attrib);
 

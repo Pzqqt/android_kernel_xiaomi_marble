@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010,2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2010, 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -31,11 +31,11 @@
 #include "AR900B/hw/si_reg.h"
 #include "AR900B/extra/hw/pcie_local_reg.h"
 #include "AR900B/hw/ce_wrapper_reg_csr.h"
-#if 0
-#include "hw/soc_core_reg.h"
-#include "hw/soc_pcie_reg.h"
-#include "hw/ce_reg_csr.h"
-#endif
+/* TODO
+ * #include "hw/soc_core_reg.h"
+ * #include "hw/soc_pcie_reg.h"
+ * #include "hw/ce_reg_csr.h"
+ */
 
 #include "AR900B/extra/hw/soc_core_reg.h"
 #include "AR900B/hw/soc_pcie_reg.h"
