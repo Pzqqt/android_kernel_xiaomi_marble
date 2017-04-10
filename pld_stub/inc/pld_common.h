@@ -181,7 +181,6 @@ static inline int pld_wlan_disable(struct device *dev,
 }
 static inline void pld_is_pci_link_down(struct device *dev)
 {
-	return;
 }
 static inline int pld_wlan_pm_control(struct device *dev, bool vote)
 {
@@ -189,7 +188,6 @@ static inline int pld_wlan_pm_control(struct device *dev, bool vote)
 }
 static inline void pld_intr_notify_q6(struct device *dev)
 {
-	return;
 }
 
 static inline int pld_get_user_msi_assignment(struct device *dev,
@@ -241,11 +239,9 @@ static inline int pld_pm_runtime_request(struct device *dev,
 }
 static inline void pld_runtime_init(struct device *dev, int auto_delay)
 {
-	return;
 }
 static inline void pld_runtime_exit(struct device *dev)
 {
-	return;
 }
 static inline int pld_athdiag_read(struct device *dev,
 				   uint32_t offset, uint32_t memtype,
