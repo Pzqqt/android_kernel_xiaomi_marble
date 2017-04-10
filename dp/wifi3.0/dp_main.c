@@ -1343,7 +1343,7 @@ static inline void dp_reo_desc_freelist_destroy(struct dp_soc *soc)
 		(qdf_list_node_t **)&desc) == QDF_STATUS_SUCCESS) {
 		rx_tid = &desc->rx_tid;
 		qdf_mem_unmap_nbytes_single(soc->osdev,
-			rx_tid->hw_qdesc_paddr_unaligned,
+			rx_tid->hw_qdesc_paddr,
 			QDF_DMA_BIDIRECTIONAL,
 			rx_tid->hw_qdesc_alloc_size);
 		qdf_mem_free(rx_tid->hw_qdesc_vaddr_unaligned);

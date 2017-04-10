@@ -614,7 +614,7 @@ static void dp_reo_desc_free(struct dp_soc *soc,
 		list_size--;
 		rx_tid = &desc->rx_tid;
 		qdf_mem_unmap_nbytes_single(soc->osdev,
-			rx_tid->hw_qdesc_paddr_unaligned,
+			rx_tid->hw_qdesc_paddr,
 			QDF_DMA_BIDIRECTIONAL,
 			rx_tid->hw_qdesc_alloc_size);
 		qdf_mem_free(rx_tid->hw_qdesc_vaddr_unaligned);
@@ -711,10 +711,9 @@ try_desc_alloc:
 		 * memory for alignment
 		 */
 		qdf_mem_free(rx_tid->hw_qdesc_vaddr_unaligned);
-		rx_tid->hw_qdesc_alloc_size =
-			hw_qdesc_size + hw_qdesc_align - 1;
 		rx_tid->hw_qdesc_vaddr_unaligned =
-			qdf_mem_malloc(rx_tid->hw_qdesc_alloc_size);
+			qdf_mem_malloc(rx_tid->hw_qdesc_alloc_size +
+					hw_qdesc_align - 1);
 
 		if (!rx_tid->hw_qdesc_vaddr_unaligned) {
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
@@ -723,9 +722,15 @@ try_desc_alloc:
 			return QDF_STATUS_E_NOMEM;
 		}
 
-		hw_qdesc_vaddr = rx_tid->hw_qdesc_vaddr_unaligned +
-			((unsigned long)(rx_tid->hw_qdesc_vaddr_unaligned) %
+		hw_qdesc_vaddr = (void *)qdf_align((unsigned long)
+			rx_tid->hw_qdesc_vaddr_unaligned,
 			hw_qdesc_align);
+
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
+			"%s: Total Size %d Aligned Addr %p\n",
+			__func__, rx_tid->hw_qdesc_alloc_size,
+			hw_qdesc_vaddr);
+
 	} else {
 		hw_qdesc_vaddr = rx_tid->hw_qdesc_vaddr_unaligned;
 	}
@@ -756,11 +761,11 @@ try_desc_alloc:
 	hal_reo_qdesc_setup(soc->hal_soc, tid, ba_window_size, start_seq,
 		hw_qdesc_vaddr, rx_tid->hw_qdesc_paddr, hal_pn_type);
 
-	qdf_mem_map_nbytes_single(soc->osdev, rx_tid->hw_qdesc_vaddr_unaligned,
+	qdf_mem_map_nbytes_single(soc->osdev, hw_qdesc_vaddr,
 		QDF_DMA_BIDIRECTIONAL, rx_tid->hw_qdesc_alloc_size,
-		&(rx_tid->hw_qdesc_paddr_unaligned));
+		&(rx_tid->hw_qdesc_paddr));
 
-	if (dp_reo_desc_addr_chk(rx_tid->hw_qdesc_paddr_unaligned) !=
+	if (dp_reo_desc_addr_chk(rx_tid->hw_qdesc_paddr) !=
 			QDF_STATUS_SUCCESS) {
 		if (alloc_tries++ < 10)
 			goto try_desc_alloc;
@@ -771,11 +776,6 @@ try_desc_alloc:
 			return QDF_STATUS_E_NOMEM;
 		}
 	}
-
-	rx_tid->hw_qdesc_paddr = rx_tid->hw_qdesc_paddr_unaligned +
-		((unsigned long)hw_qdesc_vaddr -
-		(unsigned long)(rx_tid->hw_qdesc_vaddr_unaligned));
-
 
 	if (soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup) {
 		soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup(
