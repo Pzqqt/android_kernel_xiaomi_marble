@@ -11000,6 +11000,7 @@ static int hdd_update_scan_config(hdd_context_t *hdd_ctx)
 	scan_cfg.conc_idle_time = cfg->idle_time_conc;
 	scan_cfg.scan_cache_aging_time = cfg->scanAgingTimeout;
 	scan_cfg.scan_dwell_time_mode = cfg->scan_adaptive_dwell_mode;
+	scan_cfg.is_snr_monitoring_enabled = cfg->fEnableSNRMonitoring;
 
 	hdd_update_pno_config(&scan_cfg.pno_cfg, cfg);
 
