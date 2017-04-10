@@ -33,7 +33,6 @@
 #include "qdf_types.h"
 #include "qdf_util.h"
 #include "hal_internal.h"
-#include "hif_io32.h"
 #include "rx_msdu_link.h"
 #include "rx_reo_queue.h"
 #include "rx_reo_queue_ext.h"
@@ -620,10 +619,12 @@ static inline void hal_srng_access_end_unlocked(void *hal_soc, void *hal_ring)
 		}
 	} else {
 		if (srng->ring_dir == HAL_SRNG_SRC_RING)
-			hif_write32_mb(srng->u.src_ring.hp_addr,
+			hal_write_address_32_mb(hal_soc,
+				srng->u.src_ring.hp_addr,
 				srng->u.src_ring.hp);
 		else
-			hif_write32_mb(srng->u.dst_ring.tp_addr,
+			hal_write_address_32_mb(hal_soc,
+				srng->u.dst_ring.tp_addr,
 				srng->u.dst_ring.tp);
 	}
 }

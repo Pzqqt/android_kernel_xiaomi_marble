@@ -133,10 +133,10 @@
 	SRNG_REG_ADDR(_srng, _reg, _reg ## _GROUP, SRC)
 
 #define SRNG_REG_WRITE(_srng, _reg, _value, _dir) \
-	hif_write32_mb(SRNG_ ## _dir ## _ADDR(_srng, _reg), (_value))
+	hal_write_address_32_mb(_srng->hal_soc, SRNG_ ## _dir ## _ADDR(_srng, _reg), (_value))
 
 #define SRNG_REG_READ(_srng, _reg, _dir) \
-	hif_read32_mb(SRNG_ ## _dir ## _ADDR(_srng, _reg))
+	hal_read_address_32_mb(_srng->hal_soc, SRNG_ ## _dir ## _ADDR(_srng, _reg))
 
 #define SRNG_SRC_REG_WRITE(_srng, _reg, _value) \
 	SRNG_REG_WRITE(_srng, _reg, _value, SRC)
@@ -1091,6 +1091,7 @@ void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 	srng->intr_timer_thres_us = ring_params->intr_timer_thres_us;
 	srng->intr_batch_cntr_thres_entries =
 		ring_params->intr_batch_cntr_thres_entries;
+	srng->hal_soc = hal_soc;
 
 	for (i = 0 ; i < MAX_SRNG_REG_GROUPS; i++) {
 		srng->hwreg_base[i] = dev_base_addr + ring_config->reg_start[i]

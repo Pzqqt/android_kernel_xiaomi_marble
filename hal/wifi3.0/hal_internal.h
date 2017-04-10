@@ -271,6 +271,8 @@ struct hal_srng {
 			uint32_t low_threshold;
 		} src_ring;
 	} u;
+
+	struct hal_soc *hal_soc;
 };
 
 /* HW SRNG configuration table */
