@@ -378,6 +378,7 @@ typedef void (*wlan_objmgr_op_handler)(struct wlan_objmgr_psoc *psoc,
 
 /**
  * wlan_objmgr_iterate_obj_list() - iterate through all psoc objects
+ *                                  (CREATED state)
  * @psoc: PSOC object
  * @obj_type: PDEV_OP/VDEV_OP/PEER_OP
  * @handler: the handler will be called for each object of requested type
@@ -394,6 +395,30 @@ typedef void (*wlan_objmgr_op_handler)(struct wlan_objmgr_psoc *psoc,
  * Return: SUCCESS/FAILURE
  */
 QDF_STATUS wlan_objmgr_iterate_obj_list(
+		struct wlan_objmgr_psoc *psoc,
+		enum wlan_objmgr_obj_type obj_type,
+		wlan_objmgr_op_handler handler,
+		void *arg, uint8_t lock_free_op,
+		wlan_objmgr_ref_dbgid dbg_id);
+
+/**
+ * wlan_objmgr_iterate_obj_list_all() - iterate through all psoc objects
+ * @psoc: PSOC object
+ * @obj_type: PDEV_OP/VDEV_OP/PEER_OP
+ * @handler: the handler will be called for each object of requested type
+ *            the handler should be implemented to perform required operation
+ * @arg:     agruments passed by caller
+ * @lock_free_op: This gives provision to run this API with out lock protected
+ *                 It would be useful, for operations like Obj Delete, where
+ *                 lock should not be taken by caller.
+ * @dbg_id: id of the caller
+ *
+ * API to be used for performing the operations on all PDEV/VDEV/PEER objects
+ * of psoc
+ *
+ * Return: SUCCESS/FAILURE
+ */
+QDF_STATUS wlan_objmgr_iterate_obj_list_all(
 		struct wlan_objmgr_psoc *psoc,
 		enum wlan_objmgr_obj_type obj_type,
 		wlan_objmgr_op_handler handler,
