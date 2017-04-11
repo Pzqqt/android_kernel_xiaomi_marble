@@ -1822,7 +1822,6 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 			pe_session->vendor_specific_vht_ie_sub_type;
 
 		frm->vendor_vht_ie.VHTCaps.present = 1;
-		pe_session->vht_config.su_beam_formee = 0;
 		populate_dot11f_vht_caps(mac_ctx, pe_session,
 				&frm->vendor_vht_ie.VHTCaps);
 		vht_enabled = true;
