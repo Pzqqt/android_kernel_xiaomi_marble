@@ -130,13 +130,6 @@ static void wlan_cfg80211_pno_callback(struct wlan_objmgr_vdev *vdev,
 	cfg80211_sched_scan_results(pdev_ospriv->wiphy);
 }
 
-static void
-wlan_cfg80211_register_pno_cb(struct wlan_objmgr_psoc *psoc)
-{
-	ucfg_scan_register_pno_cb(psoc,
-		wlan_cfg80211_pno_callback, NULL);
-}
-
 /**
  * wlan_cfg80211_is_pno_allowed() -  Check if PNO is allowed
  * @vdev: vdev ptr
@@ -179,6 +172,7 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_pdev *pdev,
 	QDF_STATUS status;
 	uint8_t num_chan = 0, channel;
 	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_psoc *psoc;
 	uint32_t valid_ch[SCAN_PNO_MAX_NETW_CHANNELS_EX] = {0};
 
 	vdev = wlan_objmgr_get_vdev_by_macaddr_from_pdev(pdev, dev->dev_addr,
@@ -193,6 +187,12 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_pdev *pdev,
 		cfg80211_err("pno is not allowed");
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
 		return -ENOTSUPP;
+	}
+
+	if (ucfg_scan_get_pno_in_progress(vdev)) {
+		cfg80211_debug("pno is already in progress");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
+		return -EBUSY;
 	}
 
 	ucfg_scan_flush_results(pdev, NULL);
@@ -330,6 +330,11 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_pdev *pdev,
 		req->fast_scan_period, req->fast_scan_max_cycles,
 		req->slow_scan_period);
 
+	wlan_pdev_obj_lock(pdev);
+	psoc = wlan_pdev_get_psoc(pdev);
+	wlan_pdev_obj_unlock(pdev);
+	ucfg_scan_register_pno_cb(psoc,
+		wlan_cfg80211_pno_callback, NULL);
 	ucfg_scan_get_pno_def_params(vdev, req);
 	status = ucfg_scan_pno_start(vdev, req);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -371,13 +376,6 @@ int wlan_cfg80211_sched_scan_stop(struct wlan_objmgr_pdev *pdev,
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
 	return ret;
 }
-#else
-static inline void
-wlan_cfg80211_register_pno_cb(struct wlan_objmgr_psoc *psoc)
-{
-	return;
-}
-
 #endif /*FEATURE_WLAN_SCAN_PNO */
 
 /**
@@ -706,7 +704,6 @@ QDF_STATUS wlan_cfg80211_scan_priv_init(struct wlan_objmgr_pdev *pdev)
 	psoc = wlan_pdev_get_psoc(pdev);
 	wlan_pdev_obj_unlock(pdev);
 
-	wlan_cfg80211_register_pno_cb(psoc);
 	req_id = ucfg_scan_register_requester(psoc, "HDD",
 		wlan_cfg80211_scan_done_callback, NULL);
 
