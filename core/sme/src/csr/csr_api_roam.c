@@ -14599,8 +14599,22 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 				("Failed to get CSN beamformee capability"));
 
+		/*
+		 * Set SU Bformee only if SU Bformee is enabled in INI
+		 * and AP is SU Bformer capable
+		 */
+		if (value && !((IS_BSS_VHT_CAPABLE(pIes->VHTCaps) &&
+		   pIes->VHTCaps.suBeamFormerCap) ||
+		   (IS_BSS_VHT_CAPABLE(
+		   pIes->vendor_vht_ie.VHTCaps)
+		   && pIes->vendor_vht_ie.VHTCaps.
+		   suBeamFormerCap)))
+			value = 0;
+
 		csr_join_req->vht_config.su_beam_formee = value;
-		if (value) {
+
+		/* Set BF CSN value only if SU Bformee is enabled */
+		if (csr_join_req->vht_config.su_beam_formee) {
 			txBFCsnValue = (uint8_t)value1;
 			if (IS_BSS_VHT_CAPABLE(pIes->VHTCaps) &&
 			    pIes->VHTCaps.csnofBeamformerAntSup)
@@ -14617,11 +14631,40 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		csr_join_req->vht_config.csnof_beamformer_antSup = txBFCsnValue;
 
 		if (wlan_cfg_get_int(pMac,
-				WNI_CFG_VHT_MU_BEAMFORMEE_CAP, &value)
-				!= eSIR_SUCCESS)
-			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-				("Failed to get CSN beamformee capability"));
-		csr_join_req->vht_config.mu_beam_formee = (uint8_t) value;
+		   WNI_CFG_VHT_SU_BEAMFORMER_CAP, &value)
+		   != eSIR_SUCCESS)
+			sme_err("Failed to get SU beamformer capability");
+
+		/*
+		 * Set SU Bformer only if SU Bformer is enabled in INI
+		 * and AP is SU Bformee capable
+		 */
+		if (value && !((IS_BSS_VHT_CAPABLE(pIes->VHTCaps) &&
+		   pIes->VHTCaps.suBeamformeeCap) ||
+		   (IS_BSS_VHT_CAPABLE(
+		   pIes->vendor_vht_ie.VHTCaps)
+		   && pIes->vendor_vht_ie.VHTCaps.
+		   suBeamformeeCap)))
+			value = 0;
+
+		csr_join_req->vht_config.su_beam_former = value;
+
+		/* Set num soundingdim value to 0 if SU Bformer is disabled */
+		if (!csr_join_req->vht_config.su_beam_former)
+			csr_join_req->vht_config.num_soundingdim = 0;
+
+		if (wlan_cfg_get_int(pMac,
+		   WNI_CFG_VHT_MU_BEAMFORMEE_CAP, &value)
+		   != eSIR_SUCCESS)
+			sme_err("Failed to get CSN beamformee capability");
+		/*
+		 * Set MU Bformee only if SU Bformee is enabled and
+		 * MU Bformee is enabled in INI
+		 */
+		if (value && csr_join_req->vht_config.su_beam_formee)
+			csr_join_req->vht_config.mu_beam_formee = 1;
+		else
+			csr_join_req->vht_config.mu_beam_formee = 0;
 
 		csr_join_req->enableVhtpAid =
 			(uint8_t) pMac->roam.configParam.enableVhtpAid;
