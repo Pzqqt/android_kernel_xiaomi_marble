@@ -43,6 +43,10 @@
 #include "target_if_nan.h"
 #endif /* WLAN_FEATURE_NAN_CONVERGENCE */
 
+#ifdef CONVERGED_TDLS_ENABLE
+#include "target_if_tdls.h"
+#endif
+
 static struct target_if_ctx *g_target_if_ctx;
 
 struct target_if_ctx *target_if_get_ctx()
@@ -136,6 +140,17 @@ static void target_if_nan_tx_ops_register(
 }
 #endif /* WLAN_FEATURE_NAN_CONVERGENCE */
 
+#ifdef CONVERGED_TDLS_ENABLE
+static void target_if_tdls_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
+{
+	target_if_tdls_register_tx_ops(tx_ops);
+}
+#else
+static void target_if_tdls_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
+{
+}
+#endif /* CONVERGED_TDLS_ENABLE */
+
 static
 QDF_STATUS target_if_register_umac_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {
@@ -154,6 +169,7 @@ QDF_STATUS target_if_register_umac_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	/* call regulatory callback to register tx ops */
 	target_if_register_regulatory_tx_ops(tx_ops);
 
+	target_if_tdls_tx_ops_register(tx_ops);
 	/* Converged UMAC components to register their TX-ops here */
 	return QDF_STATUS_SUCCESS;
 }

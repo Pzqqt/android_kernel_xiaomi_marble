@@ -46,6 +46,10 @@ struct oem_data_rsp;
 struct scheduler_msg;
 #endif
 
+#ifdef CONVERGED_TDLS_ENABLE
+#include "wlan_tdls_public_structs.h"
+#endif
+
 /**
  * struct wlan_lmac_if_mgmt_txrx_tx_ops - structure of tx function
  *                  pointers for mgmt txrx component
@@ -350,6 +354,52 @@ struct wlan_lmac_if_wifi_pos_tx_ops {
 };
 #endif
 
+#ifdef CONVERGED_TDLS_ENABLE
+/* fwd declarations for tdls tx ops */
+struct tdls_info;
+struct tdls_peer_update_state;
+struct tdls_channel_switch_params;
+struct sta_uapsd_trig_params;
+/**
+ * struct wlan_lmac_if_tdls_tx_ops - south bound tx function pointers for tdls
+ * @update_fw_state: function to update tdls firmware state
+ * @update_peer_state: function to update tdls peer state
+ * @set_offchan_mode: function to set tdls offchannel mode
+ * @tdls_reg_ev_handler: function to register for tdls events
+ * @tdls_unreg_ev_handler: function to unregister for tdls events
+ * @tdls_set_uapsd: function to set upasdt trigger command
+ *
+ * tdls module uses these functions to avail ol/da lmac services
+ */
+struct wlan_lmac_if_tdls_tx_ops {
+	QDF_STATUS(*update_fw_state)(struct wlan_objmgr_psoc *psoc,
+				     struct tdls_info *req);
+	QDF_STATUS(*update_peer_state)(struct wlan_objmgr_psoc *psoc,
+				       struct tdls_peer_update_state *param);
+	QDF_STATUS(*set_offchan_mode)(struct wlan_objmgr_psoc *psoc,
+				      struct tdls_channel_switch_params *param);
+	QDF_STATUS(*tdls_reg_ev_handler)(struct wlan_objmgr_psoc *psoc,
+					 void *arg);
+	QDF_STATUS(*tdls_unreg_ev_handler) (struct wlan_objmgr_psoc *psoc,
+					    void *arg);
+	QDF_STATUS(*tdls_set_uapsd)(struct wlan_objmgr_psoc *psoc,
+				    struct sta_uapsd_trig_params *params);
+};
+
+/* fwd declarations for tdls rx ops */
+struct tdls_event_info;
+/**
+ * struct wlan_lmac_if_tdls_rx_ops  - south bound rx function pointers for tdls
+ * @tdls_ev_handler: function to handler tdls event
+ *
+ * lmac modules uses this API to post scan events to tdls module
+ */
+struct wlan_lmac_if_tdls_rx_ops {
+	QDF_STATUS(*tdls_ev_handler)(struct wlan_objmgr_psoc *psoc,
+				     struct tdls_event_info *info);
+};
+#endif
+
 #ifdef WLAN_FEATURE_NAN_CONVERGENCE
 /**
  * struct wlan_lmac_if_nan_tx_ops - structure of firwware tx function
@@ -490,6 +540,10 @@ struct wlan_lmac_if_tx_ops {
 #endif
 	struct wlan_lmac_if_reg_tx_ops reg_ops;
 	struct wlan_lmac_if_dfs_tx_ops dfs_tx_ops;
+
+#ifdef CONVERGED_TDLS_ENABLE
+	struct wlan_lmac_if_tdls_tx_ops tdls_tx_ops;
+#endif
 };
 
 /**
@@ -797,6 +851,9 @@ struct wlan_lmac_if_rx_ops {
 #endif
 	struct wlan_lmac_if_reg_rx_ops reg_rx_ops;
 	struct wlan_lmac_if_dfs_rx_ops dfs_rx_ops;
+#ifdef CONVERGED_TDLS_ENABLE
+	struct wlan_lmac_if_tdls_rx_ops tdls_rx_ops;
+#endif
 };
 
 /* Function pointer to call legacy tx_ops registration in OL/WMA.

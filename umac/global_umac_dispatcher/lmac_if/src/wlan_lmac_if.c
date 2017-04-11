@@ -35,6 +35,9 @@
 #ifdef CONVERGED_P2P_ENABLE
 #include "wlan_p2p_tgt_api.h"
 #endif
+#ifdef CONVERGED_TDLS_ENABLE
+#include "wlan_tdls_tgt_api.h"
+#endif
 
 #ifdef WLAN_CONV_CRYPTO_SUPPORTED
 #include "wlan_crypto_global_api.h"
@@ -199,6 +202,22 @@ wlan_lmac_if_umac_dfs_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 }
 #endif
 
+#ifdef CONVERGED_TDLS_ENABLE
+static QDF_STATUS
+wlan_lmac_if_umac_tdls_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+	rx_ops->tdls_rx_ops.tdls_ev_handler = tgt_tdls_event_handler;
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static QDF_STATUS
+wlan_lmac_if_umac_tdls_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /**
  * wlan_lmac_if_umac_rx_ops_register() - UMAC rx handler register
  * @rx_ops: Pointer to rx_ops structure to be populated
@@ -243,6 +262,9 @@ wlan_lmac_if_umac_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 	wlan_lmac_if_crypto_rx_ops_register(rx_ops);
 	/* wifi_pos rx ops */
 	wlan_lmac_if_umac_rx_ops_register_wifi_pos(rx_ops);
+
+	/* tdls rx ops */
+	wlan_lmac_if_umac_tdls_rx_ops_register(rx_ops);
 
 	wlan_lmac_if_register_nan_rx_ops(rx_ops);
 
