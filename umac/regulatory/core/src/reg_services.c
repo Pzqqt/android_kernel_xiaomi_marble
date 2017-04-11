@@ -1453,8 +1453,11 @@ modify_chan_list_for_freq_range(struct regulatory_channel
 				uint32_t low_freq_5g,
 				uint32_t high_freq_5g)
 {
-	enum channel_enum low_limit_2g = 0, high_limit_2g = 0,
-		low_limit_5g = 0, high_limit_5g = 0, chan_enum;
+	uint32_t low_limit_2g = NUM_CHANNELS;
+	uint32_t high_limit_2g = NUM_CHANNELS;
+	uint32_t low_limit_5g = NUM_CHANNELS;
+	uint32_t high_limit_5g = NUM_CHANNELS;
+	enum channel_enum chan_enum;
 	bool chan_in_range;
 
 	for (chan_enum = 0; chan_enum < NUM_CHANNELS; chan_enum++) {
@@ -1476,6 +1479,8 @@ modify_chan_list_for_freq_range(struct regulatory_channel
 			high_limit_2g = chan_enum;
 			break;
 		}
+		if (chan_enum == 0)
+			break;
 	}
 
 	for (chan_enum = NUM_CHANNELS - 1; chan_enum >= 0; chan_enum--) {
@@ -1483,15 +1488,21 @@ modify_chan_list_for_freq_range(struct regulatory_channel
 			high_limit_5g = chan_enum;
 			break;
 		}
+		if (chan_enum == 0)
+			break;
 	}
 
 	for (chan_enum = 0; chan_enum < NUM_CHANNELS; chan_enum++) {
 		chan_in_range = false;
 		if  ((low_limit_2g <= chan_enum) &&
-		     (high_limit_2g >= chan_enum))
+		     (high_limit_2g >= chan_enum) &&
+		     (low_limit_2g != NUM_CHANNELS) &&
+		     (high_limit_2g != NUM_CHANNELS))
 			chan_in_range = true;
 		if  ((low_limit_5g <= chan_enum) &&
-		     (high_limit_5g >= chan_enum))
+		     (high_limit_5g >= chan_enum) &&
+		     (low_limit_5g != NUM_CHANNELS) &&
+		     (high_limit_5g != NUM_CHANNELS))
 			chan_in_range = true;
 		if (!chan_in_range) {
 			chan_list[chan_enum].chan_flags |=
@@ -1578,7 +1589,12 @@ QDF_STATUS wlan_regulatory_pdev_obj_created_notification(
 	reg_cap_ptr = parent_psoc->ext_service_param.reg_cap;
 
 	for (cnt = 0; cnt < PSOC_MAX_PHY_REG_CAP; cnt++) {
-		if (pdev_id == reg_cap_ptr->phy_id)
+		if (reg_cap_ptr == NULL) {
+			reg_err(" reg cap ptr is NULL");
+			return QDF_STATUS_E_FAULT;
+		}
+
+		if (reg_cap_ptr->phy_id == pdev_id)
 			break;
 		reg_cap_ptr++;
 	}
