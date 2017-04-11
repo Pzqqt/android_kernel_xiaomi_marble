@@ -11976,17 +11976,12 @@ QDF_STATUS csr_roam_lost_link(tpAniSirGlobal pMac, uint32_t sessionId,
 	tSirSmeDisassocInd *pDisassocIndMsg = NULL;
 	eCsrRoamResult result = eCSR_ROAM_RESULT_LOSTLINK;
 	tCsrRoamInfo roamInfo;
-	bool fToRoam;
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
 
 	if (!pSession) {
 		sme_err("session: %d not found", sessionId);
 		return QDF_STATUS_E_FAILURE;
 	}
-	/* Only need to roam for infra station. In this case P2P client will
-	 * roam as well
-	 */
-	fToRoam = CSR_IS_INFRASTRUCTURE(&pSession->connectedProfile);
 #ifndef NAPIER_SCAN
 	pSession->fCancelRoaming = false;
 #endif
@@ -12018,9 +12013,6 @@ QDF_STATUS csr_roam_lost_link(tpAniSirGlobal pMac, uint32_t sessionId,
 	else if (eWNI_SME_DEAUTH_IND == type)
 		status = csr_send_mb_deauth_cnf_msg(pMac, pDeauthIndMsg);
 
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		/* If fail to send confirmation to PE, not to trigger roaming */
-		fToRoam = false;
 	/* prepare to tell HDD to disconnect */
 	qdf_mem_set(&roamInfo, sizeof(tCsrRoamInfo), 0);
 	roamInfo.statusCode = (tSirResultCodes) pSession->roamingStatusCode;
@@ -18747,6 +18739,17 @@ QDF_STATUS csr_queue_sme_command(tpAniSirGlobal mac_ctx, tSmeCmd *sme_cmd,
 			sme_err("Can't process cmd(%d), waiting for key",
 				sme_cmd->command);
 			return QDF_STATUS_CMD_NOT_QUEUED;
+		}
+	}
+
+	if ((eSmeCommandScan == sme_cmd->command) ||
+	    (sme_cmd->command == eSmeCommandRemainOnChannel)) {
+		if (csr_scan_active_ll_count(mac_ctx) >=
+		    mac_ctx->scan.max_scan_count) {
+			sme_err("Max scan reached");
+			csr_scan_call_callback(mac_ctx, sme_cmd,
+					       eCSR_SCAN_ABORT);
+			return QDF_STATUS_E_FAILURE;
 		}
 	}
 

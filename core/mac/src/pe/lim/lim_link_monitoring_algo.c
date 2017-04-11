@@ -222,11 +222,17 @@ void lim_delete_sta_context(tpAniSirGlobal mac_ctx,
 	switch (msg->reasonCode) {
 	case HAL_DEL_STA_REASON_CODE_KEEP_ALIVE:
 		if (LIM_IS_STA_ROLE(session_entry) && !msg->is_tdls) {
-			if (session_entry->limMlmState !=
-			    eLIM_MLM_LINK_ESTABLISHED_STATE) {
-				pe_err("Do not process in limMlmState %s(%x)",
+			if (!((session_entry->limMlmState ==
+			    eLIM_MLM_LINK_ESTABLISHED_STATE) &&
+			    (session_entry->limSmeState !=
+			    eLIM_SME_WT_DISASSOC_STATE) &&
+			    (session_entry->limSmeState !=
+			    eLIM_SME_WT_DEAUTH_STATE))) {
+				pe_err("Do not process in limMlmState %s(%x) limSmeState %s(%x)",
 				  lim_mlm_state_str(session_entry->limMlmState),
-				  session_entry->limMlmState);
+				  session_entry->limMlmState,
+				  lim_mlm_state_str(session_entry->limSmeState),
+				  session_entry->limSmeState);
 				qdf_mem_free(msg);
 				return;
 			}
