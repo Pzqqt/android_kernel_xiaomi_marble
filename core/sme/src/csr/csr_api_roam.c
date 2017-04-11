@@ -2762,9 +2762,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->roam.configParam.per_roam_config.rx_per_mon_time =
 			pParam->per_roam_config.rx_per_mon_time;
 
-		/* update p2p offload status */
-		pMac->pnoOffload = pParam->pnoOffload;
-
 		pMac->fEnableDebugLog = pParam->fEnableDebugLog;
 
 		/* update interface configuration */
@@ -2792,8 +2789,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->fine_time_meas_cap = pParam->fine_time_meas_cap;
 		pMac->dual_mac_feature_disable =
 			pParam->dual_mac_feature_disable;
-		sme_update_roam_pno_channel_prediction_config(pMac, pParam,
-				SME_CONFIG_TO_ROAM_CONFIG);
 		pMac->roam.configParam.early_stop_scan_enable =
 			pParam->early_stop_scan_enable;
 		pMac->roam.configParam.early_stop_scan_min_threshold =
@@ -3007,7 +3002,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 	pParam->max_intf_count = pMac->sme.max_intf_count;
 	pParam->enableSelfRecovery = pMac->sme.enableSelfRecovery;
-	pParam->pnoOffload = pMac->pnoOffload;
 	pParam->f_prefer_non_dfs_on_radar =
 		pMac->f_prefer_non_dfs_on_radar;
 	pParam->fine_time_meas_cap = pMac->fine_time_meas_cap;
@@ -3020,8 +3014,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->enable5gEBT = pMac->enable5gEBT;
 	pParam->f_sta_miracast_mcc_rest_time_val =
 		pMac->f_sta_miracast_mcc_rest_time_val;
-	sme_update_roam_pno_channel_prediction_config(pMac, pParam,
-			ROAM_CONFIG_TO_SME_CONFIG);
 	pParam->early_stop_scan_enable =
 		pMac->roam.configParam.early_stop_scan_enable;
 	pParam->early_stop_scan_min_threshold =

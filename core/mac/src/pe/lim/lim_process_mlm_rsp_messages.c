@@ -3301,42 +3301,6 @@ void lim_send_beacon_ind(tpAniSirGlobal pMac, tpPESession psessionEntry)
 	return;
 }
 
-#ifdef FEATURE_WLAN_SCAN_PNO
-/**
- * lim_send_sme_scan_cache_updated_ind()
- *
- ***FUNCTION:
- * This function is used to post WMA_SME_SCAN_CACHE_UPDATED message to WMA.
- * This message is the indication to WMA that all scan cache results
- * are updated from LIM to SME. Mainly used only in PNO offload case.
- *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- * This function should be called after posting scan cache results to SME.
- *
- ***NOTE:
- * NA
- *
- * @return None
- */
-static void lim_send_sme_scan_cache_updated_ind(uint8_t sessionId)
-{
-	struct scheduler_msg msg;
-
-	msg.type = WMA_SME_SCAN_CACHE_UPDATED;
-	msg.reserved = 0;
-	msg.bodyptr = NULL;
-	msg.bodyval = sessionId;
-
-	if (!QDF_IS_STATUS_SUCCESS
-		    (scheduler_post_msg(QDF_MODULE_ID_WMA, &msg)))
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Not able to post WMA_SME_SCAN_CACHE_UPDATED message to WMA",
-			  __func__);
-}
-#endif
-
 static void lim_send_scan_offload_complete(tpAniSirGlobal pMac,
 					   tSirScanOffloadEvent *pScanEvent)
 {
@@ -3344,9 +3308,6 @@ static void lim_send_scan_offload_complete(tpAniSirGlobal pMac,
 	pMac->lim.gLimRspReqd = false;
 	lim_send_sme_scan_rsp(pMac, pScanEvent->reasonCode,
 			pScanEvent->sessionId, 0, pScanEvent->scanId);
-#ifdef FEATURE_WLAN_SCAN_PNO
-	lim_send_sme_scan_cache_updated_ind(pScanEvent->sessionId);
-#endif
 }
 
 void lim_process_rx_scan_event(tpAniSirGlobal pMac, void *buf)

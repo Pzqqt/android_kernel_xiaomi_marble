@@ -2143,9 +2143,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *cds_context,
 	qdf_mem_zero(wma_handle, sizeof(t_wma_handle));
 
 	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE) {
-#ifdef FEATURE_WLAN_SCAN_PNO
-		qdf_wake_lock_create(&wma_handle->pno_wake_lock, "wlan_pno_wl");
-#endif /* FEATURE_WLAN_SCAN_PNO */
 #ifdef FEATURE_WLAN_EXTSCAN
 		qdf_wake_lock_create(&wma_handle->extscan_wake_lock,
 					"wlan_extscan_wl");
@@ -2611,9 +2608,6 @@ err_wmi_handle:
 err_wma_handle:
 
 	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE) {
-#ifdef FEATURE_WLAN_SCAN_PNO
-		qdf_wake_lock_destroy(&wma_handle->pno_wake_lock);
-#endif /* FEATURE_WLAN_SCAN_PNO */
 #ifdef FEATURE_WLAN_EXTSCAN
 		qdf_wake_lock_destroy(&wma_handle->extscan_wake_lock);
 #endif /* FEATURE_WLAN_EXTSCAN */
@@ -3120,36 +3114,6 @@ QDF_STATUS wma_start(void *cds_ctx)
 		qdf_status = QDF_STATUS_E_FAILURE;
 		goto end;
 	}
-#ifndef NAPIER_SCAN
-#ifdef FEATURE_WLAN_SCAN_PNO
-	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-				   WMI_SERVICE_NLO)) {
-
-		WMA_LOGD("FW supports pno offload, registering nlo match handler");
-
-		status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-						WMI_NLO_MATCH_EVENTID,
-						wma_nlo_match_evt_handler,
-						WMA_RX_SERIALIZER_CTX);
-		if (status) {
-			WMA_LOGE("Failed to register nlo match event cb");
-			qdf_status = QDF_STATUS_E_FAILURE;
-			goto end;
-		}
-
-		status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-						WMI_NLO_SCAN_COMPLETE_EVENTID,
-						wma_nlo_scan_cmp_evt_handler,
-						WMA_RX_SERIALIZER_CTX);
-		if (status) {
-			WMA_LOGE("Failed to register nlo scan comp event cb");
-			qdf_status = QDF_STATUS_E_FAILURE;
-			goto end;
-		}
-	}
-#endif /* FEATURE_WLAN_SCAN_PNO */
-#endif
-
 #if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || \
 	defined(QCA_LL_TX_FLOW_CONTROL_V2) || defined(CONFIG_HL_SUPPORT)
 	WMA_LOGD("MCC TX Pause Event Handler register");
@@ -3622,9 +3586,6 @@ QDF_STATUS wma_close(void *cds_ctx)
 	}
 	wma_cleanup_dbs_phy_caps(wma_handle);
 	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE) {
-#ifdef FEATURE_WLAN_SCAN_PNO
-		qdf_wake_lock_destroy(&wma_handle->pno_wake_lock);
-#endif /* FEATURE_WLAN_SCAN_PNO */
 #ifdef FEATURE_WLAN_EXTSCAN
 		qdf_wake_lock_destroy(&wma_handle->extscan_wake_lock);
 #endif /* FEATURE_WLAN_EXTSCAN */
@@ -6555,15 +6516,6 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, struct scheduler_msg *msg)
 		wma_set_keepalive_req(wma_handle,
 				      (tSirKeepAliveReq *) msg->bodyptr);
 		break;
-#ifdef FEATURE_WLAN_SCAN_PNO
-	case WMA_SET_PNO_REQ:
-		wma_config_pno(wma_handle, (tpSirPNOScanReq) msg->bodyptr);
-		break;
-
-	case WMA_SME_SCAN_CACHE_UPDATED:
-		wma_scan_cache_updated_ind(wma_handle, msg->bodyval);
-		break;
-#endif /* FEATURE_WLAN_SCAN_PNO */
 #ifdef FEATURE_WLAN_ESE
 	case WMA_SET_PLM_REQ:
 		wma_config_plm(wma_handle, (tpSirPlmReq) msg->bodyptr);

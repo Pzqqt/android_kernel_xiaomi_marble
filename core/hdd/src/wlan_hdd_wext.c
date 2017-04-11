@@ -99,6 +99,8 @@
 #include "os_if_wifi_pos.h"
 #include <cdp_txrx_stats.h>
 #include <cds_api.h>
+#include <wlan_osif_priv.h>
+
 #define HDD_FINISH_ULA_TIME_OUT         800
 #define HDD_SET_MCBC_FILTERS_TO_FW      1
 #define HDD_DELETE_MCBC_FILTERS_FROM_FW 0
@@ -11948,35 +11950,45 @@ static int iw_get_statistics(struct net_device *dev,
 }
 
 #ifdef FEATURE_WLAN_SCAN_PNO
-
 /*Max Len for PNO notification*/
 #define MAX_PNO_NOTIFY_LEN 100
-static void found_pref_network_cb(void *callbackContext,
-				  tSirPrefNetworkFoundInd *pPrefNetworkFoundInd)
+static void found_pref_network_cb(struct wlan_objmgr_vdev *vdev,
+	struct scan_event *event, void *args)
 {
-	hdd_adapter_t *pAdapter = (hdd_adapter_t *) callbackContext;
+	struct vdev_osif_priv *osif_priv;
+	struct wireless_dev *wdev;
 	union iwreq_data wrqu;
 	char buf[MAX_PNO_NOTIFY_LEN + 1];
 
-	hdd_debug("A preferred network was found: %s with rssi: -%d",
-	       pPrefNetworkFoundInd->ssId.ssId, pPrefNetworkFoundInd->rssi);
+	wlan_vdev_obj_lock(vdev);
+	osif_priv = wlan_vdev_get_ospriv(vdev);
+	wlan_vdev_obj_unlock(vdev);
+	if (!osif_priv) {
+		hdd_err("osif_priv is null");
+		return;
+	}
+
+	wdev = osif_priv->wdev;
+	if (!wdev) {
+		hdd_err("wdev is null");
+		return;
+	}
+
+	hdd_debug("A preferred network was found");
 
 	/* create the event */
-	memset(&wrqu, 0, sizeof(wrqu));
-	memset(buf, 0, sizeof(buf));
+	qdf_mem_zero(&wrqu, sizeof(wrqu));
+	qdf_mem_zero(buf, sizeof(buf));
 
 	snprintf(buf, MAX_PNO_NOTIFY_LEN,
-		 "QCOM: Found preferred network: %s with RSSI of -%u",
-		 pPrefNetworkFoundInd->ssId.ssId,
-		 (unsigned int)pPrefNetworkFoundInd->rssi);
+		 "QCOM: Found preferred network:");
 
 	wrqu.data.pointer = buf;
 	wrqu.data.length = strlen(buf);
 
 	/* send the event */
 
-	wireless_send_event(pAdapter->dev, IWEVCUSTOM, &wrqu, buf);
-
+	wireless_send_event(wdev->netdev, IWEVCUSTOM, &wrqu, buf);
 }
 
 /**
@@ -12025,17 +12037,21 @@ static int __iw_set_pno(struct net_device *dev,
 {
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *hdd_ctx;
-	int ret;
+	uint8_t value;
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_psoc *psoc;
+	int ret = 0;
 	int offset;
 	char *ptr;
-	uint8_t i, j, params, mode;
+	uint8_t i, j, params;
+	QDF_STATUS status;
 
 	/* request is a large struct, so we make it static to avoid
 	 * stack overflow.  This API is only invoked via ioctl, so it
 	 * is serialized by the kernel rtnl_lock and hence does not
 	 * need to be reentrant
 	 */
-	static tSirPNOScanReq request;
+	static struct pno_scan_req_params req;
 
 	ENTER_DEV(dev);
 
@@ -12048,167 +12064,195 @@ static int __iw_set_pno(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
-	hdd_debug("PNO data len %d data %s", wrqu->data.length, extra);
+	vdev = wlan_objmgr_get_vdev_by_macaddr_from_pdev(hdd_ctx->hdd_pdev,
+		dev->dev_addr, WLAN_LEGACY_MAC_ID);
+	if (!vdev) {
+		hdd_err("vdev object is NULL");
+		return -EIO;
+	}
 
-	request.enable = 0;
-	request.ucNetworksCount = 0;
+	hdd_debug("PNO data len %d data %s", wrqu->data.length, extra);
 
 	ptr = extra;
 
-	if (1 != sscanf(ptr, "%hhu%n", &(request.enable), &offset)) {
+	if (1 != sscanf(ptr, "%hhu%n", &value, &offset)) {
 		hdd_err("PNO enable input is not valid %s", ptr);
-		return -EINVAL;
+		ret = -EINVAL;
+		goto exit;
 	}
 
-	if (0 == request.enable) {
-		/* Disable PNO, ignore any other params */
-		memset(&request, 0, sizeof(request));
-		sme_set_preferred_network_list(WLAN_HDD_GET_HAL_CTX(adapter),
-					       &request, adapter->sessionId,
-					       found_pref_network_cb, adapter);
-		return 0;
+	if (!value) {
+		status = ucfg_scan_pno_stop(vdev);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_err("Failed to disabled PNO");
+			ret = -EINVAL;
+		} else {
+			hdd_debug("PNO scan disabled");
+		}
+		goto exit;
+	}
+
+	if (ucfg_scan_get_pno_in_progress(vdev)) {
+		hdd_debug("pno is already in progress");
+		ret = -EBUSY;
+		goto exit;
 	}
 
 	ptr += offset;
 
-	if (1 != sscanf(ptr, "%hhu %n", &(request.ucNetworksCount), &offset)) {
+	if (1 != sscanf(ptr, "%hhu %n", &value, &offset)) {
 		hdd_err("PNO count input not valid %s", ptr);
-		return -EINVAL;
-
+		ret = -EINVAL;
+		goto exit;
 	}
+	req.networks_cnt = value;
 
-	hdd_debug("PNO enable %d networks count %d offset %d",
-		 request.enable, request.ucNetworksCount, offset);
+	hdd_debug("PNO enable networks count %d offset %d",
+		 req.networks_cnt, offset);
 
-	if ((0 == request.ucNetworksCount) ||
-	    (request.ucNetworksCount > SIR_PNO_MAX_SUPP_NETWORKS)) {
+	if ((0 == req.networks_cnt) ||
+	    (req.networks_cnt > SCAN_PNO_MAX_SUPP_NETWORKS)) {
 		hdd_err("Network count %d invalid",
-			request.ucNetworksCount);
-		return -EINVAL;
+			req.networks_cnt);
+		ret = -EINVAL;
+		goto exit;
 	}
 
 	ptr += offset;
 
-	for (i = 0; i < request.ucNetworksCount; i++) {
+	for (i = 0; i < req.networks_cnt; i++) {
 
-		request.aNetworks[i].ssId.length = 0;
+		req.networks_list[i].ssid.length = 0;
 
 		params = sscanf(ptr, "%hhu %n",
-				  &(request.aNetworks[i].ssId.length),
+				  &(req.networks_list[i].ssid.length),
 				  &offset);
 
 		if (1 != params) {
 			hdd_err("PNO ssid length input is not valid %s", ptr);
-			return -EINVAL;
+			ret = -EINVAL;
+			goto exit;
 		}
 
-		if ((0 == request.aNetworks[i].ssId.length) ||
-		    (request.aNetworks[i].ssId.length > 32)) {
+		if ((0 == req.networks_list[i].ssid.length) ||
+		    (req.networks_list[i].ssid.length > 32)) {
 			hdd_err("SSID Len %d is not correct for network %d",
-				  request.aNetworks[i].ssId.length, i);
-			return -EINVAL;
+				  req.networks_list[i].ssid.length, i);
+			ret = -EINVAL;
+			goto exit;
 		}
 
 		/* Advance to SSID */
 		ptr += offset;
 
-		memcpy(request.aNetworks[i].ssId.ssId, ptr,
-		       request.aNetworks[i].ssId.length);
-		ptr += request.aNetworks[i].ssId.length;
+		memcpy(req.networks_list[i].ssid.ssid, ptr,
+		       req.networks_list[i].ssid.length);
+		ptr += req.networks_list[i].ssid.length;
 
 		params = sscanf(ptr, "%u %u %hhu %n",
-				  &(request.aNetworks[i].authentication),
-				  &(request.aNetworks[i].encryption),
-				  &(request.aNetworks[i].ucChannelCount),
+				  &(req.networks_list[i].authentication),
+				  &(req.networks_list[i].encryption),
+				  &(req.networks_list[i].channel_cnt),
 				  &offset);
 
 		if (3 != params) {
 			hdd_err("Incorrect cmd %s", ptr);
-			return -EINVAL;
+			ret = -EINVAL;
+			goto exit;
 		}
 
 		hdd_debug("PNO len %d ssid %.*s auth %d encry %d channel count %d offset %d",
-			  request.aNetworks[i].ssId.length,
-			  request.aNetworks[i].ssId.length,
-			  request.aNetworks[i].ssId.ssId,
-			  request.aNetworks[i].authentication,
-			  request.aNetworks[i].encryption,
-			  request.aNetworks[i].ucChannelCount, offset);
+			  req.networks_list[i].ssid.length,
+			  req.networks_list[i].ssid.length,
+			  req.networks_list[i].ssid.ssid,
+			  req.networks_list[i].authentication,
+			  req.networks_list[i].encryption,
+			  req.networks_list[i].channel_cnt, offset);
 
 		/* Advance to channel list */
 		ptr += offset;
 
-		if (SIR_PNO_MAX_NETW_CHANNELS <
-		    request.aNetworks[i].ucChannelCount) {
+		if (SCAN_PNO_MAX_NETW_CHANNELS_EX <
+		    req.networks_list[i].channel_cnt) {
 			hdd_err("Incorrect number of channels");
-			return -EINVAL;
+			ret = -EINVAL;
+			goto exit;
 		}
 
-		if (0 != request.aNetworks[i].ucChannelCount) {
-			for (j = 0; j < request.aNetworks[i].ucChannelCount;
+		if (0 != req.networks_list[i].channel_cnt) {
+			for (j = 0; j < req.networks_list[i].channel_cnt;
 			     j++) {
-				if (1 != sscanf(ptr, "%hhu %n",
-					   &(request.aNetworks[i].
-					     aChannels[j]), &offset)) {
+				if (1 != sscanf(ptr, "%hhu %n", &value,
+				   &offset)) {
 					hdd_err("PNO network channel is not valid %s",
 						  ptr);
-					return -EINVAL;
+					ret = -EINVAL;
+					goto exit;
 				}
+				req.networks_list[i].channels[j] =
+					cds_chan_to_freq(value);
 				/* Advance to next channel number */
 				ptr += offset;
 			}
 		}
 
 		if (1 != sscanf(ptr, "%u %n",
-				&(request.aNetworks[i].bcastNetwType),
+				&(req.networks_list[i].bc_new_type),
 				&offset)) {
 			hdd_err("PNO broadcast network type is not valid %s",
 				  ptr);
-			return -EINVAL;
+			ret = -EINVAL;
+			goto exit;
 		}
 
 		hdd_debug("PNO bcastNetwType %d offset %d",
-			  request.aNetworks[i].bcastNetwType, offset);
+			  req.networks_list[i].bc_new_type, offset);
 
 		/* Advance to rssi Threshold */
 		ptr += offset;
 		if (1 != sscanf(ptr, "%d %n",
-				&(request.aNetworks[i].rssiThreshold),
+				&(req.networks_list[i].rssi_thresh),
 				&offset)) {
 			hdd_err("PNO rssi threshold input is not valid %s",
 				  ptr);
-			return -EINVAL;
+			ret = -EINVAL;
+			goto exit;
 		}
 		hdd_debug("PNO rssi %d offset %d",
-			  request.aNetworks[i].rssiThreshold, offset);
+			  req.networks_list[i].rssi_thresh, offset);
 		/* Advance to next network */
 		ptr += offset;
 	} /* For ucNetworkCount */
 
-	request.fast_scan_period = 0;
-	if (sscanf(ptr, "%u %n", &(request.fast_scan_period), &offset) > 0) {
-		request.fast_scan_period *= MSEC_PER_SEC;
+	req.fast_scan_period = 0;
+	if (sscanf(ptr, "%u %n", &(req.fast_scan_period), &offset) > 0) {
+		req.fast_scan_period *= MSEC_PER_SEC;
 		ptr += offset;
 	}
 
-	request.fast_scan_max_cycles = 0;
-	if (sscanf(ptr, "%hhu %n", &(request.fast_scan_max_cycles),
+	req.fast_scan_max_cycles = 0;
+	if (sscanf(ptr, "%hhu %n", &value,
 		   &offset) > 0)
 		ptr += offset;
+	req.fast_scan_max_cycles = value;
 
-	params = sscanf(ptr, "%hhu %n", &(mode), &offset);
+	wlan_pdev_obj_lock(hdd_ctx->hdd_pdev);
+	psoc = wlan_pdev_get_psoc(hdd_ctx->hdd_pdev);
+	wlan_pdev_obj_unlock(hdd_ctx->hdd_pdev);
+	ucfg_scan_register_pno_cb(psoc,
+		found_pref_network_cb, NULL);
 
-	request.modePNO = mode;
-	/* for LA we just expose suspend option */
-	if ((1 != params) || (mode >= SIR_PNO_MODE_MAX))
-		request.modePNO = SIR_PNO_MODE_ON_SUSPEND;
+	ucfg_scan_get_pno_def_params(vdev, &req);
+	status = ucfg_scan_pno_start(vdev, &req);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to enable PNO");
+		ret = -EINVAL;
+	}
 
-	sme_set_preferred_network_list(WLAN_HDD_GET_HAL_CTX(adapter),
-				       &request,
-				       adapter->sessionId,
-				       found_pref_network_cb, adapter);
+exit:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
 
-	return 0;
+	return ret;
 }
 
 static int iw_set_pno(struct net_device *dev,

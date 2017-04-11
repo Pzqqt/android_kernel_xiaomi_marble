@@ -10633,13 +10633,4 @@ QDF_STATUS hdd_hex_string_to_u16_array(char *str, uint16_t *int_array,
 void hdd_cfg_print(hdd_context_t *pHddCtx);
 
 QDF_STATUS hdd_update_nss(hdd_context_t *hdd_ctx, uint8_t nss);
-#ifdef FEATURE_WLAN_SCAN_PNO
-void hdd_set_pno_channel_prediction_config(
-	tpSmeConfigParams sme_config, hdd_context_t *hdd_ctx);
-#else
-static inline void hdd_set_pno_channel_prediction_config(
-	tpSmeConfigParams sme_config, hdd_context_t *hdd_ctx)
-{}
-#endif
-
 #endif

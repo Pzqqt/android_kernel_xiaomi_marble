@@ -132,13 +132,6 @@ typedef struct sSelfRecoveryStats {
 	uint8_t cmdStatsIndx;
 } tSelfRecoveryStats;
 
-#ifdef FEATURE_WLAN_SCAN_PNO
-/*Pref netw found Cb declaration*/
-typedef void (*preferred_network_found_ind_cb)(void *callback_context,
-		tpSirPrefNetworkFoundInd
-		pPrefNetworkFoundInd);
-#endif
-
 typedef void (*ocb_callback)(void *context, void *response);
 typedef void (*sme_set_thermal_level_callback)(void *context, u_int8_t level);
 typedef void (*p2p_lo_callback)(void *context, void *event);
@@ -219,12 +212,6 @@ typedef struct tagSmeStruct {
 	void (*pGetTemperatureCb)(int temperature, void *context);
 	uint8_t miracast_value;
 	struct ps_global_info  ps_global_info;
-#ifdef FEATURE_WLAN_SCAN_PNO
-	/* routine to call for Preferred Network Found Indication */
-	preferred_network_found_ind_cb pref_netw_found_cb;
-	/* value to be passed as parameter to routine specified above */
-	void *preferred_network_found_ind_cb_ctx;
-#endif /* FEATURE_WLAN_SCAN_PNO */
 	void (*rssi_threshold_breached_cb)(void *, struct rssi_breach_event *);
 #ifdef WLAN_FEATURE_MEMDUMP
 	void (*fw_dump_callback)(void *context, struct fw_dump_rsp *rsp);

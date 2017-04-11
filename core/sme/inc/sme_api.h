@@ -239,16 +239,6 @@ QDF_STATUS sme_close_session(tHalHandle hHal, uint8_t sessionId,
 		void *pContext);
 QDF_STATUS sme_update_roam_params(tHalHandle hHal, uint8_t session_id,
 		struct roam_ext_params roam_params_src, int update_param);
-#ifdef FEATURE_WLAN_SCAN_PNO
-void sme_update_roam_pno_channel_prediction_config(
-		tHalHandle hal, tCsrConfigParam *csr_config,
-		uint8_t copy_from_to);
-#else
-static inline void sme_update_roam_pno_channel_prediction_config(
-		tHalHandle hal, tCsrConfigParam *csr_config,
-		uint8_t copy_from_to)
-{}
-#endif
 QDF_STATUS sme_update_config(tHalHandle hHal,
 		tpSmeConfigParams pSmeConfigParams);
 
@@ -548,15 +538,6 @@ QDF_STATUS sme_abort_mac_scan(tHalHandle hHal, uint8_t sessionId,
 		uint32_t scan_id, eCsrAbortReason reason);
 QDF_STATUS sme_get_cfg_valid_channels(uint8_t *aValidChannels,
 		uint32_t *len);
-#ifdef FEATURE_WLAN_SCAN_PNO
-QDF_STATUS sme_set_preferred_network_list(tHalHandle hHal,
-		tpSirPNOScanReq pRequest,
-		uint8_t sessionId,
-		preferred_network_found_ind_cb
-		callbackRoutine, void *callbackContext);
-
-QDF_STATUS sme_preferred_network_found_ind(tHalHandle hHal, void *pMsg);
-#endif /* FEATURE_WLAN_SCAN_PNO */
 #ifdef WLAN_FEATURE_PACKET_FILTERING
 QDF_STATUS sme_8023_multicast_list(tHalHandle hHal, uint8_t sessionId,
 		tpSirRcvFltMcAddrList pMulticastAddrs);

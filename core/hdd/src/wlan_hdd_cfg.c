@@ -6887,35 +6887,6 @@ bool hdd_update_config_cfg(hdd_context_t *hdd_ctx)
 	return status;
 }
 
-#ifdef FEATURE_WLAN_SCAN_PNO
-/**
- * hdd_set_pno_channel_prediction_config() - Set PNO configuration
- * @sme_config:         Config params from SME Context
- * @hdd_ctx:            Config params from HDD Context
- *
- * Copy the PNO Channel prediction feature configuration parameters
- * from HDD context to SME context.
- *
- * Return: None
- */
-void hdd_set_pno_channel_prediction_config(
-		tpSmeConfigParams sme_config, hdd_context_t *hdd_ctx)
-{
-	sme_config->csrConfig.dual_mac_feature_disable =
-		hdd_ctx->config->dual_mac_feature_disable;
-	sme_config->csrConfig.pno_channel_prediction =
-		hdd_ctx->config->pno_channel_prediction;
-	sme_config->csrConfig.top_k_num_of_channels =
-		hdd_ctx->config->top_k_num_of_channels;
-	sme_config->csrConfig.stationary_thresh =
-		hdd_ctx->config->stationary_thresh;
-	sme_config->csrConfig.channel_prediction_full_scan =
-		hdd_ctx->config->channel_prediction_full_scan;
-	sme_config->csrConfig.pnoscan_adaptive_dwell_mode =
-		hdd_ctx->config->pnoscan_adaptive_dwell_mode;
-}
-#endif
-
 /**
  * hdd_update_per_config_to_sme() -initializes the sme config for PER roam
  *
@@ -7231,11 +7202,6 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 	sme_update_enable_ssr((tHalHandle) (pHddCtx->hHal),
 			      pHddCtx->config->enableSSR);
 
-#ifdef FEATURE_WLAN_SCAN_PNO
-	/* Update PNO offoad status */
-	smeConfig->csrConfig.pnoOffload = pHddCtx->config->PnoOffload;
-#endif
-
 	/* Update maximum interfaces information */
 	smeConfig->csrConfig.max_intf_count = pHddCtx->max_intf_count;
 
@@ -7282,7 +7248,6 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 	/* Update 802.11p config */
 	smeConfig->csrConfig.enable_dot11p =
 		(pHddCtx->config->dot11p_mode != WLAN_HDD_11P_DISABLED);
-	hdd_set_pno_channel_prediction_config(smeConfig, pHddCtx);
 
 	smeConfig->csrConfig.early_stop_scan_enable =
 		pHddCtx->config->early_stop_scan_enable;

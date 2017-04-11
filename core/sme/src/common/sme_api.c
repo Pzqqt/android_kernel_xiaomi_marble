@@ -2250,19 +2250,6 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, struct scheduler_msg *pMsg)
 			sme_err("Empty message for: %d", pMsg->type);
 		}
 		break;
-#ifdef FEATURE_WLAN_SCAN_PNO
-	case eWNI_SME_PREF_NETWORK_FOUND_IND:
-		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_RX_WMA_MSG,
-				 NO_SESSION, pMsg->type));
-		if (pMsg->bodyptr) {
-			status = sme_preferred_network_found_ind((void *)pMac,
-								 pMsg->bodyptr);
-			qdf_mem_free(pMsg->bodyptr);
-		} else {
-			sme_err("Empty message for: %d", pMsg->type);
-		}
-		break;
-#endif /* FEATURE_WLAN_SCAN_PNO */
 	case eWNI_SME_CHANGE_COUNTRY_CODE:
 		if (pMsg->bodyptr) {
 			status = sme_handle_change_country_code((void *)pMac,
@@ -5942,42 +5929,6 @@ QDF_STATUS sme_set_keep_alive(tHalHandle hHal, uint8_t session_id,
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef FEATURE_WLAN_SCAN_PNO
-/* ---------------------------------------------------------------------------
-    \fn sme_set_preferred_network_list
-    \brief  API to set the Preferred Network List Offload feature.
-    \param  hHal - The handle returned by mac_open.
-    \param  request -  Pointer to the offload request.
-    \return QDF_STATUS
-   ---------------------------------------------------------------------------*/
-QDF_STATUS sme_set_preferred_network_list(tHalHandle hHal,
-		tpSirPNOScanReq request,
-		uint8_t sessionId,
-		void (*callback_routine)(void *callback_context,
-			tSirPrefNetworkFoundInd
-			*pPrefNetworkFoundInd),
-		void *callback_context)
-{
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	QDF_STATUS status;
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_PREF_NET_LIST,
-			 sessionId, request->ucNetworksCount));
-	status = sme_acquire_global_lock(&pMac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = sme_set_ps_preferred_network_list(hHal, request,
-							   sessionId,
-							   callback_routine,
-							   callback_context);
-		sme_release_global_lock(&pMac->sme);
-	}
-
-	return status;
-}
-
-#endif /* FEATURE_WLAN_SCAN_PNO */
-
 QDF_STATUS sme_abort_mac_scan(tHalHandle hHal, uint8_t sessionId,
 			      uint32_t scan_id, eCsrAbortReason reason)
 {
@@ -6678,132 +6629,6 @@ uint16_t sme_check_concurrent_channel_overlap(tHalHandle hHal, uint16_t sap_ch,
 	return channel;
 }
 #endif
-
-#ifdef FEATURE_WLAN_SCAN_PNO
-/**
- * sme_update_roam_pno_channel_prediction_config() - Update PNO config
- * @csr_config:      config from SME context
- * @hal:             Global Hal handle
- * @copy_from_to:    Used to specify the source and destination
- *
- * Copy the PNO channel prediction configuration parameters from
- * SME context to MAC context or vice-versa
- *
- * Return: None
- */
-void sme_update_roam_pno_channel_prediction_config(
-		tHalHandle hal, tCsrConfigParam *csr_config,
-		uint8_t copy_from_to)
-{
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
-	if (copy_from_to == SME_CONFIG_TO_ROAM_CONFIG) {
-		mac_ctx->roam.configParam.pno_channel_prediction =
-			csr_config->pno_channel_prediction;
-		mac_ctx->roam.configParam.top_k_num_of_channels =
-			csr_config->top_k_num_of_channels;
-		mac_ctx->roam.configParam.stationary_thresh =
-			csr_config->stationary_thresh;
-		mac_ctx->roam.configParam.channel_prediction_full_scan =
-			csr_config->channel_prediction_full_scan;
-		mac_ctx->roam.configParam.pnoscan_adaptive_dwell_mode =
-			csr_config->pnoscan_adaptive_dwell_mode;
-	} else if (copy_from_to == ROAM_CONFIG_TO_SME_CONFIG) {
-		csr_config->pno_channel_prediction =
-			mac_ctx->roam.configParam.pno_channel_prediction;
-		csr_config->top_k_num_of_channels =
-			mac_ctx->roam.configParam.top_k_num_of_channels;
-		csr_config->stationary_thresh =
-			mac_ctx->roam.configParam.stationary_thresh;
-		csr_config->channel_prediction_full_scan =
-			mac_ctx->roam.configParam.channel_prediction_full_scan;
-		csr_config->pnoscan_adaptive_dwell_mode =
-			mac_ctx->roam.configParam.pnoscan_adaptive_dwell_mode;
-	}
-
-}
-/******************************************************************************
-*
-* Name: sme_preferred_network_found_ind
-*
-* Description:
-*    Invoke Preferred Network Found Indication
-*
-* Parameters:
-*    hHal - HAL handle for device
-*    pMsg - found network description
-*
-* Returns: QDF_STATUS
-*
-******************************************************************************/
-QDF_STATUS sme_preferred_network_found_ind(tHalHandle hHal, void *pMsg)
-{
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tSirPrefNetworkFoundInd *pPrefNetworkFoundInd =
-		(tSirPrefNetworkFoundInd *) pMsg;
-	uint8_t dumpSsId[SIR_MAC_MAX_SSID_LENGTH + 1];
-	uint8_t ssIdLength = 0;
-
-	if (NULL == pMsg) {
-		sme_err("msg ptr is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (pMac->pnoOffload) {
-		/* Call Preferred Network Found Indication callback routine. */
-		if (pMac->sme.pref_netw_found_cb != NULL) {
-			pMac->sme.pref_netw_found_cb(pMac->sme.
-					preferred_network_found_ind_cb_ctx,
-					pPrefNetworkFoundInd);
-		}
-		return status;
-	}
-
-	if (pPrefNetworkFoundInd->ssId.length > 0) {
-		ssIdLength = CSR_MIN(SIR_MAC_MAX_SSID_LENGTH,
-				     pPrefNetworkFoundInd->ssId.length);
-		qdf_mem_copy(dumpSsId, pPrefNetworkFoundInd->ssId.ssId,
-			     ssIdLength);
-		dumpSsId[ssIdLength] = 0;
-		sme_debug("SSID: %s frame length: %d",
-			  dumpSsId, pPrefNetworkFoundInd->frameLength);
-
-		/* Flush scan results, So as to avoid indication/updation of
-		 * stale entries, which may not have aged out during APPS collapse
-		 */
-		sme_scan_flush_result(hHal);
-
-		/* Save the frame to scan result */
-		if (pPrefNetworkFoundInd->mesgLen >
-		    sizeof(tSirPrefNetworkFoundInd)) {
-			/* we may have a frame */
-			status = csr_scan_save_preferred_network_found(pMac,
-					pPrefNetworkFoundInd);
-			if (!QDF_IS_STATUS_SUCCESS(status)) {
-				sme_err("fail to save preferred network");
-			}
-		} else {
-			sme_err("not enough data length %d needed %zu",
-				pPrefNetworkFoundInd->mesgLen,
-				sizeof(tSirPrefNetworkFoundInd));
-		}
-
-		/* Call Preferred Netowrk Found Indication callback routine. */
-		if (QDF_IS_STATUS_SUCCESS(status)
-		    && (pMac->sme.pref_netw_found_cb != NULL)) {
-			pMac->sme.pref_netw_found_cb(pMac->sme.
-					preferred_network_found_ind_cb_ctx,
-					pPrefNetworkFoundInd);
-		}
-	} else {
-		sme_err("callback failed - SSID is NULL");
-		status = QDF_STATUS_E_FAILURE;
-	}
-
-	return status;
-}
-
-#endif /* FEATURE_WLAN_SCAN_PNO */
 
 /**
  * sme_set_tsfcb() - Set callback for TSF capture

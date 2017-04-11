@@ -291,28 +291,6 @@ void wma_roam_preauth_scan_event_handler(tp_wma_handle wma_handle,
 
 void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params);
 
-#ifdef FEATURE_WLAN_SCAN_PNO
-QDF_STATUS wma_pno_start(tp_wma_handle wma, tpSirPNOScanReq pno);
-
-QDF_STATUS wma_pno_stop(tp_wma_handle wma, uint8_t vdev_id);
-#ifndef NAPIER_SCAN
-void wma_config_pno(tp_wma_handle wma, tpSirPNOScanReq pno);
-#else
-static inline void wma_config_pno(tp_wma_handle wma, tpSirPNOScanReq pno) {}
-#endif
-
-void wma_set_pno_channel_prediction(uint8_t *buf_ptr,
-		tpSirPNOScanReq pno);
-void wma_scan_cache_updated_ind(tp_wma_handle wma, uint8_t sessionId);
-#else
-static inline void wma_set_pno_channel_prediction(uint8_t *buf_ptr,
-		void *pno)
-{
-	WMA_LOGD("PNO Channel Prediction feature not supported");
-	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_FIXED_STRUC, 0);
-}
-#endif
-
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 void wma_set_ric_req(tp_wma_handle wma, void *msg, uint8_t is_add_ts);
 #endif
@@ -422,12 +400,6 @@ void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id);
 
 int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 			    uint32_t len);
-
-#ifdef FEATURE_WLAN_SCAN_PNO
-int wma_nlo_match_evt_handler(void *handle, uint8_t *event, uint32_t len);
-
-int wma_nlo_scan_cmp_evt_handler(void *handle, uint8_t *event, uint32_t len);
-#endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 void wma_process_roam_synch_complete(WMA_HANDLE handle, uint8_t vdev_id);

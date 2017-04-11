@@ -83,19 +83,6 @@ QDF_STATUS sme_ps_open_per_session(tHalHandle hal_ctx, uint32_t session_id);
 void sme_auto_ps_entry_timer_expired(void *ps_param);
 QDF_STATUS sme_ps_close(tHalHandle hal_ctx);
 QDF_STATUS sme_ps_close_per_session(tHalHandle hal_ctx, uint32_t sessionId);
-#ifdef FEATURE_WLAN_SCAN_PNO
-void sme_set_pno_channel_prediction(tpSirPNOScanReq request_buf,
-		tpAniSirGlobal mac_ctx);
-QDF_STATUS sme_set_ps_preferred_network_list(tHalHandle hal_ctx,
-		tpSirPNOScanReq request,
-		uint8_t session_id,
-		preferred_network_found_ind_cb callback_routine,
-		void *callback_context);
-#else
-static inline void sme_set_pno_channel_prediction(void *request_buf,
-		tpAniSirGlobal mac_ctx)
-{}
-#endif
 
 bool sme_is_auto_ps_timer_running(tHalHandle hal_ctx,
 		uint32_t session_id);

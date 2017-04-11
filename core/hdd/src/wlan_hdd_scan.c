@@ -2502,145 +2502,6 @@ int wlan_hdd_scan_abort(hdd_adapter_t *pAdapter)
 
 #ifdef FEATURE_WLAN_SCAN_PNO
 /**
- * hdd_sched_scan_callback - scheduled scan callback
- * @callbackContext: Callback context
- * @pPrefNetworkFoundInd: Preferred network found indication
- *
- * This is a callback function that is registerd with SME that is
- * invoked when a preferred network is discovered by firmware.
- *
- * Return: none
- */
-static void
-hdd_sched_scan_callback(void *callbackContext,
-			tSirPrefNetworkFoundInd *pPrefNetworkFoundInd)
-{
-	int ret;
-	hdd_adapter_t *pAdapter = (hdd_adapter_t *) callbackContext;
-	hdd_context_t *pHddCtx;
-
-	ENTER();
-
-	if (NULL == pAdapter) {
-		hdd_err("HDD adapter is Null");
-		return;
-	}
-
-	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
-	if (NULL == pHddCtx) {
-		hdd_err("HDD context is Null!!!");
-		return;
-	}
-
-	qdf_spin_lock(&pHddCtx->sched_scan_lock);
-	if (true == pHddCtx->isWiphySuspended) {
-		pHddCtx->isSchedScanUpdatePending = true;
-		qdf_spin_unlock(&pHddCtx->sched_scan_lock);
-		hdd_debug("Update cfg80211 scan database after it resume");
-		return;
-	}
-	qdf_spin_unlock(&pHddCtx->sched_scan_lock);
-
-	ret = wlan_hdd_cfg80211_update_bss(pHddCtx->wiphy, pAdapter, 0);
-
-	if (0 > ret)
-		hdd_debug("NO SCAN result");
-
-	cfg80211_sched_scan_results(pHddCtx->wiphy);
-	hdd_debug("cfg80211 scan result database updated");
-}
-
-/**
- * wlan_hdd_is_pno_allowed() -  Check if PNO is allowed
- * @adapter: HDD Device Adapter
- *
- * The PNO Start request is coming from upper layers.
- * It is to be allowed only for Infra STA device type
- * and the link should be in a disconnected state.
- *
- * Return: Success if PNO is allowed, Failure otherwise.
- */
-static QDF_STATUS wlan_hdd_is_pno_allowed(hdd_adapter_t *adapter)
-{
-	hdd_debug("dev_mode=%d, conn_state=%d, session ID=%d",
-		adapter->device_mode,
-		adapter->sessionCtx.station.conn_info.connState,
-		adapter->sessionId);
-	if ((adapter->device_mode == QDF_STA_MODE) &&
-		(eConnectionState_NotConnected ==
-		 adapter->sessionCtx.station.conn_info.connState))
-		return QDF_STATUS_SUCCESS;
-	else
-		return QDF_STATUS_E_FAILURE;
-
-}
-
-#if ((LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)) || \
-	defined(CFG80211_MULTI_SCAN_PLAN_BACKPORT)) && \
-	defined(FEATURE_WLAN_SCAN_PNO)
-/**
- * hdd_config_sched_scan_plan() - configures the sched scan plans
- *   from the framework.
- * @pno_req: pointer to PNO scan request
- * @request: pointer to scan request from framework
- *
- * Return: None
- */
-static void hdd_config_sched_scan_plan(tpSirPNOScanReq pno_req,
-			       struct cfg80211_sched_scan_request *request,
-			       hdd_context_t *hdd_ctx)
-{
-	pno_req->delay_start_time = request->delay;
-	/*
-	 * As of now max 2 scan plans were supported by firmware
-	 * if number of scan plan supported by firmware increased below logic
-	 * must change.
-	 */
-	if (request->n_scan_plans == SIR_PNO_MAX_PLAN_REQUEST) {
-		pno_req->fast_scan_period =
-			request->scan_plans[0].interval * MSEC_PER_SEC;
-		pno_req->fast_scan_max_cycles =
-			request->scan_plans[0].iterations;
-		pno_req->slow_scan_period =
-			request->scan_plans[1].interval * MSEC_PER_SEC;
-		hdd_debug("Base scan interval: %d sec, scan cycles: %d, slow scan interval %d",
-			   request->scan_plans[0].interval,
-			   request->scan_plans[0].iterations,
-			   request->scan_plans[1].interval);
-	} else if (request->n_scan_plans == 1) {
-		pno_req->fast_scan_period =
-			request->scan_plans[0].interval * MSEC_PER_SEC;
-		/*
-		 * if only one scan plan is configured from framework
-		 * then both fast and slow scan should be configured with the
-		 * same value that is why fast scan cycles are hardcoded to one
-		 */
-		pno_req->fast_scan_max_cycles = 1;
-		pno_req->slow_scan_period =
-			request->scan_plans[0].interval * MSEC_PER_SEC;
-	} else {
-		hdd_err("Invalid number of scan plans %d !!",
-			request->n_scan_plans);
-	}
-}
-#else
-static void hdd_config_sched_scan_plan(tpSirPNOScanReq pno_req,
-			       struct cfg80211_sched_scan_request *request,
-			       hdd_context_t *hdd_ctx)
-{
-	pno_req->fast_scan_period = request->interval;
-	pno_req->fast_scan_max_cycles =
-		hdd_ctx->config->configPNOScanTimerRepeatValue;
-	pno_req->slow_scan_period =
-		hdd_ctx->config->pno_slow_scan_multiplier *
-		pno_req->fast_scan_period;
-	hdd_debug("Base scan interval: %d sec PNOScanTimerRepeatValue: %d",
-		   (request->interval / 1000),
-		   hdd_ctx->config->configPNOScanTimerRepeatValue);
-}
-#endif
-
-/**
  * __wlan_hdd_cfg80211_sched_scan_start() - cfg80211 scheduled scan(pno) start
  * @wiphy: Pointer to wiphy
  * @dev: Pointer network device
@@ -2655,18 +2516,9 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 						*request)
 {
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	tpSirPNOScanReq pPnoRequest = NULL;
 	hdd_context_t *pHddCtx;
 	tHalHandle hHal;
-	uint32_t i, indx, num_ch, j;
-	u8 valid_ch[WNI_CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
-	u8 channels_allowed[WNI_CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
-	uint32_t num_channels_allowed = WNI_CFG_VALID_CHANNEL_LIST_LEN;
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	int ret = 0;
-	hdd_scaninfo_t *pScanInfo = &pAdapter->scan_info;
-	struct hdd_config *config = NULL;
-	uint32_t num_ignore_dfs_ch = 0;
 
 	ENTER();
 
@@ -2686,214 +2538,21 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 	if (0 != ret)
 		return ret;
 
+	if (!pHddCtx->config->PnoOffload) {
+		hdd_debug("PnoOffloadis not enabled!!!");
+		return -EINVAL;
+	}
+
 	if (!sme_is_session_id_valid(pHddCtx->hHal, pAdapter->sessionId))
 		return -EINVAL;
 
-	config = pHddCtx->config;
 	hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
 	if (NULL == hHal) {
 		hdd_err("HAL context  is Null!!!");
 		return -EINVAL;
 	}
 
-#ifdef NAPIER_SCAN
 	return wlan_cfg80211_sched_scan_start(pHddCtx->hdd_pdev, dev, request);
-#endif
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_CFG80211_SCHED_SCAN_START,
-			 pAdapter->sessionId, pAdapter->device_mode));
-	/*
-	 * The current umac is unable to handle the SCAN_PREEMPT and SCAN_DEQUEUED
-	 * so its necessary to terminate the existing scan which is already issued
-	 * otherwise the host won't enter into the suspend state due to the reason
-	 * that the wlan wakelock which was held in the wlan_hdd_cfg80211_scan
-	 * function.
-	 */
-	sme_scan_flush_result(hHal);
-	if (true == pScanInfo->mScanPending) {
-		ret = wlan_hdd_scan_abort(pAdapter);
-		if (ret < 0) {
-			hdd_err("aborting the existing scan is unsuccessful");
-			return -EBUSY;
-		}
-	}
-
-	if (QDF_STATUS_E_FAILURE == wlan_hdd_is_pno_allowed(pAdapter)) {
-		hdd_err("pno is not allowed");
-		return -ENOTSUPP;
-	}
-
-	pPnoRequest = (tpSirPNOScanReq) qdf_mem_malloc(sizeof(tSirPNOScanReq));
-	if (NULL == pPnoRequest) {
-		hdd_err("qdf_mem_malloc failed");
-		return -ENOMEM;
-	}
-
-	pPnoRequest->enable = 1;        /*Enable PNO */
-	pPnoRequest->ucNetworksCount = request->n_match_sets;
-
-	if ((!pPnoRequest->ucNetworksCount) ||
-	    (pPnoRequest->ucNetworksCount > SIR_PNO_MAX_SUPP_NETWORKS)) {
-		hdd_err("Network input is not correct %d",
-			pPnoRequest->ucNetworksCount);
-		ret = -EINVAL;
-		goto error;
-	}
-
-	if (SIR_PNO_MAX_NETW_CHANNELS_EX < request->n_channels) {
-		hdd_err("Incorrect number of channels %d",
-			request->n_channels);
-		ret = -EINVAL;
-		goto error;
-	}
-
-	/*
-	 * Framework provides one set of channels(all)
-	 * common for all saved profile
-	 */
-	if (0 != sme_cfg_get_str(hHal, WNI_CFG_VALID_CHANNEL_LIST,
-				 channels_allowed, &num_channels_allowed)) {
-		hdd_err("failed to get valid channel list");
-		ret = -EINVAL;
-		goto error;
-	}
-	/* Checking each channel against allowed channel list */
-	num_ch = 0;
-	if (request->n_channels) {
-		char chList[(request->n_channels * 5) + 1];
-		int len;
-		for (i = 0, len = 0; i < request->n_channels; i++) {
-			for (indx = 0; indx < num_channels_allowed; indx++) {
-				if (request->channels[i]->hw_value ==
-				    channels_allowed[indx]) {
-
-					if ((!config->enable_dfs_pno_chnl_scan)
-						&& (CHANNEL_STATE_DFS ==
-						cds_get_channel_state(
-						    channels_allowed[indx]))) {
-						hdd_debug("Dropping DFS channel : %d",
-							   channels_allowed[indx]);
-						num_ignore_dfs_ch++;
-						break;
-					}
-					if (!cds_is_dsrc_channel(
-					    cds_chan_to_freq(
-					    request->channels[i]->hw_value))) {
-						valid_ch[num_ch++] = request->
-							channels[i]->hw_value;
-						len += snprintf(chList + len,
-							5, "%d ",
-							request->channels[i]->
-							hw_value);
-					}
-					break;
-				}
-			}
-		}
-		hdd_debug("Channel-List: %s ", chList);
-
-		/* If all channels are DFS and dropped,
-		 * then ignore the PNO request
-		 */
-		if (!num_ch) {
-			hdd_debug("Channel list empty due to filtering of DSRC,DFS channels");
-			ret = -EINVAL;
-			goto error;
-		}
-
-	}
-	/* Filling per profile  params */
-	for (i = 0; i < pPnoRequest->ucNetworksCount; i++) {
-		pPnoRequest->aNetworks[i].ssId.length =
-			request->match_sets[i].ssid.ssid_len;
-
-		if ((0 == pPnoRequest->aNetworks[i].ssId.length) ||
-		    (pPnoRequest->aNetworks[i].ssId.length > 32)) {
-			hdd_err(" SSID Len %d is not correct for network %d",
-				  pPnoRequest->aNetworks[i].ssId.length, i);
-			ret = -EINVAL;
-			goto error;
-		}
-
-		memcpy(pPnoRequest->aNetworks[i].ssId.ssId,
-		       request->match_sets[i].ssid.ssid,
-		       request->match_sets[i].ssid.ssid_len);
-		pPnoRequest->aNetworks[i].authentication = 0;   /*eAUTH_TYPE_ANY */
-		pPnoRequest->aNetworks[i].encryption = 0;       /*eED_ANY */
-		pPnoRequest->aNetworks[i].bcastNetwType = 0;    /*eBCAST_UNKNOWN */
-
-		/*Copying list of valid channel into request */
-		memcpy(pPnoRequest->aNetworks[i].aChannels, valid_ch, num_ch);
-		pPnoRequest->aNetworks[i].ucChannelCount = num_ch;
-		pPnoRequest->aNetworks[i].rssiThreshold =
-			request->match_sets[i].rssi_thold;
-	}
-
-	for (i = 0; i < request->n_ssids; i++) {
-		j = 0;
-		while (j < pPnoRequest->ucNetworksCount) {
-			if ((pPnoRequest->aNetworks[j].ssId.length ==
-			     request->ssids[i].ssid_len) &&
-			    (0 == memcmp(pPnoRequest->aNetworks[j].ssId.ssId,
-					 request->ssids[i].ssid,
-					 pPnoRequest->aNetworks[j].ssId.
-					 length))) {
-				pPnoRequest->aNetworks[j].bcastNetwType =
-					eBCAST_HIDDEN;
-				break;
-			}
-			j++;
-		}
-	}
-	hdd_debug("Number of hidden networks being Configured = %d",
-		  request->n_ssids);
-
-	/*
-	 * Before Kernel 4.4
-	 *   Driver gets only one time interval which is hard coded in
-	 *   supplicant for 10000ms.
-	 *
-	 * After Kernel 4.4
-	 *   User can configure multiple scan_plans, each scan would have
-	 *   separate scan cycle and interval. (interval is in unit of second.)
-	 *   For our use case, we would only have supplicant set one scan_plan,
-	 *   and firmware also support only one as well, so pick up the first
-	 *   index.
-	 *
-	 *   Taking power consumption into account
-	 *   firmware after gPNOScanTimerRepeatValue times fast_scan_period
-	 *   switches slow_scan_period. This is less frequent scans and firmware
-	 *   shall be in slow_scan_period mode until next PNO Start.
-	 */
-	hdd_config_sched_scan_plan(pPnoRequest, request, pHddCtx);
-
-	hdd_debug("Base scan interval: %d sec PNOScanTimerRepeatValue: %d",
-			(pPnoRequest->fast_scan_period / 1000),
-			config->configPNOScanTimerRepeatValue);
-
-	pPnoRequest->modePNO = SIR_PNO_MODE_IMMEDIATE;
-
-	hdd_debug("SessionId %d, enable %d, modePNO %d",
-		pAdapter->sessionId, pPnoRequest->enable, pPnoRequest->modePNO);
-
-	status = sme_set_preferred_network_list(WLAN_HDD_GET_HAL_CTX(pAdapter),
-						pPnoRequest,
-						pAdapter->sessionId,
-						hdd_sched_scan_callback,
-						pAdapter);
-	if (QDF_STATUS_SUCCESS != status) {
-		hdd_err("Failed to enable PNO");
-		ret = -EINVAL;
-		goto error;
-	}
-
-	hdd_debug("PNO scanRequest offloaded");
-
-error:
-	qdf_mem_free(pPnoRequest);
-	EXIT();
-	return ret;
 }
 
 /**
@@ -2920,74 +2579,39 @@ int wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 
 int wlan_hdd_sched_scan_stop(struct net_device *dev)
 {
-	QDF_STATUS status;
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *hdd_ctx;
 	tHalHandle hHal;
-	tSirPNOScanReq *pno_req = NULL;
-	int ret = 0;
 
 	ENTER_DEV(dev);
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
-		ret = -EINVAL;
-		goto exit;
+		return -EINVAL;
 	}
 
 	if (wlan_hdd_validate_session_id(adapter->sessionId)) {
 		hdd_err("invalid session id: %d", adapter->sessionId);
-		ret = -EINVAL;
-		goto exit;
+		return -EINVAL;
 	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	if (NULL == hdd_ctx) {
 		hdd_err("HDD context is Null");
-		ret = -ENODEV;
-		goto exit;
+		return -EINVAL;
+	}
+	if (!hdd_ctx->config->PnoOffload) {
+		hdd_debug("PnoOffloadis not enabled!!!");
+		return -EINVAL;
 	}
 
 	hHal = WLAN_HDD_GET_HAL_CTX(adapter);
 	if (NULL == hHal) {
 		hdd_err(" HAL context  is Null!!!");
-		ret = -EINVAL;
-		goto exit;
+		return -EINVAL;
 	}
 
-#ifdef NAPIER_SCAN
 	return wlan_cfg80211_sched_scan_stop(hdd_ctx->hdd_pdev, dev);
-#endif
-	pno_req = (tpSirPNOScanReq) qdf_mem_malloc(sizeof(tSirPNOScanReq));
-	if (NULL == pno_req) {
-		hdd_err("qdf_mem_malloc failed");
-		ret = -ENOMEM;
-		goto exit;
-	}
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_CFG80211_SCHED_SCAN_STOP,
-			 adapter->sessionId, adapter->device_mode));
-
-	/* Disable PNO */
-	pno_req->enable = 0;
-	pno_req->ucNetworksCount = 0;
-	status = sme_set_preferred_network_list(hHal, pno_req,
-						adapter->sessionId,
-						NULL, adapter);
-	qdf_mem_free(pno_req);
-
-	if (QDF_STATUS_SUCCESS != status) {
-		hdd_err("Failed to disabled PNO");
-		ret = -EINVAL;
-		goto exit;
-	}
-
-	hdd_debug("PNO scan disabled");
-
-exit:
-	EXIT();
-	return ret;
 }
 
 /**

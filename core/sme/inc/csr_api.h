@@ -1260,18 +1260,10 @@ typedef struct tagCsrConfigParam {
 	/* 802.11p enable */
 	bool enable_dot11p;
 	uint8_t max_scan_count;
-#ifdef FEATURE_WLAN_SCAN_PNO
-	bool pno_channel_prediction;
-	uint8_t top_k_num_of_channels;
-	uint8_t stationary_thresh;
-	enum wmi_dwelltime_adaptive_mode pnoscan_adaptive_dwell_mode;
-	uint32_t channel_prediction_full_scan;
-#endif
 	bool early_stop_scan_enable;
 	int8_t early_stop_scan_min_threshold;
 	int8_t early_stop_scan_max_threshold;
 	int8_t first_scan_bucket_threshold;
-	bool pnoOffload;
 	uint8_t fEnableDebugLog;
 	uint8_t max_intf_count;
 	bool enable5gEBT;

@@ -247,13 +247,6 @@ QDF_STATUS sme_release_global_lock(tSmeStruct *psSme);
 QDF_STATUS csr_process_add_sta_session_rsp(tpAniSirGlobal pMac, uint8_t *pMsg);
 QDF_STATUS csr_process_del_sta_session_rsp(tpAniSirGlobal pMac, uint8_t *pMsg);
 
-#ifdef FEATURE_WLAN_SCAN_PNO
-QDF_STATUS pmc_set_preferred_network_list(tHalHandle hHal,
-		tpSirPNOScanReq pRequest,
-		uint8_t sessionId,
-		preferred_network_found_ind_cb
-		callbackRoutine, void *callbackContext);
-#endif /* FEATURE_WLAN_SCAN_PNO */
 bool csr_roamGetConcurrencyConnectStatusForBmps(tpAniSirGlobal pMac);
 #ifdef FEATURE_WLAN_TDLS
 QDF_STATUS csr_tdls_send_mgmt_req(tHalHandle hHal, uint8_t sessionId,

@@ -305,15 +305,6 @@ enum ds_mode {
 /* Default rssi threshold defined in CFG80211 */
 #define WMA_RSSI_THOLD_DEFAULT   -300
 
-#ifdef FEATURE_WLAN_SCAN_PNO
-#define WMA_PNO_MATCH_WAKE_LOCK_TIMEOUT         (5 * 1000)     /* in msec */
-#ifdef CONFIG_SLUB_DEBUG_ON
-#define WMA_PNO_SCAN_COMPLETE_WAKE_LOCK_TIMEOUT (2 * 1000)     /* in msec */
-#else
-#define WMA_PNO_SCAN_COMPLETE_WAKE_LOCK_TIMEOUT (1 * 1000)     /* in msec */
-#endif /* CONFIG_SLUB_DEBUG_ON */
-#endif /* FEATURE_WLAN_SCAN_PNO */
-
 #define WMA_AUTH_REQ_RECV_WAKE_LOCK_TIMEOUT     (5 * 1000)     /* in msec */
 #define WMA_ASSOC_REQ_RECV_WAKE_LOCK_DURATION   (5 * 1000)     /* in msec */
 #define WMA_DEAUTH_RECV_WAKE_LOCK_DURATION      (5 * 1000)     /* in msec */
@@ -1025,10 +1016,6 @@ struct wma_txrx_node {
 	struct scan_param scan_info;
 	uint32_t type;
 	uint32_t sub_type;
-#ifdef FEATURE_WLAN_SCAN_PNO
-	bool nlo_match_evt_received;
-	bool pno_in_progress;
-#endif
 #ifdef FEATURE_WLAN_ESE
 	bool plm_in_progress;
 #endif
@@ -1439,9 +1426,6 @@ typedef struct {
 	tSetBssKeyParams ibsskey_info;
 	struct ieee80211com *dfs_ic;
 	txFailIndCallback hddTxFailCb;
-#ifdef FEATURE_WLAN_SCAN_PNO
-	qdf_wake_lock_t pno_wake_lock;
-#endif
 #ifdef FEATURE_WLAN_EXTSCAN
 	qdf_wake_lock_t extscan_wake_lock;
 #endif

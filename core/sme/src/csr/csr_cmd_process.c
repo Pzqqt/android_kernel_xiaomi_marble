@@ -52,10 +52,6 @@ QDF_STATUS csr_msg_processor(tpAniSirGlobal mac_ctx, void *msg_buf)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tSirSmeRsp *sme_rsp = (tSirSmeRsp *) msg_buf;
-#ifdef FEATURE_WLAN_SCAN_PNO
-	tSirMbMsg *msg = (tSirMbMsg *) msg_buf;
-	tCsrRoamSession *session;
-#endif
 	uint8_t session_id = sme_rsp->sessionId;
 	eCsrRoamState cur_state = mac_ctx->roam.curState[session_id];
 
@@ -65,31 +61,6 @@ QDF_STATUS csr_msg_processor(tpAniSirGlobal mac_ctx, void *msg_buf)
 		mac_trace_getcsr_roam_sub_state(
 			mac_ctx->roam.curSubState[session_id]),
 		session_id);
-
-#ifdef FEATURE_WLAN_SCAN_PNO
-	/*
-	 * PNO scan responses have to be handled irrespective of CSR roam state.
-	 * Check if PNO has been started & only then process the PNO scan result
-	 * Also note that normal scan isn't allowed when PNO scan is in progress
-	 * and so the scan responses reaching here when PNO is started must be
-	 * PNO responses. For normal scan, the PNO started flag will be false
-	 * and it'll be processed as usual based on the current CSR roam state.
-	 */
-	session = CSR_GET_SESSION(mac_ctx, session_id);
-	if (!session) {
-		sme_err("session %d not found, msgType: %d",
-			session_id, msg->type);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (eWNI_SME_SCAN_RSP == msg->type) {
-		status = csr_scanning_state_msg_processor(mac_ctx, msg_buf);
-		if (QDF_STATUS_SUCCESS != status)
-			sme_err("handling PNO scan resp 0x%X CSR state %d",
-				sme_rsp->messageType, cur_state);
-		return status;
-	}
-#endif
 
 	/* Process the message based on the state of the roaming states... */
 #if defined(ANI_RTT_DEBUG)

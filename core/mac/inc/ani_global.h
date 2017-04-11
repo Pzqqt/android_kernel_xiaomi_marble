@@ -932,9 +932,6 @@ typedef struct sAniSirGlobal {
 
 	bool imps_enabled;
 
-	/* PNO offload */
-	bool pnoOffload;
-
 	csr_readyToSuspendCallback readyToSuspendCallback;
 	void *readyToSuspendContext;
 	uint8_t lteCoexAntShare;

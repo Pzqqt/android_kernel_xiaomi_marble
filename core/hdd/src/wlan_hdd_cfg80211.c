@@ -10053,10 +10053,10 @@ static void hdd_config_sched_scan_plans_to_wiphy(struct wiphy *wiphy,
 {
 	if (config->configPNOScanSupport) {
 		wiphy->flags |= WIPHY_FLAG_SUPPORTS_SCHED_SCAN;
-		wiphy->max_sched_scan_ssids = SIR_PNO_MAX_SUPP_NETWORKS;
-		wiphy->max_match_sets = SIR_PNO_MAX_SUPP_NETWORKS;
+		wiphy->max_sched_scan_ssids = SCAN_PNO_MAX_SUPP_NETWORKS;
+		wiphy->max_match_sets = SCAN_PNO_MAX_SUPP_NETWORKS;
 		wiphy->max_sched_scan_ie_len = SIR_MAC_MAX_IE_LENGTH;
-		wiphy->max_sched_scan_plans = SIR_PNO_MAX_PLAN_REQUEST;
+		wiphy->max_sched_scan_plans = SCAN_PNO_MAX_PLAN_REQUEST;
 		if (config->max_sched_scan_plan_interval)
 			wiphy->max_sched_scan_plan_interval =
 				config->max_sched_scan_plan_interval;

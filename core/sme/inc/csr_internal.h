@@ -603,13 +603,6 @@ typedef struct tagCsrConfig {
 	uint8_t is_sta_connection_in_5gz_enabled;
 	struct roam_ext_params roam_params;
 	bool sendDeauthBeforeCon;
-#ifdef FEATURE_WLAN_SCAN_PNO
-	bool pno_channel_prediction;
-	uint8_t top_k_num_of_channels;
-	uint8_t stationary_thresh;
-	enum wmi_dwelltime_adaptive_mode pnoscan_adaptive_dwell_mode;
-	uint32_t channel_prediction_full_scan;
-#endif
 	bool early_stop_scan_enable;
 	int8_t early_stop_scan_min_threshold;
 	int8_t early_stop_scan_max_threshold;
@@ -975,9 +968,6 @@ typedef struct tagCsrRoamSession {
 #ifdef WLAN_FEATURE_11AX
 	tDot11fIEvendor_he_cap he_config;
 #endif
-#ifdef FEATURE_WLAN_SCAN_PNO
-	bool pnoStarted;
-#endif
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	csr_roam_offload_synch_params roamOffloadSynchParams;
 	uint8_t psk_pmk[SIR_ROAM_SCAN_PSK_SIZE];
@@ -1292,12 +1282,6 @@ QDF_STATUS csr_roam_copy_connect_profile(tpAniSirGlobal pMac,
 bool csr_is_set_key_allowed(tpAniSirGlobal pMac, uint32_t sessionId);
 
 void csr_set_opposite_band_channel_info(tpAniSirGlobal pMac);
-#ifdef FEATURE_WLAN_SCAN_PNO
-QDF_STATUS csr_scan_save_preferred_network_found(tpAniSirGlobal pMac,
-		tSirPrefNetworkFoundInd *
-		pPrefNetworkFoundInd);
-#endif
-
 /* Returns whether the current association is a 11r assoc or not */
 bool csr_roam_is11r_assoc(tpAniSirGlobal pMac, uint8_t sessionId);
 
