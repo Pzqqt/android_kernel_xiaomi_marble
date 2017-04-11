@@ -981,7 +981,7 @@ error:
 }
 
 /**
- * tdls_process_add_peer_rsp() - handle response for add TDLS peer
+ * tdls_add_peer_rsp() - handle response for add TDLS peer
  * @rsp: TDLS add peer response
  *
  * Return: QDF_STATUS_SUCCESS for success; other values if failed

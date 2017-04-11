@@ -21,3 +21,94 @@
  *
  * TDLS south bound interface declaration
  */
+
+#ifndef _WLAN_TDLS_TGT_API_H_
+#define _WLAN_TDLS_TGT_API_H_
+#include <wlan_tdls_public_structs.h>
+#include "../../core/src/wlan_tdls_main.h"
+
+/**
+ * tgt_tdls_set_fw_state() - invoke lmac tdls update fw
+ * @psoc: soc object
+ * @tdls_param: update tdls state parameters
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS tgt_tdls_set_fw_state(struct wlan_objmgr_psoc *psoc,
+				 struct tdls_info *tdls_param);
+
+/**
+ * tgt_tdls_set_peer_state() - invoke lmac tdls update peer state
+ * @psoc: soc object
+ * @peer_param: update tdls peer parameters
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS tgt_tdls_set_peer_state(struct wlan_objmgr_psoc *psoc,
+				   struct tdls_peer_update_state *peer_param);
+
+/**
+ * tgt_tdls_set_offchan_mode() - invoke lmac tdls set off-channel mode
+ * @psoc: soc object
+ * @param: set tdls off channel parameters
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS tgt_tdls_set_offchan_mode(struct wlan_objmgr_psoc *psoc,
+				     struct tdls_channel_switch_params *param);
+
+/**
+ * tgt_tdls_set_uapsd()- invoke lamc tdls set uapsd function
+ * @psoc: soc object
+ * @params: uapsd parameters
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS tgt_tdls_set_uapsd(struct wlan_objmgr_psoc *psoc,
+			      struct sta_uapsd_trig_params *params);
+
+/**
+ * tgt_tdls_del_peer_rsp() - handle TDLS del peer response
+ * @pmsg: sheduler msg
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS tgt_tdls_del_peer_rsp(struct scheduler_msg *pmsg);
+
+/**
+ * tgt_tdls_add_peer_rsp() - handle TDLS add peer response
+ * @pmsg: sheduler msg
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS tgt_tdls_add_peer_rsp(struct scheduler_msg *pmsg);
+
+/**
+ * tgt_tdls_register_ev_handler() - invoke lmac register tdls event handler
+ * @psoc: soc object
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code.
+ */
+QDF_STATUS tgt_tdls_register_ev_handler(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * tgt_tdls_unregister_ev_handler() - invoke lmac unregister tdls event handler
+ * @psoc: soc object
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code.
+ */
+QDF_STATUS tgt_tdls_unregister_ev_handler(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * tgt_tdls_event_handler() - The callback registered to WMI for tdls events
+ * @psoc: psoc object
+ * @info: tdls event info
+ *
+ * The callback is registered by tgt as tdls rx ops handler.
+ *
+ * Return: 0 for success or err code.
+ */
+QDF_STATUS
+tgt_tdls_event_handler(struct wlan_objmgr_psoc *psoc,
+		       struct tdls_event_info *info);
+#endif
