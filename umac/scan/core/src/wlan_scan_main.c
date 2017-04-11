@@ -54,8 +54,11 @@ QDF_STATUS wlan_scan_psoc_destroyed_notification(
 	void *scan_obj = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
+	wlan_psoc_obj_lock(psoc);
 	scan_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
-		WLAN_UMAC_COMP_SCAN);
+			WLAN_UMAC_COMP_SCAN);
+	wlan_psoc_obj_unlock(psoc);
+
 	if (!scan_obj) {
 		scm_err("Failed to detach scan in psoc ctx");
 		return QDF_STATUS_E_FAILURE;
@@ -83,7 +86,7 @@ QDF_STATUS wlan_scan_vdev_created_notification(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	/* Attach scan private date to psoc */
+	/* Attach scan private date to vdev */
 	status = wlan_objmgr_vdev_component_obj_attach(vdev,
 		WLAN_UMAC_COMP_SCAN, (void *)scan_vdev_obj,
 		QDF_STATUS_SUCCESS);
@@ -104,8 +107,11 @@ QDF_STATUS wlan_scan_vdev_destroyed_notification(
 	void *scan_vdev_obj = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
+	wlan_vdev_obj_lock(vdev);
 	scan_vdev_obj = wlan_objmgr_vdev_get_comp_private_obj(vdev,
-		WLAN_UMAC_COMP_SCAN);
+			WLAN_UMAC_COMP_SCAN);
+	wlan_vdev_obj_unlock(vdev);
+
 	if (!scan_vdev_obj) {
 		scm_err("Failed to detach scan in vdev ctx");
 		return QDF_STATUS_E_FAILURE;

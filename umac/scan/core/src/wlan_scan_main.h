@@ -355,9 +355,15 @@ struct wlan_scan_obj {
 static inline struct wlan_scan_obj *
 wlan_psoc_get_scan_obj(struct wlan_objmgr_psoc *psoc)
 {
-	return (struct wlan_scan_obj *)
+	struct wlan_scan_obj *scan_obj;
+
+	wlan_psoc_obj_lock(psoc);
+	scan_obj = (struct wlan_scan_obj *)
 		wlan_objmgr_psoc_get_comp_private_obj(psoc,
 				WLAN_UMAC_COMP_SCAN);
+	wlan_psoc_obj_unlock(psoc);
+
+	return scan_obj;
 }
 
 /**
@@ -369,7 +375,11 @@ wlan_psoc_get_scan_obj(struct wlan_objmgr_psoc *psoc)
 static inline struct wlan_scan_obj *
 wlan_pdev_get_scan_obj(struct wlan_objmgr_pdev *pdev)
 {
-	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
+	struct wlan_objmgr_psoc *psoc;
+
+	wlan_pdev_obj_lock(pdev);
+	psoc = wlan_pdev_get_psoc(pdev);
+	wlan_pdev_obj_unlock(pdev);
 
 	return wlan_psoc_get_scan_obj(psoc);
 }
@@ -383,7 +393,11 @@ wlan_pdev_get_scan_obj(struct wlan_objmgr_pdev *pdev)
 static inline struct wlan_scan_obj *
 wlan_vdev_get_scan_obj(struct wlan_objmgr_vdev *vdev)
 {
-	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
+	struct wlan_objmgr_pdev *pdev;
+
+	wlan_vdev_obj_lock(vdev);
+	pdev = wlan_vdev_get_pdev(vdev);
+	wlan_vdev_obj_unlock(vdev);
 
 	return wlan_pdev_get_scan_obj(pdev);
 }
@@ -397,13 +411,19 @@ wlan_vdev_get_scan_obj(struct wlan_objmgr_vdev *vdev)
 static inline struct scan_vdev_obj *
 wlan_get_vdev_scan_obj(struct wlan_objmgr_vdev *vdev)
 {
-	return (struct scan_vdev_obj *)
+	struct scan_vdev_obj *scan_vdev_obj;
+
+	wlan_vdev_obj_lock(vdev);
+	scan_vdev_obj = (struct scan_vdev_obj *)
 		wlan_objmgr_vdev_get_comp_private_obj(vdev,
 				WLAN_UMAC_COMP_SCAN);
+	wlan_vdev_obj_unlock(vdev);
+
+	return scan_vdev_obj;
 }
 
 /**
- * wlan_scan_vdev_get_pdev_id)() - private API to get pdev id from vdev object
+ * wlan_scan_vdev_get_pdev_id() - private API to get pdev id from vdev object
  * @vdev: vdev object
  *
  * Return: parent pdev id
@@ -411,7 +431,11 @@ wlan_get_vdev_scan_obj(struct wlan_objmgr_vdev *vdev)
 static inline uint8_t
 wlan_scan_vdev_get_pdev_id(struct wlan_objmgr_vdev *vdev)
 {
-	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
+	struct wlan_objmgr_pdev *pdev;
+
+	wlan_vdev_obj_lock(vdev);
+	pdev = wlan_vdev_get_pdev(vdev);
+	wlan_vdev_obj_unlock(vdev);
 
 	return wlan_objmgr_pdev_get_pdev_id(pdev);
 }
@@ -426,9 +450,17 @@ wlan_scan_vdev_get_pdev_id(struct wlan_objmgr_vdev *vdev)
 static inline struct pdev_scan_ev_handler*
 wlan_pdev_get_pdev_scan_ev_handlers(struct wlan_objmgr_pdev *pdev)
 {
-	uint8_t pdevid = wlan_objmgr_pdev_get_pdev_id(pdev);
-	struct wlan_scan_obj *scan = wlan_pdev_get_scan_obj(pdev);
-	struct pdev_scan_ev_handler *pdev_ev_handler =
+	uint8_t pdevid;
+	struct wlan_scan_obj *scan;
+	struct pdev_scan_ev_handler *pdev_ev_handler;
+
+	wlan_pdev_obj_lock(pdev);
+	pdevid = wlan_objmgr_pdev_get_pdev_id(pdev);
+	wlan_pdev_obj_unlock(pdev);
+
+	scan = wlan_pdev_get_scan_obj(pdev);
+
+	pdev_ev_handler =
 		&scan->global_evhandlers.pdev_ev_handlers[pdevid];
 
 	return pdev_ev_handler;
@@ -444,7 +476,11 @@ wlan_pdev_get_pdev_scan_ev_handlers(struct wlan_objmgr_pdev *pdev)
 static inline struct pdev_scan_ev_handler*
 wlan_vdev_get_pdev_scan_ev_handlers(struct wlan_objmgr_vdev *vdev)
 {
-	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
+	struct wlan_objmgr_pdev *pdev;
+
+	wlan_vdev_obj_lock(vdev);
+	pdev = wlan_vdev_get_pdev(vdev);
+	wlan_vdev_obj_unlock(vdev);
 
 	return wlan_pdev_get_pdev_scan_ev_handlers(pdev);
 }

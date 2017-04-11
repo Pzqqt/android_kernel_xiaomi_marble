@@ -44,7 +44,9 @@ wlan_vdev_get_scan_txops(struct wlan_objmgr_vdev *vdev)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
 
+	wlan_vdev_obj_lock(vdev);
 	psoc = wlan_vdev_get_psoc(vdev);
+	wlan_vdev_obj_unlock(vdev);
 
 	return wlan_psoc_get_scan_txops(psoc);
 }
@@ -54,7 +56,9 @@ wlan_vdev_get_scan_rxops(struct wlan_objmgr_vdev *vdev)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
 
+	wlan_vdev_obj_lock(vdev);
 	psoc = wlan_vdev_get_psoc(vdev);
+	wlan_vdev_obj_unlock(vdev);
 
 	return &((psoc->soc_cb.rx_ops.scan));
 }
@@ -64,10 +68,14 @@ wlan_vdev_get_scan_rxops(struct wlan_objmgr_vdev *vdev)
 QDF_STATUS tgt_scan_pno_start(struct wlan_objmgr_vdev *vdev,
 	struct pno_scan_req_params *req)
 {
-	struct wlan_lmac_if_scan_tx_ops *scan_ops = NULL;
-	struct wlan_objmgr_psoc *psoc = wlan_vdev_get_psoc(vdev);
+	struct wlan_lmac_if_scan_tx_ops *scan_ops;
+	struct wlan_objmgr_psoc *psoc;
 
-	scan_ops = wlan_vdev_get_scan_txops(vdev);
+	wlan_vdev_obj_lock(vdev);
+	psoc = wlan_vdev_get_psoc(vdev);
+	wlan_vdev_obj_unlock(vdev);
+
+	scan_ops = wlan_psoc_get_scan_txops(psoc);
 	/* invoke wmi_unified_pno_start_cmd() */
 	QDF_ASSERT(scan_ops->pno_start);
 	if (scan_ops->pno_start)
@@ -79,11 +87,14 @@ QDF_STATUS tgt_scan_pno_start(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS tgt_scan_pno_stop(struct wlan_objmgr_vdev *vdev,
 	uint8_t vdev_id)
 {
-	struct wlan_lmac_if_scan_tx_ops *scan_ops = NULL;
-	struct wlan_objmgr_psoc *psoc = wlan_vdev_get_psoc(vdev);
+	struct wlan_lmac_if_scan_tx_ops *scan_ops;
+	struct wlan_objmgr_psoc *psoc;
 
-	scan_ops = wlan_vdev_get_scan_txops(vdev);
+	wlan_vdev_obj_lock(vdev);
+	psoc = wlan_vdev_get_psoc(vdev);
+	wlan_vdev_obj_unlock(vdev);
 
+	scan_ops = wlan_psoc_get_scan_txops(psoc);
 	/* invoke wmi_unified_pno_stop_cmd() */
 	QDF_ASSERT(scan_ops->pno_stop);
 	if (scan_ops->pno_stop)
@@ -96,10 +107,15 @@ QDF_STATUS tgt_scan_pno_stop(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS
 tgt_scan_start(struct scan_start_request *req)
 {
-	struct wlan_lmac_if_scan_tx_ops *scan_ops = NULL;
-	struct wlan_objmgr_psoc *psoc = wlan_vdev_get_psoc(req->vdev);
+	struct wlan_lmac_if_scan_tx_ops *scan_ops;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_vdev *vdev = req->vdev;
 
-	scan_ops = wlan_vdev_get_scan_txops(req->vdev);
+	wlan_vdev_obj_lock(vdev);
+	psoc = wlan_vdev_get_psoc(vdev);
+	wlan_vdev_obj_unlock(vdev);
+
+	scan_ops = wlan_psoc_get_scan_txops(psoc);
 	/* invoke wmi_unified_scan_start_cmd_send() */
 	QDF_ASSERT(scan_ops->scan_start);
 	if (scan_ops->scan_start)
@@ -112,10 +128,15 @@ tgt_scan_start(struct scan_start_request *req)
 QDF_STATUS
 tgt_scan_cancel(struct scan_cancel_request *req)
 {
-	struct wlan_lmac_if_scan_tx_ops *scan_ops = NULL;
-	struct wlan_objmgr_psoc *psoc = wlan_vdev_get_psoc(req->vdev);
+	struct wlan_lmac_if_scan_tx_ops *scan_ops;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_vdev *vdev = req->vdev;
 
-	scan_ops = wlan_vdev_get_scan_txops(req->vdev);
+	wlan_vdev_obj_lock(vdev);
+	psoc = wlan_vdev_get_psoc(vdev);
+	wlan_vdev_obj_unlock(vdev);
+
+	scan_ops = wlan_psoc_get_scan_txops(psoc);
 	/* invoke wmi_unified_scan_stop_cmd_send() */
 	QDF_ASSERT(scan_ops->scan_cancel);
 	if (scan_ops->scan_cancel)
@@ -191,7 +212,6 @@ tgt_scan_event_handler(struct wlan_objmgr_psoc *psoc,
 
 	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		qdf_mem_free(event_info);
 		wlan_objmgr_vdev_release_ref(event_info->vdev, WLAN_SCAN_ID);
 	}
 
@@ -233,6 +253,16 @@ QDF_STATUS tgt_scan_bcn_probe_rx_callback(struct wlan_objmgr_psoc *psoc,
 		bcn->frm_type = MGMT_SUBTYPE_PROBE_RESP;
 	else
 		bcn->frm_type = MGMT_SUBTYPE_BEACON;
+
+	status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_SCAN_ID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		scm_info("unable to get reference");
+		qdf_mem_free(bcn->rx_data);
+		qdf_mem_free(bcn);
+		qdf_nbuf_free(buf);
+		return status;
+	}
+
 	bcn->psoc = psoc;
 	bcn->buf = buf;
 	qdf_mem_copy(bcn->rx_data, rx_param, sizeof(*rx_param));
@@ -243,6 +273,7 @@ QDF_STATUS tgt_scan_bcn_probe_rx_callback(struct wlan_objmgr_psoc *psoc,
 	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
 
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		wlan_objmgr_psoc_release_ref(psoc, WLAN_SCAN_ID);
 		scm_err("failed to post to QDF_MODULE_ID_TARGET_IF");
 		qdf_mem_free(bcn->rx_data);
 		qdf_mem_free(bcn);

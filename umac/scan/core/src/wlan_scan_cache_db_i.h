@@ -183,7 +183,9 @@ wlan_pdev_get_scan_db(struct wlan_objmgr_psoc *psoc,
 		scm_err("pdev is NULL");
 		return NULL;
 	}
+	wlan_pdev_obj_lock(pdev);
 	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+	wlan_pdev_obj_unlock(pdev);
 
 	return wlan_pdevid_get_scan_db(psoc, pdev_id);
 }

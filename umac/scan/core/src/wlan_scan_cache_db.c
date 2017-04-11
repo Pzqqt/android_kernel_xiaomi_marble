@@ -562,6 +562,8 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 	}
 
 free_nbuf:
+	if (bcn->psoc)
+		wlan_objmgr_psoc_release_ref(bcn->psoc, WLAN_SCAN_ID);
 	if (pdev)
 		wlan_objmgr_pdev_release_ref(pdev, WLAN_SCAN_ID);
 	if (bcn->rx_data)
@@ -755,7 +757,9 @@ qdf_list_t *scm_get_scan_result(struct wlan_objmgr_pdev *pdev,
 		return NULL;
 	}
 
+	wlan_pdev_obj_lock(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
+	wlan_pdev_obj_unlock(pdev);
 	if (!psoc) {
 		scm_err("psoc is NULL");
 		return NULL;
@@ -837,7 +841,9 @@ scm_iterate_scan_db(struct wlan_objmgr_pdev *pdev,
 		return QDF_STATUS_E_INVAL;
 	}
 
+	wlan_pdev_obj_lock(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
+	wlan_pdev_obj_unlock(pdev);
 	if (!psoc) {
 		scm_err("psoc is NULL");
 		return QDF_STATUS_E_INVAL;
@@ -923,7 +929,9 @@ QDF_STATUS scm_flush_results(struct wlan_objmgr_pdev *pdev,
 		return QDF_STATUS_E_INVAL;
 	}
 
+	wlan_pdev_obj_lock(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
+	wlan_pdev_obj_unlock(pdev);
 	if (!psoc) {
 		scm_err("psoc is NULL");
 		return QDF_STATUS_E_INVAL;
@@ -985,7 +993,9 @@ void scm_filter_valid_channel(struct wlan_objmgr_pdev *pdev,
 		return;
 	}
 
+	wlan_pdev_obj_lock(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
+	wlan_pdev_obj_unlock(pdev);
 	if (!psoc) {
 		scm_err("psoc is NULL");
 		return;

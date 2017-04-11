@@ -30,8 +30,8 @@
 #include <host_diag_core_event.h>
 #endif
 
-static QDF_STATUS
-scm_free_scan_request_mem(struct scan_start_request *req)
+QDF_STATUS
+scm_scan_free_scan_request_mem(struct scan_start_request *req)
 {
 	void *ie;
 
@@ -322,9 +322,10 @@ scm_scan_serialize_callback(struct wlan_serialization_command *cmd,
 
 	case WLAN_SER_CB_RELEASE_MEM_CMD:
 		/* command successfully completed.
-		 * release scan_start_request memory
+		 * Release vdev reference and free scan_start_request memory
 		 */
-		status = scm_free_scan_request_mem(req);
+		wlan_objmgr_vdev_release_ref(req->vdev, WLAN_SCAN_ID);
+		status = scm_scan_free_scan_request_mem(req);
 		break;
 
 	default:
@@ -398,13 +399,19 @@ scm_scan_start_req(struct scheduler_msg *msg)
 		scm_post_internal_scan_complete_event(req,
 				SCAN_REASON_INTERNAL_FAILURE);
 		/* cmd can't be serviced.
-		 * release scan_start_request memory.
+		 * release vdev reference and free scan_start_request memory
 		 */
-		scm_free_scan_request_mem(req);
+		wlan_objmgr_vdev_release_ref(req->vdev, WLAN_SCAN_ID);
+		scm_scan_free_scan_request_mem(req);
 		break;
 	default:
 		QDF_ASSERT(0);
 		status = QDF_STATUS_E_INVAL;
+		/* cmd can't be serviced.
+		 * release vdev reference and free scan_start_request memory
+		 */
+		wlan_objmgr_vdev_release_ref(req->vdev, WLAN_SCAN_ID);
+		scm_scan_free_scan_request_mem(req);
 		break;
 	}
 
@@ -482,6 +489,11 @@ scm_scan_cancel_req(struct scheduler_msg *msg)
 		status = QDF_STATUS_E_INVAL;
 		break;
 	}
+
+	/* Release vdev reference and scan cancel request
+	 * processing is complete
+	 */
+	wlan_objmgr_vdev_release_ref(req->vdev, WLAN_SCAN_ID);
 	/* Free cancel request memory */
 	qdf_mem_free(req);
 

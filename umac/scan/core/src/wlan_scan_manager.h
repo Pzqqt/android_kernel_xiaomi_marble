@@ -76,4 +76,13 @@ QDF_STATUS scm_scan_cancel_req(struct scheduler_msg *msg);
  * Return: QDF_STATUS
  */
 QDF_STATUS scm_scan_event_handler(struct scheduler_msg *msg);
+
+/**
+ * scm_scan_free_scan_request_mem() - Free scan request memory
+ * @req: scan_start_request object
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS scm_scan_free_scan_request_mem(struct scan_start_request *req);
+
 #endif

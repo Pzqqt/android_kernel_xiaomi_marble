@@ -77,6 +77,9 @@ target_if_scan_event_handler(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 			qdf_mem_free(event_info);
 			return -EINVAL;
 		}
+	} else {
+		qdf_mem_free(event_info);
+		return -EINVAL;
 	}
 
 	return 0;
@@ -126,6 +129,9 @@ int target_if_nlo_complete_handler(ol_scn_t scn, uint8_t *data,
 			qdf_mem_free(event_info);
 			return -EINVAL;
 		}
+	} else {
+		qdf_mem_free(event_info);
+		return -EINVAL;
 	}
 
 	return 0;
@@ -173,6 +179,9 @@ int target_if_nlo_match_event_handler(ol_scn_t scn, uint8_t *data,
 			qdf_mem_free(event_info);
 			return -EINVAL;
 		}
+	} else {
+		qdf_mem_free(event_info);
+		return -EINVAL;
 	}
 
 	return 0;
