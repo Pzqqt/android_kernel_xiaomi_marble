@@ -450,9 +450,13 @@ static QDF_STATUS p2p_process_scan_complete_evt(
 		roc_ctx->phy_mode, roc_ctx->duration,
 		roc_ctx->roc_type, roc_ctx->roc_state);
 
-	status = qdf_mc_timer_stop(&roc_ctx->roc_timer);
-	if (status != QDF_STATUS_SUCCESS)
-		p2p_err("Failed to stop roc timer");
+	if (QDF_TIMER_STATE_RUNNING ==
+		qdf_mc_timer_get_current_state(&roc_ctx->roc_timer)) {
+		status = qdf_mc_timer_stop(&roc_ctx->roc_timer);
+		if (status != QDF_STATUS_SUCCESS)
+			p2p_err("Failed to stop roc timer");
+	}
+
 	status = qdf_mc_timer_destroy(&roc_ctx->roc_timer);
 	if (status != QDF_STATUS_SUCCESS)
 		p2p_err("Failed to destroy roc timer");
@@ -486,45 +490,6 @@ static QDF_STATUS p2p_process_scan_complete_evt(
 				struct p2p_roc_context, node);
 		status = p2p_execute_roc_req(roc_ctx);
 	}
-	return status;
-}
-
-/**
- * p2p_process_scan_dequeue() - Process scan dequeue
- * @roc_ctx: remain on channel request
- *
- * This function process scan dequeued event.
- *
- * Return: QDF_STATUS_SUCCESS - in case of success
- */
-static QDF_STATUS p2p_process_scan_dequeue(
-	struct p2p_roc_context *roc_ctx)
-{
-	QDF_STATUS status;
-	struct p2p_soc_priv_obj *p2p_soc_obj = roc_ctx->p2p_soc_obj;
-
-	if (roc_ctx->roc_state != ROC_STATE_CANCEL_IN_PROG) {
-		p2p_debug("invalid roc state, %d", roc_ctx->roc_state);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	if (QDF_TIMER_STATE_RUNNING !=
-		qdf_mc_timer_get_current_state(&roc_ctx->roc_timer)) {
-		qdf_mc_timer_stop(&roc_ctx->roc_timer);
-	}
-
-	status = qdf_mc_timer_destroy(&roc_ctx->roc_timer);
-	if (status != QDF_STATUS_SUCCESS)
-		p2p_err("failed to destroy roc timer, roc ctx:%p, status:%d",
-			roc_ctx, status);
-
-	status = qdf_list_remove_node(&p2p_soc_obj->roc_q,
-				(qdf_list_node_t *)roc_ctx);
-	if (status != QDF_STATUS_SUCCESS)
-		p2p_err("failed to remove roc context, roc ctx:%p, status:%d",
-			roc_ctx, status);
-	qdf_mem_free(roc_ctx);
-
 	return status;
 }
 
@@ -582,7 +547,6 @@ QDF_STATUS p2p_cleanup_roc_queue(struct p2p_soc_priv_obj *p2p_soc_obj)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct p2p_roc_context *roc_ctx;
 	qdf_list_node_t *tmp, *pos;
-	unsigned long rc = 0;
 
 	p2p_debug("clean up idle roc request, roc queue size:%d",
 		qdf_list_size(&p2p_soc_obj->roc_q));
@@ -625,18 +589,11 @@ QDF_STATUS p2p_cleanup_roc_queue(struct p2p_soc_priv_obj *p2p_soc_obj)
 			    ROC_STATE_CANCEL_IN_PROG)
 				p2p_execute_cancel_roc_req(roc_ctx);
 
-			rc = qdf_wait_single_event(
+			status = qdf_wait_single_event(
 				&p2p_soc_obj->cancel_roc_done,
-				msecs_to_jiffies(P2P_WAIT_CANCEL_ROC));
-			if (!rc)
-				p2p_err("Timeout occurred while waiting for RoC cancellation");
+				P2P_WAIT_CANCEL_ROC);
+			p2p_err("roc cancellation done, status:%d", status);
 		}
-	}
-
-	if (status != QDF_STATUS_SUCCESS || rc) {
-		p2p_err("failed to cleanup roc queue, status:%d, rc:%ld",
-			status, rc);
-		status = QDF_STATUS_E_FAILURE;
 	}
 
 	return status;
@@ -661,7 +618,7 @@ QDF_STATUS p2p_process_roc_req(struct p2p_roc_context *roc_ctx)
 			&roc_ctx->node);
 	if (QDF_STATUS_SUCCESS != status) {
 		qdf_mem_free(roc_ctx);
-		p2p_err("Failed to insert roc req, status %d", status);
+		p2p_debug("Failed to insert roc req, status %d", status);
 		return status;
 	}
 
@@ -742,12 +699,11 @@ void p2p_scan_event_cb(struct wlan_objmgr_vdev *vdev,
 		p2p_process_ready_on_channel_evt(curr_roc_ctx);
 		break;
 	case SCAN_EVENT_TYPE_COMPLETED:
+	case SCAN_EVENT_TYPE_DEQUEUED:
+	case SCAN_EVENT_TYPE_START_FAILED:
 		p2p_process_scan_complete_evt(curr_roc_ctx);
 		break;
-	case SCAN_EVENT_TYPE_DEQUEUED:
-		p2p_process_scan_dequeue(curr_roc_ctx);
-		break;
 	default:
-		p2p_err("invalid scan event, %d", event->type);
+		p2p_debug("drop scan event, %d", event->type);
 	}
 }

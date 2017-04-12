@@ -160,20 +160,20 @@ QDF_STATUS ucfg_p2p_mgmt_tx(struct wlan_objmgr_psoc *soc,
 		mgmt_frm->wait, mgmt_frm->len, mgmt_frm->no_cck,
 		mgmt_frm->dont_wait_for_ack, mgmt_frm->off_chan);
 
-	if (soc == NULL) {
+	if (!soc) {
 		p2p_err("psoc context passed is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	p2p_soc_obj = wlan_objmgr_psoc_get_comp_private_obj(soc,
 			WLAN_UMAC_COMP_P2P);
-	if (p2p_soc_obj == NULL) {
+	if (!p2p_soc_obj) {
 		p2p_err("P2P soc context is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	tx_action = qdf_mem_malloc(sizeof(*tx_action));
-	if (tx_action == NULL) {
+	if (!tx_action) {
 		p2p_err("Failed to allocate tx action context");
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -193,7 +193,7 @@ QDF_STATUS ucfg_p2p_mgmt_tx(struct wlan_objmgr_psoc *soc,
 	tx_action->no_ack = mgmt_frm->dont_wait_for_ack;
 	tx_action->off_chan = mgmt_frm->off_chan;
 	tx_action->buf = qdf_mem_malloc(tx_action->buf_len);
-	if (tx_action->buf == NULL) {
+	if (!(tx_action->buf)) {
 		p2p_err("Failed to allocate buffer for action frame");
 		qdf_mem_free(tx_action);
 		return QDF_STATUS_E_NOMEM;
@@ -216,20 +216,20 @@ QDF_STATUS ucfg_p2p_mgmt_tx_cancel(struct wlan_objmgr_psoc *soc,
 
 	p2p_debug("soc:%p, cookie:0x%llx", soc, cookie);
 
-	if (soc == NULL) {
+	if (!soc) {
 		p2p_err("psoc context passed is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	p2p_soc_obj = wlan_objmgr_psoc_get_comp_private_obj(soc,
 			WLAN_UMAC_COMP_P2P);
-	if (p2p_soc_obj == NULL) {
+	if (!p2p_soc_obj) {
 		p2p_err("p2p soc context is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	cancel_tx = qdf_mem_malloc(sizeof(*cancel_tx));
-	if (cancel_tx == NULL) {
+	if (!cancel_tx) {
 		p2p_err("Failed to allocate cancel p2p roc");
 		return QDF_STATUS_E_NOMEM;
 	}
