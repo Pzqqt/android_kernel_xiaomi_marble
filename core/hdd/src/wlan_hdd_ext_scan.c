@@ -2309,25 +2309,27 @@ int wlan_hdd_cfg80211_extscan_set_significant_change(struct wiphy *wiphy,
 
 /**
  * hdd_remove_dsrc_channels () - remove dsrc chanels
+ * @hdd_ctx: hdd context
  * @wiphy: Pointer to wireless phy
  * @chan_list: channel list
  * @num_channels: number of channels
  *
  * Return: none
  */
-static void hdd_remove_dsrc_channels(struct wiphy *wiphy, uint32_t *chan_list,
+static void hdd_remove_dsrc_channels(hdd_context_t *hdd_ctx,
+				     struct wiphy *wiphy, uint32_t *chan_list,
 				     uint8_t *num_channels)
 {
 	uint8_t num_chan_temp = 0;
 	int i;
 
 	for (i = 0; i < *num_channels; i++) {
-		if (!cds_is_dsrc_channel(chan_list[i])) {
+		if (!WLAN_REG_IS_11P_CH(wlan_reg_freq_to_chan(hdd_ctx->hdd_pdev,
+							      chan_list[i]))) {
 			chan_list[num_chan_temp] = chan_list[i];
 			num_chan_temp++;
 		}
 	}
-
 	*num_channels = num_chan_temp;
 }
 
@@ -2461,8 +2463,7 @@ __wlan_hdd_cfg80211_extscan_get_valid_channels(struct wiphy *wiphy,
 
 	num_channels = QDF_MIN(num_channels, maxChannels);
 
-	hdd_remove_dsrc_channels(wiphy, chan_list, &num_channels);
-
+	hdd_remove_dsrc_channels(pHddCtx, wiphy, chan_list, &num_channels);
 	if ((QDF_SAP_MODE == pAdapter->device_mode) ||
 	    !strncmp(hdd_get_fwpath(), "ap", 2))
 		hdd_remove_passive_channels(wiphy, chan_list,
@@ -2776,8 +2777,10 @@ static int hdd_extscan_start_fill_bucket_channel_spec(
 							chan_list[j];
 				req_msg->buckets[bkt_index].channels[j].
 							chnlClass = 0;
-				if (CDS_IS_PASSIVE_OR_DISABLE_CH(
-					cds_freq_to_chan(chan_list[j]))) {
+				if ((wlan_reg_get_channel_state(
+					hdd_ctx->hdd_pdev,
+					cds_freq_to_chan(chan_list[j]))) !=
+						CHANNEL_STATE_ENABLE) {
 					req_msg->buckets[bkt_index].channels[j].
 								passive = 1;
 					req_msg->buckets[bkt_index].channels[j].
@@ -2914,9 +2917,12 @@ static int hdd_extscan_start_fill_bucket_channel_spec(
 				hdd_debug("WiFi band is unspecified, dwellTime:%d",
 						req_msg->buckets[bkt_index].channels[j].dwellTimeMs);
 
-				if (CDS_IS_PASSIVE_OR_DISABLE_CH(
+				if ((wlan_reg_get_channel_state(
+					hdd_ctx->hdd_pdev,
 					cds_freq_to_chan(
-						req_msg->buckets[bkt_index].channels[j].channel))) {
+					req_msg->buckets[bkt_index].
+					channels[j].channel)))
+						!= CHANNEL_STATE_ENABLE) {
 					req_msg->buckets[bkt_index].channels[j].dwellTimeMs =
 						hdd_ctx->config->extscan_passive_max_chn_time;
 				} else {
@@ -2928,9 +2934,11 @@ static int hdd_extscan_start_fill_bucket_channel_spec(
 			hdd_debug("New Dwell time %u ms",
 				req_msg->buckets[bkt_index].channels[j].dwellTimeMs);
 
-			if (CDS_IS_PASSIVE_OR_DISABLE_CH(
-						cds_freq_to_chan(
-						req_msg->buckets[bkt_index].channels[j].channel))) {
+			if ((wlan_reg_get_channel_state(hdd_ctx->hdd_pdev,
+					cds_freq_to_chan(
+					req_msg->buckets[bkt_index].
+					channels[j].channel)))
+					!= CHANNEL_STATE_ENABLE) {
 				if (min_dwell_time_passive_bucket >
 						req_msg->buckets[bkt_index].channels[j].dwellTimeMs) {
 					min_dwell_time_passive_bucket =
@@ -2966,9 +2974,11 @@ static int hdd_extscan_start_fill_bucket_channel_spec(
 			hdd_debug("Chnl spec passive %u",
 				req_msg->buckets[bkt_index].channels[j].passive);
 			/* Override scan type if required */
-			if (CDS_IS_PASSIVE_OR_DISABLE_CH(
-				cds_freq_to_chan(
-					req_msg->buckets[bkt_index].channels[j].channel))) {
+			if ((wlan_reg_get_channel_state(hdd_ctx->hdd_pdev,
+					cds_freq_to_chan(
+					req_msg->buckets[bkt_index].
+					channels[j].channel)))
+					!= CHANNEL_STATE_ENABLE) {
 				req_msg->buckets[bkt_index].channels[j].passive = true;
 			} else {
 				req_msg->buckets[bkt_index].channels[j].passive = false;
@@ -3000,7 +3010,6 @@ static int hdd_extscan_start_fill_bucket_channel_spec(
 				req_msg->max_dwell_time_active,
 				req_msg->min_dwell_time_passive,
 				req_msg->max_dwell_time_passive);
-
 	return 0;
 }
 

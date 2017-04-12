@@ -5959,7 +5959,7 @@ static int drv_cmd_tdls_off_channel(hdd_adapter_t *adapter,
 	if (ret != 1)
 		return -EINVAL;
 
-	if (CDS_IS_DFS_CH(set_value)) {
+	if (wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev, set_value)) {
 		hdd_err("DFS channel %d is passed for hdd_set_tdls_offchannel",
 		    set_value);
 		return -EINVAL;

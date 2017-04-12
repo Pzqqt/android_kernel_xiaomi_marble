@@ -62,6 +62,7 @@
 #include <wlan_objmgr_pdev_obj.h>
 #include <wlan_utility.h>
 #endif
+#include "wlan_reg_services_api.h"
 
 #define MIN_CHN_TIME_TO_FIND_GO 100
 #define MAX_CHN_TIME_TO_FIND_GO 100
@@ -1935,16 +1936,16 @@ QDF_STATUS csr_save_to_channel_power2_g_5_g(tpAniSirGlobal pMac,
 		 * Now set the inter-channel offset based on the frequency band
 		 * the channel set lies in
 		 */
-		if ((CDS_IS_CHANNEL_24GHZ(pChannelSet->firstChannel)) &&
+		if ((WLAN_REG_IS_24GHZ_CH(pChannelSet->firstChannel)) &&
 		    ((pChannelSet->firstChannel +
 		      (pChannelSet->numChannels - 1)) <=
-		     CDS_MAX_24GHZ_CHANNEL_NUMBER)) {
+		     WLAN_REG_MAX_24GHZ_CH_NUM)) {
 			pChannelSet->interChannelOffset = 1;
 			f2GHzInfoFound = true;
-		} else if ((CDS_IS_CHANNEL_5GHZ(pChannelSet->firstChannel))
+		} else if ((WLAN_REG_IS_5GHZ_CH(pChannelSet->firstChannel))
 		    && ((pChannelSet->firstChannel +
 		      ((pChannelSet->numChannels - 1) * 4)) <=
-		     CDS_MAX_5GHZ_CHANNEL_NUMBER)) {
+		     WLAN_REG_MAX_5GHZ_CH_NUM)) {
 			pChannelSet->interChannelOffset = 4;
 			f2GHzInfoFound = false;
 		} else {
@@ -2265,10 +2266,9 @@ void csr_apply_country_information(tpAniSirGlobal pMac)
 	if (pMac->scan.domainIdCurrent != domainId) {
 		sme_debug("Domain Changed Old %d, new %d",
 			pMac->scan.domainIdCurrent, domainId);
-		status = wma_set_reg_domain(pMac, domainId);
+		if (domainId >= REGDOMAIN_COUNT)
+			sme_err("fail to set regId %d", domainId);
 	}
-	if (status != QDF_STATUS_SUCCESS)
-		sme_err("fail to set regId %d", domainId);
 	pMac->scan.domainIdCurrent = domainId;
 	/* switch to active scans using this new channel list */
 	pMac->scan.curScanType = eSIR_ACTIVE_SCAN;
@@ -2297,8 +2297,8 @@ void csr_save_channel_power_for_band(tpAniSirGlobal pMac, bool fill_5f)
 	ch_info_start = chan_info;
 	for (idx = 0; idx < max_ch_idx; idx++) {
 		ch = pMac->scan.defaultPowerTable[idx].chan_num;
-		tmp_bool =  (fill_5f && CDS_IS_CHANNEL_5GHZ(ch))
-			|| (!fill_5f && CDS_IS_CHANNEL_24GHZ(ch));
+		tmp_bool = (fill_5f && WLAN_REG_IS_5GHZ_CH(ch)) ||
+			(!fill_5f && WLAN_REG_IS_24GHZ_CH(ch));
 		if (!tmp_bool)
 			continue;
 
@@ -3608,7 +3608,7 @@ csr_issue_user_scan(tpAniSirGlobal mac_ctx, tSmeCmd *cmd)
 		j = 0;
 		for (i = 0; i < len; i++) {
 			new_ch_info.ChannelList[j++] = ch_lst[i];
-			if (CDS_MAX_24GHZ_CHANNEL_NUMBER >= ch_lst[i])
+			if (WLAN_REG_MAX_24GHZ_CH_NUM >= ch_lst[i])
 				new_ch_info.ChannelList[j++] = ch_lst[i];
 		}
 		if (NULL !=
@@ -3702,13 +3702,10 @@ static void csr_scan_copy_request_valid_channels_only(tpAniSirGlobal mac_ctx,
 		     ((eCSR_SCAN_P2P_DISCOVERY == src_req->requestType) &&
 		      CSR_IS_SOCIAL_CHANNEL(
 				src_req->ChannelInfo.ChannelList[index])))) {
-			if (((src_req->skipDfsChnlInP2pSearch || skip_dfs_chnl)
-				&& (CHANNEL_STATE_DFS ==
-				cds_get_channel_state(src_req->
-							ChannelInfo.
-							ChannelList
-							[index])))
-			) {
+			if (((src_req->skipDfsChnlInP2pSearch ||
+				skip_dfs_chnl) && (CHANNEL_STATE_DFS ==
+				wlan_reg_get_channel_state(mac_ctx->pdev,
+				src_req->ChannelInfo.ChannelList[index])))) {
 				sme_debug(
 					"reqType= %s (%d), numOfChannels=%d, ignoring DFS channel %d",
 					sme_request_type_to_string(
@@ -3738,7 +3735,7 @@ static void csr_scan_copy_request_valid_channels_only(tpAniSirGlobal mac_ctx,
 					mac_ctx->roam.configParam.
 					sta_roam_policy.sap_operating_band ==
 						eCSR_BAND_24) ||
-						(CDS_IS_CHANNEL_5GHZ(
+						(WLAN_REG_IS_5GHZ_CH(
 							src_req->ChannelInfo.
 							ChannelList[index]) &&
 					mac_ctx->roam.configParam.
@@ -3809,14 +3806,13 @@ static bool csr_scan_filter_given_chnl_band(tpAniSirGlobal mac_ctx,
 	for (i = 0; i < valid_chnl_len; i++) {
 		if (valid_chnl_list[i] >= WLAN_REG_MIN_11P_CH_NUM)
 			continue;
-
-		if (CDS_IS_CHANNEL_5GHZ(channel) &&
-			CDS_IS_CHANNEL_24GHZ(valid_chnl_list[i])) {
+		if (WLAN_REG_IS_5GHZ_CH(channel) &&
+			WLAN_REG_IS_24GHZ_CH(valid_chnl_list[i])) {
 			valid_chnl_list[filter_chnl_len] =
 					valid_chnl_list[i];
 			filter_chnl_len++;
-		} else if (CDS_IS_CHANNEL_24GHZ(channel) &&
-			CDS_IS_CHANNEL_5GHZ(valid_chnl_list[i])) {
+		} else if (WLAN_REG_IS_24GHZ_CH(channel) &&
+			WLAN_REG_IS_5GHZ_CH(valid_chnl_list[i])) {
 			valid_chnl_list[filter_chnl_len] =
 					valid_chnl_list[i];
 			filter_chnl_len++;
@@ -3914,22 +3910,22 @@ QDF_STATUS csr_scan_copy_request(tpAniSirGlobal mac_ctx,
 			(src_req->requestType == eCSR_SCAN_REQUEST_11D_SCAN)) {
 			for (index = 0; index < src_req->ChannelInfo.
 						numOfChannels; index++) {
-				channel_state =
-					cds_get_channel_state(src_req->
-							ChannelInfo.
-							ChannelList[index]);
+				channel_state = wlan_reg_get_channel_state(
+						mac_ctx->pdev,
+						src_req->ChannelInfo.
+						ChannelList[index]);
 				if (src_req->ChannelInfo.ChannelList[index] <
 				    WLAN_REG_MIN_11P_CH_NUM &&
 				    ((CHANNEL_STATE_ENABLE ==
-						channel_state) ||
-					((CHANNEL_STATE_DFS == channel_state) &&
-					!skip_dfs_chnl))) {
+				      channel_state) ||
+				     ((CHANNEL_STATE_DFS == channel_state) &&
+				      !skip_dfs_chnl))) {
 					dst_req->ChannelInfo.ChannelList
-							[new_index] =
-								src_req->
-								ChannelInfo.
-								ChannelList
-								[index];
+						[new_index] =
+						src_req->
+						ChannelInfo.
+						ChannelList
+						[index];
 					new_index++;
 				}
 			}
@@ -3948,7 +3944,7 @@ QDF_STATUS csr_scan_copy_request(tpAniSirGlobal mac_ctx,
 				"Couldn't get the valid Channel List, keeping requester's list");
 			new_index = 0;
 			for (index = 0; index < src_req->ChannelInfo.
-					numOfChannels; index++) {
+				     numOfChannels; index++) {
 				if (src_req->ChannelInfo.ChannelList[index] <
 				    WLAN_REG_MIN_11P_CH_NUM) {
 					dst_req->ChannelInfo.
@@ -5969,7 +5965,7 @@ static QDF_STATUS csr_fill_bss_from_scan_entry(tpAniSirGlobal mac_ctx,
 	bss_desc->beaconInterval = scan_entry->bcn_int;
 	bss_desc->capabilityInfo = scan_entry->cap_info.value;
 
-	if (CDS_IS_CHANNEL_5GHZ(scan_entry->channel.chan_idx))
+	if (WLAN_REG_IS_5GHZ_CH(scan_entry->channel.chan_idx))
 		bss_desc->nwType = eSIR_11A_NW_TYPE;
 	else if (scan_entry->phy_mode == WLAN_PHYMODE_11B)
 		bss_desc->nwType = eSIR_11B_NW_TYPE;

@@ -12403,7 +12403,8 @@ int hdd_set_band(struct net_device *dev, u8 ui_band)
 				  band);
 			return -EINVAL;
 		}
-		wlan_hdd_cfg80211_update_band(pHddCtx->wiphy, (eCsrBand) band);
+		wlan_hdd_cfg80211_update_band(pHddCtx, pHddCtx->wiphy,
+				(eCsrBand)band);
 	}
 	return 0;
 }
@@ -12498,11 +12499,12 @@ static int wlan_hdd_set_mon_chan(hdd_adapter_t *adapter, uint32_t chan,
 		     QDF_MAC_ADDR_SIZE);
 
 	ch_params.ch_width = bandwidth;
-	cds_set_channel_params(chan, 0, &ch_params);
+	wlan_reg_set_channel_params(hdd_ctx->hdd_pdev, chan, 0, &ch_params);
 	if (ch_params.ch_width == CH_WIDTH_INVALID) {
 		hdd_err("Invalid capture channel or bandwidth for a country");
 		return -EINVAL;
 	}
+
 	status = sme_roam_channel_change_req(hal_hdl, bssid, &ch_params,
 					     &roam_profile);
 	if (status) {

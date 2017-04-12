@@ -59,6 +59,7 @@
 #include "lim_send_messages.h"
 #include "nan_datapath.h"
 #include "lim_assoc_utils.h"
+#include "wlan_reg_services_api.h"
 
 #ifdef CONVERGED_TDLS_ENABLE
 #include "wlan_tdls_tgt_api.h"
@@ -2097,8 +2098,8 @@ static void lim_process_csa_wbw_ie(tpAniSirGlobal mac_ctx,
 	if ((ap_new_ch_width == CH_WIDTH_160MHZ) &&
 			!new_ch_width_dfn) {
 		ch_params.ch_width = CH_WIDTH_160MHZ;
-		cds_set_channel_params(csa_params->channel, 0,
-				&ch_params);
+		wlan_reg_set_channel_params(mac_ctx->pdev,
+					    csa_params->channel, 0, &ch_params);
 		ap_new_ch_width = ch_params.ch_width;
 		csa_params->new_ch_freq_seg1 = ch_params.center_freq_seg0;
 		csa_params->new_ch_freq_seg2 = ch_params.center_freq_seg1;
@@ -2227,7 +2228,7 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx,
 		} else if (csa_params->ies_present_flag
 				& lim_xcsa_ie_present) {
 			chan_space =
-				cds_reg_dmn_get_chanwidth_from_opclass(
+				wlan_reg_dmn_get_chanwidth_from_opclass(
 						mac_ctx->scan.countryCodeCurrent,
 						csa_params->channel,
 						csa_params->new_op_class);
@@ -2249,8 +2250,8 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx,
 
 			ch_params.ch_width =
 				chnl_switch_info->newChanWidth;
-			cds_set_channel_params(csa_params->channel,
-					0, &ch_params);
+			wlan_reg_set_channel_params(mac_ctx->pdev,
+					csa_params->channel, 0, &ch_params);
 			chnl_switch_info->newCenterChanFreq0 =
 				ch_params.center_freq_seg0;
 			/*
@@ -2277,7 +2278,7 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx,
 		if (csa_params->ies_present_flag
 				& lim_xcsa_ie_present) {
 			chan_space =
-				cds_reg_dmn_get_chanwidth_from_opclass(
+				wlan_reg_dmn_get_chanwidth_from_opclass(
 						mac_ctx->scan.countryCodeCurrent,
 						csa_params->channel,
 						csa_params->new_op_class);
@@ -2290,7 +2291,7 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx,
 					CH_WIDTH_40MHZ;
 				ch_params.ch_width =
 					chnl_switch_info->newChanWidth;
-				cds_set_channel_params(
+				wlan_reg_set_channel_params(mac_ctx->pdev,
 						csa_params->channel,
 						0, &ch_params);
 				lim_ch_switch->ch_center_freq_seg0 =
@@ -2313,8 +2314,8 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx,
 			lim_ch_switch->state =
 				eLIM_CHANNEL_SWITCH_PRIMARY_AND_SECONDARY;
 			ch_params.ch_width = CH_WIDTH_40MHZ;
-			cds_set_channel_params(csa_params->channel,
-					0, &ch_params);
+			wlan_reg_set_channel_params(mac_ctx->pdev,
+					csa_params->channel, 0, &ch_params);
 			lim_ch_switch->ch_center_freq_seg0 =
 				ch_params.center_freq_seg0;
 			lim_ch_switch->sec_ch_offset =
@@ -2563,13 +2564,16 @@ lim_send_sme_ap_channel_switch_resp(tpAniSirGlobal pMac,
 	if (ch_width == CH_WIDTH_160MHZ) {
 		is_ch_dfs = true;
 	} else if (ch_width == CH_WIDTH_80P80MHZ) {
-		if (cds_get_channel_state(channelId) == CHANNEL_STATE_DFS ||
-		    cds_get_channel_state(ch_center_freq_seg1 -
-					SIR_80MHZ_START_CENTER_CH_DIFF) ==
+		if (wlan_reg_get_channel_state(pMac->pdev, channelId) ==
+				CHANNEL_STATE_DFS ||
+		    wlan_reg_get_channel_state(pMac->pdev,
+			    ch_center_freq_seg1 -
+			    SIR_80MHZ_START_CENTER_CH_DIFF) ==
 							CHANNEL_STATE_DFS)
 			is_ch_dfs = true;
 	} else {
-		if (cds_get_channel_state(channelId) == CHANNEL_STATE_DFS)
+		if (wlan_reg_get_channel_state(pMac->pdev, channelId) ==
+				CHANNEL_STATE_DFS)
 			is_ch_dfs = true;
 	}
 

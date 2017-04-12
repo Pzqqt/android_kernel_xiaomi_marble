@@ -64,6 +64,7 @@
 #include "qdf_mem.h"
 #include "wlan_policy_mgr_api.h"
 #include "nan_datapath.h"
+#include "wlan_reg_services_api.h"
 
 void lim_log_session_states(tpAniSirGlobal pMac);
 static void lim_process_normal_hdd_msg(tpAniSirGlobal mac_ctx,
@@ -1837,7 +1838,7 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 			 *    restart, in such a case, beacon params will be
 			 *    reset and thus will not contain Q2Q IE, by default
 			 */
-			if (cds_get_channel_state(
+			if (wlan_reg_get_channel_state(mac_ctx->pdev,
 					session_entry->currentOperChannel)
 					!= CHANNEL_STATE_DFS) {
 				beacon_params.bssIdx = session_entry->bssIdx;

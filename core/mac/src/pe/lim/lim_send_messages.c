@@ -39,6 +39,7 @@
 #include "lim_send_messages.h"
 #include "cfg_api.h"
 #include "lim_trace.h"
+#include "wlan_reg_services_api.h"
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
 #include "host_diag_core_log.h"
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
@@ -246,13 +247,16 @@ tSirRetStatus lim_send_switch_chnl_params(tpAniSirGlobal pMac,
 		pChnlParams->isDfsChannel = true;
 	} else if (ch_width == CH_WIDTH_80P80MHZ) {
 		pChnlParams->isDfsChannel = false;
-		if (cds_get_channel_state(chnlNumber) == CHANNEL_STATE_DFS ||
-		    cds_get_channel_state(pChnlParams->ch_center_freq_seg1 -
+		if (wlan_reg_get_channel_state(pMac->pdev, chnlNumber) ==
+				CHANNEL_STATE_DFS ||
+		    wlan_reg_get_channel_state(pMac->pdev,
+			    pChnlParams->ch_center_freq_seg1 -
 				SIR_80MHZ_START_CENTER_CH_DIFF) ==
 							CHANNEL_STATE_DFS)
 			pChnlParams->isDfsChannel = true;
 	} else {
-		if (cds_get_channel_state(chnlNumber) == CHANNEL_STATE_DFS)
+		if (wlan_reg_get_channel_state(pMac->pdev, chnlNumber) ==
+				CHANNEL_STATE_DFS)
 			pChnlParams->isDfsChannel = true;
 		else
 			pChnlParams->isDfsChannel = false;
@@ -853,7 +857,7 @@ tSirRetStatus lim_send_ht40_obss_scanind(tpAniSirGlobal mac_ctx,
 	ht40_obss_scanind->obss_activity_threshold =
 		session->obss_ht40_scanparam.obss_activity_threshold;
 	ht40_obss_scanind->current_operatingclass =
-		cds_reg_dmn_get_opclass_from_channel(
+		wlan_reg_dmn_get_opclass_from_channel(
 			mac_ctx->scan.countryCodeCurrent,
 			session->currentOperChannel,
 			session->ch_width);

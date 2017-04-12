@@ -414,8 +414,8 @@ static void hdd_update_channel_bw_info(hdd_context_t *hdd_ctx,
 	/* Passing CH_WIDTH_MAX will give the max bandwidth supported */
 	ch_params.ch_width = CH_WIDTH_MAX;
 
-	cds_set_channel_params(chan, sec_ch_2g, &ch_params);
-
+	wlan_reg_set_channel_params(hdd_ctx->hdd_pdev, chan,
+			sec_ch_2g, &ch_params);
 	if (ch_params.center_freq_seg0)
 		hdd_chan_info->band_center_freq1 =
 			cds_chan_to_freq(ch_params.center_freq_seg0);
@@ -512,7 +512,8 @@ static int oem_process_channel_info_req_msg(int numOfChannels, char *chanList)
 
 			hddChanInfo.info = 0;
 			if (CHANNEL_STATE_DFS ==
-			    cds_get_channel_state(chanId))
+			    wlan_reg_get_channel_state(p_hdd_ctx->hdd_pdev,
+				    chanId))
 				WMI_SET_CHANNEL_FLAG(&hddChanInfo,
 						     WMI_CHAN_FLAG_DFS);
 

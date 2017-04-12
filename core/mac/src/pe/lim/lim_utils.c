@@ -58,6 +58,7 @@
 #include "cds_reg_service.h"
 #include "nan_datapath.h"
 #include "wma.h"
+#include "wlan_reg_services_api.h"
 
 #ifdef WLAN_FEATURE_11W
 #include "wni_cfg.h"
@@ -5944,10 +5945,11 @@ bool lim_is_noa_insert_reqd(tpAniSirGlobal pMac)
 	return false;
 }
 
-bool lim_isconnected_on_dfs_channel(uint8_t currentChannel)
+bool lim_isconnected_on_dfs_channel(tpAniSirGlobal mac_ctx,
+		uint8_t currentChannel)
 {
 	if (CHANNEL_STATE_DFS ==
-	    cds_get_channel_state(currentChannel)) {
+	    wlan_reg_get_channel_state(mac_ctx->pdev, currentChannel)) {
 		return true;
 	} else {
 		return false;
@@ -6454,7 +6456,7 @@ static QDF_STATUS lim_send_ie(tpAniSirGlobal mac_ctx, uint32_t sme_session_id,
 static inline bool lim_get_rx_ldpc(tpAniSirGlobal mac_ctx, uint8_t ch)
 {
 	if (mac_ctx->roam.configParam.rxLdpcEnable &&
-		wma_is_rx_ldpc_supported_for_channel(CDS_CHANNEL_NUM(ch)))
+		wma_is_rx_ldpc_supported_for_channel(WLAN_REG_CH_NUM(ch)))
 		return true;
 	else
 		return false;

@@ -9848,7 +9848,7 @@ enum l1ss_sleep_allowed {
 #define CFG_ENABLE_REG_OFFLOAD_NAME      "enable_reg_offload"
 #define CFG_ENABLE_REG_OFFLOAD_MIN       (0)
 #define CFG_ENABLE_REG_OFFLOAD_MAX       (1)
-#define CFG_ENABLE_REG_OFFLOAD_DEFAULT   (0)
+#define CFG_ENABLE_REG_OFFLOAD_DEFAULT   (1)
 
 /*
  * <ini>

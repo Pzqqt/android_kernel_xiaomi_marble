@@ -27,9 +27,9 @@
 
 #include "ath_dfs_structs.h"
 #include <qdf_lock.h>
-#include "cds_reg_service.h"
 #include "cds_regdomain.h"
 #include "cds_ieee80211_common.h"
+#include "wlan_reg_services_api.h"
 
 #define IEEE80211_CHAN_MAX      255
 

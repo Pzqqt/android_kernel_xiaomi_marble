@@ -71,8 +71,8 @@
 #ifndef __CDS_REGDOMAIN_H
 #define __CDS_REGDOMAIN_H
 
-#define MAX_CHANNELS_PER_OPERATING_CLASS  25
-#define CDS_MAX_SUPP_OPER_CLASSES 32
+#include <reg_services_public_struct.h>
+
 #define MIN_TX_PWR_CAP    8
 #define MAX_TX_PWR_CAP    22
 
@@ -539,13 +539,5 @@ int32_t cds_fill_some_regulatory_info(struct regulatory *reg);
 int32_t cds_get_country_from_alpha2(uint8_t *alpha2);
 void cds_fill_and_send_ctl_to_fw(struct regulatory *reg);
 void cds_set_wma_dfs_region(uint8_t dfs_region);
-uint16_t cds_reg_dmn_get_opclass_from_channel(uint8_t *country,
-					      uint8_t channel,
-					      uint8_t offset);
-uint16_t cds_reg_dmn_get_chanwidth_from_opclass(uint8_t *country,
-						uint8_t channel,
-						uint8_t opclass);
-uint16_t cds_reg_dmn_set_curr_opclasses(uint8_t num_classes, uint8_t *class);
-uint16_t cds_reg_dmn_get_curr_opclasses(uint8_t *num_classes, uint8_t *class);
 
 #endif /* __CDS_REGDOMAIN_H */

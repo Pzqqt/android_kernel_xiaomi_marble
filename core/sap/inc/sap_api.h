@@ -1001,9 +1001,8 @@ QDF_STATUS wlansap_update_sap_config_add_ie(tsap_Config_t *pConfig,
 		eUpdateIEsType updateType);
 QDF_STATUS wlansap_reset_sap_config_add_ie(tsap_Config_t *pConfig,
 			eUpdateIEsType updateType);
-void wlansap_extend_to_acs_range(uint8_t *startChannelNum,
-		uint8_t *endChannelNum,
-		uint8_t *bandStartChannel,
+void wlansap_extend_to_acs_range(tHalHandle hal, uint8_t *startChannelNum,
+		uint8_t *endChannelNum, uint8_t *bandStartChannel,
 		uint8_t *bandEndChannel);
 QDF_STATUS wlansap_get_dfs_nol(void *pSapCtx, uint8_t *nol, uint32_t *nol_len);
 QDF_STATUS wlansap_set_dfs_nol(void *pSapCtx, eSapDfsNolType conf);

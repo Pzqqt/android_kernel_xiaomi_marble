@@ -61,6 +61,7 @@
 #include "sch_api.h"
 #include "sme_nan_datapath.h"
 #include "csr_api.h"
+#include "wlan_reg_services_api.h"
 
 #define LOG_SIZE 256
 
@@ -1707,7 +1708,8 @@ QDF_STATUS sme_set_plm_request(tHalHandle hHal, tpSirPlmReq pPlmReq)
 	for (count = 0; count < pPlmReq->plmNumCh; count++) {
 		ret = csr_is_supported_channel(pMac, pPlmReq->plmChList[count]);
 		if (ret && pPlmReq->plmChList[count] > 14) {
-			if (CHANNEL_STATE_DFS == cds_get_channel_state(
+			if (CHANNEL_STATE_DFS == wlan_reg_get_channel_state(
+						pMac->pdev,
 						pPlmReq->plmChList[count])) {
 				/* DFS channel is provided, no PLM bursts can be
 				 * transmitted. Ignoring these channels.
@@ -6789,7 +6791,8 @@ QDF_STATUS sme_handle_change_country_code(tpAniSirGlobal pMac, void *pMsgBuf)
 		pMac->roam.configParam.Is11dSupportEnabled =
 			pMac->roam.configParam.Is11dSupportEnabledOriginal;
 
-		qdf_status = cds_read_default_country(default_country);
+		qdf_status = wlan_reg_read_default_country(pMac->psoc,
+				default_country);
 
 		/* read the country code and use it */
 		if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -6853,11 +6856,9 @@ QDF_STATUS sme_handle_change_country_code(tpAniSirGlobal pMac, void *pMsgBuf)
 		sme_warn("Country Code unrecognized by driver");
 	}
 
-	status = wma_set_reg_domain(pMac, domainIdIoctl);
-
-	if (status != QDF_STATUS_SUCCESS) {
-		sme_err("fail to set regId %d", domainIdIoctl);
-		return status;
+	if (domainIdIoctl >= REGDOMAIN_COUNT) {
+		sme_err("Invalid regId %d", domainIdIoctl);
+		return QDF_STATUS_E_FAILURE;
 	} else {
 		/* if 11d has priority, clear currentCountryBssid & countryCode11d to get */
 		/* set again if we find AP with 11d info during scan */
@@ -7780,7 +7781,7 @@ QDF_STATUS sme_ext_change_channel(tHalHandle h_hal, uint32_t channel,
 
 	sme_err("Set Channel: %d", channel);
 	channel_state =
-		cds_get_channel_state(channel);
+		wlan_reg_get_channel_state(mac_ctx->pdev, channel);
 
 	if (CHANNEL_STATE_DISABLE == channel_state) {
 		sme_err("Invalid channel: %d", channel);
@@ -9629,14 +9630,14 @@ QDF_STATUS sme_update_tdls_peer_state(tHalHandle hHal,
 		for (i = 0; i < peerStateParams->peerCap.peerChanLen; i++) {
 			chanId = peerStateParams->peerCap.peerChan[i];
 			if (csr_roam_is_channel_valid(pMac, chanId) &&
-			    !(cds_get_channel_state(chanId) ==
+			    !(wlan_reg_get_channel_state(pMac->pdev, chanId) ==
 			      CHANNEL_STATE_DFS) &&
-			    !cds_is_dsrc_channel(cds_chan_to_freq(chanId))) {
+			    !WLAN_REG_IS_11P_CH(chanId)) {
 				peer_cap->peerChan[num].chanId = chanId;
 				peer_cap->peerChan[num].pwr =
 					csr_get_cfg_max_tx_power(pMac, chanId);
 				peer_cap->peerChan[num].dfsSet = false;
-			num++;
+				num++;
 			}
 		}
 	} else {
@@ -12377,6 +12378,7 @@ QDF_STATUS sme_get_valid_channels_by_band(tHalHandle hHal,
 	uint8_t numChannels = 0;
 	uint8_t i = 0;
 	uint32_t totValidChannels = WNI_CFG_VALID_CHANNEL_LIST_LEN;
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hHal);
 
 	if (!aValidChannels || !pNumChannels) {
 		sme_err("Output channel list/NumChannels is NULL");
@@ -12408,7 +12410,7 @@ QDF_STATUS sme_get_valid_channels_by_band(tHalHandle hHal,
 	case WIFI_BAND_BG:
 		sme_debug("WIFI_BAND_BG (2.4 GHz)");
 		for (i = 0; i < totValidChannels; i++) {
-			if (CDS_IS_CHANNEL_24GHZ(chanList[i])) {
+			if (WLAN_REG_IS_24GHZ_CH(chanList[i])) {
 				aValidChannels[numChannels++] =
 					cds_chan_to_freq(chanList[i]);
 			}
@@ -12418,8 +12420,8 @@ QDF_STATUS sme_get_valid_channels_by_band(tHalHandle hHal,
 	case WIFI_BAND_A:
 		sme_debug("WIFI_BAND_A (5 GHz without DFS)");
 		for (i = 0; i < totValidChannels; i++) {
-			if (CDS_IS_CHANNEL_5GHZ(chanList[i]) &&
-			    !CDS_IS_DFS_CH(chanList[i])) {
+			if (WLAN_REG_IS_5GHZ_CH(chanList[i]) &&
+			    !wlan_reg_is_dfs_ch(mac_ctx->pdev, chanList[i])) {
 				aValidChannels[numChannels++] =
 					cds_chan_to_freq(chanList[i]);
 			}
@@ -12429,9 +12431,9 @@ QDF_STATUS sme_get_valid_channels_by_band(tHalHandle hHal,
 	case WIFI_BAND_ABG:
 		sme_debug("WIFI_BAND_ABG (2.4 GHz + 5 GHz; no DFS)");
 		for (i = 0; i < totValidChannels; i++) {
-			if ((CDS_IS_CHANNEL_24GHZ(chanList[i]) ||
-			     CDS_IS_CHANNEL_5GHZ(chanList[i])) &&
-			    !CDS_IS_DFS_CH(chanList[i])) {
+			if ((WLAN_REG_IS_24GHZ_CH(chanList[i]) ||
+			     WLAN_REG_IS_5GHZ_CH(chanList[i])) &&
+			    !wlan_reg_is_dfs_ch(mac_ctx->pdev, chanList[i])) {
 				aValidChannels[numChannels++] =
 					cds_chan_to_freq(chanList[i]);
 			}
@@ -12441,8 +12443,8 @@ QDF_STATUS sme_get_valid_channels_by_band(tHalHandle hHal,
 	case WIFI_BAND_A_DFS_ONLY:
 		sme_debug("WIFI_BAND_A_DFS (5 GHz DFS only)");
 		for (i = 0; i < totValidChannels; i++) {
-			if (CDS_IS_CHANNEL_5GHZ(chanList[i]) &&
-			    CDS_IS_DFS_CH(chanList[i])) {
+			if (WLAN_REG_IS_5GHZ_CH(chanList[i]) &&
+			    wlan_reg_is_dfs_ch(mac_ctx->pdev, chanList[i])) {
 				aValidChannels[numChannels++] =
 					cds_chan_to_freq(chanList[i]);
 			}
@@ -12452,7 +12454,7 @@ QDF_STATUS sme_get_valid_channels_by_band(tHalHandle hHal,
 	case WIFI_BAND_A_WITH_DFS:
 		sme_debug("WIFI_BAND_A_WITH_DFS (5 GHz with DFS)");
 		for (i = 0; i < totValidChannels; i++) {
-			if (CDS_IS_CHANNEL_5GHZ(chanList[i])) {
+			if (WLAN_REG_IS_5GHZ_CH(chanList[i])) {
 				aValidChannels[numChannels++] =
 					cds_chan_to_freq(chanList[i]);
 			}
@@ -12462,8 +12464,8 @@ QDF_STATUS sme_get_valid_channels_by_band(tHalHandle hHal,
 	case WIFI_BAND_ABG_WITH_DFS:
 		sme_debug("WIFI_BAND_ABG_WITH_DFS (2.4 GHz+5 GHz with DFS)");
 		for (i = 0; i < totValidChannels; i++) {
-			if (CDS_IS_CHANNEL_24GHZ(chanList[i]) ||
-			    CDS_IS_CHANNEL_5GHZ(chanList[i])) {
+			if (WLAN_REG_IS_24GHZ_CH(chanList[i]) ||
+			    WLAN_REG_IS_5GHZ_CH(chanList[i])) {
 				aValidChannels[numChannels++] =
 					cds_chan_to_freq(chanList[i]);
 			}
@@ -14863,20 +14865,20 @@ void sme_get_opclass(tHalHandle hal, uint8_t channel, uint8_t bw_offset,
 	 * matching 20MHz, else for any BW.
 	 */
 	if (bw_offset & (1 << BW_40_OFFSET_BIT)) {
-		*opclass = cds_reg_dmn_get_opclass_from_channel(
+		*opclass = wlan_reg_dmn_get_opclass_from_channel(
 				mac_ctx->scan.countryCodeCurrent,
 				channel, BW40_LOW_PRIMARY);
 		if (!(*opclass)) {
-			*opclass = cds_reg_dmn_get_opclass_from_channel(
+			*opclass = wlan_reg_dmn_get_opclass_from_channel(
 					mac_ctx->scan.countryCodeCurrent,
 					channel, BW40_HIGH_PRIMARY);
 		}
 	} else if (bw_offset & (1 << BW_20_OFFSET_BIT)) {
-		*opclass = cds_reg_dmn_get_opclass_from_channel(
+		*opclass = wlan_reg_dmn_get_opclass_from_channel(
 				mac_ctx->scan.countryCodeCurrent,
 				channel, BW20);
 	} else {
-		*opclass = cds_reg_dmn_get_opclass_from_channel(
+		*opclass = wlan_reg_dmn_get_opclass_from_channel(
 				mac_ctx->scan.countryCodeCurrent,
 				channel, BWALL);
 	}
@@ -16140,4 +16142,43 @@ QDF_STATUS sme_rso_cmd_status_cb(tHalHandle hal,
 	mac->sme.rso_cmd_status_cb = cb;
 	sms_log(mac, LOG1, FL("Registered RSO command status callback"));
 	return status;
+}
+
+void sme_store_pdev(tHalHandle hal, struct wlan_objmgr_pdev *pdev)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	void *wma_handle;
+	QDF_STATUS status;
+
+	status = wlan_objmgr_pdev_try_get_ref(pdev, WLAN_LEGACY_SME_ID);
+	if (QDF_STATUS_SUCCESS != status) {
+		mac_ctx->pdev = NULL;
+		return;
+	}
+	mac_ctx->pdev = pdev;
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma_handle) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				"wma handle is NULL");
+		return;
+	}
+	wma_store_pdev(wma_handle, pdev);
+}
+
+void sme_clear_pdev(tHalHandle hal)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	void *wma_handle;
+
+	if (mac_ctx->pdev) {
+		wlan_objmgr_pdev_release_ref(mac_ctx->pdev, WLAN_LEGACY_SME_ID);
+		mac_ctx->pdev = NULL;
+	}
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma_handle) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				"wma handle is NULL");
+		return;
+	}
+	wma_clear_pdev(wma_handle);
 }

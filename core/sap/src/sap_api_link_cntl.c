@@ -57,6 +57,8 @@
 #include "wma.h"
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_objmgr_pdev_obj.h>
+#include "wlan_reg_services_api.h"
+
 /*----------------------------------------------------------------------------
  * Preprocessor Definitions and Constants
  * -------------------------------------------------------------------------*/
@@ -108,6 +110,7 @@ QDF_STATUS wlansap_scan_callback(tHalHandle hal_handle,
 	uint8_t operChannel = 0;
 	QDF_STATUS sap_sm_status;
 	uint32_t event;
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_handle);
 
 
 	if (NULL == hal_handle) {
@@ -197,7 +200,7 @@ QDF_STATUS wlansap_scan_callback(tHalHandle hal_handle,
 	}
 
 	sap_ctx->ch_params.ch_width = sap_ctx->acs_cfg->ch_width;
-	cds_set_channel_params(sap_ctx->channel,
+	wlan_reg_set_channel_params(mac_ctx->pdev, sap_ctx->channel,
 		sap_ctx->secondary_ch,
 		&sap_ctx->ch_params);
 #ifdef SOFTAP_CHANNEL_RANGE
@@ -246,9 +249,11 @@ void sap_config_acs_result(tHalHandle hal, ptSapContext sap_ctx,
 {
 	uint32_t channel = sap_ctx->acs_cfg->pri_ch;
 	struct ch_params ch_params = {0};
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 
 	ch_params.ch_width = sap_ctx->acs_cfg->ch_width;
-	cds_set_channel_params(channel, sec_ch, &ch_params);
+	wlan_reg_set_channel_params(mac_ctx->pdev, channel, sec_ch,
+			&ch_params);
 	sap_ctx->acs_cfg->ch_width = ch_params.ch_width;
 	if (sap_ctx->acs_cfg->ch_width > CH_WIDTH_40MHZ)
 		sap_ctx->acs_cfg->vht_seg0_center_ch =
@@ -459,14 +464,17 @@ wlansap_roam_process_ch_change_success(tpAniSirGlobal mac_ctx,
 	if (sap_ctx->ch_params.ch_width == CH_WIDTH_160MHZ) {
 		is_ch_dfs = true;
 	} else if (sap_ctx->ch_params.ch_width == CH_WIDTH_80P80MHZ) {
-		if (cds_get_channel_state(sap_ctx->channel) ==
+		if (wlan_reg_get_channel_state(mac_ctx->pdev,
+					sap_ctx->channel) ==
 						CHANNEL_STATE_DFS ||
-		    cds_get_channel_state(sap_ctx->ch_params.center_freq_seg1 -
+		    wlan_reg_get_channel_state(mac_ctx->pdev,
+			    sap_ctx->ch_params.center_freq_seg1 -
 					  SIR_80MHZ_START_CENTER_CH_DIFF) ==
 							CHANNEL_STATE_DFS)
 			is_ch_dfs = true;
 	} else {
-		if (cds_get_channel_state(sap_ctx->channel) ==
+		if (wlan_reg_get_channel_state(mac_ctx->pdev,
+					sap_ctx->channel) ==
 						CHANNEL_STATE_DFS)
 			is_ch_dfs = true;
 	}
@@ -596,8 +604,9 @@ wlansap_roam_process_dfs_chansw_update(tHalHandle hHal,
 	 * currently. For e.g. 20/40/80 MHz operation
 	 */
 	if (mac_ctx->sap.SapDfsInfo.target_channel)
-		cds_set_channel_params(mac_ctx->sap.SapDfsInfo.target_channel,
-			0, &sap_ctx->ch_params);
+		wlan_reg_set_channel_params(mac_ctx->pdev,
+				mac_ctx->sap.SapDfsInfo.target_channel,
+				0, &sap_ctx->ch_params);
 
 	/*
 	 * Fetch the number of SAP interfaces. If the number of sap Interface

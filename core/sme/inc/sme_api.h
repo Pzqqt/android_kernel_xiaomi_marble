@@ -41,7 +41,6 @@
 #include "qdf_lock.h"
 #include "qdf_types.h"
 #include "sir_api.h"
-#include "cds_reg_service.h"
 #include "p2p_api.h"
 #include "cds_regdomain.h"
 #include "sme_internal.h"
@@ -159,7 +158,7 @@ typedef struct _smeTdlsPeerStateParams {
 #define BW_40_OFFSET_BIT   1
 #define BW_80_OFFSET_BIT   2
 #define BW_160_OFFSET_BIT  3
-typedef struct sme_tdls_chan_switch_params_struct {
+typedef struct sme_tdls_chan_switch_param_struct {
 	uint32_t vdev_id;
 	tSirMacAddr peer_mac_addr;
 	uint16_t tdls_off_ch_bw_offset;/* Target Off Channel Bandwidth offset */
@@ -1470,4 +1469,20 @@ QDF_STATUS sme_register_set_connection_info_cb(tHalHandle hHal,
 				bool (*get_connection_info_cb)(uint8_t *session_id,
 				enum scan_reject_states *reason));
 
+/**
+ * sme_store_pdev() - store pdev
+ * @hal - MAC global handle
+ * @pdev - pdev ptr
+ *
+ * Return: QDF_STATUS
+ */
+void sme_store_pdev(tHalHandle hal, struct wlan_objmgr_pdev *pdev);
+
+/**
+ * sme_clear_pdev() - clear pdev
+ * @hal - MAC global handle
+ *
+ * Return: QDF_STATUS
+ */
+void sme_clear_pdev(tHalHandle hal);
 #endif /* #if !defined( __SME_API_H ) */

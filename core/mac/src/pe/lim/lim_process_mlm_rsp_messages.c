@@ -50,6 +50,7 @@
 #include "lim_types.h"
 #include "wlan_policy_mgr_api.h"
 #include "nan_datapath.h"
+#include "wlan_reg_services_api.h"
 
 #define MAX_SUPPORTED_PEERS_WEP 16
 
@@ -235,16 +236,16 @@ void lim_process_mlm_start_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 		if (psessionEntry->ch_width == CH_WIDTH_160MHZ) {
 			send_bcon_ind = false;
 		} else if (psessionEntry->ch_width == CH_WIDTH_80P80MHZ) {
-			if ((cds_get_channel_state(channelId) !=
-						CHANNEL_STATE_DFS) &&
-			    (cds_get_channel_state(psessionEntry->
-					ch_center_freq_seg1 -
+			if ((wlan_reg_get_channel_state(pMac->pdev, channelId)
+						!= CHANNEL_STATE_DFS) &&
+			    (wlan_reg_get_channel_state(pMac->pdev,
+					psessionEntry->ch_center_freq_seg1 -
 					SIR_80MHZ_START_CENTER_CH_DIFF) !=
 						CHANNEL_STATE_DFS))
 				send_bcon_ind = true;
 		} else {
-			if (cds_get_channel_state(channelId) !=
-							CHANNEL_STATE_DFS)
+			if (wlan_reg_get_channel_state(pMac->pdev, channelId)
+					!= CHANNEL_STATE_DFS)
 				send_bcon_ind = true;
 		}
 		if (send_bcon_ind) {

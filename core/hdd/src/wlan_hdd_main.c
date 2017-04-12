@@ -347,13 +347,13 @@ int hdd_validate_channel_and_bandwidth(hdd_adapter_t *adapter,
 		return -EOPNOTSUPP;
 	}
 
-	if ((!CDS_IS_CHANNEL_24GHZ(chan_number)) &&
-			(!CDS_IS_CHANNEL_5GHZ(chan_number))) {
+	if ((!WLAN_REG_IS_24GHZ_CH(chan_number)) &&
+			(!WLAN_REG_IS_5GHZ_CH(chan_number))) {
 		hdd_err("CH %d is not in 2.4GHz or 5GHz", chan_number);
 		return -EINVAL;
 	}
 
-	if (CDS_IS_CHANNEL_24GHZ(chan_number)) {
+	if (WLAN_REG_IS_24GHZ_CH(chan_number)) {
 		if (chan_bw == CH_WIDTH_80MHZ) {
 			hdd_err("BW80 not possible in 2.4GHz band");
 			return -EINVAL;
@@ -365,7 +365,7 @@ int hdd_validate_channel_and_bandwidth(hdd_adapter_t *adapter,
 		}
 	}
 
-	if (CDS_IS_CHANNEL_5GHZ(chan_number)) {
+	if (WLAN_REG_IS_5GHZ_CH(chan_number)) {
 		if ((chan_bw != CH_WIDTH_20MHZ) && (chan_number == 165) &&
 				(chan_bw != CH_WIDTH_MAX)) {
 			hdd_err("Only BW20 possible on channel 165");
@@ -1403,6 +1403,7 @@ void hdd_update_tgt_cfg(void *context, void *param)
 			QDF_BUG(0);
 		}
 	}
+
 	if (cds_cfg) {
 		if (hdd_ctx->config->enable_sub_20_channel_width !=
 			WLAN_SUB_20_CH_WIDTH_NONE && !cfg->sub_20_support) {
@@ -1562,7 +1563,8 @@ bool hdd_dfs_indicate_radar(void *context, void *param)
 			if ((QDF_SAP_MODE == adapter->device_mode ||
 			     QDF_P2P_GO_MODE == adapter->device_mode) &&
 			     (CHANNEL_STATE_DFS ==
-			     cds_get_channel_state(ap_ctx->operatingChannel))) {
+			     wlan_reg_get_channel_state(hdd_ctx->hdd_pdev,
+				     ap_ctx->operatingChannel))) {
 				WLAN_HDD_GET_AP_CTX_PTR(adapter)->
 				dfs_cac_block_tx = true;
 				hdd_debug("tx blocked for session:%d",
@@ -6662,7 +6664,8 @@ void hdd_switch_sap_channel(hdd_adapter_t *adapter, uint8_t channel)
 	hdd_debug("chan:%d width:%d",
 		channel, hdd_ap_ctx->sapConfig.ch_width_orig);
 
-	cds_set_channel_params(hdd_ap_ctx->sapConfig.channel,
+	wlan_reg_set_channel_params(hdd_ctx->hdd_pdev,
+			hdd_ap_ctx->sapConfig.channel,
 			hdd_ap_ctx->sapConfig.sec_ch,
 			&hdd_ap_ctx->sapConfig.ch_params);
 
@@ -6859,23 +6862,23 @@ void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 			continue;
 
 		for (channel_loop = CHAN_ENUM_1; channel_loop <=
-					CHAN_ENUM_184; channel_loop++) {
-			if (CDS_CHANNEL_FREQ(channel_loop) >=
-						ch_avoid_indi->avoid_freq_range[
-						range_loop].start_freq) {
+			     CHAN_ENUM_184; channel_loop++) {
+			if (WLAN_REG_CH_TO_FREQ(channel_loop) >=
+			    ch_avoid_indi->avoid_freq_range[
+				    range_loop].start_freq) {
 				start_channel_idx = channel_loop;
 				break;
 			}
 		}
 		for (channel_loop = CHAN_ENUM_1; channel_loop <=
-					CHAN_ENUM_184; channel_loop++) {
-			if (CDS_CHANNEL_FREQ(channel_loop) >=
-						ch_avoid_indi->avoid_freq_range[
-						range_loop].end_freq) {
+			     CHAN_ENUM_184; channel_loop++) {
+			if (WLAN_REG_CH_TO_FREQ(channel_loop) >=
+			    ch_avoid_indi->avoid_freq_range[
+				    range_loop].end_freq) {
 				end_channel_idx = channel_loop;
-				if (CDS_CHANNEL_FREQ(channel_loop) >
-						ch_avoid_indi->avoid_freq_range[
-						range_loop].end_freq)
+				if (WLAN_REG_CH_TO_FREQ(channel_loop) >
+				    ch_avoid_indi->avoid_freq_range[
+					    range_loop].end_freq)
 					end_channel_idx--;
 				break;
 			}
@@ -6889,7 +6892,7 @@ void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 					end_channel_idx; channel_loop++) {
 			hdd_ctxt->unsafe_channel_list[
 				hdd_ctxt->unsafe_channel_count++] =
-				CDS_CHANNEL_NUM(channel_loop);
+				WLAN_REG_CH_NUM(channel_loop);
 			if (hdd_ctxt->unsafe_channel_count >=
 							NUM_CHANNELS) {
 				hdd_warn("LTECoex unsafe ch list full");
@@ -11648,11 +11651,10 @@ void hdd_check_and_restart_sap_with_non_dfs_acs(void)
 	}
 
 	ap_adapter = hdd_get_adapter(hdd_ctx, QDF_SAP_MODE);
-	if (ap_adapter != NULL &&
-			test_bit(SOFTAP_BSS_STARTED,
-				&ap_adapter->event_flags)
-			&& CDS_IS_DFS_CH(ap_adapter->sessionCtx.ap.
-				operatingChannel)) {
+	if (ap_adapter != NULL && test_bit(SOFTAP_BSS_STARTED,
+			&ap_adapter->event_flags) &&
+			wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev,
+				ap_adapter->sessionCtx.ap.operatingChannel)) {
 
 		cds_warn("STA-AP Mode DFS not supported. Restart SAP with Non DFS ACS");
 		ap_adapter->sessionCtx.ap.sapConfig.channel =

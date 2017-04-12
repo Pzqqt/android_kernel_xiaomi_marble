@@ -69,6 +69,8 @@
 #include "dfs.h"
 #include "wma_internal.h"
 #include "wlan_tgt_def_config.h"
+#include "wlan_reg_services_api.h"
+
 /* This is temporary, should be removed */
 #include "ol_htt_api.h"
 #include <cdp_txrx_handle.h>
@@ -429,14 +431,15 @@ QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 					 WMA_ROAM_SCAN_CHANNEL_SWITCH_TIME));
 		if (!policy_mgr_is_hw_dbs_capable(wma_handle->psoc) ||
 			(policy_mgr_is_hw_dbs_capable(wma_handle->psoc) &&
-				CDS_IS_CHANNEL_5GHZ(
+				WLAN_REG_IS_5GHZ_CH(
 					policy_mgr_get_channel(wma_handle->psoc,
 						PM_SAP_MODE, NULL)))) {
 			cmd->dwell_time_passive = cmd->dwell_time_active;
 		}
 		cmd->burst_duration = 0;
-		if (CDS_IS_DFS_CH(policy_mgr_get_channel(wma_handle->psoc,
-			PM_SAP_MODE, NULL)))
+		if (wlan_reg_is_dfs_ch(wma_handle->pdev,
+				policy_mgr_get_channel(wma_handle->psoc,
+					PM_SAP_MODE, NULL)))
 			cmd->burst_duration =
 				WMA_BURST_SCAN_MAX_NUM_OFFCHANNELS *
 				scan_req->maxChannelTime;

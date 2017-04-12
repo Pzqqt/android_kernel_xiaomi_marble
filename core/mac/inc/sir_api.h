@@ -46,7 +46,6 @@ typedef struct sAniSirGlobal *tpAniSirGlobal;
 #endif
 
 #include "qdf_types.h"
-#include "cds_reg_service.h"
 #include "cds_regdomain.h"
 #include "sir_types.h"
 #include "sir_mac_prot_def.h"
@@ -56,6 +55,7 @@ typedef struct sAniSirGlobal *tpAniSirGlobal;
 #include "wmi_unified.h"
 #include "wmi_unified_param.h"
 #include "ol_txrx_htt_api.h"
+#include "wlan_reg_services_api.h"
 #include <dot11f.h>
 #include "wlan_policy_mgr_api.h"
 
@@ -3395,7 +3395,7 @@ typedef struct {
 	uint8_t supportedChannelsLen;
 	uint8_t supportedChannels[SIR_MAC_MAX_SUPP_CHANNELS];
 	uint8_t supportedOperClassesLen;
-	uint8_t supportedOperClasses[CDS_MAX_SUPP_OPER_CLASSES];
+	uint8_t supportedOperClasses[REG_MAX_SUPP_OPER_CLASSES];
 } tSirTdlsLinkEstablishReq, *tpSirTdlsLinkEstablishReq;
 
 /* TDLS Request struct SME-->PE */

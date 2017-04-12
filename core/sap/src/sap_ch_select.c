@@ -55,6 +55,7 @@
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 #include "cds_utils.h"
 #include "pld_common.h"
+#include "wlan_reg_services_api.h"
 
 /*--------------------------------------------------------------------------
    Function definitions
@@ -371,16 +372,24 @@ static void sap_process_avoid_ie(tHalHandle hal,
    RETURN VALUE
     NULL
    ============================================================================*/
-void sap_update_unsafe_channel_list(ptSapContext pSapCtx)
+void sap_update_unsafe_channel_list(tHalHandle hal, ptSapContext pSapCtx)
 {
 	uint16_t i, j;
 	uint16_t unsafe_channel_list[NUM_CHANNELS];
 	uint16_t unsafe_channel_count = 0;
+	tpAniSirGlobal mac_ctx = NULL;
+
 	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
 	if (!qdf_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_FATAL,
 			  "qdf_ctx is NULL");
+		return;
+	}
+	mac_ctx = PMAC_STRUCT(hal);
+	if (!mac_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_FATAL,
+			  "mac_ctx is NULL");
 		return;
 	}
 
@@ -393,7 +402,8 @@ void sap_update_unsafe_channel_list(ptSapContext pSapCtx)
 #if defined(FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE)
 	for (i = 0; i < NUM_CHANNELS; i++) {
 		if (pSapCtx->dfs_ch_disable == true) {
-			if (CDS_IS_DFS_CH(safe_channels[i].channelNumber)) {
+			if (wlan_reg_is_dfs_ch(mac_ctx->pdev,
+					safe_channels[i].channelNumber)) {
 				safe_channels[i].isSafe = false;
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					QDF_TRACE_LEVEL_INFO_HIGH,
@@ -612,7 +622,7 @@ static bool sap_chan_sel_init(tHalHandle halHandle,
 		}
 
 		if (include_dfs_ch == false) {
-			if (CDS_IS_DFS_CH(*pChans)) {
+			if (wlan_reg_is_dfs_ch(pMac->pdev, *pChans)) {
 				chSafe = false;
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_INFO_HIGH,
@@ -643,7 +653,7 @@ static bool sap_chan_sel_init(tHalHandle halHandle,
 		}
 
 		/* Skip DSRC channels */
-		if (cds_is_dsrc_channel(cds_chan_to_freq(*pChans)))
+		if (WLAN_REG_IS_11P_CH(*pChans))
 			continue;
 
 		if (true == chSafe) {
@@ -1740,7 +1750,8 @@ static void sap_sort_chl_weight_vht160(tSapChSelSpectInfo *pSpectInfoParams)
  *
  * Return: none
  */
-static void sap_sort_chl_weight_ht40_24_g(tSapChSelSpectInfo *pSpectInfoParams)
+static void sap_sort_chl_weight_ht40_24_g(tSapChSelSpectInfo *pSpectInfoParams,
+		v_REGDOMAIN_t domain)
 {
 	uint8_t i, j;
 	tSapSpectChInfo *pSpectInfo;
@@ -1834,7 +1845,7 @@ static void sap_sort_chl_weight_ht40_24_g(tSapChSelSpectInfo *pSpectInfoParams)
 	 * channel. Mark the channel whose combination can't satisfy 40MHZ
 	 * as max value, so that it will be sorted to the bottom.
 	 */
-	if (cds_is_fcc_regdomain())
+	if (REGDOMAIN_FCC == domain)
 		ht40plus2gendch = HT40PLUS_2G_FCC_CH_END;
 	else
 		ht40plus2gendch = HT40PLUS_2G_EURJAP_CH_END;
@@ -1979,7 +1990,8 @@ static void sap_sort_chl_weight_ht40_5_g(tSapChSelSpectInfo *pSpectInfoParams)
    ============================================================================*/
 static void sap_sort_chl_weight_all(ptSapContext pSapCtx,
 				    tSapChSelSpectInfo *pSpectInfoParams,
-				    uint32_t operatingBand)
+				    uint32_t operatingBand,
+				    v_REGDOMAIN_t domain)
 {
 	tSapSpectChInfo *pSpectCh = NULL;
 	uint32_t j = 0;
@@ -1993,11 +2005,11 @@ static void sap_sort_chl_weight_all(ptSapContext pSapCtx,
 	switch (pSapCtx->acs_cfg->ch_width) {
 	case CH_WIDTH_40MHZ:
 		if (eCSR_DOT11_MODE_11g == operatingBand)
-			sap_sort_chl_weight_ht40_24_g(pSpectInfoParams);
+			sap_sort_chl_weight_ht40_24_g(pSpectInfoParams, domain);
 		else if (eCSR_DOT11_MODE_11a == operatingBand)
 			sap_sort_chl_weight_ht40_5_g(pSpectInfoParams);
 		else {
-			sap_sort_chl_weight_ht40_24_g(pSpectInfoParams);
+			sap_sort_chl_weight_ht40_24_g(pSpectInfoParams, domain);
 			sap_sort_chl_weight_ht40_5_g(pSpectInfoParams);
 		}
 		break;
@@ -2096,6 +2108,9 @@ static uint8_t sap_select_channel_no_scan_result(tHalHandle hal,
 	uint32_t dfs_master_cap_enabled;
 	uint32_t start_ch_num = sap_ctx->acs_cfg->start_ch;
 	uint32_t end_ch_num = sap_ctx->acs_cfg->end_ch;
+	tpAniSirGlobal mac_ctx = NULL;
+
+	mac_ctx = PMAC_STRUCT(hal);
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  FL("start - end: %d - %d"), start_ch_num, end_ch_num);
@@ -2124,7 +2139,8 @@ static uint8_t sap_select_channel_no_scan_result(tHalHandle hal,
 		    (safe_channels[i].channelNumber > end_ch_num))
 			continue;
 
-		ch_type = cds_get_channel_state(safe_channels[i].channelNumber);
+		ch_type = wlan_reg_get_channel_state(mac_ctx->pdev,
+				safe_channels[i].channelNumber);
 
 		if ((ch_type == CHANNEL_STATE_DISABLE) ||
 			(ch_type == CHANNEL_STATE_INVALID))
@@ -2194,15 +2210,20 @@ uint8_t sap_select_channel(tHalHandle hal, ptSapContext sap_ctx,
 	tSapChSelSpectInfo *spect_info = &spect_info_obj;
 	uint8_t best_ch_num = SAP_CHANNEL_NOT_SELECTED;
 	uint32_t ht40plus2gendch = 0;
+	v_REGDOMAIN_t domain;
+	uint8_t country[CDS_COUNTRY_CODE_LEN];
 #ifdef SOFTAP_CHANNEL_RANGE
 	uint8_t count;
 	uint32_t start_ch_num, end_ch_num, tmp_ch_num, operating_band = 0;
 #endif
+	tpAniSirGlobal mac_ctx;
+
+	mac_ctx = PMAC_STRUCT(hal);
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "In %s, Running SAP Ch Select", __func__);
 
 #ifdef FEATURE_WLAN_CH_AVOID
-	sap_update_unsafe_channel_list(sap_ctx);
+	sap_update_unsafe_channel_list(hal, sap_ctx);
 #endif
 
 	if (NULL == scan_result) {
@@ -2230,6 +2251,8 @@ uint8_t sap_select_channel(tHalHandle hal, ptSapContext sap_ctx,
 	sap_process_avoid_ie(hal, sap_ctx, scan_result, spect_info);
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 
+	wlan_reg_read_default_country(mac_ctx->psoc, country);
+	wlan_reg_get_domain_from_country_code(&domain, country, SOURCE_DRIVER);
 #ifdef SOFTAP_CHANNEL_RANGE
 	start_ch_num = sap_ctx->acs_cfg->start_ch;
 	end_ch_num = sap_ctx->acs_cfg->end_ch;
@@ -2239,7 +2262,7 @@ uint8_t sap_select_channel(tHalHandle hal, ptSapContext sap_ctx,
 	sap_ctx->acsBestChannelInfo.weight = SAP_ACS_WEIGHT_MAX;
 
 	/* Sort the ch lst as per the computed weights, lesser weight first. */
-	sap_sort_chl_weight_all(sap_ctx, spect_info, operating_band);
+	sap_sort_chl_weight_all(sap_ctx, spect_info, operating_band, domain);
 
 	/*Loop till get the best channel in the given range */
 	for (count = 0; count < spect_info->numSpectChans; count++) {
@@ -2335,8 +2358,7 @@ uint8_t sap_select_channel(tHalHandle hal, ptSapContext sap_ctx,
 	if ((operating_band != eCSR_DOT11_MODE_11g) ||
 	    (sap_ctx->acs_cfg->ch_width != CH_WIDTH_40MHZ))
 		goto sap_ch_sel_end;
-
-	if (cds_is_fcc_regdomain())
+	if (REGDOMAIN_FCC == domain)
 		ht40plus2gendch = HT40PLUS_2G_FCC_CH_END;
 	else
 		ht40plus2gendch = HT40PLUS_2G_EURJAP_CH_END;

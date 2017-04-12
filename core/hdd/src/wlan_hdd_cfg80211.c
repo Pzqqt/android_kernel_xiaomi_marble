@@ -74,6 +74,7 @@
 #include "sap_api.h"
 #include "csr_api.h"
 #include "pld_common.h"
+
 #ifdef WLAN_UMAC_CONVERGENCE
 #include "wlan_cfg80211.h"
 #endif
@@ -1200,6 +1201,11 @@ int wlan_hdd_sap_cfg_dfs_override(hdd_adapter_t *adapter)
 	int con_ch;
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
+	if (!hdd_ctx) {
+		hdd_err("hdd context is NULL");
+		return 0;
+	}
+
 	/*
 	 * Check if AP+AP case, once primary AP chooses a DFS
 	 * channel secondary AP should always follow primary APs channel
@@ -1216,7 +1222,7 @@ int wlan_hdd_sap_cfg_dfs_override(hdd_adapter_t *adapter)
 	con_sap_config = &con_sap_adapter->sessionCtx.ap.sapConfig;
 	con_ch = con_sap_adapter->sessionCtx.ap.operatingChannel;
 
-	if (!CDS_IS_DFS_CH(con_ch))
+	if (!wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev, con_ch))
 		return 0;
 
 	hdd_debug("Only SCC AP-AP DFS Permitted (ch=%d, con_ch=%d)",
@@ -1280,20 +1286,20 @@ static void wlan_hdd_set_acs_ch_range(tsap_Config_t *sap_cfg, bool ht_enabled,
 	int i;
 	if (sap_cfg->acs_cfg.hw_mode == QCA_ACS_MODE_IEEE80211B) {
 		sap_cfg->acs_cfg.hw_mode = eCSR_DOT11_MODE_11b;
-		sap_cfg->acs_cfg.start_ch = CDS_CHANNEL_NUM(CHAN_ENUM_1);
-		sap_cfg->acs_cfg.end_ch = CDS_CHANNEL_NUM(CHAN_ENUM_14);
+		sap_cfg->acs_cfg.start_ch = WLAN_REG_CH_NUM(CHAN_ENUM_1);
+		sap_cfg->acs_cfg.end_ch = WLAN_REG_CH_NUM(CHAN_ENUM_14);
 	} else if (sap_cfg->acs_cfg.hw_mode == QCA_ACS_MODE_IEEE80211G) {
 		sap_cfg->acs_cfg.hw_mode = eCSR_DOT11_MODE_11g;
-		sap_cfg->acs_cfg.start_ch = CDS_CHANNEL_NUM(CHAN_ENUM_1);
-		sap_cfg->acs_cfg.end_ch = CDS_CHANNEL_NUM(CHAN_ENUM_13);
+		sap_cfg->acs_cfg.start_ch = WLAN_REG_CH_NUM(CHAN_ENUM_1);
+		sap_cfg->acs_cfg.end_ch = WLAN_REG_CH_NUM(CHAN_ENUM_13);
 	} else if (sap_cfg->acs_cfg.hw_mode == QCA_ACS_MODE_IEEE80211A) {
 		sap_cfg->acs_cfg.hw_mode = eCSR_DOT11_MODE_11a;
-		sap_cfg->acs_cfg.start_ch = CDS_CHANNEL_NUM(CHAN_ENUM_36);
-		sap_cfg->acs_cfg.end_ch = CDS_CHANNEL_NUM(CHAN_ENUM_165);
+		sap_cfg->acs_cfg.start_ch = WLAN_REG_CH_NUM(CHAN_ENUM_36);
+		sap_cfg->acs_cfg.end_ch = WLAN_REG_CH_NUM(CHAN_ENUM_165);
 	} else if (sap_cfg->acs_cfg.hw_mode == QCA_ACS_MODE_IEEE80211ANY) {
 		sap_cfg->acs_cfg.hw_mode = eCSR_DOT11_MODE_abg;
-		sap_cfg->acs_cfg.start_ch = CDS_CHANNEL_NUM(CHAN_ENUM_1);
-		sap_cfg->acs_cfg.end_ch = CDS_CHANNEL_NUM(CHAN_ENUM_165);
+		sap_cfg->acs_cfg.start_ch = WLAN_REG_CH_NUM(CHAN_ENUM_1);
+		sap_cfg->acs_cfg.end_ch = WLAN_REG_CH_NUM(CHAN_ENUM_165);
 	}
 
 	if (ht_enabled)
@@ -1495,9 +1501,10 @@ static int hdd_update_reg_chan_info(hdd_adapter_t *adapter,
 			bw_offset = 1 << BW_40_OFFSET_BIT;
 		else if (sap_config->acs_cfg.ch_width == CH_WIDTH_20MHZ)
 			bw_offset = 1 << BW_20_OFFSET_BIT;
-		icv->freq = cds_get_channel_freq(chan);
+		icv->freq = wlan_reg_get_channel_freq(hdd_ctx->hdd_pdev, chan);
 		icv->ieee_chan_number = chan;
-		icv->max_reg_power = cds_get_channel_reg_power(chan);
+		icv->max_reg_power = wlan_reg_get_channel_reg_power(
+				hdd_ctx->hdd_pdev, chan);
 
 		/* filling demo values */
 		icv->max_radio_power = HDD_MAX_TX_POWER;
@@ -1509,14 +1516,16 @@ static int hdd_update_reg_chan_info(hdd_adapter_t *adapter,
 					WLAN_HDD_GET_HAL_CTX(adapter),
 					chan, bw_offset);
 
-		if (CDS_IS_CHANNEL_5GHZ(chan)) {
+		if (WLAN_REG_IS_5GHZ_CH(chan)) {
 			ch_params.ch_width = sap_config->acs_cfg.ch_width;
-			cds_set_channel_params(chan, 0, &ch_params);
+			wlan_reg_set_channel_params(hdd_ctx->hdd_pdev, chan,
+					0, &ch_params);
 			icv->vht_center_freq_seg0 = ch_params.center_freq_seg0;
 			icv->vht_center_freq_seg1 = ch_params.center_freq_seg1;
 		}
+
 		icv->flags = 0;
-		icv->flags = cds_get_vendor_reg_flags(chan,
+		icv->flags = cds_get_vendor_reg_flags(hdd_ctx->hdd_pdev, chan,
 				sap_config->acs_cfg.ch_width,
 				sap_config->acs_cfg.is_ht_enabled,
 				sap_config->acs_cfg.is_vht_enabled,
@@ -3148,7 +3157,6 @@ static bool wlan_hdd_check_dfs_channel_for_adapter(hdd_context_t *hdd_ctx,
 
 	qdf_status = hdd_get_front_adapter(hdd_ctx,
 					   &adapter_node);
-
 	while ((NULL != adapter_node) &&
 	       (QDF_STATUS_SUCCESS == qdf_status)) {
 		adapter = adapter_node->pAdapter;
@@ -3165,9 +3173,9 @@ static bool wlan_hdd_check_dfs_channel_for_adapter(hdd_context_t *hdd_ctx,
 			 *  single radio. But then we can have multiple
 			 *  radios !!
 			 */
-			if (CHANNEL_STATE_DFS ==
-			    cds_get_channel_state(
-				    ap_ctx->operatingChannel)) {
+			if (CHANNEL_STATE_DFS == wlan_reg_get_channel_state(
+						hdd_ctx->hdd_pdev,
+						ap_ctx->operatingChannel)) {
 				hdd_err("SAP running on DFS channel");
 				return true;
 			}
@@ -3183,9 +3191,9 @@ static bool wlan_hdd_check_dfs_channel_for_adapter(hdd_context_t *hdd_ctx,
 			 *  do not disable scan on dfs channels
 			 */
 			if (hdd_conn_is_connected(sta_ctx) &&
-			    (CHANNEL_STATE_DFS ==
-			     cds_get_channel_state(
-				     sta_ctx->conn_info.operationChannel))) {
+				(CHANNEL_STATE_DFS ==
+				wlan_reg_get_channel_state(hdd_ctx->hdd_pdev,
+					sta_ctx->conn_info.operationChannel))) {
 				hdd_err("client connected on DFS channel");
 				return true;
 			}
@@ -7381,7 +7389,8 @@ static int wlan_hdd_validate_and_get_pre_cac_ch(hdd_context_t *hdd_ctx,
 			}
 			if (found)
 				continue;
-			if (CDS_IS_DFS_CH(channel_list[i])) {
+			if (wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev,
+						channel_list[i])) {
 				*pre_cac_chan = channel_list[i];
 				break;
 			}
@@ -7396,7 +7405,7 @@ static int wlan_hdd_validate_and_get_pre_cac_ch(hdd_context_t *hdd_ctx,
 		 * the user is expected to take care of this.
 		 */
 		if (!sme_is_channel_valid(hdd_ctx->hHal, channel) ||
-			!CDS_IS_DFS_CH(channel)) {
+			!wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev, channel)) {
 			hdd_err("Invalid channel for pre cac:%d", channel);
 			return -EINVAL;
 		}
@@ -7466,13 +7475,14 @@ int wlan_hdd_request_pre_cac(uint8_t channel)
 		return -EINVAL;
 	}
 
-	if (CDS_IS_DFS_CH(hdd_ap_ctx->operatingChannel)) {
+	if (wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev,
+				hdd_ap_ctx->operatingChannel)) {
 		hdd_err("SAP is already on DFS channel:%d",
 			hdd_ap_ctx->operatingChannel);
 		return -EINVAL;
 	}
 
-	if (!CDS_IS_CHANNEL_24GHZ(hdd_ap_ctx->operatingChannel)) {
+	if (!WLAN_REG_IS_24GHZ_CH(hdd_ap_ctx->operatingChannel)) {
 		hdd_err("pre CAC alllowed only when SAP is in 2.4GHz:%d",
 			hdd_ap_ctx->operatingChannel);
 		return -EINVAL;
@@ -8096,7 +8106,8 @@ __wlan_hdd_cfg80211_sap_configuration_set(struct wiphy *wiphy,
 		ap_ctx->sapConfig.ch_params.ch_width =
 					ap_ctx->sapConfig.ch_width_orig;
 
-		cds_set_channel_params(ap_ctx->sapConfig.channel,
+		wlan_reg_set_channel_params(hdd_ctx->hdd_pdev,
+				ap_ctx->sapConfig.channel,
 				ap_ctx->sapConfig.sec_ch,
 				&ap_ctx->sapConfig.ch_params);
 
@@ -10153,13 +10164,13 @@ hdd_context_t *hdd_cfg80211_wiphy_alloc(int priv_size)
  * This function is called from the supplicant through a
  * private ioctl to change the band value
  */
-int wlan_hdd_cfg80211_update_band(struct wiphy *wiphy, eCsrBand eBand)
+int wlan_hdd_cfg80211_update_band(hdd_context_t *hdd_ctx, struct wiphy *wiphy,
+		eCsrBand eBand)
 {
 	int i, j;
 	enum channel_state channelEnabledState;
 
 	ENTER();
-
 	for (i = 0; i < NUM_NL80211_BANDS; i++) {
 
 		if (NULL == wiphy->bands[i])
@@ -10168,9 +10179,9 @@ int wlan_hdd_cfg80211_update_band(struct wiphy *wiphy, eCsrBand eBand)
 		for (j = 0; j < wiphy->bands[i]->n_channels; j++) {
 			struct ieee80211_supported_band *band = wiphy->bands[i];
 
-			channelEnabledState =
-				cds_get_channel_state(band->channels[j].
-								 hw_value);
+			channelEnabledState = wlan_reg_get_channel_state(
+					hdd_ctx->hdd_pdev,
+					band->channels[j].hw_value);
 
 			if (NL80211_BAND_2GHZ == i && eCSR_BAND_5G == eBand) {
 				/* 5G only */
@@ -10840,7 +10851,7 @@ QDF_STATUS wlan_hdd_validate_operation_channel(hdd_adapter_t *pAdapter,
 	if (hdd_pConfig_ini->sapAllowAllChannel) {
 		/* Validate the channel */
 		for (count = CHAN_ENUM_1; count <= CHAN_ENUM_165; count++) {
-			if (channel == CDS_CHANNEL_NUM(count)) {
+			if (channel == WLAN_REG_CH_NUM(count)) {
 				fValidChannel = true;
 				break;
 			}
@@ -12766,13 +12777,14 @@ void hdd_select_cbmode(hdd_adapter_t *pAdapter, uint8_t operationChannel,
 	hdd_station_ctx_t *station_ctx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	struct hdd_mon_set_ch_info *ch_info = &station_ctx->ch_info;
 	uint8_t sec_ch = 0;
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 
 	/*
 	 * CDS api expects secondary channel for calculating
 	 * the channel params
 	 */
 	if ((ch_params->ch_width == CH_WIDTH_40MHZ) &&
-	    (CDS_IS_CHANNEL_24GHZ(operationChannel))) {
+	    (WLAN_REG_IS_24GHZ_CH(operationChannel))) {
 		if (operationChannel >= 1 && operationChannel <= 5)
 			sec_ch = operationChannel + 4;
 		else if (operationChannel >= 6 && operationChannel <= 13)
@@ -12780,7 +12792,8 @@ void hdd_select_cbmode(hdd_adapter_t *pAdapter, uint8_t operationChannel,
 	}
 
 	/* This call decides required channel bonding mode */
-	cds_set_channel_params(operationChannel, sec_ch, ch_params);
+	wlan_reg_set_channel_params(hdd_ctx->hdd_pdev, operationChannel,
+			sec_ch, ch_params);
 
 	if (QDF_GLOBAL_MONITOR_MODE == cds_get_conparam()) {
 		enum hdd_dot11_mode hdd_dot11_mode;
@@ -12879,8 +12892,9 @@ static bool wlan_hdd_handle_sap_sta_dfs_conc(hdd_adapter_t *adapter,
 	}
 
 	/* sap is on non-dfs channel, nothing to handle */
-	if (!CDS_IS_DFS_CH(hdd_ap_ctx->operatingChannel)) {
-		hdd_debug("sap is on non-dfs channel, sta is allowed");
+	if (!wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev,
+				hdd_ap_ctx->operatingChannel)) {
+		hdd_info("sap is on non-dfs channel, sta is allowed");
 		return true;
 	}
 	/*
@@ -12894,8 +12908,8 @@ static bool wlan_hdd_handle_sap_sta_dfs_conc(hdd_adapter_t *adapter,
 	 * If the STA's channel is 2.4 GHz, then set pcl with only 2.4 GHz
 	 * channels for roaming case.
 	 */
-	if (CDS_IS_CHANNEL_24GHZ(channel)) {
-		hdd_debug("sap is on dfs, new sta conn on 2.4 is allowed");
+	if (WLAN_REG_IS_24GHZ_CH(channel)) {
+		hdd_info("sap is on dfs, new sta conn on 2.4 is allowed");
 		return true;
 	}
 
@@ -12905,7 +12919,7 @@ static bool wlan_hdd_handle_sap_sta_dfs_conc(hdd_adapter_t *adapter,
 	 * to STA's channel to make scc, so we have room for 3port MCC
 	 * scenario.
 	 */
-	if ((0 == channel) || CDS_IS_DFS_CH(channel))
+	if ((0 == channel) || wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev, channel))
 		channel = policy_mgr_get_nondfs_preferred_channel(
 			hdd_ctx->hdd_psoc, PM_SAP_MODE, true);
 
@@ -13186,7 +13200,7 @@ static int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 			 * In IBSS mode while operating in 2.4 GHz,
 			 * the device supports only 20 MHz.
 			 */
-			if (CDS_IS_CHANNEL_24GHZ(operatingChannel))
+			if (WLAN_REG_IS_24GHZ_CH(operatingChannel))
 				pRoamProfile->ch_params.ch_width =
 					CH_WIDTH_20MHZ;
 			hdd_select_cbmode(pAdapter, operatingChannel,
@@ -16650,13 +16664,14 @@ static int __wlan_hdd_cfg80211_set_mon_ch(struct wiphy *wiphy,
 	 * the channel params
 	 */
 	if ((ch_params.ch_width == CH_WIDTH_40MHZ) &&
-	    (CDS_IS_CHANNEL_24GHZ(chan_num))) {
+	    (WLAN_REG_IS_24GHZ_CH(chan_num))) {
 		if (chan_num >= 1 && chan_num <= 5)
 			sec_ch = chan_num + 4;
 		else if (chan_num >= 6 && chan_num <= 13)
 			sec_ch = chan_num - 4;
 	}
-	cds_set_channel_params(chan_num, sec_ch, &ch_params);
+	wlan_reg_set_channel_params(hdd_ctx->hdd_pdev, chan_num,
+			sec_ch, &ch_params);
 	status = sme_roam_channel_change_req(hal_hdl, bssid, &ch_params,
 						 &roam_profile);
 	if (status) {
@@ -16855,8 +16870,8 @@ void wlan_hdd_init_chan_info(hdd_context_t *hdd_ctx)
 
 	num_5g = QDF_ARRAY_SIZE(hdd_channels_5_ghz);
 	for (; (index - num_2g) < num_5g; index++) {
-		if (cds_is_dsrc_channel(
-			hdd_channels_5_ghz[index - num_2g].center_freq))
+		if (WLAN_REG_IS_11P_CH(
+			    hdd_channels_5_ghz[index - num_2g].hw_value))
 			continue;
 		hdd_ctx->chan_info[index].freq =
 			hdd_channels_5_ghz[index - num_2g].center_freq;

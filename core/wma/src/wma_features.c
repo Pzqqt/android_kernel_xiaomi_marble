@@ -72,6 +72,7 @@
 #include <cdp_txrx_handle.h>
 #include "wlan_pmo_ucfg_api.h"
 #include <target_if_scan.h>
+#include "wlan_reg_services_api.h"
 
 #ifndef ARRAY_LENGTH
 #define ARRAY_LENGTH(a)         (sizeof(a) / sizeof((a)[0]))
@@ -551,9 +552,9 @@ WLAN_PHY_MODE wma_chan_phy_mode(u8 chan, enum phy_ch_width chan_width,
 				u8 dot11_mode)
 {
 	WLAN_PHY_MODE phymode = MODE_UNKNOWN;
-	uint16_t bw_val = cds_bw_value(chan_width);
+	uint16_t bw_val = wlan_reg_get_bw_value(chan_width);
 
-	if (CDS_IS_CHANNEL_24GHZ(chan)) {
+	if (WLAN_REG_IS_24GHZ_CH(chan)) {
 		if (((CH_WIDTH_5MHZ == chan_width) ||
 		     (CH_WIDTH_10MHZ == chan_width)) &&
 		    ((WNI_CFG_DOT11_MODE_11B == dot11_mode) ||
@@ -1385,13 +1386,15 @@ static int wma_unified_dfs_radar_rx_event_handler(void *handle,
 	if (IEEE80211_IS_CHAN_11AC_VHT160(chan)) {
 		is_ch_dfs = true;
 	} else if (IEEE80211_IS_CHAN_11AC_VHT80P80(chan)) {
-		if (cds_get_channel_state(chan->ic_ieee) == CHANNEL_STATE_DFS ||
-		    cds_get_channel_state(chan->ic_ieee_ext -
+		if (wlan_reg_get_channel_state(wma->pdev, chan->ic_ieee) ==
+				CHANNEL_STATE_DFS ||
+		    wlan_reg_get_channel_state(wma->pdev, chan->ic_ieee_ext -
 					  WMA_80MHZ_START_CENTER_CH_DIFF) ==
 							CHANNEL_STATE_DFS)
 			is_ch_dfs = true;
 	} else {
-		if (cds_get_channel_state(chan->ic_ieee) == CHANNEL_STATE_DFS)
+		if (wlan_reg_get_channel_state(wma->pdev, chan->ic_ieee) ==
+				CHANNEL_STATE_DFS)
 			is_ch_dfs = true;
 	}
 	if (!is_ch_dfs) {
@@ -4371,23 +4374,6 @@ QDF_STATUS wma_process_ch_avoid_update_req(tp_wma_handle wma_handle,
 	return status;
 }
 #endif /* FEATURE_WLAN_CH_AVOID */
-
-/**
- * wma_set_reg_domain() - set reg domain
- * @clientCtxt: client context
- * @regId: reg id
- *
- * Return: QDF status
- */
-QDF_STATUS wma_set_reg_domain(void *clientCtxt, v_REGDOMAIN_t regId)
-{
-	if (QDF_STATUS_SUCCESS !=
-	    cds_set_reg_domain(clientCtxt, regId))
-		return QDF_STATUS_E_INVAL;
-
-	return QDF_STATUS_SUCCESS;
-}
-
 /**
  * wma_send_regdomain_info_to_fw() - send regdomain info to fw
  * @reg_dmn: reg domain
@@ -5091,6 +5077,13 @@ struct dfs_ieee80211_channel *wma_dfs_configure_channel(
 						*req)
 {
 	uint8_t ext_channel;
+	tp_wma_handle wma;
+
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma) {
+		WMA_LOGE("%s: DFS- Invalid wma", __func__);
+		return NULL;
+	}
 
 	if (dfs_ic == NULL) {
 		WMA_LOGE("%s: DFS ic is Invalid", __func__);
@@ -5156,10 +5149,10 @@ struct dfs_ieee80211_channel *wma_dfs_configure_channel(
 
 		/* verify both the 80MHz are DFS bands or not */
 		if ((CHANNEL_STATE_DFS ==
-		     cds_get_5g_bonded_channel_state(req->chan ,
-						     CH_WIDTH_80MHZ)) &&
-		    (CHANNEL_STATE_DFS == cds_get_5g_bonded_channel_state(
-			    ext_channel - WMA_80MHZ_START_CENTER_CH_DIFF,
+		     wlan_reg_get_5g_bonded_channel_state(wma->pdev,
+			     req->chan, CH_WIDTH_80MHZ)) &&
+		    (CHANNEL_STATE_DFS == wlan_reg_get_5g_bonded_channel_state(
+			wma->pdev, ext_channel - WMA_80MHZ_START_CENTER_CH_DIFF,
 			    CH_WIDTH_80MHZ)))
 			dfs_ic->ic_curchan->ic_80p80_both_dfs = true;
 		break;
@@ -5221,8 +5214,9 @@ void wma_set_dfs_region(tp_wma_handle wma, enum dfs_reg dfs_region)
  *
  * Return: return number of channels
  */
-static int wma_get_channels(struct dfs_ieee80211_channel *ichan,
-			    struct wma_dfs_radar_channel_list *chan_list)
+static int wma_get_channels(tp_wma_handle wma,
+		struct dfs_ieee80211_channel *ichan,
+		struct wma_dfs_radar_channel_list *chan_list)
 {
 	uint8_t center_chan = cds_freq_to_chan(ichan->ic_vhtop_ch_freq_seg1);
 	int count = 0;
@@ -5250,7 +5244,8 @@ static int wma_get_channels(struct dfs_ieee80211_channel *ichan,
 		 */
 		start_channel = center_chan - WMA_160MHZ_START_CENTER_CH_DIFF;
 		for (loop = 0; loop < WMA_DFS_MAX_20M_SUB_CH; loop++) {
-			if (cds_get_channel_state(start_channel +
+			if (wlan_reg_get_channel_state(wma->pdev,
+						start_channel +
 				    (loop * WMA_NEXT_20MHZ_START_CH_DIFF)) ==
 							CHANNEL_STATE_DFS) {
 				chan_list->channels[count] = start_channel +
@@ -5375,7 +5370,7 @@ int wma_dfs_indicate_radar(struct ieee80211com *ic,
 		 * select a new channel and set CSA IE
 		 */
 		radar_event->vdev_id = ic->vdev_id;
-		wma_get_channels(ichan, &radar_event->chan_list);
+		wma_get_channels(wma, ichan, &radar_event->chan_list);
 		radar_event->dfs_radar_status = WMA_DFS_RADAR_FOUND;
 		radar_event->use_nol = ic->ic_dfs_usenol(ic);
 		wma_send_msg(wma, WMA_DFS_RADAR_IND, (void *)radar_event, 0);

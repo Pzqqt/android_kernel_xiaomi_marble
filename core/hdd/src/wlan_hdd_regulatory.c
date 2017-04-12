@@ -36,8 +36,7 @@
 #include "wlan_hdd_main.h"
 #include "wlan_hdd_regulatory.h"
 #include <wlan_reg_ucfg_api.h>
-#include <wlan_reg_services_api.h>
-#include "cds_reg_service.h"
+#include "cds_regdomain.h"
 
 #define REG_RULE_2412_2462    REG_RULE(2412-10, 2462+10, 40, 0, 20, 0)
 
@@ -59,6 +58,8 @@
 
 static bool init_by_driver;
 static bool init_by_reg_core;
+
+struct regulatory_channel reg_channels[NUM_CHANNELS];
 
 static const struct ieee80211_regdomain
 hdd_world_regrules_60_61_62 = {
@@ -129,7 +130,7 @@ hdd_world_regrules_67_68_6A_6C = {
  * Return: regulatory rules ptr
  */
 static const struct ieee80211_regdomain *hdd_get_world_regrules(
-struct regulatory *reg)
+	struct regulatory *reg)
 {
 	struct reg_dmn_pair *regpair =
 		(struct reg_dmn_pair *)reg->regpair;
@@ -462,7 +463,7 @@ static void hdd_process_regulatory_data(hdd_context_t *hdd_ctx,
 			wiphy_chan_144->flags |= IEEE80211_CHAN_DISABLED;
 	}
 
-	wlan_hdd_cfg80211_update_band(wiphy, band_capability);
+	wlan_hdd_cfg80211_update_band(hdd_ctx, wiphy, band_capability);
 }
 
 /**
@@ -531,7 +532,7 @@ static int hdd_regulatory_init_no_offload(hdd_context_t *hdd_ctx,
 
 	reg_info->cc_src = SOURCE_DRIVER;
 
-	cds_put_default_country(reg_info->alpha2);
+	wlan_reg_set_default_country(hdd_ctx->hdd_psoc, reg_info->alpha2);
 
 	cds_fill_and_send_ctl_to_fw(reg_info);
 

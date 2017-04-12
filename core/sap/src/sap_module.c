@@ -56,6 +56,7 @@
 #include "cds_regdomain.h"
 #include "wlan_policy_mgr_api.h"
 #include <wlan_scan_ucfg_api.h>
+#include "wlan_reg_services_api.h"
 
 /*----------------------------------------------------------------------------
  * Preprocessor Definitions and Constants
@@ -1653,7 +1654,7 @@ static QDF_STATUS wlansap_update_csa_channel_params(ptSapContext sap_context,
 		for (; bw >= BW20; bw--) {
 			uint16_t op_class;
 
-			op_class = cds_reg_dmn_get_opclass_from_channel(
+			op_class = wlan_reg_dmn_get_opclass_from_channel(
 					mac_ctx->scan.countryCodeCurrent,
 					channel, bw);
 			if (!op_class)
@@ -1730,9 +1731,9 @@ wlansap_set_channel_change_with_csa(void *p_cds_gctx, uint32_t targetChannel,
 	 * current regulatory domain.
 	 */
 	if (sapContext->channel != targetChannel &&
-		((cds_get_channel_state(targetChannel) ==
+		((wlan_reg_get_channel_state(pMac->pdev, targetChannel) ==
 			CHANNEL_STATE_ENABLE) ||
-		(cds_get_channel_state(targetChannel) ==
+		(wlan_reg_get_channel_state(pMac->pdev, targetChannel) ==
 			CHANNEL_STATE_DFS &&
 		!policy_mgr_is_any_mode_active_on_band_along_with_session(
 			pMac->psoc, sapContext->sessionId,
@@ -1796,7 +1797,7 @@ wlansap_set_channel_change_with_csa(void *p_cds_gctx, uint32_t targetChannel,
 							new_ch_params.ch_width,
 							target_bw);
 			}
-			cds_set_channel_params(targetChannel,
+			wlan_reg_set_channel_params(pMac->pdev, targetChannel,
 				0, &pMac->sap.SapDfsInfo.new_ch_params);
 			/*
 			 * Set the CSA IE required flag.
@@ -2693,7 +2694,8 @@ wlansap_channel_change_request(void *pSapCtx, uint8_t target_channel)
 	 * which will result in channel width changing dynamically.
 	 */
 	ch_params = &mac_ctx->sap.SapDfsInfo.new_ch_params;
-	cds_set_channel_params(target_channel, 0, ch_params);
+	wlan_reg_set_channel_params(mac_ctx->pdev, target_channel,
+			0, ch_params);
 	sapContext->ch_params.ch_width = ch_params->ch_width;
 	/* Update the channel as this will be used to
 	 * send event to supplicant
@@ -2838,8 +2840,9 @@ QDF_STATUS wlansap_dfs_send_csa_ie_request(void *pSapCtx)
 
 	pMac->sap.SapDfsInfo.new_ch_params.ch_width =
 				pMac->sap.SapDfsInfo.new_chanWidth;
-	cds_set_channel_params(pMac->sap.SapDfsInfo.target_channel,
-				0, &pMac->sap.SapDfsInfo.new_ch_params);
+	wlan_reg_set_channel_params(pMac->pdev,
+			pMac->sap.SapDfsInfo.target_channel,
+			0, &pMac->sap.SapDfsInfo.new_ch_params);
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 			"%s: chan:%d req:%d width:%d off:%d",
@@ -3270,17 +3273,23 @@ wlansap_reset_sap_config_add_ie(tsap_Config_t *pConfig, eUpdateIEsType updateTyp
 
    SIDE EFFECTS
    ============================================================================*/
-void wlansap_extend_to_acs_range(uint8_t *startChannelNum,
-				 uint8_t *endChannelNum,
-				 uint8_t *bandStartChannel,
-				 uint8_t *bandEndChannel)
+void wlansap_extend_to_acs_range(tHalHandle hal, uint8_t *startChannelNum,
+		uint8_t *endChannelNum, uint8_t *bandStartChannel,
+		uint8_t *bandEndChannel)
 {
 #define ACS_WLAN_20M_CH_INC 4
 #define ACS_2G_EXTEND ACS_WLAN_20M_CH_INC
 #define ACS_5G_EXTEND (ACS_WLAN_20M_CH_INC * 3)
 
 	uint8_t tmp_startChannelNum = 0, tmp_endChannelNum = 0;
+	tpAniSirGlobal mac_ctx;
 
+	mac_ctx = PMAC_STRUCT(hal);
+	if (!mac_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			"%s: Invalid mac_ctx", __func__);
+		return;
+	}
 	if (*startChannelNum <= 14 && *endChannelNum <= 14) {
 		*bandStartChannel = CHAN_ENUM_1;
 		*bandEndChannel = CHAN_ENUM_14;
@@ -3309,15 +3318,17 @@ void wlansap_extend_to_acs_range(uint8_t *startChannelNum,
 	* spikes in DFS specturm channels which is due to emission spill.
 	* Remove the active channels from extend ACS range for DFS only range
 	*/
-	if (CDS_IS_DFS_CH(*startChannelNum)) {
-		while (!CDS_IS_DFS_CH(tmp_startChannelNum) &&
+	if (wlan_reg_is_dfs_ch(mac_ctx->pdev, *startChannelNum)) {
+		while (!wlan_reg_is_dfs_ch(mac_ctx->pdev,
+					tmp_startChannelNum) &&
 			tmp_startChannelNum < *startChannelNum)
 			tmp_startChannelNum += ACS_WLAN_20M_CH_INC;
 
 		*startChannelNum = tmp_startChannelNum;
 	}
-	if (CDS_IS_DFS_CH(*endChannelNum)) {
-		while (!CDS_IS_DFS_CH(tmp_endChannelNum) &&
+	if (wlan_reg_is_dfs_ch(mac_ctx->pdev, *endChannelNum)) {
+		while (!wlan_reg_is_dfs_ch(mac_ctx->pdev,
+					tmp_endChannelNum) &&
 				 tmp_endChannelNum > *endChannelNum)
 			tmp_endChannelNum -= ACS_WLAN_20M_CH_INC;
 

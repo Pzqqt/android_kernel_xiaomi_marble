@@ -78,6 +78,7 @@
 #include "wma_types.h"
 #include "cds_regdomain.h"
 #include "cds_utils.h"
+#include "wlan_reg_services_api.h"
 
 #ifdef CONVERGED_TDLS_ENABLE
 #include "wlan_tdls_tgt_api.h"
@@ -227,7 +228,7 @@ static void populate_dot11f_tdls_offchannel_params(
 	uint8_t chanOffset;
 	uint8_t op_class;
 	uint8_t numClasses;
-	uint8_t classes[CDS_MAX_SUPP_OPER_CLASSES];
+	uint8_t classes[REG_MAX_SUPP_OPER_CLASSES];
 	uint32_t band;
 	uint8_t nss_2g;
 	uint8_t nss_5g;
@@ -258,14 +259,13 @@ static void populate_dot11f_tdls_offchannel_params(
 		if ((band == eCSR_BAND_5G) &&
 		    (NSS_2x2_MODE == nss_5g) &&
 		    (NSS_1x1_MODE == nss_2g) &&
-		    (true == CDS_IS_DFS_CH(validChan[i]))) {
+		    (wlan_reg_is_dfs_ch(pMac->pdev, validChan[i]))) {
 			lim_log(pMac, LOGD,
 				FL("skipping channel %d, nss_5g: %d, nss_2g: %d"),
 				validChan[i], nss_5g, nss_2g);
 			continue;
 		} else {
-			if (true == cds_is_dsrc_channel(
-				cds_chan_to_freq(validChan[i]))) {
+			if (WLAN_REG_IS_11P_CH(validChan[i])) {
 				lim_log(pMac, LOGD,
 					FL("skipping channel %d from the valid channel list"),
 					validChan[i]);
@@ -300,10 +300,9 @@ static void populate_dot11f_tdls_offchannel_params(
 	default:
 		chanOffset = BWALL;
 		break;
-
 	}
 
-	op_class = cds_reg_dmn_get_opclass_from_channel(
+	op_class = wlan_reg_dmn_get_opclass_from_channel(
 		pMac->scan.countryCodeCurrent,
 		psessionEntry->currentOperChannel,
 		chanOffset);
@@ -328,11 +327,11 @@ static void populate_dot11f_tdls_offchannel_params(
 	suppOperClasses->present = 1;
 	suppOperClasses->classes[0] = op_class;
 
-	cds_reg_dmn_get_curr_opclasses(&numClasses, &classes[0]);
+	wlan_reg_dmn_get_curr_opclasses(&numClasses, &classes[0]);
 
-	for (i = 0; i < numClasses; i++) {
+	for (i = 0; i < numClasses; i++)
 		suppOperClasses->classes[i + 1] = classes[i];
-	}
+
 	/* add one for present operating class, added in the beginning */
 	suppOperClasses->num_classes = numClasses + 1;
 

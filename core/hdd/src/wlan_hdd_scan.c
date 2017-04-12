@@ -767,7 +767,7 @@ static int __iw_set_scan(struct net_device *dev, struct iw_request_info *info,
 	if (con_sap_adapter) {
 		con_dfs_ch = con_sap_adapter->sessionCtx.ap.operatingChannel;
 
-		if (CDS_IS_DFS_CH(con_dfs_ch)) {
+		if (wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev, con_dfs_ch)) {
 			hdd_warn("##In DFS Master mode. Scan aborted");
 			return -EOPNOTSUPP;
 		}
@@ -1563,8 +1563,8 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 			con_dfs_ch =
 				con_sap_adapter->sessionCtx.ap.operatingChannel;
 
-		if (!policy_mgr_is_hw_dbs_capable(pHddCtx->hdd_psoc)
-			&& CDS_IS_DFS_CH(con_dfs_ch)) {
+		if (!policy_mgr_is_hw_dbs_capable(pHddCtx->hdd_psoc) &&
+			wlan_reg_is_dfs_ch(pHddCtx->hdd_pdev, con_dfs_ch)) {
 			/* Provide empty scan result during DFS operation since
 			 * scanning not supported during DFS. Reason is
 			 * following case:
@@ -1770,9 +1770,10 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 			goto free_mem;
 		}
 		for (i = 0, len = 0; i < request->n_channels; i++) {
-			if (cds_is_dsrc_channel(cds_chan_to_freq(
-			    request->channels[i]->hw_value)))
+			if (WLAN_REG_IS_11P_CH(
+					pHddCrequest->channels[i]->hw_value))
 				continue;
+
 			channelList[num_chan] = request->channels[i]->hw_value;
 			len += snprintf(chList + len, 5, "%d ", channelList[i]);
 			num_chan++;

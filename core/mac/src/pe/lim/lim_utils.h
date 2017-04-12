@@ -456,7 +456,8 @@ uint8_t lim_get_noa_attr_stream(tpAniSirGlobal pMac, uint8_t *pNoaStream,
 uint8_t lim_build_p2p_ie(tpAniSirGlobal pMac, uint8_t *ie, uint8_t *data,
 		uint8_t ie_len);
 bool lim_is_noa_insert_reqd(tpAniSirGlobal pMac);
-bool lim_isconnected_on_dfs_channel(uint8_t currentChannel);
+bool lim_isconnected_on_dfs_channel(tpAniSirGlobal mac_ctx,
+		uint8_t currentChannel);
 uint8_t lim_get_current_operating_channel(tpAniSirGlobal pMac);
 uint32_t lim_get_max_rate_flags(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds);
 

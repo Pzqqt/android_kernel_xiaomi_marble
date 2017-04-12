@@ -76,6 +76,7 @@
 #include "wlan_tgt_def_config.h"
 #include <cdp_txrx_handle.h>
 #include "wlan_pmo_ucfg_api.h"
+#include "wlan_reg_services_api.h"
 
 #include "wma_he.h"
 
@@ -1967,7 +1968,7 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 
 	params.band_center_freq1 = params.chan_freq;
 
-	bw_val = cds_bw_value(req->chan_width);
+	bw_val = wlan_reg_get_bw_value(req->chan_width);
 	if (20 < bw_val)
 		params.band_center_freq1 =
 			cds_chan_to_freq(req->ch_center_freq_seg0);
@@ -4704,4 +4705,28 @@ void wma_set_vdev_intrabss_fwd(tp_wma_handle wma_handle,
 	cdp_cfg_vdev_rx_set_intrabss_fwd(cds_get_context(QDF_MODULE_ID_SOC),
 				    txrx_vdev,
 				    pdis_intra_fwd->disableintrabssfwd);
+}
+
+void wma_store_pdev(void *wma_ctx, struct wlan_objmgr_pdev *pdev)
+{
+	tp_wma_handle wma = (tp_wma_handle)wma_ctx;
+	QDF_STATUS status;
+
+	status = wlan_objmgr_pdev_try_get_ref(pdev, WLAN_LEGACY_WMA_ID);
+	if (QDF_STATUS_SUCCESS != status) {
+		wma->pdev = NULL;
+		return;
+	}
+
+	wma->pdev = pdev;
+}
+
+void wma_clear_pdev(void *wma_ctx)
+{
+	tp_wma_handle wma = (tp_wma_handle)wma_ctx;
+
+	if (wma->pdev) {
+		wlan_objmgr_pdev_release_ref(wma->pdev, WLAN_LEGACY_WMA_ID);
+		wma->pdev = NULL;
+	}
 }

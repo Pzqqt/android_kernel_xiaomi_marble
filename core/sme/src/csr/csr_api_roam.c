@@ -56,6 +56,7 @@
 #include "wlan_policy_mgr_api.h"
 #include "sme_nan_datapath.h"
 #include "pld_common.h"
+#include "wlan_reg_services_api.h"
 #include <wlan_logging_sock_svc.h>
 #include "wlan_objmgr_psoc_obj.h"
 #include <wlan_scan_ucfg_api.h>
@@ -392,11 +393,9 @@ QDF_STATUS csr_set_reg_info(tHalHandle hHal, uint8_t *apCntryCode)
 			apCntryCode);
 		return status;
 	}
-	status = wma_set_reg_domain(hHal, regId);
-	if (status != QDF_STATUS_SUCCESS) {
-		sme_err("fail to get regId for country Code %.2s",
-			apCntryCode);
-		return status;
+	if (regId >= REGDOMAIN_COUNT) {
+		sme_err("Invalid regId for country Code %.2s", apCntryCode);
+		return QDF_STATUS_E_FAILURE;
 	}
 	pMac->scan.domainIdDefault = regId;
 	pMac->scan.domainIdCurrent = pMac->scan.domainIdDefault;
@@ -508,8 +507,9 @@ static void csr_roam_arrange_ch_list(tpAniSirGlobal mac_ctx,
 
 	/* Fist copy Non-DFS 5g channels */
 	for (i = 0; i < num_channel; i++) {
-		if (CDS_IS_CHANNEL_5GHZ(chan_list[i].chanId) &&
-			!CDS_IS_DFS_CH(chan_list[i].chanId)) {
+		if (WLAN_REG_IS_5GHZ_CH(chan_list[i].chanId) &&
+			!wlan_reg_is_dfs_ch(mac_ctx->pdev,
+				chan_list[i].chanId)) {
 			qdf_mem_copy(&tmp_list[j++],
 				&chan_list[i], sizeof(tSirUpdateChanParam));
 			chan_list[i].chanId = INVALID_CHANNEL_ID;
@@ -518,7 +518,7 @@ static void csr_roam_arrange_ch_list(tpAniSirGlobal mac_ctx,
 	if (prefer_dfs) {
 		/* next copy DFS channels (remaining channels in 5G) */
 		for (i = 0; i < num_channel; i++) {
-			if (CDS_IS_CHANNEL_5GHZ(chan_list[i].chanId)) {
+			if (WLAN_REG_IS_5GHZ_CH(chan_list[i].chanId)) {
 				qdf_mem_copy(&tmp_list[j++], &chan_list[i],
 					sizeof(tSirUpdateChanParam));
 				chan_list[i].chanId = INVALID_CHANNEL_ID;
@@ -527,7 +527,7 @@ static void csr_roam_arrange_ch_list(tpAniSirGlobal mac_ctx,
 	} else {
 		/* next copy 2G channels */
 		for (i = 0; i < num_channel; i++) {
-			if (CDS_IS_CHANNEL_24GHZ(chan_list[i].chanId)) {
+			if (WLAN_REG_IS_24GHZ_CH(chan_list[i].chanId)) {
 				qdf_mem_copy(&tmp_list[j++], &chan_list[i],
 					sizeof(tSirUpdateChanParam));
 				chan_list[i].chanId = INVALID_CHANNEL_ID;
@@ -679,12 +679,12 @@ scan_list_sort_error:
 static QDF_STATUS csr_emu_chan_req(uint32_t channel)
 {
 	int i;
-	if (CDS_IS_CHANNEL_24GHZ(channel)) {
+	if (WLAN_REG_IS_24GHZ_CH(channel)) {
 		for (i = 0; i < QDF_ARRAY_SIZE(csr_start_ibss_channels24); i++) {
 			if (csr_start_ibss_channels24[i] == channel)
 				return QDF_STATUS_SUCCESS;
 		}
-	} else if (CDS_IS_CHANNEL_5GHZ(channel)) {
+	} else if (WLAN_REG_IS_5GHZ_CH(channel)) {
 		for (i = 0; i < QDF_ARRAY_SIZE(csr_start_ibss_channels50); i++) {
 			if (csr_start_ibss_channels50[i] == channel)
 				return QDF_STATUS_SUCCESS;
@@ -727,7 +727,8 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 
 	if (CSR_IS_5G_BAND_ONLY(pMac)) {
 		for (i = 0; i < MAX_SOCIAL_CHANNELS; i++) {
-			if (cds_get_channel_state(social_channel[i])
+			if (wlan_reg_get_channel_state(pMac->pdev,
+						social_channel[i])
 			    == CHANNEL_STATE_ENABLE)
 				numChan++;
 		}
@@ -758,8 +759,7 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 
 		channel = pScan->base_channels.channelList[i];
 
-		channel_state =
-			cds_get_channel_state(
+		channel_state = wlan_reg_get_channel_state(pMac->pdev,
 				pScan->base_channels.channelList[i]);
 		if ((CHANNEL_STATE_ENABLE == channel_state) ||
 		    pMac->scan.fEnableDFSChnlScan) {
@@ -783,10 +783,10 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 					}
 				}
 				if ((is_unsafe_chan) &&
-				    ((CDS_IS_CHANNEL_24GHZ(channel) &&
+				    ((WLAN_REG_IS_24GHZ_CH(channel) &&
 				      roam_policy->sap_operating_band ==
 					eCSR_BAND_24) ||
-					(CDS_IS_CHANNEL_5GHZ(channel) &&
+					(WLAN_REG_IS_5GHZ_CH(channel) &&
 					 roam_policy->sap_operating_band ==
 					eCSR_BAND_5G))) {
 					QDF_TRACE(QDF_MODULE_ID_SME,
@@ -846,7 +846,8 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 
 	if (CSR_IS_5G_BAND_ONLY(pMac)) {
 		for (j = 0; j < MAX_SOCIAL_CHANNELS; j++) {
-			if (cds_get_channel_state(social_channel[j])
+			if (wlan_reg_get_channel_state(pMac->pdev,
+						social_channel[j])
 			    != CHANNEL_STATE_ENABLE)
 				continue;
 			pChanList->chanParam[num_channel].chanId =
@@ -1635,7 +1636,7 @@ QDF_STATUS csr_create_roam_scan_channel_list(tpAniSirGlobal pMac,
 	}
 	if (eCSR_BAND_24 == eBand) {
 		for (i = 0; i < inNumChannels; i++) {
-			if (CDS_IS_CHANNEL_24GHZ(inPtr[i])
+			if (WLAN_REG_IS_24GHZ_CH(inPtr[i])
 			    && csr_roam_is_channel_valid(pMac, inPtr[i])) {
 				ChannelList[outNumChannels++] = inPtr[i];
 			}
@@ -1643,16 +1644,16 @@ QDF_STATUS csr_create_roam_scan_channel_list(tpAniSirGlobal pMac,
 	} else if (eCSR_BAND_5G == eBand) {
 		for (i = 0; i < inNumChannels; i++) {
 			/* Add 5G Non-DFS channel */
-			if (CDS_IS_CHANNEL_5GHZ(inPtr[i]) &&
+			if (WLAN_REG_IS_5GHZ_CH(inPtr[i]) &&
 			    csr_roam_is_channel_valid(pMac, inPtr[i]) &&
-			    !CDS_IS_DFS_CH(inPtr[i])) {
+			    !wlan_reg_is_dfs_ch(pMac->pdev, inPtr[i])) {
 				ChannelList[outNumChannels++] = inPtr[i];
 			}
 		}
 	} else if (eCSR_BAND_ALL == eBand) {
 		for (i = 0; i < inNumChannels; i++) {
 			if (csr_roam_is_channel_valid(pMac, inPtr[i]) &&
-			    !CDS_IS_DFS_CH(inPtr[i])) {
+			    !wlan_reg_is_dfs_ch(pMac->pdev, inPtr[i])) {
 				ChannelList[outNumChannels++] = inPtr[i];
 			}
 		}
@@ -1898,7 +1899,7 @@ csr_fetch_ch_lst_from_received_list(tpAniSirGlobal mac_ctx,
 		if ((!mac_ctx->roam.configParam.allowDFSChannelRoam ||
 		    (mac_ctx->roam.configParam.sta_roam_policy.dfs_mode ==
 			 CSR_STA_ROAM_POLICY_DFS_DISABLED)) &&
-		     (CDS_IS_DFS_CH(*ch_lst))) {
+		     (wlan_reg_is_dfs_ch(mac_ctx->pdev, *ch_lst))) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				("ignoring dfs channel %d"), *ch_lst);
 			ch_lst++;
@@ -3181,13 +3182,13 @@ static void csr_prune_ch_list(tCsrChannel *ch_lst, bool is_24_GHz)
 	uint8_t idx = 0, num_channels = 0;
 	for ( ; idx < ch_lst->numChannels; idx++) {
 		if (is_24_GHz) {
-			if (CDS_IS_CHANNEL_24GHZ(ch_lst->channelList[idx])) {
+			if (WLAN_REG_IS_24GHZ_CH(ch_lst->channelList[idx])) {
 				ch_lst->channelList[num_channels] =
 					ch_lst->channelList[idx];
 				num_channels++;
 			}
 		} else {
-			if (CDS_IS_CHANNEL_5GHZ(ch_lst->channelList[idx])) {
+			if (WLAN_REG_IS_5GHZ_CH(ch_lst->channelList[idx])) {
 				ch_lst->channelList[num_channels] =
 					ch_lst->channelList[idx];
 				num_channels++;
@@ -3287,9 +3288,9 @@ QDF_STATUS csr_get_channel_and_power_list(tpAniSirGlobal pMac)
 	QDF_STATUS qdf_status;
 	uint8_t Index = 0;
 
-	qdf_status =
-		cds_get_channel_list_with_power(pMac->scan.defaultPowerTable,
-						&num20MHzChannelsFound);
+	qdf_status = wlan_reg_get_channel_list_with_power(pMac->pdev,
+				pMac->scan.defaultPowerTable,
+				&num20MHzChannelsFound);
 
 	if ((QDF_STATUS_SUCCESS != qdf_status) ||
 	    (num20MHzChannelsFound == 0)) {
@@ -4188,7 +4189,7 @@ QDF_STATUS csr_roam_prepare_bss_config(tpAniSirGlobal pMac,
 			return QDF_STATUS_E_FAILURE;
 		}
 	}
-	if (CDS_IS_CHANNEL_5GHZ(pBssDesc->channelId))
+	if (WLAN_REG_IS_5GHZ_CH(pBssDesc->channelId))
 		pBssConfig->eBand = eCSR_BAND_5G;
 	else
 		pBssConfig->eBand = eCSR_BAND_24;
@@ -5032,11 +5033,11 @@ QDF_STATUS csr_roam_set_bss_config_cfg(tpAniSirGlobal pMac, uint32_t sessionId,
 		}
 	}
 	if (0 != channel) {
-		if (CDS_IS_CHANNEL_24GHZ(channel)) {    /* for now if we are on 2.4 Ghz, CB will be always disabled */
+		/* for now if we are on 2.4 Ghz, CB will be always disabled */
+		if (WLAN_REG_IS_24GHZ_CH(channel))
 			cfgCb = WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
-		} else {
+		else
 			cfgCb = pBssConfig->cbMode;
-		}
 	}
 	/* Rate */
 	/* Fixed Rate */
@@ -12183,7 +12184,7 @@ csr_compute_mode_and_band(tpAniSirGlobal mac_ctx,
 			 * If the operating channel is in 2.4 GHz band, check
 			 * for INI item to disable VHT operation in 2.4 GHz band
 			 */
-			if (CDS_IS_CHANNEL_24GHZ(opr_ch) && !vht_24_ghz)
+			if (WLAN_REG_IS_24GHZ_CH(opr_ch) && !vht_24_ghz)
 				/* Disable 11AC operation */
 				*dot11_mode = eCSR_CFG_DOT11_MODE_11N;
 			else
@@ -12199,7 +12200,7 @@ csr_compute_mode_and_band(tpAniSirGlobal mac_ctx,
 			 * If the operating channel is in 2.4 GHz band, check
 			 * for INI item to disable VHT operation in 2.4 GHz band
 			 */
-			if (CDS_IS_CHANNEL_24GHZ(opr_ch) && !vht_24_ghz)
+			if (WLAN_REG_IS_24GHZ_CH(opr_ch) && !vht_24_ghz)
 				/* Disable 11AC operation */
 				*dot11_mode = eCSR_CFG_DOT11_MODE_11N;
 			else
@@ -12218,7 +12219,7 @@ csr_compute_mode_and_band(tpAniSirGlobal mac_ctx,
 			 * If the operating channel is in 2.4 GHz band, check
 			 * for INI item to disable VHT operation in 2.4 GHz band
 			 */
-			if (CDS_IS_CHANNEL_24GHZ(opr_ch) && !vht_24_ghz)
+			if (WLAN_REG_IS_24GHZ_CH(opr_ch) && !vht_24_ghz)
 				/* Disable 11AC operation */
 				*dot11_mode = eCSR_CFG_DOT11_MODE_11N;
 			else
@@ -12237,7 +12238,7 @@ csr_compute_mode_and_band(tpAniSirGlobal mac_ctx,
 			 * check for INI item to disable VHT operation
 			 * in 2.4 GHz band
 			 */
-			if (CDS_IS_CHANNEL_24GHZ(opr_ch)
+			if (WLAN_REG_IS_24GHZ_CH(opr_ch)
 				&& !vht_24_ghz)
 				/* Disable 11AC operation */
 				*dot11_mode = eCSR_CFG_DOT11_MODE_11N;
@@ -12257,7 +12258,7 @@ csr_compute_mode_and_band(tpAniSirGlobal mac_ctx,
 			*band = mac_ctx->roam.configParam.eBand;
 			if (eCSR_BAND_24 == *band) {
 				/*
-				 * See reason in else if ( CDS_IS_CHANNEL_24GHZ
+				 * See reason in else if ( WLAN_REG_IS_24GHZ_CH
 				 * (opr_ch) ) to pick 11B
 				 */
 				*dot11_mode = eCSR_CFG_DOT11_MODE_11B;
@@ -12266,7 +12267,7 @@ csr_compute_mode_and_band(tpAniSirGlobal mac_ctx,
 				*band = eCSR_BAND_5G;
 				*dot11_mode = eCSR_CFG_DOT11_MODE_11A;
 			}
-		} else if (CDS_IS_CHANNEL_24GHZ(opr_ch)) {
+		} else if (WLAN_REG_IS_24GHZ_CH(opr_ch)) {
 			/*
 			 * WiFi tests require IBSS networks to start in 11b mode
 			 * without any change to the default parameter settings
@@ -12372,7 +12373,7 @@ csr_roam_get_phy_mode_band_for_bss(tpAniSirGlobal mac_ctx,
 		&& ((eCSR_CFG_DOT11_MODE_11N == cfg_dot11_mode) ||
 	     (eCSR_CFG_DOT11_MODE_11AC == cfg_dot11_mode))) {
 		/* We cannot do 11n here */
-		if (CDS_IS_CHANNEL_24GHZ(opr_chn))
+		if (WLAN_REG_IS_24GHZ_CH(opr_chn))
 			cfg_dot11_mode = eCSR_CFG_DOT11_MODE_11G;
 		else
 			cfg_dot11_mode = eCSR_CFG_DOT11_MODE_11A;
@@ -12428,7 +12429,7 @@ QDF_STATUS csr_get_cfg_valid_channels(tpAniSirGlobal pMac, uint8_t *pChannels,
 		return QDF_STATUS_E_FAILURE;
 
 	for (i = 0; i < *pNumChan; i++) {
-		if (!cds_is_dsrc_channel(cds_chan_to_freq(pChannels[i]))) {
+		if (!WLAN_REG_IS_11P_CH(pChannels[i])) {
 			pChannels[num_chan_temp] = pChannels[i];
 			num_chan_temp++;
 		}
@@ -12449,10 +12450,10 @@ int8_t csr_get_cfg_max_tx_power(tpAniSirGlobal pMac, uint8_t channel)
 	uint8_t firstChannel;
 	uint8_t maxChannels;
 
-	if (CDS_IS_CHANNEL_5GHZ(channel)) {
+	if (WLAN_REG_IS_5GHZ_CH(channel)) {
 		cfgId = WNI_CFG_MAX_TX_POWER_5;
 		cfgLength = WNI_CFG_MAX_TX_POWER_5_LEN;
-	} else if (CDS_IS_CHANNEL_24GHZ(channel)) {
+	} else if (WLAN_REG_IS_24GHZ_CH(channel)) {
 		cfgId = WNI_CFG_MAX_TX_POWER_2_4;
 		cfgLength = WNI_CFG_MAX_TX_POWER_2_4_LEN;
 	} else
@@ -12521,7 +12522,7 @@ static ePhyChanBondState csr_get_cb_mode_from_ies(tpAniSirGlobal pMac,
 	ePhyChanBondState eRet = PHY_SINGLE_CHANNEL_CENTERED;
 	uint8_t centerChn;
 	uint32_t ChannelBondingMode;
-	if (CDS_IS_CHANNEL_24GHZ(primaryChn)) {
+	if (WLAN_REG_IS_24GHZ_CH(primaryChn)) {
 		ChannelBondingMode =
 			pMac->roam.configParam.channelBondingMode24GHz;
 	} else {
@@ -12765,7 +12766,7 @@ static uint8_t csr_roam_get_ibss_start_channel_number50(tpAniSirGlobal pMac)
 		if (!fFound) {
 			for (idxValidChannels = 0; idxValidChannels < len;
 			     idxValidChannels++) {
-				if (CDS_IS_CHANNEL_5GHZ(pMac->roam.
+				if (WLAN_REG_IS_5GHZ_CH(pMac->roam.
 					validChannelList[idxValidChannels])) {
 					/* the max channel# in 11g is 14 */
 					if (idxValidChannels <
@@ -13308,7 +13309,7 @@ void csr_roam_prepare_bss_params(tpAniSirGlobal pMac, uint32_t sessionId,
 						       &pSession->bssParams.
 						       operationalRateSet);
 		if (CSR_IS_INFRA_AP(pProfile) || CSR_IS_START_IBSS(pProfile)) {
-			if (CDS_IS_CHANNEL_24GHZ(Channel)) {
+			if (WLAN_REG_IS_24GHZ_CH(Channel)) {
 				cbMode =
 					pMac->roam.configParam.
 					channelBondingMode24GHz;
@@ -13871,7 +13872,7 @@ static void csr_add_supported_5Ghz_channels(tpAniSirGlobal mac_ctx,
 				&size))) {
 		for (i = 0, j = 0; i < size; i++) {
 			/* Only add 5ghz channels.*/
-			if (CDS_IS_CHANNEL_5GHZ
+			if (WLAN_REG_IS_5GHZ_CH
 					(mac_ctx->roam.validChannelList[i])) {
 				chan_list[j]
 					= mac_ctx->roam.validChannelList[i];
@@ -14008,7 +14009,7 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 	}
 	neigh_roam_info = &pMac->roam.neighborRoamInfo[sessionId];
 	if ((eWNI_SME_REASSOC_REQ == messageType) ||
-		CDS_IS_CHANNEL_5GHZ(pBssDescription->channelId) ||
+		WLAN_REG_IS_5GHZ_CH(pBssDescription->channelId) ||
 		(abs(pBssDescription->rssi) <
 		 (neigh_roam_info->cfgParams.neighborLookupThreshold -
 		  neigh_roam_info->cfgParams.hi_rssi_scan_rssi_delta))) {
@@ -14443,11 +14444,11 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		csr_join_req->txLdpcIniFeatureEnabled =
 			(uint8_t) pMac->roam.configParam.txLdpcEnable;
 
-		if ((csr_is11h_supported(pMac))
-		    && (CDS_IS_CHANNEL_5GHZ(pBssDescription->channelId))
-		    && (pIes->Country.present)
-		    && (!pMac->roam.configParam.
-			fSupplicantCountryCodeHasPriority)) {
+		if ((csr_is11h_supported(pMac)) &&
+			(WLAN_REG_IS_5GHZ_CH(pBssDescription->channelId)) &&
+			(pIes->Country.present) &&
+			(!pMac->roam.configParam.
+			 fSupplicantCountryCodeHasPriority)) {
 			csr_save_to_channel_power2_g_5_g(pMac,
 				pIes->Country.num_triplets *
 				sizeof(tSirMacChanInfo),
@@ -14643,18 +14644,17 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		 * same as STA's channel.
 		 */
 		if (pMac->roam.configParam.conc_custom_rule1) {
-			if ((0 ==
-			     pMac->
-			      roam.configParam.is_sta_connection_in_5gz_enabled)
-			     && CDS_IS_CHANNEL_5GHZ(pBssDescription->
-							channelId)) {
+			if ((0 == pMac->roam.configParam.
+				is_sta_connection_in_5gz_enabled) &&
+				WLAN_REG_IS_5GHZ_CH(pBssDescription->
+					channelId)) {
 				QDF_TRACE(QDF_MODULE_ID_SME,
 					  QDF_TRACE_LEVEL_ERROR,
 					 "STA-conn on 5G isn't allowed");
 				status = QDF_STATUS_E_FAILURE;
 				break;
 			}
-			if (!CDS_IS_CHANNEL_5GHZ(pBssDescription->channelId) &&
+			if (!WLAN_REG_IS_5GHZ_CH(pBssDescription->channelId) &&
 				(false == csr_is_conn_allow_2g_band(pMac,
 						pBssDescription->channelId))) {
 				status = QDF_STATUS_E_FAILURE;
@@ -14669,13 +14669,12 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		 * condition we are just adding sanity check to make sure that
 		 * by this time P2PGO's channel is same as STA's channel.
 		 */
-		if (pMac->roam.configParam.conc_custom_rule2) {
-			if (!CDS_IS_CHANNEL_24GHZ(pBssDescription->channelId) &&
-				(false == csr_is_conn_allow_5g_band(pMac,
-				pBssDescription->channelId))) {
-					status = QDF_STATUS_E_FAILURE;
-					break;
-			}
+		if (pMac->roam.configParam.conc_custom_rule2 &&
+			!WLAN_REG_IS_24GHZ_CH(pBssDescription->channelId) &&
+			(!csr_is_conn_allow_5g_band(pMac,
+						pBssDescription->channelId))) {
+			status = QDF_STATUS_E_FAILURE;
+			break;
 		}
 		status = umac_send_mb_message_to_mac(csr_join_req);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -16941,10 +16940,10 @@ csr_check_band_channel_match(eCsrBand band, uint8_t channel)
 	if (eCSR_BAND_ALL == band)
 		return true;
 
-	if (eCSR_BAND_24 == band && CDS_IS_CHANNEL_24GHZ(channel))
+	if (eCSR_BAND_24 == band && WLAN_REG_IS_24GHZ_CH(channel))
 		return true;
 
-	if (eCSR_BAND_5G == band && CDS_IS_CHANNEL_5GHZ(channel))
+	if (eCSR_BAND_5G == band && WLAN_REG_IS_5GHZ_CH(channel))
 		return true;
 
 	return false;
@@ -17003,7 +17002,7 @@ csr_fetch_ch_lst_from_ini(tpAniSirGlobal mac_ctx,
 		if ((!mac_ctx->roam.configParam.allowDFSChannelRoam ||
 		    (mac_ctx->roam.configParam.sta_roam_policy.dfs_mode ==
 			 CSR_STA_ROAM_POLICY_DFS_DISABLED)) &&
-		     (CDS_IS_DFS_CH(*ch_lst))) {
+		     (wlan_reg_is_dfs_ch(mac_ctx->pdev, *ch_lst))) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				("ignoring dfs channel %d"), *ch_lst);
 			ch_lst++;
@@ -17084,7 +17083,7 @@ csr_fetch_ch_lst_from_occupied_lst(tpAniSirGlobal mac_ctx,
 		if ((!mac_ctx->roam.configParam.allowDFSChannelRoam ||
 		    (mac_ctx->roam.configParam.sta_roam_policy.dfs_mode ==
 			 CSR_STA_ROAM_POLICY_DFS_DISABLED)) &&
-		     (CDS_IS_DFS_CH(*ch_lst))) {
+		     (wlan_reg_is_dfs_ch(mac_ctx->pdev, *ch_lst))) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				("ignoring dfs channel %d"), *ch_lst);
 			ch_lst++;
@@ -17116,7 +17115,9 @@ csr_fetch_ch_lst_from_occupied_lst(tpAniSirGlobal mac_ctx,
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				"DFSRoam=%d, ChnlState=%d, Chnl=%d, num_ch=%d",
 				mac_ctx->roam.configParam.allowDFSChannelRoam,
-				cds_get_channel_state(*ch_lst), *ch_lst,
+				wlan_reg_get_channel_state(mac_ctx->pdev,
+					*ch_lst),
+				*ch_lst,
 				num_channels);
 		ch_lst++;
 	}
@@ -17186,7 +17187,7 @@ csr_fetch_valid_ch_lst(tpAniSirGlobal mac_ctx,
 		if ((!mac_ctx->roam.configParam.allowDFSChannelRoam ||
 		    (mac_ctx->roam.configParam.sta_roam_policy.dfs_mode ==
 			 CSR_STA_ROAM_POLICY_DFS_DISABLED)) &&
-		     (CDS_IS_DFS_CH(*ch_lst))) {
+		     (wlan_reg_is_dfs_ch(mac_ctx->pdev, *ch_lst))) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				("ignoring dfs channel %d"), *ch_lst);
 			ch_lst++;
@@ -19396,11 +19397,11 @@ csr_update_op_class_array(tpAniSirGlobal mac_ctx,
 	sme_debug("Num of %s channels,  %d",
 		ch_name, num_channels);
 
-	for (idx = 0; idx < num_channels
-		&& *i < (CDS_MAX_SUPP_OPER_CLASSES - 1); idx++) {
+	for (idx = 0; idx < num_channels &&
+			*i < (REG_MAX_SUPP_OPER_CLASSES - 1); idx++) {
 		for (ch_bandwidth = BW20; ch_bandwidth < BWALL;
 			ch_bandwidth++) {
-			class = cds_reg_dmn_get_opclass_from_channel(
+			class = wlan_reg_dmn_get_opclass_from_channel(
 					mac_ctx->scan.countryCodeCurrent,
 					channel_info->channelList[idx],
 					ch_bandwidth);
@@ -19408,7 +19409,7 @@ csr_update_op_class_array(tpAniSirGlobal mac_ctx,
 				channel_info->channelList[idx], class);
 
 			found = false;
-			for (j = 0; j < CDS_MAX_SUPP_OPER_CLASSES - 1;
+			for (j = 0; j < REG_MAX_SUPP_OPER_CLASSES - 1;
 				j++) {
 				if (op_classes[j] == class) {
 					found = true;
@@ -19436,7 +19437,7 @@ void csr_init_operating_classes(tHalHandle hHal)
 	uint8_t j = 0;
 	uint8_t swap = 0;
 	uint8_t numClasses = 0;
-	uint8_t opClasses[CDS_MAX_SUPP_OPER_CLASSES] = {0,};
+	uint8_t opClasses[REG_MAX_SUPP_OPER_CLASSES] = {0,};
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
 	sme_debug("Current Country = %c%c",
@@ -19470,7 +19471,7 @@ void csr_init_operating_classes(tHalHandle hHal)
 	/* Set the ordered list of op classes in regdomain
 	 * for use by other modules
 	 */
-	cds_reg_dmn_set_curr_opclasses(numClasses, &opClasses[0]);
+	wlan_reg_dmn_set_curr_opclasses(numClasses, &opClasses[0]);
 }
 
 /**

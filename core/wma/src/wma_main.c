@@ -88,11 +88,12 @@
 #include "wma_he.h"
 #include "wlan_pmo_obj_mgmt_api.h"
 
+#include "wlan_reg_tgt_api.h"
+#include "wlan_reg_services_api.h"
 #include <cdp_txrx_handle.h>
 #include <wlan_pmo_ucfg_api.h>
 
 #define WMA_LOG_COMPLETION_TIMER 10000 /* 10 seconds */
-
 #define WMI_TLV_HEADROOM 128
 
 static uint32_t g_fw_wlan_feat_caps;
@@ -4979,7 +4980,7 @@ bool wma_is_rx_ldpc_supported_for_channel(uint32_t channel)
 	enum cds_band_type band;
 	bool status;
 
-	if (!CDS_IS_CHANNEL_24GHZ(channel))
+	if (!WLAN_REG_IS_24GHZ_CH(channel))
 		band = CDS_BAND_5GHZ;
 	else
 		band = CDS_BAND_2GHZ;
@@ -4989,7 +4990,7 @@ bool wma_is_rx_ldpc_supported_for_channel(uint32_t channel)
 						HW_MODE_DBS, band)) {
 		return false;
 	}
-	if (CDS_IS_CHANNEL_24GHZ(channel))
+	if (WLAN_REG_IS_24GHZ_CH(channel))
 		status = (!!(caps_per_phy.ht_2g & WMI_HT_CAP_RX_LDPC));
 	else
 		status = (!!(caps_per_phy.ht_5g & WMI_HT_CAP_RX_LDPC));

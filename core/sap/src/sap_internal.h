@@ -377,7 +377,7 @@ QDF_STATUS sap_acquire_global_lock(ptSapContext pSapCtx);
 QDF_STATUS sap_release_global_lock(ptSapContext pSapCtx);
 
 #ifdef FEATURE_WLAN_CH_AVOID
-void sap_update_unsafe_channel_list(ptSapContext pSapCtx);
+void sap_update_unsafe_channel_list(tHalHandle hal, ptSapContext pSapCtx);
 #endif /* FEATURE_WLAN_CH_AVOID */
 
 uint8_t

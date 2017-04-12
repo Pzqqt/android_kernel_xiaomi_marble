@@ -130,7 +130,6 @@ int wma_cli_set2_command(int vdev_id, int param_id, int sval1,
 			 int sval2, int vpdev);
 
 QDF_STATUS wma_set_htconfig(uint8_t vdev_id, uint16_t ht_capab, int value);
-QDF_STATUS wma_set_reg_domain(void *clientCtxt, v_REGDOMAIN_t regId);
 
 QDF_STATUS wma_get_wcnss_software_version(void *p_cds_gctx,
 					  uint8_t *pVersion,
@@ -287,4 +286,22 @@ static inline void wma_tx_failure_cb(void *ctx, uint32_t num_msdu,
 {
 }
 #endif
+
+/**
+ * wma_store_pdev() - store pdev
+ * @wma_ctx:	wma context
+ * @pdev:	pdev context
+ *
+ * Return: void
+ */
+void wma_store_pdev(void *wma_ctx, struct wlan_objmgr_pdev *pdev);
+
+/**
+ * wma_clear_pdev() - clear pdev
+ * @wma_ctx:	wma context
+ *
+ * Return: void
+ */
+void wma_clear_pdev(void *wma_ctx);
+
 #endif

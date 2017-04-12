@@ -968,6 +968,7 @@ typedef struct sAniSirGlobal {
 	uint8_t user_configured_nss;
 	bool sta_prefer_80MHz_over_160MHz;
 	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_pdev *pdev;
 	enum  country_src reg_hint_src;
 	bool snr_monitor_enabled;
 	void (*chan_info_cb)(struct scan_chan_info *chan_info);

@@ -119,6 +119,7 @@ int hdd_objmgr_create_and_store_pdev(hdd_context_t *hdd_ctx)
 		return -ENOMEM;
 	}
 	hdd_ctx->hdd_pdev = pdev;
+	sme_store_pdev(hdd_ctx->hHal, hdd_ctx->hdd_pdev);
 	hdd_init_pdev_os_priv(hdd_ctx, priv);
 	wlan_pdev_obj_lock(pdev);
 	wlan_pdev_set_tgt_if_handle(pdev, psoc->tgt_if_handle);
@@ -133,6 +134,7 @@ int hdd_objmgr_release_and_destroy_pdev(hdd_context_t *hdd_ctx)
 
 	hdd_deinit_pdev_os_priv(hdd_ctx);
 	hdd_ctx->hdd_pdev = NULL;
+	sme_clear_pdev(hdd_ctx->hHal);
 	if (!pdev)
 		return -EINVAL;
 

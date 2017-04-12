@@ -1966,7 +1966,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 
 		/* Enable the spectrum management if this is a DFS channel */
 		if (session->country_info_present &&
-			lim_isconnected_on_dfs_channel(
+			lim_isconnected_on_dfs_channel(mac_ctx,
 					session->currentOperChannel))
 			session->spectrumMgtEnabled = true;
 
@@ -2315,7 +2315,7 @@ static void __lim_process_sme_reassoc_req(tpAniSirGlobal mac_ctx,
 
 	/* Enable the spectrum management if this is a DFS channel */
 	if (session_entry->country_info_present &&
-		lim_isconnected_on_dfs_channel(
+			lim_isconnected_on_dfs_channel(mac_ctx,
 				session_entry->currentOperChannel))
 		session_entry->spectrumMgtEnabled = true;
 
@@ -5984,7 +5984,7 @@ static void send_extended_chan_switch_action_frame(tpAniSirGlobal mac_ctx,
 	tpDphHashNode psta;
 
 
-	op_class = cds_reg_dmn_get_opclass_from_channel(
+	op_class = wlan_reg_dmn_get_opclass_from_channel(
 				mac_ctx->scan.countryCodeCurrent,
 				new_channel,
 				ch_bandwidth);

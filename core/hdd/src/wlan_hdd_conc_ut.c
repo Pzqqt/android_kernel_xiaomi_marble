@@ -38,7 +38,6 @@
 #include "qdf_types.h"
 #include "qdf_trace.h"
 #include "cds_utils.h"
-#include "cds_reg_service.h"
 #include "wma_types.h"
 #include "wma.h"
 #include "wma_api.h"
@@ -269,7 +268,7 @@ static bool wlan_hdd_validate_pcl(hdd_context_t *hdd_ctx,
 		break;
 	case PM_5G:
 		for (first_idx = 0; first_idx < pcl_len; first_idx++) {
-			if (!CDS_IS_CHANNEL_5GHZ(pcl[first_idx])) {
+			if (!WLAN_REG_IS_5GHZ_CH(pcl[first_idx])) {
 				snprintf(reason, reason_length,
 					"2G channel found");
 				return false;
@@ -278,7 +277,7 @@ static bool wlan_hdd_validate_pcl(hdd_context_t *hdd_ctx,
 		break;
 	case PM_24G:
 		for (first_idx = 0; first_idx < pcl_len; first_idx++) {
-			if (!CDS_IS_CHANNEL_24GHZ(pcl[first_idx])) {
+			if (!WLAN_REG_IS_24GHZ_CH(pcl[first_idx])) {
 				snprintf(reason, reason_length,
 					"5G channel found");
 				return false;
@@ -326,7 +325,7 @@ static bool wlan_hdd_validate_pcl(hdd_context_t *hdd_ctx,
 				"No SCC found");
 			return false;
 		}
-		if (!CDS_IS_CHANNEL_24GHZ(pcl[pcl_len-1])) {
+		if (!WLAN_REG_IS_24GHZ_CH(pcl[pcl_len - 1])) {
 			snprintf(reason, reason_length,
 				"No 2.4Ghz chnl");
 			return false;
@@ -344,14 +343,14 @@ static bool wlan_hdd_validate_pcl(hdd_context_t *hdd_ctx,
 				"No SCC found");
 			return false;
 		}
-		if (!CDS_IS_CHANNEL_5GHZ(pcl[pcl_len-1])) {
+		if (!WLAN_REG_IS_5GHZ_CH(pcl[pcl_len - 1])) {
 			snprintf(reason, reason_length,
 				"No 5Ghz chnl");
 			return false;
 		}
 		break;
 	case PM_24G_SCC_CH:
-		if (!CDS_IS_CHANNEL_24GHZ(pcl[0])) {
+		if (!WLAN_REG_IS_24GHZ_CH(pcl[0])) {
 			snprintf(reason, reason_length,
 				"No 2.4Ghz chnl");
 			return false;
@@ -369,7 +368,7 @@ static bool wlan_hdd_validate_pcl(hdd_context_t *hdd_ctx,
 		}
 		break;
 	case PM_5G_SCC_CH:
-		if (!CDS_IS_CHANNEL_5GHZ(pcl[0])) {
+		if (!WLAN_REG_IS_5GHZ_CH(pcl[0])) {
 			snprintf(reason, reason_length,
 				"No 5Ghz chnl");
 			return false;
@@ -401,7 +400,7 @@ static bool wlan_hdd_validate_pcl(hdd_context_t *hdd_ctx,
 				"MCC invalid");
 			return false;
 		}
-		if (!CDS_IS_CHANNEL_24GHZ(pcl[pcl_len-1])) {
+		if (!WLAN_REG_IS_24GHZ_CH(pcl[pcl_len - 1])) {
 			snprintf(reason, reason_length,
 				"No 24Ghz chnl");
 			return false;
@@ -422,14 +421,14 @@ static bool wlan_hdd_validate_pcl(hdd_context_t *hdd_ctx,
 				"MCC invalid");
 			return false;
 		}
-		if (!CDS_IS_CHANNEL_5GHZ(pcl[pcl_len-1])) {
+		if (!WLAN_REG_IS_5GHZ_CH(pcl[pcl_len - 1])) {
 			snprintf(reason, reason_length,
 				"No 5Ghz chnl");
 			return false;
 		}
 		break;
 	case PM_24G_MCC_CH:
-		if (!CDS_IS_CHANNEL_24GHZ(pcl[0])) {
+		if (!WLAN_REG_IS_24GHZ_CH(pcl[0])) {
 			snprintf(reason, reason_length,
 				"No 24Ghz chnl");
 			return false;
@@ -450,7 +449,7 @@ static bool wlan_hdd_validate_pcl(hdd_context_t *hdd_ctx,
 		}
 		break;
 	case PM_5G_MCC_CH:
-		if (!CDS_IS_CHANNEL_5GHZ(pcl[0])) {
+		if (!WLAN_REG_IS_5GHZ_CH(pcl[0])) {
 			snprintf(reason, reason_length,
 				"No 5Ghz chnl");
 			return false;
@@ -471,98 +470,98 @@ static bool wlan_hdd_validate_pcl(hdd_context_t *hdd_ctx,
 		}
 		break;
 	case PM_SCC_ON_5_SCC_ON_24_24G:
-		if (!CDS_IS_CHANNEL_5GHZ(pcl[0]) ||
+		if (!WLAN_REG_IS_5GHZ_CH(pcl[0]) ||
 			(pcl[0] != first_connection_chnl &&
 			 pcl[0] != second_connection_chnl)) {
 			snprintf(reason, reason_length,
 				"No 5Ghz chnl/scc");
 			return false;
 		}
-		if (!CDS_IS_CHANNEL_24GHZ(pcl[1]) ||
+		if (!WLAN_REG_IS_24GHZ_CH(pcl[1]) ||
 			(pcl[1] != first_connection_chnl &&
 			 pcl[1] != second_connection_chnl)) {
 			snprintf(reason, reason_length,
 				"No 24Ghz chnl/scc");
 			return false;
 		}
-		if (!CDS_IS_CHANNEL_24GHZ(pcl[pcl_len-1])) {
+		if (!WLAN_REG_IS_24GHZ_CH(pcl[pcl_len - 1])) {
 			snprintf(reason, reason_length,
 				"No 24Ghz chnls");
 			return false;
 		}
 		break;
 	case PM_SCC_ON_5_SCC_ON_24_5G:
-		if (!CDS_IS_CHANNEL_5GHZ(pcl[0]) ||
+		if (!WLAN_REG_IS_5GHZ_CH(pcl[0]) ||
 			(pcl[0] != first_connection_chnl &&
 			 pcl[0] != second_connection_chnl)) {
 			snprintf(reason, reason_length,
 				"No 5Ghz chnl/scc");
 			return false;
 		}
-		if (!CDS_IS_CHANNEL_24GHZ(pcl[1]) ||
+		if (!WLAN_REG_IS_24GHZ_CH(pcl[1]) ||
 			(pcl[1] != first_connection_chnl &&
 			 pcl[1] != second_connection_chnl)) {
 			snprintf(reason, reason_length,
 				"No 24Ghz chnl/scc");
 			return false;
 		}
-		if (!CDS_IS_CHANNEL_5GHZ(pcl[pcl_len-1])) {
+		if (!WLAN_REG_IS_5GHZ_CH(pcl[pcl_len - 1])) {
 			snprintf(reason, reason_length,
 				"No 5Ghz chnls");
 			return false;
 		}
 		break;
 	case PM_SCC_ON_24_SCC_ON_5_24G:
-		if (!CDS_IS_CHANNEL_24GHZ(pcl[0]) ||
+		if (!WLAN_REG_IS_24GHZ_CH(pcl[0]) ||
 			(pcl[0] != first_connection_chnl &&
 			 pcl[0] != second_connection_chnl)) {
 			snprintf(reason, reason_length,
 				"No 24Ghz chnl/scc");
 			return false;
 		}
-		if (!CDS_IS_CHANNEL_5GHZ(pcl[1]) ||
+		if (!WLAN_REG_IS_5GHZ_CH(pcl[1]) ||
 			(pcl[1] != first_connection_chnl &&
 			 pcl[1] != second_connection_chnl)) {
 			snprintf(reason, reason_length,
 				"No 5Ghz chnl/scc");
 			return false;
 		}
-		if (!CDS_IS_CHANNEL_24GHZ(pcl[pcl_len-1])) {
+		if (!WLAN_REG_IS_24GHZ_CH(pcl[pcl_len - 1])) {
 			snprintf(reason, reason_length,
 				"No 24Ghz chnls");
 			return false;
 		}
 		break;
 	case PM_SCC_ON_24_SCC_ON_5_5G:
-		if (!CDS_IS_CHANNEL_24GHZ(pcl[0]) ||
+		if (!WLAN_REG_IS_24GHZ_CH(pcl[0]) ||
 			(pcl[0] != first_connection_chnl &&
 			 pcl[0] != second_connection_chnl)) {
 			snprintf(reason, reason_length,
 				"No 24Ghz chnl/scc");
 			return false;
 		}
-		if (!CDS_IS_CHANNEL_5GHZ(pcl[1]) ||
+		if (!WLAN_REG_IS_5GHZ_CH(pcl[1]) ||
 			(pcl[1] != first_connection_chnl &&
 			 pcl[1] != second_connection_chnl)) {
 			snprintf(reason, reason_length,
 				"No 5Ghz chnl/scc");
 			return false;
 		}
-		if (!CDS_IS_CHANNEL_5GHZ(pcl[pcl_len-1])) {
+		if (!WLAN_REG_IS_5GHZ_CH(pcl[pcl_len - 1])) {
 			snprintf(reason, reason_length,
 				"No 5Ghz chnls");
 			return false;
 		}
 		break;
 	case PM_SCC_ON_5_SCC_ON_24:
-		if (!CDS_IS_CHANNEL_5GHZ(pcl[0]) ||
+		if (!WLAN_REG_IS_5GHZ_CH(pcl[0]) ||
 			(pcl[0] != first_connection_chnl &&
 			 pcl[0] != second_connection_chnl)) {
 			snprintf(reason, reason_length,
 				"No 5Ghz chnl/scc");
 			return false;
 		}
-		if (!CDS_IS_CHANNEL_24GHZ(pcl[1]) ||
+		if (!WLAN_REG_IS_24GHZ_CH(pcl[1]) ||
 			(pcl[1] != first_connection_chnl &&
 			 pcl[1] != second_connection_chnl)) {
 			snprintf(reason, reason_length,
@@ -576,14 +575,14 @@ static bool wlan_hdd_validate_pcl(hdd_context_t *hdd_ctx,
 		}
 		break;
 	case PM_SCC_ON_24_SCC_ON_5:
-		if (!CDS_IS_CHANNEL_24GHZ(pcl[0]) ||
+		if (!WLAN_REG_IS_24GHZ_CH(pcl[0]) ||
 			(pcl[0] != first_connection_chnl &&
 			 pcl[0] != second_connection_chnl)) {
 			snprintf(reason, reason_length,
 				"No 24Ghz chnl/scc");
 			return false;
 		}
-		if (!CDS_IS_CHANNEL_5GHZ(pcl[1]) ||
+		if (!WLAN_REG_IS_5GHZ_CH(pcl[1]) ||
 			(pcl[1] != first_connection_chnl &&
 			 pcl[1] != second_connection_chnl)) {
 			snprintf(reason, reason_length,

@@ -472,7 +472,7 @@ void lim_handle_heart_beat_failure(tpAniSirGlobal mac_ctx,
 		 * down the link
 		 */
 		curr_chan = session->currentOperChannel;
-		if (!lim_isconnected_on_dfs_channel(curr_chan)) {
+		if (!lim_isconnected_on_dfs_channel(mac_ctx, curr_chan)) {
 			/* Detected continuous Beacon Misses */
 			session->LimHBFailureStatus = true;
 

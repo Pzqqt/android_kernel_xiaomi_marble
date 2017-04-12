@@ -32,7 +32,6 @@
 
     Implementation supporting routines for CSR.
    ========================================================================== */
-
 #include "ani_global.h"
 
 #include "csr_support.h"
@@ -43,6 +42,7 @@
 #include "cds_utils.h"
 #include "wlan_policy_mgr_api.h"
 #include "wlan_serialization_legacy_api.h"
+#include "wlan_reg_services_api.h"
 
 
 uint8_t csr_wpa_oui[][CSR_WPA_OUI_SIZE] = {
@@ -2203,7 +2203,7 @@ bool csr_is_phy_mode_match(tpAniSirGlobal pMac, uint32_t phyMode,
 			phyMode2 = phyMode;
 		}
 		fMatch = csr_get_phy_mode_in_use(phyMode2, phyModeInBssDesc,
-				CDS_IS_CHANNEL_5GHZ(pSirBssDesc->channelId),
+				WLAN_REG_IS_5GHZ_CH(pSirBssDesc->channelId),
 				&cfgDot11ModeToUse);
 	} else {
 		bitMask = 1;
@@ -2212,7 +2212,7 @@ bool csr_is_phy_mode_match(tpAniSirGlobal pMac, uint32_t phyMode,
 			phyMode2 = (phyMode & (bitMask << loopCount++));
 			if (0 != phyMode2 && csr_get_phy_mode_in_use(phyMode2,
 						phyModeInBssDesc,
-						CDS_IS_CHANNEL_5GHZ
+						WLAN_REG_IS_5GHZ_CH
 						(pSirBssDesc->channelId),
 						&cfgDot11ModeToUse)) {
 				fMatch = true;
@@ -2238,7 +2238,7 @@ bool csr_is_phy_mode_match(tpAniSirGlobal pMac, uint32_t phyMode,
 					(eCSR_CFG_DOT11_MODE_11AX ==
 						cfgDot11ModeToUse))) {
 				/* We cannot do 11n here */
-				if (!CDS_IS_CHANNEL_5GHZ
+				if (!WLAN_REG_IS_5GHZ_CH
 						(pSirBssDesc->channelId)) {
 					cfgDot11ModeToUse =
 						eCSR_CFG_DOT11_MODE_11G;
@@ -5716,7 +5716,7 @@ tSirScanType csr_get_scan_type(tpAniSirGlobal pMac, uint8_t chnId)
 	tSirScanType scanType = eSIR_PASSIVE_SCAN;
 	enum channel_state channelEnabledType;
 
-	channelEnabledType = cds_get_channel_state(chnId);
+	channelEnabledType = wlan_reg_get_channel_state(pMac->pdev, chnId);
 	if (CHANNEL_STATE_ENABLE == channelEnabledType) {
 		scanType = eSIR_ACTIVE_SCAN;
 	}
@@ -5855,14 +5855,13 @@ QDF_STATUS csr_get_regulatory_domain_for_country(tpAniSirGlobal pMac,
 	if (pCountry) {
 		countryCode[0] = pCountry[0];
 		countryCode[1] = pCountry[1];
-		qdf_status = cds_get_reg_domain_from_country_code(&domainId,
+		qdf_status = wlan_reg_get_domain_from_country_code(&domainId,
 								  countryCode,
 								  source);
 
 		if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			if (pDomainId) {
+			if (pDomainId)
 				*pDomainId = domainId;
-			}
 			status = QDF_STATUS_SUCCESS;
 		} else {
 			sme_warn("Couldn't find domain for country code %c%c",
@@ -5979,8 +5978,8 @@ uint16_t sme_chn_to_freq(uint8_t chanNum)
 	int i;
 
 	for (i = 0; i < NUM_CHANNELS; i++) {
-		if (CDS_CHANNEL_NUM(i) == chanNum)
-			return CDS_CHANNEL_FREQ(i);
+		if (WLAN_REG_CH_NUM(i) == chanNum)
+			return WLAN_REG_CH_TO_FREQ(i);
 	}
 
 	return 0;

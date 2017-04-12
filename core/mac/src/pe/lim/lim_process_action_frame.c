@@ -404,10 +404,12 @@ lim_process_ext_channel_switch_action_frame(tpAniSirGlobal mac_ctx,
 	 * and no concurrent session is running.
 	 */
 	if (!((session_entry->currentOperChannel != target_channel) &&
-	((cds_get_channel_state(target_channel)
-				== CHANNEL_STATE_ENABLE) ||
-	(cds_get_channel_state(target_channel) == CHANNEL_STATE_DFS &&
-	!policy_mgr_concurrent_open_sessions_running(mac_ctx->psoc))))) {
+		((wlan_reg_get_channel_state(mac_ctx->pdev, target_channel) ==
+		  CHANNEL_STATE_ENABLE) ||
+		 (wlan_reg_get_channel_state(mac_ctx->pdev, target_channel) ==
+		  CHANNEL_STATE_DFS &&
+		  !policy_mgr_concurrent_open_sessions_running(
+			  mac_ctx->psoc))))) {
 		lim_log(mac_ctx, LOGE, FL("Channel %d is not valid"),
 							target_channel);
 		return;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2005-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -62,7 +62,8 @@
 /* From wlan_modules/include/ */
 #include "ath_dfs_structs.h"
 /*DFS - Newly added File to interface cld UMAC and dfs data structures*/
-#include <wma_dfs_interface.h>
+#include "wlan_reg_services_api.h"
+#include "wma_dfs_interface.h"
 /*
    *TO DO DFS- Need to include this file later on
    #include "ah.h"

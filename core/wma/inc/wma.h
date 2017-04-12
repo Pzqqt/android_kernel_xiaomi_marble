@@ -1341,6 +1341,7 @@ typedef struct {
 	void *cds_context;
 	void *mac_context;
 	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_pdev *pdev;
 	qdf_event_t wma_ready_event;
 	qdf_event_t wma_resume_event;
 	qdf_event_t target_suspend;

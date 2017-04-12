@@ -4585,7 +4585,7 @@ int wlan_hdd_tdls_extctrl_config_peer(hdd_adapter_t *pAdapter,
 	pHddCtx->tdls_external_peer_count++;
 
 	/* validate if off channel is DFS channel */
-	if (CDS_IS_DFS_CH(chan)) {
+	if (wlan_reg_is_dfs_ch(pHddCtx->hdd_pdev, chan)) {
 		hdd_err("Resetting TDLS off-channel from %d to %d",
 		       chan, CFG_TDLS_PREFERRED_OFF_CHANNEL_NUM_DEFAULT);
 		chan = CFG_TDLS_PREFERRED_OFF_CHANNEL_NUM_DEFAULT;
@@ -5006,8 +5006,9 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 						pTdlsPeer->
 						op_class_for_pref_off_chan;
 
-				if (CDS_IS_DFS_CH(smeTdlsPeerStateParams.
-					peerCap.prefOffChanNum)) {
+				if (wlan_reg_is_dfs_ch(pHddCtx->hdd_pdev,
+						smeTdlsPeerStateParams.
+						peerCap.prefOffChanNum)) {
 					hdd_err("Resetting TDLS off-channel from %d to %d",
 					       smeTdlsPeerStateParams.peerCap.
 						prefOffChanNum,

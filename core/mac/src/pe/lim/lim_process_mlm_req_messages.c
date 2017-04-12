@@ -46,6 +46,7 @@
 #include "host_diag_core_log.h"
 #endif
 #include "wma_if.h"
+#include "wlan_reg_services_api.h"
 
 static void lim_process_mlm_start_req(tpAniSirGlobal, uint32_t *);
 static void lim_process_mlm_join_req(tpAniSirGlobal, uint32_t *);
@@ -288,7 +289,7 @@ void lim_set_dfs_channel_list(tpAniSirGlobal mac_ctx, uint8_t chan_num,
 		return;
 	}
 
-	if (true == lim_isconnected_on_dfs_channel(chan_num)) {
+	if (lim_isconnected_on_dfs_channel(mac_ctx, chan_num)) {
 		if (dfs_ch_list->timeStamp[chan_num] == 0) {
 			/*
 			 * Received first beacon;
@@ -576,15 +577,18 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 	if (session->ch_width == CH_WIDTH_160MHZ) {
 		is_ch_dfs = true;
 	} else if (session->ch_width == CH_WIDTH_80P80MHZ) {
-		if (cds_get_channel_state(mlm_start_req->channelNumber) ==
-							CHANNEL_STATE_DFS ||
-		    cds_get_channel_state(session->ch_center_freq_seg1 -
-					    SIR_80MHZ_START_CENTER_CH_DIFF) ==
-							CHANNEL_STATE_DFS)
+		if (wlan_reg_get_channel_state(mac_ctx->pdev,
+					mlm_start_req->channelNumber) ==
+				CHANNEL_STATE_DFS ||
+				wlan_reg_get_channel_state(mac_ctx->pdev,
+					session->ch_center_freq_seg1 -
+					SIR_80MHZ_START_CENTER_CH_DIFF) ==
+				CHANNEL_STATE_DFS)
 			is_ch_dfs = true;
 	} else {
-		if (cds_get_channel_state(mlm_start_req->channelNumber) ==
-							CHANNEL_STATE_DFS)
+		if (wlan_reg_get_channel_state(mac_ctx->pdev,
+					mlm_start_req->channelNumber) ==
+				CHANNEL_STATE_DFS)
 			is_ch_dfs = true;
 	}
 
