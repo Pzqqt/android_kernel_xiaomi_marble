@@ -1091,16 +1091,6 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 			hdd_err("could not set SHORT GI 80MHZ to CCM");
 	}
 
-	/* Get current GI 160 value */
-	status = sme_cfg_get_int(hdd_ctx->hHal,
-				 WNI_CFG_VHT_SHORT_GI_160_AND_80_PLUS_80MHZ,
-				 &value);
-
-	if (status != QDF_STATUS_SUCCESS) {
-		hdd_err("could not get SHORT GI 80 & 160");
-		value = 0;
-	}
-
 	/* Get VHT TX STBC cap */
 	status = sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_VHT_TXSTBC, &value);
 
@@ -1275,22 +1265,22 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 	}
 	pconfig->vhtChannelWidth = QDF_MIN(pconfig->vhtChannelWidth,
 			ch_width);
-	/* Get the current supported chan width */
+	/* Get the current GI 160 value */
 	status = sme_cfg_get_int(hdd_ctx->hHal,
-				WNI_CFG_VHT_SUPPORTED_CHAN_WIDTH_SET,
+				WNI_CFG_VHT_SHORT_GI_160_AND_80_PLUS_80MHZ,
 				&value);
 	if (status != QDF_STATUS_SUCCESS) {
-		hdd_err("could not get CH BW");
+		hdd_err("could not get GI 80 & 160");
 		value = 0;
 	}
-	/* set the Guard interval 80MHz */
-	if (value) {
+	/* set the Guard interval 160MHz */
+	if (value && !cfg->vht_short_gi_160) {
 		status = sme_cfg_set_int(hdd_ctx->hHal,
-				WNI_CFG_VHT_SHORT_GI_160_AND_80_PLUS_80MHZ,
-				cfg->vht_short_gi_160);
+			WNI_CFG_VHT_SHORT_GI_160_AND_80_PLUS_80MHZ,
+			cfg->vht_short_gi_160);
 
 		if (status == QDF_STATUS_E_FAILURE)
-			hdd_err("failed to set SHORT GI 80MHZ");
+			hdd_err("failed to set SHORT GI 160MHZ");
 	}
 
 	if (cfg->vht_rx_ldpc & WMI_VHT_CAP_RX_LDPC)
