@@ -940,19 +940,6 @@ lim_handle80211_frames(tpAniSirGlobal pMac, struct scheduler_msg *limMsg,
 		goto end;
 	}
 #endif
-	if (WMA_GET_OFFLOADSCANLEARN(pRxPacketInfo)) {
-		if (fc.subType == SIR_MAC_MGMT_BEACON) {
-			pe_debug("Learning scan beacon");
-			__lim_handle_beacon(pMac, limMsg, NULL);
-		} else if (fc.subType == SIR_MAC_MGMT_PROBE_RSP) {
-			pe_debug("Learning scan probe rsp");
-			lim_process_probe_rsp_frame_no_session(pMac, pRxPacketInfo);
-		} else {
-			pe_err("Wrong frame Type %d, Subtype %d for LFR",
-				fc.type, fc.subType);
-		}
-		goto end;
-	}
 	/* Added For BT-AMP Support */
 	psessionEntry = pe_find_session_by_bssid(pMac, pHdr->bssId,
 						 &sessionId);
@@ -1070,10 +1057,7 @@ lim_handle80211_frames(tpAniSirGlobal pMac, struct scheduler_msg *limMsg,
 			break;
 
 		case SIR_MAC_MGMT_PROBE_RSP:
-			if (psessionEntry == NULL)
-				lim_process_probe_rsp_frame_no_session(pMac,
-								       pRxPacketInfo);
-			else
+			if (psessionEntry)
 				lim_process_probe_rsp_frame(pMac,
 							    pRxPacketInfo,
 							    psessionEntry);

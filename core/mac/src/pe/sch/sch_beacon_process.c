@@ -299,16 +299,6 @@ static void __sch_beacon_process_no_session(tpAniSirGlobal pMac,
 		lim_handle_ibss_coalescing(pMac, pBeacon, pRxPacketInfo,
 					   psessionEntry);
 	}
-#ifndef NAPIER_SCAN
-	/* If station(STA/BT-STA/BT-AP/IBSS) mode, Always save the
-	 * beacon in the scan results, if atleast one session is
-	 * active.  sch_beacon_process_no_session will be called only
-	 * when there is atleast one session active, so not checking
-	 * it again here.
-	 */
-	lim_check_and_add_bss_description(pMac, pBeacon, pRxPacketInfo, false,
-					  false);
-#endif
 	return;
 }
 
@@ -373,9 +363,6 @@ sch_bcn_process_sta(tpAniSirGlobal mac_ctx,
 	 *  This handles two cases:
 	 *  -- Infra STA receving beacons from AP
 	 */
-	/* Always save the beacon into LIM's cached scan results */
-	lim_check_and_add_bss_description(mac_ctx, bcn, rx_pkt_info,
-					  false, false);
 
 	/**
 	 * This is the Beacon received from the AP  we're currently associated

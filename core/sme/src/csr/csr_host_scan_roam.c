@@ -465,12 +465,6 @@ QDF_STATUS csr_neighbor_roam_candidate_found_ind_hdlr(tpAniSirGlobal pMac,
 		sme_err("Recvd in NotCONNECTED or OsReqHandoff. Ignore");
 		status = QDF_STATUS_E_FAILURE;
 	} else {
-		/* Firmware indicated that roaming candidate is found. Beacons
-		 * are already in the SME scan results table.
-		 * Process the results for choosing best roaming candidate.
-		 */
-		csr_save_scan_results(pMac, eCsrScanCandidateFound,
-				      sessionId);
 		/* Future enhancements:
 		 * If firmware tags candidate beacons, give them preference
 		 * for roaming.

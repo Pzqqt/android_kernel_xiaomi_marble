@@ -671,8 +671,6 @@ typedef struct tagCsrVotes11d {
 
 typedef struct tagCsrScanStruct {
 	tScanProfile scanProfile;
-	tDblLinkList scanResultList;
-	tDblLinkList tempScanResults;
 	bool fScanEnable;
 	bool fFullScanIssued;
 #ifdef WLAN_AP_STA_CONCURRENCY

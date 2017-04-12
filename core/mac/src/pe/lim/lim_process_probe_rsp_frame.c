@@ -166,18 +166,7 @@ lim_process_probe_rsp_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_Packet_info,
 		return;
 	}
 
-	lim_check_and_add_bss_description(mac_ctx, probe_rsp,
-			  rx_Packet_info, false, true);
-	/* To Support BT-AMP */
-	if ((mac_ctx->lim.gLimMlmState ==
-			eLIM_MLM_WT_PROBE_RESP_STATE) ||
-	    (mac_ctx->lim.gLimMlmState ==
-			eLIM_MLM_PASSIVE_SCAN_STATE)) {
-		lim_check_and_add_bss_description(mac_ctx, probe_rsp,
-			rx_Packet_info, ((mac_ctx->lim.
-			gLimHalScanState == eLIM_HAL_SCANNING_STATE)
-			? true : false), true);
-	} else if (session_entry->limMlmState ==
+	if (session_entry->limMlmState ==
 			eLIM_MLM_WT_JOIN_BEACON_STATE) {
 		/*
 		 * Either Beacon/probe response is required.
@@ -316,71 +305,3 @@ lim_process_probe_rsp_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_Packet_info,
 	/* Ignore Probe Response frame in all other states */
 	return;
 }
-#ifndef NAPIER_SCAN
-/**
- * lim_process_probe_rsp_frame_no_session() - process Probe Response frame
- * @mac_ctx: Pointer to Global MAC structure
- * @rx_packet_info: A pointer to Buffer descriptor + associated PDUs
- *
- * This function processes received Probe Response frame with no session.
- *
- * Return: None
- */
-void
-lim_process_probe_rsp_frame_no_session(tpAniSirGlobal mac_ctx,
-						uint8_t *rx_packet_info)
-{
-	uint8_t *body;
-	uint32_t frame_len = 0;
-	tpSirMacMgmtHdr header;
-	tSirProbeRespBeacon *probe_rsp;
-
-	probe_rsp = qdf_mem_malloc(sizeof(tSirProbeRespBeacon));
-	if (NULL == probe_rsp) {
-		pe_err("Unable to allocate memory");
-		return;
-	}
-
-	probe_rsp->ssId.length = 0;
-	probe_rsp->wpa.length = 0;
-
-	header = WMA_GET_RX_MAC_HEADER(rx_packet_info);
-
-	pe_debug("Received Probe Response frame with length=%d from",
-		WMA_GET_RX_MPDU_LEN(rx_packet_info));
-	lim_print_mac_addr(mac_ctx, header->sa, LOG2);
-
-	/* Validate IE information before processing Probe Response Frame */
-	if (lim_validate_ie_information_in_probe_rsp_frame(mac_ctx,
-				rx_packet_info) !=
-								eSIR_SUCCESS) {
-		pe_err("Parse error ProbeResponse, length=%d", frame_len);
-		qdf_mem_free(probe_rsp);
-		return;
-	}
-
-	frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_packet_info);
-	pe_debug("Probe Resp Frame Received: BSSID "
-		  MAC_ADDRESS_STR " (RSSI %d)",
-		  MAC_ADDR_ARRAY(header->bssId),
-		  (uint) abs((int8_t)WMA_GET_RX_RSSI_NORMALIZED(
-					rx_packet_info)));
-	/*
-	 * Get pointer to Probe Response frame body
-	 */
-	body = WMA_GET_RX_MPDU_DATA(rx_packet_info);
-	if (sir_convert_probe_frame2_struct(mac_ctx, body, frame_len,
-		probe_rsp) == eSIR_FAILURE) {
-		pe_err("Parse error ProbeResponse, length=%d",
-			frame_len);
-		qdf_mem_free(probe_rsp);
-		return;
-	}
-
-	pe_debug("Save this probe rsp in LFR cache");
-	lim_check_and_add_bss_description(mac_ctx, probe_rsp,
-		  rx_packet_info, false, true);
-	qdf_mem_free(probe_rsp);
-	return;
-}
-#endif

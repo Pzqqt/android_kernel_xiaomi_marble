@@ -434,9 +434,6 @@ void csr_apply_channel_power_info_to_fw(tpAniSirGlobal pMac,
 void csr_apply_power2_current(tpAniSirGlobal pMac);
 void csr_assign_rssi_for_category(tpAniSirGlobal pMac, int8_t bestApRssi,
 				  uint8_t catOffset);
-QDF_STATUS csr_roam_remove_connected_bss_from_scan_cache(tpAniSirGlobal pMac,
-							 tCsrRoamConnectedProfile *
-							 pConnProfile);
 QDF_STATUS csr_roam_start_roaming(tpAniSirGlobal pMac, uint32_t sessionId,
 				  eCsrRoamingReason roamingReason);
 /* return a bool to indicate whether roaming completed or continue. */
@@ -539,9 +536,6 @@ QDF_STATUS csr_scan_flush_result(tpAniSirGlobal);
  ***-------------------------------------------------------------------------------
  */
 QDF_STATUS csr_scan_filter_results(tpAniSirGlobal pMac);
-
-void csr_save_scan_results(tpAniSirGlobal pMac, uint8_t reason,
-				  uint8_t sessionId);
 
 QDF_STATUS csr_scan_flush_selective_result(tpAniSirGlobal, bool flushP2P);
 

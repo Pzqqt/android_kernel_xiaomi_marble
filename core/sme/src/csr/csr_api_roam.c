@@ -12064,22 +12064,6 @@ QDF_STATUS csr_roam_lost_link(tpAniSirGlobal pMac, uint32_t sessionId,
 	}
 	sme_debug("roamInfo.staId: %d", roamInfo.staId);
 /* Dont initiate internal driver based roaming after disconnection*/
-#ifndef NAPIER_SCAN
-	/* See if we can possibly roam.  If so, start the roaming process and notify HDD
-	   that we are roaming.  But if we cannot possibly roam, or if we are unable to
-	   currently roam, then notify HDD of the lost link */
-	if (fToRoam) {
-		/* Only remove the connected BSS in infrastructure mode */
-		csr_roam_remove_connected_bss_from_scan_cache(pMac,
-							      &pSession->
-							      connectedProfile);
-		/* Not to do anying for lostlink with WDS */
-		status = csr_roam_start_roaming(pMac, sessionId,
-				(eWNI_SME_DEAUTH_IND == type) ?
-				eCsrLostlinkRoamingDeauth :
-				eCsrLostlinkRoamingDisassoc);
-	}
-#endif
 	return status;
 }
 
@@ -13783,103 +13767,6 @@ eRoamCmdStatus csr_get_roam_complete_status(tpAniSirGlobal pMac, uint32_t sessio
 		pSession->fRoaming = false;
 	}
 	return retStatus;
-}
-
-/* This function remove the connected BSS from te cached scan result */
-QDF_STATUS
-csr_roam_remove_connected_bss_from_scan_cache(tpAniSirGlobal pMac,
-					tCsrRoamConnectedProfile *pConnProfile)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	tCsrScanResultFilter *pScanFilter = NULL;
-	tListElem *pEntry;
-	tCsrScanResult *pResult;
-	tDot11fBeaconIEs *pIes;
-	bool fMatch;
-
-	if ((qdf_is_macaddr_zero(&pConnProfile->bssid) ||
-	     qdf_is_macaddr_broadcast(&pConnProfile->bssid)))
-		return status;
-	/*
-	 * Prepare the filter. Only fill in the necessary fields. Not all fields
-	 * are needed
-	 */
-	pScanFilter = qdf_mem_malloc(sizeof(tCsrScanResultFilter));
-	if (NULL == pScanFilter)
-		return QDF_STATUS_E_NOMEM;
-
-	pScanFilter->BSSIDs.bssid = qdf_mem_malloc(sizeof(struct qdf_mac_addr));
-	if (NULL == pScanFilter->BSSIDs.bssid) {
-		qdf_mem_free(pScanFilter);
-		return QDF_STATUS_E_NOMEM;
-	}
-	qdf_mem_copy(pScanFilter->BSSIDs.bssid,
-		     &pConnProfile->bssid, sizeof(struct qdf_mac_addr));
-	pScanFilter->BSSIDs.numOfBSSIDs = 1;
-	if (!csr_is_nullssid(pConnProfile->SSID.ssId,
-			pConnProfile->SSID.length)) {
-		pScanFilter->SSIDs.SSIDList = qdf_mem_malloc(
-							sizeof(tCsrSSIDInfo));
-		if (NULL == pScanFilter->SSIDs.SSIDList) {
-			csr_free_scan_filter(pMac, pScanFilter);
-			qdf_mem_free(pScanFilter);
-			return QDF_STATUS_E_NOMEM;
-		}
-		qdf_mem_copy(&pScanFilter->SSIDs.SSIDList[0].SSID,
-			&pConnProfile->SSID, sizeof(tSirMacSSid));
-	}
-	pScanFilter->authType.numEntries = 1;
-	pScanFilter->authType.authType[0] = pConnProfile->AuthType;
-	pScanFilter->BSSType = pConnProfile->BSSType;
-	pScanFilter->EncryptionType.numEntries = 1;
-	pScanFilter->EncryptionType.encryptionType[0] =
-		pConnProfile->EncryptionType;
-	pScanFilter->mcEncryptionType.numEntries = 1;
-	pScanFilter->mcEncryptionType.encryptionType[0] =
-		pConnProfile->mcEncryptionType;
-	/* We ignore the channel for now, BSSID should be enough */
-	pScanFilter->ChannelInfo.numOfChannels = 0;
-	/* Also ignore the following fields */
-	pScanFilter->uapsd_mask = 0;
-	pScanFilter->bWPSAssociation = false;
-	pScanFilter->bOSENAssociation = false;
-	pScanFilter->countryCode[0] = 0;
-	pScanFilter->phyMode = eCSR_DOT11_MODE_AUTO;
-#ifdef WLAN_FEATURE_11W
-	pScanFilter->MFPEnabled = pConnProfile->MFPEnabled;
-	pScanFilter->MFPRequired = pConnProfile->MFPRequired;
-	pScanFilter->MFPCapable = pConnProfile->MFPCapable;
-#endif
-	csr_ll_lock(&pMac->scan.scanResultList);
-	pEntry = csr_ll_peek_head(&pMac->scan.scanResultList, LL_ACCESS_NOLOCK);
-	while (pEntry) {
-		pResult = GET_BASE_ADDR(pEntry, tCsrScanResult, Link);
-		pIes = (tDot11fBeaconIEs *) (pResult->Result.pvIes);
-		fMatch = csr_match_bss(pMac, &pResult->Result.BssDescriptor,
-				       pScanFilter, NULL, NULL, NULL, &pIes);
-		/* Release the IEs allocated by csr_match_bss is needed */
-		if (!pResult->Result.pvIes) {
-			/*
-			 * need to free the IEs since it is allocated
-			 * by csr_match_bss
-			 */
-			qdf_mem_free(pIes);
-		}
-		if (fMatch) {
-			/* We found the one */
-			if (csr_ll_remove_entry(&pMac->scan.scanResultList,
-						pEntry, LL_ACCESS_NOLOCK))
-				/* Free the memory */
-				csr_free_scan_result_entry(pMac, pResult);
-			break;
-		}
-		pEntry = csr_ll_next(&pMac->scan.scanResultList,
-				    pEntry, LL_ACCESS_NOLOCK);
-	} /* while */
-	csr_ll_unlock(&pMac->scan.scanResultList);
-	csr_free_scan_filter(pMac, pScanFilter);
-	qdf_mem_free(pScanFilter);
-	return status;
 }
 
 static QDF_STATUS csr_roam_start_wds(tpAniSirGlobal pMac, uint32_t sessionId,

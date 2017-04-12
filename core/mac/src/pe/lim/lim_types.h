@@ -434,16 +434,8 @@ void lim_cleanup_mlm(tpAniSirGlobal);
 
 /* Management frame handling functions */
 void lim_process_beacon_frame(tpAniSirGlobal, uint8_t *, tpPESession);
-void lim_process_beacon_frame_no_session(tpAniSirGlobal, uint8_t *);
 void lim_process_probe_req_frame(tpAniSirGlobal, uint8_t *, tpPESession);
 void lim_process_probe_rsp_frame(tpAniSirGlobal, uint8_t *, tpPESession);
-#ifndef NAPIER_SCAN
-void lim_process_probe_rsp_frame_no_session(tpAniSirGlobal, uint8_t *);
-#else
-static inline
-void lim_process_probe_rsp_frame_no_session(tpAniSirGlobal mac_ctx,
-	uint8_t *pkt){}
-#endif
 void lim_process_probe_req_frame_multiple_bss(tpAniSirGlobal, uint8_t *,
 					      tpPESession);
 

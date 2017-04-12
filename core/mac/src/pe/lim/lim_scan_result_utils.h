@@ -44,15 +44,6 @@
 uint8_t lim_scan_hash_function(tSirMacAddr);
 void lim_restore_pre_scan_state(tpAniSirGlobal);
 void lim_copy_scan_result(tpAniSirGlobal, uint8_t *);
-#ifndef NAPIER_SCAN
-void lim_check_and_add_bss_description(tpAniSirGlobal, tpSirProbeRespBeacon,
-				       uint8_t *, bool, uint8_t);
-#else
-static inline
-void lim_check_and_add_bss_description(tpAniSirGlobal mac_ctx,
-	tpSirProbeRespBeacon bcn, uint8_t *rx_pkt,
-	bool scanning, uint8_t probe){}
-#endif
 void lim_collect_bss_description(tpAniSirGlobal pMac,
 			    tSirBssDescription *pBssDescr,
 			    tpSirProbeRespBeacon pBPR,
