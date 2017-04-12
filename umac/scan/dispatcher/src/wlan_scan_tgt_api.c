@@ -281,3 +281,20 @@ QDF_STATUS tgt_scan_bcn_probe_rx_callback(struct wlan_objmgr_psoc *psoc,
 	}
 	return status;
 }
+
+QDF_STATUS
+tgt_scan_set_max_active_scans(struct wlan_objmgr_psoc *psoc,
+		uint32_t max_active_scans)
+{
+	struct scan_default_params *scan_params = NULL;
+
+	if (!psoc) {
+		scm_err("null psoc");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	scan_params = wlan_scan_psoc_get_def_params(psoc);
+
+	scan_params->max_active_scans_allowed = max_active_scans;
+
+	return QDF_STATUS_SUCCESS;
+}

@@ -130,4 +130,16 @@ tgt_scan_register_ev_handler(struct wlan_objmgr_psoc *psoc);
  */
 QDF_STATUS
 tgt_scan_unregister_ev_handler(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * tgt_scan_set_max_active_scans() - lmac handler to set max active scans
+ * @psoc: psoc object
+ * @max_active_scans: maximum active scans allowed on underlying psoc
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+tgt_scan_set_max_active_scans(struct wlan_objmgr_psoc *psoc,
+		uint32_t max_active_scans);
+
 #endif

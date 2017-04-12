@@ -343,3 +343,22 @@ target_if_register_scan_tx_ops(struct wlan_lmac_if_scan_tx_ops *scan)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS
+target_if_scan_set_max_active_scans(struct wlan_objmgr_psoc *psoc,
+		uint32_t max_active_scans)
+{
+	struct wlan_lmac_if_scan_rx_ops *scan_rx_ops;
+	QDF_STATUS status;
+
+	scan_rx_ops = target_if_scan_get_rx_ops(psoc);
+	if (scan_rx_ops->scan_set_max_active_scans) {
+		status = scan_rx_ops->scan_set_max_active_scans(psoc,
+				max_active_scans);
+	} else {
+		target_if_err("scan_set_max_active_scans uninitialized");
+		status = QDF_STATUS_E_FAULT;
+	}
+
+	return status;
+}

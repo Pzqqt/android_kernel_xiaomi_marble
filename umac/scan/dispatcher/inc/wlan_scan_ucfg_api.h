@@ -433,4 +433,13 @@ QDF_STATUS ucfg_scan_psoc_open(struct wlan_objmgr_psoc *psoc);
  */
 QDF_STATUS ucfg_scan_psoc_close(struct wlan_objmgr_psoc *psoc);
 
+/**
+ * ucfg_scan_get_max_active_scans() - API to get max active scans
+ * supported on this psoc
+ * @psoc: psoc object
+ *
+ * Return: uint32_t
+ */
+uint32_t ucfg_scan_get_max_active_scans(struct wlan_objmgr_psoc *psoc);
+
 #endif

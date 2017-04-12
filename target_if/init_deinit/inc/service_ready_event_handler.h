@@ -36,6 +36,7 @@
 #include "wmi_unified_param.h"
 #include "wlan_objmgr_psoc_obj.h"
 #include "target_if.h"
+#include "target_if_scan.h"
 
 /**
  * init_deinit_service_ready_event_handler() - service ready handler

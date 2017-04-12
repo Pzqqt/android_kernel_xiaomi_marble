@@ -258,6 +258,7 @@ wlan_lmac_if_umac_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 
 	/* scan rx ops */
 	rx_ops->scan.scan_ev_handler = tgt_scan_event_handler;
+	rx_ops->scan.scan_set_max_active_scans = tgt_scan_set_max_active_scans;
 
 	wlan_lmac_if_atf_rx_ops_register(rx_ops);
 

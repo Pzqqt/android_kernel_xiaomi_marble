@@ -98,12 +98,15 @@ struct wlan_lmac_if_scan_tx_ops {
 /**
  * struct wlan_lmac_if_scan_rx_ops  - south bound rx function pointers for scan
  * @scan_ev_handler: scan event handler
+ * @scan_set_max_active_scans: set max active scans allowed
  *
  * lmac modules uses this API to post scan events to scan module
  */
 struct wlan_lmac_if_scan_rx_ops {
 	QDF_STATUS (*scan_ev_handler)(struct wlan_objmgr_psoc *psoc,
 		struct scan_event_info *event_info);
+	QDF_STATUS (*scan_set_max_active_scans)(struct wlan_objmgr_psoc *psoc,
+			uint32_t max_active_scans);
 };
 
 #ifdef WLAN_PMO_ENABLE

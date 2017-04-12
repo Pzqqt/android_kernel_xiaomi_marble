@@ -94,7 +94,6 @@
 /* scan age time in millisec */
 #define SCAN_CACHE_AGING_TIME (300*1000)
 #define SCAN_MAX_BSS_PDEV 100
-#define SCAN_MAX_NUM_SCAN_ALLOWED 8
 #define SCAN_PRIORITY SCAN_PRIORITY_LOW
 
 /**
@@ -200,7 +199,8 @@ struct pno_def_config {
  * @num_probes: default maximum number of probes to sent
  * @cache_aging_time: default scan cache aging time
  * @max_bss_per_pdev: maximum number of bss entries to be maintained per pdev
- * @max_num_scan_allowed: maximum number of parallel scan allowed per psoc
+ * @max_active_scans_allowed: maximum number of active parallel scan allowed
+ *                            per psoc
  * @scan_priority: default scan priority
  * @scan_f_passive: passively scan all channels including active channels
  * @scan_f_bcast_probe: add wild card ssid prbreq even if ssid_list is specified
@@ -260,7 +260,7 @@ struct scan_default_params {
 	uint32_t num_probes;
 	uint32_t scan_cache_aging_time;
 	uint16_t max_bss_per_pdev;
-	uint8_t max_num_scan_allowed;
+	uint32_t max_active_scans_allowed;
 	enum scan_priority scan_priority;
 	enum scan_dwelltime_adaptive_mode adaptive_dwell_time_mode;
 	union {
@@ -486,17 +486,48 @@ wlan_vdev_get_pdev_scan_ev_handlers(struct wlan_objmgr_vdev *vdev)
 }
 
 /**
+ * wlan_scan_psoc_get_def_params() - private API to get scan defaults
+ * @psoc: psoc object
+ *
+ * Return: scan defaults
+ */
+static inline struct scan_default_params*
+wlan_scan_psoc_get_def_params(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_scan_obj *scan = NULL;
+
+	if (!psoc) {
+		scm_err("null psoc");
+		return NULL;
+	}
+	scan = wlan_psoc_get_scan_obj(psoc);
+
+	if (!scan)
+		return NULL;
+
+	return &scan->scan_def;
+}
+
+/**
  * wlan_vdev_get_def_scan_params() - private API to get scan defaults
- * @psoc: vdev object
+ * @vdev: vdev object
  *
  * Return: scan defaults
  */
 static inline struct scan_default_params*
 wlan_vdev_get_def_scan_params(struct wlan_objmgr_vdev *vdev)
 {
-	struct wlan_scan_obj *scan = wlan_vdev_get_scan_obj(vdev);
+	struct wlan_objmgr_psoc *psoc = NULL;
 
-	return &scan->scan_def;
+	if (!vdev) {
+		scm_err("null vdev");
+		return NULL;
+	}
+	wlan_vdev_obj_lock(vdev);
+	psoc = wlan_vdev_get_psoc(vdev);
+	wlan_vdev_obj_unlock(vdev);
+
+	return wlan_scan_psoc_get_def_params(psoc);
 }
 
 /**

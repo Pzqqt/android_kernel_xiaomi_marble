@@ -598,7 +598,6 @@ wlan_scan_global_init(struct wlan_scan_obj *scan_obj)
 	scan_obj->scan_def.num_probes = SCAN_NUM_PROBES;
 	scan_obj->scan_def.scan_cache_aging_time = SCAN_CACHE_AGING_TIME;
 	scan_obj->scan_def.max_bss_per_pdev = SCAN_MAX_BSS_PDEV;
-	scan_obj->scan_def.max_num_scan_allowed = SCAN_MAX_NUM_SCAN_ALLOWED;
 	scan_obj->scan_def.scan_priority = SCAN_PRIORITY;
 	scan_obj->scan_def.idle_time = SCAN_NETWORK_IDLE_TIMEOUT;
 	scan_obj->scan_def.adaptive_dwell_time_mode = SCAN_DWELL_MODE_DEFAULT;
@@ -1038,4 +1037,18 @@ ucfg_scan_psoc_disable(struct wlan_objmgr_psoc *psoc)
 	scm_db_deinit(psoc);
 
 	return status;
+}
+
+uint32_t
+ucfg_scan_get_max_active_scans(struct wlan_objmgr_psoc *psoc)
+{
+	struct scan_default_params *scan_params = NULL;
+
+	if (!psoc) {
+		scm_err("null psoc");
+		return 0;
+	}
+	scan_params = wlan_scan_psoc_get_def_params(psoc);
+
+	return scan_params->max_active_scans_allowed;
 }

@@ -28,6 +28,8 @@ struct scan_req_params;
 struct scan_cancel_param;
 struct wlan_objmgr_psoc;
 
+#define WLAN_MAX_ACTIVE_SCANS_ALLOWED   8
+
 #ifdef FEATURE_WLAN_SCAN_PNO
 /**
  * target_if_nlo_match_event_handler() - nlo match event handler
@@ -115,4 +117,16 @@ target_if_scan_cancel(struct wlan_objmgr_psoc *psoc,
 
 QDF_STATUS
 target_if_register_scan_tx_ops(struct wlan_lmac_if_scan_tx_ops *scan);
+
+/**
+ * target_if_scan_set_max_active_scans() - lmac handler to set max active scans
+ * @psoc: psoc object
+ * @max_active_scans: maximum active scans allowed on underlying psoc
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+target_if_scan_set_max_active_scans(struct wlan_objmgr_psoc *psoc,
+		uint32_t max_active_scans);
+
 #endif
