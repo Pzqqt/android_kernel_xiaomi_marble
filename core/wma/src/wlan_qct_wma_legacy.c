@@ -109,6 +109,7 @@ static tSirRetStatus wma_post_cfg_msg(tpAniSirGlobal pMac,
 tSirRetStatus u_mac_post_ctrl_msg(void *pSirGlobal, tSirMbMsg *pMb)
 {
 	struct scheduler_msg msg = {0};
+	tSirRetStatus status = eSIR_SUCCESS;
 	tpAniSirGlobal pMac = (tpAniSirGlobal) pSirGlobal;
 
 	tSirMbMsg *pMbLocal;
@@ -127,19 +128,19 @@ tSirRetStatus u_mac_post_ctrl_msg(void *pSirGlobal, tSirMbMsg *pMb)
 
 	switch (msg.type & HAL_MMH_MB_MSG_TYPE_MASK) {
 	case WMA_MSG_TYPES_BEGIN:       /* Posts a message to the HAL MsgQ */
-		wma_post_ctrl_msg(pMac, &msg);
+		status = wma_post_ctrl_msg(pMac, &msg);
 		break;
 
 	case SIR_LIM_MSG_TYPES_BEGIN:   /* Posts a message to the LIM MsgQ */
-		lim_post_msg_api(pMac, &msg);
+		status = lim_post_msg_api(pMac, &msg);
 		break;
 
 	case SIR_CFG_MSG_TYPES_BEGIN:   /* Posts a message to the CFG MsgQ */
-		wma_post_cfg_msg(pMac, &msg);
+		status = wma_post_cfg_msg(pMac, &msg);
 		break;
 
 	case SIR_PMM_MSG_TYPES_BEGIN:   /* Posts a message to the LIM MsgQ */
-		sme_post_pe_message(pMac, &msg);
+		status = sme_post_pe_message(pMac, &msg);
 		break;
 
 	case SIR_PTT_MSG_TYPES_BEGIN:
@@ -152,7 +153,10 @@ tSirRetStatus u_mac_post_ctrl_msg(void *pSirGlobal, tSirMbMsg *pMb)
 		return eSIR_FAILURE;
 	}
 
-	return eSIR_SUCCESS;
+	if (status != eSIR_SUCCESS)
+		qdf_mem_free(msg.bodyptr);
+
+	return status;
 
 } /* u_mac_post_ctrl_msg() */
 
