@@ -458,17 +458,17 @@ static QDF_STATUS scm_add_update_entry(struct scan_dbs *scan_db,
 {
 	QDF_STATUS status;
 
-	/* SSID shouldn't be NULL in probe resp */
 	if (scan_params->frm_subtype ==
 	   MGMT_SUBTYPE_PROBE_RESP &&
 	   !scan_params->ie_list.ssid)
-		return QDF_STATUS_E_INVAL;
+		scm_info("Probe resp doesnt contain SSID");
 
-	/* CSA or ECSA present ignore */
+
 	if (scan_params->ie_list.csa ||
 	   scan_params->ie_list.xcsa ||
 	   scan_params->ie_list.cswrp)
-		return QDF_STATUS_E_INVAL;
+		scm_info("CSA IE present for BSSID: %pM",
+			scan_params->bssid.bytes);
 
 	scm_find_duplicate_and_del(scan_db, scan_params);
 	status = scm_add_scan_entry(scan_db, scan_params);
