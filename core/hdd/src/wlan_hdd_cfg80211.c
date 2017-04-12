@@ -14274,7 +14274,7 @@ static int wlan_hdd_disconnect(hdd_adapter_t *pAdapter, u16 reason)
 	/* stop tx queues */
 	hdd_debug("Disabling queues");
 	wlan_hdd_netif_queue_control(pAdapter,
-		WLAN_NETIF_TX_DISABLE_N_CARRIER, WLAN_CONTROL_PATH);
+		WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER, WLAN_CONTROL_PATH);
 	hdd_debug("Set HDD connState to eConnectionState_Disconnecting");
 	pHddStaCtx->conn_info.connState = eConnectionState_Disconnecting;
 	INIT_COMPLETION(pAdapter->disconnect_comp_var);

@@ -1190,8 +1190,6 @@ const char *hdd_action_type_to_string(enum netif_action_type action)
 	CASE_RETURN_STRING(WLAN_WAKE_ALL_NETIF_QUEUE);
 	CASE_RETURN_STRING(WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER);
 	CASE_RETURN_STRING(WLAN_START_ALL_NETIF_QUEUE_N_CARRIER);
-	CASE_RETURN_STRING(WLAN_NETIF_TX_DISABLE);
-	CASE_RETURN_STRING(WLAN_NETIF_TX_DISABLE_N_CARRIER);
 	CASE_RETURN_STRING(WLAN_NETIF_CARRIER_ON);
 	CASE_RETURN_STRING(WLAN_NETIF_CARRIER_OFF);
 	default:
@@ -1211,8 +1209,6 @@ static void wlan_hdd_update_queue_oper_stats(hdd_adapter_t *adapter,
 	switch (action) {
 	case WLAN_STOP_ALL_NETIF_QUEUE:
 	case WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER:
-	case WLAN_NETIF_TX_DISABLE:
-	case WLAN_NETIF_TX_DISABLE_N_CARRIER:
 		adapter->queue_oper_stats[reason].pause_count++;
 		break;
 	case WLAN_START_ALL_NETIF_QUEUE:
@@ -1374,29 +1370,6 @@ void wlan_hdd_netif_queue_control(hdd_adapter_t *adapter,
 			netif_tx_start_all_queues(adapter->dev);
 			wlan_hdd_update_pause_time(adapter, temp_map);
 		}
-		spin_unlock_bh(&adapter->pause_map_lock);
-		break;
-
-	case WLAN_NETIF_TX_DISABLE:
-		spin_lock_bh(&adapter->pause_map_lock);
-		if (!adapter->pause_map) {
-			netif_tx_disable(adapter->dev);
-			wlan_hdd_update_txq_timestamp(adapter->dev);
-			wlan_hdd_update_unpause_time(adapter);
-		}
-		adapter->pause_map |= (1 << reason);
-		spin_unlock_bh(&adapter->pause_map_lock);
-		break;
-
-	case WLAN_NETIF_TX_DISABLE_N_CARRIER:
-		spin_lock_bh(&adapter->pause_map_lock);
-		if (!adapter->pause_map) {
-			netif_tx_disable(adapter->dev);
-			wlan_hdd_update_txq_timestamp(adapter->dev);
-			wlan_hdd_update_unpause_time(adapter);
-		}
-		adapter->pause_map |= (1 << reason);
-		netif_carrier_off(adapter->dev);
 		spin_unlock_bh(&adapter->pause_map_lock);
 		break;
 

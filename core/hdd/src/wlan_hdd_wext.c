@@ -7187,7 +7187,7 @@ static int __iw_set_mlme(struct net_device *dev,
 
 			hdd_notice("Disabling queues");
 			wlan_hdd_netif_queue_control(pAdapter,
-					WLAN_NETIF_TX_DISABLE_N_CARRIER,
+					WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
 					WLAN_CONTROL_PATH);
 
 		} else {

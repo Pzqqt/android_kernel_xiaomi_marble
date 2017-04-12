@@ -132,7 +132,7 @@ static int hdd_close_ndi(hdd_adapter_t *adapter)
 		return -EINVAL;
 	}
 	wlan_hdd_netif_queue_control(adapter,
-				     WLAN_NETIF_TX_DISABLE_N_CARRIER,
+				     WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
 				     WLAN_CONTROL_PATH);
 
 #ifdef WLAN_OPEN_SOURCE

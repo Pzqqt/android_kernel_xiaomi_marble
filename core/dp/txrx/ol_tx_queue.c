@@ -1839,7 +1839,7 @@ void ol_txrx_vdev_pause(struct cdp_vdev *pvdev, uint32_t reason)
 	if (netif_reason == WLAN_REASON_TYPE_MAX)
 		return;
 
-	pdev->pause_cb(vdev->vdev_id, WLAN_NETIF_TX_DISABLE, netif_reason);
+	pdev->pause_cb(vdev->vdev_id, WLAN_STOP_ALL_NETIF_QUEUE, netif_reason);
 }
 
 /**
