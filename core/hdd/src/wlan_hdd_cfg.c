@@ -4228,12 +4228,20 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_PER_ROAM_MONITOR_TIME_MIN,
 		CFG_PER_ROAM_MONITOR_TIME_MAX),
 
-	REG_VARIABLE(CFG_ACTIVE_BPF_MODE_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, active_bpf_mode,
+	REG_VARIABLE(CFG_ACTIVE_UC_BPF_MODE_NAME, WLAN_PARAM_Integer,
+		struct hdd_config, active_uc_bpf_mode,
 		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_ACTIVE_BPF_MODE_DEFAULT,
-		CFG_ACTIVE_BPF_MODE_MIN,
-		CFG_ACTIVE_BPF_MODE_MAX),
+		CFG_ACTIVE_UC_BPF_MODE_DEFAULT,
+		CFG_ACTIVE_UC_BPF_MODE_MIN,
+		CFG_ACTIVE_UC_BPF_MODE_MAX),
+
+	REG_VARIABLE(CFG_ACTIVE_MC_BC_BPF_MODE_NAME, WLAN_PARAM_Integer,
+		struct hdd_config, active_mc_bc_bpf_mode,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_ACTIVE_MC_BC_BPF_MODE_DEFAULT,
+		CFG_ACTIVE_MC_BC_BPF_MODE_MIN,
+		CFG_ACTIVE_MC_BC_BPF_MODE_MAX),
+
 	REG_VARIABLE(CFG_ENABLE_BCAST_PROBE_RESP_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, enable_bcast_probe_rsp,
 		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -5772,6 +5780,12 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	hdd_info("Name = [%s] Value = [%u]",
 		CFG_CRASH_FW_TIMEOUT_NAME,
 		pHddCtx->config->fw_timeout_crash);
+	hdd_debug("Name = [%s] Value = [%u]",
+		CFG_ACTIVE_UC_BPF_MODE_NAME,
+		pHddCtx->config->active_uc_bpf_mode);
+	hdd_debug("Name = [%s] Value = [%u]",
+		CFG_ACTIVE_MC_BC_BPF_MODE_NAME,
+		pHddCtx->config->active_mc_bc_bpf_mode);
 	hdd_info("Name = [%s] Value = [%d]",
 		CFG_SAP_INTERNAL_RESTART_NAME,
 		pHddCtx->config->sap_internal_restart);

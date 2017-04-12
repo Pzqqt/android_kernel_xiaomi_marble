@@ -1373,6 +1373,29 @@ static int wma_remove_bss_peer(tp_wma_handle wma, void *pdev,
 	return 0;
 }
 
+/*
+ * get_fw_active_bpf_mode() - convert HDD BPF mode to FW configurable BPF
+ * mode
+ * @mode: BPF mode maintained in HDD
+ *
+ * Return: FW configurable BP mode
+ */
+static enum wmi_host_active_bpf_mode
+get_fw_active_bpf_mode(enum active_bpf_mode mode)
+{
+	switch (mode) {
+	case ACTIVE_BPF_DISABLED:
+		return WMI_HOST_ACTIVE_BPF_DISABLED;
+	case ACTIVE_BPF_ENABLED:
+		return WMI_HOST_ACTIVE_BPF_ENABLED;
+	case ACTIVE_BPF_ADAPTIVE:
+		return WMI_HOST_ACTIVE_BPF_ADAPTIVE;
+	default:
+		WMA_LOGE("Invalid Active BPF Mode %d; Using 'disabled'", mode);
+		return WMI_HOST_ACTIVE_BPF_DISABLED;
+	}
+}
+
 /**
  * wma_config_active_bpf_mode() - Config active BPF mode in FW
  * @wma: the WMA handle
@@ -1382,30 +1405,13 @@ static int wma_remove_bss_peer(tp_wma_handle wma, void *pdev,
  */
 static QDF_STATUS wma_config_active_bpf_mode(t_wma_handle *wma, uint8_t vdev_id)
 {
-	/* for now, hard code mc/bc mode to enabled */
-	const enum wmi_host_active_bpf_mode mcbc_mode =
-		WMI_HOST_ACTIVE_BPF_ENABLED;
-	enum wmi_host_active_bpf_mode uc_mode;
+	enum wmi_host_active_bpf_mode uc_mode, mcbc_mode;
 
-	WMA_LOGD("Configuring Active BPF Mode %d for vdev %u",
-		 wma->active_bpf_mode, vdev_id);
+	uc_mode = get_fw_active_bpf_mode(wma->active_uc_bpf_mode);
+	mcbc_mode = get_fw_active_bpf_mode(wma->active_mc_bc_bpf_mode);
 
-	switch (wma->active_bpf_mode) {
-	case ACTIVE_BPF_DISABLED:
-		uc_mode = FW_ACTIVE_BPF_MODE_DISABLE;
-		break;
-	case ACTIVE_BPF_ENABLED:
-		uc_mode = FW_ACTIVE_BPF_MODE_FORCE_ENABLE;
-		break;
-	case ACTIVE_BPF_ADAPTIVE:
-		uc_mode = FW_ACTIVE_BPF_MODE_ADAPTIVE_ENABLE;
-		break;
-	default:
-		WMA_LOGD("Invalid Active BPF Mode %d; Using 'disabled'",
-			 wma->active_bpf_mode);
-		uc_mode = FW_ACTIVE_BPF_MODE_DISABLE;
-		break;
-	}
+	WMA_LOGD("Configuring Active BPF Mode UC:%d MC/BC:%d for vdev %u",
+		  uc_mode, mcbc_mode, vdev_id);
 
 	return wmi_unified_set_active_bpf_mode_cmd(wma->wmi_handle, vdev_id,
 						   uc_mode, mcbc_mode);

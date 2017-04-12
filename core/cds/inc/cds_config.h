@@ -113,7 +113,10 @@ enum active_bpf_mode {
  * @sub_20_channel_width: Sub 20 MHz ch width, ini intersected with fw cap
  * @flow_steering_enabled: Receive flow steering.
  * @is_fw_timeout: Indicate whether crash host when fw timesout or not
- * @active_bpf_mode: Setting that determines how BPF is applied in active mode
+ * @active_uc_bpf_mode: Setting that determines how BPF is applied in active
+ *	mode for uc packets
+ * @active_mc_bc_bpf_mode: Setting that determines how BPF is applied in
+ *	active mode for MC/BC packets
  * Structure for holding cds ini parameters.
  */
 
@@ -167,6 +170,7 @@ struct cds_config_info {
 	bool self_recovery_enabled;
 	bool fw_timeout_crash;
 	struct ol_tx_sched_wrr_ac_specs_t ac_specs[TX_WMM_AC_NUM];
-	enum active_bpf_mode active_bpf_mode;
+	enum active_bpf_mode active_uc_bpf_mode;
+	enum active_bpf_mode active_mc_bc_bpf_mode;
 };
 #endif /* !defined( __CDS_CONFIG_H ) */

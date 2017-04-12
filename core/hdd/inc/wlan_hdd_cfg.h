@@ -9649,27 +9649,51 @@ enum hdd_wext_control {
 
 /*
  * <ini>
- * gActiveBpfMode - Control active BPF mode
+ * gActiveUcBpfMode - Control UC active BPF mode
  * @Min: 0 (disabled)
  * @Max: 2 (adaptive)
  * @Default: 0 (disabled)
  *
- * This config item is used to control BPF in active mode. There are 3 modes:
+ * This config item controls UC BPF in active mode. There are 3 modes:
  *	0) disabled - BPF is disabled in active mode
  *	1) enabled - BPF is enabled for all packets in active mode
  *	2) adaptive - BPF is enabled for packets up to some throughput threshold
  *
- * Related: N/A
+ * Related: gActiveMcBcBpfMode
  *
  * Supported Feature: Active Mode BPF
  *
  * Usage: Internal/External
  * </ini>
  */
-#define CFG_ACTIVE_BPF_MODE_NAME    "gActiveBpfMode"
-#define CFG_ACTIVE_BPF_MODE_MIN     (ACTIVE_BPF_DISABLED)
-#define CFG_ACTIVE_BPF_MODE_MAX     (ACTIVE_BPF_MODE_COUNT - 1)
-#define CFG_ACTIVE_BPF_MODE_DEFAULT (ACTIVE_BPF_DISABLED)
+#define CFG_ACTIVE_UC_BPF_MODE_NAME    "gActiveUcBpfMode"
+#define CFG_ACTIVE_UC_BPF_MODE_MIN     (ACTIVE_BPF_DISABLED)
+#define CFG_ACTIVE_UC_BPF_MODE_MAX     (ACTIVE_BPF_MODE_COUNT - 1)
+#define CFG_ACTIVE_UC_BPF_MODE_DEFAULT (ACTIVE_BPF_DISABLED)
+
+/*
+ * <ini>
+ * gActiveMcBcBpfMode - Control MC/BC active BPF mode
+ * @Min: 0 (disabled)
+ * @Max: 2 (adaptive)
+ * @Default: 0 (disabled)
+ *
+ * This config item controls MC/BC BPF in active mode. There are 3 modes:
+ *	0) disabled - BPF is disabled in active mode
+ *	1) enabled - BPF is enabled for all packets in active mode
+ *	2) adaptive - BPF is enabled for packets up to some throughput threshold
+ *
+ * Related: gActiveUcBpfMode
+ *
+ * Supported Feature: Active Mode BPF
+ *
+ * Usage: Internal/External
+ * </ini>
+ */
+#define CFG_ACTIVE_MC_BC_BPF_MODE_NAME    "gActiveMcBcBpfMode"
+#define CFG_ACTIVE_MC_BC_BPF_MODE_MIN     (ACTIVE_BPF_DISABLED)
+#define CFG_ACTIVE_MC_BC_BPF_MODE_MAX     (ACTIVE_BPF_MODE_COUNT - 1)
+#define CFG_ACTIVE_MC_BC_BPF_MODE_DEFAULT (ACTIVE_BPF_DISABLED)
 
 #ifdef WLAN_FEATURE_11AX
 /* 11AX related INI configuration */
@@ -10556,7 +10580,8 @@ struct hdd_config {
 	uint32_t per_roam_th_percent;
 	uint32_t per_roam_rest_time;
 	uint32_t per_roam_mon_time;
-	enum active_bpf_mode active_bpf_mode;
+	enum active_bpf_mode active_uc_bpf_mode;
+	enum active_bpf_mode active_mc_bc_bpf_mode;
 	bool enable_bcast_probe_rsp;
 #ifdef WLAN_FEATURE_11AX
 	bool enable_ul_mimo;
