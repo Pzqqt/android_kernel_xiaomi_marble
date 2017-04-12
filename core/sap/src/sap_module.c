@@ -958,6 +958,11 @@ QDF_STATUS wlansap_start_bss(void *pCtx,     /* pwextCtx */
 	 */
 	pmac->sap.SapDfsInfo.disable_dfs_ch_switch =
 				pConfig->disableDFSChSwitch;
+	pmac->sap.sapCtxList[pSapCtx->sessionId].pSapContext = pSapCtx;
+	pmac->sap.sapCtxList[pSapCtx->sessionId].sapPersona =
+		pSapCtx->csr_roamProfile.csrPersona;
+	pmac->sap.sapCtxList[pSapCtx->sessionId].sessionID =
+		pSapCtx->sessionId;
 
 	/* Copy MAC filtering settings to sap context */
 	pSapCtx->eSapMacAddrAclMode = pConfig->SapMacaddr_acl;
