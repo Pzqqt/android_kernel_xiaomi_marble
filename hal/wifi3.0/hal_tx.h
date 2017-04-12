@@ -543,24 +543,6 @@ static inline void hal_tx_ext_desc_set_tso_flags(void *desc,
 }
 
 /**
- * hal_tx_ext_desc_set_checksum_en() - Enable HW Checksum offload
- * @desc: Handle to Tx MSDU Extension Descriptor
- * @en: Checksum offload enable
- *
- * Return: none
- */
-static inline void hal_tx_ext_desc_set_checksum_en(void *desc,
-						   uint8_t en)
-{
-	HAL_SET_FLD(desc, TX_MSDU_EXTENSION_0, IPV4_CHECKSUM_EN) |=
-	((HAL_TX_SM(TX_MSDU_EXTENSION_0, IPV4_CHECKSUM_EN, en)) |
-	(HAL_TX_SM(TX_MSDU_EXTENSION_0, UDP_OVER_IPV4_CHECKSUM_EN, en)) |
-	(HAL_TX_SM(TX_MSDU_EXTENSION_0, UDP_OVER_IPV6_CHECKSUM_EN, en)) |
-	(HAL_TX_SM(TX_MSDU_EXTENSION_0, TCP_OVER_IPV4_CHECKSUM_EN, en)) |
-	(HAL_TX_SM(TX_MSDU_EXTENSION_0, TCP_OVER_IPV6_CHECKSUM_EN, en)));
-}
-
-/**
  * hal_tx_ext_desc_set_tcp_flags() - Enable HW Checksum offload
  * @desc: Handle to Tx MSDU Extension Descriptor
  * @tcp_flags: TCP flags {NS,CWR,ECE,URG,ACK,PSH, RST ,SYN,FIN}

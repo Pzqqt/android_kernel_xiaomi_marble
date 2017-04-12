@@ -2358,7 +2358,6 @@ static inline void hal_rx_dump_msdu_end_tlv(struct rx_msdu_end *msdu_end,
 			"sa_offset: %d\n"
 			"da_offset_valid: %d\n"
 			"sa_offset_valid: %d\n"
-			"type_offset: %d\n"
 			"rule_indication_31_0: %d\n"
 			"rule_indication_63_32: %d\n"
 			"sa_idx: %d\n"
@@ -2405,7 +2404,6 @@ static inline void hal_rx_dump_msdu_end_tlv(struct rx_msdu_end *msdu_end,
 		msdu_end->sa_offset,
 		msdu_end->da_offset_valid,
 		msdu_end->sa_offset_valid,
-		msdu_end->type_offset,
 		msdu_end->rule_indication_31_0,
 		msdu_end->rule_indication_63_32,
 		msdu_end->sa_idx,
