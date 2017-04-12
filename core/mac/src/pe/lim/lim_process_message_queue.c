@@ -371,6 +371,9 @@ static void lim_process_hw_mode_trans_ind(tpAniSirGlobal mac, void *body)
 
 uint8_t static def_msg_decision(tpAniSirGlobal pMac, struct scheduler_msg *limMsg)
 {
+	uint8_t type, subtype;
+	QDF_STATUS status;
+	bool mgmt_pkt_defer = true;
 
 /* this function should not changed */
 	if (pMac->lim.gLimSmeState == eLIM_SME_OFFLINE_STATE) {
@@ -387,6 +390,21 @@ uint8_t static def_msg_decision(tpAniSirGlobal pMac, struct scheduler_msg *limMs
 	if ((!lim_is_system_in_scan_state(pMac))
 	    && (true != GET_LIM_PROCESS_DEFD_MESGS(pMac))
 	    && !pMac->lim.gLimSystemInScanLearnMode) {
+
+		if (limMsg->type == SIR_BB_XPORT_MGMT_MSG) {
+			/*
+			 * Dont defer beacon and probe response
+			 * because it will fill the differ queue quickly
+			 */
+			status = lim_util_get_type_subtype(limMsg->bodyptr,
+				&type, &subtype);
+			if (QDF_IS_STATUS_SUCCESS(status) &&
+				(type == SIR_MAC_MGMT_FRAME) &&
+				((subtype == SIR_MAC_MGMT_BEACON) ||
+				 (subtype == SIR_MAC_MGMT_PROBE_RSP)))
+				mgmt_pkt_defer = false;
+		}
+
 		if ((limMsg->type != WMA_ADD_BSS_RSP)
 		    && (limMsg->type != WMA_DELETE_BSS_RSP)
 		    && (limMsg->type != WMA_DELETE_BSS_HO_FAIL_RSP)
@@ -420,7 +438,8 @@ uint8_t static def_msg_decision(tpAniSirGlobal pMac, struct scheduler_msg *limMs
 		     * after ADD TS request is sent over the air and
 		     * ADD TS response received over the air */
 		    !(limMsg->type == SIR_BB_XPORT_MGMT_MSG &&
-			pMac->lim.gLimAddtsSent)) {
+			pMac->lim.gLimAddtsSent) &&
+			(mgmt_pkt_defer)) {
 			pe_debug("Defer the current message %s , gLimProcessDefdMsgs is false and system is not in scan/learn mode",
 				       lim_msg_str(limMsg->type));
 			/* Defer processsing this message */
@@ -694,7 +713,7 @@ uint32_t lim_defer_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 			       LIM_TRACE_MAKE_RXMSG(pMsg->type, LIM_MSG_DEFERRED));
 		       )
 	} else {
-		pe_err("Dropped lim message (0x%X)", pMsg->type);
+		pe_err("Dropped lim message (0x%X) Message %s", pMsg->type, lim_msg_str(pMsg->type));
 		MTRACE(mac_trace_msg_rx
 			       (pMac, NO_SESSION,
 			       LIM_TRACE_MAKE_RXMSG(pMsg->type, LIM_MSG_DROPPED));

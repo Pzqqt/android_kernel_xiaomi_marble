@@ -1192,4 +1192,7 @@ void lim_decrement_pending_mgmt_count(tpAniSirGlobal mac_ctx);
 bool lim_check_if_vendor_oui_match(tpAniSirGlobal mac_ctx,
 					uint8_t *oui, uint8_t oui_len,
 			       uint8_t *ie, uint8_t ie_len);
+QDF_STATUS lim_util_get_type_subtype(void *pkt, uint8_t *type,
+					uint8_t *subtype);
+
 #endif /* __LIM_UTILS_H */
