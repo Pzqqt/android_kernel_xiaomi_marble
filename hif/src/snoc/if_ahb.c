@@ -250,9 +250,8 @@ int hif_ahb_configure_irq(struct hif_pci_softc *sc)
 	struct hif_softc *scn = HIF_GET_SOFTC(sc);
 	struct platform_device *pdev = (struct platform_device *)sc->pdev;
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
-	struct hif_ext_group_entry *hif_ext_group;
 	int irq = 0;
-	int i, j;
+	int i;
 
 	/* configure per CE interrupts */
 	for (i = 0; i < scn->ce_count; i++) {
@@ -269,6 +268,20 @@ int hif_ahb_configure_irq(struct hif_pci_softc *sc)
 		}
 		hif_ahb_irq_enable(scn, i);
 	}
+
+end:
+	return ret;
+}
+
+int hif_ahb_configure_grp_irq(struct hif_softc *scn)
+{
+	int ret = 0;
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
+	struct platform_device *pdev = (struct platform_device *)sc->pdev;
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+	struct hif_ext_group_entry *hif_ext_group;
+	int irq = 0;
+	int i, j;
 
 	/* configure external interrupts */
 	for (i = 0; i < hif_state->hif_num_extgroup; i++) {
@@ -302,6 +315,25 @@ int hif_ahb_configure_irq(struct hif_pci_softc *sc)
 
 end:
 	return ret;
+}
+
+void hif_ahb_deconfigure_grp_irq(struct hif_softc *scn)
+{
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+	struct hif_ext_group_entry *hif_ext_group;
+	int i, j;
+
+	/* configure external interrupts */
+	for (i = 0; i < hif_state->hif_num_extgroup; i++) {
+		hif_ext_group = &hif_state->hif_ext_group[i];
+		if (hif_ext_group->inited == true) {
+			hif_ext_group->inited = false;
+			for (j = 0; j < hif_ext_group->numirq; j++) {
+				free_irq(ic_irqnum[hif_ext_group->irq[i]],
+						hif_ext_group);
+			}
+		}
+	}
 }
 
 irqreturn_t hif_ahb_interrupt_handler(int irq, void *context)
@@ -581,6 +613,7 @@ void hif_ahb_nointrs(struct hif_softc *scn)
 				free_irq(ic_irqnum[HIF_IC_CE0_IRQ_OFFSET + i],
 						&hif_state->tasklets[i]);
 			}
+			hif_ahb_deconfigure_grp_irq(scn);
 		}
 	}
 	scn->request_irq_done = false;

@@ -852,6 +852,8 @@ uint32_t hif_register_ext_group_int_handler(struct hif_opaque_softc *hif_ctx,
 		uint32_t numirq, uint32_t irq[], ext_intr_handler handler,
 		void *context);
 
+uint32_t hif_configure_ext_group_interrupts(struct hif_opaque_softc *hif_ctx);
+
 void hif_update_pipe_callback(struct hif_opaque_softc *osc,
 				u_int8_t pipeid,
 				struct hif_msg_callbacks *callbacks);

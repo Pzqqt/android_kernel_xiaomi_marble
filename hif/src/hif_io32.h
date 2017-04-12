@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -106,5 +106,6 @@ void hif_irq_enable(struct hif_softc *scn, int irq_id);
 void hif_irq_disable(struct hif_softc *scn, int irq_id);
 void hif_grp_irq_enable(struct hif_softc *scn, uint32_t grp_id);
 void hif_grp_irq_disable(struct hif_softc *scn, uint32_t grp_id);
+int hif_grp_irq_configure(struct hif_softc *scn);
 
 #endif /* __HIF_IO32_H__ */

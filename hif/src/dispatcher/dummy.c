@@ -261,6 +261,18 @@ void hif_dummy_irq_disable(struct hif_softc *hif_sc, int irq_id)
  */
 void hif_dummy_grp_irq_disable(struct hif_softc *hif_sc, uint32_t grp_id)
 {}
+
+/**
+ * hif_dummy_grp_irq_configure - dummy call
+ * hif_ctx: hif context
+ *
+ * Return: none
+ */
+int hif_dummy_grp_irq_configure(struct hif_softc *hif_sc)
+{
+    return 0;
+}
+
 /**
  * hif_dummy_dump_registers - dummy call
  * hif_sc: hif context

@@ -142,6 +142,7 @@ struct hif_softc {
 	qdf_device_t qdf_dev;
 	bool hif_init_done;
 	bool request_irq_done;
+	bool ext_grp_irq_configured;
 	/* Packet statistics */
 	struct hif_ce_stats pkt_stats;
 	enum hif_target_status target_status;

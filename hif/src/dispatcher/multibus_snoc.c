@@ -84,6 +84,7 @@ QDF_STATUS hif_initialize_snoc_ops(struct hif_bus_ops *bus_ops)
 	bus_ops->hif_grp_irq_disable = &hif_dummy_grp_irq_disable;
 	bus_ops->hif_grp_irq_enable = &hif_dummy_grp_irq_enable;
 	bus_ops->hif_map_ce_to_irq = &hif_snoc_map_ce_to_irq;
+	bus_ops->hif_grp_irq_configure = &hif_dummy_grp_irq_configure;
 
 	return QDF_STATUS_SUCCESS;
 }

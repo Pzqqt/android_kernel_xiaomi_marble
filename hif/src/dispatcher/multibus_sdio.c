@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -66,6 +66,7 @@ QDF_STATUS hif_initialize_sdio_ops(struct hif_softc *hif_sc)
 		&hif_dummy_disable_power_management;
 	bus_ops->hif_grp_irq_disable = &hif_dummy_grp_irq_disable;
 	bus_ops->hif_grp_irq_enable = &hif_dummy_grp_irq_enable;
+	bus_ops->hif_grp_irq_configure = &hif_dummy_grp_irq_configure;
 
 	return QDF_STATUS_SUCCESS;
 }

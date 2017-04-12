@@ -67,6 +67,7 @@ static void hif_intialize_default_ops(struct hif_softc *hif_sc)
 	bus_ops->hif_grp_irq_disable = &hif_dummy_grp_irq_disable;
 	bus_ops->hif_grp_irq_enable = &hif_dummy_grp_irq_enable;
 	bus_ops->hif_map_ce_to_irq = &hif_dummy_map_ce_to_irq;
+	bus_ops->hif_grp_irq_configure = &hif_dummy_grp_irq_configure;
 }
 
 #define NUM_OPS (sizeof(struct hif_bus_ops) / sizeof(void *))
@@ -320,6 +321,11 @@ void hif_irq_disable(struct hif_softc *hif_sc, int irq_id)
 void hif_grp_irq_disable(struct hif_softc *hif_sc, uint32_t grp_id)
 {
 	hif_sc->bus_ops.hif_grp_irq_disable(hif_sc, grp_id);
+}
+
+int hif_grp_irq_configure(struct hif_softc *hif_sc)
+{
+	return hif_sc->bus_ops.hif_grp_irq_configure(hif_sc);
 }
 
 int hif_dump_registers(struct hif_opaque_softc *hif_hdl)

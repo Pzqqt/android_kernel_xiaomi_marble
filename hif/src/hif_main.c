@@ -1209,8 +1209,8 @@ uint32_t hif_register_ext_group_int_handler(struct hif_opaque_softc *hif_ctx,
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 	struct hif_ext_group_entry *hif_ext_group;
 
-	if (scn->hif_init_done) {
-		HIF_ERROR("%s Called after HIF initialization \n", __func__);
+	if (scn->ext_grp_irq_configured) {
+		HIF_ERROR("%s Called after ext grp irq configured\n", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1235,6 +1235,28 @@ uint32_t hif_register_ext_group_int_handler(struct hif_opaque_softc *hif_ctx,
 	hif_ext_group->hif_state = hif_state;
 
 	hif_state->hif_num_extgroup++;
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * hif_configure_ext_group_interrupts() - API to configure external group
+ * interrpts
+ * @hif_ctx : HIF Context
+ *
+ * Return: status
+ */
+uint32_t hif_configure_ext_group_interrupts(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
+	if (scn->ext_grp_irq_configured) {
+		HIF_ERROR("%s Called after ext grp irq configured\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	hif_grp_irq_configure(scn);
+	scn->ext_grp_irq_configured = true;
+
 	return QDF_STATUS_SUCCESS;
 }
 
