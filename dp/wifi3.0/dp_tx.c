@@ -98,7 +98,6 @@ dp_tx_desc_release(struct dp_tx_desc_s *tx_desc, uint8_t desc_pool_id)
 
 	soc = pdev->soc;
 
-	DP_STATS_INC(tx_desc->vdev, tx_i.freed.num, 1);
 	if (tx_desc->flags & DP_TX_DESC_FLAG_FRAG)
 		dp_tx_ext_desc_free(soc, tx_desc->msdu_ext_desc, desc_pool_id);
 
@@ -307,8 +306,10 @@ struct dp_tx_ext_desc_elem_s *dp_tx_prepare_ext_desc(struct dp_vdev *vdev,
 	msdu_ext_desc = dp_tx_ext_desc_alloc(soc, desc_pool_id);
 	qdf_mem_zero(&cached_ext_desc[0], HAL_TX_EXT_DESC_WITH_META_DATA);
 
-	if (!msdu_ext_desc)
+	if (!msdu_ext_desc) {
+		DP_STATS_INC(vdev, tx_i.dropped.desc_na, 1);
 		return NULL;
+	}
 
 	if (qdf_unlikely(vdev->mesh_vdev)) {
 		qdf_mem_copy(&cached_ext_desc[HAL_TX_EXTENSION_DESC_LEN_BYTES],
@@ -381,6 +382,7 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	if (QDF_STATUS_E_RESOURCES == status) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 				"%s Tx Resource Full\n", __func__);
+		DP_STATS_INC(vdev, tx_i.dropped.res_full, 1);
 		/* TODO Stop Tx Queues */
 	}
 
@@ -390,6 +392,7 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	if (qdf_unlikely(!tx_desc)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			"%s Tx Desc Alloc Failed\n", __func__);
+		DP_STATS_INC(vdev, tx_i.dropped.desc_na, 1);
 		return NULL;
 	}
 
@@ -461,6 +464,7 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 		/* Handle failure */
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				"qdf_nbuf_map failed\n");
+		DP_STATS_INC(vdev, tx_i.dropped.dma_error, 1);
 		goto failure;
 	}
 
@@ -484,9 +488,6 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	return tx_desc;
 
 failure:
-	DP_STATS_INC_PKT(vdev, tx_i.dropped.dropped_pkt, 1,
-			qdf_nbuf_len(nbuf));
-	DP_STATS_INC(vdev, tx_i.dropped.dma_error, 1);
 	dp_tx_desc_release(tx_desc, desc_pool_id);
 	return NULL;
 }
@@ -520,14 +521,17 @@ static struct dp_tx_desc_s *dp_tx_prepare_desc(struct dp_vdev *vdev,
 	if (QDF_STATUS_E_RESOURCES == status) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 				"%s Tx Resource Full\n", __func__);
+		DP_STATS_INC(vdev, tx_i.dropped.res_full, 1);
 		/* TODO Stop Tx Queues */
 	}
 
 	/* Allocate software Tx descriptor */
 	tx_desc = dp_tx_desc_alloc(soc, desc_pool_id);
 
-	if (!tx_desc)
+	if (!tx_desc) {
+		DP_STATS_INC(vdev, tx_i.dropped.desc_na, 1);
 		return NULL;
+	}
 
 	/* Flow control/Congestion Control counters */
 	qdf_atomic_inc(&pdev->num_tx_outstanding);
@@ -563,9 +567,6 @@ static struct dp_tx_desc_s *dp_tx_prepare_desc(struct dp_vdev *vdev,
 
 	return tx_desc;
 failure:
-	DP_STATS_INC(vdev, tx_i.dropped.desc_na, 1);
-	DP_STATS_INC_PKT(vdev, tx_i.dropped.dropped_pkt, 1,
-			qdf_nbuf_len(nbuf));
 	if (qdf_unlikely(tx_desc->flags & DP_TX_DESC_FLAG_ME))
 		dp_tx_me_free_buf(pdev, tx_desc->me_buffer);
 	dp_tx_desc_release(tx_desc, desc_pool_id);
@@ -591,9 +592,12 @@ static qdf_nbuf_t dp_tx_prepare_raw(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 	struct dp_tx_sg_info_s *sg_info = &msdu_info->u.sg_info;
 
+	DP_STATS_INC_PKT(vdev, tx_i.raw.raw_pkt, 1, qdf_nbuf_len(nbuf));
+
 	if (QDF_STATUS_SUCCESS != qdf_nbuf_map(vdev->osdev, nbuf,
 				QDF_DMA_TO_DEVICE)) {
 		qdf_print("dma map error\n");
+		DP_STATS_INC(vdev, tx_i.raw.dma_map_error, 1);
 		qdf_nbuf_free(nbuf);
 		return NULL;
 	}
@@ -701,9 +705,7 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s TCL ring full ring_id:%d\n", __func__, ring_id);
 		DP_STATS_INC(soc, tx.tcl_ring_full[ring_id], 1);
-		DP_STATS_INC(vdev, tx_i.dropped.ring_full, 1);
-		DP_STATS_INC_PKT(vdev, tx_i.dropped.dropped_pkt, 1,
-				length);
+		DP_STATS_INC(vdev, tx_i.dropped.enqueue_fail, 1);
 		hal_srng_access_end(soc->hal_soc,
 				soc->tcl_data_ring[ring_id].hal_srng);
 		return QDF_STATUS_E_RESOURCES;
@@ -872,7 +874,6 @@ static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  "%s Tx_desc prepare Fail vdev %p queue %d\n",
 			  __func__, vdev, tx_q->desc_pool_id);
-		DP_STATS_INC(vdev, tx_i.dropped.desc_na, 1);
 		goto fail_return;
 	}
 
@@ -901,7 +902,6 @@ static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 			  "%s Tx_hw_enqueue Fail tx_desc %p queue %d\n",
 			  __func__, tx_desc, tx_q->ring_id);
 		dp_tx_desc_release(tx_desc, tx_q->desc_pool_id);
-		DP_STATS_INC(vdev, tx_i.dropped.enqueue_fail, 1);
 		goto fail_return;
 	}
 
@@ -910,8 +910,6 @@ static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	return NULL;
 
 fail_return:
-	DP_STATS_INC_PKT(pdev, tx_i.dropped.dropped_pkt, 1,
-			qdf_nbuf_len(nbuf));
 	return nbuf;
 }
 
@@ -948,9 +946,6 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				"%s %d : HAL RING Access Failed -- %p\n",
 				__func__, __LINE__, hal_srng);
 		DP_STATS_INC(vdev, tx_i.dropped.ring_full, 1);
-		DP_STATS_INC_PKT(vdev,
-				tx_i.dropped.dropped_pkt, 1,
-				qdf_nbuf_len(nbuf));
 		return nbuf;
 	}
 
@@ -981,10 +976,6 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				  "%s Tx_desc prepare Fail vdev %p queue %d\n",
 				  __func__, vdev, tx_q->desc_pool_id);
-			DP_STATS_INC(vdev, tx_i.dropped.desc_na, 1);
-			DP_STATS_INC_PKT(vdev,
-					tx_i.dropped.dropped_pkt, 1,
-					qdf_nbuf_len(nbuf));
 
 			if (tx_desc->flags & DP_TX_DESC_FLAG_ME)
 				dp_tx_me_free_buf(pdev, tx_desc->me_buffer);
@@ -1002,11 +993,6 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				  "%s Tx_hw_enqueue Fail tx_desc %p queue %d\n",
 				  __func__, tx_desc, tx_q->ring_id);
-
-			DP_STATS_INC(vdev, tx_i.dropped.enqueue_fail, 1);
-			DP_STATS_INC_PKT(pdev,
-					tx_i.dropped.dropped_pkt, 1,
-					qdf_nbuf_len(nbuf));
 
 			if (tx_desc->flags & DP_TX_DESC_FLAG_ME)
 				dp_tx_me_free_buf(pdev, tx_desc->me_buffer);
@@ -1093,6 +1079,7 @@ static qdf_nbuf_t dp_tx_prepare_sg(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				QDF_DMA_TO_DEVICE)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				"dma map error\n");
+		DP_STATS_INC(vdev, tx_i.sg.dma_map_error, 1);
 
 		qdf_nbuf_free(nbuf);
 		return NULL;
@@ -1108,6 +1095,7 @@ static qdf_nbuf_t dp_tx_prepare_sg(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 					nbuf, 0, QDF_DMA_TO_DEVICE, cur_frag)) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 					"frag dma map error\n");
+			DP_STATS_INC(vdev, tx_i.sg.dma_map_error, 1);
 			qdf_nbuf_free(nbuf);
 			return NULL;
 		}
@@ -1334,6 +1322,7 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 					"%s tso_prepare fail vdev_id:%d\n",
 					__func__, vdev->vdev_id);
+			DP_STATS_INC(vdev, tx_i.tso.dropped_host, 1);
 			return nbuf;
 		}
 
@@ -1381,9 +1370,6 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s Raw frame %p\n", __func__, vdev);
-
-		DP_STATS_INC_PKT(vdev, tx_i.raw_pkt, 1,
-				qdf_nbuf_len(nbuf));
 
 		goto send_multiple;
 
@@ -1514,8 +1500,6 @@ void dp_tx_process_htt_completion(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 	case HTT_TX_FW2WBM_TX_STATUS_TTL:
 	{
 		qdf_atomic_dec(&pdev->num_tx_exception);
-		DP_STATS_INC_PKT(tx_desc->vdev, tx_i.dropped.dropped_pkt,
-				1, qdf_nbuf_len(tx_desc->nbuf));
 		DP_TX_FREE_SINGLE_BUF(soc, tx_desc->nbuf);
 		break;
 	}

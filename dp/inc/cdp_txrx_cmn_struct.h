@@ -88,6 +88,7 @@
 		(((_tid) == 4) || ((_tid) == 5)) ? WME_AC_VI : \
 		WME_AC_VO)
 
+#define CDP_MAX_RX_RINGS 4
 /*
  * htt_dbg_stats_type -
  * bit positions for each stats type within a stats type bitmask
@@ -134,6 +135,7 @@ enum cdp_host_txrx_stats {
 	TXRX_TX_HOST_STATS  = 2,
 	TXRX_RX_HOST_STATS  = 3,
 	TXRX_CLEAR_STATS    = 4,
+	TXRX_HOST_STATS_MAX,
 };
 
 /**
@@ -590,10 +592,7 @@ struct cdp_tx_stats {
 
 	/* Packets dropped on the Tx side */
 	struct {
-		uint32_t dma_map_error;
-		/* dropped due to ring full */
-		uint32_t ring_full;
-		/* Discarded bu firmware */
+		/* Discarded by firmware */
 		uint32_t fw_discard;
 		/* fw_discard_retired */
 		uint32_t fw_discard_retired;
@@ -615,17 +614,21 @@ struct cdp_rx_stats {
 	/* Total packets sent up the stack */
 	struct cdp_pkt_info to_stack;
 	/* Packets received on the reo ring */
-	struct cdp_pkt_info rcvd_reo;
-	/* Total multicast packets */
-	struct cdp_pkt_info unicast;
+	struct cdp_pkt_info rcvd_reo[CDP_MAX_RX_RINGS];
 	/* Total unicast packets */
+	struct cdp_pkt_info unicast;
+	/* Total multicast packets */
 	struct cdp_pkt_info multicast;
 	/* WDS packets received */
 	struct cdp_pkt_info wds;
-	/* Intra BSS packets received */
-	struct cdp_pkt_info intra_bss;
 	/* Raw Pakets received */
 	struct cdp_pkt_info raw;
+
+	struct {
+	/* Intra BSS packets received */
+	struct cdp_pkt_info pkts;
+	struct cdp_pkt_info fail;
+	} intra_bss;
 
 	/* Errors */
 	struct {
@@ -639,8 +642,11 @@ struct cdp_rx_stats {
 	uint32_t wme_ac_type[WME_AC_MAX];
 	/* Reception type os packets */
 	uint32_t reception_type[SUPPORTED_RECEPTION_TYPES];
-	/* packets in different MCS rates */
-	uint32_t mcs_count[MAX_MCS + 1];
+	/* Packet Type */
+	struct {
+		/* MCS Count */
+		uint32_t mcs_count[MAX_MCS + 1];
+	} pkt_type[DOT11_MAX];
 	/* SGI count */
 	uint32_t sgi_count[MAX_MCS + 1];
 	/* Packet count in spatiel Streams */
@@ -661,16 +667,19 @@ struct cdp_rx_stats {
 struct cdp_tx_ingress_stats {
 	/* Total packets received for transmission */
 	struct cdp_pkt_info rcvd;
-	/* Tx packets freed*/
-	struct cdp_pkt_info freed;
 	/* Tx packets processed*/
 	struct cdp_pkt_info processed;
 	/* Total packets passed Reinject handler */
 	struct cdp_pkt_info reinject_pkts;
 	/*  Total packets passed to inspect handler */
 	struct cdp_pkt_info inspect_pkts;
-	/* Total Raw packets */
-	struct cdp_pkt_info raw_pkt;
+
+	struct {
+		/* Total Raw packets */
+		struct cdp_pkt_info raw_pkt;
+		/* DMA map error */
+		uint32_t dma_map_error;
+	} raw;
 
 	/* TSO packets info */
 	struct {
@@ -692,6 +701,8 @@ struct cdp_tx_ingress_stats {
 		uint32_t dropped_host;
 		/* SG packets dropped by target */
 		uint32_t dropped_target;
+		/* Dma map error */
+		uint32_t dma_map_error;
 	} sg;
 
 	/* Multicast Enhancement packets info */
@@ -714,7 +725,7 @@ struct cdp_tx_ingress_stats {
 
 	/* Packets dropped on the Tx side */
 	struct {
-		/* Total packets dropped */
+		/* Total scatter gather packets */
 		struct cdp_pkt_info dropped_pkt;
 		/* Desc Not Available */
 		uint32_t desc_na;
@@ -724,6 +735,8 @@ struct cdp_tx_ingress_stats {
 		uint32_t enqueue_fail;
 		/* DMA failed */
 		uint32_t dma_error;
+		/* Resource Full: Congestion Control */
+		uint32_t res_full;
 	} dropped;
 };
 
@@ -773,14 +786,33 @@ struct cdp_pdev_stats {
 	/* packets dropped on rx */
 	struct {
 		/* packets dropped because nsdu_done bit not set */
-		struct cdp_pkt_info msdu_not_done;
+		uint32_t msdu_not_done;
+		/* Multicast Echo check */
+		uint32_t mec;
+		/* Mesh Filtered packets */
+		uint32_t mesh_filter;
 	} dropped;
-	/* total packets replnished */
-	struct cdp_pkt_info replenished;
+
+	struct {
+		/* total packets replnished */
+		struct cdp_pkt_info pkts;
+		/* rxdma errors */
+		uint32_t rxdma_err;
+		/* nbuf alloc failed */
+		uint32_t nbuf_alloc_fail;
+		/* Mapping failure */
+		uint32_t map_err;
+		/* x86 failures */
+		uint32_t x86_fail;
+	} replenish;
+
+	/* Rx Raw Packets */
+	uint32_t rx_raw_pkts;
+	/* Mesh Rx Stats Alloc fail */
+	uint32_t mesh_mem_alloc;
+
 	/* Rx errors */
 	struct {
-		/* rxdma_unitialized errors */
-		uint32_t rxdma_unitialized;
 		/* desc alloc failed errors */
 		uint32_t desc_alloc_fail;
 	} err;

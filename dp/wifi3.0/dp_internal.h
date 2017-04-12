@@ -57,6 +57,21 @@ while (0)
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_##LVL,       \
 		fmt, ## args)
 
+#ifdef CONFIG_WIN
+#ifdef DP_STATS_LOG_EN
+#define DP_TRACE_STATS(LVL, fmt, args ...)                             \
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_##LVL,       \
+		fmt, ## args)
+#else
+#define DP_TRACE_STATS(LVL, fmt, args ...)                             \
+	qdf_trace(QDF_TRACE_LEVEL_##LVL, fmt, ## args)
+#endif
+#else
+#define DP_TRACE_STATS(LVL, fmt, args ...)                             \
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_##LVL,       \
+		fmt, ## args)
+#endif
+
 #define DP_STATS_INIT(_handle) \
 	qdf_mem_set(&((_handle)->stats), sizeof((_handle)->stats), 0x0)
 
@@ -204,7 +219,7 @@ while (0)
 #define DP_STATS_DEC(_handle, _field, _delta)
 #define DP_STATS_UPD(_handle, _field, _delta)
 #define DP_STATS_INC_PKT(_handle, _field, _count, _bytes)
-#define DP_STATS_INCC_PKT(_handle, _field, _count, _bytes)
+#define DP_STATS_INCC_PKT(_handle, _field, _count, _bytes, _cond)
 #define DP_STATS_AGGR(_handle_a, _handle_b, _field)
 #define DP_STATS_AGGR_PKT(_handle_a, _handle_b, _field)
 #define DP_HIST_INIT()

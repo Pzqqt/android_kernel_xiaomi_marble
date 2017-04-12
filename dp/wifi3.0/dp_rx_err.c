@@ -380,7 +380,6 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 				FL("vdev %p osif_rx %p"), vdev,
 				vdev->osif_rx);
-
 			qdf_nbuf_set_next(nbuf, NULL);
 			vdev->osif_rx(vdev->osif_vdev, nbuf);
 			DP_STATS_INC(vdev->pdev, rx.to_stack.num, 1);
@@ -506,6 +505,7 @@ dp_rx_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 	while (qdf_likely((ring_desc =
 				hal_srng_dst_get_next(hal_soc, hal_ring))
 				&& quota--)) {
+		DP_STATS_INC(soc, rx.err_ring_pkts, 1);
 
 		error = HAL_RX_ERROR_STATUS_GET(ring_desc);
 
@@ -538,11 +538,10 @@ dp_rx_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 
 		if (mpdu_desc_info.mpdu_flags & HAL_MPDU_F_FRAGMENT) {
 			/* TODO */
-			DP_STATS_INC(soc,
-				rx.err.reo_error[HAL_MPDU_F_FRAGMENT], 1);
 			rx_bufs_used += dp_rx_frag_handle(soc,
 					ring_desc, &mpdu_desc_info,
 					&head, &tail, quota);
+			DP_STATS_INC(soc, rx.rx_frags, 1);
 			continue;
 		}
 

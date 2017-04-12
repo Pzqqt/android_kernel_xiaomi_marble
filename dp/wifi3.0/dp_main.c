@@ -2420,7 +2420,11 @@ void dp_aggregate_vdev_stats(struct dp_vdev *vdev)
 			DP_STATS_AGGR(vdev, peer, tx.pkt_type[2].mcs_count[i]);
 			DP_STATS_AGGR(vdev, peer, tx.pkt_type[3].mcs_count[i]);
 			DP_STATS_AGGR(vdev, peer, tx.pkt_type[4].mcs_count[i]);
-			DP_STATS_AGGR(vdev, peer, rx.mcs_count[i]);
+			DP_STATS_AGGR(vdev, peer, rx.pkt_type[0].mcs_count[i]);
+			DP_STATS_AGGR(vdev, peer, rx.pkt_type[1].mcs_count[i]);
+			DP_STATS_AGGR(vdev, peer, rx.pkt_type[2].mcs_count[i]);
+			DP_STATS_AGGR(vdev, peer, rx.pkt_type[3].mcs_count[i]);
+			DP_STATS_AGGR(vdev, peer, rx.pkt_type[4].mcs_count[i]);
 		}
 
 		for (i = 0; i < SUPPORTED_BW; i++) {
@@ -2454,14 +2458,13 @@ void dp_aggregate_vdev_stats(struct dp_vdev *vdev)
 		DP_STATS_AGGR(vdev, peer, tx.retries);
 		DP_STATS_AGGR(vdev, peer, tx.non_amsdu_cnt);
 		DP_STATS_AGGR(vdev, peer, tx.amsdu_cnt);
-		DP_STATS_AGGR(vdev, peer, tx.dropped.dma_map_error);
-		DP_STATS_AGGR(vdev, peer, tx.dropped.ring_full);
 		DP_STATS_AGGR(vdev, peer, tx.dropped.fw_discard);
 		DP_STATS_AGGR(vdev, peer, tx.dropped.fw_discard_retired);
 		DP_STATS_AGGR(vdev, peer, tx.dropped.mpdu_age_out);
 		DP_STATS_AGGR(vdev, peer, tx.dropped.fw_discard_reason1);
 		DP_STATS_AGGR(vdev, peer, tx.dropped.fw_discard_reason2);
 		DP_STATS_AGGR(vdev, peer, tx.dropped.fw_discard_reason3);
+
 		DP_STATS_AGGR(vdev, peer, rx.err.mic_err);
 		DP_STATS_AGGR(vdev, peer, rx.err.decrypt_err);
 		DP_STATS_AGGR(vdev, peer, rx.non_ampdu_cnt);
@@ -2469,12 +2472,20 @@ void dp_aggregate_vdev_stats(struct dp_vdev *vdev)
 		DP_STATS_AGGR(vdev, peer, rx.non_amsdu_cnt);
 		DP_STATS_AGGR(vdev, peer, rx.amsdu_cnt);
 		DP_STATS_AGGR_PKT(vdev, peer, rx.to_stack);
-		DP_STATS_AGGR_PKT(vdev, peer, rx.rcvd_reo);
+
+		for (i = 0; i <  CDP_MAX_RX_RINGS; i++)
+			DP_STATS_AGGR_PKT(vdev, peer, rx.rcvd_reo[i]);
+
+		peer->stats.rx.unicast.num = peer->stats.rx.to_stack.num -
+			peer->stats.rx.multicast.num;
+		peer->stats.rx.unicast.bytes = peer->stats.rx.to_stack.bytes -
+			peer->stats.rx.multicast.bytes;
 		DP_STATS_AGGR_PKT(vdev, peer, rx.unicast);
 		DP_STATS_AGGR_PKT(vdev, peer, rx.multicast);
 		DP_STATS_AGGR_PKT(vdev, peer, rx.wds);
 		DP_STATS_AGGR_PKT(vdev, peer, rx.raw);
-		DP_STATS_AGGR_PKT(vdev, peer, rx.intra_bss);
+		DP_STATS_AGGR_PKT(vdev, peer, rx.intra_bss.pkts);
+		DP_STATS_AGGR_PKT(vdev, peer, rx.intra_bss.fail);
 
 		vdev->stats.tx.last_ack_rssi =
 			peer->stats.tx.last_ack_rssi;
@@ -2507,7 +2518,11 @@ static inline void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 			DP_STATS_AGGR(pdev, vdev, tx.pkt_type[2].mcs_count[i]);
 			DP_STATS_AGGR(pdev, vdev, tx.pkt_type[3].mcs_count[i]);
 			DP_STATS_AGGR(pdev, vdev, tx.pkt_type[4].mcs_count[i]);
-			DP_STATS_AGGR(pdev, vdev, rx.mcs_count[i]);
+			DP_STATS_AGGR(pdev, vdev, rx.pkt_type[0].mcs_count[i]);
+			DP_STATS_AGGR(pdev, vdev, rx.pkt_type[1].mcs_count[i]);
+			DP_STATS_AGGR(pdev, vdev, rx.pkt_type[2].mcs_count[i]);
+			DP_STATS_AGGR(pdev, vdev, rx.pkt_type[3].mcs_count[i]);
+			DP_STATS_AGGR(pdev, vdev, rx.pkt_type[4].mcs_count[i]);
 		}
 
 		for (i = 0; i < SUPPORTED_BW; i++) {
@@ -2542,8 +2557,6 @@ static inline void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 			DP_STATS_AGGR(pdev, vdev, tx.retries);
 			DP_STATS_AGGR(pdev, vdev, tx.non_amsdu_cnt);
 			DP_STATS_AGGR(pdev, vdev, tx.amsdu_cnt);
-			DP_STATS_AGGR(pdev, vdev, tx.dropped.dma_map_error);
-			DP_STATS_AGGR(pdev, vdev, tx.dropped.ring_full);
 			DP_STATS_AGGR(pdev, vdev, tx.dropped.fw_discard);
 			DP_STATS_AGGR(pdev, vdev,
 					tx.dropped.fw_discard_retired);
@@ -2554,6 +2567,7 @@ static inline void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 					tx.dropped.fw_discard_reason2);
 			DP_STATS_AGGR(pdev, vdev,
 					tx.dropped.fw_discard_reason3);
+
 			DP_STATS_AGGR(pdev, vdev, rx.err.mic_err);
 			DP_STATS_AGGR(pdev, vdev, rx.err.decrypt_err);
 			DP_STATS_AGGR(pdev, vdev, rx.non_ampdu_cnt);
@@ -2561,19 +2575,23 @@ static inline void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 			DP_STATS_AGGR(pdev, vdev, rx.non_amsdu_cnt);
 			DP_STATS_AGGR(pdev, vdev, rx.amsdu_cnt);
 			DP_STATS_AGGR_PKT(pdev, vdev, rx.to_stack);
-			DP_STATS_AGGR_PKT(pdev, vdev, rx.rcvd_reo);
+			DP_STATS_AGGR_PKT(pdev, vdev, rx.rcvd_reo[0]);
+			DP_STATS_AGGR_PKT(pdev, vdev, rx.rcvd_reo[1]);
+			DP_STATS_AGGR_PKT(pdev, vdev, rx.rcvd_reo[2]);
+			DP_STATS_AGGR_PKT(pdev, vdev, rx.rcvd_reo[3]);
 			DP_STATS_AGGR_PKT(pdev, vdev, rx.unicast);
 			DP_STATS_AGGR_PKT(pdev, vdev, rx.multicast);
 			DP_STATS_AGGR_PKT(pdev, vdev, rx.wds);
-			DP_STATS_AGGR_PKT(pdev, vdev, rx.intra_bss);
+			DP_STATS_AGGR_PKT(pdev, vdev, rx.intra_bss.pkts);
+			DP_STATS_AGGR_PKT(pdev, vdev, rx.intra_bss.fail);
 			DP_STATS_AGGR_PKT(pdev, vdev, rx.raw);
 
 			DP_STATS_AGGR_PKT(pdev, vdev, tx_i.rcvd);
-			DP_STATS_AGGR_PKT(pdev, vdev, tx_i.freed);
 			DP_STATS_AGGR_PKT(pdev, vdev, tx_i.processed);
 			DP_STATS_AGGR_PKT(pdev, vdev, tx_i.reinject_pkts);
 			DP_STATS_AGGR_PKT(pdev, vdev, tx_i.inspect_pkts);
-			DP_STATS_AGGR_PKT(pdev, vdev, tx_i.raw_pkt);
+			DP_STATS_AGGR_PKT(pdev, vdev, tx_i.raw.raw_pkt);
+			DP_STATS_AGGR(pdev, vdev, tx_i.raw.dma_map_error);
 			DP_STATS_AGGR_PKT(pdev, vdev, tx_i.tso.tso_pkt);
 			DP_STATS_AGGR(pdev, vdev, tx_i.tso.dropped_host);
 			DP_STATS_AGGR(pdev, vdev, tx_i.tso.dropped_target);
@@ -2588,7 +2606,18 @@ static inline void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 			DP_STATS_AGGR(pdev, vdev,
 					tx_i.mcast_en.dropped_send_fail);
 			DP_STATS_AGGR(pdev, vdev, tx_i.mcast_en.ucast);
-			DP_STATS_AGGR_PKT(pdev, vdev, tx_i.dropped.dropped_pkt);
+			DP_STATS_AGGR(pdev, vdev, tx_i.dropped.dma_error);
+			DP_STATS_AGGR(pdev, vdev, tx_i.dropped.ring_full);
+			DP_STATS_AGGR(pdev, vdev, tx_i.dropped.enqueue_fail);
+			DP_STATS_AGGR(pdev, vdev, tx_i.dropped.desc_na);
+			DP_STATS_AGGR(pdev, vdev, tx_i.dropped.res_full);
+
+			pdev->stats.tx_i.dropped.dropped_pkt.num =
+				pdev->stats.tx_i.dropped.dma_error +
+				pdev->stats.tx_i.dropped.ring_full +
+				pdev->stats.tx_i.dropped.enqueue_fail +
+				pdev->stats.tx_i.dropped.desc_na +
+				pdev->stats.tx_i.dropped.res_full;
 
 			pdev->stats.tx.last_ack_rssi =
 				vdev->stats.tx.last_ack_rssi;
@@ -2606,76 +2635,97 @@ static inline void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 static inline void
 dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 {
-	DP_TRACE(NONE, "WLAN Tx Stats:\n");
-	DP_TRACE(NONE, "Received From Stack:\n");
-	DP_TRACE(NONE, "Total Packets Received = %d",
+	DP_TRACE_STATS(NONE, "WLAN Tx Stats:\n");
+	DP_TRACE_STATS(NONE, "Received From Stack:\n");
+	DP_TRACE_STATS(NONE, "Packets = %d",
 			pdev->stats.tx_i.rcvd.num);
-	DP_TRACE(NONE, "Bytes Sent = %d",
+	DP_TRACE_STATS(NONE, "Bytes = %d\n",
 			pdev->stats.tx_i.rcvd.bytes);
-	DP_TRACE(NONE, "Processed:\n");
-	DP_TRACE(NONE, "Msdu Processed = %d",
+	DP_TRACE_STATS(NONE, "Processed:\n");
+	DP_TRACE_STATS(NONE, "Packets = %d",
 			pdev->stats.tx_i.processed.num);
-	DP_TRACE(NONE, "Bytes Processed = %d",
+	DP_TRACE_STATS(NONE, "Bytes = %d\n",
 			pdev->stats.tx_i.processed.bytes);
-	DP_TRACE(NONE, "Completions:\n");
-	DP_TRACE(NONE, "Msdu Sent = %d",
+	DP_TRACE_STATS(NONE, "Completions:\n");
+	DP_TRACE_STATS(NONE, "Packets = %d",
 			pdev->stats.tx.comp_pkt.num);
-	DP_TRACE(NONE, "Bytes Sent = %d",
+	DP_TRACE_STATS(NONE, "Bytes = %d\n",
 			pdev->stats.tx.comp_pkt.bytes);
-	DP_TRACE(NONE, "Freed:\n");
-	DP_TRACE(NONE, "Msdus Freed = %d",
-			pdev->stats.tx_i.freed.num);
-	DP_TRACE(NONE, "Bytes Freed = %d",
-			pdev->stats.tx_i.freed.bytes);
-	DP_TRACE(NONE, "Dropped:\n");
-	DP_TRACE(NONE, "Total Packets Dropped = %d",
+	DP_TRACE_STATS(NONE, "Dropped:\n");
+	DP_TRACE_STATS(NONE, "Packets = %d",
 			pdev->stats.tx_i.dropped.dropped_pkt.num);
-	DP_TRACE(NONE, "Bytes Dropped = %d",
-			pdev->stats.tx_i.dropped.dropped_pkt.bytes);
-	DP_TRACE(NONE, "Dma_map_error = %d",
-			pdev->stats.tx.dropped.dma_map_error);
-	DP_TRACE(NONE, "Ring Full = %d", pdev->stats.tx.dropped.ring_full);
-	DP_TRACE(NONE, "Fw Discard = %d",
+	DP_TRACE_STATS(NONE, "Dma_map_error = %d",
+			pdev->stats.tx_i.dropped.dma_error);
+	DP_TRACE_STATS(NONE, "Ring Full = %d",
+			pdev->stats.tx_i.dropped.ring_full);
+	DP_TRACE_STATS(NONE, "Descriptor Not available = %d",
+			pdev->stats.tx_i.dropped.desc_na);
+	DP_TRACE_STATS(NONE, "HW enqueue failed= %d",
+			pdev->stats.tx_i.dropped.enqueue_fail);
+	DP_TRACE_STATS(NONE, "Resources Full = %d",
+			pdev->stats.tx_i.dropped.res_full);
+	DP_TRACE_STATS(NONE, "Fw Discard = %d",
 			pdev->stats.tx.dropped.fw_discard);
-	DP_TRACE(NONE, "Fw Discard Retired = %d",
+	DP_TRACE_STATS(NONE, "Fw Discard Retired = %d",
 			pdev->stats.tx.dropped.fw_discard_retired);
-	DP_TRACE(NONE, "Firmware Discard Untransmitted = %d",
+	DP_TRACE_STATS(NONE, "Firmware Discard Untransmitted = %d",
 			pdev->stats.tx.dropped.fw_discard_untransmitted);
-	DP_TRACE(NONE, "Mpdu Age Out = %d",
+	DP_TRACE_STATS(NONE, "Mpdu Age Out = %d",
 			pdev->stats.tx.dropped.mpdu_age_out);
-	DP_TRACE(NONE, "Firmware Discard Reason1 = %d",
+	DP_TRACE_STATS(NONE, "Firmware Discard Reason1 = %d",
 			pdev->stats.tx.dropped.fw_discard_reason1);
-	DP_TRACE(NONE, "Firmware Discard Reason2 = %d",
+	DP_TRACE_STATS(NONE, "Firmware Discard Reason2 = %d",
 			pdev->stats.tx.dropped.fw_discard_reason2);
-	DP_TRACE(NONE, "Firmware Discard Reason3 = %d",
+	DP_TRACE_STATS(NONE, "Firmware Discard Reason3 = %d\n",
 			pdev->stats.tx.dropped.fw_discard_reason3);
-	DP_TRACE(NONE, "Scatter Gather:\n");
-	DP_TRACE(NONE, "Total Packets = %d",
+	DP_TRACE_STATS(NONE, "Scatter Gather:\n");
+	DP_TRACE_STATS(NONE, "Packets = %d",
 			pdev->stats.tx_i.sg.sg_pkt.num);
-	DP_TRACE(NONE, "Total Bytes = %d",
+	DP_TRACE_STATS(NONE, "Bytes = %d",
 			pdev->stats.tx_i.sg.sg_pkt.bytes);
-	DP_TRACE(NONE, "Dropped By Host = %d",
+	DP_TRACE_STATS(NONE, "Dropped By Host = %d",
 			pdev->stats.tx_i.sg.dropped_host);
-	DP_TRACE(NONE, "Dropped By Target = %d",
+	DP_TRACE_STATS(NONE, "Dropped By Target = %d\n",
 			pdev->stats.tx_i.sg.dropped_target);
-	DP_TRACE(NONE, "Tso:\n");
-	DP_TRACE(NONE, "Number of Segments = %d",
+	DP_TRACE_STATS(NONE, "Tso:\n");
+	DP_TRACE_STATS(NONE, "Number of Segments = %d",
 			pdev->stats.tx_i.tso.num_seg);
-	DP_TRACE(NONE, "Number Packets = %d",
+	DP_TRACE_STATS(NONE, "Packets = %d",
 			pdev->stats.tx_i.tso.tso_pkt.num);
-	DP_TRACE(NONE, "Total Bytes = %d",
+	DP_TRACE_STATS(NONE, "Bytes = %d",
 			pdev->stats.tx_i.tso.tso_pkt.bytes);
-	DP_TRACE(NONE, "Dropped By Host = %d",
+	DP_TRACE_STATS(NONE, "Dropped By Host = %d\n",
 			pdev->stats.tx_i.tso.dropped_host);
-	DP_TRACE(NONE, "Mcast Enhancement:\n");
-	DP_TRACE(NONE, "Dropped: Map Errors = %d",
+	DP_TRACE_STATS(NONE, "Mcast Enhancement:\n");
+	DP_TRACE_STATS(NONE, "Packets = %d",
+			pdev->stats.tx_i.mcast_en.mcast_pkt.num);
+	DP_TRACE_STATS(NONE, "Bytes = %d",
+			pdev->stats.tx_i.mcast_en.mcast_pkt.bytes);
+	DP_TRACE_STATS(NONE, "Dropped: Map Errors = %d",
 			pdev->stats.tx_i.mcast_en.dropped_map_error);
-	DP_TRACE(NONE, "Dropped: Self Mac = %d",
+	DP_TRACE_STATS(NONE, "Dropped: Self Mac = %d",
 			pdev->stats.tx_i.mcast_en.dropped_self_mac);
-	DP_TRACE(NONE, "Dropped: Send Fail = %d",
+	DP_TRACE_STATS(NONE, "Dropped: Send Fail = %d",
 			pdev->stats.tx_i.mcast_en.dropped_send_fail);
-	DP_TRACE(NONE, "Total Unicast sent = %d",
+	DP_TRACE_STATS(NONE, "Unicast sent = %d\n",
 			pdev->stats.tx_i.mcast_en.ucast);
+	DP_TRACE_STATS(NONE, "Raw:\n");
+	DP_TRACE_STATS(NONE, "Packets = %d",
+			pdev->stats.tx_i.raw.raw_pkt.num);
+	DP_TRACE_STATS(NONE, "Bytes = %d",
+			pdev->stats.tx_i.raw.raw_pkt.bytes);
+	DP_TRACE_STATS(NONE, "DMA map error = %d\n",
+			pdev->stats.tx_i.raw.dma_map_error);
+	DP_TRACE_STATS(NONE, "Reinjected:\n");
+	DP_TRACE_STATS(NONE, "Packets = %d",
+			pdev->stats.tx_i.reinject_pkts.num);
+	DP_TRACE_STATS(NONE, "Bytes = %d\n",
+			pdev->stats.tx_i.reinject_pkts.bytes);
+	DP_TRACE_STATS(NONE, "Inspected:\n");
+	DP_TRACE_STATS(NONE, "Packets = %d",
+			pdev->stats.tx_i.inspect_pkts.num);
+	DP_TRACE_STATS(NONE, "Bytes = %d\n",
+			pdev->stats.tx_i.inspect_pkts.bytes);
 }
 
 /**
@@ -2687,33 +2737,42 @@ dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 static inline void
 dp_print_pdev_rx_stats(struct dp_pdev *pdev)
 {
-	DP_TRACE(NONE, "WLAN Rx Stats:\n");
-	DP_TRACE(NONE, "Received From HW (Reo Dest Ring):\n");
-	DP_TRACE(NONE, "Total Packets Received = %d",
-			pdev->stats.rx.rcvd_reo.num);
-	DP_TRACE(NONE, "Bytes Sent = %d",
-			pdev->stats.rx.rcvd_reo.bytes);
-	DP_TRACE(NONE, "Replenished:\n");
-	DP_TRACE(NONE, "Total Packets Replenished = %d",
-			pdev->stats.replenished.num);
-	DP_TRACE(NONE, "Bytes Sent = %d",
-			pdev->stats.replenished.bytes);
-	DP_TRACE(NONE, "Buffers Added To Freelist = %d",
+	DP_TRACE_STATS(NONE, "WLAN Rx Stats:\n");
+	DP_TRACE_STATS(NONE, "Received From HW (Per Rx Ring):\n");
+	DP_TRACE_STATS(NONE, "Packets = %d %d %d %d",
+			pdev->stats.rx.rcvd_reo[0].num,
+			pdev->stats.rx.rcvd_reo[1].num,
+			pdev->stats.rx.rcvd_reo[2].num,
+			pdev->stats.rx.rcvd_reo[3].num);
+	DP_TRACE_STATS(NONE, "Bytes = %d %d %d %d\n",
+			pdev->stats.rx.rcvd_reo[0].bytes,
+			pdev->stats.rx.rcvd_reo[1].bytes,
+			pdev->stats.rx.rcvd_reo[2].bytes,
+			pdev->stats.rx.rcvd_reo[3].bytes);
+	DP_TRACE_STATS(NONE, "Replenished:\n");
+	DP_TRACE_STATS(NONE, "Packets = %d",
+			pdev->stats.replenish.pkts.num);
+	DP_TRACE_STATS(NONE, "Bytes = %d",
+			pdev->stats.replenish.pkts.bytes);
+	DP_TRACE_STATS(NONE, "Buffers Added To Freelist = %d\n",
 			pdev->stats.buf_freelist);
-	DP_TRACE(NONE, "Dropped:\n");
-	DP_TRACE(NONE, "Total Packets With Msdu Not Done = %d",
-			pdev->stats.dropped.msdu_not_done.num);
-	DP_TRACE(NONE, "Bytes Sent With Msdu Not Done = %d",
-			pdev->stats.dropped.msdu_not_done.bytes);
-	DP_TRACE(NONE, "Sent To Stack:\n");
-	DP_TRACE(NONE, "Packets Sent To Stack = %d",
+	DP_TRACE_STATS(NONE, "Dropped:\n");
+	DP_TRACE_STATS(NONE, "Total Packets With Msdu Not Done = %d\n",
+			pdev->stats.dropped.msdu_not_done);
+	DP_TRACE_STATS(NONE, "Sent To Stack:\n");
+	DP_TRACE_STATS(NONE, "Packets = %d",
 			pdev->stats.rx.to_stack.num);
-	DP_TRACE(NONE, "Bytes Sent To Stack = %d",
+	DP_TRACE_STATS(NONE, "Bytes = %d\n",
 			pdev->stats.rx.to_stack.bytes);
-	DP_TRACE(NONE, "Errors:\n");
-	DP_TRACE(NONE, "Rxdma Ring Unititalized: %d",
-			pdev->stats.err.rxdma_unitialized);
-	DP_TRACE(NONE, "Desc Alloc Failed: %d",
+	DP_TRACE_STATS(NONE, "Multicast/Broadcast:\n");
+	DP_TRACE_STATS(NONE, "Packets = %d",
+			pdev->stats.rx.multicast.num);
+	DP_TRACE_STATS(NONE, "Bytes = %d\n",
+			pdev->stats.rx.multicast.bytes);
+	DP_TRACE_STATS(NONE, "Errors:\n");
+	DP_TRACE_STATS(NONE, "Rxdma Ring Un-inititalized = %d",
+			pdev->stats.replenish.rxdma_err);
+	DP_TRACE_STATS(NONE, "Desc Alloc Failed: = %d",
 			pdev->stats.err.desc_alloc_fail);
 }
 
@@ -2726,13 +2785,19 @@ dp_print_pdev_rx_stats(struct dp_pdev *pdev)
 static inline void
 dp_print_soc_tx_stats(struct dp_soc *soc)
 {
-	DP_TRACE(NONE, "SOC Tx Stats:\n");
-	DP_TRACE(NONE, "Tx Descriptors In Use = %d",
+	DP_TRACE_STATS(NONE, "SOC Tx Stats:\n");
+	DP_TRACE_STATS(NONE, "Tx Descriptors In Use = %d",
 			soc->stats.tx.desc_in_use);
-	DP_TRACE(NONE, "Total Packets With No Peer = %d",
+	DP_TRACE_STATS(NONE, "Invalid peer:\n");
+	DP_TRACE_STATS(NONE, "Packets = %d",
 			soc->stats.tx.tx_invalid_peer.num);
-	DP_TRACE(NONE, "Bytes Sent With No Peer = %d",
+	DP_TRACE_STATS(NONE, "Bytes = %d",
 			soc->stats.tx.tx_invalid_peer.bytes);
+	DP_TRACE_STATS(NONE, "Packets dropped due to TCL ring full = %d %d %d",
+			soc->stats.tx.tcl_ring_full[0],
+			soc->stats.tx.tcl_ring_full[1],
+			soc->stats.tx.tcl_ring_full[2]);
+
 }
 
 
@@ -2750,33 +2815,33 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
 	char rxdma_error[DP_RXDMA_ERR_LENGTH];
 	uint8_t index = 0;
 
-	DP_TRACE(NONE, "SOC Rx Stats:\n");
-	DP_TRACE(NONE, "Errors:\n");
-	DP_TRACE(NONE, "Invalid RBM = %d",
+	DP_TRACE_STATS(NONE, "SOC Rx Stats:\n");
+	DP_TRACE_STATS(NONE, "Errors:\n");
+	DP_TRACE_STATS(NONE, "Invalid RBM = %d",
 			soc->stats.rx.err.invalid_rbm);
-	DP_TRACE(NONE, "Invalid Vdev = %d",
+	DP_TRACE_STATS(NONE, "Invalid Vdev = %d",
 			soc->stats.rx.err.invalid_vdev);
-	DP_TRACE(NONE, "Invalid Pdev = %d",
+	DP_TRACE_STATS(NONE, "Invalid Pdev = %d",
 			soc->stats.rx.err.invalid_pdev);
-	DP_TRACE(NONE, "Invalid Peer = %d",
+	DP_TRACE_STATS(NONE, "Invalid Peer = %d",
 			soc->stats.rx.err.rx_invalid_peer.num);
-	DP_TRACE(NONE, "HAL Ring Access Fail = %d",
+	DP_TRACE_STATS(NONE, "HAL Ring Access Fail = %d",
 			soc->stats.rx.err.hal_ring_access_fail);
 	for (i = 0; i < MAX_RXDMA_ERRORS; i++) {
 		index += qdf_snprint(&rxdma_error[index],
 				DP_RXDMA_ERR_LENGTH - index,
-				" %d,", soc->stats.rx.err.rxdma_error[i]);
+				" %d", soc->stats.rx.err.rxdma_error[i]);
 	}
-	DP_TRACE(NONE, "RXDMA Error (0-31):%s",
+	DP_TRACE_STATS(NONE, "RXDMA Error (0-31):%s",
 			rxdma_error);
 
 	index = 0;
 	for (i = 0; i < REO_ERROR_TYPE_MAX; i++) {
 		index += qdf_snprint(&reo_error[index],
 				DP_REO_ERR_LENGTH - index,
-				" %d,", soc->stats.rx.err.reo_error[i]);
+				" %d", soc->stats.rx.err.reo_error[i]);
 	}
-	DP_TRACE(NONE, "REO Error(0-14):%s",
+	DP_TRACE_STATS(NONE, "REO Error(0-14):%s",
 			reo_error);
 }
 
@@ -2811,28 +2876,53 @@ static inline void
 dp_print_rx_rates(struct dp_vdev *vdev)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)vdev->pdev;
-	uint8_t i;
+	uint8_t i, pkt_type;
 	uint8_t index = 0;
-	char mcs[DP_MCS_LENGTH];
+	char rx_mcs[DOT11_MAX][DP_MCS_LENGTH];
 	char nss[DP_NSS_LENGTH];
 
-	DP_TRACE(NONE, "Rx Rate Info:\n");
-	for (i = 0; i < MAX_MCS; i++) {
-		index += qdf_snprint(&mcs[index], DP_MCS_LENGTH - index,
-				" %d,", pdev->stats.rx.mcs_count[i]);
-	}
-	DP_TRACE(NONE, "MCS(0-11):%s",
-			mcs);
+	DP_TRACE_STATS(NONE, "Rx Rate Info:\n");
 
+	for (pkt_type = 0; pkt_type < DOT11_MAX; pkt_type++) {
+		index = 0;
+		for (i = 0; i < MAX_MCS; i++) {
+			index += qdf_snprint(&rx_mcs[pkt_type][index],
+					DP_MCS_LENGTH - index,
+					" %d ",
+					pdev->stats.rx.pkt_type[pkt_type].
+					mcs_count[i]);
+		}
+	}
+
+	DP_TRACE_STATS(NONE, "11A MCS(0-7) = %s",
+			rx_mcs[0]);
+	DP_TRACE_STATS(NONE, "11A MCS Invalid = %d",
+			pdev->stats.rx.pkt_type[DOT11_A].mcs_count[MAX_MCS]);
+	DP_TRACE_STATS(NONE, "11B MCS(0-6) = %s",
+			rx_mcs[1]);
+	DP_TRACE_STATS(NONE, "11B MCS Invalid = %d",
+			pdev->stats.rx.pkt_type[DOT11_B].mcs_count[MAX_MCS]);
+	DP_TRACE_STATS(NONE, "11N MCS(0-7) = %s",
+			rx_mcs[2]);
+	DP_TRACE_STATS(NONE, "11N MCS Invalid = %d",
+			pdev->stats.rx.pkt_type[DOT11_N].mcs_count[MAX_MCS]);
+	DP_TRACE_STATS(NONE, "Type 11AC MCS(0-9) = %s",
+			rx_mcs[3]);
+	DP_TRACE_STATS(NONE, "11AC MCS Invalid = %d",
+			pdev->stats.rx.pkt_type[DOT11_AC].mcs_count[MAX_MCS]);
+	DP_TRACE_STATS(NONE, "11AX MCS(0-11) = %s",
+			rx_mcs[4]);
+	DP_TRACE_STATS(NONE, "11AX MCS Invalid = %d",
+			pdev->stats.rx.pkt_type[DOT11_AX].mcs_count[MAX_MCS]);
 	index = 0;
 	for (i = 0; i < SS_COUNT; i++) {
 		index += qdf_snprint(&nss[index], DP_NSS_LENGTH - index,
-				" %d,", pdev->stats.rx.nss[i]);
+				" %d", pdev->stats.rx.nss[i]);
 	}
-	DP_TRACE(NONE, "NSS(0-7):%s",
+	DP_TRACE_STATS(NONE, "NSS(0-7) = %s",
 			nss);
 
-	DP_TRACE(NONE, "SGI:"
+	DP_TRACE_STATS(NONE, "SGI ="
 			" 0.8us %d,"
 			" 0.4us %d,"
 			" 1.6us %d,"
@@ -2841,26 +2931,26 @@ dp_print_rx_rates(struct dp_vdev *vdev)
 			pdev->stats.rx.sgi_count[1],
 			pdev->stats.rx.sgi_count[2],
 			pdev->stats.rx.sgi_count[3]);
-	DP_TRACE(NONE, "BW Counts: 20MHZ %d, 40MHZ %d, 80MHZ %d, 160MHZ %d",
+	DP_TRACE_STATS(NONE, "BW Counts = 20MHZ %d, 40MHZ %d, 80MHZ %d, 160MHZ %d",
 			pdev->stats.rx.bw[0], pdev->stats.rx.bw[1],
 			pdev->stats.rx.bw[2], pdev->stats.rx.bw[3]);
-	DP_TRACE(NONE, "Reception Type:"
+	DP_TRACE_STATS(NONE, "Reception Type ="
 			" SU: %d,"
 			" MU_MIMO:%d,"
 			" MU_OFDMA:%d,"
-			" MU_OFDMA_MIMO:%d",
+			" MU_OFDMA_MIMO:%d\n",
 			pdev->stats.rx.reception_type[0],
 			pdev->stats.rx.reception_type[1],
 			pdev->stats.rx.reception_type[2],
 			pdev->stats.rx.reception_type[3]);
-	DP_TRACE(NONE, "Aggregation:\n");
-	DP_TRACE(NONE, "Number of Msdu's Part of Ampdus = %d",
+	DP_TRACE_STATS(NONE, "Aggregation:\n");
+	DP_TRACE_STATS(NONE, "Number of Msdu's Part of Ampdus = %d",
 			pdev->stats.rx.ampdu_cnt);
-	DP_TRACE(NONE, "Number of Msdu's With No Mpdu Level Aggregation : %d",
+	DP_TRACE_STATS(NONE, "Number of Msdu's With No Mpdu Level Aggregation : %d",
 			pdev->stats.rx.non_ampdu_cnt);
-	DP_TRACE(NONE, "Number of Msdu's Part of Amsdu: %d",
+	DP_TRACE_STATS(NONE, "Number of Msdu's Part of Amsdu: %d",
 			pdev->stats.rx.amsdu_cnt);
-	DP_TRACE(NONE, "Number of Msdu's With No Msdu Level Aggregation: %d",
+	DP_TRACE_STATS(NONE, "Number of Msdu's With No Msdu Level Aggregation: %d",
 			pdev->stats.rx.non_amsdu_cnt);
 }
 
@@ -2878,7 +2968,7 @@ dp_print_tx_rates(struct dp_vdev *vdev)
 	char mcs[DOT11_MAX][DP_MCS_LENGTH];
 	uint32_t index;
 
-	DP_TRACE(NONE, "Tx Rate Info:\n");
+	DP_TRACE_STATS(NONE, "Tx Rate Info:\n");
 
 	for (pkt_type = 0; pkt_type < DOT11_MAX; pkt_type++) {
 		index = 0;
@@ -2891,42 +2981,47 @@ dp_print_tx_rates(struct dp_vdev *vdev)
 		}
 	}
 
-	DP_TRACE(NONE, "Packet Type 11A MCS(0-7):%s",
+	DP_TRACE_STATS(NONE, "11A MCS(0-7) = %s",
 			mcs[0]);
-	DP_TRACE(NONE, "Packet Type 11A MCS Invalid = %d",
+	DP_TRACE_STATS(NONE, "11A MCS Invalid = %d",
 			pdev->stats.tx.pkt_type[DOT11_A].mcs_count[MAX_MCS]);
-	DP_TRACE(NONE, "Packet Type 11B MCS(0-6):%s",
+	DP_TRACE_STATS(NONE, "11B MCS(0-6) = %s",
 			mcs[1]);
-	DP_TRACE(NONE, "Packet Type 11B MCS Invalid = %d",
+	DP_TRACE_STATS(NONE, "11B MCS Invalid = %d",
 			pdev->stats.tx.pkt_type[DOT11_B].mcs_count[MAX_MCS]);
-	DP_TRACE(NONE, "Packet Type 11N MCS(0-7):%s",
+	DP_TRACE_STATS(NONE, "11N MCS(0-7) = %s",
 			mcs[2]);
-	DP_TRACE(NONE, "Packet Type 11N MCS Invalid = %d",
+	DP_TRACE_STATS(NONE, "11N MCS Invalid = %d",
 			pdev->stats.tx.pkt_type[DOT11_N].mcs_count[MAX_MCS]);
-	DP_TRACE(NONE, "Packet Type 11AC MCS(0-9):%s",
+	DP_TRACE_STATS(NONE, "Type 11AC MCS(0-9) = %s",
 			mcs[3]);
-	DP_TRACE(NONE, "Packet Type 11AC MCS Invalid = %d",
+	DP_TRACE_STATS(NONE, "11AC MCS Invalid = %d",
 			pdev->stats.tx.pkt_type[DOT11_AC].mcs_count[MAX_MCS]);
-	DP_TRACE(NONE, "Packet Type 11AX MCS(0-11):%s",
+	DP_TRACE_STATS(NONE, "11AX MCS(0-11) = %s",
 			mcs[4]);
-	DP_TRACE(NONE, "Packet Type 11AX MCS Invalid = %d",
+	DP_TRACE_STATS(NONE, "11AX MCS Invalid = %d",
 			pdev->stats.tx.pkt_type[DOT11_AX].mcs_count[MAX_MCS]);
-	DP_TRACE(NONE, "SGI:"
-			" 0.8us %d,"
-			" 0.4us %d,"
-			" 1.6us %d,"
-			" 3.2us %d,",
+	DP_TRACE_STATS(NONE, "SGI ="
+			" 0.8us %d"
+			" 0.4us %d"
+			" 1.6us %d"
+			" 3.2us %d",
 			pdev->stats.tx.sgi_count[0],
 			pdev->stats.tx.sgi_count[1],
 			pdev->stats.tx.sgi_count[2],
 			pdev->stats.tx.sgi_count[3]);
-	DP_TRACE(NONE, "BW Counts: 20MHZ %d, 40MHZ %d, 80MHZ %d, 160MHZ %d",
+	DP_TRACE_STATS(NONE, "BW Counts = 20MHZ %d, 40MHZ %d, 80MHZ %d, 160MHZ %d",
 			pdev->stats.tx.bw[0], pdev->stats.tx.bw[1],
 			pdev->stats.tx.bw[2], pdev->stats.tx.bw[3]);
-	DP_TRACE(NONE, "Aggregation:\n");
-	DP_TRACE(NONE, "Number of Msdu's Part of Amsdu: %d",
+	DP_TRACE_STATS(NONE, "OFDMA = %d", pdev->stats.tx.ofdma);
+	DP_TRACE_STATS(NONE, "STBC = %d", pdev->stats.tx.stbc);
+	DP_TRACE_STATS(NONE, "LDPC = %d", pdev->stats.tx.ldpc);
+	DP_TRACE_STATS(NONE, "Retries = %d", pdev->stats.tx.retries);
+	DP_TRACE_STATS(NONE, "Last ack rssi = %d\n", pdev->stats.tx.last_ack_rssi);
+	DP_TRACE_STATS(NONE, "Aggregation:\n");
+	DP_TRACE_STATS(NONE, "Number of Msdu's Part of Amsdu = %d",
 			pdev->stats.tx.amsdu_cnt);
-	DP_TRACE(NONE, "Number of Msdu's With No Msdu Level Aggregation: %d",
+	DP_TRACE_STATS(NONE, "Number of Msdu's With No Msdu Level Aggregation = %d",
 			pdev->stats.tx.non_amsdu_cnt);
 }
 
@@ -2939,58 +3034,54 @@ dp_print_tx_rates(struct dp_vdev *vdev)
 static inline void dp_print_peer_stats(struct dp_peer *peer)
 {
 	uint8_t i, pkt_type;
-	char mcs[DOT11_MAX][DP_MCS_LENGTH];
+	char tx_mcs[DOT11_MAX][DP_MCS_LENGTH];
+	char rx_mcs[DOT11_MAX][DP_MCS_LENGTH];
 	uint32_t index;
 	char nss[DP_NSS_LENGTH];
-	char mcs_rx[DP_MCS_LENGTH];
-	DP_TRACE(NONE, "Node Tx Stats:\n");
-	DP_TRACE(NONE, "Total Packet Completions %d",
+	DP_TRACE_STATS(NONE, "Node Tx Stats:\n");
+	DP_TRACE_STATS(NONE, "Total Packet Completions = %d",
 			peer->stats.tx.comp_pkt.num);
-	DP_TRACE(NONE, "Total Bytes Completions %d",
+	DP_TRACE_STATS(NONE, "Total Bytes Completions = %d",
 			peer->stats.tx.comp_pkt.bytes);
-	DP_TRACE(NONE, "Success Packets %d",
+	DP_TRACE_STATS(NONE, "Success Packets = %d",
 			peer->stats.tx.tx_success.num);
-	DP_TRACE(NONE, "Success Bytes %d",
+	DP_TRACE_STATS(NONE, "Success Bytes = %d",
 			peer->stats.tx.tx_success.bytes);
-	DP_TRACE(NONE, "Packets Failed %d",
+	DP_TRACE_STATS(NONE, "Packets Failed = %d",
 			peer->stats.tx.tx_failed);
-	DP_TRACE(NONE, "Packets In OFDMA %d",
+	DP_TRACE_STATS(NONE, "Packets In OFDMA = %d",
 			peer->stats.tx.ofdma);
-	DP_TRACE(NONE, "Packets In STBC %d",
+	DP_TRACE_STATS(NONE, "Packets In STBC = %d",
 			peer->stats.tx.stbc);
-	DP_TRACE(NONE, "Packets In LDPC %d",
+	DP_TRACE_STATS(NONE, "Packets In LDPC = %d",
 			peer->stats.tx.ldpc);
-	DP_TRACE(NONE, "Packet Retries %d",
+	DP_TRACE_STATS(NONE, "Packet Retries = %d",
 			peer->stats.tx.retries);
-	DP_TRACE(NONE, "Msdu's Not Part of Ampdu %d",
+	DP_TRACE_STATS(NONE, "Msdu's Not Part of Ampdu = %d",
 			peer->stats.tx.non_amsdu_cnt);
-	DP_TRACE(NONE, "Mpdu's Part of Ampdu %d",
+	DP_TRACE_STATS(NONE, "Mpdu's Part of Ampdu = %d",
 			peer->stats.tx.amsdu_cnt);
-	DP_TRACE(NONE, "Last Packet RSSI %d",
+	DP_TRACE_STATS(NONE, "Last Packet RSSI = %d",
 			peer->stats.tx.last_ack_rssi);
-	DP_TRACE(NONE, "Dropped At Host: Due To DMA Map Error %d",
-			peer->stats.tx.dropped.dma_map_error);
-	DP_TRACE(NONE, "Dropped At Host: Due To Ring Full %d",
-			peer->stats.tx.dropped.ring_full);
-	DP_TRACE(NONE, "Dropped At FW: FW Discard %d",
+	DP_TRACE_STATS(NONE, "Dropped At FW: FW Discard = %d",
 			peer->stats.tx.dropped.fw_discard);
-	DP_TRACE(NONE, "Dropped At FW: FW Discard Retired %d",
+	DP_TRACE_STATS(NONE, "Dropped At FW: FW Discard Retired = %d",
 			peer->stats.tx.dropped.fw_discard_retired);
-	DP_TRACE(NONE, "Dropped At FW: FW Discard Untransmitted %d",
+	DP_TRACE_STATS(NONE, "Dropped At FW: FW Discard Untransmitted = %d",
 			peer->stats.tx.dropped.fw_discard_untransmitted);
-	DP_TRACE(NONE, "Dropped : Mpdu Age Out %d",
+	DP_TRACE_STATS(NONE, "Dropped : Mpdu Age Out = %d",
 			peer->stats.tx.dropped.mpdu_age_out);
-	DP_TRACE(NONE, "Dropped : FW Discard Reason1 %d",
+	DP_TRACE_STATS(NONE, "Dropped : FW Discard Reason1 = %d",
 			peer->stats.tx.dropped.fw_discard_reason1);
-	DP_TRACE(NONE, "Dropped : FW Discard Reason2 %d",
+	DP_TRACE_STATS(NONE, "Dropped : FW Discard Reason2 = %d",
 			peer->stats.tx.dropped.fw_discard_reason2);
-	DP_TRACE(NONE, "Dropped : FW Discard Reason3 %d",
+	DP_TRACE_STATS(NONE, "Dropped : FW Discard Reason3 = %d",
 			peer->stats.tx.dropped.fw_discard_reason3);
 
 	for (pkt_type = 0; pkt_type < DOT11_MAX; pkt_type++) {
 		index = 0;
 		for (i = 0; i < MAX_MCS; i++) {
-			index += qdf_snprint(&mcs[pkt_type][index],
+			index += qdf_snprint(&tx_mcs[pkt_type][index],
 					DP_MCS_LENGTH - index,
 					" %d ",
 					peer->stats.tx.pkt_type[pkt_type].
@@ -2998,95 +3089,96 @@ static inline void dp_print_peer_stats(struct dp_peer *peer)
 		}
 	}
 
-	DP_TRACE(NONE, "Packet Type 11A MCS(0-7):%s",
-			mcs[0]);
-	DP_TRACE(NONE, "Packet Type 11A MCS Invalid = %d",
+	DP_TRACE_STATS(NONE, "11A MCS(0-7) = %s",
+			tx_mcs[0]);
+	DP_TRACE_STATS(NONE, "11A MCS Invalid = %d",
 			peer->stats.tx.pkt_type[DOT11_A].mcs_count[MAX_MCS]);
-	DP_TRACE(NONE, "Packet Type 11B MCS(0-6):%s",
-			mcs[1]);
-	DP_TRACE(NONE, "Packet Type 11B MCS Invalid = %d",
+	DP_TRACE_STATS(NONE, "11B MCS(0-6) = %s",
+			tx_mcs[1]);
+	DP_TRACE_STATS(NONE, "11B MCS Invalid = %d",
 			peer->stats.tx.pkt_type[DOT11_B].mcs_count[MAX_MCS]);
-	DP_TRACE(NONE, "Packet Type 11N MCS(0-7):%s",
-			mcs[2]);
-	DP_TRACE(NONE, "Packet Type 11N MCS Invalid = %d",
+	DP_TRACE_STATS(NONE, "11N MCS(0-7) = %s",
+			tx_mcs[2]);
+	DP_TRACE_STATS(NONE, "11N MCS Invalid = %d",
 			peer->stats.tx.pkt_type[DOT11_N].mcs_count[MAX_MCS]);
-	DP_TRACE(NONE, "Packet Type 11AC MCS(0-9):%s",
-			mcs[3]);
-	DP_TRACE(NONE, "Packet Type 11AC MCS Invalid = %d",
+	DP_TRACE_STATS(NONE, "11AC MCS(0-9) = %s",
+			tx_mcs[3]);
+	DP_TRACE_STATS(NONE, "11AC MCS Invalid = %d",
 			peer->stats.tx.pkt_type[DOT11_AC].mcs_count[MAX_MCS]);
-	DP_TRACE(NONE, "Packet Type 11AX MCS(0-11):%s",
-			mcs[4]);
-	DP_TRACE(NONE, "Packet Type 11AX MCS Invalid = %d",
+	DP_TRACE_STATS(NONE, "11AX MCS(0-11) = %s",
+			tx_mcs[4]);
+	DP_TRACE_STATS(NONE, "11AX MCS Invalid = %d",
 			peer->stats.tx.pkt_type[DOT11_AX].mcs_count[MAX_MCS]);
-	DP_TRACE(NONE, "SGI:"
-			" 0.8us %d,"
-			" 0.4us %d,"
-			" 1.6us %d,"
-			" 3.2us %d,",
+	DP_TRACE_STATS(NONE, "SGI = "
+			" 0.8us %d"
+			" 0.4us %d"
+			" 1.6us %d"
+			" 3.2us %d",
 			peer->stats.tx.sgi_count[0],
 			peer->stats.tx.sgi_count[1],
 			peer->stats.tx.sgi_count[2],
 			peer->stats.tx.sgi_count[3]);
-	DP_TRACE(NONE, "BW Counts: 20MHZ %d, 40MHZ %d, 80MHZ %d, 160MHZ %d",
+	DP_TRACE_STATS(NONE, "BW Counts = 20MHZ %d 40MHZ %d 80MHZ %d 160MHZ %d\n",
 			peer->stats.tx.bw[0], peer->stats.tx.bw[1],
 			peer->stats.tx.bw[2], peer->stats.tx.bw[3]);
-	DP_TRACE(NONE, "Aggregation:\n");
-	DP_TRACE(NONE, "Number of Msdu's Part of Amsdu: %d",
+	DP_TRACE_STATS(NONE, "Aggregation:\n");
+	DP_TRACE_STATS(NONE, "Number of Msdu's Part of Amsdu = %d",
 			peer->stats.tx.amsdu_cnt);
-	DP_TRACE(NONE, "Number of Msdu's With No Msdu Level Aggregation: %d",
+	DP_TRACE_STATS(NONE, "Number of Msdu's With No Msdu Level Aggregation = %d\n",
 			peer->stats.tx.non_amsdu_cnt);
 
-	DP_TRACE(NONE, "Node Rx Stats:\n");
-	DP_TRACE(NONE, "Packets Sent To Stack %d",
+	DP_TRACE_STATS(NONE, "Node Rx Stats:\n");
+	DP_TRACE_STATS(NONE, "Packets Sent To Stack = %d",
 			peer->stats.rx.to_stack.num);
-	DP_TRACE(NONE, "Bytes Sent To Stack %d",
+	DP_TRACE_STATS(NONE, "Bytes Sent To Stack = %d",
 			peer->stats.rx.to_stack.bytes);
-	DP_TRACE(NONE, "Packets Received %d", peer->stats.rx.rcvd_reo.num);
-	DP_TRACE(NONE, "Bytes Received %d", peer->stats.rx.rcvd_reo.bytes);
-	DP_TRACE(NONE, "Unicast Packets Received %d",
-			peer->stats.rx.unicast.num);
-	DP_TRACE(NONE, "Unicast Bytes Received %d",
-			peer->stats.rx.unicast.bytes);
-	DP_TRACE(NONE, "Multicast Packets Received %d",
+	for (i = 0; i <  CDP_MAX_RX_RINGS; i++) {
+		DP_TRACE_STATS(NONE, "Packets Received = %d",
+				peer->stats.rx.rcvd_reo[i].num);
+		DP_TRACE_STATS(NONE, "Bytes Received = %d",
+				peer->stats.rx.rcvd_reo[i].bytes);
+	}
+	DP_TRACE_STATS(NONE, "Multicast Packets Received = %d",
 			peer->stats.rx.multicast.num);
-	DP_TRACE(NONE, "Multicast Bytes Received %d",
+	DP_TRACE_STATS(NONE, "Multicast Bytes Received = %d",
 			peer->stats.rx.multicast.bytes);
-	DP_TRACE(NONE, "WDS Packets Received %d",
+	DP_TRACE_STATS(NONE, "WDS Packets Received = %d",
 			peer->stats.rx.wds.num);
-	DP_TRACE(NONE, "WDS Bytes Received %d",
+	DP_TRACE_STATS(NONE, "WDS Bytes Received = %d",
 			peer->stats.rx.wds.bytes);
-	DP_TRACE(NONE, "Intra BSS Packets Received %d",
-			peer->stats.rx.intra_bss.num);
-	DP_TRACE(NONE, "Intra BSS Bytes Received %d",
-			peer->stats.rx.intra_bss.bytes);
-	DP_TRACE(NONE, "Raw Packets Received %d",
+	DP_TRACE_STATS(NONE, "Intra BSS Packets Received = %d",
+			peer->stats.rx.intra_bss.pkts.num);
+	DP_TRACE_STATS(NONE, "Intra BSS Bytes Received = %d",
+			peer->stats.rx.intra_bss.pkts.bytes);
+	DP_TRACE_STATS(NONE, "Raw Packets Received = %d",
 			peer->stats.rx.raw.num);
-	DP_TRACE(NONE, "Raw Bytes Received %d",
+	DP_TRACE_STATS(NONE, "Raw Bytes Received = %d",
 			peer->stats.rx.raw.bytes);
-	DP_TRACE(NONE, "Errors: MIC Errors %d",
+	DP_TRACE_STATS(NONE, "Errors: MIC Errors = %d",
 			peer->stats.rx.err.mic_err);
-	DP_TRACE(NONE, "Erros: Decryption Errors %d",
+	DP_TRACE_STATS(NONE, "Erros: Decryption Errors = %d",
 			peer->stats.rx.err.decrypt_err);
-	DP_TRACE(NONE, "Msdu's Received As Part of Ampdu %d",
+	DP_TRACE_STATS(NONE, "Msdu's Received As Part of Ampdu = %d",
 			peer->stats.rx.non_ampdu_cnt);
-	DP_TRACE(NONE, "Msdu's Recived As Ampdu %d", peer->stats.rx.ampdu_cnt);
-	DP_TRACE(NONE, "Msdu's Received Not Part of Amsdu's %d",
+	DP_TRACE_STATS(NONE, "Msdu's Recived As Ampdu = %d",
+			peer->stats.rx.ampdu_cnt);
+	DP_TRACE_STATS(NONE, "Msdu's Received Not Part of Amsdu's = %d",
 			peer->stats.rx.non_amsdu_cnt);
-	DP_TRACE(NONE, "MSDUs Received As Part of Amsdu %d",
+	DP_TRACE_STATS(NONE, "MSDUs Received As Part of Amsdu = %d",
 			peer->stats.rx.amsdu_cnt);
-	DP_TRACE(NONE, "SGI:"
-			" 0.8us %d,"
-			" 0.4us %d,"
-			" 1.6us %d,"
-			" 3.2us %d,",
+	DP_TRACE_STATS(NONE, "SGI ="
+			" 0.8us %d"
+			" 0.4us %d"
+			" 1.6us %d"
+			" 3.2us %d",
 			peer->stats.rx.sgi_count[0],
 			peer->stats.rx.sgi_count[1],
 			peer->stats.rx.sgi_count[2],
 			peer->stats.rx.sgi_count[3]);
-	DP_TRACE(NONE, "BW Counts: 20MHZ %d, 40MHZ %d, 80MHZ %d, 160MHZ %d",
+	DP_TRACE_STATS(NONE, "BW Counts = 20MHZ %d 40MHZ %d 80MHZ %d 160MHZ %d",
 			peer->stats.rx.bw[0], peer->stats.rx.bw[1],
 			peer->stats.rx.bw[2], peer->stats.rx.bw[3]);
-	DP_TRACE(NONE, "Reception Type:"
+	DP_TRACE_STATS(NONE, "Reception Type ="
 			" SU %d,"
 			" MU_MIMO %d,"
 			" MU_OFDMA %d,"
@@ -3096,29 +3188,53 @@ static inline void dp_print_peer_stats(struct dp_peer *peer)
 			peer->stats.rx.reception_type[2],
 			peer->stats.rx.reception_type[3]);
 
-	index = 0;
-	for (i = 0; i < MAX_MCS; i++) {
-		index += qdf_snprint(&mcs_rx[index], DP_MCS_LENGTH - index,
-				" %d,", peer->stats.rx.mcs_count[i]);
+	for (pkt_type = 0; pkt_type < DOT11_MAX; pkt_type++) {
+		index = 0;
+		for (i = 0; i < MAX_MCS; i++) {
+			index += qdf_snprint(&rx_mcs[pkt_type][index],
+					DP_MCS_LENGTH - index,
+					" %d ",
+					peer->stats.rx.pkt_type[pkt_type].
+					mcs_count[i]);
+		}
 	}
-	DP_TRACE(NONE, "MCS(0-11):%s",
-			mcs_rx);
+
+	DP_TRACE_STATS(NONE, "11A MCS(0-7) = %s",
+			rx_mcs[0]);
+	DP_TRACE_STATS(NONE, "11A MCS Invalid = %d",
+			peer->stats.rx.pkt_type[DOT11_A].mcs_count[MAX_MCS]);
+	DP_TRACE_STATS(NONE, "11B MCS(0-6) = %s",
+			rx_mcs[1]);
+	DP_TRACE_STATS(NONE, "11B MCS Invalid = %d",
+			peer->stats.rx.pkt_type[DOT11_B].mcs_count[MAX_MCS]);
+	DP_TRACE_STATS(NONE, "11N MCS(0-7) = %s",
+			rx_mcs[2]);
+	DP_TRACE_STATS(NONE, "11N MCS Invalid = %d",
+			peer->stats.rx.pkt_type[DOT11_N].mcs_count[MAX_MCS]);
+	DP_TRACE_STATS(NONE, "11AC MCS(0-9) = %s",
+			rx_mcs[3]);
+	DP_TRACE_STATS(NONE, "11AC MCS Invalid = %d",
+			peer->stats.rx.pkt_type[DOT11_AC].mcs_count[MAX_MCS]);
+	DP_TRACE_STATS(NONE, "11AX MCS(0-11) = %s",
+			rx_mcs[4]);
+	DP_TRACE_STATS(NONE, "11AX MCS Invalid = %d",
+			peer->stats.rx.pkt_type[DOT11_AX].mcs_count[MAX_MCS]);
 
 	index = 0;
 	for (i = 0; i < SS_COUNT; i++) {
 		index += qdf_snprint(&nss[index], DP_NSS_LENGTH - index,
-				" %d,", peer->stats.rx.nss[i]);
+				" %d", peer->stats.rx.nss[i]);
 	}
-	DP_TRACE(NONE, "NSS(0-7):%s",
+	DP_TRACE_STATS(NONE, "NSS(0-7) = %s\n",
 			nss);
-	DP_TRACE(NONE, "Aggregation:\n");
-	DP_TRACE(NONE, "Number of Msdu's Part of Ampdu = %d",
+	DP_TRACE_STATS(NONE, "Aggregation:\n");
+	DP_TRACE_STATS(NONE, "Number of Msdu's Part of Ampdu = %d",
 			peer->stats.rx.ampdu_cnt);
-	DP_TRACE(NONE, "Number of Msdu's With No Mpdu Level Aggregation : %d",
+	DP_TRACE_STATS(NONE, "Number of Msdu's With No Mpdu Level Aggregation = %d",
 			peer->stats.rx.non_ampdu_cnt);
-	DP_TRACE(NONE, "Number of Msdu's Part of Amsdu: %d",
+	DP_TRACE_STATS(NONE, "Number of Msdu's Part of Amsdu = %d",
 			peer->stats.rx.amsdu_cnt);
-	DP_TRACE(NONE, "Number of Msdu's With No Msdu Level Aggregation: %d",
+	DP_TRACE_STATS(NONE, "Number of Msdu's With No Msdu Level Aggregation = %d",
 			peer->stats.rx.non_amsdu_cnt);
 }
 
@@ -3296,8 +3412,12 @@ static int dp_txrx_stats(struct cdp_vdev *vdev,
 
 	/* TODO: Firmware Mapping not implemented */
 
-	if (host_stats != TXRX_HOST_STATS_INVALID)
+	if ((host_stats != TXRX_HOST_STATS_INVALID) &&
+			(host_stats <= TXRX_HOST_STATS_MAX))
 		return dp_print_host_stats(vdev, req, host_stats);
+	else
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+				"Wrong Input for TxRx Stats");
 
 	return 0;
 }
@@ -3336,6 +3456,7 @@ static void dp_txrx_path_stats(struct dp_soc *soc)
 	uint8_t error_code;
 	uint8_t loop_pdev;
 	struct dp_pdev *pdev;
+	uint8_t i;
 
 	for (loop_pdev = 0; loop_pdev < soc->pdev_count; loop_pdev++) {
 
@@ -3404,12 +3525,13 @@ static void dp_txrx_path_stats(struct dp_soc *soc)
 		DP_TRACE(NONE, "delivered %u msdus ( %u bytes),",
 			pdev->stats.rx.to_stack.num,
 			pdev->stats.rx.to_stack.bytes);
-		DP_TRACE(NONE, "received on reo %u msdus ( %u bytes),",
-			pdev->stats.rx.rcvd_reo.num,
-			pdev->stats.rx.rcvd_reo.bytes);
+		for (i = 0; i <  CDP_MAX_RX_RINGS; i++)
+			DP_TRACE(NONE, "received on reo[%d] %u msdus ( %u bytes),",
+					i, pdev->stats.rx.rcvd_reo[i].num,
+					pdev->stats.rx.rcvd_reo[i].bytes);
 		DP_TRACE(NONE, "intra-bss packets %u msdus ( %u bytes),",
-			pdev->stats.rx.intra_bss.num,
-			pdev->stats.rx.intra_bss.bytes);
+			pdev->stats.rx.intra_bss.pkts.num,
+			pdev->stats.rx.intra_bss.pkts.bytes);
 		DP_TRACE(NONE, "raw packets %u msdus ( %u bytes),",
 			pdev->stats.rx.raw.num,
 			pdev->stats.rx.raw.bytes);
