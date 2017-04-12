@@ -180,7 +180,6 @@ static QDF_STATUS dispatcher_deinit_pmo(void)
 }
 #endif /* END of WLAN_PMO_ENABLE */
 
-#ifdef CONFIG_REGULAORY_CONV
 static QDF_STATUS dispatcher_regulatory_init(void)
 {
 	return wlan_regulatory_init();
@@ -202,31 +201,6 @@ static QDF_STATUS dispatcher_regulatory_psoc_close(struct wlan_objmgr_psoc
 {
 	return regulatory_psoc_close(psoc);
 }
-#else
-static QDF_STATUS dispatcher_regulatory_init(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS dispatcher_regulatory_deinit(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS dispatcher_regulatory_psoc_open(struct wlan_objmgr_psoc
-						  *psoc)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS dispatcher_regulatory_psoc_close(struct wlan_objmgr_psoc
-						   *psoc)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-#endif
-
 
 #ifdef WLAN_POLICY_MGR_ENABLE
 static QDF_STATUS dispatcher_policy_mgr_init(void)
