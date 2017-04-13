@@ -4441,12 +4441,23 @@ static QDF_STATUS hdd_cfg_get_config(struct reg_table_entry *reg_table,
 		    (WLAN_PARAM_SignedInteger == pRegEntry->RegType) ||
 		    (WLAN_PARAM_HexInteger == pRegEntry->RegType)) {
 			value = 0;
+
+			if ((pRegEntry->VarSize > sizeof(value)) ||
+			    (pRegEntry->VarSize == 0)) {
+				pr_warn("Invalid length of %s: %d",
+					pRegEntry->RegName, pRegEntry->VarSize);
+				continue;
+			}
+
 			memcpy(&value, pField, pRegEntry->VarSize);
 			if (WLAN_PARAM_HexInteger == pRegEntry->RegType) {
 				fmt = "%x";
 			} else if (WLAN_PARAM_SignedInteger ==
 				   pRegEntry->RegType) {
 				fmt = "%d";
+				value = sign_extend32(
+						value,
+						pRegEntry->VarSize * 8 - 1);
 			} else {
 				fmt = "%u";
 			}
