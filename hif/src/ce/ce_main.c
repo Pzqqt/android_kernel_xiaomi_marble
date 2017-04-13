@@ -597,7 +597,7 @@ static void hif_select_service_to_pipe_map(struct hif_softc *scn,
 static bool ce_mark_datapath(struct CE_state *ce_state)
 {
 	struct service_to_pipe *svc_map;
-	uint32_t map_sz;
+	uint32_t map_sz, map_len;
 	int    i;
 	bool   rc = false;
 
@@ -605,7 +605,8 @@ static bool ce_mark_datapath(struct CE_state *ce_state)
 		hif_select_service_to_pipe_map(ce_state->scn, &svc_map,
 					       &map_sz);
 
-		for (i = 0; i < map_sz; i++) {
+		map_len = map_sz / sizeof(struct service_to_pipe);
+		for (i = 0; i < map_len; i++) {
 			if ((svc_map[i].pipenum == ce_state->id) &&
 			    ((svc_map[i].service_id == HTT_DATA_MSG_SVC)  ||
 			     (svc_map[i].service_id == HTT_DATA2_MSG_SVC) ||
