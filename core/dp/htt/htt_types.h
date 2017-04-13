@@ -48,7 +48,8 @@
 #endif
 #endif /* QCA_TX_HTT2_SUPPORT */
 
-/* Set the base misclist size to the size of the htt tx copy engine
+/*
+ * Set the base misclist size to the size of the htt tx copy engine
  * to guarantee that a packet on the misclist wont be freed while it
  * is sitting in the copy engine.
  */
@@ -120,17 +121,21 @@ struct htt_rx_hash_bucket {
 #endif
 };
 
-/* IPA micro controller
-   wlan host driver
-   firmware shared memory structure */
+/*
+ * IPA micro controller
+ * wlan host driver
+ * firmware shared memory structure
+ */
 struct uc_shared_mem_t {
 	uint32_t *vaddr;
 	qdf_dma_addr_t paddr;
 	qdf_dma_mem_context(memctx);
 };
 
-/* Micro controller datapath offload
- * WLAN TX resources */
+/*
+ * Micro controller datapath offload
+ * WLAN TX resources
+ */
 struct htt_ipa_uc_tx_resource_t {
 	struct uc_shared_mem_t tx_ce_idx;
 	struct uc_shared_mem_t tx_comp_base;
@@ -207,19 +212,19 @@ struct msdu_ext_desc_t {
 	struct qdf_tso_flags_t tso_flags;
 	struct msdu_ext_frag_desc frags[6];
 /*
-	u_int32_t frag_ptr0;
-	u_int32_t frag_len0;
-	u_int32_t frag_ptr1;
-	u_int32_t frag_len1;
-	u_int32_t frag_ptr2;
-	u_int32_t frag_len2;
-	u_int32_t frag_ptr3;
-	u_int32_t frag_len3;
-	u_int32_t frag_ptr4;
-	u_int32_t frag_len4;
-	u_int32_t frag_ptr5;
-	u_int32_t frag_len5;
-*/
+ *	u_int32_t frag_ptr0;
+ *	u_int32_t frag_len0;
+ *	u_int32_t frag_ptr1;
+ *	u_int32_t frag_len1;
+ *	u_int32_t frag_ptr2;
+ *	u_int32_t frag_len2;
+ *	u_int32_t frag_ptr3;
+ *	u_int32_t frag_len3;
+ *	u_int32_t frag_ptr4;
+ *	u_int32_t frag_len4;
+ *	u_int32_t frag_ptr5;
+ *	u_int32_t frag_len5;
+ */
 };
 #endif  /* defined(HELIUMPLUS) */
 
@@ -298,8 +303,8 @@ struct htt_pdev_t {
 		 * than a CPU address.
 		 */
 		qdf_dma_addr_t base_paddr;
-		int32_t  size;       /* how many elems in the ring (power of 2) */
-		uint32_t size_mask;  /* size - 1, at least 16 bits long */
+		int32_t  size;	/* how many elems in the ring (power of 2) */
+		uint32_t size_mask;	/* size - 1, at least 16 bits long */
 
 		int fill_level; /* how many rx buffers to keep in the ring */
 		int fill_cnt;   /* # of rx buffers (full+empty) in the ring */
@@ -334,11 +339,13 @@ struct htt_pdev_t {
 			qdf_dma_mem_context(memctx);
 		} alloc_idx;
 
-		/* sw_rd_idx -
-		 * where HTT SW has processed bufs filled by rx MAC DMA */
+		/*
+		 * sw_rd_idx -
+		 * where HTT SW has processed bufs filled by rx MAC DMA
+		 */
 		struct {
-			unsigned msdu_desc;
-			unsigned msdu_payld;
+			unsigned int msdu_desc;
+			unsigned int msdu_payld;
 		} sw_rd_idx;
 
 		/*
