@@ -1261,6 +1261,7 @@ QDF_STATUS sme_hdd_ready_ind(tHalHandle hHal)
 		msg->length = sizeof(*msg);
 		msg->add_bssdescr_cb = csr_scan_process_single_bssdescr;
 		msg->csr_roam_synch_cb = csr_roam_synch_callback;
+		msg->sme_msg_cb = sme_process_msg_callback;
 
 		if (eSIR_FAILURE != u_mac_post_ctrl_msg(hHal, (tSirMbMsg *) msg)) {
 			status = QDF_STATUS_SUCCESS;
@@ -16628,6 +16629,19 @@ QDF_STATUS sme_get_chain_rssi(tHalHandle hal,
 	wma_get_chain_rssi(hal, input);
 
 	SME_EXIT();
+	return status;
+}
+
+QDF_STATUS sme_process_msg_callback(tHalHandle hal,
+				struct scheduler_msg *msg)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	if (msg == NULL) {
+		sme_err("Empty message for SME Msg callback");
+		return status;
+	}
+	status = sme_process_msg(hal, msg);
 	return status;
 }
 

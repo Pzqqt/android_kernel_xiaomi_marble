@@ -1682,7 +1682,6 @@ QDF_STATUS sme_get_peer_info_ext(tHalHandle hal,
  */
 void sme_set_5g_band_pref(tHalHandle hal_handle,
 			  struct sme_5g_band_pref_params *pref_params);
-
 /**
  * sme_get_chain_rssi() - Get chain rssi
  * @hal: Global HAL handle
@@ -1731,4 +1730,16 @@ tpAniSirGlobal sme_get_mac_context(void);
  * Return: None
  */
 void sme_display_disconnect_stats(tHalHandle hal, uint8_t session_id);
+
+/**
+ * sme_process_msg_callback() - process callback message from LIM
+ * @hal: global hal handle
+ * @msg: scheduler message
+ *
+ * This function process the callback messages from LIM.
+ *
+ * Return: QDF_STATUS enumeration.
+ */
+QDF_STATUS sme_process_msg_callback(tHalHandle hal,
+				struct scheduler_msg *msg);
 #endif /* #if !defined( __SME_API_H ) */

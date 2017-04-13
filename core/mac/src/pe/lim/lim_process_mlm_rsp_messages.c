@@ -790,7 +790,7 @@ lim_fill_assoc_ind_params(tpAniSirGlobal mac_ctx,
 void lim_process_mlm_assoc_ind(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 {
 	uint32_t len;
-	struct scheduler_msg msgQ = {0};
+	struct scheduler_msg msg = {0};
 	tSirSmeAssocInd *pSirSmeAssocInd;
 	tpDphHashNode pStaDs = 0;
 	tpPESession psessionEntry;
@@ -814,11 +814,12 @@ void lim_process_mlm_assoc_ind(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 	}
 
 	pSirSmeAssocInd->messageType = eWNI_SME_ASSOC_IND;
-	lim_fill_assoc_ind_params(pMac, (tpLimMlmAssocInd) pMsgBuf, pSirSmeAssocInd,
+	lim_fill_assoc_ind_params(pMac, (tpLimMlmAssocInd) pMsgBuf,
+				  pSirSmeAssocInd,
 				  psessionEntry);
-	msgQ.type = eWNI_SME_ASSOC_IND;
-	msgQ.bodyptr = pSirSmeAssocInd;
-	msgQ.bodyval = 0;
+	msg.type = eWNI_SME_ASSOC_IND;
+	msg.bodyptr = pSirSmeAssocInd;
+	msg.bodyval = 0;
 	pStaDs = dph_get_hash_entry(pMac,
 				    ((tpLimMlmAssocInd) pMsgBuf)->aid,
 				    &psessionEntry->dph.dphHashTable);
@@ -833,13 +834,11 @@ void lim_process_mlm_assoc_ind(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 	pSirSmeAssocInd->reassocReq = pStaDs->mlmStaContext.subType;
 	pSirSmeAssocInd->timingMeasCap = pStaDs->timingMeasCap;
 	MTRACE(mac_trace(pMac, TRACE_CODE_TX_SME_MSG,
-			 psessionEntry->peSessionId, msgQ.type));
+			 psessionEntry->peSessionId, msg.type));
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
 	lim_diag_event_report(pMac, WLAN_PE_DIAG_ASSOC_IND_EVENT, psessionEntry, 0,
 			      0);
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
-	lim_sys_process_mmh_msg_api(pMac, &msgQ, ePROT);
-
 	pe_debug("Create CNF_WAIT_TIMER after received LIM_MLM_ASSOC_IND");
 	/*
 	** turn on a timer to detect the loss of ASSOC CNF
@@ -848,6 +847,7 @@ void lim_process_mlm_assoc_ind(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 			       (uint16_t) ((tpLimMlmAssocInd) pMsgBuf)->aid,
 			       psessionEntry);
 
+	pMac->lim.sme_msg_callback(pMac, &msg);
 } /*** end lim_process_mlm_assoc_ind() ***/
 
 /**
