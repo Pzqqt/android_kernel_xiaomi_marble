@@ -1801,7 +1801,6 @@ static void dp_tx_comp_process_desc(struct dp_soc *soc,
 		}
 
 		DP_HIST_PACKET_COUNT_INC(desc->pdev->pdev_id);
-		DP_TRACE(NONE, "pdev_id: %u", desc->pdev->pdev_id);
 		next = desc->next;
 
 		if (desc->flags & DP_TX_DESC_FLAG_ME)
