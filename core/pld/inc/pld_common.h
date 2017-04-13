@@ -129,7 +129,30 @@ enum pld_driver_status {
 	PLD_UNINITIALIZED,
 	PLD_INITIALIZED,
 	PLD_LOAD_UNLOAD,
+};
+
+/**
+ * enum pld_uevent - WLAN FW status
+ * @PLD_RECOVERY: driver is recovering
+ * @PLD_FW_DOWN: FW is down
+ */
+enum pld_uevent {
 	PLD_RECOVERY,
+	PLD_FW_DOWN,
+};
+
+/**
+ * struct pld_uevent_data - uevent status received from platform driver
+ * @uevent: uevent type
+ * @fw_down: FW down info
+ */
+struct pld_uevent_data {
+	enum pld_uevent uevent;
+	union {
+		struct {
+			bool crashed;
+		} fw_down;
+	};
 };
 
 /**
@@ -282,7 +305,7 @@ enum pld_recovery_reason {
  *          is enabled
  * @modem_status: optional operation, will be called when platform driver
  *                sending modem power status to WLAN FW
- * @update_status: optional operation, will be called when platform driver
+ * @uevent: optional operation, will be called when platform driver
  *                 updating driver status
  * @runtime_suspend: optional operation, prepare the device for a condition
  *                   in which it won't be able to communicate with the CPU(s)
@@ -316,7 +339,7 @@ struct pld_driver_ops {
 	void (*modem_status)(struct device *dev,
 			     enum pld_bus_type bus_type,
 			     int state);
-	void (*update_status)(struct device *dev, uint32_t status);
+	void (*uevent)(struct device *dev, struct pld_uevent_data *uevent);
 	int (*runtime_suspend)(struct device *dev,
 			       enum pld_bus_type bus_type);
 	int (*runtime_resume)(struct device *dev,

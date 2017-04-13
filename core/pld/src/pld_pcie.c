@@ -181,22 +181,30 @@ static void pld_pcie_notify_handler(struct pci_dev *pdev, int state)
 }
 
 /**
- * pld_pcie_update_status() - update wlan driver status callback function
+ * pld_pcie_uevent() - update wlan driver status callback function
  * @pdev: PCIE device
- * @status: driver status
+ * @status driver uevent status
  *
  * This function will be called when platform driver wants to update wlan
  * driver's status.
  *
  * Return: void
  */
-static void pld_pcie_update_status(struct pci_dev *pdev, uint32_t status)
+static void pld_pcie_uevent(struct pci_dev *pdev, uint32_t status)
 {
 	struct pld_context *pld_context;
+	struct pld_uevent_data data;
 
 	pld_context = pld_get_global_context();
-	if (pld_context->ops->update_status)
-		pld_context->ops->update_status(&pdev->dev, status);
+	if (!pld_context)
+		return;
+
+	data.uevent = status;
+
+	if (!pld_context->ops->uevent)
+		pld_context->ops->uevent(&pdev->dev, &data);
+
+	return;
 }
 
 #ifdef FEATURE_RUNTIME_PM
@@ -449,7 +457,7 @@ struct cnss_wlan_driver pld_pcie_ops = {
 	.shutdown   = pld_pcie_shutdown,
 	.crash_shutdown = pld_pcie_crash_shutdown,
 	.modem_status   = pld_pcie_notify_handler,
-	.update_status  = pld_pcie_update_status,
+	.update_status  = pld_pcie_uevent,
 #ifdef CONFIG_PM
 	.suspend    = pld_pcie_suspend,
 	.resume     = pld_pcie_resume,
