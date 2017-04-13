@@ -7701,6 +7701,9 @@ void lim_log_he_cap(tpAniSirGlobal mac, tDot11fIEvendor_he_cap *he_cap)
 	lim_log(mac, LOG1, "\tRX BW bitmap: 0x%05x ", he_cap->rx_bw_bitmap);
 
 	/* HE PPET */
+	if (!he_cap->ppet_present)
+		return;
+
 	if (!he_cap->ppe_threshold.present) {
 		lim_log(mac, LOG1, FL("PPET is not present. Invalid IE"));
 		return;

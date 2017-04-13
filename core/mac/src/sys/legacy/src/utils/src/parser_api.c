@@ -6051,14 +6051,25 @@ QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal mac_ctx, tpPESession session,
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_MCS, value);
 		he_cap->mcs_supported = value;
 
-		value = WNI_CFG_HE_PPET_LEN;
-		CFG_GET_STR(status, mac_ctx, WNI_CFG_HE_PPET,
-			(void *)&he_cap->ppe_threshold, value, value);
+		if (he_cap->ppet_present) {
+			value = WNI_CFG_HE_PPET_LEN;
+			CFG_GET_STR(status, mac_ctx, WNI_CFG_HE_PPET,
+				(void *)&he_cap->ppe_threshold, value, value);
+		} else {
+			he_cap->ppe_threshold.present = false;
+		}
 
 		return QDF_STATUS_SUCCESS;
 	}
 
 	qdf_mem_copy(he_cap, &session->he_config, sizeof(*he_cap));
+	if (he_cap->ppet_present) {
+		value = WNI_CFG_HE_PPET_LEN;
+		CFG_GET_STR(status, mac_ctx, WNI_CFG_HE_PPET,
+			(void *)&he_cap->ppe_threshold, value, value);
+	} else {
+		he_cap->ppe_threshold.present = false;
+	}
 
 	lim_log_he_cap(mac_ctx, he_cap);
 
