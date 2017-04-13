@@ -72,22 +72,30 @@ int pld_pcie_wlan_enable(struct device *dev, struct pld_wlan_enable_cfg *config,
 int pld_pcie_wlan_disable(struct device *dev, enum pld_driver_mode mode);
 #endif
 
-#if (!defined(CONFIG_PLD_PCIE_CNSS)) || (!defined(QCA_WIFI_3_0_ADRASTEA))
-static inline int pld_pcie_set_fw_log_mode(u8 fw_log_mode)
-{
-	return 0;
-}
-static inline void pld_pcie_intr_notify_q6(void)
-{
-}
-#else
-static inline int pld_pcie_set_fw_log_mode(u8 fw_log_mode)
+#if defined(CONFIG_PLD_PCIE_CNSS) && defined(QCA_WIFI_3_0_ADRASTEA)
+static inline int pld_pcie_set_fw_log_mode(struct device *dev, u8 fw_log_mode)
 {
 	return cnss_set_fw_debug_mode(fw_log_mode);
 }
 static inline void pld_pcie_intr_notify_q6(void)
 {
 	cnss_intr_notify_q6();
+}
+#elif defined(CONFIG_PLD_PCIE_CNSS)
+static inline int pld_pcie_set_fw_log_mode(struct device *dev, u8 fw_log_mode)
+{
+	return cnss_set_fw_log_mode(dev, fw_log_mode);
+}
+static inline void pld_pcie_intr_notify_q6(void)
+{
+}
+#else
+static inline int pld_pcie_set_fw_log_mode(struct device *dev, u8 fw_log_mode)
+{
+	return 0;
+}
+static inline void pld_pcie_intr_notify_q6(void)
+{
 }
 #endif
 

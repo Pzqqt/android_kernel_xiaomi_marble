@@ -406,7 +406,7 @@ int pld_set_fw_log_mode(struct device *dev, u8 fw_log_mode)
 
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		ret = pld_pcie_set_fw_log_mode(fw_log_mode);
+		ret = pld_pcie_set_fw_log_mode(dev, fw_log_mode);
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		ret = pld_snoc_set_fw_log_mode(fw_log_mode);
