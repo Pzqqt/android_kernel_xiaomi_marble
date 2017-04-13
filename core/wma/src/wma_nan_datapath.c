@@ -1034,7 +1034,7 @@ void wma_add_bss_ndi_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	/* Initialize protection mode to no protection */
 	param.if_id = vdev_id;
 	param.param_id = WMI_VDEV_PARAM_PROTECTION_MODE;
-	param.param_value = WMI_VDEV_PARAM_PROTECTION_MODE;
+	param.param_value = IEEE80211_PROT_NONE;
 	if (wmi_unified_vdev_set_param_send(wma->wmi_handle, &param))
 		WMA_LOGE("Failed to initialize protection mode");
 
