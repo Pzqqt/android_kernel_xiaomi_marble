@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -149,6 +149,96 @@ static inline void qdf_atomic_set(qdf_atomic_t *v, int i)
 static inline int32_t qdf_atomic_inc_return(qdf_atomic_t *v)
 {
 	return __qdf_atomic_inc_return(v);
+}
+
+/**
+ * qdf_atomic_set_bit - Atomically set a bit in memory
+ * @nr: bit to set
+ * @addr: the address to start counting from
+ *
+ * Return: none
+ */
+static inline void qdf_atomic_set_bit(int nr, volatile unsigned long *addr)
+{
+	__qdf_atomic_set_bit(nr, addr);
+}
+
+/**
+ * qdf_atomic_clear_bit - Atomically clear a bit in memory
+ * @nr: bit to clear
+ * @addr: the address to start counting from
+ *
+ * Return: none
+ */
+static inline void qdf_atomic_clear_bit(int nr, volatile unsigned long *addr)
+{
+	__qdf_atomic_clear_bit(nr, addr);
+}
+
+/**
+ * qdf_atomic_change_bit - Atomically toggle a bit in memory
+ * from addr
+ * @nr: bit to change
+ * @addr: the address to start counting from
+ *
+ * Return: none
+ */
+static inline void qdf_atomic_change_bit(int nr, volatile unsigned long *addr)
+{
+	__qdf_atomic_change_bit(nr, addr);
+}
+
+/**
+ * qdf_atomic_test_and_set_bit - Atomically set a bit and return its old value
+ * @nr: Bit to set
+ * @addr: the address to start counting from
+ *
+ * Return: return nr bit old value
+ */
+static inline int qdf_atomic_test_and_set_bit(int nr,
+					      volatile unsigned long *addr)
+{
+	return __qdf_atomic_test_and_set_bit(nr, addr);
+}
+
+/**
+ * qdf_atomic_test_and_clear_bit - Atomically clear a bit and return its old
+ * value
+ * @nr: bit to clear
+ * @addr: the address to start counting from
+ *
+ * Return: return nr bit old value
+ */
+static inline int qdf_atomic_test_and_clear_bit(int nr,
+						volatile unsigned long *addr)
+{
+	return __qdf_atomic_test_and_clear_bit(nr, addr);
+}
+
+/**
+ * qdf_atomic_test_and_change_bit - Atomically toggle a bit and return its old
+ * value
+ * @nr: bit to change
+ * @addr: the address to start counting from
+ *
+ * Return: return nr bit old value
+ */
+static inline int qdf_atomic_test_and_change_bit(int nr,
+						 volatile unsigned long *addr)
+{
+	return __qdf_atomic_test_and_change_bit(nr, addr);
+}
+
+/**
+ * qdf_atomic_test_bit - Atomically get the nr-th bit value starting from addr
+ * @nr: bit to get
+ * @addr: the address to start counting from
+ *
+ * Return: return nr bit value
+ */
+static inline int qdf_atomic_test_bit(int nr, volatile unsigned long *addr)
+{
+	return __qdf_atomic_test_bit(nr, addr);
 }
 
 #endif
