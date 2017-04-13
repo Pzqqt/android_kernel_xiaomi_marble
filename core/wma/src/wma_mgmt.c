@@ -691,6 +691,10 @@ void wma_set_sta_sa_query_param(tp_wma_handle wma,
 
 	WMA_LOGD(FL("Enter:"));
 
+	if (!mac) {
+		WMA_LOGE(FL("mac context is NULL"));
+		return;
+	}
 	if (wlan_cfg_get_int
 		    (mac, WNI_CFG_PMF_SA_QUERY_MAX_RETRIES,
 		    &max_retries) != eSIR_SUCCESS) {
