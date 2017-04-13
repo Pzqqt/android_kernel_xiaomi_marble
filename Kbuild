@@ -86,11 +86,6 @@ ifeq ($(KERNEL_BUILD), 0)
 	#Flag to enable Legacy Fast Roaming3(LFR3)
 	CONFIG_QCACLD_WLAN_LFR3 := y
 
-	#Enable Power debugfs feature only if debug_fs is enabled
-	ifeq ($(CONFIG_DEBUG_FS), y)
-	CONFIG_WLAN_POWER_DEBUGFS := y
-	endif
-
 	# JB kernel has CPU enablement patches, so enable
 	ifeq ($(CONFIG_ROME_IF),pci)
 		CONFIG_PRIMA_WLAN_11AC_HIGH_TP := y
@@ -225,12 +220,15 @@ endif
 	# Flag to enable MCC to SCC switch feature
 	CONFIG_MCC_TO_SCC_SWITCH := y
 
-ifeq ($(CONFIG_DEBUG_FS), y)
-	# Flag to enable debugfs. Depends on CONFIG_DEBUG_FS in kernel
-	# configuration.
-	CONFIG_WLAN_DEBUGFS := y
 endif
 
+#Enable WLAN/Power debugfs feature only if debug_fs is enabled
+ifeq ($(CONFIG_DEBUG_FS), y)
+       # Flag to enable debugfs. Depends on CONFIG_DEBUG_FS in kernel
+       # configuration.
+       CONFIG_WLAN_DEBUGFS := y
+
+       CONFIG_WLAN_POWER_DEBUGFS := y
 endif
 
 # If not set, assume, Common driver is with in the build tree
