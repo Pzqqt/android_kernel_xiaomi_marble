@@ -328,6 +328,7 @@ bool qdf_lro_get_info(qdf_lro_ctx_t lro_ctx, qdf_nbuf_t nbuf,
 	int hw_lro_eligible =
 		 QDF_NBUF_CB_RX_LRO_ELIGIBLE(nbuf) &&
 		 (!QDF_NBUF_CB_RX_TCP_PURE_ACK(nbuf));
+	int rx_data_before_peer_rx = QDF_NBUF_CB_RX_LRO_INELIGIBLE(nbuf);
 
 	if (unlikely(!lro_ctx)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
@@ -335,7 +336,7 @@ bool qdf_lro_get_info(qdf_lro_ctx_t lro_ctx, qdf_nbuf_t nbuf,
 		return false;
 	}
 
-	if (!hw_lro_eligible)
+	if (!hw_lro_eligible || rx_data_before_peer_rx)
 		return false;
 
 	iph = (struct iphdr *)info->iph;

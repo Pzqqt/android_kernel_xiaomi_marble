@@ -137,6 +137,7 @@ struct qdf_nbuf_cb {
 		/* Note: MAX: 40 bytes */
 		struct {
 			uint32_t lro_eligible:1,
+				no_peer_lro_ineligible:1,
 				tcp_proto:1,
 				tcp_pure_ack:1,
 				ipv6_proto:1,
@@ -251,6 +252,8 @@ QDF_COMPILE_TIME_ASSERT(qdf_nbuf_cb_size,
 
 #define QDF_NBUF_CB_RX_LRO_ELIGIBLE(skb) \
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.lro_eligible)
+#define QDF_NBUF_CB_RX_LRO_INELIGIBLE(skb) \
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.no_peer_lro_ineligible)
 #define QDF_NBUF_CB_RX_LRO_DESC(skb) \
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.lro_desc)
 #define QDF_NBUF_CB_RX_LRO_CTX(skb) \
