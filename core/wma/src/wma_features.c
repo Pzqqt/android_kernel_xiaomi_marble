@@ -4243,6 +4243,25 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 					 chanId);
 	}
 
+	/* Make sure that peer exists before sending peer state cmd*/
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	if (!pdev) {
+		WMA_LOGE("%s: Failed to find pdev", __func__);
+		ret = -EIO;
+		goto end_tdls_peer_state;
+	}
+
+	peer = cdp_peer_find_by_addr(soc,
+			pdev,
+			peerStateParams->peerMacAddr,
+			&peer_id);
+	if (!peer) {
+		WMA_LOGE("%s: Failed to get peer handle using peer mac %pM",
+				__func__, peerStateParams->peerMacAddr);
+		ret = -EIO;
+		goto end_tdls_peer_state;
+	}
+
 	if (wmi_unified_update_tdls_peer_state_cmd(wma_handle->wmi_handle,
 			 (struct tdls_peer_state_params *)peerStateParams,
 			 ch_mhz)) {
@@ -4254,23 +4273,6 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 
 	/* in case of teardown, remove peer from fw */
 	if (WMA_TDLS_PEER_STATE_TEARDOWN == peerStateParams->peerState) {
-		pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-		if (!pdev) {
-			WMA_LOGE("%s: Failed to find pdev", __func__);
-			ret = -EIO;
-			goto end_tdls_peer_state;
-		}
-
-		peer = cdp_peer_find_by_addr(soc,
-					pdev,
-					peerStateParams->peerMacAddr,
-					&peer_id);
-		if (!peer) {
-			WMA_LOGE("%s: Failed to get peer handle using peer mac %pM",
-				__func__, peerStateParams->peerMacAddr);
-			ret = -EIO;
-			goto end_tdls_peer_state;
-		}
 		peer_mac_addr = cdp_peer_get_peer_mac_addr(soc, peer);
 		if (peer_mac_addr == NULL) {
 			WMA_LOGE("peer_mac_addr is NULL");
