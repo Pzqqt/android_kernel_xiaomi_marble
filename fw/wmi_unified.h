@@ -17474,26 +17474,37 @@ typedef struct {
     };
     A_UINT32 rate_flags;
     /**
-    * FLAG_ONE_CHAIN     0x001  - one chain mask
-    * FLAG_TWO_CHAIN     0x005  - two chain mask
-    * FLAG_THREE_CHAIN   0x007  - three chain mask
-    * FLAG_FOUR_CHAIN    0x00F  - four chain mask
-    * FLAG_STBC          0x010  - STBC is set
-    * FLAG_40MHZ         0x020
-    * FLAG_80MHZ         0x040
-    * FLAG_160MHZ        0x080
-    * FLAG_TXBF          0x0100 - Tx Bf enabled
-    * FLAG_RTSENA        0x0200 - RTS enabled
-    * FLAG_CTSENA        0x0400 - CTS enabled
-    * FLAG_LDPC          0x0800 - LDPC set
-    * FLAG_SERIES1       0x1000 -
-    * FLAG_SGI           0x2000 - Short gaurd interval
-    * FLAG_MU2           0x4000 - MU2 data
-    * FLAG_MU3           0x8000 - MU3 data
+    * FLAG_ONE_CHAIN     0x00000001  - one chain mask
+    * FLAG_TWO_CHAIN     0x00000003  - two chain mask
+    * FLAG_THREE_CHAIN   0x00000007  - three chain mask
+    * FLAG_FOUR_CHAIN    0x0000000F  - four chain mask
+    * FLAG_FIVE_CHAIN    0x0000001F  - five chain mask
+    * FLAG_SIX_CHAIN     0x0000003F  - six chain mask
+    * FLAG_SEVEN_CHAIN   0x0000007F  - seven chain mask
+    * FLAG_EIGHT_CHAIN   0x000000FF  - eight chain mask
+    * FLAG_STBC          0x00000100  - STBC is set
+    * FLAG_40MHZ         0x00000200
+    * FLAG_80MHZ         0x00000300
+    * FLAG_160MHZ        0x00000400
+    * FLAG_TXBF          0x00000800 - Tx Bf enabled
+    * FLAG_RTSENA        0x00001000 - RTS enabled
+    * FLAG_CTSENA        0x00002000 - CTS enabled
+    * FLAG_LDPC          0x00004000 - LDPC set
+    * FLAG_SGI           0x00008000 - Short gaurd interval
+    *                   (0x00010000-0x00080000 unused)
+    *------------------
+    * 0x00100000-0x00700000 used for SU/MU/OFDMA tx mode
+    * FLAG_SU            0x00100000 - SU Data
+    * FLAG_DL_MU_MIMO_AC 0x00200000 - DL AC MU data
+    * FLAG_DL_MU_MIMO_AX 0x00300000 - DL AX MU data
+    * FLAG_DL_OFDMA      0x00400000 - DL OFDMA data
+    * FLAG_UL_OFDMA      0x00500000 - UL OFDMA data
+    * FLAG_UL_MU_MIMO    0x00600000 - UL MU data
+    *------------------
     * */
     A_UINT32 nss;
     /**
-    * NSS 0x0 - 0x3
+    * NSS 0x0 - 0x7
     * */
     A_UINT32 preamble;
     /**
@@ -17501,6 +17512,7 @@ typedef struct {
     * PREAM_CCK  - 0x1
     * PREAM_HT   - 0x2
     * PREAM_VHT  - 0x3
+    * PREAM_HE   - 0x4
     * */
     A_UINT32 hw_rate;
     /**
@@ -17524,7 +17536,7 @@ typedef struct {
      * CCK_2_SHORT_MBPS   - 0x6
      *
      * *** HW_HT / VHT_RATE ***
-     * MCS 0x0 - 0x9
+     * MCS 0x0 - 0xb
      * */
 } wmi_pdev_get_tpc_cmd_fixed_param;
 
