@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -125,6 +125,11 @@ struct mgmt_txrx_desc_elem_t *wlan_mgmt_txrx_desc_get(
 					  struct mgmt_txrx_desc_elem_t,
 					  entry);
 	mgmt_txrx_desc->in_use = true;
+
+	/* acquire the wakelock when there are pending mgmt tx frames */
+	qdf_wake_lock_timeout_acquire(&mgmt_txrx_ctx->wakelock_tx_cmp,
+				      MGMT_TXRX_WAKELOCK_TIMEOUT_TX_CMP);
+
 	qdf_spin_unlock_bh(&mgmt_txrx_ctx->mgmt_desc_pool.desc_pool_lock);
 
 	mgmt_txrx_info("retrieved mgmt desc: %p with desc id: %d",
@@ -142,6 +147,13 @@ void wlan_mgmt_txrx_desc_put(struct mgmt_txrx_priv_context *mgmt_txrx_ctx,
 	desc->in_use = false;
 	qdf_list_insert_front(&mgmt_txrx_ctx->mgmt_desc_pool.free_list,
 			      &desc->entry);
+
+	/* release the wakelock if there are no pending mgmt tx frames */
+	if (mgmt_txrx_ctx->mgmt_desc_pool.free_list.count ==
+	    mgmt_txrx_ctx->mgmt_desc_pool.free_list.max_size)
+		qdf_wake_lock_release(&mgmt_txrx_ctx->wakelock_tx_cmp,
+				      MGMT_TXRX_WAKELOCK_REASON_TX_CMP);
+
 	qdf_spin_unlock_bh(&mgmt_txrx_ctx->mgmt_desc_pool.desc_pool_lock);
 
 	mgmt_txrx_info("put mgmt desc: %p with desc id: %d into freelist",

@@ -80,6 +80,8 @@ static QDF_STATUS wlan_mgmt_txrx_psoc_obj_create_notification(
 	mgmt_txrx_ctx->mgmt_txrx_stats = mgmt_txrx_stats;
 
 	qdf_spinlock_create(&mgmt_txrx_ctx->mgmt_txrx_ctx_lock);
+	qdf_wake_lock_create(&mgmt_txrx_ctx->wakelock_tx_cmp,
+			     "mgmt_txrx tx_cmp");
 
 	if (wlan_objmgr_psoc_component_obj_attach(psoc,
 				WLAN_UMAC_COMP_MGMT_TXRX,
@@ -97,6 +99,7 @@ static QDF_STATUS wlan_mgmt_txrx_psoc_obj_create_notification(
 
 err_psoc_attach:
 	qdf_spinlock_destroy(&mgmt_txrx_ctx->mgmt_txrx_ctx_lock);
+	qdf_wake_lock_destroy(&mgmt_txrx_ctx->wakelock_tx_cmp);
 	qdf_mem_free(mgmt_txrx_stats);
 err_mgmt_txrx_stats:
 	wlan_mgmt_txrx_desc_pool_deinit(mgmt_txrx_ctx);
@@ -146,6 +149,7 @@ static QDF_STATUS wlan_mgmt_txrx_psoc_obj_destroy_notification(
 	wlan_mgmt_txrx_desc_pool_deinit(mgmt_txrx_ctx);
 	qdf_mem_free(mgmt_txrx_ctx->mgmt_txrx_stats);
 	qdf_spinlock_destroy(&mgmt_txrx_ctx->mgmt_txrx_ctx_lock);
+	qdf_wake_lock_destroy(&mgmt_txrx_ctx->wakelock_tx_cmp);
 	qdf_mem_free(mgmt_txrx_ctx);
 
 	mgmt_txrx_info("mgmt txrx deletion successful, psoc: %p", psoc);

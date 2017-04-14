@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -36,6 +36,16 @@
 #define IEEE80211_FC0_SUBTYPE_MASK          0xf0
 #define IEEE80211_FC0_TYPE_MGT              0x00
 
+/**
+ * mgmt_wakelock_reason - reasons mgmt_txrx might hold a wakelock
+ * @MGMT_TXRX_WAKELOCK_REASON_TX_CMP - wait for mgmt_tx_complete event
+ */
+enum mgmt_txrx_wakelock_reason {
+	MGMT_TXRX_WAKELOCK_REASON_TX_CMP
+};
+
+/* timeout to wait for management_tx_complete event from firmware */
+#define MGMT_TXRX_WAKELOCK_TIMEOUT_TX_CMP 300
 
 /*
  * generic definitions for IEEE 802.11 frames
@@ -165,6 +175,7 @@ struct mgmt_txrx_stats_t {
  * @mgmt_rx_comp_cb:  array of pointers of mgmt rx cbs
  * @mgmt_desc_pool:   pointer to mgmt desc. pool
  * @mgmt_txrx_stats:  pointer to mgmt txrx stats
+ * @wakelock_tx_cmp:  mgmt tx complete wake lock
  */
 struct mgmt_txrx_priv_context {
 	struct wlan_objmgr_psoc *psoc;
@@ -172,6 +183,7 @@ struct mgmt_txrx_priv_context {
 	struct mgmt_desc_pool_t mgmt_desc_pool;
 	struct mgmt_txrx_stats_t *mgmt_txrx_stats;
 	qdf_spinlock_t mgmt_txrx_ctx_lock;
+	qdf_wake_lock_t wakelock_tx_cmp;
 };
 
 
