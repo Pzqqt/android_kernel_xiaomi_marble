@@ -372,10 +372,21 @@ QDF_STATUS wlansap_start(void *pCtx, enum tQDF_ADAPTER_MODE mode,
 		return QDF_STATUS_E_INVAL;
 	}
 	pmac = PMAC_STRUCT(hal);
+	/*
+	 * Anytime when you call sap_open_session, please call
+	 * sap_set_session_param to fill sap context parameters
+	 */
 	qdf_ret_status = sap_open_session(hal, pSapCtx, session_id);
 	if (QDF_STATUS_SUCCESS != qdf_ret_status) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			"Error: In %s calling sap_open_session status = %d",
+			__func__, qdf_ret_status);
+		return QDF_STATUS_E_FAILURE;
+	}
+	qdf_ret_status = sap_set_session_param(hal, pSapCtx, session_id);
+	if (QDF_STATUS_SUCCESS != qdf_ret_status) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			"In %s calling sap_set_session_param status = %d",
 			__func__, qdf_ret_status);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -523,6 +534,8 @@ QDF_STATUS wlansap_clean_cb(ptSapContext pSapCtx, uint32_t freeFlag      /* 0 / 
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 				"close existing SAP session");
 		sap_close_session(hal, pSapCtx, NULL, false);
+		sap_clear_session_param(hal, pSapCtx,
+					pSapCtx->sessionId);
 	}
 
 	qdf_mem_zero(pSapCtx, sizeof(tSapContext));

@@ -2600,6 +2600,104 @@ QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 }
 
 /**
+ * sap_find_valid_concurrent_session() - to find valid concurrent session
+ * @hal: pointer to hal abstration layer
+ *
+ * This API will check if any valid concurrent SAP session is present
+ *
+ * Return: pointer to sap context of valid concurrent session
+ */
+static ptSapContext sap_find_valid_concurrent_session(tHalHandle hal)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	uint8_t intf = 0;
+	ptSapContext sap_ctx;
+
+	for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
+		if (((QDF_SAP_MODE ==
+				mac_ctx->sap.sapCtxList[intf].sapPersona) ||
+		     (QDF_P2P_GO_MODE ==
+				mac_ctx->sap.sapCtxList[intf].sapPersona)) &&
+		    mac_ctx->sap.sapCtxList[intf].pSapContext != NULL) {
+			sap_ctx = mac_ctx->sap.sapCtxList[intf].pSapContext;
+			if (sap_ctx->sapsMachine != eSAP_DISCONNECTED)
+				return sap_ctx;
+		}
+	}
+
+	return NULL;
+}
+
+static QDF_STATUS sap_clear_global_dfs_param(tHalHandle hal)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+
+	if (NULL == sap_find_valid_concurrent_session(hal)) {
+		/* If timer is running then stop the timer and destory it */
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
+			  "sapdfs: no session are valid, so clearing dfs global structure");
+		/*
+		 * CAC timer will be initiated and started only when SAP starts
+		 * on DFS channel and it will be stopped and destroyed
+		 * immediately once the radar detected or timedout. So
+		 * as per design CAC timer should be destroyed after stop
+		 */
+		if (mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running) {
+			qdf_mc_timer_stop(&mac_ctx->sap.SapDfsInfo.
+					  sap_dfs_cac_timer);
+			mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running = 0;
+			qdf_mc_timer_destroy(
+				&mac_ctx->sap.SapDfsInfo.sap_dfs_cac_timer);
+		}
+		mac_ctx->sap.SapDfsInfo.cac_state = eSAP_DFS_DO_NOT_SKIP_CAC;
+		sap_cac_reset_notify(hal);
+		qdf_mem_zero(&mac_ctx->sap, sizeof(mac_ctx->sap));
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS sap_set_session_param(tHalHandle hal, ptSapContext sapctx,
+				uint32_t session_id)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+
+	sapctx->sessionId = session_id;
+	sapctx->isSapSessionOpen = eSAP_TRUE;
+	sapctx->is_pre_cac_on = false;
+	sapctx->pre_cac_complete = false;
+	sapctx->chan_before_pre_cac = 0;
+	mac_ctx->sap.sapCtxList[sapctx->sessionId].sessionID =
+				sapctx->sessionId;
+	mac_ctx->sap.sapCtxList[sapctx->sessionId].pSapContext = sapctx;
+	mac_ctx->sap.sapCtxList[sapctx->sessionId].sapPersona =
+				sapctx->csr_roamProfile.csrPersona;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS sap_clear_session_param(tHalHandle hal, ptSapContext sapctx,
+				uint32_t session_id)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+
+	sapctx->isCacStartNotified = false;
+	sapctx->isCacEndNotified = false;
+	sapctx->isSapSessionOpen = false;
+	sapctx->pre_cac_complete = false;
+	sapctx->is_pre_cac_on = false;
+	sapctx->chan_before_pre_cac = 0;
+	mac_ctx->sap.sapCtxList[sapctx->sessionId].sessionID =
+						CSR_SESSION_ID_INVALID;
+	mac_ctx->sap.sapCtxList[sapctx->sessionId].pSapContext = NULL;
+	mac_ctx->sap.sapCtxList[sapctx->sessionId].sapPersona =
+							QDF_MAX_NO_OF_MODE;
+	sap_clear_global_dfs_param(hal);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * sap_open_session() - Opens a SAP session
  * @hHal: Hal handle
  * @sapContext:  Sap Context value
@@ -2615,7 +2713,6 @@ QDF_STATUS sap_open_session(tHalHandle hHal, ptSapContext sapContext,
 	uint32_t type, subType;
 	QDF_STATUS qdf_ret_status;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
 	if (sapContext->csr_roamProfile.csrPersona == QDF_P2P_GO_MODE)
 		status = cds_get_vdev_types(QDF_P2P_GO_MODE, &type, &subType);
@@ -2644,7 +2741,6 @@ QDF_STATUS sap_open_session(tHalHandle hHal, ptSapContext sapContext,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	sapContext->sessionId = session_id;
 	status = qdf_wait_single_event(&sapContext->sap_session_opened_evt,
 					SME_CMD_TIMEOUT_VALUE);
 
@@ -2654,15 +2750,6 @@ QDF_STATUS sap_open_session(tHalHandle hHal, ptSapContext sapContext,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	pMac->sap.sapCtxList[sapContext->sessionId].sessionID =
-		sapContext->sessionId;
-	pMac->sap.sapCtxList[sapContext->sessionId].pSapContext = sapContext;
-	pMac->sap.sapCtxList[sapContext->sessionId].sapPersona =
-		sapContext->csr_roamProfile.csrPersona;
-	sapContext->isSapSessionOpen = eSAP_TRUE;
-	sapContext->is_pre_cac_on = false;
-	sapContext->pre_cac_complete = false;
-	sapContext->chan_before_pre_cac = 0;
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -3249,43 +3336,6 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 
 }
 
-/*==========================================================================
-   FUNCTION  sap_find_valid_concurrent_session
-
-   DESCRIPTION
-    This function will return sapcontext of any valid sap session.
-
-   PARAMETERS
-
-    IN
-    hHal        : HAL pointer
-
-   RETURN VALUE
-    ptSapContext : valid sap context
-
-   SIDE EFFECTS
-    NA
-   ============================================================================*/
-static ptSapContext sap_find_valid_concurrent_session(tHalHandle hHal)
-{
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	uint8_t intf = 0;
-	ptSapContext sapContext;
-
-	for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
-		if (((QDF_SAP_MODE == pMac->sap.sapCtxList[intf].sapPersona)
-		    ||
-		    (QDF_P2P_GO_MODE == pMac->sap.sapCtxList[intf].sapPersona)) &&
-		    pMac->sap.sapCtxList[intf].pSapContext != NULL) {
-			sapContext = pMac->sap.sapCtxList[intf].pSapContext;
-			if (sapContext->sapsMachine != eSAP_DISCONNECTED)
-				return sapContext;
-		}
-	}
-
-	return NULL;
-}
-
 /**
  * sap_find_cac_wait_session() - Get context of a SAP session in CAC wait state
  * @handle: Global MAC handle
@@ -3325,76 +3375,26 @@ static ptSapContext sap_find_cac_wait_session(tHalHandle handle)
 	return NULL;
 }
 
-/*==========================================================================
-   FUNCTION   sap_close_session
-
-   DESCRIPTION
-    This function will close all the sme sessions as well as zero-out the
-    sap global structure
-
-   PARAMETERS
-
-    IN
-    hHal        : HAL pointer
-    sapContext  : Sap Context value
-    callback    : Roam Session close callback
-    valid       : Sap context is valid or no
-
-   RETURN VALUE
-    The QDF_STATUS code associated with performing the operation
-    QDF_STATUS_SUCCESS: Success
-
-   SIDE EFFECTS
-    NA
-   ============================================================================*/
-QDF_STATUS sap_close_session(tHalHandle hHal,
-			     ptSapContext sapContext,
+/**
+ * sap_close_session() - API to close SAP/SME sesssion
+ * @hal: pointer hal
+ * @sapctx: pointer to sap context
+ * @callback: callback to be called up on operation completion
+ * @valid: flag to check if sap context to be passed
+ *
+ * This API is used to close the SME session opened for SAP persona
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sap_close_session(tHalHandle hal, ptSapContext sapctx,
 			     csr_roamSessionCloseCallback callback, bool valid)
 {
-	QDF_STATUS qdf_status;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
-	if (false == valid) {
-		qdf_status = sme_close_session(hHal,
-					       sapContext->sessionId,
-					       callback, NULL);
-	} else {
-		qdf_status = sme_close_session(hHal,
-					       sapContext->sessionId,
-					       callback, sapContext);
-	}
-
-	sapContext->isCacStartNotified = false;
-	sapContext->isCacEndNotified = false;
-	pMac->sap.sapCtxList[sapContext->sessionId].pSapContext = NULL;
-	sapContext->isSapSessionOpen = false;
-	sapContext->pre_cac_complete = false;
-	sapContext->is_pre_cac_on = false;
-	sapContext->chan_before_pre_cac = 0;
-
-	if (NULL == sap_find_valid_concurrent_session(hHal)) {
-		/* If timer is running then stop the timer and destory it */
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
-			  "sapdfs: no session are valid, so clearing dfs global structure");
-		/*
-		 * CAC timer will be initiated and started only when SAP starts
-		 * on DFS channel and it will be stopped and destroyed
-		 * immediately once the radar detected or timedout. So
-		 * as per design CAC timer should be destroyed after stop
-		 */
-		if (pMac->sap.SapDfsInfo.is_dfs_cac_timer_running) {
-			qdf_mc_timer_stop(&pMac->sap.SapDfsInfo.
-					  sap_dfs_cac_timer);
-			pMac->sap.SapDfsInfo.is_dfs_cac_timer_running = 0;
-			qdf_mc_timer_destroy(
-				&pMac->sap.SapDfsInfo.sap_dfs_cac_timer);
-		}
-		pMac->sap.SapDfsInfo.cac_state = eSAP_DFS_DO_NOT_SKIP_CAC;
-		sap_cac_reset_notify(hHal);
-		qdf_mem_zero(&pMac->sap, sizeof(pMac->sap));
-	}
-
-	return qdf_status;
+	if (false == valid)
+		return sme_close_session(hal, sapctx->sessionId,
+					 callback, NULL);
+	else
+		return sme_close_session(hal, sapctx->sessionId,
+					 callback, sapctx);
 }
 
 /*==========================================================================
@@ -4093,8 +4093,11 @@ static QDF_STATUS sap_fsm_state_starting(ptSapContext sap_ctx,
 
 		if (eSAP_TRUE == sap_ctx->isSapSessionOpen) {
 			if (QDF_STATUS_SUCCESS == sap_close_session(hal,
-						sap_ctx, NULL, false))
+						sap_ctx, NULL, false)) {
+				sap_clear_session_param(hal, sap_ctx,
+						sap_ctx->sessionId);
 				sap_ctx->isSapSessionOpen = eSAP_FALSE;
+			}
 		}
 	} else if (msg == eSAP_OPERATING_CHANNEL_CHANGED) {
 		/* The operating channel has changed, update hostapd */
@@ -4235,6 +4238,9 @@ static QDF_STATUS sap_fsm_state_disconnecting(ptSapContext sap_ctx,
 				qdf_status = sap_signal_hdd_event(sap_ctx, NULL,
 						eSAP_STOP_BSS_EVENT,
 						(void *)eSAP_STATUS_SUCCESS);
+			} else {
+				sap_clear_session_param(hal, sap_ctx,
+						sap_ctx->sessionId);
 			}
 		}
 	} else if (msg == eWNI_SME_CHANNEL_CHANGE_REQ) {

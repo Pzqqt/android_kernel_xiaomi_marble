@@ -441,6 +441,30 @@ QDF_STATUS sap_close_session(tHalHandle hHal,
 			     ptSapContext sapContext,
 			     csr_roamSessionCloseCallback callback, bool valid);
 /**
+ * sap_set_session_param() - set sap related param to sap context and global var
+ * @hal: pointer to hardware abstraction layer
+ * @sapctx: pointer to sapctx
+ * @session_id: session id for sap
+ *
+ * This API will set appropriate softap parameters to sap context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sap_set_session_param(tHalHandle hal, ptSapContext sapctx,
+				uint32_t session_id);
+/**
+ * sap_clear_session_param() - clear sap related param from sap context
+ * @hal: pointer to hardware abstraction layer
+ * @sapctx: pointer to sapctx
+ * @session_id: session id for sap
+ *
+ * This API will clear appropriate softap parameters from sap context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sap_clear_session_param(tHalHandle hal, ptSapContext sapctx,
+				uint32_t session_id);
+/**
  * sap_mark_leaking_ch() - to mark channel leaking in to nol
  * @sap_ctx: pointer to SAP context
  * @ch_width: channel width
