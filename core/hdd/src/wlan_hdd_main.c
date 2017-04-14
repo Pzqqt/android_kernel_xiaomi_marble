@@ -5335,6 +5335,26 @@ static void hdd_context_destroy(hdd_context_t *hdd_ctx)
 }
 
 /**
+ * wlan_destroy_bug_report_lock() - Destroy bug report lock
+ *
+ * This function is used to destroy bug report lock
+ *
+ * Return: None
+ */
+static void wlan_destroy_bug_report_lock(void)
+{
+	p_cds_contextType p_cds_context;
+
+	p_cds_context = cds_get_global_context();
+	if (!p_cds_context) {
+		hdd_err("cds context is NULL");
+		return;
+	}
+
+	qdf_spinlock_destroy(&p_cds_context->bug_report_lock);
+}
+
+/**
  * hdd_wlan_exit() - HDD WLAN exit function
  * @hdd_ctx:	Pointer to the HDD Context
  *
@@ -5419,6 +5439,8 @@ static void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 		hdd_abort_sched_scan_all_adapters(hdd_ctx);
 		hdd_stop_all_adapters(hdd_ctx);
 	}
+
+	wlan_destroy_bug_report_lock();
 
 	/*
 	 * Close the scheduler before calling cds_close to make sure
@@ -9083,6 +9105,26 @@ static void hdd_register_debug_callback(void)
 	qdf_register_debug_callback(QDF_MODULE_ID_HDD, &hdd_state_info_dump);
 }
 
+/*
+ * wlan_init_bug_report_lock() - Initialize bug report lock
+ *
+ * This function is used to create bug report lock
+ *
+ * Return: None
+ */
+static void wlan_init_bug_report_lock(void)
+{
+	p_cds_contextType p_cds_context;
+
+	p_cds_context = cds_get_global_context();
+	if (!p_cds_context) {
+		hdd_err("cds context is NULL");
+		return;
+	}
+
+	qdf_spinlock_create(&p_cds_context->bug_report_lock);
+}
+
 /**
  * hdd_wlan_startup() - HDD init function
  * @dev:	Pointer to the underlying device
@@ -9131,6 +9173,8 @@ int hdd_wlan_startup(struct device *dev)
 		hdd_err("Failed to start modules: %d", ret);
 		goto err_exit_nl_srv;
 	}
+
+	wlan_init_bug_report_lock();
 
 	wlan_hdd_update_wiphy(hdd_ctx);
 

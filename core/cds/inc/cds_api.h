@@ -270,7 +270,6 @@ void cds_set_fatal_event(bool value);
 void cds_wlan_flush_host_logs_for_fatal(void);
 
 void cds_init_log_completion(void);
-void cds_deinit_log_completion(void);
 QDF_STATUS cds_flush_logs(uint32_t is_fatal,
 		uint32_t indicator,
 		uint32_t reason_code,
