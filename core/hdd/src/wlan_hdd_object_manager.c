@@ -117,6 +117,9 @@ int hdd_objmgr_create_and_store_pdev(hdd_context_t *hdd_ctx)
 	}
 	hdd_ctx->hdd_pdev = pdev;
 	hdd_init_pdev_os_priv(hdd_ctx, priv);
+	wlan_pdev_obj_lock(pdev);
+	wlan_pdev_set_tgt_if_handle(pdev, psoc->tgt_if_handle);
+	wlan_pdev_obj_unlock(pdev);
 	return 0;
 }
 
