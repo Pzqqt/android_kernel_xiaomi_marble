@@ -3306,7 +3306,14 @@ void peer_unmap_timer_handler(void *data)
 		    peer->mac_addr.raw[0], peer->mac_addr.raw[1],
 		    peer->mac_addr.raw[2], peer->mac_addr.raw[3],
 		    peer->mac_addr.raw[4], peer->mac_addr.raw[5]);
-	QDF_BUG(0);
+	if (!cds_is_driver_recovering()) {
+		/*
+		 * Add the equivalent of wma_peer_debug_dump() when available.
+		 */
+		QDF_BUG(0);
+	} else {
+		ol_txrx_err("Recovery is in progress, ignore!");
+	}
 }
 
 
