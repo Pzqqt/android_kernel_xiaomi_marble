@@ -999,6 +999,7 @@ static inline qdf_nbuf_t htt_rx_netbuf_pop(htt_pdev_handle pdev)
 	return msdu;
 }
 
+#ifndef CONFIG_HL_SUPPORT
 static inline qdf_nbuf_t
 htt_rx_in_order_netbuf_pop(htt_pdev_handle pdev, qdf_dma_addr_t paddr)
 {
@@ -1007,6 +1008,7 @@ htt_rx_in_order_netbuf_pop(htt_pdev_handle pdev, qdf_dma_addr_t paddr)
 	paddr = htt_paddr_trim_to_37(paddr);
 	return htt_rx_hash_list_lookup(pdev, paddr);
 }
+#endif
 
 /*
  * FIX ME: this function applies only to LL rx descs.
@@ -3170,6 +3172,7 @@ void htt_rx_msdu_buff_replenish(htt_pdev_handle pdev)
 	qdf_atomic_inc(&pdev->rx_ring.refill_ref_cnt);
 }
 
+#ifndef CONFIG_HL_SUPPORT
 #define RX_RING_REFILL_DEBT_MAX 128
 int htt_rx_msdu_buff_in_order_replenish(htt_pdev_handle pdev, uint32_t num)
 {
@@ -3418,6 +3421,7 @@ qdf_nbuf_t htt_rx_hash_list_lookup(struct htt_pdev_t *pdev,
 
 	return netbuf;
 }
+#endif
 
 /*
  * Initialization function of the rx buffer hash table. This function will
