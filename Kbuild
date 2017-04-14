@@ -1367,7 +1367,7 @@ ifeq ($(CONFIG_PLD_USB_CNSS), y)
 PLD_OBJS +=	$(PLD_SRC_DIR)/pld_usb.o
 endif
 
-TARGET_INC :=	-I$(WLAN_ROOT)/../fw-api/hw/qca6290/v1 \
+TARGET_INC :=	-I$(WLAN_ROOT)/../fw-api/hw/qca6290/v2 \
 		-I$(WLAN_ROOT)/../fw-api/fw
 
 LINUX_INC :=	-Iinclude/linux
