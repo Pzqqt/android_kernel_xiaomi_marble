@@ -144,6 +144,11 @@ typedef __qdf_dma_size_t     qdf_dma_size_t;
 typedef __qdf_dma_context_t qdf_dma_context_t;
 
 /**
+ * pointer to net device
+ */
+typedef __qdf_netdev_t qdf_netdev_t;
+
+/**
  * struct qdf_dma_map_info - Information inside a DMA map.
  * @nsegs: total number mapped segments
  * struct __dma_segs - Information of physical address.

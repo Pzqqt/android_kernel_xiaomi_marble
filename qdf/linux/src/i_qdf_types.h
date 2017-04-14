@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -127,6 +127,7 @@ typedef int (*__qdf_os_intr)(void *);
 typedef dma_addr_t __qdf_dma_addr_t;
 typedef size_t __qdf_dma_size_t;
 typedef dma_addr_t __qdf_dma_context_t;
+typedef struct net_device *__qdf_netdev_t;
 
 #define qdf_dma_mem_context(context) dma_addr_t context
 #define qdf_get_dma_mem_context(var, field)   ((qdf_dma_context_t)(var->field))
