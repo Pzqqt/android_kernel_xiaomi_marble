@@ -33,18 +33,18 @@
 #include <wlan_hdd_object_manager.h>
 #include <wlan_osif_priv.h>
 
-#ifdef NAPIER_SCAN
-#define hdd_init_scan_priv(x) wlan_cfg80211_scan_priv_init(x)
-#else
-#define hdd_init_scan_priv(x)
-#endif
 
 static void hdd_init_pdev_os_priv(hdd_context_t *hdd_ctx,
 	struct pdev_osif_priv *os_priv)
 {
 	/* Initialize the OS private structure*/
 	os_priv->wiphy = hdd_ctx->wiphy;
-	hdd_init_scan_priv(hdd_ctx->hdd_pdev);
+	wlan_cfg80211_scan_priv_init(hdd_ctx->hdd_pdev);
+}
+
+static void hdd_deinit_pdev_os_priv(hdd_context_t *hdd_ctx)
+{
+	wlan_cfg80211_scan_priv_deinit(hdd_ctx->hdd_pdev);
 }
 
 static void hdd_init_vdev_os_priv(hdd_adapter_t *adapter,
@@ -125,6 +125,7 @@ int hdd_objmgr_release_and_destroy_pdev(hdd_context_t *hdd_ctx)
 	struct wlan_objmgr_pdev *pdev = hdd_ctx->hdd_pdev;
 	struct pdev_osif_priv *osif_priv;
 
+	hdd_deinit_pdev_os_priv(hdd_ctx);
 	hdd_ctx->hdd_pdev = NULL;
 	if (!pdev)
 		return -EINVAL;

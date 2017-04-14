@@ -5410,9 +5410,7 @@ static void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 		 * the expectation is that by the time Request Full Power has
 		 * completed, all scans will be cancelled
 		 */
-#ifndef NAPIER_SCAN
-		hdd_cleanup_scan_queue(hdd_ctx);
-#endif
+		wlan_cfg80211_cleanup_scan_queue(hdd_ctx->hdd_pdev);
 		hdd_abort_mac_scan_all_adapters(hdd_ctx);
 		hdd_abort_sched_scan_all_adapters(hdd_ctx);
 		hdd_stop_all_adapters(hdd_ctx);
