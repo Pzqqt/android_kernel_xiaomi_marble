@@ -2871,8 +2871,8 @@ static int wmi_connect_pdev_htc_service(struct wmi_soc *soc,
 	int status;
 	uint32_t svc_id[] = {WMI_CONTROL_SVC, WMI_CONTROL_SVC_WMAC1,
 						WMI_CONTROL_SVC_WMAC2};
-	HTC_SERVICE_CONNECT_RESP response;
-	HTC_SERVICE_CONNECT_REQ connect;
+	struct htc_service_connect_resp response;
+	struct htc_service_connect_req connect;
 
 	OS_MEMZERO(&connect, sizeof(connect));
 	OS_MEMZERO(&response, sizeof(response));
