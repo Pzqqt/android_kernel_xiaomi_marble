@@ -9288,6 +9288,7 @@ static void populate_vdev_param_non_tlv(uint32_t *vdev_param)
 	vdev_param[wmi_vdev_param_capabilities] =
 		WMI_VDEV_PARAM_CAPABILITIES;
 	vdev_param[wmi_vdev_param_mgmt_tx_power] = WMI_VDEV_PARAM_MGMT_TX_POWER;
+	vdev_param[wmi_vdev_param_tx_power] = WMI_VDEV_PARAM_TX_POWER;
 	vdev_param[wmi_vdev_param_atf_ssid_sched_policy] =
 		WMI_VDEV_PARAM_ATF_SSID_SCHED_POLICY;
 	vdev_param[wmi_vdev_param_disable_dyn_bw_rts] =
