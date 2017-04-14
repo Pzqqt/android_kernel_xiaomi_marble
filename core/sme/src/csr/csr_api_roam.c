@@ -7990,6 +7990,7 @@ QDF_STATUS csr_roam_connect(tpAniSirGlobal pMac, uint32_t sessionId,
 					sme_debug("conn update error");
 					csr_scan_result_purge(pMac, hBSSList);
 					fCallCallback = true;
+					status = QDF_STATUS_E_TIMEOUT;
 					goto error;
 			} else if (status == QDF_STATUS_E_FAILURE) {
 				sme_debug("conn update error");
