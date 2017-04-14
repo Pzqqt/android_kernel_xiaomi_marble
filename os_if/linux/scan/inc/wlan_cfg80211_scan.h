@@ -150,6 +150,17 @@ int wlan_cfg80211_sched_scan_stop(struct wlan_objmgr_pdev *pdev,
 QDF_STATUS wlan_cfg80211_scan_priv_init(struct wlan_objmgr_pdev *pdev);
 
 /**
+ * wlan_cfg80211_scan_priv_deinit() - API to deinitialize cfg80211 scan
+ * @pdev: Pointer to net device
+ *
+ * API to deinitialize cfg80211 scan module.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_cfg80211_scan_priv_deinit(
+		struct wlan_objmgr_pdev *pdev);
+
+/**
  * wlan_cfg80211_scan() - API to process cfg80211 scan request
  * @pdev: Pointer to pdev
  * @request: Pointer to scan request
@@ -216,5 +227,16 @@ QDF_STATUS wlan_abort_scan(struct wlan_objmgr_pdev *pdev,
 				   uint32_t pdev_id,
 				   uint32_t vdev_id,
 				   wlan_scan_id scan_id);
+
+/**
+ * wlan_cfg80211_cleanup_scan_queue() - remove entries in scan queue
+ * @pdev: pdev pointer
+ *
+ * Removes entries in scan queue and sends scan complete event to NL
+ *
+ * Return: None
+ */
+void wlan_cfg80211_cleanup_scan_queue(struct wlan_objmgr_pdev *pdev);
+
 
 #endif

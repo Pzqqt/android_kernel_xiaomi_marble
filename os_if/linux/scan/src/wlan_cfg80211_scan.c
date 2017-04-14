@@ -721,6 +721,68 @@ QDF_STATUS wlan_cfg80211_scan_priv_init(struct wlan_objmgr_pdev *pdev)
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS wlan_cfg80211_scan_priv_deinit(struct wlan_objmgr_pdev *pdev)
+{
+	struct pdev_osif_priv *osif_priv;
+	struct osif_scan_pdev *scan_priv;
+	struct wlan_objmgr_psoc *psoc;
+
+	wlan_pdev_obj_lock(pdev);
+	psoc = wlan_pdev_get_psoc(pdev);
+	osif_priv = wlan_pdev_get_ospriv(pdev);
+	wlan_pdev_obj_unlock(pdev);
+
+	scan_priv = osif_priv->osif_scan;
+	osif_priv->osif_scan = NULL;
+	ucfg_scan_unregister_requester(psoc, scan_priv->req_id);
+	qdf_list_destroy(&scan_priv->scan_req_q);
+	qdf_mem_free(scan_priv);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+void wlan_cfg80211_cleanup_scan_queue(struct wlan_objmgr_pdev *pdev)
+{
+	struct scan_req *scan_req;
+	qdf_list_node_t *node = NULL;
+	struct cfg80211_scan_request *req;
+	uint8_t source;
+	bool aborted = true;
+	struct pdev_osif_priv *osif_priv;
+	struct osif_scan_pdev *scan_priv;
+
+	if (!pdev) {
+		cfg80211_err("pdev is Null");
+		return;
+	}
+
+	wlan_pdev_obj_lock(pdev);
+	osif_priv = wlan_pdev_get_ospriv(pdev);
+	wlan_pdev_obj_unlock(pdev);
+
+	scan_priv = osif_priv->osif_scan;
+
+	while (!qdf_list_empty(&scan_priv->scan_req_q)) {
+		if (QDF_STATUS_SUCCESS !=
+			qdf_list_remove_front(&scan_priv->scan_req_q,
+						&node)) {
+			cfg80211_err("Failed to remove scan request");
+			return;
+		}
+
+		scan_req = container_of(node, struct scan_req, node);
+		req = scan_req->scan_request;
+		source = scan_req->source;
+		if (NL_SCAN == source)
+			wlan_cfg80211_scan_done(req, aborted);
+		else
+			wlan_vendor_scan_callback(req, aborted);
+		qdf_mem_free(scan_req);
+	}
+
+	return;
+}
+
 /**
  * wlan_cfg80211_scan() - Process scan request
  * @pdev: pdev object pointer
