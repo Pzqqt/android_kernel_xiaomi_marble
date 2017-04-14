@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -51,8 +51,9 @@ QDF_STATUS bmi_init(struct ol_context *ol_ctx)
 
 	if (!info->bmi_cmd_buff) {
 		info->bmi_cmd_buff =
-			qdf_mem_alloc_consistent(qdf_dev, qdf_dev->dev, MAX_BMI_CMDBUF_SZ,
-							&info->bmi_cmd_da);
+			qdf_mem_alloc_consistent(qdf_dev, qdf_dev->dev,
+						 MAX_BMI_CMDBUF_SZ,
+						 &info->bmi_cmd_da);
 		if (!info->bmi_cmd_buff) {
 			BMI_ERR("No Memory for BMI Command");
 			return QDF_STATUS_E_NOMEM;
@@ -61,8 +62,9 @@ QDF_STATUS bmi_init(struct ol_context *ol_ctx)
 
 	if (!info->bmi_rsp_buff) {
 		info->bmi_rsp_buff =
-			qdf_mem_alloc_consistent(qdf_dev, qdf_dev->dev, MAX_BMI_CMDBUF_SZ,
-							&info->bmi_rsp_da);
+			qdf_mem_alloc_consistent(qdf_dev, qdf_dev->dev,
+						 MAX_BMI_CMDBUF_SZ,
+						 &info->bmi_rsp_da);
 		if (!info->bmi_rsp_buff) {
 			BMI_ERR("No Memory for BMI Response");
 			goto end;
@@ -223,11 +225,11 @@ QDF_STATUS bmi_download_firmware(struct ol_context *ol_ctx)
 		if (NO_BMI) {
 			/* ol_ctx is not allocated in NO_BMI case */
 			return QDF_STATUS_SUCCESS;
-		} else {
-			BMI_ERR("ol_ctx is NULL");
-			bmi_assert(0);
-			return QDF_STATUS_NOT_INITIALIZED;
 		}
+
+		BMI_ERR("ol_ctx is NULL");
+		bmi_assert(0);
+		return QDF_STATUS_NOT_INITIALIZED;
 	}
 
 	scn = ol_ctx->scn;

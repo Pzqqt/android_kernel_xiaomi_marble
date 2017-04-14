@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -119,7 +119,8 @@ QDF_STATUS ol_sdio_extra_initialization(struct ol_context *ol_ctx)
 	}
 	/* note: we actually get the block size for mailbox 1,
 	 * for SDIO the block size on mailbox 0 is artificially
-	 * set to 1 must be a power of 2 */
+	 * set to 1 must be a power of 2
+	 */
 	qdf_assert((blocksizes[1] & (blocksizes[1] - 1)) == 0);
 
 	/* set the host interest area for the block size */
@@ -175,13 +176,13 @@ exit:
 }
 
 /**
-* ol_extra_initialization() - OL extra initilization
-* @ol_ctx: pointer to ol_context
-*
-* Bus specific initialization after firmware download
-*
-* Return: QDF_STATUS_SUCCESS on success and error QDF status on failure
-*/
+ * ol_extra_initialization() - OL extra initialization
+ * @ol_ctx: pointer to ol_context
+ *
+ * Bus specific initialization after firmware download
+ *
+ * Return: QDF_STATUS_SUCCESS on success and error QDF status on failure
+ */
 QDF_STATUS ol_extra_initialization(struct ol_context *ol_ctx)
 {
 	struct hif_opaque_softc *scn = ol_ctx->scn;
