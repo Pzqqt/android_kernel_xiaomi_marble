@@ -9050,6 +9050,11 @@ static int hdd_deconfigure_cds(hdd_context_t *hdd_ctx)
 		ret = -EINVAL;
 	}
 
+	if (hdd_ipa_uc_ol_deinit(hdd_ctx)) {
+		hdd_err("Failed to disconnect pipes");
+		ret = -EINVAL;
+	}
+
 	EXIT();
 	return ret;
 }

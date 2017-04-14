@@ -122,6 +122,7 @@ bool hdd_ipa_is_present(hdd_context_t *hdd_ctx);
 void hdd_ipa_dump_info(hdd_context_t *hdd_ctx);
 QDF_STATUS hdd_ipa_uc_ol_init(hdd_context_t *hdd_ctx);
 void hdd_ipa_set_tx_flow_info(void);
+int hdd_ipa_uc_ol_deinit(hdd_context_t *hdd_ctx);
 #else
 static inline QDF_STATUS hdd_ipa_init(hdd_context_t *hdd_ctx)
 {
@@ -262,5 +263,15 @@ static inline void hdd_ipa_set_tx_flow_info(void)
 	return;
 }
 
+/**
+ * hdd_ipa_uc_ol_deinit() - Disconnect IPA TX and RX pipes
+ * @hdd_ctx: Global HDD context
+ *
+ * Return: 0 on success, negativer errno on error
+ */
+static int hdd_ipa_uc_ol_deinit(hdd_context_t *hdd_ctx)
+{
+	return 0;
+}
 #endif /* IPA_OFFLOAD */
 #endif /* #ifndef HDD_IPA_H__ */
