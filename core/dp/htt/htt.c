@@ -214,13 +214,13 @@ void htt_htc_misc_pkt_pool_free(struct htt_pdev_t *pdev)
  */
 static void
 htt_htc_tx_htt2_service_start(struct htt_pdev_t *pdev,
-			      HTC_SERVICE_CONNECT_REQ *connect_req,
-			      HTC_SERVICE_CONNECT_RESP *connect_resp)
+			      struct htc_service_connect_req *connect_req,
+			      struct htc_service_connect_resp *connect_resp)
 {
 	A_STATUS status;
 
-	qdf_mem_set(connect_req, 0, sizeof(HTC_SERVICE_CONNECT_REQ));
-	qdf_mem_set(connect_resp, 0, sizeof(HTC_SERVICE_CONNECT_RESP));
+	qdf_mem_set(connect_req, 0, sizeof(struct htc_service_connect_req));
+	qdf_mem_set(connect_resp, 0, sizeof(struct htc_service_connect_resp));
 
 	/* The same as HTT service but no RX. */
 	connect_req->EpCallbacks.pContext = pdev;
@@ -254,8 +254,8 @@ htt_htc_tx_htt2_service_start(struct htt_pdev_t *pdev,
 
 static inline void
 htt_htc_tx_htt2_service_start(struct htt_pdev_t *pdev,
-			      HTC_SERVICE_CONNECT_REQ *connect_req,
-			      HTC_SERVICE_CONNECT_RESP *connect_resp)
+			      struct htc_service_connect_req *connect_req,
+			      struct htc_service_connect_resp *connect_resp)
 {
 	return;
 }
@@ -278,7 +278,7 @@ htt_htc_tx_htt2_service_start(struct htt_pdev_t *pdev,
  */
 static
 void htt_htc_credit_flow_disable(struct htt_pdev_t *pdev,
-				 HTC_SERVICE_CONNECT_REQ *connect_req)
+				 struct htc_service_connect_req *connect_req)
 {
 	if (pdev->osdev->bus_type == QDF_BUS_TYPE_SDIO) {
 		/*
@@ -667,8 +667,8 @@ int htt_update_endpoint(struct htt_pdev_t *pdev,
 
 int htt_htc_attach(struct htt_pdev_t *pdev, uint16_t service_id)
 {
-	HTC_SERVICE_CONNECT_REQ connect;
-	HTC_SERVICE_CONNECT_RESP response;
+	struct htc_service_connect_req connect;
+	struct htc_service_connect_resp response;
 	A_STATUS status;
 
 	qdf_mem_set(&connect, sizeof(connect), 0);

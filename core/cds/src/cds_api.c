@@ -381,7 +381,7 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	tSirRetStatus sirStatus = eSIR_SUCCESS;
 	struct cds_config_info *cds_cfg;
 	qdf_device_t qdf_ctx;
-	HTC_INIT_INFO htcInfo;
+	struct htc_init_info htcInfo;
 	struct ol_context *ol_ctx;
 	struct hif_opaque_softc *scn;
 	void *HTCHandle;

@@ -113,7 +113,7 @@ void htt_h2t_send_complete(void *context, HTC_PACKET *htc_pkt)
 	htt_htc_pkt_free(pdev, htt_pkt);
 }
 
-HTC_SEND_FULL_ACTION htt_h2t_full(void *context, HTC_PACKET *pkt)
+enum htc_send_full_action htt_h2t_full(void *context, HTC_PACKET *pkt)
 {
 /* FIX THIS */
 	return HTC_SEND_FULL_KEEP;

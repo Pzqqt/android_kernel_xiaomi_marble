@@ -522,7 +522,7 @@ extern QDF_STATUS htt_h2t_rx_ring_cfg_msg_hl(struct htt_pdev_t *pdev);
 
 extern QDF_STATUS (*htt_h2t_rx_ring_cfg_msg)(struct htt_pdev_t *pdev);
 
-HTC_SEND_FULL_ACTION htt_h2t_full(void *context, HTC_PACKET *pkt);
+enum htc_send_full_action htt_h2t_full(void *context, HTC_PACKET *pkt);
 
 struct htt_htc_pkt *htt_htc_pkt_alloc(struct htt_pdev_t *pdev);
 
