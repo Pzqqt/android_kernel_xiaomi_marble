@@ -2632,27 +2632,26 @@ static QDF_STATUS sap_clear_global_dfs_param(tHalHandle hal)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 
-	if (NULL == sap_find_valid_concurrent_session(hal)) {
-		/* If timer is running then stop the timer and destory it */
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
-			  "sapdfs: no session are valid, so clearing dfs global structure");
-		/*
-		 * CAC timer will be initiated and started only when SAP starts
-		 * on DFS channel and it will be stopped and destroyed
-		 * immediately once the radar detected or timedout. So
-		 * as per design CAC timer should be destroyed after stop
-		 */
-		if (mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running) {
-			qdf_mc_timer_stop(&mac_ctx->sap.SapDfsInfo.
-					  sap_dfs_cac_timer);
-			mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running = 0;
-			qdf_mc_timer_destroy(
-				&mac_ctx->sap.SapDfsInfo.sap_dfs_cac_timer);
-		}
-		mac_ctx->sap.SapDfsInfo.cac_state = eSAP_DFS_DO_NOT_SKIP_CAC;
-		sap_cac_reset_notify(hal);
-		qdf_mem_zero(&mac_ctx->sap, sizeof(mac_ctx->sap));
+	if (NULL != sap_find_valid_concurrent_session(hal)) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
+			  "conc session exists, no need to clear dfs struct");
+		return QDF_STATUS_SUCCESS;
 	}
+	/*
+	 * CAC timer will be initiated and started only when SAP starts
+	 * on DFS channel and it will be stopped and destroyed
+	 * immediately once the radar detected or timedout. So
+	 * as per design CAC timer should be destroyed after stop
+	 */
+	if (mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running) {
+		qdf_mc_timer_stop(&mac_ctx->sap.SapDfsInfo.sap_dfs_cac_timer);
+		mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running = 0;
+		qdf_mc_timer_destroy(
+			&mac_ctx->sap.SapDfsInfo.sap_dfs_cac_timer);
+	}
+	mac_ctx->sap.SapDfsInfo.cac_state = eSAP_DFS_DO_NOT_SKIP_CAC;
+	sap_cac_reset_notify(hal);
+	qdf_mem_zero(&mac_ctx->sap, sizeof(mac_ctx->sap));
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -2663,7 +2662,6 @@ QDF_STATUS sap_set_session_param(tHalHandle hal, ptSapContext sapctx,
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 
 	sapctx->sessionId = session_id;
-	sapctx->isSapSessionOpen = eSAP_TRUE;
 	sapctx->is_pre_cac_on = false;
 	sapctx->pre_cac_complete = false;
 	sapctx->chan_before_pre_cac = 0;
@@ -2672,6 +2670,9 @@ QDF_STATUS sap_set_session_param(tHalHandle hal, ptSapContext sapctx,
 	mac_ctx->sap.sapCtxList[sapctx->sessionId].pSapContext = sapctx;
 	mac_ctx->sap.sapCtxList[sapctx->sessionId].sapPersona =
 				sapctx->csr_roamProfile.csrPersona;
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
+		"%s: Initializing sapContext = %p with session = %d", __func__,
+		sapctx, session_id);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -2681,18 +2682,17 @@ QDF_STATUS sap_clear_session_param(tHalHandle hal, ptSapContext sapctx,
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 
-	sapctx->isCacStartNotified = false;
-	sapctx->isCacEndNotified = false;
-	sapctx->isSapSessionOpen = false;
-	sapctx->pre_cac_complete = false;
-	sapctx->is_pre_cac_on = false;
-	sapctx->chan_before_pre_cac = 0;
 	mac_ctx->sap.sapCtxList[sapctx->sessionId].sessionID =
-						CSR_SESSION_ID_INVALID;
+		CSR_SESSION_ID_INVALID;
 	mac_ctx->sap.sapCtxList[sapctx->sessionId].pSapContext = NULL;
 	mac_ctx->sap.sapCtxList[sapctx->sessionId].sapPersona =
-							QDF_MAX_NO_OF_MODE;
+		QDF_MAX_NO_OF_MODE;
 	sap_clear_global_dfs_param(hal);
+	qdf_mem_zero(sapctx, sizeof(tSapContext));
+	sapctx->sessionId = CSR_SESSION_ID_INVALID;
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
+		"%s: Initializing State: %d, sapContext value = %p", __func__,
+		sapctx->sapsMachine, sapctx);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -2859,26 +2859,6 @@ static QDF_STATUS sap_goto_disconnecting(ptSapContext sapContext)
 	}
 
 	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS sap_roam_session_close_callback(void *pContext)
-{
-	ptSapContext sapContext = (ptSapContext) pContext;
-	QDF_STATUS status;
-
-	status = wlansap_context_get(pContext);
-	if (status != QDF_STATUS_SUCCESS) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: sap context has already been freed", __func__);
-		return status;
-	}
-
-	status = sap_signal_hdd_event(sapContext, NULL,
-				 eSAP_STOP_BSS_EVENT,
-				 (void *) eSAP_STATUS_SUCCESS);
-
-	wlansap_context_put(pContext);
-	return status;
 }
 
 /*==========================================================================
@@ -3658,39 +3638,6 @@ static QDF_STATUS sap_fsm_state_disconnected(ptSapContext sap_ctx,
 			  "eSAP_DISCONNECTED", "eSAP_CH_SELECT",
 			  sap_ctx->sessionId);
 
-		if (sap_ctx->isSapSessionOpen == eSAP_FALSE) {
-			uint32_t type, subtype;
-			if (sap_ctx->csr_roamProfile.csrPersona ==
-			    QDF_P2P_GO_MODE)
-				qdf_status = cds_get_vdev_types(QDF_P2P_GO_MODE,
-							&type, &subtype);
-			else
-				qdf_status = cds_get_vdev_types(QDF_SAP_MODE,
-								&type,
-								&subtype);
-
-			if (QDF_STATUS_SUCCESS != qdf_status) {
-				QDF_TRACE(QDF_MODULE_ID_SAP,
-						QDF_TRACE_LEVEL_FATAL,
-						"failed to get vdev type");
-				return QDF_STATUS_E_FAILURE;
-			}
-
-			/* recycle old session Id */
-			qdf_status = sme_open_session(hal,
-					&wlansap_roam_callback,
-					sap_ctx, sap_ctx->self_mac_addr,
-					sap_ctx->sessionId, type, subtype);
-			if (QDF_STATUS_SUCCESS != qdf_status) {
-				QDF_TRACE(QDF_MODULE_ID_SAP,
-					 QDF_TRACE_LEVEL_ERROR,
-					 FL("Error: calling sme_open_session"));
-				return QDF_STATUS_E_FAILURE;
-			}
-
-			sap_ctx->isSapSessionOpen = eSAP_TRUE;
-		}
-
 		/* init dfs channel nol */
 		sap_init_dfs_channel_nol_list(sap_ctx);
 
@@ -4090,15 +4037,6 @@ static QDF_STATUS sap_fsm_state_starting(ptSapContext sap_ctx,
 				(void *) eSAP_STATUS_FAILURE);
 		qdf_status = sap_goto_disconnected(sap_ctx);
 		/* Close the SME session */
-
-		if (eSAP_TRUE == sap_ctx->isSapSessionOpen) {
-			if (QDF_STATUS_SUCCESS == sap_close_session(hal,
-						sap_ctx, NULL, false)) {
-				sap_clear_session_param(hal, sap_ctx,
-						sap_ctx->sessionId);
-				sap_ctx->isSapSessionOpen = eSAP_FALSE;
-			}
-		}
 	} else if (msg == eSAP_OPERATING_CHANNEL_CHANGED) {
 		/* The operating channel has changed, update hostapd */
 		sap_ctx->channel =
@@ -4230,19 +4168,9 @@ static QDF_STATUS sap_fsm_state_disconnecting(ptSapContext sap_ctx,
 		sap_ctx->sapsMachine = eSAP_DISCONNECTED;
 
 		/* Close the SME session */
-		if (eSAP_TRUE == sap_ctx->isSapSessionOpen) {
-			sap_ctx->isSapSessionOpen = eSAP_FALSE;
-			qdf_status = sap_close_session(hal, sap_ctx,
-					sap_roam_session_close_callback, true);
-			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-				qdf_status = sap_signal_hdd_event(sap_ctx, NULL,
-						eSAP_STOP_BSS_EVENT,
-						(void *)eSAP_STATUS_SUCCESS);
-			} else {
-				sap_clear_session_param(hal, sap_ctx,
-						sap_ctx->sessionId);
-			}
-		}
+		qdf_status = sap_signal_hdd_event(sap_ctx, NULL,
+					eSAP_STOP_BSS_EVENT,
+					(void *)eSAP_STATUS_SUCCESS);
 	} else if (msg == eWNI_SME_CHANNEL_CHANGE_REQ) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
 			  FL("sapdfs: Send channel change request on sapctx[%p]"),

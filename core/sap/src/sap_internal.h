@@ -166,9 +166,6 @@ typedef struct sSapContext {
 	tCsrRoamProfile csr_roamProfile;
 	uint32_t csr_roamId;
 
-	/* Sap session */
-	bool isSapSessionOpen;
-
 	/* SAP event Callback to hdd */
 	tpWLAN_SAPEventCB pfnSapEventCallback;
 

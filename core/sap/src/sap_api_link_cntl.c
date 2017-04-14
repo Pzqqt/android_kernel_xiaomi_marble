@@ -918,7 +918,6 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("Session %d opened successfully"),
 			  sap_ctx->sessionId);
-		sap_ctx->isSapSessionOpen = eSAP_TRUE;
 		qdf_event_set(&sap_ctx->sap_session_opened_evt);
 		break;
 	case eCSR_ROAM_INFRA_IND:
