@@ -5822,6 +5822,7 @@ typedef enum {
 	wmi_vdev_param_disable_cabq,
 
 	wmi_vdev_param_rate_dropdown_bmap,
+	wmi_vdev_param_tx_power,
 	wmi_vdev_param_max,
 } wmi_conv_vdev_param_id;
 
