@@ -244,6 +244,8 @@ typedef struct tagSmeStruct {
 	bool (*set_connection_info_cb)(bool);
 	bool (*get_connection_info_cb)(uint8_t *session_id,
 			enum scan_reject_states *reason);
+	void (*rso_cmd_status_cb)(void *hdd_context,
+			struct rso_cmd_status *rso_status);
 } tSmeStruct, *tpSmeStruct;
 
 #endif /* #if !defined( __SMEINTERNAL_H ) */

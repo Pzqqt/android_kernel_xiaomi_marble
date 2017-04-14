@@ -1750,6 +1750,36 @@ int wma_link_status_event_handler(void *handle, uint8_t *cmd_param_info,
 	return 0;
 }
 
+int wma_rso_cmd_status_event_handler(wmi_roam_event_fixed_param *wmi_event)
+{
+	struct rso_cmd_status *rso_status;
+	struct scheduler_msg sme_msg;
+	QDF_STATUS qdf_status;
+
+	rso_status = qdf_mem_malloc(sizeof(*rso_status));
+	if (!rso_status) {
+		WMA_LOGE("%s: malloc fails for rso cmd status", __func__);
+		return -ENOMEM;
+	}
+
+	rso_status->vdev_id = wmi_event->vdev_id;
+	if (WMI_ROAM_NOTIF_SCAN_MODE_SUCCESS == wmi_event->notif)
+		rso_status->status = true;
+	else if (WMI_ROAM_NOTIF_SCAN_MODE_FAIL == wmi_event->notif)
+		rso_status->status = false;
+	sme_msg.type = eWNI_SME_RSO_CMD_STATUS_IND;
+	sme_msg.bodyptr = rso_status;
+	sme_msg.bodyval = 0;
+	WMA_LOGI("%s: Post RSO cmd status to SME",  __func__);
+
+	qdf_status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		WMA_LOGE("%s: fail to post RSO cmd status to SME", __func__);
+		qdf_mem_free(rso_status);
+	}
+	return 0;
+}
+
 /**
  * wma_stats_event_handler() - stats event handler
  * @handle: wma handle

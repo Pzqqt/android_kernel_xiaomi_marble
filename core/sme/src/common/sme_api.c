@@ -2630,6 +2630,11 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, struct scheduler_msg *pMsg)
 				(struct sir_lost_link_info *)pMsg->bodyptr);
 		qdf_mem_free(pMsg->bodyptr);
 		break;
+	case eWNI_SME_RSO_CMD_STATUS_IND:
+		if (pMac->sme.rso_cmd_status_cb)
+			pMac->sme.rso_cmd_status_cb(pMac->hHdd, pMsg->bodyptr);
+		qdf_mem_free(pMsg->bodyptr);
+		break;
 	default:
 
 		if ((pMsg->type >= eWNI_SME_MSG_TYPES_BEGIN)
@@ -16091,5 +16096,16 @@ QDF_STATUS sme_register_set_connection_info_cb(tHalHandle hHal,
 		pMac->sme.get_connection_info_cb = get_connection_info_cb;
 		sme_release_global_lock(&pMac->sme);
 	}
+	return status;
+}
+
+QDF_STATUS sme_rso_cmd_status_cb(tHalHandle hal,
+		void (*cb)(void *, struct rso_cmd_status *))
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+
+	mac->sme.rso_cmd_status_cb = cb;
+	sms_log(mac, LOG1, FL("Registered RSO command status callback"));
 	return status;
 }

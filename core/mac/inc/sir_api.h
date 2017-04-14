@@ -4617,6 +4617,26 @@ struct power_stats_response {
 };
 #endif
 
+/**
+ * struct lfr_firmware_status - LFR status in firmware
+ * @is_disabled: Is LFR disabled in FW
+ * @disable_lfr_event: Disable attempt done in FW
+ */
+struct lfr_firmware_status {
+	uint32_t is_disabled;
+	struct completion disable_lfr_event;
+};
+
+/**
+ * struct rso_cmd_status - RSO Command status
+ * @vdev_id: Vdev ID for which RSO command sent
+ * @status: Status of RSO command sent to FW
+ */
+struct rso_cmd_status {
+	uint32_t vdev_id;
+	bool status;
+};
+
 typedef struct {
 	uint8_t oui[WIFI_SCANNING_MAC_OUI_LENGTH];
 } tSirScanMacOui, *tpSirScanMacOui;

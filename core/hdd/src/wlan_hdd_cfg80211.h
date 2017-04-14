@@ -297,6 +297,18 @@ void wlan_hdd_cfg80211_extscan_callback(void *ctx,
 					const uint16_t evType, void *pMsg);
 #endif /* FEATURE_WLAN_EXTSCAN */
 
+/**
+ * wlan_hdd_rso_cmd_status_cb() - HDD callback to read RSO command status
+ * @ctx: void pointer to hdd context
+ * @rso_status: rso command status
+ *
+ * This callback function is invoked by firmware to update
+ * the RSO(ROAM SCAN OFFLOAD) command status.
+ *
+ * Return: None
+ */
+void wlan_hdd_rso_cmd_status_cb(void *ctx, struct rso_cmd_status *rso_status);
+
 void hdd_rssi_threshold_breached(void *hddctx,
 				 struct rssi_breach_event *data);
 

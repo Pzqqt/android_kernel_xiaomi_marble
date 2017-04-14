@@ -2816,6 +2816,7 @@ static hdd_adapter_t *hdd_alloc_station_adapter(hdd_context_t *hdd_ctx,
 
 
 		init_completion(&adapter->scan_info.abortscan_event_var);
+		init_completion(&adapter->lfr_fw_status.disable_lfr_event);
 
 		adapter->offloads_configured = false;
 		adapter->isLinkUpSvcNeeded = false;
@@ -9349,6 +9350,8 @@ int hdd_register_cb(hdd_context_t *hdd_ctx)
 
 	sme_set_link_layer_stats_ind_cb(hdd_ctx->hHal,
 				wlan_hdd_cfg80211_link_layer_stats_callback);
+
+	sme_rso_cmd_status_cb(hdd_ctx->hHal, wlan_hdd_rso_cmd_status_cb);
 
 	status = sme_set_lost_link_info_cb(hdd_ctx->hHal,
 					   hdd_lost_link_info_cb);

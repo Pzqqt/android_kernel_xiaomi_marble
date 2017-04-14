@@ -167,6 +167,9 @@
 
 #define WLAN_WAIT_TIME_BPF     1000
 
+/* Maximum time(ms) to wait for RSO CMD status event */
+#define WAIT_TIME_RSO_CMD_STATUS 2000
+
 #define MAX_NUMBER_OF_ADAPTERS 4
 
 #define MAX_CFG_STRING_LEN  255
@@ -1143,6 +1146,7 @@ struct hdd_adapter_s {
 	 * disconnect is being deferred.
 	 */
 	uint8_t cfg80211_disconnect_reason;
+	struct lfr_firmware_status lfr_fw_status;
 };
 
 /*
