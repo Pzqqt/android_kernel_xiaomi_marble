@@ -30,6 +30,7 @@
 #include "wlan_objmgr_global_obj.h"
 #include "wlan_objmgr_psoc_obj.h"
 #include "wlan_serialization_rules_i.h"
+#include "wlan_scan_ucfg_api.h"
 
 /**
  * struct wlan_serialization_timer - Timer used for serialization

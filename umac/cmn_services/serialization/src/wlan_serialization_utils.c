@@ -397,7 +397,7 @@ wlan_serialization_is_active_scan_cmd_allowed(struct wlan_objmgr_pdev *pdev)
 	wlan_objmgr_iterate_obj_list(psoc, WLAN_PDEV_OP,
 			wlan_serialization_active_scan_cmd_count_handler,
 			&count, 1, WLAN_SERIALIZATION_ID);
-	if (count < WLAN_SERIALIZATION_MAX_ACTIVE_SCAN_CMDS) {
+	if (count < ucfg_scan_get_max_active_scans(psoc)) {
 		serialization_notice("count is [%d]", count);
 		return true;
 	}
@@ -551,7 +551,7 @@ bool wlan_serialization_is_cmd_in_vdev_list(struct wlan_objmgr_vdev *vdev,
 
 	queuelen = qdf_list_size(queue);
 	if (!queuelen) {
-		serialization_err("invalid queue length");
+		serialization_debug("queue empty");
 		return false;
 	}
 
@@ -579,7 +579,7 @@ bool wlan_serialization_is_cmd_in_pdev_list(struct wlan_objmgr_pdev *pdev,
 
 	queuelen = qdf_list_size(queue);
 	if (!queuelen) {
-		serialization_err("invalid queue length");
+		serialization_debug("queue empty");
 		return false;
 	}
 
