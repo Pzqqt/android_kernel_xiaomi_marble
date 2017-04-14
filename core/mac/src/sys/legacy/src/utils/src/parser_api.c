@@ -349,7 +349,7 @@ tSirRetStatus
 populate_dot11f_country(tpAniSirGlobal pMac,
 			tDot11fIECountry *pDot11f, tpPESession psessionEntry)
 {
-	uint32_t len, maxlen, codelen;
+	uint32_t len, maxlen;
 	uint16_t item;
 	tSirRetStatus nSirStatus;
 	tSirRFBand rfBand;
@@ -373,10 +373,9 @@ populate_dot11f_country(tpAniSirGlobal pMac,
 			return eSIR_SUCCESS;
 		}
 
-		CFG_GET_STR(nSirStatus, pMac, WNI_CFG_COUNTRY_CODE,
-			    code, codelen, 3);
+		wlan_reg_read_default_country(pMac->psoc, code);
 
-		qdf_mem_copy(pDot11f->country, code, codelen);
+		qdf_mem_copy(pDot11f->country, code, 2);
 
 		if (len > MAX_SIZE_OF_TRIPLETS_IN_COUNTRY_IE) {
 			pe_err("len:%d is out of bounds, resetting", len);
@@ -5741,7 +5740,7 @@ void populate_dot11f_timeout_interval(tpAniSirGlobal pMac,
 tSirRetStatus populate_dot11f_timing_advert_frame(tpAniSirGlobal mac_ctx,
 	tDot11fTimingAdvertisementFrame *frame)
 {
-	uint32_t val, codelen, len;
+	uint32_t val, len;
 	uint16_t item;
 	uint8_t temp[CFG_MAX_STR_LEN], code[3];
 	tSirRetStatus nSirStatus;
@@ -5777,9 +5776,8 @@ tSirRetStatus populate_dot11f_timing_advert_frame(tpAniSirGlobal mac_ctx,
 	item = WNI_CFG_MAX_TX_POWER_5;
 	CFG_GET_STR(nSirStatus, mac_ctx, item, temp, len,
 		WNI_CFG_MAX_TX_POWER_5_LEN);
-	item = WNI_CFG_COUNTRY_CODE;
-	CFG_GET_STR(nSirStatus, mac_ctx, item, code, codelen, 3);
-	qdf_mem_copy(&frame->Country, code, codelen);
+	wlan_reg_read_default_country(mac_ctx->psoc, code);
+	qdf_mem_copy(&frame->Country, code, 2);
 	if (len > MAX_SIZE_OF_TRIPLETS_IN_COUNTRY_IE)
 		len = MAX_SIZE_OF_TRIPLETS_IN_COUNTRY_IE;
 
