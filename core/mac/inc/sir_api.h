@@ -368,8 +368,8 @@ typedef struct sSirSupportedRates {
 	uint16_t vhtTxMCSMap;
 	uint16_t vhtTxHighestDataRate;
 #ifdef WLAN_FEATURE_11AX
-	uint16_t he_rx_mcs;
-	uint16_t he_tx_mcs;
+	uint32_t he_rx_mcs;
+	uint32_t he_tx_mcs;
 #endif
 } tSirSupportedRates, *tpSirSupportedRates;
 
