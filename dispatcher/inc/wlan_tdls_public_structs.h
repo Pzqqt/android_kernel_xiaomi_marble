@@ -178,7 +178,14 @@ enum tdls_command_type {
 	TDLS_CMD_CONFIG_FORCE_PEER,
 	TDLS_CMD_REMOVE_FORCE_PEER,
 	TDLS_CMD_STATS_UPDATE,
-	TDLS_CMD_CONFIG_UPDATE
+	TDLS_CMD_CONFIG_UPDATE,
+	TDLS_CMD_SCAN_DONE,
+	TDLS_CMD_SET_RESPONDER,
+	TDLS_NOTIFY_STA_CONNECTION,
+	TDLS_NOTIFY_STA_DISCONNECTION,
+	TDLS_CMD_SET_TDLS_MODE,
+	TDLS_CMD_SESSION_INCREMENT,
+	TDLS_CMD_SESSION_DECREMENT,
 };
 
 /**
@@ -350,21 +357,21 @@ enum tdls_feature_bit {
 };
 
 #define TDLS_IS_OFF_CHANNEL_ENABLED(flags) \
-	CHECK_BIT(TDLS_FEATURE_OFF_CHANNEL, flags)
+	CHECK_BIT(flags, TDLS_FEATURE_OFF_CHANNEL)
 #define TDLS_IS_WMM_ENABLED(flags) \
-	CHECK_BIT(TDLS_FEATURE_WMM, flags)
+	CHECK_BIT(flags, TDLS_FEATURE_WMM)
 #define TDLS_IS_BUFFER_STA_ENABLED(flags) \
-	CHECK_BIT(TDLS_FEATURE_BUFFER_STA, flags)
+	CHECK_BIT(flags, TDLS_FEATURE_BUFFER_STA)
 #define TDLS_IS_SLEEP_STA_ENABLED(flags) \
-	CHECK_BIT(TDLS_FEATURE_SLEEP_STA, flags)
+	CHECK_BIT(flags, TDLS_FEATURE_SLEEP_STA)
 #define TDLS_IS_SCAN_ENABLED(flags) \
-	CHECK_BIT(TDLS_FEATURE_SCAN, flags)
+	CHECK_BIT(flags, TDLS_FEATURE_SCAN)
 #define TDLS_IS_ENABLED(flags) \
-	CHECK_BIT(TDLS_FEATURE_ENABLE, flags)
+	CHECK_BIT(flags, TDLS_FEATURE_ENABLE)
 #define TDLS_IS_IMPLICIT_TRIG_ENABLED(flags) \
-	CHECK_BIT(TDLS_FEAUTRE_IMPLICIT_TRIGGER, flags)
+	CHECK_BIT(flags, TDLS_FEAUTRE_IMPLICIT_TRIGGER)
 #define TDLS_IS_EXTERNAL_CONTROL_ENABLED(flags) \
-	CHECK_BIT(TDLS_FEATURE_EXTERNAL_CONTROL, flags)
+	CHECK_BIT(flags, TDLS_FEATURE_EXTERNAL_CONTROL)
 
 /**
  * struct tdls_user_config - TDLS user configuration
@@ -448,6 +455,47 @@ struct tdls_tx_cnf {
 	int status;
 };
 
+/**
+ * struct tdls_rx_mgmt_frame - rx mgmt frame structure
+ * @frame_len: frame length
+ * @rx_chan: rx channel
+ * @vdev_id: vdev id
+ * @frm_type: frame type
+ * @rx_rssi: rx rssi
+ * @buf: buffer address
+ */
+struct tdls_rx_mgmt_frame {
+	uint32_t frame_len;
+	uint32_t rx_chan;
+	uint32_t vdev_id;
+	uint32_t frm_type;
+	uint32_t rx_rssi;
+	uint8_t buf[1];
+};
+
+/**
+ * tdls_rx_callback() - Callback for rx mgmt frame
+ * @user_data: user data associated to this rx mgmt frame.
+ * @rx_frame: RX mgmt frame
+ *
+ * This callback will be used to give rx frames to hdd.
+ *
+ * Return: None
+ */
+typedef void (*tdls_rx_callback)(void *user_data,
+	struct tdls_rx_mgmt_frame *rx_frame);
+
+/**
+ * tdls_wmm_check() - Callback for wmm info
+ * @psoc: psoc object
+ *
+ * This callback will be used to check wmm information
+ *
+ * Return: true or false
+ */
+typedef bool (*tdls_wmm_check)(struct wlan_objmgr_vdev **vdev);
+
+
 /* This callback is used to report state change of peer to wpa_supplicant */
 typedef int (*tdls_state_change_callback)(const uint8_t *mac,
 					  uint32_t opclass,
@@ -497,6 +545,10 @@ struct tdls_start_params {
 	uint16_t tdls_add_sta_req;
 	uint16_t tdls_del_sta_req;
 	uint16_t tdls_update_peer_state;
+	tdls_rx_callback tdls_rx_cb;
+	void *tdls_rx_cb_data;
+	tdls_wmm_check tdls_wmm_cb;
+	void *tdls_wmm_cb_data;
 	tdls_evt_callback tdls_event_cb;
 	void *tdls_evt_cb_data;
 	tdls_tx_ack_cnf_callback ack_cnf_cb;
@@ -848,6 +900,7 @@ struct tdls_event_notify {
  * @dialog: dialog token used in the frame.
  * @status_code: status to be incuded in the frame
  * @responder: Tdls request type
+ * @len: lenght of additional Ies
  * @peer_capability: peer cpabilities
  * @len: lenght of additional Ies
  * @buf: additional IEs to be included
@@ -865,19 +918,85 @@ struct tdls_send_mgmt {
 };
 
 /**
+ * struct tdls_validate_action_req - tdls validate mgmt request
+ * @vdev: vdev object
+ * @action_code: action code
+ * @peer_mac: peer mac address
+ * @dialog_token: dialog code
+ * @status_code: status code to add
+ * @len: len of the frame
+ * @responder: whether to respond or not
+ * @max_sta_failed: mgmt failure reason
+ */
+struct tdls_validate_action_req {
+	struct wlan_objmgr_vdev *vdev;
+	uint8_t action_code;
+	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
+	uint8_t dialog_token;
+	uint8_t status_code;
+	size_t len;
+	int responder;
+	int max_sta_failed;
+};
+
+/**
  * struct tdls_send_action_frame_request - tdls send mgmt request
  * @vdev: vdev object
+ * @chk_frame: frame validation structure
  * @session_id: session id
  * @vdev_id: vdev id
  * @tdls_mgmt: tdls managment
  */
 struct tdls_action_frame_request {
 	struct wlan_objmgr_vdev *vdev;
+	struct tdls_validate_action_req *chk_frame;
 	uint8_t session_id;
 	uint8_t vdev_id;
 	const uint8_t *cmd_buf;
 	uint8_t len;
 	struct tdls_send_mgmt tdls_mgmt;
+};
+
+/**
+ * struct tdls_set_responder_req - tdls set responder in peer
+ * @vdev: vdev object
+ * @peer_mac: peer mac address
+ * @responder: whether to respond or not
+ */
+struct tdls_set_responder_req {
+	struct wlan_objmgr_vdev *vdev;
+	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
+	uint8_t responder;
+};
+
+/**
+ * struct tdls_sta_notify_params - STA connection notify info
+ * @vdev: vdev object
+ * @tdls_prohibited: peer mac addr
+ * @tdls_chan_swit_prohibited: peer type
+ * @lfr_roam: is trigger due to lfr
+ * @session_id: session id
+ */
+struct tdls_sta_notify_params {
+	struct wlan_objmgr_vdev *vdev;
+	bool tdls_prohibited;
+	bool tdls_chan_swit_prohibited;
+	bool lfr_roam;
+	uint8_t session_id;
+};
+
+/**
+ * struct tdls_set_mode_params - TDLS set mode params
+ * @vdev: vdev object
+ * @tdls_mode: tdls mode to set
+ * @update_last: inform to update last tdls mode
+ * @source: mode change requester
+ */
+struct tdls_set_mode_params {
+	struct wlan_objmgr_vdev *vdev;
+	enum tdls_feature_mode tdls_mode;
+	bool update_last;
+	enum tdls_disable_sources source;
 };
 
 #endif
