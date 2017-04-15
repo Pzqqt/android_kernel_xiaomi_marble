@@ -26,6 +26,7 @@
 #include <wlan_tdls_tgt_api.h>
 #include "../../core/src/wlan_tdls_main.h"
 #include "../../core/src/wlan_tdls_cmds_process.h"
+#include "../../core/src/wlan_tdls_ct.h"
 #include <wlan_objmgr_global_obj.h>
 #include <wlan_objmgr_cmn.h>
 #include "wlan_policy_mgr_api.h"
@@ -485,4 +486,153 @@ QDF_STATUS ucfg_tdls_send_mgmt_frame(
 	scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ucfg_tdls_responder(struct tdls_set_responder_req *req)
+{
+	struct scheduler_msg msg = {0, };
+	struct tdls_set_responder_req *msg_req;
+	QDF_STATUS status;
+
+	if (!req || !req->vdev) {
+		tdls_err("invalid input %p", req);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	msg_req = qdf_mem_malloc(sizeof(*msg_req));
+	if (!msg_req)
+		return QDF_STATUS_E_NULL_VALUE;
+
+	msg_req->responder = req->responder;
+	msg_req->vdev = req->vdev;
+	qdf_mem_copy(msg_req->peer_mac, req->peer_mac, QDF_MAC_ADDR_SIZE);
+
+	msg.bodyptr = msg_req;
+	msg.callback = tdls_process_cmd;
+	msg.type = TDLS_CMD_SET_RESPONDER;
+	status = scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
+
+	return status;
+}
+
+QDF_STATUS ucfg_tdls_notify_sta_connect(
+			struct tdls_sta_notify_params *notify_info)
+{
+	struct scheduler_msg msg = {0, };
+	struct tdls_sta_notify_params *notify;
+
+	if (!notify_info || !notify_info->vdev) {
+		tdls_err("notify_info->vdev: %p, notify_info %p",
+				notify_info->vdev, notify_info);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	tdls_notice("Enter ");
+
+	notify = qdf_mem_malloc(sizeof(*notify));
+	if (!notify)
+		return QDF_STATUS_E_NULL_VALUE;
+
+	notify->session_id = notify_info->session_id;
+	notify->tdls_chan_swit_prohibited =
+			notify_info->tdls_chan_swit_prohibited;
+	notify->tdls_prohibited = notify_info->tdls_prohibited;
+	notify->vdev = notify_info->vdev;
+
+	msg.bodyptr = notify;
+	msg.callback = tdls_process_cmd;
+	msg.type = TDLS_NOTIFY_STA_CONNECTION;
+	scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
+
+	tdls_notice("Exit ");
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ucfg_tdls_notify_sta_disconnect(
+			struct tdls_sta_notify_params *notify_info)
+{
+	struct scheduler_msg msg = {0, };
+	struct tdls_sta_notify_params *notify;
+
+	if (!notify_info || !notify_info->vdev) {
+		tdls_err("notify_info->vdev: %p, notify_info %p",
+				notify_info->vdev, notify_info);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	tdls_notice("Enter ");
+
+	notify = qdf_mem_malloc(sizeof(*notify));
+	if (!notify)
+		return QDF_STATUS_E_NULL_VALUE;
+
+	notify->session_id = notify_info->session_id;
+	notify->tdls_chan_swit_prohibited = false;
+	notify->tdls_prohibited = false;
+	notify->vdev = notify_info->vdev;
+
+	msg.bodyptr = notify;
+	msg.callback = tdls_process_cmd;
+	msg.type = TDLS_NOTIFY_STA_DISCONNECTION;
+	scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
+
+	tdls_notice("Exit ");
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ucfg_tdls_set_operating_mode(
+			struct tdls_set_mode_params *set_mode_params)
+{
+	struct scheduler_msg msg = {0, };
+	struct tdls_set_mode_params *set_mode;
+
+	if (!set_mode_params || !set_mode_params->vdev) {
+		tdls_err("vdev: %p, set_mode_params %p",
+				set_mode_params->vdev, set_mode_params);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	tdls_notice("Enter ");
+
+	set_mode = qdf_mem_malloc(sizeof(*set_mode));
+	if (!set_mode)
+		return QDF_STATUS_E_NULL_VALUE;
+
+	set_mode->source = set_mode_params->source;
+	set_mode->tdls_mode = set_mode_params->tdls_mode;
+	set_mode->update_last = set_mode_params->update_last;
+	set_mode->vdev = set_mode_params->vdev;
+
+	msg.bodyptr = set_mode;
+	msg.callback = tdls_process_cmd;
+	msg.type = TDLS_CMD_SET_TDLS_MODE;
+	scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
+
+	tdls_notice("Exit ");
+
+	return QDF_STATUS_SUCCESS;
+}
+
+void ucfg_tdls_update_rx_pkt_cnt(struct wlan_objmgr_vdev *vdev,
+				 struct qdf_mac_addr *mac_addr)
+{
+	QDF_STATUS status;
+	status = wlan_objmgr_vdev_try_get_ref(vdev, WLAN_TDLS_NB_ID);
+	if (status != QDF_STATUS_SUCCESS)
+		return;
+	tdls_update_rx_pkt_cnt(vdev, mac_addr);
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
+}
+
+void ucfg_tdls_update_tx_pkt_cnt(struct wlan_objmgr_vdev *vdev,
+				 struct qdf_mac_addr *mac_addr)
+{
+	QDF_STATUS status;
+	status = wlan_objmgr_vdev_try_get_ref(vdev, WLAN_TDLS_NB_ID);
+	if (status != QDF_STATUS_SUCCESS)
+		return;
+	tdls_update_tx_pkt_cnt(vdev, mac_addr);
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
 }

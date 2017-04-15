@@ -241,6 +241,23 @@ QDF_STATUS tdls_process_cmd(struct scheduler_msg *msg)
 		break;
 	case TDLS_CMD_CONFIG_UPDATE:
 		break;
+	case TDLS_CMD_SET_RESPONDER:
+		tdls_set_responder(msg->bodyptr);
+		break;
+	case TDLS_NOTIFY_STA_CONNECTION:
+		tdls_notify_sta_connect(msg->bodyptr);
+		break;
+	case TDLS_NOTIFY_STA_DISCONNECTION:
+		tdls_notify_sta_disconnect(msg->bodyptr);
+		break;
+	case TDLS_CMD_SET_TDLS_MODE:
+		tdls_set_operation_mode(msg->bodyptr);
+		break;
+	case TDLS_CMD_SESSION_INCREMENT:
+	case TDLS_CMD_SESSION_DECREMENT:
+		tdls_process_policy_mgr_notification(msg->bodyptr);
+		break;
+
 	default:
 		break;
 	}
@@ -1053,3 +1070,35 @@ static void tdls_set_current_mode(struct tdls_soc_priv_obj *tdls_soc,
 	tdls_soc->tdls_current_mode = tdls_mode;
 
 }
+
+QDF_STATUS tdls_set_operation_mode(struct tdls_set_mode_params *tdls_set_mode)
+{
+	struct tdls_soc_priv_obj *tdls_soc;
+	struct tdls_vdev_priv_obj *tdls_vdev;
+	QDF_STATUS status;
+
+	if (!tdls_set_mode || !tdls_set_mode->vdev)
+		return QDF_STATUS_E_INVAL;
+
+	if (QDF_STATUS_SUCCESS !=
+		wlan_objmgr_vdev_try_get_ref(tdls_set_mode->vdev,
+						WLAN_TDLS_NB_ID))
+		return QDF_STATUS_E_INVAL;
+
+	status = tdls_get_vdev_objects(tdls_set_mode->vdev,
+				       &tdls_vdev, &tdls_soc);
+
+	if (status != QDF_STATUS_SUCCESS)
+		goto release_mode_ref;
+
+	tdls_set_current_mode(tdls_soc,
+			      tdls_set_mode->tdls_mode,
+			      tdls_set_mode->update_last,
+			      tdls_set_mode->source);
+
+release_mode_ref:
+	wlan_objmgr_vdev_release_ref(tdls_set_mode->vdev, WLAN_TDLS_NB_ID);
+	qdf_mem_free(tdls_set_mode);
+	return status;
+}
+

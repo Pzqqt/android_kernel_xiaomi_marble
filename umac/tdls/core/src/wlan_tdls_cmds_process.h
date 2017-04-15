@@ -259,4 +259,12 @@ QDF_STATUS tdls_process_connection_tracker_notify(struct wlan_objmgr_vdev *vdev,
  */
 int tdls_validate_mgmt_request(struct tdls_validate_action_req *tdls_validate);
 
+/**
+ * tdls_set_responder() - Set/clear TDLS peer's responder role
+ * @set_req: set responder request
+ *
+ * Return: 0 for success or -EINVAL otherwise
+ */
+int tdls_set_responder(struct tdls_set_responder_req *set_req);
+
 #endif

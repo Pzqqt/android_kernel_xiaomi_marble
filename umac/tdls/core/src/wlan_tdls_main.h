@@ -534,41 +534,38 @@ QDF_STATUS tdls_get_vdev_objects(struct wlan_objmgr_vdev *vdev,
 void tdls_set_ct_mode(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * tdls_set_operation_mode() - set tdls operating mode
+ * @tdls_set_mode: tdls mode set params
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS tdls_set_operation_mode(struct tdls_set_mode_params *tdls_set_mode);
+
+/**
  * tdls_notify_sta_connect() - Update tdls state for every
  * connect event.
- * @vdev: vdev object manager
- * @tdls_prohibited: flag to tell whether tdls prohibited in this bss
- * @tdls_chan_swit_prohibited: flag to tell whether tdls channel switch
- *                                        prohibited in this bss
- * @session_id: session id
+ * @notify: sta connect params
  *
  * After every connect event in the system, check whether TDLS
  * can be enabled in the system. If TDLS can be enabled, update the
  * TDLS state as needed.
  *
- * Return: None
+ * Return: QDF_STATUS
  */
-void tdls_notify_sta_connect(struct wlan_objmgr_vdev *vdev,
-			      bool tdls_prohibited,
-			      bool tdls_chan_swit_prohibited,
-			      uint8_t session_id);
+QDF_STATUS tdls_notify_sta_connect(struct tdls_sta_notify_params *notify);
 
 /**
  * tdls_notify_sta_disconnect() - Update tdls state for every
  * disconnect event.
- * @vdev: vdev object manager
- * @lfr_roam: roaming case
- * @session_id: session id
+ * @notify: sta disconnect params
  *
  * After every disconnect event in the system, check whether TDLS
  * can be disabled/enabled in the system and update the
  * TDLS state as needed.
  *
- * Return: None
+ * Return: QDF_STATUS
  */
-void tdls_notify_sta_disconnect(struct wlan_objmgr_vdev *vdev,
-				 bool lfr_roam,
-				 uint8_t session_id);
+QDF_STATUS tdls_notify_sta_disconnect(struct tdls_sta_notify_params *notify);
 
 /**
  * tdls_notify_decrement_session() - Notify the session decrement

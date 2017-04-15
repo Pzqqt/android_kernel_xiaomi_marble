@@ -1759,3 +1759,60 @@ QDF_STATUS tdls_process_connection_tracker_notify(struct wlan_objmgr_vdev *vdev,
 	/*TODO connection tracker update*/
 	return QDF_STATUS_SUCCESS;
 }
+
+/**
+ * tdls_process_set_responder() - Set/clear TDLS peer's responder role
+ * @set_req: set responder request
+ *
+ * Return: 0 for success or -EINVAL otherwise
+ */
+static
+int tdls_process_set_responder(struct tdls_set_responder_req *set_req)
+{
+	struct tdls_peer *curr_peer;
+	struct tdls_vdev_priv_obj *tdls_vdev;
+
+	tdls_vdev = wlan_vdev_get_tdls_vdev_obj(set_req->vdev);
+	if (!tdls_vdev) {
+		tdls_err("tdls vdev obj is NULL");
+		return -EINVAL;
+	}
+	curr_peer = tdls_get_peer(tdls_vdev, set_req->peer_mac);
+	if (curr_peer == NULL) {
+		tdls_err("curr_peer is NULL");
+		return -EINVAL;
+	}
+
+	curr_peer->is_responder = set_req->responder;
+	return 0;
+}
+
+
+/**
+ * tdls_set_responder() - Set/clear TDLS peer's responder role
+ * @set_req: set responder request
+ *
+ * Return: 0 for success or -EINVAL otherwise
+ */
+int tdls_set_responder(struct tdls_set_responder_req *set_req)
+{
+	QDF_STATUS status;
+
+	if (!set_req || !set_req->vdev) {
+		tdls_err("Invalid input params %p", set_req);
+		return -EINVAL;
+	}
+
+	status = wlan_objmgr_vdev_try_get_ref(set_req->vdev, WLAN_TDLS_NB_ID);
+	if (QDF_STATUS_SUCCESS != status) {
+		tdls_err("vdev object is deleted");
+		return -EINVAL;
+	}
+
+	status = tdls_process_set_responder(set_req);
+
+	wlan_objmgr_vdev_release_ref(set_req->vdev, WLAN_TDLS_NB_ID);
+	qdf_mem_free(set_req);
+	return status;
+}
+

@@ -130,4 +130,59 @@ QDF_STATUS ucfg_tdls_oper(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS ucfg_tdls_send_mgmt_frame(
 				struct tdls_action_frame_request *mgmt_req);
 
+/**
+ * ucfg_tdls_responder() - set responder in TDLS peer
+ * @msg_req: responder msg
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_tdls_responder(struct tdls_set_responder_req *msg_req);
+
+/**
+ * ucfg_tdls_notify_sta_connect() - notify sta connect
+ * @notify_info: sta notification info
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_tdls_notify_sta_connect(
+			struct tdls_sta_notify_params *notify_info);
+
+/**
+ * ucfg_tdls_notify_sta_disconnect() - notify sta disconnect
+ * @notify_info: sta notification info
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_tdls_notify_sta_disconnect(
+			struct tdls_sta_notify_params *notify_info);
+
+/**
+ * ucfg_tdls_set_operating_mode() - set operating mode
+ * @set_mode_params: set mode params
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_tdls_set_operating_mode(
+			struct tdls_set_mode_params *set_mode_params);
+
+/**
+ * ucfg_tdls_update_rx_pkt_cnt() - update rx pkt count
+ * @vdev: tdls vdev object
+ * @mac_addr: peer mac address
+ *
+ * Return: None
+ */
+void ucfg_tdls_update_rx_pkt_cnt(struct wlan_objmgr_vdev *vdev,
+				 struct qdf_mac_addr *mac_addr);
+
+/**
+ * ucfg_tdls_update_tx_pkt_cnt() - update tx pkt count
+ * @vdev: tdls vdev object
+ * @mac_addr: peer mac address
+ *
+ * Return: None
+ */
+void ucfg_tdls_update_tx_pkt_cnt(struct wlan_objmgr_vdev *vdev,
+				 struct qdf_mac_addr *mac_addr);
+
 #endif
