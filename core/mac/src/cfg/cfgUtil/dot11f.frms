@@ -123,6 +123,23 @@ const EID_WIDER_BW_CHANNEL_SWITCH_ANN=  194;
 const VHT_TRANSMIT_POWER_ENVELOPE    = 195;
 const EID_CHANNEL_SWITCH_WRAPPER     = 196;
 const EID_VENDOR_SPECIFIC            = 221;
+const EID_FILS_INDICATION            = 240;
+/**
+ * Extended Element ID
+ *
+ * As part of IEEE-802.11-2016 spec, extended element ID is introduced(9.4.2.1)
+ * Elements are defined to have a common general format consisting of a 1 octet
+ * Element ID field, a 1 octet Length field, an optional 1 octet Element ID
+ * Extension field, and a variable-length element-specific Information field.
+ * Each element is identified by the contents of the Element ID and, when
+ * present, Element ID Extension fields as defined in this standard. An Extended
+ * Element ID is a combination of an Element ID and an Element ID Extension for
+ * those elements that have a defined Element ID Extension. The Length field
+ * specifies the number of octets following the Length field. The presence of
+ * the Element ID Extension field is determined by the Element ID field having
+ * value of 255
+ */
+const EID_EXTN_ID_ELEMENT            = 255;
 
 const SIR_MAC_PROP_EXT_RATES_TYPE    =   0;
 const SIR_MAC_PROP_AP_NAME_TYPE      =   1;
@@ -2472,6 +2489,68 @@ IE QCN_IE (EID_VENDOR_SPECIFIC) OUI ( 0x8C, 0xFD, 0xF0, 0x01 )
     version[4];
 }
 
+IE fils_indication (EID_FILS_INDICATION)
+{
+   // FILS Information element
+   {
+       public_key_identifiers_cnt     : 3;
+       realm_identifiers_cnt          : 3;
+       is_ip_config_supported         : 1;
+       is_cache_id_present            : 1;
+       is_hessid_present              : 1;
+       is_fils_sk_auth_supported      : 1;
+       is_fils_sk_auth_pfs_supported  : 1;
+       is_pk_auth_supported           : 1;
+       reserved                       : 4;
+   }
+   // other FILS elements
+   variable_data[3..255];
+}
+
+IE fils_assoc_delay_info (EID_EXTN_ID_ELEMENT) OUI ( 0x01 )
+{
+    assoc_delay_info, 1;
+}
+
+IE fils_key_confirmation (EID_EXTN_ID_ELEMENT) OUI ( 0x03 )
+{
+    key_auth[0..255];
+}
+
+IE fils_session (EID_EXTN_ID_ELEMENT) OUI ( 0x04 )
+{
+    session[8];
+}
+
+IE fils_hlp_container (EID_EXTN_ID_ELEMENT) OUI ( 0x05 )
+{
+    dest_mac[6];
+    src_mac[6];
+    hlp_packet[0..255];
+}
+
+IE fils_kde (EID_EXTN_ID_ELEMENT) OUI ( 0x07 )
+{
+    key_rsc[8];
+    kde_list[0..255];
+}
+
+IE fils_wrapped_data (EID_EXTN_ID_ELEMENT) OUI ( 0x08 )
+{
+    wrapped_data[0..255];
+}
+
+IE fils_public_key (EID_EXTN_ID_ELEMENT) OUI ( 0x0C )
+{
+    key_type, 1;
+    public_key[0..255];
+}
+
+IE fils_nonce (EID_EXTN_ID_ELEMENT) OUI ( 0x0D )
+{
+    nonce[16];
+}
+
 const EID_RRM_BEACON_REPORTING     = 1;
 const EID_RRM_BCN_REPORTING_DETAIL = 2;
 
@@ -3120,6 +3199,7 @@ FRAME Beacon                              // C.f. Sec. 7.2.3.1
     OPTIE  OperatingMode;
     OPTIE  WiderBWChanSwitchAnn;
     OPTIE  OBSSScanParameters;
+    OPTIE  fils_indication;
     OPTIE  Vendor1IE;
     OPTIE  vendor_vht_ie;
     OPTIE  Vendor3IE;
@@ -3212,6 +3292,7 @@ FRAME Beacon2
     OPTIE  OperatingMode;
     OPTIE  WiderBWChanSwitchAnn;
     OPTIE  OBSSScanParameters;
+    OPTIE  fils_indication;
     OPTIE  Vendor1IE;
     OPTIE  vendor_vht_ie;
     OPTIE  Vendor3IE;
@@ -3280,6 +3361,7 @@ FRAME BeaconIEs
     OPTIE  OperatingMode;
     OPTIE  WiderBWChanSwitchAnn;
     OPTIE  OBSSScanParameters;
+    OPTIE  fils_indication;
     OPTIE  Vendor1IE;
     OPTIE  vendor_vht_ie;
     OPTIE  Vendor3IE;
@@ -3319,6 +3401,10 @@ FRAME AssocRequest                        // 7.2.3.4
     OPTIE  QosMapSet;
     OPTIE  ExtCap;
     OPTIE  VHTCaps;
+    OPTIE  fils_session;
+    OPTIE  fils_public_key;
+    OPTIE  fils_key_confirmation;
+    OPTIE  fils_hlp_container;
     OPTIE  WPAOpaque;
     OPTIE  WMMCaps;
     OPTIE  WMMInfoStation;
@@ -3364,6 +3450,11 @@ FRAME AssocResponse                       // 7.2.3.5
     OPTIE  ExtCap;
     OPTIE  OBSSScanParameters;
     OPTIE  QosMapSet;
+    OPTIE  fils_session;
+    OPTIE  fils_public_key;
+    OPTIE  fils_key_confirmation;
+    OPTIE  fils_hlp_container;
+    OPTIE  fils_kde;
     OPTIE  vendor_vht_ie;
     OPTIE  QCN_IE;
     OPTIE  vendor_he_cap;
@@ -3511,6 +3602,7 @@ FRAME ProbeResponse                       // 7.2.3.9
     OPTIE  VHTExtBssLoad;
     OPTIE  ExtCap;
     OPTIE  OBSSScanParameters;
+    OPTIE  fils_indication;
     OPTIE  Vendor1IE;
     OPTIE  vendor_vht_ie;
     OPTIE  Vendor3IE;
@@ -3535,6 +3627,10 @@ FRAME Authentication                      // 7.2.3.10
     OPTIE  FTInfo;
     OPTIE  TimeoutInterval;
     OPTIE  RICDataDesc[2];
+    OPTIE  fils_nonce;
+    OPTIE  fils_session;
+    OPTIE  fils_wrapped_data;
+    OPTIE  fils_assoc_delay_info;
 } // End frame Auth.
 
 FRAME DeAuth                              // 7.2.3.11
