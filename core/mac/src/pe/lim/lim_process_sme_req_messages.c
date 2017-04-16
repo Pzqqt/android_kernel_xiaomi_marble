@@ -465,7 +465,7 @@ static uint16_t __lim_get_sme_join_req_size_for_alloc(uint8_t *pBuf)
 
 	pBuf += sizeof(uint16_t);
 	len = lim_get_u16(pBuf);
-	return len + sizeof(uint16_t);
+	return len;
 }
 
 /**
