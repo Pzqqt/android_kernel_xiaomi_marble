@@ -1167,11 +1167,12 @@ void dp_tx_extract_mesh_meta_data(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 	if (!(mhdr->flags & METAHDR_FLAG_AUTO_RATE)) {
 		meta_data->power = mhdr->power;
-		meta_data->mcs_mask = mhdr->rates[0] & 0xF;
-		meta_data->nss_mask = (mhdr->rates[0] >> 4) & 0x3;
-		meta_data->pream_type = (mhdr->rates[0] >> 6) & 0x3;
 
-		meta_data->retry_limit = mhdr->max_tries[0];
+		meta_data->mcs_mask = 1 << mhdr->rate_info[0].mcs;
+		meta_data->nss_mask = 1 << mhdr->rate_info[0].nss;
+		meta_data->pream_type = mhdr->rate_info[0].preamble_type;
+		meta_data->retry_limit = mhdr->rate_info[0].max_tries;
+
 		meta_data->dyn_bw = 1;
 
 		meta_data->valid_pwr = 1;
