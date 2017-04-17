@@ -3032,60 +3032,6 @@ typedef struct sSirRoamOffloadScanRsp {
 #define    SIR_MAX_NUM_TESTS_PER_FILTER      10
 
 /* */
-/* Receive Filter Parameters */
-/* */
-typedef enum {
-	SIR_RCV_FILTER_TYPE_INVALID,
-	SIR_RCV_FILTER_TYPE_FILTER_PKT,
-	SIR_RCV_FILTER_TYPE_BUFFER_PKT,
-	SIR_RCV_FILTER_TYPE_MAX_ENUM_SIZE
-} eSirReceivePacketFilterType;
-
-typedef enum {
-	SIR_FILTER_HDR_TYPE_INVALID,
-	SIR_FILTER_HDR_TYPE_MAC,
-	SIR_FILTER_HDR_TYPE_ARP,
-	SIR_FILTER_HDR_TYPE_IPV4,
-	SIR_FILTER_HDR_TYPE_IPV6,
-	SIR_FILTER_HDR_TYPE_UDP,
-	SIR_FILTER_HDR_TYPE_MAX
-} eSirRcvPktFltProtocolType;
-
-typedef enum {
-	SIR_FILTER_CMP_TYPE_INVALID,
-	SIR_FILTER_CMP_TYPE_EQUAL,
-	SIR_FILTER_CMP_TYPE_MASK_EQUAL,
-	SIR_FILTER_CMP_TYPE_NOT_EQUAL,
-	SIR_FILTER_CMP_TYPE_MASK_NOT_EQUAL,
-	SIR_FILTER_CMP_TYPE_MAX
-} eSirRcvPktFltCmpFlagType;
-
-typedef struct sSirRcvPktFilterFieldParams {
-	eSirRcvPktFltProtocolType protocolLayer;
-	eSirRcvPktFltCmpFlagType cmpFlag;
-	/* Length of the data to compare */
-	uint16_t dataLength;
-	/* from start of the respective frame header */
-	uint8_t dataOffset;
-	/* Reserved field */
-	uint8_t reserved;
-	/* Data to compare */
-	uint8_t compareData[SIR_MAX_FILTER_TEST_DATA_LEN];
-	/* Mask to be applied on the received packet data before compare */
-	uint8_t dataMask[SIR_MAX_FILTER_TEST_DATA_LEN];
-} tSirRcvPktFilterFieldParams, *tpSirRcvPktFilterFieldParams;
-
-typedef struct sSirRcvPktFilterCfg {
-	uint8_t filterId;
-	eSirReceivePacketFilterType filterType;
-	uint32_t numFieldParams;
-	uint32_t coalesceTime;
-	struct qdf_mac_addr self_macaddr;
-	struct qdf_mac_addr bssid;      /* Bssid of the connected AP */
-	tSirRcvPktFilterFieldParams paramsData[SIR_MAX_NUM_TESTS_PER_FILTER];
-} tSirRcvPktFilterCfgType, *tpSirRcvPktFilterCfgType;
-
-/* */
 /* Filter Packet Match Count Parameters */
 /* */
 typedef struct sSirRcvFltPktMatchCnt {

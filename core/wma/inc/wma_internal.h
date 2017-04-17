@@ -949,14 +949,6 @@ void wma_aggr_qos_req(tp_wma_handle wma,
 
 void wma_add_ts_req(tp_wma_handle wma, tAddTsParams *msg);
 
-int wma_process_receive_filter_set_filter_req(tp_wma_handle wma_handle,
-						     tSirRcvPktFilterCfgType *
-						     rcv_filter_param);
-
-int wma_process_receive_filter_clear_filter_req(tp_wma_handle wma_handle,
-						       tSirRcvFltPktClearParam *
-						       rcv_clear_param);
-
 #ifdef FEATURE_WLAN_ESE
 QDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,
 				     void *pTsmStatsMsg);

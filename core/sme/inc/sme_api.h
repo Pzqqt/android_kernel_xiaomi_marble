@@ -537,12 +537,6 @@ QDF_STATUS sme_get_cfg_valid_channels(uint8_t *aValidChannels,
 #ifdef WLAN_FEATURE_PACKET_FILTERING
 QDF_STATUS sme_8023_multicast_list(tHalHandle hHal, uint8_t sessionId,
 		tpSirRcvFltMcAddrList pMulticastAddrs);
-QDF_STATUS sme_receive_filter_set_filter(tHalHandle hHal,
-		tpSirRcvPktFilterCfgType pRcvPktFilterCfg,
-		uint8_t sessionId);
-QDF_STATUS sme_receive_filter_clear_filter(tHalHandle hHal,
-		tpSirRcvFltPktClearParam pRcvFltPktClearParam,
-		uint8_t sessionId);
 #endif /* WLAN_FEATURE_PACKET_FILTERING */
 bool sme_is_channel_valid(tHalHandle hHal, uint8_t channel);
 QDF_STATUS sme_set_freq_band(tHalHandle hHal, uint8_t sessionId,

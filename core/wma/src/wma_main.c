@@ -6501,18 +6501,6 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, struct scheduler_msg *msg)
 		wma_aggr_qos_req(wma_handle, (tAggrAddTsParams *) msg->bodyptr);
 		break;
 
-	case WMA_RECEIVE_FILTER_SET_FILTER_REQ:
-		wma_process_receive_filter_set_filter_req(wma_handle,
-				(tSirRcvPktFilterCfgType *) msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
-
-	case WMA_RECEIVE_FILTER_CLEAR_FILTER_REQ:
-		wma_process_receive_filter_clear_filter_req(wma_handle,
-				(tSirRcvFltPktClearParam *) msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
-
 	case WMA_WOW_ADD_PTRN:
 		wma_wow_add_pattern(wma_handle,
 				    (struct wow_add_pattern *) msg->bodyptr);

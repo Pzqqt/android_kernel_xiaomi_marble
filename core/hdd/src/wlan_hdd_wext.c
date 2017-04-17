@@ -11607,9 +11607,10 @@ static int wlan_hdd_set_filter(hdd_context_t *hdd_ctx,
 				struct pkt_filter_cfg *request,
 				uint8_t sessionId)
 {
-	tSirRcvPktFilterCfgType packetFilterSetReq = {0};
-	tSirRcvFltPktClearParam packetFilterClrReq = {0};
+	struct pmo_rcv_pkt_fltr_cfg *pmo_set_pkt_fltr_req = NULL;
+	struct pmo_rcv_pkt_fltr_clear_param *pmo_clr_pkt_fltr_param = NULL;
 	int i = 0;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (hdd_ctx->config->disablePacketFilter) {
 		hdd_warn("Packet filtering disabled in ini");
@@ -11625,25 +11626,33 @@ static int wlan_hdd_set_filter(hdd_context_t *hdd_ctx,
 		hdd_debug("Set Packet Filter Request for Id: %d",
 			request->filter_id);
 
-		packetFilterSetReq.filterId = request->filter_id;
+		pmo_set_pkt_fltr_req =
+			qdf_mem_malloc(sizeof(*pmo_set_pkt_fltr_req));
+		if (!pmo_set_pkt_fltr_req) {
+			pmo_err("unable to allocate pmo_set_pkt_fltr_req");
+			return QDF_STATUS_E_NOMEM;
+		}
+
+		pmo_set_pkt_fltr_req->filter_id = request->filter_id;
 		if (request->num_params >= HDD_MAX_CMP_PER_PACKET_FILTER) {
 			hdd_err("Number of Params exceed Max limit %d",
 				request->num_params);
-			return -EINVAL;
+			status = QDF_STATUS_E_INVAL;
+			goto out;
 		}
-		packetFilterSetReq.numFieldParams = request->num_params;
-		packetFilterSetReq.coalesceTime = 0;
-		packetFilterSetReq.filterType = HDD_RCV_FILTER_SET;
+		pmo_set_pkt_fltr_req->num_params = request->num_params;
+		pmo_set_pkt_fltr_req->coalesce_time = 0;
+		pmo_set_pkt_fltr_req->filter_type = HDD_RCV_FILTER_SET;
 		for (i = 0; i < request->num_params; i++) {
-			packetFilterSetReq.paramsData[i].protocolLayer =
+			pmo_set_pkt_fltr_req->params_data[i].protocol_layer =
 				request->params_data[i].protocol_layer;
-			packetFilterSetReq.paramsData[i].cmpFlag =
+			pmo_set_pkt_fltr_req->params_data[i].compare_flag =
 				request->params_data[i].compare_flag;
-			packetFilterSetReq.paramsData[i].dataOffset =
+			pmo_set_pkt_fltr_req->params_data[i].data_offset =
 				request->params_data[i].data_offset;
-			packetFilterSetReq.paramsData[i].dataLength =
+			pmo_set_pkt_fltr_req->params_data[i].data_length =
 				request->params_data[i].data_length;
-			packetFilterSetReq.paramsData[i].reserved = 0;
+			pmo_set_pkt_fltr_req->params_data[i].reserved = 0;
 
 			if (request->params_data[i].data_offset >
 			    SIR_MAX_FILTER_TEST_DATA_OFFSET) {
@@ -11651,36 +11660,41 @@ static int wlan_hdd_set_filter(hdd_context_t *hdd_ctx,
 					request->params_data[i].data_offset,
 					i,
 					SIR_MAX_FILTER_TEST_DATA_OFFSET);
-				return -EINVAL;
+				status = QDF_STATUS_E_INVAL;
+				goto out;
 			}
 
 			if (request->params_data[i].data_length >
 				SIR_MAX_FILTER_TEST_DATA_LEN) {
 				hdd_err("Error invalid data length %d",
 					request->params_data[i].data_length);
-				return -EINVAL;
+				status = QDF_STATUS_E_INVAL;
+				goto out;
 			}
 
 			hdd_debug("Proto %d Comp Flag %d Filter Type %d",
 				request->params_data[i].protocol_layer,
 				request->params_data[i].compare_flag,
-				packetFilterSetReq.filterType);
+				pmo_set_pkt_fltr_req->filter_type);
 
 			hdd_debug("Data Offset %d Data Len %d",
 				request->params_data[i].data_offset,
 				request->params_data[i].data_length);
 
-			if (sizeof(packetFilterSetReq.paramsData[i].compareData)
+			if (sizeof(
+			    pmo_set_pkt_fltr_req->params_data[i].compare_data)
 				< (request->params_data[i].data_length)) {
 				hdd_err("Error invalid data length %d",
 					request->params_data[i].data_length);
-				return -EINVAL;
+				status = QDF_STATUS_E_INVAL;
+				goto out;
 			}
 
-			memcpy(&packetFilterSetReq.paramsData[i].compareData,
+			memcpy(
+			    &pmo_set_pkt_fltr_req->params_data[i].compare_data,
 			       request->params_data[i].compare_data,
 			       request->params_data[i].data_length);
-			memcpy(&packetFilterSetReq.paramsData[i].dataMask,
+			memcpy(&pmo_set_pkt_fltr_req->params_data[i].data_mask,
 			       request->params_data[i].data_mask,
 			       request->params_data[i].data_length);
 
@@ -11702,26 +11716,35 @@ static int wlan_hdd_set_filter(hdd_context_t *hdd_ctx,
 		}
 
 		if (QDF_STATUS_SUCCESS !=
-			sme_receive_filter_set_filter(hdd_ctx->hHal,
-				&packetFilterSetReq,
+			pmo_ucfg_set_pkt_filter(hdd_ctx->hdd_psoc,
+				pmo_set_pkt_fltr_req,
 				sessionId)) {
 			hdd_err("Failure to execute Set Filter");
-			return -EINVAL;
+			status = QDF_STATUS_E_INVAL;
+			goto out;
 		}
 
 		break;
 
 	case HDD_RCV_FILTER_CLEAR:
-
 		hdd_debug("Clear Packet Filter Request for Id: %d",
 			request->filter_id);
-		packetFilterClrReq.filterId = request->filter_id;
+
+		pmo_clr_pkt_fltr_param = qdf_mem_malloc(
+					sizeof(*pmo_clr_pkt_fltr_param));
+		if (!pmo_clr_pkt_fltr_param) {
+			hdd_err("unable to allocate pmo_clr_pkt_fltr_param");
+			return QDF_STATUS_E_NOMEM;
+		}
+
+		pmo_clr_pkt_fltr_param->filter_id = request->filter_id;
 		if (QDF_STATUS_SUCCESS !=
-		    sme_receive_filter_clear_filter(hdd_ctx->hHal,
-						    &packetFilterClrReq,
-						    sessionId)) {
+			pmo_ucfg_clear_pkt_filter(hdd_ctx->hdd_psoc,
+			    pmo_clr_pkt_fltr_param,
+			    sessionId)) {
 			hdd_err("Failure to execute Clear Filter");
-			return -EINVAL;
+			status = QDF_STATUS_E_INVAL;
+			goto out;
 		}
 		break;
 
@@ -11730,7 +11753,14 @@ static int wlan_hdd_set_filter(hdd_context_t *hdd_ctx,
 		       request->filter_action);
 		return -EINVAL;
 	}
-	return 0;
+
+out:
+	if (pmo_set_pkt_fltr_req)
+		qdf_mem_free(pmo_set_pkt_fltr_req);
+	if (pmo_clr_pkt_fltr_param)
+		qdf_mem_free(pmo_clr_pkt_fltr_param);
+
+	return status;
 }
 
 /**
