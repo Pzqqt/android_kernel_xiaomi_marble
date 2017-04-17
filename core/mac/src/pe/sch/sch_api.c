@@ -152,7 +152,7 @@ tSirRetStatus sch_post_message(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 
 void sch_send_start_scan_rsp(tpAniSirGlobal pMac)
 {
-	struct scheduler_msg msgQ;
+	struct scheduler_msg msgQ = {0};
 	uint32_t retCode;
 
 	msgQ.type = SIR_SCH_START_SCAN_RSP;
@@ -190,7 +190,7 @@ void sch_send_start_scan_rsp(tpAniSirGlobal pMac)
 tSirRetStatus sch_send_beacon_req(tpAniSirGlobal pMac, uint8_t *beaconPayload,
 				  uint16_t size, tpPESession psessionEntry)
 {
-	struct scheduler_msg msgQ;
+	struct scheduler_msg msgQ = {0};
 	tpSendbeaconParams beaconParams = NULL;
 	tSirRetStatus retCode;
 
@@ -317,7 +317,7 @@ uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal pMac,
 					    tpPESession psessionEntry,
 					    uint32_t *IeBitmap)
 {
-	struct scheduler_msg msgQ;
+	struct scheduler_msg msgQ = {0};
 	uint8_t *pFrame2Hal = psessionEntry->pSchProbeRspTemplate;
 	tpSendProbeRespParams pprobeRespParams = NULL;
 	uint32_t retCode = eSIR_FAILURE;

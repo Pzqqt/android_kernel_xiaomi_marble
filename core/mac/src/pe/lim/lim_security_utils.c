@@ -813,7 +813,7 @@ void lim_send_set_bss_key_req(tpAniSirGlobal pMac,
 			      tLimMlmSetKeysReq *pMlmSetKeysReq,
 			      tpPESession psessionEntry)
 {
-	struct scheduler_msg msgQ;
+	struct scheduler_msg msgQ = {0};
 	tpSetBssKeyParams pSetBssKeyParams = NULL;
 	tLimMlmSetKeysCnf mlmSetKeysCnf;
 	tSirRetStatus retCode;
@@ -926,7 +926,7 @@ void lim_send_set_sta_key_req(tpAniSirGlobal pMac,
 			      uint8_t defWEPIdx,
 			      tpPESession sessionEntry, bool sendRsp)
 {
-	struct scheduler_msg msgQ;
+	struct scheduler_msg msgQ = {0};
 	tpSetStaKeyParams pSetStaKeyParams = NULL;
 	tLimMlmSetKeysCnf mlmSetKeysCnf;
 	tSirRetStatus retCode;

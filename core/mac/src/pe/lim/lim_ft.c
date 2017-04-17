@@ -906,7 +906,7 @@ void lim_process_ft_aggr_qo_s_rsp(tpAniSirGlobal pMac,
 
 tSirRetStatus lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 {
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	tSirAggrQosReq *aggrQosReq = (tSirAggrQosReq *) pMsgBuf;
 	tpAggrAddTsParams pAggrAddTsParam;
 	tpPESession psessionEntry = NULL;

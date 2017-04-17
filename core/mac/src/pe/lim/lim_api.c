@@ -1095,7 +1095,7 @@ static QDF_STATUS pe_handle_mgmt_frame(struct wlan_objmgr_psoc *psoc,
 {
 	tpAniSirGlobal pMac;
 	tpSirMacMgmtHdr mHdr;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	cds_pkt_t *pVosPkt;
 	QDF_STATUS qdf_status;
 	uint8_t *pRxPacketInfo;
@@ -1781,7 +1781,7 @@ tSirRetStatus lim_update_short_slot(tpAniSirGlobal pMac,
 void lim_send_heart_beat_timeout_ind(tpAniSirGlobal pMac, tpPESession psessionEntry)
 {
 	uint32_t statusCode;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 
 	/* Prepare and post message to LIM Message Queue */
 	msg.type = (uint16_t) SIR_LIM_HEART_BEAT_TIMEOUT;

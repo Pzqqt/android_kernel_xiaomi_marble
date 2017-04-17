@@ -706,7 +706,7 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 	uint8_t numChan = pScan->base_channels.numChannels;
 	uint8_t num_channel = 0;
 	uint32_t bufLen;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	uint8_t i, j, social_channel[MAX_SOCIAL_CHANNELS] = { 1, 6, 11 };
 	uint8_t channel_state;
 	uint16_t unsafe_chan[NUM_CHANNELS];
@@ -6373,7 +6373,7 @@ static eCsrPhyMode csr_roamdot11mode_to_phymode(uint8_t dot11mode)
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 static void csr_roam_synch_clean_up (tpAniSirGlobal mac, uint8_t session_id)
 {
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	struct roam_offload_synch_fail *roam_offload_failed = NULL;
 	tCsrRoamSession *session = &mac->roam.roamSession[session_id];
 
@@ -15186,7 +15186,7 @@ QDF_STATUS csr_send_assoc_ind_to_upper_layer_cnf_msg(tpAniSirGlobal pMac,
 						     QDF_STATUS Halstatus,
 						     uint8_t sessionId)
 {
-	struct scheduler_msg msgQ;
+	struct scheduler_msg msgQ = {0};
 	tSirSmeAssocIndToUpperLayerCnf *pMsg;
 	uint8_t *pBuf;
 	tSirResultCodes statusCode;
@@ -15628,7 +15628,7 @@ QDF_STATUS csr_issue_add_sta_for_session_req(tpAniSirGlobal pMac,
 	struct add_sta_self_params *add_sta_self_req;
 	uint8_t nss_2g;
 	uint8_t nss_5g;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 
 	add_sta_self_req = qdf_mem_malloc(sizeof(struct add_sta_self_params));
 	if (NULL == add_sta_self_req) {
@@ -15889,7 +15889,7 @@ csr_issue_del_sta_for_session_req(tpAniSirGlobal pMac, uint32_t sessionId,
 				  void *pContext)
 {
 	struct del_sta_self_params *del_sta_self_req;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	del_sta_self_req = qdf_mem_malloc(sizeof(struct del_sta_self_params));
 	if (NULL == del_sta_self_req) {
@@ -16607,7 +16607,7 @@ QDF_STATUS csr_get_rssi(tpAniSirGlobal pMac,
 			int8_t lastRSSI, void *pContext, void *p_cds_context)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	uint32_t sessionId;
 
 	tAniGetRssiReq *pMsg;
@@ -16657,7 +16657,7 @@ QDF_STATUS csr_get_snr(tpAniSirGlobal pMac,
 		       uint8_t staId, struct qdf_mac_addr bssId, void *pContext)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	uint32_t sessionId;
 
 	tAniGetSnrReq *pMsg;
@@ -17934,7 +17934,7 @@ csr_roam_offload_per_scan(tpAniSirGlobal mac_ctx, uint8_t session_id)
 	tpCsrNeighborRoamControlInfo roam_info =
 		&mac_ctx->roam.neighborRoamInfo[session_id];
 	struct wmi_per_roam_config_req *req_buf;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 
 	/*
 	 * No need to update in case of stop command, FW takes care of stopping
@@ -19087,7 +19087,7 @@ QDF_STATUS csr_handoff_request(tpAniSirGlobal pMac,
 			       tCsrHandoffRequest *pHandoffInfo)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 
 	tAniHandoffReq *pMsg;
 	pMsg = qdf_mem_malloc(sizeof(tAniHandoffReq));
@@ -19834,7 +19834,7 @@ void csr_process_set_hw_mode(tpAniSirGlobal mac, tSmeCmd *command)
 	uint32_t len;
 	struct s_sir_set_hw_mode *cmd = NULL;
 	QDF_STATUS status;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	struct sir_set_hw_mode_resp *param;
 	enum policy_mgr_hw_mode_change hw_mode;
 
@@ -19945,7 +19945,7 @@ void csr_process_set_dual_mac_config(tpAniSirGlobal mac, tSmeCmd *command)
 	uint32_t len;
 	struct sir_set_dual_mac_cfg *cmd;
 	QDF_STATUS status;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	struct sir_dual_mac_config_resp *param;
 
 	/* Setting MAC configuration is for the entire system.
@@ -20020,7 +20020,7 @@ void csr_process_set_antenna_mode(tpAniSirGlobal mac, tSmeCmd *command)
 	uint32_t len;
 	struct sir_set_antenna_mode *cmd;
 	QDF_STATUS status;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	struct sir_antenna_mode_resp *param;
 
 	/* Setting MAC configuration is for the entire system.
@@ -20089,7 +20089,7 @@ void csr_process_nss_update_req(tpAniSirGlobal mac, tSmeCmd *command)
 	uint32_t len;
 	struct sir_nss_update_request *msg;
 	QDF_STATUS status;
-	struct scheduler_msg msg_return;
+	struct scheduler_msg msg_return = {0};
 	struct sir_beacon_tx_complete_rsp *param;
 	tCsrRoamSession *session;
 

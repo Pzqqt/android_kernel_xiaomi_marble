@@ -151,7 +151,7 @@ rrm_send_set_max_tx_power_req(tpAniSirGlobal pMac, int8_t txPower,
 {
 	tpMaxTxPowerParams pMaxTxParams;
 	tSirRetStatus retCode = eSIR_SUCCESS;
-	struct scheduler_msg msgQ;
+	struct scheduler_msg msgQ = {0};
 
 	if (pSessionEntry == NULL) {
 		PELOGE(lim_log(pMac, LOGE, FL("Invalid parameters"));)

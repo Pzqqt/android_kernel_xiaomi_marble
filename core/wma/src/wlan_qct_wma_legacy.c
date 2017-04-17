@@ -108,7 +108,7 @@ static tSirRetStatus wma_post_cfg_msg(tpAniSirGlobal pMac,
 
 tSirRetStatus u_mac_post_ctrl_msg(void *pSirGlobal, tSirMbMsg *pMb)
 {
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	tpAniSirGlobal pMac = (tpAniSirGlobal) pSirGlobal;
 
 	tSirMbMsg *pMbLocal;

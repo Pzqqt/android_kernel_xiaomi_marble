@@ -95,7 +95,7 @@ tSirRetStatus lim_send_cf_params(tpAniSirGlobal pMac, uint8_t bssIdx,
 {
 	tpUpdateCFParams pCFParams = NULL;
 	tSirRetStatus retCode = eSIR_SUCCESS;
-	struct scheduler_msg msgQ;
+	struct scheduler_msg msgQ = {0};
 
 	pCFParams = qdf_mem_malloc(sizeof(tUpdateCFParams));
 	if (NULL == pCFParams) {
@@ -141,7 +141,7 @@ tSirRetStatus lim_send_beacon_params(tpAniSirGlobal pMac,
 {
 	tpUpdateBeaconParams pBcnParams = NULL;
 	tSirRetStatus retCode = eSIR_SUCCESS;
-	struct scheduler_msg msgQ;
+	struct scheduler_msg msgQ = {0};
 
 	pBcnParams = qdf_mem_malloc(sizeof(*pBcnParams));
 	if (NULL == pBcnParams) {
@@ -209,7 +209,7 @@ tSirRetStatus lim_send_switch_chnl_params(tpAniSirGlobal pMac,
 					  uint32_t dfs_regdomain)
 {
 	tpSwitchChannelParams pChnlParams = NULL;
-	struct scheduler_msg msgQ;
+	struct scheduler_msg msgQ = {0};
 	tpPESession pSessionEntry;
 	pSessionEntry = pe_find_session_by_session_id(pMac, peSessionId);
 	if (pSessionEntry == NULL) {
@@ -314,7 +314,7 @@ tSirRetStatus lim_send_edca_params(tpAniSirGlobal pMac,
 {
 	tEdcaParams *pEdcaParams = NULL;
 	tSirRetStatus retCode = eSIR_SUCCESS;
-	struct scheduler_msg msgQ;
+	struct scheduler_msg msgQ = {0};
 	uint8_t i;
 
 	pEdcaParams = qdf_mem_malloc(sizeof(tEdcaParams));
@@ -469,7 +469,7 @@ tSirRetStatus lim_set_link_state(tpAniSirGlobal pMac, tSirLinkState state,
 				 tpSetLinkStateCallback callback,
 				 void *callbackArg)
 {
-	struct scheduler_msg msgQ;
+	struct scheduler_msg msgQ = {0};
 	tSirRetStatus retCode;
 	tpLinkStateParams pLinkStateParams = NULL;
 	/* Allocate memory. */
@@ -508,7 +508,7 @@ extern tSirRetStatus lim_set_link_state_ft(tpAniSirGlobal pMac, tSirLinkState
 					   tSirMacAddr selfMacAddr, int ft,
 					   tpPESession psessionEntry)
 {
-	struct scheduler_msg msgQ;
+	struct scheduler_msg msgQ = {0};
 	tSirRetStatus retCode;
 	tpLinkStateParams pLinkStateParams = NULL;
 	/* Allocate memory. */
@@ -556,7 +556,7 @@ tSirRetStatus lim_send_beacon_filter_info(tpAniSirGlobal pMac,
 {
 	tpBeaconFilterMsg pBeaconFilterMsg = NULL;
 	tSirRetStatus retCode = eSIR_SUCCESS;
-	struct scheduler_msg msgQ;
+	struct scheduler_msg msgQ = {0};
 	uint8_t *ptr;
 	uint32_t i;
 	uint32_t msgSize;
@@ -620,7 +620,7 @@ tSirRetStatus lim_send_mode_update(tpAniSirGlobal pMac,
 {
 	tUpdateVHTOpMode *pVhtOpMode = NULL;
 	tSirRetStatus retCode = eSIR_SUCCESS;
-	struct scheduler_msg msgQ;
+	struct scheduler_msg msgQ = {0};
 
 	pVhtOpMode = qdf_mem_malloc(sizeof(tUpdateVHTOpMode));
 	if (NULL == pVhtOpMode) {
@@ -657,7 +657,7 @@ tSirRetStatus lim_send_rx_nss_update(tpAniSirGlobal pMac,
 {
 	tUpdateRxNss *pRxNss = NULL;
 	tSirRetStatus retCode = eSIR_SUCCESS;
-	struct scheduler_msg msgQ;
+	struct scheduler_msg msgQ = {0};
 
 	pRxNss = qdf_mem_malloc(sizeof(tUpdateRxNss));
 	if (NULL == pRxNss) {
@@ -692,7 +692,7 @@ tSirRetStatus lim_set_membership(tpAniSirGlobal pMac,
 {
 	tUpdateMembership *pMembership = NULL;
 	tSirRetStatus retCode = eSIR_SUCCESS;
-	struct scheduler_msg msgQ;
+	struct scheduler_msg msgQ = {0};
 
 	pMembership = qdf_mem_malloc(sizeof(tUpdateMembership));
 	if (NULL == pMembership) {
@@ -729,7 +729,7 @@ tSirRetStatus lim_set_user_pos(tpAniSirGlobal pMac,
 {
 	tUpdateUserPos *pUserPos = NULL;
 	tSirRetStatus retCode = eSIR_SUCCESS;
-	struct scheduler_msg msgQ;
+	struct scheduler_msg msgQ = {0};
 
 	pUserPos = qdf_mem_malloc(sizeof(tUpdateUserPos));
 	if (NULL == pUserPos) {
@@ -776,7 +776,7 @@ tSirRetStatus lim_send_exclude_unencrypt_ind(tpAniSirGlobal pMac,
 					     tpPESession psessionEntry)
 {
 	tSirRetStatus retCode = eSIR_SUCCESS;
-	struct scheduler_msg msgQ;
+	struct scheduler_msg msgQ = {0};
 	tSirWlanExcludeUnencryptParam *pExcludeUnencryptParam;
 
 	pExcludeUnencryptParam =
@@ -822,7 +822,7 @@ tSirRetStatus lim_send_ht40_obss_scanind(tpAniSirGlobal mac_ctx,
 	enum eSirRetStatus ret = eSIR_SUCCESS;
 	struct obss_ht40_scanind *ht40_obss_scanind;
 	uint32_t channelnum;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	uint8_t chan_list[WNI_CFG_VALID_CHANNEL_LIST_LEN];
 	uint8_t channel24gnum, count;
 

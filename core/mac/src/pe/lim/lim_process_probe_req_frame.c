@@ -651,7 +651,7 @@ lim_send_sme_probe_req_ind(tpAniSirGlobal pMac,
 			   uint32_t ProbeReqIELen, tpPESession psessionEntry)
 {
 	tSirSmeProbeReqInd *pSirSmeProbeReqInd;
-	struct scheduler_msg msgQ;
+	struct scheduler_msg msgQ = {0};
 
 	pSirSmeProbeReqInd = qdf_mem_malloc(sizeof(tSirSmeProbeReqInd));
 	if (NULL == pSirSmeProbeReqInd) {

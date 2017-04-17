@@ -602,7 +602,7 @@ QDF_STATUS lim_handle_ndp_event_message(tpAniSirGlobal mac_ctx,
 static QDF_STATUS lim_process_sme_ndp_initiator_req(tpAniSirGlobal mac_ctx,
 						    void *ndp_msg)
 {
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	QDF_STATUS status;
 
 	struct sir_sme_ndp_initiator_req *sme_req =
@@ -651,7 +651,7 @@ send_initiator_rsp:
 static QDF_STATUS lim_process_sme_ndp_responder_req(tpAniSirGlobal mac_ctx,
 	struct sir_sme_ndp_responder_req *lim_msg)
 {
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct ndp_responder_req *responder_req;
 
@@ -701,7 +701,7 @@ send_failure_rsp:
 static QDF_STATUS lim_process_sme_ndp_data_end_req(tpAniSirGlobal mac_ctx,
 					struct sir_sme_ndp_end_req *sme_msg)
 {
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	uint32_t len;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 

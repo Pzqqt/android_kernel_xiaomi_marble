@@ -794,7 +794,7 @@ lim_fill_assoc_ind_params(tpAniSirGlobal mac_ctx,
 void lim_process_mlm_assoc_ind(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 {
 	uint32_t len;
-	struct scheduler_msg msgQ;
+	struct scheduler_msg msgQ = {0};
 	tSirSmeAssocInd *pSirSmeAssocInd;
 	tpDphHashNode pStaDs = 0;
 	tpPESession psessionEntry;
@@ -3116,7 +3116,7 @@ void lim_process_switch_channel_rsp(tpAniSirGlobal pMac, void *body)
 void lim_send_beacon_ind(tpAniSirGlobal pMac, tpPESession psessionEntry)
 {
 	tBeaconGenParams *pBeaconGenParams = NULL;
-	struct scheduler_msg limMsg;
+	struct scheduler_msg limMsg = {0};
 	/** Allocate the Memory for Beacon Pre Message and for Stations in PoweSave*/
 	if (psessionEntry == NULL) {
 		pe_err("Error:Unable to get the PESessionEntry");

@@ -3237,7 +3237,7 @@ tSirRetStatus lim_process_sme_tdls_link_establish_req(tpAniSirGlobal mac_ctx,
 	tpPESession session_entry;
 	uint8_t session_id;
 	tpTdlsLinkEstablishParams tdls_req_params;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	uint16_t peer_idx = 0;
 	tpDphHashNode stads = NULL;
 	uint32_t self_num_chan = WNI_CFG_VALID_CHANNEL_LIST_LEN;

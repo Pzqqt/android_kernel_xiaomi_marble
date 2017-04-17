@@ -482,7 +482,7 @@ tSirResultCodes
 lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 		tLimMlmStartReq *mlm_start_req, tpPESession session)
 {
-	struct scheduler_msg msg_buf;
+	struct scheduler_msg msg_buf = {0};
 	tpAddBssParams addbss_param = NULL;
 	uint32_t retcode;
 	bool is_ch_dfs = false;

@@ -134,11 +134,11 @@ static void lim_process_ext_change_channel(tpAniSirGlobal mac_ctx,
 static QDF_STATUS lim_process_set_hw_mode(tpAniSirGlobal mac, uint32_t *msg)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	struct policy_mgr_hw_mode *req_msg;
 	uint32_t len;
 	struct s_sir_set_hw_mode *buf;
-	struct scheduler_msg resp_msg;
+	struct scheduler_msg resp_msg = {0};
 	struct sir_set_hw_mode_resp *param;
 
 	buf = (struct s_sir_set_hw_mode *) msg;
@@ -205,11 +205,11 @@ static QDF_STATUS lim_process_set_dual_mac_cfg_req(tpAniSirGlobal mac,
 		uint32_t *msg)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	struct sir_dual_mac_config *req_msg;
 	uint32_t len;
 	struct sir_set_dual_mac_cfg *buf;
-	struct scheduler_msg resp_msg;
+	struct scheduler_msg resp_msg = {0};
 	struct sir_dual_mac_config_resp *param;
 
 	buf = (struct sir_set_dual_mac_cfg *) msg;
@@ -277,10 +277,10 @@ static QDF_STATUS lim_process_set_antenna_mode_req(tpAniSirGlobal mac,
 		uint32_t *msg)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	struct sir_antenna_mode_param *req_msg;
 	struct sir_set_antenna_mode *buf;
-	struct scheduler_msg resp_msg;
+	struct scheduler_msg resp_msg = {0};
 	struct sir_antenna_mode_resp *param;
 
 	buf = (struct sir_set_antenna_mode *) msg;
@@ -547,7 +547,7 @@ __lim_is_defered_msg_for_radar(tpAniSirGlobal mac_ctx,
 
 static bool __lim_process_sme_sys_ready_ind(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 {
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	tSirSmeReadyReq *ready_req = (tSirSmeReadyReq *) pMsgBuf;
 
 	msg.type = WMA_SYS_READY_IND;
@@ -1233,7 +1233,7 @@ static QDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 {
 	tSirScanOffloadReq *pScanOffloadReq;
 	uint8_t *p;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	uint16_t i, len;
 	uint16_t addn_ie_len = 0;
 	tSirRetStatus status, rc = eSIR_SUCCESS;
@@ -3995,7 +3995,7 @@ static void
 __lim_process_sme_get_statistics_request(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 {
 	tpAniGetPEStatsReq pPEStatsReq;
-	struct scheduler_msg msgQ;
+	struct scheduler_msg msgQ = {0};
 
 	pPEStatsReq = (tpAniGetPEStatsReq) pMsgBuf;
 
@@ -4028,7 +4028,7 @@ __lim_process_sme_get_statistics_request(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 static void
 __lim_process_sme_get_tsm_stats_request(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 {
-	struct scheduler_msg msgQ;
+	struct scheduler_msg msgQ = {0};
 
 	msgQ.type = WMA_TSM_STATS_REQ;
 	msgQ.reserved = 0;
@@ -4094,7 +4094,7 @@ lim_send_vdev_restart(tpAniSirGlobal pMac,
 		      tpPESession psessionEntry, uint8_t sessionId)
 {
 	tpHalHiddenSsidVdevRestart pHalHiddenSsidVdevRestart = NULL;
-	struct scheduler_msg msgQ;
+	struct scheduler_msg msgQ = {0};
 	tSirRetStatus retCode = eSIR_SUCCESS;
 
 	if (psessionEntry == NULL) {
@@ -4143,7 +4143,7 @@ static void __lim_process_roam_scan_offload_req(tpAniSirGlobal mac_ctx,
 						uint32_t *msg_buf)
 {
 	tpPESession pe_session;
-	struct scheduler_msg wma_msg;
+	struct scheduler_msg wma_msg = {0};
 	tSirRetStatus status;
 	tSirRoamOffloadScanReq *req_buffer;
 	uint16_t local_ie_len;
@@ -4383,7 +4383,7 @@ static void __lim_process_sme_set_ht2040_mode(tpAniSirGlobal pMac,
 	tpSirSetHT2040Mode pSetHT2040Mode;
 	tpPESession psessionEntry;
 	uint8_t sessionId = 0;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	tUpdateVHTOpMode *pHtOpMode = NULL;
 	uint16_t staId = 0;
 	tpDphHashNode pStaDs = NULL;
@@ -4546,7 +4546,7 @@ lim_send_set_max_tx_power_req(tpAniSirGlobal pMac, int8_t txPower,
 {
 	tpMaxTxPowerParams pMaxTxParams = NULL;
 	tSirRetStatus retCode = eSIR_SUCCESS;
-	struct scheduler_msg msgQ;
+	struct scheduler_msg msgQ = {0};
 
 	if (pSessionEntry == NULL) {
 		lim_log(pMac, LOGE, FL("Inavalid parameters"));
@@ -4894,7 +4894,7 @@ static void lim_set_pdev_ht_ie(tpAniSirGlobal mac_ctx, uint8_t pdev_id,
 		uint8_t nss)
 {
 	struct set_ie_param *ie_params;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	tSirRetStatus rc = eSIR_SUCCESS;
 	uint8_t *p_ie = NULL;
 	tHtCaps *p_ht_cap;
@@ -4968,7 +4968,7 @@ static void lim_set_pdev_vht_ie(tpAniSirGlobal mac_ctx, uint8_t pdev_id,
 		uint8_t nss)
 {
 	struct set_ie_param *ie_params;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	tSirRetStatus rc = eSIR_SUCCESS;
 	uint8_t *p_ie = NULL;
 	tSirMacVHTCapabilityInfo *vht_cap;

@@ -96,7 +96,7 @@ void sme_nan_deregister_callback(tHalHandle h_hal)
  *****************************************************************************/
 QDF_STATUS sme_nan_request(tpNanRequestReq input)
 {
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	tpNanRequest data;
 	size_t data_len;
 

@@ -915,7 +915,7 @@ lim_send_hal_msg_add_ts(tpAniSirGlobal pMac,
 			uint8_t tspecIdx, tSirMacTspecIE tspecIE, uint8_t sessionId)
 #endif
 {
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	tpAddTsParams pAddTsParam;
 
 	tpPESession psessionEntry = pe_find_session_by_session_id(pMac, sessionId);
@@ -982,7 +982,7 @@ lim_send_hal_msg_del_ts(tpAniSirGlobal pMac,
 			uint8_t tspecIdx,
 			tSirDeltsReqInfo delts, uint8_t sessionId, uint8_t *bssId)
 {
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	tpDelTsParams pDelTsParam;
 	tpPESession psessionEntry = NULL;
 

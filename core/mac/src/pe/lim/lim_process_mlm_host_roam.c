@@ -606,7 +606,7 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 	tLimMlmReassocReq *pMlmReassocReq;
 	uint16_t caps;
 	uint32_t val;
-	struct scheduler_msg msgQ;
+	struct scheduler_msg msgQ = {0};
 	tSirRetStatus retCode;
 	uint32_t teleBcnEn = 0;
 

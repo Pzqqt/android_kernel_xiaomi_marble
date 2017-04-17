@@ -45,7 +45,7 @@
  */
 static QDF_STATUS sme_post_ps_msg_to_wma(uint16_t type, void *body)
 {
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 
 	msg.type = type;
 	msg.reserved = 0;
@@ -686,7 +686,7 @@ QDF_STATUS sme_set_ps_host_offload(tHalHandle hal_ctx,
 		uint8_t session_id)
 {
 	tpSirHostOffloadReq request_buf;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_ctx);
 	tCsrRoamSession *session = CSR_GET_SESSION(mac_ctx, session_id);
 
@@ -746,7 +746,7 @@ QDF_STATUS sme_set_ps_ns_offload(tHalHandle hal_ctx,
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_ctx);
 	tpSirHostOffloadReq request_buf;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	tCsrRoamSession *session = CSR_GET_SESSION(mac_ctx, session_id);
 
 	if (NULL == session) {

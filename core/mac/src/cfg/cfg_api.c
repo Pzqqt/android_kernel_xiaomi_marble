@@ -912,7 +912,7 @@ void cfg_cleanup(tpAniSirGlobal pMac)
 static void notify(tpAniSirGlobal pMac, uint16_t cfgId, uint32_t ntfMask)
 {
 
-	struct scheduler_msg mmhMsg;
+	struct scheduler_msg mmhMsg = {0};
 
 	mmhMsg.type = SIR_CFG_PARAM_UPDATE_IND;
 	mmhMsg.bodyval = (uint32_t) cfgId;

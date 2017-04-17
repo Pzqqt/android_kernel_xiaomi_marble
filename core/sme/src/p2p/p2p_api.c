@@ -331,7 +331,7 @@ QDF_STATUS p2p_cancel_remain_on_channel(tHalHandle hHal,
 QDF_STATUS p2p_set_ps(tHalHandle hHal, tP2pPsConfig *pNoA)
 {
 	tpP2pPsConfig pNoAParam;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 

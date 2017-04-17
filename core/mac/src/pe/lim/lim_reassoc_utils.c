@@ -438,7 +438,7 @@ tSirRetStatus lim_add_ft_sta_self(tpAniSirGlobal mac_ctx, uint16_t assoc_id,
 {
 	tpAddStaParams add_sta_params = NULL;
 	tSirRetStatus ret_code = eSIR_SUCCESS;
-	struct scheduler_msg msg_q;
+	struct scheduler_msg msg_q = {0};
 
 	add_sta_params = session_entry->ftPEContext.pAddStaReq;
 	add_sta_params->assocId = assoc_id;

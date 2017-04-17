@@ -1681,7 +1681,7 @@ QDF_STATUS sme_set_plm_request(tHalHandle hHal, tpSirPlmReq pPlmReq)
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	uint8_t ch_list[WNI_CFG_VALID_CHANNEL_LIST] = { 0 };
 	uint8_t count, valid_count = 0;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, pPlmReq->sessionId);
 
 	status = sme_acquire_global_lock(&pMac->sme);
@@ -2907,7 +2907,7 @@ QDF_STATUS sme_scan_request(tHalHandle hal, uint8_t session_id,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	struct ani_scan_req *scan_msg;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	uint32_t scan_req_id, scan_count;
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
@@ -4558,7 +4558,7 @@ QDF_STATUS sme_wow_add_pattern(tHalHandle hal,
 	tpAniSirGlobal pMac = PMAC_STRUCT(hal);
 	struct wow_add_pattern *ptrn;
 	tSirRetStatus ret_code = eSIR_SUCCESS;
-	struct scheduler_msg msg_q;
+	struct scheduler_msg msg_q = {0};
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
 			TRACE_CODE_SME_RX_HDD_WOWL_ADDBCAST_PATTERN, session_id,
 			0));
@@ -4597,7 +4597,7 @@ QDF_STATUS sme_wow_delete_pattern(tHalHandle hal,
 	tpAniSirGlobal pMac = PMAC_STRUCT(hal);
 	struct wow_delete_pattern *delete_ptrn;
 	tSirRetStatus ret_code = eSIR_SUCCESS;
-	struct scheduler_msg msg_q;
+	struct scheduler_msg msg_q = {0};
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
 			 TRACE_CODE_SME_RX_HDD_WOWL_DELBCAST_PATTERN, sessionId,
 			 0));
@@ -4805,7 +4805,7 @@ QDF_STATUS sme_roam_set_key(tHalHandle hal,  uint8_t session_id,
 QDF_STATUS sme_roam_set_default_key_index(tHalHandle hal, uint8_t session_id,
 					  uint8_t default_idx)
 {
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	struct wep_update_default_key_idx *update_key;
 
 	update_key = qdf_mem_malloc(sizeof(*update_key));
@@ -4943,7 +4943,7 @@ QDF_STATUS sme_get_link_status(tHalHandle hHal,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tAniGetLinkStatus *pMsg;
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
@@ -5081,7 +5081,7 @@ QDF_STATUS sme_change_country_code(tHalHandle hHal,
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	tAniChangeCountryCodeReq *pMsg;
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
@@ -5155,7 +5155,7 @@ QDF_STATUS sme_generic_change_country_code(tHalHandle hHal,
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	tAniGenericChangeCountryCodeReq *pMsg;
 
 	if (NULL == pMac) {
@@ -5221,7 +5221,7 @@ QDF_STATUS sme_dhcp_start_ind(tHalHandle hHal,
 	QDF_STATUS status;
 	QDF_STATUS qdf_status;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	tAniDHCPInd *pMsg;
 	tCsrRoamSession *pSession;
 
@@ -5293,7 +5293,7 @@ QDF_STATUS sme_dhcp_stop_ind(tHalHandle hHal,
 	QDF_STATUS status;
 	QDF_STATUS qdf_status;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	tAniDHCPInd *pMsg;
 	tCsrRoamSession *pSession;
 
@@ -5360,7 +5360,7 @@ QDF_STATUS sme_tx_fail_monitor_start_stop_ind(tHalHandle hHal, uint8_t tx_fail_c
 	QDF_STATUS status;
 	QDF_STATUS qdf_status;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	tAniTXFailMonitorInd *pMsg;
 
 	status = sme_acquire_global_lock(&pMac->sme);
@@ -5891,7 +5891,7 @@ QDF_STATUS sme_set_keep_alive(tHalHandle hHal, uint8_t session_id,
 			      tpSirKeepAliveReq request)
 {
 	tpSirKeepAliveReq request_buf;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, session_id);
 
@@ -6200,7 +6200,7 @@ QDF_STATUS sme_remain_on_channel(tHalHandle hHal, uint8_t session_id,
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hHal);
 	uint32_t san_req_id, scan_count;
 	struct ani_roc_req *roc_msg;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
@@ -6395,7 +6395,7 @@ QDF_STATUS sme_configure_ext_wow(tHalHandle hHal,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	tpSirExtWoWParams MsgPtr = qdf_mem_malloc(sizeof(*MsgPtr));
 
 	if (!MsgPtr)
@@ -6454,7 +6454,7 @@ QDF_STATUS sme_configure_app_type1_params(tHalHandle hHal,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	tpSirAppType1Params MsgPtr = qdf_mem_malloc(sizeof(*MsgPtr));
 
 	if (!MsgPtr)
@@ -6506,7 +6506,7 @@ QDF_STATUS sme_configure_app_type2_params(tHalHandle hHal,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	tpSirAppType2Params MsgPtr = qdf_mem_malloc(sizeof(*MsgPtr));
 
 	if (!MsgPtr)
@@ -7008,7 +7008,7 @@ QDF_STATUS sme_8023_multicast_list(tHalHandle hHal, uint8_t sessionId,
 				   tpSirRcvFltMcAddrList pMulticastAddrs)
 {
 	tpSirRcvFltMcAddrList request_buf;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tCsrRoamSession *pSession = NULL;
 
@@ -7080,7 +7080,7 @@ QDF_STATUS sme_receive_filter_set_filter(tHalHandle hHal,
 {
 	tpSirRcvPktFilterCfgType request_buf;
 	int32_t allocSize;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
 	uint8_t idx = 0;
@@ -7177,7 +7177,7 @@ QDF_STATUS sme_receive_filter_clear_filter(tHalHandle hHal,
 					   pRcvFltPktClearParam, uint8_t sessionId)
 {
 	tpSirRcvFltPktClearParam request_buf;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
 
@@ -7309,7 +7309,7 @@ QDF_STATUS sme_get_freq_band(tHalHandle hHal, eCsrBand *pBand)
    ----------------------------------------------------------------------------*/
 QDF_STATUS sme_set_max_tx_power_per_band(eCsrBand band, int8_t dB)
 {
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	tpMaxTxPowerPerBandParams pMaxTxPowerPerBandParams = NULL;
 
 	pMaxTxPowerPerBandParams =
@@ -7358,7 +7358,7 @@ QDF_STATUS sme_set_max_tx_power_per_band(eCsrBand band, int8_t dB)
 QDF_STATUS sme_set_max_tx_power(tHalHandle hHal, struct qdf_mac_addr pBssid,
 				struct qdf_mac_addr pSelfMacAddress, int8_t dB)
 {
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	tpMaxTxPowerParams pMaxTxParams = NULL;
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
@@ -7403,7 +7403,7 @@ QDF_STATUS sme_set_max_tx_power(tHalHandle hHal, struct qdf_mac_addr pBssid,
    ---------------------------------------------------------------------------*/
 QDF_STATUS sme_set_custom_mac_addr(tSirMacAddr customMacAddr)
 {
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	tSirMacAddr *pBaseMacAddr;
 
 	pBaseMacAddr = qdf_mem_malloc(sizeof(tSirMacAddr));
@@ -7445,7 +7445,7 @@ QDF_STATUS sme_set_tx_power(tHalHandle hHal, uint8_t sessionId,
 			   struct qdf_mac_addr pBSSId,
 			   enum tQDF_ADAPTER_MODE dev_mode, int dBm)
 {
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	tpMaxTxPowerParams pTxParams = NULL;
 	int8_t power = (int8_t) dBm;
 
@@ -7538,7 +7538,7 @@ QDF_STATUS sme_set_tm_level(tHalHandle hHal, uint16_t newTMLevel, uint16_t tmMod
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	tAniSetTmLevelReq *setTmLevelReq = NULL;
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
@@ -9504,7 +9504,7 @@ QDF_STATUS sme_update_fw_tdls_state(tHalHandle hHal, void *psmeTdlsParams,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = NULL;
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 
 	pMac = PMAC_STRUCT(hHal);
 	if (NULL == pMac) {
@@ -9551,7 +9551,7 @@ QDF_STATUS sme_update_tdls_peer_state(tHalHandle hHal,
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tTdlsPeerStateParams *pTdlsPeerStateParams = NULL;
 	tTdlsPeerCapParams *peer_cap = NULL;
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	uint8_t num;
 	uint8_t peer_chan_len;
 	uint8_t chanId;
@@ -9697,7 +9697,7 @@ QDF_STATUS sme_send_tdls_chan_switch_req(tHalHandle hal,
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac = PMAC_STRUCT(hal);
 	tdls_chan_switch_params *chan_switch_params = NULL;
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
 			 TRACE_CODE_SME_RX_HDD_TDLS_CHAN_SWITCH_REQ,
@@ -9772,7 +9772,7 @@ QDF_STATUS sme_get_link_speed(tHalHandle hHal, tSirLinkSpeedInfo *lsReq,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac;
 	tSirLinkSpeedInfo *req;
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 
 	if (!hHal || !pCallbackfn || !lsReq) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -9913,7 +9913,7 @@ QDF_STATUS sme_ipa_offload_enable_disable(tHalHandle hal, uint8_t session_id,
 	tpAniSirGlobal pMac = PMAC_STRUCT(hal);
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct sir_ipa_offload_enable_disable *request_buf;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_STATUS_SUCCESS == status) {
@@ -10000,7 +10000,7 @@ sme_add_periodic_tx_ptrn(tHalHandle hal,
 	QDF_STATUS status   = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac  = PMAC_STRUCT(hal);
 	struct sSirAddPeriodicTxPtrn *req_msg;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 
 	SME_ENTER();
 
@@ -10049,7 +10049,7 @@ sme_del_periodic_tx_ptrn(tHalHandle hal,
 	QDF_STATUS status    = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac   = PMAC_STRUCT(hal);
 	struct sSirDelPeriodicTxPtrn *req_msg;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 
 	SME_ENTER();
 
@@ -10095,7 +10095,7 @@ QDF_STATUS sme_enable_rmc(tHalHandle hHal, uint32_t sessionId)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 
 	SME_ENTER();
@@ -10128,7 +10128,7 @@ QDF_STATUS sme_disable_rmc(tHalHandle hHal, uint32_t sessionId)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 
 	SME_ENTER();
@@ -10162,7 +10162,7 @@ QDF_STATUS sme_send_rmc_action_period(tHalHandle hHal, uint32_t sessionId)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_STATUS_SUCCESS == status) {
@@ -10199,7 +10199,7 @@ QDF_STATUS sme_request_ibss_peer_info(tHalHandle hHal, void *pUserData,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	tSirIbssGetPeerInfoReqParams *pIbssInfoReqParams;
 
 	status = sme_acquire_global_lock(&pMac->sme);
@@ -10250,7 +10250,7 @@ QDF_STATUS sme_send_cesium_enable_ind(tHalHandle hHal, uint32_t sessionId)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_STATUS_SUCCESS == status) {
@@ -10909,7 +10909,7 @@ void sme_get_recovery_stats(tHalHandle hHal)
 
 QDF_STATUS sme_notify_modem_power_state(tHalHandle hHal, uint32_t value)
 {
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	tpSirModemPowerStateInd request_buf;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
@@ -10948,7 +10948,7 @@ QDF_STATUS sme_notify_ht2040_mode(tHalHandle hHal, uint16_t staId,
 				  uint8_t sessionId,
 				  uint8_t channel_type)
 {
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	tUpdateVHTOpMode *pHtOpMode = NULL;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
@@ -11166,7 +11166,7 @@ QDF_STATUS sme_send_rate_update_ind(tHalHandle hHal,
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	QDF_STATUS status;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	tSirRateUpdateInd *rate_upd = qdf_mem_malloc(sizeof(tSirRateUpdateInd));
 
 	if (rate_upd == NULL) {
@@ -11267,7 +11267,7 @@ QDF_STATUS sme_update_short_retry_limit_threshold(tHalHandle hal_handle,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct sme_short_retry_limit *srl;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 
 	srl = qdf_mem_malloc(sizeof(*srl));
 	if (NULL == srl) {
@@ -11313,7 +11313,7 @@ QDF_STATUS sme_update_long_retry_limit_threshold(tHalHandle hal_handle,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct sme_long_retry_limit *lrl;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 
 	lrl = qdf_mem_malloc(sizeof(*lrl));
 	if (NULL == lrl) {
@@ -11466,7 +11466,7 @@ QDF_STATUS sme_set_auto_shutdown_timer(tHalHandle hHal, uint32_t timer_val)
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tSirAutoShutdownCmdParams *auto_sh_cmd;
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_STATUS_SUCCESS == status) {
@@ -11545,7 +11545,7 @@ QDF_STATUS sme_ch_avoid_update_req(tHalHandle hHal)
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tSirChAvoidUpdateReq *cauReq;
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_STATUS_SUCCESS == status) {
@@ -11595,7 +11595,7 @@ QDF_STATUS sme_ch_avoid_update_req(tHalHandle hHal)
  */
 QDF_STATUS sme_set_miracast(tHalHandle hal, uint8_t filter_type)
 {
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	uint32_t *val;
 	tpAniSirGlobal mac_ptr = PMAC_STRUCT(hal);
 
@@ -11637,7 +11637,7 @@ QDF_STATUS sme_set_miracast(tHalHandle hal, uint8_t filter_type)
  */
 QDF_STATUS sme_set_mas(uint32_t val)
 {
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	uint32_t *ptr_val;
 
 	ptr_val = qdf_mem_malloc(sizeof(*ptr_val));
@@ -11809,7 +11809,7 @@ QDF_STATUS sme_roam_csa_ie_request(tHalHandle hHal, struct qdf_mac_addr bssid,
 QDF_STATUS sme_init_thermal_info(tHalHandle hHal, tSmeThermalParams thermalParam)
 {
 	t_thermal_mgmt *pWmaParam;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
 	pWmaParam = (t_thermal_mgmt *) qdf_mem_malloc(sizeof(t_thermal_mgmt));
@@ -11894,7 +11894,7 @@ void sme_add_set_thermal_level_callback(tHalHandle hal,
  */
 QDF_STATUS sme_set_thermal_level(tHalHandle hal, uint8_t level)
 {
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	tpAniSirGlobal pMac = PMAC_STRUCT(hal);
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 
@@ -11928,7 +11928,7 @@ QDF_STATUS sme_txpower_limit(tHalHandle hHal, tSirTxPowerLimit *psmetx)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tSirTxPowerLimit *tx_power_limit;
 
@@ -11992,7 +11992,7 @@ QDF_STATUS sme_ap_disable_intra_bss_fwd(tHalHandle hHal, uint8_t sessionId,
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	int status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	tpDisableIntraBssFwd pSapDisableIntraFwd = NULL;
 
 	/* Prepare the request to send to SME. */
@@ -12077,7 +12077,7 @@ void sme_stats_ext_deregister_callback(tHalHandle h_hal)
 ******************************************************************************/
 QDF_STATUS sme_stats_ext_request(uint8_t session_id, tpStatsExtRequestReq input)
 {
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	tpStatsExtRequest data;
 	size_t data_len;
 
@@ -12493,7 +12493,7 @@ QDF_STATUS sme_ext_scan_get_capabilities(tHalHandle hHal,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
@@ -12525,7 +12525,7 @@ QDF_STATUS sme_ext_scan_start(tHalHandle hHal,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
@@ -12556,7 +12556,7 @@ QDF_STATUS sme_ext_scan_stop(tHalHandle hHal, tSirExtScanStopReqParams *pStopReq
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
@@ -12588,7 +12588,7 @@ QDF_STATUS sme_set_bss_hotlist(tHalHandle hHal,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
@@ -12621,7 +12621,7 @@ QDF_STATUS sme_reset_bss_hotlist(tHalHandle hHal,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
@@ -12655,7 +12655,7 @@ QDF_STATUS sme_set_wisa_params(tHalHandle hal,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac = PMAC_STRUCT(hal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	struct sir_wisa_params *cds_msg_wisa_params;
 
 	cds_msg_wisa_params = qdf_mem_malloc(sizeof(struct sir_wisa_params));
@@ -12687,7 +12687,7 @@ QDF_STATUS sme_set_significant_change(tHalHandle hHal,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
@@ -12720,7 +12720,7 @@ QDF_STATUS sme_reset_significant_change(tHalHandle hHal,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
@@ -12753,7 +12753,7 @@ QDF_STATUS sme_get_cached_results(tHalHandle hHal,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
@@ -12787,7 +12787,7 @@ QDF_STATUS sme_set_epno_list(tHalHandle hal,
 {
 	QDF_STATUS status    = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac   = PMAC_STRUCT(hal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	struct wifi_epno_params *req_msg;
 	int len, i;
 
@@ -12865,7 +12865,7 @@ QDF_STATUS sme_set_passpoint_list(tHalHandle hal,
 {
 	QDF_STATUS status  = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac = PMAC_STRUCT(hal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	struct wifi_passpoint_req *req_msg;
 	int len, i;
 
@@ -12929,7 +12929,7 @@ QDF_STATUS sme_reset_passpoint_list(tHalHandle hal,
 {
 	QDF_STATUS status   = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac  = PMAC_STRUCT(hal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	struct wifi_passpoint_req *req_msg;
 
 	SME_ENTER();
@@ -12996,7 +12996,7 @@ QDF_STATUS sme_ll_stats_clear_req(tHalHandle hHal,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	tSirLLStatsClearReq *clear_stats_req;
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
@@ -13056,7 +13056,7 @@ QDF_STATUS sme_ll_stats_set_req(tHalHandle hHal, tSirLLStatsSetReq *psetStatsReq
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	tSirLLStatsSetReq *set_stats_req;
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
@@ -13115,7 +13115,7 @@ QDF_STATUS sme_ll_stats_get_req(tHalHandle hHal, tSirLLStatsGetReq *pgetStatsReq
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	tSirLLStatsGetReq *get_stats_req;
 
 	get_stats_req = qdf_mem_malloc(sizeof(*get_stats_req));
@@ -13235,7 +13235,7 @@ QDF_STATUS sme_power_debug_stats_req(tHalHandle hal, void (*callback_fn)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 
 	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
@@ -13416,7 +13416,7 @@ QDF_STATUS sme_get_temperature(tHalHandle hHal,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_STATUS_SUCCESS == status) {
@@ -13458,7 +13458,7 @@ QDF_STATUS sme_set_scanning_mac_oui(tHalHandle hHal, tSirScanMacOui *pScanMacOui
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_STATUS_SUCCESS == status) {
@@ -13488,7 +13488,7 @@ QDF_STATUS sme_set_scanning_mac_oui(tHalHandle hHal, tSirScanMacOui *pScanMacOui
 QDF_STATUS sme_set_dhcp_srv_offload(tHalHandle hHal,
 				    tSirDhcpSrvOffloadInfo *pDhcpSrvInfo)
 {
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	tSirDhcpSrvOffloadInfo *pSmeDhcpSrvInfo;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
@@ -13544,7 +13544,7 @@ QDF_STATUS sme_set_led_flashing(tHalHandle hHal, uint8_t type,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	tSirLedFlashingReq *ledflashing;
 
 	ledflashing = qdf_mem_malloc(sizeof(*ledflashing));
@@ -13656,7 +13656,7 @@ bool sme_validate_sap_channel_switch(tHalHandle hal,
 QDF_STATUS sme_configure_stats_avg_factor(tHalHandle hal, uint8_t session_id,
 					  uint16_t stats_avg_factor)
 {
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac  = PMAC_STRUCT(hal);
 	struct sir_stats_avg_factor *stats_factor;
@@ -13713,7 +13713,7 @@ QDF_STATUS sme_configure_stats_avg_factor(tHalHandle hal, uint8_t session_id,
 QDF_STATUS sme_configure_guard_time(tHalHandle hal, uint8_t session_id,
 				    uint32_t guard_time)
 {
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac  = PMAC_STRUCT(hal);
 	struct sir_guard_time_request *g_time;
@@ -13770,7 +13770,7 @@ QDF_STATUS sme_configure_guard_time(tHalHandle hal, uint8_t session_id,
 QDF_STATUS sme_configure_modulated_dtim(tHalHandle h_hal, uint8_t session_id,
 					uint32_t modulated_dtim)
 {
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac  = PMAC_STRUCT(h_hal);
 	wma_cli_set_cmd_t *iwcmd;
@@ -13829,7 +13829,7 @@ QDF_STATUS sme_wifi_start_logger(tHalHandle hal,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac   = PMAC_STRUCT(hal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	struct sir_wifi_start_log *req_msg;
 	uint32_t len;
 
@@ -13907,7 +13907,7 @@ bool sme_neighbor_middle_of_roaming(tHalHandle hHal, uint8_t sessionId)
 QDF_STATUS sme_send_flush_logs_cmd_to_fw(tpAniSirGlobal mac)
 {
 	QDF_STATUS status;
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 
 	/* Serialize the req through MC thread */
 	message.bodyptr = NULL;
@@ -14201,7 +14201,7 @@ QDF_STATUS sme_set_rssi_monitoring(tHalHandle hal,
 {
 	QDF_STATUS status     = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac    = PMAC_STRUCT(hal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	struct rssi_monitor_req *req_msg;
 
 	SME_ENTER();
@@ -14249,7 +14249,7 @@ QDF_STATUS sme_fw_mem_dump(tHalHandle hHal, void *recvd_req)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	struct fw_dump_req *send_req;
 	struct fw_dump_seg_req seg_req;
 	int loop;
@@ -14322,7 +14322,7 @@ QDF_STATUS sme_pdev_set_pcl(struct policy_mgr_pcl_list msg)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac   = sme_get_mac_context();
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	struct wmi_pcl_chan_weights *req_msg;
 	uint32_t len, i;
 
@@ -14526,7 +14526,7 @@ QDF_STATUS sme_gateway_param_update(tHalHandle Hal,
 			      struct gateway_param_update_req *gw_params)
 {
 	QDF_STATUS qdf_status;
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	struct gateway_param_update_req *request_buf;
 
 	request_buf = qdf_mem_malloc(sizeof(*request_buf));
@@ -14869,7 +14869,7 @@ void sme_get_opclass(tHalHandle hal, uint8_t channel, uint8_t bw_offset,
 QDF_STATUS sme_send_egap_conf_params(uint32_t enable, uint32_t inactivity_time,
 				     uint32_t wait_time, uint32_t flags)
 {
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	QDF_STATUS status;
 	struct egap_conf_params *egap_params;
 
@@ -15010,7 +15010,7 @@ QDF_STATUS sme_add_beacon_filter(tHalHandle hal,
 				 uint32_t session_id,
 				 uint32_t *ie_map)
 {
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	QDF_STATUS qdf_status;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	struct beacon_filter_param *filter_param;
@@ -15055,7 +15055,7 @@ QDF_STATUS sme_add_beacon_filter(tHalHandle hal,
  */
 QDF_STATUS sme_remove_beacon_filter(tHalHandle hal, uint32_t session_id)
 {
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	QDF_STATUS qdf_status;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	struct beacon_filter_param *filter_param;
@@ -15159,7 +15159,7 @@ QDF_STATUS sme_get_bpf_offload_capabilities(tHalHandle hal,
 {
 	QDF_STATUS          status     = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal      mac_ctx      = PMAC_STRUCT(hal);
-	struct scheduler_msg           cds_msg;
+	struct scheduler_msg           cds_msg = {0};
 
 	SME_ENTER();
 
@@ -15198,7 +15198,7 @@ QDF_STATUS sme_set_bpf_instructions(tHalHandle hal,
 {
 	QDF_STATUS          status     = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal      mac_ctx    = PMAC_STRUCT(hal);
-	struct scheduler_msg           cds_msg;
+	struct scheduler_msg           cds_msg = {0};
 	struct sir_bpf_set_offload *set_offload;
 
 	set_offload = qdf_mem_malloc(sizeof(*set_offload) +
@@ -15304,7 +15304,7 @@ void sme_set_chan_info_callback(tHalHandle hal_handle,
 QDF_STATUS sme_set_adaptive_dwelltime_config(tHalHandle hal,
 			struct adaptive_dwelltime_params *params)
 {
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	QDF_STATUS status;
 	struct adaptive_dwelltime_params *dwelltime_params;
 
@@ -15509,7 +15509,7 @@ QDF_STATUS sme_process_mac_pwr_dbg_cmd(tHalHandle hal, uint32_t session_id,
 				       struct sir_mac_pwr_dbg_cmd*
 				       dbg_args)
 {
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	struct sir_mac_pwr_dbg_cmd *req;
 	int i;
@@ -15635,7 +15635,7 @@ QDF_STATUS sme_enable_disable_chanavoidind_event(tHalHandle hal,
 {
 	QDF_STATUS status;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 
 	sme_debug("set_value: %d", set_value);
 	status = sme_acquire_global_lock(&mac_ctx->sme);
@@ -15714,7 +15714,7 @@ QDF_STATUS sme_encrypt_decrypt_msg(tHalHandle hal,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
-	struct scheduler_msg cds_msg;
+	struct scheduler_msg cds_msg = {0};
 	struct encrypt_decrypt_req_params *params;
 	uint8_t *ptr;
 
@@ -15800,7 +15800,7 @@ QDF_STATUS sme_update_tx_fail_cnt_threshold(tHalHandle hal_handle,
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct sme_tx_fail_cnt_threshold *tx_fail_cnt;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 
 	tx_fail_cnt = qdf_mem_malloc(sizeof(*tx_fail_cnt));
 	if (NULL == tx_fail_cnt) {
@@ -15866,7 +15866,7 @@ bool sme_neighbor_roam_is11r_assoc(tHalHandle hal_ctx, uint8_t session_id)
  */
 QDF_STATUS sme_set_wow_pulse(struct wow_pulse_mode *wow_pulse_set_info)
 {
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	QDF_STATUS status;
 	struct wow_pulse_mode *wow_pulse_set_cmd;
 

@@ -2068,7 +2068,7 @@ lim_add_sta(tpAniSirGlobal mac_ctx,
 	tpDphHashNode sta_ds, uint8_t update_entry, tpPESession session_entry)
 {
 	tpAddStaParams add_sta_params = NULL;
-	struct scheduler_msg msg_q;
+	struct scheduler_msg msg_q = {0};
 	tSirRetStatus ret_code = eSIR_SUCCESS;
 	tSirMacAddr sta_mac, *sta_Addr;
 	tpSirAssocReq assoc_req;
@@ -2468,7 +2468,7 @@ lim_del_sta(tpAniSirGlobal pMac,
 	    tpDphHashNode pStaDs, bool fRespReqd, tpPESession psessionEntry)
 {
 	tpDeleteStaParams pDelStaParams = NULL;
-	struct scheduler_msg msgQ;
+	struct scheduler_msg msgQ = {0};
 	tSirRetStatus retCode = eSIR_SUCCESS;
 
 	pDelStaParams = qdf_mem_malloc(sizeof(tDeleteStaParams));
@@ -2595,7 +2595,7 @@ lim_add_sta_self(tpAniSirGlobal pMac, uint16_t staIdx, uint8_t updateSta,
 		 tpPESession psessionEntry)
 {
 	tpAddStaParams pAddStaParams = NULL;
-	struct scheduler_msg msgQ;
+	struct scheduler_msg msgQ = {0};
 	tSirRetStatus retCode = eSIR_SUCCESS;
 	tSirMacAddr staMac;
 	uint32_t listenInterval = WNI_CFG_LISTEN_INTERVAL_STADEF;
@@ -3249,7 +3249,7 @@ lim_del_bss(tpAniSirGlobal pMac, tpDphHashNode pStaDs, uint16_t bssIdx,
 	    tpPESession psessionEntry)
 {
 	tpDeleteBssParams pDelBssParams = NULL;
-	struct scheduler_msg msgQ;
+	struct scheduler_msg msgQ = {0};
 	tSirRetStatus retCode = eSIR_SUCCESS;
 
 	pDelBssParams = qdf_mem_malloc(sizeof(tDeleteBssParams));
@@ -3434,7 +3434,7 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 				   tpSirBssDescription bssDescription,
 				   uint8_t updateEntry, tpPESession psessionEntry)
 {
-	struct scheduler_msg msgQ;
+	struct scheduler_msg msgQ = {0};
 	tpAddBssParams pAddBssParams = NULL;
 	uint32_t retCode;
 	tpDphHashNode pStaDs = NULL;
@@ -3953,7 +3953,7 @@ returnFailure:
 tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t updateEntry,
 					     tpPESession psessionEntry)
 {
-	struct scheduler_msg msgQ;
+	struct scheduler_msg msgQ = {0};
 	tpAddBssParams pAddBssParams = NULL;
 	uint32_t retCode;
 	tSchBeaconStruct *pBeaconStruct;
@@ -4652,7 +4652,7 @@ void lim_send_sme_unprotected_mgmt_frame_ind(tpAniSirGlobal pMac, uint8_t frameT
 					     uint16_t sessionId,
 					     tpPESession psessionEntry)
 {
-	struct scheduler_msg mmhMsg;
+	struct scheduler_msg mmhMsg = {0};
 	tSirSmeUnprotMgmtFrameInd *pSirSmeMgmtFrame = NULL;
 	uint16_t length;
 
@@ -4693,7 +4693,7 @@ void lim_send_sme_unprotected_mgmt_frame_ind(tpAniSirGlobal pMac, uint8_t frameT
 void lim_send_sme_tsm_ie_ind(tpAniSirGlobal pMac, tpPESession psessionEntry,
 			     uint8_t tid, uint8_t state, uint16_t measInterval)
 {
-	struct scheduler_msg mmhMsg;
+	struct scheduler_msg mmhMsg = {0};
 	tpSirSmeTsmIEInd pSirSmeTsmIeInd = NULL;
 
 	if (!pMac || !psessionEntry)

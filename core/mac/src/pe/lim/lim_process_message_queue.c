@@ -84,7 +84,7 @@ static void lim_process_dual_mac_cfg_resp(tpAniSirGlobal mac, void *body)
 {
 	struct sir_dual_mac_config_resp *resp, *param;
 	uint32_t len, fail_resp = 0;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 
 	resp = (struct sir_dual_mac_config_resp *)body;
 	if (!resp) {
@@ -139,7 +139,7 @@ static void lim_process_set_hw_mode_resp(tpAniSirGlobal mac, void *body)
 {
 	struct sir_set_hw_mode_resp *resp, *param;
 	uint32_t len, i, fail_resp = 0;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 
 	resp = (struct sir_set_hw_mode_resp *)body;
 	if (!resp) {
@@ -206,7 +206,7 @@ static void lim_process_set_antenna_resp(tpAniSirGlobal mac, void *body)
 {
 	struct sir_antenna_mode_resp *resp, *param;
 	bool fail_resp = false;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 
 	resp = (struct sir_antenna_mode_resp *)body;
 	if (!resp) {
@@ -259,7 +259,7 @@ static void lim_process_set_default_scan_ie_request(tpAniSirGlobal mac_ctx,
 	struct vdev_ie_info *wma_ie_params;
 	uint8_t *local_ie_buf;
 	uint16_t local_ie_len;
-	struct scheduler_msg msg_q;
+	struct scheduler_msg msg_q = {0};
 	tSirRetStatus ret_code;
 	QDF_STATUS qdf_status;
 
@@ -330,7 +330,7 @@ static void lim_process_hw_mode_trans_ind(tpAniSirGlobal mac, void *body)
 {
 	struct sir_hw_mode_trans_ind *ind, *param;
 	uint32_t len, i;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 
 	ind = (struct sir_hw_mode_trans_ind *)body;
 	if (!ind) {
@@ -1153,7 +1153,7 @@ end:
 static QDF_STATUS lim_send_stop_scan_offload_req(tpAniSirGlobal pMac,
 	uint8_t SessionId, uint32_t scan_id, uint32_t scan_requestor_id)
 {
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	tSirRetStatus rc = eSIR_SUCCESS;
 	tAbortScanParams *pAbortScanParams;
 

@@ -820,7 +820,7 @@ void lim_print_mac_addr(tpAniSirGlobal pMac, tSirMacAddr macAddr, uint8_t logLev
 
 void lim_reset_deferred_msg_q(tpAniSirGlobal pMac)
 {
-	struct scheduler_msg *read_msg;
+	struct scheduler_msg *read_msg = {0};
 
 	if (pMac->lim.gLimDeferredMsgQ.size > 0) {
 		while ((read_msg = lim_read_deferred_msg_q(pMac)) != NULL) {
@@ -962,7 +962,7 @@ uint8_t lim_write_deferred_msg_q(tpAniSirGlobal mac_ctx,
 
 struct scheduler_msg *lim_read_deferred_msg_q(tpAniSirGlobal pMac)
 {
-	struct scheduler_msg *msg;
+	struct scheduler_msg *msg = {0};
 
 	/*
 	** check any messages left. If no, return
@@ -4708,7 +4708,7 @@ tSirRetStatus lim_process_hal_ind_messages(tpAniSirGlobal pMac, uint32_t msgId,
 					   void *msgParam)
 {
 	/* its PE's responsibility to free msgparam when its done extracting the message parameters. */
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 
 	switch (msgId) {
 	case SIR_LIM_DEL_TS_IND:
@@ -4879,7 +4879,7 @@ lim_validate_delts_req(tpAniSirGlobal mac_ctx, tpSirDeltsReq delts_req,
    -------------------------------------------------------------*/
 void lim_register_hal_ind_call_back(tpAniSirGlobal pMac)
 {
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	tpHalIndCB pHalCB;
 
 	pHalCB = qdf_mem_malloc(sizeof(tHalIndCB));
@@ -5036,7 +5036,7 @@ lim_post_sm_state_update(tpAniSirGlobal pMac,
 			 uint8_t *pPeerStaMac, uint8_t sessionId)
 {
 	tSirRetStatus retCode = eSIR_SUCCESS;
-	struct scheduler_msg msgQ;
+	struct scheduler_msg msgQ = {0};
 	tpSetMIMOPS pMIMO_PSParams;
 
 	msgQ.reserved = 0;
@@ -5233,7 +5233,7 @@ void lim_frame_transmission_control(tpAniSirGlobal pMac, tLimQuietTxMode type,
 
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpTxControlParams pTxCtrlMsg;
-	struct scheduler_msg msgQ;
+	struct scheduler_msg msgQ = {0};
 	uint8_t nBytes = 0; /* No of bytes required for station bitmap. */
 
 	/** Allocate only required number of bytes for station bitmap
@@ -7253,7 +7253,7 @@ void lim_send_set_dtim_period(tpAniSirGlobal mac_ctx, uint8_t dtim_period,
 {
 	struct set_dtim_params *dtim_params = NULL;
 	tSirRetStatus ret = eSIR_SUCCESS;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 
 	if (session == NULL) {
 		lim_log(mac_ctx, LOGE, FL("Inavalid parameters"));

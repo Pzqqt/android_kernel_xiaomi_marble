@@ -684,7 +684,7 @@ QDF_STATUS lim_send_preauth_scan_offload(tpAniSirGlobal mac_ctx,
 {
 	tSirScanOffloadReq *scan_offload_req;
 	tSirRetStatus rc = eSIR_SUCCESS;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 
 	scan_offload_req = qdf_mem_malloc(sizeof(tSirScanOffloadReq));
 	if (NULL == scan_offload_req) {
