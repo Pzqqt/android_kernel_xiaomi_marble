@@ -261,6 +261,7 @@ error:
 	return ret;
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 3, 0))
 int qdf_aes_ctr(const uint8_t *key, unsigned int key_len, uint8_t *siv,
 		const uint8_t *src, size_t src_len, uint8_t *dest, bool enc)
 {
@@ -319,3 +320,10 @@ int qdf_aes_ctr(const uint8_t *key, unsigned int key_len, uint8_t *siv,
 	crypto_free_skcipher(tfm);
 	return ret;
 }
+#else
+int qdf_aes_ctr(const uint8_t *key, unsigned int key_len, uint8_t *siv,
+		const uint8_t *src, size_t src_len, uint8_t *dest, bool enc)
+{
+	return -EINVAL;
+}
+#endif
