@@ -1845,4 +1845,18 @@ void policy_mgr_update_old_hw_mode_index(struct wlan_objmgr_psoc *psoc,
  */
 void policy_mgr_update_new_hw_mode_index(struct wlan_objmgr_psoc *psoc,
 		uint32_t new_hw_mode_index);
+
+/**
+ * policy_mgr_is_chan_ok_for_dnbs() - Function to check if a channel
+ * is OK for "Do Not Break Stream"
+ * @psoc: PSOC object information
+ * @channel: Channel to check.
+ * @ok: Pointer to flag in which status will be stored
+ * This function checks if a channel is OK for
+ * "Do Not Break Stream"
+ * Return: SUCCESS or FAILURE
+ */
+QDF_STATUS policy_mgr_is_chan_ok_for_dnbs(struct wlan_objmgr_psoc *psoc,
+			uint8_t channel, bool *ok);
+
 #endif /* __WLAN_POLICY_MGR_API_H */
