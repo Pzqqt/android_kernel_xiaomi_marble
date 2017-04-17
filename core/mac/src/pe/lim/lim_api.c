@@ -1954,6 +1954,9 @@ lim_roam_fill_bss_descr(tpAniSirGlobal pMac,
 					   ieFields[0]) -
 				sizeof(bss_desc_ptr->length) + ie_len);
 
+	bss_desc_ptr->fProbeRsp = !roam_offload_synch_ind_ptr->isBeacon;
+	/* Copy Timestamp */
+	bss_desc_ptr->scansystimensec = qdf_get_monotonic_boottime_ns();
 	if (parsed_frm_ptr->dsParamsPresent) {
 		bss_desc_ptr->channelId = parsed_frm_ptr->channelNumber;
 	} else if (parsed_frm_ptr->HTInfo.present) {
