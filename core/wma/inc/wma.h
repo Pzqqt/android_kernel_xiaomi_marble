@@ -226,6 +226,8 @@ enum ds_mode {
 
 #define WMA_MAX_RF_CHAINS(x)    ((1 << x) - 1)
 #define WMA_MIN_RF_CHAINS               (1)
+#define WMA_MAX_NSS               (2)
+
 
 #ifdef FEATURE_WLAN_EXTSCAN
 #define WMA_MAX_EXTSCAN_MSG_SIZE        1536

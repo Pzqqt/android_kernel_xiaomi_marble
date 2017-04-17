@@ -1243,7 +1243,8 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 	 * Limit nss to max number of rf chain supported by target
 	 * Otherwise Fw will crash
 	 */
-	wma_update_txrx_chainmask(wma->num_rf_chains, &cmd->peer_nss);
+	if (cmd->peer_nss > WMA_MAX_NSS)
+		cmd->peer_nss = WMA_MAX_NSS;
 
 	wma_populate_peer_he_cap(cmd, params);
 
@@ -2772,7 +2773,8 @@ void wma_process_update_rx_nss(tp_wma_handle wma_handle,
 		&wma_handle->interfaces[update_rx_nss->smesessionId];
 	int rx_nss = update_rx_nss->rxNss;
 
-	wma_update_txrx_chainmask(wma_handle->num_rf_chains, &rx_nss);
+	if (rx_nss > WMA_MAX_NSS)
+		rx_nss = WMA_MAX_NSS;
 
 	intr->nss = (uint8_t)rx_nss;
 	update_rx_nss->rxNss = (uint32_t)rx_nss;
