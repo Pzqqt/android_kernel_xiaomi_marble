@@ -390,6 +390,12 @@ struct cdp_ctrl_ops {
 	 */
 	enum cdp_host_reo_dest_ring (*txrx_get_pdev_reo_dest)(
 						struct cdp_pdev *pdev);
+
+	int (*txrx_wdi_event_sub)(struct cdp_pdev *pdev, void *event_cb_sub,
+			uint32_t event);
+
+	int (*txrx_wdi_event_unsub)(struct cdp_pdev *pdev, void *event_cb_sub,
+			uint32_t event);
 };
 
 struct cdp_me_ops {
