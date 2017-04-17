@@ -39,6 +39,8 @@
 #include "qdf_types.h"
 #include "qdf_trace.h"
 #include "wlan_objmgr_global_obj.h"
+#include "wlan_objmgr_pdev_obj.h"
+#include "wlan_objmgr_vdev_obj.h"
 
 /* invalid channel id. */
 #define INVALID_CHANNEL_ID 0
@@ -1355,9 +1357,11 @@ bool policy_mgr_is_ibss_conn_exist(struct wlan_objmgr_psoc *psoc,
 	return status;
 }
 
-bool policy_mgr_get_sap_conn_info(struct wlan_objmgr_psoc *psoc,
-				  uint8_t *channel, uint8_t *vdev_id)
+bool policy_mgr_get_mode_specific_conn_info(struct wlan_objmgr_psoc *psoc,
+				  uint8_t *channel, uint8_t *vdev_id,
+				  enum policy_mgr_con_mode mode)
 {
+
 	uint32_t count, index = 0;
 	uint32_t list[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	bool status = false;
@@ -1374,10 +1378,10 @@ bool policy_mgr_get_sap_conn_info(struct wlan_objmgr_psoc *psoc,
 	}
 
 	count = policy_mgr_mode_specific_connection_count(
-				psoc, PM_SAP_MODE, list);
+				psoc, mode, list);
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	if (count == 0) {
-		policy_mgr_err("No SAP connection");
+		policy_mgr_err("No mode:[%d] connection", mode);
 		status = false;
 	} else if (count == 1) {
 		*channel = pm_conc_connection_list[list[index]].chan;
@@ -1393,12 +1397,22 @@ bool policy_mgr_get_sap_conn_info(struct wlan_objmgr_psoc *psoc,
 		*channel = pm_conc_connection_list[list[index]].chan;
 		*vdev_id =
 			pm_conc_connection_list[list[index]].vdev_id;
-		policy_mgr_notice("Multiple SAP connections, picking first one");
+		policy_mgr_notice("Multiple mode:[%d] connections, picking first one",
+				mode);
 		status = true;
 	}
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 
 	return status;
+}
+
+bool policy_mgr_get_sap_conn_info(struct wlan_objmgr_psoc *psoc,
+				  uint8_t *channel, uint8_t *vdev_id)
+{
+	return policy_mgr_get_mode_specific_conn_info(psoc,
+					  channel,
+					  vdev_id,
+					  PM_SAP_MODE);
 }
 
 bool policy_mgr_max_concurrent_connections_reached(
@@ -2357,4 +2371,67 @@ bool policy_mgr_is_hw_mode_change_after_vdev_up(struct wlan_objmgr_psoc *psoc)
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 
 	return flag;
+}
+
+bool policy_mgr_vdev_mlme_is_dnsc_set(struct wlan_objmgr_vdev *vdev)
+{
+	/* TODO : Check Dont_Switch_Channel status from vdev mlme caps*/
+	return false;
+}
+
+QDF_STATUS policy_mgr_is_chan_ok_for_dnbs(struct wlan_objmgr_psoc *psoc,
+			uint8_t channel, bool *ok)
+{
+	uint8_t operating_channel = 0, vdev_id = 0;
+	struct wlan_objmgr_vdev *vdev;
+
+	if (!channel || !ok) {
+		policy_mgr_err("Invalid parameter");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (policy_mgr_get_mode_specific_conn_info(psoc,
+				  &operating_channel,
+				  &vdev_id,
+				  PM_SAP_MODE))
+		policy_mgr_debug("SAP mode active");
+	else if (policy_mgr_get_mode_specific_conn_info(psoc,
+				  &operating_channel,
+				  &vdev_id,
+				  PM_P2P_GO_MODE))
+		policy_mgr_debug("P2P_GO_MODE mode active");
+	else {
+		*ok = true;
+		return QDF_STATUS_SUCCESS;
+	}
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						WLAN_POLICY_MGR_ID);
+	if (!vdev) {
+		policy_mgr_err("vdev is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	/**
+	 * If channel passed is same as AP/GO operating channel, then
+	 *   return true.
+	 * If channel is different from operating channel but in same band.
+	 *   return false.
+	 * If operating channel in different band.
+	 *   return true.
+	 */
+	/* TODO: To be enhanced for SBS */
+	if (policy_mgr_vdev_mlme_is_dnsc_set(vdev)) {
+		if (operating_channel == channel)
+			*ok = true;
+		else if (WLAN_REG_IS_SAME_BAND_CHANNELS(operating_channel,
+							channel))
+			*ok = false;
+		else
+			*ok = true;
+	} else {
+		*ok = true;
+	}
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_POLICY_MGR_ID);
+	return QDF_STATUS_SUCCESS;
 }

@@ -34,6 +34,7 @@
 #include <wlan_cfg80211_scan.h>
 #include <qdf_mem.h>
 #include <wlan_utility.h>
+#include <wlan_policy_mgr_api.h>
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
 static uint32_t hdd_config_sched_scan_start_delay(
@@ -945,10 +946,35 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 	if (request->n_channels) {
 		char chl[(request->n_channels * 5) + 1];
 		int len = 0;
+		bool ap_or_go_present =
+			policy_mgr_mode_specific_connection_count(
+			     psoc, QDF_SAP_MODE, NULL) ||
+			     policy_mgr_mode_specific_connection_count(
+			     psoc, QDF_P2P_GO_MODE, NULL);
+
 		for (i = 0; i < request->n_channels; i++) {
 			channel = request->channels[i]->hw_value;
 			if (wlan_is_dsrc_channel(wlan_chan_to_freq(channel)))
 				continue;
+
+			if (ap_or_go_present) {
+				bool ok;
+				int ret;
+
+				ret = policy_mgr_is_chan_ok_for_dnbs(psoc,
+								channel,
+								&ok);
+
+				if (QDF_IS_STATUS_ERROR(ret)) {
+					cfg80211_err("DNBS check failed");
+					qdf_mem_free(req);
+					status = -EINVAL;
+					goto end;
+				}
+				if (!ok)
+					continue;
+			}
+
 			len += snprintf(chl + len, 5, "%d ", channel);
 			req->scan_req.chan_list[i] = wlan_chan_to_freq(channel);
 			num_chan++;
@@ -1296,4 +1322,3 @@ void wlan_cfg80211_inform_bss_frame(struct wlan_objmgr_pdev *pdev,
 		frame_len, rssi, GFP_KERNEL);
 	qdf_mem_free(mgmt);
 }
-
