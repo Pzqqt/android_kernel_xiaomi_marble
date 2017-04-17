@@ -1160,6 +1160,67 @@ static bool sap_is_channel_bonding_etsi_weather_channel(ptSapContext sap_ctx)
 }
 
 /**
+ * sap_ch_params_to_bonding_channels() - get bonding channels from channel param
+ * @ch_params: channel params ( bw, pri and sec channel info)
+ * @channels: bonded channel list
+ *
+ * Return: Number of sub channels
+ */
+static uint8_t sap_ch_params_to_bonding_channels(
+		struct ch_params *ch_params,
+		uint8_t *channels)
+{
+	uint8_t center_chan = ch_params->center_freq_seg0;
+	uint8_t nchannels = 0;
+
+	switch (ch_params->ch_width) {
+	case CH_WIDTH_160MHZ:
+		nchannels = 8;
+		center_chan = ch_params->center_freq_seg1;
+		channels[0] = center_chan - 14;
+		channels[1] = center_chan - 10;
+		channels[2] = center_chan - 6;
+		channels[3] = center_chan - 2;
+		channels[4] = center_chan + 2;
+		channels[5] = center_chan + 6;
+		channels[6] = center_chan + 10;
+		channels[7] = center_chan + 14;
+		break;
+	case CH_WIDTH_80P80MHZ:
+		nchannels = 8;
+		channels[0] = center_chan - 6;
+		channels[1] = center_chan - 2;
+		channels[2] = center_chan + 2;
+		channels[3] = center_chan + 6;
+
+		center_chan = ch_params->center_freq_seg1;
+		channels[4] = center_chan - 6;
+		channels[5] = center_chan - 2;
+		channels[6] = center_chan + 2;
+		channels[7] = center_chan + 6;
+		break;
+	case CH_WIDTH_80MHZ:
+		nchannels = 4;
+		channels[0] = center_chan - 6;
+		channels[1] = center_chan - 2;
+		channels[2] = center_chan + 2;
+		channels[3] = center_chan + 6;
+		break;
+	case CH_WIDTH_40MHZ:
+		nchannels = 2;
+		channels[0] = center_chan - 2;
+		channels[1] = center_chan + 2;
+		break;
+	default:
+		nchannels = 1;
+		channels[0] = center_chan;
+		break;
+	}
+
+	return nchannels;
+}
+
+/**
  * sap_get_cac_dur_dfs_region() - get cac duration and dfs region.
  * @sap_ctxt: sap context
  * @cac_duration_ms: pointer to cac duration
@@ -1173,6 +1234,10 @@ static void sap_get_cac_dur_dfs_region(ptSapContext sap_ctx,
 		uint32_t *cac_duration_ms,
 		uint32_t *dfs_region)
 {
+	int i;
+	uint8_t channels[MAX_BONDED_CHANNELS];
+	uint8_t num_channels;
+	struct ch_params *ch_params = &sap_ctx->ch_params;
 	tHalHandle hal = NULL;
 	tpAniSirGlobal mac = NULL;
 
@@ -1190,21 +1255,45 @@ static void sap_get_cac_dur_dfs_region(ptSapContext sap_ctx,
 	}
 
 	mac = PMAC_STRUCT(hal);
+	wlan_reg_get_dfs_region(mac->psoc, dfs_region);
 	if (mac->sap.SapDfsInfo.ignore_cac) {
 		*cac_duration_ms = 0;
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: ignore_cac is set", __func__);
 		return;
 	}
+	*cac_duration_ms = DEFAULT_CAC_TIMEOUT;
 
-	wlan_reg_get_dfs_region(mac->psoc, dfs_region);
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+		  FL("sapdfs: dfs_region=%d, chwidth=%d, seg0=%d, seg1=%d"),
+		  *dfs_region, ch_params->ch_width,
+		  ch_params->center_freq_seg0, ch_params->center_freq_seg1);
 
-	if ((*dfs_region == DFS_ETSI_REG) &&
-	    ((IS_ETSI_WEATHER_CH(sap_ctx->channel)) ||
-	    (sap_is_channel_bonding_etsi_weather_channel(sap_ctx))))
+	if (*dfs_region != DFS_ETSI_REG) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+			  FL("sapdfs: defult cac duration"));
+		return;
+	}
+
+	if (sap_is_channel_bonding_etsi_weather_channel(sap_ctx)) {
 		*cac_duration_ms = ETSI_WEATHER_CH_CAC_TIMEOUT;
-	else
-		*cac_duration_ms = DEFAULT_CAC_TIMEOUT;
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+			  FL("sapdfs: bonding_etsi_weather_channel"));
+		return;
+	}
+
+	qdf_mem_zero(channels, sizeof(channels));
+	num_channels = sap_ch_params_to_bonding_channels(ch_params, channels);
+	for (i = 0; i < num_channels; i++) {
+		if (IS_ETSI_WEATHER_CH(channels[i])) {
+			*cac_duration_ms = ETSI_WEATHER_CH_CAC_TIMEOUT;
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+				  FL("sapdfs: ch=%d is etsi weather channel"),
+				  channels[i]);
+			return;
+		}
+	}
+
 }
 
 void sap_dfs_set_current_channel(void *ctx)
@@ -4330,12 +4419,6 @@ int sap_start_dfs_cac_timer(ptSapContext sap_ctx)
 	sap_get_cac_dur_dfs_region(sap_ctx, &cac_dur, &dfs_region);
 	if (0 == cac_dur)
 		return 0;
-
-	if ((dfs_region == DFS_ETSI_REG) &&
-	    ((IS_ETSI_WEATHER_CH(sap_ctx->channel)) ||
-	     (sap_is_channel_bonding_etsi_weather_channel(sap_ctx)))) {
-		cac_dur = ETSI_WEATHER_CH_CAC_TIMEOUT;
-	}
 
 #ifdef QCA_WIFI_NAPIER_EMULATION
 	cac_dur = cac_dur / 100;
