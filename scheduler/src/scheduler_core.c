@@ -423,6 +423,7 @@ int scheduler_thread(void *arg)
 void scheduler_cleanup_queues(struct scheduler_ctx *sch_ctx, int idx)
 {
 	struct scheduler_msg_wrapper *msg_wrapper = NULL;
+	QDF_STATUS (*scheduler_flush_callback) (struct scheduler_msg *);
 
 	if (!sch_ctx) {
 		QDF_ASSERT(0);
@@ -437,9 +438,22 @@ void scheduler_cleanup_queues(struct scheduler_ctx *sch_ctx, int idx)
 			QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_INFO,
 				"%s: Freeing MC WMA MSG message type %d",
 				__func__, msg_wrapper->msg_buf->type);
-			if (msg_wrapper->msg_buf->bodyptr)
+			if (msg_wrapper->msg_buf->flush_callback) {
+				QDF_TRACE(QDF_MODULE_ID_SCHEDULER,
+					QDF_TRACE_LEVEL_DEBUG,
+					"%s: Flush callback called for type-%x",
+					__func__, msg_wrapper->msg_buf->type);
+				scheduler_flush_callback =
+					msg_wrapper->msg_buf->flush_callback;
+				scheduler_flush_callback(msg_wrapper->msg_buf);
+			} else if (msg_wrapper->msg_buf->bodyptr) {
+				QDF_TRACE(QDF_MODULE_ID_SCHEDULER,
+					QDF_TRACE_LEVEL_DEBUG,
+					"%s: noflush cb given for type-%x",
+					__func__, msg_wrapper->msg_buf->type);
 				qdf_mem_free(
 					(void *)msg_wrapper->msg_buf->bodyptr);
+			}
 			msg_wrapper->msg_buf->bodyptr = NULL;
 			msg_wrapper->msg_buf->bodyval = 0;
 			msg_wrapper->msg_buf->type = 0;

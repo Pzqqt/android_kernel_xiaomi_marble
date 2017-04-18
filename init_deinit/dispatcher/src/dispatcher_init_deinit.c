@@ -560,9 +560,6 @@ QDF_STATUS dispatcher_init(void)
 	if (QDF_STATUS_SUCCESS != wlan_serialization_init())
 		goto serialization_init_fail;
 
-	if (QDF_STATUS_SUCCESS != scheduler_init())
-		goto scheduler_init_fail;
-
 	if (QDF_STATUS_SUCCESS != dispatcher_init_pmo())
 		goto pmo_init_fail;
 
@@ -590,8 +587,18 @@ QDF_STATUS dispatcher_init(void)
 	if (QDF_STATUS_SUCCESS != dispatcher_offchan_txrx_init())
 		goto offchan_init_fail;
 
+	/*
+	 * scheduler INIT has to be the last as each component's
+	 * initialization has to happen first and then at the end
+	 * scheduler needs to start accepting the service.
+	 */
+	if (QDF_STATUS_SUCCESS != scheduler_init())
+		goto scheduler_init_fail;
+
 	return QDF_STATUS_SUCCESS;
 
+scheduler_init_fail:
+	dispatcher_offchan_txrx_deinit();
 offchan_init_fail:
 	dispatcher_regulatory_deinit();
 regulatory_init_fail:
@@ -609,8 +616,6 @@ policy_mgr_init_fail:
 crypto_init_fail:
 	dispatcher_deinit_pmo();
 pmo_init_fail:
-	scheduler_deinit();
-scheduler_init_fail:
 	wlan_serialization_deinit();
 serialization_init_fail:
 	tdls_deinit();
@@ -630,6 +635,12 @@ EXPORT_SYMBOL(dispatcher_init);
 
 QDF_STATUS dispatcher_deinit(void)
 {
+	/*
+	 * schduler service should be the first one to stop offering
+	 * services up on dispatcher deinit sequence
+	 */
+	QDF_BUG(QDF_STATUS_SUCCESS == scheduler_deinit());
+
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_offchan_txrx_deinit());
 
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_regulatory_deinit());
@@ -647,8 +658,6 @@ QDF_STATUS dispatcher_deinit(void)
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_deinit_crypto());
 
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_deinit_pmo());
-
-	QDF_BUG(QDF_STATUS_SUCCESS == scheduler_deinit());
 
 	QDF_BUG(QDF_STATUS_SUCCESS == wlan_serialization_deinit());
 
