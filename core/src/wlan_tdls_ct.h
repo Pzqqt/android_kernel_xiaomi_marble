@@ -31,6 +31,10 @@
   */
 #define TDLS_DISCOVERY_TIMEOUT_ERE_UPDATE     1000
 
+#define TDLS_PREFERRED_OFF_CHANNEL_NUM_MIN      1
+#define TDLS_PREFERRED_OFF_CHANNEL_NUM_MAX      165
+#define TDLS_PREFERRED_OFF_CHANNEL_NUM_DEFAULT  36
+
 /**
  * tdls_is_vdev_connected() - check the vdev is connected to ap
  * @vdev: vdev object manager
@@ -171,5 +175,23 @@ bool tdls_is_vdev_connected(struct wlan_objmgr_vdev *vdev);
  * Return: true or false
  */
 bool tdls_is_vdev_authenticated(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * tdls_teardown_connections() -teardown and delete all the tdls peers
+ * @vdev: vdev oobject
+ *
+ * Return: true or false
+ */
+void tdls_teardown_connections(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * tdls_disable_offchan_and_teardown_links - Disable offchannel
+ * and teardown TDLS links
+ * @tdls_soc : tdls soc object
+ *
+ * Return: None
+ */
+void tdls_disable_offchan_and_teardown_links(
+				struct wlan_objmgr_vdev *vdev);
 
 #endif

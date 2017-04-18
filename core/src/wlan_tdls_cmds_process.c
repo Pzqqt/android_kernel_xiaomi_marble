@@ -43,7 +43,7 @@ static uint16_t tdls_get_connected_peer(struct tdls_soc_priv_obj *soc_obj)
  *
  * Return: None.
  */
-static void tdls_decrement_peer_count(struct tdls_soc_priv_obj *soc_obj)
+void tdls_decrement_peer_count(struct tdls_soc_priv_obj *soc_obj)
 {
 	if (soc_obj->connected_peer_count)
 		soc_obj->connected_peer_count--;

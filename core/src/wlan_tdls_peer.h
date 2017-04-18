@@ -85,6 +85,20 @@ struct tdls_peer *
 tdls_find_all_peer(struct tdls_soc_priv_obj *soc_obj, const uint8_t *macaddr);
 
 /**
+ * tdls_find_all_peer() - find peer matching the input MACaddr in soc range
+ * @soc_obj: TDLS soc object
+ * @channel:channel number
+ * @bw_offset: offset to bandwidth
+ *
+ * This is in scheduler thread context, no lock required.
+ *
+ * Return: Operating class
+ */
+uint8_t tdls_find_opclass(struct wlan_objmgr_psoc *psoc,
+				 uint8_t channel,
+				 uint8_t bw_offset);
+
+/**
  * tdls_find_first_connected_peer() - find the 1st connected tdls peer from vdev
  * @vdev_obj: tdls vdev object
  *

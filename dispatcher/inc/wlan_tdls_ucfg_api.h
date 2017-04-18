@@ -139,6 +139,14 @@ QDF_STATUS ucfg_tdls_send_mgmt_frame(
 QDF_STATUS ucfg_tdls_responder(struct tdls_set_responder_req *msg_req);
 
 /**
+ * ucfg_tdls_teardown_links() - teardown all TDLS links
+ * @vdev: vdev object manager
+ *
+ * Return: None
+ */
+QDF_STATUS ucfg_tdls_teardown_links(struct wlan_objmgr_vdev *vdev);
+
+/**
  * ucfg_tdls_notify_sta_connect() - notify sta connect
  * @notify_info: sta notification info
  *

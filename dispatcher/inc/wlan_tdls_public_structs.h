@@ -29,7 +29,6 @@
 #include <qdf_mc_timer.h>
 #include <wlan_cmn.h>
 #include <wlan_cmn_ieee80211.h>
-#include <wlan_objmgr_psoc_obj.h>
 
 
 #define WLAN_TDLS_STA_MAX_NUM                        8
@@ -62,6 +61,9 @@
 
 /** Maximum time(ms) to wait for tdls mgmt to complete **/
 #define WAIT_TIME_FOR_TDLS_MGMT         11000
+
+/** Maximum waittime for TDLS teardown links **/
+#define WAIT_TIME_FOR_TDLS_TEARDOWN_LINKS 10000
 
 #define TDLS_TEARDOWN_PEER_UNREACHABLE   25
 #define TDLS_TEARDOWN_PEER_UNSPEC_REASON 26
@@ -188,6 +190,7 @@ enum tdls_command_type {
 	TDLS_CMD_SET_TDLS_MODE,
 	TDLS_CMD_SESSION_INCREMENT,
 	TDLS_CMD_SESSION_DECREMENT,
+	TDLS_CMD_TEARDOWN_LINKS,
 };
 
 /**
@@ -210,6 +213,7 @@ enum tdls_event_type {
 	TDLS_EVENT_DISCOVERY_REQ,
 	TDLS_EVENT_TEARDOWN_REQ,
 	TDLS_EVENT_SETUP_REQ,
+	TDLS_EVENT_TEARDOWN_LINKS_DONE,
 };
 
 /**
@@ -547,6 +551,7 @@ struct tdls_start_params {
 	uint16_t tdls_add_sta_req;
 	uint16_t tdls_del_sta_req;
 	uint16_t tdls_update_peer_state;
+	uint16_t tdls_del_all_peers;
 	tdls_rx_callback tdls_rx_cb;
 	void *tdls_rx_cb_data;
 	tdls_wmm_check tdls_wmm_cb;
@@ -999,6 +1004,18 @@ struct tdls_set_mode_params {
 	enum tdls_feature_mode tdls_mode;
 	bool update_last;
 	enum tdls_disable_sources source;
+};
+
+/**
+ * struct tdls_del_all_tdls_peers - delete all tdls peers
+ * @msg_type: type of message
+ * @msg_len: length of message
+ * @bssid: bssid of peer device
+ */
+struct tdls_del_all_tdls_peers {
+	uint16_t msg_type;
+	uint16_t msg_len;
+	struct qdf_mac_addr bssid;
 };
 
 #endif

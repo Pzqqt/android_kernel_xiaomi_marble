@@ -125,7 +125,7 @@ tdls_find_all_peer(struct tdls_soc_priv_obj *soc_obj, const uint8_t *macaddr)
 	return tdls_search_param.peer;
 }
 
-static uint8_t tdls_find_opclass(struct wlan_objmgr_psoc *psoc, uint8_t channel,
+uint8_t tdls_find_opclass(struct wlan_objmgr_psoc *psoc, uint8_t channel,
 				 uint8_t bw_offset)
 {
 	char country[REG_ALPHA2_LEN + 1];
