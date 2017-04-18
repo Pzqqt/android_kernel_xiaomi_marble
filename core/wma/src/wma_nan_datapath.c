@@ -668,7 +668,7 @@ static int wma_ndp_end_indication_event_handler(void *handle,
 	tp_wma_handle wma_handle = handle;
 	WMI_NDP_END_INDICATION_EVENTID_param_tlvs *event;
 	wmi_ndp_end_indication *ind;
-	struct scheduler_msg pe_msg;
+	struct scheduler_msg pe_msg = {0};
 	struct ndp_end_indication_event *ndp_event_buf;
 	int i, ret, buf_size;
 	struct qdf_mac_addr peer_addr;

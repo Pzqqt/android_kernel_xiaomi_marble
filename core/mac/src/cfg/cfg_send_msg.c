@@ -74,7 +74,7 @@ cfg_send_host_msg(tpAniSirGlobal pMac, uint16_t msgType, uint32_t msgLen,
 		  uint32_t *pData)
 {
 	uint32_t *pMsg, *pEnd;
-	struct scheduler_msg mmhMsg;
+	struct scheduler_msg mmhMsg = {0};
 
 	/* sanity */
 	if ((paramNum > 0) && (NULL == pParamList)) {

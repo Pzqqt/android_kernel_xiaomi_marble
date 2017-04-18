@@ -1733,7 +1733,7 @@ static void proc_dnld_rsp(tpAniSirGlobal pMac, uint16_t length, uint32_t *pParam
 	uint32_t strSize, j;
 	uint8_t pStr[CFG_MAX_STR_LEN];
 	tpCfgBinHdr pHdr;
-	struct scheduler_msg mmhMsg;
+	struct scheduler_msg mmhMsg = {0};
 
 	/* First Dword must contain the AP or STA magic dword */
 	PELOGW(cfg_log(pMac, LOGW, FL("CFG size %d bytes MAGIC dword is 0x%x"),

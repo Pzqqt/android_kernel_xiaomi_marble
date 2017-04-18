@@ -452,7 +452,7 @@ __lim_pno_match_fwd_bcn_probepsp(tpAniSirGlobal pmac, uint8_t *rx_pkt_info,
 {
 	struct pno_match_found  *result;
 	uint8_t                 *body;
-	struct scheduler_msg    mmh_msg;
+	struct scheduler_msg    mmh_msg = {0};
 	tpSirMacMgmtHdr         hdr;
 	uint32_t num_results = 1, len, i;
 
@@ -510,7 +510,7 @@ __lim_ext_scan_forward_bcn_probe_rsp(tpAniSirGlobal pmac, uint8_t *rx_pkt_info,
 {
 	tpSirWifiFullScanResultEvent result;
 	uint8_t                     *body;
-	struct scheduler_msg         mmh_msg;
+	struct scheduler_msg         mmh_msg = {0};
 	tpSirMacMgmtHdr              hdr;
 	uint32_t frame_len;
 	tSirBssDescription *bssdescr;
@@ -1248,7 +1248,7 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 	uint16_t pkt_len = 0;
 	cds_pkt_t *body_ptr = NULL;
 	QDF_STATUS qdf_status;
-	struct scheduler_msg new_msg;
+	struct scheduler_msg new_msg = {0};
 	tSirSmeScanAbortReq *req_msg = NULL;
 	uint8_t session_id;
 	uint32_t scan_id;
@@ -1951,8 +1951,7 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 
 static void lim_process_deferred_message_queue(tpAniSirGlobal pMac)
 {
-	struct scheduler_msg limMsg = { 0, 0, 0 };
-
+	struct scheduler_msg limMsg = {0};
 	struct scheduler_msg *readMsg;
 	uint16_t size;
 

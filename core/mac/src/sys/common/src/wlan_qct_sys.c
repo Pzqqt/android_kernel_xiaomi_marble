@@ -94,7 +94,7 @@ static void sys_stop_complete_cb(void *pUserData)
 QDF_STATUS sys_stop(v_CONTEXT_t p_cds_context)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	struct scheduler_msg sysMsg;
+	struct scheduler_msg sysMsg = {0};
 
 	/* Initialize the stop event */
 	qdf_status = qdf_event_create(&g_stop_evt);
@@ -366,7 +366,7 @@ void sys_process_mmh_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
  */
 void wlan_sys_probe(void)
 {
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 
 	message.reserved = SYS_MSG_COOKIE;
 	message.type = SYS_MSG_ID_MC_THR_PROBE;

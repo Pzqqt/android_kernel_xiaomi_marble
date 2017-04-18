@@ -2155,7 +2155,7 @@ int wma_thermal_mgmt_evt_handler(void *handle, uint8_t *event,
 int wma_ibss_peer_info_event_handler(void *handle, uint8_t *data,
 					    uint32_t len)
 {
-	struct scheduler_msg cds_msg;
+	struct scheduler_msg cds_msg = {0};
 	wmi_peer_info *peer_info;
 	void *pdev;
 	tSirIbssPeerInfoParams *pSmeRsp;
@@ -2930,7 +2930,7 @@ void ol_rx_err(void *pdev, uint8_t vdev_id,
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	tpSirSmeMicFailureInd mic_err_ind;
 	struct ether_header *eth_hdr;
-	struct scheduler_msg cds_msg;
+	struct scheduler_msg cds_msg = {0};
 
 	if (NULL == wma) {
 		WMA_LOGE("%s: Failed to get wma", __func__);
@@ -3080,7 +3080,7 @@ wma_indicate_err(
 	{
 		tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 		tpSirSmeMicFailureInd mic_err_ind;
-		struct scheduler_msg cds_msg;
+		struct scheduler_msg cds_msg = {0};
 		uint8_t vdev_id;
 
 		if (NULL == wma) {

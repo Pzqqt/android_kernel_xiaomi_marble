@@ -90,7 +90,7 @@ static void wlanqcmbr_mc_process_msg(void *message);
  */
 static uint32_t wlan_ftm_postmsg(uint8_t *cmd_ptr, uint16_t cmd_len)
 {
-	struct scheduler_msg ftmMsg;
+	struct scheduler_msg ftmMsg = {0};
 
 	ENTER();
 

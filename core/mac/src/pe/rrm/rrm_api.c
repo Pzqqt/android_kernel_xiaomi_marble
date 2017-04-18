@@ -353,7 +353,7 @@ rrm_process_neighbor_report_response(tpAniSirGlobal pMac,
 	tpSirNeighborReportInd pSmeNeighborRpt = NULL;
 	uint16_t length;
 	uint8_t i;
-	struct scheduler_msg mmhMsg;
+	struct scheduler_msg mmhMsg = {0};
 
 	if (pNeighborRep == NULL || pSessionEntry == NULL) {
 		PELOGE(lim_log(pMac, LOGE, FL(" Invalid parameters"));)
@@ -536,7 +536,7 @@ rrm_process_beacon_report_req(tpAniSirGlobal pMac,
 			      tDot11fIEMeasurementRequest *pBeaconReq,
 			      tpPESession pSessionEntry)
 {
-	struct scheduler_msg mmhMsg;
+	struct scheduler_msg mmhMsg = {0};
 	tpSirBeaconReportReqInd pSmeBcnReportReq;
 	uint8_t num_channels = 0, num_APChanReport;
 	uint16_t measDuration, maxMeasduration;

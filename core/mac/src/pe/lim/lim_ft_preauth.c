@@ -603,7 +603,7 @@ void lim_post_ft_pre_auth_rsp(tpAniSirGlobal mac_ctx,
 			      tpPESession session)
 {
 	tpSirFTPreAuthRsp ft_pre_auth_rsp;
-	struct scheduler_msg mmh_msg;
+	struct scheduler_msg mmh_msg = {0};
 	uint16_t rsp_len = sizeof(tSirFTPreAuthRsp);
 
 	ft_pre_auth_rsp = (tpSirFTPreAuthRsp) qdf_mem_malloc(rsp_len);

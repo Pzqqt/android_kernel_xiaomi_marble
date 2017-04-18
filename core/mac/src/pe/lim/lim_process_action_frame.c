@@ -417,7 +417,7 @@ lim_process_ext_channel_switch_action_frame(tpAniSirGlobal mac_ctx,
 	if (eLIM_AP_ROLE == session_entry->limSystemRole) {
 
 		struct sir_sme_ext_cng_chan_ind *ext_cng_chan_ind;
-		struct scheduler_msg mmh_msg;
+		struct scheduler_msg mmh_msg = {0};
 
 		ext_cng_chan_ind = qdf_mem_malloc(sizeof(*ext_cng_chan_ind));
 		if (NULL == ext_cng_chan_ind) {

@@ -436,7 +436,7 @@ int wma_stats_ext_event_handler(void *handle, uint8_t *event_buf,
 	tSirStatsExtEvent *stats_ext_event;
 	wmi_stats_ext_event_fixed_param *stats_ext_info;
 	QDF_STATUS status;
-	struct scheduler_msg cds_msg;
+	struct scheduler_msg cds_msg = {0};
 	uint8_t *buf_ptr;
 	uint32_t alloc_len;
 
@@ -1750,7 +1750,7 @@ int wma_link_status_event_handler(void *handle, uint8_t *cmd_param_info,
 int wma_rso_cmd_status_event_handler(wmi_roam_event_fixed_param *wmi_event)
 {
 	struct rso_cmd_status *rso_status;
-	struct scheduler_msg sme_msg;
+	struct scheduler_msg sme_msg = {0};
 	QDF_STATUS qdf_status;
 
 	rso_status = qdf_mem_malloc(sizeof(*rso_status));

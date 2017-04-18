@@ -2356,7 +2356,7 @@ void lim_update_lost_link_info(tpAniSirGlobal mac, tpPESession session,
 				int32_t rssi)
 {
 	struct sir_lost_link_info *lost_link_info;
-	struct scheduler_msg mmh_msg;
+	struct scheduler_msg mmh_msg = {0};
 
 	if ((NULL == mac) || (NULL == session)) {
 		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,

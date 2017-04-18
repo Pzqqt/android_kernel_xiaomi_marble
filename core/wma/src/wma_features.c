@@ -1041,7 +1041,7 @@ int wma_nan_rsp_event_handler(void *handle, uint8_t *event_buf,
 	tSirNanEvent *nan_rsp_event;
 	wmi_nan_event_hdr *nan_rsp_event_hdr;
 	QDF_STATUS status;
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	uint8_t *buf_ptr;
 	uint32_t alloc_len;
 
@@ -3970,7 +3970,7 @@ static void wma_send_status_of_ext_wow(tp_wma_handle wma, bool status)
 {
 	tSirReadyToExtWoWInd *ready_to_extwow;
 	QDF_STATUS vstatus;
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	uint8_t len;
 
 	WMA_LOGD("Posting ready to suspend indication to umac");
@@ -4454,7 +4454,7 @@ void wma_send_regdomain_info_to_fw(uint32_t reg_dmn, uint16_t regdmn2G,
  */
 static QDF_STATUS wma_post_runtime_resume_msg(WMA_HANDLE handle)
 {
-	struct scheduler_msg resume_msg;
+	struct scheduler_msg resume_msg = {0};
 	QDF_STATUS status;
 	tp_wma_handle wma = (tp_wma_handle) handle;
 

@@ -676,7 +676,7 @@ tSirRetStatus lim_send_sa_query_response_frame(tpAniSirGlobal pMac,
 static inline void
 lim_post_sme_message(tpAniSirGlobal pMac, uint32_t msgType, uint32_t *pMsgBuf)
 {
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 
 	if (pMsgBuf == NULL) {
 		lim_log(pMac, LOGE, FL("Buffer is Pointing to NULL"));
@@ -724,7 +724,7 @@ static inline void
 lim_post_mlm_message(tpAniSirGlobal pMac, uint32_t msgType, uint32_t *pMsgBuf)
 {
 
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	if (pMsgBuf == NULL) {
 		lim_log(pMac, LOGE, FL("Buffer is Pointing to NULL"));
 		return;
