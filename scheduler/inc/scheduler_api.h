@@ -73,6 +73,11 @@ typedef enum {
  * @bodyval: message body val
  * @callback: callback to be called by scheduler thread once message is posted
  *   and scheduler thread has started processing the message.
+ * @flush_callback: flush callback which will be invoked during driver unload
+ *   such that component can release the ref count of common global objects
+ *   like PSOC, PDEV, VDEV and PEER. A component needs to populate flush
+ *   callback in message body pointer for those messages which have taken ref
+ *   count for above mentioned common objects.
  */
 struct scheduler_msg {
 	uint16_t type;
@@ -80,6 +85,7 @@ struct scheduler_msg {
 	void *bodyptr;
 	uint32_t bodyval;
 	void *callback;
+	void *flush_callback;
 };
 
 typedef QDF_STATUS (*scheduler_msg_process_fn_t) (struct scheduler_msg  *msg);
