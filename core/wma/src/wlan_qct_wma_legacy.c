@@ -111,8 +111,8 @@ tSirRetStatus u_mac_post_ctrl_msg(void *pSirGlobal, tSirMbMsg *pMb)
 	struct scheduler_msg msg = {0};
 	tSirRetStatus status = eSIR_SUCCESS;
 	tpAniSirGlobal pMac = (tpAniSirGlobal) pSirGlobal;
-
 	tSirMbMsg *pMbLocal;
+
 	msg.type = pMb->type;
 	msg.bodyval = 0;
 

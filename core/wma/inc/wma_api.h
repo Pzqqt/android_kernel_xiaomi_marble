@@ -54,7 +54,7 @@ typedef void *WMA_HANDLE;
  * @GEN_PARAM_RESET_TSF_GPIO: reset tsf gpio
  * @GEN_VDEV_ROAM_SYNCH_DELAY: roam sync delay
  */
-typedef enum {
+enum GEN_PARAM {
 	GEN_VDEV_PARAM_AMPDU = 0x1,
 	GEN_VDEV_PARAM_AMSDU,
 	GEN_PARAM_CRASH_INJECT,
@@ -62,7 +62,7 @@ typedef enum {
 	GEN_PARAM_CAPTURE_TSF,
 	GEN_PARAM_RESET_TSF_GPIO,
 	GEN_VDEV_ROAM_SYNCH_DELAY,
-} GEN_PARAM;
+};
 
 /**
  * struct wma_caps_per_phy - various caps per phy

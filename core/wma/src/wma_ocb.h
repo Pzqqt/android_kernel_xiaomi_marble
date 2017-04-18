@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -122,7 +122,7 @@ static inline int wma_ocb_get_tsf_timer(tp_wma_handle wma_handle,
 static inline int wma_dcc_get_stats(tp_wma_handle wma_handle,
 		struct sir_dcc_get_stats *get_stats_param)
 {
-	return 0 ;
+	return 0;
 }
 
 static inline int wma_dcc_clear_stats(tp_wma_handle wma_handle,

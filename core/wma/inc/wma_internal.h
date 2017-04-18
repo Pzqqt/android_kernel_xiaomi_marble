@@ -343,21 +343,18 @@ QDF_STATUS wma_extscan_start_hotlist_monitor(tp_wma_handle wma,
 					     *photlist);
 
 QDF_STATUS wma_extscan_stop_hotlist_monitor(tp_wma_handle wma,
-					    tSirExtScanResetBssidHotlistReqParams
-					    *photlist_reset);
+			tSirExtScanResetBssidHotlistReqParams *photlist_reset);
 
 QDF_STATUS wma_get_buf_extscan_change_monitor_cmd(tp_wma_handle wma_handle,
-						  tSirExtScanSetSigChangeReqParams
-						  *psigchange, wmi_buf_t *buf,
-						  int *buf_len);
+				tSirExtScanSetSigChangeReqParams *psigchange,
+				wmi_buf_t *buf, int *buf_len);
 
 QDF_STATUS wma_extscan_start_change_monitor(tp_wma_handle wma,
 					    tSirExtScanSetSigChangeReqParams *
 					    psigchange);
 
 QDF_STATUS wma_extscan_stop_change_monitor(tp_wma_handle wma,
-					   tSirExtScanResetSignificantChangeReqParams
-					   *pResetReq);
+		   tSirExtScanResetSignificantChangeReqParams *pResetReq);
 
 QDF_STATUS wma_extscan_get_cached_results(tp_wma_handle wma,
 					  tSirExtScanGetCachedResultsReqParams *
@@ -380,7 +377,7 @@ QDF_STATUS  wma_ipa_offload_enable_disable(tp_wma_handle wma,
 			struct sir_ipa_offload_enable_disable *ipa_offload);
 
 void wma_process_unit_test_cmd(WMA_HANDLE handle,
-				      t_wma_unit_test_cmd * wma_utest);
+				      t_wma_unit_test_cmd *wma_utest);
 
 QDF_STATUS wma_scan_probe_setoui(tp_wma_handle wma, tSirScanMacOui *psetoui);
 
@@ -534,8 +531,8 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 				struct add_sta_self_params *self_sta_req,
 				uint8_t generateRsp);
 
-QDF_STATUS wma_vdev_start(tp_wma_handle wma,
-				 struct wma_vdev_start_req *req, bool isRestart);
+QDF_STATUS wma_vdev_start(tp_wma_handle wma, struct wma_vdev_start_req *req,
+			  bool isRestart);
 
 void wma_vdev_resp_timer(void *data);
 
@@ -680,8 +677,7 @@ void wma_disable_sta_ps_mode(tp_wma_handle wma, tpDisablePsParams ps_req);
 
 void wma_enable_uapsd_mode(tp_wma_handle wma, tpEnableUapsdParams ps_req);
 
-void wma_disable_uapsd_mode(tp_wma_handle wma,
-				   tpDisableUapsdParams ps_req);
+void wma_disable_uapsd_mode(tp_wma_handle wma, tpDisableUapsdParams ps_req);
 
 QDF_STATUS wma_get_temperature(tp_wma_handle wma_handle);
 
@@ -804,7 +800,7 @@ int wma_stats_ext_event_handler(void *handle, uint8_t *event_buf,
 				       uint32_t len);
 #endif
 
-tSmpsModeValue host_map_smps_mode(A_UINT32 fw_smps_mode);
+enum eSmpsModeValue host_map_smps_mode(A_UINT32 fw_smps_mode);
 int wma_smps_mode_to_force_mode_param(uint8_t smps_mode);
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
@@ -817,7 +813,7 @@ QDF_STATUS wma_process_ll_stats_set_req
 	(tp_wma_handle wma, const tpSirLLStatsSetReq setReq);
 
 QDF_STATUS wma_process_ll_stats_get_req
-	(tp_wma_handle wma, const tpSirLLStatsGetReq getReq) ;
+	(tp_wma_handle wma, const tpSirLLStatsGetReq getReq);
 
 int wma_unified_link_iface_stats_event_handler(void *handle,
 					       uint8_t *cmd_param_info,

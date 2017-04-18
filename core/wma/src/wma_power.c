@@ -376,7 +376,8 @@ void wma_set_tx_power(WMA_HANDLE handle,
 
 	if (tx_pwr_params->power == 0) {
 		/* set to default. Since the app does not care the tx power
-		 * we keep the previous setting */
+		 * we keep the previous setting
+		 */
 		wma_handle->interfaces[vdev_id].tx_power = 0;
 		ret = 0;
 		goto end;
@@ -394,10 +395,9 @@ void wma_set_tx_power(WMA_HANDLE handle,
 		/* tx_power changed, Push the tx_power to FW */
 		WMA_LOGI("%s: Set TX pwr limit [WMI_VDEV_PARAM_TX_PWRLIMIT] to %d",
 			__func__, tx_pwr_params->power);
-		ret = wma_vdev_set_param(wma_handle->wmi_handle,
-						      vdev_id,
-						      WMI_VDEV_PARAM_TX_PWRLIMIT,
-						      tx_pwr_params->power);
+		ret = wma_vdev_set_param(wma_handle->wmi_handle, vdev_id,
+					      WMI_VDEV_PARAM_TX_PWRLIMIT,
+					      tx_pwr_params->power);
 		if (ret == QDF_STATUS_SUCCESS)
 			wma_handle->interfaces[vdev_id].tx_power =
 				tx_pwr_params->power;
@@ -786,8 +786,8 @@ void wma_enable_sta_ps_mode(tp_wma_handle wma, tpEnablePsParams ps_req)
 		}
 	} else if (eSIR_ADDON_ENABLE_UAPSD == ps_req->psSetting) {
 		uint32_t uapsd_val = 0;
-		uapsd_val = wma_get_uapsd_mask(&ps_req->uapsdParams);
 
+		uapsd_val = wma_get_uapsd_mask(&ps_req->uapsdParams);
 		if (uapsd_val != iface->uapsd_cached_val) {
 			WMA_LOGD("Enable Uapsd vdevId %d Mask %d",
 					vdev_id, uapsd_val);
@@ -1194,10 +1194,8 @@ int wma_pdev_temperature_evt_handler(void *handle, uint8_t *event,
 	sme_msg.bodyval = wmi_event->value;
 
 	qdf_status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		WMA_LOGE(FL("Fail to post get temperature ind msg"));
-	}
-
 	return 0;
 }
 
@@ -1292,9 +1290,8 @@ static void wma_update_beacon_noa_ie(struct beacon_info *bcn,
 	/* if there is nothing to add, just return */
 	if (new_noa_sub_ie_len == 0) {
 		if (bcn->noa_sub_ie_len && bcn->noa_ie) {
-			WMA_LOGD("%s: NoA is present in previous beacon, "
-				 "but not present in swba event, "
-				 "So Reset the NoA", __func__);
+			WMA_LOGD("%s: NoA is present in previous beacon, but not present in swba event, So Reset the NoA",
+				 __func__);
 			/* TODO: Assuming p2p noa ie is last ie in the beacon */
 			qdf_mem_zero(bcn->noa_ie, (bcn->noa_sub_ie_len +
 						   sizeof(struct p2p_ie)));
@@ -1309,16 +1306,14 @@ static void wma_update_beacon_noa_ie(struct beacon_info *bcn,
 
 	if (bcn->noa_sub_ie_len && bcn->noa_ie) {
 		/* NoA present in previous beacon, update it */
-		WMA_LOGD("%s: NoA present in previous beacon, "
-			 "update the NoA IE, bcn->len %u"
-			 "bcn->noa_sub_ie_len %u",
+		WMA_LOGD("%s: NoA present in previous beacon, update the NoA IE, bcn->len %u bcn->noa_sub_ie_len %u",
 			 __func__, bcn->len, bcn->noa_sub_ie_len);
 		bcn->len -= (bcn->noa_sub_ie_len + sizeof(struct p2p_ie));
 		qdf_mem_zero(bcn->noa_ie,
 			     (bcn->noa_sub_ie_len + sizeof(struct p2p_ie)));
 	} else {                /* NoA is not present in previous beacon */
-		WMA_LOGD("%s: NoA not present in previous beacon, add it"
-			 "bcn->len %u", __func__, bcn->len);
+		WMA_LOGD("%s: NoA not present in previous beacon, add it bcn->len %u",
+			 __func__, bcn->len);
 		buf = qdf_nbuf_data(bcn->buf);
 		bcn->noa_ie = buf + bcn->len;
 	}
@@ -1364,9 +1359,8 @@ static void wma_p2p_create_sub_ie_noa(uint8_t *buf,
 	*buf++ = noa->index;    /* Instance Index */
 
 	tmp_octet = noa->ctwindow & WMA_P2P_NOA_IE_CTWIN_MASK;
-	if (noa->oppPS) {
+	if (noa->oppPS)
 		tmp_octet |= WMA_P2P_NOA_IE_OPP_PS_SET;
-	}
 	*buf++ = tmp_octet;     /* Opp Ps and CTWin capabilities */
 
 	for (i = 0; i < noa->num_descriptors; i++) {
@@ -1510,8 +1504,8 @@ int wma_p2p_noa_event_handler(void *handle, uint8_t *event,
 		descriptors = WMI_UNIFIED_NOA_ATTR_NUM_DESC_GET(p2p_noa_info);
 		noa_ie.num_descriptors = (uint8_t) descriptors;
 
-		WMA_LOGI("%s: index %u, oppPs %u, ctwindow %u, "
-			 "num_descriptors = %u", __func__, noa_ie.index,
+		WMA_LOGI("%s: index %u, oppPs %u, ctwindow %u, num_descriptors = %u",
+			 __func__, noa_ie.index,
 			 noa_ie.oppPS, noa_ie.ctwindow, noa_ie.num_descriptors);
 		for (i = 0; i < noa_ie.num_descriptors; i++) {
 			noa_ie.noa_descriptors[i].type_count =
@@ -1523,8 +1517,7 @@ int wma_p2p_noa_event_handler(void *handle, uint8_t *event,
 				p2p_noa_info->noa_descriptors[i].interval;
 			noa_ie.noa_descriptors[i].start_time =
 				p2p_noa_info->noa_descriptors[i].start_time;
-			WMA_LOGI("%s: NoA descriptor[%d] type_count %u, "
-				 "duration %u, interval %u, start_time = %u",
+			WMA_LOGI("%s: NoA descriptor[%d] type_count %u, duration %u, interval %u, start_time = %u",
 				 __func__, i,
 				 noa_ie.noa_descriptors[i].type_count,
 				 noa_ie.noa_descriptors[i].duration,
@@ -1533,7 +1526,8 @@ int wma_p2p_noa_event_handler(void *handle, uint8_t *event,
 		}
 
 		/* Send a msg to LIM to update the NoA IE in probe response
-		 * frames transmitted by the host */
+		 * frames transmitted by the host
+		 */
 		wma_update_probe_resp_noa(wma, &noa_ie);
 	}
 
@@ -1566,7 +1560,6 @@ static void wma_set_p2pgo_noa_req(tp_wma_handle wma, tP2pPsParams *noa)
 	if (QDF_IS_STATUS_ERROR(ret))
 		WMA_LOGE("Failed to send set uapsd param ret = %d", ret);
 
-	return;
 }
 
 /**
@@ -1595,7 +1588,6 @@ static void wma_set_p2pgo_oppps_req(tp_wma_handle wma, tP2pPsParams *oppps)
 	if (QDF_IS_STATUS_ERROR(ret))
 		WMA_LOGE("Failed to send set uapsd param ret = %d", ret);
 
-	return;
 }
 
 /**
@@ -1609,11 +1601,10 @@ void wma_process_set_p2pgo_noa_req(tp_wma_handle wma,
 				   tP2pPsParams *ps_params)
 {
 	WMA_LOGD("%s: Enter", __func__);
-	if (ps_params->opp_ps) {
+	if (ps_params->opp_ps)
 		wma_set_p2pgo_oppps_req(wma, ps_params);
-	} else {
+	else
 		wma_set_p2pgo_noa_req(wma, ps_params);
-	}
 
 	WMA_LOGD("%s: Exit", __func__);
 }
@@ -1966,6 +1957,7 @@ static void wma_set_vdev_resume_dtim(tp_wma_handle wma, uint8_t vdev_id)
 		uint32_t cfg_data_val = 0;
 		/* get mac to acess CFG data base */
 		struct sAniSirGlobal *mac = cds_get_context(QDF_MODULE_ID_PE);
+
 		if (!mac) {
 			WMA_LOGE(FL("Failed to get mac context"));
 			return;
@@ -1979,8 +1971,8 @@ static void wma_set_vdev_resume_dtim(tp_wma_handle wma, uint8_t vdev_id)
 		}
 
 		ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
-						      WMI_VDEV_PARAM_LISTEN_INTERVAL,
-						      cfg_data_val);
+					      WMI_VDEV_PARAM_LISTEN_INTERVAL,
+					      cfg_data_val);
 		if (QDF_IS_STATUS_ERROR(ret)) {
 			/* Even it fails continue Fw will take default LI */
 			WMA_LOGE("Failed to Set Listen Interval vdevId %d",

@@ -43,23 +43,25 @@
 #error "more than one ANI_OS_TYPE_xxx is defined for this build"
 #endif
 
-#elif defined (ANI_OS_TYPE_QNX)        /* QNX */
+#elif defined(ANI_OS_TYPE_QNX)        /* QNX */
 
 #if defined(ANI_OS_TYPE_ANDROID)
 #error "more than one ANI_OS_TYPE_xxx is defined for this build"
 #endif
 
-#elif !defined(ANI_OS_TYPE_ANDROID) && !defined(ANI_OS_TYPE_QNX)        /* NONE */
+#elif !defined(ANI_OS_TYPE_ANDROID) && !defined(ANI_OS_TYPE_QNX) /* NONE */
 #error "NONE of the ANI_OS_TYPE_xxx are defined for this build"
 #endif
 
 /*
  * Validate the compiler
  */
-#if (defined (ANI_COMPILER_TYPE_MSVC) && defined (ANI_COMPILER_TYPE_GCC) && defined (ANI_COMPILER_TYPE_RVCT))
+#if (defined(ANI_COMPILER_TYPE_MSVC) && defined(ANI_COMPILER_TYPE_GCC) && \
+					defined(ANI_COMPILER_TYPE_RVCT))
 #error "more than one ANI_COMPILER_TYPE_xxx is defined for this build"
 
-#elif !(defined (ANI_COMPILER_TYPE_MSVC) || defined (ANI_COMPILER_TYPE_GCC) || defined (ANI_COMPILER_TYPE_RVCT))
+#elif !(defined(ANI_COMPILER_TYPE_MSVC) || defined(ANI_COMPILER_TYPE_GCC) || \
+					defined(ANI_COMPILER_TYPE_RVCT))
 #error "NONE of the ANI_COMPILER_TYPE_xxx are defined for this build"
 
 #endif
