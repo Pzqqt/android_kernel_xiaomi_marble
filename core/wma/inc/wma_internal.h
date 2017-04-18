@@ -263,9 +263,6 @@ QDF_STATUS wma_roam_scan_bmiss_cnt(tp_wma_handle wma_handle,
 QDF_STATUS wma_roam_scan_offload_command(tp_wma_handle wma_handle,
 					 uint32_t command, uint32_t vdev_id);
 
-QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
-				     tSirRoamOffloadScanReq *roam_req);
-
 QDF_STATUS wma_roam_preauth_chan_set(tp_wma_handle wma_handle,
 				     tpSwitchChannelParams params,
 				     uint8_t vdev_id);
