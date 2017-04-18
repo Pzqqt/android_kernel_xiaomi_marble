@@ -2394,6 +2394,7 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 	bool hddDisconInProgress = false;
 	unsigned long rc;
 	tSirResultCodes timeout_reason = 0;
+	bool ok;
 
 	if (!pHddCtx) {
 		hdd_err("HDD context is NULL");
@@ -2512,6 +2513,31 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 		wlan_hdd_auto_shutdown_enable(pHddCtx, false);
 #endif
+
+		hdd_debug("check if STA chan ok for DNBS");
+		if (policy_mgr_is_chan_ok_for_dnbs(pHddCtx->hdd_psoc,
+					pHddStaCtx->conn_info.operationChannel,
+					&ok)) {
+			hdd_err("Unable to check DNBS eligibility for chan:%d",
+					pHddStaCtx->conn_info.operationChannel);
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		if (!ok) {
+			hdd_err("Chan:%d not suitable for DNBS",
+				pHddStaCtx->conn_info.operationChannel);
+			wlan_hdd_netif_queue_control(pAdapter,
+				WLAN_NETIF_CARRIER_OFF,
+				WLAN_CONTROL_PATH);
+			if (!hddDisconInProgress) {
+				hdd_err("Disconnecting...");
+				sme_roam_disconnect(
+					WLAN_HDD_GET_HAL_CTX(pAdapter),
+					pAdapter->sessionId,
+					eCSR_DISCONNECT_REASON_UNSPECIFIED);
+			}
+			return QDF_STATUS_E_FAILURE;
+		}
 
 		hdd_debug("check for SAP restart");
 		policy_mgr_check_concurrent_intf_and_restart_sap(
