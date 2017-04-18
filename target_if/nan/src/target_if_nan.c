@@ -907,7 +907,7 @@ static int target_if_ndp_end_ind_handler(ol_scn_t scn, uint8_t *data,
 {
 	int i, buf_size;
 	QDF_STATUS status;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	wmi_ndp_end_indication *ind;
 	struct qdf_mac_addr peer_addr;
 	struct wlan_objmgr_psoc *psoc;

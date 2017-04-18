@@ -196,6 +196,14 @@ QDF_STATUS scheduler_post_msg_by_priority(QDF_MODULE_ID qid,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	if ((0 != pMsg->reserved) && (SYS_MSG_COOKIE != pMsg->reserved)) {
+		QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
+			"%s: Un-initialized message pointer.. please initialize it",
+			__func__);
+		QDF_BUG(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	/* Target_If is a special message queue in phase 3 convergence beacause
 	 * its used by both legacy WMA and as well as new UMAC components which
 	 * directly populate callback handlers in message body.
@@ -516,7 +524,7 @@ QDF_STATUS scheduler_deregister_sys_legacy_handler(void)
 void scheduler_mc_timer_callback(unsigned long data)
 {
 	qdf_mc_timer_t *timer = (qdf_mc_timer_t *)data;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	QDF_STATUS status;
 
 	qdf_mc_timer_callback_t callback = NULL;
