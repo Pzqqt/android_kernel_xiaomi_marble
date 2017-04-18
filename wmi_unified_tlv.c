@@ -17756,7 +17756,6 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 					WMI_PEER_STA_PS_STATECHG_EVENTID;
 	event_ids[wmi_pdev_channel_hopping_event_id] =
 					WMI_PDEV_CHANNEL_HOPPING_EVENTID;
-	event_ids[wmi_wds_peer_event_id] = WMI_WDS_PEER_EVENTID;
 	event_ids[wmi_offchan_data_tx_completion_event] =
 				WMI_OFFCHAN_DATA_TX_COMPLETION_EVENTID;
 	event_ids[wmi_dfs_cac_complete_id] = WMI_VDEV_DFS_CAC_COMPLETE_EVENTID;
