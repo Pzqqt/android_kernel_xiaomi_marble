@@ -2823,12 +2823,11 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event, uint32_t len)
 	case WOW_REASON_NLOD:
 		if (wma_vdev) {
 			WMI_NLO_MATCH_EVENTID_param_tlvs nlo_param;
-			wmi_nlo_event *nlo_event;
+			wmi_nlo_event nlo_event;
 
 			WMA_LOGD("NLO match happened");
-
-			nlo_event = nlo_param.fixed_param;
-			nlo_event->vdev_id = wake_info->vdev_id;
+			nlo_param.fixed_param = &nlo_event;
+			nlo_event.vdev_id = wake_info->vdev_id;
 			target_if_nlo_match_event_handler(handle,
 							  (uint8_t *)&nlo_param,
 							  sizeof(nlo_param));
