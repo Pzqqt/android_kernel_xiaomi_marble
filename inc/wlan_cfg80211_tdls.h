@@ -33,6 +33,7 @@
 #include <qdf_types.h>
 #include <wlan_tdls_ucfg_api.h>
 
+#ifdef CONVERGED_TDLS_ENABLE
 
 #define TDLS_VDEV_MAGIC 0x54444c53       /* "TDLS" */
 
@@ -51,6 +52,7 @@ struct osif_tdls_vdev {
 	struct completion tdls_del_peer_comp;
 	struct completion tdls_mgmt_comp;
 	struct completion tdls_link_establish_req_comp;
+	struct completion tdls_teardown_comp;
 	QDF_STATUS tdls_add_peer_status;
 	uint32_t mgmt_tx_completion_status;
 };
@@ -191,4 +193,76 @@ void wlan_cfg80211_tdls_event_callback(void *userdata,
 void wlan_cfg80211_tdls_rx_callback(void *user_data,
 	struct tdls_rx_mgmt_frame *rx_frame);
 
+/**
+ * hdd_notify_sta_connect() - notify sta connect to TDLS
+ * @session_id: pointer to soc object
+ * @tdls_chan_swit_prohibited: indicates channel switch capability
+ * @tdls_prohibited: indicates tdls allowed or not
+ * @vdev: vdev object manager
+ *
+ * Notify sta connect event to TDLS component
+ *
+ * Return: None
+ */
+void
+hdd_notify_sta_connect(uint8_t session_id,
+		       bool tdls_chan_swit_prohibited,
+		       bool tdls_prohibited,
+		       struct wlan_objmgr_vdev *vdev);
+
+/**
+ * hdd_notify_sta_disconnect() - notify sta disconnect to TDLS
+ * @session_id: pointer to soc object
+ * @lfr_roam: indicate, whether disconnect due to lfr roam
+ * @vdev: vdev object manager
+ *
+ * Notify sta disconnect event to TDLS component
+ *
+ * Return: None
+ */
+void hdd_notify_sta_disconnect(uint8_t session_id,
+			       bool lfr_roam,
+			       struct wlan_objmgr_vdev *vdev);
+
+/**
+ * hdd_notify_teardown_tdls_links() - notify TDLS to teardown links
+ * @vdev: vdev object manager
+ *
+ * Notify tdls to teardown all the links, due to certain events
+ * in the system
+ *
+ * Return: None
+ */
+void hdd_notify_teardown_tdls_links(struct wlan_objmgr_vdev *vdev);
+
+#else
+static inline void
+hdd_notify_sta_connect(uint8_t session_id,
+		       bool tdls_chan_swit_prohibited,
+		       bool tdls_prohibited,
+		       struct wlan_objmgr_vdev *vdev)
+{
+}
+
+static inline
+void hdd_notify_sta_disconnect(uint8_t session_id,
+			       bool lfr_roam,
+			       struct wlan_objmgr_vdev *vdev)
+{
+
+}
+
+static inline
+int wlan_cfg80211_tdls_configure_mode(struct wlan_objmgr_vdev *vdev,
+						uint32_t trigger_mode)
+{
+	return 0;
+}
+
+static inline
+void hdd_notify_teardown_tdls_links(struct wlan_objmgr_vdev *vdev)
+{
+
+}
+#endif
 #endif

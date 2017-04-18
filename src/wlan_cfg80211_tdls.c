@@ -53,6 +53,7 @@ QDF_STATUS wlan_cfg80211_tdls_priv_init(struct vdev_osif_priv *osif_priv)
 	init_completion(&tdls_priv->tdls_del_peer_comp);
 	init_completion(&tdls_priv->tdls_mgmt_comp);
 	init_completion(&tdls_priv->tdls_link_establish_req_comp);
+	init_completion(&tdls_priv->tdls_teardown_comp);
 
 	osif_priv->osif_tdls = tdls_priv;
 
@@ -67,6 +68,72 @@ void wlan_cfg80211_tdls_priv_deinit(struct vdev_osif_priv *osif_priv)
 	osif_priv->osif_tdls = NULL;
 }
 
+void hdd_notify_teardown_tdls_links(struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_osif_priv *osif_priv;
+	struct osif_tdls_vdev *tdls_priv;
+	QDF_STATUS status;
+	unsigned long rc;
+
+	if (!vdev)
+		return;
+
+	wlan_vdev_obj_lock(vdev);
+	osif_priv = wlan_vdev_get_ospriv(vdev);
+	wlan_vdev_obj_unlock(vdev);
+
+	tdls_priv = osif_priv->osif_tdls;
+
+	reinit_completion(&tdls_priv->tdls_teardown_comp);
+	status = ucfg_tdls_teardown_links(vdev);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cfg80211_err("ucfg_tdls_teardown_links failed err %d", status);
+		return;
+	}
+
+	cfg80211_info("Wait for tdls teardown completion. Timeout %u ms",
+		WAIT_TIME_FOR_TDLS_TEARDOWN_LINKS);
+
+	rc = wait_for_completion_timeout(
+		&tdls_priv->tdls_teardown_comp,
+		msecs_to_jiffies(WAIT_TIME_FOR_TDLS_TEARDOWN_LINKS));
+
+	if (0 == rc) {
+		cfg80211_err(" Teardown Completion timed out rc: %ld", rc);
+		return;
+	}
+
+	cfg80211_info("TDLS teardown completion status %ld ", rc);
+}
+
+void
+hdd_notify_sta_connect(uint8_t session_id,
+		       bool tdls_chan_swit_prohibited,
+		       bool tdls_prohibited,
+		       struct wlan_objmgr_vdev *vdev)
+{
+	struct tdls_sta_notify_params notify_info;
+
+	notify_info.session_id = session_id;
+	notify_info.vdev = vdev;
+	notify_info.tdls_chan_swit_prohibited = tdls_chan_swit_prohibited;
+	notify_info.tdls_prohibited = tdls_prohibited;
+	ucfg_tdls_notify_sta_connect(&notify_info);
+
+}
+
+void hdd_notify_sta_disconnect(uint8_t session_id,
+			       bool lfr_roam,
+			       struct wlan_objmgr_vdev *vdev)
+{
+	struct tdls_sta_notify_params notify_info;
+
+	notify_info.session_id = session_id;
+	notify_info.lfr_roam = lfr_roam;
+	notify_info.vdev = vdev;
+	ucfg_tdls_notify_sta_disconnect(&notify_info);
+
+}
 int wlan_cfg80211_tdls_add_peer(struct wlan_objmgr_pdev *pdev,
 				struct net_device *dev, const uint8_t *mac)
 {
@@ -385,14 +452,14 @@ int wlan_cfg80211_tdls_configure_mode(struct wlan_objmgr_vdev *vdev,
 
 	switch (trigger_mode) {
 	case WLAN_VENDOR_TDLS_TRIGGER_MODE_EXPLICIT:
-		tdls_mode = TDLS_SUPPORT_IMP_MODE;
-		break;
+		tdls_mode = TDLS_SUPPORT_EXP_TRIG_ONLY;
+		return 0;
 	case WLAN_VENDOR_TDLS_TRIGGER_MODE_EXTERNAL:
 		tdls_mode = TDLS_SUPPORT_EXT_CONTROL;
 		break;
 	case WLAN_VENDOR_TDLS_TRIGGER_MODE_IMPLICIT:
 		tdls_mode = TDLS_SUPPORT_IMP_MODE;
-		break;
+		return 0;
 	default:
 		cfg80211_err("Invalid TDLS trigger mode");
 		return -EINVAL;
@@ -751,6 +818,9 @@ void wlan_cfg80211_tdls_event_callback(void *user_data,
 		break;
 	case TDLS_EVENT_SETUP_REQ:
 		wlan_cfg80211_tdls_indicate_setup(ind);
+		break;
+	case TDLS_EVENT_TEARDOWN_LINKS_DONE:
+		complete(&tdls_priv->tdls_teardown_comp);
 		break;
 	default:
 		break;
