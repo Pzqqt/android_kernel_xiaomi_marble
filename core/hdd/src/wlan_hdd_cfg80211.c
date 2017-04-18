@@ -109,6 +109,7 @@
 #include <qca_vendor.h>
 #include "wlan_pmo_ucfg_api.h"
 #include "os_if_wifi_pos.h"
+#include "wlan_utility.h"
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -14262,6 +14263,41 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 
 	/* Check for max concurrent connections after doing disconnect if any */
 	if (req->channel) {
+		bool ok;
+
+		if (req->channel->hw_value && policy_mgr_is_chan_ok_for_dnbs(
+						pHddCtx->hdd_psoc,
+						req->channel->hw_value,
+						&ok)) {
+			hdd_warn("Unable to get channel:%d eligibility for DNBS",
+					req->channel->hw_value);
+			return -EINVAL;
+		}
+		/**
+		 * Send connection timedout, so that Android framework does not
+		 * blacklist us.
+		 */
+		if (!ok) {
+			struct ieee80211_channel *chan =
+				__ieee80211_get_channel(wiphy,
+				wlan_chan_to_freq(req->channel->hw_value));
+			struct cfg80211_bss *bss;
+
+			hdd_warn("Channel:%d not OK for DNBS",
+				req->channel->hw_value);
+			if (chan) {
+				bss = hdd_cfg80211_get_bss(wiphy,
+							chan,
+							req->bssid, req->ssid,
+							req->ssid_len);
+				if (bss) {
+					cfg80211_assoc_timeout(ndev, bss);
+					return -ETIMEDOUT;
+				}
+			}
+			return -EINVAL;
+		}
+
 		if (!policy_mgr_allow_concurrency(pHddCtx->hdd_psoc,
 				policy_mgr_convert_device_mode_to_qdf_type(
 				pAdapter->device_mode),
