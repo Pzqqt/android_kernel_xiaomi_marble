@@ -364,12 +364,11 @@ static void scm_delete_duplicate_entry(struct scan_dbs *scan_db,
 	struct scan_cache_node *scan_node)
 {
 	struct scan_cache_entry *scan_entry;
+	uint64_t time_gap;
 
 	scan_entry = scan_node->entry;
 	/* If old entry have the ssid but new entry does not */
 	if (!scan_params->ssid.length && scan_entry->ssid.length) {
-		uint64_t time_gap;
-
 		/*
 		 * New entry has a hidden SSID and old one has the SSID.
 		 * Add the entry by using the ssid of the old entry
@@ -397,9 +396,29 @@ static void scm_delete_duplicate_entry(struct scan_dbs *scan_db,
 	 */
 	if (scan_params->channel_mismatch) {
 		scan_params->rssi_raw = scan_entry->rssi_raw;
+		scan_params->avg_rssi = scan_entry->avg_rssi;
 		scan_params->rssi_timestamp =
 			scan_entry->rssi_timestamp;
+	} else {
+		/* If elapsed time since last rssi update for this
+		 * entry is smaller than a thresold, calculate a
+		 * running average of the RSSI values.
+		 * Otherwise last RSSI is more representive of the
+		 * signal strength.
+		 */
+		time_gap =
+			scan_entry->rssi_timestamp -
+			scan_params->rssi_timestamp;
+		if (time_gap > WLAN_RSSI_AVERAGING_TIME)
+			scan_params->avg_rssi =
+				WLAN_RSSI_IN(scan_params->rssi_raw);
+		else
+			WLAN_RSSI_LPF(scan_params->avg_rssi,
+					scan_params->rssi_raw);
+
+		scan_params->rssi_timestamp = scan_params->scan_entry_time;
 	}
+
 	/* copy wsn ie from scan_entry to scan_params*/
 	scm_update_alt_wcn_ie(scan_entry, scan_params);
 
@@ -541,6 +560,7 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 		status = QDF_STATUS_E_INVAL;
 		goto free_nbuf;
 	}
+
 
 	scm_info("Received %s from BSSID: %pM tsf_delta = %u Seq Num: %x ssid:%.*s",
 		(bcn->frm_type == MGMT_SUBTYPE_PROBE_RESP) ?

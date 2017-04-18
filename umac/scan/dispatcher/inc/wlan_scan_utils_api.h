@@ -181,6 +181,7 @@ util_scan_entry_reset_timestamp(struct scan_cache_entry *scan_entry)
 /*
  * Macros used for RSSI calculation.
  */
+#define WLAN_RSSI_AVERAGING_TIME (5 * 1000) /* 5 seconds */
 
 #define WLAN_RSSI_EP_MULTIPLIER (1<<7)  /* pow2 to optimize out * and / */
 

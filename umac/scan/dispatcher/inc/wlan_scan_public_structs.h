@@ -247,7 +247,7 @@ struct scan_cache_entry {
 	struct wlan_ssid ssid;
 	uint16_t seq_num;
 	enum wlan_phymode phy_mode;
-	int8_t avg_rssi;
+	int32_t avg_rssi;
 	int8_t rssi_raw;
 	uint16_t bcn_int;
 	union wlan_capability cap_info;
