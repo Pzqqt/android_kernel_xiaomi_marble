@@ -297,7 +297,7 @@ static QDF_STATUS p2p_vdev_obj_destroy_notification(
 static QDF_STATUS p2p_send_noa_to_pe(struct p2p_noa_info *noa_info)
 {
 	struct p2p_noa_attr *noa_attr;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 
 	if (!noa_info) {
 		p2p_err("noa info is null");

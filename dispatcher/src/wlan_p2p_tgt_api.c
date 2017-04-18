@@ -127,7 +127,7 @@ QDF_STATUS tgt_p2p_mgmt_ota_comp_cb(void *context, qdf_nbuf_t buf,
 	struct p2p_tx_conf_event *tx_conf_event;
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 	struct tx_action_context *tx_ctx;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 
 	p2p_debug("context:%p, buf:%p, status:%d, tx complete params:%p",
 		context, buf, status, tx_compl_params);
@@ -176,7 +176,7 @@ QDF_STATUS tgt_p2p_mgmt_frame_rx_cb(struct wlan_objmgr_psoc *psoc,
 	struct p2p_rx_mgmt_frame *rx_mgmt;
 	struct p2p_rx_mgmt_event *rx_mgmt_event;
 	struct p2p_soc_priv_obj *p2p_soc_obj;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	struct wlan_frame_hdr *wh;
 	struct wlan_objmgr_vdev *vdev;
 	struct p2p_roc_context *roc_ctx;
@@ -257,7 +257,7 @@ QDF_STATUS  tgt_p2p_noa_event_cb(struct wlan_objmgr_psoc *psoc,
 		struct p2p_noa_info *event_info)
 {
 	struct p2p_noa_event *noa_event;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 
 	p2p_debug("soc:%p, event_info:%p", psoc, event_info);
@@ -304,7 +304,7 @@ QDF_STATUS tgt_p2p_lo_event_cb(struct wlan_objmgr_psoc *psoc,
 		struct p2p_lo_event *event_info)
 {
 	struct p2p_lo_stop_event *lo_stop_event;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 
 	p2p_debug("soc:%p, event_info:%p", psoc, event_info);

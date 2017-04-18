@@ -69,7 +69,7 @@ QDF_STATUS ucfg_p2p_psoc_stop(struct wlan_objmgr_psoc *soc)
 QDF_STATUS ucfg_p2p_roc_req(struct wlan_objmgr_psoc *soc,
 	struct p2p_roc_req *roc_req, uint64_t *cookie)
 {
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 	struct p2p_roc_context *roc_ctx;
 
@@ -114,7 +114,7 @@ QDF_STATUS ucfg_p2p_roc_req(struct wlan_objmgr_psoc *soc,
 QDF_STATUS ucfg_p2p_roc_cancel_req(struct wlan_objmgr_psoc *soc,
 	uint64_t cookie)
 {
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 	struct cancel_roc_context *cancel_roc;
 
@@ -151,7 +151,7 @@ QDF_STATUS ucfg_p2p_roc_cancel_req(struct wlan_objmgr_psoc *soc,
 QDF_STATUS ucfg_p2p_mgmt_tx(struct wlan_objmgr_psoc *soc,
 	struct p2p_mgmt_tx *mgmt_frm, uint64_t *cookie)
 {
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 	struct  tx_action_context *tx_action;
 
@@ -210,7 +210,7 @@ QDF_STATUS ucfg_p2p_mgmt_tx(struct wlan_objmgr_psoc *soc,
 QDF_STATUS ucfg_p2p_mgmt_tx_cancel(struct wlan_objmgr_psoc *soc,
 	uint64_t cookie)
 {
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 	struct cancel_roc_context *cancel_tx;
 
