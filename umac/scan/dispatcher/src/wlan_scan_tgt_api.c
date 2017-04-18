@@ -187,7 +187,7 @@ QDF_STATUS
 tgt_scan_event_handler(struct wlan_objmgr_psoc *psoc,
 		struct scan_event_info *event_info)
 {
-	struct scheduler_msg msg = {0,};
+	struct scheduler_msg msg = {0};
 	struct scan_event *event = &event_info->event;
 	uint8_t vdev_id = event->vdev_id;
 	QDF_STATUS status;

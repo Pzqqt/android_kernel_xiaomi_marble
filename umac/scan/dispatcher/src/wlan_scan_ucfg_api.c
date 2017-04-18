@@ -329,7 +329,7 @@ ucfg_scan_update_pno_config(struct pno_def_config *pno,
 QDF_STATUS
 ucfg_scan_start(struct scan_start_request *req)
 {
-	struct scheduler_msg msg = {0, };
+	struct scheduler_msg msg = {0};
 	QDF_STATUS status;
 
 	if (!req || !req->vdev) {
@@ -369,7 +369,7 @@ ucfg_scan_start(struct scan_start_request *req)
 QDF_STATUS
 ucfg_scan_cancel(struct scan_cancel_request *req)
 {
-	struct scheduler_msg msg = {0, };
+	struct scheduler_msg msg = {0};
 	QDF_STATUS status;
 
 	if (!req || !req->vdev) {
