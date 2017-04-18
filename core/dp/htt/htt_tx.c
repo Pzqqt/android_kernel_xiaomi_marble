@@ -1315,7 +1315,7 @@ int htt_tx_ipa_uc_attach(struct htt_pdev_t *pdev,
 	if (!pdev->ipa_uc_tx_rsc.paddr_strg) {
 		qdf_print("%s: TX BUF POOL paddr storage alloc fail", __func__);
 		return_code = -ENOBUFS;
-		goto free_tx_comp_base;
+		goto free_tx_buf_pool_vaddr_strg;
 	}
 
 	pdev->ipa_uc_tx_rsc.alloc_tx_buf_cnt = htt_tx_ipa_uc_wdi_tx_buf_alloc(
@@ -1324,6 +1324,8 @@ int htt_tx_ipa_uc_attach(struct htt_pdev_t *pdev,
 
 	return 0;
 
+free_tx_buf_pool_vaddr_strg:
+	qdf_mem_free(pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg);
 free_tx_comp_base:
 	qdf_mem_free_consistent(pdev->osdev, pdev->osdev->dev,
 				   tx_comp_ring_size,
