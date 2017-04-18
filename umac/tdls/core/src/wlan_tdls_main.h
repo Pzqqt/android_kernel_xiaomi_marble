@@ -180,6 +180,7 @@ struct tdls_set_state_info {
  * @tdls_add_sta_req: store eWNI_SME_TDLS_ADD_STA_REQ value
  * @tdls_del_sta_req: store eWNI_SME_TDLS_DEL_STA_REQ value
  * @tdls_update_peer_state: store WMA_UPDATE_TDLS_PEER_STATE value
+ * @tdls_del_all_peers:store eWNI_SME_DEL_ALL_TDLS_PEERS
  * @tdls_idle_peer_data: provide information about idle peer
  * @tdls_ct_spinlock: connection tracker spin lock
  */
@@ -221,6 +222,7 @@ struct tdls_soc_priv_obj {
 	uint16_t tdls_add_sta_req;
 	uint16_t tdls_del_sta_req;
 	uint16_t tdls_update_peer_state;
+	uint16_t tdls_del_all_peers;
 	struct tdls_ct_idle_peer_data tdls_idle_peer_data;
 	qdf_spinlock_t tdls_ct_spinlock;
 };
@@ -255,6 +257,7 @@ struct tdls_vdev_priv_obj {
 			ct_peer_table[WLAN_TDLS_CT_TABLE_SIZE];
 	uint8_t valid_mac_entries;
 	uint32_t magic;
+	uint8_t session_id;
 	qdf_list_t tx_queue;
 };
 
@@ -666,5 +669,17 @@ void tdls_scan_done_callback(struct tdls_soc_priv_obj *tdls_soc);
  */
 void tdls_scan_serialization_comp_info_cb(
 		union wlan_serialization_rules_info *comp_info);
+
+/**
+ * tdls_set_offchan_mode() - update tdls status info
+ * @psoc: soc object
+ * @param: channel switch params
+ *
+ * send message to WMI to set TDLS off channel in f/w
+ *
+ * Return: QDF_STATUS.
+ */
+QDF_STATUS tdls_set_offchan_mode(struct wlan_objmgr_psoc *psoc,
+				     struct tdls_channel_switch_params *param);
 
 #endif

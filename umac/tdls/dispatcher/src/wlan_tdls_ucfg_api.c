@@ -216,6 +216,7 @@ QDF_STATUS ucfg_tdls_update_config(struct wlan_objmgr_psoc *psoc,
 	soc_obj->tdls_add_sta_req = req->tdls_add_sta_req;
 	soc_obj->tdls_del_sta_req = req->tdls_del_sta_req;
 	soc_obj->tdls_update_peer_state = req->tdls_update_peer_state;
+	soc_obj->tdls_del_all_peers = req->tdls_del_all_peers;
 	tdls_pm_call_backs.tdls_notify_increment_session =
 			tdls_notify_increment_session;
 
@@ -238,6 +239,7 @@ QDF_STATUS ucfg_tdls_update_config(struct wlan_objmgr_psoc *psoc,
 	else
 		soc_obj->tdls_current_mode = TDLS_SUPPORT_IMP_MODE;
 
+	soc_obj->tdls_last_mode = soc_obj->tdls_current_mode;
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -535,6 +537,26 @@ QDF_STATUS ucfg_tdls_responder(struct tdls_set_responder_req *req)
 	msg.type = TDLS_CMD_SET_RESPONDER;
 	status = scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
 
+	return status;
+}
+
+QDF_STATUS ucfg_tdls_teardown_links(struct wlan_objmgr_vdev *vdev)
+{
+	QDF_STATUS status;
+	struct scheduler_msg msg = {0, };
+
+	if (!vdev) {
+		tdls_err("vdev is NULL ");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	tdls_notice("Enter ");
+
+	msg.bodyptr = vdev;
+	msg.callback = tdls_process_cmd;
+	msg.type = TDLS_CMD_TEARDOWN_LINKS;
+	status = scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
+
+	tdls_notice("Exit ");
 	return status;
 }
 

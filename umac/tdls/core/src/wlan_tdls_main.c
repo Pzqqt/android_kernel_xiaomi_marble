@@ -287,6 +287,9 @@ QDF_STATUS tdls_process_cmd(struct scheduler_msg *msg)
 	case TDLS_CMD_SESSION_DECREMENT:
 		tdls_process_policy_mgr_notification(msg->bodyptr);
 		break;
+	case TDLS_CMD_TEARDOWN_LINKS:
+		tdls_teardown_connections(msg->bodyptr);
+		break;
 	default:
 		break;
 	}
@@ -466,6 +469,20 @@ static void tdls_state_param_setting_dump(struct tdls_info *info)
 		   info->teardown_notification_ms,
 		   info->tdls_peer_kickout_threshold);
 
+}
+
+QDF_STATUS tdls_set_offchan_mode(struct wlan_objmgr_psoc *psoc,
+				     struct tdls_channel_switch_params *param)
+{
+	QDF_STATUS status;
+
+	/*  wmi_unified_set_tdls_offchan_mode_cmd() will be called directly */
+	status = tgt_tdls_set_offchan_mode(psoc, param);
+
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		status = QDF_STATUS_E_FAILURE;
+
+	return status;
 }
 
 /**
@@ -745,12 +762,15 @@ static void tdls_send_update_to_fw(struct tdls_vdev_priv_obj *tdls_vdev_obj,
 			tdls_soc_obj->set_state_info.set_state_cnt);
 		/* disable off channel and teardown links */
 		/* Go through the peer list and delete them */
+		tdls_disable_offchan_and_teardown_links(tdls_vdev_obj->vdev);
 		tdls_soc_obj->tdls_current_mode = TDLS_SUPPORT_DISABLED;
 		tdls_info_to_fw->vdev_id = tdls_soc_obj->set_state_info.vdev_id;
 	} else {
 		tdls_info_to_fw->vdev_id = session_id;
 	}
 
+	/* record the session id in vdev context */
+	tdls_vdev_obj->session_id = session_id;
 	tdls_info_to_fw->tdls_state = tdls_soc_obj->tdls_current_mode;
 	tdls_info_to_fw->tdls_options = 0;
 

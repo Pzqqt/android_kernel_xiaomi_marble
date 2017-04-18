@@ -365,4 +365,14 @@ int tdls_validate_mgmt_request(struct tdls_validate_action_req *tdls_validate);
  */
 int tdls_set_responder(struct tdls_set_responder_req *set_req);
 
+/**
+ * tdls_decrement_peer_count() - decrement connected TDLS peer counter
+ * @soc_obj: TDLS soc object
+ *
+ * Used in scheduler thread context, no lock needed.
+ *
+ * Return: None.
+ */
+void tdls_decrement_peer_count(struct tdls_soc_priv_obj *soc_obj);
+
 #endif
