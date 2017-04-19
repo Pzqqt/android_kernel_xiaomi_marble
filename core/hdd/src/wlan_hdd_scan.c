@@ -1279,7 +1279,6 @@ static QDF_STATUS hdd_cfg80211_scan_done_callback(tHalHandle halHandle,
 		hdd_vendor_scan_callback(pAdapter, req, aborted);
 
 allow_suspend:
-	qdf_runtime_pm_allow_suspend(hddctx->runtime_context.scan);
 	qdf_spin_lock(&hddctx->hdd_scan_req_q_lock);
 	size = qdf_list_size(&hddctx->hdd_scan_req_q);
 	if (!size) {
@@ -1898,7 +1897,6 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	if (request->flags & NL80211_SCAN_FLAG_FLUSH)
 		sme_scan_flush_result(WLAN_HDD_GET_HAL_CTX(pAdapter));
 #endif
-	qdf_runtime_pm_prevent_suspend(pHddCtx->runtime_context.scan);
 	status = sme_scan_request(WLAN_HDD_GET_HAL_CTX(pAdapter),
 				pAdapter->sessionId, &scan_req,
 				&hdd_cfg80211_scan_done_callback, dev);
@@ -1913,8 +1911,6 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 		} else {
 			status = -EIO;
 		}
-
-		qdf_runtime_pm_allow_suspend(pHddCtx->runtime_context.scan);
 		hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_SCAN);
 		goto free_mem;
 	}

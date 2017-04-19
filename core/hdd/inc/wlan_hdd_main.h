@@ -866,7 +866,6 @@ struct hdd_chan_change_params {
  * Prevent Runtime PM for scan
  */
 struct hdd_runtime_pm_context {
-	qdf_runtime_lock_t scan;
 	qdf_runtime_lock_t roc;
 	qdf_runtime_lock_t dfs;
 };

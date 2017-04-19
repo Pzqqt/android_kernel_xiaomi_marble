@@ -33,7 +33,6 @@
 #include <wlan_hdd_object_manager.h>
 #include <wlan_osif_priv.h>
 
-
 static void hdd_init_pdev_os_priv(hdd_context_t *hdd_ctx,
 	struct pdev_osif_priv *os_priv)
 {
