@@ -247,83 +247,6 @@ static void p2p_roc_timeout(void *pdata)
 }
 
 /**
- * p2p_execute_roc_req() - Execute roc request
- * @roc_ctx: remain on channel request
- *
- * This function init roc timer, start scan and register mgmt rx
- * callbak.
- *
- * Return: QDF_STATUS_SUCCESS - in case of success
- */
-static QDF_STATUS p2p_execute_roc_req(struct p2p_roc_context *roc_ctx)
-{
-	QDF_STATUS status;
-	uint32_t go_num;
-	struct p2p_soc_priv_obj *p2p_soc_obj = roc_ctx->p2p_soc_obj;
-
-	p2p_debug("p2p soc obj:%p, roc ctx:%p, vdev_id:%d, scan_id:%d, cookie:%llx, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
-		p2p_soc_obj, roc_ctx, roc_ctx->vdev_id,
-		roc_ctx->scan_id, roc_ctx->cookie, roc_ctx->chan,
-		roc_ctx->phy_mode, roc_ctx->duration,
-		roc_ctx->roc_type, roc_ctx->roc_state);
-
-	status = qdf_mc_timer_init(&roc_ctx->roc_timer,
-			QDF_TIMER_TYPE_SW, p2p_roc_timeout,
-			p2p_soc_obj);
-	if (status != QDF_STATUS_SUCCESS)
-		return status;
-
-	roc_ctx->roc_state = ROC_STATE_REQUESTED;
-	go_num = policy_mgr_mode_specific_connection_count(
-			p2p_soc_obj->soc, PM_P2P_GO_MODE, NULL);
-	p2p_debug("present go number:%d", go_num);
-	if (go_num)
-		roc_ctx->duration *= P2P_ROC_DURATION_MULTI_GO_PRESENT;
-	else
-		roc_ctx->duration *= P2P_ROC_DURATION_MULTI_GO_ABSENT;
-
-	status = p2p_scan_start(roc_ctx);
-	if (status != QDF_STATUS_SUCCESS) {
-		p2p_err("Failed to start scan, status:%d", status);
-	}
-	status = p2p_mgmt_rx_ops(roc_ctx->p2p_soc_obj->soc, true);
-	if (status != QDF_STATUS_SUCCESS)
-		p2p_err("Failed to register mgmt rx callback, status:%d",
-			status);
-
-	return status;
-}
-
-/**
- * p2p_find_roc_ctx() - Find out roc context by cookie
- * @p2p_soc_obj: p2p psoc private object
- * @cookie: cookie is the key to find out roc context
- *
- * This function find out roc context by cookie from p2p psoc private
- * object
- *
- * Return: Pointer to roc context - success
- *         NULL                   - failure
- */
-static struct p2p_roc_context *p2p_find_roc_ctx(
-	struct p2p_soc_priv_obj *p2p_soc_obj, uint64_t cookie)
-{
-	struct p2p_roc_context *curr_roc_ctx;
-	qdf_list_node_t *tmp, *pos;
-
-	p2p_debug("p2p soc obj:%p, cookie:%llx", p2p_soc_obj, cookie);
-
-	list_for_each_safe(pos, tmp, &p2p_soc_obj->roc_q.anchor) {
-		curr_roc_ctx = list_entry(pos, struct p2p_roc_context,
-					node);
-		if ((uintptr_t) curr_roc_ctx == cookie)
-			return curr_roc_ctx;
-	}
-
-	return NULL;
-}
-
-/**
  * p2p_send_roc_event() - Send roc event
  * @roc_ctx: remain on channel request
  * @evt: roc event information
@@ -364,6 +287,135 @@ static QDF_STATUS p2p_send_roc_event(
 	start_param->event_cb(start_param->event_cb_data, &p2p_evt);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * p2p_destroy_roc_ctx() - destroy roc ctx
+ * @roc_ctx:            remain on channel request
+ * @up_layer_event:     if send uplayer event
+ * @in_roc_queue:       if roc context in roc queue
+ *
+ * This function destroy roc context.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+static QDF_STATUS p2p_destroy_roc_ctx(struct p2p_roc_context *roc_ctx,
+	bool up_layer_event, bool in_roc_queue)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct p2p_soc_priv_obj *p2p_soc_obj = roc_ctx->p2p_soc_obj;
+
+	p2p_debug("p2p_soc_obj:%p, roc_ctx:%p, up_layer_event:%d, in_roc_queue:%d",
+		p2p_soc_obj, roc_ctx, up_layer_event, in_roc_queue);
+
+	if (up_layer_event) {
+		p2p_send_roc_event(roc_ctx, ROC_EVENT_READY_ON_CHAN);
+		p2p_send_roc_event(roc_ctx, ROC_EVENT_COMPLETED);
+	}
+
+	if (in_roc_queue) {
+		status = qdf_list_remove_node(&p2p_soc_obj->roc_q,
+				(qdf_list_node_t *)roc_ctx);
+		if (QDF_STATUS_SUCCESS != status)
+			p2p_err("Failed to remove roc req, status %d", status);
+	}
+
+	qdf_mem_free(roc_ctx);
+
+	return status;
+}
+
+/**
+ * p2p_execute_roc_req() - Execute roc request
+ * @roc_ctx: remain on channel request
+ *
+ * This function init roc timer, start scan and register mgmt rx
+ * callbak.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+static QDF_STATUS p2p_execute_roc_req(struct p2p_roc_context *roc_ctx)
+{
+	QDF_STATUS status;
+	uint32_t go_num;
+	struct p2p_soc_priv_obj *p2p_soc_obj = roc_ctx->p2p_soc_obj;
+
+	p2p_debug("p2p soc obj:%p, roc ctx:%p, vdev_id:%d, scan_id:%d, cookie:%llx, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
+		p2p_soc_obj, roc_ctx, roc_ctx->vdev_id,
+		roc_ctx->scan_id, roc_ctx->cookie, roc_ctx->chan,
+		roc_ctx->phy_mode, roc_ctx->duration,
+		roc_ctx->roc_type, roc_ctx->roc_state);
+
+	/* prevent runtime suspend */
+	qdf_runtime_pm_prevent_suspend(p2p_soc_obj->roc_runtime_lock);
+
+	status = qdf_mc_timer_init(&roc_ctx->roc_timer,
+			QDF_TIMER_TYPE_SW, p2p_roc_timeout,
+			p2p_soc_obj);
+	if (status != QDF_STATUS_SUCCESS) {
+		p2p_err("failed to init roc timer, status:%d", status);
+		goto fail;
+	}
+
+	roc_ctx->roc_state = ROC_STATE_REQUESTED;
+	go_num = policy_mgr_mode_specific_connection_count(
+			p2p_soc_obj->soc, PM_P2P_GO_MODE, NULL);
+	p2p_debug("present go number:%d", go_num);
+	if (go_num)
+		roc_ctx->duration *= P2P_ROC_DURATION_MULTI_GO_PRESENT;
+	else
+		roc_ctx->duration *= P2P_ROC_DURATION_MULTI_GO_ABSENT;
+
+	status = p2p_scan_start(roc_ctx);
+	if (status != QDF_STATUS_SUCCESS) {
+		qdf_mc_timer_destroy(&roc_ctx->roc_timer);
+		p2p_err("Failed to start scan, status:%d", status);
+		goto fail;
+	}
+
+fail:
+	if (status != QDF_STATUS_SUCCESS) {
+		p2p_destroy_roc_ctx(roc_ctx, true, true);
+		qdf_runtime_pm_allow_suspend(
+			p2p_soc_obj->roc_runtime_lock);
+		return status;
+	}
+
+	status = p2p_mgmt_rx_ops(roc_ctx->p2p_soc_obj->soc, true);
+	if (status != QDF_STATUS_SUCCESS)
+		p2p_err("Failed to register mgmt rx callback, status:%d",
+			status);
+
+	return status;
+}
+
+/**
+ * p2p_find_roc_ctx() - Find out roc context by cookie
+ * @p2p_soc_obj: p2p psoc private object
+ * @cookie: cookie is the key to find out roc context
+ *
+ * This function find out roc context by cookie from p2p psoc private
+ * object
+ *
+ * Return: Pointer to roc context - success
+ *         NULL                   - failure
+ */
+static struct p2p_roc_context *p2p_find_roc_ctx(
+	struct p2p_soc_priv_obj *p2p_soc_obj, uint64_t cookie)
+{
+	struct p2p_roc_context *curr_roc_ctx;
+	qdf_list_node_t *tmp, *pos;
+
+	p2p_debug("p2p soc obj:%p, cookie:%llx", p2p_soc_obj, cookie);
+
+	list_for_each_safe(pos, tmp, &p2p_soc_obj->roc_q.anchor) {
+		curr_roc_ctx = list_entry(pos, struct p2p_roc_context,
+					node);
+		if ((uintptr_t) curr_roc_ctx == cookie)
+			return curr_roc_ctx;
+	}
+
+	return NULL;
 }
 
 /**
@@ -450,6 +502,9 @@ static QDF_STATUS p2p_process_scan_complete_evt(
 		roc_ctx->phy_mode, roc_ctx->duration,
 		roc_ctx->roc_type, roc_ctx->roc_state);
 
+	/* allow runtime suspend */
+	qdf_runtime_pm_allow_suspend(p2p_soc_obj->roc_runtime_lock);
+
 	if (QDF_TIMER_STATE_RUNNING ==
 		qdf_mc_timer_get_current_state(&roc_ctx->roc_timer)) {
 		status = qdf_mc_timer_stop(&roc_ctx->roc_timer);
@@ -469,11 +524,7 @@ static QDF_STATUS p2p_process_scan_complete_evt(
 		status = p2p_send_roc_event(roc_ctx,
 				ROC_EVENT_COMPLETED);
 
-	status = qdf_list_remove_node(&p2p_soc_obj->roc_q,
-			(qdf_list_node_t *)roc_ctx);
-	if (QDF_STATUS_SUCCESS != status)
-		p2p_err("Failed to remove roc req, status %d", status);
-	qdf_mem_free(roc_ctx);
+	p2p_destroy_roc_ctx(roc_ctx, false, true);
 	qdf_event_set(&p2p_soc_obj->cancel_roc_done);
 
 	size = qdf_list_size(&p2p_soc_obj->roc_q);
@@ -566,7 +617,8 @@ QDF_STATUS p2p_cleanup_roc_queue(struct p2p_soc_priv_obj *p2p_soc_obj)
 					&p2p_soc_obj->roc_q,
 					(qdf_list_node_t *)roc_ctx);
 			if (status == QDF_STATUS_SUCCESS)
-				qdf_mem_free(roc_ctx);
+				p2p_destroy_roc_ctx(roc_ctx,
+						true, false);
 			else
 				p2p_err("Failed to remove roc ctx from queue");
 		}
@@ -617,7 +669,7 @@ QDF_STATUS p2p_process_roc_req(struct p2p_roc_context *roc_ctx)
 	status = qdf_list_insert_back(&p2p_soc_obj->roc_q,
 			&roc_ctx->node);
 	if (QDF_STATUS_SUCCESS != status) {
-		qdf_mem_free(roc_ctx);
+		p2p_destroy_roc_ctx(roc_ctx, true, false);
 		p2p_debug("Failed to insert roc req, status %d", status);
 		return status;
 	}
