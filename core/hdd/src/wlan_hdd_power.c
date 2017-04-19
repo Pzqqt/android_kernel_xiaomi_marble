@@ -1444,6 +1444,7 @@ QDF_STATUS hdd_wlan_re_init(void)
 	pHddCtx->last_scan_reject_reason = 0;
 	pHddCtx->last_scan_reject_timestamp = 0;
 
+	hdd_set_roaming_in_progress(false);
 	pHddCtx->btCoexModeSet = false;
 
 	/* Allow the phone to go to sleep */
