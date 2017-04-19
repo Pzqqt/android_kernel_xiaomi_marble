@@ -16424,6 +16424,7 @@ __wlan_hdd_cfg80211_set_ap_channel_width(struct wiphy *wiphy,
 	sme_get_config_param(pHddCtx->hHal, &sme_config);
 	switch (chandef->width) {
 	case NL80211_CHAN_WIDTH_20:
+	case NL80211_CHAN_WIDTH_20_NOHT:
 		if (sme_config.csrConfig.channelBondingMode24GHz !=
 		    eCSR_INI_SINGLE_CHANNEL_CENTERED) {
 			sme_config.csrConfig.channelBondingMode24GHz =
