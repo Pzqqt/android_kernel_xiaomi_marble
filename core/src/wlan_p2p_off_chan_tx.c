@@ -855,7 +855,6 @@ static QDF_STATUS p2p_roc_req_for_tx_action(
 	status = p2p_process_roc_req(roc_ctx);
 	if (status != QDF_STATUS_SUCCESS) {
 		p2p_err("request roc for tx action frrame fail");
-		qdf_mem_free(roc_ctx);
 		return status;
 	}
 

@@ -27,6 +27,7 @@
 #include <qdf_types.h>
 #include <qdf_event.h>
 #include <qdf_list.h>
+#include <qdf_lock.h>
 
 #define MAX_QUEUE_LENGTH 20
 #define P2P_NOA_ATTR_IND 0x1090
@@ -138,6 +139,7 @@ struct p2p_noa_event {
  * @start_param:      Start parameters, include callbacks and user
  *                    data to HDD
  * @cancel_roc_done:  Cancel roc done event
+ * @roc_runtime_lock: Runtime lock for roc request
  */
 struct p2p_soc_priv_obj {
 	struct wlan_objmgr_psoc *soc;
@@ -147,6 +149,7 @@ struct p2p_soc_priv_obj {
 	uint16_t scan_req_id;
 	struct p2p_start_param *start_param;
 	qdf_event_t cancel_roc_done;
+	qdf_runtime_lock_t roc_runtime_lock;
 };
 
 /**
