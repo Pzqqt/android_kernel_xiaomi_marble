@@ -682,6 +682,7 @@ static void wlan_cfg80211_scan_done_callback(
 	uint32_t scan_id = event->scan_id;
 	uint8_t source = NL_SCAN;
 	struct wlan_objmgr_pdev *pdev;
+	struct pdev_osif_priv *osif_priv;
 	QDF_STATUS status;
 
 	if ((event->type != SCAN_EVENT_TYPE_COMPLETED) &&
@@ -722,7 +723,7 @@ static void wlan_cfg80211_scan_done_callback(
 	status = wlan_scan_request_dequeue(pdev, scan_id, &req, &source);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		cfg80211_err("Dequeue of scan request failed ID: %d", scan_id);
-		return;
+		goto allow_suspend;
 	}
 
 	/*
@@ -736,6 +737,13 @@ static void wlan_cfg80211_scan_done_callback(
 		wlan_cfg80211_scan_done(req, aborted);
 	else
 		wlan_vendor_scan_callback(req, aborted);
+
+allow_suspend:
+	osif_priv = wlan_pdev_get_ospriv(pdev);
+	if (qdf_list_empty(&osif_priv->osif_scan->scan_req_q))
+		qdf_runtime_pm_allow_suspend(
+			osif_priv->osif_scan->runtime_pm_lock);
+
 }
 
 QDF_STATUS wlan_cfg80211_scan_priv_init(struct wlan_objmgr_pdev *pdev)
@@ -762,6 +770,7 @@ QDF_STATUS wlan_cfg80211_scan_priv_init(struct wlan_objmgr_pdev *pdev)
 	osif_priv->osif_scan = scan_priv;
 	qdf_list_create(&scan_priv->scan_req_q, WLAN_MAX_SCAN_COUNT);
 	scan_priv->req_id = req_id;
+	scan_priv->runtime_pm_lock = qdf_runtime_lock_init("scan");
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -781,6 +790,8 @@ QDF_STATUS wlan_cfg80211_scan_priv_deinit(struct wlan_objmgr_pdev *pdev)
 	osif_priv->osif_scan = NULL;
 	ucfg_scan_unregister_requester(psoc, scan_priv->req_id);
 	qdf_list_destroy(&scan_priv->scan_req_q);
+	qdf_runtime_lock_deinit(scan_priv->runtime_pm_lock);
+	scan_priv->runtime_pm_lock = NULL;
 	qdf_mem_free(scan_priv);
 
 	return QDF_STATUS_SUCCESS;
@@ -1044,6 +1055,9 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 	/* Enqueue the scan request */
 	wlan_scan_request_enqueue(pdev, request, source, req->scan_req.scan_id);
 
+	qdf_runtime_pm_prevent_suspend(
+		osif_priv->osif_scan->runtime_pm_lock);
+
 	status = ucfg_scan_start(req);
 	if (QDF_STATUS_SUCCESS != status) {
 		cfg80211_err("ucfg_scan_start returned error %d", status);
@@ -1053,6 +1067,10 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 		} else {
 			status = -EIO;
 		}
+		wlan_scan_request_dequeue(pdev, scan_id, &request, &source);
+		if (qdf_list_empty(&osif_priv->osif_scan->scan_req_q))
+			qdf_runtime_pm_allow_suspend(
+				osif_priv->osif_scan->runtime_pm_lock);
 	}
 
 end:

@@ -551,6 +551,43 @@ void qdf_runtime_lock_deinit(qdf_runtime_lock_t lock)
 }
 EXPORT_SYMBOL(qdf_runtime_lock_deinit);
 
+#else
+
+QDF_STATUS qdf_runtime_pm_get(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+EXPORT_SYMBOL(qdf_runtime_pm_get);
+
+QDF_STATUS qdf_runtime_pm_put(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+EXPORT_SYMBOL(qdf_runtime_pm_put);
+
+QDF_STATUS qdf_runtime_pm_prevent_suspend(qdf_runtime_lock_t lock)
+{
+	return QDF_STATUS_SUCCESS;
+}
+EXPORT_SYMBOL(qdf_runtime_pm_prevent_suspend);
+
+QDF_STATUS qdf_runtime_pm_allow_suspend(qdf_runtime_lock_t lock)
+{
+	return QDF_STATUS_SUCCESS;
+}
+EXPORT_SYMBOL(qdf_runtime_pm_allow_suspend);
+
+qdf_runtime_lock_t qdf_runtime_lock_init(const char *name)
+{
+	return NULL;
+}
+EXPORT_SYMBOL(qdf_runtime_lock_init);
+
+void qdf_runtime_lock_deinit(qdf_runtime_lock_t lock)
+{
+}
+EXPORT_SYMBOL(qdf_runtime_lock_deinit);
+
 #endif /* CONFIG_MCL */
 
 /**
