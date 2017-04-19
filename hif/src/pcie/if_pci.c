@@ -2546,7 +2546,10 @@ static int hif_pci_configure_legacy_irq(struct hif_pci_softc *sc)
 			(target_type == TARGET_TYPE_AR900B)  ||
 			(target_type == TARGET_TYPE_QCA9984) ||
 			(target_type == TARGET_TYPE_AR9888) ||
-			(target_type == TARGET_TYPE_QCA9888)) {
+			(target_type == TARGET_TYPE_QCA9888) ||
+			(target_type == TARGET_TYPE_AR6320V1) ||
+			(target_type == TARGET_TYPE_AR6320V2) ||
+			(target_type == TARGET_TYPE_AR6320V3)) {
 		hif_write32_mb(scn->mem + PCIE_LOCAL_BASE_ADDRESS +
 				PCIE_SOC_WAKE_ADDRESS, PCIE_SOC_WAKE_V_MASK);
 	}
