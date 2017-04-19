@@ -1030,9 +1030,9 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
  * @context:	Opaque context (HTT SOC handle)
  * @pkt:	HTC packet
  *
- * Return: HTC_SEND_FULL_ACTION
+ * Return: enum htc_send_full_action
  */
-static HTC_SEND_FULL_ACTION
+static enum htc_send_full_action
 dp_htt_h2t_full(void *context, HTC_PACKET *pkt)
 {
 	return HTC_SEND_FULL_KEEP;
@@ -1047,8 +1047,8 @@ dp_htt_h2t_full(void *context, HTC_PACKET *pkt)
 static int
 htt_htc_soc_attach(struct htt_soc *soc)
 {
-	HTC_SERVICE_CONNECT_REQ connect;
-	HTC_SERVICE_CONNECT_RESP response;
+	struct htc_service_connect_req connect;
+	struct htc_service_connect_resp response;
 	A_STATUS status;
 
 	qdf_mem_set(&connect, sizeof(connect), 0);

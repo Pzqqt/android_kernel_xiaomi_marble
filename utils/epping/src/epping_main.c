@@ -170,7 +170,7 @@ void epping_close(void)
 
 /**
  * epping_target_suspend_acknowledge() - process wow ack/nack from fw
- * @context: HTC_INIT_INFO->context
+ * @context: htc_init_info->context
  * @wow_nack: true when wow is rejected
  */
 static void epping_target_suspend_acknowledge(void *context, bool wow_nack)
@@ -219,7 +219,7 @@ int epping_enable(struct device *parent_dev)
 	epping_context_t *pEpping_ctx = NULL;
 	cds_context_type *p_cds_context = NULL;
 	qdf_device_t qdf_ctx;
-	HTC_INIT_INFO htcInfo;
+	struct htc_init_info htcInfo;
 	struct hif_opaque_softc *scn;
 	tSirMacAddr adapter_macAddr;
 	struct hif_target_info *tgt_info;

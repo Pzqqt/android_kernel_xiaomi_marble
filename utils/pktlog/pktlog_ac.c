@@ -737,7 +737,7 @@ static void pktlog_h2t_send_complete(void *context, HTC_PACKET *htc_pkt)
  *
  * Return: HTC action
  */
-static HTC_SEND_FULL_ACTION pktlog_h2t_full(void *context, HTC_PACKET *pkt)
+static enum htc_send_full_action pktlog_h2t_full(void *context, HTC_PACKET *pkt)
 {
 	return HTC_SEND_FULL_KEEP;
 }
@@ -750,8 +750,8 @@ static HTC_SEND_FULL_ACTION pktlog_h2t_full(void *context, HTC_PACKET *pkt)
  */
 static int pktlog_htc_connect_service(struct ol_pktlog_dev_t *pdev)
 {
-	HTC_SERVICE_CONNECT_REQ connect;
-	HTC_SERVICE_CONNECT_RESP response;
+	struct htc_service_connect_req connect;
+	struct htc_service_connect_resp response;
 	A_STATUS status;
 
 	qdf_mem_set(&connect, sizeof(connect), 0);

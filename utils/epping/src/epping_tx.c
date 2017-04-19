@@ -305,7 +305,8 @@ tx_fail:
 }
 
 #ifdef HIF_SDIO
-HTC_SEND_FULL_ACTION epping_tx_queue_full(void *Context, HTC_PACKET *pPacket)
+enum htc_send_full_action epping_tx_queue_full(void *Context,
+						HTC_PACKET *pPacket)
 {
 	/*
 	 * Call netif_stop_queue frequently will impact the mboxping tx t-put.
