@@ -561,7 +561,7 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 	uint8_t noa_ie[SIR_MAX_NOA_ATTR_LEN + SIR_P2P_IE_HEADER_LEN];
 	uint8_t sme_sessionid = 0;
 	bool is_vht_enabled = false;
-	tDot11fIEExtCap extracted_ext_cap;
+	tDot11fIEExtCap extracted_ext_cap = {0};
 	bool extracted_ext_cap_flag = false;
 
 	/* We don't answer requests in this case*/
