@@ -40,6 +40,7 @@
 #include <linux/errno.h>
 
 #include <linux/random.h>
+#include <linux/io.h>
 
 #include <qdf_types.h>
 #include <qdf_status.h>
@@ -275,6 +276,8 @@ static inline bool __qdf_is_macaddr_equal(struct qdf_mac_addr *mac_addr1,
 #define __qdf_wmb()                wmb()
 #define __qdf_rmb()                rmb()
 #define __qdf_mb()                 mb()
+#define __qdf_ioread32(offset)             ioread32(offset)
+#define __qdf_iowrite32(offset, value)     iowrite32(value, offset)
 
 #define __qdf_roundup(x, y) roundup(x, y)
 

@@ -62,6 +62,18 @@ typedef __qdf_wait_queue_head_t qdf_wait_queue_head_t;
 #define qdf_mb()                 __qdf_mb()
 
 /**
+ * qdf_ioread32 - read a register
+ * @offset: register address
+ */
+#define qdf_ioread32(offset)            __qdf_ioread32(offset)
+/**
+ * qdf_iowrite32 - write a register
+ * @offset: register address
+ * @value: value to write (32bit value)
+ */
+#define qdf_iowrite32(offset, value)    __qdf_iowrite32(offset, value)
+
+/**
  * qdf_assert - assert "expr" evaluates to false.
  */
 #ifdef QDF_DEBUG
