@@ -11238,6 +11238,73 @@ static QDF_STATUS send_vdev_spectral_enable_cmd_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * send_thermal_mitigation_param_cmd_tlv() - configure thermal mitigation params
+ * @param wmi_handle : handle to WMI.
+ * @param param : pointer to hold thermal mitigation param
+ *
+ * @return QDF_STATUS_SUCCESS  on success and -ve on failure.
+ */
+static QDF_STATUS send_thermal_mitigation_param_cmd_tlv(
+		wmi_unified_t wmi_handle,
+		struct thermal_mitigation_params *param)
+{
+	wmi_therm_throt_config_request_fixed_param *tt_conf = NULL;
+	wmi_therm_throt_level_config_info *lvl_conf = NULL;
+	wmi_buf_t buf = NULL;
+	uint8_t *buf_ptr = NULL;
+	int error;
+	int32_t len;
+	int i;
+
+	len = sizeof(*tt_conf) + WMI_TLV_HDR_SIZE +
+			THERMAL_LEVELS * sizeof(wmi_therm_throt_level_config_info);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s:wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+	tt_conf = (wmi_therm_throt_config_request_fixed_param *) wmi_buf_data(buf);
+
+	/* init fixed params */
+	WMITLV_SET_HDR(tt_conf,
+		WMITLV_TAG_STRUC_wmi_therm_throt_config_request_fixed_param,
+		(WMITLV_GET_STRUCT_TLVLEN(wmi_therm_throt_config_request_fixed_param)));
+
+	tt_conf->pdev_id = param->pdev_id;
+	tt_conf->enable = param->enable;
+	tt_conf->dc = param->dc;
+	tt_conf->dc_per_event = param->dc_per_event;
+	tt_conf->therm_throt_levels = THERMAL_LEVELS;
+
+	buf_ptr = (uint8_t *) ++tt_conf;
+	/* init TLV params */
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+			(THERMAL_LEVELS * sizeof(wmi_therm_throt_level_config_info)));
+
+	lvl_conf = (wmi_therm_throt_level_config_info *) (buf_ptr +  WMI_TLV_HDR_SIZE);
+	for (i = 0; i < THERMAL_LEVELS; i++) {
+		WMITLV_SET_HDR(&lvl_conf->tlv_header,
+			WMITLV_TAG_STRUC_wmi_therm_throt_level_config_info,
+			WMITLV_GET_STRUCT_TLVLEN(wmi_therm_throt_level_config_info));
+		lvl_conf->temp_lwm = param->levelconf[i].tmplwm;
+		lvl_conf->temp_hwm = param->levelconf[i].tmphwm;
+		lvl_conf->dc_off_percent = param->levelconf[i].dcoffpercent;
+		lvl_conf->prio = param->levelconf[i].priority;
+		lvl_conf++;
+	}
+
+	error = wmi_unified_cmd_send(wmi_handle, buf, len,
+			WMI_THERM_THROT_SET_CONF_CMDID);
+	if (QDF_IS_STATUS_ERROR(error)) {
+		wmi_buf_free(buf);
+		WMI_LOGE("Failed to send WMI_THERM_THROT_SET_CONF_CMDID command");
+	}
+
+	return error;
+}
+
+/**
  * send_pdev_qvit_cmd_tlv() - send qvit command to fw
  * @wmi_handle: wmi handle
  * @param: pointer to pdev_qvit_params
@@ -16695,6 +16762,70 @@ static QDF_STATUS extract_dcs_im_tgt_stats_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * extract_thermal_stats_tlv() - extract thermal stats from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: Pointer to event buffer
+ * @param temp: Pointer to hold extracted temperature
+ * @param level: Pointer to hold extracted level
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS
+extract_thermal_stats_tlv(wmi_unified_t wmi_handle,
+		void *evt_buf, uint32_t *temp,
+		uint32_t *level, uint32_t *pdev_id)
+{
+	WMI_THERM_THROT_STATS_EVENTID_param_tlvs *param_buf;
+	wmi_therm_throt_stats_event_fixed_param *tt_stats_event;
+
+	param_buf =
+		(WMI_THERM_THROT_STATS_EVENTID_param_tlvs *) evt_buf;
+	if (!param_buf)
+		return QDF_STATUS_E_INVAL;
+
+	tt_stats_event = param_buf->fixed_param;
+
+	*pdev_id = tt_stats_event->pdev_id;
+	*temp = tt_stats_event->temp;
+	*level = tt_stats_event->level;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * extract_thermal_level_stats_tlv() - extract thermal level stats from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param idx: Index to level stats
+ * @param levelcount: Pointer to hold levelcount
+ * @param dccount: Pointer to hold dccount
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS
+extract_thermal_level_stats_tlv(wmi_unified_t wmi_handle,
+		void *evt_buf, uint8_t idx, uint32_t *levelcount,
+		uint32_t *dccount)
+{
+	WMI_THERM_THROT_STATS_EVENTID_param_tlvs *param_buf;
+	wmi_therm_throt_level_stats_info *tt_level_info;
+
+	param_buf =
+		(WMI_THERM_THROT_STATS_EVENTID_param_tlvs *) evt_buf;
+	if (!param_buf)
+		return QDF_STATUS_E_INVAL;
+
+	tt_level_info = param_buf->therm_throt_level_stats_info;
+
+	if (idx < THERMAL_LEVELS) {
+		*levelcount = tt_level_info[idx].level_count;
+		*dccount = tt_level_info[idx].dc_count;
+		return QDF_STATUS_SUCCESS;
+	}
+
+	return QDF_STATUS_E_FAILURE;
+}
 #ifdef BIG_ENDIAN_HOST
 /**
  * fips_conv_data_be() - LE to BE conversion of FIPS ev data
@@ -17541,6 +17672,8 @@ struct wmi_ops tlv_ops =  {
 				send_vdev_spectral_configure_cmd_tlv,
 	.send_vdev_spectral_enable_cmd =
 				send_vdev_spectral_enable_cmd_tlv,
+	.send_thermal_mitigation_param_cmd =
+		send_thermal_mitigation_param_cmd_tlv,
 	.send_pdev_qvit_cmd = send_pdev_qvit_cmd_tlv,
 	.send_wmm_update_cmd = send_wmm_update_cmd_tlv,
 	.send_coex_config_cmd = send_coex_config_cmd_tlv,
@@ -17625,6 +17758,8 @@ struct wmi_ops tlv_ops =  {
 		extract_reg_chan_list_update_event_tlv,
 	.extract_chainmask_tables =
 		extract_chainmask_tables_tlv,
+	.extract_thermal_stats = extract_thermal_stats_tlv,
+	.extract_thermal_level_stats = extract_thermal_level_stats_tlv,
 #ifdef DFS_COMPONENT_ENABLE
 	.extract_dfs_cac_complete_event = extract_dfs_cac_complete_event_tlv,
 	.extract_dfs_radar_detection_event =
@@ -17856,6 +17991,7 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_dfs_cac_complete_id] = WMI_VDEV_DFS_CAC_COMPLETE_EVENTID;
 	event_ids[wmi_dfs_radar_detection_event_id] =
 		WMI_PDEV_DFS_RADAR_DETECTION_EVENTID;
+	event_ids[wmi_tt_stats_event_id] = WMI_THERM_THROT_STATS_EVENTID;
 }
 
 #ifndef CONFIG_MCL
