@@ -984,6 +984,7 @@ static const struct ccp_freq_chan_map freq_chan_map[] = {
 #define WE_CLEAR_STATS                        86
 /* Private sub ioctl for starting/stopping the profiling */
 #define WE_START_FW_PROFILE                      87
+
 /*
  * <ioctl>
  * setChanChange - Initiate channel change
@@ -1071,6 +1072,28 @@ static const struct ccp_freq_chan_map freq_chan_map[] = {
  * </ioctl>
  */
 #define WE_SET_RANGE_EXT                      93
+
+/*
+ * <ioctl>
+ * wow_ito - sets the timeout value for inactivity data while
+ * in power save mode during wow
+ *
+ * @INPUT: int
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL set the timeout value for inactivity data in power save mode
+ *
+ * @E.g: iwpriv wlan0 wow_ito 20
+ *
+ * Supported Feature: STA
+ *
+ * Usage: External
+ *
+ * </ioctl>
+*/
+#define WE_SET_WOW_DATA_INACTIVITY_TO    94
+
 
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_SET_NONE_GET_INT    (SIOCIWFIRSTPRIV + 1)
@@ -7769,6 +7792,19 @@ static int __iw_setint_getnone(struct net_device *dev,
 			ret = -EINVAL;
 		}
 		break;
+	case WE_SET_WOW_DATA_INACTIVITY_TO:
+		if (!hHal)
+			return -EINVAL;
+
+		if ((set_value < CFG_WOW_DATA_INACTIVITY_TIMEOUT_MIN) ||
+		    (set_value > CFG_WOW_DATA_INACTIVITY_TIMEOUT_MAX) ||
+		    (sme_cfg_set_int((WLAN_HDD_GET_CTX(pAdapter))->hHal,
+				     WNI_CFG_PS_WOW_DATA_INACTIVITY_TIMEOUT,
+				     set_value) == QDF_STATUS_E_FAILURE)) {
+			hdd_err("WNI_CFG_PS_WOW_DATA_INACTIVITY_TIMEOUT fail");
+			ret = -EINVAL;
+		}
+		break;
 	case WE_SET_MC_RATE:
 	{
 		ret = wlan_hdd_set_mc_rate(pAdapter, set_value);
@@ -12840,6 +12876,11 @@ static const struct iw_priv_args we_private_args[] = {
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 0,
 	 "inactivityTO"},
+
+	{WE_SET_WOW_DATA_INACTIVITY_TO,
+	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+	 0,
+	 "wow_ito"},
 
 	{WE_SET_MAX_TX_POWER,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
