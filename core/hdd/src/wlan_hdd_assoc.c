@@ -3910,6 +3910,14 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 		curr_peer =
 			wlan_hdd_tdls_find_peer(pAdapter,
 						pRoamInfo->peerMac.bytes);
+
+		if (!curr_peer) {
+			mutex_unlock(&pHddCtx->tdls_lock);
+			hdd_debug("peer doesn't exists");
+			status = QDF_STATUS_SUCCESS;
+			break;
+		}
+
 		wlan_hdd_tdls_indicate_teardown(pAdapter, curr_peer,
 						pRoamInfo->reasonCode);
 		hdd_send_wlan_tdls_teardown_event(eTDLS_TEARDOWN_BSS_DISCONNECT,
