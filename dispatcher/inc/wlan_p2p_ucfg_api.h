@@ -262,4 +262,29 @@ QDF_STATUS ucfg_p2p_lo_start(struct wlan_objmgr_psoc *soc,
 QDF_STATUS ucfg_p2p_lo_stop(struct wlan_objmgr_psoc *soc,
 	uint32_t vdev_id);
 
+/**
+ * p2p_peer_authorized() - Process peer authorized event
+ * @vdev: vdev structure to which peer is associated
+ * @mac_addr: peer mac address
+ *
+ * This function handles disables noa whenever a legacy station
+ * complete 4-way handshake after association.
+ *
+ * Return: void
+ */
+void p2p_peer_authorized(struct wlan_objmgr_vdev *vdev, uint8_t *mac_addr);
+
+/**
+ * ucfg_p2p_set_noa() - Disable/Enable NOA
+ * @soc: soc context
+ * @vdev_id: vdev id
+ * @disable_noa: TRUE - Disable NoA, FALSE - Enable NoA
+ *
+ * This function send wmi command to enable / disable NoA.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS ucfg_p2p_set_noa(struct wlan_objmgr_psoc *soc,
+	uint32_t vdev_id, bool disable_noa);
+
 #endif /* _WLAN_P2P_UCFG_API_H_ */

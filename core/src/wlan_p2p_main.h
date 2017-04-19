@@ -154,12 +154,16 @@ struct p2p_soc_priv_obj {
 
 /**
  * struct p2p_vdev_priv_obj - Per vdev p2p private object
- * @vdev:              Pointer to vdev context
- * @noa_info:          NoA information
+ * @vdev:               Pointer to vdev context
+ * @noa_info:           NoA information
+ * @noa_status:         NoA status i.e. Enabled / Disabled (TRUE/FALSE)
+ * @non_p2p_peer_count: Number of legacy stations connected to this GO
  */
 struct p2p_vdev_priv_obj {
-	struct wlan_objmgr_vdev *vdev;
-	struct p2p_noa_info *noa_info;
+	struct   wlan_objmgr_vdev *vdev;
+	struct   p2p_noa_info *noa_info;
+	bool     noa_status;
+	uint16_t non_p2p_peer_count;
 };
 
 /**
