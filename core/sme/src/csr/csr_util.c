@@ -2802,6 +2802,7 @@ bool csr_is_auth_type11r(eCsrAuthType auth_type, uint8_t mdie_present)
 	case eCSR_AUTH_TYPE_OPEN_SYSTEM:
 		if (mdie_present)
 			return true;
+		break;
 	case eCSR_AUTH_TYPE_FT_RSN_PSK:
 	case eCSR_AUTH_TYPE_FT_RSN:
 		return true;
