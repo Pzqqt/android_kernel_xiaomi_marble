@@ -326,6 +326,26 @@ QDF_STATUS target_if_p2p_lo_stop(struct wlan_objmgr_psoc *psoc,
 			(uint8_t)vdev_id);
 }
 
+QDF_STATUS target_if_p2p_set_noa(struct wlan_objmgr_psoc *psoc,
+	uint32_t vdev_id, bool disable_noa)
+{
+	struct vdev_set_params param;
+	wmi_unified_t wmi_handle = wlan_psoc_get_tgt_if_handle(psoc);
+
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	target_if_debug("psoc:%p, vdev_id:%d disable_noa:%d",
+				psoc, vdev_id, disable_noa);
+	param.if_id = vdev_id;
+	param.param_id = WMI_VDEV_PARAM_DISABLE_NOA_P2P_GO;
+	param.param_value = (uint32_t)disable_noa;
+
+	return wmi_unified_vdev_set_param_send(wmi_handle, &param);
+}
+
 void target_if_p2p_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {
 	struct wlan_lmac_if_p2p_tx_ops *p2p_tx_ops;
@@ -339,6 +359,7 @@ void target_if_p2p_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	p2p_tx_ops->set_ps = target_if_p2p_set_ps;
 	p2p_tx_ops->lo_start = target_if_p2p_lo_start;
 	p2p_tx_ops->lo_stop = target_if_p2p_lo_stop;
+	p2p_tx_ops->set_noa = target_if_p2p_set_noa;
 	p2p_tx_ops->reg_lo_ev_handler =
 			target_if_p2p_register_lo_event_handler;
 	p2p_tx_ops->reg_noa_ev_handler =
