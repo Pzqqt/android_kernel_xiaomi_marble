@@ -2602,8 +2602,10 @@ void wlan_hdd_tdls_disconnection_callback(hdd_adapter_t *pAdapter)
 	ENTER();
 
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
-	if (0 != wlan_hdd_validate_context(pHddCtx))
+
+	if (!pHddCtx)
 		return;
+
 	mutex_lock(&pHddCtx->tdls_lock);
 
 	pHddTdlsCtx = WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter);
