@@ -211,6 +211,8 @@ static QDF_STATUS p2p_vdev_obj_create_notification(
 	}
 
 	p2p_vdev_obj->vdev = vdev;
+	p2p_vdev_obj->noa_status = true;
+	p2p_vdev_obj->non_p2p_peer_count = 0;
 
 	status = wlan_objmgr_vdev_component_obj_attach(vdev,
 				WLAN_UMAC_COMP_P2P, p2p_vdev_obj,
@@ -286,6 +288,127 @@ static QDF_STATUS p2p_vdev_obj_destroy_notification(
 }
 
 /**
+ * p2p_peer_obj_create_notification() - manages peer details per vdev
+ * @peer: peer object
+ * @arg: Pointer to private argument - NULL
+ *
+ * This function gets called from object manager when peer is being
+ * created.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+static QDF_STATUS p2p_peer_obj_create_notification(
+	struct wlan_objmgr_peer *peer, void *arg)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct p2p_vdev_priv_obj *p2p_vdev_obj;
+	enum tQDF_ADAPTER_MODE mode;
+	enum wlan_peer_type peer_type;
+
+	if (!peer) {
+		p2p_err("peer context passed is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wlan_peer_obj_lock(peer);
+	vdev = wlan_peer_get_vdev(peer);
+	wlan_peer_obj_unlock(peer);
+	p2p_vdev_obj = wlan_objmgr_vdev_get_comp_private_obj(vdev,
+						WLAN_UMAC_COMP_P2P);
+	wlan_peer_obj_lock(peer);
+	peer_type = wlan_peer_get_peer_type(peer);
+	wlan_peer_obj_unlock(peer);
+	if ((peer_type == WLAN_PEER_STA) && p2p_vdev_obj) {
+
+		wlan_vdev_obj_lock(vdev);
+		mode = wlan_vdev_mlme_get_opmode(vdev);
+		wlan_vdev_obj_unlock(vdev);
+		if (mode == QDF_P2P_GO_MODE) {
+			p2p_vdev_obj->non_p2p_peer_count++;
+			p2p_debug("Non P2P peer count: %d",
+				  p2p_vdev_obj->non_p2p_peer_count);
+		}
+	}
+	p2p_debug("p2p peer object create successful");
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * p2p_peer_obj_destroy_notification() - clears peer details per vdev
+ * @peer: peer object
+ * @arg: Pointer to private argument - NULL
+ *
+ * This function gets called from object manager when peer is being
+ * destroyed.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+static QDF_STATUS p2p_peer_obj_destroy_notification(
+	struct wlan_objmgr_peer *peer, void *arg)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct p2p_vdev_priv_obj *p2p_vdev_obj;
+	struct wlan_objmgr_psoc *psoc;
+	enum tQDF_ADAPTER_MODE mode;
+	enum wlan_peer_type peer_type;
+	uint8_t vdev_id;
+
+	if (!peer) {
+		p2p_err("peer context passed is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wlan_peer_obj_lock(peer);
+	vdev = wlan_peer_get_vdev(peer);
+	wlan_peer_obj_unlock(peer);
+	p2p_vdev_obj = wlan_objmgr_vdev_get_comp_private_obj(vdev,
+						WLAN_UMAC_COMP_P2P);
+	wlan_vdev_obj_lock(vdev);
+	psoc = wlan_vdev_get_psoc(vdev);
+	wlan_vdev_obj_unlock(vdev);
+	if (!p2p_vdev_obj || !psoc) {
+		p2p_err("p2p_vdev_obj:%p psoc:%p", p2p_vdev_obj, psoc);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wlan_vdev_obj_lock(vdev);
+	mode = wlan_vdev_mlme_get_opmode(vdev);
+	wlan_vdev_obj_unlock(vdev);
+
+	wlan_peer_obj_lock(peer);
+	peer_type = wlan_peer_get_peer_type(peer);
+	wlan_peer_obj_unlock(peer);
+
+	if ((peer_type == WLAN_PEER_STA) && (mode == QDF_P2P_GO_MODE)) {
+
+		p2p_vdev_obj->non_p2p_peer_count--;
+
+		if (!p2p_vdev_obj->non_p2p_peer_count &&
+		    (p2p_vdev_obj->noa_status == false)) {
+
+			wlan_vdev_obj_lock(vdev);
+			vdev_id = wlan_vdev_get_id(vdev);
+			wlan_vdev_obj_unlock(vdev);
+
+			if (ucfg_p2p_set_noa(psoc, vdev_id,
+				 false)	== QDF_STATUS_SUCCESS)
+				p2p_vdev_obj->noa_status = true;
+			else
+				p2p_vdev_obj->noa_status = false;
+
+			p2p_debug("Non p2p peer disconnected from GO,NOA status: %d.",
+				p2p_vdev_obj->noa_status);
+		}
+		p2p_debug("Non P2P peer count: %d",
+			   p2p_vdev_obj->non_p2p_peer_count);
+	}
+	p2p_debug("p2p peer object destroy successful");
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * p2p_send_noa_to_pe() - send noa information to pe
  * @noa_info: vdev context
  *
@@ -348,6 +471,68 @@ static QDF_STATUS p2p_send_noa_to_pe(struct p2p_noa_info *noa_info)
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * process_peer_for_noa() - disable NoA
+ * @vdev: vdev object
+ * @psoc: soc object
+ * @peer: peer object
+ *
+ * This function disables NoA
+ *
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS process_peer_for_noa(struct wlan_objmgr_vdev *vdev,
+				struct wlan_objmgr_psoc *psoc,
+				struct wlan_objmgr_peer *peer)
+{
+	struct p2p_vdev_priv_obj *p2p_vdev_obj = NULL;
+	enum tQDF_ADAPTER_MODE mode;
+	enum wlan_peer_type peer_type;
+	bool disable_noa;
+	uint8_t vdev_id;
+
+	if (!vdev || !psoc || !peer) {
+		p2p_err("vdev:%p psoc:%p peer:%p", vdev, psoc, peer);
+		return QDF_STATUS_E_INVAL;
+	}
+	p2p_vdev_obj = wlan_objmgr_vdev_get_comp_private_obj(vdev,
+						WLAN_UMAC_COMP_P2P);
+	if (!p2p_vdev_obj) {
+		p2p_err("p2p_vdev_obj:%p", p2p_vdev_obj);
+		return QDF_STATUS_E_INVAL;
+	}
+	wlan_vdev_obj_lock(vdev);
+	mode = wlan_vdev_mlme_get_opmode(vdev);
+	wlan_vdev_obj_unlock(vdev);
+
+	wlan_peer_obj_lock(peer);
+	peer_type = wlan_peer_get_peer_type(peer);
+	wlan_peer_obj_unlock(peer);
+
+	disable_noa = ((mode == QDF_P2P_GO_MODE)
+			&& p2p_vdev_obj->non_p2p_peer_count
+			&& p2p_vdev_obj->noa_status);
+
+	if (disable_noa && (peer_type == WLAN_PEER_STA)) {
+
+		wlan_vdev_obj_lock(vdev);
+		vdev_id = wlan_vdev_get_id(vdev);
+		wlan_vdev_obj_unlock(vdev);
+
+		if (ucfg_p2p_set_noa(psoc, vdev_id,
+				true) == QDF_STATUS_SUCCESS) {
+			p2p_vdev_obj->noa_status = false;
+		} else {
+			p2p_vdev_obj->noa_status = true;
+		}
+		p2p_debug("NoA status: %d", p2p_vdev_obj->noa_status);
+	}
+	p2p_debug("process_peer_for_noa");
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS p2p_component_init(void)
 {
 	QDF_STATUS status;
@@ -388,9 +573,33 @@ QDF_STATUS p2p_component_init(void)
 		goto err_reg_vdev_delete;
 	}
 
+	status = wlan_objmgr_register_peer_create_handler(
+				WLAN_UMAC_COMP_P2P,
+				p2p_peer_obj_create_notification,
+				NULL);
+	if (status != QDF_STATUS_SUCCESS) {
+		p2p_err("Failed to register p2p peer create handler");
+		goto err_reg_peer_create;
+	}
+
+	status = wlan_objmgr_register_peer_destroy_handler(
+				WLAN_UMAC_COMP_P2P,
+				p2p_peer_obj_destroy_notification,
+				NULL);
+	if (status != QDF_STATUS_SUCCESS) {
+		p2p_err("Failed to register p2p peer destroy handler");
+		goto err_reg_peer_destroy;
+	}
+
 	p2p_debug("Register p2p obj handler successful");
 
 	return QDF_STATUS_SUCCESS;
+err_reg_peer_destroy:
+	wlan_objmgr_unregister_peer_create_handler(WLAN_UMAC_COMP_P2P,
+			p2p_peer_obj_create_notification, NULL);
+err_reg_peer_create:
+	wlan_objmgr_unregister_vdev_destroy_handler(WLAN_UMAC_COMP_P2P,
+			p2p_vdev_obj_destroy_notification, NULL);
 err_reg_vdev_delete:
 	wlan_objmgr_unregister_vdev_create_handler(WLAN_UMAC_COMP_P2P,
 			p2p_vdev_obj_create_notification, NULL);
@@ -809,4 +1018,36 @@ fail:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_P2P_ID);
 
 	return status;
+}
+
+void p2p_peer_authorized(struct wlan_objmgr_vdev *vdev, uint8_t *mac_addr)
+{
+	QDF_STATUS status;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_peer *peer;
+
+	if (!vdev) {
+		p2p_err("vdev:%p", vdev);
+		return;
+	}
+	wlan_vdev_obj_lock(vdev);
+	psoc = wlan_vdev_get_psoc(vdev);
+	wlan_vdev_obj_unlock(vdev);
+	if (!psoc) {
+		p2p_err("psoc:%p", psoc);
+		return;
+	}
+	peer = wlan_objmgr_get_peer(psoc, mac_addr, WLAN_P2P_ID);
+	if (!peer) {
+		p2p_debug("peer info not found");
+		return;
+	}
+	status = process_peer_for_noa(vdev, psoc, peer);
+	wlan_objmgr_peer_release_ref(peer, WLAN_P2P_ID);
+
+	if (status != QDF_STATUS_SUCCESS) {
+		p2p_err("status:%u", status);
+		return;
+	}
+	p2p_debug("peer is authorized");
 }

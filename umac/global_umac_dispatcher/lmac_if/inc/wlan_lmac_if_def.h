@@ -253,6 +253,7 @@ struct p2p_lo_start;
  * @set_ps:      function pointer to set power save
  * @lo_start:    function pointer to start listen offload
  * @lo_stop:     function pointer to stop listen offload
+ * @set_noa:     function pointer to disable/enable NOA
  * @reg_lo_ev_handler:   function pointer to register lo event handler
  * @reg_noa_ev_handler:  function pointer to register noa event handler
  * @unreg_lo_ev_handler: function pointer to unregister lo event handler
@@ -265,6 +266,8 @@ struct wlan_lmac_if_p2p_tx_ops {
 		struct p2p_lo_start *lo_start);
 	QDF_STATUS (*lo_stop)(struct wlan_objmgr_psoc *psoc,
 		uint32_t vdev_id);
+	QDF_STATUS (*set_noa)(struct wlan_objmgr_psoc *psoc,
+		uint32_t vdev_id, bool disable_noa);
 	QDF_STATUS (*reg_lo_ev_handler)(struct wlan_objmgr_psoc *psoc,
 			void *arg);
 	QDF_STATUS (*reg_noa_ev_handler)(struct wlan_objmgr_psoc *psoc,

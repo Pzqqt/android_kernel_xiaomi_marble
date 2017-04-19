@@ -121,4 +121,17 @@ QDF_STATUS target_if_p2p_lo_start(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS target_if_p2p_lo_stop(struct wlan_objmgr_psoc *psoc,
 	uint32_t vdev_id);
 
+/**
+ * target_if_p2p_set_noa() - Disable / Enable NOA
+ * @psoc: soc object
+ * @vdev_id: vdev id
+ * @disable_noa: TRUE - Disable NoA, FALSE - Enable NoA
+ *
+ * Target interface API to Disable / Enable P2P NOA.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS target_if_p2p_set_noa(struct wlan_objmgr_psoc *psoc,
+	uint32_t vdev_id, bool disable_noa);
+
 #endif /* _TARGET_IF_P2P_H_ */

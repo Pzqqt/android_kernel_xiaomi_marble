@@ -164,7 +164,8 @@ struct wlan_objmgr_peer *wlan_objmgr_peer_obj_create(
 	qdf_spinlock_create(&peer->peer_lock);
 	wlan_objmgr_peer_get_ref(peer, WLAN_OBJMGR_ID);
 	/* Increment ref count for BSS peer, so that BSS peer deletes last*/
-	if ((type == WLAN_PEER_STA) || (type == WLAN_PEER_STA_TEMP))
+	if ((type == WLAN_PEER_STA) || (type == WLAN_PEER_STA_TEMP)
+				    || (type == WLAN_PEER_P2P_CLI))
 		wlan_objmgr_peer_get_ref(wlan_vdev_get_bsspeer(vdev),
 					 WLAN_OBJMGR_ID);
 	/* TODO init other parameters */

@@ -580,7 +580,8 @@ QDF_STATUS wlan_objmgr_vdev_peer_attach(struct wlan_objmgr_vdev *vdev,
 	wlan_obj_vdev_peerlist_add_tail(&objmgr->wlan_peer_list, peer);
 	objmgr->wlan_peer_count++;
 
-	if (wlan_peer_get_peer_type(peer) == WLAN_PEER_AP) {
+	if ((wlan_peer_get_peer_type(peer) == WLAN_PEER_AP) ||
+	    (wlan_peer_get_peer_type(peer) == WLAN_PEER_P2P_GO)) {
 		if (WLAN_ADDR_EQ(wlan_peer_get_macaddr(peer),
 				 wlan_vdev_mlme_get_macaddr(vdev)) ==
 					QDF_STATUS_SUCCESS) {
@@ -615,7 +616,8 @@ QDF_STATUS wlan_objmgr_vdev_peer_detach(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (wlan_peer_get_peer_type(peer) == WLAN_PEER_AP) {
+	if ((wlan_peer_get_peer_type(peer) == WLAN_PEER_AP) ||
+	    (wlan_peer_get_peer_type(peer) == WLAN_PEER_P2P_GO)) {
 		if (wlan_vdev_get_selfpeer(vdev) == peer) {
 			/*
 			 * There might be instances where new node is created

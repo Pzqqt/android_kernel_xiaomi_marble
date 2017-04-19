@@ -35,6 +35,48 @@ ucfg_p2p_psoc_get_tx_ops(struct wlan_objmgr_psoc *psoc)
 	return &(psoc->soc_cb.tx_ops.p2p);
 }
 
+/**
+ * is_p2p_ps_allowed() - If P2P power save is allowed or not
+ * @vdev: vdev object
+ * @id: umac component id
+ *
+ * This function returns TRUE if P2P power-save is allowed
+ * else returns FALSE.
+ *
+ * Return: bool
+ */
+static bool is_p2p_ps_allowed(struct wlan_objmgr_vdev *vdev,
+				enum wlan_umac_comp_id id)
+{
+	struct p2p_vdev_priv_obj *p2p_vdev_obj;
+	uint8_t is_p2pgo = 0;
+
+	if (!vdev) {
+		p2p_err("vdev:%p", vdev);
+		return true;
+	}
+	p2p_vdev_obj = wlan_objmgr_vdev_get_comp_private_obj(vdev,
+						WLAN_UMAC_COMP_P2P);
+
+	if (wlan_vdev_mlme_get_opmode(vdev) == QDF_P2P_GO_MODE)
+		is_p2pgo = 1;
+
+	if (!p2p_vdev_obj || !is_p2pgo) {
+		p2p_err("p2p_vdev_obj:%p is_p2pgo:%u",
+			p2p_vdev_obj, is_p2pgo);
+		return false;
+	}
+	if (p2p_vdev_obj->non_p2p_peer_count &&
+	    p2p_vdev_obj->noa_status == false) {
+		p2p_debug("non_p2p_peer_count: %u, noa_status: %d",
+			p2p_vdev_obj->non_p2p_peer_count,
+			p2p_vdev_obj->noa_status);
+		return false;
+	}
+
+	return true;
+}
+
 QDF_STATUS ucfg_p2p_init(void)
 {
 	return p2p_component_init();
@@ -249,6 +291,8 @@ QDF_STATUS ucfg_p2p_set_ps(struct wlan_objmgr_psoc *soc,
 {
 	struct wlan_lmac_if_p2p_tx_ops *p2p_ops;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	uint16_t obj_id;
+	struct wlan_objmgr_vdev *vdev;
 
 	p2p_debug("soc:%p, vdev_id:%d, opp_ps:%d, ct_window:%d, count:%d, duration:%d, duration:%d, ps_selection:%d",
 		soc, ps_config->vdev_id, ps_config->opp_ps,
@@ -259,6 +303,20 @@ QDF_STATUS ucfg_p2p_set_ps(struct wlan_objmgr_psoc *soc,
 	if (!soc) {
 		p2p_err("psoc context passed is NULL");
 		return QDF_STATUS_E_INVAL;
+	}
+
+	for (obj_id = 0; obj_id < WLAN_UMAC_PSOC_MAX_VDEVS; obj_id++) {
+
+		vdev = wlan_objmgr_get_vdev_by_id_from_psoc(soc, obj_id,
+							WLAN_P2P_ID);
+		if (vdev) {
+			if (is_p2p_ps_allowed(vdev,
+				WLAN_UMAC_COMP_P2P) == false) {
+				p2p_debug("p2p set ps, NoA is disabled as legacy STA is connected to GO.");
+				return QDF_STATUS_E_BUSY;
+			}
+			wlan_objmgr_vdev_release_ref(vdev, WLAN_P2P_ID);
+		}
 	}
 
 	p2p_ops = ucfg_p2p_psoc_get_tx_ops(soc);
@@ -314,6 +372,21 @@ QDF_STATUS ucfg_p2p_lo_stop(struct wlan_objmgr_psoc *soc,
 	if (p2p_ops->lo_stop) {
 		status = p2p_ops->lo_stop(soc, vdev_id);
 		p2p_debug("p2p lo stop, status:%d", status);
+	}
+
+	return status;
+}
+
+QDF_STATUS  ucfg_p2p_set_noa(struct wlan_objmgr_psoc *soc,
+	uint32_t vdev_id, bool disable_noa)
+{
+	struct wlan_lmac_if_p2p_tx_ops *p2p_ops;
+	QDF_STATUS status = QDF_STATUS_E_INVAL;
+
+	p2p_ops = ucfg_p2p_psoc_get_tx_ops(soc);
+	if (p2p_ops->set_noa) {
+		status = p2p_ops->set_noa(soc, vdev_id, disable_noa);
+		p2p_debug("p2p set noa, status:%d", status);
 	}
 
 	return status;

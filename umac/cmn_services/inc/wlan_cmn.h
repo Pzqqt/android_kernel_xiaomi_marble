@@ -198,7 +198,9 @@ enum wlan_phymode {
  * enum wlan_peer_type  - peer type
  * @WLAN_PEER_SELF:     for AP mode, SELF PEER or AP PEER are same
  * @WLAN_PEER_AP:       BSS peer for STA mode, Self peer for AP mode
+ * @WLAN_PEER_P2P_GO:   BSS peer for P2P CLI mode, Self peer for P2P GO mode
  * @WLAN_PEER_STA:      Self Peer for STA mode, STA peer for AP mode
+ * @WLAN_PEER_P2P_CLI:  Self peer for P2P CLI mode, P2P CLI peer for P2P GO mode
  * @WLAN_PEER_TDLS:     TDLS Peer
  * @WLAN_PEER_NAWDS:    NAWDS Peer
  * @WLAN_PEER_STA_TEMP: STA Peer Temp (its host only node)
@@ -207,11 +209,13 @@ enum wlan_phymode {
 enum wlan_peer_type {
 	WLAN_PEER_SELF     = 1,
 	WLAN_PEER_AP       = 2,
-	WLAN_PEER_STA      = 3,
-	WLAN_PEER_TDLS     = 4,
-	WLAN_PEER_NAWDS    = 5,
-	WLAN_PEER_STA_TEMP = 6,
-	WLAN_PEER_IBSS     = 7,
+	WLAN_PEER_P2P_GO   = 3,
+	WLAN_PEER_STA      = 4,
+	WLAN_PEER_P2P_CLI  = 5,
+	WLAN_PEER_TDLS     = 6,
+	WLAN_PEER_NAWDS    = 7,
+	WLAN_PEER_STA_TEMP = 8,
+	WLAN_PEER_IBSS     = 9,
 };
 
 /**
