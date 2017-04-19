@@ -159,16 +159,18 @@ int hdd_objmgr_release_and_destroy_vdev(hdd_adapter_t *adapter);
  * @vdev: vdev pointer
  * @adapter_mode: adapter mode
  * @mac_addr: Peer mac address
+ * @is_p2p_type: TRUE if peer is p2p type
  *
  * This API creates and adds the peer object to the given @vdev. The peer type
- * (STA, AP or IBSS) is assigned based on adapter mode. For example, if adapter
- * mode is STA, peer is AP.
+ * (STA, AP, P2P or IBSS) is assigned based on adapter mode. For example, if
+ * adapter mode is STA, peer is AP.
  *
  * Return: 0 for success, negative error code for failure
  */
 int hdd_objmgr_add_peer_object(struct wlan_objmgr_vdev *vdev,
 			       enum tQDF_ADAPTER_MODE adapter_mode,
-			       uint8_t *mac_addr);
+			       uint8_t *mac_addr,
+			       bool is_p2p_type);
 
 /**
  * hdd_objmgr_remove_peer_object() - Delete and remove the peer from vdev

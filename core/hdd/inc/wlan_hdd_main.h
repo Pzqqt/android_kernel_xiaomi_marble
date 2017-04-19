@@ -713,6 +713,9 @@ typedef struct {
 	 */
 	uint8_t ucSTAId;
 
+	/* type of station i.e. p2p client or infrastructure station */
+	eStationType staType;
+
 	/** MAC address of the station */
 	struct qdf_mac_addr macAddrSTA;
 

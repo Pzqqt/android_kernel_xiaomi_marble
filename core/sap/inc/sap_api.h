@@ -234,6 +234,15 @@ typedef enum {
 	eSAP_WPSPBC_ONE_WPSPBC_PROBE_REQ_IN120S,
 } eWPSPBCOverlap;
 
+/*---------------------------------------------------------------------------
+  SAP Associated station types
+  ---------------------------------------------------------------------------*/
+typedef enum {
+	eSTA_TYPE_NONE    = 0x00000000,  /* No station type */
+	eSTA_TYPE_INFRA   = 0x00000001,  /* legacy station */
+	eSTA_TYPE_P2P_CLI = 0x00000002,  /* p2p client */
+} eStationType;
+
 /*----------------------------------------------------------------------------
  *  Typedefs
  * -------------------------------------------------------------------------*/
@@ -267,6 +276,7 @@ typedef struct sap_StationAssocIndication_s {
 
 typedef struct sap_StationAssocReassocCompleteEvent_s {
 	struct qdf_mac_addr staMac;
+	eStationType staType;
 	uint8_t staId;
 	uint8_t status;
 	uint8_t ies[MAX_ASSOC_IND_IE_LEN];

@@ -1276,7 +1276,8 @@ static void hdd_send_association_event(struct net_device *dev,
 
 		ret = hdd_objmgr_add_peer_object(pAdapter->hdd_vdev,
 						 pAdapter->device_mode,
-						 peerMacAddr.bytes);
+						 peerMacAddr.bytes,
+						 false);
 		if (ret)
 			hdd_err("Peer object "MAC_ADDRESS_STR" add fails!",
 					MAC_ADDR_ARRAY(peerMacAddr.bytes));
@@ -1326,7 +1327,8 @@ static void hdd_send_association_event(struct net_device *dev,
 
 		ret = hdd_objmgr_add_peer_object(pAdapter->hdd_vdev,
 						 QDF_IBSS_MODE,
-						 pCsrRoamInfo->bssid.bytes);
+						 pCsrRoamInfo->bssid.bytes,
+						 false);
 		if (ret)
 			hdd_err("Peer object "MAC_ADDRESS_STR" add fails!",
 				MAC_ADDR_ARRAY(pCsrRoamInfo->bssid.bytes));

@@ -55,6 +55,7 @@
 #include "cds_reg_service.h"
 #include "qdf_util.h"
 #include "wlan_policy_mgr_api.h"
+#include "cfg_api.h"
 #include <wlan_objmgr_pdev_obj.h>
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_utility.h>
@@ -2393,6 +2394,13 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 			qdf_mem_copy(&reassoc_complete->ies[len],
 				     csr_roaminfo->paddIE,
 				     csr_roaminfo->addIELen);
+			if (cfg_get_vendor_ie_ptr_from_oui(mac_ctx,
+			    SIR_MAC_P2P_OUI, SIR_MAC_P2P_OUI_SIZE,
+			    csr_roaminfo->paddIE, csr_roaminfo->addIELen)) {
+				reassoc_complete->staType = eSTA_TYPE_P2P_CLI;
+			} else {
+				reassoc_complete->staType = eSTA_TYPE_INFRA;
+			}
 		}
 
 		/* also fill up the channel info from the csr_roamInfo */

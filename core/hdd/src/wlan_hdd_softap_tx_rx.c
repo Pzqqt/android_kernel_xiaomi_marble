@@ -47,6 +47,7 @@
 #include <cdp_txrx_flow_ctrl_v2.h>
 #include <cdp_txrx_handle.h>
 #include <wlan_hdd_object_manager.h>
+#include "wlan_p2p_ucfg_api.h"
 #ifdef IPA_OFFLOAD
 #include <wlan_hdd_ipa.h>
 #endif
@@ -1067,6 +1068,7 @@ QDF_STATUS hdd_softap_change_sta_state(hdd_adapter_t *pAdapter,
 	if (QDF_STATUS_SUCCESS == qdf_status) {
 		pAdapter->aStaInfo[ucSTAId].tlSTAState =
 			OL_TXRX_PEER_STATE_AUTH;
+		p2p_peer_authorized(pAdapter->hdd_vdev, pDestMacAddress->bytes);
 	}
 
 	EXIT();

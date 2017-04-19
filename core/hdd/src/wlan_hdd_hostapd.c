@@ -1574,6 +1574,12 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 				pSapEvent->sapevt.
 				sapStationAssocReassocCompleteEvent.
 				chan_info.rate_flags;
+			pHostapdAdapter->aStaInfo[staId].staType =
+				pSapEvent->sapevt.
+				sapStationAssocReassocCompleteEvent.
+				staType;
+			hdd_debug("hdd_hostapd_sap_event_cb, StaID: %d, StaType: %d",
+			      staId, pHostapdAdapter->aStaInfo[staId].staType);
 		}
 
 		if (hdd_ipa_is_enabled(pHddCtx)) {
@@ -1692,7 +1698,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			pHostapdAdapter->hdd_vdev,
 			pHostapdAdapter->device_mode,
 			pSapEvent->sapevt.sapStationAssocReassocCompleteEvent.
-				staMac.bytes);
+			staMac.bytes,
+			(pHostapdAdapter->aStaInfo[staId].staType
+							== eSTA_TYPE_P2P_CLI));
 		if (ret)
 			hdd_err("Peer object "MAC_ADDRESS_STR" add fails!",
 					MAC_ADDR_ARRAY(pSapEvent->sapevt.

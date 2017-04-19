@@ -245,7 +245,8 @@ int hdd_objmgr_release_and_destroy_vdev(hdd_adapter_t *adapter)
 
 int hdd_objmgr_add_peer_object(struct wlan_objmgr_vdev *vdev,
 			       enum tQDF_ADAPTER_MODE adapter_mode,
-			       uint8_t *mac_addr)
+			       uint8_t *mac_addr,
+			       bool is_p2p_type)
 {
 	enum wlan_peer_type peer_type;
 	struct wlan_objmgr_peer *peer;
@@ -255,7 +256,11 @@ int hdd_objmgr_add_peer_object(struct wlan_objmgr_vdev *vdev,
 		peer_type = WLAN_PEER_AP;
 	} else if ((adapter_mode == QDF_SAP_MODE) ||
 		(adapter_mode == QDF_P2P_GO_MODE)) {
-		peer_type = WLAN_PEER_STA;
+		if (is_p2p_type) {
+			peer_type = WLAN_PEER_P2P_CLI;
+		} else {
+			peer_type = WLAN_PEER_STA;
+		}
 	} else if (adapter_mode == QDF_IBSS_MODE) {
 		peer_type = WLAN_PEER_IBSS;
 	} else {
@@ -273,8 +278,8 @@ int hdd_objmgr_add_peer_object(struct wlan_objmgr_vdev *vdev,
 	if (!peer)
 		return -ENOMEM;
 
-	hdd_info("Peer object "MAC_ADDRESS_STR" add success!",
-		 MAC_ADDR_ARRAY(mac_addr));
+	hdd_info("Peer object "MAC_ADDRESS_STR" add success! Type: %d",
+		 MAC_ADDR_ARRAY(mac_addr), peer_type);
 
 	return 0;
 }
