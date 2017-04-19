@@ -5342,6 +5342,41 @@ static int hdd_roc_context_init(hdd_context_t *hdd_ctx)
 }
 
 /**
+ * hdd_destroy_roc_req_q() - Free allocations in ROC Req Queue
+ * @hdd_ctx: HDD context.
+ *
+ * Free memory allocations made in ROC Req Queue nodes.
+ *
+ * Return: None.
+ */
+static void hdd_destroy_roc_req_q(hdd_context_t *hdd_ctx)
+{
+	hdd_roc_req_t *hdd_roc_req;
+	QDF_STATUS status;
+
+	qdf_spin_lock(&hdd_ctx->hdd_roc_req_q_lock);
+
+	while (!qdf_list_empty(&hdd_ctx->hdd_roc_req_q)) {
+		status = qdf_list_remove_front(&hdd_ctx->hdd_roc_req_q,
+				(qdf_list_node_t **) &hdd_roc_req);
+
+		if (QDF_STATUS_SUCCESS != status) {
+			hdd_debug("unable to remove roc element from list in %s",
+					__func__);
+			QDF_ASSERT(0);
+			return;
+		}
+
+		if (hdd_roc_req->pRemainChanCtx)
+			qdf_mem_free(hdd_roc_req->pRemainChanCtx);
+
+		qdf_mem_free(hdd_roc_req);
+	}
+
+	qdf_spin_unlock(&hdd_ctx->hdd_roc_req_q_lock);
+}
+
+/**
  * hdd_roc_context_destroy() - Destroy ROC context
  * @hdd_ctx:	HDD context.
  *
@@ -5352,7 +5387,7 @@ static int hdd_roc_context_init(hdd_context_t *hdd_ctx)
 static void hdd_roc_context_destroy(hdd_context_t *hdd_ctx)
 {
 	flush_delayed_work(&hdd_ctx->roc_req_work);
-	qdf_list_destroy(&hdd_ctx->hdd_roc_req_q);
+	hdd_destroy_roc_req_q(hdd_ctx);
 	qdf_spinlock_destroy(&hdd_ctx->hdd_roc_req_q_lock);
 }
 
