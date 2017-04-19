@@ -6732,12 +6732,13 @@ static QDF_STATUS extract_rtt_ev_non_tlv(wmi_unified_t wmi_handle, void *evt_buf
  */
 static QDF_STATUS extract_thermal_stats_non_tlv(wmi_unified_t wmi_handle,
 		void *evt_buf,
-		uint32_t *temp, uint32_t *level)
+		uint32_t *temp, uint32_t *level, uint32_t *pdev_id)
 {
 	tt_stats_t *tt_stats_event = NULL;
 
 	tt_stats_event = (tt_stats_t *) evt_buf;
 
+	*pdev_id = WMI_NON_TLV_DEFAULT_PDEV_ID;
 	*temp = tt_stats_event->temp;
 	*level = tt_stats_event->level;
 	return QDF_STATUS_SUCCESS;

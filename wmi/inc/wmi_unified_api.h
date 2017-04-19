@@ -1318,7 +1318,7 @@ QDF_STATUS wmi_extract_chan_stats(void *wmi_hdl, void *evt_buf,
 		uint32_t index, wmi_host_chan_stats *chan_stats);
 
 QDF_STATUS wmi_extract_thermal_stats(void *wmi_hdl, void *evt_buf,
-		uint32_t *temp, uint32_t *level);
+		uint32_t *temp, uint32_t *level, uint32_t *pdev_id);
 
 QDF_STATUS wmi_extract_thermal_level_stats(void *wmi_hdl, void *evt_buf,
 		uint8_t idx, uint32_t *levelcount, uint32_t *dccount);

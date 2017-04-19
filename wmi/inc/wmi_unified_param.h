@@ -3478,6 +3478,7 @@ typedef struct {
  * @tt_level_config: TT level config params
  */
 struct thermal_mitigation_params {
+	uint32_t pdev_id;
 	uint32_t enable;
 	uint32_t dc;
 	uint32_t dc_per_event;
