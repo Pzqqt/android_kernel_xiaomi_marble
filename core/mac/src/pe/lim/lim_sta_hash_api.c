@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -67,7 +67,7 @@ tSirRetStatus lim_get_sta_hash_bssidx(tpAniSirGlobal pMac, uint16_t assocId,
 		dph_get_hash_entry(pMac, assocId, &psessionEntry->dph.dphHashTable);
 
 	if (pSta == NULL) {
-		PELOGE(lim_log(pMac, LOGE, FL("invalid STA %d"), assocId);)
+		lim_log(pMac, LOGE, FL("invalid STA %d"), assocId);
 		return eSIR_LIM_INVALID_STA;
 	}
 
