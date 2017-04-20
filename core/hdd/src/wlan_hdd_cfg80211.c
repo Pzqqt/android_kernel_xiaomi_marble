@@ -4612,14 +4612,19 @@ static int wlan_hdd_save_default_scan_ies(hdd_context_t *hdd_ctx,
 		scan_info->default_scan_ies = NULL;
 	}
 
+	scan_info->default_scan_ies_len = ie_len;
+
 	if (add_qcn_ie)
-		ie_len += (QCN_IE_HDR_LEN + QCN_IE_VERSION_SUBATTR_DATA_LEN);
+		ie_len += (QCN_IE_HDR_LEN + QCN_IE_VERSION_SUBATTR_LEN);
 
 	scan_info->default_scan_ies = qdf_mem_malloc(ie_len);
-	if (!scan_info->default_scan_ies)
+	if (!scan_info->default_scan_ies) {
+		scan_info->default_scan_ies_len = 0;
 		return -ENOMEM;
+	}
 
-	memcpy(scan_info->default_scan_ies, ie_data, ie_len);
+	qdf_mem_copy(scan_info->default_scan_ies, ie_data,
+			  scan_info->default_scan_ies_len);
 
 	/* Add QCN IE if g_qcn_ie_support INI is enabled */
 	if (add_qcn_ie)
