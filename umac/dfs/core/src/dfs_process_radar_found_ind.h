@@ -76,8 +76,8 @@
  */
 struct freqs_offsets {
 	uint32_t  chan_num[DFS_NUM_FREQ_OFFSET];
-	int32_t freq[DFS_NUM_FREQ_OFFSET];
-	uint32_t offset[DFS_NUM_FREQ_OFFSET];
+	uint32_t freq[DFS_NUM_FREQ_OFFSET];
+	int32_t offset[DFS_NUM_FREQ_OFFSET];
 };
 
 /**
