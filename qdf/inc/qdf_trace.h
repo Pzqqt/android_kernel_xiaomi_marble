@@ -476,6 +476,62 @@ void __printf(3, 4) qdf_snprintf(char *str_buffer, unsigned int size,
 		  char *str_format, ...);
 
 #define QDF_SNPRINTF qdf_snprintf
+
+#ifdef TSOSEG_DEBUG
+static inline
+int qdf_tso_seg_dbg_record(struct qdf_tso_seg_elem_t *tsoseg,
+			   uint16_t caller)
+{
+	int rc = -1;
+
+	if (tsoseg != NULL) {
+		tsoseg->dbg.cur++;  tsoseg->dbg.cur &= 0x0f;
+		tsoseg->dbg.history[tsoseg->dbg.cur] = caller;
+		rc = tsoseg->dbg.cur;
+	}
+	return rc;
+};
+static inline void qdf_tso_seg_dbg_bug(char *msg)
+{
+	qdf_print(msg);
+	QDF_BUG(0);
+};
+
+static inline void
+qdf_tso_seg_dbg_setowner(struct qdf_tso_seg_elem_t *tsoseg, void *owner)
+{
+	tsoseg->dbg.txdesc = owner;
+};
+
+static inline void
+qdf_tso_seg_dbg_zero(struct qdf_tso_seg_elem_t *tsoseg)
+{
+	memset(tsoseg, 0, offsetof(struct qdf_tso_seg_elem_t, dbg));
+	return;
+};
+
+#else
+static inline
+int qdf_tso_seg_dbg_record(struct qdf_tso_seg_elem_t *tsoseg,
+			   uint16_t caller)
+{
+	return 0;
+};
+static inline void qdf_tso_seg_dbg_bug(char *msg)
+{
+};
+static inline void
+qdf_tso_seg_dbg_setowner(struct qdf_tso_seg_elem_t *tsoseg, void *owner)
+{
+};
+static inline int
+qdf_tso_seg_dbg_zero(struct qdf_tso_seg_elem_t *tsoseg)
+{
+	memset(tsoseg, 0, sizeof(struct qdf_tso_seg_elem_t));
+	return 0;
+};
+
+#endif /* TSOSEG_DEBUG */
 #else
 
 #define DPTRACE(x)
