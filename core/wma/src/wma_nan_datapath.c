@@ -908,42 +908,36 @@ uint32_t wma_ndp_get_eventid_from_tlvtag(uint32_t tag)
  * of tag (higher 2 bytes) and length (lower 2 bytes). The tag is used to
  * identify the event which triggered wow event.
  *
- * Return: none
+ * Return: Errno
  */
-void wma_ndp_wow_event_callback(void *handle, void *event, uint32_t len,
-				uint32_t event_id)
+int wma_ndp_wow_event_callback(void *handle, void *event, uint32_t len,
+			       uint32_t event_id)
 {
 	WMA_LOGD(FL("ndp_wow_event dump"));
 	qdf_trace_hex_dump(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
 			   event, len);
 	switch (event_id) {
 	case WMI_NDP_INITIATOR_RSP_EVENTID:
-		wma_ndp_initiator_rsp_event_handler(handle, event, len);
-		break;
+		return wma_ndp_initiator_rsp_event_handler(handle, event, len);
 
 	case WMI_NDP_RESPONDER_RSP_EVENTID:
-		wma_ndp_responder_rsp_event_handler(handle, event, len);
-		break;
+		return wma_ndp_responder_rsp_event_handler(handle, event, len);
 
 	case WMI_NDP_END_RSP_EVENTID:
-		wma_ndp_end_response_event_handler(handle, event, len);
-		break;
+		return wma_ndp_end_response_event_handler(handle, event, len);
 
 	case WMI_NDP_INDICATION_EVENTID:
-		wma_ndp_indication_event_handler(handle, event, len);
-		break;
+		return wma_ndp_indication_event_handler(handle, event, len);
 
 	case WMI_NDP_CONFIRM_EVENTID:
-		wma_ndp_confirm_event_handler(handle, event, len);
-		break;
+		return wma_ndp_confirm_event_handler(handle, event, len);
 
 	case WMI_NDP_END_INDICATION_EVENTID:
-		wma_ndp_end_indication_event_handler(handle, event, len);
-		break;
+		return wma_ndp_end_indication_event_handler(handle, event, len);
 
 	default:
 		WMA_LOGE(FL("Unknown event: %d"), event_id);
-		break;
+		return 0;
 	}
 }
 #endif /* WLAN_FEATURE_NAN_CONVERGENCE */

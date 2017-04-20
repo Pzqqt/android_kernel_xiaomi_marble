@@ -576,7 +576,7 @@ int wma_beacon_swba_handler(void *handle, uint8_t *event, uint32_t len);
 
 int wma_peer_sta_kickout_event_handler(void *handle, u8 *event, u32 len);
 
-void wma_extscan_wow_event_callback(void *handle, void *event, uint32_t len);
+int wma_extscan_wow_event_callback(void *handle, void *event, uint32_t len);
 
 int wma_unified_bcntx_status_event_handler(void *handle,
 					   uint8_t *cmd_param_info,

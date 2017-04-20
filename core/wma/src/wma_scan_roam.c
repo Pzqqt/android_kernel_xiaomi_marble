@@ -3185,47 +3185,43 @@ void wma_config_plm(tp_wma_handle wma, tpSirPlmReq plm)
  * Payload is extracted and converted into generic tlv structure before
  * being passed to this function.
  *
- * @Return: none
+ * @Return: Errno
  */
-void wma_extscan_wow_event_callback(void *handle, void *event, uint32_t len)
+int wma_extscan_wow_event_callback(void *handle, void *event, uint32_t len)
 {
 	uint32_t tag = WMITLV_GET_TLVTAG(WMITLV_GET_HDR(event));
 
 	switch (tag) {
 	case WMITLV_TAG_STRUC_wmi_extscan_start_stop_event_fixed_param:
-		wma_extscan_start_stop_event_handler(handle, event, len);
-		break;
+		return wma_extscan_start_stop_event_handler(handle, event, len);
 
 	case WMITLV_TAG_STRUC_wmi_extscan_operation_event_fixed_param:
-		wma_extscan_operations_event_handler(handle, event, len);
-		break;
+		return wma_extscan_operations_event_handler(handle, event, len);
 
 	case WMITLV_TAG_STRUC_wmi_extscan_table_usage_event_fixed_param:
-		wma_extscan_table_usage_event_handler(handle, event, len);
-		break;
+		return wma_extscan_table_usage_event_handler(handle, event,
+							     len);
 
 	case WMITLV_TAG_STRUC_wmi_extscan_cached_results_event_fixed_param:
-		wma_extscan_cached_results_event_handler(handle, event, len);
-		break;
+		return wma_extscan_cached_results_event_handler(handle, event,
+								len);
 
 	case WMITLV_TAG_STRUC_wmi_extscan_wlan_change_results_event_fixed_param:
-		wma_extscan_change_results_event_handler(handle, event, len);
-		break;
+		return wma_extscan_change_results_event_handler(handle, event,
+								len);
 
 	case WMITLV_TAG_STRUC_wmi_extscan_hotlist_match_event_fixed_param:
-		wma_extscan_hotlist_match_event_handler(handle,	event, len);
-		break;
+		return wma_extscan_hotlist_match_event_handler(handle,	event,
+							       len);
 
 	case WMITLV_TAG_STRUC_wmi_extscan_capabilities_event_fixed_param:
-		wma_extscan_capabilities_event_handler(handle, event, len);
-		break;
+		return wma_extscan_capabilities_event_handler(handle, event,
+							      len);
 
 	default:
 		WMA_LOGE(FL("Unknown tag: %d"), tag);
-		break;
+		return 0;
 	}
-
-	return;
 }
 #endif
 
