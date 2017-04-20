@@ -41,6 +41,7 @@ typedef uint32_t wlan_scan_id;
 #define SCM_BSS_CAP_VALUE_NONE  0/* not much value */
 #define SCM_BSS_CAP_VALUE_HT    1
 #define SCM_BSS_CAP_VALUE_VHT   2
+#define SCM_BSS_CAP_VALUE_HE    3
 #define SCM_BSS_CAP_VALUE_WMM   1
 #define SCM_BSS_CAP_VALUE_UAPSD 1
 #define SCM_BSS_CAP_VALUE_5GHZ  2

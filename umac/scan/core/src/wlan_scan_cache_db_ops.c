@@ -213,8 +213,10 @@ static uint32_t scm_get_bss_cap_value(struct scan_default_params *params,
 	 * the capability checking
 	 */
 	if (!params->select_5ghz_margin) {
-		/* We only care about 11N capability */
-		if (entry->ie_list.vhtcap)
+		/* give weightage in the order 11ax, 11ac, 11n */
+		if (entry->ie_list.hecap)
+			ret += SCM_BSS_CAP_VALUE_HE;
+		else if (entry->ie_list.vhtcap)
 			ret += SCM_BSS_CAP_VALUE_VHT;
 		else if (entry->ie_list.htcap)
 			ret += SCM_BSS_CAP_VALUE_HT;
