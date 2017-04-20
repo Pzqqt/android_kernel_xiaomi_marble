@@ -91,21 +91,16 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 	if (lim_is_group_addr(pHdr->sa)) {
 		/* Received Disassoc frame from a BC/MC address */
 		/* Log error and ignore it */
-		PELOGE(lim_log(pMac, LOGE,
-			       FL
-				       ("received Disassoc frame from a BC/MC address"));
-		       )
-
+		lim_log(pMac, LOGE,
+			FL("received Disassoc frame from a BC/MC address"));
 		return;
 	}
 
 	if (lim_is_group_addr(pHdr->da) && !lim_is_addr_bc(pHdr->da)) {
 		/* Received Disassoc frame for a MC address */
 		/* Log error and ignore it */
-		PELOGE(lim_log(pMac, LOGE,
-			       FL("received Disassoc frame for a MC address"));
-		       )
-
+		lim_log(pMac, LOGE,
+			FL("received Disassoc frame for a MC address"));
 		return;
 	}
 	if (!lim_validate_received_frame_a1_addr(pMac,
@@ -133,11 +128,8 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 	if (psessionEntry->limRmfEnabled
 	    && (WMA_GET_RX_DPU_FEEDBACK(pRxPacketInfo) &
 		DPU_FEEDBACK_UNPROTECTED_ERROR)) {
-		PELOGE(lim_log
-			       (pMac, LOGE,
-			       FL("received an unprotected disassoc from AP"));
-		       )
-
+		lim_log(pMac, LOGE,
+			FL("received an unprotected disassoc from AP"));
 		/*
 		 * When 11w offload is enabled then
 		 * firmware should not fwd this frame
@@ -166,15 +158,14 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 	/* Get reasonCode from Disassociation frame body */
 	reasonCode = sir_read_u16(pBody);
 
-	PELOG2(lim_log(pMac, LOGE,
-		       FL("Received Disassoc frame for Addr: " MAC_ADDRESS_STR
+	lim_log(pMac, LOG1,
+		FL("Received Disassoc frame for Addr: " MAC_ADDRESS_STR
 			  "(mlm state=%s, sme state=%d RSSI=%d),"
 			  "with reason code %d [%s] from " MAC_ADDRESS_STR),
 		       MAC_ADDR_ARRAY(pHdr->da),
 		       lim_mlm_state_str(psessionEntry->limMlmState),
 		       psessionEntry->limSmeState, frame_rssi, reasonCode,
 		       lim_dot11_reason_str(reasonCode), MAC_ADDR_ARRAY(pHdr->sa));
-	       )
 	lim_diag_event_report(pMac, WLAN_PE_DIAG_DISASSOC_FRAME_EVENT,
 		psessionEntry, 0, reasonCode);
 	/**
@@ -190,21 +181,17 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		 * Disassociating STA is not associated.
 		 * Log error.
 		 */
-		PELOGE(lim_log(pMac, LOGE,
-			       FL
-				       ("received Disassoc frame from STA that does not have context "
-				       "reasonCode=%d, addr " MAC_ADDRESS_STR),
-			       reasonCode, MAC_ADDR_ARRAY(pHdr->sa));
-		       )
-
+		lim_log(pMac, LOGE,
+			FL("received Disassoc frame from STA that does not have context "
+			"reasonCode=%d, addr " MAC_ADDRESS_STR),
+			reasonCode, MAC_ADDR_ARRAY(pHdr->sa));
 		return;
 	}
 
 	if (lim_check_disassoc_deauth_ack_pending(pMac, (uint8_t *) pHdr->sa)) {
-		PELOGE(lim_log(pMac, LOGE,
-			       FL("Ignore the DisAssoc received, while waiting "
-				  "for ack of disassoc/deauth"));
-		       )
+		lim_log(pMac, LOGE,
+			FL("Ignore the DisAssoc received, while waiting "
+			"for ack of disassoc/deauth"));
 		lim_clean_up_disassoc_deauth_req(pMac, (uint8_t *) pHdr->sa, 1);
 		return;
 	}
@@ -217,22 +204,17 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		 *   drop/ignore the DisAssoc received
 		 */
 		if (!IS_REASSOC_BSSID(pMac, pHdr->sa, psessionEntry)) {
-			PELOGE(lim_log
-				       (pMac, LOGE,
-				       FL("Ignore the DisAssoc received, while "
-					  "Processing ReAssoc with different/unknown AP"));
-			       )
+			lim_log(pMac, LOGE,
+				FL("Ignore the DisAssoc received, while "
+				"Processing ReAssoc with different/unknown AP"));
 			return;
 		}
 		/** If the Disassoc is received from the new AP to which we tried to ReAssociate
 		 *  Drop ReAssoc and Restore the Previous context( current connected AP).
 		 */
 		if (!IS_CURRENT_BSSID(pMac, pHdr->sa, psessionEntry)) {
-			PELOGW(lim_log
-				       (pMac, LOGW,
-				       FL
-					       ("received Disassoc from the New AP to which ReAssoc is sent "));
-			       )
+			lim_log(pMac, LOGW,
+				FL("received Disassoc from the New AP to which ReAssoc is sent "));
 			lim_restore_pre_reassoc_state(pMac,
 						      eSIR_SME_REASSOC_REFUSED,
 						      reasonCode,
@@ -256,12 +238,10 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 
 		default:
 			/* Invalid reasonCode in received Disassociation frame */
-			PELOGE(lim_log(pMac, LOGE,
-				       FL
-					       ("received Disassoc frame with invalid reasonCode "
-					       "%d from " MAC_ADDRESS_STR), reasonCode,
+			lim_log(pMac, LOGE,
+				FL("received Disassoc frame with invalid reasonCode "
+				"%d from " MAC_ADDRESS_STR), reasonCode,
 				       MAC_ADDR_ARRAY(pHdr->sa));
-			       )
 			break;
 		}
 	} else if (LIM_IS_STA_ROLE(psessionEntry) &&
@@ -292,9 +272,8 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 	} else {
 		/* Received Disassociation frame in either IBSS */
 		/* or un-known role. Log and ignore it */
-		lim_log(pMac, LOGE,
-			FL
-				("received Disassoc frame with invalid reasonCode %d in role "
+		lim_log(pMac, LOG1,
+			FL("received Disassoc frame with invalid reasonCode %d in role "
 				"%d in sme state %d from " MAC_ADDRESS_STR), reasonCode,
 			GET_LIM_SYSTEM_ROLE(psessionEntry), psessionEntry->limSmeState,
 			MAC_ADDR_ARRAY(pHdr->sa));
@@ -308,13 +287,10 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		 * Already in the process of deleting context for the peer
 		 * and received Disassociation frame. Log and Ignore.
 		 */
-		PELOGE(lim_log(pMac, LOGE,
-			       FL("received Disassoc frame in state %d from "
-				  MAC_ADDRESS_STR),
-			       pStaDs->mlmStaContext.mlmState,
-			       MAC_ADDR_ARRAY(pHdr->sa));
-		       )
-
+		lim_log(pMac, LOG1,
+			FL("received Disassoc frame in state %d from "
+			MAC_ADDRESS_STR), pStaDs->mlmStaContext.mlmState,
+			MAC_ADDR_ARRAY(pHdr->sa));
 		return;
 	}
 #ifdef FEATURE_WLAN_TDLS
@@ -340,12 +316,10 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		    eLIM_MLM_WT_ASSOC_CNF_STATE)
 			pStaDs->mlmStaContext.updateContext = 1;
 
-		PELOGE(lim_log(pMac, LOGE,
-			       FL
-				       ("received Disassoc frame from peer that is in state %X, addr "
-				       MAC_ADDRESS_STR), pStaDs->mlmStaContext.mlmState,
+		lim_log(pMac, LOG1,
+			FL("received Disassoc frame from peer that is in state %X, addr "
+			MAC_ADDRESS_STR), pStaDs->mlmStaContext.mlmState,
 			       MAC_ADDR_ARRAY(pHdr->sa));
-		       )
 
 	} /* if (pStaDs->mlmStaContext.mlmState != eLIM_MLM_LINK_ESTABLISHED_STATE) */
 
@@ -369,11 +343,8 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		 * failure result code. By design, SME will then issue "Disassoc"
 		 * and cleanup will happen at that time.
 		 */
-		PELOGE(lim_log
-			       (pMac, LOGE,
-			       FL("received Disassoc from AP while waiting "
-				  "for Reassoc Rsp"));
-		       )
+		lim_log(pMac, LOGD,
+			FL("received Disassoc from AP while waiting for Reassoc Rsp"));
 
 		if (psessionEntry->limAssocResponseData) {
 			qdf_mem_free(psessionEntry->limAssocResponseData);
