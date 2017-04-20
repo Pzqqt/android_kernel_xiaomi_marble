@@ -746,13 +746,6 @@ QDF_STATUS wmi_unified_aggr_qos_cmd(void *wmi_hdl,
 QDF_STATUS wmi_unified_add_ts_cmd(void *wmi_hdl,
 		 struct add_ts_param *msg);
 
-QDF_STATUS wmi_unified_enable_disable_packet_filter_cmd(void *wmi_hdl,
-					uint8_t vdev_id, bool enable);
-
-QDF_STATUS wmi_unified_config_packet_filter_cmd(void *wmi_hdl,
-		uint8_t vdev_id, struct rcv_pkt_filter_config *rcv_filter_param,
-		uint8_t filter_id, bool enable);
-
 QDF_STATUS wmi_unified_process_add_periodic_tx_ptrn_cmd(void *wmi_hdl,
 						struct periodic_tx_pattern  *
 						pAddPeriodicTxPtrnParams,
