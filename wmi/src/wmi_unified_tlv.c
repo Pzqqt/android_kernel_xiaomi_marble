@@ -8380,136 +8380,6 @@ static QDF_STATUS send_add_ts_cmd_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
- * send_enable_disable_packet_filter_cmd_tlv() - enable/disable packet filter in target
- * @wmi_handle: wmi handle
- * @vdev_id: vdev id
- * @enable: Flag to enable/disable packet filter
- *
- * Return: QDF_STATUS_SUCCESS for success or error code
- */
-static QDF_STATUS send_enable_disable_packet_filter_cmd_tlv(wmi_unified_t wmi_handle,
-					uint8_t vdev_id, bool enable)
-{
-	int32_t len;
-	int ret = 0;
-	wmi_buf_t buf;
-	WMI_PACKET_FILTER_ENABLE_CMD_fixed_param *cmd;
-
-	len = sizeof(WMI_PACKET_FILTER_ENABLE_CMD_fixed_param);
-
-	buf = wmi_buf_alloc(wmi_handle, len);
-	if (!buf) {
-		WMI_LOGE("%s: Failed allocate wmi buffer", __func__);
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	cmd = (WMI_PACKET_FILTER_ENABLE_CMD_fixed_param *) wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		WMITLV_TAG_STRUC_wmi_packet_filter_enable_fixed_param,
-		WMITLV_GET_STRUCT_TLVLEN(
-		WMI_PACKET_FILTER_ENABLE_CMD_fixed_param));
-
-	cmd->vdev_id = vdev_id;
-	if (enable)
-		cmd->enable = PACKET_FILTER_SET_ENABLE;
-	else
-		cmd->enable = PACKET_FILTER_SET_DISABLE;
-
-	WMI_LOGE("%s: Packet filter enable %d for vdev_id %d",
-		__func__, cmd->enable, vdev_id);
-
-	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
-			 WMI_PACKET_FILTER_ENABLE_CMDID);
-	if (ret) {
-		WMI_LOGE("Failed to send packet filter wmi cmd to fw");
-		wmi_buf_free(buf);
-	}
-
-	return ret;
-}
-
-/**
- * send_config_packet_filter_cmd_tlv() - configure packet filter in target
- * @wmi_handle: wmi handle
- * @vdev_id: vdev id
- * @rcv_filter_param: Packet filter parameters
- * @filter_id: Filter id
- * @enable: Flag to add/delete packet filter configuration
- *
- * Return: QDF_STATUS_SUCCESS for success or error code
- */
-static QDF_STATUS send_config_packet_filter_cmd_tlv(wmi_unified_t wmi_handle,
-		uint8_t vdev_id, struct rcv_pkt_filter_config *rcv_filter_param,
-		uint8_t filter_id, bool enable)
-{
-	int len, i;
-	int err = 0;
-	wmi_buf_t buf;
-	WMI_PACKET_FILTER_CONFIG_CMD_fixed_param *cmd;
-
-
-	/* allocate the memory */
-	len = sizeof(*cmd);
-	buf = wmi_buf_alloc(wmi_handle, len);
-	if (!buf) {
-		WMI_LOGE("Failed to allocate buffer to send set_param cmd");
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	cmd = (WMI_PACKET_FILTER_CONFIG_CMD_fixed_param *)wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		WMITLV_TAG_STRUC_wmi_packet_filter_config_fixed_param,
-		WMITLV_GET_STRUCT_TLVLEN
-			       (WMI_PACKET_FILTER_CONFIG_CMD_fixed_param));
-
-	cmd->vdev_id = vdev_id;
-	cmd->filter_id = filter_id;
-	if (enable)
-		cmd->filter_action = PACKET_FILTER_SET_ACTIVE;
-	else
-		cmd->filter_action = PACKET_FILTER_SET_INACTIVE;
-
-	if (enable) {
-		cmd->num_params = QDF_MIN(
-			WMI_PACKET_FILTER_MAX_CMP_PER_PACKET_FILTER,
-			rcv_filter_param->numFieldParams);
-		cmd->filter_type = rcv_filter_param->filterType;
-		cmd->coalesce_time = rcv_filter_param->coalesceTime;
-
-		for (i = 0; i < cmd->num_params; i++) {
-			cmd->paramsData[i].proto_type =
-				rcv_filter_param->paramsData[i].protocolLayer;
-			cmd->paramsData[i].cmp_type =
-				rcv_filter_param->paramsData[i].cmpFlag;
-			cmd->paramsData[i].data_length =
-				rcv_filter_param->paramsData[i].dataLength;
-			cmd->paramsData[i].data_offset =
-				rcv_filter_param->paramsData[i].dataOffset;
-			memcpy(&cmd->paramsData[i].compareData,
-				rcv_filter_param->paramsData[i].compareData,
-				sizeof(cmd->paramsData[i].compareData));
-			memcpy(&cmd->paramsData[i].dataMask,
-				rcv_filter_param->paramsData[i].dataMask,
-				sizeof(cmd->paramsData[i].dataMask));
-		}
-	}
-
-	WMI_LOGE("Packet filter action %d filter with id: %d, num_params=%d",
-		cmd->filter_action, cmd->filter_id, cmd->num_params);
-	/* send the command along with data */
-	err = wmi_unified_cmd_send(wmi_handle, buf, len,
-				WMI_PACKET_FILTER_CONFIG_CMDID);
-	if (err) {
-		WMI_LOGE("Failed to send pkt_filter cmd");
-		wmi_buf_free(buf);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-
-	return 0;
-}
-
-/**
  * send_process_add_periodic_tx_ptrn_cmd_tlv - add periodic tx ptrn
  * @wmi_handle: wmi handle
  * @pAddPeriodicTxPtrnParams: tx ptrn params
@@ -13647,6 +13517,135 @@ static QDF_STATUS send_enable_broadcast_filter_cmd_tlv(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+/**
+ * send_enable_disable_packet_filter_cmd_tlv() - enable/disable packet filter
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev id
+ * @enable: Flag to enable/disable packet filter
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS send_enable_disable_packet_filter_cmd_tlv(
+		wmi_unified_t wmi_handle, uint8_t vdev_id, bool enable)
+{
+	int32_t len;
+	int ret = 0;
+	wmi_buf_t buf;
+	WMI_PACKET_FILTER_ENABLE_CMD_fixed_param *cmd;
+
+	len = sizeof(WMI_PACKET_FILTER_ENABLE_CMD_fixed_param);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s: Failed allocate wmi buffer", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (WMI_PACKET_FILTER_ENABLE_CMD_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_packet_filter_enable_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(
+		WMI_PACKET_FILTER_ENABLE_CMD_fixed_param));
+
+	cmd->vdev_id = vdev_id;
+	if (enable)
+		cmd->enable = PACKET_FILTER_SET_ENABLE;
+	else
+		cmd->enable = PACKET_FILTER_SET_DISABLE;
+
+	WMI_LOGE("%s: Packet filter enable %d for vdev_id %d",
+		__func__, cmd->enable, vdev_id);
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+			 WMI_PACKET_FILTER_ENABLE_CMDID);
+	if (ret) {
+		WMI_LOGE("Failed to send packet filter wmi cmd to fw");
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+
+/**
+ * send_config_packet_filter_cmd_tlv() - configure packet filter in target
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev id
+ * @rcv_filter_param: Packet filter parameters
+ * @filter_id: Filter id
+ * @enable: Flag to add/delete packet filter configuration
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS send_config_packet_filter_cmd_tlv(wmi_unified_t wmi_handle,
+		uint8_t vdev_id, struct pmo_rcv_pkt_fltr_cfg *rcv_filter_param,
+		uint8_t filter_id, bool enable)
+{
+	int len, i;
+	int err = 0;
+	wmi_buf_t buf;
+	WMI_PACKET_FILTER_CONFIG_CMD_fixed_param *cmd;
+
+
+	/* allocate the memory */
+	len = sizeof(*cmd);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("Failed to allocate buffer to send set_param cmd");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (WMI_PACKET_FILTER_CONFIG_CMD_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_packet_filter_config_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN
+			       (WMI_PACKET_FILTER_CONFIG_CMD_fixed_param));
+
+	cmd->vdev_id = vdev_id;
+	cmd->filter_id = filter_id;
+	if (enable)
+		cmd->filter_action = PACKET_FILTER_SET_ACTIVE;
+	else
+		cmd->filter_action = PACKET_FILTER_SET_INACTIVE;
+
+	if (enable) {
+		cmd->num_params = QDF_MIN(
+			WMI_PACKET_FILTER_MAX_CMP_PER_PACKET_FILTER,
+			rcv_filter_param->num_params);
+		cmd->filter_type = rcv_filter_param->filter_type;
+		cmd->coalesce_time = rcv_filter_param->coalesce_time;
+
+		for (i = 0; i < cmd->num_params; i++) {
+			cmd->paramsData[i].proto_type =
+				rcv_filter_param->params_data[i].protocol_layer;
+			cmd->paramsData[i].cmp_type =
+				rcv_filter_param->params_data[i].compare_flag;
+			cmd->paramsData[i].data_length =
+				rcv_filter_param->params_data[i].data_length;
+			cmd->paramsData[i].data_offset =
+				rcv_filter_param->params_data[i].data_offset;
+			memcpy(&cmd->paramsData[i].compareData,
+				rcv_filter_param->params_data[i].compare_data,
+				sizeof(cmd->paramsData[i].compareData));
+			memcpy(&cmd->paramsData[i].dataMask,
+				rcv_filter_param->params_data[i].data_mask,
+				sizeof(cmd->paramsData[i].dataMask));
+		}
+	}
+
+	WMI_LOGE("Packet filter action %d filter with id: %d, num_params=%d",
+		cmd->filter_action, cmd->filter_id, cmd->num_params);
+	/* send the command along with data */
+	err = wmi_unified_cmd_send(wmi_handle, buf, len,
+				WMI_PACKET_FILTER_CONFIG_CMDID);
+	if (err) {
+		WMI_LOGE("Failed to send pkt_filter cmd");
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
 #endif /* End of WLAN_PMO_ENABLE */
 
 /**
@@ -17721,6 +17720,9 @@ struct wmi_ops tlv_ops =  {
 	.send_lphb_config_udp_params_cmd = send_lphb_config_udp_params_cmd_tlv,
 	.send_lphb_config_udp_pkt_filter_cmd =
 		send_lphb_config_udp_pkt_filter_cmd_tlv,
+	.send_enable_disable_packet_filter_cmd =
+		send_enable_disable_packet_filter_cmd_tlv,
+	.send_config_packet_filter_cmd = send_config_packet_filter_cmd_tlv,
 #endif /* End of WLAN_PMO_ENABLE */
 #ifdef CONFIG_MCL
 	.send_process_dhcp_ind_cmd = send_process_dhcp_ind_cmd_tlv,
@@ -17746,9 +17748,6 @@ struct wmi_ops tlv_ops =  {
 	.send_del_ts_cmd = send_del_ts_cmd_tlv,
 	.send_aggr_qos_cmd = send_aggr_qos_cmd_tlv,
 	.send_add_ts_cmd = send_add_ts_cmd_tlv,
-	.send_enable_disable_packet_filter_cmd =
-		send_enable_disable_packet_filter_cmd_tlv,
-	.send_config_packet_filter_cmd = send_config_packet_filter_cmd_tlv,
 	.send_process_add_periodic_tx_ptrn_cmd =
 		send_process_add_periodic_tx_ptrn_cmd_tlv,
 	.send_process_del_periodic_tx_ptrn_cmd =

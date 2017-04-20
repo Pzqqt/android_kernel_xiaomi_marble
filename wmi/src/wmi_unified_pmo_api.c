@@ -155,6 +155,31 @@ QDF_STATUS wmi_unified_send_gtk_offload_cmd(void *wmi_hdl, uint8_t vdev_id,
 	return QDF_STATUS_E_FAILURE;
 }
 
+QDF_STATUS wmi_unified_enable_disable_packet_filter_cmd(void *wmi_hdl,
+		uint8_t vdev_id, bool enable)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_enable_disable_packet_filter_cmd)
+		return wmi_handle->ops->send_enable_disable_packet_filter_cmd(
+		wmi_handle, vdev_id, enable);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_unified_config_packet_filter_cmd(void *wmi_hdl,
+		uint8_t vdev_id, struct pmo_rcv_pkt_fltr_cfg *rcv_filter_param,
+		uint8_t filter_id, bool enable)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_config_packet_filter_cmd)
+		return wmi_handle->ops->send_config_packet_filter_cmd(
+		wmi_handle, vdev_id, rcv_filter_param, filter_id, enable);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 QDF_STATUS wmi_unified_enable_arp_ns_offload_cmd(void *wmi_hdl,
 			   struct pmo_arp_offload_params *arp_offload_req,
 			   struct pmo_ns_offload_params *ns_offload_req,
