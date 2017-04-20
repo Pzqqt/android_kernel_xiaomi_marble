@@ -760,8 +760,8 @@ static void reg_set_2g_channel_params(struct wlan_objmgr_pdev *pdev,
 
 	while (ch_params->ch_width != CH_WIDTH_INVALID) {
 		chan_state = reg_get_2g_bonded_channel_state(pdev, oper_ch,
-							  ch_params->ch_width,
-							  sec_ch_2g);
+							  sec_ch_2g,
+							  ch_params->ch_width);
 		if (CHANNEL_STATE_ENABLE == chan_state) {
 			if (CH_WIDTH_40MHZ == ch_params->ch_width) {
 				if (oper_ch < sec_ch_2g)
