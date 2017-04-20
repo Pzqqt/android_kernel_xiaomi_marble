@@ -140,6 +140,8 @@ struct pmo_lphb_udp_params;
 struct pmo_lphb_udp_filter_req;
 struct pmo_wow_cmd_params;
 struct pmo_suspend_params;
+struct pmo_rcv_pkt_fltr_cfg;
+struct pmo_rcv_pkt_fltr_clear_param;
 
 /**
  * struct wlan_lmac_if_pmo_tx_ops - structure of tx function
@@ -147,6 +149,8 @@ struct pmo_suspend_params;
  * @send_arp_offload_req: fp to send arp offload request
  * @send_ns_offload_req: fp to send ns offload request
  * @send_non_arp_bcast_filter_req: for enable/disable  broadcast filter
+ * @send_set_pkt_filter: send set packet filter
+ * @send_clear_pkt_filter: send clear packet filter
  * @send_enable_wakeup_event_req: fp to send enable wow wakeup events req
  * @send_disable_wakeup_event_req: fp to send disable wow wakeup events req
  * @send_add_wow_pattern: fp to send wow pattern request
@@ -185,6 +189,11 @@ struct wlan_lmac_if_pmo_tx_ops {
 	QDF_STATUS(*send_ns_offload_req)(struct wlan_objmgr_vdev *vdev,
 			struct pmo_arp_offload_params *arp_offload_req,
 			struct pmo_ns_offload_params *ns_offload_req);
+	QDF_STATUS(*send_set_pkt_filter)(struct wlan_objmgr_vdev *vdev,
+			struct pmo_rcv_pkt_fltr_cfg *pmo_set_pkt_fltr_req);
+	QDF_STATUS(*send_clear_pkt_filter)(struct wlan_objmgr_vdev *vdev,
+			struct pmo_rcv_pkt_fltr_clear_param
+						*pmo_clr_pkt_fltr_param);
 	QDF_STATUS(*send_enable_wow_wakeup_event_req)(
 			struct wlan_objmgr_vdev *vdev,
 			uint32_t bitmap);
