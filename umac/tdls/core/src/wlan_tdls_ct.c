@@ -1165,7 +1165,7 @@ QDF_STATUS tdls_delete_all_tdls_peers(struct wlan_objmgr_vdev *vdev,
 {
 	struct wlan_objmgr_peer *peer;
 	struct tdls_del_all_tdls_peers *del_msg;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	QDF_STATUS status;
 
 

@@ -285,7 +285,15 @@ QDF_STATUS ucfg_tdls_psoc_disable(struct wlan_objmgr_psoc *psoc)
 		tdls_err("NULL psoc");
 		return QDF_STATUS_E_FAILURE;
 	}
+
 	status = tgt_tdls_unregister_ev_handler(psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		tdls_err("Failed to unregister tdls event handler");
+
+	status = tdls_mgmt_rx_ops(psoc, false);
+	if (QDF_IS_STATUS_ERROR(status))
+		tdls_err("Failed to unregister mgmt rx callback");
+
 	soc_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
 							WLAN_UMAC_COMP_TDLS);
 	if (!soc_obj) {
