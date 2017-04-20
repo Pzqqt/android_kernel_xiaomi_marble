@@ -138,6 +138,30 @@ QDF_STATUS target_if_pmo_send_non_arp_bcast_filter_req(
 		struct pmo_bcast_filter_params *bcast_req);
 
 /**
+ * target_if_pmo_send_pkt_filter_req() - enable packet filter
+ * @vdev: objmgr vdev
+ * @rcv_filter_param: filter params
+ *
+ * This function enable packet filter
+ *
+ *  Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS target_if_pmo_send_pkt_filter_req(struct wlan_objmgr_vdev *vdev,
+			struct pmo_rcv_pkt_fltr_cfg *rcv_filter_param);
+
+/**
+ * target_if_pmo_clear_pkt_filter_req() - disable packet filter
+ * @vdev: objmgr vdev
+ * @rcv_clear_param: filter params
+ *
+ * This function disable packet filter
+ *
+ *  Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS target_if_pmo_clear_pkt_filter_req(struct wlan_objmgr_vdev *vdev,
+			struct pmo_rcv_pkt_fltr_clear_param *rcv_clear_param);
+
+/**
  * target_if_pmo_send_arp_offload_req() - sends arp request to fwr
  * @vdev: objmgr vdev
  * @arp_offload_req: arp offload req

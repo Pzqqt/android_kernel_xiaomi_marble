@@ -29,6 +29,7 @@
 #include "wlan_pmo_wow_public_struct.h"
 #include "wlan_pmo_common_public_struct.h"
 #include "wlan_pmo_obj_mgmt_api.h"
+#include "wlan_pmo_pkt_filter_public_struct.h"
 
 /**
  * pmo_ucfg_is_ap_mode_supports_arp_ns() - Check ap mode support arp&ns offload
@@ -299,6 +300,30 @@ QDF_STATUS pmo_ucfg_enable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev);
  * Return QDF_STATUS_SUCCESS -in case of success else return error
  */
 QDF_STATUS pmo_ucfg_disable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * pmo_ucfg_set_pkt_filter() - Set packet filter
+ * @psoc: objmgr psoc handle
+ * @pmo_set_pkt_fltr_req:
+ * @vdev_id: vdev id
+ *
+ * Return QDF_STATUS_SUCCESS -in case of success else return error
+ */
+QDF_STATUS pmo_ucfg_set_pkt_filter(struct wlan_objmgr_psoc *psoc,
+	struct pmo_rcv_pkt_fltr_cfg *pmo_set_pkt_fltr_req,
+	uint8_t vdev_id);
+
+/**
+ * pmo_ucfg_clear_pkt_filter() - Clear packet filter
+ * @psoc: objmgr psoc handle
+ * @pmo_clr_pkt_fltr_req:
+ * @vdev_id: vdev id
+ *
+ * Return QDF_STATUS_SUCCESS -in case of success else return error
+ */
+QDF_STATUS pmo_ucfg_clear_pkt_filter(struct wlan_objmgr_psoc *psoc,
+	struct pmo_rcv_pkt_fltr_clear_param *pmo_clr_pkt_fltr_param,
+	uint8_t vdev_id);
 
 /**
  * pmo_ucfg_get_gtk_rsp(): API to send gtk response request to fwr

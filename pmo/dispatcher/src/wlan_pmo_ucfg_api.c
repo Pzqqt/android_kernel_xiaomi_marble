@@ -29,6 +29,7 @@
 #include "wlan_pmo_main.h"
 #include "wlan_pmo_lphb.h"
 #include "wlan_pmo_suspend_resume.h"
+#include "wlan_pmo_pkt_filter.h"
 
 QDF_STATUS pmo_ucfg_get_psoc_config(struct wlan_objmgr_psoc *psoc,
 		struct pmo_psoc_cfg *psoc_cfg)
@@ -180,6 +181,21 @@ QDF_STATUS pmo_ucfg_enable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev)
 QDF_STATUS pmo_ucfg_disable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev)
 {
 	return pmo_core_disable_gtk_offload_in_fwr(vdev);
+}
+
+QDF_STATUS pmo_ucfg_set_pkt_filter(struct wlan_objmgr_psoc *psoc,
+		struct pmo_rcv_pkt_fltr_cfg *pmo_set_pkt_fltr_req,
+		uint8_t vdev_id)
+{
+	return pmo_core_set_pkt_filter(psoc, pmo_set_pkt_fltr_req, vdev_id);
+}
+
+QDF_STATUS pmo_ucfg_clear_pkt_filter(struct wlan_objmgr_psoc *psoc,
+		struct pmo_rcv_pkt_fltr_clear_param *pmo_clr_pkt_fltr_param,
+		uint8_t vdev_id)
+{
+	return pmo_core_clear_pkt_filter(psoc,
+				pmo_clr_pkt_fltr_param, vdev_id);
 }
 
 QDF_STATUS pmo_ucfg_get_gtk_rsp(struct wlan_objmgr_vdev *vdev,

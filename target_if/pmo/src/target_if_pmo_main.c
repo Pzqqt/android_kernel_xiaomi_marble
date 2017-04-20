@@ -94,6 +94,10 @@ void target_if_pmo_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 		target_if_pmo_psoc_send_host_wakeup_ind;
 	pmo_tx_ops->psoc_send_target_resume_req =
 		target_if_pmo_psoc_send_target_resume_req;
+	pmo_tx_ops->send_set_pkt_filter =
+		target_if_pmo_send_pkt_filter_req;
+	pmo_tx_ops->send_clear_pkt_filter =
+		target_if_pmo_clear_pkt_filter_req;
 
 }
 

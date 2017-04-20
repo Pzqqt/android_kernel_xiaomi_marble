@@ -49,6 +49,34 @@ QDF_STATUS pmo_tgt_disable_non_arp_bcast_filter_req(
 		struct wlan_objmgr_vdev *vdev, uint8_t vdev_id);
 
 /**
+ * pmo_tgt_set_pkt_filter() - Set packet filter
+ * @vdev: objmgr vdev
+ * @pmo_set_pkt_fltr_req:
+ * @vdev_id: vdev id
+ *
+ * API to set packet filter
+ *
+ * Return: QDF_STATUS_SUCCESS in case of success else return error
+ */
+QDF_STATUS pmo_tgt_set_pkt_filter(struct wlan_objmgr_vdev *vdev,
+		struct pmo_rcv_pkt_fltr_cfg *pmo_set_pkt_fltr_req,
+		uint8_t vdev_id);
+
+/**
+ * pmo_tgt_clear_pkt_filter() - Clear packet filter
+ * @vdev: objmgr vdev
+ * @pmo_clr_pkt_fltr_param:
+ * @vdev_id: vdev id
+ *
+ * API to clear packet filter
+ *
+ * Return: QDF_STATUS_SUCCESS in case of success else return error
+ */
+QDF_STATUS pmo_tgt_clear_pkt_filter(struct wlan_objmgr_vdev *vdev,
+		struct pmo_rcv_pkt_fltr_clear_param *pmo_clr_pkt_fltr_param,
+		uint8_t vdev_id);
+
+/**
  * pmo_tgt_enable_arp_offload_req() - Enable arp offload req to target
  * @vdev: objmgr vdev
  * @vdev_id: vdev id
