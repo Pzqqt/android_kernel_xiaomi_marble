@@ -764,7 +764,8 @@ OS_IF_DIR := $(WLAN_COMMON_ROOT)/os_if
 
 OS_IF_INC := -I$(WLAN_COMMON_INC)/os_if/linux \
             -I$(WLAN_COMMON_INC)/os_if/linux/scan/inc \
-             -I$(WLAN_COMMON_INC)/os_if/linux/p2p/inc
+            -I$(WLAN_COMMON_INC)/os_if/linux/p2p/inc \
+            -I$(WLAN_COMMON_INC)/os_if/linux/tdls/inc
 
 OS_IF_OBJ := $(OS_IF_DIR)/linux/p2p/src/wlan_cfg80211_p2p.o
 
@@ -904,6 +905,21 @@ UMAC_POLICY_MGR_OBJS := $(UMAC_POLICY_MGR_DIR)/src/wlan_policy_mgr_action.o \
 	$(UMAC_POLICY_MGR_DIR)/src/wlan_policy_mgr_init_deinit.o \
 	$(UMAC_POLICY_MGR_DIR)/src/wlan_policy_mgr_pcl.o \
 
+###### UMAC TDLS ########
+UMAC_TDLS_DIR := $(WLAN_COMMON_ROOT)/umac/tdls
+
+UMAC_TDLS_INC := -I$(WLAN_COMMON_INC)/umac/tdls/dispatcher/inc
+
+UMAC_TDLS_OBJS := $(UMAC_TDLS_DIR)/core/src/wlan_tdls_main.o \
+       $(UMAC_TDLS_DIR)/core/src/wlan_tdls_cmds_process.o \
+       $(UMAC_TDLS_DIR)/core/src/wlan_tdls_peer.o \
+       $(UMAC_TDLS_DIR)/core/src/wlan_tdls_mgmt.o \
+       $(UMAC_TDLS_DIR)/core/src/wlan_tdls_ct.o \
+       $(UMAC_TDLS_DIR)/dispatcher/src/wlan_tdls_tgt_api.o \
+       $(UMAC_TDLS_DIR)/dispatcher/src/wlan_tdls_ucfg_api.o \
+       $(UMAC_TDLS_DIR)/dispatcher/src/wlan_tdls_utils_api.o \
+       $(WLAN_COMMON_ROOT)/os_if/linux/tdls/src/wlan_cfg80211_tdls.o
+
 ########### BMI ###########
 BMI_DIR := core/bmi
 
@@ -923,7 +939,8 @@ TARGET_IF_INC := -I$(WLAN_COMMON_INC)/target_if/core/inc \
 		 -I$(WLAN_COMMON_INC)/target_if/pmo/inc \
 		 -I$(WLAN_COMMON_INC)/target_if/pmo/src \
 		 -I$(WLAN_COMMON_INC)/target_if/p2p/inc \
-		 -I$(WLAN_COMMON_INC)/target_if/regulatory/inc
+		 -I$(WLAN_COMMON_INC)/target_if/regulatory/inc \
+		 -I$(WLAN_COMMON_INC)/target_if/tdls/inc
 
 TARGET_IF_OBJ := $(TARGET_IF_DIR)/core/src/target_if_main.o \
 		$(TARGET_IF_DIR)/init_deinit/src/service_ready_event_handler.o \
@@ -937,8 +954,10 @@ TARGET_IF_OBJ := $(TARGET_IF_DIR)/core/src/target_if_main.o \
 		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_static_config.o \
 		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_lphb.o \
 		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_suspend_resume.o \
+		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_non_arp_bcast_fltr.o \
 		$(TARGET_IF_DIR)/p2p/src/target_if_p2p.o \
-		$(TARGET_IF_DIR)/regulatory/src/target_if_reg.o
+		$(TARGET_IF_DIR)/regulatory/src/target_if_reg.o \
+		$(TARGET_IF_DIR)/tdls/src/target_if_tdls.o
 
 ########### GLOBAL_LMAC_IF ##########
 GLOBAL_LMAC_IF_DIR := $(WLAN_COMMON_ROOT)/global_lmac_if
@@ -1392,6 +1411,7 @@ INCS +=		$(PMO_INC)
 INCS +=		$(UMAC_P2P_INC)
 INCS +=		$(UMAC_POLICY_MGR_INC)
 INCS +=		$(TARGET_INC)
+INCS +=		$(UMAC_TDLS_INC)
 INCS +=		$(UMAC_SER_INC)
 INCS +=		$(NLINK_INC) \
 		$(PTT_INC) \
@@ -1447,6 +1467,7 @@ OBJS +=		$(UMAC_OBJMGR_OBJS)
 OBJS +=		$(WIFI_POS_OBJS)
 OBJS +=		$(WLAN_NAN_OBJS)
 OBJS +=		$(UMAC_MGMT_TXRX_OBJS)
+OBJS +=		$(UMAC_TDLS_OBJS)
 OBJS +=		$(PMO_OBJS)
 OBJS +=		$(UMAC_P2P_OBJS)
 OBJS +=		$(UMAC_POLICY_MGR_OBJS)
@@ -1512,7 +1533,8 @@ CDEFINES :=	-DANI_LITTLE_BYTE_ENDIAN \
 		-DWLAN_PMO_ENABLE \
 		-DCONVERGED_P2P_ENABLE \
 		-DWLAN_POLICY_MGR_ENABLE \
-		-DSUPPORT_11AX
+		-DSUPPORT_11AX \
+		-DCONVERGED_TDLS_ENABLE
 
 
 ############ WIFI POS ##############
