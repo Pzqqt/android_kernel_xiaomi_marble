@@ -204,6 +204,7 @@ typedef enum {
 	WLAN_NAN_ID           = 20,
 	WLAN_REGULATORY_SB_ID = 21,
 	WLAN_REGULATORY_NB_ID = 22,
+	WLAN_OFFCHAN_TXRX_ID  = 23,
 	WLAN_REF_ID_MAX,
 } wlan_objmgr_ref_dbgid;
 
