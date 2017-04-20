@@ -358,7 +358,7 @@ wlan_objmgr_populate_ext_service_ready_data(struct wlan_objmgr_psoc *psoc,
 	struct wlan_objmgr_psoc_ext_service_ready_param *ext_service_data);
 
 /**
- * wlan_objmgr_ext_service_ready_chainmask_table_caplist_alloc()
+ * wlan_objmgr_ext_service_ready_chainmask_table_alloc()
  *	- allocate chainmask table capability list.
  * @service_ext_param: pointer to server ext param.
  *
@@ -366,11 +366,11 @@ wlan_objmgr_populate_ext_service_ready_data(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF Status.
  */
-QDF_STATUS wlan_objmgr_ext_service_ready_chainmask_table_caplist_alloc(
+QDF_STATUS wlan_objmgr_ext_service_ready_chainmask_table_alloc(
 		struct wlan_psoc_host_service_ext_param *service_ext_param);
 
 /**
- * wlan_objmgr_ext_service_ready_chainmask_table_caplist_free()
+ * wlan_objmgr_ext_service_ready_chainmask_table_free()
  *	-free chainmask table capability list.
  * @service_ext_param: pointer to server ext param.
  *
@@ -378,7 +378,7 @@ QDF_STATUS wlan_objmgr_ext_service_ready_chainmask_table_caplist_alloc(
  *
  * Return: QDF Status.
  */
-QDF_STATUS wlan_objmgr_ext_service_ready_chainmask_table_caplist_free(
+QDF_STATUS wlan_objmgr_ext_service_ready_chainmask_table_free(
 		struct wlan_psoc_host_service_ext_param *service_ext_param);
 
 #endif /* _WLAN_OBJMGR_PSOC_SERVICE_READY_API_H_*/

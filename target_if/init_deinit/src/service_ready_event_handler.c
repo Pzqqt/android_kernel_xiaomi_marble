@@ -305,7 +305,7 @@ int init_deinit_service_ext_ready_event_handler(ol_scn_t scn_handle,
 	if (err_code)
 		goto free_param_and_exit;
 
-	if (wlan_objmgr_ext_service_ready_chainmask_table_caplist_alloc(
+	if (wlan_objmgr_ext_service_ready_chainmask_table_alloc(
 				&(service_param->service_ext_param)) == QDF_STATUS_SUCCESS) {
 		err_code = populate_chainmaks_tables(wmi_handle, event,
 				&(service_param->service_ext_param.chainmask_table[0]));

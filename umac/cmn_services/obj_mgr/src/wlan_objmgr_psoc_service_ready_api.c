@@ -44,7 +44,7 @@ wlan_objmgr_populate_ext_service_ready_data(struct wlan_objmgr_psoc *psoc,
 }
 EXPORT_SYMBOL(wlan_objmgr_populate_ext_service_ready_data);
 
-QDF_STATUS wlan_objmgr_ext_service_ready_chainmask_table_caplist_alloc(
+QDF_STATUS wlan_objmgr_ext_service_ready_chainmask_table_alloc(
 		struct wlan_psoc_host_service_ext_param *service_ext_param)
 {
 	int i;
@@ -56,7 +56,7 @@ QDF_STATUS wlan_objmgr_ext_service_ready_chainmask_table_caplist_alloc(
 					service_ext_param->chainmask_table[i].num_valid_chainmasks);
 			service_ext_param->chainmask_table[i].cap_list = qdf_mem_alloc_outline(NULL, alloc_size);
 			if (service_ext_param->chainmask_table[i].cap_list == NULL) {
-				wlan_objmgr_ext_service_ready_chainmask_table_caplist_free(service_ext_param);
+				wlan_objmgr_ext_service_ready_chainmask_table_free(service_ext_param);
 				return QDF_STATUS_E_NOMEM;
 			}
 		}
@@ -67,9 +67,9 @@ QDF_STATUS wlan_objmgr_ext_service_ready_chainmask_table_caplist_alloc(
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(wlan_objmgr_ext_service_ready_chainmask_table_caplist_alloc);
+EXPORT_SYMBOL(wlan_objmgr_ext_service_ready_chainmask_table_alloc);
 
-QDF_STATUS wlan_objmgr_ext_service_ready_chainmask_table_caplist_free(
+QDF_STATUS wlan_objmgr_ext_service_ready_chainmask_table_free(
 		struct wlan_psoc_host_service_ext_param *service_ext_param)
 {
 	struct wlan_psoc_host_chainmask_table *table = NULL;
@@ -85,4 +85,4 @@ QDF_STATUS wlan_objmgr_ext_service_ready_chainmask_table_caplist_free(
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(wlan_objmgr_ext_service_ready_chainmask_table_caplist_free);
+EXPORT_SYMBOL(wlan_objmgr_ext_service_ready_chainmask_table_free);

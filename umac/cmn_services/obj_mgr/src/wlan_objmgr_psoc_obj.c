@@ -99,7 +99,7 @@ static QDF_STATUS wlan_objmgr_psoc_obj_free(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_FAILURE;
 	}
 	wlan_objmgr_psoc_peer_list_deinit(&psoc->soc_objmgr.peer_list);
-	wlan_objmgr_ext_service_ready_chainmask_table_caplist_free(ext_param);
+	wlan_objmgr_ext_service_ready_chainmask_table_free(ext_param);
 
 	qdf_spinlock_destroy(&psoc->psoc_lock);
 	qdf_mem_free(psoc);
