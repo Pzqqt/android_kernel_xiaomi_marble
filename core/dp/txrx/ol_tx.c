@@ -186,6 +186,8 @@ static inline uint8_t ol_tx_prepare_tso(ol_txrx_vdev_handle vdev,
 			struct qdf_tso_seg_elem_t *tso_seg =
 				ol_tso_alloc_segment(vdev->pdev);
 			if (tso_seg) {
+				qdf_tso_seg_dbg_record(tso_seg,
+						       TSOSEG_LOC_PREPARETSO);
 				tso_seg->next =
 					msdu_info->tso_info.tso_seg_list;
 				msdu_info->tso_info.tso_seg_list
@@ -534,6 +536,9 @@ ol_tx_prepare_ll_fast(struct ol_txrx_pdev_t *pdev,
 	tx_desc->netbuf = msdu;
 	if (msdu_info->tso_info.is_tso) {
 		tx_desc->tso_desc = msdu_info->tso_info.curr_seg;
+		qdf_tso_seg_dbg_setowner(tx_desc->tso_desc, tx_desc);
+		qdf_tso_seg_dbg_record(tx_desc->tso_desc,
+				       TSOSEG_LOC_TXPREPLLFAST);
 		tx_desc->tso_num_desc = msdu_info->tso_info.tso_num_seg_list;
 		tx_desc->pkt_type = OL_TX_FRM_TSO;
 		TXRX_STATS_MSDU_INCR(pdev, tx.tso.tso_pkts, msdu);
@@ -2013,6 +2018,11 @@ void ol_tso_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg)
 		/* set the freelist bit and magic cookie*/
 		c_element->on_freelist = 1;
 		c_element->cookie = TSO_SEG_MAGIC_COOKIE;
+#ifdef TSOSEG_DEBUG
+		c_element->dbg.txdesc = NULL;
+		c_element->dbg.cur    = -1; /* history empty */
+		qdf_tso_seg_dbg_record(c_element, TSOSEG_LOC_INIT1);
+#endif /* TSOSEG_DEBUG */
 		c_element->next =
 			qdf_mem_malloc(sizeof(struct qdf_tso_seg_elem_t));
 		c_element = c_element->next;
@@ -2032,6 +2042,11 @@ void ol_tso_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg)
 	}
 	c_element->on_freelist = 1;
 	c_element->cookie = TSO_SEG_MAGIC_COOKIE;
+#ifdef TSOSEG_DEBUG
+	c_element->dbg.txdesc = NULL;
+	c_element->dbg.cur    = -1; /* history empty */
+	qdf_tso_seg_dbg_record(c_element, TSOSEG_LOC_INIT2);
+#endif /* TSOSEG_DEBUG */
 	c_element->next = NULL;
 	pdev->tso_seg_pool.pool_size = num_seg;
 	pdev->tso_seg_pool.num_free = num_seg;
@@ -2069,8 +2084,7 @@ void ol_tso_seg_list_deinit(struct ol_txrx_pdev_t *pdev)
 	while (i-- > 0 && c_element) {
 		temp = c_element->next;
 		if (c_element->on_freelist != 1) {
-			qdf_print("this seg memory is already freed (double free?)");
-			QDF_BUG(0);
+			qdf_tso_seg_dbg_bug("this seg already freed (double?)");
 			return;
 		} else if (c_element->cookie != TSO_SEG_MAGIC_COOKIE) {
 			qdf_print("this seg cookie is bad (memory corruption?)");

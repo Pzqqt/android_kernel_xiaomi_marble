@@ -29,6 +29,7 @@
 #include <qdf_nbuf.h>           /* qdf_nbuf_t, etc. */
 #include <qdf_util.h>           /* qdf_assert */
 #include <qdf_lock.h>           /* qdf_spinlock */
+#include <qdf_trace.h>          /* qdf_tso_seg_dbg stuff */
 #ifdef QCA_COMPUTE_TX_DELAY
 #include <qdf_time.h>           /* qdf_system_ticks */
 #endif
@@ -761,6 +762,31 @@ free_tx_desc:
 }
 
 #if defined(FEATURE_TSO)
+#ifdef TSOSEG_DEBUG
+static int
+ol_tso_seg_dbg_sanitize(struct qdf_tso_seg_elem_t *tsoseg)
+{
+	int rc = -1;
+	struct ol_tx_desc_t *txdesc;
+
+	if (tsoseg != NULL) {
+		txdesc = tsoseg->dbg.txdesc;
+		if (txdesc->tso_desc != tsoseg)
+			qdf_tso_seg_dbg_bug("Owner sanity failed");
+		else
+			rc = 0;
+	}
+	return rc;
+
+};
+#else
+static int
+ol_tso_seg_dbg_sanitize(struct qdf_tso_seg_elem_t *tsoseg)
+{
+	return 0;
+}
+#endif /* TSOSEG_DEBUG */
+
 /**
  * ol_tso_alloc_segment() - function to allocate a TSO segment
  * element
@@ -792,6 +818,7 @@ struct qdf_tso_seg_elem_t *ol_tso_alloc_segment(struct ol_txrx_pdev_t *pdev)
 		}
 		/*this tso seg is not a part of freelist now.*/
 		tso_seg->on_freelist = 0;
+		qdf_tso_seg_dbg_record(tso_seg, TSOSEG_LOC_ALLOC);
 		pdev->tso_seg_pool.freelist = pdev->tso_seg_pool.freelist->next;
 	}
 	qdf_spin_unlock_bh(&pdev->tso_seg_pool.tso_mutex);
@@ -815,9 +842,8 @@ void ol_tso_free_segment(struct ol_txrx_pdev_t *pdev,
 {
 	qdf_spin_lock_bh(&pdev->tso_seg_pool.tso_mutex);
 	if (tso_seg->on_freelist != 0) {
-		qdf_print("Do not free the tso seg as this seg is already freed");
 		qdf_spin_unlock_bh(&pdev->tso_seg_pool.tso_mutex);
-		QDF_BUG(0);
+		qdf_tso_seg_dbg_bug("Do not free tso seg, already freed");
 		return;
 	} else if (tso_seg->cookie != TSO_SEG_MAGIC_COOKIE) {
 		qdf_print("Do not free the tso seg as cookie is not good. Looks like memory corruption");
@@ -825,11 +851,15 @@ void ol_tso_free_segment(struct ol_txrx_pdev_t *pdev,
 		QDF_BUG(0);
 		return;
 	}
+	/* sanitize before free */
+	ol_tso_seg_dbg_sanitize(tso_seg);
 	/*this tso seg is now a part of freelist*/
-	qdf_mem_zero(tso_seg, sizeof(*tso_seg));
+	/* retain segment history, if debug is enabled */
+	qdf_tso_seg_dbg_zero(tso_seg);
 	tso_seg->next = pdev->tso_seg_pool.freelist;
 	tso_seg->on_freelist = 1;
 	tso_seg->cookie = TSO_SEG_MAGIC_COOKIE;
+	qdf_tso_seg_dbg_record(tso_seg, TSOSEG_LOC_FREE);
 	pdev->tso_seg_pool.freelist = tso_seg;
 	pdev->tso_seg_pool.num_free++;
 	qdf_spin_unlock_bh(&pdev->tso_seg_pool.tso_mutex);
