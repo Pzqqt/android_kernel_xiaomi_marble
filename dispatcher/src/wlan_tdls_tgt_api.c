@@ -225,7 +225,7 @@ QDF_STATUS tgt_tdls_mgmt_frame_process_rx_cb(
 	struct tdls_rx_mgmt_frame *rx_mgmt;
 	struct tdls_rx_mgmt_event *rx_mgmt_event;
 	struct tdls_soc_priv_obj *tdls_soc_obj;
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	struct wlan_objmgr_vdev *vdev;
 	uint32_t vdev_id;
 	uint8_t *pdata;

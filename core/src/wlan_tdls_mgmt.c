@@ -225,8 +225,7 @@ static QDF_STATUS tdls_activate_send_mgmt_request(
 	struct wlan_objmgr_peer *peer;
 	struct tdls_soc_priv_obj *tdls_soc_obj;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	struct tdls_send_mgmt_request *tdls_mgmt_req;
 
 	if (!action_req || !action_req->vdev)

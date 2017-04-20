@@ -805,10 +805,8 @@ static void tdls_send_update_to_fw(struct tdls_vdev_priv_obj *tdls_vdev_obj,
 	tdls_state_param_setting_dump(tdls_info_to_fw);
 
 	status = tdls_update_fw_tdls_state(tdls_soc_obj, tdls_info_to_fw);
-	if (QDF_STATUS_SUCCESS != status) {
-		qdf_mem_free(tdls_info_to_fw);
+	if (QDF_STATUS_SUCCESS != status)
 		goto done;
-	}
 
 	if (sta_connect_event) {
 		tdls_soc_obj->set_state_info.set_state_cnt++;
@@ -828,6 +826,7 @@ static void tdls_send_update_to_fw(struct tdls_vdev_priv_obj *tdls_vdev_obj,
 		tdls_mgmt_rx_ops(tdls_soc_obj->soc, false);
 
 done:
+	qdf_mem_free(tdls_info_to_fw);
 	tdls_process_session_update(tdls_soc_obj->soc,
 					TDLS_CMD_SESSION_INCREMENT);
 	return;
