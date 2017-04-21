@@ -430,7 +430,9 @@ static void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
 	struct dfs_ieee80211_channel *chan_list, uint32_t *num_chan)
 {
 	uint8_t pcl_ch[NUM_CHANNELS];
+	uint8_t weight_list[NUM_CHANNELS];
 	uint32_t len;
+	uint32_t weight_len;
 	int i;
 	struct wlan_objmgr_psoc *psoc;
 	uint32_t conn_count = 0;
@@ -445,13 +447,15 @@ static void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
 	}
 
 	len = QDF_ARRAY_SIZE(pcl_ch);
+	weight_len = QDF_ARRAY_SIZE(weight_list);
 	conn_count = policy_mgr_mode_specific_connection_count(
 			psoc, PM_SAP_MODE, NULL);
 	if (0 == conn_count)
-		policy_mgr_get_pcl(psoc, PM_SAP_MODE, pcl_ch, &len, NULL, 0);
+		policy_mgr_get_pcl(psoc, PM_SAP_MODE, pcl_ch,
+				&len, weight_list, weight_len);
 	else
 		policy_mgr_get_pcl_for_existing_conn(psoc, PM_SAP_MODE, pcl_ch,
-						     &len, NULL, 0);
+				&len, weight_list, weight_len);
 
 	if (*num_chan < len) {
 		DFS_PRINTK("%s: Invalid len src=%d, dst=%d\n",
