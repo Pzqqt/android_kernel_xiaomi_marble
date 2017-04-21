@@ -16150,7 +16150,7 @@ void sme_store_pdev(tHalHandle hal, struct wlan_objmgr_pdev *pdev)
 	void *wma_handle;
 	QDF_STATUS status;
 
-	status = wlan_objmgr_pdev_try_get_ref(pdev, WLAN_LEGACY_SME_ID);
+	status = wlan_objmgr_pdev_try_get_ref(pdev, WLAN_LEGACY_MAC_ID);
 	if (QDF_STATUS_SUCCESS != status) {
 		mac_ctx->pdev = NULL;
 		return;
@@ -16159,26 +16159,9 @@ void sme_store_pdev(tHalHandle hal, struct wlan_objmgr_pdev *pdev)
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma_handle) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"wma handle is NULL");
+				FL("wma handle is NULL"));
 		return;
 	}
 	wma_store_pdev(wma_handle, pdev);
 }
 
-void sme_clear_pdev(tHalHandle hal)
-{
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
-	void *wma_handle;
-
-	if (mac_ctx->pdev) {
-		wlan_objmgr_pdev_release_ref(mac_ctx->pdev, WLAN_LEGACY_SME_ID);
-		mac_ctx->pdev = NULL;
-	}
-	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"wma handle is NULL");
-		return;
-	}
-	wma_clear_pdev(wma_handle);
-}

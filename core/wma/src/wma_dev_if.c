@@ -4721,12 +4721,3 @@ void wma_store_pdev(void *wma_ctx, struct wlan_objmgr_pdev *pdev)
 	wma->pdev = pdev;
 }
 
-void wma_clear_pdev(void *wma_ctx)
-{
-	tp_wma_handle wma = (tp_wma_handle)wma_ctx;
-
-	if (wma->pdev) {
-		wlan_objmgr_pdev_release_ref(wma->pdev, WLAN_LEGACY_WMA_ID);
-		wma->pdev = NULL;
-	}
-}

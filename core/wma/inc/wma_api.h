@@ -296,12 +296,4 @@ static inline void wma_tx_failure_cb(void *ctx, uint32_t num_msdu,
  */
 void wma_store_pdev(void *wma_ctx, struct wlan_objmgr_pdev *pdev);
 
-/**
- * wma_clear_pdev() - clear pdev
- * @wma_ctx:	wma context
- *
- * Return: void
- */
-void wma_clear_pdev(void *wma_ctx);
-
 #endif

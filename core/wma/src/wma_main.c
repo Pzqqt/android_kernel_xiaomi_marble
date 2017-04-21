@@ -3655,7 +3655,11 @@ QDF_STATUS wma_close(void *cds_ctx)
 	}
 
 	wma_ndp_unregister_all_event_handlers(wma_handle);
-
+	if (wma_handle->pdev) {
+		wlan_objmgr_pdev_release_ref(wma_handle->pdev,
+				WLAN_LEGACY_WMA_ID);
+		wma_handle->pdev = NULL;
+	}
 	wlan_objmgr_psoc_release_ref(wma_handle->psoc, WLAN_LEGACY_WMA_ID);
 	wma_handle->psoc = NULL;
 	target_if_close();

@@ -1478,11 +1478,4 @@ QDF_STATUS sme_register_set_connection_info_cb(tHalHandle hHal,
  */
 void sme_store_pdev(tHalHandle hal, struct wlan_objmgr_pdev *pdev);
 
-/**
- * sme_clear_pdev() - clear pdev
- * @hal - MAC global handle
- *
- * Return: QDF_STATUS
- */
-void sme_clear_pdev(tHalHandle hal);
 #endif /* #if !defined( __SME_API_H ) */

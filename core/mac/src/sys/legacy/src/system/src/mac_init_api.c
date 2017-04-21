@@ -182,6 +182,10 @@ tSirRetStatus mac_close(tHalHandle hHal)
 	/* Call routine to free-up all CFG data structures */
 	cfg_de_init(pMac);
 
+	if (pMac->pdev) {
+		wlan_objmgr_pdev_release_ref(pMac->pdev, WLAN_LEGACY_MAC_ID);
+		pMac->pdev = NULL;
+	}
 	wlan_objmgr_psoc_release_ref(pMac->psoc, WLAN_LEGACY_MAC_ID);
 	pMac->psoc = NULL;
 	/* Finally, de-allocate the global MAC datastructure: */

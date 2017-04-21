@@ -134,7 +134,6 @@ int hdd_objmgr_release_and_destroy_pdev(hdd_context_t *hdd_ctx)
 
 	hdd_deinit_pdev_os_priv(hdd_ctx);
 	hdd_ctx->hdd_pdev = NULL;
-	sme_clear_pdev(hdd_ctx->hHal);
 	if (!pdev)
 		return -EINVAL;
 
