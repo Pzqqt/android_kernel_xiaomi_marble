@@ -95,7 +95,7 @@
 #include "wifi_pos_api.h"
 #include "hif_main.h"
 
-#define WMA_LOG_COMPLETION_TIMER 10000 /* 10 seconds */
+#define WMA_LOG_COMPLETION_TIMER 3000 /* 3 seconds */
 #define WMI_TLV_HEADROOM 128
 uint8_t *mac_trace_get_wma_msg_string(uint16_t wmaMsg);
 static uint32_t g_fw_wlan_feat_caps;
