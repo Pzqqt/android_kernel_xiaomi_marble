@@ -86,6 +86,8 @@ void target_if_pmo_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 		target_if_pmo_psoc_send_wow_enable_req;
 	pmo_tx_ops->psoc_send_supend_req =
 		target_if_pmo_psoc_send_suspend_req;
+	pmo_tx_ops->psoc_set_runtime_pm_in_progress =
+		target_if_pmo_set_runtime_pm_in_progress;
 	pmo_tx_ops->psoc_get_runtime_pm_in_progress =
 		target_if_pmo_get_runtime_pm_in_progress;
 	pmo_tx_ops->psoc_send_host_wakeup_ind =

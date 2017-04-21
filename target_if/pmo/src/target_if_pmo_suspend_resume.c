@@ -160,6 +160,13 @@ QDF_STATUS target_if_pmo_psoc_send_suspend_req(
 			TGT_WILDCARD_PDEV_ID);
 }
 
+void target_if_pmo_set_runtime_pm_in_progress(struct wlan_objmgr_psoc *psoc,
+					      bool value)
+{
+	return wmi_set_runtime_pm_inprogress(GET_WMI_HDL_FROM_PSOC(psoc),
+					     value);
+}
+
 bool target_if_pmo_get_runtime_pm_in_progress(
 		struct wlan_objmgr_psoc *psoc)
 {
