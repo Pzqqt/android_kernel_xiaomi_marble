@@ -28,12 +28,14 @@
 #define __SCHEDULER_CORE_H
 
 #include <qdf_threads.h>
+#include <qdf_timer.h>
 #include <scheduler_api.h>
 #include <qdf_list.h>
 
 #define SCHEDULER_CORE_MAX_MESSAGES 8000
 #define SCHEDULER_NUMBER_OF_MSG_QUEUE 5
 #define SCHEDULER_WRAPPER_MAX_FAIL_COUNT (SCHEDULER_CORE_MAX_MESSAGES * 3)
+#define SCHEDULER_WATCHDOG_TIMEOUT (10 * 1000) /* 10s */
 
 /**
  * struct scheduler_mq_type -  scheduler message queue
@@ -90,6 +92,9 @@ struct scheduler_mq_ctx {
  * @hdd_callback: os if suspend callback
  * @legacy_wma_handler: legacy wma message handler
  * @legacy_sys_handler: legacy sys message handler
+ * @watchdog_timer: timer for triggering a scheduler watchdog bite
+ * @watchdog_msg_type: 'type' of the current msg being processed
+ * @watchdog_callback: the callback of the current msg being processed
  */
 struct scheduler_ctx {
 	struct scheduler_mq_ctx queue_ctx;
@@ -104,6 +109,9 @@ struct scheduler_ctx {
 	hdd_suspend_callback hdd_callback;
 	scheduler_msg_process_fn_t legacy_wma_handler;
 	scheduler_msg_process_fn_t legacy_sys_handler;
+	qdf_timer_t watchdog_timer;
+	uint16_t watchdog_msg_type;
+	void *watchdog_callback;
 };
 
 

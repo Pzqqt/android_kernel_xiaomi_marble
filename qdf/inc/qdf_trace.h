@@ -731,4 +731,15 @@ void qdf_logging_init(void);
  */
 void qdf_logging_exit(void);
 
+#define QDF_SYMBOL_LEN __QDF_SYMBOL_LEN
+
+/**
+ * qdf_sprint_symbol() - prints the name of a symbol into a string buffer
+ * @buffer: the string buffer to print into
+ * @addr: address of the symbol to lookup and print
+ *
+ * Return: number of characters printed
+ */
+int qdf_sprint_symbol(char *buffer, void *addr);
+
 #endif /* __QDF_TRACE_H */

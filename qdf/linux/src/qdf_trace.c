@@ -2279,3 +2279,18 @@ void qdf_logging_exit(void)
 }
 #endif
 
+#ifdef CONFIG_KALLSYMS
+inline int qdf_sprint_symbol(char *buffer, void *addr)
+{
+	return sprint_symbol(buffer, (unsigned long)addr);
+}
+#else
+int qdf_sprint_symbol(char *buffer, void *addr)
+{
+	if (!buffer)
+		return 0;
+
+	buffer[0] = '\0';
+	return 1;
+}
+#endif

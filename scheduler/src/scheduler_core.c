@@ -283,7 +283,7 @@ static void scheduler_core_return_msg(struct scheduler_ctx *sch_ctx,
 }
 
 static void scheduler_thread_process_queues(struct scheduler_ctx *sch_ctx,
-						bool *shutdown)
+					    bool *shutdown)
 {
 	int i;
 	QDF_STATUS vStatus = QDF_STATUS_E_FAILURE;
@@ -331,9 +331,16 @@ static void scheduler_thread_process_queues(struct scheduler_ctx *sch_ctx,
 			return;
 		}
 		if (sch_ctx->queue_ctx.scheduler_msg_process_fn[i]) {
+			struct scheduler_msg *msg = pMsgWrapper->msg_buf;
+
+			sch_ctx->watchdog_msg_type = msg->type;
+			sch_ctx->watchdog_callback = msg->callback;
+			qdf_timer_start(&sch_ctx->watchdog_timer,
+					SCHEDULER_WATCHDOG_TIMEOUT);
 			vStatus = sch_ctx->queue_ctx.
-					scheduler_msg_process_fn[i](
-							pMsgWrapper->msg_buf);
+					scheduler_msg_process_fn[i](msg);
+			qdf_timer_stop(&sch_ctx->watchdog_timer);
+
 			if (QDF_IS_STATUS_ERROR(vStatus)) {
 				QDF_TRACE(QDF_MODULE_ID_SCHEDULER,
 					QDF_TRACE_LEVEL_ERROR,
