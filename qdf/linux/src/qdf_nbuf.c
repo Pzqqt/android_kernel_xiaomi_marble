@@ -41,6 +41,7 @@
 #include <qdf_lock.h>
 #include <qdf_trace.h>
 #include <net/ieee80211_radiotap.h>
+#include <qdf_module.h>
 
 #if defined(FEATURE_TSO)
 #include <net/ipv6.h>
@@ -2658,6 +2659,7 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 	return 0;
 }
 #endif
+qdf_export_symbol(qdf_nbuf_update_radiotap);
 
 /**
  * __qdf_nbuf_reg_free_cb() - register nbuf free callback
