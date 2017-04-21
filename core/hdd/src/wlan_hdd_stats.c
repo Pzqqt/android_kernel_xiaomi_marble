@@ -1381,11 +1381,10 @@ static int wlan_hdd_send_ll_stats_req(hdd_context_t *hdd_ctx,
 int wlan_hdd_ll_stats_get(hdd_adapter_t *adapter, uint32_t req_id,
 			  uint32_t req_mask)
 {
-	unsigned long rc;
+	int ret;
 	tSirLLStatsGetReq get_req;
 	hdd_station_ctx_t *hddstactx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	int status;
 
 	ENTER();
 
@@ -1394,12 +1393,12 @@ int wlan_hdd_ll_stats_get(hdd_adapter_t *adapter, uint32_t req_id,
 		return -EPERM;
 	}
 
-	status = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != status)
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
 		return -EINVAL;
 
 	if (hddstactx->hdd_ReassocScenario) {
-		hdd_err("Roaming in progress, so unable to proceed this request");
+		hdd_err("Roaming in progress, cannot process the request");
 		return -EBUSY;
 	}
 
@@ -1412,20 +1411,15 @@ int wlan_hdd_ll_stats_get(hdd_adapter_t *adapter, uint32_t req_id,
 	get_req.staId = adapter->sessionId;
 
 	rtnl_lock();
-	rc = wlan_hdd_send_ll_stats_req(hdd_ctx, &get_req);
-	if (0 != rc) {
-		hdd_err("Failed to send LL stats request (id:%u)", req_id);
-		goto err_rtnl_unlock;
-	}
-
+	ret = wlan_hdd_send_ll_stats_req(hdd_ctx, &get_req);
 	rtnl_unlock();
+	if (0 != ret)
+		hdd_err("Send LL stats req failed, id:%u, mask:%d, session:%d",
+			req_id, req_mask, adapter->sessionId);
 
 	EXIT();
-	return rc;
+	return ret;
 
-err_rtnl_unlock:
-	rtnl_unlock();
-	return rc;
 }
 
 /**
