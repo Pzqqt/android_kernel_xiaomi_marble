@@ -545,6 +545,8 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 			gp_cds_context->htc_ctx, gp_cds_context->qdf_ctx,
 			&dp_ol_if_ops, psoc);
 
+	pmo_ucfg_psoc_update_dp_handle(psoc, gp_cds_context->dp_soc);
+
 	cds_set_ac_specs_params(cds_cfg);
 
 	cds_cdp_cfg_attach(cds_cfg);
@@ -583,6 +585,7 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 		QDF_ASSERT(0);
 		goto err_sme_close;
 	}
+	pmo_ucfg_psoc_set_txrx_handle(psoc, gp_cds_context->pdev_txrx_ctx);
 
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: CDS successfully Opened", __func__);
@@ -599,13 +602,14 @@ err_mac_close:
 err_wma_close:
 	cds_shutdown_notifier_purge();
 	wma_close(gp_cds_context);
-
 	wma_wmi_service_close(gp_cds_context);
+	pmo_ucfg_psoc_update_dp_handle(psoc, NULL);
 
 err_htc_close:
 	if (gp_cds_context->htc_ctx) {
 		htc_destroy(gp_cds_context->htc_ctx);
 		gp_cds_context->htc_ctx = NULL;
+		pmo_ucfg_psoc_update_htc_handle(psoc, NULL);
 	}
 
 err_bmi_close:
@@ -1025,6 +1029,7 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc, v_CONTEXT_t cds_context)
 
 	ctx = cds_get_context(QDF_MODULE_ID_TXRX);
 	cds_set_context(QDF_MODULE_ID_TXRX, NULL);
+	pmo_ucfg_psoc_set_txrx_handle(psoc, NULL);
 	cdp_pdev_detach(cds_get_context(QDF_MODULE_ID_SOC),
 		       (struct cdp_pdev *)ctx, 1);
 
@@ -1045,6 +1050,7 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc, v_CONTEXT_t cds_context)
 	((p_cds_contextType) cds_context)->pMACContext = NULL;
 
 	cdp_soc_detach(gp_cds_context->dp_soc);
+	pmo_ucfg_psoc_update_dp_handle(psoc, NULL);
 
 	cds_shutdown_notifier_purge();
 

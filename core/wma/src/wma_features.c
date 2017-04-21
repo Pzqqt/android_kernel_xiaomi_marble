@@ -2561,33 +2561,6 @@ static inline void wma_set_wow_bus_suspend(tp_wma_handle wma, int val)
 }
 
 /**
- * wma_suspend_req() -  Handles suspend indication request received from umac.
- * @wma: wma handle
- * @type: type of suspend
- *
- * The type controlls how we notify the indicator that the indication has
- * been processed
- *
- * Return: QDF status
- */
-QDF_STATUS wma_suspend_req(tp_wma_handle wma, enum qdf_suspend_type type)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * wma_resume_req() - clear configured wow patterns in fw
- * @wma: wma handle
- * @type: type of suspend
- *
- * Return: QDF status
- */
-QDF_STATUS wma_resume_req(tp_wma_handle wma, enum qdf_suspend_type type)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
  * wma_wow_add_pattern() - add wow pattern in target
  * @wma: wma handle
  * @ptrn: wow pattern
@@ -3951,105 +3924,6 @@ void wma_send_regdomain_info_to_fw(uint32_t reg_dmn, uint16_t regdmn2G,
 			 ret);
 
 	return;
-}
-
-/**
- * wma_post_runtime_resume_msg() - post the resume request
- * @handle: validated wma handle
- *
- * request the MC thread unpaus the vdev and set resume dtim
- *
- * Return: qdf status of the mq post
- */
-static QDF_STATUS wma_post_runtime_resume_msg(WMA_HANDLE handle)
-{
-	struct scheduler_msg resume_msg = {0};
-	QDF_STATUS status;
-	tp_wma_handle wma = (tp_wma_handle) handle;
-
-	qdf_runtime_pm_prevent_suspend(wma->wma_runtime_resume_lock);
-
-	resume_msg.bodyptr = NULL;
-	resume_msg.type    = WMA_RUNTIME_PM_RESUME_IND;
-
-	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &resume_msg);
-
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		WMA_LOGE("Failed to post Runtime PM Resume IND to VOS");
-		qdf_runtime_pm_allow_suspend(wma->wma_runtime_resume_lock);
-	}
-
-	return status;
-}
-
-/**
- * __wma_bus_suspend(): handles bus suspend for wma
- * @type: is this suspend part of runtime suspend or system suspend?
- * @wow_params: collection of wow enable override parameters
- *
- * Bails if a scan is in progress.
- * Calls the appropriate handlers based on configuration and event.
- *
- * Return: 0 for success or error code
- */
-static int __wma_bus_suspend(enum qdf_suspend_type type,
-			     struct wow_enable_params wow_params)
-{
-	return 0;
-}
-
-/**
- * wma_runtime_suspend() - handles runtime suspend request from hdd
- * @wow_params: collection of wow enable override parameters
- *
- * Calls the appropriate handler based on configuration and event.
- * Last busy marking should prevent race conditions between processing
- * of asyncronous fw events and the running of runtime suspend.
- * (eg. last busy marking should guarantee that any auth requests have
- * been processed)
- * Events comming from the host are not protected, but aren't expected
- * to be an issue.
- *
- * Return: 0 for success or error code
- */
-int wma_runtime_suspend(struct wow_enable_params wow_params)
-{
-	return __wma_bus_suspend(QDF_RUNTIME_SUSPEND, wow_params);
-}
-
-/**
- * __wma_bus_resume() - bus resume for wma
- *
- * does the part of the bus resume common to bus and system suspend
- *
- * Return: os error code.
- */
-static int __wma_bus_resume(WMA_HANDLE handle)
-{
-	return 0;
-}
-
-/**
- * wma_runtime_resume() - do the runtime resume operation for wma
- *
- * Return: os error code.
- */
-int wma_runtime_resume(void)
-{
-	int ret;
-	QDF_STATUS status;
-	WMA_HANDLE handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (NULL == handle) {
-		WMA_LOGE("%s: wma context is NULL", __func__);
-		return -EFAULT;
-	}
-
-	ret = __wma_bus_resume(handle);
-	if (ret)
-		return ret;
-
-	status = wma_post_runtime_resume_msg(handle);
-	return qdf_status_to_os_return(status);
 }
 
 /**

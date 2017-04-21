@@ -103,11 +103,12 @@ int wlan_hdd_bus_resume_noirq(void);
 
 /**
  * hdd_hif_close() - HIF close helper
+ * @hdd_ctx: HDD context
  * @hif_ctx: HIF context
  *
  * Helper function to close HIF
  */
-void hdd_hif_close(void *hif_ctx);
+void hdd_hif_close(hdd_context_t *hdd_ctx, void *hif_ctx);
 
 /**
  * hdd_hif_open() - HIF open helper

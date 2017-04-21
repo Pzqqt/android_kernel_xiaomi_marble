@@ -934,8 +934,6 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 				     uint32_t len);
 int wma_pdev_resume_event_handler(void *handle, uint8_t *event, uint32_t len);
 
-QDF_STATUS wma_resume_req(tp_wma_handle wma, enum qdf_suspend_type type);
-
 QDF_STATUS wma_wow_add_pattern(tp_wma_handle wma,
 			struct wow_add_pattern *ptrn);
 
@@ -945,8 +943,6 @@ QDF_STATUS wma_wow_delete_user_pattern(tp_wma_handle wma,
 QDF_STATUS wma_wow_enter(tp_wma_handle wma, tpSirHalWowlEnterParams info);
 
 QDF_STATUS wma_wow_exit(tp_wma_handle wma, tpSirHalWowlExitParams info);
-
-QDF_STATUS wma_suspend_req(tp_wma_handle wma, enum qdf_suspend_type type);
 
 void wma_calculate_and_update_conn_state(tp_wma_handle wma);
 void wma_update_conn_state(tp_wma_handle wma, uint32_t conn_mask);

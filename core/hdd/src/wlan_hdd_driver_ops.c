@@ -251,6 +251,8 @@ int hdd_hif_open(struct device *dev, void *bdev, const hif_bus_id *bid,
 		}
 	}
 
+	pmo_ucfg_psoc_set_hif_handle(hdd_ctx->hdd_psoc, hif_ctx);
+
 	return 0;
 
 err_hif_close:
@@ -259,8 +261,13 @@ err_hif_close:
 	return ret;
 }
 
-void hdd_hif_close(void *hif_ctx)
+void hdd_hif_close(hdd_context_t *hdd_ctx, void *hif_ctx)
 {
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx error");
+		return;
+	}
+
 	if (hif_ctx == NULL)
 		return;
 
@@ -270,6 +277,8 @@ void hdd_hif_close(void *hif_ctx)
 
 	hdd_deinit_cds_hif_context();
 	hif_close(hif_ctx);
+
+	pmo_ucfg_psoc_set_hif_handle(hdd_ctx->hdd_psoc, NULL);
 }
 
 /**
@@ -934,6 +943,23 @@ static int wlan_hdd_bus_reset_resume(void)
 
 #ifdef FEATURE_RUNTIME_PM
 /**
+ * hdd_pld_runtime_suspend_cb() - Runtime suspend callback from PMO
+ *
+ * Return: 0 on success or error value otherwise
+ */
+static int hdd_pld_runtime_suspend_cb(void)
+{
+	qdf_device_t qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+
+	if (!qdf_dev) {
+		hdd_err("Invalid context");
+		return -EINVAL;
+	}
+
+	return pld_auto_suspend(qdf_dev->dev);
+}
+
+/**
  * __wlan_hdd_runtime_suspend() - suspend the wlan bus without apps suspend
  *
  * Each layer is responsible for its own suspend actions.  wma_runtime_suspend
@@ -944,59 +970,36 @@ static int wlan_hdd_bus_reset_resume(void)
  */
 static int __wlan_hdd_runtime_suspend(struct device *dev)
 {
-	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
-	void *txrx_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	void *htc_ctx = cds_get_context(QDF_MODULE_ID_HTC);
-	int status = wlan_hdd_validate_context(hdd_ctx);
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	struct wow_enable_params wow_params = {0};
+	int err;
+	QDF_STATUS status;
+	hdd_context_t *hdd_ctx;
 
-	if (0 != status)
-		goto process_failure;
+	hdd_debug("Starting runtime suspend");
 
-	status = hif_pre_runtime_suspend(hif_ctx);
-	if (status)
-		goto process_failure;
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	err = wlan_hdd_validate_context(hdd_ctx);
+	if (err)
+		return err;
 
-	status = qdf_status_to_os_return(cdp_runtime_suspend(soc,
-				(struct cdp_pdev *)txrx_pdev));
-	if (status)
-		goto process_failure;
+	if (hdd_ctx->driver_status != DRIVER_MODULES_ENABLED) {
+		hdd_debug("Driver module closed skipping runtime suspend");
+		return 0;
+	}
 
-	status = htc_runtime_suspend(htc_ctx);
-	if (status)
-		goto resume_txrx;
+	if (ucfg_scan_get_pdev_status(hdd_ctx->hdd_pdev) !=
+	    SCAN_NOT_IN_PROGRESS) {
+		hdd_debug("Scan in progress, ignore runtime suspend");
+		return -EBUSY;
+	}
 
-	status = wma_runtime_suspend(wow_params);
-	if (status)
-		goto resume_htc;
+	status = pmo_ucfg_psoc_bus_runtime_suspend(hdd_ctx->hdd_psoc,
+						   hdd_pld_runtime_suspend_cb);
+	err = qdf_status_to_os_return(status);
 
-	status = hif_runtime_suspend(hif_ctx);
-	if (status)
-		goto resume_wma;
+	hdd_debug("Runtime suspend done result: %d", err);
 
-	status = pld_auto_suspend(dev);
-	if (status)
-		goto resume_hif;
-
-	hif_process_runtime_suspend_success(hif_ctx);
-	return status;
-
-resume_hif:
-	QDF_BUG(!hif_runtime_resume(hif_ctx));
-resume_wma:
-	QDF_BUG(!wma_runtime_resume());
-resume_htc:
-	QDF_BUG(!htc_runtime_resume(htc_ctx));
-resume_txrx:
-	QDF_BUG(!qdf_status_to_os_return(cdp_runtime_resume(soc,
-				(struct cdp_pdev *)txrx_pdev)));
-process_failure:
-	hif_process_runtime_suspend_failure(hif_ctx);
-	return status;
+	return err;
 }
-
 
 /**
  * wlan_hdd_runtime_suspend() - suspend the wlan bus without apps suspend
@@ -1018,6 +1021,23 @@ static int wlan_hdd_runtime_suspend(struct device *dev)
 }
 
 /**
+ * hdd_pld_runtime_resume_cb() - Runtime resume callback from PMO
+ *
+ * Return: 0 on success or error value otherwise
+ */
+static int hdd_pld_runtime_resume_cb(void)
+{
+	qdf_device_t qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+
+	if (!qdf_dev) {
+		hdd_err("Invalid context");
+		return -EINVAL;
+	}
+
+	return pld_auto_resume(qdf_dev->dev);
+}
+
+/**
  * __wlan_hdd_runtime_resume() - resume the wlan bus from runtime suspend
  *
  * Sets the runtime pm state and coordinates resume between hif wma and
@@ -1027,19 +1047,26 @@ static int wlan_hdd_runtime_suspend(struct device *dev)
  */
 static int __wlan_hdd_runtime_resume(struct device *dev)
 {
-	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
-	void *htc_ctx = cds_get_context(QDF_MODULE_ID_HTC);
-	void *txrx_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	QDF_STATUS status;
 
-	hif_pre_runtime_resume(hif_ctx);
-	QDF_BUG(!pld_auto_resume(dev));
-	QDF_BUG(!hif_runtime_resume(hif_ctx));
-	QDF_BUG(!wma_runtime_resume());
-	QDF_BUG(!htc_runtime_resume(htc_ctx));
-	QDF_BUG(!qdf_status_to_os_return(cdp_runtime_resume(soc,
-				(struct cdp_pdev *)txrx_pdev)));
-	hif_process_runtime_resume_success(hif_ctx);
+	hdd_debug("Starting runtime resume");
+
+	if (wlan_hdd_validate_context(hdd_ctx))
+		return 0;
+
+	if (hdd_ctx->driver_status != DRIVER_MODULES_ENABLED) {
+		hdd_debug("Driver module closed skipping runtime resume");
+		return 0;
+	}
+
+	status = pmo_ucfg_psoc_bus_runtime_resume(hdd_ctx->hdd_psoc,
+						  hdd_pld_runtime_resume_cb);
+	if (status != QDF_STATUS_SUCCESS)
+		hdd_err("PMO Runtime resume failed: %d", status);
+
+	hdd_debug("Runtime resume done");
+
 	return 0;
 }
 

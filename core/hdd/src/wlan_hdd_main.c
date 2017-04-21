@@ -2100,7 +2100,7 @@ ol_cds_free:
 	ol_cds_free();
 
 hif_close:
-	hdd_hif_close(p_cds_context->pHIFContext);
+	hdd_hif_close(hdd_ctx, p_cds_context->pHIFContext);
 power_down:
 	if (!reinit && !unint)
 		pld_power_off(qdf_dev->dev);
@@ -8962,7 +8962,7 @@ int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx, bool ftm_mode)
 		ret = -EINVAL;
 	}
 
-	hdd_hif_close(hif_ctx);
+	hdd_hif_close(hdd_ctx, hif_ctx);
 
 	ol_cds_free();
 

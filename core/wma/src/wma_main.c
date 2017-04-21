@@ -2161,9 +2161,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *cds_context,
 	wma_handle->qdf_dev = qdf_dev;
 	wma_handle->max_scan = cds_cfg->max_scan;
 
-	wma_handle->wma_runtime_resume_lock =
-		qdf_runtime_lock_init("wma_runtime_resume");
-
 	/* Initialize max_no_of_peers for wma_get_number_of_peers_supported() */
 	wma_init_max_no_of_peers(wma_handle, cds_cfg->max_station);
 	/* Cap maxStation based on the target version */
@@ -2553,7 +2550,6 @@ err_wma_handle:
 		qdf_wake_lock_destroy(&wma_handle->wow_wake_lock);
 	}
 
-	qdf_runtime_lock_deinit(wma_handle->wma_runtime_resume_lock);
 	cds_free_context(cds_context, QDF_MODULE_ID_WMA, wma_handle);
 
 	WMA_LOGD("%s: Exit", __func__);
@@ -6537,15 +6533,6 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, struct scheduler_msg *msg)
 		break;
 	case WMA_WOWL_EXIT_REQ:
 		wma_wow_exit(wma_handle, (tpSirHalWowlExitParams) msg->bodyptr);
-		break;
-
-	case WMA_RUNTIME_PM_SUSPEND_IND:
-		wma_calculate_and_update_conn_state(wma_handle);
-		wma_suspend_req(wma_handle, QDF_RUNTIME_SUSPEND);
-		break;
-
-	case WMA_RUNTIME_PM_RESUME_IND:
-		wma_resume_req(wma_handle, QDF_RUNTIME_SUSPEND);
 		break;
 
 	case WMA_8023_MULTICAST_LIST_REQ:
