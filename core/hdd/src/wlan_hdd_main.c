@@ -10310,6 +10310,7 @@ static ssize_t wlan_hdd_state_ctrl_param_write(struct file *filp,
 	}
 
 	if (!cds_is_driver_loaded()) {
+		init_completion(&wlan_start_comp);
 		rc = wait_for_completion_timeout(&wlan_start_comp,
 				msecs_to_jiffies(HDD_WLAN_START_WAIT_TIME));
 		if (!rc) {
@@ -10402,7 +10403,6 @@ static void wlan_hdd_state_ctrl_param_destroy(void)
 static int __hdd_module_init(void)
 {
 	int ret = 0;
-	unsigned long rc;
 
 	pr_err("%s: Loading driver v%s\n", WLAN_MODULE_NAME,
 		QWLAN_VERSIONSTR TIMER_MANAGER_STR MEMORY_DEBUG_STR);
@@ -10427,24 +10427,10 @@ static int __hdd_module_init(void)
 
 	hdd_set_conparam((uint32_t) con_mode);
 
-	init_completion(&wlan_start_comp);
 	ret = wlan_hdd_register_driver();
 	if (ret) {
 		pr_err("%s: driver load failure, err %d\n", WLAN_MODULE_NAME,
 			ret);
-		goto out;
-	}
-
-	/*
-	 * This wait is temporarily introduced till
-	 * boardconfig changes for dev node are merged
-	 */
-	rc = wait_for_completion_timeout(&wlan_start_comp,
-			msecs_to_jiffies(HDD_WLAN_START_WAIT_TIME));
-	if (!rc) {
-		hdd_err("Timed-out waiting for wlan_hdd_register_driver");
-		ret = -ETIMEDOUT;
-		wlan_hdd_unregister_driver();
 		goto out;
 	}
 
