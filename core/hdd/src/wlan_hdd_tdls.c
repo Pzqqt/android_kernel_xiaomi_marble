@@ -6116,7 +6116,7 @@ static void wlan_hdd_tdls_ct_process_peers(hddTdlsPeer_t *curr_peer,
 					   hdd_context_t *hdd_ctx,
 					   tdlsCtx_t *hdd_tdls_ctx)
 {
-	hdd_info(MAC_ADDRESS_STR " link_status %d tdls_support %d",
+	hdd_debug(MAC_ADDRESS_STR " link_status %d tdls_support %d",
 		 MAC_ADDR_ARRAY(curr_peer->peerMac),
 		 curr_peer->link_status, curr_peer->tdls_support);
 
