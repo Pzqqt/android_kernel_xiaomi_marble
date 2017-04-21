@@ -151,6 +151,7 @@ struct pmo_suspend_params;
  * @update_target_suspend_flag: fp to update target suspend flag at wmi
  * @psoc_send_wow_enable_req: fp to send wow enable request
  * @psoc_send_supend_req: fp to send target suspend request
+ * @psoc_set_runtime_pm_in_progress: fp to set runtime pm is in progress status
  * @psoc_get_runtime_pm_in_progress: fp to get runtime pm is in progress status
  * @psoc_send_host_wakeup_ind: fp tp send host wake indication to fwr
  * @psoc_send_target_resume_req: fp to send target resume request
@@ -227,7 +228,9 @@ struct wlan_lmac_if_pmo_tx_ops {
 		struct pmo_wow_cmd_params *param);
 	QDF_STATUS(*psoc_send_supend_req)(struct wlan_objmgr_psoc *psoc,
 		struct pmo_suspend_params *param);
-	bool(*psoc_get_runtime_pm_in_progress)(struct wlan_objmgr_psoc *psoc);
+	void (*psoc_set_runtime_pm_in_progress)(struct wlan_objmgr_psoc *psoc,
+						bool value);
+	bool (*psoc_get_runtime_pm_in_progress)(struct wlan_objmgr_psoc *psoc);
 	QDF_STATUS(*psoc_send_host_wakeup_ind)(struct wlan_objmgr_psoc *psoc);
 	QDF_STATUS (*psoc_send_target_resume_req)(
 			struct wlan_objmgr_psoc *psoc);
