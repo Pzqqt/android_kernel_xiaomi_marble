@@ -265,3 +265,58 @@ out:
 	return status;
 }
 
+void pmo_core_psoc_set_hif_handle(struct wlan_objmgr_psoc *psoc,
+				  void *hif_hdl)
+{
+	struct pmo_psoc_priv_obj *psoc_ctx;
+
+	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
+	if (!psoc_ctx)
+		return;
+	qdf_spin_lock_bh(&psoc_ctx->lock);
+	psoc_ctx->hif_hdl = hif_hdl;
+	qdf_spin_unlock_bh(&psoc_ctx->lock);
+}
+
+void *pmo_core_psoc_get_hif_handle(struct wlan_objmgr_psoc *psoc)
+{
+	void *hif_hdl;
+	struct pmo_psoc_priv_obj *psoc_ctx;
+
+	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
+	if (!psoc_ctx)
+		return NULL;
+	qdf_spin_lock_bh(&psoc_ctx->lock);
+	hif_hdl = psoc_ctx->hif_hdl;
+	qdf_spin_unlock_bh(&psoc_ctx->lock);
+
+	return hif_hdl;
+}
+
+void pmo_core_psoc_set_txrx_handle(struct wlan_objmgr_psoc *psoc,
+				   void *txrx_hdl)
+{
+	struct pmo_psoc_priv_obj *psoc_ctx;
+
+	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
+	if (!psoc_ctx)
+		return;
+	qdf_spin_lock_bh(&psoc_ctx->lock);
+	psoc_ctx->txrx_hdl = txrx_hdl;
+	qdf_spin_unlock_bh(&psoc_ctx->lock);
+}
+
+void *pmo_core_psoc_get_txrx_handle(struct wlan_objmgr_psoc *psoc)
+{
+	void *txrx_hdl;
+	struct pmo_psoc_priv_obj *psoc_ctx;
+
+	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
+	if (!psoc_ctx)
+		return NULL;
+	qdf_spin_lock_bh(&psoc_ctx->lock);
+	txrx_hdl = psoc_ctx->txrx_hdl;
+	qdf_spin_unlock_bh(&psoc_ctx->lock);
+
+	return txrx_hdl;
+}

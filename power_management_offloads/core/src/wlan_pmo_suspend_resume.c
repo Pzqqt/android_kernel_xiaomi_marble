@@ -26,7 +26,9 @@
 #include "wlan_pmo_lphb.h"
 #include "wlan_pmo_suspend_resume.h"
 #include "cdp_txrx_ops.h"
+#include "cdp_txrx_misc.h"
 #include "cdp_txrx_flow_ctrl_legacy.h"
+#include "hif.h"
 #include "htc_api.h"
 #include "wlan_pmo_obj_mgmt_api.h"
 #include <wlan_scan_ucfg_api.h>
@@ -251,10 +253,54 @@ void pmo_core_configure_dynamic_wake_events(struct wlan_objmgr_psoc *psoc)
 	}
 }
 
+/**
+ * pmo_core_psoc_configure_suspend(): configure suspend req events
+ * @psoc: objmgr psoc
+ *
+ * Responsibility of the caller to take the psoc reference.
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS pmo_core_psoc_configure_suspend(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *psoc_ctx;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	PMO_ENTER();
+
+	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
+	if (!psoc_ctx) {
+		pmo_err("pmo psoc ctx is null");
+		status = QDF_STATUS_E_NULL_VALUE;
+		goto out;
+	}
+
+	if (pmo_core_is_wow_applicable(psoc)) {
+		pmo_info("WOW Suspend");
+		pmo_core_apply_lphb(psoc);
+		pmo_core_configure_dynamic_wake_events(psoc);
+		pmo_core_update_wow_enable(psoc_ctx, true);
+		pmo_core_update_wow_enable_cmd_sent(psoc_ctx, false);
+	}
+
+	pmo_core_set_suspend_dtim(psoc);
+
+	/*
+	 * To handle race between hif_pci_suspend and unpause/pause tx handler.
+	 * This happens when host sending WMI_WOW_ENABLE_CMDID to FW and receive
+	 * WMI_TX_PAUSE_EVENT with ACTON_UNPAUSE almost at same time.
+	 */
+	pmo_core_update_wow_bus_suspend(psoc, psoc_ctx, true);
+
+out:
+	PMO_EXIT();
+
+	return status;
+}
+
 QDF_STATUS pmo_core_psoc_user_space_suspend_req(struct wlan_objmgr_psoc *psoc,
 		enum qdf_suspend_type type)
 {
-	struct pmo_psoc_priv_obj *psoc_ctx;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	PMO_ENTER();
@@ -265,13 +311,6 @@ QDF_STATUS pmo_core_psoc_user_space_suspend_req(struct wlan_objmgr_psoc *psoc,
 		goto out;
 	}
 
-	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
-	if (!psoc_ctx) {
-		pmo_err("pmo psoc ctx is null");
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto dec_psoc_ref;
-	}
-
 	/* Suspend all components before sending target suspend command */
 	status = pmo_suspend_all_components(psoc, type);
 	if (status != QDF_STATUS_SUCCESS) {
@@ -279,23 +318,10 @@ QDF_STATUS pmo_core_psoc_user_space_suspend_req(struct wlan_objmgr_psoc *psoc,
 		goto dec_psoc_ref;
 	}
 
-	if (pmo_core_is_wow_applicable(psoc)) {
-		pmo_info("WOW Suspend");
-		pmo_core_apply_lphb(psoc);
+	status = pmo_core_psoc_configure_suspend(psoc);
+	if (status != QDF_STATUS_SUCCESS)
+		pmo_err("Failed to configure suspend");
 
-		pmo_core_configure_dynamic_wake_events(psoc);
-		pmo_core_update_wow_enable(psoc_ctx, true);
-		pmo_core_update_wow_enable_cmd_sent(psoc_ctx, false);
-	}
-
-	/* Set the Suspend DTIM Parameters */
-	pmo_core_set_suspend_dtim(psoc);
-
-	/*
-	 * To handle race between hif_pci_suspend and
-	 * unpause/pause tx handler
-	 */
-	pmo_core_update_wow_bus_suspend(psoc, psoc_ctx, true);
 dec_psoc_ref:
 	wlan_objmgr_psoc_release_ref(psoc, WLAN_PMO_ID);
 out:
@@ -456,10 +482,41 @@ static void pmo_unpause_all_vdev(struct wlan_objmgr_psoc *psoc,
 	}
 }
 
+/**
+ * pmo_core_psoc_configure_resume(): configure events after bus resume
+ * @psoc: objmgr psoc
+ *
+ * Responsibility of the caller to take the psoc reference.
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS pmo_core_psoc_configure_resume(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *psoc_ctx;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	PMO_ENTER();
+
+	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
+	if (!psoc_ctx) {
+		pmo_err("pmo psoc ctx is null");
+		status = QDF_STATUS_E_NULL_VALUE;
+		goto out;
+	}
+
+	pmo_core_set_resume_dtim(psoc);
+	pmo_core_update_wow_bus_suspend(psoc, psoc_ctx, false);
+	pmo_unpause_all_vdev(psoc, psoc_ctx);
+
+out:
+	PMO_EXIT();
+
+	return status;
+}
+
 QDF_STATUS pmo_core_psoc_user_space_resume_req(struct wlan_objmgr_psoc *psoc,
 		enum qdf_suspend_type type)
 {
-	struct pmo_psoc_priv_obj *psoc_ctx;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	PMO_ENTER();
@@ -470,13 +527,6 @@ QDF_STATUS pmo_core_psoc_user_space_resume_req(struct wlan_objmgr_psoc *psoc,
 		goto out;
 	}
 
-	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
-	if (!psoc_ctx) {
-		pmo_err("pmo psoc ctx is null");
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto dec_psoc_ref;
-	}
-
 	/* Resume all components */
 	status = pmo_resume_all_components(psoc, type);
 	if (status != QDF_STATUS_SUCCESS) {
@@ -484,12 +534,9 @@ QDF_STATUS pmo_core_psoc_user_space_resume_req(struct wlan_objmgr_psoc *psoc,
 		goto dec_psoc_ref;
 	}
 
-	/* Reset the DTIM Parameters */
-	pmo_core_set_resume_dtim(psoc);
-	/* need to reset if hif_pci_suspend_fails */
-	pmo_core_update_wow_bus_suspend(psoc, psoc_ctx, false);
-	/* unpause the vdev if left paused and hif_pci_suspend fails */
-	pmo_unpause_all_vdev(psoc, psoc_ctx);
+	status = pmo_core_psoc_configure_resume(psoc);
+	if (status != QDF_STATUS_SUCCESS)
+		pmo_err("Failed to configure resume");
 
 dec_psoc_ref:
 	wlan_objmgr_psoc_release_ref(psoc, WLAN_PMO_ID);
@@ -695,10 +742,8 @@ QDF_STATUS pmo_core_psoc_bus_suspend_req(struct wlan_objmgr_psoc *psoc,
 	}
 */
 
-	if (type == QDF_SYSTEM_SUSPEND) {
-		wow_mode_selected = pmo_core_is_wow_enabled(psoc_ctx);
-		pmo_info("wow mode selected %d", wow_mode_selected);
-	}
+	wow_mode_selected = pmo_core_is_wow_enabled(psoc_ctx);
+	pmo_info("wow mode selected %d", wow_mode_selected);
 
 	if (wow_mode_selected)
 		status = pmo_core_enable_wow_in_fw(psoc, psoc_ctx, wow_params);
@@ -711,6 +756,191 @@ out:
 
 	return status;
 }
+
+#ifdef FEATURE_RUNTIME_PM
+QDF_STATUS pmo_core_psoc_bus_runtime_suspend(struct wlan_objmgr_psoc *psoc,
+					     pmo_pld_auto_suspend_cb pld_cb)
+{
+	struct pmo_psoc_priv_obj *psoc_ctx;
+	void *hif_ctx;
+	void *dp_soc;
+	void *txrx_pdev;
+	void *htc_ctx;
+	QDF_STATUS status;
+	struct pmo_wow_enable_params wow_params = {0};
+
+	PMO_ENTER();
+
+	if (!psoc) {
+		pmo_err("psoc is NULL");
+		status = QDF_STATUS_E_INVAL;
+		goto out;
+	}
+
+	status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_PMO_ID);
+	if (status != QDF_STATUS_SUCCESS) {
+		pmo_err("pmo cannot get the reference out of psoc");
+		goto out;
+	}
+
+	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
+	if (!psoc_ctx) {
+		pmo_err("psoc_ctx is NULL");
+		status = QDF_STATUS_E_NULL_VALUE;
+		goto dec_psoc_ref;
+	}
+
+	hif_ctx = pmo_core_psoc_get_hif_handle(psoc);
+	dp_soc = pmo_core_psoc_get_dp_handle(psoc);
+	txrx_pdev = pmo_core_psoc_get_txrx_handle(psoc);
+	htc_ctx = pmo_core_psoc_get_htc_handle(psoc);
+	if (!hif_ctx || !dp_soc || !txrx_pdev || !htc_ctx) {
+		pmo_err("Invalid hif: %p, dp: %p, txrx: %p, htc: %p",
+			hif_ctx, dp_soc, txrx_pdev, htc_ctx);
+		status = QDF_STATUS_E_INVAL;
+		goto dec_psoc_ref;
+	}
+
+	if (hif_pre_runtime_suspend(hif_ctx))
+		goto runtime_failure;
+
+	status = cdp_runtime_suspend(dp_soc, txrx_pdev);
+	if (status != QDF_STATUS_SUCCESS)
+		goto runtime_failure;
+
+	if (htc_runtime_suspend(htc_ctx))
+		goto cdp_runtime_resume;
+
+	status = pmo_tgt_psoc_set_runtime_pm_inprogress(psoc, true);
+	if (status != QDF_STATUS_SUCCESS)
+		goto resume_htc;
+
+	status = pmo_core_psoc_configure_suspend(psoc);
+	if (status != QDF_STATUS_SUCCESS)
+		goto resume_htc;
+
+	status = pmo_core_psoc_bus_suspend_req(psoc, QDF_RUNTIME_SUSPEND,
+					       &wow_params);
+	if (status != QDF_STATUS_SUCCESS)
+		goto pmo_resume_configure;
+
+	if (hif_runtime_suspend(hif_ctx))
+		goto pmo_bus_resume;
+
+	if (pld_cb && pld_cb())
+		goto resume_hif;
+
+	hif_process_runtime_suspend_success(hif_ctx);
+
+	goto dec_psoc_ref;
+
+resume_hif:
+	QDF_BUG(!hif_runtime_resume(hif_ctx));
+
+pmo_bus_resume:
+	QDF_BUG(QDF_STATUS_SUCCESS ==
+		pmo_core_psoc_bus_resume_req(psoc, QDF_RUNTIME_SUSPEND));
+
+pmo_resume_configure:
+	QDF_BUG(QDF_STATUS_SUCCESS ==
+		pmo_core_psoc_configure_resume(psoc));
+
+resume_htc:
+	QDF_BUG(QDF_STATUS_SUCCESS ==
+		pmo_tgt_psoc_set_runtime_pm_inprogress(psoc, false));
+
+	QDF_BUG(!htc_runtime_resume(htc_ctx));
+
+cdp_runtime_resume:
+	QDF_BUG(QDF_STATUS_SUCCESS ==
+		cdp_runtime_resume(dp_soc, txrx_pdev));
+
+runtime_failure:
+	hif_process_runtime_suspend_failure(hif_ctx);
+
+dec_psoc_ref:
+	wlan_objmgr_psoc_release_ref(psoc, WLAN_PMO_ID);
+
+out:
+	PMO_EXIT();
+
+	return status;
+}
+
+QDF_STATUS pmo_core_psoc_bus_runtime_resume(struct wlan_objmgr_psoc *psoc,
+					    pmo_pld_auto_resume_cb pld_cb)
+{
+	struct pmo_psoc_priv_obj *psoc_ctx;
+	void *hif_ctx;
+	void *dp_soc;
+	void *txrx_pdev;
+	void *htc_ctx;
+	QDF_STATUS status;
+
+	PMO_ENTER();
+
+	if (!psoc) {
+		pmo_err("psoc is NULL");
+		status = QDF_STATUS_E_INVAL;
+		goto out;
+	}
+
+	status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_PMO_ID);
+	if (status != QDF_STATUS_SUCCESS) {
+		pmo_err("pmo cannot get the reference out of psoc");
+		goto out;
+	}
+
+	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
+	if (!psoc_ctx) {
+		pmo_err("pmo psoc ctx is null");
+		status = QDF_STATUS_E_NULL_VALUE;
+		goto dec_psoc_ref;
+	}
+
+	hif_ctx = pmo_core_psoc_get_hif_handle(psoc);
+	dp_soc = pmo_core_psoc_get_dp_handle(psoc);
+	txrx_pdev = pmo_core_psoc_get_txrx_handle(psoc);
+	htc_ctx = pmo_core_psoc_get_htc_handle(psoc);
+	if (!hif_ctx || !dp_soc || !txrx_pdev || !htc_ctx) {
+		pmo_err("Invalid hif: %p, dp: %p, txrx: %p, htc: %p",
+			hif_ctx, dp_soc, txrx_pdev, htc_ctx);
+		status = QDF_STATUS_E_INVAL;
+		goto dec_psoc_ref;
+	}
+
+	hif_pre_runtime_resume(hif_ctx);
+
+	if (pld_cb)
+		QDF_BUG(!pld_cb());
+
+	QDF_BUG(!hif_runtime_resume(hif_ctx));
+
+	status = pmo_core_psoc_bus_resume_req(psoc, QDF_RUNTIME_SUSPEND);
+	QDF_BUG(status == QDF_STATUS_SUCCESS);
+
+	status = pmo_core_psoc_configure_resume(psoc);
+	QDF_BUG(status == QDF_STATUS_SUCCESS);
+
+	status = pmo_tgt_psoc_set_runtime_pm_inprogress(psoc, false);
+	QDF_BUG(status == QDF_STATUS_SUCCESS);
+
+	QDF_BUG(!htc_runtime_resume(htc_ctx));
+
+	status = cdp_runtime_resume(dp_soc, txrx_pdev);
+	QDF_BUG(status == QDF_STATUS_SUCCESS);
+
+	hif_process_runtime_resume_success(hif_ctx);
+
+dec_psoc_ref:
+	wlan_objmgr_psoc_release_ref(psoc, WLAN_PMO_ID);
+
+out:
+	PMO_EXIT();
+
+	return status;
+}
+#endif
 
 /**
  * pmo_core_psoc_send_host_wakeup_ind_to_fw() - send wakeup ind to fw

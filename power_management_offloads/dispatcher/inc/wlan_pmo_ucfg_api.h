@@ -396,6 +396,26 @@ void pmo_ucfg_psoc_update_htc_handle(struct wlan_objmgr_psoc *psoc,
 		void *htc_handle);
 
 /**
+ * pmo_ucfg_psoc_set_hif_handle() - Set psoc hif layer handle
+ * @psoc: objmgr psoc handle
+ * @hif_handle: hif context handle
+ *
+ * Return: None
+ */
+void pmo_ucfg_psoc_set_hif_handle(struct wlan_objmgr_psoc *psoc,
+				  void *hif_handle);
+
+/**
+ * pmo_ucfg_psoc_set_txrx_handle() - Set psoc pdev txrx layer handle
+ * @psoc: objmgr psoc handle
+ * @txrx_handle: pdev txrx context handle
+ *
+ * Return: None
+ */
+void pmo_ucfg_psoc_set_txrx_handle(struct wlan_objmgr_psoc *psoc,
+				   void *txrx_handle);
+
+/**
  * pmo_ucfg_psoc_user_space_suspend_req() -  Handles user space suspend req
  * @psoc: objmgr psoc handle
  * @type: type of suspend
@@ -433,6 +453,28 @@ QDF_STATUS pmo_ucfg_psoc_user_space_resume_req(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS pmo_ucfg_psoc_bus_suspend_req(struct wlan_objmgr_psoc *psoc,
 		enum qdf_suspend_type type,
 		struct pmo_wow_enable_params *wow_params);
+
+#ifdef FEATURE_RUNTIME_PM
+/**
+ * pmo_ucfg_psoc_bus_runtime_suspend(): handles bus runtime suspend for psoc
+ * @psoc: objmgr psoc
+ * @pld_cb: callback to call link auto suspend
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS pmo_ucfg_psoc_bus_runtime_suspend(struct wlan_objmgr_psoc *psoc,
+					     pmo_pld_auto_suspend_cb pld_cb);
+
+/**
+ * pmo_ucfg_psoc_bus_runtime_resume(): handles bus runtime resume for psoc
+ * @psoc: objmgr psoc
+ * @pld_cb: callback to call link auto resume
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS pmo_ucfg_psoc_bus_runtime_resume(struct wlan_objmgr_psoc *psoc,
+					    pmo_pld_auto_resume_cb pld_cb);
+#endif
 
 /**
  * pmo_ucfg_psoc_suspend_target() -Send suspend target command

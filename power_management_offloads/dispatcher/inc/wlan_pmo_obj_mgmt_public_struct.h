@@ -50,6 +50,8 @@ typedef  uint16_t(*pmo_get_pause_bitmap)(uint8_t vdev_id);
  * @wow: wow configuration
  * @dp_hdl: psoc data path handle
  * @htc_hdl: htc layer handle
+ * @hif_hdl: hif layer handle
+ * @txrx_hdl: txrx pdev handle
  * @pause_bitmap_notifier: registered callback to update pause bitmap value
  * @pmo_get_pause_bitmap: registered callback to get pause bitmap value
  * @lock: spin lock for pmo psoc
@@ -59,6 +61,8 @@ struct pmo_psoc_priv_obj {
 	struct pmo_wow wow;
 	void *dp_hdl;
 	void *htc_hdl;
+	void *hif_hdl;
+	void *txrx_hdl;
 	pmo_notify_pause_bitmap pause_bitmap_notifier;
 	pmo_get_pause_bitmap get_pause_bitmap;
 	qdf_spinlock_t lock;
@@ -132,4 +136,15 @@ struct pmo_vdev_priv_obj {
 	qdf_spinlock_t pmo_vdev_lock;
 };
 
+/*
+ * typedef for pld auto suspend callback during runtime suspend
+ */
+typedef
+int (*pmo_pld_auto_suspend_cb)(void);
+
+/*
+ * typedef for pld auto resume callback during runtime resume
+ */
+typedef
+int (*pmo_pld_auto_resume_cb)(void);
 #endif /* end  of _WLAN_PMO_OBJ_MGMT_PUBLIC_STRUCT_H_ */

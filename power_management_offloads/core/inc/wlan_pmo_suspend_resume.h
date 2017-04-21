@@ -97,6 +97,32 @@ QDF_STATUS pmo_core_psoc_bus_suspend_req(struct wlan_objmgr_psoc *psoc,
 		enum qdf_suspend_type type,
 		struct pmo_wow_enable_params *wow_params);
 
+#ifdef FEATURE_RUNTIME_PM
+/**
+ * pmo_core_psoc_bus_runtime_suspend(): handles bus runtime suspend
+ * @psoc: objmgr psoc
+ * @pld_cb: callback to do link auto suspend
+ *
+ * Suspend the wlan bus without apps suspend.
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS pmo_core_psoc_bus_runtime_suspend(struct wlan_objmgr_psoc *psoc,
+					     pmo_pld_auto_suspend_cb pld_cb);
+
+/**
+ * pmo_core_psoc_bus_runtime_resume(): handles bus runtime resume
+ * @psoc: objmgr psoc
+ * @pld_cb: callback to do link auto resume
+ *
+ * Resume the wlan bus from runtime suspend.
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS pmo_core_psoc_bus_runtime_resume(struct wlan_objmgr_psoc *psoc,
+					     pmo_pld_auto_resume_cb pld_cb);
+#endif
+
 /**
  * pmo_core_psoc_suspend_target() -Send suspend target command
  * @psoc: objmgr psoc handle

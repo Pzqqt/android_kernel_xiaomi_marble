@@ -364,6 +364,42 @@ void *pmo_core_psoc_get_htc_handle(struct wlan_objmgr_psoc *psoc)
 }
 
 /**
+ * pmo_core_psoc_set_hif_handle() - update psoc hif layer handle
+ * @psoc: objmgr psoc handle
+ * @hif_hdl: hif context handle
+ *
+ * Return: None
+ */
+void pmo_core_psoc_set_hif_handle(struct wlan_objmgr_psoc *psoc,
+				  void *hif_hdl);
+
+/**
+ * pmo_core_psoc_get_hif_handle() - Get psoc hif layer handle
+ * @psoc: objmgr psoc handle
+ *
+ * Return: psoc hif layer handle
+ */
+void *pmo_core_psoc_get_hif_handle(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * pmo_core_psoc_set_txrx_handle() - update psoc pdev txrx layer handle
+ * @psoc: objmgr psoc handle
+ * @txrx_hdl: pdev txrx context handle
+ *
+ * Return: None
+ */
+void pmo_core_psoc_set_txrx_handle(struct wlan_objmgr_psoc *psoc,
+				   void *txrx_hdl);
+
+/**
+ * pmo_core_psoc_get_txrx_handle() - Get psoc pdev txrx handle
+ * @psoc: objmgr psoc handle
+ *
+ * Return: pdev txrx handle
+ */
+void *pmo_core_psoc_get_txrx_handle(struct wlan_objmgr_psoc *psoc);
+
+/**
  * pmo_is_vdev_up() - API to check whether vdev is UP
  * @vdev: objmgr vdev handle
  *

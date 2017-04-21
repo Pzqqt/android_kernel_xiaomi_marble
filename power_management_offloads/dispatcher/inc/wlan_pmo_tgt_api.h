@@ -346,6 +346,16 @@ QDF_STATUS pmo_tgt_psoc_send_supend_req(struct wlan_objmgr_psoc *psoc,
 		struct pmo_suspend_params *param);
 
 /**
+ * pmo_tgt_psoc_set_runtime_pm_inprogress() -set runtime status
+ * @psoc: objmgr psoc
+ * @value: set runtime pm in progress true or false
+ *
+ * Return: none
+ */
+QDF_STATUS pmo_tgt_psoc_set_runtime_pm_inprogress(struct wlan_objmgr_psoc *psoc,
+						  bool value);
+
+/**
  * pmo_tgt_psoc_get_runtime_pm_in_progress() -get runtime status
  * @psoc: objmgr psoc
  *

@@ -237,6 +237,18 @@ void pmo_ucfg_psoc_update_htc_handle(struct wlan_objmgr_psoc *psoc,
 	pmo_core_psoc_update_htc_handle(psoc, htc_handle);
 }
 
+void pmo_ucfg_psoc_set_hif_handle(struct wlan_objmgr_psoc *psoc,
+		void *hif_handle)
+{
+	pmo_core_psoc_set_hif_handle(psoc, hif_handle);
+}
+
+void pmo_ucfg_psoc_set_txrx_handle(struct wlan_objmgr_psoc *psoc,
+		void *txrx_handle)
+{
+	pmo_core_psoc_set_txrx_handle(psoc, txrx_handle);
+}
+
 void pmo_ucfg_psoc_handle_initial_wake_up(void *cb_ctx)
 {
 	return pmo_core_psoc_handle_initial_wake_up(cb_ctx);
@@ -261,6 +273,20 @@ QDF_STATUS pmo_ucfg_psoc_bus_suspend_req(struct wlan_objmgr_psoc *psoc,
 {
 	return pmo_core_psoc_bus_suspend_req(psoc, type, wow_params);
 }
+
+#ifdef FEATURE_RUNTIME_PM
+QDF_STATUS pmo_ucfg_psoc_bus_runtime_suspend(struct wlan_objmgr_psoc *psoc,
+					     pmo_pld_auto_suspend_cb pld_cb)
+{
+	return pmo_core_psoc_bus_runtime_suspend(psoc, pld_cb);
+}
+
+QDF_STATUS pmo_ucfg_psoc_bus_runtime_resume(struct wlan_objmgr_psoc *psoc,
+					    pmo_pld_auto_suspend_cb pld_cb)
+{
+	return pmo_core_psoc_bus_runtime_resume(psoc, pld_cb);
+}
+#endif
 
 QDF_STATUS pmo_ucfg_psoc_suspend_target(struct wlan_objmgr_psoc *psoc,
 		int disable_target_intr)

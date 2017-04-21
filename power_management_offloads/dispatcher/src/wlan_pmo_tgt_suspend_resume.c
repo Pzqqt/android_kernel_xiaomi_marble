@@ -167,6 +167,22 @@ QDF_STATUS pmo_tgt_psoc_send_supend_req(struct wlan_objmgr_psoc *psoc,
 	return pmo_tx_ops.psoc_send_supend_req(psoc, param);
 }
 
+QDF_STATUS pmo_tgt_psoc_set_runtime_pm_inprogress(struct wlan_objmgr_psoc *psoc,
+						  bool value)
+{
+	struct wlan_lmac_if_pmo_tx_ops pmo_tx_ops;
+
+	pmo_tx_ops = GET_PMO_TX_OPS_FROM_PSOC(psoc);
+	if (!pmo_tx_ops.psoc_set_runtime_pm_in_progress) {
+		pmo_err("pmo ops is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	pmo_tx_ops.psoc_set_runtime_pm_in_progress(psoc, value);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 bool pmo_tgt_psoc_get_runtime_pm_in_progress(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_lmac_if_pmo_tx_ops pmo_tx_ops;
