@@ -622,7 +622,7 @@ static void scm_list_insert_sorted(struct scan_filter *filter,
 		}
 		qdf_list_peek_next(scan_list,
 			cur_lst, &next_lst);
-		next_lst = next_lst;
+		cur_lst = next_lst;
 		next_lst = NULL;
 	}
 
@@ -694,13 +694,16 @@ static void scm_get_results(struct scan_dbs *scan_db,
 	struct scan_filter *filter,
 	qdf_list_t *scan_list)
 {
-	int i;
+	int i, count;
 	struct scan_cache_node *cur_node;
 	struct scan_cache_node *next_node = NULL;
 
 	for (i = 0 ; i < SCAN_HASH_SIZE; i++) {
 		cur_node = scm_get_next_node(scan_db,
 			   &scan_db->scan_hash_tbl[i], NULL);
+		count = qdf_list_size(&scan_db->scan_hash_tbl[i]);
+		if (!count)
+			continue;
 		while (cur_node) {
 			scm_scan_apply_filter_get_entry(
 				cur_node->entry, filter, scan_list);
