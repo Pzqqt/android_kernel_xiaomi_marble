@@ -1652,7 +1652,48 @@ static QDF_STATUS send_beacon_send_cmd_tlv(wmi_unified_t wmi_handle,
 static QDF_STATUS send_beacon_send_cmd_tlv(wmi_unified_t wmi_handle,
 				struct beacon_params *param)
 {
-	return 0;
+	QDF_STATUS ret;
+	wmi_bcn_send_from_host_cmd_fixed_param *cmd;
+	wmi_buf_t wmi_buf;
+	qdf_dma_addr_t dma_addr;
+	uint32_t dtim_flag = 0;
+
+	wmi_buf = wmi_buf_alloc(wmi_handle, sizeof(*cmd));
+	if (!wmi_buf) {
+		WMI_LOGE("%s : wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+	if (param->is_dtim_count_zero) {
+		dtim_flag |= WMI_BCN_SEND_DTIM_ZERO;
+		if (param->is_bitctl_reqd) {
+			/* deliver CAB traffic in next DTIM beacon */
+			dtim_flag |= WMI_BCN_SEND_DTIM_BITCTL_SET;
+		}
+	}
+	cmd = (wmi_bcn_send_from_host_cmd_fixed_param *) wmi_buf_data(wmi_buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_bcn_send_from_host_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN
+				(wmi_bcn_send_from_host_cmd_fixed_param));
+	cmd->vdev_id = param->vdev_id;
+	cmd->data_len = qdf_nbuf_len(param->wbuf);
+	cmd->frame_ctrl = param->frame_ctrl;
+	cmd->dtim_flag = dtim_flag;
+	dma_addr = qdf_nbuf_get_frag_paddr(param->wbuf, 0);
+	cmd->frag_ptr_lo = qdf_get_lower_32_bits(dma_addr);
+#if defined(HTT_PADDR64)
+	cmd->frag_ptr_hi = qdf_get_upper_32_bits(dma_addr) & 0x1F;
+#endif
+	cmd->bcn_antenna = param->bcn_txant;
+
+	ret = wmi_unified_cmd_send(wmi_handle,
+			wmi_buf, sizeof(*cmd), WMI_PDEV_SEND_BCN_CMDID);
+	if (ret != QDF_STATUS_SUCCESS) {
+		WMI_LOGE("%s: Failed to send bcn: %d", __func__, ret);
+		wmi_buf_free(wmi_buf);
+	}
+
+	return ret;
 }
 
 /**
