@@ -28,12 +28,14 @@
 #include <wlan_objmgr_peer_obj.h>
 #include <wlan_p2p_public_struct.h>
 #include <wlan_p2p_ucfg_api.h>
+#include <wlan_policy_mgr_api.h>
 #include <wlan_utility.h>
 #include <wlan_osif_priv.h>
 #include "wlan_cfg80211.h"
 #include "wlan_cfg80211_p2p.h"
 
 #define MAX_NO_OF_2_4_CHANNELS 14
+#define MAX_OFFCHAN_TIME_FOR_DNBS 150
 
 /**
  * wlan_p2p_rx_callback() - Callback for rx mgmt frame
@@ -345,6 +347,8 @@ int wlan_cfg80211_roc(struct wlan_objmgr_vdev *vdev,
 	struct p2p_roc_req roc_req;
 	struct wlan_objmgr_psoc *psoc;
 	uint8_t vdev_id;
+	bool ok;
+	int ret;
 
 	if (!vdev) {
 		cfg80211_err("invalid vdev object");
@@ -368,6 +372,18 @@ int wlan_cfg80211_roc(struct wlan_objmgr_vdev *vdev,
 	roc_req.chan = (uint32_t)wlan_freq_to_chan(chan->center_freq);
 	roc_req.duration = duration;
 	roc_req.vdev_id = (uint32_t)vdev_id;
+
+	ret = policy_mgr_is_chan_ok_for_dnbs(psoc, roc_req.chan, &ok);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		cfg80211_err("policy_mgr_is_chan_ok_for_dnbs():ret:%d",
+			ret);
+		return -EINVAL;
+	}
+
+	if (!ok) {
+		cfg80211_err("channel%d not OK for DNBS", roc_req.chan);
+		return -EINVAL;
+	}
 
 	return qdf_status_to_os_return(
 		ucfg_p2p_roc_req(psoc, &roc_req, cookie));
@@ -422,6 +438,28 @@ int wlan_cfg80211_mgmt_tx(struct wlan_objmgr_vdev *vdev,
 	if (!psoc) {
 		cfg80211_err("psoc handle is NULL");
 		return -EINVAL;
+	}
+
+	/**
+	 * When offchannel time is more than MAX_OFFCHAN_TIME_FOR_DNBS,
+	 * allow offchannel only if Do_Not_Switch_Channel is not set.
+	 */
+	if (wait > MAX_OFFCHAN_TIME_FOR_DNBS) {
+		int ret;
+		bool ok;
+		uint32_t channel = wlan_freq_to_chan(chan->center_freq);
+
+		ret = policy_mgr_is_chan_ok_for_dnbs(psoc, channel, &ok);
+		if (QDF_IS_STATUS_ERROR(ret)) {
+			cfg80211_err("policy_mgr_is_chan_ok_for_dnbs():ret:%d",
+				ret);
+			return -EINVAL;
+		}
+		if (!ok) {
+			cfg80211_err("Rejecting mgmt_tx for channel:%d as DNSC is set",
+				channel);
+			return -EINVAL;
+		}
 	}
 
 	mgmt_tx.vdev_id = (uint32_t)vdev_id;
