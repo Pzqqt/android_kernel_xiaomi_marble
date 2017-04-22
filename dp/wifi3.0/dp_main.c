@@ -514,11 +514,10 @@ static QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
 
 		}
 
-
-		ret = hif_register_ext_group_int_handler(soc->hif_handle,
-				num_irq, irq_id_map,
-				dp_service_srngs,
-				&soc->intr_ctx[i]);
+		ret = hif_register_ext_group(soc->hif_handle,
+				num_irq, irq_id_map, dp_service_srngs,
+				&soc->intr_ctx[i], "dp_intr",
+				HIF_EXEC_NAPI_TYPE);
 
 		if (ret) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,

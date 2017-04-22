@@ -64,8 +64,6 @@ static void hif_intialize_default_ops(struct hif_softc *hif_sc)
 	bus_ops->hif_bus_resume_noirq = &hif_dummy_bus_resume_noirq;
 	bus_ops->hif_bus_early_suspend = &hif_dummy_bus_suspend;
 	bus_ops->hif_bus_late_resume = &hif_dummy_bus_resume;
-	bus_ops->hif_grp_irq_disable = &hif_dummy_grp_irq_disable;
-	bus_ops->hif_grp_irq_enable = &hif_dummy_grp_irq_enable;
 	bus_ops->hif_map_ce_to_irq = &hif_dummy_map_ce_to_irq;
 	bus_ops->hif_grp_irq_configure = &hif_dummy_grp_irq_configure;
 }
@@ -321,24 +319,15 @@ void hif_irq_enable(struct hif_softc *hif_sc, int irq_id)
 	hif_sc->bus_ops.hif_irq_enable(hif_sc, irq_id);
 }
 
-void hif_grp_irq_enable(struct hif_softc *hif_sc, uint32_t grp_id)
-{
-	hif_sc->bus_ops.hif_grp_irq_enable(hif_sc, grp_id);
-}
-
 void hif_irq_disable(struct hif_softc *hif_sc, int irq_id)
 {
 	hif_sc->bus_ops.hif_irq_disable(hif_sc, irq_id);
 }
 
-void hif_grp_irq_disable(struct hif_softc *hif_sc, uint32_t grp_id)
+int hif_grp_irq_configure(struct hif_softc *hif_sc,
+			  struct hif_exec_context *hif_exec)
 {
-	hif_sc->bus_ops.hif_grp_irq_disable(hif_sc, grp_id);
-}
-
-int hif_grp_irq_configure(struct hif_softc *hif_sc)
-{
-	return hif_sc->bus_ops.hif_grp_irq_configure(hif_sc);
+	return hif_sc->bus_ops.hif_grp_irq_configure(hif_sc, hif_exec);
 }
 
 int hif_dump_registers(struct hif_opaque_softc *hif_hdl)

@@ -1,0 +1,360 @@
+/*
+ * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for
+ * any purpose with or without fee is hereby granted, provided that the
+ * above copyright notice and this permission notice appear in all
+ * copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+ * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+ * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ */
+
+#include <hif_exec.h>
+#include <ce_main.h>
+
+
+static void hif_exec_tasklet_schedule(struct hif_exec_context *ctx)
+{
+	struct hif_tasklet_exec_context *t_ctx = hif_exec_get_tasklet(ctx);
+
+	tasklet_schedule(&t_ctx->tasklet);
+}
+
+/**
+ * hif_exec_tasklet() - grp tasklet
+ * data: context
+ *
+ * return: void
+ */
+static void hif_exec_tasklet_fn(unsigned long data)
+{
+	struct hif_exec_context *hif_ext_group =
+			(struct hif_exec_context *)data;
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ext_group->hif);
+	unsigned int work_done;
+
+	work_done =
+		hif_ext_group->handler(hif_ext_group->context, HIF_MAX_BUDGET);
+
+	if (hif_ext_group->work_complete(hif_ext_group, work_done)) {
+		qdf_atomic_dec(&(scn->active_grp_tasklet_cnt));
+		hif_ext_group->irq_enable(hif_ext_group);
+	} else {
+		hif_exec_tasklet_schedule(hif_ext_group);
+	}
+}
+
+/**
+ * hif_exec_poll() - grp tasklet
+ * data: context
+ *
+ * return: void
+ */
+static int hif_exec_poll(struct napi_struct *napi, int budget)
+{
+	struct hif_napi_exec_context *exec_ctx =
+		    qdf_container_of(napi, struct hif_napi_exec_context, napi);
+	struct hif_exec_context *hif_ext_group = &exec_ctx->exec_ctx;
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ext_group->hif);
+	int work_done;
+
+	work_done = hif_ext_group->handler(hif_ext_group->context, budget);
+
+	if (hif_ext_group->work_complete(hif_ext_group, work_done)) {
+		if (work_done >= budget)
+			work_done = budget - 1;
+
+		napi_complete(napi);
+		qdf_atomic_dec(&scn->active_grp_tasklet_cnt);
+		hif_ext_group->irq_enable(hif_ext_group);
+	} else {
+		/* if the ext_group supports time based yield, claim full work
+		 * done anyways */
+		work_done = budget;
+	}
+
+	return work_done;
+}
+
+/**
+ * hif_exec_napi_schedule() - schedule the napi exec instance
+ * @ctx: a hif_exec_context known to be of napi type
+ */
+static void hif_exec_napi_schedule(struct hif_exec_context *ctx)
+{
+	struct hif_napi_exec_context *n_ctx = hif_exec_get_napi(ctx);
+
+	napi_schedule(&n_ctx->napi);
+}
+
+/**
+ * hif_exec_napi_kill() - stop a napi exec context from being rescheduled
+ * @ctx: a hif_exec_context known to be of napi type
+ */
+static void hif_exec_napi_kill(struct hif_exec_context *ctx)
+{
+	struct hif_napi_exec_context *n_ctx = hif_exec_get_napi(ctx);
+
+	if (ctx->inited) {
+		napi_disable(&n_ctx->napi);
+		ctx->inited = 0;
+	}
+}
+
+struct hif_execution_ops napi_sched_ops = {
+	.schedule = &hif_exec_napi_schedule,
+	.kill = &hif_exec_napi_kill,
+};
+
+#ifdef FEATURE_NAPI
+/**
+ * hif_exec_napi_create() - allocate and initialize a napi exec context
+ */
+static struct hif_exec_context *hif_exec_napi_create(void)
+{
+	struct hif_napi_exec_context *ctx;
+
+	ctx = qdf_mem_malloc(sizeof(struct hif_napi_exec_context));
+	if (ctx == NULL)
+		return NULL;
+
+	ctx->exec_ctx.sched_ops = &napi_sched_ops;
+	ctx->exec_ctx.inited = true;
+	init_dummy_netdev(&(ctx->netdev));
+	netif_napi_add(&(ctx->netdev), &(ctx->napi), hif_exec_poll,
+		       QCA_NAPI_BUDGET);
+	napi_enable(&ctx->napi);
+
+	return &ctx->exec_ctx;
+}
+#else
+static struct hif_exec_context *hif_exec_napi_create(void)
+{
+	HIF_WARN("%s: FEATURE_NAPI not defined, making tasklet");
+	return hif_exec_tasklet_create();
+}
+#endif
+
+
+/**
+ * hif_exec_tasklet_kill() - stop a tasklet exec context from being rescheduled
+ * @ctx: a hif_exec_context known to be of tasklet type
+ */
+static void hif_exec_tasklet_kill(struct hif_exec_context *ctx)
+{
+	struct hif_tasklet_exec_context *t_ctx = hif_exec_get_tasklet(ctx);
+
+	if (ctx->inited) {
+		tasklet_disable(&t_ctx->tasklet);
+		tasklet_kill(&t_ctx->tasklet);
+	}
+	ctx->inited = false;
+}
+
+struct hif_execution_ops tasklet_sched_ops = {
+	.schedule = &hif_exec_tasklet_schedule,
+	.kill = &hif_exec_tasklet_kill,
+};
+
+/**
+ * hif_exec_tasklet_schedule() -  allocate and initialize a tasklet exec context
+ */
+static struct hif_exec_context *hif_exec_tasklet_create(void)
+{
+	struct hif_tasklet_exec_context *ctx;
+
+	ctx = qdf_mem_malloc(sizeof(struct hif_tasklet_exec_context));
+	if (ctx == NULL)
+		return NULL;
+
+	ctx->exec_ctx.sched_ops = &tasklet_sched_ops;
+	tasklet_init(&ctx->tasklet, hif_exec_tasklet_fn,
+		     (unsigned long)ctx);
+
+	ctx->exec_ctx.inited = true;
+
+	return &ctx->exec_ctx;
+}
+
+/**
+ * hif_exec_get_ctx() - retrieve an exec context based on an id
+ * @softc: the hif context owning the exec context
+ * @id: the id of the exec context
+ *
+ * mostly added to make it easier to rename or move the context array
+ */
+struct hif_exec_context *hif_exec_get_ctx(struct hif_opaque_softc *softc,
+					  uint8_t id)
+{
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(softc);
+
+	if (id < hif_state->hif_num_extgroup)
+		return hif_state->hif_ext_group[id];
+
+	return NULL;
+}
+
+/**
+ * hif_configure_ext_group_interrupts() - API to configure external group
+ * interrpts
+ * @hif_ctx : HIF Context
+ *
+ * Return: status
+ */
+uint32_t hif_configure_ext_group_interrupts(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_ctx);
+	struct hif_exec_context *hif_ext_group;
+	int i, status;
+
+	if (scn->ext_grp_irq_configured) {
+		HIF_ERROR("%s Called after ext grp irq configured\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	for (i = 0; i < hif_state->hif_num_extgroup; i++) {
+		hif_ext_group = hif_state->hif_ext_group[i];
+		status = 0;
+		if (hif_ext_group->configured &&
+		    hif_ext_group->irq_requested == false)
+			status = hif_grp_irq_configure(scn, hif_ext_group);
+		if (status != 0)
+			HIF_ERROR("%s: failed for group %d", __func__, i);
+	}
+
+	scn->ext_grp_irq_configured = true;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * hif_ext_group_interrupt_handler() - handler for related interrupts
+ * @irq: irq number of the interrupt
+ * @context: the associated hif_exec_group context
+ *
+ * This callback function takes care of dissabling the associated interrupts
+ * and scheduling the expected bottom half for the exec_context.
+ * This callback function also helps keep track of the count running contexts.
+ */
+irqreturn_t hif_ext_group_interrupt_handler(int irq, void *context)
+{
+	struct hif_exec_context *hif_ext_group = context;
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ext_group->hif);
+
+
+	hif_ext_group->irq_disable(hif_ext_group);
+	qdf_atomic_inc(&scn->active_grp_tasklet_cnt);
+
+	hif_ext_group->sched_ops->schedule(hif_ext_group);
+
+	return IRQ_HANDLED;
+}
+
+/**
+ * hif_exec_kill() - grp tasklet kill
+ * scn: hif_softc
+ *
+ * return: void
+ */
+void hif_exec_kill(struct hif_opaque_softc *hif_ctx)
+{
+	int i;
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_ctx);
+
+	for (i = 0; i < hif_state->hif_num_extgroup; i++)
+		hif_state->hif_ext_group[i]->sched_ops->kill(
+			hif_state->hif_ext_group[i]);
+
+	qdf_atomic_set(&hif_state->ol_sc.active_grp_tasklet_cnt, 0);
+}
+
+/**
+ * hif_register_ext_group() - API to register external group
+ * interrupt handler.
+ * @hif_ctx : HIF Context
+ * @numirq: number of irq's in the group
+ * @irq: array of irq values
+ * @handler: callback interrupt handler function
+ * @cb_ctx: context to passed in callback
+ * @type: napi vs tasklet
+ *
+ * Return: status
+ */
+uint32_t hif_register_ext_group(struct hif_opaque_softc *hif_ctx,
+		uint32_t numirq, uint32_t irq[], ext_intr_handler handler,
+		void *cb_ctx, const char *context_name, enum hif_exec_type type)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+	struct hif_exec_context *hif_ext_group;
+
+	if (scn->ext_grp_irq_configured) {
+		HIF_ERROR("%s Called after ext grp irq configured\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (hif_state->hif_num_extgroup >= HIF_MAX_GROUP) {
+		HIF_ERROR("%s Max groups reached\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (numirq >= HIF_MAX_GRP_IRQ) {
+		HIF_ERROR("%s invalid numirq\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	hif_ext_group = hif_exec_create(type);
+	if (hif_ext_group == NULL)
+		return QDF_STATUS_E_FAILURE;
+
+	hif_state->hif_ext_group[hif_state->hif_num_extgroup] =
+		hif_ext_group;
+
+	hif_ext_group->numirq = numirq;
+	qdf_mem_copy(&hif_ext_group->irq[0], irq, numirq * sizeof(irq[0]));
+	hif_ext_group->context = cb_ctx;
+	hif_ext_group->handler = handler;
+	hif_ext_group->configured = true;
+	hif_ext_group->grp_id = hif_state->hif_num_extgroup;
+	hif_ext_group->hif = hif_ctx;
+	hif_ext_group->context_name = context_name;
+
+	hif_state->hif_num_extgroup++;
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * hif_exec_create() - create an execution context
+ * @type: the type of execution context to create
+ */
+struct hif_exec_context *hif_exec_create(enum hif_exec_type type)
+{
+	switch (type) {
+	case HIF_EXEC_NAPI_TYPE:
+		return hif_exec_napi_create();
+
+	case HIF_EXEC_TASKLET_TYPE:
+		return hif_exec_tasklet_create();
+	default:
+		return NULL;
+	}
+}
+
+/**
+ * hif_exec_destroy() - free the hif_exec context
+ * @ctx: context to free
+ *
+ * please kill the context before freeing it to avoid a use after free.
+ */
+void hif_exec_destroy(struct hif_exec_context *ctx)
+{
+	qdf_mem_free(ctx);
+}

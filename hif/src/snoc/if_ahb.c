@@ -113,9 +113,9 @@ void hif_ahb_disable_isr(struct hif_softc *scn)
 {
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 
+	hif_exec_kill(&scn->osc);
 	hif_nointrs(scn);
 	ce_tasklet_kill(scn);
-	hif_grp_tasklet_kill(scn);
 	tasklet_kill(&sc->intr_tq);
 	qdf_atomic_set(&scn->active_tasklet_cnt, 0);
 	qdf_atomic_set(&scn->active_grp_tasklet_cnt, 0);
@@ -273,45 +273,39 @@ end:
 	return ret;
 }
 
-int hif_ahb_configure_grp_irq(struct hif_softc *scn)
+int hif_ahb_configure_grp_irq(struct hif_softc *scn,
+			      struct hif_exec_context *hif_ext_group)
 {
 	int ret = 0;
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 	struct platform_device *pdev = (struct platform_device *)sc->pdev;
-	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
-	struct hif_ext_group_entry *hif_ext_group;
 	int irq = 0;
-	int i, j;
+	const char *irq_name;
+	int j;
 
 	/* configure external interrupts */
-	for (i = 0; i < hif_state->hif_num_extgroup; i++) {
+	hif_ext_group->irq_enable = &hif_ahb_exec_grp_irq_enable;
+	hif_ext_group->irq_disable = &hif_ahb_exec_grp_irq_disable;
+	hif_ext_group->work_complete = &hif_dummy_grp_done;
 
-		hif_ext_group = &hif_state->hif_ext_group[i];
-		if (hif_ext_group->configured) {
+	hif_ext_group->irq_requested = true;
 
-			tasklet_init(&hif_ext_group->intr_tq,
-					hif_ext_grp_tasklet,
-					(unsigned long)hif_ext_group);
-			hif_ext_group->inited = true;
+	for (j = 0; j < hif_ext_group->numirq; j++) {
+		irq_name = ic_irqname[hif_ext_group->irq[j]];
+		irq = platform_get_irq_byname(pdev, irq_name);
 
-			for (j = 0; j < hif_ext_group->numirq; j++) {
-				irq = platform_get_irq_byname(pdev,
-					ic_irqname[hif_ext_group->irq[j]]);
-
-				ic_irqnum[hif_ext_group->irq[j]] = irq;
-				ret = request_irq(irq,
-					hif_ext_group_ahb_interrupt_handler,
-						IRQF_TRIGGER_RISING,
-						ic_irqname[hif_ext_group->irq[j]],
-						hif_ext_group);
-				if (ret) {
-					dev_err(&pdev->dev,
-						"ath_request_irq failed\n");
-					ret = -1;
-					goto end;
-				}
-			}
+		ic_irqnum[hif_ext_group->irq[j]] = irq;
+		ret = request_irq(irq, hif_ext_group_interrupt_handler,
+				  IRQF_TRIGGER_RISING,
+				  ic_irqname[hif_ext_group->irq[j]],
+				  hif_ext_group);
+		if (ret) {
+			dev_err(&pdev->dev,
+				"ath_request_irq failed\n");
+			ret = -1;
+			goto end;
 		}
+		hif_ext_group->os_irq[j] = irq;
 	}
 
 end:
@@ -321,16 +315,16 @@ end:
 void hif_ahb_deconfigure_grp_irq(struct hif_softc *scn)
 {
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
-	struct hif_ext_group_entry *hif_ext_group;
+	struct hif_exec_context *hif_ext_group;
 	int i, j;
 
 	/* configure external interrupts */
 	for (i = 0; i < hif_state->hif_num_extgroup; i++) {
-		hif_ext_group = &hif_state->hif_ext_group[i];
-		if (hif_ext_group->inited == true) {
-			hif_ext_group->inited = false;
+		hif_ext_group = hif_state->hif_ext_group[i];
+		if (hif_ext_group->irq_requested == true) {
+			hif_ext_group->irq_requested = false;
 			for (j = 0; j < hif_ext_group->numirq; j++) {
-				free_irq(ic_irqnum[hif_ext_group->irq[j]],
+				free_irq(hif_ext_group->os_irq[j],
 						hif_ext_group);
 			}
 		}
@@ -341,27 +335,6 @@ irqreturn_t hif_ahb_interrupt_handler(int irq, void *context)
 {
 	struct ce_tasklet_entry *tasklet_entry = context;
 	return ce_dispatch_interrupt(tasklet_entry->ce_id, tasklet_entry);
-}
-
-irqreturn_t hif_ext_group_ahb_interrupt_handler(int irq, void *context)
-{
-	struct hif_ext_group_entry *hif_ext_group = context;
-	struct HIF_CE_state *hif_state = hif_ext_group->hif_state;
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_state);
-	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
-	uint32_t grp_id = hif_ext_group->grp_id;
-
-	hif_grp_irq_disable(scn, grp_id);
-
-	qdf_atomic_inc(&scn->active_grp_tasklet_cnt);
-
-	if (hif_ext_napi_enabled(hif_hdl, grp_id)) {
-		hif_napi_schedule_grp(hif_hdl, grp_id);
-	} else {
-		tasklet_schedule(&hif_ext_group->intr_tq);
-	}
-
-	return IRQ_HANDLED;
 }
 
 /**
@@ -710,28 +683,21 @@ void hif_ahb_irq_disable(struct hif_softc *scn, int ce_id)
 	}
 }
 
-void hif_ahb_grp_irq_disable(struct hif_softc *scn, uint32_t grp_id)
+void hif_ahb_exec_grp_irq_disable(struct hif_exec_context *hif_ext_group)
 {
-	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
-	struct hif_ext_group_entry *hif_ext_group;
-	uint32_t i;
-
-	hif_ext_group = &hif_state->hif_ext_group[grp_id];
+	int i;
 
 	for (i = 0; i < hif_ext_group->numirq; i++) {
-		disable_irq_nosync(ic_irqnum[hif_ext_group->irq[i]]);
+		disable_irq_nosync(hif_ext_group->os_irq[i]);
 	}
 }
 
-void hif_ahb_grp_irq_enable(struct hif_softc *scn, uint32_t grp_id)
+void hif_ahb_exec_grp_irq_enable(struct hif_exec_context *hif_ext_group)
 {
-	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
-	struct hif_ext_group_entry *hif_ext_group;
-	uint32_t i;
-
-	hif_ext_group = &hif_state->hif_ext_group[grp_id];
+	int i;
 
 	for (i = 0; i < hif_ext_group->numirq; i++) {
-		enable_irq(ic_irqnum[hif_ext_group->irq[i]]);
+		enable_irq(hif_ext_group->os_irq[i]);
 	}
 }
+

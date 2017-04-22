@@ -25,6 +25,7 @@
  * to the Linux Foundation.
  */
 struct hif_softc;
+struct hif_exec_context;
 
 void hif_dummy_bus_prevent_linkdown(struct hif_softc *scn, bool flag);
 void hif_dummy_reset_soc(struct hif_softc *scn);
@@ -49,7 +50,8 @@ void hif_dummy_irq_enable(struct hif_softc *hif_sc, int irq_id);
 void hif_dummy_irq_disable(struct hif_softc *hif_sc, int irq_id);
 void hif_dummy_grp_irq_enable(struct hif_softc *hif_sc, uint32_t grp_id);
 void hif_dummy_grp_irq_disable(struct hif_softc *hif_sc, uint32_t grp_id);
-int hif_dummy_grp_irq_configure(struct hif_softc *hif_sc);
+int hif_dummy_grp_irq_configure(struct hif_softc *hif_sc,
+				struct hif_exec_context *exec);
 int hif_dummy_dump_registers(struct hif_softc *hif_sc);
 void hif_dummy_dump_target_memory(struct hif_softc *hif_sc, void *ramdump_base,
 				  uint32_t address, uint32_t size);

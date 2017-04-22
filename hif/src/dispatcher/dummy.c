@@ -265,7 +265,8 @@ void hif_dummy_grp_irq_disable(struct hif_softc *hif_sc, uint32_t grp_id)
  *
  * Return: none
  */
-int hif_dummy_grp_irq_configure(struct hif_softc *hif_sc)
+int hif_dummy_grp_irq_configure(struct hif_softc *hif_sc,
+				struct hif_exec_context *exec)
 {
     return 0;
 }
@@ -274,7 +275,7 @@ int hif_dummy_grp_irq_configure(struct hif_softc *hif_sc)
  * hif_dummy_dump_registers - dummy call
  * hif_sc: hif context
  *
- * Return: 0 for sucess
+ * Return: 0 for success
  */
 int hif_dummy_dump_registers(struct hif_softc *hif_sc)
 {

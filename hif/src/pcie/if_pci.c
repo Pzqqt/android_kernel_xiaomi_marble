@@ -2392,6 +2392,7 @@ irq_handled:
 
 }
 
+/* deprecated */
 static int hif_configure_msi(struct hif_pci_softc *sc)
 {
 	int ret = 0;
@@ -3197,11 +3198,11 @@ void hif_pci_disable_isr(struct hif_softc *scn)
 {
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 
+	hif_exec_kill(&scn->osc);
 	hif_nointrs(scn);
 	hif_free_msi_ctx(scn);
 	/* Cancel the pending tasklet */
 	ce_tasklet_kill(scn);
-	hif_grp_tasklet_kill(scn);
 	tasklet_kill(&sc->intr_tq);
 	qdf_atomic_set(&scn->active_tasklet_cnt, 0);
 	qdf_atomic_set(&scn->active_grp_tasklet_cnt, 0);

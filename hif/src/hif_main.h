@@ -247,7 +247,4 @@ void hif_ramdump_handler(struct hif_opaque_softc *scn);
 static inline void hif_usb_get_hw_info(struct hif_softc *scn) {}
 static inline void hif_ramdump_handler(struct hif_opaque_softc *scn) {}
 #endif
-void hif_ext_grp_tasklet(unsigned long data);
-void hif_grp_tasklet_kill(struct hif_softc *scn);
-
 #endif /* __HIF_MAIN_H__ */

@@ -18,6 +18,7 @@
 
 #ifndef __AHB_API_H
 #define __AHB_API_H
+struct hif_exec_context;
 
 QDF_STATUS hif_ahb_open(struct hif_softc *hif_ctx,
 			 enum qdf_bus_type bus_type);
@@ -35,8 +36,8 @@ void hif_ahb_disable_bus(struct hif_softc *scn);
 int hif_ahb_bus_configure(struct hif_softc *scn);
 void hif_ahb_irq_disable(struct hif_softc *scn, int ce_id);
 void hif_ahb_irq_enable(struct hif_softc *scn, int ce_id);
-void hif_ahb_grp_irq_disable(struct hif_softc *scn, uint32_t grp_id);
-void hif_ahb_grp_irq_enable(struct hif_softc *scn, uint32_t grp_id);
+void hif_ahb_exec_grp_irq_disable(struct hif_exec_context *hif_ext_grp);
+void hif_ahb_exec_grp_irq_enable(struct hif_exec_context *hif_ext_grp);
 int hif_ahb_dump_registers(struct hif_softc *scn);
 
 int hif_ahb_configure_legacy_irq(struct hif_pci_softc *sc);
@@ -46,6 +47,7 @@ int hif_ahb_enable_radio(struct hif_pci_softc *sc,
 		struct platform_device *pdev,
 		const struct platform_device_id *id);
 int hif_ahb_configure_irq(struct hif_pci_softc *sc);
-int hif_ahb_configure_grp_irq(struct hif_softc *scn);
+int hif_ahb_configure_grp_irq(struct hif_softc *scn,
+			      struct hif_exec_context *hif_ext_grp);
 
 #endif

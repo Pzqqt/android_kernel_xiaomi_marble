@@ -32,6 +32,7 @@
 #include "qdf_lock.h"
 #include "hif_main.h"
 #include "qdf_util.h"
+#include "hif_exec.h"
 
 #define CE_HTT_T2H_MSG 1
 #define CE_HTT_H2T_MSG 4
@@ -114,17 +115,14 @@ struct ce_tasklet_entry {
 	void *hif_ce_state;
 };
 
-struct hif_ext_group_entry {
-	uint32_t numirq;
-	uint32_t irq[HIF_MAX_GRP_IRQ];
-	uint32_t grp_id;
-	void *context;
-	ext_intr_handler handler;
-	struct tasklet_struct intr_tq;
-	bool configured;
-	bool inited;
-	void *hif_state;
-};
+static inline bool hif_dummy_grp_done(struct hif_exec_context *grp_entry, int
+				      work_done)
+{
+	return true;
+}
+
+extern struct hif_execution_ops tasklet_sched_ops;
+extern struct hif_execution_ops napi_sched_ops;
 
 struct ce_stats {
 	uint32_t ce_per_cpu[CE_COUNT_MAX][QDF_MAX_AVAILABLE_CPU];
@@ -134,7 +132,7 @@ struct HIF_CE_state {
 	struct hif_softc ol_sc;
 	bool started;
 	struct ce_tasklet_entry tasklets[CE_COUNT_MAX];
-	struct hif_ext_group_entry hif_ext_group[HIF_MAX_GROUP];
+	struct hif_exec_context *hif_ext_group[HIF_MAX_GROUP];
 	uint32_t hif_num_extgroup;
 	qdf_spinlock_t keep_awake_lock;
 	qdf_spinlock_t irq_reg_lock;
