@@ -310,6 +310,7 @@ QDF_STATUS utils_dfs_get_nol_chfreq_and_chwidth(struct wlan_objmgr_pdev *pdev,
  * @ch_params: current channel params.
  * @hw_mode: current operating mode.
  * @target_chan: Pointer to target_chan.
+ * @acs_info: acs range info.
  *
  * wrapper function for get_random_chan(). this
  * function called from outside of dfs component.
@@ -318,7 +319,8 @@ QDF_STATUS utils_dfs_get_nol_chfreq_and_chwidth(struct wlan_objmgr_pdev *pdev,
  */
 QDF_STATUS dfs_get_random_channel(struct wlan_objmgr_pdev *pdev,
 		uint16_t flags, struct ch_params *ch_params,
-		uint32_t *hw_mode, int *target_chan);
+		uint32_t *hw_mode, int *target_chan,
+		struct dfs_acs_info *acs_info);
 
 /**
  * dfs_init_nol() - Initialize nol from platform driver.

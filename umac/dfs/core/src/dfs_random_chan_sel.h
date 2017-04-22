@@ -168,6 +168,7 @@ struct chan_bonding_bitmap {
  * @ch_wd: input channel width, used same variable to return new ch width.
  * @cur_chan: current channel.
  * @dfs_region: DFS region.
+ * @acs_info: acs channel range information.
  *
  * Function used to find random channel selection from a given list.
  * First this function removes channels  based on flags and then uses final
@@ -182,4 +183,5 @@ int dfs_prepare_random_channel(struct wlan_dfs *dfs,
 	uint32_t flags,
 	uint8_t *ch_wd,
 	struct dfs_ieee80211_channel *cur_chan,
-	uint8_t dfs_region);
+	uint8_t dfs_region,
+	struct dfs_acs_info *acs_info);

@@ -478,7 +478,8 @@ QDF_STATUS dfs_get_random_channel(
 	uint16_t flags,
 	struct ch_params *ch_params,
 	uint32_t *hw_mode,
-	int *target_chan)
+	int *target_chan,
+	struct dfs_acs_info *acs_info)
 {
 	uint32_t dfs_reg;
 	uint32_t num_chan = NUM_CHANNELS;
@@ -525,7 +526,7 @@ QDF_STATUS dfs_get_random_channel(
 
 	*target_chan = dfs_prepare_random_channel(dfs, chan_list,
 		num_chan, flags, (uint8_t *)&ch_params->ch_width,
-		&cur_chan, (uint8_t)dfs_reg);
+		&cur_chan, (uint8_t)dfs_reg, acs_info);
 
 	ch_params->center_freq_seg0 = cur_chan.ic_vhtop_ch_freq_seg1;
 	ch_params->center_freq_seg1 = cur_chan.ic_vhtop_ch_freq_seg2;

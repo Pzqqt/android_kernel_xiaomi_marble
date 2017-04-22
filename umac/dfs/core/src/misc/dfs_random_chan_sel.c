@@ -395,6 +395,7 @@ static bool dfs_freq_is_in_nol(struct wlan_dfs *dfs, uint32_t freq)
  * @ch_list: input channel list
  * @ch_cnt: input channel count
  * @dfs_region: dfs region
+ * @acs_info: acs channel range information
  *
  * prepare channel list based on flags
  *
@@ -406,7 +407,8 @@ static void dfs_apply_rules(struct wlan_dfs *dfs,
 	uint32_t *random_chan_cnt,
 	struct dfs_ieee80211_channel *ch_list,
 	uint32_t ch_cnt,
-	uint8_t dfs_region)
+	uint8_t dfs_region,
+	struct dfs_acs_info *acs_info)
 {
 	struct dfs_ieee80211_channel *chan;
 	uint16_t flag_no_wheather = 0;
@@ -431,7 +433,6 @@ static void dfs_apply_rules(struct wlan_dfs *dfs,
 	flag_no_2g_chan  = flags & DFS_RANDOM_CH_FLAG_NO_2GHZ_CH;
 	flag_no_5g_chan  = flags & DFS_RANDOM_CH_FLAG_NO_5GHZ_CH;
 
-
 	for (i = 0; i < ch_cnt; i++) {
 		chan = &ch_list[i];
 
@@ -440,16 +441,29 @@ static void dfs_apply_rules(struct wlan_dfs *dfs,
 				   __func__, chan->ic_ieee);
 			continue;
 		}
+
+		if (acs_info && (acs_info->acs_mode == 1) &&
+		    ((chan->ic_ieee < acs_info->start_ch) ||
+		    (chan->ic_ieee > acs_info->end_ch))) {
+			DFS_PRINTK("%s: skip ch %d not in acs range (%d-%d)\n",
+				   __func__, chan->ic_ieee, acs_info->start_ch,
+				   acs_info->end_ch);
+			continue;
+
+		}
+
 		if (flag_no_2g_chan && chan->ic_ieee <= DFS_MAX_24GHZ_CHANNEL) {
 			DFS_PRINTK("%s: skip 2.4 GHz channel=%d\n",
 				   __func__, chan->ic_ieee);
 			continue;
 		}
+
 		if (flag_no_5g_chan && chan->ic_ieee > DFS_MAX_24GHZ_CHANNEL) {
 			DFS_PRINTK("%s: skip 5 GHz channel=%d\n",
 				   __func__, chan->ic_ieee);
 			continue;
 		}
+
 		if (flag_no_wheather) {
 			/*
 			 * We should also avoid this channel in HT40 mode as
@@ -470,6 +484,7 @@ static void dfs_apply_rules(struct wlan_dfs *dfs,
 				continue;
 			}
 		}
+
 		if (flag_no_lower_5g &&
 		    DFS_IS_CHAN_JAPAN_INDOOR(chan->ic_freq)) {
 			DFS_PRINTK("%s: skip indoor channel=%d\n",
@@ -508,7 +523,8 @@ int dfs_prepare_random_channel(struct wlan_dfs *dfs,
 	uint32_t flags,
 	uint8_t *ch_wd,
 	struct dfs_ieee80211_channel *cur_chan,
-	uint8_t dfs_region)
+	uint8_t dfs_region,
+	struct dfs_acs_info *acs_info)
 {
 	uint8_t target_ch = 0;
 	uint8_t *random_chan_list = NULL;
@@ -535,7 +551,7 @@ int dfs_prepare_random_channel(struct wlan_dfs *dfs,
 		dfs_remove_cur_ch_from_list(ch_list, &ch_cnt, ch_wd, cur_chan);
 
 	dfs_apply_rules(dfs, flags, random_chan_list, &random_chan_cnt,
-		    ch_list, ch_cnt, dfs_region);
+		    ch_list, ch_cnt, dfs_region, acs_info);
 
 	do {
 		if (*ch_wd == DFS_CH_WIDTH_20MHZ) {
