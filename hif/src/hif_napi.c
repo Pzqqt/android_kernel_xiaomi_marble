@@ -40,12 +40,10 @@
 #include <linux/topology.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>
-#ifdef HELIUMPLUS
 #ifdef CONFIG_SCHED_CORE_CTL
 #include <linux/sched/core_ctl.h>
 #endif
-#include <pld_snoc.h>
-#endif
+#include <pld_common.h>
 #include <linux/pm.h>
 
 /* Driver headers */
@@ -54,6 +52,7 @@
 #include <hif_io32.h>
 #include <ce_api.h>
 #include <ce_internal.h>
+#include <hif_irq_affinity.h>
 
 enum napi_decision_vector {
 	HIF_NAPI_NOEVENT = 0,
@@ -61,29 +60,6 @@ enum napi_decision_vector {
 	HIF_NAPI_CONF_UP = 2
 };
 #define ENABLE_NAPI_MASK (HIF_NAPI_INITED | HIF_NAPI_CONF_UP)
-
-#ifdef HELIUMPLUS
-static inline int hif_get_irq_for_ce(int ce_id)
-{
-	return pld_snoc_get_irq(ce_id);
-}
-#else /* HELIUMPLUS */
-static inline int hif_get_irq_for_ce(int ce_id)
-{
-	return -EINVAL;
-}
-static int hif_napi_cpu_migrate(struct qca_napi_data *napid, int cpu,
-				int action)
-{
-	return 0;
-}
-
-int hif_napi_cpu_blacklist(struct qca_napi_data *napid,
-					enum qca_blacklist_op op)
-{
-	return 0;
-}
-#endif /* HELIUMPLUS */
 
 /**
  * hif_napi_create() - creates the NAPI structures for a given CE
@@ -135,11 +111,12 @@ int hif_napi_create(struct hif_opaque_softc   *hif_ctx,
 		napid->flags = flags;
 
 		rc = hif_napi_cpu_init(hif_ctx);
-		if (rc != 0) {
+		if (rc != 0 && rc != -EALREADY) {
 			HIF_ERROR("NAPI_initialization failed,. %d", rc);
 			rc = napid->ce_map;
 			goto hnc_err;
-		}
+		} else
+			rc = 0;
 
 		HIF_DBG("%s: NAPI structures initialized, rc=%d",
 			 __func__, rc);
@@ -149,6 +126,9 @@ int hif_napi_create(struct hif_opaque_softc   *hif_ctx,
 		NAPI_DEBUG("ce %d: htt_rx=%d htt_tx=%d",
 			   i, ce_state->htt_rx_data,
 			   ce_state->htt_tx_data);
+		if (ce_srng_based(hif))
+			continue;
+
 		if (!ce_state->htt_rx_data)
 			continue;
 
@@ -173,7 +153,7 @@ int hif_napi_create(struct hif_opaque_softc   *hif_ctx,
 		napii->scale = scale;
 		napii->id    = NAPI_PIPE2ID(i);
 		napii->hif_ctx = hif_ctx;
-		napii->irq   = hif_get_irq_for_ce(i);
+		napii->irq   = pld_get_irq(hif->qdf_dev->dev, i);
 
 		if (napii->irq < 0)
 			HIF_WARN("%s: bad IRQ value for CE %d: %d",
@@ -207,6 +187,13 @@ int hif_napi_create(struct hif_opaque_softc   *hif_ctx,
 		HIF_DBG("%s: NAPI id %d created for pipe %d", __func__,
 			 napii->id, i);
 	}
+
+	/* no ces registered with the napi */
+	if (!ce_srng_based(hif) && napid->ce_map == 0) {
+		HIF_WARN("%s: no napis created for copy engines", __func__);
+		return -EFAULT;
+	}
+
 	NAPI_DEBUG("napi map = %x", napid->ce_map);
 	NAPI_DEBUG("NAPI ids created for all applicable pipes");
 	return napid->ce_map;
@@ -434,6 +421,9 @@ int hif_napi_event(struct hif_opaque_softc *hif_ctx, enum qca_napi_event event,
 	     } blacklist_pending = BLACKLIST_NOT_PENDING;
 
 	NAPI_DEBUG("%s: -->(event=%d, aux=%p)", __func__, event, data);
+
+	if (ce_srng_based(hif))
+		return hif_exec_event(hif_ctx, event, data);
 
 	if ((napid->state & HIF_NAPI_INITED) == 0) {
 		NAPI_DEBUG("%s: got event when NAPI not initialized",
@@ -850,7 +840,7 @@ out:
 	return rc;
 }
 
-#ifdef HELIUMPLUS
+#ifdef HIF_IRQ_AFFINITY
 /**
  *
  * hif_napi_update_yield_stats() - update NAPI yield related stats
@@ -1183,6 +1173,19 @@ static int hnc_tput_hook(int install)
  * Implementation of hif_napi_cpu API
  */
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
+static inline void record_sibling_cpumask(struct qca_napi_cpu *cpus, int i)
+{
+	cpumask_copy(&(cpus[i].thread_mask),
+			     topology_sibling_cpumask(i));
+}
+#else
+static inline void record_sibling_cpumask(struct qca_napi_cpu *cpus, int i)
+{
+}
+#endif
+
+
 /**
  * hif_napi_cpu_init() - initialization of irq affinity block
  * @ctx: pointer to qca_napi_data
@@ -1220,8 +1223,7 @@ int hif_napi_cpu_init(struct hif_opaque_softc *hif)
 		cpus[i].cluster_id  = topology_physical_package_id(i);
 		cpumask_copy(&(cpus[i].core_mask),
 			     topology_core_cpumask(i));
-		cpumask_copy(&(cpus[i].thread_mask),
-			     topology_sibling_cpumask(i));
+		record_sibling_cpumask(cpus, i);
 		cpus[i].max_freq    = cpufreq_quick_get_max(i);
 		cpus[i].napis       = 0x0;
 		cpus[i].cluster_nxt = -1; /* invalid */
@@ -1618,4 +1620,4 @@ int hif_napi_serialize(struct hif_opaque_softc *hif, int is_on)
 	return rc;
 }
 
-#endif /* ifdef HELIUMPLUS */
+#endif /* ifdef HIF_IRQ_AFFINITY */

@@ -18,6 +18,7 @@
 
 #include <hif_exec.h>
 #include <ce_main.h>
+#include <hif_irq_affinity.h>
 
 
 static void hif_exec_tasklet_schedule(struct hif_exec_context *ctx)
@@ -101,11 +102,15 @@ static void hif_exec_napi_schedule(struct hif_exec_context *ctx)
 static void hif_exec_napi_kill(struct hif_exec_context *ctx)
 {
 	struct hif_napi_exec_context *n_ctx = hif_exec_get_napi(ctx);
+	int irq_ind;
 
 	if (ctx->inited) {
 		napi_disable(&n_ctx->napi);
 		ctx->inited = 0;
 	}
+
+	for (irq_ind = 0; irq_ind < ctx->numirq; irq_ind++)
+		hif_irq_affinity_remove(ctx->os_irq[irq_ind]);
 }
 
 struct hif_execution_ops napi_sched_ops = {
@@ -150,12 +155,16 @@ static struct hif_exec_context *hif_exec_napi_create(void)
 static void hif_exec_tasklet_kill(struct hif_exec_context *ctx)
 {
 	struct hif_tasklet_exec_context *t_ctx = hif_exec_get_tasklet(ctx);
+	int irq_ind;
 
 	if (ctx->inited) {
 		tasklet_disable(&t_ctx->tasklet);
 		tasklet_kill(&t_ctx->tasklet);
 	}
 	ctx->inited = false;
+
+	for (irq_ind = 0; irq_ind < ctx->numirq; irq_ind++)
+		hif_irq_affinity_remove(ctx->os_irq[irq_ind]);
 }
 
 struct hif_execution_ops tasklet_sched_ops = {

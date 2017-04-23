@@ -133,20 +133,6 @@ int hif_napi_schedule(struct hif_opaque_softc *scn, int ce_id);
 /* called by hdd_napi, which is called by kernel */
 int hif_napi_poll(struct hif_opaque_softc *hif_ctx,
 			struct napi_struct *napi, int budget);
-#ifdef HELIUMPLUS
-/* called to retrieve NAPI CPU statistics */
-void hif_napi_stats(struct qca_napi_data *napid);
-void hif_napi_update_yield_stats(struct CE_state *ce_state,
-				 bool time_limit_reached,
-				 bool rxpkt_thresh_reached);
-#else
-static inline void hif_napi_stats(struct qca_napi_data *napid) { }
-
-static inline void hif_napi_update_yield_stats(struct CE_state *ce_state,
-				 bool time_limit_reached,
-				 bool rxpkt_thresh_reached) { }
-
-#endif
 
 #ifdef FEATURE_NAPI_DEBUG
 #define NAPI_DEBUG(fmt, ...)			\
@@ -166,8 +152,6 @@ enum qca_blacklist_op {
 	BLACKLIST_ON
 };
 
-int hif_napi_cpu_blacklist(struct qca_napi_data *napid,
-			   enum qca_blacklist_op op);
 /**
  * Local interface to HIF implemented functions of NAPI CPU affinity management.
  * Note:
@@ -177,32 +161,6 @@ int hif_napi_cpu_blacklist(struct qca_napi_data *napid,
  *    mere wrappers.
  *
  */
-#ifndef HELIUMPLUS
-/**
- * stub functions
- */
-/* fw-declare to make compiler happy */
-struct qca_napi_data;
-static inline int hif_napi_cpu_init(struct hif_opaque_softc *hif)
-{ return 0; }
-
-static inline int hif_napi_cpu_deinit(struct hif_opaque_softc *hif)
-{ return 0; }
-
-static inline int hif_napi_serialize(struct hif_opaque_softc *hif, int is_on)
-{ return -EPERM; }
-#else /* HELIUMPLUS - NAPI CPU symbols are valid */
-
-/*
- * prototype signatures
- */
-int hif_napi_cpu_init(struct hif_opaque_softc *hif);
-int hif_napi_cpu_deinit(struct hif_opaque_softc *hif);
-
-int hif_napi_cpu_migrate(struct qca_napi_data *napid, int cpu, int action);
-int hif_napi_serialize(struct hif_opaque_softc *hif, int is_on);
-
-#endif /* HELIUMPLUS */
 
 #else /* ! defined(FEATURE_NAPI) */
 
@@ -214,6 +172,15 @@ int hif_napi_serialize(struct hif_opaque_softc *hif, int is_on);
  */
 
 #define NAPI_DEBUG(fmt, ...) /* NO-OP */
+
+static inline int hif_napi_cpu_init(struct hif_opaque_softc *hif)
+{
+	return 0;
+}
+static inline int hif_napi_cpu_deinit(struct hif_opaque_softc *hif)
+{
+	return 0;
+}
 
 static inline int hif_napi_create(struct hif_opaque_softc   *hif,
 				  uint8_t            pipe_id,
@@ -251,17 +218,49 @@ static inline int hif_napi_schedule(struct hif_opaque_softc *hif, int ce_id)
 static inline int hif_napi_poll(struct napi_struct *napi, int budget)
 { return -EPERM; }
 
-static inline void hif_napi_stats(struct qca_napi_data *napid) { }
-static inline void hif_napi_update_yield_stats(struct CE_state *ce_state,
-				 bool time_limit_reached,
-				 bool rxpkt_thresh_reached) { }
 #endif /* FEATURE_NAPI */
 
-static inline int hif_ext_napi_enabled(struct hif_opaque_softc *hif, int ce)
+#if defined(HIF_IRQ_AFFINITY) && defined(FEATURE_NAPI)
+/*
+ * prototype signatures
+ */
+int hif_napi_cpu_init(struct hif_opaque_softc *hif);
+int hif_napi_cpu_deinit(struct hif_opaque_softc *hif);
+
+int hif_napi_cpu_migrate(struct qca_napi_data *napid, int cpu, int action);
+int hif_napi_serialize(struct hif_opaque_softc *hif, int is_on);
+
+int hif_napi_cpu_blacklist(struct qca_napi_data *napid,
+			   enum qca_blacklist_op op);
+
+/* not directly related to irq affinity, but oh well */
+void hif_napi_stats(struct qca_napi_data *napid);
+void hif_napi_update_yield_stats(struct CE_state *ce_state,
+				 bool time_limit_reached,
+				 bool rxpkt_thresh_reached);
+#else
+struct qca_napi_data;
+static inline int hif_napi_cpu_init(struct hif_opaque_softc *hif)
 { return 0; }
 
-static inline int hif_napi_schedule_grp(struct hif_opaque_softc *hif,
-		uint32_t grp_id)
+static inline int hif_napi_cpu_deinit(struct hif_opaque_softc *hif)
 { return 0; }
+
+static inline int hif_napi_cpu_migrate(struct qca_napi_data *napid, int cpu,
+				       int action)
+{ return 0; }
+
+static inline int hif_napi_serialize(struct hif_opaque_softc *hif, int is_on)
+{ return -EPERM; }
+
+static inline void hif_napi_stats(struct qca_napi_data *napid) { }
+static inline void hif_napi_update_yield_stats(struct CE_state *ce_state,
+					       bool time_limit_reached,
+					       bool rxpkt_thresh_reached) { }
+
+static inline int hif_napi_cpu_blacklist(struct qca_napi_data *napid,
+			   enum qca_blacklist_op op)
+{ return 0; }
+#endif /* HIF_IRQ_AFFINITY */
 
 #endif /* __HIF_NAPI_H__ */

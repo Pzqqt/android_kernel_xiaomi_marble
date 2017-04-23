@@ -211,6 +211,11 @@ static inline void pld_get_msi_address(struct device *dev,
 	return;
 }
 
+static inline int pld_get_irq(struct device *dev, int ce_id)
+{
+	return -EINVAL;
+}
+
 static inline int pld_ce_request_irq(struct device *dev, unsigned int ce_id,
 				     irqreturn_t (*handler)(int, void *),
 				     unsigned long flags, const char *name,
