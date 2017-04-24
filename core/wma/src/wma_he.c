@@ -186,8 +186,9 @@ static void wma_convert_he_ppet(tDot11fIEppe_threshold *he_ppet,
  * @mac_cap: Received HE MAC capability
  * @phy_cap: Received HE PHY capability
  * @he_ppet: Received HE PPE threshold
- * @mcs: Max MCS supported (Tx/Rx)
- * @nss: Max NSS supported (Tx/Rx)
+ * @supp_mcs: Max MCS supported (Tx/Rx)
+ * @tx_chain_mask: Tx chain mask
+ * @rx_chain_mask: Rx chain mask
  *
  * This function converts various HE capability received as part of extended
  * service ready event into dot11f structure. GET macros are defined at WMI
@@ -197,9 +198,21 @@ static void wma_convert_he_ppet(tDot11fIEppe_threshold *he_ppet,
  */
 static void wma_convert_he_cap(tDot11fIEvendor_he_cap *he_cap, uint32_t mac_cap,
 			       uint32_t *phy_cap, void *he_ppet,
-			       uint8_t mcs, uint8_t nss)
+			       uint32_t supp_mcs, uint32_t tx_chain_mask,
+			       uint32_t rx_chain_mask)
 {
 	struct wmi_host_ppe_threshold *ppet = he_ppet;
+	uint8_t mcs, nss, k, mcs_temp;
+
+	nss = QDF_MAX(wma_get_num_of_setbits_from_bitmask(tx_chain_mask),
+		      wma_get_num_of_setbits_from_bitmask(rx_chain_mask));
+
+	mcs = 0;
+	for (k = 1; k < nss; k++) {
+		mcs_temp = WMI_HE_MAX_MCS_4_SS_MASK(supp_mcs, k);
+		if (mcs_temp > mcs)
+			mcs = mcs_temp;
+	}
 
 	he_cap->present = true;
 
@@ -355,10 +368,85 @@ static void wma_derive_ext_he_cap(t_wma_handle *wma_handle,
 						new_cap->bsrp_ampdu_aggr);
 		he_cap->qtp = QDF_MIN(he_cap->qtp, new_cap->qtp);
 		he_cap->a_bqr = QDF_MIN(he_cap->a_bqr, new_cap->a_bqr);
+		he_cap->reserved1 = QDF_MIN(he_cap->reserved1,
+					    new_cap->reserved1);
 
-		/* Remaining capabilities are not captured here.
-		 * Intersect only the required capability
-		 */
+		he_cap->dual_band = QDF_MIN(he_cap->dual_band,
+					    new_cap->dual_band);
+		he_cap->chan_width = QDF_MIN(he_cap->chan_width,
+					     new_cap->chan_width);
+		he_cap->rx_pream_puncturing =
+			QDF_MIN(he_cap->rx_pream_puncturing,
+				new_cap->rx_pream_puncturing);
+		he_cap->device_class = QDF_MIN(he_cap->device_class,
+					       new_cap->device_class);
+		he_cap->ldpc_coding = QDF_MIN(he_cap->ldpc_coding,
+					      new_cap->ldpc_coding);
+		he_cap->he_ltf_gi_ppdu = QDF_MIN(he_cap->he_ltf_gi_ppdu,
+						 new_cap->he_ltf_gi_ppdu);
+		he_cap->he_ltf_gi_ndp = QDF_MIN(he_cap->he_ltf_gi_ndp,
+						new_cap->he_ltf_gi_ndp);
+		he_cap->stbc = QDF_MIN(he_cap->stbc,
+				       new_cap->stbc);
+		he_cap->doppler = QDF_MIN(he_cap->doppler,
+					  new_cap->doppler);
+		he_cap->ul_mu = QDF_MIN(he_cap->ul_mu, new_cap->ul_mu);
+		he_cap->dcm_enc_tx = QDF_MIN(he_cap->dcm_enc_tx,
+					     new_cap->dcm_enc_tx);
+		he_cap->dcm_enc_rx = QDF_MIN(he_cap->dcm_enc_rx,
+					     new_cap->dcm_enc_rx);
+		he_cap->ul_he_mu = QDF_MIN(he_cap->ul_he_mu, new_cap->ul_he_mu);
+		he_cap->su_beamformer = QDF_MIN(he_cap->su_beamformer,
+						new_cap->su_beamformer);
+		he_cap->su_beamformee = QDF_MIN(he_cap->su_beamformee,
+						new_cap->su_beamformee);
+		he_cap->mu_beamformer = QDF_MIN(he_cap->mu_beamformer,
+						new_cap->mu_beamformer);
+		he_cap->bfee_sts_lt_80 = QDF_MIN(he_cap->bfee_sts_lt_80,
+						 new_cap->bfee_sts_lt_80);
+		he_cap->nsts_tol_lt_80 = QDF_MIN(he_cap->nsts_tol_lt_80,
+						 new_cap->nsts_tol_lt_80);
+		he_cap->bfee_sta_gt_80 = QDF_MIN(he_cap->bfee_sta_gt_80,
+						 new_cap->bfee_sta_gt_80);
+		he_cap->nsts_tot_gt_80 = QDF_MIN(he_cap->nsts_tot_gt_80,
+						 new_cap->nsts_tot_gt_80);
+		he_cap->num_sounding_lt_80 = QDF_MIN(he_cap->num_sounding_lt_80,
+						new_cap->num_sounding_lt_80);
+		he_cap->num_sounding_gt_80 = QDF_MIN(he_cap->num_sounding_gt_80,
+						new_cap->num_sounding_gt_80);
+		he_cap->su_feedback_tone16 = QDF_MIN(he_cap->su_feedback_tone16,
+						new_cap->su_feedback_tone16);
+		he_cap->mu_feedback_tone16 = QDF_MIN(he_cap->mu_feedback_tone16,
+						new_cap->mu_feedback_tone16);
+		he_cap->codebook_su = QDF_MIN(he_cap->codebook_su,
+					      new_cap->codebook_su);
+		he_cap->codebook_mu = QDF_MIN(he_cap->codebook_mu,
+					      new_cap->codebook_mu);
+		he_cap->beamforming_feedback =
+			QDF_MIN(he_cap->beamforming_feedback,
+				new_cap->beamforming_feedback);
+		he_cap->he_er_su_ppdu = QDF_MIN(he_cap->he_er_su_ppdu,
+						new_cap->he_er_su_ppdu);
+		he_cap->dl_mu_mimo_part_bw = QDF_MIN(he_cap->dl_mu_mimo_part_bw,
+				     new_cap->dl_mu_mimo_part_bw);
+		he_cap->ppet_present = QDF_MIN(he_cap->ppet_present,
+					       new_cap->ppet_present);
+		he_cap->srp = QDF_MIN(he_cap->srp, new_cap->srp);
+		he_cap->power_boost = QDF_MIN(he_cap->power_boost,
+					      new_cap->power_boost);
+		he_cap->he_ltf_gi_4x = QDF_MIN(he_cap->he_ltf_gi_4x,
+					       new_cap->he_ltf_gi_4x);
+		he_cap->reserved2 = QDF_MIN(he_cap->reserved2,
+					    new_cap->reserved2);
+		he_cap->nss_supported = QDF_MIN(he_cap->nss_supported,
+						new_cap->nss_supported);
+		he_cap->mcs_supported = QDF_MIN(he_cap->mcs_supported,
+						new_cap->mcs_supported);
+		he_cap->tx_bw_bitmap = QDF_MIN(he_cap->tx_bw_bitmap,
+					       new_cap->tx_bw_bitmap);
+		he_cap->rx_bw_bitmap = QDF_MIN(he_cap->rx_bw_bitmap,
+					       new_cap->rx_bw_bitmap);
+
 	}
 }
 
@@ -628,15 +716,11 @@ void wma_update_target_ext_he_cap(tp_wma_handle wma_handle,
 				  struct wma_tgt_cfg *tgt_cfg)
 {
 	tDot11fIEvendor_he_cap *he_cap = &tgt_cfg->he_cap;
-	int i, j = 0, k, max_mac;
-	uint32_t he_mac;
-	uint32_t he_phy[WMI_MAX_HECAP_PHY_SIZE];
-	uint8_t *he_ppet;
+	int i, j = 0, max_mac;
 	struct extended_caps *phy_caps;
 	WMI_MAC_PHY_CAPABILITIES *mac_cap;
-	tDot11fIEvendor_he_cap he_cap_mac0 = {0}, he_cap_mac1 = {0};
+	tDot11fIEvendor_he_cap he_cap_mac;
 	tDot11fIEvendor_he_cap tmp_he_cap = {0};
-	uint8_t mcs, nss, mcs_temp;
 
 	if (!wma_handle ||
 		(0 == wma_handle->phy_caps.num_hw_modes.num_hw_modes)) {
@@ -658,49 +742,40 @@ void wma_update_target_ext_he_cap(tp_wma_handle wma_handle,
 		else
 			max_mac = j + 1;
 		for ( ; j < max_mac; j++) {
+			qdf_mem_zero(&he_cap_mac,
+				     sizeof(tDot11fIEvendor_he_cap));
 			mac_cap = &phy_caps->each_phy_cap_per_hwmode[j];
-			he_mac = mac_cap->he_cap_info_2G;
-			qdf_mem_copy(he_phy, mac_cap->he_cap_phy_info_2G,
-				     WMI_MAX_HECAP_PHY_SIZE * 4);
-			he_ppet = (uint8_t *)&mac_cap->he_ppet2G;
-			nss = (mac_cap->tx_chain_mask_2G >
-				mac_cap->rx_chain_mask_2G) ?
-					mac_cap->tx_chain_mask_2G :
-					mac_cap->rx_chain_mask_2G;
-			mcs = 0;
-			for (k = 1; k < nss; k++) {
-				mcs_temp = WMI_HE_MAX_MCS_4_SS_MASK(
-						mac_cap->he_supp_mcs_2G, k);
-				if (mcs_temp > mcs)
-					mcs = mcs_temp;
+			if (mac_cap->supported_bands & WLAN_2G_CAPABILITY) {
+				wma_convert_he_cap(&he_cap_mac,
+						mac_cap->he_cap_info_2G,
+						mac_cap->he_cap_phy_info_2G,
+						(uint8_t *)&mac_cap->he_ppet2G,
+						mac_cap->he_supp_mcs_2G,
+						mac_cap->tx_chain_mask_2G,
+						mac_cap->rx_chain_mask_2G);
+
 			}
 
-			wma_convert_he_cap(&he_cap_mac0, he_mac, he_phy,
-					   he_ppet, mcs, nss);
-			if (he_cap_mac0.present)
+			if (he_cap_mac.present)
 				wma_derive_ext_he_cap(wma_handle, &tmp_he_cap,
-					&he_cap_mac0);
+					&he_cap_mac);
 
-			he_mac = mac_cap->he_cap_info_5G;
-			qdf_mem_copy(he_phy, mac_cap->he_cap_phy_info_5G,
-				     WMI_MAX_HECAP_PHY_SIZE * 4);
-			he_ppet = (uint8_t *)&mac_cap->he_ppet5G;
-			nss = (mac_cap->tx_chain_mask_5G >
-				mac_cap->rx_chain_mask_5G) ?
-					mac_cap->tx_chain_mask_5G :
-					mac_cap->rx_chain_mask_5G;
-			mcs = 0;
-			for (k = 1; k < nss; k++) {
-				mcs_temp = WMI_HE_MAX_MCS_4_SS_MASK(
-						mac_cap->he_supp_mcs_5G, k);
-				if (mcs_temp > mcs)
-					mcs = mcs_temp;
+			qdf_mem_zero(&he_cap_mac,
+				     sizeof(tDot11fIEvendor_he_cap));
+			if (mac_cap->supported_bands & WLAN_5G_CAPABILITY) {
+				wma_convert_he_cap(&he_cap_mac,
+						mac_cap->he_cap_info_5G,
+						mac_cap->he_cap_phy_info_5G,
+						(uint8_t *)&mac_cap->he_ppet5G,
+						mac_cap->he_supp_mcs_5G,
+						mac_cap->tx_chain_mask_5G,
+						mac_cap->rx_chain_mask_5G);
+
 			}
-			wma_convert_he_cap(&he_cap_mac1, he_mac, he_phy,
-					   he_ppet, mcs, nss);
-			if (he_cap_mac1.present)
+
+			if (he_cap_mac.present)
 				wma_derive_ext_he_cap(wma_handle, &tmp_he_cap,
-					&he_cap_mac1);
+					&he_cap_mac);
 		}
 	}
 
