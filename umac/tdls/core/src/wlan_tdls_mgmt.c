@@ -172,28 +172,23 @@ QDF_STATUS tdls_process_rx_frame(struct scheduler_msg *msg)
 QDF_STATUS tdls_mgmt_rx_ops(struct wlan_objmgr_psoc *psoc,
 	bool isregister)
 {
-	struct mgmt_txrx_mgmt_frame_cb_info frm_cb_info[3];
-
+	struct mgmt_txrx_mgmt_frame_cb_info frm_cb_info;
 	QDF_STATUS status;
 	int num_of_entries;
 
 	tdls_debug("psoc:%p, is register rx:%d", psoc, isregister);
 
-	frm_cb_info[0].frm_type = MGMT_PROBE_REQ;
-	frm_cb_info[0].mgmt_rx_cb = tgt_tdls_mgmt_frame_rx_cb;
-	frm_cb_info[1].frm_type = MGMT_ACTION_TDLS_DISCRESP;
-	frm_cb_info[1].mgmt_rx_cb = tgt_tdls_mgmt_frame_rx_cb;
-	frm_cb_info[2].frm_type = MGMT_ACTION_VENDOR_SPECIFIC;
-	frm_cb_info[2].mgmt_rx_cb = tgt_tdls_mgmt_frame_rx_cb;
-	num_of_entries = 3;
+	frm_cb_info.frm_type = MGMT_ACTION_TDLS_DISCRESP;
+	frm_cb_info.mgmt_rx_cb = tgt_tdls_mgmt_frame_rx_cb;
+	num_of_entries = 1;
 
 	if (isregister)
 		status = wlan_mgmt_txrx_register_rx_cb(psoc,
-				WLAN_UMAC_COMP_TDLS, frm_cb_info,
+				WLAN_UMAC_COMP_TDLS, &frm_cb_info,
 				num_of_entries);
 	else
 		status = wlan_mgmt_txrx_deregister_rx_cb(psoc,
-				WLAN_UMAC_COMP_TDLS, frm_cb_info,
+				WLAN_UMAC_COMP_TDLS, &frm_cb_info,
 				num_of_entries);
 
 	return status;
