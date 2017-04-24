@@ -110,6 +110,19 @@ struct cancel_roc_context {
 };
 
 /**
+ * p2p_mgmt_rx_action_ops() - register or unregister rx action callback
+ * @psoc: psoc object
+ * @isregister: register if true, unregister if false
+ *
+ * This function registers or unregisters rx action frame callback to
+ * mgmt txrx component.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS p2p_mgmt_rx_action_ops(struct wlan_objmgr_psoc *psoc,
+	bool isregister);
+
+/**
  * p2p_find_current_roc_ctx() - Find out roc context in progressing
  * @p2p_soc_obj: p2p psoc private object
  *
