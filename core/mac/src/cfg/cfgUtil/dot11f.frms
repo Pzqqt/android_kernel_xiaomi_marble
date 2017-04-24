@@ -2817,6 +2817,64 @@ IE vendor_he_op (EID_VENDOR_SPECIFIC) OUI (0x00, 0x13, 0x74, 0x02)
     MANDIE IE vht_info;
 }
 
+IE mu_edca_param_set (EID_VENDOR_SPECIFIC) OUI (0x00, 0x13, 0x74, 0x04)
+{
+    qos, 1;
+    {
+        acbe_aifsn: 4;
+        acbe_acm:   1;
+        acbe_aci:   2;
+        unused1:    1;
+    }
+    {
+        acbe_acwmin: 4;
+        acbe_acwmax: 4;
+    }
+    acbe_muedca_timer, 1;
+    {
+        acbk_aifsn: 4;
+        acbk_acm:   1;
+        acbk_aci:   2;
+        unused2:    1;
+    }
+    {
+        acbk_acwmin: 4;
+        acbk_acwmax: 4;
+    }
+    acbk_muedca_timer, 1;
+    {
+        acvi_aifsn: 4;
+        acvi_acm:   1;
+        acvi_aci:   2;
+        unused3:    1;
+    }
+    {
+        acvi_acwmin: 4;
+        acvi_acwmax: 4;
+    }
+    acvi_muedca_timer, 1;
+    {
+        acvo_aifsn: 4;
+        acvo_acm:   1;
+        acvo_aci:   2;
+        unused4:    1;
+    }
+    {
+        acvo_acwmin: 4;
+        acvo_acwmax: 4;
+    }
+    acvo_muedca_timer, 1;
+}
+
+IE bss_color_change(EID_VENDOR_SPECIFIC) OUI (0x00, 0x13, 0x74, 0x05)
+{
+    countdown, 1;
+    {
+        new_color: 6;
+        reserved: 2;
+    }
+}
+
 /////////////////////////////////////////////////////////////////////////////
 //                                MULTIIEs                                 //
 /////////////////////////////////////////////////////////////////////////////
@@ -3211,6 +3269,8 @@ FRAME Beacon                              // C.f. Sec. 7.2.3.1
     OPTIE  QCN_IE;
     OPTIE  vendor_he_cap;
     OPTIE  vendor_he_op;
+    OPTIE  bss_color_change;
+    OPTIE  mu_edca_param_set;
 } // End frame Beacon.
 
 // Ok, here's  the story on  Beacon1 & Beacon2.   We presumably beacon  a lot
@@ -3303,6 +3363,8 @@ FRAME Beacon2
     OPTIE  QCN_IE;
     OPTIE  vendor_he_cap;
     OPTIE  vendor_he_op;
+    OPTIE  bss_color_change;
+    OPTIE  mu_edca_param_set;
 }
 
 // This frame is just Beacon with its Fixed Fields stripped out.  It's handy
@@ -3372,6 +3434,8 @@ FRAME BeaconIEs
     OPTIE  QCN_IE;
     OPTIE  vendor_he_cap;
     OPTIE  vendor_he_op;
+    OPTIE  bss_color_change;
+    OPTIE  mu_edca_param_set;
 } // End frame BeaconIEs.
 
 FRAME Disassociation                      // 7.3.3.3
@@ -3459,6 +3523,8 @@ FRAME AssocResponse                       // 7.2.3.5
     OPTIE  QCN_IE;
     OPTIE  vendor_he_cap;
     OPTIE  vendor_he_op;
+    OPTIE  bss_color_change;
+    OPTIE  mu_edca_param_set;
 } // End frame AssocResponse.
 
 FRAME ReAssocRequest                      // 7.2.3.6
@@ -3535,6 +3601,8 @@ FRAME ReAssocResponse                     // 7.2.3.7
     OPTIE  vendor_vht_ie;
     OPTIE  vendor_he_cap;
     OPTIE  vendor_he_op;
+    OPTIE  bss_color_change;
+    OPTIE  mu_edca_param_set;
 } // End frame ReAssocResponse.
 
 FRAME ProbeRequest                        // 7.2.3.8
@@ -3614,6 +3682,8 @@ FRAME ProbeResponse                       // 7.2.3.9
     OPTIE  QCN_IE;
     OPTIE  vendor_he_cap;
     OPTIE  vendor_he_op;
+    OPTIE  bss_color_change;
+    OPTIE  mu_edca_param_set;
 } // End frame ProbeResponse.
 
 FRAME Authentication                      // 7.2.3.10
