@@ -11336,6 +11336,55 @@ send_wmm_update_cmd_tlv(wmi_unified_t wmi_handle,
 	return ret;
 }
 
+/**
+ * send_coex_config_cmd_tlv() - send coex config command to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to coex config param
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS
+send_coex_config_cmd_tlv(wmi_unified_t wmi_handle,
+			 struct coex_config_params *param)
+{
+	WMI_COEX_CONFIG_CMD_fixed_param *cmd;
+	wmi_buf_t buf;
+	QDF_STATUS ret;
+	int32_t len;
+
+	len = sizeof(*cmd);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s: wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cmd = (WMI_COEX_CONFIG_CMD_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_WMI_COEX_CONFIG_CMD_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(
+		       WMITLV_TAG_STRUC_WMI_COEX_CONFIG_CMD_fixed_param));
+
+	cmd->vdev_id = param->vdev_id;
+	cmd->config_type = param->config_type;
+	cmd->config_arg1 = param->config_arg1;
+	cmd->config_arg2 = param->config_arg2;
+	cmd->config_arg3 = param->config_arg3;
+	cmd->config_arg4 = param->config_arg4;
+	cmd->config_arg5 = param->config_arg5;
+	cmd->config_arg6 = param->config_arg6;
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_COEX_CONFIG_CMDID);
+
+	if (ret != 0) {
+		WMI_LOGE("Sending COEX CONFIG CMD failed\n");
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+
 static
 void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 				target_resource_config *tgt_res_cfg)
@@ -17449,6 +17498,7 @@ struct wmi_ops tlv_ops =  {
 				send_vdev_spectral_enable_cmd_tlv,
 	.send_pdev_qvit_cmd = send_pdev_qvit_cmd_tlv,
 	.send_wmm_update_cmd = send_wmm_update_cmd_tlv,
+	.send_coex_config_cmd = send_coex_config_cmd_tlv,
 	.get_target_cap_from_service_ready = extract_service_ready_tlv,
 	.extract_hal_reg_cap = extract_hal_reg_cap_tlv,
 	.extract_host_mem_req = extract_host_mem_req_tlv,
