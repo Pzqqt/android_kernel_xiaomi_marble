@@ -35,6 +35,7 @@
 
 #include <qdf_status.h>         /* QDF_STATUS */
 #include <linux/atomic.h>
+#include <linux/bitops.h>
 
 typedef atomic_t __qdf_atomic_t;
 
