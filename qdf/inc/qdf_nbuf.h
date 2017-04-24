@@ -116,13 +116,15 @@
  * @chan_num: Capture channel number
  * @chan_flags: Bitmap of Channel flags, IEEE80211_CHAN_TURBO,
  *              IEEE80211_CHAN_CCK...
- * @vht_flags: VHT flgs, only present for VHT frames.
+ * @ht_flags: HT flags, only present for HT frames.
+ * @vht_flags: VHT flags, only present for VHT frames.
  * @vht_flag_values1-5: Contains corresponding data for flags field
  * @rate: Rate in terms 500Kbps
  * @rtap_flags: Bit map of available fields in the radiotap
  * @ant_signal_db: Rx packet RSSI
  * @nr_ant: Number of Antennas used for streaming
  * @mcs: MCS index of Rx frame
+ * @bw: bandwidth of rx frame
  * @is_stbc: Is STBC enabled
  * @sgi: Rx frame short guard interval
  * @ldpc: ldpc enabled
@@ -133,6 +135,7 @@ struct mon_rx_status {
 	uint16_t chan_freq;
 	uint16_t chan_num;
 	uint16_t chan_flags;
+	uint16_t ht_flags;
 	uint16_t vht_flags;
 	uint16_t vht_flag_values6;
 	uint8_t  rate;
@@ -140,6 +143,7 @@ struct mon_rx_status {
 	uint8_t  ant_signal_db;
 	uint8_t  nr_ant;
 	uint8_t  mcs;
+	uint8_t  bw;
 	uint8_t  vht_flag_values1;
 	uint8_t  vht_flag_values2;
 	uint8_t  vht_flag_values3[4];
