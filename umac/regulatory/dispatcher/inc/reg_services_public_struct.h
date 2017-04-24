@@ -381,6 +381,10 @@ struct bonded_channel {
 	uint16_t end_ch;
 };
 
+struct set_country {
+	uint8_t country[REG_ALPHA2_LEN + 1];
+	uint8_t pdev_id;
+};
 /**
  * enum ht_sec_ch_offset
  * @NO_SEC_CH: no secondary

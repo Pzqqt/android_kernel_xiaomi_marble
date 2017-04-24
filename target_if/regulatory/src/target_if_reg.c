@@ -129,6 +129,13 @@ static QDF_STATUS tgt_if_regulatory_unregister_master_list_handler(
 					       get_chan_list_cc_event_id());
 }
 
+static QDF_STATUS tgt_if_regulatory_set_country_code(
+	struct wlan_objmgr_psoc *psoc, void *arg)
+{
+	wmi_unified_t wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
+
+	return wmi_unified_set_country_cmd_send(wmi_handle, arg);
+}
 QDF_STATUS target_if_register_regulatory_tx_ops(struct wlan_lmac_if_tx_ops
 						*tx_ops)
 {
@@ -140,6 +147,7 @@ QDF_STATUS target_if_register_regulatory_tx_ops(struct wlan_lmac_if_tx_ops
 	reg_ops->unregister_master_handler =
 		tgt_if_regulatory_unregister_master_list_handler;
 
+	reg_ops->set_country_code = tgt_if_regulatory_set_country_code;
 	return QDF_STATUS_SUCCESS;
 }
 

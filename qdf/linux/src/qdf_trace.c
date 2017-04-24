@@ -1800,6 +1800,7 @@ struct category_name_info g_qdf_category_name[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_SPECTRAL] = {"SPECTRAL"},
 	[QDF_MODULE_ID_P2P] = {"P2P"},
 	[QDF_MODULE_ID_OFFCHAN_TXRX] = {"OFFCHAN"},
+	[QDF_MODULE_ID_REGULATORY] = {"REGULATORY"},
 	[QDF_MODULE_ID_ANY] = {"ANY"},
 };
 EXPORT_SYMBOL(g_qdf_category_name);

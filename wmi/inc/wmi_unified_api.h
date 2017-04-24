@@ -1454,6 +1454,9 @@ QDF_STATUS wmi_unified_dfs_phyerr_offload_en_cmd(void *wmi_hdl,
 QDF_STATUS wmi_unified_dfs_phyerr_offload_dis_cmd(void *wmi_hdl,
 		uint32_t pdev_id);
 
+QDF_STATUS wmi_unified_set_country_cmd_send(void *wmi_hdl,
+				struct set_country *param);
+
 #ifdef WMI_INTERFACE_EVENT_LOGGING
 void wmi_print_cmd_log(wmi_unified_t wmi, uint32_t count,
 		       qdf_abstract_print *print, void *print_priv);
@@ -1475,6 +1478,7 @@ void wmi_print_rx_event_log(wmi_unified_t wmi, uint32_t count,
 
 void wmi_print_mgmt_event_log(wmi_unified_t wmi, uint32_t count,
 			      qdf_abstract_print *print, void *print_priv);
+
 #endif /* WMI_INTERFACE_EVENT_LOGGING */
 
 #endif /* _WMI_UNIFIED_API_H_ */

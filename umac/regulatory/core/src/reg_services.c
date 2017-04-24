@@ -858,6 +858,8 @@ QDF_STATUS reg_set_default_country(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS reg_set_country(struct wlan_objmgr_pdev *pdev, uint8_t *country)
 {
 	struct wlan_regulatory_psoc_priv_obj *psoc_reg;
+	struct wlan_lmac_if_reg_tx_ops *tx_ops;
+	struct set_country country_code;
 	struct wlan_objmgr_psoc *psoc;
 
 	if (!country) {
@@ -866,7 +868,9 @@ QDF_STATUS reg_set_country(struct wlan_objmgr_pdev *pdev, uint8_t *country)
 	}
 
 	psoc = wlan_pdev_get_psoc(pdev);
+
 	psoc_reg = reg_get_psoc_obj(psoc);
+
 	if (!IS_VALID_REG_OBJ(psoc_reg)) {
 		reg_alert("psoc reg component is NULL");
 		return QDF_STATUS_E_INVAL;
@@ -875,6 +879,11 @@ QDF_STATUS reg_set_country(struct wlan_objmgr_pdev *pdev, uint8_t *country)
 	reg_info("setting current_country:%s", country);
 	qdf_mem_copy(psoc_reg->current_country,
 		     country, sizeof(psoc_reg->current_country));
+	qdf_mem_copy(country_code.country,
+		     country, sizeof(psoc_reg->current_country));
+	country_code.pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+	tx_ops = get_reg_psoc_tx_ops(psoc);
+	tx_ops->set_country_code(psoc, &country_code);
 
 	return QDF_STATUS_SUCCESS;
 }

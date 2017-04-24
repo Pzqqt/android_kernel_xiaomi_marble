@@ -17317,7 +17317,13 @@ static QDF_STATUS extract_reg_chan_list_update_event_tlv(
 	num_2g_reg_rules = reg_info->num_2g_reg_rules;
 	num_5g_reg_rules = reg_info->num_5g_reg_rules;
 
+	WMI_LOGD("%s:cc %s dsf %d BW: min_2g %d max_2g %d min_5g %d max_5g %d",
+			__func__, reg_info->alpha2, reg_info->dfs_region,
+			reg_info->min_bw_2g, reg_info->max_bw_2g,
+			reg_info->min_bw_5g, reg_info->max_bw_5g);
 
+	WMI_LOGD("%s: num_2g_reg_rules %d num_5g_reg_rules %d", __func__,
+			num_2g_reg_rules, num_5g_reg_rules);
 	wmi_reg_rule =
 		(wmi_regulatory_rule_struct *)((uint8_t *)chan_list_event_hdr
 			+ sizeof(wmi_reg_chan_list_cc_event_fixed_param)
@@ -17404,6 +17410,52 @@ static QDF_STATUS extract_dfs_radar_detection_event_tlv(
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+/**
+ *  send_set_country_cmd_tlv() - WMI scan channel list function
+ *  @param wmi_handle      : handle to WMI.
+ *  @param param    : pointer to hold scan channel list parameter
+ *
+ *  Return: 0  on success and -ve on failure.
+ */
+static QDF_STATUS send_set_country_cmd_tlv(wmi_unified_t wmi_handle,
+				struct set_country *params)
+{
+	wmi_buf_t buf;
+	QDF_STATUS qdf_status;
+	wmi_set_current_country_cmd_fixed_param *cmd;
+	uint16_t len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("Failed to allocate memory");
+		qdf_status = QDF_STATUS_E_NOMEM;
+		goto end;
+	}
+
+	cmd = (wmi_set_current_country_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_set_current_country_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_set_current_country_cmd_fixed_param));
+
+	WMI_LOGD("setting cuurnet country to  %s", params->country);
+
+	qdf_mem_copy((uint8_t *)&cmd->new_alpha2, params->country, 3);
+
+	cmd->pdev_id = params->pdev_id;
+
+	qdf_status = wmi_unified_cmd_send(wmi_handle,
+			buf, len, WMI_SET_CURRENT_COUNTRY_CMDID);
+
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		WMI_LOGE("Failed to send WMI_SET_CURRENT_COUNTRY_CMDID");
+		wmi_buf_free(buf);
+	}
+
+end:
+	return qdf_status;
+}
 
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
@@ -17680,6 +17732,7 @@ struct wmi_ops tlv_ops =  {
 	.send_pdev_qvit_cmd = send_pdev_qvit_cmd_tlv,
 	.send_wmm_update_cmd = send_wmm_update_cmd_tlv,
 	.send_coex_config_cmd = send_coex_config_cmd_tlv,
+	.send_set_country_cmd = send_set_country_cmd_tlv,
 	.get_target_cap_from_service_ready = extract_service_ready_tlv,
 	.extract_hal_reg_cap = extract_hal_reg_cap_tlv,
 	.extract_host_mem_req = extract_host_mem_req_tlv,

@@ -533,6 +533,8 @@ struct wlan_lmac_if_reg_tx_ops {
 					      void *arg);
 	QDF_STATUS (*unregister_master_handler)(struct wlan_objmgr_psoc *psoc,
 						void *arg);
+	QDF_STATUS (*set_country_code)(struct wlan_objmgr_psoc *psoc,
+						void *arg);
 };
 
 /**
