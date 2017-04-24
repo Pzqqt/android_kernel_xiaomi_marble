@@ -14917,8 +14917,9 @@ QDF_STATUS csr_send_mb_disassoc_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 	 * handoff. Here we should not send the disassoc over the air
 	 * to the AP
 	 */
-	if (CSR_IS_ROAM_SUBSTATE_DISASSOC_HO(pMac, sessionId)
-	    && csr_roam_is11r_assoc(pMac, sessionId)) {
+	if ((CSR_IS_ROAM_SUBSTATE_DISASSOC_HO(pMac, sessionId)
+			&& csr_roam_is11r_assoc(pMac, sessionId)) ||
+						pMsg->process_ho_fail) {
 		/* Set DoNotSendOverTheAir flag to 1 only for handoff case */
 		pMsg->doNotSendOverTheAir = CSR_DONT_SEND_DISASSOC_OVER_THE_AIR;
 	}
