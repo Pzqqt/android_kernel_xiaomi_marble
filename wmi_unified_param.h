@@ -7164,4 +7164,26 @@ enum wmi_host_active_bpf_mode {
 	WMI_HOST_ACTIVE_BPF_ADAPTIVE =	(1 << 3)
 };
 
+/**
+ * struct coex_config_params - Coex config command params
+ * @vdev_id: Virtual AP device identifier
+ * @config_type: Configuration type - wmi_coex_config_type enum
+ * @config_arg1: Configuration argument based on config type
+ * @config_arg2: Configuration argument based on config type
+ * @config_arg3: Configuration argument based on config type
+ * @config_arg4: Configuration argument based on config type
+ * @config_arg5: Configuration argument based on config type
+ * @config_arg6: Configuration argument based on config type
+ */
+struct coex_config_params {
+	uint32_t vdev_id;
+	uint32_t config_type;
+	uint32_t config_arg1;
+	uint32_t config_arg2;
+	uint32_t config_arg3;
+	uint32_t config_arg4;
+	uint32_t config_arg5;
+	uint32_t config_arg6;
+};
+
 #endif /* _WMI_UNIFIED_PARAM_H_ */

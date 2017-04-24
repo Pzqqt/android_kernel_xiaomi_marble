@@ -940,6 +940,9 @@ QDF_STATUS wmi_unified_send_btcoex_duty_cycle_cmd(void *wmi_hdl,
 QDF_STATUS wmi_unified_send_coex_ver_cfg_cmd(void *wmi_hdl,
 				coex_ver_cfg_t *param);
 
+QDF_STATUS wmi_unified_send_coex_config_cmd(void *wmi_hdl,
+					    struct coex_config_params *param);
+
 QDF_STATUS wmi_unified_set_atf_cmd_send(void *wmi_hdl,
 				struct set_atf_params *param);
 
