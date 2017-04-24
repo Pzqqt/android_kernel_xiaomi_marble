@@ -3003,7 +3003,7 @@ QDF_STATUS hdd_ipa_uc_ol_init(hdd_context_t *hdd_ctx)
 	/* IPA requires total byte counts of Tx comp ring */
 	pipe_in.u.dl.comp_ring_size =
 		ipa_ctxt->ipa_resource.tx_comp_ring_size *
-		sizeof(qdf_dma_addr_t);
+		sizeof(target_paddr_t);
 	pipe_in.u.dl.ce_ring_base_pa =
 		ipa_ctxt->ipa_resource.ce_sr_base_paddr;
 	pipe_in.u.dl.ce_door_bell_pa = ipa_ctxt->ipa_resource.ce_reg_paddr;
