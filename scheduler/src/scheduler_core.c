@@ -56,7 +56,7 @@ static QDF_STATUS scheduler_all_queues_init(
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	int i;
 
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR, FL("enter"));
+	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_DEBUG, FL("enter"));
 	if (!sched_ctx) {
 		QDF_ASSERT(0);
 		QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
@@ -69,7 +69,7 @@ static QDF_STATUS scheduler_all_queues_init(
 		return status;
 
 	QDF_TRACE(QDF_MODULE_ID_SCHEDULER,
-		QDF_TRACE_LEVEL_ERROR, FL("free msg queue init complete"));
+		QDF_TRACE_LEVEL_DEBUG, FL("free msg queue init complete"));
 
 	/* Initialize all message queues */
 	for (i = 0; i < SCHEDULER_NUMBER_OF_MSG_QUEUE; i++) {
@@ -83,7 +83,7 @@ static QDF_STATUS scheduler_all_queues_init(
 		sched_ctx->queue_ctx.scheduler_msg_qid_to_qidx[i] =
 					SCHEDULER_NUMBER_OF_MSG_QUEUE;
 
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR, FL("exit"));
+	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_DEBUG, FL("exit"));
 
 	return status;
 }
@@ -95,7 +95,7 @@ static QDF_STATUS scheduler_all_queues_deinit(
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	int i;
 
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR, FL("enter"));
+	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_DEBUG, FL("enter"));
 	if (!sched_ctx) {
 		QDF_ASSERT(0);
 		QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
@@ -106,7 +106,7 @@ static QDF_STATUS scheduler_all_queues_deinit(
 	scheduler_mq_deinit(&sched_ctx->queue_ctx.free_msg_q);
 
 	QDF_TRACE(QDF_MODULE_ID_SCHEDULER,
-		  QDF_TRACE_LEVEL_ERROR, FL("free msg queue inited"));
+		  QDF_TRACE_LEVEL_DEBUG, FL("free msg queue inited"));
 
 	/* De-Initialize all message queues */
 	for (i = 0; i < SCHEDULER_NUMBER_OF_MSG_QUEUE; i++)
@@ -117,13 +117,13 @@ static QDF_STATUS scheduler_all_queues_deinit(
 		sched_ctx->queue_ctx.scheduler_msg_qid_to_qidx[i] =
 					SCHEDULER_NUMBER_OF_MSG_QUEUE;
 
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR, FL("exit"));
+	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_DEBUG, FL("exit"));
 	return status;
 }
 
 QDF_STATUS scheduler_mq_init(struct scheduler_mq_type *msg_q)
 {
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR, FL("Enter"));
+	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_DEBUG, FL("Enter"));
 	if (msg_q == NULL) {
 		QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
 			  "%s: NULL pointer passed", __func__);
@@ -133,7 +133,7 @@ QDF_STATUS scheduler_mq_init(struct scheduler_mq_type *msg_q)
 	qdf_spinlock_create(&msg_q->mq_lock);
 	/* Now initialize the List data structure */
 	qdf_list_create(&msg_q->mq_list, SCHEDULER_CORE_MAX_MESSAGES);
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR, FL("Exit"));
+	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_DEBUG, FL("Exit"));
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -227,7 +227,7 @@ QDF_STATUS scheduler_queues_init(struct scheduler_ctx *sched_ctx)
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	int i;
 
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR, FL("Enter"));
+	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_DEBUG, FL("Enter"));
 	if (!sched_ctx) {
 		QDF_ASSERT(0);
 		QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
@@ -243,7 +243,7 @@ QDF_STATUS scheduler_queues_init(struct scheduler_ctx *sched_ctx)
 		return status;
 	}
 	QDF_TRACE(QDF_MODULE_ID_SCHEDULER,
-		QDF_TRACE_LEVEL_ERROR, FL("Queue init passed"));
+		QDF_TRACE_LEVEL_DEBUG, FL("Queue init passed"));
 
 	for (i = 0; i < SCHEDULER_CORE_MAX_MESSAGES; i++) {
 		(sched_ctx->queue_ctx.msg_wrappers[i]).msg_buf =
@@ -253,7 +253,7 @@ QDF_STATUS scheduler_queues_init(struct scheduler_ctx *sched_ctx)
 		scheduler_mq_put(&sched_ctx->queue_ctx.free_msg_q,
 			   &(sched_ctx->queue_ctx.msg_wrappers[i]));
 	}
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR, FL("Exit"));
+	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_DEBUG, FL("Exit"));
 	return status;
 }
 
@@ -389,7 +389,7 @@ int scheduler_thread(void *arg)
 	 * has been created
 	 */
 	qdf_event_set(&sch_ctx->sch_start_event);
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
+	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: scheduler_thread %d (%s) starting up", __func__, current->pid,
 		  current->comm);
 

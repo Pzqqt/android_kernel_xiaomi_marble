@@ -146,7 +146,7 @@ static QDF_STATUS scheduler_open(struct scheduler_ctx *sched_ctx)
 	}
 	/* start the thread here */
 	qdf_wake_up_process(sched_ctx->sch_thread);
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
+	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_INFO,
 		  "%s: QDF Main Controller thread Created", __func__);
 
 	/*
@@ -155,7 +155,7 @@ static QDF_STATUS scheduler_open(struct scheduler_ctx *sched_ctx)
 	 */
 	qdf_wait_single_event(&sched_ctx->sch_start_event, 0);
 	/* We're good now: Let's get the ball rolling!!! */
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
+	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_INFO,
 		  "%s: Scheduler thread has started", __func__);
 	return QDF_STATUS_SUCCESS;
 }
@@ -316,7 +316,7 @@ QDF_STATUS scheduler_register_module(QDF_MODULE_ID qid,
 	struct scheduler_mq_ctx *ctx;
 	struct scheduler_ctx *sched_ctx = scheduler_get_context();
 
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_DEBUG,
 		FL("Enter"));
 	if (!sched_ctx) {
 		QDF_ASSERT(0);
@@ -338,7 +338,7 @@ QDF_STATUS scheduler_register_module(QDF_MODULE_ID qid,
 	ctx->sch_msg_q[sched_ctx->sch_last_qidx].qid = qid;
 	ctx->scheduler_msg_process_fn[sched_ctx->sch_last_qidx] = callback;
 	sched_ctx->sch_last_qidx++;
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_DEBUG,
 		FL("Exit"));
 	return QDF_STATUS_SUCCESS;
 }
