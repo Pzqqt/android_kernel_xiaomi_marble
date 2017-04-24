@@ -1745,7 +1745,11 @@ static void ce_fastpath_rx_handle(struct CE_state *ce_state,
 	dest_ring->write_index = write_index;
 }
 
+#ifdef CONFIG_SLUB_DEBUG_ON
+#define MSG_FLUSH_NUM 16
+#else /* PERF build */
 #define MSG_FLUSH_NUM 32
+#endif /* SLUB_DEBUG_ON */
 /**
  * ce_per_engine_service_fast() - CE handler routine to service fastpath msgs
  * @scn: hif_context
