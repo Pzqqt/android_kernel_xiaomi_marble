@@ -6633,3 +6633,22 @@ QDF_STATUS wmi_extract_chainmask_tables(void *wmi_hdl, uint8_t *evt_buf,
 
 	return QDF_STATUS_E_FAILURE;
 }
+/**
+ *  wmi_unified_set_country_cmd_send() - WMI set country function
+ *  @param wmi_handle      : handle to WMI.
+ *  @param param    : pointer to hold set country cmd parameter
+ *
+ *  Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_set_country_cmd_send(void *wmi_hdl,
+				struct set_country *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_set_country_cmd)
+		return wmi_handle->ops->send_set_country_cmd(wmi_handle,
+				  param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
