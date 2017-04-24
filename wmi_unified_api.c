@@ -6543,6 +6543,27 @@ QDF_STATUS wmi_unified_send_coex_ver_cfg_cmd(void *wmi_hdl,
 }
 
 /**
+ * wmi_unified_send_coex_config_cmd() - send coex ver cfg command
+ * @wmi_handle: wmi handle
+ * @param:      wmi coex cfg cmd params
+ *
+ * Send WMI_COEX_CFG_CMD parameters to fw.
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+QDF_STATUS wmi_unified_send_coex_config_cmd(void *wmi_hdl,
+					    struct coex_config_params *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_coex_config_cmd)
+		return wmi_handle->ops->send_coex_config_cmd(wmi_handle,
+			param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
  * wmi_extract_peer_delete_response_event() -
  *       extract vdev id and peer mac addresse from peer delete response event
  * @wmi_handle: wmi handle
