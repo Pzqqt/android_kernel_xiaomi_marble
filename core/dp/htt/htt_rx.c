@@ -1685,7 +1685,7 @@ static void htt_mon_rx_get_phy_info(struct htt_host_rx_desc_base *rx_desc,
 	uint8_t preamble = SHORT_PREAMBLE;
 	uint8_t preamble_type = rx_desc->ppdu_start.preamble_type;
 	uint8_t mcs = 0, nss = 0, sgi = 0, bw = 0, beamformed = 0;
-	uint16_t vht_flags = 0;
+	uint16_t vht_flags = 0, ht_flags = 0;
 	uint32_t l_sig_rate_select = rx_desc->ppdu_start.l_sig_rate_select;
 	uint32_t l_sig_rate = rx_desc->ppdu_start.l_sig_rate;
 	bool is_stbc = 0, ldpc = 0;
@@ -1758,7 +1758,7 @@ static void htt_mon_rx_get_phy_info(struct htt_host_rx_desc_base *rx_desc,
 		is_stbc = ((VHT_SIG_A_2(rx_desc) >> 4) & 3);
 		/* fallthrough */
 	case 9:
-		vht_flags = 1;
+		ht_flags = 1;
 		sgi = (VHT_SIG_A_2(rx_desc) >> 7) & 0x01;
 		bw = (VHT_SIG_A_1(rx_desc) >> 7) & 0x01;
 		mcs = (VHT_SIG_A_1(rx_desc) & 0x7f);
@@ -1767,7 +1767,6 @@ static void htt_mon_rx_get_phy_info(struct htt_host_rx_desc_base *rx_desc,
 			(VHT_SIG_A_2(rx_desc) >> 8) & 0x1;
 		break;
 	case 0x0c:
-		vht_flags = 1;
 		is_stbc = (VHT_SIG_A_2(rx_desc) >> 3) & 1;
 		ldpc = (VHT_SIG_A_2(rx_desc) >> 2) & 1;
 		/* fallthrough */
@@ -1785,7 +1784,7 @@ static void htt_mon_rx_get_phy_info(struct htt_host_rx_desc_base *rx_desc,
 			nss = (VHT_SIG_A_1(rx_desc) >> 10) &
 				0x7;
 		} else {
-			/* SU case */
+			/* MU case */
 			uint8_t sta_user_pos =
 				(uint8_t)((rx_desc->ppdu_start.reserved_4a >> 8)
 					  & 0x3);
@@ -1806,16 +1805,23 @@ static void htt_mon_rx_get_phy_info(struct htt_host_rx_desc_base *rx_desc,
 	}
 
 	rx_status->mcs = mcs;
+	rx_status->bw = bw;
 	rx_status->nr_ant = nss;
 	rx_status->is_stbc = is_stbc;
 	rx_status->sgi = sgi;
 	rx_status->ldpc = ldpc;
 	rx_status->beamformed = beamformed;
-	rx_status->vht_flag_values3[0] = mcs << 0x4;
+	rx_status->vht_flag_values3[0] = mcs << 0x4 | (nss + 1);
 	rx_status->rate = rate;
+	rx_status->ht_flags = ht_flags;
 	rx_status->vht_flags = vht_flags;
 	rx_status->rtap_flags |= ((preamble == SHORT_PREAMBLE) ? BIT(1) : 0);
-	rx_status->vht_flag_values2 = 0x01 < bw;
+	if (bw == 0)
+		rx_status->vht_flag_values2 = 0;
+	else if (bw == 1)
+		rx_status->vht_flag_values2 = 1;
+	else if (bw == 2)
+		rx_status->vht_flag_values2 = 4;
 }
 
 /**
