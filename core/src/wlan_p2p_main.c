@@ -564,6 +564,9 @@ QDF_STATUS p2p_psoc_start(struct wlan_objmgr_psoc *soc,
 		soc, P2P_MODULE_NAME, tgt_p2p_scan_event_cb,
 		p2p_soc_obj);
 
+	/* register rx action frame */
+	p2p_mgmt_rx_action_ops(soc, true);
+
 	p2p_debug("p2p psoc start successful, scan request id:%d",
 		p2p_soc_obj->scan_req_id);
 
@@ -593,6 +596,9 @@ QDF_STATUS p2p_psoc_stop(struct wlan_objmgr_psoc *soc)
 		p2p_err("start parameters is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	/* unregister rx action frame */
+	p2p_mgmt_rx_action_ops(soc, false);
 
 	/* clean up queue of p2p psoc private object */
 	p2p_cleanup_tx_queue(p2p_soc_obj);
