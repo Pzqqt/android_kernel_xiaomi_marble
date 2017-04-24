@@ -366,50 +366,6 @@ QDF_STATUS csr_init_chan_list(tpAniSirGlobal mac, uint8_t *alpha2)
 	return status;
 }
 
-QDF_STATUS csr_set_reg_info(tHalHandle hHal, uint8_t *apCntryCode)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	v_REGDOMAIN_t regId;
-	uint8_t cntryCodeLength;
-
-	if (NULL == apCntryCode) {
-		sme_err("Invalid country Code Pointer");
-		return QDF_STATUS_E_FAILURE;
-	}
-	sme_debug("country Code %.2s", apCntryCode);
-
-	cntryCodeLength = WNI_CFG_COUNTRY_CODE_LEN;
-	status = csr_get_regulatory_domain_for_country(pMac, apCntryCode,
-						&regId, SOURCE_USERSPACE);
-	if (status != QDF_STATUS_SUCCESS) {
-		sme_err("fail to get regId for country Code %.2s",
-			apCntryCode);
-		return status;
-	}
-	if (regId >= REGDOMAIN_COUNT) {
-		sme_err("Invalid regId for country Code %.2s", apCntryCode);
-		return QDF_STATUS_E_FAILURE;
-	}
-	pMac->scan.domainIdDefault = regId;
-	pMac->scan.domainIdCurrent = pMac->scan.domainIdDefault;
-	/* Clear CC field */
-	qdf_mem_set(pMac->scan.countryCodeDefault, WNI_CFG_COUNTRY_CODE_LEN, 0);
-
-	/* Copy 2 or 3 bytes country code */
-	qdf_mem_copy(pMac->scan.countryCodeDefault, apCntryCode,
-		     cntryCodeLength);
-
-	/* If 2 bytes country code, 3rd byte must be filled with space */
-	if ((WNI_CFG_COUNTRY_CODE_LEN - 1) == cntryCodeLength)
-		qdf_mem_set(pMac->scan.countryCodeDefault + 2, 1, 0x20);
-
-	qdf_mem_copy(pMac->scan.countryCodeCurrent,
-		     pMac->scan.countryCodeDefault, WNI_CFG_COUNTRY_CODE_LEN);
-	status = csr_get_channel_and_power_list(pMac);
-	return status;
-}
-
 QDF_STATUS csr_set_channels(tHalHandle hHal, tCsrConfigParam *pParam)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;

@@ -64,6 +64,7 @@
 #include "csr_api.h"
 #include "wlan_reg_services_api.h"
 #include <wlan_scan_ucfg_api.h>
+#include "wlan_reg_ucfg_api.h"
 
 static tSelfRecoveryStats g_self_recovery_stats;
 
@@ -952,31 +953,6 @@ QDF_STATUS sme_get_soft_ap_domain(tHalHandle hHal, v_REGDOMAIN_t *domainIdSoftAp
 	*domainIdSoftAp = pMac->scan.domainIdCurrent;
 	status = QDF_STATUS_SUCCESS;
 
-	return status;
-}
-
-QDF_STATUS sme_set_reg_info(tHalHandle hHal, uint8_t *apCntryCode)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	int32_t ctry_val;
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_MSG_SET_REGINFO, NO_SESSION, 0));
-	if (NULL == apCntryCode) {
-		sme_err("Empty Country Code, nothing to update");
-		return status;
-	}
-
-	ctry_val = cds_get_country_from_alpha2(apCntryCode);
-	if (ctry_val == CTRY_DEFAULT) {
-		sme_err("invalid AP alpha2");
-		return  status;
-	}
-
-	status = csr_set_reg_info(hHal, apCntryCode);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sme_err("csr_set_reg_info failed with status: %d", status);
-	}
 	return status;
 }
 
@@ -5043,21 +5019,6 @@ QDF_STATUS sme_get_country_code(tHalHandle hHal, uint8_t *pBuf, uint8_t *pbLen)
 	return csr_get_country_code(pMac, pBuf, pbLen);
 }
 
-/**
- * sme_apply_channel_power_info_to_fw() - sends channel info to fw
- * @hHal: hal handle
- *
- * This function sends the channel power info to firmware
- *
- * Return: none
- */
-void sme_apply_channel_power_info_to_fw(tHalHandle hHal)
-{
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
-	csr_apply_channel_power_info_wrapper(pMac);
-}
-
 /* some support functions */
 bool sme_is11d_supported(tHalHandle hHal)
 {
@@ -6801,8 +6762,8 @@ QDF_STATUS sme_handle_change_country_code(tpAniSirGlobal pMac, void *pMsgBuf)
 		pMac->roam.configParam.Is11dSupportEnabled =
 			pMac->roam.configParam.Is11dSupportEnabledOriginal;
 
-		qdf_status = wlan_reg_read_default_country(pMac->psoc,
-				default_country);
+		qdf_status = ucfg_reg_get_default_country(pMac->psoc,
+							  default_country);
 
 		/* read the country code and use it */
 		if (QDF_IS_STATUS_SUCCESS(qdf_status)) {

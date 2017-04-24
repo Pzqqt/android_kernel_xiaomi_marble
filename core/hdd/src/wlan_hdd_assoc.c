@@ -240,7 +240,7 @@ bool hdd_conn_is_connected(hdd_station_ctx_t *pHddStaCtx)
  * Return: eCSR_BAND_24 or eCSR_BAND_5G based on current AP connection
  *	eCSR_BAND_ALL if not connected
  */
-eCsrBand hdd_conn_get_connected_band(hdd_station_ctx_t *pHddStaCtx)
+enum band_info hdd_conn_get_connected_band(hdd_station_ctx_t *pHddStaCtx)
 {
 	uint8_t staChannel = 0;
 
@@ -248,11 +248,11 @@ eCsrBand hdd_conn_get_connected_band(hdd_station_ctx_t *pHddStaCtx)
 		staChannel = pHddStaCtx->conn_info.operationChannel;
 
 	if (staChannel > 0 && staChannel < 14)
-		return eCSR_BAND_24;
+		return BAND_2G;
 	else if (staChannel >= 36 && staChannel <= 184)
-		return eCSR_BAND_5G;
+		return BAND_5G;
 	else   /* If station is not connected return as eCSR_BAND_ALL */
-		return eCSR_BAND_ALL;
+		return BAND_ALL;
 }
 
 /**

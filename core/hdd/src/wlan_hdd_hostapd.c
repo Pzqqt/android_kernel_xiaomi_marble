@@ -84,6 +84,7 @@
 #include <cdp_txrx_stats.h>
 #include "wlan_hdd_he.h"
 #include "wlan_dfs_tgt_api.h"
+#include <wlan_reg_ucfg_api.h>
 
 #define    IS_UP(_dev) \
 	(((_dev)->flags & (IFF_RUNNING|IFF_UP)) == (IFF_RUNNING|IFF_UP))
@@ -7502,8 +7503,12 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 		if (pIe) {
 			pConfig->ieee80211d = 1;
 			qdf_mem_copy(pConfig->countryCode, &pIe[2], 3);
-			sme_set_reg_info(hHal, pConfig->countryCode);
-			sme_apply_channel_power_info_to_fw(hHal);
+			status = ucfg_reg_set_country(pHddCtx->hdd_pdev,
+					pConfig->countryCode);
+			if (QDF_IS_STATUS_ERROR(status)) {
+				hdd_err("Failed to set country");
+				pConfig->ieee80211d = 0;
+			}
 		} else {
 			pConfig->countryCode[0] = pHddCtx->reg.alpha2[0];
 			pConfig->countryCode[1] = pHddCtx->reg.alpha2[1];

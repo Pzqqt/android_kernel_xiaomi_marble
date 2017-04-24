@@ -244,7 +244,6 @@ QDF_STATUS sme_update_config(tHalHandle hHal,
 QDF_STATUS sme_set11dinfo(tHalHandle hHal, tpSmeConfigParams pSmeConfigParams);
 QDF_STATUS sme_get_soft_ap_domain(tHalHandle hHal,
 		v_REGDOMAIN_t *domainIdSoftAp);
-QDF_STATUS sme_set_reg_info(tHalHandle hHal, uint8_t *apCntryCode);
 QDF_STATUS sme_hdd_ready_ind(tHalHandle hHal);
 /**
  * sme_ser_cmd_callback() - callback from serialization module
@@ -432,8 +431,6 @@ QDF_STATUS sme_roam_set_key(tHalHandle, uint8_t sessionId,
 		tCsrRoamSetKey *pSetKey, uint32_t *pRoamId);
 QDF_STATUS sme_get_country_code(tHalHandle hHal, uint8_t *pBuf, uint8_t *pbLen);
 
-
-void sme_apply_channel_power_info_to_fw(tHalHandle hHal);
 
 /* some support functions */
 bool sme_is11d_supported(tHalHandle hHal);

@@ -1666,8 +1666,6 @@ typedef QDF_STATUS (*csr_roamSessionCloseCallback)(void *pContext);
 
 QDF_STATUS csr_set_channels(tHalHandle hHal, tCsrConfigParam *pParam);
 
-QDF_STATUS csr_set_reg_info(tHalHandle hHal, uint8_t *apCntryCode);
-
 /* enum to string conversion for debug output */
 const char *get_e_roam_cmd_status_str(eRoamCmdStatus val);
 const char *get_e_csr_roam_result_str(eCsrRoamResult val);

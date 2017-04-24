@@ -7649,46 +7649,17 @@ err_close_adapters:
 /**
  * hdd_update_country_code - Update country code
  * @hdd_ctx: HDD context
- * @adapter: Primary adapter context
  *
- * Update country code based on module parameter country_code at SME and wait
- * for the settings to take effect.
+ * Update country code based on module parameter country_code
  *
  * Return: 0 on success and errno on failure
  */
-static int hdd_update_country_code(hdd_context_t *hdd_ctx,
-				  hdd_adapter_t *adapter)
+static int hdd_update_country_code(hdd_context_t *hdd_ctx)
 {
-	QDF_STATUS status;
-	int ret = 0;
-	unsigned long rc;
-
-	if (country_code == NULL)
+	if (!country_code)
 		return 0;
 
-	INIT_COMPLETION(adapter->change_country_code);
-
-	status = sme_change_country_code(hdd_ctx->hHal,
-					 wlan_hdd_change_country_code_callback,
-					 country_code, adapter,
-					 hdd_ctx->pcds_context, eSIR_TRUE,
-					 eSIR_TRUE);
-
-
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hdd_err("SME Change Country code from module param fail ret=%d",
-			ret);
-		return -EINVAL;
-	}
-
-	rc = wait_for_completion_timeout(&adapter->change_country_code,
-			 msecs_to_jiffies(WLAN_WAIT_TIME_COUNTRY));
-	if (!rc) {
-		hdd_err("SME while setting country code timed out");
-		ret = -ETIMEDOUT;
-	}
-
-	return ret;
+	return hdd_reg_set_country(hdd_ctx, country_code);
 }
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
@@ -8636,7 +8607,7 @@ static int hdd_features_init(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 
 	ENTER();
 
-	ret = hdd_update_country_code(hdd_ctx, adapter);
+	ret = hdd_update_country_code(hdd_ctx);
 	if (ret) {
 		hdd_err("Failed to update country code: %d", ret);
 		goto out;

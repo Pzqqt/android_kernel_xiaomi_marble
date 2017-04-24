@@ -544,7 +544,7 @@ static int hdd_regulatory_init_no_offload(hdd_context_t *hdd_ctx,
 
 	reg_info->cc_src = SOURCE_DRIVER;
 
-	wlan_reg_set_default_country(hdd_ctx->hdd_psoc, reg_info->alpha2);
+	ucfg_reg_set_default_country(hdd_ctx->hdd_psoc, reg_info->alpha2);
 
 	cds_fill_and_send_ctl_to_fw(reg_info);
 
@@ -580,6 +580,28 @@ void hdd_program_country_code(hdd_context_t *hdd_ctx)
 	}
 }
 
+int hdd_reg_set_country(hdd_context_t *hdd_ctx, char *country_code)
+{
+	int err;
+	QDF_STATUS status;
+
+	/* validation */
+	err = wlan_hdd_validate_context(hdd_ctx);
+	if (err)
+		return err;
+
+	if (!country_code) {
+		hdd_err("country_code is null");
+		return -EINVAL;
+	}
+
+	/* call regulatory set_country api */
+	status = ucfg_reg_set_country(hdd_ctx->hdd_pdev, country_code);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to set country");
+
+	return qdf_status_to_os_return(status);
+}
 
 /**
  * hdd_restore_custom_reg_settings() - restore custom reg settings

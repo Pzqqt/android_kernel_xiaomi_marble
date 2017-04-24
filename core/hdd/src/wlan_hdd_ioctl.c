@@ -32,12 +32,13 @@
 #include "wlan_hdd_trace.h"
 #include "wlan_hdd_ioctl.h"
 #include "wlan_hdd_power.h"
+#include "wlan_hdd_regulatory.h"
 #include "wlan_hdd_request_manager.h"
 #include "wlan_hdd_driver_ops.h"
 #include "wlan_policy_mgr_api.h"
 #include "wlan_hdd_hostapd.h"
 #include "scheduler_api.h"
-
+#include "wlan_reg_ucfg_api.h"
 #include "wlan_hdd_p2p.h"
 #include <linux/ctype.h>
 #include "wma.h"
@@ -2861,24 +2862,20 @@ static int drv_cmd_set_band(hdd_adapter_t *adapter,
 			    uint8_t command_len,
 			    hdd_priv_data_t *priv_data)
 {
-	int ret = 0;
-
-	uint8_t *ptr = command;
-
-	/* Change band request received */
+	int err;
+	uint8_t band;
 
 	/*
-	 * First 8 bytes will have "SETBAND " and
-	 * 9 byte will have band setting value
+	 * Parse the band value passed from userspace. The first 8 bytes
+	 * should be "SETBAND " and the 9th byte should be a UI band value
 	 */
-	hdd_debug("SetBandCommand Info  comm %s UL %d, TL %d",
-		  command, priv_data->used_len,
-		  priv_data->total_len);
+	err = kstrtou8(command + command_len + 1, 10, &band);
+	if (err) {
+		hdd_err("error %d parsing userspace band parameter", err);
+		return err;
+	}
 
-	/* Change band request received */
-	ret = hdd_set_band_helper(adapter->dev, ptr);
-
-	return ret;
+	return hdd_reg_set_band(adapter->dev, band);
 }
 
 static int drv_cmd_set_wmmps(hdd_adapter_t *adapter,
@@ -2890,41 +2887,13 @@ static int drv_cmd_set_wmmps(hdd_adapter_t *adapter,
 	return hdd_wmmps_helper(adapter, command);
 }
 
-static int drv_cmd_country(hdd_adapter_t *adapter,
-			   hdd_context_t *hdd_ctx,
-			   uint8_t *command,
-			   uint8_t command_len,
-			   hdd_priv_data_t *priv_data)
+static inline int drv_cmd_country(hdd_adapter_t *adapter,
+				  hdd_context_t *hdd_ctx,
+				  uint8_t *command,
+				  uint8_t command_len,
+				  hdd_priv_data_t *priv_data)
 {
-	int ret = 0;
-	QDF_STATUS status;
-	unsigned long rc;
-	char *country_code;
-
-	country_code = command + 8;
-
-	INIT_COMPLETION(adapter->change_country_code);
-
-	status = sme_change_country_code(hdd_ctx->hHal,
-			wlan_hdd_change_country_code_callback,
-			country_code,
-			adapter,
-			hdd_ctx->pcds_context,
-			eSIR_TRUE,
-			eSIR_TRUE);
-	if (status == QDF_STATUS_SUCCESS) {
-		rc = wait_for_completion_timeout(
-			&adapter->change_country_code,
-			 msecs_to_jiffies(WLAN_WAIT_TIME_COUNTRY));
-		if (!rc)
-			hdd_err("SME while setting country code timed out");
-	} else {
-		hdd_err("SME Change Country code fail, status %d",
-			 status);
-		ret = -EINVAL;
-	}
-
-	return ret;
+	return hdd_reg_set_country(hdd_ctx, command + command_len + 1);
 }
 
 static int drv_cmd_set_roam_trigger(hdd_adapter_t *adapter,
@@ -5734,8 +5703,8 @@ static int drv_cmd_set_dfs_scan_mode(hdd_adapter_t *adapter,
 	/* When DFS scanning is disabled, the DFS channels need to be
 	 * removed from the operation of device.
 	 */
-	ret = wlan_hdd_disable_dfs_chan_scan(hdd_ctx, adapter,
-			(dfsScanMode == CFG_ROAMING_DFS_CHANNEL_DISABLED));
+	ret = wlan_hdd_enable_dfs_chan_scan(hdd_ctx,
+			dfsScanMode != CFG_ROAMING_DFS_CHANNEL_DISABLED);
 	if (ret < 0) {
 		/* Some conditions prevented it from disabling DFS channels */
 		hdd_err("disable/enable DFS channel request was denied");
@@ -6589,11 +6558,9 @@ static int drv_cmd_set_fcc_channel(hdd_adapter_t *adapter,
 				   uint8_t command_len,
 				   hdd_priv_data_t *priv_data)
 {
-	uint8_t *value;
-	uint8_t fcc_constraint;
 	QDF_STATUS status;
-	bool scan_pending;
-	int ret = 0;
+	uint8_t fcc_constraint;
+	int err;
 
 	/*
 	 * this command would be called by user-space when it detects WLAN
@@ -6605,31 +6572,20 @@ static int drv_cmd_set_fcc_channel(hdd_adapter_t *adapter,
 	 * country code is set
 	 */
 
-	value =  command + command_len + 1;
-
-	ret = kstrtou8(value, 10, &fcc_constraint);
-	if ((ret < 0) || (fcc_constraint > 1)) {
-		/*
-		 *  If the input value is greater than max value of datatype,
-		 *  then also it is a failure
-		 */
-		hdd_err("value out of range");
-		return -EINVAL;
-	}
-#ifndef NAPIER_SCAN
-	/* This code will be removed*/
-	scan_pending = !qdf_list_empty(&hdd_ctx->hdd_scan_req_q);
-#else
-	scan_pending = ucfg_scan_get_pdev_status(hdd_ctx->hdd_pdev);
-#endif
-	status = sme_handle_set_fcc_channel(hdd_ctx->hHal, !fcc_constraint,
-					    scan_pending);
-	if (status != QDF_STATUS_SUCCESS) {
-		hdd_err("sme disable fn. returned err");
-		ret = -EPERM;
+	err = kstrtou8(command + command_len + 1, 10, &fcc_constraint);
+	if (err) {
+		hdd_err("error %d parsing userspace fcc parameter", err);
+		return err;
 	}
 
-	return ret;
+	status = ucfg_reg_set_fcc_constraint(hdd_ctx->hdd_pdev,
+			fcc_constraint);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to %s tx power for channels 12/13",
+			fcc_constraint ? "reduce" : "restore");
+
+	return qdf_status_to_os_return(status);
 }
 
 /**

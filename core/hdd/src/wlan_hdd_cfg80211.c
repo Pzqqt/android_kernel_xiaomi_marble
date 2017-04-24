@@ -110,6 +110,7 @@
 #include "wlan_pmo_ucfg_api.h"
 #include "os_if_wifi_pos.h"
 #include "wlan_utility.h"
+#include "wlan_reg_ucfg_api.h"
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -3322,71 +3323,54 @@ static bool wlan_hdd_check_dfs_channel_for_adapter(hdd_context_t *hdd_ctx,
 }
 
 /**
- * wlan_hdd_disable_dfs_chan_scan() - disable/enable DFS channels
+ * wlan_hdd_enable_dfs_chan_scan() - disable/enable DFS channels
  * @hdd_ctx: HDD context within host driver
- * @adapter: Adapter pointer
- * @no_dfs_flag: If TRUE, DFS channels cannot be used for scanning
+ * @enable_dfs_channels: If true, DFS channels can be used for scanning
  *
  * Loops through devices to see who is operating on DFS channels
- * and then disables/enables DFS channels by calling SME API.
+ * and then disables/enables DFS channels.
  * Fails the disable request if any device is active on a DFS channel.
  *
  * Return: 0 or other error codes.
  */
 
-int wlan_hdd_disable_dfs_chan_scan(hdd_context_t *hdd_ctx,
-				   hdd_adapter_t *adapter,
-				   uint32_t no_dfs_flag)
+int wlan_hdd_enable_dfs_chan_scan(hdd_context_t *hdd_ctx,
+				  bool enable_dfs_channels)
 {
-	tHalHandle h_hal = WLAN_HDD_GET_HAL_CTX(adapter);
 	QDF_STATUS status;
-	int ret_val = -EPERM;
+	bool err;
 
-	if (no_dfs_flag == hdd_ctx->config->enableDFSChnlScan) {
-		if (no_dfs_flag) {
-			status = wlan_hdd_check_dfs_channel_for_adapter(
-				hdd_ctx, QDF_STA_MODE);
-
-			if (true == status)
-				return -EOPNOTSUPP;
-
-			status = wlan_hdd_check_dfs_channel_for_adapter(
-				hdd_ctx, QDF_SAP_MODE);
-
-			if (true == status)
-				return -EOPNOTSUPP;
-		}
-
-		hdd_ctx->config->enableDFSChnlScan = !no_dfs_flag;
-
-		hdd_abort_mac_scan_all_adapters(hdd_ctx);
-
-		/*
-		 *  call the SME API to tunnel down the new channel list
-		 *  to the firmware
-		 */
-		status = sme_handle_dfs_chan_scan(
-			h_hal, hdd_ctx->config->enableDFSChnlScan);
-
-		if (QDF_STATUS_SUCCESS == status) {
-			ret_val = 0;
-
-			/*
-			 * Clear the SME scan cache also. Note that the
-			 * clearing of scan results is independent of session;
-			 * so no need to iterate over
-			 * all sessions
-			 */
-			status = sme_scan_flush_result(h_hal);
-			if (QDF_STATUS_SUCCESS != status)
-				ret_val = -EPERM;
-		}
-
-	} else {
-		hdd_debug(" the DFS flag has not changed");
-		ret_val = 0;
+	if (enable_dfs_channels == hdd_ctx->config->enableDFSChnlScan) {
+		hdd_info("DFS channels are already %s",
+			 enable_dfs_channels ? "enabled" : "disabled");
+		return 0;
 	}
-	return ret_val;
+
+	if (!enable_dfs_channels) {
+		err = wlan_hdd_check_dfs_channel_for_adapter(hdd_ctx,
+							     QDF_STA_MODE);
+		if (err)
+			return -EOPNOTSUPP;
+
+		err = wlan_hdd_check_dfs_channel_for_adapter(hdd_ctx,
+							     QDF_SAP_MODE);
+		if (err)
+			return -EOPNOTSUPP;
+	}
+
+	hdd_ctx->config->enableDFSChnlScan = enable_dfs_channels;
+
+	hdd_abort_mac_scan_all_adapters(hdd_ctx);
+
+	/* pass dfs channel status to regulatory component */
+	status = ucfg_reg_enable_dfs_channels(hdd_ctx->hdd_pdev,
+			enable_dfs_channels);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to %s DFS channels",
+			enable_dfs_channels ? "enable" : "disable");
+
+	return qdf_status_to_os_return(status);
 }
 
 /**
@@ -3403,7 +3387,6 @@ static int __wlan_hdd_cfg80211_disable_dfs_chan_scan(struct wiphy *wiphy,
 						     int data_len)
 {
 	struct net_device *dev = wdev->netdev;
-	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *hdd_ctx  = wiphy_priv(wiphy);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_SET_NO_DFS_FLAG_MAX + 1];
 	int ret_val;
@@ -3437,8 +3420,7 @@ static int __wlan_hdd_cfg80211_disable_dfs_chan_scan(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	ret_val = wlan_hdd_disable_dfs_chan_scan(hdd_ctx, adapter,
-						 no_dfs_flag);
+	ret_val = wlan_hdd_enable_dfs_chan_scan(hdd_ctx, !no_dfs_flag);
 	return ret_val;
 }
 
@@ -8686,8 +8668,8 @@ static int __wlan_hdd_cfg80211_setband(struct wiphy *wiphy,
 				       struct wireless_dev *wdev,
 				       const void *data, int data_len)
 {
-	struct net_device *dev = wdev->netdev;
 	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	struct net_device *dev = wdev->netdev;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_MAX + 1];
 	int ret;
 	static const struct nla_policy policy[QCA_WLAN_VENDOR_ATTR_MAX + 1]
@@ -8709,8 +8691,8 @@ static int __wlan_hdd_cfg80211_setband(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	ret = hdd_set_band(dev,
-			nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_SETBAND_VALUE]));
+	ret = hdd_reg_set_band(dev,
+		nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_SETBAND_VALUE]));
 
 	EXIT();
 	return ret;

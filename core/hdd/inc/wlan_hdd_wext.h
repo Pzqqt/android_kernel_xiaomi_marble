@@ -68,9 +68,6 @@ struct sap_Config;
 #define WLAN_HDD_UI_BAND_AUTO                          0
 #define WLAN_HDD_UI_BAND_5_GHZ                         1
 #define WLAN_HDD_UI_BAND_2_4_GHZ                       2
-/* SETBAND x */
-/* 012345678 */
-#define WLAN_HDD_UI_SET_BAND_VALUE_OFFSET              8
 
 enum hdd_wlan_wmm_direction {
 	HDD_WLAN_WMM_DIRECTION_UPSTREAM = 0,
@@ -440,8 +437,6 @@ int hdd_set_peer_rate(hdd_adapter_t *adapter, int value);
 
 void wlan_hdd_change_country_code_callback(void *pAdapter);
 
-int hdd_set_band(struct net_device *dev, u8 ui_band);
-int hdd_set_band_helper(struct net_device *dev, const char *command);
 int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 			    int new_phymode, hdd_context_t *phddctx);
 

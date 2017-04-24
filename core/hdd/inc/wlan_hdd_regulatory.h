@@ -43,4 +43,22 @@ int hdd_regulatory_init(hdd_context_t *hdd_ctx, struct wiphy *wiphy);
 void hdd_program_country_code(hdd_context_t *hdd_ctx);
 void hdd_reset_global_reg_params(void);
 
+/**
+ * hdd_reg_set_country() - helper function for setting the regulatory country
+ * @hdd_ctx: the HDD context to set the country for
+ * @country_code: the two character country code to configure
+ *
+ * Return: zero for success, non-zero error code for failure
+ */
+int hdd_reg_set_country(hdd_context_t *hdd_ctx, char *country_code);
+
+/**
+ * hdd_reg_set_band() - helper function for setting the regulatory band
+ * @hdd_ctx: the HDD context to set the band for
+ * @ui_band: the UI band to configure
+ *
+ * Return: zero for success, non-zero error code for failure
+ */
+int hdd_reg_set_band(struct net_device *dev, u8 ui_band);
+
 #endif

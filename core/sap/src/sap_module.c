@@ -58,6 +58,7 @@
 #include <wlan_scan_ucfg_api.h>
 #include "wlan_reg_services_api.h"
 #include <wlan_dfs_utils_api.h>
+#include <wlan_reg_ucfg_api.h>
 
 /*----------------------------------------------------------------------------
  * Preprocessor Definitions and Constants
@@ -683,6 +684,8 @@ wlansap_set_scan_acs_channel_params(tsap_Config_t *pconfig,
 				void *pusr_context)
 {
 	tHalHandle h_hal = NULL;
+	tpAniSirGlobal pmac;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (NULL == pconfig) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -725,22 +728,26 @@ wlansap_set_scan_acs_channel_params(tsap_Config_t *pconfig,
 	if (NULL == h_hal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			"%s: Invalid MAC context from pvosGCtx", __func__);
-	} else {
-		/*
-		 * If concurrent session is running that is already associated
-		 * then we just follow that sessions country info (whether
-		 * present or not doesn't maater as we have to follow whatever
-		 * STA session does)
-		 */
-		if ((0 == sme_get_concurrent_operation_channel(h_hal)) &&
+		return QDF_STATUS_E_FAULT;
+	}
+	pmac = PMAC_STRUCT(h_hal);
+	/*
+	 * If concurrent session is running that is already associated
+	 * then we just follow that sessions country info (whether
+	 * present or not doesn't maater as we have to follow whatever
+	 * STA session does)
+	 */
+	if ((0 == sme_get_concurrent_operation_channel(h_hal)) &&
 			pconfig->ieee80211d) {
-			/* Setting the region/country  information */
-			sme_set_reg_info(h_hal, pconfig->countryCode);
-			sme_apply_channel_power_info_to_fw(h_hal);
-		}
+		/* Setting the region/country  information */
+		status = ucfg_reg_set_country(pmac->pdev,
+					pconfig->countryCode);
+		if (QDF_IS_STATUS_ERROR(status))
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				FL("Failed to set country"));
 	}
 
-	return QDF_STATUS_SUCCESS;
+	return status;
 }
 /**
  * wlan_sap_get_vht_ch_width() - Returns SAP VHT channel width.
@@ -899,19 +906,7 @@ QDF_STATUS wlansap_start_bss(void *pCtx,     /* pwextCtx */
 			  "%s: Invalid MAC context from p_cds_gctx",
 			  __func__);
 		return QDF_STATUS_E_FAULT;
-	} else {
-		/* If concurrent session is running that is already associated
-		 * then we just follow that sessions country info (whether
-		 * present or not doesn't maater as we have to follow whatever
-		 * STA session does) */
-		if ((0 == sme_get_concurrent_operation_channel(hHal)) &&
-		    pConfig->ieee80211d) {
-			/* Setting the region/country  information */
-			sme_set_reg_info(hHal, pConfig->countryCode);
-			sme_apply_channel_power_info_to_fw(hHal);
-		}
 	}
-
 	pmac = PMAC_STRUCT(hHal);
 	if (NULL == pmac) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -919,6 +914,20 @@ QDF_STATUS wlansap_start_bss(void *pCtx,     /* pwextCtx */
 			  __func__);
 		return QDF_STATUS_E_FAULT;
 	}
+	/* If concurrent session is running that is already associated
+	 * then we just follow that sessions country info (whether
+	 * present or not doesn't maater as we have to follow whatever
+	 * STA session does) */
+	if ((0 == sme_get_concurrent_operation_channel(hHal)) &&
+			pConfig->ieee80211d) {
+		/* Setting the region/country  information */
+		qdf_status = ucfg_reg_set_country(pmac->pdev,
+					pConfig->countryCode);
+		if (QDF_IS_STATUS_ERROR(qdf_status))
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				FL("Failed to set country"));
+	}
+
 	/*
 	 * Copy the DFS Test Mode setting to pmac for
 	 * access in lower layers

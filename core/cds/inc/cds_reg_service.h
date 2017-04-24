@@ -37,8 +37,8 @@
    ========================================================================*/
 
 #include "qdf_status.h"
-#include <reg_services_public_struct.h>
-#include <wlan_reg_services_api.h>
+#include <wlan_objmgr_psoc_obj.h>
+#include <wlan_objmgr_pdev_obj.h>
 
 #define CDS_COUNTRY_CODE_LEN  2
 #define CDS_MAC_ADDRESS_LEN 6

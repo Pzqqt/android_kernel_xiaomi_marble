@@ -234,10 +234,10 @@ bool hdd_conn_is_connected(hdd_station_ctx_t *pHddStaCtx);
  * hdd_conn_get_connected_band() - get current connection radio band
  * @pHddStaCtx:    pointer to global HDD Station context
  *
- * Return: eCSR_BAND_24 or eCSR_BAND_5G based on current AP connection
- *      eCSR_BAND_ALL if not connected
+ * Return: BAND_2G or BAND_5G based on current AP connection
+ *      BAND_ALL if not connected
  */
-eCsrBand hdd_conn_get_connected_band(hdd_station_ctx_t *pHddStaCtx);
+enum band_info hdd_conn_get_connected_band(hdd_station_ctx_t *pHddStaCtx);
 
 /**
  * hdd_sme_roam_callback() - hdd sme roam callback
