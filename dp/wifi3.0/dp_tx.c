@@ -1019,6 +1019,7 @@ static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				"%s %d : HAL RING Access Failed -- %p\n",
 				__func__, __LINE__, hal_srng);
 		DP_STATS_INC(vdev, tx_i.dropped.ring_full, 1);
+		dp_tx_desc_release(tx_desc, tx_q->desc_pool_id);
 		goto fail_return;
 	}
 
