@@ -178,13 +178,9 @@ ifneq ($(CONFIG_ROME_IF),sdio)
 	CONFIG_WLAN_FASTPATH := y
 
 	# Flag to enable NAPI
-ifeq (y,$(CONFIG_LITHIUM))
-	CONFIG_WLAN_NAPI := n
-	CONFIG_WLAN_NAPI_DEBUG := n
-else
 	CONFIG_WLAN_NAPI := y
 	CONFIG_WLAN_NAPI_DEBUG := n
-endif
+
 	# Flag to enable FW based TX Flow control
 	ifeq ($(CONFIG_CNSS_EOS),y)
 		CONFIG_WLAN_TX_FLOW_CONTROL_V2 := y
@@ -1256,7 +1252,9 @@ endif
 
 HIF_COMMON_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/ath_procfs.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_main.o \
-                $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/mp_dev.o
+                $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/mp_dev.o \
+                $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_exec.o \
+                $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_irq_affinity.o
 
 HIF_CE_OBJS :=  $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_bmi.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_diag.o \
@@ -1269,6 +1267,7 @@ ifeq ($(CONFIG_LITHIUM), y)
 HIF_CE_OBJS +=  $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/qca6290def.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_service_srng.o
 endif
+
 
 HIF_USB_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_USB_DIR)/usbdrv.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_USB_DIR)/hif_usb.o \
@@ -1647,6 +1646,7 @@ CDEFINES +=	-DCONFIG_DP_TRACE
 
 ifeq ($(CONFIG_WLAN_NAPI), y)
 CDEFINES += -DFEATURE_NAPI
+CDEFINES += -DHIF_IRQ_AFFINITY
 ifeq ($(CONFIG_WLAN_NAPI_DEBUG), y)
 CDEFINES += -DFEATURE_NAPI_DEBUG
 endif
