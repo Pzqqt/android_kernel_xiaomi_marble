@@ -450,7 +450,7 @@ QDF_STATUS policy_mgr_next_actions(struct wlan_objmgr_psoc *psoc,
 		if (!policy_mgr_is_hw_sbs_capable(psoc)) {
 			/* No action */
 			policy_mgr_notice("firmware is not sbs capable");
-			return QDF_STATUS_SUCCESS;
+			return QDF_STATUS_E_NOSUPPORT;
 		}
 		/* check if current mode is already SBS nothing to be
 		 * done
