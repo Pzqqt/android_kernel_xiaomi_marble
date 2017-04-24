@@ -9924,6 +9924,85 @@ enum l1ss_sleep_allowed {
 #define CFG_FILS_MAX_CHAN_GUARD_TIME_DEFAULT (0)
 
 /*
+ * enum hdd_external_acs_policy - External ACS policy
+ * @HDD_EXTERNAL_ACS_PCL_PREFERRED -Preferable for ACS to select a
+ *	channel with non-zero pcl weight.
+ * @HDD_EXTERNAL_ACS_PCL_MANDATORY -Mandatory for ACS to select a
+ *	channel with non-zero pcl weight.
+ *
+ * enum hdd_external_acs_policy is used to select the ACS policy.
+ *
+ */
+enum hdd_external_acs_policy {
+	HDD_EXTERNAL_ACS_PCL_PREFERRED = 0,
+	HDD_EXTERNAL_ACS_PCL_MANDATORY = 1,
+};
+
+/*
+ * <ini>
+ * external_acs_policy - External ACS policy control
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * Values are per enum hdd_external_acs_policy.
+ *
+ * This ini is used to control the external ACS policy.
+ *
+ * Related: None
+ *
+ * Supported Feature: ACS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_EXTERNAL_ACS_POLICY         "acs_policy"
+#define CFG_EXTERNAL_ACS_POLICY_MIN     (HDD_EXTERNAL_ACS_PCL_PREFERRED)
+#define CFG_EXTERNAL_ACS_POLICY_MAX     (HDD_EXTERNAL_ACS_PCL_MANDATORY)
+#define CFG_EXTERNAL_ACS_POLICY_DEFAULT (HDD_EXTERNAL_ACS_PCL_PREFERRED)
+
+/*
+ * enum hdd_external_acs_policyl - Preferred freq band for external ACS
+ * @HDD_EXTERNAL_ACS_FREQ_BAND_24GHZ -2.4GHz band
+ * @HDD_EXTERNAL_ACS_FREQ_BAND_5GHZ -5GHz band
+ *
+ * enum hdd_external_acs_freq_band is used to select the freq band for ACS.
+ *
+ */
+enum hdd_external_acs_freq_band {
+	HDD_EXTERNAL_ACS_FREQ_BAND_24GHZ = 0,
+	HDD_EXTERNAL_ACS_FREQ_BAND_5GHZ = 1,
+};
+
+/*
+ * <ini>
+ * external_acs_freq_band - External ACS freq band
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * Values are per enum hdd_external_acs_freq_band.
+ *
+ * This ini is used to select the ACS freq band. Currently
+ * the external ACS module doesn't support channels from
+ * both the bands. Once multiple band support is added in
+ * ICM, this ini can be removed
+ *
+ * Related: None
+ *
+ * Supported Feature: ACS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_EXTERNAL_ACS_FREQ_BAND          "acs_freq_band"
+#define CFG_EXTERNAL_ACS_FREQ_BAND_MIN      (HDD_EXTERNAL_ACS_FREQ_BAND_24GHZ)
+#define CFG_EXTERNAL_ACS_FREQ_BAND_MAX      (HDD_EXTERNAL_ACS_FREQ_BAND_5GHZ)
+#define CFG_EXTERNAL_ACS_FREQ_BAND_DEFAULT  (HDD_EXTERNAL_ACS_FREQ_BAND_24GHZ)
+
+/*
  * Type declarations
  */
 struct hdd_config {
@@ -10647,6 +10726,8 @@ struct hdd_config {
 	bool qcn_ie_support;
 	bool reg_offload_enabled;
 	uint8_t fils_max_chan_guard_time;
+	enum hdd_external_acs_policy external_acs_policy;
+	enum hdd_external_acs_freq_band external_acs_freq_band;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

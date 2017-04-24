@@ -1620,12 +1620,14 @@ struct hdd_context_s {
  * struct hdd_vendor_acs_chan_params - vendor acs channel parameters
  * @channel_count: channel count
  * @channel_list: pointer to channel list
+ * @pcl_count: pcl list count
  * @vendor_pcl_list: pointer to pcl list
  * @vendor_weight_list: pointer to pcl weight list
  */
 struct hdd_vendor_acs_chan_params {
 	uint32_t channel_count;
 	uint8_t *channel_list;
+	uint32_t pcl_count;
 	uint8_t *vendor_pcl_list;
 	uint8_t *vendor_weight_list;
 };
@@ -2250,6 +2252,7 @@ bool hdd_set_connection_in_progress(bool value);
  * @ap_adapter: adapter
  * @channel_count: valid channel count
  * @channel_list: valid channel list
+ * @band: frequency band
  *
  * This API returns valid channel list for SAP after removing nol and
  * channel which lies outside of configuration.
@@ -2258,7 +2261,8 @@ bool hdd_set_connection_in_progress(bool value);
  */
 int wlan_hdd_sap_get_valid_channellist(hdd_adapter_t *adapter,
 				       uint32_t *channel_count,
-				       uint8_t *channel_list);
+				       uint8_t *channel_list,
+				       eCsrBand band);
 /**
  * wlan_hdd_init_chan_info() - initialize channel info variables
  * @hdd_ctx: hdd ctx

@@ -4318,6 +4318,19 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_FILS_MAX_CHAN_GUARD_TIME_DEFAULT,
 		CFG_FILS_MAX_CHAN_GUARD_TIME_MIN,
 		CFG_FILS_MAX_CHAN_GUARD_TIME_MAX),
+	REG_VARIABLE(CFG_EXTERNAL_ACS_POLICY, WLAN_PARAM_Integer,
+		     struct hdd_config, external_acs_policy,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_EXTERNAL_ACS_POLICY_DEFAULT,
+		     CFG_EXTERNAL_ACS_POLICY_MIN,
+		     CFG_EXTERNAL_ACS_POLICY_MAX),
+
+	REG_VARIABLE(CFG_EXTERNAL_ACS_FREQ_BAND, WLAN_PARAM_Integer,
+		     struct hdd_config, external_acs_freq_band,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_EXTERNAL_ACS_FREQ_BAND_DEFAULT,
+		     CFG_EXTERNAL_ACS_FREQ_BAND_MIN,
+		     CFG_EXTERNAL_ACS_FREQ_BAND_MAX),
 };
 
 
@@ -5819,6 +5832,12 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	hdd_info("Name = [%s] Value = [%d]",
 		CFG_ARP_AC_CATEGORY,
 		pHddCtx->config->arp_ac_category);
+	hdd_info("Name = [%s] Value = [%d]",
+		 CFG_EXTERNAL_ACS_POLICY,
+		 pHddCtx->config->external_acs_policy);
+	hdd_info("Name = [%s] Value = [%d]",
+		 CFG_EXTERNAL_ACS_FREQ_BAND,
+		 pHddCtx->config->external_acs_freq_band);
 }
 
 
