@@ -329,6 +329,15 @@ bool wlan_reg_is_passive_or_disable_ch(struct wlan_objmgr_pdev *pdev,
 				       uint32_t chan);
 
 /**
+ * wlan_reg_is_disable_ch () - Checks chan state for disabled
+ * @pdev: pdev ptr
+ * @chan: channel
+ *
+ * Return: true or false
+ */
+bool wlan_reg_is_disable_ch(struct wlan_objmgr_pdev *pdev, uint32_t chan);
+
+/**
  * wlan_reg_freq_to_chan () - convert channel freq to channel number
  * @freq: frequency
  *

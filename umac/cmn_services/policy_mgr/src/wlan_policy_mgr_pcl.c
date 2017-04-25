@@ -235,6 +235,127 @@ uint8_t policy_mgr_get_channel(struct wlan_objmgr_psoc *psoc,
 	return 0;
 }
 
+static QDF_STATUS policy_mgr_modify_sap_pcl_based_on_nol(
+		struct wlan_objmgr_psoc *psoc,
+		uint8_t *pcl_list_org,
+		uint8_t *weight_list_org,
+		uint32_t *pcl_len_org)
+{
+	uint32_t i, pcl_len = 0;
+	uint8_t pcl_list[QDF_MAX_NUM_CHAN];
+	uint8_t weight_list[QDF_MAX_NUM_CHAN];
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	for (i = 0; i < *pcl_len_org; i++) {
+		if (!wlan_reg_is_disable_ch(pm_ctx->pdev, pcl_list_org[i])) {
+			pcl_list[pcl_len] = pcl_list_org[i];
+			weight_list[pcl_len++] = weight_list_org[i];
+		}
+	}
+
+	qdf_mem_zero(pcl_list_org, QDF_ARRAY_SIZE(pcl_list_org));
+	qdf_mem_zero(weight_list_org, QDF_ARRAY_SIZE(weight_list_org));
+	qdf_mem_copy(pcl_list_org, pcl_list, pcl_len);
+	qdf_mem_copy(weight_list_org, weight_list, pcl_len);
+	*pcl_len_org = pcl_len;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS policy_mgr_pcl_modification_for_sap(
+			struct wlan_objmgr_psoc *psoc,
+			uint8_t *pcl_channels, uint8_t *pcl_weight,
+			uint32_t *len)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	uint32_t i;
+
+	if (policy_mgr_is_sap_mandatory_channel_set(psoc)) {
+		status = policy_mgr_modify_sap_pcl_based_on_mandatory_channel(
+				psoc, pcl_channels, pcl_weight, len);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			policy_mgr_err("failed to get modified pcl for SAP");
+			return status;
+		}
+		policy_mgr_debug("modified pcl len:%d", *len);
+		for (i = 0; i < *len; i++)
+			policy_mgr_debug("chan:%d weight:%d",
+				pcl_channels[i], pcl_weight[i]);
+	}
+
+	status = policy_mgr_modify_sap_pcl_based_on_nol(
+			psoc, pcl_channels, pcl_weight, len);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		policy_mgr_err("failed to get modified pcl for SAP");
+		return status;
+	}
+	policy_mgr_debug("modified pcl len:%d", *len);
+	for (i = 0; i < *len; i++)
+		policy_mgr_debug("chan:%d weight:%d",
+			pcl_channels[i], pcl_weight[i]);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS policy_mgr_pcl_modification_for_p2p_go(
+			struct wlan_objmgr_psoc *psoc,
+			uint8_t *pcl_channels, uint8_t *pcl_weight,
+			uint32_t *len)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint32_t i;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("context is NULL");
+		return status;
+	}
+
+	status = policy_mgr_modify_pcl_based_on_enabled_channels(
+			pm_ctx, pcl_channels, pcl_weight, len);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		policy_mgr_err("failed to get modified pcl for GO");
+		return status;
+	}
+	policy_mgr_debug("modified pcl len:%d", *len);
+	for (i = 0; i < *len; i++)
+		policy_mgr_debug("chan:%d weight:%d",
+			pcl_channels[i], pcl_weight[i]);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS policy_mgr_mode_specific_modification_on_pcl(
+			struct wlan_objmgr_psoc *psoc,
+			uint8_t *pcl_channels, uint8_t *pcl_weight,
+			uint32_t *len, enum policy_mgr_con_mode mode)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	switch (mode) {
+	case PM_SAP_MODE:
+		status = policy_mgr_pcl_modification_for_sap(
+			psoc, pcl_channels, pcl_weight, len);
+		break;
+	case PM_P2P_GO_MODE:
+		status = policy_mgr_pcl_modification_for_p2p_go(
+			psoc, pcl_channels, pcl_weight, len);
+		break;
+	default:
+		policy_mgr_err("unexpected mode %d", mode);
+		break;
+	}
+
+	return status;
+}
+
 QDF_STATUS policy_mgr_get_pcl(struct wlan_objmgr_psoc *psoc,
 			enum policy_mgr_con_mode mode,
 			uint8_t *pcl_channels, uint32_t *len,
@@ -340,33 +461,12 @@ QDF_STATUS policy_mgr_get_pcl(struct wlan_objmgr_psoc *psoc,
 				pcl_channels[i], pcl_weight[i]);
 	}
 
-	if ((mode == PM_SAP_MODE) &&
-		policy_mgr_is_sap_mandatory_channel_set(psoc)) {
-		status = policy_mgr_modify_sap_pcl_based_on_mandatory_channel(
-					psoc, pcl_channels, pcl_weight, len);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			policy_mgr_err("failed to get modified pcl for SAP");
-			return status;
-		}
-		policy_mgr_debug("modified pcl len:%d", *len);
-		for (i = 0; i < *len; i++)
-			policy_mgr_debug("chan:%d weight:%d",
-					pcl_channels[i], pcl_weight[i]);
+	policy_mgr_mode_specific_modification_on_pcl(
+		psoc, pcl_channels, pcl_weight, len, PM_SAP_MODE);
 
-	}
+	policy_mgr_mode_specific_modification_on_pcl(
+		psoc, pcl_channels, pcl_weight, len, PM_P2P_GO_MODE);
 
-	if (mode == PM_P2P_GO_MODE) {
-		status = policy_mgr_modify_pcl_based_on_enabled_channels(
-		pm_ctx, pcl_channels, pcl_weight, len);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			policy_mgr_err("failed to get modified pcl for GO");
-			return status;
-		}
-		policy_mgr_debug("modified pcl len:%d", *len);
-		for (i = 0; i < *len; i++)
-			policy_mgr_debug("chan:%d weight:%d",
-			pcl_channels[i], pcl_weight[i]);
-	}
 
 	status = policy_mgr_modify_pcl_based_on_dnbs(psoc, pcl_channels,
 						pcl_weight, len);

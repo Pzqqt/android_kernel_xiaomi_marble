@@ -177,6 +177,8 @@ bool reg_is_dfs_ch(struct wlan_objmgr_pdev *pdev, uint32_t chan);
 bool reg_is_passive_or_disable_ch(struct wlan_objmgr_pdev *pdev,
 				  uint32_t chan);
 
+bool reg_is_disable_ch(struct wlan_objmgr_pdev *pdev, uint32_t chan);
+
 uint32_t reg_freq_to_chan(struct wlan_objmgr_pdev *pdev, uint32_t freq);
 
 uint32_t reg_chan_to_freq(struct wlan_objmgr_pdev *pdev, uint32_t chan_num);

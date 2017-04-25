@@ -1810,6 +1810,14 @@ bool reg_is_passive_or_disable_ch(struct wlan_objmgr_pdev *pdev, uint32_t chan)
 		(ch_state == CHANNEL_STATE_DISABLE);
 }
 
+bool reg_is_disable_ch(struct wlan_objmgr_pdev *pdev, uint32_t chan)
+{
+	enum channel_state ch_state;
+
+	ch_state = reg_get_channel_state(pdev, chan);
+
+	return ch_state == CHANNEL_STATE_DISABLE;
+}
 
 uint32_t reg_freq_to_chan(struct wlan_objmgr_pdev *pdev, uint32_t freq)
 {

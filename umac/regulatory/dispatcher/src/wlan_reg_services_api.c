@@ -388,6 +388,12 @@ bool wlan_reg_is_passive_or_disable_ch(struct wlan_objmgr_pdev *pdev,
 	return reg_is_passive_or_disable_ch(pdev, chan);
 }
 
+bool wlan_reg_is_disable_ch(struct wlan_objmgr_pdev *pdev,
+				       uint32_t chan)
+{
+	return reg_is_disable_ch(pdev, chan);
+}
+
 uint32_t wlan_reg_freq_to_chan(struct wlan_objmgr_pdev *pdev,
 			       uint32_t freq)
 {
