@@ -249,7 +249,8 @@ struct wlan_channel {
  * @bss_chan:           BSS channel
  * @des_chan:           Desired channel, for STA Desired may not be used
  * @nss:                Num. Spatial streams
- * @chainmask:          Chainmask
+ * @tx_chainmask:       Tx Chainmask
+ * @rx_chainmask:       Rx Chainmask
  * @macaddr[]:          VDEV self MAC address
  * @vdev_caps:          VDEV capabilities
  * @vdev_feat_caps:     VDEV feature caps
@@ -268,7 +269,8 @@ struct wlan_objmgr_vdev_mlme {
 	struct wlan_channel  *bss_chan;   /* Define wlan_channel */
 	struct wlan_channel  *des_chan;  /*TODO ??? */
 	uint8_t nss;
-	uint8_t chainmask;
+	uint8_t tx_chainmask;
+	uint8_t rx_chainmask;
 	uint8_t  macaddr[WLAN_MACADDR_LEN];
 	uint32_t vdev_caps;
 	uint32_t vdev_feat_caps;
@@ -941,39 +943,75 @@ static inline uint8_t wlan_vdev_mlme_get_nss(
 }
 
 /**
- * wlan_vdev_mlme_set_chainmask() - set chainmask
+ * wlan_vdev_mlme_set_txchainmask() - set Tx chainmask
  * @vdev: VDEV object
  * @chainmask : chainmask either configured by user or max supported
  *
- * API to set the chainmask
+ * API to set the Tx chainmask
  *
  * Caller need to acquire lock with wlan_vdev_obj_lock()
  *
  * Return: void
  */
-static inline void wlan_vdev_mlme_set_chainmask(struct wlan_objmgr_vdev *vdev,
+static inline void wlan_vdev_mlme_set_txchainmask(struct wlan_objmgr_vdev *vdev,
 			uint8_t chainmask)
 {
 	/* This API is invoked with lock acquired, do not add log prints */
-	vdev->vdev_mlme.chainmask = chainmask;
+	vdev->vdev_mlme.tx_chainmask = chainmask;
 }
 
 /**
- * wlan_vdev_mlme_get_chainmask() - get chainmask
+ * wlan_vdev_mlme_get_txchainmask() - get Tx chainmask
  * @vdev: VDEV object
  *
- * API to get the chainmask
+ * API to get the Tx chainmask
  *
  * Caller need to acquire lock with wlan_vdev_obj_lock()
  *
  * Return:
- * @chainmask : chainmask either configured by user or max supported
+ * @chainmask : Tx chainmask either configured by user or max supported
  */
-static inline uint8_t wlan_vdev_mlme_get_chainmask(
+static inline uint8_t wlan_vdev_mlme_get_txchainmask(
 				struct wlan_objmgr_vdev *vdev)
 {
 	/* This API is invoked with lock acquired, do not add log prints */
-	return vdev->vdev_mlme.chainmask;
+	return vdev->vdev_mlme.tx_chainmask;
+}
+
+/**
+ * wlan_vdev_mlme_set_rxchainmask() - set Rx chainmask
+ * @vdev: VDEV object
+ * @chainmask : Rx chainmask either configured by user or max supported
+ *
+ * API to set the Rx chainmask
+ *
+ * Caller need to acquire lock with wlan_vdev_obj_lock()
+ *
+ * Return: void
+ */
+static inline void wlan_vdev_mlme_set_rxchainmask(struct wlan_objmgr_vdev *vdev,
+			uint8_t chainmask)
+{
+	/* This API is invoked with lock acquired, do not add log prints */
+	vdev->vdev_mlme.rx_chainmask = chainmask;
+}
+
+/**
+ * wlan_vdev_mlme_get_rxchainmask() - get Rx chainmask
+ * @vdev: VDEV object
+ *
+ * API to get the Rx chainmask
+ *
+ * Caller need to acquire lock with wlan_vdev_obj_lock()
+ *
+ * Return:
+ * @chainmask : Rx chainmask either configured by user or max supported
+ */
+static inline uint8_t wlan_vdev_mlme_get_rxchainmask(
+				struct wlan_objmgr_vdev *vdev)
+{
+	/* This API is invoked with lock acquired, do not add log prints */
+	return vdev->vdev_mlme.rx_chainmask;
 }
 
 /**
