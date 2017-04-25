@@ -35,6 +35,20 @@
 #include <qdf_mem.h>
 #include <wlan_utility.h>
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
+static uint32_t hdd_config_sched_scan_start_delay(
+		struct cfg80211_sched_scan_request *request)
+{
+	return request->delay;
+}
+#else
+static uint32_t hdd_config_sched_scan_start_delay(
+		struct cfg80211_sched_scan_request *request)
+{
+	return 0;
+}
+#endif
+
 #ifdef FEATURE_WLAN_SCAN_PNO
 #if ((LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)) || \
 	defined(CFG80211_MULTI_SCAN_PLAN_BACKPORT))
@@ -50,7 +64,6 @@
 static void wlan_config_sched_scan_plan(struct pno_scan_req_params *pno_req,
 	struct cfg80211_sched_scan_request *request)
 {
-	pno_req->delay_start_time = request->delay;
 	/*
 	 * As of now max 2 scan plans were supported by firmware
 	 * if number of scan plan supported by firmware increased below logic
@@ -326,6 +339,7 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_pdev *pdev,
 	 *   shall be in slow_scan_period mode until next PNO Start.
 	 */
 	wlan_config_sched_scan_plan(req, request);
+	req->delay_start_time = hdd_config_sched_scan_start_delay(request);
 	cfg80211_notice("Base scan interval: %d sec, scan cycles: %d, slow scan interval %d",
 		req->fast_scan_period, req->fast_scan_max_cycles,
 		req->slow_scan_period);
