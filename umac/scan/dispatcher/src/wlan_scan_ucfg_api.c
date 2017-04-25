@@ -401,6 +401,77 @@ ucfg_scan_cancel(struct scan_cancel_request *req)
 	return status;
 }
 
+QDF_STATUS
+ucfg_scan_cancel_sync(struct scan_cancel_request *req)
+{
+	QDF_STATUS status;
+	bool cancel_vdev = false, cancel_pdev = false;
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_pdev *pdev;
+	uint32_t max_wait_iterations = SCM_CANCEL_SCAN_WAIT_ITERATION;
+	qdf_event_t cancel_scan_event;
+
+	if (!req || !req->vdev) {
+		scm_err("vdev: %p, req: %p", req->vdev, req);
+		if (req)
+			qdf_mem_free(req);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (req->cancel_req.req_type ==
+	   WLAN_SCAN_CANCEL_PDEV_ALL)
+		cancel_pdev = true;
+	else if (req->cancel_req.req_type ==
+	   WLAN_SCAN_CANCEL_VDEV_ALL)
+		cancel_vdev = true;
+
+	vdev = req->vdev;
+	status = ucfg_scan_cancel(req);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		scm_err("failed to post to QDF_MODULE_ID_OS_IF");
+		return status;
+	}
+
+	/*
+	 * If cancel req is to cancel all scan of pdev or vdev
+	 * wait untill all scan of pdev or vdev get cancelled
+	 */
+	qdf_event_create(&cancel_scan_event);
+	qdf_event_reset(&cancel_scan_event);
+
+	if (cancel_pdev) {
+		wlan_vdev_obj_lock(vdev);
+		pdev = wlan_vdev_get_pdev(vdev);
+		wlan_vdev_obj_unlock(vdev);
+		while ((ucfg_scan_get_pdev_status(pdev) !=
+		     SCAN_NOT_IN_PROGRESS) && max_wait_iterations) {
+			scm_debug("wait for all pdev scan to get complete");
+				qdf_wait_single_event(&cancel_scan_event,
+					qdf_system_msecs_to_ticks(
+					SCM_CANCEL_SCAN_WAIT_TIME));
+			max_wait_iterations--;
+		}
+	} else if (cancel_vdev) {
+		while ((ucfg_scan_get_vdev_status(vdev) !=
+		     SCAN_NOT_IN_PROGRESS) && max_wait_iterations) {
+			scm_debug("wait for all vdev scan to get complete");
+				qdf_wait_single_event(&cancel_scan_event,
+					qdf_system_msecs_to_ticks(
+					SCM_CANCEL_SCAN_WAIT_TIME));
+			max_wait_iterations--;
+		}
+	}
+
+	qdf_event_destroy(&cancel_scan_event);
+
+	if (!max_wait_iterations) {
+		scm_err("Failed to wait for scans to get complete");
+		return QDF_STATUS_E_TIMEOUT;
+	}
+
+	return status;
+}
+
 wlan_scan_requester
 ucfg_scan_register_requester(struct wlan_objmgr_psoc *psoc,
 	uint8_t *name, scan_event_handler event_cb, void *arg)
@@ -896,7 +967,7 @@ ucfg_scan_get_pdev_status(struct wlan_objmgr_pdev *pdev)
 
 	if (!pdev) {
 		scm_err("null pdev");
-		return QDF_STATUS_E_NULL_VALUE;
+		return SCAN_NOT_IN_PROGRESS;
 	}
 	status = wlan_serialization_pdev_scan_status(pdev);
 

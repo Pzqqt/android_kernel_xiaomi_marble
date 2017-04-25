@@ -216,6 +216,7 @@ int wlan_cfg80211_abort_scan(struct wlan_objmgr_pdev *pdev);
  * @pdev_id: pdev id
  * @vdev_id: vdev id
  * @scan_id: scan id
+ * @sync: if wait for scan complete is required
  *
  * Generic API to abort scans
  *
@@ -224,7 +225,8 @@ int wlan_cfg80211_abort_scan(struct wlan_objmgr_pdev *pdev);
 QDF_STATUS wlan_abort_scan(struct wlan_objmgr_pdev *pdev,
 				   uint32_t pdev_id,
 				   uint32_t vdev_id,
-				   wlan_scan_id scan_id);
+				   wlan_scan_id scan_id,
+				   bool sync);
 
 /**
  * wlan_cfg80211_cleanup_scan_queue() - remove entries in scan queue

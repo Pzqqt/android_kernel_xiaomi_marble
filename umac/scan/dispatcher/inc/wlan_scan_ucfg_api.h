@@ -184,6 +184,19 @@ QDF_STATUS
 ucfg_scan_cancel(struct scan_cancel_request *req);
 
 /**
+ * ucfg_scan_cancel_sync() - Public API to stop a scan and wait
+ * till all scan are completed
+ * @req: stop scan request params
+ *
+ * The Public API to stop a scan and wait
+ * till all scan are completed
+ *
+ * Return: 0 for success or error code.
+ */
+QDF_STATUS
+ucfg_scan_cancel_sync(struct scan_cancel_request *req);
+
+/**
  * ucfg_scan_get_result() - The Public API to get scan results
  * @pdev: pdev info
  * @filter: Filters

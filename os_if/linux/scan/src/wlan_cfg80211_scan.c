@@ -216,7 +216,7 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_pdev *pdev,
 	   SCAN_NOT_IN_PROGRESS) {
 		status = wlan_abort_scan(pdev,
 				wlan_objmgr_pdev_get_pdev_id(pdev),
-				INVAL_VDEV_ID, INVAL_SCAN_ID);
+				INVAL_VDEV_ID, INVAL_SCAN_ID, true);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			cfg80211_err("aborting the existing scan is unsuccessful");
 			wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
@@ -1118,7 +1118,7 @@ static int wlan_get_scanid(struct wlan_objmgr_pdev *pdev,
 
 QDF_STATUS wlan_abort_scan(struct wlan_objmgr_pdev *pdev,
 				   uint32_t pdev_id, uint32_t vdev_id,
-				   wlan_scan_id scan_id)
+				   wlan_scan_id scan_id, bool sync)
 {
 	struct scan_cancel_request *req;
 	struct pdev_osif_priv *osif_ctx;
@@ -1163,7 +1163,11 @@ QDF_STATUS wlan_abort_scan(struct wlan_objmgr_pdev *pdev,
 		req->cancel_req.req_type = WLAN_SCAN_CANCEL_PDEV_ALL;
 	else
 		req->cancel_req.req_type = WLAN_SCAN_CANCEL_VDEV_ALL;
-	status = ucfg_scan_cancel(req);
+
+	if (sync)
+		status = ucfg_scan_cancel_sync(req);
+	else
+		status = ucfg_scan_cancel(req);
 	if (QDF_IS_STATUS_ERROR(status))
 		cfg80211_err("Cancel scan request failed");
 
@@ -1181,7 +1185,7 @@ int wlan_cfg80211_abort_scan(struct wlan_objmgr_pdev *pdev)
 	if (ucfg_scan_get_pdev_status(pdev) !=
 	   SCAN_NOT_IN_PROGRESS)
 		wlan_abort_scan(pdev, pdev_id,
-			INVAL_VDEV_ID, INVAL_SCAN_ID);
+			INVAL_VDEV_ID, INVAL_SCAN_ID, true);
 
 	return 0;
 }
@@ -1211,7 +1215,7 @@ int wlan_vendor_abort_scan(struct wlan_objmgr_pdev *pdev,
 		if (ucfg_scan_get_pdev_status(pdev) !=
 		   SCAN_NOT_IN_PROGRESS)
 			wlan_abort_scan(pdev, pdev_id,
-					INVAL_VDEV_ID, scan_id);
+					INVAL_VDEV_ID, scan_id, true);
 	}
 	return 0;
 }
