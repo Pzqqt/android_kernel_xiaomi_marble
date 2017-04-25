@@ -3418,15 +3418,16 @@ static bool csr_lookup_pmkid(tpAniSirGlobal pMac, uint32_t sessionId,
 		return false;
 	}
 
+	sme_debug("match PMKID " MAC_ADDRESS_STR " to ",
+		  MAC_ADDR_ARRAY(pBSSId));
 	do {
 		for (Index = 0; Index < CSR_MAX_PMKID_ALLOWED; Index++) {
-			sme_debug("match PMKID " MAC_ADDRESS_STR " to ",
-				MAC_ADDR_ARRAY(pBSSId));
 			if (!qdf_mem_cmp
 			   (pBSSId, pSession->PmkidCacheInfo[Index].BSSID.bytes,
 			    sizeof(struct qdf_mac_addr))) {
 				/* match found */
 				fMatchFound = true;
+				sme_debug("PMKID found");
 				break;
 			}
 		}
