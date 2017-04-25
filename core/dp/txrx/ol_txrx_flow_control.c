@@ -721,11 +721,9 @@ void ol_tx_flow_pool_map_handler(uint8_t flow_id, uint8_t flow_type,
 
 	case FLOW_TYPE_VDEV:
 		ol_tx_flow_pool_vdev_map(pool, flow_id);
-		qdf_spin_lock_bh(&pool->flow_pool_lock);
 		pdev->pause_cb(flow_id,
 			       WLAN_WAKE_ALL_NETIF_QUEUE,
 			       WLAN_DATA_FLOW_CONTROL);
-		qdf_spin_unlock_bh(&pool->flow_pool_lock);
 		break;
 	default:
 		if (pool_create)
