@@ -6597,6 +6597,11 @@ __wlan_hdd_cfg80211_set_ns_offload(struct wiphy *wiphy,
 	pHddCtx->ns_offload_enable =
 		nla_get_u8(tb[QCA_WLAN_VENDOR_ATTR_ND_OFFLOAD_FLAG]);
 
+	if (QDF_IBSS_MODE == adapter->device_mode) {
+		hdd_debug("NS Offload is not supported in IBSS mode");
+		return -EINVAL;
+	}
+
 	/* update ns offload in case it is already enabled/disabled */
 	if (pHddCtx->ns_offload_enable)
 		hdd_enable_ns_offload(adapter, pmo_ns_offload_dynamic_update);
