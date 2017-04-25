@@ -2339,7 +2339,7 @@ static QDF_STATUS wma_unified_bcn_tmpl_send(tp_wma_handle wma,
 				     const tpSendbeaconParams bcn_info,
 				     uint8_t bytes_to_strip)
 {
-	struct beacon_params params = {0};
+	struct beacon_tmpl_params params = {0};
 	uint32_t tmpl_len, tmpl_len_aligned;
 	uint8_t *frm;
 	QDF_STATUS ret;
@@ -2387,7 +2387,7 @@ static QDF_STATUS wma_unified_bcn_tmpl_send(tp_wma_handle wma,
 	params.frm = frm;
 	params.tmpl_len_aligned = tmpl_len_aligned;
 
-	ret = wmi_unified_beacon_send_cmd(wma->wmi_handle,
+	ret = wmi_unified_beacon_tmpl_send_cmd(wma->wmi_handle,
 				 &params);
 	if (QDF_IS_STATUS_ERROR(ret))
 		WMA_LOGE("%s: Failed to send bcn tmpl: %d", __func__, ret);
