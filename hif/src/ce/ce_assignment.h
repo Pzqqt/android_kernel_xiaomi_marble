@@ -105,8 +105,7 @@ static struct CE_attr host_ce_config_wlan[] = {
 	/* Target autonomous HIF_memcpy */
 	{ /* CE6 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
 	/* ce_diag, the Diagnostic Window */
-	{ /* CE7 */ (CE_ATTR_DIAG_FLAGS | CE_ATTR_DISABLE_INTR) , 0,
-		2, DIAG_TRANSFER_LIMIT, 2, NULL,},
+	{ /* CE7 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
 	/* Target to uMC */
 	{ /* CE8 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
 	/* target->host HTT */
