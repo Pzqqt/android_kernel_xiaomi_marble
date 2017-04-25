@@ -287,7 +287,7 @@ static void scheduler_thread_process_queues(struct scheduler_ctx *sch_ctx,
 {
 	int i;
 	QDF_STATUS vStatus = QDF_STATUS_E_FAILURE;
-	struct scheduler_msg_wrapper *pMsgWrapper = NULL;
+	struct scheduler_msg_wrapper *msg_wrapper = NULL;
 
 	if (!sch_ctx) {
 		QDF_ASSERT(0);
@@ -321,17 +321,17 @@ static void scheduler_thread_process_queues(struct scheduler_ctx *sch_ctx,
 			i++;
 			continue;
 		}
-		pMsgWrapper =
+		msg_wrapper =
 			scheduler_mq_get(&sch_ctx->queue_ctx.sch_msg_q[i]);
-		if (pMsgWrapper == NULL) {
+		if (msg_wrapper == NULL) {
 			QDF_TRACE(QDF_MODULE_ID_SCHEDULER,
 				QDF_TRACE_LEVEL_ERROR,
-				"%s: pMsgWrapper is NULL", __func__);
+				"%s: msg_wrapper is NULL", __func__);
 			QDF_ASSERT(0);
 			return;
 		}
 		if (sch_ctx->queue_ctx.scheduler_msg_process_fn[i]) {
-			struct scheduler_msg *msg = pMsgWrapper->msg_buf;
+			struct scheduler_msg *msg = msg_wrapper->msg_buf;
 
 			sch_ctx->watchdog_msg_type = msg->type;
 			sch_ctx->watchdog_callback = msg->callback;
@@ -348,7 +348,7 @@ static void scheduler_thread_process_queues(struct scheduler_ctx *sch_ctx,
 					sch_ctx->queue_ctx.sch_msg_q[i].qid);
 			}
 			/* return message to the Core */
-			scheduler_core_return_msg(sch_ctx, pMsgWrapper);
+			scheduler_core_return_msg(sch_ctx, msg_wrapper);
 		}
 
 		/* start again with highest priority queue at index 0 */
