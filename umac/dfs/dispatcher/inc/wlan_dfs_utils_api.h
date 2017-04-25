@@ -35,7 +35,7 @@
 #define DFS_NOL_RESET                0
 
 /* Max nol channels */
-#define DFS_MAX_NOL_CHANNEL        128
+#define DFS_MAX_NOL_CHANNEL         80
 
 /* dfs offload service bit */
 #define DFS_SERVICE_PHYERR_OFFLOAD 113
