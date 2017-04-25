@@ -49,6 +49,10 @@ typedef uint32_t wlan_scan_id;
 #define SCM_CANCEL_SCAN_WAIT_TIME 50
 #define SCM_CANCEL_SCAN_WAIT_ITERATION 100
 
+#define INVAL_SCAN_ID        0xFFFFFFFF
+#define INVAL_VDEV_ID        0xFFFFFFFF
+#define INVAL_PDEV_ID        0xFFFFFFFF
+
 #define BURST_SCAN_MAX_NUM_OFFCHANNELS 3
 #define P2P_SCAN_MAX_BURST_DURATION 180
 /* Increase dwell time for P2P search in ms */

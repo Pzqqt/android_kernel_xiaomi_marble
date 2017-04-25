@@ -45,10 +45,6 @@
 #define QCOM_VENDOR_IE_AGE_TYPE  0x100
 #define QCOM_VENDOR_IE_AGE_LEN   (sizeof(qcom_ie_age) - 2)
 #define SCAN_DONE_EVENT_BUF_SIZE 4096
-#define INVAL_SCAN_ID        0xFFFFFFFF
-#define INVAL_VDEV_ID        0xFFFFFFFF
-#define INVAL_PDEV_ID        0xFFFFFFFF
-
 
 /**
  * typedef struct qcom_ie_age - age ie
