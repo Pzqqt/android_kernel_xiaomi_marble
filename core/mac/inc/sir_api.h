@@ -6736,8 +6736,8 @@ struct wow_enable_params {
  * For SS - 2; bits 3-5
  * MCS values are interpreted as in IEEE 11ax-D1.0 spec
  */
-#define HE_MCS_1x1 0xFFF8
-#define HE_MCS_2x2 0xFFC7
+#define HE_MCS_1x1 0xFFFFFFF8
+#define HE_MCS_2x2 0xFFFFFFC0
 
 #define HEMCSSIZE 3
 
