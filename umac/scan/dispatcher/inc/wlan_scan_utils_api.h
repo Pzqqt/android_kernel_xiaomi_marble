@@ -1275,6 +1275,21 @@ util_scan_entry_heop(struct scan_cache_entry *scan_entry)
 }
 
 /**
+ * util_scan_entry_spatial_reuse_parameter() - function to read spatial reuse
+ *                                             parameter ie
+ * @scan_entry: scan entry
+ *
+ * API, function to read scan_entry reuse parameter ie
+ *
+ * Return, spatial reuse parameter ie or NULL if ie is not present
+ */
+static inline uint8_t*
+util_scan_entry_spatial_reuse_parameter(struct scan_cache_entry *scan_entry)
+{
+	return scan_entry->ie_list.srp;
+}
+
+/**
  * util_get_last_scan_time() - function to get last scan time on this pdev
  * @vdev: vdev object
  *

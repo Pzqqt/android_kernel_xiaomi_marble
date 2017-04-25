@@ -114,6 +114,7 @@ struct element_info {
  * @cswrp:      pointer to channel switch announcement wrapper ie
  * @widebw:     pointer to wide band channel switch sub ie
  * @txpwrenvlp: pointer to tx power envelop sub ie
+ * @srp: pointer to spatial reuse parameter sub extended ie
  */
 struct ie_list {
 	uint8_t *tim;
@@ -154,6 +155,7 @@ struct ie_list {
 	uint8_t *mdie;
 	uint8_t *hecap;
 	uint8_t *heop;
+	uint8_t *srp;
 };
 
 /**

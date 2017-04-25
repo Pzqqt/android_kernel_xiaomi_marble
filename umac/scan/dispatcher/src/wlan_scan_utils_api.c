@@ -342,6 +342,21 @@ util_scan_is_hidden_ssid(struct ie_ssid *ssid)
 }
 
 static void
+util_scan_parse_extn_ie(struct scan_cache_entry *scan_params,
+	struct ie_header *ie)
+{
+	struct extn_ie_header *extn_ie = (struct extn_ie_header *) ie;
+
+	switch (extn_ie->ie_extn_id) {
+	case WLAN_EXTN_ELEMID_SRP:
+		scan_params->ie_list.srp = (uint8_t *)ie;
+		break;
+	default:
+		break;
+	}
+}
+
+static void
 util_scan_parse_vendor_ie(struct scan_cache_entry *scan_params,
 	struct ie_header *ie)
 {
@@ -520,6 +535,9 @@ util_scan_populate_bcn_ie_list(struct scan_cache_entry *scan_params)
 				scm_err("failed to parse chan_switch_wrapper_ie");
 				return status;
 			}
+			break;
+		case WLAN_ELEMID_EXTN_ELEM:
+			util_scan_parse_extn_ie(scan_params, ie);
 			break;
 		default:
 			break;
