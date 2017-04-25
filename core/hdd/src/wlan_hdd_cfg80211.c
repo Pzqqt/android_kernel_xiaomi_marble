@@ -14756,9 +14756,8 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 		pScanInfo = &pAdapter->scan_info;
 		if (pScanInfo->mScanPending) {
 			hdd_debug("Disconnect is in progress, Aborting Scan");
-			hdd_abort_mac_scan(pHddCtx, pAdapter->sessionId,
-					   INVALID_SCAN_ID,
-					   eCSR_SCAN_ABORT_DEFAULT);
+			wlan_abort_scan(pHddCtx->hdd_pdev, INVAL_PDEV_ID,
+				pAdapter->sessionId, INVALID_SCAN_ID, false);
 		}
 		wlan_hdd_cleanup_remain_on_channel_ctx(pAdapter);
 #ifdef FEATURE_WLAN_TDLS

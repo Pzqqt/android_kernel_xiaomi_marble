@@ -1675,9 +1675,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		pScanInfo = &pHostapdAdapter->scan_info;
 		/* Lets abort scan to ensure smooth authentication for client */
 		if ((pScanInfo != NULL) && pScanInfo->mScanPending) {
-			hdd_abort_mac_scan(pHddCtx, pHostapdAdapter->sessionId,
-					   INVALID_SCAN_ID,
-					   eCSR_SCAN_ABORT_DEFAULT);
+			wlan_abort_scan(pHddCtx->hdd_pdev, INVAL_PDEV_ID,
+				pHostapdAdapter->sessionId, INVALID_SCAN_ID, false);
 		}
 		if (pHostapdAdapter->device_mode == QDF_P2P_GO_MODE) {
 			/* send peer status indication to oem app */
@@ -8042,7 +8041,6 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	tSirUpdateIE updateIE;
 	beacon_data_t *old;
 	int ret;
-	unsigned long rc;
 	hdd_adapter_list_node_t *pAdapterNode = NULL;
 	hdd_adapter_list_node_t *pNext = NULL;
 
@@ -8101,19 +8099,8 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 			if (pScanInfo && pScanInfo->mScanPending) {
 				hdd_debug("Aborting pending scan for device mode:%d",
 				       staAdapter->device_mode);
-				INIT_COMPLETION(pScanInfo->abortscan_event_var);
-				hdd_abort_mac_scan(staAdapter->pHddCtx,
-						   staAdapter->sessionId,
-						   INVALID_SCAN_ID,
-						   eCSR_SCAN_ABORT_DEFAULT);
-				rc = wait_for_completion_timeout(
-					&pScanInfo->abortscan_event_var,
-					msecs_to_jiffies(
-						WLAN_WAIT_TIME_ABORTSCAN));
-				if (!rc) {
-					hdd_err("Timeout occurred while waiting for abortscan");
-					QDF_ASSERT(pScanInfo->mScanPending);
-				}
+				wlan_abort_scan(pHddCtx->hdd_pdev, INVAL_PDEV_ID,
+					staAdapter->sessionId, INVALID_SCAN_ID, true);
 			}
 		}
 

@@ -1031,7 +1031,8 @@ void hdd_abort_mac_scan(hdd_context_t *pHddCtx, uint8_t sessionId,
 #ifndef NAPIER_SCAN
 	sme_abort_mac_scan(pHddCtx->hHal, sessionId, scan_id, reason);
 #else
-	wlan_abort_scan(pHddCtx->hdd_pdev, INVAL_PDEV_ID, sessionId, scan_id);
+	wlan_abort_scan(pHddCtx->hdd_pdev, INVAL_PDEV_ID,
+		sessionId, scan_id, false);
 #endif
 }
 /**
@@ -2430,10 +2431,8 @@ static int __wlan_hdd_vendor_abort_scan(
 					  cookie);
 		if (ret != 0)
 			return ret;
-		hdd_abort_mac_scan(hdd_ctx,
-				   HDD_SESSION_ID_INVALID,
-				   scan_id,
-				   eCSR_SCAN_ABORT_DEFAULT);
+		wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
+				HDD_SESSION_ID_INVALID, scan_id, false);
 	}
 #else
 	wlan_vendor_abort_scan(hdd_ctx->hdd_pdev, data,
@@ -2480,23 +2479,12 @@ int wlan_hdd_scan_abort(hdd_adapter_t *pAdapter)
 {
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	hdd_scaninfo_t *pScanInfo = NULL;
-	unsigned long rc;
 
 	pScanInfo = &pAdapter->scan_info;
 
-	if (pScanInfo->mScanPending) {
-		INIT_COMPLETION(pScanInfo->abortscan_event_var);
-		hdd_abort_mac_scan(pHddCtx, pAdapter->sessionId,
-				   INVALID_SCAN_ID, eCSR_SCAN_ABORT_DEFAULT);
-
-		rc = wait_for_completion_timeout(
-			&pScanInfo->abortscan_event_var,
-				msecs_to_jiffies(5000));
-		if (!rc) {
-			hdd_err("Timeout occurred while waiting for abort scan");
-			return -ETIME;
-		}
-	}
+	if (pScanInfo->mScanPending)
+		wlan_abort_scan(pHddCtx->hdd_pdev, INVAL_PDEV_ID,
+				pAdapter->sessionId, INVALID_SCAN_ID, true);
 	return 0;
 }
 

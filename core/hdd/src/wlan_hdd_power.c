@@ -1832,23 +1832,9 @@ next_adapter:
 			return -EAGAIN;
 		}
 
-		if (pScanInfo->mScanPending) {
-			INIT_COMPLETION(pScanInfo->abortscan_event_var);
-			hdd_abort_mac_scan(pHddCtx, pAdapter->sessionId,
-					   INVALID_SCAN_ID,
-					   eCSR_SCAN_ABORT_DEFAULT);
-
-			status =
-				wait_for_completion_timeout(&pScanInfo->
-				    abortscan_event_var,
-				    msecs_to_jiffies(WLAN_WAIT_TIME_ABORTSCAN));
-			if (!status) {
-				hdd_err("Timeout occurred while waiting for abort scan");
-				wlan_hdd_inc_suspend_stats(pHddCtx,
-							   SUSPEND_FAIL_SCAN);
-				return -ETIME;
-			}
-		}
+		if (pScanInfo->mScanPending)
+			wlan_abort_scan(pHddCtx->hdd_pdev, INVAL_PDEV_ID,
+				pAdapter->sessionId, INVALID_SCAN_ID, true);
 		status = hdd_get_next_adapter(pHddCtx, pAdapterNode, &pNext);
 		pAdapterNode = pNext;
 	}

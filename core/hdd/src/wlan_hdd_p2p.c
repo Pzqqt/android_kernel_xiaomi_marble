@@ -2289,9 +2289,8 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 		!(wlan_hdd_validate_session_id(pAdapter->sessionId))) {
 		scan_info = &pAdapter->scan_info;
 		if (scan_info->mScanPending) {
-			hdd_abort_mac_scan(pHddCtx, pAdapter->sessionId,
-					   INVALID_SCAN_ID,
-					   eCSR_SCAN_ABORT_DEFAULT);
+			wlan_abort_scan(pHddCtx->hdd_pdev, INVAL_PDEV_ID,
+				pAdapter->sessionId, INVALID_SCAN_ID, false);
 			hdd_debug("Abort Scan while adding virtual interface");
 		}
 	}

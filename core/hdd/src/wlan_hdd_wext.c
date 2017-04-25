@@ -12374,9 +12374,8 @@ int hdd_set_band(struct net_device *dev, u8 ui_band)
 		while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
 			pAdapter = pAdapterNode->pAdapter;
 			hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
-			hdd_abort_mac_scan(pHddCtx, pAdapter->sessionId,
-					   INVALID_SCAN_ID,
-					   eCSR_SCAN_ABORT_DUE_TO_BAND_CHANGE);
+			wlan_abort_scan(pHddCtx->hdd_pdev, INVAL_PDEV_ID,
+				pAdapter->sessionId, INVALID_SCAN_ID, false);
 			connectedBand =
 				hdd_conn_get_connected_band
 					(WLAN_HDD_GET_STATION_CTX_PTR(pAdapter));

@@ -438,19 +438,8 @@ static int __hdd_netdev_notifier_call(struct notifier_block *nb,
 
 	case NETDEV_GOING_DOWN:
 		if (adapter->scan_info.mScanPending != false) {
-			unsigned long rc;
-
-			INIT_COMPLETION(adapter->scan_info.
-					abortscan_event_var);
-			hdd_abort_mac_scan(adapter->pHddCtx,
-					   adapter->sessionId,
-					   INVALID_SCAN_ID,
-					   eCSR_SCAN_ABORT_DEFAULT);
-			rc = wait_for_completion_timeout(
-				&adapter->scan_info.abortscan_event_var,
-				msecs_to_jiffies(WLAN_WAIT_TIME_ABORTSCAN));
-			if (!rc)
-				hdd_err("Timeout occurred while waiting for abortscan");
+			wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
+				adapter->sessionId, INVALID_SCAN_ID, true);
 		} else {
 			hdd_debug("Scan is not Pending from user");
 		}
@@ -4898,9 +4887,8 @@ QDF_STATUS hdd_abort_mac_scan_all_adapters(hdd_context_t *hdd_ctx)
 		    (adapter->device_mode == QDF_P2P_DEVICE_MODE) ||
 		    (adapter->device_mode == QDF_SAP_MODE) ||
 		    (adapter->device_mode == QDF_P2P_GO_MODE)) {
-			hdd_abort_mac_scan(hdd_ctx, adapter->sessionId,
-					   INVALID_SCAN_ID,
-					   eCSR_SCAN_ABORT_DEFAULT);
+		    wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
+				adapter->sessionId, INVALID_SCAN_ID, false);
 		}
 		status = hdd_get_next_adapter(hdd_ctx, adapterNode, &pNext);
 		adapterNode = pNext;
