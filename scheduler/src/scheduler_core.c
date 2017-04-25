@@ -286,7 +286,7 @@ static void scheduler_thread_process_queues(struct scheduler_ctx *sch_ctx,
 					    bool *shutdown)
 {
 	int i;
-	QDF_STATUS vStatus = QDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	struct scheduler_msg_wrapper *msg_wrapper = NULL;
 
 	if (!sch_ctx) {
@@ -337,11 +337,11 @@ static void scheduler_thread_process_queues(struct scheduler_ctx *sch_ctx,
 			sch_ctx->watchdog_callback = msg->callback;
 			qdf_timer_start(&sch_ctx->watchdog_timer,
 					SCHEDULER_WATCHDOG_TIMEOUT);
-			vStatus = sch_ctx->queue_ctx.
+			qdf_status = sch_ctx->queue_ctx.
 					scheduler_msg_process_fn[i](msg);
 			qdf_timer_stop(&sch_ctx->watchdog_timer);
 
-			if (QDF_IS_STATUS_ERROR(vStatus)) {
+			if (QDF_IS_STATUS_ERROR(qdf_status)) {
 				QDF_TRACE(QDF_MODULE_ID_SCHEDULER,
 					QDF_TRACE_LEVEL_ERROR,
 					FL("Failed processing Qid[%d] message"),
