@@ -925,23 +925,6 @@ struct beacon_tmpl_params {
 	uint8_t *frm;
 };
 
-#ifdef CONFIG_MCL
-/**
- * struct beacon_params - beacon cmd parameter
- * @vdev_id: vdev id
- * @tim_ie_offset: tim ie offset
- * @tmpl_len: beacon template length
- * @tmpl_len_aligned: beacon template alignment
- * @frm: beacon template parameter
- */
-struct beacon_params {
-	uint8_t vdev_id;
-	uint32_t tim_ie_offset;
-	uint32_t tmpl_len;
-	uint32_t tmpl_len_aligned;
-	uint8_t *frm;
-};
-#else
 /**
  * struct beacon_params - beacon cmd parameter
  * @vdev_id: vdev id
@@ -963,7 +946,6 @@ struct beacon_params {
 	bool is_bitctl_reqd;
 	bool is_high_latency;
 };
-#endif
 
 /**
  * struct bcn_prb_template_params - beacon probe template parameter
