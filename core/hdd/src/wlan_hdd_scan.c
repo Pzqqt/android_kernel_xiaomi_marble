@@ -1538,16 +1538,13 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 		pAdapter->device_mode);
 
 	/*
-	 * IBSS vdev does not have peers on other macs,
-	 * so it does not support scan on other band,
-	 * and IBSS vdev does not need to scan to establish
+	 * IBSS vdev does not need to scan to establish
 	 * IBSS connection. If IBSS vdev need to support scan,
 	 * Firmware need to make the change to add self peer
 	 * per mac for IBSS vdev.
 	 */
-	if (policy_mgr_is_hw_dbs_capable(pHddCtx->hdd_psoc) &&
-	   (QDF_IBSS_MODE == pAdapter->device_mode)) {
-		hdd_err("Scan not supported for IBSS in if HW support DBS");
+	if (QDF_IBSS_MODE == pAdapter->device_mode) {
+		hdd_err("Scan not supported for IBSS");
 		return -EINVAL;
 	}
 
