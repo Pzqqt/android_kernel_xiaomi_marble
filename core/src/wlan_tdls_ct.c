@@ -536,6 +536,13 @@ void tdls_indicate_teardown(struct tdls_vdev_priv_obj *tdls_vdev,
 				  TDLS_LINK_UNSPECIFIED);
 	tdls_notice("Teardown reason %d", reason);
 
+	if (tdls_soc->tdls_dp_vdev_update)
+		tdls_soc->tdls_dp_vdev_update(&tdls_soc->soc,
+				curr_peer->sta_id,
+				tdls_soc->tdls_update_dp_vdev_flags,
+				((curr_peer->link_status ==
+				TDLS_LINK_CONNECTED) ? true : false));
+
 	indication.reason = reason;
 	indication.vdev = tdls_vdev->vdev;
 	qdf_mem_copy(indication.peer_mac, curr_peer->peer_mac.bytes,
