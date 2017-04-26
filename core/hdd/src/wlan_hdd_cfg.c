@@ -7024,6 +7024,9 @@ QDF_STATUS hdd_set_policy_mgr_user_cfg(hdd_context_t *hdd_ctx)
 	user_cfg->max_concurrent_active_sessions =
 		hdd_ctx->config->gMaxConcurrentActiveSessions;
 	user_cfg->enable2x2 = hdd_ctx->config->enable2x2;
+	user_cfg->mcc_to_scc_switch_mode =
+		hdd_ctx->config->WlanMccToSccSwitchMode;
+	user_cfg->sub_20_mhz_enabled = cds_is_sub_20_mhz_enabled();
 	status = policy_mgr_set_user_cfg(hdd_ctx->hdd_psoc, user_cfg);
 
 	qdf_mem_free(user_cfg);
