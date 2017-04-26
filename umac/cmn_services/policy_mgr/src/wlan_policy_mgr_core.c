@@ -147,7 +147,15 @@ bool policy_mgr_is_dual_mac_disabled_in_ini(
 uint32_t policy_mgr_mcc_to_scc_switch_mode_in_user_cfg(
 	struct wlan_objmgr_psoc *psoc)
 {
-	return 0;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return 0;
+	}
+
+	return pm_ctx->user_cfg.mcc_to_scc_switch_mode;
 }
 
 /**

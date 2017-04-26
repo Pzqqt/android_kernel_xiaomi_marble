@@ -1419,9 +1419,17 @@ bool policy_mgr_max_concurrent_connections_reached(
 	return false;
 }
 
-static bool policy_mgr_is_sub_20_mhz_enabled(void)
+static bool policy_mgr_is_sub_20_mhz_enabled(struct wlan_objmgr_psoc *psoc)
 {
-	return false;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return false;
+	}
+
+	return pm_ctx->user_cfg.sub_20_mhz_enabled;
 }
 
 bool policy_mgr_allow_concurrency(struct wlan_objmgr_psoc *psoc,
@@ -1453,7 +1461,7 @@ bool policy_mgr_allow_concurrency(struct wlan_objmgr_psoc *psoc,
 	/* find the current connection state from pm_conc_connection_list*/
 	num_connections = policy_mgr_get_connection_count(psoc);
 
-	if (num_connections && policy_mgr_is_sub_20_mhz_enabled()) {
+	if (num_connections && policy_mgr_is_sub_20_mhz_enabled(psoc)) {
 		policy_mgr_err("dont allow concurrency if Sub 20 MHz is enabled");
 		status = false;
 		goto done;
