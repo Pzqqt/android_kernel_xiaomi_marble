@@ -1391,6 +1391,7 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	struct wma_tgt_cfg *cfg = param;
 	uint8_t temp_band_cap;
 	struct cds_config_info *cds_cfg = cds_get_ini_config();
+	uint8_t antenna_mode;
 
 	/* Reuse same pdev for module stop and start */
 	if ((hdd_get_conparam() == QDF_GLOBAL_FTM_MODE) ||
@@ -1493,9 +1494,9 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	hdd_debug("fine_time_meas_cap: 0x%x",
 		hdd_ctx->config->fine_time_meas_cap);
 
-	hdd_ctx->current_antenna_mode =
-		(hdd_ctx->config->enable2x2 == 0x01) ?
-		HDD_ANTENNA_MODE_2X2 : HDD_ANTENNA_MODE_1X1;
+	antenna_mode = (hdd_ctx->config->enable2x2 == 0x01) ?
+			HDD_ANTENNA_MODE_2X2 : HDD_ANTENNA_MODE_1X1;
+	hdd_update_smps_antenna_mode(hdd_ctx, antenna_mode);
 	hdd_debug("Init current antenna mode: %d",
 		 hdd_ctx->current_antenna_mode);
 

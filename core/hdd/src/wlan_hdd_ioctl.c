@@ -6332,6 +6332,49 @@ static bool hdd_is_supported_chain_mask_1x1(hdd_context_t *hdd_ctx)
 	return (!hdd_ctx->config->enable2x2) ? true : false;
 }
 
+QDF_STATUS hdd_update_smps_antenna_mode(hdd_context_t *hdd_ctx, int mode)
+{
+	QDF_STATUS status;
+	uint8_t smps_mode;
+	uint8_t smps_enable;
+
+	/* Update SME SMPS config */
+	if (HDD_ANTENNA_MODE_1X1 == mode) {
+		smps_enable = true;
+		smps_mode = HDD_SMPS_MODE_STATIC;
+	} else {
+		smps_enable = false;
+		smps_mode = HDD_SMPS_MODE_DISABLED;
+	}
+
+	hdd_debug("Update SME SMPS enable: %d mode: %d",
+		 smps_enable, smps_mode);
+	status = sme_update_mimo_power_save(
+		hdd_ctx->hHal, smps_enable, smps_mode, false);
+	if (QDF_STATUS_SUCCESS != status) {
+		hdd_err("Update SMPS config failed enable: %d mode: %d"
+			"status: %d",
+			smps_enable, smps_mode, status);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	hdd_ctx->current_antenna_mode = mode;
+	/*
+	 * Update the user requested nss in the mac context.
+	 * This will be used in tdls protocol engine to form tdls
+	 * Management frames.
+	 */
+	sme_update_user_configured_nss(
+		hdd_ctx->hHal,
+		hdd_ctx->current_antenna_mode);
+
+	hdd_debug("Successfully switched to mode: %d x %d",
+		 hdd_ctx->current_antenna_mode,
+		 hdd_ctx->current_antenna_mode);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * drv_cmd_set_antenna_mode() - SET ANTENNA MODE driver command
  * handler
@@ -6352,8 +6395,6 @@ static int drv_cmd_set_antenna_mode(hdd_adapter_t *adapter,
 	int ret = 0;
 	int mode;
 	uint8_t *value = command;
-	uint8_t smps_mode;
-	uint8_t smps_enable;
 
 	if (((1 << QDF_STA_MODE) != hdd_ctx->concurrency_mode) ||
 	    (hdd_ctx->no_of_active_sessions[QDF_STA_MODE] > 1)) {
@@ -6440,38 +6481,11 @@ static int drv_cmd_set_antenna_mode(hdd_adapter_t *adapter,
 		goto exit;
 	}
 
-	/* Update SME SMPS config */
-	if (HDD_ANTENNA_MODE_1X1 == mode) {
-		smps_enable = true;
-		smps_mode = HDD_SMPS_MODE_STATIC;
-	} else {
-		smps_enable = false;
-		smps_mode = HDD_SMPS_MODE_DISABLED;
-	}
-
-	hdd_debug("Update SME SMPS enable: %d mode: %d",
-		 smps_enable, smps_mode);
-	status = sme_update_mimo_power_save(
-		hdd_ctx->hHal, smps_enable, smps_mode, false);
+	status = hdd_update_smps_antenna_mode(hdd_ctx, mode);
 	if (QDF_STATUS_SUCCESS != status) {
-		hdd_err("Update SMPS config failed enable: %d mode: %d status: %d",
-			smps_enable, smps_mode, status);
 		ret = -EFAULT;
 		goto exit;
 	}
-
-	hdd_ctx->current_antenna_mode = mode;
-	/* Update the user requested nss in the mac context.
-	 * This will be used in tdls protocol engine to form tdls
-	 * Management frames.
-	 */
-	sme_update_user_configured_nss(
-		hdd_ctx->hHal,
-		hdd_ctx->current_antenna_mode);
-
-	hdd_debug("Successfully switched to mode: %d x %d",
-		 hdd_ctx->current_antenna_mode,
-		 hdd_ctx->current_antenna_mode);
 	ret = 0;
 exit:
 #ifdef FEATURE_WLAN_TDLS
