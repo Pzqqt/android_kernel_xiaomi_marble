@@ -394,6 +394,34 @@ int wlan_cfg80211_sched_scan_stop(struct wlan_objmgr_pdev *pdev,
 #endif /*FEATURE_WLAN_SCAN_PNO */
 
 /**
+ * wlan_copy_bssid_scan_request() - API to copy the bssid to Scan request
+ * @scan_req: Pointer to scan_start_request
+ * @request: scan request from Supplicant
+ *
+ * This API copies the BSSID in scan request from Supplicant and copies it to
+ * the scan_start_request
+ *
+ * Return: None
+ */
+#if defined(CFG80211_SCAN_BSSID) || \
+	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 7, 0))
+static inline void
+wlan_copy_bssid_scan_request(struct scan_start_request *scan_req,
+		struct cfg80211_scan_request *request)
+{
+	qdf_mem_copy(scan_req->scan_req.bssid_list[0].bytes,
+				request->bssid, QDF_MAC_ADDR_SIZE);
+}
+#else
+static inline void
+wlan_copy_bssid_scan_request(struct scan_start_request *scan_req,
+		struct cfg80211_scan_request *request)
+{
+
+}
+#endif
+
+/**
  * wlan_scan_request_enqueue() - enqueue Scan Request
  * @pdev: pointer to pdev object
  * @req: Pointer to the scan request
@@ -719,7 +747,7 @@ QDF_STATUS wlan_cfg80211_scan_priv_init(struct wlan_objmgr_pdev *pdev)
 	psoc = wlan_pdev_get_psoc(pdev);
 	wlan_pdev_obj_unlock(pdev);
 
-	req_id = ucfg_scan_register_requester(psoc, "HDD",
+	req_id = ucfg_scan_register_requester(psoc, "CFG",
 		wlan_cfg80211_scan_done_callback, NULL);
 
 	osif_priv = wlan_pdev_get_ospriv(pdev);
@@ -938,8 +966,7 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 	 * which fw will send probe req.
 	 */
 	req->scan_req.num_bssid = 1;
-	qdf_mem_copy(&req->scan_req.bssid_list[0].bytes, request->bssid,
-			QDF_MAC_ADDR_SIZE);
+	wlan_copy_bssid_scan_request(req, request);
 	if (qdf_is_macaddr_zero(&req->scan_req.bssid_list[0]))
 		qdf_set_macaddr_broadcast(&req->scan_req.bssid_list[0]);
 

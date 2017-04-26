@@ -323,6 +323,7 @@ enum qca_nl80211_vendor_subcmds {
 	QCA_NL80211_VENDOR_SUBCMD_P2P_LISTEN_OFFLOAD_START = 122,
 	QCA_NL80211_VENDOR_SUBCMD_P2P_LISTEN_OFFLOAD_STOP = 123,
 	QCA_NL80211_VENDOR_SUBCMD_SAP_CONDITIONAL_CHAN_SWITCH = 124,
+	QCA_NL80211_VENDOR_SUBCMD_GPIO_CONFIG_COMMAND = 125,
 
 	QCA_NL80211_VENDOR_SUBCMD_LL_STATS_EXT = 127,
 
@@ -3596,6 +3597,29 @@ enum qca_wlan_vendor_acs_select_reason {
 	QCA_WLAN_VENDOR_ACS_SELECT_REASON_DFS,
 	QCA_WLAN_VENDOR_ACS_SELECT_REASON_LTE_COEX,
 };
+
+/**
+ * enum qca_wlan_gpio_attr - Parameters for GPIO configuration
+ */
+enum qca_wlan_gpio_attr {
+	QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_INVALID = 0,
+	/* Unsigned 32-bit attribute for GPIO command */
+	QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_COMMAND,
+	/* Unsigned 32-bit attribute for GPIO PIN number to configure */
+	QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_PINNUM,
+	/* Unsigned 32-bit attribute for GPIO value to configure */
+	QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_VALUE,
+	/* Unsigned 32-bit attribute for GPIO pull type */
+	QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_PULL_TYPE,
+	/* Unsigned 32-bit attribute for GPIO interrupt mode */
+	QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_INTR_MODE,
+
+	/* keep last */
+	QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_LAST,
+	QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_MAX =
+		QCA_WLAN_VENDOR_ATTR_GPIO_PARAM_LAST - 1,
+};
+
 #if !(defined (SUPPORT_WDEV_CFG80211_VENDOR_EVENT_ALLOC)) &&	\
 	(LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)) && 	\
 	!(defined(WITH_BACKPORTS))

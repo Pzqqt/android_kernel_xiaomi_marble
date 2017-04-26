@@ -37,7 +37,6 @@
 /* Max number of scans allowed from userspace */
 #define WLAN_MAX_SCAN_COUNT 8
 
-#ifdef WLAN_ENABLE_AGEIE_ON_SCAN_RESULTS
 /* GPS application requirement */
 #define QCOM_VENDOR_IE_ID 221
 #define QCOM_OUI1         0x00
@@ -77,7 +76,6 @@ typedef struct {
 	u64 beacon_tsf;
 	u16 seq_ctrl;
 } __attribute__ ((packed)) qcom_ie_age;
-#endif
 
 /**
  * struct osif_scan_pdev - OS scan private strcutre
