@@ -1387,6 +1387,11 @@ __wlan_hdd_cfg80211_ll_stats_get(struct wiphy *wiphy,
 
 	LinkLayerStatsGetReq.staId = pAdapter->sessionId;
 
+	if (wlan_hdd_validate_session_id(pAdapter->sessionId)) {
+		hdd_err("invalid session id: %d", pAdapter->sessionId);
+		return -EINVAL;
+	}
+
 	context = &ll_stats_context;
 	spin_lock(&context->context_lock);
 	context->request_id = LinkLayerStatsGetReq.reqId;
