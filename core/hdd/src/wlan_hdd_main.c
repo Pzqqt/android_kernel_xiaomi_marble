@@ -5747,14 +5747,9 @@ void hdd_exchange_version_and_caps(hdd_context_t *hdd_ctx)
 QDF_STATUS hdd_set_sme_chan_list(hdd_context_t *hdd_ctx)
 {
 
-	if (hdd_ctx->reg_offload)
-		return sme_init_chan_list(hdd_ctx->hHal,
-					  hdd_ctx->reg.alpha2,
-					  0);
-	else
-		return sme_init_chan_list(hdd_ctx->hHal,
-					  hdd_ctx->reg.alpha2,
-					  hdd_ctx->reg.cc_src);
+	return sme_init_chan_list(hdd_ctx->hHal,
+				  hdd_ctx->reg.alpha2,
+				  hdd_ctx->reg.cc_src);
 }
 
 /**
