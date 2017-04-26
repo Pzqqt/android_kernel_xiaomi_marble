@@ -1092,7 +1092,8 @@ static void __lim_process_qos_map_configure_frame(tpAniSirGlobal mac_ctx,
 	lim_send_sme_mgmt_frame_ind(mac_ctx, mac_hdr->fc.subType,
 			(uint8_t *) mac_hdr,
 			frame_len + sizeof(tSirMacMgmtHdr), 0,
-			WMA_GET_RX_CH(rx_pkt_info), session, 0);
+			WMA_GET_RX_CH(rx_pkt_info), session,
+			WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info));
 }
 
 #ifdef ANI_SUPPORT_11H
@@ -1301,7 +1302,8 @@ __lim_process_radio_measure_request(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 
 	lim_send_sme_mgmt_frame_ind(pMac, pHdr->fc.subType, (uint8_t *)pHdr,
 		frameLen + sizeof(tSirMacMgmtHdr), 0,
-		WMA_GET_RX_CH(pRxPacketInfo), psessionEntry, 0);
+		WMA_GET_RX_CH(pRxPacketInfo), psessionEntry,
+		WMA_GET_RX_RSSI_NORMALIZED(pRxPacketInfo));
 
 	frm = qdf_mem_malloc(sizeof(*frm));
 	if (frm == NULL) {
@@ -1528,7 +1530,9 @@ static void __lim_process_sa_query_response_action_frame(tpAniSirGlobal pMac,
 		lim_send_sme_mgmt_frame_ind(pMac, pHdr->fc.subType, (uint8_t *) pHdr,
 					    frameLen + sizeof(tSirMacMgmtHdr), 0,
 					    WMA_GET_RX_CH(pRxPacketInfo),
-					    psessionEntry, 0);
+					    psessionEntry,
+					    WMA_GET_RX_RSSI_NORMALIZED(
+					    pRxPacketInfo));
 		return;
 	}
 
@@ -2025,7 +2029,9 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 					sizeof(tSirMacMgmtHdr),
 					session->smeSessionId,
 					WMA_GET_RX_CH(rx_pkt_info),
-					session, 0);
+					session,
+					WMA_GET_RX_RSSI_NORMALIZED(
+					rx_pkt_info));
 		} else {
 			pe_debug("Dropping the vendor specific action frame"
 					"beacause of (WES Mode not enabled "
@@ -2099,7 +2105,9 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 					(uint8_t *) mac_hdr,
 					frame_len + sizeof(tSirMacMgmtHdr),
 					session->smeSessionId,
-					WMA_GET_RX_CH(rx_pkt_info), session, 0);
+					WMA_GET_RX_CH(rx_pkt_info), session,
+					WMA_GET_RX_RSSI_NORMALIZED(
+					rx_pkt_info));
 		break;
 #ifdef FEATURE_WLAN_TDLS
 #ifndef CONVERGED_TDLS_ENABLE
@@ -2187,7 +2195,9 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 					    frame_len + sizeof(tSirMacMgmtHdr),
 					    session->smeSessionId,
 					    WMA_GET_RX_CH(rx_pkt_info),
-					    session, 0);
+					    session,
+					    WMA_GET_RX_RSSI_NORMALIZED(
+					    rx_pkt_info));
 		break;
 	}
 	case SIR_MAC_ACTION_PROT_DUAL_PUB:
@@ -2234,6 +2244,52 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 	}
 }
 
+#ifndef CONVERGED_P2P_ENABLE
+/*
+ * lim_process_action_vendor_specific() - Process action frame received
+ * @mac_ctx: Pointer to Global MAC structure
+ * @pkt_info: A pointer to packet info structure
+ * @action_hdr: Pointer to vendor specific action frame hdr
+ * @session: PE session entry
+ *
+ * Return: none
+ */
+static void lim_process_action_vendor_specific(tpAniSirGlobal mac_ctx,
+			uint8_t *pkt_info,
+			tpSirMacVendorSpecificPublicActionFrameHdr action_hdr,
+			tpPESession session)
+{
+
+	tpSirMacMgmtHdr mac_hdr;
+	uint32_t frame_len;
+	uint8_t session_id = 0;
+	uint8_t p2p_oui[] = { 0x50, 0x6F, 0x9A, 0x09 };
+
+	mac_hdr = WMA_GET_RX_MAC_HEADER(pkt_info);
+	frame_len = WMA_GET_RX_PAYLOAD_LEN(pkt_info);
+	if (session)
+		session_id = session->smeSessionId;
+
+	/* Check if it is a P2P public action frame. */
+	if (!qdf_mem_cmp(action_hdr->Oui, p2p_oui, 4)) {
+		/* Forward to the SME to HDD to wpa_supplicant */
+		/* type is ACTION */
+		lim_send_sme_mgmt_frame_ind(mac_ctx, mac_hdr->fc.subType,
+					    (uint8_t *) mac_hdr, frame_len +
+					    sizeof(tSirMacMgmtHdr), session_id,
+					    WMA_GET_RX_CH(pkt_info), session,
+					    WMA_GET_RX_RSSI_NORMALIZED(
+					    pkt_info));
+	} else {
+		pe_debug("Unhandled public action frame (Vendor specific) OUI: %x %x %x %x",
+			 action_hdr->Oui[0],
+			 action_hdr->Oui[1],
+			 action_hdr->Oui[2],
+			 action_hdr->Oui[3]);
+	}
+}
+#endif
+
 /**
  * lim_process_action_frame_no_session
  *
@@ -2266,35 +2322,8 @@ void lim_process_action_frame_no_session(tpAniSirGlobal pMac, uint8_t *pBd)
 	case SIR_MAC_ACTION_PUBLIC_USAGE:
 		switch (pActionHdr->actionID) {
 		case SIR_MAC_ACTION_VENDOR_SPECIFIC:
-		{
-			tpSirMacMgmtHdr pHdr;
-			uint32_t frameLen;
-			uint8_t P2POui[] = { 0x50, 0x6F, 0x9A, 0x09 };
-
-			pHdr = WMA_GET_RX_MAC_HEADER(pBd);
-			frameLen = WMA_GET_RX_PAYLOAD_LEN(pBd);
-
-			/* Check if it is a P2P public action frame. */
-			if (!qdf_mem_cmp(pActionHdr->Oui, P2POui, 4)) {
-				/* Forward to the SME to HDD to wpa_supplicant */
-				/* type is ACTION */
-				lim_send_sme_mgmt_frame_ind(pMac,
-							    pHdr->fc.subType,
-							    (uint8_t *) pHdr,
-							    frameLen +
-							    sizeof
-							    (tSirMacMgmtHdr),
-							    0,
-							    WMA_GET_RX_CH
-								    (pBd), NULL, 0);
-			} else {
-				pe_debug("Unhandled public action frame (Vendor specific) OUI: %x %x %x %x",
-					pActionHdr->Oui[0],
-					pActionHdr->Oui[1],
-					pActionHdr->Oui[2],
-					pActionHdr->Oui[3]);
-			}
-		}
+			lim_process_action_vendor_specific(pMac, pBd,
+							   pActionHdr, NULL);
 		break;
 		default:
 			pe_warn("Unhandled public action frame: %x",

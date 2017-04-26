@@ -561,7 +561,8 @@ lim_indicate_probe_req_to_hdd(tpAniSirGlobal pMac, uint8_t *pBd,
 				    (uint8_t *) pHdr,
 				    (frameLen + sizeof(tSirMacMgmtHdr)),
 				    psessionEntry->smeSessionId, WMA_GET_RX_CH(pBd),
-				    psessionEntry, 0);
+				    psessionEntry,
+				    WMA_GET_RX_RSSI_NORMALIZED(pBd));
 } /*** end lim_indicate_probe_req_to_hdd() ***/
 
 /**
