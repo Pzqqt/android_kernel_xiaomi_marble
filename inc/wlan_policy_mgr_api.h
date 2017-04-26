@@ -1181,6 +1181,19 @@ bool policy_mgr_is_any_mode_active_on_band_along_with_session(
 		enum policy_mgr_band band);
 
 /**
+ * policy_mgr_get_chan_by_session_id() - Get channel for a given session ID
+ * @psoc: PSOC object information
+ * @session_id: Session ID
+ * @chan: Pointer to the channel
+ *
+ * Gets the channel for a given session ID
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS policy_mgr_get_chan_by_session_id(struct wlan_objmgr_psoc *psoc,
+		uint8_t session_id, uint8_t *chan);
+
+/**
  * policy_mgr_get_mac_id_by_session_id() - Get MAC ID for a given session ID
  * @psoc: PSOC object information
  * @session_id: Session ID

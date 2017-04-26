@@ -2219,6 +2219,32 @@ send_status:
 	return status;
 }
 
+QDF_STATUS policy_mgr_get_chan_by_session_id(struct wlan_objmgr_psoc *psoc,
+					uint8_t session_id, uint8_t *chan)
+{
+	uint32_t i;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	for (i = 0; i < MAX_NUMBER_OF_CONC_CONNECTIONS; i++) {
+		if ((pm_conc_connection_list[i].vdev_id == session_id) &&
+		    (pm_conc_connection_list[i].in_use)) {
+			*chan = pm_conc_connection_list[i].chan;
+			qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+			return QDF_STATUS_SUCCESS;
+		}
+	}
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 QDF_STATUS policy_mgr_get_mac_id_by_session_id(struct wlan_objmgr_psoc *psoc,
 					uint8_t session_id, uint8_t *mac_id)
 {
@@ -2250,12 +2276,20 @@ QDF_STATUS policy_mgr_get_mcc_session_id_on_mac(struct wlan_objmgr_psoc *psoc,
 					uint8_t *mcc_session_id)
 {
 	uint32_t i;
-	uint8_t chan = pm_conc_connection_list[session_id].chan;
+	QDF_STATUS status;
+	uint8_t chan;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
 		policy_mgr_err("Invalid Context");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = policy_mgr_get_chan_by_session_id(psoc, session_id, &chan);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		policy_mgr_err("Failed to get channel for session id:%d",
+			       session_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -2305,9 +2339,13 @@ uint8_t policy_mgr_get_mcc_operating_channel(struct wlan_objmgr_psoc *psoc,
 		return INVALID_CHANNEL_ID;
 	}
 
-	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
-	chan = pm_conc_connection_list[mcc_session_id].chan;
-	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+	status = policy_mgr_get_chan_by_session_id(psoc, mcc_session_id,
+						   &chan);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		policy_mgr_err("Failed to get channel for MCC session ID:%d",
+			       mcc_session_id);
+		return INVALID_CHANNEL_ID;
+	}
 
 	return chan;
 }
