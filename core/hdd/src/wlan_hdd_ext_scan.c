@@ -1609,6 +1609,11 @@ static int __wlan_hdd_cfg80211_extscan_get_capabilities(struct wiphy *wiphy,
 	if (0 != ret)
 		return -EINVAL;
 
+	if (pHddCtx->driver_status == DRIVER_MODULES_CLOSED) {
+		hdd_err("Driver Modules are closed");
+		return -EINVAL;
+	}
+
 	if (!pHddCtx->config->extscan_enabled) {
 		hdd_err("extscan not supported");
 		return -ENOTSUPP;
