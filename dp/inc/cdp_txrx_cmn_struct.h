@@ -440,13 +440,16 @@ struct cdp_soc_t {
  *			to set values in vdev
  * @CDP_ENABLE_NAWDS: set nawds enable/disable
  * @CDP_ENABLE_MCAST_EN: enable/disable multicast enhancement
- *
+ * @CDP_ENABLE_WDS: wds sta
+ * @CDP_ENABLE_PROXYSTA: proxy sta
+ * @CDP_UPDATE_TDLS_FLAGS: tdls link flags
  */
 enum cdp_vdev_param_type {
 	CDP_ENABLE_NAWDS,
 	CDP_ENABLE_MCAST_EN,
 	CDP_ENABLE_WDS,
 	CDP_ENABLE_PROXYSTA,
+	CDP_UPDATE_TDLS_FLAGS,
 };
 
 #define TXRX_FW_STATS_TXSTATS                     1

@@ -3212,6 +3212,8 @@ static void dp_set_vdev_param(struct cdp_vdev *vdev_handle,
 	case CDP_ENABLE_PROXYSTA:
 		vdev->proxysta_vdev = val;
 		break;
+	case CDP_UPDATE_TDLS_FLAGS:
+		vdev->tdls_link_connected = val;
 	default:
 		break;
 	}

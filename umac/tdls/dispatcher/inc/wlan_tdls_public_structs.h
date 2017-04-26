@@ -530,6 +530,14 @@ typedef QDF_STATUS (*tdls_register_tl_peer_callback)(void *userdata,
 typedef QDF_STATUS (*tdls_deregister_tl_peer_callback)(void *userdata,
 						       uint32_t vdev_id,
 						       uint8_t sta_id);
+
+/* This callback is used to update datapath vdev flags */
+typedef QDF_STATUS
+(*tdls_dp_vdev_update_flags_callback)(void *cbk_data,
+				      uint8_t sta_id,
+				      uint32_t vdev_param,
+				      bool is_link_up);
+
 /**
  * struct tdls_start_params - tdls start params
  * @config: tdls user config
@@ -537,12 +545,15 @@ typedef QDF_STATUS (*tdls_deregister_tl_peer_callback)(void *userdata,
  * @tdls_add_sta_req: pass eWNI_SME_TDLS_ADD_STA_REQ value
  * @tdls_del_sta_req: pass eWNI_SME_TDLS_DEL_STA_REQ value
  * @tdls_update_peer_state: pass WMA_UPDATE_TDLS_PEER_STATE value
+ * @tdls_del_all_peers: pass eWNI_SME_DEL_ALL_TDLS_PEERS
+ * @tdls_update_dp_vdev_flags: pass CDP_UPDATE_TDLS_FLAGS
  * @tdls_event_cb: tdls event callback
  * @tdls_evt_cb_data: tdls event data
  * @ack_cnf_cb: tdls tx ack callback to indicate the tx status
  * @tx_ack_cnf_cb_data: tdls tx ack user data
  * @tdls_reg_tl_peer: tdls register tdls peer
  * @tdls_dereg_tl_peer: tdls deregister tdls peer
+ * @tdls_dp_vdev_update: update vdev flags in datapath
  * @tdls_tl_peer_data: userdata for register/deregister TDLS peer
  */
 struct tdls_start_params {
@@ -552,6 +563,7 @@ struct tdls_start_params {
 	uint16_t tdls_del_sta_req;
 	uint16_t tdls_update_peer_state;
 	uint16_t tdls_del_all_peers;
+	uint32_t tdls_update_dp_vdev_flags;
 	tdls_rx_callback tdls_rx_cb;
 	void *tdls_rx_cb_data;
 	tdls_wmm_check tdls_wmm_cb;
@@ -562,6 +574,7 @@ struct tdls_start_params {
 	void *tx_ack_cnf_cb_data;
 	tdls_register_tl_peer_callback tdls_reg_tl_peer;
 	tdls_deregister_tl_peer_callback tdls_dereg_tl_peer;
+	tdls_dp_vdev_update_flags_callback tdls_dp_vdev_update;
 	void *tdls_tl_peer_data;
 };
 

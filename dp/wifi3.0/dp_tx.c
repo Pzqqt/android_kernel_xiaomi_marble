@@ -1995,13 +1995,20 @@ QDF_STATUS dp_tx_vdev_attach(struct dp_vdev *vdev)
 void dp_tx_vdev_update_search_flags(struct dp_vdev *vdev)
 {
 	/*
+	 * Enable both AddrY (SA based search) and AddrX (Da based search)
+	 * for TDLS link
+	 *
 	 * Enable AddrY (SA based search) only for non-WDS STA and
 	 * ProxySTA VAP modes.
 	 *
 	 * In all other VAP modes, only DA based search should be
 	 * enabled
 	 */
-	if ((vdev->opmode == wlan_op_mode_sta &&
+	if (vdev->opmode == wlan_op_mode_sta &&
+	    vdev->tdls_link_connected)
+		vdev->hal_desc_addr_search_flags =
+			(HAL_TX_DESC_ADDRX_EN | HAL_TX_DESC_ADDRY_EN);
+	else if ((vdev->opmode == wlan_op_mode_sta &&
 				(!vdev->wds_enabled || vdev->proxysta_vdev)))
 		vdev->hal_desc_addr_search_flags = HAL_TX_DESC_ADDRY_EN;
 	else

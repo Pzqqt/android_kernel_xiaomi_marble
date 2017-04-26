@@ -920,6 +920,8 @@ struct dp_vdev {
 	privacy_exemption privacy_filters[MAX_PRIVACY_FILTERS];
 	uint32_t filters_num;
 #endif
+	/* TDLS Link status */
+	bool tdls_link_connected;
 
 	/* VDEV operating mode */
 	enum wlan_op_mode opmode;

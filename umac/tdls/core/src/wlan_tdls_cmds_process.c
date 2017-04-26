@@ -1693,6 +1693,13 @@ QDF_STATUS tdls_process_enable_link(struct tdls_oper_request *req)
 	tdls_increment_peer_count(soc_obj);
 	feature = soc_obj->tdls_configs.tdls_feature_flags;
 
+	if (soc_obj->tdls_dp_vdev_update)
+		soc_obj->tdls_dp_vdev_update(&soc_obj->soc,
+					peer->sta_id,
+					soc_obj->tdls_update_dp_vdev_flags,
+					((peer->link_status ==
+					TDLS_LINK_CONNECTED) ? true : false));
+
 	tdls_debug("TDLS buffer sta: %d, uapsd_mask %d",
 		   TDLS_IS_BUFFER_STA_ENABLED(feature),
 		   soc_obj->tdls_configs.tdls_uapsd_mask);
@@ -1910,6 +1917,13 @@ QDF_STATUS tdls_process_remove_force_peer(struct tdls_oper_request *req)
 
 	tdls_set_peer_link_status(peer, TDLS_LINK_TEARING,
 				  TDLS_LINK_UNSPECIFIED);
+
+	if (soc_obj->tdls_dp_vdev_update)
+		soc_obj->tdls_dp_vdev_update(&soc_obj->soc,
+				peer->sta_id,
+				soc_obj->tdls_update_dp_vdev_flags,
+				((peer->link_status ==
+				TDLS_LINK_CONNECTED) ? true : false));
 
 	if (soc_obj->tdls_event_cb) {
 		qdf_mem_copy(ind.peer_mac, macaddr, QDF_MAC_ADDR_SIZE);
