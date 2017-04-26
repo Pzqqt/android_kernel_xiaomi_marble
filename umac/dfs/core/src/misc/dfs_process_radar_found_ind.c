@@ -230,10 +230,10 @@ void dfs_process_radar_found_indication(struct wlan_dfs *dfs,
 	sidx = DFS_FREQ_OFFSET_TO_SIDX(radar_found->freq_offset);
 
 	if (!radar_found->segment_id)
-		freq_center = utils_dfs_chan_to_freq(dfs->dfs_pdev_obj,
+		freq_center = utils_dfs_chan_to_freq(
 				dfs->dfs_curchan->ic_vhtop_ch_freq_seg1);
 	else {
-		freq_center = utils_dfs_chan_to_freq(dfs->dfs_pdev_obj,
+		freq_center = utils_dfs_chan_to_freq(
 				dfs->dfs_curchan->ic_vhtop_ch_freq_seg2);
 		if (flag & IEEE80211_CHAN_VHT160)
 			freq_center += DFS_160MHZ_SECOND_SEG_OFFSET;
@@ -273,7 +273,7 @@ void dfs_process_radar_found_indication(struct wlan_dfs *dfs,
 
 	for (i = 0; i < DFS_NUM_FREQ_OFFSET; i++) {
 		freq_offset.chan_num[i] = utils_dfs_freq_to_chan(
-				dfs->dfs_pdev_obj, freq_offset.freq[i]);
+				freq_offset.freq[i]);
 		DFS_PRINTK("%s: offset=%d, channel%d\n",
 			   __func__, i, freq_offset.chan_num[i]);
 	}

@@ -530,6 +530,8 @@ QDF_STATUS dfs_get_random_channel(
 
 	ch_params->center_freq_seg0 = cur_chan.ic_vhtop_ch_freq_seg1;
 	ch_params->center_freq_seg1 = cur_chan.ic_vhtop_ch_freq_seg2;
+	DFS_PRINTK("%s: input width=%d\n", __func__, ch_params->ch_width);
+
 	if (*target_chan) {
 		wlan_reg_set_channel_params(pdev,
 			(uint8_t)*target_chan, 0, ch_params);
@@ -537,6 +539,9 @@ QDF_STATUS dfs_get_random_channel(
 		status = QDF_STATUS_SUCCESS;
 	}
 
+	DFS_PRINTK("%s: ch=%d, seg0=%d, seg1=%d, width=%d\n",
+		   __func__, *target_chan, ch_params->center_freq_seg0,
+		   ch_params->center_freq_seg1, ch_params->ch_width);
 random_chan_error:
 	qdf_mem_free(chan_list);
 
@@ -575,10 +580,13 @@ void dfs_init_nol(struct wlan_objmgr_pdev *pdev)
 	qdf_mem_zero(&dfs_nolinfo, sizeof(dfs_nolinfo));
 	len = pld_wlan_get_dfs_nol(qdf_dev->dev, (void *)&dfs_nolinfo,
 			(uint16_t)sizeof(dfs_nolinfo));
-	if (len > 0)
+	if (len > 0) {
 		dfs_set_nol(dfs, dfs_nolinfo.dfs_nol, dfs_nolinfo.num_chans);
-	else
-		DFS_PRINTK("%s: nol nol in pld\n", __func__);
+		DFS_PRINTK("%s: nol channels in pld\n", __func__);
+		dfs_print_nol(dfs);
+	} else {
+		DFS_PRINTK("%s: no nol in pld\n", __func__);
+	}
 }
 #endif
 EXPORT_SYMBOL(dfs_init_nol);
@@ -685,16 +693,36 @@ void utils_dfs_reg_update_nol_ch(struct wlan_objmgr_pdev *pdev,
 }
 EXPORT_SYMBOL(utils_dfs_reg_update_nol_ch);
 
-uint32_t utils_dfs_freq_to_chan(struct wlan_objmgr_pdev *pdev,
-			       uint32_t freq)
+uint8_t utils_dfs_freq_to_chan(uint32_t freq)
 {
-	return wlan_reg_freq_to_chan(pdev, freq);
+	uint8_t chan;
+
+	if (freq > DFS_24_GHZ_BASE_FREQ && freq < DFS_CHAN_14_FREQ)
+		chan = ((freq - DFS_24_GHZ_BASE_FREQ) / DFS_CHAN_SPACING_5MHZ);
+	else if (freq == DFS_CHAN_14_FREQ)
+		chan = DFS_24_GHZ_CHANNEL_14;
+	else if ((freq > DFS_24_GHZ_BASE_FREQ) && (freq < DFS_5_GHZ_BASE_FREQ))
+		chan = (((freq - DFS_CHAN_15_FREQ) / DFS_CHAN_SPACING_20MHZ) +
+			DFS_24_GHZ_CHANNEL_15);
+	else
+		chan = (freq - DFS_5_GHZ_BASE_FREQ) / DFS_CHAN_SPACING_5MHZ;
+
+	return chan;
 }
 EXPORT_SYMBOL(utils_dfs_freq_to_chan);
 
-uint32_t utils_dfs_chan_to_freq(struct wlan_objmgr_pdev *pdev,
-			       uint32_t chan)
+uint32_t utils_dfs_chan_to_freq(uint8_t chan)
 {
-	return wlan_reg_chan_to_freq(pdev, chan);
+	if (chan < DFS_24_GHZ_CHANNEL_14)
+		return DFS_24_GHZ_BASE_FREQ + (chan * DFS_CHAN_SPACING_5MHZ);
+	else if (chan == DFS_24_GHZ_CHANNEL_14)
+		return DFS_CHAN_14_FREQ;
+	else if (chan < DFS_24_GHZ_CHANNEL_27)
+		return DFS_CHAN_15_FREQ + ((chan - DFS_24_GHZ_CHANNEL_15) *
+				DFS_CHAN_SPACING_20MHZ);
+	else if (chan == DFS_5_GHZ_CHANNEL_170)
+		return DFS_CHAN_170_FREQ;
+	else
+		return DFS_5_GHZ_BASE_FREQ + (chan * DFS_CHAN_SPACING_5MHZ);
 }
 EXPORT_SYMBOL(utils_dfs_chan_to_freq);

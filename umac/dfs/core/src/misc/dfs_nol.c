@@ -105,7 +105,7 @@ static os_timer_func(dfs_remove_from_nol)
 	struct wlan_dfs *dfs;
 	uint16_t delfreq;
 	uint16_t delchwidth;
-	uint32_t chan;
+	uint8_t chan;
 
 	OS_GET_TIMER_ARG(nol_arg, struct dfs_nol_timer_arg *);
 
@@ -120,7 +120,7 @@ static os_timer_func(dfs_remove_from_nol)
 	dfs_nol_update(dfs);
 
 	dfs_mlme_nol_timeout_notification(dfs->dfs_pdev_obj);
-	chan = utils_dfs_freq_to_chan(dfs->dfs_pdev_obj, delfreq);
+	chan = utils_dfs_freq_to_chan(delfreq);
 	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_NOL,
 		    "%s: remove channel %d from nol\n", __func__, chan);
 	utils_dfs_reg_update_nol_ch(dfs->dfs_pdev_obj,

@@ -37,6 +37,42 @@
 /* Max nol channels */
 #define DFS_MAX_NOL_CHANNEL         80
 
+/* WLAN 2.4GHz start freq */
+#define DFS_24_GHZ_BASE_FREQ     (2407)
+
+/* WLAN 5GHz start freq */
+#define DFS_5_GHZ_BASE_FREQ      (5000)
+
+/* WLAN 2.4 GHz channel number 6 */
+#define DFS_24_GHZ_CHANNEL_6        (6)
+
+/* WLAN 2.4 GHz channel number 14 */
+#define DFS_24_GHZ_CHANNEL_14      (14)
+
+/* WLAN 2.4 GHz channel number 15 */
+#define DFS_24_GHZ_CHANNEL_15      (15)
+
+/* WLAN 2.4 GHz channel number 27 */
+#define DFS_24_GHZ_CHANNEL_27      (27)
+
+/* WLAN 5GHz channel number 170 */
+#define DFS_5_GHZ_CHANNEL_170     (170)
+
+/* WLAN 5MHz channel spacing */
+#define DFS_CHAN_SPACING_5MHZ       (5)
+
+/* WLAN 20Hz channel spacing */
+#define DFS_CHAN_SPACING_20MHZ     (20)
+
+/* WLAN 2.4GHz channel number 14 freq */
+#define DFS_CHAN_14_FREQ         (2484)
+
+/* WLAN 2.4GHz channel number 15 freq */
+#define DFS_CHAN_15_FREQ         (2512)
+
+/* WLAN 5GHz channel number 170 freq */
+#define DFS_CHAN_170_FREQ        (5852)
+
 /* dfs offload service bit */
 #define DFS_SERVICE_PHYERR_OFFLOAD 113
 
@@ -389,22 +425,18 @@ void utils_dfs_reg_update_nol_ch(struct wlan_objmgr_pdev *pdev,
 
 /**
  * utils_dfs_freq_to_chan () - convert channel freq to channel number
- * @pdev: pdev ptr
  * @freq: frequency
  *
  * Return: channel number
  */
-uint32_t utils_dfs_freq_to_chan(struct wlan_objmgr_pdev *pdev,
-			       uint32_t freq);
+uint8_t utils_dfs_freq_to_chan(uint32_t freq);
 
 /**
  * utils_dfs__chan_to_freq () - convert channel number to frequency
- * @pdev: pdev ptr
  * @chan: channel number
  *
  * Return: frequency
  */
-uint32_t utils_dfs_chan_to_freq(struct wlan_objmgr_pdev *pdev,
-			       uint32_t chan);
+uint32_t utils_dfs_chan_to_freq(uint8_t chan);
 
 #endif /* _WLAN_DFS_UTILS_API_H_ */
