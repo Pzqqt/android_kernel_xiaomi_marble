@@ -1746,6 +1746,48 @@ QDF_STATUS wma_set_smps_params(tp_wma_handle wma, uint8_t vdev_id,
 }
 
 /**
+ * wma_configure_vdev_suspend_params() - set suspend related parameters in fw
+ * @wma: wma handle
+ * @vdev_id: vdev id
+ *
+ * Return: none
+ */
+static void wma_configure_vdev_suspend_params(tp_wma_handle wma,
+		uint8_t vdev_id)
+{
+	uint32_t cfg_data_val = 0;
+	struct wma_txrx_node *iface = &wma->interfaces[vdev_id];
+	struct sAniSirGlobal *mac;
+	QDF_STATUS ret;
+
+	if (iface->type != WMI_VDEV_TYPE_STA)
+		return;
+
+	mac = cds_get_context(QDF_MODULE_ID_PE);
+	if (!mac) {
+		WMA_LOGE(FL("Failed to get mac context"));
+		return;
+	}
+
+	if (wlan_cfg_get_int(mac,
+			     WNI_CFG_PS_WOW_DATA_INACTIVITY_TIMEOUT,
+			     &cfg_data_val) != eSIR_SUCCESS) {
+		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
+			"Can't get WNI_CFG_PS_WOW_DATA_INACTIVITY_TO");
+		cfg_data_val = WOW_POWERSAVE_DEFAULT_INACTIVITY_TIME;
+	}
+
+	WMA_LOGD("%s: Set inactivity_time for wow: %d", __func__,
+			cfg_data_val);
+	ret = wma_unified_set_sta_ps_param(wma->wmi_handle, vdev_id,
+			WMI_STA_PS_PARAM_INACTIVITY_TIME, cfg_data_val);
+	if (ret)
+		WMA_LOGE("%s: Setting InActivity time Failed.",
+			__func__);
+
+}
+
+/**
  * wma_set_vdev_suspend_dtim() - set suspend dtim parameters in fw
  * @wma: wma handle
  * @vdev_id: vdev id
@@ -1828,24 +1870,19 @@ static void wma_set_vdev_suspend_dtim(tp_wma_handle wma, uint8_t vdev_id)
 		WMA_LOGD("Set Listen Interval vdevId %d Listen Intv %d",
 			 vdev_id, listen_interval);
 
-		if (wlan_cfg_get_int(mac,
-				     WNI_CFG_PS_WOW_DATA_INACTIVITY_TIMEOUT,
-				     &cfg_data_val) != eSIR_SUCCESS) {
-			QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
-				"Can't get WNI_CFG_PS_WOW_DATA_INACTIVITY_TO");
-			cfg_data_val = WOW_POWERSAVE_DEFAULT_INACTIVITY_TIME;
-		}
-
-		WMA_LOGD("%s: Set inactivity_time for wow: %d", __func__,
-				cfg_data_val);
-		ret = wma_unified_set_sta_ps_param(wma->wmi_handle, vdev_id,
-				WMI_STA_PS_PARAM_INACTIVITY_TIME, cfg_data_val);
-		if (ret)
-			WMA_LOGE("%s: Setting InActivity time Failed.",
-				__func__);
-
 		iface->restore_dtim_setting = true;
 	}
+}
+
+/*
+ * wma_is_user_set_li_params() - Check LI related params are set by user or not
+ * @iface: wma vdev handle
+ *
+ * Return: 1 if true else 0
+ */
+static inline uint8_t wma_is_user_set_li_params(struct wma_txrx_node *iface)
+{
+       return iface->alt_modulated_dtim_enabled ? 1 : 0;
 }
 
 /**
@@ -1864,11 +1901,52 @@ void wma_set_suspend_dtim(tp_wma_handle wma)
 	}
 
 	for (i = 0; i < wma->max_bssid; i++) {
-	  if ((wma->interfaces[i].handle) &&
-	      (false == wma->interfaces[i].alt_modulated_dtim_enabled)) {
-			wma_set_vdev_suspend_dtim(wma, i);
+		if (wma->interfaces[i].handle) {
+			if (!wma_is_user_set_li_params(&wma->interfaces[i]))
+				wma_set_vdev_suspend_dtim(wma, i);
+			wma_configure_vdev_suspend_params(wma, i);
 		}
 	}
+}
+
+/**
+ * wma_configure_vdev_resume_params() - set resume related parameters in fw
+ * @wma: wma handle
+ * @vdev_id: vdev id
+ *
+ * Return: none
+ */
+static void wma_configure_vdev_resume_params(tp_wma_handle wma, uint8_t vdev_id)
+{
+	struct wma_txrx_node *iface = &wma->interfaces[vdev_id];
+	u_int32_t cfg_data_val;
+	struct sAniSirGlobal *mac;
+	QDF_STATUS ret;
+
+	if (iface->type != WMI_VDEV_TYPE_STA)
+		return;
+
+	mac = cds_get_context(QDF_MODULE_ID_PE);
+	if (!mac) {
+		WMA_LOGE(FL("Failed to get mac context"));
+		return;
+	}
+
+	if (wlan_cfg_get_int(mac, WNI_CFG_PS_DATA_INACTIVITY_TIMEOUT,
+				&cfg_data_val) != eSIR_SUCCESS) {
+		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
+			"Failed to get WNI_CFG_PS_DATA_INACTIVITY_TIMEOUT");
+		cfg_data_val = POWERSAVE_DEFAULT_INACTIVITY_TIME;
+	}
+
+	WMA_LOGD("%s: Setting InActivity time %d.", __func__, cfg_data_val);
+	ret = wma_unified_set_sta_ps_param(wma->wmi_handle, vdev_id,
+				WMI_STA_PS_PARAM_INACTIVITY_TIME,
+				cfg_data_val);
+	if (ret)
+		WMA_LOGE("%s: Setting InActivity time Failed.",
+			__func__);
+
 }
 
 /**
@@ -1881,7 +1959,6 @@ void wma_set_suspend_dtim(tp_wma_handle wma)
 static void wma_set_vdev_resume_dtim(tp_wma_handle wma, uint8_t vdev_id)
 {
 	struct wma_txrx_node *iface = &wma->interfaces[vdev_id];
-	uint32_t inactivity_time;
 
 	if ((iface->type == WMI_VDEV_TYPE_STA) &&
 	    (iface->restore_dtim_setting)) {
@@ -1913,31 +1990,6 @@ static void wma_set_vdev_resume_dtim(tp_wma_handle wma, uint8_t vdev_id)
 		WMA_LOGD("Set Listen Interval vdevId %d Listen Intv %d",
 			 vdev_id, cfg_data_val);
 
-		if (wlan_cfg_get_int(mac, WNI_CFG_PS_DATA_INACTIVITY_TIMEOUT,
-					&cfg_data_val) != eSIR_SUCCESS) {
-			QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
-				"Failed to get WNI_CFG_PS_DATA_INACTIVITY_TIMEOUT");
-			cfg_data_val = POWERSAVE_DEFAULT_INACTIVITY_TIME;
-		}
-
-		inactivity_time = (u_int32_t)cfg_data_val;
-		WMA_LOGD("%s: Setting InActivity time %d.", __func__,
-							inactivity_time);
-		ret = wma_unified_set_sta_ps_param(wma->wmi_handle, vdev_id,
-					WMI_STA_PS_PARAM_INACTIVITY_TIME,
-					inactivity_time);
-		if (ret)
-			WMA_LOGE("%s: Setting InActivity time Failed.",
-				__func__);
-
-		if (wlan_cfg_get_int(mac, WNI_CFG_MAX_PS_POLL,
-				&cfg_data_val) != eSIR_SUCCESS) {
-				QDF_TRACE(QDF_MODULE_ID_WMA,
-				QDF_TRACE_LEVEL_ERROR,
-				"Failed to get value for WNI_CFG_MAX_PS_POLL");
-			cfg_data_val = 0;
-		}
-
 		iface->restore_dtim_setting = false;
 
 	}
@@ -1959,9 +2011,10 @@ void wma_set_resume_dtim(tp_wma_handle wma)
 	}
 
 	for (i = 0; i < wma->max_bssid; i++) {
-	  if ((wma->interfaces[i].handle) &&
-	      (false == wma->interfaces[i].alt_modulated_dtim_enabled)) {
-			wma_set_vdev_resume_dtim(wma, i);
+		if (wma->interfaces[i].handle) {
+			if (!wma_is_user_set_li_params(&wma->interfaces[i]))
+				wma_set_vdev_resume_dtim(wma, i);
+			wma_configure_vdev_resume_params(wma, i);
 		}
 	}
 }
