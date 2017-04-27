@@ -249,6 +249,18 @@ static QDF_STATUS dispatcher_policy_mgr_deinit(void)
 	return policy_mgr_deinit();
 }
 
+static QDF_STATUS dispatcher_policy_mgr_psoc_open(
+	struct wlan_objmgr_psoc *psoc)
+{
+	return policy_mgr_psoc_open(psoc);
+}
+
+static QDF_STATUS dispatcher_policy_mgr_psoc_close(
+	struct wlan_objmgr_psoc *psoc)
+{
+	return policy_mgr_psoc_close(psoc);
+}
+
 static QDF_STATUS dispatcher_policy_mgr_psoc_enable(
 	struct wlan_objmgr_psoc *psoc)
 {
@@ -267,6 +279,18 @@ static QDF_STATUS dispatcher_policy_mgr_init(void)
 }
 
 static QDF_STATUS dispatcher_policy_mgr_deinit(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS dispatcher_policy_mgr_psoc_open(
+	struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS dispatcher_policy_mgr_psoc_close(
+	struct wlan_objmgr_psoc *psoc)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -659,12 +683,17 @@ QDF_STATUS dispatcher_psoc_open(struct wlan_objmgr_psoc *psoc)
 	if (QDF_STATUS_SUCCESS != atf_psoc_open(psoc))
 		goto atf_psoc_open_fail;
 
+	if (QDF_STATUS_SUCCESS != dispatcher_policy_mgr_psoc_open(psoc))
+		goto policy_mgr_psoc_open_fail;
+
 	if (QDF_STATUS_SUCCESS != dispatcher_regulatory_psoc_open(psoc))
 		goto regulatory_psoc_open_fail;
 
 	return QDF_STATUS_SUCCESS;
 
 regulatory_psoc_open_fail:
+	dispatcher_policy_mgr_psoc_close(psoc);
+policy_mgr_psoc_open_fail:
 	atf_psoc_close(psoc);
 atf_psoc_open_fail:
 	wlan_serialization_psoc_close(psoc);
@@ -683,6 +712,8 @@ EXPORT_SYMBOL(dispatcher_psoc_open);
 QDF_STATUS dispatcher_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_regulatory_psoc_close(psoc));
+
+	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_policy_mgr_psoc_close(psoc));
 
 	QDF_BUG(QDF_STATUS_SUCCESS == atf_psoc_close(psoc));
 
