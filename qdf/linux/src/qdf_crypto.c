@@ -270,7 +270,7 @@ int qdf_aes_ctr(const uint8_t *key, unsigned int key_len, uint8_t *siv,
 	struct scatterlist sg_in, sg_out;
 	int ret;
 
-	if (key_len != 16 && key_len != 24 && key_len != 32) {
+	if (!IS_VALID_CTR_KEY_LEN(key_len)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  FL("Invalid key length: %u"), key_len);
 		return -EINVAL;
@@ -318,6 +318,66 @@ int qdf_aes_ctr(const uint8_t *key, unsigned int key_len, uint8_t *siv,
 
 	skcipher_request_free(req);
 	crypto_free_skcipher(tfm);
+	return ret;
+}
+#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 18, 0))
+int qdf_aes_ctr(const uint8_t *key, unsigned int key_len, uint8_t *siv,
+		const uint8_t *src, size_t src_len, uint8_t *dest, bool enc)
+{
+	struct crypto_ablkcipher *tfm;
+	struct ablkcipher_request *req = NULL;
+	struct scatterlist sg_in, sg_out;
+	int ret;
+
+	if (!IS_VALID_CTR_KEY_LEN(key_len)) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  FL("Invalid key length: %u"), key_len);
+		return -EINVAL;
+	}
+
+	tfm = crypto_alloc_ablkcipher("ctr(aes)", 0, CRYPTO_ALG_ASYNC);
+	if (IS_ERR(tfm)) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  FL("Failed to alloc transformation for ctr(aes):%ld"),
+			  PTR_ERR(tfm));
+		return -EAGAIN;
+	}
+
+	req = ablkcipher_request_alloc(tfm, GFP_KERNEL);
+	if (!req) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  FL("Failed to allocate request for ctr(aes)"));
+		crypto_free_ablkcipher(tfm);
+		return -EAGAIN;
+	}
+
+	ret = crypto_ablkcipher_setkey(tfm, key, key_len);
+	if (ret) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  FL("Set key failed for ctr(aes), ret:%d"), -ret);
+		ablkcipher_request_free(req);
+		crypto_free_ablkcipher(tfm);
+		return ret;
+	}
+
+	sg_init_one(&sg_in, src, src_len);
+	sg_init_one(&sg_out, dest, src_len);
+	ablkcipher_request_set_crypt(req, &sg_in, &sg_out, src_len, siv);
+
+	if (enc)
+		ret = crypto_ablkcipher_encrypt(req);
+	else
+		ret = crypto_ablkcipher_decrypt(req);
+
+	if (ret) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  FL("%s failed for ctr(aes), ret:%d"),
+			  enc ? "Encryption" : "Decryption", -ret);
+	}
+
+	ablkcipher_request_free(req);
+	crypto_free_ablkcipher(tfm);
+
 	return ret;
 }
 #else
