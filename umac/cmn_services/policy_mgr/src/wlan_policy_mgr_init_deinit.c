@@ -101,6 +101,9 @@ static QDF_STATUS policy_mgr_pdev_obj_create_cb(struct wlan_objmgr_pdev *pdev,
 
 	policy_mgr_ctx->pdev = pdev;
 
+	wlan_reg_register_chan_change_callback(psoc,
+		policy_mgr_reg_chan_change_callback, NULL);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -118,6 +121,8 @@ static QDF_STATUS policy_mgr_pdev_obj_destroy_cb(struct wlan_objmgr_pdev *pdev,
 	}
 
 	policy_mgr_ctx->pdev = NULL;
+	wlan_reg_unregister_chan_change_callback(psoc,
+		policy_mgr_reg_chan_change_callback);
 
 	return QDF_STATUS_SUCCESS;
 }
