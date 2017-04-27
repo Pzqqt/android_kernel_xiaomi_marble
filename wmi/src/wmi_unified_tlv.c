@@ -17138,6 +17138,9 @@ static struct cur_reg_rule
 		reg_rule_ptr[count].reg_power =
 			WMI_REG_RULE_REG_POWER_GET(
 					wmi_reg_rule[count].bw_pwr_info);
+		reg_rule_ptr[count].ant_gain =
+			WMI_REG_RULE_ANTENNA_GAIN_GET(
+					wmi_reg_rule[count].bw_pwr_info);
 		reg_rule_ptr[count].flags =
 			WMI_REG_RULE_FLAGS_GET(
 					wmi_reg_rule[count].flag_info);

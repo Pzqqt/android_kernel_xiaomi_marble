@@ -1033,6 +1033,7 @@ static void reg_fill_channel_info(enum channel_enum chan_enum,
 		~REGULATORY_CHAN_DISABLED;
 
 	master_list[chan_enum].tx_power = reg_rule->reg_power;
+	master_list[chan_enum].ant_gain = reg_rule->ant_gain;
 	master_list[chan_enum].state = CHANNEL_STATE_ENABLE;
 
 	if (reg_rule->flags & REGULATORY_CHAN_NO_IR) {

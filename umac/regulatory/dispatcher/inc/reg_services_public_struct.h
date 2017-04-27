@@ -330,6 +330,7 @@ struct regulatory_channel {
 	uint32_t tx_power;
 	uint16_t min_bw;
 	uint16_t max_bw;
+	uint8_t ant_gain;
 	bool nol_chan;
 };
 
