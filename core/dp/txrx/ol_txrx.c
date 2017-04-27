@@ -4887,17 +4887,32 @@ free_buf:
 /* print for every 16th packet */
 #define OL_TXRX_PRINT_RATE_LIMIT_THRESH 0x0f
 struct ol_rx_cached_buf *cache_buf;
+
+/** helper function to drop packets
+ *  Note: caller must hold the cached buq lock before invoking
+ *  this function. Also, it assumes that the pointers passed in
+ *  are valid (non-NULL)
+ */
+static inline void ol_txrx_drop_frames(
+					struct ol_txrx_cached_bufq_t *bufqi,
+					qdf_nbuf_t rx_buf_list)
+{
+	uint32_t dropped = ol_txrx_drop_nbuf_list(rx_buf_list);
+	bufqi->dropped += dropped;
+	bufqi->qdepth_no_thresh += dropped;
+
+	if (bufqi->qdepth_no_thresh > bufqi->high_water_mark)
+		bufqi->high_water_mark = bufqi->qdepth_no_thresh;
+}
+
 static QDF_STATUS ol_txrx_enqueue_rx_frames(
+					struct ol_txrx_peer_t *peer,
 					struct ol_txrx_cached_bufq_t *bufqi,
 					qdf_nbuf_t rx_buf_list)
 {
 	struct ol_rx_cached_buf *cache_buf;
 	qdf_nbuf_t buf, next_buf;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	int dropped = 0;
 	static uint32_t count;
-	bool thresh_crossed = false;
-
 
 	if ((count++ & OL_TXRX_PRINT_RATE_LIMIT_THRESH) == 0)
 		ol_txrx_info_high(
@@ -4906,21 +4921,11 @@ static QDF_STATUS ol_txrx_enqueue_rx_frames(
 
 	qdf_spin_lock_bh(&bufqi->bufq_lock);
 	if (bufqi->curr >= bufqi->thresh) {
-		status = QDF_STATUS_E_FAULT;
-		dropped = ol_txrx_drop_nbuf_list(rx_buf_list);
-		bufqi->dropped += dropped;
-		bufqi->qdepth_no_thresh += dropped;
-
-		if (bufqi->qdepth_no_thresh > bufqi->high_water_mark)
-			bufqi->high_water_mark = bufqi->qdepth_no_thresh;
-
-		thresh_crossed = true;
+		ol_txrx_drop_frames(bufqi, rx_buf_list);
+		qdf_spin_unlock_bh(&bufqi->bufq_lock);
+		return QDF_STATUS_E_FAULT;
 	}
-
 	qdf_spin_unlock_bh(&bufqi->bufq_lock);
-
-	if (thresh_crossed)
-		goto end;
 
 	buf = rx_buf_list;
 	while (buf) {
@@ -4934,16 +4939,25 @@ static QDF_STATUS ol_txrx_enqueue_rx_frames(
 			/* Add NULL terminator */
 			qdf_nbuf_set_next(buf, NULL);
 			cache_buf->buf = buf;
-			qdf_spin_lock_bh(&bufqi->bufq_lock);
-			list_add_tail(&cache_buf->list,
+			if (peer && peer->valid) {
+				qdf_spin_lock_bh(&bufqi->bufq_lock);
+				list_add_tail(&cache_buf->list,
 				      &bufqi->cached_bufq);
-			bufqi->curr++;
-			qdf_spin_unlock_bh(&bufqi->bufq_lock);
+				bufqi->curr++;
+				qdf_spin_unlock_bh(&bufqi->bufq_lock);
+			} else {
+				qdf_mem_free(cache_buf);
+				rx_buf_list = buf;
+				qdf_nbuf_set_next(rx_buf_list, next_buf);
+				qdf_spin_lock_bh(&bufqi->bufq_lock);
+				ol_txrx_drop_frames(bufqi, rx_buf_list);
+				qdf_spin_unlock_bh(&bufqi->bufq_lock);
+				return QDF_STATUS_E_FAULT;
+			}
 		}
 		buf = next_buf;
 	}
-end:
-	return status;
+	return QDF_STATUS_SUCCESS;
 }
 /**
  * ol_rx_data_process() - process rx frame
@@ -4982,7 +4996,8 @@ void ol_rx_data_process(struct ol_txrx_peer_t *peer,
 	 * which will be flushed to HDD once that station is registered.
 	 */
 	if (!data_rx) {
-		if (ol_txrx_enqueue_rx_frames(&peer->bufq_info, rx_buf_list)
+		if (ol_txrx_enqueue_rx_frames(peer, &peer->bufq_info,
+					      rx_buf_list)
 				!= QDF_STATUS_SUCCESS)
 			ol_txrx_err("failed to enqueue rx frm to cached_bufq");
 	} else {
