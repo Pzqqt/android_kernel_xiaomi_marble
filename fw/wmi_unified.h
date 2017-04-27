@@ -845,6 +845,8 @@ typedef enum {
     WMI_SET_MULTIPLE_MCAST_FILTER_CMDID,
     /** upload a requested section of data from firmware flash to host */
     WMI_READ_DATA_FROM_FLASH_CMDID,
+    /* Thermal Throttling SET CONF commands */
+    WMI_THERM_THROT_SET_CONF_CMDID,
 
     /* GPIO Configuration */
     WMI_GPIO_CONFIG_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_GPIO),
@@ -1421,6 +1423,9 @@ typedef enum {
 
     /** event to upload a PKGID to host to identify chip for various products */
     WMI_PKGID_EVENTID,
+
+    /* Thermal Throttling stats event id for every pdev and zones, etc */
+    WMI_THERM_THROT_STATS_EVENTID,
 
     /* GPIO Event */
     WMI_GPIO_INPUT_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_GPIO),
@@ -18342,6 +18347,72 @@ typedef struct {
  */
 } wmi_scan_dbs_duty_cycle_fixed_param;
 
+typedef struct {
+    /** TLV tag and len; tag equals
+     *  WMITLV_TAG_STRUC_wmi_therm_throt_level_config_info */
+    A_UINT32 tlv_header;
+    /**
+      * temperature sensor value in celsius when to exit to lower zone,
+      * this value can be lower than HWM of lower zone as zone overlapping
+      * is permitted by design to provide hysteresis
+      */
+    A_UINT32 temp_lwm;
+    /**
+      * temperature sensor value in celsius when to exit to higher zone,
+      * this value can be higher than LWM of higher zone as zone overlapping
+      * is permitted by design to provide hysteresis
+      */
+    A_UINT32 temp_hwm;
+    A_UINT32 dc_off_percent; /* duty cycle off percent 0-100. 0 means no off, 100 means no on (shutdown the phy) */
+    /** Disable only the transmit queues in firmware that have lower priority than value defined by prio
+       *    Prioritization:
+       *    0 = disable all data tx queues, No Prioritization defined
+       *    1 = disable BK tx queue
+       *    2 = disable BK+BE tx queues
+       *    3 = disable BK+BE+VI tx queues
+       */
+    A_UINT32 prio;
+} wmi_therm_throt_level_config_info;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_therm_throt_config_request_fixed_param */
+    A_UINT32 pdev_id;          /* config for each pdev */
+    A_UINT32 enable;           /* 0:disable, 1:enable */
+    A_UINT32 dc;               /* duty cycle in ms */
+    A_UINT32 dc_per_event;     /* how often (after how many duty cycles) the FW sends stats to host */
+    A_UINT32 therm_throt_levels; /* Indicates the number of thermal zone configuration */
+    /*
+     * Following this structure is the TLV:
+     * struct wmi_therm_throt_level_config_info therm_throt_level_config_info[therm_throt_levels];
+     */
+} wmi_therm_throt_config_request_fixed_param;
+
+/** FW response with the stats event id for every pdev and zones */
+typedef struct {
+    /*  TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_therm_throt_stats_event_fixed_param */
+    A_UINT32 tlv_header;
+    A_UINT32 pdev_id;            /* stats for corresponding pdev*/
+    A_UINT32 temp;               /* Temperature reading in celsius */
+    A_UINT32 level;              /* current thermal throttling level */
+    A_UINT32 therm_throt_levels; /* number of levels in therm_throt_level_stats_info */
+    /* This TLV is followed by another TLV of array of structs
+     * wmi_therm_throt_level_stats_info therm_throt_level_stats_info[therm_throt_levels];
+     */
+} wmi_therm_throt_stats_event_fixed_param;
+
+
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     *  WMITLV_TAG_STRUC_wmi_therm_throt_level_stats_info */
+    A_UINT32 tlv_header;
+    A_UINT32 level_count; /* count of each time thermal throttling entered this state */
+    A_UINT32 dc_count;    /* total number of duty cycles spent in this state. */
+                          /* this number increments by one each time we are in this state and we finish one full duty cycle. */
+} wmi_therm_throt_level_stats_info;
+
+
+
 
 typedef enum {
     WMI_REG_EXT_FCC_MIDBAND = 0,
@@ -18953,6 +19024,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_OFFCHAN_DATA_TX_SEND_CMDID);
         WMI_RETURN_STRING(WMI_SET_INIT_COUNTRY_CMDID);
         WMI_RETURN_STRING(WMI_SET_SCAN_DBS_DUTY_CYCLE_CMDID);
+        WMI_RETURN_STRING(WMI_THERM_THROT_SET_CONF_CMDID);
     }
 
     return "Invalid WMI cmd";
