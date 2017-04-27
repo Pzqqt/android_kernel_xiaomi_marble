@@ -59,6 +59,9 @@
 #include "nan_datapath.h"
 #include "wma.h"
 #include "wlan_reg_services_api.h"
+#ifdef WLAN_FEATURE_11AX_BSS_COLOR
+#include "wma_he.h"
+#endif
 
 #ifdef WLAN_FEATURE_11W
 #include "wni_cfg.h"
@@ -5851,6 +5854,40 @@ bool lim_check_vht_op_mode_change(tpAniSirGlobal pMac, tpPESession psessionEntry
 
 	return true;
 }
+
+#ifdef WLAN_FEATURE_11AX_BSS_COLOR
+bool lim_send_he_ie_update(tpAniSirGlobal mac_ctx, tpPESession pe_session)
+{
+	uint32_t he_ops = 0;
+	tDot11fIEvendor_he_op *he_op = &pe_session->he_op;
+	QDF_STATUS status;
+
+	WMI_HEOPS_COLOR_SET(he_ops, he_op->bss_color);
+	WMI_HEOPS_DEFPE_SET(he_ops, he_op->default_pe);
+	WMI_HEOPS_TWT_SET(he_ops, he_op->twt_required);
+	WMI_HEOPS_RTSTHLD_SET(he_ops, he_op->rts_threshold);
+	WMI_HEOPS_PARTBSSCOLOR_SET(he_ops, he_op->partial_bss_col);
+	WMI_HEOPS_MAXBSSID_SET(he_ops, he_op->maxbssid_ind);
+	WMI_HEOPS_TXBSSID_SET(he_ops, he_op->tx_bssid_ind);
+	WMI_HEOPS_BSSCOLORDISABLE_SET(he_ops, he_op->bss_col_disabled);
+	WMI_HEOPS_DUALBEACON_SET(he_ops, he_op->dual_beacon);
+	status = wma_update_he_ops_ie(cds_get_context(QDF_MODULE_ID_WMA),
+				      pe_session->smeSessionId, he_ops);
+	if (status != QDF_STATUS_SUCCESS)  {
+		lim_log(mac_ctx, LOGE,
+			FL("Can't send for vdev_id[%d] he_ops[0x%x]"),
+			pe_session->smeSessionId, he_ops);
+		return false;
+	} else {
+		lim_log(mac_ctx, LOGD,
+			FL("successfully sent for vdev_id[%d] he_ops[0x%x]"),
+			pe_session->smeSessionId, he_ops);
+	}
+
+	return true;
+
+}
+#endif
 
 bool lim_set_nss_change(tpAniSirGlobal pMac, tpPESession psessionEntry,
 			uint8_t rxNss, uint8_t staId, uint8_t *peerMac)

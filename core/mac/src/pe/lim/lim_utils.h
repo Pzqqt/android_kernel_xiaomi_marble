@@ -465,6 +465,9 @@ bool lim_check_vht_op_mode_change(tpAniSirGlobal pMac,
 		tpPESession psessionEntry,
 		uint8_t chanWidth, uint8_t staId,
 		uint8_t *peerMac);
+#ifdef WLAN_FEATURE_11AX_BSS_COLOR
+bool lim_send_he_ie_update(tpAniSirGlobal mac_ctx, tpPESession pe_session);
+#endif
 bool lim_set_nss_change(tpAniSirGlobal pMac, tpPESession psessionEntry,
 		uint8_t rxNss, uint8_t staId, uint8_t *peerMac);
 bool lim_check_membership_user_position(tpAniSirGlobal pMac,

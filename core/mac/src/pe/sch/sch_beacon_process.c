@@ -489,6 +489,173 @@ static void update_nss(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
 	}
 }
 
+#ifdef WLAN_FEATURE_11AX_BSS_COLOR
+static void
+sch_bcn_update_he_ies(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
+				tpPESession session, tpSchBeaconStruct bcn,
+				tpSirMacMgmtHdr mac_hdr)
+{
+	uint8_t session_bss_col_disabled_flag;
+	bool anything_changed = false;
+
+	if (session->he_op.present && bcn->vendor_he_op.present) {
+		if (bcn->vendor_he_bss_color_change.present &&
+				(session->he_op.bss_color !=
+				 bcn->vendor_he_bss_color_change.new_color)) {
+			pe_debug("bss color changed from [%d] to [%d]",
+				session->he_op.bss_color,
+				bcn->vendor_he_bss_color_change.new_color);
+			session->he_op.bss_color =
+				bcn->vendor_he_bss_color_change.new_color;
+			anything_changed = true;
+		}
+		session_bss_col_disabled_flag = session->he_op.bss_col_disabled;
+		if (session_bss_col_disabled_flag !=
+				bcn->vendor_he_op.bss_col_disabled) {
+			pe_debug("color disable flag changed from [%d] to [%d]",
+				session->he_op.bss_col_disabled,
+				bcn->vendor_he_op.bss_col_disabled);
+			session->he_op.bss_col_disabled =
+				bcn->vendor_he_op.bss_col_disabled;
+			anything_changed = true;
+		}
+	}
+	if (anything_changed)
+		lim_send_he_ie_update(mac_ctx, session);
+}
+#else
+static void
+sch_bcn_update_he_ies(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
+				tpPESession session, tpSchBeaconStruct bcn,
+				tpSirMacMgmtHdr mac_hdr)
+{
+	return;
+}
+#endif
+
+static void
+sch_bcn_update_opmode_change(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
+				tpPESession session, tpSchBeaconStruct bcn,
+				tpSirMacMgmtHdr mac_hdr)
+{
+	bool skip_opmode_update = false;
+	uint8_t oper_mode;
+	uint32_t fw_vht_ch_wd = wma_get_vht_ch_width();
+	uint8_t ch_width = 0;
+
+	if (session->vhtCapability && bcn->OperatingMode.present) {
+		oper_mode = get_operating_channel_width(sta_ds);
+		if ((oper_mode == eHT_CHANNEL_WIDTH_80MHZ) &&
+		    (bcn->OperatingMode.chanWidth > eHT_CHANNEL_WIDTH_80MHZ))
+			skip_opmode_update = true;
+
+		if (!skip_opmode_update &&
+			((oper_mode != bcn->OperatingMode.chanWidth) ||
+			(sta_ds->vhtSupportedRxNss !=
+			(bcn->OperatingMode.rxNSS + 1)))) {
+			pe_debug("received OpMode Chanwidth %d, staIdx = %d",
+			       bcn->OperatingMode.chanWidth, sta_ds->staIndex);
+			pe_debug("MAC - %0x:%0x:%0x:%0x:%0x:%0x",
+			       mac_hdr->sa[0], mac_hdr->sa[1],
+			       mac_hdr->sa[2], mac_hdr->sa[3],
+			       mac_hdr->sa[4], mac_hdr->sa[5]);
+
+			if ((bcn->OperatingMode.chanWidth >=
+				eHT_CHANNEL_WIDTH_160MHZ) &&
+				(fw_vht_ch_wd > eHT_CHANNEL_WIDTH_80MHZ)) {
+				pe_debug("Updating the CH Width to 160MHz");
+				sta_ds->vhtSupportedChannelWidthSet =
+					WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ;
+				sta_ds->htSupportedChannelWidthSet =
+					eHT_CHANNEL_WIDTH_40MHZ;
+				ch_width = eHT_CHANNEL_WIDTH_160MHZ;
+			} else if (bcn->OperatingMode.chanWidth >=
+				eHT_CHANNEL_WIDTH_80MHZ) {
+				pe_debug("Updating the CH Width to 80MHz");
+				sta_ds->vhtSupportedChannelWidthSet =
+					WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ;
+				sta_ds->htSupportedChannelWidthSet =
+					eHT_CHANNEL_WIDTH_40MHZ;
+				ch_width = eHT_CHANNEL_WIDTH_80MHZ;
+			} else if (bcn->OperatingMode.chanWidth ==
+				eHT_CHANNEL_WIDTH_40MHZ) {
+				pe_debug("Updating the CH Width to 40MHz");
+				sta_ds->vhtSupportedChannelWidthSet =
+					WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ;
+				sta_ds->htSupportedChannelWidthSet =
+					eHT_CHANNEL_WIDTH_40MHZ;
+				ch_width = eHT_CHANNEL_WIDTH_40MHZ;
+			} else if (bcn->OperatingMode.chanWidth ==
+				eHT_CHANNEL_WIDTH_20MHZ) {
+				pe_debug("Updating the CH Width to 20MHz");
+				sta_ds->vhtSupportedChannelWidthSet =
+					WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ;
+				sta_ds->htSupportedChannelWidthSet =
+					eHT_CHANNEL_WIDTH_20MHZ;
+				ch_width = eHT_CHANNEL_WIDTH_20MHZ;
+			}
+			lim_check_vht_op_mode_change(mac_ctx, session,
+				ch_width, sta_ds->staIndex, mac_hdr->sa);
+			update_nss(mac_ctx, sta_ds, bcn, session, mac_hdr);
+		}
+		return;
+	}
+
+	if (!(session->vhtCapability && bcn->VHTOperation.present))
+		return;
+
+	oper_mode = sta_ds->vhtSupportedChannelWidthSet;
+	if ((oper_mode == WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ) &&
+	    (oper_mode < bcn->VHTOperation.chanWidth))
+		skip_opmode_update = true;
+
+	if (!skip_opmode_update &&
+	    (oper_mode != bcn->VHTOperation.chanWidth)) {
+		pe_debug("received VHTOP CHWidth %d staIdx = %d",
+		       bcn->VHTOperation.chanWidth, sta_ds->staIndex);
+		pe_debug("MAC - %0x:%0x:%0x:%0x:%0x:%0x",
+		       mac_hdr->sa[0], mac_hdr->sa[1],
+		       mac_hdr->sa[2], mac_hdr->sa[3],
+		       mac_hdr->sa[4], mac_hdr->sa[5]);
+
+		if ((bcn->VHTOperation.chanWidth >=
+			WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ) &&
+			(fw_vht_ch_wd > eHT_CHANNEL_WIDTH_80MHZ)) {
+			pe_debug("Updating the CH Width to 160MHz");
+			sta_ds->vhtSupportedChannelWidthSet =
+				bcn->VHTOperation.chanWidth;
+			sta_ds->htSupportedChannelWidthSet =
+				eHT_CHANNEL_WIDTH_40MHZ;
+			ch_width = eHT_CHANNEL_WIDTH_160MHZ;
+		} else if (bcn->VHTOperation.chanWidth >=
+			WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ) {
+			pe_debug("Updating the CH Width to 80MHz");
+			sta_ds->vhtSupportedChannelWidthSet =
+				WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ;
+			sta_ds->htSupportedChannelWidthSet =
+				eHT_CHANNEL_WIDTH_40MHZ;
+			ch_width = eHT_CHANNEL_WIDTH_80MHZ;
+		} else if (bcn->VHTOperation.chanWidth ==
+			WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ) {
+			sta_ds->vhtSupportedChannelWidthSet =
+				WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ;
+			if (bcn->HTCaps.supportedChannelWidthSet) {
+				pe_debug("Updating the CH Width to 40MHz");
+				sta_ds->htSupportedChannelWidthSet =
+					eHT_CHANNEL_WIDTH_40MHZ;
+				ch_width = eHT_CHANNEL_WIDTH_40MHZ;
+			} else {
+				pe_debug("Updating the CH Width to 20MHz");
+				sta_ds->htSupportedChannelWidthSet =
+					eHT_CHANNEL_WIDTH_20MHZ;
+				ch_width = eHT_CHANNEL_WIDTH_20MHZ;
+			}
+		}
+		lim_check_vht_op_mode_change(mac_ctx, session, ch_width,
+						sta_ds->staIndex, mac_hdr->sa);
+	}
+}
+
 /*
  * sch_bcn_process_sta_ibss() - Process the received beacon frame
  * for sta, bt_amp_sta and ibss
@@ -516,11 +683,7 @@ sch_bcn_process_sta_ibss(tpAniSirGlobal mac_ctx,
 {
 	tpDphHashNode pStaDs = NULL;
 	uint16_t aid;
-	uint8_t operMode;
-	uint8_t chWidth = 0;
 	uint8_t cb_mode;
-	uint32_t fw_vht_ch_wd = wma_get_vht_ch_width();
-	bool skip_opmode_update = false;
 
 	if (CHAN_ENUM_14 >= session->currentOperChannel)
 		cb_mode = mac_ctx->roam.configParam.channelBondingMode24GHz;
@@ -534,118 +697,8 @@ sch_bcn_process_sta_ibss(tpAniSirGlobal mac_ctx,
 	  ((NULL != pStaDs) &&
 	   (STA_INVALID_IDX == pStaDs->staIndex)))
 		return;
-
-	if (session->vhtCapability && bcn->OperatingMode.present) {
-		operMode = get_operating_channel_width(pStaDs);
-		if ((operMode == eHT_CHANNEL_WIDTH_80MHZ) &&
-		    (bcn->OperatingMode.chanWidth > eHT_CHANNEL_WIDTH_80MHZ))
-			skip_opmode_update = true;
-
-		if (!skip_opmode_update &&
-			((operMode != bcn->OperatingMode.chanWidth) ||
-			(pStaDs->vhtSupportedRxNss !=
-			(bcn->OperatingMode.rxNSS + 1)))) {
-			pe_debug("received OpMode Chanwidth %d, staIdx = %d",
-			       bcn->OperatingMode.chanWidth, pStaDs->staIndex);
-			pe_debug("MAC - %0x:%0x:%0x:%0x:%0x:%0x",
-			       pMh->sa[0], pMh->sa[1],
-			       pMh->sa[2], pMh->sa[3],
-			       pMh->sa[4], pMh->sa[5]);
-
-			if ((bcn->OperatingMode.chanWidth >=
-				eHT_CHANNEL_WIDTH_160MHZ) &&
-				(fw_vht_ch_wd > eHT_CHANNEL_WIDTH_80MHZ)) {
-				pe_debug("Updating the CH Width to 160MHz");
-				pStaDs->vhtSupportedChannelWidthSet =
-					WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ;
-				pStaDs->htSupportedChannelWidthSet =
-					eHT_CHANNEL_WIDTH_40MHZ;
-				chWidth = eHT_CHANNEL_WIDTH_160MHZ;
-			} else if (bcn->OperatingMode.chanWidth >=
-				eHT_CHANNEL_WIDTH_80MHZ) {
-				pe_debug("Updating the CH Width to 80MHz");
-				pStaDs->vhtSupportedChannelWidthSet =
-					WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ;
-				pStaDs->htSupportedChannelWidthSet =
-					eHT_CHANNEL_WIDTH_40MHZ;
-				chWidth = eHT_CHANNEL_WIDTH_80MHZ;
-			} else if (bcn->OperatingMode.chanWidth ==
-				eHT_CHANNEL_WIDTH_40MHZ) {
-				pe_debug("Updating the CH Width to 40MHz");
-				pStaDs->vhtSupportedChannelWidthSet =
-					WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ;
-				pStaDs->htSupportedChannelWidthSet =
-					eHT_CHANNEL_WIDTH_40MHZ;
-				chWidth = eHT_CHANNEL_WIDTH_40MHZ;
-			} else if (bcn->OperatingMode.chanWidth ==
-				eHT_CHANNEL_WIDTH_20MHZ) {
-				pe_debug("Updating the CH Width to 20MHz");
-				pStaDs->vhtSupportedChannelWidthSet =
-					WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ;
-				pStaDs->htSupportedChannelWidthSet =
-					eHT_CHANNEL_WIDTH_20MHZ;
-				chWidth = eHT_CHANNEL_WIDTH_20MHZ;
-			}
-			lim_check_vht_op_mode_change(mac_ctx, session,
-					chWidth, pStaDs->staIndex, pMh->sa);
-			update_nss(mac_ctx, pStaDs, bcn, session, pMh);
-		}
-		return;
-	}
-
-	if (!(session->vhtCapability && bcn->VHTOperation.present))
-		return;
-
-	operMode = pStaDs->vhtSupportedChannelWidthSet;
-	if ((operMode == WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ) &&
-	    (operMode < bcn->VHTOperation.chanWidth))
-		skip_opmode_update = true;
-
-	if (!skip_opmode_update &&
-	    (operMode != bcn->VHTOperation.chanWidth)) {
-		pe_debug("received VHTOP CHWidth %d staIdx = %d",
-		       bcn->VHTOperation.chanWidth, pStaDs->staIndex);
-		pe_debug("MAC - %0x:%0x:%0x:%0x:%0x:%0x",
-		       pMh->sa[0], pMh->sa[1],
-		       pMh->sa[2], pMh->sa[3],
-		       pMh->sa[4], pMh->sa[5]);
-
-		if ((bcn->VHTOperation.chanWidth >=
-			WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ) &&
-			(fw_vht_ch_wd > eHT_CHANNEL_WIDTH_80MHZ)) {
-			pe_debug("Updating the CH Width to 160MHz");
-			pStaDs->vhtSupportedChannelWidthSet =
-				bcn->VHTOperation.chanWidth;
-			pStaDs->htSupportedChannelWidthSet =
-				eHT_CHANNEL_WIDTH_40MHZ;
-			chWidth = eHT_CHANNEL_WIDTH_160MHZ;
-		} else if (bcn->VHTOperation.chanWidth >=
-			WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ) {
-			pe_debug("Updating the CH Width to 80MHz");
-			pStaDs->vhtSupportedChannelWidthSet =
-				WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ;
-			pStaDs->htSupportedChannelWidthSet =
-				eHT_CHANNEL_WIDTH_40MHZ;
-			chWidth = eHT_CHANNEL_WIDTH_80MHZ;
-		} else if (bcn->VHTOperation.chanWidth ==
-			WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ) {
-			pStaDs->vhtSupportedChannelWidthSet =
-				WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ;
-			if (bcn->HTCaps.supportedChannelWidthSet) {
-				pe_debug("Updating the CH Width to 40MHz");
-				pStaDs->htSupportedChannelWidthSet =
-					eHT_CHANNEL_WIDTH_40MHZ;
-				chWidth = eHT_CHANNEL_WIDTH_40MHZ;
-			} else {
-				pe_debug("Updating the CH Width to 20MHz");
-				pStaDs->htSupportedChannelWidthSet =
-					eHT_CHANNEL_WIDTH_20MHZ;
-				chWidth = eHT_CHANNEL_WIDTH_20MHZ;
-			}
-		}
-		lim_check_vht_op_mode_change(mac_ctx, session, chWidth,
-						pStaDs->staIndex, pMh->sa);
-	}
+	sch_bcn_update_opmode_change(mac_ctx, pStaDs, session, bcn, pMh);
+	sch_bcn_update_he_ies(mac_ctx, pStaDs, session, bcn, pMh);
 	return;
 }
 

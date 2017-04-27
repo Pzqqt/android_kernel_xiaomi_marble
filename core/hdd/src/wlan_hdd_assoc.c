@@ -126,6 +126,15 @@ static const int beacon_filter_table[] = {
 	SIR_MAC_HT_INFO_EID,
 	SIR_MAC_VHT_OPMODE_EID,
 	SIR_MAC_VHT_OPERATION_EID,
+#ifdef WLAN_FEATURE_11AX_BSS_COLOR
+	/*
+	 * EID: 221 vendor IE is being used temporarily by 11AX
+	 * bss-color-change IE till it gets any fixed number. This
+	 * vendor EID needs to be replaced with bss-color-change IE
+	 * number.
+	 */
+	SIR_MAC_EID_VENDOR,
+#endif
 };
 
 /**
