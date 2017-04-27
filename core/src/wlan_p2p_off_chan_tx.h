@@ -121,10 +121,12 @@ enum p2p_public_action_type {
 
 /**
  * enum p2p_action_type - p2p action frame type
+ * @P2P_ACTION_PRESENCE_REQ:    presence request frame
  * @P2P_ACTION_PRESENCE_RSP:    presence response frame
  * @P2P_ACTION_NOT_SUPPORT:     not support action frame type
  */
 enum p2p_action_type {
+	P2P_ACTION_PRESENCE_REQ = 1,
 	P2P_ACTION_PRESENCE_RSP = 2,
 	P2P_ACTION_NOT_SUPPORT,
 };
