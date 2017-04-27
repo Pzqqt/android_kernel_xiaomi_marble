@@ -343,20 +343,24 @@ QDF_STATUS regulatory_psoc_open(struct wlan_objmgr_psoc *psoc)
 	tx_ops = reg_get_psoc_tx_ops(psoc);
 	if (tx_ops->register_master_handler)
 		tx_ops->register_master_handler(psoc, NULL);
+	if (tx_ops->register_11d_new_cc_handler)
+		tx_ops->register_11d_new_cc_handler(psoc, NULL);
 
 	return QDF_STATUS_SUCCESS;
-};
+}
 
 QDF_STATUS regulatory_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_lmac_if_reg_tx_ops *tx_ops;
 
 	tx_ops = reg_get_psoc_tx_ops(psoc);
+	if (tx_ops->unregister_11d_new_cc_handler)
+		tx_ops->unregister_11d_new_cc_handler(psoc, NULL);
 	if (tx_ops->unregister_master_handler)
 		tx_ops->unregister_master_handler(psoc, NULL);
 
 	return QDF_STATUS_SUCCESS;
-};
+}
 
 void wlan_reg_update_nol_ch(struct wlan_objmgr_pdev *pdev, uint8_t *ch_list,
 		uint8_t num_ch, bool nol_ch)
@@ -455,4 +459,10 @@ QDF_STATUS wlan_reg_get_freq_range(struct wlan_objmgr_pdev *pdev,
 	*high_5g = pdev_priv_obj->range_5g_high;
 
 	return QDF_STATUS_SUCCESS;
+}
+
+struct wlan_lmac_if_reg_tx_ops *
+wlan_reg_get_tx_ops(struct wlan_objmgr_psoc *psoc)
+{
+	return reg_get_psoc_tx_ops(psoc);
 }

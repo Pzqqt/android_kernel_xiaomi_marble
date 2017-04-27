@@ -541,16 +541,27 @@ struct wlan_lmac_if_nan_tx_ops {
  *                  pointers for regulatory component
  * @register_master_handler: pointer to register event handler
  * @unregister_master_handler:  pointer to unregister event handler
+ * @register_11d_new_cc_handler: pointer to register 11d cc event handler
+ * @unregister_11d_new_cc_handler:  pointer to unregister 11d cc event handler
  */
 struct wlan_lmac_if_reg_tx_ops {
 	QDF_STATUS (*register_master_handler)(struct wlan_objmgr_psoc *psoc,
 					      void *arg);
 	QDF_STATUS (*unregister_master_handler)(struct wlan_objmgr_psoc *psoc,
 						void *arg);
+
 	QDF_STATUS (*set_country_code)(struct wlan_objmgr_psoc *psoc,
 						void *arg);
 	QDF_STATUS (*fill_umac_legacy_chanlist)(struct wlan_objmgr_pdev *pdev,
 			struct regulatory_channel *cur_chan_list);
+	QDF_STATUS (*register_11d_new_cc_handler)(
+			struct wlan_objmgr_psoc *psoc, void *arg);
+	QDF_STATUS (*unregister_11d_new_cc_handler)(
+			struct wlan_objmgr_psoc *psoc, void *arg);
+	QDF_STATUS (*start_11d_scan)(struct wlan_objmgr_psoc *psoc,
+			struct reg_start_11d_scan_req *reg_start_11d_scan_req);
+	QDF_STATUS (*stop_11d_scan)(struct wlan_objmgr_psoc *psoc,
+			struct reg_stop_11d_scan_req *reg_stop_11d_scan_req);
 };
 
 /**
@@ -741,6 +752,8 @@ struct wlan_lmac_if_pmo_rx_ops {
 struct wlan_lmac_if_reg_rx_ops {
 	QDF_STATUS (*master_list_handler)(struct cur_regulatory_info
 					  *reg_info);
+	QDF_STATUS (*reg_11d_new_cc_handler)(struct wlan_objmgr_psoc *psoc,
+			struct reg_11d_new_country *reg_11d_new_cc);
 };
 
 #ifdef CONVERGED_P2P_ENABLE

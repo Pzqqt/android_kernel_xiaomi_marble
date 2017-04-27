@@ -320,4 +320,14 @@ struct chan_change_cbk_entry {
 enum country_src reg_get_cc_and_src(struct wlan_objmgr_psoc *psoc,
 				    uint8_t *alpha2);
 
+/**
+ * reg_save_new_11d_country() - Save the 11d new country
+ * @psoc: psoc for country information
+ * @country: country value
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS reg_save_new_11d_country(struct wlan_objmgr_psoc *psoc,
+		uint8_t *country);
+
 #endif

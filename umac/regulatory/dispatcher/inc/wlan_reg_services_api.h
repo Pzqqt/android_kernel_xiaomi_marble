@@ -349,7 +349,7 @@ QDF_STATUS wlan_reg_set_country(struct wlan_objmgr_pdev *pdev,
 
 /**
  * wlan_reg_register_chan_change_callback () - add chan change cbk
- * @psoc: channel number
+ * @psoc: psoc ptr
  * @cbk: callback
  * @arg: argument
  *
@@ -361,8 +361,8 @@ void wlan_reg_register_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 
 /**
  * wlan_reg_unregister_chan_change_callback () - remove chan change cbk
- * @psoc: channel number
- * @cbk: callback
+ * @psoc: psoc ptr
+ * @cbk:callback
  *
  * Return: true or false
  */
@@ -394,4 +394,12 @@ QDF_STATUS wlan_reg_get_freq_range(struct wlan_objmgr_pdev *pdev,
 		uint32_t *high_2g,
 		uint32_t *low_5g,
 		uint32_t *high_5g);
+/**
+ * wlan_reg_get_tx_ops () - get regulatory tx ops
+ * @psoc: psoc ptr
+ *
+ */
+struct wlan_lmac_if_reg_tx_ops *
+wlan_reg_get_tx_ops(struct wlan_objmgr_psoc *psoc);
+
 #endif

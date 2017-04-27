@@ -296,6 +296,34 @@ struct reg_dmn_supp_op_classes {
 };
 
 /**
+ * struct reg_start_11d_scan_req: start 11d scan request
+ * @vdev_id: vdev id
+ * @scan_period_msec: scan duration in milli-seconds
+ * @start_interval_msec: offset duration to start the scan in milli-seconds
+ */
+struct reg_start_11d_scan_req {
+	uint8_t vdev_id;
+	uint32_t scan_period_msec;
+	uint32_t start_interval_msec;
+};
+
+/**
+ * struct reg_stop_11d_scan_req: stop 11d scan request
+ * @vdev_id: vdev id
+ */
+struct reg_stop_11d_scan_req {
+	uint8_t vdev_id;
+};
+
+/**
+ * struct reg_11d_new_country: regulatory 11d new coutry code
+ * @alpha2: new 11d alpha2
+ */
+struct reg_11d_new_country {
+	uint8_t alpha2[REG_ALPHA2_LEN + 1];
+};
+
+/**
  * enum country_src: country source
  * @SOURCE_QUERY: source query
  * @SOURCE_CORE: source regulatory core

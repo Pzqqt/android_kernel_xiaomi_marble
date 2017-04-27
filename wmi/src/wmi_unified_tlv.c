@@ -7957,6 +7957,100 @@ static QDF_STATUS send_oem_dma_cfg_cmd_tlv(wmi_unified_t wmi_handle,
 #endif
 
 /**
+ * send_start_11d_scan_cmd_tlv() - start 11d scan request
+ * @wmi_handle: wmi handle
+ * @start_11d_scan: 11d scan start request parameters
+ *
+ * This function request FW to start 11d scan.
+ *
+ * Return: QDF status
+ */
+static QDF_STATUS send_start_11d_scan_cmd_tlv(wmi_unified_t wmi_handle,
+			  struct reg_start_11d_scan_req *start_11d_scan)
+{
+	wmi_11d_scan_start_cmd_fixed_param *cmd;
+	int32_t len;
+	wmi_buf_t buf;
+	int ret;
+
+	len = sizeof(*cmd);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s: Failed allocate wmi buffer", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_11d_scan_start_cmd_fixed_param *)wmi_buf_data(buf);
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_11d_scan_start_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+		       (wmi_11d_scan_start_cmd_fixed_param));
+
+	cmd->vdev_id = start_11d_scan->vdev_id;
+	cmd->scan_period_msec = start_11d_scan->scan_period_msec;
+	cmd->start_interval_msec = start_11d_scan->start_interval_msec;
+
+	WMI_LOGD("vdev %d sending 11D scan start req", cmd->vdev_id);
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_11D_SCAN_START_CMDID);
+	if (ret) {
+		WMI_LOGE("%s: Failed to send start 11d scan wmi cmd", __func__);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_stop_11d_scan_cmd_tlv() - stop 11d scan request
+ * @wmi_handle: wmi handle
+ * @start_11d_scan: 11d scan stop request parameters
+ *
+ * This function request FW to stop 11d scan.
+ *
+ * Return: QDF status
+ */
+static QDF_STATUS send_stop_11d_scan_cmd_tlv(wmi_unified_t wmi_handle,
+			  struct reg_stop_11d_scan_req *stop_11d_scan)
+{
+	wmi_11d_scan_stop_cmd_fixed_param *cmd;
+	int32_t len;
+	wmi_buf_t buf;
+	int ret;
+
+	len = sizeof(*cmd);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s: Failed allocate wmi buffer", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_11d_scan_stop_cmd_fixed_param *)wmi_buf_data(buf);
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_11d_scan_stop_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+		       (wmi_11d_scan_stop_cmd_fixed_param));
+
+	cmd->vdev_id = stop_11d_scan->vdev_id;
+
+	WMI_LOGD("vdev %d sending 11D scan stop req", cmd->vdev_id);
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_11D_SCAN_STOP_CMDID);
+	if (ret) {
+		WMI_LOGE("%s: Failed to send stop 11d scan wmi cmd", __func__);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * send_start_oem_data_cmd_tlv() - start OEM data request to target
  * @wmi_handle: wmi handle
  * @startOemDataReq: start request params
@@ -17559,6 +17653,29 @@ static QDF_STATUS extract_reg_chan_list_update_event_tlv(
 	return QDF_STATUS_SUCCESS;
 }
 
+static QDF_STATUS extract_reg_11d_new_country_event_tlv(
+	wmi_unified_t wmi_handle, uint8_t *evt_buf,
+	struct reg_11d_new_country *reg_11d_country, uint32_t len)
+{
+	wmi_11d_new_country_event_fixed_param *reg_11d_country_event;
+	WMI_11D_NEW_COUNTRY_EVENTID_param_tlvs *param_buf;
+
+	param_buf = (WMI_11D_NEW_COUNTRY_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		WMI_LOGE("invalid 11d country event buf");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	reg_11d_country_event = param_buf->fixed_param;
+
+	qdf_mem_copy(reg_11d_country->alpha2,
+			&reg_11d_country_event->new_alpha2, REG_ALPHA2_LEN);
+
+	WMI_LOGD("processed 11d country event, new cc %s",
+			reg_11d_country->alpha2);
+
+	return QDF_STATUS_SUCCESS;
+}
 #ifdef DFS_COMPONENT_ENABLE
 /**
  * extract_dfs_cac_complete_event_tlv() - extract cac complete event
@@ -18084,6 +18201,11 @@ struct wmi_ops tlv_ops =  {
 		convert_host_pdev_id_to_target_pdev_id_legacy,
 	.convert_pdev_id_target_to_host =
 		convert_target_pdev_id_to_host_pdev_id_legacy,
+
+	.send_start_11d_scan_cmd = send_start_11d_scan_cmd_tlv,
+	.send_stop_11d_scan_cmd = send_stop_11d_scan_cmd_tlv,
+	.extract_reg_11d_new_country_event =
+		extract_reg_11d_new_country_event_tlv,
 };
 
 /**
