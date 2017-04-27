@@ -2294,3 +2294,4 @@ int qdf_sprint_symbol(char *buffer, void *addr)
 	return 1;
 }
 #endif
+EXPORT_SYMBOL(qdf_sprint_symbol);
