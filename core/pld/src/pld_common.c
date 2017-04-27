@@ -1391,6 +1391,9 @@ int pld_athdiag_read(struct device *dev, uint32_t offset,
 					    datalen, output);
 		break;
 	case PLD_BUS_TYPE_PCIE:
+		ret = pld_pcie_athdiag_read(dev, offset, memtype,
+					    datalen, output);
+		break;
 	case PLD_BUS_TYPE_SDIO:
 	case PLD_BUS_TYPE_USB:
 		break;
@@ -1425,6 +1428,9 @@ int pld_athdiag_write(struct device *dev, uint32_t offset,
 					     datalen, input);
 		break;
 	case PLD_BUS_TYPE_PCIE:
+		ret = pld_pcie_athdiag_write(dev, offset, memtype,
+					     datalen, input);
+		break;
 	case PLD_BUS_TYPE_SDIO:
 	case PLD_BUS_TYPE_USB:
 		break;

@@ -159,6 +159,18 @@ static inline int pld_pcie_wlan_get_dfs_nol(void *info, u16 info_len)
 {
 	return 0;
 }
+static inline int pld_pcie_athdiag_read(struct device *dev, uint32_t offset,
+					uint32_t memtype, uint32_t datalen,
+					uint8_t *output)
+{
+	return 0;
+}
+static inline int pld_pcie_athdiag_write(struct device *dev, uint32_t offset,
+					 uint32_t memtype, uint32_t datalen,
+					 uint8_t *input)
+{
+	return 0;
+}
 static inline void pld_pcie_schedule_recovery_work(struct device *dev,
 					   enum pld_recovery_reason reason)
 {
@@ -279,6 +291,18 @@ static inline int pld_pcie_wlan_set_dfs_nol(void *info, u16 info_len)
 static inline int pld_pcie_wlan_get_dfs_nol(void *info, u16 info_len)
 {
 	return cnss_wlan_get_dfs_nol(info, info_len);
+}
+static inline int pld_pcie_athdiag_read(struct device *dev, uint32_t offset,
+					uint32_t memtype, uint32_t datalen,
+					uint8_t *output)
+{
+	return cnss_athdiag_read(dev, offset, memtype, datalen, output);
+}
+static inline int pld_pcie_athdiag_write(struct device *dev, uint32_t offset,
+					 uint32_t memtype, uint32_t datalen,
+					 uint8_t *input)
+{
+	return cnss_athdiag_write(dev, offset, memtype, datalen, input);
 }
 static inline void *pld_pcie_get_virt_ramdump_mem(unsigned long *size)
 {
