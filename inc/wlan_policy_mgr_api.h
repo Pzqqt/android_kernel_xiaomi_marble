@@ -304,6 +304,7 @@ QDF_STATUS policy_mgr_get_pcl(struct wlan_objmgr_psoc *psoc,
 /**
  * policy_mgr_update_with_safe_channel_list() - provides the safe
  * channel list
+ * @psoc: PSOC object information
  * @pcl_channels: channel list
  * @len: length of the list
  * @weight_list: Weights of the PCL
@@ -314,8 +315,9 @@ QDF_STATUS policy_mgr_get_pcl(struct wlan_objmgr_psoc *psoc,
  *
  * Return: None
  */
-void policy_mgr_update_with_safe_channel_list(uint8_t *pcl_channels,
-		uint32_t *len, uint8_t *weight_list, uint32_t weight_len);
+void policy_mgr_update_with_safe_channel_list(struct wlan_objmgr_psoc *psoc,
+		uint8_t *pcl_channels, uint32_t *len,
+		uint8_t *weight_list, uint32_t weight_len);
 
 /**
  * policy_mgr_get_nondfs_preferred_channel() - to get non-dfs preferred channel

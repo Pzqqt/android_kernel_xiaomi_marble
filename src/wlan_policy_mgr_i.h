@@ -224,6 +224,8 @@ extern enum policy_mgr_conc_next_action
  *                            change is in progress
  * @enable_mcc_adaptive_scheduler: Enable MCC adaptive scheduler
  *      value from INI
+ * @unsafe_channel_list: LTE coex channel avoidance list
+ * @unsafe_channel_count: LTE coex channel avoidance list count
  */
 struct policy_mgr_psoc_priv_obj {
 		struct wlan_objmgr_psoc *psoc;
@@ -250,6 +252,8 @@ struct policy_mgr_psoc_priv_obj {
 		struct dual_mac_config dual_mac_cfg;
 		uint32_t hw_mode_change_in_progress;
 		struct policy_mgr_user_cfg user_cfg;
+		uint16_t unsafe_channel_list[QDF_MAX_NUM_CHAN];
+		uint16_t unsafe_channel_count;
 };
 
 /**
@@ -403,4 +407,23 @@ QDF_STATUS policy_mgr_reset_sap_mandatory_channels(
 bool policy_mgr_get_mode_specific_conn_info(struct wlan_objmgr_psoc *psoc,
 				  uint8_t *channel, uint8_t *vdev_id,
 				  enum policy_mgr_con_mode mode);
+
+/**
+ * policy_mgr_reg_chan_change_callback() - Callback to be
+ * invoked by regulatory module when valid channel list changes
+ * @psoc: PSOC object information
+ * @pdev: PDEV object information
+ * @chan_list: New channel list
+ * @avoid_freq_ind: LTE coex avoid channel list
+ * @arg: Information passed at registration
+ *
+ * Get updated channel list from regulatory module
+ *
+ * Return: None
+ */
+void policy_mgr_reg_chan_change_callback(struct wlan_objmgr_psoc *psoc,
+		struct wlan_objmgr_pdev *pdev,
+		struct regulatory_channel *chan_list,
+		struct avoid_freq_ind_data *avoid_freq_ind,
+		void *arg);
 #endif

@@ -142,9 +142,95 @@ void policy_mgr_decr_session_set_pcl(struct wlan_objmgr_psoc *psoc,
 	return;
 }
 
-void policy_mgr_update_with_safe_channel_list(uint8_t *pcl_channels,
-		uint32_t *len, uint8_t *weight_list, uint32_t weight_len)
+void policy_mgr_reg_chan_change_callback(struct wlan_objmgr_psoc *psoc,
+		struct wlan_objmgr_pdev *pdev,
+		struct regulatory_channel *chan_list,
+		struct avoid_freq_ind_data *avoid_freq_ind,
+		void *arg)
 {
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
+
+	if (!avoid_freq_ind) {
+		policy_mgr_debug("avoid_freq_ind NULL");
+		return;
+	}
+
+	pm_ctx->unsafe_channel_count = avoid_freq_ind->chan_list.ch_cnt >=
+			QDF_MAX_NUM_CHAN ?
+			QDF_MAX_NUM_CHAN : avoid_freq_ind->chan_list.ch_cnt;
+	if (pm_ctx->unsafe_channel_count)
+		qdf_mem_copy(pm_ctx->unsafe_channel_list,
+			avoid_freq_ind->chan_list.ch_list,
+			pm_ctx->unsafe_channel_count);
+	policy_mgr_debug("Channel list update, recieved %d avoided channels",
+		pm_ctx->unsafe_channel_count);
+}
+
+void policy_mgr_update_with_safe_channel_list(struct wlan_objmgr_psoc *psoc,
+		uint8_t *pcl_channels, uint32_t *len,
+		uint8_t *weight_list, uint32_t weight_len)
+{
+	uint8_t current_channel_list[QDF_MAX_NUM_CHAN];
+	uint8_t org_weight_list[QDF_MAX_NUM_CHAN];
+	uint8_t is_unsafe = 1;
+	uint8_t i, j;
+	uint32_t safe_channel_count = 0, current_channel_count = 0;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
+
+	if (len) {
+		current_channel_count = QDF_MIN(*len, QDF_MAX_NUM_CHAN);
+	} else {
+		policy_mgr_err("invalid number of channel length");
+		return;
+	}
+
+	if (pm_ctx->unsafe_channel_count == 0) {
+		policy_mgr_debug("There are no unsafe channels");
+		return;
+	}
+
+	qdf_mem_copy(current_channel_list, pcl_channels,
+		current_channel_count);
+	qdf_mem_zero(pcl_channels, current_channel_count);
+
+	qdf_mem_copy(org_weight_list, weight_list, QDF_MAX_NUM_CHAN);
+	qdf_mem_zero(weight_list, weight_len);
+
+	for (i = 0; i < current_channel_count; i++) {
+		is_unsafe = 0;
+		for (j = 0; j < pm_ctx->unsafe_channel_count; j++) {
+			if (current_channel_list[i] ==
+				pm_ctx->unsafe_channel_list[j]) {
+				/* Found unsafe channel, update it */
+				is_unsafe = 1;
+				policy_mgr_warn("CH %d is not safe",
+					current_channel_list[i]);
+				break;
+			}
+		}
+		if (!is_unsafe) {
+			pcl_channels[safe_channel_count] =
+				current_channel_list[i];
+			if (safe_channel_count < weight_len)
+				weight_list[safe_channel_count] =
+					org_weight_list[i];
+			safe_channel_count++;
+		}
+	}
+	*len = safe_channel_count;
+
 	return;
 }
 
