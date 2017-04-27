@@ -37,4 +37,38 @@ QDF_STATUS wmi_extract_reg_chan_list_update_event(void *wmi_hdl,
 						  struct cur_regulatory_info
 						  *reg_info,
 						  uint32_t len);
+
+/*
+ * wmi_unified_send_stop_11d_scan_cmd() - stop 11d scan
+ * @wmi_handle: wmi handle
+ * @stop_11d_scan: pointer to 11d scan stop req.
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+QDF_STATUS wmi_unified_send_stop_11d_scan_cmd(wmi_unified_t wmi_handle,
+		struct reg_stop_11d_scan_req *stop_11d_scan);
+
+/*
+ * wmi_unified_send_start_11d_scan_cmd() - start 11d scan
+ * @wmi_handle: wmi handle
+ * @start_11d_scan: pointer to 11d scan start req.
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+QDF_STATUS wmi_unified_send_start_11d_scan_cmd(wmi_unified_t wmi_handle,
+		struct reg_start_11d_scan_req *start_11d_scan);
+
+/**
+ * wmi_extract_reg_11d_new_cc_event() - function to extract the 11d new country
+ * @wmi_hdl: wmi handle
+ * @evt_buf: event buffer
+ * @reg_11d_new_cc: pointer to new 11d country info
+ * @len: length of buffer
+ *
+ * Return: 0 for success or error code
+ */
+QDF_STATUS wmi_extract_reg_11d_new_cc_event(void *wmi_hdl,
+		uint8_t *evt_buf,
+		struct reg_11d_new_country *reg_11d_new_cc,
+		uint32_t len);
 #endif /* _WMI_UNIFIED_REG_API_H_ */

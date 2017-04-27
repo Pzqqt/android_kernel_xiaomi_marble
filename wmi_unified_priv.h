@@ -1029,6 +1029,14 @@ QDF_STATUS
 			struct btcoex_cfg_params *param);
 
 QDF_STATUS
+(*send_start_11d_scan_cmd)(wmi_unified_t wmi_handle,
+			struct reg_start_11d_scan_req *param);
+
+QDF_STATUS
+(*send_stop_11d_scan_cmd)(wmi_unified_t wmi_handle,
+			struct reg_stop_11d_scan_req *param);
+
+QDF_STATUS
 (*send_btcoex_duty_cycle_cmd)(wmi_unified_t wmi_handle,
 			struct btcoex_cfg_params *param);
 
@@ -1313,6 +1321,12 @@ QDF_STATUS (*extract_reg_chan_list_update_event)(wmi_unified_t wmi_handle,
 						 struct cur_regulatory_info
 						 *reg_info,
 						 uint32_t len);
+
+QDF_STATUS (*extract_reg_11d_new_country_event)(wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct reg_11d_new_country *reg_11d_country,
+		uint32_t len);
+
 QDF_STATUS (*extract_chainmask_tables)(wmi_unified_t wmi_handle,
 		uint8_t *evt_buf,
 		struct wlan_psoc_host_chainmask_table *chainmask_table);
