@@ -53,7 +53,7 @@
 #define WLAN_PEER_F_WDS                             0x00000800
 /* No AMPDU support */
 #define WLAN_PEER_F_NOAMPDU                         0x00001000
-/* Atheros proprietary wep/tkip aggregation support */
+/* wep/tkip aggregation support */
 #define WLAN_PEER_F_WEPTKIPAGGR                     0x00002000
 #define WLAN_PEER_F_WEPTKIP                         0x00004000
 /* temp node (not in the node table) */
