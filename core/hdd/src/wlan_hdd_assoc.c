@@ -1692,7 +1692,8 @@ static QDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
 		pHddCtx->sta_to_adapter[sta_id] = NULL;
 		/* Clear all the peer sta register with TL. */
 		for (i = 0; i < MAX_PEERS; i++) {
-			if (0 == pHddStaCtx->conn_info.staId[i])
+			if (HDD_WLAN_INVALID_STA_ID ==
+				pHddStaCtx->conn_info.staId[i])
 				continue;
 			sta_id = pHddStaCtx->conn_info.staId[i];
 			hdd_debug("Deregister StaID %d", sta_id);
@@ -3317,7 +3318,8 @@ static bool roam_remove_ibss_station(hdd_adapter_t *pAdapter, uint8_t staId)
 
 			empty_slots++;
 		} else {
-			if (pHddStaCtx->conn_info.staId[idx] != 0) {
+			if (pHddStaCtx->conn_info.staId[idx] !=
+					HDD_WLAN_INVALID_STA_ID) {
 				valid_idx = idx;
 			} else {
 				/* Found an empty slot */
@@ -3335,7 +3337,8 @@ static bool roam_remove_ibss_station(hdd_adapter_t *pAdapter, uint8_t staId)
 	/* Find next active staId, to have a valid sta trigger for TL. */
 	if (fSuccess == true) {
 		if (del_idx == 0) {
-			if (pHddStaCtx->conn_info.staId[valid_idx] != 0) {
+			if (pHddStaCtx->conn_info.staId[valid_idx] !=
+					HDD_WLAN_INVALID_STA_ID) {
 				pHddStaCtx->conn_info.staId[0] =
 					pHddStaCtx->conn_info.staId[valid_idx];
 				qdf_copy_macaddr(&pHddStaCtx->conn_info.
