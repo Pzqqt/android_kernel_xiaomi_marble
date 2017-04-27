@@ -324,7 +324,20 @@ QDF_STATUS policy_mgr_psoc_open(struct wlan_objmgr_psoc *psoc)
 
 QDF_STATUS policy_mgr_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
-	/* placeholder for now */
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (pm_ctx->hw_mode.hw_mode_list) {
+		qdf_mem_free(pm_ctx->hw_mode.hw_mode_list);
+		pm_ctx->hw_mode.hw_mode_list = NULL;
+		policy_mgr_info("HW list is freed");
+	}
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -425,12 +438,6 @@ QDF_STATUS policy_mgr_psoc_disable(struct wlan_objmgr_psoc *psoc)
 	if (!pm_ctx) {
 		policy_mgr_err("Invalid Context");
 		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (pm_ctx->hw_mode.hw_mode_list) {
-		qdf_mem_free(pm_ctx->hw_mode.hw_mode_list);
-		pm_ctx->hw_mode.hw_mode_list = NULL;
-		policy_mgr_info("HW list is freed");
 	}
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_mutex_destroy(
