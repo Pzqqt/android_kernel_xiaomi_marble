@@ -428,36 +428,38 @@ struct dfs_state *dfs_getchanstate(struct wlan_dfs *dfs, uint8_t *index,
 		int ext_chan_flag)
 {
 	struct dfs_state *rs = NULL;
-	struct dfs_ieee80211_channel *cmp_ch = NULL;
+	struct dfs_ieee80211_channel *cmp_ch, cmp_ch1;
 	int i;
+	QDF_STATUS err;
 
 	if (dfs == NULL) {
 		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS, "%s: dfs is NULL\n", __func__);
 		return NULL;
 	}
 
+	cmp_ch = &cmp_ch1;
 	if (ext_chan_flag) {
-		dfs_mlme_get_extchan(dfs->dfs_pdev_obj,
+		err = dfs_mlme_get_extchan(dfs->dfs_pdev_obj,
 				&(cmp_ch->ic_freq),
 				&(cmp_ch->ic_flags),
 				&(cmp_ch->ic_flagext),
 				&(cmp_ch->ic_ieee),
 				&(cmp_ch->ic_vhtop_ch_freq_seg1),
 				&(cmp_ch->ic_vhtop_ch_freq_seg2));
-		if (cmp_ch) {
+
+		if (err == QDF_STATUS_SUCCESS) {
 			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
 					"Extension channel freq = %u flags=0x%x\n",
 					cmp_ch->ic_freq, cmp_ch->ic_flagext);
-		} else {
+		} else
 			return NULL;
-		}
-
 	} else {
 		cmp_ch = dfs->dfs_curchan;
 		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
 				"Primary channel freq = %u flags=0x%x\n",
 				cmp_ch->ic_freq, cmp_ch->ic_flagext);
 	}
+
 	for (i = 0; i < DFS_NUM_RADAR_STATES; i++) {
 		if ((dfs->dfs_radar[i].rs_chan.ic_freq == cmp_ch->ic_freq) &&
 			(dfs->dfs_radar[i].rs_chan.ic_flags == cmp_ch->ic_flags)
@@ -494,7 +496,8 @@ void dfs_radar_enable(struct wlan_dfs *dfs, int no_cac, uint32_t opmode)
 {
 	int is_ext_ch;
 	int is_fastclk = 0;
-	struct dfs_ieee80211_channel *ext_ch = NULL;
+	struct dfs_ieee80211_channel *ext_ch, extchan;
+	QDF_STATUS err = QDF_STATUS_E_FAILURE;
 
 	if (dfs == NULL) {
 		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS1,
@@ -522,22 +525,26 @@ void dfs_radar_enable(struct wlan_dfs *dfs, int no_cac, uint32_t opmode)
 		dfs->dfs_proc_phyerr |= DFS_RADAR_EN;
 		dfs->dfs_proc_phyerr |= DFS_SECOND_SEGMENT_RADAR_EN;
 
+		ext_ch = &extchan;
 		if (is_ext_ch)
-			dfs_mlme_get_extchan(dfs->dfs_pdev_obj,
-				&(ext_ch->ic_freq),
-				&(ext_ch->ic_flags),
-				&(ext_ch->ic_flagext),
-				&(ext_ch->ic_ieee),
-				&(ext_ch->ic_vhtop_ch_freq_seg1),
-				&(ext_ch->ic_vhtop_ch_freq_seg2));
+			err = dfs_mlme_get_extchan(dfs->dfs_pdev_obj,
+					&(ext_ch->ic_freq),
+					&(ext_ch->ic_flags),
+					&(ext_ch->ic_flagext),
+					&(ext_ch->ic_ieee),
+					&(ext_ch->ic_vhtop_ch_freq_seg1),
+					&(ext_ch->ic_vhtop_ch_freq_seg2));
+
 
 		dfs_reset_alldelaylines(dfs);
 
 		rs_pri = dfs_getchanstate(dfs, &index_pri, 0);
-		if (ext_ch)
+		if (err == QDF_STATUS_SUCCESS) {
 			rs_ext = dfs_getchanstate(dfs, &index_ext, 1);
+		}
 
-		if (rs_pri != NULL && ((ext_ch == NULL) || (rs_ext != NULL))) {
+		if (rs_pri != NULL && ((err == QDF_STATUS_E_FAILURE) ||
+			    (rs_ext != NULL))) {
 			struct wlan_dfs_phyerr_param pe;
 
 			qdf_mem_set(&pe, '\0', sizeof(pe));

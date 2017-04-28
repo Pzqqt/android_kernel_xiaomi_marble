@@ -128,7 +128,7 @@ void dfs_mlme_find_any_valid_channel(struct wlan_objmgr_pdev *pdev,
  * @ic_vhtop_ch_freq_seg2:  Channel Center frequency applicable for 80+80MHz
  *                          mode of operation.
  */
-void dfs_mlme_get_extchan(struct wlan_objmgr_pdev *pdev,
+QDF_STATUS dfs_mlme_get_extchan(struct wlan_objmgr_pdev *pdev,
 		uint16_t *ic_freq,
 		uint32_t *ic_flags,
 		uint16_t *ic_flagext,

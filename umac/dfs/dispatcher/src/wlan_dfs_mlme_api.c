@@ -172,7 +172,7 @@ void dfs_mlme_find_any_valid_channel(struct wlan_objmgr_pdev *pdev,
 				ret_val);
 }
 
-void dfs_mlme_get_extchan(struct wlan_objmgr_pdev *pdev,
+QDF_STATUS dfs_mlme_get_extchan(struct wlan_objmgr_pdev *pdev,
 		uint16_t *ic_freq,
 		uint32_t *ic_flags,
 		uint16_t *ic_flagext,
@@ -181,13 +181,15 @@ void dfs_mlme_get_extchan(struct wlan_objmgr_pdev *pdev,
 		uint8_t *ic_vhtop_ch_freq_seg2)
 {
 	if (global_dfs_to_mlme.mlme_get_extchan != NULL)
-		global_dfs_to_mlme.mlme_get_extchan(pdev,
+		return global_dfs_to_mlme.mlme_get_extchan(pdev,
 				ic_freq,
 				ic_flags,
 				ic_flagext,
 				ic_ieee,
 				ic_vhtop_ch_freq_seg1,
 				ic_vhtop_ch_freq_seg2);
+
+	return QDF_STATUS_E_FAILURE;
 }
 
 void dfs_mlme_set_no_chans_available(struct wlan_objmgr_pdev *pdev,
