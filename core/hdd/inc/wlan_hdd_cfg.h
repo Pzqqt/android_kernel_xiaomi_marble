@@ -9642,7 +9642,7 @@ enum hdd_wext_control {
  * g_enable_bcast_probe_rsp - Enable Broadcast probe response.
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: 1
  *
  * This ini is used to enable/disable broadcast probe response
  *
@@ -9657,7 +9657,7 @@ enum hdd_wext_control {
 #define CFG_ENABLE_BCAST_PROBE_RESP_NAME    "g_enable_bcast_probe_rsp"
 #define CFG_ENABLE_BCAST_PROBE_RESP_MIN     (0)
 #define CFG_ENABLE_BCAST_PROBE_RESP_MAX     (1)
-#define CFG_ENABLE_BCAST_PROBE_RESP_DEFAULT (0)
+#define CFG_ENABLE_BCAST_PROBE_RESP_DEFAULT (1)
 
 /**
  * arp_ac_category - ARP access category
@@ -9848,7 +9848,7 @@ enum l1ss_sleep_allowed {
  * g_qcn_ie_support - QCN IE Support
  * @Min: 0 (disabled)
  * @Max: 1 (enabled)
- * @Default: 0 (disabled)
+ * @Default: 1 (enabled)
  *
  * This config item is used to support QCN IE in probe/assoc/reassoc request
  * for STA mode. QCN IE support is not added for SAP mode.
@@ -9864,7 +9864,7 @@ enum l1ss_sleep_allowed {
 #define CFG_QCN_IE_SUPPORT_NAME    "g_qcn_ie_support"
 #define CFG_QCN_IE_SUPPORT_MIN      0
 #define CFG_QCN_IE_SUPPORT_MAX      1
-#define CFG_QCN_IE_SUPPORT_DEFAULT  0
+#define CFG_QCN_IE_SUPPORT_DEFAULT  1
 
 /* enable_reg_offload - enable regulatory offload
  * @Min: 0
