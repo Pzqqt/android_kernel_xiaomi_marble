@@ -992,4 +992,14 @@ struct policy_mgr_user_cfg {
 	uint32_t mcc_to_scc_switch_mode;
 	bool sub_20_mhz_enabled;
 };
+
+/**
+ * struct dbs_nss - Number of spatial streams in DBS mode
+ * @mac0_ss: Number of spatial streams on MAC0
+ * @mac1_ss: Number of spatial streams on MAC1
+ */
+struct dbs_nss {
+	enum hw_mode_ss_config mac0_ss;
+	enum hw_mode_ss_config mac1_ss;
+};
 #endif /* __WLAN_POLICY_MGR_PUBLIC_STRUCT_H */

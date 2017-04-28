@@ -752,43 +752,18 @@ bool policy_mgr_is_dbs_enable(struct wlan_objmgr_psoc *psoc)
 
 bool policy_mgr_is_hw_dbs_2x2_capable(struct wlan_objmgr_psoc *psoc)
 {
-	int i, param;
-	uint32_t dbs, tx_chain0, rx_chain0, tx_chain1, rx_chain1;
-	uint32_t final_min_rf_chains = 2;
-	uint32_t min_rf_chains, min_mac0_rf_chains, min_mac1_rf_chains;
-	bool is_dbs_found = false;
-	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint32_t max_rf_chains, final_min_rf_chains = HW_MODE_SS_2x2;
+	struct dbs_nss nss_dbs;
 
-	pm_ctx = policy_mgr_get_context(psoc);
-	if (!pm_ctx) {
-		policy_mgr_err("Invalid Context");
-		return false;
+	if (policy_mgr_get_hw_dbs_nss(psoc, &nss_dbs)) {
+		max_rf_chains = QDF_MAX(nss_dbs.mac0_ss, nss_dbs.mac1_ss);
+		final_min_rf_chains
+			= QDF_MIN(final_min_rf_chains, max_rf_chains);
+	} else {
+		final_min_rf_chains = HW_MODE_SS_0x0;
 	}
 
-	for (i = 0; i < pm_ctx->num_dbs_hw_modes; i++) {
-		param = pm_ctx->hw_mode.hw_mode_list[i];
-		tx_chain0 = POLICY_MGR_HW_MODE_MAC0_TX_STREAMS_GET(param);
-		rx_chain0 = POLICY_MGR_HW_MODE_MAC0_RX_STREAMS_GET(param);
-		dbs = POLICY_MGR_HW_MODE_DBS_MODE_GET(param);
-		tx_chain1 = POLICY_MGR_HW_MODE_MAC1_TX_STREAMS_GET(param);
-		rx_chain1 = POLICY_MGR_HW_MODE_MAC1_RX_STREAMS_GET(param);
-
-		if (dbs) {
-			min_mac0_rf_chains = QDF_MIN(tx_chain0, rx_chain0);
-			min_mac1_rf_chains = QDF_MIN(tx_chain1, rx_chain1);
-			min_rf_chains = QDF_MIN(min_mac0_rf_chains,
-						min_mac1_rf_chains);
-			is_dbs_found = true;
-		} else {
-			continue;
-		}
-		final_min_rf_chains = QDF_MIN(final_min_rf_chains,
-					min_rf_chains);
-	}
-	if (false == is_dbs_found)
-		final_min_rf_chains = 0;
-
-	return (final_min_rf_chains == 2) ? true : false;
+	return (final_min_rf_chains == HW_MODE_SS_2x2) ? true : false;
 }
 
 uint32_t policy_mgr_get_connection_count(struct wlan_objmgr_psoc *psoc)
@@ -2434,4 +2409,52 @@ QDF_STATUS policy_mgr_is_chan_ok_for_dnbs(struct wlan_objmgr_psoc *psoc,
 	}
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_POLICY_MGR_ID);
 	return QDF_STATUS_SUCCESS;
+}
+
+bool policy_mgr_get_hw_dbs_nss(struct wlan_objmgr_psoc *psoc,
+			       struct dbs_nss *nss_dbs)
+{
+	int i, param;
+	uint32_t dbs, tx_chain0, rx_chain0, tx_chain1, rx_chain1;
+	uint32_t min_mac0_rf_chains, min_mac1_rf_chains;
+	bool is_dbs_found = false;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx)
+		policy_mgr_err("Invalid Context");
+
+	for (i = 0; i < pm_ctx->num_dbs_hw_modes; i++) {
+		param = pm_ctx->hw_mode.hw_mode_list[i];
+		dbs = POLICY_MGR_HW_MODE_DBS_MODE_GET(param);
+
+		if (dbs) {
+			tx_chain0
+				= POLICY_MGR_HW_MODE_MAC0_TX_STREAMS_GET(param);
+			rx_chain0
+				= POLICY_MGR_HW_MODE_MAC0_RX_STREAMS_GET(param);
+
+			tx_chain1
+				= POLICY_MGR_HW_MODE_MAC1_TX_STREAMS_GET(param);
+			rx_chain1
+				= POLICY_MGR_HW_MODE_MAC1_RX_STREAMS_GET(param);
+
+			min_mac0_rf_chains = QDF_MIN(tx_chain0, rx_chain0);
+			min_mac1_rf_chains = QDF_MIN(tx_chain1, rx_chain1);
+
+			nss_dbs->mac0_ss
+				= (min_mac0_rf_chains == 2)
+				? HW_MODE_SS_2x2 : HW_MODE_SS_1x1;
+
+			nss_dbs->mac1_ss
+				= (min_mac1_rf_chains == 2)
+				? HW_MODE_SS_2x2 : HW_MODE_SS_1x1;
+
+			is_dbs_found = true;
+		} else {
+			continue;
+		}
+	}
+
+	return is_dbs_found;
 }
