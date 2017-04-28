@@ -3701,7 +3701,8 @@ static void csr_scan_copy_request_valid_channels_only(tpAniSirGlobal mac_ctx,
 			if (((src_req->skipDfsChnlInP2pSearch ||
 				skip_dfs_chnl) && (CHANNEL_STATE_DFS ==
 				wlan_reg_get_channel_state(mac_ctx->pdev,
-				src_req->ChannelInfo.ChannelList[index])))) {
+				src_req->ChannelInfo.ChannelList[index]))) &&
+				(src_req->ChannelInfo.numOfChannels > 1)) {
 				sme_debug(
 					"reqType= %s (%d), numOfChannels=%d, ignoring DFS channel %d",
 					sme_request_type_to_string(
