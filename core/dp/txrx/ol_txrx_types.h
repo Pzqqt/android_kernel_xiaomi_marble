@@ -1066,6 +1066,7 @@ struct ol_txrx_vdev_t {
 #endif
 
 	uint16_t wait_on_peer_id;
+	union ol_txrx_align_mac_addr_t last_peer_mac_addr;
 	qdf_event_t wait_delete_comp;
 #if defined(FEATURE_TSO)
 	struct {
