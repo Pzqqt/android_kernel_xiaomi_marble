@@ -13010,14 +13010,31 @@ struct cfg80211_bss *wlan_hdd_cfg80211_inform_bss_frame(hdd_adapter_t *pAdapter,
 	size_t frame_len = sizeof(struct ieee80211_mgmt) + ie_length;
 	int rssi = 0;
 	hdd_context_t *pHddCtx;
-	int status;
 	struct timespec ts;
 	struct hdd_config *cfg_param;
 
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
-	status = wlan_hdd_validate_context(pHddCtx);
-	if (0 != status)
+
+	/*
+	 * wlan_hdd_validate_context should not be used here, In validate ctx
+	 * start_modules_in_progress or stop_modules_in_progress is validated,
+	 * If the start_modules_in_progress is set to true means the interface
+	 * is not UP yet if the stop_modules_in_progress means that interface
+	 * is already down. So in both the two scenario's driver should not be
+	 * informing bss to kernel. Hence removing the validate context.
+	 */
+
+	if (NULL == pHddCtx || NULL == pHddCtx->config) {
+		hdd_debug("HDD context is Null");
 		return NULL;
+	}
+
+	if (cds_is_driver_recovering() ||
+	    cds_is_load_or_unload_in_progress()) {
+		hdd_debug("Recovery or load/unload in progress. State: 0x%x",
+			  cds_get_driver_state());
+		return NULL;
+	}
 
 	cfg_param = pHddCtx->config;
 	mgmt = qdf_mem_malloc((sizeof(struct ieee80211_mgmt) + ie_length));
