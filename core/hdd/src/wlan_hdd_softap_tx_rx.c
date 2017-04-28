@@ -760,7 +760,7 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 		/* Remove SKB from internal tracking table before submitting
 		 * it to stack
 		 */
-		qdf_net_buf_debug_release_skb(rxBuf);
+		qdf_net_buf_debug_release_skb(skb);
 		if (hdd_napi_enabled(HDD_NAPI_ANY) &&
 			!pHddCtx->enableRxThread)
 			rxstat = netif_receive_skb(skb);
