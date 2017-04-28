@@ -1506,4 +1506,16 @@ QDF_STATUS sme_set_dbs_scan_selection_config(tHalHandle hal,
  */
 void sme_store_pdev(tHalHandle hal, struct wlan_objmgr_pdev *pdev);
 
+/**
+ * sme_ipa_uc_stat_request() - set ipa config parameters
+ * @vdev_id: virtual device for the command
+ * @param_id: parameter id
+ * @param_val: parameter value
+ * @req_cat: parameter category
+ *
+ * Return: QDF_STATUS_SUCCESS or non-zero on failure
+ */
+QDF_STATUS sme_ipa_uc_stat_request(tHalHandle hal,
+			uint32_t vdev_id, uint32_t param_id,
+			uint32_t param_val, uint32_t req_cat);
 #endif /* #if !defined( __SME_API_H ) */

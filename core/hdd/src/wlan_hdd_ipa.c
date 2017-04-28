@@ -1763,9 +1763,9 @@ static void __hdd_ipa_uc_stat_request(hdd_adapter_t *adapter, uint8_t reason)
 		(false == hdd_ipa->resource_loading)) {
 		hdd_ipa->stat_req_reason = reason;
 		qdf_mutex_release(&hdd_ipa->ipa_lock);
-		wma_cli_set_command(
-			(int)adapter->sessionId,
-			(int)WMA_VDEV_TXRX_GET_IPA_UC_FW_STATS_CMDID,
+		sme_ipa_uc_stat_request(WLAN_HDD_GET_HAL_CTX(adapter),
+			adapter->sessionId,
+			WMA_VDEV_TXRX_GET_IPA_UC_FW_STATS_CMDID,
 			0, VDEV_CMD);
 	} else {
 		qdf_mutex_release(&hdd_ipa->ipa_lock);

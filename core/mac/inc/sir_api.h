@@ -7175,4 +7175,24 @@ enum scan_reject_states {
 	EAPOL_IN_PROGRESS,
 	SAP_EAPOL_IN_PROGRESS,
 };
+
+/**
+ * struct ani_ipa_stat_req - IPA stats request
+ * @msg_type: Message type
+ * @msg_len: Message Length
+ * @vdev_id: Vdev Id
+ * @param_id: param id
+ * @param_val: param value
+ * @req_type: request type
+ *
+ * IPA stats request message structure
+ */
+struct ani_ipa_stat_req {
+	uint16_t msg_type;
+	uint16_t msg_len;
+	uint16_t vdev_id;
+	uint32_t param_id;
+	uint32_t param_val;
+	uint32_t req_type;
+};
 #endif /* __SIR_API_H */

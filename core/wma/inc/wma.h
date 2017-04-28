@@ -2479,4 +2479,12 @@ static inline void wma_print_wmi_mgmt_event_log(uint32_t count,
 }
 #endif /* WMI_INTERFACE_EVENT_LOGGING */
 
+/**
+ * wma_ipa_uc_stat_request() - set ipa config parameters
+ * @privcmd: private command
+ *
+ * Return: None
+ */
+void wma_ipa_uc_stat_request(wma_cli_set_cmd_t *privcmd);
+
 #endif
