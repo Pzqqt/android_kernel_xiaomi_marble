@@ -71,6 +71,7 @@ static ssize_t ath_procfs_diag_read(struct file *file, char __user *buf,
 	uint8_t *read_buffer = NULL;
 	struct hif_softc *scn;
 	uint32_t offset = 0, memtype = 0;
+	struct hif_target_info *tgt_info;
 
 	read_buffer = qdf_mem_malloc(count);
 	if (NULL == read_buffer) {
@@ -83,7 +84,11 @@ static ssize_t ath_procfs_diag_read(struct file *file, char __user *buf,
 		 read_buffer, count, (int)*pos, buf);
 
 	scn = HIF_GET_SOFTC(hif_hdl);
-	if (scn->bus_type == QDF_BUS_TYPE_SNOC) {
+	tgt_info = hif_get_target_info_handle(GET_HIF_OPAQUE_HDL(hif_hdl));
+	if (scn->bus_type == QDF_BUS_TYPE_SNOC ||
+			(scn->bus_type ==  QDF_BUS_TYPE_PCI &&
+			 (tgt_info->target_type == TARGET_TYPE_QCA6290 ||
+			  tgt_info->target_type == TARGET_TYPE_QCA8074))) {
 		memtype = ((uint32_t)(*pos) & 0xff000000) >> 24;
 		offset = (uint32_t)(*pos) & 0xffffff;
 		HIF_TRACE("%s: offset 0x%x memtype 0x%x, datalen %zu\n",
@@ -126,6 +131,7 @@ static ssize_t ath_procfs_diag_write(struct file *file,
 	uint8_t *write_buffer = NULL;
 	struct hif_softc *scn;
 	uint32_t offset = 0, memtype = 0;
+	struct hif_target_info *tgt_info;
 
 	write_buffer = qdf_mem_malloc(count);
 	if (NULL == write_buffer) {
@@ -145,7 +151,11 @@ static ssize_t ath_procfs_diag_write(struct file *file,
 		 (int)*pos, *((uint32_t *) write_buffer));
 
 	scn = HIF_GET_SOFTC(hif_hdl);
-	if (scn->bus_type == QDF_BUS_TYPE_SNOC) {
+	tgt_info = hif_get_target_info_handle(GET_HIF_OPAQUE_HDL(hif_hdl));
+	if (scn->bus_type == QDF_BUS_TYPE_SNOC ||
+			(scn->bus_type ==  QDF_BUS_TYPE_PCI &&
+			 (tgt_info->target_type == TARGET_TYPE_QCA6290 ||
+			  tgt_info->target_type == TARGET_TYPE_QCA8074))) {
 		memtype = ((uint32_t)(*pos) & 0xff000000) >> 24;
 		offset = (uint32_t)(*pos) & 0xffffff;
 		HIF_TRACE("%s: offset 0x%x memtype 0x%x, datalen %zu\n",
