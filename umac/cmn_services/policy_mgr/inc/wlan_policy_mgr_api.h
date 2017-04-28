@@ -1485,7 +1485,7 @@ bool policy_mgr_is_current_hwmode_dbs(struct wlan_objmgr_psoc *psoc);
  * policy_mgr_is_hw_dbs_2x2_capable() - if hardware is capable of dbs 2x2
  * @psoc: PSOC object information
  * This function checks if hw_modes supported are always capable of
- * DBS 2x2.
+ * DBS and there is no need for downgrading while entering DBS.
  *    true: DBS 2x2 can always be supported
  *    false: hw_modes support DBS 1x1 as well
  *
@@ -1859,4 +1859,16 @@ void policy_mgr_update_new_hw_mode_index(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS policy_mgr_is_chan_ok_for_dnbs(struct wlan_objmgr_psoc *psoc,
 			uint8_t channel, bool *ok);
 
+/**
+ * policy_mgr_get_hw_dbs_nss() - Computes DBS NSS
+ * @psoc: PSOC object information
+ * @nss_dbs: NSS info of both MAC0 and MAC1
+ * This function computes NSS info of both MAC0 and MAC1
+ *    True: DBS capable
+ *    False: not DBS capable
+ *
+ * Return: True or False
+ */
+bool policy_mgr_get_hw_dbs_nss(struct wlan_objmgr_psoc *psoc,
+			       struct dbs_nss *nss_dbs);
 #endif /* __WLAN_POLICY_MGR_API_H */

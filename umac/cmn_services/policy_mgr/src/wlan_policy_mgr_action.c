@@ -422,6 +422,7 @@ QDF_STATUS policy_mgr_next_actions(struct wlan_objmgr_psoc *psoc,
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct policy_mgr_hw_mode_params hw_mode;
+	struct dbs_nss nss_dbs;
 
 	if (policy_mgr_is_hw_dbs_capable(psoc) == false) {
 		policy_mgr_err("driver isn't dbs capable, no further action needed");
@@ -469,24 +470,17 @@ QDF_STATUS policy_mgr_next_actions(struct wlan_objmgr_psoc *psoc,
 					PM_DBS, reason, session_id);
 		break;
 	case PM_DBS:
-		if (policy_mgr_is_hw_dbs_2x2_capable(psoc))
-			status = policy_mgr_pdev_set_hw_mode(psoc, session_id,
-						HW_MODE_SS_2x2,
-						HW_MODE_80_MHZ,
-						HW_MODE_SS_2x2, HW_MODE_40_MHZ,
-						HW_MODE_DBS,
-						HW_MODE_AGILE_DFS_NONE,
-						HW_MODE_SBS_NONE,
-						reason);
-		else
-			status = policy_mgr_pdev_set_hw_mode(psoc, session_id,
-						HW_MODE_SS_1x1,
-						HW_MODE_80_MHZ,
-						HW_MODE_SS_1x1, HW_MODE_40_MHZ,
-						HW_MODE_DBS,
-						HW_MODE_AGILE_DFS_NONE,
-						HW_MODE_SBS_NONE,
-						reason);
+		(void)policy_mgr_get_hw_dbs_nss(psoc, &nss_dbs);
+
+		status = policy_mgr_pdev_set_hw_mode(psoc, session_id,
+						     nss_dbs.mac0_ss,
+						     HW_MODE_80_MHZ,
+						     nss_dbs.mac1_ss,
+						     HW_MODE_40_MHZ,
+						     HW_MODE_DBS,
+						     HW_MODE_AGILE_DFS_NONE,
+						     HW_MODE_SBS_NONE,
+						     reason);
 		break;
 	case PM_SINGLE_MAC_UPGRADE:
 		/*
