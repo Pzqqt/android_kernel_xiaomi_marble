@@ -173,10 +173,11 @@ sme_rrm_send_beacon_report_xmit_ind(tpAniSirGlobal mac_ctx,
 	tpSirBssDescription bss_desc = NULL;
 	tpSirBeaconReportXmitInd beacon_rep;
 	uint16_t length, ie_len, tot_len;
-	uint8_t  i = 0, j = 0;
+	uint8_t  i = 0, j = 0, counter = 0;
 	tCsrScanResultInfo *cur_result = NULL;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpRrmSMEContext rrm_ctx = &mac_ctx->rrm.rrmSmeContext;
+	tpSirBssDescription bss_desc_to_free[SIR_BCN_REPORT_MAX_BSS_DESC] = {0};
 
 	if (NULL == result_arr && !msrmnt_status) {
 		sme_err("Beacon report xmit Ind to PE Failed");
@@ -218,6 +219,8 @@ sme_rrm_send_beacon_report_xmit_ind(tpAniSirGlobal mac_ctx,
 			qdf_mem_copy(
 				&beacon_rep->pBssDescription[i]->ieFields[0],
 				bss_desc->ieFields, ie_len);
+			bss_desc_to_free[i] =
+				beacon_rep->pBssDescription[i];
 			sme_debug("RRM Result Bssid = " MAC_ADDRESS_STR
 				" chan= %d, rssi = -%d",
 				MAC_ADDR_ARRAY(
@@ -245,6 +248,8 @@ sme_rrm_send_beacon_report_xmit_ind(tpAniSirGlobal mac_ctx,
 		sme_debug("SME Sending BcnRepXmit to PE numBss %d i %d j %d",
 			beacon_rep->numBssDesc, i, j);
 		status = umac_send_mb_message_to_mac(beacon_rep);
+		for (counter = 0; counter < i; ++counter)
+			qdf_mem_free(bss_desc_to_free[counter]);
 	} while (cur_result);
 
 	return status;
