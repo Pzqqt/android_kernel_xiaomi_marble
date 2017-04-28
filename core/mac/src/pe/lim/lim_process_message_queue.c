@@ -1682,6 +1682,9 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 	case WMA_ADD_BSS_RSP:
 		lim_process_mlm_add_bss_rsp(mac_ctx, msg);
 		break;
+	case WMA_HIDDEN_SSID_RESTART_RSP:
+		lim_process_mlm_update_hidden_ssid_rsp(mac_ctx, msg);
+		break;
 	case WMA_ADD_STA_RSP:
 		lim_process_add_sta_rsp(mac_ctx, msg);
 		break;

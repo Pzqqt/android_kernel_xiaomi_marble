@@ -914,29 +914,33 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 
 	iface = &wma->interfaces[resp_event->vdev_id];
 
+	req_msg = wma_find_vdev_req(wma, resp_event->vdev_id,
+				    WMA_TARGET_REQ_TYPE_VDEV_START);
+
+	if (!req_msg) {
+		WMA_LOGE("%s: Failed to lookup request message for vdev %d",
+			 __func__, resp_event->vdev_id);
+		policy_mgr_set_do_hw_mode_change_flag(wma->psoc, false);
+		return -EINVAL;
+	}
+
 	if ((resp_event->vdev_id <= wma->max_bssid) &&
 	    (qdf_atomic_read(
 	    &wma->interfaces[resp_event->vdev_id].vdev_restart_params.hidden_ssid_restart_in_progress))
 	    && (wma_is_vdev_in_ap_mode(wma, resp_event->vdev_id) == true)) {
+		tpHalHiddenSsidVdevRestart hidden_ssid_restart =
+			(tpHalHiddenSsidVdevRestart)req_msg->user_data;
 		WMA_LOGE("%s: vdev restart event recevied for hidden ssid set using IOCTL",
 			__func__);
 
 		param.vdev_id = resp_event->vdev_id;
 		param.assoc_id = 0;
-		if (wmi_unified_vdev_up_send
-			    (wma->wmi_handle,
-			    wma->interfaces[resp_event->vdev_id].bssid,
-				&param) != QDF_STATUS_SUCCESS) {
-			WMA_LOGE("%s : failed to send vdev up", __func__);
-			policy_mgr_set_do_hw_mode_change_flag(
-				wma->psoc, false);
-			return -EEXIST;
-		}
 		qdf_atomic_set(&wma->interfaces[resp_event->vdev_id].
 			       vdev_restart_params.
 			       hidden_ssid_restart_in_progress, 0);
-		wma_vdev_set_mlme_state(wma, resp_event->vdev_id,
-			WLAN_VDEV_S_RUN);
+
+		wma_send_msg(wma, WMA_HIDDEN_SSID_RESTART_RSP,
+				(void *)hidden_ssid_restart, 0);
 		/*
 		 * Unpause TX queue in SAP case while configuring hidden ssid
 		 * enable or disable, else the data path is paused forever
@@ -946,17 +950,6 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 				iface->handle,
 				OL_TXQ_PAUSE_REASON_VDEV_STOP);
 		wma_vdev_clear_pause_bit(resp_event->vdev_id, PAUSE_TYPE_HOST);
-	}
-
-	req_msg = wma_find_vdev_req(wma, resp_event->vdev_id,
-				    WMA_TARGET_REQ_TYPE_VDEV_START);
-
-	if (!req_msg) {
-		WMA_LOGE("%s: Failed to lookup request message for vdev %d",
-			 __func__, resp_event->vdev_id);
-		policy_mgr_set_do_hw_mode_change_flag(
-			wma->psoc, false);
-		return -EINVAL;
 	}
 
 	qdf_mc_timer_stop(&req_msg->event_timeout);
@@ -1643,7 +1636,7 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 	tp_wma_handle wma = (tp_wma_handle) handle;
 	WMI_VDEV_STOPPED_EVENTID_param_tlvs *param_buf;
 	wmi_vdev_stopped_event_fixed_param *resp_event;
-	struct wma_target_req *req_msg, *del_req;
+	struct wma_target_req *req_msg, *del_req, *new_req_msg;
 	struct cdp_pdev *pdev;
 	void *peer;
 	uint8_t peer_id;
@@ -1672,6 +1665,14 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 	}
 	resp_event = param_buf->fixed_param;
 
+	req_msg = wma_find_vdev_req(wma, resp_event->vdev_id,
+				    WMA_TARGET_REQ_TYPE_VDEV_STOP);
+	if (!req_msg) {
+		WMA_LOGE("%s: Failed to lookup vdev request for vdev id %d",
+			 __func__, resp_event->vdev_id);
+		return -EINVAL;
+	}
+
 	if ((resp_event->vdev_id <= wma->max_bssid) &&
 	    (qdf_atomic_read
 		     (&wma->interfaces[resp_event->vdev_id].vdev_restart_params.
@@ -1681,11 +1682,14 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 		WMA_LOGE("%s: vdev stop event recevied for hidden ssid set using IOCTL ",
 			__func__);
 
-		req_msg = wma_fill_vdev_req(wma, resp_event->vdev_id,
+		wma_vdev_set_mlme_state(wma,
+				resp_event->vdev_id, WLAN_VDEV_S_STOP);
+		new_req_msg = wma_fill_vdev_req(wma, resp_event->vdev_id,
 				WMA_HIDDEN_SSID_VDEV_RESTART,
-				WMA_TARGET_REQ_TYPE_VDEV_START, resp_event,
+				WMA_TARGET_REQ_TYPE_VDEV_START,
+				req_msg->user_data,
 				WMA_VDEV_START_REQUEST_TIMEOUT);
-		if (!req_msg) {
+		if (!new_req_msg) {
 			WMA_LOGE("%s: Failed to fill vdev request, vdev_id %d",
 					__func__, resp_event->vdev_id);
 			return -EINVAL;
@@ -1695,13 +1699,6 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 							  resp_event->vdev_id);
 	}
 
-	req_msg = wma_find_vdev_req(wma, resp_event->vdev_id,
-				    WMA_TARGET_REQ_TYPE_VDEV_STOP);
-	if (!req_msg) {
-		WMA_LOGE("%s: Failed to lookup vdev request for vdev id %d",
-			 __func__, resp_event->vdev_id);
-		return -EINVAL;
-	}
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev) {
 		WMA_LOGE("%s: pdev is NULL", __func__);

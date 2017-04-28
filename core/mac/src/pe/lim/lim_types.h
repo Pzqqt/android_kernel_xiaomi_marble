@@ -498,6 +498,9 @@ void lim_send_disassoc_mgmt_frame(tpAniSirGlobal, uint16_t, tSirMacAddr,
 void lim_send_deauth_mgmt_frame(tpAniSirGlobal, uint16_t, tSirMacAddr, tpPESession,
 				bool waitForAck);
 
+void lim_process_mlm_update_hidden_ssid_rsp(tpAniSirGlobal mac_ctx,
+		struct scheduler_msg *msg);
+
 tSirResultCodes lim_mlm_add_bss(tpAniSirGlobal, tLimMlmStartReq *,
 				tpPESession psessionEntry);
 
