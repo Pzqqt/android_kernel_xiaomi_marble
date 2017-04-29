@@ -91,6 +91,8 @@
 #include "wlan_reg_services_api.h"
 #include <cdp_txrx_handle.h>
 #include <wlan_pmo_ucfg_api.h>
+#include "wifi_pos_api.h"
+#include "hif_main.h"
 
 #define WMA_LOG_COMPLETION_TIMER 10000 /* 10 seconds */
 #define WMI_TLV_HEADROOM 128
@@ -5234,6 +5236,15 @@ static QDF_STATUS wma_update_hw_mode_list(t_wma_handle *wma_handle)
 	return QDF_STATUS_SUCCESS;
 }
 
+static void wma_init_wifi_pos_dma_rings(t_wma_handle *wma_handle,
+					uint8_t num_mac, void *buf)
+{
+	struct hif_softc *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+	void *hal_soc = hif_get_hal_handle(hif_ctx);
+
+	wifi_pos_init_cir_cfr_rings(wma_handle->psoc, hal_soc, num_mac, buf);
+}
+
 /**
  * wma_populate_soc_caps() - populate entire SOC's capabilities
  * @wma_handle: pointer to wma global structure
@@ -5369,6 +5380,11 @@ static void wma_populate_soc_caps(t_wma_handle *wma_handle,
 			param_buf->hal_reg_caps,
 			phy_caps->num_phy_for_hal_reg_cap.num_phy *
 				sizeof(WMI_HAL_REG_CAPABILITIES_EXT));
+
+	wma_init_wifi_pos_dma_rings(wma_handle,
+				    param_buf->num_oem_dma_ring_caps,
+				    param_buf->oem_dma_ring_caps);
+
 	wma_print_populate_soc_caps(wma_handle);
 }
 
