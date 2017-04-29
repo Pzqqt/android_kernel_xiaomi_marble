@@ -183,6 +183,42 @@ struct qdf_packed wifi_pos_oem_get_cap_rsp {
 };
 
 /**
+ * struct wifi_pos_dma_rings_cap - capabilities requested by firmware.
+ * @pdev_id: pdev_id or mac_id of ring
+ * @min_num_ptr: minimum depth of ring required
+ * @min_buf_size: minimum size of each buffer
+ * @min_buf_align: minimum allignment of buffer memory
+ */
+struct wifi_pos_dma_rings_cap {
+	uint32_t pdev_id;
+	uint32_t min_num_ptr;
+	uint32_t min_buf_size;
+	uint32_t min_buf_align;
+};
+
+/**
+ * struct wifi_pos_dma_rings_cfg - DMA ring parameters to be programmed to FW.
+ * @pdev_id: pdev_id of ring
+ * @base_addr_lo: Base address of ring, bits 31:0
+ * @base_addr_hi: Base address of ring, bits 63:32
+ * @head_idx_addr_lo: Address of head index register, bits 31:0
+ * @head_idx_addr_hi: Address of head index register, bits 63:32
+ * @tail_idx_addr_lo: Address of tail index register, bits 31:0
+ * @tail_idx_addr_hi: Address of tail index register, bits 63:32
+ * @num_ptr: Number of pointers in the ring
+ */
+struct wifi_pos_dma_rings_cfg {
+	uint32_t pdev_id;
+	uint32_t base_addr_lo;
+	uint32_t base_addr_hi;
+	uint32_t head_idx_addr_lo;
+	uint32_t head_idx_addr_hi;
+	uint32_t tail_idx_addr_lo;
+	uint32_t tail_idx_addr_hi;
+	uint32_t num_ptr;
+};
+
+/**
  * struct wifi_pos_psoc_priv_obj - psoc obj data for wifi_pos
  * @app_pid: pid of app registered to host driver
  * @is_app_registered: indicates if app is registered
@@ -190,7 +226,22 @@ struct qdf_packed wifi_pos_oem_get_cap_rsp {
  * @ftm_rr: configured value of FTM Ranging Request capability
  * @lci_capability: configured value of LCI capability
  * @rsvd: reserved
+ * @oem_target_type
+ * @oem_target_type: oem target type, populated from HDD
+ * @oem_fw_version: firmware version, populated from HDD
+ * @driver_version: driver version, populated from HDD
+ * @allowed_dwell_time_min: allowed dwell time min, populated from HDD
+ * @allowed_dwell_time_max: allowed dwell time max, populated from HDD
+ * @current_dwell_time_min: current dwell time min, populated from HDD
+ * @current_dwell_time_max: current dwell time max, populated from HDD
+ * @num_rings: DMA ring cap requested by firmware
+ * @dma_cap: dma cap as read from service ready ext event
+ * @dma_cfg: DMA ring cfg to be programmed to firmware
+ * where with num_rows = number of rings num_elements in each row = ring depth
+ * @wifi_pos_lock: lock to access wifi pos priv object
  * @wifi_pos_req_handler: function pointer to handle TLV or non-TLV
+ * @wifi_pos_send_rsp: function pointer to send msg to userspace APP
+ *
  * wifi pos request messages
  * <----- fine_time_meas_cap (in bits) ----->
  *+----------+-----+-----+------+------+-------+-------+-----+-----+
@@ -210,7 +261,6 @@ struct wifi_pos_psoc_priv_obj {
 	uint32_t lci_capability:1;
 	uint32_t rsvd:30;
 
-	/* following are populated from HDD */
 	uint32_t oem_target_type;
 	uint32_t oem_fw_version;
 	struct wifi_pos_driver_version driver_version;
@@ -219,8 +269,11 @@ struct wifi_pos_psoc_priv_obj {
 	uint16_t current_dwell_time_min;
 	uint16_t current_dwell_time_max;
 
-	qdf_spinlock_t wifi_pos_lock;
+	uint8_t num_rings;
+	struct wifi_pos_dma_rings_cap *dma_cap;
+	struct wifi_pos_dma_rings_cfg *dma_cfg;
 
+	qdf_spinlock_t wifi_pos_lock;
 	QDF_STATUS (*wifi_pos_req_handler)(struct wlan_objmgr_psoc *psoc,
 				    struct wifi_pos_req_msg *req);
 	void (*wifi_pos_send_rsp)(uint32_t, uint32_t, uint32_t, uint8_t *);

@@ -347,4 +347,26 @@ static inline QDF_STATUS wifi_pos_psoc_disable(struct wlan_objmgr_psoc *psoc)
 }
 #endif
 
+#if defined(WLAN_FEATURE_CIF_CFR) && defined(WIFI_POS_CONVERGED)
+/**
+ * wifi_pos_init_cir_cfr_rings: API to set DMA ring cap in wifi pos psoc private
+ * object
+ * @psoc: pointer to psoc object
+ * @hal_soc: hal soc pointer
+ * @num_mac: number of macs
+ * @buf: buffer containing dma ring cap
+ *
+ * Return: status of operation.
+ */
+QDF_STATUS wifi_pos_init_cir_cfr_rings(struct wlan_objmgr_psoc *psoc,
+				   void *hal_soc, uint8_t num_mac, void *buf);
+#else
+static inline QDF_STATUS wifi_pos_init_cir_cfr_rings(
+				struct wlan_objmgr_psoc *psoc,
+				void *hal_soc, uint8_t num_mac, void *buf)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 #endif

@@ -36,6 +36,9 @@
 #include "target_if_wifi_pos.h"
 #include "../../../../umac/wifi_pos/src/wifi_pos_main_i.h"
 #include "target_if.h"
+#ifdef WLAN_FEATURE_CIF_CFR
+#include "hal_api.h"
+#endif
 
 /**
  * wifi_pos_oem_rsp_ev_handler: handler registered with WMI_OEM_RESPONSE_EVENTID
@@ -271,3 +274,56 @@ QDF_STATUS target_if_wifi_pos_deregister_events(struct wlan_objmgr_psoc *psoc)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef WLAN_FEATURE_CIF_CFR
+static QDF_STATUS target_if_wifi_pos_init_srngs(struct wlan_objmgr_psoc *psoc,
+			void *hal_soc, struct wifi_pos_psoc_priv_obj *priv_obj)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS target_if_wifi_pos_cfg_fw(struct wlan_objmgr_psoc *psoc,
+					struct wifi_pos_psoc_priv_obj *priv_obj)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS target_if_wifi_pos_init_cir_cfr_rings(struct wlan_objmgr_psoc *psoc,
+					     void *hal_soc, uint8_t num_mac,
+					     void *buf)
+{
+	uint8_t i;
+	struct wifi_pos_psoc_priv_obj *priv_obj =
+			wifi_pos_get_psoc_priv_obj(psoc);
+	WMI_OEM_DMA_RING_CAPABILITIES *dma_cap = buf;
+
+	if (!priv_obj) {
+		target_if_err("unable to get wifi_pos psoc obj");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	priv_obj->hal_soc = hal_soc;
+	priv_obj->num_rings = num_mac;
+	priv_obj->dma_cap = qdf_mem_malloc(priv_obj->num_rings *
+					sizeof(struct wifi_pos_dma_rings_cap));
+	if (!priv_obj->dma_cap) {
+		target_if_err("unable to get wifi_pos psoc obj");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	for (i = 0; i < num_mac; i++) {
+		priv_obj->dma_cap[i].pdev_id = dma_cap[i].pdev_id;
+		priv_obj->dma_cap[i].min_num_ptr = dma_cap[i].min_num_ptr;
+		priv_obj->dma_cap[i].min_buf_size = dma_cap[i].min_buf_size;
+		priv_obj->dma_cap[i].min_buf_align = dma_cap[i].min_buf_align;
+	}
+
+	/* initialize DMA rings now */
+	target_if_wifi_pos_init_srngs(psoc, hal_soc, priv_obj);
+
+	/* send cfg req cmd to firmware */
+	target_if_wifi_pos_cfg_fw(psoc, priv_obj);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif

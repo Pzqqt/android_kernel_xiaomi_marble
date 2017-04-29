@@ -257,3 +257,12 @@ bool wifi_pos_is_app_registered(struct wlan_objmgr_psoc *psoc)
 	return is_app_registered;
 }
 
+#ifdef WLAN_FEATURE_CIF_CFR
+QDF_STATUS wifi_pos_init_cir_cfr_rings(struct wlan_objmgr_psoc *psoc,
+				   void *hal_soc, uint8_t num_mac, void *buf)
+{
+	return target_if_wifi_pos_init_cir_cfr_rings(psoc, hal_soc,
+						     num_mac, buf);
+}
+#endif
+

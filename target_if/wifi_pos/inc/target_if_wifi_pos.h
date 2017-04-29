@@ -93,7 +93,6 @@ static inline struct wlan_lmac_if_wifi_pos_tx_ops *target_if_wifi_pos_get_txops(
 	return NULL;
 }
 
-
 static inline struct wlan_lmac_if_wifi_pos_rx_ops *target_if_wifi_pos_get_rxops(
 						struct wlan_objmgr_psoc *psoc)
 {
@@ -108,6 +107,29 @@ static inline void target_if_wifi_pos_register_tx_ops(
 static inline void target_if_wifi_pos_register_rx_ops(
 					struct wlan_lmac_if_rx_ops *rx_ops)
 {
+}
+#endif
+
+#if defined(WLAN_FEATURE_CIF_CFR) && defined(WIFI_POS_CONVERGED)
+/**
+ * target_if_wifi_pos_init_cir_cfr_rings: set DMA ring cap in psoc private
+ * object
+ * @psoc: pointer to psoc object
+ * @hal_soc: pointer to hal soc
+ * @num_mac: number of mac
+ * @buf: buffer containing DMA ring cap
+ *
+ * Return: status of operation
+ */
+QDF_STATUS target_if_wifi_pos_init_cir_cfr_rings(struct wlan_objmgr_psoc *psoc,
+					     void *hal_soc, uint8_t num_mac,
+					     void *buf);
+#else
+static inline QDF_STATUS target_if_wifi_pos_init_cir_cfr_rings(
+				struct wlan_objmgr_psoc *psoc, void *hal_soc,
+				uint8_t num_mac, void *buf)
+{
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 
