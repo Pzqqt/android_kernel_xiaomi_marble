@@ -17787,6 +17787,7 @@ typedef enum wmi_coex_config_type {
                                                  arg4 BT priority time in microsec,
                                                  arg5 PTA algorithm (WMI_COEX_ALGO_TYPE),
                                                  arg6 PTA priority */
+    WMI_COEX_CONFIG_BTC_DUTYCYCLE       = 18, /* config interval (ms units) (arg1 WLAN pause duration, arg2 WLAN unpause duration) for WLAN UL + BT Rx */
 } WMI_COEX_CONFIG_TYPE;
 
 typedef struct {
