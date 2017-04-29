@@ -475,6 +475,7 @@ struct dfs_state {
 
 /**
  * struct dfs_nolelem - DFS NOL element.
+ * @nol_dfs           Back pointer to dfs object.
  * @nol_freq:         Centre frequency.
  * @nol_chwidth:      Event width (MHz).
  * @nol_start_ticks:  NOL start time in OS ticks.
@@ -483,6 +484,7 @@ struct dfs_state {
  * @nol_next:         Next element pointer.
  */
 struct dfs_nolelem {
+	struct wlan_dfs *nol_dfs;
 	uint32_t       nol_freq;
 	uint32_t       nol_chwidth;
 	unsigned long  nol_start_ticks;
@@ -491,17 +493,6 @@ struct dfs_nolelem {
 	struct dfs_nolelem *nol_next;
 } qdf_packed;
 
-/**
- * struct dfs_nol_timer_arg - DFS NOL timer arguments.
- * @dfs:        Object of wlan_dfs structure.
- * @delfreq:    Freq to delete.
- * @delchwidth: Channel width to delete.
- */
-struct dfs_nol_timer_arg {
-	struct wlan_dfs *dfs;
-	uint16_t       delfreq;
-	uint16_t       delchwidth;
-};
 
 /**
  * struct dfs_info - DFS Info.

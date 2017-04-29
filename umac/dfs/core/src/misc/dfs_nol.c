@@ -101,17 +101,17 @@ static void dfs_nol_delete(struct wlan_dfs *dfs,
  */
 static os_timer_func(dfs_remove_from_nol)
 {
-	struct dfs_nol_timer_arg *nol_arg;
+	struct dfs_nolelem *nol_arg;
 	struct wlan_dfs *dfs;
 	uint16_t delfreq;
 	uint16_t delchwidth;
 	uint8_t chan;
 
-	OS_GET_TIMER_ARG(nol_arg, struct dfs_nol_timer_arg *);
+	OS_GET_TIMER_ARG(nol_arg, struct dfs_nolelem *);
 
-	dfs = nol_arg->dfs;
-	delfreq = nol_arg->delfreq;
-	delchwidth = nol_arg->delchwidth;
+	dfs = nol_arg->nol_dfs;
+	delfreq = nol_arg->nol_freq;
+	delchwidth = nol_arg->nol_chwidth;
 
 	/* Delete the given NOL entry. */
 	dfs_nol_delete(dfs, delfreq, delchwidth);
@@ -126,7 +126,6 @@ static os_timer_func(dfs_remove_from_nol)
 	utils_dfs_reg_update_nol_ch(dfs->dfs_pdev_obj,
 			(uint8_t *)&chan, 1, DFS_NOL_RESET);
 	dfs_save_nol(dfs->dfs_pdev_obj);
-	qdf_mem_free(nol_arg);
 }
 
 void dfs_print_nol(struct wlan_dfs *dfs)
@@ -256,7 +255,6 @@ void dfs_nol_addchan(struct wlan_dfs *dfs,
 #define TIME_IN_MS 1000
 #define TIME_IN_US (TIME_IN_MS * 1000)
 	struct dfs_nolelem *nol, *elem, *prev;
-	struct dfs_nol_timer_arg *dfs_nol_arg;
 	/* For now, assume all events are 20MHz wide. */
 	int ch_width = 20;
 
@@ -292,12 +290,7 @@ void dfs_nol_addchan(struct wlan_dfs *dfs,
 	if (elem == NULL)
 		goto bad;
 
-	dfs_nol_arg = (struct dfs_nol_timer_arg *)qdf_mem_malloc(
-			sizeof(struct dfs_nol_timer_arg));
-	if (dfs_nol_arg == NULL) {
-		qdf_mem_free(elem);
-		goto bad;
-	}
+	elem->nol_dfs = dfs;
 	elem->nol_freq = freq;
 	elem->nol_chwidth = ch_width;
 	elem->nol_start_ticks = qdf_system_ticks();
@@ -309,13 +302,10 @@ void dfs_nol_addchan(struct wlan_dfs *dfs,
 		/* This is the first element in the NOL. */
 		dfs->dfs_nol = elem;
 	}
-	dfs_nol_arg->dfs = dfs;
-	dfs_nol_arg->delfreq = elem->nol_freq;
-	dfs_nol_arg->delchwidth = elem->nol_chwidth;
 
 	qdf_timer_init(NULL,
 			&elem->nol_timer, dfs_remove_from_nol,
-			dfs_nol_arg, QDF_TIMER_TYPE_WAKE_APPS);
+			elem, QDF_TIMER_TYPE_WAKE_APPS);
 	OS_SET_TIMER(&elem->nol_timer, dfs_nol_timeout * TIME_IN_MS);
 
 	/* Update the NOL counter. */
@@ -414,7 +404,7 @@ void dfs_nol_timer_cleanup(struct wlan_dfs *dfs)
 	struct dfs_nolelem *nol = dfs->dfs_nol, *prev;
 
 	while (nol) {
-		qdf_timer_stop(&nol->nol_timer);
+		qdf_timer_sync_cancel(&nol->nol_timer);
 		nol = nol->nol_next;
 	}
 
