@@ -487,17 +487,15 @@ QDF_STATUS wlansap_close(void *pCtx)
 			  "%s: Invalid SAP pointer from pCtx", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
-	hal = CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
-	if (!hal) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  FL("Invalid hal pointer"));
-		return QDF_STATUS_E_FAULT;
-	}
 	/* Cleanup SAP control block */
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG, FL("Enter"));
 	sap_cleanup_channel_list(pCtx);
-	/* empty queues/lists/pkts if any */
-	if (pSapCtx->sessionId != CSR_SESSION_ID_INVALID)
+	hal = CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
+	if (!hal)
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  FL("hal is NULL, so lets skip global sap cleanup"));
+	else if (pSapCtx->sessionId != CSR_SESSION_ID_INVALID)
+		/* empty queues/lists/pkts if any */
 		sap_clear_session_param(hal, pSapCtx, pSapCtx->sessionId);
 	/*
 	 * wlansap_context_put will release actual pSapCtx memory
