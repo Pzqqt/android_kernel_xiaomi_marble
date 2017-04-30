@@ -5536,6 +5536,12 @@ typedef struct
     A_INT32 per_chain_snr[WMI_MAX_CHAINS];
     /** per chain background noise, units are dBm */
     A_INT32 per_chain_nf[WMI_MAX_CHAINS];
+    /** per antenna rx MPDUs */
+    A_UINT32 per_antenna_rx_mpdus[WMI_MAX_CHAINS];
+    /** per antenna tx MPDUs */
+    A_UINT32 per_antenna_tx_mpdus[WMI_MAX_CHAINS];
+    /** num of valid chains for per antenna rx/tx MPDU cnts*/
+    A_UINT32 num_chains_valid;
 } wmi_peer_signal_stats;
 
 /** Thresholds of signal stats, stand for percentage of stats variation.
