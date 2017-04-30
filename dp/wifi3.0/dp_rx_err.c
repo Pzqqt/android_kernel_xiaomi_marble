@@ -342,10 +342,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 	 * Advance the packet start pointer by total size of
 	 * pre-header TLV's
 	 */
-	qdf_nbuf_pull_head(nbuf, RX_PKT_TLVS_LEN);
-
-	if (l2_hdr_offset)
-		qdf_nbuf_pull_head(nbuf, l2_hdr_offset);
+	qdf_nbuf_pull_head(nbuf, (l2_hdr_offset + RX_PKT_TLVS_LEN));
 
 	nbuf_data = qdf_nbuf_data(nbuf);
 	for (count = 0; count < soc->mect_cnt; count++) {
@@ -393,7 +390,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 
 	if (qdf_unlikely(vdev->rx_decap_type == htt_cmn_pkt_type_raw)) {
 		qdf_nbuf_set_next(nbuf, NULL);
-		dp_rx_deliver_raw(vdev, nbuf, (struct cdp_peer *) peer);
+		dp_rx_deliver_raw(vdev, nbuf, peer);
 	} else {
 		if (qdf_unlikely(peer->bss_peer)) {
 			QDF_TRACE(QDF_MODULE_ID_DP,
@@ -424,6 +421,115 @@ fail:
 }
 
 /**
+* dp_rx_err_deliver() - Function to deliver error frames to OS
+*
+* @soc: core DP main context
+* @rx_desc : pointer to the sw rx descriptor
+* @head: pointer to head of rx descriptors to be added to free list
+* @tail: pointer to tail of rx descriptors to be added to free list
+* quota: upper limit of descriptors that can be reaped
+*
+* Return: uint32_t: No. of Rx buffers reaped
+*/
+static uint32_t
+dp_rx_err_deliver(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
+			union dp_rx_desc_list_elem_t **head,
+			union dp_rx_desc_list_elem_t **tail,
+			uint32_t quota)
+{
+	uint32_t rx_bufs_used = 0;
+	uint32_t pkt_len, l2_hdr_offset;
+	uint16_t msdu_len;
+	qdf_nbuf_t nbuf;
+	struct dp_vdev *vdev;
+	uint16_t peer_id = 0xFFFF;
+	struct dp_peer *peer = NULL;
+
+	rx_bufs_used++;
+
+	nbuf = rx_desc->nbuf;
+
+	qdf_nbuf_unmap_single(soc->osdev, nbuf,
+				QDF_DMA_BIDIRECTIONAL);
+
+	rx_desc->rx_buf_start = qdf_nbuf_data(nbuf);
+
+	/*
+	 * Check if DMA completed -- msdu_done is the last bit
+	 * to be written
+	 */
+	if (!hal_rx_attn_msdu_done_get(rx_desc->rx_buf_start)) {
+
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				FL("MSDU DONE failure"));
+
+		hal_rx_dump_pkt_tlvs(rx_desc->rx_buf_start,
+					QDF_TRACE_LEVEL_INFO);
+		qdf_assert(0);
+	}
+
+	peer_id = hal_rx_mpdu_start_sw_peer_id_get(rx_desc->rx_buf_start);
+	peer = dp_peer_find_by_id(soc, peer_id);
+
+	if (!peer) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				FL("peer is NULL"));
+		DP_STATS_INC_PKT(soc, rx.err.rx_invalid_peer, 1,
+				qdf_nbuf_len(nbuf));
+		/* Drop & free packet */
+		qdf_nbuf_free(nbuf);
+		goto fail;
+	}
+
+	vdev = peer->vdev;
+	if (!vdev) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				FL("INVALID vdev %p OR osif_rx"), vdev);
+		/* Drop & free packet */
+		qdf_nbuf_free(nbuf);
+		DP_STATS_INC(soc, rx.err.invalid_vdev, 1);
+		goto fail;
+	}
+
+	/* Drop & free packet if mesh mode not enabled */
+	if (!vdev->mesh_vdev) {
+		qdf_nbuf_free(nbuf);
+		DP_STATS_INC(soc, rx.err.invalid_vdev, 1);
+		goto fail;
+	}
+
+	l2_hdr_offset =
+		hal_rx_msdu_end_l3_hdr_padding_get(rx_desc->rx_buf_start);
+
+	msdu_len =
+		hal_rx_msdu_start_msdu_len_get(rx_desc->rx_buf_start);
+
+	pkt_len = msdu_len + l2_hdr_offset + RX_PKT_TLVS_LEN;
+
+	/* Set length in nbuf */
+	qdf_nbuf_set_pktlen(nbuf, pkt_len);
+
+	qdf_nbuf_set_next(nbuf, NULL);
+
+	/*
+	 * Advance the packet start pointer by total size of
+	 * pre-header TLV's
+	 */
+	qdf_nbuf_pull_head(nbuf, (l2_hdr_offset + RX_PKT_TLVS_LEN));
+
+	if (qdf_unlikely(vdev->rx_decap_type == htt_cmn_pkt_type_raw)) {
+		dp_rx_deliver_raw(vdev, nbuf, peer);
+	} else {
+		DP_STATS_INC(vdev->pdev, rx.to_stack.num, 1);
+		vdev->osif_rx(vdev->osif_vdev, nbuf);
+	}
+fail:
+	dp_rx_add_to_free_desc_list(head, tail, rx_desc);
+
+	return rx_bufs_used;
+}
+
+/**
  * dp_rx_link_desc_return() - Return a MPDU link descriptor to HW
  *			      (WBM), following error handling
  *
@@ -432,7 +538,7 @@ fail:
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS
+	static QDF_STATUS
 dp_rx_link_desc_return(struct dp_soc *soc, void *ring_desc)
 {
 	void *buf_addr_info = HAL_RX_REO_BUF_ADDR_INFO_GET(ring_desc);
@@ -646,6 +752,7 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 	struct dp_pdev *dp_pdev;
 	struct dp_srng *dp_rxdma_srng;
 	struct rx_desc_pool *rx_desc_pool;
+	uint8_t	 pool_id;
 
 	/* Debug -- Remove later */
 	qdf_assert(soc && hal_ring);
@@ -702,6 +809,8 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 			continue;
 		}
 
+		pool_id = rx_desc->pool_id;
+
 		/* XXX */
 		buf_type = HAL_RX_WBM_BUF_TYPE_GET(ring_desc);
 
@@ -716,7 +825,6 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 				HAL_RX_WBM_REO_PUSH_REASON_GET(ring_desc);
 
 			if (push_reason == HAL_RX_WBM_REO_PSH_RSN_ERROR) {
-
 				uint8_t reo_error_code =
 				   HAL_RX_WBM_REO_ERROR_CODE_GET(ring_desc);
 
@@ -734,11 +842,11 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 						"Got pkt with REO ERROR: %d",
 						reo_error_code);
 
-					rx_bufs_used[rx_desc->pool_id] +=
+					rx_bufs_used[pool_id] +=
 						dp_rx_null_q_desc_handle(soc,
 						rx_desc,
-						&head[rx_desc->pool_id],
-						&tail[rx_desc->pool_id], quota);
+						&head[pool_id],
+						&tail[pool_id], quota);
 					continue;
 				/* TODO */
 				/* Add per error code accounting */
@@ -763,15 +871,20 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 						rxdma_error_code], 1);
 
 				switch (rxdma_error_code) {
-
-				/* TODO */
-				/* Add per error code accounting */
+				case HAL_RXDMA_ERR_UNENCRYPTED:
+					rx_bufs_used[pool_id] +=
+						dp_rx_err_deliver(soc,
+								rx_desc,
+								&head[pool_id],
+								&tail[pool_id],
+								quota);
+					continue;
 
 				default:
 					QDF_TRACE(QDF_MODULE_ID_DP,
-						QDF_TRACE_LEVEL_ERROR,
-						"RXDMA error %d detected",
-						rxdma_error_code);
+							QDF_TRACE_LEVEL_ERROR,
+							"RXDMA error %d",
+							rxdma_error_code);
 				}
 			}
 		} else {

@@ -220,7 +220,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
  */
 void
 dp_rx_deliver_raw(struct dp_vdev *vdev, qdf_nbuf_t nbuf_list,
-					struct cdp_peer *peer)
+					struct dp_peer *peer)
 {
 	qdf_nbuf_t deliver_list_head = NULL;
 	qdf_nbuf_t deliver_list_tail = NULL;
@@ -248,7 +248,7 @@ dp_rx_deliver_raw(struct dp_vdev *vdev, qdf_nbuf_t nbuf_list,
 	}
 
 	vdev->osif_rsim_rx_decap(vdev->osif_vdev, &deliver_list_head,
-				 &deliver_list_tail, peer);
+				 &deliver_list_tail, (struct cdp_peer*) peer);
 
 	vdev->osif_rx(vdev->osif_vdev, deliver_list_head);
 }
@@ -1308,8 +1308,7 @@ done:
 
 		if (qdf_unlikely(vdev->rx_decap_type == htt_cmn_pkt_type_raw) ||
 			(vdev->rx_decap_type == htt_cmn_pkt_type_native_wifi))
-			dp_rx_deliver_raw(vdev, deliver_list_head,
-						(struct cdp_peer *) peer);
+			dp_rx_deliver_raw(vdev, deliver_list_head, peer);
 		else if (qdf_likely(vdev->osif_rx) && deliver_list_head)
 			vdev->osif_rx(vdev->osif_vdev, deliver_list_head);
 	}
