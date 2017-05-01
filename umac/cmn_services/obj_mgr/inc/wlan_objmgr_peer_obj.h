@@ -60,13 +60,13 @@
 #define WLAN_PEER_F_TEMP                            0x00008000
 /* 2.4ng VHT interop AMSDU disabled */
 #define WLAN_PEER_F_11NG_VHT_INTEROP_AMSDU_DISABLE  0x00010000
-/* HT40 Intolerant  */
-#define WLAN_PEER_F_40_INTOLERANT                   0x00020000
+/* 40 MHz Intolerant  */
+#define WLAN_PEER_F_40MHZ_INTOLERANT                0x00020000
 /* node is  paused*/
 #define WLAN_PEER_F_PAUSED                          0x00040000
 #define WLAN_PEER_F_EXTRADELIMWAR                   0x00080000
-/* HT20 requesting node */
-#define WLAN_PEER_F_REQ_HT20                        0x00100000
+/* 20 MHz requesting node */
+#define WLAN_PEER_F_REQ_20MHZ                       0x00100000
 /* all the tid queues in ath layer are paused*/
 #define WLAN_PEER_F_ATH_PAUSED                      0x00200000
 /*Require credit update*/
