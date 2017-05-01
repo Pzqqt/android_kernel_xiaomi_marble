@@ -393,51 +393,99 @@ static inline uint8_t *qdf_get_u32(uint8_t *ptr, uint32_t *value)
 /**
  * qdf_cpu_to_le16 - Convert a 16-bit value from CPU byte order to
  * little-endian byte order
+ *
+ * @x: value to be converted
  */
 #define qdf_cpu_to_le16(x)                   __qdf_cpu_to_le16(x)
 
 /**
  * qdf_cpu_to_le32 - Convert a 32-bit value from CPU byte order to
  * little-endian byte order
+ *
+ * @x: value to be converted
  */
 #define qdf_cpu_to_le32(x)                   __qdf_cpu_to_le32(x)
 
 /**
  * qdf_cpu_to_le64 - Convert a 64-bit value from CPU byte order to
  * little-endian byte order
+ *
+ * @x: value to be converted
  */
 #define qdf_cpu_to_le64(x)                   __qdf_cpu_to_le64(x)
 
 /**
- * qdf_be32_to_cpu - Convert a 32-bit value from big-endian byte order
+ * qdf_le16_to_cpu - Convert a 16-bit value from little-endian byte order
  * to CPU byte order
+ *
+ * @x: value to be converted
  */
-#define qdf_be32_to_cpu(x)                   __qdf_be32_to_cpu(x)
-
-/**
- * qdf_be64_to_cpu - Convert a 64-bit value from big-endian byte order
- * to CPU byte order
- */
-#define qdf_be64_to_cpu(x)                   __qdf_be64_to_cpu(x)
+#define qdf_le16_to_cpu(x)                   __qdf_le16_to_cpu(x)
 
 /**
  * qdf_le32_to_cpu - Convert a 32-bit value from little-endian byte
  * order to CPU byte order
+ *
+ * @x: value to be converted
  */
 #define qdf_le32_to_cpu(x)                   __qdf_le32_to_cpu(x)
 
 /**
  * qdf_le64_to_cpu - Convert a 64-bit value from little-endian byte
  * order to CPU byte order
+ *
+ * @x: value to be converted
  */
 #define qdf_le64_to_cpu(x)                   __qdf_le64_to_cpu(x)
 
 /**
- * qdf_le16_to_cpu - Convert a 16-bit value from little-endian byte order
- * to CPU byte order
+ * qdf_cpu_to_be16 - Convert a 16-bit value from CPU byte order to
+ * big-endian byte order
+ *
  * @x: value to be converted
  */
-#define qdf_le16_to_cpu(x)                   __qdf_le16_to_cpu(x)
+#define qdf_cpu_to_be16(x)                   __qdf_cpu_to_be16(x)
+
+/**
+ * qdf_cpu_to_be32 - Convert a 32-bit value from CPU byte order to
+ * big-endian byte order
+ *
+ * @x: value to be converted
+ */
+#define qdf_cpu_to_be32(x)                   __qdf_cpu_to_be32(x)
+
+/**
+ * qdf_cpu_to_be64 - Convert a 64-bit value from CPU byte order to
+ * big-endian byte order
+ *
+ * @x: value to be converted
+ */
+#define qdf_cpu_to_be64(x)                   __qdf_cpu_to_be64(x)
+
+
+/**
+ * qdf_be16_to_cpu - Convert a 16-bit value from big-endian byte order
+ * to CPU byte order
+ *
+ * @x: value to be converted
+ */
+#define qdf_be16_to_cpu(x)                   __qdf_be16_to_cpu(x)
+
+/**
+ * qdf_be32_to_cpu - Convert a 32-bit value from big-endian byte order
+ * to CPU byte order
+ *
+ * @x: value to be converted
+ */
+#define qdf_be32_to_cpu(x)                   __qdf_be32_to_cpu(x)
+
+/**
+ * qdf_be64_to_cpu - Convert a 64-bit value from big-endian byte order
+ * to CPU byte order
+ *
+ * @x: value to be converted
+ */
+#define qdf_be64_to_cpu(x)                   __qdf_be64_to_cpu(x)
 
 /**
  * qdf_function - replace with the name of the current function

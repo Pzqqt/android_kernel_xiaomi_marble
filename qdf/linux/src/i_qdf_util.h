@@ -249,7 +249,6 @@ static inline bool __qdf_is_macaddr_equal(struct qdf_mac_addr *mac_addr1,
 	}     \
 } while (0)
 
-#define __qdf_cpu_to_le64                cpu_to_le64
 #define __qdf_container_of(ptr, type, member) container_of(ptr, type, member)
 
 #define __qdf_ntohs                      ntohs
@@ -258,17 +257,21 @@ static inline bool __qdf_is_macaddr_equal(struct qdf_mac_addr *mac_addr1,
 #define __qdf_htons                      htons
 #define __qdf_htonl                      htonl
 
-#define __qdf_cpu_to_le16                cpu_to_le16
-#define __qdf_cpu_to_le32                cpu_to_le32
-#define __qdf_cpu_to_le64                cpu_to_le64
+#define __qdf_cpu_to_le16 cpu_to_le16
+#define __qdf_cpu_to_le32 cpu_to_le32
+#define __qdf_cpu_to_le64 cpu_to_le64
 
-#define __qdf_le16_to_cpu                le16_to_cpu
-#define __qdf_le32_to_cpu                le32_to_cpu
+#define __qdf_le16_to_cpu le16_to_cpu
+#define __qdf_le32_to_cpu le32_to_cpu
+#define __qdf_le64_to_cpu le64_to_cpu
 
-#define __qdf_be32_to_cpu                be32_to_cpu
-#define __qdf_be64_to_cpu                be64_to_cpu
-#define __qdf_le64_to_cpu                le64_to_cpu
-#define __qdf_le16_to_cpu                le16_to_cpu
+#define __qdf_cpu_to_be16 cpu_to_be16
+#define __qdf_cpu_to_be32 cpu_to_be32
+#define __qdf_cpu_to_be64 cpu_to_be64
+
+#define __qdf_be16_to_cpu be16_to_cpu
+#define __qdf_be32_to_cpu be32_to_cpu
+#define __qdf_be64_to_cpu be64_to_cpu
 
 /**
  * @brief memory barriers.
