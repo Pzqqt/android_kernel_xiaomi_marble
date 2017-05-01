@@ -771,6 +771,7 @@ int hif_get_device_type(uint32_t device_id,
 		break;
 
 	case QCA6290_EMULATION_DEVICE_ID:
+	case QCA6290_DEVICE_ID:
 		*hif_type = HIF_TYPE_QCA6290;
 		*target_type = TARGET_TYPE_QCA6290;
 		HIF_INFO(" *********** QCA6290EMU *************\n");
