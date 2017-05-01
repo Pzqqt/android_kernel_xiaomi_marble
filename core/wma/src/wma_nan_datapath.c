@@ -913,32 +913,46 @@ uint32_t wma_ndp_get_eventid_from_tlvtag(uint32_t tag)
 int wma_ndp_wow_event_callback(void *handle, void *event, uint32_t len,
 			       uint32_t event_id)
 {
+	QDF_STATUS status;
+
 	WMA_LOGD(FL("ndp_wow_event dump"));
 	qdf_trace_hex_dump(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
 			   event, len);
+
 	switch (event_id) {
 	case WMI_NDP_INITIATOR_RSP_EVENTID:
-		return wma_ndp_initiator_rsp_event_handler(handle, event, len);
+		status = wma_ndp_initiator_rsp_event_handler(handle, event,
+							     len);
+		break;
 
 	case WMI_NDP_RESPONDER_RSP_EVENTID:
-		return wma_ndp_responder_rsp_event_handler(handle, event, len);
+		status = wma_ndp_responder_rsp_event_handler(handle, event,
+							     len);
+		break;
 
 	case WMI_NDP_END_RSP_EVENTID:
-		return wma_ndp_end_response_event_handler(handle, event, len);
+		status = wma_ndp_end_response_event_handler(handle, event, len);
+		break;
 
 	case WMI_NDP_INDICATION_EVENTID:
-		return wma_ndp_indication_event_handler(handle, event, len);
+		status = wma_ndp_indication_event_handler(handle, event, len);
+		break;
 
 	case WMI_NDP_CONFIRM_EVENTID:
-		return wma_ndp_confirm_event_handler(handle, event, len);
+		status = wma_ndp_confirm_event_handler(handle, event, len);
+		break;
 
 	case WMI_NDP_END_INDICATION_EVENTID:
-		return wma_ndp_end_indication_event_handler(handle, event, len);
+		status = wma_ndp_end_indication_event_handler(handle, event,
+							       len);
+		break;
 
 	default:
 		WMA_LOGE(FL("Unknown event: %d"), event_id);
-		return 0;
+		status = QDF_STATUS_SUCCESS;
 	}
+
+	return qdf_status_to_os_return(status);
 }
 #endif /* WLAN_FEATURE_NAN_CONVERGENCE */
 

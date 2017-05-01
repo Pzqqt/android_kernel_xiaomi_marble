@@ -50,6 +50,7 @@
 #include "qdf_nbuf.h"
 #include "qdf_types.h"
 #include "qdf_mem.h"
+#include "qdf_util.h"
 
 #include "wma_types.h"
 #include "lim_api.h"
@@ -1480,7 +1481,7 @@ static void wma_wow_stats_display(struct sir_vdev_wow_stats *stats)
 static void wma_print_wow_stats(t_wma_handle *wma,
 				WOW_EVENT_INFO_fixed_param *wake_info)
 {
-	struct wma_txrx_node *vdev;
+	struct sir_vdev_wow_stats *stats;
 
 	switch (wake_info->wake_reason) {
 	case WOW_REASON_BPF_ALLOW:
@@ -1497,11 +1498,8 @@ static void wma_print_wow_stats(t_wma_handle *wma,
 		return;
 	}
 
-	vdev = &wma->interfaces[wake_info->vdev_id];
-	if (!vdev)
-		return;
-
-	wma_wow_stats_display(&vdev->wow_stats);
+	stats = &wma->interfaces[wake_info->vdev_id].wow_stats;
+	wma_wow_stats_display(stats);
 }
 
 /**
@@ -1514,7 +1512,6 @@ static void wma_print_wow_stats(t_wma_handle *wma,
 static void wma_inc_wow_stats(t_wma_handle *wma,
 			      WOW_EVENT_INFO_fixed_param *wake_info)
 {
-	struct wma_txrx_node *vdev;
 	struct sir_vdev_wow_stats *stats;
 
 	if (wake_info->wake_reason == WOW_REASON_UNSPECIFIED) {
@@ -1522,11 +1519,7 @@ static void wma_inc_wow_stats(t_wma_handle *wma,
 		return;
 	}
 
-	vdev = &wma->interfaces[wake_info->vdev_id];
-	if (!vdev)
-		return;
-
-	stats = &vdev->wow_stats;
+	stats = &wma->interfaces[wake_info->vdev_id].wow_stats;
 	switch (wake_info->wake_reason) {
 	case WOW_REASON_RA_MATCH:
 		stats->ipv6_mcast++;
@@ -1656,15 +1649,15 @@ static int wow_get_wmi_eventid(int32_t reason, uint32_t tag)
 }
 
 /**
- * is_piggybacked_event() - tells whether to check the wow packet buffer
- *                        for proper TLV structure.
+ * is_piggybacked_event() - Returns true if the given wake reason indicates
+ *	there will be piggybacked TLV event data
  * @reason: WOW reason
  *
- * In most cases, wow wake up event carries the actual event buffer in
- * wow_packet_buffer with some exceptions. This function is used to
- * determine when to check for the TLVs in wow_packet_buffer.
+ * There are three types of WoW event payloads: none, piggybacked event, and
+ * network packet. This function returns true for wake reasons that fall into
+ * the piggybacked event case.
  *
- * Return: true if check is required and false otherwise.
+ * Return: true for piggybacked event data
  */
 static bool is_piggybacked_event(int32_t reason)
 {
@@ -1757,18 +1750,14 @@ wma_pkt_proto_subtype_to_string(enum qdf_proto_subtype proto_subtype)
 }
 
 /**
- * wma_wow_get_pkt_proto_subtype() - get the proto subtype
- *            of the packet.
- * @data: Pointer to data buffer
- * @len: length of the data buffer
- *
- * This function gives the proto subtype of the packet.
+ * wma_wow_get_pkt_proto_subtype() - get the proto subtype of the packet.
+ * @data: Pointer to the packet data buffer
+ * @len: length of the packet data buffer
  *
  * Return: proto subtype of the packet.
  */
 static enum qdf_proto_subtype
-wma_wow_get_pkt_proto_subtype(uint8_t *data,
-			      uint32_t len)
+wma_wow_get_pkt_proto_subtype(uint8_t *data, uint32_t len)
 {
 	uint16_t eth_type;
 	uint8_t proto_type;
@@ -1780,7 +1769,7 @@ wma_wow_get_pkt_proto_subtype(uint8_t *data,
 	}
 
 	eth_type = *(uint16_t *)(data + QDF_NBUF_TRAC_ETH_TYPE_OFFSET);
-	eth_type = ani_cpu_to_be16(eth_type);
+	eth_type = qdf_cpu_to_be16(eth_type);
 
 	WMA_LOGD("Ether Type: 0x%04x", eth_type);
 	switch (eth_type) {
@@ -1889,7 +1878,7 @@ static void wma_log_pkt_eapol(uint8_t *data, uint32_t length)
 	pkt_len = *(uint16_t *)(data + EAPOL_PKT_LEN_OFFSET);
 	key_len = *(uint16_t *)(data + EAPOL_KEY_LEN_OFFSET);
 	WMA_LOGD("Pkt_len: %u, Key_len: %u",
-		 ani_cpu_to_be16(pkt_len), ani_cpu_to_be16(key_len));
+		 qdf_cpu_to_be16(pkt_len), qdf_cpu_to_be16(key_len));
 }
 
 static void wma_log_pkt_dhcp(uint8_t *data, uint32_t length)
@@ -1903,7 +1892,7 @@ static void wma_log_pkt_dhcp(uint8_t *data, uint32_t length)
 	pkt_len = *(uint16_t *)(data + DHCP_PKT_LEN_OFFSET);
 	trans_id = *(uint32_t *)(data + DHCP_TRANSACTION_ID_OFFSET);
 	WMA_LOGD("Pkt_len: %u, Transaction_id: %u",
-		 ani_cpu_to_be16(pkt_len), ani_cpu_to_be16(trans_id));
+		 qdf_cpu_to_be16(pkt_len), qdf_cpu_to_be16(trans_id));
 }
 
 static void wma_log_pkt_icmpv4(uint8_t *data, uint32_t length)
@@ -1916,7 +1905,7 @@ static void wma_log_pkt_icmpv4(uint8_t *data, uint32_t length)
 	pkt_len = *(uint16_t *)(data + IPV4_PKT_LEN_OFFSET);
 	seq_num = *(uint16_t *)(data + ICMP_SEQ_NUM_OFFSET);
 	WMA_LOGD("Pkt_len: %u, Seq_num: %u",
-		 ani_cpu_to_be16(pkt_len), ani_cpu_to_be16(seq_num));
+		 qdf_cpu_to_be16(pkt_len), qdf_cpu_to_be16(seq_num));
 }
 
 static void wma_log_pkt_icmpv6(uint8_t *data, uint32_t length)
@@ -1929,7 +1918,7 @@ static void wma_log_pkt_icmpv6(uint8_t *data, uint32_t length)
 	pkt_len = *(uint16_t *)(data + IPV6_PKT_LEN_OFFSET);
 	seq_num = *(uint16_t *)(data + ICMPV6_SEQ_NUM_OFFSET);
 	WMA_LOGD("Pkt_len: %u, Seq_num: %u",
-		 ani_cpu_to_be16(pkt_len), ani_cpu_to_be16(seq_num));
+		 qdf_cpu_to_be16(pkt_len), qdf_cpu_to_be16(seq_num));
 }
 
 static void wma_log_pkt_ipv4(uint8_t *data, uint32_t length)
@@ -1943,9 +1932,9 @@ static void wma_log_pkt_ipv4(uint8_t *data, uint32_t length)
 	src_port = *(uint16_t *)(data + IPV4_SRC_PORT_OFFSET);
 	dst_port = *(uint16_t *)(data + IPV4_DST_PORT_OFFSET);
 	WMA_LOGD("Pkt_len: %u, src_port: %u, dst_port: %u",
-		 ani_cpu_to_be16(pkt_len),
-		 ani_cpu_to_be16(src_port),
-		 ani_cpu_to_be16(dst_port));
+		 qdf_cpu_to_be16(pkt_len),
+		 qdf_cpu_to_be16(src_port),
+		 qdf_cpu_to_be16(dst_port));
 }
 
 static void wma_log_pkt_ipv6(uint8_t *data, uint32_t length)
@@ -1959,9 +1948,9 @@ static void wma_log_pkt_ipv6(uint8_t *data, uint32_t length)
 	src_port = *(uint16_t *)(data + IPV6_SRC_PORT_OFFSET);
 	dst_port = *(uint16_t *)(data + IPV6_DST_PORT_OFFSET);
 	WMA_LOGD("Pkt_len: %u, src_port: %u, dst_port: %u",
-		 ani_cpu_to_be16(pkt_len),
-		 ani_cpu_to_be16(src_port),
-		 ani_cpu_to_be16(dst_port));
+		 qdf_cpu_to_be16(pkt_len),
+		 qdf_cpu_to_be16(src_port),
+		 qdf_cpu_to_be16(dst_port));
 }
 
 static void wma_log_pkt_tcpv4(uint8_t *data, uint32_t length)
@@ -1972,7 +1961,7 @@ static void wma_log_pkt_tcpv4(uint8_t *data, uint32_t length)
 		return;
 
 	seq_num = *(uint32_t *)(data + IPV4_TCP_SEQ_NUM_OFFSET);
-	WMA_LOGD("TCP_seq_num: %u", ani_cpu_to_be16(seq_num));
+	WMA_LOGD("TCP_seq_num: %u", qdf_cpu_to_be16(seq_num));
 }
 
 static void wma_log_pkt_tcpv6(uint8_t *data, uint32_t length)
@@ -1983,7 +1972,7 @@ static void wma_log_pkt_tcpv6(uint8_t *data, uint32_t length)
 		return;
 
 	seq_num = *(uint32_t *)(data + IPV6_TCP_SEQ_NUM_OFFSET);
-	WMA_LOGD("TCP_seq_num: %u", ani_cpu_to_be16(seq_num));
+	WMA_LOGD("TCP_seq_num: %u", qdf_cpu_to_be16(seq_num));
 }
 
 /**
@@ -2327,11 +2316,6 @@ static int wma_wake_event_packet(
 				   packet, packet_len);
 
 		vdev = &wma->interfaces[wake_info->vdev_id];
-		if (!vdev) {
-			WMA_LOGE("vdev is null for id %u", wake_info->vdev_id);
-			break;
-		}
-
 		wma_wow_parse_data_pkt(&vdev->wow_stats, packet, packet_len);
 		break;
 
@@ -2358,9 +2342,10 @@ static int wma_wake_event_no_payload(
 
 	case WOW_REASON_NLOD:
 		return wma_wake_reason_nlod(wma, wake_info->vdev_id);
-	}
 
-	return 0;
+	default:
+		return 0;
+	}
 }
 
 static int wma_wake_event_piggybacked(
@@ -2482,16 +2467,16 @@ static int wma_wake_event_piggybacked(
 static void wma_wake_event_log_reason(t_wma_handle *wma,
 				      WOW_EVENT_INFO_fixed_param *wake_info)
 {
-	struct wma_txrx_node *wma_vdev;
+	struct wma_txrx_node *vdev;
 
 	/* "Unspecified" means APPS triggered wake, else firmware triggered */
 	if (wake_info->wake_reason != WOW_REASON_UNSPECIFIED) {
-		wma_vdev = &wma->interfaces[wake_info->vdev_id];
+		vdev = &wma->interfaces[wake_info->vdev_id];
 		WMA_LOGA("WOW wakeup for reason: %s(%d) on vdev %d (%s)",
 			 wma_wow_wake_reason_str(wake_info->wake_reason),
 			 wake_info->wake_reason,
 			 wake_info->vdev_id,
-			 wma_vdev ? wma_vdev_type_str(wma_vdev->type) : "null");
+			 wma_vdev_type_str(vdev->type));
 	} else if (!wmi_get_runtime_pm_inprogress(wma->wmi_handle)) {
 		WMA_LOGA("WOW wakeup for reason: %s(%d)",
 			 wma_wow_wake_reason_str(wake_info->wake_reason),
