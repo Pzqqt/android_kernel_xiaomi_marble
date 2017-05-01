@@ -827,6 +827,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_therm_throt_level_config_info,
     WMITLV_TAG_STRUC_wmi_therm_throt_stats_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_therm_throt_level_stats_info,
+    WMITLV_TAG_STRUC_wmi_pdev_div_rssi_antid_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1343,6 +1344,7 @@ typedef enum {
     OP(WMI_VDEV_GET_TX_POWER_EVENTID) \
     OP(WMI_OFFCHAN_DATA_TX_COMPLETION_EVENTID) \
     OP(WMI_THERM_THROT_STATS_EVENTID) \
+    OP(WMI_PDEV_DIV_RSSI_ANTID_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -3445,6 +3447,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_UPDATE_WHAL_MIB_STATS_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_tpc_config_event_fixed_param, wmi_pdev_tpc_config_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, ratesArray, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_TPC_CONFIG_EVENTID);
+
+/* PDEV DIV RSSI Antenna index Event */
+#define WMITLV_TABLE_WMI_PDEV_DIV_RSSI_ANTID_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_div_rssi_antid_event_fixed_param, wmi_pdev_div_rssi_antid_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_DIV_RSSI_ANTID_EVENTID);
 
 /* VDEV Tx Power Event */
 #define WMITLV_TABLE_WMI_VDEV_GET_TX_POWER_EVENTID(id,op,buf,len) \

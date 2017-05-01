@@ -1125,6 +1125,9 @@ typedef enum {
     /** Report the caldata version to host */
     WMI_PDEV_CHECK_CAL_VERSION_EVENTID,
 
+    /** Report chain RSSI and antenna index to host */
+    WMI_PDEV_DIV_RSSI_ANTID_EVENTID,
+
     /* VDEV specific events */
     /** VDEV started event in response to VDEV_START request */
     WMI_VDEV_START_RESP_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_VDEV),
@@ -4493,6 +4496,19 @@ typedef struct {
  *      A_UINT8 ratesArray[];
  */
 } wmi_pdev_tpc_config_event_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_div_rssi_antid_event_fixed_param */
+    A_UINT32 tlv_header;
+    /** how many elements in the MAX_CHAINS arrays below contain valid info */
+    A_UINT32 num_chains_valid;
+    /** RSSI (rssi_chain_x_pri20) on each chain (units: dB above noise floor) */
+    A_UINT32 chain_rssi[WMI_MAX_CHAINS];
+    /** index of the last-used antenna for each chain */
+    A_UINT32 ant_id[WMI_MAX_CHAINS];
+    /** mac address of diversity peer */
+    wmi_mac_addr macaddr;
+} wmi_pdev_div_rssi_antid_event_fixed_param;
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_l1ss_track_event_fixed_param  */
