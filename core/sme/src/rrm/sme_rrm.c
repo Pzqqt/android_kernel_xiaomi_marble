@@ -227,7 +227,7 @@ sme_rrm_send_beacon_report_xmit_ind(tpAniSirGlobal mac_ctx,
 				beacon_rep->pBssDescription[i]->bssId),
 				beacon_rep->pBssDescription[i]->channelId,
 				beacon_rep->pBssDescription[i]->rssi * (-1));
-				beacon_rep->numBssDesc++;
+			beacon_rep->numBssDesc++;
 			if (++i >= SIR_BCN_REPORT_MAX_BSS_DESC)
 				break;
 			cur_result =
@@ -248,8 +248,9 @@ sme_rrm_send_beacon_report_xmit_ind(tpAniSirGlobal mac_ctx,
 		sme_debug("SME Sending BcnRepXmit to PE numBss %d i %d j %d",
 			beacon_rep->numBssDesc, i, j);
 		status = umac_send_mb_message_to_mac(beacon_rep);
-		for (counter = 0; counter < i; ++counter)
-			qdf_mem_free(bss_desc_to_free[counter]);
+		if (status != QDF_STATUS_SUCCESS)
+			for (counter = 0; counter < i; ++counter)
+				qdf_mem_free(bss_desc_to_free[counter]);
 	} while (cur_result);
 
 	return status;

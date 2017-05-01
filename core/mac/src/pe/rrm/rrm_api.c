@@ -760,7 +760,7 @@ rrm_process_beacon_report_xmit(tpAniSirGlobal mac_ctx,
 	tpSirBssDescription bss_desc;
 	tpRRMReq curr_req = mac_ctx->rrm.rrmPEContext.pCurrentReq;
 	tpPESession session_entry;
-	uint8_t session_id;
+	uint8_t session_id, counter;
 	uint8_t bss_desc_count = 0;
 
 	pe_debug("Received beacon report xmit indication");
@@ -772,7 +772,8 @@ rrm_process_beacon_report_xmit(tpAniSirGlobal mac_ctx,
 
 	if (NULL == curr_req) {
 		pe_err("Received report xmit while there is no request pending in PE");
-		return eSIR_FAILURE;
+		status = eSIR_FAILURE;
+		goto end;
 	}
 
 	if ((beacon_xmit_ind->numBssDesc) || curr_req->sendEmptyBcnRpt) {
@@ -784,7 +785,8 @@ rrm_process_beacon_report_xmit(tpAniSirGlobal mac_ctx,
 				beacon_xmit_ind->bssId, &session_id);
 		if (NULL == session_entry) {
 			pe_err("session does not exist for given bssId");
-			return eSIR_FAILURE;
+			status = eSIR_FAILURE;
+			goto end;
 		}
 
 		report = qdf_mem_malloc(beacon_xmit_ind->numBssDesc *
@@ -792,7 +794,8 @@ rrm_process_beacon_report_xmit(tpAniSirGlobal mac_ctx,
 
 		if (NULL == report) {
 			pe_err("RRM Report is NULL, allocation failed");
-			return eSIR_MEM_ALLOC_FAILED;
+			status = eSIR_MEM_ALLOC_FAILED;
+			goto end;
 		}
 
 		for (bss_desc_count = 0; bss_desc_count <
@@ -872,7 +875,6 @@ rrm_process_beacon_report_xmit(tpAniSirGlobal mac_ctx,
 				break;
 			}
 		}
-
 		pe_info("Sending Action frame with %d bss info",
 			bss_desc_count);
 		lim_send_radio_measure_report_action_frame(mac_ctx,
@@ -881,6 +883,10 @@ rrm_process_beacon_report_xmit(tpAniSirGlobal mac_ctx,
 
 		curr_req->sendEmptyBcnRpt = false;
 	}
+
+end:
+	for (counter = 0; counter < beacon_xmit_ind->numBssDesc; counter++)
+		qdf_mem_free(beacon_xmit_ind->pBssDescription[counter]);
 
 	if (beacon_xmit_ind->fMeasureDone) {
 		pe_debug("Measurement done....cleanup the context");
