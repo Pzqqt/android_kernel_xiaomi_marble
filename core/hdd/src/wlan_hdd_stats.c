@@ -3143,6 +3143,10 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	myRate = pAdapter->hdd_stats.ClassA_stat.tx_rate * 5;
 	if (!(rate_flags & eHAL_TX_RATE_LEGACY)) {
 		nss = pAdapter->hdd_stats.ClassA_stat.nss;
+		if (policy_mgr_is_current_hwmode_dbs(pHddCtx->hdd_psoc)) {
+			hdd_debug("Hw mode is DBS, Reduce nss to 1");
+			nss--;
+		}
 
 		if (eHDD_LINK_SPEED_REPORT_ACTUAL == pCfg->reportMaxLinkSpeed) {
 			/* Get current rate flags if report actual */
