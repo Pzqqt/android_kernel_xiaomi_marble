@@ -1906,8 +1906,8 @@ static void wma_set_vdev_suspend_dtim(tp_wma_handle wma, uint8_t vdev_id)
 				 vdev_id);
 		}
 
-		WMA_LOGD("Set Listen Interval vdevId %d Listen Intv %d",
-			 vdev_id, listen_interval);
+		WMA_LOGD("%s: Set Listen Interval vdevId %d Listen Intv %d",
+			 __func__, vdev_id, listen_interval);
 
 		iface->restore_dtim_setting = true;
 	}
@@ -1921,7 +1921,7 @@ static void wma_set_vdev_suspend_dtim(tp_wma_handle wma, uint8_t vdev_id)
  */
 static inline uint8_t wma_is_user_set_li_params(struct wma_txrx_node *iface)
 {
-       return iface->alt_modulated_dtim_enabled ? 1 : 0;
+	return iface->alt_modulated_dtim_enabled || iface->override_li ? 1 : 0;
 }
 
 /**
@@ -2027,8 +2027,8 @@ static void wma_set_vdev_resume_dtim(tp_wma_handle wma, uint8_t vdev_id)
 				 vdev_id);
 		}
 
-		WMA_LOGD("Set Listen Interval vdevId %d Listen Intv %d",
-			 vdev_id, cfg_data_val);
+		WMA_LOGD("%s: Set Listen Interval vdevId %d Listen Intv %d",
+			 __func__, vdev_id, cfg_data_val);
 
 		iface->restore_dtim_setting = false;
 

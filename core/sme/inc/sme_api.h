@@ -960,6 +960,9 @@ QDF_STATUS sme_ext_change_channel(tHalHandle hHal, uint32_t channel,
 QDF_STATUS sme_configure_modulated_dtim(tHalHandle hal, uint8_t session_id,
 				      uint32_t modulated_dtim);
 
+QDF_STATUS sme_override_listen_interval(tHalHandle h_hal, uint8_t session_id,
+		uint32_t override_li);
+
 QDF_STATUS sme_configure_stats_avg_factor(tHalHandle hal, uint8_t session_id,
 					  uint16_t stats_avg_factor);
 

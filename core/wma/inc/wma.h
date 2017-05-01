@@ -1029,6 +1029,7 @@ typedef struct {
  * @plink_status_req: link status request
  * @psnr_req: snr request
  * @delay_before_vdev_stop: delay
+ * @override_li: dynamically user configured listen interval
  * @tx_streams: number of tx streams can be used by the vdev
  * @rx_streams: number of rx streams can be used by the vdev
  * @chain_mask: chain mask can be used by the vdev
@@ -1101,6 +1102,7 @@ struct wma_txrx_node {
 #endif
 	uint32_t alt_modulated_dtim;
 	bool alt_modulated_dtim_enabled;
+	uint32_t override_li;
 	uint32_t tx_streams;
 	uint32_t rx_streams;
 	uint32_t chain_mask;

@@ -13733,6 +13733,63 @@ QDF_STATUS sme_configure_modulated_dtim(tHalHandle h_hal, uint8_t session_id,
 	return status;
 }
 
+/**
+ * sme_override_listen_interval() - function to override static LI
+ * @h_hal: SME API to override listen interval
+ * @session_id: session ID
+ * @override_li: new LI value passed by user
+ *
+ * This function override (enable/disable) static a.k.a ini based LI
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_override_listen_interval(tHalHandle h_hal, uint8_t session_id,
+					uint32_t override_li)
+{
+	struct scheduler_msg msg = {0};
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tpAniSirGlobal mac  = PMAC_STRUCT(h_hal);
+	wma_cli_set_cmd_t *iwcmd;
+
+	iwcmd = qdf_mem_malloc(sizeof(*iwcmd));
+	if (!iwcmd) {
+		QDF_TRACE(QDF_MODULE_ID_SME,
+			  QDF_TRACE_LEVEL_FATAL,
+			  "%s: qdf_mem_malloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	status = sme_acquire_global_lock(&mac->sme);
+
+	if (status == QDF_STATUS_SUCCESS) {
+
+		iwcmd->param_value = override_li;
+		iwcmd->param_vdev_id = session_id;
+		iwcmd->param_id = GEN_PARAM_LISTEN_INTERVAL;
+		iwcmd->param_vp_dev = GEN_CMD;
+		msg.type = WMA_CLI_SET_CMD;
+		msg.reserved = 0;
+		msg.bodyptr = (void *)iwcmd;
+
+		if (!QDF_IS_STATUS_SUCCESS(
+			    scheduler_post_msg(QDF_MODULE_ID_WMA, &msg))) {
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				  "%s: Can't post GEN_PARAM_LISTEN_INTERVAL",
+				  __func__);
+			qdf_mem_free(iwcmd);
+			status = QDF_STATUS_E_FAILURE;
+		}
+		sme_release_global_lock(&mac->sme);
+	} else {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  "%s: sme_acquire_global_lock error!",
+			  __func__);
+		qdf_mem_free(iwcmd);
+	}
+
+	return status;
+}
+
 /*
  * sme_wifi_start_logger() - Send the start/stop logging command to WMA
  * to either start/stop logging

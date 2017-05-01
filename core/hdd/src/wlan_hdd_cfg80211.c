@@ -5426,6 +5426,7 @@ wlan_hdd_wifi_config_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1] = {
 		.type = NLA_UNSPEC,
 		.len = QDF_MAC_ADDR_SIZE},
 	[RX_BLOCKSIZE_WINLIMIT] = {.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_LISTEN_INTERVAL] = {.type = NLA_U32 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_ENA] = {.type = NLA_U32 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_CHAIN] = {.type = NLA_U32 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_SELFTEST] = {.type = NLA_U32 },
@@ -5735,7 +5736,7 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	struct hdd_context *hdd_ctx  = wiphy_priv(wiphy);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1];
 	int ret_val = 0;
-	u32 modulated_dtim;
+	u32 modulated_dtim, override_li;
 	u16 stats_avg_factor;
 	u32 guard_time;
 	uint8_t set_value;
@@ -5799,6 +5800,18 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 						      modulated_dtim);
 
 		if (QDF_STATUS_SUCCESS != status)
+			ret_val = -EPERM;
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_LISTEN_INTERVAL]) {
+		override_li = nla_get_u32(
+			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_LISTEN_INTERVAL]);
+
+		status = sme_override_listen_interval(hdd_ctx->hHal,
+						      adapter->sessionId,
+						      override_li);
+
+		if (status != QDF_STATUS_SUCCESS)
 			ret_val = -EPERM;
 	}
 
