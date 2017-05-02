@@ -1326,7 +1326,7 @@ lim_update_overlap_sta_param(tpAniSirGlobal pMac, tSirMacAddr bssId,
 	}
 
 	if (i == LIM_PROT_STA_OVERLAP_CACHE_SIZE) {
-		pe_warn("Overlap cache is full");
+		pe_debug("Overlap cache is full");
 	} else {
 		qdf_mem_copy(pMac->lim.protStaOverlapCache[i].addr,
 			     bssId, sizeof(tSirMacAddr));
