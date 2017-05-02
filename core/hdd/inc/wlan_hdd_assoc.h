@@ -333,6 +333,11 @@ static inline bool hdd_is_roam_sync_in_progress(tCsrRoamInfo *roaminfo)
 }
 #endif
 
+QDF_STATUS hdd_update_dp_vdev_flags(void *cbk_data,
+				    uint8_t sta_id,
+				    uint32_t vdev_param,
+				    bool is_link_up);
+
 QDF_STATUS hdd_roam_register_sta(struct hdd_adapter_s *adapter,
 					struct tagCsrRoamInfo *roam_info,
 					uint8_t sta_id,

@@ -59,6 +59,7 @@
 #include <cdp_txrx_flow_ctrl_legacy.h>
 #include <cdp_txrx_peer_ops.h>
 #include <cdp_txrx_misc.h>
+#include <cdp_txrx_ctrl.h>
 #include <wlan_logging_sock_svc.h>
 #include <wlan_hdd_object_manager.h>
 #include <cdp_txrx_handle.h>
@@ -1841,6 +1842,46 @@ QDF_STATUS hdd_change_peer_state(hdd_adapter_t *pAdapter,
 		}
 	}
 	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * hdd_update_dp_vdev_flags() - update datapath vdev flags
+ * @cbk_data: callback data
+ * @sta_id: station id
+ * @vdev_param: vdev parameter
+ * @is_link_up: link state up or down
+ *
+ * Return: QDF status
+ */
+QDF_STATUS hdd_update_dp_vdev_flags(void *cbk_data,
+				    uint8_t sta_id,
+				    uint32_t vdev_param,
+				    bool is_link_up)
+{
+	struct cdp_vdev *data_vdev;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	hdd_context_t *hdd_ctx;
+	struct wlan_objmgr_psoc **psoc;
+
+	if (!cbk_data)
+		return status;
+
+	psoc = cbk_data;
+	hdd_ctx = container_of(psoc, hdd_context_t, hdd_psoc);
+
+	if (!hdd_ctx->tdls_nap_active)
+		return status;
+
+	data_vdev = cdp_peer_get_vdev_by_sta_id(soc, sta_id);
+	if (NULL == data_vdev) {
+		status = QDF_STATUS_E_FAILURE;
+		return status;
+	}
+
+	cdp_txrx_set_vdev_param(soc, data_vdev, vdev_param, is_link_up);
+
+	return status;
 }
 
 /**

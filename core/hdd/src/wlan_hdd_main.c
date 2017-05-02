@@ -11243,6 +11243,7 @@ static int hdd_update_tdls_config(hdd_context_t *hdd_ctx)
 	tdls_cfg.tdls_del_sta_req = eWNI_SME_TDLS_DEL_STA_REQ;
 	tdls_cfg.tdls_update_peer_state = WMA_UPDATE_TDLS_PEER_STATE;
 	tdls_cfg.tdls_del_all_peers = eWNI_SME_DEL_ALL_TDLS_PEERS;
+	tdls_cfg.tdls_update_dp_vdev_flags = CDP_UPDATE_TDLS_FLAGS;
 	tdls_cfg.tdls_event_cb = wlan_cfg80211_tdls_event_callback;
 	tdls_cfg.tdls_evt_cb_data = psoc;
 	tdls_cfg.tdls_tl_peer_data = hdd_ctx;
@@ -11252,6 +11253,7 @@ static int hdd_update_tdls_config(hdd_context_t *hdd_ctx)
 	tdls_cfg.tdls_wmm_cb_data = psoc;
 	tdls_cfg.tdls_rx_cb = wlan_cfg80211_tdls_rx_callback;
 	tdls_cfg.tdls_rx_cb_data = psoc;
+	tdls_cfg.tdls_dp_vdev_update = hdd_update_dp_vdev_flags;
 
 	status = ucfg_tdls_update_config(psoc, &tdls_cfg);
 	if (status != QDF_STATUS_SUCCESS) {
@@ -11260,6 +11262,8 @@ static int hdd_update_tdls_config(hdd_context_t *hdd_ctx)
 	}
 
 	hdd_ctx->tdls_umac_comp_active = true;
+	/* disable napier specific tdls data path */
+	hdd_ctx->tdls_nap_active = false;
 
 	return 0;
 }
@@ -11267,6 +11271,8 @@ static int hdd_update_tdls_config(hdd_context_t *hdd_ctx)
 static int hdd_update_tdls_config(hdd_context_t *hdd_ctx)
 {
 	hdd_ctx->tdls_umac_comp_active = false;
+	/* disable napier specific tdls data path */
+	hdd_ctx->tdls_nap_active = false;
 	return 0;
 }
 #endif
