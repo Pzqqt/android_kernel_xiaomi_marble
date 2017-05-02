@@ -82,7 +82,11 @@
 #include "cds_utils.h"
 
 /* Preprocessor definitions and constants */
+#ifdef QCA_WIFI_NAPIER_EMULATION
+#define HDD_SSR_BRING_UP_TIME 3000000
+#else
 #define HDD_SSR_BRING_UP_TIME 30000
+#endif
 #define HDD_WAKE_LOCK_RESUME_DURATION 1000
 
 /* Type declarations */
