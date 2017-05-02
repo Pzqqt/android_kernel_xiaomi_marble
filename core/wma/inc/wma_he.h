@@ -155,6 +155,17 @@ void wma_copy_vdev_start_he_ops(struct vdev_start_params *params,
 void wma_vdev_set_he_bss_params(tp_wma_handle wma, uint8_t vdev_id,
 				struct wma_vdev_start_req *req);
 
+/**
+ * wma_vdev_set_he_config() - set HE Config in vdev start
+ * @wma: pointer to wma handle
+ * @vdev_id: VDEV id
+ * @add_bss: BSS params
+ *
+ * Return: None
+ */
+void wma_vdev_set_he_config(tp_wma_handle wma, uint8_t vdev_id,
+				tpAddBssParams add_bss);
+
 static inline bool wma_is_peer_he_capable(tpAddStaParams params)
 {
 	return params->he_capable;
@@ -278,6 +289,11 @@ static inline  QDF_STATUS wma_update_he_ops_ie(tp_wma_handle wma,
 
 static inline void wma_vdev_set_he_bss_params(tp_wma_handle wma,
 				uint8_t vdev_id, struct wma_vdev_start_req *req)
+{
+}
+
+static inline void wma_vdev_set_he_config(tp_wma_handle wma, uint8_t vdev_id,
+					tpAddBssParams add_bss)
 {
 }
 

@@ -3178,7 +3178,6 @@ static void wma_add_bss_ap_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 				add_bss->llbCoexist, maxTxPower);
 
 	wma_vdev_set_he_bss_params(wma, vdev_id, &req);
-
 	return;
 
 peer_cleanup:
@@ -3588,6 +3587,8 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 
 	}
 send_bss_resp:
+
+	wma_vdev_set_he_config(wma, vdev_id, add_bss);
 	cdp_peer_find_by_addr(soc, pdev, add_bss->bssId,
 		&add_bss->staContext.staIdx);
 	add_bss->status = (add_bss->staContext.staIdx < 0) ?

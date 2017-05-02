@@ -2330,6 +2330,8 @@ static void csr_update_session_he_cap(tpAniSirGlobal mac_ctx,
 	} else {
 		he_cap->ppe_threshold.present = false;
 	}
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_STA_OBSSPD, &value);
+	session->he_sta_obsspd = value;
 }
 
 #else

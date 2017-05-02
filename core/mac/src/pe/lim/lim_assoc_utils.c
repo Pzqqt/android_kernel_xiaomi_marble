@@ -3624,9 +3624,10 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 			pAddBssParams->ch_center_freq_seg1);
 
 	if (lim_is_session_he_capable(psessionEntry) &&
-			(pAssocRsp->vendor_he_cap.present))
+			(pAssocRsp->vendor_he_cap.present)) {
 		lim_add_bss_he_cap(pAddBssParams, pAssocRsp);
-
+		lim_add_bss_he_cfg(pAddBssParams, psessionEntry);
+	}
 	/*
 	 * Populate the STA-related parameters here
 	 * Note that the STA here refers to the AP
@@ -4164,9 +4165,10 @@ tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t update
 	}
 
 	if (lim_is_session_he_capable(psessionEntry) &&
-	    pBeaconStruct->vendor_he_cap.present)
+	    pBeaconStruct->vendor_he_cap.present) {
 		lim_update_bss_he_capable(pMac, pAddBssParams);
-
+		lim_add_bss_he_cfg(pAddBssParams, psessionEntry);
+	}
 	pe_debug("vhtCapable %d vhtTxChannelWidthSet %d center_freq_seg0 - %d, center_freq_seg1 - %d",
 		pAddBssParams->vhtCapable, pAddBssParams->ch_width,
 		pAddBssParams->ch_center_freq_seg0,

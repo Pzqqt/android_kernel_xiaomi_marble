@@ -9834,6 +9834,34 @@ enum hdd_wext_control {
 #define CFG_ENABLE_UL_OFDMA_MAX     (1)
 #define CFG_ENABLE_UL_OFDMA_DEFAULT (0)
 
+/*
+ * <ini>
+ * he_sta_obsspd- 11AX HE OBSS PD bit field
+ * @Min: 0
+ * @Max: uin32_t max
+ * @Default: 0x15b8c2ae
+ *
+ * 4 Byte value with each byte representing a signed value for following params:
+ * Param                   Bit position    Default
+ * OBSS_PD min (primary)   7:0             -82 (0xae)
+ * OBSS_PD max (primary)   15:8            -62 (0xc2)
+ * Secondary channel Ed    23:16           -72 (0xb8)
+ * TX_PWR(ref)             31:24           21  (0x15)
+ * This bit field value is directly applied to FW
+ *
+ * Related: NA
+ *
+ * Supported Feature: 11AX
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_HE_STA_OBSSPD_NAME    "he_sta_obsspd"
+#define CFG_HE_STA_OBSSPD_MIN     (0)
+#define CFG_HE_STA_OBSSPD_MAX     (0xffffffff)
+#define CFG_HE_STA_OBSSPD_DEFAULT (0x15b8c2ae)
+
 #endif /* WLAN_FEATURE_11AX */
 
 /**
@@ -10786,6 +10814,7 @@ struct hdd_config {
 #ifdef WLAN_FEATURE_11AX
 	bool enable_ul_mimo;
 	bool enable_ul_ofdma;
+	uint32_t he_sta_obsspd;
 #endif
 	enum l1ss_sleep_allowed l1ss_sleep_allowed;
 	uint32_t arp_ac_category;

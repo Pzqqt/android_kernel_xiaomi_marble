@@ -316,6 +316,7 @@ enum {
 	WNI_CFG_HE_MCS,
 	WNI_CFG_HE_PPET,
 	WNI_CFG_PS_WOW_DATA_INACTIVITY_TIMEOUT,
+	WNI_CFG_HE_STA_OBSSPD,
 	/* Any new items to be added should be above this strictly */
 	CFG_PARAM_MAX_NUM
 };

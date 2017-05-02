@@ -4269,6 +4269,13 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_UL_OFDMA_DEFAULT,
 		     CFG_ENABLE_UL_OFDMA_MIN,
 		     CFG_ENABLE_UL_OFDMA_MAX),
+
+	REG_VARIABLE(CFG_HE_STA_OBSSPD_NAME, WLAN_PARAM_HexInteger,
+		     struct hdd_config, he_sta_obsspd,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_HE_STA_OBSSPD_DEFAULT,
+		     CFG_HE_STA_OBSSPD_MIN,
+		     CFG_HE_STA_OBSSPD_MAX),
 #endif
 
 	REG_VARIABLE(CFG_L1SS_SLEEP_ALLOWED_NAME, WLAN_PARAM_Integer,

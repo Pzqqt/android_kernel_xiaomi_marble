@@ -1086,6 +1086,24 @@ void wma_vdev_set_he_bss_params(tp_wma_handle wma, uint8_t vdev_id,
 		intr[vdev_id].he_ops = req->he_ops;
 }
 
+void wma_vdev_set_he_config(tp_wma_handle wma, uint8_t vdev_id,
+				tpAddBssParams add_bss)
+{
+	QDF_STATUS ret;
+	int8_t pd_min, pd_max, sec_ch_ed, tx_pwr;
+
+	ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
+				 WMI_VDEV_PARAM_OBSSPD, add_bss->he_sta_obsspd);
+	if (QDF_IS_STATUS_ERROR(ret))
+		WMA_LOGE(FL("Failed to set HE Config"));
+	pd_min = add_bss->he_sta_obsspd & 0xff,
+	pd_max = (add_bss->he_sta_obsspd & 0xff00) >> 8,
+	sec_ch_ed = (add_bss->he_sta_obsspd & 0xff0000) >> 16,
+	tx_pwr = (add_bss->he_sta_obsspd & 0xff000000) >> 24;
+	WMA_LOGI(FL("HE_STA_OBSSPD: PD_MIN: %d PD_MAX: %d SEC_CH_ED: %d TX_PWR: %d"),
+		 pd_min, pd_max, sec_ch_ed, tx_pwr);
+}
+
 void wma_update_vdev_he_capable(struct wma_vdev_start_req *req,
 		tpSwitchChannelParams params)
 {

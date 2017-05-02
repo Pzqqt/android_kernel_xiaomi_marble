@@ -530,6 +530,7 @@ typedef struct {
 	bool he_capable;
 	tDot11fIEvendor_he_cap he_config;
 	tDot11fIEvendor_he_op he_op;
+	uint32_t he_sta_obsspd;
 #endif
 	uint32_t cac_duration_ms;
 	uint32_t dfs_regdomain;

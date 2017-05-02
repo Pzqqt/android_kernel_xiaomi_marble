@@ -7231,6 +7231,11 @@ void lim_add_bss_he_cap(tpAddBssParams add_bss, tpSirAssocRsp assoc_rsp)
 			     he_op, sizeof(*he_op));
 }
 
+void lim_add_bss_he_cfg(tpAddBssParams add_bss, tpPESession session)
+{
+	add_bss->he_sta_obsspd = session->he_sta_obsspd;
+}
+
 void lim_update_stads_he_caps(tpDphHashNode sta_ds, tpSirAssocRsp assoc_rsp,
 			      tpPESession session_entry)
 {

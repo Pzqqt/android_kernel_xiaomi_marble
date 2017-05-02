@@ -740,6 +740,15 @@ void lim_add_self_he_cap(tpAddStaParams add_sta_params, tpPESession session);
 void lim_add_bss_he_cap(tpAddBssParams add_bss, tpSirAssocRsp assoc_rsp);
 
 /**
+ * lim_add_bss_he_cfg() - Set HE config to BSS params
+ * @add_bss: pointer to add bss params
+ * @session: Pointer to Session entry struct
+ *
+ * Return: None
+ */
+void lim_add_bss_he_cfg(tpAddBssParams add_bss, tpPESession session);
+
+/**
  * lim_copy_bss_he_cap() - Copy HE capability into PE session from start bss
  * @session: pointer to PE session
  * @sme_start_bss_req: pointer to start BSS request
@@ -944,6 +953,11 @@ static inline void lim_add_bss_he_cap(tpAddBssParams add_bss,
 				      tpSirAssocRsp assoc_rsp)
 {
 	return;
+}
+
+static inline void lim_add_bss_he_cfg(tpAddBssParams add_bss,
+					 tpPESession session)
+{
 }
 
 static inline void lim_intersect_ap_he_caps(tpPESession session,

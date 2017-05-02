@@ -258,6 +258,8 @@ void hdd_he_print_ini_config(hdd_context_t *hdd_ctx)
 		hdd_ctx->config->enable_ul_mimo);
 	hdd_info("Name = [%s] Value = [%d]", CFG_ENABLE_UL_OFDMA_NAME,
 		hdd_ctx->config->enable_ul_ofdma);
+	hdd_info("Name = [%s] Value = [%d]", CFG_HE_STA_OBSSPD_NAME,
+		hdd_ctx->config->he_sta_obsspd);
 }
 
 int hdd_update_he_cap_in_cfg(hdd_context_t *hdd_ctx)
@@ -266,6 +268,11 @@ int hdd_update_he_cap_in_cfg(hdd_context_t *hdd_ctx)
 	QDF_STATUS status;
 	int ret;
 	struct hdd_config *config = hdd_ctx->config;
+
+	ret = hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_STA_OBSSPD,
+				 config->he_sta_obsspd);
+	if (ret)
+		return ret;
 
 	status = sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_HE_UL_MUMIMO, &val);
 	if (QDF_IS_STATUS_ERROR(status)) {
