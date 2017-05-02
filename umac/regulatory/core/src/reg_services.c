@@ -32,6 +32,7 @@
 
 #include "reg_services.h"
 #include "reg_priv.h"
+#include "reg_db_parser.h"
 
 #define MAX_PWR_FCC_CHAN_12 8
 #define MAX_PWR_FCC_CHAN_13 2

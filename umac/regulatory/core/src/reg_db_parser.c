@@ -26,11 +26,6 @@
 #include "reg_db_parser.h"
 #include <qdf_mem.h>
 
-int reg_create_master_chan_list(uint8_t *event_buf)
-{
-	return 0;
-}
-
 QDF_STATUS reg_is_country_code_valid(uint8_t alpha[3])
 {
 	uint16_t i;
@@ -83,115 +78,246 @@ QDF_STATUS reg_regrules_assign(uint8_t dmn_id_2g,
 	return QDF_STATUS_SUCCESS;
 }
 
-/* Given a country code the function
- * finds current  regulatory information
- */
-QDF_STATUS reg_get_cur_reginfo(uint8_t *alpha,
-	uint32_t max_rules,
-	struct cur_regulatory_info *reg_info)
+QDF_STATUS reg_get_rdpair_from_country_iso(uint8_t *alpha,
+	uint16_t *country_index,
+	uint16_t *regdmn_pair)
 {
 	uint16_t i, j;
-	uint8_t rgalpha[3];
 	int num_countries;
 	int num_reg_dmn;
-	int default_country_2g;
-	int default_country_5g;
-
-	rgalpha[0] = alpha[0];
-	rgalpha[1] = alpha[1];
-	rgalpha[2] = 0;
 
 	get_num_countries(&num_countries);
 	get_num_reg_dmn_pairs(&num_reg_dmn);
 
-	if (reg_is_country_code_valid(rgalpha)) {
-		for (i = 0; i < num_countries; i++) {
-			if ((g_all_countries[i].alpha2[0] == alpha[0]) &&
+	for (i = 0; i < num_countries; i++) {
+		if ((g_all_countries[i].alpha2[0] == alpha[0]) &&
 				(g_all_countries[i].alpha2[1] == alpha[1]) &&
 				(g_all_countries[i].alpha2[2] == alpha[2]))
-				break;
-			else
-				continue;
-		}
-		for (j = 0; j < num_reg_dmn; j++) {
-			if (g_reg_dmn_pairs[j].reg_dmn_pair_id ==
+			break;
+	}
+
+	if (i == num_countries) {
+		*country_index = -1;
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	for (j = 0; j < num_reg_dmn; j++) {
+		if (g_reg_dmn_pairs[j].reg_dmn_pair_id ==
 				g_all_countries[i].reg_dmn_pair_id)
-				break;
-			else
-				continue;
-		}
+			break;
+	}
 
-		if ((max_rules >= regdomains_2g[
-				g_reg_dmn_pairs[j].dmn_id_2g].num_reg_rules +
-				regdomains_5g[
-				g_reg_dmn_pairs[j].dmn_id_5g].num_reg_rules)) {
+	if (j == num_reg_dmn) {
+		*regdmn_pair = -1;
+		return QDF_STATUS_E_FAILURE;
+	}
 
-			reg_info->dfs_region = regdomains_5g[
-				g_reg_dmn_pairs[j].dmn_id_5g].dfs_region;
-			reg_info->phybitmap = g_all_countries[i].phymode_bitmap;
-			reg_info->max_bw_2g = g_all_countries[i].max_bw_2g;
-			reg_info->max_bw_5g = g_all_countries[i].max_bw_5g;
-			reg_info->min_bw_2g = regdomains_2g[
-			    g_reg_dmn_pairs[j].dmn_id_2g].min_bw;
-			reg_info->min_bw_5g = regdomains_5g[
-			    g_reg_dmn_pairs[j].dmn_id_5g].min_bw;
-			reg_info->num_2g_reg_rules = regdomains_2g[
-			    g_reg_dmn_pairs[j].dmn_id_2g].num_reg_rules;
-			reg_info->num_5g_reg_rules = regdomains_5g[
-			    g_reg_dmn_pairs[j].dmn_id_5g].num_reg_rules;
-			reg_info->reg_rules_2g_ptr = (struct cur_reg_rule *)
-			    qdf_mem_malloc((reg_info->num_2g_reg_rules) *
-				    sizeof(struct cur_reg_rule));
+	*country_index = i;
+	*regdmn_pair = j;
 
-			reg_info->reg_rules_5g_ptr = (struct cur_reg_rule *)
-			    qdf_mem_malloc((reg_info->num_5g_reg_rules) *
-				    sizeof(struct cur_reg_rule));
+	return QDF_STATUS_SUCCESS;
+}
 
-			reg_regrules_assign(g_reg_dmn_pairs[j].dmn_id_2g,
-					g_reg_dmn_pairs[j].dmn_id_5g, reg_info);
+QDF_STATUS reg_get_rdpair_from_country_code(uint16_t cc,
+		uint16_t *country_index,
+		uint16_t *regdmn_pair)
+{
+	uint16_t i, j;
+	int num_countries;
+	int num_reg_dmn;
 
-			alpha[0] = g_all_countries[i].alpha2_11d[0];
-			alpha[1] = g_all_countries[i].alpha2_11d[1];
+	get_num_countries(&num_countries);
+	get_num_reg_dmn_pairs(&num_reg_dmn);
 
-			return QDF_STATUS_SUCCESS;
-		} else if (!((max_rules >= regdomains_2g[
-				g_reg_dmn_pairs[j].dmn_id_2g].num_reg_rules +
-				regdomains_5g[
-				g_reg_dmn_pairs[j].dmn_id_5g].num_reg_rules)))
-			return QDF_STATUS_E_NOMEM;
-	} else {
-		get_default_country_2g(&default_country_2g);
-		get_default_country_5g(&default_country_5g);
+	for (i = 0; i < num_countries; i++) {
+		if (g_all_countries[i].country_code == cc)
+			break;
+	}
 
-		if ((max_rules >=
-			    regdomains_2g[default_country_2g].num_reg_rules +
-			    regdomains_5g[default_country_5g].num_reg_rules)) {
-			reg_info->dfs_region =
-			    regdomains_5g[default_country_5g].dfs_region;
-			reg_info->phybitmap = 0;
-			reg_info->max_bw_2g = 40;
-			reg_info->max_bw_5g = 160;
-			reg_info->min_bw_2g =
-			    regdomains_2g[default_country_2g].min_bw;
-			reg_info->min_bw_5g =
-			    regdomains_5g[default_country_5g].min_bw;
-			reg_info->num_2g_reg_rules =
-			    regdomains_2g[default_country_2g].num_reg_rules;
-			reg_info->num_5g_reg_rules =
-			    regdomains_5g[default_country_5g].num_reg_rules;
+	if (i == num_countries) {
+		*country_index = -1;
+		return QDF_STATUS_E_FAILURE;
+	}
 
-			reg_regrules_assign(default_country_2g,
-					default_country_5g, reg_info);
+	for (j = 0; j < num_reg_dmn; j++) {
+		if (g_reg_dmn_pairs[j].reg_dmn_pair_id ==
+			g_all_countries[i].reg_dmn_pair_id)
+			break;
+	}
 
-			alpha[0] = '0';
-			alpha[1] = '0';
+	if (j == num_reg_dmn) {
+		*regdmn_pair = -1;
+		return QDF_STATUS_E_FAILURE;
+	}
 
-			return QDF_STATUS_SUCCESS;
-		} else if (!((max_rules >= regdomains_2g[
-				default_country_2g].num_reg_rules +
-				regdomains_5g[default_country_5g].num_reg_rules)
-			    ))
-			return QDF_STATUS_E_NOMEM;
+	*country_index = i;
+	*regdmn_pair = j;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS reg_get_reginfo_form_country_code_and_regdmn_pair(
+		uint32_t max_rules,
+		struct cur_regulatory_info *reg_info,
+		uint16_t country_index,
+		uint16_t regdmn_pair)
+{
+	uint16_t i, j;
+
+	i = country_index;
+	j = regdmn_pair;
+
+	if ((max_rules >=
+		    regdomains_2g[g_reg_dmn_pairs[j].dmn_id_2g].num_reg_rules +
+		    regdomains_5g[g_reg_dmn_pairs[j].dmn_id_5g].num_reg_rules)
+		) {
+
+		reg_info->dfs_region =
+		    regdomains_5g[g_reg_dmn_pairs[j].dmn_id_5g].dfs_region;
+		reg_info->phybitmap = g_all_countries[i].phymode_bitmap;
+		reg_info->max_bw_2g = g_all_countries[i].max_bw_2g;
+		reg_info->max_bw_5g = g_all_countries[i].max_bw_5g;
+		reg_info->min_bw_2g =
+		    regdomains_2g[g_reg_dmn_pairs[j].dmn_id_2g].min_bw;
+		reg_info->min_bw_5g =
+		    regdomains_5g[g_reg_dmn_pairs[j].dmn_id_5g].min_bw;
+		reg_info->num_2g_reg_rules =
+		    regdomains_2g[g_reg_dmn_pairs[j].dmn_id_2g].num_reg_rules;
+		reg_info->num_5g_reg_rules =
+		    regdomains_5g[g_reg_dmn_pairs[j].dmn_id_5g].num_reg_rules;
+
+		reg_info->reg_rules_2g_ptr = (struct cur_reg_rule *)
+		    qdf_mem_malloc((reg_info->num_2g_reg_rules) *
+			    sizeof(struct cur_reg_rule));
+		reg_info->reg_rules_5g_ptr = (struct cur_reg_rule *)
+		    qdf_mem_malloc((reg_info->num_5g_reg_rules) *
+			    sizeof(struct cur_reg_rule));
+
+		reg_regrules_assign(g_reg_dmn_pairs[j].dmn_id_2g,
+				g_reg_dmn_pairs[j].dmn_id_5g, reg_info);
+
+		return QDF_STATUS_SUCCESS;
+	} else if (!((max_rules >= regdomains_2g[
+			g_reg_dmn_pairs[j].dmn_id_2g].num_reg_rules +
+			regdomains_5g[
+			g_reg_dmn_pairs[j].dmn_id_5g].num_reg_rules)))
+		return QDF_STATUS_E_NOMEM;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS reg_get_reginfo_form_regdmn_pair(
+		uint32_t max_rules,
+		struct cur_regulatory_info *reg_info,
+		uint16_t regdmn_pair)
+{
+	uint16_t j;
+
+	j = regdmn_pair;
+
+	if ((max_rules >=
+		    regdomains_2g[g_reg_dmn_pairs[j].dmn_id_2g].num_reg_rules +
+		    regdomains_5g[g_reg_dmn_pairs[j].dmn_id_5g].num_reg_rules)
+		) {
+
+		reg_info->dfs_region =
+		    regdomains_5g[g_reg_dmn_pairs[j].dmn_id_5g].dfs_region;
+		reg_info->phybitmap = 0;
+		reg_info->max_bw_2g = 40;
+		reg_info->max_bw_5g = 160;
+		reg_info->min_bw_2g =
+		    regdomains_2g[g_reg_dmn_pairs[j].dmn_id_2g].min_bw;
+		reg_info->min_bw_5g =
+		    regdomains_5g[g_reg_dmn_pairs[j].dmn_id_5g].min_bw;
+		reg_info->num_2g_reg_rules =
+		    regdomains_2g[g_reg_dmn_pairs[j].dmn_id_2g].num_reg_rules;
+		reg_info->num_5g_reg_rules =
+		    regdomains_5g[g_reg_dmn_pairs[j].dmn_id_5g].num_reg_rules;
+
+		reg_info->reg_rules_2g_ptr = (struct cur_reg_rule *)
+		    qdf_mem_malloc((reg_info->num_2g_reg_rules) *
+			    sizeof(struct cur_reg_rule));
+		reg_info->reg_rules_5g_ptr = (struct cur_reg_rule *)
+		    qdf_mem_malloc((reg_info->num_5g_reg_rules) *
+			    sizeof(struct cur_reg_rule));
+
+		reg_regrules_assign(g_reg_dmn_pairs[j].dmn_id_2g,
+				g_reg_dmn_pairs[j].dmn_id_5g, reg_info);
+
+		return QDF_STATUS_SUCCESS;
+	} else if (!((max_rules >= regdomains_2g[
+			g_reg_dmn_pairs[j].dmn_id_2g].num_reg_rules +
+			regdomains_5g[
+			g_reg_dmn_pairs[j].dmn_id_5g].num_reg_rules)))
+		return QDF_STATUS_E_NOMEM;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS reg_get_reginfo_for_default_regdmn_pair(
+		uint32_t max_rules,
+		struct cur_regulatory_info *reg_info)
+{
+	int default_country_2g;
+	int default_country_5g;
+
+	get_default_country_2g(&default_country_2g);
+	get_default_country_5g(&default_country_5g);
+
+	if ((max_rules >= regdomains_2g[default_country_2g].num_reg_rules +
+		    regdomains_5g[default_country_5g].num_reg_rules)) {
+		reg_info->dfs_region =
+		    regdomains_5g[default_country_5g].dfs_region;
+		reg_info->phybitmap = 0;
+		reg_info->max_bw_2g = 40;
+		reg_info->max_bw_5g = 160;
+		reg_info->min_bw_2g = regdomains_2g[default_country_2g].min_bw;
+		reg_info->min_bw_5g = regdomains_5g[default_country_5g].min_bw;
+		reg_info->num_2g_reg_rules =
+		    regdomains_2g[default_country_2g].num_reg_rules;
+		reg_info->num_5g_reg_rules =
+		    regdomains_5g[default_country_5g].num_reg_rules;
+		reg_info->reg_rules_2g_ptr = (struct cur_reg_rule *)
+		    qdf_mem_malloc((reg_info->num_2g_reg_rules) *
+			    sizeof(struct cur_reg_rule));
+		reg_info->reg_rules_5g_ptr = (struct cur_reg_rule *)
+		    qdf_mem_malloc((reg_info->num_5g_reg_rules) *
+			    sizeof(struct cur_reg_rule));
+
+		reg_regrules_assign(default_country_2g,
+				default_country_5g, reg_info);
+
+		return QDF_STATUS_SUCCESS;
+	} else if (!((max_rules >=
+			regdomains_2g[default_country_2g].num_reg_rules +
+			regdomains_5g[default_country_5g].num_reg_rules)))
+		return QDF_STATUS_E_NOMEM;
+	return QDF_STATUS_SUCCESS;
+}
+
+/* Given a country code the function finds current  regulatory information */
+QDF_STATUS reg_get_cur_reginfo(uint32_t max_rules,
+		struct cur_regulatory_info *reg_info,
+		uint16_t country_index,
+		uint16_t regdmn_pair)
+{
+	if ((country_index != (uint16_t)(-1)) &&
+		(regdmn_pair != (uint16_t)(-1)))
+		reg_get_reginfo_form_country_code_and_regdmn_pair(
+				max_rules,
+				reg_info,
+				country_index,
+				regdmn_pair);
+	else {
+		if (regdmn_pair != (uint16_t)(-1))
+			reg_get_reginfo_form_regdmn_pair(
+					max_rules,
+					reg_info,
+					regdmn_pair);
+		else
+			reg_get_reginfo_for_default_regdmn_pair(
+					max_rules,
+					reg_info);
 	}
 
 	return QDF_STATUS_SUCCESS;
