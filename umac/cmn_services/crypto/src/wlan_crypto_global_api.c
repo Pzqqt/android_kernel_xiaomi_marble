@@ -605,12 +605,10 @@ QDF_STATUS wlan_crypto_delkey(struct wlan_objmgr_vdev *vdev,
 	} else {
 		struct wlan_objmgr_peer *peer;
 
-		wlan_vdev_obj_lock(vdev);
 		peer = wlan_objmgr_get_peer_by_mac_n_vdev(
 				psoc, macaddr,
 				bssid_mac,
 				WLAN_CRYPTO_ID);
-		wlan_vdev_obj_unlock(vdev);
 		if (peer == NULL) {
 			qdf_print("%s[%d] peer NULL\n", __func__, __LINE__);
 			return QDF_STATUS_E_INVAL;
