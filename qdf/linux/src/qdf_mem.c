@@ -88,9 +88,6 @@ struct s_qdf_mem_struct {
 /* Preprocessor Definitions and Constants */
 #define QDF_GET_MEMORY_TIME_THRESHOLD 300
 
-int qdf_dbg_mask = QDF_TRACE_LEVEL_NONE;
-qdf_declare_param(qdf_dbg_mask, int);
-EXPORT_SYMBOL(qdf_dbg_mask);
 
 u_int8_t prealloc_disabled = 1;
 qdf_declare_param(prealloc_disabled, byte);

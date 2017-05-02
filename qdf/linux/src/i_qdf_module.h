@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -59,5 +59,8 @@
 
 #define __qdf_declare_param(_name, _type) \
 	module_param(_name, _type, 0600)
+
+#define __qdf_declare_param_array(_name, _type, _num) \
+	module_param_array(_name, _type, _num, 0600)
 
 #endif /* _I_QDF_MODULE_H */

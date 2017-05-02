@@ -39,6 +39,7 @@
 #define QDF_TRACE_LEVEL_TO_MODULE_BITMASK(_level) ((1 << (_level)))
 
 #include <wlan_logging_sock_svc.h>
+#include <qdf_module.h>
 static int qdf_pidx = -1;
 #ifdef CONFIG_MCL
 
@@ -1813,6 +1814,7 @@ struct category_name_info g_qdf_category_name[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_ANY] = {"ANY"},
 };
 
+
 #ifdef CONFIG_MCL
 #define print_to_console(str)
 #else
@@ -2007,25 +2009,226 @@ void qdf_shared_print_ctrl_cleanup(void)
 }
 EXPORT_SYMBOL(qdf_shared_print_ctrl_cleanup);
 
-extern int qdf_dbg_mask;
+/*
+ * Set this to invalid value to differentiate with user-provided
+ * value.
+ */
+int qdf_dbg_mask = -1;
+EXPORT_SYMBOL(qdf_dbg_mask);
+qdf_declare_param(qdf_dbg_mask, int);
+
+/*
+ * QDF can be passed parameters which indicate the
+ * debug level for each module.
+ * an array of string values are passed, each string hold the following form
+ *
+ * <module name string>=<integer debug level value>
+ *
+ * The array qdf_dbg_arr will hold these module-string=value strings
+ * The variable qdf_dbg_arr_cnt will have the count of how many such
+ * string values were passed.
+ */
+static char *qdf_dbg_arr[QDF_MODULE_ID_MAX];
+static int qdf_dbg_arr_cnt;
+qdf_declare_param_array(qdf_dbg_arr, charp, &qdf_dbg_arr_cnt);
+
+static uint16_t set_cumulative_verbose_mask(QDF_TRACE_LEVEL max_level)
+{
+	uint16_t category_verbose_mask = 0;
+	QDF_TRACE_LEVEL level;
+
+	for (level = QDF_TRACE_LEVEL_FATAL; level <= max_level; level++) {
+		category_verbose_mask |=
+			QDF_TRACE_LEVEL_TO_MODULE_BITMASK(level);
+	}
+	return category_verbose_mask;
+}
+
+static QDF_MODULE_ID find_qdf_module_from_string(char *str)
+{
+	QDF_MODULE_ID mod_id;
+
+	for (mod_id = 0; mod_id < QDF_MODULE_ID_MAX; mod_id++) {
+		if (strcasecmp(str,
+				g_qdf_category_name[mod_id].category_name_str)
+				== 0) {
+			break;
+		}
+	}
+	return mod_id;
+}
+
+static void process_qdf_dbg_arr_param(struct category_info *cinfo,
+					int array_index)
+{
+	char *mod_val_str, *mod_str, *val_str;
+	unsigned long dbg_level;
+	QDF_MODULE_ID mod_id;
+
+	mod_val_str = qdf_dbg_arr[array_index];
+	mod_str = strsep(&mod_val_str, "=");
+	val_str = mod_val_str;
+	if (val_str == NULL) {
+		pr_info("qdf_dbg_arr: %s not in the <mod>=<val> form\n",
+				mod_str);
+		return;
+	}
+
+	mod_id = find_qdf_module_from_string(mod_str);
+	if (mod_id >= QDF_MODULE_ID_MAX) {
+		pr_info("ERROR!!Module name %s not in the list of modules\n",
+				mod_str);
+		return;
+	}
+
+	if (kstrtol(val_str, 10, &dbg_level) < 0) {
+		pr_info("ERROR!!Invalid debug level for module: %s\n",
+				mod_str);
+		return;
+	}
+
+	if (dbg_level >= QDF_TRACE_LEVEL_MAX) {
+		pr_info("ERROR!!Debug level for %s too high", mod_str);
+		pr_info("max: %d given %lu\n", QDF_TRACE_LEVEL_MAX,
+				dbg_level);
+		return;
+	}
+
+	pr_info("User passed setting module %s(%d) to level %lu\n",
+			mod_str,
+			mod_id,
+			dbg_level);
+	cinfo[mod_id].category_verbose_mask =
+		set_cumulative_verbose_mask((QDF_TRACE_LEVEL)dbg_level);
+}
+
+static void set_default_trace_levels(struct category_info *cinfo)
+{
+	int i;
+	static QDF_TRACE_LEVEL module_trace_default_level[QDF_MODULE_ID_MAX] = {
+		[QDF_MODULE_ID_TDLS] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_ACS] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_SCAN_SM] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_SCANENTRY] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_WDS] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_ACTION] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_ROAM] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_INACT] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_DOTH] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_IQUE] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_WME] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_ACL] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_WPA] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_RADKEYS] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_RADDUMP] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_RADIUS] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_DOT1XSM] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_DOT1X] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_POWER] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_STATE] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_OUTPUT] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_SCAN] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_AUTH] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_ASSOC] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_NODE] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_ELEMID] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_XRATE] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_INPUT] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_CRYPTO] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_DUMPPKTS] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_DEBUG] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_MLME] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_RRM] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_WNM] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_P2P_PROT] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_PROXYARP] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_L2TIF] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_WIFIPOS] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_WRAP] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_DFS] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_ATF] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_SPLITMAC] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_IOCTL] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_NAC] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_MESH] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_MBO] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_EXTIOCTL_CHANSWITCH] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_EXTIOCTL_CHANSSCAN] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_TLSHIM] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_WMI] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_HTT] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_HDD] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_SME] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_PE] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_WMA] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_SYS] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_QDF] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_SAP] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_HDD_SOFTAP] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_HDD_DATA] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_HDD_SAP_DATA] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_HIF] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_HTC] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_TXRX] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_QDF_DEVICE] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_CFG] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_BMI] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_EPPING] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_QVIT] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_DP] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_SOC] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_OS_IF] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_TARGET_IF] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_SCHEDULER] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_MGMT_TXRX] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_PMO] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_POLICY_MGR] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_NAN] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_P2P] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_OFFCHAN_TXRX] = QDF_TRACE_LEVEL_WARN,
+		[QDF_MODULE_ID_ANY] = QDF_TRACE_LEVEL_WARN,
+	};
+
+	for (i = 0; i < MAX_SUPPORTED_CATEGORY; i++) {
+		cinfo[i].category_verbose_mask = set_cumulative_verbose_mask(
+				module_trace_default_level[i]);
+	}
+}
+
 void qdf_shared_print_ctrl_init(void)
 {
 	int i;
-	QDF_TRACE_LEVEL level;
 	struct category_info *cinfo = qdf_mem_malloc((sizeof(*cinfo))*
 			MAX_SUPPORTED_CATEGORY);
 	if (cinfo == NULL) {
 		pr_info("ERROR!! qdf_mem_malloc failed. \
-				Shared Print Ctrl object not initialized \
-				\nQDF_TRACE messages may not be logged/displayed");
+			Shared Print Ctrl object not initialized \
+			\nQDF_TRACE messages may not be logged/displayed");
 		return;
 	}
-	for (i = 0; i < MAX_SUPPORTED_CATEGORY; i++) {
-		cinfo[i].category_verbose_mask = 0;
-		for (level = QDF_TRACE_LEVEL_NONE; level <= qdf_dbg_mask; level++) {
-			cinfo[i].category_verbose_mask |=
-				QDF_TRACE_LEVEL_TO_MODULE_BITMASK(level);
+
+	set_default_trace_levels(cinfo);
+
+	/*
+	 * User specified across-module single debug level
+	 */
+	if ((qdf_dbg_mask >= 0) && (qdf_dbg_mask <= QDF_TRACE_LEVEL_MAX)) {
+		pr_info("User specified module debug level of %d\n",
+			qdf_dbg_mask);
+		for (i = 0; i < MAX_SUPPORTED_CATEGORY; i++) {
+			cinfo[i].category_verbose_mask =
+			set_cumulative_verbose_mask(qdf_dbg_mask);
 		}
+	} else {
+		pr_info("qdf_dbg_mask value is invalid\n");
+		pr_info("Using the default module debug levels instead\n");
+	}
+
+	/*
+	 * Module ID-Level specified as array during module load
+	 */
+	for (i = 0; i < qdf_dbg_arr_cnt; i++) {
+		process_qdf_dbg_arr_param(cinfo, i);
 	}
 	qdf_pidx = qdf_print_ctrl_register(cinfo, NULL, NULL,
 			"LOG_SHARED_OBJ");
