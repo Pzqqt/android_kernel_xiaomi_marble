@@ -157,21 +157,25 @@ QDF_STATUS reg_get_rdpair_from_country_code(uint16_t cc,
 }
 
 static inline QDF_STATUS reg_get_reginfo_form_country_code_and_regdmn_pair(
-		uint32_t max_rules,
 		struct cur_regulatory_info *reg_info,
 		uint16_t country_index,
 		uint16_t regdmn_pair)
 {
 	uint16_t i, j;
+	uint8_t rule_size_2g, rule_size_5g;
 
 	i = country_index;
 	j = regdmn_pair;
 
-	if ((max_rules >=
+	rule_size_2g = QDF_ARRAY_SIZE(
+		regdomains_2g[g_reg_dmn_pairs[j].dmn_id_2g].reg_rule_id);
+	rule_size_5g = QDF_ARRAY_SIZE(
+		regdomains_5g[g_reg_dmn_pairs[j].dmn_id_5g].reg_rule_id);
+
+	if (((rule_size_2g + rule_size_5g) >=
 		    regdomains_2g[g_reg_dmn_pairs[j].dmn_id_2g].num_reg_rules +
 		    regdomains_5g[g_reg_dmn_pairs[j].dmn_id_5g].num_reg_rules)
 		) {
-
 		reg_info->dfs_region =
 		    regdomains_5g[g_reg_dmn_pairs[j].dmn_id_5g].dfs_region;
 		reg_info->phybitmap = g_all_countries[i].phymode_bitmap;
@@ -197,25 +201,28 @@ static inline QDF_STATUS reg_get_reginfo_form_country_code_and_regdmn_pair(
 				g_reg_dmn_pairs[j].dmn_id_5g, reg_info);
 
 		return QDF_STATUS_SUCCESS;
-	} else if (!((max_rules >= regdomains_2g[
-			g_reg_dmn_pairs[j].dmn_id_2g].num_reg_rules +
-			regdomains_5g[
-			g_reg_dmn_pairs[j].dmn_id_5g].num_reg_rules)))
-		return QDF_STATUS_E_NOMEM;
+	} else if (!(((rule_size_2g + rule_size_5g) >=
+		regdomains_2g[g_reg_dmn_pairs[j].dmn_id_2g].num_reg_rules +
+		regdomains_5g[g_reg_dmn_pairs[j].dmn_id_5g].num_reg_rules)))
+	    return QDF_STATUS_E_NOMEM;
 
 	return QDF_STATUS_SUCCESS;
 }
 
 static inline QDF_STATUS reg_get_reginfo_form_regdmn_pair(
-		uint32_t max_rules,
 		struct cur_regulatory_info *reg_info,
 		uint16_t regdmn_pair)
 {
 	uint16_t j;
+	uint8_t rule_size_2g, rule_size_5g;
 
 	j = regdmn_pair;
+	rule_size_2g = QDF_ARRAY_SIZE(
+		regdomains_2g[g_reg_dmn_pairs[j].dmn_id_2g].reg_rule_id);
+	rule_size_5g = QDF_ARRAY_SIZE(
+		regdomains_5g[g_reg_dmn_pairs[j].dmn_id_5g].reg_rule_id);
 
-	if ((max_rules >=
+	if (((rule_size_2g + rule_size_5g) >=
 		    regdomains_2g[g_reg_dmn_pairs[j].dmn_id_2g].num_reg_rules +
 		    regdomains_5g[g_reg_dmn_pairs[j].dmn_id_5g].num_reg_rules)
 		) {
@@ -245,7 +252,7 @@ static inline QDF_STATUS reg_get_reginfo_form_regdmn_pair(
 				g_reg_dmn_pairs[j].dmn_id_5g, reg_info);
 
 		return QDF_STATUS_SUCCESS;
-	} else if (!((max_rules >= regdomains_2g[
+	} else if (!(((rule_size_2g + rule_size_5g) >= regdomains_2g[
 			g_reg_dmn_pairs[j].dmn_id_2g].num_reg_rules +
 			regdomains_5g[
 			g_reg_dmn_pairs[j].dmn_id_5g].num_reg_rules)))
@@ -255,17 +262,25 @@ static inline QDF_STATUS reg_get_reginfo_form_regdmn_pair(
 }
 
 static inline QDF_STATUS reg_get_reginfo_for_default_regdmn_pair(
-		uint32_t max_rules,
-		struct cur_regulatory_info *reg_info)
+		struct cur_regulatory_info *reg_info,
+		uint16_t regdmn_pair)
 {
 	int default_country_2g;
 	int default_country_5g;
+	uint8_t rule_size_2g, rule_size_5g;
 
 	get_default_country_2g(&default_country_2g);
 	get_default_country_5g(&default_country_5g);
 
-	if ((max_rules >= regdomains_2g[default_country_2g].num_reg_rules +
+	rule_size_2g =
+		QDF_ARRAY_SIZE(regdomains_2g[default_country_2g].reg_rule_id);
+	rule_size_5g =
+		QDF_ARRAY_SIZE(regdomains_5g[default_country_5g].reg_rule_id);
+
+	if (((rule_size_2g + rule_size_5g) >=
+			regdomains_2g[default_country_2g].num_reg_rules +
 		    regdomains_5g[default_country_5g].num_reg_rules)) {
+
 		reg_info->dfs_region =
 		    regdomains_5g[default_country_5g].dfs_region;
 		reg_info->phybitmap = 0;
@@ -288,7 +303,7 @@ static inline QDF_STATUS reg_get_reginfo_for_default_regdmn_pair(
 				default_country_5g, reg_info);
 
 		return QDF_STATUS_SUCCESS;
-	} else if (!((max_rules >=
+	} else if (!(((rule_size_2g + rule_size_5g) >=
 			regdomains_2g[default_country_2g].num_reg_rules +
 			regdomains_5g[default_country_5g].num_reg_rules)))
 		return QDF_STATUS_E_NOMEM;
@@ -296,27 +311,23 @@ static inline QDF_STATUS reg_get_reginfo_for_default_regdmn_pair(
 }
 
 /* Given a country code the function finds current  regulatory information */
-QDF_STATUS reg_get_cur_reginfo(uint32_t max_rules,
-		struct cur_regulatory_info *reg_info,
+QDF_STATUS reg_get_cur_reginfo(struct cur_regulatory_info *reg_info,
 		uint16_t country_index,
 		uint16_t regdmn_pair)
 {
 	if ((country_index != (uint16_t)(-1)) &&
 		(regdmn_pair != (uint16_t)(-1)))
 		reg_get_reginfo_form_country_code_and_regdmn_pair(
-				max_rules,
 				reg_info,
 				country_index,
 				regdmn_pair);
 	else {
 		if (regdmn_pair != (uint16_t)(-1))
 			reg_get_reginfo_form_regdmn_pair(
-					max_rules,
 					reg_info,
 					regdmn_pair);
 		else
 			reg_get_reginfo_for_default_regdmn_pair(
-					max_rules,
 					reg_info);
 	}
 
