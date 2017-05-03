@@ -403,7 +403,7 @@ csr_issue_11d_scan(tpAniSirGlobal mac_ctx, tSmeCmd *scan_cmd,
 			QDF_TIMER_TYPE_SW,
 			csr_scan_active_list_timeout_handle, scan_11d_cmd);
 
-	if (csr_is11d_supported(mac_ctx)) {
+	if (wlan_reg_11d_enabled_on_host(mac_ctx->psoc)) {
 		tmp_rq.bcnRptReqScan = scan_req->bcnRptReqScan;
 		if (scan_req->bcnRptReqScan)
 			tmp_rq.scanType = scan_req->scanType ?
@@ -2229,7 +2229,7 @@ void csr_apply_country_information(tpAniSirGlobal pMac)
 	v_REGDOMAIN_t domainId;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	if (!csr_is11d_supported(pMac)
+	if (!wlan_reg_11d_enabled_on_host(pMac->psoc)
 	    || 0 == pMac->scan.channelOf11dInfo)
 		return;
 	status = csr_get_regulatory_domain_for_country(pMac,
@@ -2338,7 +2338,7 @@ bool csr_learn_11dcountry_information(tpAniSirGlobal pMac,
 		useVoting = true;
 
 	/* check if .11d support is enabled */
-	if (!csr_is11d_supported(pMac))
+	if (!wlan_reg_11d_enabled_on_host(pMac->psoc))
 		goto free_ie;
 
 	if (false == useVoting) {

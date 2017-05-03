@@ -119,6 +119,7 @@
 #include "wlan_hdd_he.h"
 #include "os_if_nan.h"
 #include "nan_public_structs.h"
+#include "wlan_reg_ucfg_api.h"
 
 #ifdef CNSS_GENL
 #include <net/cnss_nl.h>
@@ -2994,6 +2995,7 @@ int hdd_vdev_ready(hdd_adapter_t *adapter)
 	QDF_STATUS status;
 
 	status = pmo_vdev_ready(adapter->hdd_vdev);
+	status = ucfg_reg_11d_vdev_created_update(adapter->hdd_vdev);
 
 	return qdf_status_to_os_return(status);
 }
@@ -3012,7 +3014,7 @@ int hdd_vdev_destroy(hdd_adapter_t *adapter)
 		hdd_err("vdev for Id %d does not exist", adapter->sessionId);
 		return -EINVAL;
 	}
-
+	status = ucfg_reg_11d_vdev_delete_update(adapter->hdd_vdev);
 	/* do vdev logical destroy via objmgr */
 	errno = hdd_objmgr_destroy_vdev(adapter);
 	if (errno) {

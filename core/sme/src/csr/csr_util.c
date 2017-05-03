@@ -5904,7 +5904,7 @@ bool csr_match_country_code(tpAniSirGlobal pMac, uint8_t *pCountry,
 	bool fRet = true;
 
 	do {
-		if (!csr_is11d_supported(pMac))
+		if (!wlan_reg_11d_enabled_on_host(pMac->psoc))
 			break;
 
 		if (!pIes) {

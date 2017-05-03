@@ -5020,7 +5020,7 @@ bool sme_is11d_supported(tHalHandle hHal)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
-	return csr_is11d_supported(pMac);
+	return wlan_reg_11d_enabled_on_host(pMac->psoc);
 }
 
 bool sme_is11h_supported(tHalHandle hHal)

@@ -2543,7 +2543,7 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->roam.configParam.nTxPowerCap = pParam->nTxPowerCap;
 		pMac->roam.configParam.allow_tpc_from_ap =
 				pParam->allow_tpc_from_ap;
-		if (csr_is11d_supported(pMac))
+		if (wlan_reg_11d_enabled_on_host(pMac->psoc))
 			status = csr_init11d_info(pMac, &pParam->Csr11dinfo);
 		else
 			pMac->scan.curScanType = eSIR_ACTIVE_SCAN;
@@ -2552,7 +2552,8 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		 * enabled. If 11d is enabled this information has already
 		 * been initialized
 		 */
-		if (csr_is11h_supported(pMac) && !csr_is11d_supported(pMac))
+		if (csr_is11h_supported(pMac) &&
+				!wlan_reg_11d_enabled_on_host(pMac->psoc))
 			csr_init_channel_power_list(pMac, &pParam->Csr11dinfo);
 
 		qdf_mem_copy(&pMac->roam.configParam.csr11rConfig,
@@ -5003,7 +5004,7 @@ QDF_STATUS csr_roam_set_bss_config_cfg(tpAniSirGlobal pMac, uint32_t sessionId,
 					pMac, pBssDesc, pIes, true)) {
 			csr_apply_country_information(pMac);
 		}
-		if ((csr_is11d_supported(pMac)) && pIes) {
+		if ((wlan_reg_11d_enabled_on_host(pMac->psoc)) && pIes) {
 			if (!pIes->Country.present)
 				csr_apply_channel_power_info_wrapper(pMac);
 			else
@@ -15416,6 +15417,7 @@ static QDF_STATUS csr_roam_session_opened(tpAniSirGlobal pMac,
 	status = csr_roam_call_callback(pMac, sessionId, &roamInfo, 0,
 					eCSR_ROAM_SESSION_OPENED,
 					eCSR_ROAM_RESULT_NONE);
+
 	return status;
 }
 
@@ -15839,26 +15841,29 @@ QDF_STATUS csr_roam_close_session(tpAniSirGlobal pMac, uint32_t sessionId,
 				  void *pContext)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tCsrRoamSession *pSession;
 
-	if (CSR_IS_SESSION_VALID(pMac, sessionId)) {
-		tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
-		/* Vdev going down stop roaming */
-		pSession->fCancelRoaming = true;
-		if (fSync) {
-			csr_cleanup_session(pMac, sessionId);
-		} else {
-			purge_sme_session_pending_cmd_list(pMac, sessionId);
-			purge_sme_session_active_cmd_list(pMac, sessionId);
-			purge_sme_session_pending_scan_cmd_list(pMac,
-								sessionId);
-			status = csr_issue_del_sta_for_session_req(pMac,
-						 sessionId,
-						 pSession->selfMacAddr.bytes,
-						 callback, pContext);
-		}
-	} else {
-		status = QDF_STATUS_E_INVAL;
+	if (!CSR_IS_SESSION_VALID(pMac, sessionId)) {
+		sme_err("session %d not found", sessionId);
+		return QDF_STATUS_E_INVAL;
 	}
+
+	pSession = CSR_GET_SESSION(pMac, sessionId);
+	/* Vdev going down stop roaming */
+	pSession->fCancelRoaming = true;
+	if (fSync) {
+		csr_cleanup_session(pMac, sessionId);
+		return status;
+	}
+
+	purge_sme_session_pending_cmd_list(pMac, sessionId);
+	purge_sme_session_active_cmd_list(pMac, sessionId);
+	purge_sme_session_pending_scan_cmd_list(pMac,
+			sessionId);
+	status = csr_issue_del_sta_for_session_req(pMac,
+			sessionId,
+			pSession->selfMacAddr.bytes,
+			callback, pContext);
 	return status;
 }
 
