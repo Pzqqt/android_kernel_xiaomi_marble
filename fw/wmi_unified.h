@@ -8899,6 +8899,8 @@ typedef struct {
     A_UINT32 tx_frame_cnt;
     /** mac clock */
     A_UINT32 mac_clk_mhz;
+    /** unique id identifying the VDEV */
+    A_UINT32 vdev_id;
 } wmi_chan_info_event_fixed_param;
 
 /**
