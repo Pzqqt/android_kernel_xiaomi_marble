@@ -90,6 +90,42 @@ static QDF_STATUS target_if_wifi_pos_replenish_ring(
 
 	return QDF_STATUS_SUCCESS;
 }
+
+static QDF_STATUS target_if_wifi_pos_get_indirect_data(
+		struct wifi_pos_psoc_priv_obj *priv_obj,
+		wmi_oem_indirect_data *indirect,
+		struct oem_data_rsp *rsp, uint32_t *cookie)
+{
+	void *paddr = NULL;
+	uint32_t addr_hi;
+	uint8_t ring_idx = 0, num_rings;
+
+	if (!indirect) {
+		target_if_debug("no indirect data. regular event received");
+		return QDF_STATUS_SUCCESS;
+	}
+
+	ring_idx = indirect->pdev_id - 1;
+	num_rings = priv_obj->num_rings;
+	if (ring_idx >= num_rings) {
+		target_if_err("incorrect pdev_id: %d", indirect->pdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+	addr_hi = (uint64_t)WMI_OEM_DMA_DATA_ADDR_HI_GET(
+						indirect->addr_hi);
+	paddr = (void *)((uint64_t)addr_hi << 32 | indirect->addr_lo);
+	*cookie = WMI_OEM_DMA_DATA_ADDR_HI_HOST_DATA_GET(
+						indirect->addr_hi);
+	rsp->vaddr = target_if_wifi_pos_vaddr_lookup(priv_obj,
+					paddr, ring_idx, *cookie);
+	rsp->dma_len = indirect->len;
+	qdf_mem_unmap_nbytes_single(NULL, (qdf_dma_addr_t)paddr,
+			QDF_DMA_FROM_DEVICE,
+			priv_obj->dma_cap[ring_idx].min_buf_size);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #else
 static QDF_STATUS target_if_wifi_pos_replenish_ring(
 			struct wifi_pos_psoc_priv_obj *priv, uint8_t ring_idx,
@@ -97,23 +133,36 @@ static QDF_STATUS target_if_wifi_pos_replenish_ring(
 {
 	return QDF_STATUS_SUCCESS;
 }
+
+static QDF_STATUS target_if_wifi_pos_get_indirect_data(
+		struct wifi_pos_psoc_priv_obj *priv_obj,
+		wmi_oem_indirect_data *indirect,
+		struct oem_data_rsp *rsp, uint32_t *cookie)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif
 
 /**
- * wifi_pos_oem_rsp_ev_handler: handler registered with WMI_OEM_RESPONSE_EVENTID
+ * target_if_wifi_pos_oem_rsp_ev_handler: handler registered with
+ * WMI_OEM_RESPONSE_EVENTID
  * @scn: scn handle
  * @data_buf: event buffer
  * @data_len: event buffer length
  *
  * Return: status of operation
  */
-static int wifi_pos_oem_rsp_ev_handler(ol_scn_t scn,
+static int target_if_wifi_pos_oem_rsp_ev_handler(ol_scn_t scn,
 					uint8_t *data_buf,
 					uint32_t data_len)
 {
 	int ret;
+	uint8_t ring_idx = 0;
+	QDF_STATUS status;
+	uint32_t cookie = 0;
+	wmi_oem_indirect_data *indirect;
 	struct oem_data_rsp oem_rsp = {0};
-	struct wifi_pos_psoc_priv_obj *wifi_pos_psoc;
+	struct wifi_pos_psoc_priv_obj *priv_obj;
 	struct wlan_objmgr_psoc *psoc = wifi_pos_get_psoc();
 	struct wlan_lmac_if_wifi_pos_rx_ops *wifi_pos_rx_ops = NULL;
 	WMI_OEM_RESPONSE_EVENTID_param_tlvs *param_buf =
@@ -123,30 +172,51 @@ static int wifi_pos_oem_rsp_ev_handler(ol_scn_t scn,
 		wifi_pos_err("psoc is null");
 		return QDF_STATUS_NOT_INITIALIZED;
 	}
-	wifi_pos_psoc = wifi_pos_get_psoc_priv_obj(psoc);
-	if (!wifi_pos_psoc) {
-		wifi_pos_err("wifi_pos_psoc is null");
-		return QDF_STATUS_NOT_INITIALIZED;
-	}
-	qdf_spin_lock_bh(&wifi_pos_psoc->wifi_pos_lock);
+
 	wlan_objmgr_psoc_get_ref(psoc, WLAN_WIFI_POS_ID);
 
-	wifi_pos_rx_ops = target_if_wifi_pos_get_rxops(psoc);
-	/* this will be implemented later */
-	if (!wifi_pos_rx_ops || !wifi_pos_rx_ops->oem_rsp_event_rx) {
-		wifi_pos_err("lmac callbacks not registered");
-		ret = QDF_STATUS_NOT_INITIALIZED;
-		goto release_psoc_ref;
+	priv_obj = wifi_pos_get_psoc_priv_obj(psoc);
+	if (!priv_obj) {
+		target_if_err("priv_obj is null");
+		wlan_objmgr_psoc_release_ref(psoc, WLAN_WIFI_POS_ID);
+		return QDF_STATUS_NOT_INITIALIZED;
 	}
 
-	oem_rsp.rsp_len = param_buf->num_data;
-	oem_rsp.data = param_buf->data;
+	wifi_pos_rx_ops = target_if_wifi_pos_get_rxops(psoc);
+	if (!wifi_pos_rx_ops || !wifi_pos_rx_ops->oem_rsp_event_rx) {
+		wlan_objmgr_psoc_release_ref(psoc, WLAN_WIFI_POS_ID);
+		target_if_err("lmac callbacks not registered");
+		return QDF_STATUS_NOT_INITIALIZED;
+	}
+
+	oem_rsp.rsp_len_1 = param_buf->num_data;
+	oem_rsp.data_1 = param_buf->data;
+
+	if (param_buf->num_data2) {
+		oem_rsp.rsp_len_2 = param_buf->num_data2;
+		oem_rsp.data_2 = param_buf->data2;
+	}
+
+	indirect = (wmi_oem_indirect_data *)param_buf->indirect_data;
+	status = target_if_wifi_pos_get_indirect_data(priv_obj, indirect,
+						      &oem_rsp, &cookie);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("get indirect data failed status: %d", status);
+		wlan_objmgr_psoc_release_ref(psoc, WLAN_WIFI_POS_ID);
+		return QDF_STATUS_E_INVAL;
+	}
 
 	ret = wifi_pos_rx_ops->oem_rsp_event_rx(psoc, &oem_rsp);
+	if (indirect)
+		ring_idx = indirect->pdev_id - 1;
+	status = target_if_wifi_pos_replenish_ring(priv_obj, ring_idx,
+					oem_rsp.vaddr, cookie);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("replenish failed status: %d", status);
+		ret = QDF_STATUS_E_FAILURE;
+	}
 
-release_psoc_ref:
 	wlan_objmgr_psoc_release_ref(psoc, WLAN_WIFI_POS_ID);
-	qdf_spin_unlock_bh(&wifi_pos_psoc->wifi_pos_lock);
 
 	return ret;
 }
@@ -278,8 +348,8 @@ QDF_STATUS target_if_wifi_pos_register_events(struct wlan_objmgr_psoc *psoc)
 
 	ret = wmi_unified_register_event_handler(psoc->tgt_if_handle,
 					WMI_OEM_RESPONSE_EVENTID,
-					wifi_pos_oem_rsp_ev_handler,
-					WMI_RX_UMAC_CTX);
+					target_if_wifi_pos_oem_rsp_ev_handler,
+					WMI_RX_WORK_CTX);
 	if (ret) {
 		wifi_pos_err("register_event_handler failed: err %d", ret);
 		return QDF_STATUS_E_INVAL;
@@ -288,7 +358,7 @@ QDF_STATUS target_if_wifi_pos_register_events(struct wlan_objmgr_psoc *psoc)
 	ret = wmi_unified_register_event_handler(psoc->tgt_if_handle,
 					wmi_oem_cap_event_id,
 					wifi_pos_oem_cap_ev_handler,
-					WMI_RX_UMAC_CTX);
+					WMI_RX_WORK_CTX);
 	if (ret) {
 		wifi_pos_err("register_event_handler failed: err %d", ret);
 		return QDF_STATUS_E_INVAL;
@@ -297,7 +367,7 @@ QDF_STATUS target_if_wifi_pos_register_events(struct wlan_objmgr_psoc *psoc)
 	ret = wmi_unified_register_event_handler(psoc->tgt_if_handle,
 					wmi_oem_meas_report_event_id,
 					wifi_pos_oem_meas_rpt_ev_handler,
-					WMI_RX_UMAC_CTX);
+					WMI_RX_WORK_CTX);
 	if (ret) {
 		wifi_pos_err("register_event_handler failed: err %d", ret);
 		return QDF_STATUS_E_INVAL;
@@ -306,7 +376,7 @@ QDF_STATUS target_if_wifi_pos_register_events(struct wlan_objmgr_psoc *psoc)
 	ret = wmi_unified_register_event_handler(psoc->tgt_if_handle,
 					wmi_oem_report_event_id,
 					wifi_pos_oem_err_rpt_ev_handler,
-					WMI_RX_UMAC_CTX);
+					WMI_RX_WORK_CTX);
 	if (ret) {
 		wifi_pos_err("register_event_handler failed: err %d", ret);
 		return QDF_STATUS_E_INVAL;

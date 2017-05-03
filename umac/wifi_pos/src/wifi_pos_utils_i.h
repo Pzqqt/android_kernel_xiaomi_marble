@@ -106,13 +106,21 @@ struct oem_data_req {
 
 /**
  * struct oem_data_rsp - response from firmware to data request sent earlier
- * @data_len: len of data
- * @data: buffer containing data
+ * @rsp_len_1: len of data_1
+ * @data_1: first part of payload
+ * @rsp_len_2: len of data_2
+ * @data_2: second part of payload
+ * @dma_len: len of DMAed data
+ * @vaddr: virtual address of DMA data start
  *
  */
 struct oem_data_rsp {
-	uint32_t rsp_len;
-	uint8_t *data;
+	uint32_t rsp_len_1;
+	uint8_t *data_1;
+	uint32_t rsp_len_2;
+	uint8_t *data_2;
+	uint32_t dma_len;
+	void *vaddr;
 };
 
 /**
