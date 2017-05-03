@@ -98,18 +98,18 @@ typedef PREPACK struct {
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 3, 0))
 /* TODO Cleanup this backported function */
-static int qcacld_bp_seq_printf(struct seq_file *m, const char *f, ...)
+static int wmi_bp_seq_printf(struct seq_file *m, const char *f, ...)
 {
 	va_list args;
 
 	va_start(args, f);
-	seq_printf(m, f, args);
+	seq_vprintf(m, f, args);
 	va_end(args);
 
-	return m->count;
+	return 0;
 }
-
-#define seq_printf(m, fmt, ...) qcacld_bp_seq_printf((m), fmt, ##__VA_ARGS__)
+#else
+#define wmi_bp_seq_printf(m, fmt, ...) seq_printf((m), fmt, ##__VA_ARGS__)
 #endif
 
 #define WMI_MIN_HEAD_ROOM 64
@@ -758,7 +758,7 @@ const int8_t * const debugfs_dir[MAX_WMI_INSTANCES] = {"WMI0", "WMI1", "WMI2"};
 		qdf_spin_lock(&wmi_handle->log_info.wmi_record_lock);	\
 		if (!wmi_log->length) {					\
 			qdf_spin_unlock(&wmi_handle->log_info.wmi_record_lock);\
-			return seq_printf(m,				\
+			return wmi_bp_seq_printf(m,			\
 			"no elements to read from ring buffer!\n");	\
 		}							\
 									\
@@ -773,28 +773,27 @@ const int8_t * const debugfs_dir[MAX_WMI_INSTANCES] = {"WMI0", "WMI1", "WMI2"};
 		else							\
 			pos = *(wmi_log->p_buf_tail_idx) - 1;		\
 									\
-		outlen = seq_printf(m, "Length = %d\n", wmi_log->length);\
+		outlen = wmi_bp_seq_printf(m, "Length = %d\n", wmi_log->length);\
 		qdf_spin_unlock(&wmi_handle->log_info.wmi_record_lock);	\
 		while (nread--) {					\
 			struct wmi_command_debug *wmi_record;		\
 									\
 			wmi_record = (struct wmi_command_debug *)	\
 			&(((struct wmi_command_debug *)wmi_log->buf)[pos]);\
-			outlen += seq_printf(m, "CMD ID = %x\n",	\
+			outlen += wmi_bp_seq_printf(m, "CMD ID = %x\n",	\
 				(wmi_record->command));			\
-			outlen += seq_printf(m, "CMD = ");		\
+			outlen += wmi_bp_seq_printf(m, "CMD = ");	\
 			for (i = 0; i < (wmi_record_max_length/		\
 					sizeof(uint32_t)); i++)		\
-				outlen += seq_printf(m, "%x ",		\
+				outlen += wmi_bp_seq_printf(m, "%x ",	\
 					wmi_record->data[i]);		\
-			outlen += seq_printf(m, "\n");			\
+			outlen += wmi_bp_seq_printf(m, "\n");		\
 									\
 			if (pos == 0)					\
 				pos = wmi_ring_size - 1;		\
 			else						\
 				pos--;					\
 		}							\
-									\
 		return outlen;						\
 	}								\
 
@@ -811,7 +810,7 @@ const int8_t * const debugfs_dir[MAX_WMI_INSTANCES] = {"WMI0", "WMI1", "WMI2"};
 		qdf_spin_lock(&wmi_handle->log_info.wmi_record_lock);	\
 		if (!wmi_log->length) {					\
 			qdf_spin_unlock(&wmi_handle->log_info.wmi_record_lock);\
-			return seq_printf(m,				\
+			return wmi_bp_seq_printf(m,			\
 			"no elements to read from ring buffer!\n");	\
 		}							\
 									\
@@ -826,28 +825,27 @@ const int8_t * const debugfs_dir[MAX_WMI_INSTANCES] = {"WMI0", "WMI1", "WMI2"};
 		else							\
 			pos = *(wmi_log->p_buf_tail_idx) - 1;		\
 									\
-		outlen = seq_printf(m, "Length = %d\n", wmi_log->length);\
+		outlen = wmi_bp_seq_printf(m, "Length = %d\n", wmi_log->length);\
 		qdf_spin_unlock(&wmi_handle->log_info.wmi_record_lock);	\
 		while (nread--) {					\
 			struct wmi_event_debug *wmi_record;		\
 									\
 			wmi_record = (struct wmi_event_debug *)		\
 			&(((struct wmi_event_debug *)wmi_log->buf)[pos]);\
-			outlen += seq_printf(m, "Event ID = %x\n",	\
+			outlen += wmi_bp_seq_printf(m, "Event ID = %x\n",\
 				(wmi_record->event));			\
-			outlen += seq_printf(m, "CMD = ");		\
+			outlen += wmi_bp_seq_printf(m, "CMD = ");	\
 			for (i = 0; i < (wmi_record_max_length/		\
 					sizeof(uint32_t)); i++)		\
-				outlen += seq_printf(m, "%x ",		\
+				outlen += wmi_bp_seq_printf(m, "%x ",	\
 					wmi_record->data[i]);		\
-			outlen += seq_printf(m, "\n");			\
+			outlen += wmi_bp_seq_printf(m, "\n");		\
 									\
 			if (pos == 0)					\
 				pos = wmi_ring_size - 1;		\
 			else						\
 				pos--;					\
 		}							\
-									\
 		return outlen;						\
 	}
 
@@ -873,8 +871,8 @@ static int debug_wmi_enable_show(struct seq_file *m, void *v)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) m->private;
 
-	return seq_printf(m, "%d\n", wmi_handle->log_info.wmi_logging_enable);
-
+	return wmi_bp_seq_printf(m, "%d\n",
+			wmi_handle->log_info.wmi_logging_enable);
 }
 
 /**
@@ -889,9 +887,11 @@ static int debug_wmi_enable_show(struct seq_file *m, void *v)
 static int debug_wmi_log_size_show(struct seq_file *m, void *v)
 {
 
-	seq_printf(m, "WMI command/event log max size:%d\n", wmi_log_max_entry);
-	return seq_printf(m, "WMI management command/events log max size:%d\n",
-				wmi_mgmt_log_max_entry);
+	wmi_bp_seq_printf(m, "WMI command/event log max size:%d\n",
+				wmi_log_max_entry);
+	return wmi_bp_seq_printf(m,
+			"WMI management command/events log max size:%d\n",
+			wmi_mgmt_log_max_entry);
 }
 
 /**
@@ -915,9 +915,16 @@ static int debug_wmi_log_size_show(struct seq_file *m, void *v)
 			((struct seq_file *)file->private_data)->private;\
 		struct wmi_log_buf_t *wmi_log = &wmi_handle->log_info.	\
 				wmi_##func_base##_buf_info;		\
+		char locbuf[50];					\
 									\
-		ret = sscanf(buf, "%d", &k);				\
-		if ((ret != 1) || (k != 0)) {				\
+		if ((!buf) || (count > 50))				\
+			return -EFAULT;					\
+									\
+		if (copy_from_user(locbuf, buf, count))			\
+			return -EFAULT;					\
+									\
+		ret = sscanf(locbuf, "%d", &k);				\
+		if ((ret != 1) || (k != 0)) {                           \
 			qdf_print("Wrong input, echo 0 to clear the wmi	buffer\n");\
 			return -EINVAL;					\
 		}							\
@@ -964,8 +971,15 @@ static ssize_t debug_wmi_enable_write(struct file *file, const char __user *buf,
 	wmi_unified_t wmi_handle =
 		((struct seq_file *)file->private_data)->private;
 	int k, ret;
+	char locbuf[50];
 
-	ret = sscanf(buf, "%d", &k);
+	if ((!buf) || (count > 50))
+		return -EFAULT;
+
+	if (copy_from_user(locbuf, buf, count))
+		return -EFAULT;
+
+	ret = sscanf(locbuf, "%d", &k);
 	if ((ret != 1) || ((k != 0) && (k != 1)))
 		return -EINVAL;
 
