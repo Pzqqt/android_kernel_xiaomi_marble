@@ -1124,7 +1124,6 @@ struct hdd_adapter_s {
 	struct hdd_netif_queue_history
 		 queue_oper_history[WLAN_HDD_MAX_HISTORY_ENTRY];
 	struct hdd_netif_queue_stats queue_oper_stats[WLAN_REASON_TYPE_MAX];
-	struct hdd_lro_s lro_info;
 	ol_txrx_tx_fp tx_fn;
 	/* debugfs entry */
 	struct dentry *debugfs_phy;

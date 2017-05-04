@@ -3164,14 +3164,9 @@ QDF_STATUS hdd_init_station_mode(hdd_adapter_t *adapter)
 	if (status != QDF_STATUS_SUCCESS)
 		goto error_tdls_init;
 
-	status = hdd_lro_enable(hdd_ctx, adapter);
-	if (status != QDF_STATUS_SUCCESS)
-		goto error_lro_enable;
-
+	adapter->dev->features |= NETIF_F_LRO;
 	return QDF_STATUS_SUCCESS;
 
-error_lro_enable:
-	wlan_hdd_tdls_exit(adapter);
 error_tdls_init:
 	clear_bit(WMM_INIT_DONE, &adapter->event_flags);
 	hdd_wmm_adapter_close(adapter);
@@ -3990,7 +3985,6 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 		if (scan_info != NULL && scan_info->mScanPending)
 			wlan_hdd_scan_abort(adapter);
 
-		hdd_lro_disable(hdd_ctx, adapter);
 		wlan_hdd_cleanup_remain_on_channel_ctx(adapter);
 
 #ifdef WLAN_OPEN_SOURCE

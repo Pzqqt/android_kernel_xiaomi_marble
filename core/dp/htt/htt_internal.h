@@ -181,7 +181,7 @@ static inline struct htt_host_rx_desc_base *htt_rx_desc(qdf_nbuf_t msdu)
 		~HTT_RX_DESC_ALIGN_MASK);
 }
 
-#if defined(FEATURE_LRO) && defined(HELIUMPLUS_PADDR64)
+#if defined(FEATURE_LRO) && defined(HELIUMPLUS)
 /**
  * htt_print_rx_desc_lro() - print LRO information in the rx
  * descriptor
@@ -244,7 +244,6 @@ static inline void htt_rx_extract_lro_info(qdf_nbuf_t msdu,
 		QDF_NBUF_CB_RX_TCP_WIN(msdu) = rx_desc->msdu_end.window_size;
 		QDF_NBUF_CB_RX_TCP_PROTO(msdu) = rx_desc->msdu_start.tcp_proto;
 		QDF_NBUF_CB_RX_IPV6_PROTO(msdu) = rx_desc->msdu_start.ipv6_proto;
-		QDF_NBUF_CB_RX_IP_OFFSET(msdu) = rx_desc->msdu_start.l3_offset;
 		QDF_NBUF_CB_RX_TCP_OFFSET(msdu) = rx_desc->msdu_start.l4_offset;
 		QDF_NBUF_CB_RX_FLOW_ID_TOEPLITZ(msdu) =
 			 rx_desc->msdu_start.flow_id_toeplitz;

@@ -74,7 +74,6 @@
 #include <cdp_txrx_flow_ctrl_legacy.h>
 #include <cdp_txrx_bus.h>
 #include <cdp_txrx_ipa.h>
-#include <cdp_txrx_lro.h>
 #include <cdp_txrx_pmf.h>
 #include "wma.h"
 #include "hif.h"
@@ -4869,166 +4868,6 @@ static QDF_STATUS ol_txrx_register_pause_cb(ol_tx_pause_callback_fp pause_cb)
 }
 #endif
 
-#if defined(FEATURE_LRO)
-/**
- * ol_txrx_lro_flush_handler() - LRO flush handler
- * @context: dev handle
- * @rxpkt: rx data
- * @staid: station id
- *
- * This function handles an LRO flush indication.
- * If the rx thread is enabled, it will be invoked by the rx
- * thread else it will be called in the tasklet context
- *
- * Return: none
- */
-static void ol_txrx_lro_flush_handler(void *context,
-				      void *rxpkt,
-				      uint16_t staid)
-{
-	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-
-	if (qdf_unlikely(!pdev)) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid context", __func__);
-		qdf_assert(0);
-		return;
-	}
-
-	if (pdev->lro_info.lro_flush_cb)
-		pdev->lro_info.lro_flush_cb(context);
-	else
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "%s: lro_flush_cb NULL", __func__);
-}
-
-/**
- * ol_txrx_lro_flush() - LRO flush callback
- * @data: opaque data pointer
- *
- * This is the callback registered with CE to trigger
- * an LRO flush
- *
- * Return: none
- */
-static void ol_txrx_lro_flush(void *data)
-{
-	p_cds_sched_context sched_ctx = get_cds_sched_ctxt();
-	struct cds_ol_rx_pkt *pkt;
-	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-
-	if (qdf_unlikely(!sched_ctx))
-		return;
-
-	if (!ol_cfg_is_rx_thread_enabled(pdev->ctrl_pdev)) {
-		ol_txrx_lro_flush_handler(data, NULL, 0);
-	} else {
-		pkt = cds_alloc_ol_rx_pkt(sched_ctx);
-		if (qdf_unlikely(!pkt)) {
-			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Not able to allocate context", __func__);
-			return;
-		}
-
-		pkt->callback =
-			 (cds_ol_rx_thread_cb) ol_txrx_lro_flush_handler;
-		pkt->context = data;
-		pkt->Rxpkt = NULL;
-		pkt->staId = 0;
-		cds_indicate_rxpkt(sched_ctx, pkt);
-	}
-}
-
-/**
- * ol_register_lro_flush_cb() - register the LRO flush callback
- * @lro_flush_cb: flush callback function
- * @lro_init_cb: Allocate and initialize LRO data structure.
- *
- * Store the LRO flush callback provided and in turn
- * register OL's LRO flush handler with CE
- *
- * Return: none
- */
-static void ol_register_lro_flush_cb(void (lro_flush_cb)(void *),
-			      void *(lro_init_cb)(void))
-{
-	struct hif_opaque_softc *hif_device;
-	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-
-	if (pdev == NULL) {
-		ol_txrx_err("%s: pdev NULL!", __func__);
-		TXRX_ASSERT2(0);
-		goto out;
-	}
-	if (pdev->lro_info.lro_flush_cb != NULL) {
-		ol_txrx_info(
-			   "%s: LRO already initialised\n", __func__);
-		if (pdev->lro_info.lro_flush_cb != lro_flush_cb) {
-			ol_txrx_err(
-				   "lro_flush_cb is differ to previously registered callback\n")
-			TXRX_ASSERT2(0);
-			goto out;
-		}
-		qdf_atomic_inc(&pdev->lro_info.lro_dev_cnt);
-		goto out;
-	}
-	pdev->lro_info.lro_flush_cb = lro_flush_cb;
-	hif_device = (struct hif_opaque_softc *)
-				cds_get_context(QDF_MODULE_ID_HIF);
-
-	if (qdf_unlikely(hif_device == NULL)) {
-		ol_txrx_err(
-			"%s: hif_device NULL!", __func__);
-		qdf_assert(0);
-		goto out;
-	}
-
-	hif_lro_flush_cb_register(hif_device, ol_txrx_lro_flush, lro_init_cb);
-	qdf_atomic_inc(&pdev->lro_info.lro_dev_cnt);
-
-out:
-	return;
-}
-
-/**
- * ol_deregister_lro_flush_cb() - deregister the LRO flush callback
- * @lro_deinit_cb: callback function for deregistration.
- *
- * Remove the LRO flush callback provided and in turn
- * deregister OL's LRO flush handler with CE
- *
- * Return: none
- */
-static void ol_deregister_lro_flush_cb(void (lro_deinit_cb)(void *))
-{
-	struct hif_opaque_softc *hif_device;
-	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-
-	if (pdev == NULL) {
-		ol_txrx_err("%s: pdev NULL!", __func__);
-		return;
-	}
-	if (qdf_atomic_dec_and_test(&pdev->lro_info.lro_dev_cnt) == 0) {
-		ol_txrx_info(
-			   "%s: Other LRO enabled modules still exist, do not unregister the lro_flush_cb\n", __func__);
-		return;
-	}
-	hif_device =
-		(struct hif_opaque_softc *)cds_get_context(QDF_MODULE_ID_HIF);
-
-	if (qdf_unlikely(hif_device == NULL)) {
-		ol_txrx_err(
-			"%s: hif_device NULL!", __func__);
-		qdf_assert(0);
-		return;
-	}
-
-	hif_lro_flush_cb_deregister(hif_device, lro_deinit_cb);
-
-	pdev->lro_info.lro_flush_cb = NULL;
-}
-#endif /* FEATURE_LRO */
-
 void
 ol_txrx_dump_pkt(qdf_nbuf_t nbuf, uint32_t nbuf_paddr, int len)
 {
@@ -5418,13 +5257,6 @@ static struct cdp_ipa_ops ol_ops_ipa = {
 #endif /* IPA_OFFLOAD */
 };
 
-static struct cdp_lro_ops ol_ops_lro = {
-#ifdef FEATURE_LRO
-	.register_lro_flush_cb = ol_register_lro_flush_cb,
-	.deregister_lro_flush_cb = ol_deregister_lro_flush_cb
-#endif /* FEATURE_LRO */
-};
-
 static struct cdp_bus_ops ol_ops_bus = {
 	.bus_suspend = ol_txrx_bus_suspend,
 	.bus_resume = ol_txrx_bus_resume
@@ -5541,7 +5373,6 @@ static struct cdp_ops ol_txrx_ops = {
 	.flowctl_ops = &ol_ops_flowctl,
 	.l_flowctl_ops = &ol_ops_l_flowctl,
 	.ipa_ops = &ol_ops_ipa,
-	.lro_ops = &ol_ops_lro,
 	.bus_ops = &ol_ops_bus,
 	.ocb_ops = &ol_ops_ocb,
 	.peer_ops = &ol_ops_peer,
