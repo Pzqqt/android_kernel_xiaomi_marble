@@ -57,6 +57,7 @@
 
 #define LIM_GET_NOISE_MAX_TRY 5
 
+#ifdef FEATURE_WLAN_ESE
 /**
  * get_local_power_constraint_probe_response() - extracts local constraint
  * from probe response
@@ -66,7 +67,6 @@
  *
  * Return: None
  */
-#ifdef FEATURE_WLAN_ESE
 static void get_local_power_constraint_probe_response(
 		tpSirProbeRespBeacon beacon_struct,
 		int8_t *local_constraint,
@@ -75,6 +75,21 @@ static void get_local_power_constraint_probe_response(
 	if (beacon_struct->eseTxPwr.present)
 		*local_constraint =
 			beacon_struct->eseTxPwr.power_limit;
+}
+
+/**
+ * get_ese_version_ie_probe_response() - extracts ESE version IE
+ * from probe response
+ * @beacon_struct: beacon structure
+ * @session: A pointer to session entry.
+ *
+ * Return: None
+ */
+static void get_ese_version_ie_probe_response(tpAniSirGlobal mac_ctx,
+					tpSirProbeRespBeacon beacon_struct,
+					tpPESession session)
+{
+	if (mac_ctx->roam.configParam.isEseIniFeatureEnabled)
 		session->is_ese_version_ie_present =
 			beacon_struct->is_ese_ver_ie_present;
 }
@@ -85,6 +100,12 @@ static void get_local_power_constraint_probe_response(
 		tpPESession session)
 {
 
+}
+
+static inline void get_ese_version_ie_probe_response(tpAniSirGlobal mac_ctx,
+					tpSirProbeRespBeacon beacon_struct,
+					tpPESession session)
+{
 }
 #endif
 
@@ -354,6 +375,9 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 				beacon_struct, local_constraint, session);
 		}
 	}
+
+	get_ese_version_ie_probe_response(mac_ctx, beacon_struct, session);
+
 	session->country_info_present = false;
 	/* Initializing before first use */
 	if (beacon_struct->countryInfoPresent)
