@@ -3851,10 +3851,6 @@ static struct cdp_ipa_ops dp_ops_ipa = {
 	/* WIFI 3.0 DP NOT IMPLEMENTED YET */
 };
 
-static struct cdp_lro_ops dp_ops_lro = {
-	/* WIFI 3.0 DP NOT IMPLEMENTED YET */
-};
-
 /**
  * dp_dummy_bus_suspend() - dummy bus suspend op
  *
@@ -3937,7 +3933,6 @@ static struct cdp_ops dp_txrx_ops = {
 	.flowctl_ops = &dp_ops_flowctl,
 	.l_flowctl_ops = &dp_ops_l_flowctl,
 	.ipa_ops = &dp_ops_ipa,
-	.lro_ops = &dp_ops_lro,
 	.bus_ops = &dp_ops_bus,
 	.ocb_ops = &dp_ops_ocb,
 	.peer_ops = &dp_ops_peer,

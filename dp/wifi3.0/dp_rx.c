@@ -636,6 +636,33 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu)
 }
 #endif
 
+#if defined(FEATURE_LRO)
+static void dp_rx_print_lro_info(uint8_t *rx_tlv)
+{
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+	FL("----------------------RX DESC LRO----------------------\n"));
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		FL("lro_eligible 0x%x"), HAL_RX_TLV_GET_LRO_ELIGIBLE(rx_tlv));
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		FL("pure_ack 0x%x"), HAL_RX_TLV_GET_TCP_PURE_ACK(rx_tlv));
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		FL("chksum 0x%x"), HAL_RX_TLV_GET_TCP_CHKSUM(rx_tlv));
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		FL("TCP seq num 0x%x"), HAL_RX_TLV_GET_TCP_SEQ(rx_tlv));
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		FL("TCP ack num 0x%x"), HAL_RX_TLV_GET_TCP_ACK(rx_tlv));
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		FL("TCP window 0x%x"), HAL_RX_TLV_GET_TCP_WIN(rx_tlv));
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		FL("TCP protocol 0x%x"), HAL_RX_TLV_GET_TCP_PROTO(rx_tlv));
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		FL("TCP offset 0x%x"), HAL_RX_TLV_GET_TCP_OFFSET(rx_tlv));
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		FL("toeplitz 0x%x"), HAL_RX_TLV_GET_FLOW_ID_TOEPLITZ(rx_tlv));
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+	FL("---------------------------------------------------------\n"));
+}
+
 /**
  * dp_rx_lro() - LRO related processing
  * @rx_tlv: TLV data extracted from the rx packet
@@ -647,52 +674,47 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu)
  *
  * Return: true: LRO enabled false: LRO is not enabled
  */
-#if defined(FEATURE_LRO)
-static bool dp_rx_lro(uint8_t *rx_tlv, struct dp_peer *peer,
+static void dp_rx_lro(uint8_t *rx_tlv, struct dp_peer *peer,
 	 qdf_nbuf_t msdu, qdf_lro_ctx_t ctx)
 {
-	qdf_assert(rx_tlv);
-	if (peer->vdev->lro_enable &&
-	 HAL_RX_TLV_GET_TCP_PROTO(rx_tlv)) {
-		QDF_NBUF_CB_RX_LRO_ELIGIBLE(msdu) =
-			 HAL_RX_TLV_GET_LRO_ELIGIBLE(rx_tlv) &&
-			 !HAL_RX_TLV_GET_TCP_PURE_ACK(rx_tlv);
-
-		if (QDF_NBUF_CB_RX_LRO_ELIGIBLE(msdu)) {
-			QDF_NBUF_CB_RX_LRO_CTX(msdu) = ctx;
-			QDF_NBUF_CB_RX_TCP_ACK_NUM(msdu) =
-				 HAL_RX_TLV_GET_TCP_ACK(rx_tlv);
-			QDF_NBUF_CB_RX_TCP_WIN(msdu) =
-				 HAL_RX_TLV_GET_TCP_WIN(rx_tlv);
-			QDF_NBUF_CB_RX_TCP_SEQ_NUM(msdu) =
-				 HAL_RX_TLV_GET_TCP_SEQ(rx_tlv);
-			QDF_NBUF_CB_RX_TCP_CHKSUM(msdu) =
-				 HAL_RX_TLV_GET_TCP_CHKSUM
-					(rx_tlv);
-			QDF_NBUF_CB_RX_FLOW_ID_TOEPLITZ(msdu) =
-				 HAL_RX_TLV_GET_FLOW_ID_TOEPLITZ
-					(rx_tlv);
-			QDF_NBUF_CB_RX_TCP_OFFSET(msdu) =
-				 HAL_RX_TLV_GET_TCP_OFFSET
-					(rx_tlv);
-			QDF_NBUF_CB_RX_IPV6_PROTO(msdu) =
-				 HAL_RX_TLV_GET_IPV6(rx_tlv);
-
-			QDF_NBUF_CB_RX_LRO_ELIGIBLE(msdu) =
-				 qdf_lro_update_info(ctx, msdu);
-		}
-		/* LRO 'enabled' packet, it may not be LRO 'eligible' */
-		return true;
+	if (!peer || !peer->vdev || !peer->vdev->lro_enable) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			 FL("no peer, no vdev or LRO disabled"));
+		QDF_NBUF_CB_RX_LRO_ELIGIBLE(msdu) = 0;
+		return;
 	}
+	qdf_assert(rx_tlv);
+	dp_rx_print_lro_info(rx_tlv);
 
-	/* LRO not supported on this vdev or a non-TCP packet */
-	return false;
+	QDF_NBUF_CB_RX_LRO_ELIGIBLE(msdu) =
+		 HAL_RX_TLV_GET_LRO_ELIGIBLE(rx_tlv);
+
+	QDF_NBUF_CB_RX_TCP_PURE_ACK(msdu) =
+			HAL_RX_TLV_GET_TCP_PURE_ACK(rx_tlv);
+
+	QDF_NBUF_CB_RX_TCP_CHKSUM(msdu) =
+			 HAL_RX_TLV_GET_TCP_CHKSUM(rx_tlv);
+	QDF_NBUF_CB_RX_TCP_SEQ_NUM(msdu) =
+			 HAL_RX_TLV_GET_TCP_SEQ(rx_tlv);
+	QDF_NBUF_CB_RX_TCP_ACK_NUM(msdu) =
+			 HAL_RX_TLV_GET_TCP_ACK(rx_tlv);
+	QDF_NBUF_CB_RX_TCP_WIN(msdu) =
+			 HAL_RX_TLV_GET_TCP_WIN(rx_tlv);
+	QDF_NBUF_CB_RX_TCP_PROTO(msdu) =
+			 HAL_RX_TLV_GET_TCP_PROTO(rx_tlv);
+	QDF_NBUF_CB_RX_IPV6_PROTO(msdu) =
+			 HAL_RX_TLV_GET_IPV6(rx_tlv);
+	QDF_NBUF_CB_RX_TCP_OFFSET(msdu) =
+			 HAL_RX_TLV_GET_TCP_OFFSET(rx_tlv);
+	QDF_NBUF_CB_RX_FLOW_ID_TOEPLITZ(msdu) =
+			 HAL_RX_TLV_GET_FLOW_ID_TOEPLITZ(rx_tlv);
+	QDF_NBUF_CB_RX_LRO_CTX(msdu) = (unsigned char *)ctx;
+
 }
 #else
-static bool dp_rx_lro(uint8_t *rx_tlv, struct dp_peer *peer,
+static void dp_rx_lro(uint8_t *rx_tlv, struct dp_peer *peer,
 	 qdf_nbuf_t msdu, qdf_lro_ctx_t ctx)
 {
-	return false;
 }
 #endif
 
@@ -1099,8 +1121,7 @@ done:
 
 			rx_bufs_used++;
 
-			if (!dp_rx_lro(rx_tlv_hdr, peer, nbuf, int_ctx->lro_ctx))
-				QDF_NBUF_CB_RX_LRO_CTX(nbuf) = NULL;
+			dp_rx_lro(rx_tlv_hdr, peer, nbuf, int_ctx->lro_ctx);
 
 			DP_RX_LIST_APPEND(deliver_list_head,
 						deliver_list_tail,

@@ -35,6 +35,7 @@ extern "C" {
 /* Header files */
 #include <qdf_status.h>
 #include "qdf_nbuf.h"
+#include "qdf_lro.h"
 #include "ol_if_athvar.h"
 #include <linux/platform_device.h>
 #ifdef HIF_PCI
@@ -211,8 +212,8 @@ struct qca_napi_info {
 	int                  irq;
 	struct qca_napi_stat stats[NR_CPUS];
 	/* will only be present for data rx CE's */
-	void (*lro_flush_cb)(void *arg);
-	void                 *lro_ctx;
+	void (*lro_flush_cb)(void *);
+	qdf_lro_ctx_t        lro_ctx;
 	qdf_spinlock_t lro_unloading_lock;
 };
 

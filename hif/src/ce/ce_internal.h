@@ -150,8 +150,7 @@ struct CE_state {
 	/* datapath - for faster access, use bools instead of a bitmap */
 	bool htt_tx_data;
 	bool htt_rx_data;
-	void (*lro_flush_cb)(void *);
-	void *lro_data;
+	qdf_lro_ctx_t lro_data;
 	qdf_spinlock_t lro_unloading_lock;
 };
 

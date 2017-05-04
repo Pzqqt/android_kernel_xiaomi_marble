@@ -783,17 +783,6 @@ struct cdp_ipa_ops {
 };
 
 /**
- * struct cdp_lro_ops - mcl large receive offload ops
- * @register_lro_flush_cb:
- * @deregister_lro_flush_cb:
- */
-struct cdp_lro_ops {
-	void (*register_lro_flush_cb)(void (lro_flush_cb)(void *),
-			void *(lro_init_cb)(void));
-	void (*deregister_lro_flush_cb)(void (lro_deinit_cb)(void *));
-};
-
-/**
  * struct cdp_bus_ops - mcl bus suspend/resume ops
  * @bus_suspend:
  * @bus_resume:
@@ -924,7 +913,6 @@ struct cdp_ops {
 	struct cdp_flowctl_ops      *flowctl_ops;
 	struct cdp_lflowctl_ops     *l_flowctl_ops;
 	struct cdp_ipa_ops          *ipa_ops;
-	struct cdp_lro_ops          *lro_ops;
 	struct cdp_bus_ops          *bus_ops;
 	struct cdp_ocb_ops          *ocb_ops;
 	struct cdp_peer_ops         *peer_ops;

@@ -100,6 +100,7 @@ typedef union {
  *   @rx.tcp_seq_num     : TCP sequence number
  *   @rx.tcp_ack_num     : TCP ACK number
  *   @rx.flow_id_toeplitz: 32-bit 5-tuple Toeplitz hash
+ *   @rx.lro_ctx         : LRO context
  * @tx.extra_frag  : represent HTC/HTT header
  * @tx.efrag.vaddr       : virtual address of ~
  * @tx.efrag.paddr       : physical/DMA address of ~
@@ -146,8 +147,7 @@ struct qdf_nbuf_cb {
 			uint32_t tcp_ack_num;
 			uint32_t flow_id_toeplitz;
 			uint32_t map_index;
-			void *lro_desc;
-			void *lro_ctx;
+			unsigned char *lro_ctx;
 			union {
 				uint8_t packet_state;
 				uint8_t dp_trace:1,

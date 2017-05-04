@@ -182,6 +182,10 @@ int hif_napi_create(struct hif_opaque_softc   *hif_ctx,
 			   napii->netdev.napi_list.prev,
 			   napii->netdev.napi_list.next);
 
+		napii->lro_ctx = qdf_lro_init();
+		NAPI_DEBUG("Registering LRO for ce_id %d NAPI callback for %d lro_ctx %p\n",
+				i, napii->id, napii->lro_ctx);
+
 		/* It is OK to change the state variable below without
 		 * protection as there should be no-one around yet
 		 */
@@ -261,6 +265,7 @@ int hif_napi_destroy(struct hif_opaque_softc *hif_ctx,
 				   napii->netdev.napi_list.next);
 
 			qdf_spinlock_destroy(&napii->lro_unloading_lock);
+			qdf_lro_deinit(napii->lro_ctx);
 			netif_napi_del(&(napii->napi));
 
 			napid->ce_map &= ~(0x01 << ce);
@@ -285,94 +290,6 @@ int hif_napi_destroy(struct hif_opaque_softc *hif_ctx,
 	}
 
 	return rc;
-}
-
-/**
- * hif_napi_lro_flush_cb_register() - init and register flush callback for LRO
- * @hif_hdl: pointer to hif context
- * @lro_flush_handler: register LRO flush callback
- * @lro_init_handler: Callback for initializing LRO
- *
- * Return: positive value on success and 0 on failure
- */
-int hif_napi_lro_flush_cb_register(struct hif_opaque_softc *hif_hdl,
-				   void (lro_flush_handler)(void *),
-				   void *(lro_init_handler)(void))
-{
-	int rc = 0;
-	int i;
-	struct CE_state *ce_state;
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_hdl);
-	void *data = NULL;
-	struct qca_napi_data *napid;
-	struct qca_napi_info *napii;
-
-	QDF_ASSERT(scn != NULL);
-
-	napid = hif_napi_get_all(hif_hdl);
-	if (scn != NULL) {
-		for (i = 0; i < scn->ce_count; i++) {
-			ce_state = scn->ce_id_to_state[i];
-			if ((ce_state != NULL) && (ce_state->htt_rx_data)) {
-				data = lro_init_handler();
-				if (data == NULL) {
-					HIF_ERROR("%s: Failed to init LRO for CE %d",
-						  __func__, i);
-					continue;
-				}
-				napii = &(napid->napis[i]);
-				napii->lro_flush_cb = lro_flush_handler;
-				napii->lro_ctx = data;
-				HIF_DBG("Registering LRO for ce_id %d NAPI callback for %d flush_cb %p, lro_data %p\n",
-					i, napii->id, napii->lro_flush_cb,
-					napii->lro_ctx);
-				rc++;
-			}
-		}
-	} else {
-		HIF_ERROR("%s: hif_state NULL!", __func__);
-	}
-	return rc;
-}
-
-/**
- * hif_napi_lro_flush_cb_deregister() - Degregister and free LRO.
- * @hif: pointer to hif context
- * @lro_deinit_cb: LRO deinit callback
- *
- * Return: NONE
- */
-void hif_napi_lro_flush_cb_deregister(struct hif_opaque_softc *hif_hdl,
-				     void (lro_deinit_cb)(void *))
-{
-	int i;
-	struct CE_state *ce_state;
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_hdl);
-	struct qca_napi_data *napid;
-	struct qca_napi_info *napii;
-
-	QDF_ASSERT(scn != NULL);
-
-	napid = hif_napi_get_all(hif_hdl);
-	if (scn != NULL) {
-		for (i = 0; i < scn->ce_count; i++) {
-			ce_state = scn->ce_id_to_state[i];
-			if ((ce_state != NULL) && (ce_state->htt_rx_data)) {
-				napii = &(napid->napis[i]);
-				HIF_DBG("deRegistering LRO for ce_id %d NAPI callback for %d flush_cb %p, lro_data %p\n",
-					i, napii->id, napii->lro_flush_cb,
-					napii->lro_ctx);
-				qdf_spin_lock_bh(&napii->lro_unloading_lock);
-				napii->lro_flush_cb = NULL;
-				lro_deinit_cb(napii->lro_ctx);
-				napii->lro_ctx = NULL;
-				qdf_spin_unlock_bh(
-					&napii->lro_unloading_lock);
-			}
-		}
-	} else {
-		HIF_ERROR("%s: hif_state NULL!", __func__);
-	}
 }
 
 /**
@@ -809,8 +726,7 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx,
 	NAPI_DEBUG("%s: ce_per_engine_service processed %d msgs",
 		    __func__, rc);
 
-	if (napi_info->lro_flush_cb)
-		napi_info->lro_flush_cb(napi_info->lro_ctx);
+	qdf_lro_flush(napi_info->lro_ctx);
 	qdf_spin_unlock_bh(&napi_info->lro_unloading_lock);
 
 	/* do not return 0, if there was some work done,

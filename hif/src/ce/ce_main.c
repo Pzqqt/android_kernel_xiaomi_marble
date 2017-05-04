@@ -1292,6 +1292,8 @@ void ce_fini(struct CE_handle *copyeng)
 
 	qdf_spinlock_destroy(&CE_state->lro_unloading_lock);
 
+	qdf_lro_deinit(CE_state->lro_data);
+
 	if (CE_state->src_ring) {
 		/* Cleanup the datapath Tx ring */
 		ce_h2t_tx_ce_cleanup(copyeng);
@@ -2467,6 +2469,8 @@ int hif_config_ce(struct hif_softc *scn)
 			goto err;
 		}
 
+		ce_state->lro_data = qdf_lro_init();
+
 		if (attr->flags & CE_ATTR_DIAG) {
 			/* Reserve the ultimate CE for
 			 * Diagnostic Window support
@@ -2741,90 +2745,6 @@ void *hif_ce_get_lro_ctx(struct hif_opaque_softc *hif_hdl, int ctx_id)
 	ce_state = scn->ce_id_to_state[ctx_id];
 
 	return ce_state->lro_data;
-}
-
-/**
- * ce_lro_flush_cb_register() - register the LRO flush
- * callback
- * @scn: HIF context
- * @handler: callback function
- * @data: opaque data pointer to be passed back
- *
- * Store the LRO flush callback provided
- *
- * Return: Number of instances the callback is registered for
- */
-int ce_lro_flush_cb_register(struct hif_opaque_softc *hif_hdl,
-			     void (handler)(void *),
-			     void *(lro_init_handler)(void))
-{
-	int rc = 0;
-	int i;
-	struct CE_state *ce_state;
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_hdl);
-	void *data = NULL;
-
-	QDF_ASSERT(scn != NULL);
-
-	if (scn != NULL) {
-		for (i = 0; i < scn->ce_count; i++) {
-			ce_state = scn->ce_id_to_state[i];
-			if ((ce_state != NULL) && (ce_state->htt_rx_data)) {
-				data = lro_init_handler();
-				if (data == NULL) {
-					HIF_ERROR("%s: Failed to init LRO for CE %d",
-						  __func__, i);
-					continue;
-				}
-				ce_state->lro_flush_cb = handler;
-				ce_state->lro_data = data;
-				rc++;
-			}
-		}
-	} else {
-		HIF_ERROR("%s: hif_state NULL!", __func__);
-	}
-	return rc;
-}
-
-/**
- * ce_lro_flush_cb_deregister() - deregister the LRO flush
- * callback
- * @scn: HIF context
- *
- * Remove the LRO flush callback
- *
- * Return: Number of instances the callback is de-registered
- */
-int ce_lro_flush_cb_deregister(struct hif_opaque_softc *hif_hdl,
-			       void (lro_deinit_cb)(void *))
-{
-	int rc = 0;
-	int i;
-	struct CE_state *ce_state;
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_hdl);
-
-	QDF_ASSERT(scn != NULL);
-	if (scn != NULL) {
-		for (i = 0; i < scn->ce_count; i++) {
-			ce_state = scn->ce_id_to_state[i];
-			if ((ce_state != NULL) && (ce_state->htt_rx_data)) {
-				qdf_spin_lock_bh(
-					&ce_state->lro_unloading_lock);
-				ce_state->lro_flush_cb = NULL;
-				lro_deinit_cb(ce_state->lro_data);
-				ce_state->lro_data = NULL;
-				qdf_spin_unlock_bh(
-					&ce_state->lro_unloading_lock);
-				qdf_spinlock_destroy(
-					&ce_state->lro_unloading_lock);
-				rc++;
-			}
-		}
-	} else {
-		HIF_ERROR("%s: hif_state NULL!", __func__);
-	}
-	return rc;
 }
 #endif
 
