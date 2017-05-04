@@ -8039,7 +8039,10 @@ QDF_STATUS sme_stop_roaming(tHalHandle hHal, uint8_t sessionId, uint8_t reason)
 	}
 
 	req->Command = ROAM_SCAN_OFFLOAD_STOP;
-	req->reason = REASON_ROAM_SYNCH_FAILED;
+	if (reason == eCsrForcedDisassoc)
+		req->reason = REASON_ROAM_STOP_ALL;
+	else
+		req->reason = REASON_ROAM_SYNCH_FAILED;
 	req->sessionId = sessionId;
 	if (csr_neighbor_middle_of_roaming(mac_ctx, sessionId))
 		req->middle_of_roaming = 1;

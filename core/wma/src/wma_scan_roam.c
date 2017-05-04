@@ -1850,13 +1850,18 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 	case ROAM_SCAN_OFFLOAD_STOP:
 		wma_handle->suitable_ap_hb_failure = false;
 		if (wma_handle->roam_offload_enabled) {
+			uint32_t mode;
 
 			wma_roam_scan_fill_scan_params(wma_handle, pMac,
 						       NULL, &scan_params);
+
+			if (roam_req->reason == REASON_ROAM_STOP_ALL)
+				mode = WMI_ROAM_SCAN_MODE_NONE;
+			else
+				mode = WMI_ROAM_SCAN_MODE_NONE |
+					WMI_ROAM_SCAN_MODE_ROAMOFFLOAD;
 			qdf_status = wma_roam_scan_offload_mode(wma_handle,
-						&scan_params, NULL,
-						WMI_ROAM_SCAN_MODE_NONE |
-						WMI_ROAM_SCAN_MODE_ROAMOFFLOAD,
+						&scan_params, NULL, mode,
 						roam_req->sessionId);
 		}
 		/*
