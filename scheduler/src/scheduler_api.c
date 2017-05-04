@@ -221,14 +221,18 @@ QDF_STATUS scheduler_post_msg_by_priority(QDF_MODULE_ID qid,
 	struct scheduler_msg_wrapper *msg_wrapper = NULL;
 	struct scheduler_ctx *sched_ctx = scheduler_get_context();
 
-	if (!sched_ctx || !pMsg || !sched_ctx->sch_thread) {
-		QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
-				"%s: Null params or global sch context is null",
-				__func__);
-		QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
-				"%s: sched_ctx[%d], pMsg[%d]",
-				__func__, !!sched_ctx, !!pMsg);
-		QDF_ASSERT(0);
+	if (!pMsg) {
+		sched_err("pMsg is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!sched_ctx) {
+		sched_err("sched_ctx is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!sched_ctx->sch_thread) {
+		sched_err("Cannot post message; scheduler thread is stopped");
 		return QDF_STATUS_E_FAILURE;
 	}
 
