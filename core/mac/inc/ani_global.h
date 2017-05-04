@@ -973,6 +973,7 @@ typedef struct sAniSirGlobal {
 	bool snr_monitor_enabled;
 	void (*chan_info_cb)(struct scan_chan_info *chan_info);
 	uint32_t rx_packet_drop_counter;
+	bool ignore_assoc_disallowed;
 } tAniSirGlobal;
 
 typedef enum {

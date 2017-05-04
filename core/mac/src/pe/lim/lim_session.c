@@ -401,6 +401,7 @@ pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 #endif
 	session_ptr->fWaitForProbeRsp = 0;
 	session_ptr->fIgnoreCapsChange = 0;
+	session_ptr->ignore_assoc_disallowed = pMac->ignore_assoc_disallowed;
 
 	pe_debug("Create a new PE session: %d BSSID: "MAC_ADDRESS_STR" Max No of STA: %d",
 		*sessionId, MAC_ADDR_ARRAY(bssid), numSta);

@@ -7469,6 +7469,9 @@ QDF_STATUS sme_update_session_param(tHalHandle hal, uint8_t session_id,
 			return status;
 		}
 
+		if (param_type == SIR_PARAM_IGNORE_ASSOC_DISALLOWED)
+			mac_ctx->ignore_assoc_disallowed = param_val;
+
 		if (!session->sessionActive)
 			QDF_ASSERT(0);
 
