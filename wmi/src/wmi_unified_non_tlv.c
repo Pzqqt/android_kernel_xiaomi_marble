@@ -5970,12 +5970,13 @@ static QDF_STATUS extract_mgmt_rx_params_non_tlv(wmi_unified_t wmi_handle,
 
 	hdr->channel = ev->hdr.channel;
 	hdr->snr = ev->hdr.snr;
+	hdr->rssi = ev->hdr.snr;
 	hdr->rate = ev->hdr.rate;
 	hdr->phy_mode = ev->hdr.phy_mode;
 	hdr->buf_len = ev->hdr.buf_len;
 	hdr->status = ev->hdr.status;
 	hdr->pdev_id = WMI_NON_TLV_DEFAULT_PDEV_ID;
-
+	qdf_mem_copy(hdr->rssi_ctl, ev->hdr.rssi_ctl, sizeof(hdr->rssi_ctl));
 	*bufp = ev->bufp;
 
 	return QDF_STATUS_SUCCESS;
