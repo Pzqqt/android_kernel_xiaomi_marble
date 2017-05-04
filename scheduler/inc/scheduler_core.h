@@ -37,6 +37,22 @@
 #define SCHEDULER_WRAPPER_MAX_FAIL_COUNT (SCHEDULER_CORE_MAX_MESSAGES * 3)
 #define SCHEDULER_WATCHDOG_TIMEOUT (10 * 1000) /* 10s */
 
+#define sched_log(level, args...) \
+	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, level, ## args)
+#define sched_logfl(level, format, args...) \
+	sched_log(level, FL(format), ## args)
+
+#define sched_fatal(format, args...) \
+	sched_logfl(QDF_TRACE_LEVEL_FATAL, format, ## args)
+#define sched_err(format, args...) \
+	sched_logfl(QDF_TRACE_LEVEL_ERROR, format, ## args)
+#define sched_warn(format, args...) \
+	sched_logfl(QDF_TRACE_LEVEL_WARN, format, ## args)
+#define sched_info(format, args...) \
+	sched_logfl(QDF_TRACE_LEVEL_INFO, format, ## args)
+#define sched_debug(format, args...) \
+	sched_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
+
 /**
  * struct scheduler_mq_type -  scheduler message queue
  * @mq_lock: message queue lock
