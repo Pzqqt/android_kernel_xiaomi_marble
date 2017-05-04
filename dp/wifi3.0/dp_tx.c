@@ -591,8 +591,15 @@ static qdf_nbuf_t dp_tx_prepare_raw(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	int32_t i;
 
 	struct dp_tx_sg_info_s *sg_info = &msdu_info->u.sg_info;
+	qdf_dot3_qosframe_t *qos_wh = (qdf_dot3_qosframe_t *) nbuf->data;
 
 	DP_STATS_INC_PKT(vdev, tx_i.raw.raw_pkt, 1, qdf_nbuf_len(nbuf));
+
+	/* SWAR for HW: Enable WEP bit in the AMSDU frames for RAW mode */
+	if ((qos_wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_QOS)
+			&& (qos_wh->i_qos[0] & IEEE80211_QOS_AMSDU)) {
+		qos_wh->i_fc[1] |= IEEE80211_FC1_WEP;
+	}
 
 	if (QDF_STATUS_SUCCESS != qdf_nbuf_map(vdev->osdev, nbuf,
 				QDF_DMA_TO_DEVICE)) {
@@ -603,7 +610,7 @@ static qdf_nbuf_t dp_tx_prepare_raw(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	}
 
 	for (curr_nbuf = nbuf, i = 0; curr_nbuf;
-				curr_nbuf = qdf_nbuf_next(nbuf), i++) {
+				curr_nbuf = qdf_nbuf_next(curr_nbuf), i++) {
 		seg_info->frags[i].paddr_lo =
 			qdf_nbuf_get_frag_paddr(curr_nbuf, 0);
 		seg_info->frags[i].paddr_hi = 0x0;
