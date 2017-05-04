@@ -444,7 +444,19 @@ static void hdd_process_regulatory_data(hdd_context_t *hdd_ctx,
 				cds_chan->max_bw = 5;
 			else if (wiphy_chan->flags & IEEE80211_CHAN_NO_20MHZ)
 				cds_chan->max_bw = 10;
-			else if (wiphy_chan->flags & IEEE80211_CHAN_NO_HT40)
+			/*
+			 * IEEE80211_CHAN_NO_HT40  is defined as 0x30 in kernel
+			 * 4th BIT representing IEEE80211_CHAN_NO_HT40PLUS
+			 * 5th BIT representing IEEE80211_CHAN_NO_HT40MINUS
+			 *
+			 * In order to claim no 40Mhz support value of
+			 * wiphy_chan->flags needs to be 0x30.
+			 * 0x20 and 0x10 values shows that either HT40+ or
+			 * HT40- is not supported based on BIT set but they
+			 * can support 40Mhz Operation.
+			 */
+			else if ((wiphy_chan->flags & IEEE80211_CHAN_NO_HT40) ==
+					IEEE80211_CHAN_NO_HT40)
 				cds_chan->max_bw = 20;
 			else if (wiphy_chan->flags & IEEE80211_CHAN_NO_80MHZ)
 				cds_chan->max_bw = 40;
