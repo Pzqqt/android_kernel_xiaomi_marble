@@ -15919,6 +15919,82 @@ static void sme_prepare_beacon_from_bss_descp(uint8_t *frame_buf,
 		     &bss_descp->ieFields, ie_len);
 }
 
+QDF_STATUS sme_get_rssi_snr_by_bssid(tHalHandle hal,
+				tCsrRoamProfile *profile,
+				const uint8_t *bssid,
+				int8_t *rssi, int8_t *snr)
+{
+	tSirBssDescription *bss_descp;
+	tCsrScanResultFilter *scan_filter;
+	struct scan_result_list *bss_list;
+	tScanResultHandle result_handle = NULL;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+
+	scan_filter = qdf_mem_malloc(sizeof(tCsrScanResultFilter));
+	if (NULL == scan_filter) {
+		sme_err("memory allocation failed");
+		status = QDF_STATUS_E_NOMEM;
+		goto free_scan_flter;
+	}
+
+	status = csr_roam_prepare_filter_from_profile(mac_ctx,
+						profile, scan_filter);
+	if (QDF_STATUS_SUCCESS != status) {
+		sme_err("prepare_filter failed");
+		goto free_scan_flter;
+	}
+
+	/* update filter to get scan result with just target BSSID */
+	if (NULL == scan_filter->BSSIDs.bssid) {
+		scan_filter->BSSIDs.bssid =
+			qdf_mem_malloc(sizeof(struct qdf_mac_addr));
+		if (scan_filter->BSSIDs.bssid == NULL) {
+			sme_err("malloc failed");
+			status = QDF_STATUS_E_NOMEM;
+			goto free_scan_flter;
+		}
+	}
+
+	scan_filter->BSSIDs.numOfBSSIDs = 1;
+	qdf_mem_copy(scan_filter->BSSIDs.bssid[0].bytes,
+		     bssid, sizeof(struct qdf_mac_addr));
+
+	status = csr_scan_get_result(mac_ctx, scan_filter, &result_handle);
+	if (QDF_STATUS_SUCCESS != status) {
+		sme_err("parse_scan_result failed");
+		goto free_scan_flter;
+	}
+
+	bss_list = (struct scan_result_list *)result_handle;
+	bss_descp = csr_get_fst_bssdescr_ptr(bss_list);
+	if (!bss_descp) {
+		sme_err("unable to fetch bss descriptor");
+		status = QDF_STATUS_E_FAULT;
+		goto free_scan_flter;
+	}
+
+	sme_debug("snr: %d, rssi: %d, raw_rssi: %d",
+		bss_descp->sinr, bss_descp->rssi, bss_descp->rssi_raw);
+
+	if (rssi)
+		*rssi = bss_descp->rssi;
+	if (snr)
+		*snr = bss_descp->sinr;
+
+free_scan_flter:
+	/* free scan filter and exit */
+	if (scan_filter) {
+		csr_free_scan_filter(mac_ctx, scan_filter);
+		qdf_mem_free(scan_filter);
+	}
+
+	if (result_handle)
+		csr_scan_result_purge(mac_ctx, result_handle);
+
+	return status;
+}
+
 QDF_STATUS sme_get_beacon_frm(tHalHandle hal, tCsrRoamProfile *profile,
 				const tSirMacAddr bssid,
 				uint8_t **frame_buf, uint32_t *frame_len,

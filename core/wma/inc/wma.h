@@ -276,8 +276,10 @@ enum ds_mode {
  * But, to maintain backward compatibility, the old
  * value is also preserved.
  */
-#define WMA_TGT_INVALID_SNR_OLD (-1)
-#define WMA_TGT_INVALID_SNR_NEW 0x127
+#define WMA_TGT_INVALID_SNR (0)
+
+#define WMA_TGT_IS_VALID_SNR(x)  (((x) >= 0 && (x) < 0x7f) ? true : false)
+#define WMA_TGT_IS_INVALID_SNR(x) (!WMA_TGT_IS_VALID_SNR(x))
 
 #define WMA_TX_Q_RECHECK_TIMER_WAIT      2      /* 2 ms */
 #define WMA_TX_Q_RECHECK_TIMER_MAX_WAIT  20     /* 20 ms */

@@ -3595,9 +3595,22 @@ QDF_STATUS wlan_hdd_get_rssi(hdd_adapter_t *pAdapter, int8_t *rssi_value)
 		} else {
 			/* update the adapter with the fresh results */
 			priv = hdd_request_priv(request);
-			pAdapter->rssi = priv->rssi;
-			if (pAdapter->rssi > 0)
-				pAdapter->rssi = 0;
+			/*
+			 * update rssi only if its valid else return previous
+			 * valid rssi.
+			 */
+			if (priv->rssi)
+				pAdapter->rssi = priv->rssi;
+
+			/*
+			 * for new connection there might be no valid previous
+			 * RSSI.
+			 */
+			if (!pAdapter->rssi) {
+				hdd_get_rssi_snr_by_bssid(pAdapter,
+					pHddStaCtx->conn_info.bssId.bytes,
+					&pAdapter->rssi, NULL);
+			}
 		}
 	}
 

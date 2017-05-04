@@ -3093,7 +3093,18 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 		return status;
 
 	wlan_hdd_get_station_stats(pAdapter);
-	sinfo->signal = pAdapter->hdd_stats.summary_stat.rssi;
+
+	if (pAdapter->hdd_stats.summary_stat.rssi)
+		pAdapter->rssi = pAdapter->hdd_stats.summary_stat.rssi;
+
+	/* for new connection there might be no valid previous RSSI */
+	if (!pAdapter->rssi) {
+		hdd_get_rssi_snr_by_bssid(pAdapter,
+				pHddStaCtx->conn_info.bssId.bytes,
+				&pAdapter->rssi, NULL);
+	}
+
+	sinfo->signal = pAdapter->rssi;
 	snr = pAdapter->hdd_stats.summary_stat.snr;
 	hdd_debug("snr: %d, rssi: %d",
 		pAdapter->hdd_stats.summary_stat.snr,
