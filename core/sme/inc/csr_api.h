@@ -1241,8 +1241,8 @@ typedef struct tagCsrConfigParam {
 	bool isRoamOffloadScanEnabled;
 	bool bFastRoamInConIniFeatureEnabled;
 	uint8_t scanCfgAgingTime;
-	uint8_t enableTxLdpc;
-	uint8_t enableRxLDPC;
+	uint8_t enable_tx_ldpc;
+	uint8_t enable_rx_ldpc;
 	uint8_t isAmsduSupportInAMPDU;
 	uint8_t nSelect5GHzMargin;
 	uint8_t isCoalesingInIBSSAllowed;

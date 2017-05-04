@@ -2717,8 +2717,8 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->roam.configParam.htSmps = pParam->htSmps;
 		pMac->roam.configParam.send_smps_action =
 			pParam->send_smps_action;
-		pMac->roam.configParam.txLdpcEnable = pParam->enableTxLdpc;
-		pMac->roam.configParam.rxLdpcEnable = pParam->enableRxLDPC;
+		pMac->roam.configParam.tx_ldpc_enable = pParam->enable_tx_ldpc;
+		pMac->roam.configParam.rx_ldpc_enable = pParam->enable_rx_ldpc;
 		pMac->roam.configParam.ignore_peer_erp_info =
 			pParam->ignore_peer_erp_info;
 		pMac->roam.configParam.isAmsduSupportInAMPDU =
@@ -2971,8 +2971,8 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	pParam->cc_switch_mode = cfg_params->cc_switch_mode;
 #endif
-	pParam->enableTxLdpc = cfg_params->txLdpcEnable;
-	pParam->enableRxLDPC = cfg_params->rxLdpcEnable;
+	pParam->enable_tx_ldpc = cfg_params->tx_ldpc_enable;
+	pParam->enable_rx_ldpc = cfg_params->rx_ldpc_enable;
 	pParam->isAmsduSupportInAMPDU = cfg_params->isAmsduSupportInAMPDU;
 	pParam->nSelect5GHzMargin = cfg_params->nSelect5GHzMargin;
 	pParam->isCoalesingInIBSSAllowed = cfg_params->isCoalesingInIBSSAllowed;
@@ -14523,7 +14523,7 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 			csr_join_req->isFastRoamIniFeatureEnabled = false;
 
 		csr_join_req->txLdpcIniFeatureEnabled =
-			(uint8_t) pMac->roam.configParam.txLdpcEnable;
+			(uint8_t) pMac->roam.configParam.tx_ldpc_enable;
 
 		if ((csr_is11h_supported(pMac)) &&
 			(WLAN_REG_IS_5GHZ_CH(pBssDescription->channelId)) &&
@@ -14546,7 +14546,7 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		    !policy_mgr_is_dbs_enable(pMac->psoc))
 			csr_set_ldpc_exception(pMac, pSession,
 					pBssDescription->channelId,
-					pMac->roam.configParam.rxLdpcEnable);
+					pMac->roam.configParam.rx_ldpc_enable);
 		qdf_mem_copy(&csr_join_req->htConfig,
 				&pSession->htConfig, sizeof(tSirHTConfig));
 		qdf_mem_copy(&csr_join_req->vht_config, &pSession->vht_config,
@@ -15361,7 +15361,7 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(tpAniSirGlobal pMac, uint32_t
 	pMsg->wps_state = pParam->wps_state;
 	pMsg->isCoalesingInIBSSAllowed = pMac->isCoalesingInIBSSAllowed;
 	pMsg->bssPersona = pParam->bssPersona;
-	pMsg->txLdpcIniFeatureEnabled = pMac->roam.configParam.txLdpcEnable;
+	pMsg->txLdpcIniFeatureEnabled = pMac->roam.configParam.tx_ldpc_enable;
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_VHT_SU_BEAMFORMEE_CAP, &value)
 					!= eSIR_SUCCESS)
@@ -15406,7 +15406,7 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(tpAniSirGlobal pMac, uint32_t
 		!policy_mgr_is_dbs_enable(pMac->psoc))
 		csr_set_ldpc_exception(pMac, pSession,
 				pMsg->channelId,
-				pMac->roam.configParam.rxLdpcEnable);
+				pMac->roam.configParam.rx_ldpc_enable);
 	qdf_mem_copy(&pMsg->vht_config,
 		     &pSession->vht_config,
 		     sizeof(pSession->vht_config));

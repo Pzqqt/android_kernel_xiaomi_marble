@@ -2180,13 +2180,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_TX_STBC_MIN,
 		     CFG_ENABLE_TX_STBC_MAX),
 
-	REG_VARIABLE(CFG_ENABLE_RX_LDPC, WLAN_PARAM_Integer,
-		     struct hdd_config, enableRxLDPC,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_RX_LDPC_DEFAULT,
-		     CFG_ENABLE_RX_LDPC_MIN,
-		     CFG_ENABLE_RX_LDPC_MAX),
-
 	REG_VARIABLE(CFG_PPS_ENABLE_5G_EBT, WLAN_PARAM_Integer,
 		     struct hdd_config, enable5gEBT,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -2389,11 +2382,18 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_SCAN_AGING_PARAM_MAX),
 
 	REG_VARIABLE(CFG_TX_LDPC_ENABLE_FEATURE, WLAN_PARAM_Integer,
-		     struct hdd_config, enableTxLdpc,
+		     struct hdd_config, enable_tx_ldpc,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
 		     CFG_TX_LDPC_ENABLE_FEATURE_DEFAULT,
 		     CFG_TX_LDPC_ENABLE_FEATURE_MIN,
 		     CFG_TX_LDPC_ENABLE_FEATURE_MAX),
+
+	REG_VARIABLE(CFG_ENABLE_RX_LDPC, WLAN_PARAM_Integer,
+		     struct hdd_config, enable_rx_ldpc,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_ENABLE_RX_LDPC_DEFAULT,
+		     CFG_ENABLE_RX_LDPC_MIN,
+		     CFG_ENABLE_RX_LDPC_MAX),
 
 	REG_VARIABLE(CFG_ENABLE_MCC_ADATIVE_SCHEDULER_ENABLED_NAME,
 		     WLAN_PARAM_Integer,
@@ -6361,7 +6361,7 @@ static bool hdd_update_ht_cap_in_cfg(hdd_context_t *hdd_ctx)
 	}
 	val16 = (uint16_t) val32;
 	ht_cap_info = (tSirMacHTCapabilityInfo *) &val16;
-	ht_cap_info->advCodingCap &= hdd_ctx->config->enableRxLDPC;
+	ht_cap_info->advCodingCap &= hdd_ctx->config->enable_rx_ldpc;
 	ht_cap_info->rxSTBC = QDF_MIN(ht_cap_info->rxSTBC,
 			hdd_ctx->config->enableRxSTBC);
 	ht_cap_info->txSTBC &= hdd_ctx->config->enableTxSTBC;
@@ -6478,7 +6478,7 @@ static bool hdd_update_vht_cap_in_cfg(hdd_context_t *hdd_ctx)
 		hdd_err("Could not get WNI_CFG_VHT_LDPC_CODING_CAP");
 	}
 	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_VHT_LDPC_CODING_CAP,
-			config->enableRxLDPC & val) == QDF_STATUS_E_FAILURE) {
+			config->enable_rx_ldpc & val) == QDF_STATUS_E_FAILURE) {
 		status = false;
 		hdd_err("Couldn't pass on WNI_CFG_VHT_LDPC_CODING_CAP to CFG");
 	}
@@ -7258,8 +7258,8 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 	/* Scan Results Aging Time out value */
 	smeConfig->csrConfig.scanCfgAgingTime = pConfig->scanAgingTimeout;
 
-	smeConfig->csrConfig.enableTxLdpc = pConfig->enableTxLdpc;
-	smeConfig->csrConfig.enableRxLDPC = pConfig->enableRxLDPC;
+	smeConfig->csrConfig.enable_tx_ldpc = pConfig->enable_tx_ldpc;
+	smeConfig->csrConfig.enable_rx_ldpc = pConfig->enable_rx_ldpc;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	smeConfig->csrConfig.cc_switch_mode = pConfig->WlanMccToSccSwitchMode;
 #endif
