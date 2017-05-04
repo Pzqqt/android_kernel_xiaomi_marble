@@ -838,7 +838,7 @@ void htt_tx_desc_set_chanfreq(void *htt_tx_desc, uint16_t chanfreq)
 	*chanfreq_field_ptr = chanfreq;
 }
 
-#if defined(FEATURE_TSO)
+#if defined(FEATURE_TSO) && defined(HELIUMPLUS)
 void
 htt_tx_desc_fill_tso_info(htt_pdev_handle pdev, void *desc,
 	 struct qdf_tso_info_t *tso_info);

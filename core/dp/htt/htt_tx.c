@@ -1404,7 +1404,7 @@ int htt_tx_ipa_uc_detach(struct htt_pdev_t *pdev)
 }
 #endif /* IPA_OFFLOAD */
 
-#if defined(FEATURE_TSO)
+#if defined(FEATURE_TSO) && defined(HELIUMPLUS)
 void
 htt_tx_desc_fill_tso_info(htt_pdev_handle pdev, void *desc,
 	 struct qdf_tso_info_t *tso_info)
@@ -1417,7 +1417,7 @@ htt_tx_desc_fill_tso_info(htt_pdev_handle pdev, void *desc,
 	word = (u_int32_t *)(desc);
 
 	/* Initialize the TSO flags per MSDU */
-	((struct msdu_ext_desc_t *)msdu_ext_desc)->tso_flags =
+	msdu_ext_desc->tso_flags =
 		 tso_seg->seg.tso_flags;
 
 	/* First 24 bytes (6*4) contain the TSO flags */
