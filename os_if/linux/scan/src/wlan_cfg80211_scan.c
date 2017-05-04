@@ -34,7 +34,9 @@
 #include <wlan_cfg80211_scan.h>
 #include <qdf_mem.h>
 #include <wlan_utility.h>
+#ifdef WLAN_POLICY_MGR_ENABLE
 #include <wlan_policy_mgr_api.h>
+#endif
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
 static uint32_t hdd_config_sched_scan_start_delay(
@@ -973,17 +975,19 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 	if (request->n_channels) {
 		char chl[(request->n_channels * 5) + 1];
 		int len = 0;
+#ifdef WLAN_POLICY_MGR_ENABLE
 		bool ap_or_go_present =
 			policy_mgr_mode_specific_connection_count(
 			     psoc, QDF_SAP_MODE, NULL) ||
 			     policy_mgr_mode_specific_connection_count(
 			     psoc, QDF_P2P_GO_MODE, NULL);
+#endif
 
 		for (i = 0; i < request->n_channels; i++) {
 			channel = request->channels[i]->hw_value;
 			if (wlan_is_dsrc_channel(wlan_chan_to_freq(channel)))
 				continue;
-
+#ifdef WLAN_POLICY_MGR_ENABLE
 			if (ap_or_go_present) {
 				bool ok;
 				int ret;
@@ -1001,6 +1005,7 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 				if (!ok)
 					continue;
 			}
+#endif
 
 			len += snprintf(chl + len, 5, "%d ", channel);
 			req->scan_req.chan_list[i] = wlan_chan_to_freq(channel);
