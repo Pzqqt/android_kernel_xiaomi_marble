@@ -9364,6 +9364,7 @@ static int __wlan_hdd_cfg80211_set_fast_roaming(struct wiphy *wiphy,
 	int ret;
 	QDF_STATUS qdf_status;
 	unsigned long rc;
+	hdd_station_ctx_t *hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	ENTER_DEV(dev);
 
@@ -9408,8 +9409,10 @@ static int __wlan_hdd_cfg80211_set_fast_roaming(struct wiphy *wiphy,
 				qdf_status);
 	ret = qdf_status_to_os_return(qdf_status);
 
-	INIT_COMPLETION(adapter->lfr_fw_status.disable_lfr_event);
-	if (QDF_IS_STATUS_SUCCESS(qdf_status) && !enable_lfr_fw) {
+	if (eConnectionState_Associated == hdd_sta_ctx->conn_info.connState &&
+		QDF_IS_STATUS_SUCCESS(qdf_status) && !enable_lfr_fw) {
+
+		INIT_COMPLETION(adapter->lfr_fw_status.disable_lfr_event);
 		/*
 		 * wait only for LFR disable in fw as LFR enable
 		 * is always success
