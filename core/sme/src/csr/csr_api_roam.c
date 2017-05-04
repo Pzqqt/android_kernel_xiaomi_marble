@@ -14585,6 +14585,10 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		 * We need the power capabilities for Assoc Req.
 		 * This macro is provided by the halPhyCfg.h. We pick our
 		 * max and min capability by the halPhy provided macros
+		 * Any change in this power cap IE should also be done
+		 * in csr_update_driver_assoc_ies() which would send
+		 * assoc IE's to FW which is used for LFR3 roaming
+		 * ie. used in reassociation requests from FW.
 		 */
 		pwrLimit = csr_get_cfg_max_tx_power(pMac,
 					pBssDescription->channelId);
@@ -17628,8 +17632,11 @@ static void csr_update_driver_assoc_ies(tpAniSirGlobal mac_ctx,
 	if (session->pConnectBssDesc)
 		max_tx_pwr_cap = csr_get_cfg_max_tx_power(mac_ctx,
 				session->pConnectBssDesc->channelId);
-	if (max_tx_pwr_cap)
+
+	if (max_tx_pwr_cap && max_tx_pwr_cap < MAX_TX_PWR_CAP)
 		power_cap_ie_data[1] = max_tx_pwr_cap;
+	else
+		power_cap_ie_data[1] = MAX_TX_PWR_CAP;
 
 	wlan_cfg_get_int(mac_ctx, WNI_CFG_11H_ENABLED, &csr_11henable);
 
