@@ -1772,13 +1772,11 @@ void hdd_cfg80211_update_acs_config(hdd_adapter_t *adapter,
 		       true) ||
 	    nla_put_u8(skb, QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_CHAN_WIDTH,
 		       sap_config->acs_cfg.ch_width) ||
-	    nla_put(skb, QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_MAC_ADDR,
-		    QDF_MAC_ADDR_SIZE, adapter->macAddressCurrent.bytes) ||
 	    nla_put_u8(skb, QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_BAND,
 		       band) ||
 	    nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_PHY_MODE,
 		       phy_mode) ||
-	    nla_put(skb, QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_CHANLIST,
+	    nla_put(skb, QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_FREQ_LIST,
 		    channel_count, channel_list)) {
 		hdd_err("nla put fail");
 		goto fail;
