@@ -183,6 +183,70 @@ qdf_nbuf_free_t nbuf_free_cb;
  *
  * Return: nbuf or %NULL if no memory
  */
+#if defined(QCA_WIFI_QCA8074) && defined (BUILD_X86)
+struct sk_buff *__qdf_nbuf_alloc(qdf_device_t osdev, size_t size, int reserve,
+			 int align, int prio)
+{
+	struct sk_buff *skb;
+	unsigned long offset;
+	uint32_t lowmem_alloc_tries = 0;
+
+	if (align)
+		size += (align - 1);
+
+realloc:
+	skb = dev_alloc_skb(size);
+
+	if (!skb) {
+		pr_info("ERROR:NBUF alloc failed\n");
+		return NULL;
+	}
+
+	/* Hawkeye M2M emulation cannot handle memory addresses below 0x50000040
+	 * Though we are trying to reserve low memory upfront to prevent this,
+	 * we sometimes see SKBs allocated from low memory.
+	 */
+	if (virt_to_phys(qdf_nbuf_data(skb) < 0x50000040)) {
+		lowmem_alloc_tries++;
+		if (lowmem_alloc_tries > 100) {
+			qdf_print("%s Failed \n",__func__);
+			return NULL;
+		} else {
+			/* Not freeing to make sure it
+			 * will not get allocated again
+			 */
+			goto realloc;
+		}
+	}
+	memset(skb->cb, 0x0, sizeof(skb->cb));
+
+	/*
+	 * The default is for netbuf fragments to be interpreted
+	 * as wordstreams rather than bytestreams.
+	 */
+	QDF_NBUF_CB_TX_EXTRA_FRAG_WORDSTR_EFRAG(skb) = 1;
+	QDF_NBUF_CB_TX_EXTRA_FRAG_WORDSTR_NBUF(skb) = 1;
+
+	/*
+	 * XXX:how about we reserve first then align
+	 * Align & make sure that the tail & data are adjusted properly
+	 */
+
+	if (align) {
+		offset = ((unsigned long)skb->data) % align;
+		if (offset)
+			skb_reserve(skb, align - offset);
+	}
+
+	/*
+	 * NOTE:alloc doesn't take responsibility if reserve unaligns the data
+	 * pointer
+	 */
+	skb_reserve(skb, reserve);
+
+	return skb;
+}
+#else
 struct sk_buff *__qdf_nbuf_alloc(qdf_device_t osdev, size_t size, int reserve,
 			 int align, int prio)
 {
@@ -226,6 +290,7 @@ struct sk_buff *__qdf_nbuf_alloc(qdf_device_t osdev, size_t size, int reserve,
 
 	return skb;
 }
+#endif
 EXPORT_SYMBOL(__qdf_nbuf_alloc);
 
 /**
