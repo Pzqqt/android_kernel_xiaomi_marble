@@ -35,6 +35,8 @@ QDF_STATUS reg_is_country_code_valid(uint8_t alpha[3]);
 
 QDF_STATUS reg_regrules_assign(uint8_t dmn_id_2g,
 		uint8_t dmn_id_5g,
+		uint8_t ant_gain_2g,
+		uint8_t ant_gain_5g,
 		struct cur_regulatory_info *reg_info);
 
 QDF_STATUS reg_get_cur_reginfo(struct cur_regulatory_info *reg_info,

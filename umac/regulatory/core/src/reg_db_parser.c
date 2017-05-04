@@ -47,6 +47,8 @@ QDF_STATUS reg_is_country_code_valid(uint8_t alpha[3])
 
 QDF_STATUS reg_regrules_assign(uint8_t dmn_id_2g,
 	uint8_t dmn_id_5g,
+	uint8_t ant_gain_2g,
+	uint8_t ant_gain_5g,
 	struct cur_regulatory_info *reg_info)
 
 {
@@ -62,6 +64,7 @@ QDF_STATUS reg_regrules_assign(uint8_t dmn_id_2g,
 		r_r_2g->max_bw = reg_rules_2g[rule_index].max_bw;
 		r_r_2g->reg_power = reg_rules_2g[rule_index].reg_power;
 		r_r_2g->flags = reg_rules_2g[rule_index].flags;
+		r_r_2g->ant_gain = ant_gain_2g;
 		r_r_2g++;
 	}
 
@@ -72,6 +75,7 @@ QDF_STATUS reg_regrules_assign(uint8_t dmn_id_2g,
 		r_r_5g->max_bw = reg_rules_5g[rule_index].max_bw;
 		r_r_5g->reg_power = reg_rules_5g[rule_index].reg_power;
 		r_r_5g->flags = reg_rules_5g[rule_index].flags;
+		r_r_2g->ant_gain = ant_gain_5g;
 		r_r_5g++;
 	}
 
@@ -186,6 +190,7 @@ static inline QDF_STATUS reg_get_reginfo_form_country_code_and_regdmn_pair(
 {
 	uint8_t rule_size_2g, rule_size_5g;
 	uint8_t dmn_id_5g, dmn_id_2g;
+	uint8_t ant_gain_2g, ant_gain_5g;
 
 	dmn_id_5g = g_reg_dmn_pairs[regdmn_pair].dmn_id_5g;
 	dmn_id_2g = g_reg_dmn_pairs[regdmn_pair].dmn_id_2g;
@@ -204,11 +209,15 @@ static inline QDF_STATUS reg_get_reginfo_form_country_code_and_regdmn_pair(
 		reg_info->dfs_region = regdomains_5g[dmn_id_5g].dfs_region;
 		reg_info->phybitmap =
 			g_all_countries[country_index].phymode_bitmap;
+
 		reg_info->max_bw_2g = g_all_countries[country_index].max_bw_2g;
 		reg_info->max_bw_5g = g_all_countries[country_index].max_bw_5g;
 
 		reg_info->min_bw_2g = regdomains_2g[dmn_id_2g].min_bw;
 		reg_info->min_bw_5g = regdomains_5g[dmn_id_5g].min_bw;
+
+		ant_gain_2g = regdomains_2g[dmn_id_2g].ant_gain;
+		ant_gain_5g = regdomains_5g[dmn_id_5g].ant_gain;
 
 		reg_info->num_2g_reg_rules =
 			regdomains_2g[dmn_id_2g].num_reg_rules;
@@ -222,7 +231,8 @@ static inline QDF_STATUS reg_get_reginfo_form_country_code_and_regdmn_pair(
 			qdf_mem_malloc((reg_info->num_5g_reg_rules) *
 					sizeof(struct cur_reg_rule));
 
-		reg_regrules_assign(dmn_id_2g, dmn_id_5g, reg_info);
+		reg_regrules_assign(dmn_id_2g, dmn_id_5g,
+				ant_gain_2g, ant_gain_5g, reg_info);
 
 		return QDF_STATUS_SUCCESS;
 	} else if (!(((rule_size_2g + rule_size_5g) >=
@@ -239,6 +249,7 @@ static inline QDF_STATUS reg_get_reginfo_form_regdmn_pair(
 {
 	uint8_t rule_size_2g, rule_size_5g;
 	uint8_t dmn_id_5g, dmn_id_2g;
+	uint8_t ant_gain_2g, ant_gain_5g;
 
 	dmn_id_5g = g_reg_dmn_pairs[regdmn_pair].dmn_id_5g;
 	dmn_id_2g = g_reg_dmn_pairs[regdmn_pair].dmn_id_2g;
@@ -254,10 +265,15 @@ static inline QDF_STATUS reg_get_reginfo_form_regdmn_pair(
 
 		reg_info->dfs_region = regdomains_5g[dmn_id_5g].dfs_region;
 		reg_info->phybitmap = 0;
+
 		reg_info->max_bw_2g = 40;
 		reg_info->max_bw_5g = 160;
+
 		reg_info->min_bw_2g = regdomains_2g[dmn_id_2g].min_bw;
 		reg_info->min_bw_5g = regdomains_5g[dmn_id_5g].min_bw;
+
+		ant_gain_2g = regdomains_2g[dmn_id_2g].ant_gain;
+		ant_gain_5g = regdomains_5g[dmn_id_5g].ant_gain;
 
 		reg_info->num_2g_reg_rules =
 			regdomains_2g[dmn_id_2g].num_reg_rules;
@@ -271,7 +287,8 @@ static inline QDF_STATUS reg_get_reginfo_form_regdmn_pair(
 			qdf_mem_malloc((reg_info->num_5g_reg_rules) *
 					sizeof(struct cur_reg_rule));
 
-		reg_regrules_assign(dmn_id_2g, dmn_id_5g, reg_info);
+		reg_regrules_assign(dmn_id_2g, dmn_id_5g,
+			ant_gain_2g, ant_gain_5g, reg_info);
 
 		return QDF_STATUS_SUCCESS;
 	} else if (!(((rule_size_2g + rule_size_5g) >=

@@ -95,6 +95,7 @@ struct regdomain   {
 	uint8_t ctl_val;
 	enum dfs_reg dfs_region;
 	uint16_t min_bw;
+	uint8_t ant_gain;
 	uint8_t num_reg_rules;
 	uint8_t reg_rule_id[MAX_REG_RULES];
 };
