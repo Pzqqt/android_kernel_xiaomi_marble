@@ -2439,13 +2439,6 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, struct scheduler_msg *pMsg)
 		}
 		break;
 #endif
-	case eWNI_SME_LINK_SPEED_IND:
-		if (pMac->sme.pLinkSpeedIndCb)
-			pMac->sme.pLinkSpeedIndCb(pMsg->bodyptr,
-						pMac->sme.pLinkSpeedCbContext);
-		if (pMsg->bodyptr)
-			qdf_mem_free(pMsg->bodyptr);
-		break;
 	case eWNI_SME_CSA_OFFLOAD_EVENT:
 		if (pMsg->bodyptr) {
 			csr_scan_flush_bss_entry(pMac, pMsg->bodyptr);
@@ -9791,11 +9784,18 @@ QDF_STATUS sme_get_link_speed(tHalHandle hHal, tSirLinkSpeedInfo *lsReq,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac;
 	tSirLinkSpeedInfo *req;
-	struct scheduler_msg message = {0};
+	void *wma_handle;
 
 	if (!hHal || !pCallbackfn || !lsReq) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("Invalid parameter"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma_handle) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				"wma handle is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -9816,16 +9816,8 @@ QDF_STATUS sme_get_link_speed(tHalHandle hHal, tSirLinkSpeedInfo *lsReq,
 
 	pMac->sme.pLinkSpeedCbContext = plsContext;
 	pMac->sme.pLinkSpeedIndCb = pCallbackfn;
-
-	/* serialize the req through MC thread */
-	message.bodyptr = req;
-	message.type = WMA_GET_LINK_SPEED;
-	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
+	status = wma_get_link_speed(wma_handle, req);
 	sme_release_global_lock(&pMac->sme);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sme_err("%s: Post Link Speed msg fail", __func__);
-		qdf_mem_free(req);
-	}
 
 	return status;
 }

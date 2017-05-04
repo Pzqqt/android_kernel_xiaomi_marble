@@ -2784,24 +2784,28 @@ int wma_stats_event_handler(void *handle, uint8_t *cmd_param_info,
 QDF_STATUS wma_send_link_speed(uint32_t link_speed)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	struct scheduler_msg sme_msg = { 0 };
-	tSirLinkSpeedInfo *ls_ind =
-		(tSirLinkSpeedInfo *) qdf_mem_malloc(sizeof(tSirLinkSpeedInfo));
+	tpAniSirGlobal mac_ctx;
+	tSirLinkSpeedInfo *ls_ind;
+
+	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+	if (!mac_ctx) {
+		WMA_LOGD("%s: NULL pMac ptr. Exiting", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	ls_ind = (tSirLinkSpeedInfo *)qdf_mem_malloc(sizeof(tSirLinkSpeedInfo));
 	if (!ls_ind) {
 		WMA_LOGE("%s: Memory allocation failed.", __func__);
 		qdf_status = QDF_STATUS_E_NOMEM;
 	} else {
 		ls_ind->estLinkSpeed = link_speed;
-		sme_msg.type = eWNI_SME_LINK_SPEED_IND;
-		sme_msg.bodyptr = ls_ind;
-		sme_msg.bodyval = 0;
+		if (mac_ctx->sme.pLinkSpeedIndCb)
+			mac_ctx->sme.pLinkSpeedIndCb(ls_ind,
+					mac_ctx->sme.pLinkSpeedCbContext);
+		else
+			WMA_LOGD("%s: pLinkSpeedIndCb is null", __func__);
+		qdf_mem_free(ls_ind);
 
-		qdf_status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			WMA_LOGE("%s: Fail to post linkspeed ind  msg",
-				 __func__);
-			qdf_mem_free(ls_ind);
-		}
 	}
 	return qdf_status;
 }

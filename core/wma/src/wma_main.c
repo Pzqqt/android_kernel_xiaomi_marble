@@ -6653,10 +6653,6 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, struct scheduler_msg *msg)
 					  (tDisableIntraBssFwd *) msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
-	case WMA_GET_LINK_SPEED:
-		wma_get_link_speed(wma_handle, msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
 	case WMA_MODEM_POWER_STATE_IND:
 		wma_notify_modem_power_state(wma_handle,
 				(tSirModemPowerStateInd *) msg->bodyptr);
