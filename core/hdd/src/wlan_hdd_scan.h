@@ -109,5 +109,15 @@ int wlan_hdd_vendor_abort_scan(
 void wlan_hdd_cfg80211_abort_scan(struct wiphy *wiphy,
 				  struct wireless_dev *wdev);
 #endif
+
+/**
+ * wlan_hdd_cfg80211_scan_block_cb() - scan block work handler
+ * @work: Pointer to work
+ *
+ * This function is used to do scan block work handler
+ *
+ * Return: none
+ */
+void wlan_hdd_cfg80211_scan_block_cb(struct work_struct *work);
 #endif /* end #if !defined(WLAN_HDD_SCAN_H) */
 

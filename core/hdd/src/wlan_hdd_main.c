@@ -441,6 +441,7 @@ static int __hdd_netdev_notifier_call(struct notifier_block *nb,
 			wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
 				adapter->sessionId, INVALID_SCAN_ID, true);
 		} else {
+			cds_flush_work(&adapter->scan_block_work);
 			hdd_debug("Scan is not Pending from user");
 		}
 		break;
@@ -3750,6 +3751,8 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 		QDF_ASSERT(0);
 		return NULL;
 	}
+
+	INIT_WORK(&adapter->scan_block_work, wlan_hdd_cfg80211_scan_block_cb);
 
 	cfgState = WLAN_HDD_GET_CFG_STATE_PTR(adapter);
 	mutex_init(&cfgState->remain_on_chan_ctx_lock);

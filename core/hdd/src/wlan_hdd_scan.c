@@ -1378,13 +1378,7 @@ static bool wlan_hdd_sap_skip_scan_check(hdd_context_t *hdd_ctx,
 }
 #endif
 
-/**
- * wlan_hdd_cfg80211_scan_block_cb() - scan block work handler
- * @work: Pointer to work
- *
- * Return: none
- */
-static void wlan_hdd_cfg80211_scan_block_cb(struct work_struct *work)
+void wlan_hdd_cfg80211_scan_block_cb(struct work_struct *work)
 {
 	hdd_adapter_t *adapter = container_of(work,
 					      hdd_adapter_t, scan_block_work);
@@ -1600,8 +1594,6 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 			pAdapter->request = request;
 			pAdapter->scan_source = source;
 
-			INIT_WORK(&pAdapter->scan_block_work,
-				  wlan_hdd_cfg80211_scan_block_cb);
 			schedule_work(&pAdapter->scan_block_work);
 			return 0;
 		}
@@ -1675,8 +1667,6 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 		hdd_debug("sap scan skipped");
 		pAdapter->request = request;
 		pAdapter->scan_source = source;
-		INIT_WORK(&pAdapter->scan_block_work,
-			wlan_hdd_cfg80211_scan_block_cb);
 		schedule_work(&pAdapter->scan_block_work);
 		return 0;
 	}
