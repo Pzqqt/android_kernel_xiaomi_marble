@@ -2184,6 +2184,9 @@ QDF_STATUS reg_get_current_cc(struct wlan_objmgr_psoc *psoc,
 
 	if (rd->flags == CC_IS_SET) {
 		rd->cc.country_code = soc_reg->ctry_code;
+	} else if (rd->flags == ALPHA_IS_SET) {
+		qdf_mem_copy(rd->cc.alpha, soc_reg->current_country,
+				sizeof(rd->cc.alpha));
 	}
 
 	return QDF_STATUS_SUCCESS;
