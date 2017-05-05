@@ -1452,7 +1452,7 @@ static int wlan_hdd_update_scan_ies(hdd_adapter_t *adapter,
 	uint8_t *current_ie;
 	uint8_t elem_id;
 	uint16_t elem_len;
-	bool add_ie;
+	bool add_ie = false;
 
 	if (!scan_info->default_scan_ies_len || !scan_info->default_scan_ies)
 		return 0;
