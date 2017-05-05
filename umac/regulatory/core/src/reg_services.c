@@ -2062,6 +2062,9 @@ QDF_STATUS reg_program_default_cc(struct wlan_objmgr_psoc *psoc,
 		err = reg_get_cur_reginfo(reg_info, country_index, regdmn_pair);
 		if (err == QDF_STATUS_E_FAILURE) {
 			reg_err("%s : Unable to set country code\n", __func__);
+			qdf_mem_free(reg_info->reg_rules_2g_ptr);
+			qdf_mem_free(reg_info->reg_rules_5g_ptr);
+			qdf_mem_free(reg_info);
 			return QDF_STATUS_E_FAILURE;
 		}
 
@@ -2074,6 +2077,9 @@ QDF_STATUS reg_program_default_cc(struct wlan_objmgr_psoc *psoc,
 		err = reg_get_cur_reginfo(reg_info, country_index, regdmn_pair);
 		if (err == QDF_STATUS_E_FAILURE) {
 			reg_err("%s : Unable to set country code\n", __func__);
+			qdf_mem_free(reg_info->reg_rules_2g_ptr);
+			qdf_mem_free(reg_info->reg_rules_5g_ptr);
+			qdf_mem_free(reg_info);
 			return QDF_STATUS_E_FAILURE;
 		}
 
@@ -2082,6 +2088,10 @@ QDF_STATUS reg_program_default_cc(struct wlan_objmgr_psoc *psoc,
 
 	reg_info->offload_enabled = false;
 	reg_process_master_chan_list(reg_info);
+
+	qdf_mem_free(reg_info->reg_rules_2g_ptr);
+	qdf_mem_free(reg_info->reg_rules_5g_ptr);
+	qdf_mem_free(reg_info);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -2094,13 +2104,6 @@ QDF_STATUS reg_program_chan_list(struct wlan_objmgr_psoc *psoc,
 	uint16_t country_index = -1, regdmn_pair = -1;
 	QDF_STATUS err;
 
-	reg_info = (struct cur_regulatory_info *)qdf_mem_malloc
-		(sizeof(struct cur_regulatory_info));
-	if (reg_info == NULL) {
-		reg_err("reg info is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-
 	soc_reg = (struct wlan_regulatory_psoc_priv_obj *)
 		wlan_objmgr_psoc_get_comp_private_obj(psoc,
 				WLAN_UMAC_COMP_REGULATORY);
@@ -2112,6 +2115,13 @@ QDF_STATUS reg_program_chan_list(struct wlan_objmgr_psoc *psoc,
 
 	if (soc_reg->offload_enabled)
 		return QDF_STATUS_E_FAILURE;
+
+	reg_info = (struct cur_regulatory_info *)qdf_mem_malloc
+		(sizeof(struct cur_regulatory_info));
+	if (reg_info == NULL) {
+		reg_err("reg info is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	reg_info->psoc = psoc;
 
@@ -2131,6 +2141,9 @@ QDF_STATUS reg_program_chan_list(struct wlan_objmgr_psoc *psoc,
 	err = reg_get_cur_reginfo(reg_info, country_index, regdmn_pair);
 	if (err == QDF_STATUS_E_FAILURE) {
 		reg_err("%s : Unable to set country code\n", __func__);
+		qdf_mem_free(reg_info->reg_rules_2g_ptr);
+		qdf_mem_free(reg_info->reg_rules_5g_ptr);
+		qdf_mem_free(reg_info);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -2145,6 +2158,9 @@ QDF_STATUS reg_program_chan_list(struct wlan_objmgr_psoc *psoc,
 
 	reg_info->offload_enabled = false;
 	reg_process_master_chan_list(reg_info);
+	qdf_mem_free(reg_info->reg_rules_2g_ptr);
+	qdf_mem_free(reg_info->reg_rules_5g_ptr);
+	qdf_mem_free(reg_info);
 
 	return QDF_STATUS_SUCCESS;
 }
