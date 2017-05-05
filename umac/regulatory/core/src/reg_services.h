@@ -187,6 +187,9 @@ QDF_STATUS reg_get_current_chan_list(struct wlan_objmgr_pdev *pdev,
 				     struct regulatory_channel
 				     *chan_list);
 
+QDF_STATUS reg_program_chan_list(struct wlan_objmgr_psoc *psoc,
+		struct cc_regdmn_s *rd);
+
 void reg_update_nol_ch(struct wlan_objmgr_pdev *pdev, uint8_t *ch_list,
 		       uint8_t num_ch, bool nol_ch);
 

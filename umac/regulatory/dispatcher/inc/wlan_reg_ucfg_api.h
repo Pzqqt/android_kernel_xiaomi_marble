@@ -49,6 +49,9 @@ QDF_STATUS ucfg_reg_init_handler(uint8_t pdev_id);
 QDF_STATUS ucfg_reg_program_default_cc(struct wlan_objmgr_psoc *psoc,
 		uint16_t regdmn);
 
+QDF_STATUS ucfg_reg_program_cc(struct wlan_objmgr_psoc *psoc,
+		struct cc_regdmn_s *rd);
+
 /**
  * ucfg_reg_set_config_vars () - Set the config vars in reg component
  * @psoc: psoc ptr

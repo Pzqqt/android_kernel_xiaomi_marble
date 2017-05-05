@@ -2085,3 +2085,66 @@ QDF_STATUS reg_program_default_cc(struct wlan_objmgr_psoc *psoc,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS reg_program_chan_list(struct wlan_objmgr_psoc *psoc,
+		struct cc_regdmn_s *rd)
+{
+	struct cur_regulatory_info *reg_info;
+	struct wlan_regulatory_psoc_priv_obj *soc_reg;
+	uint16_t country_index = -1, regdmn_pair = -1;
+	QDF_STATUS err;
+
+	reg_info = (struct cur_regulatory_info *)qdf_mem_malloc
+		(sizeof(struct cur_regulatory_info));
+	if (reg_info == NULL) {
+		reg_err("reg info is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	soc_reg = (struct wlan_regulatory_psoc_priv_obj *)
+		wlan_objmgr_psoc_get_comp_private_obj(psoc,
+				WLAN_UMAC_COMP_REGULATORY);
+
+	if (NULL == soc_reg) {
+		reg_err("soc_reg is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (soc_reg->offload_enabled)
+		return QDF_STATUS_E_FAILURE;
+
+	reg_info->psoc = psoc;
+
+	if (rd->flags == CC_IS_SET) {
+		reg_get_rdpair_from_country_code(rd->cc.country_code,
+				&country_index,
+				&regdmn_pair);
+	} else if (rd->flags == ALPHA_IS_SET) {
+		reg_get_rdpair_from_country_iso(rd->cc.alpha,
+				&country_index,
+				&regdmn_pair);
+	} else if (rd->flags == REGDMN_IS_SET) {
+		reg_get_rdpair_from_regdmn_id(rd->cc.regdmn_id,
+				&regdmn_pair);
+	}
+
+	err = reg_get_cur_reginfo(reg_info, country_index, regdmn_pair);
+	if (err == QDF_STATUS_E_FAILURE) {
+		reg_err("%s : Unable to set country code\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (rd->flags == CC_IS_SET ||
+			rd->flags == ALPHA_IS_SET) {
+		soc_reg->ctry_code =
+			g_all_countries[country_index].country_code;
+	}
+
+	if (rd->flags == REGDMN_IS_SET)
+		soc_reg->reg_dmn_pair = rd->cc.regdmn_id;
+
+	reg_info->offload_enabled = false;
+	reg_process_master_chan_list(reg_info);
+
+	return QDF_STATUS_SUCCESS;
+}
