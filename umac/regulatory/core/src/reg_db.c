@@ -858,21 +858,21 @@ const struct regdomain regdomains_5g[] = {
 						       CHAN_5735_5835_5} },
 };
 
-QDF_STATUS get_num_countries(int *num_countries)
+QDF_STATUS reg_get_num_countries(int *num_countries)
 {
 	*num_countries = QDF_ARRAY_SIZE(g_all_countries);
 
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS get_num_reg_dmn_pairs(int *num_reg_dmn)
+QDF_STATUS reg_get_num_reg_dmn_pairs(int *num_reg_dmn)
 {
 	*num_reg_dmn = QDF_ARRAY_SIZE(g_reg_dmn_pairs);
 
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS get_default_country(uint16_t *default_country)
+QDF_STATUS reg_get_default_country(uint16_t *default_country)
 {
 	*default_country = CTRY_UNITED_STATES;
 

@@ -32,7 +32,7 @@ QDF_STATUS reg_is_country_code_valid(uint8_t alpha[3])
 	uint16_t i;
 	int num_countries;
 
-	get_num_countries(&num_countries);
+	reg_get_num_countries(&num_countries);
 
 	for (i = 0; i < num_countries; i++) {
 		if ((g_all_countries[i].alpha2[0] == alpha[0]) &&
@@ -95,8 +95,8 @@ QDF_STATUS reg_get_rdpair_from_country_iso(uint8_t *alpha,
 	int num_countries;
 	int num_reg_dmn;
 
-	get_num_countries(&num_countries);
-	get_num_reg_dmn_pairs(&num_reg_dmn);
+	reg_get_num_countries(&num_countries);
+	reg_get_num_reg_dmn_pairs(&num_reg_dmn);
 
 	for (i = 0; i < num_countries; i++) {
 		if ((g_all_countries[i].alpha2[0] == alpha[0]) &&
@@ -133,7 +133,7 @@ QDF_STATUS reg_get_rdpair_from_regdmn_id(uint16_t regdmn_id,
 	uint16_t j;
 	int num_reg_dmn;
 
-	get_num_reg_dmn_pairs(&num_reg_dmn);
+	reg_get_num_reg_dmn_pairs(&num_reg_dmn);
 
 	for (j = 0; j < num_reg_dmn; j++) {
 		if (g_reg_dmn_pairs[j].reg_dmn_pair_id == regdmn_id)
@@ -158,8 +158,8 @@ QDF_STATUS reg_get_rdpair_from_country_code(uint16_t cc,
 	int num_countries;
 	int num_reg_dmn;
 
-	get_num_countries(&num_countries);
-	get_num_reg_dmn_pairs(&num_reg_dmn);
+	reg_get_num_countries(&num_countries);
+	reg_get_num_reg_dmn_pairs(&num_reg_dmn);
 
 	for (i = 0; i < num_countries; i++) {
 		if (g_all_countries[i].country_code == cc)

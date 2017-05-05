@@ -146,10 +146,10 @@ enum ctl_value {
 	CTL_NONE = 0xff
 };
 
-QDF_STATUS get_num_countries(int *num_countries);
+QDF_STATUS reg_get_num_countries(int *num_countries);
 
-QDF_STATUS get_num_reg_dmn_pairs(int *num_reg_dmn);
+QDF_STATUS reg_get_num_reg_dmn_pairs(int *num_reg_dmn);
 
-QDF_STATUS get_default_country(uint16_t *default_country);
+QDF_STATUS reg_get_default_country(uint16_t *default_country);
 
 #endif

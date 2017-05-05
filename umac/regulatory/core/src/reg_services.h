@@ -230,4 +230,7 @@ void reg_program_mas_chan_list(struct wlan_objmgr_psoc *psoc,
 
 QDF_STATUS reg_program_default_cc(struct wlan_objmgr_psoc *psoc,
 		uint16_t regdmn);
+
+QDF_STATUS reg_get_current_cc(struct wlan_objmgr_psoc *psoc,
+		struct cc_regdmn_s *rd);
 #endif

@@ -2048,7 +2048,7 @@ QDF_STATUS reg_program_default_cc(struct wlan_objmgr_psoc *psoc,
 	reg_info->psoc = psoc;
 
 	if (regdmn == 0) {
-		get_default_country(&regdmn);
+		reg_get_default_country(&regdmn);
 		regdmn |= COUNTRY_ERD_FLAG;
 	}
 
@@ -2161,6 +2161,30 @@ QDF_STATUS reg_program_chan_list(struct wlan_objmgr_psoc *psoc,
 	qdf_mem_free(reg_info->reg_rules_2g_ptr);
 	qdf_mem_free(reg_info->reg_rules_5g_ptr);
 	qdf_mem_free(reg_info);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS reg_get_current_cc(struct wlan_objmgr_psoc *psoc,
+		struct cc_regdmn_s *rd)
+{
+	struct wlan_regulatory_psoc_priv_obj *soc_reg;
+
+	soc_reg = (struct wlan_regulatory_psoc_priv_obj *)
+		wlan_objmgr_psoc_get_comp_private_obj(psoc,
+				WLAN_UMAC_COMP_REGULATORY);
+
+	if (NULL == soc_reg) {
+		reg_err("reg soc is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (soc_reg->offload_enabled)
+		return QDF_STATUS_E_FAILURE;
+
+	if (rd->flags == CC_IS_SET) {
+		rd->cc.country_code = soc_reg->ctry_code;
+	}
 
 	return QDF_STATUS_SUCCESS;
 }

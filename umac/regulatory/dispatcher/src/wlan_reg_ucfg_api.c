@@ -125,3 +125,9 @@ QDF_STATUS ucfg_reg_program_cc(struct wlan_objmgr_psoc *psoc,
 {
 	return reg_program_chan_list(psoc, rd);
 }
+
+QDF_STATUS ucfg_reg_get_current_cc(struct wlan_objmgr_psoc *psoc,
+		struct cc_regdmn_s *rd)
+{
+	return reg_get_current_cc(psoc, rd);
+}
