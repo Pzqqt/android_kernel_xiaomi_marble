@@ -1207,6 +1207,13 @@ void policy_mgr_set_pcl_for_existing_combo(
 			info[MAX_NUMBER_OF_CONC_CONNECTIONS] = { {0} };
 	enum tQDF_ADAPTER_MODE pcl_mode;
 	uint8_t num_cxn_del = 0;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
 
 	switch (mode) {
 	case PM_STA_MODE:
@@ -1228,17 +1235,20 @@ void policy_mgr_set_pcl_for_existing_combo(
 		policy_mgr_err("Invalid mode to set PCL");
 		return;
 	};
-
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	if (policy_mgr_mode_specific_connection_count(psoc, mode, NULL) > 0) {
 		/* Check, store and temp delete the mode's parameter */
 		policy_mgr_store_and_del_conn_info(psoc, mode, false,
 						info, &num_cxn_del);
+		qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 		/* Set the PCL to the FW since connection got updated */
 		policy_mgr_pdev_set_pcl(psoc, pcl_mode);
 		policy_mgr_debug("Set PCL to FW for mode:%d", mode);
+		qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 		/* Restore the connection info */
 		policy_mgr_restore_deleted_conn_info(psoc, info, num_cxn_del);
 	}
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 }
 
 /**
