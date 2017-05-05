@@ -13833,6 +13833,8 @@ typedef struct {
     A_UINT32 nan_csid;
     /** Actual number of bytes in TLV nan_scid */
     A_UINT32 nan_scid_len;
+    /** Self NDI mac address */
+    wmi_mac_addr self_ndi_mac_addr;
     /**
      * TLV (tag length value) parameters follow the ndp_indication
      * structure. The TLV's are:
