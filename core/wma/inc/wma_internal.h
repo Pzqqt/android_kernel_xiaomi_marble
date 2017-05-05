@@ -62,7 +62,7 @@
  * similar to the mentioned the WMA
  */
 #define WMA_TGT_NOISE_FLOOR_DBM (-96)
-#define WMA_TGT_RSSI_INVALID      96
+#define WMA_TGT_MAX_SNR         (WMA_TGT_NOISE_FLOOR_DBM * (-1))
 
 /*
  * Make sure that link monitor and keep alive
