@@ -1116,6 +1116,7 @@ REGULATORY_INC := -I$(WLAN_COMMON_INC)/$(REGULATORY_CORE_INC_DIR)
 REGULATORY_INC += -I$(WLAN_COMMON_INC)/$(REG_DISPATCHER_INC_DIR)
 REGULATORY_OBJS := $(REG_CORE_OBJ_DIR)/reg_db.o \
                    $(REG_CORE_OBJ_DIR)/reg_services.o \
+                   $(REG_CORE_OBJ_DIR)/reg_db_parser.o \
                    $(REG_DISPATCHER_OBJ_DIR)/wlan_reg_services_api.o \
                    $(REG_DISPATCHER_OBJ_DIR)/wlan_reg_tgt_api.o \
                    $(REG_DISPATCHER_OBJ_DIR)/wlan_reg_ucfg_api.o
