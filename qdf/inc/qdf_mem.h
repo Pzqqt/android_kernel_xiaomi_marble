@@ -76,32 +76,22 @@ struct qdf_mem_multi_page_t {
 /* Preprocessor definitions and constants */
 
 typedef __qdf_mempool_t qdf_mempool_t;
-#ifdef MEMORY_DEBUG
-void qdf_mem_clean(void);
 
+/**
+ * qdf_mem_init() - Initialize QDF memory module
+ *
+ * Return: None
+ *
+ */
 void qdf_mem_init(void);
 
+/**
+ * qdf_mem_exit() - Exit QDF memory module
+ *
+ * Return: None
+ *
+ */
 void qdf_mem_exit(void);
-
-#else
-/**
- * qdf_mem_init() - initialize qdf memory debug functionality
- *
- * Return: none
- */
-static inline void qdf_mem_init(void)
-{
-}
-
-/**
- * qdf_mem_exit() - exit qdf memory debug functionality
- *
- * Return: none
- */
-static inline void qdf_mem_exit(void)
-{
-}
-#endif
 
 #ifdef MEMORY_DEBUG
 #define qdf_mem_malloc(size) \
