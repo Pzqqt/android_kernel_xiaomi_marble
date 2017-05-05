@@ -531,13 +531,16 @@ static void lim_get_keys(tpPESession pe_session)
 	struct pe_fils_session *fils_info = pe_session->fils_info;
 	uint8_t key_data[MAX_ICK_LEN + MAX_KEK_LEN + MAX_TK_LEN] = {0};
 	uint8_t key_data_len;
-	uint8_t ick_len = lim_get_ick_len(fils_info->akm);
-	uint8_t kek_len = lim_get_kek_len(fils_info->akm);
+	uint8_t ick_len;
+	uint8_t kek_len;
 	uint8_t tk_len = lim_get_tk_len(pe_session->encryptType);
 	uint8_t *buf;
 
 	if (!fils_info)
 		return;
+
+	ick_len = lim_get_ick_len(fils_info->akm);
+	kek_len = lim_get_kek_len(fils_info->akm);
 
 	key_data_len = ick_len + kek_len + tk_len;
 
@@ -703,7 +706,7 @@ static QDF_STATUS lim_process_auth_wrapped_data(tpPESession pe_session,
 	uint8_t type;
 	unsigned long flags;
 	struct pe_fils_session *fils_info;
-	uint8_t hash[32], crypto;
+	uint8_t hash[32] = {0}, crypto;
 	uint32_t remaining_len = data_len, new_len;
 	uint8_t *input_data[1];
 	uint32_t input_len[1];
@@ -1156,9 +1159,11 @@ void lim_update_fils_config(tpPESession session,
 		qdf_mem_free(csr_fils_info->keyname_nai_data);
 		return;
 	}
-	qdf_mem_copy(csr_fils_info->fils_r_rk,
-			fils_config_info->r_rk,
-			fils_config_info->r_rk_length);
+
+	if (fils_config_info->r_rk_length <= FILS_MAX_RRK_LENGTH)
+		qdf_mem_copy(csr_fils_info->fils_r_rk,
+				fils_config_info->r_rk,
+				fils_config_info->r_rk_length);
 
 	qdf_mem_copy(csr_fils_info->fils_pmkid,
 			fils_config_info->pmkid, PMKID_LEN);

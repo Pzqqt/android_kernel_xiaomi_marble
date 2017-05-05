@@ -8056,12 +8056,14 @@ bool lim_check_if_vendor_oui_match(tpAniSirGlobal mac_ctx,
 			       uint8_t *ie, uint8_t ie_len)
 {
 	uint8_t *ptr = ie;
-	uint8_t elem_id = *ie;
+	uint8_t elem_id;
 
 	if (NULL == ie || 0 == ie_len) {
 		pe_err("IE Null or ie len zero %d", ie_len);
 		return false;
 	}
+
+	elem_id = *ie;
 
 	if (elem_id == IE_EID_VENDOR &&
 		!qdf_mem_cmp(&ptr[2], oui, oui_len))
