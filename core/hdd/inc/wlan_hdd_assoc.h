@@ -45,7 +45,7 @@
 #define HDD_MAX_NUM_TDLS_STA          8
 #define HDD_MAX_NUM_TDLS_STA_P_UAPSD_OFFCHAN  1
 #define TDLS_STA_INDEX_VALID(staId) \
-	(((staId) >= 1) && ((staId) < 0xFF))
+	(((staId) >= 0) && ((staId) < 0xFF))
 #endif
 #define TKIP_COUNTER_MEASURE_STARTED 1
 #define TKIP_COUNTER_MEASURE_STOPED  0

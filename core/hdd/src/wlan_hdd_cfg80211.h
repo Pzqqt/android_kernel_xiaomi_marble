@@ -117,6 +117,8 @@ static inline void wlan_hdd_clear_link_layer_stats(hdd_adapter_t *adapter) {}
 #define USE_CFG80211_DEL_STA_V2
 #endif
 
+#define OL_TXRX_INVALID_TDLS_PEER_ID 0xff
+
 /**
  * enum eDFS_CAC_STATUS: CAC status
  *
