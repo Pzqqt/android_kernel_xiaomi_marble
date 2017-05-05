@@ -35,7 +35,7 @@
  */
 
 /* Include files */
-#include "wmi_unified.h"
+#include <wmi_unified_api.h>
 
 #define POLICY_MGR_MAX_CHANNEL_LIST 128
 
