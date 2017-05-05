@@ -25,6 +25,7 @@
 #include <qdf_types.h>
 #include "reg_db_parser.h"
 #include <qdf_mem.h>
+#include "reg_priv.h"
 
 QDF_STATUS reg_is_country_code_valid(uint8_t alpha[3])
 {
@@ -78,6 +79,10 @@ QDF_STATUS reg_regrules_assign(uint8_t dmn_id_2g,
 		r_r_2g->ant_gain = ant_gain_5g;
 		r_r_5g++;
 	}
+
+	if ((r_r_2g == reg_info->reg_rules_2g_ptr) &&
+			(r_r_5g == reg_info->reg_rules_5g_ptr))
+		return QDF_STATUS_E_FAILURE;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -191,6 +196,7 @@ static inline QDF_STATUS reg_get_reginfo_form_country_code_and_regdmn_pair(
 	uint8_t rule_size_2g, rule_size_5g;
 	uint8_t dmn_id_5g, dmn_id_2g;
 	uint8_t ant_gain_2g, ant_gain_5g;
+	QDF_STATUS err;
 
 	dmn_id_5g = g_reg_dmn_pairs[regdmn_pair].dmn_id_5g;
 	dmn_id_2g = g_reg_dmn_pairs[regdmn_pair].dmn_id_2g;
@@ -231,8 +237,14 @@ static inline QDF_STATUS reg_get_reginfo_form_country_code_and_regdmn_pair(
 			qdf_mem_malloc((reg_info->num_5g_reg_rules) *
 					sizeof(struct cur_reg_rule));
 
-		reg_regrules_assign(dmn_id_2g, dmn_id_5g,
+		err = reg_regrules_assign(dmn_id_2g, dmn_id_5g,
 				ant_gain_2g, ant_gain_5g, reg_info);
+
+		if (err == QDF_STATUS_E_FAILURE) {
+			reg_err("%s : No rule found for country index = %d regdmn_pair = %d\n",
+					__func__, country_index, regdmn_pair);
+			return QDF_STATUS_E_FAILURE;
+		}
 
 		return QDF_STATUS_SUCCESS;
 	} else if (!(((rule_size_2g + rule_size_5g) >=
@@ -250,6 +262,7 @@ static inline QDF_STATUS reg_get_reginfo_form_regdmn_pair(
 	uint8_t rule_size_2g, rule_size_5g;
 	uint8_t dmn_id_5g, dmn_id_2g;
 	uint8_t ant_gain_2g, ant_gain_5g;
+	QDF_STATUS err;
 
 	dmn_id_5g = g_reg_dmn_pairs[regdmn_pair].dmn_id_5g;
 	dmn_id_2g = g_reg_dmn_pairs[regdmn_pair].dmn_id_2g;
@@ -287,8 +300,13 @@ static inline QDF_STATUS reg_get_reginfo_form_regdmn_pair(
 			qdf_mem_malloc((reg_info->num_5g_reg_rules) *
 					sizeof(struct cur_reg_rule));
 
-		reg_regrules_assign(dmn_id_2g, dmn_id_5g,
+		err = reg_regrules_assign(dmn_id_2g, dmn_id_5g,
 			ant_gain_2g, ant_gain_5g, reg_info);
+		if (err == QDF_STATUS_E_FAILURE) {
+			reg_err("%s : No rule found for regdmn_pair = %d\n",
+					__func__, regdmn_pair);
+			return QDF_STATUS_E_FAILURE;
+		}
 
 		return QDF_STATUS_SUCCESS;
 	} else if (!(((rule_size_2g + rule_size_5g) >=
@@ -305,13 +323,13 @@ QDF_STATUS reg_get_cur_reginfo(struct cur_regulatory_info *reg_info,
 		uint16_t regdmn_pair)
 {
 	if ((country_index != (uint16_t)(-1)) &&
-		(regdmn_pair != (uint16_t)(-1)))
-		reg_get_reginfo_form_country_code_and_regdmn_pair(
+			(regdmn_pair != (uint16_t)(-1)))
+		return reg_get_reginfo_form_country_code_and_regdmn_pair(
 				reg_info,
 				country_index,
 				regdmn_pair);
 	else if (regdmn_pair != (uint16_t)(-1))
-		reg_get_reginfo_form_regdmn_pair(
+		return reg_get_reginfo_form_regdmn_pair(
 				reg_info,
 				regdmn_pair);
 	else
