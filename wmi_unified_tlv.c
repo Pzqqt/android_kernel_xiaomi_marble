@@ -17174,6 +17174,7 @@ static QDF_STATUS extract_reg_chan_list_update_event_tlv(
 			REG_ALPHA2_LEN);
 	reg_info->dfs_region = chan_list_event_hdr->dfs_region;
 	reg_info->phybitmap = chan_list_event_hdr->phybitmap;
+	reg_info->offload_enabled = true;
 	reg_info->min_bw_2g = chan_list_event_hdr->min_bw_2g;
 	reg_info->max_bw_2g = chan_list_event_hdr->max_bw_2g;
 	reg_info->min_bw_5g = chan_list_event_hdr->min_bw_5g;
