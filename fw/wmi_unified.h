@@ -931,6 +931,7 @@ typedef enum {
     WMI_OEM_REQUEST_CMDID, /* UNUSED */
     /* OEM related cmd used for Low Power ranging */
     WMI_LPI_OEM_REQ_CMDID,
+    WMI_OEM_DMA_RING_CFG_REQ_CMDID,
 
     /** Nan Request */
     WMI_NAN_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_NAN),
@@ -1461,6 +1462,8 @@ typedef enum {
     WMI_OEM_MEASUREMENT_REPORT_EVENTID, /* DEPRECATED */
     WMI_OEM_ERROR_REPORT_EVENTID, /* DEPRECATED */
     WMI_OEM_RESPONSE_EVENTID,
+    WMI_OEM_DMA_RING_CFG_RSP_EVENTID,
+    WMI_OEM_DMA_BUF_RELEASE_EVENTID,
 
     /* NAN Event */
     WMI_NAN_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_NAN),
@@ -13297,6 +13300,109 @@ typedef struct{
 } wmi_tpc_chainmask_config_cmd_fixed_param;
 
 typedef struct {
+    A_UINT32 tlv_header;        /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_oem_dma_ring_cfg_req_fixed_param */
+    A_UINT32 pdev_id;
+    /**
+     * Bits 31:0:   base address of ring [31:0]
+     */
+    A_UINT32 base_addr_lo;
+    /**
+     * Bits 3:0:    base address of ring [35:32]
+     * Bits 31:4:   reserved
+     */
+    A_UINT32 base_addr_hi;
+    /**
+     * Bits 31:0:   address of head index [31:0]
+     */
+    A_UINT32 head_idx_addr_lo;
+    /**
+     * Bits 3:0:    address of head index [35:32]
+     * Bits 31:4:   reserved
+     */
+    A_UINT32 head_idx_addr_hi;
+    /**
+     * Bits 31:0:   address of tail index [31:0]
+     */
+    A_UINT32 tail_idx_addr_lo;
+    /**
+     * Bits 3:0:    address of tail index [35:32]
+     * Bits 31:4:   reserved
+     */
+    A_UINT32 tail_idx_addr_hi;
+    A_UINT32 num_ptr;           /** Number of pointers in the ring */
+} wmi_oem_dma_ring_cfg_req_fixed_param;
+
+#define WMI_OEM_DMA_RING_ADDR_LO_S 0
+#define WMI_OEM_DMA_RING_ADDR_LO 0xffffffff
+
+#define WMI_OEM_DMA_RING_ADDR_LO_GET(dword) WMI_F_MS(dword, WMI_OEM_DMA_RING_ADDR_LO)
+#define WMI_OEM_DMA_RING_ADDR_LO_SET(dword, val) WMI_F_RMW(dword, val, WMI_OEM_DMA_RING_ADDR_LO)
+
+#define WMI_OEM_DMA_RING_ADDR_HI_S 0
+#define WMI_OEM_DMA_RING_ADDR_HI 0xf
+
+#define WMI_OEM_DMA_RING_ADDR_HI_GET(dword) WMI_F_MS(dword, WMI_OEM_DMA_RING_ADDR_HI)
+#define WMI_OEM_DMA_RING_ADDR_HI_SET(dword, val) WMI_F_RMW(dword, val, WMI_OEM_DMA_RING_ADDR_HI)
+
+typedef struct {
+    A_UINT32 tlv_header;    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_oem_dma_ring_cfg_rsp_fixed_param */
+    A_UINT32 pdev_id;
+    A_UINT32 cfg_status;    /** Configuration status; see A_STATUS */
+} wmi_oem_dma_ring_cfg_rsp_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header;    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_oem_indirect_data */
+    A_UINT32 pdev_id;       /** ID of pdev whose OEM DMA ring produced the data */
+    /**
+     * Bits 31:0:   address of data [31:0]
+     */
+    A_UINT32 addr_lo;
+    /**
+     * Bits 3:0:    address of data [35:32]
+     * Bits 11:4:   reserved
+     * Bits 31:12:  opaque host context data [19:0]
+     */
+    A_UINT32 addr_hi;
+    A_UINT32 len;           /** Length of data in bytes */
+} wmi_oem_indirect_data;
+
+#define WMI_OEM_DMA_DATA_ADDR_LO_S 0
+#define WMI_OEM_DMA_DATA_ADDR_LO 0xffffffff
+
+#define WMI_OEM_DMA_DATA_ADDR_LO_GET(dword) WMI_F_MS(dword, WMI_OEM_DMA_DATA_ADDR_LO)
+#define WMI_OEM_DMA_DATA_ADDR_LO_SET(dword, val) WMI_F_RMW(dword, val, WMI_OEM_DMA_DATA_ADDR_LO)
+
+#define WMI_OEM_DMA_DATA_ADDR_HI_S 0
+#define WMI_OEM_DMA_DATA_ADDR_HI 0xf
+
+#define WMI_OEM_DMA_DATA_ADDR_HI_GET(dword) WMI_F_MS(dword, WMI_OEM_DMA_DATA_ADDR_HI)
+#define WMI_OEM_DMA_DATA_ADDR_HI_SET(dword, val) WMI_F_RMW(dword, val, WMI_OEM_DMA_DATA_ADDR_HI)
+
+#define WMI_OEM_DMA_DATA_ADDR_HI_HOST_DATA_S 12
+#define WMI_OEM_DMA_DATA_ADDR_HI_HOST_DATA 0xfffff
+
+#define WMI_OEM_DMA_DATA_ADDR_HI_HOST_DATA_GET(dword) WMI_F_MS(dword, WMI_OEM_DMA_DATA_ADDR_HI_HOST_DATA)
+#define WMI_OEM_DMA_DATA_ADDR_HI_HOST_DATA_SET(dword, val) WMI_F_RMW(dword, val, WMI_OEM_DMA_DATA_ADDR_HI_HOST_DATA)
+
+typedef struct {
+    A_UINT32 tlv_header;    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_oem_dma_buf_release_hdr */
+    A_UINT32 pdev_id;       /** ID of pdev whose OEM DMA ring produced the data */
+} wmi_oem_dma_buf_release_fixed_param;
+
+typedef struct {
+    /**
+     * Bits 31:0:   address of data [31:0]
+     */
+    A_UINT32 addr_lo;
+    /**
+     * Bits 3:0:    address of data [35:32]
+     * Bits 11:4:   reserved
+     * Bits 31:12:  host context data [19:0]
+     */
+    A_UINT32 addr_hi;
+} wmi_oem_dma_buf_release_entry;
+
+typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_nan_cmd_param */
     A_UINT32 data_len; /** length in byte of data[]. */
 /* This structure is used to send REQ binary blobs
@@ -18325,6 +18431,17 @@ typedef struct {
 } WMI_SOC_HAL_REG_CAPABILITIES;
 
 typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_WMI_OEM_DMA_RING_CAPABILITIES */
+    A_UINT32 pdev_id;
+    A_UINT32 min_num_ptr;
+    /* Minimum number of pointers in the OEM DMA ring for this pdev */
+    A_UINT32 min_buf_size;
+    /* Minimum size in bytes of each buffer in the OEM DMA ring */
+    A_UINT32 min_buf_align;
+    /* Minimum alignment in bytes of each buffer in the OEM DMA ring */
+} WMI_OEM_DMA_RING_CAPABILITIES;
+
+typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_scan_adaptive_dwell_parameters_tlv */
     /** global default adaptive dwell mode, used when WMI_SCAN_DWELL_MODE_DEFAULT */
     A_UINT32 default_adaptive_dwell_mode;
@@ -19056,6 +19173,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_SET_INIT_COUNTRY_CMDID);
         WMI_RETURN_STRING(WMI_SET_SCAN_DBS_DUTY_CYCLE_CMDID);
         WMI_RETURN_STRING(WMI_THERM_THROT_SET_CONF_CMDID);
+        WMI_RETURN_STRING(WMI_OEM_DMA_RING_CFG_REQ_CMDID);
     }
 
     return "Invalid WMI cmd";
