@@ -2016,3 +2016,72 @@ void reg_program_mas_chan_list(struct wlan_objmgr_psoc *psoc,
 				     NULL, 1, WLAN_REGULATORY_SB_ID);
 
 }
+
+QDF_STATUS reg_program_default_cc(struct wlan_objmgr_psoc *psoc,
+		uint16_t regdmn)
+{
+	struct wlan_regulatory_psoc_priv_obj *soc_reg;
+	struct cur_regulatory_info *reg_info;
+	uint16_t cc = -1;
+	uint16_t country_index = -1, regdmn_pair = -1;
+	QDF_STATUS err;
+
+	soc_reg = (struct wlan_regulatory_psoc_priv_obj *)
+		wlan_objmgr_psoc_get_comp_private_obj(psoc,
+				WLAN_UMAC_COMP_REGULATORY);
+
+	if (NULL == soc_reg) {
+		reg_err("reg soc is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (soc_reg->offload_enabled)
+		return QDF_STATUS_E_FAILURE;
+
+	reg_info = (struct cur_regulatory_info *)qdf_mem_malloc
+		(sizeof(struct cur_regulatory_info));
+	if (reg_info == NULL) {
+		reg_err("reg info is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	reg_info->psoc = psoc;
+
+	if (regdmn == 0) {
+		get_default_country(&regdmn);
+		regdmn |= COUNTRY_ERD_FLAG;
+	}
+
+	if (regdmn & COUNTRY_ERD_FLAG) {
+		cc = regdmn & ~COUNTRY_ERD_FLAG;
+
+		reg_get_rdpair_from_country_code(cc,
+				&country_index,
+				&regdmn_pair);
+
+		err = reg_get_cur_reginfo(reg_info, country_index, regdmn_pair);
+		if (err == QDF_STATUS_E_FAILURE) {
+			reg_err("%s : Unable to set country code\n", __func__);
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		soc_reg->ctry_code = cc;
+
+	} else {
+		reg_get_rdpair_from_regdmn_id(regdmn,
+				&regdmn_pair);
+
+		err = reg_get_cur_reginfo(reg_info, country_index, regdmn_pair);
+		if (err == QDF_STATUS_E_FAILURE) {
+			reg_err("%s : Unable to set country code\n", __func__);
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		soc_reg->reg_dmn_pair = regdmn;
+	}
+
+	reg_info->offload_enabled = false;
+	reg_process_master_chan_list(reg_info);
+
+	return QDF_STATUS_SUCCESS;
+}

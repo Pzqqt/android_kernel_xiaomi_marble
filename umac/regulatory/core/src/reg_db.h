@@ -149,7 +149,6 @@ QDF_STATUS get_num_countries(int *num_countries);
 
 QDF_STATUS get_num_reg_dmn_pairs(int *num_reg_dmn);
 
-QDF_STATUS get_default_country_2g(int *default_country);
+QDF_STATUS get_default_country(uint16_t *default_country);
 
-QDF_STATUS get_default_country_5g(int *default_country);
 #endif

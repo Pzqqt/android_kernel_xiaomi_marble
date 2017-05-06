@@ -49,3 +49,5 @@ QDF_STATUS reg_get_rdpair_from_country_code(uint16_t cc,
 		uint16_t *country_index,
 		uint16_t *regdmn_pair);
 
+QDF_STATUS reg_get_rdpair_from_regdmn_id(uint16_t regdmn_id,
+		uint16_t *regdmn_pair);

@@ -46,6 +46,9 @@ QDF_STATUS ucfg_reg_unregister_event_handler(uint8_t vdev_id, reg_event_cb cb,
 		void *arg);
 QDF_STATUS ucfg_reg_init_handler(uint8_t pdev_id);
 
+QDF_STATUS ucfg_reg_program_default_cc(struct wlan_objmgr_psoc *psoc,
+		uint16_t regdmn);
+
 /**
  * ucfg_reg_set_config_vars () - Set the config vars in reg component
  * @psoc: psoc ptr

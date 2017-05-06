@@ -872,16 +872,9 @@ QDF_STATUS get_num_reg_dmn_pairs(int *num_reg_dmn)
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS get_default_country_2g(int *default_country)
+QDF_STATUS get_default_country(uint16_t *default_country)
 {
-	*default_country = WORLD_2G_3;
-
-	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS get_default_country_5g(int *default_country)
-{
-	*default_country = WORLD_5G_2;
+	*default_country = CTRY_UNITED_STATES;
 
 	return QDF_STATUS_SUCCESS;
 }
