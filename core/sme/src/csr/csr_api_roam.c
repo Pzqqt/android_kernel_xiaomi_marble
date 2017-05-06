@@ -6742,7 +6742,7 @@ static void csr_roam_process_start_bss_success(tpAniSirGlobal mac_ctx,
 			return;
 		}
 	}
-	if (!CSR_IS_INFRA_AP(profile)) {
+	if (!CSR_IS_INFRA_AP(profile) && !CSR_IS_NDI(profile)) {
 		scan_res =
 			csr_scan_append_bss_description(mac_ctx,
 					bss_desc, ies_ptr, false,
