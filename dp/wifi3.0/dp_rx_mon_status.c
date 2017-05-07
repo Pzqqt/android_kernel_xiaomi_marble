@@ -25,6 +25,8 @@
 #include "hal_api_mon.h"
 #include "ieee80211.h"
 #include "dp_rx_mon.h"
+#include "dp_internal.h"
+#include "qdf_mem.h"   /* qdf_mem_malloc,free */
 
 
 /**
@@ -44,7 +46,7 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 	qdf_nbuf_t status_nbuf;
 	uint8_t *rx_tlv;
 	uint8_t *rx_tlv_start;
-	uint32_t tlv_status;
+	uint32_t tlv_status = HAL_TLV_STATUS_DUMMY;
 
 #ifdef DP_INTR_POLL_BASED
 	if (!pdev)
@@ -62,16 +64,24 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 		rx_tlv = qdf_nbuf_data(status_nbuf);
 		rx_tlv_start = rx_tlv;
 
-		do {
-			tlv_status = hal_rx_status_get_tlv_info(rx_tlv,
-				ppdu_info);
-			rx_tlv = hal_rx_status_get_next_tlv(rx_tlv);
+#if defined(CONFIG_WIN) && WDI_EVENT_ENABLE
+#ifndef REMOVE_PKT_LOG
+		dp_wdi_event_handler(WDI_EVENT_RX_DESC, soc,
+			status_nbuf, HTT_INVALID_PEER, WDI_NO_VAL, 0);
+#endif
+#endif
+		if (pdev->monitor_vdev != NULL) {
 
-			if ((rx_tlv - rx_tlv_start) >= RX_BUFFER_SIZE)
-				break;
+			do {
+				tlv_status = hal_rx_status_get_tlv_info(rx_tlv,
+						ppdu_info);
+				rx_tlv = hal_rx_status_get_next_tlv(rx_tlv);
 
-		} while (tlv_status == HAL_TLV_STATUS_PPDU_NOT_DONE);
+				if ((rx_tlv - rx_tlv_start) >= RX_BUFFER_SIZE)
+					break;
 
+			} while (tlv_status == HAL_TLV_STATUS_PPDU_NOT_DONE);
+		}
 		qdf_nbuf_free(status_nbuf);
 
 		if (tlv_status == HAL_TLV_STATUS_PPDU_DONE) {

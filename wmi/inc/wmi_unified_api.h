@@ -426,14 +426,14 @@ QDF_STATUS wmi_unified_wow_remove_wakeup_pattern_send(void *wmi_hdl,
 
 #ifndef CONFIG_MCL
 QDF_STATUS wmi_unified_packet_log_enable_send(void *wmi_hdl,
-				WMI_HOST_PKTLOG_EVENT PKTLOG_EVENT);
+			WMI_HOST_PKTLOG_EVENT PKTLOG_EVENT, uint8_t mac_id);
 #else
 QDF_STATUS wmi_unified_packet_log_enable_send(void *wmi_hdl,
 				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct packet_enable_params *param);
 #endif
 
-QDF_STATUS wmi_unified_packet_log_disable_send(void *wmi_hdl);
+QDF_STATUS wmi_unified_packet_log_disable_send(void *wmi_hdl, uint8_t mac_id);
 
 QDF_STATUS wmi_unified_suspend_send(void *wmi_hdl,
 				struct suspend_params *param,

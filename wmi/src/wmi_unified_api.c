@@ -648,13 +648,13 @@ QDF_STATUS wmi_unified_packet_log_enable_send(void *wmi_hdl,
  *  Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS wmi_unified_packet_log_enable_send(void *wmi_hdl,
-				WMI_HOST_PKTLOG_EVENT PKTLOG_EVENT)
+			WMI_HOST_PKTLOG_EVENT PKTLOG_EVENT, uint8_t mac_id)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
 	if (wmi_handle->ops->send_packet_log_enable_cmd)
 		return wmi_handle->ops->send_packet_log_enable_cmd(wmi_handle,
-				  PKTLOG_EVENT);
+				  PKTLOG_EVENT, mac_id);
 
 	return QDF_STATUS_E_FAILURE;
 }
@@ -666,12 +666,13 @@ QDF_STATUS wmi_unified_packet_log_enable_send(void *wmi_hdl,
  *  @param PKTLOG_EVENT    : packet log event
  *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-QDF_STATUS wmi_unified_packet_log_disable_send(void *wmi_hdl)
+QDF_STATUS wmi_unified_packet_log_disable_send(void *wmi_hdl, uint8_t mac_id)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
 	if (wmi_handle->ops->send_packet_log_disable_cmd)
-		return wmi_handle->ops->send_packet_log_disable_cmd(wmi_handle);
+		return wmi_handle->ops->send_packet_log_disable_cmd(wmi_handle,
+			mac_id);
 
 	return QDF_STATUS_E_FAILURE;
 }

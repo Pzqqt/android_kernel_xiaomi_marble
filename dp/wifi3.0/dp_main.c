@@ -37,6 +37,7 @@
 #include "dp_peer.h"
 #include "dp_rx_mon.h"
 #include "htt_stats.h"
+#include "qdf_mem.h"   /* qdf_mem_malloc,free */
 
 #define DP_INTR_POLL_TIMER_MS	10
 #define DP_MCS_LENGTH (6*MAX_MCS)
@@ -468,7 +469,7 @@ static QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
 
 			if (rx_mon_mask & (1 << j)) {
 				irq_id_map[num_irq++] =
-					(rxdma2host_monitor_destination_mac1
+					(ppdu_end_interrupts_mac1
 					 - j);
 			}
 
@@ -1294,8 +1295,14 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	/* Rx monitor mode specific init */
 	if (dp_rx_pdev_mon_attach(pdev)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		"dp_rx_pdev_attach failed\n");
-		goto fail0;
+				"dp_rx_pdev_attach failed\n");
+		goto fail1;
+	}
+
+	if (dp_wdi_event_attach(pdev)) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+				"dp_wdi_evet_attach failed\n");
+		goto fail1;
 	}
 
 	/* set the reo destination to 1 during initialization */
@@ -1369,6 +1376,8 @@ static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)txrx_pdev;
 	struct dp_soc *soc = pdev->soc;
+
+	dp_wdi_event_detach(pdev);
 
 	dp_tx_pdev_detach(pdev);
 
@@ -3872,6 +3881,8 @@ static struct cdp_ctrl_ops dp_ops_ctrl = {
 	.txrx_update_filter_neighbour_peers =
 		dp_update_filter_neighbour_peers,
 	/* TODO: Add other functions */
+	.txrx_wdi_event_sub = dp_wdi_event_sub,
+	.txrx_wdi_event_unsub = dp_wdi_event_unsub,
 };
 
 static struct cdp_me_ops dp_ops_me = {
@@ -4103,3 +4114,106 @@ fail1:
 fail0:
 	return NULL;
 }
+
+#if defined(CONFIG_WIN) && WDI_EVENT_ENABLE
+/*
+* dp_set_pktlog_wifi3() - attach txrx vdev
+* @pdev: Datapath PDEV handle
+* @event: which event's notifications are being subscribed to
+* @enable: WDI event subscribe or not. (True or False)
+*
+* Return: Success, NULL on failure
+*/
+int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
+	bool enable)
+{
+	struct dp_soc *soc = pdev->soc;
+	struct htt_rx_ring_tlv_filter htt_tlv_filter = {0};
+
+	if (enable) {
+		switch (event) {
+		case WDI_EVENT_RX_DESC:
+			if (pdev->monitor_vdev) {
+				/* Nothing needs to be done if monitor mode is
+				 * enabled
+				 */
+				return 0;
+			}
+			if (pdev->rx_pktlog_mode != DP_RX_PKTLOG_FULL) {
+				pdev->rx_pktlog_mode = DP_RX_PKTLOG_FULL;
+				htt_tlv_filter.mpdu_start = 1;
+				htt_tlv_filter.msdu_start = 1;
+				htt_tlv_filter.msdu_end = 1;
+				htt_tlv_filter.mpdu_end = 1;
+				htt_tlv_filter.packet_header = 1;
+				htt_tlv_filter.attention = 1;
+				htt_tlv_filter.ppdu_start = 1;
+				htt_tlv_filter.ppdu_end = 1;
+				htt_tlv_filter.ppdu_end_user_stats = 1;
+				htt_tlv_filter.ppdu_end_user_stats_ext = 1;
+				htt_tlv_filter.ppdu_end_status_done = 1;
+				htt_tlv_filter.enable_fp = 1;
+
+				htt_h2t_rx_ring_cfg(soc->htt_handle,
+					pdev->pdev_id,
+					pdev->rxdma_mon_status_ring.hal_srng,
+					RXDMA_MONITOR_STATUS, RX_BUFFER_SIZE,
+					&htt_tlv_filter);
+			}
+			break;
+		case WDI_EVENT_LITE_RX:
+			if (pdev->monitor_vdev) {
+				/* Nothing needs to be done if monitor mode is
+				 * enabled
+				 */
+				return 0;
+			}
+			if (pdev->rx_pktlog_mode != DP_RX_PKTLOG_LITE) {
+				pdev->rx_pktlog_mode = DP_RX_PKTLOG_LITE;
+				htt_tlv_filter.ppdu_start = 1;
+				htt_tlv_filter.ppdu_end = 1;
+				htt_tlv_filter.ppdu_end_user_stats = 1;
+				htt_tlv_filter.ppdu_end_user_stats_ext = 1;
+				htt_tlv_filter.ppdu_end_status_done = 1;
+				htt_tlv_filter.enable_fp = 1;
+
+				htt_h2t_rx_ring_cfg(soc->htt_handle,
+					pdev->pdev_id,
+					pdev->rxdma_mon_status_ring.hal_srng,
+					RXDMA_MONITOR_STATUS,
+					RX_BUFFER_SIZE_PKTLOG_LITE,
+					&htt_tlv_filter);
+			}
+			break;
+		default:
+			/* Nothing needs to be done for other pktlog types */
+			break;
+		}
+	} else {
+		switch (event) {
+		case WDI_EVENT_RX_DESC:
+		case WDI_EVENT_LITE_RX:
+			if (pdev->monitor_vdev) {
+				/* Nothing needs to be done if monitor mode is
+				 * enabled
+				 */
+				return 0;
+			}
+			if (pdev->rx_pktlog_mode != DP_RX_PKTLOG_DISABLED) {
+				pdev->rx_pktlog_mode = DP_RX_PKTLOG_DISABLED;
+				/* htt_tlv_filter is initialized to 0 */
+				htt_h2t_rx_ring_cfg(soc->htt_handle,
+					pdev->pdev_id,
+					pdev->rxdma_mon_status_ring.hal_srng,
+					RXDMA_MONITOR_STATUS, RX_BUFFER_SIZE,
+					&htt_tlv_filter);
+			}
+			break;
+		default:
+			/* Nothing needs to be done for other pktlog types */
+			break;
+		}
+	}
+	return 0;
+}
+#endif

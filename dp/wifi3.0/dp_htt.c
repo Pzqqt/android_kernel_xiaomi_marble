@@ -24,10 +24,12 @@
 #include "dp_internal.h"
 #include "dp_rx_mon.h"
 #include "htt_stats.h"
+#include "qdf_mem.h"   /* qdf_mem_malloc,free */
 
 #define HTT_TLV_HDR_LEN HTT_T2H_EXT_STATS_CONF_TLV_HDR_SIZE
 
 #define HTT_HTC_PKT_POOL_INIT_SIZE 64
+#define HTT_T2H_MAX_MSG_SIZE 2048
 
 #define HTT_MSG_BUF_SIZE(msg_bytes) \
 	((msg_bytes) + HTC_HEADER_LEN + HTC_HDR_ALIGNMENT_PADDING)
@@ -1149,18 +1151,27 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 				msg_word, msg_word + 2);
 			break;
 		}
-#ifdef notyet
+#if defined(CONFIG_WIN) && WDI_EVENT_ENABLE
 #ifndef REMOVE_PKT_LOG
 	case HTT_T2H_MSG_TYPE_PKTLOG:
 		{
 			u_int32_t *pl_hdr;
 			pl_hdr = (msg_word + 1);
-			wdi_event_handler(WDI_EVENT_OFFLOAD_ALL, soc->dp_soc,
-				pl_hdr, HTT_INVALID_PEER, WDI_NO_VAL);
+			dp_wdi_event_handler(WDI_EVENT_OFFLOAD_ALL, soc->dp_soc,
+				(void *)pl_hdr, HTT_INVALID_PEER, WDI_NO_VAL, 0);
+			break;
+		}
+	case HTT_T2H_MSG_TYPE_PPDU_STATS_IND:
+		{
+			qdf_nbuf_set_pktlen(htt_t2h_msg, HTT_T2H_MAX_MSG_SIZE);
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+				"received HTT_T2H_MSG_TYPE_PPDU_STATS_IND\n");
+			dp_wdi_event_handler(WDI_EVENT_LITE_T2H, soc->dp_soc,
+				htt_t2h_msg, HTT_INVALID_PEER, WDI_NO_VAL, 0);
 			break;
 		}
 #endif
-#endif /* notyet */
+#endif
 	case HTT_T2H_MSG_TYPE_VERSION_CONF:
 		{
 			soc->tgt_ver.major = HTT_VER_CONF_MAJOR_GET(*msg_word);

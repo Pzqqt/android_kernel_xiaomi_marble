@@ -29,7 +29,7 @@
 #define RX_BUFFER_ALIGNMENT     4
 #endif /* RXDMA_OPTIMIZATION */
 
-#define RX_BUFFER_SIZE          2048
+#define RX_BUFFER_SIZE			2048
 #define RX_BUFFER_RESERVATION   0
 
 #define DP_PEER_METADATA_PEER_ID_MASK	0x0000ffff

@@ -89,6 +89,14 @@
 #define DP_MAX_INTERRUPT_CONTEXTS 8
 #define DP_MAX_MECT_ENTRIES 64
 
+#ifndef REMOVE_PKT_LOG
+enum rx_pktlog_mode {
+	DP_RX_PKTLOG_DISABLED = 0,
+	DP_RX_PKTLOG_FULL,
+	DP_RX_PKTLOG_LITE,
+};
+#endif
+
 struct dp_soc_cmn;
 struct dp_pdev;
 struct dp_vdev;
@@ -511,11 +519,6 @@ struct dp_soc {
 	/* Rx ring map for interrupt processing */
 	struct dp_srng *rx_ring_map[DP_MAX_RX_RINGS];
 
-#ifndef CONFIG_WIN
-	/* WDI event handlers */
-	struct wdi_event_subscribe_t **wdi_event_list;
-#endif
-
 	/* peer ID to peer object map (array of pointers to peer objects) */
 	struct dp_peer **peer_id_to_obj_map;
 
@@ -822,6 +825,14 @@ struct dp_pdev {
 
 	/* map this pdev to a particular Reo Destination ring */
 	enum cdp_host_reo_dest_ring reo_dest;
+
+#ifndef REMOVE_PKT_LOG
+	/* Packet log mode */
+	uint8_t rx_pktlog_mode;
+#endif
+
+	/* WDI event handlers */
+	struct wdi_event_subscribe_t **wdi_event_list;
 };
 
 struct dp_peer;
