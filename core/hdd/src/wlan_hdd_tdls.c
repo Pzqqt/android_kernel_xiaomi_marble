@@ -5808,7 +5808,7 @@ void wlan_hdd_tdls_implicit_send_discovery_request(tdlsCtx_t *hdd_tdls_ctx)
 					   eTDLS_LINK_DISCOVERING,
 					   eTDLS_LINK_SUCCESS);
 
-	hdd_info("Implicit TDLS, Send Discovery request event");
+	hdd_debug("Implicit TDLS, Send Discovery request event");
 	cfg80211_tdls_oper_request(hdd_tdls_ctx->pAdapter->dev,
 				   curr_peer->peerMac,
 				   NL80211_TDLS_DISCOVERY_REQ,
@@ -5821,7 +5821,7 @@ void wlan_hdd_tdls_implicit_send_discovery_request(tdlsCtx_t *hdd_tdls_ctx)
 				hdd_tdls_ctx->threshold_config.tx_period_t -
 				TDLS_DISCOVERY_TIMEOUT_BEFORE_UPDATE);
 
-	hdd_info("discovery count %u timeout %u msec",
+	hdd_debug("discovery count %u timeout %u msec",
 		 hdd_tdls_ctx->discovery_sent_cnt,
 		 hdd_tdls_ctx->threshold_config.tx_period_t -
 		 TDLS_DISCOVERY_TIMEOUT_BEFORE_UPDATE);
@@ -6049,7 +6049,7 @@ static void wlan_hdd_tdls_ct_process_cap_supported(hddTdlsPeer_t *curr_peer,
 						   hdd_context_t *hdd_ctx,
 						   tdlsCtx_t *hdd_tdls_ctx)
 {
-	hdd_info("tx %d, rx %d (thr.pkt %d/idle %d), rssi %d (thr.trig %d/tear %d)",
+	hdd_debug("tx %d, rx %d (thr.pkt %d/idle %d), rssi %d (thr.trig %d/tear %d)",
 		 curr_peer->tx_pkt, curr_peer->rx_pkt,
 		 hdd_tdls_ctx->threshold_config.tx_packet_n,
 		 hdd_tdls_ctx->threshold_config.idle_packet_n,
@@ -6093,7 +6093,7 @@ static void wlan_hdd_tdls_ct_process_cap_unknown(hddTdlsPeer_t *curr_peer,
 		return;
 	}
 
-	hdd_info("threshold_config.tx_packet_n = %d curr_peer->tx_pkt = %d curr_peer->rx_pkt = %d ",
+	hdd_debug("threshold_config.tx_packet_n = %d curr_peer->tx_pkt = %d curr_peer->rx_pkt = %d ",
 		hdd_tdls_ctx->threshold_config.tx_packet_n, curr_peer->tx_pkt,
 		curr_peer->rx_pkt);
 
@@ -6104,10 +6104,10 @@ static void wlan_hdd_tdls_ct_process_cap_unknown(hddTdlsPeer_t *curr_peer,
 		 * is, peer is forced. In that case, continue discovery attempt
 		 * regardless attempt count
 		 */
-		hdd_info("TDLS UNKNOWN pre discover ");
+		hdd_debug("TDLS UNKNOWN pre discover ");
 		if (curr_peer->isForcedPeer || curr_peer->discovery_attempt++ <
 		    hdd_tdls_ctx->threshold_config.discovery_tries_n) {
-			hdd_info("TDLS UNKNOWN discover ");
+			hdd_debug("TDLS UNKNOWN discover ");
 			hdd_tdls_ctx->curr_candidate = curr_peer;
 			wlan_hdd_tdls_implicit_send_discovery_request(hdd_tdls_ctx);
 		} else {
