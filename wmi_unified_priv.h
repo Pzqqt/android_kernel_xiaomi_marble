@@ -260,14 +260,15 @@ QDF_STATUS (*send_stats_request_cmd)(wmi_unified_t wmi_handle,
 
 #ifdef CONFIG_WIN
 QDF_STATUS (*send_packet_log_enable_cmd)(wmi_unified_t wmi_handle,
-				WMI_HOST_PKTLOG_EVENT PKTLOG_EVENT);
+			WMI_HOST_PKTLOG_EVENT PKTLOG_EVENT, uint8_t mac_id);
 #else
 QDF_STATUS (*send_packet_log_enable_cmd)(wmi_unified_t wmi_handle,
 				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct packet_enable_params *param);
 #endif
 
-QDF_STATUS (*send_packet_log_disable_cmd)(wmi_unified_t wmi_handle);
+QDF_STATUS (*send_packet_log_disable_cmd)(wmi_unified_t wmi_handle,
+	uint8_t mac_id);
 
 QDF_STATUS (*send_beacon_send_cmd)(wmi_unified_t wmi_handle,
 				struct beacon_params *param);
