@@ -1446,10 +1446,11 @@ static QDF_STATUS send_bss_chan_info_request_cmd_non_tlv(wmi_unified_t wmi_handl
  *
  *  @param wmi_handle	  : handle to WMI.
  *  @param PKTLOG_EVENT	: packet log event
+ *  @mac_id: mac id to have radio context
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
 static QDF_STATUS send_packet_log_enable_cmd_non_tlv(wmi_unified_t wmi_handle,
-				WMI_HOST_PKTLOG_EVENT PKTLOG_EVENT)
+			WMI_HOST_PKTLOG_EVENT PKTLOG_EVENT, uint8_t mac_id)
 {
 	wmi_pdev_pktlog_enable_cmd *cmd;
 	int len = 0;
@@ -1474,9 +1475,11 @@ static QDF_STATUS send_packet_log_enable_cmd_non_tlv(wmi_unified_t wmi_handle,
  *  send_packet_log_disable_cmd_non_tlv() - WMI disable packet log send function
  *
  *  @param wmi_handle	  : handle to WMI.
+ *  @mac_id: mac id to have radio context
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
-static QDF_STATUS send_packet_log_disable_cmd_non_tlv(wmi_unified_t wmi_handle)
+static QDF_STATUS send_packet_log_disable_cmd_non_tlv(wmi_unified_t wmi_handle,
+	uint8_t mac_id)
 {
 	int len = 0;
 	wmi_buf_t buf;

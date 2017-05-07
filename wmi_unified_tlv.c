@@ -1575,17 +1575,79 @@ static QDF_STATUS send_stats_request_cmd_tlv(wmi_unified_t wmi_handle,
 
 #ifdef CONFIG_WIN
 /**
- *  send_packet_log_enable_cmd_tlv() - WMI request stats function
+ *  send_packet_log_enable_cmd_tlv() - Send WMI command to enable packet-log
  *  @param wmi_handle      : handle to WMI.
- *  @param macaddr        : MAC address
- *  @param param    : pointer to hold stats request parameter
+ *  @param PKTLOG_EVENT	: packet log event
+ *  @mac_id: mac id to have radio context
  *
  *  Return: 0  on success and -ve on failure.
  */
 static QDF_STATUS send_packet_log_enable_cmd_tlv(wmi_unified_t wmi_handle,
-				WMI_HOST_PKTLOG_EVENT PKTLOG_EVENT)
+			WMI_HOST_PKTLOG_EVENT PKTLOG_EVENT, uint8_t mac_id)
 {
-	return 0;
+	int32_t ret;
+	wmi_pdev_pktlog_enable_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint16_t len = sizeof(wmi_pdev_pktlog_enable_cmd_fixed_param);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s: wmi_buf_alloc failed", __func__);
+		return -QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_pdev_pktlog_enable_cmd_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_pdev_pktlog_enable_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_pdev_pktlog_enable_cmd_fixed_param));
+	cmd->evlist = PKTLOG_EVENT;
+	cmd->pdev_id = mac_id;
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+					 WMI_PDEV_PKTLOG_ENABLE_CMDID);
+	if (ret) {
+		WMI_LOGE("Failed to send pktlog enable cmd to FW =%d", ret);
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+
+/**
+ *  send_packet_log_disable_cmd_tlv() - Send WMI command to disable packet-log
+ *  @param wmi_handle      : handle to WMI.
+ *  @mac_id: mac id to have radio context
+ *
+ *  Return: 0  on success and -ve on failure.
+ */
+static QDF_STATUS send_packet_log_disable_cmd_tlv(wmi_unified_t wmi_handle,
+			WMI_HOST_PKTLOG_EVENT PKTLOG_EVENT, uint8_t mac_id)
+{
+	int32_t ret;
+	wmi_pdev_pktlog_disable_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint16_t len = sizeof(wmi_pdev_pktlog_disable_cmd_fixed_param);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s: wmi_buf_alloc failed", __func__);
+		return -QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_pdev_pktlog_disable_cmd_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_pdev_pktlog_disable_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_pdev_pktlog_disable_cmd_fixed_param));
+	cmd->pdev_id = mac_id;
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+					 WMI_PDEV_PKTLOG_DISABLE_CMDID);
+	if (ret) {
+		WMI_LOGE("Failed to send pktlog disable cmd to FW =%d", ret);
+		wmi_buf_free(buf);
+	}
+
+	return ret;
 }
 #else
 /**
