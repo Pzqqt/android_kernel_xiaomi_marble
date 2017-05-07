@@ -2764,7 +2764,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 			chanfreq = wma_handle->interfaces[vdev_id].mhz;
 		else
 			chanfreq = channel_freq;
-		WMA_LOGI("%s: Probe response frame on channel %d vdev:%d",
+		WMA_LOGD("%s: Probe response frame on channel %d vdev:%d",
 			__func__, chanfreq, vdev_id);
 		if (wma_is_vdev_in_ap_mode(wma_handle, vdev_id) && !chanfreq)
 			WMA_LOGE("%s: AP oper chan is zero", __func__);

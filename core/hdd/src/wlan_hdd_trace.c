@@ -51,12 +51,12 @@ static void
 hdd_trace_dump(void *mac, tp_qdf_trace_record record, uint16_t index)
 {
 	if (TRACE_CODE_HDD_RX_SME_MSG == record->code)
-		hdd_info("%04d %012llu %s S%d %-14s %-30s(0x%x)",
+		hdd_debug("%04d %012llu %s S%d %-14s %-30s(0x%x)",
 			index, record->qtime, record->time, record->session,
 			"RX SME MSG:",
 			get_e_roam_cmd_status_str(record->data), record->data);
 	else
-		hdd_info("%04d %012llu %s S%d %-14s %-30s(0x%x)",
+		hdd_debug("%04d %012llu %s S%d %-14s %-30s(0x%x)",
 			index, record->qtime, record->time, record->session,
 			"HDD Event:",
 			hdd_trace_event_string(record->code), record->data);

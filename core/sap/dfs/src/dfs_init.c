@@ -368,12 +368,12 @@ int dfs_init_radar_filters(struct ieee80211com *ic,
 		rf->rf_threshold = dfs_radars[p].rp_threshold;
 		rf->rf_filterlen = rf->rf_maxpri * rf->rf_numpulses;
 
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s[%d]: minprf = %d maxprf = %d pulsevar = %d thresh=%d",
 			  __func__, __LINE__, dfs_radars[p].rp_pulsefreq,
 			  dfs_radars[p].rp_max_pulsefreq,
 			  dfs_radars[p].rp_pulsevar, rf->rf_threshold);
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s[%d]:minpri = %d maxpri = %d filterlen = %d filterID = %d",
 			  __func__, __LINE__, rf->rf_minpri, rf->rf_maxpri,
 			  rf->rf_filterlen, rf->rf_pulseid);
