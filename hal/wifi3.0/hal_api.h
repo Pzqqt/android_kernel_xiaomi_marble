@@ -187,6 +187,22 @@ extern uint32_t hal_srng_get_entrysize(void *hal_soc, int ring_type);
  */
 uint32_t hal_srng_max_entries(void *hal_soc, int ring_type);
 
+/* HAL memory information */
+struct hal_mem_info {
+	/* dev base virutal addr */
+	void *dev_base_addr;
+	/* dev base physical addr */
+	void *dev_base_paddr;
+	/* Remote virtual pointer memory for HW/FW updates */
+	void *shadow_rdptr_mem_vaddr;
+	/* Remote physical pointer memory for HW/FW updates */
+	void *shadow_rdptr_mem_paddr;
+	/* Shared memory for ring pointer updates from host to FW */
+	void *shadow_wrptr_mem_vaddr;
+	/* Shared physical memory for ring pointer updates from host to FW */
+	void *shadow_wrptr_mem_paddr;
+};
+
 /* SRNG parameters to be passed to hal_srng_setup */
 struct hal_srng_params {
 	/* Physical base address of the ring */
@@ -213,6 +229,12 @@ struct hal_srng_params {
 	uint32_t flags;
 	/* Unique ring id */
 	uint8_t ring_id;
+	/* Source or Destination ring */
+	enum hal_srng_dir ring_dir;
+	/* Size of ring entry */
+	uint32_t entry_size;
+	/* hw register base address */
+	void *hwreg_base[MAX_SRNG_REG_GROUPS];
 };
 
 /* hal_construct_shadow_config() - initialize the shadow registers for dp rings
@@ -948,4 +970,11 @@ static inline qdf_dma_addr_t hal_srng_get_tp_addr(void *hal_soc, void *hal_ring)
 extern void hal_get_srng_params(void *hal_soc, void *hal_ring,
 	struct hal_srng_params *ring_params);
 
+/**
+ * hal_mem_info - Retreive hal memory base address
+ *
+ * @hal_soc: Opaque HAL SOC handle
+ * @mem: pointer to structure to be updated with hal mem info
+ */
+extern void hal_get_meminfo(void *hal_soc,struct hal_mem_info *mem );
 #endif /* _HAL_APIH_ */

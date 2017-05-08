@@ -666,7 +666,6 @@ int hif_check_fw_reg(struct hif_opaque_softc *scn)
 }
 #endif
 
-#ifdef IPA_OFFLOAD
 /**
  * hif_read_phy_mem_base(): hif_read_phy_mem_base
  * @scn: scn
@@ -678,7 +677,6 @@ void hif_read_phy_mem_base(struct hif_softc *scn, qdf_dma_addr_t *phy_mem_base)
 {
 	*phy_mem_base = scn->mem_pa;
 }
-#endif /* IPA_OFFLOAD */
 
 /**
  * hif_get_device_type(): hif_get_device_type

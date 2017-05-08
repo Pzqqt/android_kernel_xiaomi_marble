@@ -756,6 +756,24 @@ fail0:
 }
 
 /**
+ * hal_mem_info - Retreive hal memory base address
+ *
+ * @hal_soc: Opaque HAL SOC handle
+ * @mem: pointer to structure to be updated with hal mem info
+ */
+void hal_get_meminfo(void *hal_soc, struct hal_mem_info *mem )
+{
+	struct hal_soc *hal = (struct hal_soc *)hal_soc;
+	mem->dev_base_addr = (void *)hal->dev_base_addr;
+        mem->shadow_rdptr_mem_vaddr = (void *)hal->shadow_rdptr_mem_vaddr;
+	mem->shadow_wrptr_mem_vaddr = (void *)hal->shadow_wrptr_mem_vaddr;
+        mem->shadow_rdptr_mem_paddr = (void *)hal->shadow_rdptr_mem_paddr;
+	mem->shadow_wrptr_mem_paddr = (void *)hal->shadow_wrptr_mem_paddr;
+	hif_read_phy_mem_base(hal->hif_handle, (qdf_dma_addr_t *)&mem->dev_base_paddr);
+	return;
+}
+
+/**
  * hal_detach - Detach HAL layer
  * @hal_soc: HAL SOC handle
  *
@@ -1239,6 +1257,10 @@ extern void hal_get_srng_params(void *hal_soc, void *hal_ring,
 	struct hal_srng_params *ring_params)
 {
 	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	int i =0;
+	ring_params->ring_id = srng->ring_id;
+	ring_params->ring_dir = srng->ring_dir;
+	ring_params->entry_size = srng->entry_size;
 
 	ring_params->ring_base_paddr = srng->ring_base_paddr;
 	ring_params->ring_base_vaddr = srng->ring_base_vaddr;
@@ -1251,4 +1273,6 @@ extern void hal_get_srng_params(void *hal_soc, void *hal_ring,
 	ring_params->low_threshold = srng->u.src_ring.low_threshold;
 	ring_params->flags = srng->flags;
 	ring_params->ring_id = srng->ring_id;
+	for (i = 0 ; i < MAX_SRNG_REG_GROUPS; i++)
+		ring_params->hwreg_base[i] = srng->hwreg_base[i];
 }
