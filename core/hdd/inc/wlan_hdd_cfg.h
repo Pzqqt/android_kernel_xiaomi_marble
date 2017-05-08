@@ -4087,29 +4087,6 @@ enum station_keepalive_method {
 
 /*
  * <ini>
- * McastBcastFilter - Filters Mcast/Bcast Rx packets completely
- * @Min: 0
- * @Max: 3
- * @Default: 0
- *
- * This ini is used to send default NULL frame to AP
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_MCAST_BCAST_FILTER_SETTING_NAME          "McastBcastFilter"
-#define CFG_MCAST_BCAST_FILTER_SETTING_MIN           (0)
-#define CFG_MCAST_BCAST_FILTER_SETTING_MAX           (3)
-#define CFG_MCAST_BCAST_FILTER_SETTING_DEFAULT       (0)
-
-/*
- * <ini>
  * gDynamicPSPollvalue - Set dynamic PSpoll value
  * @Min: 0
  * @Max: 255
@@ -10559,7 +10536,6 @@ struct hdd_config {
 	 * single replay counter for all TID
 	 */
 	bool bSingleTidRc;
-	uint8_t mcastBcastFilterSetting;
 	bool fhostArpOffload;
 	enum pmo_hw_filter_mode hw_filter_mode;
 	bool ssdp;

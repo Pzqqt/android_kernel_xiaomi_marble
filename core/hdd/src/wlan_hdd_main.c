@@ -7577,8 +7577,6 @@ static hdd_context_t *hdd_context_create(struct device *dev)
 		  hdd_ctx->config->timer_multiplier);
 	qdf_timer_set_multiplier(hdd_ctx->config->timer_multiplier);
 
-	hdd_debug("Setting configuredMcastBcastFilter: %d",
-		   hdd_ctx->config->mcastBcastFilterSetting);
 
 	if (hdd_ctx->config->fhostNSOffload)
 		hdd_ctx->ns_offload_enable = true;

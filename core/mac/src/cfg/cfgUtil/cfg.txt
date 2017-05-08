@@ -3923,19 +3923,6 @@ NONE
 0    1    1
 
 *
-*  MCAST BCAST filter Setting
-*  0: No filter, 1: Block Mcast, 2: Block Bcast, 3: Block Mcast and Bcast
-*
-
-WNI_CFG_MCAST_BCAST_FILTER_SETTING    I    4    7
-V    RW    NP
-HAL
-0    3    0
-V    RW    NP
-HAL
-0    3    0
-
-*
 *  BTC DHCP No of Bt slots to block
 *
 WNI_CFG_BTC_DHCP_BT_SLOTS_TO_BLOCK    I    4    7
