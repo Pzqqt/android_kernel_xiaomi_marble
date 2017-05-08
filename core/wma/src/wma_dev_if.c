@@ -742,6 +742,12 @@ static void wma_vdev_start_rsp(tp_wma_handle wma,
 	}
 	add_bss->smpsMode = host_map_smps_mode(resp_event->smps_mode);
 send_fail_resp:
+	/* Send vdev stop if vdev start was success */
+	if ((add_bss->status != QDF_STATUS_SUCCESS) &&
+	   !resp_event->status)
+		if (wma_send_vdev_stop_to_fw(wma, resp_event->vdev_id))
+			WMA_LOGE("%s: %d Failed to send vdev stop", __func__, __LINE__);
+
 	WMA_LOGD("%s: Sending add bss rsp to umac(vdev %d status %d)",
 		 __func__, resp_event->vdev_id, add_bss->status);
 	wma_send_msg(wma, WMA_ADD_BSS_RSP, (void *)add_bss, 0);
