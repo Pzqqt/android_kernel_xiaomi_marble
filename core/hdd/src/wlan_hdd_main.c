@@ -1382,10 +1382,12 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	struct cds_config_info *cds_cfg = cds_get_ini_config();
 	uint8_t antenna_mode;
 
-	/* Reuse same pdev for module stop and start */
+	/* Reuse same pdev for module start/stop or SSR */
 	if ((hdd_get_conparam() == QDF_GLOBAL_FTM_MODE) ||
-		(!cds_is_driver_loading())) {
-		hdd_err("Reuse pdev for module start/stop");
+	    !cds_is_driver_loading()) {
+		hdd_err("Reuse pdev for module start/stop or SSR");
+		/* Restore pdev to MAC/WMA contexts */
+		sme_store_pdev(hdd_ctx->hHal, hdd_ctx->hdd_pdev);
 	} else {
 		ret = hdd_objmgr_create_and_store_pdev(hdd_ctx);
 		if (ret) {
