@@ -2946,6 +2946,13 @@ int hdd_vdev_destroy(hdd_adapter_t *adapter)
 		return errno;
 	}
 
+	/*
+	 * In SSR case, there is no need to destroy vdev in firmware since
+	 * it has already asserted. vdev can be released directly.
+	 */
+	if (cds_is_driver_recovering())
+		goto release_vdev;
+
 	/* close sme session (destroy vdev in firmware via legacy API) */
 	INIT_COMPLETION(adapter->session_close_comp_var);
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -2968,6 +2975,7 @@ int hdd_vdev_destroy(hdd_adapter_t *adapter)
 		return -ETIMEDOUT;
 	}
 
+release_vdev:
 	/* now that sme session is closed, allow physical vdev destroy */
 	errno = hdd_objmgr_release_vdev(adapter);
 	if (errno) {
@@ -4165,6 +4173,9 @@ QDF_STATUS hdd_reset_all_adapters(hdd_context_t *hdd_ctx)
 		if (adapter->device_mode == QDF_SAP_MODE)
 			wlansap_set_invalid_session(
 				WLAN_HDD_GET_SAP_CTX_PTR(adapter));
+
+		/* Destroy vdev which will be recreated during reinit. */
+		hdd_vdev_destroy(adapter);
 
 		status = hdd_get_next_adapter(hdd_ctx, adapterNode, &pNext);
 		adapterNode = pNext;
