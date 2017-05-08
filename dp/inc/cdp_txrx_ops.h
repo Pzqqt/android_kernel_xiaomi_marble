@@ -203,6 +203,10 @@ struct cdp_cmn_ops {
 		struct ol_txrx_stats_req *req, enum cdp_stats stats);
 
 	QDF_STATUS (*display_stats)(void *psoc, uint16_t value);
+
+	void (*txrx_soc_set_nss_cfg)(ol_txrx_soc_handle soc, int config);
+
+	int(*txrx_soc_get_nss_cfg)(ol_txrx_soc_handle soc);
 };
 
 struct cdp_ctrl_ops {
@@ -600,6 +604,11 @@ struct ol_if_ops {
 	void (*update_dp_stats)(void *soc, void *stats, uint16_t id,
 			uint8_t type);
 	uint8_t (*rx_invalid_peer)(void *osif_pdev, void *msg);
+
+	int  (*peer_map_event)(void *ol_soc_handle, uint16_t peer_id, uint16_t hw_peer_id,
+			uint8_t vdev_id, uint8_t *peer_mac_addr);
+	int (*peer_unmap_event)(void *ol_soc_handle, uint16_t peer_id);
+
 
 	/* TODO: Add any other control path calls required to OL_IF/WMA layer */
 };

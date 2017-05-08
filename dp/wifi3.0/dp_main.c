@@ -1138,6 +1138,12 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 		goto fail0;
 	}
 
+	/*
+	 * set nss pdev config based on soc config
+	 */
+	wlan_cfg_set_dp_pdev_nss_enabled(pdev->wlan_cfg_ctx,
+			(wlan_cfg_get_dp_soc_nss_cfg(soc->wlan_cfg_ctx) & (1 << pdev->pdev_id)));
+
 	pdev->soc = soc;
 	pdev->osif_pdev = ctrl_pdev;
 	pdev->pdev_id = pdev_id;
@@ -1591,6 +1597,35 @@ static int dp_soc_attach_target_wifi3(struct cdp_soc_t *cdp_soc)
 }
 
 /*
+ * dp_soc_get_nss_cfg_wifi3() - SOC get nss config
+ * @txrx_soc: Datapath SOC handle
+ */
+static int dp_soc_get_nss_cfg_wifi3(struct cdp_soc_t *cdp_soc)
+{
+	struct dp_soc *dsoc = (struct dp_soc *)cdp_soc;
+	return wlan_cfg_get_dp_soc_nss_cfg(dsoc->wlan_cfg_ctx);
+}
+/*
+ * dp_soc_set_nss_cfg_wifi3() - SOC set nss config
+ * @txrx_soc: Datapath SOC handle
+ * @nss_cfg: nss config
+ */
+static void dp_soc_set_nss_cfg_wifi3(struct cdp_soc_t *cdp_soc, int config)
+{
+	struct dp_soc *dsoc = (struct dp_soc *)cdp_soc;
+	wlan_cfg_set_dp_soc_nss_cfg(dsoc->wlan_cfg_ctx, config);
+	if (config) {
+		/*
+		 * disable dp interrupt if nss enabled
+		 */
+		wlan_cfg_set_num_contexts(dsoc->wlan_cfg_ctx, 0);
+	}
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				FL("nss-wifi<0> nss config is enabled"));
+}
+
+
+/*
 * dp_vdev_attach_wifi3() - attach txrx vdev
 * @txrx_pdev: Datapath PDEV handle
 * @vdev_mac_addr: MAC address of the virtual interface
@@ -1651,8 +1686,10 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 	dp_tx_vdev_attach(vdev);
 
 #ifdef DP_INTR_POLL_BASED
-	if (pdev->vdev_count == 1)
-		qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
+	if (wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx) != 0) {
+		if (pdev->vdev_count == 1)
+			qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
+	}
 #endif
 
 	dp_lro_hash_setup(soc);
@@ -3670,6 +3707,8 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_stats = dp_txrx_stats,
 	.txrx_set_monitor_mode = dp_vdev_set_monitor_mode,
 	.display_stats = dp_txrx_dump_stats,
+	.txrx_soc_set_nss_cfg = dp_soc_set_nss_cfg_wifi3,
+	.txrx_soc_get_nss_cfg = dp_soc_get_nss_cfg_wifi3,
 	/* TODO: Add other functions */
 };
 
@@ -3889,10 +3928,6 @@ void *dp_soc_attach_wifi3(void *osif_soc, void *hif_handle,
 		goto fail2;
 	}
 	qdf_spinlock_create(&soc->peer_ref_mutex);
-
-	if (dp_soc_interrupt_attach(soc) != QDF_STATUS_SUCCESS) {
-		goto fail2;
-	}
 
 	qdf_spinlock_create(&soc->reo_desc_freelist_lock);
 	qdf_list_create(&soc->reo_desc_freelist, REO_DESC_FREELIST_SIZE);

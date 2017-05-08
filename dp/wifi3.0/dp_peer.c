@@ -441,12 +441,18 @@ dp_rx_peer_map_handler(void *soc_handle, uint16_t peer_id, uint16_t hw_peer_id,
 	 * in this case just add the ast entry to the existing
 	 * peer ast_list.
 	 */
-	if (!peer)
+	if (!peer) {
 		dp_peer_find_add_id(soc, peer_mac_addr, peer_id,
-					hw_peer_id, vdev_id);
-	else
+				hw_peer_id, vdev_id);
+		if (soc->cdp_soc.ol_ops->peer_map_event) {
+			soc->cdp_soc.ol_ops->peer_map_event(soc->osif_soc,
+					peer_id, hw_peer_id, vdev_id, peer_mac_addr);
+		}
+
+	} else {
 		dp_peer_add_ast(soc, peer, peer_mac_addr,
-					hw_peer_id, vdev_id);
+				hw_peer_id, vdev_id);
+	}
 }
 
 void
@@ -475,6 +481,11 @@ dp_rx_peer_unmap_handler(void *soc_handle, uint16_t peer_id)
 			peer->peer_ids[i] = HTT_INVALID_PEER;
 			break;
 		}
+	}
+
+	if (soc->cdp_soc.ol_ops->peer_unmap_event) {
+		soc->cdp_soc.ol_ops->peer_unmap_event(soc->osif_soc,
+				peer_id);
 	}
 
 	/*

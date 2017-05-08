@@ -329,4 +329,32 @@ bool wlan_cfg_is_lro_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);
  */
 bool wlan_cfg_is_rx_hash_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);
 
+/*
+ * wlan_cfg_get_dp_pdev_nss_enabled - Return pdev nss enabled/disabled
+ * @wlan_cfg_pdev_ctx
+ *
+ * Return: 1 - enabled 0 - disabled
+ */
+int wlan_cfg_get_dp_pdev_nss_enabled(struct wlan_cfg_dp_pdev_ctxt *cfg);
+
+/*
+ * wlan_cfg_set_dp_pdev_nss_enabled - set pdev nss enabled/disabled
+ * @wlan_cfg_pdev_ctx
+ */
+void wlan_cfg_set_dp_pdev_nss_enabled(struct wlan_cfg_dp_pdev_ctxt *cfg, int nss_enabled);
+
+/*
+ * wlan_cfg_get_dp_soc_nss_cfg - Return soc nss config
+ * @wlan_cfg_pdev_ctx
+ *
+ * Return: nss_cfg
+ */
+int wlan_cfg_get_dp_soc_nss_cfg(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
+ * wlan_cfg_set_dp_soc_nss_cfg - set soc nss config
+ * @wlan_cfg_pdev_ctx
+ *
+ */
+void wlan_cfg_set_dp_soc_nss_cfg(struct wlan_cfg_dp_soc_ctxt *cfg, int nss_cfg);
 #endif
