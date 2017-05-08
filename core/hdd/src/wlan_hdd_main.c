@@ -5362,8 +5362,8 @@ static void hdd_destroy_roc_req_q(hdd_context_t *hdd_ctx)
 				(qdf_list_node_t **) &hdd_roc_req);
 
 		if (QDF_STATUS_SUCCESS != status) {
-			hdd_debug("unable to remove roc element from list in %s",
-					__func__);
+			qdf_spin_unlock(&hdd_ctx->hdd_roc_req_q_lock);
+			hdd_debug("unable to remove roc element from list");
 			QDF_ASSERT(0);
 			return;
 		}
