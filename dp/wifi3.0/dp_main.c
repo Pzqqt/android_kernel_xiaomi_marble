@@ -3370,6 +3370,7 @@ static void dp_set_vdev_param(struct cdp_vdev *vdev_handle,
 		break;
 	case CDP_ENABLE_NAWDS:
 		vdev->nawds_enabled = val;
+		break;
 	case CDP_ENABLE_MCAST_EN:
 		vdev->mcast_enhancement_en = val;
 		break;
@@ -3378,6 +3379,7 @@ static void dp_set_vdev_param(struct cdp_vdev *vdev_handle,
 		break;
 	case CDP_UPDATE_TDLS_FLAGS:
 		vdev->tdls_link_connected = val;
+		break;
 	default:
 		break;
 	}
