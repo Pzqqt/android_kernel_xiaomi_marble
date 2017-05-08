@@ -1058,20 +1058,24 @@ static bool hdd_is_arp_local(struct sk_buff *skb)
 			memcpy(&tip, arp_ptr, 4);
 			hdd_info("ARP packet: local IP: %x dest IP: %x",
 				ifa->ifa_local, tip);
-			if (ifa->ifa_local != tip)
-				return false;
+			if (ifa->ifa_local == tip)
+				return true;
 		}
 	}
 
-	return true;
+	return false;
 }
 
 /**
-* hdd_is_rx_wake_lock_needed() - check if wake lock is needed
-* @skb: pointer to sk_buff
-*
-* Return: true if wake lock is needed or false otherwise.
-*/
+ * hdd_is_rx_wake_lock_needed() - check if wake lock is needed
+ * @skb: pointer to sk_buff
+ *
+ * RX wake lock is needed for:
+ * 1) Unicast data packet OR
+ * 2) Local ARP data packet
+ *
+ * Return: true if wake lock is needed or false otherwise.
+ */
 static bool hdd_is_rx_wake_lock_needed(struct sk_buff *skb)
 {
 	if ((skb->pkt_type != PACKET_BROADCAST &&
