@@ -103,13 +103,22 @@ static QDF_STATUS lim_add_ndi_peer(tpAniSirGlobal mac_ctx,
 	tpDphHashNode sta_ds;
 	uint16_t assoc_id, peer_idx;
 	tSirRetStatus status;
+	uint8_t zero_mac_addr[QDF_MAC_ADDR_SIZE] = { 0, 0, 0, 0, 0, 0 };
+
+	if (!qdf_mem_cmp(&zero_mac_addr, &peer_mac_addr.bytes[0],
+			QDF_MAC_ADDR_SIZE)) {
+		pe_err("Failing to add peer with all zero mac addr");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	session = pe_find_session_by_sme_session_id(mac_ctx,
 						vdev_id);
 	if (session == NULL) {
 		/* couldn't find session */
+		pe_err("Session not found for vdev_id: %d", vdev_id);
 		return QDF_STATUS_E_FAILURE;
 	}
+
 	sta_ds = dph_lookup_hash_entry(mac_ctx,
 				peer_mac_addr.bytes,
 				&assoc_id, &session->dph.dphHashTable);
@@ -263,6 +272,13 @@ static void lim_ndp_delete_peer_by_addr(tpAniSirGlobal mac_ctx, uint8_t vdev_id,
 	tpPESession session;
 	tpDphHashNode sta_ds;
 	uint16_t peer_idx;
+	uint8_t zero_mac_addr[QDF_MAC_ADDR_SIZE] = { 0, 0, 0, 0, 0, 0 };
+
+	if (!qdf_mem_cmp(&zero_mac_addr, &peer_ndi_mac_addr.bytes[0],
+			QDF_MAC_ADDR_SIZE)) {
+		pe_err("Failing to delete the peer with all zero mac addr");
+		return;
+	}
 
 	pe_info("deleting peer: "MAC_ADDRESS_STR" confirm rejected",
 		MAC_ADDR_ARRAY(peer_ndi_mac_addr.bytes));
