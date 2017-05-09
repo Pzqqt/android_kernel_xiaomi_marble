@@ -5373,3 +5373,58 @@ int wma_wlan_bt_activity_evt_handler(void *handle, uint8_t *event, uint32_t len)
 
 	return 0;
 }
+
+int wma_peer_ant_info_evt_handler(void *handle, u_int8_t *event,
+	u_int32_t len)
+{
+	wmi_peer_antdiv_info *peer_ant_info;
+	WMI_PEER_ANTDIV_INFO_EVENTID_param_tlvs *param_buf;
+	wmi_peer_antdiv_info_event_fixed_param *fix_param;
+	struct chain_rssi_result *chain_rssi_result;
+	u_int32_t chain_index;
+
+	tpAniSirGlobal pmac = (tpAniSirGlobal)cds_get_context(
+					QDF_MODULE_ID_PE);
+	if (!pmac) {
+		WMA_LOGE("%s: Invalid pmac", __func__);
+		return -EINVAL;
+	}
+
+	param_buf = (WMI_PEER_ANTDIV_INFO_EVENTID_param_tlvs *) event;
+	if (!param_buf) {
+		WMA_LOGE("Invalid peer_ant_info event buffer");
+		return -EINVAL;
+	}
+	fix_param = param_buf->fixed_param;
+	peer_ant_info = param_buf->peer_info;
+
+	WMA_LOGD("num_peers=%d\tvdev_id=%d",
+		fix_param->num_peers, fix_param->vdev_id);
+	WMA_LOGD("peer_ant_info: %p", peer_ant_info);
+
+	if (!peer_ant_info) {
+		WMA_LOGE("Invalid peer_ant_info ptr");
+		return -EINVAL;
+	}
+
+	chain_rssi_result = qdf_mem_malloc(sizeof(*chain_rssi_result));
+	if (!chain_rssi_result) {
+		WMA_LOGE("%s: Failed to malloc", __func__);
+		return -ENOMEM;
+	}
+
+	for (chain_index = 0; chain_index < CHAIN_RSSI_NUM; chain_index++)
+		WMA_LOGD("chain%d rssi: %x", chain_index,
+				peer_ant_info->chain_rssi[chain_index]);
+
+	qdf_mem_copy(chain_rssi_result->chain_rssi,
+				peer_ant_info->chain_rssi,
+				sizeof(peer_ant_info->chain_rssi));
+
+	pmac->sme.get_chain_rssi_cb(pmac->sme.get_chain_rssi_context,
+				chain_rssi_result);
+
+	qdf_mem_free(chain_rssi_result);
+
+	return 0;
+}

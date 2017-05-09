@@ -2586,4 +2586,15 @@ QDF_STATUS wma_configure_smps_params(uint32_t vdev_id, uint32_t param_id,
 int wma_chip_power_save_failure_detected_handler(void *handle,
 						 uint8_t *cmd_param_info,
 						 uint32_t len);
+
+/**
+ * wma_get_chain_rssi() - send wmi cmd to get chain rssi
+ * @wma_handle: wma handler
+ * @req_params: requset params
+ *
+ * Return: Return QDF_STATUS
+ */
+QDF_STATUS wma_get_chain_rssi(tp_wma_handle wma_handle,
+		struct get_chain_rssi_req_params *req_params);
+
 #endif

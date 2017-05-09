@@ -1327,4 +1327,19 @@ int wma_rx_aggr_failure_event_handler(void *handle, u_int8_t *event_buf,
  */
 int wma_wlan_bt_activity_evt_handler(void *handle, uint8_t *event,
 				     uint32_t len);
+
+/**
+ * wma_peer_ant_info_evt_handler - event handler to handle antenna info
+ * @handle: the wma handle
+ * @event: buffer with event
+ * @len: buffer length
+ *
+ * This function receives antenna info from firmware and passes the event
+ * to upper layer
+ *
+ * Return: 0 on success
+ */
+int wma_peer_ant_info_evt_handler(void *handle, u_int8_t *event,
+	u_int32_t len);
+
 #endif

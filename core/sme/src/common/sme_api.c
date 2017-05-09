@@ -16507,3 +16507,26 @@ QDF_STATUS sme_set_bt_activity_info_cb(tHalHandle hal,
 
 	return status;
 }
+
+QDF_STATUS sme_get_chain_rssi(tHalHandle hal,
+			      struct get_chain_rssi_req_params *input,
+			      get_chain_rssi_callback callback,
+			      void *context)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+
+	SME_ENTER();
+
+	if (NULL == input) {
+		sme_err("Invalid req params");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	mac_ctx->sme.get_chain_rssi_cb = callback;
+	mac_ctx->sme.get_chain_rssi_context = context;
+	wma_get_chain_rssi(hal, input);
+
+	SME_EXIT();
+	return status;
+}

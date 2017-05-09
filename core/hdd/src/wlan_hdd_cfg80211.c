@@ -5113,6 +5113,10 @@ wlan_hdd_wifi_config_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1] = {
 		.type = NLA_UNSPEC,
 		.len = QDF_MAC_ADDR_SIZE},
 	[RX_BLOCKSIZE_WINLIMIT] = {.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_ENA] = {.type = NLA_U32 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_CHAIN] = {.type = NLA_U32 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_SELFTEST] = {.type = NLA_U32 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_SELFTEST_INTVL] = {.type = NLA_U32 },
 };
 
 /**
@@ -5438,6 +5442,8 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	int param_id;
 	uint32_t tx_fail_count;
 	uint32_t ant_div_usrcfg;
+	uint32_t antdiv_enable, antdiv_chain;
+	uint32_t antdiv_selftest, antdiv_selftest_intvl;
 
 	ENTER_DEV(dev);
 
@@ -5839,6 +5845,59 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		wlan_hdd_cfg80211_wifi_set_rx_blocksize(hdd_ctx, adapter, tb);
 	if (ret_val != 0)
 		return ret_val;
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_ENA]) {
+		antdiv_enable = nla_get_u32(
+			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_ENA]);
+		hdd_debug("antdiv_enable: %d", antdiv_enable);
+		ret_val = wma_cli_set_command((int)adapter->sessionId,
+					(int)WMI_PDEV_PARAM_ENA_ANT_DIV,
+					antdiv_enable, PDEV_CMD);
+		if (ret_val) {
+			hdd_err("Failed to set antdiv_enable");
+			return ret_val;
+		}
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_CHAIN]) {
+		antdiv_chain = nla_get_u32(
+			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_CHAIN]);
+		hdd_debug("antdiv_chain: %d", antdiv_chain);
+		ret_val = wma_cli_set_command((int)adapter->sessionId,
+					(int)WMI_PDEV_PARAM_FORCE_CHAIN_ANT,
+					antdiv_chain, PDEV_CMD);
+		if (ret_val) {
+			hdd_err("Failed to set antdiv_chain");
+			return ret_val;
+		}
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_SELFTEST]) {
+		antdiv_selftest = nla_get_u32(
+			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_SELFTEST]);
+		hdd_debug("antdiv_selftest: %d", antdiv_selftest);
+		ret_val = wma_cli_set_command((int)adapter->sessionId,
+					(int)WMI_PDEV_PARAM_ANT_DIV_SELFTEST,
+					antdiv_selftest, PDEV_CMD);
+		if (ret_val) {
+			hdd_err("Failed to set antdiv_selftest");
+			return ret_val;
+		}
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_SELFTEST_INTVL]) {
+		antdiv_selftest_intvl = nla_get_u32(
+			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_SELFTEST_INTVL]);
+		hdd_debug("antdiv_selftest_intvl: %d",
+			antdiv_selftest_intvl);
+		ret_val = wma_cli_set_command((int)adapter->sessionId,
+				(int)WMI_PDEV_PARAM_ANT_DIV_SELFTEST_INTVL,
+				antdiv_selftest_intvl, PDEV_CMD);
+		if (ret_val) {
+			hdd_err("Failed to set antdiv_selftest_intvl");
+			return ret_val;
+		}
+	}
 
 	return ret_val;
 }
@@ -10649,6 +10708,184 @@ static inline bool wlan_hdd_is_bt_in_progress(hdd_context_t *hdd_ctx)
 	return false;
 }
 
+struct chain_rssi_priv {
+	struct chain_rssi_result chain_rssi;
+};
+
+/**
+ * hdd_get_chain_rssi_cb() - Callback function to get chain rssi
+ * @context: opaque context originally passed to SME. HDD always passes
+ * a cookie for the request context
+ * @data: struct for get chain rssi
+ *
+ * This function receives the response/data from the lower layer and
+ * checks to see if the thread is still waiting then post the results to
+ * upper layer, if the request has timed out then ignore.
+ *
+ * Return: None
+ */
+static void hdd_get_chain_rssi_cb(void *context,
+				  struct chain_rssi_result *data)
+{
+	struct hdd_request *request;
+	struct chain_rssi_priv *priv;
+
+	ENTER();
+
+	request = hdd_request_get(context);
+	if (!request) {
+		hdd_err("Obsolete request");
+		return;
+	}
+
+	priv = hdd_request_priv(request);
+	priv->chain_rssi = *data;
+	hdd_request_complete(request);
+	hdd_request_put(request);
+}
+
+/**
+ * hdd_post_get_chain_rssi_rsp - send rsp to user space
+ * @hdd_ctx: pointer to hdd context
+ * @result: chain rssi result
+ *
+ * Return: 0 for success, non-zero for failure
+ */
+static int hdd_post_get_chain_rssi_rsp(hdd_context_t *hdd_ctx,
+				       struct chain_rssi_result *result)
+{
+	struct sk_buff *skb;
+	int data_len = sizeof(result->chain_rssi);
+
+	skb = cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy,
+		data_len + NLA_HDRLEN + NLMSG_HDRLEN);
+
+	if (!skb) {
+		hdd_err("cfg80211_vendor_event_alloc failed");
+		return -ENOMEM;
+	}
+
+	if (nla_put(skb, QCA_WLAN_VENDOR_ATTR_CHAIN_RSSI, data_len,
+			result->chain_rssi)) {
+		hdd_err("put fail");
+		goto nla_put_failure;
+	}
+
+	cfg80211_vendor_cmd_reply(skb);
+	return 0;
+
+nla_put_failure:
+	kfree_skb(skb);
+	return -EINVAL;
+}
+
+/**
+ * __wlan_hdd_cfg80211_get_chain_rssi() - get chain rssi
+ * @wiphy: wiphy pointer
+ * @wdev: pointer to struct wireless_dev
+ * @data: pointer to incoming NL vendor data
+ * @data_len: length of @data
+ *
+ * Return: 0 on success; error number otherwise.
+ */
+static int __wlan_hdd_cfg80211_get_chain_rssi(struct wiphy *wiphy,
+					      struct wireless_dev *wdev,
+					      const void *data,
+					      int data_len)
+{
+	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(wdev->netdev);
+	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	struct get_chain_rssi_req_params req_msg;
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_MAX + 1];
+	QDF_STATUS status;
+	int retval;
+	void *cookie;
+	struct hdd_request *request;
+	struct chain_rssi_priv *priv;
+	static const struct hdd_request_params params = {
+		.priv_size = sizeof(*priv),
+		.timeout_ms = WLAN_WAIT_TIME_STATS,
+	};
+
+	ENTER();
+
+	retval = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != retval)
+		return retval;
+
+	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_MAX, data, data_len, NULL)) {
+		hdd_err("Invalid ATTR");
+		return -EINVAL;
+	}
+
+	if (!tb[QCA_WLAN_VENDOR_ATTR_MAC_ADDR]) {
+		hdd_err("attr mac addr failed");
+		return -EINVAL;
+	}
+	if (nla_len(tb[QCA_WLAN_VENDOR_ATTR_MAC_ADDR]) !=
+		QDF_MAC_ADDR_SIZE) {
+		hdd_err("incorrect mac size");
+		return -EINVAL;
+	}
+	memcpy(&req_msg.peer_macaddr,
+		nla_data(tb[QCA_WLAN_VENDOR_ATTR_MAC_ADDR]),
+		QDF_MAC_ADDR_SIZE);
+	req_msg.session_id = adapter->sessionId;
+
+	request = hdd_request_alloc(&params);
+	if (!request) {
+		hdd_err("Request allocation failure");
+		return -ENOMEM;
+	}
+	cookie = hdd_request_cookie(request);
+
+	status = sme_get_chain_rssi(hdd_ctx->hHal,
+			&req_msg,
+			hdd_get_chain_rssi_cb,
+			cookie);
+	if (QDF_STATUS_SUCCESS != status) {
+		hdd_err("Unable to get chain rssi");
+		retval = qdf_status_to_os_return(status);
+	} else {
+		retval = hdd_request_wait_for_response(request);
+		if (retval) {
+			hdd_err("Target response timed out");
+		} else {
+			priv = hdd_request_priv(request);
+			retval = hdd_post_get_chain_rssi_rsp(hdd_ctx,
+					&priv->chain_rssi);
+			if (retval)
+				hdd_err("Failed to post chain rssi");
+		}
+	}
+	hdd_request_put(request);
+
+	EXIT();
+	return retval;
+}
+
+/**
+ * wlan_hdd_cfg80211_get_chain_rssi() - get chain rssi
+ * @wiphy: wiphy pointer
+ * @wdev: pointer to struct wireless_dev
+ * @data: pointer to incoming NL vendor data
+ * @data_len: length of @data
+ *
+ * Return: 0 on success; error number otherwise.
+ */
+static int wlan_hdd_cfg80211_get_chain_rssi(struct wiphy *wiphy,
+					    struct wireless_dev *wdev,
+					    const void *data,
+					    int data_len)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_cfg80211_get_chain_rssi(wiphy, wdev, data, data_len);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
+}
 
 const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 	{
@@ -11312,6 +11549,15 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 	COMMON_VENDOR_COMMANDS
 #endif
 	FEATURE_11AX_VENDOR_COMMANDS
+
+	{
+		.info.vendor_id = QCA_NL80211_VENDOR_ID,
+		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_GET_CHAIN_RSSI,
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
+			WIPHY_VENDOR_CMD_NEED_NETDEV |
+			WIPHY_VENDOR_CMD_NEED_RUNNING,
+		.doit = wlan_hdd_cfg80211_get_chain_rssi
+	},
 };
 
 #if ((LINUX_VERSION_CODE > KERNEL_VERSION(4, 4, 0)) || \

@@ -1665,4 +1665,21 @@ QDF_STATUS sme_get_peer_info_ext(tHalHandle hal,
 void sme_set_5g_band_pref(tHalHandle hal_handle,
 			  struct sme_5g_band_pref_params *pref_params);
 
+/**
+ * sme_get_chain_rssi() - Get chain rssi
+ * @hal: Global HAL handle
+ * @input: get chain rssi req params
+ * @callback: Callback function to be called with the result
+ * @context: Opaque context to be used by the caller to associate the
+ *   request with the response
+ *
+ * This function constructs the cds message and fill in message type,
+ * post the same to WDA.
+ *
+ * Return: QDF_STATUS enumeration
+ */
+QDF_STATUS sme_get_chain_rssi(tHalHandle hal,
+			      struct get_chain_rssi_req_params *input,
+			      get_chain_rssi_callback callback,
+			      void *context);
 #endif /* #if !defined( __SME_API_H ) */

@@ -160,6 +160,16 @@ typedef void (*sme_encrypt_decrypt_callback)(
 			void *context,
 			struct sir_encrypt_decrypt_rsp_params *response);
 
+/**
+ * typedef get_chain_rssi_callback - get chain rssi callback
+ * @context: Opaque context that the client can use to associate the
+ *    callback with the request
+ * @data: chain rssi result reported by firmware
+ */
+struct chain_rssi_result;
+typedef void (*get_chain_rssi_callback)(void *context,
+					struct chain_rssi_result *data);
+
 typedef struct tagSmeStruct {
 	eSmeState state;
 	qdf_mutex_t lkSmeGlobalLock;
@@ -258,6 +268,8 @@ typedef struct tagSmeStruct {
 	void (*chip_power_save_fail_cb)(void *,
 			struct chip_pwr_save_fail_detected_params *);
 	void (*bt_activity_info_cb)(void *context, uint32_t bt_activity);
+	get_chain_rssi_callback get_chain_rssi_cb;
+	void *get_chain_rssi_context;
 } tSmeStruct, *tpSmeStruct;
 
 #endif /* #if !defined( __SMEINTERNAL_H ) */

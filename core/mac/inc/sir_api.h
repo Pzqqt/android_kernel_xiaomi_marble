@@ -7452,4 +7452,24 @@ struct sir_rssi_disallow_lst {
 	int8_t expected_rssi;
 	qdf_time_t time_during_rejection;
 };
+
+/**
+ * struct chain_rssi_result - chain rssi result
+ * @chain_rssi: chain rssi result as dBm unit
+ */
+#define CHAIN_RSSI_NUM  8
+struct chain_rssi_result {
+	int32_t chain_rssi[CHAIN_RSSI_NUM];
+};
+
+/**
+ * struct get_chain_rssi_req_params - get chain rssi req params
+ * @peer_macaddr: specific peer mac address
+ * @session_id: session id
+ */
+struct get_chain_rssi_req_params {
+	struct qdf_mac_addr peer_macaddr;
+	uint8_t session_id;
+};
+
 #endif /* __SIR_API_H */
