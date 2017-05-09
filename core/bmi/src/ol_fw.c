@@ -504,6 +504,7 @@ int ol_copy_ramdump(struct hif_opaque_softc *scn)
 
 	if (!info->base || !info->size) {
 		BMI_ERR("%s:ramdump collection fail", __func__);
+		qdf_mem_free(info);
 		return -EACCES;
 	}
 
