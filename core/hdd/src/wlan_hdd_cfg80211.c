@@ -761,7 +761,6 @@ wlan_hdd_cfg80211_get_tdls_capabilities(struct wiphy *wiphy,
 static void wlan_hdd_cfg80211_start_pending_acs(struct work_struct *work);
 #endif
 
-#if defined(FEATURE_WLAN_CH_AVOID) || defined(FEATURE_WLAN_FORCE_SAP_SCC)
 /*
  * FUNCTION: wlan_hdd_send_avoid_freq_event
  * This is called when wlan driver needs to send vendor specific
@@ -802,18 +801,15 @@ int wlan_hdd_send_avoid_freq_event(hdd_context_t *pHddCtx,
 	EXIT();
 	return 0;
 }
-#endif /* FEATURE_WLAN_CH_AVOID || FEATURE_WLAN_FORCE_SAP_SCC */
 
 /* vendor specific events */
 static const struct nl80211_vendor_cmd_info wlan_hdd_cfg80211_vendor_events[] = {
-#ifdef FEATURE_WLAN_CH_AVOID
 	[QCA_NL80211_VENDOR_SUBCMD_AVOID_FREQUENCY_INDEX] = {
 		.vendor_id =
 			QCA_NL80211_VENDOR_ID,
 		.subcmd =
 			QCA_NL80211_VENDOR_SUBCMD_AVOID_FREQUENCY
 	},
-#endif /* FEATURE_WLAN_CH_AVOID */
 
 #ifdef WLAN_FEATURE_NAN
 	[QCA_NL80211_VENDOR_SUBCMD_NAN_INDEX] = {
