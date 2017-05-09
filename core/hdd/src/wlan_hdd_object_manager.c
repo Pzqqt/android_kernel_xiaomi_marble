@@ -33,6 +33,11 @@
 #include <wlan_hdd_object_manager.h>
 #include <wlan_osif_priv.h>
 
+#define LOW_2GHZ_FREQ 2312
+#define HIGH_2GHZ_FREQ 2732
+#define LOW_5GHZ_FREQ  4912
+#define HIGH_5GHZ_FREQ 6100
+
 static void hdd_init_pdev_os_priv(hdd_context_t *hdd_ctx,
 	struct pdev_osif_priv *os_priv)
 {
@@ -101,6 +106,7 @@ int hdd_objmgr_create_and_store_pdev(hdd_context_t *hdd_ctx)
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
 	struct wlan_objmgr_pdev *pdev;
 	struct pdev_osif_priv *priv;
+	struct wlan_psoc_host_hal_reg_capabilities_ext *reg_cap_ptr;
 
 	if (!psoc) {
 		hdd_err("Psoc NULL");
@@ -112,11 +118,20 @@ int hdd_objmgr_create_and_store_pdev(hdd_context_t *hdd_ctx)
 		hdd_err("pdev os obj create failed");
 		return -ENOMEM;
 	}
+
+	reg_cap_ptr = psoc->ext_service_param.reg_cap;
+	reg_cap_ptr->phy_id = 0;
+	reg_cap_ptr->low_2ghz_chan = LOW_2GHZ_FREQ;
+	reg_cap_ptr->high_2ghz_chan = HIGH_2GHZ_FREQ;
+	reg_cap_ptr->low_5ghz_chan = LOW_5GHZ_FREQ;
+	reg_cap_ptr->high_5ghz_chan = HIGH_5GHZ_FREQ;
+
 	pdev = wlan_objmgr_pdev_obj_create(psoc, priv);
 	if (!pdev) {
 		hdd_err("pdev obj create failed");
 		return -ENOMEM;
 	}
+
 	hdd_ctx->hdd_pdev = pdev;
 	sme_store_pdev(hdd_ctx->hHal, hdd_ctx->hdd_pdev);
 	hdd_init_pdev_os_priv(hdd_ctx, priv);
