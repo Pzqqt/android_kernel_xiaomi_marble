@@ -1416,9 +1416,9 @@ QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info
 	soc_reg->phybitmap = regulat_info->phybitmap;
 	soc_reg->dfs_region = regulat_info->dfs_region;
 	qdf_mem_copy(soc_reg->default_country, regulat_info->alpha2,
-		     REG_ALPHA2_LEN);
+		     REG_ALPHA2_LEN + 1);
 	qdf_mem_copy(soc_reg->current_country, regulat_info->alpha2,
-		     REG_ALPHA2_LEN);
+		     REG_ALPHA2_LEN + 1);
 
 	min_bw_2g = regulat_info->min_bw_2g;
 	max_bw_2g = regulat_info->max_bw_2g;

@@ -99,9 +99,9 @@ QDF_STATUS reg_get_rdpair_from_country_iso(uint8_t *alpha,
 	reg_get_num_reg_dmn_pairs(&num_reg_dmn);
 
 	for (i = 0; i < num_countries; i++) {
-		if ((g_all_countries[i].alpha2[0] == alpha[0]) &&
-				(g_all_countries[i].alpha2[1] == alpha[1]) &&
-				(g_all_countries[i].alpha2[2] == alpha[2]))
+		if ((g_all_countries[i].alpha2_11d[0] == alpha[0]) &&
+			(g_all_countries[i].alpha2_11d[1] == alpha[1]) &&
+			(g_all_countries[i].alpha2_11d[2] == alpha[2]))
 			break;
 	}
 
@@ -209,8 +209,8 @@ static inline QDF_STATUS reg_get_reginfo_form_country_code_and_regdmn_pair(
 				regdomains_5g[dmn_id_5g].num_reg_rules)) {
 
 		qdf_mem_copy(reg_info->alpha2,
-				g_all_countries[country_index].alpha2,
-				sizeof(g_all_countries[country_index].alpha2));
+			g_all_countries[country_index].alpha2_11d,
+			sizeof(g_all_countries[country_index].alpha2_11d));
 
 		reg_info->dfs_region = regdomains_5g[dmn_id_5g].dfs_region;
 		reg_info->phybitmap =
