@@ -5469,6 +5469,11 @@ void lim_handle_heart_beat_failure_timeout(tpAniSirGlobal mac_ctx)
 			 (psession_entry->currentBssBeaconCnt == 0))) {
 			pe_debug("for session: %d",
 						psession_entry->peSessionId);
+
+			lim_send_deauth_mgmt_frame(mac_ctx,
+				eSIR_MAC_DISASSOC_DUE_TO_INACTIVITY_REASON,
+				psession_entry->bssId, psession_entry, false);
+
 			/*
 			 * AP did not respond to Probe Request.
 			 * Tear down link with it.
