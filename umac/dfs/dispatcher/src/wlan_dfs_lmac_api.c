@@ -23,6 +23,7 @@
 
 #include "wlan_dfs_lmac_api.h"
 #include "../../core/src/dfs_internal.h"
+#include <wlan_reg_services_api.h>
 
 void lmac_get_caps(struct wlan_objmgr_pdev *pdev,
 		bool *ext_chan,
@@ -93,17 +94,13 @@ void lmac_dfs_disable(struct wlan_objmgr_pdev *pdev, int no_cac)
 int lmac_get_dfsdomain(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_objmgr_psoc *psoc;
-	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
-	int dfsdomain = DFS_FCC_DOMAIN;
+	enum dfs_reg dfsdomain;
 
 	wlan_pdev_obj_lock(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
 	wlan_pdev_obj_unlock(pdev);
 
-	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
-
-	if (dfs_tx_ops->dfs_get_dfsdomain)
-		dfs_tx_ops->dfs_get_dfsdomain(pdev, &dfsdomain);
+	wlan_reg_get_dfs_region(psoc, &dfsdomain);
 
 	return dfsdomain;
 }
