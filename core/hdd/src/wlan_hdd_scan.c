@@ -747,7 +747,7 @@ static int wlan_hdd_update_scan_ies(hdd_adapter_t *adapter,
 				add_ie = true;
 			break;
 		case IE_EID_VENDOR:
-			if ((0 == qdf_mem_cmp(&temp_ie[0], MBO_OUI_TYPE,
+			if ((0 != qdf_mem_cmp(&temp_ie[0], MBO_OUI_TYPE,
 							MBO_OUI_TYPE_SIZE)) ||
 				(0 == qdf_mem_cmp(&temp_ie[0], QCN_OUI_TYPE,
 							QCN_OUI_TYPE_SIZE)))
