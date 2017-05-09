@@ -89,6 +89,9 @@ static int target_p2p_lo_event_handler(ol_scn_t scn, uint8_t *data,
 		status = p2p_rx_ops->lo_ev_handler(psoc, event_info);
 		target_if_debug("call lo event handler, status:%d",
 			status);
+	} else {
+		qdf_mem_free(event_info);
+		target_if_debug("no valid lo event handler");
 	}
 
 	return qdf_status_to_os_return(status);
@@ -152,6 +155,9 @@ static int target_p2p_noa_event_handler(ol_scn_t scn, uint8_t *data,
 		status = p2p_rx_ops->noa_ev_handler(psoc, event_info);
 		target_if_debug("call noa event handler, status:%d",
 			status);
+	} else {
+		qdf_mem_free(event_info);
+		target_if_debug("no valid noa event handler");
 	}
 
 	return qdf_status_to_os_return(status);
