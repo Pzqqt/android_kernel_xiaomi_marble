@@ -38,12 +38,12 @@
 #include "wmi.h"
 #include "wmi_unified.h"
 
-/* Pdev_id starts from 1. For backward compatability value zero is used
- * for broadcast ID. pdev_id is used to distinguish the radio for which event
+
+/* pdev_id is used to distinguish the radio for which event
  * is recieved. Since non-tlv target has only one radio, setting
  * default pdev_id to one to keep rest of the code using WMI APIs unfiorm.
  */
-#define WMI_NON_TLV_DEFAULT_PDEV_ID 1
+#define WMI_NON_TLV_DEFAULT_PDEV_ID WMI_HOST_PDEV_ID_0
 
 /**
  * send_vdev_create_cmd_non_tlv() - send VDEV create command to fw

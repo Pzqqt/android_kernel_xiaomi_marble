@@ -3042,4 +3042,18 @@ wmi_stop(wmi_unified_t wmi_handle)
 	wmi_handle->wmi_stopinprogress = 1;
 	return 0;
 }
+
+/**
+ * wmi_pdev_id_conversion_enable() - API to enable pdev_id conversion in WMI
+ *                     By default pdev_id conversion is not done in WMI.
+ *                     This API can be used enable conversion in WMI.
+ * @param wmi_handle   : handle to WMI
+ * Return none
+ */
+void wmi_pdev_id_conversion_enable(wmi_unified_t wmi_handle)
+{
+	if (wmi_handle->target_type == WMI_TLV_TARGET)
+		wmi_tlv_pdev_id_conversion_enable(wmi_handle);
+}
+
 #endif
