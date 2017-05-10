@@ -3385,6 +3385,18 @@ static __iw_softap_setparam(struct net_device *dev,
 					  WMI_VDEV_PARAM_HE_RANGE_EXT,
 					  set_value, VDEV_CMD);
 		break;
+	case QCSAP_SET_DEFAULT_AMPDU:
+		hdd_notice("QCSAP_SET_DEFAULT_AMPDU val %d", set_value);
+		ret = wma_cli_set_command((int)pHostapdAdapter->sessionId,
+				(int)WMI_PDEV_PARAM_MAX_MPDUS_IN_AMPDU,
+				set_value, PDEV_CMD);
+		break;
+	case QCSAP_ENABLE_RTS_BURSTING:
+		hdd_notice("QCSAP_ENABLE_RTS_BURSTING val %d", set_value);
+		ret = wma_cli_set_command((int)pHostapdAdapter->sessionId,
+				(int)WMI_PDEV_PARAM_ENABLE_RTS_SIFS_BURSTING,
+				set_value, PDEV_CMD);
+		break;
 	default:
 		hdd_err("Invalid setparam command %d value %d",
 		       sub_cmd, set_value);
@@ -5898,6 +5910,16 @@ static const struct iw_priv_args hostapd_private_args[] = {
 		QCASAP_PARAM_RANGE_EXT,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 		0, "enable_range_ext"
+	}
+	,
+	{	QCSAP_SET_DEFAULT_AMPDU,
+		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+		0, "def_ampdu"
+	}
+	,
+	{	QCSAP_ENABLE_RTS_BURSTING,
+		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+		0, "rts_bursting"
 	}
 	,
 };
