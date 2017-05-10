@@ -1313,9 +1313,12 @@ QDF_STATUS (*extract_dfs_radar_detection_event)(wmi_unified_t wmi_handle,
 		struct radar_found_info *radar_found,
 		uint32_t len);
 #endif
-
 QDF_STATUS (*send_set_country_cmd)(wmi_unified_t wmi_handle,
 				struct set_country *param);
+
+uint32_t (*convert_pdev_id_host_to_target)(uint32_t pdev_id);
+uint32_t (*convert_pdev_id_target_to_host)(uint32_t pdev_id);
+
 };
 
 struct target_abi_version {
@@ -1430,8 +1433,11 @@ struct wmi_soc {
 /* ONLY_NON_TLV_TARGET:TLV attach dummy function defintion for case when
  * driver supports only NON-TLV target (WIN mainline) */
 #define wmi_tlv_attach(x) qdf_print("TLV Unavailable\n")
+#define wmi_tlv_pdev_id_conversion_enable(wmi_hdl) \
+		qdf_print("PDEV conversion Not Available")
 #else
 void wmi_tlv_attach(wmi_unified_t wmi_handle);
+void wmi_tlv_pdev_id_conversion_enable(wmi_unified_t wmi_handle);
 #endif
 void wmi_non_tlv_attach(wmi_unified_t wmi_handle);
 
