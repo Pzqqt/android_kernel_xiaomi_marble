@@ -7232,4 +7232,8 @@ struct coex_config_params {
 	uint32_t config_arg6;
 };
 
+#define WMI_HOST_PDEV_ID_SOC 0xFF
+#define WMI_HOST_PDEV_ID_0   0
+#define WMI_HOST_PDEV_ID_1   1
+#define WMI_HOST_PDEV_ID_2   2
 #endif /* _WMI_UNIFIED_PARAM_H_ */
