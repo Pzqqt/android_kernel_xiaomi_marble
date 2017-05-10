@@ -384,8 +384,6 @@ struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_macaddr_from_pdev_no_state(
  *
  * API to get component private object
  *
- * Caller need to acquire lock with wlan_pdev_obj_lock()
- *
  * Return: void *ptr on SUCCESS
  *         NULL on Failure
  */
@@ -428,8 +426,6 @@ static inline void wlan_pdev_obj_unlock(struct wlan_objmgr_pdev *pdev)
  *
  * API to get the psoc object from PDEV
  *
- * Caller need to acquire lock with wlan_pdev_obj_lock()
- *
  * Return:
  * @psoc: PSOC object
  */
@@ -447,8 +443,6 @@ static inline struct wlan_objmgr_psoc *wlan_pdev_get_psoc(
  *
  * API to set the psoc object from PDEV
  *
- * Caller need to acquire lock with wlan_pdev_obj_lock()
- *
  * Return: void
  */
 static inline void wlan_pdev_set_psoc(struct wlan_objmgr_pdev *pdev,
@@ -464,8 +458,6 @@ static inline void wlan_pdev_set_psoc(struct wlan_objmgr_pdev *pdev,
  * @cap: capability flag to be set
  *
  * API to set fw caps in pdev
- *
- * Caller need to acquire lock with wlan_pdev_obj_lock()
  *
  * Return: void
  */
@@ -483,8 +475,6 @@ static inline void wlan_pdev_nif_fw_cap_set(struct wlan_objmgr_pdev *pdev,
  *
  * API to clear fw caps in pdev
  *
- * Caller need to acquire lock with wlan_pdev_obj_lock()
- *
  * Return: void
  */
 static inline void wlan_pdev_nif_fw_cap_clear(struct wlan_objmgr_pdev *pdev,
@@ -500,8 +490,6 @@ static inline void wlan_pdev_nif_fw_cap_clear(struct wlan_objmgr_pdev *pdev,
  * @cap: capability flag to be checked
  *
  * API to know, whether particular fw caps flag is set in pdev
- *
- * Caller need to acquire lock with wlan_pdev_obj_lock()
  *
  * Return: 1 (for set) or 0 (for not set)
  */
@@ -519,8 +507,6 @@ static inline uint8_t wlan_pdev_nif_fw_cap_get(struct wlan_objmgr_pdev *pdev,
  *
  * API to set feat caps in pdev
  *
- * Caller need to acquire lock with wlan_pdev_obj_lock()
- *
  * Return: void
  */
 static inline void wlan_pdev_nif_feat_cap_set(struct wlan_objmgr_pdev *pdev,
@@ -537,8 +523,6 @@ static inline void wlan_pdev_nif_feat_cap_set(struct wlan_objmgr_pdev *pdev,
  *
  * API to clear feat caps in pdev
  *
- * Caller need to acquire lock with wlan_pdev_obj_lock()
- *
  * Return: void
  */
 static inline void wlan_pdev_nif_feat_cap_clear(struct wlan_objmgr_pdev *pdev,
@@ -554,8 +538,6 @@ static inline void wlan_pdev_nif_feat_cap_clear(struct wlan_objmgr_pdev *pdev,
  * @cap: capability flag to be checked
  *
  * API to know, whether particular feat caps flag is set in pdev
- *
- * Caller need to acquire lock with wlan_pdev_obj_lock()
  *
  * Return: 1 (for set) or 0 (for not set)
  */
@@ -611,8 +593,6 @@ static inline void wlan_pdev_set_hw_macaddr(struct wlan_objmgr_pdev *pdev,
  *
  * API to get OS private pointer from PDEV
  *
- * Caller need to acquire lock with wlan_pdev_obj_lock()
- *
  * Return: ospriv - private pointer
  */
 static inline struct pdev_osif_priv *wlan_pdev_get_ospriv(
@@ -627,8 +607,6 @@ static inline struct pdev_osif_priv *wlan_pdev_get_ospriv(
  * @pdev: PDEV object
  *
  * API to reset OS private pointer in PDEV
- *
- * Caller need to acquire lock with wlan_pdev_obj_lock()
  *
  * Return: void
  */
@@ -645,8 +623,6 @@ static inline void wlan_pdev_reset_ospriv(struct wlan_objmgr_pdev *pdev)
  *
  * API to set Max vdev count
  *
- * Caller need to acquire lock with wlan_pdev_obj_lock()
- *
  * Return: void
  */
 static inline void wlan_pdev_set_max_vdev_count(struct wlan_objmgr_pdev *pdev,
@@ -661,8 +637,6 @@ static inline void wlan_pdev_set_max_vdev_count(struct wlan_objmgr_pdev *pdev,
  * @pdev: PDEV object
  *
  * API to set Max vdev count
- *
- * Caller need to acquire lock with wlan_pdev_obj_lock()
  *
  * Return: @vdev count: Max vdev count
  */
@@ -756,8 +730,6 @@ void wlan_objmgr_pdev_release_ref(struct wlan_objmgr_pdev *pdev,
  *
  * API to get pdev id from pdev object
  *
- * Caller need to acquire lock with wlan_pdev_obj_lock()
- *
  * Return: @pdev id
  */
 static inline
@@ -793,8 +765,6 @@ static inline void wlan_pdev_set_tgt_if_handle(struct wlan_objmgr_pdev *pdev,
  * @pdev: Pdev pointer
  *
  * API to get target interface handle from pdev object
- *
- * Caller need to acquire lock with wlan_pdev_obj_lock()
  *
  * Return: target interface handle
  */

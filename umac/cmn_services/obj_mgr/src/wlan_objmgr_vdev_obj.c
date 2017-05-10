@@ -374,6 +374,7 @@ QDF_STATUS wlan_objmgr_vdev_component_obj_detach(
 	/* component id is invalid */
 	if (id >= WLAN_UMAC_MAX_COMPONENTS)
 		return QDF_STATUS_MAXCOMP_FAIL;
+
 	wlan_vdev_obj_lock(vdev);
 	/* If there is a valid entry, return failure */
 	if (vdev->vdev_comp_priv_obj[id] != comp_priv_obj) {

@@ -296,8 +296,6 @@ QDF_STATUS wlan_objmgr_trigger_peer_comp_priv_object_deletion(
  *
  * API to get component private object
  *
- * Caller need to acquire lock with wlan_peer_obj_lock()
- *
  * Return: void *ptr on SUCCESS
  *         NULL on Failure
  */
@@ -563,8 +561,6 @@ static inline void wlan_peer_set_next_peer_of_psoc(qdf_list_t *peer_list,
  *
  * API to set peer type
  *
- * Caller need to acquire lock with wlan_peer_obj_lock()
- *
  * Return: void
  */
 static inline void wlan_peer_set_peer_type(struct wlan_objmgr_peer *peer,
@@ -579,8 +575,6 @@ static inline void wlan_peer_set_peer_type(struct wlan_objmgr_peer *peer,
  * @peer: PEER object
  *
  * API to get peer type
- *
- * Caller need to acquire lock with wlan_peer_obj_lock()
  *
  * Return:
  * @peer_type: type of PEER
@@ -633,8 +627,6 @@ static inline uint8_t *wlan_peer_get_macaddr(struct wlan_objmgr_peer *peer)
  *
  * API to get peer's vdev
  *
- * Caller need to acquire lock with wlan_peer_obj_lock()
- *
  * Return:
  * @vdev: VDEV object
  */
@@ -652,8 +644,6 @@ static inline struct wlan_objmgr_vdev *wlan_peer_get_vdev(
  *
  * API to set peer's vdev
  *
- * Caller need to acquire lock with wlan_peer_obj_lock()
- *
  * Return: void
  */
 static inline void wlan_peer_set_vdev(struct wlan_objmgr_peer *peer,
@@ -669,8 +659,6 @@ static inline void wlan_peer_set_vdev(struct wlan_objmgr_peer *peer,
  * @flag: flag to be set
  *
  * API to set flag in peer
- *
- * Caller need to acquire lock with wlan_peer_obj_lock()
  *
  * Return: void
  */
@@ -688,8 +676,6 @@ static inline void wlan_peer_mlme_flag_set(struct wlan_objmgr_peer *peer,
  *
  * API to clear flag in peer
  *
- * Caller need to acquire lock with wlan_peer_obj_lock()
- *
  * Return: void
  */
 static inline void wlan_peer_mlme_flag_clear(struct wlan_objmgr_peer *peer,
@@ -706,8 +692,6 @@ static inline void wlan_peer_mlme_flag_clear(struct wlan_objmgr_peer *peer,
  *
  * API to know, whether particular flag is set in peer
  *
- * Caller need to acquire lock with wlan_peer_obj_lock()
- *
  * Return: 1 (for set) or 0 (for not set)
  */
 static inline uint8_t wlan_peer_mlme_flag_get(struct wlan_objmgr_peer *peer,
@@ -723,8 +707,6 @@ static inline uint8_t wlan_peer_mlme_flag_get(struct wlan_objmgr_peer *peer,
  * @state: enum wlan_peer_state
  *
  * API to update the current peer state
- *
- * Caller need to acquire lock with wlan_peer_obj_lock()
  *
  * Return: void
  */
@@ -743,8 +725,6 @@ static inline void wlan_peer_mlme_set_state(
  *
  * API to update the current peer auth state
  *
- * Caller need to acquire lock with wlan_peer_obj_lock()
- *
  * Return: void
  */
 static inline void wlan_peer_mlme_set_auth_state(
@@ -761,8 +741,6 @@ static inline void wlan_peer_mlme_set_auth_state(
  *
  * API to get peer state
  *
- * Caller need to acquire lock with wlan_peer_obj_lock()
- *
  * Return: enum wlan_peer_state
  */
 static inline enum wlan_peer_state wlan_peer_mlme_get_state(
@@ -777,8 +755,6 @@ static inline enum wlan_peer_state wlan_peer_mlme_get_state(
  * @peer: PEER object
  *
  * API to get peer auth state
- *
- * Caller need to acquire lock with wlan_peer_obj_lock()
  *
  * Return: auth state true/false
  */

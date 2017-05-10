@@ -759,8 +759,6 @@ static inline void wlan_psoc_obj_unlock(struct wlan_objmgr_psoc *psoc)
  *
  * API to set nif phy version in psoc
  *
- * Caller need to acquire lock with wlan_psoc_obj_lock()
- *
  * Return: void
  */
 static inline void wlan_psoc_set_nif_phy_version(struct wlan_objmgr_psoc *psoc,
@@ -776,8 +774,6 @@ static inline void wlan_psoc_set_nif_phy_version(struct wlan_objmgr_psoc *psoc,
  *
  * API to set nif phy version in psoc
  *
- * Caller need to acquire lock with wlan_psoc_obj_lock()
- *
  * Return: @phy_ver: phy version
  */
 static inline uint32_t wlan_psoc_get_nif_phy_version(
@@ -786,6 +782,7 @@ static inline uint32_t wlan_psoc_get_nif_phy_version(
 	/* This API is invoked with lock acquired, do not add log prints */
 	if (psoc == NULL)
 		return (uint32_t)-1;
+
 	return psoc->soc_nif.phy_version;
 }
 
@@ -795,8 +792,6 @@ static inline uint32_t wlan_psoc_get_nif_phy_version(
  * @phy_type: phy type (OL/DA)
  *
  * API to set dev type in psoc
- *
- * Caller need to acquire lock with wlan_psoc_obj_lock()
  *
  * Return: void
  */
@@ -813,8 +808,6 @@ static inline void wlan_psoc_set_dev_type(struct wlan_objmgr_psoc *psoc,
  *
  * API to get dev type in psoc
  *
- * Caller need to acquire lock with wlan_psoc_obj_lock()
- *
  * Return: phy type (OL/DA)
  */
 static inline WLAN_DEV_TYPE wlan_objmgr_psoc_get_dev_type(
@@ -823,6 +816,7 @@ static inline WLAN_DEV_TYPE wlan_objmgr_psoc_get_dev_type(
 	/* This API is invoked with lock acquired, do not add log prints */
 	if (psoc == NULL)
 		return (uint32_t)-1;
+
 	return psoc->soc_nif.phy_type;
 }
 
@@ -832,8 +826,6 @@ static inline WLAN_DEV_TYPE wlan_objmgr_psoc_get_dev_type(
  * @cap: capability flag to be set
  *
  * API to set fw caps in psoc
- *
- * Caller need to acquire lock with wlan_psoc_obj_lock()
  *
  * Return: void
  */
@@ -851,8 +843,6 @@ static inline void wlan_psoc_nif_fw_cap_set(struct wlan_objmgr_psoc *psoc,
  *
  * API to clear fw caps in psoc
  *
- * Caller need to acquire lock with wlan_psoc_obj_lock()
- *
  * Return: void
  */
 static inline void wlan_psoc_nif_fw_cap_clear(struct wlan_objmgr_psoc *psoc,
@@ -868,8 +858,6 @@ static inline void wlan_psoc_nif_fw_cap_clear(struct wlan_objmgr_psoc *psoc,
  * @cap: capability flag to be checked
  *
  * API to know, whether particular fw caps flag is set in psoc
- *
- * Caller need to acquire lock with wlan_psoc_obj_lock()
  *
  * Return: 1 (for set) or 0 (for not set)
  */
@@ -887,8 +875,6 @@ static inline uint8_t wlan_psoc_nif_fw_cap_get(struct wlan_objmgr_psoc *psoc,
  *
  * API to set fw ext caps in psoc
  *
- * Caller need to acquire lock with wlan_psoc_obj_lock()
- *
  * Return: void
  */
 static inline void wlan_psoc_nif_fw_ext_cap_set(struct wlan_objmgr_psoc *psoc,
@@ -904,8 +890,6 @@ static inline void wlan_psoc_nif_fw_ext_cap_set(struct wlan_objmgr_psoc *psoc,
  * @ext_cap: capability flag to be cleared
  *
  * API to clear fw ext caps in psoc
- *
- * Caller need to acquire lock with wlan_psoc_obj_lock()
  *
  * Return: void
  */
@@ -923,8 +907,6 @@ static inline void wlan_psoc_nif_fw_ext_cap_clear(struct wlan_objmgr_psoc *psoc,
  *
  * API to know, whether particular fw caps flag is set in psoc
  *
- * Caller need to acquire lock with wlan_psoc_obj_lock()
- *
  * Return: 1 (for set) or 0 (for not set)
  */
 static inline uint8_t wlan_psoc_nif_fw_ext_cap_get(
@@ -940,8 +922,6 @@ static inline uint8_t wlan_psoc_nif_fw_ext_cap_get(
  * @cap: feature flag to be set
  *
  * API to set feature caps in psoc
- *
- * Caller need to acquire lock with wlan_psoc_obj_lock()
  *
  * Return: void
  */
@@ -959,8 +939,6 @@ static inline void wlan_psoc_nif_feat_cap_set(struct wlan_objmgr_psoc *psoc,
  *
  * API to clear feature caps in psoc
  *
- * Caller need to acquire lock with wlan_psoc_obj_lock()
- *
  * Return: void
  */
 static inline void wlan_psoc_nif_feat_cap_clear(struct wlan_objmgr_psoc *psoc,
@@ -976,8 +954,6 @@ static inline void wlan_psoc_nif_feat_cap_clear(struct wlan_objmgr_psoc *psoc,
  * @cap: feature flag to be checked
  *
  * API to know, whether particular feature cap flag is set in psoc
- *
- * Caller need to acquire lock with wlan_psoc_obj_lock()
  *
  * Return: 1 (for set) or 0 (for not set)
  */
@@ -1013,8 +989,6 @@ static inline void wlan_psoc_set_hw_macaddr(struct wlan_objmgr_psoc *psoc,
  *
  * API to set hw macaddr of psoc
  *
- * Caller need to acquire lock with wlan_psoc_obj_lock()
- *
  * Return: hw macaddr
  */
 static inline uint8_t *wlan_psoc_get_hw_macaddr(struct wlan_objmgr_psoc *psoc)
@@ -1022,6 +996,7 @@ static inline uint8_t *wlan_psoc_get_hw_macaddr(struct wlan_objmgr_psoc *psoc)
 	/* This API is invoked with lock acquired, do not add log prints */
 	if (psoc == NULL)
 		return NULL;
+
 	return psoc->soc_nif.soc_hw_macaddr;
 }
 
@@ -1033,8 +1008,6 @@ static inline uint8_t *wlan_psoc_get_hw_macaddr(struct wlan_objmgr_psoc *psoc)
  * This API is used to get the component private object pointer tied to the
  * corresponding psoc object
  *
- * Caller need to acquire lock with wlan_psoc_obj_lock()
- *
  * Return: Component private object
  */
 void *wlan_objmgr_psoc_get_comp_private_obj(struct wlan_objmgr_psoc *psoc,
@@ -1044,8 +1017,6 @@ void *wlan_objmgr_psoc_get_comp_private_obj(struct wlan_objmgr_psoc *psoc,
  * @psoc: PSOC object
  *
  * API to get number of pdev's attached to the psoc
- *
- * Caller need to acquire lock with wlan_psoc_obj_lock()
  *
  * Return: number of pdev's
  */
@@ -1065,8 +1036,6 @@ static inline uint8_t wlan_psoc_get_pdev_count(struct wlan_objmgr_psoc *psoc)
  *
  * API to set target interface handle in psoc object
  *
- * Caller need to acquire lock with wlan_psoc_obj_lock()
- *
  * Return: None
  */
 static inline void wlan_psoc_set_tgt_if_handle(struct wlan_objmgr_psoc *psoc,
@@ -1075,6 +1044,7 @@ static inline void wlan_psoc_set_tgt_if_handle(struct wlan_objmgr_psoc *psoc,
 	/* This API is invoked with lock acquired, do not add log prints */
 	if (psoc == NULL)
 		return;
+
 	psoc->tgt_if_handle = tgt_if_handle;
 }
 
@@ -1084,8 +1054,6 @@ static inline void wlan_psoc_set_tgt_if_handle(struct wlan_objmgr_psoc *psoc,
  *
  * API to get target interface handle from psoc object
  *
- * Caller need to acquire lock with wlan_psoc_obj_lock()
- *
  * Return: target interface handle
  */
 static inline void *wlan_psoc_get_tgt_if_handle(struct wlan_objmgr_psoc *psoc)
@@ -1093,6 +1061,7 @@ static inline void *wlan_psoc_get_tgt_if_handle(struct wlan_objmgr_psoc *psoc)
 	/* This API is invoked with lock acquired, do not add log prints */
 	if (psoc == NULL)
 		return NULL;
+
 	return psoc->tgt_if_handle;
 }
 
@@ -1101,8 +1070,6 @@ static inline void *wlan_psoc_get_tgt_if_handle(struct wlan_objmgr_psoc *psoc)
  * @psoc: Psoc pointer
  *
  * API to get qdf device from psoc object
- *
- * Caller need to acquire lock with wlan_psoc_obj_lock()
  *
  * Return: qdf_device_t
  */
@@ -1122,8 +1089,6 @@ static inline qdf_device_t wlan_psoc_get_qdf_dev(
  * dev: qdf device
  *
  * API to set qdf device from psoc object
- *
- * Caller need to acquire lock with wlan_psoc_obj_lock()
  *
  * Return: None
  */
