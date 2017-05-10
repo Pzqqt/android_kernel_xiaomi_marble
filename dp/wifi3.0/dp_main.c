@@ -3833,9 +3833,45 @@ static struct cdp_pflow_ops dp_ops_pflow = {
 };
 #endif /* CONFIG_WIN */
 
+#ifdef DP_INTR_POLL_BASED
+static QDF_STATUS dp_bus_suspend(struct cdp_pdev *opaque_pdev)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)opaque_pdev;
+	struct dp_soc *soc = pdev->soc;
+
+	qdf_timer_stop(&soc->int_timer);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS dp_bus_resume(struct cdp_pdev *opaque_pdev)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)opaque_pdev;
+	struct dp_soc *soc = pdev->soc;
+
+	qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static QDF_STATUS dp_bus_suspend(struct cdp_pdev *opaque_pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS dp_bus_resume(struct cdp_pdev *opaque_pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* DP_INTR_POLL_BASED */
+
 #ifndef CONFIG_WIN
 static struct cdp_misc_ops dp_ops_misc = {
 	.get_opmode = dp_get_opmode,
+#ifdef FEATURE_RUNTIME_PM
+	.runtime_suspend = dp_bus_suspend,
+	.runtime_resume = dp_bus_resume,
+#endif
 };
 
 static struct cdp_flowctl_ops dp_ops_flowctl = {
@@ -3850,34 +3886,9 @@ static struct cdp_ipa_ops dp_ops_ipa = {
 	/* WIFI 3.0 DP NOT IMPLEMENTED YET */
 };
 
-/**
- * dp_dummy_bus_suspend() - dummy bus suspend op
- *
- * FIXME - This is a placeholder for the actual logic!
- *
- * Return: QDF_STATUS_SUCCESS
- */
-inline QDF_STATUS dp_dummy_bus_suspend(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * dp_dummy_bus_resume() - dummy bus resume
- *
- * FIXME - This is a placeholder for the actual logic!
- *
- * Return: QDF_STATUS_SUCCESS
- */
-inline QDF_STATUS dp_dummy_bus_resume(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
 static struct cdp_bus_ops dp_ops_bus = {
-	/* WIFI 3.0 DP NOT IMPLEMENTED YET */
-	.bus_suspend = dp_dummy_bus_suspend,
-	.bus_resume = dp_dummy_bus_resume
+	.bus_suspend = dp_bus_suspend,
+	.bus_resume = dp_bus_resume
 };
 
 static struct cdp_ocb_ops dp_ops_ocb = {

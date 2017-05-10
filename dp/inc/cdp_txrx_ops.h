@@ -790,8 +790,8 @@ struct cdp_ipa_ops {
  * @bus_resume:
  */
 struct cdp_bus_ops {
-	QDF_STATUS (*bus_suspend)(void);
-	QDF_STATUS (*bus_resume)(void);
+	QDF_STATUS (*bus_suspend)(struct cdp_pdev *opaque_pdev);
+	QDF_STATUS (*bus_resume)(struct cdp_pdev *opaque_pdev);
 };
 
 /**
