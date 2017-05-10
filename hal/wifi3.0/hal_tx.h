@@ -893,7 +893,7 @@ static inline void hal_tx_comp_get_status(void *desc,
 			TRANSMIT_COUNT);
 
 	rate_stats = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_5,
-			TX_RATE_STATS_INFO_TX_RATE_STATS);
+			TX_RATE_STATS);
 
 	rate_stats_valid = HAL_TX_MS(TX_RATE_STATS_INFO_0,
 			TX_RATE_STATS_INFO_VALID, rate_stats);
