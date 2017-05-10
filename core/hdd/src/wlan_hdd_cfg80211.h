@@ -309,6 +309,8 @@ void wlan_hdd_testmode_rx_event(void *buf, size_t buf_len);
 int wlan_hdd_send_avoid_freq_event(hdd_context_t *pHddCtx,
 				tHddAvoidFreqList * pAvoidFreqList);
 
+int wlan_hdd_send_avoid_freq_for_dnbs(hdd_context_t *pHddCtx, uint8_t op_chan);
+
 #ifdef FEATURE_WLAN_EXTSCAN
 void wlan_hdd_cfg80211_extscan_callback(void *ctx,
 					const uint16_t evType, void *pMsg);
@@ -512,4 +514,18 @@ int wlan_cfg80211_tdls_mgmt(struct wlan_objmgr_pdev *pdev,
  */
 void hdd_update_cca_info_cb(void *context, uint32_t congestion,
 			uint32_t vdev_id);
+
+/**
+ * wlan_hdd_get_adjacent_chan(): Gets next/previous channel
+ * to the channel passed.
+ * @chan: Channel
+ * @upper: If "true" then next channel is returned or else
+ * previous channel is returned.
+ *
+ * This function returns the next/previous adjacent-channel to
+ * the channel passed. If "upper = true" then next channel is
+ * returned else previous is returned.
+ */
+int wlan_hdd_get_adjacent_chan(uint8_t chan, bool upper);
+
 #endif

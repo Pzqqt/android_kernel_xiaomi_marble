@@ -802,6 +802,137 @@ int wlan_hdd_send_avoid_freq_event(hdd_context_t *pHddCtx,
 	return 0;
 }
 
+/**
+ * wlan_hdd_get_adjacent_chan(): Gets next/previous channel
+ * with respect to the channel passed.
+ * @chan: Channel
+ * @upper: If "true" then next channel is returned or else
+ * previous channel is returned.
+ *
+ * This function returns the next/previous adjacent-channel to
+ * the channel passed. If "upper = true" then next channel is
+ * returned else previous is returned.
+ */
+int wlan_hdd_get_adjacent_chan(uint8_t chan, bool upper)
+{
+	enum channel_enum ch_idx = reg_get_chan_enum(chan);
+
+	if (ch_idx == INVALID_CHANNEL)
+		return -EINVAL;
+
+	if (upper && (ch_idx < (NUM_CHANNELS - 1)))
+		ch_idx++;
+	else if (!upper && (ch_idx > CHAN_ENUM_1))
+		ch_idx--;
+	else
+		return -EINVAL;
+
+	return WLAN_REG_CH_NUM(ch_idx);
+}
+
+/**
+ * wlan_hdd_send_avoid_freq_for_dnbs(): Sends list of frequencies to be
+ * avoided when Do_Not_Break_Stream is active.
+ * @pHddCtx:  HDD Context
+ * @op_chan:  AP/P2P-GO operating channel
+ *
+ * This function sends list of frequencies to be avoided when
+ * Do_Not_Break_Stream is active.
+ * To clear the avoid_frequency_list in the application,
+ * op_chan = 0 can be passed.
+ *
+ * Return: 0 on success and errno on failure
+ */
+int wlan_hdd_send_avoid_freq_for_dnbs(hdd_context_t *pHddCtx, uint8_t op_chan)
+{
+	tHddAvoidFreqList p2p_avoid_freq_list;
+	uint8_t min_chan, max_chan;
+	int ret;
+	int chan;
+
+	ENTER();
+
+	if (!pHddCtx) {
+		hdd_err("invalid param");
+		return -EINVAL;
+	}
+
+	qdf_mem_zero(&p2p_avoid_freq_list, sizeof(tHddAvoidFreqList));
+	/*
+	 * If channel passed is zero, clear the avoid_freq list in application.
+	 */
+	if (!op_chan) {
+		ret = wlan_hdd_send_avoid_freq_event(pHddCtx,
+						     &p2p_avoid_freq_list);
+		if (ret)
+			hdd_err("wlan_hdd_send_avoid_freq_event error:%d",
+				ret);
+
+		return ret;
+	}
+
+	if (WLAN_REG_IS_24GHZ_CH(op_chan)) {
+		min_chan = REG_MIN_24GHZ_CH_NUM;
+		max_chan = REG_MAX_24GHZ_CH_NUM;
+	} else if WLAN_REG_IS_5GHZ_CH(op_chan) {
+		min_chan = REG_MIN_5GHZ_CH_NUM;
+		max_chan = REG_MAX_5GHZ_CH_NUM;
+	} else {
+		hdd_err("invalid channel:%d", op_chan);
+		return -EINVAL;
+	}
+
+	if ((op_chan > min_chan) && (op_chan < max_chan)) {
+		p2p_avoid_freq_list.avoidFreqRangeCount = 2;
+		p2p_avoid_freq_list.avoidFreqRange[0].startFreq =
+			wlan_chan_to_freq(min_chan);
+
+		/* Get channel before the op_chan */
+		chan = wlan_hdd_get_adjacent_chan(op_chan, false);
+		if (chan < 0)
+			return -EINVAL;
+		p2p_avoid_freq_list.avoidFreqRange[0].endFreq =
+			wlan_chan_to_freq(chan);
+
+		/* Get channel next to the op_chan */
+		chan = wlan_hdd_get_adjacent_chan(op_chan, true);
+		if (chan < 0)
+			return -EINVAL;
+		p2p_avoid_freq_list.avoidFreqRange[1].startFreq =
+			wlan_chan_to_freq(chan);
+
+		p2p_avoid_freq_list.avoidFreqRange[1].endFreq =
+			wlan_chan_to_freq(max_chan);
+	} else if (op_chan == min_chan) {
+		p2p_avoid_freq_list.avoidFreqRangeCount = 1;
+
+		chan = wlan_hdd_get_adjacent_chan(op_chan, true);
+		if (chan < 0)
+			return -EINVAL;
+		p2p_avoid_freq_list.avoidFreqRange[0].startFreq =
+			wlan_chan_to_freq(chan);
+
+		p2p_avoid_freq_list.avoidFreqRange[0].endFreq =
+			wlan_chan_to_freq(max_chan);
+	} else {
+		p2p_avoid_freq_list.avoidFreqRangeCount = 1;
+		p2p_avoid_freq_list.avoidFreqRange[0].startFreq =
+			wlan_chan_to_freq(min_chan);
+
+		chan = wlan_hdd_get_adjacent_chan(op_chan, false);
+		if (chan < 0)
+			return -EINVAL;
+		p2p_avoid_freq_list.avoidFreqRange[0].endFreq =
+			wlan_chan_to_freq(chan);
+	}
+
+	ret = wlan_hdd_send_avoid_freq_event(pHddCtx, &p2p_avoid_freq_list);
+	if (ret)
+		hdd_err("wlan_hdd_send_avoid_freq_event error:%d", ret);
+
+	return ret;
+}
+
 /* vendor specific events */
 static const struct nl80211_vendor_cmd_info wlan_hdd_cfg80211_vendor_events[] = {
 	[QCA_NL80211_VENDOR_SUBCMD_AVOID_FREQUENCY_INDEX] = {
