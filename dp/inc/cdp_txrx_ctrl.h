@@ -250,10 +250,14 @@ cdp_set_inact_params(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 			u_int16_t inact_normal,
 			u_int16_t inact_overload)
 {
+	if (!soc || !pdev)
+		return false;
+
 	if (soc->ops->ctrl_ops->txrx_set_inact_params)
 		return soc->ops->ctrl_ops->txrx_set_inact_params
 			(pdev, inact_check_interval, inact_normal,
 			inact_overload);
+
 	return false;
 }
 static inline bool
@@ -261,6 +265,9 @@ cdp_start_inact_timer(ol_txrx_soc_handle soc,
 	struct cdp_pdev *pdev,
 	bool enable)
 {
+	if (!soc || !pdev)
+		return false;
+
 	if (soc->ops->ctrl_ops->txrx_start_inact_timer)
 		return soc->ops->ctrl_ops->txrx_start_inact_timer
 			(pdev, enable);
@@ -280,8 +287,12 @@ static inline void
 cdp_set_overload(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 	bool overload)
 {
+	if (!soc || !pdev)
+		return;
+
 	if (soc->ops->ctrl_ops->txrx_set_overload)
 		return soc->ops->ctrl_ops->txrx_set_overload(pdev, overload);
+
 	return;
 }
 
@@ -294,8 +305,12 @@ cdp_set_overload(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 static inline bool
 cdp_peer_is_inact(ol_txrx_soc_handle soc, void *peer)
 {
+	if (!soc || !peer)
+		return false;
+
 	if (soc->ops->ctrl_ops->txrx_peer_is_inact)
 		return soc->ops->ctrl_ops->txrx_peer_is_inact(peer);
+
 	return false;
 }
 

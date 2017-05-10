@@ -1959,6 +1959,21 @@ dp_get_pdev_reo_dest(struct cdp_pdev *pdev_handle)
 		return cdp_host_reo_dest_ring_unknown;
 }
 
+#ifdef QCA_SUPPORT_SON
+static void dp_son_peer_authorize(struct dp_peer *peer)
+{
+	struct dp_soc *soc;
+	soc = peer->vdev->pdev->soc;
+	peer->peer_bs_inact_flag = 0;
+	peer->peer_bs_inact = soc->pdev_bs_inact_reload;
+	return;
+}
+#else
+static void dp_son_peer_authorize(struct dp_peer *peer)
+{
+	return;
+}
+#endif
 /*
  * dp_set_filter_neighbour_peers() - set filter neighbour peers for smart mesh
  * @pdev_handle: device object
@@ -2057,13 +2072,9 @@ static void dp_peer_authorize(void *peer_handle, uint32_t authorize)
 
 	if (peer != NULL) {
 		soc = peer->vdev->pdev->soc;
-
 		qdf_spin_lock_bh(&soc->peer_ref_mutex);
+		dp_son_peer_authorize(peer);
 		peer->authorize = authorize ? 1 : 0;
-#ifdef notyet /* ATH_BAND_STEERING */
-		peer->peer_bs_inact_flag = 0;
-		peer->peer_bs_inact = soc->pdev_bs_inact_reload;
-#endif
 		qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 	}
 }

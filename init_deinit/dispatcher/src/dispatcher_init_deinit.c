@@ -33,6 +33,9 @@
 #ifdef WLAN_ATF_ENABLE
 #include <wlan_atf_utils_api.h>
 #endif
+#ifdef QCA_SUPPORT_SON
+#include <wlan_son_pub.h>
+#endif
 #ifdef WIFI_POS_CONVERGED
 #include "wifi_pos_api.h"
 #endif /* WIFI_POS_CONVERGED */
@@ -44,7 +47,6 @@
 #include <wlan_p2p_ucfg_api.h>
 #endif
 #include <wlan_reg_services_api.h>
-
 #ifdef WLAN_CONV_CRYPTO_SUPPORTED
 #include "wlan_crypto_main.h"
 #endif
@@ -193,6 +195,47 @@ static QDF_STATUS tdls_psoc_disable(struct wlan_objmgr_psoc *psoc)
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+#if defined QCA_SUPPORT_SON && QCA_SUPPORT_SON >= 1
+static QDF_STATUS dispatcher_init_son(void)
+{
+	return wlan_son_init();
+}
+static QDF_STATUS son_psoc_open(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_son_psoc_open(psoc);
+}
+static QDF_STATUS dispatcher_deinit_son(void)
+{
+	return wlan_son_deinit();
+}
+
+static QDF_STATUS son_psoc_close(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_son_psoc_close(psoc);
+}
+#else
+static QDF_STATUS dispatcher_init_son(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS dispatcher_deinit_son(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS son_psoc_open(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS son_psoc_close(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+#endif /* END of QCA_SUPPORT_SON */
 
 #ifdef WLAN_PMO_ENABLE
 static QDF_STATUS dispatcher_init_pmo(void)
@@ -587,6 +630,9 @@ QDF_STATUS dispatcher_init(void)
 	if (QDF_STATUS_SUCCESS != dispatcher_offchan_txrx_init())
 		goto offchan_init_fail;
 
+	if (QDF_STATUS_SUCCESS != dispatcher_init_son())
+		goto son_init_fail;
+
 	/*
 	 * scheduler INIT has to be the last as each component's
 	 * initialization has to happen first and then at the end
@@ -598,6 +644,8 @@ QDF_STATUS dispatcher_init(void)
 	return QDF_STATUS_SUCCESS;
 
 scheduler_init_fail:
+	dispatcher_deinit_son();
+son_init_fail:
 	dispatcher_offchan_txrx_deinit();
 offchan_init_fail:
 	dispatcher_regulatory_deinit();
@@ -640,6 +688,8 @@ QDF_STATUS dispatcher_deinit(void)
 	 * services up on dispatcher deinit sequence
 	 */
 	QDF_BUG(QDF_STATUS_SUCCESS == scheduler_deinit());
+
+	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_deinit_son());
 
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_offchan_txrx_deinit());
 
@@ -698,8 +748,12 @@ QDF_STATUS dispatcher_psoc_open(struct wlan_objmgr_psoc *psoc)
 	if (QDF_STATUS_SUCCESS != dispatcher_regulatory_psoc_open(psoc))
 		goto regulatory_psoc_open_fail;
 
-	return QDF_STATUS_SUCCESS;
+	if (QDF_STATUS_SUCCESS != son_psoc_open(psoc))
+		goto psoc_son_fail;
 
+	return QDF_STATUS_SUCCESS;
+psoc_son_fail:
+	regulatory_psoc_close(psoc);
 regulatory_psoc_open_fail:
 	dispatcher_policy_mgr_psoc_close(psoc);
 policy_mgr_psoc_open_fail:
@@ -720,6 +774,8 @@ EXPORT_SYMBOL(dispatcher_psoc_open);
 
 QDF_STATUS dispatcher_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
+	QDF_BUG(QDF_STATUS_SUCCESS == son_psoc_close(psoc));
+
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_regulatory_psoc_close(psoc));
 
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_policy_mgr_psoc_close(psoc));

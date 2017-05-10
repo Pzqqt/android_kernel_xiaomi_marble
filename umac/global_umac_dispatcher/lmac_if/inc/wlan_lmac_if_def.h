@@ -31,12 +31,14 @@
 #ifdef WLAN_ATF_ENABLE
 #include "wlan_atf_utils_defs.h"
 #endif
+#ifdef QCA_SUPPORT_SON
+#include <wlan_son_tgt_api.h>
+#endif
 #include <reg_services_public_struct.h>
 
 #ifdef WLAN_CONV_CRYPTO_SUPPORTED
 #include "wlan_crypto_global_def.h"
 #endif
-
 /* Number of dev type: Direct attach and Offload */
 #define MAX_DEV_TYPE 2
 
@@ -545,6 +547,9 @@ struct wlan_lmac_if_tx_ops {
 #endif
 #ifdef CONVERGED_P2P_ENABLE
 	struct wlan_lmac_if_p2p_tx_ops p2p;
+#endif
+#ifdef QCA_SUPPORT_SON
+	struct wlan_lmac_if_son_tx_ops son_tx_ops;
 #endif
 
 #ifdef WLAN_ATF_ENABLE

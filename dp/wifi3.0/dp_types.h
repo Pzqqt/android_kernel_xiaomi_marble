@@ -591,14 +591,28 @@ struct dp_soc {
 #endif
 	qdf_list_t reo_desc_freelist;
 	qdf_spinlock_t reo_desc_freelist_lock;
-
 	/* Obj Mgr SoC */
 	struct wlan_objmgr_psoc *psoc;
-
 	qdf_nbuf_t invalid_peer_head_msdu;
 	qdf_nbuf_t invalid_peer_tail_msdu;
-};
+#ifdef QCA_SUPPORT_SON
+	/* The timer to check station's inactivity status */
+	os_timer_t pdev_bs_inact_timer;
+	/* The current inactivity count reload value
+	   based on overload condition */
+	u_int16_t pdev_bs_inact_reload;
 
+	/* The inactivity timer value when not overloaded */
+	u_int16_t pdev_bs_inact_normal;
+
+	/* The inactivity timer value when overloaded */
+	u_int16_t pdev_bs_inact_overload;
+
+	/* The inactivity timer check interval */
+	u_int16_t pdev_bs_inact_interval;
+	/* Inactivity timer */
+#endif /* QCA_SUPPORT_SON */
+};
 #define MAX_RX_MAC_RINGS 2
 /* Same as NAC_MAX_CLENT */
 #define DP_NAC_MAX_CLIENT  24
@@ -612,7 +626,6 @@ enum dp_nac_param_cmd {
 	/* IEEE80211_NAC_PARAM_LIST */
 	DP_NAC_PARAM_LIST,
 };
-
 #define DP_MAC_ADDR_LEN 6
 union dp_align_mac_addr {
 	uint8_t raw[DP_MAC_ADDR_LEN];
@@ -938,6 +951,7 @@ struct dp_peer {
 
 	/* Band steering: Set when node is inactive */
 	uint8_t peer_bs_inact_flag:1;
+	u_int16_t peer_bs_inact; /* inactivity mark count */
 
 	/* NAWDS Flag and Bss Peer bit */
 	uint8_t nawds_enabled:1,
