@@ -268,6 +268,40 @@ pe_init_pmf_comeback_timer(tpAniSirGlobal mac_ctx,
 #endif
 
 /**
+ * lim_get_peer_idxpool_size: get number of peer idx pool size
+ * @num_sta: Max number of STA
+ * @bss_type: BSS type
+ *
+ * The peer index start from 1 and thus index 0 is not used, so
+ * add 1 to the max sta. For STA if TDLS is enabled add 2 as
+ * index 1 is reserved for peer BSS.
+ *
+ * Return: number of peer idx pool size
+ */
+#ifdef FEATURE_WLAN_TDLS
+static inline uint8_t
+lim_get_peer_idxpool_size(uint16_t num_sta, tSirBssType bss_type)
+{
+	/*
+	 * In station role, index 1 is reserved for peer
+	 * corresponding to AP. For TDLS the index should
+	 * start from 2
+	 */
+	if (bss_type == eSIR_INFRASTRUCTURE_MODE)
+		return num_sta + 2;
+	else
+		return num_sta + 1;
+
+}
+#else
+static inline uint8_t
+lim_get_peer_idxpool_size(uint16_t num_sta, tSirBssType bss_type)
+{
+	return num_sta + 1;
+}
+#endif
+
+/**
  * pe_create_session() creates a new PE session given the BSSID
  * @param pMac:        pointer to global adapter context
  * @param bssid:       BSSID of the new session
@@ -320,10 +354,12 @@ pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 		return NULL;
 	}
 
+
 	session_ptr->dph.dphHashTable.size = numSta + 1;
 	dph_hash_table_class_init(pMac, &session_ptr->dph.dphHashTable);
 	session_ptr->gpLimPeerIdxpool = qdf_mem_malloc(
-		sizeof(*(session_ptr->gpLimPeerIdxpool)) * (numSta + 1));
+		sizeof(*(session_ptr->gpLimPeerIdxpool)) *
+		lim_get_peer_idxpool_size(numSta, bssType));
 	if (NULL == session_ptr->gpLimPeerIdxpool) {
 		pe_err("memory allocate failed!");
 		qdf_mem_free(session_ptr->dph.dphHashTable.pHashTable);
