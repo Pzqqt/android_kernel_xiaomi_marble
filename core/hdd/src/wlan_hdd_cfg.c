@@ -4368,6 +4368,13 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_MAX_MPDUS_IN_AMPDU_DEFAULT,
 		CFG_MAX_MPDUS_IN_AMPDU_MIN,
 		CFG_MAX_MPDUS_IN_AMPDU_MAX),
+
+	REG_VARIABLE(CFG_SAP_MAX_MCS_FOR_TX_DATA, WLAN_PARAM_Integer,
+		struct hdd_config, sap_max_mcs_txdata,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_SAP_MAX_MCS_FOR_TX_DATA_DEFAULT,
+		CFG_SAP_MAX_MCS_FOR_TX_DATA_MIN,
+		CFG_SAP_MAX_MCS_FOR_TX_DATA_MAX),
 };
 
 
@@ -7018,6 +7025,13 @@ bool hdd_update_config_cfg(hdd_context_t *hdd_ctx)
 			    QDF_STATUS_E_FAILURE) {
 		status = false;
 		hdd_err("Couldn't pass on WNI_CFG_RATE_FOR_TX_MGMT to CCM");
+	}
+
+	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_SAP_MAX_MCS_DATA,
+			    config->sap_max_mcs_txdata) ==
+			    QDF_STATUS_E_FAILURE) {
+		status = false;
+		hdd_err("Could not pass on WNI_CFG_SAP_MAX_MCS_DATA to CCM");
 	}
 
 	return status;

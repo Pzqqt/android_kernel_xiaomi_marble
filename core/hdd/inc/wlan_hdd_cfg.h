@@ -10136,6 +10136,23 @@ enum hdd_external_acs_freq_band {
 #define CFG_EXTERNAL_ACS_FREQ_BAND_DEFAULT  (HDD_EXTERNAL_ACS_FREQ_BAND_24GHZ)
 
 /*
+ * gSapMaxMCSForTxData - sap 11n max mcs
+ * @Min: 0
+ * @Max: 383
+ * @Default: 0
+ *
+ * This ini configure SAP 11n max mcs
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_SAP_MAX_MCS_FOR_TX_DATA         "gSapMaxMCSForTxData"
+#define CFG_SAP_MAX_MCS_FOR_TX_DATA_MIN     (0)
+#define CFG_SAP_MAX_MCS_FOR_TX_DATA_MAX     (383)
+#define CFG_SAP_MAX_MCS_FOR_TX_DATA_DEFAULT (0)
+
+/*
  * Type declarations
  */
 struct hdd_config {
@@ -10865,6 +10882,7 @@ struct hdd_config {
 	bool is_force_1x1;
 	uint8_t enable_rts_sifsbursting;
 	uint8_t max_mpdus_inampdu;
+	uint16_t sap_max_mcs_txdata;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

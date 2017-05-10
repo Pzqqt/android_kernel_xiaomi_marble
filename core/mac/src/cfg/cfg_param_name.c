@@ -326,4 +326,8 @@ unsigned char *g_cfg_param_name[] = {
 	(unsigned char *)"MAX_HT_MCS_TX_DATA",
 	(unsigned char *)"DISABLE_ABG_RATE_TX_DATA",
 	(unsigned char *)"RATE_FOR_TX_MGMT",
+	(unsigned char *)"TGT_GTX_USR_CFG",
+	(unsigned char *)"ASSOC_STA_LIMIT_GO",
+	(unsigned char *)"ASSOC_STA_LIMIT_AP",
+	(unsigned char *)"SAP_MAX_MCS_DATA",
 };
