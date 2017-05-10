@@ -413,7 +413,10 @@ int hdd_display_napi_stats(void)
 
 	for (i = 0; i < CE_COUNT_MAX; i++)
 		if (napid->ce_map & (0x01 << i)) {
-			napii = &(napid->napis[i]);
+			napii = napid->napis[i];
+			if (!napii)
+				continue;
+
 			for (j = 0; j < num_possible_cpus(); j++) {
 				napis = &(napii->stats[j]);
 				n = 0;
