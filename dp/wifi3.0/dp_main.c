@@ -1371,6 +1371,7 @@ static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force)
 
 	soc->pdev_list[pdev->pdev_id] = NULL;
 	soc->pdev_count--;
+	wlan_cfg_pdev_detach(pdev->wlan_cfg_ctx);
 	qdf_mem_free(pdev);
 }
 
@@ -1427,10 +1428,9 @@ static void dp_soc_detach_wifi3(void *txrx_soc)
 	/* Common rings */
 	dp_srng_cleanup(soc, &soc->wbm_desc_rel_ring, SW2WBM_RELEASE, 0);
 
+	dp_tx_soc_detach(soc);
 	/* Tx data rings */
 	if (!wlan_cfg_per_pdev_tx_ring(soc->wlan_cfg_ctx)) {
-		dp_tx_soc_detach(soc);
-
 		for (i = 0; i < soc->num_tcl_data_rings; i++) {
 			dp_srng_cleanup(soc, &soc->tcl_data_ring[i],
 				TCL_DATA, i);
@@ -1477,6 +1477,7 @@ static void dp_soc_detach_wifi3(void *txrx_soc)
 	htt_soc_detach(soc->htt_handle);
 
 	dp_reo_desc_freelist_destroy(soc);
+	wlan_cfg_soc_detach(soc->wlan_cfg_ctx);
 	qdf_mem_free(soc);
 }
 
