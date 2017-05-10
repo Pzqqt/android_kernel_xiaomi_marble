@@ -59,7 +59,6 @@ typedef enum eSmeCommandType {
 	eSmeCommandScan,
 	eSmeCommandRoam,
 	eSmeCommandWmStatusChange,
-	eSmeCommandSetKey,
 #ifdef FEATURE_WLAN_TDLS
 	/*
 	 * eSmeTdlsCommandMask = 0x80000,

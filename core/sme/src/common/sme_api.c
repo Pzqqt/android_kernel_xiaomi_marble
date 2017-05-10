@@ -442,11 +442,6 @@ static void dump_csr_command_info(tpAniSirGlobal pMac, tSmeCmd *pCmd)
 			pCmd->u.wmStatusChangeCmd.Type);
 		break;
 
-	case eSmeCommandSetKey:
-		sme_debug("setKey command auth(%d) enc(%d)",
-			pCmd->u.setKeyCmd.authType, pCmd->u.setKeyCmd.encType);
-		break;
-
 	default:
 		sme_debug("default: Unhandled command %d",
 			pCmd->command);
@@ -576,9 +571,6 @@ QDF_STATUS sme_ser_handle_active_cmd(struct wlan_serialization_command *cmd)
 	case eSmeCommandWmStatusChange:
 		csr_roam_process_wm_status_change_command(mac_ctx,
 					sme_cmd);
-		break;
-	case eSmeCommandSetKey:
-		status = csr_roam_process_set_key_command(mac_ctx, sme_cmd);
 		break;
 	case eSmeCommandNdpInitiatorRequest:
 		status = csr_process_ndp_initiator_request(mac_ctx, sme_cmd);

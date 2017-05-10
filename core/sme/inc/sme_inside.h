@@ -174,7 +174,6 @@ typedef struct tagSmeCmd {
 		tScanCmd scanCmd;
 		tRoamCmd roamCmd;
 		tWmStatusChangeCmd wmStatusChangeCmd;
-		tSetKeyCmd setKeyCmd;
 		tGenericPmcCmd pmcCmd;
 		tGenericQosCmd qosCmd;
 		tRemainChlCmd remainChlCmd;
@@ -232,10 +231,8 @@ void csr_roam_process_wm_status_change_command(tpAniSirGlobal pMac,
 		tSmeCmd *pCommand);
 void csr_reinit_roam_cmd(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 void csr_reinit_wm_status_change_cmd(tpAniSirGlobal pMac, tSmeCmd *pCommand);
-void csr_reinit_set_key_cmd(tpAniSirGlobal pMac, tSmeCmd *pCommand);
-QDF_STATUS csr_roam_process_set_key_command(tpAniSirGlobal pMac,
-		tSmeCmd *pCommand);
-void csr_release_command_set_key(tpAniSirGlobal pMac, tSmeCmd *pCommand);
+QDF_STATUS csr_roam_send_set_key_cmd(tpAniSirGlobal mac_ctx,
+		uint32_t session_id, tSetKeyCmd *set_key_cmd);
 void csr_cancel_command(tpAniSirGlobal mac_ctx, tSmeCmd *sme_cmd);
 
 QDF_STATUS csr_is_valid_channel(tpAniSirGlobal pMac, uint8_t chnNum);
