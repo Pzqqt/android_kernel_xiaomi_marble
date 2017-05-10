@@ -8276,6 +8276,47 @@ static void populate_non_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_mawc] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_multiple_vdev_restart] =
 				WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_peer_assoc_conf] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_egap] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_sta_pmf_offload] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_unified_wow_capability] =
+				WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_enterprise_mesh] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_bpf_offload] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_sync_delete_cmds] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_ratectrl_limit_max_min_rates] =
+				WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_nan_data] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_nan_rtt] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_11ax] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_deprecated_replace] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_tdls_conn_tracker_in_host_mode] =
+				WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_enhanced_mcast_filter] =WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_half_rate_quarter_rate_support] =
+				WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_vdev_rx_filter] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_p2p_listen_offload_support] =
+				WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_mark_first_wakeup_packet] =
+				WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_multiple_mcast_filter_set] =
+				WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_host_managed_rx_reorder] =
+				WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_flash_rdwr_support] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_wlan_stats_report] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_tx_msdu_id_new_partition_support] =
+				WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_dfs_phyerr_offload] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_rcpi_support] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_fw_mem_dump_support] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_peer_stats_info] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_regulatory_db] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_11d_offload] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_hw_data_filtering] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_pkt_routing] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_offchan_tx_wmi] = WMI_SERVICE_UNAVAILABLE;
 }
 
 /**
