@@ -61,7 +61,7 @@
 #define MAX_PWR_FCC_CHAN_12 8
 #define MAX_PWR_FCC_CHAN_13 2
 
-#define CSR_NUM_IBSS_START_CHANNELS_50      4
+#define CSR_NUM_IBSS_START_CHAN_50      5
 #define CSR_NUM_IBSS_START_CHANNELS_24      3
 /* 5 seconds, for WPA, WPA2, CCKM */
 #define CSR_WAIT_FOR_KEY_TIMEOUT_PERIOD     (15 * QDF_MC_TIMER_TO_SEC_UNIT)
@@ -175,7 +175,7 @@ int diag_enc_type_from_csr_type(eCsrEncryptionType encType)
 }
 #endif /* #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR */
 static const uint8_t
-csr_start_ibss_channels50[CSR_NUM_IBSS_START_CHANNELS_50] = { 36, 40, 44, 48 };
+csr_start_ibss_channels50[CSR_NUM_IBSS_START_CHAN_50] = { 36, 44, 52, 56, 140 };
 static const uint8_t
 csr_start_ibss_channels24[CSR_NUM_IBSS_START_CHANNELS_24] = { 1, 6, 11 };
 static void init_config_param(tpAniSirGlobal pMac);
@@ -12825,7 +12825,7 @@ static uint8_t csr_roam_get_ibss_start_channel_number50(tpAniSirGlobal pMac)
 	    QDF_IS_STATUS_SUCCESS(csr_get_cfg_valid_channels
 					  (pMac, (uint8_t *) pMac->roam.
 					validChannelList, &len))) {
-		for (idx = 0; (idx < CSR_NUM_IBSS_START_CHANNELS_50) && !fFound;
+		for (idx = 0; (idx < CSR_NUM_IBSS_START_CHAN_50) && !fFound;
 		     idx++) {
 			for (idxValidChannels = 0;
 			     (idxValidChannels < len) && !fFound;
@@ -12851,7 +12851,7 @@ static uint8_t csr_roam_get_ibss_start_channel_number50(tpAniSirGlobal pMac)
 					validChannelList[idxValidChannels])) {
 					/* the max channel# in 11g is 14 */
 					if (idxValidChannels <
-					    CSR_NUM_IBSS_START_CHANNELS_50) {
+					    CSR_NUM_IBSS_START_CHAN_50) {
 						channel =
 						pMac->roam.validChannelList
 						[idxValidChannels];
