@@ -391,29 +391,6 @@ populate_dot11f_country(tpAniSirGlobal pMac,
 	return eSIR_SUCCESS;
 } /* End populate_dot11f_country. */
 
-#if defined(QCA_WIFI_3_0_EMU) || defined(QCA_WIFI_NAPIER_EMULATION)
-/**
- * populate_dot11f_ds_params() - To populate DS IE params
- * mac_ctx: Pointer to global mac context
- * dot11f_param: pointer to DS params IE
- * channel: channel number
- *
- * This routine will populate DS param in management frame like
- * beacon, probe response, and etc.
- *
- * Return: Overall sucess
- */
-tSirRetStatus
-populate_dot11f_ds_params(tpAniSirGlobal mac_ctx,
-			  tDot11fIEDSParams *dot11f_param, uint8_t channel)
-{
-	/* .11a/11b/g mode PHY => Include the DS Parameter Set IE: */
-	dot11f_param->curr_channel = channel;
-	dot11f_param->present = 1;
-
-	return eSIR_SUCCESS;
-} /* End populate_dot11f_ds_params. */
-#else
 /**
  * populate_dot11f_ds_params() - To populate DS IE params
  * mac_ctx: Pointer to global mac context
@@ -437,7 +414,6 @@ populate_dot11f_ds_params(tpAniSirGlobal mac_ctx,
 
 	return eSIR_SUCCESS;
 }
-#endif
 
 #define SET_AIFSN(aifsn) (((aifsn) < 2) ? 2 : (aifsn))
 
