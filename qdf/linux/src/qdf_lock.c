@@ -835,7 +835,7 @@ void qdf_lock_stats_cookie_create(struct lock_stats *stats,
 		qdf_atomic_inc(&lock_cookie_get_failures);
 		count = qdf_atomic_inc_return(&lock_cookie_untracked_num);
 		stats->cookie = (void *) DUMMY_LOCK_COOKIE;
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: cookie allocation failure, using dummy (%s:%d) count %d",
 			  __func__, func, line, count);
 		return;
