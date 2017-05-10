@@ -546,6 +546,12 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 			gp_cds_context->htc_ctx, gp_cds_context->qdf_ctx,
 			&dp_ol_if_ops, psoc);
 
+	if (!gp_cds_context->dp_soc)
+		goto err_wma_close;
+
+	if (cdp_txrx_intr_attach(gp_cds_context->dp_soc) != QDF_STATUS_SUCCESS)
+		goto err_wma_close;
+
 	pmo_ucfg_psoc_update_dp_handle(psoc, gp_cds_context->dp_soc);
 
 	cds_set_ac_specs_params(cds_cfg);
@@ -1020,6 +1026,7 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc, v_CONTEXT_t cds_context)
 		QDF_ASSERT(0);
 	}
 
+	cdp_txrx_intr_detach(gp_cds_context->dp_soc);
 	if (gp_cds_context->htc_ctx) {
 		htc_stop(gp_cds_context->htc_ctx);
 		htc_destroy(gp_cds_context->htc_ctx);
