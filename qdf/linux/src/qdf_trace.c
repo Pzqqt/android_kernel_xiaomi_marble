@@ -129,18 +129,6 @@ static struct s_qdf_dp_trace_data g_qdf_dp_trace_data;
 static tp_qdf_dp_trace_cb qdf_dp_trace_cb_table[QDF_DP_TRACE_MAX+1];
 #endif
 
-void qdf_set_pidx(int pidx)
-{
-	qdf_pidx = pidx;
-}
-EXPORT_SYMBOL(qdf_set_pidx);
-
-int qdf_get_pidx(void)
-{
-	return qdf_pidx;
-}
-EXPORT_SYMBOL(qdf_get_pidx);
-
 /**
  * qdf_trace_set_level() - Set the trace level for a particular module
  * @module: Module id
@@ -1814,6 +1802,7 @@ struct category_name_info g_qdf_category_name[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_OFFCHAN_TXRX] = {"OFFCHAN"},
 	[QDF_MODULE_ID_ANY] = {"ANY"},
 };
+EXPORT_SYMBOL(g_qdf_category_name);
 
 
 #ifdef CONFIG_MCL
@@ -1989,6 +1978,13 @@ int qdf_print_ctrl_register(const struct category_info *cinfo,
 			    QDF_TRACE_LEVEL_ALL) {
 				print_ctrl_obj[idx].cat_info[i]
 				.category_verbose_mask = 0xFFFF;
+			} else if ((cinfo[i].category_verbose_mask ==
+				   QDF_TRACE_LEVEL_NONE) ||
+				   (cinfo[i].category_verbose_mask ==
+				   QDF_TRACE_LEVEL_TO_MODULE_BITMASK(
+				   QDF_TRACE_LEVEL_NONE))) {
+				print_ctrl_obj[idx].cat_info[i]
+				.category_verbose_mask = 0;
 			} else {
 				print_ctrl_obj[idx].cat_info[i]
 				.category_verbose_mask =
@@ -2499,3 +2495,15 @@ int qdf_sprint_symbol(char *buffer, void *addr)
 }
 #endif
 EXPORT_SYMBOL(qdf_sprint_symbol);
+
+void qdf_set_pidx(int pidx)
+{
+	qdf_pidx = pidx;
+}
+EXPORT_SYMBOL(qdf_set_pidx);
+
+int qdf_get_pidx(void)
+{
+	return qdf_pidx;
+}
+EXPORT_SYMBOL(qdf_get_pidx);

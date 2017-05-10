@@ -53,6 +53,9 @@
 #define QDF_DEFAULT_TRACE_LEVEL (1 << QDF_TRACE_LEVEL_INFO)
 #endif
 
+#define QDF_CATEGORY_INFO_U16(val) (((val >> 16) & 0x0000FFFF))
+#define QDF_TRACE_LEVEL_INFO_L16(val) (val & 0x0000FFFF)
+
 typedef int (qdf_abstract_print)(void *priv, const char *fmt, ...);
 
 /*
@@ -67,19 +70,6 @@ typedef int (qdf_abstract_print)(void *priv, const char *fmt, ...);
 #define QDF_DEBUG_CFG           0x40
 
 #ifdef CONFIG_MCL
-/**
- * qdf_set_pidx() - Sets the global qdf_pidx.
- * @pidx : Index of print control object assigned to the module
- *
- */
-void qdf_set_pidx(int pidx);
-
-/**
- * qdf_get_pidx() - Returns the global qdf_pidx.
- *
- * Return : Current qdf print index.
- */
-int qdf_get_pidx(void);
 
 /* By default Data Path module will have all log levels enabled, except debug
  * log level. Debug level will be left up to the framework or user space modules
@@ -545,10 +535,24 @@ qdf_tso_seg_dbg_zero(struct qdf_tso_seg_elem_t *tsoseg)
 
 #define MAX_SUPPORTED_CATEGORY QDF_MODULE_ID_MAX
 
+/**
+ * qdf_set_pidx() - Sets the global qdf_pidx.
+ * @pidx : Index of print control object assigned to the module
+ *
+ */
+void qdf_set_pidx(int pidx);
+
+/**
+ * qdf_get_pidx() - Returns the global qdf_pidx.
+ *
+ * Return : Current qdf print index.
+ */
+int qdf_get_pidx(void);
 /*
  * Shared print control index
  * for converged debug framework
  */
+
 #define QDF_PRINT_IDX_SHARED -1
 
 /**
