@@ -289,7 +289,7 @@ QDF_STATUS hif_snoc_enable_bus(struct hif_softc *ol_sc,
 	/* the bus should remain on durring suspend for snoc */
 	hif_vote_link_up(GET_HIF_OPAQUE_HDL(ol_sc));
 
-	HIF_TRACE("%s: X - hif_type = 0x%x, target_type = 0x%x",
+	HIF_DBG("%s: X - hif_type = 0x%x, target_type = 0x%x",
 		  __func__, hif_type, target_type);
 
 	return QDF_STATUS_SUCCESS;

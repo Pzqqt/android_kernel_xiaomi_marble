@@ -947,4 +947,5 @@ static inline qdf_dma_addr_t hal_srng_get_tp_addr(void *hal_soc, void *hal_ring)
  */
 extern void hal_get_srng_params(void *hal_soc, void *hal_ring,
 	struct hal_srng_params *ring_params);
-#endif /* _HAL_API_H_ */
+
+#endif /* _HAL_APIH_ */

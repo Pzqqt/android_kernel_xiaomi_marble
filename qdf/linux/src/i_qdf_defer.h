@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -306,6 +306,21 @@ static inline uint32_t __qdf_flush_delayed_work(qdf_handle_t hdl,
 static inline __qdf_workqueue_t *__qdf_create_workqueue(char *name)
 {
 	return create_workqueue(name);
+}
+
+/**
+ * __qdf_create_singlethread_workqueue() - create a single threaded workqueue
+ * @name: string
+ *
+ * This API creates a dedicated work queue with a single worker thread to avoid
+ * wasting unnecessary resources when works which needs to be submitted in this
+ * queue are not very critical and frequent.
+ *
+ * Return: pointer of type qdf_workqueue_t
+ */
+static inline __qdf_workqueue_t *__qdf_create_singlethread_workqueue(char *name)
+{
+	return create_singlethread_workqueue(name);
 }
 
 /**

@@ -393,6 +393,14 @@ enum ht_sec_ch_offset {
 	HIGH_PRIMARY_CH = 3,
 };
 
+enum cc_setting_code {
+	REG_SET_CC_STATUS_PASS = 0,
+	REG_CURRENT_ALPHA2_NOT_FOUND = 1,
+	REG_INIT_ALPHA2_NOT_FOUND = 2,
+	REG_SET_CC_CHANGE_NOT_ALLOWED = 3,
+	REG_SET_CC_STATUS_NO_MEMORY = 4,
+	REG_SET_CC_STATUS_FAIL = 5,
+};
 
 /**
  * struct cur_reg_rule
@@ -415,6 +423,7 @@ struct cur_reg_rule {
 /**
  * struct cur_regulatory_info
  * @psoc: psoc ptr
+ * @cc_setting_code: cc setting regdb value
  * @alpha2: country alpha2
  * @dfs_reg: dfs region
  * @phybitmap: phy bit map
@@ -429,7 +438,12 @@ struct cur_reg_rule {
  */
 struct cur_regulatory_info {
 	struct wlan_objmgr_psoc *psoc;
+	enum cc_setting_code status_code;
+	uint8_t num_phy;
+	uint16_t reg_dmn_pair;
+	uint16_t ctry_code;
 	uint8_t alpha2[REG_ALPHA2_LEN + 1];
+	bool offload_enabled;
 	enum dfs_reg dfs_region;
 	uint32_t phybitmap;
 	uint32_t min_bw_2g;

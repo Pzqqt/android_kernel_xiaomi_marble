@@ -95,6 +95,7 @@ struct regdomain   {
 	uint8_t ctl_val;
 	enum dfs_reg dfs_region;
 	uint16_t min_bw;
+	uint8_t ant_gain;
 	uint8_t num_reg_rules;
 	uint8_t reg_rule_id[MAX_REG_RULES];
 };
@@ -144,5 +145,11 @@ enum ctl_value {
 	CTL_ETSI = 0x30,
 	CTL_NONE = 0xff
 };
+
+QDF_STATUS reg_get_num_countries(int *num_countries);
+
+QDF_STATUS reg_get_num_reg_dmn_pairs(int *num_reg_dmn);
+
+QDF_STATUS reg_get_default_country(uint16_t *default_country);
 
 #endif

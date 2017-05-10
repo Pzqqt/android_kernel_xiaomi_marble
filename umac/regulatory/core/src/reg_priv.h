@@ -48,6 +48,9 @@
 struct wlan_regulatory_psoc_priv_obj {
 	struct regulatory_channel mas_chan_list[NUM_CHANNELS];
 	bool offload_enabled;
+	uint8_t num_phy;
+	uint16_t reg_dmn_pair;
+	uint16_t ctry_code;
 	bool nol_chan[NUM_CHANNELS];
 	char default_country[REG_ALPHA2_LEN + 1];
 	char current_country[REG_ALPHA2_LEN + 1];

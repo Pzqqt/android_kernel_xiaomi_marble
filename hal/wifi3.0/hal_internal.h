@@ -33,6 +33,7 @@
 #include "qdf_types.h"
 #include "qdf_lock.h"
 #include "qdf_mem.h"
+#include "qdf_nbuf.h"
 #include "wcss_seq_hwiobase.h"
 #include "tlv_hdr.h"
 #include "tlv_tag_def.h"
@@ -62,9 +63,11 @@
 #include "rx_ppdu_start_user_info.h"
 #include "rx_ppdu_end_user_stats.h"
 #include "rx_ppdu_end_user_stats_ext.h"
+#include "rx_mpdu_desc_info.h"
 #include "tx_msdu_extension.h"
 #include "wcss_version.h"
 #include "pld_common.h"
+#include "rx_msdu_link.h"
 
 /* TBD: This should be movded to shared HW header file */
 enum hal_srng_ring_id {

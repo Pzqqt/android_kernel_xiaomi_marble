@@ -113,3 +113,21 @@ void ucfg_reg_program_mas_chan_list(struct wlan_objmgr_psoc *psoc,
 {
 	reg_program_mas_chan_list(psoc, reg_channels, alpha2, dfs_region);
 }
+
+QDF_STATUS ucfg_reg_program_default_cc(struct wlan_objmgr_psoc *psoc,
+		uint16_t regdmn)
+{
+	return reg_program_default_cc(psoc, regdmn);
+}
+
+QDF_STATUS ucfg_reg_program_cc(struct wlan_objmgr_psoc *psoc,
+		struct cc_regdmn_s *rd)
+{
+	return reg_program_chan_list(psoc, rd);
+}
+
+QDF_STATUS ucfg_reg_get_current_cc(struct wlan_objmgr_psoc *psoc,
+		struct cc_regdmn_s *rd)
+{
+	return reg_get_current_cc(psoc, rd);
+}

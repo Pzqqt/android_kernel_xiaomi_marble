@@ -39,7 +39,7 @@
  */
 void hif_dummy_bus_prevent_linkdown(struct hif_softc *scn, bool flag)
 {
-	HIF_ERROR("wlan: %s pcie power collapse ignored",
+	HIF_DBG("wlan: %s pcie power collapse ignored",
 			(flag ? "disable" : "enable"));
 }
 
