@@ -871,11 +871,11 @@ UMAC_MGMT_TXRX_OBJS := $(UMAC_MGMT_TXRX_DIR)/core/src/wlan_mgmt_txrx_main.o \
 	$(UMAC_MGMT_TXRX_DIR)/dispatcher/src/wlan_mgmt_txrx_tgt_api.o
 
 ########## POWER MANAGEMENT OFFLOADS (PMO) ##########
-PMO_DIR := $(WLAN_COMMON_ROOT)/power_management_offloads
-PMO_INC :=      -I$(WLAN_COMMON_INC)/power_management_offloads/core/inc \
-		-I$(WLAN_COMMON_INC)/power_management_offloads/dispatcher/inc \
-		-I$(WLAN_COMMON_INC)/power_management_offloads/core/src \
-		-I$(WLAN_COMMON_INC)/power_management_offloads/dispatcher/src
+PMO_DIR := $(WLAN_COMMON_ROOT)/pmo
+PMO_INC :=      -I$(WLAN_COMMON_INC)/pmo/core/inc \
+		-I$(WLAN_COMMON_INC)/pmo/dispatcher/inc \
+		-I$(WLAN_COMMON_INC)/pmo/core/src \
+		-I$(WLAN_COMMON_INC)/pmo/dispatcher/src
 
 PMO_OBJS :=     $(PMO_DIR)/core/src/wlan_pmo_main.o \
 		$(PMO_DIR)/core/src/wlan_pmo_arp.o \
