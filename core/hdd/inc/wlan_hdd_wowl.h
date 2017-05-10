@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -172,12 +172,10 @@ bool hdd_enter_wowl(hdd_adapter_t *pAdapter, bool enable_mp, bool enable_pbm);
 bool hdd_exit_wowl(hdd_adapter_t *pAdapter);
 
 /**
- * hdd_init_wowl() - Init function which will initialize the WoWL module
- *		     and perform any required initial configuration
- * @pAdapter: pointer to the adapter
+ * hdd_deinit_wowl() - Deinit function to cleanup WoWL allocated memory
  *
- * Return: false if any errors encountered, true otherwise
+ * Return: None
  */
-bool hdd_init_wowl(hdd_adapter_t *pAdapter);
+void hdd_deinit_wowl(void);
 
 #endif /* #ifndef _WLAN_HDD_WOWL_H */

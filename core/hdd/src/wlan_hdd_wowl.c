@@ -539,23 +539,14 @@ bool hdd_exit_wowl(hdd_adapter_t *pAdapter)
 	return true;
 }
 
-/**
- * hdd_init_wowl() - Init function which will initialize the WoWL module
- *		     and perform any required initial configuration
- * @pAdapter: pointer to the adapter
- *
- * Return: false if any errors encountered, true otherwise
- */
-bool hdd_init_wowl(hdd_adapter_t *pAdapter)
+void hdd_deinit_wowl(void)
 {
-	hdd_context_t *pHddCtx = NULL;
-	pHddCtx = pAdapter->pHddCtx;
+	int i;
 
-	memset(g_hdd_wowl_ptrns, 0, sizeof(g_hdd_wowl_ptrns));
-	g_hdd_wowl_ptrns_count = 0;
-
-	/* Add any statically configured patterns */
-	hdd_add_wowl_ptrn(pAdapter, pHddCtx->config->wowlPattern);
-
-	return true;
+	for (i = 0; i < WOWL_MAX_PTRNS_ALLOWED; ++i) {
+		if (g_hdd_wowl_ptrns[i]) {
+			qdf_mem_free(g_hdd_wowl_ptrns[i]);
+			g_hdd_wowl_ptrns[i] = NULL;
+		}
+	}
 }
