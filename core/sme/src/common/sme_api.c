@@ -1374,33 +1374,6 @@ QDF_STATUS sme_start(tHalHandle hHal)
 	return status;
 }
 
-static QDF_STATUS sme_handle_ipa_uc_stat_request(
-		tpAniSirGlobal mac_ctx, void *msg)
-{
-	wma_cli_set_cmd_t *iwcmd;
-	struct ani_ipa_stat_req *ipa_stat_msg;
-
-	ipa_stat_msg = msg;
-	iwcmd = qdf_mem_malloc(sizeof(*iwcmd));
-	if (!iwcmd) {
-		sme_err("Failed alloc memory for iwcmd");
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	qdf_mem_zero(iwcmd, sizeof(*iwcmd));
-	iwcmd->param_sec_value = 0;
-	iwcmd->param_vdev_id = ipa_stat_msg->vdev_id;
-	iwcmd->param_id = ipa_stat_msg->param_id;
-	iwcmd->param_vp_dev = ipa_stat_msg->req_type;
-	iwcmd->param_value =  ipa_stat_msg->param_val;
-
-	sme_info("param_id %d", iwcmd->param_id);
-	wma_ipa_uc_stat_request(iwcmd);
-	qdf_mem_free(iwcmd);
-
-	return QDF_STATUS_SUCCESS;
-}
-
 /**
  * sme_handle_scan_req() - Scan request handler
  * @mac_ctx: MAC global context
@@ -2664,16 +2637,6 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, struct scheduler_msg *pMsg)
 			pMac->sme.link_layer_stats_ext_cb(pMac->hHdd,
 							  pMsg->bodyptr);
 		qdf_mem_free(pMsg->bodyptr);
-		break;
-
-	case eWNI_SME_IPA_STATS_REQ_CMD:
-		if (pMsg->bodyptr) {
-			status = sme_handle_ipa_uc_stat_request(pMac,
-							 pMsg->bodyptr);
-			qdf_mem_free(pMsg->bodyptr);
-		} else {
-			sme_err("Empty message for: %d", pMsg->type);
-		}
 		break;
 
 	default:
@@ -16261,40 +16224,23 @@ QDF_STATUS sme_congestion_register_callback(tHalHandle hal,
 QDF_STATUS sme_ipa_uc_stat_request(tHalHandle hal, uint32_t vdev_id,
 			uint32_t param_id, uint32_t param_val, uint32_t req_cat)
 {
-	struct ani_ipa_stat_req	*ipa_stat_msg;
-	struct scheduler_msg msg = {0};
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
-	QDF_STATUS status;
+	wma_cli_set_cmd_t *iwcmd;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	status = sme_acquire_global_lock(&mac_ctx->sme);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sme_err("Unable to acquire lock");
-		return status;
-	}
-
-	ipa_stat_msg = qdf_mem_malloc(sizeof(struct ani_ipa_stat_req));
-	if (NULL == ipa_stat_msg) {
-		sme_release_global_lock(&mac_ctx->sme);
-		sme_err("Failed to allocate memory for ipa_stat_msg");
+	iwcmd = qdf_mem_malloc(sizeof(*iwcmd));
+	if (!iwcmd) {
+		sme_err("Failed alloc memory for iwcmd");
 		return QDF_STATUS_E_NOMEM;
 	}
-	ipa_stat_msg->msg_type = eWNI_SME_IPA_STATS_REQ_CMD;
-	ipa_stat_msg->msg_len = (uint16_t) sizeof(struct ani_ipa_stat_req);
-	ipa_stat_msg->vdev_id = vdev_id;
-	ipa_stat_msg->param_id = param_id;
-	ipa_stat_msg->param_val = param_val;
-	ipa_stat_msg->req_type = req_cat;
-	msg.type = eWNI_SME_IPA_STATS_REQ_CMD;
-	msg.bodyptr = ipa_stat_msg;
-	msg.reserved = 0;
-	msg.bodyval = 0;
-	if (QDF_STATUS_SUCCESS !=
-		scheduler_post_msg(QDF_MODULE_ID_SME, &msg)) {
-		sme_err("sme_ipa_uc_stat_request failed to post msg");
-		qdf_mem_free(ipa_stat_msg);
-		status = QDF_STATUS_E_FAILURE;
-	}
-	sme_release_global_lock(&mac_ctx->sme);
+
+	qdf_mem_zero(iwcmd, sizeof(*iwcmd));
+	iwcmd->param_sec_value = 0;
+	iwcmd->param_vdev_id = vdev_id;
+	iwcmd->param_id = param_id;
+	iwcmd->param_vp_dev = req_cat;
+	iwcmd->param_value =  param_val;
+	wma_ipa_uc_stat_request(iwcmd);
+	qdf_mem_free(iwcmd);
 
 	return status;
 }
