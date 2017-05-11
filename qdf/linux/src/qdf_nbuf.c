@@ -1902,14 +1902,11 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 	/* get the length of the next tso fragment */
 	tso_frag_len = min(skb_frag_len, tso_seg_size);
 
-	if (tso_frag_len == 0) {
-		qdf_print("ERROR:tso_frag_len=0, gso_size=%d!!!",
-				tso_seg_size);
-		return 0;
+	if (tso_frag_len != 0) {
+		tso_frag_paddr = dma_map_single(osdev->dev,
+				tso_frag_vaddr, tso_frag_len, DMA_TO_DEVICE);
 	}
 
-	tso_frag_paddr = dma_map_single(osdev->dev,
-		 tso_frag_vaddr, tso_frag_len, DMA_TO_DEVICE);
 	TSO_DEBUG("%s[%d] skb frag len %d tso frag len %d\n", __func__,
 		__LINE__, skb_frag_len, tso_frag_len);
 	num_seg = tso_info->num_segs;
@@ -1936,23 +1933,29 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 		curr_seg->seg.num_frags++;
 
 		while (more_tso_frags) {
-			curr_seg->seg.tso_frags[i].vaddr = tso_frag_vaddr;
-			curr_seg->seg.tso_frags[i].length = tso_frag_len;
-			curr_seg->seg.total_len += tso_frag_len;
-			curr_seg->seg.tso_flags.ip_len +=  tso_frag_len;
-			curr_seg->seg.num_frags++;
-			skb_proc = skb_proc - tso_frag_len;
+			if (tso_frag_len != 0) {
+				curr_seg->seg.tso_frags[i].vaddr =
+					tso_frag_vaddr;
+				curr_seg->seg.tso_frags[i].length =
+					tso_frag_len;
+				curr_seg->seg.total_len += tso_frag_len;
+				curr_seg->seg.tso_flags.ip_len +=  tso_frag_len;
+				curr_seg->seg.num_frags++;
+				skb_proc = skb_proc - tso_frag_len;
 
-			/* increment the TCP sequence number */
+				/* increment the TCP sequence number */
 
-			tso_cmn_info.tcp_seq_num += tso_frag_len;
-			curr_seg->seg.tso_frags[i].paddr = tso_frag_paddr;
+				tso_cmn_info.tcp_seq_num += tso_frag_len;
+				curr_seg->seg.tso_frags[i].paddr =
+					tso_frag_paddr;
+			}
+
 			TSO_DEBUG("%s[%d] frag %d frag len %d total_len %u vaddr %p\n",
-				__func__, __LINE__,
-				i,
-				tso_frag_len,
-				curr_seg->seg.total_len,
-				curr_seg->seg.tso_frags[i].vaddr);
+					__func__, __LINE__,
+					i,
+					tso_frag_len,
+					curr_seg->seg.total_len,
+					curr_seg->seg.tso_frags[i].vaddr);
 
 			/* if there is no more data left in the skb */
 			if (!skb_proc)
@@ -1961,9 +1964,12 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 			/* get the next payload fragment information */
 			/* check if there are more fragments in this segment */
 			if (tso_frag_len < tso_seg_size) {
-				tso_seg_size = tso_seg_size - tso_frag_len;
 				more_tso_frags = 1;
-				i++;
+				if (tso_frag_len != 0) {
+					tso_seg_size = tso_seg_size -
+						tso_frag_len;
+					i++;
+				}
 			} else {
 				more_tso_frags = 0;
 				/* reset i and the tso payload size */
@@ -1972,7 +1978,7 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 			}
 
 			/* if the next fragment is contiguous */
-			if (tso_frag_len < skb_frag_len) {
+			if ((tso_frag_len != 0)  && (tso_frag_len < skb_frag_len)) {
 				tso_frag_vaddr = tso_frag_vaddr + tso_frag_len;
 				skb_frag_len = skb_frag_len - tso_frag_len;
 				tso_frag_len = min(skb_frag_len, tso_seg_size);
@@ -1995,6 +2001,7 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 				tso_frag_vaddr = skb_frag_address_safe(frag);
 				j++;
 			}
+
 			TSO_DEBUG("%s[%d] skb frag len %d tso frag %d len tso_seg_size %d\n",
 				__func__, __LINE__, skb_frag_len, tso_frag_len,
 				tso_seg_size);
