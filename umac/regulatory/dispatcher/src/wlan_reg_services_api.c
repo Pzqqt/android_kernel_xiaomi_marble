@@ -388,3 +388,8 @@ uint32_t wlan_reg_chan_to_freq(struct wlan_objmgr_pdev *pdev,
 	return reg_chan_to_freq(pdev, chan_num);
 }
 
+QDF_STATUS wlan_reg_set_country(struct wlan_objmgr_pdev *pdev,
+				       uint8_t *country)
+{
+	return reg_set_country(pdev, country);
+}

@@ -328,4 +328,13 @@ uint32_t wlan_reg_freq_to_chan(struct wlan_objmgr_pdev *pdev,
 uint32_t wlan_reg_chan_to_freq(struct wlan_objmgr_pdev *pdev,
 			       uint32_t chan);
 
+/**
+ * wlan_reg_set_country() - Set the current regulatory country
+ * @pdev: The physical dev to set current country for
+ * @country: The country information to configure
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_reg_set_country(struct wlan_objmgr_pdev *pdev,
+				       uint8_t *country);
 #endif
