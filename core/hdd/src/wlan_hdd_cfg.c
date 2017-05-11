@@ -4268,6 +4268,7 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_ENABLE_BCAST_PROBE_RESP_DEFAULT,
 		CFG_ENABLE_BCAST_PROBE_RESP_MIN,
 		CFG_ENABLE_BCAST_PROBE_RESP_MAX),
+
 #ifdef WLAN_FEATURE_11AX
 	REG_VARIABLE(CFG_ENABLE_UL_MIMO_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, enable_ul_mimo,
@@ -4353,6 +4354,13 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_DROPPED_PKT_DISCONNECT_TH_DEFAULT,
 		CFG_DROPPED_PKT_DISCONNECT_TH_MIN,
 		CFG_DROPPED_PKT_DISCONNECT_TH_MAX),
+
+	REG_VARIABLE(CFG_FORCE_1X1_NAME, WLAN_PARAM_Integer,
+		struct hdd_config, is_force_1x1,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_FORCE_1X1_DEFAULT,
+		CFG_FORCE_1X1_MIN,
+		CFG_FORCE_1X1_MAX),
 };
 
 
@@ -5866,6 +5874,9 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	hdd_info("Name = [%s] value = [%u]",
 		 CFG_DROPPED_PKT_DISCONNECT_TH_NAME,
 		 pHddCtx->config->pkt_err_disconn_th);
+	hdd_debug("Name = [%s] value = [%u]",
+		 CFG_FORCE_1X1_NAME,
+		 pHddCtx->config->is_force_1x1);
 }
 
 
@@ -7452,6 +7463,8 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 
 	smeConfig->csrConfig.pkt_err_disconn_th =
 			pHddCtx->config->pkt_err_disconn_th;
+	smeConfig->csrConfig.is_force_1x1 =
+			pHddCtx->config->is_force_1x1;
 	status = sme_update_config(pHddCtx->hHal, smeConfig);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("sme_update_config() failure: %d", status);

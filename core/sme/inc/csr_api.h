@@ -1314,6 +1314,7 @@ typedef struct tagCsrConfigParam {
 	bool qcn_ie_support;
 	uint8_t fils_max_chan_guard_time;
 	uint16_t pkt_err_disconn_th;
+	bool is_force_1x1;
 } tCsrConfigParam;
 
 /* Tush */
