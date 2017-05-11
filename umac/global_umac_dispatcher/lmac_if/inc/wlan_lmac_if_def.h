@@ -34,6 +34,9 @@
 #ifdef QCA_SUPPORT_SON
 #include <wlan_son_tgt_api.h>
 #endif
+#ifdef WLAN_SA_API_ENABLE
+#include "wlan_sa_api_utils_defs.h"
+#endif
 #include <reg_services_public_struct.h>
 
 #ifdef WLAN_CONV_CRYPTO_SUPPORTED
@@ -364,6 +367,37 @@ struct wlan_lmac_if_atf_tx_ops {
 };
 #endif
 
+#ifdef WLAN_SA_API_ENABLE
+
+/**
+ * struct wlan_lmac_if_sa_api_tx_ops - SA API specific tx function pointers
+ */
+
+struct wlan_lmac_if_sa_api_tx_ops {
+	void (*sa_api_register_event_handler)(struct wlan_objmgr_psoc *psoc);
+	void (*sa_api_unregister_event_handler)(struct wlan_objmgr_psoc *posc);
+	void (*sa_api_enable_sa) (struct wlan_objmgr_pdev *pdev,
+			uint32_t enable, uint32_t mode, uint32_t rx_antenna);
+	void (*sa_api_set_rx_antenna) (struct wlan_objmgr_pdev *pdev,
+			uint32_t antenna);
+	void (*sa_api_set_tx_antenna) (struct wlan_objmgr_peer *peer,
+			uint32_t *antenna_array);
+	void (*sa_api_set_tx_default_antenna) (struct wlan_objmgr_pdev *pdev,
+			u_int32_t antenna);
+	void (*sa_api_set_training_info) (struct wlan_objmgr_peer *peer,
+			uint32_t *rate_array,
+			uint32_t *antenna_array,
+			uint32_t numpkts);
+	void (*sa_api_prepare_rateset)(struct wlan_objmgr_pdev *pdev,
+			struct wlan_objmgr_peer *peer,
+			struct sa_rate_info *rate_info);
+	void (*sa_api_set_node_config_ops) (struct wlan_objmgr_peer *peer,
+			uint32_t cmd_id, uint16_t args_count,
+			u_int32_t args_arr[]);
+};
+
+#endif
+
 #ifdef WIFI_POS_CONVERGED
 /*
  * struct wlan_lmac_if_wifi_pos_tx_ops - structure of firmware tx function
@@ -555,6 +589,9 @@ struct wlan_lmac_if_tx_ops {
 #ifdef WLAN_ATF_ENABLE
 	struct wlan_lmac_if_atf_tx_ops atf_tx_ops;
 #endif
+#ifdef WLAN_SA_API_ENABLE
+	struct wlan_lmac_if_sa_api_tx_ops sa_api_tx_ops;
+#endif
 
 #ifdef WLAN_CONV_CRYPTO_SUPPORTED
 	struct wlan_lmac_if_crypto_tx_ops crypto_tx_ops;
@@ -743,6 +780,41 @@ struct wlan_lmac_if_atf_rx_ops {
 					uint16_t value);
 };
 #endif
+
+#ifdef WLAN_SA_API_ENABLE
+
+/**
+ * struct wlan_lmac_if_sa_api_rx_ops - SA API south bound rx function pointers
+ */
+struct wlan_lmac_if_sa_api_rx_ops {
+	uint32_t (*sa_api_get_sa_supported)(struct wlan_objmgr_psoc *psoc);
+	uint32_t (*sa_api_get_validate_sw)(struct wlan_objmgr_psoc *psoc);
+	void (*sa_api_enable_sa)(struct wlan_objmgr_psoc *psoc, uint32_t value);
+	uint32_t (*sa_api_get_sa_enable)(struct wlan_objmgr_psoc *psoc);
+	void (*sa_api_peer_assoc_hanldler)(struct wlan_objmgr_pdev *pdev,
+			struct wlan_objmgr_peer *peer, struct sa_rate_cap *);
+	uint32_t (*sa_api_update_tx_feedback)(struct wlan_objmgr_pdev *pdev,
+			struct wlan_objmgr_peer *peer,
+			struct sa_tx_feedback *feedback);
+	uint32_t (*sa_api_update_rx_feedback)(struct wlan_objmgr_pdev *pdev,
+			struct wlan_objmgr_peer *peer,
+			struct sa_rx_feedback *feedback);
+	uint32_t (*sa_api_ucfg_set_param)(struct wlan_objmgr_pdev *pdev,
+			char *val);
+	uint32_t (*sa_api_ucfg_get_param)(struct wlan_objmgr_pdev *pdev,
+			char *val);
+	uint32_t (*sa_api_is_tx_feedback_enabled)
+			(struct wlan_objmgr_pdev *pdev);
+	uint32_t (*sa_api_is_rx_feedback_enabled)
+			(struct wlan_objmgr_pdev *pdev);
+	uint32_t (*sa_api_convert_rate_2g)(uint32_t rate);
+	uint32_t (*sa_api_convert_rate_5g)(uint32_t rate);
+	uint32_t (*sa_api_get_sa_mode)(struct wlan_objmgr_pdev *pdev);
+	uint32_t (*sa_api_get_beacon_txantenna)(struct wlan_objmgr_pdev *pdev);
+	uint32_t (*sa_api_cwm_action)(struct wlan_objmgr_pdev *pdev);
+};
+#endif
+
 
 #ifdef WIFI_POS_CONVERGED
 /**
@@ -934,6 +1006,9 @@ struct wlan_lmac_if_rx_ops {
 
 #ifdef WLAN_ATF_ENABLE
 	struct wlan_lmac_if_atf_rx_ops atf_rx_ops;
+#endif
+#ifdef WLAN_SA_API_ENABLE
+	struct wlan_lmac_if_sa_api_rx_ops sa_api_rx_ops;
 #endif
 #ifdef WLAN_CONV_CRYPTO_SUPPORTED
 	struct wlan_lmac_if_crypto_rx_ops crypto_rx_ops;

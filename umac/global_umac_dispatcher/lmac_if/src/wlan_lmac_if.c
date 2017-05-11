@@ -25,6 +25,9 @@
 #ifdef WLAN_ATF_ENABLE
 #include "wlan_atf_tgt_api.h"
 #endif
+#ifdef WLAN_SA_API_ENABLE
+#include "wlan_sa_api_tgt_api.h"
+#endif
 #ifdef WIFI_POS_CONVERGED
 #include "target_if_wifi_pos.h"
 #endif /* WIFI_POS_CONVERGED */
@@ -110,6 +113,46 @@ wlan_lmac_if_atf_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 {
 }
 #endif
+
+#ifdef WLAN_SA_API_ENABLE
+/**
+ * wlan_lmac_if_sa_api_rx_ops_register() - Function to register SA_API RX ops.
+ */
+static void
+wlan_lmac_if_sa_api_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+	struct wlan_lmac_if_sa_api_rx_ops *sa_api_rx_ops = &rx_ops->sa_api_rx_ops;
+
+	/* SA API rx ops */
+	sa_api_rx_ops->sa_api_get_sa_supported = tgt_sa_api_get_sa_supported;
+	sa_api_rx_ops->sa_api_get_validate_sw  = tgt_sa_api_get_validate_sw;
+	sa_api_rx_ops->sa_api_enable_sa        = tgt_sa_api_enable_sa;
+	sa_api_rx_ops->sa_api_get_sa_enable    = tgt_sa_api_get_sa_enable;
+
+	sa_api_rx_ops->sa_api_peer_assoc_hanldler = tgt_sa_api_peer_assoc_hanldler;
+	sa_api_rx_ops->sa_api_update_tx_feedback = tgt_sa_api_update_tx_feedback;
+	sa_api_rx_ops->sa_api_update_rx_feedback = tgt_sa_api_update_rx_feedback;
+
+	sa_api_rx_ops->sa_api_ucfg_set_param = tgt_sa_api_ucfg_set_param;
+	sa_api_rx_ops->sa_api_ucfg_get_param = tgt_sa_api_ucfg_get_param;
+
+	sa_api_rx_ops->sa_api_is_tx_feedback_enabled = tgt_sa_api_is_tx_feedback_enabled;
+	sa_api_rx_ops->sa_api_is_rx_feedback_enabled = tgt_sa_api_is_rx_feedback_enabled;
+
+	sa_api_rx_ops->sa_api_convert_rate_2g = tgt_sa_api_convert_rate_2g;
+	sa_api_rx_ops->sa_api_convert_rate_5g = tgt_sa_api_convert_rate_5g;
+	sa_api_rx_ops->sa_api_get_sa_mode = tgt_sa_api_get_sa_mode;
+
+	sa_api_rx_ops->sa_api_get_beacon_txantenna = tgt_sa_api_get_beacon_txantenna;
+	sa_api_rx_ops->sa_api_cwm_action = tgt_sa_api_cwm_action;
+}
+#else
+static void
+wlan_lmac_if_sa_api_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+}
+#endif
+
 
 #ifdef WLAN_CONV_CRYPTO_SUPPORTED
 static void
@@ -261,6 +304,8 @@ wlan_lmac_if_umac_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 	rx_ops->scan.scan_set_max_active_scans = tgt_scan_set_max_active_scans;
 
 	wlan_lmac_if_atf_rx_ops_register(rx_ops);
+
+	wlan_lmac_if_sa_api_rx_ops_register(rx_ops);
 
 	wlan_lmac_if_crypto_rx_ops_register(rx_ops);
 	/* wifi_pos rx ops */

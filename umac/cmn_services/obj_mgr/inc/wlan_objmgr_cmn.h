@@ -208,6 +208,7 @@ typedef enum {
 	WLAN_OFFCHAN_TXRX_ID  = 23,
 	WLAN_POLICY_MGR_ID    = 24,
 	WLAN_SON_ID           = 25,
+	WLAN_SA_API_ID        = 26,
 	WLAN_REF_ID_MAX,
 } wlan_objmgr_ref_dbgid;
 
