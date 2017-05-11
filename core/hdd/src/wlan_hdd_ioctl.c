@@ -4322,8 +4322,8 @@ static int drv_cmd_fast_reassoc(hdd_adapter_t *adapter,
 	}
 
 	/* Check channel number is a valid channel number */
-	if (QDF_STATUS_SUCCESS !=
-		wlan_hdd_validate_operation_channel(adapter, channel)) {
+	if (channel && (QDF_STATUS_SUCCESS !=
+		wlan_hdd_validate_operation_channel(adapter, channel))) {
 		hdd_err("Invalid Channel [%d]", channel);
 		return -EINVAL;
 	}

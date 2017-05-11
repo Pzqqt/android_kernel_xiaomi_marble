@@ -1421,12 +1421,14 @@ void sme_set_chan_info_callback(tHalHandle hal_handle,
  * @bssid: bssid to look for in scan cache
  * @frame_buf: frame buffer to populate
  * @frame_len: length of constructed frame
+ * @channel: Pointer to channel info to be filled
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS sme_get_beacon_frm(tHalHandle hal, tCsrRoamProfile *profile,
 			    const tSirMacAddr bssid,
-			    uint8_t **frame_buf, uint32_t *frame_len);
+			    uint8_t **frame_buf, uint32_t *frame_len,
+			    int *channel);
 /**
  * sme_fast_reassoc() - invokes FAST REASSOC command
  * @hal: handle returned by mac_open

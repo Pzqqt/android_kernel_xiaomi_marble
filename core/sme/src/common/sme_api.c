@@ -15829,7 +15829,8 @@ static void sme_prepare_beacon_from_bss_descp(uint8_t *frame_buf,
 
 QDF_STATUS sme_get_beacon_frm(tHalHandle hal, tCsrRoamProfile *profile,
 				const tSirMacAddr bssid,
-				uint8_t **frame_buf, uint32_t *frame_len)
+				uint8_t **frame_buf, uint32_t *frame_len,
+				int *channel)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tScanResultHandle result_handle = NULL;
@@ -15849,6 +15850,7 @@ QDF_STATUS sme_get_beacon_frm(tHalHandle hal, tCsrRoamProfile *profile,
 						profile, scan_filter);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		sme_err("prepare_filter failed");
+		status = QDF_STATUS_E_FAULT;
 		goto free_scan_flter;
 	}
 
@@ -15869,6 +15871,7 @@ QDF_STATUS sme_get_beacon_frm(tHalHandle hal, tCsrRoamProfile *profile,
 	status = csr_scan_get_result(mac_ctx, scan_filter, &result_handle);
 	if (QDF_STATUS_SUCCESS != status) {
 		sme_err("parse_scan_result failed");
+		status = QDF_STATUS_E_FAULT;
 		goto free_scan_flter;
 	}
 
@@ -15886,7 +15889,8 @@ QDF_STATUS sme_get_beacon_frm(tHalHandle hal, tCsrRoamProfile *profile,
 	 */
 	ie_len = bss_descp->length - sizeof(tSirBssDescription)
 		+ sizeof(bss_descp->length) + sizeof(bss_descp->ieFields);
-	sme_debug("found bss_descriptor ie_len: %d", ie_len);
+	sme_debug("found bss_descriptor ie_len: %d channel %d",
+					ie_len, bss_descp->channelId);
 
 	/* include mac header and fixed params along with IEs in frame */
 	*frame_len = SIR_MAC_HDR_LEN_3A + SIR_MAC_B_PR_SSID_OFFSET + ie_len;
@@ -15899,6 +15903,8 @@ QDF_STATUS sme_get_beacon_frm(tHalHandle hal, tCsrRoamProfile *profile,
 
 	sme_prepare_beacon_from_bss_descp(*frame_buf, bss_descp, bssid, ie_len);
 
+	if (!*channel)
+		*channel = bss_descp->channelId;
 free_scan_flter:
 	/* free scan filter and exit */
 	if (scan_filter) {
@@ -15923,7 +15929,6 @@ QDF_STATUS sme_fast_reassoc(tHalHandle hal, tCsrRoamProfile *profile,
 		return QDF_STATUS_E_NOMEM;
 	}
 	fastreassoc->vdev_id = vdev_id;
-	fastreassoc->channel = channel;
 	fastreassoc->bssid[0] = bssid[0];
 	fastreassoc->bssid[1] = bssid[1];
 	fastreassoc->bssid[2] = bssid[2];
@@ -15933,8 +15938,16 @@ QDF_STATUS sme_fast_reassoc(tHalHandle hal, tCsrRoamProfile *profile,
 
 	status = sme_get_beacon_frm(hal, profile, bssid,
 				    &fastreassoc->frame_buf,
-				    &fastreassoc->frame_len);
+				    &fastreassoc->frame_len,
+				    &channel);
 
+	if (!channel) {
+		sme_err("channel retrieval from BSS desc fails!");
+		qdf_mem_free(fastreassoc);
+		return QDF_STATUS_E_FAULT;
+	}
+
+	fastreassoc->channel = channel;
 	if (QDF_STATUS_SUCCESS != status) {
 		sme_warn("sme_get_beacon_frm failed");
 		fastreassoc->frame_buf = NULL;
