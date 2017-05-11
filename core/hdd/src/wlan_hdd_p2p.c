@@ -429,6 +429,12 @@ static void wlan_hdd_cancel_pending_roc(hdd_adapter_t *adapter)
 	mutex_lock(&cfg_state->remain_on_chan_ctx_lock);
 	roc_ctx = cfg_state->remain_on_chan_ctx;
 
+	if (!roc_ctx) {
+		mutex_unlock(&cfg_state->remain_on_chan_ctx_lock);
+		hdd_debug("roc_ctx is NULL, No pending RoC");
+		return;
+	}
+
 	if (roc_ctx->hdd_remain_on_chan_cancel_in_progress) {
 		mutex_unlock(&cfg_state->remain_on_chan_ctx_lock);
 		hdd_debug("roc cancel already in progress");
