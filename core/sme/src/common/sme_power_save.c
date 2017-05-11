@@ -820,24 +820,17 @@ tSirRetStatus sme_post_pe_message(tpAniSirGlobal mac_ctx,
 	return eSIR_SUCCESS;
 }
 
-/**
- * sme_ps_enable_auto_ps_timer(): Enable power-save auto timer with timeout
- * @hal_ctx:	HAL context
- * @session_id:	adapter session Id
- * @timeout:	timeout period in ms
- *
- * Returns:	0 on success, non-zero on failure
- */
 QDF_STATUS sme_ps_enable_auto_ps_timer(tHalHandle hal_ctx,
-	uint32_t session_id, uint32_t timeout)
+	uint32_t session_id, uint32_t timeout, bool force_trigger)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_ctx);
 	struct ps_global_info *ps_global_info = &mac_ctx->sme.ps_global_info;
 	struct ps_params *ps_param = &ps_global_info->ps_params[session_id];
 	QDF_STATUS qdf_status;
 
-	if (!ps_global_info->auto_bmps_timer_val) {
-		sme_debug("auto_ps_timer is disabled in INI");
+	if (!ps_global_info->auto_bmps_timer_val && !force_trigger) {
+		sme_debug("auto_ps_timer is disabled in INI, force_trigger-%d",
+			  force_trigger);
 		return QDF_STATUS_SUCCESS;
 	}
 

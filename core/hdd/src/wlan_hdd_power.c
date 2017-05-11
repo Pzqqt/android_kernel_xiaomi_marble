@@ -1523,6 +1523,7 @@ static int wlan_hdd_set_powersave(hdd_adapter_t *adapter,
 {
 	tHalHandle hal;
 	hdd_context_t *hdd_ctx;
+	bool force_trigger = false;
 
 	if (NULL == adapter) {
 		hdd_err("Adapter NULL");
@@ -1537,6 +1538,15 @@ static int wlan_hdd_set_powersave(hdd_adapter_t *adapter,
 
 	hdd_debug("Allow power save: %d", allow_power_save);
 	hal = WLAN_HDD_GET_HAL_CTX(adapter);
+
+	if ((QDF_STA_MODE == adapter->device_mode) &&
+	    !adapter->sessionCtx.station.ap_supports_immediate_power_save) {
+		/* override user's requested flag */
+		force_trigger = allow_power_save;
+		allow_power_save = false;
+		timeout = AUTO_PS_ENTRY_USER_TIMER_DEFAULT_VALUE;
+		hdd_debug("Defer power-save for few seconds...");
+	}
 
 	if (allow_power_save) {
 		if (QDF_STA_MODE == adapter->device_mode ||
@@ -1570,7 +1580,7 @@ static int wlan_hdd_set_powersave(hdd_adapter_t *adapter,
 			adapter->sessionId);
 		sme_ps_enable_disable(hal, adapter->sessionId, SME_PS_DISABLE);
 		sme_ps_enable_auto_ps_timer(WLAN_HDD_GET_HAL_CTX(adapter),
-			adapter->sessionId, timeout);
+			adapter->sessionId, timeout, force_trigger);
 	}
 
 	return 0;
