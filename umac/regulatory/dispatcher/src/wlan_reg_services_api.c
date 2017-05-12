@@ -334,7 +334,7 @@ QDF_STATUS regulatory_psoc_open(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_lmac_if_reg_tx_ops *tx_ops;
 
-	tx_ops = get_reg_psoc_tx_ops(psoc);
+	tx_ops = reg_get_psoc_tx_ops(psoc);
 	if (tx_ops->register_master_handler)
 		tx_ops->register_master_handler(psoc, NULL);
 
@@ -345,7 +345,7 @@ QDF_STATUS regulatory_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_lmac_if_reg_tx_ops *tx_ops;
 
-	tx_ops = get_reg_psoc_tx_ops(psoc);
+	tx_ops = reg_get_psoc_tx_ops(psoc);
 	if (tx_ops->unregister_master_handler)
 		tx_ops->unregister_master_handler(psoc, NULL);
 
@@ -393,3 +393,19 @@ QDF_STATUS wlan_reg_set_country(struct wlan_objmgr_pdev *pdev,
 {
 	return reg_set_country(pdev, country);
 }
+
+void wlan_reg_register_chan_change_callback(struct wlan_objmgr_psoc *psoc,
+					    reg_chan_change_callback cbk,
+					    void *arg)
+{
+	reg_register_chan_change_callback(psoc, cbk, arg);
+
+}
+
+void wlan_reg_unregister_chan_change_callback(struct wlan_objmgr_psoc *psoc,
+					      reg_chan_change_callback cbk)
+{
+	reg_unregister_chan_change_callback(psoc, cbk);
+
+}
+

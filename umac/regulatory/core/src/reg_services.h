@@ -162,8 +162,8 @@ QDF_STATUS reg_set_default_country(struct wlan_objmgr_psoc *psoc,
 
 /**
  * reg_set_country() - Set the current regulatory country
- * @pdev: The physical dev to set current country for
- * @country: The country information to configure
+ * @pdev: pdev device for country information
+ * @country: country value
  *
  * Return: QDF_STATUS
  */
@@ -239,7 +239,7 @@ QDF_STATUS  wlan_regulatory_pdev_obj_destroyed_notification(
 					    void *arg_list);
 
 static inline struct wlan_lmac_if_reg_tx_ops *
-get_reg_psoc_tx_ops(struct wlan_objmgr_psoc *psoc)
+reg_get_psoc_tx_ops(struct wlan_objmgr_psoc *psoc)
 {
 	return &((psoc->soc_cb.tx_ops.reg_ops));
 }
@@ -298,5 +298,26 @@ QDF_STATUS reg_get_current_cc(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS reg_get_curr_band(struct wlan_objmgr_pdev *pdev,
 		enum band_info *band);
 
+typedef void (*reg_chan_change_callback)(struct wlan_objmgr_psoc *psoc,
+					      struct wlan_objmgr_pdev *pdev,
+					      struct regulatory_channel
+					      *chan_list,
+					      void *arg);
+
+void reg_register_chan_change_callback(struct wlan_objmgr_psoc *psoc,
+				       reg_chan_change_callback cbk,
+				       void *arg);
+
+void reg_unregister_chan_change_callback(struct wlan_objmgr_psoc *psoc,
+					 reg_chan_change_callback cbk);
+
+
+struct chan_change_cbk_entry {
+	reg_chan_change_callback cbk;
+	void *arg;
+};
+
+enum country_src reg_get_cc_and_src(struct wlan_objmgr_psoc *psoc,
+				    uint8_t *alpha2);
 
 #endif

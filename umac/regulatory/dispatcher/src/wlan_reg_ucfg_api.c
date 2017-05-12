@@ -151,7 +151,7 @@ QDF_STATUS ucfg_reg_set_default_country(struct wlan_objmgr_psoc *psoc,
  * Return: QDF_STATUS
  */
 QDF_STATUS ucfg_reg_set_country(struct wlan_objmgr_pdev *pdev,
-				       uint8_t *country)
+				uint8_t *country)
 {
 	return reg_set_country(pdev, country);
 }
@@ -184,4 +184,23 @@ QDF_STATUS ucfg_reg_get_curr_band(struct wlan_objmgr_pdev *pdev,
 {
 	return reg_get_curr_band(pdev, band);
 
+}
+
+void ucfg_reg_register_chan_change_callback(struct wlan_objmgr_psoc *psoc,
+					    reg_chan_change_callback cbk,
+					    void *arg)
+{
+	reg_register_chan_change_callback(psoc, cbk, arg);
+}
+
+void ucfg_reg_unregister_chan_change_callback(struct wlan_objmgr_psoc *psoc,
+					      reg_chan_change_callback cbk)
+{
+	reg_unregister_chan_change_callback(psoc, cbk);
+}
+
+enum country_src ucfg_reg_get_cc_and_src(struct wlan_objmgr_psoc *psoc,
+					 uint8_t *alpha2)
+{
+	return reg_get_cc_and_src(psoc, alpha2);
 }

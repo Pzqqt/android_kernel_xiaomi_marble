@@ -29,6 +29,7 @@
 #define REG_SBS_SEPARATION_THRESHOLD 100
 #define REG_MAX_CHANNELS_PER_OPERATING_CLASS  25
 #define REG_MAX_SUPP_OPER_CLASSES 32
+#define REG_MAX_CHAN_CHANGE_CBKS 30
 
 /**
  * enum channel_enum - channel enumeration
@@ -496,6 +497,26 @@ struct reg_config_vars {
 struct reg_freq_range {
 	uint32_t low_freq;
 	uint32_t high_freq;
+};
+
+/**
+ * struct reg_sched_payload
+ * @psoc: psoc ptr
+ * @pdev: pdev ptr
+ */
+struct reg_sched_payload {
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_pdev *pdev;
+};
+
+/**
+ * enum direction
+ * @NORTHBOUND: northbound
+ * @SOUTHBOUND: southbound
+ */
+enum direction {
+	NORTHBOUND,
+	SOUTHBOUND,
 };
 
 #endif

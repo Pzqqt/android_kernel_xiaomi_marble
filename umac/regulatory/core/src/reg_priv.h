@@ -54,9 +54,12 @@ struct wlan_regulatory_psoc_priv_obj {
 	bool nol_chan[NUM_CHANNELS];
 	char default_country[REG_ALPHA2_LEN + 1];
 	char current_country[REG_ALPHA2_LEN + 1];
+	enum country_src cc_src;
 	struct wlan_objmgr_psoc *psoc_ptr;
 	uint32_t phybitmap;
 	enum dfs_reg dfs_region;
+	bool new_user_ctry_pending;
+	bool new_11d_ctry_pending;
 	char country_11d[REG_ALPHA2_LEN + 1];
 	bool dfs_enabled;
 	bool set_fcc_channel;
@@ -65,6 +68,9 @@ struct wlan_regulatory_psoc_priv_obj {
 	bool enable_11d_supp_original;
 	bool enable_11d_supp_current;
 	bool userspace_country_priority;
+	struct chan_change_cbk_entry cbk_list[REG_MAX_CHAN_CHANGE_CBKS];
+	uint8_t num_chan_change_cbks;
+	qdf_spinlock_t cbk_list_lock;
 };
 
 struct wlan_regulatory_pdev_priv_obj {

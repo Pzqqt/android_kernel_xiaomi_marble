@@ -29,6 +29,7 @@
 #include "../../core/src/reg_services.h"
 #include <reg_services_public_struct.h>
 
+
 #define WLAN_REG_MIN_24GHZ_CH_NUM REG_MIN_24GHZ_CH_NUM
 #define WLAN_REG_MAX_24GHZ_CH_NUM REG_MAX_24GHZ_CH_NUM
 #define WLAN_REG_MIN_5GHZ_CH_NUM REG_MIN_5GHZ_CH_NUM
@@ -61,7 +62,6 @@
 #define WLAN_REG_GET_24_END_CHAN_NUM 14
 
 #define WLAN_REG_CHAN_TO_BAND(chan_num)  reg_chan_to_band(chan_num)
-
 
 /**
  * wlan_reg_get_channel_list_with_power() - Provide the channel list with power
@@ -337,4 +337,27 @@ uint32_t wlan_reg_chan_to_freq(struct wlan_objmgr_pdev *pdev,
  */
 QDF_STATUS wlan_reg_set_country(struct wlan_objmgr_pdev *pdev,
 				       uint8_t *country);
+
+/**
+ * wlan_reg_register_chan_change_callback () - add chan change cbk
+ * @psoc: channel number
+ * @cbk: callback
+ * @arg: argument
+ *
+ * Return: true or false
+ */
+void wlan_reg_register_chan_change_callback(struct wlan_objmgr_psoc *psoc,
+					    reg_chan_change_callback cbk,
+					    void *arg);
+
+/**
+ * wlan_reg_unregister_chan_change_callback () - remove chan change cbk
+ * @psoc: channel number
+ * @cbk: callback
+ *
+ * Return: true or false
+ */
+void wlan_reg_unregister_chan_change_callback(struct wlan_objmgr_psoc *psoc,
+					      reg_chan_change_callback cbk);
+
 #endif

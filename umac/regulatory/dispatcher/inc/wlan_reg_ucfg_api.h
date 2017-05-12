@@ -81,8 +81,8 @@ QDF_STATUS ucfg_reg_set_default_country(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS ucfg_reg_set_country(struct wlan_objmgr_pdev *pdev,
-		uint8_t *country_code);
+QDF_STATUS ucfg_reg_set_country(struct wlan_objmgr_pdev *dev,
+				uint8_t *country_code);
 
 /**
  * ucfg_reg_reset_country() - Reset the regulatory country to default
@@ -167,4 +167,35 @@ void ucfg_reg_program_mas_chan_list(struct wlan_objmgr_psoc *psoc,
 				    uint8_t *alpha2,
 				    enum dfs_reg dfs_region);
 
+/**
+ * ucfg_reg_register_chan_change_callback () - add chan change cbk
+ * @psoc: psoc ptr
+ * @cbk: callback
+ * @arg: argument
+ *
+ * Return: void
+ */
+void ucfg_reg_register_chan_change_callback(struct wlan_objmgr_psoc *psoc,
+					    reg_chan_change_callback cbk,
+					    void *arg);
+
+/**
+ * ucfg_reg_unregister_chan_change_callback () - remove chan change cbk
+ * @psoc: psoc ptr
+ * @cbk: callback
+ *
+ * Return: void
+ */
+void ucfg_reg_unregister_chan_change_callback(struct wlan_objmgr_psoc *psoc,
+					      reg_chan_change_callback cbk);
+
+/**
+ * ucfg_reg_get_cc_and_src () - get country code and src
+ * @psoc: psoc ptr
+ * @alpha2: country code alpha2
+ *
+ * Return: void
+ */
+enum country_src ucfg_reg_get_cc_and_src(struct wlan_objmgr_psoc *psoc,
+					 uint8_t *alpha2);
 #endif
