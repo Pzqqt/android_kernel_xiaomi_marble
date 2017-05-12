@@ -1514,15 +1514,7 @@ success:
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * wlan_hdd_set_powersave() - Set powersave mode
- * @adapter: adapter upon which the request was received
- * @allow_power_save: is wlan allowed to go into power save mode
- * @timeout: timeout period in ms
- *
- * Return: 0 on success, non-zero on any error
- */
-static int wlan_hdd_set_powersave(hdd_adapter_t *adapter,
+int wlan_hdd_set_powersave(hdd_adapter_t *adapter,
 	bool allow_power_save, uint32_t timeout)
 {
 	tHalHandle hal;

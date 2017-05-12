@@ -1918,6 +1918,11 @@ ifneq (y,$(filter y,$(CONFIG_CNSS_EOS) $(CONFIG_ICNSS)))
 CDEFINES += -DWLAN_ENABLE_CHNL_MATRIX_RESTRICTION
 endif
 
+#Enable ICMP packet disable powersave feature
+ifeq ($(CONFIG_ICMP_DISABLE_PS),y)
+CDEFINES += -DWLAN_ICMP_DISABLE_PS
+endif
+
 #Enable OBSS feature
 CDEFINES += -DQCA_HT_2040_COEX
 

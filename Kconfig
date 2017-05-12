@@ -132,4 +132,8 @@ config WLAN_FEATURE_11AX
 	bool "Enable 11AX(High Efficiency) feature"
 	default n
 
+config ICMP_DISABLE_PS
+	bool "Enable ICMP packet disable powersave feature"
+	default n
+
 endif # QCA_CLD_WLAN

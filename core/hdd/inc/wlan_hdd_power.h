@@ -303,6 +303,17 @@ void hdd_wlan_suspend_resume_event(uint8_t state) {}
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
 /**
+ * wlan_hdd_set_powersave() - Set powersave mode
+ * @adapter: adapter upon which the request was received
+ * @allow_power_save: is wlan allowed to go into power save mode
+ * @timeout: timeout period in ms
+ *
+ * Return: 0 on success, non-zero on any error
+ */
+int wlan_hdd_set_powersave(hdd_adapter_t *adapter,
+			   bool allow_power_save, uint32_t timeout);
+
+/**
  * wlan_hdd_inc_suspend_stats() - Prints, then increments, then prints suspend
  *	failed statistics.
  * @hdd_ctx:	The HDD context to operate on
