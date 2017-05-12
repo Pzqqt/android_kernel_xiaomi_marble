@@ -4540,6 +4540,20 @@ nla_put_failure:
 }
 #endif
 
+#define ANT_DIV_PROBE_PERIOD \
+	QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_PROBE_PERIOD
+#define ANT_DIV_STAY_PERIOD \
+	QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_STAY_PERIOD
+#define ANT_DIV_SNR_DIFF \
+	QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_SNR_DIFF
+#define ANT_DIV_PROBE_DWELL_TIME \
+	QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_PROBE_DWELL_TIME
+#define ANT_DIV_MGMT_SNR_WEIGHT \
+	QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_MGMT_SNR_WEIGHT
+#define ANT_DIV_DATA_SNR_WEIGHT \
+	QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_DATA_SNR_WEIGHT
+#define ANT_DIV_ACK_SNR_WEIGHT \
+	QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_ACK_SNR_WEIGHT
 static const struct nla_policy
 wlan_hdd_wifi_config_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1] = {
 
@@ -4555,6 +4569,13 @@ wlan_hdd_wifi_config_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_CTRL_RETRY] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_PROPAGATION_DELAY] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_FAIL_COUNT] = {.type = NLA_U32 },
+	[ANT_DIV_PROBE_PERIOD] = {.type = NLA_U32},
+	[ANT_DIV_STAY_PERIOD] = {.type = NLA_U32},
+	[ANT_DIV_SNR_DIFF] = {.type = NLA_U32},
+	[ANT_DIV_PROBE_DWELL_TIME] = {.type = NLA_U32},
+	[ANT_DIV_MGMT_SNR_WEIGHT] = {.type = NLA_U32},
+	[ANT_DIV_DATA_SNR_WEIGHT] = {.type = NLA_U32},
+	[ANT_DIV_ACK_SNR_WEIGHT] = {.type = NLA_U32},
 };
 
 /**
@@ -4629,6 +4650,7 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	uint32_t abs_delay;
 	int param_id;
 	uint32_t tx_fail_count;
+	uint32_t ant_div_usrcfg;
 
 	ENTER_DEV(dev);
 
@@ -4917,6 +4939,93 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 					adapter->sessionId,
 					SIR_PARAM_IGNORE_ASSOC_DISALLOWED,
 					ignore_assoc_disallowed);
+	}
+
+#define ANT_DIV_SET_PERIOD(probe_period, stay_period) \
+	((1<<26)|((probe_period&0x1fff)<<13)|(stay_period&0x1fff))
+
+#define ANT_DIV_SET_SNR_DIFF(snr_diff) \
+	((1<<27)|(snr_diff&0x1fff))
+
+#define ANT_DIV_SET_PROBE_DWELL_TIME(probe_dwell_time) \
+	((1<<28)|(probe_dwell_time&0x1fff))
+
+#define ANT_DIV_SET_WEIGHT(mgmt_snr_weight, data_snr_weight, ack_snr_weight) \
+	((1<<29)|((mgmt_snr_weight&0xff)<<16)|((data_snr_weight&0xff)<<8)| \
+	(ack_snr_weight&0xff))
+
+	if (tb[ANT_DIV_PROBE_PERIOD] ||
+	    tb[ANT_DIV_STAY_PERIOD]) {
+
+		if (!tb[ANT_DIV_PROBE_PERIOD] ||
+		    !tb[ANT_DIV_STAY_PERIOD]) {
+			hdd_err("Both probe and stay period required");
+			return -EINVAL;
+		}
+
+		ant_div_usrcfg = ANT_DIV_SET_PERIOD(
+			nla_get_u32(tb[ANT_DIV_PROBE_PERIOD]),
+			nla_get_u32(tb[ANT_DIV_STAY_PERIOD]));
+		hdd_debug("ant div set period: %x", ant_div_usrcfg);
+		ret_val = wma_cli_set_command((int)adapter->sessionId,
+					(int)WMI_PDEV_PARAM_ANT_DIV_USRCFG,
+					ant_div_usrcfg, PDEV_CMD);
+		if (ret_val) {
+			hdd_err("Failed to set ant div period");
+			return ret_val;
+		}
+	}
+
+	if (tb[ANT_DIV_SNR_DIFF]) {
+		ant_div_usrcfg = ANT_DIV_SET_SNR_DIFF(
+			nla_get_u32(tb[ANT_DIV_SNR_DIFF]));
+		hdd_debug("ant div set snr diff: %x", ant_div_usrcfg);
+		ret_val = wma_cli_set_command((int)adapter->sessionId,
+					(int)WMI_PDEV_PARAM_ANT_DIV_USRCFG,
+					ant_div_usrcfg, PDEV_CMD);
+		if (ret_val) {
+			hdd_err("Failed to set ant snr diff");
+			return ret_val;
+		}
+	}
+
+	if (tb[ANT_DIV_PROBE_DWELL_TIME]) {
+		ant_div_usrcfg = ANT_DIV_SET_PROBE_DWELL_TIME(
+			nla_get_u32(tb[ANT_DIV_PROBE_DWELL_TIME]));
+		hdd_debug("ant div set probe dewll time: %x",
+					ant_div_usrcfg);
+		ret_val = wma_cli_set_command((int)adapter->sessionId,
+					(int)WMI_PDEV_PARAM_ANT_DIV_USRCFG,
+					ant_div_usrcfg, PDEV_CMD);
+		if (ret_val) {
+			hdd_err("Failed to set ant div probe dewll time");
+			return ret_val;
+		}
+	}
+
+	if (tb[ANT_DIV_MGMT_SNR_WEIGHT] ||
+	    tb[ANT_DIV_DATA_SNR_WEIGHT] ||
+	    tb[ANT_DIV_ACK_SNR_WEIGHT]) {
+
+		if (!tb[ANT_DIV_MGMT_SNR_WEIGHT] ||
+		    !tb[ANT_DIV_DATA_SNR_WEIGHT] ||
+		    !tb[ANT_DIV_ACK_SNR_WEIGHT]) {
+			hdd_err("Mgmt snr, data snr and ack snr weight are required");
+			return -EINVAL;
+		}
+
+		ant_div_usrcfg = ANT_DIV_SET_WEIGHT(
+			nla_get_u32(tb[ANT_DIV_MGMT_SNR_WEIGHT]),
+			nla_get_u32(tb[ANT_DIV_DATA_SNR_WEIGHT]),
+			nla_get_u32(tb[ANT_DIV_ACK_SNR_WEIGHT]));
+		hdd_debug("ant div set weight: %x", ant_div_usrcfg);
+		ret_val = wma_cli_set_command((int)adapter->sessionId,
+					(int)WMI_PDEV_PARAM_ANT_DIV_USRCFG,
+					ant_div_usrcfg, PDEV_CMD);
+		if (ret_val) {
+			hdd_err("Failed to set ant div weight");
+			return ret_val;
+		}
 	}
 
 	return ret_val;
