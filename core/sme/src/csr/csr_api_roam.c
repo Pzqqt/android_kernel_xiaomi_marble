@@ -17297,6 +17297,18 @@ csr_create_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
 						curr_ch_lst_info, req_buf);
 	}
 #endif
+
+	if (req_buf->ConnectedNetwork.ChannelCount == 0) {
+		/* Maintain the Valid Channels List */
+		status = csr_fetch_valid_ch_lst(mac_ctx, req_buf);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+					"Fetch channel list fail");
+			qdf_mem_free(req_buf);
+			return NULL;
+		}
+	}
+
 	for (i = 0, j = 0; i < req_buf->ConnectedNetwork.ChannelCount; i++) {
 		if (j < sizeof(ch_cache_str)) {
 			j += snprintf(ch_cache_str + j,
@@ -17310,15 +17322,6 @@ csr_create_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
 		 FL("ChnlCacheType:%d, No of Chnls:%d,Channels: %s"),
 		  req_buf->ChannelCacheType,
 		  req_buf->ConnectedNetwork.ChannelCount, ch_cache_str);
-
-	/* Maintain the Valid Channels List */
-	status = csr_fetch_valid_ch_lst(mac_ctx, req_buf);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			"Fetch channel list fail");
-		qdf_mem_free(req_buf);
-		return NULL;
-	}
 
 	req_buf->MDID.mdiePresent =
 		mac_ctx->roam.roamSession[session_id].
