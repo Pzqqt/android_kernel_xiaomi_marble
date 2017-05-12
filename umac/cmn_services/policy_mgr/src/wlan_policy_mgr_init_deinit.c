@@ -501,6 +501,12 @@ QDF_STATUS policy_mgr_register_sme_cb(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	pm_ctx->sme_cbacks.sme_check_enable_rx_ldpc_sta_ini_item =
+		sme_cbacks->sme_check_enable_rx_ldpc_sta_ini_item;
+	pm_ctx->sme_cbacks.sme_set_vdev_ies_per_band =
+		sme_cbacks->sme_set_vdev_ies_per_band;
+	pm_ctx->sme_cbacks.sme_issue_same_ap_reassoc_cmd =
+		sme_cbacks->sme_issue_same_ap_reassoc_cmd;
 	pm_ctx->sme_cbacks.sme_get_nss_for_vdev =
 		sme_cbacks->sme_get_nss_for_vdev;
 	pm_ctx->sme_cbacks.sme_get_valid_channels =
