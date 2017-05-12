@@ -735,6 +735,9 @@ typedef void (*policy_mgr_nss_update_cback)(struct wlan_objmgr_psoc *psoc,
 /**
  * struct policy_mgr_sme_cbacks - SME Callbacks to be invoked
  * from policy manager
+ * @sme_check_enable_rx_ldpc_sta_ini_item: Get rx ldpc sta ini value
+ * @sme_set_vdev_ies_per_band: Set vdev IEs per band
+ * @sme_issue_same_ap_reassoc_cmd: Issue AP reassoc
  * @sme_get_valid_channels: Get valid channel list
  * @sme_get_nss_for_vdev: Get the allowed nss value for the vdev
  * @sme_soc_set_dual_mac_config: Set the dual MAC scan & FW
@@ -745,6 +748,10 @@ typedef void (*policy_mgr_nss_update_cback)(struct wlan_objmgr_psoc *psoc,
  * @sme_change_mcc_beacon_interval: Set MCC beacon interval to FW
  */
 struct policy_mgr_sme_cbacks {
+	bool (*sme_check_enable_rx_ldpc_sta_ini_item)(void);
+	void (*sme_set_vdev_ies_per_band)(uint8_t vdev_id,
+					  uint8_t is_hw_mode_dbs);
+	QDF_STATUS (*sme_issue_same_ap_reassoc_cmd)(uint8_t session_id);
 	QDF_STATUS (*sme_get_valid_channels)(uint8_t *chan_list,
 		uint32_t *list_len);
 	void (*sme_get_nss_for_vdev)(enum tQDF_ADAPTER_MODE,
@@ -1906,4 +1913,19 @@ uint32_t policy_mgr_get_hw_dbs_nss(struct wlan_objmgr_psoc *psoc,
  * Return: true for success, else false
  */
 bool policy_mgr_is_dnsc_set(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * policy_mgr_find_sta_and_update_caps_with_reassociation() - find sta and
+ *		update HT/VHT caps and do reassociation with same ap
+ * @psoc: PSOC object information
+ * @is_hw_mode_dbs: DBS or NON-DBS hardware mode to use
+ *
+ * This API will find the 2G STA currently active from policy manager table
+ * and update their HT/VHT caps to firmware and trigger self reassociation
+ * with same AP through LFR3 roaming module.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS policy_mgr_find_sta_and_update_caps_with_reassociation(
+			struct wlan_objmgr_psoc *psoc, uint8_t is_hw_mode_dbs);
 #endif /* __WLAN_POLICY_MGR_API_H */
