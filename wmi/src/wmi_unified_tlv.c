@@ -11471,7 +11471,7 @@ send_coex_config_cmd_tlv(wmi_unified_t wmi_handle,
 	WMITLV_SET_HDR(&cmd->tlv_header,
 		       WMITLV_TAG_STRUC_WMI_COEX_CONFIG_CMD_fixed_param,
 		       WMITLV_GET_STRUCT_TLVLEN(
-		       WMITLV_TAG_STRUC_WMI_COEX_CONFIG_CMD_fixed_param));
+		       WMI_COEX_CONFIG_CMD_fixed_param));
 
 	cmd->vdev_id = param->vdev_id;
 	cmd->config_type = param->config_type;
