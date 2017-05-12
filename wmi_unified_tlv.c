@@ -33,6 +33,9 @@
 #ifdef CONVERGED_P2P_ENABLE
 #include "wlan_p2p_public_struct.h"
 #endif
+#ifdef WLAN_PMO_ENABLE
+#include "wlan_pmo_hw_filter_public_struct.h"
+#endif
 #include <wlan_utility.h>
 
 /* copy_vdev_create_pdev_id() - copy pdev from host params to target command
@@ -13475,47 +13478,43 @@ QDF_STATUS send_lphb_config_udp_pkt_filter_cmd_tlv(wmi_unified_t wmi_handle,
 }
 #endif /* FEATURE_WLAN_LPHB */
 
-static QDF_STATUS send_enable_broadcast_filter_cmd_tlv(wmi_unified_t wmi_handle,
-			   uint8_t vdev_id, bool enable)
+static QDF_STATUS send_conf_hw_filter_cmd_tlv(wmi_unified_t wmi,
+					      struct pmo_hw_filter_params *req)
 {
-	int32_t res;
+	QDF_STATUS status;
 	wmi_hw_data_filter_cmd_fixed_param *cmd;
-	A_UINT8 *buf_ptr;
-	wmi_buf_t buf;
-	int32_t len;
+	wmi_buf_t wmi_buf;
 
-	/*
-	 * TLV place holder size for array of ARP tuples
-	 */
-	len = sizeof(wmi_hw_data_filter_cmd_fixed_param);
+	if (!req) {
+		WMI_LOGE("req is null");
+		return QDF_STATUS_E_INVAL;
+	}
 
-	buf = wmi_buf_alloc(wmi_handle, len);
-	if (!buf) {
-		WMI_LOGE("%s: wmi_buf_alloc failed", __func__);
+	wmi_buf = wmi_buf_alloc(wmi, sizeof(*cmd));
+	if (!wmi_buf) {
+		WMI_LOGE(FL("Out of memory"));
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	buf_ptr = (A_UINT8 *) wmi_buf_data(buf);
-	cmd = (wmi_hw_data_filter_cmd_fixed_param *) buf_ptr;
+	cmd = (wmi_hw_data_filter_cmd_fixed_param *)wmi_buf_data(wmi_buf);
 	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_hw_data_filter_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_hw_data_filter_cmd_fixed_param));
-	cmd->vdev_id = vdev_id;
-	cmd->enable = enable;
-	cmd->hw_filter_bitmap = WMI_HW_DATA_FILTER_DROP_NON_ARP_BC;
+		  WMITLV_TAG_STRUC_wmi_hw_data_filter_cmd_fixed_param,
+		  WMITLV_GET_STRUCT_TLVLEN(wmi_hw_data_filter_cmd_fixed_param));
+	cmd->vdev_id = req->vdev_id;
+	cmd->enable = req->mode != PMO_HW_FILTER_DISABLED;
+	cmd->hw_filter_bitmap = req->mode;
 
-	WMI_LOGD("HW Broadcast Filter vdev_id: %d", cmd->vdev_id);
+	WMI_LOGD("configure hw filter (vdev_id: %d, mode: %d)",
+		 req->vdev_id, req->mode);
 
-	res = wmi_unified_cmd_send(wmi_handle, buf, len,
-				     WMI_HW_DATA_FILTER_CMDID);
-	if (res) {
-		WMI_LOGE("Failed to enable ARP NDP/NSffload");
-		wmi_buf_free(buf);
-		return QDF_STATUS_E_FAILURE;
+	status = wmi_unified_cmd_send(wmi, wmi_buf, sizeof(*cmd),
+				      WMI_HW_DATA_FILTER_CMDID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMI_LOGE("Failed to configure hw filter");
+		wmi_buf_free(wmi_buf);
 	}
 
-	return QDF_STATUS_SUCCESS;
+	return status;
 }
 
 /**
@@ -17701,8 +17700,7 @@ struct wmi_ops tlv_ops =  {
 	.send_wow_patterns_to_fw_cmd = send_wow_patterns_to_fw_cmd_tlv,
 	.send_enable_arp_ns_offload_cmd = send_enable_arp_ns_offload_cmd_tlv,
 	.send_add_clear_mcbc_filter_cmd = send_add_clear_mcbc_filter_cmd_tlv,
-	.send_enable_broadcast_filter_cmd =
-		 send_enable_broadcast_filter_cmd_tlv,
+	.send_conf_hw_filter_cmd = send_conf_hw_filter_cmd_tlv,
 	.send_gtk_offload_cmd = send_gtk_offload_cmd_tlv,
 	.send_process_gtk_offload_getinfo_cmd =
 		send_process_gtk_offload_getinfo_cmd_tlv,
