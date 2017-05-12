@@ -17309,6 +17309,27 @@ static QDF_STATUS extract_reg_chan_list_update_event_tlv(
 	reg_info->dfs_region = chan_list_event_hdr->dfs_region;
 	reg_info->phybitmap = chan_list_event_hdr->phybitmap;
 	reg_info->offload_enabled = true;
+	reg_info->num_phy = chan_list_event_hdr->num_phy;
+	reg_info->ctry_code = chan_list_event_hdr->country_id;
+	reg_info->reg_dmn_pair = chan_list_event_hdr->domain_code;
+	if (chan_list_event_hdr->status_code == WMI_REG_SET_CC_STATUS_PASS)
+		reg_info->status_code = REG_SET_CC_STATUS_PASS;
+	else if (chan_list_event_hdr->status_code ==
+		 WMI_REG_CURRENT_ALPHA2_NOT_FOUND)
+		reg_info->status_code = REG_CURRENT_ALPHA2_NOT_FOUND;
+	else if (chan_list_event_hdr->status_code ==
+		 WMI_REG_INIT_ALPHA2_NOT_FOUND)
+		reg_info->status_code = REG_INIT_ALPHA2_NOT_FOUND;
+	else if (chan_list_event_hdr->status_code ==
+		 WMI_REG_SET_CC_CHANGE_NOT_ALLOWED)
+		reg_info->status_code = REG_SET_CC_CHANGE_NOT_ALLOWED;
+	else if (chan_list_event_hdr->status_code ==
+		 WMI_REG_SET_CC_STATUS_NO_MEMORY)
+		reg_info->status_code = REG_SET_CC_STATUS_NO_MEMORY;
+	else if (chan_list_event_hdr->status_code ==
+		 WMI_REG_SET_CC_STATUS_FAIL)
+		reg_info->status_code = REG_SET_CC_STATUS_FAIL;
+
 	reg_info->min_bw_2g = chan_list_event_hdr->min_bw_2g;
 	reg_info->max_bw_2g = chan_list_event_hdr->max_bw_2g;
 	reg_info->min_bw_5g = chan_list_event_hdr->min_bw_5g;
