@@ -27,26 +27,14 @@
 #define GET_PMO_TX_OPS_FROM_PSOC(psoc) (psoc->soc_cb.tx_ops.pmo_tx_ops)
 
 /**
- * pmo_tgt_enable_non_arp_bcast_filter_req() - Enable non arp
- * hw bcast filter to target
- * @vdev: objmgr vdev
- * @vdev_id: vdev id
+ * pmo_tgt_conf_hw_filter() - configure hardware filter mode in firmware
+ * @psoc: the psoc to use to communicate with firmware
+ * @req: the configuration request
  *
- * Return: QDF status
+ * Return: QDF_STATUS
  */
-QDF_STATUS pmo_tgt_enable_non_arp_bcast_filter_req(
-		struct wlan_objmgr_vdev *vdev, uint8_t vdev_id);
-
-/**
- * pmo_tgt_disable_non_arp_bcast_filter_req() - Disable non arp
- * hw bcast filter to target
- * @vdev: objmgr vdev
- * @vdev_id: vdev id
- *
- * Return: QDF status
- */
-QDF_STATUS pmo_tgt_disable_non_arp_bcast_filter_req(
-		struct wlan_objmgr_vdev *vdev, uint8_t vdev_id);
+QDF_STATUS pmo_tgt_conf_hw_filter(struct wlan_objmgr_psoc *psoc,
+				  struct pmo_hw_filter_params *req);
 
 /**
  * pmo_tgt_set_pkt_filter() - Set packet filter

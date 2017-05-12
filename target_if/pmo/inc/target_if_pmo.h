@@ -125,17 +125,14 @@ QDF_STATUS target_if_pmo_send_action_frame_patterns(
 		struct pmo_action_wakeup_set_params *ip_cmd);
 
 /**
- * target_if_pmo_send_non_arp_bcast_filter_req() -  Enable/Disable Broadcast
- * @vdev: objmgr vdev
- * @bcast_req: enable/disable hw bcast filter
+ * target_if_pmo_conf_hw_filter() - configure hardware filter in DTIM mode
+ * @psoc: the psoc containing the vdev to configure
+ * @req: the request parameters
  *
- * This functions enable/disable non arp hw bcast filter.
- *
- * Return: QDF_STATUS_SUCCESS for success or error code
+ * Return: QDF_STATUS
  */
-QDF_STATUS target_if_pmo_send_non_arp_bcast_filter_req(
-		struct wlan_objmgr_vdev *vdev,
-		struct pmo_bcast_filter_params *bcast_req);
+QDF_STATUS target_if_pmo_conf_hw_filter(struct wlan_objmgr_psoc *psoc,
+					struct pmo_hw_filter_params *req);
 
 /**
  * target_if_pmo_send_pkt_filter_req() - enable packet filter

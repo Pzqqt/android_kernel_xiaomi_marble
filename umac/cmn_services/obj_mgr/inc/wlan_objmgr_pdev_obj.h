@@ -15,13 +15,17 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
- /**
-  * DOC: Define the pdev data structure of UMAC
-  * Public APIs to perform operations on Global objects
-  */
+
+/**
+ * DOC: Define the pdev data structure of UMAC
+ * Public APIs to perform operations on Global objects
+ */
+
 #ifndef _WLAN_OBJMGR_PDEV_OBJ_H_
 #define _WLAN_OBJMGR_PDEV_OBJ_H_
+
 #include <wlan_objmgr_cmn.h>
+#include "wlan_objmgr_psoc_obj.h"
 
 /* STATUS: scanning */
 #define WLAN_PDEV_F_SCAN                    0x00000001
