@@ -9281,6 +9281,10 @@ int hdd_wlan_startup(struct device *dev)
 					    set_value, PDEV_CMD);
 	}
 
+	if (hdd_ctx->config->is_force_1x1)
+		wma_cli_set_command(0, (int)WMI_PDEV_PARAM_SET_IOT_PATTERN,
+				1, PDEV_CMD);
+
 	qdf_mc_timer_start(&hdd_ctx->iface_change_timer,
 			   hdd_ctx->config->iface_change_wait_time * 5000);
 

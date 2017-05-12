@@ -89,6 +89,39 @@ static void get_local_power_constraint_probe_response(
 #endif
 
 /**
+ * lim_get_nss_supported_by_beacon() - finds out nss from beacom
+ * @bcn: beacon structure pointer
+ * @session: pointer to pe session
+ *
+ * Return: number of nss advertised by beacon
+ */
+static uint8_t lim_get_nss_supported_by_beacon(tpSchBeaconStruct bcn,
+						tpPESession session)
+{
+	if (session->vhtCapability && bcn->VHTCaps.present) {
+		if ((bcn->VHTCaps.rxMCSMap & 0xC0) != 0xC0)
+			return 4;
+
+		if ((bcn->VHTCaps.rxMCSMap & 0x30) != 0x30)
+			return 3;
+
+		if ((bcn->VHTCaps.rxMCSMap & 0x0C) != 0x0C)
+			return 2;
+	} else if (session->htCapability && bcn->HTCaps.present) {
+		if (bcn->HTCaps.supportedMCSSet[3])
+			return 4;
+
+		if (bcn->HTCaps.supportedMCSSet[2])
+			return 3;
+
+		if (bcn->HTCaps.supportedMCSSet[1])
+			return 2;
+	}
+
+	return 1;
+}
+
+/**
  * lim_extract_ap_capability() - extract AP's HCF/WME/WSM capability
  * @mac_ctx: Pointer to Global MAC structure
  * @p_ie: Pointer to starting IE in Beacon/Probe Response
@@ -138,6 +171,18 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 		qdf_mem_free(beacon_struct);
 		return;
 	}
+
+	if (mac_ctx->roam.configParam.is_force_1x1 &&
+		cfg_get_vendor_ie_ptr_from_oui(mac_ctx, SIR_MAC_VENDOR_AP_1_OUI,
+				SIR_MAC_VENDOR_AP_1_OUI_LEN, p_ie, ie_len) &&
+		lim_get_nss_supported_by_beacon(beacon_struct, session) == 2) {
+		session->supported_nss_1x1 = true;
+		session->vdev_nss = 1;
+		session->nss = 1;
+		pe_debug("For special ap, NSS: %d", session->nss);
+	}
+
+
 	if (beacon_struct->wmeInfoPresent ||
 	    beacon_struct->wmeEdcaPresent ||
 	    beacon_struct->HTCaps.present)

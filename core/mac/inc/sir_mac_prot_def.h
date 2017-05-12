@@ -617,6 +617,8 @@
 #define BA_INITIATOR       2
 #define BA_BOTH_DIRECTIONS 3
 
+#define SIR_MAC_VENDOR_AP_1_OUI             "\x00\x0C\x43"
+#define SIR_MAC_VENDOR_AP_1_OUI_LEN         3
 /* / Status Code (present in Management response frames) enum */
 
 typedef enum eSirMacStatusCodes {
