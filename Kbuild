@@ -877,7 +877,7 @@ PMO_OBJS :=     $(PMO_DIR)/core/src/wlan_pmo_main.o \
 		$(PMO_DIR)/core/src/wlan_pmo_wow.o \
 		$(PMO_DIR)/core/src/wlan_pmo_lphb.o \
 		$(PMO_DIR)/core/src/wlan_pmo_suspend_resume.o \
-		$(PMO_DIR)/core/src/wlan_pmo_hw_bcast_fltr.o \
+		$(PMO_DIR)/core/src/wlan_pmo_hw_filter.o \
 		$(PMO_DIR)/core/src/wlan_pmo_pkt_filter.o \
 		$(PMO_DIR)/dispatcher/src/wlan_pmo_obj_mgmt_api.o \
 		$(PMO_DIR)/dispatcher/src/wlan_pmo_ucfg_api.o \
@@ -889,7 +889,7 @@ PMO_OBJS :=     $(PMO_DIR)/core/src/wlan_pmo_main.o \
 		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_mc_addr_filtering.o \
 		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_lphb.o \
 		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_suspend_resume.o \
-		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_non_arp_bcast_fltr.o \
+		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_hw_filter.o \
 		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_pkt_filter.o
 
 ############## UMAC P2P ###########
@@ -965,12 +965,11 @@ TARGET_IF_OBJ := $(TARGET_IF_DIR)/core/src/target_if_main.o \
 		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_ns.o \
 		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_gtk.o \
 		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_wow.o \
-		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_non_arp_bcast_fltr.o \
+		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_hw_filter.o \
 		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_mc_addr_filtering.o \
 		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_static_config.o \
 		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_lphb.o \
 		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_suspend_resume.o \
-		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_non_arp_bcast_fltr.o \
 		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_pkt_filter.o \
 		$(TARGET_IF_DIR)/p2p/src/target_if_p2p.o \
 		$(TARGET_IF_DIR)/regulatory/src/target_if_reg.o \

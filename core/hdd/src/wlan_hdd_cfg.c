@@ -1458,12 +1458,12 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_HOST_ARPOFFLOAD_MIN,
 		     CFG_ENABLE_HOST_ARPOFFLOAD_MAX),
 
-	REG_VARIABLE(CFG_HW_BC_FILTER_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, hw_broadcast_filter,
+	REG_VARIABLE(CFG_HW_FILTER_MODE_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, hw_filter_mode,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_HW_FILTER_DEFAULT,
-		     CFG_HW_FILTER_MIN,
-		     CFG_HW_FILTER_MAX),
+		     CFG_HW_FILTER_MODE_DEFAULT,
+		     CFG_HW_FILTER_MODE_MIN,
+		     CFG_HW_FILTER_MODE_MAX),
 
 #ifdef FEATURE_WLAN_RA_FILTERING
 	REG_VARIABLE(CFG_RA_FILTER_ENABLE_NAME, WLAN_PARAM_Integer,
@@ -5349,8 +5349,8 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 		  pHddCtx->config->mcastBcastFilterSetting);
 	hdd_info("Name = [fhostArpOffload] Value = [%u] ",
 		  pHddCtx->config->fhostArpOffload);
-	hdd_info("Name = [hw_broadcast_filter] Value = [%u]",
-		  pHddCtx->config->hw_broadcast_filter);
+	hdd_info("Name = [%s] Value = [%u]",
+		  CFG_HW_FILTER_MODE_NAME, pHddCtx->config->hw_filter_mode);
 	hdd_info("Name = [ssdp] Value = [%u] ", pHddCtx->config->ssdp);
 	hdd_cfg_print_runtime_pm(pHddCtx);
 #ifdef FEATURE_WLAN_RA_FILTERING

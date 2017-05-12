@@ -499,6 +499,32 @@ void hdd_ipv6_notifier_work_queue(struct work_struct *work)
 	cds_ssr_unprotect(__func__);
 }
 
+static void hdd_enable_hw_filter(hdd_adapter_t *adapter)
+{
+	QDF_STATUS status;
+
+	ENTER();
+
+	status = pmo_ucfg_enable_hw_filter_in_fwr(adapter->hdd_vdev);
+	if (status != QDF_STATUS_SUCCESS)
+		hdd_info("Failed to enable hardware filter");
+
+	EXIT();
+}
+
+static void hdd_disable_hw_filter(hdd_adapter_t *adapter)
+{
+	QDF_STATUS status;
+
+	ENTER();
+
+	status = pmo_ucfg_disable_hw_filter_in_fwr(adapter->hdd_vdev);
+	if (status != QDF_STATUS_SUCCESS)
+		hdd_info("Failed to disable hardware filter");
+
+	EXIT();
+}
+
 void hdd_enable_host_offloads(hdd_adapter_t *adapter,
 	enum pmo_offload_trigger trigger)
 {
@@ -520,7 +546,7 @@ void hdd_enable_host_offloads(hdd_adapter_t *adapter,
 	hdd_enable_arp_offload(adapter, trigger);
 	hdd_enable_ns_offload(adapter, trigger);
 	hdd_enable_mc_addr_filtering(adapter, trigger);
-	hdd_enable_non_arp_hw_broadcast_filter(adapter);
+	hdd_enable_hw_filter(adapter);
 out:
 	EXIT();
 
@@ -547,7 +573,7 @@ void hdd_disable_host_offloads(hdd_adapter_t *adapter,
 	hdd_disable_arp_offload(adapter, trigger);
 	hdd_disable_ns_offload(adapter, trigger);
 	hdd_disable_mc_addr_filtering(adapter, trigger);
-	hdd_disable_non_arp_hw_broadcast_filter(adapter);
+	hdd_disable_hw_filter(adapter);
 out:
 	EXIT();
 
@@ -911,35 +937,6 @@ void hdd_disable_arp_offload(hdd_adapter_t *adapter,
 	else
 		hdd_info("fail to disable arp offload");
 out:
-	EXIT();
-}
-
-void hdd_enable_non_arp_hw_broadcast_filter(hdd_adapter_t *adapter)
-{
-	QDF_STATUS status;
-
-	ENTER();
-
-	status = pmo_ucfg_enable_non_arp_bcast_filter_in_fwr(
-							adapter->hdd_vdev);
-
-	if (status != QDF_STATUS_SUCCESS)
-		hdd_info("Failed to enable broadcast filter");
-
-	EXIT();
-}
-
-void hdd_disable_non_arp_hw_broadcast_filter(hdd_adapter_t *adapter)
-{
-	QDF_STATUS status;
-
-	ENTER();
-
-	status = pmo_ucfg_disable_non_arp_bcast_filter_in_fwr(
-							adapter->hdd_vdev);
-	if (status != QDF_STATUS_SUCCESS)
-		hdd_info("Failed to disable broadcast filter");
-
 	EXIT();
 }
 

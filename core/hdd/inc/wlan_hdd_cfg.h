@@ -45,6 +45,7 @@
 #include <sap_api.h>
 #include "osapi_linux.h"
 #include <wmi_unified.h>
+#include "wlan_pmo_hw_filter_public_struct.h"
 
 #define FW_MODULE_LOG_LEVEL_STRING_LENGTH  (255)
 #define TX_SCHED_WRR_PARAM_STRING_LENGTH   (50)
@@ -4167,22 +4168,36 @@ enum station_keepalive_method {
 
 /*
  * <ini>
- * g_enable_non_arp_bc_hw_filter - Enable HW broadcast filtering
+ * gHwFilterMode - configure hardware filter for DTIM mode
  * @Min: 0
- * @Max: 1
+ * @Max: 3
  * @Default: 0
  *
- * This ini support to dynamically enable/disable Broadast filter
- * when target goes to wow suspend/resume mode
+ * The hardware filter is only effective in DTIM mode. Use this configuration
+ * to blanket drop broadcast/multicast packets at the hardware level, without
+ * waking up the firmware
  *
- * Usage: External
+ * Takes a bitmap of frame types to drop
+ * @E.g.
+ *	# disable feature (default)
+ *	gHwFilterMode=0
+ *	# drop all broadcast frames, except ARP
+ *	gHwFilterMode=1
+ *	# drop all multicast frames, except ICMPv6
+ *	gHwFilterMode=2
+ *	# drop all broadcast and multicast frames, except ARP and ICMPv6
+ *	gHwFilterMode=3
+ *
+ * Related: N/A
+ *
+ * Usage: Internal/External
  *
  * </ini>
  */
-#define CFG_HW_BC_FILTER_NAME     "g_enable_non_arp_bc_hw_filter"
-#define CFG_HW_FILTER_DEFAULT         (0)
-#define CFG_HW_FILTER_MIN             (0)
-#define CFG_HW_FILTER_MAX             (1)
+#define CFG_HW_FILTER_MODE_NAME		"gHwFilterMode"
+#define CFG_HW_FILTER_MODE_MIN		(0)
+#define CFG_HW_FILTER_MODE_MAX		(3)
+#define CFG_HW_FILTER_MODE_DEFAULT	(0)
 
 /*
  * <ini>
@@ -10242,7 +10257,7 @@ struct hdd_config {
 	bool bSingleTidRc;
 	uint8_t mcastBcastFilterSetting;
 	bool fhostArpOffload;
-	bool hw_broadcast_filter;
+	enum pmo_hw_filter_mode hw_filter_mode;
 	bool ssdp;
 
 #ifdef FEATURE_RUNTIME_PM

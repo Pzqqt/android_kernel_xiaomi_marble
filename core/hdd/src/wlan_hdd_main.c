@@ -11162,7 +11162,7 @@ static int hdd_update_pmo_config(hdd_context_t *hdd_ctx)
 	psoc_cfg.bpf_enable =
 		hdd_ctx->config->bpf_packet_filter_enable;
 	psoc_cfg.arp_offload_enable = hdd_ctx->config->fhostArpOffload;
-	psoc_cfg.hw_bcast_filter = hdd_ctx->config->hw_broadcast_filter;
+	psoc_cfg.hw_filter_mode = hdd_ctx->config->hw_filter_mode;
 	psoc_cfg.ns_offload_enable_static = hdd_ctx->config->fhostNSOffload;
 	if (hdd_ctx->config->fhostNSOffload)
 		psoc_cfg.ns_offload_enable_dynamic = true;

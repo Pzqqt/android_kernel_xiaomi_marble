@@ -148,22 +148,6 @@ QDF_STATUS hdd_wlan_shutdown(void);
 QDF_STATUS hdd_wlan_re_init(void);
 
 /**
- * hdd_enable_non_arp_hw_broadcast_filter() - API to enable broadcast filter
- * @adapter: Adapter context for which ARP offload is to be configured
- *
- * Return: None
- */
-void hdd_enable_non_arp_hw_broadcast_filter(hdd_adapter_t *adapter);
-
-/**
- * hdd_disable_non_arp_hw_broadcast_filter() - API to disable broadcast filter
- * @adapter: Adapter context for which ARP offload is to be configured
- *
- * Return: None
- */
-void hdd_disable_non_arp_hw_broadcast_filter(hdd_adapter_t *adapter);
-
-/**
  * hdd_enable_arp_offload() - API to enable ARP offload
  * @adapter: Adapter context for which ARP offload is to be configured
  * @trigger: trigger reason for request
