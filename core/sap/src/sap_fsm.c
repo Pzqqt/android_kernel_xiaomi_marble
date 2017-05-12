@@ -3649,8 +3649,14 @@ sapconvert_to_csr_profile(tsap_Config_t *pconfig_params, eCsrRoamBssType bssType
 	profile->pWPAReqIE = NULL;
 	profile->nWPAReqIELength = 0;
 
+	if (profile->pRSNReqIE) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
+			  FL("pRSNReqIE already allocated."));
+		qdf_mem_free(profile->pRSNReqIE);
+		profile->pRSNReqIE = NULL;
+	}
+
 	/* set the RSN/WPA IE */
-	profile->pRSNReqIE = NULL;
 	profile->nRSNReqIELength = pconfig_params->RSNWPAReqIELength;
 	if (pconfig_params->RSNWPAReqIELength) {
 		profile->pRSNReqIE =
