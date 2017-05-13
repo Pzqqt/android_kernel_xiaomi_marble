@@ -6235,7 +6235,8 @@ static QDF_STATUS __hdd_ipa_cleanup(hdd_context_t *hdd_ctx)
 		qdf_spin_unlock_bh(&hdd_ipa->pm_lock);
 
 		pm_tx_cb = (struct hdd_ipa_pm_tx_cb *)skb->cb;
-		ipa_free_skb(pm_tx_cb->ipa_tx_desc);
+		if (pm_tx_cb->ipa_tx_desc)
+			ipa_free_skb(pm_tx_cb->ipa_tx_desc);
 
 		qdf_spin_lock_bh(&hdd_ipa->pm_lock);
 	}
