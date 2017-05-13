@@ -176,11 +176,19 @@ struct htt_ipa_uc_rx_resource_t {
  * @vdev_id: virtual interface id
  * @rx_packet_leng: packet length
  */
+#if HTT_PADDR64
 struct ipa_uc_rx_ring_elem_t {
 	target_paddr_t rx_packet_paddr;
 	uint32_t vdev_id;
 	uint32_t rx_packet_leng;
 };
+#else
+struct ipa_uc_rx_ring_elem_t {
+	target_paddr_t rx_packet_paddr;
+	uint16_t vdev_id;
+	uint16_t rx_packet_leng;
+};
+#endif
 
 struct htt_tx_credit_t {
 	qdf_atomic_t bus_delta;
