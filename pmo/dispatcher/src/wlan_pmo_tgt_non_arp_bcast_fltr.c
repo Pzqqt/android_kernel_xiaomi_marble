@@ -35,19 +35,10 @@ QDF_STATUS pmo_tgt_enable_non_arp_bcast_filter_req(
 	struct qdf_mac_addr peer_bssid;
 
 	PMO_ENTER();
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx) {
-		pmo_err("vdev_ctx is NULL");
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto out;
-	}
 
-	psoc = wlan_vdev_get_psoc(vdev);
-	if (!psoc) {
-		pmo_err("psoc unavailable for vdev %p", vdev);
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto out;
-	}
+	vdev_ctx = pmo_vdev_get_priv(vdev);
+
+	psoc = pmo_vdev_get_psoc(vdev);
 
 	bcast_req = qdf_mem_malloc(sizeof(*bcast_req));
 	if (!bcast_req) {
@@ -103,19 +94,10 @@ QDF_STATUS pmo_tgt_disable_non_arp_bcast_filter_req(
 	struct qdf_mac_addr peer_bssid;
 
 	PMO_ENTER();
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx) {
-		pmo_err("vdev_ctx is NULL");
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto out;
-	}
 
-	psoc = wlan_vdev_get_psoc(vdev);
-	if (!psoc) {
-		pmo_err("psoc unavailable for vdev %p", vdev);
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto out;
-	}
+	vdev_ctx = pmo_vdev_get_priv(vdev);
+
+	psoc = pmo_vdev_get_psoc(vdev);
 
 	bcast_req = qdf_mem_malloc(sizeof(*bcast_req));
 	if (!bcast_req) {

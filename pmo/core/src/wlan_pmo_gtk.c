@@ -32,16 +32,11 @@ static QDF_STATUS pmo_core_cache_gtk_req_in_vdev_priv(
 	QDF_STATUS status;
 	struct qdf_mac_addr peer_bssid;
 
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx) {
-		pmo_err("vdev_ctx is NULL");
-		return QDF_STATUS_E_INVAL;
-	}
+	vdev_ctx = pmo_vdev_get_priv(vdev);
 
-	status = pmo_get_vdev_bss_peer_mac_addr(vdev,
-			&peer_bssid);
+	status = pmo_get_vdev_bss_peer_mac_addr(vdev, &peer_bssid);
 	if (status != QDF_STATUS_SUCCESS)
-		return QDF_STATUS_E_INVAL;
+		return status;
 
 	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 	qdf_mem_copy(&vdev_ctx->vdev_gtk_req, gtk_req,
@@ -51,7 +46,7 @@ static QDF_STATUS pmo_core_cache_gtk_req_in_vdev_priv(
 	vdev_ctx->vdev_gtk_req.flags = PMO_GTK_OFFLOAD_ENABLE;
 	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
 
-	return status;
+	return QDF_STATUS_SUCCESS;
 }
 
 static QDF_STATUS pmo_core_flush_gtk_req_from_vdev_priv(
@@ -59,11 +54,7 @@ static QDF_STATUS pmo_core_flush_gtk_req_from_vdev_priv(
 {
 	struct pmo_vdev_priv_obj *vdev_ctx;
 
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx) {
-		pmo_err("vdev_ctx is NULL");
-		return QDF_STATUS_E_INVAL;
-	}
+	vdev_ctx = pmo_vdev_get_priv(vdev);
 
 	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 	qdf_mem_zero(&vdev_ctx->vdev_gtk_req, sizeof(vdev_ctx->vdev_gtk_req));
@@ -90,7 +81,7 @@ static QDF_STATUS pmo_core_do_enable_gtk_offload(
 	if (!pmo_core_is_vdev_connected(vdev))
 		return QDF_STATUS_E_INVAL;
 
-	vdev_id = pmo_get_vdev_id(vdev);
+	vdev_id = pmo_vdev_get_id(vdev);
 
 	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 	qdf_mem_copy(op_gtk_req, &vdev_ctx->vdev_gtk_req,
@@ -195,12 +186,12 @@ QDF_STATUS pmo_core_cache_gtk_offload_req(struct wlan_objmgr_vdev *vdev,
 		goto out;
 	}
 
-	status = wlan_objmgr_vdev_try_get_ref(vdev, WLAN_PMO_ID);
+	status = pmo_vdev_get_ref(vdev);
 	if (status != QDF_STATUS_SUCCESS)
 		goto out;
 
 	opmode = pmo_get_vdev_opmode(vdev);
-	vdev_id = pmo_get_vdev_id(vdev);
+	vdev_id = pmo_vdev_get_id(vdev);
 	pmo_info("vdev opmode: %d vdev_id: %d", opmode, vdev_id);
 	if (!pmo_core_is_vdev_supports_offload(vdev)) {
 		pmo_info("vdev in invalid opmode for caching gtk request %d",
@@ -211,7 +202,7 @@ QDF_STATUS pmo_core_cache_gtk_offload_req(struct wlan_objmgr_vdev *vdev,
 
 	status = pmo_core_cache_gtk_req_in_vdev_priv(vdev, gtk_req);
 dec_ref:
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
+	pmo_vdev_put_ref(vdev);
 out:
 	PMO_EXIT();
 
@@ -231,12 +222,12 @@ QDF_STATUS pmo_core_flush_gtk_offload_req(struct wlan_objmgr_vdev *vdev)
 		goto out;
 	}
 
-	status = wlan_objmgr_vdev_try_get_ref(vdev, WLAN_PMO_ID);
+	status = pmo_vdev_get_ref(vdev);
 	if (status != QDF_STATUS_SUCCESS)
 		goto out;
 
 	opmode = pmo_get_vdev_opmode(vdev);
-	vdev_id = pmo_get_vdev_id(vdev);
+	vdev_id = pmo_vdev_get_id(vdev);
 	pmo_info("vdev opmode: %d vdev_id: %d", opmode, vdev_id);
 	if (!pmo_core_is_vdev_supports_offload(vdev)) {
 		pmo_info("vdev in invalid opmode for flushing gtk request %d",
@@ -247,7 +238,7 @@ QDF_STATUS pmo_core_flush_gtk_offload_req(struct wlan_objmgr_vdev *vdev)
 
 	status = pmo_core_flush_gtk_req_from_vdev_priv(vdev);
 dec_ref:
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
+	pmo_vdev_put_ref(vdev);
 out:
 	PMO_EXIT();
 
@@ -267,16 +258,11 @@ QDF_STATUS pmo_core_enable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev)
 		goto out;
 	}
 
-	status = wlan_objmgr_vdev_try_get_ref(vdev, WLAN_PMO_ID);
+	status = pmo_vdev_get_ref(vdev);
 	if (status != QDF_STATUS_SUCCESS)
 		goto out;
 
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx) {
-		pmo_err("vdev_ctx is NULL");
-		status = QDF_STATUS_E_INVAL;
-		goto dec_ref;
-	}
+	vdev_ctx = pmo_vdev_get_priv(vdev);
 
 	op_gtk_req = qdf_mem_malloc(sizeof(*op_gtk_req));
 	if (!op_gtk_req) {
@@ -286,7 +272,7 @@ QDF_STATUS pmo_core_enable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev)
 	}
 	status = pmo_core_do_enable_gtk_offload(vdev, vdev_ctx, op_gtk_req);
 dec_ref:
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
+	pmo_vdev_put_ref(vdev);
 out:
 	if (op_gtk_req)
 		qdf_mem_free(op_gtk_req);
@@ -308,16 +294,11 @@ QDF_STATUS pmo_core_disable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev)
 		goto out;
 	}
 
-	status = wlan_objmgr_vdev_try_get_ref(vdev, WLAN_PMO_ID);
+	status = pmo_vdev_get_ref(vdev);
 	if (status != QDF_STATUS_SUCCESS)
 		goto out;
 
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx) {
-		pmo_err("vdev_ctx is NULL");
-		status = QDF_STATUS_E_INVAL;
-		goto dec_ref;
-	}
+	vdev_ctx = pmo_vdev_get_priv(vdev);
 
 	op_gtk_req = qdf_mem_malloc(sizeof(*op_gtk_req));
 	if (!op_gtk_req) {
@@ -328,7 +309,7 @@ QDF_STATUS pmo_core_disable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev)
 
 	status = pmo_core_do_disable_gtk_offload(vdev, vdev_ctx, op_gtk_req);
 dec_ref:
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
+	pmo_vdev_put_ref(vdev);
 out:
 	if (op_gtk_req)
 		qdf_mem_free(op_gtk_req);
@@ -350,16 +331,11 @@ QDF_STATUS pmo_core_get_gtk_rsp(struct wlan_objmgr_vdev *vdev,
 		goto out;
 	}
 
-	status = wlan_objmgr_vdev_try_get_ref(vdev, WLAN_PMO_ID);
+	status = pmo_vdev_get_ref(vdev);
 	if (status != QDF_STATUS_SUCCESS)
 		goto out;
 
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx) {
-		pmo_err("vdev_ctx is NULL");
-		status = QDF_STATUS_E_INVAL;
-		goto dec_ref;
-	}
+	vdev_ctx = pmo_vdev_get_priv(vdev);
 
 	status = pmo_core_is_gtk_enabled_in_fwr(vdev, vdev_ctx);
 	if (status != QDF_STATUS_SUCCESS)
@@ -373,7 +349,7 @@ QDF_STATUS pmo_core_get_gtk_rsp(struct wlan_objmgr_vdev *vdev,
 	/* send cmd to fwr */
 	status = pmo_tgt_get_gtk_rsp(vdev);
 dec_ref:
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
+	pmo_vdev_put_ref(vdev);
 out:
 	PMO_EXIT();
 

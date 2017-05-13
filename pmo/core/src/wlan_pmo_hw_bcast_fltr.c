@@ -34,12 +34,7 @@ static QDF_STATUS pmo_core_non_arp_bcast_filter_sanity(
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx) {
-		pmo_err("vdev_ctx is NULL");
-		return QDF_STATUS_E_NULL_VALUE;
-	}
-
+	vdev_ctx = pmo_vdev_get_priv(vdev);
 	if (!vdev_ctx->pmo_psoc_ctx->psoc_cfg.hw_bcast_filter) {
 		pmo_err("user disabled hw broadcast filter using ini");
 		return QDF_STATUS_E_INVAL;
@@ -92,7 +87,7 @@ QDF_STATUS pmo_core_enable_non_arp_bcast_filter_in_fwr(
 		goto out;
 	}
 
-	status = wlan_objmgr_vdev_try_get_ref(vdev, WLAN_PMO_ID);
+	status = pmo_vdev_get_ref(vdev);
 	if (status != QDF_STATUS_SUCCESS)
 		goto out;
 
@@ -100,13 +95,13 @@ QDF_STATUS pmo_core_enable_non_arp_bcast_filter_in_fwr(
 	if (status != QDF_STATUS_SUCCESS)
 		goto def_ref;
 
-	vdev_id = pmo_get_vdev_id(vdev);
+	vdev_id = pmo_vdev_get_id(vdev);
 	pmo_info("Enable non arp hw bcast filter in fwr vdev id: %d vdev: %p",
 		vdev_id, vdev);
 
 	status = pmo_core_do_enable_non_arp_bcast_filter(vdev, vdev_id);
 def_ref:
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
+	pmo_vdev_put_ref(vdev);
 out:
 	PMO_EXIT();
 
@@ -126,7 +121,7 @@ QDF_STATUS pmo_core_disable_non_arp_bcast_filter_in_fwr(
 		goto out;
 	}
 
-	status = wlan_objmgr_vdev_try_get_ref(vdev, WLAN_PMO_ID);
+	status = pmo_vdev_get_ref(vdev);
 	if (status != QDF_STATUS_SUCCESS)
 		goto out;
 
@@ -134,13 +129,13 @@ QDF_STATUS pmo_core_disable_non_arp_bcast_filter_in_fwr(
 	if (status != QDF_STATUS_SUCCESS)
 		goto def_ref;
 
-	vdev_id = pmo_get_vdev_id(vdev);
+	vdev_id = pmo_vdev_get_id(vdev);
 	pmo_info("Disable non arp hw bcast filter in fwr vdev id: %d vdev: %p",
 		vdev_id, vdev);
 
 	status = pmo_core_do_disable_non_arp_bcast_filter(vdev, vdev_id);
 def_ref:
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
+	pmo_vdev_put_ref(vdev);
 out:
 	PMO_EXIT();
 

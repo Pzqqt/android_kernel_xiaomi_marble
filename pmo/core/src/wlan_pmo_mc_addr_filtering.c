@@ -80,17 +80,11 @@ static QDF_STATUS pmo_core_cache_mc_addr_list_in_vdev_priv(
 		struct wlan_objmgr_vdev *vdev)
 {
 	struct pmo_vdev_priv_obj *vdev_ctx;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx) {
-		pmo_err("vdev_ctx is NULL");
-		return QDF_STATUS_E_INVAL;
-	}
-
+	vdev_ctx = pmo_vdev_get_priv(vdev);
 	pmo_core_fill_mc_list(&vdev_ctx, mc_list_config);
 
-	return status;
+	return QDF_STATUS_SUCCESS;
 }
 
 static QDF_STATUS pmo_core_flush_mc_addr_list_from_vdev_priv(
@@ -98,11 +92,7 @@ static QDF_STATUS pmo_core_flush_mc_addr_list_from_vdev_priv(
 {
 	struct pmo_vdev_priv_obj *vdev_ctx;
 
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx) {
-		pmo_err("vdev_ctx is NULL");
-		return QDF_STATUS_E_INVAL;
-	}
+	vdev_ctx = pmo_vdev_get_priv(vdev);
 
 	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 	qdf_mem_zero(&vdev_ctx->vdev_mc_list_req,
@@ -115,19 +105,12 @@ static QDF_STATUS pmo_core_flush_mc_addr_list_from_vdev_priv(
 QDF_STATUS pmo_core_set_mc_filter_req(struct wlan_objmgr_vdev *vdev,
 	struct pmo_mc_addr_list *mc_list)
 {
-	struct pmo_vdev_priv_obj *vdev_ctx;
 	uint8_t vdev_id;
 	int i;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	PMO_ENTER();
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx) {
-		pmo_err("vdev_ctx is NULL");
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto out;
-	}
-	vdev_id = pmo_get_vdev_id(vdev);
+
+	vdev_id = pmo_vdev_get_id(vdev);
 	/*
 	 * Configure enhance multicast offload feature for filtering out
 	 * multicast IP data packets transmitted using unicast MAC address
@@ -154,28 +137,21 @@ QDF_STATUS pmo_core_set_mc_filter_req(struct wlan_objmgr_vdev *vdev,
 		pmo_tgt_set_mc_filter_req(vdev,
 					mc_list->mc_addr[i]);
 	}
-out:
+
 	PMO_EXIT();
 
-	return status;
+	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS pmo_core_clear_mc_filter_req(struct wlan_objmgr_vdev *vdev,
 	struct pmo_mc_addr_list *mc_list)
 {
-	struct pmo_vdev_priv_obj *vdev_ctx;
 	uint8_t vdev_id;
 	int i;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	PMO_ENTER();
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx) {
-		pmo_err("vdev_ctx is NULL");
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto out;
-	}
-	vdev_id = pmo_get_vdev_id(vdev);
+
+	vdev_id = pmo_vdev_get_id(vdev);
 
 	/*
 	 * Configure enhance multicast offload feature for filtering out
@@ -200,13 +176,12 @@ QDF_STATUS pmo_core_clear_mc_filter_req(struct wlan_objmgr_vdev *vdev,
 	 * to configure the MCList in FW
 	 */
 	for (i = 0; i < mc_list->mc_cnt; i++) {
-		pmo_tgt_clear_mc_filter_req(vdev,
-					mc_list->mc_addr[i]);
+		pmo_tgt_clear_mc_filter_req(vdev, mc_list->mc_addr[i]);
 	}
-out:
+
 	PMO_EXIT();
 
-	return status;
+	return QDF_STATUS_SUCCESS;
 }
 
 static QDF_STATUS pmo_core_do_enable_mc_addr_list(struct wlan_objmgr_vdev *vdev,
@@ -287,37 +262,29 @@ uint8_t pmo_core_max_mc_addr_supported(struct wlan_objmgr_psoc *psoc)
 int pmo_core_get_mc_addr_list_count(struct wlan_objmgr_psoc *psoc,
 		uint8_t vdev_id)
 {
-	struct pmo_psoc_priv_obj *psoc_ctx;
+	QDF_STATUS status;
 	struct wlan_objmgr_vdev *vdev;
 	struct pmo_vdev_priv_obj *vdev_ctx;
 	uint8_t mc_cnt;
 
-	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
-	if (!psoc_ctx) {
-		pmo_err("psoc_ctx is");
-		mc_cnt = PMO_INVALID_MC_ADDR_COUNT;
-		goto out;
-	}
-
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id, WLAN_PMO_ID);
+	vdev = pmo_psoc_get_vdev(psoc, vdev_id);
 	if (!vdev) {
 		pmo_err("vdev is NULL");
-		mc_cnt = PMO_INVALID_MC_ADDR_COUNT;
-		goto out;
+		return PMO_INVALID_MC_ADDR_COUNT;
 	}
 
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx) {
-		pmo_err("vdev_ctx is NULL");
-		mc_cnt = PMO_INVALID_MC_ADDR_COUNT;
-		goto dec_ref;
+	status = pmo_vdev_get_ref(vdev);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pmo_warn("failed to get vdev reference");
+		return PMO_INVALID_MC_ADDR_COUNT;
 	}
+
+	vdev_ctx = pmo_vdev_get_priv(vdev);
 	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 	mc_cnt = vdev_ctx->vdev_mc_list_req.mc_cnt;
 	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
-dec_ref:
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
-out:
+
+	pmo_vdev_put_ref(vdev);
 
 	return mc_cnt;
 }
@@ -325,36 +292,28 @@ out:
 void pmo_core_set_mc_addr_list_count(struct wlan_objmgr_psoc *psoc,
 		uint8_t vdev_id, uint8_t count)
 {
-	struct pmo_psoc_priv_obj *psoc_ctx;
+	QDF_STATUS status;
 	struct pmo_vdev_priv_obj *vdev_ctx;
 	struct wlan_objmgr_vdev *vdev;
 
-	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
-	if (!psoc_ctx) {
-		pmo_err("psoc_ctx is NULL");
-		goto out;
-	}
-
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id, WLAN_PMO_ID);
+	vdev = pmo_psoc_get_vdev(psoc, vdev_id);
 	if (!vdev) {
 		pmo_err("vdev is NULL");
-		goto out;
+		return;
 	}
 
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx) {
-		pmo_err("vdev_ctx is NULL");
-		goto dec_ref;
+	status = pmo_vdev_get_ref(vdev);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pmo_warn("failed to get vdev reference");
+		return;
 	}
+
+	vdev_ctx = pmo_vdev_get_priv(vdev);
 	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 	vdev_ctx->vdev_mc_list_req.mc_cnt = count;
 	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
 
-dec_ref:
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
-out:
-
-	return;
+	pmo_vdev_put_ref(vdev);
 }
 
 static QDF_STATUS pmo_core_mc_addr_flitering_sanity(
@@ -367,11 +326,7 @@ static QDF_STATUS pmo_core_mc_addr_flitering_sanity(
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx) {
-		pmo_err("vdev_ctx is NULL");
-		return QDF_STATUS_E_NULL_VALUE;
-	}
+	vdev_ctx = pmo_vdev_get_priv(vdev);
 
 	/* Check if INI is enabled or not, otherwise just return */
 	if (!vdev_ctx->pmo_psoc_ctx->psoc_cfg.enable_mc_list) {
@@ -397,17 +352,24 @@ QDF_STATUS pmo_core_cache_mc_addr_list(
 	QDF_STATUS status;
 
 	PMO_ENTER();
+
 	if (!mc_list_config->psoc) {
 		pmo_err("psoc is NULL");
 		status = QDF_STATUS_E_NULL_VALUE;
 		goto out;
 	}
 
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mc_list_config->psoc,
-			mc_list_config->vdev_id, WLAN_PMO_ID);
+	vdev = pmo_psoc_get_vdev(mc_list_config->psoc, mc_list_config->vdev_id);
 	if (!vdev) {
 		pmo_err("vdev is NULL");
 		status = QDF_STATUS_E_NULL_VALUE;
+		goto out;
+	}
+
+	status = pmo_vdev_get_ref(vdev);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pmo_warn("failed to get vdev reference");
+		status = QDF_STATUS_E_INVAL;
 		goto out;
 	}
 
@@ -420,7 +382,7 @@ QDF_STATUS pmo_core_cache_mc_addr_list(
 
 	status = pmo_core_cache_mc_addr_list_in_vdev_priv(mc_list_config, vdev);
 dec_ref:
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
+	pmo_vdev_put_ref(vdev);
 out:
 	PMO_EXIT();
 
@@ -440,10 +402,17 @@ QDF_STATUS pmo_core_flush_mc_addr_list(struct wlan_objmgr_psoc *psoc,
 		goto out;
 	}
 
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id, WLAN_PMO_ID);
+	vdev = pmo_psoc_get_vdev(psoc, vdev_id);
 	if (!vdev) {
 		pmo_err("vdev is NULL");
 		status = QDF_STATUS_E_NULL_VALUE;
+		goto out;
+	}
+
+	status = pmo_vdev_get_ref(vdev);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pmo_warn("failed to get vdev reference");
+		status = QDF_STATUS_E_INVAL;
 		goto out;
 	}
 
@@ -455,8 +424,9 @@ QDF_STATUS pmo_core_flush_mc_addr_list(struct wlan_objmgr_psoc *psoc,
 			vdev_id, psoc, vdev);
 
 	status = pmo_core_flush_mc_addr_list_from_vdev_priv(vdev);
+
 dec_ref:
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
+	pmo_vdev_put_ref(vdev);
 out:
 	PMO_EXIT();
 
@@ -471,12 +441,7 @@ static QDF_STATUS pmo_core_handle_enable_mc_list_trigger(
 	QDF_STATUS status;
 	struct pmo_mc_addr_list *op_mc_list_req = NULL;
 
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx) {
-		pmo_err("vdev_ctx is NULL");
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto out;
-	}
+	vdev_ctx = pmo_vdev_get_priv(vdev);
 
 	op_mc_list_req = qdf_mem_malloc(sizeof(*op_mc_list_req));
 	if (!op_mc_list_req) {
@@ -533,12 +498,16 @@ QDF_STATUS pmo_core_enable_mc_addr_filtering_in_fwr(
 		goto out;
 	}
 
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id, WLAN_PMO_ID);
+	vdev = pmo_psoc_get_vdev(psoc, vdev_id);
 	if (!vdev) {
 		pmo_err("vdev is NULL");
 		status = QDF_STATUS_E_NULL_VALUE;
 		goto out;
 	}
+
+	status = pmo_vdev_get_ref(vdev);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto out;
 
 	status = pmo_core_mc_addr_flitering_sanity(vdev);
 	if (status != QDF_STATUS_SUCCESS)
@@ -547,7 +516,7 @@ QDF_STATUS pmo_core_enable_mc_addr_filtering_in_fwr(
 	pmo_info("enable mclist trigger: %d", trigger);
 	status = pmo_core_handle_enable_mc_list_trigger(vdev, trigger);
 dec_ref:
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
+	pmo_vdev_put_ref(vdev);
 out:
 	PMO_EXIT();
 
@@ -562,12 +531,7 @@ static QDF_STATUS pmo_core_handle_disable_mc_list_trigger(
 	QDF_STATUS status;
 	struct pmo_mc_addr_list *op_mc_list_req = NULL;
 
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx) {
-		pmo_err("vdev_ctx is NULL");
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto out;
-	}
+	vdev_ctx = pmo_vdev_get_priv(vdev);
 
 	op_mc_list_req = qdf_mem_malloc(sizeof(*op_mc_list_req));
 	if (!op_mc_list_req) {
@@ -625,12 +589,16 @@ QDF_STATUS pmo_core_disable_mc_addr_filtering_in_fwr(
 		goto out;
 	}
 
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id, WLAN_PMO_ID);
+	vdev = pmo_psoc_get_vdev(psoc, vdev_id);
 	if (!vdev) {
 		pmo_err("vdev is NULL");
 		status = QDF_STATUS_E_NULL_VALUE;
 		goto out;
 	}
+
+	status = pmo_vdev_get_ref(vdev);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto out;
 
 	status = pmo_core_mc_addr_flitering_sanity(vdev);
 	if (status != QDF_STATUS_SUCCESS)
@@ -639,7 +607,7 @@ QDF_STATUS pmo_core_disable_mc_addr_filtering_in_fwr(
 	pmo_info("disable mclist trigger: %d", trigger);
 	status = pmo_core_handle_disable_mc_list_trigger(vdev, trigger);
 dec_ref:
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
+	pmo_vdev_put_ref(vdev);
 out:
 	PMO_EXIT();
 

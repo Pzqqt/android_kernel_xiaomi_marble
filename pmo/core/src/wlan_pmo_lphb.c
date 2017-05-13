@@ -195,11 +195,8 @@ void pmo_core_apply_lphb(struct wlan_objmgr_psoc *psoc)
 	int i;
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
-	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
-	if (!psoc_ctx) {
-		pmo_err("psoc ctx is null");
-		return;
-	}
+	psoc_ctx = pmo_psoc_get_priv(psoc);
+
 	pmo_debug("checking LPHB cache");
 	for (i = 0; i < 2; i++) {
 		if (psoc_ctx->wow.lphb_cache[i].params.lphb_enable_req.enable) {
@@ -215,7 +212,6 @@ QDF_STATUS pmo_core_lphb_config_req(struct wlan_objmgr_psoc *psoc,
 		struct pmo_lphb_req *lphb_req, void *lphb_cb_ctx,
 		pmo_lphb_callback callback)
 {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
 	if (lphb_req == NULL) {
@@ -223,11 +219,7 @@ QDF_STATUS pmo_core_lphb_config_req(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
-	if (!psoc_ctx) {
-		pmo_err("psoc ctx is null");
-		return QDF_STATUS_E_NULL_VALUE;
-	}
+	psoc_ctx = pmo_psoc_get_priv(psoc);
 
 	if (pmo_lphb_set_en_param_indid == lphb_req->cmd) {
 		if (!lphb_cb_ctx) {
@@ -243,9 +235,8 @@ QDF_STATUS pmo_core_lphb_config_req(struct wlan_objmgr_psoc *psoc,
 		psoc_ctx->wow.lphb_cb = callback;
 		qdf_spin_unlock_bh(&psoc_ctx->lock);
 	}
-	status = pmo_process_lphb_conf_req(psoc, psoc_ctx, lphb_req);
 
-	return status;
+	return pmo_process_lphb_conf_req(psoc, psoc_ctx, lphb_req);
 }
 
 #endif /* FEATURE_WLAN_LPHB */

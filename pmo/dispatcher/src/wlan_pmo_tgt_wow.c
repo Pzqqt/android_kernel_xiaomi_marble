@@ -32,13 +32,8 @@ QDF_STATUS pmo_tgt_enable_wow_wakeup_event(
 	struct wlan_lmac_if_pmo_tx_ops pmo_tx_ops;
 
 	PMO_ENTER();
-	psoc = wlan_vdev_get_psoc(vdev);
-	if (!psoc) {
-		pmo_err("Failed to find psoc from from vdev:%p",
-			vdev);
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto out;
-	}
+
+	psoc = pmo_vdev_get_psoc(vdev);
 
 	pmo_tx_ops = GET_PMO_TX_OPS_FROM_PSOC(psoc);
 	if (!pmo_tx_ops.send_enable_wow_wakeup_event_req) {
@@ -64,13 +59,8 @@ QDF_STATUS pmo_tgt_disable_wow_wakeup_event(
 	struct wlan_lmac_if_pmo_tx_ops pmo_tx_ops;
 
 	PMO_ENTER();
-	psoc = wlan_vdev_get_psoc(vdev);
-	if (!psoc) {
-		pmo_err("Failed to find psoc from from vdev:%p",
-			vdev);
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto out;
-	}
+
+	psoc = pmo_vdev_get_psoc(vdev);
 
 	pmo_tx_ops = GET_PMO_TX_OPS_FROM_PSOC(psoc);
 	if (!pmo_tx_ops.send_disable_wow_wakeup_event_req) {
@@ -99,20 +89,9 @@ QDF_STATUS pmo_tgt_send_wow_patterns_to_fw(
 	struct wlan_lmac_if_pmo_tx_ops pmo_tx_ops;
 
 	PMO_ENTER();
-	psoc = wlan_vdev_get_psoc(vdev);
-	if (!psoc) {
-		pmo_err("Failed to find psoc from from vdev:%p",
-			vdev);
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto out;
-	}
+	psoc = pmo_vdev_get_psoc(vdev);
 
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx) {
-		pmo_err("vdev_ctx is NULL");
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto out;
-	}
+	vdev_ctx = pmo_vdev_get_priv(vdev);
 
 	pmo_tx_ops = GET_PMO_TX_OPS_FROM_PSOC(psoc);
 	if (!pmo_tx_ops.send_add_wow_pattern) {

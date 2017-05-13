@@ -47,10 +47,7 @@ bool pmo_core_get_wow_bus_suspend(struct wlan_objmgr_psoc *psoc)
 	bool value;
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
-	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
-	if (!psoc_ctx)
-		return false;
-
+	psoc_ctx = pmo_psoc_get_priv(psoc);
 	qdf_spin_lock_bh(&psoc_ctx->lock);
 	value = psoc_ctx->wow.is_wow_bus_suspended;
 	qdf_spin_unlock_bh(&psoc_ctx->lock);
@@ -204,9 +201,7 @@ void pmo_core_update_alt_modulated_dtim_enable(struct wlan_objmgr_vdev *vdev,
 {
 	struct pmo_vdev_priv_obj *vdev_ctx;
 
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx)
-		return;
+	vdev_ctx = pmo_vdev_get_priv(vdev);
 	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 	vdev_ctx->alt_modulated_dtim_enable = value;
 	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
@@ -225,9 +220,7 @@ void pmo_core_vdev_set_dtim_policy(struct wlan_objmgr_vdev *vdev,
 {
 	struct pmo_vdev_priv_obj *vdev_ctx;
 
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx)
-		return;
+	vdev_ctx = pmo_vdev_get_priv(vdev);
 	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 	vdev_ctx->dtim_policy = value;
 	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
@@ -245,9 +238,7 @@ uint32_t pmo_core_vdev_get_dtim_policy(struct wlan_objmgr_vdev *vdev)
 	uint32_t value;
 	struct pmo_vdev_priv_obj *vdev_ctx;
 
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx)
-		return 0;
+	vdev_ctx = pmo_vdev_get_priv(vdev);
 	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 	value = vdev_ctx->dtim_policy;
 	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
@@ -268,9 +259,7 @@ void pmo_core_psoc_update_power_save_mode(struct wlan_objmgr_psoc *psoc,
 {
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
-	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
-	if (!psoc_ctx)
-		return;
+	psoc_ctx = pmo_psoc_get_priv(psoc);
 	qdf_spin_lock_bh(&psoc_ctx->lock);
 	psoc_ctx->psoc_cfg.power_save_mode = value;
 	qdf_spin_unlock_bh(&psoc_ctx->lock);
@@ -288,9 +277,7 @@ uint8_t pmo_core_psoc_get_power_save_mode(struct wlan_objmgr_psoc *psoc)
 	uint8_t value;
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
-	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
-	if (!psoc_ctx)
-		return 0;
+	psoc_ctx = pmo_psoc_get_priv(psoc);
 	qdf_spin_lock_bh(&psoc_ctx->lock);
 	value = psoc_ctx->psoc_cfg.power_save_mode;
 	qdf_spin_unlock_bh(&psoc_ctx->lock);

@@ -198,12 +198,8 @@ QDF_STATUS pmo_psoc_object_destroyed_notification(
 	QDF_STATUS status;
 
 	PMO_ENTER();
-	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
-	if (!psoc_ctx) {
-		pmo_err("psoc_ctx is NULL");
-		status = QDF_STATUS_E_FAILURE;
-		goto out;
-	}
+
+	psoc_ctx = pmo_psoc_get_priv(psoc);
 
 	status = wlan_objmgr_psoc_component_obj_detach(psoc,
 			WLAN_UMAC_COMP_PMO,
@@ -234,19 +230,10 @@ QDF_STATUS pmo_vdev_object_created_notification(
 	QDF_STATUS status;
 
 	PMO_ENTER();
-	psoc = wlan_vdev_get_psoc(vdev);
-	if (psoc == NULL) {
-		pmo_err("psoc is NULL");
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto out;
-	}
 
-	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
-	if (!psoc_ctx) {
-		pmo_err("psoc_ctx is NULL");
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto out;
-	}
+	psoc = pmo_vdev_get_psoc(vdev);
+
+	psoc_ctx = pmo_psoc_get_priv(psoc);
 
 	vdev_ctx = qdf_mem_malloc(sizeof(*vdev_ctx));
 	if (vdev_ctx == NULL) {
@@ -303,12 +290,8 @@ QDF_STATUS pmo_vdev_object_destroyed_notification(
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	PMO_ENTER();
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx) {
-		pmo_err("vdev_ctx is NULL");
-		status = QDF_STATUS_E_INVAL;
-		goto out;
-	}
+
+	vdev_ctx = pmo_vdev_get_priv(vdev);
 
 	status = wlan_objmgr_vdev_component_obj_detach(vdev,
 			 WLAN_UMAC_COMP_PMO,
@@ -318,7 +301,7 @@ QDF_STATUS pmo_vdev_object_destroyed_notification(
 
 	qdf_spinlock_destroy(&vdev_ctx->pmo_vdev_lock);
 	qdf_mem_free(vdev_ctx);
-out:
+
 	PMO_EXIT();
 
 	return status;
@@ -592,12 +575,7 @@ QDF_STATUS pmo_register_pause_bitmap_notifier(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
-	if (!psoc_ctx) {
-		pmo_err("psoc_ctx is null");
-		return QDF_STATUS_E_NULL_VALUE;
-	}
-
+	psoc_ctx = pmo_psoc_get_priv(psoc);
 	qdf_spin_lock_bh(&psoc_ctx->lock);
 	psoc_ctx->pause_bitmap_notifier = handler;
 	qdf_spin_unlock_bh(&psoc_ctx->lock);
@@ -620,12 +598,7 @@ QDF_STATUS pmo_unregister_pause_bitmap_notifier(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
-	if (!psoc_ctx) {
-		pmo_err("psoc_ctx is null");
-		return QDF_STATUS_E_NULL_VALUE;
-	}
-
+	psoc_ctx = pmo_psoc_get_priv(psoc);
 	qdf_spin_lock_bh(&psoc_ctx->lock);
 	if (psoc_ctx->pause_bitmap_notifier == handler)
 		psoc_ctx->pause_bitmap_notifier = NULL;
@@ -649,12 +622,7 @@ QDF_STATUS pmo_register_get_pause_bitmap(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
-	if (!psoc_ctx) {
-		pmo_err("psoc_ctx is null");
-		return QDF_STATUS_E_NULL_VALUE;
-	}
-
+	psoc_ctx = pmo_psoc_get_priv(psoc);
 	qdf_spin_lock_bh(&psoc_ctx->lock);
 	psoc_ctx->get_pause_bitmap = handler;
 	qdf_spin_unlock_bh(&psoc_ctx->lock);
@@ -677,12 +645,7 @@ QDF_STATUS pmo_unregister_get_pause_bitmap(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
-	if (!psoc_ctx) {
-		pmo_err("psoc_ctx is null");
-		return QDF_STATUS_E_NULL_VALUE;
-	}
-
+	psoc_ctx = pmo_psoc_get_priv(psoc);
 	qdf_spin_lock_bh(&psoc_ctx->lock);
 	if (psoc_ctx->get_pause_bitmap == handler)
 		psoc_ctx->get_pause_bitmap = NULL;

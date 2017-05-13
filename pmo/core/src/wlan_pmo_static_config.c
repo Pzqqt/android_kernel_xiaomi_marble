@@ -63,14 +63,10 @@ void pmo_register_wow_wakeup_events(struct wlan_objmgr_vdev *vdev)
 	struct wlan_objmgr_psoc *psoc;
 	enum tQDF_ADAPTER_MODE  vdev_opmode = QDF_MAX_NO_OF_MODE;
 
-	psoc = wlan_vdev_get_psoc(vdev);
-	if (psoc == NULL) {
-		pmo_err("psoc is NULL");
-		return;
-	}
+	psoc = pmo_vdev_get_psoc(vdev);
 
 	vdev_opmode = pmo_get_vdev_opmode(vdev);
-	vdev_id = pmo_get_vdev_id(vdev);
+	vdev_id = pmo_vdev_get_id(vdev);
 	pmo_info("vdev_opmode %d vdev_id %d", vdev_opmode, vdev_id);
 
 	switch (vdev_opmode) {
@@ -128,11 +124,7 @@ static QDF_STATUS pmo_configure_wow_ap(struct wlan_objmgr_vdev *vdev)
 	uint8_t mac_mask[PMO_80211_ADDR_LEN];
 	struct pmo_vdev_priv_obj *vdev_ctx;
 
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx) {
-		pmo_err("vdev_ctx is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
+	vdev_ctx = pmo_vdev_get_priv(vdev);
 
 	/*
 	 * Setup unicast pkt pattern
@@ -178,15 +170,12 @@ static QDF_STATUS pmo_configure_mc_ssdp(
 {
 	struct wlan_objmgr_psoc *psoc;
 	const uint8_t ssdp_addr[QDF_MAC_ADDR_SIZE] = {
-		0x01, 0x00, 0x5e, 0x7f, 0xff, 0xfa};
+		0x01, 0x00, 0x5e, 0x7f, 0xff, 0xfa };
 	struct qdf_mac_addr multicast_addr;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	psoc = wlan_vdev_get_psoc(vdev);
-	if (!psoc) {
-		pmo_err("psoc is NULL");
-		return QDF_STATUS_E_INVAL;
-	}
+	psoc = pmo_vdev_get_psoc(vdev);
+
 	qdf_mem_copy(&multicast_addr.bytes, &ssdp_addr, QDF_MAC_ADDR_SIZE);
 	status = pmo_tgt_set_mc_filter_req(vdev,
 					  multicast_addr);
@@ -211,11 +200,8 @@ static QDF_STATUS pmo_configure_wow_ssdp(
 	uint8_t discvr_offset = 30;
 	struct pmo_vdev_priv_obj *vdev_ctx;
 
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx) {
-		pmo_err("vdev_ctx is NULL");
-		return QDF_STATUS_E_INVAL;
-	}
+	vdev_ctx = pmo_vdev_get_priv(vdev);
+
 	/*
 	 * WoW pattern ID should be unique for each vdev
 	 * Different WoW patterns can use same pattern ID
@@ -243,14 +229,8 @@ static QDF_STATUS pmo_configure_wow_ssdp(
 static QDF_STATUS pmo_configure_ssdp(struct wlan_objmgr_vdev *vdev)
 {
 	struct pmo_vdev_priv_obj *vdev_ctx;
-	uint8_t vdev_id;
 
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx) {
-		pmo_err("vdev_ctx is NULL");
-		return QDF_STATUS_E_INVAL;
-	}
-	vdev_id = pmo_get_vdev_id(vdev);
+	vdev_ctx = pmo_vdev_get_priv(vdev);
 
 	if (!vdev_ctx->pmo_psoc_ctx->psoc_cfg.ssdp) {
 		pmo_err("mDNS, SSDP, LLMNR patterns are disabled from ini");
@@ -281,11 +261,7 @@ static QDF_STATUS pmo_configure_wow_sta(struct wlan_objmgr_vdev *vdev)
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 	struct pmo_vdev_priv_obj *vdev_ctx;
 
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx) {
-		pmo_err("vdev_ctx is NULL");
-		return QDF_STATUS_E_INVAL;
-	}
+	vdev_ctx = pmo_vdev_get_priv(vdev);
 
 	qdf_mem_set(&mac_mask, PMO_80211_ADDR_LEN, 0xFF);
 	/*
@@ -350,13 +326,9 @@ void pmo_register_wow_default_patterns(struct wlan_objmgr_vdev *vdev)
 	uint8_t vdev_id;
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx) {
-		pmo_err("vdev_ctx is NULL");
-		return;
-	}
+	vdev_ctx = pmo_vdev_get_priv(vdev);
 
-	vdev_id = pmo_get_vdev_id(vdev);
+	vdev_id = pmo_vdev_get_id(vdev);
 	if (vdev_id > WLAN_UMAC_PSOC_MAX_VDEVS) {
 		pmo_err("Invalid vdev id %d", vdev_id);
 		return;
@@ -393,22 +365,14 @@ void pmo_register_wow_default_patterns(struct wlan_objmgr_vdev *vdev)
 
 }
 
-void pmo_register_action_frame_patterns(
-		struct wlan_objmgr_vdev *vdev)
+void pmo_register_action_frame_patterns(struct wlan_objmgr_vdev *vdev)
 {
 
 	struct pmo_action_wakeup_set_params cmd = {0};
 	int i = 0;
-	uint8_t vdev_id;
 	QDF_STATUS status;
 
-	vdev_id = pmo_get_vdev_id(vdev);
-	if (vdev_id > WLAN_UMAC_PSOC_MAX_VDEVS) {
-		pmo_err("Invalid vdev id %d", vdev_id);
-		return;
-	}
-
-	cmd.vdev_id = vdev_id;
+	cmd.vdev_id = pmo_vdev_get_id(vdev);
 	cmd.operation = pmo_action_wakeup_set;
 
 	cmd.action_category_map[i++] = ALLOWED_ACTION_FRAMES_BITMAP0;
@@ -433,6 +397,5 @@ void pmo_register_action_frame_patterns(
 	if (status != QDF_STATUS_SUCCESS)
 		pmo_err("Failed to config wow action frame map, ret %d",
 			status);
-
 }
 

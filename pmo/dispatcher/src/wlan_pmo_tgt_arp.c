@@ -35,19 +35,10 @@ QDF_STATUS pmo_tgt_enable_arp_offload_req(struct wlan_objmgr_vdev *vdev,
 	struct wlan_lmac_if_pmo_tx_ops pmo_tx_ops;
 
 	PMO_ENTER();
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx) {
-		pmo_err("vdev_ctx is NULL");
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto out;
-	}
 
-	psoc = wlan_vdev_get_psoc(vdev);
-	if (!psoc) {
-		pmo_err("psoc unavailable for vdev %p", vdev);
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto out;
-	}
+	vdev_ctx = pmo_vdev_get_priv(vdev);
+
+	psoc = pmo_vdev_get_psoc(vdev);
 
 	arp_offload_req = qdf_mem_malloc(sizeof(*arp_offload_req));
 	if (!arp_offload_req) {
@@ -109,19 +100,10 @@ QDF_STATUS pmo_tgt_disable_arp_offload_req(struct wlan_objmgr_vdev *vdev,
 	struct wlan_lmac_if_pmo_tx_ops pmo_tx_ops;
 
 	PMO_ENTER();
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx) {
-		pmo_err("vdev_ctx is NULL");
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto out;
-	}
 
-	psoc = wlan_vdev_get_psoc(vdev);
-	if (!psoc) {
-		pmo_err("psoc unavailable for vdev %p", vdev);
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto out;
-	}
+	vdev_ctx = pmo_vdev_get_priv(vdev);
+
+	psoc = pmo_vdev_get_psoc(vdev);
 
 	arp_offload_req = qdf_mem_malloc(sizeof(*arp_offload_req));
 	if (!arp_offload_req) {

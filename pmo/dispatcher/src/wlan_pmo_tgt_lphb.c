@@ -139,12 +139,7 @@ QDF_STATUS pmo_tgt_lphb_rsp_evt(struct wlan_objmgr_psoc *psoc,
 {
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
-	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
-	if (!psoc_ctx) {
-		pmo_err("psoc_ctx is null");
-		return QDF_STATUS_E_NULL_VALUE;
-	}
-
+	psoc_ctx = pmo_psoc_get_priv(psoc);
 	if (psoc_ctx->wow.lphb_cb && psoc_ctx->wow.lphb_cb_ctx) {
 		pmo_info("callback:%p context:%p psoc:%p",
 			psoc_ctx->wow.lphb_cb, psoc_ctx->wow.lphb_cb_ctx, psoc);

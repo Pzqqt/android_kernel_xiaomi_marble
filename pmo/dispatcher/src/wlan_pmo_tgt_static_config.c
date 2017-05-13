@@ -33,13 +33,7 @@ QDF_STATUS pmo_tgt_send_enhance_multicast_offload_req(
 	struct wlan_lmac_if_pmo_tx_ops pmo_tx_ops;
 
 	PMO_ENTER();
-	psoc = wlan_vdev_get_psoc(vdev);
-	if (!psoc) {
-		pmo_err("Failed to find psoc from from vdev:%p",
-			vdev);
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto out;
-	}
+	psoc = pmo_vdev_get_psoc(vdev);
 
 	pmo_tx_ops = GET_PMO_TX_OPS_FROM_PSOC(psoc);
 	if (!pmo_tx_ops.send_enhance_mc_offload_req) {
@@ -69,22 +63,12 @@ QDF_STATUS pmo_tgt_send_ra_filter_req(struct wlan_objmgr_vdev *vdev)
 	struct wlan_lmac_if_pmo_tx_ops pmo_tx_ops;
 
 	PMO_ENTER();
-	psoc = wlan_vdev_get_psoc(vdev);
-	if (!psoc) {
-		pmo_err("Failed to find psoc from from vdev:%p",
-			vdev);
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto out;
-	}
 
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx) {
-		pmo_err("vdev_ctx is NULL");
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto out;
-	}
+	psoc = pmo_vdev_get_psoc(vdev);
 
-	vdev_id = pmo_get_vdev_id(vdev);
+	vdev_ctx = pmo_vdev_get_priv(vdev);
+
+	vdev_id = pmo_vdev_get_id(vdev);
 	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 	ra_interval = vdev_ctx->pmo_psoc_ctx->psoc_cfg.ra_ratelimit_interval;
 	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
@@ -121,13 +105,8 @@ QDF_STATUS pmo_tgt_send_action_frame_pattern_req(
 	struct wlan_lmac_if_pmo_tx_ops pmo_tx_ops;
 
 	PMO_ENTER();
-	psoc = wlan_vdev_get_psoc(vdev);
-	if (!psoc) {
-		pmo_err("Failed to find psoc from from vdev:%p",
-			vdev);
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto out;
-	}
+
+	psoc = pmo_vdev_get_psoc(vdev);
 
 	pmo_tx_ops = GET_PMO_TX_OPS_FROM_PSOC(psoc);
 	if (!pmo_tx_ops.send_action_frame_pattern_req) {

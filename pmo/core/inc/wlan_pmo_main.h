@@ -30,12 +30,13 @@
 #include "wlan_objmgr_pdev_obj.h"
 #include "wlan_objmgr_vdev_obj.h"
 #include "wlan_objmgr_peer_obj.h"
+#include "wlan_pmo_objmgr.h"
 #include "qdf_status.h"
 #include "qdf_types.h"
 #include "qdf_lock.h"
 #include "wlan_pmo_obj_mgmt_public_struct.h"
 
-#define pmo_log(level, args...) QDF_TRACE(QDF_MODULE_ID_HDD, level, ## args)
+#define pmo_log(level, args...) QDF_TRACE(QDF_MODULE_ID_PMO, level, ## args)
 #define pmo_logfl(level, format, args...) pmo_log(level, FL(format), ## args)
 
 #define pmo_fatal(format, args...) \
@@ -49,11 +50,11 @@
 #define pmo_debug(format, args...) \
 		pmo_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
 
-#define PMO_ENTER() pmo_logfl(QDF_TRACE_LEVEL_INFO, "enter")
-#define PMO_EXIT() pmo_logfl(QDF_TRACE_LEVEL_INFO, "exit")
+#define PMO_ENTER() pmo_debug("enter")
+#define PMO_EXIT() pmo_debug("exit")
 
-#define PMO_VDEV_IN_STA_MODE(mode)\
-	((mode == QDF_STA_MODE || mode == QDF_P2P_CLIENT_MODE) == 1 ? 1 : 0)
+#define PMO_VDEV_IN_STA_MODE(mode) \
+	((mode) == QDF_STA_MODE || (mode) == QDF_P2P_CLIENT_MODE ? 1 : 0)
 
 static inline enum tQDF_ADAPTER_MODE pmo_get_vdev_opmode(
 			struct wlan_objmgr_vdev *vdev)
@@ -65,17 +66,6 @@ static inline enum tQDF_ADAPTER_MODE pmo_get_vdev_opmode(
 	wlan_vdev_obj_unlock(vdev);
 
 	return opmode;
-}
-
-static inline uint8_t pmo_get_vdev_id(struct wlan_objmgr_vdev *vdev)
-{
-	uint8_t vdev_id;
-
-	wlan_vdev_obj_lock(vdev);
-	vdev_id = wlan_vdev_get_id(vdev);
-	wlan_vdev_obj_unlock(vdev);
-
-	return vdev_id;
 }
 
 /**
@@ -106,26 +96,6 @@ void pmo_free_ctx(void);
 struct wlan_pmo_ctx *pmo_get_context(void);
 
 /**
- * pmo_get_psoc_priv_ctx() - return pmo psoc priv ctx from objmgr psoc
- * @psoc: objmgr psoc
- *
- * Helper function to pmo psoc ctx from objmgr psoc
- *
- * Return: if success pmo psoc ctx else NULL
- */
-struct pmo_psoc_priv_obj *pmo_get_psoc_priv_ctx(struct wlan_objmgr_psoc *psoc);
-
-/**
- * pmo_get_vdev_priv_ctx() - return pmo vdev priv ctx from objmgr vdev
- * @vdev: objmgr vdev
- *
- * Helper function to pmo vdev ctx from objmgr vdev
- *
- * Return: if success pmo vdev ctx else NULL
- */
-struct pmo_vdev_priv_obj *pmo_get_vdev_priv_ctx(struct wlan_objmgr_vdev *vdev);
-
-/**
  * pmo_get_vdev_bss_peer_mac_addr() - API to get bss peer mac address
  * @vdev: objmgr vdev
  * @bss_peer_mac_address: bss peer mac address
@@ -136,17 +106,6 @@ struct pmo_vdev_priv_obj *pmo_get_vdev_priv_ctx(struct wlan_objmgr_vdev *vdev);
  */
 QDF_STATUS pmo_get_vdev_bss_peer_mac_addr(struct wlan_objmgr_vdev *vdev,
 		struct qdf_mac_addr *bss_peer_mac_address);
-
-/**
- * pmo_psoc_ctx_from_vdev_ctx() - return pmo psoc ctx from pmo vdev ctx
- * @vdev: pmo vdev ctx
- *
- * Helper function to get pmo psoc ctx from pmo vdev ctx
- *
- * Return: pmo psoc ctx
- */
-struct pmo_psoc_priv_obj *pmo_psoc_ctx_from_vdev_ctx(
-	struct pmo_vdev_priv_obj *vdev_ctx);
 
 /**
  * pmo_is_vdev_in_beaconning_mode() - check if vdev is in a beaconning mode
@@ -247,9 +206,7 @@ void pmo_core_psoc_update_dp_handle(struct wlan_objmgr_psoc *psoc,
 {
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
-	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
-	if (!psoc_ctx)
-		return;
+	psoc_ctx = pmo_psoc_get_priv(psoc);
 	qdf_spin_lock_bh(&psoc_ctx->lock);
 	psoc_ctx->dp_hdl = dp_hdl;
 	qdf_spin_unlock_bh(&psoc_ctx->lock);
@@ -267,9 +224,7 @@ void *pmo_core_psoc_get_dp_handle(struct wlan_objmgr_psoc *psoc)
 	void *dp_hdl;
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
-	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
-	if (!psoc_ctx)
-		return NULL;
+	psoc_ctx = pmo_psoc_get_priv(psoc);
 	qdf_spin_lock_bh(&psoc_ctx->lock);
 	dp_hdl = psoc_ctx->dp_hdl;
 	qdf_spin_unlock_bh(&psoc_ctx->lock);
@@ -290,9 +245,7 @@ void pmo_core_vdev_update_dp_handle(struct wlan_objmgr_vdev *vdev,
 {
 	struct pmo_vdev_priv_obj *vdev_ctx;
 
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx)
-		return;
+	vdev_ctx = pmo_vdev_get_priv(vdev);
 	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 	vdev_ctx->vdev_dp_hdl = dp_hdl;
 	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
@@ -310,9 +263,7 @@ void *pmo_core_vdev_get_dp_handle(struct wlan_objmgr_vdev *vdev)
 	void *dp_hdl;
 	struct pmo_vdev_priv_obj *vdev_ctx;
 
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx)
-		return NULL;
+	vdev_ctx = pmo_vdev_get_priv(vdev);
 	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 	dp_hdl = vdev_ctx->vdev_dp_hdl;
 	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
@@ -333,9 +284,7 @@ void pmo_core_psoc_update_htc_handle(struct wlan_objmgr_psoc *psoc,
 {
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
-	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
-	if (!psoc_ctx)
-		return;
+	psoc_ctx = pmo_psoc_get_priv(psoc);
 	qdf_spin_lock_bh(&psoc_ctx->lock);
 	psoc_ctx->htc_hdl = htc_hdl;
 	qdf_spin_unlock_bh(&psoc_ctx->lock);
@@ -353,9 +302,7 @@ void *pmo_core_psoc_get_htc_handle(struct wlan_objmgr_psoc *psoc)
 	void *htc_hdl;
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
-	psoc_ctx = pmo_get_psoc_priv_ctx(psoc);
-	if (!psoc_ctx)
-		return NULL;
+	psoc_ctx = pmo_psoc_get_priv(psoc);
 	qdf_spin_lock_bh(&psoc_ctx->lock);
 	htc_hdl = psoc_ctx->htc_hdl;
 	qdf_spin_unlock_bh(&psoc_ctx->lock);
@@ -418,7 +365,7 @@ bool pmo_is_vdev_up(struct wlan_objmgr_vdev *vdev)
 	state = wlan_vdev_mlme_get_state(vdev);
 	wlan_vdev_obj_unlock(vdev);
 
-	return (state == WLAN_VDEV_S_RUN) ? true : false;
+	return state == WLAN_VDEV_S_RUN;
 }
 
 #endif /* end  of _WLAN_PMO_MAIN_H_ */

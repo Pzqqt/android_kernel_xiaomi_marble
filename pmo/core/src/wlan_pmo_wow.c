@@ -64,6 +64,7 @@ QDF_STATUS pmo_core_wow_exit(struct wlan_objmgr_vdev *vdev)
 void pmo_core_enable_wakeup_event(struct wlan_objmgr_psoc *psoc,
 	uint32_t vdev_id, uint32_t bitmap)
 {
+	QDF_STATUS status;
 	struct wlan_objmgr_vdev *vdev;
 
 	PMO_ENTER();
@@ -72,24 +73,30 @@ void pmo_core_enable_wakeup_event(struct wlan_objmgr_psoc *psoc,
 		goto out;
 	}
 
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id, WLAN_PMO_ID);
+	vdev = pmo_psoc_get_vdev(psoc, vdev_id);
 	if (!vdev) {
 		pmo_err("vdev is NULL");
 		goto out;
 	}
 
+	status = pmo_vdev_get_ref(vdev);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto out;
+
 	pmo_info("enable wakeup event vdev_id %d wake up event 0x%x",
 		vdev_id, bitmap);
 	pmo_tgt_enable_wow_wakeup_event(vdev, bitmap);
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
+
+	pmo_vdev_put_ref(vdev);
+
 out:
 	PMO_EXIT();
-
 }
 
 void pmo_core_disable_wakeup_event(struct wlan_objmgr_psoc *psoc,
 	uint32_t vdev_id, uint32_t bitmap)
 {
+	QDF_STATUS status;
 	struct wlan_objmgr_vdev *vdev;
 
 	PMO_ENTER();
@@ -98,58 +105,59 @@ void pmo_core_disable_wakeup_event(struct wlan_objmgr_psoc *psoc,
 		goto out;
 	}
 
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id, WLAN_PMO_ID);
+	vdev = pmo_psoc_get_vdev(psoc, vdev_id);
 	if (!vdev) {
 		pmo_err("vdev is NULL");
 		goto out;
 	}
 
+	status = pmo_vdev_get_ref(vdev);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto out;
+
 	pmo_info("Disable wakeup eventvdev_id %d wake up event 0x%x",
 		vdev_id, bitmap);
 	pmo_tgt_disable_wow_wakeup_event(vdev, bitmap);
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
+
+	pmo_vdev_put_ref(vdev);
+
 out:
 	PMO_EXIT();
-
 }
 
 /**
- * pmo_is_beaconning_vdev_up(): check if a beaconning vdev is up
+ * pmo_is_beaconing_vdev_up(): check if a beaconning vdev is up
  * @psoc: objmgr psoc handle
  *
  * Return TRUE if beaconning vdev is up
  */
 static
-bool pmo_is_beaconning_vdev_up(struct wlan_objmgr_psoc *psoc)
+bool pmo_is_beaconing_vdev_up(struct wlan_objmgr_psoc *psoc)
 {
 	int vdev_id;
-	struct wlan_objmgr_psoc_objmgr *objmgr;
 	struct wlan_objmgr_vdev *vdev;
 	enum tQDF_ADAPTER_MODE vdev_opmode;
+	bool is_beaconing;
 	QDF_STATUS status;
 
 	/* Iterate through VDEV list */
 	for (vdev_id = 0; vdev_id < WLAN_UMAC_PSOC_MAX_VDEVS; vdev_id++) {
-		wlan_psoc_obj_lock(psoc);
-		objmgr = &psoc->soc_objmgr;
-		if (!objmgr->wlan_vdev_list[vdev_id]) {
-			wlan_psoc_obj_unlock(psoc);
+		vdev = pmo_psoc_get_vdev(psoc, vdev_id);
+		if (!vdev)
 			continue;
-		}
-		vdev = objmgr->wlan_vdev_list[vdev_id];
-		wlan_psoc_obj_unlock(psoc);
 
-		status = wlan_objmgr_vdev_try_get_ref(vdev, WLAN_PMO_ID);
-		if (status != QDF_STATUS_SUCCESS)
+		status = pmo_vdev_get_ref(vdev);
+		if (QDF_IS_STATUS_ERROR(status))
 			continue;
 
 		vdev_opmode = pmo_get_vdev_opmode(vdev);
-		if (pmo_is_vdev_in_beaconning_mode(vdev_opmode) &&
-		    pmo_is_vdev_up(vdev)) {
-			wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
+		is_beaconing = pmo_is_vdev_in_beaconning_mode(vdev_opmode) &&
+			pmo_is_vdev_up(vdev);
+
+		pmo_vdev_put_ref(vdev);
+
+		if (is_beaconing)
 			return true;
-		}
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
 	}
 
 	return false;
@@ -171,18 +179,14 @@ bool pmo_support_wow_for_beaconing(struct wlan_objmgr_psoc *psoc)
 	 * if (WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
 	 *			WMI_SERVICE_BEACON_OFFLOAD))
 	 */
-	if (pmo_is_beaconning_vdev_up(psoc))
-		return true;
-
-	return false;
+	return pmo_is_beaconing_vdev_up(psoc);
 }
 
 bool pmo_core_is_wow_applicable(struct wlan_objmgr_psoc *psoc)
 {
 	int vdev_id;
-	struct wlan_objmgr_psoc_objmgr *objmgr;
 	struct wlan_objmgr_vdev *vdev;
-	bool is_wow_applicable = false;
+	bool is_wow_applicable;
 	QDF_STATUS status;
 
 	if (!psoc) {
@@ -197,61 +201,44 @@ bool pmo_core_is_wow_applicable(struct wlan_objmgr_psoc *psoc)
 
 	/* Iterate through VDEV list */
 	for (vdev_id = 0; vdev_id < WLAN_UMAC_PSOC_MAX_VDEVS; vdev_id++) {
-		wlan_psoc_obj_lock(psoc);
-		objmgr = &psoc->soc_objmgr;
-		if (!objmgr->wlan_vdev_list[vdev_id]) {
-			wlan_psoc_obj_unlock(psoc);
+		vdev = pmo_psoc_get_vdev(psoc, vdev_id);
+		if (!vdev)
 			continue;
-		}
-		vdev = objmgr->wlan_vdev_list[vdev_id];
-		wlan_psoc_obj_unlock(psoc);
 
-		status = wlan_objmgr_vdev_try_get_ref(vdev, WLAN_PMO_ID);
-		if (status != QDF_STATUS_SUCCESS)
+		status = pmo_vdev_get_ref(vdev);
+		if (QDF_IS_STATUS_ERROR(status))
 			continue;
 
 		if (pmo_core_is_vdev_connected(vdev)) {
-			wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
 			pmo_debug("STA is connected, enabling wow");
 			is_wow_applicable = true;
-			break;
 		} else if (ucfg_scan_get_pno_in_progress(vdev)) {
-			wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
 			pmo_debug("NLO is in progress, enabling wow");
 			is_wow_applicable = true;
-			break;
 		} else if (pmo_core_is_extscan_in_progress(vdev)) {
-			wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
 			pmo_debug("EXT is in progress, enabling wow");
 			is_wow_applicable = true;
-			break;
 		} else if (pmo_core_is_p2plo_in_progress(vdev)) {
-			wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
 			pmo_debug("P2P LO is in progress, enabling wow");
 			is_wow_applicable = true;
-			break;
 		} else if (pmo_core_is_lpass_enabled(vdev)) {
-			wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
 			pmo_debug("LPASS is enabled, enabling WoW");
 			is_wow_applicable = true;
-			break;
 		} else if (pmo_core_is_nan_enabled(vdev)) {
-			wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
 			pmo_debug("NAN is enabled, enabling WoW");
 			is_wow_applicable = true;
-			break;
 		} else if (pmo_core_get_vdev_op_mode(vdev) == QDF_NDI_MODE) {
-			wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
 			pmo_debug("vdev %d is in NAN data mode, enabling wow",
 				vdev_id);
 			is_wow_applicable = true;
-			break;
 		}
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
+
+		pmo_vdev_put_ref(vdev);
+
+		if (is_wow_applicable)
+			return true;
 	}
 
-	if (is_wow_applicable)
-		return true;
 	pmo_debug("All vdev are in disconnected state\n"
 		"and pno/extscan is not in progress, skipping wow");
 

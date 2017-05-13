@@ -430,9 +430,7 @@ bool pmo_core_is_extscan_in_progress(struct wlan_objmgr_vdev *vdev)
 	bool extscan_in_progress;
 	struct pmo_vdev_priv_obj *vdev_ctx;
 
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx)
-		return false;
+	vdev_ctx = pmo_vdev_get_priv(vdev);
 	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 	extscan_in_progress = vdev_ctx->extscan_in_progress;
 	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
@@ -453,9 +451,7 @@ void pmo_core_update_extscan_in_progress(struct wlan_objmgr_vdev *vdev,
 {
 	struct pmo_vdev_priv_obj *vdev_ctx;
 
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx)
-		return;
+	vdev_ctx = pmo_vdev_get_priv(vdev);
 	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 	vdev_ctx->extscan_in_progress = value;
 	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
@@ -486,9 +482,7 @@ bool pmo_core_is_p2plo_in_progress(struct wlan_objmgr_vdev *vdev)
 	bool p2plo_in_progress;
 	struct pmo_vdev_priv_obj *vdev_ctx;
 
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx)
-		return false;
+	vdev_ctx = pmo_vdev_get_priv(vdev);
 	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 	p2plo_in_progress = vdev_ctx->p2plo_in_progress;
 	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
@@ -509,9 +503,7 @@ void pmo_core_update_p2plo_in_progress(struct wlan_objmgr_vdev *vdev,
 {
 	struct pmo_vdev_priv_obj *vdev_ctx;
 
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx)
-		return;
+	vdev_ctx = pmo_vdev_get_priv(vdev);
 	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 	vdev_ctx->p2plo_in_progress = value;
 	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
@@ -534,9 +526,7 @@ bool pmo_core_is_lpass_enabled(struct wlan_objmgr_vdev *vdev)
 	bool lpass_enable;
 	struct pmo_vdev_priv_obj *vdev_ctx;
 
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx)
-		return false;
+	vdev_ctx = pmo_vdev_get_priv(vdev);
 	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 	lpass_enable = vdev_ctx->pmo_psoc_ctx->psoc_cfg.lpass_enable;
 	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
@@ -568,9 +558,7 @@ bool pmo_core_is_nan_enabled(struct wlan_objmgr_vdev *vdev)
 	bool nan_enable;
 	struct pmo_vdev_priv_obj *vdev_ctx;
 
-	vdev_ctx = pmo_get_vdev_priv_ctx(vdev);
-	if (!vdev_ctx)
-		return false;
+	vdev_ctx = pmo_vdev_get_priv(vdev);
 	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 	nan_enable = vdev_ctx->pmo_psoc_ctx->psoc_cfg.nan_enable;
 	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);

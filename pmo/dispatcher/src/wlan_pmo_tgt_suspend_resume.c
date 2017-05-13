@@ -31,13 +31,8 @@ QDF_STATUS pmo_tgt_vdev_update_param_req(struct wlan_objmgr_vdev *vdev,
 	struct wlan_lmac_if_pmo_tx_ops pmo_tx_ops;
 
 	PMO_ENTER();
-	psoc = wlan_vdev_get_psoc(vdev);
-	if (!psoc) {
-		pmo_err("Failed to find psoc from from vdev:%p",
-			vdev);
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto out;
-	}
+
+	psoc = pmo_vdev_get_psoc(vdev);
 
 	pmo_tx_ops = GET_PMO_TX_OPS_FROM_PSOC(psoc);
 	if (!pmo_tx_ops.send_vdev_param_update_req) {
@@ -62,13 +57,8 @@ QDF_STATUS pmo_tgt_send_vdev_sta_ps_param(struct wlan_objmgr_vdev *vdev,
 	struct wlan_lmac_if_pmo_tx_ops pmo_tx_ops;
 
 	PMO_ENTER();
-	psoc = wlan_vdev_get_psoc(vdev);
-	if (!psoc) {
-		pmo_err("Failed to find psoc from from vdev:%p",
-			vdev);
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto out;
-	}
+
+	psoc = pmo_vdev_get_psoc(vdev);
 
 	pmo_tx_ops = GET_PMO_TX_OPS_FROM_PSOC(psoc);
 	if (!pmo_tx_ops.send_vdev_sta_ps_param_req) {
