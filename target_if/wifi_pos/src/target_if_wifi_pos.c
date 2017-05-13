@@ -169,7 +169,7 @@ static int target_if_wifi_pos_oem_rsp_ev_handler(ol_scn_t scn,
 		(WMI_OEM_RESPONSE_EVENTID_param_tlvs *)data_buf;
 
 	if (!psoc) {
-		wifi_pos_err("psoc is null");
+		target_if_err("psoc is null");
 		return QDF_STATUS_NOT_INITIALIZED;
 	}
 
@@ -280,15 +280,15 @@ static QDF_STATUS wifi_pos_oem_data_req(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS status;
 	void *wmi_hdl = GET_WMI_HDL_FROM_PSOC(psoc);
 
-	wifi_pos_debug("Send oem data req to target");
+	target_if_debug("Send oem data req to target");
 
 	if (!req || !req->data) {
-		wifi_pos_err("oem_data_req is null");
+		target_if_err("oem_data_req is null");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (!wmi_hdl) {
-		wifi_pos_err(FL("WMA closed, can't send oem data req cmd"));
+		target_if_err("WMA closed, can't send oem data req cmd");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -296,7 +296,7 @@ static QDF_STATUS wifi_pos_oem_data_req(struct wlan_objmgr_psoc *psoc,
 						req->data);
 
 	if (!QDF_IS_STATUS_SUCCESS(status))
-		wifi_pos_err("wmi cmd send failed");
+		target_if_err("wmi cmd send failed");
 
 	return status;
 }
@@ -319,7 +319,7 @@ inline struct wlan_lmac_if_wifi_pos_tx_ops *target_if_wifi_pos_get_txops(
 						struct wlan_objmgr_psoc *psoc)
 {
 	if (!psoc) {
-		wifi_pos_err("passed psoc is NULL");
+		target_if_err("passed psoc is NULL");
 		return NULL;
 	}
 
@@ -330,7 +330,7 @@ inline struct wlan_lmac_if_wifi_pos_rx_ops *target_if_wifi_pos_get_rxops(
 						struct wlan_objmgr_psoc *psoc)
 {
 	if (!psoc) {
-		wifi_pos_err("passed psoc is NULL");
+		target_if_err("passed psoc is NULL");
 		return NULL;
 	}
 
@@ -342,7 +342,7 @@ QDF_STATUS target_if_wifi_pos_register_events(struct wlan_objmgr_psoc *psoc)
 	int ret;
 
 	if (!psoc || !psoc->tgt_if_handle) {
-		wifi_pos_err("psoc or psoc->tgt_if_handle is null");
+		target_if_err("psoc or psoc->tgt_if_handle is null");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -351,7 +351,7 @@ QDF_STATUS target_if_wifi_pos_register_events(struct wlan_objmgr_psoc *psoc)
 					target_if_wifi_pos_oem_rsp_ev_handler,
 					WMI_RX_WORK_CTX);
 	if (ret) {
-		wifi_pos_err("register_event_handler failed: err %d", ret);
+		target_if_err("register_event_handler failed: err %d", ret);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -360,7 +360,7 @@ QDF_STATUS target_if_wifi_pos_register_events(struct wlan_objmgr_psoc *psoc)
 					wifi_pos_oem_cap_ev_handler,
 					WMI_RX_WORK_CTX);
 	if (ret) {
-		wifi_pos_err("register_event_handler failed: err %d", ret);
+		target_if_err("register_event_handler failed: err %d", ret);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -369,7 +369,7 @@ QDF_STATUS target_if_wifi_pos_register_events(struct wlan_objmgr_psoc *psoc)
 					wifi_pos_oem_meas_rpt_ev_handler,
 					WMI_RX_WORK_CTX);
 	if (ret) {
-		wifi_pos_err("register_event_handler failed: err %d", ret);
+		target_if_err("register_event_handler failed: err %d", ret);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -378,7 +378,7 @@ QDF_STATUS target_if_wifi_pos_register_events(struct wlan_objmgr_psoc *psoc)
 					wifi_pos_oem_err_rpt_ev_handler,
 					WMI_RX_WORK_CTX);
 	if (ret) {
-		wifi_pos_err("register_event_handler failed: err %d", ret);
+		target_if_err("register_event_handler failed: err %d", ret);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -388,7 +388,7 @@ QDF_STATUS target_if_wifi_pos_register_events(struct wlan_objmgr_psoc *psoc)
 QDF_STATUS target_if_wifi_pos_deregister_events(struct wlan_objmgr_psoc *psoc)
 {
 	if (!psoc || !psoc->tgt_if_handle) {
-		wifi_pos_err("psoc or psoc->tgt_if_handle is null");
+		target_if_err("psoc or psoc->tgt_if_handle is null");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -570,7 +570,41 @@ static QDF_STATUS target_if_wifi_pos_deinit_srngs(
 static QDF_STATUS target_if_wifi_pos_cfg_fw(struct wlan_objmgr_psoc *psoc,
 					struct wifi_pos_psoc_priv_obj *priv)
 {
-	return QDF_STATUS_SUCCESS;
+	uint8_t i;
+	QDF_STATUS status;
+	void *wmi_hdl = GET_WMI_HDL_FROM_PSOC(psoc);
+	wmi_oem_dma_ring_cfg_req_fixed_param cfg = {0};
+
+	if (!wmi_hdl) {
+		target_if_err("WMA closed, can't send oem data req cmd");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	target_if_debug("Sending oem dma ring cfg to target");
+
+	for (i = 0; i < priv->num_rings; i++) {
+		cfg.pdev_id = priv->dma_cfg[i].pdev_id;
+		cfg.base_addr_lo = (uint64_t)priv->dma_cfg[i].base_paddr_aligned
+						& 0xFFFFFFFF;
+		cfg.base_addr_hi = (uint64_t)priv->dma_cfg[i].base_paddr_aligned
+						& 0xFFFFFFFF00000000;
+		cfg.head_idx_addr_lo = (uint64_t)priv->dma_cfg[i].head_idx_addr
+						& 0xFFFFFFFF;
+		cfg.head_idx_addr_hi = (uint64_t)priv->dma_cfg[i].head_idx_addr
+						& 0xFFFFFFFF00000000;
+		cfg.tail_idx_addr_lo = (uint64_t)priv->dma_cfg[i].tail_idx_addr
+						& 0xFFFFFFFF;
+		cfg.tail_idx_addr_hi = (uint64_t)priv->dma_cfg[i].tail_idx_addr
+						& 0xFFFFFFFF00000000;
+		cfg.num_ptr = priv->dma_cfg[i].num_ptr;
+		status = wmi_unified_oem_dma_ring_cfg(wmi_hdl, &cfg);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			target_if_err("wmi cmd send failed");
+			return status;
+		}
+	}
+
+	return status;
 }
 
 QDF_STATUS target_if_wifi_pos_deinit_dma_rings(struct wlan_objmgr_psoc *psoc)

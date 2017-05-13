@@ -719,6 +719,19 @@ QDF_STATUS wmi_unified_nat_keepalive_en_cmd(void *wmi_hdl, uint8_t vdev_id);
 
 QDF_STATUS wmi_unified_csa_offload_enable(void *wmi_hdl, uint8_t vdev_id);
 
+#ifdef WLAN_FEATURE_CIF_CFR
+/**
+ * wmi_unified_oem_dma_ring_cfg() - configure OEM DMA rings
+ * @wmi_handle: wmi handle
+ * @data_len: len of dma cfg req
+ * @data: dma cfg req
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_oem_dma_ring_cfg(void *wmi_hdl,
+				wmi_oem_dma_ring_cfg_req_fixed_param *cfg);
+#endif
+
 QDF_STATUS wmi_unified_start_oem_data_cmd(void *wmi_hdl,
 			  uint32_t data_len,
 			  uint8_t *data);
