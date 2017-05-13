@@ -4284,6 +4284,14 @@ typedef enum {
      *  refer to WMI_PDEV_PKT_PWR_SAVE_LEVEL
      */
     WMI_PDEV_PARAM_PACKET_POWER_SAVE_LEVEL,
+    /** Define IOT pattern to be enabled/disabled
+      * bit values: 0 - disable, 1 - enable
+      * BIT[0..31]: each bit represents an IOT pattern
+      * -----
+      * Bit 0 - avoid SMPS with certain APs
+      * Bits 31:1 - reserved
+      */
+    WMI_PDEV_PARAM_SET_IOT_PATTERN,
 } WMI_PDEV_PARAM;
 
 typedef struct {
