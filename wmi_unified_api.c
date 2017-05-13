@@ -2258,6 +2258,20 @@ QDF_STATUS wmi_unified_csa_offload_enable(void *wmi_hdl, uint8_t vdev_id)
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+#ifdef WLAN_FEATURE_CIF_CFR
+QDF_STATUS wmi_unified_oem_dma_ring_cfg(void *wmi_hdl,
+				wmi_oem_dma_ring_cfg_req_fixed_param *cfg)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_start_oem_data_cmd)
+		return wmi_handle->ops->send_oem_dma_cfg_cmd(wmi_handle, cfg);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
+
 /**
  * wmi_unified_start_oem_data_cmd() - start OEM data request to target
  * @wmi_handle: wmi handle
