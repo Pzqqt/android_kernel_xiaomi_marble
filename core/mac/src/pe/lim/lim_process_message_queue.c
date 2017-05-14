@@ -1924,7 +1924,7 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 	default:
 		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;
-		pe_err("Discarding unexpected message received %X",
+		pe_debug("Discarding unexpected message received %X",
 			msg->type);
 		lim_print_msg_name(mac_ctx, LOGE, msg->type);
 		break;

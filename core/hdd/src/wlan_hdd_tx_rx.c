@@ -440,7 +440,7 @@ static void hdd_get_transmit_sta_id(hdd_adapter_t *adapter,
 	if (QDF_IS_STATUS_ERROR(status)) {
 		if (QDF_NBUF_CB_GET_IS_BCAST(skb) ||
 				QDF_NBUF_CB_GET_IS_MCAST(skb)) {
-			hdd_info("Received MC/BC packet for transmission");
+			hdd_debug("Received MC/BC packet for transmission");
 			mcbc_addr = true;
 		}
 	}

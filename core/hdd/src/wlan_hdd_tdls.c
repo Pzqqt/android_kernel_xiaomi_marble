@@ -239,7 +239,7 @@ void wlan_hdd_tdls_disable_offchan_and_teardown_links(hdd_context_t *hddctx)
 	connected_tdls_peers = wlan_hdd_tdls_connected_peers(adapter);
 
 	if (!connected_tdls_peers) {
-		hdd_notice("No TDLS connected peers to delete");
+		hdd_debug("No TDLS connected peers to delete");
 		return;
 	}
 
@@ -1696,7 +1696,7 @@ static void wlan_hdd_tdls_set_mode(hdd_context_t *pHddCtx,
 
 	if (pHddCtx->tdls_mode == tdls_mode) {
 		mutex_unlock(&pHddCtx->tdls_lock);
-		hdd_notice("already in mode %d", (int)tdls_mode);
+		hdd_debug("already in mode %d", (int)tdls_mode);
 
 		switch (tdls_mode) {
 		/* TDLS is already enabled hence clear source mask, return */
@@ -1705,13 +1705,13 @@ static void wlan_hdd_tdls_set_mode(hdd_context_t *pHddCtx,
 		case eTDLS_SUPPORT_EXTERNAL_CONTROL:
 			clear_bit((unsigned long)source,
 				  &pHddCtx->tdls_source_bitmap);
-			hdd_notice("clear source mask:%d", source);
+			hdd_debug("clear source mask:%d", source);
 			return;
 		/* TDLS is already disabled hence set source mask, return */
 		case eTDLS_SUPPORT_DISABLED:
 			set_bit((unsigned long)source,
 				&pHddCtx->tdls_source_bitmap);
-			hdd_notice("set source mask:%d", source);
+			hdd_debug("set source mask:%d", source);
 			return;
 		default:
 			return;
@@ -1736,7 +1736,7 @@ static void wlan_hdd_tdls_set_mode(hdd_context_t *pHddCtx,
 				 */
 				if (pHddCtx->tdls_source_bitmap) {
 					mutex_unlock(&pHddCtx->tdls_lock);
-					hdd_notice("Don't enable TDLS, source"
+					hdd_debug("Don't enable TDLS, source"
 						"bitmap: %lu",
 						pHddCtx->tdls_source_bitmap);
 					return;

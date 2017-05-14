@@ -3141,12 +3141,6 @@ int ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer)
 	if (qdf_atomic_dec_and_test(&peer->ref_cnt)) {
 		u_int16_t peer_id;
 
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
-			   "Deleting peer %p (%pM) ref_cnt %d\n",
-			   peer,
-			   peer->mac_addr.raw,
-			   qdf_atomic_read(&peer->ref_cnt));
-
 		peer_id = peer->local_id;
 		/* remove the reference to the peer from the hash table */
 		ol_txrx_peer_find_hash_remove(pdev, peer);
@@ -3221,6 +3215,10 @@ int ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer)
 			qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
 		}
 
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Deleting peer %p (%pM) ref_cnt = %d",
+			  __func__, peer, peer->mac_addr.raw,
+			  qdf_atomic_read(&peer->ref_cnt));
 		ol_txrx_peer_tx_queue_free(pdev, peer);
 
 		/*
@@ -3246,7 +3244,7 @@ int ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer)
 		qdf_mem_free(peer);
 	} else {
 		qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: peer %p peer->ref_cnt = %d",
 			  __func__, peer, rc);
 	}

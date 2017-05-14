@@ -1253,7 +1253,7 @@ __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 	pRemainChanCtx = cfgState->remain_on_chan_ctx;
 
 	if (pRemainChanCtx) {
-		hdd_notice("action_cookie = %08llx, roc cookie = %08llx, cookie = %08llx",
+		hdd_debug("action_cookie = %08llx, roc cookie = %08llx, cookie = %08llx",
 				cfgState->action_cookie, pRemainChanCtx->cookie,
 				cookie);
 

@@ -593,7 +593,7 @@ void ol_rx_peer_unmap_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 	 */
 	ol_txrx_peer_unref_delete(peer);
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
 	   "%s: Remove the ID %d reference to peer %p peer_id_ref_cnt %d",
 	   __func__, peer_id, peer, ref_cnt);
 }
