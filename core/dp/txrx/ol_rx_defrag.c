@@ -1143,7 +1143,6 @@ ol_rx_defrag_decap_recombine(htt_pdev_handle htt_pdev,
 	qdf_nbuf_set_next(rx_nbuf, NULL);
 	while (msdu) {
 		htt_rx_msdu_desc_free(htt_pdev, msdu);
-		qdf_net_buf_debug_release_skb(msdu);
 		tmp = qdf_nbuf_next(msdu);
 		qdf_nbuf_set_next(msdu, NULL);
 		ol_rx_frag_pull_hdr(htt_pdev, msdu, hdrsize);
