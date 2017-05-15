@@ -698,7 +698,6 @@ QDF_STATUS wlan_crypto_default_key(struct wlan_objmgr_vdev *vdev,
 				psoc, macaddr,
 				bssid_mac,
 				WLAN_CRYPTO_ID);
-		wlan_vdev_obj_unlock(vdev);
 
 		if (peer == NULL) {
 			qdf_print("%s[%d] peer NULL\n", __func__, __LINE__);
