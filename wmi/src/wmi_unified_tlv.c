@@ -16500,9 +16500,11 @@ static QDF_STATUS extract_service_ready_ext_tlv(wmi_unified_t wmi_handle,
 	else
 		param->num_phy = 0;
 
-	param->num_chainmask_tables = hw_caps->num_chainmask_tables;
-
-	qdf_print("Num chain mask tables: %d\n", hw_caps->num_chainmask_tables);
+	if (hw_caps) {
+		param->num_chainmask_tables = hw_caps->num_chainmask_tables;
+		qdf_print("Num chain mask tables: %d\n", hw_caps->num_chainmask_tables);
+	} else
+		param->num_chainmask_tables = 0;
 
 	chain_mask_combo = param_buf->mac_phy_chainmask_combo;
 
@@ -16511,7 +16513,7 @@ static QDF_STATUS extract_service_ready_ext_tlv(wmi_unified_t wmi_handle,
 
 	qdf_print("Dumping chain mask combo data\n");
 
-	for (i = 0; i < hw_caps->num_chainmask_tables; i++) {
+	for (i = 0; i < param->num_chainmask_tables; i++) {
 
 		qdf_print("table_id : %d Num valid chainmasks: %d\n",
 				chain_mask_combo->chainmask_table_id,
