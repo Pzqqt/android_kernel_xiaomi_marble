@@ -497,6 +497,20 @@ static struct hal_hw_srng_config hw_srng_table[] = {
 		.reg_start = {},
 		.reg_size = {},
 	},
+#ifdef WLAN_FEATURE_CIF_CFR
+	{ /* WIFI_POS_SRC */
+		.start_ring_id = HAL_SRNG_WIFI_POS_SRC_DMA_RING,
+		.max_rings = 1,
+		.entry_size = sizeof(wmi_oem_dma_buf_release_entry)  >> 2,
+		.lmac_ring = TRUE,
+		.ring_dir = HAL_SRNG_SRC_RING,
+		/* reg_start is not set because LMAC rings are not accessed
+		 * from host
+		 */
+		.reg_start = {},
+		.reg_size = {},
+	},
+#endif
 };
 
 /**

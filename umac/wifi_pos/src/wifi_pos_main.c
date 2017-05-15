@@ -447,6 +447,8 @@ QDF_STATUS  wifi_pos_psoc_obj_destroyed_notification(
 		return QDF_STATUS_E_FAULT;
 	}
 
+	target_if_wifi_pos_deinit_dma_rings(psoc);
+
 	status = wlan_objmgr_psoc_component_obj_detach(psoc,
 						WLAN_UMAC_COMP_WIFI_POS,
 						wifi_pos_obj);
