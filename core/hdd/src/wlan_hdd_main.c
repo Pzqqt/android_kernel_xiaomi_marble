@@ -5647,9 +5647,6 @@ void __hdd_wlan_exit(void)
 		return;
 	}
 
-	/* Check IPA HW Pipe shutdown */
-	hdd_ipa_uc_force_pipe_shutdown(hdd_ctx);
-
 	memdump_deinit();
 	hdd_driver_memdump_deinit();
 

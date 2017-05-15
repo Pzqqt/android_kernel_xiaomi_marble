@@ -3141,6 +3141,9 @@ int hdd_ipa_uc_ol_deinit(hdd_context_t *hdd_ctx)
 	if (!hdd_ipa_uc_is_enabled(hdd_ctx))
 		return ret;
 
+	if (!hdd_ipa->ipa_pipes_down)
+		hdd_ipa_uc_disable_pipes(hdd_ipa);
+
 	if (true == hdd_ipa->uc_loaded) {
 		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 			    "%s: Disconnect TX PIPE tx_pipe_handle=0x%x",
@@ -3408,8 +3411,6 @@ static int __hdd_ipa_uc_ssr_deinit(void)
 	 * IPA submodule during SSR transient state. So deinit basic IPA
 	 * UC host side to be in sync with reloaded FW during SSR
 	 */
-	if (!hdd_ipa->ipa_pipes_down)
-		hdd_ipa_uc_disable_pipes(hdd_ipa);
 
 	qdf_mutex_acquire(&hdd_ipa->ipa_lock);
 	for (idx = 0; idx < WLAN_MAX_STA_COUNT; idx++) {
