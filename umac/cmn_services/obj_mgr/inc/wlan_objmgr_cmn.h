@@ -177,6 +177,7 @@ typedef void (*wlan_objmgr_peer_status_handler)(
  * @WLAN_REGULATORY_NB_ID:      NB regulatory operations
  * @WLAN_POLICY_MGR_ID:         Policy Manager operations
  * @WLAN_SPECTRAL_ID:           Spectral operations
+ * @WLAN_SPLITMAC_ID            SplitMac
  * @WLAN_REF_ID_MAX:            Max id used to generate ref count tracking array
  */
  /* New value added to the enum must also be reflected in function
@@ -211,6 +212,7 @@ typedef enum {
 	WLAN_SON_ID           = 25,
 	WLAN_SA_API_ID        = 26,
 	WLAN_SPECTRAL_ID      = 27,
+	WLAN_SPLITMAC_ID      = 28,
 	WLAN_REF_ID_MAX,
 } wlan_objmgr_ref_dbgid;
 

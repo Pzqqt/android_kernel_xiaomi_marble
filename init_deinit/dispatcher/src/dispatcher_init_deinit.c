@@ -64,6 +64,11 @@
 #ifdef CONVERGED_TDLS_ENABLE
 #include "wlan_tdls_ucfg_api.h"
 #endif
+
+#ifdef WLAN_SUPPORT_SPLITMAC
+#include <wlan_splitmac.h>
+#endif
+
 /**
  * DOC: This file provides various init/deinit trigger point for new
  * components.
@@ -629,6 +634,28 @@ static QDF_STATUS dispatcher_offchan_txrx_deinit(void)
 }
 #endif /*WLAN_OFFCHAN_TXRX_ENABLE*/
 
+#ifdef WLAN_SUPPORT_SPLITMAC
+static QDF_STATUS dispatcher_splitmac_init(void)
+{
+	return wlan_splitmac_init();
+}
+
+static QDF_STATUS dispatcher_splitmac_deinit(void)
+{
+	return wlan_splitmac_deinit();
+}
+#else
+static QDF_STATUS dispatcher_splitmac_init(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS dispatcher_splitmac_deinit(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif  /* WLAN_SUPPORT_SPLITMAC */
+
 QDF_STATUS dispatcher_init(void)
 {
 	if (QDF_STATUS_SUCCESS != wlan_objmgr_global_obj_init())
@@ -682,6 +709,9 @@ QDF_STATUS dispatcher_init(void)
 	if (QDF_STATUS_SUCCESS != dispatcher_init_son())
 		goto son_init_fail;
 
+	if (QDF_STATUS_SUCCESS != dispatcher_splitmac_init())
+		goto splitmac_init_fail;
+
 	/*
 	 * scheduler INIT has to be the last as each component's
 	 * initialization has to happen first and then at the end
@@ -693,6 +723,8 @@ QDF_STATUS dispatcher_init(void)
 	return QDF_STATUS_SUCCESS;
 
 scheduler_init_fail:
+	dispatcher_splitmac_deinit();
+splitmac_init_fail:
 	dispatcher_deinit_son();
 son_init_fail:
 	dispatcher_offchan_txrx_deinit();
@@ -739,6 +771,8 @@ QDF_STATUS dispatcher_deinit(void)
 	 * services up on dispatcher deinit sequence
 	 */
 	QDF_BUG(QDF_STATUS_SUCCESS == scheduler_deinit());
+
+	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_splitmac_deinit());
 
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_deinit_son());
 
