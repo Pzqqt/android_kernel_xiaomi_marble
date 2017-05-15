@@ -1352,8 +1352,6 @@ QDF_STATUS hdd_wlan_re_init(void)
 	sme_set_chip_pwr_save_fail_cb(hdd_ctx->mac_handle,
 				      hdd_chip_pwr_save_fail_detected_cb);
 
-	hdd_lpass_notify_start(hdd_ctx);
-
 	hdd_send_default_scan_ies(hdd_ctx);
 	hdd_info("WLAN host driver reinitiation completed!");
 
