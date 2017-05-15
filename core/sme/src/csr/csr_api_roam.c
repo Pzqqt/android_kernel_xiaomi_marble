@@ -6906,6 +6906,11 @@ static void csr_roam_process_join_res(tpAniSirGlobal mac_ctx,
 	tSirSmeJoinRsp *join_rsp = (tSirSmeJoinRsp *) context;
 	uint32_t len;
 
+	if (!join_rsp) {
+		sme_err("join_rsp is NULL");
+		return;
+	}
+
 	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
 		sme_err("Invalid session id %d", session_id);
 		return;
