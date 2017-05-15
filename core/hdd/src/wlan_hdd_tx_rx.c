@@ -1321,14 +1321,13 @@ static void wlan_hdd_update_txq_timestamp(struct net_device *dev)
 {
 	struct netdev_queue *txq;
 	int i;
-	bool unlock;
 
 	for (i = 0; i < NUM_TX_QUEUES; i++) {
 		txq = netdev_get_tx_queue(dev, i);
-		unlock = __netif_tx_trylock(txq);
-		txq_trans_update(txq);
-		if (unlock == true)
+		if (__netif_tx_trylock(txq)) {
+			txq_trans_update(txq);
 			__netif_tx_unlock(txq);
+		}
 	}
 }
 
