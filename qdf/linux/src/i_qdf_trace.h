@@ -95,7 +95,8 @@
 
 /* This code will be used for compilation if tracing is to be compiled out */
 /* of the code so these functions/macros are 'do nothing' */
-static inline void qdf_trace_msg(QDF_MODULE_ID module, ...)
+static inline void qdf_trace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
+		   char *str_format, ...)
 {
 }
 

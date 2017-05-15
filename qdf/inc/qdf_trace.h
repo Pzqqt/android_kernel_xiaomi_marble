@@ -69,7 +69,17 @@ typedef int (qdf_abstract_print)(void *priv, const char *fmt, ...);
 #define QDF_DEBUG_ERROR         0x20
 #define QDF_DEBUG_CFG           0x40
 
+
+/* DP Trace Implementation */
+#ifdef CONFIG_DP_TRACE
+#define DPTRACE(p) p
+#else
+#define DPTRACE(p)
+#endif
+
 #ifdef CONFIG_MCL
+void qdf_trace(uint8_t module, uint8_t code, uint16_t session, uint32_t data);
+#endif
 
 /* By default Data Path module will have all log levels enabled, except debug
  * log level. Debug level will be left up to the framework or user space modules
@@ -84,6 +94,7 @@ typedef int (qdf_abstract_print)(void *priv, const char *fmt, ...);
 /* Preprocessor definitions and constants */
 #define ASSERT_BUFFER_SIZE (512)
 
+#define QDF_TRACE_DEFAULT_PDEV_ID 0xff
 #define MAX_QDF_TRACE_RECORDS 4000
 #define INVALID_QDF_TRACE_ADDR 0xffffffff
 #define DEFAULT_QDF_TRACE_DUMP_COUNT 0
@@ -142,12 +153,6 @@ typedef struct s_qdf_trace_data {
 
 #define CASE_RETURN_STRING(str) case ((str)): return (uint8_t *)(# str);
 
-/* DP Trace Implementation */
-#ifdef FEATURE_DP_TRACE
-#define DPTRACE(p) p
-#else
-#define DPTRACE(p)
-#endif
 
 #define MAX_QDF_DP_TRACE_RECORDS       4000
 #define QDF_DP_TRACE_RECORD_SIZE       16
@@ -170,12 +175,14 @@ typedef struct s_qdf_trace_data {
  * @QDF_DP_TRACE_HDD_TX_TIMEOUT - HDD tx timeout
  * @QDF_DP_TRACE_HDD_SOFTAP_TX_TIMEOUT- SOFTAP HDD tx timeout
  * @QDF_DP_TRACE_HDD_TX_PACKET_PTR_RECORD - HDD layer ptr record
+ * @QDF_DP_TRACE_LI_DP_TX_PACKET_PTR_RECORD - Lithium DP layer ptr record
  * @QDF_DP_TRACE_CE_PACKET_PTR_RECORD - CE layer ptr record
  * @QDF_DP_TRACE_CE_FAST_PACKET_PTR_RECORD- CE fastpath ptr record
  * @QDF_DP_TRACE_FREE_PACKET_PTR_RECORD - tx completion ptr record
  * @QDF_DP_TRACE_RX_HTT_PACKET_PTR_RECORD - HTT RX record
  * @QDF_DP_TRACE_RX_OFFLOAD_HTT_PACKET_PTR_RECORD- HTT RX offload record
  * @QDF_DP_TRACE_RX_HDD_PACKET_PTR_RECORD - HDD RX record
+ * @QDF_DP_TRACE_RX_LI_DP_PACKET_PTR_RECORD - Lithium DP RX record
  * @QDF_DP_TRACE_LOW_VERBOSITY - below this are part of low verbosity
  * @QDF_DP_TRACE_TXRX_QUEUE_PACKET_PTR_RECORD -tx queue ptr record
  * @QDF_DP_TRACE_TXRX_PACKET_PTR_RECORD - txrx packet ptr record
@@ -187,6 +194,10 @@ typedef struct s_qdf_trace_data {
  * @QDF_DP_TRACE_MED_VERBOSITY - below this are part of med verbosity
  * @QDF_DP_TRACE_HDD_TX_PACKET_RECORD - record 32 bytes of tx pkt at HDD
  * @QDF_DP_TRACE_HDD_RX_PACKET_RECORD - record 32 bytes of rx pkt at HDD
+ * @QDF_DP_TRACE_LI_DP_TX_PACKET_RECORD - record 32 bytes of tx pkt at LI_DP
+ * @QDF_DP_TRACE_LI_DP_RX_PACKET_RECORD - record 32 bytes of rx pkt at LI_DP
+ * @QDF_DP_TRACE_LI_DP_NULL_RX_PACKET_RECORD
+ *		- record 32 bytes of rx null_queue pkt at LI_DP
  * @QDF_DP_TRACE_HIGH_VERBOSITY - below this are part of high verbosity
  */
 enum  QDF_DP_TRACE_ID {
@@ -201,12 +212,14 @@ enum  QDF_DP_TRACE_ID {
 	QDF_DP_TRACE_HDD_TX_TIMEOUT,
 	QDF_DP_TRACE_HDD_SOFTAP_TX_TIMEOUT,
 	QDF_DP_TRACE_HDD_TX_PACKET_PTR_RECORD,
+	QDF_DP_TRACE_LI_DP_TX_PACKET_PTR_RECORD,
 	QDF_DP_TRACE_CE_PACKET_PTR_RECORD,
 	QDF_DP_TRACE_CE_FAST_PACKET_PTR_RECORD,
 	QDF_DP_TRACE_FREE_PACKET_PTR_RECORD,
 	QDF_DP_TRACE_RX_HTT_PACKET_PTR_RECORD,
 	QDF_DP_TRACE_RX_OFFLOAD_HTT_PACKET_PTR_RECORD,
 	QDF_DP_TRACE_RX_HDD_PACKET_PTR_RECORD,
+	QDF_DP_TRACE_RX_LI_DP_PACKET_PTR_RECORD,
 	QDF_DP_TRACE_LOW_VERBOSITY,
 	QDF_DP_TRACE_TXRX_QUEUE_PACKET_PTR_RECORD,
 	QDF_DP_TRACE_TXRX_PACKET_PTR_RECORD,
@@ -218,6 +231,9 @@ enum  QDF_DP_TRACE_ID {
 	QDF_DP_TRACE_MED_VERBOSITY,
 	QDF_DP_TRACE_HDD_TX_PACKET_RECORD,
 	QDF_DP_TRACE_HDD_RX_PACKET_RECORD,
+	QDF_DP_TRACE_LI_DP_TX_PACKET_RECORD,
+	QDF_DP_TRACE_LI_DP_RX_PACKET_RECORD,
+	QDF_DP_TRACE_LI_DP_NULL_RX_PACKET_RECORD,
 	QDF_DP_TRACE_HIGH_VERBOSITY,
 	QDF_DP_TRACE_MAX
 };
@@ -302,6 +318,7 @@ struct qdf_dp_trace_record_s {
 	uint8_t data[QDF_DP_TRACE_RECORD_SIZE];
 	uint8_t size;
 	uint32_t pid;
+	uint8_t pdev_id;
 };
 
 /**
@@ -371,7 +388,6 @@ void qdf_register_debug_callback(QDF_MODULE_ID module_id,
 					tp_qdf_state_info_cb qdf_state_infocb);
 QDF_STATUS qdf_state_info_dump_all(char *buf, uint16_t size,
 			uint16_t *driver_dump_size);
-void qdf_trace(uint8_t module, uint8_t code, uint16_t session, uint32_t data);
 void qdf_trace_register(QDF_MODULE_ID, tp_qdf_trace_cb);
 QDF_STATUS qdf_trace_spin_lock_init(void);
 void qdf_trace_init(void);
@@ -379,46 +395,56 @@ void qdf_trace_enable(uint32_t, uint8_t enable);
 void qdf_trace_dump_all(void *, uint8_t, uint8_t, uint32_t, uint32_t);
 
 
-#ifdef FEATURE_DP_TRACE
+#ifdef CONFIG_DP_TRACE
+void qdf_dp_set_proto_bitmap(uint32_t val);
+void qdf_dp_trace_set_verbosity(uint32_t val);
+void qdf_dp_set_no_of_record(uint32_t val);
 void qdf_dp_trace_log_pkt(uint8_t session_id, struct sk_buff *skb,
-				enum qdf_proto_dir dir);
+				enum qdf_proto_dir dir, uint8_t pdev_id);
 void qdf_dp_trace_init(void);
 void qdf_dp_trace_spin_lock_init(void);
 void qdf_dp_trace_set_value(uint8_t proto_bitmap, uint8_t no_of_records,
 			 uint8_t verbosity);
 void qdf_dp_trace_set_track(qdf_nbuf_t nbuf, enum qdf_proto_dir dir);
-void qdf_dp_trace(qdf_nbuf_t nbuf, enum QDF_DP_TRACE_ID code,
+void qdf_dp_trace(qdf_nbuf_t nbuf, enum QDF_DP_TRACE_ID code, uint8_t pdev_id,
 			uint8_t *data, uint8_t size, enum qdf_proto_dir dir);
-void qdf_dp_trace_dump_all(uint32_t count);
-typedef void (*tp_qdf_dp_trace_cb)(struct qdf_dp_trace_record_s* , uint16_t);
+void qdf_dp_trace_dump_all(uint32_t count, uint8_t pdev_id);
+typedef void (*tp_qdf_dp_trace_cb)(struct qdf_dp_trace_record_s*,
+				uint16_t, uint8_t);
 void qdf_dp_display_record(struct qdf_dp_trace_record_s *record,
-							uint16_t index);
+					uint16_t index, uint8_t pdev_id);
 void qdf_dp_trace_ptr(qdf_nbuf_t nbuf, enum QDF_DP_TRACE_ID code,
-		uint8_t *data, uint8_t size, uint16_t msdu_id, uint16_t status);
+	uint8_t pdev_id, uint8_t *data, uint8_t size, uint16_t msdu_id,
+	uint16_t status);
 
 void qdf_dp_display_ptr_record(struct qdf_dp_trace_record_s *pRecord,
-				uint16_t recIndex);
+				uint16_t recIndex, uint8_t pdev_id);
 uint8_t qdf_dp_get_proto_bitmap(void);
+uint8_t qdf_dp_get_verbosity(void);
+uint8_t qdf_dp_get_no_of_record(void);
 void
 qdf_dp_trace_proto_pkt(enum QDF_DP_TRACE_ID code, uint8_t vdev_id,
-		uint8_t *sa, uint8_t *da, enum qdf_proto_type type,
-		enum qdf_proto_subtype subtype, enum qdf_proto_dir dir);
+	uint8_t *sa, uint8_t *da, enum qdf_proto_type type,
+	enum qdf_proto_subtype subtype, enum qdf_proto_dir dir,
+	uint8_t pdev_id);
 void qdf_dp_display_proto_pkt(struct qdf_dp_trace_record_s *record,
-				uint16_t index);
+				uint16_t index, uint8_t pdev_id);
 void qdf_dp_trace_enable_live_mode(void);
 void qdf_dp_trace_clear_buffer(void);
 void qdf_dp_trace_mgmt_pkt(enum QDF_DP_TRACE_ID code, uint8_t vdev_id,
-		enum qdf_proto_type type, enum qdf_proto_subtype subtype);
+	uint8_t pdev_id, enum qdf_proto_type type,
+	enum qdf_proto_subtype subtype);
 void qdf_dp_display_mgmt_pkt(struct qdf_dp_trace_record_s *record,
-			      uint16_t index);
+			      uint16_t index, uint8_t pdev_id);
 void qdf_dp_display_event_record(struct qdf_dp_trace_record_s *record,
-			      uint16_t index);
+			      uint16_t index, uint8_t pdev_id);
 void qdf_dp_trace_record_event(enum QDF_DP_TRACE_ID code, uint8_t vdev_id,
-		enum qdf_proto_type type, enum qdf_proto_subtype subtype);
+	uint8_t pdev_id, enum qdf_proto_type type,
+	enum qdf_proto_subtype subtype);
 #else
 static inline
 void qdf_dp_trace_log_pkt(uint8_t session_id, struct sk_buff *skb,
-				enum qdf_proto_dir dir)
+				enum qdf_proto_dir dir, uint8_t pdev_id)
 {
 }
 static inline
@@ -435,7 +461,7 @@ void qdf_dp_trace_set_value(uint8_t proto_bitmap, uint8_t no_of_records,
 {
 }
 static inline
-void qdf_dp_trace_dump_all(uint32_t count)
+void qdf_dp_trace_dump_all(uint32_t count, uint8_t pdev_id)
 {
 }
 
@@ -452,8 +478,6 @@ void qdf_dp_trace_clear_buffer(void)
 #endif
 
 
-void qdf_trace_hex_dump(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
-			void *data, int buf_len);
 
 void qdf_trace_display(void);
 
@@ -466,14 +490,6 @@ void __printf(3, 4) qdf_snprintf(char *str_buffer, unsigned int size,
 		  char *str_format, ...);
 
 #define QDF_SNPRINTF qdf_snprintf
-
-#else
-
-#define DPTRACE(x)
-#define qdf_trace_hex_dump(x, y, z, q)
-
-#endif /* CONFIG_MCL */
-
 
 #ifdef TSOSEG_DEBUG
 static inline
@@ -530,6 +546,9 @@ qdf_tso_seg_dbg_zero(struct qdf_tso_seg_elem_t *tsoseg)
 };
 
 #endif /* TSOSEG_DEBUG */
+
+void qdf_trace_hex_dump(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
+			void *data, int buf_len);
 
 #define ERROR_CODE                      -1
 #define QDF_MAX_NAME_SIZE               32

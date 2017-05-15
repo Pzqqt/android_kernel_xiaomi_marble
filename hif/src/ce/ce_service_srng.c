@@ -206,6 +206,7 @@ ce_sendlist_send_srng(struct CE_handle *copyeng,
 					QDF_NBUF_TX_PKT_CE);
 		DPTRACE(qdf_dp_trace((qdf_nbuf_t)per_transfer_context,
 			QDF_DP_TRACE_CE_PACKET_PTR_RECORD,
+			QDF_TRACE_DEFAULT_PDEV_ID,
 			(uint8_t *)(((qdf_nbuf_t)per_transfer_context)->data),
 			sizeof(((qdf_nbuf_t)per_transfer_context)->data), QDF_TX));
 	} else {
