@@ -763,6 +763,7 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 
 				DPTRACE(qdf_dp_trace_ptr(msdu,
 				    QDF_DP_TRACE_TXRX_FAST_PACKET_PTR_RECORD,
+				    QDF_TRACE_DEFAULT_PDEV_ID,
 				    qdf_nbuf_data_addr(msdu),
 				    sizeof(qdf_nbuf_data(msdu)),
 				     tx_desc->id, vdev->vdev_id));
@@ -891,6 +892,7 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 		if (qdf_likely(tx_desc)) {
 			DPTRACE(qdf_dp_trace_ptr(msdu,
 				QDF_DP_TRACE_TXRX_FAST_PACKET_PTR_RECORD,
+				QDF_TRACE_DEFAULT_PDEV_ID,
 				qdf_nbuf_data_addr(msdu),
 				sizeof(qdf_nbuf_data(msdu)), tx_desc->id,
 				vdev->vdev_id));
@@ -1036,6 +1038,7 @@ ol_tx_vdev_pause_queue_append(struct ol_txrx_vdev_t *vdev,
 					     QDF_NBUF_TX_PKT_TXRX_ENQUEUE);
 		DPTRACE(qdf_dp_trace(msdu_list,
 				QDF_DP_TRACE_TXRX_QUEUE_PACKET_PTR_RECORD,
+				QDF_TRACE_DEFAULT_PDEV_ID,
 				qdf_nbuf_data_addr(msdu_list),
 				sizeof(qdf_nbuf_data(msdu_list)), QDF_TX));
 

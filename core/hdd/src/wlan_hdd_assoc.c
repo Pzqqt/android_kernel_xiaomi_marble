@@ -1591,6 +1591,7 @@ static QDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
 
 	DPTRACE(qdf_dp_trace_mgmt_pkt(QDF_DP_TRACE_MGMT_PACKET_RECORD,
 				pAdapter->sessionId,
+				QDF_TRACE_DEFAULT_PDEV_ID,
 				QDF_PROTO_TYPE_MGMT, QDF_PROTO_MGMT_DISASSOC));
 
 	/* HDD has initiated disconnect, do not send disconnect indication
@@ -2612,6 +2613,7 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 
 		DPTRACE(qdf_dp_trace_mgmt_pkt(QDF_DP_TRACE_MGMT_PACKET_RECORD,
 			pAdapter->sessionId,
+			QDF_TRACE_DEFAULT_PDEV_ID,
 			QDF_PROTO_TYPE_MGMT, QDF_PROTO_MGMT_ASSOC));
 
 		/*

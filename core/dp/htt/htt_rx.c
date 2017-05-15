@@ -2136,6 +2136,7 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 		ol_rx_log_packet(pdev, peer_id, msdu);
 		DPTRACE(qdf_dp_trace(msdu,
 			QDF_DP_TRACE_RX_HTT_PACKET_PTR_RECORD,
+			QDF_TRACE_DEFAULT_PDEV_ID,
 			qdf_nbuf_data_addr(msdu),
 			sizeof(qdf_nbuf_data(msdu)), QDF_RX));
 

@@ -12696,7 +12696,8 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 		hdd_debug("WE_DUMP_DP_TRACE_LEVEL: %d %d",
 		       value[1], value[2]);
 		if (value[1] == DUMP_DP_TRACE)
-			qdf_dp_trace_dump_all(value[2]);
+			qdf_dp_trace_dump_all(value[2],
+					QDF_TRACE_DEFAULT_PDEV_ID);
 		else if (value[1] == ENABLE_DP_TRACE_LIVE_MODE)
 			qdf_dp_trace_enable_live_mode();
 		else if (value[1] == CLEAR_DP_TRACE_BUFFER)

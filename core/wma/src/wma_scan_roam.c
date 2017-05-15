@@ -2325,7 +2325,8 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 	}
 
 	DPTRACE(qdf_dp_trace_record_event(QDF_DP_TRACE_EVENT_RECORD,
-		synch_event->vdev_id, QDF_PROTO_TYPE_EVENT, QDF_ROAM_SYNCH));
+		synch_event->vdev_id, QDF_TRACE_DEFAULT_PDEV_ID,
+		QDF_PROTO_TYPE_EVENT, QDF_ROAM_SYNCH));
 
 	if (wma_is_roam_synch_in_progress(wma, synch_event->vdev_id)) {
 		WMA_LOGE("%s: Ignoring RSI since one is already in progress",
@@ -2765,7 +2766,8 @@ void wma_process_roam_synch_complete(WMA_HANDLE handle, uint8_t vdev_id)
 	}
 
 	DPTRACE(qdf_dp_trace_record_event(QDF_DP_TRACE_EVENT_RECORD,
-		vdev_id, QDF_PROTO_TYPE_EVENT, QDF_ROAM_COMPLETE));
+		vdev_id, QDF_TRACE_DEFAULT_PDEV_ID,
+		QDF_PROTO_TYPE_EVENT, QDF_ROAM_COMPLETE));
 
 	WMA_LOGE("LFR3: Posting WMA_ROAM_OFFLOAD_SYNCH_CNF");
 }
@@ -5377,7 +5379,8 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 		 wmi_event->vdev_id, wmi_event->rssi);
 
 	DPTRACE(qdf_dp_trace_record_event(QDF_DP_TRACE_EVENT_RECORD,
-		wmi_event->vdev_id, QDF_PROTO_TYPE_EVENT, QDF_ROAM_EVENTID));
+		wmi_event->vdev_id, QDF_TRACE_DEFAULT_PDEV_ID,
+		QDF_PROTO_TYPE_EVENT, QDF_ROAM_EVENTID));
 
 	switch (wmi_event->reason) {
 	case WMI_ROAM_REASON_BMISS:

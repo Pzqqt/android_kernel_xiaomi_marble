@@ -1599,6 +1599,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 
 		DPTRACE(qdf_dp_trace_mgmt_pkt(QDF_DP_TRACE_MGMT_PACKET_RECORD,
 			pHostapdAdapter->sessionId,
+			QDF_TRACE_DEFAULT_PDEV_ID,
 			QDF_PROTO_TYPE_MGMT, QDF_PROTO_MGMT_ASSOC));
 
 #ifdef MSM_PLATFORM
@@ -1753,6 +1754,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 #endif
 		DPTRACE(qdf_dp_trace_mgmt_pkt(QDF_DP_TRACE_MGMT_PACKET_RECORD,
 			pHostapdAdapter->sessionId,
+			QDF_TRACE_DEFAULT_PDEV_ID,
 			QDF_PROTO_TYPE_MGMT, QDF_PROTO_MGMT_DISASSOC));
 
 		hdd_softap_deregister_sta(pHostapdAdapter, staId);
@@ -2603,7 +2605,8 @@ static int __iw_softap_set_two_ints_getnone(struct net_device *dev,
 		hdd_debug("WE_DUMP_DP_TRACE: %d %d",
 		       value[1], value[2]);
 		if (value[1] == DUMP_DP_TRACE)
-			qdf_dp_trace_dump_all(value[2]);
+			qdf_dp_trace_dump_all(value[2],
+				QDF_TRACE_DEFAULT_PDEV_ID);
 		else if (value[1] == ENABLE_DP_TRACE_LIVE_MODE)
 			qdf_dp_trace_enable_live_mode();
 		else if (value[1] == CLEAR_DP_TRACE_BUFFER)

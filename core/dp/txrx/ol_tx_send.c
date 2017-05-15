@@ -238,6 +238,7 @@ ol_tx_send(struct ol_txrx_pdev_t *pdev,
 	id = ol_tx_desc_id(pdev, tx_desc);
 	QDF_NBUF_UPDATE_TX_PKT_COUNT(msdu, QDF_NBUF_TX_PKT_TXRX);
 	DPTRACE(qdf_dp_trace_ptr(msdu, QDF_DP_TRACE_TXRX_PACKET_PTR_RECORD,
+				QDF_TRACE_DEFAULT_PDEV_ID,
 				qdf_nbuf_data_addr(msdu),
 				sizeof(qdf_nbuf_data(msdu)), tx_desc->id,
 				vdev_id));
@@ -596,6 +597,7 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 
 		DPTRACE(qdf_dp_trace_ptr(netbuf,
 			QDF_DP_TRACE_FREE_PACKET_PTR_RECORD,
+			QDF_TRACE_DEFAULT_PDEV_ID,
 			qdf_nbuf_data_addr(netbuf),
 			sizeof(qdf_nbuf_data(netbuf)), tx_desc->id, status));
 		htc_pm_runtime_put(pdev->htt_pdev->htc_pdev);
