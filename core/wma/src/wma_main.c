@@ -7628,6 +7628,11 @@ void wma_ipa_uc_stat_request(wma_cli_set_cmd_t *privcmd)
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 
+	if (!wma) {
+		WMA_LOGE("%s: Failed to get wma", __func__);
+		return;
+	}
+
 	if (wma_set_priv_cfg(wma, privcmd))
 		WMA_LOGE("Failed to set wma priv congiuration");
 }
