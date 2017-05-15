@@ -96,6 +96,16 @@ typedef struct join_params {
 	tSirResultCodes result_code;
 } join_params;
 
+#ifdef WLAN_FEATURE_11AX_BSS_COLOR
+#define MAX_BSS_COLOR_VALUE 63
+#define TIME_BEACON_NOT_UPDATED 30000
+#define BSS_COLOR_SWITCH_COUNTDOWN 5
+struct bss_color_info {
+	qdf_time_t timestamp;
+	uint64_t seen_count;
+};
+#endif
+
 typedef struct sPESession       /* Added to Support BT-AMP */
 {
 	/* To check session table is in use or free */
@@ -497,6 +507,11 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	bool he_capable;
 	tDot11fIEvendor_he_cap he_config;
 	tDot11fIEvendor_he_op he_op;
+#ifdef WLAN_FEATURE_11AX_BSS_COLOR
+	tDot11fIEbss_color_change he_bss_color_change;
+	struct bss_color_info bss_color_info[MAX_BSS_COLOR_VALUE];
+	uint8_t bss_color_changing;
+#endif
 #endif
 } tPESession, *tpPESession;
 

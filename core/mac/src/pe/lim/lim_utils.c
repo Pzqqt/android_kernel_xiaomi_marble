@@ -7449,6 +7449,15 @@ void lim_log_he_op(tpAniSirGlobal mac, tDot11fIEvendor_he_op *he_ops)
 			vht_info->center_freq_seg1);
 }
 
+#ifdef WLAN_FEATURE_11AX_BSS_COLOR
+void lim_log_he_bss_color(tpAniSirGlobal mac,
+				tDot11fIEbss_color_change *he_bss_color)
+{
+	pe_debug("countdown: %d, new_color: %d",
+			he_bss_color->countdown, he_bss_color->new_color);
+}
+#endif
+
 void lim_update_sta_he_capable(tpAniSirGlobal mac,
 	tpAddStaParams add_sta_params, tpDphHashNode sta_ds,
 	tpPESession session_entry)

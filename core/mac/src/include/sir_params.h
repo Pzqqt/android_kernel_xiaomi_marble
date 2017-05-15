@@ -773,6 +773,7 @@ typedef struct sSirMbMsgP2p {
 #define PARAM_RIFS_MODE_CHANGED                            (1<<8)
 #define PARAM_LSIG_TXOP_FULL_SUPPORT_CHANGED   (1<<9)
 #define PARAM_OBSS_MODE_CHANGED                               (1<<10)
+#define PARAM_BSS_COLOR_CHANGED			(1 << 11)
 #define PARAM_BEACON_UPDATE_MASK    (PARAM_BCN_INTERVAL_CHANGED | \
 				     PARAM_SHORT_PREAMBLE_CHANGED | \
 				     PARAM_SHORT_SLOT_TIME_CHANGED | \
@@ -783,6 +784,7 @@ typedef struct sSirMbMsgP2p {
 				     PARAM_NON_GF_DEVICES_PRESENT_CHANGED | \
 				     PARAM_RIFS_MODE_CHANGED | \
 				     PARAM_LSIG_TXOP_FULL_SUPPORT_CHANGED | \
-				     PARAM_OBSS_MODE_CHANGED)
+				     PARAM_OBSS_MODE_CHANGED | \
+				     PARAM_BSS_COLOR_CHANGED)
 
 #endif

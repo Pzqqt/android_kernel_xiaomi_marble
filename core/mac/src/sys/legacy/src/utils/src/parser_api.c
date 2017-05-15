@@ -6010,6 +6010,34 @@ QDF_STATUS populate_dot11f_he_operation(tpAniSirGlobal mac_ctx,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef WLAN_FEATURE_11AX_BSS_COLOR
+/**
+ * populate_dot11f_he_bss_color_change() - pouldate HE BSS color change IE
+ * @mac_ctx: Global MAC context
+ * @session: PE session
+ * @he_bss_color: pointer to HE BSS color change IE
+ *
+ * Populdate the HE BSS color change IE based on the session.
+ */
+QDF_STATUS populate_dot11f_he_bss_color_change(tpAniSirGlobal mac_ctx,
+				tpPESession session,
+				tDot11fIEbss_color_change *he_bss_color)
+{
+	if (!session->bss_color_changing) {
+		he_bss_color->present = 0;
+		return QDF_STATUS_SUCCESS;
+	}
+
+	he_bss_color->present = 1;
+	he_bss_color->countdown = session->he_bss_color_change.countdown;
+	he_bss_color->new_color = session->he_bss_color_change.new_color;
+
+	lim_log_he_bss_color(mac_ctx, he_bss_color);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 #endif
 
 /* parser_api.c ends here. */

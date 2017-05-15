@@ -835,6 +835,99 @@ static void __sch_beacon_process_for_session(tpAniSirGlobal mac_ctx,
 	}
 }
 
+#ifdef WLAN_FEATURE_11AX_BSS_COLOR
+static void ap_update_bss_color_info(tpAniSirGlobal mac_ctx,
+						tpPESession session,
+						uint8_t bss_color)
+{
+	if (!session)
+		return;
+
+	if (bss_color < 1 || bss_color > 63) {
+		pe_warn("Invalid BSS color");
+		return;
+	}
+
+	session->bss_color_info[bss_color - 1].seen_count++;
+	session->bss_color_info[bss_color - 1].timestamp =
+					qdf_get_system_timestamp();
+}
+
+static uint8_t ap_get_new_bss_color(tpAniSirGlobal mac_ctx, tpPESession session)
+{
+	int i;
+	uint8_t new_bss_color;
+	struct bss_color_info color_info;
+	qdf_time_t cur_timestamp;
+
+	if (!session)
+		return 0;
+
+	color_info = session->bss_color_info[0];
+	new_bss_color = 0;
+	cur_timestamp = qdf_get_system_timestamp();
+	for (i = 1; i < MAX_BSS_COLOR_VALUE; i++) {
+		if (session->bss_color_info[i].seen_count == 0) {
+			new_bss_color = i + 1;
+			return new_bss_color;
+		}
+
+		if (color_info.seen_count >
+				session->bss_color_info[i].seen_count &&
+				(cur_timestamp - session->bss_color_info[i].
+					timestamp) > TIME_BEACON_NOT_UPDATED) {
+			color_info = session->bss_color_info[i];
+			new_bss_color = i + 1;
+		}
+	}
+	pe_debug("new bss color: %d", new_bss_color);
+	return new_bss_color;
+}
+
+static void sch_check_bss_color_ie(tpAniSirGlobal mac_ctx,
+					tpPESession ap_session,
+					tSchBeaconStruct *bcn,
+					tUpdateBeaconParams *bcn_prm)
+{
+	/* check bss color in the beacon */
+	if (ap_session->he_op.present && !ap_session->he_op.bss_color) {
+		if (bcn->vendor_he_op.present &&
+			(bcn->vendor_he_op.bss_color ==
+					ap_session->he_op.bss_color)) {
+			ap_session->he_op.bss_col_disabled = 1;
+			bcn_prm->paramChangeBitmap |=
+						PARAM_BSS_COLOR_CHANGED;
+			ap_session->he_bss_color_change.countdown =
+						BSS_COLOR_SWITCH_COUNTDOWN;
+			ap_session->he_bss_color_change.new_color =
+					ap_get_new_bss_color(mac_ctx,
+								ap_session);
+			ap_session->he_op.bss_color = ap_session->
+						he_bss_color_change.new_color;
+			WMI_HEOPS_COLOR_SET(bcn_prm->he_ops,
+						ap_session->he_op.bss_color);
+			WMI_HEOPS_BSSCOLORDISABLE_SET(bcn_prm->he_ops,
+					ap_session->he_op.bss_col_disabled);
+			ap_session->bss_color_changing = 1;
+		} else {
+			/* update info for the bss color */
+			if (bcn->vendor_he_op.present)
+				ap_update_bss_color_info(mac_ctx,
+						ap_session,
+						bcn->vendor_he_op.bss_color);
+		}
+	}
+}
+
+#else
+static void  sch_check_bss_color_ie(tpAniSirGlobal mac_ctx,
+					tpPESession ap_session,
+					tSchBeaconStruct *bcn,
+					tUpdateBeaconParams *bcn_prm)
+{
+}
+#endif
+
 /**
  * sch_beacon_process() - process the beacon frame
  * @mac_ctx:        mac global context
@@ -885,6 +978,9 @@ sch_beacon_process(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			continue;
 
 		bcn_prm.bssIdx = ap_session->bssIdx;
+
+		sch_check_bss_color_ie(mac_ctx, ap_session, &bcn, &bcn_prm);
+
 		if (ap_session->gLimProtectionControl !=
 		    WNI_CFG_FORCE_POLICY_PROTECTION_DISABLE)
 			ap_beacon_process(mac_ctx, rx_pkt_info,

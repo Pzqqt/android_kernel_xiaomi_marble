@@ -1343,6 +1343,39 @@ wma_update_beacon_interval(tp_wma_handle wma, uint8_t vdev_id,
 			 beaconInterval, vdev_id);
 }
 
+#ifdef WLAN_FEATURE_11AX_BSS_COLOR
+/**
+ * wma_update_bss_color() - update beacon bss color in fw
+ * @wma: wma handle
+ * @vdev_id: vdev id
+ * @he_ops: HE operation, only the bss_color and bss_color_disabled fields
+ * are updated.
+ *
+ * Return: none
+ */
+static void
+wma_update_bss_color(tp_wma_handle wma, uint8_t vdev_id,
+			   uint32_t he_ops)
+{
+	QDF_STATUS ret;
+
+	ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
+					      WMI_VDEV_PARAM_BSS_COLOR,
+					      he_ops);
+
+	if (QDF_IS_STATUS_ERROR(ret))
+		WMA_LOGE("Failed to update HE operations");
+	else
+		WMA_LOGI("Updated HE operations %x for vdev %d",
+			 he_ops, vdev_id);
+}
+#else
+static void wma_update_bss_color(tp_wma_handle wma, uint8_t vdev_id,
+			   uint32_t he_ops)
+{
+}
+#endif
+
 /**
  * wma_process_update_beacon_params() - update beacon parameters to target
  * @wma: wma handle
@@ -1372,6 +1405,10 @@ wma_process_update_beacon_params(tp_wma_handle wma,
 	if (bcn_params->paramChangeBitmap & PARAM_llBCOEXIST_CHANGED)
 		wma_update_protection_mode(wma, bcn_params->smeSessionId,
 					   bcn_params->llbCoexist);
+
+	if (bcn_params->paramChangeBitmap & PARAM_BSS_COLOR_CHANGED)
+		wma_update_bss_color(wma, bcn_params->smeSessionId,
+					   bcn_params->he_ops);
 }
 
 /**

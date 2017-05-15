@@ -2499,6 +2499,59 @@ lim_send_sme_ap_channel_switch_resp(tpAniSirGlobal pMac,
 	return;
 }
 
+#ifdef WLAN_FEATURE_11AX_BSS_COLOR
+/**
+ *  lim_send_bss_color_change_ie_update() - update bss color change IE in
+ *   beacon template
+ *
+ *  @mac_ctx: pointer to global adapter context
+ *  @session: session pointer
+ *
+ *  Return: none
+ */
+static void
+lim_send_bss_color_change_ie_update(tpAniSirGlobal mac_ctx,
+						tpPESession session)
+{
+	/* Update the beacon template and send to FW */
+	if (sch_set_fixed_beacon_fields(mac_ctx, session) != eSIR_SUCCESS) {
+		pe_err("Unable to set BSS color change IE in beacon");
+	       return;
+	}
+
+	/* Send update beacon template message */
+	lim_send_beacon_ind(mac_ctx, session);
+	pe_info("Updated BSS color change countdown = %d",
+		session->he_bss_color_change.countdown);
+}
+
+static void
+lim_handle_bss_color_change_ie(tpAniSirGlobal mac_ctx,
+					tpPESession session)
+{
+	/* handle bss color change IE */
+	if (LIM_IS_AP_ROLE(session) &&
+			session->he_op.bss_col_disabled) {
+		if (session->he_bss_color_change.countdown > 0) {
+			session->he_bss_color_change.countdown--;
+		} else {
+			session->bss_color_changing = 0;
+			if (session->he_bss_color_change.new_color != 0)
+				session->he_op.bss_col_disabled = 0;
+		}
+
+		lim_send_bss_color_change_ie_update(mac_ctx, session);
+	}
+}
+
+#else
+static void
+lim_handle_bss_color_change_ie(tpAniSirGlobal mac_ctx,
+					tpPESession session)
+{
+}
+#endif
+
 /** -----------------------------------------------------------------
    \brief lim_process_beacon_tx_success_ind() - This function is used
    explicitely to handle successful beacon transmission indication
@@ -2592,5 +2645,8 @@ lim_process_beacon_tx_success_ind(tpAniSirGlobal pMac, uint16_t msgType, void *e
 		mmhMsg.bodyval = 0;
 		lim_sys_process_mmh_msg_api(pMac, &mmhMsg, ePROT);
 	}
+
+	lim_handle_bss_color_change_ie(pMac, psessionEntry);
+
 	return;
 }

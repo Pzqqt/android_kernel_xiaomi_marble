@@ -383,6 +383,8 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 					&bcn_2->vendor_he_cap);
 		populate_dot11f_he_operation(mac_ctx, session,
 					&bcn_2->vendor_he_op);
+		populate_dot11f_he_bss_color_change(mac_ctx, session,
+					&bcn_2->bss_color_change);
 	}
 
 	if (session->limSystemRole != eLIM_STA_IN_IBSS_ROLE)

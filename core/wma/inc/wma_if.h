@@ -806,6 +806,7 @@ typedef struct {
 	uint8_t fRIFSMode;
 	uint16_t paramChangeBitmap;
 	uint8_t smeSessionId;
+	uint32_t he_ops;
 } tUpdateBeaconParams, *tpUpdateBeaconParams;
 
 /**

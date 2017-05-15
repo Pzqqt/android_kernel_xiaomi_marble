@@ -200,6 +200,9 @@ typedef struct sSirProbeRespBeacon {
 	tSirQCNIE QCN_IE;
 	tDot11fIEvendor_he_cap vendor_he_cap;
 	tDot11fIEvendor_he_op vendor_he_op;
+#ifdef WLAN_FEATURE_11AX_BSS_COLOR
+	tDot11fIEbss_color_change vendor_he_bss_color_change;
+#endif
 } tSirProbeRespBeacon, *tpSirProbeRespBeacon;
 
 /* probe Request structure */
@@ -1012,6 +1015,19 @@ QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal , tpPESession ,
 				   tDot11fIEvendor_he_cap *);
 QDF_STATUS populate_dot11f_he_operation(tpAniSirGlobal , tpPESession ,
 					tDot11fIEvendor_he_op *);
+#ifdef WLAN_FEATURE_11AX_BSS_COLOR
+QDF_STATUS populate_dot11f_he_bss_color_change(tpAniSirGlobal mac_ctx,
+				tpPESession session,
+				tDot11fIEbss_color_change *bss_color);
+#else
+static inline QDF_STATUS populate_dot11f_he_bss_color_change(
+				tpAniSirGlobal mac_ctx,
+				tpPESession session,
+				tDot11fIEbss_color_change *bss_color)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 #else
 static inline QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal mac_ctx,
 			tpPESession session, tDot11fIEvendor_he_cap *he_cap)
@@ -1025,5 +1041,12 @@ static inline QDF_STATUS populate_dot11f_he_operation(tpAniSirGlobal mac_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
+static inline QDF_STATUS populate_dot11f_he_bss_color_change(
+				tpAniSirGlobal mac_ctx,
+				tpPESession session,
+				tDot11fIEbss_color_change *bss_color)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif
 #endif /* __PARSE_H__ */
