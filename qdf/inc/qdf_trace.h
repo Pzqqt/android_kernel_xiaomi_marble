@@ -99,9 +99,18 @@ void qdf_trace(uint8_t module, uint8_t code, uint16_t session, uint32_t data);
 #define INVALID_QDF_TRACE_ADDR 0xffffffff
 #define DEFAULT_QDF_TRACE_DUMP_COUNT 0
 
-#define DUMP_DP_TRACE       0
+/*
+ * first parameter to iwpriv command - dump_dp_trace
+ * iwpriv wlan0 dump_dp_trace 0 0 -> dump full buffer
+ * iwpriv wlan0 dump_dp_trace 1 0 -> enable live view mode
+ * iwpriv wlan0 dump_dp_trace 2 0 -> clear dp trace buffer
+ * iwpriv wlan0 dump_dp_trace 3 0 -> disable live view mode
+ */
+#define DUMP_DP_TRACE			0
 #define ENABLE_DP_TRACE_LIVE_MODE	1
-#define CLEAR_DP_TRACE_BUFFER	2
+#define CLEAR_DP_TRACE_BUFFER		2
+#define DISABLE_DP_TRACE_LIVE_MODE	3
+
 
 #ifdef TRACE_RECORD
 
@@ -160,7 +169,7 @@ typedef struct s_qdf_trace_data {
 #define QDF_DP_TRACE_VERBOSITY_HIGH    3
 #define QDF_DP_TRACE_VERBOSITY_MEDIUM  2
 #define QDF_DP_TRACE_VERBOSITY_LOW     1
-#define QDF_DP_TRACE_VERBOSITY_DEFAULT 0
+#define QDF_DP_TRACE_VERBOSITY_BASE    0
 
 /**
  * enum QDF_DP_TRACE_ID - Generic ID to identify various events in data path
@@ -170,21 +179,24 @@ typedef struct s_qdf_trace_data {
  * @QDF_DP_TRACE_DHCP_PACKET_RECORD - record DHCP packet
  * @QDF_DP_TRACE_ARP_PACKET_RECORD - record ARP packet
  * @QDF_DP_TRACE_MGMT_PACKET_RECORD - record MGMT pacekt
- * @QDF_DP_TRACE_ICMP_PACKET_RECORD - record ICMP packet
  * QDF_DP_TRACE_EVENT_RECORD - record events
- * @QDF_DP_TRACE_DEFAULT_VERBOSITY - below this are part of default verbosity
+ * @QDF_DP_TRACE_BASE_VERBOSITY - below this are part of base verbosity
+ * @QDF_DP_TRACE_ICMP_PACKET_RECORD - record ICMP packets
+ * @QDF_DP_TRACE_HDD_TX_PACKET_RECORD - record 32 bytes of tx pkt at HDD
+ * @QDF_DP_TRACE_HDD_RX_PACKET_RECORD - record 32 bytes of rx pkt at HDD
  * @QDF_DP_TRACE_HDD_TX_TIMEOUT - HDD tx timeout
  * @QDF_DP_TRACE_HDD_SOFTAP_TX_TIMEOUT- SOFTAP HDD tx timeout
+ * @QDF_DP_TRACE_FREE_PACKET_PTR_RECORD - tx completion ptr record
+ * @QDF_DP_TRACE_LOW_VERBOSITY - below this are part of low verbosity
  * @QDF_DP_TRACE_HDD_TX_PACKET_PTR_RECORD - HDD layer ptr record
  * @QDF_DP_TRACE_LI_DP_TX_PACKET_PTR_RECORD - Lithium DP layer ptr record
  * @QDF_DP_TRACE_CE_PACKET_PTR_RECORD - CE layer ptr record
  * @QDF_DP_TRACE_CE_FAST_PACKET_PTR_RECORD- CE fastpath ptr record
- * @QDF_DP_TRACE_FREE_PACKET_PTR_RECORD - tx completion ptr record
  * @QDF_DP_TRACE_RX_HTT_PACKET_PTR_RECORD - HTT RX record
  * @QDF_DP_TRACE_RX_OFFLOAD_HTT_PACKET_PTR_RECORD- HTT RX offload record
  * @QDF_DP_TRACE_RX_HDD_PACKET_PTR_RECORD - HDD RX record
  * @QDF_DP_TRACE_RX_LI_DP_PACKET_PTR_RECORD - Lithium DP RX record
- * @QDF_DP_TRACE_LOW_VERBOSITY - below this are part of low verbosity
+  * @QDF_DP_TRACE_MED_VERBOSITY - below this are part of med verbosity
  * @QDF_DP_TRACE_TXRX_QUEUE_PACKET_PTR_RECORD -tx queue ptr record
  * @QDF_DP_TRACE_TXRX_PACKET_PTR_RECORD - txrx packet ptr record
  * @QDF_DP_TRACE_TXRX_FAST_PACKET_PTR_RECORD - txrx fast path record
@@ -192,9 +204,6 @@ typedef struct s_qdf_trace_data {
  * @QDF_DP_TRACE_HTC_PACKET_PTR_RECORD - htc packet ptr record
  * @QDF_DP_TRACE_HIF_PACKET_PTR_RECORD - hif packet ptr record
  * @QDF_DP_TRACE_RX_TXRX_PACKET_PTR_RECORD - txrx packet ptr record
- * @QDF_DP_TRACE_MED_VERBOSITY - below this are part of med verbosity
- * @QDF_DP_TRACE_HDD_TX_PACKET_RECORD - record 32 bytes of tx pkt at HDD
- * @QDF_DP_TRACE_HDD_RX_PACKET_RECORD - record 32 bytes of rx pkt at HDD
  * @QDF_DP_TRACE_LI_DP_TX_PACKET_RECORD - record 32 bytes of tx pkt at LI_DP
  * @QDF_DP_TRACE_LI_DP_RX_PACKET_RECORD - record 32 bytes of rx pkt at LI_DP
  * @QDF_DP_TRACE_LI_DP_NULL_RX_PACKET_RECORD
@@ -208,21 +217,24 @@ enum  QDF_DP_TRACE_ID {
 	QDF_DP_TRACE_DHCP_PACKET_RECORD,
 	QDF_DP_TRACE_ARP_PACKET_RECORD,
 	QDF_DP_TRACE_MGMT_PACKET_RECORD,
-	QDF_DP_TRACE_ICMP_PACKET_RECORD,
 	QDF_DP_TRACE_EVENT_RECORD,
-	QDF_DP_TRACE_DEFAULT_VERBOSITY,
+	QDF_DP_TRACE_BASE_VERBOSITY,
+	QDF_DP_TRACE_ICMP_PACKET_RECORD,
+	QDF_DP_TRACE_HDD_TX_PACKET_RECORD,
+	QDF_DP_TRACE_HDD_RX_PACKET_RECORD,
 	QDF_DP_TRACE_HDD_TX_TIMEOUT,
 	QDF_DP_TRACE_HDD_SOFTAP_TX_TIMEOUT,
+	QDF_DP_TRACE_FREE_PACKET_PTR_RECORD,
+	QDF_DP_TRACE_LOW_VERBOSITY,
 	QDF_DP_TRACE_HDD_TX_PACKET_PTR_RECORD,
 	QDF_DP_TRACE_LI_DP_TX_PACKET_PTR_RECORD,
+	QDF_DP_TRACE_RX_HDD_PACKET_PTR_RECORD,
 	QDF_DP_TRACE_CE_PACKET_PTR_RECORD,
 	QDF_DP_TRACE_CE_FAST_PACKET_PTR_RECORD,
-	QDF_DP_TRACE_FREE_PACKET_PTR_RECORD,
 	QDF_DP_TRACE_RX_HTT_PACKET_PTR_RECORD,
 	QDF_DP_TRACE_RX_OFFLOAD_HTT_PACKET_PTR_RECORD,
-	QDF_DP_TRACE_RX_HDD_PACKET_PTR_RECORD,
 	QDF_DP_TRACE_RX_LI_DP_PACKET_PTR_RECORD,
-	QDF_DP_TRACE_LOW_VERBOSITY,
+	QDF_DP_TRACE_MED_VERBOSITY,
 	QDF_DP_TRACE_TXRX_QUEUE_PACKET_PTR_RECORD,
 	QDF_DP_TRACE_TXRX_PACKET_PTR_RECORD,
 	QDF_DP_TRACE_TXRX_FAST_PACKET_PTR_RECORD,
@@ -230,9 +242,6 @@ enum  QDF_DP_TRACE_ID {
 	QDF_DP_TRACE_HTC_PACKET_PTR_RECORD,
 	QDF_DP_TRACE_HIF_PACKET_PTR_RECORD,
 	QDF_DP_TRACE_RX_TXRX_PACKET_PTR_RECORD,
-	QDF_DP_TRACE_MED_VERBOSITY,
-	QDF_DP_TRACE_HDD_TX_PACKET_RECORD,
-	QDF_DP_TRACE_HDD_RX_PACKET_RECORD,
 	QDF_DP_TRACE_LI_DP_TX_PACKET_RECORD,
 	QDF_DP_TRACE_LI_DP_RX_PACKET_RECORD,
 	QDF_DP_TRACE_LI_DP_NULL_RX_PACKET_RECORD,
@@ -333,6 +342,17 @@ struct qdf_dp_trace_record_s {
  * @verbosity : defines verbosity level
  * @enable: enable/disable DP trace
  * @count: current packet number
+ * @live_mode_config: configuration as received during initialization
+ * @live_mode: current live mode, enabled or disabled.
+ * @print_pkt_cnt: count of number of packets printed in live mode
+ *.@high_tput_thresh: thresh beyond which live mode is turned off
+ *.@thresh_time_limit: max time, in terms of BW timer intervals to wait,
+ *	         for determining if high_tput_thresh has been crossed. ~1s
+ *.@arp_req: stats for arp reqs
+ *.@arp_resp: stats for arp resps
+ *.@icmp_req: stats for icmp reqs
+ *.@icmp_req: stats for icmp resps
+
  */
 struct s_qdf_dp_trace_data {
 	uint32_t head;
@@ -342,9 +362,18 @@ struct s_qdf_dp_trace_data {
 	uint8_t no_of_record;
 	uint8_t verbosity;
 	bool enable;
+	bool live_mode_config;
+	bool live_mode;
+	uint8_t print_pkt_cnt;
+	uint8_t high_tput_thresh;
+	uint16_t thresh_time_limit;
+	/* Stats */
 	uint32_t tx_count;
 	uint32_t rx_count;
-	bool live_mode;
+	uint32_t arp_req;
+	uint32_t arp_resp;
+	uint32_t icmp_req;
+	uint32_t icmp_resp;
 };
 
 
@@ -401,9 +430,11 @@ void qdf_trace_dump_all(void *, uint8_t, uint8_t, uint32_t, uint32_t);
 void qdf_dp_set_proto_bitmap(uint32_t val);
 void qdf_dp_trace_set_verbosity(uint32_t val);
 void qdf_dp_set_no_of_record(uint32_t val);
-void qdf_dp_trace_log_pkt(uint8_t session_id, struct sk_buff *skb,
+bool qdf_dp_trace_log_pkt(uint8_t session_id, struct sk_buff *skb,
 				enum qdf_proto_dir dir, uint8_t pdev_id);
-void qdf_dp_trace_init(void);
+void qdf_dp_trace_init(bool live_mode_config, uint8_t thresh,
+				uint16_t time_limit, uint8_t verbosity,
+				uint8_t proto_bitmap);
 void qdf_dp_trace_spin_lock_init(void);
 void qdf_dp_trace_set_value(uint8_t proto_bitmap, uint8_t no_of_records,
 			 uint8_t verbosity);
@@ -412,15 +443,17 @@ void qdf_dp_trace(qdf_nbuf_t nbuf, enum QDF_DP_TRACE_ID code, uint8_t pdev_id,
 			uint8_t *data, uint8_t size, enum qdf_proto_dir dir);
 void qdf_dp_trace_dump_all(uint32_t count, uint8_t pdev_id);
 typedef void (*tp_qdf_dp_trace_cb)(struct qdf_dp_trace_record_s*,
-				uint16_t, uint8_t);
+					uint16_t, uint8_t, bool live);
 void qdf_dp_display_record(struct qdf_dp_trace_record_s *record,
-					uint16_t index, uint8_t pdev_id);
+					uint16_t index, uint8_t pdev_id, bool live);
 void qdf_dp_trace_ptr(qdf_nbuf_t nbuf, enum QDF_DP_TRACE_ID code,
 	uint8_t pdev_id, uint8_t *data, uint8_t size, uint16_t msdu_id,
 	uint16_t status);
-
+void qdf_dp_trace_throttle_live_mode(bool high_bw_request);
 void qdf_dp_display_ptr_record(struct qdf_dp_trace_record_s *pRecord,
-				uint16_t recIndex, uint8_t pdev_id);
+				uint16_t recIndex, uint8_t pdev_id, bool live);
+void qdf_dp_display_proto_pkt(struct qdf_dp_trace_record_s *record,
+					 uint16_t index, uint8_t pdev_id, bool live);
 uint8_t qdf_dp_get_proto_bitmap(void);
 uint8_t qdf_dp_get_verbosity(void);
 uint8_t qdf_dp_get_no_of_record(void);
@@ -428,29 +461,31 @@ void
 qdf_dp_trace_proto_pkt(enum QDF_DP_TRACE_ID code, uint8_t vdev_id,
 	uint8_t *sa, uint8_t *da, enum qdf_proto_type type,
 	enum qdf_proto_subtype subtype, enum qdf_proto_dir dir,
-	uint8_t pdev_id);
-void qdf_dp_display_proto_pkt(struct qdf_dp_trace_record_s *record,
-				uint16_t index, uint8_t pdev_id);
+	uint8_t pdev_id, bool print);
+void qdf_dp_trace_disable_live_mode(void);
 void qdf_dp_trace_enable_live_mode(void);
 void qdf_dp_trace_clear_buffer(void);
 void qdf_dp_trace_mgmt_pkt(enum QDF_DP_TRACE_ID code, uint8_t vdev_id,
 	uint8_t pdev_id, enum qdf_proto_type type,
 	enum qdf_proto_subtype subtype);
 void qdf_dp_display_mgmt_pkt(struct qdf_dp_trace_record_s *record,
-			      uint16_t index, uint8_t pdev_id);
+			      uint16_t index, uint8_t pdev_id,  bool live);
 void qdf_dp_display_event_record(struct qdf_dp_trace_record_s *record,
-			      uint16_t index, uint8_t pdev_id);
+			      uint16_t index, uint8_t pdev_id, bool live);
 void qdf_dp_trace_record_event(enum QDF_DP_TRACE_ID code, uint8_t vdev_id,
 	uint8_t pdev_id, enum qdf_proto_type type,
 	enum qdf_proto_subtype subtype);
 #else
 static inline
-void qdf_dp_trace_log_pkt(uint8_t session_id, struct sk_buff *skb,
+bool qdf_dp_trace_log_pkt(uint8_t session_id, struct sk_buff *skb,
 				enum qdf_proto_dir dir, uint8_t pdev_id)
 {
+	return false;
 }
 static inline
-void qdf_dp_trace_init(void)
+void qdf_dp_trace_init(bool live_mode_config, uint8_t thresh,
+				uint16_t time_limit, uint8_t verbosity,
+				uint8_t proto_bitmap)
 {
 }
 static inline
@@ -468,7 +503,17 @@ void qdf_dp_trace_dump_all(uint32_t count, uint8_t pdev_id)
 }
 
 static inline
+void qdf_dp_trace_disable_live_mode(void)
+{
+}
+
+static inline
 void qdf_dp_trace_enable_live_mode(void)
+{
+}
+
+static inline
+void qdf_dp_trace_throttle_live_mode(bool high_bw_request)
 {
 }
 
