@@ -167,6 +167,9 @@ ifneq ($(CONFIG_ROME_IF),sdio)
 	#Flag to enable DISA
 	CONFIG_WLAN_FEATURE_DISA := y
 
+	#Flag to enable FIPS
+	CONFIG_WLAN_FEATURE_FIPS := y
+
 	#Flag to enable Fast Path feature
 	CONFIG_WLAN_FASTPATH := y
 
@@ -2097,6 +2100,10 @@ endif
 
 ifeq ($(CONFIG_WLAN_FEATURE_DISA),y)
 CDEFINES += -DWLAN_FEATURE_DISA
+endif
+
+ifeq ($(CONFIG_WLAN_FEATURE_FIPS),y)
+CDEFINES += -DWLAN_FEATURE_FIPS
 endif
 
 ifeq ($(CONFIG_LFR_SUBNET_DETECTION), y)
