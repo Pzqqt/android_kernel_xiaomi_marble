@@ -326,6 +326,7 @@ void csr_roam_reset_roam_params(tpAniSirGlobal mac_ptr);
 #define REASON_ROAM_SYNCH_FAILED                    36
 #define REASON_ROAM_PSK_PMK_CHANGED                 37
 #define REASON_SUPPLICANT_DISABLED_ROAMING          39
+#define REASON_CTX_INIT                             40
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 QDF_STATUS csr_roam_offload_scan(tpAniSirGlobal pMac, uint8_t sessionId,

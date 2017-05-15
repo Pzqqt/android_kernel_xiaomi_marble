@@ -1043,7 +1043,7 @@ static void csr_neighbor_roam_info_ctx_init(
 
 			csr_roam_offload_scan(pMac, session_id,
 				ROAM_SCAN_OFFLOAD_START,
-				REASON_CONNECT);
+				REASON_CTX_INIT);
 
 			if (session->pCurRoamProfile &&
 				 session->pCurRoamProfile->do_not_roam) {
