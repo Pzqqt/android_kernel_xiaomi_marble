@@ -515,11 +515,6 @@ static QDF_STATUS qdf_mem_debug_debugfs_init(void)
 	return QDF_STATUS_E_NOSUPPORT;
 }
 
-static QDF_STATUS qdf_mem_debug_debugfs_init(void)
-{
-	return QDF_STATUS_E_NOSUPPORT;
-}
-
 static QDF_STATUS qdf_mem_debug_debugfs_exit(void)
 {
 	return QDF_STATUS_E_NOSUPPORT;
