@@ -17935,6 +17935,9 @@ typedef enum wmi_coex_config_type {
                                                  arg6 PTA priority */
     WMI_COEX_CONFIG_BTC_DUTYCYCLE       = 18, /* config interval (ms units) (arg1 WLAN pause duration, arg2 WLAN unpause duration) for WLAN UL + BT Rx */
     WMI_COEX_CONFIG_HANDOVER_RSSI       = 19, /* config to set WLAN RSSI (dBm units) at which device switches from Hybrid to TDD coex mode */
+    WMI_COEX_CONFIG_PTA_BT_INFO         = 20, /* get BT information,
+                                                 arg1 BT info type: WMI_COEX_PTA_BT_INFO_TYPE_T, scan/advertise/connection info,
+                                                 arg2-arg5: BT information parameters */
 } WMI_COEX_CONFIG_TYPE;
 
 typedef struct {
