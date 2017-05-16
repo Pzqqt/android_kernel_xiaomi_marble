@@ -2651,6 +2651,78 @@ static unsigned int qdf_nbuf_update_radiotap_vht_flags(
 	return rtap_len;
 }
 
+/**
+ * qdf_nbuf_update_radiotap_he_flags() - Update radiotap header from rx_status
+ * @rx_status: Pointer to rx_status.
+ * @nbuf:      nbuf pointer to which radiotap has to be updated
+ * @headroom_sz: Available headroom size.
+ *
+ * API update high-efficiency (11ax) fields in the radiotap header
+ *
+ * Return: length of rtap_len updated.
+ */
+static unsigned int
+qdf_nbuf_update_radiotap_he_flags(struct mon_rx_status *rx_status,
+				     int8_t *rtap_buf, uint32_t rtap_len)
+{
+	/*
+	 * IEEE80211_RADIOTAP_HE u32, u32, u32, u32 u16, u16, u16, u16, u8[4]
+	 * Enable all "known" radiotap flags for now
+	 */
+
+	/* HE-MU-COMMON fields */
+	if (rx_status->he_sig_b_common_known &
+			QDF_MON_STATUS_HE_SIG_B_COMMON_KNOWN_RU0) {
+		rtap_buf[rtap_len] = rx_status->he_sig_b_common_RU[0];
+		rtap_len += 1;
+	}
+
+	if (rx_status->he_sig_b_common_known &
+			QDF_MON_STATUS_HE_SIG_B_COMMON_KNOWN_RU1) {
+		rtap_buf[rtap_len] = rx_status->he_sig_b_common_RU[1];
+		rtap_len += 1;
+	}
+	if (rx_status->he_sig_b_common_known &
+			QDF_MON_STATUS_HE_SIG_B_COMMON_KNOWN_RU2) {
+		rtap_buf[rtap_len] = rx_status->he_sig_b_common_RU[2];
+		rtap_len += 1;
+	}
+	if (rx_status->he_sig_b_common_known &
+			QDF_MON_STATUS_HE_SIG_B_COMMON_KNOWN_RU3) {
+		rtap_buf[rtap_len] = rx_status->he_sig_b_common_RU[3];
+		rtap_len += 1;
+	}
+
+	put_unaligned_le16(rx_status->he_sig_b_common, &rtap_buf[rtap_len]);
+	rtap_len += 2;
+
+	put_unaligned_le16(
+		rx_status->he_sig_b_common_known, &rtap_buf[rtap_len]);
+	rtap_len += 2;
+
+	/* HE-MU-USER fields */
+	put_unaligned_le32(rx_status->he_sig_b_user, &rtap_buf[rtap_len]);
+	rtap_len += 4;
+
+	put_unaligned_le32(rx_status->he_sig_b_user_known, &rtap_buf[rtap_len]);
+	rtap_len += 4;
+
+	/* HE fields */
+	put_unaligned_le32(rx_status->he_sig_A1, &rtap_buf[rtap_len]);
+	rtap_len += 4;
+
+	put_unaligned_le32(rx_status->he_sig_A2, &rtap_buf[rtap_len]);
+	rtap_len += 4;
+
+	put_unaligned_le16(rx_status->he_sig_A1_known, &rtap_buf[rtap_len]);
+	rtap_len += 2;
+
+	put_unaligned_le16(rx_status->he_sig_A2_known, &rtap_buf[rtap_len]);
+	rtap_len += 2;
+
+	return rtap_len;
+}
+
 #define NORMALIZED_TO_NOISE_FLOOR (-96)
 
 /* This is the length for radiotap, combined length
@@ -2660,6 +2732,8 @@ static unsigned int qdf_nbuf_update_radiotap_vht_flags(
  * increase this when we add more radiotap elements.
  */
 #define RADIOTAP_HEADER_LEN (sizeof(struct ieee80211_radiotap_header) + 100)
+
+#define IEEE80211_RADIOTAP_HE 22
 
 /**
  * qdf_nbuf_update_radiotap() - Update radiotap header from rx_status
@@ -2746,6 +2820,15 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 							      rtap_buf,
 							      rtap_len);
 	}
+
+	if (rx_status->he_flags) {
+		/* IEEE80211_RADIOTAP_HE */
+		rthdr->it_present |= cpu_to_le32(1 << IEEE80211_RADIOTAP_HE);
+		rtap_len = qdf_nbuf_update_radiotap_he_flags(rx_status,
+								rtap_buf,
+								rtap_len);
+	}
+
 	rthdr->it_len = cpu_to_le16(rtap_len);
 
 	if (headroom_sz < rtap_len) {
@@ -2761,6 +2844,13 @@ static unsigned int qdf_nbuf_update_radiotap_vht_flags(
 					struct mon_rx_status *rx_status,
 					int8_t *rtap_buf,
 					uint32_t rtap_len)
+{
+	qdf_print("ERROR: struct ieee80211_radiotap_header not supported");
+	return 0;
+}
+
+unsigned int qdf_nbuf_update_radiotap_he_flags(struct mon_rx_status *rx_status,
+				      int8_t *rtap_buf, uint32_t rtap_len)
 {
 	qdf_print("ERROR: struct ieee80211_radiotap_header not supported");
 	return 0;
