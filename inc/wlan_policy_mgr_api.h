@@ -1332,6 +1332,19 @@ void policy_mgr_checkn_update_hw_mode_single_mac_mode(
 void policy_mgr_dump_connection_status_info(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * policy_mgr_mode_specific_vdev_id() - provides the
+ * vdev id of the pecific mode
+ * @psoc: PSOC object information
+ * @mode: type of connection
+ *
+ * This function provides vdev id for the given mode
+ *
+ * Return: vdev id
+ */
+uint32_t policy_mgr_mode_specific_vdev_id(struct wlan_objmgr_psoc *psoc,
+					  enum policy_mgr_con_mode mode);
+
+/**
  * policy_mgr_mode_specific_connection_count() - provides the
  * count of connections of specific mode
  * @psoc: PSOC object information
