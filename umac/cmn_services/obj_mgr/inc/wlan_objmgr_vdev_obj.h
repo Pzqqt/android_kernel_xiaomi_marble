@@ -199,6 +199,9 @@
   /* CAPABILITY: bg scanning */
 #define WLAN_VDEV_C_BGSCAN               0x00000100
 
+/* Invalid VDEV identifier */
+#define WLAN_INVALID_VDEV_ID 255
+
 /**
  * enum wlan_vdev_state - VDEV state
  * @WLAN_VDEV_S_INIT:    Default state, IDLE state

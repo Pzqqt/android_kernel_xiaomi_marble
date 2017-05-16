@@ -788,6 +788,36 @@ uint32_t policy_mgr_get_connection_count(struct wlan_objmgr_psoc *psoc)
 	return count;
 }
 
+uint32_t policy_mgr_mode_specific_vdev_id(struct wlan_objmgr_psoc *psoc,
+					  enum policy_mgr_con_mode mode)
+{
+	uint32_t conn_index = 0;
+	uint32_t vdev_id = WLAN_INVALID_VDEV_ID;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return vdev_id;
+	}
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	/*
+	 * Note: This gives you the first vdev id of the mode type in a
+	 * sta+sta or sap+sap or p2p + p2p case
+	 */
+	for (conn_index = 0; conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
+		conn_index++) {
+		if ((pm_conc_connection_list[conn_index].mode == mode) &&
+			pm_conc_connection_list[conn_index].in_use) {
+			vdev_id = pm_conc_connection_list[conn_index].vdev_id;
+			break;
+		}
+	}
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+
+	return vdev_id;
+}
+
 uint32_t policy_mgr_mode_specific_connection_count(
 		struct wlan_objmgr_psoc *psoc,
 		enum policy_mgr_con_mode mode,

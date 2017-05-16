@@ -623,20 +623,25 @@ tdls_process_policy_mgr_notification(struct wlan_objmgr_psoc *psoc)
 struct wlan_objmgr_vdev *tdls_get_vdev(struct wlan_objmgr_psoc *psoc,
 					  wlan_objmgr_ref_dbgid dbg_id)
 {
+	uint32_t vdev_id;
+
 	if (policy_mgr_get_connection_count(psoc) > 1)
 		return NULL;
-	if (policy_mgr_mode_specific_connection_count(psoc,
-						      PM_STA_MODE,
-						      NULL) == 1)
-		return wlan_objmgr_get_vdev_by_opmode_from_psoc(psoc,
-							QDF_STA_MODE,
-							dbg_id);
-	if (policy_mgr_mode_specific_connection_count(psoc,
-						      PM_P2P_CLIENT_MODE,
-						      NULL) == 1)
-		return wlan_objmgr_get_vdev_by_opmode_from_psoc(psoc,
-							QDF_P2P_CLIENT_MODE,
-							dbg_id);
+
+	vdev_id = policy_mgr_mode_specific_vdev_id(psoc, PM_STA_MODE);
+
+	if (WLAN_INVALID_VDEV_ID != vdev_id)
+		return wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
+							    vdev_id,
+							    dbg_id);
+
+	vdev_id = policy_mgr_mode_specific_vdev_id(psoc, PM_P2P_CLIENT_MODE);
+
+	if (WLAN_INVALID_VDEV_ID != vdev_id)
+		return wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
+							    vdev_id,
+							    dbg_id);
+
 	return NULL;
 }
 
@@ -705,10 +710,9 @@ static void tdls_send_update_to_fw(struct tdls_vdev_priv_obj *tdls_vdev_obj,
 	uint32_t tdls_feature_flags;
 	QDF_STATUS status;
 
-
-	/* If TDLS support is disabled then no need to update target */
-	if (tdls_soc_obj->tdls_current_mode <= TDLS_SUPPORT_SUSPENDED) {
-		tdls_err("TDLS not enabled or suspended");
+	tdls_feature_flags = tdls_soc_obj->tdls_configs.tdls_feature_flags;
+	if (!TDLS_IS_ENABLED(tdls_feature_flags)) {
+		tdls_debug("TDLS mode is not enabled");
 		return;
 	}
 
@@ -717,23 +721,28 @@ static void tdls_send_update_to_fw(struct tdls_vdev_priv_obj *tdls_vdev_obj,
 		return;
 	}
 
-	tdls_feature_flags = tdls_soc_obj->tdls_configs.tdls_feature_flags;
-
 	/* If AP or caller indicated TDLS Prohibited then disable tdls mode */
-	if (tdls_prohibited) {
-		tdls_soc_obj->tdls_current_mode = TDLS_SUPPORT_DISABLED;
-	} else {
-		tdls_debug("TDLS feature flags from ini %d ",
+	if (sta_connect_event) {
+		if (tdls_prohibited) {
+			tdls_soc_obj->tdls_current_mode =
+					TDLS_SUPPORT_DISABLED;
+		} else {
+			tdls_debug("TDLS feature flags from ini %d ",
 				tdls_feature_flags);
-		if (!TDLS_IS_IMPLICIT_TRIG_ENABLED(tdls_feature_flags))
-			tdls_soc_obj->tdls_current_mode =
-				TDLS_SUPPORT_EXP_TRIG_ONLY;
-		else if (TDLS_IS_EXTERNAL_CONTROL_ENABLED(tdls_feature_flags))
-			tdls_soc_obj->tdls_current_mode =
-				TDLS_SUPPORT_EXT_CONTROL;
-		else
-			tdls_soc_obj->tdls_current_mode =
-				TDLS_SUPPORT_IMP_MODE;
+			if (!TDLS_IS_IMPLICIT_TRIG_ENABLED(tdls_feature_flags))
+				tdls_soc_obj->tdls_current_mode =
+					TDLS_SUPPORT_EXP_TRIG_ONLY;
+			else if (TDLS_IS_EXTERNAL_CONTROL_ENABLED(
+				tdls_feature_flags))
+				tdls_soc_obj->tdls_current_mode =
+					TDLS_SUPPORT_EXT_CONTROL;
+			else
+				tdls_soc_obj->tdls_current_mode =
+					TDLS_SUPPORT_IMP_MODE;
+		}
+	} else {
+		tdls_soc_obj->tdls_current_mode =
+				TDLS_SUPPORT_DISABLED;
 	}
 
 	tdls_info_to_fw = qdf_mem_malloc(sizeof(struct tdls_info));
@@ -827,8 +836,6 @@ static void tdls_send_update_to_fw(struct tdls_vdev_priv_obj *tdls_vdev_obj,
 
 done:
 	qdf_mem_free(tdls_info_to_fw);
-	tdls_process_session_update(tdls_soc_obj->soc,
-					TDLS_CMD_SESSION_INCREMENT);
 	return;
 }
 
@@ -845,6 +852,11 @@ tdls_process_sta_connect(struct tdls_sta_notify_params *notify)
 
 
 	tdls_debug("Check and update TDLS state");
+
+	if (policy_mgr_get_connection_count(tdls_soc_obj->soc) > 1) {
+		tdls_debug("Concurrent sessions exist, TDLS can't be enabled");
+		return QDF_STATUS_SUCCESS;
+	}
 
 	/* Association event */
 	if (!tdls_soc_obj->tdls_disable_in_progress) {
@@ -872,8 +884,10 @@ QDF_STATUS tdls_notify_sta_connect(struct tdls_sta_notify_params *notify)
 		return QDF_STATUS_E_INVAL;
 
 	if (QDF_STATUS_SUCCESS != wlan_objmgr_vdev_try_get_ref(notify->vdev,
-							WLAN_TDLS_NB_ID))
+							WLAN_TDLS_NB_ID)) {
+		qdf_mem_free(notify);
 		return QDF_STATUS_E_INVAL;
+	}
 
 	status = tdls_process_sta_connect(notify);
 
@@ -956,8 +970,10 @@ QDF_STATUS tdls_notify_sta_disconnect(struct tdls_sta_notify_params *notify)
 		return QDF_STATUS_E_INVAL;
 
 	if (QDF_STATUS_SUCCESS != wlan_objmgr_vdev_try_get_ref(notify->vdev,
-							       WLAN_TDLS_NB_ID))
+							WLAN_TDLS_NB_ID)) {
+		qdf_mem_free(notify);
 		return QDF_STATUS_E_INVAL;
+	}
 
 	status = tdls_process_sta_disconnect(notify);
 
@@ -966,6 +982,26 @@ QDF_STATUS tdls_notify_sta_disconnect(struct tdls_sta_notify_params *notify)
 
 	qdf_mem_free(notify);
 	return status;
+}
+
+void tdls_peers_deleted_notification(struct wlan_objmgr_vdev *vdev,
+					 uint32_t session_id)
+{
+	struct tdls_sta_notify_params *notify;
+
+	notify = qdf_mem_malloc(sizeof(*notify));
+	if (!notify) {
+		tdls_err("memory allocation failed !!!");
+		return;
+	}
+
+	notify->lfr_roam = true;
+	notify->tdls_chan_swit_prohibited = false;
+	notify->tdls_prohibited = false;
+	notify->session_id = session_id;
+	notify->vdev = vdev;
+
+	tdls_notify_sta_disconnect(notify);
 }
 
 /**

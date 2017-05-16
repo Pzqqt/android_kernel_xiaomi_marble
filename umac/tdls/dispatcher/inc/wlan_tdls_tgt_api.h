@@ -146,4 +146,16 @@ QDF_STATUS tgt_tdls_mgmt_frame_rx_cb(struct wlan_objmgr_psoc *psoc,
 	struct mgmt_rx_event_params *mgmt_rx_params,
 	enum mgmt_frame_type frm_type);
 
+/**
+ * tgt_tdls_peers_deleted_notification()- notification from legacy lim
+ * @psoc: soc object
+ * @session_id: session id
+ *
+ * This function called from legacy lim to notify tdls peer deletion
+ *
+ * Return: None
+ */
+void tgt_tdls_peers_deleted_notification(struct wlan_objmgr_psoc *psoc,
+					 uint32_t session_id);
+
 #endif
