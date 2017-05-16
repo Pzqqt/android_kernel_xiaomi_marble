@@ -224,6 +224,9 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 	uint16_t peer_id = 0xFFFF;
 	struct dp_peer *peer = NULL;
 	uint32_t sgi, rate_mcs, tid;
+	uint8_t count;
+	struct mect_entry *mect_entry;
+	uint8_t *nbuf_data = NULL;
 
 	rx_bufs_used++;
 
@@ -293,11 +296,6 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 		"%s: %d, SGI: %d, rate_mcs: %d, tid: %d",
 		__func__, __LINE__, sgi, rate_mcs, tid);
 
-	/* WDS Source Port Learning */
-	if (qdf_likely(vdev->rx_decap_type == htt_cmn_pkt_type_ethernet) &&
-			(vdev->wds_enabled))
-		dp_rx_wds_srcport_learn(soc, rx_desc->rx_buf_start, peer, nbuf);
-
 	/*
 	 * Advance the packet start pointer by total size of
 	 * pre-header TLV's
@@ -306,6 +304,28 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 
 	if (l2_hdr_offset)
 		qdf_nbuf_pull_head(nbuf, l2_hdr_offset);
+
+	nbuf_data = qdf_nbuf_data(nbuf);
+	for (count = 0; count < soc->mect_cnt; count++) {
+		mect_entry = &soc->mect_table[count];
+		mect_entry->ts = jiffies_64;
+		if (!(memcmp(mect_entry->mac_addr, &nbuf_data[DP_MAC_ADDR_LEN],
+				DP_MAC_ADDR_LEN))) {
+			QDF_TRACE(QDF_MODULE_ID_DP,
+				QDF_TRACE_LEVEL_INFO,
+				FL("received pkt with same src MAC"));
+
+			/* Drop & free packet */
+			qdf_nbuf_free(nbuf);
+			/* Statistics */
+			goto fail;
+		}
+	}
+
+	/* WDS Source Port Learning */
+	if (qdf_likely(vdev->rx_decap_type == htt_cmn_pkt_type_ethernet) &&
+			(vdev->wds_enabled))
+		dp_rx_wds_srcport_learn(soc, rx_desc->rx_buf_start, peer, nbuf);
 
 	if (hal_rx_mpdu_start_mpdu_qos_control_valid_get(
 		rx_desc->rx_buf_start)) {
