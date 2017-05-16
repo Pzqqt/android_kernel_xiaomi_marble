@@ -997,32 +997,29 @@ lim_ibss_sta_add(tpAniSirGlobal pMac, void *pBody, tpPESession psessionEntry)
 
 	return retCode;
 }
+
 /**
- * __lim_ibss_search_and_delete_peer()- to cleanup the IBSS peer
+ * lim_ibss_search_and_delete_peer()- to cleanup the IBSS
+ * peer from lim ibss peer list
  *
  * @mac_ptr: Pointer to Global MAC structure
  * @session_entry: Session entry
  * @mac_addr: Mac Address of the IBSS peer
  *
- * This function is called to cleanup the IBSS peer while
- * operating in IBSS mode.
+ * This function is called to cleanup the IBSS peer from
+ * lim ibss peer list
  *
  * Return: None
  *
  */
 static void
-__lim_ibss_search_and_delete_peer(tpAniSirGlobal mac_ptr,
+lim_ibss_search_and_delete_peer(tpAniSirGlobal mac_ctx,
 			tpPESession session_entry, tSirMacAddr mac_addr)
 {
 	tLimIbssPeerNode *temp_node, *prev_node;
 	tLimIbssPeerNode *temp_next_node = NULL;
-	tpDphHashNode sta = NULL;
-	uint16_t peer_idx = 0;
-	uint16_t sta_index = 0;
-	uint8_t uc_ucast_sig;
-	uint8_t uc_bcast_sig;
 
-	prev_node = temp_node = mac_ptr->lim.gLimIbssPeerList;
+	prev_node = temp_node = mac_ctx->lim.gLimIbssPeerList;
 
 	pe_debug(" PEER ADDR :" MAC_ADDRESS_STR,
 		MAC_ADDR_ARRAY(mac_addr));
@@ -1035,55 +1032,22 @@ __lim_ibss_search_and_delete_peer(tpAniSirGlobal mac_ptr,
 		if (!qdf_mem_cmp((uint8_t *) mac_addr,
 				    (uint8_t *) &temp_node->peerMacAddr,
 				    sizeof(tSirMacAddr))) {
-			sta = dph_lookup_hash_entry(mac_ptr, mac_addr,
-							&peer_idx,
-							&session_entry->dph.
-							dphHashTable);
-			if (sta) {
-				sta_index = sta->staIndex;
-				uc_ucast_sig = sta->ucUcastSig;
-				uc_bcast_sig = sta->ucBcastSig;
-				/*
-				 * Send DEL STA only if ADD STA
-				 * was success i.e staid is Valid.
-				 */
-				if (STA_INVALID_IDX != sta_index)
-					lim_del_sta(mac_ptr, sta,
-						  false /*asynchronous */,
-						  session_entry);
-				lim_delete_dph_hash_entry(mac_ptr, sta->staAddr,
-						  peer_idx, session_entry);
-				lim_release_peer_idx(mac_ptr,
-						peer_idx, session_entry);
+			if (temp_node ==
+			   mac_ctx->lim.gLimIbssPeerList) {
+				mac_ctx->lim.gLimIbssPeerList =
+					temp_node->next;
+				prev_node =
+					mac_ctx->lim.gLimIbssPeerList;
+			} else
+				prev_node->next = temp_node->next;
+			if (temp_node->beacon)
+				qdf_mem_free(temp_node->beacon);
 
-				/*
-				 * Send indication to upper layers only if ADD
-				 * STA was success i.e staid is Valid.
-				 */
-				if (STA_INVALID_IDX != sta_index)
-					ibss_status_chg_notify(mac_ptr,
-						mac_addr, sta_index,
-						uc_ucast_sig, uc_bcast_sig,
-						eWNI_SME_IBSS_PEER_DEPARTED_IND,
-						session_entry->
-						smeSessionId);
-				if (temp_node ==
-					 mac_ptr->lim.gLimIbssPeerList) {
-					mac_ptr->lim.gLimIbssPeerList =
-						temp_node->next;
-					prev_node =
-						mac_ptr->lim.gLimIbssPeerList;
-				} else
-					prev_node->next = temp_node->next;
-				if (temp_node->beacon)
-					qdf_mem_free(temp_node->beacon);
+			qdf_mem_free(temp_node);
+			mac_ctx->lim.gLimNumIbssPeers--;
 
-				qdf_mem_free(temp_node);
-				mac_ptr->lim.gLimNumIbssPeers--;
-
-				temp_node = temp_next_node;
-				break;
-			}
+			temp_node = temp_next_node;
+			break;
 		}
 		prev_node = temp_node;
 		temp_node = temp_next_node;
@@ -1092,10 +1056,118 @@ __lim_ibss_search_and_delete_peer(tpAniSirGlobal mac_ptr,
 	 * if it is the last peer walking out, we better
 	 * we set IBSS state to inactive.
 	 */
-	if (0 == mac_ptr->lim.gLimNumIbssPeers) {
+	if (0 == mac_ctx->lim.gLimNumIbssPeers) {
 		pe_debug("Last STA from IBSS walked out");
 		session_entry->limIbssActive = false;
 	}
+}
+
+/**
+ * lim_ibss_delete_peer()- to delete IBSS peer
+ *
+ * @mac_ptr: Pointer to Global MAC structure
+ * @session_entry: Session entry
+ * @mac_addr: Mac Address of the IBSS peer
+ *
+ * This function is called delete IBSS peer.
+ *
+ * Return: None
+ *
+ */
+static void
+lim_ibss_delete_peer(tpAniSirGlobal mac_ctx,
+			tpPESession session_entry, tSirMacAddr mac_addr)
+{
+	tpDphHashNode sta = NULL;
+	uint16_t peer_idx = 0;
+
+	pe_debug("Delete peer :" MAC_ADDRESS_STR,
+		MAC_ADDR_ARRAY(mac_addr));
+
+	sta = dph_lookup_hash_entry(mac_ctx, mac_addr,
+			&peer_idx,
+			&session_entry->dph.
+			dphHashTable);
+
+	if (!sta) {
+		pe_err("DPH Entry for STA %pM is missing",
+			mac_addr);
+		return;
+	}
+
+	if (STA_INVALID_IDX != sta->staIndex) {
+		lim_del_sta(mac_ctx, sta,
+			  true, session_entry);
+	} else {
+		/*
+		 * This mean ADD STA failed, thus remove the sta from
+		 * from database and no need to send del sta to firmware
+		 * and peer departed indication to upper layer.
+		 */
+		lim_delete_dph_hash_entry(mac_ctx, sta->staAddr,
+			  peer_idx, session_entry);
+		lim_release_peer_idx(mac_ctx,
+			peer_idx, session_entry);
+		lim_ibss_search_and_delete_peer(mac_ctx,
+			session_entry, mac_addr);
+	}
+
+}
+
+void lim_process_ibss_del_sta_rsp(tpAniSirGlobal mac_ctx,
+	struct scheduler_msg *lim_msg,
+	tpPESession pe_session)
+{
+	tpDphHashNode sta_ds = NULL;
+	tpDeleteStaParams del_sta_params = (tpDeleteStaParams) lim_msg->bodyptr;
+	tSirResultCodes status = eSIR_SME_SUCCESS;
+
+	if (!del_sta_params) {
+		pe_err("del_sta_params is NULL");
+		return;
+	}
+	if (!LIM_IS_IBSS_ROLE(pe_session)) {
+		pe_err("Session %d is not IBSS role", del_sta_params->assocId);
+		status = eSIR_SME_REFUSED;
+		goto skip_event;
+	}
+
+	sta_ds = dph_get_hash_entry(mac_ctx, del_sta_params->assocId,
+			&pe_session->dph.dphHashTable);
+	if (!sta_ds) {
+		pe_err("DPH Entry for STA %X is missing",
+			del_sta_params->assocId);
+		status = eSIR_SME_REFUSED;
+		goto skip_event;
+	}
+
+	if (QDF_STATUS_SUCCESS != del_sta_params->status) {
+		pe_err("DEL STA failed!");
+		status = eSIR_SME_REFUSED;
+		goto skip_event;
+	}
+	pe_debug("Deleted STA associd %d staId %d MAC " MAC_ADDRESS_STR,
+		sta_ds->assocId, sta_ds->staIndex,
+		MAC_ADDR_ARRAY(sta_ds->staAddr));
+
+	lim_delete_dph_hash_entry(mac_ctx, sta_ds->staAddr,
+			  del_sta_params->assocId, pe_session);
+	lim_release_peer_idx(mac_ctx,
+			del_sta_params->assocId, pe_session);
+
+	ibss_status_chg_notify(mac_ctx,
+		del_sta_params->staMac,
+		sta_ds->staIndex,
+		sta_ds->ucUcastSig, sta_ds->ucBcastSig,
+		eWNI_SME_IBSS_PEER_DEPARTED_IND,
+		pe_session->smeSessionId);
+
+	lim_ibss_search_and_delete_peer(mac_ctx,
+				pe_session, del_sta_params->staMac);
+
+skip_event:
+	qdf_mem_free(del_sta_params);
+	lim_msg->bodyptr = NULL;
 }
 
 /* handle the response from HAL for an ADD STA request */
@@ -1126,7 +1198,7 @@ lim_ibss_add_sta_rsp(tpAniSirGlobal pMac, void *msg, tpPESession psessionEntry)
 		pe_err("IBSS: ADD_STA_RSP error: %x for MAC:"MAC_ADDRESS_STR,
 			pAddStaParams->status,
 			MAC_ADDR_ARRAY(pAddStaParams->staMac));
-		__lim_ibss_search_and_delete_peer(pMac,
+		lim_ibss_delete_peer(pMac,
 			psessionEntry, pAddStaParams->staMac);
 		qdf_mem_free(pAddStaParams);
 		return eSIR_FAILURE;
@@ -1353,7 +1425,7 @@ lim_ibss_coalesce(tpAniSirGlobal pMac,
 		 */
 		pPeerNode = ibss_peer_find(pMac, pHdr->sa);
 		if (NULL != pPeerNode) {
-			__lim_ibss_search_and_delete_peer(pMac, psessionEntry,
+			lim_ibss_delete_peer(pMac, psessionEntry,
 							  pHdr->sa);
 			pe_warn("Peer attempting to reconnect before HB timeout, deleted");
 			return eSIR_LIM_IGNORE_BEACON;
@@ -1687,7 +1759,7 @@ __lim_ibss_peer_inactivity_handler(tpAniSirGlobal pMac,
 	}
 
 	/* delete the peer for which heartbeat is observed */
-	__lim_ibss_search_and_delete_peer(pMac, psessionEntry,
+	lim_ibss_delete_peer(pMac, psessionEntry,
 					  peerInactivityInd->peer_addr.bytes);
 }
 
