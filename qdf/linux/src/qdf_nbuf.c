@@ -206,7 +206,7 @@ realloc:
 	 * Though we are trying to reserve low memory upfront to prevent this,
 	 * we sometimes see SKBs allocated from low memory.
 	 */
-	if (virt_to_phys(qdf_nbuf_data(skb) < 0x50000040)) {
+	if (virt_to_phys(qdf_nbuf_data(skb)) < 0x50000040) {
 		lowmem_alloc_tries++;
 		if (lowmem_alloc_tries > 100) {
 			qdf_print("%s Failed \n",__func__);
