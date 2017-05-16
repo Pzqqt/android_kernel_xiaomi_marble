@@ -1901,6 +1901,8 @@ static HTC_PACKET *htc_lookup_tx_packet(HTC_TARGET *target,
 	HTC_PACKET_QUEUE lookupQueue;
 
 	INIT_HTC_PACKET_QUEUE(&lookupQueue);
+	LOCK_HTC_EP_TX_LOOKUP(pEndpoint);
+
 	LOCK_HTC_TX(target);
 
 	/* mark that HIF has indicated the send complete for another packet */
@@ -1910,10 +1912,12 @@ static HTC_PACKET *htc_lookup_tx_packet(HTC_TARGET *target,
 	pPacket = htc_packet_dequeue(&pEndpoint->TxLookupQueue);
 	if (qdf_unlikely(!pPacket)) {
 		UNLOCK_HTC_TX(target);
+		UNLOCK_HTC_EP_TX_LOOKUP(pEndpoint);
 		return NULL;
 	}
 	if (netbuf == (qdf_nbuf_t) GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket)) {
 		UNLOCK_HTC_TX(target);
+		UNLOCK_HTC_EP_TX_LOOKUP(pEndpoint);
 		return pPacket;
 	}
 	HTC_PACKET_ENQUEUE(&lookupQueue, pPacket);
@@ -1949,6 +1953,7 @@ static HTC_PACKET *htc_lookup_tx_packet(HTC_TARGET *target,
 	HTC_PACKET_QUEUE_TRANSFER_TO_HEAD(&pEndpoint->TxLookupQueue,
 					  &lookupQueue);
 	UNLOCK_HTC_TX(target);
+	UNLOCK_HTC_EP_TX_LOOKUP(pEndpoint);
 
 	return pFoundPacket;
 }

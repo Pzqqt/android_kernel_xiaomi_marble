@@ -142,7 +142,8 @@ void htc_dump(HTC_HANDLE HTCHandle, uint8_t CmdId, bool start)
 static void htc_cleanup(HTC_TARGET *target)
 {
 	HTC_PACKET *pPacket;
-	/* qdf_nbuf_t netbuf; */
+	int i;
+	HTC_ENDPOINT *endpoint;
 
 	if (target->hif_dev != NULL) {
 		hif_detach_htc(target->hif_dev);
@@ -180,6 +181,10 @@ static void htc_cleanup(HTC_TARGET *target)
 	qdf_spinlock_destroy(&target->HTCRxLock);
 	qdf_spinlock_destroy(&target->HTCTxLock);
 	qdf_spinlock_destroy(&target->HTCCreditLock);
+	for (i = 0; i < ENDPOINT_MAX; i++) {
+		endpoint = &target->endpoint[i];
+		qdf_spinlock_destroy(&endpoint->lookup_queue_lock);
+	}
 
 	/* free our instance */
 	qdf_mem_free(target);
@@ -262,6 +267,10 @@ HTC_HANDLE htc_create(void *ol_sc, struct htc_init_info *pInfo,
 	qdf_spinlock_create(&target->HTCRxLock);
 	qdf_spinlock_create(&target->HTCTxLock);
 	qdf_spinlock_create(&target->HTCCreditLock);
+	for (i = 0; i < ENDPOINT_MAX; i++) {
+		pEndpoint = &target->endpoint[i];
+		qdf_spinlock_create(&pEndpoint->lookup_queue_lock);
+	}
 	target->is_nodrop_pkt = false;
 	target->wmi_ep_count = 1;
 

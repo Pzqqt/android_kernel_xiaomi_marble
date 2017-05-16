@@ -174,6 +174,7 @@ typedef struct _HTC_ENDPOINT {
 #endif
 	bool TxCreditFlowEnabled;
 	bool async_update;  /* packets can be queued asynchronously */
+	qdf_spinlock_t lookup_queue_lock;
 } HTC_ENDPOINT;
 
 #ifdef HTC_EP_STAT_PROFILING
@@ -279,16 +280,18 @@ do { \
 } while (0)
 #endif
 
-#define HTC_STATE_STOPPING      (1 << 0)
-#define HTC_STOPPING(t)         ((t)->HTCStateFlags & HTC_STATE_STOPPING)
-#define LOCK_HTC(t)             qdf_spin_lock_bh(&(t)->HTCLock)
-#define UNLOCK_HTC(t)           qdf_spin_unlock_bh(&(t)->HTCLock)
-#define LOCK_HTC_RX(t)          qdf_spin_lock_bh(&(t)->HTCRxLock)
-#define UNLOCK_HTC_RX(t)        qdf_spin_unlock_bh(&(t)->HTCRxLock)
-#define LOCK_HTC_TX(t)          qdf_spin_lock_bh(&(t)->HTCTxLock)
-#define UNLOCK_HTC_TX(t)        qdf_spin_unlock_bh(&(t)->HTCTxLock)
-#define LOCK_HTC_CREDIT(t)      qdf_spin_lock_bh(&(t)->HTCCreditLock)
-#define UNLOCK_HTC_CREDIT(t)    qdf_spin_unlock_bh(&(t)->HTCCreditLock)
+#define HTC_STATE_STOPPING         (1 << 0)
+#define HTC_STOPPING(t)            ((t)->HTCStateFlags & HTC_STATE_STOPPING)
+#define LOCK_HTC(t)                qdf_spin_lock_bh(&(t)->HTCLock)
+#define UNLOCK_HTC(t)              qdf_spin_unlock_bh(&(t)->HTCLock)
+#define LOCK_HTC_RX(t)             qdf_spin_lock_bh(&(t)->HTCRxLock)
+#define UNLOCK_HTC_RX(t)           qdf_spin_unlock_bh(&(t)->HTCRxLock)
+#define LOCK_HTC_TX(t)             qdf_spin_lock_bh(&(t)->HTCTxLock)
+#define UNLOCK_HTC_TX(t)           qdf_spin_unlock_bh(&(t)->HTCTxLock)
+#define LOCK_HTC_CREDIT(t)         qdf_spin_lock_bh(&(t)->HTCCreditLock)
+#define UNLOCK_HTC_CREDIT(t)       qdf_spin_unlock_bh(&(t)->HTCCreditLock)
+#define LOCK_HTC_EP_TX_LOOKUP(t)   qdf_spin_lock_bh(&(t)->lookup_queue_lock)
+#define UNLOCK_HTC_EP_TX_LOOKUP(t) qdf_spin_unlock_bh(&(t)->lookup_queue_lock)
 
 #define GET_HTC_TARGET_FROM_HANDLE(hnd) ((HTC_TARGET *)(hnd))
 
