@@ -334,3 +334,24 @@ release_nbuf:
 	return status;
 }
 
+void tgt_tdls_peers_deleted_notification(struct wlan_objmgr_psoc *psoc,
+						uint32_t session_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
+						    session_id,
+						    WLAN_TDLS_SB_ID);
+
+	if (!vdev) {
+		tdls_err("vdev not exist for the session id %d",
+			 session_id);
+		return;
+	}
+
+	tdls_peers_deleted_notification(vdev, session_id);
+
+	wlan_objmgr_vdev_release_ref(vdev,
+				     WLAN_TDLS_SB_ID);
+}
+

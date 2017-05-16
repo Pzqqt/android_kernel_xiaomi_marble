@@ -584,6 +584,20 @@ QDF_STATUS tdls_notify_sta_connect(struct tdls_sta_notify_params *notify);
 QDF_STATUS tdls_notify_sta_disconnect(struct tdls_sta_notify_params *notify);
 
 /**
+ * tdls_peers_deleted_notification() - peer delete notification
+ * @vdev: vdev object
+ * @session_id: session id
+ *
+ * Legacy lim layer will delete tdls peers for roaming and heart beat failures
+ * and notify the component about the delete event to update the tdls.
+ * state.
+ *
+ * Return: None
+ */
+void tdls_peers_deleted_notification(struct wlan_objmgr_vdev *vdev,
+					 uint32_t session_id);
+
+/**
  * tdls_notify_decrement_session() - Notify the session decrement
  * @psoc: psoc  object manager
  *
