@@ -3317,6 +3317,7 @@ static inline int wma_process_rmf_frame(tp_wma_handle wma_handle,
  * wma_is_pkt_drop_candidate() - check if the mgmt frame should be droppped
  * @wma_handle: wma handle
  * @peer_addr: peer MAC address
+ * @bssid: BSSID Address
  * @subtype: Management frame subtype
  *
  * This function is used to decide if a particular management frame should be
@@ -3325,7 +3326,8 @@ static inline int wma_process_rmf_frame(tp_wma_handle wma_handle,
  * Return: true if the packet should be dropped and false oterwise
  */
 static bool wma_is_pkt_drop_candidate(tp_wma_handle wma_handle,
-				      uint8_t *peer_addr, uint8_t subtype)
+				      uint8_t *peer_addr, uint8_t *bssid,
+				      uint8_t subtype)
 {
 	void *peer;
 	struct cdp_pdev *pdev_ctx;
@@ -3333,6 +3335,14 @@ static bool wma_is_pkt_drop_candidate(tp_wma_handle wma_handle,
 	bool should_drop = false;
 	qdf_time_t *ptr;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	uint8_t nan_addr[] = {0x50, 0x6F, 0x9A, 0x01, 0x00, 0x00};
+
+	/* Drop the beacons from NAN device */
+	if ((subtype == IEEE80211_FC0_SUBTYPE_BEACON) &&
+		(!qdf_mem_cmp(nan_addr, bssid, NAN_CLUSTER_ID_BYTES))) {
+			should_drop = true;
+			goto end;
+	}
 
 	/*
 	 * Currently this function handles only Disassoc,
@@ -3557,7 +3567,8 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 	rx_pkt->pkt_meta.sessionId =
 		(vdev_id == WMA_INVALID_VDEV_ID ? 0 : vdev_id);
 
-	if (wma_is_pkt_drop_candidate(wma_handle, wh->i_addr2, mgt_subtype)) {
+	if (wma_is_pkt_drop_candidate(wma_handle, wh->i_addr2, wh->i_addr3,
+					mgt_subtype)) {
 		cds_pkt_return_packet(rx_pkt);
 		return -EINVAL;
 	}
