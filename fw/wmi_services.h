@@ -190,6 +190,7 @@ typedef  enum  {
     WMI_SERVICE_PKT_ROUTING=121, /* Support for routing specific data packets to selected destination rings */
     WMI_SERVICE_CHECK_CAL_VERSION=122, /* Support cal version check */
     WMI_SERVICE_OFFCHAN_TX_WMI=123, /* Support offchan data/mgmt tx over wmi */
+    WMI_SERVICE_8SS_TX_BFEE = 124, /* support for 8Ant Bfee */
 
 
     /******* ADD NEW SERVICES HERE UNTIL ALL VALUES UP TO 128 ARE USED *******/
