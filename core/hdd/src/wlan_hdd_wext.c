@@ -9631,7 +9631,8 @@ static int __iw_set_three_ints_getnone(struct net_device *dev,
 	switch (sub_cmd) {
 
 	case WE_SET_WLAN_DBG:
-		qdf_trace_set_value(value[1], value[2], value[3]);
+		qdf_print_set_category_verbose(qdf_get_pidx(), value[1],
+					       value[2], value[3]);
 		break;
 	case WE_SET_DP_TRACE:
 		qdf_dp_trace_set_value(value[1], value[2], value[3]);
