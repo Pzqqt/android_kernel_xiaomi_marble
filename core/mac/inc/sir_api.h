@@ -1198,7 +1198,7 @@ typedef struct sSirSmeJoinReq {
 	tSirMacPowerCapInfo powerCap;
 	tSirSupChnl supportedChannels;
 	tSirBssDescription bssDescription;
-
+	bool enable_bcast_probe_rsp;
 } tSirSmeJoinReq, *tpSirSmeJoinReq;
 
 /* / Definition for reponse message to previously issued join request */

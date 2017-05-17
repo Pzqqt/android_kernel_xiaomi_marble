@@ -514,6 +514,7 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	uint8_t bss_color_changing;
 #endif
 #endif
+	bool enable_bcast_probe_rsp;
 } tPESession, *tpPESession;
 
 /*-------------------------------------------------------------------------
