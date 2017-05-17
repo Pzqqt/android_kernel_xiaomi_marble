@@ -24,6 +24,9 @@
 #define _WLAN_UTILITY_H_
 
 #include <qdf_types.h>
+#include <wlan_objmgr_psoc_obj.h>
+#include <wlan_objmgr_pdev_obj.h>
+#include <wlan_objmgr_vdev_obj.h>
 
 /**
  * wlan_chan_to_freq() - converts channel to frequency
@@ -71,4 +74,19 @@ uint8_t *wlan_get_vendor_ie_ptr_from_oui(uint8_t *oui,
  * Return: boolean value based on platform type
  */
 bool wlan_is_emulation_platform(uint32_t phy_version);
+
+/**
+ * wlan_get_pdev_id_from_vdev_id() - Helper func to derive pdev id from vdev_id
+ * @psoc    : psoc object
+ * @vdev_id : vdev identifier
+ * @dbg_id  : object manager debug id
+ *
+ * This function is used to derive the pdev id from vdev id for a psoc
+ *
+ * Return : pdev_id - +ve integer for success and WLAN_INVALID_PDEV_ID
+ *          for failure
+ */
+uint32_t wlan_get_pdev_id_from_vdev_id(struct wlan_objmgr_psoc *psoc,
+				 uint8_t vdev_id,
+				 wlan_objmgr_ref_dbgid dbg_id);
 #endif /* _WLAN_UTILITY_H_ */

@@ -104,3 +104,25 @@ bool wlan_is_emulation_platform(uint32_t phy_version)
 
 	return false;
 }
+
+uint32_t wlan_get_pdev_id_from_vdev_id(struct wlan_objmgr_psoc *psoc,
+				      uint8_t vdev_id,
+				      wlan_objmgr_ref_dbgid dbg_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_pdev *pdev = NULL;
+	uint32_t pdev_id = WLAN_INVALID_PDEV_ID;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
+						    vdev_id, dbg_id);
+
+	if (vdev) {
+		pdev = wlan_vdev_get_pdev(vdev);
+		if (pdev)
+			pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+		wlan_objmgr_vdev_release_ref(vdev, dbg_id);
+	}
+
+	return pdev_id;
+}
+EXPORT_SYMBOL(wlan_get_pdev_id_from_vdev_id);

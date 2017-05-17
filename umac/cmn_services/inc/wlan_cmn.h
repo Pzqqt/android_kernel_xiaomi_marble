@@ -48,6 +48,9 @@
 /* Max vdev_id */
 #define WLAN_UMAC_VDEV_ID_MAX 0xFF
 
+/* Invalid pdev_id */
+#define WLAN_INVALID_PDEV_ID 0xFFFFFFFF
+
 /* 802.11 cap info */
 #define WLAN_CAPINFO_ESS               0x0001
 #define WLAN_CAPINFO_IBSS              0x0002
