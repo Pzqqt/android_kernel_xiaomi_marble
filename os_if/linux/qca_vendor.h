@@ -2168,6 +2168,22 @@ enum qca_roaming_policy {
  * @QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_PTK_KCK: KCK of the PTK
  * @QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_PTK_KEK: KEK of the PTK
  * @QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_SUBNET_STATUS: subnet change status
+ * @QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_STATUS:
+ * Indicates the status of re-association requested by user space for
+ * the BSSID specified by QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_BSSID.
+ * Type u16.
+ * Represents the status code from AP. Use
+ * %WLAN_STATUS_UNSPECIFIED_FAILURE if the device cannot give you the
+ * real status code for failures.
+ * @QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_RETAIN_CONNECTION:
+ * This attribute indicates that the old association was maintained when
+ * a re-association is requested by user space and that re-association
+ * attempt fails (i.e., cannot connect to the requested BSS, but can
+ * remain associated with the BSS with which the association was in
+ * place when being requested to roam). Used along with
+ * WLAN_VENDOR_ATTR_ROAM_AUTH_STATUS to indicate the current
+ * re-association status. Type flag.
+ * This attribute is applicable only for re-association failure cases.
  */
 enum qca_wlan_vendor_attr_roam_auth {
 	QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_INVALID = 0,
@@ -2179,6 +2195,8 @@ enum qca_wlan_vendor_attr_roam_auth {
 	QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_PTK_KCK,
 	QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_PTK_KEK,
 	QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_SUBNET_STATUS,
+	QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_STATUS,
+	QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_RETAIN_CONNECTION,
 	QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_AFTER_LAST,
 	QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_MAX =
 		QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_AFTER_LAST - 1
