@@ -10057,6 +10057,37 @@ enum l1ss_sleep_allowed {
 #define CFG_MAX_MPDUS_IN_AMPDU_DEFAULT          (0)
 
 /*
+ * <ini>
+ * gScanBackoffMultiplier - For NLO/PNO, multiply fast scan period by this every
+ *	max cycles
+ * @Min: 0
+ * @Max: 255
+ * @Default: 0
+ *
+ * For Network Listen Offload and Perfered Network Offload, multiply the fast
+ * scan period by this value after max cycles have occurred. Setting this to 0
+ * disables the feature.
+ *
+ * @E.g.
+ *	# Disable scan backoff multiplier
+ *	gScanBackoffMultiplier=0
+ *	# Effectively the same
+ *	gScanBackoffMultiplier=1
+ *	# Double the scan period after each max cycles have occurred
+ *	gScanBackoffMultiplier=2
+ *
+ * Related: NLO, PNO
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_SCAN_BACKOFF_MULTIPLIER_NAME	"gScanBackoffMultiplier"
+#define CFG_SCAN_BACKOFF_MULTIPLIER_MIN		(0)
+#define CFG_SCAN_BACKOFF_MULTIPLIER_MAX		(255)
+#define CFG_SCAN_BACKOFF_MULTIPLIER_DEFAULT	(0)
+
+/*
  * enum hdd_external_acs_policy - External ACS policy
  * @HDD_EXTERNAL_ACS_PCL_PREFERRED -Preferable for ACS to select a
  *	channel with non-zero pcl weight.
@@ -10875,6 +10906,7 @@ struct hdd_config {
 	bool reg_offload_enabled;
 	uint32_t timer_multiplier;
 	uint8_t fils_max_chan_guard_time;
+	uint8_t scan_backoff_multiplier;
 	enum hdd_external_acs_policy external_acs_policy;
 	enum hdd_external_acs_freq_band external_acs_freq_band;
 	/* threshold of packet drops at which FW initiates disconnect */

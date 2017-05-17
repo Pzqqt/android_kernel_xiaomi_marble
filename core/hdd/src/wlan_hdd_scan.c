@@ -2551,7 +2551,8 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	return wlan_cfg80211_sched_scan_start(pHddCtx->hdd_pdev, dev, request);
+	return wlan_cfg80211_sched_scan_start(pHddCtx->hdd_pdev, dev, request,
+				      pHddCtx->config->scan_backoff_multiplier);
 }
 
 /**
