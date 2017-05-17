@@ -191,6 +191,8 @@ typedef  enum  {
     WMI_SERVICE_CHECK_CAL_VERSION=122, /* Support cal version check */
     WMI_SERVICE_OFFCHAN_TX_WMI=123, /* Support offchan data/mgmt tx over wmi */
     WMI_SERVICE_8SS_TX_BFEE = 124, /* support for 8Ant Bfee */
+    WMI_SERVICE_EXTENDED_NSS_SUPPORT=125, /* Extend NSS support for 80Mhz and 160Mhz */
+    WMI_SERVICE_ACK_TIMEOUT=126, /* Support TX ack timeout configurations */
 
 
     /******* ADD NEW SERVICES HERE UNTIL ALL VALUES UP TO 128 ARE USED *******/

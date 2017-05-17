@@ -4292,6 +4292,10 @@ typedef enum {
       * Bits 31:1 - reserved
       */
     WMI_PDEV_PARAM_SET_IOT_PATTERN,
+    /** ACK timeout - change wireless packet ack timeout configuration,
+     *  units are microseconds
+     */
+    WMI_PDEV_PARAM_ACK_TIMEOUT,
 } WMI_PDEV_PARAM;
 
 typedef struct {
