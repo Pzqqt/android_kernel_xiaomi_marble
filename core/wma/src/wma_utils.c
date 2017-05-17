@@ -3264,7 +3264,13 @@ void wma_get_stats_req(WMA_HANDLE handle,
 			WMA_LOGD("Stats for staId %d with stats mask %d is pending.. ignore new request",
 				 get_stats_param->staId,
 				 get_stats_param->statsMask);
-			goto end;
+			pGetPEStatsRspParams =
+				wma_get_stats_rsp_buf(get_stats_param);
+			if (!pGetPEStatsRspParams) {
+				WMA_LOGE("failed to allocate memory for stats response");
+				goto end;
+			}
+			goto req_pending;
 		} else {
 			qdf_mem_free(node->stats_rsp);
 			node->stats_rsp = NULL;
@@ -3299,12 +3305,12 @@ void wma_get_stats_req(WMA_HANDLE handle,
 
 	goto end;
 failed:
-
+	node->stats_rsp = NULL;
+req_pending:
 	pGetPEStatsRspParams->rc = QDF_STATUS_E_FAILURE;
 	/* send response to UMAC */
 	wma_send_msg(wma_handle, WMA_GET_STATISTICS_RSP, pGetPEStatsRspParams,
 		     0);
-	node->stats_rsp = NULL;
 end:
 	qdf_mem_free(get_stats_param);
 	WMA_LOGD("%s: Exit", __func__);
