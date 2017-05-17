@@ -4955,6 +4955,7 @@ typedef enum {
 	wmi_offchan_data_tx_completion_event,
 	wmi_dfs_cac_complete_id,
 	wmi_dfs_radar_detection_event_id,
+	wmi_ext_tbttoffset_update_event_id,
 
 	wmi_events_max,
 } wmi_conv_event_id;
@@ -5860,6 +5861,7 @@ struct wmi_host_offchan_data_tx_compl_event {
  * @tim_bitmap: TIM bitmap
  * @tim_changed: TIM changed
  * @tim_num_ps_pending: TIM num PS sta pending
+ * @vdev_id: Vdev id
  */
 typedef struct {
 	uint32_t tim_len;
@@ -5867,6 +5869,7 @@ typedef struct {
 	uint32_t tim_bitmap[WMI_HOST_TIM_BITMAP_ARRAY_SIZE];
 	uint32_t tim_changed;
 	uint32_t tim_num_ps_pending;
+	uint32_t vdev_id;
 } wmi_host_tim_info;
 
 /**
@@ -5892,6 +5895,7 @@ typedef struct {
  * @ctwindow: CT window
  * @num_descriptors: number of descriptors
  * @noa_descriptors: noa descriptors
+ * @vdev_id: Vdev id
  */
 typedef struct {
 	uint8_t modified;
@@ -5901,6 +5905,7 @@ typedef struct {
 	uint8_t num_descriptors;
 	wmi_host_p2p_noa_descriptor
 		noa_descriptors[WMI_HOST_P2P_MAX_NOA_DESCRIPTORS];
+	uint32_t vdev_id;
 } wmi_host_p2p_noa_info;
 
 /**
@@ -7250,4 +7255,15 @@ struct coex_config_params {
 #define WMI_HOST_PDEV_ID_0   0
 #define WMI_HOST_PDEV_ID_1   1
 #define WMI_HOST_PDEV_ID_2   2
+
+/**
+ * struct tbttoffset_params - Tbttoffset event params
+ * @vdev_id: Virtual AP device identifier
+ * @tbttoffset : Tbttoffset for the virtual AP device
+ */
+struct tbttoffset_params {
+	uint32_t vdev_id;
+	uint32_t tbttoffset;
+};
+
 #endif /* _WMI_UNIFIED_PARAM_H_ */
