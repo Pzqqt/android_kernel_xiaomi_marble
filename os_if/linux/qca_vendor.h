@@ -3013,6 +3013,16 @@ enum qca_wlan_vendor_attr_config {
 	/* 32-bit unsigned value to set ack snr weight */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_ACK_SNR_WEIGHT = 47,
 	/*
+	 * 32-bit unsigned value to configure the listen interval.
+	 * This is in units of beacon intervals. This configuration alters
+	 * the negotiated listen interval with the AP during the connection.
+	 * It is highly recommended to configure a value less than or equal to
+	 * the one negotiated during the association. Configuring any greater
+	 * value can have adverse effects (frame loss, AP disassociating STA,
+	 * etc.).
+	 */
+	QCA_WLAN_VENDOR_ATTR_CONFIG_LISTEN_INTERVAL = 48,
+	/*
 	 * 8 bit unsigned value that is set on an AP/GO virtual interface to
 	 * disable operations that would cause the AP/GO to leave its operating
 	 * channel.
