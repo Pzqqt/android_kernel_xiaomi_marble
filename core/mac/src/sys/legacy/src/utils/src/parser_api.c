@@ -911,10 +911,8 @@ populate_dot11f_vht_caps(tpAniSirGlobal pMac,
 		pDot11f->suBeamformeeCap =
 			psessionEntry->vht_config.su_beam_formee;
 		if (psessionEntry->vht_config.su_beam_formee) {
-			nCfgValue = 0;
-			CFG_GET_INT(nStatus, pMac,
-				    WNI_CFG_VHT_MU_BEAMFORMEE_CAP, nCfgValue);
-			pDot11f->muBeamformeeCap = (nCfgValue & 0x0001);
+			pDot11f->muBeamformeeCap =
+				psessionEntry->vht_config.mu_beam_formee;
 			pDot11f->csnofBeamformerAntSup =
 			      psessionEntry->vht_config.csnof_beamformer_antSup;
 		} else {

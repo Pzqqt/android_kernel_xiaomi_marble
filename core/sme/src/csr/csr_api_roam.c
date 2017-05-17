@@ -15365,6 +15365,13 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(tpAniSirGlobal pMac, uint32_t
 	pMsg->bssPersona = pParam->bssPersona;
 	pMsg->txLdpcIniFeatureEnabled = pMac->roam.configParam.tx_ldpc_enable;
 
+	qdf_mem_copy(&pMsg->vht_config,
+		     &pSession->vht_config,
+		     sizeof(pSession->vht_config));
+	qdf_mem_copy(&pMsg->htConfig,
+		     &pSession->htConfig,
+		     sizeof(tSirHTConfig));
+
 	if (wlan_cfg_get_int(pMac, WNI_CFG_VHT_SU_BEAMFORMEE_CAP, &value)
 					!= eSIR_SUCCESS)
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
@@ -15378,7 +15385,11 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(tpAniSirGlobal pMac, uint32_t
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 				("Failed to get CSN beamformee capability"));
 	pMsg->vht_config.csnof_beamformer_antSup = (uint8_t)value;
+	pMsg->vht_config.mu_beam_formee = 0;
 
+	sme_debug("ht capability 0x%x VHT capability 0x%x",
+			 (uint32_t)(*(uint32_t *) &pMsg->htConfig),
+			 (uint32_t)(*(uint32_t *) &pMsg->vht_config));
 #ifdef WLAN_FEATURE_11W
 	pMsg->pmfCapable = pParam->mfpCapable;
 	pMsg->pmfRequired = pParam->mfpRequired;
@@ -15409,15 +15420,6 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(tpAniSirGlobal pMac, uint32_t
 		csr_set_ldpc_exception(pMac, pSession,
 				pMsg->channelId,
 				pMac->roam.configParam.rx_ldpc_enable);
-	qdf_mem_copy(&pMsg->vht_config,
-		     &pSession->vht_config,
-		     sizeof(pSession->vht_config));
-	qdf_mem_copy(&pMsg->htConfig,
-		     &pSession->htConfig,
-		     sizeof(tSirHTConfig));
-	sme_debug("ht capability 0x%x VHT capability 0x%x",
-			 (uint32_t)(*(uint32_t *) &pMsg->htConfig),
-			 (uint32_t)(*(uint32_t *) &pMsg->vht_config));
 	if (IS_DOT11_MODE_HE(pMsg->dot11mode))
 		csr_start_bss_copy_he_cap(pMsg, pSession);
 
