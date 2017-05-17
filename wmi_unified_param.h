@@ -6880,6 +6880,8 @@ struct wmi_adaptive_dwelltime_params {
  *     for PER based roam in tx path
  * @rx_per_mon_time: Minimum time required to be considered as valid scenario
  *     for PER based roam in rx path
+ * @min_candidate_rssi: Minimum RSSI threshold for candidate AP to be used for
+ *     PER based roaming
  */
 struct wmi_per_roam_config {
 	uint32_t enable;
@@ -6892,6 +6894,7 @@ struct wmi_per_roam_config {
 	uint32_t per_rest_time;
 	uint32_t tx_per_mon_time;
 	uint32_t rx_per_mon_time;
+	uint32_t min_candidate_rssi;
 };
 
 /**
