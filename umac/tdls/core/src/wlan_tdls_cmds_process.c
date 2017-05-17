@@ -648,7 +648,7 @@ static int tdls_validate_setup_frames(struct tdls_soc_priv_obj *tdls_soc,
 	return 0;
 }
 
-int tdls_validate_mgmt_request(struct tdls_validate_action_req *tdls_validate)
+int tdls_validate_mgmt_request(struct tdls_action_frame_request *tdls_mgmt_req)
 {
 	struct tdls_vdev_priv_obj *tdls_vdev;
 	struct tdls_soc_priv_obj *tdls_soc;
@@ -656,6 +656,8 @@ int tdls_validate_mgmt_request(struct tdls_validate_action_req *tdls_validate)
 	struct tdls_peer *temp_peer;
 	QDF_STATUS status;
 
+	struct tdls_validate_action_req *tdls_validate =
+		tdls_mgmt_req->chk_frame;
 
 	if (!tdls_validate || !tdls_validate->vdev)
 		return -EINVAL;
@@ -711,20 +713,14 @@ int tdls_validate_mgmt_request(struct tdls_validate_action_req *tdls_validate)
 		}
 	}
 
-	/*
-	 * Discard TDLS Discovery request and setup confirm if violates
-	 * ACM rules
-	 */
-	if ((TDLS_DISCOVERY_REQUEST == tdls_validate->action_code ||
-		TDLS_SETUP_CONFIRM == tdls_validate->action_code)) {
-		/*  call hdd_wmm_is_acm_allowed() */
-		if (!tdls_soc->tdls_wmm_cb(&tdls_vdev->vdev)) {
-			tdls_err("admission ctrl set to VI, action %d declined",
-				 tdls_validate->action_code);
-			return -EPERM;
-		}
+	/*  call hdd_wmm_is_acm_allowed() */
+	if (!tdls_soc->tdls_wmm_cb(&tdls_vdev->vdev)) {
+		tdls_debug("admission ctrl set to VI, send the frame with least AC (BK) for action %d",
+			   tdls_validate->action_code);
+		tdls_mgmt_req->use_default_ac = false;
+	} else {
+		tdls_mgmt_req->use_default_ac = true;
 	}
-
 
 	if (TDLS_SETUP_REQUEST == tdls_validate->action_code ||
 	    TDLS_SETUP_RESPONSE == tdls_validate->action_code) {

@@ -27,6 +27,7 @@
 #include "../../core/src/wlan_tdls_main.h"
 #include "../../core/src/wlan_tdls_cmds_process.h"
 #include "../../core/src/wlan_tdls_ct.h"
+#include "../../core/src/wlan_tdls_mgmt.h"
 #include <wlan_objmgr_global_obj.h>
 #include <wlan_objmgr_cmn.h>
 #include "wlan_policy_mgr_api.h"
