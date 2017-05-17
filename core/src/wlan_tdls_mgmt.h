@@ -73,6 +73,7 @@ struct tdls_send_mgmt_request {
 	uint32_t peer_capability;
 	struct qdf_mac_addr bssid;
 	struct qdf_mac_addr peer_mac;
+	enum wifi_traffic_ac ac;
 	/* Variable length. Dont add any field after this. */
 	uint8_t add_ie[1];
 };
