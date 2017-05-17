@@ -316,11 +316,11 @@ int init_deinit_service_ext_ready_event_handler(ol_scn_t scn_handle,
 			goto free_param_and_exit;
 	}
 
+	wlan_objmgr_populate_ext_service_ready_data(psoc, service_param);
 	legacy_callback = target_if_get_psoc_legacy_service_ready_cb();
+
 	err_code = legacy_callback(wmi_service_ready_ext_event_id,
 				  scn_handle, event, data_len);
-
-	wlan_objmgr_populate_ext_service_ready_data(psoc, service_param);
 
 	target_if_scan_set_max_active_scans(psoc,
 			WLAN_MAX_ACTIVE_SCANS_ALLOWED);
