@@ -9141,6 +9141,31 @@ enum hdd_wext_control {
 
 /*
  * <ini>
+ * gper_min_rssi_threshold_for_roam -  Minimum roamable AP RSSI for
+ * candidate selection for PER based roam
+ * @Min: 0
+ * @Max: 96
+ * @Default: 83
+ *
+ * Minimum roamable AP RSSI for candidate selection for PER based roam
+ *
+ * Related: gper_roam_enabled, gper_roam_high_rate_th, gper_roam_low_rate_th,
+ *          gper_roam_th_percent, gper_roam_rest_time
+ *
+ * Supported Feature: LFR-3.0
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_PER_ROAM_MIN_CANDIDATE_RSSI           "gper_min_rssi_threshold_for_roam"
+#define CFG_PER_ROAM_MIN_CANDIDATE_RSSI_MIN       (0)
+#define CFG_PER_ROAM_MIN_CANDIDATE_RSSI_MAX       (96)
+#define CFG_PER_ROAM_MIN_CANDIDATE_RSSI_DEFAULT   (83)
+
+
+/*
+ * <ini>
  * gEnableImps - Enable/Disable IMPS
  * @Min: 0
  * @Max: 1
@@ -10957,6 +10982,7 @@ struct hdd_config {
 	uint32_t per_roam_th_percent;
 	uint32_t per_roam_rest_time;
 	uint32_t per_roam_mon_time;
+	uint32_t min_candidate_rssi;
 	enum active_bpf_mode active_uc_bpf_mode;
 	enum active_bpf_mode active_mc_bc_bpf_mode;
 	bool enable_bcast_probe_rsp;
