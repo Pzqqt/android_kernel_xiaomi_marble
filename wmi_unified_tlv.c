@@ -15413,29 +15413,117 @@ static QDF_STATUS extract_vdev_start_resp_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
- * extract_tbttoffset_update_params_tlv() - extract tbtt offset update param
+ * extract_tbttoffset_num_vdevs_tlv() - extract tbtt offset num vdev
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
- * @param vdev_map: Pointer to hold vdev map
- * @param tbttoffset_list: Pointer to tbtt offset list
+ * @param num_vdevs: Pointer to hold num vdev
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_tbttoffset_num_vdevs_tlv(void *wmi_hdl,
+	void *evt_buf, uint32_t *num_vdevs)
+{
+	WMI_TBTTOFFSET_UPDATE_EVENTID_param_tlvs *param_buf;
+	wmi_tbtt_offset_event_fixed_param *tbtt_offset_event;
+	uint32_t vdev_map;
+
+	param_buf = (WMI_TBTTOFFSET_UPDATE_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		qdf_print("Invalid tbtt update ext event buffer\n");
+		return QDF_STATUS_E_INVAL;
+	}
+	tbtt_offset_event = param_buf->fixed_param;
+	vdev_map = tbtt_offset_event->vdev_map;
+	*num_vdevs = wmi_vdev_map_to_num_vdevs(vdev_map);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * extract_ext_tbttoffset_num_vdevs_tlv() - extract ext tbtt offset num vdev
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param num_vdevs: Pointer to hold num vdev
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_ext_tbttoffset_num_vdevs_tlv(void *wmi_hdl,
+	void *evt_buf, uint32_t *num_vdevs)
+{
+	WMI_TBTTOFFSET_EXT_UPDATE_EVENTID_param_tlvs *param_buf;
+	wmi_tbtt_offset_ext_event_fixed_param *tbtt_offset_ext_event;
+
+	param_buf = (WMI_TBTTOFFSET_EXT_UPDATE_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		qdf_print("Invalid tbtt update ext event buffer\n");
+		return QDF_STATUS_E_INVAL;
+	}
+	tbtt_offset_ext_event = param_buf->fixed_param;
+
+	*num_vdevs = tbtt_offset_ext_event->num_vdevs;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * extract_tbttoffset_update_params_tlv() - extract tbtt offset param
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param idx: Index refering to a vdev
+ * @param tbtt_param: Pointer to tbttoffset event param
  *
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
 static QDF_STATUS extract_tbttoffset_update_params_tlv(void *wmi_hdl,
-	void *evt_buf, uint32_t *vdev_map, uint32_t **tbttoffset_list)
+	void *evt_buf, uint8_t idx,
+	struct tbttoffset_params *tbtt_param)
 {
 	WMI_TBTTOFFSET_UPDATE_EVENTID_param_tlvs *param_buf;
 	wmi_tbtt_offset_event_fixed_param *tbtt_offset_event;
+	uint32_t vdev_map;
 
 	param_buf = (WMI_TBTTOFFSET_UPDATE_EVENTID_param_tlvs *) evt_buf;
 	if (!param_buf) {
 		qdf_print("Invalid tbtt update event buffer\n");
 		return QDF_STATUS_E_INVAL;
 	}
-	tbtt_offset_event = param_buf->fixed_param;
 
-	*vdev_map = tbtt_offset_event->vdev_map;
-	*tbttoffset_list = param_buf->tbttoffset_list;
+	tbtt_offset_event = param_buf->fixed_param;
+	vdev_map = tbtt_offset_event->vdev_map;
+	tbtt_param->vdev_id = wmi_vdev_map_to_vdev_id(vdev_map, idx);
+	if (tbtt_param->vdev_id == WLAN_INVALID_VDEV_ID)
+		return QDF_STATUS_E_INVAL;
+	tbtt_param->tbttoffset =
+		param_buf->tbttoffset_list[tbtt_param->vdev_id];
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * extract_ext_tbttoffset_update_params_tlv() - extract ext tbtt offset param
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param idx: Index refering to a vdev
+ * @param tbtt_param: Pointer to tbttoffset event param
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_ext_tbttoffset_update_params_tlv(void *wmi_hdl,
+	void *evt_buf, uint8_t idx,
+	struct tbttoffset_params *tbtt_param)
+{
+	WMI_TBTTOFFSET_EXT_UPDATE_EVENTID_param_tlvs *param_buf;
+	wmi_tbtt_offset_info *tbtt_offset_info;
+
+	param_buf = (WMI_TBTTOFFSET_EXT_UPDATE_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		qdf_print("Invalid tbtt update event buffer\n");
+		return QDF_STATUS_E_INVAL;
+	}
+	tbtt_offset_info = &param_buf->tbtt_offset_info[idx];
+
+	tbtt_param->vdev_id = tbtt_offset_info->vdev_id;
+	tbtt_param->tbttoffset = tbtt_offset_info->tbttoffset;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -15833,26 +15921,32 @@ static QDF_STATUS extract_pdev_csa_switch_count_status_tlv(
 }
 
 /**
- * extract_swba_vdev_map_tlv() - extract swba vdev map from event
+ * extract_swba_num_vdevs_tlv() - extract swba num vdevs from event
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
- * @param vdev_map: Pointer to hold vdev map
+ * @param num_vdevs: Pointer to hold num vdevs
  *
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
-static QDF_STATUS extract_swba_vdev_map_tlv(wmi_unified_t wmi_handle,
-	void *evt_buf, uint32_t *vdev_map)
+static QDF_STATUS extract_swba_num_vdevs_tlv(wmi_unified_t wmi_handle,
+	void *evt_buf, uint32_t *num_vdevs)
 {
 	WMI_HOST_SWBA_EVENTID_param_tlvs *param_buf;
 	wmi_host_swba_event_fixed_param *swba_event;
+	uint32_t vdev_map;
 
 	param_buf = (WMI_HOST_SWBA_EVENTID_param_tlvs *) evt_buf;
 	if (!param_buf) {
 		WMI_LOGE("Invalid swba event buffer");
 		return QDF_STATUS_E_INVAL;
 	}
+
 	swba_event = param_buf->fixed_param;
-	*vdev_map = swba_event->vdev_map;
+	*num_vdevs = swba_event->num_vdevs;
+	if (!(*num_vdevs)) {
+		vdev_map = swba_event->vdev_map;
+		*num_vdevs = wmi_vdev_map_to_num_vdevs(vdev_map);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -15886,6 +15980,7 @@ static QDF_STATUS extract_swba_tim_info_tlv(wmi_unified_t wmi_handle,
 			(sizeof(uint32_t) * WMI_TIM_BITMAP_ARRAY_SIZE));
 	tim_info->tim_changed = tim_info_ev->tim_changed;
 	tim_info->tim_num_ps_pending = tim_info_ev->tim_num_ps_pending;
+	tim_info->vdev_id = tim_info_ev->vdev_id;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -15938,6 +16033,7 @@ static QDF_STATUS extract_swba_noa_info_tlv(wmi_unified_t wmi_handle,
 			p2p_desc->noa_descriptors[i].start_time =
 				p2p_noa_info->noa_descriptors[i].start_time;
 		}
+		p2p_desc->vdev_id = p2p_noa_info->vdev_id;
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -17900,6 +17996,12 @@ struct wmi_ops tlv_ops =  {
 	.extract_vdev_start_resp = extract_vdev_start_resp_tlv,
 	.extract_tbttoffset_update_params =
 				extract_tbttoffset_update_params_tlv,
+	.extract_ext_tbttoffset_update_params =
+				extract_ext_tbttoffset_update_params_tlv,
+	.extract_tbttoffset_num_vdevs =
+				extract_tbttoffset_num_vdevs_tlv,
+	.extract_ext_tbttoffset_num_vdevs =
+				extract_ext_tbttoffset_num_vdevs_tlv,
 	.extract_mgmt_rx_params = extract_mgmt_rx_params_tlv,
 	.extract_vdev_stopped_param = extract_vdev_stopped_param_tlv,
 	.extract_vdev_roam_param = extract_vdev_roam_param_tlv,
@@ -17908,7 +18010,7 @@ struct wmi_ops tlv_ops =  {
 	.extract_vdev_tdls_ev_param = extract_vdev_tdls_ev_param_tlv,
 #endif
 	.extract_mgmt_tx_compl_param = extract_mgmt_tx_compl_param_tlv,
-	.extract_swba_vdev_map = extract_swba_vdev_map_tlv,
+	.extract_swba_num_vdevs = extract_swba_num_vdevs_tlv,
 	.extract_swba_tim_info = extract_swba_tim_info_tlv,
 	.extract_swba_noa_info = extract_swba_noa_info_tlv,
 #ifdef CONVERGED_P2P_ENABLE
@@ -18024,6 +18126,8 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_host_swba_event_id] = WMI_HOST_SWBA_EVENTID;
 	event_ids[wmi_tbttoffset_update_event_id] =
 					WMI_TBTTOFFSET_UPDATE_EVENTID;
+	event_ids[wmi_ext_tbttoffset_update_event_id] =
+					WMI_TBTTOFFSET_EXT_UPDATE_EVENTID;
 	event_ids[wmi_offload_bcn_tx_status_event_id] =
 				WMI_OFFLOAD_BCN_TX_STATUS_EVENTID;
 	event_ids[wmi_offload_prob_resp_tx_status_event_id] =
