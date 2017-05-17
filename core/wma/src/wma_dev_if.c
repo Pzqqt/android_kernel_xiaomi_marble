@@ -3617,6 +3617,7 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 	}
 #endif
 
+	iface->rmfEnabled = add_sta->rmfEnabled;
 	if (add_sta->rmfEnabled)
 		wma_set_mgmt_frame_protection(wma);
 
