@@ -271,8 +271,7 @@ qdf_nbuf_t ol_tx_data(void *data_vdev, qdf_nbuf_t skb)
 	qdf_nbuf_set_next(skb, NULL);
 	ret = OL_TX_SEND(vdev, skb);
 	if (ret) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
-			"%s: Failed to tx", __func__);
+		ol_txrx_dbg("%s: Failed to tx", __func__);
 		return ret;
 	}
 
@@ -300,7 +299,7 @@ qdf_nbuf_t ol_tx_send_ipa_data_frame(struct cdp_vdev *vdev,
 	qdf_nbuf_set_next(skb, NULL);
 	ret = OL_TX_SEND((struct ol_txrx_vdev_t *)vdev, skb);
 	if (ret) {
-		ol_txrx_warn("%s: Failed to tx", __func__);
+		ol_txrx_dbg("%s: Failed to tx", __func__);
 		return ret;
 	}
 
@@ -692,7 +691,7 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 		msdu_info.peer = NULL;
 
 		if (qdf_unlikely(ol_tx_prepare_tso(vdev, msdu, &msdu_info))) {
-			qdf_print("ol_tx_prepare_tso failed\n");
+			ol_txrx_dbg("ol_tx_prepare_tso failed\n");
 			TXRX_STATS_MSDU_LIST_INCR(vdev->pdev,
 				 tx.dropped.host_reject, msdu);
 			return msdu;
