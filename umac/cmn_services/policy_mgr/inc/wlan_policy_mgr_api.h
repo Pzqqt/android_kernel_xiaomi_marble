@@ -1890,11 +1890,9 @@ QDF_STATUS policy_mgr_is_chan_ok_for_dnbs(struct wlan_objmgr_psoc *psoc,
  * @psoc: PSOC object information
  * @nss_dbs: NSS info of both MAC0 and MAC1
  * This function computes NSS info of both MAC0 and MAC1
- *    True: DBS capable
- *    False: not DBS capable
  *
- * Return: True or False
+ * Return: uint32_t value signifies supported RF chains
  */
-bool policy_mgr_get_hw_dbs_nss(struct wlan_objmgr_psoc *psoc,
-			       struct dbs_nss *nss_dbs);
+uint32_t policy_mgr_get_hw_dbs_nss(struct wlan_objmgr_psoc *psoc,
+				   struct dbs_nss *nss_dbs);
 #endif /* __WLAN_POLICY_MGR_API_H */
