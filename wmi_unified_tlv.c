@@ -16303,6 +16303,9 @@ static QDF_STATUS extract_chan_info_event_tlv(wmi_unified_t wmi_handle,
 	chan_info->noise_floor = ev->noise_floor;
 	chan_info->rx_clear_count = ev->rx_clear_count;
 	chan_info->cycle_count = ev->cycle_count;
+	chan_info->pdev_id = wlan_get_pdev_id_from_vdev_id(
+			(struct wlan_objmgr_psoc *)wmi_handle->soc->wmi_psoc,
+			ev->vdev_id, WLAN_SCAN_ID);
 
 	return QDF_STATUS_SUCCESS;
 }
