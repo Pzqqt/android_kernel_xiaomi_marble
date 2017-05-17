@@ -1058,7 +1058,16 @@ QDF_STATUS (*extract_vdev_start_resp)(wmi_unified_t wmi_handle, void *evt_buf,
 	wmi_host_vdev_start_resp *vdev_rsp);
 
 QDF_STATUS (*extract_tbttoffset_update_params)(void *wmi_hdl, void *evt_buf,
-	uint32_t *vdev_map, uint32_t **tbttoffset_list);
+	uint8_t idx, struct tbttoffset_params *tbtt_param);
+
+QDF_STATUS (*extract_ext_tbttoffset_update_params)(void *wmi_hdl, void *evt_buf,
+	uint8_t idx, struct tbttoffset_params *tbtt_param);
+
+QDF_STATUS (*extract_tbttoffset_num_vdevs)(void *wmi_hdl, void *evt_buf,
+					   uint32_t *num_vdevs);
+
+QDF_STATUS (*extract_ext_tbttoffset_num_vdevs)(void *wmi_hdl, void *evt_buf,
+					       uint32_t *num_vdevs);
 
 QDF_STATUS (*extract_mgmt_rx_params)(wmi_unified_t wmi_handle, void *evt_buf,
 	struct mgmt_rx_event_params *hdr, uint8_t **bufp);
@@ -1122,8 +1131,8 @@ QDF_STATUS (*extract_offchan_data_tx_compl_param)(wmi_unified_t wmi_handle,
 QDF_STATUS (*extract_pdev_csa_switch_count_status)(wmi_unified_t wmi_handle,
 		void *evt_buf, struct pdev_csa_switch_count_status *param);
 
-QDF_STATUS (*extract_swba_vdev_map)(wmi_unified_t wmi_handle, void *evt_buf,
-	uint32_t *vdev_map);
+QDF_STATUS (*extract_swba_num_vdevs)(wmi_unified_t wmi_handle, void *evt_buf,
+	uint32_t *num_vdevs);
 
 QDF_STATUS (*extract_swba_tim_info)(wmi_unified_t wmi_handle, void *evt_buf,
 	uint32_t idx, wmi_host_tim_info *tim_info);
@@ -1455,5 +1464,53 @@ void wmi_non_tlv_attach(wmi_unified_t wmi_handle);
 static inline uint32_t wmi_align(uint32_t param)
 {
 	return roundup(param, sizeof(uint32_t));
+}
+
+/**
+ * wmi_vdev_map_to_vdev_id() - Provides vdev id corresponding to idx
+ *                             from vdev map
+ * @vdev_map: Bitmask containing information of active vdev ids
+ * @idx: Index referring to the i'th bit set from LSB in vdev map
+ *
+ * This API returns the vdev id for the i'th bit set from LSB in vdev map.
+ * Index runs through 1 from maximum number of vdevs set in the vdev map
+ *
+ * Return: vdev id of the vdev object
+ */
+static inline uint32_t wmi_vdev_map_to_vdev_id(uint32_t vdev_map,
+					       uint32_t idx)
+{
+	uint32_t vdev_count = 0, vdev_set = 0, vdev_id = WLAN_INVALID_VDEV_ID;
+
+	while (vdev_map) {
+		vdev_set += (vdev_map & 0x1);
+		if (vdev_set == (idx+1)) {
+			vdev_id = vdev_count;
+			break;
+		}
+		vdev_map >>= 1;
+		vdev_count++;
+	}
+
+	return vdev_id;
+}
+
+/**
+ * wmi_vdev_map_to_num_vdevs() - Provides number of vdevs active based on the
+ *                               vdev map received from FW
+ * @vdev_map: Bitmask containing information of active vdev ids
+ *
+ * Return: Number of vdevs set in the vdev bit mask
+ */
+static inline uint32_t wmi_vdev_map_to_num_vdevs(uint32_t vdev_map)
+{
+	uint32_t num_vdevs = 0;
+
+	while (vdev_map) {
+		num_vdevs += (vdev_map & 0x1);
+		vdev_map >>= 1;
+	}
+
+	return num_vdevs;
 }
 #endif

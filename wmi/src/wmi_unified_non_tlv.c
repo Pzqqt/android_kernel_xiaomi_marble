@@ -5887,23 +5887,51 @@ static QDF_STATUS extract_vdev_start_resp_non_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * extract_tbttoffset_num_vdevs_non_tlv() - extract tbtt offset num vdevs
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param num_vdev: Pointer to hold num vdev
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS extract_tbttoffset_num_vdevs_non_tlv(void *wmi_hdl,
+		void *evt_buf,
+		uint32_t *num_vdevs)
+{
+	wmi_tbtt_offset_event *tbtt_offset_event =
+		(wmi_tbtt_offset_event *)evt_buf;
+	uint32_t vdev_map;
+
+	vdev_map = tbtt_offset_event->vdev_map;
+	*num_vdevs = wmi_vdev_map_to_num_vdevs(vdev_map);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * extract_tbttoffset_update_params_non_tlv() - extract tbtt offset update param
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
- * @param vdev_map: Pointer to hold vdev map
- * @param tbttoffset_list: Pointer to tbtt offset list
+ * @param idx: Index refering to a vdev
+ * @param tbtt_param: Pointer to tbttoffset event param
  *
  * Return: 0 for success or error code
  */
 static QDF_STATUS extract_tbttoffset_update_params_non_tlv(void *wmi_hdl,
-		void *evt_buf,
-		uint32_t *vdev_map, uint32_t **tbttoffset_list)
+		void *evt_buf, uint8_t idx,
+		struct tbttoffset_params *tbtt_param)
 {
 	wmi_tbtt_offset_event *tbtt_offset_event =
 		(wmi_tbtt_offset_event *)evt_buf;
+	uint32_t vdev_map;
 
-	*vdev_map = tbtt_offset_event->vdev_map;
-	*tbttoffset_list = tbtt_offset_event->tbttoffset_list;
+	vdev_map = tbtt_offset_event->vdev_map;
+
+	tbtt_param->vdev_id = wmi_vdev_map_to_vdev_id(vdev_map, idx);
+	if (tbtt_param->vdev_id == WLAN_INVALID_VDEV_ID)
+		return QDF_STATUS_E_INVAL;
+	tbtt_param->tbttoffset =
+		tbtt_offset_event->tbttoffset_list[tbtt_param->vdev_id];
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -6331,20 +6359,22 @@ static QDF_STATUS extract_pdev_reserve_ast_ev_param_non_tlv(
 }
 
 /**
- * extract_swba_vdev_map_non_tlv() - extract swba vdev map from event
+ * extract_swba_num_vdevs_non_tlv() - extract swba num vdevs from event
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
- * @param vdev_map: Pointer to hold vdev map
+ * @param num_vdevs: Pointer to hold num vdevs
  *
  * Return: 0 for success or error code
  */
-static QDF_STATUS extract_swba_vdev_map_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS extract_swba_num_vdevs_non_tlv(wmi_unified_t wmi_handle,
 		void *evt_buf,
-		uint32_t *vdev_map)
+		uint32_t *num_vdevs)
 {
 	wmi_host_swba_event *swba_event = (wmi_host_swba_event *)evt_buf;
+	uint32_t vdev_map;
 
-	*vdev_map = swba_event->vdev_map;
+	vdev_map = swba_event->vdev_map;
+	*num_vdevs = wmi_vdev_map_to_num_vdevs(vdev_map);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -6364,9 +6394,14 @@ static QDF_STATUS extract_swba_tim_info_non_tlv(wmi_unified_t wmi_handle,
 {
 	wmi_host_swba_event *swba_event = (wmi_host_swba_event *)evt_buf;
 	wmi_bcn_info *bcn_info;
+	uint32_t vdev_map;
 
 	bcn_info = &swba_event->bcn_info[idx];
+	vdev_map = swba_event->vdev_map;
 
+	tim_info->vdev_id = wmi_vdev_map_to_vdev_id(vdev_map, idx);
+	if (tim_info->vdev_id == WLAN_INVALID_VDEV_ID)
+		return QDF_STATUS_E_INVAL;
 	tim_info->tim_len = bcn_info->tim_info.tim_len;
 	tim_info->tim_mcast = bcn_info->tim_info.tim_mcast;
 	qdf_mem_copy(tim_info->tim_bitmap, bcn_info->tim_info.tim_bitmap,
@@ -6393,11 +6428,15 @@ static QDF_STATUS extract_swba_noa_info_non_tlv(wmi_unified_t wmi_handle,
 	wmi_p2p_noa_info *p2p_noa_info;
 	wmi_bcn_info *bcn_info;
 	uint8_t i = 0;
+	uint32_t vdev_map;
 
 	bcn_info = &swba_event->bcn_info[idx];
-
+	vdev_map = swba_event->vdev_map;
 	p2p_noa_info = &bcn_info->p2p_noa_info;
 
+	p2p_desc->vdev_id = wmi_vdev_map_to_vdev_id(vdev_map, idx);
+	if (p2p_desc->vdev_id == WLAN_INVALID_VDEV_ID)
+		return QDF_STATUS_E_INVAL;
 	p2p_desc->modified = false;
 	p2p_desc->num_descriptors = 0;
 	if (WMI_UNIFIED_NOA_ATTR_IS_MODIFIED(p2p_noa_info)) {
@@ -8077,6 +8116,8 @@ struct wmi_ops non_tlv_ops =  {
 	.extract_vdev_start_resp = extract_vdev_start_resp_non_tlv,
 	.extract_tbttoffset_update_params =
 			extract_tbttoffset_update_params_non_tlv,
+	.extract_tbttoffset_num_vdevs =
+			extract_tbttoffset_num_vdevs_non_tlv,
 	.extract_mgmt_rx_params = extract_mgmt_rx_params_non_tlv,
 	.extract_vdev_stopped_param =  extract_vdev_stopped_param_non_tlv,
 	.extract_vdev_roam_param = extract_vdev_roam_param_non_tlv,
@@ -8091,7 +8132,7 @@ struct wmi_ops non_tlv_ops =  {
 	.extract_gpio_input_ev_param = extract_gpio_input_ev_param_non_tlv,
 	.extract_pdev_reserve_ast_ev_param =
 			extract_pdev_reserve_ast_ev_param_non_tlv,
-	.extract_swba_vdev_map = extract_swba_vdev_map_non_tlv,
+	.extract_swba_num_vdevs = extract_swba_num_vdevs_non_tlv,
 	.extract_swba_tim_info = extract_swba_tim_info_non_tlv,
 	.extract_swba_noa_info = extract_swba_noa_info_non_tlv,
 	.extract_peer_sta_ps_statechange_ev =
