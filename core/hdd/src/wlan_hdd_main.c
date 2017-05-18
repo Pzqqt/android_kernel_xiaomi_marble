@@ -6435,6 +6435,9 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 		hdd_napi_apply_throughput_policy(hdd_ctx, tx_packets, rx_packets);
 	}
 
+	qdf_dp_trace_throttle_live_mode(
+		(next_vote_level > PLD_BUS_WIDTH_NONE) ? true : false);
+
 	/* fine-tuning parameters for RX Flows */
 	temp_rx = (rx_packets + hdd_ctx->prev_rx) / 2;
 
@@ -9679,6 +9682,46 @@ static void wlan_init_bug_report_lock(void)
 	qdf_spinlock_create(&p_cds_context->bug_report_lock);
 }
 
+void hdd_dp_trace_init(struct hdd_config *config)
+{
+
+	bool live_mode = DP_TRACE_CONFIG_DEFAULT_LIVE_MODE;
+	uint8_t thresh = DP_TRACE_CONFIG_DEFAULT_THRESH;
+	uint16_t thresh_time_limit = DP_TRACE_CONFIG_DEFAULT_THRESH_TIME_LIMIT;
+	uint8_t verbosity = DP_TRACE_CONFIG_DEFAULT_VERBOSTY;
+	uint8_t proto_bitmap = DP_TRACE_CONFIG_DEFAULT_BITMAP;
+	uint8_t config_params[DP_TRACE_CONFIG_NUM_PARAMS];
+	uint8_t num_entries = 0;
+
+	hdd_string_to_u8_array(config->dp_trace_config, config_params,
+				&num_entries, sizeof(config_params));
+
+	/* calculating, num bw timer intervals in a second (1000ms) */
+	if (config->busBandwidthComputeInterval)
+		thresh_time_limit =
+			(1000 / config->busBandwidthComputeInterval);
+	else
+		hdd_err("busBandwidthComputeInterval is 0, using defaults");
+
+	switch (num_entries) {
+	case 4:
+		proto_bitmap = config_params[3];
+	case 3:
+		verbosity = config_params[2];
+	case 2:
+		thresh = config_params[1];
+	case 1:
+		live_mode = config_params[0];
+	default:
+		hdd_info("live_mode %u thresh %u time_limit %u verbosity %u bitmap 0x%x",
+			live_mode, thresh, thresh_time_limit,
+			verbosity, proto_bitmap);
+	};
+
+	qdf_dp_trace_init(live_mode, thresh, thresh_time_limit,
+			verbosity, proto_bitmap);
+
+}
 /**
  * hdd_wlan_startup() - HDD init function
  * @dev:	Pointer to the underlying device
@@ -9748,7 +9791,7 @@ int hdd_wlan_startup(struct device *dev)
 	}
 
 	if (hdd_ctx->config->enable_dp_trace)
-		qdf_dp_trace_init();
+		hdd_dp_trace_init(hdd_ctx->config);
 
 	if (hdd_ipa_init(hdd_ctx) == QDF_STATUS_E_FAILURE)
 		goto err_wiphy_unregister;

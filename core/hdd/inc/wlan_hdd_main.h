@@ -2774,4 +2774,12 @@ hdd_nla_parse(struct nlattr **tb, int maxtype, const struct nlattr *head,
 }
 #endif
 
+/**
+ * hdd_dp_trace_init() - initialize DP Trace by calling the QDF API
+ * @config: hdd config
+ *
+ * Return: NONE
+ */
+void hdd_dp_trace_init(struct hdd_config *config);
+
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

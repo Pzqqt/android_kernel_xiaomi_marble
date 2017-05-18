@@ -1384,7 +1384,7 @@ QDF_STATUS hdd_wlan_re_init(void)
 	}
 
 	if (pHddCtx->config->enable_dp_trace)
-		qdf_dp_trace_init();
+		hdd_dp_trace_init(pHddCtx->config);
 
 	hdd_bus_bandwidth_init(pHddCtx);
 

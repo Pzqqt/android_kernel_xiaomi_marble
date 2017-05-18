@@ -52,7 +52,6 @@ struct hdd_context;
 #define FW_MODULE_LOG_LEVEL_STRING_LENGTH  (255)
 #define TX_SCHED_WRR_PARAM_STRING_LENGTH   (50)
 #define TX_SCHED_WRR_PARAMS_NUM            (5)
-
 #define CFG_ENABLE_RX_THREAD		(1 << 0)
 #define CFG_ENABLE_RPS			(1 << 1)
 #define CFG_ENABLE_NAPI			(1 << 2)
@@ -9124,8 +9123,69 @@ enum dot11p_mode {
  */
 #define CFG_ENABLE_DP_TRACE		"enable_dp_trace"
 #define CFG_ENABLE_DP_TRACE_MIN		(0)
-#define CFG_ENABLE_DP_TRACE_MAX		(1)
+#define CFG_ENABLE_DP_TRACE_MAX	(1)
 #define CFG_ENABLE_DP_TRACE_DEFAULT	(1)
+
+/* Max length of gDptraceConfig string. e.g.- "1, 6, 1, 62" */
+#define DP_TRACE_CONFIG_STRING_LENGTH		(20)
+
+/* At max 4 DP Trace config parameters are allowed. Refer - gDptraceConfig */
+#define DP_TRACE_CONFIG_NUM_PARAMS		(4)
+
+/*
+ * Default value of live mode in case it cannot be determined from cfg string
+ * gDptraceConfig
+ */
+#define DP_TRACE_CONFIG_DEFAULT_LIVE_MODE	(1)
+
+/*
+ * Default value of thresh (packets/second) beyond which DP Trace is disabled.
+ * Use this default in case the value cannot be determined from cfg string
+ * gDptraceConfig
+ */
+#define DP_TRACE_CONFIG_DEFAULT_THRESH		(4)
+
+/*
+ * Number of intervals of BW timer to wait before enabling/disabling DP Trace.
+ * Since throughput threshold to disable live logging for DP Trace is very low,
+ * we calculate throughput based on # packets received in a second.
+ * For example assuming bandwidth timer interval is 100ms, and if more than 4
+ * packets are received in 10 * 100 ms interval, we want to disable DP Trace
+ * live logging. DP_TRACE_CONFIG_DEFAULT_THRESH_TIME_LIMIT is the default
+ * value, to be used in case the real value cannot be derived from
+ * bw timer interval
+ */
+#define DP_TRACE_CONFIG_DEFAULT_THRESH_TIME_LIMIT (10)
+
+/* Default proto bitmap in case its missing in gDptraceConfig string */
+#define DP_TRACE_CONFIG_DEFAULT_BITMAP \
+			(QDF_NBUF_PKT_TRAC_TYPE_EAPOL |\
+			QDF_NBUF_PKT_TRAC_TYPE_DHCP |\
+			QDF_NBUF_PKT_TRAC_TYPE_MGMT_ACTION |\
+			QDF_NBUF_PKT_TRAC_TYPE_ARP |\
+			QDF_NBUF_PKT_TRAC_TYPE_ICMP)\
+
+/* Default verbosity, in case its missing in gDptraceConfig string*/
+#define DP_TRACE_CONFIG_DEFAULT_VERBOSTY QDF_DP_TRACE_VERBOSITY_LOW
+/*
+ * Config DPTRACE
+ * The sequence of params is important. If some param is missing, defaults are
+ * considered.
+ * Param 1: Enable/Disable DP Trace live mode (uint8_t)
+ * Param 2: DP Trace live mode high bandwidth thresh.(uint8_t)
+ *         (packets/second) beyond which DP Trace is disabled. Decimal Val.
+ *          MGMT, DHCP, EAPOL, ARP pkts are not counted. ICMP and Data are.
+ * Param 3: Default Verbosity (0-3)
+ * Param 4: Proto Bitmap (uint8_t). Decimal Value.
+ *          (decimal 62 = 0x3e)
+ * e.g., to disable live mode, use the following param in the ini file.
+ * gDptraceConfig = 0
+ * e.g., to enable dptrace live mode and set the thresh as 4,
+ * use the following param in the ini file.
+ * gDptraceConfig = 1, 4
+ */
+#define CFG_ENABLE_DP_TRACE_CONFIG		"gDptraceConfig"
+#define CFG_ENABLE_DP_TRACE_CONFIG_DEFAULT	"1, 8, 1, 62"
 
 /*
  * This parameter will set the weight to calculate the average low pass
@@ -12302,6 +12362,7 @@ struct hdd_config {
 	bool enable_fatal_event;
 	bool bpf_enabled;
 	bool enable_dp_trace;
+	uint8_t dp_trace_config[DP_TRACE_CONFIG_STRING_LENGTH];
 	bool adaptive_dwell_mode_enabled;
 	enum wmi_dwelltime_adaptive_mode scan_adaptive_dwell_mode;
 	enum wmi_dwelltime_adaptive_mode roamscan_adaptive_dwell_mode;

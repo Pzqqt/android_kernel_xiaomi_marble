@@ -13086,6 +13086,8 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 			qdf_dp_trace_enable_live_mode();
 		else if (value[1] == CLEAR_DP_TRACE_BUFFER)
 			qdf_dp_trace_clear_buffer();
+		else if (value[1] == DISABLE_DP_TRACE_LIVE_MODE)
+			qdf_dp_trace_disable_live_mode();
 		break;
 	case WE_SET_MON_MODE_CHAN:
 		ret = wlan_hdd_set_mon_chan(pAdapter, value[1], value[2]);

@@ -2205,7 +2205,6 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 		qdf_dp_trace_set_track(msdu, QDF_RX);
 		QDF_NBUF_CB_TX_PACKET_TRACK(msdu) = QDF_NBUF_TX_PKT_DATA_TRACK;
 		QDF_NBUF_CB_RX_CTX_ID(msdu) = rx_ctx_id;
-		ol_rx_log_packet(pdev, peer_id, msdu);
 		DPTRACE(qdf_dp_trace(msdu,
 			QDF_DP_TRACE_RX_HTT_PACKET_PTR_RECORD,
 			QDF_TRACE_DEFAULT_PDEV_ID,
