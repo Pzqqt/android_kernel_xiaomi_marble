@@ -1442,6 +1442,7 @@ EXPORT_SYMBOL(qdf_net_buf_debug_init);
 void qdf_net_buf_debug_exit(void)
 {
 	uint32_t i;
+	uint32_t count = 0;
 	unsigned long irq_flag;
 	QDF_NBUF_TRACK *p_node;
 	QDF_NBUF_TRACK *p_prev;
@@ -1452,6 +1453,7 @@ void qdf_net_buf_debug_exit(void)
 		while (p_node) {
 			p_prev = p_node;
 			p_node = p_node->p_next;
+			count++;
 			qdf_print("SKB buf memory Leak@ File %s, @Line %d, size %zu\n",
 				  p_prev->file_name, p_prev->line_num,
 				  p_prev->size);
@@ -1461,6 +1463,11 @@ void qdf_net_buf_debug_exit(void)
 	}
 
 	qdf_nbuf_track_memory_manager_destroy();
+
+#ifdef CONFIG_HALT_KMEMLEAK
+	if (count)
+		QDF_BUG(0);
+#endif
 
 	return;
 }
