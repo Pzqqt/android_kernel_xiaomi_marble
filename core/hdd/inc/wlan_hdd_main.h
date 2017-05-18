@@ -1646,6 +1646,7 @@ struct hdd_external_acs_timer_context {
 
 /**
  * struct hdd_vendor_chan_info - vendor channel info
+ * @band: channel operating band
  * @pri_ch: primary channel
  * @ht_sec_ch: secondary channel
  * @vht_seg0_center_ch: segment0 for vht
@@ -1653,6 +1654,7 @@ struct hdd_external_acs_timer_context {
  * @chan_width: channel width
  */
 struct hdd_vendor_chan_info {
+	uint8_t band;
 	uint8_t pri_ch;
 	uint8_t ht_sec_ch;
 	uint8_t vht_seg0_center_ch;

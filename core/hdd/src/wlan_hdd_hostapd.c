@@ -8051,6 +8051,32 @@ error:
 	return ret;
 }
 
+static int hdd_destroy_acs_timer(hdd_adapter_t *adapter)
+{
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
+
+	if (!adapter->sessionCtx.ap.vendor_acs_timer_initialized)
+		return 0;
+
+	adapter->sessionCtx.ap.vendor_acs_timer_initialized = false;
+
+	if (QDF_TIMER_STATE_RUNNING ==
+			adapter->sessionCtx.ap.vendor_acs_timer.state) {
+		qdf_status =
+			qdf_mc_timer_stop(&adapter->sessionCtx.ap.
+					vendor_acs_timer);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+			hdd_err("Failed to stop ACS timer");
+	}
+
+	if (adapter->sessionCtx.ap.vendor_acs_timer.user_data)
+		qdf_mem_free(adapter->sessionCtx.ap.vendor_acs_timer.user_data);
+
+	qdf_mc_timer_destroy(&adapter->sessionCtx.ap.vendor_acs_timer);
+
+	return 0;
+}
+
 /**
  * __wlan_hdd_cfg80211_stop_ap() - stop soft ap
  * @wiphy: Pointer to wiphy structure
@@ -8224,7 +8250,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	}
 	/* Reset WNI_CFG_PROBE_RSP Flags */
 	wlan_hdd_reset_prob_rspies(pAdapter);
-
+	hdd_destroy_acs_timer(pAdapter);
 #ifdef WLAN_FEATURE_P2P_DEBUG
 	if ((pAdapter->device_mode == QDF_P2P_GO_MODE) &&
 	    (global_p2p_connection_status == P2P_GO_COMPLETED_STATE)) {
