@@ -116,6 +116,12 @@ dbglog_set_timestamp_resolution(wmi_unified_t wmi_handle,
 int
 dbglog_report_enable(wmi_unified_t wmi_handle, A_BOOL isenable);
 
+#ifdef CONFIG_MCL
+/*
+ * enum DBGLOG_LOG_LVL is not converged between WIN and MCL.
+ * So this function declaration needs to be disabled from WIN side.
+ */
+
 /** Set the log level
  * @brief DBGLOG_INFO - Information lowest log level
  * @brief DBGLOG_WARNING
@@ -123,6 +129,7 @@ dbglog_report_enable(wmi_unified_t wmi_handle, A_BOOL isenable);
  */
 int
 dbglog_set_log_lvl(wmi_unified_t wmi_handle, enum DBGLOG_LOG_LVL log_lvl);
+#endif
 
 /*
  * set the debug log level for a given module

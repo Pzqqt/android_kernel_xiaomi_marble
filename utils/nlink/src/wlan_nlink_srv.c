@@ -50,6 +50,7 @@
 #include <net/sock.h>
 #include <wlan_nlink_srv.h>
 #include <qdf_trace.h>
+#include <qdf_module.h>
 
 #ifdef CNSS_GENL
 #include <qdf_mem.h>
@@ -196,6 +197,7 @@ int nl_srv_bcast(struct sk_buff *skb)
 		dev_kfree_skb(skb);
 	return err;
 }
+qdf_export_symbol(nl_srv_bcast);
 
 /**
  * nl_srv_unregister() - wrapper function to unregister event to cnss_logger
@@ -271,6 +273,7 @@ inline int nl_srv_is_initialized(void)
 	else
 		return -EPERM;
 }
+qdf_export_symbol(nl_srv_is_initialized);
 
 #else
 
@@ -510,6 +513,7 @@ int nl_srv_bcast(struct sk_buff *skb, int mcgroup_id, int app_id)
 	qdf_mem_free(tempbuf);
 	return 0;
 }
+qdf_export_symbol(nl_srv_bcast);
 
 /**
  * nl_srv_ucast() - wrapper function to do unicast events to user space apps
@@ -605,6 +609,7 @@ int nl_srv_bcast(struct sk_buff *skb)
 		dev_kfree_skb(skb);
 	return err;
 }
+qdf_export_symbol(nl_srv_bcast);
 #endif
 
 /*
@@ -713,6 +718,7 @@ int nl_srv_is_initialized(void)
 
 	return -EPERM;
 }
+qdf_export_symbol(nl_srv_is_initialized);
 #endif
 #else /* ifndef MULTI_IF_NAME */
 
@@ -746,13 +752,14 @@ int nl_srv_bcast(struct sk_buff *skb)
 {
 	return 0;
 }
+qdf_export_symbol(nl_srv_bcast);
 
 int nl_srv_is_initialized(void)
 {
 	return 0;
 }
+qdf_export_symbol(nl_srv_is_initialized);
 #endif
-
 
 /**
  * nl_srv_ucast_oem() - Wrapper function to send ucast msgs to OEM
