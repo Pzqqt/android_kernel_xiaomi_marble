@@ -4171,7 +4171,7 @@ enum station_keepalive_method {
  * gHwFilterMode - configure hardware filter for DTIM mode
  * @Min: 0
  * @Max: 3
- * @Default: 0
+ * @Default: 1
  *
  * The hardware filter is only effective in DTIM mode. Use this configuration
  * to blanket drop broadcast/multicast packets at the hardware level, without
@@ -4179,9 +4179,9 @@ enum station_keepalive_method {
  *
  * Takes a bitmap of frame types to drop
  * @E.g.
- *	# disable feature (default)
+ *	# disable feature
  *	gHwFilterMode=0
- *	# drop all broadcast frames, except ARP
+ *	# drop all broadcast frames, except ARP (default)
  *	gHwFilterMode=1
  *	# drop all multicast frames, except ICMPv6
  *	gHwFilterMode=2
@@ -4197,7 +4197,7 @@ enum station_keepalive_method {
 #define CFG_HW_FILTER_MODE_NAME		"gHwFilterMode"
 #define CFG_HW_FILTER_MODE_MIN		(0)
 #define CFG_HW_FILTER_MODE_MAX		(3)
-#define CFG_HW_FILTER_MODE_DEFAULT	(0)
+#define CFG_HW_FILTER_MODE_DEFAULT	(1)
 
 /*
  * <ini>
