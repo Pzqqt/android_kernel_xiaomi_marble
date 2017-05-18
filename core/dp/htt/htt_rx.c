@@ -3214,6 +3214,9 @@ qdf_nbuf_t htt_rx_hash_list_lookup(struct htt_pdev_t *pdev,
 
 	qdf_spin_lock_bh(&(pdev->rx_ring.rx_hash_lock));
 
+	if (!pdev->rx_ring.hash_table)
+		return NULL;
+
 	i = RX_HASH_FUNCTION(paddr);
 
 	HTT_LIST_ITER_FWD(list_iter, &pdev->rx_ring.hash_table[i]->listhead) {
@@ -3226,6 +3229,10 @@ qdf_nbuf_t htt_rx_hash_list_lookup(struct htt_pdev_t *pdev,
 		if (hash_entry->paddr == paddr) {
 			/* Found the entry corresponding to paddr */
 			netbuf = hash_entry->netbuf;
+			/* set netbuf to NULL to trace if freed entry
+			 * is getting unmapped in hash deinit.
+			 */
+			hash_entry->netbuf = NULL;
 			htt_list_remove(&hash_entry->listnode);
 			HTT_RX_HASH_COUNT_DECR(pdev->rx_ring.hash_table[i]);
 			/*
