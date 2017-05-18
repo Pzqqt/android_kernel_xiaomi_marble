@@ -7429,6 +7429,10 @@ static hdd_context_t *hdd_context_create(struct device *dev)
 		goto err_free_config;
 	}
 
+	hdd_debug("setting timer multiplier: %u",
+		  hdd_ctx->config->timer_multiplier);
+	qdf_timer_set_multiplier(hdd_ctx->config->timer_multiplier);
+
 	hdd_debug("Setting configuredMcastBcastFilter: %d",
 		   hdd_ctx->config->mcastBcastFilterSetting);
 

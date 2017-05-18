@@ -9932,6 +9932,36 @@ enum l1ss_sleep_allowed {
 #define CFG_QCN_IE_SUPPORT_MAX      1
 #define CFG_QCN_IE_SUPPORT_DEFAULT  1
 
+/*
+ * <ini>
+ * gTimerMultiplier - Scale QDF timers by this value
+ * @Min: 1
+ * @Max: 0xFFFFFFFF
+ * @Default: 1 (100 for emulation)
+ *
+ * To assist in debugging emulation setups, scale QDF timers by this factor.
+ *
+ * @E.g.
+ *	# QDF timers expire in real time
+ *	gTimerMultiplier=1
+ *	# QDF timers expire after 100 times real time
+ *	gTimerMultiplier=100
+ *
+ * Related: N/A
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_TIMER_MULTIPLIER_NAME	"gTimerMultiplier"
+#define CFG_TIMER_MULTIPLIER_MIN	(1)
+#define CFG_TIMER_MULTIPLIER_MAX	(0xFFFFFFFF)
+#ifdef QCA_WIFI_NAPIER_EMULATION
+#define CFG_TIMER_MULTIPLIER_DEFAULT	(100)
+#else
+#define CFG_TIMER_MULTIPLIER_DEFAULT	(1)
+#endif
+
 /* enable_reg_offload - enable regulatory offload
  * @Min: 0
  * @Max: 1
@@ -10777,6 +10807,7 @@ struct hdd_config {
 	bool ani_enabled;
 	bool qcn_ie_support;
 	bool reg_offload_enabled;
+	uint32_t timer_multiplier;
 	uint8_t fils_max_chan_guard_time;
 	enum hdd_external_acs_policy external_acs_policy;
 	enum hdd_external_acs_freq_band external_acs_freq_band;
