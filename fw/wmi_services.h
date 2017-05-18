@@ -193,6 +193,7 @@ typedef  enum  {
     WMI_SERVICE_8SS_TX_BFEE = 124, /* support for 8Ant Bfee */
     WMI_SERVICE_EXTENDED_NSS_SUPPORT=125, /* Extend NSS support for 80Mhz and 160Mhz */
     WMI_SERVICE_ACK_TIMEOUT=126, /* Support TX ack timeout configurations */
+    WMI_SERVICE_PDEV_BSS_CHANNEL_INFO_64 = 127, /* BSS channel info (freq, noise floor, rx clear, cycles 64-bit counters) event support */
 
 
     /******* ADD NEW SERVICES HERE UNTIL ALL VALUES UP TO 128 ARE USED *******/

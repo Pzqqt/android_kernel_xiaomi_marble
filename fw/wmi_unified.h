@@ -368,6 +368,8 @@ typedef enum {
     WMI_PDEV_SET_DIVERSITY_GAIN_CMDID,
     /** Get chain RSSI and antena index command */
     WMI_PDEV_DIV_GET_RSSI_ANTID_CMDID,
+    /* get bss chan info */
+    WMI_PDEV_BSS_CHAN_INFO_REQUEST_CMDID,
 
     /* VDEV (virtual device) specific commands */
     /** vdev create */
@@ -1128,6 +1130,9 @@ typedef enum {
 
     /** Report chain RSSI and antenna index to host */
     WMI_PDEV_DIV_RSSI_ANTID_EVENTID,
+
+    /** provide noise floor and cycle counts for a channel */
+    WMI_PDEV_BSS_CHAN_INFO_EVENTID,
 
     /* VDEV specific events */
     /** VDEV started event in response to VDEV_START request */
@@ -4342,6 +4347,11 @@ typedef struct {
     wmi_mac_addr macaddr;
 } wmi_pdev_div_get_rssi_antid_fixed_param;
 
+typedef struct {
+    A_UINT32 tlv_header; /* WMITLV_TAG_STRUC_wmi_pdev_bss_chan_info_request_fixed_param */
+    A_UINT32 param;   /* 1 = read only, 2= read and clear */
+} wmi_pdev_bss_chan_info_request_fixed_param;
+
 #define WMI_FAST_DIVERSITY_BIT_OFFSET 0
 #define WMI_SLOW_DIVERSITY_BIT_OFFSET 1
 
@@ -4524,6 +4534,31 @@ typedef struct {
     /** mac address of diversity peer */
     wmi_mac_addr macaddr;
 } wmi_pdev_div_rssi_antid_event_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header;                /* WMITLV_TAG_STRUC_wmi_pdev_bss_chan_info_event_fixed_param */
+    A_UINT32 freq;                      /* Units in MHz */
+    A_INT32 noise_floor;                /* units are dBm */
+
+    /* rx clear - how often the channel was unused */
+    A_UINT32 rx_clear_count_low;        /* low 31 bits of rx_clear cnt in 64bits format */
+    A_UINT32 rx_clear_count_high;       /* high 31 bits of rx_clear cnt in 64bits format */
+
+    /* cycle count - elapsed time during the measured period, in clock ticks */
+    A_UINT32 cycle_count_low;           /* low 31 bits of cycle cnt in 64bits format */
+    A_UINT32 cycle_count_high;          /* high 31 bits of cycle cnt in 64bits format */
+
+    /* tx cycle count - elapsed time spent in tx, in clock ticks */
+    A_UINT32 tx_cycle_count_low;        /* low 31 bits of tx_cycle cnt in 64bits format */
+    A_UINT32 tx_cycle_count_high;       /* high 31 bits of tx_cycle cnt in 64bits format */
+
+    /* rx cycle count - elapsed time spent in rx, in clock ticks */
+    A_UINT32 rx_cycle_count_low;        /* low 31 bits of rx_cycle cnt in 64bits format */
+    A_UINT32 rx_cycle_count_high;       /* high 31 bits of rx_cycle cnt in 64bits format */
+
+    A_UINT32 rx_bss_cycle_count_low;    /* low 31 bits of rx cycle cnt for my bss in 64bits format */
+    A_UINT32 rx_bss_cycle_count_high;   /* high 31 bits of rx_cycle cnt for my bss in 64bits format */
+} wmi_pdev_bss_chan_info_event_fixed_param;
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_l1ss_track_event_fixed_param  */
@@ -19211,6 +19246,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_SET_SCAN_DBS_DUTY_CYCLE_CMDID);
         WMI_RETURN_STRING(WMI_THERM_THROT_SET_CONF_CMDID);
         WMI_RETURN_STRING(WMI_OEM_DMA_RING_CFG_REQ_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_BSS_CHAN_INFO_REQUEST_CMDID);
     }
 
     return "Invalid WMI cmd";
