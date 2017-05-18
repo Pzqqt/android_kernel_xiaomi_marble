@@ -1733,6 +1733,7 @@ void dp_tx_comp_fill_tx_completion_stats(struct dp_tx_desc_s *tx_desc,
 
 	mhdr = (struct meta_hdr_s *)qdf_nbuf_data(netbuf);
 	mhdr->rssi = ts->ack_frame_rssi;
+	mhdr->channel = tx_desc->pdev->operating_channel;
 }
 
 #else
