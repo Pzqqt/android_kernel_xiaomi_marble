@@ -1064,9 +1064,26 @@ static int wma_ll_stats_evt_handler(void *handle, u_int8_t *event,
 		peer_stats[i].vdev_id = wmi_peer_signal->vdev_id;
 		peer_signal = &peer_stats[i].peer_signal_stats;
 
+		WMA_LOGD("%d antennas for peer %d",
+			 wmi_peer_signal->num_chains_valid,
+			 wmi_peer_signal->peer_id);
 		if (dst_len <= result_size) {
-			qdf_mem_copy(peer_signal,
-				     &wmi_peer_signal->vdev_id, dst_len);
+			peer_signal->vdev_id = wmi_peer_signal->vdev_id;
+			peer_signal->peer_id = wmi_peer_signal->peer_id;
+			peer_signal->num_chain =
+					wmi_peer_signal->num_chains_valid;
+			qdf_mem_copy(peer_signal->per_ant_snr,
+				     wmi_peer_signal->per_chain_snr,
+				     sizeof(peer_signal->per_ant_snr));
+			qdf_mem_copy(peer_signal->nf,
+				     wmi_peer_signal->per_chain_nf,
+				     sizeof(peer_signal->nf));
+			qdf_mem_copy(peer_signal->per_ant_rx_mpdus,
+				     wmi_peer_signal->per_antenna_rx_mpdus,
+				     sizeof(peer_signal->per_ant_rx_mpdus));
+			qdf_mem_copy(peer_signal->per_ant_tx_mpdus,
+				     wmi_peer_signal->per_antenna_tx_mpdus,
+				     sizeof(peer_signal->per_ant_tx_mpdus));
 			result_size -= dst_len;
 		} else {
 			WMA_LOGE(FL("Invalid length of PEER signal."));

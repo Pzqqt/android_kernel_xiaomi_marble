@@ -5225,6 +5225,9 @@ struct sir_wifi_chan_cca_stats {
  * @peer_id: peer ID
  * @per_ant_snr: per antenna SNR
  * @nf: peer background noise
+ * @per_ant_rx_mpdus: MPDUs received per antenna
+ * @per_ant_tx_mpdus: MPDUs transferred per antenna
+ * @num_chain: valid chain count
  */
 struct sir_wifi_peer_signal_stats {
 	uint32_t vdev_id;
@@ -5235,6 +5238,10 @@ struct sir_wifi_peer_signal_stats {
 
 	/* Background noise */
 	int32_t nf[WIFI_MAX_CHAINS];
+
+	int32_t per_ant_rx_mpdus[WIFI_MAX_CHAINS];
+	int32_t per_ant_tx_mpdus[WIFI_MAX_CHAINS];
+	int32_t num_chain;
 };
 
 #define WIFI_VDEV_NUM           4
