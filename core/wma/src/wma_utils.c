@@ -2216,7 +2216,7 @@ static void wma_vdev_stats_lost_link_helper(tp_wma_handle wma,
 
 	node = &wma->interfaces[vdev_stats->vdev_id];
 	if (wma_is_vdev_up(vdev_stats->vdev_id) &&
-	    qdf_mem_cmp(node->bssid, zero_mac, QDF_MAC_ADDR_SIZE)) {
+	    !qdf_mem_cmp(node->bssid, zero_mac, QDF_MAC_ADDR_SIZE)) {
 		req_msg = wma_peek_vdev_req(wma, vdev_stats->vdev_id,
 					    WMA_TARGET_REQ_TYPE_VDEV_STOP);
 		if ((NULL == req_msg) ||
