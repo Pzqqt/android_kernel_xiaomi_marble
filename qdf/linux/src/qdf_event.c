@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -36,14 +36,8 @@
 
 /* Include Files */
 #include "qdf_event.h"
+#include "qdf_mc_timer.h"
 #include <linux/export.h>
-
-/* Flag for napier emulation */
-#ifdef QCA_WIFI_NAPIER_EMULATION
-#define QDF_TIMER_MULTIPLIER 100
-#else
-#define QDF_TIMER_MULTIPLIER 1
-#endif
 
 /* Function Definitions and Documentation */
 
@@ -251,7 +245,7 @@ QDF_STATUS qdf_wait_single_event(qdf_event_t *event, uint32_t timeout)
 	}
 
 	/* update the timeout if its on a emaulation platform */
-	timeout *= QDF_TIMER_MULTIPLIER;
+	timeout *= qdf_timer_get_multiplier();
 	if (timeout) {
 		long ret;
 		ret = wait_for_completion_timeout(&event->complete,
