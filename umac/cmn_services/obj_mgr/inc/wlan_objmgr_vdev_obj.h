@@ -776,7 +776,7 @@ static inline QDF_STATUS wlan_vdev_mlme_set_ssid(
 				const uint8_t *ssid, uint8_t ssid_len)
 {
 	/* This API is invoked with lock acquired, do not add log prints */
-	if (ssid_len < WLAN_SSID_MAX_LEN) {
+	if (ssid_len <= WLAN_SSID_MAX_LEN) {
 		qdf_mem_copy(vdev->vdev_mlme.ssid, ssid, ssid_len);
 		vdev->vdev_mlme.ssid_len = ssid_len;
 	} else {
