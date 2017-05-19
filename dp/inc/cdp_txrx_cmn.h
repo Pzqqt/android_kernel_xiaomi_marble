@@ -508,6 +508,28 @@ int cdp_txrx_stats(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 }
 
 /**
+  * cdp_txrx_intr_attach(): function to attach and configure interrupt
+  * @soc: soc handle
+  */
+static inline QDF_STATUS cdp_txrx_intr_attach(ol_txrx_soc_handle soc)
+{
+	if (soc->ops->cmn_drv_ops->txrx_intr_attach)
+		return soc->ops->cmn_drv_ops->txrx_intr_attach(soc);
+
+	return 0;
+}
+
+/**
+  * cdp_txrx_intr_detach(): function to detach interrupt
+  * @soc: soc handle
+  */
+static inline void cdp_txrx_intr_detach(ol_txrx_soc_handle soc)
+{
+	if (soc->ops->cmn_drv_ops->txrx_intr_detach)
+		soc->ops->cmn_drv_ops->txrx_intr_detach(soc);
+}
+
+/**
   * cdp_display_stats(): function to map to dump stats
   * @soc: soc handle
   * @value: statistics option

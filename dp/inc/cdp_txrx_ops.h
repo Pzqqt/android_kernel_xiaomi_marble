@@ -206,6 +206,8 @@ struct cdp_cmn_ops {
 	void (*txrx_soc_set_nss_cfg)(ol_txrx_soc_handle soc, int config);
 
 	int(*txrx_soc_get_nss_cfg)(ol_txrx_soc_handle soc);
+	QDF_STATUS (*txrx_intr_attach)(void *soc);
+	void (*txrx_intr_detach)(void *soc);
 };
 
 struct cdp_ctrl_ops {
