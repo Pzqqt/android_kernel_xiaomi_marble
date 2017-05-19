@@ -116,6 +116,9 @@ int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 
 	wlan_objmgr_populate_service_ready_data(psoc, service_param);
 
+	target_if_scan_set_max_active_scans(psoc,
+				  WLAN_MAX_ACTIVE_SCANS_ALLOWED);
+
 free_param_and_exit:
 	qdf_mem_free(service_param);
 
