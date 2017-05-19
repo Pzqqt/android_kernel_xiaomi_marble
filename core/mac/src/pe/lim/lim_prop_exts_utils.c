@@ -196,13 +196,14 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 	if (mac_ctx->roam.configParam.is_force_1x1 &&
 		cfg_get_vendor_ie_ptr_from_oui(mac_ctx, SIR_MAC_VENDOR_AP_1_OUI,
 				SIR_MAC_VENDOR_AP_1_OUI_LEN, p_ie, ie_len) &&
-		lim_get_nss_supported_by_beacon(beacon_struct, session) == 2) {
+		lim_get_nss_supported_by_beacon(beacon_struct, session) == 2 &&
+		mac_ctx->lteCoexAntShare &&
+		IS_24G_CH(session->currentOperChannel)) {
 		session->supported_nss_1x1 = true;
 		session->vdev_nss = 1;
 		session->nss = 1;
 		pe_debug("For special ap, NSS: %d", session->nss);
 	}
-
 
 	if (beacon_struct->wmeInfoPresent ||
 	    beacon_struct->wmeEdcaPresent ||
