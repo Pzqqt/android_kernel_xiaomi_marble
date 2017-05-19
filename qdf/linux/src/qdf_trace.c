@@ -2000,7 +2000,7 @@ EXPORT_SYMBOL(qdf_shared_print_ctrl_cleanup);
  * Set this to invalid value to differentiate with user-provided
  * value.
  */
-int qdf_dbg_mask = -1;
+int qdf_dbg_mask = 0;
 EXPORT_SYMBOL(qdf_dbg_mask);
 qdf_declare_param(qdf_dbg_mask, int);
 
@@ -2162,7 +2162,7 @@ static void set_default_trace_levels(struct category_info *cinfo)
 		[QDF_MODULE_ID_BMI] = QDF_TRACE_LEVEL_NONE,
 		[QDF_MODULE_ID_EPPING] = QDF_TRACE_LEVEL_NONE,
 		[QDF_MODULE_ID_QVIT] = QDF_TRACE_LEVEL_NONE,
-		[QDF_MODULE_ID_DP] = QDF_TRACE_LEVEL_NONE,
+		[QDF_MODULE_ID_DP] = QDF_TRACE_LEVEL_FATAL,
 		[QDF_MODULE_ID_SOC] = QDF_TRACE_LEVEL_NONE,
 		[QDF_MODULE_ID_OS_IF] = QDF_TRACE_LEVEL_NONE,
 		[QDF_MODULE_ID_TARGET_IF] = QDF_TRACE_LEVEL_NONE,
@@ -2199,7 +2199,7 @@ void qdf_shared_print_ctrl_init(void)
 	/*
 	 * User specified across-module single debug level
 	 */
-	if ((qdf_dbg_mask >= 0) && (qdf_dbg_mask <= QDF_TRACE_LEVEL_MAX)) {
+	if ((qdf_dbg_mask > 0) && (qdf_dbg_mask <= QDF_TRACE_LEVEL_MAX)) {
 		pr_info("User specified module debug level of %d\n",
 			qdf_dbg_mask);
 		for (i = 0; i < MAX_SUPPORTED_CATEGORY; i++) {
