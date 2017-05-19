@@ -757,6 +757,9 @@ QDF_STATUS pmo_core_psoc_bus_runtime_suspend(struct wlan_objmgr_psoc *psoc,
 		goto dec_psoc_ref;
 	}
 
+	wow_params.interface_pause = PMO_WOW_INTERFACE_PAUSE_ENABLE;
+	wow_params.resume_trigger = PMO_WOW_RESUME_TRIGGER_GPIO;
+
 	if (hif_pre_runtime_suspend(hif_ctx))
 		goto runtime_failure;
 
