@@ -43,6 +43,7 @@
 #include <net/cnss.h>
 #endif
 #include "i_bmi.h"
+#include "cds_api.h"
 
 #ifdef CONFIG_DISABLE_SLEEP_BMI_OPTION
 static inline void ol_sdio_disable_sleep(struct ol_context *ol_ctx)
@@ -173,6 +174,10 @@ QDF_STATUS ol_sdio_extra_initialization(struct ol_context *ol_ctx)
 	}
 
 	param |= SDIO_HI_ACS_FLAGS;
+
+	/* enable TX completion to collect tx_desc for pktlog */
+	if (cds_is_packet_log_enabled())
+		param &= ~HI_ACS_FLAGS_SDIO_REDUCE_TX_COMPL_SET;
 
 	bmi_write_memory(hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s,
