@@ -2105,6 +2105,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *cds_context,
 	QDF_STATUS qdf_status;
 	struct wmi_rx_ops ops;
 	struct policy_mgr_wma_cbacks wma_cbacks;
+	struct target_psoc_info *tgt_psoc_info;
 
 	bool use_cookie = false;
 
@@ -2135,6 +2136,12 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *cds_context,
 
 	qdf_mem_zero(wma_handle, sizeof(t_wma_handle));
 
+	tgt_psoc_info = qdf_mem_malloc(sizeof(*tgt_psoc_info));
+	if (!tgt_psoc_info) {
+		WMA_LOGE("%s: failed to allocate mem for tgt info", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
 	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE) {
 #ifdef FEATURE_WLAN_EXTSCAN
 		qdf_wake_lock_create(&wma_handle->extscan_wake_lock,
@@ -2146,6 +2153,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *cds_context,
 	qdf_status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_LEGACY_WMA_ID);
 	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		WMA_LOGE("%s: PSOC get_ref fails", __func__);
+		qdf_mem_free(tgt_psoc_info);
 		return qdf_status;
 	}
 	wma_handle->psoc = psoc;
@@ -2170,9 +2178,11 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *cds_context,
 
 	WMA_LOGA("WMA --> wmi_unified_attach - success");
 
-	/* set the wmi handle (as tgt_if_handle) in psoc */
+	/* store the wmi handle in tgt_if_handle */
+	tgt_psoc_info->wmi_handle = wmi_handle;
+
 	wlan_psoc_obj_lock(psoc);
-	wlan_psoc_set_tgt_if_handle(psoc, wmi_handle);
+	wlan_psoc_set_tgt_if_handle(psoc, tgt_psoc_info);
 	wlan_psoc_obj_unlock(psoc);
 
 	wmi_unified_register_event_handler(wmi_handle,
@@ -2575,7 +2585,7 @@ err_scn_context:
 	OS_FREE(wmi_handle);
 
 err_wma_handle:
-
+	qdf_mem_free(tgt_psoc_info);
 	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE) {
 #ifdef FEATURE_WLAN_EXTSCAN
 		qdf_wake_lock_destroy(&wma_handle->extscan_wake_lock);
@@ -3500,6 +3510,7 @@ QDF_STATUS wma_close(void *cds_ctx)
 	tp_wma_handle wma_handle;
 	uint32_t idx;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	struct target_psoc_info *tgt_psoc_info;
 
 	WMA_LOGD("%s: Enter", __func__);
 
@@ -3586,6 +3597,13 @@ QDF_STATUS wma_close(void *cds_ctx)
 				WLAN_LEGACY_WMA_ID);
 		wma_handle->pdev = NULL;
 	}
+
+	tgt_psoc_info = wlan_psoc_get_tgt_if_handle(wma_handle->psoc);
+	if (tgt_psoc_info) {
+		qdf_mem_free(tgt_psoc_info);
+		wlan_psoc_set_tgt_if_handle(wma_handle->psoc, NULL);
+	}
+
 	wlan_objmgr_psoc_release_ref(wma_handle->psoc, WLAN_LEGACY_WMA_ID);
 	wma_handle->psoc = NULL;
 	target_if_close();
