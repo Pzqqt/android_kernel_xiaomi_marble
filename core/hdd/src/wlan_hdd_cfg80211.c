@@ -761,6 +761,27 @@ wlan_hdd_cfg80211_get_tdls_capabilities(struct wiphy *wiphy,
 static void wlan_hdd_cfg80211_start_pending_acs(struct work_struct *work);
 #endif
 
+int wlan_hdd_merge_avoid_freqs(tHddAvoidFreqList *destFreqList,
+		tHddAvoidFreqList *srcFreqList)
+{
+	int i;
+	tHddAvoidFreqRange *avoidRange =
+	&destFreqList->avoidFreqRange[destFreqList->avoidFreqRangeCount];
+
+	destFreqList->avoidFreqRangeCount += srcFreqList->avoidFreqRangeCount;
+	if (destFreqList->avoidFreqRangeCount > HDD_MAX_AVOID_FREQ_RANGES) {
+		hdd_err("avoid freq overflow");
+		return -EINVAL;
+	}
+
+	for (i = 0; i < srcFreqList->avoidFreqRangeCount; i++) {
+		avoidRange->startFreq =
+			srcFreqList->avoidFreqRange[i].startFreq;
+		avoidRange->endFreq = srcFreqList->avoidFreqRange[i].endFreq;
+		avoidRange++;
+	}
+	return 0;
+}
 /*
  * FUNCTION: wlan_hdd_send_avoid_freq_event
  * This is called when wlan driver needs to send vendor specific
@@ -862,6 +883,16 @@ int wlan_hdd_send_avoid_freq_for_dnbs(hdd_context_t *pHddCtx, uint8_t op_chan)
 	 * If channel passed is zero, clear the avoid_freq list in application.
 	 */
 	if (!op_chan) {
+#ifdef FEATURE_WLAN_CH_AVOID
+		mutex_lock(&pHddCtx->avoid_freq_lock);
+		qdf_mem_zero(&pHddCtx->dnbs_avoid_freq_list,
+				sizeof(tHddAvoidFreqList));
+		if (pHddCtx->coex_avoid_freq_list.avoidFreqRangeCount)
+			memcpy(&p2p_avoid_freq_list,
+			       &pHddCtx->coex_avoid_freq_list,
+			       sizeof(tHddAvoidFreqList));
+		mutex_unlock(&pHddCtx->avoid_freq_lock);
+#endif
 		ret = wlan_hdd_send_avoid_freq_event(pHddCtx,
 						     &p2p_avoid_freq_list);
 		if (ret)
@@ -925,7 +956,20 @@ int wlan_hdd_send_avoid_freq_for_dnbs(hdd_context_t *pHddCtx, uint8_t op_chan)
 		p2p_avoid_freq_list.avoidFreqRange[0].endFreq =
 			wlan_chan_to_freq(chan);
 	}
-
+#ifdef FEATURE_WLAN_CH_AVOID
+	mutex_lock(&pHddCtx->avoid_freq_lock);
+	pHddCtx->dnbs_avoid_freq_list = p2p_avoid_freq_list;
+	if (pHddCtx->coex_avoid_freq_list.avoidFreqRangeCount) {
+		ret = wlan_hdd_merge_avoid_freqs(&p2p_avoid_freq_list,
+				&pHddCtx->coex_avoid_freq_list);
+		if (ret) {
+			mutex_unlock(&pHddCtx->avoid_freq_lock);
+			hdd_err("avoid freq merge failed");
+			return ret;
+		}
+	}
+	mutex_unlock(&pHddCtx->avoid_freq_lock);
+#endif
 	ret = wlan_hdd_send_avoid_freq_event(pHddCtx, &p2p_avoid_freq_list);
 	if (ret)
 		hdd_err("wlan_hdd_send_avoid_freq_event error:%d", ret);

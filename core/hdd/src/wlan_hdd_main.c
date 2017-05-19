@@ -5527,6 +5527,9 @@ static void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 
 	hdd_exit_netlink_services(hdd_ctx);
 	mutex_destroy(&hdd_ctx->iface_change_lock);
+#ifdef FEATURE_WLAN_CH_AVOID
+	mutex_destroy(&hdd_ctx->avoid_freq_lock);
+#endif
 
 	driver_status = hdd_objmgr_release_and_destroy_pdev(hdd_ctx);
 	if (driver_status)
@@ -6840,6 +6843,7 @@ next_adapater:
 		adapter_node = next;
 	}
 }
+
 /**
  * hdd_ch_avoid_cb() - Avoid notified channels from FW handler
  * @adapter:	HDD adapter pointer
@@ -6888,6 +6892,10 @@ void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 	}
 	hdd_avoid_freq_list.avoidFreqRangeCount =
 		ch_avoid_indi->avoid_range_count;
+
+	mutex_lock(&hdd_ctxt->avoid_freq_lock);
+	hdd_ctxt->coex_avoid_freq_list = hdd_avoid_freq_list;
+	mutex_unlock(&hdd_ctxt->avoid_freq_lock);
 
 	/* clear existing unsafe channel cache */
 	hdd_ctxt->unsafe_channel_count = 0;
@@ -6979,6 +6987,15 @@ void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 		       hdd_ctxt->unsafe_channel_list[channel_loop]);
 	}
 
+	mutex_lock(&hdd_ctxt->avoid_freq_lock);
+	if (hdd_ctxt->dnbs_avoid_freq_list.avoidFreqRangeCount)
+		if (wlan_hdd_merge_avoid_freqs(&hdd_avoid_freq_list,
+					&hdd_ctxt->dnbs_avoid_freq_list)) {
+			mutex_unlock(&hdd_ctxt->avoid_freq_lock);
+			hdd_debug("unable to merge avoid freqs");
+			return;
+	}
+	mutex_unlock(&hdd_ctxt->avoid_freq_lock);
 	/*
 	 * first update the unsafe channel list to the platform driver and
 	 * send the avoid freq event to the application
@@ -9201,6 +9218,9 @@ int hdd_wlan_startup(struct device *dev)
 			  hdd_iface_change_callback, (void *)hdd_ctx);
 
 	mutex_init(&hdd_ctx->iface_change_lock);
+#ifdef FEATURE_WLAN_CH_AVOID
+	mutex_init(&hdd_ctx->avoid_freq_lock);
+#endif
 
 	ret = hdd_init_netlink_services(hdd_ctx);
 	if (ret)

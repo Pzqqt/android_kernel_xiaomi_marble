@@ -1614,6 +1614,12 @@ struct hdd_context_s {
 	unsigned long last_scan_reject_timestamp;
 	bool dfs_cac_offload;
 	bool reg_offload;
+#ifdef FEATURE_WLAN_CH_AVOID
+	tHddAvoidFreqList coex_avoid_freq_list;
+	tHddAvoidFreqList dnbs_avoid_freq_list;
+	/* Lock to control access to dnbs and coex avoid freq list */
+	struct mutex avoid_freq_lock;
+#endif
 };
 
 /**

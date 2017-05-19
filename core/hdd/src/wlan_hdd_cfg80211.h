@@ -528,4 +528,14 @@ void hdd_update_cca_info_cb(void *context, uint32_t congestion,
  */
 int wlan_hdd_get_adjacent_chan(uint8_t chan, bool upper);
 
+/**
+ * wlan_hdd_merge_avoid_freqs(): Merge two tHddAvoidFreqList
+ * @destFreqList: Destination list in which merged frequency
+ * list will be available.
+ * @srcFreqList: Source frequency list.
+ *
+ * Merges two avoid_frequency lists
+ */
+int wlan_hdd_merge_avoid_freqs(tHddAvoidFreqList *destFreqList,
+		tHddAvoidFreqList *srcFreqList);
 #endif
