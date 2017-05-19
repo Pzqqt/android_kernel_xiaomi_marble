@@ -735,8 +735,6 @@ static int wlan_logging_thread(void *Arg)
 	int ret = 0;
 	unsigned long flags;
 
-	set_user_nice(current, -2);
-
 	while (!gwlan_logging.exit) {
 		ret_wait_status =
 			wait_event_interruptible(gwlan_logging.wait_queue,
