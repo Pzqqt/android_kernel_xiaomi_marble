@@ -66,8 +66,14 @@ struct wlan_regulatory_psoc_priv_obj {
 	enum band_info band_capability;
 	bool indoor_chan_enabled;
 	bool enable_11d_supp_original;
-	bool enable_11d_supp_current;
-	bool userspace_country_priority;
+	bool enable_11d_supp;
+	bool is_11d_offloaded;
+	uint8_t vdev_id_for_11d_scan;
+	uint8_t master_vdev_cnt;
+	uint8_t vdev_cnt_11d;
+	uint8_t vdev_ids_11d[MAX_STA_VDEV_CNT];
+	bool user_ctry_priority;
+	bool user_ctry_set;
 	struct chan_change_cbk_entry cbk_list[REG_MAX_CHAN_CHANGE_CBKS];
 	uint8_t num_chan_change_cbks;
 	qdf_spinlock_t cbk_list_lock;

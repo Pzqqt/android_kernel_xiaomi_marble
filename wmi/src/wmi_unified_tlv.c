@@ -18435,6 +18435,7 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_dfs_radar_detection_event_id] =
 		WMI_PDEV_DFS_RADAR_DETECTION_EVENTID;
 	event_ids[wmi_tt_stats_event_id] = WMI_THERM_THROT_STATS_EVENTID;
+	event_ids[wmi_11d_new_country_event_id] = WMI_11D_NEW_COUNTRY_EVENTID;
 }
 
 #ifndef CONFIG_MCL

@@ -30,7 +30,8 @@
 #define REG_MAX_CHANNELS_PER_OPERATING_CLASS  25
 #define REG_MAX_SUPP_OPER_CLASSES 32
 #define REG_MAX_CHAN_CHANGE_CBKS 30
-
+#define MAX_STA_VDEV_CNT 4
+#define INVALID_VDEV_ID 0xFF
 /**
  * enum channel_enum - channel enumeration
  * @CHAN_ENUM_1:  channel number 1

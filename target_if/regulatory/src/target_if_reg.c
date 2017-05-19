@@ -35,11 +35,61 @@ static inline uint32_t get_chan_list_cc_event_id(void)
 {
 	return WMI_REG_CHAN_LIST_CC_EVENTID;
 }
+
+static bool tgt_if_regulatory_is_11d_offloaded(struct wlan_objmgr_psoc
+					       *psoc)
+{
+	return WMI_SERVICE_IS_ENABLED(psoc->service_param.service_bitmap,
+				      WMI_SERVICE_11D_OFFLOAD);
+}
+
+static bool tgt_if_regulatory_is_regdb_offloaded(struct wlan_objmgr_psoc
+						 *psoc)
+{
+	return WMI_SERVICE_IS_ENABLED(psoc->service_param.service_bitmap,
+				      WMI_SERVICE_REGULATORY_DB);
+}
+
+static bool tgt_if_regulatory_is_there_serv_ready_extn(struct wlan_objmgr_psoc
+						       *psoc)
+{
+	return WMI_SERVICE_IS_ENABLED(psoc->service_param.service_bitmap,
+				      WMI_SERVICE_EXT_MSG);
+}
+
 #else
 static inline uint32_t get_chan_list_cc_event_id(void)
 {
 	return wmi_reg_chan_list_cc_event_id;
 }
+
+static bool tgt_if_regulatory_is_11d_offloaded(struct wlan_objmgr_psoc
+					       *psoc)
+{
+	wmi_unified_t wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
+
+	return wmi_service_enabled(wmi_handle,
+				   wmi_service_11d_offload);
+}
+
+static bool tgt_if_regulatory_is_regdb_offloaded(struct wlan_objmgr_psoc
+						 *psoc)
+{
+	wmi_unified_t wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
+
+	return wmi_service_enabled(wmi_handle,
+				   wmi_service_regulatory_db);
+}
+
+static bool tgt_if_regulatory_is_there_serv_ready_extn(struct wlan_objmgr_psoc
+						       *psoc)
+{
+	wmi_unified_t wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
+
+	return wmi_service_enabled(wmi_handle,
+				   wmi_service_ext_msg);
+}
+
 #endif
 
 static inline struct wlan_lmac_if_reg_rx_ops *
@@ -185,10 +235,9 @@ static QDF_STATUS tgt_if_regulatory_register_11d_new_cc_handler(
 {
 	wmi_unified_t wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
 
-	return wmi_unified_register_event_handler(wmi_handle,
-						  WMI_11D_NEW_COUNTRY_EVENTID,
-						  tgt_reg_11d_new_cc_handler,
-						  WMI_RX_UMAC_CTX);
+	return wmi_unified_register_event(wmi_handle,
+					  wmi_11d_new_country_event_id,
+					  tgt_reg_11d_new_cc_handler);
 }
 
 static QDF_STATUS tgt_if_regulatory_unregister_11d_new_cc_handler(
@@ -196,8 +245,8 @@ static QDF_STATUS tgt_if_regulatory_unregister_11d_new_cc_handler(
 {
 	wmi_unified_t wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
 
-	return wmi_unified_unregister_event_handler(wmi_handle,
-			WMI_11D_NEW_COUNTRY_EVENTID);
+	return wmi_unified_unregister_event(wmi_handle,
+					    wmi_11d_new_country_event_id);
 }
 
 static QDF_STATUS tgt_if_regulatory_start_11d_scan(
@@ -207,18 +256,19 @@ static QDF_STATUS tgt_if_regulatory_start_11d_scan(
 	wmi_unified_t wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
 
 	return wmi_unified_send_start_11d_scan_cmd(wmi_handle,
-			reg_start_11d_scan_req);
+						   reg_start_11d_scan_req);
 }
 
 static QDF_STATUS tgt_if_regulatory_stop_11d_scan(
-		struct wlan_objmgr_psoc *psoc,
-		struct reg_stop_11d_scan_req *reg_stop_11d_scan_req)
+		   struct wlan_objmgr_psoc *psoc,
+		   struct reg_stop_11d_scan_req *reg_stop_11d_scan_req)
 {
 	wmi_unified_t wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
 
 	return wmi_unified_send_stop_11d_scan_cmd(wmi_handle,
-			reg_stop_11d_scan_req);
+						  reg_stop_11d_scan_req);
 }
+
 
 QDF_STATUS target_if_register_regulatory_tx_ops(struct wlan_lmac_if_tx_ops
 						*tx_ops)
@@ -244,6 +294,13 @@ QDF_STATUS target_if_register_regulatory_tx_ops(struct wlan_lmac_if_tx_ops
 	reg_ops->start_11d_scan = tgt_if_regulatory_start_11d_scan;
 
 	reg_ops->stop_11d_scan = tgt_if_regulatory_stop_11d_scan;
+
+	reg_ops->is_11d_offloaded = tgt_if_regulatory_is_11d_offloaded;
+
+	reg_ops->is_regdb_offloaded = tgt_if_regulatory_is_regdb_offloaded;
+
+	reg_ops->is_there_serv_ready_extn =
+		tgt_if_regulatory_is_there_serv_ready_extn;
 
 	return QDF_STATUS_SUCCESS;
 }

@@ -368,6 +368,13 @@ void wlan_reg_register_chan_change_callback(struct wlan_objmgr_psoc *psoc,
  */
 void wlan_reg_unregister_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 					      reg_chan_change_callback cbk);
+/**
+ * wlan_reg_11d_enabled_on_host() - 11d enabled don host
+ * @psoc: psoc ptr
+ *
+ * Return: bool
+ */
+bool wlan_reg_11d_enabled_on_host(struct wlan_objmgr_psoc *psoc);
 
 /**
  * wlan_reg_get_chip_mode() - get supported chip mode

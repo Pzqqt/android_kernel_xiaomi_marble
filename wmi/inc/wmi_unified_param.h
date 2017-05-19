@@ -4956,6 +4956,7 @@ typedef enum {
 	wmi_dfs_cac_complete_id,
 	wmi_dfs_radar_detection_event_id,
 	wmi_ext_tbttoffset_update_event_id,
+	wmi_11d_new_country_event_id,
 
 	wmi_events_max,
 } wmi_conv_event_id;

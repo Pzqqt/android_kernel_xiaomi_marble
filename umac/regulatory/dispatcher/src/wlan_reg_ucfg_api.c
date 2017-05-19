@@ -204,3 +204,13 @@ enum country_src ucfg_reg_get_cc_and_src(struct wlan_objmgr_psoc *psoc,
 {
 	return reg_get_cc_and_src(psoc, alpha2);
 }
+
+QDF_STATUS ucfg_reg_11d_vdev_delete_update(struct wlan_objmgr_vdev *vdev)
+{
+	return reg_11d_vdev_delete_update(vdev);
+}
+
+QDF_STATUS ucfg_reg_11d_vdev_created_update(struct wlan_objmgr_vdev *vdev)
+{
+	return reg_11d_vdev_created_update(vdev);
+}

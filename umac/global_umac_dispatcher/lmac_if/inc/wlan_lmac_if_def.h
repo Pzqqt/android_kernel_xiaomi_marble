@@ -562,6 +562,10 @@ struct wlan_lmac_if_reg_tx_ops {
 			struct reg_start_11d_scan_req *reg_start_11d_scan_req);
 	QDF_STATUS (*stop_11d_scan)(struct wlan_objmgr_psoc *psoc,
 			struct reg_stop_11d_scan_req *reg_stop_11d_scan_req);
+
+	bool (*is_11d_offloaded)(struct wlan_objmgr_psoc *psoc);
+	bool (*is_regdb_offloaded)(struct wlan_objmgr_psoc *psoc);
+	bool (*is_there_serv_ready_extn)(struct wlan_objmgr_psoc *psoc);
 };
 
 /**

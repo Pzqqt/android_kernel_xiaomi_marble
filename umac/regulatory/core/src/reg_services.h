@@ -32,6 +32,7 @@
 #include <wlan_objmgr_global_obj.h>
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_objmgr_pdev_obj.h>
+#include <wlan_objmgr_vdev_obj.h>
 #include "reg_db.h"
 #include <reg_services_public_struct.h>
 
@@ -330,4 +331,27 @@ enum country_src reg_get_cc_and_src(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS reg_save_new_11d_country(struct wlan_objmgr_psoc *psoc,
 		uint8_t *country);
 
+/**
+ * reg_11d_enabled_on_host() - know whether 11d enabled on host
+ * @psoc: psoc ptr
+ *
+ * Return: bool
+ */
+bool reg_11d_enabled_on_host(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * reg_11d_vdev_delete_update() - update 11d state upon vdev delete
+ * @vdev: vdev pointer
+ *
+ * Return: Success or Failure
+ */
+QDF_STATUS reg_11d_vdev_delete_update(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * reg_11d_vdev_created_update() - update 11d state upon vdev create
+ * @vdev: vdev pointer
+ *
+ * Return: Success or Failure
+ */
+QDF_STATUS reg_11d_vdev_created_update(struct wlan_objmgr_vdev *vdev);
 #endif
