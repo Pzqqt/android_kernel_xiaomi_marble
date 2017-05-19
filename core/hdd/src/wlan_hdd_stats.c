@@ -2932,6 +2932,59 @@ void wlan_hdd_cfg80211_stats_ext_callback(void *ctx,
 	cfg80211_vendor_event(vendor_event, GFP_KERNEL);
 
 }
+
+void wlan_hdd_cfg80211_stats_ext2_callback(void *ctx,
+				struct sir_sme_rx_aggr_hole_ind *pmsg)
+{
+	hdd_context_t *hdd_ctx = (hdd_context_t *)ctx;
+	int status;
+	uint32_t data_size, hole_info_size;
+	struct sk_buff *vendor_event;
+
+	status = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != status)
+		return;
+
+	if (NULL == pmsg) {
+		hdd_err("msg received here is null");
+		return;
+	}
+
+	hole_info_size = (pmsg->hole_cnt)*sizeof(pmsg->hole_info_array[0]);
+	data_size = sizeof(struct sir_sme_rx_aggr_hole_ind) + hole_info_size;
+
+	vendor_event = cfg80211_vendor_event_alloc(hdd_ctx->wiphy,
+			NULL,
+			data_size + NLMSG_HDRLEN + NLMSG_HDRLEN,
+			QCA_NL80211_VENDOR_SUBCMD_STATS_EXT_INDEX,
+			GFP_KERNEL);
+
+	if (!vendor_event) {
+		hdd_err("vendor_event_alloc failed for STATS_EXT2");
+		return;
+	}
+
+	if (nla_put_u32(vendor_event,
+			QCA_WLAN_VENDOR_ATTR_RX_AGGREGATION_STATS_HOLES_NUM,
+			pmsg->hole_cnt)) {
+		hdd_err("%s put fail",
+			"QCA_WLAN_VENDOR_ATTR_RX_AGGREGATION_STATS_HOLES_NUM");
+		kfree_skb(vendor_event);
+		return;
+	}
+	if (nla_put(vendor_event,
+		    QCA_WLAN_VENDOR_ATTR_RX_AGGREGATION_STATS_HOLES_INFO,
+		    hole_info_size,
+		    (void *)(pmsg->hole_info_array))) {
+		hdd_err("%s put fail",
+			"QCA_WLAN_VENDOR_ATTR_RX_AGGREGATION_STATS_HOLES_INFO");
+		kfree_skb(vendor_event);
+		return;
+	}
+
+	cfg80211_vendor_event(vendor_event, GFP_KERNEL);
+}
+
 #endif /* End of WLAN_FEATURE_STATS_EXT */
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)) && !defined(WITH_BACKPORTS)

@@ -248,6 +248,7 @@ typedef struct tagSmeStruct {
 	void (*rso_cmd_status_cb)(void *hdd_context,
 			struct rso_cmd_status *rso_status);
 	void (*congestion_cb)(void *, uint32_t congestion, uint32_t vdev_id);
+	void (*stats_ext2_cb)(void *, struct sir_sme_rx_aggr_hole_ind *);
 } tSmeStruct, *tpSmeStruct;
 
 #endif /* #if !defined( __SMEINTERNAL_H ) */

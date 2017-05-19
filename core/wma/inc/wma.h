@@ -2501,4 +2501,24 @@ static inline void wma_print_wmi_mgmt_event_log(uint32_t count,
  */
 void wma_ipa_uc_stat_request(wma_cli_set_cmd_t *privcmd);
 
+/**
+ * wma_set_rx_reorder_timeout_val() - set rx recorder timeout value
+ * @wma_handle: pointer to wma handle
+ * @reorder_timeout: rx reorder timeout value
+ *
+ * Return: VOS_STATUS_SUCCESS for success or error code.
+ */
+QDF_STATUS wma_set_rx_reorder_timeout_val(tp_wma_handle wma_handle,
+	struct sir_set_rx_reorder_timeout_val *reorder_timeout);
+
+/**
+ * wma_set_rx_blocksize() - set rx blocksize
+ * @wma_handle: pointer to wma handle
+ * @peer_rx_blocksize: rx blocksize for peer mac
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code.
+ */
+QDF_STATUS wma_set_rx_blocksize(tp_wma_handle wma_handle,
+	struct sir_peer_set_rx_blocksize *peer_rx_blocksize);
+
 #endif

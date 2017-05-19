@@ -276,6 +276,16 @@ void hdd_clear_hif_stats(void);
 void wlan_hdd_cfg80211_stats_ext_callback(void *ctx,
 					  tStatsExtEvent *msg);
 
+/**
+ * wlan_hdd_cfg80211_stats_ext2_callback - stats_ext2_callback
+ * @ctx: hdd context
+ * @pmsg: sir_sme_rx_aggr_hole_ind
+ *
+ * Return: void
+ */
+void wlan_hdd_cfg80211_stats_ext2_callback(void *ctx,
+				struct sir_sme_rx_aggr_hole_ind *pmsg);
+
 void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
 						 int indType, void *pRsp);
 /**

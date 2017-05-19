@@ -4719,6 +4719,18 @@ nla_put_failure:
 	QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_DATA_SNR_WEIGHT
 #define ANT_DIV_ACK_SNR_WEIGHT \
 	QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_ACK_SNR_WEIGHT
+#define RX_REORDER_TIMEOUT_VOICE \
+	QCA_WLAN_VENDOR_ATTR_CONFIG_RX_REORDER_TIMEOUT_VOICE
+#define RX_REORDER_TIMEOUT_VIDEO \
+	QCA_WLAN_VENDOR_ATTR_CONFIG_RX_REORDER_TIMEOUT_VIDEO
+#define RX_REORDER_TIMEOUT_BESTEFFORT \
+	QCA_WLAN_VENDOR_ATTR_CONFIG_RX_REORDER_TIMEOUT_BESTEFFORT
+#define RX_REORDER_TIMEOUT_BACKGROUND \
+	QCA_WLAN_VENDOR_ATTR_CONFIG_RX_REORDER_TIMEOUT_BACKGROUND
+#define RX_BLOCKSIZE_PEER_MAC \
+	QCA_WLAN_VENDOR_ATTR_CONFIG_RX_BLOCKSIZE_PEER_MAC
+#define RX_BLOCKSIZE_WINLIMIT \
+	QCA_WLAN_VENDOR_ATTR_CONFIG_RX_BLOCKSIZE_WINLIMIT
 static const struct nla_policy
 wlan_hdd_wifi_config_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1] = {
 
@@ -4743,6 +4755,12 @@ wlan_hdd_wifi_config_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1] = {
 	[ANT_DIV_DATA_SNR_WEIGHT] = {.type = NLA_U32},
 	[ANT_DIV_ACK_SNR_WEIGHT] = {.type = NLA_U32},
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_RESTRICT_OFFCHANNEL] = {.type = NLA_U8},
+	[RX_REORDER_TIMEOUT_VOICE] = {.type = NLA_U32},
+	[RX_REORDER_TIMEOUT_VIDEO] = {.type = NLA_U32},
+	[RX_REORDER_TIMEOUT_BESTEFFORT] = {.type = NLA_U32},
+	[RX_REORDER_TIMEOUT_BACKGROUND] = {.type = NLA_U32},
+	[RX_BLOCKSIZE_PEER_MAC] = {.type = NLA_UNSPEC},
+	[RX_BLOCKSIZE_WINLIMIT] = {.type = NLA_U32},
 };
 
 /**
@@ -4897,6 +4915,128 @@ static int wlan_hdd_handle_restrict_offchan_config(hdd_adapter_t *adapter,
 	} else {
 		ret_val = -EINVAL;
 		hdd_err("Invalid RESTRICT_OFFCHAN setting");
+	}
+
+	return ret_val;
+}
+
+/**
+ * wlan_hdd_cfg80211_wifi_set_reorder_timeout - set reorder timeout
+ *
+ * @hdd_ctx: hdd context
+ * @tb: array of pointer to struct nlattr
+ *
+ * Return: 0 on success; error number otherwise
+ */
+static int wlan_hdd_cfg80211_wifi_set_reorder_timeout(hdd_context_t *hdd_ctx,
+						      struct nlattr *tb[])
+{
+	int ret_val;
+	QDF_STATUS qdf_status;
+	struct sir_set_rx_reorder_timeout_val reorder_timeout;
+
+#define RX_TIMEOUT_VAL_MIN 10
+#define RX_TIMEOUT_VAL_MAX 1000
+
+	if (tb[RX_REORDER_TIMEOUT_VOICE] ||
+	    tb[RX_REORDER_TIMEOUT_VIDEO] ||
+	    tb[RX_REORDER_TIMEOUT_BESTEFFORT] ||
+	    tb[RX_REORDER_TIMEOUT_BACKGROUND]) {
+
+		/* if one is specified, all must be specified */
+		if (!tb[RX_REORDER_TIMEOUT_VOICE] ||
+		    !tb[RX_REORDER_TIMEOUT_VIDEO] ||
+		    !tb[RX_REORDER_TIMEOUT_BESTEFFORT] ||
+		    !tb[RX_REORDER_TIMEOUT_BACKGROUND]) {
+			hdd_err("four AC timeout val are required MAC");
+			return -EINVAL;
+		}
+
+		reorder_timeout.rx_timeout_pri[0] = nla_get_u32(
+			tb[RX_REORDER_TIMEOUT_VOICE]);
+		reorder_timeout.rx_timeout_pri[1] = nla_get_u32(
+			tb[RX_REORDER_TIMEOUT_VIDEO]);
+		reorder_timeout.rx_timeout_pri[2] = nla_get_u32(
+			tb[RX_REORDER_TIMEOUT_BESTEFFORT]);
+		reorder_timeout.rx_timeout_pri[3] = nla_get_u32(
+			tb[RX_REORDER_TIMEOUT_BACKGROUND]);
+		/* timeout value is required to be in the rang 10 to 1000ms */
+		if (reorder_timeout.rx_timeout_pri[0] >= RX_TIMEOUT_VAL_MIN &&
+		    reorder_timeout.rx_timeout_pri[0] <= RX_TIMEOUT_VAL_MAX &&
+		    reorder_timeout.rx_timeout_pri[1] >= RX_TIMEOUT_VAL_MIN &&
+		    reorder_timeout.rx_timeout_pri[1] <= RX_TIMEOUT_VAL_MAX &&
+		    reorder_timeout.rx_timeout_pri[2] >= RX_TIMEOUT_VAL_MIN &&
+		    reorder_timeout.rx_timeout_pri[2] <= RX_TIMEOUT_VAL_MAX &&
+		    reorder_timeout.rx_timeout_pri[3] >= RX_TIMEOUT_VAL_MIN &&
+		    reorder_timeout.rx_timeout_pri[3] <= RX_TIMEOUT_VAL_MAX) {
+			qdf_status = sme_set_reorder_timeout(hdd_ctx->hHal,
+							     &reorder_timeout);
+			if (qdf_status != QDF_STATUS_SUCCESS) {
+				hdd_err("failed to set reorder timeout err %d",
+					qdf_status);
+				ret_val = -EPERM;
+			}
+		} else {
+			hdd_err("one of the timeout value is not in range");
+			ret_val = -EINVAL;
+		}
+	}
+
+	return ret_val;
+}
+
+/**
+ * wlan_hdd_cfg80211_wifi_set_rx_blocksize - set rx blocksize
+ *
+ * @hdd_ctx: hdd context
+ * @adapter: hdd adapter
+ * @tb: array of pointer to struct nlattr
+ *
+ * Return: 0 on success; error number otherwise
+ */
+static int wlan_hdd_cfg80211_wifi_set_rx_blocksize(hdd_context_t *hdd_ctx,
+						   hdd_adapter_t *adapter,
+						   struct nlattr *tb[])
+{
+	int ret_val;
+	uint32_t set_value;
+	QDF_STATUS qdf_status;
+	struct sir_peer_set_rx_blocksize rx_blocksize;
+
+#define WINDOW_SIZE_VAL_MIN 1
+#define WINDOW_SIZE_VAL_MAX 64
+
+	if (tb[RX_BLOCKSIZE_PEER_MAC] ||
+	    tb[RX_BLOCKSIZE_WINLIMIT]) {
+
+		/* if one is specified, both must be specified */
+		if (!tb[RX_BLOCKSIZE_PEER_MAC] ||
+		    !tb[RX_BLOCKSIZE_WINLIMIT]) {
+			hdd_err(FL("Both Peer MAC and windows limit required"));
+			return -EINVAL;
+		}
+
+		memcpy(&rx_blocksize.peer_macaddr,
+		       nla_data(tb[RX_BLOCKSIZE_PEER_MAC]),
+		       sizeof(rx_blocksize.peer_macaddr)),
+
+		rx_blocksize.vdev_id = adapter->sessionId;
+		set_value = nla_get_u32(tb[RX_BLOCKSIZE_WINLIMIT]);
+		/* maximum window size is 64 */
+		if (set_value >= WINDOW_SIZE_VAL_MIN &&
+		    set_value <= WINDOW_SIZE_VAL_MAX) {
+			rx_blocksize.rx_block_ack_win_limit = set_value;
+			qdf_status = sme_set_rx_set_blocksize(hdd_ctx->hHal,
+							      &rx_blocksize);
+			if (qdf_status != QDF_STATUS_SUCCESS) {
+				hdd_err("failed to set aggr sizes err %d",
+					qdf_status);
+				ret_val = -EPERM;
+			}
+		} else {
+			hdd_err("window size val is not in range");
+			ret_val = -EINVAL;
+		}
 	}
 
 	return ret_val;
@@ -5337,6 +5477,17 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 			hdd_err("Invalid RESTRICT_OFFCHAN setting");
 		}
 	}
+
+	ret_val =
+		wlan_hdd_cfg80211_wifi_set_reorder_timeout(hdd_ctx, tb);
+	if (ret_val != 0)
+		return ret_val;
+
+	ret_val =
+		wlan_hdd_cfg80211_wifi_set_rx_blocksize(hdd_ctx, adapter, tb);
+	if (ret_val != 0)
+		return ret_val;
+
 	return ret_val;
 }
 

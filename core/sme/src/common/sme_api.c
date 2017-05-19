@@ -2656,6 +2656,8 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, struct scheduler_msg *pMsg)
 	case eWNI_SME_RSO_CMD_STATUS_IND:
 		if (pMac->sme.rso_cmd_status_cb)
 			pMac->sme.rso_cmd_status_cb(pMac->hHdd, pMsg->bodyptr);
+		qdf_mem_free(pMsg->bodyptr);
+		break;
 	case eWMI_SME_LL_STATS_IND:
 		if (pMac->sme.link_layer_stats_ext_cb)
 			pMac->sme.link_layer_stats_ext_cb(pMac->hHdd,
@@ -11919,6 +11921,14 @@ void sme_stats_ext_register_callback(tHalHandle hHal, StatsExtCallback callback)
 	pMac->sme.StatsExtCallback = callback;
 }
 
+void sme_stats_ext2_register_callback(tHalHandle hal_handle,
+	void (*stats_ext2_cb)(void *, struct sir_sme_rx_aggr_hole_ind *))
+{
+	tpAniSirGlobal pmac = PMAC_STRUCT(hal_handle);
+
+	pmac->sme.stats_ext2_cb = stats_ext2_cb;
+}
+
 /**
  * sme_stats_ext_deregister_callback() - De-register ext stats callback
  * @h_hal: Hal Handle
@@ -16250,6 +16260,26 @@ QDF_STATUS sme_ipa_uc_stat_request(tHalHandle hal, uint32_t vdev_id,
 		status = QDF_STATUS_E_FAILURE;
 	}
 	sme_release_global_lock(&mac_ctx->sme);
+
+	return status;
+}
+
+QDF_STATUS sme_set_reorder_timeout(tHalHandle hal,
+	struct sir_set_rx_reorder_timeout_val *req)
+{
+	QDF_STATUS status;
+
+	status = wma_set_rx_reorder_timeout_val(hal, req);
+
+	return status;
+}
+
+QDF_STATUS sme_set_rx_set_blocksize(tHalHandle hal,
+	struct sir_peer_set_rx_blocksize *req)
+{
+	QDF_STATUS status;
+
+	status = wma_set_rx_blocksize(hal, req);
 
 	return status;
 }
