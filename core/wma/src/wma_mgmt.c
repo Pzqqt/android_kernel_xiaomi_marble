@@ -3197,7 +3197,6 @@ int wma_process_rmf_frame(tp_wma_handle wma_handle,
 		rx_pkt->pkt_meta.mpdu_data_ptr =
 		rx_pkt->pkt_meta.mpdu_hdr_ptr +
 		rx_pkt->pkt_meta.mpdu_hdr_len;
-		rx_pkt->pkt_meta.tsf_delta = rx_pkt->pkt_meta.tsf_delta;
 		rx_pkt->pkt_buf = wbuf;
 		WMA_LOGD(FL("BSSID: "MAC_ADDRESS_STR" tsf_delta: %u"),
 		    MAC_ADDR_ARRAY(wh->i_addr3), rx_pkt->pkt_meta.tsf_delta);
