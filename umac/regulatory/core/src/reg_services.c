@@ -1512,7 +1512,7 @@ static void call_chan_change_cbks(struct wlan_objmgr_psoc *psoc,
 	struct chan_change_cbk_entry *cbk_list;
 	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
 	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
-	struct regulatory_channel cur_chan_list[NUM_CHANNELS];
+	struct regulatory_channel *cur_chan_list;
 	uint32_t ctr;
 	reg_chan_change_callback callback;
 
@@ -1525,6 +1525,12 @@ static void call_chan_change_cbks(struct wlan_objmgr_psoc *psoc,
 	pdev_priv_obj = reg_get_pdev_obj(pdev);
 	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
 		reg_alert("pdev reg component is NULL");
+		return;
+	}
+
+	cur_chan_list = qdf_mem_malloc(NUM_CHANNELS * sizeof(*cur_chan_list));
+	if (NULL == cur_chan_list) {
+		reg_alert("Mem alloc failed for current channel list");
 		return;
 	}
 
@@ -1545,6 +1551,7 @@ static void call_chan_change_cbks(struct wlan_objmgr_psoc *psoc,
 			callback(psoc, pdev, cur_chan_list,
 				 cbk_list[ctr].arg);
 	}
+	qdf_mem_free(cur_chan_list);
 }
 
 static struct reg_sched_payload
