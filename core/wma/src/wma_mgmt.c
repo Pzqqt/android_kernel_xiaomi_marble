@@ -3337,6 +3337,8 @@ end:
 	return should_drop;
 }
 
+#define RATE_LIMIT 16
+
 int wma_form_rx_packet(qdf_nbuf_t buf,
 			struct mgmt_rx_event_params *mgmt_rx_params,
 			cds_pkt_t *rx_pkt)
@@ -3349,6 +3351,9 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 	tp_wma_handle wma_handle = (tp_wma_handle)
 				cds_get_context(QDF_MODULE_ID_WMA);
 	tp_wma_packetdump_cb packetdump_cb;
+	static uint8_t limit_prints_invalid_len = RATE_LIMIT - 1;
+	static uint8_t limit_prints_load_unload = RATE_LIMIT - 1;
+	static uint8_t limit_prints_recovery = RATE_LIMIT - 1;
 
 	if (!wma_handle) {
 		WMA_LOGE(FL("wma handle is NULL"));
@@ -3358,21 +3363,33 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 	}
 
 	if (!mgmt_rx_params) {
-		WMA_LOGE(FL("mgmt rx params is NULL"));
+		limit_prints_invalid_len++;
+		if (limit_prints_invalid_len == RATE_LIMIT) {
+			WMA_LOGD(FL("mgmt rx params is NULL"));
+			limit_prints_invalid_len = 0;
+		}
 		qdf_nbuf_free(buf);
 		qdf_mem_free(rx_pkt);
 		return -EINVAL;
 	}
 
 	if (cds_is_load_or_unload_in_progress()) {
-		WMA_LOGW(FL("Load/Unload in progress"));
+		limit_prints_load_unload++;
+		if (limit_prints_load_unload == RATE_LIMIT) {
+			WMA_LOGD(FL("Load/Unload in progress"));
+			limit_prints_load_unload = 0;
+		}
 		qdf_nbuf_free(buf);
 		qdf_mem_free(rx_pkt);
 		return -EINVAL;
 	}
 
 	if (cds_is_driver_recovering()) {
-		WMA_LOGW(FL("Recovery in progress"));
+		limit_prints_recovery++;
+		if (limit_prints_recovery == RATE_LIMIT) {
+			WMA_LOGD(FL("Recovery in progress"));
+			limit_prints_recovery = 0;
+		}
 		qdf_nbuf_free(buf);
 		qdf_mem_free(rx_pkt);
 		return -EINVAL;
