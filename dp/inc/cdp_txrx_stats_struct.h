@@ -223,6 +223,7 @@ struct ol_ath_radiostats {
 	A_UINT32    wmi_tx_mgmt_completion_err;
 	A_UINT32    peer_delete_req;
 	A_UINT32    peer_delete_resp;
+	A_UINT32    rx_mgmt_rssi_drop;
 };
 
 #ifndef CONFIG_WIN
@@ -493,6 +494,7 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_DUMP_CHAINMASK_TABLES = 350,
 	OL_ATH_PARAM_DUMP_OBJECTS = 351,
 	OL_ATH_PARAM_ACS_SRLOADVAR = 352,
+	OL_ATH_PARAM_MGMT_RSSI_THRESHOLD = 353,
 };
 
 /* Enumeration of PDEV Configuration parameter */
