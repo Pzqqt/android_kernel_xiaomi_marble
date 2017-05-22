@@ -1680,6 +1680,7 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 	case SIR_HAL_TDLS_SHOULD_DISCOVER:
 	case SIR_HAL_TDLS_SHOULD_TEARDOWN:
 	case SIR_HAL_TDLS_PEER_DISCONNECTED:
+	case SIR_HAL_TDLS_CONNECTION_TRACKER_NOTIFICATION:
 		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
 			("%s received tdls event: 0x%x"), __func__, msg->type);
 		lim_send_sme_tdls_event_notify(mac_ctx, msg->type,
