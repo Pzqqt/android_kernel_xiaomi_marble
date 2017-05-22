@@ -111,20 +111,10 @@ tSirRetStatus u_mac_post_ctrl_msg(void *pSirGlobal, tSirMbMsg *pMb)
 	struct scheduler_msg msg = {0};
 	tSirRetStatus status = eSIR_SUCCESS;
 	tpAniSirGlobal pMac = (tpAniSirGlobal) pSirGlobal;
-	tSirMbMsg *pMbLocal;
 
 	msg.type = pMb->type;
 	msg.bodyval = 0;
-
-	pMbLocal = qdf_mem_malloc(pMb->msgLen);
-	if (!pMbLocal) {
-		WMA_LOGE("Memory allocation failed! Can't send 0x%x\n",
-			 msg.type);
-		return eSIR_MEM_ALLOC_FAILED;
-	}
-
-	qdf_mem_copy((void *)pMbLocal, (void *)pMb, pMb->msgLen);
-	msg.bodyptr = pMbLocal;
+	msg.bodyptr = pMb;
 
 	switch (msg.type & HAL_MMH_MB_MSG_TYPE_MASK) {
 	case WMA_MSG_TYPES_BEGIN:       /* Posts a message to the HAL MsgQ */
@@ -176,13 +166,12 @@ QDF_STATUS umac_send_mb_message_to_mac(void *pBuf)
 	if (NULL == hHal) {
 		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_ERROR,
 			  "%s: invalid hHal", __func__);
+		qdf_mem_free(pBuf);
 	} else {
 		sirStatus = u_mac_post_ctrl_msg(hHal, pBuf);
 		if (eSIR_SUCCESS == sirStatus)
 			qdf_ret_status = QDF_STATUS_SUCCESS;
 	}
-
-	qdf_mem_free(pBuf);
 
 	return qdf_ret_status;
 }
