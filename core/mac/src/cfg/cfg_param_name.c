@@ -330,4 +330,6 @@ unsigned char *g_cfg_param_name[] = {
 	(unsigned char *)"ASSOC_STA_LIMIT_GO",
 	(unsigned char *)"ASSOC_STA_LIMIT_AP",
 	(unsigned char *)"SAP_MAX_MCS_DATA",
+	(unsigned char *)"RATE_FOR_TX_MGMT_2G",
+	(unsigned char *)"RATE_FOR_TX_MGMT_5G",
 };
