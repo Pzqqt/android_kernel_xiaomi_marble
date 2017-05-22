@@ -534,6 +534,7 @@ enum scan_dwelltime_adaptive_mode {
  * @extraie: list of optional/vendor specific ie's to be added in probe requests
  * @htcap: htcap ie
  * @vhtcap: vhtcap ie
+ * @scan_ctrl_flags_ext: scan control flag extended
  */
 
 struct scan_req_params {
@@ -611,6 +612,7 @@ struct scan_req_params {
 	struct element_info extraie;
 	struct element_info htcap;
 	struct element_info vhtcap;
+	uint32_t scan_ctrl_flags_ext;
 };
 
 /**
