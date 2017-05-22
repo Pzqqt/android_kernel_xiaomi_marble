@@ -483,8 +483,23 @@ static QDF_STATUS hif_hal_attach(struct hif_softc *scn)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+static QDF_STATUS hif_hal_detach(struct hif_softc *scn)
+{
+	if (ce_srng_based(scn)) {
+		hal_detach(scn->hal_soc);
+		scn->hal_soc = NULL;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
 #else
 static QDF_STATUS hif_hal_attach(struct hif_softc *scn)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS hif_hal_detach(struct hif_softc *scn)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -525,14 +540,13 @@ QDF_STATUS hif_enable(struct hif_opaque_softc *hif_ctx, struct device *dev,
 	status = hif_hal_attach(scn);
 	if (status != QDF_STATUS_SUCCESS) {
 		HIF_ERROR("%s: hal attach failed", __func__);
-		return status;
+		goto disable_bus;
 	}
 
 	if (hif_bus_configure(scn)) {
 		HIF_ERROR("%s: Target probe failed.", __func__);
-		hif_disable_bus(scn);
 		status = QDF_STATUS_E_FAILURE;
-		return status;
+		goto hal_detach;
 	}
 
 	hif_ut_suspend_init(scn);
@@ -550,6 +564,12 @@ QDF_STATUS hif_enable(struct hif_opaque_softc *hif_ctx, struct device *dev,
 	HIF_DBG("%s: OK", __func__);
 
 	return QDF_STATUS_SUCCESS;
+
+hal_detach:
+	hif_hal_detach(scn);
+disable_bus:
+	hif_disable_bus(scn);
+	return status;
 }
 
 void hif_disable(struct hif_opaque_softc *hif_ctx, enum hif_disable_type type)
@@ -564,6 +584,8 @@ void hif_disable(struct hif_opaque_softc *hif_ctx, enum hif_disable_type type)
 		hif_shutdown_device(hif_ctx);
 	else
 		hif_stop(hif_ctx);
+
+	hif_hal_detach(scn);
 
 	hif_disable_bus(scn);
 
