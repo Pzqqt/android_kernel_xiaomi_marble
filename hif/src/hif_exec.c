@@ -299,7 +299,6 @@ irqreturn_t hif_ext_group_interrupt_handler(int irq, void *context)
 	struct hif_exec_context *hif_ext_group = context;
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ext_group->hif);
 
-
 	hif_ext_group->irq_disable(hif_ext_group);
 	qdf_atomic_inc(&scn->active_grp_tasklet_cnt);
 

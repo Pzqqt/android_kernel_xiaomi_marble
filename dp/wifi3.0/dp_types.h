@@ -424,6 +424,7 @@ struct dp_intr {
 	struct dp_soc *soc;    /* Reference to SoC structure ,
 				to get DMA ring handles */
 	qdf_lro_ctx_t lro_ctx;
+	uint8_t dp_intr_id;
 };
 
 #define REO_DESC_FREELIST_SIZE 64

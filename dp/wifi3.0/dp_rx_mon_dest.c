@@ -730,27 +730,21 @@ mon_deliver_fail:
 void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 {
 	struct dp_pdev *pdev = soc->pdev_list[mac_id];
-	uint8_t pdev_id = pdev->pdev_id;
+	uint8_t pdev_id;
 	void *hal_soc;
 	void *rxdma_dst_ring_desc;
-	void *mon_dst_srng = pdev->rxdma_mon_dst_ring.hal_srng;
+	void *mon_dst_srng;
 	union dp_rx_desc_list_elem_t *head = NULL;
 	union dp_rx_desc_list_elem_t *tail = NULL;
 	uint32_t ppdu_id;
 	uint32_t rx_bufs_used;
 
-#ifdef DP_INTR_POLL_BASED
-	if (!pdev)
-		return;
-#endif
-
 	pdev_id = pdev->pdev_id;
 	mon_dst_srng = pdev->rxdma_mon_dst_ring.hal_srng;
 
-	if (!mon_dst_srng) {
+	if (!mon_dst_srng || hal_srng_initialized(mon_dst_srng)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s %d : HAL Monitor Destination Ring Init \
-			Failed -- %p\n",
+			"%s %d : HAL Monitor Destination Ring Init Failed -- %p\n",
 			__func__, __LINE__, mon_dst_srng);
 		return;
 	}
@@ -761,8 +755,7 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 
 	if (qdf_unlikely(hal_srng_access_start(hal_soc, mon_dst_srng))) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s %d : HAL Monitor Destination Ring Init \
-			Failed -- %p\n",
+			"%s %d : HAL Monitor Destination Ring access Failed -- %p\n",
 			__func__, __LINE__, mon_dst_srng);
 		return;
 	}

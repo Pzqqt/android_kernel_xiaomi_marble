@@ -174,6 +174,34 @@
 #define WLAN_RX_HASH_ENABLE 0
 #endif
 
+#ifdef CONFIG_MCL
+static const int tx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
+						0,
+						WLAN_CFG_TX_RING_MASK_0,
+						0,
+						0,
+						WLAN_CFG_TX_RING_MASK_1,
+						WLAN_CFG_TX_RING_MASK_2,
+						WLAN_CFG_TX_RING_MASK_3};
+
+static const int rx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
+					0,
+					0,
+					WLAN_CFG_RX_RING_MASK_0,
+					0,
+					WLAN_CFG_RX_RING_MASK_1,
+					WLAN_CFG_RX_RING_MASK_2,
+					WLAN_CFG_RX_RING_MASK_3};
+
+static const int rx_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
+					0,
+					0,
+					0,
+					WLAN_CFG_RX_MON_RING_MASK_0,
+					WLAN_CFG_RX_MON_RING_MASK_1,
+					WLAN_CFG_RX_MON_RING_MASK_2,
+					WLAN_CFG_RX_MON_RING_MASK_3};
+#else
 static const int tx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
 						WLAN_CFG_TX_RING_MASK_0,
 						WLAN_CFG_TX_RING_MASK_1,
@@ -191,6 +219,8 @@ static const int rx_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
 					WLAN_CFG_RX_MON_RING_MASK_1,
 					WLAN_CFG_RX_MON_RING_MASK_2,
 					WLAN_CFG_RX_MON_RING_MASK_3};
+
+#endif
 
 static const int rx_err_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
 					WLAN_CFG_RX_ERR_RING_MASK_0,
@@ -215,75 +245,6 @@ static const int rxdma2host_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
 					WLAN_CFG_RXDMA2HOST_RING_MASK_1,
 					WLAN_CFG_RXDMA2HOST_RING_MASK_2,
 					WLAN_CFG_RXDMA2HOST_RING_MASK_3};
-
-/**
- * struct wlan_cfg_dp_soc_ctxt - Configuration parameters for SoC (core TxRx)
- * @num_int_ctxts - Number of NAPI/Interrupt contexts to be registered for DP
- * @max_clients - Maximum number of peers/stations supported by device
- * @max_alloc_size - Maximum allocation size for any dynamic memory
- *			allocation request for this device
- * @per_pdev_tx_ring - 0 - TCL ring is not mapped per radio
- *		       1 - Each TCL ring is mapped to one radio/pdev
- * @num_tcl_data_rings - Number of TCL Data rings supported by device
- * @per_pdev_rx_ring - 0 - REO ring is not mapped per radio
- *		       1 - Each REO ring is mapped to one radio/pdev
- * @num_tx_desc_pool - Number of Tx Descriptor pools
- * @num_tx_ext_desc_pool - Number of Tx MSDU extension Descriptor pools
- * @num_tx_desc - Number of Tx Descriptors per pool
- * @num_tx_ext_desc - Number of Tx MSDU extension Descriptors per pool
- * @max_peer_id - Maximum value of peer id that FW can assign for a client
- * @htt_packet_type - Default 802.11 encapsulation type for any VAP created
- * @int_tx_ring_mask - Bitmap of Tx interrupts mapped to each NAPI/Intr context
- * @int_rx_ring_mask - Bitmap of Rx interrupts mapped to each NAPI/Intr context
- * @int_rx_mon_ring_mask - Bitmap of Rx monitor ring interrupts mapped to each
- *			  NAPI/Intr context
- * @int_rxdma2host_ring_mask - Bitmap of RXDMA2host ring interrupts mapped to
- *		each NAPI/Intr context
- * @int_ce_ring_mask - Bitmap of CE interrupts mapped to each NAPI/Intr context
- * @lro_enabled - is LRO enabled
- * @rx_hash - Enable hash based steering of rx packets
- *
- */
-struct wlan_cfg_dp_soc_ctxt {
-	int num_int_ctxts;
-	int max_clients;
-	int max_alloc_size;
-	int per_pdev_tx_ring;
-	int num_tcl_data_rings;
-	int per_pdev_rx_ring;
-	int num_reo_dest_rings;
-	int num_tx_desc_pool;
-	int num_tx_ext_desc_pool;
-	int num_tx_desc;
-	int num_tx_ext_desc;
-	int max_peer_id;
-	int htt_packet_type;
-	int int_batch_threshold_tx;
-	int int_timer_threshold_tx;
-	int int_batch_threshold_rx;
-	int int_timer_threshold_rx;
-	int int_batch_threshold_other;
-	int int_timer_threshold_other;
-	int tx_ring_size;
-	int tx_comp_ring_size;
-	int int_tx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
-	int int_rx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
-	int int_rx_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
-	int int_rxdma2host_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
-	int int_ce_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
-	int int_rx_err_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
-	int int_rx_wbm_rel_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
-	int int_reo_status_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
-	bool lro_enabled;
-	bool rx_hash;
-	int nss_cfg;
-	int hw_macid[MAX_PDEV_CNT];
-	int base_hw_macid;
-#ifdef QCA_LL_TX_FLOW_CONTROL_V2
-	int tx_flow_stop_queue_th;
-	int tx_flow_start_queue_offset;
-#endif
-};
 
 /**
  * struct wlan_cfg_dp_pdev_ctxt - Configuration parameters for pdev (radio)

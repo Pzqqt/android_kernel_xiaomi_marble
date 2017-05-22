@@ -840,9 +840,6 @@ static inline void hal_srng_src_hw_init(struct hal_soc *hal,
 		SRNG_SRC_REG_WRITE(srng, MSI1_DATA, srng->msi_data);
 	}
 
-	HIF_INFO("%s: hw_init srng (msi_end) %d", __func__, srng->ring_id);
-
-
 	SRNG_SRC_REG_WRITE(srng, BASE_LSB, srng->ring_base_paddr & 0xffffffff);
 	reg_val = SRNG_SM(SRNG_SRC_FLD(BASE_MSB, RING_BASE_ADDR_MSB),
 		((uint64_t)(srng->ring_base_paddr) >> 32)) |
@@ -982,8 +979,6 @@ static inline void hal_srng_dst_hw_init(struct hal_soc *hal,
 		SRNG_DST_REG_WRITE(srng, MSI1_BASE_MSB, reg_val);
 		SRNG_DST_REG_WRITE(srng, MSI1_DATA, srng->msi_data);
 	}
-
-	HIF_INFO("%s: hw_init srng msi end %d", __func__, srng->ring_id);
 
 	SRNG_DST_REG_WRITE(srng, BASE_LSB, srng->ring_base_paddr & 0xffffffff);
 	reg_val = SRNG_SM(SRNG_DST_FLD(BASE_MSB, RING_BASE_ADDR_MSB),
@@ -1227,6 +1222,8 @@ void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 
 	SRNG_LOCK_INIT(&srng->lock);
 
+	srng->initialized = true;
+
 	return (void *)srng;
 }
 
@@ -1266,6 +1263,14 @@ uint32_t hal_srng_max_entries(void *hal_soc, int ring_type)
 {
 	struct hal_hw_srng_config *ring_config = HAL_SRNG_CONFIG(hal, ring_type);
 	return SRNG_MAX_SIZE_DWORDS / ring_config->entry_size;
+}
+
+enum hal_srng_dir hal_srng_get_dir(void *hal_soc, int ring_type)
+{
+	struct hal_hw_srng_config *ring_config =
+		HAL_SRNG_CONFIG(hal, ring_type);
+
+	return ring_config->ring_dir;
 }
 
 /**

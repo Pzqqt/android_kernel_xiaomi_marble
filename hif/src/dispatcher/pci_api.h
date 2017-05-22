@@ -26,6 +26,8 @@
  */
 #ifndef _PCI_API_H_
 #define _PCI_API_H_
+struct hif_exec_context;
+
 QDF_STATUS hif_pci_open(struct hif_softc *hif_ctx,
 			enum qdf_bus_type bus_type);
 void hif_pci_close(struct hif_softc *hif_ctx);
@@ -52,6 +54,8 @@ int hif_pci_dump_registers(struct hif_softc *scn);
 void hif_pci_enable_power_management(struct hif_softc *hif_ctx,
 				 bool is_packet_log_enabled);
 void hif_pci_disable_power_management(struct hif_softc *hif_ctx);
+int hif_pci_configure_grp_irq(struct hif_softc *scn,
+			      struct hif_exec_context *exec);
 void hif_pci_display_stats(struct hif_softc *hif_ctx);
 void hif_pci_clear_stats(struct hif_softc *hif_ctx);
 int hif_pci_legacy_map_ce_to_irq(struct hif_softc *scn, int ce_id);

@@ -54,6 +54,7 @@
 #include "if_pci_internal.h"
 #include "ce_tasklet.h"
 #include "targaddrs.h"
+#include "hif_exec.h"
 
 #include "pci_api.h"
 #include "ahb_api.h"
@@ -2592,6 +2593,25 @@ static int hif_ce_srng_msi_free_irq(struct hif_softc *scn)
 	return ret;
 }
 
+static void hif_pci_deconfigure_grp_irq(struct hif_softc *scn)
+{
+	int i, j, irq;
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+	struct hif_exec_context *hif_ext_group;
+
+	for (i = 0; i < hif_state->hif_num_extgroup; i++) {
+		hif_ext_group = hif_state->hif_ext_group[i];
+		if (hif_ext_group->irq_requested) {
+			hif_ext_group->irq_requested = false;
+			for (j = 0; j < hif_ext_group->numirq; j++) {
+				irq = hif_ext_group->os_irq[j];
+				free_irq(irq, hif_ext_group);
+			}
+			hif_ext_group->numirq = 0;
+		}
+	}
+}
+
 /**
  * hif_nointrs(): disable IRQ
  *
@@ -2611,6 +2631,8 @@ void hif_pci_nointrs(struct hif_softc *scn)
 
 	if (scn->request_irq_done == false)
 		return;
+
+	hif_pci_deconfigure_grp_irq(scn);
 
 	ret = hif_ce_srng_msi_free_irq(scn);
 	if (ret != 0 && sc->num_msi_intrs > 0) {
@@ -3623,10 +3645,13 @@ static int hif_ce_msi_configure_irq(struct hif_softc *scn)
 		unsigned int msi_data = (ce_id % msi_data_count) +
 			msi_irq_start;
 		irq = pld_get_msi_irq(scn->qdf_dev->dev, msi_data);
-
-		HIF_INFO("%s: (ce_id %d, msi_data %d, irq %d tasklet %p)",
+		HIF_DBG("%s: (ce_id %d, msi_data %d, irq %d tasklet %p)",
 			 __func__, ce_id, msi_data, irq,
 			 &ce_sc->tasklets[ce_id]);
+
+		/* implies the ce is also initialized */
+		if (!ce_sc->tasklets[ce_id].inited)
+			continue;
 
 		pci_sc->ce_msi_irq_num[ce_id] = irq;
 		ret = request_irq(irq, hif_ce_interrupt_handler,
@@ -3652,6 +3677,53 @@ free_irq:
 	return ret;
 }
 
+static void hif_exec_grp_irq_disable(struct hif_exec_context *hif_ext_group)
+{
+	int i;
+
+	for (i = 0; i < hif_ext_group->numirq; i++)
+		disable_irq_nosync(hif_ext_group->os_irq[i]);
+}
+
+static void hif_exec_grp_irq_enable(struct hif_exec_context *hif_ext_group)
+{
+	int i;
+
+	for (i = 0; i < hif_ext_group->numirq; i++)
+		enable_irq(hif_ext_group->os_irq[i]);
+}
+
+
+int hif_pci_configure_grp_irq(struct hif_softc *scn,
+			      struct hif_exec_context *hif_ext_group)
+{
+	int ret = 0;
+	int irq = 0;
+	int j;
+
+	hif_ext_group->irq_enable = &hif_exec_grp_irq_enable;
+	hif_ext_group->irq_disable = &hif_exec_grp_irq_disable;
+	hif_ext_group->work_complete = &hif_dummy_grp_done;
+
+	for (j = 0; j < hif_ext_group->numirq; j++) {
+		irq = hif_ext_group->irq[j];
+
+		HIF_DBG("%s: request_irq = %d for grp %d",
+			  __func__, irq, hif_ext_group->grp_id);
+		ret = request_irq(irq,
+				  hif_ext_group_interrupt_handler,
+				  IRQF_SHARED, "wlan_EXT_GRP",
+				  hif_ext_group);
+		if (ret) {
+			HIF_ERROR("%s: request_irq failed ret = %d",
+				  __func__, ret);
+			return -EFAULT;
+		}
+		hif_ext_group->os_irq[j] = irq;
+	}
+	hif_ext_group->irq_requested = true;
+	return 0;
+}
 
 /**
  * hif_configure_irq() - configure interrupt

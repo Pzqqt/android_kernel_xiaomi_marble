@@ -194,6 +194,15 @@ extern uint32_t hal_srng_get_entrysize(void *hal_soc, int ring_type);
  */
 uint32_t hal_srng_max_entries(void *hal_soc, int ring_type);
 
+/**
+ * hal_srng_get_dir - Returns the direction of the ring
+ * @hal_soc: Opaque HAL SOC handle
+ * @ring_type: one of the types from hal_ring_type
+ *
+ * Return: Ring direction
+ */
+enum hal_srng_dir hal_srng_get_dir(void *hal_soc, int ring_type);
+
 /* HAL memory information */
 struct hal_mem_info {
 	/* dev base virutal addr */
@@ -305,6 +314,13 @@ extern void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
  * @hal_srng: Opaque HAL SRNG pointer
  */
 extern void hal_srng_cleanup(void *hal_soc, void *hal_srng);
+
+static inline bool hal_srng_initialized(void *hal_ring)
+{
+	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+
+	return !!srng->initialized;
+}
 
 /**
  * hal_srng_access_start_unlocked - Start ring access (unlocked). Should use

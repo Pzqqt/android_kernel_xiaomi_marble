@@ -47,11 +47,6 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 	uint8_t *rx_tlv_start;
 	uint32_t tlv_status = HAL_TLV_STATUS_DUMMY;
 
-#ifdef DP_INTR_POLL_BASED
-	if (!pdev)
-		return;
-#endif
-
 	ppdu_info = &pdev->ppdu_info;
 
 	if (pdev->mon_ppdu_status != DP_PPDU_STATUS_START)
@@ -116,14 +111,16 @@ dp_rx_mon_status_srng_process(struct dp_soc *soc, uint32_t mac_id,
 	QDF_STATUS status;
 	uint32_t work_done = 0;
 
-#ifdef DP_INTR_POLL_BASED
-	if (!pdev)
-		return work_done;
-#endif
-
 	mon_status_srng = pdev->rxdma_mon_status_ring.hal_srng;
 
 	qdf_assert(mon_status_srng);
+	if (!mon_status_srng || !hal_srng_initialized(mon_status_srng)) {
+
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"%s %d : HAL Monitor Destination Ring Init Failed -- %p\n",
+			__func__, __LINE__, mon_status_srng);
+		return work_done;
+	}
 
 	hal_soc = soc->hal_soc;
 

@@ -398,6 +398,7 @@ irqreturn_t ce_dispatch_interrupt(int ce_id,
 			  __func__, tasklet_entry->ce_id, CE_COUNT_MAX);
 		return IRQ_NONE;
 	}
+
 	hif_irq_disable(scn, ce_id);
 	hif_record_ce_desc_event(scn, ce_id, HIF_IRQ_EVENT, NULL, NULL, 0);
 	hif_ce_increment_interrupt_count(hif_ce_state, ce_id);

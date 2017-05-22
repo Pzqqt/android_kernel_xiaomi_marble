@@ -25,8 +25,10 @@
  */
 #if defined(CONFIG_MCL)
 #define MAX_PDEV_CNT 1
+#define WLAN_CFG_INT_NUM_CONTEXTS 7
 #else
 #define MAX_PDEV_CNT 3
+#define WLAN_CFG_INT_NUM_CONTEXTS 4
 #endif
 
 /* Tx configuration */
@@ -52,9 +54,79 @@
 #define DP_MAX_TIDS 17
 #define DP_NON_QOS_TID 16
 
-#define WLAN_CFG_INT_NUM_CONTEXTS 4
 struct wlan_cfg_dp_pdev_ctxt;
-struct wlan_cfg_dp_soc_ctxt;
+/**
+ * struct wlan_cfg_dp_soc_ctxt - Configuration parameters for SoC (core TxRx)
+ * @num_int_ctxts - Number of NAPI/Interrupt contexts to be registered for DP
+ * @max_clients - Maximum number of peers/stations supported by device
+ * @max_alloc_size - Maximum allocation size for any dynamic memory
+ *			allocation request for this device
+ * @per_pdev_tx_ring - 0 - TCL ring is not mapped per radio
+ *		       1 - Each TCL ring is mapped to one radio/pdev
+ * @num_tcl_data_rings - Number of TCL Data rings supported by device
+ * @per_pdev_rx_ring - 0 - REO ring is not mapped per radio
+ *		       1 - Each REO ring is mapped to one radio/pdev
+ * @num_tx_desc_pool - Number of Tx Descriptor pools
+ * @num_tx_ext_desc_pool - Number of Tx MSDU extension Descriptor pools
+ * @num_tx_desc - Number of Tx Descriptors per pool
+ * @num_tx_ext_desc - Number of Tx MSDU extension Descriptors per pool
+ * @max_peer_id - Maximum value of peer id that FW can assign for a client
+ * @htt_packet_type - Default 802.11 encapsulation type for any VAP created
+ * @int_tx_ring_mask - Bitmap of Tx interrupts mapped to each NAPI/Intr context
+ * @int_rx_ring_mask - Bitmap of Rx interrupts mapped to each NAPI/Intr context
+ * @int_rx_mon_ring_mask - Bitmap of Rx monitor ring interrupts mapped to each
+ *			  NAPI/Intr context
+ * @int_rx_err_ring_mask - Bitmap of Rx err ring interrupts mapped to each
+ *			  NAPI/Intr context
+ * @int_wbm_rel_ring_mask - Bitmap of wbm rel ring interrupts mapped to each
+ *			  NAPI/Intr context
+ * @int_reo_status_ring_mask - Bitmap of reo status ring interrupts mapped to each
+ *                        NAPI/Intr context
+ * @int_ce_ring_mask - Bitmap of CE interrupts mapped to each NAPI/Intr context
+ * @lro_enabled - is LRO enabled
+ * @rx_hash - Enable hash based steering of rx packets
+ * @nss_cfg - nss configuration
+ */
+struct wlan_cfg_dp_soc_ctxt {
+	int num_int_ctxts;
+	int max_clients;
+	int max_alloc_size;
+	int per_pdev_tx_ring;
+	int num_tcl_data_rings;
+	int per_pdev_rx_ring;
+	int num_reo_dest_rings;
+	int num_tx_desc_pool;
+	int num_tx_ext_desc_pool;
+	int num_tx_desc;
+	int num_tx_ext_desc;
+	int max_peer_id;
+	int htt_packet_type;
+	int int_batch_threshold_tx;
+	int int_timer_threshold_tx;
+	int int_batch_threshold_rx;
+	int int_timer_threshold_rx;
+	int int_batch_threshold_other;
+	int int_timer_threshold_other;
+	int tx_ring_size;
+	int tx_comp_ring_size;
+	int int_tx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	int int_rx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	int int_rx_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	int int_ce_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	int int_rx_err_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	int int_rx_wbm_rel_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	int int_reo_status_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	int int_rxdma2host_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	int hw_macid[MAX_PDEV_CNT];
+	int base_hw_macid;
+	bool lro_enabled;
+	bool rx_hash;
+	int nss_cfg;
+#ifdef QCA_LL_TX_FLOW_CONTROL_V2
+	int tx_flow_stop_queue_th;
+	int tx_flow_start_queue_offset;
+#endif
+};
 
 /**
  * wlan_cfg_soc_attach() - Attach configuration interface for SoC
@@ -115,12 +187,6 @@ int wlan_cfg_set_rx_wbm_rel_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
 					int context, int mask);
 int wlan_cfg_set_reo_status_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
 					int context, int mask);
-int wlan_cfg_get_rx_err_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
-					int context);
-int wlan_cfg_get_rx_wbm_rel_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
-					int context);
-int wlan_cfg_get_reo_status_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
-					int context);
 /**
  * wlan_cfg_get_num_contexts() - Number of interrupt contexts to be registered
  * @wlan_cfg_ctx - Configuration Handle
@@ -219,6 +285,39 @@ int wlan_cfg_get_hw_macid(struct wlan_cfg_dp_soc_ctxt *cfg, int pdev_idx);
  * Return: HW MAC index
  */
 int wlan_cfg_get_hw_mac_idx(struct wlan_cfg_dp_soc_ctxt *cfg, int pdev_idx);
+
+/**
+ * wlan_cfg_get_rx_err_ring_mask() - Return Rx monitor ring interrupt mask
+ *					   mapped to an interrupt context
+ * @wlan_cfg_ctx - Configuration Handle
+ * @context - Numerical ID identifying the Interrupt/NAPI context
+ *
+ * Return: int_rx_err_ring_mask[context]
+ */
+int wlan_cfg_get_rx_err_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg, int
+				  context);
+
+/**
+ * wlan_cfg_get_rx_wbm_rel_ring_mask() - Return Rx monitor ring interrupt mask
+ *					   mapped to an interrupt context
+ * @wlan_cfg_ctx - Configuration Handle
+ * @context - Numerical ID identifying the Interrupt/NAPI context
+ *
+ * Return: int_wbm_rel_ring_mask[context]
+ */
+int wlan_cfg_get_rx_wbm_rel_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg, int
+				      context);
+
+/**
+ * wlan_cfg_get_reo_status_ring_mask() - Return Rx monitor ring interrupt mask
+ *					   mapped to an interrupt context
+ * @wlan_cfg_ctx - Configuration Handle
+ * @context - Numerical ID identifying the Interrupt/NAPI context
+ *
+ * Return: int_reo_status_ring_mask[context]
+ */
+int wlan_cfg_get_reo_status_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg, int
+				      context);
 
 /**
  * wlan_cfg_get_ce_ring_mask() - Return CE ring interrupt mask
