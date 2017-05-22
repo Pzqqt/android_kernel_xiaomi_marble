@@ -1486,6 +1486,18 @@ QDF_STATUS sme_register_set_connection_info_cb(tHalHandle hHal,
 				enum scan_reject_states *reason));
 
 /**
+ * sme_set_dbs_scan_selection_config() - Update DBS scan selection
+ * configuration
+ * @hal: The handle returned by macOpen
+ * @params: wmi_dbs_scan_sel_params config
+ *
+ * Return: QDF_STATUS if DBS scan selection update
+ * configuration success else failure status
+ */
+QDF_STATUS sme_set_dbs_scan_selection_config(tHalHandle hal,
+		struct wmi_dbs_scan_sel_params *params);
+
+/**
  * sme_store_pdev() - store pdev
  * @hal - MAC global handle
  * @pdev - pdev ptr

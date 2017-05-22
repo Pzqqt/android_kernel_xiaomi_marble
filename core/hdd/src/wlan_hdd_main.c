@@ -8699,6 +8699,62 @@ static int hdd_adaptive_dwelltime_init(hdd_context_t *hdd_ctx)
 	return 0;
 }
 
+int hdd_dbs_scan_selection_init(hdd_context_t *hdd_ctx)
+{
+	QDF_STATUS status;
+	struct wmi_dbs_scan_sel_params dbs_scan_params;
+	uint32_t i = 0;
+	uint8_t count = 0, numentries = 0;
+	uint8_t dbs_scan_config[CDS_DBS_SCAN_PARAM_PER_CLIENT
+				* CDS_DBS_SCAN_CLIENTS_MAX];
+
+	/* check if DBS is enabled or supported */
+	if ((hdd_ctx->config->dual_mac_feature_disable)
+	    || (!policy_mgr_is_hw_dbs_capable(hdd_ctx->hdd_psoc)))
+		return -EINVAL;
+
+	hdd_string_to_u8_array(hdd_ctx->config->dbs_scan_selection,
+			       dbs_scan_config, &numentries,
+			       (CDS_DBS_SCAN_PARAM_PER_CLIENT
+				* CDS_DBS_SCAN_CLIENTS_MAX));
+
+	hdd_info("numentries %hu", numentries);
+	if (!numentries) {
+		hdd_info("Donot send scan_selection_config");
+		return 0;
+	}
+
+	/* hdd_set_fw_log_params */
+	dbs_scan_params.num_clients = 0;
+	while (count < (numentries - 2)) {
+		dbs_scan_params.module_id[i] = dbs_scan_config[count];
+		dbs_scan_params.num_dbs_scans[i] = dbs_scan_config[count + 1];
+		dbs_scan_params.num_non_dbs_scans[i] =
+			dbs_scan_config[count + 2];
+		dbs_scan_params.num_clients++;
+		hdd_debug("module:%d NDS:%d NNDS:%d",
+			  dbs_scan_params.module_id[i],
+			  dbs_scan_params.num_dbs_scans[i],
+			  dbs_scan_params.num_non_dbs_scans[i]);
+		count += CDS_DBS_SCAN_PARAM_PER_CLIENT;
+		i++;
+	}
+
+	dbs_scan_params.pdev_id = 0;
+
+	hdd_debug("clients:%d pdev:%d",
+		  dbs_scan_params.num_clients, dbs_scan_params.pdev_id);
+
+	status = sme_set_dbs_scan_selection_config(hdd_ctx->hHal,
+						   &dbs_scan_params);
+	hdd_debug("Sending DBS Scan Selection Configuration to fw");
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("Failed to send DBS Scan selection configuration!");
+		return -EAGAIN;
+	}
+	return 0;
+}
+
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 /**
  * hdd_set_auto_shutdown_cb() - Set auto shutdown callback
@@ -8773,6 +8829,9 @@ static int hdd_features_init(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 
 	if (hdd_adaptive_dwelltime_init(hdd_ctx))
 		hdd_err("Unable to send adaptive dwelltime setting to FW");
+
+	if (hdd_dbs_scan_selection_init(hdd_ctx))
+		hdd_err("Unable to send DBS scan selection setting to FW");
 
 	ret = hdd_init_thermal_info(hdd_ctx);
 	if (ret) {

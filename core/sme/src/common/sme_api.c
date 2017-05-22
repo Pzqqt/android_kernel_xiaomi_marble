@@ -16069,6 +16069,44 @@ QDF_STATUS sme_rso_cmd_status_cb(tHalHandle hal,
 	return status;
 }
 
+QDF_STATUS sme_set_dbs_scan_selection_config(tHalHandle hal,
+		struct wmi_dbs_scan_sel_params *params)
+{
+	struct scheduler_msg message = {0};
+	QDF_STATUS status;
+	struct wmi_dbs_scan_sel_params *dbs_scan_params;
+	uint32_t i;
+
+	if (0 == params->num_clients) {
+		sme_err("Num of clients is 0");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	dbs_scan_params = qdf_mem_malloc(sizeof(*dbs_scan_params));
+	if (!dbs_scan_params) {
+		sme_err("fail to alloc dbs_scan_params");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	dbs_scan_params->num_clients = params->num_clients;
+	dbs_scan_params->pdev_id = params->pdev_id;
+	for (i = 0; i < params->num_clients; i++) {
+		dbs_scan_params->module_id[i] = params->module_id[i];
+		dbs_scan_params->num_dbs_scans[i] = params->num_dbs_scans[i];
+		dbs_scan_params->num_non_dbs_scans[i] =
+			params->num_non_dbs_scans[i];
+	}
+	message.type = WMA_SET_DBS_SCAN_SEL_CONF_PARAMS;
+	message.bodyptr = dbs_scan_params;
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		sme_err("Not able to post msg to WMA!");
+		qdf_mem_free(dbs_scan_params);
+	}
+
+	return status;
+}
+
 void sme_store_pdev(tHalHandle hal, struct wlan_objmgr_pdev *pdev)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);

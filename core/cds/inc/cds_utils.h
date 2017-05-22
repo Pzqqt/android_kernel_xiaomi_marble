@@ -68,6 +68,9 @@
 
 #define INVALID_SCAN_ID        0xFFFFFFFF
 
+#define CDS_DBS_SCAN_CLIENTS_MAX           (7)
+#define CDS_DBS_SCAN_PARAM_PER_CLIENT      (3)
+
 #define cds_log(level, args...) QDF_TRACE(QDF_MODULE_ID_QDF, level, ## args)
 #define cds_logfl(level, format, args...) cds_log(level, FL(format), ## args)
 

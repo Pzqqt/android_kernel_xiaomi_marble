@@ -866,6 +866,20 @@ QDF_STATUS wma_send_adapt_dwelltime_params(WMA_HANDLE handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS wma_send_dbs_scan_selection_params(WMA_HANDLE handle,
+			struct wmi_dbs_scan_sel_params *dbs_scan_params)
+{
+	tp_wma_handle wma_handle = (tp_wma_handle) handle;
+	int32_t err;
+
+	err = wmi_unified_send_dbs_scan_sel_params_cmd(wma_handle->
+					wmi_handle, dbs_scan_params);
+	if (err)
+		return QDF_STATUS_E_FAILURE;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #ifdef FEATURE_GREEN_AP
 
 /**

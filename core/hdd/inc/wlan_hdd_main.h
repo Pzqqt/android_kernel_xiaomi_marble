@@ -2421,6 +2421,17 @@ hdd_adapter_t *wlan_hdd_get_adapter_from_vdev(struct wlan_objmgr_psoc
 void hdd_unregister_notifiers(hdd_context_t *hdd_ctx);
 
 /**
+ * hdd_dbs_scan_selection_init() - initialization for DBS scan selection config
+ * @hdd_ctx: HDD context
+ *
+ * This function sends the DBS scan selection config configuration to the
+ * firmware via WMA
+ *
+ * Return: 0 - success, < 0 - failure
+ */
+int hdd_dbs_scan_selection_init(hdd_context_t *hdd_ctx);
+
+/**
  * hdd_start_complete()- complete the start event
  * @ret: return value for complete event.
  *

@@ -60,8 +60,6 @@
 #define IPADDR_STRING_LENGTH   (16)
 #endif
 
-#define CFG_DBS_SCAN_CLIENTS_MAX           (7)
-#define CFG_DBS_SCAN_PARAM_PER_CLIENT      (3)
 #define CFG_DBS_SCAN_PARAM_LENGTH          (42)
 
 /* Number of items that can be configured */
