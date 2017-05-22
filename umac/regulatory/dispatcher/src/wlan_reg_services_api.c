@@ -160,6 +160,12 @@ uint32_t wlan_reg_get_channel_freq(struct wlan_objmgr_pdev *pdev,
 	return reg_get_channel_freq(pdev, chan_num);
 }
 
+QDF_STATUS wlan_reg_get_current_chan_list(struct wlan_objmgr_pdev *pdev,
+		struct regulatory_channel *chan_list)
+{
+	return reg_get_current_chan_list(pdev, chan_list);
+}
+
 /**
  * wlan_reg_get_bw_value() - give bandwidth value
  * bw: bandwidth enum

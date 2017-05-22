@@ -151,6 +151,15 @@ uint32_t wlan_reg_get_channel_freq(struct wlan_objmgr_pdev *pdev,
 				   uint32_t chan_num);
 
 /**
+ * wlan_reg_get_current_chan_list() - provide the pdev current channel list
+ * @pdev: pdev pointer
+ * @chan_list: channel list pointer
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_reg_get_current_chan_list(struct wlan_objmgr_pdev *pdev,
+		struct regulatory_channel *chan_list);
+/**
  * wlan_reg_get_bonded_channel_state() - get bonded channel state
  * @pdev: pdev ptr
  * @ch: chennal number
