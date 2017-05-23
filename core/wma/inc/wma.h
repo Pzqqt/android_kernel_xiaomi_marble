@@ -328,6 +328,8 @@ enum ds_mode {
 #define WMA_ROAM_HO_WAKE_LOCK_DURATION          (500)          /* in msec */
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 #define WMA_AUTO_SHUTDOWN_WAKE_LOCK_DURATION    (5 * 1000)     /* in msec */
+#else
+#define WMA_AUTO_SHUTDOWN_WAKE_LOCK_DURATION    0              /* in msec */
 #endif
 #define WMA_BMISS_EVENT_WAKE_LOCK_DURATION      (4 * 1000)     /* in msec */
 #define WMA_FW_RSP_EVENT_WAKE_LOCK_DURATION     (3 * 1000)     /* in msec */
@@ -1281,6 +1283,13 @@ struct hw_mode_idx_to_mac_cap_idx {
  * @pno_wake_lock: PNO wake lock
  * @extscan_wake_lock: extscan wake lock
  * @wow_wake_lock: wow wake lock
+ * @wow_auth_req_wl: wow wake lock for auth req
+ * @wow_assoc_req_wl: wow wake lock for assoc req
+ * @wow_deauth_rec_wl: wow wake lock for deauth req
+ * @wow_disassoc_rec_wl: wow wake lock for disassoc req
+ * @wow_ap_assoc_lost_wl: wow wake lock for assoc lost req
+ * @wow_auto_shutdown_wl: wow wake lock for shutdown req
+ * @roam_ho_wl: wake lock for roam handoff req
  * @wow_nack: wow negative ack flag
  * @ap_client_cnt: ap client count
  * @is_wow_bus_suspended: is wow bus suspended flag
@@ -1442,6 +1451,13 @@ typedef struct {
 	qdf_wake_lock_t extscan_wake_lock;
 #endif
 	qdf_wake_lock_t wow_wake_lock;
+	qdf_wake_lock_t wow_auth_req_wl;
+	qdf_wake_lock_t wow_assoc_req_wl;
+	qdf_wake_lock_t wow_deauth_rec_wl;
+	qdf_wake_lock_t wow_disassoc_rec_wl;
+	qdf_wake_lock_t wow_ap_assoc_lost_wl;
+	qdf_wake_lock_t wow_auto_shutdown_wl;
+	qdf_wake_lock_t roam_ho_wl;
 	int wow_nack;
 	qdf_atomic_t is_wow_bus_suspended;
 	qdf_mc_timer_t wma_scan_comp_timer;

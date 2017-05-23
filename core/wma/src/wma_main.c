@@ -2148,7 +2148,22 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *cds_context,
 		qdf_wake_lock_create(&wma_handle->extscan_wake_lock,
 					"wlan_extscan_wl");
 #endif /* FEATURE_WLAN_EXTSCAN */
-		qdf_wake_lock_create(&wma_handle->wow_wake_lock, "wlan_wow_wl");
+		qdf_wake_lock_create(&wma_handle->wow_wake_lock,
+			"wlan_wow_wl");
+		qdf_wake_lock_create(&wma_handle->wow_auth_req_wl,
+			"wlan_auth_req_wl");
+		qdf_wake_lock_create(&wma_handle->wow_assoc_req_wl,
+			"wlan_assoc_req_wl");
+		qdf_wake_lock_create(&wma_handle->wow_deauth_rec_wl,
+			"wlan_deauth_rec_wl");
+		qdf_wake_lock_create(&wma_handle->wow_disassoc_rec_wl,
+			"wlan_disassoc_rec_wl");
+		qdf_wake_lock_create(&wma_handle->wow_ap_assoc_lost_wl,
+			"wlan_ap_assoc_lost_wl");
+		qdf_wake_lock_create(&wma_handle->wow_auto_shutdown_wl,
+			"wlan_auto_shutdown_wl");
+		qdf_wake_lock_create(&wma_handle->roam_ho_wl,
+			"wlan_roam_ho_wl");
 	}
 
 	qdf_status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_LEGACY_WMA_ID);
@@ -2606,6 +2621,13 @@ err_wma_handle:
 		qdf_wake_lock_destroy(&wma_handle->extscan_wake_lock);
 #endif /* FEATURE_WLAN_EXTSCAN */
 		qdf_wake_lock_destroy(&wma_handle->wow_wake_lock);
+		qdf_wake_lock_destroy(&wma_handle->wow_auth_req_wl);
+		qdf_wake_lock_destroy(&wma_handle->wow_assoc_req_wl);
+		qdf_wake_lock_destroy(&wma_handle->wow_deauth_rec_wl);
+		qdf_wake_lock_destroy(&wma_handle->wow_disassoc_rec_wl);
+		qdf_wake_lock_destroy(&wma_handle->wow_ap_assoc_lost_wl);
+		qdf_wake_lock_destroy(&wma_handle->wow_auto_shutdown_wl);
+		qdf_wake_lock_destroy(&wma_handle->roam_ho_wl);
 	}
 
 	cds_free_context(cds_context, QDF_MODULE_ID_WMA, wma_handle);
@@ -3565,6 +3587,13 @@ QDF_STATUS wma_close(void *cds_ctx)
 		qdf_wake_lock_destroy(&wma_handle->extscan_wake_lock);
 #endif /* FEATURE_WLAN_EXTSCAN */
 		qdf_wake_lock_destroy(&wma_handle->wow_wake_lock);
+		qdf_wake_lock_destroy(&wma_handle->wow_auth_req_wl);
+		qdf_wake_lock_destroy(&wma_handle->wow_assoc_req_wl);
+		qdf_wake_lock_destroy(&wma_handle->wow_deauth_rec_wl);
+		qdf_wake_lock_destroy(&wma_handle->wow_disassoc_rec_wl);
+		qdf_wake_lock_destroy(&wma_handle->wow_ap_assoc_lost_wl);
+		qdf_wake_lock_destroy(&wma_handle->wow_auto_shutdown_wl);
+		qdf_wake_lock_destroy(&wma_handle->roam_ho_wl);
 	}
 
 	/* unregister Firmware debug log */
