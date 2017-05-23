@@ -6054,6 +6054,9 @@ QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter, bool reinit)
 		return status;
 	}
 
+	/* set SME_SESSION_OPENED since sap session started */
+	set_bit(SME_SESSION_OPENED, &pAdapter->event_flags);
+
 	ret = hdd_vdev_ready(pAdapter);
 	if (ret) {
 		hdd_err("failed to raise vdev ready event: %d", ret);
@@ -8210,8 +8213,8 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 		global_p2p_connection_status = P2P_NOT_ACTIVE;
 	}
 #endif
-	pAdapter->sessionId = HDD_SESSION_ID_INVALID;
 	EXIT();
+
 	return ret;
 }
 
