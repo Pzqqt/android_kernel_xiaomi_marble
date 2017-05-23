@@ -260,6 +260,8 @@ int hdd_hif_open(struct device *dev, void *bdev, const struct hif_bus_id *bid,
 		}
 	}
 
+	hif_set_ce_service_max_yield_time(hif_ctx,
+				hdd_ctx->config->ce_service_max_yield_time);
 	pmo_ucfg_psoc_set_hif_handle(hdd_ctx->hdd_psoc, hif_ctx);
 
 	return 0;

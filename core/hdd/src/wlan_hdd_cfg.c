@@ -4144,6 +4144,13 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_RX_MODE_MIN,
 		CFG_RX_MODE_MAX),
 
+	REG_VARIABLE(CFG_CE_SERVICE_MAX_YIELD_TIME_NAME, WLAN_PARAM_Integer,
+		struct hdd_config, ce_service_max_yield_time,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_CE_SERVICE_MAX_YIELD_TIME_DEFAULT,
+		CFG_CE_SERVICE_MAX_YIELD_TIME_MIN,
+		CFG_CE_SERVICE_MAX_YIELD_TIME_MAX),
+
 	REG_VARIABLE_STRING(CFG_RPS_RX_QUEUE_CPU_MAP_LIST_NAME,
 				 WLAN_PARAM_String,
 				 struct hdd_config, cpu_map_list,
@@ -6848,6 +6855,9 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 		  hdd_ctx->config->max_scan_count);
 	hdd_debug("Name = [%s] value = [%d]",
 		  CFG_RX_MODE_NAME, hdd_ctx->config->rx_mode);
+	hdd_debug("Name = [%s] value = [%d]",
+		  CFG_CE_SERVICE_MAX_YIELD_TIME_NAME,
+		  hdd_ctx->config->ce_service_max_yield_time);
 	hdd_debug("Name = [%s] Value = [%u]",
 		  CFG_CE_CLASSIFY_ENABLE_NAME,
 		  hdd_ctx->config->ce_classify_enabled);
