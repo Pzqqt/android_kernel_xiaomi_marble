@@ -7356,6 +7356,14 @@ typedef enum {
     /* This should be called before WMI_VDEV_PARAM_TXBF */
     WMI_VDEV_PARAM_11AX_TXBF,
 
+    /** This parameter indicates whether VDEV is SMPS intolerant.
+      * I.e. - SMPS action frame cannot be transmitted by the VDEV to
+      * dynamically change the RX NSS.
+      *
+      * valid values: 1 - VDEV is SMPS intolerant, 0 - VDEV is SMPS tolerant
+      */
+    WMI_VDEV_PARAM_SMPS_INTOLERANT,
+
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
      * prone to change.
