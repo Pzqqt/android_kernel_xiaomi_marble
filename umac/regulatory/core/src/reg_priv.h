@@ -84,6 +84,7 @@ struct wlan_regulatory_pdev_priv_obj {
 	bool set_fcc_channel;
 	enum band_info band_capability;
 	bool indoor_chan_enabled;
+	uint32_t wireless_modes;
 };
 
 #endif

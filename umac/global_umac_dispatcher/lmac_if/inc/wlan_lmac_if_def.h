@@ -544,6 +544,8 @@ struct wlan_lmac_if_reg_tx_ops {
 						void *arg);
 	QDF_STATUS (*set_country_code)(struct wlan_objmgr_psoc *psoc,
 						void *arg);
+	QDF_STATUS (*fill_umac_legacy_chanlist)(struct wlan_objmgr_pdev *pdev,
+			struct regulatory_channel *cur_chan_list);
 };
 
 /**

@@ -360,4 +360,29 @@ void wlan_reg_register_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 void wlan_reg_unregister_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 					      reg_chan_change_callback cbk);
 
+/**
+ * wlan_reg_get_chip_mode() - get supported chip mode
+ * @pdev: pdev pointer
+ * @chip_mode: chip mode
+ *
+ * Return: QDF STATUS
+ */
+QDF_STATUS wlan_reg_get_chip_mode(struct wlan_objmgr_pdev *pdev,
+		uint32_t *chip_mode);
+
+/**
+ * wlan_reg_get_freq_range() - Get 2GHz and 5GHz frequency range
+ * @pdev: pdev pointer
+ * @low_2g: low 2GHz frequency range
+ * @high_2g: high 2GHz frequency range
+ * @low_5g: low 5GHz frequency range
+ * @high_5g: high 5GHz frequency range
+ *
+ * Return: QDF status
+ */
+QDF_STATUS wlan_reg_get_freq_range(struct wlan_objmgr_pdev *pdev,
+		uint32_t *low_2g,
+		uint32_t *high_2g,
+		uint32_t *low_5g,
+		uint32_t *high_5g);
 #endif

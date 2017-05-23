@@ -212,6 +212,9 @@ static inline QDF_STATUS reg_get_reginfo_form_country_code_and_regdmn_pair(
 			g_all_countries[country_index].alpha2_11d,
 			sizeof(g_all_countries[country_index].alpha2_11d));
 
+		reg_info->ctry_code =
+			g_all_countries[country_index].country_code;
+		reg_info->reg_dmn_pair = 0;
 		reg_info->dfs_region = regdomains_5g[dmn_id_5g].dfs_region;
 		reg_info->phybitmap =
 			g_all_countries[country_index].phymode_bitmap;
@@ -276,6 +279,9 @@ static inline QDF_STATUS reg_get_reginfo_form_regdmn_pair(
 
 		qdf_mem_zero(reg_info->alpha2, sizeof(reg_info->alpha2));
 
+		reg_info->reg_dmn_pair =
+			g_reg_dmn_pairs[regdmn_pair].reg_dmn_pair_id;
+		reg_info->ctry_code = 0;
 		reg_info->dfs_region = regdomains_5g[dmn_id_5g].dfs_region;
 		reg_info->phybitmap = 0;
 

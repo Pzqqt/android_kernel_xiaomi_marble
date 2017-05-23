@@ -409,3 +409,44 @@ void wlan_reg_unregister_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 
 }
 
+QDF_STATUS wlan_reg_get_chip_mode(struct wlan_objmgr_pdev *pdev,
+		uint32_t *chip_mode)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+
+	pdev_priv_obj = wlan_objmgr_pdev_get_comp_private_obj(pdev,
+			WLAN_UMAC_COMP_REGULATORY);
+
+	if (NULL == pdev_priv_obj) {
+		reg_err("reg pdev private obj is NULL");
+		return QDF_STATUS_E_FAULT;
+	}
+
+	*chip_mode = pdev_priv_obj->wireless_modes;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_reg_get_freq_range(struct wlan_objmgr_pdev *pdev,
+		uint32_t *low_2g,
+		uint32_t *high_2g,
+		uint32_t *low_5g,
+		uint32_t *high_5g)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+
+	pdev_priv_obj = wlan_objmgr_pdev_get_comp_private_obj(pdev,
+			WLAN_UMAC_COMP_REGULATORY);
+
+	if (NULL == pdev_priv_obj) {
+		reg_err("reg pdev private obj is NULL");
+		return QDF_STATUS_E_FAULT;
+	}
+
+	*low_2g = pdev_priv_obj->range_2g_low;
+	*high_2g = pdev_priv_obj->range_2g_high;
+	*low_5g = pdev_priv_obj->range_5g_low;
+	*high_5g = pdev_priv_obj->range_5g_high;
+
+	return QDF_STATUS_SUCCESS;
+}

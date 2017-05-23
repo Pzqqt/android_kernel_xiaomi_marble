@@ -148,6 +148,9 @@ QDF_STATUS target_if_register_regulatory_tx_ops(struct wlan_lmac_if_tx_ops
 		tgt_if_regulatory_unregister_master_list_handler;
 
 	reg_ops->set_country_code = tgt_if_regulatory_set_country_code;
+
+	reg_ops->fill_umac_legacy_chanlist = NULL;
+
 	return QDF_STATUS_SUCCESS;
 }
 
