@@ -14492,18 +14492,6 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 				("Failed to get CSN beamformee capability"));
 
-		/*
-		 * Set SU Bformee only if SU Bformee is enabled in INI
-		 * and AP is SU Bformer capable
-		 */
-		if (value && !((IS_BSS_VHT_CAPABLE(pIes->VHTCaps) &&
-		   pIes->VHTCaps.suBeamFormerCap) ||
-		   (IS_BSS_VHT_CAPABLE(
-		   pIes->vendor_vht_ie.VHTCaps)
-		   && pIes->vendor_vht_ie.VHTCaps.
-		   suBeamFormerCap)))
-			value = 0;
-
 		csr_join_req->vht_config.su_beam_formee = value;
 
 		/* Set BF CSN value only if SU Bformee is enabled */
