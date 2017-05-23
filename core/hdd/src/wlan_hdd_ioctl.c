@@ -776,44 +776,11 @@ static int hdd_parse_reassoc_command_v1_data(const uint8_t *pValue,
 void hdd_wma_send_fastreassoc_cmd(hdd_adapter_t *adapter,
 				const tSirMacAddr bssid, int channel)
 {
-	QDF_STATUS status;
 	hdd_wext_state_t *wext_state = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	tCsrRoamProfile *profile = &wext_state->roamProfile;
-	struct wma_roam_invoke_cmd *fastreassoc;
-	struct scheduler_msg msg = {0};
 
-	fastreassoc = qdf_mem_malloc(sizeof(*fastreassoc));
-	if (NULL == fastreassoc) {
-		hdd_err("qdf_mem_malloc failed for fastreassoc");
-		return;
-	}
-	fastreassoc->vdev_id = adapter->sessionId;
-	fastreassoc->channel = channel;
-	fastreassoc->bssid[0] = bssid[0];
-	fastreassoc->bssid[1] = bssid[1];
-	fastreassoc->bssid[2] = bssid[2];
-	fastreassoc->bssid[3] = bssid[3];
-	fastreassoc->bssid[4] = bssid[4];
-	fastreassoc->bssid[5] = bssid[5];
-
-	status = sme_get_beacon_frm(WLAN_HDD_GET_HAL_CTX(adapter), profile,
-						bssid, &fastreassoc->frame_buf,
-						&fastreassoc->frame_len);
-
-	if (QDF_STATUS_SUCCESS != status) {
-		hdd_warn("sme_get_beacon_frm failed");
-		fastreassoc->frame_buf = NULL;
-		fastreassoc->frame_len = 0;
-	}
-
-	msg.type = SIR_HAL_ROAM_INVOKE;
-	msg.reserved = 0;
-	msg.bodyptr = fastreassoc;
-	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &msg);
-	if (QDF_STATUS_SUCCESS != status) {
-		hdd_err("Not able to post ROAM_INVOKE_CMD message to WMA");
-		qdf_mem_free(fastreassoc);
-	}
+	sme_fast_reassoc(WLAN_HDD_GET_HAL_CTX(adapter),
+			 profile, bssid, channel, adapter->sessionId);
 }
 #endif
 
