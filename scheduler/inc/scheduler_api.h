@@ -27,13 +27,11 @@
 #if !defined(__SCHEDULER_API_H)
 #define __SCHEDULER_API_H
 
-
 #include <qdf_event.h>
 #include <qdf_types.h>
 #include <qdf_lock.h>
 #include <qdf_mc_timer.h>
 #include <qdf_status.h>
-
 
 /* Controller thread various event masks
  * MC_POST_EVENT_MASK: wake up thread after posting message
@@ -247,12 +245,14 @@ QDF_STATUS scheduler_register_sys_legacy_handler(scheduler_msg_process_fn_t
  * Return: QDF status
  */
 QDF_STATUS scheduler_deregister_sys_legacy_handler(void);
+
 /**
  * scheduler_deregister_wma_legacy_handler() - deregister legacy wma handler
  *
  * Return: QDF status
  */
 QDF_STATUS scheduler_deregister_wma_legacy_handler(void);
+
 /**
  * scheduler_mc_timer_callback() - timer callback, gets called at time out
  * @data: unsigned long, holds the timer object.
@@ -260,4 +260,5 @@ QDF_STATUS scheduler_deregister_wma_legacy_handler(void);
  * Return: None
  */
 void scheduler_mc_timer_callback(unsigned long data);
+
 #endif
