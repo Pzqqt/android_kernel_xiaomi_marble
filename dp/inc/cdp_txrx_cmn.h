@@ -542,4 +542,21 @@ cdp_display_stats(ol_txrx_soc_handle soc, uint16_t value)
 
 	return 0;
 }
+
+
+/**
+  * cdp_set_pn_check(): function to set pn check
+  * @soc: soc handle
+  * @sec_type: security type
+  * #rx_pn: receive pn
+  */
+static inline int cdp_set_pn_check(ol_txrx_soc_handle soc,
+	struct cdp_vdev *vdev, struct cdp_peer *peer_handle, enum cdp_sec_type sec_type,  uint32_t *rx_pn)
+{
+	if (soc->ops->cmn_drv_ops->set_pn_check)
+		soc->ops->cmn_drv_ops->set_pn_check(vdev, peer_handle,
+			sec_type, rx_pn);
+	return 0;
+}
+
 #endif /* _CDP_TXRX_CMN_H_ */

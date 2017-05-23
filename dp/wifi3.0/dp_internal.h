@@ -285,4 +285,7 @@ QDF_STATUS dp_h2t_ext_stats_msg_send(struct dp_pdev *pdev,
 		uint32_t config_param_3);
 void dp_htt_stats_print_tag(uint8_t tag_type, uint32_t *tag_buf);
 int dp_peer_rxtid_stats(struct dp_peer *peer);
+void dp_set_pn_check_wifi3(struct cdp_vdev *vdev_handle,
+	struct cdp_peer *peer_handle, enum cdp_sec_type sec_type,
+	 uint32_t *rx_pn);
 #endif /* #ifndef _DP_INTERNAL_H_ */

@@ -170,6 +170,10 @@ enum hal_ring_type {
 #define HAL_SRNG_LOW_THRES_INTR_ENABLE	0x00010000
 #define HAL_SRNG_MSI_INTR				0x00020000
 
+#define PN_SIZE_24 0
+#define PN_SIZE_48 1
+#define PN_SIZE_128 2
+
 /**
  * hal_srng_get_entrysize - Returns size of ring entry in bytes. Should be
  * used by callers for calculating the size of memory to be allocated before

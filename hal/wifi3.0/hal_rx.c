@@ -23,10 +23,6 @@
 #define HAL_REO_QUEUE_DESC 8
 #define HAL_REO_QUEUE_EXT_DESC 9
 
-#define PN_SIZE_24 0
-#define PN_SIZE_48 1
-#define PN_SIZE_128 2
-
 /* TODO: Using associated link desc counter 1 for Rx. Check with FW on
  * how these counters are assigned
  */
