@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -255,4 +255,17 @@ static inline int hif_napi_cpu_blacklist(struct qca_napi_data *napid,
 { return 0; }
 #endif /* HIF_IRQ_AFFINITY */
 
+/**
+ * hif_update_napi_max_poll_time() - updates NAPI max poll time
+ * @ce_state: ce state
+ * @napi_info: pointer to napi info structure
+ * @cpu_id: cpu id
+ *
+ * This API updates NAPI max poll time per CE per SPU.
+ *
+ * Return: void
+ */
+void hif_update_napi_max_poll_time(struct CE_state *ce_state,
+				   struct qca_napi_info *napi_info,
+				   int cpu_id);
 #endif /* __HIF_NAPI_H__ */

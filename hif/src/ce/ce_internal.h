@@ -141,6 +141,8 @@ struct CE_state {
 
 	/* time in nanoseconds to yield control of napi poll */
 	unsigned long long ce_service_yield_time;
+	/* CE service start time in nanoseconds */
+	unsigned long long ce_service_start_time;
 	/* Num Of Receive Buffers handled for one interrupt DPC routine */
 	unsigned int receive_count;
 	/* epping */

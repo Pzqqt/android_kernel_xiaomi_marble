@@ -853,6 +853,18 @@ out:
 }
 qdf_export_symbol(hif_napi_poll);
 
+void hif_update_napi_max_poll_time(struct CE_state *ce_state,
+				   struct qca_napi_info *napi_info,
+				   int cpu_id)
+{
+	unsigned long long napi_poll_time = sched_clock() -
+					ce_state->ce_service_start_time;
+
+	if (napi_poll_time >
+			napi_info->stats[cpu_id].napi_max_poll_time)
+		napi_info->stats[cpu_id].napi_max_poll_time = napi_poll_time;
+}
+
 #ifdef HIF_IRQ_AFFINITY
 /**
  *
@@ -890,16 +902,22 @@ void hif_napi_update_yield_stats(struct CE_state *ce_state,
 		return;
 	}
 
-	if (unlikely(NULL == napi_data->napis[ce_id]))
-		return;
-
 	ce_id = ce_state->id;
 	cpu_id = qdf_get_cpu();
+
+	if (unlikely(!napi_data->napis[ce_id])) {
+		HIF_INFO("%s: NAPI info is NULL for ce id: %d",
+			 __func__, ce_id);
+		return;
+	}
 
 	if (time_limit_reached)
 		napi_data->napis[ce_id]->stats[cpu_id].time_limit_reached++;
 	else
 		napi_data->napis[ce_id]->stats[cpu_id].rxpkt_thresh_reached++;
+
+	hif_update_napi_max_poll_time(ce_state, napi_data->napis[ce_id],
+				      cpu_id);
 }
 
 /**

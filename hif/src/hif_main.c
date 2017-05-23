@@ -1260,3 +1260,19 @@ void hif_set_initial_wakeup_cb(struct hif_opaque_softc *hif_ctx,
 	scn->initial_wakeup_priv = priv;
 }
 
+void hif_set_ce_service_max_yield_time(struct hif_opaque_softc *hif,
+				       uint8_t ce_service_max_yield_time)
+{
+	struct hif_softc *hif_ctx = HIF_GET_SOFTC(hif);
+
+	hif_ctx->ce_service_max_yield_time =
+		ce_service_max_yield_time * 1000 * 1000;
+}
+
+unsigned long long
+hif_get_ce_service_max_yield_time(struct hif_opaque_softc *hif)
+{
+	struct hif_softc *hif_ctx = HIF_GET_SOFTC(hif);
+
+	return hif_ctx->ce_service_max_yield_time;
+}
