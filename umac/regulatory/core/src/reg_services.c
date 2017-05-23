@@ -2638,9 +2638,6 @@ QDF_STATUS reg_program_chan_list(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (soc_reg->offload_enabled)
-		return QDF_STATUS_E_FAILURE;
-
 	reg_info = (struct cur_regulatory_info *)qdf_mem_malloc
 		(sizeof(struct cur_regulatory_info));
 	if (reg_info == NULL) {
@@ -2704,9 +2701,6 @@ QDF_STATUS reg_get_current_cc(struct wlan_objmgr_psoc *psoc,
 		reg_err("reg soc is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	if (soc_reg->offload_enabled)
-		return QDF_STATUS_E_FAILURE;
 
 	if (rd->flags == CC_IS_SET) {
 		rd->cc.country_code = soc_reg->ctry_code;
