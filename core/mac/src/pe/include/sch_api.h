@@ -43,9 +43,6 @@
 
 #include "ani_global.h"
 
-/* / Send start scan response message */
-extern void sch_send_start_scan_rsp(tpAniSirGlobal pMac);
-
 /* update only the broadcast qos params */
 extern void sch_qos_update_broadcast(tpAniSirGlobal pMac,
 				     tpPESession psessionEntry);
@@ -63,15 +60,6 @@ extern void sch_edca_profile_update(tpAniSirGlobal pMac,
 /* / Set the fixed fields in a beacon frame */
 extern tSirRetStatus sch_set_fixed_beacon_fields(tpAniSirGlobal pMac,
 						 tpPESession psessionEntry);
-
-/* / Initialize globals */
-extern void sch_init_globals(tpAniSirGlobal pMac);
-
-/* / Initialize CF Poll template */
-extern void sch_initializeCfPollTemplate(tpAniSirGlobal pMac);
-
-/* / Initialize CF End template */
-extern void sch_initializeCfEndTemplate(tpAniSirGlobal pMac);
 
 /* / Process the scheduler messages */
 extern void sch_process_message(tpAniSirGlobal pMac,
@@ -92,7 +80,6 @@ extern tSirRetStatus sch_beacon_edca_process(tpAniSirGlobal pMac,
 					     tpPESession psessionEntry);
 
 void sch_generate_tim(tpAniSirGlobal, uint8_t **, uint16_t *, uint8_t);
-#define SCH_RR_TIMEOUT                   (SCH_RR_TIMEOUT_MS / SYS_TICK_DUR_MS)
 
 void sch_set_beacon_interval(tpAniSirGlobal pMac, tpPESession psessionEntry);
 

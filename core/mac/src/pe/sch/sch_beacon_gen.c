@@ -829,25 +829,17 @@ static void write_beacon_to_memory(tpAniSirGlobal pMac, uint16_t size,
 	if (!pMac->sch.schObject.fBeaconChanged)
 		return;
 
-	pMac->sch.gSchGenBeacon = 1;
-	if (pMac->sch.gSchGenBeacon) {
-		pMac->sch.gSchBeaconsSent++;
+	/*
+	 * Copy beacon data to SoftMAC shared memory...
+	 * Do this by sending a message to HAL
+	 */
 
-		/* */
-		/* Copy beacon data to SoftMAC shared memory... */
-		/* Do this by sending a message to HAL */
-		/* */
+	size = (size + 3) & (~3);
+	if (eSIR_SUCCESS != sch_send_beacon_req(pMac,
+	   psessionEntry->pSchBeaconFrameBegin, size, psessionEntry))
+		pe_err("sch_send_beacon_req() returned an error (zsize %d)",
+			size);
 
-		size = (size + 3) & (~3);
-		if (eSIR_SUCCESS !=
-		    sch_send_beacon_req(pMac, psessionEntry->pSchBeaconFrameBegin,
-					size, psessionEntry))
-			pe_err("sch_send_beacon_req() returned an error (zsize %d)",
-			       size);
-			else {
-				pMac->sch.gSchBeaconsWritten++;
-			}
-	}
 	pMac->sch.schObject.fBeaconChanged = 0;
 }
 

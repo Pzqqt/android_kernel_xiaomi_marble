@@ -390,7 +390,6 @@ lim_process_probe_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			pe_err("Parse error ProbeReq, length: %d, SA is: "
 					MAC_ADDRESS_STR, frame_len,
 					MAC_ADDR_ARRAY(mac_hdr->sa));
-			mac_ctx->sys.probeError++;
 			return;
 		}
 		if (session->pePersona == QDF_P2P_GO_MODE) {
@@ -489,7 +488,6 @@ lim_process_probe_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 				pe_debug("Ignore ProbeReq frm with unmatch SSID received from");
 					lim_print_mac_addr(mac_ctx, mac_hdr->sa,
 						LOGD);
-					mac_ctx->sys.probeBadSsid++;
 			}
 		} else {
 			/*
@@ -516,12 +514,10 @@ lim_process_probe_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 multipleSSIDcheck:
 		pe_debug("Ignore ProbeReq frm with unmatch SSID rcved from");
 			lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOGD);
-		mac_ctx->sys.probeBadSsid++;
 	} else {
 		/* Ignore received Probe Request frame */
 		pe_debug("Ignoring Probe Request frame received from");
 		lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOGD);
-		mac_ctx->sys.probeIgnore++;
 	}
 	return;
 }

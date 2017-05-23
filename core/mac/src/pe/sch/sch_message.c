@@ -108,32 +108,6 @@ void sch_process_message(tpAniSirGlobal pMac, struct scheduler_msg *pSchMsg)
 	tpPESession psessionEntry = &pMac->lim.gpSession[0];
 
 	switch (pSchMsg->type) {
-
-	case SIR_SCH_CHANNEL_SWITCH_REQUEST:
-		pe_debug("Channel switch request not handled");
-		break;
-
-	case SIR_SCH_START_SCAN_REQ:
-		pMac->sch.gSchScanReqRcvd = true;
-		if (pMac->sch.gSchHcfEnabled) {
-			/* In HCF mode, wait for TFP to stop before sending a response */
-			if (pMac->sch.schObject.gSchCFBInitiated ||
-			    pMac->sch.schObject.gSchCFPInitiated) {
-				pe_debug("Waiting for TFP to halt before sending "
-					 "start scan response");
-			} else
-				sch_send_start_scan_rsp(pMac);
-		} else {
-			/* In eDCF mode, send the response right away */
-			sch_send_start_scan_rsp(pMac);
-		}
-		break;
-
-	case SIR_SCH_END_SCAN_NTF:
-		pe_debug("Received STOP_SCAN_NTF from LIM");
-		pMac->sch.gSchScanReqRcvd = false;
-		break;
-
 	case SIR_CFG_PARAM_UPDATE_IND:
 
 		if (wlan_cfg_get_int(pMac, (uint16_t) pSchMsg->bodyval, &val) !=
@@ -145,14 +119,6 @@ void sch_process_message(tpAniSirGlobal pMac, struct scheduler_msg *pSchMsg)
 			/* What to do for IBSS ?? - TBD */
 			if (LIM_IS_AP_ROLE(psessionEntry))
 				sch_set_beacon_interval(pMac, psessionEntry);
-			break;
-
-		case WNI_CFG_DTIM_PERIOD:
-			pMac->sch.schObject.gSchDTIMCount = 0;
-			break;
-
-		case WNI_CFG_CFP_PERIOD:
-			pMac->sch.schObject.gSchCFPCount = 0;
 			break;
 
 		case WNI_CFG_EDCA_PROFILE:

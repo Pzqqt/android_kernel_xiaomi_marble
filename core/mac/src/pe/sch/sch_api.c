@@ -51,7 +51,6 @@
 
 #include "sch_api.h"
 
-#include "sch_sys_params.h"
 #include "lim_trace.h"
 #include "lim_types.h"
 #include "lim_utils.h"
@@ -62,54 +61,6 @@
 /* */
 /*                          Static Variables */
 /* */
-/* ------------------------------------------------------------------- */
-
-/* -------------------------------------------------------------------- */
-/**
- * sch_init_globals
- *
- * FUNCTION:
- * Initialize globals
- *
- * LOGIC:
- *
- * ASSUMPTIONS:
- *
- * NOTE:
- *
- * @param None
- * @return None
- */
-
-void sch_init_globals(tpAniSirGlobal pMac)
-{
-	pMac->sch.gSchHcfEnabled = false;
-
-	pMac->sch.gSchScanRequested = false;
-	pMac->sch.gSchScanReqRcvd = false;
-
-	pMac->sch.gSchGenBeacon = 1;
-	pMac->sch.gSchBeaconsSent = 0;
-	pMac->sch.gSchBeaconsWritten = 0;
-	pMac->sch.gSchBcnParseErrorCnt = 0;
-	pMac->sch.gSchBcnIgnored = 0;
-	pMac->sch.gSchBBXportRcvCnt = 0;
-	pMac->sch.gSchUnknownRcvCnt = 0;
-	pMac->sch.gSchBcnRcvCnt = 0;
-	pMac->sch.gSchRRRcvCnt = 0;
-	pMac->sch.qosNullCnt = 0;
-	pMac->sch.numData = 0;
-	pMac->sch.numPoll = 0;
-	pMac->sch.numCorrupt = 0;
-	pMac->sch.numBogusInt = 0;
-	pMac->sch.numTxAct0 = 0;
-	pMac->sch.rrTimeout = SCH_RR_TIMEOUT;
-	pMac->sch.pollPeriod = SCH_POLL_PERIOD;
-	pMac->sch.multipleSched = 1;
-	pMac->sch.maxPollTimeouts = 20;
-	pMac->sch.checkCfbFlagStuck = 0;
-}
-
 /* -------------------------------------------------------------------- */
 /**
  * sch_post_message
@@ -135,32 +86,6 @@ tSirRetStatus sch_post_message(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 }
 
 /* --------------------------------------------------------------------------- */
-/**
- * sch_send_start_scan_rsp
- *
- * FUNCTION:
- *
- * LOGIC:
- *
- * ASSUMPTIONS:
- *
- * NOTE:
- *
- * @param None
- * @return None
- */
-
-void sch_send_start_scan_rsp(tpAniSirGlobal pMac)
-{
-	struct scheduler_msg msgQ = {0};
-	uint32_t retCode;
-
-	msgQ.type = SIR_SCH_START_SCAN_RSP;
-	retCode = lim_post_msg_api(pMac, &msgQ);
-	if (retCode != eSIR_SUCCESS)
-		pe_err("Posting START_SCAN_RSP to LIM failed, reason=%X",
-			retCode);
-}
 
 /**
  * sch_send_beacon_req

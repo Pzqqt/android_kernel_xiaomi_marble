@@ -830,8 +830,6 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 	pe_debug("Sending Probe Response frame to");
 	lim_print_mac_addr(mac_ctx, peer_macaddr, LOGD);
 
-	mac_ctx->sys.probeRespond++;
-
 	if (mac_ctx->lim.gpLimRemainOnChanReq)
 		qdf_mem_copy(frame + sizeof(tSirMacMgmtHdr) + payload,
 			     mac_ctx->lim.gpLimRemainOnChanReq->probeRspIe,

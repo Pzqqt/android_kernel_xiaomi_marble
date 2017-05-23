@@ -726,14 +726,6 @@ typedef struct sSirMbMsgP2p {
 
 #define SIR_LIM_MSG_TYPES_END            (SIR_LIM_MSG_TYPES_BEGIN+0xFF)
 
-/* SCH message types */
-#define SIR_SCH_MSG_TYPES_BEGIN        (SIR_SCH_MODULE_ID << 8)
-#define SIR_SCH_CHANNEL_SWITCH_REQUEST (SIR_SCH_MSG_TYPES_BEGIN)
-#define SIR_SCH_START_SCAN_REQ         (SIR_SCH_MSG_TYPES_BEGIN + 1)
-#define SIR_SCH_START_SCAN_RSP         (SIR_SCH_MSG_TYPES_BEGIN + 2)
-#define SIR_SCH_END_SCAN_NTF           (SIR_SCH_MSG_TYPES_BEGIN + 3)
-#define SIR_SCH_MSG_TYPES_END          (SIR_SCH_MSG_TYPES_BEGIN+0xFF)
-
 /* PMM message types */
 #define SIR_PMM_MSG_TYPES_BEGIN        (SIR_PMM_MODULE_ID << 8)
 #define SIR_PMM_CHANGE_PM_MODE         (SIR_PMM_MSG_TYPES_BEGIN)

@@ -251,7 +251,6 @@ ap_beacon_process(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	else if (SIR_BAND_2_4_GHZ == rf_band)
 		ap_beacon_process_24_ghz(mac_ctx, rx_pkt_info, bcn_struct,
 					 bcn_prm, session, phy_mode);
-	mac_ctx->sch.gSchBcnIgnored++;
 }
 
 /* -------------------------------------------------------------------- */
@@ -999,12 +998,10 @@ sch_beacon_process(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 
 	qdf_mem_zero(&bcn_prm, sizeof(tUpdateBeaconParams));
 	bcn_prm.paramChangeBitmap = 0;
-	mac_ctx->sch.gSchBcnRcvCnt++;
 	/* Convert the beacon frame into a structure */
 	if (sir_convert_beacon_frame2_struct(mac_ctx, (uint8_t *) rx_pkt_info,
 		&bcn) != eSIR_SUCCESS) {
 		pe_err("beacon parsing failed");
-		mac_ctx->sch.gSchBcnParseErrorCnt++;
 		return;
 	}
 
