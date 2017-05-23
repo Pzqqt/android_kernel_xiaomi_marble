@@ -2863,6 +2863,9 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
 
 	DP_TRACE_STATS(FATAL, "SOC Rx Stats:\n");
 	DP_TRACE_STATS(FATAL, "Errors:\n");
+	DP_TRACE_STATS(FATAL, "Rx Decrypt Errors = %d",
+			(soc->stats.rx.err.rxdma_error[HAL_RXDMA_ERR_DECRYPT] +
+			soc->stats.rx.err.rxdma_error[HAL_RXDMA_ERR_TKIP_MIC]));
 	DP_TRACE_STATS(FATAL, "Invalid RBM = %d",
 			soc->stats.rx.err.invalid_rbm);
 	DP_TRACE_STATS(FATAL, "Invalid Vdev = %d",
@@ -2873,6 +2876,7 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
 			soc->stats.rx.err.rx_invalid_peer.num);
 	DP_TRACE_STATS(FATAL, "HAL Ring Access Fail = %d",
 			soc->stats.rx.err.hal_ring_access_fail);
+
 	for (i = 0; i < MAX_RXDMA_ERRORS; i++) {
 		index += qdf_snprint(&rxdma_error[index],
 				DP_RXDMA_ERR_LENGTH - index,

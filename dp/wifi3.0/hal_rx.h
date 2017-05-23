@@ -1684,6 +1684,47 @@ enum hal_reo_error_code {
 	HAL_REO_ERR_QUEUE_DESC_BLOCKED_SET
 };
 
+/**
+ * enum hal_rxdma_error_code: Code describing the type of RxDMA error detected
+ *
+ * @HAL_RXDMA_ERR_OVERFLOW: MPDU frame is not complete due to a FIFO overflow
+ * @ HAL_RXDMA_ERR_OVERFLOW      : MPDU frame is not complete due to a FIFO
+ * 				   overflow
+ * @ HAL_RXDMA_ERR_MPDU_LENGTH   : MPDU frame is not complete due to receiving
+ * 				   incomplete
+ * 		               	   MPDU from the PHY
+ * @ HAL_RXDMA_ERR_FCS           : FCS check on the MPDU frame failed
+ * @ HAL_RXDMA_ERR_DECRYPT       : Decryption error
+ * @ HAL_RXDMA_ERR_TKIP_MIC      : TKIP MIC error
+ * @ HAL_RXDMA_ERR_UNECRYPTED    : Received a frame that was expected to be
+ * 			  	   encrypted but wasn’t
+ * @ HAL_RXDMA_ERR_MSDU_LEN      : MSDU related length error
+ * @ HAL_RXDMA_ERR_MSDU_LIMIT    : Number of MSDUs in the MPDUs exceeded
+ * 				   the max allowed
+ * @ HAL_RXDMA_ERR_WIFI_PARSE    : wifi parsing error
+ * @ HAL_RXDMA_ERR_AMSDU_PARSE   : Amsdu parsing error
+ * @ HAL_RXDMA_ERR_SA_TIMEOUT    : Source Address search timeout
+ * @ HAL_RXDMA_ERR_DA_TIMEOUT    : Destination Address  search timeout
+ * @ HAL_RXDMA_ERR_FLOW_TIMEOUT  : Flow Search Timeout
+ * @ HAL_RXDMA_ERR_FLUSH_REQUEST : RxDMA FIFO Flush request
+ */
+enum hal_rxdma_error_code {
+	HAL_RXDMA_ERR_OVERFLOW = 0,
+	HAL_RXDMA_ERR_MPDU_LENGTH,
+	HAL_RXDMA_ERR_FCS,
+	HAL_RXDMA_ERR_DECRYPT,
+	HAL_RXDMA_ERR_TKIP_MIC,
+	HAL_RXDMA_ERR_UNECRYPTED,
+	HAL_RXDMA_ERR_MSDU_LEN,
+	HAL_RXDMA_ERR_MSDU_LIMIT,
+	HAL_RXDMA_ERR_WIFI_PARSE,
+	HAL_RXDMA_ERR_AMSDU_PARSE,
+	HAL_RXDMA_ERR_SA_TIMEOUT,
+	HAL_RXDMA_ERR_DA_TIMEOUT,
+	HAL_RXDMA_ERR_FLOW_TIMEOUT,
+	HAL_RXDMA_ERR_FLUSH_REQUEST
+};
+
 #define HAL_RX_REO_ERROR_GET(reo_desc) (((*(((uint32_t *) reo_desc)+ \
 		(REO_DESTINATION_RING_7_REO_ERROR_CODE_OFFSET >> 2))) & \
 		REO_DESTINATION_RING_7_REO_ERROR_CODE_MASK) >> \
