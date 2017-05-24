@@ -4100,6 +4100,13 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			qdf_mem_free(adapter->sessionCtx.ap.beacon);
 			adapter->sessionCtx.ap.beacon = NULL;
 		}
+
+		/*
+		 * If Do_Not_Break_Stream was enabled clear avoid channel list.
+		 */
+		if (policy_mgr_is_dnsc_set(adapter->hdd_vdev))
+			wlan_hdd_send_avoid_freq_for_dnbs(hdd_ctx, 0);
+
 		if (true == bCloseSession)
 			hdd_vdev_destroy(adapter);
 		mutex_unlock(&hdd_ctx->sap_lock);

@@ -8454,6 +8454,8 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	    ) {
 		beacon_data_t *old, *new;
 		enum nl80211_channel_type channel_type;
+		tsap_Config_t *sap_config =
+			&((WLAN_HDD_GET_AP_CTX_PTR(pAdapter))->sapConfig);
 
 		old = pAdapter->sessionCtx.ap.beacon;
 
@@ -8503,7 +8505,15 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 				&params->beacon,
 				params->ssid, params->ssid_len,
 				params->hidden_ssid, true, false);
-
+		/*
+		 * If Do_Not_Break_Stream enabled send avoid channel list
+		 * to application.
+		 */
+		if (policy_mgr_is_dnsc_set(pAdapter->hdd_vdev) &&
+		    sap_config->channel) {
+			wlan_hdd_send_avoid_freq_for_dnbs(pHddCtx,
+							  sap_config->channel);
+		}
 		if (pHddCtx->config->sap_max_inactivity_override) {
 			sta_inactivity_timer = qdf_mem_malloc(
 					sizeof(*sta_inactivity_timer));

@@ -4723,6 +4723,7 @@ wlan_hdd_wifi_config_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1] = {
 	[ANT_DIV_MGMT_SNR_WEIGHT] = {.type = NLA_U32},
 	[ANT_DIV_DATA_SNR_WEIGHT] = {.type = NLA_U32},
 	[ANT_DIV_ACK_SNR_WEIGHT] = {.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_RESTRICT_OFFCHANNEL] = {.type = NLA_U8},
 };
 
 /**
@@ -4812,6 +4813,74 @@ static int wlan_hdd_save_default_scan_ies(hdd_context_t *hdd_ctx,
 				scan_info->default_scan_ies_len);
 
 	return 0;
+}
+
+/**
+ * wlan_hdd_handle_restrict_offchan_config() -
+ * Handle wifi configuration attribute :
+ * QCA_WLAN_VENDOR_ATTR_CONFIG_RESTRICT_OFFCHANNEL
+ * @adapter: Pointer to HDD adapter
+ * @restrict_offchan: Restrict offchannel setting done by
+ * application
+ *
+ * Return: 0 on success; error number otherwise
+ */
+static int wlan_hdd_handle_restrict_offchan_config(hdd_adapter_t *adapter,
+						   u8 restrict_offchan)
+{
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	enum tQDF_ADAPTER_MODE dev_mode = adapter->device_mode;
+	int ret_val = 0;
+
+	if (!(dev_mode == QDF_SAP_MODE || dev_mode == QDF_P2P_GO_MODE)) {
+		hdd_err("Invalid interface type:%d", dev_mode);
+		return -EINVAL;
+	}
+	/*
+	 * To cater to multiple apps we maintain
+	 * a counter to check if restrict_offchannel
+	 * is enabled or disabled per AP/GO vdev.
+	 */
+	if (restrict_offchan == 1) {
+		enum policy_mgr_con_mode pmode =
+		policy_mgr_convert_device_mode_to_qdf_type(dev_mode);
+		int chan;
+
+		adapter->restrict_offchannel_cnt++;
+		if (adapter->restrict_offchannel_cnt == 1) {
+			u32 vdev_id = wlan_vdev_get_id(adapter->hdd_vdev);
+
+			wlan_vdev_obj_lock(adapter->hdd_vdev);
+			wlan_vdev_mlme_cap_set(adapter->hdd_vdev,
+					       WLAN_VDEV_C_RESTRICT_OFFCHAN);
+			wlan_vdev_obj_unlock(adapter->hdd_vdev);
+			chan = policy_mgr_get_channel(hdd_ctx->hdd_psoc, pmode,
+						      &vdev_id);
+			if (!chan ||
+			    wlan_hdd_send_avoid_freq_for_dnbs(hdd_ctx, chan)) {
+				hdd_err("unable to send avoid_freq");
+				ret_val = -EINVAL;
+			}
+		}
+	} else if ((restrict_offchan == 0) &&
+			(adapter->restrict_offchannel_cnt > 0)) {
+		adapter->restrict_offchannel_cnt--;
+		if (adapter->restrict_offchannel_cnt == 0) {
+			wlan_vdev_obj_lock(adapter->hdd_vdev);
+			wlan_vdev_mlme_cap_clear(adapter->hdd_vdev,
+						 WLAN_VDEV_C_RESTRICT_OFFCHAN);
+			wlan_vdev_obj_unlock(adapter->hdd_vdev);
+			if (wlan_hdd_send_avoid_freq_for_dnbs(hdd_ctx, 0)) {
+				hdd_err("unable to clear avoid_freq");
+				ret_val = -EINVAL;
+			}
+		}
+	} else {
+		ret_val = -EINVAL;
+		hdd_err("Invalid RESTRICT_OFFCHAN setting");
+	}
+
+	return ret_val;
 }
 
 /**
@@ -5235,6 +5304,20 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		}
 	}
 
+	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_RESTRICT_OFFCHANNEL]) {
+		u8 restrict_offchan = nla_get_u8(
+			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_RESTRICT_OFFCHANNEL]);
+
+		hdd_debug("Restrict offchannel:%d", restrict_offchan);
+		if (restrict_offchan <= 1)
+			ret_val =
+			wlan_hdd_handle_restrict_offchan_config(adapter,
+							restrict_offchan);
+		else {
+			ret_val = -EINVAL;
+			hdd_err("Invalid RESTRICT_OFFCHAN setting");
+		}
+	}
 	return ret_val;
 }
 

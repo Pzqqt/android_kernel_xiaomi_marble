@@ -1150,6 +1150,11 @@ struct hdd_adapter_s {
 	 */
 	uint8_t cfg80211_disconnect_reason;
 	struct lfr_firmware_status lfr_fw_status;
+	/*
+	 * Store the restrict_offchannel count
+	 * to cater to multiple application.
+	 */
+	u8 restrict_offchannel_cnt;
 };
 
 /*
