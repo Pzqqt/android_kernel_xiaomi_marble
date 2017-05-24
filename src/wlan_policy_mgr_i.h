@@ -414,16 +414,4 @@ bool policy_mgr_get_sap_conn_info(struct wlan_objmgr_psoc *psoc,
 bool policy_mgr_get_mode_specific_conn_info(struct wlan_objmgr_psoc *psoc,
 				  uint8_t *channel, uint8_t *vdev_id,
 				  enum policy_mgr_con_mode mode);
-
-/**
- * policy_mgr_vdev_mlme_is_dnsc_set - Check if user has set
- * "Do_Not_Switch_Channel" for this vdev
- * @vdev: vdev pointer
- *
- * Get "Do_Not_Switch_Channel" setting for this vdev
- *
- * Return: true for success, else false
- */
-bool policy_mgr_vdev_mlme_is_dnsc_set(struct wlan_objmgr_vdev *vdev);
-
 #endif

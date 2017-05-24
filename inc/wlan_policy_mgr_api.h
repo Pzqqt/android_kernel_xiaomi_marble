@@ -1895,4 +1895,15 @@ QDF_STATUS policy_mgr_is_chan_ok_for_dnbs(struct wlan_objmgr_psoc *psoc,
  */
 uint32_t policy_mgr_get_hw_dbs_nss(struct wlan_objmgr_psoc *psoc,
 				   struct dbs_nss *nss_dbs);
+
+/**
+ * policy_mgr_is_dnsc_set - Check if user has set
+ * "Do_Not_Switch_Channel" for the vdev passed
+ * @vdev: vdev pointer
+ *
+ * Get "Do_Not_Switch_Channel" setting for the vdev passed.
+ *
+ * Return: true for success, else false
+ */
+bool policy_mgr_is_dnsc_set(struct wlan_objmgr_vdev *vdev);
 #endif /* __WLAN_POLICY_MGR_API_H */

@@ -2408,10 +2408,23 @@ bool policy_mgr_is_hw_mode_change_after_vdev_up(struct wlan_objmgr_psoc *psoc)
 	return flag;
 }
 
-bool policy_mgr_vdev_mlme_is_dnsc_set(struct wlan_objmgr_vdev *vdev)
+bool policy_mgr_is_dnsc_set(struct wlan_objmgr_vdev *vdev)
 {
-	/* TODO : Check Dont_Switch_Channel status from vdev mlme caps*/
-	return false;
+	bool roffchan;
+
+	if (!vdev) {
+		policy_mgr_err("Invalid parameter");
+		return false;
+	}
+
+	wlan_vdev_obj_lock(vdev);
+	roffchan = wlan_vdev_mlme_cap_get(vdev, WLAN_VDEV_C_RESTRICT_OFFCHAN);
+	wlan_vdev_obj_unlock(vdev);
+
+	policy_mgr_debug("Restrict offchannel:%s",
+			 roffchan  ? "set" : "clear");
+
+	return roffchan;
 }
 
 QDF_STATUS policy_mgr_is_chan_ok_for_dnbs(struct wlan_objmgr_psoc *psoc,
@@ -2456,7 +2469,7 @@ QDF_STATUS policy_mgr_is_chan_ok_for_dnbs(struct wlan_objmgr_psoc *psoc,
 	 *   return true.
 	 */
 	/* TODO: To be enhanced for SBS */
-	if (policy_mgr_vdev_mlme_is_dnsc_set(vdev)) {
+	if (policy_mgr_is_dnsc_set(vdev)) {
 		if (operating_channel == channel)
 			*ok = true;
 		else if (WLAN_REG_IS_SAME_BAND_CHANNELS(operating_channel,
