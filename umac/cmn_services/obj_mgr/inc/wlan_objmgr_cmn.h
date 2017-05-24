@@ -226,7 +226,7 @@ typedef enum {
  */
 static inline char *string_from_dbgid(wlan_objmgr_ref_dbgid id)
 {
-    static const char *strings[] = { "WLAN_OBJMGR_ID",
+	static const char *strings[] = { "WLAN_OBJMGR_ID",
 					"WLAN_MLME_SB_ID",
 					"WLAN_MLME_NB_ID",
 					"WLAN_MGMT_SB_ID",
@@ -253,7 +253,7 @@ static inline char *string_from_dbgid(wlan_objmgr_ref_dbgid id)
 					"WLAN_SPECTRAL_ID",
 					"WLAN_REF_ID_MAX" };
 
-    return (char *)strings[id];
+	return (char *)strings[id];
 }
 
 #ifdef WLAN_OBJMGR_DEBUG

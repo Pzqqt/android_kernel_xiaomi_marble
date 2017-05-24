@@ -728,6 +728,9 @@ struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_macaddr_from_psoc_no_state(
  * @psoc: PSOC object
  *
  * API to acquire PSOC lock
+ * Parent lock should not be taken in child lock context
+ * but child lock can be taken in parent lock context
+ * (for ex: psoc lock can't be invoked in pdev/vdev/peer lock context)
  *
  * Return: void
  */

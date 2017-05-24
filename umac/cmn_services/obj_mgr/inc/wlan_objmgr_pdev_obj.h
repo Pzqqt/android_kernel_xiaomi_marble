@@ -195,7 +195,7 @@ struct wlan_objmgr_pdev {
  *         Failure)
  */
 struct wlan_objmgr_pdev *wlan_objmgr_pdev_obj_create(
-			struct wlan_objmgr_psoc *psoc, struct pdev_osif_priv *osif_priv);
+	struct wlan_objmgr_psoc *psoc, struct pdev_osif_priv *osif_priv);
 
 /**
  * wlan_objmgr_pdev_obj_delete() - pdev delete
@@ -394,6 +394,9 @@ void *wlan_objmgr_pdev_get_comp_private_obj(
  * @pdev: PDEV object
  *
  * API to acquire PDEV lock
+ * Parent lock should not be taken in child lock context
+ * but child lock can be taken in parent lock context
+ * (for ex: psoc lock can't be invoked in pdev/vdev/peer lock context)
  *
  * Return: void
  */
@@ -608,7 +611,8 @@ static inline void wlan_pdev_set_hw_macaddr(struct wlan_objmgr_pdev *pdev,
  *
  * Return: ospriv - private pointer
  */
-static inline struct pdev_osif_priv *wlan_pdev_get_ospriv(struct wlan_objmgr_pdev *pdev)
+static inline struct pdev_osif_priv *wlan_pdev_get_ospriv(
+				struct wlan_objmgr_pdev *pdev)
 {
 	/* This API is invoked with lock acquired, do not add log prints */
 	return pdev->pdev_nif.pdev_ospriv;
