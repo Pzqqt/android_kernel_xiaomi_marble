@@ -597,107 +597,118 @@ int htt_h2t_rx_ring_cfg(void *htt_soc, int pdev_id, void *hal_srng,
 
 	if (htt_tlv_filter->enable_fp) {
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, FP,
-			MGMT, 0000, 1);
+				MGMT, 0000, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, FP,
-			MGMT, 0001, 1);
+				MGMT, 0001, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, FP,
-			MGMT, 0010, 1);
+				MGMT, 0010, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, FP,
-			MGMT, 0011, 1);
+				MGMT, 0011, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, FP,
-			MGMT, 0100, 1);
+				MGMT, 0100, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, FP,
-			MGMT, 0101, 1);
+				MGMT, 0101, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, FP,
-			MGMT, 0110, 1);
+				MGMT, 0110, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, FP,
-			MGMT, 1000, 1);
+				MGMT, 0111, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, FP,
-			MGMT, 1001, 1);
+				MGMT, 1000, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, FP,
+				MGMT, 1001, 1);
 	}
 
 	if (htt_tlv_filter->enable_md) {
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MD,
-			MGMT, 0000, 1);
+				MGMT, 0000, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MD,
-			MGMT, 0001, 1);
+				MGMT, 0001, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MD,
-			MGMT, 0010, 1);
+				MGMT, 0010, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MD,
-			MGMT, 0011, 1);
+				MGMT, 0011, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MD,
-			MGMT, 0100, 1);
+				MGMT, 0100, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MD,
-			MGMT, 0101, 1);
+				MGMT, 0101, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MD,
-			MGMT, 0110, 1);
+				MGMT, 0110, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MD,
-			MGMT, 1000, 1);
+				MGMT, 0111, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MD,
-			MGMT, 1001, 1);
+				MGMT, 1000, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MD,
+				MGMT, 1001, 1);
 	}
 
 	if (htt_tlv_filter->enable_mo) {
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MO,
-			MGMT, 0000, 1);
+				MGMT, 0000, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MO,
-			MGMT, 0001, 1);
+				MGMT, 0001, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MO,
-			MGMT, 0010, 1);
+				MGMT, 0010, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MO,
-			MGMT, 0011, 1);
+				MGMT, 0011, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MO,
-			MGMT, 0100, 1);
+				MGMT, 0100, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MO,
-			MGMT, 0101, 1);
+				MGMT, 0101, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MO,
-			MGMT, 0110, 1);
+				MGMT, 0110, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MO,
-			MGMT, 1000, 1);
+				MGMT, 0111, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MO,
-			MGMT, 1001, 1);
+				MGMT, 1000, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MO,
+				MGMT, 1001, 1);
 	}
+
 	/* word 3 */
 	msg_word++;
 	*msg_word = 0;
 
 	if (htt_tlv_filter->enable_fp) {
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, FP,
-			MGMT, 1010, 1);
+				MGMT, 1010, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, FP,
-			MGMT, 1011, 1);
+				MGMT, 1011, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, FP,
-			MGMT, 1100, 1);
+				MGMT, 1100, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, FP,
-			MGMT, 1101, 1);
+				MGMT, 1101, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, FP,
-			MGMT,	1110, 1);
+				MGMT, 1110, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, FP,
+				MGMT, 1111, 1);
 	}
 
 	if (htt_tlv_filter->enable_md) {
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, MD,
-			MGMT, 1010, 1);
+				MGMT, 1010, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, MD,
-			MGMT, 1011, 1);
+				MGMT, 1011, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, MD,
-			MGMT, 1100, 1);
+				MGMT, 1100, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, MD,
-			MGMT, 1101, 1);
+				MGMT, 1101, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, MD,
-			MGMT, 1110, 1);
+				MGMT, 1110, 1);
 	}
 
 	if (htt_tlv_filter->enable_mo) {
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, MO,
-			MGMT, 1010, 1);
+				MGMT, 1010, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, MO,
-			MGMT, 1011, 1);
+				MGMT, 1011, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, MO,
-			MGMT, 1100, 1);
+				MGMT, 1100, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, MO,
-			MGMT, 1101, 1);
+				MGMT, 1101, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, MO,
-			MGMT, 1110, 1);
+				MGMT, 1110, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, MO,
+				MGMT, 1111, 1);
 	}
 
 	/* word 4 */
@@ -705,30 +716,72 @@ int htt_h2t_rx_ring_cfg(void *htt_soc, int pdev_id, void *hal_srng,
 	*msg_word = 0;
 
 	if (htt_tlv_filter->enable_fp) {
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
+				CTRL, 0000, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
+				CTRL, 0001, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
+				CTRL, 0010, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
+				CTRL, 0011, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
+				CTRL, 0100, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
+				CTRL, 0101, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
+				CTRL, 0110, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, FP,
-			CTRL, 0111, 1);
+				CTRL, 0111, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, FP,
-			CTRL, 1000, 1);
+				CTRL, 1000, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, FP,
-			CTRL, 1001, 1);
+				CTRL, 1001, 1);
 	}
 
 	if (htt_tlv_filter->enable_md) {
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
+				CTRL, 0000, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
+				CTRL, 0001, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
+				CTRL, 0010, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
+				CTRL, 0011, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
+				CTRL, 0100, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
+				CTRL, 0101, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
+				CTRL, 0110, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MD,
-			CTRL, 0111, 1);
+				CTRL, 0111, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MD,
-			CTRL, 1000, 1);
+				CTRL, 1000, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MD,
-			CTRL, 1001, 1);
+				CTRL, 1001, 1);
 	}
 
 	if (htt_tlv_filter->enable_mo) {
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
-			CTRL, 0111, 1);
+				CTRL, 0000, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
-			CTRL, 1000, 1);
+				CTRL, 0001, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
-			CTRL, 1001, 1);
+				CTRL, 0010, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
+				CTRL, 0011, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
+				CTRL, 0100, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
+				CTRL, 0101, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
+				CTRL, 0110, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
+				CTRL, 0111, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
+				CTRL, 1000, 1);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
+				CTRL, 1001, 1);
 	}
 
 	/* word 5 */
@@ -736,70 +789,65 @@ int htt_h2t_rx_ring_cfg(void *htt_soc, int pdev_id, void *hal_srng,
 	*msg_word = 0;
 	if (htt_tlv_filter->enable_fp) {
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, FP,
-			CTRL, 1010, 1);
+				CTRL, 1010, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, FP,
-			CTRL, 1011, 1);
+				CTRL, 1011, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, FP,
-			CTRL, 1100, 1);
+				CTRL, 1100, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, FP,
-			CTRL, 1101, 1);
+				CTRL, 1101, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, FP,
-			CTRL, 1110, 1);
+				CTRL, 1110, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, FP,
-			CTRL, 1111, 1);
+				CTRL, 1111, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, FP,
-			CTRL, 1111, 1);
+				DATA, MCAST, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, FP,
-			DATA, MCAST, 1);
+				DATA, UCAST, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, FP,
-			DATA, UCAST, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, FP,
-			DATA, NULL, 1);
+				DATA, NULL, 1);
 	}
 
 	if (htt_tlv_filter->enable_md) {
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MD,
-			CTRL, 1010, 1);
+				CTRL, 1010, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MD,
-			CTRL, 1011, 1);
+				CTRL, 1011, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MD,
-			CTRL, 1100, 1);
+				CTRL, 1100, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MD,
-			CTRL, 1101, 1);
+				CTRL, 1101, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MD,
-			CTRL, 1110, 1);
+				CTRL, 1110, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MD,
-			CTRL, 1111, 1);
+				CTRL, 1111, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MD,
-			CTRL, 1111, 1);
+				DATA, MCAST, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MD,
-			DATA, MCAST, 1);
+				DATA, UCAST, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MD,
-			DATA, UCAST, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MD,
-			DATA, NULL, 1);
+				DATA, NULL, 1);
 	}
+
 	if (htt_tlv_filter->enable_mo) {
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MO,
-			CTRL, 1010, 1);
+				CTRL, 1010, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MO,
-			CTRL, 1011, 1);
+				CTRL, 1011, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MO,
-			CTRL, 1100, 1);
+				CTRL, 1100, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MO,
-			CTRL, 1101, 1);
+				CTRL, 1101, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MO,
-			CTRL, 1110, 1);
+				CTRL, 1110, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MO,
-			CTRL, 1111, 1);
+				CTRL, 1111, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MO,
-			CTRL, 1111, 1);
+				DATA, MCAST, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MO,
-			DATA, MCAST, 1);
+				DATA, UCAST, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MO,
-			DATA, UCAST, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MO,
-			DATA, NULL, 1);
+				DATA, NULL, 1);
 	}
 
 	/* word 6 */
