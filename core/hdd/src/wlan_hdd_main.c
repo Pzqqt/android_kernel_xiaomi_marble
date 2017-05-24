@@ -4155,6 +4155,7 @@ QDF_STATUS hdd_reset_all_adapters(hdd_context_t *hdd_ctx)
 	hdd_adapter_t *adapter;
 	hdd_station_ctx_t *pHddStaCtx;
 	struct qdf_mac_addr peerMacAddr;
+	tdlsCtx_t *tdls_ctx;
 
 	ENTER();
 
@@ -4166,6 +4167,15 @@ QDF_STATUS hdd_reset_all_adapters(hdd_context_t *hdd_ctx)
 		adapter = adapterNode->pAdapter;
 		hdd_notice("Disabling queues for adapter type: %d",
 			   adapter->device_mode);
+
+		if ((adapter->device_mode == QDF_STA_MODE) ||
+			(adapter->device_mode == QDF_P2P_CLIENT_MODE)) {
+			/* Stop tdls timers */
+			tdls_ctx = WLAN_HDD_GET_TDLS_CTX_PTR(adapter);
+			if (tdls_ctx)
+				wlan_hdd_tdls_timers_stop(tdls_ctx);
+		}
+
 		if (hdd_ctx->config->sap_internal_restart &&
 		    adapter->device_mode == QDF_SAP_MODE) {
 			wlan_hdd_netif_queue_control(adapter,
