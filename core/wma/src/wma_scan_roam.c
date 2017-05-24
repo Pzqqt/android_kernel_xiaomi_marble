@@ -5426,6 +5426,18 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 	case WMI_ROAM_REASON_RSO_STATUS:
 		wma_rso_cmd_status_event_handler(wmi_event);
 		break;
+	case WMI_ROAM_REASON_INVOKE_ROAM_FAIL:
+		roam_synch_data = qdf_mem_malloc(sizeof(*roam_synch_data));
+		if (!roam_synch_data) {
+			WMA_LOGE("Memory unavailable for roam synch data");
+			return -ENOMEM;
+		}
+		roam_synch_data->roamedVdevId = wmi_event->vdev_id;
+		wma_handle->csr_roam_synch_cb(
+				(tpAniSirGlobal)wma_handle->mac_context,
+				roam_synch_data, NULL, SIR_ROAMING_INVOKE_FAIL);
+		qdf_mem_free(roam_synch_data);
+		break;
 	default:
 		WMA_LOGD("%s:Unhandled Roam Event %x for vdevid %x", __func__,
 			 wmi_event->reason, wmi_event->vdev_id);

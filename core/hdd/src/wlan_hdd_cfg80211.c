@@ -14400,6 +14400,7 @@ static bool wlan_hdd_reassoc_bssid_hint(hdd_adapter_t *adapter,
 	bool reassoc = false;
 	const uint8_t *bssid = NULL;
 	uint16_t channel = 0;
+	hdd_wext_state_t *wext_state = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 
 	if (req->bssid)
 		bssid = req->bssid;
@@ -14415,6 +14416,15 @@ static bool wlan_hdd_reassoc_bssid_hint(hdd_adapter_t *adapter,
 		reassoc = true;
 		hdd_debug(FL("REASSOC Attempt on channel %d to "MAC_ADDRESS_STR),
 				channel, MAC_ADDR_ARRAY(bssid));
+		/*
+		 * Save BSSID in a separate variable as
+		 * pRoamProfile's BSSID is getting zeroed out in the
+		 * association process. In case of join failure
+		 * we should send valid BSSID to supplicant
+		 */
+		qdf_mem_copy(wext_state->req_bssId.bytes, bssid,
+			     QDF_MAC_ADDR_SIZE);
+
 		*status = hdd_reassoc(adapter, bssid, channel,
 				      CONNECT_CMD_USERSPACE);
 		hdd_debug("hdd_reassoc: status: %d", *status);

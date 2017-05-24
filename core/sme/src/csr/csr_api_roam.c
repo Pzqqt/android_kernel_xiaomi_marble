@@ -20089,6 +20089,16 @@ QDF_STATUS csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 				eCSR_ROAM_NAPI_OFF, eSIR_SME_SUCCESS);
 		sme_release_global_lock(&mac_ctx->sme);
 		return status;
+	case SIR_ROAMING_INVOKE_FAIL:
+		csr_roam_call_callback(mac_ctx, session_id, NULL, 0,
+				       eCSR_ROAM_ASSOCIATION_FAILURE,
+				       eCSR_ROAM_RESULT_INVOKE_FAILED);
+
+		/* Userspace roam request failed, disconnect with current AP */
+		sme_debug("LFR3: roam invoke from user-space fail, dis cur AP");
+		csr_roam_disconnect(mac_ctx, session_id,
+				    eCSR_DISCONNECT_REASON_DEAUTH);
+		return status;
 	case SIR_ROAM_SYNCH_PROPAGATION:
 		break;
 	case SIR_ROAM_SYNCH_COMPLETE:
