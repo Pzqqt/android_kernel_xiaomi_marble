@@ -489,11 +489,11 @@ static void hdd_process_regulatory_data(hdd_context_t *hdd_ctx,
 static void hdd_set_dfs_region(hdd_context_t *hdd_ctx,
 			       enum dfs_reg dfs_reg)
 {
-	wlan_reg_set_dfs_region(hdd_ctx->hdd_psoc, dfs_reg);
+	wlan_reg_set_dfs_region(hdd_ctx->hdd_pdev, dfs_reg);
 }
 #else
 static void hdd_set_dfs_region(hdd_context_t *hdd_ctx,
-				     enum dfs_region dfs_reg)
+			       enum dfs_region dfs_reg)
 {
 
 	/* remap the ctl code to dfs region code */
@@ -550,7 +550,7 @@ static int hdd_regulatory_init_no_offload(hdd_context_t *hdd_ctx,
 	cds_fill_and_send_ctl_to_fw(reg_info);
 
 	hdd_set_dfs_region(hdd_ctx, DFS_FCC_REG);
-	wlan_reg_get_dfs_region(hdd_ctx->hdd_psoc, &dfs_reg);
+	wlan_reg_get_dfs_region(hdd_ctx->hdd_pdev, &dfs_reg);
 
 	reg_program_config_vars(hdd_ctx, &config_vars);
 	ucfg_reg_set_config_vars(hdd_ctx->hdd_psoc, config_vars);
@@ -774,7 +774,7 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 		cds_fill_and_send_ctl_to_fw(&hdd_ctx->reg);
 
 		hdd_set_dfs_region(hdd_ctx, request->dfs_region);
-		wlan_reg_get_dfs_region(hdd_ctx->hdd_psoc, &dfs_reg);
+		wlan_reg_get_dfs_region(hdd_ctx->hdd_pdev, &dfs_reg);
 
 		reg_program_config_vars(hdd_ctx, &config_vars);
 		ucfg_reg_set_config_vars(hdd_ctx->hdd_psoc, config_vars);

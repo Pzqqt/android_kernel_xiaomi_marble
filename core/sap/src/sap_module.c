@@ -2976,7 +2976,7 @@ wlansap_set_dfs_restrict_japan_w53(tHalHandle hHal, uint8_t disable_Dfs_W53)
 		return QDF_STATUS_E_FAULT;
 	}
 
-	wlan_reg_get_dfs_region(pMac->psoc, &dfs_region);
+	wlan_reg_get_dfs_region(pMac->pdev, &dfs_region);
 
 	/*
 	 * Set the JAPAN W53 restriction only if the current
@@ -3072,7 +3072,7 @@ wlansap_set_dfs_preferred_channel_location(tHalHandle hHal,
 		return QDF_STATUS_E_FAULT;
 	}
 
-	wlan_reg_get_dfs_region(pMac->psoc, &dfs_region);
+	wlan_reg_get_dfs_region(pMac->pdev, &dfs_region);
 
 	/*
 	 * The Indoor/Outdoor only random channel selection

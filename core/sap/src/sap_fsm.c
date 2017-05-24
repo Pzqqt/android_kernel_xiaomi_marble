@@ -1257,7 +1257,7 @@ static void sap_get_cac_dur_dfs_region(ptSapContext sap_ctx,
 	}
 
 	mac = PMAC_STRUCT(hal);
-	wlan_reg_get_dfs_region(mac->psoc, dfs_region);
+	wlan_reg_get_dfs_region(mac->pdev, dfs_region);
 	if (mac->sap.SapDfsInfo.ignore_cac) {
 		*cac_duration_ms = 0;
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
@@ -1265,17 +1265,6 @@ static void sap_get_cac_dur_dfs_region(ptSapContext sap_ctx,
 		return;
 	}
 	*cac_duration_ms = DEFAULT_CAC_TIMEOUT;
-
-	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-		  FL("sapdfs: dfs_region=%d, chwidth=%d, seg0=%d, seg1=%d"),
-		  *dfs_region, ch_params->ch_width,
-		  ch_params->center_freq_seg0, ch_params->center_freq_seg1);
-
-	if (*dfs_region != DFS_ETSI_REG) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-			  FL("sapdfs: defult cac duration"));
-		return;
-	}
 
 	if (sap_is_channel_bonding_etsi_weather_channel(sap_ctx)) {
 		*cac_duration_ms = ETSI_WEATHER_CH_CAC_TIMEOUT;
