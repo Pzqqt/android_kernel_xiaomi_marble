@@ -1399,7 +1399,7 @@ tSirRetStatus lim_process_auth_frame_no_session(tpAniSirGlobal pMac, uint8_t *pB
 	}
 
 	if (psessionEntry == NULL) {
-		pe_err("Error: Unable to find session id while in pre-auth phase for FT");
+		pe_debug("cannot find session id in FT pre-auth phase");
 		return eSIR_FAILURE;
 	}
 
