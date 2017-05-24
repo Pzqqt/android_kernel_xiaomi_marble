@@ -10979,16 +10979,15 @@ static int __con_mode_handler(const char *kmessage, struct kernel_param *kp,
 	enum tQDF_GLOBAL_CON_MODE curr_mode;
 	enum tQDF_ADAPTER_MODE adapter_mode;
 
+	hdd_info("con_mode handler: %s", kmessage);
+
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret)
 		return ret;
 
 	cds_set_load_in_progress(true);
 
-	hdd_debug("con_mode handler: %s", kmessage);
 	ret = param_set_int(kmessage, kp);
-
-
 
 	if (!(is_con_mode_valid(con_mode))) {
 		hdd_err("invlaid con_mode %d", con_mode);

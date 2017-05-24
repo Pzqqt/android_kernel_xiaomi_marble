@@ -16994,6 +16994,12 @@ static int __wlan_hdd_cfg80211_testmode(struct wiphy *wiphy,
 		int buf_len;
 		void *buf;
 		QDF_STATUS status;
+
+		if (hdd_get_conparam() != QDF_GLOBAL_FTM_MODE) {
+			hdd_err("Device is not in FTM mode");
+			return -EINVAL;
+		}
+
 		if (!tb[WLAN_HDD_TM_ATTR_DATA]) {
 			hdd_err("WLAN_HDD_TM_ATTR_DATA attribute is invalid");
 			return -EINVAL;
