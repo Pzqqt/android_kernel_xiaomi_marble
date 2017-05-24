@@ -78,6 +78,8 @@ struct htt_host_rx_desc_base {
 	char rx_hdr_status[RX_HTT_HDR_STATUS_LEN];
 };
 
+#define RX_DESC_ATTN_MPDU_LEN_ERR_BIT   0x08000000
+
 #define RX_STD_DESC_ATTN_OFFSET	\
 	(offsetof(struct htt_host_rx_desc_base, attention))
 #define RX_STD_DESC_FRAG_INFO_OFFSET \

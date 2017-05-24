@@ -655,12 +655,14 @@ extern bool
 extern int
 (*htt_rx_amsdu_pop)(htt_pdev_handle pdev,
 		    qdf_nbuf_t rx_ind_msg,
-		    qdf_nbuf_t *head_msdu, qdf_nbuf_t *tail_msdu);
+		    qdf_nbuf_t *head_msdu, qdf_nbuf_t *tail_msdu,
+		    uint32_t *msdu_count);
 
 extern int
 (*htt_rx_frag_pop)(htt_pdev_handle pdev,
 		   qdf_nbuf_t rx_ind_msg,
-		   qdf_nbuf_t *head_msdu, qdf_nbuf_t *tail_msdu);
+		   qdf_nbuf_t *head_msdu, qdf_nbuf_t *tail_msdu,
+		   uint32_t *msdu_count);
 
 /**
  * @brief Return a linked list of buffers holding one MSDU
