@@ -30,6 +30,8 @@
 #include "wmi_version.h"
 #include "wmi_unified_priv.h"
 #include "wmi_version_whitelist.h"
+#include <wlan_defs.h>
+
 #ifdef CONVERGED_P2P_ENABLE
 #include "wlan_p2p_public_struct.h"
 #endif
@@ -7430,8 +7432,7 @@ static QDF_STATUS send_get_stats_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_request_stats_cmd_fixed_param));
 	cmd->stats_id =
-		WMI_REQUEST_PEER_STAT | WMI_REQUEST_PDEV_STAT |
-		WMI_REQUEST_VDEV_STAT | WMI_REQUEST_RSSI_PER_CHAIN_STAT;
+		 WMI_REQUEST_PDEV_STAT;
 	cmd->vdev_id = get_stats_param->session_id;
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(addr, &cmd->peer_macaddr);
 	WMI_LOGD("STATS REQ VDEV_ID:%d-->", cmd->vdev_id);
@@ -16360,8 +16361,67 @@ static QDF_STATUS extract_all_stats_counts_tlv(wmi_unified_t wmi_handle,
 	stats_param->num_peer_stats = ev->num_peer_stats;
 	stats_param->num_bcnflt_stats = ev->num_bcnflt_stats;
 	stats_param->num_chan_stats = ev->num_chan_stats;
+	stats_param->pdev_id = 0;
 
 	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * extract_pdev_tx_stats() - extract pdev tx stats from event
+ */
+static void extract_pdev_tx_stats(wmi_host_dbg_tx_stats *tx, struct wlan_dbg_tx_stats *tx_stats)
+{
+	/* Tx Stats */
+	tx->comp_queued = tx_stats->comp_queued;
+	tx->comp_delivered = tx_stats->comp_delivered;
+	tx->msdu_enqued = tx_stats->msdu_enqued;
+	tx->mpdu_enqued = tx_stats->mpdu_enqued;
+	tx->wmm_drop = tx_stats->wmm_drop;
+	tx->local_enqued = tx_stats->local_enqued;
+	tx->local_freed = tx_stats->local_freed;
+	tx->hw_queued = tx_stats->hw_queued;
+	tx->hw_reaped = tx_stats->hw_reaped;
+	tx->underrun = tx_stats->underrun;
+	tx->tx_abort = tx_stats->tx_abort;
+	tx->mpdus_requed = tx_stats->mpdus_requed;
+	tx->data_rc = tx_stats->data_rc;
+	tx->self_triggers = tx_stats->self_triggers;
+	tx->sw_retry_failure = tx_stats->sw_retry_failure;
+	tx->illgl_rate_phy_err = tx_stats->illgl_rate_phy_err;
+	tx->pdev_cont_xretry = tx_stats->pdev_cont_xretry;
+	tx->pdev_tx_timeout = tx_stats->pdev_tx_timeout;
+	tx->pdev_resets = tx_stats->pdev_resets;
+	tx->stateless_tid_alloc_failure = tx_stats->stateless_tid_alloc_failure;
+	tx->phy_underrun = tx_stats->phy_underrun;
+	tx->txop_ovf = tx_stats->txop_ovf;
+
+	return;
+}
+
+
+/**
+ * extract_pdev_rx_stats() - extract pdev rx stats from event
+ */
+static void extract_pdev_rx_stats(wmi_host_dbg_rx_stats *rx, struct wlan_dbg_rx_stats *rx_stats)
+{
+	/* Rx Stats */
+	rx->mid_ppdu_route_change = rx_stats->mid_ppdu_route_change;
+	rx->status_rcvd = rx_stats->status_rcvd;
+	rx->r0_frags = rx_stats->r0_frags;
+	rx->r1_frags = rx_stats->r1_frags;
+	rx->r2_frags = rx_stats->r2_frags;
+	/* Only TLV */
+	rx->r3_frags = 0;
+	rx->htt_msdus = rx_stats->htt_msdus;
+	rx->htt_mpdus = rx_stats->htt_mpdus;
+	rx->loc_msdus = rx_stats->loc_msdus;
+	rx->loc_mpdus = rx_stats->loc_mpdus;
+	rx->oversize_amsdu = rx_stats->oversize_amsdu;
+	rx->phy_errs = rx_stats->phy_errs;
+	rx->phy_err_drop = rx_stats->phy_err_drop;
+	rx->mpdu_errs = rx_stats->mpdu_errs;
+
+	return;
 }
 
 /**
@@ -16376,6 +16436,33 @@ static QDF_STATUS extract_all_stats_counts_tlv(wmi_unified_t wmi_handle,
 static QDF_STATUS extract_pdev_stats_tlv(wmi_unified_t wmi_handle,
 	void *evt_buf, uint32_t index, wmi_host_pdev_stats *pdev_stats)
 {
+	WMI_UPDATE_STATS_EVENTID_param_tlvs *param_buf;
+	wmi_stats_event_fixed_param *ev_param;
+	uint8_t *data;
+
+	param_buf = (WMI_UPDATE_STATS_EVENTID_param_tlvs *) evt_buf;
+	ev_param = (wmi_stats_event_fixed_param *) param_buf->fixed_param;
+
+	data = param_buf->data;
+
+	if (index < ev_param->num_pdev_stats) {
+		wmi_pdev_stats *ev = (wmi_pdev_stats *) ((data) +
+				(index * sizeof(wmi_pdev_stats)));
+
+		pdev_stats->chan_nf = ev->chan_nf;
+		pdev_stats->tx_frame_count = ev->tx_frame_count;
+		pdev_stats->rx_frame_count = ev->rx_frame_count;
+		pdev_stats->rx_clear_count = ev->rx_clear_count;
+		pdev_stats->cycle_count = ev->cycle_count;
+		pdev_stats->phy_err_count = ev->phy_err_count;
+		pdev_stats->chan_tx_pwr = ev->chan_tx_pwr;
+
+		extract_pdev_tx_stats(&(pdev_stats->pdev_stats.tx),
+			&(ev->pdev_stats.tx));
+		extract_pdev_rx_stats(&(pdev_stats->pdev_stats.rx),
+			&(ev->pdev_stats.rx));
+	}
+
 	return QDF_STATUS_SUCCESS;
 }
 
