@@ -186,8 +186,8 @@ static struct hal_hw_srng_config hw_srng_table[] = {
 		.reg_size = {
 			HWIO_REO_R0_REO2SW2_RING_BASE_LSB_ADDR(0) -
 				HWIO_REO_R0_REO2SW1_RING_BASE_LSB_ADDR(0),
-			HWIO_REO_R2_REO2SW1_RING_HP_ADDR(0) -
-				HWIO_REO_R2_REO2SW2_RING_HP_ADDR(0),
+			HWIO_REO_R2_REO2SW2_RING_HP_ADDR(0) -
+				HWIO_REO_R2_REO2SW1_RING_HP_ADDR(0),
 		},
 	},
 	{ /* REO_EXCEPTION */
