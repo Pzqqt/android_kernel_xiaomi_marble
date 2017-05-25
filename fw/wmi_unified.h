@@ -10216,6 +10216,7 @@ typedef enum event_type_e {
     WOW_TDLS_CONN_TRACKER_EVENT,
     WOW_CRITICAL_LOG_EVENT,
     WOW_CHIP_POWER_FAILURE_DETECT_EVENT,
+    WOW_11D_SCAN_EVENT,
 } WOW_WAKE_EVENT_TYPE;
 
 typedef enum wake_reason_e {
@@ -10268,6 +10269,7 @@ typedef enum wake_reason_e {
     WOW_REASON_P2P_LISTEN_OFFLOAD,
     WOW_REASON_NAN_EVENT_WAKE_HOST,
     WOW_REASON_CHIP_POWER_FAILURE_DETECT,
+    WOW_REASON_11D_SCAN,
     WOW_REASON_DEBUG_TEST = 0xFF,
 } WOW_WAKE_REASON_TYPE;
 
@@ -10278,17 +10280,19 @@ typedef enum {
 } WOW_IFACE_STATUS;
 
 enum {
-    WMI_WOW_FLAG_IGNORE_PCIE_RESET = 0x00000001, /* some win10 platfrom will not assert pcie_reset for wow.*/
+    WMI_WOW_FLAG_IGNORE_PCIE_RESET          = 0x00000001, /* some win10 platfrom will not assert pcie_reset for wow.*/
     /* WMI_WOW_FLAG_SEND_PM_PME
      * Some platforms have issues if the PM_PME message is sent after WoW,
      * so don't send PM_PME after WoW unless the host uses this flag
      * to request it.
      */
-    WMI_WOW_FLAG_SEND_PM_PME       = 0x00000002,
+    WMI_WOW_FLAG_SEND_PM_PME                = 0x00000002,
     /* Flag to indicate unit test */
-    WMI_WOW_FLAG_UNIT_TEST_ENABLE  = 0x00000004,
+    WMI_WOW_FLAG_UNIT_TEST_ENABLE           = 0x00000004,
     /* Force HTC wakeup */
-    WMI_WOW_FLAG_DO_HTC_WAKEUP     = 0x00000008,
+    WMI_WOW_FLAG_DO_HTC_WAKEUP              = 0x00000008,
+    /* Enable L1SS sleep for PCIE DRV case */
+    WMI_WOW_FLAG_ENABLE_DRV_PCIE_L1SS_SLEEP = 0x00000010,
 };
 
 typedef struct {
@@ -11949,6 +11953,8 @@ typedef struct {
     A_UINT32 segment_id;
     A_UINT32 timestamp;
     A_UINT32 is_chirp;
+    A_INT32  freq_offset; /* in MHz */
+    A_INT32  sidx; /* segment index (where was the radar within the channel) */
 } wmi_pdev_dfs_radar_detection_event_fixed_param;
 
 typedef enum {
