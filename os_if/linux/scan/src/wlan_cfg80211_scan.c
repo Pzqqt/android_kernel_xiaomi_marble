@@ -211,7 +211,6 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_pdev *pdev,
 		return -EBUSY;
 	}
 
-	ucfg_scan_flush_results(pdev, NULL);
 	if (ucfg_scan_get_pdev_status(pdev) !=
 	   SCAN_NOT_IN_PROGRESS) {
 		status = wlan_abort_scan(pdev,
