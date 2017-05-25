@@ -3567,6 +3567,19 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 	rx_pkt->pkt_meta.sessionId =
 		(vdev_id == WMA_INVALID_VDEV_ID ? 0 : vdev_id);
 
+	if (mgt_type == IEEE80211_FC0_TYPE_MGT &&
+	    (mgt_subtype == IEEE80211_FC0_SUBTYPE_BEACON ||
+	     mgt_subtype == IEEE80211_FC0_SUBTYPE_PROBE_RESP)) {
+		if (mgmt_rx_params->buf_len <=
+			(sizeof(struct ieee80211_frame) +
+			offsetof(struct wlan_bcn_frame, ie))) {
+			WMA_LOGD("Dropping frame from "MAC_ADDRESS_STR,
+				 MAC_ADDR_ARRAY(wh->i_addr3));
+			cds_pkt_return_packet(rx_pkt);
+			return -EINVAL;
+		}
+	}
+
 	if (wma_is_pkt_drop_candidate(wma_handle, wh->i_addr2, wh->i_addr3,
 					mgt_subtype)) {
 		cds_pkt_return_packet(rx_pkt);
