@@ -1846,6 +1846,33 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 		break;
 
 	case ROAM_SCAN_OFFLOAD_STOP:
+		/*
+		 * If roam synch propagation is in progress and an user space
+		 * disconnect is requested, then there is no need to send the
+		 * RSO STOP to firmware, since the roaming is already complete.
+		 * If the RSO STOP is sent to firmware, then an HO_FAIL will be
+		 * generated and the expectation from firmware would be to
+		 * clean up the peer context on the host and not send down any
+		 * WMI PEER DELETE commands to firmware. But, if the user space
+		 * disconnect gets processed first, then there is a chance to
+		 * send down the PEER DELETE commands. Hence, if we do not
+		 * receive the HO_FAIL, and we complete the roam sync
+		 * propagation, then the host and firmware will be in sync with
+		 * respect to the peer and then the user space disconnect can
+		 * be handled gracefully in a normal way.
+		 *
+		 * Ensure to check the reason code since the RSO Stop might
+		 * come when roam sync failed as well and at that point it
+		 * should go through to the firmware and receive HO_FAIL
+		 * and clean up.
+		 */
+		if (wma_is_roam_synch_in_progress(wma_handle,
+				roam_req->sessionId) &&
+				roam_req->reason ==
+				REASON_ROAM_STOP_ALL) {
+				WMA_LOGD("Dont send RSO stop during roam sync");
+				break;
+		}
 		wma_handle->suitable_ap_hb_failure = false;
 		if (wma_handle->roam_offload_enabled) {
 			uint32_t mode;
@@ -2416,9 +2443,10 @@ cleanup_label:
 			wma->csr_roam_synch_cb((tpAniSirGlobal)wma->mac_context,
 				roam_synch_ind_ptr, NULL, SIR_ROAMING_ABORT);
 		roam_req = qdf_mem_malloc(sizeof(tSirRoamOffloadScanReq));
-		if (roam_req) {
+		if (roam_req && synch_event) {
 			roam_req->Command = ROAM_SCAN_OFFLOAD_STOP;
 			roam_req->reason = REASON_ROAM_SYNCH_FAILED;
+			roam_req->sessionId = synch_event->vdev_id;
 			wma_process_roaming_config(wma, roam_req);
 		}
 	}
