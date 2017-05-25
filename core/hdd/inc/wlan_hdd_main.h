@@ -1369,8 +1369,6 @@ struct hdd_context_s {
 	/** Config values read from qcom_cfg.ini file */
 	struct hdd_config *config;
 
-	struct wlan_hdd_ftm_status ftm;
-
 	/* Completion  variable to indicate Mc Thread Suspended */
 	struct completion mc_sus_event_var;
 
