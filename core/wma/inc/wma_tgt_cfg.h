@@ -153,6 +153,7 @@ struct wma_dfs_radar_ind {
  * @bool is_ra_rate_limit_enabled: RA filter support
  * @he_cap: HE capability received from FW
  * @dfs_cac_offload: dfs and cac timer offloaded
+ * @tx_bfee_8ss_enabled: Tx Beamformee support for 8x8
  */
 struct wma_tgt_cfg {
 	uint32_t target_fw_version;
@@ -186,5 +187,6 @@ struct wma_tgt_cfg {
 	tDot11fIEvendor_he_cap he_cap;
 #endif
 	bool dfs_cac_offload;
+	bool tx_bfee_8ss_enabled;
 };
 #endif /* WMA_TGT_CFG_H */

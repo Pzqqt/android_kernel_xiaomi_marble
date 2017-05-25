@@ -1513,10 +1513,10 @@ typedef struct {
 	tp_wma_packetdump_cb wma_mgmt_tx_packetdump_cb;
 	tp_wma_packetdump_cb wma_mgmt_rx_packetdump_cb;
 	tSirLLStatsResults *link_stats_results;
-
 #ifdef WLAN_FEATURE_11AX
 	struct he_capability he_cap;
 #endif
+	bool tx_bfee_8ss_enabled;
 } t_wma_handle, *tp_wma_handle;
 
 /**

@@ -938,8 +938,17 @@ enum {
 #define WNI_CFG_VHT_SU_BEAMFORMEE_CAP_STADEF    1
 
 #define WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_STAMIN    0
-#define WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_STAMAX    4
-#define WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_STADEF    0
+#define WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_STAMAX    8
+#define WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_STADEF    8
+/*
+ * WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_FW_DEF + 1 is
+ * assumed to be the default fw supported BF antennas, if fw
+ * says it supports 8 antennas in rx ready event and if
+ * gTxBFCsnValue INI value is configured above 3, set
+ * the same to WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED.
+ * Otherwise, fall back and set fw default value[3].
+ */
+#define WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_FW_DEF    3
 
 #define WNI_CFG_VHT_NUM_SOUNDING_DIMENSIONS_STAMIN    0
 #define WNI_CFG_VHT_NUM_SOUNDING_DIMENSIONS_STAMAX    3
