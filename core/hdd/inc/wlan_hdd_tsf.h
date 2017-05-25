@@ -38,6 +38,7 @@
  * @TSF_GET_FAIL:                 get fail
  * @TSF_RESET_GPIO_FAIL:          GPIO reset fail
  * @TSF_SAP_NOT_STARTED_NO_TSF    SAP not started
+ * @TSF_NOT_READY: TSF module is not initialized or init failed
  */
 enum hdd_tsf_get_state {
 	TSF_RETURN = 0,
@@ -47,7 +48,8 @@ enum hdd_tsf_get_state {
 	TSF_CAPTURE_FAIL,
 	TSF_GET_FAIL,
 	TSF_RESET_GPIO_FAIL,
-	TSF_SAP_NOT_STARTED_NO_TSF
+	TSF_SAP_NOT_STARTED_NO_TSF,
+	TSF_NOT_READY
 };
 
 /**
@@ -61,16 +63,78 @@ enum hdd_tsf_capture_state {
 };
 
 #ifdef WLAN_FEATURE_TSF
+/**
+ * wlan_hdd_tsf_init() - set gpio and callbacks for
+ *     capturing tsf and init tsf_plus
+ * @hdd_ctx: pointer to the hdd_context_t
+ *
+ * This function set the callback to sme module, the callback will be
+ * called when a tsf event is reported by firmware; set gpio number
+ * to FW, FW will toggle this gpio when received a CAP_TSF command;
+ * do tsf_plus init
+ *
+ * Return: nothing
+ */
 void wlan_hdd_tsf_init(struct hdd_context_s *hdd_ctx);
+
+/**
+ * wlan_hdd_tsf_deinit() - reset callbacks for capturing tsf, deinit tsf_plus
+ * @hdd_ctx: pointer to the hdd_context_t
+ *
+ * This function reset the callback to sme module, and deinit tsf_plus
+ *
+ * Return: nothing
+ */
+void wlan_hdd_tsf_deinit(hdd_context_t *hdd_ctx);
+
+/**
+ * hdd_capture_tsf() - capture tsf
+ * @adapter: pointer to adapter
+ * @buf: pointer to uplayer buf
+ * @len : the length of buf
+ *
+ * This function returns tsf value to uplayer.
+ *
+ * Return: 0 for success or non-zero negative failure code
+ */
 int hdd_capture_tsf(struct hdd_adapter_s *adapter, uint32_t *buf, int len);
+
+/**
+ * hdd_indicate_tsf() - return tsf to uplayer
+ *
+ * @adapter: pointer to adapter
+ * @buf: pointer to uplayer buf
+ * @len : the length of buf
+ *
+ * This function returns tsf value to uplayer.
+ *
+ * Return: Describe the execute result of this routine
+ */
 int hdd_indicate_tsf(struct hdd_adapter_s *adapter, uint32_t *buf, int len);
+
+/**
+ * wlan_hdd_cfg80211_handle_tsf_cmd(): Setup TSF operations
+ * @wiphy: Pointer to wireless phy
+ * @wdev: Pointer to wireless device
+ * @data: Pointer to data
+ * @data_len: Data length
+ *
+ * Handle TSF SET / GET operation from userspace
+ *
+ * Return: 0 on success, negative errno on failure
+ */
 int wlan_hdd_cfg80211_handle_tsf_cmd(struct wiphy *wiphy,
 					struct wireless_dev *wdev,
 					const void *data,
 					int data_len);
+
 int hdd_get_tsf_cb(void *pcb_cxt, struct stsf *ptsf);
 #else
 static inline void wlan_hdd_tsf_init(struct hdd_context_s *hdd_ctx)
+{
+}
+
+static inline void wlan_hdd_tsf_deinit(hdd_context_t *hdd_ctx)
 {
 }
 
