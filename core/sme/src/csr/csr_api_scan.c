@@ -5352,7 +5352,6 @@ tpSirBssDescription csr_get_fst_bssdescr_ptr(tScanResultHandle result_handle)
 	if (csr_ll_is_list_empty(&bss_list->List, LL_ACCESS_NOLOCK)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			FL("bss_list->List is empty"));
-		qdf_mem_free(bss_list);
 		return NULL;
 	}
 	first_element = csr_ll_peek_head(&bss_list->List, LL_ACCESS_NOLOCK);
