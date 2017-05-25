@@ -15768,7 +15768,7 @@ static QDF_STATUS extract_vdev_scan_ev_param_tlv(wmi_unified_t wmi_handle,
 	case WMI_SCAN_EVENT_RESTARTED:
 		param->type = SCAN_EVENT_TYPE_RESTARTED;
 		break;
-	case WMI_HOST_SCAN_EVENT_FOREIGN_CHANNEL_EXIT:
+	case WMI_SCAN_EVENT_FOREIGN_CHANNEL_EXIT:
 		param->type = SCAN_EVENT_TYPE_FOREIGN_CHANNEL_EXIT;
 		break;
 	case WMI_SCAN_EVENT_MAX:
