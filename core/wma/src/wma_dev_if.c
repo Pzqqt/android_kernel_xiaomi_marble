@@ -1382,6 +1382,14 @@ static void wma_cleanup_target_req_param(struct wma_target_req *tgt_req)
 		qdf_mem_free(tgt_req->user_data);
 		tgt_req->user_data = NULL;
 	}
+
+	if (tgt_req->msg_type == WMA_SET_LINK_STATE && tgt_req->user_data) {
+		tpLinkStateParams params =
+			(tpLinkStateParams) tgt_req->user_data;
+		qdf_mem_free(params->callbackArg);
+		qdf_mem_free(tgt_req->user_data);
+		tgt_req->user_data = NULL;
+	}
 }
 
 /**
