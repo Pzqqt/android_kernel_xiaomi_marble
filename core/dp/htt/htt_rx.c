@@ -92,7 +92,11 @@
 
  /* very conservative to ensure enough buffers are allocated */
 #ifndef HTT_RX_HOST_LATENCY_WORST_LIKELY_MS
+#ifdef QCA_WIFI_3_0
 #define HTT_RX_HOST_LATENCY_WORST_LIKELY_MS 20
+#else
+#define HTT_RX_HOST_LATENCY_WORST_LIKELY_MS 10
+#endif
 #endif
 
 #ifndef HTT_RX_RING_REFILL_RETRY_TIME_MS
