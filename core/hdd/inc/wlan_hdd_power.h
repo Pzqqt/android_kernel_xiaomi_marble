@@ -40,6 +40,9 @@
 
 #define HDD_MAX_CMP_PER_PACKET_FILTER	5
 
+#define HDD_WAKELOCK_TIMEOUT_CONNECT 1000
+#define HDD_WAKELOCK_TIMEOUT_RESUME 1000
+
 /**
  * enum pkt_filter_protocol_layer - packet filter protocol layer
  * @HDD_FILTER_PROTO_TYPE_INVALID: Invalid initial value
