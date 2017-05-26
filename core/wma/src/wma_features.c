@@ -1566,6 +1566,8 @@ static const u8 *wma_wow_wake_reason_str(A_INT32 wake_reason)
 		return "DEBUG_TEST";
 	case WOW_REASON_CHIP_POWER_FAILURE_DETECT:
 		return "CHIP_POWER_FAILURE_DETECT";
+	case WOW_REASON_11D_SCAN:
+		return "11D_SCAN";
 	default:
 		return "unknown";
 	}
@@ -1613,6 +1615,7 @@ static void wma_print_wow_stats(t_wma_handle *wma,
 	case WOW_REASON_RSSI_BREACH_EVENT:
 	case WOW_REASON_OEM_RESPONSE_EVENT:
 	case WOW_REASON_CHIP_POWER_FAILURE_DETECT:
+	case WOW_REASON_11D_SCAN:
 		break;
 	default:
 		return;
@@ -1663,6 +1666,8 @@ static void wma_inc_wow_stats(t_wma_handle *wma,
 		break;
 	case WOW_REASON_OEM_RESPONSE_EVENT:
 		stats->oem_response++;
+	case WOW_REASON_11D_SCAN:
+		stats->scan_11d++;
 		break;
 	case WOW_REASON_CHIP_POWER_FAILURE_DETECT:
 		stats->pwr_save_fail_detected++;
@@ -1766,6 +1771,8 @@ static int wow_get_wmi_eventid(int32_t reason, uint32_t tag)
 		return WOW_TDLS_CONN_TRACKER_EVENT;
 	case WOW_REASON_ROAM_HO:
 		return WMI_ROAM_EVENTID;
+	case WOW_REASON_11D_SCAN:
+		return WMI_11D_NEW_COUNTRY_EVENTID;
 	default:
 		WMA_LOGD(FL("No Event Id for WOW reason %s(%d)"),
 			 wma_wow_wake_reason_str(reason), reason);

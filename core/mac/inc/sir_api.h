@@ -6513,7 +6513,8 @@ struct sir_wake_lock_stats {
  * @gscan: gscan wakeup count
  * @pno_complete: pno complete wakeup count
  * @pno_match: pno match wakeup count
- * @oem_response: oem response wakeup count
+ * @oem_response: oem response wakeup coun
+ * @scan_11d: 11d scan wakeup count
  */
 struct sir_vdev_wow_stats {
 	uint32_t ucast;
@@ -6532,6 +6533,7 @@ struct sir_vdev_wow_stats {
 	uint32_t pno_match;
 	uint32_t oem_response;
 	uint32_t pwr_save_fail_detected;
+	uint32_t scan_11d;
 };
 
 /**
