@@ -2582,7 +2582,10 @@ void __hdd_indicate_mgmt_frame(hdd_adapter_t *pAdapter,
 	subType = WLAN_HDD_GET_SUBTYPE_FRM_FC(pbFrames[0]);
 
 	/* Get pAdapter from Destination mac address of the frame */
-	if ((type == SIR_MAC_MGMT_FRAME) && (subType != SIR_MAC_MGMT_PROBE_REQ)) {
+	if ((type == SIR_MAC_MGMT_FRAME) &&
+	    (subType != SIR_MAC_MGMT_PROBE_REQ) &&
+	    !qdf_is_macaddr_broadcast(
+	     (struct qdf_mac_addr *)&pbFrames[WLAN_HDD_80211_FRM_DA_OFFSET])) {
 		pAdapter =
 			hdd_get_adapter_by_macaddr(pHddCtx,
 						   &pbFrames
