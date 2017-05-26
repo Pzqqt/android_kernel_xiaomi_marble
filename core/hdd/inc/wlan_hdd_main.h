@@ -1053,6 +1053,18 @@ struct hdd_adapter_s {
 	/* tsf value received from firmware */
 	uint64_t cur_target_time;
 	uint64_t tsf_sync_soc_timer;
+#ifdef WLAN_FEATURE_TSF_PLUS
+	/* spin lock for read/write timestamps */
+	qdf_spinlock_t host_target_sync_lock;
+	qdf_mc_timer_t host_target_sync_timer;
+	uint64_t cur_host_time;
+	uint64_t last_host_time;
+	uint64_t last_target_time;
+	/* to store the count of continuous invalid tstamp-pair */
+	int continuous_error_count;
+	/* to indicate whether tsf_sync has been initialized */
+	qdf_atomic_t tsf_sync_ready_flag;
+#endif /* WLAN_FEATURE_TSF_PLUS */
 #endif
 
 	hdd_cfg80211_state_t cfg80211State;

@@ -39,6 +39,7 @@
  * @TSF_RESET_GPIO_FAIL:          GPIO reset fail
  * @TSF_SAP_NOT_STARTED_NO_TSF    SAP not started
  * @TSF_NOT_READY: TSF module is not initialized or init failed
+ * @TSF_DISABLED_BY_TSFPLUS: cap_tsf/get_tsf are disabled due to TSF_PLUS
  */
 enum hdd_tsf_get_state {
 	TSF_RETURN = 0,
@@ -49,7 +50,8 @@ enum hdd_tsf_get_state {
 	TSF_GET_FAIL,
 	TSF_RESET_GPIO_FAIL,
 	TSF_SAP_NOT_STARTED_NO_TSF,
-	TSF_NOT_READY
+	TSF_NOT_READY,
+	TSF_DISABLED_BY_TSFPLUS
 };
 
 /**
@@ -162,6 +164,63 @@ static inline int hdd_get_tsf_cb(void *pcb_cxt, struct stsf *ptsf)
 	return -ENOTSUPP;
 }
 
+#endif
+
+#if defined(WLAN_FEATURE_TSF_PLUS) && defined(WLAN_FEATURE_TSF)
+
+/**
+ * hdd_start_tsf_sync() - start tsf sync
+ * @adapter: pointer to adapter
+ *
+ * This function initialize and start TSF synchronization
+ *
+ * Return: Describe the execute result of this routine
+ */
+int hdd_start_tsf_sync(hdd_adapter_t *adapter);
+
+/**
+ * hdd_stop_tsf_sync() - stop tsf sync
+ * @adapter: pointer to adapter
+ *
+ * This function stop and de-initialize TSF synchronization
+ *
+ * Return: Describe the execute result of this routine
+ */
+int hdd_stop_tsf_sync(hdd_adapter_t *adapter);
+
+/**
+ * hdd_tsf_notify_wlan_state_change() -
+ *     notify tsf module of wlan connection state
+ * @old_state: old wlan state
+ * @new_state: new wlan state
+ *
+ * This function check the old and new connection state, determine whether
+ * to start or stop tsf sync
+ *
+ * Return: nothing
+ */
+void hdd_tsf_notify_wlan_state_change(hdd_adapter_t *adapter,
+				      eConnectionState old_state,
+				      eConnectionState new_state);
+
+#else
+static inline int hdd_start_tsf_sync(hdd_adapter_t *adapter)
+{
+	return -ENOTSUPP;
+}
+
+static inline int hdd_stop_tsf_sync(hdd_adapter_t *adapter)
+{
+	return -ENOTSUPP;
+}
+
+static inline
+void hdd_tsf_notify_wlan_state_change(hdd_adapter_t *adapter,
+				      eConnectionState old_state,
+				      eConnectionState new_state)
+
+{
+}
 #endif
 
 #endif

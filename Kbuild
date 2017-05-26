@@ -58,6 +58,12 @@ ifeq ($(KERNEL_BUILD), 0)
 	CONFIG_MOBILE_ROUTER := y
 	endif
 
+	ifeq ($(CONFIG_ARCH_MSM8917), y)
+		ifeq ($(CONFIG_ROME_IF), sdio)
+			CONFIG_WLAN_SYNC_TSF_PLUS := y
+		endif
+	endif
+
 	#Flag to enable Legacy Fast Roaming2(LFR2)
 	CONFIG_QCACLD_WLAN_LFR2 := y
 	#Flag to enable Legacy Fast Roaming3(LFR3)
@@ -455,6 +461,10 @@ endif
 
 ifeq ($(CONFIG_QCOM_TDLS),y)
 HDD_OBJS +=	$(HDD_SRC_DIR)/wlan_hdd_tdls.o
+endif
+
+ifeq ($(CONFIG_WLAN_SYNC_TSF_PLUS), y)
+CONFIG_WLAN_SYNC_TSF := y
 endif
 
 ifeq ($(CONFIG_WLAN_SYNC_TSF),y)
@@ -2011,6 +2021,10 @@ endif
 # Enable featue sync tsf between multi devices
 ifeq ($(CONFIG_WLAN_SYNC_TSF), y)
 CDEFINES += -DWLAN_FEATURE_TSF
+endif
+
+ifeq ($(CONFIG_WLAN_SYNC_TSF_PLUS), y)
+CDEFINES += -DWLAN_FEATURE_TSF_PLUS
 endif
 
 # Enable full rx re-order offload for adrastea
