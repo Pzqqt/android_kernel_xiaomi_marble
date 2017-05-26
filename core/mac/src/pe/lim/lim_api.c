@@ -1828,6 +1828,30 @@ void lim_fill_join_rsp_ht_caps(tpPESession session, tpSirSmeJoinRsp join_rsp)
 }
 #endif
 
+/**
+ * sir_parse_bcn_fixed_fields() - Parse fixed fields in Beacon IE's
+ *
+ * @mac_ctx: MAC Context
+ * @beacon_struct: Beacon/Probe Response structure
+ * @buf: Fixed Fields buffer
+ */
+static void sir_parse_bcn_fixed_fields(tpAniSirGlobal mac_ctx,
+					tpSirProbeRespBeacon beacon_struct,
+					uint8_t *buf)
+{
+	tDot11fFfCapabilities dst;
+	beacon_struct->timeStamp[0] = lim_get_u32(buf);
+	beacon_struct->timeStamp[1] = lim_get_u32(buf + 4);
+	buf += 8;
+
+	beacon_struct->beaconInterval = lim_get_u16(buf);
+	buf += 2;
+
+	dot11f_unpack_ff_capabilities(mac_ctx, buf, &dst);
+
+	sir_copy_caps_info(mac_ctx, dst, beacon_struct);
+}
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 static QDF_STATUS
 lim_roam_fill_bss_descr(tpAniSirGlobal pMac,
@@ -1884,6 +1908,15 @@ lim_roam_fill_bss_descr(tpAniSirGlobal pMac,
 			return QDF_STATUS_E_FAILURE;
 		}
 	}
+
+	/*
+	 * For probe response, unpack core parses beacon interval, capabilities,
+	 * timestamp. For beacon IEs, these fields are not parsed.
+	 */
+	if (roam_offload_synch_ind_ptr->isBeacon)
+		sir_parse_bcn_fixed_fields(pMac, parsed_frm_ptr,
+			&bcn_proberesp_ptr[SIR_MAC_HDR_LEN_3A]);
+
 	/* 24 byte MAC header and 12 byte to ssid IE */
 	if (roam_offload_synch_ind_ptr->beaconProbeRespLength >
 		(SIR_MAC_HDR_LEN_3A + SIR_MAC_B_PR_SSID_OFFSET)) {

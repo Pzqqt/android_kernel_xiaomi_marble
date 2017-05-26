@@ -2254,6 +2254,27 @@ sir_validate_and_rectify_ies(tpAniSirGlobal mac_ctx,
 	return eSIR_SUCCESS;
 }
 
+void sir_copy_caps_info(tpAniSirGlobal mac_ctx, tDot11fFfCapabilities caps,
+					    tpSirProbeRespBeacon pProbeResp)
+{
+	pProbeResp->capabilityInfo.ess = caps.ess;
+	pProbeResp->capabilityInfo.ibss = caps.ibss;
+	pProbeResp->capabilityInfo.cfPollable = caps.cfPollable;
+	pProbeResp->capabilityInfo.cfPollReq = caps.cfPollReq;
+	pProbeResp->capabilityInfo.privacy = caps.privacy;
+	pProbeResp->capabilityInfo.shortPreamble = caps.shortPreamble;
+	pProbeResp->capabilityInfo.pbcc = caps.pbcc;
+	pProbeResp->capabilityInfo.channelAgility =	caps.channelAgility;
+	pProbeResp->capabilityInfo.spectrumMgt = caps.spectrumMgt;
+	pProbeResp->capabilityInfo.qos = caps.qos;
+	pProbeResp->capabilityInfo.shortSlotTime = caps.shortSlotTime;
+	pProbeResp->capabilityInfo.apsd = caps.apsd;
+	pProbeResp->capabilityInfo.rrm = caps.rrm;
+	pProbeResp->capabilityInfo.dsssOfdm = caps.dsssOfdm;
+	pProbeResp->capabilityInfo.delayedBA = caps.delayedBA;
+	pProbeResp->capabilityInfo.immediateBA = caps.immediateBA;
+}
+
 tSirRetStatus sir_convert_probe_frame2_struct(tpAniSirGlobal pMac,
 					      uint8_t *pFrame,
 					      uint32_t nFrame,
@@ -2295,26 +2316,7 @@ tSirRetStatus sir_convert_probe_frame2_struct(tpAniSirGlobal pMac,
 	/* Beacon Interval */
 	pProbeResp->beaconInterval = pr->BeaconInterval.interval;
 
-	/* Capabilities */
-	pProbeResp->capabilityInfo.ess = pr->Capabilities.ess;
-	pProbeResp->capabilityInfo.ibss = pr->Capabilities.ibss;
-	pProbeResp->capabilityInfo.cfPollable = pr->Capabilities.cfPollable;
-	pProbeResp->capabilityInfo.cfPollReq = pr->Capabilities.cfPollReq;
-	pProbeResp->capabilityInfo.privacy = pr->Capabilities.privacy;
-	pProbeResp->capabilityInfo.shortPreamble =
-		pr->Capabilities.shortPreamble;
-	pProbeResp->capabilityInfo.pbcc = pr->Capabilities.pbcc;
-	pProbeResp->capabilityInfo.channelAgility =
-		pr->Capabilities.channelAgility;
-	pProbeResp->capabilityInfo.spectrumMgt = pr->Capabilities.spectrumMgt;
-	pProbeResp->capabilityInfo.qos = pr->Capabilities.qos;
-	pProbeResp->capabilityInfo.shortSlotTime =
-		pr->Capabilities.shortSlotTime;
-	pProbeResp->capabilityInfo.apsd = pr->Capabilities.apsd;
-	pProbeResp->capabilityInfo.rrm = pr->Capabilities.rrm;
-	pProbeResp->capabilityInfo.dsssOfdm = pr->Capabilities.dsssOfdm;
-	pProbeResp->capabilityInfo.delayedBA = pr->Capabilities.delayedBA;
-	pProbeResp->capabilityInfo.immediateBA = pr->Capabilities.immediateBA;
+	sir_copy_caps_info(pMac, pr->Capabilities, pProbeResp);
 
 	if (!pr->SSID.present) {
 		pe_warn("Mandatory IE SSID not present!");
