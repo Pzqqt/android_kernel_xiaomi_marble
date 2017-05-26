@@ -249,7 +249,7 @@ qdf_nbuf_t ol_tx_data(void *data_vdev, qdf_nbuf_t skb)
 	ol_txrx_vdev_handle vdev = data_vdev;
 
 	if (qdf_unlikely(!vdev)) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
 			"%s:vdev is null", __func__);
 		return skb;
 	} else {
@@ -257,7 +257,7 @@ qdf_nbuf_t ol_tx_data(void *data_vdev, qdf_nbuf_t skb)
 	}
 
 	if (qdf_unlikely(!pdev)) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
 			"%s:pdev is null", __func__);
 		return skb;
 	}
