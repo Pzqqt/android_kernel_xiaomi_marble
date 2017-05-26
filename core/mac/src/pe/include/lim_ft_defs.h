@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -54,6 +54,7 @@
 typedef struct sSirFTPreAuthReq {
 	uint16_t messageType;   /* eWNI_SME_FT_PRE_AUTH_REQ */
 	uint16_t length;
+	uint32_t dot11mode;
 	/*
 	 * Track if response is processed for this request
 	 * We expect only one response per request.

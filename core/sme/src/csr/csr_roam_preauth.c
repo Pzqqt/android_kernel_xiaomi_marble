@@ -40,6 +40,18 @@
 static void csr_reinit_preauth_cmd(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 static QDF_STATUS csr_neighbor_roam_add_preauth_fail(tpAniSirGlobal mac_ctx,
 			uint8_t session_id, tSirMacAddr bssid);
+
+/**
+ * csr_get_dot11_mode() - Derives dot11mode
+ * @hal: Global Handle
+ * @session_id: SME Session ID
+ * @bss_desc: BSS descriptor
+ *
+ * Return: dot11mode
+ */
+static uint32_t csr_get_dot11_mode(tHalHandle hal, uint32_t session_id,
+			      tpSirBssDescription bss_desc);
+
 /**
  * csr_neighbor_roam_state_preauth_done() - Check if state is preauth done
  * @mac_ctx: Global MAC context
@@ -471,6 +483,59 @@ bool csr_neighbor_roam_is_preauth_candidate(tpAniSirGlobal pMac,
 	return true;
 }
 
+uint32_t csr_get_dot11_mode(tHalHandle hal, uint32_t session_id,
+			      tpSirBssDescription bss_desc)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	tCsrRoamSession *csr_session = CSR_GET_SESSION(mac_ctx, session_id);
+	eCsrCfgDot11Mode ucfg_dot11_mode, cfg_dot11_mode;
+	QDF_STATUS status;
+	tDot11fBeaconIEs *ies_local = NULL;
+	uint32_t dot11mode = 0;
+
+	sme_debug("phyMode %d", csr_session->pCurRoamProfile->phyMode);
+
+	/* Get IE's */
+	status = csr_get_parsed_bss_description_ies(mac_ctx, bss_desc,
+							&ies_local);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		sme_err("csr_get_parsed_bss_description_ies failed");
+		return 0;
+	}
+	if (ies_local == NULL) {
+		sme_err("ies_local is NULL");
+		return 0;
+	}
+
+	if (csr_is_phy_mode_match(mac_ctx,
+			csr_session->pCurRoamProfile->phyMode,
+			bss_desc, csr_session->pCurRoamProfile,
+			&cfg_dot11_mode, ies_local))
+		ucfg_dot11_mode = cfg_dot11_mode;
+	else {
+		sme_err("Can not find match phy mode");
+		if (WLAN_REG_IS_5GHZ_CH(bss_desc->channelId))
+			ucfg_dot11_mode = eCSR_CFG_DOT11_MODE_11A;
+		else
+			ucfg_dot11_mode = eCSR_CFG_DOT11_MODE_11G;
+	}
+
+	/* dot11mode */
+	dot11mode = csr_translate_to_wni_cfg_dot11_mode(mac_ctx,
+							ucfg_dot11_mode);
+	sme_debug("dot11mode %d ucfg_dot11_mode %d",
+			dot11mode, ucfg_dot11_mode);
+
+	if (bss_desc->channelId <= 14 &&
+		false == mac_ctx->roam.configParam.enableVhtFor24GHz &&
+		WNI_CFG_DOT11_MODE_11AC == dot11mode) {
+		/* Need to disable VHT operation in 2.4 GHz band */
+		dot11mode = WNI_CFG_DOT11_MODE_11N;
+	}
+	qdf_mem_free(ies_local);
+	return dot11mode;
+}
+
 /**
  * csr_roam_issue_ft_preauth_req() - Initiate Preauthentication request
  * @hal: Global Handle
@@ -513,6 +578,13 @@ QDF_STATUS csr_roam_issue_ft_preauth_req(tHalHandle hal, uint32_t session_id,
 	preauth_req->messageType = eWNI_SME_FT_PRE_AUTH_REQ;
 
 	preauth_req->preAuthchannelNum = bss_desc->channelId;
+	preauth_req->dot11mode =
+				csr_get_dot11_mode(hal, session_id, bss_desc);
+	if (!preauth_req->dot11mode) {
+		sme_err("preauth_req->dot11mode is zero");
+		qdf_mem_free(preauth_req);
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	qdf_mem_copy((void *)&preauth_req->currbssId,
 			(void *)csr_session->connectedProfile.bssid.bytes,

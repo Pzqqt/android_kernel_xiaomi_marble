@@ -4207,6 +4207,10 @@ QDF_STATUS csr_roam_prepare_bss_config(tpAniSirGlobal pMac,
 		else
 			pBssConfig->uCfgDot11Mode = eCSR_CFG_DOT11_MODE_11A;
 	}
+
+	sme_debug("phyMode=%d, uCfgDot11Mode=%d",
+			pProfile->phyMode, pBssConfig->uCfgDot11Mode);
+
 	/* Qos */
 	if ((pBssConfig->uCfgDot11Mode != eCSR_CFG_DOT11_MODE_11N) &&
 	    (pMac->roam.configParam.WMMSupportMode == eCsrRoamWmmNoQos)) {
@@ -14095,6 +14099,9 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 			ucDot11Mode = WNI_CFG_DOT11_MODE_11N;
 		}
 		csr_join_req->dot11mode = (uint8_t) ucDot11Mode;
+		sme_debug("dot11mode=%d, uCfgDot11Mode=%d",
+			csr_join_req->dot11mode,
+			pSession->bssParams.uCfgDot11Mode);
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 		csr_join_req->cc_switch_mode =
 			pMac->roam.configParam.cc_switch_mode;
