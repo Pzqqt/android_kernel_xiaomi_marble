@@ -2199,6 +2199,7 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 	struct net_device *ndev = wdev->netdev;
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 	int status;
+	hdd_station_ctx_t *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	ENTER();
 
@@ -2228,6 +2229,13 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 		return 0;
 	}
 	mutex_unlock(&pHddCtx->iface_change_lock);
+
+	if (sta_ctx->conn_info.connState != eConnectionState_Associated) {
+		hdd_debug("Not associated");
+		/*To keep GUI happy */
+		*dbm = 0;
+		return 0;
+	}
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_GET_TXPOWER,
