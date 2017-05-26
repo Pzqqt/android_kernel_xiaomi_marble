@@ -4153,6 +4153,8 @@ QDF_STATUS hdd_reset_all_adapters(hdd_context_t *hdd_ctx)
 	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
 	QDF_STATUS status;
 	hdd_adapter_t *adapter;
+	hdd_station_ctx_t *pHddStaCtx;
+	struct qdf_mac_addr peerMacAddr;
 
 	ENTER();
 
@@ -4162,7 +4164,8 @@ QDF_STATUS hdd_reset_all_adapters(hdd_context_t *hdd_ctx)
 
 	while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
 		adapter = adapterNode->pAdapter;
-		hdd_notice("Disabling queues");
+		hdd_notice("Disabling queues for adapter type: %d",
+			   adapter->device_mode);
 		if (hdd_ctx->config->sap_internal_restart &&
 		    adapter->device_mode == QDF_SAP_MODE) {
 			wlan_hdd_netif_queue_control(adapter,
@@ -4198,6 +4201,17 @@ QDF_STATUS hdd_reset_all_adapters(hdd_context_t *hdd_ctx)
 		if (adapter->device_mode == QDF_SAP_MODE)
 			wlansap_set_invalid_session(
 				WLAN_HDD_GET_SAP_CTX_PTR(adapter));
+
+		/* Delete peers if any for STA and P2P client modes */
+		if (adapter->device_mode == QDF_STA_MODE ||
+		    adapter->device_mode == QDF_P2P_CLIENT_MODE) {
+			pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+			qdf_copy_macaddr(&peerMacAddr,
+					 &pHddStaCtx->conn_info.bssId);
+
+			hdd_objmgr_remove_peer_object(adapter->hdd_vdev,
+						      peerMacAddr.bytes);
+		}
 
 		/* Destroy vdev which will be recreated during reinit. */
 		hdd_vdev_destroy(adapter);
