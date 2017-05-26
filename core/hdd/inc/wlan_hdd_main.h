@@ -1792,6 +1792,7 @@ int hdd_validate_adapter(hdd_adapter_t *adapter);
 
 bool hdd_is_valid_mac_address(const uint8_t *pMacAddr);
 QDF_STATUS hdd_issta_p2p_clientconnected(hdd_context_t *pHddCtx);
+bool wlan_hdd_validate_modules_state(hdd_context_t *hdd_ctx);
 
 struct qdf_mac_addr *
 hdd_wlan_get_ibss_mac_addr_from_staid(hdd_adapter_t *pAdapter,

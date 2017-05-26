@@ -664,6 +664,28 @@ int hdd_validate_adapter(hdd_adapter_t *adapter)
 }
 
 /**
+ * wlan_hdd_validate_modules_state() - Check modules status
+ * @hdd_ctx: HDD context pointer
+ *
+ * Check's the driver module's state and returns true if the
+ * modules are enabled returns false if modules are closed.
+ *
+ * Return: True if modules are enabled or false.
+ */
+bool wlan_hdd_validate_modules_state(hdd_context_t *hdd_ctx)
+{
+	mutex_lock(&hdd_ctx->iface_change_lock);
+	if (hdd_ctx->driver_status != DRIVER_MODULES_ENABLED) {
+		mutex_unlock(&hdd_ctx->iface_change_lock);
+		hdd_notice("Modules not enabled, Present status: %d",
+			   hdd_ctx->driver_status);
+		return false;
+	}
+	mutex_unlock(&hdd_ctx->iface_change_lock);
+	return true;
+}
+
+/**
  * hdd_set_ibss_power_save_params() - update IBSS Power Save params to WMA.
  * @hdd_adapter_t Hdd adapter.
  *
