@@ -795,6 +795,26 @@ enum policy_mgr_hw_mode_change {
 };
 
 /**
+ * enum dbs_support - structure to define INI values and their meaning
+ *
+ * @ENABLE_DBS_CXN_AND_SCAN: Enable DBS support for connection and scan
+ * @DISABLE_DBS_CXN_AND_SCAN: Disable DBS support for connection and scan
+ * @DISABLE_DBS_CXN_AND_ENABLE_DBS_SCAN: disable dbs support for
+ * connection but keep dbs support for scan
+ * @DISABLE_DBS_CXN_AND_ENABLE_DBS_SCAN_WITH_ASYNC_SCAN_OFF: disable dbs support
+ * for connection but keep dbs for scan but switch off the async scan
+ * @ENABLE_DBS_CXN_AND_ENABLE_SCAN_WITH_ASYNC_SCAN_OFF: enable dbs support for
+ * connection and scan but switch off the async scan
+ */
+enum dbs_support {
+	ENABLE_DBS_CXN_AND_SCAN,
+	DISABLE_DBS_CXN_AND_SCAN,
+	DISABLE_DBS_CXN_AND_ENABLE_DBS_SCAN,
+	DISABLE_DBS_CXN_AND_ENABLE_DBS_SCAN_WITH_ASYNC_SCAN_OFF,
+	ENABLE_DBS_CXN_AND_ENABLE_SCAN_WITH_ASYNC_SCAN_OFF,
+};
+
+/**
  * struct policy_mgr_conc_connection_info - information of all existing
  * connections in the wlan system
  *
