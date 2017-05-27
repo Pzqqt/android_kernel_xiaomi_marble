@@ -329,7 +329,7 @@ void hif_ahb_deconfigure_grp_irq(struct hif_softc *scn)
 		if (hif_ext_group->inited == true) {
 			hif_ext_group->inited = false;
 			for (j = 0; j < hif_ext_group->numirq; j++) {
-				free_irq(ic_irqnum[hif_ext_group->irq[i]],
+				free_irq(ic_irqnum[hif_ext_group->irq[j]],
 						hif_ext_group);
 			}
 		}
