@@ -8502,11 +8502,19 @@ enum dot11p_mode {
  * <ini>
  * gDualMacFeatureDisable - Disable Dual MAC feature.
  * @Min: 0
- * @Max: 1
+ * @Max: 4
  * @Default: 0
  *
  * This ini is used to enable/disable dual MAC feature.
- * 0 - enable DBS  1 - disable DBS
+ * 0 - enable DBS
+ * 1 - disable DBS
+ * 2 - disable DBS for connection but keep DBS for scan
+ * 3 - disable DBS for connection but keep DBS scan with async
+ * scan policy disabled
+ * 4 - enable DBS for connection as well as for scan with async
+ * scan policy disabled
+ *
+ * Note: INI item value should match 'enum dbs_support'
  *
  * Related: None.
  *
@@ -8516,9 +8524,9 @@ enum dot11p_mode {
  *
  * </ini>
  */
-#define CFG_DUAL_MAC_FEATURE_DISABLE               "gDualMacFeatureDisable"
+#define CFG_DUAL_MAC_FEATURE_DISABLE              "gDualMacFeatureDisable"
 #define CFG_DUAL_MAC_FEATURE_DISABLE_MIN          (0)
-#define CFG_DUAL_MAC_FEATURE_DISABLE_MAX          (1)
+#define CFG_DUAL_MAC_FEATURE_DISABLE_MAX          (4)
 #define CFG_DUAL_MAC_FEATURE_DISABLE_DEFAULT      (0)
 
 /*
