@@ -1709,14 +1709,7 @@ enum policy_mgr_hw_mode_change policy_mgr_get_hw_mode_change_from_hw_mode_index(
  *
  * Return: True if master DBS control is enabled
  */
-static inline bool policy_mgr_is_scan_simultaneous_capable(
-	struct wlan_objmgr_psoc *psoc)
-{
-	if (policy_mgr_is_hw_dbs_capable(psoc))
-		return true;
-
-	return false;
-}
+bool policy_mgr_is_scan_simultaneous_capable(struct wlan_objmgr_psoc *psoc);
 
 /**
  * policy_mgr_is_mcc_adaptive_scheduler_enabled() - Function to
@@ -1924,4 +1917,19 @@ uint32_t policy_mgr_get_hw_dbs_nss(struct wlan_objmgr_psoc *psoc,
  * Return: true for success, else false
  */
 bool policy_mgr_is_dnsc_set(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * policy_mgr_get_updated_scan_and_fw_mode_config() - Function
+ * to get latest scan & fw config for DBS
+ * @psoc: PSOC object information
+ * @scan_config: DBS related scan config
+ * @fw_mode_config: DBS related FW config
+ * @dual_mac_disable_ini: DBS related ini config
+ * This function returns the latest DBS configuration for
+ * connection & scan, sent to FW
+ * Return: SUCCESS or FAILURE
+ */
+QDF_STATUS policy_mgr_get_updated_scan_and_fw_mode_config(
+		struct wlan_objmgr_psoc *psoc, uint32_t *scan_config,
+		uint32_t *fw_mode_config, uint32_t dual_mac_disable_ini);
 #endif /* __WLAN_POLICY_MGR_API_H */

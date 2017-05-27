@@ -136,12 +136,32 @@ QDF_STATUS policy_mgr_get_updated_fw_mode_config(
  *
  * Checks if the dual mac feature is disabled in INI
  *
- * Return: true if the dual mac feature is disabled from INI
+ * Return: true if the dual mac connection is disabled from INI
  */
 bool policy_mgr_is_dual_mac_disabled_in_ini(
 		struct wlan_objmgr_psoc *psoc)
 {
-	return wlan_objmgr_psoc_get_dual_mac_disable(psoc);
+	bool is_disabled = false;
+	enum dbs_support dbs_type = wlan_objmgr_psoc_get_dual_mac_disable(psoc);
+
+	/*
+	 * If DBS support for connection is disabled through INI then assume
+	 * that DBS is not supported, so that policy manager takes
+	 * the decision considering non-dbs cases only.
+	 *
+	 * For DBS scan check the INI value explicitly
+	 */
+	switch (dbs_type) {
+	case DISABLE_DBS_CXN_AND_SCAN:
+	case DISABLE_DBS_CXN_AND_ENABLE_DBS_SCAN:
+	case DISABLE_DBS_CXN_AND_ENABLE_DBS_SCAN_WITH_ASYNC_SCAN_OFF:
+		is_disabled = true;
+		break;
+	default:
+		break;
+	}
+
+	return is_disabled;
 }
 
 uint32_t policy_mgr_mcc_to_scc_switch_mode_in_user_cfg(
