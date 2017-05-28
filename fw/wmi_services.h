@@ -208,6 +208,7 @@ typedef  enum  {
      */
 
     WMI_SERVICE_CHAN_LOAD_INFO=128, /* The values in WMI_CHAN_INFO_EVENTID is the difference in cycle counters */
+    WMI_SERVICE_TX_PPDU_INFO_STATS_SUPPORT=129, /* support to report tx ppdu info stats via htt events */
 
     /******* ADD NEW SERVICES HERE *******/
 
