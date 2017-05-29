@@ -5882,6 +5882,7 @@ static QDF_STATUS send_roam_scan_filter_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mac_addr *bssid_dst_ptr = NULL;
 	wmi_ssid *ssid_ptr = NULL;
 	uint32_t *bssid_preferred_factor_ptr = NULL;
+	wmi_roam_lca_disallow_config_tlv_param *blist_param;
 
 	len = sizeof(wmi_roam_filter_fixed_param);
 	len += WMI_TLV_HDR_SIZE;
@@ -5956,6 +5957,26 @@ static QDF_STATUS send_roam_scan_filter_cmd_tlv(wmi_unified_t wmi_handle,
 	}
 	buf_ptr += WMI_TLV_HDR_SIZE +
 		(roam_req->num_bssid_preferred_list * sizeof(uint32_t));
+
+	if (roam_req->lca_disallow_config_present) {
+		WMITLV_SET_HDR(buf_ptr,
+				WMITLV_TAG_ARRAY_STRUC,
+				sizeof(wmi_roam_lca_disallow_config_tlv_param));
+		buf_ptr += WMI_TLV_HDR_SIZE;
+		blist_param =
+			(wmi_roam_lca_disallow_config_tlv_param *) buf_ptr;
+		WMITLV_SET_HDR(&blist_param->tlv_header,
+			WMITLV_TAG_STRUC_wmi_roam_lca_disallow_config_tlv_param,
+			WMITLV_GET_STRUCT_TLVLEN(
+				wmi_roam_lca_disallow_config_tlv_param));
+
+		blist_param->disallow_duration = roam_req->disallow_duration;
+		blist_param->rssi_channel_penalization =
+				roam_req->rssi_channel_penalization;
+		blist_param->num_disallowed_aps = roam_req->num_disallowed_aps;
+		blist_param->disallow_lca_enable_source_bitmap = 0x1;
+		buf_ptr += (sizeof(wmi_roam_lca_disallow_config_tlv_param));
+	}
 
 	status = wmi_unified_cmd_send(wmi_handle, buf,
 		len, WMI_ROAM_FILTER_CMDID);

@@ -3168,6 +3168,14 @@ struct ssid_hotlist_param {
  * @ssid_allowed_list:        Whitelist SSID's
  * @bssid_favored:            Favorable BSSID's
  * @bssid_favored_factor:     RSSI to be added to this BSSID to prefer it
+ * @lca_disallow_config_present: LCA [Last Connected AP] disallow config present
+ * @disallow_duration:        How long LCA AP will be disallowed before it
+ *                            can be a roaming candidate again, in seconds
+ * @rssi_channel_penalization:How much RSSI will be penalized if candidate(s)
+ *                            are found in the same channel as disallowed AP's,
+ *                            in units of db
+ * @num_disallowed_aps:       How many APs the target should maintain in its
+ *                            LCA list
  *
  * This structure holds all the key parameters related to
  * initial connection and roaming connections.
@@ -3184,6 +3192,10 @@ struct roam_scan_filter_params {
 	struct mac_ssid ssid_allowed_list[MAX_SSID_ALLOWED_LIST];
 	struct qdf_mac_addr bssid_favored[MAX_BSSID_FAVORED];
 	uint8_t bssid_favored_factor[MAX_BSSID_FAVORED];
+	uint8_t lca_disallow_config_present;
+	uint32_t disallow_duration;
+	uint32_t rssi_channel_penalization;
+	uint32_t num_disallowed_aps;
 };
 
 /**
