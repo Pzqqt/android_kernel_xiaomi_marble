@@ -10457,6 +10457,70 @@ enum hdd_external_acs_freq_band {
 #define CFG_ITO_REPEAT_COUNT_MAX        (5)
 #define CFG_ITO_REPEAT_COUNT_DEFAULT    (0)
 /*
+ * <ini>
+ * groam_disallow_duration -disallow duration before roaming
+ * @Min: 0
+ * @Max: 3600
+ * @Default: 30
+ *
+ * This ini is used to configure how long LCA[Last Connected AP] AP will
+ * be disallowed before it can be a roaming candidate again, in units of
+ * seconds.
+ *
+ * Related: LFR
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_ROAM_DISALLOW_DURATION_NAME    "groam_disallow_duration"
+#define CFG_ROAM_DISALLOW_DURATION_MIN     (0)
+#define CFG_ROAM_DISALLOW_DURATION_MAX     (3600)
+#define CFG_ROAM_DISALLOW_DURATION_DEFAULT (30)
+
+/*
+ * <ini>
+ * grssi_channel_penalization - RSSI penalization
+ * @Min: 0
+ * @Max: 15
+ * @Default: 5
+ *
+ * This ini is used to configure RSSI that will be penalized if candidate(s)
+ * are found to be in the same channel as disallowed AP's, in units of db.
+ *
+ * Related: LFR
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_ROAM_RSSI_CHANNEL_PENALIZATION_NAME    "grssi_channel_penalization"
+#define CFG_ROAM_RSSI_CHANNEL_PENALIZATION_MIN     (0)
+#define CFG_ROAM_RSSI_CHANNEL_PENALIZATION_MAX     (15)
+#define CFG_ROAM_RSSI_CHANNEL_PENALIZATION_DEFAULT (5)
+
+/*
+ * <ini>
+ * groam_num_disallowed_aps - Max number of AP's to maintain in LCA list
+ * @Min: 0
+ * @Max: 8
+ * @Default: 3
+ *
+ * This ini is used to set the maximum number of AP's to be maintained
+ * in LCA [Last Connected AP] list.
+ *
+ * Related: LFR
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_ROAM_NUM_DISALLOWED_APS_NAME    "groam_num_disallowed_aps"
+#define CFG_ROAM_NUM_DISALLOWED_APS_MIN     (0)
+#define CFG_ROAM_NUM_DISALLOWED_APS_MAX     (8)
+#define CFG_ROAM_NUM_DISALLOWED_APS_DEFAULT (3)
+
+/*
  * Type declarations
  */
 
@@ -11200,6 +11264,11 @@ struct hdd_config {
 	uint16_t num_11b_tx_chains;
 	uint16_t num_11ag_tx_chains;
 	uint8_t ito_repeat_count;
+
+	/* LCA(Last connected AP) disallow configs */
+	uint32_t disallow_duration;
+	uint32_t rssi_channel_penalization;
+	uint32_t num_disallowed_aps;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))
