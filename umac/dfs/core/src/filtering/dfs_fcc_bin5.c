@@ -54,7 +54,7 @@ int dfs_bin5_check_pulse(struct wlan_dfs *dfs, struct dfs_event *re,
 
 #define CHANNEL_TURBO 0x00010
 	/* Adjust the filter threshold for rssi in non TURBO mode. */
-	if (!(dfs->dfs_curchan->ic_flags & CHANNEL_TURBO))
+	if (!(dfs->dfs_curchan->dfs_ch_flags & CHANNEL_TURBO))
 		b5_rssithresh += br->br_pulse.b5_rssimargin;
 
 	/* Check if the pulse is within duration and rssi thresholds. */

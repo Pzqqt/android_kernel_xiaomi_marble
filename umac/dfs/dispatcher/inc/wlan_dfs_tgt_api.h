@@ -34,20 +34,20 @@ extern struct dfs_to_mlme global_dfs_to_mlme;
  * tgt_dfs_set_current_channel() - Fill dfs channel structure from
  *                                 dfs_ieee80211_channel structure.
  * @pdev: Pointer to DFS pdev object.
- * @ic_freq: Frequency in Mhz.
- * @ic_flags: Channel flags.
- * @ic_flagext: Extended channel flags.
- * @ic_ieee: IEEE channel number.
- * @ic_vhtop_ch_freq_seg1: Channel Center frequency1.
- * @ic_vhtop_ch_freq_seg2: Channel Center frequency2.
+ * @dfs_ch_freq: Frequency in Mhz.
+ * @dfs_ch_flags: Channel flags.
+ * @dfs_ch_flagext: Extended channel flags.
+ * @dfs_ch_ieee: IEEE channel number.
+ * @dfs_ch_vhtop_ch_freq_seg1: Channel Center frequency1.
+ * @dfs_ch_vhtop_ch_freq_seg2: Channel Center frequency2.
  */
 QDF_STATUS tgt_dfs_set_current_channel(struct wlan_objmgr_pdev *pdev,
-		uint16_t ic_freq,
-		uint32_t ic_flags,
-		uint16_t ic_flagext,
-		uint8_t ic_ieee,
-		uint8_t ic_vhtop_ch_freq_seg1,
-		uint8_t ic_vhtop_ch_freq_seg2);
+		uint16_t dfs_ch_freq,
+		uint32_t dfs_ch_flags,
+		uint16_t dfs_ch_flagext,
+		uint8_t dfs_ch_ieee,
+		uint8_t dfs_ch_vhtop_ch_freq_seg1,
+		uint8_t dfs_ch_vhtop_ch_freq_seg2);
 
 /**
  * tgt_dfs_reset() - DFS reset

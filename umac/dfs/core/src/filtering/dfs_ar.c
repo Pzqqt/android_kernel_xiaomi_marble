@@ -262,7 +262,7 @@ void dfs_process_ar_event(struct wlan_dfs *dfs,
 				 * Neighboring traffic detected, get out of
 				 * Turbo.
 				 */
-				chan->ic_flagext |= CHANNEL_INTERFERENCE;
+				chan->dfs_ch_flagext |= CHANNEL_INTERFERENCE;
 				qdf_mem_zero(ar->ar_peaklist,
 						sizeof(ar->ar_peaklist));
 				ar->ar_acksum = 0;

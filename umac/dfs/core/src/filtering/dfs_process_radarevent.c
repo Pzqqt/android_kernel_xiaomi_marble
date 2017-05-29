@@ -304,7 +304,7 @@ int dfs_process_radarevent(struct wlan_dfs *dfs,
 
 	if ((dfs->dfsdomain  == DFS_MKK4_DOMAIN) &&
 		(dfs->dfs_caps.wlan_chip_is_bb_tlv) &&
-		(chan->ic_freq < FREQ_5500_MHZ)) {
+		(chan->dfs_ch_freq < FREQ_5500_MHZ)) {
 
 		dfs->dfs_pri_multiplier = DFS_W53_DEFAULT_PRI_MULTIPLIER;
 		/*
@@ -374,7 +374,7 @@ int dfs_process_radarevent(struct wlan_dfs *dfs,
 			WLAN_DFSQ_UNLOCK(dfs);
 			continue;
 		}
-		if (rs->rs_chan.ic_flagext & CHANNEL_INTERFERENCE) {
+		if (rs->rs_chan.dfs_ch_flagext & CHANNEL_INTERFERENCE) {
 			WLAN_DFSQ_LOCK(dfs);
 			empty = STAILQ_EMPTY(&(dfs->dfs_radarq));
 			WLAN_DFSQ_UNLOCK(dfs);
@@ -597,7 +597,7 @@ int dfs_process_radarevent(struct wlan_dfs *dfs,
 		rf = NULL;
 		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS1,
 			"  *** chan freq (%d): ts %llu dur %u rssi %u\n",
-			rs->rs_chan.ic_freq,
+			rs->rs_chan.dfs_ch_freq,
 			(uint64_t)this_ts,
 			re.re_dur,
 			re.re_rssi);
@@ -609,7 +609,7 @@ int dfs_process_radarevent(struct wlan_dfs *dfs,
 					[tabledepth])];
 			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
 				"  ** RD (%d): ts %x dur %u rssi %u\n",
-				rs->rs_chan.ic_freq,
+				rs->rs_chan.dfs_ch_freq,
 				re.re_ts,
 				re.re_dur,
 				re.re_rssi);
@@ -685,7 +685,7 @@ dfsfound:
 		} else {
 			DFS_PRINTK(
 				"Radar found on channel %d (%d MHz)\n",
-				thischan->ic_ieee, thischan->ic_freq);
+				thischan->dfs_ch_ieee, thischan->dfs_ch_freq);
 		}
 
 		/*
@@ -701,13 +701,13 @@ dfsfound:
 
 		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS1,
 			"Primary channel freq = %u flags=0x%x\n",
-			chan->ic_freq, chan->ic_flagext);
+			chan->dfs_ch_freq, chan->dfs_ch_flagext);
 
-		if (chan->ic_freq != thischan->ic_freq)
+		if (chan->dfs_ch_freq != thischan->dfs_ch_freq)
 			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS1,
 				"Ext channel freq = %u flags=0x%x\n",
-				thischan->ic_freq,
-				thischan->ic_flagext);
+				thischan->dfs_ch_freq,
+				thischan->dfs_ch_flagext);
 
 		dfs->dfs_phyerr_freq_min = 0x7fffffff;
 		dfs->dfs_phyerr_freq_max = 0;

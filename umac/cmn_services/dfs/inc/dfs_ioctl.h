@@ -79,7 +79,7 @@ struct dfsreq_nolelem {
 };
 
 struct dfsreq_nolinfo {
-	uint32_t  ic_nchans;
+	uint32_t  dfs_ch_nchans;
 	struct dfsreq_nolelem dfs_nol[IEEE80211_CHAN_MAX];
 };
 

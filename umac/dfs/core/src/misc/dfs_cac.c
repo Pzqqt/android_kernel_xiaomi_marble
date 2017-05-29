@@ -86,8 +86,8 @@ void dfs_cac_valid_reset(struct wlan_dfs *dfs,
 		uint32_t prevchan_flags)
 {
 	if (dfs->dfs_cac_valid_time) {
-		if ((prevchan_ieee != dfs->dfs_curchan->ic_ieee) ||
-			(prevchan_flags != dfs->dfs_curchan->ic_flags)) {
+		if ((prevchan_ieee != dfs->dfs_curchan->dfs_ch_ieee) ||
+			(prevchan_flags != dfs->dfs_curchan->dfs_ch_flags)) {
 			DFS_PRINTK(
 				"%s : Cancelling timer & clearing cac_valid\n",
 				__func__);
@@ -138,7 +138,7 @@ static os_timer_func(dfs_cac_timeout)
 	dfs->dfs_cac_timer_running = 0;
 
 	DFS_PRINTK("%s cac expired, chan %d curr time %d\n", __func__,
-		dfs->dfs_curchan->ic_freq,
+		dfs->dfs_curchan->dfs_ch_freq,
 		(qdf_system_ticks_to_msecs(qdf_system_ticks()) / 1000));
 	/*
 	 * When radar is detected during a CAC we are woken up prematurely to
@@ -146,17 +146,19 @@ static os_timer_func(dfs_cac_timeout)
 	 */
 	if (IEEE80211_IS_CHAN_RADAR(dfs->dfs_curchan)) {
 		dfs_mlme_mark_dfs(dfs->dfs_pdev_obj,
-				dfs->dfs_curchan->ic_ieee,
-				dfs->dfs_curchan->ic_freq,
-				dfs->dfs_curchan->ic_vhtop_ch_freq_seg2,
-				dfs->dfs_curchan->ic_flags);
+				dfs->dfs_curchan->dfs_ch_ieee,
+				dfs->dfs_curchan->dfs_ch_freq,
+				dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg2,
+				dfs->dfs_curchan->dfs_ch_flags);
 		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
 			"CAC timer on channel %u (%u MHz) stopped due to radar\n",
-			dfs->dfs_curchan->ic_ieee, dfs->dfs_curchan->ic_freq);
+			dfs->dfs_curchan->dfs_ch_ieee,
+			dfs->dfs_curchan->dfs_ch_freq);
 	} else {
 		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
 			"CAC timer on channel %u (%u MHz) expired; no radar detected\n",
-			dfs->dfs_curchan->ic_ieee, dfs->dfs_curchan->ic_freq);
+			dfs->dfs_curchan->dfs_ch_ieee,
+			dfs->dfs_curchan->dfs_ch_freq);
 
 		/* On CAC completion, set the bit 'cac_valid'.
 		 * CAC will not be re-done if this bit is reset.
@@ -191,9 +193,9 @@ void dfs_start_cac_timer(struct wlan_dfs *dfs)
 {
 	OS_SET_TIMER(&dfs->dfs_cac_timer,
 			dfs_mlme_get_cac_timeout(dfs->dfs_pdev_obj,
-				dfs->dfs_curchan->ic_freq,
-				dfs->dfs_curchan->ic_vhtop_ch_freq_seg2,
-				dfs->dfs_curchan->ic_flags) * 1000);
+				dfs->dfs_curchan->dfs_ch_freq,
+				dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg2,
+				dfs->dfs_curchan->dfs_ch_flags) * 1000);
 }
 
 void dfs_cancel_cac_timer(struct wlan_dfs *dfs)
@@ -208,7 +210,7 @@ void dfs_cac_stop(struct wlan_dfs *dfs)
 	dfs_get_debug_info(dfs, (void *)&phyerr);
 	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
 		"%s : Stopping CAC Timer %d procphyerr 0x%08x\n",
-		__func__, dfs->dfs_curchan->ic_freq, phyerr);
+		__func__, dfs->dfs_curchan->dfs_ch_freq, phyerr);
 	qdf_timer_stop(&dfs->dfs_cac_timer);
 	dfs->dfs_cac_timer_running = 0;
 }
@@ -220,7 +222,7 @@ void dfs_stacac_stop(struct wlan_dfs *dfs)
 	dfs_get_debug_info(dfs, (void *)&phyerr);
 	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
 		"%s : Stopping STA CAC Timer %d procphyerr 0x%08x\n",
-		__func__, dfs->dfs_curchan->ic_freq, phyerr);
+		__func__, dfs->dfs_curchan->dfs_ch_freq, phyerr);
 }
 
 /**
@@ -239,24 +241,25 @@ static os_timer_func(dfs_nol_timeout)
 	c = &lc;
 
 	OS_GET_TIMER_ARG(dfs, struct wlan_dfs *);
-	dfs_mlme_get_ic_nchans(dfs->dfs_pdev_obj, &nchans);
+	dfs_mlme_get_dfs_ch_nchans(dfs->dfs_pdev_obj, &nchans);
 
 	now = oldest = qdf_system_ticks();
 	for (i = 0; i < nchans; i++) {
-		dfs_mlme_get_ic_channels(dfs->dfs_pdev_obj,
-				&(c->ic_freq),
-				&(c->ic_flags),
-				&(c->ic_flagext),
-				&(c->ic_ieee),
-				&(c->ic_vhtop_ch_freq_seg1),
-				&(c->ic_vhtop_ch_freq_seg2),
+		dfs_mlme_get_dfs_ch_channels(dfs->dfs_pdev_obj,
+				&(c->dfs_ch_freq),
+				&(c->dfs_ch_flags),
+				&(c->dfs_ch_flagext),
+				&(c->dfs_ch_ieee),
+				&(c->dfs_ch_vhtop_ch_freq_seg1),
+				&(c->dfs_ch_vhtop_ch_freq_seg2),
 				i);
 		if (IEEE80211_IS_CHAN_RADAR(c)) {
 			if (qdf_system_time_after_eq(now,
 				dfs->dfs_nol_event[i] + NOL_TIMEOUT)) {
-				c->ic_flagext &=
+				c->dfs_ch_flagext &=
 					~IEEE80211_CHAN_DFS_RADAR_FOUND;
-				if (c->ic_flags & IEEE80211_CHAN_DFS_RADAR) {
+				if (c->dfs_ch_flags &
+						IEEE80211_CHAN_DFS_RADAR) {
 					/*
 					 * NB: do this here so we get only one
 					 * msg instead of one for every channel
@@ -265,8 +268,8 @@ static os_timer_func(dfs_nol_timeout)
 					DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
 						"%s : radar on channel %u (%u MHz) cleared after timeout\n",
 						__func__,
-						c->ic_ieee,
-						c->ic_freq);
+						c->dfs_ch_ieee,
+						c->dfs_ch_freq);
 				}
 			} else if (dfs->dfs_nol_event[i] < oldest)
 				oldest = dfs->dfs_nol_event[i];
@@ -370,7 +373,7 @@ int dfs_random_channel(struct wlan_dfs *dfs,
 				"%s -- MMK4 domain, HT160, will look for HT160. if can't find no restriction on using upper or lower 5G channel\n",
 				__func__);
 		} else {
-			if (dfs->dfs_curchan->ic_freq < CH100_START_FREQ) {
+			if (dfs->dfs_curchan->dfs_ch_freq < CH100_START_FREQ) {
 				use_lower_5g_only = 1;
 				use_upper_5g_only = 0;
 				DFS_PRINTK(
@@ -392,17 +395,17 @@ int dfs_random_channel(struct wlan_dfs *dfs,
 	 * Assuming all G channels are present at the beginning of the
 	 * list, followed by all A channels
 	 */
-	dfs_mlme_get_ic_nchans(dfs->dfs_pdev_obj, &nchans);
+	dfs_mlme_get_dfs_ch_nchans(dfs->dfs_pdev_obj, &nchans);
 	for (j = 0; j < nchans; j++) {
-		dfs_mlme_get_ic_channels(dfs->dfs_pdev_obj,
-				&(c->ic_freq),
-				&(c->ic_flags),
-				&(c->ic_flagext),
-				&(c->ic_ieee),
-				&(c->ic_vhtop_ch_freq_seg1),
-				&(c->ic_vhtop_ch_freq_seg2),
+		dfs_mlme_get_dfs_ch_channels(dfs->dfs_pdev_obj,
+				&(c->dfs_ch_freq),
+				&(c->dfs_ch_flags),
+				&(c->dfs_ch_flagext),
+				&(c->dfs_ch_ieee),
+				&(c->dfs_ch_vhtop_ch_freq_seg1),
+				&(c->dfs_ch_vhtop_ch_freq_seg2),
 				j);
-		chan_flags = c->ic_flags;
+		chan_flags = c->dfs_ch_flags;
 		if (chan_flags & IEEE80211_CHAN_2GHZ) {
 			numGChannels++;
 			continue;
@@ -413,34 +416,34 @@ int dfs_random_channel(struct wlan_dfs *dfs,
 	numAChannels = (nchans - numGChannels);
 	chanStart = numGChannels;
 
-	curChanFlags = (dfs->dfs_curchan->ic_flags) & IEEE80211_CHAN_ALL;
-	if (dfs_mlme_ic_flags_ext(dfs->dfs_pdev_obj) &
+	curChanFlags = (dfs->dfs_curchan->dfs_ch_flags) & IEEE80211_CHAN_ALL;
+	if (dfs_mlme_dfs_ch_flags_ext(dfs->dfs_pdev_obj) &
 			IEEE80211_FEXT_BLKDFSCHAN)
 		curChanFlags &= ~IEEE80211_CHAN_DFS;
 
 	for (n = 0; n < nchans; chanStart++, n++) {
 		if (chanStart == nchans)
 			chanStart = 0;
-		dfs_mlme_get_ic_channels(dfs->dfs_pdev_obj,
-				&(c->ic_freq),
-				&(c->ic_flags),
-				&(c->ic_flagext),
-				&(c->ic_ieee),
-				&(c->ic_vhtop_ch_freq_seg1),
-				&(c->ic_vhtop_ch_freq_seg2),
+		dfs_mlme_get_dfs_ch_channels(dfs->dfs_pdev_obj,
+				&(c->dfs_ch_freq),
+				&(c->dfs_ch_flags),
+				&(c->dfs_ch_flagext),
+				&(c->dfs_ch_ieee),
+				&(c->dfs_ch_vhtop_ch_freq_seg1),
+				&(c->dfs_ch_vhtop_ch_freq_seg2),
 				chanStart);
-		chan_flags = c->ic_flags;
-		chan_flagext = c->ic_flagext;
+		chan_flags = c->dfs_ch_flags;
+		chan_flagext = c->dfs_ch_flagext;
 
 		if (skip_curchan) {
 			/* Skip curchan when choosing apriori random channel.
 			 */
-			if (c->ic_freq == dfs->dfs_curchan->ic_freq)
+			if (c->dfs_ch_freq == dfs->dfs_curchan->dfs_ch_freq)
 				continue;
 		}
 
 		/* These channels have CAC of 10 minutes so skipping these. */
-		dfs_mlme_get_ic_no_weather_radar_chan(dfs->dfs_pdev_obj,
+		dfs_mlme_get_dfs_ch_no_weather_radar_chan(dfs->dfs_pdev_obj,
 				&no_wradar);
 		if (no_wradar) {
 			/*
@@ -473,7 +476,7 @@ int dfs_random_channel(struct wlan_dfs *dfs,
 			(chan_flags & IEEE80211_CHAN_DFS_RADAR) ||
 			(chan_flagext & IEEE80211_CHAN_11D_EXCLUDED) ||
 			(chan_flagext & IEEE80211_CHAN_DFS &&
-			 dfs_mlme_ic_flags_ext(dfs->dfs_pdev_obj) &
+			 dfs_mlme_dfs_ch_flags_ext(dfs->dfs_pdev_obj) &
 			 IEEE80211_FEXT_BLKDFSCHAN) ||
 			(chan_flagext & IEEE80211_CHAN_DFS && is_select_nondfs))
 			continue;
@@ -486,13 +489,14 @@ int dfs_random_channel(struct wlan_dfs *dfs,
 		 */
 		if (use_lower_5g_only) {
 			if (IEEE80211_IS_CHAN_11AC_VHT80_80(c)) {
-				if ((c->ic_freq > CH100_START_FREQ) ||
-					(c->ic_vhtop_ch_freq_seg2 > CH100)) {
+				if ((c->dfs_ch_freq > CH100_START_FREQ) ||
+						(c->dfs_ch_vhtop_ch_freq_seg2 >
+						 CH100)) {
 					/* Skip this channel. */
 					continue;
 				}
 			} else {
-				if (c->ic_freq > CH100_START_FREQ) {
+				if (c->dfs_ch_freq > CH100_START_FREQ) {
 					/* Skip this channel. */
 					continue;
 				}
@@ -501,13 +505,14 @@ int dfs_random_channel(struct wlan_dfs *dfs,
 
 		if (use_upper_5g_only) {
 			if (IEEE80211_IS_CHAN_11AC_VHT80_80(c)) {
-				if ((c->ic_freq < CH100_START_FREQ) ||
-					(c->ic_vhtop_ch_freq_seg2 < CH100)) {
+				if ((c->dfs_ch_freq < CH100_START_FREQ) ||
+						(c->dfs_ch_vhtop_ch_freq_seg2 <
+						 CH100)) {
 					/* Skip this channel. */
 					continue;
 				}
 			} else {
-				if (c->ic_freq < CH100_START_FREQ) {
+				if (c->dfs_ch_freq < CH100_START_FREQ) {
 					/* Skip this channel. */
 					continue;
 				}
