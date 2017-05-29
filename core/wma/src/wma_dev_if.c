@@ -1162,6 +1162,43 @@ peer_detach:
 }
 
 /**
+ * wma_find_duplicate_peer_on_other_vdev() - Find if same peer exist
+ * on other vdevs
+ * @wma: wma handle
+ * @pdev: txrx pdev ptr
+ * @vdev_id: vdev id of vdev on which the peer
+ *           needs to be added
+ * @peer_mac: peer mac addr which needs to be added
+ *
+ * Check if peer with same MAC is present on vdev other then
+ * the provided vdev_id
+ *
+ * Return: true if same peer is present on vdev other then vdev_id
+ * else return false
+ */
+static bool wma_find_duplicate_peer_on_other_vdev(tp_wma_handle wma,
+	struct cdp_pdev *pdev, uint8_t vdev_id, uint8_t *peer_mac)
+{
+	int i;
+	uint8_t peer_id;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+
+	for (i = 0; i < wma->max_bssid; i++) {
+		/* Need to check vdevs other than the vdev_id */
+		if (vdev_id == i ||
+		   !wma->interfaces[i].handle)
+			continue;
+		if (cdp_peer_find_by_addr_and_vdev(soc, pdev,
+			wma->interfaces[i].handle, peer_mac, &peer_id)) {
+			WMA_LOGE("%s :Duplicate peer %pM (peer id %d) already exist on vdev %d",
+				__func__, peer_mac, peer_id, i);
+			return true;
+		}
+	}
+	return false;
+}
+
+/**
  * wma_create_peer() - send peer create command to fw
  * @wma: wma handle
  * @pdev: txrx pdev ptr
@@ -1184,6 +1221,7 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 	uint8_t *mac_addr_raw;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
+
 	if (++wma->interfaces[vdev_id].peer_count >
 	    wma->wlan_resource_config.num_peers) {
 		WMA_LOGE("%s, the peer count exceeds the limit %d", __func__,
@@ -1195,6 +1233,14 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 		WMA_LOGE("%s:SOC context is NULL", __func__);
 		goto err;
 	}
+
+	/*
+	 * Check if peer with same MAC exist on other Vdev, If so avoid
+	 * adding this peer, as it will cause FW to crash.
+	 */
+	if (wma_find_duplicate_peer_on_other_vdev(wma, pdev,
+	   vdev_id, peer_addr))
+		goto err;
 
 	/* The peer object should be created before sending the WMI peer
 	 * create command to firmware. This is to prevent a race condition
