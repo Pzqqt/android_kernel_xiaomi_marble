@@ -422,9 +422,21 @@ static QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
 		int rx_mon_mask =
 			wlan_cfg_get_rx_mon_ring_mask(soc->wlan_cfg_ctx, i);
 
+		/*
+		 * Mapping the exception/status rings to IRQ Group 0 (CPU 0).
+		 * Later add wlan_cfg interface for these masks
+		 */
+		int rx_err_ring_mask = 0x1;
+		int rx_wbm_rel_ring_mask = 0x1;
+		int reo_status_ring_mask = 0x1;
+
 		soc->intr_ctx[i].tx_ring_mask = tx_mask;
 		soc->intr_ctx[i].rx_ring_mask = rx_mask;
 		soc->intr_ctx[i].rx_mon_ring_mask = rx_mon_mask;
+		soc->intr_ctx[i].rx_err_ring_mask = rx_err_ring_mask;
+		soc->intr_ctx[i].rx_wbm_rel_ring_mask = rx_wbm_rel_ring_mask;
+		soc->intr_ctx[i].reo_status_ring_mask = reo_status_ring_mask;
+
 		soc->intr_ctx[i].soc = soc;
 
 		num_irq = 0;
@@ -446,6 +458,16 @@ static QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
 					(rxdma2host_monitor_destination_mac1
 					 - j);
 			}
+
+			if (rx_wbm_rel_ring_mask & (1 << j))
+				irq_id_map[num_irq++] = wbm2host_rx_release;
+
+			if (rx_err_ring_mask & (1 << j))
+				irq_id_map[num_irq++] = reo2host_exception;
+
+			if (reo_status_ring_mask & (1 << j))
+				irq_id_map[num_irq++] = reo2host_status;
+
 		}
 
 

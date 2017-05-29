@@ -122,7 +122,7 @@ enum hif_ic_irq {
 	host2rxdma_monitor_ring3,
 	host2rxdma_monitor_ring2,
 	host2rxdma_monitor_ring1,
-	reo2ost_exception,
+	reo2host_exception,
 	wbm2host_rx_release,
 	reo2host_status,
 	reo2host_destination_ring4,
