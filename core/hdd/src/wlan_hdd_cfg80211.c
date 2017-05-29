@@ -1434,77 +1434,26 @@ static void hdd_update_vendor_pcl_list(hdd_context_t *hdd_ctx,
 		tsap_Config_t *sap_config)
 {
 	int i, j;
-	bool found;
-
-	if (HDD_EXTERNAL_ACS_PCL_MANDATORY ==
-		hdd_ctx->config->external_acs_policy) {
-		/*
-		 * In preferred channels mandatory case, PCL shall
-		 * contain only the preferred channels from the
-		 * application. If those channels are not present
-		 * in the driver PCL, then set the weight to zero
-		 */
-		for (i = 0; i < sap_config->acs_cfg.ch_list_count; i++) {
-			acs_chan_params->vendor_pcl_list[i] =
-				sap_config->acs_cfg.ch_list[i];
-			acs_chan_params->vendor_weight_list[i] = 0;
-			for (j = 0; j < sap_config->acs_cfg.pcl_ch_count; j++) {
-				if (sap_config->acs_cfg.ch_list[i] ==
-				sap_config->acs_cfg.pcl_channels[j]) {
-					acs_chan_params->vendor_weight_list[i] =
-					sap_config->
-					acs_cfg.pcl_channels_weight_list[j];
-					break;
-				}
-			}
-		}
-		acs_chan_params->pcl_count = sap_config->acs_cfg.ch_list_count;
-	} else {
-		/*
-		 * In preferred channels not mandatory case update the
-		 * PCL weight to zero for those channels which are not
-		 * present in the application's preferred channel list for
-		 * ACS
-		 */
-		for (i = 0; i < sap_config->acs_cfg.pcl_ch_count; i++) {
-			found = false;
-			for (j = 0; j < sap_config->acs_cfg.ch_list_count;
-				j++) {
-				if (sap_config->acs_cfg.pcl_channels[i] ==
-					sap_config->acs_cfg.ch_list[j]) {
-					acs_chan_params->vendor_pcl_list[i] =
-						sap_config->
-						acs_cfg.pcl_channels[i];
-					acs_chan_params->
-						vendor_weight_list[i] =
-						sap_config->acs_cfg.
-						pcl_channels_weight_list[i];
-					found = true;
-					break;
-				}
-			}
-			if (!found) {
-				acs_chan_params->vendor_pcl_list[i] =
-				sap_config->acs_cfg.pcl_channels[i];
-				acs_chan_params->vendor_weight_list[i] = 0;
-			}
-		}
-
-		acs_chan_params->pcl_count = sap_config->acs_cfg.pcl_ch_count;
-
-		if (hdd_ctx->unsafe_channel_count == 0)
-			return;
-		/* Update unsafe channel weight as zero */
-		for (i = 0; i < acs_chan_params->pcl_count; i++) {
-			for (j = 0; j < hdd_ctx->unsafe_channel_count; j++) {
-				if (acs_chan_params->vendor_pcl_list[i] ==
-				hdd_ctx->unsafe_channel_list[j]) {
-					acs_chan_params->
-						vendor_weight_list[i] = 0;
-				}
+	/*
+	 * PCL shall contain only the preferred channels from the
+	 * application. If those channels are not present in the
+	 * driver PCL, then set the weight to zero
+	 */
+	for (i = 0; i < sap_config->acs_cfg.ch_list_count; i++) {
+		acs_chan_params->vendor_pcl_list[i] =
+			sap_config->acs_cfg.ch_list[i];
+		acs_chan_params->vendor_weight_list[i] = 0;
+		for (j = 0; j < sap_config->acs_cfg.pcl_ch_count; j++) {
+			if (sap_config->acs_cfg.ch_list[i] ==
+			sap_config->acs_cfg.pcl_channels[j]) {
+				acs_chan_params->vendor_weight_list[i] =
+				sap_config->
+				acs_cfg.pcl_channels_weight_list[j];
+				break;
 			}
 		}
 	}
+	acs_chan_params->pcl_count = sap_config->acs_cfg.ch_list_count;
 }
 
 /**
@@ -1731,6 +1680,8 @@ static void hdd_get_scan_band(hdd_context_t *hdd_ctx,
 			      tsap_Config_t *sap_config,
 			      eCsrBand *band)
 {
+	int i, temp_count = 0;
+	int acs_list_count = sap_config->acs_cfg.ch_list_count;
 	/* Get scan band */
 	if ((sap_config->acs_cfg.hw_mode == QCA_ACS_MODE_IEEE80211B) ||
 	   (sap_config->acs_cfg.hw_mode == QCA_ACS_MODE_IEEE80211G)) {
@@ -1748,6 +1699,26 @@ static void hdd_get_scan_band(hdd_context_t *hdd_ctx,
 			*band = eCSR_BAND_24;
 		else
 			*band = eCSR_BAND_5G;
+		for (i = 0; i < acs_list_count; i++) {
+			if (eCSR_BAND_24 == *band) {
+				if (WLAN_REG_IS_24GHZ_CH(
+					sap_config->acs_cfg.ch_list[i])) {
+					sap_config->acs_cfg.ch_list[
+						temp_count] =
+						sap_config->acs_cfg.ch_list[i];
+					temp_count++;
+				}
+			} else if (eCSR_BAND_5G == *band) {
+				if (WLAN_REG_IS_5GHZ_CH(
+					sap_config->acs_cfg.ch_list[i])) {
+					sap_config->acs_cfg.ch_list[
+							temp_count] =
+						sap_config->acs_cfg.ch_list[i];
+					temp_count++;
+				}
+			}
+		}
+		sap_config->acs_cfg.ch_list_count = temp_count;
 	}
 }
 
