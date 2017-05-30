@@ -1344,6 +1344,7 @@ static int wma_remove_bss_peer(tp_wma_handle wma, void *pdev,
 	uint8_t peer_id;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	uint8_t *mac_addr = NULL;
+	struct wma_target_req *del_req;
 
 	vdev = cdp_get_vdev_from_vdev_id(soc, pdev, vdev_id);
 	if (!vdev) {
@@ -1373,7 +1374,24 @@ static int wma_remove_bss_peer(tp_wma_handle wma, void *pdev,
 	}
 
 	wma_remove_peer(wma, mac_addr, vdev_id, peer, false);
-
+	if (WMI_SERVICE_IS_ENABLED(
+	   wma->wmi_service_bitmap,
+	   WMI_SERVICE_SYNC_DELETE_CMDS)) {
+		WMA_LOGD(FL("Wait for the peer delete. vdev_id %d"),
+				 req_msg->vdev_id);
+		del_req = wma_fill_hold_req(wma,
+				   req_msg->vdev_id,
+				   WMA_DELETE_STA_REQ,
+				   WMA_DELETE_PEER_RSP,
+				   params,
+				   WMA_DELETE_STA_TIMEOUT);
+		if (!del_req) {
+			WMA_LOGE(FL("Failed to allocate request. vdev_id %d"),
+				 req_msg->vdev_id);
+			params->status = QDF_STATUS_E_NOMEM;
+			return -EINVAL;
+		}
+	}
 	return 0;
 }
 
@@ -1420,6 +1438,126 @@ static QDF_STATUS wma_config_active_bpf_mode(t_wma_handle *wma, uint8_t vdev_id)
 	return wmi_unified_set_active_bpf_mode_cmd(wma->wmi_handle, vdev_id,
 						   uc_mode, mcbc_mode);
 }
+
+#ifdef FEATURE_AP_MCC_CH_AVOIDANCE
+/**
+ * wma_check_and_find_mcc_ap() - finds if device is operating AP
+ * in MCC mode or not
+ * @wma: wma handle.
+ * @vdev_id: vdev ID of device for which MCC has to be checked
+ *
+ * This function internally calls wma_find_mcc_ap finds if
+ * device is operating AP in MCC mode or not
+ *
+ * Return: none
+ */
+static void
+wma_check_and_find_mcc_ap(tp_wma_handle wma, uint8_t vdev_id)
+{
+	tpAniSirGlobal mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+
+	if (NULL == mac_ctx) {
+		WMA_LOGE("%s: Failed to get mac_ctx", __func__);
+		return;
+	}
+	if (mac_ctx->sap.sap_channel_avoidance)
+		wma_find_mcc_ap(wma, vdev_id, false);
+}
+#else
+static inline void
+wma_check_and_find_mcc_ap(tp_wma_handle wma, uint8_t vdev_id)
+{}
+#endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
+
+/**
+ * wma_send_del_bss_response() - send del bss resp to upper layer
+ * @wma: wma handle.
+ * @vdev_id: vdev ID of device for which MCC has to be checked
+ *
+ * This function sends del bss resp to upper layer
+ *
+ * Return: none
+ */
+static void
+wma_send_del_bss_response(tp_wma_handle wma, struct wma_target_req *req,
+	uint8_t vdev_id)
+{
+	struct wma_txrx_node *iface;
+	struct beacon_info *bcn;
+	tpDeleteBssParams params;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+
+	if (!req) {
+		WMA_LOGE("%s req is NULL", __func__);
+		return;
+	}
+
+	iface = &wma->interfaces[vdev_id];
+	if (!iface->handle) {
+		WMA_LOGE("%s vdev id %d is already deleted",
+			 __func__, vdev_id);
+		if (req->user_data)
+			qdf_mem_free(req->user_data);
+		req->user_data = NULL;
+		return;
+	}
+	params = (tpDeleteBssParams) req->user_data;
+
+	if (wmi_unified_vdev_down_send(wma->wmi_handle,
+	   vdev_id) !=
+	   QDF_STATUS_SUCCESS) {
+		WMA_LOGE("Failed to send vdev down cmd: vdev %d",
+			 vdev_id);
+	} else {
+		wma_vdev_set_mlme_state(wma, vdev_id,
+				WLAN_VDEV_S_STOP);
+		wma_check_and_find_mcc_ap(wma, vdev_id);
+	}
+
+	cdp_fc_vdev_flush(soc, iface->handle);
+	WMA_LOGD("%s, vdev_id: %d, un-pausing tx_ll_queue for VDEV_STOP rsp",
+		 __func__, vdev_id);
+	cdp_fc_vdev_unpause(soc, iface->handle,
+		OL_TXQ_PAUSE_REASON_VDEV_STOP);
+	wma_vdev_clear_pause_bit(vdev_id, PAUSE_TYPE_HOST);
+	qdf_atomic_set(&iface->bss_status, WMA_BSS_STATUS_STOPPED);
+	WMA_LOGD("%s: (type %d subtype %d) BSS is stopped",
+		 __func__, iface->type, iface->sub_type);
+
+	bcn = wma->interfaces[vdev_id].beacon;
+	if (bcn) {
+		WMA_LOGD("%s: Freeing beacon struct %p, template memory %p",
+			 __func__, bcn, bcn->buf);
+		if (bcn->dma_mapped)
+			qdf_nbuf_unmap_single(wma->qdf_dev, bcn->buf,
+					  QDF_DMA_TO_DEVICE);
+			qdf_nbuf_free(bcn->buf);
+			qdf_mem_free(bcn);
+			wma->interfaces[vdev_id].beacon = NULL;
+	}
+
+	/* Timeout status means its WMA generated DEL BSS REQ when ADD
+	 * BSS REQ was timed out to stop the VDEV in this case no need
+	 * to send response to UMAC
+	 */
+	if (params->status == QDF_STATUS_FW_MSG_TIMEDOUT) {
+		qdf_mem_free(req->user_data);
+		req->user_data = NULL;
+		WMA_LOGE("%s: DEL BSS from ADD BSS timeout do not send resp to UMAC (vdev id %x)",
+			 __func__, vdev_id);
+	} else {
+		params->status = QDF_STATUS_SUCCESS;
+		wma_send_msg(wma, WMA_DELETE_BSS_RSP, (void *)params,
+			 0);
+	}
+
+	if (iface->del_staself_req != NULL) {
+		WMA_LOGA("scheduling defered deletion (vdev id %x)",
+			 vdev_id);
+		wma_vdev_detach(wma, iface->del_staself_req, 1);
+	}
+}
+
 
 /**
  * wma_vdev_stop_resp_handler() - vdev stop response handler
@@ -1507,7 +1645,6 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 	if (req_msg->msg_type == WMA_DELETE_BSS_REQ) {
 		tpDeleteBssParams params =
 			(tpDeleteBssParams) req_msg->user_data;
-		struct beacon_info *bcn;
 
 		if (resp_event->vdev_id > wma->max_bssid) {
 			WMA_LOGE("%s: Invalid vdev_id %d", __func__,
@@ -1538,60 +1675,12 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 		if (status != 0)
 			goto free_req_msg;
 
-		if (wmi_unified_vdev_down_send(wma->wmi_handle,
-						resp_event->vdev_id) !=
-						QDF_STATUS_SUCCESS) {
-			WMA_LOGE("Failed to send vdev down cmd: vdev %d",
-				 resp_event->vdev_id);
-		} else {
-			wma_vdev_set_mlme_state(wma, resp_event->vdev_id,
-				WLAN_VDEV_S_STOP);
-#ifdef FEATURE_AP_MCC_CH_AVOIDANCE
-		if (mac_ctx->sap.sap_channel_avoidance)
-			wma_find_mcc_ap(wma, resp_event->vdev_id, false);
-#endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
-		}
-		cdp_fc_vdev_flush(soc, iface->handle);
-		WMA_LOGD("%s, vdev_id: %d, un-pausing tx_ll_queue for VDEV_STOP rsp",
-			 __func__, resp_event->vdev_id);
-		cdp_fc_vdev_unpause(soc, iface->handle,
-				     OL_TXQ_PAUSE_REASON_VDEV_STOP);
-		wma_vdev_clear_pause_bit(resp_event->vdev_id, PAUSE_TYPE_HOST);
-		qdf_atomic_set(&iface->bss_status, WMA_BSS_STATUS_STOPPED);
-		WMA_LOGD("%s: (type %d subtype %d) BSS is stopped",
-			 __func__, iface->type, iface->sub_type);
-		bcn = wma->interfaces[resp_event->vdev_id].beacon;
+		if (WMI_SERVICE_IS_ENABLED(
+		   wma->wmi_service_bitmap,
+		   WMI_SERVICE_SYNC_DELETE_CMDS))
+			goto free_req_msg;
 
-		if (bcn) {
-			WMA_LOGD("%s: Freeing beacon struct %p, template memory %p",
-				 __func__, bcn, bcn->buf);
-			if (bcn->dma_mapped)
-				qdf_nbuf_unmap_single(wma->qdf_dev, bcn->buf,
-						      QDF_DMA_TO_DEVICE);
-			qdf_nbuf_free(bcn->buf);
-			qdf_mem_free(bcn);
-			wma->interfaces[resp_event->vdev_id].beacon = NULL;
-		}
-
-		/* Timeout status means its WMA generated DEL BSS REQ when ADD
-		 * BSS REQ was timed out to stop the VDEV in this case no need
-		 * to send response to UMAC
-		 */
-		if (params->status == QDF_STATUS_FW_MSG_TIMEDOUT) {
-			wma_cleanup_target_req_param(req_msg);
-			WMA_LOGE("%s: DEL BSS from ADD BSS timeout do not send resp to UMAC (vdev id %x)",
-				 __func__, resp_event->vdev_id);
-		} else {
-			params->status = QDF_STATUS_SUCCESS;
-			wma_send_msg(wma, WMA_DELETE_BSS_RSP, (void *)params,
-				     0);
-		}
-
-		if (iface->del_staself_req != NULL) {
-			WMA_LOGA("scheduling defered deletion (vdev id %x)",
-				 resp_event->vdev_id);
-			wma_vdev_detach(wma, iface->del_staself_req, 1);
-		}
+		wma_send_del_bss_response(wma, req_msg, resp_event->vdev_id);
 	} else if (req_msg->msg_type == WMA_SET_LINK_STATE) {
 		tpLinkStateParams params =
 			(tpLinkStateParams) req_msg->user_data;
@@ -2368,6 +2457,8 @@ int wma_peer_delete_handler(void *handle, uint8_t *cmd_param_info,
 					req_msg->vdev_id);
 		}
 		wma_send_msg(wma, WMA_SET_LINK_STATE_RSP, (void *)params, 0);
+	} else if (req_msg->type == WMA_DELETE_PEER_RSP) {
+		wma_send_del_bss_response(wma, req_msg, req_msg->vdev_id);
 	}
 	qdf_mem_free(req_msg);
 	return status;
@@ -2463,6 +2554,11 @@ void wma_hold_req_timer(void *data)
 	} else if ((tgt_req->msg_type == WMA_DELETE_STA_REQ) &&
 			(tgt_req->type == WMA_SET_LINK_PEER_RSP)) {
 		WMA_LOGA(FL("wma delete peer for set link timed out"));
+		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash) == true)
+			QDF_BUG(0);
+	} else if ((tgt_req->msg_type == WMA_DELETE_STA_REQ) &&
+			(tgt_req->type == WMA_DELETE_PEER_RSP)) {
+		 WMA_LOGE(FL("wma delete peer for del bss req timed out"));
 		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash) == true)
 			QDF_BUG(0);
 	} else {
@@ -2646,6 +2742,11 @@ void wma_vdev_resp_timer(void *data)
 		status = wma_remove_bss_peer(wma, pdev, tgt_req,
 					     tgt_req->vdev_id, params);
 		if (status != 0)
+			goto free_tgt_req;
+
+		if (WMI_SERVICE_IS_ENABLED(
+		   wma->wmi_service_bitmap,
+		   WMI_SERVICE_SYNC_DELETE_CMDS))
 			goto free_tgt_req;
 
 		if (wmi_unified_vdev_down_send(wma->wmi_handle,
