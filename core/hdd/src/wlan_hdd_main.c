@@ -3176,6 +3176,9 @@ QDF_STATUS hdd_init_station_mode(hdd_adapter_t *adapter)
 	hdd_debug("Set HDD connState to eConnectionState_NotConnected");
 	pHddStaCtx->conn_info.connState = eConnectionState_NotConnected;
 
+	qdf_mem_set(pHddStaCtx->conn_info.staId,
+		sizeof(pHddStaCtx->conn_info.staId), HDD_WLAN_INVALID_STA_ID);
+
 	/* set fast roaming capability in sme session */
 	status = sme_config_fast_roaming(hdd_ctx->hHal, adapter->sessionId,
 					 adapter->fast_roaming_allowed);
