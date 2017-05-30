@@ -167,6 +167,7 @@ struct hif_softc {
 	void *hal_soc;
 	struct hif_ut_suspend_context ut_suspend_ctx;
 	uint32_t hif_attribute;
+	int wake_irq;
 };
 
 static inline void *hif_get_hal_handle(void *hif_hdl)
@@ -247,4 +248,14 @@ void hif_ramdump_handler(struct hif_opaque_softc *scn);
 static inline void hif_usb_get_hw_info(struct hif_softc *scn) {}
 static inline void hif_ramdump_handler(struct hif_opaque_softc *scn) {}
 #endif
+
+/**
+ * hif_wake_interrupt_handler() - interrupt handler for standalone wake irq
+ * @irq: the irq number that fired
+ * @context: the opaque pointer passed to request_irq()
+ *
+ * Return: an irq return type
+ */
+irqreturn_t hif_wake_interrupt_handler(int irq, void *context);
+
 #endif /* __HIF_MAIN_H__ */

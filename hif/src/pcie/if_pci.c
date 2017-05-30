@@ -2498,6 +2498,7 @@ static int hif_pci_configure_legacy_irq(struct hif_pci_softc *sc)
 		HIF_ERROR("%s: request_irq failed, ret = %d", __func__, ret);
 		goto end;
 	}
+	scn->wake_irq = sc->pdev->irq;
 	/* Use sc->irq instead of sc->pdev-irq
 	 * platform_device pdev doesn't have an irq field
 	 */
@@ -2732,15 +2733,8 @@ void hif_pci_prevent_linkdown(struct hif_softc *scn, bool flag)
 static int hif_mark_wake_irq_wakeable(struct hif_softc *scn)
 {
 	int errno;
-	uint8_t ce_id;
 
-	errno = hif_get_wake_ce_id(scn, &ce_id);
-	if (errno) {
-		HIF_ERROR("%s: failed to get wake CE Id: %d", __func__, errno);
-		return errno;
-	}
-
-	errno = enable_irq_wake(scn->bus_ops.hif_map_ce_to_irq(scn, ce_id));
+	errno = enable_irq_wake(scn->wake_irq);
 	if (errno) {
 		HIF_ERROR("%s: Failed to mark wake IRQ: %d", __func__, errno);
 		return errno;
@@ -2758,14 +2752,6 @@ static int hif_mark_wake_irq_wakeable(struct hif_softc *scn)
  */
 int hif_pci_bus_suspend(struct hif_softc *scn)
 {
-	/*
-	 * This is a workaround to a spurious wake interrupt issue. The
-	 * proper fix is being worked on, and this should be removed as
-	 * soon as possible.
-	 */
-	HIF_ERROR("%s: Pausing bus suspend for 200ms", __func__);
-	msleep(200);
-
 	if (hif_can_suspend_link(GET_HIF_OPAQUE_HDL(scn)))
 		return 0;
 
@@ -2815,15 +2801,8 @@ static int __hif_check_link_status(struct hif_softc *scn)
 static int hif_unmark_wake_irq_wakeable(struct hif_softc *scn)
 {
 	int errno;
-	uint8_t ce_id;
 
-	errno = hif_get_wake_ce_id(scn, &ce_id);
-	if (errno) {
-		HIF_ERROR("%s: failed to get wake CE Id: %d", __func__, errno);
-		return errno;
-	}
-
-	errno = disable_irq_wake(scn->bus_ops.hif_map_ce_to_irq(scn, ce_id));
+	errno = disable_irq_wake(scn->wake_irq);
 	if (errno) {
 		HIF_ERROR("%s: Failed to unmark wake IRQ: %d", __func__, errno);
 		return errno;
@@ -3586,11 +3565,25 @@ static int hif_ce_msi_configure_irq(struct hif_softc *scn)
 	struct HIF_CE_state *ce_sc = HIF_GET_CE_STATE(scn);
 	struct hif_pci_softc *pci_sc = HIF_GET_PCI_SOFTC(scn);
 
+	/* do wake irq assignment */
+	ret = pld_get_user_msi_assignment(scn->qdf_dev->dev, "WAKE",
+					  &msi_data_count, &msi_data_start,
+					  &msi_irq_start);
+	if (ret)
+		return ret;
+
+	scn->wake_irq = pld_get_msi_irq(scn->qdf_dev->dev, msi_irq_start);
+	ret = request_irq(scn->wake_irq, hif_wake_interrupt_handler, 0,
+			  "wlan_wake_irq", scn);
+	if (ret)
+		return ret;
+
+	/* do ce irq assignments */
 	ret = pld_get_user_msi_assignment(scn->qdf_dev->dev, "CE",
 					    &msi_data_count, &msi_data_start,
 					    &msi_irq_start);
 	if (ret)
-		return ret;
+		goto free_wake_irq;
 
 	if (ce_srng_based(scn)) {
 		scn->bus_ops.hif_irq_disable = &hif_ce_srng_msi_irq_disable;
@@ -3638,6 +3631,11 @@ free_irq:
 		irq = pld_get_msi_irq(scn->qdf_dev->dev, msi_data);
 		free_irq(irq, &ce_sc->tasklets[ce_id]);
 	}
+
+free_wake_irq:
+	free_irq(scn->wake_irq, scn->qdf_dev->dev);
+	scn->wake_irq = 0;
+
 	return ret;
 }
 

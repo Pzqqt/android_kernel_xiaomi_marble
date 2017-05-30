@@ -439,7 +439,6 @@ void hif_set_bundle_mode(struct hif_opaque_softc *scn, bool enabled,
  * Return: int 0 for success, non zero for failure
  */
 int hif_bus_reset_resume(struct hif_opaque_softc *scn)
-
 {
 	struct hif_softc *hif_sc = HIF_GET_SOFTC(scn);
 
@@ -451,14 +450,19 @@ int hif_apps_irqs_disable(struct hif_opaque_softc *hif_ctx)
 	struct hif_softc *scn;
 	int i;
 
+	QDF_BUG(hif_ctx);
 	scn = HIF_GET_SOFTC(hif_ctx);
-	if (!scn) {
-		QDF_BUG(0);
+	if (!scn)
 		return -EINVAL;
-	}
 
-	for (i = 0; i < scn->ce_count; ++i)
-		disable_irq(scn->bus_ops.hif_map_ce_to_irq(scn, i));
+	/* if the wake_irq is shared, don't disable it twice */
+	disable_irq(scn->wake_irq);
+	for (i = 0; i < scn->ce_count; ++i) {
+		int irq = scn->bus_ops.hif_map_ce_to_irq(scn, i);
+
+		if (irq != scn->wake_irq)
+			disable_irq(irq);
+	}
 
 	return 0;
 }
@@ -468,60 +472,47 @@ int hif_apps_irqs_enable(struct hif_opaque_softc *hif_ctx)
 	struct hif_softc *scn;
 	int i;
 
+	QDF_BUG(hif_ctx);
 	scn = HIF_GET_SOFTC(hif_ctx);
-	if (!scn) {
-		QDF_BUG(0);
+	if (!scn)
 		return -EINVAL;
-	}
 
-	for (i = 0; i < scn->ce_count; ++i)
-		enable_irq(scn->bus_ops.hif_map_ce_to_irq(scn, i));
+	/* if the wake_irq is shared, don't enable it twice */
+	enable_irq(scn->wake_irq);
+	for (i = 0; i < scn->ce_count; ++i) {
+		int irq = scn->bus_ops.hif_map_ce_to_irq(scn, i);
+
+		if (irq != scn->wake_irq)
+			enable_irq(irq);
+	}
 
 	return 0;
 }
 
 int hif_apps_wake_irq_disable(struct hif_opaque_softc *hif_ctx)
 {
-	int errno;
 	struct hif_softc *scn;
-	uint8_t wake_ce_id;
 
+	QDF_BUG(hif_ctx);
 	scn = HIF_GET_SOFTC(hif_ctx);
-	if (!scn) {
-		QDF_BUG(0);
+	if (!scn)
 		return -EINVAL;
-	}
 
-	errno = hif_get_wake_ce_id(scn, &wake_ce_id);
-	if (errno) {
-		HIF_ERROR("%s: failed to get wake CE Id: %d", __func__, errno);
-		return errno;
-	}
-
-	disable_irq(scn->bus_ops.hif_map_ce_to_irq(scn, wake_ce_id));
+	disable_irq(scn->wake_irq);
 
 	return 0;
 }
 
 int hif_apps_wake_irq_enable(struct hif_opaque_softc *hif_ctx)
 {
-	int errno;
 	struct hif_softc *scn;
-	uint8_t wake_ce_id;
 
+	QDF_BUG(hif_ctx);
 	scn = HIF_GET_SOFTC(hif_ctx);
-	if (!scn) {
-		QDF_BUG(0);
+	if (!scn)
 		return -EINVAL;
-	}
 
-	errno = hif_get_wake_ce_id(scn, &wake_ce_id);
-	if (errno) {
-		HIF_ERROR("%s: failed to get wake CE Id: %d", __func__, errno);
-		return errno;
-	}
-
-	enable_irq(scn->bus_ops.hif_map_ce_to_irq(scn, wake_ce_id));
+	enable_irq(scn->wake_irq);
 
 	return 0;
 }

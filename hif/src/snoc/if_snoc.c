@@ -37,6 +37,8 @@
 #include "hif_io32.h"
 #include "ce_main.h"
 #include "ce_tasklet.h"
+#include "ce_api.h"
+#include "ce_internal.h"
 #include "snoc_api.h"
 #include <soc/qcom/icnss.h>
 #include "pld_common.h"
@@ -166,6 +168,7 @@ static QDF_STATUS hif_snoc_get_soc_info(struct hif_softc *scn)
 int hif_snoc_bus_configure(struct hif_softc *scn)
 {
 	int ret;
+	uint8_t wake_ce_id;
 
 	ret = hif_snoc_get_soc_info(scn);
 	if (ret)
@@ -182,7 +185,25 @@ int hif_snoc_bus_configure(struct hif_softc *scn)
 
 	ret = hif_config_ce(scn);
 	if (ret)
-		hif_wlan_disable(scn);
+		goto wlan_disable;
+
+	ret = hif_get_wake_ce_id(scn, &wake_ce_id);
+	if (ret)
+		goto unconfig_ce;
+
+	scn->wake_irq = icnss_get_irq(wake_ce_id);
+
+	HIF_INFO(FL("expecting wake from ce %d, irq %d"),
+		 wake_ce_id, scn->wake_irq);
+
+	return 0;
+
+unconfig_ce:
+	hif_unconfig_ce(scn);
+
+wlan_disable:
+	hif_wlan_disable(scn);
+
 	return ret;
 }
 
@@ -369,40 +390,18 @@ void hif_snoc_irq_disable(struct hif_softc *scn, int ce_id)
 static
 QDF_STATUS hif_snoc_setup_wakeup_sources(struct hif_softc *scn, bool enable)
 {
-	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
-	uint8_t ul_pipe, dl_pipe;
-	int ul_is_polled, dl_is_polled;
-	int irq_to_wake_on;
-
-	QDF_STATUS status;
 	int ret;
 
-	status = hif_map_service_to_pipe(hif_hdl, HTC_CTRL_RSVD_SVC,
-					 &ul_pipe, &dl_pipe,
-					 &ul_is_polled, &dl_is_polled);
-	if (status) {
-		HIF_ERROR("%s: pipe_mapping failure", __func__);
-		return status;
-	}
-
-	irq_to_wake_on = icnss_get_irq(dl_pipe);
-	if (irq_to_wake_on < 0) {
-		HIF_ERROR("%s: failed to map ce to irq", __func__);
-		return QDF_STATUS_E_RESOURCES;
-	}
-
 	if (enable)
-		ret = enable_irq_wake(irq_to_wake_on);
+		ret = enable_irq_wake(scn->wake_irq);
 	else
-		ret = disable_irq_wake(irq_to_wake_on);
+		ret = disable_irq_wake(scn->wake_irq);
 
 	if (ret) {
 		HIF_ERROR("%s: Fail to setup wake IRQ!", __func__);
 		return QDF_STATUS_E_RESOURCES;
 	}
 
-	HIF_INFO("%s: expecting wake from ce %d, irq %d enable %d",
-		  __func__, dl_pipe, irq_to_wake_on, enable);
 	return QDF_STATUS_SUCCESS;
 }
 

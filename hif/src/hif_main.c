@@ -1186,3 +1186,23 @@ void hif_ramdump_handler(struct hif_opaque_softc *scn)
 }
 #endif
 
+#ifdef WLAN_SUSPEND_RESUME_TEST
+irqreturn_t hif_wake_interrupt_handler(int irq, void *context)
+{
+	struct hif_softc *scn = context;
+
+	HIF_INFO("wake interrupt received on irq %d", irq);
+
+	if (hif_is_ut_suspended(scn))
+		hif_ut_fw_resume(scn);
+
+	return IRQ_HANDLED;
+}
+#else /* WLAN_SUSPEND_RESUME_TEST */
+irqreturn_t hif_wake_interrupt_handler(int irq, void *context)
+{
+	HIF_INFO("wake interrupt received on irq %d", irq);
+
+	return IRQ_HANDLED;
+}
+#endif /* WLAN_SUSPEND_RESUME_TEST */
