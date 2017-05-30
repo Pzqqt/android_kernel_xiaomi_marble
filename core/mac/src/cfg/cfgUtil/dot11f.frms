@@ -3481,6 +3481,7 @@ FRAME AssocRequest                        // 7.2.3.4
     OPTIE  hs20vendor_ie;
     OPTIE  QCN_IE;
     OPTIE  vendor_he_cap;
+    OPTIE  MBO_IE;
 } // End frame AssocRequest.
 
 FRAME AssocResponse                       // 7.2.3.5
