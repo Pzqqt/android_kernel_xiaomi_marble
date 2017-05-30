@@ -643,8 +643,10 @@ static void ce_srng_dest_ring_setup(struct hif_softc *scn, uint32_t ce_id,
 	ring_params.ring_base_paddr = dest_ring->base_addr_CE_space;
 	ring_params.ring_base_vaddr = dest_ring->base_addr_owner_space;
 	ring_params.num_entries = dest_ring->nentries;
-	ring_params.intr_timer_thres_us = 0;
-	ring_params.intr_batch_cntr_thres_entries = 1;
+	ring_params.low_threshold = dest_ring->nentries - 1;
+	ring_params.flags |= HAL_SRNG_LOW_THRES_INTR_ENABLE;
+	ring_params.intr_timer_thres_us = 1024;
+	ring_params.intr_batch_cntr_thres_entries = 0;
 	ring_params.max_buffer_length = attr->src_sz_max;
 
 	/* TODO

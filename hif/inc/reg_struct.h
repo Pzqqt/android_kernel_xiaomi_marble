@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -655,6 +655,10 @@ struct ce_reg_def {
 	uint32_t d_CE1_BASE_ADDRESS;
 	uint32_t d_A_WIFI_APB_3_A_WCMN_APPS_CE_INTR_ENABLES;
 	uint32_t d_A_WIFI_APB_3_A_WCMN_APPS_CE_INTR_STATUS;
+	uint32_t d_HOST_IE_ADDRESS_3;
+	uint32_t d_HOST_IE_REG1_CE_LSB;
+	uint32_t d_HOST_IE_REG2_CE_LSB;
+	uint32_t d_HOST_IE_REG3_CE_LSB;
 };
 
 #endif
