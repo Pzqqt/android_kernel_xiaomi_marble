@@ -63,7 +63,8 @@ static inline void wlan_logging_set_fw_flush_complete(void)
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 void wlan_report_log_completion(uint32_t is_fatal,
 		uint32_t indicator,
-		uint32_t reason_code);
+		uint32_t reason_code,
+		uint8_t ring_id);
 #else
 static inline void wlan_report_log_completion(uint32_t is_fatal,
 		uint32_t indicator,
