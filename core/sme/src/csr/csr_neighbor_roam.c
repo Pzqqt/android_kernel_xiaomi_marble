@@ -115,8 +115,8 @@ void csr_neighbor_roam_send_lfr_metric_event(
 	if (NULL == roam_info) {
 		sme_err("Memory allocation failed!");
 	} else {
-		qdf_mem_copy((void *)roam_info->bssid,
-			     (void *)bssid, sizeof(*roam_info));
+		qdf_mem_copy((void *)roam_info->bssid.bytes,
+			     (void *)bssid, sizeof(struct qdf_mac_addr));
 		csr_roam_call_callback(mac_ctx, session_id, roam_info, 0,
 			status, 0);
 		qdf_mem_free(roam_info);

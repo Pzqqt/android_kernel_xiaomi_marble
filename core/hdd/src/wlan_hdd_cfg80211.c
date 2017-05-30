@@ -12960,7 +12960,7 @@ QDF_STATUS wlan_hdd_cfg80211_roam_metrics_preauth(hdd_adapter_t *pAdapter,
 	wrqu.data.length = scnprintf(metrics_notification,
 				     sizeof(metrics_notification),
 				     "QCOM: LFR_PREAUTH_INIT " MAC_ADDRESS_STR,
-				     MAC_ADDR_ARRAY(pRoamInfo->bssid));
+				     MAC_ADDR_ARRAY(pRoamInfo->bssid.bytes));
 
 	wireless_send_event(pAdapter->dev, IWEVCUSTOM, &wrqu,
 			    metrics_notification);
@@ -13001,7 +13001,7 @@ wlan_hdd_cfg80211_roam_metrics_preauth_status(hdd_adapter_t *pAdapter,
 
 	scnprintf(metrics_notification, sizeof(metrics_notification),
 		  "QCOM: LFR_PREAUTH_STATUS " MAC_ADDRESS_STR,
-		  MAC_ADDR_ARRAY(pRoamInfo->bssid));
+		  MAC_ADDR_ARRAY(pRoamInfo->bssid.bytes));
 
 	if (1 == preauth_status)
 		strlcat(metrics_notification, " true",
@@ -13052,7 +13052,7 @@ QDF_STATUS wlan_hdd_cfg80211_roam_metrics_handover(hdd_adapter_t *pAdapter,
 				     sizeof(metrics_notification),
 				     "QCOM: LFR_PREAUTH_HANDOVER "
 				     MAC_ADDRESS_STR,
-				     MAC_ADDR_ARRAY(pRoamInfo->bssid));
+				     MAC_ADDR_ARRAY(pRoamInfo->bssid.bytes));
 
 	wireless_send_event(pAdapter->dev, IWEVCUSTOM, &wrqu,
 			    metrics_notification);
