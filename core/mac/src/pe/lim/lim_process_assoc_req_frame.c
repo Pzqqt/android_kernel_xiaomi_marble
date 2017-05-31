@@ -2110,6 +2110,50 @@ static void lim_fill_assoc_ind_vht_info(tpAniSirGlobal mac_ctx,
 	return;
 }
 
+static uint8_t lim_get_max_rate_idx(tSirMacRateSet *rateset)
+{
+	uint8_t maxidx;
+	int i;
+
+	maxidx = rateset->rate[0] & 0x7f;
+	for (i = 1; i < rateset->numRates; i++) {
+		if ((rateset->rate[i] & 0x7f) > maxidx)
+			maxidx = rateset->rate[i] & 0x7f;
+	}
+
+	return maxidx;
+}
+
+static void fill_mlm_assoc_ind_vht(tpSirAssocReq assocreq,
+		tpDphHashNode stads,
+		tpLimMlmAssocInd assocind)
+{
+	if (stads->mlmStaContext.vhtCapability) {
+		/* ampdu */
+		assocind->ampdu = true;
+
+		/* sgi */
+		if (assocreq->VHTCaps.shortGI80MHz ||
+		    assocreq->VHTCaps.shortGI160and80plus80MHz)
+			assocind->sgi_enable = true;
+
+		/* stbc */
+		assocind->tx_stbc = assocreq->VHTCaps.txSTBC;
+		assocind->rx_stbc = assocreq->VHTCaps.rxSTBC;
+
+		/* ch width */
+		assocind->ch_width = stads->vhtSupportedChannelWidthSet ?
+			eHT_CHANNEL_WIDTH_80MHZ :
+			stads->htSupportedChannelWidthSet ?
+			eHT_CHANNEL_WIDTH_40MHZ : eHT_CHANNEL_WIDTH_20MHZ;
+
+		/* mode */
+		assocind->mode = SIR_SME_PHY_MODE_VHT;
+		assocind->rx_mcs_map = assocreq->VHTCaps.rxMCSMap & 0xff;
+		assocind->tx_mcs_map = assocreq->VHTCaps.txMCSMap & 0xff;
+	}
+}
+
 /**
  * lim_send_mlm_assoc_ind() - Sends assoc indication to SME
  * @mac_ctx: Global Mac context
@@ -2130,6 +2174,7 @@ void lim_send_mlm_assoc_ind(tpAniSirGlobal mac_ctx,
 	uint32_t phy_mode;
 	uint8_t sub_type;
 	uint8_t *wpsie = NULL;
+	uint8_t maxidx, i;
 	uint32_t tmp;
 
 	/* Get a copy of the already parsed Assoc Request */
@@ -2295,6 +2340,57 @@ void lim_send_mlm_assoc_ind(tpAniSirGlobal mac_ctx,
 		assoc_ind->chan_info.nss = sta_ds->nss;
 		assoc_ind->chan_info.rate_flags =
 			lim_get_max_rate_flags(mac_ctx, sta_ds);
+		assoc_ind->ampdu = false;
+		assoc_ind->sgi_enable = false;
+		assoc_ind->tx_stbc = false;
+		assoc_ind->rx_stbc = false;
+		assoc_ind->ch_width = eHT_CHANNEL_WIDTH_20MHZ;
+		assoc_ind->mode = SIR_SME_PHY_MODE_LEGACY;
+		assoc_ind->max_supp_idx = 0xff;
+		assoc_ind->max_ext_idx = 0xff;
+		assoc_ind->max_mcs_idx = 0xff;
+		assoc_ind->rx_mcs_map = 0xff;
+		assoc_ind->tx_mcs_map = 0xff;
+
+		if (assoc_req->supportedRates.numRates)
+			assoc_ind->max_supp_idx =
+				lim_get_max_rate_idx(
+					&assoc_req->supportedRates);
+		if (assoc_req->extendedRates.numRates)
+			assoc_ind->max_ext_idx =
+				lim_get_max_rate_idx(
+					&assoc_req->extendedRates);
+
+		if (sta_ds->mlmStaContext.htCapability) {
+			/* ampdu */
+			assoc_ind->ampdu = true;
+
+			/* sgi */
+			if (sta_ds->htShortGI20Mhz || sta_ds->htShortGI40Mhz)
+				assoc_ind->sgi_enable = true;
+
+			/* stbc */
+			assoc_ind->tx_stbc = assoc_req->HTCaps.txSTBC;
+			assoc_ind->rx_stbc = assoc_req->HTCaps.rxSTBC;
+
+			/* ch width */
+			assoc_ind->ch_width =
+				sta_ds->htSupportedChannelWidthSet ?
+				eHT_CHANNEL_WIDTH_40MHZ :
+				eHT_CHANNEL_WIDTH_20MHZ;
+
+			/* mode */
+			assoc_ind->mode = SIR_SME_PHY_MODE_HT;
+			maxidx = 0;
+			for (i = 0; i < 8; i++) {
+				if (assoc_req->HTCaps.supportedMCSSet[0] &
+					(1 << i))
+					maxidx = i;
+			}
+			assoc_ind->max_mcs_idx = maxidx;
+		}
+		fill_mlm_assoc_ind_vht(assoc_req, sta_ds, assoc_ind);
+
 		/* updates VHT information in assoc indication */
 		lim_fill_assoc_ind_vht_info(mac_ctx, session_entry, assoc_req,
 			assoc_ind);

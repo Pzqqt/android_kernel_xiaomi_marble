@@ -1627,4 +1627,37 @@ int sme_cli_set_command(int vdev_id, int param_id, int sval, int vpdev);
 QDF_STATUS sme_set_bt_activity_info_cb(tHalHandle hal,
 				void (*cb)(void *, uint32_t profile_info));
 
+/**
+ * sme_get_peer_info() - sme api to get peer info
+ * @hal: hal handle for getting global mac struct
+ * @req: peer info request struct send to wma
+ * @context: context of callback function
+ * @callbackfn: hdd callback function when receive response
+ *
+ * This function will send WMA_GET_PEER_INFO to WMA
+ *
+ * Return: QDF_STATUS_SUCCESS or non-zero on failure
+ */
+QDF_STATUS sme_get_peer_info(tHalHandle hal,
+		struct sir_peer_info_req req,
+		void *context,
+		void (*callbackfn)(struct sir_peer_info_resp *param,
+			void *pcontext));
+
+/**
+ * sme_get_peer_info_ext() - sme api to get peer ext info
+ * @hal: hal handle for getting global mac struct
+ * @req: peer ext info request struct send to wma
+ * @context: context of callback function
+ * @callbackfn: hdd callback function when receive response
+ *
+ * This function will send WMA_GET_PEER_INFO_EXT to WMA
+ *
+ * Return: QDF_STATUS_SUCCESS or non-zero on failure
+ */
+QDF_STATUS sme_get_peer_info_ext(tHalHandle hal,
+		struct sir_peer_info_ext_req *req,
+		void *context,
+		void (*callbackfn)(struct sir_peer_info_ext_resp *param,
+			void *pcontext));
 #endif /* #if !defined( __SME_API_H ) */

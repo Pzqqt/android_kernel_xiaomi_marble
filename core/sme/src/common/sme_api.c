@@ -2413,6 +2413,18 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, struct scheduler_msg *pMsg)
 		}
 		break;
 #endif
+	case eWNI_SME_GET_PEER_INFO_IND:
+		if (pMac->sme.pget_peer_info_ind_cb)
+			pMac->sme.pget_peer_info_ind_cb(pMsg->bodyptr,
+				pMac->sme.pget_peer_info_cb_context);
+		qdf_mem_free(pMsg->bodyptr);
+		break;
+	case eWNI_SME_GET_PEER_INFO_EXT_IND:
+		if (pMac->sme.pget_peer_info_ext_ind_cb)
+			pMac->sme.pget_peer_info_ext_ind_cb(pMsg->bodyptr,
+				pMac->sme.pget_peer_info_ext_cb_context);
+		qdf_mem_free(pMsg->bodyptr);
+		break;
 	case eWNI_SME_CSA_OFFLOAD_EVENT:
 		if (pMsg->bodyptr) {
 			csr_scan_flush_bss_entry(pMac, pMsg->bodyptr);
@@ -9686,6 +9698,100 @@ QDF_STATUS sme_get_link_speed(tHalHandle hHal, tSirLinkSpeedInfo *lsReq,
 	return status;
 }
 
+QDF_STATUS sme_get_peer_info(tHalHandle hal, struct sir_peer_info_req req,
+			void *context,
+			void (*callbackfn)(struct sir_peer_info_resp *param,
+						void *pcontext))
+{
+
+	QDF_STATUS status;
+	QDF_STATUS qdf_status;
+	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+	struct scheduler_msg message;
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_STATUS_SUCCESS == status) {
+		if (NULL == callbackfn) {
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				"%s: Indication Call back is NULL",
+				__func__);
+			sme_release_global_lock(&mac->sme);
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		mac->sme.pget_peer_info_ind_cb = callbackfn;
+		mac->sme.pget_peer_info_cb_context = context;
+
+		/* serialize the req through MC thread */
+		message.bodyptr = qdf_mem_malloc(sizeof(req));
+		if (NULL == message.bodyptr) {
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				"%s: Memory allocation failed.", __func__);
+			sme_release_global_lock(&mac->sme);
+			return QDF_STATUS_E_NOMEM;
+		}
+		qdf_mem_copy(message.bodyptr, &req, sizeof(req));
+		message.type = WMA_GET_PEER_INFO;
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				"%s: Post get peer info msg fail", __func__);
+			qdf_mem_free(message.bodyptr);
+			status = QDF_STATUS_E_FAILURE;
+		}
+		sme_release_global_lock(&mac->sme);
+	}
+	return status;
+}
+
+QDF_STATUS sme_get_peer_info_ext(tHalHandle hal,
+		struct sir_peer_info_ext_req *req,
+		void *context,
+		void (*callbackfn)(struct sir_peer_info_ext_resp *param,
+			void *pcontext))
+{
+	QDF_STATUS status;
+	QDF_STATUS qdf_status;
+	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+	struct scheduler_msg message;
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_STATUS_SUCCESS == status) {
+		if (NULL == callbackfn) {
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				"%s: Indication Call back is NULL",
+				__func__);
+			sme_release_global_lock(&mac->sme);
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		mac->sme.pget_peer_info_ext_ind_cb = callbackfn;
+		mac->sme.pget_peer_info_ext_cb_context = context;
+
+		/* serialize the req through MC thread */
+		message.bodyptr =
+			qdf_mem_malloc(sizeof(struct sir_peer_info_ext_req));
+		if (NULL == message.bodyptr) {
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				"%s: Memory allocation failed.", __func__);
+			sme_release_global_lock(&mac->sme);
+			return QDF_STATUS_E_NOMEM;
+		}
+		qdf_mem_copy(message.bodyptr,
+				req,
+				sizeof(struct sir_peer_info_ext_req));
+		message.type = WMA_GET_PEER_INFO_EXT;
+		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				"%s: Post get rssi msg fail", __func__);
+			qdf_mem_free(message.bodyptr);
+			status = QDF_STATUS_E_FAILURE;
+		}
+		sme_release_global_lock(&mac->sme);
+	}
+	return status;
+}
 
 /*
  * SME API to enable/disable WLAN driver initiated SSR

@@ -9852,6 +9852,17 @@ void csr_roam_joined_state_msg_processor(tpAniSirGlobal pMac, void *pMsgBuf)
 		qdf_mem_copy(&pRoamInfo->chan_info,
 			     &pUpperLayerAssocCnf->chan_info,
 			     sizeof(tSirSmeChanInfo));
+		pRoamInfo->ampdu = pUpperLayerAssocCnf->ampdu;
+		pRoamInfo->sgi_enable = pUpperLayerAssocCnf->sgi_enable;
+		pRoamInfo->tx_stbc = pUpperLayerAssocCnf->tx_stbc;
+		pRoamInfo->tx_stbc = pUpperLayerAssocCnf->rx_stbc;
+		pRoamInfo->ch_width = pUpperLayerAssocCnf->ch_width;
+		pRoamInfo->mode = pUpperLayerAssocCnf->mode;
+		pRoamInfo->max_supp_idx = pUpperLayerAssocCnf->max_supp_idx;
+		pRoamInfo->max_ext_idx = pUpperLayerAssocCnf->max_ext_idx;
+		pRoamInfo->max_mcs_idx = pUpperLayerAssocCnf->max_mcs_idx;
+		pRoamInfo->rx_mcs_map = pUpperLayerAssocCnf->rx_mcs_map;
+		pRoamInfo->tx_mcs_map = pUpperLayerAssocCnf->tx_mcs_map;
 		if (CSR_IS_INFRA_AP(pRoamInfo->u.pConnectedProfile)) {
 			pMac->roam.roamSession[sessionId].connectState =
 				eCSR_ASSOC_STATE_TYPE_INFRA_CONNECTED;
@@ -15171,54 +15182,90 @@ QDF_STATUS csr_send_assoc_ind_to_upper_layer_cnf_msg(tpAniSirGlobal pMac,
 		else
 			statusCode = eSIR_SME_ASSOC_REFUSED;
 		qdf_mem_copy(pBuf, &statusCode, sizeof(tSirResultCodes));
-		pBuf += sizeof(tSirResultCodes);
 		/* bssId */
-		qdf_mem_copy((tSirMacAddr *) pBuf, pAssocInd->bssId,
-			     sizeof(tSirMacAddr));
-		pBuf += sizeof(tSirMacAddr);
+		pBuf = (uint8_t *)&pMsg->bssId;
+		qdf_mem_copy((tSirMacAddr *)pBuf, pAssocInd->bssId,
+			sizeof(tSirMacAddr));
 		/* peerMacAddr */
-		qdf_mem_copy((tSirMacAddr *) pBuf, pAssocInd->peerMacAddr,
-			     sizeof(tSirMacAddr));
-		pBuf += sizeof(tSirMacAddr);
+		pBuf = (uint8_t *)&pMsg->peerMacAddr;
+		qdf_mem_copy((tSirMacAddr *)pBuf, pAssocInd->peerMacAddr,
+			sizeof(tSirMacAddr));
 		/* StaId */
+		pBuf = (uint8_t *)&pMsg->aid;
 		wTmp = pAssocInd->staId;
 		qdf_mem_copy(pBuf, &wTmp, sizeof(uint16_t));
-		pBuf += sizeof(uint16_t);
 		/* alternateBssId */
-		qdf_mem_copy((tSirMacAddr *) pBuf, pAssocInd->bssId,
-			     sizeof(tSirMacAddr));
-		pBuf += sizeof(tSirMacAddr);
+		pBuf = (uint8_t *)&pMsg->alternateBssId;
+		qdf_mem_copy((tSirMacAddr *)pBuf, pAssocInd->bssId,
+			sizeof(tSirMacAddr));
 		/* alternateChannelId */
+		pBuf = (uint8_t *)&pMsg->alternateChannelId;
 		*pBuf = 11;
-		pBuf += sizeof(uint8_t);
-		/* Instead of copying roam Info, we just copy only WmmEnabled,
-		 * RsnIE information
+		/*
+		 * Instead of copying roam Info,just copy WmmEnabled,
+		 * RsnIE information.
+		 * Wmm
 		 */
-		/* Wmm */
+		pBuf = (uint8_t *)&pMsg->wmmEnabledSta;
 		*pBuf = pAssocInd->wmmEnabledSta;
-		pBuf += sizeof(uint8_t);
 		/* RSN IE */
-		qdf_mem_copy((tSirRSNie *) pBuf, &pAssocInd->rsnIE,
-			     sizeof(tSirRSNie));
-		pBuf += sizeof(tSirRSNie);
+		pBuf = (uint8_t *)&pMsg->rsnIE;
+		qdf_mem_copy((tSirRSNie *)pBuf, &pAssocInd->rsnIE,
+			sizeof(tSirRSNie));
 #ifdef FEATURE_WLAN_WAPI
 		/* WAPI IE */
-		qdf_mem_copy((tSirWAPIie *) pBuf, &pAssocInd->wapiIE,
-			     sizeof(tSirWAPIie));
-		pBuf += sizeof(tSirWAPIie);
+		pBuf = (uint8_t *)&pMsg->wapiIE;
+		qdf_mem_copy((tSirWAPIie *)pBuf, &pAssocInd->wapiIE,
+			sizeof(tSirWAPIie));
 #endif
 		/* Additional IE */
-		qdf_mem_copy((void *)pBuf, &pAssocInd->addIE,
-			     sizeof(tSirAddie));
-		pBuf += sizeof(tSirAddie);
+		pBuf = (uint8_t *)&pMsg->addIE;
+		qdf_mem_copy((tSirAddie *)pBuf, &pAssocInd->addIE,
+			sizeof(tSirAddie));
 		/* reassocReq */
+		pBuf = (uint8_t *)&pMsg->reassocReq;
 		*pBuf = pAssocInd->reassocReq;
-		pBuf += sizeof(uint8_t);
 		/* timingMeasCap */
+		pBuf = (uint8_t *)&pMsg->timingMeasCap;
 		*pBuf = pAssocInd->timingMeasCap;
-		pBuf += sizeof(uint8_t);
+		/* chan_info */
+		pBuf = (uint8_t *)&pMsg->chan_info;
 		qdf_mem_copy((void *)pBuf, &pAssocInd->chan_info,
-			     sizeof(tSirSmeChanInfo));
+			sizeof(tSirSmeChanInfo));
+		/* ampdu */
+		pBuf = (uint8_t *)&pMsg->ampdu;
+		*((bool *)pBuf) = pAssocInd->ampdu;
+		/* sgi_enable */
+		pBuf = (uint8_t *)&pMsg->sgi_enable;
+		*((bool *)pBuf) = pAssocInd->sgi_enable;
+		/* tx stbc */
+		pBuf = (uint8_t *)&pMsg->tx_stbc;
+		*((bool *)pBuf) = pAssocInd->tx_stbc;
+		/* ch_width */
+		pBuf = (uint8_t *)&pMsg->ch_width;
+		*((tSirMacHTChannelWidth *)pBuf) = pAssocInd->ch_width;
+		/* mode */
+		pBuf = (uint8_t *)&pMsg->mode;
+		*((enum sir_sme_phy_mode *)pBuf) = pAssocInd->mode;
+		/* rx stbc */
+		pBuf = (uint8_t *)&pMsg->rx_stbc;
+		*((bool *)pBuf) = pAssocInd->rx_stbc;
+		/* max supported idx */
+		pBuf = (uint8_t *)&pMsg->max_supp_idx;
+		*pBuf = pAssocInd->max_supp_idx;
+		/* max extended idx */
+		pBuf = (uint8_t *)&pMsg->max_ext_idx;
+		*pBuf = pAssocInd->max_ext_idx;
+		/* max ht mcs idx */
+		pBuf = (uint8_t *)&pMsg->max_mcs_idx;
+		*pBuf = pAssocInd->max_mcs_idx;
+		/* vht rx mcs map */
+		pBuf = (uint8_t *)&pMsg->rx_mcs_map;
+		*pBuf = pAssocInd->rx_mcs_map;
+		/* vht tx mcs map */
+		pBuf = (uint8_t *)&pMsg->tx_mcs_map;
+		*pBuf = pAssocInd->tx_mcs_map;
+
 		msgQ.type = eWNI_SME_UPPER_LAYER_ASSOC_CNF;
 		msgQ.bodyptr = pMsg;
 		msgQ.bodyval = 0;

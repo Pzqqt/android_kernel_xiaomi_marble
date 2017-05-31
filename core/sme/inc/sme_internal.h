@@ -197,6 +197,14 @@ typedef struct tagSmeStruct {
 	void (*pLinkSpeedIndCb)(tSirLinkSpeedInfo *indParam,
 			void *pDevContext);
 	void *pLinkSpeedCbContext;
+	/* get peer info callback */
+	void (*pget_peer_info_ind_cb)(struct sir_peer_info_resp *param,
+		void *pcontext);
+	void *pget_peer_info_cb_context;
+	/* get extended peer info callback */
+	void (*pget_peer_info_ext_ind_cb)(struct sir_peer_info_ext_resp *param,
+		void *pcontext);
+	void *pget_peer_info_ext_cb_context;
 #ifdef FEATURE_WLAN_EXTSCAN
 	void (*pExtScanIndCb)(void *, const uint16_t, void *);
 #endif /* FEATURE_WLAN_EXTSCAN */
