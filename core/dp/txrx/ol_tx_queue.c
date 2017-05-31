@@ -1087,7 +1087,7 @@ ol_tx_queue_log_entry_type_info(
 			struct ol_tx_log_queue_state_var_sz_t *record;
 
 			align_pad =
-				(*align - ((((u_int32_t) *type) + 1)))
+			(*align - (uint32_t)(((unsigned long) type) + 1))
 							& (*align - 1);
 			record = (struct ol_tx_log_queue_state_var_sz_t *)
 				(type + 1 + align_pad);
