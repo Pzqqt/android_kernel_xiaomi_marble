@@ -16496,7 +16496,7 @@ QDF_STATUS csr_get_snr(tpAniSirGlobal pMac,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct scheduler_msg msg = {0};
-	uint32_t sessionId;
+	uint32_t sessionId = CSR_SESSION_ID_INVALID;
 	tAniGetSnrReq *pMsg;
 
 	pMsg = (tAniGetSnrReq *) qdf_mem_malloc(sizeof(tAniGetSnrReq));
