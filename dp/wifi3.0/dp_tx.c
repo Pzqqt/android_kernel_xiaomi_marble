@@ -816,9 +816,9 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 			vdev->dscp_tid_map_id);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			"%s length:%d , type = %d, dma_addr %llx, offset %d\n",
+			"%s length:%d , type = %d, dma_addr %llx, offset %d desc id %u\n",
 			__func__, length, type, (uint64_t)dma_addr,
-			tx_desc->pkt_offset);
+			tx_desc->pkt_offset, tx_desc->id);
 
 	if (tx_desc->flags & DP_TX_DESC_FLAG_TO_FW)
 		hal_tx_desc_set_to_fw(hal_tx_desc_cached, 1);
