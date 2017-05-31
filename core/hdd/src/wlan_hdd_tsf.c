@@ -276,8 +276,16 @@ static enum hdd_tsf_op_result hdd_indicate_tsf_internal(
 #define HOST_TO_TARGET_TIME_RATIO NSEC_PER_USEC
 #define MAX_ALLOWED_DEVIATION_NS (20 * NSEC_PER_MSEC)
 #define MAX_CONTINUOUS_ERROR_CNT 3
+
+/* to distinguish 32-bit overflow case, this inverval should:
+ * equal or less than (1/2 * OVERFLOW_INDICATOR32 us)
+ */
 #define WLAN_HDD_CAPTURE_TSF_INTERVAL_SEC 500
 #define WLAN_HDD_CAPTURE_TSF_INIT_INTERVAL_MS 100
+#define NORMAL_INTERVAL_TARGET \
+	((int64_t)((int64_t)WLAN_HDD_CAPTURE_TSF_INTERVAL_SEC * \
+		NSEC_PER_SEC / HOST_TO_TARGET_TIME_RATIO))
+#define OVERFLOW_INDICATOR32 (((int64_t)0x1) << 32)
 
 /**
  * TS_STATUS - timestamp status
@@ -462,6 +470,68 @@ static void hdd_update_timestamp(hdd_adapter_t *adapter,
 		qdf_mc_timer_start(&adapter->host_target_sync_timer, interval);
 }
 
+static inline bool hdd_tsf_is_in_cap(hdd_adapter_t *adapter)
+{
+	hdd_context_t *hddctx;
+
+	hddctx = WLAN_HDD_GET_CTX(adapter);
+	if (!hddctx)
+		return false;
+
+	return qdf_atomic_read(&hddctx->cap_tsf_flag) > 0;
+}
+
+/* define 64bit plus/minus to deal with overflow */
+static inline int hdd_64bit_plus(uint64_t x, int64_t y, uint64_t *ret)
+{
+	if ((y < 0 && (-y) > x) ||
+	    (y > 0 && (y > U64_MAX - x))) {
+		*ret = 0;
+		return -EINVAL;
+	}
+
+	*ret = x + y;
+	return 0;
+}
+
+static inline int32_t hdd_get_hosttime_from_targettime(
+	hdd_adapter_t *adapter, uint64_t target_time,
+	uint64_t *host_time)
+{
+	int32_t ret = -EINVAL;
+	int64_t delta32_target;
+	bool in_cap_state;
+
+	in_cap_state = hdd_tsf_is_in_cap(adapter);
+
+	/*
+	 * To avoid check the lock when it's not capturing tsf
+	 * (the tstamp-pair won't be changed)
+	 */
+	if (in_cap_state)
+		qdf_spin_lock_bh(&adapter->host_target_sync_lock);
+
+	/* at present, target_time is only 32bit in fact */
+	delta32_target = (int64_t)((target_time & U32_MAX) -
+			(adapter->last_target_time & U32_MAX));
+
+	if (delta32_target <
+			(NORMAL_INTERVAL_TARGET - OVERFLOW_INDICATOR32))
+		delta32_target += OVERFLOW_INDICATOR32;
+	else if (delta32_target >
+			(OVERFLOW_INDICATOR32 - NORMAL_INTERVAL_TARGET))
+		delta32_target -= OVERFLOW_INDICATOR32;
+
+	ret = hdd_64bit_plus(adapter->last_host_time,
+			     HOST_TO_TARGET_TIME_RATIO * delta32_target,
+			     host_time);
+
+	if (in_cap_state)
+		qdf_spin_unlock_bh(&adapter->host_target_sync_lock);
+
+	return ret;
+}
+
 static inline uint64_t hdd_get_monotonic_host_time(void)
 {
 	struct timespec ts;
@@ -605,6 +675,31 @@ static inline void hdd_update_tsf(hdd_adapter_t *adapter, uint64_t tsf)
 	hdd_update_timestamp(adapter, tsf, 0);
 }
 
+static inline
+enum hdd_tsf_op_result hdd_netbuf_timestamp(qdf_nbuf_t netbuf,
+					    uint64_t target_time)
+{
+	hdd_adapter_t *adapter;
+	struct net_device *net_dev = netbuf->dev;
+
+	if (!net_dev)
+		return HDD_TSF_OP_FAIL;
+
+	adapter = (hdd_adapter_t *)(netdev_priv(net_dev));
+	if (adapter && adapter->magic == WLAN_HDD_ADAPTER_MAGIC &&
+	    hdd_get_th_sync_status(adapter)) {
+		uint64_t host_time;
+		int32_t ret = hdd_get_hosttime_from_targettime(adapter,
+				target_time, &host_time);
+		if (!ret) {
+			netbuf->tstamp = ns_to_ktime(host_time);
+			return HDD_TSF_OP_SUCC;
+		}
+	}
+
+	return HDD_TSF_OP_FAIL;
+}
+
 int hdd_start_tsf_sync(hdd_adapter_t *adapter)
 {
 	enum hdd_tsf_op_result ret;
@@ -639,6 +734,54 @@ int hdd_stop_tsf_sync(hdd_adapter_t *adapter)
 		return -EINVAL;
 	}
 	return 0;
+}
+
+int hdd_tx_timestamp(qdf_nbuf_t netbuf, uint64_t target_time)
+{
+	struct sock *sk = netbuf->sk;
+
+	if (!sk)
+		return -EINVAL;
+
+	if ((skb_shinfo(netbuf)->tx_flags & SKBTX_SW_TSTAMP) &&
+	    !(skb_shinfo(netbuf)->tx_flags & SKBTX_IN_PROGRESS)) {
+		struct sock_exterr_skb *serr;
+		qdf_nbuf_t new_netbuf;
+		int err;
+
+		if (hdd_netbuf_timestamp(netbuf, target_time) !=
+		    HDD_TSF_OP_SUCC)
+			return -EINVAL;
+
+		new_netbuf = qdf_nbuf_clone(netbuf);
+		if (!new_netbuf)
+			return -ENOMEM;
+
+		serr = SKB_EXT_ERR(new_netbuf);
+		memset(serr, 0, sizeof(*serr));
+		serr->ee.ee_errno = ENOMSG;
+		serr->ee.ee_origin = SO_EE_ORIGIN_TIMESTAMPING;
+
+		err = sock_queue_err_skb(sk, new_netbuf);
+		if (err) {
+			qdf_nbuf_free(new_netbuf);
+			return err;
+		}
+
+		return 0;
+	}
+	return -EINVAL;
+}
+
+int hdd_rx_timestamp(qdf_nbuf_t netbuf, uint64_t target_time)
+{
+	if (hdd_netbuf_timestamp(netbuf, target_time) ==
+		HDD_TSF_OP_SUCC)
+		return 0;
+
+	/* reset tstamp when failed */
+	netbuf->tstamp = ns_to_ktime(0);
+	return -EINVAL;
 }
 
 static inline int __hdd_capture_tsf(hdd_adapter_t *adapter,

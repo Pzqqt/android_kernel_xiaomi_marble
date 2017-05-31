@@ -203,6 +203,31 @@ void hdd_tsf_notify_wlan_state_change(hdd_adapter_t *adapter,
 				      eConnectionState old_state,
 				      eConnectionState new_state);
 
+/**
+ * hdd_tx_timestamp() - time stamp TX netbuf
+ *
+ * @netbuf: pointer to a TX netbuf
+ * @target_time: TX time for the netbuf
+ *
+ * This function  get corresponding host time from target time,
+ * and time stamp the TX netbuf with this time
+ *
+ * Return: Describe the execute result of this routine
+ */
+int hdd_tx_timestamp(qdf_nbuf_t netbuf, uint64_t target_time);
+
+/**
+ * hdd_rx_timestamp() - time stamp RX netbuf
+ *
+ * @netbuf: pointer to a RX netbuf
+ * @target_time: RX time for the netbuf
+ *
+ * This function get corresponding host time from target time,
+ * and time stamp the RX netbuf with this time
+ *
+ * Return: Describe the execute result of this routine
+ */
+int hdd_rx_timestamp(qdf_nbuf_t netbuf, uint64_t target_time);
 #else
 static inline int hdd_start_tsf_sync(hdd_adapter_t *adapter)
 {
@@ -220,6 +245,18 @@ void hdd_tsf_notify_wlan_state_change(hdd_adapter_t *adapter,
 				      eConnectionState new_state)
 
 {
+}
+
+static inline
+int hdd_tx_timestamp(qdf_nbuf_t netbuf, uint64_t target_time)
+{
+	return -ENOTSUPP;
+}
+
+static inline
+int hdd_rx_timestamp(qdf_nbuf_t netbuf, uint64_t target_time)
+{
+	return -ENOTSUPP;
 }
 #endif
 
