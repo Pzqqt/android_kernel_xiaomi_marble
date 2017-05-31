@@ -4515,20 +4515,11 @@ QDF_STATUS csr_scan_for_ssid(tpAniSirGlobal mac_ctx, uint32_t session_id,
 {
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
 	uint32_t num_ssid = profile->SSIDs.numOfSSIDs;
-#ifndef NAPIER_SCAN
-	tSmeCmd *scan_cmd = NULL;
-	tCsrScanRequest *scan_req = NULL;
-	uint8_t index = 0;
-	tpCsrNeighborRoamControlInfo neighbor_roaminfo =
-		&mac_ctx->roam.neighborRoamInfo[session_id];
-	tCsrSSIDs *ssids = NULL;
-#else
 	struct scan_start_request *req;
 	struct wlan_objmgr_vdev *vdev;
-	uint8_t i, chan, num_chan = 0, str[20];
+	uint8_t i, chan, num_chan = 0, str[MAX_SSID_LEN];
 	wlan_scan_id scan_id;
 	tCsrRoamSession *session = CSR_GET_SESSION(mac_ctx, session_id);
-#endif
 
 	if (!(mac_ctx->scan.fScanEnable) && (num_ssid != 1)) {
 		sme_err(
@@ -4536,155 +4527,6 @@ QDF_STATUS csr_scan_for_ssid(tpAniSirGlobal mac_ctx, uint32_t session_id,
 			mac_ctx->scan.fScanEnable, profile->SSIDs.numOfSSIDs);
 		return status;
 	}
-
-#ifndef NAPIER_SCAN
-	scan_cmd = csr_get_command_buffer(mac_ctx);
-
-	if (!scan_cmd) {
-		sme_err("failed to allocate command buffer");
-		goto error;
-	}
-
-	qdf_mem_set(&scan_cmd->u.scanCmd, sizeof(tScanCmd), 0);
-	scan_cmd->u.scanCmd.pToRoamProfile =
-			qdf_mem_malloc(sizeof(tCsrRoamProfile));
-
-	if (NULL == scan_cmd->u.scanCmd.pToRoamProfile)
-		status = QDF_STATUS_E_NOMEM;
-	else
-		status = csr_roam_copy_profile(mac_ctx,
-					scan_cmd->u.scanCmd.pToRoamProfile,
-					profile);
-
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		goto error;
-
-	scan_cmd->u.scanCmd.roamId = roam_id;
-	scan_cmd->command = eSmeCommandScan;
-	scan_cmd->sessionId = (uint8_t) session_id;
-	scan_cmd->u.scanCmd.callback = NULL;
-	scan_cmd->u.scanCmd.pContext = NULL;
-	scan_cmd->u.scanCmd.reason = eCsrScanForSsid;
-
-	/* let it wrap around */
-	wma_get_scan_id(&scan_cmd->u.scanCmd.scanID);
-	qdf_mem_set(&scan_cmd->u.scanCmd.u.scanRequest,
-			sizeof(tCsrScanRequest), 0);
-	status = qdf_mc_timer_init(&scan_cmd->u.scanCmd.csr_scan_timer,
-			QDF_TIMER_TYPE_SW,
-			csr_scan_active_list_timeout_handle, scan_cmd);
-	scan_req = &scan_cmd->u.scanCmd.u.scanRequest;
-	scan_req->scanType = eSIR_ACTIVE_SCAN;
-	scan_req->BSSType = profile->BSSType;
-	scan_req->scan_id = scan_cmd->u.scanCmd.scanID;
-	/*
-	 * To avoid 11b rate in probe request Set p2pSearch
-	 * flag as 1 for P2P Client Mode
-	 */
-	if (QDF_P2P_CLIENT_MODE == profile->csrPersona)
-		scan_req->p2pSearch = 1;
-
-	/* Allocate memory for IE field */
-	if (profile->pAddIEScan) {
-		scan_req->pIEField =
-			qdf_mem_malloc(profile->nAddIEScanLength);
-
-		if (NULL == scan_req->pIEField)
-			status = QDF_STATUS_E_NOMEM;
-		else
-			status = QDF_STATUS_SUCCESS;
-
-		if (QDF_IS_STATUS_SUCCESS(status)) {
-			qdf_mem_copy(scan_req->pIEField,
-					profile->pAddIEScan,
-					profile->nAddIEScanLength);
-			scan_req->uIEFieldLen = profile->nAddIEScanLength;
-		} else {
-			sme_err("No memory for scanning IE fields");
-		}
-	} else
-		scan_req->uIEFieldLen = 0;
-
-	/*
-	 * For one channel be good enpugh time to receive beacon
-	 * atleast
-	 */
-	if (1 == profile->ChannelInfo.numOfChannels) {
-		if (neighbor_roaminfo->handoffReqInfo.src ==
-					FASTREASSOC) {
-			scan_req->maxChnTime =
-				MAX_ACTIVE_SCAN_FOR_ONE_CHANNEL_FASTREASSOC;
-			scan_req->minChnTime =
-				MIN_ACTIVE_SCAN_FOR_ONE_CHANNEL_FASTREASSOC;
-			/* Reset this value */
-			neighbor_roaminfo->handoffReqInfo.src = 0;
-		} else {
-			scan_req->maxChnTime =
-					MAX_ACTIVE_SCAN_FOR_ONE_CHANNEL;
-			scan_req->minChnTime =
-					MIN_ACTIVE_SCAN_FOR_ONE_CHANNEL;
-		}
-	} else {
-		scan_req->maxChnTime =
-			mac_ctx->roam.configParam.nActiveMaxChnTime;
-		scan_req->minChnTime =
-			mac_ctx->roam.configParam.nActiveMinChnTime;
-	}
-
-	if (profile->BSSIDs.numOfBSSIDs == 1)
-		qdf_copy_macaddr(&scan_req->bssid,
-				profile->BSSIDs.bssid);
-	else
-		qdf_set_macaddr_broadcast(&scan_req->bssid);
-
-	if (profile->ChannelInfo.numOfChannels) {
-		scan_req->ChannelInfo.ChannelList =
-		    qdf_mem_malloc(sizeof(*scan_req->ChannelInfo.ChannelList) *
-					profile->ChannelInfo.numOfChannels);
-
-		if (NULL == scan_req->ChannelInfo.ChannelList)
-			status = QDF_STATUS_E_NOMEM;
-		else
-			status = QDF_STATUS_SUCCESS;
-
-		scan_req->ChannelInfo.numOfChannels = 0;
-
-		if (QDF_IS_STATUS_SUCCESS(status)) {
-			csr_roam_is_channel_valid(mac_ctx,
-				profile->ChannelInfo.ChannelList[0]);
-			csr_roam_copy_channellist(mac_ctx,
-				profile, scan_cmd, index);
-		} else {
-			goto error;
-		}
-	} else {
-		scan_req->ChannelInfo.numOfChannels = 0;
-	}
-
-	if (profile->SSIDs.numOfSSIDs) {
-		scan_req->SSIDs.SSIDList =
-			qdf_mem_malloc(profile->SSIDs.numOfSSIDs *
-					sizeof(tCsrSSIDInfo));
-
-		if (NULL == scan_req->SSIDs.SSIDList)
-			status = QDF_STATUS_E_NOMEM;
-		else
-			status = QDF_STATUS_SUCCESS;
-
-		if (!QDF_IS_STATUS_SUCCESS(status))
-			goto error;
-
-		ssids = &scan_req->SSIDs;
-		ssids->numOfSSIDs =  1;
-
-		qdf_mem_copy(scan_req->SSIDs.SSIDList,
-				profile->SSIDs.SSIDList,
-				sizeof(tCsrSSIDInfo));
-	}
-
-	/* Start process the command */
-	status = csr_queue_sme_command(mac_ctx, scan_cmd, false);
-#else
 
 	session->scan_info.profile =
 			qdf_mem_malloc(sizeof(tCsrRoamProfile));
@@ -4773,14 +4615,10 @@ QDF_STATUS csr_scan_for_ssid(tpAniSirGlobal mac_ctx, uint32_t session_id,
 	}
 	status = ucfg_scan_start(req);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
-#endif
 error:
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sme_err("failed to initiate scan with status: %d", status);
-#ifndef NAPIER_SCAN
-		if (scan_cmd)
-			csr_release_command(mac_ctx, scan_cmd);
-#endif
+
 		if (notify)
 			csr_roam_call_callback(mac_ctx, session_id, NULL,
 					roam_id, eCSR_ROAM_FAILED,
