@@ -1589,6 +1589,21 @@ QDF_STATUS wma_process_hal_pwr_dbg_cmd(WMA_HANDLE handle,
 	return status;
 }
 
+static void wma_discard_fw_event(struct scheduler_msg *msg)
+{
+	switch (msg->type) {
+	case WMA_PROCESS_FW_EVENT:
+		qdf_nbuf_free(((wma_process_fw_event_params *)msg->bodyptr)
+				->evt_buf);
+		break;
+	}
+	if (msg->bodyptr)
+		qdf_mem_free(msg->bodyptr);
+	msg->bodyptr = NULL;
+	msg->bodyval = 0;
+	msg->type = 0;
+}
+
 /**
  * wma_process_fw_event_handler() - common event handler to serialize
  *                                  event processing through mc_thread
@@ -1616,6 +1631,7 @@ static int wma_process_fw_event_mc_thread_ctx(void *ctx, void *ev)
 	cds_msg.type = WMA_PROCESS_FW_EVENT;
 	cds_msg.bodyptr = params_buf;
 	cds_msg.bodyval = 0;
+	cds_msg.flush_callback = wma_discard_fw_event;
 
 	if (QDF_STATUS_SUCCESS !=
 		scheduler_post_msg(QDF_MODULE_ID_WMA, &cds_msg)) {
