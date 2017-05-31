@@ -91,6 +91,8 @@
 
 #define FRAGMENT_SIZE 3072
 
+#define MAX_PRINT_FAILURE_CNT 50
+
 #define WMA_INVALID_VDEV_ID                             0xFF
 #define MAX_MEM_CHUNKS                                  32
 #define WMA_MAX_VDEV_SIZE                               20
@@ -1517,6 +1519,7 @@ typedef struct {
 	tp_wma_packetdump_cb wma_mgmt_tx_packetdump_cb;
 	tp_wma_packetdump_cb wma_mgmt_rx_packetdump_cb;
 	tSirLLStatsResults *link_stats_results;
+	uint64_t tx_fail_cnt;
 #ifdef WLAN_FEATURE_11AX
 	struct he_capability he_cap;
 #endif
