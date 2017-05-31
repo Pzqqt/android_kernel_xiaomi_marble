@@ -34,6 +34,8 @@
 #include "wlan_crypto_param_handling_i.h"
 #include "wlan_crypto_obj_mgr_i.h"
 
+#include <qdf_module.h>
+
 
 const struct wlan_crypto_cipher *wlan_crypto_cipher_ops[WLAN_CRYPTO_CIPHER_MAX];
 
@@ -143,29 +145,20 @@ QDF_STATUS wlan_crypto_set_param(struct wlan_objmgr_vdev *vdev,
 }
 
 /**
- * wlan_crypto_get_param - called by ucfg to get crypto param
+ * wlan_crypto_get_param_value - called by crypto APIs to get value for param
  *
- * @vdev: vdev
- * @param: param to be get.
+ * @param: Crypto param type
+ * @crypto_params: Crypto params struct
  *
- * This function gets called from ucfg to get param
+ * This function gets called from in-within crypto layer
  *
  * Return: value or -1 for failure
  */
-int32_t wlan_crypto_get_param(struct wlan_objmgr_vdev *vdev,
-				wlan_crypto_param_type param){
+static int32_t wlan_crypto_get_param_value(wlan_crypto_param_type param,
+				struct wlan_crypto_params *crypto_params)
+{
 	int32_t value = -1;
-	struct wlan_crypto_comp_priv *crypto_priv;
-	struct wlan_crypto_params *crypto_params;
-	crypto_priv = (struct wlan_crypto_comp_priv *)
-				wlan_get_vdev_crypto_obj(vdev);
 
-	if (crypto_priv == NULL) {
-		qdf_print("%s[%d] crypto_priv NULL\n", __func__, __LINE__);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	crypto_params = &(crypto_priv->crypto_params);
 	switch (param) {
 	case WLAN_CRYPTO_PARAM_AUTH_MODE:
 		value = wlan_crypto_get_authmode(crypto_params);
@@ -194,6 +187,71 @@ int32_t wlan_crypto_get_param(struct wlan_objmgr_vdev *vdev,
 
 	return value;
 }
+
+int32_t wlan_crypto_get_param(struct wlan_objmgr_vdev *vdev,
+			      wlan_crypto_param_type param)
+{
+	int32_t value = -1;
+	struct wlan_crypto_comp_priv *crypto_priv;
+	struct wlan_crypto_params *crypto_params;
+	crypto_priv = (struct wlan_crypto_comp_priv *)
+				wlan_get_vdev_crypto_obj(vdev);
+
+	if (crypto_priv == NULL) {
+		qdf_print("%s[%d] crypto_priv NULL\n", __func__, __LINE__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	crypto_params = &(crypto_priv->crypto_params);
+	value = wlan_crypto_get_param_value(param, crypto_params);
+
+	return value;
+}
+
+int32_t wlan_crypto_get_peer_param(struct wlan_objmgr_peer *peer,
+				   wlan_crypto_param_type param)
+{
+	int32_t value = -1;
+	struct wlan_crypto_comp_priv *crypto_priv;
+	struct wlan_crypto_params *crypto_params;
+
+	crypto_params = wlan_crypto_peer_get_comp_params(peer,
+							&crypto_priv);
+
+	if (crypto_params == NULL) {
+		qdf_print("%s[%d] crypto_params NULL\n", __func__, __LINE__);
+		return QDF_STATUS_E_INVAL;
+	}
+	value = wlan_crypto_get_param_value(param, crypto_params);
+
+	return value;
+}
+
+uint8_t wlan_crypto_is_htallowed(struct wlan_objmgr_vdev *vdev,
+				 struct wlan_objmgr_peer *peer)
+{
+	int32_t ucast_cipher;
+
+	if (!(vdev || peer)) {
+		qdf_print("%s[%d] Invalid params\n", __func__, __LINE__);
+		return 0;
+	}
+
+	if (vdev)
+		ucast_cipher = wlan_crypto_get_param(vdev,
+				WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+	else
+		ucast_cipher = wlan_crypto_get_peer_param(peer,
+				WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+
+	return (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_WEP)) ||
+		((ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_TKIP)) &&
+		!(ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_AES_CCM)) &&
+		!(ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_AES_GCM)) &&
+		!(ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_AES_GCM_256)) &&
+		!(ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_AES_CCM_256)));
+}
+qdf_export_symbol(wlan_crypto_is_htallowed);
 
 static void  initialize_send_iv(uint8_t *iv, uint8_t *init_iv)
 {
@@ -573,9 +631,9 @@ QDF_STATUS wlan_crypto_delkey(struct wlan_objmgr_vdev *vdev,
 	uint8_t bssid_mac[WLAN_ALEN] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
 	if (!vdev || !macaddr || (key_idx >= WLAN_CRYPTO_MAXKEYIDX)) {
-		qdf_print("%s[%d] Invalid params vdev %p, macaddr %p keyidx %d",
-				__func__, __LINE__, vdev,
-				macaddr, key_idx);
+		qdf_print("%s[%d] Invalid params vdev %p, macaddr %p keyidx %d\n",
+			  __func__, __LINE__, vdev,
+			  macaddr, key_idx);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -673,9 +731,8 @@ QDF_STATUS wlan_crypto_default_key(struct wlan_objmgr_vdev *vdev,
 	wlan_vdev_obj_unlock(vdev);
 
 	if (!vdev || !macaddr || (key_idx >= WLAN_CRYPTO_MAXKEYIDX)) {
-		qdf_print("%s[%d] Invalid params vdev %p, macaddr %p keyidx %d",
-				__func__, __LINE__, vdev,
-				macaddr, key_idx);
+		qdf_print("%s[%d] Invalid params vdev %p, macaddr %p keyidx %d\n",
+			  __func__, __LINE__, vdev, macaddr, key_idx);
 		return QDF_STATUS_E_INVAL;
 	}
 	if (qdf_is_macaddr_broadcast((struct qdf_mac_addr *)macaddr)) {
