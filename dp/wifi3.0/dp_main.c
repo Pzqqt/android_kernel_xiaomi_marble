@@ -1175,6 +1175,7 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	TAILQ_INIT(&pdev->vdev_list);
 	pdev->vdev_count = 0;
 
+	qdf_spinlock_create(&pdev->tx_mutex);
 	qdf_spinlock_create(&pdev->neighbour_peer_mutex);
 	TAILQ_INIT(&pdev->neighbour_peers_list);
 
@@ -1370,6 +1371,7 @@ static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force)
 	dp_rx_pdev_mon_detach(pdev);
 
 	dp_neighbour_peers_detach(pdev);
+	qdf_spinlock_destroy(&pdev->tx_mutex);
 
 	/* Setup per PDEV REO rings if configured */
 	if (wlan_cfg_per_pdev_rx_ring(soc->wlan_cfg_ctx)) {
