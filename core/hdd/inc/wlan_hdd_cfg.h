@@ -66,6 +66,29 @@
 #define MAX_CFG_INI_ITEMS   1024
 
 /* Defines for all of the things we read from the configuration (registry). */
+/*
+ * <ini>
+ * gEnableConnectedScan - Will enable or disable scan in connected state
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable or disable the scanning in
+ * Connected state
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: External
+ *
+ * <ini>
+ */
+
+#define CFG_ENABLE_CONNECTED_SCAN_NAME        "gEnableConnectedScan"
+#define CFG_ENABLE_CONNECTED_SCAN_MIN         (0)
+#define CFG_ENABLE_CONNECTED_SCAN_MAX         (1)
+#define CFG_ENABLE_CONNECTED_SCAN_DEFAULT     (1)
 
 /*
  * <ini>
@@ -10231,6 +10254,7 @@ struct hdd_config {
 	DECLARE_BITMAP(bExplicitCfg, MAX_CFG_INI_ITEMS);
 
 	/* Config parameters */
+	bool enable_connected_scan;
 	uint32_t RTSThreshold;
 	uint32_t FragmentationThreshold;
 	uint8_t OperatingChannel;

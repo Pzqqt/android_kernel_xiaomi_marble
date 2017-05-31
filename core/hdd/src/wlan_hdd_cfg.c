@@ -329,6 +329,13 @@ cb_notify_set_roam_scan_hi_rssi_scan_params(hdd_context_t *hdd_ctx,
 
 
 struct reg_table_entry g_registry_table[] = {
+	REG_VARIABLE(CFG_ENABLE_CONNECTED_SCAN_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, enable_connected_scan,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_ENABLE_CONNECTED_SCAN_DEFAULT,
+		     CFG_ENABLE_CONNECTED_SCAN_MIN,
+		     CFG_ENABLE_CONNECTED_SCAN_MAX),
+
 	REG_VARIABLE(CFG_RTS_THRESHOLD_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, RTSThreshold,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -5915,6 +5922,9 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	hdd_debug("Name = [%s] value = [%u]",
 		 CFG_FORCE_1X1_NAME,
 		 pHddCtx->config->is_force_1x1);
+	hdd_info("Name = [%s] Value = %u",
+		CFG_ENABLE_CONNECTED_SCAN_NAME,
+		pHddCtx->config->enable_connected_scan);
 }
 
 
