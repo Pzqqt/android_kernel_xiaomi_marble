@@ -11033,6 +11033,7 @@ int sme_update_ht_config(tHalHandle hHal, uint8_t sessionId, uint16_t htCapab,
 		break;
 	}
 
+	csr_roam_update_config(pMac, sessionId, htCapab, value);
 	return 0;
 }
 

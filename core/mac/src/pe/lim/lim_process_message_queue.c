@@ -1394,6 +1394,7 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 	case eWNI_SME_SET_DUAL_MAC_CFG_REQ:
 	case eWNI_SME_SET_ANTENNA_MODE_REQ:
 	case eWNI_SME_UPDATE_ACCESS_POLICY_VENDOR_IE:
+	case eWNI_SME_UPDATE_CONFIG:
 		/* These messages are from HDD. Need to respond to HDD */
 		lim_process_normal_hdd_msg(mac_ctx, msg, true);
 		break;
