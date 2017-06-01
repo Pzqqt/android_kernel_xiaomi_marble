@@ -1488,12 +1488,13 @@ QDF_STATUS sme_get_beacon_frm(tHalHandle hal, tCsrRoamProfile *profile,
  * @bssid: bssid to look for in scan cache
  * @channel: channel on which reassoc should be send
  * @vdev_id: vdev id
+ * @connected_bssid: bssid of currently connected profile
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS sme_fast_reassoc(tHalHandle hal, tCsrRoamProfile *profile,
 			    const tSirMacAddr bssid, int channel,
-			    uint8_t vdev_id);
+			    uint8_t vdev_id, const tSirMacAddr connected_bssid);
 
 /**
  * sme_congestion_register_callback(): registers congestion callback

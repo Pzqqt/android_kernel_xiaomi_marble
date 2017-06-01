@@ -802,10 +802,16 @@ void hdd_wma_send_fastreassoc_cmd(struct hdd_adapter *adapter,
 				const tSirMacAddr bssid, int channel)
 {
 	hdd_wext_state_t *wext_state = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
+	struct hdd_station_ctx *hdd_sta_ctx =
+			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	tCsrRoamProfile *profile = &wext_state->roamProfile;
+	tSirMacAddr connected_bssid;
 
+	qdf_mem_copy(connected_bssid, hdd_sta_ctx->conn_info.bssId.bytes,
+		     ETH_ALEN);
 	sme_fast_reassoc(WLAN_HDD_GET_HAL_CTX(adapter),
-			 profile, bssid, channel, adapter->sessionId);
+			 profile, bssid, channel, adapter->sessionId,
+			 connected_bssid);
 }
 #endif
 
