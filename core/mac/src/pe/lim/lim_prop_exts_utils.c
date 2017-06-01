@@ -205,6 +205,16 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 		pe_debug("For special ap, NSS: %d", session->nss);
 	}
 
+	if (session->nss > lim_get_nss_supported_by_beacon(beacon_struct,
+	    session)) {
+		session->nss = lim_get_nss_supported_by_beacon(beacon_struct,
+							       session);
+		session->vdev_nss = session->nss;
+	}
+
+	if (session->nss == 1)
+		session->supported_nss_1x1 = true;
+
 	if (beacon_struct->wmeInfoPresent ||
 	    beacon_struct->wmeEdcaPresent ||
 	    beacon_struct->HTCaps.present)
