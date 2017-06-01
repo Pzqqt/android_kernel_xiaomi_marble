@@ -1874,8 +1874,10 @@ static int hif_post_recv_buffers_for_pipe(struct HIF_CE_pipe_info *pipe_info)
 
 /*
  * Try to post all desired receive buffers for all pipes.
- * returns 0 as oom_allocation_work will be scheduled
- * to recover any failures.
+ * Returns 0 for non fastpath rx copy engine as
+ * oom_allocation_work will be scheduled to recover any
+ * failures, non-zero if unable to completely replenish
+ * receive buffers for fastpath rx Copy engine.
  */
 static int hif_post_recv_buffers(struct hif_softc *scn)
 {
@@ -1894,9 +1896,15 @@ static int hif_post_recv_buffers(struct hif_softc *scn)
 		    ce_state && (ce_state->htt_rx_data))
 			continue;
 
-		hif_post_recv_buffers_for_pipe(pipe_info);
+		if (hif_post_recv_buffers_for_pipe(pipe_info) &&
+			ce_state->htt_rx_data &&
+			scn->fastpath_mode_on) {
+			rv = 1;
+			goto done;
+		}
 	}
 
+done:
 	A_TARGET_ACCESS_UNLIKELY(scn);
 
 	return rv;
@@ -1955,9 +1963,11 @@ static void hif_recv_buffer_cleanup_on_pipe(struct HIF_CE_pipe_info *pipe_info)
 	while (ce_revoke_recv_next
 		       (ce_hdl, &per_CE_context, (void **)&netbuf,
 			&CE_data) == QDF_STATUS_SUCCESS) {
-		qdf_nbuf_unmap_single(scn->qdf_dev, netbuf,
-				      QDF_DMA_FROM_DEVICE);
-		qdf_nbuf_free(netbuf);
+		if (netbuf) {
+			qdf_nbuf_unmap_single(scn->qdf_dev, netbuf,
+					      QDF_DMA_FROM_DEVICE);
+			qdf_nbuf_free(netbuf);
+		}
 	}
 }
 
