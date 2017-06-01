@@ -16510,13 +16510,15 @@ static QDF_STATUS extract_pdev_utf_event_tlv(wmi_unified_t wmi_handle,
 			     struct wmi_host_pdev_utf_event *event)
 {
 	WMI_PDEV_UTF_EVENTID_param_tlvs *param_buf;
+	struct wmi_host_utf_seg_header_info *seg_hdr;
 
 	param_buf = (WMI_PDEV_UTF_EVENTID_param_tlvs *)evt_buf;
 	event->data = param_buf->data;
 	event->datalen = param_buf->num_data;
+	seg_hdr = (struct wmi_host_utf_seg_header_info *)param_buf->data;
 	/* Set pdev_id=1 until FW adds support to include pdev_id */
 	event->pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host(
-							WMI_PDEV_ID_1ST);
+							seg_hdr->pdev_id);
 
 	return QDF_STATUS_SUCCESS;
 }
