@@ -8201,6 +8201,8 @@ PREPACK struct htt_txq_group {
 #define HTT_TX_COMPL_IND_NUM_M         0x00ff0000
 #define HTT_TX_COMPL_IND_APPEND_S      24
 #define HTT_TX_COMPL_IND_APPEND_M      0x01000000
+#define HTT_TX_COMPL_IND_APPEND1_S     25
+#define HTT_TX_COMPL_IND_APPEND1_M     0x02000000
 
 #define HTT_TX_COMPL_IND_STATUS_SET(_info, _val)                        \
 	do {								\
