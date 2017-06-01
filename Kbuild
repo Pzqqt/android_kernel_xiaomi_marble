@@ -372,6 +372,11 @@ HAVE_CFG80211 := 0
 endif
 endif
 
+# enable unit-test suspend for SLUB debug builds
+ifeq ($(CONFIG_SLUB_DEBUG_ON), y)
+	CONFIG_FEATURE_UNIT_TEST_SUSPEND := 1
+endif
+
 ############ UAPI ############
 UAPI_DIR :=	uapi
 UAPI_INC :=	-I$(WLAN_ROOT)/$(UAPI_DIR)/linux
@@ -1263,6 +1268,10 @@ ifeq ($(CONFIG_WLAN_NAPI), y)
 HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_napi.o
 endif
 
+ifeq ($(CONFIG_FEATURE_UNIT_TEST_SUSPEND), 1)
+	HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_unit_test_suspend.o
+endif
+
 HIF_PCIE_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_PCIE_DIR)/if_pci.o
 HIF_SNOC_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_SNOC_DIR)/if_snoc.o
 HIF_SDIO_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_SDIO_DIR)/if_sdio.o
@@ -1650,11 +1659,14 @@ CDEFINES +=	-DWLAN_DEBUG \
 		-DPE_DEBUG_LOGE
 endif
 
+ifeq ($(CONFIG_FEATURE_UNIT_TEST_SUSPEND), 1)
+	CDEFINES += -DWLAN_SUSPEND_RESUME_TEST
+endif
+
 ifeq ($(CONFIG_SLUB_DEBUG_ON),y)
 CDEFINES += -DTIMER_MANAGER
 CDEFINES += -DMEMORY_DEBUG
 CDEFINES += -DCONFIG_HALT_KMEMLEAK
-CDEFINES += -DWLAN_SUSPEND_RESUME_TEST
 endif
 
 ifeq ($(HAVE_CFG80211),1)

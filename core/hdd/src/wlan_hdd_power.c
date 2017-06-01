@@ -72,6 +72,7 @@
 #include <wma_types.h>
 #include <ol_txrx_osif_api.h>
 #include "hif.h"
+#include "hif_unit_test_suspend.h"
 #include "sme_power_save_api.h"
 #include "wlan_policy_mgr_api.h"
 #include "cdp_txrx_flow_ctrl_v2.h"
@@ -2336,7 +2337,7 @@ static void __hdd_wlan_fake_apps_resume(struct wiphy *wiphy,
 	struct hif_opaque_softc *hif_ctx;
 	qdf_device_t qdf_dev;
 
-	hdd_debug("Unit-test resume WLAN");
+	hdd_info("Unit-test resume WLAN");
 
 	qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	if (!qdf_dev) {
@@ -2352,7 +2353,7 @@ static void __hdd_wlan_fake_apps_resume(struct wiphy *wiphy,
 	}
 
 	if (!test_and_clear_bit(HDD_FA_SUSPENDED_BIT, &fake_apps_state)) {
-		hdd_debug("Not unit-test suspended; Nothing to do");
+		hdd_alert("Not unit-test suspended; Nothing to do");
 		return;
 	}
 
@@ -2373,21 +2374,20 @@ static void __hdd_wlan_fake_apps_resume(struct wiphy *wiphy,
 
 	dev->watchdog_timeo = HDD_TX_TIMEOUT;
 
-	hdd_debug("Unit-test resume succeeded");
+	hdd_alert("Unit-test resume succeeded");
 }
 
 /**
  * hdd_wlan_fake_apps_resume_irq_callback() - Irq callback function for resuming
  *	from unit-test initiated suspend from irq wakeup signal
- * @val: interrupt val
  *
  * Resume wlan after getting very 1st CE interrupt from target
  *
  * Return: none
  */
-static void hdd_wlan_fake_apps_resume_irq_callback(uint32_t val)
+static void hdd_wlan_fake_apps_resume_irq_callback(void)
 {
-	hdd_debug("Trigger unit-test resume WLAN; val: 0x%x", val);
+	hdd_info("Trigger unit-test resume WLAN");
 
 	QDF_BUG(g_wiphy);
 	QDF_BUG(g_dev);
@@ -2409,7 +2409,7 @@ int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy, struct net_device *dev,
 		.resume_trigger = resume_setting
 	};
 
-	hdd_debug("Unit-test suspend WLAN");
+	hdd_info("Unit-test suspend WLAN");
 
 	if (pause_setting < WOW_INTERFACE_PAUSE_DEFAULT ||
 	    pause_setting >= WOW_INTERFACE_PAUSE_COUNT) {
@@ -2438,7 +2438,7 @@ int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy, struct net_device *dev,
 	}
 
 	if (test_and_set_bit(HDD_FA_SUSPENDED_BIT, &fake_apps_state)) {
-		hdd_debug("Already unit-test suspended; Nothing to do");
+		hdd_alert("Already unit-test suspended; Nothing to do");
 		return 0;
 	}
 
@@ -2467,7 +2467,7 @@ int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy, struct net_device *dev,
 	g_wiphy = wiphy;
 	g_dev = dev;
 	g_resume_trigger = resume_setting;
-	hif_fake_apps_suspend(hif_ctx, hdd_wlan_fake_apps_resume_irq_callback);
+	hif_ut_apps_suspend(hif_ctx, hdd_wlan_fake_apps_resume_irq_callback);
 
 	/* re-enable wake irq */
 	errno = hif_apps_wake_irq_enable(hif_ctx);
@@ -2480,12 +2480,12 @@ int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy, struct net_device *dev,
 	 */
 	dev->watchdog_timeo = INT_MAX;
 
-	hdd_debug("Unit-test suspend succeeded");
+	hdd_alert("Unit-test suspend succeeded");
 
 	return 0;
 
 fake_apps_resume:
-	hif_fake_apps_resume(hif_ctx);
+	hif_ut_apps_resume(hif_ctx);
 
 enable_irqs:
 	QDF_BUG(!hif_apps_irqs_enable(hif_ctx));
@@ -2515,7 +2515,7 @@ int hdd_wlan_fake_apps_resume(struct wiphy *wiphy, struct net_device *dev)
 		return -EINVAL;
 	}
 
-	hif_fake_apps_resume(hif_ctx);
+	hif_ut_apps_resume(hif_ctx);
 	__hdd_wlan_fake_apps_resume(wiphy, dev);
 
 	return 0;
