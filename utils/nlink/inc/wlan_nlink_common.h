@@ -38,8 +38,12 @@
 #define WLAN_NLINK_COMMON_H__
 
 #include <linux/netlink.h>
-#include <linux/if.h>
 
+#ifdef __KERNEL__
+#include <linux/if.h>
+#else
+#include <net/if.h>
+#endif
 
 /*---------------------------------------------------------------------------
  * External Functions
