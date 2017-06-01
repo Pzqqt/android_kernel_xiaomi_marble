@@ -7106,11 +7106,28 @@ enum WMI_HOST_CALIBRATION_STATUS {
  * struct wmi_host_pdev_utf_event - Host defined struct to hold utf event data
  * @data:        Pointer to data
  * @datalen:     Data length
+ * @pdev_id:     Pdev_id of data
  *
  */
 struct wmi_host_pdev_utf_event {
 	uint8_t *data;
 	uint16_t datalen;
+	uint32_t pdev_id;
+};
+
+/**
+ * struct wmi_host_utf_seg_header_info - Host defined struct to map seg info in
+ *                         UTF event
+ * @len:        segment length
+ * @msgref:     message reference
+ * @segment_info: segment info
+ * @pdev_id:  pdev_id
+ *
+ */
+struct wmi_host_utf_seg_header_info {
+	uint32_t len;
+	uint32_t msgref;
+	uint32_t segment_info;
 	uint32_t pdev_id;
 };
 
