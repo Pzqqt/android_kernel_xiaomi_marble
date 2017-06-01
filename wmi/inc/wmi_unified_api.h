@@ -571,12 +571,9 @@ QDF_STATUS wmi_unified_set_sta_keep_alive_cmd(void *wmi_hdl,
 QDF_STATUS wmi_unified_vdev_set_gtx_cfg_cmd(void *wmi_hdl, uint32_t if_id,
 				  struct wmi_gtx_config *gtx_info);
 
-#ifdef CONFIG_MCL
 QDF_STATUS wmi_unified_process_update_edca_param(void *wmi_hdl,
 		     uint8_t vdev_id,
-		     wmi_wmm_vparams gwmm_param[WMI_MAX_NUM_AC]);
-#endif
-
+		     struct wmi_host_wme_vparams wmm_vparams[WMI_MAX_NUM_AC]);
 
 QDF_STATUS wmi_unified_probe_rsp_tmpl_send_cmd(void *wmi_hdl,
 		   uint8_t vdev_id,

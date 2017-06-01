@@ -4048,6 +4048,27 @@ struct wmm_update_params {
 };
 
 /**
+ * struct wmi_host_wmevParams - WME params
+ * @wmep_acm: ACM paramete
+ * @wmep_aifsn:	AIFSN parameters
+ * @wmep_logcwmin: cwmin in exponential form
+ * @wmep_logcwmax: cwmax in exponential form
+ * @wmep_txopLimit: txopLimit
+ * @wmep_noackPolicy: No-Ack Policy: 0=ack, 1=no-ack
+ */
+struct wmi_host_wme_vparams {
+	u_int32_t	acm;
+	u_int32_t	aifs;
+	u_int32_t	cwmin;
+	u_int32_t	cwmax;
+	union {
+		u_int32_t txoplimit;
+		u_int32_t mu_edca_timer;
+	};
+	u_int32_t	noackpolicy;
+};
+
+/**
  * struct ant_switch_tbl_params - Antenna switch table params
  * @ant_ctrl_common1: ANtenna control common param 1
  * @ant_ctrl_common2: Antenna control commn param 2
