@@ -499,7 +499,7 @@ QDF_STATUS sme_enable_sta_ps_check(tpAniSirGlobal mac_ctx, uint32_t session_id)
 
 	/* Check whether the given session is Infra and in Connected State */
 	if (!csr_is_conn_state_connected_infra(mac_ctx, session_id)) {
-		sme_err("STA not infra/connected state Session_id: %d",
+		sme_debug("STA not infra/connected state Session_id: %d",
 				session_id);
 		return QDF_STATUS_E_FAILURE;
 	}

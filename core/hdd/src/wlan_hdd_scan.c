@@ -1720,7 +1720,7 @@ static int __wlan_hdd_vendor_abort_scan(
 	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
 #ifndef NAPIER_SCAN
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_SCAN_MAX + 1];
-	uint32_t scan_id;
+	uint32_t scan_id = 0;
 	uint64_t cookie;
 #endif
 	int ret;
