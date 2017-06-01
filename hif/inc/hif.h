@@ -853,12 +853,6 @@ int hif_bus_reset_resume(struct hif_opaque_softc *hif_ctx);
 void hif_set_attribute(struct hif_opaque_softc *osc, uint8_t hif_attrib);
 
 void *hif_get_lro_info(int ctx_id, struct hif_opaque_softc *hif_hdl);
-#ifdef WLAN_SUSPEND_RESUME_TEST
-typedef void (*hif_fake_resume_callback)(uint32_t val);
-void hif_fake_apps_suspend(struct hif_opaque_softc *hif_ctx,
-			   hif_fake_resume_callback callback);
-void hif_fake_apps_resume(struct hif_opaque_softc *hif_ctx);
-#endif
 
 uint32_t hif_register_ext_group_int_handler(struct hif_opaque_softc *hif_ctx,
 		uint32_t numirq, uint32_t irq[], ext_intr_handler handler,

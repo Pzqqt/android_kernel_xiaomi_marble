@@ -50,6 +50,7 @@
 #include "hal_api.h"
 #endif
 #include "hif_napi.h"
+#include "hif_unit_test_suspend_i.h"
 
 void hif_dump(struct hif_opaque_softc *hif_ctx, uint8_t cmd_id, bool start)
 {
@@ -533,6 +534,8 @@ QDF_STATUS hif_enable(struct hif_opaque_softc *hif_ctx, struct device *dev,
 		status = QDF_STATUS_E_FAILURE;
 		return status;
 	}
+
+	hif_ut_suspend_init(scn);
 
 	/*
 	 * Flag to avoid potential unallocated memory access from MSI

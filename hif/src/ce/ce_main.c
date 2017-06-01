@@ -2415,16 +2415,6 @@ static inline void hif_post_static_buf_to_target(struct hif_softc *scn)
 }
 #endif
 
-#ifdef WLAN_SUSPEND_RESUME_TEST
-static void hif_fake_apps_init_ctx(struct hif_softc *scn)
-{
-	INIT_WORK(&scn->fake_apps_ctx.resume_work,
-		  hif_fake_apps_resume_work);
-}
-#else
-static inline void hif_fake_apps_init_ctx(struct hif_softc *scn) {}
-#endif
-
 /**
  * hif_config_ce() - configure copy engines
  * @scn: hif context
@@ -2511,7 +2501,6 @@ int hif_config_ce(struct hif_softc *scn)
 	HIF_DBG("%s: ce_init done", __func__);
 
 	init_tasklet_workers(hif_hdl);
-	hif_fake_apps_init_ctx(scn);
 
 	HIF_DBG("%s: X, ret = %d", __func__, rv);
 

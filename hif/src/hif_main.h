@@ -47,6 +47,7 @@
 #include "cepci.h"
 #include "hif.h"
 #include "multibus.h"
+#include "hif_unit_test_suspend_i.h"
 
 #define HIF_MIN_SLEEP_INACTIVITY_TIME_MS     50
 #define HIF_SLEEP_INACTIVITY_TIMER_PERIOD_MS 60
@@ -118,20 +119,6 @@ struct hif_ce_stats {
 	int ce_ring_delta_fail_count;
 };
 
-#ifdef WLAN_SUSPEND_RESUME_TEST
-struct fake_apps_context {
-	unsigned long state;
-	hif_fake_resume_callback resume_callback;
-	struct work_struct resume_work;
-};
-
-enum hif_fake_apps_state_bits {
-	HIF_FA_SUSPENDED_BIT = 0
-};
-
-void hif_fake_apps_resume_work(struct work_struct *work);
-#endif /* WLAN_SUSPEND_RESUME_TEST */
-
 struct hif_softc {
 	struct hif_opaque_softc osc;
 	struct hif_config_info hif_config;
@@ -178,9 +165,7 @@ struct hif_softc {
 	uint32_t nss_wifi_ol_mode;
 #endif
 	void *hal_soc;
-#ifdef WLAN_SUSPEND_RESUME_TEST
-	struct fake_apps_context fake_apps_ctx;
-#endif /* WLAN_SUSPEND_RESUME_TEST */
+	struct hif_ut_suspend_context ut_suspend_ctx;
 	uint32_t hif_attribute;
 };
 
