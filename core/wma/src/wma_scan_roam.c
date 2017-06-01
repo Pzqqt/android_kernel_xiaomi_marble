@@ -75,6 +75,7 @@
 #include "wma_he.h"
 #include <wlan_scan_public_structs.h>
 #include <wlan_scan_ucfg_api.h>
+#include "wma_nan_datapath.h"
 
 #define WMA_MCC_MIRACAST_REST_TIME 400
 #define WMA_SCAN_ID_MASK 0x0fff
@@ -374,6 +375,14 @@ QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 					 * Disable burst scan for now.
 					 */
 					cmd->burst_duration = 0;
+				break;
+			}
+			if (wma_is_ndi_active(wma_handle)) {
+				cmd->burst_duration = wma_get_burst_duration(
+						scan_req->maxChannelTime,
+						wma_handle->miracast_value);
+				WMA_LOGD("NDI Active, Burst duration: %x",
+					cmd->burst_duration);
 				break;
 			}
 		} while (0);

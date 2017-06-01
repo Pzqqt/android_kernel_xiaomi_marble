@@ -102,6 +102,23 @@ void wma_add_bss_ndi_mode(tp_wma_handle wma, tpAddBssParams add_bss);
 void wma_delete_sta_req_ndi_mode(tp_wma_handle wma,
 					tpDeleteStaParams del_sta);
 
+/**
+ * wma_is_ndi_active() - Determines of the nan data iface is active
+ * @wma_handle: handle to wma context
+ *
+ * Returns: true if ndi active, flase otherwise
+ */
+static inline bool wma_is_ndi_active(tp_wma_handle wma_handle)
+{
+	int i;
+
+	for (i = 0; i < wma_handle->max_bssid; i++) {
+		if (wma_handle->interfaces[i].type == WMI_VDEV_TYPE_NDI &&
+				wma_handle->interfaces[i].peer_count > 0)
+			return true;
+	}
+	return false;
+}
 #else
 #define WMA_IS_VDEV_IN_NDI_MODE(intf, vdev_id) (false)
 static inline void wma_update_hdd_cfg_ndp(tp_wma_handle wma_handle,
@@ -122,6 +139,8 @@ static inline void wma_delete_sta_req_ndi_mode(tp_wma_handle wma,
 }
 static inline void wma_add_sta_ndi_mode(tp_wma_handle wma,
 					tpAddStaParams add_sta) {}
+
+static inline bool wma_is_ndi_active(tp_wma_handle wma_handle) { return false; }
 #endif /* WLAN_FEATURE_NAN_DATAPATH */
 
 #endif /* __WMA_NAN_DATAPATH_H */
