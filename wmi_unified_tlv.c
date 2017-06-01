@@ -4699,7 +4699,8 @@ static QDF_STATUS send_vdev_set_gtx_cfg_cmd_tlv(wmi_unified_t wmi_handle, uint32
 /**
  * send_process_update_edca_param_cmd_tlv() - update EDCA params
  * @wmi_handle: wmi handle
- * @edca_params: edca parameters
+ * @vdev_id: vdev id.
+ * @wmm_vparams: edca parameters
  *
  * This function updates EDCA parameters to the target
  *
@@ -4707,12 +4708,13 @@ static QDF_STATUS send_vdev_set_gtx_cfg_cmd_tlv(wmi_unified_t wmi_handle, uint32
  */
 static QDF_STATUS send_process_update_edca_param_cmd_tlv(wmi_unified_t wmi_handle,
 				    uint8_t vdev_id,
-				    wmi_wmm_vparams gwmm_param[WMI_MAX_NUM_AC])
+				    struct wmi_host_wme_vparams wmm_vparams[WMI_MAX_NUM_AC])
 {
 	uint8_t *buf_ptr;
 	wmi_buf_t buf;
 	wmi_vdev_set_wmm_params_cmd_fixed_param *cmd;
-	wmi_wmm_vparams *wmm_param, *twmm_param;
+	wmi_wmm_vparams *wmm_param;
+	struct wmi_host_wme_vparams *twmm_param;
 	int len = sizeof(*cmd);
 	int ac;
 
@@ -4733,7 +4735,7 @@ static QDF_STATUS send_process_update_edca_param_cmd_tlv(wmi_unified_t wmi_handl
 
 	for (ac = 0; ac < WMI_MAX_NUM_AC; ac++) {
 		wmm_param = (wmi_wmm_vparams *) (&cmd->wmm_params[ac]);
-		twmm_param = (wmi_wmm_vparams *) (&gwmm_param[ac]);
+		twmm_param = (struct wmi_host_wme_vparams *) (&wmm_vparams[ac]);
 		WMITLV_SET_HDR(&wmm_param->tlv_header,
 			       WMITLV_TAG_STRUC_wmi_vdev_set_wmm_params_cmd_fixed_param,
 			       WMITLV_GET_STRUCT_TLVLEN(wmi_wmm_vparams));
@@ -4742,7 +4744,7 @@ static QDF_STATUS send_process_update_edca_param_cmd_tlv(wmi_unified_t wmi_handl
 		wmm_param->aifs = twmm_param->aifs;
 		wmm_param->txoplimit = twmm_param->txoplimit;
 		wmm_param->acm = twmm_param->acm;
-		wmm_param->no_ack = twmm_param->no_ack;
+		wmm_param->no_ack = twmm_param->noackpolicy;
 	}
 
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
@@ -18805,8 +18807,6 @@ struct wmi_ops tlv_ops =  {
 	.send_get_link_speed_cmd = send_get_link_speed_cmd_tlv,
 	.send_egap_conf_params_cmd = send_egap_conf_params_cmd_tlv,
 	.send_bcn_buf_ll_cmd = send_bcn_buf_ll_cmd_tlv,
-	.send_process_update_edca_param_cmd =
-				 send_process_update_edca_param_cmd_tlv,
 	.send_roam_scan_offload_mode_cmd =
 			send_roam_scan_offload_mode_cmd_tlv,
 	.send_pktlog_wmi_send_cmd = send_pktlog_wmi_send_cmd_tlv,
@@ -18925,6 +18925,8 @@ struct wmi_ops tlv_ops =  {
 		send_thermal_mitigation_param_cmd_tlv,
 	.send_pdev_qvit_cmd = send_pdev_qvit_cmd_tlv,
 	.send_wmm_update_cmd = send_wmm_update_cmd_tlv,
+	.send_process_update_edca_param_cmd =
+				 send_process_update_edca_param_cmd_tlv,
 	.send_coex_config_cmd = send_coex_config_cmd_tlv,
 	.send_set_country_cmd = send_set_country_cmd_tlv,
 	.get_target_cap_from_service_ready = extract_service_ready_tlv,
