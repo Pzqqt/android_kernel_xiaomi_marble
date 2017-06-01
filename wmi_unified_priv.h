@@ -576,10 +576,6 @@ QDF_STATUS (*send_get_link_speed_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_egap_conf_params_cmd)(wmi_unified_t wmi_handle,
 				     wmi_ap_ps_egap_param_cmd_fixed_param *egap_params);
 
-QDF_STATUS (*send_process_update_edca_param_cmd)(wmi_unified_t wmi_handle,
-			     uint8_t vdev_id,
-			     wmi_wmm_vparams gwmm_param[WMI_MAX_NUM_AC]);
-
 QDF_STATUS (*send_bcn_buf_ll_cmd)(wmi_unified_t wmi_handle,
 			wmi_bcn_send_from_host_cmd_fixed_param * param);
 
@@ -792,6 +788,10 @@ QDF_STATUS (*send_set_vht_ie_cmd)(wmi_unified_t wmi_handle,
 
 QDF_STATUS (*send_wmm_update_cmd)(wmi_unified_t wmi_handle,
 		struct wmm_update_params *param);
+
+QDF_STATUS (*send_process_update_edca_param_cmd)(wmi_unified_t wmi_handle,
+		uint8_t vdev_id,
+		struct wmi_host_wme_vparams wmm_vparams[WMI_MAX_NUM_AC]);
 
 QDF_STATUS (*send_set_ant_switch_tbl_cmd)(wmi_unified_t wmi_handle,
 		struct ant_switch_tbl_params *param);
