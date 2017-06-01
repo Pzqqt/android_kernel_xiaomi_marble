@@ -81,9 +81,11 @@
 #ifdef CONFIG_MCL
 #define WLAN_CFG_PER_PDEV_RX_RING 0
 #define NUM_RXDMA_RINGS_PER_PDEV 2
+#define WLAN_LRO_ENABLE 1
 #else
 #define WLAN_CFG_PER_PDEV_RX_RING 1
 #define NUM_RXDMA_RINGS_PER_PDEV 1
+#define WLAN_LRO_ENABLE 0
 #endif
 
 #ifdef WLAN_RX_HASH
@@ -91,7 +93,6 @@
 #else
 #define WLAN_RX_HASH_ENABLE 0
 #endif
-#define WLAN_LRO_ENABLE 0
 
 static const int tx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
 						WLAN_CFG_TX_RING_MASK_0,

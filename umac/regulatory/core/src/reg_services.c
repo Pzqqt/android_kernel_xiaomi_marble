@@ -1716,6 +1716,7 @@ static void reg_propagate_mas_chan_list_to_pdev(struct wlan_objmgr_psoc *psoc,
 	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
 	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
 	enum direction *dir = arg;
+	struct wlan_lmac_if_reg_tx_ops *reg_tx_ops;
 
 	wlan_psoc_obj_lock(psoc);
 	psoc_priv_obj = (struct wlan_regulatory_psoc_priv_obj *)
@@ -1739,6 +1740,11 @@ static void reg_propagate_mas_chan_list_to_pdev(struct wlan_objmgr_psoc *psoc,
 			    pdev_priv_obj);
 
 	compute_pdev_current_chan_list(pdev_priv_obj);
+
+	reg_tx_ops = reg_get_psoc_tx_ops(psoc);
+	if(reg_tx_ops->fill_umac_legacy_chanlist)
+		reg_tx_ops->fill_umac_legacy_chanlist(pdev,
+				pdev_priv_obj->cur_chan_list);
 
 	if (*dir == NORTHBOUND)
 		send_scheduler_msg_nb(psoc, pdev);
@@ -2171,6 +2177,7 @@ QDF_STATUS wlan_regulatory_pdev_obj_created_notification(
 	pdev_priv_obj->range_2g_high = range_2g_high;
 	pdev_priv_obj->range_5g_low = range_5g_low;
 	pdev_priv_obj->range_5g_high = range_5g_high;
+	pdev_priv_obj->wireless_modes = reg_cap_ptr->wireless_modes;
 
 	init_pdev_chan_list(psoc_priv_obj,
 			    pdev_priv_obj);
@@ -2638,9 +2645,6 @@ QDF_STATUS reg_program_chan_list(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (soc_reg->offload_enabled)
-		return QDF_STATUS_E_FAILURE;
-
 	reg_info = (struct cur_regulatory_info *)qdf_mem_malloc
 		(sizeof(struct cur_regulatory_info));
 	if (reg_info == NULL) {
@@ -2672,15 +2676,6 @@ QDF_STATUS reg_program_chan_list(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (rd->flags == CC_IS_SET ||
-			rd->flags == ALPHA_IS_SET) {
-		soc_reg->ctry_code =
-			g_all_countries[country_index].country_code;
-	}
-
-	if (rd->flags == REGDMN_IS_SET)
-		soc_reg->reg_dmn_pair = rd->cc.regdmn_id;
-
 	reg_info->offload_enabled = false;
 	reg_process_master_chan_list(reg_info);
 
@@ -2704,9 +2699,6 @@ QDF_STATUS reg_get_current_cc(struct wlan_objmgr_psoc *psoc,
 		reg_err("reg soc is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	if (soc_reg->offload_enabled)
-		return QDF_STATUS_E_FAILURE;
 
 	if (rd->flags == CC_IS_SET) {
 		rd->cc.country_code = soc_reg->ctry_code;

@@ -211,6 +211,9 @@ static void target_if_sptrl_tx_ops_register(
 static
 QDF_STATUS target_if_register_umac_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {
+	/* call regulatory callback to register tx ops */
+	target_if_register_regulatory_tx_ops(tx_ops);
+
 	/* call umac callback to register legacy tx ops */
 	wlan_lmac_if_umac_tx_ops_register(tx_ops);
 
@@ -226,9 +229,6 @@ QDF_STATUS target_if_register_umac_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	target_if_nan_tx_ops_register(tx_ops);
 
 	target_if_dfs_tx_ops_register(tx_ops);
-
-	/* call regulatory callback to register tx ops */
-	target_if_register_regulatory_tx_ops(tx_ops);
 
 	target_if_son_tx_ops_register(tx_ops);
 

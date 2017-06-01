@@ -1874,9 +1874,8 @@ static int hif_post_recv_buffers_for_pipe(struct HIF_CE_pipe_info *pipe_info)
 
 /*
  * Try to post all desired receive buffers for all pipes.
- * Returns 0 if all desired buffers are posted,
- * non-zero if were were unable to completely
- * replenish receive buffers.
+ * returns 0 as oom_allocation_work will be scheduled
+ * to recover any failures.
  */
 static int hif_post_recv_buffers(struct hif_softc *scn)
 {
@@ -1895,13 +1894,9 @@ static int hif_post_recv_buffers(struct hif_softc *scn)
 		    ce_state && (ce_state->htt_rx_data))
 			continue;
 
-		if (hif_post_recv_buffers_for_pipe(pipe_info)) {
-			rv = 1;
-			goto done;
-		}
+		hif_post_recv_buffers_for_pipe(pipe_info);
 	}
 
-done:
 	A_TARGET_ACCESS_UNLIKELY(scn);
 
 	return rv;

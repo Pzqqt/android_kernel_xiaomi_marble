@@ -965,8 +965,6 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 		goto fail1;
 	}
 
-	dp_soc_interrupt_attach(soc);
-
 	/* Setup HW REO */
 	qdf_mem_zero(&reo_params, sizeof(reo_params));
 
@@ -1412,8 +1410,6 @@ static void dp_soc_detach_wifi3(void *txrx_soc)
 	int i;
 
 	qdf_atomic_set(&soc->cmn_init_done, 0);
-
-	dp_soc_interrupt_detach(soc);
 
 	for (i = 0; i < MAX_PDEV_CNT; i++) {
 		if (soc->pdev_list[i])
@@ -3779,6 +3775,8 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.display_stats = dp_txrx_dump_stats,
 	.txrx_soc_set_nss_cfg = dp_soc_set_nss_cfg_wifi3,
 	.txrx_soc_get_nss_cfg = dp_soc_get_nss_cfg_wifi3,
+	.txrx_intr_attach = dp_soc_interrupt_attach,
+	.txrx_intr_detach = dp_soc_interrupt_detach,
 	/* TODO: Add other functions */
 };
 

@@ -652,9 +652,7 @@ enum qca_wlan_vendor_attr_get_station_info {
  */
 
 enum qca_nl80211_vendor_subcmds_index {
-#if defined(FEATURE_WLAN_CH_AVOID) || defined(FEATURE_WLAN_FORCE_SAP_SCC)
 	QCA_NL80211_VENDOR_SUBCMD_AVOID_FREQUENCY_INDEX = 0,
-#endif /* FEATURE_WLAN_CH_AVOID || FEATURE_WLAN_FORCE_SAP_SCC */
 
 #ifdef WLAN_FEATURE_NAN
 	QCA_NL80211_VENDOR_SUBCMD_NAN_INDEX,
