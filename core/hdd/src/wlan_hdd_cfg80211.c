@@ -9540,6 +9540,15 @@ static int wlan_hdd_cfg80211_sar_convert_modulation(u32 nl80211_value,
 	return ret;
 }
 
+static const struct nla_policy
+sar_limits_policy[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SAR_ENABLE] = {.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_NUM_SPECS] = {.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_BAND] = {.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_CHAIN] = {.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_MODULATION] = {.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_POWER_LIMIT] = {.type = NLA_U32},
+};
 
 /**
  * __wlan_hdd_set_sar_power_limits() - Set SAR power limits
@@ -9574,7 +9583,7 @@ static int __wlan_hdd_set_sar_power_limits(struct wiphy *wiphy,
 		return -EINVAL;
 
 	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_MAX,
-		      data, data_len, NULL)) {
+		      data, data_len, sar_limits_policy)) {
 		hdd_err("Invalid SAR attributes");
 		return -EINVAL;
 	}
@@ -9625,7 +9634,7 @@ static int __wlan_hdd_set_sar_power_limits(struct wiphy *wiphy,
 
 		if (nla_parse(sar_spec, QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_MAX,
 			      nla_data(sar_spec_list), nla_len(sar_spec_list),
-			      NULL)) {
+			      sar_limits_policy)) {
 			hdd_err("nla_parse failed for SAR Spec list");
 			goto fail;
 		}
