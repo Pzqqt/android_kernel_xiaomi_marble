@@ -2087,6 +2087,7 @@ lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 	uint8_t tx_flag = 0;
 	uint8_t sme_sessionid = 0;
 	uint16_t ft_ies_length = 0;
+	bool challenge_req = false;
 
 	if (NULL == session) {
 		pe_err("Error: psession Entry is NULL");
@@ -2108,8 +2109,8 @@ lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 		pe_debug("Sending encrypted auth frame to " MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(peer_addr));
 
-		frame_len = sizeof(tSirMacMgmtHdr) + LIM_ENCR_AUTH_BODY_LEN;
 		body_len = LIM_ENCR_AUTH_BODY_LEN;
+		frame_len = sizeof(tSirMacMgmtHdr) + body_len;
 
 		goto alloc_packet;
 	}
@@ -2131,9 +2132,8 @@ lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 		 * and status code.
 		 */
 
-		frame_len = sizeof(tSirMacMgmtHdr) +
-			   SIR_MAC_AUTH_CHALLENGE_OFFSET;
-		body_len = SIR_MAC_AUTH_CHALLENGE_OFFSET;
+		body_len = SIR_MAC_AUTH_FRAME_INFO_LEN;
+		frame_len = sizeof(tSirMacMgmtHdr) + body_len;
 
 		if (auth_frame->authAlgoNumber == eSIR_FT_AUTH) {
 			if (NULL != session->ftPEContext.pFTPreAuthReq &&
@@ -2163,9 +2163,8 @@ lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 			 * transaction number and status code.
 			 */
 
-			frame_len = sizeof(tSirMacMgmtHdr) +
-				   SIR_MAC_AUTH_CHALLENGE_OFFSET;
-			body_len = SIR_MAC_AUTH_CHALLENGE_OFFSET;
+			body_len = SIR_MAC_AUTH_FRAME_INFO_LEN;
+			frame_len = sizeof(tSirMacMgmtHdr) + body_len;
 		} else {
 			/*
 			 * Shared Key algorithm with challenge text
@@ -2178,9 +2177,10 @@ lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 			 * for challenge text.
 			 */
 
-			frame_len = sizeof(tSirMacMgmtHdr) +
-				   sizeof(tSirMacAuthFrame);
-			body_len = sizeof(tSirMacAuthFrameBody);
+			challenge_req = true;
+			body_len = SIR_MAC_AUTH_FRAME_INFO_LEN +
+					SIR_MAC_AUTH_CHALLENGE_BODY_LEN;
+			frame_len = sizeof(tSirMacMgmtHdr) + body_len;
 		}
 		break;
 
@@ -2194,9 +2194,8 @@ lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 		 * status code.
 		 */
 
-		frame_len = sizeof(tSirMacMgmtHdr) +
-			   SIR_MAC_AUTH_CHALLENGE_OFFSET;
-		body_len = SIR_MAC_AUTH_CHALLENGE_OFFSET;
+		body_len = SIR_MAC_AUTH_FRAME_INFO_LEN;
+		frame_len = sizeof(tSirMacMgmtHdr) + body_len;
 		break;
 
 	case SIR_MAC_AUTH_FRAME_4:
@@ -2207,9 +2206,8 @@ lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 		 * status code.
 		 */
 
-		frame_len = sizeof(tSirMacMgmtHdr) +
-			   SIR_MAC_AUTH_CHALLENGE_OFFSET;
-		body_len = SIR_MAC_AUTH_CHALLENGE_OFFSET;
+		body_len = SIR_MAC_AUTH_FRAME_INFO_LEN;
+		frame_len = sizeof(tSirMacMgmtHdr) + body_len;
 
 		break;
 	default:
@@ -2265,11 +2263,29 @@ alloc_packet:
 			sir_swap_u16if_needed(auth_frame->authStatusCode);
 		body += sizeof(uint16_t);
 		body_len -= sizeof(uint16_t);
-		if (body_len <= (sizeof(auth_frame->type) +
-				sizeof(auth_frame->length) +
-				sizeof(auth_frame->challengeText)))
-			qdf_mem_copy(body, (uint8_t *) &auth_frame->type,
-				     body_len);
+
+		if (challenge_req) {
+			if (body_len < SIR_MAC_AUTH_CHALLENGE_BODY_LEN) {
+				qdf_mem_copy(body, (uint8_t *)&auth_frame->type,
+					     body_len);
+				pe_err("Incomplete challenge info: length: %d, expected: %d",
+				       body_len,
+				       SIR_MAC_AUTH_CHALLENGE_BODY_LEN);
+				body += body_len;
+				body_len = 0;
+			} else {
+				/* copy challenge IE id, len, challenge text */
+				*body = auth_frame->type;
+				body++;
+				*body = auth_frame->length;
+				body++;
+				qdf_mem_copy(body, auth_frame->challengeText,
+					     SIR_MAC_AUTH_CHALLENGE_LENGTH);
+				body += SIR_MAC_AUTH_CHALLENGE_LENGTH;
+
+				body_len -= SIR_MAC_AUTH_CHALLENGE_BODY_LEN;
+			}
+		}
 
 		if ((auth_frame->authAlgoNumber == eSIR_FT_AUTH) &&
 		    (auth_frame->authTransactionSeqNumber ==

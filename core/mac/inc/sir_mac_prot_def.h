@@ -548,7 +548,6 @@
 #define SIR_MAC_AUTH_ALGO_OFFSET             0
 #define SIR_MAC_AUTH_XACT_SEQNUM_OFFSET      2
 #define SIR_MAC_AUTH_STATUS_CODE_OFFSET      4
-#define SIR_MAC_AUTH_CHALLENGE_OFFSET        6
 
 /* / Transaction sequence number definitions (used in Authentication frames) */
 #define    SIR_MAC_AUTH_FRAME_1        1
