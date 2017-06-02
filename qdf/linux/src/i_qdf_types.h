@@ -224,7 +224,6 @@ struct __qdf_dma_map {
 	__qdf_segment_t      seg[__QDF_MAX_SCATTER];
 };
 typedef struct  __qdf_dma_map  *__qdf_dma_map_t;
-typedef uint32_t  ath_dma_addr_t;
 
 /**
  * __qdf_net_wireless_evcode - enum for event code
