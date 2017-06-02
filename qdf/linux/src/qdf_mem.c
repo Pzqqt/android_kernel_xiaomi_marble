@@ -58,8 +58,9 @@
 
 #ifdef MEMORY_DEBUG
 #include <qdf_list.h>
-qdf_list_t qdf_mem_list;
-qdf_spinlock_t qdf_mem_list_lock;
+static qdf_list_t qdf_mem_list;
+static qdf_list_t qdf_mem_trash_list;
+static qdf_spinlock_t qdf_mem_list_lock;
 
 static uint8_t WLAN_MEM_HEADER[] = { 0x61, 0x62, 0x63, 0x64, 0x65, 0x66,
 					0x67, 0x68 };
@@ -804,10 +805,29 @@ static void qdf_mem_debug_init(void)
 {
 	/* Initalizing the list with maximum size of 60000 */
 	qdf_list_create(&qdf_mem_list, 60000);
+	qdf_list_create(&qdf_mem_trash_list, 60000);
 	qdf_spinlock_create(&qdf_mem_list_lock);
 	qdf_net_buf_debug_init();
 	return;
 }
+
+#ifdef CONFIG_HALT_KMEMLEAK
+static void qdf_handle_leaked_memory(qdf_list_node_t *node)
+{
+	/* do not free the leaked memory if halt on memleak is enabled
+	 * such that leaked memory does not get poisoned and can be
+	 * used for offline debugging
+	 */
+	qdf_spin_lock(&qdf_mem_list_lock);
+	qdf_list_insert_front(&qdf_mem_trash_list, node);
+	qdf_spin_unlock(&qdf_mem_list_lock);
+}
+#else
+static void qdf_handle_leaked_memory(qdf_list_node_t *node)
+{
+	kfree((void *)node);
+}
+#endif
 
 /**
  * qdf_mem_debug_clean() - display memory leak debug info and free leaked
@@ -863,7 +883,7 @@ static void qdf_mem_debug_clean(void)
 					mleak_cnt = 0;
 				}
 				mleak_cnt++;
-				kfree((void *)mem_struct);
+				qdf_handle_leaked_memory(node);
 			}
 		} while (qdf_status == QDF_STATUS_SUCCESS);
 
