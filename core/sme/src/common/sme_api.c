@@ -15975,12 +15975,19 @@ QDF_STATUS sme_get_beacon_frm(tHalHandle hal, tCsrRoamProfile *profile,
 		goto free_scan_flter;
 	}
 
-	/*
-	 * bss_descp->length = sizeof(tSirBssDescription) - sizeof(length_field)
-	 * - sizeof(ieFields) + ie_len;
+	/**
+	 * Length of BSS descriptor is without length of
+	 * length itself and length of pointer that holds ieFields.
+	 *
+	 * tSirBssDescription
+	 * +--------+---------------------------------+---------------+
+	 * | length | other fields                    | pointer to IEs|
+	 * +--------+---------------------------------+---------------+
+	 *                                            ^
+	 *                                            ieFields
 	 */
-	ie_len = bss_descp->length - sizeof(tSirBssDescription)
-		+ sizeof(bss_descp->length) + sizeof(bss_descp->ieFields);
+	ie_len = bss_descp->length + sizeof(bss_descp->length)
+		- (uint16_t)(offsetof(tSirBssDescription, ieFields[0]));
 	sme_debug("found bss_descriptor ie_len: %d channel %d",
 					ie_len, bss_descp->channelId);
 
