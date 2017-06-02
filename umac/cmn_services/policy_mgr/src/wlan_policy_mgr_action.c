@@ -200,6 +200,14 @@ enum policy_mgr_conc_next_action policy_mgr_need_opportunistic_upgrade(
 		} else if ((pm_conc_connection_list[conn_index].mac == 1) &&
 			pm_conc_connection_list[conn_index].in_use) {
 			mac |= POLICY_MGR_MAC1;
+			if (policy_mgr_is_hw_dbs_2x2_capable(psoc) &&
+			    WLAN_REG_IS_24GHZ_CH(
+				    pm_conc_connection_list[conn_index].chan)
+			    ) {
+				qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+				policy_mgr_debug("2X2 DBS capable with 2.4 GHZ connection");
+				goto done;
+			}
 			if (POLICY_MGR_MAC0_AND_MAC1 == mac) {
 				qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 				goto done;
