@@ -343,13 +343,13 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 
 	if (!hal_rx_msdu_end_sa_is_valid_get(rx_tlv_hdr)) {
 		ret = soc->cdp_soc.ol_ops->peer_add_wds_entry(
-						soc->osif_soc,
+						ta_peer->vdev->pdev->osif_pdev,
 						wds_src_mac,
 						ta_peer->mac_addr.raw,
 						flags);
 	} else if (sa_sw_peer_id != ta_peer->peer_ids[0]) {
 		ret = soc->cdp_soc.ol_ops->peer_update_wds_entry(
-						soc->osif_soc,
+						ta_peer->vdev->pdev->osif_pdev,
 						wds_src_mac,
 						ta_peer->mac_addr.raw,
 						flags);
