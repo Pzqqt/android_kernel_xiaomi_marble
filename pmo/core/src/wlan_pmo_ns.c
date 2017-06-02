@@ -276,12 +276,6 @@ QDF_STATUS pmo_core_cache_ns_offload_req(
 		goto out;
 	}
 
-	if (ns_req->vdev_id >= WLAN_UMAC_PSOC_MAX_VDEVS) {
-		pmo_err("Invalid vdev_id: %u", ns_req->vdev_id);
-		status = QDF_STATUS_E_INVAL;
-		goto out;
-	}
-
 	vdev = pmo_psoc_get_vdev(ns_req->psoc, ns_req->vdev_id);
 	if (!vdev) {
 		pmo_err("vdev is NULL");

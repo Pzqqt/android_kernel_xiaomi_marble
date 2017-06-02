@@ -243,7 +243,7 @@ enum pmo_offload_trigger {
  * @ptrn_match_enable_all_vdev: true when pattern match is enable for all vdev
  * @bpf_enable: true if psoc supports bpf else false
  * @arp_offload_enable: true if arp offload is supported for psoc else false
- * @hw_bcast_filter: true if supports hw bcast filter in ine else flase
+ * @hw_filter_mode: which mode the hardware filter should use during DTIM
  * @ns_offload_enable_static: true if psoc supports ns offload in ini else false
  * @ns_offload_enable_dynamic: to enable / disable the ns offload using
  *    ioctl or vendor command.
@@ -269,7 +269,7 @@ struct pmo_psoc_cfg {
 	bool ptrn_match_enable_all_vdev;
 	bool bpf_enable;
 	bool arp_offload_enable;
-	bool hw_bcast_filter;
+	enum pmo_hw_filter_mode hw_filter_mode;
 	bool ns_offload_enable_static;
 	bool ns_offload_enable_dynamic;
 	bool ssdp;

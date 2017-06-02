@@ -1310,6 +1310,8 @@ static void hif_pm_runtime_close(struct hif_pci_softc *sc)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(sc);
 
+	hif_runtime_lock_deinit(GET_HIF_OPAQUE_HDL(sc),
+				sc->prevent_linkdown_lock);
 	if (qdf_atomic_read(&sc->pm_state) == HIF_PM_RUNTIME_STATE_NONE)
 		return;
 	else
@@ -4400,20 +4402,17 @@ void hif_runtime_lock_deinit(struct hif_opaque_softc *hif_ctx,
 	struct hif_pm_runtime_lock *context = data;
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
 
-	if (!sc)
-		return;
-
 	if (!context)
 		return;
-
 	/*
 	 * Ensure to delete the context list entry and reduce the usage count
 	 * before freeing the context if context is active.
 	 */
-	spin_lock_bh(&sc->runtime_lock);
-	__hif_pm_runtime_allow_suspend(sc, context);
-	spin_unlock_bh(&sc->runtime_lock);
-
+	if (sc) {
+		spin_lock_bh(&sc->runtime_lock);
+		__hif_pm_runtime_allow_suspend(sc, context);
+		spin_unlock_bh(&sc->runtime_lock);
+	}
 	qdf_mem_free(context);
 }
 #endif /* FEATURE_RUNTIME_PM */

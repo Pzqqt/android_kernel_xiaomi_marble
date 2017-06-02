@@ -504,8 +504,8 @@ QDF_STATUS (*send_enable_arp_ns_offload_cmd)(wmi_unified_t wmi_handle,
 			   struct pmo_ns_offload_params *ns_offload_req,
 			   uint8_t vdev_id);
 
-QDF_STATUS (*send_enable_broadcast_filter_cmd)(wmi_unified_t wmi_handle,
-			   uint8_t vdev_id, bool enable);
+QDF_STATUS (*send_conf_hw_filter_cmd)(wmi_unified_t wmi,
+				      struct pmo_hw_filter_params *req);
 
 QDF_STATUS (*send_enable_enhance_multicast_offload_cmd)(
 		wmi_unified_t wmi_handle,

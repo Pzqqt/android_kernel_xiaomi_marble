@@ -30,6 +30,7 @@
 #include "wlan_pmo_common_public_struct.h"
 #include "wlan_pmo_obj_mgmt_api.h"
 #include "wlan_pmo_pkt_filter_public_struct.h"
+#include "wlan_pmo_hw_filter.h"
 
 /**
  * pmo_ucfg_is_ap_mode_supports_arp_ns() - Check ap mode support arp&ns offload
@@ -183,28 +184,28 @@ QDF_STATUS pmo_ucfg_disable_ns_offload_in_fwr(struct wlan_objmgr_vdev *vdev,
 		enum pmo_offload_trigger trigger);
 
 /**
- * pmo_ucfg_enable_non_arp_bcast_filter_in_fwr(): API to enable
- * hw broadcast filter in fwr
- * @vdev: objmgr vdev param
+ * pmo_ucfg_enable_hw_filter_in_fwr() - enable previously configured hw filter
+ * @vdev: objmgr vdev to configure
  *
- *  API to enable hw broadcast filter from pmo vdev priv ctx
- *
- * Return QDF_STATUS -in case of success else return error
+ * Return: QDF_STATUS
  */
-QDF_STATUS pmo_ucfg_enable_non_arp_bcast_filter_in_fwr(
-		struct wlan_objmgr_vdev *vdev);
+static inline QDF_STATUS
+pmo_ucfg_enable_hw_filter_in_fwr(struct wlan_objmgr_vdev *vdev)
+{
+	return pmo_core_enable_hw_filter_in_fwr(vdev);
+}
 
 /**
- * pmo_ucfg_disable_non_arp_bcast_filter_in_fwr(): API to disable
- * hw broadcast filter in fwr
- * @vdev: objmgr vdev param
+ * pmo_ucfg_disable_hw_filter_in_fwr() - disable previously configured hw filter
+ * @vdev: objmgr vdev to configure
  *
- *  API to disable hw broadcast filter from pmo vdev priv ctx
- *
- * Return QDF_STATUS -in case of success else return error
+ * Return: QDF_STATUS
  */
-QDF_STATUS pmo_ucfg_disable_non_arp_bcast_filter_in_fwr(
-		struct wlan_objmgr_vdev *vdev);
+static inline QDF_STATUS
+pmo_ucfg_disable_hw_filter_in_fwr(struct wlan_objmgr_vdev *vdev)
+{
+	return pmo_core_disable_hw_filter_in_fwr(vdev);
+}
 
 /**
  * pmo_ucfg_max_mc_addr_supported() -  to get max support mc address

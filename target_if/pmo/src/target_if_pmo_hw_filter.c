@@ -25,37 +25,24 @@
 #include "target_if.h"
 #include "target_if_pmo.h"
 #include "wmi_unified_api.h"
-#include "wlan_pmo_non_arp_hwbcast_public_struct.h"
+#include "wlan_pmo_hw_filter_public_struct.h"
 
-QDF_STATUS target_if_pmo_send_non_arp_bcast_filter_req(
-		struct wlan_objmgr_vdev *vdev,
-		struct pmo_bcast_filter_params *bcast_req)
+QDF_STATUS target_if_pmo_conf_hw_filter(struct wlan_objmgr_psoc *psoc,
+					struct pmo_hw_filter_params *req)
 {
-	uint8_t vdev_id;
-	struct wlan_objmgr_psoc *psoc;
 	QDF_STATUS status;
 
-	if (!vdev) {
-		target_if_err("vdev ptr passed is NULL");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	wlan_vdev_obj_lock(vdev);
-	psoc = wlan_vdev_get_psoc(vdev);
-	vdev_id = wlan_vdev_get_id(vdev);
-	wlan_vdev_obj_unlock(vdev);
 	if (!psoc) {
-		target_if_err("psoc handle is NULL");
+		target_if_err("psoc is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
-	status = wmi_unified_configure_broadcast_filter_cmd(
-			GET_WMI_HDL_FROM_PSOC(psoc),
-			vdev_id,
-			bcast_req->enable);
+	status = wmi_unified_conf_hw_filter_cmd(
+		GET_WMI_HDL_FROM_PSOC(psoc),
+		req);
 
-	if (status != QDF_STATUS_SUCCESS)
-		target_if_err("Failed to enable HW Broadcast filter");
+	if (QDF_IS_STATUS_ERROR(status))
+		target_if_err("Failed to configure HW Filter");
 
 	return status;
 }

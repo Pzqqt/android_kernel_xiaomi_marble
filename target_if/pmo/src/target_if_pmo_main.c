@@ -36,8 +36,8 @@ void target_if_pmo_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	pmo_tx_ops = &tx_ops->pmo_tx_ops;
 	pmo_tx_ops->send_arp_offload_req =
 		target_if_pmo_send_arp_offload_req;
-	pmo_tx_ops->send_non_arp_bcast_filter_req =
-		target_if_pmo_send_non_arp_bcast_filter_req;
+	pmo_tx_ops->send_conf_hw_filter_req =
+		target_if_pmo_conf_hw_filter;
 	pmo_tx_ops->send_ns_offload_req =
 		target_if_pmo_send_ns_offload_req;
 	pmo_tx_ops->send_enable_wow_wakeup_event_req =

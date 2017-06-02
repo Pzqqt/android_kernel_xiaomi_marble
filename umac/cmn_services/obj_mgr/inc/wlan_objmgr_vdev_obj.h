@@ -15,11 +15,23 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
- /**
-  * DOC: Define the vdev data structure of UMAC
-  */
+
+/**
+ * DOC: Define the vdev data structure of UMAC
+ */
+
 #ifndef _WLAN_OBJMGR_VDEV_OBJ_H_
 #define _WLAN_OBJMGR_VDEV_OBJ_H_
+
+#include "qdf_atomic.h"
+#include "qdf_list.h"
+#include "qdf_lock.h"
+#include "qdf_types.h"
+#include "wlan_cmn.h"
+#include "wlan_objmgr_cmn.h"
+#include "wlan_objmgr_pdev_obj.h"
+#include "wlan_objmgr_psoc_obj.h"
+
 	/* CONF: privacy enabled */
 #define WLAN_VDEV_F_PRIVACY              0x00000001
 	/* CONF: 11g w/o 11b sta's */

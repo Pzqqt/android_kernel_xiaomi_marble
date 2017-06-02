@@ -239,12 +239,6 @@ QDF_STATUS pmo_core_cache_arp_offload_req(struct pmo_arp_req *arp_req)
 		goto out;
 	}
 
-	if (arp_req->vdev_id >= WLAN_UMAC_PSOC_MAX_VDEVS) {
-		pmo_err("Invalid vdev_id: %u", arp_req->vdev_id);
-		status = QDF_STATUS_E_INVAL;
-		goto out;
-	}
-
 	vdev = pmo_psoc_get_vdev(arp_req->psoc, arp_req->vdev_id);
 	if (!vdev) {
 		pmo_err("vdev is NULL");
