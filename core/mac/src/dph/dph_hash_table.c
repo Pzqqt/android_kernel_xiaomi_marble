@@ -240,7 +240,7 @@ tpDphHashNode dph_init_sta_state(tpAniSirGlobal pMac, tSirMacAddr staAddr,
 {
 	uint32_t val;
 
-	tpDphHashNode pStaDs;
+	tpDphHashNode pStaDs, pnext;
 	uint16_t staIdx = STA_INVALID_IDX;
 
 	if (assocId >= pDphHashTable->size) {
@@ -250,10 +250,11 @@ tpDphHashNode dph_init_sta_state(tpAniSirGlobal pMac, tSirMacAddr staAddr,
 
 	pStaDs = get_node(pMac, (uint8_t) assocId, pDphHashTable);
 	staIdx = pStaDs->staIndex;
+	pnext = pStaDs->next;
 
-	/* Clear the STA node except for the next pointer (last 4 bytes) */
-	qdf_mem_set((uint8_t *) pStaDs,
-		    sizeof(tDphHashNode) - sizeof(tpDphHashNode), 0);
+	/* Clear the STA node except for the next pointer */
+	qdf_mem_set((uint8_t *)pStaDs, sizeof(tDphHashNode), 0);
+	pStaDs->next = pnext;
 
 	/* Initialize the assocId */
 	pStaDs->assocId = assocId;
