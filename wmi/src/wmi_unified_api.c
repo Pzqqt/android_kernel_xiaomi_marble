@@ -5061,22 +5061,83 @@ QDF_STATUS wmi_extract_vdev_start_resp(void *wmi_hdl, void *evt_buf,
 }
 
 /**
+ * wmi_extract_tbttoffset_num_vdevs() - extract tbtt offset num vdev
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param vdev_map: Pointer to hold num vdev
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_tbttoffset_num_vdevs(void *wmi_hdl, void *evt_buf,
+					    uint32_t *num_vdevs)
+{
+	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
+
+	if (wmi->ops->extract_tbttoffset_num_vdevs)
+		return wmi->ops->extract_tbttoffset_num_vdevs(wmi,
+			evt_buf, num_vdevs);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_extract_ext_tbttoffset_num_vdevs() - extract ext tbtt offset num vdev
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param vdev_map: Pointer to hold num vdev
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_ext_tbttoffset_num_vdevs(void *wmi_hdl, void *evt_buf,
+					    uint32_t *num_vdevs)
+{
+	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
+
+	if (wmi->ops->extract_ext_tbttoffset_num_vdevs)
+		return wmi->ops->extract_ext_tbttoffset_num_vdevs(wmi,
+			evt_buf, num_vdevs);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
  * wmi_extract_tbttoffset_update_params() - extract tbtt offset update param
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
- * @param vdev_map: Pointer to hold vdev map
- * @param tbttoffset_list: Pointer to tbtt offset list
+ * @param idx: Index refering to a vdev
+ * @param tbtt_param: Pointer to tbttoffset event param
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS wmi_extract_tbttoffset_update_params(void *wmi_hdl, void *evt_buf,
-	uint32_t *vdev_map, uint32_t **tbttoffset_list)
+	uint8_t idx, struct tbttoffset_params *tbtt_param)
 {
 	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
 
 	if (wmi->ops->extract_tbttoffset_update_params)
 		return wmi->ops->extract_tbttoffset_update_params(wmi,
-			evt_buf, vdev_map, tbttoffset_list);
+			evt_buf, idx, tbtt_param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_extract_ext_tbttoffset_update_params() - extract tbtt offset update param
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param idx: Index refering to a vdev
+ * @param tbtt_param: Pointer to tbttoffset event param
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_ext_tbttoffset_update_params(void *wmi_hdl,
+	void *evt_buf, uint8_t idx, struct tbttoffset_params *tbtt_param)
+{
+	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
+
+	if (wmi->ops->extract_ext_tbttoffset_update_params)
+		return wmi->ops->extract_ext_tbttoffset_update_params(wmi,
+			evt_buf, idx, tbtt_param);
 
 	return QDF_STATUS_E_FAILURE;
 }
@@ -5478,21 +5539,21 @@ QDF_STATUS wmi_extract_pdev_csa_switch_count_status(void *wmi_hdl,
 
 
 /**
- * wmi_extract_swba_vdev_map() - extract swba vdev map from event
+ * wmi_extract_swba_num_vdevs() - extract swba num vdevs from event
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
- * @param vdev_map: Pointer to hold vdev map
+ * @param num_vdevs: Pointer to hold num vdevs
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-QDF_STATUS wmi_extract_swba_vdev_map(void *wmi_hdl, void *evt_buf,
-		uint32_t *vdev_map)
+QDF_STATUS wmi_extract_swba_num_vdevs(void *wmi_hdl, void *evt_buf,
+		uint32_t *num_vdevs)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
-	if (wmi_handle->ops->extract_swba_vdev_map)
-		return wmi_handle->ops->extract_swba_vdev_map(wmi_handle,
-					evt_buf, vdev_map);
+	if (wmi_handle->ops->extract_swba_num_vdevs)
+		return wmi_handle->ops->extract_swba_num_vdevs(wmi_handle,
+					evt_buf, num_vdevs);
 
 	return QDF_STATUS_E_FAILURE;
 }

@@ -1218,8 +1218,19 @@ QDF_STATUS wmi_extract_fips_event_data(void *wmi_hdl, void *evt_buf,
 
 QDF_STATUS wmi_extract_vdev_start_resp(void *wmi_hdl, void *evt_buf,
 		wmi_host_vdev_start_resp *vdev_rsp);
+
 QDF_STATUS wmi_extract_tbttoffset_update_params(void *wmi_hdl, void *evt_buf,
-		uint32_t *vdev_map, uint32_t **tbttoffset_list);
+		uint8_t idx, struct tbttoffset_params *tbtt_param);
+
+QDF_STATUS wmi_extract_ext_tbttoffset_update_params(void *wmi_hdl,
+		void *evt_buf, uint8_t idx,
+		struct tbttoffset_params *tbtt_param);
+
+QDF_STATUS wmi_extract_tbttoffset_num_vdevs(void *wmi_hdl, void *evt_buf,
+					    uint32_t *num_vdevs);
+
+QDF_STATUS wmi_extract_ext_tbttoffset_num_vdevs(void *wmi_hdl, void *evt_buf,
+						uint32_t *num_vdevs);
 
 QDF_STATUS wmi_extract_mgmt_rx_params(void *wmi_hdl, void *evt_buf,
 		struct mgmt_rx_event_params *hdr, uint8_t **bufp);
@@ -1290,8 +1301,8 @@ QDF_STATUS wmi_extract_pdev_csa_switch_count_status(void *wmi_hdl,
 		void *evt_buf,
 		struct pdev_csa_switch_count_status *param);
 
-QDF_STATUS wmi_extract_swba_vdev_map(void *wmi_hdl, void *evt_buf,
-		uint32_t *vdev_map);
+QDF_STATUS wmi_extract_swba_num_vdevs(void *wmi_hdl, void *evt_buf,
+		uint32_t *num_vdevs);
 
 QDF_STATUS wmi_extract_swba_tim_info(void *wmi_hdl, void *evt_buf,
 		 uint32_t idx, wmi_host_tim_info *tim_info);
