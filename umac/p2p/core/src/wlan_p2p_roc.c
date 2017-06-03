@@ -545,20 +545,22 @@ static QDF_STATUS p2p_process_scan_complete_evt(
 QDF_STATUS p2p_mgmt_rx_action_ops(struct wlan_objmgr_psoc *psoc,
 	bool isregister)
 {
-	struct mgmt_txrx_mgmt_frame_cb_info frm_cb_info;
+	struct mgmt_txrx_mgmt_frame_cb_info frm_cb_info[2];
 	QDF_STATUS status;
 
 	p2p_debug("psoc:%p, is register rx:%d", psoc, isregister);
 
-	frm_cb_info.frm_type = MGMT_ACTION_VENDOR_SPECIFIC;
-	frm_cb_info.mgmt_rx_cb = tgt_p2p_mgmt_frame_rx_cb;
+	frm_cb_info[0].frm_type = MGMT_ACTION_VENDOR_SPECIFIC;
+	frm_cb_info[0].mgmt_rx_cb = tgt_p2p_mgmt_frame_rx_cb;
+	frm_cb_info[1].frm_type = MGMT_ACTION_CATEGORY_VENDOR_SPECIFIC;
+	frm_cb_info[1].mgmt_rx_cb = tgt_p2p_mgmt_frame_rx_cb;
 
 	if (isregister)
 		status = wlan_mgmt_txrx_register_rx_cb(psoc,
-				WLAN_UMAC_COMP_P2P, &frm_cb_info, 1);
+				WLAN_UMAC_COMP_P2P, frm_cb_info, 2);
 	else
 		status = wlan_mgmt_txrx_deregister_rx_cb(psoc,
-				WLAN_UMAC_COMP_P2P, &frm_cb_info, 1);
+				WLAN_UMAC_COMP_P2P, frm_cb_info, 2);
 
 	return status;
 }

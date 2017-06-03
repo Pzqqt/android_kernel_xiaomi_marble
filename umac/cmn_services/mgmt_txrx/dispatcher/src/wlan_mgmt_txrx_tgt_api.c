@@ -187,9 +187,6 @@ mgmt_get_public_action_subtype(uint8_t action_code)
 	case PUB_ACTION_2040_BSS_COEXISTENCE:
 		frm_type = MGMT_ACTION_2040_BSS_COEXISTENCE;
 		break;
-	case PUB_ACTION_P2P_SUBTYPE_PRESENCE_RSP:
-		frm_type = MGMT_ACTION_P2P_SUBTYPE_PRESENCE_RSP;
-		break;
 	case PUB_ACTION_EXT_CHANNEL_SWITCH_ID:
 		frm_type = MGMT_ACTION_EXT_CHANNEL_SWITCH_ID;
 		break;
@@ -680,6 +677,9 @@ mgmt_txrx_get_action_frm_subtype(uint8_t *mpdu_data_ptr)
 		break;
 	case ACTION_CATEGORY_VHT:
 		frm_type = mgmt_get_vht_action_subtype(action_hdr->action_code);
+		break;
+	case ACTION_CATEGORY_VENDOR_SPECIFIC:
+		frm_type = MGMT_ACTION_CATEGORY_VENDOR_SPECIFIC;
 		break;
 	default:
 		frm_type = MGMT_FRM_UNSPECIFIED;

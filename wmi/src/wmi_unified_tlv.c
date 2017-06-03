@@ -7915,6 +7915,47 @@ static QDF_STATUS send_csa_offload_enable_cmd_tlv(wmi_unified_t wmi_handle,
 	return 0;
 }
 
+#ifdef WLAN_FEATURE_CIF_CFR
+/**
+ * send_oem_dma_cfg_cmd_tlv() - configure OEM DMA rings
+ * @wmi_handle: wmi handle
+ * @data_len: len of dma cfg req
+ * @data: dma cfg req
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+static QDF_STATUS send_oem_dma_cfg_cmd_tlv(wmi_unified_t wmi_handle,
+				wmi_oem_dma_ring_cfg_req_fixed_param *cfg)
+{
+	wmi_buf_t buf;
+	uint8_t *cmd;
+	QDF_STATUS ret;
+
+	WMITLV_SET_HDR(cfg,
+		WMITLV_TAG_STRUC_wmi_oem_dma_ring_cfg_req_fixed_param,
+		(sizeof(*cfg) - WMI_TLV_HDR_SIZE));
+
+	buf = wmi_buf_alloc(wmi_handle, sizeof(*cfg));
+	if (!buf) {
+		WMI_LOGE(FL("wmi_buf_alloc failed"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cmd = (uint8_t *) wmi_buf_data(buf);
+	qdf_mem_copy(cmd, cfg, sizeof(*cfg));
+	WMI_LOGI(FL("Sending OEM Data Request to target, data len %lu"),
+		sizeof(*cfg));
+	ret = wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cfg),
+				WMI_OEM_DMA_RING_CFG_REQ_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		WMI_LOGE(FL(":wmi cmd send failed"));
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+#endif
+
 /**
  * send_start_oem_data_cmd_tlv() - start OEM data request to target
  * @wmi_handle: wmi handle
@@ -17739,6 +17780,9 @@ struct wmi_ops tlv_ops =  {
 	.send_csa_offload_enable_cmd = send_csa_offload_enable_cmd_tlv,
 	.send_nat_keepalive_en_cmd = send_nat_keepalive_en_cmd_tlv,
 	.send_start_oem_data_cmd = send_start_oem_data_cmd_tlv,
+#ifdef WLAN_FEATURE_CIF_CFR
+	.send_oem_dma_cfg_cmd = send_oem_dma_cfg_cmd_tlv,
+#endif
 	.send_dfs_phyerr_filter_offload_en_cmd =
 		 send_dfs_phyerr_filter_offload_en_cmd_tlv,
 	.send_wow_delete_pattern_cmd = send_wow_delete_pattern_cmd_tlv,

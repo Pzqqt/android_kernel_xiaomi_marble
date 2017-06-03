@@ -447,6 +447,8 @@ QDF_STATUS  wifi_pos_psoc_obj_destroyed_notification(
 		return QDF_STATUS_E_FAULT;
 	}
 
+	target_if_wifi_pos_deinit_dma_rings(psoc);
+
 	status = wlan_objmgr_psoc_component_obj_detach(psoc,
 						WLAN_UMAC_COMP_WIFI_POS,
 						wifi_pos_obj);
@@ -463,20 +465,52 @@ QDF_STATUS  wifi_pos_psoc_obj_destroyed_notification(
 int wifi_pos_oem_rsp_handler(struct wlan_objmgr_psoc *psoc,
 			     struct oem_data_rsp *oem_rsp)
 {
-	struct wifi_pos_psoc_priv_obj *wifi_pos_obj =
+	uint32_t len;
+	uint8_t *data;
+	uint32_t app_pid;
+	struct wifi_pos_psoc_priv_obj *priv =
 					wifi_pos_get_psoc_priv_obj(psoc);
-	/* handle oem event here */
-	if (oem_rsp->rsp_len > OEM_DATA_RSP_SIZE) {
+	void (*wifi_pos_send_rsp)(uint32_t, uint32_t, uint32_t, uint8_t *);
+
+	if (!priv) {
+		wifi_pos_err("private object is NULL");
+		return -EINVAL;
+	}
+
+	qdf_spin_lock_bh(&priv->wifi_pos_lock);
+	app_pid = priv->app_pid;
+	wifi_pos_send_rsp = priv->wifi_pos_send_rsp;
+	qdf_spin_unlock_bh(&priv->wifi_pos_lock);
+
+	len = oem_rsp->rsp_len_1 + oem_rsp->rsp_len_2 + oem_rsp->dma_len;
+	if (oem_rsp->rsp_len_1 > OEM_DATA_RSP_SIZE ||
+			oem_rsp->rsp_len_2 > OEM_DATA_RSP_SIZE) {
 		wifi_pos_err("invalid length of Oem Data response");
 		return -EINVAL;
 	}
 
-	wifi_pos_debug("sending oem data rsp, len: %d to pid: %d",
-			oem_rsp->rsp_len, wifi_pos_obj->app_pid);
-	wifi_pos_obj->wifi_pos_send_rsp(wifi_pos_obj->app_pid,
-					ANI_MSG_OEM_DATA_RSP,
-					oem_rsp->rsp_len,
-					oem_rsp->data);
+	wifi_pos_debug("oem data rsp, len: %d to pid: %d", len, app_pid);
+
+	if (oem_rsp->rsp_len_2 + oem_rsp->dma_len) {
+		/* stitch togther the msg data_1 + CIR/CFR + data_2 */
+		data = qdf_mem_malloc(len);
+		if (!data) {
+			wifi_pos_err("malloc failed");
+			return -ENOMEM;
+		}
+		qdf_mem_copy(data, oem_rsp->data_1, oem_rsp->rsp_len_1);
+		qdf_mem_copy(&data[oem_rsp->rsp_len_1],
+			     oem_rsp->vaddr, oem_rsp->dma_len);
+		qdf_mem_copy(&data[oem_rsp->rsp_len_1 + oem_rsp->dma_len],
+			     oem_rsp->data_2, oem_rsp->rsp_len_2);
+
+		wifi_pos_send_rsp(app_pid, ANI_MSG_OEM_DATA_RSP, len, data);
+		qdf_mem_free(data);
+	} else {
+		wifi_pos_send_rsp(app_pid, ANI_MSG_OEM_DATA_RSP,
+				  oem_rsp->rsp_len_1, oem_rsp->data_1);
+	}
+
 	return 0;
 }
 

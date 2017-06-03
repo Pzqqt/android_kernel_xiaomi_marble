@@ -200,15 +200,12 @@ enum block_ack_actioncode {
 /**
  * enum pub_actioncode - public action frames
  * @PUB_ACTION_2040_BSS_COEXISTENCE:  public 20-40 bss coex action frame
- * @PUB_ACTION_P2P_SUBTYPE_PRESENCE_RSP: public p2p subtype presence
- *                                       response action frame
  * @PUB_ACTION_EXT_CHANNEL_SWITCH_ID: public ext channel switch id action frame
  * @PUB_ACTION_VENDOR_SPECIFIC: vendor specific public action frame
  * @PUB_ACTION_TDLS_DISCRESP: tdls discovery response public action frame
  */
 enum pub_actioncode {
 	PUB_ACTION_2040_BSS_COEXISTENCE = 0,
-	PUB_ACTION_P2P_SUBTYPE_PRESENCE_RSP = 2,
 	PUB_ACTION_EXT_CHANNEL_SWITCH_ID = 4,
 	PUB_ACTION_VENDOR_SPECIFIC = 9,
 	PUB_ACTION_TDLS_DISCRESP = 14,
@@ -434,7 +431,7 @@ struct action_frm_hdr {
  * @MGMT_ACTION_BA_ADDBA_RESPONSE:  ADDBA response action frame
  * @MGMT_ACTION_BA_DELBA:           DELBA action frame
  * @MGMT_ACTION_2040_BSS_COEXISTENCE: 20-40 bss coex action frame
- * @MGMT_ACTION_P2P_SUBTYPE_PRESENCE_RSP: p2p subtype presence rsp action frame
+ * @MGMT_ACTION_CATEGORY_VENDOR_SPECIFIC: category vendor spcific action frame
  * @MGMT_ACTION_EXT_CHANNEL_SWITCH_ID: ext channel switch id action frame
  * @MGMT_ACTION_VENDOR_SPECIFIC:    vendor specific action frame
  * @MGMT_ACTION_TDLS_DISCRESP:      TDLS discovery response frame
@@ -529,7 +526,7 @@ enum mgmt_frame_type {
 	MGMT_ACTION_BA_ADDBA_RESPONSE,
 	MGMT_ACTION_BA_DELBA,
 	MGMT_ACTION_2040_BSS_COEXISTENCE,
-	MGMT_ACTION_P2P_SUBTYPE_PRESENCE_RSP,
+	MGMT_ACTION_CATEGORY_VENDOR_SPECIFIC,
 	MGMT_ACTION_EXT_CHANNEL_SWITCH_ID,
 	MGMT_ACTION_VENDOR_SPECIFIC,
 	MGMT_ACTION_TDLS_DISCRESP,

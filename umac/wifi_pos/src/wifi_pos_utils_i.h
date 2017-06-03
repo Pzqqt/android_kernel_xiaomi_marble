@@ -106,13 +106,21 @@ struct oem_data_req {
 
 /**
  * struct oem_data_rsp - response from firmware to data request sent earlier
- * @data_len: len of data
- * @data: buffer containing data
+ * @rsp_len_1: len of data_1
+ * @data_1: first part of payload
+ * @rsp_len_2: len of data_2
+ * @data_2: second part of payload
+ * @dma_len: len of DMAed data
+ * @vaddr: virtual address of DMA data start
  *
  */
 struct oem_data_rsp {
-	uint32_t rsp_len;
-	uint8_t *data;
+	uint32_t rsp_len_1;
+	uint8_t *data_1;
+	uint32_t rsp_len_2;
+	uint8_t *data_2;
+	uint32_t dma_len;
+	void *vaddr;
 };
 
 /**
@@ -197,25 +205,43 @@ struct wifi_pos_dma_rings_cap {
 };
 
 /**
+ * struct wifi_pos_dma_buf_info - buffer info struct containing phy to virtual
+ * mapping.
+ * @cookie: this identifies location of DMA buffer in pool array
+ * @paddr: aligned physical address as exchanged with firmware
+ * @vaddr: virtual address - unaligned. this helps in freeing later
+ * @offset: offset of aligned address from unaligned
+ */
+struct wifi_pos_dma_buf_info {
+	uint32_t cookie;
+	void *paddr;
+	void *vaddr;
+	uint8_t offset;
+};
+
+/**
  * struct wifi_pos_dma_rings_cfg - DMA ring parameters to be programmed to FW.
  * @pdev_id: pdev_id of ring
- * @base_addr_lo: Base address of ring, bits 31:0
- * @base_addr_hi: Base address of ring, bits 63:32
- * @head_idx_addr_lo: Address of head index register, bits 31:0
- * @head_idx_addr_hi: Address of head index register, bits 63:32
- * @tail_idx_addr_lo: Address of tail index register, bits 31:0
- * @tail_idx_addr_hi: Address of tail index register, bits 63:32
- * @num_ptr: Number of pointers in the ring
+ * @num_ptr: depth of ring
+ * @base_paddr_unaligned: base physical addr unaligned
+ * @base_vaddr_unaligned: base virtual addr unaligned
+ * @base_paddr_aligned: base physical addr aligned
+ * @base_vaddr_aligned: base virtual addr unaligned
+ * @head_idx_addr: head index addr
+ * @tail_idx_addr: tail index addr
+ * @srng: hal srng
  */
 struct wifi_pos_dma_rings_cfg {
 	uint32_t pdev_id;
-	uint32_t base_addr_lo;
-	uint32_t base_addr_hi;
-	uint32_t head_idx_addr_lo;
-	uint32_t head_idx_addr_hi;
-	uint32_t tail_idx_addr_lo;
-	uint32_t tail_idx_addr_hi;
 	uint32_t num_ptr;
+	uint32_t ring_alloc_size;
+	void *base_paddr_unaligned;
+	void *base_vaddr_unaligned;
+	void *base_paddr_aligned;
+	void *base_vaddr_aligned;
+	void *head_idx_addr;
+	void *tail_idx_addr;
+	void *srng;
 };
 
 /**
@@ -234,9 +260,11 @@ struct wifi_pos_dma_rings_cfg {
  * @allowed_dwell_time_max: allowed dwell time max, populated from HDD
  * @current_dwell_time_min: current dwell time min, populated from HDD
  * @current_dwell_time_max: current dwell time max, populated from HDD
+ * @hal_soc: hal_soc
  * @num_rings: DMA ring cap requested by firmware
  * @dma_cap: dma cap as read from service ready ext event
  * @dma_cfg: DMA ring cfg to be programmed to firmware
+ * @dma_buf_pool: DMA buffer pools maintained at host: this will be 2-D array
  * where with num_rows = number of rings num_elements in each row = ring depth
  * @wifi_pos_lock: lock to access wifi pos priv object
  * @wifi_pos_req_handler: function pointer to handle TLV or non-TLV
@@ -269,9 +297,11 @@ struct wifi_pos_psoc_priv_obj {
 	uint16_t current_dwell_time_min;
 	uint16_t current_dwell_time_max;
 
+	void *hal_soc;
 	uint8_t num_rings;
 	struct wifi_pos_dma_rings_cap *dma_cap;
 	struct wifi_pos_dma_rings_cfg *dma_cfg;
+	struct wifi_pos_dma_buf_info **dma_buf_pool;
 
 	qdf_spinlock_t wifi_pos_lock;
 	QDF_STATUS (*wifi_pos_req_handler)(struct wlan_objmgr_psoc *psoc,

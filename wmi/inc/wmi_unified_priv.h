@@ -593,6 +593,11 @@ QDF_STATUS (*send_fw_profiling_cmd)(wmi_unified_t wmi_handle,
 
 QDF_STATUS (*send_nat_keepalive_en_cmd)(wmi_unified_t wmi_handle, uint8_t vdev_id);
 
+#ifdef WLAN_FEATURE_CIF_CFR
+QDF_STATUS (*send_oem_dma_cfg_cmd)(wmi_unified_t wmi_handle,
+				   wmi_oem_dma_ring_cfg_req_fixed_param *cfg);
+#endif
+
 QDF_STATUS (*send_start_oem_data_cmd)(wmi_unified_t wmi_handle,
 			  uint32_t data_len,
 			  uint8_t *data);

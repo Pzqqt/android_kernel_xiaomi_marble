@@ -124,10 +124,23 @@ static inline void target_if_wifi_pos_register_rx_ops(
 QDF_STATUS target_if_wifi_pos_init_cir_cfr_rings(struct wlan_objmgr_psoc *psoc,
 					     void *hal_soc, uint8_t num_mac,
 					     void *buf);
+/**
+ * target_if_wifi_pos_deinit_dma_rings: frees up DMA rings
+ * @psoc: pointer to psoc
+ *
+ * Return: status of operation
+ */
+QDF_STATUS target_if_wifi_pos_deinit_dma_rings(struct wlan_objmgr_psoc *psoc);
 #else
 static inline QDF_STATUS target_if_wifi_pos_init_cir_cfr_rings(
 				struct wlan_objmgr_psoc *psoc, void *hal_soc,
 				uint8_t num_mac, void *buf)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS target_if_wifi_pos_deinit_dma_rings(
+				struct wlan_objmgr_psoc *psoc)
 {
 	return QDF_STATUS_SUCCESS;
 }
