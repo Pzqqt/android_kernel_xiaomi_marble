@@ -47,7 +47,7 @@ typedef uint32_t wlan_scan_id;
 #define SCM_BSS_CAP_VALUE_5GHZ  2
 
 #define SCM_CANCEL_SCAN_WAIT_TIME 50
-#define SCM_CANCEL_SCAN_WAIT_ITERATION 100
+#define SCM_CANCEL_SCAN_WAIT_ITERATION 600
 
 #define INVAL_SCAN_ID        0xFFFFFFFF
 #define INVAL_VDEV_ID        0xFFFFFFFF
