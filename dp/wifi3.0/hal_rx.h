@@ -1957,10 +1957,6 @@ enum hal_rx_wbm_rxdma_push_reason {
 	HAL_RX_BUF_COOKIE_GET(&((struct wbm_release_ring *) \
 	wbm_desc)->released_buff_or_desc_addr_info)
 
-#define HAL_RX_WBM_BUF_COOKIE_GET(wbm_desc) \
-	HAL_RX_BUF_COOKIE_GET(&((struct wbm_release_ring *) \
-	wbm_desc)->released_buff_or_desc_addr_info)
-
 /**
  * hal_rx_dump_rx_attention_tlv: dump RX attention TLV in structured
  *				 humman readable format.

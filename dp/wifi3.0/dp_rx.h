@@ -45,6 +45,8 @@
 	(((_peer_metadata) & DP_PEER_METADATA_VDEV_ID_MASK)	\
 			>> DP_PEER_METADATA_VDEV_ID_SHIFT)
 
+#define DP_RX_DESC_MAGIC 0xdec0de
+
 /**
  * struct dp_rx_desc
  *
@@ -65,6 +67,9 @@ struct dp_rx_desc {
 	uint8_t *rx_buf_start;
 	uint32_t cookie;
 	uint8_t	 pool_id;
+#ifdef RX_DESC_DEBUG_CHECK
+	uint32_t magic;
+#endif
 };
 
 #define RX_DESC_COOKIE_INDEX_SHIFT		0

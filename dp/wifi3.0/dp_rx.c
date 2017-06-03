@@ -29,6 +29,19 @@
 #include "dp_internal.h"
 #include "dp_rx_mon.h"
 
+#ifdef RX_DESC_DEBUG_CHECK
+static inline void dp_rx_desc_prep(struct dp_rx_desc *rx_desc, qdf_nbuf_t nbuf)
+{
+	rx_desc->magic = DP_RX_DESC_MAGIC;
+	rx_desc->nbuf = nbuf;
+}
+#else
+static inline void dp_rx_desc_prep(struct dp_rx_desc *rx_desc, qdf_nbuf_t nbuf)
+{
+	rx_desc->nbuf = nbuf;
+}
+#endif
+
 /*
  * dp_rx_buffers_replenish() - replenish rxdma ring with rx nbufs
  *			       called during dp rx initialization
@@ -160,7 +173,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 
 		next = (*desc_list)->next;
 
-		(*desc_list)->rx_desc.nbuf = rx_netbuf;
+		dp_rx_desc_prep(&((*desc_list)->rx_desc), rx_netbuf);
 
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 				"rx_netbuf=%p, buf=%p, paddr=0x%llx, cookie=%d\n",

@@ -31,6 +31,22 @@
 #include "dp_rx_defrag.h"
 #include <enet.h>	/* LLC_SNAP_HDR_LEN */
 
+#ifdef RX_DESC_DEBUG_CHECK
+static inline bool dp_rx_desc_check_magic(struct dp_rx_desc *rx_desc)
+{
+	if (qdf_unlikely(rx_desc->magic != DP_RX_DESC_MAGIC)) {
+		return false;
+	}
+	rx_desc->magic = 0;
+	return true;
+}
+#else
+static inline bool dp_rx_desc_check_magic(struct dp_rx_desc *rx_desc)
+{
+	return true;
+}
+#endif
+
 /**
  * dp_rx_msdus_drop() - Drops all MSDU's per MPDU
  *
@@ -46,10 +62,10 @@
  * Return: uint32_t: No. of elements processed
  */
 static uint32_t dp_rx_msdus_drop(struct dp_soc *soc, void *ring_desc,
-		 struct hal_rx_mpdu_desc_info *mpdu_desc_info,
-		 union dp_rx_desc_list_elem_t **head,
-		 union dp_rx_desc_list_elem_t **tail,
-		 uint32_t quota)
+		struct hal_rx_mpdu_desc_info *mpdu_desc_info,
+		union dp_rx_desc_list_elem_t **head,
+		union dp_rx_desc_list_elem_t **tail,
+		uint32_t quota)
 {
 	uint32_t rx_bufs_used = 0;
 	void *link_desc_va;
@@ -71,6 +87,13 @@ static uint32_t dp_rx_msdus_drop(struct dp_soc *soc, void *ring_desc,
 			msdu_list.sw_cookie[i]);
 
 		qdf_assert(rx_desc);
+
+		if (!dp_rx_desc_check_magic(rx_desc)) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+					FL("Invalid rx_desc cookie=%d"),
+					msdu_list.sw_cookie[i]);
+			return rx_bufs_used;
+		}
 
 		rx_bufs_used++;
 
@@ -653,12 +676,20 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 		rx_desc = dp_rx_cookie_2_va_rxdma_buf(soc, rx_buf_cookie);
 		qdf_assert(rx_desc);
 
+		if (!dp_rx_desc_check_magic(rx_desc)) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+					FL("Invalid rx_desc cookie=%d"),
+					rx_buf_cookie);
+			continue;
+		}
+
 		/* XXX */
 		buf_type = HAL_RX_WBM_BUF_TYPE_GET(ring_desc);
+
 		/*
 		 * For WBM ring, expect only MSDU buffers
 		 */
-		qdf_assert(buf_type == HAL_RX_WBM_BUF_TYPE_REL_BUF);
+		qdf_assert_always(buf_type == HAL_RX_WBM_BUF_TYPE_REL_BUF);
 
 		if (wbm_err_src == HAL_RX_WBM_ERR_SRC_REO) {
 
@@ -726,18 +757,6 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 			}
 		} else {
 			/* Should not come here */
-			rx_buf_cookie = HAL_RX_WBM_BUF_COOKIE_GET(ring_desc);
-			rx_desc = dp_rx_cookie_2_va_rxdma_buf(soc, rx_buf_cookie);
-
-			qdf_assert(rx_desc);
-
-			qdf_nbuf_unmap_single(soc->osdev, rx_desc->nbuf,
-						QDF_DMA_BIDIRECTIONAL);
-
-			rx_desc->rx_buf_start = qdf_nbuf_data(rx_desc->nbuf);
-			hal_rx_dump_pkt_tlvs(rx_desc->rx_buf_start,
-							QDF_TRACE_LEVEL_INFO);
-
 			qdf_assert(0);
 		}
 
