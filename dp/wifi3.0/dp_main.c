@@ -3373,7 +3373,14 @@ dp_get_host_peer_stats(struct cdp_pdev *pdev_handle, char *mac_addr)
 	peer = (struct dp_peer *)dp_find_peer_by_addr(pdev_handle, mac_addr,
 			&local_id);
 
+	if (!peer) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"%s: Invalid peer\n", __func__);
+		return;
+	}
+
 	dp_print_peer_stats(peer);
+	dp_peer_rxtid_stats(peer);
 	return;
 }
 
@@ -3416,6 +3423,7 @@ dp_get_fw_peer_stats(struct cdp_pdev *pdev_handle, uint8_t *mac_addr,
 	dp_h2t_ext_stats_msg_send(pdev, HTT_DBG_EXT_STATS_PEER_INFO,
 			config_param0, config_param1, config_param2,
 			config_param3);
+
 }
 
 /*

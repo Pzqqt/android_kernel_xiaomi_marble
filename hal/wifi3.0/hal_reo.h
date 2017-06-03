@@ -136,7 +136,8 @@ enum reo_thres_index_reg {
 enum reo_cmd_exec_status {
 	HAL_REO_CMD_SUCCESS = 0,
 	HAL_REO_CMD_BLOCKED = 1,
-	HAL_REO_CMD_FAILED = 2
+	HAL_REO_CMD_FAILED = 2,
+	HAL_REO_CMD_RESOURCE_BLOCKED = 3
 };
 
 /**

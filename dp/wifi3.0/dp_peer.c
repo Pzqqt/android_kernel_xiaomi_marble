@@ -318,6 +318,69 @@ int dp_peer_find_attach(struct dp_soc *soc)
 	return 0; /* success */
 }
 
+static void dp_rx_tid_stats_cb(struct dp_soc *soc, void *cb_ctxt,
+	union hal_reo_status *reo_status)
+{
+	struct dp_rx_tid *rx_tid = (struct dp_rx_tid *)cb_ctxt;
+	struct hal_reo_queue_status *queue_status = &(reo_status->queue_status);
+
+	if (queue_status->header.status != HAL_REO_CMD_SUCCESS) {
+		DP_TRACE_STATS(FATAL, "REO stats failure %d for TID %d\n",
+			queue_status->header.status, rx_tid->tid);
+		return;
+	}
+
+	DP_TRACE_STATS(FATAL, "REO queue stats (TID: %d): \n"
+		"ssn: %d\n"
+		"curr_idx  : %d\n"
+		"pn_31_0   : %08x\n"
+		"pn_63_32  : %08x\n"
+		"pn_95_64  : %08x\n"
+		"pn_127_96 : %08x\n"
+		"last_rx_enq_tstamp : %08x\n"
+		"last_rx_deq_tstamp : %08x\n"
+		"rx_bitmap_31_0     : %08x\n"
+		"rx_bitmap_63_32    : %08x\n"
+		"rx_bitmap_95_64    : %08x\n"
+		"rx_bitmap_127_96   : %08x\n"
+		"rx_bitmap_159_128  : %08x\n"
+		"rx_bitmap_191_160  : %08x\n"
+		"rx_bitmap_223_192  : %08x\n"
+		"rx_bitmap_255_224  : %08x\n"
+		"curr_mpdu_cnt      : %d\n"
+		"curr_msdu_cnt      : %d\n"
+		"fwd_timeout_cnt    : %d\n"
+		"fwd_bar_cnt        : %d\n"
+		"dup_cnt            : %d\n"
+		"frms_in_order_cnt  : %d\n"
+		"bar_rcvd_cnt       : %d\n"
+		"mpdu_frms_cnt      : %d\n"
+		"msdu_frms_cnt      : %d\n"
+		"total_byte_cnt     : %d\n"
+		"late_recv_mpdu_cnt : %d\n"
+		"win_jump_2k 	    : %d\n"
+		"hole_cnt 	    : %d\n",
+		rx_tid->tid,
+		queue_status->ssn, queue_status->curr_idx,
+		queue_status->pn_31_0, queue_status->pn_63_32,
+		queue_status->pn_95_64, queue_status->pn_127_96,
+		queue_status->last_rx_enq_tstamp,
+		queue_status->last_rx_deq_tstamp,
+		queue_status->rx_bitmap_31_0, queue_status->rx_bitmap_63_32,
+		queue_status->rx_bitmap_95_64, queue_status->rx_bitmap_127_96,
+		queue_status->rx_bitmap_159_128,
+		queue_status->rx_bitmap_191_160,
+		queue_status->rx_bitmap_223_192,
+		queue_status->rx_bitmap_255_224,
+		queue_status->curr_mpdu_cnt, queue_status->curr_msdu_cnt,
+		queue_status->fwd_timeout_cnt, queue_status->fwd_bar_cnt,
+		queue_status->dup_cnt, queue_status->frms_in_order_cnt,
+		queue_status->bar_rcvd_cnt, queue_status->mpdu_frms_cnt,
+		queue_status->msdu_frms_cnt, queue_status->total_cnt,
+		queue_status->late_recv_mpdu_cnt, queue_status->win_jump_2k,
+		queue_status->hole_cnt);
+}
+
 static inline void dp_peer_find_add_id(struct dp_soc *soc,
 	uint8_t *peer_mac_addr, uint16_t peer_id, uint16_t hw_peer_id,
 	uint8_t vdev_id)
@@ -1535,4 +1598,32 @@ uint8_t dp_get_peer_mac_addr_frm_id(struct cdp_soc_t *soc_handle,
 
 	qdf_mem_copy(peer_mac, peer->mac_addr.raw, 6);
 	return peer->vdev->vdev_id;
+}
+
+/**
+ * dp_peer_rxtid_stats: Retried Rx TID (REO queue) stats from HW
+ * @peer: DP peer handle
+ *
+ * Return: 0 on success, error code on failure
+ */
+int dp_peer_rxtid_stats(struct dp_peer *peer)
+{
+	struct dp_soc *soc = peer->vdev->pdev->soc;
+	struct hal_reo_cmd_params params;
+	int i;
+
+	qdf_mem_zero(&params, sizeof(params));
+	for (i = 0; i < DP_MAX_TIDS; i++) {
+		struct dp_rx_tid *rx_tid = &peer->rx_tid[i];
+		if (rx_tid->hw_qdesc_vaddr_unaligned != NULL) {
+			params.std.need_status = 1;
+			params.std.addr_lo =
+				rx_tid->hw_qdesc_paddr & 0xffffffff;
+			params.std.addr_hi =
+				(uint64_t)(rx_tid->hw_qdesc_paddr) >> 32;
+			dp_reo_send_cmd(soc, CMD_GET_QUEUE_STATS, &params,
+				dp_rx_tid_stats_cb, rx_tid);
+		}
+	}
+	return 0;
 }
