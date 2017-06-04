@@ -18,6 +18,7 @@
  */
 
 #include <target_if_son.h>
+#include <target_if.h>
 #include <wlan_lmac_if_def.h>
 #include <wmi_unified_api.h>
 #include <cdp_txrx_ctrl.h>
@@ -100,8 +101,8 @@ QDF_STATUS son_ol_send_null(struct wlan_objmgr_pdev *pdev,
 	param.vdev_id = wlan_vdev_get_id(vdev);
 	param.stats_id = WMI_HOST_REQUEST_INST_STAT;
 
-	return wmi_unified_stats_request_send(psoc->tgt_if_handle,
-					      macaddr, &param);
+	return wmi_unified_stats_request_send(GET_WMI_HDL_FROM_PSOC(psoc),
+					macaddr, &param);
 }
 
 int son_ol_lmac_create(struct wlan_objmgr_pdev *pdev)

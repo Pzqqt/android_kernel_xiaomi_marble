@@ -193,7 +193,7 @@ target_if_scan_register_pno_event_handler(struct wlan_objmgr_psoc *psoc,
 {
 	QDF_STATUS status;
 
-	status = wmi_unified_register_event(psoc->tgt_if_handle,
+	status = wmi_unified_register_event(GET_WMI_HDL_FROM_PSOC(psoc),
 			wmi_nlo_match_event_id,
 			target_if_nlo_match_event_handler);
 	if (status) {
@@ -201,7 +201,7 @@ target_if_scan_register_pno_event_handler(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	status = wmi_unified_register_event(psoc->tgt_if_handle,
+	status = wmi_unified_register_event(GET_WMI_HDL_FROM_PSOC(psoc),
 			wmi_nlo_scan_complete_event_id,
 			target_if_nlo_complete_handler);
 	if (status) {
@@ -218,14 +218,14 @@ target_if_scan_unregister_pno_event_handler(struct wlan_objmgr_psoc *psoc,
 {
 	QDF_STATUS status;
 
-	status = wmi_unified_unregister_event(psoc->tgt_if_handle,
+	status = wmi_unified_unregister_event(GET_WMI_HDL_FROM_PSOC(psoc),
 			wmi_nlo_match_event_id);
 	if (status) {
 		target_if_err("Failed to unregister nlo match event cb");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	status = wmi_unified_unregister_event(psoc->tgt_if_handle,
+	status = wmi_unified_unregister_event(GET_WMI_HDL_FROM_PSOC(psoc),
 			wmi_nlo_scan_complete_event_id);
 	if (status) {
 		target_if_err("Failed to unregister nlo scan comp event cb");
@@ -239,14 +239,14 @@ static QDF_STATUS
 target_if_pno_start(struct wlan_objmgr_psoc *psoc,
 	struct pno_scan_req_params *req)
 {
-	return wmi_unified_pno_start_cmd(psoc->tgt_if_handle, req);
+	return wmi_unified_pno_start_cmd(GET_WMI_HDL_FROM_PSOC(psoc), req);
 }
 
 static QDF_STATUS
 target_if_pno_stop(struct wlan_objmgr_psoc *psoc,
 	uint8_t vdev_id)
 {
-	return wmi_unified_pno_stop_cmd(psoc->tgt_if_handle, vdev_id);
+	return wmi_unified_pno_stop_cmd(GET_WMI_HDL_FROM_PSOC(psoc), vdev_id);
 }
 
 #else
@@ -286,7 +286,7 @@ target_if_scan_register_event_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 {
 	QDF_STATUS status;
 
-	status = wmi_unified_register_event(psoc->tgt_if_handle,
+	status = wmi_unified_register_event(GET_WMI_HDL_FROM_PSOC(psoc),
 		wmi_scan_event_id, target_if_scan_event_handler);
 	if (status) {
 		target_if_err("Failed to register Scan match event cb");
@@ -304,7 +304,7 @@ target_if_scan_unregister_event_handler(struct wlan_objmgr_psoc *psoc,
 {
 	QDF_STATUS status;
 
-	status = wmi_unified_unregister_event(psoc->tgt_if_handle,
+	status = wmi_unified_unregister_event(GET_WMI_HDL_FROM_PSOC(psoc),
 		wmi_scan_event_id);
 	if (status) {
 		target_if_err("Failed to unregister Scan match event cb");
@@ -320,7 +320,7 @@ QDF_STATUS
 target_if_scan_start(struct wlan_objmgr_psoc *psoc,
 		struct scan_start_request *req)
 {
-	return wmi_unified_scan_start_cmd_send(psoc->tgt_if_handle,
+	return wmi_unified_scan_start_cmd_send(GET_WMI_HDL_FROM_PSOC(psoc),
 		&req->scan_req);
 }
 
@@ -328,7 +328,7 @@ QDF_STATUS
 target_if_scan_cancel(struct wlan_objmgr_psoc *psoc,
 		struct scan_cancel_param *req)
 {
-	return wmi_unified_scan_stop_cmd_send(psoc->tgt_if_handle, req);
+	return wmi_unified_scan_stop_cmd_send(GET_WMI_HDL_FROM_PSOC(psoc), req);
 }
 
 QDF_STATUS

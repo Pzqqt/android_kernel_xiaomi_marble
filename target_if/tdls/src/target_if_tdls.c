@@ -91,7 +91,7 @@ target_if_tdls_update_fw_state(struct wlan_objmgr_psoc *psoc,
 	else
 		tdls_state = WMI_TDLS_DISABLE;
 
-	status = wmi_unified_update_fw_tdls_state_cmd(psoc->tgt_if_handle,
+	status = wmi_unified_update_fw_tdls_state_cmd(GET_WMI_HDL_FROM_PSOC(psoc),
 						      param, tdls_state);
 
 	target_if_debug("vdev_id %d", param->vdev_id);
@@ -111,7 +111,7 @@ target_if_tdls_set_offchan_mode(struct wlan_objmgr_psoc *psoc,
 {
 	QDF_STATUS status;
 
-	status = wmi_unified_set_tdls_offchan_mode_cmd(psoc->tgt_if_handle,
+	status = wmi_unified_set_tdls_offchan_mode_cmd(GET_WMI_HDL_FROM_PSOC(psoc),
 						       params);
 
 	return status;
@@ -131,7 +131,7 @@ target_if_tdls_set_uapsd(struct wlan_objmgr_psoc *psoc,
 				params->vdevid);
 		return QDF_STATUS_SUCCESS;
 	}
-	ret = wmi_unified_set_sta_uapsd_auto_trig_cmd(psoc->tgt_if_handle,
+	ret = wmi_unified_set_sta_uapsd_auto_trig_cmd(GET_WMI_HDL_FROM_PSOC(psoc),
 						      params);
 
 	if (QDF_IS_STATUS_ERROR(ret))
@@ -144,7 +144,7 @@ QDF_STATUS
 target_if_tdls_register_event_handler(struct wlan_objmgr_psoc *psoc,
 				      void *arg)
 {
-	return wmi_unified_register_event(psoc->tgt_if_handle,
+	return wmi_unified_register_event(GET_WMI_HDL_FROM_PSOC(psoc),
 					  wmi_tdls_peer_event_id,
 					  target_if_tdls_event_handler);
 }
@@ -153,7 +153,7 @@ QDF_STATUS
 target_if_tdls_unregister_event_handler(struct wlan_objmgr_psoc *psoc,
 					void *arg)
 {
-	return wmi_unified_unregister_event(psoc->tgt_if_handle,
+	return wmi_unified_unregister_event(GET_WMI_HDL_FROM_PSOC(psoc),
 					    wmi_tdls_peer_event_id);
 }
 
