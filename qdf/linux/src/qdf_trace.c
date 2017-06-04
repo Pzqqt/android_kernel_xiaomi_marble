@@ -1840,6 +1840,7 @@ struct category_name_info g_qdf_category_name[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_P2P] = {"P2P"},
 	[QDF_MODULE_ID_OFFCHAN_TXRX] = {"OFFCHAN"},
 	[QDF_MODULE_ID_REGULATORY] = {"REGULATORY"},
+	[QDF_MODULE_ID_OBJ_MGR] = {"OBJMGR"},
 	[QDF_MODULE_ID_ANY] = {"ANY"},
 };
 EXPORT_SYMBOL(g_qdf_category_name);
@@ -2256,6 +2257,7 @@ static void set_default_trace_levels(struct category_info *cinfo)
 		[QDF_MODULE_ID_NAN] = QDF_TRACE_LEVEL_NONE,
 		[QDF_MODULE_ID_P2P] = QDF_TRACE_LEVEL_NONE,
 		[QDF_MODULE_ID_OFFCHAN_TXRX] = QDF_TRACE_LEVEL_NONE,
+		[QDF_MODULE_ID_OBJ_MGR] = QDF_TRACE_LEVEL_INFO,
 		[QDF_MODULE_ID_ANY] = QDF_TRACE_LEVEL_NONE,
 	};
 
