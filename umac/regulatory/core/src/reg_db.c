@@ -547,6 +547,7 @@ enum reg_domains_5g {
 	FCC4,
 	FCC6,
 	FCC8,
+	FCC11,
 	ETSI1,
 	ETSI3,
 	ETSI4,
@@ -589,6 +590,7 @@ const struct reg_domain_pair g_reg_dmn_pairs[] = {
 	{FCC6_WORLD, FCC6, WORLD},
 	{FCC6_FCCA, FCC6, FCCA},
 	{FCC8_FCCA, FCC8, FCCA},
+	{FCC11_WORLD, FCC11, WORLD},
 
 	{ETSI1_WORLD, ETSI1, WORLD},
 	{ETSI3_WORLD, ETSI3, WORLD},
@@ -789,6 +791,11 @@ const struct regdomain regdomains_5g[] = {
 	[FCC8] = {CTL_FCC, DFS_FCC_REG, 2, 6, 4, {CHAN_5170_5250_4,
 					      CHAN_5250_5330_1,
 					      CHAN_5490_5730_1,
+					      CHAN_5735_5835_1} },
+
+	[FCC11] = {CTL_FCC, DFS_FCC_REG, 2, 6, 4, {CHAN_5170_5250_2,
+					      CHAN_5250_5330_1,
+					      CHAN_5490_5650_1,
 					      CHAN_5735_5835_1} },
 
 	[ETSI1] = {CTL_ETSI, DFS_ETSI_REG, 5, 0, 3, {CHAN_5170_5250_2,
