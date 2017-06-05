@@ -536,6 +536,9 @@ util_scan_populate_bcn_ie_list(struct scan_cache_entry *scan_params)
 				return status;
 			}
 			break;
+		case WLAN_ELEMID_FILS_INDICATION:
+			scan_params->ie_list.fils_indication = (uint8_t *)ie;
+			break;
 		case WLAN_ELEMID_EXTN_ELEM:
 			util_scan_parse_extn_ie(scan_params, ie);
 			break;

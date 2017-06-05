@@ -313,6 +313,7 @@ enum element_ie {
 	WLAN_ELEMID_QUIET_CHANNEL    = 198,
 	WLAN_ELEMID_OP_MODE_NOTIFY   = 199,
 	WLAN_ELEMID_VENDOR           = 221,
+	WLAN_ELEMID_FILS_INDICATION  = 240,
 	WLAN_ELEMID_EXTN_ELEM        = 255,
 };
 
@@ -1054,7 +1055,6 @@ is_he_op_oui(uint8_t *frm)
 	return (frm[1] > 4) && (LE_READ_4(frm + 2) ==
 		((ATH_HE_OP_SUBTYPE << 24) | ATH_HE_OUI));
 }
-
 
 /**
  * wlan_parse_rsn_ie() - parse rsn ie

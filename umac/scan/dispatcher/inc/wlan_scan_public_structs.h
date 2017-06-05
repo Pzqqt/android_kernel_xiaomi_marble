@@ -123,6 +123,7 @@ struct element_info {
  * @widebw:     pointer to wide band channel switch sub ie
  * @txpwrenvlp: pointer to tx power envelop sub ie
  * @srp: pointer to spatial reuse parameter sub extended ie
+ * @fils_indication: pointer to FILS indication ie
  */
 struct ie_list {
 	uint8_t *tim;
@@ -164,6 +165,7 @@ struct ie_list {
 	uint8_t *hecap;
 	uint8_t *heop;
 	uint8_t *srp;
+	uint8_t *fils_indication;
 };
 
 /**

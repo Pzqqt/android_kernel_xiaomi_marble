@@ -649,6 +649,8 @@ util_scan_copy_beacon_data(struct scan_cache_entry *new_entry,
 	ie_lst->mdie = conv_ptr(ie_lst->mdie, old_ptr, new_ptr);
 	ie_lst->hecap = conv_ptr(ie_lst->hecap, old_ptr, new_ptr);
 	ie_lst->heop = conv_ptr(ie_lst->heop, old_ptr, new_ptr);
+	ie_lst->fils_indication = conv_ptr(ie_lst->fils_indication,
+					   old_ptr, new_ptr);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1287,6 +1289,20 @@ static inline uint8_t*
 util_scan_entry_spatial_reuse_parameter(struct scan_cache_entry *scan_entry)
 {
 	return scan_entry->ie_list.srp;
+}
+
+/**
+ * util_scan_entry_fils_indication() - function to read FILS indication ie
+ * @scan_entry: scan entry
+ *
+ * API, function to read FILS indication ie
+ *
+ * Return, FILS indication ie or NULL if ie is not present
+ */
+static inline uint8_t*
+util_scan_entry_fils_indication(struct scan_cache_entry *scan_entry)
+{
+	return scan_entry->ie_list.fils_indication;
 }
 
 /**
