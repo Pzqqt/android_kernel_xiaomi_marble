@@ -358,6 +358,7 @@ ucfg_scan_start(struct scan_start_request *req)
 
 	msg.bodyptr = req;
 	msg.callback = scm_scan_start_req;
+	msg.flush_callback = scm_scan_start_flush_callback;
 
 	status = scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -393,6 +394,7 @@ ucfg_scan_cancel(struct scan_cancel_request *req)
 
 	msg.bodyptr = req;
 	msg.callback = scm_scan_cancel_req;
+	msg.flush_callback = scm_scan_cancel_flush_callback;
 
 	status = scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
