@@ -16261,3 +16261,8 @@ QDF_STATUS sme_set_rx_set_blocksize(tHalHandle hal,
 
 	return status;
 }
+
+int sme_cli_set_command(int vdev_id, int param_id, int sval, int vpdev)
+{
+	return wma_cli_set_command(vdev_id, param_id, sval, vpdev);
+}

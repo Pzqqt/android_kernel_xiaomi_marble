@@ -1590,5 +1590,18 @@ QDF_STATUS sme_set_rx_set_blocksize(tHalHandle hal,
 
 QDF_STATUS sme_set_chip_pwr_save_fail_cb(tHalHandle hal, void (*cb)(void *,
 				 struct chip_pwr_save_fail_detected_params *));
+/**
+ * sme_cli_set_command() - SME wrapper API over WMA "set" command
+ * processor cmd
+ * @vdev_id: virtual device for the command
+ * @param_id: parameter id
+ * @sval: parameter value
+ * @vpdev: parameter category
+ *
+ * Command handler for set operations
+ *
+ * Return: 0 on success, errno on failure
+ */
+int sme_cli_set_command(int vdev_id, int param_id, int sval, int vpdev);
 
 #endif /* #if !defined( __SME_API_H ) */
