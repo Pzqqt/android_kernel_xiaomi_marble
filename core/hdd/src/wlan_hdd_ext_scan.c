@@ -134,6 +134,8 @@ static const struct nla_policy wlan_hdd_extscan_config_policy
 				.type = NLA_S32 },
 	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_CONFIGURATION_FLAGS] = {
 				.type = NLA_U32 },
+	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_BSSID_HOTLIST_PARAMS_LOST_AP_SAMPLE_SIZE] = {
+				.type = NLA_U32},
 };
 
 static const struct nla_policy
