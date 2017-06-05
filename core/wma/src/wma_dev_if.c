@@ -3903,6 +3903,12 @@ static void wma_add_tdls_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 		goto send_rsp;
 	}
 
+	if (wma_is_roam_synch_in_progress(wma, add_sta->smesessionId)) {
+		WMA_LOGE("%s: roaming in progress, reject add sta!", __func__);
+		add_sta->status = QDF_STATUS_E_PERM;
+		goto send_rsp;
+	}
+
 	if (0 == add_sta->updateSta) {
 		/* its a add sta request * */
 
@@ -4351,6 +4357,12 @@ static void wma_del_tdls_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 		WMA_LOGE("%s: Failed to allocate memory for peerStateParams for: %pM",
 			__func__, del_sta->staMac);
 		del_sta->status = QDF_STATUS_E_NOMEM;
+		goto send_del_rsp;
+	}
+
+	if (wma_is_roam_synch_in_progress(wma, del_sta->smesessionId)) {
+		WMA_LOGE("%s: roaming in progress, reject del sta!", __func__);
+		del_sta->status = QDF_STATUS_E_PERM;
 		goto send_del_rsp;
 	}
 

@@ -2824,6 +2824,13 @@ tSirRetStatus lim_process_sme_tdls_mgmt_send_req(tpAniSirGlobal mac_ctx,
 		goto lim_tdls_send_mgmt_error;
 	}
 
+	if (lim_is_roam_synch_in_progress(session_entry)) {
+		pe_err("roaming in progress, reject mgmt! for session %d",
+		       send_req->sessionId);
+		result_code = eSIR_SME_REFUSED;
+		goto lim_tdls_send_mgmt_error;
+	}
+
 	/*
 	 * if we are still good, go ahead and check if we are in proper state to
 	 * do TDLS discovery req/rsp/....frames.
@@ -3019,6 +3026,12 @@ tSirRetStatus lim_process_sme_tdls_add_sta_req(tpAniSirGlobal pMac,
 		goto lim_tdls_add_sta_error;
 	}
 
+	if (lim_is_roam_synch_in_progress(psessionEntry)) {
+		pe_err("roaming in progress, reject add sta! for session %d",
+		       pAddStaReq->sessionId);
+		goto lim_tdls_add_sta_error;
+	}
+
 	/*
 	 * if we are still good, go ahead and check if we are in proper state to
 	 * do TDLS discovery req/rsp/....frames.
@@ -3077,6 +3090,15 @@ tSirRetStatus lim_process_sme_tdls_del_sta_req(tpAniSirGlobal pMac,
 		pe_err("Del sta received in wrong system Role %d",
 			  GET_LIM_SYSTEM_ROLE(psessionEntry));
 		goto lim_tdls_del_sta_error;
+	}
+
+	if (lim_is_roam_synch_in_progress(psessionEntry)) {
+		pe_err("roaming in progress, reject del sta! for session %d",
+		       pDelStaReq->sessionId);
+		lim_send_sme_tdls_del_sta_rsp(pMac, pDelStaReq->sessionId,
+					      pDelStaReq->peermac, NULL,
+					      eSIR_FAILURE);
+		return eSIR_FAILURE;
 	}
 
 	/*
@@ -3295,16 +3317,18 @@ static void lim_check_aid_and_delete_peer(tpAniSirGlobal p_mac,
 			pe_debug("Deleting "MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(stads->staAddr));
 
-			lim_send_deauth_mgmt_frame(p_mac,
-				eSIR_MAC_DEAUTH_LEAVING_BSS_REASON,
-				stads->staAddr, session_entry, false);
+			if (!lim_is_roam_synch_in_progress(session_entry)) {
+				lim_send_deauth_mgmt_frame(p_mac,
+					eSIR_MAC_DEAUTH_LEAVING_BSS_REASON,
+					stads->staAddr, session_entry, false);
 
-			/* Delete TDLS peer */
-			qdf_mem_copy(mac_addr.bytes, stads->staAddr,
-				     QDF_MAC_ADDR_SIZE);
+				/* Delete TDLS peer */
+				qdf_mem_copy(mac_addr.bytes, stads->staAddr,
+					     QDF_MAC_ADDR_SIZE);
 
-			lim_tdls_del_sta(p_mac, mac_addr,
-					 session_entry, false);
+				lim_tdls_del_sta(p_mac, mac_addr,
+						 session_entry, false);
+			}
 
 			dph_delete_hash_entry(p_mac,
 				stads->staAddr, stads->assocId,
