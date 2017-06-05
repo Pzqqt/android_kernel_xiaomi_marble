@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -141,6 +141,18 @@ void hdd_ipa_uc_stat(struct hdd_adapter *adapter);
  */
 void hdd_ipa_uc_info(struct hdd_context *hdd_ctx);
 
+/**
+ * hdd_ipa_uc_smmu_map() - Map / Unmap DMA buffer to IPA UC
+ * @map: Map / unmap operation
+ * @num_buf: Number of buffers in array
+ * @buf_arr: Buffer array of DMA mem mapping info
+ *
+ * This API maps/unmaps WLAN-IPA buffers if SMMU S1 translation
+ * is enabled.
+ *
+ * Return: Status of map operation
+ */
+int hdd_ipa_uc_smmu_map(bool map, uint32_t num_buf, qdf_mem_info_t *buf_arr);
 #else
 
 static inline QDF_STATUS hdd_ipa_init(struct hdd_context *hdd_ctx)
@@ -316,5 +328,10 @@ static inline void hdd_ipa_uc_info(struct hdd_context *hdd_ctx)
 {
 }
 
+static inline int hdd_ipa_uc_smmu_map(bool map, uint32_t num_buf,
+				      qdf_mem_info_t *buf_arr)
+{
+	return 0;
+}
 #endif /* IPA_OFFLOAD */
 #endif /* #ifndef HDD_IPA_H__ */

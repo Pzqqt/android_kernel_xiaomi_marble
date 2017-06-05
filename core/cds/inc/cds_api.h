@@ -593,4 +593,29 @@ bool cds_is_group_addr(uint8_t *mac_addr)
 uint32_t cds_get_arp_stats_gw_ip(void);
 void cds_incr_arp_stats_tx_tgt_delivered(void);
 void cds_incr_arp_stats_tx_tgt_acked(void);
+
+/**
+ * cds_smmu_mem_map_setup() - Check SMMU S1 stage enable
+ *                            status and setup wlan driver
+ * @osdev: Parent device instance
+ *
+ * This API checks if SMMU S1 translation is enabled in
+ * platform driver or not and sets it accordingly in driver.
+ *
+ * Return: none
+ */
+void cds_smmu_mem_map_setup(qdf_device_t osdev);
+
+/**
+ * cds_smmu_map_unmap() - Map / Unmap DMA buffer to IPA UC
+ * @map: Map / unmap operation
+ * @num_buf: Number of buffers in array
+ * @buf_arr: Buffer array of DMA mem mapping info
+ *
+ * This API maps/unmaps WLAN-IPA buffers if SMMU S1 translation
+ * is enabled.
+ *
+ * Return: Status of map operation
+ */
+int cds_smmu_map_unmap(bool map, uint32_t num_buf, qdf_mem_info_t *buf_arr);
 #endif /* if !defined __CDS_API_H */

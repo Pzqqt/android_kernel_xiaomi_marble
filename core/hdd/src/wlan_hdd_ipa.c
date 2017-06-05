@@ -6378,4 +6378,22 @@ QDF_STATUS hdd_ipa_cleanup(struct hdd_context *hdd_ctx)
 
 	return ret;
 }
+
+int hdd_ipa_uc_smmu_map(bool map, uint32_t num_buf, qdf_mem_info_t *buf_arr)
+{
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "Map: %d Num_buf: %d", map, num_buf);
+
+	if (!num_buf) {
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "No buffers to map/unmap");
+		return 0;
+	}
+
+	if (map)
+		return ipa_create_wdi_mapping(num_buf,
+			   (struct ipa_wdi_buffer_info *)buf_arr);
+	else
+		return ipa_release_wdi_mapping(num_buf,
+			   (struct ipa_wdi_buffer_info *)buf_arr);
+}
+
 #endif /* IPA_OFFLOAD */

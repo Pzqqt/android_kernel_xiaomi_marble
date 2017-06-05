@@ -2498,6 +2498,11 @@ ifeq ($(CONFIG_DYNAMIC_DEBUG),y)
 CDEFINES += -DFEATURE_MULTICAST_HOST_FW_MSGS
 endif
 
+#Flag to enable SMMU S1 support
+ifeq ($(CONFIG_ARCH_SDM845), y)
+CDEFINES += -DENABLE_SMMU_S1_TRANSLATION
+endif
+
 KBUILD_CPPFLAGS += $(CDEFINES)
 
 # Currently, for versions of gcc which support it, the kernel Makefile

@@ -71,6 +71,13 @@
 #include "wlan_ocb_ucfg_api.h"
 #include "qdf_platform.h"
 
+#ifdef ENABLE_SMMU_S1_TRANSLATION
+#include "pld_common.h"
+#include <asm/dma-iommu.h>
+#include <linux/iommu.h>
+#endif
+/* Preprocessor Definitions and Constants */
+
 /* Preprocessor Definitions and Constants */
 
 /* Data definitions */
@@ -2836,3 +2843,36 @@ void cds_incr_arp_stats_tx_tgt_acked(void)
 	if (adapter)
 		adapter->hdd_stats.hdd_arp_stats.tx_ack_cnt++;
 }
+
+#ifdef ENABLE_SMMU_S1_TRANSLATION
+void cds_smmu_mem_map_setup(qdf_device_t osdev)
+{
+	int attr = 0;
+	struct dma_iommu_mapping *mapping = pld_smmu_get_mapping(osdev->dev);
+
+	osdev->smmu_s1_enabled = false;
+	if (!mapping) {
+		cds_info("No SMMU mapping present");
+		return;
+	}
+
+	if ((iommu_domain_get_attr(mapping->domain,
+				   DOMAIN_ATTR_S1_BYPASS, &attr) == 0) &&
+				   !attr)
+		osdev->smmu_s1_enabled = true;
+}
+
+int cds_smmu_map_unmap(bool map, uint32_t num_buf, qdf_mem_info_t *buf_arr)
+{
+	return hdd_ipa_uc_smmu_map(map, num_buf, buf_arr);
+}
+#else
+void cds_smmu_mem_map_setup(qdf_device_t osdev)
+{
+}
+
+int cds_smmu_map_unmap(bool map, uint32_t num_buf, qdf_mem_info_t *buf_arr)
+{
+	return 0;
+}
+#endif
