@@ -1828,6 +1828,7 @@ void lim_fill_join_rsp_ht_caps(tpPESession session, tpSirSmeJoinRsp join_rsp)
 }
 #endif
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * sir_parse_bcn_fixed_fields() - Parse fixed fields in Beacon IE's
  *
@@ -1852,7 +1853,6 @@ static void sir_parse_bcn_fixed_fields(tpAniSirGlobal mac_ctx,
 	sir_copy_caps_info(mac_ctx, dst, beacon_struct);
 }
 
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 static QDF_STATUS
 lim_roam_fill_bss_descr(tpAniSirGlobal pMac,
 			roam_offload_synch_ind *roam_offload_synch_ind_ptr,

@@ -478,6 +478,52 @@ void lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 }
 #endif
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/**
+ * lim_fill_dot11mode() - to fill 802.11 mode in FT session
+ * @mac_ctx: pointer to mac ctx
+ * @pftSessionEntry: FT session
+ * @psessionEntry: PE session
+ *
+ * This API fills FT session's dot11mode either from pe session or
+ * from CFG depending on the condition.
+ *
+ * Return: none
+ */
+static void lim_fill_dot11mode(tpAniSirGlobal mac_ctx,
+			tpPESession pftSessionEntry, tpPESession psessionEntry)
+{
+	uint32_t self_dot11_mode;
+
+	if (psessionEntry->ftPEContext.pFTPreAuthReq &&
+			!mac_ctx->roam.configParam.isRoamOffloadEnabled) {
+		pftSessionEntry->dot11mode =
+			psessionEntry->ftPEContext.pFTPreAuthReq->dot11mode;
+	} else {
+		wlan_cfg_get_int(mac_ctx, WNI_CFG_DOT11_MODE, &self_dot11_mode);
+		pe_debug("selfDot11Mode: %d", self_dot11_mode);
+		pftSessionEntry->dot11mode = self_dot11_mode;
+	}
+}
+#else
+/**
+ * lim_fill_dot11mode() - to fill 802.11 mode in FT session
+ * @mac_ctx: pointer to mac ctx
+ * @pftSessionEntry: FT session
+ * @psessionEntry: PE session
+ *
+ * This API fills FT session's dot11mode either from pe session.
+ *
+ * Return: none
+ */
+static void lim_fill_dot11mode(tpAniSirGlobal mac_ctx,
+			tpPESession pftSessionEntry, tpPESession psessionEntry)
+{
+	pftSessionEntry->dot11mode =
+			psessionEntry->ftPEContext.pFTPreAuthReq->dot11mode;
+}
+#endif
+
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /*------------------------------------------------------------------
  *
@@ -493,7 +539,6 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 	int8_t localPowerConstraint;
 	int8_t regMax;
 	tSchBeaconStruct *pBeaconStruct;
-	uint32_t self_dot11_mode;
 	ePhyChanBondState cbEnabledMode;
 
 	pBeaconStruct = qdf_mem_malloc(sizeof(tSchBeaconStruct));
@@ -533,16 +578,8 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 	pftSessionEntry->ssId.length = pBeaconStruct->ssId.length;
 	qdf_mem_copy(pftSessionEntry->ssId.ssId, pBeaconStruct->ssId.ssId,
 		     pftSessionEntry->ssId.length);
+	lim_fill_dot11mode(pMac, pftSessionEntry, psessionEntry);
 
-	if (psessionEntry->ftPEContext.pFTPreAuthReq &&
-			!pMac->roam.configParam.isRoamOffloadEnabled)
-		pftSessionEntry->dot11mode =
-			psessionEntry->ftPEContext.pFTPreAuthReq->dot11mode;
-	else {
-		wlan_cfg_get_int(pMac, WNI_CFG_DOT11_MODE, &self_dot11_mode);
-		pe_debug("selfDot11Mode: %d", self_dot11_mode);
-		pftSessionEntry->dot11mode = self_dot11_mode;
-	}
 	pe_debug("dot11mode: %d", pftSessionEntry->dot11mode);
 	pftSessionEntry->vhtCapability =
 		(IS_DOT11_MODE_VHT(pftSessionEntry->dot11mode)
