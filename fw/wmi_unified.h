@@ -10273,6 +10273,7 @@ typedef enum wake_reason_e {
     WOW_REASON_NAN_EVENT_WAKE_HOST,
     WOW_REASON_CHIP_POWER_FAILURE_DETECT,
     WOW_REASON_11D_SCAN,
+    WOW_REASON_THERMAL_CHANGE,
     WOW_REASON_DEBUG_TEST = 0xFF,
 } WOW_WAKE_REASON_TYPE;
 
@@ -13183,6 +13184,34 @@ typedef struct {
 
 } wmi_dfs_radar_event_fixed_param;
 
+enum {
+    /* DEFAULT - target chooses what action to take, based on its thermal
+     * management policy
+     * Targets which throttle tx (and potentially rx) based on thermal
+     * management thresholds specified by the host will shut down tx
+     * if the temperature exceeds upper_thresh_degreeC.
+     * Targets which simply inform the host about threshold breaches will
+     * send a notification message to the host if the temperature exceeds
+     * upper_thresh_degreeC.
+     * Conversely, if the temperature was above upper_thresh_degreeC but
+     * then drops to below lower_threshold_degreeC, the target will either
+     * resume tx, or notify the host.
+     */
+    WMI_THERMAL_MGMT_ACTION_DEFAULT = 0,
+    /* HALT_TRAFFIC -
+     * If the temperature rises above upper_thresh_degreeC, the target will
+     * halt tx.
+     * If the temperature falls back below lower_thresh_degreeC, the target
+     * will resume tx.
+     */
+    WMI_THERMAL_MGMT_ACTION_HALT_TRAFFIC = 1,
+    /* NOTIFY_HOST - the target will notify the host if the temperature
+     * either rises above upper_thresh_degreeC or falls below
+     * lower_thresh_degreeC.
+     */
+    WMI_THERMAL_MGMT_ACTION_NOTIFY_HOST = 2,
+};
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_thermal_mgmt_cmd_fixed_param  */
 
@@ -13192,6 +13221,14 @@ typedef struct {
 
     /*Enable/Disable Thermal Monitoring for Mitigation*/
     A_UINT32 enable;
+
+    /* action: what the target should do when a thermal upper/lower threshold
+     * is crossed.
+     * Refer to the WMI_THERMAL_MGMT_ACTION enum.
+     */
+    A_UINT32 action;
+    A_UINT32 threshold_warning_degreeC;
+    A_UINT32 sample_rate_ms;
 } wmi_thermal_mgmt_cmd_fixed_param;
 
 typedef struct {
