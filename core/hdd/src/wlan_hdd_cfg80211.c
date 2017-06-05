@@ -7080,6 +7080,11 @@ static int __wlan_hdd_cfg80211_conditional_chan_switch(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
+	/*
+	 * audit note: it is ok to pass a NULL policy here since only
+	 * one attribute is parsed which is array of frequencies and
+	 * it is explicitly validated for both under read and over read
+	 */
 	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_SAP_CONDITIONAL_CHAN_SWITCH_MAX,
 		      data, data_len, NULL)) {
 		hdd_err("Invalid ATTR");
