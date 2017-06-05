@@ -2472,13 +2472,13 @@ static void wma_wake_event_log_reason(t_wma_handle *wma,
 	/* "Unspecified" means APPS triggered wake, else firmware triggered */
 	if (wake_info->wake_reason != WOW_REASON_UNSPECIFIED) {
 		vdev = &wma->interfaces[wake_info->vdev_id];
-		WMA_LOGA("WOW wakeup for reason: %s(%d) on vdev %d (%s)",
+		WMA_LOGA("WLAN triggered wakeup: %s (%d), vdev: %d (%s)",
 			 wma_wow_wake_reason_str(wake_info->wake_reason),
 			 wake_info->wake_reason,
 			 wake_info->vdev_id,
 			 wma_vdev_type_str(vdev->type));
 	} else if (!wmi_get_runtime_pm_inprogress(wma->wmi_handle)) {
-		WMA_LOGA("WOW wakeup for reason: %s(%d)",
+		WMA_LOGA("Non-WLAN triggered wakeup: %s (%d)",
 			 wma_wow_wake_reason_str(wake_info->wake_reason),
 			 wake_info->wake_reason);
 	}
