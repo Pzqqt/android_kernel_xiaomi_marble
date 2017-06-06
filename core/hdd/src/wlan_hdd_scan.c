@@ -88,6 +88,7 @@ typedef struct hdd_scan_info {
 	char *start;
 	char *end;
 } hdd_scan_info_t, *hdd_scan_info_tp;
+
 /**
  * hdd_translate_abg_rate_to_mbps_rate() - translate abg rate to Mbps rate
  * @pFcRate: Rate pointer
@@ -2107,6 +2108,13 @@ static void hdd_process_vendor_acs_response(hdd_adapter_t *adapter)
 	}
 }
 
+static const
+struct nla_policy scan_policy[QCA_WLAN_VENDOR_ATTR_SCAN_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_SCAN_FLAGS] = {.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_SCAN_TX_NO_CCK_RATE] = {.type = NLA_FLAG},
+	[QCA_WLAN_VENDOR_ATTR_SCAN_COOKIE] = {.type = NLA_U64},
+};
+
 /**
  * __wlan_hdd_cfg80211_vendor_scan() - API to process venor scan request
  * @wiphy: Pointer to wiphy
@@ -2141,7 +2149,7 @@ static int __wlan_hdd_cfg80211_vendor_scan(struct wiphy *wiphy,
 		return ret;
 
 	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_SCAN_MAX, data,
-		data_len, NULL)) {
+		      data_len, scan_policy)) {
 		hdd_err("Invalid ATTR");
 		return -EINVAL;
 	}
@@ -2194,8 +2202,13 @@ static int __wlan_hdd_cfg80211_vendor_scan(struct wiphy *wiphy,
 	count = 0;
 	if (tb[QCA_WLAN_VENDOR_ATTR_SCAN_FREQUENCIES]) {
 		nla_for_each_nested(attr,
-				tb[QCA_WLAN_VENDOR_ATTR_SCAN_FREQUENCIES],
-				tmp) {
+				    tb[QCA_WLAN_VENDOR_ATTR_SCAN_FREQUENCIES],
+				    tmp) {
+			if (nla_len(attr) != sizeof(uint32_t)) {
+				hdd_err("len is not correct for frequency %d",
+					count);
+				goto error;
+			}
 			chan = __ieee80211_get_channel(wiphy,
 							nla_get_u32(attr));
 			if (!chan)
