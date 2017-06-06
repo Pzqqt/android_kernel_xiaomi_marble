@@ -6839,6 +6839,11 @@ static int wlan_hdd_cfg80211_set_ota_test(struct wiphy *wiphy,
 	return ret;
 }
 
+static const struct nla_policy
+txpower_scale_policy[QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE] = { .type = NLA_U8 },
+};
+
 /**
  * __wlan_hdd_cfg80211_txpower_scale () - txpower scaling
  * @wiphy: Pointer to wireless phy
@@ -6870,7 +6875,7 @@ static int __wlan_hdd_cfg80211_txpower_scale(struct wiphy *wiphy,
 	adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 
 	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_MAX,
-		      data, data_len, NULL)) {
+		      data, data_len, txpower_scale_policy)) {
 		hdd_err("Invalid ATTR");
 		return -EINVAL;
 	}
