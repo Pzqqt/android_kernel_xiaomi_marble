@@ -51,6 +51,31 @@ QDF_STATUS wlan_crypto_set_param(struct wlan_objmgr_vdev *vdev,
 int32_t wlan_crypto_get_param(struct wlan_objmgr_vdev *vdev,
 					wlan_crypto_param_type param);
 /**
+ * wlan_crypto_get_peer_param - called by ucfg to get crypto peer param
+ *
+ * @peer: peer
+ * @param: param to be get.
+ *
+ * This function gets called from ucfg to get peer param
+ *
+ * Return: value or -1 for failure
+ */
+int32_t wlan_crypto_get_peer_param(struct wlan_objmgr_peer *peer,
+					wlan_crypto_param_type param);
+
+/**
+ * wlan_crypto_is_htallowed - called by ucfg to check if HT rates is allowed
+ *
+ * @vdev: Vdev
+ * @peer: Peer
+ *
+ * This function is called to check if HT rates is allowed
+ *
+ * Return: 0 for not allowed and +ve for allowed
+ */
+uint8_t wlan_crypto_is_htallowed(struct wlan_objmgr_vdev *vdev,
+				 struct wlan_objmgr_peer *peer);
+/**
  * wlan_crypto_setkey - called by ucfg to setkey
  *
  * @vdev: vdev

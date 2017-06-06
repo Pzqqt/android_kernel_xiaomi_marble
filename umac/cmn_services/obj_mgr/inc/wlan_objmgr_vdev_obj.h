@@ -210,6 +210,8 @@
 #define WLAN_VDEV_C_WME_TKIPMIC          0x00000080
   /* CAPABILITY: bg scanning */
 #define WLAN_VDEV_C_BGSCAN               0x00000100
+  /* CAPABILITY: Restrict offchannel */
+#define WLAN_VDEV_C_RESTRICT_OFFCHAN     0x00000200
 
 /* Invalid VDEV identifier */
 #define WLAN_INVALID_VDEV_ID 255

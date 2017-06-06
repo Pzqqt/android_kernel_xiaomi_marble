@@ -98,6 +98,7 @@ struct ath_pktlog_info {
 	/* Size of buffer in bytes */
 	int32_t buf_size;
 	spinlock_t log_lock;
+	struct mutex pktlog_mutex;
 
 	/* Threshold of TCP SACK packets for triggered stop */
 	int sack_thr;

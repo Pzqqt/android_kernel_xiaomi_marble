@@ -362,6 +362,7 @@ void pktlog_init(struct hif_opaque_softc *scn)
 
 	OS_MEMZERO(pl_info, sizeof(*pl_info));
 	PKTLOG_LOCK_INIT(pl_info);
+	mutex_init(&pl_info->pktlog_mutex);
 
 	pl_info->buf_size = PKTLOG_DEFAULT_BUFSIZE;
 	pl_info->buf = NULL;
@@ -387,7 +388,7 @@ void pktlog_init(struct hif_opaque_softc *scn)
 	PKTLOG_SW_EVENT_SUBSCRIBER.callback = pktlog_callback;
 }
 
-int pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state,
+static int __pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state,
 		 bool ini_triggered, uint8_t user_triggered,
 		 uint32_t is_iwpriv_command)
 {
@@ -505,7 +506,49 @@ int pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state,
 	return 0;
 }
 
-int pktlog_setsize(struct hif_opaque_softc *scn, int32_t size)
+int pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state,
+		 bool ini_triggered, uint8_t user_triggered,
+		 uint32_t is_iwpriv_command)
+{
+	struct ol_pktlog_dev_t *pl_dev;
+	struct ath_pktlog_info *pl_info;
+	struct ol_txrx_pdev_t *txrx_pdev;
+	int error;
+
+	if (!scn) {
+		printk("%s: Invalid scn context\n", __func__);
+		ASSERT(0);
+		return -EINVAL;
+	}
+
+	txrx_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	if (!txrx_pdev) {
+		printk("%s: Invalid txrx_pdev context\n", __func__);
+		ASSERT(0);
+		return -EINVAL;
+	}
+
+	pl_dev = txrx_pdev->pl_dev;
+	if (!pl_dev) {
+		printk("%s: Invalid pktlog context\n", __func__);
+		ASSERT(0);
+		return -EINVAL;
+	}
+
+	pl_info = pl_dev->pl_info;
+
+	if (!pl_info)
+		return 0;
+
+
+	mutex_lock(&pl_info->pktlog_mutex);
+	error = __pktlog_enable(scn, log_state, ini_triggered,
+				user_triggered, is_iwpriv_command);
+	mutex_unlock(&pl_info->pktlog_mutex);
+	return error;
+}
+
+static int __pktlog_setsize(struct hif_opaque_softc *scn, int32_t size)
 {
 	ol_txrx_pdev_handle pdev_txrx_handle =
 		cds_get_context(QDF_MODULE_ID_TXRX);
@@ -566,6 +609,29 @@ int pktlog_setsize(struct hif_opaque_softc *scn, int32_t size)
 	pl_info->curr_pkt_state = PKTLOG_OPR_NOT_IN_PROGRESS;
 	spin_unlock_bh(&pl_info->log_lock);
 	return 0;
+}
+
+int pktlog_setsize(struct hif_opaque_softc *scn, int32_t size)
+{
+	int status;
+	ol_txrx_pdev_handle pdev_txrx_handle =
+		cds_get_context(QDF_MODULE_ID_TXRX);
+	struct ol_pktlog_dev_t *pl_dev;
+	struct ath_pktlog_info *pl_info;
+
+	if (pdev_txrx_handle == NULL ||
+			pdev_txrx_handle->pl_dev == NULL ||
+			pdev_txrx_handle->pl_dev->pl_info == NULL)
+		return -EFAULT;
+
+	pl_dev = pdev_txrx_handle->pl_dev;
+	pl_info = pl_dev->pl_info;
+
+	mutex_lock(&pl_info->pktlog_mutex);
+	status = __pktlog_setsize(scn, size);
+	mutex_unlock(&pl_info->pktlog_mutex);
+
+	return status;
 }
 
 int pktlog_clearbuff(struct hif_opaque_softc *scn, bool clear_buff)

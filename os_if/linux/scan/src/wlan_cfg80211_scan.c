@@ -1018,7 +1018,8 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 #endif
 
 			len += snprintf(chl + len, 5, "%d ", channel);
-			req->scan_req.chan_list[i] = wlan_chan_to_freq(channel);
+			req->scan_req.chan_list[num_chan] =
+				wlan_chan_to_freq(channel);
 			num_chan++;
 		}
 		cfg80211_notice("Channel-List: %s", chl);
