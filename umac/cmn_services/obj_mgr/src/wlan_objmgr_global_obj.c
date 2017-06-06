@@ -26,7 +26,7 @@
 /* Global object, it is declared globally */
 struct wlan_objmgr_global *g_umac_glb_obj;
 /* Component Name table */
-const char *wlan_umac_component_name[] = {
+const char *wlan_umac_Component_name[] = {
 	"MLME",
 	"SCAN_MGR",
 	"SCAN_CACHE",
@@ -42,7 +42,7 @@ QDF_STATUS wlan_objmgr_global_obj_init(void)
 
 	/* If it is already created, ignore */
 	if (g_umac_glb_obj != NULL) {
-		qdf_print("%s: Global object is already created\n", __func__);
+		obj_mgr_err("Global object is already created");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -50,8 +50,7 @@ QDF_STATUS wlan_objmgr_global_obj_init(void)
 	umac_global_obj = (struct wlan_objmgr_global *)qdf_mem_malloc(
 				sizeof(*umac_global_obj));
 	if (umac_global_obj == NULL) {
-		qdf_print("%s: Global object alloc failed due to malloc\n",
-			  __func__);
+		obj_mgr_err("Global object alloc failed due to malloc");
 		return QDF_STATUS_E_NOMEM;
 	}
 	/* Store Global object pointer in Global variable */
@@ -67,7 +66,7 @@ QDF_STATUS wlan_objmgr_global_obj_deinit(void)
 {
 	/* If it is already destroyed */
 	if (g_umac_glb_obj == NULL) {
-		qdf_print("%s: Global object is not allocated\n", __func__);
+		obj_mgr_err("Global object is not allocated");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -76,7 +75,7 @@ QDF_STATUS wlan_objmgr_global_obj_deinit(void)
 		qdf_mem_free(g_umac_glb_obj);
 		g_umac_glb_obj = NULL;
 	} else {
-		qdf_print("PSOCs are leaked can't free global objmgr ctx\n");
+		obj_mgr_err("PSOCs are leaked can't free global objmgr ctx");
 		WLAN_OBJMGR_BUG(0);
 	}
 
@@ -94,7 +93,7 @@ QDF_STATUS wlan_objmgr_register_psoc_create_handler(
 {
 	/* If id is not within valid range, return */
 	if (id >= WLAN_UMAC_MAX_COMPONENTS) {
-		qdf_print("%s: component %d is out of range\n", __func__, id);
+		obj_mgr_err("Component %d is out of range", id);
 		return QDF_STATUS_MAXCOMP_FAIL;
 	}
 
@@ -102,8 +101,7 @@ QDF_STATUS wlan_objmgr_register_psoc_create_handler(
 	/* If there is a valid entry, return failure */
 	if (g_umac_glb_obj->psoc_create_handler[id] != NULL) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		qdf_print("%s:callback for comp %d is already registered\n",
-			  __func__, id);
+		obj_mgr_err("Callback for comp %d is already registered", id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Store handler and args in Global object table */
@@ -122,15 +120,14 @@ QDF_STATUS wlan_objmgr_unregister_psoc_create_handler(
 {
 	/* If id is not within valid range, return */
 	if (id >= WLAN_UMAC_MAX_COMPONENTS) {
-		qdf_print("%s: component %d is out of range\n", __func__, id);
+		obj_mgr_err("Component %d is out of range", id);
 		return QDF_STATUS_MAXCOMP_FAIL;
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is an invalid entry, return failure */
 	if (g_umac_glb_obj->psoc_create_handler[id] != handler) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		qdf_print("%s:callback for comp %d is not registered\n",
-			  __func__, id);
+		obj_mgr_err("Callback for comp %d is not registered", id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Reset handlers, and args to NULL */
@@ -149,15 +146,14 @@ QDF_STATUS wlan_objmgr_register_psoc_destroy_handler(
 {
 	/* If id is not within valid range, return */
 	if (id >= WLAN_UMAC_MAX_COMPONENTS) {
-		qdf_print("%s: component %d is out of range\n", __func__, id);
+		obj_mgr_err("Component %d is out of range", id);
 		return QDF_STATUS_MAXCOMP_FAIL;
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is a valid entry, return failure */
 	if (g_umac_glb_obj->psoc_destroy_handler[id] != NULL) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		qdf_print("%s:callback for comp %d is already registered\n",
-			  __func__, id);
+		obj_mgr_err("Callback for comp %d is already registered", id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Store handler and args in Global object table */
@@ -176,15 +172,14 @@ QDF_STATUS wlan_objmgr_unregister_psoc_destroy_handler(
 {
 	/* If id is not within valid range, return */
 	if (id >= WLAN_UMAC_MAX_COMPONENTS) {
-		qdf_print("%s: component %d is out of range\n", __func__, id);
+		obj_mgr_err("Component %d is out of range", id);
 		return QDF_STATUS_MAXCOMP_FAIL;
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is an invalid entry, return failure */
 	if (g_umac_glb_obj->psoc_destroy_handler[id] != handler) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		qdf_print("%s:callback for comp %d is not registered\n",
-			  __func__, id);
+		obj_mgr_err("Callback for comp %d is not registered", id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Reset handlers, and args to NULL */
@@ -203,15 +198,14 @@ QDF_STATUS wlan_objmgr_register_psoc_status_handler(
 {
 	/* If id is not within valid range, return */
 	if (id >= WLAN_UMAC_MAX_COMPONENTS) {
-		qdf_print("%s: component %d is out of range\n", __func__, id);
+		obj_mgr_err("Component %d is out of range", id);
 		return QDF_STATUS_MAXCOMP_FAIL;
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is a valid entry, return failure */
 	if (g_umac_glb_obj->psoc_status_handler[id] != NULL) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		qdf_print("%s:callback for comp %d is already registered\n",
-			  __func__, id);
+		obj_mgr_err("Callback for comp %d is already registered", id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Store handler and args in Global object table */
@@ -229,15 +223,14 @@ QDF_STATUS wlan_objmgr_unregister_psoc_status_handler(
 {
 	/* If id is not within valid range, return */
 	if (id >= WLAN_UMAC_MAX_COMPONENTS) {
-		qdf_print("%s: component %d is out of range\n", __func__, id);
+		obj_mgr_err("Component %d is out of range", id);
 		return QDF_STATUS_MAXCOMP_FAIL;
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is an invalid entry, return failure */
 	if (g_umac_glb_obj->psoc_status_handler[id] != handler) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		qdf_print("%s:callback for comp %d is not registered\n",
-			  __func__, id);
+		obj_mgr_err("Callback for comp %d is not registered", id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Reset handlers, and args to NULL */
@@ -256,15 +249,14 @@ QDF_STATUS wlan_objmgr_register_pdev_create_handler(
 {
 	/* If id is not within valid range, return */
 	if (id >= WLAN_UMAC_MAX_COMPONENTS) {
-		qdf_print("%s: component %d is out of range\n", __func__, id);
+		obj_mgr_err("Component %d is out of range", id);
 		return QDF_STATUS_MAXCOMP_FAIL;
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is a valid entry, return failure */
 	if (g_umac_glb_obj->pdev_create_handler[id] != NULL) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		qdf_print("%s:callback for comp %d is already registered\n",
-			  __func__, id);
+		obj_mgr_err("Callback for comp %d is already registered", id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Store handler and args in Global object table */
@@ -283,15 +275,14 @@ QDF_STATUS wlan_objmgr_unregister_pdev_create_handler(
 {
 	/* If id is not within valid range, return */
 	if (id >= WLAN_UMAC_MAX_COMPONENTS) {
-		qdf_print("%s: component %d is out of range\n", __func__, id);
+		obj_mgr_err("Component %d is out of range", id);
 		return QDF_STATUS_MAXCOMP_FAIL;
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is an invalid entry, return failure */
 	if (g_umac_glb_obj->pdev_create_handler[id] != handler) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		qdf_print("%s:callback for comp %d is not registered\n",
-			  __func__, id);
+		obj_mgr_err("Callback for comp %d is not registered", id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Reset handlers, and args to NULL */
@@ -310,15 +301,14 @@ QDF_STATUS wlan_objmgr_register_pdev_destroy_handler(
 {
 	/* If id is not within valid range, return */
 	if (id >= WLAN_UMAC_MAX_COMPONENTS) {
-		qdf_print("%s: component %d is out of range\n", __func__, id);
+		obj_mgr_err("Component %d is out of range", id);
 		return QDF_STATUS_MAXCOMP_FAIL;
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is a valid entry, return failure */
 	if (g_umac_glb_obj->pdev_destroy_handler[id] != NULL) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		qdf_print("%s:callback for comp %d is already registered\n",
-			  __func__, id);
+		obj_mgr_err("Callback for comp %d is already registered", id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Store handler and args in Global object table */
@@ -337,15 +327,14 @@ QDF_STATUS wlan_objmgr_unregister_pdev_destroy_handler(
 {
 	/* If id is not within valid range, return */
 	if (id >= WLAN_UMAC_MAX_COMPONENTS) {
-		qdf_print("%s: component %d is out of range\n", __func__, id);
+		obj_mgr_err("Component %d is out of range", id);
 		return QDF_STATUS_MAXCOMP_FAIL;
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is an invalid entry, return failure */
 	if (g_umac_glb_obj->pdev_destroy_handler[id] != handler) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		qdf_print("%s:callback for component %d is not registered\n",
-			  __func__, id);
+		obj_mgr_err("Callback for Component %d is not registered", id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Reset handlers, and args to NULL */
@@ -364,15 +353,14 @@ QDF_STATUS wlan_objmgr_register_pdev_status_handler(
 {
 	/* If id is not within valid range, return */
 	if (id >= WLAN_UMAC_MAX_COMPONENTS) {
-		qdf_print("%s: component %d is out of range\n", __func__, id);
+		obj_mgr_err("Component %d is out of range", id);
 		return QDF_STATUS_MAXCOMP_FAIL;
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is a valid entry, return failure */
 	if (g_umac_glb_obj->pdev_status_handler[id] != NULL) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		qdf_print("%s:callback for comp %d is already registered\n",
-			  __func__, id);
+		obj_mgr_err("Callback for comp %d is already registered", id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Store handler and args in Global object table */
@@ -390,15 +378,14 @@ QDF_STATUS wlan_objmgr_unregister_pdev_status_handler(
 {
 	/* If id is not within valid range, return */
 	if (id >= WLAN_UMAC_MAX_COMPONENTS) {
-		qdf_print("%s: component %d is out of range\n", __func__, id);
+		obj_mgr_err("Component %d is out of range", id);
 		return QDF_STATUS_MAXCOMP_FAIL;
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is an invalid entry, return failure */
 	if (g_umac_glb_obj->pdev_status_handler[id] != handler) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		qdf_print("%s:callback for component %d is not registered\n",
-			  __func__, id);
+		obj_mgr_err("Callback for Component %d is not registered", id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Reset handlers, and args to NULL */
@@ -417,15 +404,14 @@ QDF_STATUS wlan_objmgr_register_vdev_create_handler(
 {
 	/* If id is not within valid range, return */
 	if (id >= WLAN_UMAC_MAX_COMPONENTS) {
-		qdf_print("%s: component %d is out of range\n", __func__, id);
+		obj_mgr_err("Component %d is out of range", id);
 		return QDF_STATUS_MAXCOMP_FAIL;
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is a valid entry, return failure */
 	if (g_umac_glb_obj->vdev_create_handler[id] != NULL) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		qdf_print("%s:callback for comp %d is already registered\n",
-			  __func__, id);
+		obj_mgr_err("Callback for comp %d is already registered", id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Store handler and args in Global object table */
@@ -443,15 +429,14 @@ QDF_STATUS wlan_objmgr_unregister_vdev_create_handler(
 {
 	/* If id is not within valid range, return */
 	if (id >= WLAN_UMAC_MAX_COMPONENTS) {
-		qdf_print("%s: component %d is out of range\n", __func__, id);
+		obj_mgr_err("Component %d is out of range", id);
 		return QDF_STATUS_MAXCOMP_FAIL;
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is an invalid entry, return failure */
 	if (g_umac_glb_obj->vdev_create_handler[id] != handler) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		qdf_print("%s:callback for comp %d is not registered\n",
-			  __func__, id);
+		obj_mgr_err("Callback for comp %d is not registered", id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Reset handlers, and args to NULL */
@@ -469,15 +454,14 @@ QDF_STATUS wlan_objmgr_register_vdev_destroy_handler(
 {
 	/* If id is not within valid range, return */
 	if (id >= WLAN_UMAC_MAX_COMPONENTS) {
-		qdf_print("%s: component %d is out of range\n", __func__, id);
+		obj_mgr_err("Component %d is out of range", id);
 		return QDF_STATUS_MAXCOMP_FAIL;
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is a valid entry, return failure */
 	if (g_umac_glb_obj->vdev_destroy_handler[id] != NULL) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		qdf_print("%s:callback for comp %d is already registered\n",
-			  __func__, id);
+		obj_mgr_err("Callback for comp %d is already registered", id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Store handler and args in Global object table */
@@ -495,15 +479,14 @@ QDF_STATUS wlan_objmgr_unregister_vdev_destroy_handler(
 {
 	/* If id is not within valid range, return */
 	if (id >= WLAN_UMAC_MAX_COMPONENTS) {
-		qdf_print("%s: component %d is out of range\n", __func__, id);
+		obj_mgr_err("Component %d is out of range", id);
 		return QDF_STATUS_MAXCOMP_FAIL;
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is an invalid entry, return failure */
 	if (g_umac_glb_obj->vdev_destroy_handler[id] != handler) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		qdf_print("%s:callback for comp %d is not registered\n",
-			  __func__, id);
+		obj_mgr_err("Callback for comp %d is not registered", id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Reset handlers, and args to NULL */
@@ -521,15 +504,14 @@ QDF_STATUS wlan_objmgr_register_vdev_status_handler(
 {
 	/* If id is not within valid range, return */
 	if (id >= WLAN_UMAC_MAX_COMPONENTS) {
-		qdf_print("%s: component %d is out of range\n", __func__, id);
+		obj_mgr_err("Component %d is out of range", id);
 		return QDF_STATUS_MAXCOMP_FAIL;
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is a valid entry, return failure */
 	if (g_umac_glb_obj->vdev_status_handler[id] != NULL) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		qdf_print("%s:callback for comp %d is already registered\n",
-			  __func__, id);
+		obj_mgr_err("Callback for comp %d is already registered", id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Store handler and args in Global object table */
@@ -547,15 +529,14 @@ QDF_STATUS wlan_objmgr_unregister_vdev_status_handler(
 {
 	/* If id is not within valid range, return */
 	if (id >= WLAN_UMAC_MAX_COMPONENTS) {
-		qdf_print("%s: component %d is out of range\n", __func__, id);
+		obj_mgr_err("Component %d is out of range", id);
 		return QDF_STATUS_MAXCOMP_FAIL;
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is an invalid entry, return failure */
 	if (g_umac_glb_obj->vdev_status_handler[id] != handler) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		qdf_print("%s:callback for component %d is not registered\n",
-			  __func__, id);
+		obj_mgr_err("Callback for Component %d is not registered", id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Reset handlers, and args to NULL */
@@ -574,15 +555,14 @@ QDF_STATUS wlan_objmgr_register_peer_create_handler(
 {
 	/* If id is not within valid range, return */
 	if (id >= WLAN_UMAC_MAX_COMPONENTS) {
-		qdf_print("%s: component %d is out of range\n", __func__, id);
+		obj_mgr_err("Component %d is out of range", id);
 		return QDF_STATUS_MAXCOMP_FAIL;
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is a valid entry, return failure */
 	if (g_umac_glb_obj->peer_create_handler[id] != NULL) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		qdf_print("%s:callback for comp %d is already registered\n",
-			  __func__, id);
+		obj_mgr_err("Callback for comp %d is already registered", id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Store handler and args in Global object table */
@@ -601,15 +581,14 @@ QDF_STATUS wlan_objmgr_unregister_peer_create_handler(
 {
 	/* If id is not within valid range, return */
 	if (id >= WLAN_UMAC_MAX_COMPONENTS) {
-		qdf_print("%s: component %d is out of range\n", __func__, id);
+		obj_mgr_err("Component %d is out of range", id);
 		return QDF_STATUS_MAXCOMP_FAIL;
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is an invalid entry, return failure */
 	if (g_umac_glb_obj->peer_create_handler[id] != handler) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		qdf_print("%s:callback for comp %d is not registered\n",
-			  __func__, id);
+		obj_mgr_err("Callback for comp %d is not registered", id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Reset handlers, and args to NULL */
@@ -627,15 +606,14 @@ QDF_STATUS wlan_objmgr_register_peer_destroy_handler(
 {
 	/* If id is not within valid range, return */
 	if (id >= WLAN_UMAC_MAX_COMPONENTS) {
-		qdf_print("%s: component %d is out of range\n", __func__, id);
+		obj_mgr_err("Component %d is out of range", id);
 		return QDF_STATUS_MAXCOMP_FAIL;
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is a valid entry, return failure */
 	if (g_umac_glb_obj->peer_destroy_handler[id] != NULL) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		qdf_print("%s:callback for comp %d is already registered\n",
-			  __func__, id);
+		obj_mgr_err("Callback for comp %d is already registered", id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Store handler and args in Global object table */
@@ -653,15 +631,14 @@ QDF_STATUS wlan_objmgr_unregister_peer_destroy_handler(
 {
 	/* If id is not within valid range, return */
 	if (id >= WLAN_UMAC_MAX_COMPONENTS) {
-		qdf_print("%s: component %d is out of range\n", __func__, id);
+		obj_mgr_err("Component %d is out of range", id);
 		return QDF_STATUS_MAXCOMP_FAIL;
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is an invalid entry, return failure */
 	if (g_umac_glb_obj->peer_destroy_handler[id] != handler) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		qdf_print("%s:callback for comp %d is not registered\n",
-			  __func__, id);
+		obj_mgr_err("Callback for comp %d is not registered", id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Reset handlers, and args to NULL */
@@ -679,15 +656,14 @@ QDF_STATUS wlan_objmgr_register_peer_status_handler(
 {
 	/* If id is not within valid range, return */
 	if (id >= WLAN_UMAC_MAX_COMPONENTS) {
-		qdf_print("%s: component %d is out of range\n", __func__, id);
+		obj_mgr_err("Component %d is out of range", id);
 		return QDF_STATUS_MAXCOMP_FAIL;
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is a valid entry, return failure */
 	if (g_umac_glb_obj->peer_status_handler[id] != NULL) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		qdf_print("%s:callback for comp %d is already registered\n",
-			  __func__, id);
+		obj_mgr_err("Callback for comp %d is already registered", id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Store handler and args in Global object table */
@@ -705,15 +681,14 @@ QDF_STATUS wlan_objmgr_unregister_peer_status_handler(
 {
 	/* If id is not within valid range, return */
 	if (id >= WLAN_UMAC_MAX_COMPONENTS) {
-		qdf_print("%s: component %d is out of range\n", __func__, id);
+		obj_mgr_err("Component %d is out of range", id);
 		return QDF_STATUS_MAXCOMP_FAIL;
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is an invalid entry, return failure */
 	if (g_umac_glb_obj->peer_status_handler[id] != handler) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		qdf_print("%s:callback for comp %d is not registered\n",
-			  __func__, id);
+		obj_mgr_err("Callback for comp %d is not registered", id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Reset handlers, and args to NULL */
@@ -789,12 +764,11 @@ void wlan_objmgr_print_ref_ids(qdf_atomic_t *id)
 	uint32_t i;
 	uint32_t pending_ref;
 
-	qdf_print(" Pending references of object\n");
+	obj_mgr_info("Pending references of object");
 	for (i = 0; i < WLAN_REF_ID_MAX; i++) {
 		pending_ref = qdf_atomic_read(&id[i]);
 		if (pending_ref)
-			qdf_print(" %s -- %d\n", string_from_dbgid(i), pending_ref);
+		obj_mgr_info("%s -- %d", string_from_dbgid(i), pending_ref);
 	}
-
 	return;
 }

@@ -762,12 +762,10 @@ static inline uint8_t *wlan_vdev_get_hw_macaddr(struct wlan_objmgr_vdev *vdev)
 	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
 
 	/* This API is invoked with lock acquired, do not add log prints */
-	if (pdev != NULL) {
+	if (pdev != NULL)
 		return wlan_pdev_get_hw_macaddr(pdev);
-	} else {
-		qdf_print("%s:pdev is NULL\n", __func__);
+	else
 		return NULL;
-	}
 }
 
 /**

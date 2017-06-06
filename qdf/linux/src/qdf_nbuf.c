@@ -2788,3 +2788,35 @@ void __qdf_nbuf_reg_free_cb(qdf_nbuf_free_t cb_func_ptr)
 	nbuf_free_cb = cb_func_ptr;
 	return;
 }
+
+/**
+ * qdf_nbuf_classify_pkt() - classify packet
+ * @skb - sk buff
+ *
+ * Return: none
+ */
+void qdf_nbuf_classify_pkt(struct sk_buff *skb)
+{
+	struct ethhdr *eh = (struct ethhdr *)skb->data;
+	qdf_mem_set(skb->cb, sizeof(skb->cb), 0);
+
+	/* check destination mac address is broadcast/multicast */
+	if (is_broadcast_ether_addr((uint8_t *)eh))
+		QDF_NBUF_CB_SET_BCAST(skb);
+	else if (is_multicast_ether_addr((uint8_t *)eh))
+		QDF_NBUF_CB_SET_MCAST(skb);
+
+	if (qdf_nbuf_is_ipv4_arp_pkt(skb))
+		QDF_NBUF_CB_GET_PACKET_TYPE(skb) =
+			QDF_NBUF_CB_PACKET_TYPE_ARP;
+	else if (qdf_nbuf_is_ipv4_dhcp_pkt(skb))
+		QDF_NBUF_CB_GET_PACKET_TYPE(skb) =
+			QDF_NBUF_CB_PACKET_TYPE_DHCP;
+	else if (qdf_nbuf_is_ipv4_eapol_pkt(skb))
+		QDF_NBUF_CB_GET_PACKET_TYPE(skb) =
+			QDF_NBUF_CB_PACKET_TYPE_EAPOL;
+	else if (qdf_nbuf_is_ipv4_wapi_pkt(skb))
+		QDF_NBUF_CB_GET_PACKET_TYPE(skb) =
+			QDF_NBUF_CB_PACKET_TYPE_WAPI;
+}
+EXPORT_SYMBOL(qdf_nbuf_classify_pkt);

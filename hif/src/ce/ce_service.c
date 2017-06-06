@@ -572,6 +572,7 @@ ce_sendlist_send_legacy(struct CE_handle *copyeng,
 					QDF_NBUF_TX_PKT_CE);
 		DPTRACE(qdf_dp_trace((qdf_nbuf_t)per_transfer_context,
 			QDF_DP_TRACE_CE_PACKET_PTR_RECORD,
+			QDF_TRACE_DEFAULT_PDEV_ID,
 			(uint8_t *)&(((qdf_nbuf_t)per_transfer_context)->data),
 			sizeof(((qdf_nbuf_t)per_transfer_context)->data),
 			QDF_TX));
@@ -756,7 +757,7 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t msdu,
 
 		DPTRACE(qdf_dp_trace(msdu,
 			QDF_DP_TRACE_CE_FAST_PACKET_PTR_RECORD,
-			qdf_nbuf_data_addr(msdu),
+			QDF_TRACE_DEFAULT_PDEV_ID, qdf_nbuf_data_addr(msdu),
 			sizeof(qdf_nbuf_data(msdu)), QDF_TX));
 	}
 

@@ -100,6 +100,7 @@
 #define QDF_NBUF_TX_PKT_CE                   8
 #define QDF_NBUF_TX_PKT_FREE                 9
 #define QDF_NBUF_TX_PKT_STATE_MAX            10
+#define QDF_NBUF_TX_PKT_LI_DP                11
 
 /* Enable flag to print TSO specific prints in datapath */
 #ifdef TSO_DEBUG_LOG_ENABLE
