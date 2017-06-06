@@ -7133,6 +7133,32 @@ static int __wlan_hdd_cfg80211_conditional_chan_switch(struct wiphy *wiphy,
 	return 0;
 }
 
+/* P2P listen offload device types parameters length in bytes */
+#define P2P_LO_MAX_REQ_DEV_TYPE_COUNT (10)
+#define P2P_LO_WPS_DEV_TYPE_LEN (8)
+#define P2P_LO_DEV_TYPE_MAX_LEN \
+	(P2P_LO_MAX_REQ_DEV_TYPE_COUNT * P2P_LO_WPS_DEV_TYPE_LEN)
+
+static const struct nla_policy
+p2p_listen_offload_policy[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_CHANNEL] = { .type = NLA_U32 },
+	[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_PERIOD] = { .type = NLA_U32 },
+	[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_INTERVAL] = {
+							.type = NLA_U32 },
+	[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_COUNT] = { .type = NLA_U32 },
+	[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_DEVICE_TYPES] = {
+					.type = NLA_BINARY,
+					.len = P2P_LO_DEV_TYPE_MAX_LEN },
+	[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_VENDOR_IE] = {
+					.type = NLA_BINARY,
+					.len = MAX_GENIE_LEN },
+	[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_CTRL_FLAG] = {
+					.type = NLA_U32 },
+	[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_CHANNEL] = { .type = NLA_U32 },
+	[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_STOP_REASON] = {
+						.type = NLA_U8 },
+};
+
 /**
  * __wlan_hdd_cfg80211_p2p_lo_start () - start P2P Listen Offload
  * @wiphy: Pointer to wireless phy
@@ -7178,7 +7204,7 @@ static int __wlan_hdd_cfg80211_p2p_lo_start(struct wiphy *wiphy,
 	}
 
 	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_MAX,
-		      data, data_len, NULL)) {
+		      data, data_len, p2p_listen_offload_policy)) {
 		hdd_err("Invalid ATTR");
 		return -EINVAL;
 	}
@@ -7240,7 +7266,8 @@ static int __wlan_hdd_cfg80211_p2p_lo_start(struct wiphy *wiphy,
 
 	params.dev_types_len = nla_len(tb
 		[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_DEVICE_TYPES]);
-	if (params.dev_types_len < 8) {
+	/* device type length has to be multiple of P2P_LO_WPS_DEV_TYPE_LEN */
+	if (0 != (params.dev_types_len % P2P_LO_WPS_DEV_TYPE_LEN)) {
 		hdd_err("Invalid device type length: %d", params.dev_types_len);
 		return -EINVAL;
 	}
@@ -7252,9 +7279,13 @@ static int __wlan_hdd_cfg80211_p2p_lo_start(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
+	/*
+	 * IEs minimum length should be 2 bytes: 1 byte for element id
+	 * and 1 byte for element id length.
+	 */
 	params.probe_resp_len = nla_len(tb
 		[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_VENDOR_IE]);
-	if (params.probe_resp_len == 0) {
+	if (params.probe_resp_len < MIN_GENIE_LEN) {
 		hdd_err("Invalid probe resp template length: %d",
 				params.probe_resp_len);
 		return -EINVAL;
