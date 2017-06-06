@@ -773,6 +773,20 @@ allow_suspend:
 
 }
 
+void wlan_scan_runtime_pm_deinit(struct wlan_objmgr_pdev *pdev)
+{
+	struct pdev_osif_priv *osif_priv;
+	struct osif_scan_pdev *scan_priv;
+
+	wlan_pdev_obj_lock(pdev);
+	osif_priv = wlan_pdev_get_ospriv(pdev);
+	wlan_pdev_obj_unlock(pdev);
+
+	scan_priv = osif_priv->osif_scan;
+	qdf_runtime_lock_deinit(scan_priv->runtime_pm_lock);
+	scan_priv->runtime_pm_lock = NULL;
+}
+
 QDF_STATUS wlan_cfg80211_scan_priv_init(struct wlan_objmgr_pdev *pdev)
 {
 	struct pdev_osif_priv *osif_priv;
@@ -819,8 +833,6 @@ QDF_STATUS wlan_cfg80211_scan_priv_deinit(struct wlan_objmgr_pdev *pdev)
 	ucfg_scan_unregister_requester(psoc, scan_priv->req_id);
 	qdf_list_destroy(&scan_priv->scan_req_q);
 	qdf_mutex_destroy(&scan_priv->scan_req_q_lock);
-	qdf_runtime_lock_deinit(scan_priv->runtime_pm_lock);
-	scan_priv->runtime_pm_lock = NULL;
 	qdf_mem_free(scan_priv);
 
 	return QDF_STATUS_SUCCESS;

@@ -140,6 +140,18 @@ int wlan_cfg80211_sched_scan_stop(struct wlan_objmgr_pdev *pdev,
 #endif
 
 /**
+ * wlan_scan_runtime_pm_deinit() - API to deinitialize runtime pm
+ * for scan.
+ * @pdev: Pointer to pdev
+ *
+ * This will help to deinitialize scan runtime pm before deinitialize
+ * HIF
+ *
+ * Return: void
+ */
+void wlan_scan_runtime_pm_deinit(struct wlan_objmgr_pdev *pdev);
+
+/**
  * wlan_cfg80211_scan_priv_init() - API to initialize cfg80211 scan
  * @pdev: Pointer to net device
  *
