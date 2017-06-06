@@ -582,4 +582,9 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 QDF_STATUS
 dp_rx_link_desc_buf_return(struct dp_soc *soc, struct dp_srng *dp_rxdma_srng,
 				void *buf_addr_info);
+
+
+uint32_t
+dp_rxdma_err_process(struct dp_soc *soc, uint32_t mac_id,
+						uint32_t quota);
 #endif /* _DP_RX_H */

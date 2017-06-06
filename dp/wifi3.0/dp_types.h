@@ -723,6 +723,9 @@ struct dp_pdev {
 
 	struct dp_srng rxdma_mon_desc_ring;
 
+	/* RXDMA error destination ring */
+	struct dp_srng rxdma_err_dst_ring;
+
 	/* Link descriptor memory banks */
 	struct {
 		void *base_vaddr_unaligned;

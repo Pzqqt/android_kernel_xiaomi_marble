@@ -330,6 +330,13 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 				dp_mon_process(soc, ring, budget);
 			budget -=  work_done;
 		}
+
+		if (int_ctx->rxdma2host_ring_mask & (1 << ring)) {
+			work_done =
+				dp_rxdma_err_process(soc, ring, budget);
+			budget -=  work_done;
+		}
+
 	}
 
 	qdf_lro_flush(int_ctx->lro_ctx);
@@ -871,6 +878,7 @@ static void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
 #define RXDMA_MONITOR_DST_RING_SIZE 1024
 #define RXDMA_MONITOR_STATUS_RING_SIZE 1024
 #define RXDMA_MONITOR_DESC_RING_SIZE 1024
+#define RXDMA_ERR_DST_RING_SIZE 1024
 
 /*
  * dp_soc_cmn_setup() - Common SoC level initializion
@@ -1301,6 +1309,13 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 		goto fail1;
 	}
 
+	if (dp_srng_setup(soc, &pdev->rxdma_err_dst_ring, RXDMA_DST, 0,
+		pdev_id, RXDMA_ERR_DST_RING_SIZE)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("dp_srng_setup failed for rxdma_mon_dst_ring"));
+		goto fail1;
+	}
+
 	/* Rx specific init */
 	if (dp_rx_pdev_attach(pdev)) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -1437,6 +1452,8 @@ static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force)
 
 	dp_srng_cleanup(soc, &pdev->rxdma_mon_desc_ring,
 		RXDMA_MONITOR_DESC, 0);
+
+	dp_srng_cleanup(soc, &pdev->rxdma_err_dst_ring, RXDMA_DST, 0);
 
 	soc->pdev_list[pdev->pdev_id] = NULL;
 	soc->pdev_count--;
@@ -1633,6 +1650,10 @@ static void dp_rxdma_ring_config(struct dp_soc *soc)
 			htt_srng_setup(soc->htt_handle, i,
 				pdev->rxdma_mon_desc_ring.hal_srng,
 				RXDMA_MONITOR_DESC);
+
+			htt_srng_setup(soc->htt_handle, i,
+					pdev->rxdma_err_dst_ring.hal_srng,
+					RXDMA_DST);
 		}
 	}
 }
@@ -1660,6 +1681,9 @@ static void dp_rxdma_ring_config(struct dp_soc *soc)
 			htt_srng_setup(soc->htt_handle, i,
 				pdev->rxdma_mon_desc_ring.hal_srng,
 				RXDMA_MONITOR_DESC);
+			htt_srng_setup(soc->htt_handle, i,
+					pdev->rxdma_err_dst_ring.hal_srng,
+					RXDMA_DST);
 		}
 	}
 }

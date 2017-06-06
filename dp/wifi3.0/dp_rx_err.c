@@ -813,3 +813,161 @@ done:
 
 	return rx_bufs_reaped; /* Assume no scale factor for now */
 }
+
+/**
+ * dp_rx_err_mpdu_pop() - extract the MSDU's from link descs
+ *
+ * @soc: core DP main context
+ * @mac_id: mac id which is one of 3 mac_ids
+ * @rxdma_dst_ring_desc: void pointer to monitor link descriptor buf addr info
+ * @head: head of descs list to be freed
+ * @tail: tail of decs list to be freed
+
+ * Return: number of msdu in MPDU to be popped
+ */
+static inline uint32_t
+dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
+	void *rxdma_dst_ring_desc,
+	union dp_rx_desc_list_elem_t **head,
+	union dp_rx_desc_list_elem_t **tail)
+{
+	void *rx_msdu_link_desc;
+	qdf_nbuf_t msdu;
+	qdf_nbuf_t last;
+	struct hal_rx_msdu_list msdu_list;
+	uint8_t num_msdus;
+	struct hal_buf_info buf_info;
+	void *p_buf_addr_info;
+	void *p_last_buf_addr_info;
+	uint32_t rx_bufs_used = 0;
+	uint32_t msdu_cnt;
+	uint32_t i;
+	bool mpdu_err;
+
+	msdu = 0;
+
+	last = NULL;
+
+	hal_rx_reo_ent_buf_paddr_get(rxdma_dst_ring_desc, &buf_info,
+		&p_last_buf_addr_info, &msdu_cnt, &mpdu_err);
+
+	do {
+		rx_msdu_link_desc =
+			dp_rx_cookie_2_link_desc_va(soc, &buf_info);
+
+		qdf_assert(rx_msdu_link_desc);
+
+		num_msdus = (msdu_cnt > HAL_RX_NUM_MSDU_DESC)?
+				HAL_RX_NUM_MSDU_DESC:msdu_cnt;
+
+		hal_rx_msdu_list_get(rx_msdu_link_desc, &msdu_list, num_msdus);
+
+		msdu_cnt -= num_msdus;
+
+		for (i = 0; i < num_msdus; i++) {
+			struct dp_rx_desc *rx_desc =
+				dp_rx_cookie_2_va_rxdma_buf(soc,
+					msdu_list.sw_cookie[i]);
+
+				qdf_assert(rx_desc);
+				msdu = rx_desc->nbuf;
+
+				qdf_nbuf_unmap_single(soc->osdev, msdu,
+					QDF_DMA_FROM_DEVICE);
+
+				QDF_TRACE(QDF_MODULE_ID_DP,
+					QDF_TRACE_LEVEL_DEBUG,
+					"[%s][%d] msdu_nbuf=%p \n",
+					__func__, __LINE__, msdu);
+
+				qdf_nbuf_free(msdu);
+				rx_bufs_used++;
+				dp_rx_add_to_free_desc_list(head,
+					tail, rx_desc);
+		}
+
+		hal_rx_mon_next_link_desc_get(rx_msdu_link_desc, &buf_info,
+			&p_buf_addr_info);
+
+		dp_rx_link_desc_return(soc, p_last_buf_addr_info);
+		p_last_buf_addr_info = p_buf_addr_info;
+
+	} while (buf_info.paddr && msdu_cnt);
+
+	return rx_bufs_used;
+}
+
+/**
+* dp_rxdma_err_process() - RxDMA error processing functionality
+*
+* @soc: core txrx main contex
+* @mac_id: mac id which is one of 3 mac_ids
+* @hal_ring: opaque pointer to the HAL Rx Ring, which will be serviced
+* @quota: No. of units (packets) that can be serviced in one shot.
+
+* Return: num of buffers processed
+*/
+uint32_t
+dp_rxdma_err_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
+{
+	struct dp_pdev *pdev = soc->pdev_list[mac_id];
+	uint8_t pdev_id;
+	void *hal_soc;
+	void *rxdma_dst_ring_desc;
+	void *err_dst_srng;
+	union dp_rx_desc_list_elem_t *head = NULL;
+	union dp_rx_desc_list_elem_t *tail = NULL;
+	struct dp_srng *dp_rxdma_srng;
+	struct rx_desc_pool *rx_desc_pool;
+	uint32_t work_done = 0;
+	uint32_t rx_bufs_used = 0;
+
+#ifdef DP_INTR_POLL_BASED
+	if (!pdev)
+		return 0;
+#endif
+	pdev_id = pdev->pdev_id;
+	err_dst_srng = pdev->rxdma_err_dst_ring.hal_srng;
+
+	if (!err_dst_srng) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			"%s %d : HAL Monitor Destination Ring Init \
+			Failed -- %p\n",
+			__func__, __LINE__, err_dst_srng);
+		return 0;
+	}
+
+	hal_soc = soc->hal_soc;
+
+	qdf_assert(hal_soc);
+
+	if (qdf_unlikely(hal_srng_access_start(hal_soc, err_dst_srng))) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			"%s %d : HAL Monitor Destination Ring Init \
+			Failed -- %p\n",
+			__func__, __LINE__, err_dst_srng);
+		return 0;
+	}
+
+	while (qdf_likely((rxdma_dst_ring_desc =
+		hal_srng_dst_get_next(hal_soc, err_dst_srng)) && quota--)) {
+
+			rx_bufs_used += dp_rx_err_mpdu_pop(soc, mac_id,
+						rxdma_dst_ring_desc,
+						&head, &tail);
+	}
+
+	hal_srng_access_end(hal_soc, err_dst_srng);
+
+	if (rx_bufs_used) {
+		dp_rxdma_srng = &pdev->rx_refill_buf_ring;
+		rx_desc_pool = &soc->rx_desc_buf[mac_id];
+
+		dp_rx_buffers_replenish(soc, pdev_id, dp_rxdma_srng,
+			rx_desc_pool, rx_bufs_used, &head, &tail,
+			HAL_RX_BUF_RBM_SW3_BM);
+		work_done += rx_bufs_used;
+	}
+
+	return work_done;
+}

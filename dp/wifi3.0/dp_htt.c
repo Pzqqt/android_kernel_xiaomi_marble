@@ -316,6 +316,10 @@ int htt_srng_setup(void *htt_soc, int mac_id, void *hal_srng,
 		htt_ring_id = HTT_RXDMA_MONITOR_DESC_RING;
 		htt_ring_type = HTT_SW_TO_HW_RING;
 		break;
+	case RXDMA_DST:
+		htt_ring_id = HTT_RXDMA_NON_MONITOR_DEST_RING;
+		htt_ring_type = HTT_HW_TO_SW_RING;
+		break;
 
 	default:
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
@@ -543,6 +547,10 @@ int htt_h2t_rx_ring_cfg(void *htt_soc, int pdev_id, void *hal_srng,
 	case RXDMA_MONITOR_DESC:
 		htt_ring_id = HTT_RXDMA_MONITOR_DESC_RING;
 		htt_ring_type = HTT_SW_TO_HW_RING;
+		break;
+	case RXDMA_DST:
+		htt_ring_id = HTT_RXDMA_NON_MONITOR_DEST_RING;
+		htt_ring_type = HTT_HW_TO_SW_RING;
 		break;
 
 	default:
