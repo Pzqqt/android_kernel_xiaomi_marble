@@ -1278,6 +1278,8 @@ __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 						OFF_CHANNEL_ACTION_TX;
 					pRemainChanCtx->cookie =
 						cfgState->action_cookie;
+					mutex_unlock(&cfgState->
+						remain_on_chan_ctx_lock);
 					return 0;
 				}
 			}
