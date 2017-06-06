@@ -621,7 +621,7 @@ void cds_fill_and_send_ctl_to_fw(struct regulatory *reg)
 {
 	const struct reg_dmn *reg_dmn_2g = NULL;
 	const struct reg_dmn *reg_dmn_5g = NULL;
-	int8_t ctl_2g, ctl_5g;
+	uint8_t ctl_2g, ctl_5g;
 	const struct reg_dmn_pair *regpair;
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 

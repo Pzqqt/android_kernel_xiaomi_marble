@@ -1601,8 +1601,8 @@ typedef struct qdf_packed sHalMacStartParameter {
 
 extern void cds_wma_complete_cback(void *p_cds_context);
 extern void wma_send_regdomain_info_to_fw(uint32_t reg_dmn, uint16_t regdmn2G,
-					  uint16_t regdmn5G, int8_t ctl2G,
-					  int8_t ctl5G);
+					  uint16_t regdmn5G, uint8_t ctl2G,
+					  uint8_t ctl5G);
 /**
  * enum frame_index - Frame index
  * @GENERIC_NODOWNLD_NOACK_COMP_INDEX: Frame index for no download comp no ack
