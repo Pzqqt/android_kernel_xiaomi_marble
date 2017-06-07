@@ -5709,7 +5709,7 @@ QDF_STATUS csr_scan_get_result(tpAniSirGlobal mac_ctx,
 
 	if (!list || !qdf_list_size(list)) {
 		sme_err("get scan result failed");
-		status = QDF_STATUS_E_EMPTY;
+		status = QDF_STATUS_E_NULL_VALUE;
 		goto error;
 	}
 
