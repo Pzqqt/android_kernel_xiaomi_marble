@@ -9324,7 +9324,7 @@ int hdd_wlan_startup(struct device *dev)
 
 	ret = hdd_init_netlink_services(hdd_ctx);
 	if (ret)
-		goto err_hdd_free_context;
+		goto err_hdd_free_psoc;
 
 	hdd_request_manager_init();
 	hdd_green_ap_init(hdd_ctx);
@@ -9479,6 +9479,10 @@ err_exit_nl_srv:
 	hdd_exit_netlink_services(hdd_ctx);
 
 	cds_deinit_ini_config();
+
+err_hdd_free_psoc:
+	hdd_objmgr_release_and_destroy_psoc(hdd_ctx);
+
 err_hdd_free_context:
 	if (cds_is_fw_down())
 		hdd_err("Not setting the complete event as fw is down");
