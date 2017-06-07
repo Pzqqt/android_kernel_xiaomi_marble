@@ -2442,7 +2442,7 @@ static int __wlan_hdd_vendor_abort_scan(
 #ifndef NAPIER_SCAN
 	ret = -EINVAL;
 	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_SCAN_MAX, data,
-	    data_len, NULL)) {
+		      data_len, scan_policy)) {
 		hdd_err("Invalid ATTR");
 		return ret;
 	}
