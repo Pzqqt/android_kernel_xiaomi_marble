@@ -4272,7 +4272,7 @@ __hdd_cfg80211_get_station_cmd(struct wiphy *wiphy,
 
 
 	status = nla_parse(tb, QCA_WLAN_VENDOR_ATTR_GET_STATION_MAX,
-			data, data_len, NULL);
+			data, data_len, hdd_get_station_policy);
 	if (status) {
 		hdd_err("Invalid ATTR");
 		goto out;
