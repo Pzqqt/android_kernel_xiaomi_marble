@@ -245,9 +245,9 @@ void policy_mgr_incr_active_session(struct wlan_objmgr_psoc *psoc,
  * mode. In the case of STA/P2P CLI/IBSS upon disconnection it is decremented
  * In the case of SAP/P2P GO upon bss stop it is decremented
  *
- * Return: None
+ * Return: QDF_STATUS
  */
-void policy_mgr_decr_active_session(struct wlan_objmgr_psoc *psoc,
+QDF_STATUS policy_mgr_decr_active_session(struct wlan_objmgr_psoc *psoc,
 		enum tQDF_ADAPTER_MODE mode, uint8_t sessionId);
 
 /**
@@ -1359,6 +1359,22 @@ uint32_t policy_mgr_mode_specific_vdev_id(struct wlan_objmgr_psoc *psoc,
 uint32_t policy_mgr_mode_specific_connection_count(
 		struct wlan_objmgr_psoc *psoc, enum policy_mgr_con_mode mode,
 		uint32_t *list);
+
+/**
+ * policy_mgr_check_conn_with_mode_and_vdev_id() - checks if any active
+ * session with specific mode and vdev_id
+ * @psoc: PSOC object information
+ * @mode: type of connection
+ * @vdev_id: vdev_id of the connection
+ *
+ * This function checks if any active session with specific mode and vdev_id
+ * is present
+ *
+ * Return: QDF STATUS with success if active session is found, else failure
+ */
+QDF_STATUS policy_mgr_check_conn_with_mode_and_vdev_id(
+		struct wlan_objmgr_psoc *psoc, enum policy_mgr_con_mode mode,
+		uint32_t vdev_id);
 
 /**
  * policy_mgr_hw_mode_transition_cb() - Callback for HW mode

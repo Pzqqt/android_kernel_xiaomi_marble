@@ -838,6 +838,33 @@ uint32_t policy_mgr_mode_specific_connection_count(
 	return count;
 }
 
+QDF_STATUS policy_mgr_check_conn_with_mode_and_vdev_id(
+		struct wlan_objmgr_psoc *psoc, enum policy_mgr_con_mode mode,
+		uint32_t vdev_id)
+{
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
+	uint32_t conn_index = 0;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return qdf_status;
+	}
+
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	while (PM_CONC_CONNECTION_LIST_VALID_INDEX(conn_index)) {
+		if ((pm_conc_connection_list[conn_index].mode == mode) &&
+		    (pm_conc_connection_list[conn_index].vdev_id == vdev_id)) {
+			qdf_status = QDF_STATUS_SUCCESS;
+			break;
+		}
+		conn_index++;
+	}
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+	return qdf_status;
+}
+
 void policy_mgr_soc_set_dual_mac_cfg_cb(enum set_hw_mode_status status,
 		uint32_t scan_config,
 		uint32_t fw_mode_config)
@@ -1122,16 +1149,27 @@ void policy_mgr_incr_active_session(struct wlan_objmgr_psoc *psoc,
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 }
 
-void policy_mgr_decr_active_session(struct wlan_objmgr_psoc *psoc,
+QDF_STATUS policy_mgr_decr_active_session(struct wlan_objmgr_psoc *psoc,
 				enum tQDF_ADAPTER_MODE mode,
 				uint8_t session_id)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	QDF_STATUS qdf_status;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
 		policy_mgr_err("context is NULL");
-		return;
+		return QDF_STATUS_E_EMPTY;
+	}
+
+	qdf_status = policy_mgr_check_conn_with_mode_and_vdev_id(psoc,
+			policy_mgr_convert_device_mode_to_qdf_type(mode),
+			session_id);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		policy_mgr_err("No connection with mode:%d vdev_id:%d",
+			policy_mgr_convert_device_mode_to_qdf_type(mode),
+			session_id);
+		return qdf_status;
 	}
 
 	switch (mode) {
@@ -1157,6 +1195,8 @@ void policy_mgr_decr_active_session(struct wlan_objmgr_psoc *psoc,
 		pm_ctx->tdls_cbacks.tdls_notify_decrement_session(psoc);
 
 	policy_mgr_dump_current_concurrency(psoc);
+
+	return qdf_status;
 }
 
 QDF_STATUS policy_mgr_incr_connection_count(
