@@ -147,6 +147,14 @@ QDF_STATUS ucfg_tdls_responder(struct tdls_set_responder_req *msg_req);
 QDF_STATUS ucfg_tdls_teardown_links(struct wlan_objmgr_vdev *vdev);
 
 /**
+ * ucfg_tdls_notify_reset_adapter() - notify reset adapter
+ * @vdev: vdev object manager
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_tdls_notify_reset_adapter(struct wlan_objmgr_vdev *vdev);
+
+/**
  * ucfg_tdls_notify_sta_connect() - notify sta connect
  * @notify_info: sta notification info
  *

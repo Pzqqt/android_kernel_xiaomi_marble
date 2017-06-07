@@ -576,6 +576,16 @@ QDF_STATUS tdls_notify_sta_connect(struct tdls_sta_notify_params *notify);
 QDF_STATUS tdls_notify_sta_disconnect(struct tdls_sta_notify_params *notify);
 
 /**
+ * tdls_notify_reset_adapter() - notify reset adapter
+ * @vdev: vdev object manager
+ *
+ * Notify TDLS about the adapter reset
+ *
+ * Return: None
+ */
+void tdls_notify_reset_adapter(struct wlan_objmgr_vdev *vdev);
+
+/**
  * tdls_peers_deleted_notification() - peer delete notification
  * @vdev: vdev object
  * @session_id: session id

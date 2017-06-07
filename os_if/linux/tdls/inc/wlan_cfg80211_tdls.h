@@ -194,6 +194,16 @@ void wlan_cfg80211_tdls_rx_callback(void *user_data,
 	struct tdls_rx_mgmt_frame *rx_frame);
 
 /**
+ * hdd_notify_tdls_reset_adapter() - notify reset adapter to TDLS
+ * @vdev: vdev object manager
+ *
+ * Notify hdd reset adapter to TDLS component
+ *
+ * Return: None
+ */
+void hdd_notify_tdls_reset_adapter(struct wlan_objmgr_vdev *vdev);
+
+/**
  * hdd_notify_sta_connect() - notify sta connect to TDLS
  * @session_id: pointer to soc object
  * @tdls_chan_swit_prohibited: indicates channel switch capability
@@ -236,6 +246,11 @@ void hdd_notify_sta_disconnect(uint8_t session_id,
 void hdd_notify_teardown_tdls_links(struct wlan_objmgr_vdev *vdev);
 
 #else
+static inline void
+hdd_notify_tdls_reset_adapter(struct wlan_objmgr_vdev *vdev)
+{
+}
+
 static inline void
 hdd_notify_sta_connect(uint8_t session_id,
 		       bool tdls_chan_swit_prohibited,

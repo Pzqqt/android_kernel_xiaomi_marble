@@ -104,6 +104,11 @@ void hdd_notify_teardown_tdls_links(struct wlan_objmgr_vdev *vdev)
 	cfg80211_info("TDLS teardown completion status %ld ", rc);
 }
 
+void hdd_notify_tdls_reset_adapter(struct wlan_objmgr_vdev *vdev)
+{
+	ucfg_tdls_notify_reset_adapter(vdev);
+}
+
 void
 hdd_notify_sta_connect(uint8_t session_id,
 		       bool tdls_chan_swit_prohibited,

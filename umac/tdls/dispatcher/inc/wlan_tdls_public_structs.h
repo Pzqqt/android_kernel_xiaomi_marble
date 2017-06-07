@@ -172,6 +172,15 @@ enum tdls_feature_mode {
  * @TDLS_CMD_REMOVE_FORCE_PEER: remove external peer
  * @TDLS_CMD_STATS_UPDATE: update tdls stats
  * @TDLS_CMD_CONFIG_UPDATE: config tdls
+ * @TDLS_CMD_SCAN_DONE: scon done event
+ * @TDLS_CMD_SET_RESPONDER: responder event
+ * @TDLS_NOTIFY_STA_CONNECTION: notify sta connection
+ * @TDLS_NOTIFY_STA_DISCONNECTION: notify sta disconnection
+ * @TDLS_CMD_SET_TDLS_MODE: set the tdls mode
+ * @TDLS_CMD_SESSION_INCREMENT: notify session increment
+ * @TDLS_CMD_SESSION_DECREMENT: notify session decrement
+ * @TDLS_CMD_TEARDOWN_LINKS: notify teardown
+ * @TDLS_NOTIFY_RESET_ADAPTERS: notify adapater reset
  */
 enum tdls_command_type {
 	TDLS_CMD_TX_ACTION = 1,
@@ -191,6 +200,7 @@ enum tdls_command_type {
 	TDLS_CMD_SESSION_INCREMENT,
 	TDLS_CMD_SESSION_DECREMENT,
 	TDLS_CMD_TEARDOWN_LINKS,
+	TDLS_NOTIFY_RESET_ADAPTERS,
 };
 
 /**
