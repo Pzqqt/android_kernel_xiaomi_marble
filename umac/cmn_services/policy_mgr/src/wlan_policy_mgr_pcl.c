@@ -103,7 +103,12 @@ void policy_mgr_decr_session_set_pcl(struct wlan_objmgr_psoc *psoc,
 		return;
 	}
 
-	policy_mgr_decr_active_session(psoc, mode, session_id);
+	qdf_status = policy_mgr_decr_active_session(psoc, mode, session_id);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		policy_mgr_err("Invalid active session");
+		return;
+	}
+
 	/*
 	 * After the removal of this connection, we need to check if
 	 * a STA connection still exists. The reason for this is that
