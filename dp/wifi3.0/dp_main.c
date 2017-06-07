@@ -636,10 +636,10 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 		for (i = 0; i < MAX_LINK_DESC_BANKS &&
 			soc->link_desc_banks[i].base_paddr; i++) {
 			uint32_t num_entries = (soc->link_desc_banks[i].size -
-				(unsigned long)(
+				((unsigned long)(
 				soc->link_desc_banks[i].base_vaddr) -
 				(unsigned long)(
-				soc->link_desc_banks[i].base_vaddr_unaligned))
+				soc->link_desc_banks[i].base_vaddr_unaligned)))
 				/ link_desc_size;
 			unsigned long paddr = (unsigned long)(
 				soc->link_desc_banks[i].base_paddr);
@@ -694,11 +694,11 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 			soc->link_desc_banks[i].base_paddr; i++) {
 			uint32_t num_link_descs =
 				(soc->link_desc_banks[i].size -
-				(unsigned long)(
+				((unsigned long)(
 				soc->link_desc_banks[i].base_vaddr) -
 				(unsigned long)(
-				soc->link_desc_banks[i].base_vaddr_unaligned)) /
-				link_desc_size;
+				soc->link_desc_banks[i].base_vaddr_unaligned)))
+				/ link_desc_size;
 			unsigned long paddr = (unsigned long)(
 				soc->link_desc_banks[i].base_paddr);
 			void *desc = NULL;
