@@ -1762,8 +1762,18 @@ lim_populate_peer_rate_set(tpAniSirGlobal pMac,
 	}
 	lim_populate_vht_mcs_set(pMac, pRates, pVHTCaps,
 			psessionEntry, psessionEntry->nss);
+
 	lim_populate_he_mcs_set(pMac, pRates, he_caps,
 			psessionEntry, psessionEntry->nss);
+
+	if (IS_DOT11_MODE_HE(psessionEntry->dot11mode)) {
+		psessionEntry->nss = he_caps->nss_supported;
+	} else if (IS_DOT11_MODE_VHT(psessionEntry->dot11mode)) {
+		if ((pRates->vhtRxMCSMap & MCSMAPMASK2x2) == MCSMAPMASK2x2)
+			psessionEntry->nss = NSS_1x1_MODE;
+	} else if (pRates->supportedMCSSet[1] == 0) {
+		psessionEntry->nss = NSS_1x1_MODE;
+	}
 
 	return eSIR_SUCCESS;
 } /*** lim_populate_peer_rate_set() ***/
