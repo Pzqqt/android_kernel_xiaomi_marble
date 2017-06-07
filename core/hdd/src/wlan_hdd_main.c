@@ -2045,6 +2045,10 @@ int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 				goto release_lock;
 			}
 		}
+
+		pld_set_fw_log_mode(hdd_ctx->parent_dev,
+				    hdd_ctx->config->enable_fw_log);
+
 		ret = hdd_hif_open(qdf_dev->dev, qdf_dev->drv_hdl, qdf_dev->bid,
 				   qdf_dev->bus_type,
 				   (reinit == true) ?  HIF_ENABLE_TYPE_REINIT :
@@ -7576,13 +7580,6 @@ static hdd_context_t *hdd_context_create(struct device *dev)
 
 	if (ret)
 		goto err_free_config;
-
-
-	ret = pld_set_fw_log_mode(hdd_ctx->parent_dev,
-			hdd_ctx->config->enable_fw_log);
-
-	if (ret && cds_is_fw_down())
-		goto err_deinit_hdd_context;
 
 	/* Uses to enabled logging after SSR */
 	hdd_ctx->fw_log_settings.enable = hdd_ctx->config->enable_fw_log;
