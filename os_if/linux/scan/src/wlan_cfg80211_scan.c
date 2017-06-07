@@ -458,9 +458,10 @@ static int wlan_scan_request_enqueue(struct wlan_objmgr_pdev *pdev,
 	scan_req->source = source;
 	scan_req->scan_id = scan_id;
 
+	qdf_mutex_acquire(&osif_scan->scan_req_q_lock);
 	status = qdf_list_insert_back(&osif_scan->scan_req_q,
 					&scan_req->node);
-
+	qdf_mutex_release(&osif_scan->scan_req_q_lock);
 	if (QDF_STATUS_SUCCESS != status) {
 		cfg80211_err("Failed to enqueue Scan Req");
 		qdf_mem_free(scan_req);
@@ -509,8 +510,10 @@ static QDF_STATUS wlan_scan_request_dequeue(
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	qdf_mutex_acquire(&scan_priv->scan_req_q_lock);
 	if (QDF_STATUS_SUCCESS !=
 		qdf_list_peek_front(&scan_priv->scan_req_q, &next_node)) {
+		qdf_mutex_release(&scan_priv->scan_req_q_lock);
 		cfg80211_err("Failed to remove Scan Req from queue");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -526,11 +529,13 @@ static QDF_STATUS wlan_scan_request_dequeue(
 				*req = scan_req->scan_request;
 				*source = scan_req->source;
 				qdf_mem_free(scan_req);
+				qdf_mutex_release(&scan_priv->scan_req_q_lock);
 				cfg80211_info("removed Scan id: %d, req = %p, pending scans %d",
 				      scan_id, req,
 				      qdf_list_size(&scan_priv->scan_req_q));
 				return QDF_STATUS_SUCCESS;
 			} else {
+				qdf_mutex_release(&scan_priv->scan_req_q_lock);
 				cfg80211_err("Failed to remove node scan id %d, pending scans %d",
 				      scan_id,
 				      qdf_list_size(&scan_priv->scan_req_q));
@@ -539,7 +544,7 @@ static QDF_STATUS wlan_scan_request_dequeue(
 		}
 	} while (QDF_STATUS_SUCCESS ==
 		qdf_list_peek_next(&scan_priv->scan_req_q, node, &next_node));
-
+	qdf_mutex_release(&scan_priv->scan_req_q_lock);
 	cfg80211_err("Failed to find scan id %d", scan_id);
 
 	return status;
@@ -770,6 +775,7 @@ QDF_STATUS wlan_cfg80211_scan_priv_init(struct wlan_objmgr_pdev *pdev)
 	/* Initialize the scan request queue */
 	osif_priv->osif_scan = scan_priv;
 	qdf_list_create(&scan_priv->scan_req_q, WLAN_MAX_SCAN_COUNT);
+	qdf_mutex_create(&scan_priv->scan_req_q_lock);
 	scan_priv->req_id = req_id;
 	scan_priv->runtime_pm_lock = qdf_runtime_lock_init("scan");
 
@@ -791,6 +797,7 @@ QDF_STATUS wlan_cfg80211_scan_priv_deinit(struct wlan_objmgr_pdev *pdev)
 	osif_priv->osif_scan = NULL;
 	ucfg_scan_unregister_requester(psoc, scan_priv->req_id);
 	qdf_list_destroy(&scan_priv->scan_req_q);
+	qdf_mutex_destroy(&scan_priv->scan_req_q_lock);
 	qdf_runtime_lock_deinit(scan_priv->runtime_pm_lock);
 	scan_priv->runtime_pm_lock = NULL;
 	qdf_mem_free(scan_priv);
@@ -818,15 +825,16 @@ void wlan_cfg80211_cleanup_scan_queue(struct wlan_objmgr_pdev *pdev)
 	wlan_pdev_obj_unlock(pdev);
 
 	scan_priv = osif_priv->osif_scan;
-
+	qdf_mutex_acquire(&scan_priv->scan_req_q_lock);
 	while (!qdf_list_empty(&scan_priv->scan_req_q)) {
 		if (QDF_STATUS_SUCCESS !=
 			qdf_list_remove_front(&scan_priv->scan_req_q,
 						&node)) {
+			qdf_mutex_release(&scan_priv->scan_req_q_lock);
 			cfg80211_err("Failed to remove scan request");
 			return;
 		}
-
+		qdf_mutex_release(&scan_priv->scan_req_q_lock);
 		scan_req = container_of(node, struct scan_req, node);
 		req = scan_req->scan_request;
 		source = scan_req->source;
@@ -835,7 +843,9 @@ void wlan_cfg80211_cleanup_scan_queue(struct wlan_objmgr_pdev *pdev)
 		else
 			wlan_vendor_scan_callback(req, aborted);
 		qdf_mem_free(scan_req);
+		qdf_mutex_acquire(&scan_priv->scan_req_q_lock);
 	}
+	qdf_mutex_release(&scan_priv->scan_req_q_lock);
 
 	return;
 }
@@ -1109,7 +1119,9 @@ static int wlan_get_scanid(struct wlan_objmgr_pdev *pdev,
 		return ret;
 	}
 	scan_priv = osif_ctx->osif_scan;
+	qdf_mutex_acquire(&scan_priv->scan_req_q_lock);
 	if (qdf_list_empty(&scan_priv->scan_req_q)) {
+		qdf_mutex_release(&scan_priv->scan_req_q_lock);
 		cfg80211_err("Failed to retrieve scan id");
 		return ret;
 	}
@@ -1117,6 +1129,7 @@ static int wlan_get_scanid(struct wlan_objmgr_pdev *pdev,
 	if (QDF_STATUS_SUCCESS !=
 			    qdf_list_peek_front(&scan_priv->scan_req_q,
 			    &ptr_node)) {
+		qdf_mutex_release(&scan_priv->scan_req_q_lock);
 		return ret;
 	}
 
@@ -1132,6 +1145,8 @@ static int wlan_get_scanid(struct wlan_objmgr_pdev *pdev,
 	} while (QDF_STATUS_SUCCESS ==
 		 qdf_list_peek_next(&scan_priv->scan_req_q,
 		 node, &ptr_node));
+
+	qdf_mutex_release(&scan_priv->scan_req_q_lock);
 
 	return ret;
 }

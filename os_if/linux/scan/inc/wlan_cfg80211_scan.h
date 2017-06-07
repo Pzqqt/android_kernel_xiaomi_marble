@@ -76,11 +76,13 @@ typedef struct {
 /**
  * struct osif_scan_pdev - OS scan private strcutre
  * scan_req_q: Scan request queue
+ * scan_req_q_lock: Protect scan request queue
  * req_id: Scan request Id
  * runtime_pm_lock: Runtime suspend lock
  */
 struct osif_scan_pdev{
 	qdf_list_t scan_req_q;
+	qdf_mutex_t scan_req_q_lock;
 	wlan_scan_requester req_id;
 	qdf_runtime_lock_t runtime_pm_lock;
 };
