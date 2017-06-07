@@ -732,6 +732,26 @@ static void wlan_cfg80211_scan_done_callback(
 		goto allow_suspend;
 	}
 
+	if (req->wdev == NULL) {
+		cfg80211_err("wirless dev is NULL,Drop scan event Id: %d",
+				 scan_id);
+		goto allow_suspend;
+	}
+
+	if (req->wdev->netdev == NULL) {
+		cfg80211_err("net dev is NULL,Drop scan event Id: %d",
+				 scan_id);
+		goto allow_suspend;
+	}
+
+	/* Make sure vdev is active */
+	status = wlan_objmgr_vdev_try_get_ref(vdev, WLAN_OSIF_ID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cfg80211_err("Failed to get vdev reference: scan Id: %d",
+				 scan_id);
+		goto allow_suspend;
+	}
+
 	/*
 	 * Scan can be triggred from NL or vendor scan
 	 * - If scan is triggered from NL then cfg80211 scan done should be
@@ -744,6 +764,7 @@ static void wlan_cfg80211_scan_done_callback(
 	else
 		wlan_vendor_scan_callback(req, aborted);
 
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
 allow_suspend:
 	osif_priv = wlan_pdev_get_ospriv(pdev);
 	if (qdf_list_empty(&osif_priv->osif_scan->scan_req_q))
