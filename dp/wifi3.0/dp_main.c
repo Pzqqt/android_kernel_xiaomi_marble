@@ -2223,7 +2223,7 @@ fail0:
  * @authorize
  *
  */
-static void dp_peer_authorize(void *peer_handle, uint32_t authorize)
+static void dp_peer_authorize(struct cdp_peer *peer_handle, uint32_t authorize)
 {
 	struct dp_peer *peer = (struct dp_peer *)peer_handle;
 	struct dp_soc *soc;
@@ -3592,7 +3592,7 @@ static void dp_set_vdev_param(struct cdp_vdev *vdev_handle,
  *
  * return: void
  */
-static void dp_peer_set_nawds(void *peer_handle, uint8_t value)
+static void dp_peer_set_nawds(struct cdp_peer *peer_handle, uint8_t value)
 {
 	struct dp_peer *peer = (struct dp_peer *)peer_handle;
 	peer->nawds_enabled = value;

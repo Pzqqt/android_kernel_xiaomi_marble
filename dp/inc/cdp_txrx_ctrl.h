@@ -236,7 +236,7 @@ cdp_get_pdev_reo_dest(ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
  */
 static inline void
 cdp_peer_authorize(ol_txrx_soc_handle soc,
-	struct ol_txrx_peer_t *peer, u_int32_t authorize)
+	struct cdp_peer *peer, u_int32_t authorize)
 {
 	if (soc->ops->ctrl_ops->txrx_peer_authorize)
 		return soc->ops->ctrl_ops->txrx_peer_authorize
@@ -381,7 +381,7 @@ static inline void cdp_txrx_set_vdev_param(ol_txrx_soc_handle soc,
 
 static inline void
 cdp_peer_set_nawds(ol_txrx_soc_handle soc,
-		struct ol_txrx_peer_t *peer, uint8_t value)
+		struct cdp_peer *peer, uint8_t value)
 {
 	if (soc->ops->ctrl_ops->txrx_peer_set_nawds)
 		return soc->ops->ctrl_ops->txrx_peer_set_nawds
@@ -449,5 +449,33 @@ cdp_wdi_event_unsub(ol_txrx_soc_handle soc,
 		return soc->ops->ctrl_ops->txrx_wdi_event_unsub
 			(pdev, event_cb_sub, event);
 	return 0;
+}
+
+/**
+ * @brief Get security type from the from peer.
+ * @details
+ * This function gets the Security information from the peer handler.
+ * The security information is got from the rx descriptor and filled in
+ * to the peer handler.
+ *
+ * @param soc - pointer to the soc
+ * @param peer - peer handler
+ * @param sec_idx - mcast or ucast frame type.
+ * @return - int
+ */
+static inline int
+cdp_get_sec_type(ol_txrx_soc_handle soc, struct cdp_peer *peer, uint8_t sec_idx)
+{
+	if (!soc || !soc->ops || !soc->ops->ctrl_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return A_ERROR;
+	}
+
+	if (soc->ops->ctrl_ops->txrx_get_sec_type)
+		return soc->ops->ctrl_ops->txrx_get_sec_type
+			(peer, sec_idx);
+	return A_ERROR;
+
 }
 #endif

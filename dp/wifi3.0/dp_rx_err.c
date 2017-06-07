@@ -393,7 +393,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 
 	if (qdf_unlikely(vdev->rx_decap_type == htt_cmn_pkt_type_raw)) {
 		qdf_nbuf_set_next(nbuf, NULL);
-		dp_rx_deliver_raw(vdev, nbuf);
+		dp_rx_deliver_raw(vdev, nbuf, (struct cdp_peer *) peer);
 	} else {
 		if (qdf_unlikely(peer->bss_peer)) {
 			QDF_TRACE(QDF_MODULE_ID_DP,

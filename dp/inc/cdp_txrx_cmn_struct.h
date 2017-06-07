@@ -36,6 +36,7 @@
 #ifndef CONFIG_WIN
 #include <cdp_txrx_mob_def.h>
 #endif /* CONFIG_WIN */
+#include <cdp_txrx_handle.h>
 
 #ifndef OL_TXRX_NUM_LOCAL_PEER_IDS
 #define OL_TXRX_NUM_LOCAL_PEER_IDS 33   /* default */
@@ -310,10 +311,12 @@ typedef QDF_STATUS(*ol_txrx_rx_fp)(void *osif_dev, qdf_nbuf_t msdu_list);
  * @osif_dev  - the virtual device's OS shim object
  * @list_head - poniter to head of receive packet queue to decap
  * @list_tail - poniter to tail of receive packet queue to decap
+ * @peer      - Peer handler
  */
 typedef QDF_STATUS(*ol_txrx_rsim_rx_decap_fp)(void *osif_dev,
 						qdf_nbuf_t *list_head,
-						qdf_nbuf_t *list_tail);
+						qdf_nbuf_t *list_tail,
+						struct cdp_peer *peer);
 
 /* ol_txrx_rx_fp - external tx free function to read per packet stats and
  *                            free tx buffer externally

@@ -304,7 +304,8 @@ void dp_rx_desc_pool_free(struct dp_soc *soc,
 				uint32_t pool_id,
 				struct rx_desc_pool *rx_desc_pool);
 
-void dp_rx_deliver_raw(struct dp_vdev *vdev, qdf_nbuf_t nbuf_list);
+void dp_rx_deliver_raw(struct dp_vdev *vdev, qdf_nbuf_t nbuf_list,
+				struct cdp_peer *peer);
 
 /**
  * dp_rx_add_to_free_desc_list() - Adds to a local free descriptor list
