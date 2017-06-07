@@ -2219,6 +2219,11 @@ static QDF_STATUS hdd_ipa_uc_op_metering(struct hdd_context *hdd_ctx,
 }
 #endif
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 9, 0))
+/* older versions had a typo */
+#define num_bam_int_in_non_running_state num_bam_int_in_non_runnning_state
+#endif
+
 /**
  * hdd_ipa_uc_op_cb() - IPA uC operation callback
  * @op_msg: operation message received from firmware
@@ -2424,7 +2429,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			  ipa_stat.tx_ch_stats.num_unexpected_db,
 			  ipa_stat.tx_ch_stats.num_bam_int_handled,
 			  ipa_stat.tx_ch_stats.
-			  num_bam_int_in_non_runnning_state,
+			  num_bam_int_in_non_running_state,
 			  ipa_stat.tx_ch_stats.num_qmb_int_handled);
 
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
