@@ -2138,9 +2138,6 @@ stopbss:
 		we_custom_event_generic = we_custom_event;
 		wireless_send_event(dev, we_event, &wrqu,
 				    (char *)we_custom_event_generic);
-		policy_mgr_decr_session_set_pcl(pHddCtx->hdd_psoc,
-					 pHostapdAdapter->device_mode,
-					 pHostapdAdapter->sessionId);
 
 		/* once the event is set, structure dev/pHostapdAdapter should
 		 * not be touched since they are now subject to being deleted
