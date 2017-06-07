@@ -1773,6 +1773,20 @@ void lim_process_assoc_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			sub_type, GET_LIM_SYSTEM_ROLE(session),
 			MAC_ADDR_ARRAY(hdr->sa));
 			return;
+		} else if (!sta_ds->rmfEnabled && (sub_type == LIM_REASSOC)) {
+			/*
+			 * SAP should send reassoc response with reject code
+			 * to avoid IOT issues. as per the specification SAP
+			 * should do 4-way handshake after reassoc response and
+			 * some STA doesn't like 4way handshake after reassoc
+			 * where some STA does expect 4-way handshake.
+			 */
+			lim_send_assoc_rsp_mgmt_frame(mac_ctx,
+					eSIR_MAC_OUTSIDE_SCOPE_OF_SPEC_STATUS,
+					sta_ds->assocId, sta_ds->staAddr,
+					sub_type, sta_ds, session);
+			pe_err("Rejecting reassoc req from STA");
+			return;
 		} else if (!sta_ds->rmfEnabled) {
 			/*
 			 * Do this only for non PMF case.
