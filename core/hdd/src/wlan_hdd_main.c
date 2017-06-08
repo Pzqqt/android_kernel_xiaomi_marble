@@ -8412,14 +8412,16 @@ static void hdd_initialize_mac_address(hdd_context_t *hdd_ctx)
 	if (ret == 0)
 		return;
 
-	hdd_warn("Can't update mac config via platform driver ret: %d", ret);
+	hdd_info("MAC is not programmed in platform driver ret: %d, use wlan_mac.bin",
+		 ret);
 
 	status = hdd_update_mac_config(hdd_ctx);
 
 	if (QDF_IS_STATUS_SUCCESS(status))
 		return;
 
-	hdd_warn("Can't update mac config via wlan_mac.bin, using MAC from ini file or auto-gen");
+	hdd_info("MAC is not programmed in wlan_mac.bin ret %d, use default MAC",
+		 status);
 
 	if (hdd_ctx->update_mac_addr_to_fw) {
 		ret = hdd_update_mac_addr_to_fw(hdd_ctx);
