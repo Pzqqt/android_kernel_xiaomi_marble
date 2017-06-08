@@ -301,7 +301,8 @@ int hif_ahb_configure_grp_irq(struct hif_softc *scn)
 				ic_irqnum[hif_ext_group->irq[j]] = irq;
 				ret = request_irq(irq,
 					hif_ext_group_ahb_interrupt_handler,
-						IRQF_TRIGGER_RISING, "wlan_ahb",
+						IRQF_TRIGGER_RISING,
+						ic_irqname[hif_ext_group->irq[j]],
 						hif_ext_group);
 				if (ret) {
 					dev_err(&pdev->dev,
