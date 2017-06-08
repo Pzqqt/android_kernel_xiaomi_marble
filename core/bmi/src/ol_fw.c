@@ -1334,16 +1334,16 @@ QDF_STATUS ol_download_firmware(struct ol_context *ol_ctx)
 	case QCA9379_REV1_VERSION:
 	case AR6320_REV4_VERSION:
 	case AR6320_DEV_VERSION:
-	/*
-	 * In sdio interface chip, both sdio_data2 and uart_tx pin
-	 * will use GPIO6. It is set by fw rom code, which will cause
-	 * sdio CRC error when there is sdio transaction.
-	 * Override uart tx pin to avoid side effect to sdio pin.
-	 */
-	if (hif_get_bus_type(scn) == QDF_BUS_TYPE_SDIO)
-		param = 19;
-	else
-		param = 6;
+		/*
+		 * In sdio interface chip, both sdio_data2 and uart_tx pin
+		 * will use GPIO6. It is set by fw rom code, which will cause
+		 * sdio CRC error when there is sdio transaction.
+		 * Override uart tx pin to avoid side effect to sdio pin.
+		 */
+		if (hif_get_bus_type(scn) == QDF_BUS_TYPE_SDIO)
+			param = 19;
+		else
+			param = 6;
 		break;
 	default:
 	/* Configure GPIO AR9888 UART */

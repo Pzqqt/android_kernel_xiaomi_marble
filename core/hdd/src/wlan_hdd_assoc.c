@@ -510,10 +510,10 @@ static void hdd_copy_ht_caps(hdd_station_ctx_t *hdd_sta_ctx,
 	for (i = 0; i < IEEE80211_HT_MCS_MASK_LEN; ++i)
 		hdd_ht_cap->mcs.rx_mask[i] =
 			roam_ht_cap->supportedMCSSet[i];
-		hdd_ht_cap->mcs.rx_highest =
+	hdd_ht_cap->mcs.rx_highest =
 			((short) (roam_ht_cap->supportedMCSSet[11]) << 8) |
 			((short) (roam_ht_cap->supportedMCSSet[10]));
-		hdd_ht_cap->mcs.tx_params =
+	hdd_ht_cap->mcs.tx_params =
 			roam_ht_cap->supportedMCSSet[12];
 }
 
@@ -554,7 +554,7 @@ static void hdd_copy_vht_caps(hdd_station_ctx_t *hdd_sta_ctx,
 	temp_vht_cap = roam_vht_cap->supportedChannelWidthSet &
 		(IEEE80211_VHT_CAP_SUPP_CHAN_WIDTH_MASK >>
 			VHT_CAP_SUPP_CHAN_WIDTH_MASK_SHIFT);
-	if (temp_vht_cap)
+	if (temp_vht_cap) {
 		if (roam_vht_cap->supportedChannelWidthSet &
 		    (IEEE80211_VHT_CAP_SUPP_CHAN_WIDTH_160MHZ >>
 			VHT_CAP_SUPP_CHAN_WIDTH_MASK_SHIFT))
@@ -567,6 +567,7 @@ static void hdd_copy_vht_caps(hdd_station_ctx_t *hdd_sta_ctx,
 			hdd_vht_cap->vht_cap_info |=
 			temp_vht_cap <<
 			IEEE80211_VHT_CAP_SUPP_CHAN_WIDTH_160_80PLUS80MHZ;
+	}
 	if (roam_vht_cap->ldpcCodingCap)
 		hdd_vht_cap->vht_cap_info |= IEEE80211_VHT_CAP_RXLDPC;
 	if (roam_vht_cap->shortGI80MHz)
