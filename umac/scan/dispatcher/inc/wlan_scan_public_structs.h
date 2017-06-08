@@ -468,6 +468,18 @@ enum scan_dwelltime_adaptive_mode {
 };
 
 /**
+ * struct scan_random_attr - holds scan randomization attrs
+ * @randomize: set to true for scan randomization
+ * @mac_addr: mac addr to be randomized
+ * @mac_mask: used to represent bits in mac_addr for randomization
+ */
+struct scan_random_attr {
+	bool randomize;
+	uint8_t mac_addr[QDF_MAC_ADDR_SIZE];
+	uint8_t mac_mask[QDF_MAC_ADDR_SIZE];
+};
+
+/**
  * struct scan_req_params - start scan request parameter
  * @scan_id: scan id
  * @scan_req_id: scan requester id
@@ -533,6 +545,7 @@ enum scan_dwelltime_adaptive_mode {
  * @chan_list: channel list
  * @ssid: ssid list
  * @bssid_list: Lisst of bssid to scan
+ * @scan_random: scan randomization params
  * @extraie: list of optional/vendor specific ie's to be added in probe requests
  * @htcap: htcap ie
  * @vhtcap: vhtcap ie
@@ -611,6 +624,7 @@ struct scan_req_params {
 	uint32_t chan_list[WLAN_SCAN_MAX_NUM_CHANNELS];
 	struct wlan_ssid ssid[WLAN_SCAN_MAX_NUM_SSID];
 	struct qdf_mac_addr bssid_list[WLAN_SCAN_MAX_NUM_BSSID];
+	struct scan_random_attr scan_random;
 	struct element_info extraie;
 	struct element_info htcap;
 	struct element_info vhtcap;
@@ -882,6 +896,7 @@ struct pno_nw_type {
  * @channel_prediction_full_scan: periodic timer upon which a full scan needs
  * to be triggered.
  * @networks_list: Preferred network list
+ * @scan_random: scan randomization params
  *
  * E.g.
  *	{ fast_scan_period=120, fast_scan_max_cycles=2,
@@ -904,6 +919,7 @@ struct pno_scan_req_params {
 	enum scan_dwelltime_adaptive_mode adaptive_dwell_mode;
 	uint32_t channel_prediction_full_scan;
 	struct pno_nw_type networks_list[SCAN_PNO_MAX_SUPP_NETWORKS];
+	struct scan_random_attr scan_random;
 };
 
 /**

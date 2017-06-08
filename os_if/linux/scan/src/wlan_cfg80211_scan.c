@@ -59,6 +59,91 @@ static uint32_t hdd_config_sched_scan_start_delay(
 }
 #endif
 
+#if defined(CFG80211_SCAN_RANDOM_MAC_ADDR) || \
+	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
+/**
+ * wlan_fill_scan_rand_attrs() - Populate the scan randomization attrs
+ * @vdev: pointer to objmgr vdev
+ * @flags: cfg80211 scan flags
+ * @mac_addr: random mac addr from cfg80211
+ * @mac_addr_mask: mac addr mask from cfg80211
+ * @randomize: output variable to check scan randomization status
+ * @addr: output variable to hold random addr
+ * @mask: output variable to hold mac mask
+ *
+ * Return: None
+ */
+static void wlan_fill_scan_rand_attrs(struct wlan_objmgr_vdev *vdev,
+				      uint32_t flags,
+				      uint8_t *mac_addr,
+				      uint8_t *mac_addr_mask,
+				      bool *randomize,
+				      uint8_t *addr,
+				      uint8_t *mask)
+{
+	if (!(flags & NL80211_SCAN_FLAG_RANDOM_ADDR))
+		return;
+
+	if (wlan_vdev_mlme_get_opmode(vdev) != QDF_STA_MODE)
+		return;
+
+	if (wlan_vdev_is_connected(vdev))
+		return;
+
+	*randomize = true;
+	memcpy(addr, mac_addr, QDF_MAC_ADDR_SIZE);
+	memcpy(mask, mac_addr_mask, QDF_MAC_ADDR_SIZE);
+	cfg80211_info("Random mac addr: %pM and Random mac mask: %pM",
+		      addr, mask);
+}
+
+/**
+ * wlan_scan_rand_attrs() - Wrapper function to fill scan random attrs
+ * @vdev: pointer to objmgr vdev
+ * @request: pointer to cfg80211 scan request
+ * @req: pointer to cmn module scan request
+ *
+ * This is a wrapper function which invokes wlan_fill_scan_rand_attrs()
+ * to fill random attributes of internal scan request with cfg80211_scan_request
+ *
+ * Return: None
+ */
+static void wlan_scan_rand_attrs(struct wlan_objmgr_vdev *vdev,
+				 struct cfg80211_scan_request *request,
+				 struct scan_start_request *req)
+{
+	bool *randomize = &req->scan_req.scan_random.randomize;
+	uint8_t *mac_addr = req->scan_req.scan_random.mac_addr;
+	uint8_t *mac_mask = req->scan_req.scan_random.mac_mask;
+
+	wlan_fill_scan_rand_attrs(vdev, request->flags, request->mac_addr,
+				  request->mac_addr_mask, randomize, mac_addr,
+				  mac_mask);
+	if (!*randomize)
+		return;
+
+	req->scan_req.scan_f_add_spoofed_mac_in_probe = true;
+	req->scan_req.scan_f_add_rand_seq_in_probe = true;
+}
+#else
+/**
+ * wlan_scan_rand_attrs() - Wrapper function to fill scan random attrs
+ * @vdev: pointer to objmgr vdev
+ * @request: pointer to cfg80211 scan request
+ * @req: pointer to cmn module scan request
+ *
+ * This is a wrapper function which invokes wlan_fill_scan_rand_attrs()
+ * to fill random attributes of internal scan request with cfg80211_scan_request
+ *
+ * Return: None
+ */
+static void wlan_scan_rand_attrs(struct wlan_objmgr_vdev *vdev,
+				 struct cfg80211_scan_request *request,
+				 struct scan_start_request *req)
+{
+}
+#endif
+
 #ifdef FEATURE_WLAN_SCAN_PNO
 #if ((LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)) || \
 	defined(CFG80211_MULTI_SCAN_PLAN_BACKPORT))
@@ -220,6 +305,52 @@ static QDF_STATUS wlan_cfg80211_is_chan_ok_for_dnbs(
 
 	*ok = true;
 	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+#if defined(CFG80211_SCAN_RANDOM_MAC_ADDR) || \
+	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
+/**
+ * wlan_pno_scan_rand_attr() - Wrapper function to fill sched scan random attrs
+ * @vdev: pointer to objmgr vdev
+ * @request: pointer to cfg80211 sched scan request
+ * @req: pointer to cmn module pno scan request
+ *
+ * This is a wrapper function which invokes wlan_fill_scan_rand_attrs()
+ * to fill random attributes of internal pno scan
+ * with cfg80211_sched_scan_request
+ *
+ * Return: None
+ */
+static void wlan_pno_scan_rand_attr(struct wlan_objmgr_vdev *vdev,
+				    struct cfg80211_sched_scan_request *request,
+				    struct pno_scan_req_params *req)
+{
+	bool *randomize = &req->scan_random.randomize;
+	uint8_t *mac_addr = req->scan_random.mac_addr;
+	uint8_t *mac_mask = req->scan_random.mac_mask;
+
+	wlan_fill_scan_rand_attrs(vdev, request->flags, request->mac_addr,
+				  request->mac_addr_mask, randomize, mac_addr,
+				  mac_mask);
+}
+#else
+/**
+ * wlan_pno_scan_rand_attr() - Wrapper function to fill sched scan random attrs
+ * @vdev: pointer to objmgr vdev
+ * @request: pointer to cfg80211 sched scan request
+ * @req: pointer to cmn module pno scan request
+ *
+ * This is a wrapper function which invokes wlan_fill_scan_rand_attrs()
+ * to fill random attributes of internal pno scan
+ * with cfg80211_sched_scan_request
+ *
+ * Return: None
+ */
+static void wlan_pno_scan_rand_attr(struct wlan_objmgr_vdev *vdev,
+				    struct cfg80211_sched_scan_request *request,
+				    struct pno_scan_req_params *req)
+{
 }
 #endif
 
@@ -387,6 +518,8 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_pdev *pdev,
 	}
 	cfg80211_notice("Number of hidden networks being Configured = %d",
 		  request->n_ssids);
+
+	wlan_pno_scan_rand_attr(vdev, request, req);
 
 	/*
 	 * Before Kernel 4.4
@@ -1148,6 +1281,9 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 		qdf_mem_copy(req->scan_req.extraie.ptr, request->ie,
 				request->ie_len);
 	}
+
+	if (!is_p2p_scan)
+		wlan_scan_rand_attrs(vdev, request, req);
 
 	if (request->flags & NL80211_SCAN_FLAG_FLUSH)
 		ucfg_scan_flush_results(pdev, NULL);

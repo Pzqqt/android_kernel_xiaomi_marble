@@ -1447,4 +1447,12 @@ static inline uint16_t wlan_vdev_get_max_peer_count(
 {
 	return vdev->vdev_objmgr.max_peer_count;
 }
+
+/**
+ * wlan_vdev_is_connected() - Check whether peer is associated or not
+ * @vdev: pointer to objmgr vdev
+ *
+ * Return: true in case success else false
+ */
+bool wlan_vdev_is_connected(struct wlan_objmgr_vdev *vdev);
 #endif /* _WLAN_OBJMGR_VDEV_OBJ_H_*/

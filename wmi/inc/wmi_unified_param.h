@@ -1812,9 +1812,13 @@ struct rssi_monitor_param {
 /**
  * struct scan_mac_oui - oui paramters
  * @oui: oui parameters
+ * @vdev_id: interface id
+ * @enb_probe_req_sno_randomization: control probe req sequence no randomization
  */
 struct scan_mac_oui {
 	uint8_t oui[WMI_WIFI_SCANNING_MAC_OUI_LENGTH];
+	uint32_t vdev_id;
+	bool enb_probe_req_sno_randomization;
 };
 
 #define WMI_PASSPOINT_REALM_LEN 256
