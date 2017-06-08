@@ -89,6 +89,15 @@
 		WME_AC_VO)
 
 #define CDP_MAX_RX_RINGS 4
+
+/*
+ * DP configuration parameters
+ */
+enum cdp_cfg_param_type {
+	CDP_CFG_MAX_PEER_ID,
+	CDP_CFG_NUM_PARAMS
+};
+
 /*
  * htt_dbg_stats_type -
  * bit positions for each stats type within a stats type bitmask

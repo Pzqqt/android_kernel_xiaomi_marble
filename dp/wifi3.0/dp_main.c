@@ -4037,6 +4037,16 @@ void *dp_soc_attach_wifi3(void *osif_soc, void *hif_handle,
 				FL("wlan_cfg_soc_attach failed"));
 		goto fail2;
 	}
+
+	if (soc->cdp_soc.ol_ops->get_dp_cfg_param) {
+		int ret = soc->cdp_soc.ol_ops->get_dp_cfg_param(soc,
+				CDP_CFG_MAX_PEER_ID);
+
+		if (ret != -EINVAL) {
+			wlan_cfg_set_max_peer_id(soc->wlan_cfg_ctx, ret);
+		}
+	}
+
 	qdf_spinlock_create(&soc->peer_ref_mutex);
 
 	qdf_spinlock_create(&soc->reo_desc_freelist_lock);

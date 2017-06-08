@@ -182,9 +182,10 @@ struct wlan_cfg_dp_pdev_ctxt {
  *
  * Return: wlan_cfg_ctx - Handle to Configuration context
  */
-struct wlan_cfg_dp_soc_ctxt *wlan_cfg_soc_attach(void)
+struct wlan_cfg_dp_soc_ctxt *wlan_cfg_soc_attach()
 {
 	int i = 0;
+
 	struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx =
 		qdf_mem_malloc(sizeof(struct wlan_cfg_dp_soc_ctxt));
 
@@ -202,8 +203,8 @@ struct wlan_cfg_dp_soc_ctxt *wlan_cfg_soc_attach(void)
 	wlan_cfg_ctx->num_tx_ext_desc_pool = WLAN_CFG_NUM_TXEXT_DESC_POOL;
 	wlan_cfg_ctx->num_tx_desc = WLAN_CFG_NUM_TX_DESC;
 	wlan_cfg_ctx->num_tx_ext_desc = WLAN_CFG_NUM_TX_EXT_DESC;
-	wlan_cfg_ctx->max_peer_id = WLAN_CFG_MAX_PEER_ID;
 	wlan_cfg_ctx->htt_packet_type = WLAN_CFG_HTT_PKT_TYPE;
+	wlan_cfg_ctx->max_peer_id = WLAN_CFG_MAX_PEER_ID;
 
 	for (i = 0; i < WLAN_CFG_INT_NUM_CONTEXTS; i++) {
 		wlan_cfg_ctx->int_tx_ring_mask[i] = tx_ring_mask[i];
@@ -247,6 +248,11 @@ void wlan_cfg_pdev_detach(struct wlan_cfg_dp_pdev_ctxt *wlan_cfg_ctx)
 void wlan_cfg_set_num_contexts(struct wlan_cfg_dp_soc_ctxt *cfg, int num)
 {
 	cfg->num_int_ctxts = num;
+}
+
+void wlan_cfg_set_max_peer_id(struct wlan_cfg_dp_soc_ctxt *cfg, uint32_t val)
+{
+	cfg->max_peer_id = val;;
 }
 
 void wlan_cfg_set_tx_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
