@@ -782,7 +782,7 @@ struct policy_mgr_hdd_cbacks {
 	QDF_STATUS (*wlan_hdd_get_channel_for_sap_restart)(
 				struct wlan_objmgr_psoc *psoc,
 				uint8_t vdev_id, uint8_t *channel,
-				uint8_t *sec_ch, bool is_restart_sap);
+				uint8_t *sec_ch);
 	enum policy_mgr_con_mode (*get_mode_for_non_connected_vdev)(
 				struct wlan_objmgr_psoc *psoc,
 				uint8_t vdev_id);
