@@ -464,3 +464,19 @@ int hif_snoc_map_ce_to_irq(struct hif_softc *scn, int ce_id)
 {
 	return icnss_get_irq(ce_id);
 }
+
+/**
+ * hif_is_target_register_access_allowed(): Check target register access allow
+ * @scn: HIF Context
+ *
+ * This function help to check whether target register access is allowed or not
+ *
+ * Return: true if target access is allowed else false
+ */
+bool hif_is_target_register_access_allowed(struct hif_softc *scn)
+{
+	if (hif_is_recovery_in_progress(scn))
+		return hif_is_target_ready(scn);
+	else
+		return true;
+}

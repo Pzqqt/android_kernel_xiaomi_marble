@@ -463,6 +463,7 @@ struct hif_driver_state_callbacks {
 	bool (*is_recovery_in_progress)(void *context);
 	bool (*is_load_unload_in_progress)(void *context);
 	bool (*is_driver_unloading)(void *context);
+	bool (*is_target_ready)(void *context);
 };
 
 /* This API detaches the HTC layer from the HIF device */

@@ -1894,8 +1894,13 @@ more_data:
 		goto more_data;
 	}
 	qdf_atomic_set(&ce_state->rx_pending, 0);
-	CE_ENGINE_INT_STATUS_CLEAR(scn, ctrl_addr,
-				   HOST_IS_COPY_COMPLETE_MASK);
+	if (TARGET_REGISTER_ACCESS_ALLOWED(scn)) {
+		CE_ENGINE_INT_STATUS_CLEAR(scn, ctrl_addr,
+					   HOST_IS_COPY_COMPLETE_MASK);
+	} else {
+		HIF_ERROR("%s: target access is not allowed", __func__);
+		return;
+	}
 
 	if (ce_recv_entries_done_nolock_legacy(scn, ce_state)) {
 		if (more_comp_cnt++ < CE_TXRX_COMP_CHECK_THRESHOLD) {
@@ -2091,10 +2096,16 @@ more_watermarks:
 	 * more copy completions happened while the misc interrupts were being
 	 * handled.
 	 */
-	if (!ce_srng_based(scn))
-		CE_ENGINE_INT_STATUS_CLEAR(scn, ctrl_addr,
-				   CE_WATERMARK_MASK |
-				   HOST_IS_COPY_COMPLETE_MASK);
+	if (!ce_srng_based(scn)) {
+		if (TARGET_REGISTER_ACCESS_ALLOWED(scn)) {
+			CE_ENGINE_INT_STATUS_CLEAR(scn, ctrl_addr,
+					   CE_WATERMARK_MASK |
+					   HOST_IS_COPY_COMPLETE_MASK);
+		} else {
+			HIF_ERROR("%s: target access is not allowed", __func__);
+			return CE_state->receive_count;
+		}
+	}
 
 	/*
 	 * Now that per-engine interrupts are cleared, verify that
@@ -2216,6 +2227,11 @@ ce_per_engine_handler_adjust_legacy(struct CE_state *CE_state,
 
 	if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
 		return;
+
+	if (!TARGET_REGISTER_ACCESS_ALLOWED(scn)) {
+		HIF_ERROR("%s: target access is not allowed", __func__);
+		return;
+	}
 
 	if ((!disable_copy_compl_intr) &&
 	    (CE_state->send_cb || CE_state->recv_cb))

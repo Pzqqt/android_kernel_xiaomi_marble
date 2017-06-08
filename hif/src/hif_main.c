@@ -1067,6 +1067,23 @@ bool hif_is_recovery_in_progress(struct hif_softc *scn)
 
 	return false;
 }
+
+/**
+ * hif_is_target_ready() - API to query if target is in ready state
+ * progress
+ * @scn: HIF Context
+ *
+ * Return: True/False
+ */
+bool hif_is_target_ready(struct hif_softc *scn)
+{
+	struct hif_driver_state_callbacks *cbk = hif_get_callbacks_handle(scn);
+
+	if (cbk && cbk->is_target_ready)
+		return cbk->is_target_ready(cbk->context);
+
+	return false;
+}
 #if defined(HIF_PCI) || defined(SNOC) || defined(HIF_AHB)
 /**
  * hif_batch_send() - API to access hif specific function

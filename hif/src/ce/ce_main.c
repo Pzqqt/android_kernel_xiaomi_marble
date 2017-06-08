@@ -2897,11 +2897,16 @@ inline unsigned int hif_get_src_ring_read_index(struct hif_softc *scn,
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 
 	attr = hif_state->host_ce_config[COPY_ENGINE_ID(CE_ctrl_addr)];
-	if (attr.flags & CE_ATTR_DISABLE_INTR)
+	if (attr.flags & CE_ATTR_DISABLE_INTR) {
 		return CE_SRC_RING_READ_IDX_GET_FROM_DDR(scn, CE_ctrl_addr);
-	else
-		return A_TARGET_READ(scn,
-				(CE_ctrl_addr) + CURRENT_SRRI_ADDRESS);
+	} else {
+		if (TARGET_REGISTER_ACCESS_ALLOWED(scn))
+			return A_TARGET_READ(scn,
+					(CE_ctrl_addr) + CURRENT_SRRI_ADDRESS);
+		else
+			return CE_SRC_RING_READ_IDX_GET_FROM_DDR(scn,
+					CE_ctrl_addr);
+	}
 }
 
 /**
@@ -2923,11 +2928,16 @@ inline unsigned int hif_get_dst_ring_read_index(struct hif_softc *scn,
 
 	attr = hif_state->host_ce_config[COPY_ENGINE_ID(CE_ctrl_addr)];
 
-	if (attr.flags & CE_ATTR_DISABLE_INTR)
+	if (attr.flags & CE_ATTR_DISABLE_INTR) {
 		return CE_DEST_RING_READ_IDX_GET_FROM_DDR(scn, CE_ctrl_addr);
-	else
-		return A_TARGET_READ(scn,
-				(CE_ctrl_addr) + CURRENT_DRRI_ADDRESS);
+	} else {
+		if (TARGET_REGISTER_ACCESS_ALLOWED(scn))
+			return A_TARGET_READ(scn,
+					(CE_ctrl_addr) + CURRENT_DRRI_ADDRESS);
+		else
+			return CE_DEST_RING_READ_IDX_GET_FROM_DDR(scn,
+					CE_ctrl_addr);
+	}
 }
 
 /**
