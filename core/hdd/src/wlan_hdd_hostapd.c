@@ -2389,7 +2389,7 @@ void sap_restart_chan_switch_cb (struct wlan_objmgr_psoc *psoc,
 QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 				struct wlan_objmgr_psoc *psoc,
 				uint8_t vdev_id, uint8_t *channel,
-				uint8_t *sec_ch, bool restart_sap)
+				uint8_t *sec_ch)
 {
 	tHalHandle *hal_handle;
 	hdd_ap_ctx_t *hdd_ap_ctx;
@@ -2439,13 +2439,10 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 	*channel = hdd_ap_ctx->sapConfig.channel;
 	*sec_ch = hdd_ap_ctx->sapConfig.sec_ch;
 
-	if (restart_sap) {
-		hdd_info("Restart SAP as a part of channel switch");
-		sap_restart_chan_switch_cb(psoc, vdev_id,
-			hdd_ap_ctx->sapConfig.channel,
-			hdd_ap_ctx->sapConfig.ch_params.ch_width);
-
-	}
+	hdd_info("SAP channel change with CSA/ECSA");
+	sap_restart_chan_switch_cb(psoc, vdev_id,
+		hdd_ap_ctx->sapConfig.channel,
+		hdd_ap_ctx->sapConfig.ch_params.ch_width);
 
 	return QDF_STATUS_SUCCESS;
 }
