@@ -1290,7 +1290,7 @@ done:
 			DP_STATS_INC_PKT(peer, rx.to_stack, 1,
 					pkt_len);
 
-			if ((pdev->enhanced_stats_en) &&
+			if ((pdev->enhanced_stats_en) && likely(peer) &&
 				hal_rx_attn_first_mpdu_get(rx_tlv_hdr)) {
 				if (soc->cdp_soc.ol_ops->update_dp_stats) {
 					soc->cdp_soc.ol_ops->update_dp_stats(

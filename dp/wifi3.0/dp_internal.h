@@ -74,24 +74,26 @@ while (0)
 #ifndef DISABLE_DP_STATS
 #define DP_STATS_INC(_handle, _field, _delta) \
 { \
-	_handle->stats._field += _delta; \
+	if (likely(_handle)) \
+		_handle->stats._field += _delta; \
 }
 
 #define DP_STATS_INCC(_handle, _field, _delta, _cond) \
 { \
-	if (_cond) { \
+	if (_cond && likely(_handle)) \
 		_handle->stats._field += _delta; \
-	} \
 }
 
 #define DP_STATS_DEC(_handle, _field, _delta) \
 { \
-	_handle->stats._field -= _delta; \
+	if (likely(_handle)) \
+		_handle->stats._field -= _delta; \
 }
 
 #define DP_STATS_UPD(_handle, _field, _delta) \
 { \
-	_handle->stats._field = _delta; \
+	if (likely(_handle)) \
+		_handle->stats._field = _delta; \
 }
 
 #define DP_STATS_INC_PKT(_handle, _field, _count, _bytes) \
