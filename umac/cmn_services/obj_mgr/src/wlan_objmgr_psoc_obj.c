@@ -1166,7 +1166,7 @@ static struct wlan_objmgr_peer *wlan_obj_psoc_peerlist_get_peer_no_state(
 }
 
 /**
- * wlan_obj_psoc_peerlist_get_peer_logically_deleted_by_mac_n_bssid() - get peer
+ * wlan_obj_psoc_populate_logically_deleted_peerlist_by_mac_n_bssid() - get peer
  *                                           from psoc peer list using
  *                                           mac and vdev self mac
  * @obj_list: peer object list
@@ -1176,23 +1176,37 @@ static struct wlan_objmgr_peer *wlan_obj_psoc_peerlist_get_peer_no_state(
  *
  * API to finds peer object pointer by MAC addr and BSSID from
  * peer hash list for a node which is in logically deleted state,
- *  bssid check is done on matching peer
+ * bssid check is done on matching peer
  *
- * Return: peer pointer
+ * Caller to free the list allocated in this function
+ *
+ * Return: list of peer pointers
  *         NULL on FAILURE
  */
-static struct wlan_objmgr_peer
-	*wlan_obj_psoc_peerlist_get_peer_logically_deleted_by_mac_n_bssid(
+static qdf_list_t
+	*wlan_obj_psoc_populate_logically_deleted_peerlist_by_mac_n_bssid(
 				qdf_list_t *obj_list, uint8_t *macaddr,
 				uint8_t *bssid,
 				wlan_objmgr_ref_dbgid dbg_id)
 {
 	struct wlan_objmgr_peer *peer;
 	struct wlan_objmgr_peer *peer_temp;
+	struct wlan_logically_del_peer *peer_list = NULL;
+	qdf_list_t *logical_del_peer_list = NULL;
+	bool lock_released = false;
+
+	logical_del_peer_list = qdf_mem_malloc(sizeof(*logical_del_peer_list));
+	if (!logical_del_peer_list) {
+		obj_mgr_err("failed to allocate list");
+		return NULL;
+	}
+
+	qdf_list_create(logical_del_peer_list, WLAN_UMAC_PSOC_MAX_PEERS);
 
 	/* Iterate through hash list to get the peer */
 	peer = wlan_psoc_peer_list_peek_head(obj_list);
 	while (peer != NULL) {
+		wlan_peer_obj_lock(peer);
 		/* For peer, macaddr is key */
 		if (WLAN_ADDR_EQ(wlan_peer_get_macaddr(peer), macaddr)
 			== QDF_STATUS_SUCCESS) {
@@ -1204,21 +1218,35 @@ static struct wlan_objmgr_peer
 			if (wlan_peer_bssid_match(peer, bssid) ==
 							QDF_STATUS_SUCCESS) {
 				/* Return peer in logically deleted state */
-				if (peer->obj_state ==
-					WLAN_OBJ_STATE_LOGICALLY_DELETED) {
+				if ((peer->obj_state ==
+					WLAN_OBJ_STATE_LOGICALLY_DELETED) &&
+					qdf_atomic_read(&peer->peer_objmgr.ref_cnt)) {
 					wlan_objmgr_peer_get_ref(peer, dbg_id);
-
-					return peer;
+					wlan_peer_obj_unlock(peer);
+					lock_released = true;
+					peer_list = qdf_mem_malloc(sizeof(struct wlan_logically_del_peer));
+					peer_list->peer = peer;
+					qdf_list_insert_front(logical_del_peer_list, &peer_list->list);
 				}
 			}
 		}
+
+		if (!lock_released)
+			wlan_peer_obj_unlock(peer);
+
 		/* Move to next peer */
 		peer_temp = peer;
 		peer = wlan_peer_get_next_peer_of_psoc(obj_list, peer_temp);
 	}
 
 	/* Not found, return NULL */
-	return NULL;
+	if (qdf_list_empty(logical_del_peer_list)) {
+		qdf_mem_free(logical_del_peer_list);
+		return NULL;
+	} else {
+		return logical_del_peer_list;
+	}
+
 }
 
 /**
@@ -1526,7 +1554,7 @@ EXPORT_SYMBOL(wlan_objmgr_get_peer_by_mac_n_vdev);
 
 
 /**
- * wlan_objmgr_get_peer_logically_deleted_by_mac_n_vdev() - get peer from psoc
+ * wlan_objmgr_populate_logically_deleted_peerlist_by_mac_n_vdev() - get peer from psoc
  *                                                           peer list using
  *                                                           mac and vdev
  *                                                           self mac
@@ -1538,18 +1566,18 @@ EXPORT_SYMBOL(wlan_objmgr_get_peer_by_mac_n_vdev);
  * API to finds peer object pointer by MAC addr and BSSID from
  * peer hash list, bssid check is done on matching peer
  *
- * Return: peer pointer
+ * Return: list of peer pointer pointers
  *         NULL on FAILURE
  */
 
-struct wlan_objmgr_peer *wlan_objmgr_get_peer_logically_deleted_by_mac_n_vdev(
+qdf_list_t *wlan_objmgr_populate_logically_deleted_peerlist_by_mac_n_vdev(
 			struct wlan_objmgr_psoc *psoc, uint8_t *macaddr,
 			uint8_t *bssid, wlan_objmgr_ref_dbgid dbg_id)
 {
 	struct wlan_objmgr_psoc_objmgr *objmgr;
 	uint8_t hash_index;
-	struct wlan_objmgr_peer *peer = NULL;
-	struct wlan_peer_list *peer_list;
+	struct wlan_peer_list *peer_list = NULL;
+	qdf_list_t *logical_del_peer_list = NULL;
 
 	/* psoc lock should be taken before peer list lock */
 	wlan_psoc_obj_lock(psoc);
@@ -1564,14 +1592,14 @@ struct wlan_objmgr_peer *wlan_objmgr_get_peer_logically_deleted_by_mac_n_vdev(
 	peer_list = &objmgr->peer_list;
 	qdf_spin_lock_bh(&peer_list->peer_list_lock);
 	/* Iterate through peer list, get peer */
-	peer = wlan_obj_psoc_peerlist_get_peer_logically_deleted_by_mac_n_bssid(
+	logical_del_peer_list = wlan_obj_psoc_populate_logically_deleted_peerlist_by_mac_n_bssid(
 		&peer_list->peer_hash[hash_index], macaddr, bssid, dbg_id);
 	qdf_spin_unlock_bh(&peer_list->peer_list_lock);
 	wlan_psoc_obj_unlock(psoc);
 
-	return peer;
+	return logical_del_peer_list;
 }
-EXPORT_SYMBOL(wlan_objmgr_get_peer_logically_deleted_by_mac_n_vdev);
+EXPORT_SYMBOL(wlan_objmgr_populate_logically_deleted_peerlist_by_mac_n_vdev);
 
 struct wlan_objmgr_peer *wlan_objmgr_get_peer_by_mac_n_vdev_no_state(
 			struct wlan_objmgr_psoc *psoc, uint8_t *macaddr,

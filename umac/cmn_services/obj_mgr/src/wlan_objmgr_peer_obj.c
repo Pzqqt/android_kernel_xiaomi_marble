@@ -631,9 +631,17 @@ void wlan_objmgr_peer_release_ref(struct wlan_objmgr_peer *peer,
 	}
 	qdf_atomic_dec(&peer->peer_objmgr.ref_id_dbg[id]);
 
-	/* Decrement ref count, free vdev, if ref acount == 0 */
-	if (qdf_atomic_dec_and_test(&peer->peer_objmgr.ref_cnt))
+	/* Provide synchronization from the access to add peer
+	 * to logically deleted peer list.
+	 */
+	wlan_peer_obj_lock(peer);
+	/* Decrement ref count, free peer object, if ref count == 0 */
+	if (qdf_atomic_dec_and_test(&peer->peer_objmgr.ref_cnt)) {
+		wlan_peer_obj_unlock(peer);
 		wlan_objmgr_peer_obj_destroy(peer);
+	} else {
+		wlan_peer_obj_unlock(peer);
+	}
 
 	return;
 }

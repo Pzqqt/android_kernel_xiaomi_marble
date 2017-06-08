@@ -530,7 +530,7 @@ struct wlan_objmgr_peer *wlan_objmgr_get_peer_no_state(
 			wlan_objmgr_ref_dbgid dbg_id);
 
 /**
- * wlan_objmgr_get_peer_logically_deleted_by_mac_n_vdev() - get peer from
+ * wlan_objmgr_populate_logically_deleted_peerlist_by_mac_n_vdev() - get peer from
  *                                                psoc peer list using
  *                                                mac and vdev
  *                                                self mac
@@ -542,10 +542,10 @@ struct wlan_objmgr_peer *wlan_objmgr_get_peer_no_state(
  * API to find peer object pointer by MAC addr and vdev self mac
  * address for a node that is logically in deleted state
  *
- * Return: peer pointer
+ * Return: List of peer pointers
  *         NULL on FAILURE
  */
-struct wlan_objmgr_peer *wlan_objmgr_get_peer_logically_deleted_by_mac_n_vdev(
+qdf_list_t *wlan_objmgr_populate_logically_deleted_peerlist_by_mac_n_vdev(
 			struct wlan_objmgr_psoc *psoc, uint8_t *macaddr,
 			uint8_t *bssid, wlan_objmgr_ref_dbgid dbg_id);
 
@@ -1199,4 +1199,8 @@ static inline uint8_t wlan_objmgr_psoc_get_band_capability(
 	return psoc->soc_nif.user_config.band_capability;
 }
 
+struct wlan_logically_del_peer {
+	qdf_list_node_t list;
+	struct wlan_objmgr_peer *peer;
+};
 #endif /* _WLAN_OBJMGR_PSOC_OBJ_H_*/
