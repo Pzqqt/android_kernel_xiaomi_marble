@@ -44,7 +44,7 @@
 
 #define HIF_LINUX_MMC_SCATTER_SUPPORT
 
-#define BUS_REQUEST_MAX_NUM                64
+#define BUS_REQUEST_MAX_NUM                105
 
 #define SDIO_CLOCK_FREQUENCY_DEFAULT       25000000
 #define SDWLAN_ENABLE_DISABLE_TIMEOUT      20
