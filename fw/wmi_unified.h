@@ -18091,6 +18091,7 @@ typedef enum wmi_coex_config_type {
     WMI_COEX_CONFIG_PTA_BT_INFO         = 20, /* get BT information,
                                                  arg1 BT info type: WMI_COEX_PTA_BT_INFO_TYPE_T, scan/advertise/connection info,
                                                  arg2-arg5: BT information parameters */
+    WMI_COEX_CONFIG_SINK_WLAN_TDM       = 21, /* config interval (ms units) (arg1 BT, arg2 WLAN) for A2DP SINK + WLAN */
 } WMI_COEX_CONFIG_TYPE;
 
 typedef struct {
