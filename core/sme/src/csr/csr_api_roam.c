@@ -161,6 +161,12 @@ int diag_enc_type_from_csr_type(eCsrEncryptionType encType)
 	case eCSR_ENCRYPT_TYPE_AES:
 		n = ENC_MODE_AES;
 		break;
+	case eCSR_ENCRYPT_TYPE_AES_GCMP:
+		n = ENC_MODE_AES_GCMP;
+		break;
+	case eCSR_ENCRYPT_TYPE_AES_GCMP_256:
+		n = ENC_MODE_AES_GCMP_256;
+		break;
 #ifdef FEATURE_WLAN_WAPI
 	case eCSR_ENCRYPT_TYPE_WPI:
 		n = ENC_MODE_SMS4;
@@ -4589,6 +4595,8 @@ void csr_set_cfg_privacy(tpAniSirGlobal pMac, tCsrRoamProfile *pProfile,
 
 	case eCSR_ENCRYPT_TYPE_TKIP:
 	case eCSR_ENCRYPT_TYPE_AES:
+	case eCSR_ENCRYPT_TYPE_AES_GCMP:
+	case eCSR_ENCRYPT_TYPE_AES_GCMP_256:
 #ifdef FEATURE_WLAN_WAPI
 	case eCSR_ENCRYPT_TYPE_WPI:
 #endif /* FEATURE_WLAN_WAPI */
@@ -10063,6 +10071,32 @@ csr_update_key_cmd(tpAniSirGlobal mac_ctx, tCsrRoamSession *session,
 		set_key_cmd->keyLength = CSR_AES_KEY_LEN;
 		qdf_mem_copy(set_key_cmd->Key, set_key->Key,
 			     CSR_AES_KEY_LEN);
+		*is_key_valid = true;
+		break;
+	case eCSR_ENCRYPT_TYPE_AES_GCMP:
+		if (set_key->keyLength < CSR_AES_GCMP_KEY_LEN) {
+			sme_warn(
+				"Invalid AES_GCMP keylength [= %d]",
+				set_key->keyLength);
+			*is_key_valid = false;
+			return QDF_STATUS_E_INVAL;
+		}
+		set_key_cmd->keyLength = CSR_AES_GCMP_KEY_LEN;
+		qdf_mem_copy(set_key_cmd->Key, set_key->Key,
+			     CSR_AES_GCMP_KEY_LEN);
+		*is_key_valid = true;
+		break;
+	case eCSR_ENCRYPT_TYPE_AES_GCMP_256:
+		if (set_key->keyLength < CSR_AES_GCMP_256_KEY_LEN) {
+			sme_warn(
+				"Invalid AES_GCMP_256 keylength [= %d]",
+				set_key->keyLength);
+			*is_key_valid = false;
+			return QDF_STATUS_E_INVAL;
+		}
+		set_key_cmd->keyLength = CSR_AES_GCMP_256_KEY_LEN;
+		qdf_mem_copy(set_key_cmd->Key, set_key->Key,
+			     CSR_AES_GCMP_256_KEY_LEN);
 		*is_key_valid = true;
 		break;
 #ifdef FEATURE_WLAN_WAPI

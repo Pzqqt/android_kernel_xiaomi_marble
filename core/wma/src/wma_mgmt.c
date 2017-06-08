@@ -1705,6 +1705,11 @@ static QDF_STATUS wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 		params.key_cipher = WMI_CIPHER_AES_CMAC;
 		break;
 #endif /* WLAN_FEATURE_11W */
+	/* Firmware uses length to detect GCMP 128/256*/
+	case eSIR_ED_GCMP:
+	case eSIR_ED_GCMP_256:
+		params.key_cipher = WMI_CIPHER_AES_GCM;
+		break;
 	default:
 		/* TODO: MFP ? */
 		WMA_LOGE("%s:Invalid encryption type:%d", __func__,

@@ -802,6 +802,10 @@ lim_is_sme_set_context_req_valid(tpAniSirGlobal pMac,
 		    ((pSetContextReq->keyMaterial.edType == eSIR_ED_WPI) &&
 		     (pKey->keyLength != 32)) ||
 #endif
+		    ((pSetContextReq->keyMaterial.edType == eSIR_ED_GCMP) &&
+		     (pKey->keyLength != 16)) ||
+		    ((pSetContextReq->keyMaterial.edType == eSIR_ED_GCMP_256) &&
+		     (pKey->keyLength != 32)) ||
 		    ((pSetContextReq->keyMaterial.edType == eSIR_ED_CCMP) &&
 		     (pKey->keyLength != 16))) {
 			/**

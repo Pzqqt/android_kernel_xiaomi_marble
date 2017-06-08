@@ -650,6 +650,8 @@ void csr_get_vdev_type_nss(tpAniSirGlobal mac_ctx,
 #define ENC_MODE_WEP104 2
 #define ENC_MODE_TKIP   3
 #define ENC_MODE_AES    4
+#define ENC_MODE_AES_GCMP    5
+#define ENC_MODE_AES_GCMP_256    6
 #ifdef FEATURE_WLAN_WAPI
 #define ENC_MODE_SMS4   5       /* WAPI */
 #endif /* FEATURE_WLAN_WAPI */

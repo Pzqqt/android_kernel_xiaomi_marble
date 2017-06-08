@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -71,12 +71,19 @@
 
 #define CSR_DOT11_BASIC_RATE_MASK (0x80)
 
+/* NOTE these index are use as array index for csr_rsn_oui */
 #define CSR_OUI_USE_GROUP_CIPHER_INDEX 0x00
 #define CSR_OUI_WEP40_OR_1X_INDEX      0x01
 #define CSR_OUI_TKIP_OR_PSK_INDEX      0x02
 #define CSR_OUI_RESERVED_INDEX         0x03
 #define CSR_OUI_AES_INDEX              0x04
 #define CSR_OUI_WEP104_INDEX           0x05
+/* ENUM_FILS_SHA384 9 */
+/* ENUM_FILS_SHA384 10 */
+/* ENUM_FT_FILS_SHA256 11 */
+/* ENUM_FT_FILS_SHA384 12 */
+#define CSR_OUI_AES_GCMP_INDEX         0x0D
+#define CSR_OUI_AES_GCMP_256_INDEX     0x0E
 
 #ifdef FEATURE_WLAN_WAPI
 #define CSR_OUI_WAPI_RESERVED_INDEX    0x00
