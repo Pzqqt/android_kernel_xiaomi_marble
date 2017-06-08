@@ -422,11 +422,21 @@ static void hdd_update_timestamp(hdd_adapter_t *adapter,
 	if (!adapter)
 		return;
 
+	/* host time is updated in IRQ context, it's always before target time,
+	 * and so no need to try update last_host_time at present;
+	 * since the interval of capturing TSF
+	 * (WLAN_HDD_CAPTURE_TSF_INTERVAL_SEC) is long enough, host and target
+	 * time are updated in pairs, and one by one, we can return here to
+	 * avoid requiring spin lock, and to speed up the IRQ processing.
+	 */
+	if (host_time > 0) {
+		adapter->cur_host_time = host_time;
+		return;
+	}
+
 	qdf_spin_lock_bh(&adapter->host_target_sync_lock);
 	if (target_time > 0)
 		adapter->cur_target_time = target_time;
-	if (host_time > 0)
-		adapter->cur_host_time = host_time;
 
 	sync_status = hdd_check_timestamp_status(adapter->last_target_time,
 						 adapter->last_host_time,
