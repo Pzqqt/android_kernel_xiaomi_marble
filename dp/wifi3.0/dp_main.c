@@ -1616,6 +1616,23 @@ static void dp_rxdma_ring_config(struct dp_soc *soc)
 					 RXDMA_BUF);
 				mac_id++;
 			}
+
+			/* Configure monitor mode rings */
+			htt_srng_setup(soc->htt_handle, i,
+					pdev->rxdma_mon_buf_ring.hal_srng,
+					RXDMA_MONITOR_BUF);
+
+			htt_srng_setup(soc->htt_handle, i,
+					pdev->rxdma_mon_dst_ring.hal_srng,
+					RXDMA_MONITOR_DST);
+
+			htt_srng_setup(soc->htt_handle, i,
+				pdev->rxdma_mon_status_ring.hal_srng,
+				RXDMA_MONITOR_STATUS);
+
+			htt_srng_setup(soc->htt_handle, i,
+				pdev->rxdma_mon_desc_ring.hal_srng,
+				RXDMA_MONITOR_DESC);
 		}
 	}
 }
