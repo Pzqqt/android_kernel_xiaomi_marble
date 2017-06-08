@@ -919,8 +919,8 @@ QDF_STATUS reinit_sdio(struct hif_sdio_dev *device)
 	 */
 	if (mmcclock > 0)
 		clock = mmcclock;
-		host->ios.clock = clock;
-		host->ops->set_ios(host, &host->ios);
+	host->ios.clock = clock;
+	host->ops->set_ios(host, &host->ios);
 
 
 	if (card->host->caps & MMC_CAP_4_BIT_DATA) {
