@@ -405,4 +405,21 @@ void cds_print_htc_credit_history(uint32_t count, qdf_abstract_print * print,
 				  void *print_priv);
 #endif
 
+/**
+ * cds_is_group_addr() - checks whether addr is multi cast
+ * @mac_addr: address to be checked for multicast
+ *
+ * Check if the input mac addr is multicast addr
+ *
+ * Return: true if multicast addr else false
+ */
+static inline
+bool cds_is_group_addr(uint8_t *mac_addr)
+{
+	if (mac_addr[0] & 0x01)
+		return true;
+	else
+		return false;
+}
+
 #endif /* if !defined __CDS_API_H */

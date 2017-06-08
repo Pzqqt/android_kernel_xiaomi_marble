@@ -4764,6 +4764,8 @@ struct rso_cmd_status {
 
 typedef struct {
 	uint8_t oui[WIFI_SCANNING_MAC_OUI_LENGTH];
+	uint32_t vdev_id;
+	bool enb_probe_req_sno_randomization;
 } tSirScanMacOui, *tpSirScanMacOui;
 
 enum {

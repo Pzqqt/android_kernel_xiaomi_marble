@@ -2765,6 +2765,8 @@ __wlan_hdd_cfg80211_set_scanning_mac_oui(struct wiphy *wiphy,
 	QDF_STATUS status;
 	int ret;
 	int len;
+	struct net_device *ndev = wdev->netdev;
+	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 
 	ENTER_DEV(wdev->netdev);
 
@@ -2812,8 +2814,13 @@ __wlan_hdd_cfg80211_set_scanning_mac_oui(struct wiphy *wiphy,
 	nla_memcpy(&pReqMsg->oui[0],
 		   tb[QCA_WLAN_VENDOR_ATTR_SET_SCANNING_MAC_OUI],
 		   sizeof(pReqMsg->oui));
-	hdd_debug("Oui (%02x:%02x:%02x)", pReqMsg->oui[0],
-	       pReqMsg->oui[1], pReqMsg->oui[2]);
+
+	/* populate pReqMsg for mac addr randomization */
+	pReqMsg->vdev_id = adapter->sessionId;
+	pReqMsg->enb_probe_req_sno_randomization = true;
+
+	hdd_debug("Oui (%02x:%02x:%02x), vdev_id = %d", pReqMsg->oui[0],
+		  pReqMsg->oui[1], pReqMsg->oui[2], pReqMsg->vdev_id);
 	status = sme_set_scanning_mac_oui(pHddCtx->hHal, pReqMsg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("sme_set_scanning_mac_oui failed(err=%d)", status);
@@ -11417,6 +11424,19 @@ int wlan_hdd_cfg80211_update_band(hdd_context_t *hdd_ctx, struct wiphy *wiphy,
 	return 0;
 }
 
+#if defined(CFG80211_SCAN_RANDOM_MAC_ADDR) || \
+	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
+static void wlan_hdd_cfg80211_scan_randomization_init(struct wiphy *wiphy)
+{
+	wiphy->features |= NL80211_FEATURE_SCAN_RANDOM_MAC_ADDR;
+	wiphy->features |= NL80211_FEATURE_SCHED_SCAN_RANDOM_MAC_ADDR;
+}
+#else
+static void wlan_hdd_cfg80211_scan_randomization_init(struct wiphy *wiphy)
+{
+}
+#endif
+
 #define WLAN_HDD_MAX_NUM_CSA_COUNTERS 2
 /*
  * FUNCTION: wlan_hdd_cfg80211_init
@@ -11643,6 +11663,7 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 
 	hdd_add_channel_switch_support(&wiphy->flags);
 	wiphy->max_num_csa_counters = WLAN_HDD_MAX_NUM_CSA_COUNTERS;
+	wlan_hdd_cfg80211_scan_randomization_init(wiphy);
 
 	EXIT();
 	return 0;

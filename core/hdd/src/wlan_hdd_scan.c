@@ -1477,6 +1477,72 @@ static void hdd_process_vendor_acs_response(hdd_adapter_t *adapter)
 	}
 }
 
+#if defined(CFG80211_SCAN_RANDOM_MAC_ADDR) || \
+	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
+/**
+ * wlan_hdd_vendor_scan_random_attr() - check and fill scan randomization attrs
+ * @wiphy: Pointer to wiphy
+ * @request: Pointer to scan request
+ * @wdev: Pointer to wireless device
+ * @tb: Pointer to nl attributes
+ *
+ * This function is invoked to check whether vendor scan needs
+ * probe req source addr, if so populates mac_addr and mac_addr_mask
+ * in scan request with nl attrs.
+ *
+ * Return: 0 - on success, negative value on failure
+ */
+static int wlan_hdd_vendor_scan_random_attr(struct wiphy *wiphy,
+					struct cfg80211_scan_request *request,
+					struct wireless_dev *wdev,
+					struct nlattr **tb)
+{
+	uint32_t i;
+	int32_t len = QDF_MAC_ADDR_SIZE;
+
+	if (!(request->flags & NL80211_SCAN_FLAG_RANDOM_ADDR))
+		return 0;
+
+	if (!(wiphy->features & NL80211_FEATURE_SCAN_RANDOM_MAC_ADDR) ||
+	    (wdev->current_bss)) {
+		hdd_err("SCAN RANDOMIZATION not supported");
+		return -EOPNOTSUPP;
+	}
+
+	if (!tb[QCA_WLAN_VENDOR_ATTR_SCAN_MAC] ||
+	    !tb[QCA_WLAN_VENDOR_ATTR_SCAN_MAC_MASK])
+		return -EINVAL;
+
+	if ((nla_len(tb[QCA_WLAN_VENDOR_ATTR_SCAN_MAC]) != len) ||
+	    (nla_len(tb[QCA_WLAN_VENDOR_ATTR_SCAN_MAC_MASK]) != len))
+		return -EINVAL;
+
+	qdf_mem_copy(request->mac_addr,
+		     nla_data(tb[QCA_WLAN_VENDOR_ATTR_SCAN_MAC]), len);
+
+	qdf_mem_copy(request->mac_addr_mask,
+		     nla_data(tb[QCA_WLAN_VENDOR_ATTR_SCAN_MAC_MASK]), len);
+
+	/* avoid configure on multicast address */
+	if (!cds_is_group_addr(request->mac_addr_mask) ||
+	    cds_is_group_addr(request->mac_addr))
+		return -EINVAL;
+
+	for (i = 0; i < ETH_ALEN; i++)
+		request->mac_addr[i] &= request->mac_addr_mask[i];
+
+	return 0;
+}
+#else
+static int wlan_hdd_vendor_scan_random_attr(struct wiphy *wiphy,
+					struct cfg80211_scan_request *request,
+					struct wireless_dev *wdev,
+					struct nlattr **tb)
+{
+	return 0;
+}
+#endif
+
 static const
 struct nla_policy scan_policy[QCA_WLAN_VENDOR_ATTR_SCAN_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_SCAN_FLAGS] = {.type = NLA_U32},
@@ -1659,6 +1725,9 @@ static int __wlan_hdd_cfg80211_vendor_scan(struct wiphy *wiphy,
 			hdd_err("LOW PRIORITY SCAN not supported");
 			goto error;
 		}
+
+		if (wlan_hdd_vendor_scan_random_attr(wiphy, request, wdev, tb))
+			goto error;
 	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_SCAN_BSSID]) {

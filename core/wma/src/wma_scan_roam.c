@@ -5254,6 +5254,10 @@ QDF_STATUS wma_scan_probe_setoui(tp_wma_handle wma, tSirScanMacOui *psetoui)
 	qdf_mem_copy(set_oui.oui, psetoui->oui,
 				WMI_WIFI_SCANNING_MAC_OUI_LENGTH);
 
+	set_oui.vdev_id = psetoui->vdev_id;
+	set_oui.enb_probe_req_sno_randomization =
+				psetoui->enb_probe_req_sno_randomization;
+
 	return wmi_unified_scan_probe_setoui_cmd(wma->wmi_handle,
 						&set_oui);
 }
