@@ -2158,6 +2158,23 @@ static inline void *get_pdev_wmi_handle(wmi_unified_t wmi_handle, uint8_t vdev_i
 }
 
 /**
+ * wmi_copy_scan_random_mac() - To copy scan randomization attrs to wmi buffer
+ * @mac: random mac addr
+ * @mask: random mac mask
+ * @mac_addr: wmi random mac
+ * @mac_mask: wmi random mac mask
+ *
+ * Return None.
+ */
+static inline
+void wmi_copy_scan_random_mac(uint8_t *mac, uint8_t *mask,
+			      wmi_mac_addr *mac_addr, wmi_mac_addr *mac_mask)
+{
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(mac, mac_addr);
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(mask, mac_mask);
+}
+
+/**
  *  send_scan_start_cmd_tlv() - WMI scan start function
  *  @param wmi_handle      : handle to WMI.
  *  @param param    : pointer to hold scan start cmd parameter
@@ -2240,6 +2257,12 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->scan_ctrl_flags_ext = params->scan_ctrl_flags_ext;
 
 	WMI_LOGD("scan_ctrl_flags_ext = %x", cmd->scan_ctrl_flags_ext);
+
+	if (params->scan_random.randomize)
+		wmi_copy_scan_random_mac(params->scan_random.mac_addr,
+					 params->scan_random.mac_mask,
+					 &cmd->mac_addr,
+					 &cmd->mac_mask);
 
 	buf_ptr += sizeof(*cmd);
 	tmp_ptr = (uint32_t *) (buf_ptr + WMI_TLV_HDR_SIZE);
@@ -5212,6 +5235,11 @@ static QDF_STATUS send_scan_probe_setoui_cmd_tlv(wmi_unified_t wmi_handle,
 	WMI_LOGD("%s: wmi:oui received from hdd %08x", __func__,
 		 cmd->prob_req_oui);
 
+	cmd->vdev_id = psetoui->vdev_id;
+	cmd->flags = WMI_SCAN_PROBE_OUI_SPOOFED_MAC_IN_PROBE_REQ;
+	if (psetoui->enb_probe_req_sno_randomization)
+		cmd->flags |= WMI_SCAN_PROBE_OUI_RANDOM_SEQ_NO_IN_PROBE_REQ;
+
 	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
 				 WMI_SCAN_PROB_REQ_OUI_CMDID)) {
 		WMI_LOGE("%s: failed to send command", __func__);
@@ -7252,6 +7280,16 @@ static QDF_STATUS send_pno_start_cmd_tlv(wmi_unified_t wmi_handle,
 	WMI_LOGD("fast_scan_period: %d msec slow_scan_period: %d msec",
 			cmd->fast_scan_period, cmd->slow_scan_period);
 	WMI_LOGD("fast_scan_max_cycles: %d", cmd->fast_scan_max_cycles);
+
+	/* mac randomization attributes */
+	if (pno->scan_random.randomize) {
+		cmd->flags |= WMI_NLO_CONFIG_SPOOFED_MAC_IN_PROBE_REQ |
+				WMI_NLO_CONFIG_RANDOM_SEQ_NO_IN_PROBE_REQ;
+		wmi_copy_scan_random_mac(pno->scan_random.mac_addr,
+					 pno->scan_random.mac_mask,
+					 &cmd->mac_addr,
+					 &cmd->mac_mask);
+	}
 
 	buf_ptr += sizeof(wmi_nlo_config_cmd_fixed_param);
 
