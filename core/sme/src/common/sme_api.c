@@ -9445,8 +9445,7 @@ QDF_STATUS sme_update_tdls_peer_state(tHalHandle hHal,
 	num = 0;
 	peer_chan_len = peerStateParams->peerCap.peerChanLen;
 
-	if (peer_chan_len >= 0 &&
-	    peer_chan_len <= SME_TDLS_MAX_SUPP_CHANNELS) {
+	if (peer_chan_len <= SME_TDLS_MAX_SUPP_CHANNELS) {
 		for (i = 0; i < peerStateParams->peerCap.peerChanLen; i++) {
 			chanId = peerStateParams->peerCap.peerChan[i];
 			if (csr_roam_is_channel_valid(pMac, chanId) &&
@@ -12177,7 +12176,7 @@ QDF_STATUS sme_get_valid_channels_by_band(tHalHandle hHal,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if ((wifiBand < WIFI_BAND_UNSPECIFIED) || (wifiBand >= WIFI_BAND_MAX)) {
+	if (wifiBand >= WIFI_BAND_MAX) {
 		sme_err("Invalid wifiBand: %d", wifiBand);
 		return QDF_STATUS_E_INVAL;
 	}
