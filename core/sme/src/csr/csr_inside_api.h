@@ -154,14 +154,17 @@ typedef struct tagCsrScanResult {
 	int32_t AgingCount;     /* This BSS is removed when it reaches 0 or less */
 	uint32_t preferValue;   /* The bigger the number, the better the BSS. This value override capValue */
 	uint32_t capValue;      /* The biggger the better. This value is in use only if we have equal preferValue */
-	/* This member must be the last in the structure because the end of tSirBssDescription (inside) is an */
-	/*    array with nonknown size at this time */
-
 	eCsrEncryptionType ucEncryptionType;    /* Preferred Encryption type that matched with profile. */
 	eCsrEncryptionType mcEncryptionType;
 	eCsrAuthType authType;  /* Preferred auth type that matched with the profile. */
 
 	tCsrScanResultInfo Result;
+	/*
+	 * WARNING - Do not add any element here
+	 * This member Result must be the last in the structure because the end
+	 * of tSirBssDescription (inside) is an array with nonknown size at
+	 * this time.
+	 */
 } tCsrScanResult;
 
 typedef struct {
