@@ -271,8 +271,10 @@ void wlan_hdd_tdls_disable_offchan_and_teardown_links(hdd_context_t *hddctx)
 		mutex_lock(&hddctx->tdls_lock);
 		curr_peer = wlan_hdd_tdls_find_all_peer(hddctx,
 				hddctx->tdlsConnInfo[staidx].peerMac.bytes);
-		if (!curr_peer)
+		if (!curr_peer) {
+			mutex_unlock(&hddctx->tdls_lock);
 			continue;
+		}
 
 		hdd_notice("indicate TDLS teardown (staId %d)",
 			   curr_peer->staId);
