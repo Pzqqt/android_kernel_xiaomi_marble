@@ -135,6 +135,29 @@ static inline uint32_t __qdf_str_lcopy(char *dest, const char *src,
 }
 
 /**
+ * __qdf_dma_dir_to_os() - Convert DMA data direction to OS specific enum
+ * @dir: QDF DMA data direction
+ *
+ * Return:
+ * enum dma_data_direction
+ */
+static inline
+enum dma_data_direction __qdf_dma_dir_to_os(qdf_dma_dir_t qdf_dir)
+{
+	switch (qdf_dir) {
+	case QDF_DMA_BIDIRECTIONAL:
+		return DMA_BIDIRECTIONAL;
+	case QDF_DMA_TO_DEVICE:
+		return DMA_TO_DEVICE;
+	case QDF_DMA_FROM_DEVICE:
+		return DMA_FROM_DEVICE;
+	default:
+		return DMA_NONE;
+	}
+}
+
+
+/**
  * __qdf_mem_map_nbytes_single - Map memory for DMA
  * @osdev: pomter OS device context
  * @buf: pointer to memory to be dma mapped
@@ -150,7 +173,8 @@ static inline uint32_t __qdf_mem_map_nbytes_single(qdf_device_t osdev,
 						  qdf_dma_addr_t *phy_addr)
 {
 	/* assume that the OS only provides a single fragment */
-	*phy_addr = dma_map_single(osdev->dev, buf, nbytes, dir);
+	*phy_addr = dma_map_single(osdev->dev, buf, nbytes,
+					__qdf_dma_dir_to_os(dir));
 	return dma_mapping_error(osdev->dev, *phy_addr) ?
 	QDF_STATUS_E_FAILURE : QDF_STATUS_SUCCESS;
 }
@@ -169,7 +193,8 @@ static inline void __qdf_mem_unmap_nbytes_single(qdf_device_t osdev,
 						 qdf_dma_addr_t phy_addr,
 						 qdf_dma_dir_t dir, int nbytes)
 {
-	dma_unmap_single(osdev->dev, phy_addr, nbytes, dir);
+	dma_unmap_single(osdev->dev, phy_addr, nbytes,
+				__qdf_dma_dir_to_os(dir));
 }
 #ifdef __KERNEL__
 

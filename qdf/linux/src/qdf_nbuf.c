@@ -408,7 +408,8 @@ __qdf_nbuf_map_single(qdf_device_t osdev, qdf_nbuf_t buf, qdf_dma_dir_t dir)
 	/* assume that the OS only provides a single fragment */
 	QDF_NBUF_CB_PADDR(buf) = paddr =
 		dma_map_single(osdev->dev, buf->data,
-				skb_end_pointer(buf) - buf->data, dir);
+				skb_end_pointer(buf) - buf->data,
+				__qdf_dma_dir_to_os(dir));
 	return dma_mapping_error(osdev->dev, paddr)
 		? QDF_STATUS_E_FAILURE
 		: QDF_STATUS_SUCCESS;
@@ -434,7 +435,8 @@ void __qdf_nbuf_unmap_single(qdf_device_t osdev, qdf_nbuf_t buf,
 {
 	if (QDF_NBUF_CB_PADDR(buf))
 		dma_unmap_single(osdev->dev, QDF_NBUF_CB_PADDR(buf),
-			skb_end_pointer(buf) - buf->data, dir);
+			skb_end_pointer(buf) - buf->data,
+			__qdf_dma_dir_to_os(dir));
 }
 #endif
 EXPORT_SYMBOL(__qdf_nbuf_unmap_single);
@@ -2079,7 +2081,7 @@ void __qdf_nbuf_unmap_tso_segment(qdf_device_t osdev,
 		dma_unmap_single(osdev->dev,
 				 tso_seg->seg.tso_frags[num_frags].paddr,
 				 tso_seg->seg.tso_frags[num_frags].length,
-				 QDF_DMA_TO_DEVICE);
+				 __qdf_dma_dir_to_os(QDF_DMA_TO_DEVICE));
 		tso_seg->seg.tso_frags[num_frags].paddr = 0;
 		num_frags--;
 	}
@@ -2094,7 +2096,7 @@ void __qdf_nbuf_unmap_tso_segment(qdf_device_t osdev,
 		dma_unmap_single(osdev->dev,
 				 tso_seg->seg.tso_frags[0].paddr,
 				 tso_seg->seg.tso_frags[0].length,
-				 QDF_DMA_TO_DEVICE);
+				 __qdf_dma_dir_to_os(QDF_DMA_TO_DEVICE));
 		tso_seg->seg.tso_frags[0].paddr = 0;
 	}
 }
@@ -2297,7 +2299,7 @@ QDF_STATUS __qdf_nbuf_map_nbytes_single(
 	/* assume that the OS only provides a single fragment */
 	QDF_NBUF_CB_PADDR(buf) = paddr =
 		dma_map_single(osdev->dev, buf->data,
-			nbytes, dir);
+			nbytes, __qdf_dma_dir_to_os(dir));
 	return dma_mapping_error(osdev->dev, paddr) ?
 		QDF_STATUS_E_FAULT : QDF_STATUS_SUCCESS;
 }
@@ -2330,7 +2332,7 @@ __qdf_nbuf_unmap_nbytes_single(
 		return;
 	}
 	dma_unmap_single(osdev->dev, QDF_NBUF_CB_PADDR(buf),
-			nbytes, dir);
+			nbytes, __qdf_dma_dir_to_os(dir));
 }
 EXPORT_SYMBOL(__qdf_nbuf_unmap_nbytes_single);
 #endif
@@ -2530,7 +2532,8 @@ QDF_STATUS __qdf_nbuf_frag_map(
 	frag_len = skb_frag_size(frag);
 
 	QDF_NBUF_CB_TX_EXTRA_FRAG_PADDR(nbuf) = paddr =
-		skb_frag_dma_map(osdev->dev, frag, offset, frag_len, dir);
+		skb_frag_dma_map(osdev->dev, frag, offset, frag_len,
+					__qdf_dma_dir_to_os(dir));
 	return dma_mapping_error(osdev->dev, paddr) ?
 			QDF_STATUS_E_FAULT : QDF_STATUS_SUCCESS;
 }
@@ -2575,7 +2578,8 @@ static void __qdf_nbuf_sync_single_for_cpu(
 		return;
 	}
 	dma_sync_single_for_cpu(osdev->dev, QDF_NBUF_CB_PADDR(buf),
-		skb_end_offset(buf) - skb_headroom(buf), dir);
+		skb_end_offset(buf) - skb_headroom(buf),
+		__qdf_dma_dir_to_os(dir));
 }
 #endif
 /**
