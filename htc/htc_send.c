@@ -501,8 +501,12 @@ static void htc_issue_packets_bundle(HTC_TARGET *target,
 			htc_send_bundled_netbuf(target, pEndpoint,
 						pBundleBuffer - last_credit_pad,
 						pPacketTx);
-			if (HTC_PACKET_QUEUE_DEPTH(pPktQueue) <
+			/* One packet has been dequeued from sending queue when enter
+			 * this loop, so need to add 1 back for this checking.
+			 */
+			if ((HTC_PACKET_QUEUE_DEPTH(pPktQueue) + 1) <
 			    HTC_MIN_MSG_PER_BUNDLE) {
+				HTC_PACKET_ENQUEUE_TO_HEAD(pPktQueue, pPacket);
 				return;
 			}
 			bundlesSpaceRemaining =
@@ -510,6 +514,7 @@ static void htc_issue_packets_bundle(HTC_TARGET *target,
 				pEndpoint->TxCreditSize;
 			pPacketTx = allocate_htc_bundle_packet(target);
 			if (!pPacketTx) {
+				HTC_PACKET_ENQUEUE_TO_HEAD(pPktQueue, pPacket);
 				/* good time to panic */
 				AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 						("allocate_htc_bundle_packet failed\n"));
