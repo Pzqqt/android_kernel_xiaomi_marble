@@ -30,7 +30,8 @@
 #define REG_MAX_CHANNELS_PER_OPERATING_CLASS  25
 #define REG_MAX_SUPP_OPER_CLASSES 32
 #define REG_MAX_CHAN_CHANGE_CBKS 30
-
+#define MAX_STA_VDEV_CNT 4
+#define INVALID_VDEV_ID 0xFF
 /**
  * enum channel_enum - channel enumeration
  * @CHAN_ENUM_1:  channel number 1
@@ -293,6 +294,34 @@ struct reg_dmn_op_class_map_t {
 struct reg_dmn_supp_op_classes {
 	uint8_t num_classes;
 	uint8_t classes[REG_MAX_SUPP_OPER_CLASSES];
+};
+
+/**
+ * struct reg_start_11d_scan_req: start 11d scan request
+ * @vdev_id: vdev id
+ * @scan_period_msec: scan duration in milli-seconds
+ * @start_interval_msec: offset duration to start the scan in milli-seconds
+ */
+struct reg_start_11d_scan_req {
+	uint8_t vdev_id;
+	uint32_t scan_period_msec;
+	uint32_t start_interval_msec;
+};
+
+/**
+ * struct reg_stop_11d_scan_req: stop 11d scan request
+ * @vdev_id: vdev id
+ */
+struct reg_stop_11d_scan_req {
+	uint8_t vdev_id;
+};
+
+/**
+ * struct reg_11d_new_country: regulatory 11d new coutry code
+ * @alpha2: new 11d alpha2
+ */
+struct reg_11d_new_country {
+	uint8_t alpha2[REG_ALPHA2_LEN + 1];
 };
 
 /**

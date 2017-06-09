@@ -319,6 +319,9 @@ wlan_lmac_if_umac_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 	rx_ops->reg_rx_ops.master_list_handler =
 		tgt_reg_process_master_chan_list;
 
+	rx_ops->reg_rx_ops.reg_11d_new_cc_handler =
+		tgt_reg_process_11d_new_country;
+
 	/* p2p rx ops */
 	wlan_lmac_if_umac_rx_ops_register_p2p(rx_ops);
 

@@ -355,6 +355,7 @@ void qdf_trace_hex_dump(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
 		qdf_trace_msg(module, level, "%.8x: %s", i, linebuf);
 	}
 }
+EXPORT_SYMBOL(qdf_trace_hex_dump);
 
 #endif
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -34,12 +34,14 @@
 /**
  * cdp_bus_suspend() - suspend bus
  * @soc - data path soc handle
+ * @ppdev: data path pdev handle
  *
  * suspend bus
  *
  * return QDF_STATUS_SUCCESS suspend is not implemented or suspend done
  */
-static inline QDF_STATUS cdp_bus_suspend(ol_txrx_soc_handle soc)
+static inline QDF_STATUS cdp_bus_suspend(ol_txrx_soc_handle soc,
+					 struct cdp_pdev *ppdev)
 {
 	if (!soc || !soc->ops || !soc->ops->bus_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -48,19 +50,21 @@ static inline QDF_STATUS cdp_bus_suspend(ol_txrx_soc_handle soc)
 	}
 
 	if (soc->ops->bus_ops->bus_suspend)
-		return soc->ops->bus_ops->bus_suspend();
+		return soc->ops->bus_ops->bus_suspend(ppdev);
 	return QDF_STATUS_E_NOSUPPORT;
 }
 
 /**
  * cdp_bus_resume() - resume bus
  * @soc - data path soc handle
+ * @ppdev: data path pdev handle
  *
  * resume bus
  *
  * return QDF_STATUS_SUCCESS resume is not implemented or suspend done
  */
-static inline QDF_STATUS cdp_bus_resume(ol_txrx_soc_handle soc)
+static inline QDF_STATUS cdp_bus_resume(ol_txrx_soc_handle soc,
+					struct cdp_pdev *ppdev)
 {
 	if (!soc || !soc->ops || !soc->ops->bus_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -69,7 +73,7 @@ static inline QDF_STATUS cdp_bus_resume(ol_txrx_soc_handle soc)
 	}
 
 	if (soc->ops->bus_ops->bus_resume)
-		return soc->ops->bus_ops->bus_resume();
+		return soc->ops->bus_ops->bus_resume(ppdev);
 	return QDF_STATUS_E_NOSUPPORT;
 }
 

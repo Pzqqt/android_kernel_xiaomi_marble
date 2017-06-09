@@ -49,7 +49,8 @@
 #define TARGET_IF_ENTER() target_if_logfl(QDF_TRACE_LEVEL_INFO, "enter")
 #define TARGET_IF_EXIT() target_if_logfl(QDF_TRACE_LEVEL_INFO, "exit")
 
-#define GET_WMI_HDL_FROM_PSOC(psoc) (psoc->tgt_if_handle)
+#define GET_WMI_HDL_FROM_PSOC(psoc) \
+		(((struct target_psoc_info *)(psoc->tgt_if_handle))->wmi_handle)
 
 typedef struct wlan_objmgr_psoc *(*get_psoc_handle_callback)(
 			void *scn_handle);
@@ -70,6 +71,21 @@ struct target_if_ctx {
 	get_psoc_handle_callback get_psoc_hdl_cb;
 	wmi_legacy_service_ready_callback service_ready_cb;
 	qdf_spinlock_t lock;
+};
+
+/**
+ * struct target_psoc_info - target psoc information
+ * @tgt_if_handle: target interface handle
+ * @target_type: target type
+ * @target_version: target version
+ * @target_revision: target revision
+ */
+
+struct target_psoc_info {
+	void *wmi_handle;
+	uint32_t target_type;
+	uint32_t target_version;
+	uint32_t target_revision;
 };
 
 /**
@@ -142,5 +158,6 @@ target_if_get_psoc_legacy_service_ready_cb(void);
 QDF_STATUS target_if_register_legacy_service_ready_cb(
 	wmi_legacy_service_ready_callback service_ready_cb);
 
+void *target_if_get_wmi_handle(struct wlan_objmgr_psoc *psoc);
 #endif
 

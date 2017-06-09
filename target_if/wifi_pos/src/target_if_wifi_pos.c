@@ -341,12 +341,12 @@ QDF_STATUS target_if_wifi_pos_register_events(struct wlan_objmgr_psoc *psoc)
 {
 	int ret;
 
-	if (!psoc || !psoc->tgt_if_handle) {
+	if (!psoc || !GET_WMI_HDL_FROM_PSOC(psoc)) {
 		target_if_err("psoc or psoc->tgt_if_handle is null");
 		return QDF_STATUS_E_INVAL;
 	}
 
-	ret = wmi_unified_register_event_handler(psoc->tgt_if_handle,
+	ret = wmi_unified_register_event_handler(GET_WMI_HDL_FROM_PSOC(psoc),
 					WMI_OEM_RESPONSE_EVENTID,
 					target_if_wifi_pos_oem_rsp_ev_handler,
 					WMI_RX_WORK_CTX);
@@ -355,7 +355,7 @@ QDF_STATUS target_if_wifi_pos_register_events(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	ret = wmi_unified_register_event_handler(psoc->tgt_if_handle,
+	ret = wmi_unified_register_event_handler(GET_WMI_HDL_FROM_PSOC(psoc),
 					wmi_oem_cap_event_id,
 					wifi_pos_oem_cap_ev_handler,
 					WMI_RX_WORK_CTX);
@@ -364,7 +364,7 @@ QDF_STATUS target_if_wifi_pos_register_events(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	ret = wmi_unified_register_event_handler(psoc->tgt_if_handle,
+	ret = wmi_unified_register_event_handler(GET_WMI_HDL_FROM_PSOC(psoc),
 					wmi_oem_meas_report_event_id,
 					wifi_pos_oem_meas_rpt_ev_handler,
 					WMI_RX_WORK_CTX);
@@ -373,7 +373,7 @@ QDF_STATUS target_if_wifi_pos_register_events(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	ret = wmi_unified_register_event_handler(psoc->tgt_if_handle,
+	ret = wmi_unified_register_event_handler(GET_WMI_HDL_FROM_PSOC(psoc),
 					wmi_oem_report_event_id,
 					wifi_pos_oem_err_rpt_ev_handler,
 					WMI_RX_WORK_CTX);
@@ -387,18 +387,18 @@ QDF_STATUS target_if_wifi_pos_register_events(struct wlan_objmgr_psoc *psoc)
 
 QDF_STATUS target_if_wifi_pos_deregister_events(struct wlan_objmgr_psoc *psoc)
 {
-	if (!psoc || !psoc->tgt_if_handle) {
+	if (!psoc || !GET_WMI_HDL_FROM_PSOC(psoc)) {
 		target_if_err("psoc or psoc->tgt_if_handle is null");
 		return QDF_STATUS_E_INVAL;
 	}
 
-	wmi_unified_unregister_event_handler(psoc->tgt_if_handle,
+	wmi_unified_unregister_event_handler(GET_WMI_HDL_FROM_PSOC(psoc),
 					WMI_OEM_RESPONSE_EVENTID);
-	wmi_unified_unregister_event_handler(psoc->tgt_if_handle,
+	wmi_unified_unregister_event_handler(GET_WMI_HDL_FROM_PSOC(psoc),
 					wmi_oem_cap_event_id);
-	wmi_unified_unregister_event_handler(psoc->tgt_if_handle,
+	wmi_unified_unregister_event_handler(GET_WMI_HDL_FROM_PSOC(psoc),
 					wmi_oem_meas_report_event_id);
-	wmi_unified_unregister_event_handler(psoc->tgt_if_handle,
+	wmi_unified_unregister_event_handler(GET_WMI_HDL_FROM_PSOC(psoc),
 					wmi_oem_report_event_id);
 
 	return QDF_STATUS_SUCCESS;

@@ -33,4 +33,13 @@
 QDF_STATUS tgt_reg_process_master_chan_list(struct cur_regulatory_info
 					    *reg_info);
 
+/**
+ * tgt_reg_process_11d_new_country() - process new 11d country event
+ * @psoc: pointer to psoc
+ * @reg_11d_new_cc: new 11d country pointer
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS tgt_reg_process_11d_new_country(struct wlan_objmgr_psoc *psoc,
+		struct reg_11d_new_country *reg_11d_new_cc);
 #endif

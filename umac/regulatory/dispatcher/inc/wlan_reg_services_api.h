@@ -151,6 +151,15 @@ uint32_t wlan_reg_get_channel_freq(struct wlan_objmgr_pdev *pdev,
 				   uint32_t chan_num);
 
 /**
+ * wlan_reg_get_current_chan_list() - provide the pdev current channel list
+ * @pdev: pdev pointer
+ * @chan_list: channel list pointer
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_reg_get_current_chan_list(struct wlan_objmgr_pdev *pdev,
+		struct regulatory_channel *chan_list);
+/**
  * wlan_reg_get_bonded_channel_state() - get bonded channel state
  * @pdev: pdev ptr
  * @ch: chennal number
@@ -340,7 +349,7 @@ QDF_STATUS wlan_reg_set_country(struct wlan_objmgr_pdev *pdev,
 
 /**
  * wlan_reg_register_chan_change_callback () - add chan change cbk
- * @psoc: channel number
+ * @psoc: psoc ptr
  * @cbk: callback
  * @arg: argument
  *
@@ -352,13 +361,20 @@ void wlan_reg_register_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 
 /**
  * wlan_reg_unregister_chan_change_callback () - remove chan change cbk
- * @psoc: channel number
- * @cbk: callback
+ * @psoc: psoc ptr
+ * @cbk:callback
  *
  * Return: true or false
  */
 void wlan_reg_unregister_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 					      reg_chan_change_callback cbk);
+/**
+ * wlan_reg_11d_enabled_on_host() - 11d enabled don host
+ * @psoc: psoc ptr
+ *
+ * Return: bool
+ */
+bool wlan_reg_11d_enabled_on_host(struct wlan_objmgr_psoc *psoc);
 
 /**
  * wlan_reg_get_chip_mode() - get supported chip mode
@@ -385,4 +401,12 @@ QDF_STATUS wlan_reg_get_freq_range(struct wlan_objmgr_pdev *pdev,
 		uint32_t *high_2g,
 		uint32_t *low_5g,
 		uint32_t *high_5g);
+/**
+ * wlan_reg_get_tx_ops () - get regulatory tx ops
+ * @psoc: psoc ptr
+ *
+ */
+struct wlan_lmac_if_reg_tx_ops *
+wlan_reg_get_tx_ops(struct wlan_objmgr_psoc *psoc);
+
 #endif

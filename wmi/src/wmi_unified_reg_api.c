@@ -41,3 +41,52 @@ QDF_STATUS wmi_extract_reg_chan_list_update_event(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+/*
+ * wmi_unified_send_start_11d_scan_cmd() - start 11d scan
+ * @wmi_handle: wmi handle
+ * @start_11d_scan: pointer to 11d scan start req.
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+QDF_STATUS wmi_unified_send_start_11d_scan_cmd(wmi_unified_t wmi_handle,
+		struct reg_start_11d_scan_req *start_11d_scan)
+{
+	if (wmi_handle->ops->send_start_11d_scan_cmd)
+		return wmi_handle->ops->send_start_11d_scan_cmd(wmi_handle,
+				start_11d_scan);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/*
+ * wmi_unified_send_stop_11d_scan_cmd() - stop 11d scan
+ * @wmi_handle: wmi handle
+ * @stop_11d_scan: pointer to 11d scan stop req.
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+QDF_STATUS wmi_unified_send_stop_11d_scan_cmd(wmi_unified_t wmi_handle,
+		struct reg_stop_11d_scan_req *stop_11d_scan)
+{
+	if (wmi_handle->ops->send_stop_11d_scan_cmd)
+		return wmi_handle->ops->send_stop_11d_scan_cmd(wmi_handle,
+				stop_11d_scan);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_extract_reg_11d_new_cc_event(void *wmi_hdl,
+		uint8_t *evt_buf,
+		struct reg_11d_new_country *reg_11d_new_cc,
+		uint32_t len)
+{
+	struct wmi_unified *wmi_handle = (struct wmi_unified *)wmi_hdl;
+
+	if (wmi_handle->ops->extract_reg_11d_new_country_event)
+		return wmi_handle->ops->extract_reg_11d_new_country_event(
+				wmi_handle, evt_buf, reg_11d_new_cc, len);
+
+	return QDF_STATUS_E_FAILURE;
+}
+

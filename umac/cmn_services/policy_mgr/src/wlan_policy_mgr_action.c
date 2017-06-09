@@ -423,6 +423,7 @@ QDF_STATUS policy_mgr_next_actions(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct policy_mgr_hw_mode_params hw_mode;
 	struct dbs_nss nss_dbs;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
 
 	if (policy_mgr_is_hw_dbs_capable(psoc) == false) {
 		policy_mgr_err("driver isn't dbs capable, no further action needed");
@@ -447,6 +448,12 @@ QDF_STATUS policy_mgr_next_actions(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_ALREADY;
 	}
 
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid context");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	if ((PM_SBS == action) || (action == PM_SBS_DOWNGRADE)) {
 		if (!policy_mgr_is_hw_sbs_capable(psoc)) {
 			/* No action */
@@ -457,6 +464,31 @@ QDF_STATUS policy_mgr_next_actions(struct wlan_objmgr_psoc *psoc,
 		 * done
 		 */
 
+	}
+
+	/*
+	 * just check PM_DBS action only, no need to check for
+	 * PM_DBS_DOWNGRADE as it will eventually call PM_DBS. if you check
+	 * for PM_DBS_DOWNGRADE then IE update and self reassoc will happen
+	 * two times back to back as this functon is nested which
+	 * will not make sense. Same things apply for PM_SINGLE_MAC_UPGRADE
+	 * and PM_SINGLE_MAC operations.
+	 */
+	if ((PM_DBS == action) && !hw_mode.dbs_cap &&
+	    pm_ctx->sme_cbacks.sme_check_enable_rx_ldpc_sta_ini_item()) {
+		policy_mgr_notice("Going for DBS, disable rx-ldpc for all 2G STAs");
+		policy_mgr_find_sta_and_update_caps_with_reassociation(psoc,
+								       true);
+	} else if ((PM_SINGLE_MAC == action) && hw_mode.dbs_cap
+		   &&
+		   pm_ctx->sme_cbacks.sme_check_enable_rx_ldpc_sta_ini_item()) {
+		/*
+		 * don't use default RX LDPC which isenabled for 5g and
+		 * disable for 2g
+		 */
+		policy_mgr_notice("Going for SMM, enable rx-ldpc for all 2G STAs");
+		policy_mgr_find_sta_and_update_caps_with_reassociation(psoc,
+								       false);
 	}
 
 	switch (action) {

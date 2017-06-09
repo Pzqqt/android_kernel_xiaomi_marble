@@ -115,6 +115,10 @@
  * struct mon_rx_status - This will have monitor mode rx_status extracted from
  * htt_rx_desc used later to update radiotap information.
  * @tsft: Time Synchronization Function timer
+ * @he_sig_A1: HE (11ax) sig A1 field
+ * @he_sig_A2: HE (11ax) sig A1 field
+ * @he_sig_b_user: HE (11ax) sig B user field
+ * @he_sig_b_user_known: HE (11ax) sig B user known field
  * @chan_freq: Capture channel frequency
  * @chan_num: Capture channel number
  * @chan_flags: Bitmap of Channel flags, IEEE80211_CHAN_TURBO,
@@ -122,6 +126,11 @@
  * @ht_flags: HT flags, only present for HT frames.
  * @vht_flags: VHT flags, only present for VHT frames.
  * @vht_flag_values1-5: Contains corresponding data for flags field
+ * @he_flags: HE (11ax) flags, only present in HE frames
+ * @he_sig_A1_known: HE (11ax) sig A1 known field
+ * @he_sig_A2_known: HE (11ax) sig A2 known field
+ * @he_sig_b_common: HE (11ax) sig B common field
+ * @he_sig_b_common_known: HE (11ax) sig B common known field
  * @rate: Rate in terms 500Kbps
  * @rtap_flags: Bit map of available fields in the radiotap
  * @ant_signal_db: Rx packet RSSI
@@ -132,15 +141,25 @@
  * @sgi: Rx frame short guard interval
  * @ldpc: ldpc enabled
  * @beamformed: Is frame beamformed.
+ * @he_sig_b_common_RU[4]: HE (11ax) common RU assignment index
  */
 struct mon_rx_status {
 	uint64_t tsft;
+	uint32_t he_sig_A1;
+	uint32_t he_sig_A2;
+	uint32_t he_sig_b_user;
+	uint32_t he_sig_b_user_known;
 	uint16_t chan_freq;
 	uint16_t chan_num;
 	uint16_t chan_flags;
 	uint16_t ht_flags;
 	uint16_t vht_flags;
 	uint16_t vht_flag_values6;
+	uint16_t he_flags;
+	uint16_t he_sig_A1_known;
+	uint16_t he_sig_A2_known;
+	uint16_t he_sig_b_common;
+	uint16_t he_sig_b_common_known;
 	uint8_t  rate;
 	uint8_t  rtap_flags;
 	uint8_t  ant_signal_db;
@@ -156,6 +175,7 @@ struct mon_rx_status {
 	uint8_t  sgi;
 	uint8_t  ldpc;
 	uint8_t  beamformed;
+	uint8_t  he_sig_b_common_RU[4];
 };
 
 /* DHCP Related Mask */

@@ -198,4 +198,19 @@ void ucfg_reg_unregister_chan_change_callback(struct wlan_objmgr_psoc *psoc,
  */
 enum country_src ucfg_reg_get_cc_and_src(struct wlan_objmgr_psoc *psoc,
 					 uint8_t *alpha2);
+/**
+ * ucfg_reg_11d_vdev_delete_update() - update vdev delete to regulatory
+ * @vdev: vdev ptr
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_reg_11d_vdev_delete_update(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * ucfg_reg_11d_vdev_created_update() - update vdev create to regulatory
+ * @vdev: vdev ptr
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_reg_11d_vdev_created_update(struct wlan_objmgr_vdev *vdev);
 #endif

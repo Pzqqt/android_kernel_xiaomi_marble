@@ -308,3 +308,27 @@ QDF_STATUS target_if_register_legacy_service_ready_cb(
 	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(target_if_register_legacy_service_ready_cb);
+
+void *target_if_get_wmi_handle(struct wlan_objmgr_psoc *psoc)
+{
+	struct target_psoc_info *tgt_psoc_info;
+	void *wmi_handle;
+
+	if (psoc == NULL) {
+		target_if_err("%s: pSOC is NULL", __func__);
+		return NULL;
+	}
+
+	tgt_psoc_info = wlan_psoc_get_tgt_if_handle(psoc);
+
+	if (tgt_psoc_info == NULL) {
+		target_if_err("%s: psoc tgt_if_handle is NULL", __func__);
+		return NULL;
+	}
+
+	wmi_handle = tgt_psoc_info->wmi_handle;
+
+	return wmi_handle;
+
+}
+

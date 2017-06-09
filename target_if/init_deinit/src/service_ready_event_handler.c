@@ -87,7 +87,7 @@ int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 		return -EINVAL;
 	}
 
-	wmi_handle = psoc->tgt_if_handle;
+	wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
 
 	service_param = qdf_mem_malloc(sizeof(*service_param));
 	if (!service_param) {
@@ -282,7 +282,7 @@ int init_deinit_service_ext_ready_event_handler(ol_scn_t scn_handle,
 		return -EINVAL;
 	}
 
-	wmi_handle = psoc->tgt_if_handle;
+	wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
 
 	service_param =
 		qdf_mem_malloc(sizeof(*service_param));
