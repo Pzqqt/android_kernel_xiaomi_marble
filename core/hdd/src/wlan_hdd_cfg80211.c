@@ -11653,7 +11653,6 @@ void wlan_hdd_cfg80211_set_key_wapi(hdd_adapter_t *pAdapter, uint8_t key_index,
 	int status = 0;
 	uint32_t roamId = 0xFF;
 	uint8_t *pKeyPtr = NULL;
-	int n = 0;
 
 	hdd_debug("Device_mode %s(%d)",
 		hdd_device_mode_to_string(pAdapter->device_mode),
@@ -11674,9 +11673,6 @@ void wlan_hdd_cfg80211_set_key_wapi(hdd_adapter_t *pAdapter, uint8_t key_index,
 	memcpy(pKeyPtr, key, key_Len);
 
 	hdd_debug("WAPI KEY LENGTH:0x%04x", key_Len);
-	for (n = 0; n < key_Len; n++)
-		hdd_debug("WAPI KEY Data[%d]:%02x ",
-			   n, setKey.Key[n]);
 
 	pHddStaCtx->roam_info.roamingState = HDD_ROAM_STATE_SETTING_KEY;
 	if (isConnected) {
