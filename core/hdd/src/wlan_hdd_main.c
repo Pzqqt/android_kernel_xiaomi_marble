@@ -275,10 +275,12 @@ void wlan_hdd_txrx_pause_cb(uint8_t vdev_id,
 }
 
 /*
- * Store WLAN driver version info in a global variable such that crash debugger
- * can extract it from driver debug symbol and crashdump for post processing
+ * Store WLAN driver version and timestamp info in global variables such that
+ * crash debugger can extract them from driver debug symbol and crashdump for
+ * post processing
  */
 uint8_t g_wlan_driver_version[] = QWLAN_VERSIONSTR;
+uint8_t g_wlan_driver_timestamp[] = BUILD_TIMESTAMP;
 
 /**
  * hdd_device_mode_to_string() - return string conversion of device mode
@@ -10606,8 +10608,11 @@ static int __hdd_module_init(void)
 {
 	int ret = 0;
 
-	pr_err("%s: Loading driver v%s\n", WLAN_MODULE_NAME,
-		QWLAN_VERSIONSTR TIMER_MANAGER_STR MEMORY_DEBUG_STR);
+	pr_err("%s: Loading driver v%s (%s)%s\n",
+	       WLAN_MODULE_NAME,
+	       QWLAN_VERSIONSTR,
+	       BUILD_TIMESTAMP,
+	       TIMER_MANAGER_STR MEMORY_DEBUG_STR);
 
 	ret = wlan_hdd_state_ctrl_param_create();
 	if (ret) {
@@ -10840,17 +10845,12 @@ static int wlan_deinit_sysfs(void)
  */
 static int hdd_module_init(void)
 {
-	int ret = 0;
-
-	pr_err("%s: Loading driver v%s\n", WLAN_MODULE_NAME,
-		QWLAN_VERSIONSTR TIMER_MANAGER_STR MEMORY_DEBUG_STR);
-
 	if (__hdd_module_init()) {
 		pr_err("%s: Failed to register handler\n", __func__);
-		ret = -EINVAL;
+		return -EINVAL;
 	}
 
-	return ret;
+	return 0;
 }
 #else
 static int __init hdd_module_init(void)
