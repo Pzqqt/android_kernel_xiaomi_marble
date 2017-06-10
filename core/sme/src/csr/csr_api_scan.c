@@ -3107,6 +3107,14 @@ void csr_scan_callback(struct wlan_objmgr_vdev *vdev,
 	/* We reuse the command here instead reissue a new command */
 	csr_handle_nxt_cmd(mac_ctx, NextCommand,
 			   session_id, chan);
+
+	if (session->scan_info.profile != NULL) {
+		sme_debug("Free the profile scan_id %d", event->scan_id);
+		csr_release_profile(mac_ctx, session->scan_info.profile);
+		qdf_mem_free(session->scan_info.profile);
+		session->scan_info.profile = NULL;
+	}
+
 }
 bool csr_scan_complete(tpAniSirGlobal pMac, tSirSmeScanRsp *pScanRsp)
 {
@@ -4427,7 +4435,9 @@ QDF_STATUS csr_scan_for_ssid(tpAniSirGlobal mac_ctx, uint32_t session_id,
 error:
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sme_err("failed to initiate scan with status: %d", status);
-
+		csr_release_profile(mac_ctx, session->scan_info.profile);
+		qdf_mem_free(session->scan_info.profile);
+		session->scan_info.profile = NULL;
 		if (notify)
 			csr_roam_call_callback(mac_ctx, session_id, NULL,
 					roam_id, eCSR_ROAM_FAILED,
