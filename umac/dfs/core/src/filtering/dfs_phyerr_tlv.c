@@ -460,8 +460,8 @@ static int dfs_tlv_calc_freq_info(struct wlan_dfs *dfs,
 		 * appropriately!
 		 */
 		chan_centre = dfs_mlme_ieee2mhz(dfs->dfs_pdev_obj,
-				dfs->dfs_curchan->ic_vhtop_ch_freq_seg1,
-				dfs->dfs_curchan->ic_flags);
+				dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg1,
+				dfs->dfs_curchan->dfs_ch_flags);
 	} else {
 		/*
 		 * HT20/HT40.
@@ -475,10 +475,12 @@ static int dfs_tlv_calc_freq_info(struct wlan_dfs *dfs,
 
 		/* Calculate offset based on HT40U/HT40D and VHT40U/VHT40D. */
 		if (IEEE80211_IS_CHAN_11N_HT40PLUS(dfs->dfs_curchan) ||
-			dfs->dfs_curchan->ic_flags & IEEE80211_CHAN_VHT40PLUS)
+			dfs->dfs_curchan->dfs_ch_flags &
+			IEEE80211_CHAN_VHT40PLUS)
 			chan_offset = chan_width;
 		else if (IEEE80211_IS_CHAN_11N_HT40MINUS(dfs->dfs_curchan) ||
-			dfs->dfs_curchan->ic_flags & IEEE80211_CHAN_VHT40MINUS)
+			dfs->dfs_curchan->dfs_ch_flags &
+			IEEE80211_CHAN_VHT40MINUS)
 			chan_offset = -chan_width;
 		else
 			chan_offset = 0;

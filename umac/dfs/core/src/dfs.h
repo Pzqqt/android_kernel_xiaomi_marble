@@ -438,21 +438,21 @@ struct dfs_filtertype {
 
 /**
  * struct dfs_ieee80211_channel - Channel structure for dfs component.
- * @ic_freq:                Frequency in Mhz.
- * @ic_flags:               Channel flags.
- * @ic_flagext:             Extended channel flags.
- * @ic_ieee:                IEEE channel number.
- * @ic_vhtop_ch_freq_seg1:  Channel Center frequency.
- * @ic_vhtop_ch_freq_seg2:  Channel Center frequency applicable for 80+80MHz
+ * @dfs_ch_freq:                Frequency in Mhz.
+ * @dfs_ch_flags:               Channel flags.
+ * @dfs_ch_flagext:             Extended channel flags.
+ * @dfs_ch_ieee:                IEEE channel number.
+ * @dfs_ch_vhtop_ch_freq_seg1:  Channel Center frequency.
+ * @dfs_ch_vhtop_ch_freq_seg2:  Channel Center frequency applicable for 80+80MHz
  *                          mode of operation.
  */
 struct dfs_ieee80211_channel {
-	uint16_t       ic_freq;
-	uint32_t       ic_flags;
-	uint16_t       ic_flagext;
-	uint8_t        ic_ieee;
-	uint8_t        ic_vhtop_ch_freq_seg1;
-	uint8_t        ic_vhtop_ch_freq_seg2;
+	uint16_t       dfs_ch_freq;
+	uint32_t       dfs_ch_flags;
+	uint16_t       dfs_ch_flagext;
+	uint8_t        dfs_ch_ieee;
+	uint8_t        dfs_ch_vhtop_ch_freq_seg1;
+	uint8_t        dfs_ch_vhtop_ch_freq_seg2;
 };
 
 /**
@@ -1567,7 +1567,7 @@ int dfs_override_cac_timeout(struct wlan_dfs *dfs,
 
 /**
  * dfs_clear_nolhistory() - unmarks IEEE80211_CHAN_CLR_HISTORY_RADAR flag for
- *                          all the channels in ic_channels.
+ *                          all the channels in dfs_ch_channels.
  * @dfs: Pointer to wlan_dfs structure.
  */
 void dfs_clear_nolhistory(struct wlan_dfs *dfs);
@@ -1710,20 +1710,20 @@ void ol_if_dfs_clist_update(struct wlan_dfs *dfs,
 /**
  * dfs_set_current_channel() - Set DFS current channel.
  * @dfs: Pointer to wlan_dfs structure.
- * @ic_freq: Frequency in Mhz.
- * @ic_flags: Channel flags.
- * @ic_flagext: Extended channel flags.
- * @ic_ieee: IEEE channel number.
- * @ic_vhtop_ch_freq_seg1: Channel Center frequency1.
- * @ic_vhtop_ch_freq_seg2: Channel Center frequency2.
+ * @dfs_ch_freq: Frequency in Mhz.
+ * @dfs_ch_flags: Channel flags.
+ * @dfs_ch_flagext: Extended channel flags.
+ * @dfs_ch_ieee: IEEE channel number.
+ * @dfs_ch_vhtop_ch_freq_seg1: Channel Center frequency1.
+ * @dfs_ch_vhtop_ch_freq_seg2: Channel Center frequency2.
  */
 void dfs_set_current_channel(struct wlan_dfs *dfs,
-		uint16_t ic_freq,
-		uint32_t ic_flags,
-		uint16_t ic_flagext,
-		uint8_t ic_ieee,
-		uint8_t ic_vhtop_ch_freq_seg1,
-		uint8_t ic_vhtop_ch_freq_seg2);
+		uint16_t dfs_ch_freq,
+		uint32_t dfs_ch_flags,
+		uint16_t dfs_ch_flagext,
+		uint8_t dfs_ch_ieee,
+		uint8_t dfs_ch_vhtop_ch_freq_seg1,
+		uint8_t dfs_ch_vhtop_ch_freq_seg2);
 
 /**
  * dfs_second_segment_radar_disable() - Disables the second segment radar.

@@ -158,7 +158,7 @@ bool dfs_is_ht20_40_80_chan_in_precac_done_list(struct wlan_dfs *dfs)
 				&dfs->dfs_precac_done_list,
 				pe_list) {
 			/* Find if the VHT80 freq1 is in Pre-CAC done list */
-			if (IS_WITHIN_RANGE(dfs->dfs_curchan->ic_ieee,
+			if (IS_WITHIN_RANGE(dfs->dfs_curchan->dfs_ch_ieee,
 						precac_entry->vht80_freq,
 						VHT80_OFFSET)) {
 				ret_val = 1;
@@ -168,7 +168,7 @@ bool dfs_is_ht20_40_80_chan_in_precac_done_list(struct wlan_dfs *dfs)
 	PRECAC_LIST_UNLOCK(dfs);
 
 	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS, "%s : vht80_freq = %u ret_val = %d\n",
-		__func__, dfs->dfs_curchan->ic_ieee, ret_val);
+		__func__, dfs->dfs_curchan->dfs_ch_ieee, ret_val);
 
 	return ret_val;
 }
@@ -186,7 +186,7 @@ bool dfs_is_ht80_80_chan_in_precac_done_list(struct wlan_dfs *dfs)
 			TAILQ_FOREACH(precac_entry,
 					&dfs->dfs_precac_done_list,
 					pe_list) {
-				if (dfs->dfs_curchan->ic_vhtop_ch_freq_seg1
+				if (dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg1
 						== precac_entry->vht80_freq) {
 					primary_found = 1;
 					break;
@@ -202,7 +202,7 @@ bool dfs_is_ht80_80_chan_in_precac_done_list(struct wlan_dfs *dfs)
 			TAILQ_FOREACH(precac_entry,
 					&dfs->dfs_precac_done_list,
 					pe_list) {
-				if (dfs->dfs_curchan->ic_vhtop_ch_freq_seg2
+				if (dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg2
 						== precac_entry->vht80_freq) {
 					/* Now secondary also found */
 					ret_val = 1;
@@ -219,8 +219,8 @@ bool dfs_is_ht80_80_chan_in_precac_done_list(struct wlan_dfs *dfs)
 	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
 		"%s : freq_seg1 = %u freq_seq2 = %u ret_val = %d\n",
 		__func__,
-		dfs->dfs_curchan->ic_vhtop_ch_freq_seg1,
-		dfs->dfs_curchan->ic_vhtop_ch_freq_seg2,
+		dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg1,
+		dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg2,
 		ret_val);
 
 	return ret_val;
@@ -277,7 +277,7 @@ void dfs_mark_precac_dfs(struct wlan_dfs *dfs,
 			if (is_radar_found_on_secondary_seg ?
 				(dfs->dfs_precac_secondary_freq ==
 				 precac_entry->vht80_freq) : IS_WITHIN_RANGE(
-				     dfs->dfs_curchan->ic_ieee,
+				     dfs->dfs_curchan->dfs_ch_ieee,
 				     precac_entry->vht80_freq,
 				     VHT80_IEEE_FREQ_OFFSET)) {
 				TAILQ_REMOVE(&dfs->dfs_precac_required_list,
@@ -311,7 +311,7 @@ void dfs_mark_precac_dfs(struct wlan_dfs *dfs,
 					(dfs->dfs_precac_secondary_freq ==
 					 precac_entry->vht80_freq) :
 					IS_WITHIN_RANGE(
-						dfs->dfs_curchan->ic_ieee,
+						dfs->dfs_curchan->dfs_ch_ieee,
 						precac_entry->vht80_freq, 6)) {
 				TAILQ_REMOVE(&dfs->dfs_precac_done_list,
 					precac_entry, pe_list);
@@ -370,19 +370,20 @@ bool dfs_is_precac_timer_running(struct wlan_dfs *dfs)
 void dfs_find_precac_secondary_vht80_chan(struct wlan_dfs *dfs,
 		struct dfs_ieee80211_channel **chan)
 {
-	uint8_t first_primary_ic_ieee;
+	uint8_t first_primary_dfs_ch_ieee;
 
-	first_primary_ic_ieee =
+	first_primary_dfs_ch_ieee =
 		dfs->dfs_precac_secondary_freq - VHT80_IEEE_FREQ_OFFSET;
 
-	dfs_mlme_find_dot11_channel(dfs->dfs_pdev_obj, first_primary_ic_ieee, 0,
+	dfs_mlme_find_dot11_channel(dfs->dfs_pdev_obj,
+			first_primary_dfs_ch_ieee, 0,
 			IEEE80211_MODE_11AC_VHT80,
-			&((*chan)->ic_freq),
-			&((*chan)->ic_flags),
-			&((*chan)->ic_flagext),
-			&((*chan)->ic_ieee),
-			&((*chan)->ic_vhtop_ch_freq_seg1),
-			&((*chan)->ic_vhtop_ch_freq_seg2));
+			&((*chan)->dfs_ch_freq),
+			&((*chan)->dfs_ch_flags),
+			&((*chan)->dfs_ch_flagext),
+			&((*chan)->dfs_ch_ieee),
+			&((*chan)->dfs_ch_vhtop_ch_freq_seg1),
+			&((*chan)->dfs_ch_vhtop_ch_freq_seg2));
 }
 
 /**
@@ -486,7 +487,7 @@ void dfs_init_precac_list(struct wlan_dfs *dfs)
 	TAILQ_INIT(&dfs->dfs_precac_required_list);
 	TAILQ_INIT(&dfs->dfs_precac_done_list);
 	TAILQ_INIT(&dfs->dfs_precac_nol_list);
-	dfs_mlme_get_ic_nchans(dfs->dfs_pdev_obj, &nchans);
+	dfs_mlme_get_dfs_ch_nchans(dfs->dfs_pdev_obj, &nchans);
 
 	PRECAC_LIST_LOCK(dfs);
 	/* Fill the  precac-required-list with unique elements */
@@ -494,13 +495,13 @@ void dfs_init_precac_list(struct wlan_dfs *dfs)
 		struct dfs_ieee80211_channel *ichan = NULL, lc;
 
 		ichan = &lc;
-		dfs_mlme_get_ic_channels(dfs->dfs_pdev_obj,
-				&(ichan->ic_freq),
-				&(ichan->ic_flags),
-				&(ichan->ic_flagext),
-				&(ichan->ic_ieee),
-				&(ichan->ic_vhtop_ch_freq_seg1),
-				&(ichan->ic_vhtop_ch_freq_seg2),
+		dfs_mlme_get_dfs_ch_channels(dfs->dfs_pdev_obj,
+				&(ichan->dfs_ch_freq),
+				&(ichan->dfs_ch_flags),
+				&(ichan->dfs_ch_flagext),
+				&(ichan->dfs_ch_ieee),
+				&(ichan->dfs_ch_vhtop_ch_freq_seg1),
+				&(ichan->dfs_ch_vhtop_ch_freq_seg2),
 				i);
 
 		if (IEEE80211_IS_CHAN_11AC_VHT80(ichan) &&
@@ -510,7 +511,8 @@ void dfs_init_precac_list(struct wlan_dfs *dfs)
 					&dfs->dfs_precac_required_list,
 					pe_list) {
 				if (tmp_precac_entry->vht80_freq ==
-						ichan->ic_vhtop_ch_freq_seg1) {
+						ichan->
+						dfs_ch_vhtop_ch_freq_seg1) {
 					found = 1;
 					break;
 				}
@@ -521,7 +523,7 @@ void dfs_init_precac_list(struct wlan_dfs *dfs)
 				precac_entry = qdf_mem_malloc(
 					sizeof(*precac_entry));
 				precac_entry->vht80_freq =
-					ichan->ic_vhtop_ch_freq_seg1;
+					ichan->dfs_ch_vhtop_ch_freq_seg1;
 				precac_entry->dfs = dfs;
 
 				/*
@@ -631,7 +633,7 @@ void dfs_cancel_precac_timer(struct wlan_dfs *dfs)
 void dfs_start_precac_timer(struct wlan_dfs *dfs, uint8_t precac_chan)
 {
 	struct dfs_ieee80211_channel *ichan, lc;
-	uint8_t first_primary_ic_ieee;
+	uint8_t first_primary_dfs_ch_ieee;
 	int primary_cac_timeout;
 	int secondary_cac_timeout;
 	int precac_timeout;
@@ -643,29 +645,30 @@ void dfs_start_precac_timer(struct wlan_dfs *dfs, uint8_t precac_chan)
 	 * Get the first primary ieee chan in the HT80 band and find the channel
 	 * pointer.
 	 */
-	first_primary_ic_ieee = precac_chan - VHT80_IEEE_FREQ_OFFSET;
+	first_primary_dfs_ch_ieee = precac_chan - VHT80_IEEE_FREQ_OFFSET;
 
 	primary_cac_timeout = dfs_mlme_get_cac_timeout(dfs->dfs_pdev_obj,
-			dfs->dfs_curchan->ic_freq,
-			dfs->dfs_curchan->ic_vhtop_ch_freq_seg2,
-			dfs->dfs_curchan->ic_flags);
+			dfs->dfs_curchan->dfs_ch_freq,
+			dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg2,
+			dfs->dfs_curchan->dfs_ch_flags);
 
 	ichan = &lc;
-	dfs_mlme_find_dot11_channel(dfs->dfs_pdev_obj, first_primary_ic_ieee, 0,
+	dfs_mlme_find_dot11_channel(dfs->dfs_pdev_obj,
+			first_primary_dfs_ch_ieee, 0,
 			IEEE80211_MODE_11AC_VHT80,
-			&(ichan->ic_freq),
-			&(ichan->ic_flags),
-			&(ichan->ic_flagext),
-			&(ichan->ic_ieee),
-			&(ichan->ic_vhtop_ch_freq_seg1),
-			&(ichan->ic_vhtop_ch_freq_seg2));
+			&(ichan->dfs_ch_freq),
+			&(ichan->dfs_ch_flags),
+			&(ichan->dfs_ch_flagext),
+			&(ichan->dfs_ch_ieee),
+			&(ichan->dfs_ch_vhtop_ch_freq_seg1),
+			&(ichan->dfs_ch_vhtop_ch_freq_seg2));
 
 	secondary_cac_timeout = (dfs->dfs_precac_timeout_override != -1) ?
 		dfs->dfs_precac_timeout_override :
 		dfs_mlme_get_cac_timeout(dfs->dfs_pdev_obj,
-				ichan->ic_freq,
-				ichan->ic_vhtop_ch_freq_seg2,
-				ichan->ic_flags);
+				ichan->dfs_ch_freq,
+				ichan->dfs_ch_vhtop_ch_freq_seg2,
+				ichan->dfs_ch_flags);
 
 	/*
 	 * EXTRA time is needed so that if CAC and PreCAC is running

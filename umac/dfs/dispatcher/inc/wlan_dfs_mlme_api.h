@@ -76,25 +76,25 @@ void dfs_mlme_proc_cac(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id);
 
 /**
  * dfs_mlme_deliver_event_up_afrer_cac() - Send a CAC timeout, VAP up event to
- *                                         userspace.
+ * userspace.
  * @pdev: Pointer to DFS pdev object.
  */
 void dfs_mlme_deliver_event_up_afrer_cac(struct wlan_objmgr_pdev *pdev);
 
 /**
- * dfs_mlme_get_ic_nchans() - Get number of channels in the channel list
+ * dfs_mlme_get_dfs_ch_nchans() - Get number of channels in the channel list
  * @pdev: Pointer to DFS pdev object.
  * @nchans: Pointer to save the channel number.
  */
-void dfs_mlme_get_ic_nchans(struct wlan_objmgr_pdev *pdev, int *nchans);
+void dfs_mlme_get_dfs_ch_nchans(struct wlan_objmgr_pdev *pdev, int *nchans);
 
 /**
- * dfs_mlme_get_ic_no_weather_radar_chan() - Checks is the channel is weather
- *                                           radar channel.
+ * dfs_mlme_get_dfs_ch_no_weather_radar_chan() - Checks is the channel is
+ * 						 weather radar channel.
  * @pdev: Pointer to DFS pdev object.
  * @no_wradar: Pointer to save weather radar filter value.
  */
-void dfs_mlme_get_ic_no_weather_radar_chan(struct wlan_objmgr_pdev *pdev,
+void dfs_mlme_get_dfs_ch_no_weather_radar_chan(struct wlan_objmgr_pdev *pdev,
 	uint8_t *no_wradar);
 
 /**
@@ -120,21 +120,21 @@ void dfs_mlme_find_any_valid_channel(struct wlan_objmgr_pdev *pdev,
 /**
  * dfs_mlme_get_extchan() - Get extension channel.
  * @pdev: Pointer to DFS pdev object.
- * @ic_freq:                Frequency in Mhz.
- * @ic_flags:               Channel flags.
- * @ic_flagext:             Extended channel flags.
- * @ic_ieee:                IEEE channel number.
- * @ic_vhtop_ch_freq_seg1:  Channel Center frequency.
- * @ic_vhtop_ch_freq_seg2:  Channel Center frequency applicable for 80+80MHz
+ * @dfs_ch_freq:                Frequency in Mhz.
+ * @dfs_ch_flags:               Channel flags.
+ * @dfs_ch_flagext:             Extended channel flags.
+ * @dfs_ch_ieee:                IEEE channel number.
+ * @dfs_ch_vhtop_ch_freq_seg1:  Channel Center frequency.
+ * @dfs_ch_vhtop_ch_freq_seg2:  Channel Center frequency applicable for 80+80MHz
  *                          mode of operation.
  */
 QDF_STATUS dfs_mlme_get_extchan(struct wlan_objmgr_pdev *pdev,
-		uint16_t *ic_freq,
-		uint32_t *ic_flags,
-		uint16_t *ic_flagext,
-		uint8_t *ic_ieee,
-		uint8_t *ic_vhtop_ch_freq_seg1,
-		uint8_t *ic_vhtop_ch_freq_seg2);
+		uint16_t *dfs_ch_freq,
+		uint32_t *dfs_ch_flags,
+		uint16_t *dfs_ch_flagext,
+		uint8_t *dfs_ch_ieee,
+		uint8_t *dfs_ch_vhtop_ch_freq_seg1,
+		uint8_t *dfs_ch_vhtop_ch_freq_seg2);
 
 /**
  * dfs_mlme_set_no_chans_available() - Set no_chans_available flag.
@@ -160,51 +160,51 @@ int dfs_mlme_ieee2mhz(struct wlan_objmgr_pdev *pdev,
  * @ieee: Channel number.
  * @des_cfreq2: cfreq2
  * @mode: Phymode
- * @ic_freq:                Frequency in Mhz.
- * @ic_flags:               Channel flags.
- * @ic_flagext:             Extended channel flags.
- * @ic_ieee:                IEEE channel number.
- * @ic_vhtop_ch_freq_seg1:  Channel Center frequency.
- * @ic_vhtop_ch_freq_seg2:  Channel Center frequency applicable for 80+80MHz
+ * @dfs_ch_freq:                Frequency in Mhz.
+ * @dfs_ch_flags:               Channel flags.
+ * @dfs_ch_flagext:             Extended channel flags.
+ * @dfs_ch_ieee:                IEEE channel number.
+ * @dfs_ch_vhtop_ch_freq_seg1:  Channel Center frequency.
+ * @dfs_ch_vhtop_ch_freq_seg2:  Channel Center frequency applicable for 80+80MHz
  *                          mode of operation.
  */
 void dfs_mlme_find_dot11_channel(struct wlan_objmgr_pdev *pdev,
 		uint8_t ieee,
 		uint8_t des_cfreq2,
 		int mode,
-		uint16_t *ic_freq,
-		uint32_t *ic_flags,
-		uint16_t *ic_flagext,
-		uint8_t *ic_ieee,
-		uint8_t *ic_vhtop_ch_freq_seg1,
-		uint8_t *ic_vhtop_ch_freq_seg2);
+		uint16_t *dfs_ch_freq,
+		uint32_t *dfs_ch_flags,
+		uint16_t *dfs_ch_flagext,
+		uint8_t *dfs_ch_ieee,
+		uint8_t *dfs_ch_vhtop_ch_freq_seg1,
+		uint8_t *dfs_ch_vhtop_ch_freq_seg2);
 
 /**
- * dfs_mlme_get_ic_channels() - Get channel from channel list.
+ * dfs_mlme_get_dfs_ch_channels() - Get channel from channel list.
  * @pdev: Pointer to DFS pdev object.
- * @ic_freq:                Frequency in Mhz.
- * @ic_flags:               Channel flags.
- * @ic_flagext:             Extended channel flags.
- * @ic_ieee:                IEEE channel number.
- * @ic_vhtop_ch_freq_seg1:  Channel Center frequency.
- * @ic_vhtop_ch_freq_seg2:  Channel Center frequency applicable for 80+80MHz
+ * @dfs_ch_freq:                Frequency in Mhz.
+ * @dfs_ch_flags:               Channel flags.
+ * @dfs_ch_flagext:             Extended channel flags.
+ * @dfs_ch_ieee:                IEEE channel number.
+ * @dfs_ch_vhtop_ch_freq_seg1:  Channel Center frequency.
+ * @dfs_ch_vhtop_ch_freq_seg2:  Channel Center frequency applicable for 80+80MHz
  *                          mode of operation.
  * @index: Index into channel list.
  */
-void dfs_mlme_get_ic_channels(struct wlan_objmgr_pdev *pdev,
-		uint16_t *ic_freq,
-		uint32_t *ic_flags,
-		uint16_t *ic_flagext,
-		uint8_t *ic_ieee,
-		uint8_t *ic_vhtop_ch_freq_seg1,
-		uint8_t *ic_vhtop_ch_freq_seg2,
+void dfs_mlme_get_dfs_ch_channels(struct wlan_objmgr_pdev *pdev,
+		uint16_t *dfs_ch_freq,
+		uint32_t *dfs_ch_flags,
+		uint16_t *dfs_ch_flagext,
+		uint8_t *dfs_ch_ieee,
+		uint8_t *dfs_ch_vhtop_ch_freq_seg1,
+		uint8_t *dfs_ch_vhtop_ch_freq_seg2,
 		int index);
 
 /**
- * dfs_mlme_ic_flags_ext() - Get extension channel flags.
+ * dfs_mlme_dfs_ch_flags_ext() - Get extension channel flags.
  * @pdev: Pointer to DFS pdev object.
  */
-uint32_t dfs_mlme_ic_flags_ext(struct wlan_objmgr_pdev *pdev);
+uint32_t dfs_mlme_dfs_ch_flags_ext(struct wlan_objmgr_pdev *pdev);
 
 /**
  * dfs_mlme_channel_change_by_precac() - Channel change by PreCAC.
@@ -231,14 +231,14 @@ void dfs_mlme_clist_update(struct wlan_objmgr_pdev *pdev,
 /**
  * dfs_mlme_get_cac_timeout() - Get cac_timeout.
  * @pdev: Pointer to DFS pdev object.
- * @ic_freq:                Frequency in Mhz.
- * @ic_vhtop_ch_freq_seg2:  Channel Center frequency applicable for 80+80MHz
+ * @dfs_ch_freq:                Frequency in Mhz.
+ * @dfs_ch_vhtop_ch_freq_seg2:  Channel Center frequency applicable for 80+80MHz
  *                          mode of operation.
- * @ic_flags:               Channel flags.
+ * @dfs_ch_flags:               Channel flags.
  */
 int dfs_mlme_get_cac_timeout(struct wlan_objmgr_pdev *pdev,
-		uint16_t ic_freq,
-		uint8_t ic_vhtop_ch_freq_seg2,
-		uint32_t ic_flags);
+		uint16_t dfs_ch_freq,
+		uint8_t dfs_ch_vhtop_ch_freq_seg2,
+		uint32_t dfs_ch_flags);
 
 #endif /* _WLAN_DFS_MLME_API_H_ */

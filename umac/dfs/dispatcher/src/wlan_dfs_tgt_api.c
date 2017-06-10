@@ -36,12 +36,12 @@ wlan_psoc_get_dfs_txops(struct wlan_objmgr_psoc *psoc)
 }
 
 QDF_STATUS tgt_dfs_set_current_channel(struct wlan_objmgr_pdev *pdev,
-		uint16_t ic_freq,
-		uint32_t ic_flags,
-		uint16_t ic_flagext,
-		uint8_t ic_ieee,
-		uint8_t ic_vhtop_ch_freq_seg1,
-		uint8_t ic_vhtop_ch_freq_seg2)
+		uint16_t dfs_ch_freq,
+		uint32_t dfs_ch_flags,
+		uint16_t dfs_ch_flagext,
+		uint8_t dfs_ch_ieee,
+		uint8_t dfs_ch_vhtop_ch_freq_seg1,
+		uint8_t dfs_ch_vhtop_ch_freq_seg2)
 {
 	struct wlan_dfs *dfs;
 
@@ -49,8 +49,13 @@ QDF_STATUS tgt_dfs_set_current_channel(struct wlan_objmgr_pdev *pdev,
 	if (dfs == NULL)
 		return  QDF_STATUS_E_FAILURE;
 
-	dfs_set_current_channel(dfs, ic_freq, ic_flags, ic_flagext, ic_ieee,
-			ic_vhtop_ch_freq_seg1, ic_vhtop_ch_freq_seg2);
+	dfs_set_current_channel(dfs,
+			dfs_ch_freq,
+			dfs_ch_flags,
+			dfs_ch_flagext,
+			dfs_ch_ieee,
+			dfs_ch_vhtop_ch_freq_seg1,
+			dfs_ch_vhtop_ch_freq_seg2);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -253,10 +258,10 @@ QDF_STATUS tgt_dfs_process_radar_ind(struct wlan_objmgr_pdev *pdev,
 	}
 
 	dfs_process_radar_found_indication(dfs, radar_found);
-	dfs_mlme_mark_dfs(pdev, dfs->dfs_curchan->ic_ieee,
-		dfs->dfs_curchan->ic_freq,
-		dfs->dfs_curchan->ic_vhtop_ch_freq_seg2,
-		dfs->dfs_curchan->ic_flags);
+	dfs_mlme_mark_dfs(pdev, dfs->dfs_curchan->dfs_ch_ieee,
+		dfs->dfs_curchan->dfs_ch_freq,
+		dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg2,
+		dfs->dfs_curchan->dfs_ch_flags);
 
 	return QDF_STATUS_SUCCESS;
 }

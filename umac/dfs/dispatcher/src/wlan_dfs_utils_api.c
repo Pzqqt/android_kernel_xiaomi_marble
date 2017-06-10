@@ -465,8 +465,9 @@ static void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
 	}
 
 	for (i = 0; i < len; i++) {
-		chan_list[i].ic_ieee  = pcl_ch[i];
-		chan_list[i].ic_freq  = wlan_reg_chan_to_freq(pdev, pcl_ch[i]);
+		chan_list[i].dfs_ch_ieee  = pcl_ch[i];
+		chan_list[i].dfs_ch_freq  =
+			wlan_reg_chan_to_freq(pdev, pcl_ch[i]);
 	}
 	*num_chan = i;
 	DFS_PRINTK("%s: num channels %d\n", __func__, i);
@@ -517,8 +518,8 @@ QDF_STATUS dfs_get_random_channel(
 		goto random_chan_error;
 	}
 
-	cur_chan.ic_vhtop_ch_freq_seg1 = ch_params->center_freq_seg0;
-	cur_chan.ic_vhtop_ch_freq_seg2 = ch_params->center_freq_seg1;
+	cur_chan.dfs_ch_vhtop_ch_freq_seg1 = ch_params->center_freq_seg0;
+	cur_chan.dfs_ch_vhtop_ch_freq_seg2 = ch_params->center_freq_seg1;
 
 	if (!ch_params->ch_width)
 		utils_dfs_get_max_sup_width(pdev,
@@ -528,8 +529,8 @@ QDF_STATUS dfs_get_random_channel(
 		num_chan, flags, (uint8_t *)&ch_params->ch_width,
 		&cur_chan, (uint8_t)dfs_reg, acs_info);
 
-	ch_params->center_freq_seg0 = cur_chan.ic_vhtop_ch_freq_seg1;
-	ch_params->center_freq_seg1 = cur_chan.ic_vhtop_ch_freq_seg2;
+	ch_params->center_freq_seg0 = cur_chan.dfs_ch_vhtop_ch_freq_seg1;
+	ch_params->center_freq_seg1 = cur_chan.dfs_ch_vhtop_ch_freq_seg2;
 	DFS_PRINTK("%s: input width=%d\n", __func__, ch_params->ch_width);
 
 	if (*target_chan) {

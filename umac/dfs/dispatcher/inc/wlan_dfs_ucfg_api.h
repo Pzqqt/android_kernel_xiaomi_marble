@@ -40,18 +40,18 @@
  * @mlme_proc_cac:                     Process the CAC completion event.
  * @mlme_deliver_event_up_afrer_cac:   Send a CAC timeout, VAP up event to user
  *                                     space
- * @mlme_get_ic_nchans:                Get number of channels in the channel
+ * @mlme_get_dfs_ch_nchans:            Get number of channels in the channel
  *                                     list.
- * @mlme_get_ic_no_weather_radar_chan: Checks is the channel is weather radar
- *                                     channel.
+ * @mlme_get_dfs_ch_no_weather_radar_chan: Checks is the channel is weather
+ *					   radar channel.
  * @mlme_find_alternate_mode_channel:  Finds the channel.
  * @mlme_find_any_valid_channel:       Find the valid channeil.
  * @mlme_get_extchan:                  Gets the extension channel.
  * @mlme_set_no_chans_available:       Sets no_chans_available flag.
  * @mlme_ieee2mhz:                     Gets Channel freq from ieee number.
  * @mlme_find_dot11_channel:           Find dot11 channel.
- * @mlme_get_ic_channels:              Get the channel list.
- * @mlme_ic_flags_ext:                 Gets channel extension flag.
+ * @mlme_get_dfs_ch_channels:          Get the channel list.
+ * @mlme_dfs_ch_flags_ext:             Gets channel extension flag.
  * @mlme_channel_change_by_precac:     Channel change triggered by PreCAC.
  * @mlme_nol_timeout_notification:     NOL timeout notification.
  * @mlme_clist_update:                 Updates the channel list.
@@ -82,9 +82,9 @@ struct dfs_to_mlme {
 	QDF_STATUS (*mlme_proc_cac)(struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*mlme_deliver_event_up_afrer_cac)(
 			struct wlan_objmgr_pdev *pdev);
-	QDF_STATUS (*mlme_get_ic_nchans)(struct wlan_objmgr_pdev *pdev,
+	QDF_STATUS (*mlme_get_dfs_ch_nchans)(struct wlan_objmgr_pdev *pdev,
 			int *nchans);
-	QDF_STATUS (*mlme_get_ic_no_weather_radar_chan)(
+	QDF_STATUS (*mlme_get_dfs_ch_no_weather_radar_chan)(
 			struct wlan_objmgr_pdev *pdev,
 			uint8_t *no_wradar);
 	QDF_STATUS (*mlme_find_alternate_mode_channel)(
@@ -97,12 +97,12 @@ struct dfs_to_mlme {
 			uint32_t chan_mode,
 			int *ret_val);
 	QDF_STATUS (*mlme_get_extchan)(struct wlan_objmgr_pdev *pdev,
-			uint16_t *ic_freq,
-			uint32_t *ic_flags,
-			uint16_t *ic_flagext,
-			uint8_t *ic_ieee,
-			uint8_t *ic_vhtop_ch_freq_seg1,
-			uint8_t *ic_vhtop_ch_freq_seg2);
+			uint16_t *dfs_ch_freq,
+			uint32_t *dfs_ch_flags,
+			uint16_t *dfs_ch_flagext,
+			uint8_t *dfs_ch_ieee,
+			uint8_t *dfs_ch_vhtop_ch_freq_seg1,
+			uint8_t *dfs_ch_vhtop_ch_freq_seg2);
 	QDF_STATUS (*mlme_set_no_chans_available)(struct wlan_objmgr_pdev *pdev,
 			int val);
 	QDF_STATUS (*mlme_ieee2mhz)(struct wlan_objmgr_pdev *pdev,
@@ -113,22 +113,22 @@ struct dfs_to_mlme {
 			uint8_t ieee,
 			uint8_t des_cfreq2,
 			int mode,
-			uint16_t *ic_freq,
-			uint32_t *ic_flags,
-			uint16_t *ic_flagext,
-			uint8_t *ic_ieee,
-			uint8_t *ic_vhtop_ch_freq_seg1,
-			uint8_t *ic_vhtop_ch_freq_seg2);
+			uint16_t *dfs_ch_freq,
+			uint32_t *dfs_ch_flags,
+			uint16_t *dfs_ch_flagext,
+			uint8_t *dfs_ch_ieee,
+			uint8_t *dfs_ch_vhtop_ch_freq_seg1,
+			uint8_t *dfs_ch_vhtop_ch_freq_seg2);
 
-	QDF_STATUS (*mlme_get_ic_channels)(struct wlan_objmgr_pdev *pdev,
-			uint16_t *ic_freq,
-			uint32_t *ic_flags,
-			uint16_t *ic_flagext,
-			uint8_t *ic_ieee,
-			uint8_t *ic_vhtop_ch_freq_seg1,
-			uint8_t *ic_vhtop_ch_freq_seg2,
+	QDF_STATUS (*mlme_get_dfs_ch_channels)(struct wlan_objmgr_pdev *pdev,
+			uint16_t *dfs_ch_freq,
+			uint32_t *dfs_ch_flags,
+			uint16_t *dfs_ch_flagext,
+			uint8_t *dfs_ch_ieee,
+			uint8_t *dfs_ch_vhtop_ch_freq_seg1,
+			uint8_t *dfs_ch_vhtop_ch_freq_seg2,
 			int index);
-	QDF_STATUS (*mlme_ic_flags_ext)(struct wlan_objmgr_pdev *pdev,
+	QDF_STATUS (*mlme_dfs_ch_flags_ext)(struct wlan_objmgr_pdev *pdev,
 			uint32_t *flag_ext);
 	QDF_STATUS (*mlme_channel_change_by_precac)(
 			struct wlan_objmgr_pdev *pdev);
@@ -138,9 +138,9 @@ struct dfs_to_mlme {
 			void *nollist,
 			int nentries);
 	QDF_STATUS (*mlme_get_cac_timeout)(struct wlan_objmgr_pdev *pdev,
-			uint16_t ic_freq,
+			uint16_t dfs_ch_freq,
 			uint8_t c_vhtop_ch_freq_seg2,
-			uint32_t ic_flags,
+			uint32_t dfs_ch_flags,
 			int *cac_timeout);
 };
 

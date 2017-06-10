@@ -436,31 +436,35 @@ static void dfs_apply_rules(struct wlan_dfs *dfs,
 	for (i = 0; i < ch_cnt; i++) {
 		chan = &ch_list[i];
 
-		if ((chan->ic_ieee == 0) || (chan->ic_ieee > MAX_CHANNEL_NUM)) {
+		if ((chan->dfs_ch_ieee == 0) ||
+				(chan->dfs_ch_ieee > MAX_CHANNEL_NUM)) {
 			DFS_PRINTK("%s: invalid channel %d\n",
-				   __func__, chan->ic_ieee);
+				   __func__, chan->dfs_ch_ieee);
 			continue;
 		}
 
 		if (acs_info && (acs_info->acs_mode == 1) &&
-		    ((chan->ic_ieee < acs_info->start_ch) ||
-		    (chan->ic_ieee > acs_info->end_ch))) {
+		    ((chan->dfs_ch_ieee < acs_info->start_ch) ||
+		    (chan->dfs_ch_ieee > acs_info->end_ch))) {
 			DFS_PRINTK("%s: skip ch %d not in acs range (%d-%d)\n",
-				   __func__, chan->ic_ieee, acs_info->start_ch,
+				   __func__, chan->dfs_ch_ieee,
+				   acs_info->start_ch,
 				   acs_info->end_ch);
 			continue;
 
 		}
 
-		if (flag_no_2g_chan && chan->ic_ieee <= DFS_MAX_24GHZ_CHANNEL) {
+		if (flag_no_2g_chan &&
+				chan->dfs_ch_ieee <= DFS_MAX_24GHZ_CHANNEL) {
 			DFS_PRINTK("%s: skip 2.4 GHz channel=%d\n",
-				   __func__, chan->ic_ieee);
+				   __func__, chan->dfs_ch_ieee);
 			continue;
 		}
 
-		if (flag_no_5g_chan && chan->ic_ieee > DFS_MAX_24GHZ_CHANNEL) {
+		if (flag_no_5g_chan &&
+				chan->dfs_ch_ieee > DFS_MAX_24GHZ_CHANNEL) {
 			DFS_PRINTK("%s: skip 5 GHz channel=%d\n",
-				   __func__, chan->ic_ieee);
+				   __func__, chan->dfs_ch_ieee);
 			continue;
 		}
 
@@ -469,50 +473,50 @@ static void dfs_apply_rules(struct wlan_dfs *dfs,
 			 * We should also avoid this channel in HT40 mode as
 			 * extension channel will be on 5600.
 			 */
-			/* TODO check if reg updating chan->ic_flags for
+			/* TODO check if reg updating chan->dfs_ch_flags for
 			 * IEEE80211_CHAN_11NA_HT40PLUS
 			 * */
-			if (DFS_IS_CHANNEL_WEATHER_RADAR(chan->ic_freq)) {
+			if (DFS_IS_CHANNEL_WEATHER_RADAR(chan->dfs_ch_freq)) {
 				DFS_PRINTK("%s: skip weather channel=%d\n",
-					   __func__, chan->ic_ieee);
+					   __func__, chan->dfs_ch_ieee);
 				continue;
 			} else if (DFS_ADJACENT_WEATHER_RADAR_CHANNEL ==
-				   chan->ic_freq && (chan->ic_flags &
+				   chan->dfs_ch_freq && (chan->dfs_ch_flags &
 				   IEEE80211_CHAN_11NA_HT40PLUS)) {
 				DFS_PRINTK("%s: skip weather adjacent ch=%d\n",
-					   __func__, chan->ic_ieee);
+					   __func__, chan->dfs_ch_ieee);
 				continue;
 			}
 		}
 
 		if (flag_no_lower_5g &&
-		    DFS_IS_CHAN_JAPAN_INDOOR(chan->ic_freq)) {
+		    DFS_IS_CHAN_JAPAN_INDOOR(chan->dfs_ch_freq)) {
 			DFS_PRINTK("%s: skip indoor channel=%d\n",
-				   __func__, chan->ic_ieee);
+				   __func__, chan->dfs_ch_ieee);
 			continue;
 		}
 
 		if (flag_no_upper_5g &&
-		    DFS_IS_CHAN_JAPAN_OUTDOOR(chan->ic_freq)) {
+		    DFS_IS_CHAN_JAPAN_OUTDOOR(chan->dfs_ch_freq)) {
 			DFS_PRINTK("%s: skip outdoor channel=%d\n",
-				   __func__, chan->ic_ieee);
+				   __func__, chan->dfs_ch_ieee);
 			continue;
 		}
 
 		if (flag_no_dfs_chan &&
-		    (chan->ic_flagext & IEEE80211_CHAN_DFS)) {
+		    (chan->dfs_ch_flagext & IEEE80211_CHAN_DFS)) {
 			DFS_PRINTK("%s: skip dfs channel=%d\n",
-				   __func__, chan->ic_ieee);
+				   __func__, chan->dfs_ch_ieee);
 			continue;
 		}
 
-		if (dfs_freq_is_in_nol(dfs, chan->ic_freq)) {
+		if (dfs_freq_is_in_nol(dfs, chan->dfs_ch_freq)) {
 			DFS_PRINTK("%s: skip nol channel=%d\n",
-				   __func__, chan->ic_ieee);
+				   __func__, chan->dfs_ch_ieee);
 			continue;
 		}
 
-		random_chan_list[*random_chan_cnt] = chan->ic_ieee;
+		random_chan_list[*random_chan_cnt] = chan->dfs_ch_ieee;
 		*random_chan_cnt += 1;
 	}
 }
@@ -561,7 +565,7 @@ int dfs_prepare_random_channel(struct wlan_dfs *dfs,
 		}
 
 		target_ch = dfs_find_ch_with_fallback(ch_wd,
-				&cur_chan->ic_vhtop_ch_freq_seg2,
+				&cur_chan->dfs_ch_vhtop_ch_freq_seg2,
 				random_chan_list,
 				random_chan_cnt);
 		if (target_ch)

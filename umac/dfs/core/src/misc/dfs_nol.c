@@ -171,20 +171,20 @@ void dfs_print_nolhistory(struct wlan_dfs *dfs)
 
 	c = &lc;
 
-	dfs_mlme_get_ic_nchans(dfs->dfs_pdev_obj, &nchans);
+	dfs_mlme_get_dfs_ch_nchans(dfs->dfs_pdev_obj, &nchans);
 	for (i = 0; i < nchans; i++) {
-		dfs_mlme_get_ic_channels(dfs->dfs_pdev_obj,
-				&(c->ic_freq),
-				&(c->ic_flags),
-				&(c->ic_flagext),
-				&(c->ic_ieee),
-				&(c->ic_vhtop_ch_freq_seg1),
-				&(c->ic_vhtop_ch_freq_seg2),
+		dfs_mlme_get_dfs_ch_channels(dfs->dfs_pdev_obj,
+				&(c->dfs_ch_freq),
+				&(c->dfs_ch_flags),
+				&(c->dfs_ch_flagext),
+				&(c->dfs_ch_ieee),
+				&(c->dfs_ch_vhtop_ch_freq_seg1),
+				&(c->dfs_ch_vhtop_ch_freq_seg2),
 				i);
 		if (IEEE80211_IS_CHAN_HISTORY_RADAR(c)) {
 			DFS_PRINTK(
 				"nolhistory:%d channel=%d MHz Flags=%X\n",
-				j, c->ic_freq, c->ic_flags);
+				j, c->dfs_ch_freq, c->dfs_ch_flags);
 			j++;
 		}
 	}
@@ -235,12 +235,12 @@ void dfs_set_nol(struct wlan_dfs *dfs,
 			qdf_system_ticks_to_msecs(qdf_system_ticks() -
 				dfs_nol[i].nol_start_ticks);
 		if (nol_time_left_ms < dfs_nol[i].nol_timeout_ms) {
-			chan.ic_freq = dfs_nol[i].nol_freq;
-			chan.ic_flags = 0;
-			chan.ic_flagext = 0;
+			chan.dfs_ch_freq = dfs_nol[i].nol_freq;
+			chan.dfs_ch_flags = 0;
+			chan.dfs_ch_flagext = 0;
 			nol_time_left_ms =
 				(dfs_nol[i].nol_timeout_ms - nol_time_left_ms);
-			dfs_nol_addchan(dfs, chan.ic_freq,
+			dfs_nol_addchan(dfs, chan.dfs_ch_freq,
 					(nol_time_left_ms / TIME_IN_MS));
 		}
 	}

@@ -140,7 +140,7 @@ static void wlan_cfg80211_pno_callback(struct wlan_objmgr_vdev *vdev,
 	pdev_ospriv = wlan_pdev_get_ospriv(pdev);
 	wlan_pdev_obj_unlock(pdev);
 	if (!pdev_ospriv) {
-		cfg80211_err("pdev_osprivis NULL");
+		cfg80211_err("pdev_ospriv is NULL");
 		return;
 	}
 	cfg80211_sched_scan_results(pdev_ospriv->wiphy);
@@ -181,7 +181,8 @@ static QDF_STATUS wlan_cfg80211_is_pno_allowed(struct wlan_objmgr_vdev *vdev)
 
 int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_pdev *pdev,
 	struct net_device *dev,
-	struct cfg80211_sched_scan_request *request)
+	struct cfg80211_sched_scan_request *request,
+	uint8_t scan_backoff_multiplier)
 {
 	struct pno_scan_req_params *req;
 	int i, j, ret = 0;
@@ -342,6 +343,7 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_pdev *pdev,
 	 */
 	wlan_config_sched_scan_plan(req, request);
 	req->delay_start_time = hdd_config_sched_scan_start_delay(request);
+	req->scan_backoff_multiplier = scan_backoff_multiplier;
 	cfg80211_notice("Base scan interval: %d sec, scan cycles: %d, slow scan interval %d",
 		req->fast_scan_period, req->fast_scan_max_cycles,
 		req->slow_scan_period);

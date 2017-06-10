@@ -99,8 +99,8 @@ static inline uint16_t dfs_get_event_freqcentre(struct wlan_dfs *dfs,
 	}
 
 	/*
-	 * For non-wide channels, the centre frequency is just ic_freq.
-	 * The centre frequency for pri events is still ic_freq.
+	 * For non-wide channels, the centre frequency is just dfs_ch_freq.
+	 * The centre frequency for pri events is still dfs_ch_freq.
 	 */
 	if (is_pri)
 		return dfs_ieee80211_chan2freq(dfs->dfs_curchan);
@@ -651,7 +651,7 @@ void dfs_process_phyerr(struct wlan_dfs *dfs, void *buf, uint16_t datalen,
 	 * If the channel is a turbo G channel, then the event is for the
 	 * adaptive radio (AR) pattern matching rather than radar detection.
 	 */
-	if ((dfs->dfs_curchan->ic_flags & CHANNEL_108G) == CHANNEL_108G) {
+	if ((dfs->dfs_curchan->dfs_ch_flags & CHANNEL_108G) == CHANNEL_108G) {
 		if (!(dfs->dfs_proc_phyerr & DFS_AR_EN)) {
 			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
 				"%s: DFS_AR_EN not enabled\n",

@@ -222,7 +222,7 @@ void dfs_process_radar_found_indication(struct wlan_dfs *dfs,
 	}
 
 	qdf_mem_set(&freq_offset, sizeof(freq_offset), 0);
-	flag = dfs->dfs_curchan->ic_flags;
+	flag = dfs->dfs_curchan->dfs_ch_flags;
 
 	for (i = 0; i < DFS_NUM_FREQ_OFFSET; i++)
 		freq_offset.offset[i] = radar_found->freq_offset;
@@ -231,10 +231,10 @@ void dfs_process_radar_found_indication(struct wlan_dfs *dfs,
 
 	if (!radar_found->segment_id)
 		freq_center = utils_dfs_chan_to_freq(
-				dfs->dfs_curchan->ic_vhtop_ch_freq_seg1);
+				dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg1);
 	else {
 		freq_center = utils_dfs_chan_to_freq(
-				dfs->dfs_curchan->ic_vhtop_ch_freq_seg2);
+				dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg2);
 		if (flag & IEEE80211_CHAN_VHT160)
 			freq_center += DFS_160MHZ_SECOND_SEG_OFFSET;
 	}

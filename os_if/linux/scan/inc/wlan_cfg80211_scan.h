@@ -117,12 +117,14 @@ struct scan_req {
  * @pdev: pdev pointer
  * @dev: Pointer network device
  * @request: Pointer to cfg80211 scheduled scan start request
+ * @scan_backoff_multiplier: multiply scan period by this after max cycles
  *
  * Return: 0 for success, non zero for failure
  */
 int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_pdev *pdev,
 	struct net_device *dev,
-	struct cfg80211_sched_scan_request *request);
+	struct cfg80211_sched_scan_request *request,
+	uint8_t scan_backoff_multiplier);
 
 /**
  * wlan_cfg80211_sched_scan_stop() - cfg80211 scheduled scan(pno) stop

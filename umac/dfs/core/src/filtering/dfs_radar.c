@@ -498,14 +498,15 @@ void dfs_radar_found_action(struct wlan_dfs *dfs)
 
 			dfs_find_precac_secondary_vht80_chan(dfs, &ichan);
 			dfs_mlme_channel_mark_radar(dfs->dfs_pdev_obj,
-					ichan->ic_freq,
-					ichan->ic_vhtop_ch_freq_seg2,
-					ichan->ic_flags);
+					ichan->dfs_ch_freq,
+					ichan->dfs_ch_vhtop_ch_freq_seg2,
+					ichan->dfs_ch_flags);
 		} else {
 			dfs_mlme_channel_mark_radar(dfs->dfs_pdev_obj,
-					dfs->dfs_curchan->ic_freq,
-					dfs->dfs_curchan->ic_vhtop_ch_freq_seg2,
-					dfs->dfs_curchan->ic_flags);
+					dfs->dfs_curchan->dfs_ch_freq,
+					dfs->dfs_curchan->
+					dfs_ch_vhtop_ch_freq_seg2,
+					dfs->dfs_curchan->dfs_ch_flags);
 		}
 	}
 
@@ -540,10 +541,10 @@ void dfs_radar_found_action(struct wlan_dfs *dfs)
 	if (dfs->dfs_rinfo.rn_use_nol == 1)  {
 		dfs_mlme_start_rcsa(dfs->dfs_pdev_obj);
 		dfs_mlme_mark_dfs(dfs->dfs_pdev_obj,
-				dfs->dfs_curchan->ic_ieee,
-				dfs->dfs_curchan->ic_freq,
-				dfs->dfs_curchan->ic_vhtop_ch_freq_seg2,
-				dfs->dfs_curchan->ic_flags);
+				dfs->dfs_curchan->dfs_ch_ieee,
+				dfs->dfs_curchan->dfs_ch_freq,
+				dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg2,
+				dfs->dfs_curchan->dfs_ch_flags);
 		/*
 		 * EV 129487 : We have detected radar in the channel,
 		 * stop processing PHY error data as this can cause
@@ -560,7 +561,7 @@ void dfs_radar_found_action(struct wlan_dfs *dfs)
 		 */
 		qdf_timer_stop(&dfs->wlan_dfstesttimer);
 		dfs->wlan_dfstest = 1;
-		dfs->wlan_dfstest_ieeechan = dfs->dfs_curchan->ic_ieee;
+		dfs->wlan_dfstest_ieeechan = dfs->dfs_curchan->dfs_ch_ieee;
 		dfs->wlan_dfstesttime = 1;   /* 1ms */
 		OS_SET_TIMER(&dfs->wlan_dfstesttimer,
 				dfs->wlan_dfstesttime);
