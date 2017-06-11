@@ -85,4 +85,44 @@ QDF_STATUS scm_scan_event_handler(struct scheduler_msg *msg);
  */
 QDF_STATUS scm_scan_free_scan_request_mem(struct scan_start_request *req);
 
+/**
+ * scm_scan_event_flush_callback() - flush scan event
+ * @msg: scheduler message object containing scan event
+ *
+ * This function call is invoked when scheduler thread is going down
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS scm_scan_event_flush_callback(struct scheduler_msg *msg);
+
+/**
+ * scm_bcn_probe_flush_callback() - flush beacon/probe response
+ * @msg: scheduler message object containing scan event
+ *
+ * This function call is invoked when scheduler thread is going down
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS scm_bcn_probe_flush_callback(struct scheduler_msg *msg);
+
+/**
+ * scm_scan_start_flush_callback() - flush scan start request
+ * @msg: scheduler message object containing scan event
+ *
+ * This function call is invoked when scheduler thread is going down
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS scm_scan_start_flush_callback(struct scheduler_msg *msg);
+
+/**
+ * scm_scan_cancel_flush_callback() - flush scan cancel request
+ * @msg: scheduler message object containing scan event
+ *
+ * This function call is invoked when scheduler thread is going down
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS scm_scan_cancel_flush_callback(struct scheduler_msg *msg);
+
 #endif

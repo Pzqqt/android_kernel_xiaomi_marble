@@ -600,3 +600,75 @@ exit:
 
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS scm_scan_event_flush_callback(struct scheduler_msg *msg)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct scan_event_info *event_info;
+
+	if (!msg || !msg->bodyptr) {
+		scm_err("msg: %p, bodyptr: %p", msg, msg->bodyptr);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	event_info = msg->bodyptr;
+	vdev = event_info->vdev;
+
+	/* free event info memory */
+	qdf_mem_free(event_info);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_SCAN_ID);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS scm_bcn_probe_flush_callback(struct scheduler_msg *msg)
+{
+	struct scan_bcn_probe_event *bcn;
+
+	bcn = msg->bodyptr;
+
+	if (!bcn) {
+		scm_err("bcn is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	if (bcn->psoc)
+		wlan_objmgr_psoc_release_ref(bcn->psoc, WLAN_SCAN_ID);
+	if (bcn->rx_data)
+		qdf_mem_free(bcn->rx_data);
+	if (bcn->buf)
+		qdf_nbuf_free(bcn->buf);
+	qdf_mem_free(bcn);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS scm_scan_start_flush_callback(struct scheduler_msg *msg)
+{
+	struct scan_start_request *req;
+
+	if (!msg || !msg->bodyptr) {
+		scm_err("msg: 0x%p, bodyptr: 0x%p", msg, msg->bodyptr);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	req = msg->bodyptr;
+	wlan_objmgr_vdev_release_ref(req->vdev, WLAN_SCAN_ID);
+	scm_scan_free_scan_request_mem(req);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS scm_scan_cancel_flush_callback(struct scheduler_msg *msg)
+{
+	struct scan_cancel_request *req;
+
+	if (!msg || !msg->bodyptr) {
+		scm_err("msg: 0x%p, bodyptr: 0x%p", msg, msg->bodyptr);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	req = msg->bodyptr;
+	wlan_objmgr_vdev_release_ref(req->vdev, WLAN_SCAN_ID);
+	/* Free cancel request memory */
+	qdf_mem_free(req);
+
+	return QDF_STATUS_SUCCESS;
+}
