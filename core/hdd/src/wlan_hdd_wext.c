@@ -6241,8 +6241,8 @@ static void hdd_get_station_statistics_cb(void *stats, void *context)
 QDF_STATUS wlan_hdd_get_station_stats(hdd_adapter_t *pAdapter)
 {
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
-	QDF_STATUS hstatus;
-	int ret;
+	QDF_STATUS status;
+	int errno;
 	void *cookie;
 	struct hdd_request *request;
 	struct station_stats *priv;
@@ -6264,35 +6264,36 @@ QDF_STATUS wlan_hdd_get_station_stats(hdd_adapter_t *pAdapter)
 	cookie = hdd_request_cookie(request);
 
 	/* query only for Summary & Class A statistics */
-	hstatus = sme_get_statistics(WLAN_HDD_GET_HAL_CTX(pAdapter),
-				     eCSR_HDD,
-				     SME_SUMMARY_STATS |
-				     SME_GLOBAL_CLASSA_STATS |
-				     SME_PER_CHAIN_RSSI_STATS,
-				     hdd_get_station_statistics_cb,
-				     0, /* not periodic */
-				     false, /* non-cached results */
-				     pHddStaCtx->conn_info.staId[0],
-				     cookie, pAdapter->sessionId);
-	if (QDF_STATUS_SUCCESS != hstatus) {
-		hdd_err("Unable to retrieve statistics");
-		/* we'll return with cached values */
-	} else {
-		/* request was sent -- wait for the response */
-		ret = hdd_request_wait_for_response(request);
-		if (ret) {
-			hdd_warn("SME timed out while retrieving statistics");
-			/* we'll returned a cached value below */
-		} else {
-			/* update the adapter with the fresh results */
-			priv = hdd_request_priv(request);
-			pAdapter->hdd_stats.summary_stat = priv->summary_stats;
-			pAdapter->hdd_stats.ClassA_stat = priv->class_a_stats;
-			pAdapter->hdd_stats.per_chain_rssi_stats =
-				priv->per_chain_rssi_stats;
-		}
+	status = sme_get_statistics(WLAN_HDD_GET_HAL_CTX(pAdapter),
+				    eCSR_HDD,
+				    SME_SUMMARY_STATS |
+					    SME_GLOBAL_CLASSA_STATS |
+					    SME_PER_CHAIN_RSSI_STATS,
+				    hdd_get_station_statistics_cb,
+				    0, /* not periodic */
+				    false, /* non-cached results */
+				    pHddStaCtx->conn_info.staId[0],
+				    cookie,
+				    pAdapter->sessionId);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to retrieve statistics, status %d", status);
+		goto put_request;
 	}
 
+	/* request was sent -- wait for the response */
+	errno = hdd_request_wait_for_response(request);
+	if (errno) {
+		hdd_err("Failed to wait for statistics, errno %d", errno);
+		goto put_request;
+	}
+
+	/* update the adapter with the fresh results */
+	priv = hdd_request_priv(request);
+	pAdapter->hdd_stats.summary_stat = priv->summary_stats;
+	pAdapter->hdd_stats.ClassA_stat = priv->class_a_stats;
+	pAdapter->hdd_stats.per_chain_rssi_stats = priv->per_chain_rssi_stats;
+
+put_request:
 	/*
 	 * either we never sent a request, we sent a request and
 	 * received a response or we sent a request and timed out.
