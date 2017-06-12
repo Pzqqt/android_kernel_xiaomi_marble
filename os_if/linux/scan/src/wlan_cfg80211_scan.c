@@ -38,6 +38,13 @@
 #include <wlan_policy_mgr_api.h>
 #endif
 
+static const
+struct nla_policy scan_policy[QCA_WLAN_VENDOR_ATTR_SCAN_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_SCAN_FLAGS] = {.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_SCAN_TX_NO_CCK_RATE] = {.type = NLA_FLAG},
+	[QCA_WLAN_VENDOR_ATTR_SCAN_COOKIE] = {.type = NLA_U64},
+};
+
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
 static uint32_t hdd_config_sched_scan_start_delay(
 		struct cfg80211_sched_scan_request *request)
@@ -1330,7 +1337,7 @@ int wlan_vendor_abort_scan(struct wlan_objmgr_pdev *pdev,
 
 	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
 	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_SCAN_MAX, data,
-	    data_len, NULL)) {
+		      data_len, scan_policy)) {
 		cfg80211_err("Invalid ATTR");
 		return ret;
 	}
