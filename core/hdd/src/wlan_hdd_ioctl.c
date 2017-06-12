@@ -316,7 +316,7 @@ static int hdd_parse_setrmcrate_command(uint8_t *pValue,
 	if ('\0' == *inPtr)
 		return 0;
 
-	v = sscanf(inPtr, "%32s ", buf);
+	v = sscanf(inPtr, "%31s ", buf);
 	if (1 != v)
 		return -EINVAL;
 
