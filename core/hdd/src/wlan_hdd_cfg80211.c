@@ -14480,6 +14480,12 @@ static int wlan_hdd_cfg80211_set_ie(hdd_adapter_t *pAdapter, const uint8_t *ie,
 				pWextState->roamProfile.nAddIEAssocLength =
 					pWextState->assocAddIE.length;
 			} else if (0 == memcmp(&genie[0], "\x00\x50\xf2", 3)) {
+				if (eLen > (MAX_WPA_RSN_IE_LEN - 2)) {
+					hdd_err("%s: Invalid WPA IE length[%d]",
+						__func__, eLen);
+					QDF_ASSERT(0);
+					return -EINVAL;
+				}
 				hdd_debug("Set WPA IE (len %d)", eLen + 2);
 				memset(pWextState->WPARSNIE, 0,
 				       MAX_WPA_RSN_IE_LEN);
