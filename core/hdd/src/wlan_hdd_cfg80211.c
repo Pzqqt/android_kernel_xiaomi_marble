@@ -14450,6 +14450,14 @@ static int wlan_hdd_cfg80211_set_ie(hdd_adapter_t *pAdapter, const uint8_t *ie,
 		eLen = *genie++;
 		remLen -= 2;
 
+		/* Sanity check on eLen */
+		if (eLen > remLen) {
+			hdd_err("%s: Invalid IE length[%d] for IE[0x%X]",
+				__func__, eLen, elementId);
+			QDF_ASSERT(0);
+			return -EINVAL;
+		}
+
 		hdd_debug("IE[0x%X], LEN[%d]", elementId, eLen);
 
 		switch (elementId) {
