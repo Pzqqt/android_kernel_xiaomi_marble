@@ -177,7 +177,7 @@
 }
 
 #define HDD5GHZCHAN(freq, chan, flag)   {     \
-		.band =  NL80211_BAND_5GHZ, \
+		.band =  HDD_NL80211_BAND_5GHZ, \
 		.center_freq = (freq), \
 		.hw_value = (chan), \
 		.flags = (flag), \
@@ -315,7 +315,7 @@ static struct ieee80211_rate a_mode_rates[] = {
 static struct ieee80211_supported_band wlan_hdd_band_2_4_ghz = {
 	.channels = NULL,
 	.n_channels = ARRAY_SIZE(hdd_channels_2_4_ghz),
-	.band = NL80211_BAND_2GHZ,
+	.band = HDD_NL80211_BAND_2GHZ,
 	.bitrates = g_mode_rates,
 	.n_bitrates = g_mode_rates_size,
 	.ht_cap.ht_supported = 1,
@@ -6694,11 +6694,11 @@ static int __wlan_hdd_cfg80211_get_preferred_freq_list(struct wiphy *wiphy,
 		if (pcl[i] <= ARRAY_SIZE(hdd_channels_2_4_ghz))
 			freq_list[i] =
 				ieee80211_channel_to_frequency(pcl[i],
-							NL80211_BAND_2GHZ);
+							HDD_NL80211_BAND_2GHZ);
 		else
 			freq_list[i] =
 				ieee80211_channel_to_frequency(pcl[i],
-							NL80211_BAND_5GHZ);
+							HDD_NL80211_BAND_5GHZ);
 	}
 
 	/* send the freq_list back to supplicant */
@@ -13467,12 +13467,12 @@ struct cfg80211_bss *wlan_hdd_cfg80211_inform_bss_frame(hdd_adapter_t *pAdapter,
 	    (wiphy->bands[NL80211_BAND_2GHZ] != NULL)) {
 		freq =
 			ieee80211_channel_to_frequency(chan_no,
-						       NL80211_BAND_2GHZ);
+						       HDD_NL80211_BAND_2GHZ);
 	} else if ((chan_no > ARRAY_SIZE(hdd_channels_2_4_ghz))
 		   && (wiphy->bands[NL80211_BAND_5GHZ] != NULL)) {
 		freq =
 			ieee80211_channel_to_frequency(chan_no,
-						       NL80211_BAND_5GHZ);
+						       HDD_NL80211_BAND_5GHZ);
 	} else {
 		hdd_err("Invalid channel: %d", chan_no);
 		qdf_mem_free(mgmt);
