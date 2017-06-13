@@ -2237,7 +2237,7 @@ QDF_STATUS wma_process_update_edca_param_req(WMA_HANDLE handle,
 					     tEdcaParams *edca_params)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
-	wmi_wmm_vparams wmm_param[WME_NUM_AC];
+	struct wmi_host_wme_vparams wmm_param[WME_NUM_AC];
 	tSirMacEdcaParamRecord *edca_record;
 	int ac;
 	struct cdp_pdev *pdev;

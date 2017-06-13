@@ -318,7 +318,7 @@ QDF_STATUS wma_set_ap_peer_uapsd(tp_wma_handle wma, uint32_t vdev_id,
  * Return: none
  */
 void wma_update_edca_params_for_ac(tSirMacEdcaParamRecord *edca_param,
-				   wmi_wmm_vparams *wmm_param, int ac)
+				   struct wmi_host_wme_vparams *wmm_param, int ac)
 {
 #define WMA_WMM_EXPO_TO_VAL(val)        ((1 << (val)) - 1)
 	wmm_param->cwmin = WMA_WMM_EXPO_TO_VAL(edca_param->cw.min);
@@ -328,11 +328,11 @@ void wma_update_edca_params_for_ac(tSirMacEdcaParamRecord *edca_param,
 	wmm_param->acm = edca_param->aci.acm;
 
 	/* TODO: No ack is not present in EdcaParamRecord */
-	wmm_param->no_ack = 0;
+	wmm_param->noackpolicy = 0;
 
 	WMA_LOGD("WMM PARAMS AC[%d]: AIFS %d Min %d Max %d TXOP %d ACM %d NOACK %d",
 		ac, wmm_param->aifs, wmm_param->cwmin, wmm_param->cwmax,
-		wmm_param->txoplimit, wmm_param->acm, wmm_param->no_ack);
+		wmm_param->txoplimit, wmm_param->acm, wmm_param->noackpolicy);
 }
 
 /**
