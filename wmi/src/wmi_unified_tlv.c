@@ -18626,6 +18626,7 @@ static void populate_tlv_service(uint32_t *wmi_service)
 				WMI_SERVICE_HW_DATA_FILTERING;
 	wmi_service[wmi_service_pkt_routing] = WMI_SERVICE_PKT_ROUTING;
 	wmi_service[wmi_service_offchan_tx_wmi] = WMI_SERVICE_OFFCHAN_TX_WMI;
+	wmi_service[wmi_service_chan_load_info] = WMI_SERVICE_CHAN_LOAD_INFO;
 }
 
 /**

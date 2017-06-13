@@ -5356,6 +5356,7 @@ typedef enum {
 	wmi_service_hw_data_filtering,
 	wmi_service_pkt_routing,
 	wmi_service_offchan_tx_wmi,
+	wmi_service_chan_load_info,
 
 	wmi_services_max,
 } wmi_conv_service_ids;

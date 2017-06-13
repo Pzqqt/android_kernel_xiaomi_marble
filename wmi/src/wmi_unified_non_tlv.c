@@ -8367,6 +8367,7 @@ static void populate_non_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_hw_data_filtering] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_pkt_routing] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_offchan_tx_wmi] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_chan_load_info] = WMI_SERVICE_UNAVAILABLE;
 }
 
 /**
