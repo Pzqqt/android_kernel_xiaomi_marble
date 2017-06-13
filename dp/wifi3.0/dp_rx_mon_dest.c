@@ -121,13 +121,14 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	uint32_t msdu_ppdu_id, msdu_cnt;
 	uint8_t *data;
 	uint32_t i;
+	bool mpdu_fcs_err;
 
 	msdu = 0;
 
 	last = NULL;
 
 	hal_rx_reo_ent_buf_paddr_get(rxdma_dst_ring_desc, &buf_info,
-		&p_last_buf_addr_info, &msdu_cnt);
+		&p_last_buf_addr_info, &msdu_cnt, &mpdu_fcs_err);
 
 	do {
 		rx_msdu_link_desc =
@@ -168,6 +169,15 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 					QDF_TRACE_LEVEL_DEBUG,
 					"[%s][%d] i=%d, ppdu_id=%x, msdu_ppdu_id=%x\n",
 					__func__, __LINE__, i, *ppdu_id, msdu_ppdu_id);
+
+				if (*ppdu_id > msdu_ppdu_id)
+					QDF_TRACE(QDF_MODULE_ID_DP,
+					QDF_TRACE_LEVEL_WARN,
+					"[%s][%d] ppdu_id=%id \
+					msdu_ppdu_id=%d\n",
+					__func__, __LINE__, *ppdu_id,
+					msdu_ppdu_id);
+
 				if (*ppdu_id != msdu_ppdu_id) {
 					*ppdu_id = msdu_ppdu_id;
 					return rx_bufs_used;

@@ -345,7 +345,8 @@ int htt_srng_setup(void *htt_soc, int mac_id, void *hal_srng,
 	*msg_word = 0;
 	HTT_H2T_MSG_TYPE_SET(*msg_word, HTT_H2T_MSG_TYPE_SRING_SETUP);
 
-	if (htt_ring_type == HTT_SW_TO_HW_RING)
+	if ((htt_ring_type == HTT_SW_TO_HW_RING) ||
+		(htt_ring_type == HTT_HW_TO_SW_RING))
 		HTT_SRING_SETUP_PDEV_ID_SET(*msg_word,
 			 DP_SW2HW_MACID(mac_id));
 	else
@@ -571,7 +572,8 @@ int htt_h2t_rx_ring_cfg(void *htt_soc, int pdev_id, void *hal_srng,
 	/* word 0 */
 	*msg_word = 0;
 	HTT_H2T_MSG_TYPE_SET(*msg_word, HTT_H2T_MSG_TYPE_RX_RING_SELECTION_CFG);
-	HTT_RX_RING_SELECTION_CFG_PDEV_ID_SET(*msg_word, pdev_id);
+	HTT_RX_RING_SELECTION_CFG_PDEV_ID_SET(*msg_word,
+		DP_SW2HW_MACID(pdev_id));
 	/* TODO: Discuss with FW on changing this to unique ID and using
 	 * htt_ring_type to send the type of ring
 	 */
