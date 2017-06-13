@@ -1563,7 +1563,7 @@ typedef struct sSirSmeDisassocRsp {
 	struct qdf_mac_addr peer_macaddr;
 	tAniStaStatStruct perStaStats;  /* STA stats */
 	uint16_t staId;
-} qdf_packed tSirSmeDisassocRsp, *tpSirSmeDisassocRsp;
+} tSirSmeDisassocRsp, *tpSirSmeDisassocRsp;
 
 /* / Definition for Disassociation indication from peer */
 typedef struct sSirSmeDisassocInd {
