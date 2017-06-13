@@ -1187,6 +1187,9 @@ static QDF_STATUS send_suspend_cmd_tlv(wmi_unified_t wmi_handle,
 		cmd->suspend_opt = WMI_PDEV_SUSPEND_AND_DISABLE_INTR;
 	else
 		cmd->suspend_opt = WMI_PDEV_SUSPEND;
+
+	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(mac_id);
+
 	ret = wmi_unified_cmd_send(wmi_handle, wmibuf, len,
 				 WMI_PDEV_SUSPEND_CMDID);
 	if (ret) {
