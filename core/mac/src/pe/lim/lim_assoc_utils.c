@@ -1750,6 +1750,11 @@ lim_populate_peer_rate_set(tpAniSirGlobal pMac,
 		for (i = 0; i < SIR_MAC_MAX_SUPPORTED_MCS_SET; i++)
 			pe_debug("%x ", pRates->supportedMCSSet[i]);
 
+		if (pRates->supportedMCSSet[0] == 0) {
+			pe_debug("Incorrect MCS 0 - 7. They must be supported");
+			pRates->supportedMCSSet[0] = 0xFF;
+		}
+
 		psessionEntry->supported_nss_1x1 =
 			((pRates->supportedMCSSet[1] != 0) ? false : true);
 		pe_debug("HT supported nss 1x1: %d",
