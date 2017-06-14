@@ -151,6 +151,7 @@ void sme_set_ft_ies(tHalHandle hal_ptr, uint32_t session_id,
 	switch (session->ftSmeContext.FTState) {
 	case eFT_START_READY:
 	case eFT_AUTH_REQ_READY:
+		sme_debug("ft_ies_length: %d", ft_ies_length);
 		if ((session->ftSmeContext.auth_ft_ies) &&
 			(session->ftSmeContext.auth_ft_ies_length)) {
 			/* Free the one we recvd last from supplicant */
@@ -158,6 +159,7 @@ void sme_set_ft_ies(tHalHandle hal_ptr, uint32_t session_id,
 			session->ftSmeContext.auth_ft_ies_length = 0;
 			session->ftSmeContext.auth_ft_ies = NULL;
 		}
+		ft_ies_length = QDF_MIN(ft_ies_length, MAX_FTIE_SIZE);
 		/* Save the FT IEs */
 		session->ftSmeContext.auth_ft_ies =
 					qdf_mem_malloc(ft_ies_length);
@@ -170,8 +172,6 @@ void sme_set_ft_ies(tHalHandle hal_ptr, uint32_t session_id,
 		qdf_mem_copy((uint8_t *)session->ftSmeContext.auth_ft_ies,
 				ft_ies, ft_ies_length);
 		session->ftSmeContext.FTState = eFT_AUTH_REQ_READY;
-
-		sme_debug("ft_ies_length: %d", ft_ies_length);
 		break;
 
 	case eFT_AUTH_COMPLETE:
