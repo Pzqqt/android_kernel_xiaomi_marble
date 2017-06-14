@@ -213,7 +213,11 @@
 #define CE_DEBUG_SEL_LSB          (scn->target_ce_def->d_CE_DEBUG_SEL_LSB)
 #define CE_DEBUG_SEL_MASK         (scn->target_ce_def->d_CE_DEBUG_SEL_MASK)
 #define HOST_IE_ADDRESS           (scn->target_ce_def->d_HOST_IE_ADDRESS)
+#define HOST_IE_REG1_CE_LSB       (scn->target_ce_def->d_HOST_IE_REG1_CE_LSB)
 #define HOST_IE_ADDRESS_2         (scn->target_ce_def->d_HOST_IE_ADDRESS_2)
+#define HOST_IE_REG2_CE_LSB       (scn->target_ce_def->d_HOST_IE_REG2_CE_LSB)
+#define HOST_IE_ADDRESS_3         (scn->target_ce_def->d_HOST_IE_ADDRESS_3)
+#define HOST_IE_REG3_CE_LSB       (scn->target_ce_def->d_HOST_IE_REG3_CE_LSB)
 #define HOST_IS_ADDRESS           (scn->target_ce_def->d_HOST_IS_ADDRESS)
 
 #define SRC_WATERMARK_LOW_SET(x) \
@@ -267,6 +271,9 @@
 	(((x) << CE_WRAPPER_DEBUG_SEL_LSB) & CE_WRAPPER_DEBUG_SEL_MASK)
 #define CE_DEBUG_SEL_GET(x) (((x) & CE_DEBUG_SEL_MASK) >> CE_DEBUG_SEL_LSB)
 #define CE_DEBUG_SEL_SET(x) (((x) << CE_DEBUG_SEL_LSB) & CE_DEBUG_SEL_MASK)
+#define HOST_IE_REG1_CE_BIT(_ce_id) (1 << (_ce_id + HOST_IE_REG1_CE_LSB))
+#define HOST_IE_REG2_CE_BIT(_ce_id) (1 << (_ce_id + HOST_IE_REG2_CE_LSB))
+#define HOST_IE_REG3_CE_BIT(_ce_id) (1 << (_ce_id + HOST_IE_REG3_CE_LSB))
 
 uint32_t DEBUG_CE_SRC_RING_READ_IDX_GET(struct hif_softc *scn,
 		uint32_t CE_ctrl_addr);

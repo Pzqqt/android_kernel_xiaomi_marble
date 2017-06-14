@@ -358,6 +358,18 @@ struct targetdef_s *MY_TARGET_DEF = &my_target_def;
 #if !defined(HOST_IE_ADDRESS_2)
 #define HOST_IE_ADDRESS_2 ATH_UNSUPPORTED_REG_OFFSET
 #endif
+#if !defined(HOST_IE_ADDRESS_3)
+#define HOST_IE_ADDRESS_3 ATH_UNSUPPORTED_REG_OFFSET
+#endif
+#if !defined(HOST_IE_REG1_CE_LSB)
+#define HOST_IE_REG1_CE_LSB 0
+#endif
+#if !defined(HOST_IE_REG2_CE_LSB)
+#define HOST_IE_REG2_CE_LSB 0
+#endif
+#if !defined(HOST_IE_REG3_CE_LSB)
+#define HOST_IE_REG3_CE_LSB 0
+#endif
 
 static struct ce_reg_def my_ce_reg_def = {
 	/* copy_engine.c */
@@ -386,7 +398,11 @@ static struct ce_reg_def my_ce_reg_def = {
 	.d_CE_DDR_ADDRESS_FOR_RRI_LOW = CE_DDR_ADDRESS_FOR_RRI_LOW,
 	.d_CE_DDR_ADDRESS_FOR_RRI_HIGH = CE_DDR_ADDRESS_FOR_RRI_HIGH,
 	.d_HOST_IE_ADDRESS = HOST_IE_ADDRESS,
+	.d_HOST_IE_REG1_CE_LSB = HOST_IE_REG1_CE_LSB,
 	.d_HOST_IE_ADDRESS_2 = HOST_IE_ADDRESS_2,
+	.d_HOST_IE_REG2_CE_LSB = HOST_IE_REG2_CE_LSB,
+	.d_HOST_IE_ADDRESS_3 = HOST_IE_ADDRESS_3,
+	.d_HOST_IE_REG3_CE_LSB = HOST_IE_REG3_CE_LSB,
 	.d_HOST_IE_COPY_COMPLETE_MASK = HOST_IE_COPY_COMPLETE_MASK,
 	.d_SR_BA_ADDRESS = SR_BA_ADDRESS,
 	.d_SR_BA_ADDRESS_HIGH = SR_BA_ADDRESS_HIGH,
