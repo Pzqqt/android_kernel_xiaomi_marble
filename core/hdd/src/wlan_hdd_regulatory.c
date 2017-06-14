@@ -715,11 +715,11 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 
 	if (('K' == request->alpha2[0]) &&
 	    ('R' == request->alpha2[1]))
-		request->dfs_region = DFS_KR_REG;
+		request->dfs_region = (enum nl80211_dfs_regions) DFS_KR_REG;
 
 	if (('C' == request->alpha2[0]) &&
 	    ('N' == request->alpha2[1]))
-		request->dfs_region = DFS_CN_REG;
+		request->dfs_region = (enum nl80211_dfs_regions) DFS_CN_REG;
 
 	/* first check if this callback is in response to the driver callback */
 
