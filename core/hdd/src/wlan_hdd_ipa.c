@@ -3815,6 +3815,10 @@ static void hdd_ipa_forward(struct hdd_ipa_priv *hdd_ipa,
 	struct hdd_ipa_pm_tx_cb *pm_tx_cb;
 
 	qdf_spin_lock_bh(&hdd_ipa->pm_lock);
+
+	/* Set IPA ownership for intra-BSS Tx packets to avoid skb_orphan */
+	qdf_nbuf_ipa_owned_set(skb);
+
 	/* WLAN subsystem is in suspend, put int queue */
 	if (hdd_ipa->suspended) {
 		qdf_spin_unlock_bh(&hdd_ipa->pm_lock);
