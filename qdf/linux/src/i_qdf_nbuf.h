@@ -598,6 +598,9 @@ typedef void (*qdf_nbuf_free_t)(__qdf_nbuf_t);
 #define __qdf_nbuf_ipa_owned_set(skb) \
 	(QDF_NBUF_CB_TX_IPA_OWNED(skb) = 1)
 
+#define __qdf_nbuf_ipa_owned_clear(skb) \
+	(QDF_NBUF_CB_TX_IPA_OWNED(skb) = 0)
+
 #define __qdf_nbuf_ipa_priv_get(skb)	\
 	QDF_NBUF_CB_TX_IPA_PRIV(skb)
 

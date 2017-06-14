@@ -548,6 +548,11 @@ static inline void qdf_nbuf_ipa_owned_set(qdf_nbuf_t buf)
 	__qdf_nbuf_ipa_owned_set(buf);
 }
 
+static inline void qdf_nbuf_ipa_owned_clear(qdf_nbuf_t buf)
+{
+	__qdf_nbuf_ipa_owned_clear(buf);
+}
+
 static inline int qdf_nbuf_ipa_priv_get(qdf_nbuf_t buf)
 {
 	return __qdf_nbuf_ipa_priv_get(buf);
