@@ -276,6 +276,8 @@ qdf_export_symbol(nl_srv_is_initialized);
 #include <net/cnss_nl.h>
 #endif
 
+#define WLAN_CLD80211_MAX_SIZE (SKB_WITH_OVERHEAD(8192UL) - NLMSG_HDRLEN)
+
 /* Global variables */
 static DEFINE_MUTEX(nl_srv_sem);
 static struct sock *nl_srv_sock;
@@ -459,7 +461,17 @@ static int send_msg_to_cld80211(int mcgroup_id, int pid, int app_id,
 	if (in_interrupt() || irqs_disabled() || in_atomic())
 		flags = GFP_ATOMIC;
 
-	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, flags);
+	if (len > NLMSG_DEFAULT_SIZE) {
+		if (len > WLAN_CLD80211_MAX_SIZE) {
+			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
+				"buf size:%d if more than max size: %d",
+				len, (int) WLAN_CLD80211_MAX_SIZE);
+			return -ENOMEM;
+		}
+		msg = nlmsg_new(WLAN_CLD80211_MAX_SIZE, flags);
+	} else {
+		msg = nlmsg_new(NLMSG_DEFAULT_SIZE, flags);
+	}
 	if (!msg) {
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 						"nlmsg malloc fails");
