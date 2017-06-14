@@ -222,7 +222,8 @@ lim_process_probe_rsp_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_Packet_info,
 					(uint8_t)probe_rsp->channelNumber,
 					session_entry);
 		}
-		if (LIM_IS_STA_ROLE(session_entry)) {
+		if (LIM_IS_STA_ROLE(session_entry) &&
+				!wma_is_csa_offload_enabled()) {
 			if (probe_rsp->channelSwitchPresent) {
 				/*
 				 * on receiving channel switch announcement

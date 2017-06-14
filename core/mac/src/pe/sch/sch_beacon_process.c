@@ -792,7 +792,7 @@ static void __sch_beacon_process_for_session(tpAniSirGlobal mac_ctx,
 		lim_update_sta_run_time_ht_switch_chnl_params(mac_ctx,
 						&bcn->HTInfo, bssIdx, session);
 
-	if (LIM_IS_STA_ROLE(session)
+	if ((LIM_IS_STA_ROLE(session) && !wma_is_csa_offload_enabled())
 	    || LIM_IS_IBSS_ROLE(session)) {
 		/* Channel Switch information element updated */
 		if (bcn->channelSwitchPresent) {

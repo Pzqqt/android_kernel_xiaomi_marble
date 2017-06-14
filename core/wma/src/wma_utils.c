@@ -3830,6 +3830,22 @@ uint32_t wma_get_num_of_setbits_from_bitmask(uint32_t mask)
 }
 
 /**
+ * wma_is_csa_offload_enabled - checks fw CSA offload capability
+ *
+ * Return: true or false
+ */
+
+bool wma_is_csa_offload_enabled(void)
+{
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+
+	if (!wma)
+		return false;
+
+	return WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
+				   WMI_SERVICE_CSA_OFFLOAD);
+}
+/**
  * wma_config_debug_module_cmd - set debug log config
  * @wmi_handle: wmi layer handle
  * @param: debug log parameter

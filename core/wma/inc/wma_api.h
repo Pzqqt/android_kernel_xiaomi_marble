@@ -223,6 +223,7 @@ static inline QDF_STATUS wma_register_ndp_cb(QDF_STATUS (*pe_ndp_event_handler)
 }
 #endif /* WLAN_FEATURE_NAN_DATAPATH && !WLAN_FEATURE_NAN_CONVERGENCE */
 
+bool wma_is_csa_offload_enabled(void);
 bool wma_is_p2p_lo_capable(void);
 QDF_STATUS wma_p2p_lo_start(struct sir_p2p_lo_start *params);
 QDF_STATUS wma_p2p_lo_stop(u_int32_t vdev_id);
