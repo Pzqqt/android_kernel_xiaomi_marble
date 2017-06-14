@@ -906,14 +906,16 @@ QDF_STATUS wlansap_start_bss(void *pCtx,     /* pwextCtx */
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: Invalid MAC context from p_cds_gctx",
 			  __func__);
-		return QDF_STATUS_E_FAULT;
+		qdf_status = QDF_STATUS_E_FAULT;
+		goto fail;
 	}
 	pmac = PMAC_STRUCT(hHal);
 	if (NULL == pmac) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: Invalid MAC context from p_cds_gctx",
 			  __func__);
-		return QDF_STATUS_E_FAULT;
+		qdf_status = QDF_STATUS_E_FAULT;
+		goto fail;
 	}
 	/* If concurrent session is running that is already associated
 	 * then we just follow that sessions country info (whether
@@ -960,6 +962,9 @@ QDF_STATUS wlansap_start_bss(void *pCtx,     /* pwextCtx */
 
 	/* Handle event */
 	qdf_status = sap_fsm(pSapCtx, &sapEvent);
+fail:
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		sap_free_roam_profile(&pSapCtx->csr_roamProfile);
 
 	return qdf_status;
 } /* wlansap_start_bss */
