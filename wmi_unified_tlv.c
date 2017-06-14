@@ -5082,7 +5082,8 @@ static QDF_STATUS send_set_rssi_monitoring_cmd_tlv(wmi_unified_t wmi_handle,
 		wmi_buf_free(buf);
 	}
 
-	WMI_LOGI("Sent WMI_RSSI_BREACH_MONITOR_CONFIG_CMDID to FW");
+	WMI_LOGD("Sent WMI_RSSI_BREACH_MONITOR_CONFIG_CMDID to FW");
+
 	return ret;
 }
 
