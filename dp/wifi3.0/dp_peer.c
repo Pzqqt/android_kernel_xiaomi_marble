@@ -346,7 +346,21 @@ static void dp_rx_tid_stats_cb(struct dp_soc *soc, void *cb_ctxt,
 		"rx_bitmap_159_128  : %08x\n"
 		"rx_bitmap_191_160  : %08x\n"
 		"rx_bitmap_223_192  : %08x\n"
-		"rx_bitmap_255_224  : %08x\n"
+		"rx_bitmap_255_224  : %08x\n",
+		rx_tid->tid,
+		queue_status->ssn, queue_status->curr_idx,
+		queue_status->pn_31_0, queue_status->pn_63_32,
+		queue_status->pn_95_64, queue_status->pn_127_96,
+		queue_status->last_rx_enq_tstamp,
+		queue_status->last_rx_deq_tstamp,
+		queue_status->rx_bitmap_31_0, queue_status->rx_bitmap_63_32,
+		queue_status->rx_bitmap_95_64, queue_status->rx_bitmap_127_96,
+		queue_status->rx_bitmap_159_128,
+		queue_status->rx_bitmap_191_160,
+		queue_status->rx_bitmap_223_192,
+		queue_status->rx_bitmap_255_224);
+
+	DP_TRACE_STATS(FATAL,
 		"curr_mpdu_cnt      : %d\n"
 		"curr_msdu_cnt      : %d\n"
 		"fwd_timeout_cnt    : %d\n"
@@ -360,18 +374,6 @@ static void dp_rx_tid_stats_cb(struct dp_soc *soc, void *cb_ctxt,
 		"late_recv_mpdu_cnt : %d\n"
 		"win_jump_2k 	    : %d\n"
 		"hole_cnt 	    : %d\n",
-		rx_tid->tid,
-		queue_status->ssn, queue_status->curr_idx,
-		queue_status->pn_31_0, queue_status->pn_63_32,
-		queue_status->pn_95_64, queue_status->pn_127_96,
-		queue_status->last_rx_enq_tstamp,
-		queue_status->last_rx_deq_tstamp,
-		queue_status->rx_bitmap_31_0, queue_status->rx_bitmap_63_32,
-		queue_status->rx_bitmap_95_64, queue_status->rx_bitmap_127_96,
-		queue_status->rx_bitmap_159_128,
-		queue_status->rx_bitmap_191_160,
-		queue_status->rx_bitmap_223_192,
-		queue_status->rx_bitmap_255_224,
 		queue_status->curr_mpdu_cnt, queue_status->curr_msdu_cnt,
 		queue_status->fwd_timeout_cnt, queue_status->fwd_bar_cnt,
 		queue_status->dup_cnt, queue_status->frms_in_order_cnt,
@@ -1719,6 +1721,17 @@ int dp_peer_rxtid_stats(struct dp_peer *peer)
 				(uint64_t)(rx_tid->hw_qdesc_paddr) >> 32;
 			dp_reo_send_cmd(soc, CMD_GET_QUEUE_STATS, &params,
 				dp_rx_tid_stats_cb, rx_tid);
+
+			/* Flush REO descriptor from HW cache to update stats
+			 * in descriptor memory. This is to help debugging */
+			qdf_mem_zero(&params, sizeof(params));
+			params.std.need_status = 0;
+			params.std.addr_lo =
+				rx_tid->hw_qdesc_paddr & 0xffffffff;
+			params.std.addr_hi =
+				(uint64_t)(rx_tid->hw_qdesc_paddr) >> 32;
+			dp_reo_send_cmd(soc, CMD_FLUSH_CACHE, &params, NULL,
+				NULL);
 		}
 	}
 	return 0;
