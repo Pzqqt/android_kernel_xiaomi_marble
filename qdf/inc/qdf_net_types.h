@@ -167,6 +167,7 @@ typedef enum {
 
 /**
  * typedef qdf_nbuf_l4_rx_cksum_type_t - receive checksum API types
+ * @QDF_NBUF_RX_CKSUM_ZERO: Rx checksum zero
  * @QDF_NBUF_RX_CKSUM_TCP: Rx checksum TCP
  * @QDF_NBUF_RX_CKSUM_UDP: Rx checksum UDP
  * @QDF_NBUF_RX_CKSUM_TCPIPV6: Rx checksum TCP IPV6
@@ -176,6 +177,7 @@ typedef enum {
  * @QDF_NBUF_RX_CKSUM_TCPSUM16: Rx checksum TCP SUM16
  */
 typedef enum {
+	QDF_NBUF_RX_CKSUM_ZERO = 0x0000,
 	QDF_NBUF_RX_CKSUM_TCP = 0x0001,
 	QDF_NBUF_RX_CKSUM_UDP = 0x0002,
 	QDF_NBUF_RX_CKSUM_TCPIPV6 = 0x0010,
