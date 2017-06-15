@@ -55,13 +55,11 @@ QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc, uint32_t pool_id,
 		rx_desc_pool->array[i].next = &rx_desc_pool->array[i+1];
 		rx_desc_pool->array[i].rx_desc.cookie = i | (pool_id << 18);
 		rx_desc_pool->array[i].rx_desc.pool_id = pool_id;
-		rx_desc_pool->array[i].rx_desc.nbuf = NULL;
 	}
 
 	rx_desc_pool->array[i].next = NULL;
 	rx_desc_pool->array[i].rx_desc.cookie = i | (pool_id << 18);
 	rx_desc_pool->array[i].rx_desc.pool_id = pool_id;
-	rx_desc_pool->array[i].rx_desc.nbuf = NULL;
 	qdf_spin_unlock_bh(&soc->rx_desc_mutex[pool_id]);
 	return QDF_STATUS_SUCCESS;
 }
