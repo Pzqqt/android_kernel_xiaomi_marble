@@ -25,6 +25,8 @@
 #include "wlan_pmo_obj_mgmt_public_struct.h"
 #include <wlan_scan_ucfg_api.h>
 #include "wlan_pmo_static_config.h"
+#include "wlan_reg_services_api.h"
+
 
 static inline int pmo_find_wow_ptrn_len(const char *ptrn)
 {
@@ -199,6 +201,10 @@ bool pmo_core_is_wow_applicable(struct wlan_objmgr_psoc *psoc)
 		return true;
 	}
 
+	if (wlan_reg_is_11d_scan_inprogress(psoc)) {
+		pmo_debug("11d scan is in progress, enabling wow");
+		return true;
+	}
 	/* Iterate through VDEV list */
 	for (vdev_id = 0; vdev_id < WLAN_UMAC_PSOC_MAX_VDEVS; vdev_id++) {
 		vdev = pmo_psoc_get_vdev(psoc, vdev_id);

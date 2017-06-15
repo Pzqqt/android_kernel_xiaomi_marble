@@ -452,6 +452,11 @@ QDF_STATUS wlan_reg_get_chip_mode(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+bool wlan_reg_is_11d_scan_inprogress(struct wlan_objmgr_psoc *psoc)
+{
+	return reg_is_11d_scan_inprogress(psoc);
+}
+
 QDF_STATUS wlan_reg_get_freq_range(struct wlan_objmgr_pdev *pdev,
 		uint32_t *low_2g,
 		uint32_t *high_2g,

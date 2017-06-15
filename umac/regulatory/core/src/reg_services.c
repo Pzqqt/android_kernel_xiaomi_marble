@@ -2008,6 +2008,7 @@ QDF_STATUS wlan_regulatory_psoc_obj_created_notification(
 	soc_reg_obj->dfs_enabled = true;
 	soc_reg_obj->set_fcc_channel = false;
 	soc_reg_obj->band_capability = BAND_ALL;
+	soc_reg_obj->enable_11d_supp = false;
 	soc_reg_obj->indoor_chan_enabled = true;
 	soc_reg_obj->master_vdev_cnt = 0;
 	soc_reg_obj->vdev_cnt_11d = 0;
@@ -2920,6 +2921,21 @@ QDF_STATUS reg_program_chan_list(struct wlan_objmgr_psoc *psoc,
 	qdf_mem_free(reg_info);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+bool reg_is_11d_scan_inprogress(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
+
+	psoc_priv_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+					WLAN_UMAC_COMP_REGULATORY);
+
+	if (!psoc_priv_obj) {
+		reg_err("reg psoc private obj is NULL");
+		return false;
+	}
+
+	return psoc_priv_obj->enable_11d_supp;
 }
 
 QDF_STATUS reg_get_current_cc(struct wlan_objmgr_psoc *psoc,

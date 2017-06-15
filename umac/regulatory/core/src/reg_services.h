@@ -318,6 +318,8 @@ struct chan_change_cbk_entry {
 	void *arg;
 };
 
+bool reg_is_11d_scan_inprogress(struct wlan_objmgr_psoc *psoc);
+
 enum country_src reg_get_cc_and_src(struct wlan_objmgr_psoc *psoc,
 				    uint8_t *alpha2);
 

@@ -387,6 +387,13 @@ QDF_STATUS wlan_reg_get_chip_mode(struct wlan_objmgr_pdev *pdev,
 		uint32_t *chip_mode);
 
 /**
+ * wlan_reg_is_11d_scan_inprogress() - checks 11d scan status
+ * @psoc: psoc ptr
+ *
+ * Return: bool
+ */
+bool wlan_reg_is_11d_scan_inprogress(struct wlan_objmgr_psoc *psoc);
+/**
  * wlan_reg_get_freq_range() - Get 2GHz and 5GHz frequency range
  * @pdev: pdev pointer
  * @low_2g: low 2GHz frequency range
