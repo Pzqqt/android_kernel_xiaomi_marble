@@ -742,7 +742,7 @@ void htt_tx_desc_frags_table_set(htt_pdev_handle pdev,
 static inline
 void
 htt_tx_desc_type(htt_pdev_handle pdev,
-		 void *htt_tx_desc, enum wlan_frm_fmt type, uint8_t sub_type)
+		 void *htt_tx_desc, enum htt_pkt_type type, uint8_t sub_type)
 {
 	uint32_t *word0;
 
