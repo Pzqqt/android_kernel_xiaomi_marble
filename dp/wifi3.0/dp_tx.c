@@ -701,8 +701,6 @@ static struct dp_tx_desc_s *dp_tx_prepare_desc(struct dp_vdev *vdev,
 
 	return tx_desc;
 failure:
-	if (qdf_unlikely(tx_desc->flags & DP_TX_DESC_FLAG_ME))
-		dp_tx_me_free_buf(pdev, tx_desc->me_buffer);
 	dp_tx_desc_release(tx_desc, desc_pool_id);
 	return NULL;
 }
@@ -1107,21 +1105,23 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		tx_desc = dp_tx_prepare_desc(vdev, nbuf, msdu_info,
 				tx_q->desc_pool_id);
 
-		if (msdu_info->frm_type == dp_tx_frm_me) {
-			tx_desc->me_buffer =
-				msdu_info->u.sg_info.curr_seg->frags[0].vaddr;
-			tx_desc->flags |= DP_TX_DESC_FLAG_ME;
-		}
-
 		if (!tx_desc) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				  "%s Tx_desc prepare Fail vdev %p queue %d\n",
 				  __func__, vdev, tx_q->desc_pool_id);
 
-			if (tx_desc->flags & DP_TX_DESC_FLAG_ME)
-				dp_tx_me_free_buf(pdev, tx_desc->me_buffer);
-			dp_tx_desc_release(tx_desc, tx_q->desc_pool_id);
+			if (msdu_info->frm_type == dp_tx_frm_me) {
+				dp_tx_me_free_buf(pdev,
+					(void *)(msdu_info->u.sg_info
+						.curr_seg->frags[0].vaddr));
+			}
 			goto done;
+		}
+
+		if (msdu_info->frm_type == dp_tx_frm_me) {
+			tx_desc->me_buffer =
+				msdu_info->u.sg_info.curr_seg->frags[0].vaddr;
+			tx_desc->flags |= DP_TX_DESC_FLAG_ME;
 		}
 
 		/*
