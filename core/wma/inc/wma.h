@@ -266,6 +266,7 @@ enum ds_mode {
 #define WMA_DELETE_PEER_RSP 0x05
 #define WMA_VDEV_START_REQUEST_TIMEOUT (6000)   /* 6 seconds */
 #define WMA_VDEV_STOP_REQUEST_TIMEOUT  (6000)   /* 6 seconds */
+#define WMA_VDEV_HW_MODE_REQUEST_TIMEOUT (5000) /* 5 seconds */
 
 /*
  * The firmware value has been changed recently to 0x127

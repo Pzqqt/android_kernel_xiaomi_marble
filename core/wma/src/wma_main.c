@@ -2758,7 +2758,7 @@ static int wma_pdev_set_hw_mode_resp_evt_handler(void *handle,
 		 */
 		return QDF_STATUS_E_NULL_VALUE;
 	}
-
+	wma_release_wmi_resp_wakelock(wma);
 	hw_mode_resp = qdf_mem_malloc(sizeof(*hw_mode_resp));
 	if (!hw_mode_resp) {
 		WMA_LOGE("%s: Memory allocation failed", __func__);
@@ -7233,9 +7233,13 @@ QDF_STATUS wma_send_pdev_set_hw_mode_cmd(tp_wma_handle wma_handle,
 		goto fail;
 	}
 
+	wma_acquire_wmi_resp_wakelock(wma_handle,
+				WMA_VDEV_HW_MODE_REQUEST_TIMEOUT);
 	if (wmi_unified_soc_set_hw_mode_cmd(wma_handle->wmi_handle,
-				msg->hw_mode_index))
+				msg->hw_mode_index)) {
+		wma_release_wmi_resp_wakelock(wma_handle);
 		goto fail;
+	}
 
 	return QDF_STATUS_SUCCESS;
 fail:
