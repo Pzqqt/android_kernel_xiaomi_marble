@@ -6198,7 +6198,9 @@ enum wmi_host_sta_powersave_param {
 #define WMI_HOST_HT_CAP_MPDU_DENSITY	0x0700   /* MPDU Density */
 #define WMI_HOST_HT_CAP_MPDU_DENSITY_MASK_SHIFT 8
 #define WMI_HOST_HT_CAP_HT40_SGI	0x0800
-#define WMI_HOST_HT_CAP_IBF_BFER	0x1000
+#define WMI_HOST_HT_CAP_RX_LDPC         0x1000
+#define WMI_HOST_HT_CAP_TX_LDPC         0x2000
+#define WMI_HOST_HT_CAP_IBF_BFER	0x4000
 
 /* These macros should be used when we wish to advertise STBC support for
  * only 1SS or 2SS or 3SS. */

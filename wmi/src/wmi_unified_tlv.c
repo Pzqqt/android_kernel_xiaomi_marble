@@ -15391,6 +15391,29 @@ static bool is_service_enabled_tlv(wmi_unified_t wmi_handle,
 }
 #endif
 
+static inline void copy_ht_cap_info(uint32_t ev_target_cap,
+		struct wlan_psoc_target_capability_info *cap)
+{
+       /* except LDPC all flags are common betwen legacy and here
+	*  also IBFEER is not defined for TLV
+	*/
+	cap->ht_cap_info |= ev_target_cap & (
+					WMI_HT_CAP_ENABLED
+					| WMI_HT_CAP_HT20_SGI
+					| WMI_HT_CAP_DYNAMIC_SMPS
+					| WMI_HT_CAP_TX_STBC
+					| WMI_HT_CAP_TX_STBC_MASK_SHIFT
+					| WMI_HT_CAP_RX_STBC
+					| WMI_HT_CAP_RX_STBC_MASK_SHIFT
+					| WMI_HT_CAP_LDPC
+					| WMI_HT_CAP_L_SIG_TXOP_PROT
+					| WMI_HT_CAP_MPDU_DENSITY
+					| WMI_HT_CAP_MPDU_DENSITY_MASK_SHIFT
+					| WMI_HT_CAP_HT40_SGI);
+	if (ev_target_cap & WMI_HT_CAP_LDPC)
+		cap->ht_cap_info |= WMI_HOST_HT_CAP_RX_LDPC |
+			WMI_HOST_HT_CAP_TX_LDPC;
+}
 /**
  * extract_service_ready_tlv() - extract service ready event
  * @wmi_handle: wmi handle
@@ -15417,7 +15440,7 @@ static QDF_STATUS extract_service_ready_tlv(wmi_unified_t wmi_handle,
 	cap->phy_capability = ev->phy_capability;
 	cap->max_frag_entry = ev->max_frag_entry;
 	cap->num_rf_chains = ev->num_rf_chains;
-	cap->ht_cap_info = ev->ht_cap_info;
+	copy_ht_cap_info(ev->ht_cap_info, cap);
 	cap->vht_cap_info = ev->vht_cap_info;
 	cap->vht_supp_mcs = ev->vht_supp_mcs;
 	cap->hw_min_tx_power = ev->hw_min_tx_power;
