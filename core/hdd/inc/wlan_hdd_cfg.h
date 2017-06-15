@@ -4993,6 +4993,31 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
+ *
+ * gEnableCckTxFirOverride - Enable/disable CCK TxFIR Override
+ * @Min: 0 (disabled)
+ * @Max: 1 (enabled)
+ * @Default: 0 (disabled)
+ *
+ * When operating in an 802.11b mode, this configuration item forces a 2x2 radio
+ * configuration into 1x for Tx and 2x for Rx (ie 1x2) for regulatory compliance
+ * reasons.
+ *
+ * Related: enable2x2
+ *
+ * Supported Feature: 802.11b, 2x2
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_CCK_TX_FIR_OVERRIDE_NAME     "gEnableCckTxFirOverride"
+#define CFG_ENABLE_CCK_TX_FIR_OVERRIDE_MIN      (0)
+#define CFG_ENABLE_CCK_TX_FIR_OVERRIDE_MAX      (1)
+#define CFG_ENABLE_CCK_TX_FIR_OVERRIDE_DEFAULT  (0)
+
+/*
+ * <ini>
  * gDefaultRateIndex24Ghz -Set the rate index for 24Ghz
  * @Min: 1
  * @Max: 9
@@ -10806,6 +10831,7 @@ struct hdd_config {
 	uint8_t apMaxOffloadReorderBuffs;
 	bool advertiseConcurrentOperation;
 	bool enableMemDeepSleep;
+	bool enable_cck_tx_fir_override;
 
 	uint32_t defaultRateIndex24Ghz;
 #ifdef MEMORY_DEBUG

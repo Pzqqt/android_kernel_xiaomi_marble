@@ -3539,10 +3539,28 @@ int hdd_set_fw_params(hdd_adapter_t *adapter)
 	if (!hdd_ctx)
 		return -EINVAL;
 
-	if ((cds_get_conparam() != QDF_GLOBAL_FTM_MODE) &&
-	    (!hdd_ctx->config->enable2x2)) {
+	if (cds_get_conparam() == QDF_GLOBAL_FTM_MODE) {
+		hdd_debug("FTM Mode is active; nothing to do");
+		return 0;
+	}
+
+	if (hdd_ctx->config->enable2x2) {
+		hdd_debug("configuring 2x2 mode fw params");
+
+		ret = wma_cli_set_command(adapter->sessionId,
+				       WMI_PDEV_PARAM_ENABLE_CCK_TXFIR_OVERRIDE,
+				    hdd_ctx->config->enable_cck_tx_fir_override,
+					  PDEV_CMD);
+		if (ret) {
+			hdd_err("WMI_PDEV_PARAM_ENABLE_CCK_TXFIR_OVERRIDE set failed %d",
+				ret);
+			goto error;
+		}
+	} else {
 #define HDD_DTIM_1CHAIN_RX_ID 0x5
 #define HDD_SMPS_PARAM_VALUE_S 29
+		hdd_debug("configuring 1x1 mode fw params");
+
 		/*
 		 * Disable DTIM 1 chain Rx when in 1x1,
 		 * we are passing two value
@@ -3580,35 +3598,29 @@ int hdd_set_fw_params(hdd_adapter_t *adapter)
 		}
 #undef HDD_DTIM_1CHAIN_RX_ID
 #undef HDD_SMPS_PARAM_VALUE_S
-	} else {
-		hdd_debug("FTM Mode or 2x2 mode - Do not set 1x1 params");
 	}
 
-	if (QDF_GLOBAL_FTM_MODE != cds_get_conparam()) {
-		ret = wma_cli_set_command(adapter->sessionId,
-					  WMI_PDEV_PARAM_HYST_EN,
-					  hdd_ctx->config->enableMemDeepSleep,
-					  PDEV_CMD);
+	ret = wma_cli_set_command(adapter->sessionId,
+				  WMI_PDEV_PARAM_HYST_EN,
+				  hdd_ctx->config->enableMemDeepSleep,
+				  PDEV_CMD);
+	if (ret) {
+		hdd_err("WMI_PDEV_PARAM_HYST_EN set failed %d", ret);
+		goto error;
+	}
 
-		if (ret) {
-			hdd_err("WMI_PDEV_PARAM_HYST_EN set failed %d",
-				ret);
-			goto error;
-		}
-
-		ret = wma_cli_set_command(adapter->sessionId,
-					  WMI_VDEV_PARAM_ENABLE_RTSCTS,
-					  hdd_ctx->config->rts_profile,
-					  VDEV_CMD);
-		if (ret) {
-			hdd_err("FAILED TO SET RTSCTS Profile ret:%d", ret);
-			goto error;
-		}
+	ret = wma_cli_set_command(adapter->sessionId,
+				  WMI_VDEV_PARAM_ENABLE_RTSCTS,
+				  hdd_ctx->config->rts_profile,
+				  VDEV_CMD);
+	if (ret) {
+		hdd_err("FAILED TO SET RTSCTS Profile ret:%d", ret);
+		goto error;
 	}
 
 	hdd_set_fw_log_params(hdd_ctx, adapter);
-
 	EXIT();
+
 	return 0;
 
 error:
