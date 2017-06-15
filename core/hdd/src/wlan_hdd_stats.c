@@ -3001,6 +3001,12 @@ static inline void wlan_hdd_fill_station_info_signal(struct station_info
 }
 #endif
 
+#ifdef LINKSPEED_DEBUG_ENABLED
+#define linkspeed_dbg(format, args...) pr_info(format, ## args)
+#else
+#define linkspeed_dbg(format, args...)
+#endif /* LINKSPEED_DEBUG_ENABLED */
+
 /**
  * __wlan_hdd_cfg80211_get_station() - get station statistics
  * @wiphy: Pointer to wiphy
@@ -3129,10 +3135,8 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 		 (int)pCfg->linkSpeedRssiHigh, (int)pCfg->linkSpeedRssiMid,
 		 (int)pCfg->linkSpeedRssiLow, (int)rate_flags, (int)mcs_index);
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 0, 0)) || defined(WITH_BACKPORTS)
 	/* assume basic BW. anything else will override this later */
-	sinfo->txrate.bw = RATE_INFO_BW_20;
-#endif
+	hdd_set_rate_bw(&sinfo->txrate, HDD_RATE_BW_20);
 
 	if (eHDD_LINK_SPEED_REPORT_ACTUAL != pCfg->reportMaxLinkSpeed) {
 		/* we do not want to necessarily report the current speed */
@@ -3257,26 +3261,13 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 					(vht_mcs_map & DATA_RATE_11AC_MCS_MASK);
 				if (rate_flags & eHAL_TX_RATE_SGI)
 					rateFlag |= 1;
+
 				if (DATA_RATE_11AC_MAX_MCS_7 == vhtMaxMcs)
 					maxMCSIdx = 7;
-				else if (DATA_RATE_11AC_MAX_MCS_8 ==
-					   vhtMaxMcs)
+				else if (DATA_RATE_11AC_MAX_MCS_8 == vhtMaxMcs)
 					maxMCSIdx = 8;
-				else if (DATA_RATE_11AC_MAX_MCS_9 ==
-					   vhtMaxMcs) {
-					/*
-					 * IEEE_P802.11ac_2013.pdf page 325, 326
-					 * - MCS9 is valid for VHT20 when
-					 *   Nss = 3 or Nss = 6
-					 * - MCS9 is not valid for VHT20 when
-					 *   Nss = 1,2,4,5,7,8
-					 */
-					if ((rate_flags & eHAL_TX_RATE_VHT20) &&
-					     (nss != 3 && nss != 6))
-						maxMCSIdx = 8;
-					else
-						maxMCSIdx = 9;
-				}
+				else if (DATA_RATE_11AC_MAX_MCS_9 == vhtMaxMcs)
+					maxMCSIdx = 9;
 
 				if (rssidx != 0) {
 					for (i = 0; i <= maxMCSIdx; i++) {
@@ -3376,62 +3367,31 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 			} else {
 				maxSpeedMCS = 1;
 				maxMCSIdx = mcs_index;
-				/*
-				 * IEEE_P802.11ac_2013.pdf page 325, 326
-				 * - MCS9 is valid for VHT20 when
-				 *   Nss = 3 or Nss = 6
-				 * - MCS9 is not valid for VHT20 when
-				 *   Nss = 1,2,4,5,7,8
-				 */
-				if ((rate_flags & eHAL_TX_RATE_VHT20) &&
-				    (maxMCSIdx > 8) &&
-				    (nss != 3 && nss != 6)) {
-					maxMCSIdx = 8;
-				}
 			}
 		}
 
 		if (rate_flags & eHAL_TX_RATE_LEGACY) {
 			sinfo->txrate.legacy = maxRate;
-#ifdef LINKSPEED_DEBUG_ENABLED
-			pr_info("Reporting legacy rate %d\n",
-				sinfo->txrate.legacy);
-#endif /* LINKSPEED_DEBUG_ENABLED */
+			linkspeed_dbg("Reporting legacy rate %d\n",
+				      sinfo->txrate.legacy);
 		} else {
 			sinfo->txrate.mcs = maxMCSIdx;
 			sinfo->txrate.nss = nss;
-			if (rate_flags & eHAL_TX_RATE_VHT80) {
-				sinfo->txrate.flags |= RATE_INFO_FLAGS_VHT_MCS;
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 0, 0)) || defined(WITH_BACKPORTS)
-				sinfo->txrate.bw = RATE_INFO_BW_80;
-#else
-				sinfo->txrate.flags |=
-					RATE_INFO_FLAGS_80_MHZ_WIDTH;
-#endif
-			} else if (rate_flags & eHAL_TX_RATE_VHT40) {
-				sinfo->txrate.flags |= RATE_INFO_FLAGS_VHT_MCS;
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 0, 0)) || defined(WITH_BACKPORTS)
-				sinfo->txrate.bw = RATE_INFO_BW_40;
-#else
-				sinfo->txrate.flags |=
-					RATE_INFO_FLAGS_40_MHZ_WIDTH;
-#endif
-			} else if (rate_flags & eHAL_TX_RATE_VHT20) {
-				sinfo->txrate.flags |= RATE_INFO_FLAGS_VHT_MCS;
-			} else
-				sinfo->txrate.flags |= RATE_INFO_FLAGS_VHT_MCS;
+			sinfo->txrate.flags |= RATE_INFO_FLAGS_VHT_MCS;
+
+			if (rate_flags & eHAL_TX_RATE_VHT80)
+				hdd_set_rate_bw(&sinfo->txrate, HDD_RATE_BW_80);
+			else if (rate_flags & eHAL_TX_RATE_VHT40)
+				hdd_set_rate_bw(&sinfo->txrate, HDD_RATE_BW_40);
+
 			if (rate_flags &
 			    (eHAL_TX_RATE_HT20 | eHAL_TX_RATE_HT40)) {
 				sinfo->txrate.flags |= RATE_INFO_FLAGS_MCS;
-				if (rate_flags & eHAL_TX_RATE_HT40) {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 0, 0)) || defined(WITH_BACKPORTS)
-					sinfo->txrate.bw = RATE_INFO_BW_40;
-#else
-					sinfo->txrate.flags |=
-						RATE_INFO_FLAGS_40_MHZ_WIDTH;
-#endif
-				}
+				if (rate_flags & eHAL_TX_RATE_HT40)
+					hdd_set_rate_bw(&sinfo->txrate,
+							HDD_RATE_BW_40);
 			}
+
 			if (rate_flags & eHAL_TX_RATE_SGI) {
 				if (!
 				    (sinfo->txrate.
@@ -3440,10 +3400,8 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 						RATE_INFO_FLAGS_MCS;
 				sinfo->txrate.flags |= RATE_INFO_FLAGS_SHORT_GI;
 			}
-#ifdef LINKSPEED_DEBUG_ENABLED
-			pr_info("Reporting MCS rate %d flags %x\n",
-				sinfo->txrate.mcs, sinfo->txrate.flags);
-#endif /* LINKSPEED_DEBUG_ENABLED */
+			linkspeed_dbg("Reporting MCS rate %d flags %x\n",
+				      sinfo->txrate.mcs, sinfo->txrate.flags);
 		}
 	} else {
 		/* report current rate instead of max rate */
@@ -3451,50 +3409,34 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 		if (rate_flags & eHAL_TX_RATE_LEGACY) {
 			/* provide to the UI in units of 100kbps */
 			sinfo->txrate.legacy = myRate;
-#ifdef LINKSPEED_DEBUG_ENABLED
-			pr_info("Reporting actual legacy rate %d\n",
-				sinfo->txrate.legacy);
-#endif /* LINKSPEED_DEBUG_ENABLED */
+			linkspeed_dbg("Reporting actual legacy rate %d\n",
+				      sinfo->txrate.legacy);
 		} else {
 			/* must be MCS */
 			sinfo->txrate.mcs = mcs_index;
 			sinfo->txrate.nss = nss;
 			sinfo->txrate.flags |= RATE_INFO_FLAGS_VHT_MCS;
-			if (rate_flags & eHAL_TX_RATE_VHT80) {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 0, 0)) || defined(WITH_BACKPORTS)
-				sinfo->txrate.bw = RATE_INFO_BW_80;
-#else
-				sinfo->txrate.flags |=
-					RATE_INFO_FLAGS_80_MHZ_WIDTH;
-#endif
-			} else if (rate_flags & eHAL_TX_RATE_VHT40) {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 0, 0)) || defined(WITH_BACKPORTS)
-				sinfo->txrate.bw = RATE_INFO_BW_40;
-#else
-				sinfo->txrate.flags |=
-					RATE_INFO_FLAGS_40_MHZ_WIDTH;
-#endif
-			}
+
+			if (rate_flags & eHAL_TX_RATE_VHT80)
+				hdd_set_rate_bw(&sinfo->txrate, HDD_RATE_BW_80);
+			else if (rate_flags & eHAL_TX_RATE_VHT40)
+				hdd_set_rate_bw(&sinfo->txrate, HDD_RATE_BW_40);
+
 			if (rate_flags &
 			    (eHAL_TX_RATE_HT20 | eHAL_TX_RATE_HT40)) {
 				sinfo->txrate.flags |= RATE_INFO_FLAGS_MCS;
-				if (rate_flags & eHAL_TX_RATE_HT40) {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 0, 0)) || defined(WITH_BACKPORTS)
-					sinfo->txrate.bw = RATE_INFO_BW_40;
-#else
-					sinfo->txrate.flags |=
-						RATE_INFO_FLAGS_40_MHZ_WIDTH;
-#endif
-				}
+				if (rate_flags & eHAL_TX_RATE_HT40)
+					hdd_set_rate_bw(&sinfo->txrate,
+							HDD_RATE_BW_40);
 			}
+
 			if (rate_flags & eHAL_TX_RATE_SGI) {
 				sinfo->txrate.flags |= RATE_INFO_FLAGS_MCS;
 				sinfo->txrate.flags |= RATE_INFO_FLAGS_SHORT_GI;
 			}
-#ifdef LINKSPEED_DEBUG_ENABLED
-			pr_info("Reporting actual MCS rate %d flags %x\n",
-				sinfo->txrate.mcs, sinfo->txrate.flags);
-#endif /* LINKSPEED_DEBUG_ENABLED */
+
+			linkspeed_dbg("Reporting actual MCS rate %d flags %x\n",
+				      sinfo->txrate.mcs, sinfo->txrate.flags);
 		}
 	}
 
@@ -3579,11 +3521,12 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	}
 #endif
 
-
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_GET_STA,
 			 pAdapter->sessionId, maxRate));
+
 	EXIT();
+
 	return 0;
 }
 

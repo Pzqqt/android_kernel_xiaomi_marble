@@ -408,6 +408,31 @@ struct cfg80211_bss *wlan_hdd_cfg80211_inform_bss_frame(hdd_adapter_t *pAdapter,
 #endif
 
 /**
+ * hdd_rate_info_bw: an HDD internal rate bandwidth representation
+ * @HDD_RATE_BW_5: 5MHz
+ * @HDD_RATE_BW_10: 10MHz
+ * @HDD_RATE_BW_20: 20MHz
+ * @HDD_RATE_BW_40: 40MHz
+ * @HDD_RATE_BW_80: 80MHz
+ * @HDD_RATE_BW_160: 160 MHz
+ */
+enum hdd_rate_info_bw {
+	HDD_RATE_BW_5,
+	HDD_RATE_BW_10,
+	HDD_RATE_BW_20,
+	HDD_RATE_BW_40,
+	HDD_RATE_BW_80,
+	HDD_RATE_BW_160,
+};
+
+/**
+ * hdd_set_rate_bw(): Set the bandwidth for the given rate_info
+ * @info: The rate info for which the bandwidth should be set
+ * @hdd_bw: HDD representation of a rate info bandwidth
+ */
+void hdd_set_rate_bw(struct rate_info *info, enum hdd_rate_info_bw hdd_bw);
+
+/**
  * hdd_lost_link_info_cb() - callback function to get lost link information
  * @context: HDD context
  * @lost_link_info: lost link information
