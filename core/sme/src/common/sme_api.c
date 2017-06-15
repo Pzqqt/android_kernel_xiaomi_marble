@@ -1823,7 +1823,7 @@ QDF_STATUS sme_set_cckm_ie(tHalHandle hHal, uint8_t sessionId,
 QDF_STATUS sme_set_ese_beacon_request(tHalHandle hHal, const uint8_t sessionId,
 				      const tCsrEseBeaconReq *pEseBcnReq)
 {
-	QDF_STATUS status = eSIR_SUCCESS;
+	QDF_STATUS status;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tpSirBeaconReportReqInd pSmeBcnReportReq = NULL;
 	tCsrEseBeaconReqParams *pBeaconReq = NULL;
@@ -4584,8 +4584,9 @@ QDF_STATUS sme_wow_add_pattern(tHalHandle hal,
 	if (eSIR_SUCCESS != ret_code) {
 		sme_err("Posting WMA_WOWL_ADD_BCAST_PTRN failed, reason: %X",
 			ret_code);
+		return QDF_STATUS_E_FAILURE;
 	}
-	return ret_code;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -13451,7 +13452,7 @@ QDF_STATUS sme_set_dhcp_srv_offload(tHalHandle hHal,
 			    (scheduler_post_msg(QDF_MODULE_ID_WMA,
 						 &message))) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Not able to post WMA_SET_DHCP_SERVER_OFFLOAD_CMD to WMA!",
+				  "%s:WMA_SET_DHCP_SERVER_OFFLOAD_CMD failed",
 				  __func__);
 			qdf_mem_free(pSmeDhcpSrvInfo);
 			status = QDF_STATUS_E_FAILURE;

@@ -616,7 +616,7 @@ void csr_neighbor_roam_request_handoff(tpAniSirGlobal mac_ctx,
 
 	qdf_mem_zero(&roam_info, sizeof(tCsrRoamInfo));
 	csr_roam_call_callback(mac_ctx, session_id, &roam_info, roamid,
-			       eCSR_ROAM_FT_START, eSIR_SME_SUCCESS);
+			       eCSR_ROAM_FT_START, eCSR_ROAM_RESULT_SUCCESS);
 
 	qdf_mem_zero(&roam_info, sizeof(tCsrRoamInfo));
 	csr_neighbor_roam_state_transition(mac_ctx,

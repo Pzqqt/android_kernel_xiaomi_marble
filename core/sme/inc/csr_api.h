@@ -527,6 +527,7 @@ typedef enum {
 /* comment inside indicates what roaming callback gets */
 typedef enum {
 	eCSR_ROAM_RESULT_NONE,
+	eCSR_ROAM_RESULT_SUCCESS = eCSR_ROAM_RESULT_NONE,
 	/*
 	 * If roamStatus is eCSR_ROAM_ASSOCIATION_COMPLETION,
 	 * tCsrRoamInfo's pBssDesc may pass back
