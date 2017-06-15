@@ -42,9 +42,9 @@
 #include "sir_types.h"
 
 tSirRetStatus mac_start(tHalHandle hHal, void *pHalMacStartParams);
-tSirRetStatus mac_stop(tHalHandle hHal, tHalStopType stopType);
+QDF_STATUS mac_stop(tHalHandle hHal, tHalStopType stopType);
 tSirRetStatus mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
 			tHddHandle hHdd, struct cds_config_info *cds_cfg);
-tSirRetStatus mac_close(tHalHandle hHal);
+QDF_STATUS mac_close(tHalHandle hHal);
 
 #endif /* __MAC_INIT_API_H */

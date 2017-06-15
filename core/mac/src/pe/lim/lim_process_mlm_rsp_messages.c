@@ -3205,7 +3205,7 @@ void lim_process_rx_scan_event(tpAniSirGlobal pMac, void *buf)
 	case SIR_SCAN_EVENT_START_FAILED:
 		if (ROC_SCAN_REQUESTOR_ID == pScanEvent->requestor) {
 			lim_send_sme_roc_rsp(pMac, eWNI_SME_REMAIN_ON_CHN_RSP,
-					 QDF_STATUS_SUCCESS,
+					 eSIR_SME_SUCCESS,
 					 pScanEvent->sessionId,
 					 pScanEvent->scanId);
 			qdf_mem_free(pMac->lim.gpLimRemainOnChanReq);
@@ -3233,7 +3233,7 @@ void lim_process_rx_scan_event(tpAniSirGlobal pMac, void *buf)
 			if (pMac->lim.gpLimRemainOnChanReq) {
 				lim_send_sme_roc_rsp(pMac,
 						 eWNI_SME_REMAIN_ON_CHN_RDY_IND,
-						 QDF_STATUS_SUCCESS,
+						 eSIR_SME_SUCCESS,
 						 pScanEvent->sessionId,
 						 pScanEvent->scanId);
 			} else {
