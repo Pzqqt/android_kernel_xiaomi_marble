@@ -3109,6 +3109,20 @@ fail0:
 }
 
 /*
+ * dp_get_sec_type() - Get the security type
+ * @peer:		Datapath peer handle
+ * @sec_idx:    Security id (mcast, ucast)
+ *
+ * return sec_type: Security type
+ */
+static int dp_get_sec_type(struct cdp_peer *peer, uint8_t sec_idx)
+{
+	struct dp_peer *dpeer = (struct dp_peer *)peer;
+
+	return dpeer->security[sec_idx].sec_type;
+}
+
+/*
  * dp_peer_authorize() - authorize txrx peer
  * @peer_handle:		Datapath peer handle
  * @authorize
@@ -4827,6 +4841,7 @@ static struct cdp_ctrl_ops dp_ops_ctrl = {
 	.txrx_set_filter_neighbour_peers = dp_set_filter_neighbour_peers,
 	.txrx_update_filter_neighbour_peers =
 		dp_update_filter_neighbour_peers,
+	.txrx_get_sec_type = dp_get_sec_type,
 	/* TODO: Add other functions */
 	.txrx_wdi_event_sub = dp_wdi_event_sub,
 	.txrx_wdi_event_unsub = dp_wdi_event_unsub,
