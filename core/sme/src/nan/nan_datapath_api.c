@@ -372,7 +372,6 @@ void csr_roam_save_ndi_connected_info(tpAniSirGlobal mac_ctx,
 		sizeof(connect_profile), 0);
 	connect_profile->AuthType = roam_profile->negotiatedAuthType;
 		connect_profile->AuthInfo = roam_profile->AuthType;
-	connect_profile->CBMode = roam_profile->CBMode;
 	connect_profile->EncryptionType =
 		roam_profile->negotiatedUCEncryptionType;
 		connect_profile->EncryptionInfo = roam_profile->EncryptionType;

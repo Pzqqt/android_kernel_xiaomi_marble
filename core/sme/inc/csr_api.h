@@ -922,7 +922,6 @@ typedef struct tagCsrRoamProfile {
 	uint8_t MFPCapable;
 #endif
 	tCsrKeys Keys;
-	eCsrCBChoice CBMode;
 	tCsrChannelInfo ChannelInfo;
 	uint8_t operationChannel;
 	struct ch_params ch_params;
@@ -1012,7 +1011,6 @@ typedef struct tagCsrRoamConnectedProfile {
 	tCsrEncryptionList EncryptionInfo;
 	eCsrEncryptionType mcEncryptionType;
 	tCsrEncryptionList mcEncryptionInfo;
-	eCsrCBChoice CBMode;
 	uint8_t operationChannel;
 	uint32_t vht_channel_width;
 	uint16_t beaconInterval;
