@@ -974,6 +974,7 @@ struct ol_txrx_pdev_t {
 		qdf_atomic_t lro_dev_cnt;
 	} lro_info;
 	struct ol_txrx_peer_t *self_peer;
+	qdf_work_t peer_unmap_timer_work;
 };
 
 struct ol_txrx_vdev_t {
