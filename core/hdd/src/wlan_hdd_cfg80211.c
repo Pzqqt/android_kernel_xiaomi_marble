@@ -15870,7 +15870,7 @@ static int __wlan_hdd_cfg80211_set_wiphy_params(struct wiphy *wiphy,
 			return -EINVAL;
 		}
 
-		if (changed & WIPHY_PARAM_RETRY_SHORT) {
+		if (changed & WIPHY_PARAM_RETRY_LONG) {
 			if (0 != sme_cfg_set_int(hHal,
 						WNI_CFG_LONG_RETRY_LIMIT,
 						retry_value)) {
