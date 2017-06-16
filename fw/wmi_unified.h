@@ -4328,6 +4328,11 @@ typedef enum {
      *  bit 16~31 : 11ag mode TX chain number.
      */
     WMI_PDEV_PARAM_ABG_MODE_TX_CHAIN_NUM,
+    /** Enable/Disable cck txfir override
+     *  bit 0 - enable (1) or disale (0) CCK tx FIR
+     *  bits 31:1 - unused / reserved (set to 0)
+     */
+    WMI_PDEV_PARAM_ENABLE_CCK_TXFIR_OVERRIDE,
 } WMI_PDEV_PARAM;
 
 typedef struct {
