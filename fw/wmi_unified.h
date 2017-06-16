@@ -10038,6 +10038,11 @@ typedef enum p2p_lo_start_ctrl_flags_e {
     P2P_LO_START_CTRL_FLAG_FLUSH_LISTEN_RESULT = 1 << 0,  /* flush prob. req when host is awake */
 } p2p_lo_start_ctrl_flags;
 
+#define P2P_LO_PER_DEV_TYPE_LEN     8
+#define P2P_LO_DEV_TYPES_COUNT_MAX  10
+#define P2P_LO_DEV_TYPES_LEN_MAX    (P2P_LO_PER_DEV_TYPE_LEN * P2P_LO_DEV_TYPES_COUNT_MAX)
+#define P2P_LO_PROB_RESP_MAX_LEN    512
+
 typedef struct {
     A_UINT32 tlv_header;
     A_UINT32 vdev_id;
@@ -10051,11 +10056,13 @@ typedef struct {
      * device_types_data[] byte-array TLV that follows this TLV.
      * The data in device_types_data[] is in 8-byte elements, so
      * device_types_len will be a multiple of 8.
+     * Refer to P2P_LO_DEV_TYPES_LEN_MAX
      */
     A_UINT32 device_types_len;
     /*
      * prob_resp_len specifies the number of bytes in the
      * prob_resp_data[] byte-array TLV that follows this TLV.
+     * Refer to P2P_LO_PROB_RESP_MAX_LEN
      */
     A_UINT32 prob_resp_len;
     /*
