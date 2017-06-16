@@ -1443,15 +1443,6 @@ bool policy_mgr_get_mode_specific_conn_info(struct wlan_objmgr_psoc *psoc,
 	return status;
 }
 
-bool policy_mgr_get_sap_conn_info(struct wlan_objmgr_psoc *psoc,
-				  uint8_t *channel, uint8_t *vdev_id)
-{
-	return policy_mgr_get_mode_specific_conn_info(psoc,
-					  channel,
-					  vdev_id,
-					  PM_SAP_MODE);
-}
-
 bool policy_mgr_max_concurrent_connections_reached(
 		struct wlan_objmgr_psoc *psoc)
 {
