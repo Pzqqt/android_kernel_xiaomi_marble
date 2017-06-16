@@ -2662,7 +2662,6 @@ void lim_switch_primary_secondary_channel(tpAniSirGlobal pMac,
 					uint8_t ch_center_freq_seg1,
 					enum phy_ch_width ch_width)
 {
-	uint8_t subband = 0;
 
 	/* Assign the callback to resume TX once channel is changed. */
 	psessionEntry->currentReqChannel = newChannel;
@@ -2686,7 +2685,8 @@ void lim_switch_primary_secondary_channel(tpAniSirGlobal pMac,
 	if (psessionEntry->htSecondaryChannelOffset !=
 			psessionEntry->gLimChannelSwitch.sec_ch_offset) {
 		pe_warn("switch old sec chnl: %d --> new sec chnl: %d",
-			psessionEntry->htSecondaryChannelOffset, subband);
+			psessionEntry->htSecondaryChannelOffset,
+			psessionEntry->gLimChannelSwitch.sec_ch_offset);
 		psessionEntry->htSecondaryChannelOffset =
 			psessionEntry->gLimChannelSwitch.sec_ch_offset;
 		if (psessionEntry->htSecondaryChannelOffset ==

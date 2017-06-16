@@ -2188,7 +2188,16 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx,
 			lim_process_csa_wbw_ie(mac_ctx, csa_params,
 					chnl_switch_info, session_entry);
 			lim_ch_switch->sec_ch_offset =
-				csa_params->sec_chan_offset;
+				PHY_SINGLE_CHANNEL_CENTERED;
+			if (chnl_switch_info->newChanWidth) {
+				if (csa_params->channel <
+				  csa_params->new_ch_freq_seg1)
+					lim_ch_switch->sec_ch_offset =
+						PHY_DOUBLE_CHANNEL_LOW_PRIMARY;
+				else
+					lim_ch_switch->sec_ch_offset =
+						PHY_DOUBLE_CHANNEL_HIGH_PRIMARY;
+			}
 		} else if (csa_params->ies_present_flag
 				& lim_xcsa_ie_present) {
 			chan_space =
