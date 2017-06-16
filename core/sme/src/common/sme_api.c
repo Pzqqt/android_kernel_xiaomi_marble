@@ -4904,9 +4904,6 @@ QDF_STATUS sme_get_snr(tHalHandle hHal,
     \param statsMask - The different category/categories of stats requester
 	is looking for
     \param callback - SME sends back the requested stats using the callback
-    \param periodicity - If requester needs periodic update in millisec, 0 means
-			 it's an one time request
-    \param cache - If requester is happy with cached stats
     \param staId - The station ID for which the stats is requested for
     \param pContext - user context to be passed back along with the callback
     \param sessionId - sme session interface
@@ -4915,20 +4912,16 @@ QDF_STATUS sme_get_snr(tHalHandle hHal,
 QDF_STATUS sme_get_statistics(tHalHandle hHal,
 			      eCsrStatsRequesterType requesterId,
 			      uint32_t statsMask, tCsrStatsCallback callback,
-			      uint32_t periodicity, bool cache, uint8_t staId,
-			      void *pContext, uint8_t sessionId)
+			      uint8_t staId, void *pContext, uint8_t sessionId)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_GET_STATS, NO_SESSION,
-			 periodicity));
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		status =
-			csr_get_statistics(pMac, requesterId, statsMask, callback,
-					   periodicity, cache, staId, pContext,
+			csr_get_statistics(pMac, requesterId, statsMask,
+					   callback, staId, pContext,
 					   sessionId);
 		sme_release_global_lock(&pMac->sme);
 	}

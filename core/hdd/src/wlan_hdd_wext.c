@@ -5006,8 +5006,7 @@ static int __iw_get_bitrate(struct net_device *dev,
 					   SME_SUMMARY_STATS |
 					   SME_GLOBAL_CLASSA_STATS |
 					   SME_GLOBAL_CLASSD_STATS,
-					   hdd_statistics_cb, 0,
-					   false,
+					   hdd_statistics_cb,
 					   pHddStaCtx->conn_info.staId[0],
 					   pAdapter, pAdapter->sessionId);
 
@@ -6165,8 +6164,6 @@ QDF_STATUS wlan_hdd_get_class_astats(hdd_adapter_t *pAdapter)
 	hstatus = sme_get_statistics(WLAN_HDD_GET_HAL_CTX(pAdapter),
 				     eCSR_HDD, SME_GLOBAL_CLASSA_STATS,
 				     hdd_get_class_a_statistics_cb,
-				     0, /* not periodic */
-				     false, /* non-cached results */
 				     pHddStaCtx->conn_info.staId[0],
 				     cookie, pAdapter->sessionId);
 	if (QDF_STATUS_SUCCESS != hstatus) {
@@ -6283,8 +6280,6 @@ QDF_STATUS wlan_hdd_get_station_stats(hdd_adapter_t *pAdapter)
 					    SME_GLOBAL_CLASSA_STATS |
 					    SME_PER_CHAIN_RSSI_STATS,
 				    hdd_get_station_statistics_cb,
-				    0, /* not periodic */
-				    false, /* non-cached results */
 				    pHddStaCtx->conn_info.staId[0],
 				    cookie,
 				    pAdapter->sessionId);
@@ -11930,7 +11925,7 @@ static int __iw_get_statistics(struct net_device *dev,
 					    SME_SUMMARY_STATS |
 					    SME_GLOBAL_CLASSA_STATS |
 					    SME_GLOBAL_CLASSD_STATS,
-					    hdd_statistics_cb, 0, false,
+					    hdd_statistics_cb,
 					    (WLAN_HDD_GET_STATION_CTX_PTR
 						(pAdapter))->conn_info.staId[0],
 					    pAdapter, pAdapter->sessionId);
@@ -11954,7 +11949,7 @@ static int __iw_get_statistics(struct net_device *dev,
 						    SME_SUMMARY_STATS |
 						    SME_GLOBAL_CLASSA_STATS |
 						    SME_GLOBAL_CLASSD_STATS,
-						    NULL, 0, false,
+						    NULL,
 						    (WLAN_HDD_GET_STATION_CTX_PTR
 							 (pAdapter))->conn_info.
 						    staId[0], pAdapter,
