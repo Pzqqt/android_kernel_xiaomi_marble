@@ -664,6 +664,36 @@ static QDF_STATUS send_peer_del_wds_entry_cmd_non_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * send_set_bridge_mac_addr_cmd_non_tlv() - send set bridge MAC addr command to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer holding bridge addr details
+ *
+ * Return: 0 for success or error code
+ */
+QDF_STATUS send_set_bridge_mac_addr_cmd_non_tlv(wmi_unified_t wmi_handle,
+					struct set_bridge_mac_addr_params *param)
+{
+	wmi_peer_add_wds_entry_cmd *cmd;
+	wmi_buf_t buf;
+	uint8_t null_macaddr[IEEE80211_ADDR_LEN];
+	int len = sizeof(wmi_peer_add_wds_entry_cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		qdf_print("%s: wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+	qdf_mem_zero(null_macaddr, IEEE80211_ADDR_LEN);
+	cmd = (wmi_peer_add_wds_entry_cmd *)wmi_buf_data(buf);
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(param->bridge_addr, &cmd->wds_macaddr);
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(null_macaddr, &cmd->peer_macaddr);
+	cmd->flags = 0xffffffff;
+
+	return wmi_unified_cmd_send(wmi_handle, buf, len,
+			WMI_PEER_ADD_WDS_ENTRY_CMDID);
+}
+
+/**
  * send_peer_update_wds_entry_cmd_non_tlv() - send peer update command to fw
  * @wmi_handle: wmi handle
  * @param: pointer holding peer details
@@ -8144,6 +8174,7 @@ struct wmi_ops non_tlv_ops =  {
 	.send_mcast_group_update_cmd = send_mcast_group_update_cmd_non_tlv,
 	.send_peer_add_wds_entry_cmd = send_peer_add_wds_entry_cmd_non_tlv,
 	.send_peer_del_wds_entry_cmd = send_peer_del_wds_entry_cmd_non_tlv,
+	.send_set_bridge_mac_addr_cmd = send_set_bridge_mac_addr_cmd_non_tlv,
 	.send_peer_update_wds_entry_cmd =
 				send_peer_update_wds_entry_cmd_non_tlv,
 	.send_phyerr_enable_cmd = send_phyerr_enable_cmd_non_tlv,

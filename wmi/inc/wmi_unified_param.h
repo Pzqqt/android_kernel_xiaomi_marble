@@ -3549,6 +3549,14 @@ struct peer_del_wds_entry_params {
 };
 
 /**
+ * struct set_bridge_mac_addr_params - set bridge MAC addr params
+ * @dest_addr: Pointer to bridge macaddr
+ */
+struct set_bridge_mac_addr_params {
+	uint8_t *bridge_addr;
+};
+
+/**
  * struct peer_updatewds_entry_params - WDS peer entry update params
  * @wds_macaddr: Pointer to destination macaddr
  * @peer_add: Pointer to peer mac addr

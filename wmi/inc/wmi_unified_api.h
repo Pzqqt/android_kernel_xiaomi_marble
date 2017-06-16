@@ -1047,6 +1047,17 @@ QDF_STATUS wmi_unified_peer_add_wds_entry_cmd_send(void *wmi_hdl,
 QDF_STATUS wmi_unified_peer_del_wds_entry_cmd_send(void *wmi_hdl,
 				struct peer_del_wds_entry_params *param);
 
+/**
+ *  wmi_unified_set_bridge_mac_addr_cmd_send() - WMI set bridge mac addr cmd function
+ *  @param wmi_hdl      : handle to WMI.
+ *  @param param        : pointer to hold bridge mac addr param
+ *
+ *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_set_bridge_mac_addr_cmd_send(void *wmi_hdl,
+				struct set_bridge_mac_addr_params *param);
+
+
 QDF_STATUS wmi_unified_peer_update_wds_entry_cmd_send(void *wmi_hdl,
 				struct peer_update_wds_entry_params *param);
 

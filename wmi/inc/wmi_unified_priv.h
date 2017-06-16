@@ -844,6 +844,9 @@ QDF_STATUS (*send_peer_add_wds_entry_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_peer_del_wds_entry_cmd)(wmi_unified_t wmi_handle,
 		struct peer_del_wds_entry_params *param);
 
+QDF_STATUS (*send_set_bridge_mac_addr_cmd)(wmi_unified_t wmi_handle,
+		struct set_bridge_mac_addr_params *param);
+
 QDF_STATUS (*send_peer_update_wds_entry_cmd)(wmi_unified_t wmi_handle,
 		struct peer_update_wds_entry_params *param);
 
