@@ -9778,7 +9778,19 @@ enum {
     ROAM_FILTER_OP_BITMAP_BLACK_LIST =   0x1,
     ROAM_FILTER_OP_BITMAP_WHITE_LIST =   0x2,
     ROAM_FILTER_OP_BITMAP_PREFER_BSSID = 0x4,
+    ROAM_FILTER_OP_BITMAP_LCA_DISALLOW = 0x8,
 };
+
+/** lca_enable_source_bitmap */
+#define WMI_ROAM_LCA_DISALLOW_SOURCE_PER        = 0x1,
+#define WMI_ROAM_LCA_DISALLOW_SOURCE_BMISS      = 0x2,
+#define WMI_ROAM_LCA_DISALLOW_SOURCE_LOW_RSSI   = 0x4,
+#define WMI_ROAM_LCA_DISALLOW_SOURCE_HIGH_RSSI  = 0x8,
+#define WMI_ROAM_LCA_DISALLOW_SOURCE_PERIODIC   = 0x10,
+#define WMI_ROAM_LCA_DISALLOW_SOURCE_MAWC       = 0x20, /* MAWC = Motion Aided Wifi connectivity */
+#define WMI_ROAM_LCA_DISALLOW_SOURCE_DENSE      = 0x40,
+#define WMI_ROAM_LCA_DISALLOW_SOURCE_BACKGROUND = 0x80,
+#define WMI_ROAM_LCA_DISALLOW_SOURCE_FORCED     = 0x100,
 
 typedef struct {
     A_UINT32 tlv_header;     /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_filter_list_fixed_param */
@@ -9795,8 +9807,17 @@ typedef struct {
      *     wmi_ssid ssid_white_list[];
      *     wmi_mac_addr bssid_preferred_list[];
      *     A_UINT32 bssid_preferred_factor[];
+     *     wmi_roam_lca_disallow_config_tlv_param lca_disallow_param[0/1] (opt)
      */
 } wmi_roam_filter_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header;        /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_lca_disallow_config_tlv_param */
+    A_UINT32 disallow_duration; /** How long LCA AP will be disallowed before it can be a roaming candidate again, in units of seconds */
+    A_UINT32 rssi_channel_penalization; /** How much RSSI will be penalized if candidate(s) are found in the same channel as disallowed AP's, in units of db */
+    A_UINT32 num_disallowed_aps; /** How many APs the target should maintain in its LCA (Last Connected AP) list */
+    A_UINT32 disallow_lca_enable_source_bitmap; /** disallow LCA logic is enabled only when trigger sources are matched with corresponding bit (see WMI_ROAM_LCA_DISALLOW_SOURCE constants) */
+} wmi_roam_lca_disallow_config_tlv_param;
 
 typedef struct {
     A_UINT8 address[4]; /* IPV4 address in Network Byte Order */
