@@ -425,6 +425,34 @@ static void utils_dfs_get_max_sup_width(struct wlan_objmgr_pdev *pdev,
 static void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
 	struct dfs_ieee80211_channel *chan_list, uint32_t *num_chan)
 {
+	int i = 0, j = 0;
+	enum channel_state state;
+	struct regulatory_channel *cur_chan_list;
+
+	cur_chan_list = qdf_mem_malloc(NUM_CHANNELS *
+			sizeof(struct regulatory_channel));
+	if (cur_chan_list == NULL)
+		DFS_PRINTK("%s: fail to alloc\n", __func__);
+
+	if (wlan_reg_get_current_chan_list(
+			pdev, cur_chan_list) != QDF_STATUS_SUCCESS) {
+		*num_chan = 0;
+		DFS_PRINTK("%s: failed to get curr channel list\n", __func__);
+		return;
+	}
+
+	for (i = 0; i < NUM_CHANNELS; i++) {
+		state = cur_chan_list[i].state;
+		if (state == CHANNEL_STATE_DFS ||
+		    state == CHANNEL_STATE_ENABLE) {
+			chan_list[j].dfs_ch_ieee = cur_chan_list[i].chan_num;
+			chan_list[j].dfs_ch_freq = cur_chan_list[i].center_freq;
+			j++;
+		}
+	}
+	*num_chan = j;
+	qdf_mem_free(cur_chan_list);
+
 	return;
 }
 #else
