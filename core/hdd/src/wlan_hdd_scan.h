@@ -37,12 +37,6 @@
 /* (30 Mins) */
 #define MIN_TIME_REQUIRED_FOR_NEXT_BUG_REPORT (30 * 60 * 1000)
 
-int iw_get_scan(struct net_device *dev, struct iw_request_info *info,
-		union iwreq_data *wrqu, char *extra);
-
-int iw_set_scan(struct net_device *dev, struct iw_request_info *info,
-		union iwreq_data *wrqu, char *extra);
-
 int hdd_scan_context_init(hdd_context_t *hdd_ctx);
 void hdd_scan_context_destroy(hdd_context_t *hdd_ctx);
 

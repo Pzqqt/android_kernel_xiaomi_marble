@@ -12772,13 +12772,8 @@ static const iw_handler we_handler[] = {
 	(iw_handler) iw_get_ap_address, /* SIOCGIWAP */
 	(iw_handler) iw_set_mlme,       /* SIOCSIWMLME */
 	(iw_handler) NULL,      /* SIOCGIWAPLIST */
-#ifndef NAPIER_SCAN
-	(iw_handler) iw_set_scan,       /* SIOCSIWSCAN */
-	(iw_handler) iw_get_scan,       /* SIOCGIWSCAN */
-#else
 	(iw_handler) NULL,       /* SIOCSIWSCAN */
 	(iw_handler) NULL,       /* SIOCGIWSCAN */
-#endif
 	(iw_handler) iw_set_essid,      /* SIOCSIWESSID */
 	(iw_handler) iw_get_essid,      /* SIOCGIWESSID */
 	(iw_handler) iw_set_nick,       /* SIOCSIWNICKN */
