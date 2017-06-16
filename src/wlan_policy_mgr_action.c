@@ -591,9 +591,11 @@ static bool policy_mgr_is_restart_sap_allowed(
 {
 	if ((mcc_to_scc_switch == QDF_MCC_TO_SCC_SWITCH_DISABLE) ||
 	    !(policy_mgr_concurrent_open_sessions_running(psoc) &&
+	      ((policy_mgr_get_concurrency_mode(psoc) ==
+	       (QDF_STA_MASK | QDF_SAP_MASK)) ||
 	      (policy_mgr_get_concurrency_mode(psoc) ==
-	       (QDF_STA_MASK | QDF_SAP_MASK)))) {
-		policy_mgr_err("MCC switch disabled or not concurrent STA/SAP");
+	       (QDF_STA_MASK | QDF_P2P_GO_MASK))))) {
+		policy_mgr_err("MCC switch disabled or not concurrent STA/SAP, STA/GO");
 		return false;
 	}
 	return true;
@@ -631,10 +633,20 @@ void policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
 	if (!policy_mgr_is_restart_sap_allowed(psoc, mcc_to_scc_switch))
 		return;
 
-	if (!policy_mgr_get_sap_conn_info(psoc,
-					  &operating_channel,
-					  &vdev_id)) {
-		policy_mgr_err("Could not retrieve SAP channel & vdev id");
+	if (policy_mgr_get_mode_specific_conn_info(psoc,
+						   &operating_channel,
+						   &vdev_id,
+						   PM_SAP_MODE)) {
+		policy_mgr_debug("SAP operating at channel:%d",
+				 operating_channel);
+	} else if (policy_mgr_get_mode_specific_conn_info(psoc,
+							  &operating_channel,
+							  &vdev_id,
+							  PM_P2P_GO_MODE)) {
+		policy_mgr_debug("GO operating at channel:%d",
+				 operating_channel);
+	} else {
+		policy_mgr_err("Could not retrieve SAP/GO operating channel&vdevid");
 		return;
 	}
 
@@ -680,10 +692,20 @@ void policy_mgr_check_concurrent_intf_and_restart_sap(
 		return;
 	}
 
-	if (!policy_mgr_get_sap_conn_info(psoc,
-					  &operating_channel,
-					  &vdev_id)) {
-		policy_mgr_err("Could not retrieve SAP channel & vdev id");
+	if (policy_mgr_get_mode_specific_conn_info(psoc,
+						   &operating_channel,
+						   &vdev_id,
+						   PM_SAP_MODE)) {
+		policy_mgr_debug("SAP operating at channel:%d",
+				 operating_channel);
+	} else if (policy_mgr_get_mode_specific_conn_info(psoc,
+							  &operating_channel,
+							  &vdev_id,
+							  PM_P2P_GO_MODE)) {
+		policy_mgr_debug("GO operating at channel:%d",
+				 operating_channel);
+	} else {
+		policy_mgr_err("Could not get SAP/GO operating channel&vdevid");
 		return;
 	}
 
