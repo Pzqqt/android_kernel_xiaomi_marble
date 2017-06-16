@@ -8430,9 +8430,11 @@ enum dot11p_mode {
 /*
  * <ini>
  * gdbs_scan_selection - DBS Scan Selection.
- * @Default: 5,2,2,16,2,2
+ * @Default: ""
  *
  * This ini is used to enable DBS scan selection.
+ * Example
+ * @Value: "5,2,2,16,2,2"
  * 1st argument is module_id, 2nd argument is number of DBS scan,
  * 3rd argument is number of non-DBS scan,
  * and other arguments follows.
@@ -8449,7 +8451,7 @@ enum dot11p_mode {
  * </ini>
  */
 #define CFG_DBS_SCAN_SELECTION_NAME          "gdbs_scan_selection"
-#define CFG_DBS_SCAN_SELECTION_DEFAULT       "5,2,2,16,2,2"
+#define CFG_DBS_SCAN_SELECTION_DEFAULT       ""
 
 /*
  * gPNOChannelPrediction will allow user to enable/disable the
