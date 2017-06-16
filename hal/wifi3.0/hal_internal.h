@@ -354,9 +354,12 @@ struct hal_soc {
 
 #define HAL_DEFAULT_REO_TIMEOUT_MS 40 /* milliseconds */
 
-#define HAL_DESC_SET_FIELD(_desc, _word, _fld, _value) \
-	((_desc)[(_word ## _ ## _fld ## _OFFSET) >> 2] |= \
-		((_value) << _word ## _ ## _fld ## _LSB))
+#define HAL_DESC_SET_FIELD(_desc, _word, _fld, _value) do { \
+	((uint32_t *)(_desc))[(_word ## _ ## _fld ## _OFFSET) >> 2] &= \
+		~(_word ## _ ## _fld ## _MASK); \
+	((uint32_t *)(_desc))[(_word ## _ ## _fld ## _OFFSET) >> 2] |= \
+		((_value) << _word ## _ ## _fld ## _LSB); \
+} while (0)
 
 #define HAL_SM(_reg, _fld, _val) \
 	(((_val) << (_reg ## _ ## _fld ## _SHFT)) & \

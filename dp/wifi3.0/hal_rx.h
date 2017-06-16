@@ -1806,6 +1806,47 @@ enum hal_rxdma_error_code {
 	HAL_RXDMA_ERR_FLUSH_REQUEST
 };
 
+/**
+ * HW BM action settings in WBM release ring
+ */
+#define HAL_BM_ACTION_PUT_IN_IDLE_LIST 0
+
+/**
+ * enum hal_rx_wbm_error_source: Indicates which module initiated the
+ * release of this buffer or descriptor
+ *
+ * @ HAL_RX_WBM_ERR_SRC_TQM : TQM released this buffer or descriptor
+ * @ HAL_RX_WBM_ERR_SRC_RXDMA: RXDMA released this buffer or descriptor
+ * @ HAL_RX_WBM_ERR_SRC_REO: REO released this buffer or descriptor
+ * @ HAL_RX_WBM_ERR_SRC_FW: FW released this buffer or descriptor
+ * @ HAL_RX_WBM_ERR_SRC_SW: SW released this buffer or descriptor
+ */
+enum hal_rx_wbm_error_source {
+	HAL_RX_WBM_ERR_SRC_TQM = 0,
+	HAL_RX_WBM_ERR_SRC_RXDMA,
+	HAL_RX_WBM_ERR_SRC_REO,
+	HAL_RX_WBM_ERR_SRC_FW,
+	HAL_RX_WBM_ERR_SRC_SW,
+};
+
+/**
+ * enum hal_rx_wbm_buf_type: Indicates that type of buffer or descriptor
+ * released
+ *
+ * @ HAL_RX_WBM_ERR_SRC_TQM : TQM released this buffer or descriptor
+ * @ HAL_RX_WBM_ERR_SRC_RXDMA: RXDMA released this buffer or descriptor
+ * @ HAL_RX_WBM_ERR_SRC_REO: REO released this buffer or descriptor
+ * @ HAL_RX_WBM_ERR_SRC_FW: FW released this buffer or descriptor
+ * @ HAL_RX_WBM_ERR_SRC_SW: SW released this buffer or descriptor
+ */
+enum hal_rx_wbm_buf_type {
+	HAL_RX_WBM_BUF_TYPE_REL_BUF = 0,
+	HAL_RX_WBM_BUF_TYPE_MSDU_LINK_DESC,
+	HAL_RX_WBM_BUF_TYPE_MPDU_LINK_DESC,
+	HAL_RX_WBM_BUF_TYPE_MSDU_EXT_DESC,
+	HAL_RX_WBM_BUF_TYPE_Q_EXT_DESC,
+};
+
 #define HAL_RX_REO_ERROR_GET(reo_desc) (((*(((uint32_t *) reo_desc)+ \
 		(REO_DESTINATION_RING_7_REO_ERROR_CODE_OFFSET >> 2))) & \
 		REO_DESTINATION_RING_7_REO_ERROR_CODE_MASK) >> \
@@ -1870,6 +1911,12 @@ static inline void hal_rx_msdu_link_desc_set(struct hal_soc *soc,
 	/* Structure copy !!! */
 	wbm_rel_srng->released_buff_or_desc_addr_info =
 				*((struct buffer_addr_info *)buf_addr_info);
+	HAL_DESC_SET_FIELD(src_srng_desc, WBM_RELEASE_RING_2,
+		RELEASE_SOURCE_MODULE, HAL_RX_WBM_ERR_SRC_SW);
+	HAL_DESC_SET_FIELD(src_srng_desc, WBM_RELEASE_RING_2, BM_ACTION,
+		HAL_BM_ACTION_PUT_IN_IDLE_LIST);
+	HAL_DESC_SET_FIELD(src_srng_desc, WBM_RELEASE_RING_2,
+		BUFFER_OR_DESC_TYPE, HAL_RX_WBM_BUF_TYPE_MSDU_LINK_DESC);
 }
 
 /*
@@ -1926,46 +1973,10 @@ uint8_t hal_rx_ret_buf_manager_get(void *ring_desc)
  * RX WBM ERROR APIS
  ******************************************************************************/
 
-/**
- * enum hal_rx_wbm_error_source: Indicates which module initiated the
- * release of this buffer or descriptor
- *
- * @ HAL_RX_WBM_ERR_SRC_TQM : TQM released this buffer or descriptor
- * @ HAL_RX_WBM_ERR_SRC_RXDMA: RXDMA released this buffer or descriptor
- * @ HAL_RX_WBM_ERR_SRC_REO: REO released this buffer or descriptor
- * @ HAL_RX_WBM_ERR_SRC_FW: FW released this buffer or descriptor
- * @ HAL_RX_WBM_ERR_SRC_SW: SW released this buffer or descriptor
- */
-enum hal_rx_wbm_error_source {
-	HAL_RX_WBM_ERR_SRC_TQM = 0,
-	HAL_RX_WBM_ERR_SRC_RXDMA,
-	HAL_RX_WBM_ERR_SRC_REO,
-	HAL_RX_WBM_ERR_SRC_FW,
-	HAL_RX_WBM_ERR_SRC_SW,
-};
-
 #define HAL_RX_WBM_ERR_SRC_GET(wbm_desc) (((*(((uint32_t *) wbm_desc)+ \
 		(WBM_RELEASE_RING_2_RELEASE_SOURCE_MODULE_OFFSET >> 2))) & \
 		WBM_RELEASE_RING_2_RELEASE_SOURCE_MODULE_MASK) >> \
 		WBM_RELEASE_RING_2_RELEASE_SOURCE_MODULE_LSB)
-
-/**
- * enum hal_rx_wbm_buf_type: Indicates that type of buffer or descriptor
- * released
- *
- * @ HAL_RX_WBM_ERR_SRC_TQM : TQM released this buffer or descriptor
- * @ HAL_RX_WBM_ERR_SRC_RXDMA: RXDMA released this buffer or descriptor
- * @ HAL_RX_WBM_ERR_SRC_REO: REO released this buffer or descriptor
- * @ HAL_RX_WBM_ERR_SRC_FW: FW released this buffer or descriptor
- * @ HAL_RX_WBM_ERR_SRC_SW: SW released this buffer or descriptor
- */
-enum hal_rx_wbm_buf_type {
-	HAL_RX_WBM_BUF_TYPE_REL_BUF = 0,
-	HAL_RX_WBM_BUF_TYPE_MSDU_LINK_DESC,
-	HAL_RX_WBM_BUF_TYPE_MPDU_LINK_DESC,
-	HAL_RX_WBM_BUF_TYPE_MSDU_EXT_DESC,
-	HAL_RX_WBM_BUF_TYPE_Q_EXT_DESC,
-};
 
 #define HAL_RX_WBM_BUF_TYPE_GET(wbm_desc) (((*(((uint32_t *) wbm_desc)+ \
 		(WBM_RELEASE_RING_2_BUFFER_OR_DESC_TYPE_OFFSET >> 2))) & \
@@ -3029,6 +3040,38 @@ static inline
 uint16_t hal_rx_get_desc_len(void)
 {
 	return sizeof(struct rx_pkt_tlvs);
+}
+
+/*
+ * hal_rx_reo_ent_rxdma_push_reason_get(): Retrieves RXDMA push reason from
+ *	reo_entrance_ring descriptor
+ *
+ * @reo_ent_desc: reo_entrance_ring descriptor
+ * Returns: value of rxdma_push_reason
+ */
+static inline
+uint8_t hal_rx_reo_ent_rxdma_push_reason_get(void *reo_ent_desc)
+{
+	return _HAL_MS((*_OFFSET_TO_WORD_PTR(reo_ent_desc,
+		REO_ENTRANCE_RING_6_RXDMA_PUSH_REASON_OFFSET)),
+		REO_ENTRANCE_RING_6_RXDMA_PUSH_REASON_MASK,
+		REO_ENTRANCE_RING_6_RXDMA_PUSH_REASON_LSB);
+}
+
+/*
+ * hal_rx_reo_ent_rxdma_error_code_get(): Retrieves RXDMA error code from
+ *	reo_entrance_ring descriptor
+ *
+ * @reo_ent_desc: reo_entrance_ring descriptor
+ * Returns: value of rxdma_error_code
+ */
+static inline
+uint8_t hal_rx_reo_ent_rxdma_error_code_get(void *reo_ent_desc)
+{
+	return _HAL_MS((*_OFFSET_TO_WORD_PTR(reo_ent_desc,
+		REO_ENTRANCE_RING_6_RXDMA_ERROR_CODE_OFFSET)),
+		REO_ENTRANCE_RING_6_RXDMA_ERROR_CODE_MASK,
+		REO_ENTRANCE_RING_6_RXDMA_ERROR_CODE_LSB);
 }
 
 #endif /* _HAL_RX_H */
