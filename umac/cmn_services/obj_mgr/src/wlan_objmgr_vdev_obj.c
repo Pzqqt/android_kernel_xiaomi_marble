@@ -276,10 +276,21 @@ static QDF_STATUS wlan_objmgr_vdev_obj_destroy(struct wlan_objmgr_vdev *vdev)
 
 QDF_STATUS wlan_objmgr_vdev_obj_delete(struct wlan_objmgr_vdev *vdev)
 {
+	uint8_t print_idx;
+
 	if (vdev == NULL) {
 		obj_mgr_err("vdev is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	print_idx = qdf_get_pidx();
+	if (qdf_print_is_verbose_enabled(print_idx, QDF_MODULE_ID_OBJ_MGR,
+		QDF_TRACE_LEVEL_DEBUG)) {
+		obj_mgr_debug("Logically deleting the vdev(id:%d)",
+					vdev->vdev_objmgr.vdev_id);
+		wlan_objmgr_print_ref_ids(vdev->vdev_objmgr.ref_id_dbg);
+	}
+
 	/*
 	 * Update VDEV object state to LOGICALLY DELETED
 	 * It prevents further access of this object

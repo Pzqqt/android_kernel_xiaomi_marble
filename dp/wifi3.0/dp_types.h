@@ -87,6 +87,7 @@
 #define MAX_TX_HW_QUEUES 3
 
 #define DP_MAX_INTERRUPT_CONTEXTS 8
+#define DP_MAX_MECT_ENTRIES 64
 
 struct dp_soc_cmn;
 struct dp_pdev;
@@ -378,6 +379,13 @@ struct dp_ast_entry {
 	TAILQ_ENTRY(dp_ast_entry) ast_entry_elem;
 };
 
+struct mect_entry {
+	uint8_t idx;
+	uint8_t valid;
+	uint8_t mac_addr[6];
+	uint64_t ts;
+};
+
 /* SOC level structure for data path */
 struct dp_soc {
 	/* Common base structure - Should be the first member */
@@ -612,6 +620,9 @@ struct dp_soc {
 #endif
 	qdf_list_t reo_desc_freelist;
 	qdf_spinlock_t reo_desc_freelist_lock;
+	struct mect_entry mect_table[DP_MAX_MECT_ENTRIES];
+	uint8_t mect_cnt;
+
 	/* Obj Mgr SoC */
 	struct wlan_objmgr_psoc *psoc;
 	qdf_nbuf_t invalid_peer_head_msdu;
@@ -791,7 +802,6 @@ struct dp_pdev {
 	uint8_t operating_channel;
 
 	qdf_nbuf_queue_t rx_status_q;
-	uint32_t mon_ppdu_id;
 	uint32_t mon_ppdu_status;
 	struct cdp_mon_status rx_mon_recv_status;
 

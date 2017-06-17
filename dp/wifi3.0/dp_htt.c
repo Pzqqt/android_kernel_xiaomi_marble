@@ -815,7 +815,7 @@ int htt_h2t_rx_ring_cfg(void *htt_soc, int pdev_id, void *hal_srng,
 	htt_rx_ring_tlv_filter_in_enable_set(tlv_filter, PACKET_HEADER,
 		htt_tlv_filter->packet_header);
 	htt_rx_ring_tlv_filter_in_enable_set(tlv_filter, ATTENTION,
-		htt_tlv_filter->ppdu_end_status_done);
+		htt_tlv_filter->attention);
 	htt_rx_ring_tlv_filter_in_enable_set(tlv_filter, PPDU_START,
 		htt_tlv_filter->ppdu_start);
 	htt_rx_ring_tlv_filter_in_enable_set(tlv_filter, PPDU_END,

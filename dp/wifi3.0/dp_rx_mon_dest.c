@@ -99,8 +99,7 @@ done:
  * @tail: tail of decs list to be freed
  * Return: number of msdu in MPDU to be popped
  */
-static inline
-uint32_t
+static inline uint32_t
 dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	void *rxdma_dst_ring_desc, qdf_nbuf_t *head_msdu,
 	qdf_nbuf_t *tail_msdu, uint32_t *npackets, uint32_t *ppdu_id,
@@ -161,6 +160,23 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 					"[%s][%d] msdu_nbuf=%p, data=%p\n",
 					__func__, __LINE__, msdu, data);
 
+				rx_desc_tlv = HAL_RX_MON_DEST_GET_DESC(data);
+				msdu_ppdu_id =
+					HAL_RX_MON_HW_DESC_GET_PPDUID_GET(rx_desc_tlv);
+
+				QDF_TRACE(QDF_MODULE_ID_DP,
+					QDF_TRACE_LEVEL_DEBUG,
+					"[%s][%d] i=%d, ppdu_id=%x, msdu_ppdu_id=%x\n",
+					__func__, __LINE__, i, *ppdu_id, msdu_ppdu_id);
+				if (*ppdu_id != msdu_ppdu_id) {
+					*ppdu_id = msdu_ppdu_id;
+					return rx_bufs_used;
+				}
+
+				if (hal_rx_desc_is_first_msdu(rx_desc_tlv))
+					hal_rx_mon_hw_desc_get_mpdu_status(rx_desc_tlv,
+						&(dp_pdev->ppdu_info.rx_status));
+
 				rx_pkt_offset = HAL_RX_MON_HW_RX_DESC_SIZE();
 				/*
 				 * HW structures call this L3 header padding
@@ -176,7 +192,6 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 
 				qdf_nbuf_set_pktlen(msdu, rx_buf_size);
 
-				rx_desc_tlv = HAL_RX_MON_DEST_GET_DESC(data);
 
 #if 0
 				/* Disble it.see packet on msdu done set to 0 */
@@ -197,17 +212,6 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 						rx_desc_tlv, 128, false);
 
 					qdf_assert(0);
-				}
-#endif
-
-				msdu_ppdu_id =
-				HAL_RX_MON_HW_DESC_GET_PPDUID_GET(rx_desc_tlv);
-
-#if 0
-				/* Temporary only handle destination ring */
-				if (*ppdu_id != msdu_ppdu_id) {
-					*ppdu_id = msdu_ppdu_id;
-					return rx_bufs_used;
 				}
 #endif
 
@@ -305,8 +309,6 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
 	/*   HAL_RX_GET_PPDU_STATUS(soc, mac_id, rx_status); */
 
 	rx_desc = qdf_nbuf_data(head_msdu);
-
-	HAL_RX_MON_HW_DESC_GET_PPDU_START_STATUS(rx_desc, rx_status);
 
 	decap_format = HAL_RX_DESC_GET_DECAP_FORMAT(rx_desc);
 
@@ -616,7 +618,6 @@ QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
 	struct cdp_mon_status *rs = &pdev->rx_mon_recv_status;
 	qdf_nbuf_t mon_skb, skb_next;
 	qdf_nbuf_t mon_mpdu = NULL;
-	struct mon_rx_status rx_mon_status;
 
 	if ((pdev->monitor_vdev == NULL) ||
 		(pdev->monitor_vdev->osif_rx_mon == NULL)) {
@@ -628,13 +629,10 @@ QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
 				tail_msdu, rs);
 
 	if (mon_mpdu) {
-		/* Push radiotap header */
-		dp_rx_extract_radiotap_info(rs, &rx_mon_status);
-
-		qdf_nbuf_update_radiotap(&rx_mon_status, mon_mpdu,
-				sizeof(struct rx_pkt_tlvs));
+		qdf_nbuf_update_radiotap(&(pdev->ppdu_info.rx_status),
+			mon_mpdu, sizeof(struct rx_pkt_tlvs));
 		pdev->monitor_vdev->osif_rx_mon(
-				pdev->monitor_vdev->osif_vdev, mon_mpdu, rs);
+				pdev->monitor_vdev->osif_vdev, mon_mpdu, NULL);
 	} else {
 		goto mon_deliver_fail;
 	}
@@ -676,8 +674,8 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 	void *mon_dst_srng = pdev->rxdma_mon_dst_ring.hal_srng;
 	union dp_rx_desc_list_elem_t *head = NULL;
 	union dp_rx_desc_list_elem_t *tail = NULL;
-	struct dp_srng *dp_rxdma_srng;
-	struct rx_desc_pool *rx_desc_pool;
+	uint32_t ppdu_id;
+	uint32_t rx_bufs_used;
 
 #ifdef DP_INTR_POLL_BASED
 	if (!pdev)
@@ -686,12 +684,6 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 
 	pdev_id = pdev->pdev_id;
 	mon_dst_srng = pdev->rxdma_mon_dst_ring.hal_srng;
-
-#if 0
-	/* Temporary only handle destination ring */
-	if (pdev->mon_ppdu_status != DP_PPDU_STATUS_DONE)
-		return;
-#endif
 
 	if (!mon_dst_srng) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
@@ -713,44 +705,40 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 		return;
 	}
 
+	ppdu_id = pdev->ppdu_info.com_info.ppdu_id;
+	rx_bufs_used = 0;
 	while (qdf_likely((rxdma_dst_ring_desc =
-		hal_srng_dst_peek(hal_soc, mon_dst_srng)))) {
-			qdf_nbuf_t head_msdu, tail_msdu;
-			uint32_t rx_bufs_used = 0;
-			uint32_t npackets, ppdu_id;
-			head_msdu = (qdf_nbuf_t) NULL;
-			tail_msdu = (qdf_nbuf_t) NULL;
+		hal_srng_dst_peek(hal_soc, mon_dst_srng)) && quota--)) {
+		qdf_nbuf_t head_msdu, tail_msdu;
+		uint32_t npackets;
+		head_msdu = (qdf_nbuf_t) NULL;
+		tail_msdu = (qdf_nbuf_t) NULL;
 
-			ppdu_id = pdev->mon_ppdu_id;
-			rx_bufs_used += dp_rx_mon_mpdu_pop(soc, mac_id,
-						rxdma_dst_ring_desc,
-						&head_msdu, &tail_msdu,
-						&npackets, &ppdu_id,
-						&head, &tail);
-#if 0
-			/* Temporary only handle destination ring */
-			if (ppdu_id != pdev->mon_ppdu_id) {
-				pdev->mon_ppdu_status = DP_PPDU_STATUS_START;
-				break;
-			}
-#endif
+		rx_bufs_used += dp_rx_mon_mpdu_pop(soc, mac_id,
+					rxdma_dst_ring_desc,
+					&head_msdu, &tail_msdu,
+					&npackets, &ppdu_id,
+					&head, &tail);
 
-			dp_rx_mon_deliver(soc, mac_id, head_msdu, tail_msdu);
+		if (ppdu_id != pdev->ppdu_info.com_info.ppdu_id) {
+			pdev->mon_ppdu_status = DP_PPDU_STATUS_START;
+			qdf_mem_zero(&(pdev->ppdu_info.rx_status),
+				sizeof(pdev->ppdu_info.rx_status));
+			break;
+		}
 
-			/* replenish function should be changed to include
-			 * ring pointer */
-			dp_rxdma_srng = &pdev->rxdma_mon_buf_ring;
-			rx_desc_pool = &soc->rx_desc_mon[pdev_id];
+		dp_rx_mon_deliver(soc, mac_id, head_msdu, tail_msdu);
 
-			dp_rx_buffers_replenish(soc, pdev_id, dp_rxdma_srng,
-				rx_desc_pool, rx_bufs_used, &head, &tail,
-				HAL_RX_BUF_RBM_SW3_BM);
-
-			rxdma_dst_ring_desc = hal_srng_dst_get_next(hal_soc,
-				mon_dst_srng);
+		rxdma_dst_ring_desc = hal_srng_dst_get_next(hal_soc,
+			mon_dst_srng);
 	}
-
 	hal_srng_access_end(hal_soc, mon_dst_srng);
+
+	if (rx_bufs_used) {
+		dp_rx_buffers_replenish(soc, pdev_id,
+			&pdev->rxdma_mon_buf_ring, &soc->rx_desc_mon[pdev_id],
+			rx_bufs_used, &head, &tail, HAL_RX_BUF_RBM_SW3_BM);
+	}
 }
 
 static QDF_STATUS
@@ -939,12 +927,6 @@ static int dp_mon_link_desc_pool_setup(struct dp_soc *soc, uint32_t mac_id)
 			while (num_entries && (desc =
 				hal_srng_src_get_next(soc->hal_soc,
 					mon_desc_srng))) {
-
-				QDF_TRACE(QDF_MODULE_ID_TXRX,
-					QDF_TRACE_LEVEL_DEBUG,
-					"[%s][%d] desc=%p, i=%d, vaddr=%lx, paddr=%lx",
-					__func__, __LINE__, desc, i,
-					(unsigned long)vaddr, (unsigned long)paddr);
 
 				hal_set_link_desc_addr(desc, i, paddr);
 				num_entries--;

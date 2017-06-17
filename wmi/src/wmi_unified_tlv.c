@@ -2226,6 +2226,10 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->num_ssids = params->num_ssids;
 	cmd->ie_len = params->extraie.len;
 	cmd->n_probes = params->n_probes;
+	cmd->scan_ctrl_flags_ext = params->scan_ctrl_flags_ext;
+
+	WMI_LOGD("scan_ctrl_flags_ext = %x", cmd->scan_ctrl_flags_ext);
+
 	buf_ptr += sizeof(*cmd);
 	tmp_ptr = (uint32_t *) (buf_ptr + WMI_TLV_HDR_SIZE);
 	for (i = 0; i < params->num_chan; ++i)
@@ -5766,6 +5770,71 @@ QDF_STATUS send_adapt_dwelltime_params_cmd_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * send_dbs_scan_sel_params_cmd_tlv() - send wmi cmd of DBS scan selection
+ * configuration params
+ * @wmi_handle: wmi handler
+ * @dbs_scan_params: pointer to wmi_dbs_scan_sel_params
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF failure reason code for failure
+ */
+static QDF_STATUS send_dbs_scan_sel_params_cmd_tlv(wmi_unified_t wmi_handle,
+			struct wmi_dbs_scan_sel_params *dbs_scan_params)
+{
+	wmi_scan_dbs_duty_cycle_fixed_param *dbs_scan_param;
+	wmi_scan_dbs_duty_cycle_tlv_param *cmd;
+	wmi_buf_t buf;
+	uint8_t *buf_ptr;
+	QDF_STATUS err;
+	uint32_t i;
+	int len;
+
+	len = sizeof(*dbs_scan_param);
+	len += WMI_TLV_HDR_SIZE;
+	len += dbs_scan_params->num_clients * sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s:Failed to allocate buffer to send cmd", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+	dbs_scan_param = (wmi_scan_dbs_duty_cycle_fixed_param *) buf_ptr;
+	WMITLV_SET_HDR(&dbs_scan_param->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_scan_dbs_duty_cycle_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+		       (wmi_scan_dbs_duty_cycle_fixed_param));
+
+	dbs_scan_param->num_clients = dbs_scan_params->num_clients;
+	dbs_scan_param->pdev_id = dbs_scan_params->pdev_id;
+	buf_ptr += sizeof(*dbs_scan_param);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		       (sizeof(*cmd) * dbs_scan_params->num_clients));
+	buf_ptr = buf_ptr + (uint8_t) WMI_TLV_HDR_SIZE;
+
+	for (i = 0; i < dbs_scan_params->num_clients; i++) {
+		cmd = (wmi_scan_dbs_duty_cycle_tlv_param *) buf_ptr;
+		WMITLV_SET_HDR(&cmd->tlv_header,
+			WMITLV_TAG_STRUC_wmi_scan_dbs_duty_cycle_param_tlv,
+			WMITLV_GET_STRUCT_TLVLEN(
+					wmi_scan_dbs_duty_cycle_tlv_param));
+		cmd->module_id = dbs_scan_params->module_id[i];
+		cmd->num_dbs_scans = dbs_scan_params->num_dbs_scans[i];
+		cmd->num_non_dbs_scans = dbs_scan_params->num_non_dbs_scans[i];
+		buf_ptr = buf_ptr + (uint8_t) sizeof(*cmd);
+	}
+
+	err = wmi_unified_cmd_send(wmi_handle, buf,
+				   len, WMI_SET_SCAN_DBS_DUTY_CYCLE_CMDID);
+	if (QDF_IS_STATUS_ERROR(err)) {
+		WMI_LOGE("Failed to send dbs scan selection cmd err=%d", err);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
 
 /**
  * send_roam_scan_filter_cmd_tlv() - Filter to be applied while roaming
@@ -18066,6 +18135,8 @@ struct wmi_ops tlv_ops =  {
 	.send_set_active_bpf_mode_cmd = send_set_active_bpf_mode_cmd_tlv,
 	.send_adapt_dwelltime_params_cmd =
 		send_adapt_dwelltime_params_cmd_tlv,
+	.send_dbs_scan_sel_params_cmd =
+		send_dbs_scan_sel_params_cmd_tlv,
 	.init_cmd_send = init_cmd_send_tlv,
 	.send_smart_ant_enable_cmd = send_smart_ant_enable_cmd_tlv,
 	.send_smart_ant_set_rx_ant_cmd = send_smart_ant_set_rx_ant_cmd_tlv,

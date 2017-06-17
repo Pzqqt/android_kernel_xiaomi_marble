@@ -1397,11 +1397,53 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 	struct dp_tx_msdu_info_s msdu_info;
 	struct dp_tx_seg_info_s seg_info;
 	struct dp_vdev *vdev = (struct dp_vdev *) vap_dev;
+	struct dp_soc *soc = vdev->pdev->soc;
 	uint16_t peer_id = HTT_INVALID_PEER;
+	uint8_t count;
+	uint8_t found = 0;
+	uint8_t oldest_mec_entry_idx = 0;
+	uint64_t oldest_mec_ts = 0;
+	struct mect_entry *mect_entry;
 
 	qdf_mem_set(&msdu_info, sizeof(msdu_info), 0x0);
 	qdf_mem_set(&seg_info, sizeof(seg_info), 0x0);
 
+	if (qdf_nbuf_get_ftype(nbuf) == CB_FTYPE_INTRABSS_FWD)
+		goto out;
+
+	eh = (struct ether_header *)qdf_nbuf_data(nbuf);
+	if (DP_FRAME_IS_MULTICAST((eh)->ether_dhost)) {
+		for (count = 0; count < soc->mect_cnt; count++) {
+			mect_entry = &soc->mect_table[count];
+			if (!memcmp(mect_entry->mac_addr, eh->ether_shost,
+					DP_MAC_ADDR_LEN)) {
+				found = 1;
+				break;
+			}
+
+			if (!oldest_mec_ts) {
+				oldest_mec_entry_idx = count;
+				oldest_mec_ts = mect_entry->ts;
+			} else if (mect_entry->ts < oldest_mec_ts) {
+				oldest_mec_entry_idx = count;
+				oldest_mec_ts = mect_entry->ts;
+			}
+		}
+
+		if (!found) {
+			if (count >= DP_MAX_MECT_ENTRIES)
+				count = oldest_mec_entry_idx;
+			else
+				soc->mect_cnt++;
+
+			mect_entry = &soc->mect_table[count];
+			mect_entry->ts = jiffies_64;
+			memcpy(mect_entry->mac_addr, eh->ether_shost,
+				DP_MAC_ADDR_LEN);
+		}
+	}
+
+out:
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%s , skb %0x:%0x:%0x:%0x:%0x:%0x\n",
 			__func__, nbuf->data[0], nbuf->data[1], nbuf->data[2],

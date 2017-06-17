@@ -615,6 +615,7 @@ struct ol_if_ops {
 			uint8_t vdev_id, uint8_t *peer_mac_addr);
 	int (*peer_unmap_event)(void *ol_soc_handle, uint16_t peer_id);
 
+	int (*get_dp_cfg_param)(void *ol_soc_handle, enum cdp_cfg_param_type param_num);
 
 	/* TODO: Add any other control path calls required to OL_IF/WMA layer */
 };

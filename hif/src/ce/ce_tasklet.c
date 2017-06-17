@@ -270,73 +270,19 @@ int hif_drain_tasklets(struct hif_softc *scn)
 
 #ifdef WLAN_SUSPEND_RESUME_TEST
 /**
- * hif_fake_apps_resume_work() - Work handler for fake apps resume callback
- * @work:	The work struct being passed from the linux kernel
+ * hif_interrupt_is_ut_resume(): Tests if an irq on the given copy engine should
+ *	trigger a unit-test resume.
+ * @scn: The HIF context to operate on
+ * @ce_id: The copy engine Id from the originating interrupt
  *
- * Return: none
+ * Return: true if the raised irq should trigger a unit-test resume
  */
-void hif_fake_apps_resume_work(struct work_struct *work)
+static bool hif_interrupt_is_ut_resume(struct hif_softc *scn, int ce_id)
 {
-	struct fake_apps_context *ctx =
-		container_of(work, struct fake_apps_context, resume_work);
-
-	QDF_BUG(ctx->resume_callback);
-	ctx->resume_callback(0);
-	ctx->resume_callback = NULL;
-}
-
-/**
- * hif_fake_apps_suspend(): Setup unit-test related suspend state. Call after
- *	a normal WoW suspend has been completed.
- * @hif_ctx:	The HIF context to operate on
- * @callback:	The function to call when fake apps resume is triggered
- *
- * Set the fake suspend flag such that hif knows that it will need
- * to fake the apps resume process using hdd_trigger_fake_apps_resume
- *
- * Return: none
- */
-void hif_fake_apps_suspend(struct hif_opaque_softc *hif_ctx,
-			   hif_fake_resume_callback callback)
-{
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-
-	scn->fake_apps_ctx.resume_callback = callback;
-	set_bit(HIF_FA_SUSPENDED_BIT, &scn->fake_apps_ctx.state);
-}
-
-/**
- * hif_fake_apps_resume(): Cleanup unit-test related suspend state. Call before
- *	doing a normal WoW resume if suspend was initiated via fake apps
- *	suspend.
- * @hif_ctx:	The HIF context to operate on
- *
- * Return: none
- */
-void hif_fake_apps_resume(struct hif_opaque_softc *hif_ctx)
-{
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-
-	clear_bit(HIF_FA_SUSPENDED_BIT, &scn->fake_apps_ctx.state);
-	scn->fake_apps_ctx.resume_callback = NULL;
-}
-
-/**
- * hif_interrupt_is_fake_apps_resume(): Determines if the raised irq should
- *	trigger a fake apps resume.
- * @hif_ctx:	The HIF context to operate on
- * @ce_id:	The copy engine Id from the originating interrupt
- *
- * Return: true if the raised irq should trigger a fake apps resume
- */
-static bool hif_interrupt_is_fake_apps_resume(struct hif_opaque_softc *hif_ctx,
-					      int ce_id)
-{
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	int errno;
 	uint8_t wake_ce_id;
 
-	if (!test_bit(HIF_FA_SUSPENDED_BIT, &scn->fake_apps_ctx.state))
+	if (!hif_is_ut_suspended(scn))
 		return false;
 
 	/* ensure passed ce_id matches wake ce_id */
@@ -348,39 +294,13 @@ static bool hif_interrupt_is_fake_apps_resume(struct hif_opaque_softc *hif_ctx,
 
 	return ce_id == wake_ce_id;
 }
-
-/**
- * hif_trigger_fake_apps_resume(): Trigger a fake apps resume by scheduling the
- *	previously registered callback for execution
- * @hif_ctx:	The HIF context to operate on
- *
- * Return: None
- */
-static void hif_trigger_fake_apps_resume(struct hif_opaque_softc *hif_ctx)
-{
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-
-	if (!test_and_clear_bit(HIF_FA_SUSPENDED_BIT,
-				&scn->fake_apps_ctx.state))
-		return;
-
-	schedule_work(&scn->fake_apps_ctx.resume_work);
-}
-
 #else
-
 static inline bool
-hif_interrupt_is_fake_apps_resume(struct hif_opaque_softc *hif_ctx, int ce_id)
+hif_interrupt_is_ut_resume(struct hif_softc *scn, int ce_id)
 {
 	return false;
 }
-
-static inline void
-hif_trigger_fake_apps_resume(struct hif_opaque_softc *hif_ctx)
-{
-}
-
-#endif /* End of WLAN_SUSPEND_RESUME_TEST */
+#endif /* WLAN_SUSPEND_RESUME_TEST */
 
 /**
  * hif_snoc_interrupt_handler() - hif_snoc_interrupt_handler
@@ -482,8 +402,8 @@ irqreturn_t ce_dispatch_interrupt(int ce_id,
 	hif_record_ce_desc_event(scn, ce_id, HIF_IRQ_EVENT, NULL, NULL, 0);
 	hif_ce_increment_interrupt_count(hif_ce_state, ce_id);
 
-	if (unlikely(hif_interrupt_is_fake_apps_resume(hif_hdl, ce_id))) {
-		hif_trigger_fake_apps_resume(hif_hdl);
+	if (unlikely(hif_interrupt_is_ut_resume(scn, ce_id))) {
+		hif_ut_fw_resume(scn);
 		hif_irq_enable(scn, ce_id);
 		return IRQ_HANDLED;
 	}

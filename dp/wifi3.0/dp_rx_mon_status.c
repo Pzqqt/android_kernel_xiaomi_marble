@@ -36,7 +36,9 @@
 * Return: none
 */
 static inline void
-dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id) {
+dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
+	uint32_t quota)
+{
 	struct dp_pdev *pdev = soc->pdev_list[mac_id];
 	struct hal_rx_ppdu_info *ppdu_info;
 	qdf_nbuf_t status_nbuf;
@@ -73,12 +75,8 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id) {
 		qdf_nbuf_free(status_nbuf);
 
 		if (tlv_status == HAL_TLV_STATUS_PPDU_DONE) {
-
 			pdev->mon_ppdu_status = DP_PPDU_STATUS_DONE;
-			/* Temperary */
-			pdev->mon_ppdu_status =
-				DP_PPDU_STATUS_START;
-			break;
+			dp_rx_mon_dest_process(soc, mac_id, quota);
 		}
 	}
 	return;
@@ -237,8 +235,8 @@ dp_rx_mon_status_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota) {
 	uint32_t work_done;
 
 	work_done = dp_rx_mon_status_srng_process(soc, mac_id, quota);
-
-	dp_rx_mon_status_process_tlv(soc, mac_id);
+	quota -= work_done;
+	dp_rx_mon_status_process_tlv(soc, mac_id, quota);
 
 	return work_done;
 }
@@ -255,14 +253,9 @@ dp_rx_mon_status_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota) {
  */
 uint32_t
 dp_mon_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota) {
-	uint32_t work_done;
-
-	work_done = dp_rx_mon_status_process(soc, mac_id, quota);
-
-	dp_rx_mon_dest_process(soc, mac_id, quota);
-
-	return work_done;
+	return dp_rx_mon_status_process(soc, mac_id, quota);
 }
+
 /**
  * dp_rx_pdev_mon_detach() - detach dp rx for status ring
  * @pdev: core txrx pdev context
@@ -397,7 +390,7 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 		hal_rxdma_buff_addr_info_set(rxdma_ring_entry, paddr,
 			(*desc_list)->rx_desc.cookie, owner);
 
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"[%s][%d] rx_desc=%p, cookie=%d, nbuf=%p, \
 			status_buf=%p paddr=%p\n",
 			__func__, __LINE__, &(*desc_list)->rx_desc,
@@ -474,6 +467,8 @@ dp_rx_pdev_mon_status_attach(struct dp_pdev *pdev) {
 	qdf_nbuf_queue_init(&pdev->rx_status_q);
 
 	pdev->mon_ppdu_status = DP_PPDU_STATUS_START;
+	qdf_mem_zero(&(pdev->ppdu_info.rx_status),
+		sizeof(pdev->ppdu_info.rx_status));
 
 	return QDF_STATUS_SUCCESS;
 }

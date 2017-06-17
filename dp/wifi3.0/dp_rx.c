@@ -29,6 +29,19 @@
 #include "dp_internal.h"
 #include "dp_rx_mon.h"
 
+#ifdef RX_DESC_DEBUG_CHECK
+static inline void dp_rx_desc_prep(struct dp_rx_desc *rx_desc, qdf_nbuf_t nbuf)
+{
+	rx_desc->magic = DP_RX_DESC_MAGIC;
+	rx_desc->nbuf = nbuf;
+}
+#else
+static inline void dp_rx_desc_prep(struct dp_rx_desc *rx_desc, qdf_nbuf_t nbuf)
+{
+	rx_desc->nbuf = nbuf;
+}
+#endif
+
 /*
  * dp_rx_buffers_replenish() - replenish rxdma ring with rx nbufs
  *			       called during dp rx initialization
@@ -160,7 +173,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 
 		next = (*desc_list)->next;
 
-		(*desc_list)->rx_desc.nbuf = rx_netbuf;
+		dp_rx_desc_prep(&((*desc_list)->rx_desc), rx_netbuf);
 
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 				"rx_netbuf=%p, buf=%p, paddr=0x%llx, cookie=%d\n",
@@ -337,6 +350,8 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 		if (da_peer->vdev == sa_peer->vdev && !da_peer->bss_peer) {
 			memset(nbuf->cb, 0x0, sizeof(nbuf->cb));
 			len = qdf_nbuf_len(nbuf);
+			qdf_nbuf_set_fctx_type(nbuf, (void *)NULL,
+						CB_FTYPE_INTRABSS_FWD);
 			if (!dp_tx_send(sa_peer->vdev, nbuf)) {
 				DP_STATS_INC_PKT(sa_peer, rx.intra_bss.pkts,
 						1, len);
@@ -363,9 +378,12 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 			return false;
 		memset(nbuf_copy->cb, 0x0, sizeof(nbuf_copy->cb));
 		len = qdf_nbuf_len(nbuf_copy);
-		if (dp_tx_send(sa_peer->vdev, nbuf_copy))
+		qdf_nbuf_set_fctx_type(nbuf_copy, (void *)NULL,
+					CB_FTYPE_INTRABSS_FWD);
+		if (dp_tx_send(sa_peer->vdev, nbuf_copy)) {
+			DP_STATS_INC_PKT(sa_peer, rx.intra_bss.fail, 1, len);
 			qdf_nbuf_free(nbuf_copy);
-		else
+		} else
 			DP_STATS_INC_PKT(sa_peer, rx.intra_bss.pkts, 1, len);
 	}
 	/* return false as we have to still send the original pkt

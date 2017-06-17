@@ -422,9 +422,21 @@ static QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
 		int rx_mon_mask =
 			wlan_cfg_get_rx_mon_ring_mask(soc->wlan_cfg_ctx, i);
 
+		/*
+		 * Mapping the exception/status rings to IRQ Group 0 (CPU 0).
+		 * Later add wlan_cfg interface for these masks
+		 */
+		int rx_err_ring_mask = 0x1;
+		int rx_wbm_rel_ring_mask = 0x1;
+		int reo_status_ring_mask = 0x1;
+
 		soc->intr_ctx[i].tx_ring_mask = tx_mask;
 		soc->intr_ctx[i].rx_ring_mask = rx_mask;
 		soc->intr_ctx[i].rx_mon_ring_mask = rx_mon_mask;
+		soc->intr_ctx[i].rx_err_ring_mask = rx_err_ring_mask;
+		soc->intr_ctx[i].rx_wbm_rel_ring_mask = rx_wbm_rel_ring_mask;
+		soc->intr_ctx[i].reo_status_ring_mask = reo_status_ring_mask;
+
 		soc->intr_ctx[i].soc = soc;
 
 		num_irq = 0;
@@ -446,6 +458,16 @@ static QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
 					(rxdma2host_monitor_destination_mac1
 					 - j);
 			}
+
+			if (rx_wbm_rel_ring_mask & (1 << j))
+				irq_id_map[num_irq++] = wbm2host_rx_release;
+
+			if (rx_err_ring_mask & (1 << j))
+				irq_id_map[num_irq++] = reo2host_exception;
+
+			if (reo_status_ring_mask & (1 << j))
+				irq_id_map[num_irq++] = reo2host_status;
+
 		}
 
 
@@ -636,10 +658,10 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 		for (i = 0; i < MAX_LINK_DESC_BANKS &&
 			soc->link_desc_banks[i].base_paddr; i++) {
 			uint32_t num_entries = (soc->link_desc_banks[i].size -
-				(unsigned long)(
+				((unsigned long)(
 				soc->link_desc_banks[i].base_vaddr) -
 				(unsigned long)(
-				soc->link_desc_banks[i].base_vaddr_unaligned))
+				soc->link_desc_banks[i].base_vaddr_unaligned)))
 				/ link_desc_size;
 			unsigned long paddr = (unsigned long)(
 				soc->link_desc_banks[i].base_paddr);
@@ -694,11 +716,11 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 			soc->link_desc_banks[i].base_paddr; i++) {
 			uint32_t num_link_descs =
 				(soc->link_desc_banks[i].size -
-				(unsigned long)(
+				((unsigned long)(
 				soc->link_desc_banks[i].base_vaddr) -
 				(unsigned long)(
-				soc->link_desc_banks[i].base_vaddr_unaligned)) /
-				link_desc_size;
+				soc->link_desc_banks[i].base_vaddr_unaligned)))
+				/ link_desc_size;
 			unsigned long paddr = (unsigned long)(
 				soc->link_desc_banks[i].base_paddr);
 			void *desc = NULL;
@@ -1153,6 +1175,7 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	TAILQ_INIT(&pdev->vdev_list);
 	pdev->vdev_count = 0;
 
+	qdf_spinlock_create(&pdev->tx_mutex);
 	qdf_spinlock_create(&pdev->neighbour_peer_mutex);
 	TAILQ_INIT(&pdev->neighbour_peers_list);
 
@@ -1348,6 +1371,7 @@ static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force)
 	dp_rx_pdev_mon_detach(pdev);
 
 	dp_neighbour_peers_detach(pdev);
+	qdf_spinlock_destroy(&pdev->tx_mutex);
 
 	/* Setup per PDEV REO rings if configured */
 	if (wlan_cfg_per_pdev_rx_ring(soc->wlan_cfg_ctx)) {
@@ -2389,8 +2413,8 @@ static int dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle,
 	htt_tlv_filter.enable_mo = 1;
 
 	htt_h2t_rx_ring_cfg(soc->htt_handle, pdev_id,
-		pdev->rxdma_mon_dst_ring.hal_srng,
-		RXDMA_MONITOR_BUF,  RX_BUFFER_SIZE, &htt_tlv_filter);
+		pdev->rxdma_mon_buf_ring.hal_srng,
+		RXDMA_MONITOR_BUF, RX_BUFFER_SIZE, &htt_tlv_filter);
 
 	htt_tlv_filter.mpdu_start = 1;
 	htt_tlv_filter.msdu_start = 1;
@@ -2405,13 +2429,12 @@ static int dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle,
 	htt_tlv_filter.ppdu_end_user_stats_ext = 1;
 	htt_tlv_filter.ppdu_end_status_done = 1;
 	htt_tlv_filter.enable_fp = 1;
-	htt_tlv_filter.enable_md = 1;
+	htt_tlv_filter.enable_md = 0;
 	htt_tlv_filter.enable_mo = 1;
-	/*
-	 * htt_h2t_rx_ring_cfg(soc->htt_handle, pdev_id,
-	 * pdev->rxdma_mon_status_ring.hal_srng,
-	 * RXDMA_MONITOR_STATUS, RX_BUFFER_SIZE, &htt_tlv_filter);
-	 */
+
+	htt_h2t_rx_ring_cfg(soc->htt_handle, pdev_id,
+		pdev->rxdma_mon_status_ring.hal_srng, RXDMA_MONITOR_STATUS,
+		RX_BUFFER_SIZE, &htt_tlv_filter);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -2864,6 +2887,9 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
 
 	DP_TRACE_STATS(FATAL, "SOC Rx Stats:\n");
 	DP_TRACE_STATS(FATAL, "Errors:\n");
+	DP_TRACE_STATS(FATAL, "Rx Decrypt Errors = %d",
+			(soc->stats.rx.err.rxdma_error[HAL_RXDMA_ERR_DECRYPT] +
+			soc->stats.rx.err.rxdma_error[HAL_RXDMA_ERR_TKIP_MIC]));
 	DP_TRACE_STATS(FATAL, "Invalid RBM = %d",
 			soc->stats.rx.err.invalid_rbm);
 	DP_TRACE_STATS(FATAL, "Invalid Vdev = %d",
@@ -2874,6 +2900,7 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
 			soc->stats.rx.err.rx_invalid_peer.num);
 	DP_TRACE_STATS(FATAL, "HAL Ring Access Fail = %d",
 			soc->stats.rx.err.hal_ring_access_fail);
+
 	for (i = 0; i < MAX_RXDMA_ERRORS; i++) {
 		index += qdf_snprint(&rxdma_error[index],
 				DP_RXDMA_ERR_LENGTH - index,
@@ -3346,7 +3373,14 @@ dp_get_host_peer_stats(struct cdp_pdev *pdev_handle, char *mac_addr)
 	peer = (struct dp_peer *)dp_find_peer_by_addr(pdev_handle, mac_addr,
 			&local_id);
 
+	if (!peer) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"%s: Invalid peer\n", __func__);
+		return;
+	}
+
 	dp_print_peer_stats(peer);
+	dp_peer_rxtid_stats(peer);
 	return;
 }
 
@@ -3389,6 +3423,7 @@ dp_get_fw_peer_stats(struct cdp_pdev *pdev_handle, uint8_t *mac_addr,
 	dp_h2t_ext_stats_msg_send(pdev, HTT_DBG_EXT_STATS_PEER_INFO,
 			config_param0, config_param1, config_param2,
 			config_param3);
+
 }
 
 /*
@@ -4002,6 +4037,16 @@ void *dp_soc_attach_wifi3(void *osif_soc, void *hif_handle,
 				FL("wlan_cfg_soc_attach failed"));
 		goto fail2;
 	}
+
+	if (soc->cdp_soc.ol_ops->get_dp_cfg_param) {
+		int ret = soc->cdp_soc.ol_ops->get_dp_cfg_param(soc,
+				CDP_CFG_MAX_PEER_ID);
+
+		if (ret != -EINVAL) {
+			wlan_cfg_set_max_peer_id(soc->wlan_cfg_ctx, ret);
+		}
+	}
+
 	qdf_spinlock_create(&soc->peer_ref_mutex);
 
 	qdf_spinlock_create(&soc->reo_desc_freelist_lock);

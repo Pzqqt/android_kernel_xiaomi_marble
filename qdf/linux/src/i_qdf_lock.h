@@ -295,7 +295,7 @@ static inline void __qdf_spin_lock_bh(__qdf_spinlock_t *lock)
 static inline void __qdf_spin_unlock_bh(__qdf_spinlock_t *lock)
 {
 	if (unlikely(lock->flags & QDF_LINUX_UNLOCK_BH)) {
-		lock->flags &= ~QDF_LINUX_UNLOCK_BH;
+		lock->flags &= (unsigned long)~QDF_LINUX_UNLOCK_BH;
 		spin_unlock_bh(&lock->spinlock);
 	} else
 		spin_unlock(&lock->spinlock);

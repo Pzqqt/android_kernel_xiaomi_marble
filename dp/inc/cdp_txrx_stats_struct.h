@@ -213,6 +213,11 @@ struct ol_ath_radiostats {
 	A_INT16     chan_nf;
 	A_UINT32    rx_last_msdu_unset_cnt;
 	A_INT16     chan_nf_sec80;
+	A_UINT64    wmi_tx_mgmt;
+	A_UINT64    wmi_tx_mgmt_completions;
+	A_UINT32    wmi_tx_mgmt_completion_err;
+	A_UINT32    peer_delete_req;
+	A_UINT32    peer_delete_resp;
 };
 
 #ifndef CONFIG_WIN

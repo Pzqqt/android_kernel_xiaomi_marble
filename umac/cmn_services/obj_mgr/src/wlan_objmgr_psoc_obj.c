@@ -235,10 +235,21 @@ static QDF_STATUS wlan_objmgr_psoc_obj_destroy(struct wlan_objmgr_psoc *psoc)
 
 QDF_STATUS wlan_objmgr_psoc_obj_delete(struct wlan_objmgr_psoc *psoc)
 {
+	uint8_t print_idx;
+
 	if (psoc == NULL) {
 		obj_mgr_err("psoc is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	print_idx = qdf_get_pidx();
+
+	if (qdf_print_is_verbose_enabled(print_idx, QDF_MODULE_ID_OBJ_MGR,
+		QDF_TRACE_LEVEL_DEBUG)) {
+		obj_mgr_debug("Logically deleting the psoc");
+		wlan_objmgr_print_ref_ids(psoc->soc_objmgr.ref_id_dbg);
+	}
+
 	/*
 	 * Update PSOC object state to LOGICALLY DELETED
 	 * It prevents further access of this object

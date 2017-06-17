@@ -600,27 +600,6 @@ static bool policy_mgr_is_restart_sap_allowed(
 }
 
 /**
- * policy_mgr_is_sap_channel_change_without_restart() - Check if
- * SAP channel change allowed without restart
- * @mcc_to_scc_switch: MCC to SCC switch enabled user config
- *
- * Check if SAP channel change allowed without restart
- *
- * Restart: true or false
- */
-static bool policy_mgr_is_sap_channel_change_without_restart(
-			uint32_t mcc_to_scc_switch) {
-	if (mcc_to_scc_switch ==
-	    QDF_MCC_TO_SCC_SWITCH_FORCE_WITHOUT_DISCONNECTION ||
-	    mcc_to_scc_switch ==
-	    QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL) {
-		policy_mgr_info("SAP chan change without restart allowed");
-		return true;
-	}
-	return false;
-}
-
-/**
  * policy_mgr_check_sta_ap_concurrent_ch_intf() - Restart SAP in STA-AP case
  * @data: Pointer check concurrent channel work data
  *
@@ -637,8 +616,6 @@ void policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
 	QDF_STATUS status;
 	uint8_t channel, sec_ch;
 	uint8_t operating_channel, vdev_id;
-	bool restart_sap;
-
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -661,9 +638,6 @@ void policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
 		return;
 	}
 
-	restart_sap = policy_mgr_is_sap_channel_change_without_restart(
-		mcc_to_scc_switch) ? false : true;
-
 	if (!pm_ctx->hdd_cbacks.wlan_hdd_get_channel_for_sap_restart) {
 		policy_mgr_err("SAP restart get channel callback in NULL");
 		return;
@@ -671,7 +645,7 @@ void policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	status = pm_ctx->hdd_cbacks.
 		wlan_hdd_get_channel_for_sap_restart(psoc, vdev_id,
-			&channel, &sec_ch, restart_sap);
+			&channel, &sec_ch);
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 	if (status != QDF_STATUS_SUCCESS) {
 		policy_mgr_err("Failed to switch SAP channel");
