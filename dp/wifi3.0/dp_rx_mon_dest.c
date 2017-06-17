@@ -760,6 +760,7 @@ dp_rx_pdev_mon_buf_attach(struct dp_pdev *pdev) {
 	struct dp_srng *rxdma_srng;
 	uint32_t rxdma_entries;
 	struct rx_desc_pool *rx_desc_pool;
+	QDF_STATUS status;
 
 	rxdma_srng = &pdev->rxdma_mon_buf_ring;
 
@@ -773,14 +774,26 @@ dp_rx_pdev_mon_buf_attach(struct dp_pdev *pdev) {
 			"%s: Mon RX Desc Pool[%d] allocation size=%d\n"
 			, __func__, pdev_id, rxdma_entries*3);
 
-	dp_rx_desc_pool_alloc(soc, pdev_id, rxdma_entries*3, rx_desc_pool);
+	status = dp_rx_desc_pool_alloc(soc, pdev_id,
+			rxdma_entries*3, rx_desc_pool);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			"%s: dp_rx_desc_pool_alloc() failed \n", __func__);
+		return status;
+	}
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_WARN,
 			"%s: Mon RX Buffers Replenish pdev_id=%d\n",
 			__func__, pdev_id);
 
-	dp_rx_buffers_replenish(soc, pdev_id, rxdma_srng, rx_desc_pool,
-		rxdma_entries, &desc_list, &tail, HAL_RX_BUF_RBM_SW3_BM);
+	status = dp_rx_buffers_replenish(soc, pdev_id, rxdma_srng, rx_desc_pool,
+			rxdma_entries, &desc_list, &tail,
+			HAL_RX_BUF_RBM_SW3_BM);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			"%s: dp_rx_buffers_replenish() failed \n", __func__);
+		return status;
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -846,14 +859,22 @@ static int dp_mon_link_desc_pool_setup(struct dp_soc *soc, uint32_t mac_id)
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
 		"%s: total_mem_size: %d, num_link_desc_banks: %u, \
-		max_alloc_size: %d\n",
-		__func__, total_mem_size, num_link_desc_banks, max_alloc_size);
+		max_alloc_size: %d last_bank_size: %d\n",
+		__func__, total_mem_size, num_link_desc_banks, max_alloc_size,
+		last_bank_size);
 
 	for (i = 0; i < num_link_desc_banks; i++) {
 		dp_pdev->link_desc_banks[i].base_vaddr_unaligned =
-		qdf_mem_alloc_consistent(soc->osdev, NULL,
+		qdf_mem_alloc_consistent(soc->osdev, soc->osdev->dev,
 			max_alloc_size,
 			&(dp_pdev->link_desc_banks[i].base_paddr_unaligned));
+
+		if (!dp_pdev->link_desc_banks[i].base_vaddr_unaligned) {
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+				"%s: Link desc memory allocation failed\n",
+				__func__);
+			goto fail;
+		}
 		dp_pdev->link_desc_banks[i].size = max_alloc_size;
 
 		dp_pdev->link_desc_banks[i].base_vaddr =
@@ -870,13 +891,6 @@ static int dp_mon_link_desc_pool_setup(struct dp_soc *soc, uint32_t mac_id)
 			(dp_pdev->link_desc_banks[i].base_vaddr) -
 			 (unsigned long)
 			 (dp_pdev->link_desc_banks[i].base_vaddr_unaligned));
-
-		if (!dp_pdev->link_desc_banks[i].base_vaddr_unaligned) {
-			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"%s: Link desc memory allocation failed\n",
-				__func__);
-			goto fail;
-		}
 	}
 
 	if (last_bank_size) {
@@ -885,8 +899,15 @@ static int dp_mon_link_desc_pool_setup(struct dp_soc *soc, uint32_t mac_id)
 		 */
 		dp_pdev->link_desc_banks[i].base_vaddr_unaligned =
 			qdf_mem_alloc_consistent(soc->osdev,
-			NULL, last_bank_size,
+			soc->osdev->dev, last_bank_size,
 			&(dp_pdev->link_desc_banks[i].base_paddr_unaligned));
+
+		if (dp_pdev->link_desc_banks[i].base_vaddr_unaligned == NULL) {
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+				"%s: allocation failed for mon link desc pool\n",
+				__func__);
+			goto fail;
+		}
 		dp_pdev->link_desc_banks[i].size = last_bank_size;
 
 		dp_pdev->link_desc_banks[i].base_vaddr =
@@ -1002,13 +1023,33 @@ QDF_STATUS
 dp_rx_pdev_mon_attach(struct dp_pdev *pdev) {
 	uint8_t pdev_id = pdev->pdev_id;
 	struct dp_soc *soc = pdev->soc;
+	QDF_STATUS status;
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_WARN,
 			"%s: pdev attach id=%d\n", __func__, pdev_id);
 
-	dp_rx_pdev_mon_buf_attach(pdev);
-	dp_rx_pdev_mon_status_attach(pdev);
-	dp_mon_link_desc_pool_setup(soc, pdev_id);
+	status = dp_rx_pdev_mon_buf_attach(pdev);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			"%s: dp_rx_pdev_mon_buf_attach() failed \n", __func__);
+		return status;
+	}
+
+	status = dp_rx_pdev_mon_status_attach(pdev);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			"%s: dp_rx_pdev_mon_status_attach() failed \n",
+			__func__);
+		return status;
+	}
+
+	status = dp_mon_link_desc_pool_setup(soc, pdev_id);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			"%s: dp_mon_link_desc_pool_setup() failed \n",
+			__func__);
+		return status;
+	}
 
 	return QDF_STATUS_SUCCESS;
 }

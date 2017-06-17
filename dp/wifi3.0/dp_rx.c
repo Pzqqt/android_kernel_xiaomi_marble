@@ -97,7 +97,6 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 	 * if desc_list is NULL, allocate the descs from freelist
 	 */
 	if (!(*desc_list)) {
-
 		num_alloc_desc = dp_rx_get_free_desc_list(dp_soc, mac_id,
 							  rx_desc_pool,
 							  num_req_buffers,
@@ -123,8 +122,8 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 						   sync_hw_ptr);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"no of availble entries in rxdma ring: %d",
-			num_entries_avail);
+		"no of availble entries in rxdma ring: %d",
+		num_entries_avail);
 
 	if (num_entries_avail < num_req_buffers) {
 		num_desc_to_free = num_req_buffers - num_entries_avail;
@@ -201,7 +200,6 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 	/*
 	 * add any available free desc back to the free list
 	 */
-
 	if (*desc_list)
 		dp_rx_add_desc_list_to_free_list(dp_soc, desc_list, tail,
 			mac_id, rx_desc_pool);

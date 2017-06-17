@@ -454,6 +454,7 @@ dp_rx_pdev_mon_status_attach(struct dp_pdev *pdev) {
 	struct dp_srng *rxdma_srng;
 	uint32_t rxdma_entries;
 	struct rx_desc_pool *rx_desc_pool;
+	QDF_STATUS status;
 
 	rxdma_srng = &pdev->rxdma_mon_status_ring;
 
@@ -466,15 +467,26 @@ dp_rx_pdev_mon_status_attach(struct dp_pdev *pdev) {
 			"%s: Mon RX Status Pool[%d] allocation size=%d\n",
 			__func__, pdev_id, rxdma_entries);
 
-	dp_rx_desc_pool_alloc(soc, pdev_id, rxdma_entries+1, rx_desc_pool);
+	status = dp_rx_desc_pool_alloc(soc, pdev_id, rxdma_entries+1,
+			rx_desc_pool);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			"%s: dp_rx_desc_pool_alloc() failed \n", __func__);
+		return status;
+	}
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_WARN,
 			"%s: Mon RX Status Buffers Replenish pdev_id=%d\n",
 			__func__, pdev_id);
 
-	dp_rx_mon_status_buffers_replenish(soc, pdev_id, rxdma_srng,
-		rx_desc_pool, rxdma_entries, &desc_list, &tail,
-		HAL_RX_BUF_RBM_SW3_BM);
+	status = dp_rx_mon_status_buffers_replenish(soc, pdev_id, rxdma_srng,
+			rx_desc_pool, rxdma_entries, &desc_list, &tail,
+			HAL_RX_BUF_RBM_SW3_BM);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			"%s: dp_rx_buffers_replenish() failed \n", __func__);
+		return status;
+	}
 
 	qdf_nbuf_queue_init(&pdev->rx_status_q);
 
