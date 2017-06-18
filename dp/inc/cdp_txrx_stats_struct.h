@@ -24,7 +24,7 @@
  * under proprietary terms before Copyright ownership was assigned
  * to the Linux Foundation.
  */
- /**
+/**
  * @file cdp_txrx_stats_struct.h
  * @brief Define the host data path stats API functions
  * called by the host control SW and the OS interface module
@@ -75,14 +75,17 @@ struct ol_txrx_stats {
 		struct {
 			/* MSDUs that the host did not accept */
 			ol_txrx_stats_elem host_reject;
-			/* MSDUs which could not be downloaded to the
-			 target */
+			/* MSDUs which could not be downloaded to the target */
 			ol_txrx_stats_elem download_fail;
-			/* MSDUs which the target discarded
-			 (lack of mem or old age) */
+			/*
+			 * MSDUs which the target discarded
+			 * (lack of mem or old age)
+			 */
 			ol_txrx_stats_elem target_discard;
-			/* MSDUs which the target sent but couldn't get
-			 an ack for */
+			/*
+			 * MSDUs which the target sent but couldn't get
+			 * an ack for
+			 */
 			ol_txrx_stats_elem no_ack;
 			/* MSDUs dropped in NSS-FW */
 			ol_txrx_stats_elem nss_ol_dropped;
@@ -146,8 +149,10 @@ struct ol_txrx_stats {
 		u_int32_t num_me_ucast;
 		/* Number of multicast frames dropped due to dma_map failure */
 		u_int32_t num_me_dropped_m;
-		/* Number of multicast frames dropped due to allocation
-			failure */
+		/*
+		 * Number of multicast frames dropped due to allocation
+		 * failure
+		 */
 		u_int32_t num_me_dropped_a;
 		/* Number of multicast frames dropped due to internal failure */
 		u_int32_t num_me_dropped_i;
@@ -222,9 +227,9 @@ struct ol_ath_radiostats {
 
 #ifndef CONFIG_WIN
 /*
-** structure to hold all stats information
-** for offload device interface
-*/
+ * structure to hold all stats information
+ * for offload device interface
+ */
 struct ol_stats {
 	int txrx_stats_level;
 	struct ol_txrx_stats txrx_stats;
@@ -235,9 +240,9 @@ struct ol_stats {
 
 #endif
 /*
-** Enumeration of PDEV Configuration parameter
-*/
-typedef enum _ol_ath_param_t {
+ * Enumeration of PDEV Configuration parameter
+ */
+enum _ol_ath_param_t {
 	OL_ATH_PARAM_TXCHAINMASK               = 1,
 	OL_ATH_PARAM_RXCHAINMASK               = 2,
 	OL_ATH_PARAM_AMPDU                     = 6,
@@ -262,27 +267,28 @@ typedef enum _ol_ath_param_t {
 #endif
 	/* UMAC_SUPPORT_PERIODIC_PERFSTATS */
 	OL_ATH_PARAM_TOTAL_PER                 = 89,
-	 /*set manual rate for rts frame */
+	/* set manual rate for rts frame */
 	OL_ATH_PARAM_RTS_CTS_RATE              = 92,
-	 /** co channel interference threshold level */
+	/* co channel interference threshold level */
 	OL_ATH_PARAM_DCS_COCH_THR              = 93,
-	 /** transmit error threshold */
+	/* transmit error threshold */
 	OL_ATH_PARAM_DCS_TXERR_THR             = 94,
-	 /** phy error threshold */
+	/* phy error threshold */
 	OL_ATH_PARAM_DCS_PHYERR_THR            = 95,
-	/*  The IOCTL number is 114, it is made 114, inorder to make the IOCTL
-	    number same as Direct-attach IOCTL.
-	    Please, don't change number. This IOCTL gets the Interface code path
-	    it should be either DIRECT-ATTACH or OFF-LOAD.
-	*/
+	/*
+	 * The IOCTL number is 114, it is made 114, inorder to make the IOCTL
+	 * number same as Direct-attach IOCTL.
+	 * Please, don't change number. This IOCTL gets the Interface code path
+	 * it should be either DIRECT-ATTACH or OFF-LOAD.
+	 */
 	OL_ATH_PARAM_GET_IF_ID                 = 114,
-	/*Enable Acs back Ground Channel selection Scan timer in AP mode*/
+	/* Enable Acs back Ground Channel selection Scan timer in AP mode*/
 	OL_ATH_PARAM_ACS_ENABLE_BK_SCANTIMEREN = 118,
 	 /* ACS scan timer value in Seconds */
 	OL_ATH_PARAM_ACS_SCANTIME              = 119,
-	 /*Negligence Delta RSSI between two channel */
+	 /* Negligence Delta RSSI between two channel */
 	OL_ATH_PARAM_ACS_RSSIVAR               = 120,
-	 /*Negligence Delta Channel load between two channel*/
+	 /* Negligence Delta Channel load between two channel*/
 	OL_ATH_PARAM_ACS_CHLOADVAR             = 121,
 	  /* Enable Limited OBSS check */
 	OL_ATH_PARAM_ACS_LIMITEDOBSS           = 122,
@@ -316,15 +322,15 @@ typedef enum _ol_ath_param_t {
 	OL_ATH_PARAM_LTR_RX_OVERRIDE,
 	OL_ATH_PARAM_L1SS_ENABLE,
 	OL_ATH_PARAM_DSLEEP_ENABLE,
-	/** radar error threshold */
+	/* radar error threshold */
 	OL_ATH_PARAM_DCS_RADAR_ERR_THR = 160,
-	/** Tx channel utilization due to AP's tx and rx */
+	/* Tx channel utilization due to AP's tx and rx */
 	OL_ATH_PARAM_DCS_USERMAX_CU_THR,
-	 /** interference detection threshold */
+	/* interference detection threshold */
 	OL_ATH_PARAM_DCS_INTR_DETECT_THR,
-	/** sampling window, default 10secs */
+	/* sampling window, default 10secs */
 	OL_ATH_PARAM_DCS_SAMPLE_WINDOW,
-	/** debug logs enable/disable */
+	/* debug logs enable/disable */
 	OL_ATH_PARAM_DCS_DEBUG,
 	OL_ATH_PARAM_ANI_ENABLE = 165,
 	OL_ATH_PARAM_ANI_POLL_PERIOD,
@@ -333,14 +339,14 @@ typedef enum _ol_ath_param_t {
 	OL_ATH_PARAM_ANI_CCK_LEVEL,
 	OL_ATH_PARAM_DSCP_TID_MAP = 170,
 	OL_ATH_PARAM_TXPOWER_SCALE,
-	/** Phy error penalty */
+	/* Phy error penalty */
 	OL_ATH_PARAM_DCS_PHYERR_PENALTY,
 #if ATH_SUPPORT_DSCP_OVERRIDE
-	 /** set/get TID for sending HMMC packets */
+	/* set/get TID for sending HMMC packets */
 	OL_ATH_PARAM_HMMC_DSCP_TID_MAP,
-	/** set/get DSCP mapping override */
+	/* set/get DSCP mapping override */
 	OL_ATH_PARAM_DSCP_OVERRIDE,
-	 /** set/get HMMC-DSCP mapping override */
+	/* set/get HMMC-DSCP mapping override */
 	OL_ATH_PARAM_HMMC_DSCP_OVERRIDE = 175,
 #endif
 #if ATH_RX_LOOPLIMIT_TIMER
@@ -363,7 +369,7 @@ typedef enum _ol_ath_param_t {
 	/* Number of deauth sent in consecutive rx_peer_invalid */
 	OL_ATH_PARAM_DEAUTH_COUNT,
 	OL_ATH_PARAM_BLOCK_INTERBSS = 190,
-	 /* Firmware reset control for Bmiss / timeout / reset */
+	/* Firmware reset control for Bmiss / timeout / reset */
 	OL_ATH_PARAM_FW_DISABLE_RESET,
 	OL_ATH_PARAM_MSDU_TTL,
 	OL_ATH_PARAM_PPDU_DURATION,
@@ -373,26 +379,28 @@ typedef enum _ol_ath_param_t {
 	OL_ATH_PARAM_DYN_GROUPING,
 	OL_ATH_PARAM_DPD_ENABLE,
 	OL_ATH_PARAM_DBGLOG_RATELIM,
-	 /* firmware should intimate us about ps state change for node  */
+	/* firmware should intimate us about ps state change for node  */
 	OL_ATH_PARAM_PS_STATE_CHANGE = 200,
 	OL_ATH_PARAM_MCAST_BCAST_ECHO,
-	 /* OBSS RSSI threshold for 20/40 coexistance */
+	/* OBSS RSSI threshold for 20/40 coexistance */
 	OL_ATH_PARAM_OBSS_RSSI_THRESHOLD,
-	 /* Link/node RX RSSI threshold  for 20/40 coexistance */
+	/* Link/node RX RSSI threshold  for 20/40 coexistance */
 	OL_ATH_PARAM_OBSS_RX_RSSI_THRESHOLD,
 #if ATH_CHANNEL_BLOCKING
 	OL_ATH_PARAM_ACS_BLOCK_MODE = 205,
 #endif
 	OL_ATH_PARAM_ACS_TX_POWER_OPTION,
-	/* Default Antenna Polarization MSB 8 bits (24:31) specifying
-	   enable/disable ; LSB 24 bits (0:23) antenna mask value */
+	/*
+	 * Default Antenna Polarization MSB 8 bits (24:31) specifying
+	 * enable/disable ; LSB 24 bits (0:23) antenna mask value
+	 */
 	OL_ATH_PARAM_ANT_POLARIZATION,
 	/* rate limit mute type error prints */
 	OL_ATH_PARAM_PRINT_RATE_LIMIT,
 	OL_ATH_PARAM_PDEV_RESET,   /* Reset FW PDEV*/
-	/*Do not crash host when target assert happened*/
+	/* Do not crash host when target assert happened*/
 	OL_ATH_PARAM_FW_DUMP_NO_HOST_CRASH = 210,
-	/*Consider OBSS non-erp to change to long slot*/
+	/* Consider OBSS non-erp to change to long slot*/
 	OL_ATH_PARAM_CONSIDER_OBSS_NON_ERP_LONG_SLOT = 211,
 	OL_ATH_PARAM_STATS_FC,
 	OL_ATH_PARAM_QFLUSHINTERVAL,
@@ -448,7 +456,7 @@ typedef enum _ol_ath_param_t {
 	OL_ATH_PARAM_VAP_QOS = 318,
 #endif
 	OL_ATH_PARAM_CHAN_STATS_TH = 319,
-	 /* Passive scan is enabled or disabled  */
+	/* Passive scan is enabled or disabled  */
 	OL_ATH_PARAM_PASSIVE_SCAN_ENABLE = 320,
 	OL_ATH_MIN_RSSI_ENABLE = 321,
 	OL_ATH_MIN_RSSI = 322,
@@ -456,8 +464,10 @@ typedef enum _ol_ath_param_t {
 #if DBDC_REPEATER_SUPPORT
 	OL_ATH_PARAM_DELAY_STAVAP_UP = 324,
 #endif
-	OL_ATH_PARAM_TXPOW_MGMT = 326,  /* Can be used to configure transmit power for management frames */
-	OL_ATH_PARAM_CHANSWITCH_OPTIONS = 327,  /* It is used to set the channel switch options */
+	/* Can be used to configure transmit power for management frames */
+	OL_ATH_PARAM_TXPOW_MGMT = 326,
+	/* It is used to set the channel switch options */
+	OL_ATH_PARAM_CHANSWITCH_OPTIONS = 327,
 	OL_ATH_BTCOEX_ENABLE        = 328,
 	OL_ATH_BTCOEX_WL_PRIORITY   = 329,
 	OL_ATH_PARAM_TID_OVERRIDE_QUEUE_MAPPING = 330,
@@ -483,15 +493,12 @@ typedef enum _ol_ath_param_t {
 	OL_ATH_PARAM_DUMP_CHAINMASK_TABLES = 350,
 	OL_ATH_PARAM_DUMP_OBJECTS = 351,
 	OL_ATH_PARAM_ACS_SRLOADVAR = 352,
-} ol_ath_param_t;
+};
 
-/*
-** Enumeration of PDEV Configuration parameter
-*/
-
-typedef enum _ol_hal_param_t {
+/* Enumeration of PDEV Configuration parameter */
+enum _ol_hal_param_t {
 	OL_HAL_CONFIG_DMA_BEACON_RESPONSE_TIME         = 0
-} ol_hal_param_t;
+};
 
 
 /* Bitmasks for stats that can block */
