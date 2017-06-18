@@ -1148,7 +1148,8 @@ void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 			srng->entry_size;
 		srng->u.src_ring.tp_addr =
 			&(hal->shadow_rdptr_mem_vaddr[ring_id]);
-		srng->u.src_ring.low_threshold = ring_params->low_threshold;
+		srng->u.src_ring.low_threshold =
+			ring_params->low_threshold * srng->entry_size;
 		if (ring_config->lmac_ring) {
 			/* For LMAC rings, head pointer updates will be done
 			 * through FW by writing to a shared memory location
