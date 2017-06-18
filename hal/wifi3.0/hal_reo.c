@@ -149,9 +149,9 @@ inline int hal_reo_cmd_flush_queue(void *reo_ring, struct hal_soc *soc,
 
 	HAL_DESC_SET_FIELD(reo_desc, REO_FLUSH_QUEUE_2,
 		BLOCK_DESC_ADDR_USAGE_AFTER_FLUSH,
-		cmd->u.fl_queue_params.use_after_flush);
+		cmd->u.fl_queue_params.block_use_after_flush);
 
-	if (cmd->u.fl_queue_params.use_after_flush) {
+	if (cmd->u.fl_queue_params.block_use_after_flush) {
 		HAL_DESC_SET_FIELD(reo_desc, REO_FLUSH_QUEUE_2,
 			BLOCK_RESOURCE_INDEX, cmd->u.fl_queue_params.index);
 	}
@@ -167,23 +167,25 @@ inline int hal_reo_cmd_flush_cache(void *reo_ring, struct hal_soc *soc,
 {
 	uint32_t *reo_desc, val;
 	struct hal_reo_cmd_flush_cache_params *cp;
-	uint8_t index;
+	uint8_t index = 0;
 
 	cp = &cmd->u.fl_cache_params;
 
 	hal_srng_access_start(soc, reo_ring);
 
-	index = hal_find_zero_bit(soc->reo_res_bitmap);
 	/* We need a cache block resource for this operation, and REO HW has
 	 * only 4 such blocking resources. These resources are managed using
 	 * reo_res_bitmap, and we return failure if none is available.
 	 */
-	if (index > 3) {
-		qdf_print("%s, No blocking resource available!\n", __func__);
-		hal_srng_access_end(soc, reo_ring);
-		return -EBUSY;
+	if (cp->block_use_after_flush) {
+		index = hal_find_zero_bit(soc->reo_res_bitmap);
+		if (index > 3) {
+			qdf_print("%s, No blocking resource available!\n", __func__);
+			hal_srng_access_end(soc, reo_ring);
+			return -EBUSY;
+		}
+		soc->index = index;
 	}
-	soc->index = index;
 
 	reo_desc = hal_srng_src_get_next(soc, reo_ring);
 	if (!reo_desc) {
@@ -215,14 +217,16 @@ inline int hal_reo_cmd_flush_cache(void *reo_ring, struct hal_soc *soc,
 	HAL_DESC_SET_FIELD(reo_desc, REO_FLUSH_CACHE_2,
 		RELEASE_CACHE_BLOCK_INDEX, cp->rel_block_index);
 
-	HAL_DESC_SET_FIELD(reo_desc, REO_FLUSH_CACHE_2,
-		CACHE_BLOCK_RESOURCE_INDEX, index);
+	if (cp->block_use_after_flush) {
+		HAL_DESC_SET_FIELD(reo_desc, REO_FLUSH_CACHE_2,
+			CACHE_BLOCK_RESOURCE_INDEX, index);
+	}
 
 	HAL_DESC_SET_FIELD(reo_desc, REO_FLUSH_CACHE_2,
 		FLUSH_WITHOUT_INVALIDATE, cp->flush_no_inval);
 
 	HAL_DESC_SET_FIELD(reo_desc, REO_FLUSH_CACHE_2,
-		BLOCK_CACHE_USAGE_AFTER_FLUSH, cp->use_after_flush);
+		BLOCK_CACHE_USAGE_AFTER_FLUSH, cp->block_use_after_flush);
 
 	HAL_DESC_SET_FIELD(reo_desc, REO_FLUSH_CACHE_2, FLUSH_ENTIRE_CACHE,
 		cp->flush_all);
@@ -276,8 +280,8 @@ inline int hal_reo_cmd_unblock_cache(void *reo_ring, struct hal_soc *soc,
 
 	if (cmd->u.unblk_cache_params.type == UNBLOCK_RES_INDEX) {
 		HAL_DESC_SET_FIELD(reo_desc, REO_UNBLOCK_CACHE_1,
-			CACHE_BLOCK_RESOURCE_INDEX, index);
-		soc->index = index;
+			CACHE_BLOCK_RESOURCE_INDEX,
+			cmd->u.unblk_cache_params.index);
 	}
 
 	hal_srng_access_end(soc, reo_ring);

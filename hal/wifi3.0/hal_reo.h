@@ -186,7 +186,7 @@ struct hal_reo_cmd_get_queue_stats_params {
  * @index: Blocking resource to be used
  */
 struct hal_reo_cmd_flush_queue_params {
-	bool use_after_flush;
+	bool block_use_after_flush;
 	uint8_t index;
 };
 
@@ -204,7 +204,7 @@ struct hal_reo_cmd_flush_cache_params {
 	bool rel_block_index;
 	uint8_t cache_block_res_index;
 	bool flush_no_inval;
-	bool use_after_flush;
+	bool block_use_after_flush;
 	bool flush_all;
 };
 
