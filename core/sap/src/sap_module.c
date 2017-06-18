@@ -1711,6 +1711,8 @@ static QDF_STATUS wlansap_update_csa_channel_params(ptSapContext sap_context,
  * @p_cds_gctx: Pointer to cds global context structure
  * @targetChannel: Target channel
  * @target_bw: Target bandwidth
+ * @strict: if true switch to the requested channel always, fail
+ *        otherwise
  *
  * This api function does a channel change to the target channel specified.
  * CSA IE is included in the beacons before doing a channel change.
@@ -1719,7 +1721,7 @@ static QDF_STATUS wlansap_update_csa_channel_params(ptSapContext sap_context,
  */
 QDF_STATUS
 wlansap_set_channel_change_with_csa(void *p_cds_gctx, uint32_t targetChannel,
-					enum phy_ch_width target_bw)
+					enum phy_ch_width target_bw, bool strict)
 {
 
 	ptSapContext sapContext = NULL;
@@ -1745,6 +1747,11 @@ wlansap_set_channel_change_with_csa(void *p_cds_gctx, uint32_t targetChannel,
 	}
 	pMac = PMAC_STRUCT(hHal);
 
+	if (strict && !policy_mgr_is_safe_channel(pMac->psoc, targetChannel)) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			"%u is unsafe channel", targetChannel);
+		return QDF_STATUS_E_FAULT;
+	}
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 		"%s: sap chan:%d target:%d conn on 5GHz:%d",
 		__func__, sapContext->channel, targetChannel,
