@@ -754,6 +754,7 @@ static inline void hal_srng_access_end_reap(void *hal_soc, void *hal_ring)
 #define LINK_DESC_SIZE (NUM_OF_DWORDS_RX_MSDU_LINK << 2)
 #define LINK_DESC_ALIGN 128
 
+#define ADDRESS_MATCH_TAG_VAL 0x5
 /* Number of mpdu link pointers is 9 in case of TX_MPDU_QUEUE_HEAD and 14 in
  * of TX_MPDU_QUEUE_EXT. We are defining a common average count here
  */
@@ -874,6 +875,27 @@ static inline uint32_t hal_idle_scatter_buf_num_entries(void *hal_soc,
 }
 
 /**
+ * hal_idle_list_num_scatter_bufs - Get the number of sctater buffer
+ * each given buffer size
+ *
+ * @hal_soc: Opaque HAL SOC handle
+ * @total_mem: size of memory to be scattered
+ * @scatter_buf_size: Size of scatter buffer
+ *
+ */
+static inline uint32_t hal_idle_list_num_scatter_bufs(void *hal_soc,
+	uint32_t total_mem, uint32_t scatter_buf_size)
+{
+	uint8_t rem = (total_mem % (scatter_buf_size -
+			WBM_IDLE_SCATTER_BUF_NEXT_PTR_SIZE)) ? 1 : 0;
+
+	uint32_t num_scatter_bufs = (total_mem / (scatter_buf_size -
+				WBM_IDLE_SCATTER_BUF_NEXT_PTR_SIZE)) + rem;
+
+	return num_scatter_bufs;
+}
+
+/**
  * hal_idle_scatter_buf_setup - Setup scattered idle list using the buffer list
  * provided
  *
@@ -882,12 +904,15 @@ static inline uint32_t hal_idle_scatter_buf_num_entries(void *hal_soc,
  * @idle_scatter_bufs_base_vaddr: Array of virtual base addresses
  * @num_scatter_bufs: Number of scatter buffers in the above lists
  * @scatter_buf_size: Size of each scatter buffer
+ * @last_buf_end_offset: Offset to the last entry
+ * @num_entries: Total entries of all scatter bufs
  *
  */
 extern void hal_setup_link_idle_list(void *hal_soc,
 	qdf_dma_addr_t scatter_bufs_base_paddr[],
 	void *scatter_bufs_base_vaddr[], uint32_t num_scatter_bufs,
-	uint32_t scatter_buf_size, uint32_t last_buf_end_offset);
+	uint32_t scatter_buf_size, uint32_t last_buf_end_offset,
+	uint32_t num_entries);
 
 /* REO parameters to be passed to hal_reo_setup */
 struct hal_reo_params {
