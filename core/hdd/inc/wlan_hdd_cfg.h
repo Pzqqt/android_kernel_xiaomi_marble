@@ -10297,6 +10297,26 @@ enum hdd_external_acs_freq_band {
 #define CFG_SAP_MAX_MCS_FOR_TX_DATA_DEFAULT (0)
 
 /*
+ * <ini>
+ * gEnableTxOrphan- Enable/Disable orphaning of Tx packets
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable orphaning of Tx packets.
+ *
+ * Related: None
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_TX_ORPHAN_ENABLE_NAME    "gEnableTxOrphan"
+#define CFG_TX_ORPHAN_ENABLE_DEFAULT (0)
+#define CFG_TX_ORPHAN_ENABLE_MIN     (0)
+#define CFG_TX_ORPHAN_ENABLE_MAX     (1)
+
+/*
  * Type declarations
  */
 struct hdd_config {
@@ -11022,6 +11042,7 @@ struct hdd_config {
 	bool ani_enabled;
 	bool qcn_ie_support;
 	bool reg_offload_enabled;
+	bool tx_orphan_enable;
 	uint32_t timer_multiplier;
 	uint8_t fils_max_chan_guard_time;
 	uint8_t scan_backoff_multiplier;

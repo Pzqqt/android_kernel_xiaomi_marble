@@ -219,9 +219,10 @@ static inline struct sk_buff *hdd_skb_orphan(hdd_adapter_t *pAdapter,
 		struct sk_buff *skb) {
 
 	struct sk_buff *nskb;
-	nskb = skb_unshare(skb, GFP_ATOMIC);
+	hdd_context_t *hdd_ctx = pAdapter->pHddCtx;
 
-	if (nskb == skb) {
+	nskb = skb_unshare(skb, GFP_ATOMIC);
+	if (unlikely(hdd_ctx->config->tx_orphan_enable) && (nskb == skb)) {
 		/*
 		 * For UDP packets we want to orphan the packet to allow the app
 		 * to send more packets. The flow would ultimately be controlled
