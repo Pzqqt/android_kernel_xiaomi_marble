@@ -958,8 +958,8 @@ lim_handle80211_frames(tpAniSirGlobal pMac, struct scheduler_msg *limMsg,
 			psessionEntry = pe_find_session_by_peer_sta(pMac,
 						pHdr->sa, &sessionId);
 			if (psessionEntry == NULL) {
-				pe_debug("SessionId does not exist for Bssid");
-				lim_print_mac_addr(pMac, pHdr->sa, LOG3);
+				pe_debug("session does not exist for bssId");
+				lim_print_mac_addr(pMac, pHdr->sa, LOGD);
 				goto end;
 			} else {
 				pe_debug("SessionId:%d exists for given Bssid",
