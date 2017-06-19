@@ -1599,63 +1599,6 @@ static QDF_STATUS send_packet_log_enable_cmd_tlv(wmi_unified_t wmi_handle,
 }
 #endif
 
-#ifdef CONFIG_MCL
-/**
- *  send_beacon_send_cmd_tlv() - WMI beacon send function
- *  @param wmi_handle      : handle to WMI.
- *  @param param    : pointer to hold beacon send cmd parameter
- *
- *  Return: 0  on success and -ve on failure.
- */
-static QDF_STATUS send_beacon_send_cmd_tlv(wmi_unified_t wmi_handle,
-				struct beacon_params *param)
-{
-	int32_t ret;
-	wmi_bcn_tmpl_cmd_fixed_param *cmd;
-	wmi_bcn_prb_info *bcn_prb_info;
-	wmi_buf_t wmi_buf;
-	uint8_t *buf_ptr;
-	uint32_t wmi_buf_len;
-
-	wmi_buf_len = sizeof(wmi_bcn_tmpl_cmd_fixed_param) +
-		      sizeof(wmi_bcn_prb_info) + WMI_TLV_HDR_SIZE +
-		      param->tmpl_len_aligned;
-	wmi_buf = wmi_buf_alloc(wmi_handle, wmi_buf_len);
-	if (!wmi_buf) {
-		WMI_LOGE("%s : wmi_buf_alloc failed", __func__);
-		return QDF_STATUS_E_NOMEM;
-	}
-	buf_ptr = (uint8_t *) wmi_buf_data(wmi_buf);
-	cmd = (wmi_bcn_tmpl_cmd_fixed_param *) buf_ptr;
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_bcn_tmpl_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN(wmi_bcn_tmpl_cmd_fixed_param));
-	cmd->vdev_id = param->vdev_id;
-	cmd->tim_ie_offset = param->tim_ie_offset;
-	cmd->buf_len = param->tmpl_len;
-	buf_ptr += sizeof(wmi_bcn_tmpl_cmd_fixed_param);
-
-	bcn_prb_info = (wmi_bcn_prb_info *) buf_ptr;
-	WMITLV_SET_HDR(&bcn_prb_info->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_bcn_prb_info,
-		       WMITLV_GET_STRUCT_TLVLEN(wmi_bcn_prb_info));
-	bcn_prb_info->caps = 0;
-	bcn_prb_info->erp = 0;
-	buf_ptr += sizeof(wmi_bcn_prb_info);
-
-	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, param->tmpl_len_aligned);
-	buf_ptr += WMI_TLV_HDR_SIZE;
-	qdf_mem_copy(buf_ptr, param->frm, param->tmpl_len);
-
-	ret = wmi_unified_cmd_send(wmi_handle,
-				   wmi_buf, wmi_buf_len, WMI_BCN_TMPL_CMDID);
-	if (ret) {
-		WMI_LOGE("%s: Failed to send bcn tmpl: %d", __func__, ret);
-		wmi_buf_free(wmi_buf);
-	}
-	return 0;
-}
-#else
 static QDF_STATUS send_beacon_send_cmd_tlv(wmi_unified_t wmi_handle,
 				struct beacon_params *param)
 {
@@ -1762,7 +1705,6 @@ static QDF_STATUS send_beacon_tmpl_send_cmd_tlv(wmi_unified_t wmi_handle,
 
 	return 0;
 }
-#endif
 
 #ifdef CONFIG_MCL
 static inline void copy_peer_flags_tlv(
@@ -17930,9 +17872,7 @@ struct wmi_ops tlv_ops =  {
 	.send_stats_request_cmd = send_stats_request_cmd_tlv,
 	.send_packet_log_enable_cmd = send_packet_log_enable_cmd_tlv,
 	.send_beacon_send_cmd = send_beacon_send_cmd_tlv,
-#ifndef CONFIG_MCL
 	.send_beacon_tmpl_send_cmd = send_beacon_tmpl_send_cmd_tlv,
-#endif
 	.send_peer_assoc_cmd = send_peer_assoc_cmd_tlv,
 	.send_scan_start_cmd = send_scan_start_cmd_tlv,
 	.send_scan_stop_cmd = send_scan_stop_cmd_tlv,
