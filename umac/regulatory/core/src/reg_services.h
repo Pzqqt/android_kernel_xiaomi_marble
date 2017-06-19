@@ -73,7 +73,7 @@
 /* EEPROM setting is a country code */
 #define    COUNTRY_ERD_FLAG     0x8000
 
-extern const struct chan_map channel_map[NUM_CHANNELS];
+extern const struct chan_map *channel_map;
 
 enum channel_enum reg_get_chan_enum(uint32_t chan_num);
 

@@ -35,9 +35,16 @@
 #include "reg_db_parser.h"
 #include <scheduler_api.h>
 
+#define CHAN_12_CENT_FREQ 2467
 #define MAX_PWR_FCC_CHAN_12 8
+#define CHAN_13_CENT_FREQ 2472
 #define MAX_PWR_FCC_CHAN_13 2
 #define SCAN_11D_PERIOD_MS 360000
+
+#define IS_VALID_PSOC_REG_OBJ(psoc_priv_obj) (NULL != psoc_priv_obj)
+#define IS_VALID_PDEV_REG_OBJ(pdev_priv_obj) (NULL != pdev_priv_obj)
+
+const struct chan_map *channel_map;
 
 const struct bonded_channel bonded_chan_40mhz_list[] = {
 	{36, 40},
@@ -78,67 +85,575 @@ const enum phy_ch_width get_next_lower_bw[] = {
 	[CH_WIDTH_5MHZ] = CH_WIDTH_INVALID
 };
 
-const struct chan_map channel_map[NUM_CHANNELS] = {
-	[CHAN_ENUM_1] = {2412, 1},
-	[CHAN_ENUM_2] = {2417, 2},
-	[CHAN_ENUM_3] = {2422, 3},
-	[CHAN_ENUM_4] = {2427, 4},
-	[CHAN_ENUM_5] = {2432, 5},
-	[CHAN_ENUM_6] = {2437, 6},
-	[CHAN_ENUM_7] = {2442, 7},
-	[CHAN_ENUM_8] = {2447, 8},
-	[CHAN_ENUM_9] = {2452, 9},
-	[CHAN_ENUM_10] = {2457, 10},
-	[CHAN_ENUM_11] = {2462, 11},
-	[CHAN_ENUM_12] = {2467, 12},
-	[CHAN_ENUM_13] = {2472, 13},
-	[CHAN_ENUM_14] = {2484, 14},
+#ifdef CONFIG_LEGACY_CHAN_ENUM
+static const struct chan_map channel_map_old[NUM_CHANNELS] = {
+	[CHAN_ENUM_1] = {2412, 1, 2, 40},
+	[CHAN_ENUM_2] = {2417, 2, 2, 40},
+	[CHAN_ENUM_3] = {2422, 3, 2, 40},
+	[CHAN_ENUM_4] = {2427, 4, 2, 40},
+	[CHAN_ENUM_5] = {2432, 5, 2, 40},
+	[CHAN_ENUM_6] = {2437, 6, 2, 40},
+	[CHAN_ENUM_7] = {2442, 7, 2, 40},
+	[CHAN_ENUM_8] = {2447, 8, 2, 40},
+	[CHAN_ENUM_9] = {2452, 9, 2, 40},
+	[CHAN_ENUM_10] = {2457, 10, 2, 40},
+	[CHAN_ENUM_11] = {2462, 11, 2, 40},
+	[CHAN_ENUM_12] = {2467, 12, 2, 40},
+	[CHAN_ENUM_13] = {2472, 13, 2, 40},
+	[CHAN_ENUM_14] = {2484, 14, 2, 40},
 
-	[CHAN_ENUM_36] = {5180, 36},
-	[CHAN_ENUM_40] = {5200, 40},
-	[CHAN_ENUM_44] = {5220, 44},
-	[CHAN_ENUM_48] = {5240, 48},
-	[CHAN_ENUM_52] = {5260, 52},
-	[CHAN_ENUM_56] = {5280, 56},
-	[CHAN_ENUM_60] = {5300, 60},
-	[CHAN_ENUM_64] = {5320, 64},
+	[CHAN_ENUM_36] = {5180, 36, 2, 160},
+	[CHAN_ENUM_40] = {5200, 40, 2, 160},
+	[CHAN_ENUM_44] = {5220, 44, 2, 160},
+	[CHAN_ENUM_48] = {5240, 48, 2, 160},
+	[CHAN_ENUM_52] = {5260, 52, 2, 160},
+	[CHAN_ENUM_56] = {5280, 56, 2, 160},
+	[CHAN_ENUM_60] = {5300, 60, 2, 160},
+	[CHAN_ENUM_64] = {5320, 64, 2, 160},
 
-	[CHAN_ENUM_100] = {5500, 100},
-	[CHAN_ENUM_104] = {5520, 104},
-	[CHAN_ENUM_108] = {5540, 108},
-	[CHAN_ENUM_112] = {5560, 112},
-	[CHAN_ENUM_116] = {5580, 116},
-	[CHAN_ENUM_120] = {5600, 120},
-	[CHAN_ENUM_124] = {5620, 124},
-	[CHAN_ENUM_128] = {5640, 128},
-	[CHAN_ENUM_132] = {5660, 132},
-	[CHAN_ENUM_136] = {5680, 136},
-	[CHAN_ENUM_140] = {5700, 140},
-	[CHAN_ENUM_144] = {5720, 144},
+	[CHAN_ENUM_100] = {5500, 100, 2, 160},
+	[CHAN_ENUM_104] = {5520, 104, 2, 160},
+	[CHAN_ENUM_108] = {5540, 108, 2, 160},
+	[CHAN_ENUM_112] = {5560, 112, 2, 160},
+	[CHAN_ENUM_116] = {5580, 116, 2, 160},
+	[CHAN_ENUM_120] = {5600, 120, 2, 160},
+	[CHAN_ENUM_124] = {5620, 124, 2, 160},
+	[CHAN_ENUM_128] = {5640, 128, 2, 160},
+	[CHAN_ENUM_132] = {5660, 132, 2, 160},
+	[CHAN_ENUM_136] = {5680, 136, 2, 160},
+	[CHAN_ENUM_140] = {5700, 140, 2, 160},
+	[CHAN_ENUM_144] = {5720, 144, 2, 160},
 
-	[CHAN_ENUM_149] = {5745, 149},
-	[CHAN_ENUM_153] = {5765, 153},
-	[CHAN_ENUM_157] = {5785, 157},
-	[CHAN_ENUM_161] = {5805, 161},
-	[CHAN_ENUM_165] = {5825, 165},
+	[CHAN_ENUM_149] = {5745, 149, 2, 160},
+	[CHAN_ENUM_153] = {5765, 153, 2, 160},
+	[CHAN_ENUM_157] = {5785, 157, 2, 160},
+	[CHAN_ENUM_161] = {5805, 161, 2, 160},
+	[CHAN_ENUM_165] = {5825, 165, 2, 160},
 
-	[CHAN_ENUM_170] = {5852, 170},
-	[CHAN_ENUM_171] = {5855, 171},
-	[CHAN_ENUM_172] = {5860, 172},
-	[CHAN_ENUM_173] = {5865, 173},
-	[CHAN_ENUM_174] = {5870, 174},
-	[CHAN_ENUM_175] = {5875, 175},
-	[CHAN_ENUM_176] = {5880, 176},
-	[CHAN_ENUM_177] = {5885, 177},
-	[CHAN_ENUM_178] = {5890, 178},
-	[CHAN_ENUM_179] = {5895, 179},
-	[CHAN_ENUM_180] = {5900, 180},
-	[CHAN_ENUM_181] = {5905, 181},
-	[CHAN_ENUM_182] = {5910, 182},
-	[CHAN_ENUM_183] = {5915, 183},
-	[CHAN_ENUM_184] = {5920, 184},
+	[CHAN_ENUM_170] = {5852, 170, 2, 20},
+	[CHAN_ENUM_171] = {5855, 171, 2, 20},
+	[CHAN_ENUM_172] = {5860, 172, 2, 20},
+	[CHAN_ENUM_173] = {5865, 173, 2, 20},
+	[CHAN_ENUM_174] = {5870, 174, 2, 20},
+	[CHAN_ENUM_175] = {5875, 175, 2, 20},
+	[CHAN_ENUM_176] = {5880, 176, 2, 20},
+	[CHAN_ENUM_177] = {5885, 177, 2, 20},
+	[CHAN_ENUM_178] = {5890, 178, 2, 20},
+	[CHAN_ENUM_179] = {5895, 179, 2, 20},
+	[CHAN_ENUM_180] = {5900, 180, 2, 20},
+	[CHAN_ENUM_181] = {5905, 181, 2, 20},
+	[CHAN_ENUM_182] = {5910, 182, 2, 20},
+	[CHAN_ENUM_183] = {5915, 183, 2, 20},
+	[CHAN_ENUM_184] = {5920, 184, 2, 20},
 };
 
+#else
+static const struct chan_map channel_map_us[NUM_CHANNELS] = {
+	[CHAN_ENUM_2412] = {2412, 1, 2, 40},
+	[CHAN_ENUM_2417] = {2417, 2, 2, 40},
+	[CHAN_ENUM_2422] = {2422, 3, 2, 40},
+	[CHAN_ENUM_2427] = {2427, 4, 2, 40},
+	[CHAN_ENUM_2432] = {2432, 5, 2, 40},
+	[CHAN_ENUM_2437] = {2437, 6, 2, 40},
+	[CHAN_ENUM_2442] = {2442, 7, 2, 40},
+	[CHAN_ENUM_2447] = {2447, 8, 2, 40},
+	[CHAN_ENUM_2452] = {2452, 9, 2, 40},
+	[CHAN_ENUM_2457] = {2457, 10, 2, 40},
+	[CHAN_ENUM_2462] = {2462, 11, 2, 40},
+	[CHAN_ENUM_2467] = {2467, 12, 2, 40},
+	[CHAN_ENUM_2472] = {2472, 13, 2, 40},
+	[CHAN_ENUM_2484] = {2484, 14, 2, 40},
+
+
+	[CHAN_ENUM_4912] = {4912, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4915] = {4915, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4917] = {4917, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4920] = {4920, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4922] = {4922, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4925] = {4925, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4927] = {4927, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4932] = {4932, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4935] = {4935, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4937] = {4937, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4940] = {4940, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4942] = {4942, 1, 5, 5},
+	[CHAN_ENUM_4945] = {4945, 11, 10, 10},
+	[CHAN_ENUM_4947] = {4947, 2, 5, 5},
+	[CHAN_ENUM_4950] = {4950, 20, 10, 20},
+	[CHAN_ENUM_4952] = {4952, 3, 5, 5},
+	[CHAN_ENUM_4955] = {4955, 21, 10, 20},
+	[CHAN_ENUM_4957] = {4957, 4, 5, 5},
+	[CHAN_ENUM_4960] = {4960, 22, 10, 20},
+	[CHAN_ENUM_4962] = {4962, 5, 5, 5},
+	[CHAN_ENUM_4965] = {4965, 23, 10, 20},
+	[CHAN_ENUM_4967] = {4967, 6, 5, 5},
+	[CHAN_ENUM_4970] = {4970, 24, 10, 20},
+	[CHAN_ENUM_4972] = {4972, 7, 5, 5},
+	[CHAN_ENUM_4975] = {4975, 25, 10, 20},
+	[CHAN_ENUM_4977] = {4977, 8, 5, 5},
+	[CHAN_ENUM_4980] = {4980, 26, 10, 20},
+	[CHAN_ENUM_4982] = {4982, 9, 5, 5},
+	[CHAN_ENUM_4985] = {4985, 19, 10, 10},
+	[CHAN_ENUM_4987] = {4987, 10, 5, 5},
+	[CHAN_ENUM_5032] = {5032, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5035] = {5035, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5037] = {5037, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5040] = {5040, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5042] = {5042, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5045] = {5045, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5047] = {5047, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5052] = {5052, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5055] = {5055, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5057] = {5057, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5060] = {5060, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5080] = {5080, INVALID_CHANNEL_NUM, 2, 20},
+
+	[CHAN_ENUM_5180] = {5180, 36, 2, 160},
+	[CHAN_ENUM_5200] = {5200, 40, 2, 160},
+	[CHAN_ENUM_5220] = {5220, 44, 2, 160},
+	[CHAN_ENUM_5240] = {5240, 48, 2, 160},
+	[CHAN_ENUM_5260] = {5260, 52, 2, 160},
+	[CHAN_ENUM_5280] = {5280, 56, 2, 160},
+	[CHAN_ENUM_5300] = {5300, 60, 2, 160},
+	[CHAN_ENUM_5320] = {5320, 64, 2, 160},
+	[CHAN_ENUM_5500] = {5500, 100, 2, 160},
+	[CHAN_ENUM_5520] = {5520, 104, 2, 160},
+	[CHAN_ENUM_5540] = {5540, 108, 2, 160},
+	[CHAN_ENUM_5560] = {5560, 112, 2, 160},
+	[CHAN_ENUM_5580] = {5580, 116, 2, 160},
+	[CHAN_ENUM_5600] = {5600, 120, 2, 160},
+	[CHAN_ENUM_5620] = {5620, 124, 2, 160},
+	[CHAN_ENUM_5640] = {5640, 128, 2, 160},
+	[CHAN_ENUM_5660] = {5660, 132, 2, 160},
+	[CHAN_ENUM_5680] = {5680, 136, 2, 160},
+	[CHAN_ENUM_5700] = {5700, 140, 2, 160},
+	[CHAN_ENUM_5720] = {5720, 144, 2, 160},
+	[CHAN_ENUM_5745] = {5745, 149, 2, 160},
+	[CHAN_ENUM_5765] = {5765, 153, 2, 160},
+	[CHAN_ENUM_5785] = {5785, 157, 2, 160},
+	[CHAN_ENUM_5805] = {5805, 161, 2, 160},
+	[CHAN_ENUM_5825] = {5825, 165, 2, 160},
+	[CHAN_ENUM_5850] = {5850, 170, 2, 160},
+	[CHAN_ENUM_5855] = {5855, 171, 2, 160},
+	[CHAN_ENUM_5860] = {5860, 172, 2, 160},
+	[CHAN_ENUM_5865] = {5865, 173, 2, 160},
+	[CHAN_ENUM_5870] = {5870, 174, 2, 160},
+	[CHAN_ENUM_5875] = {5875, 175, 2, 160},
+	[CHAN_ENUM_5880] = {5880, 176, 2, 160},
+	[CHAN_ENUM_5885] = {5885, 177, 2, 160},
+	[CHAN_ENUM_5890] = {5890, 178, 2, 160},
+	[CHAN_ENUM_5895] = {5895, 179, 2, 160},
+	[CHAN_ENUM_5900] = {5900, 180, 2, 160},
+	[CHAN_ENUM_5905] = {5905, 181, 2, 160},
+	[CHAN_ENUM_5910] = {5910, 182, 2, 160},
+	[CHAN_ENUM_5915] = {5915, 183, 2, 160},
+	[CHAN_ENUM_5920] = {5920, 184, 2, 160},
+};
+
+static const struct chan_map channel_map_eu[NUM_CHANNELS] = {
+	[CHAN_ENUM_2412] = {2412, 1, 2, 40},
+	[CHAN_ENUM_2417] = {2417, 2, 2, 40},
+	[CHAN_ENUM_2422] = {2422, 3, 2, 40},
+	[CHAN_ENUM_2427] = {2427, 4, 2, 40},
+	[CHAN_ENUM_2432] = {2432, 5, 2, 40},
+	[CHAN_ENUM_2437] = {2437, 6, 2, 40},
+	[CHAN_ENUM_2442] = {2442, 7, 2, 40},
+	[CHAN_ENUM_2447] = {2447, 8, 2, 40},
+	[CHAN_ENUM_2452] = {2452, 9, 2, 40},
+	[CHAN_ENUM_2457] = {2457, 10, 2, 40},
+	[CHAN_ENUM_2462] = {2462, 11, 2, 40},
+	[CHAN_ENUM_2467] = {2467, 12, 2, 40},
+	[CHAN_ENUM_2472] = {2472, 13, 2, 40},
+	[CHAN_ENUM_2484] = {2484, 14, 2, 40},
+
+	[CHAN_ENUM_4912] = {4912, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4915] = {4915, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4917] = {4917, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4920] = {4920, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4922] = {4922, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4925] = {4925, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4927] = {4927, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4932] = {4932, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4935] = {4935, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4937] = {4937, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4940] = {4940, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4942] = {4942, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4945] = {4945, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4947] = {4947, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4950] = {4950, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4952] = {4952, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4955] = {4955, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4957] = {4957, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4960] = {4960, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4962] = {4962, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4965] = {4965, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4967] = {4967, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4970] = {4970, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4972] = {4972, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4975] = {4975, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4977] = {4977, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4980] = {4980, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4982] = {4982, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4985] = {4985, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4987] = {4987, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5032] = {5032, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5035] = {5035, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5037] = {5037, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5040] = {5040, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5042] = {5042, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5045] = {5045, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5047] = {5047, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5052] = {5052, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5055] = {5055, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5057] = {5057, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5060] = {5060, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5080] = {5080, INVALID_CHANNEL_NUM, 2, 20},
+
+	[CHAN_ENUM_5180] = {5180, 36, 2, 160},
+	[CHAN_ENUM_5200] = {5200, 40, 2, 160},
+	[CHAN_ENUM_5220] = {5220, 44, 2, 160},
+	[CHAN_ENUM_5240] = {5240, 48, 2, 160},
+	[CHAN_ENUM_5260] = {5260, 52, 2, 160},
+	[CHAN_ENUM_5280] = {5280, 56, 2, 160},
+	[CHAN_ENUM_5300] = {5300, 60, 2, 160},
+	[CHAN_ENUM_5320] = {5320, 64, 2, 160},
+	[CHAN_ENUM_5500] = {5500, 100, 2, 160},
+	[CHAN_ENUM_5520] = {5520, 104, 2, 160},
+	[CHAN_ENUM_5540] = {5540, 108, 2, 160},
+	[CHAN_ENUM_5560] = {5560, 112, 2, 160},
+	[CHAN_ENUM_5580] = {5580, 116, 2, 160},
+	[CHAN_ENUM_5600] = {5600, 120, 2, 160},
+	[CHAN_ENUM_5620] = {5620, 124, 2, 160},
+	[CHAN_ENUM_5640] = {5640, 128, 2, 160},
+	[CHAN_ENUM_5660] = {5660, 132, 2, 160},
+	[CHAN_ENUM_5680] = {5680, 136, 2, 160},
+	[CHAN_ENUM_5700] = {5700, 140, 2, 160},
+	[CHAN_ENUM_5720] = {5720, 144, 2, 160},
+	[CHAN_ENUM_5745] = {5745, 149, 2, 160},
+	[CHAN_ENUM_5765] = {5765, 153, 2, 160},
+	[CHAN_ENUM_5785] = {5785, 157, 2, 160},
+	[CHAN_ENUM_5805] = {5805, 161, 2, 160},
+	[CHAN_ENUM_5825] = {5825, 165, 2, 160},
+	[CHAN_ENUM_5850] = {5850, 170, 2, 160},
+	[CHAN_ENUM_5855] = {5855, 171, 2, 160},
+	[CHAN_ENUM_5860] = {5860, 172, 2, 160},
+	[CHAN_ENUM_5865] = {5865, 173, 2, 160},
+	[CHAN_ENUM_5870] = {5870, 174, 2, 160},
+	[CHAN_ENUM_5875] = {5875, 175, 2, 160},
+	[CHAN_ENUM_5880] = {5880, 176, 2, 160},
+	[CHAN_ENUM_5885] = {5885, 177, 2, 160},
+	[CHAN_ENUM_5890] = {5890, 178, 2, 160},
+	[CHAN_ENUM_5895] = {5895, 179, 2, 160},
+	[CHAN_ENUM_5900] = {5900, 180, 2, 160},
+	[CHAN_ENUM_5905] = {5905, 181, 2, 160},
+	[CHAN_ENUM_5910] = {5910, 182, 2, 160},
+	[CHAN_ENUM_5915] = {5915, 183, 2, 160},
+	[CHAN_ENUM_5920] = {5920, 184, 2, 160},
+};
+
+static const struct chan_map channel_map_jp[NUM_CHANNELS] = {
+	[CHAN_ENUM_2412] = {2412, 1, 2, 40},
+	[CHAN_ENUM_2417] = {2417, 2, 2, 40},
+	[CHAN_ENUM_2422] = {2422, 3, 2, 40},
+	[CHAN_ENUM_2427] = {2427, 4, 2, 40},
+	[CHAN_ENUM_2432] = {2432, 5, 2, 40},
+	[CHAN_ENUM_2437] = {2437, 6, 2, 40},
+	[CHAN_ENUM_2442] = {2442, 7, 2, 40},
+	[CHAN_ENUM_2447] = {2447, 8, 2, 40},
+	[CHAN_ENUM_2452] = {2452, 9, 2, 40},
+	[CHAN_ENUM_2457] = {2457, 10, 2, 40},
+	[CHAN_ENUM_2462] = {2462, 11, 2, 40},
+	[CHAN_ENUM_2467] = {2467, 12, 2, 40},
+	[CHAN_ENUM_2472] = {2472, 13, 2, 40},
+	[CHAN_ENUM_2484] = {2484, 14, 2, 40},
+
+	[CHAN_ENUM_4912] = {4912, 182, 5, 5},
+	[CHAN_ENUM_4915] = {4915, 183, 10, 10},
+	[CHAN_ENUM_4917] = {4917, 183, 5, 5},
+	[CHAN_ENUM_4920] = {4920, 184, 10, 20},
+	[CHAN_ENUM_4922] = {4922, 184, 5, 5},
+	[CHAN_ENUM_4925] = {4925, 185, 10, 10},
+	[CHAN_ENUM_4927] = {4927, 185, 5, 5},
+	[CHAN_ENUM_4932] = {4932, 186, 5, 5},
+	[CHAN_ENUM_4935] = {4935, 187, 10, 10},
+	[CHAN_ENUM_4937] = {4937, 187, 5, 5},
+	[CHAN_ENUM_4940] = {4940, 188, 10, 20},
+	[CHAN_ENUM_4942] = {4942, 188, 5, 5},
+	[CHAN_ENUM_4945] = {4945, 189, 10, 10},
+	[CHAN_ENUM_4947] = {4947, 189, 5, 5},
+	[CHAN_ENUM_4950] = {4950, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4952] = {4952, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4955] = {4955, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4957] = {4957, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4960] = {4960, 192, 20, 20},
+	[CHAN_ENUM_4962] = {4962, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4965] = {4965, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4967] = {4967, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4970] = {4970, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4972] = {4972, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4975] = {4975, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4977] = {4977, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4980] = {4980, 196, 20, 20},
+	[CHAN_ENUM_4982] = {4982, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4985] = {4985, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4987] = {4987, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5032] = {5032, 6, 5, 5},
+	[CHAN_ENUM_5035] = {5035, 7, 10, 10},
+	[CHAN_ENUM_5037] = {5037, 7, 5, 5},
+	[CHAN_ENUM_5040] = {5040, 8, 10, 20},
+	[CHAN_ENUM_5042] = {5042, 8, 5, 5},
+	[CHAN_ENUM_5045] = {5045, 9, 10, 10},
+	[CHAN_ENUM_5047] = {5047, 9, 5, 5},
+	[CHAN_ENUM_5052] = {5052, 10, 5, 5},
+	[CHAN_ENUM_5055] = {5055, 11, 10, 10},
+	[CHAN_ENUM_5057] = {5057, 11, 5, 5},
+	[CHAN_ENUM_5060] = {5060, 12, 20, 20},
+	[CHAN_ENUM_5080] = {5080, 16, 20, 20},
+
+	[CHAN_ENUM_5180] = {5180, 36, 2, 160},
+	[CHAN_ENUM_5200] = {5200, 40, 2, 160},
+	[CHAN_ENUM_5220] = {5220, 44, 2, 160},
+	[CHAN_ENUM_5240] = {5240, 48, 2, 160},
+	[CHAN_ENUM_5260] = {5260, 52, 2, 160},
+	[CHAN_ENUM_5280] = {5280, 56, 2, 160},
+	[CHAN_ENUM_5300] = {5300, 60, 2, 160},
+	[CHAN_ENUM_5320] = {5320, 64, 2, 160},
+	[CHAN_ENUM_5500] = {5500, 100, 2, 160},
+	[CHAN_ENUM_5520] = {5520, 104, 2, 160},
+	[CHAN_ENUM_5540] = {5540, 108, 2, 160},
+	[CHAN_ENUM_5560] = {5560, 112, 2, 160},
+	[CHAN_ENUM_5580] = {5580, 116, 2, 160},
+	[CHAN_ENUM_5600] = {5600, 120, 2, 160},
+	[CHAN_ENUM_5620] = {5620, 124, 2, 160},
+	[CHAN_ENUM_5640] = {5640, 128, 2, 160},
+	[CHAN_ENUM_5660] = {5660, 132, 2, 160},
+	[CHAN_ENUM_5680] = {5680, 136, 2, 160},
+	[CHAN_ENUM_5700] = {5700, 140, 2, 160},
+	[CHAN_ENUM_5720] = {5720, 144, 2, 160},
+	[CHAN_ENUM_5745] = {5745, 149, 2, 160},
+	[CHAN_ENUM_5765] = {5765, 153, 2, 160},
+	[CHAN_ENUM_5785] = {5785, 157, 2, 160},
+	[CHAN_ENUM_5805] = {5805, 161, 2, 160},
+	[CHAN_ENUM_5825] = {5825, 165, 2, 160},
+	[CHAN_ENUM_5850] = {5850, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5855] = {5855, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5860] = {5860, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5865] = {5865, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5870] = {5870, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5875] = {5875, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5880] = {5880, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5885] = {5885, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5890] = {5890, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5895] = {5895, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5900] = {5900, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5905] = {5905, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5910] = {5910, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5915] = {5915, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5920] = {5920, INVALID_CHANNEL_NUM, 2, 160},
+};
+
+static const struct chan_map channel_map_global[NUM_CHANNELS] = {
+	[CHAN_ENUM_2412] = {2412, 1, 2, 40},
+	[CHAN_ENUM_2417] = {2417, 2, 2, 40},
+	[CHAN_ENUM_2422] = {2422, 3, 2, 40},
+	[CHAN_ENUM_2427] = {2427, 4, 2, 40},
+	[CHAN_ENUM_2432] = {2432, 5, 2, 40},
+	[CHAN_ENUM_2437] = {2437, 6, 2, 40},
+	[CHAN_ENUM_2442] = {2442, 7, 2, 40},
+	[CHAN_ENUM_2447] = {2447, 8, 2, 40},
+	[CHAN_ENUM_2452] = {2452, 9, 2, 40},
+	[CHAN_ENUM_2457] = {2457, 10, 2, 40},
+	[CHAN_ENUM_2462] = {2462, 11, 2, 40},
+	[CHAN_ENUM_2467] = {2467, 12, 2, 40},
+	[CHAN_ENUM_2472] = {2472, 13, 2, 40},
+	[CHAN_ENUM_2484] = {2484, 14, 2, 40},
+
+	[CHAN_ENUM_4912] = {4912, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4915] = {4915, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4917] = {4917, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4920] = {4920, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4922] = {4922, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4925] = {4925, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4927] = {4927, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4932] = {4932, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4935] = {4935, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4937] = {4937, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4940] = {4940, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4942] = {4942, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4945] = {4945, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4947] = {4947, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4950] = {4950, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4952] = {4952, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4955] = {4955, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4957] = {4957, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4960] = {4960, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4962] = {4962, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4965] = {4965, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4967] = {4967, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4970] = {4970, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4972] = {4972, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4975] = {4975, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4977] = {4977, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4980] = {4980, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4982] = {4982, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4985] = {4985, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4987] = {4987, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5032] = {5032, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5035] = {5035, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5037] = {5037, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5040] = {5040, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5042] = {5042, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5045] = {5045, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5047] = {5047, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5052] = {5052, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5055] = {5055, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5057] = {5057, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5060] = {5060, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5080] = {5080, INVALID_CHANNEL_NUM, 2, 20},
+
+	[CHAN_ENUM_5180] = {5180, 36, 2, 160},
+	[CHAN_ENUM_5200] = {5200, 40, 2, 160},
+	[CHAN_ENUM_5220] = {5220, 44, 2, 160},
+	[CHAN_ENUM_5240] = {5240, 48, 2, 160},
+	[CHAN_ENUM_5260] = {5260, 52, 2, 160},
+	[CHAN_ENUM_5280] = {5280, 56, 2, 160},
+	[CHAN_ENUM_5300] = {5300, 60, 2, 160},
+	[CHAN_ENUM_5320] = {5320, 64, 2, 160},
+	[CHAN_ENUM_5500] = {5500, 100, 2, 160},
+	[CHAN_ENUM_5520] = {5520, 104, 2, 160},
+	[CHAN_ENUM_5540] = {5540, 108, 2, 160},
+	[CHAN_ENUM_5560] = {5560, 112, 2, 160},
+	[CHAN_ENUM_5580] = {5580, 116, 2, 160},
+	[CHAN_ENUM_5600] = {5600, 120, 2, 160},
+	[CHAN_ENUM_5620] = {5620, 124, 2, 160},
+	[CHAN_ENUM_5640] = {5640, 128, 2, 160},
+	[CHAN_ENUM_5660] = {5660, 132, 2, 160},
+	[CHAN_ENUM_5680] = {5680, 136, 2, 160},
+	[CHAN_ENUM_5700] = {5700, 140, 2, 160},
+	[CHAN_ENUM_5720] = {5720, 144, 2, 160},
+	[CHAN_ENUM_5745] = {5745, 149, 2, 160},
+	[CHAN_ENUM_5765] = {5765, 153, 2, 160},
+	[CHAN_ENUM_5785] = {5785, 157, 2, 160},
+	[CHAN_ENUM_5805] = {5805, 161, 2, 160},
+	[CHAN_ENUM_5825] = {5825, 165, 2, 160},
+	[CHAN_ENUM_5850] = {5850, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5855] = {5855, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5860] = {5860, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5865] = {5865, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5870] = {5870, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5875] = {5875, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5880] = {5880, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5885] = {5885, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5890] = {5890, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5895] = {5895, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5900] = {5900, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5905] = {5905, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5910] = {5910, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5915] = {5915, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5920] = {5920, INVALID_CHANNEL_NUM, 2, 160},
+};
+
+static const struct chan_map channel_map_china[NUM_CHANNELS] = {
+	[CHAN_ENUM_2412] = {2412, 1, 2, 40},
+	[CHAN_ENUM_2417] = {2417, 2, 2, 40},
+	[CHAN_ENUM_2422] = {2422, 3, 2, 40},
+	[CHAN_ENUM_2427] = {2427, 4, 2, 40},
+	[CHAN_ENUM_2432] = {2432, 5, 2, 40},
+	[CHAN_ENUM_2437] = {2437, 6, 2, 40},
+	[CHAN_ENUM_2442] = {2442, 7, 2, 40},
+	[CHAN_ENUM_2447] = {2447, 8, 2, 40},
+	[CHAN_ENUM_2452] = {2452, 9, 2, 40},
+	[CHAN_ENUM_2457] = {2457, 10, 2, 40},
+	[CHAN_ENUM_2462] = {2462, 11, 2, 40},
+	[CHAN_ENUM_2467] = {2467, 12, 2, 40},
+	[CHAN_ENUM_2472] = {2472, 13, 2, 40},
+	[CHAN_ENUM_2484] = {2484, 14, 2, 40},
+
+	[CHAN_ENUM_4912] = {4912, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4915] = {4915, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4917] = {4917, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4920] = {4920, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4922] = {4922, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4925] = {4925, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4927] = {4927, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4932] = {4932, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4935] = {4935, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4937] = {4937, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4940] = {4940, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4942] = {4942, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4945] = {4945, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4947] = {4947, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4950] = {4950, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4952] = {4952, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4955] = {4955, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4957] = {4957, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4960] = {4960, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4962] = {4962, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4965] = {4965, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4967] = {4967, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4970] = {4970, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4972] = {4972, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4975] = {4975, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4977] = {4977, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4980] = {4980, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4982] = {4982, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4985] = {4985, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_4987] = {4987, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5032] = {5032, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5035] = {5035, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5037] = {5037, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5040] = {5040, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5042] = {5042, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5045] = {5045, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5047] = {5047, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5052] = {5052, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5055] = {5055, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5057] = {5057, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5060] = {5060, INVALID_CHANNEL_NUM, 2, 20},
+	[CHAN_ENUM_5080] = {5080, INVALID_CHANNEL_NUM, 2, 20},
+
+	[CHAN_ENUM_5180] = {5180, 36, 2, 160},
+	[CHAN_ENUM_5200] = {5200, 40, 2, 160},
+	[CHAN_ENUM_5220] = {5220, 44, 2, 160},
+	[CHAN_ENUM_5240] = {5240, 48, 2, 160},
+	[CHAN_ENUM_5260] = {5260, 52, 2, 160},
+	[CHAN_ENUM_5280] = {5280, 56, 2, 160},
+	[CHAN_ENUM_5300] = {5300, 60, 2, 160},
+	[CHAN_ENUM_5320] = {5320, 64, 2, 160},
+	[CHAN_ENUM_5500] = {5500, 100, 2, 160},
+	[CHAN_ENUM_5520] = {5520, 104, 2, 160},
+	[CHAN_ENUM_5540] = {5540, 108, 2, 160},
+	[CHAN_ENUM_5560] = {5560, 112, 2, 160},
+	[CHAN_ENUM_5580] = {5580, 116, 2, 160},
+	[CHAN_ENUM_5600] = {5600, 120, 2, 160},
+	[CHAN_ENUM_5620] = {5620, 124, 2, 160},
+	[CHAN_ENUM_5640] = {5640, 128, 2, 160},
+	[CHAN_ENUM_5660] = {5660, 132, 2, 160},
+	[CHAN_ENUM_5680] = {5680, 136, 2, 160},
+	[CHAN_ENUM_5700] = {5700, 140, 2, 160},
+	[CHAN_ENUM_5720] = {5720, 144, 2, 160},
+	[CHAN_ENUM_5745] = {5745, 149, 2, 160},
+	[CHAN_ENUM_5765] = {5765, 153, 2, 160},
+	[CHAN_ENUM_5785] = {5785, 157, 2, 160},
+	[CHAN_ENUM_5805] = {5805, 161, 2, 160},
+	[CHAN_ENUM_5825] = {5825, 165, 2, 160},
+	[CHAN_ENUM_5850] = {5850, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5855] = {5855, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5860] = {5860, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5865] = {5865, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5870] = {5870, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5875] = {5875, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5880] = {5880, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5885] = {5885, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5890] = {5890, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5895] = {5895, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5900] = {5900, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5905] = {5905, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5910] = {5910, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5915] = {5915, INVALID_CHANNEL_NUM, 2, 160},
+	[CHAN_ENUM_5920] = {5920, INVALID_CHANNEL_NUM, 2, 160},
+};
+#endif
 
 static struct reg_dmn_supp_op_classes reg_dmn_curr_supp_opp_classes = { 0 };
 
@@ -325,7 +840,7 @@ QDF_STATUS reg_get_channel_list_with_power(struct wlan_objmgr_pdev *pdev,
 	for (i = 0, count = 0; i < NUM_CHANNELS; i++) {
 		if (reg_channels[i].state) {
 			ch_list[count].chan_num =
-				channel_map[i].chan_num;
+				reg_channels[i].chan_num;
 			ch_list[count++].tx_power =
 				reg_channels[i].tx_power;
 		}
@@ -1229,31 +1744,36 @@ static void reg_fill_channel_info(enum channel_enum chan_enum,
 
 
 static void reg_populate_band_channels(enum channel_enum start_chan,
-				   enum channel_enum end_chan,
-				   struct cur_reg_rule *rule_start_ptr,
-				   uint32_t num_reg_rules,
-				   uint16_t min_bw,
-				   struct regulatory_channel *mas_chan_list)
+				       enum channel_enum end_chan,
+				       struct cur_reg_rule *rule_start_ptr,
+				       uint32_t num_reg_rules,
+				       uint16_t min_bw,
+				       struct regulatory_channel *mas_chan_list)
 {
 	struct cur_reg_rule *found_rule_ptr;
 	struct cur_reg_rule *cur_rule_ptr;
 	struct regulatory_channel;
 	enum channel_enum chan_enum;
 	uint32_t rule_num, bw;
+	uint16_t max_bw;
 
 	for (chan_enum = start_chan; chan_enum <= end_chan; chan_enum++) {
 		found_rule_ptr = NULL;
-		for (bw = 20; ((bw >= 5) && (NULL == found_rule_ptr));
+
+		max_bw = QDF_MIN((uint16_t)20, channel_map[chan_enum].max_bw);
+		min_bw = QDF_MAX(min_bw, channel_map[chan_enum].min_bw);
+
+		for (bw = max_bw; ((bw >= min_bw) && (NULL == found_rule_ptr));
 		     bw = bw/2) {
 			for (rule_num = 0, cur_rule_ptr =
 				     rule_start_ptr;
 			     rule_num < num_reg_rules;
 			     cur_rule_ptr++, rule_num++) {
 				if ((cur_rule_ptr->start_freq <=
-				     channel_map[chan_enum].center_freq -
+				     mas_chan_list[chan_enum].center_freq -
 				     bw/2) &&
 				    (cur_rule_ptr->end_freq >=
-				     channel_map[chan_enum].center_freq +
+				     mas_chan_list[chan_enum].center_freq +
 				     bw/2) && (min_bw <= bw)) {
 					found_rule_ptr = cur_rule_ptr;
 					break;
@@ -1271,8 +1791,8 @@ static void reg_populate_band_channels(enum channel_enum start_chan,
 }
 
 static void reg_update_max_bw_per_rule(uint32_t num_reg_rules,
-				   struct cur_reg_rule *reg_rule_start,
-				   uint16_t max_bw)
+				       struct cur_reg_rule *reg_rule_start,
+				       uint16_t max_bw)
 {
 	uint32_t count;
 
@@ -1370,9 +1890,19 @@ static void reg_modify_chan_list_for_fcc_channel(struct regulatory_channel
 					     *chan_list,
 					     bool set_fcc_channel)
 {
+	enum channel_enum chan_enum;
+
 	if (set_fcc_channel) {
-		chan_list[CHAN_ENUM_12].tx_power = MAX_PWR_FCC_CHAN_12;
-		chan_list[CHAN_ENUM_13].tx_power = MAX_PWR_FCC_CHAN_13;
+		for (chan_enum = 0; chan_enum < NUM_CHANNELS; chan_enum++) {
+			if (chan_list[chan_enum].center_freq ==
+			    CHAN_12_CENT_FREQ)
+				chan_list[chan_enum].tx_power =
+					MAX_PWR_FCC_CHAN_12;
+			if (chan_list[chan_enum].center_freq ==
+			    CHAN_13_CENT_FREQ)
+				chan_list[chan_enum].tx_power =
+					MAX_PWR_FCC_CHAN_13;
+		}
 	}
 }
 
@@ -1854,6 +2384,39 @@ static void reg_run_11d_state_machine(struct wlan_objmgr_psoc *psoc)
 	}
 }
 
+#ifdef CONFIG_LEGACY_CHAN_ENUM
+static void reg_init_channel_map(enum dfs_reg dfs_region)
+{
+	channel_map = channel_map_old;
+}
+#else
+static void reg_init_channel_map(enum dfs_reg dfs_region)
+{
+	switch (dfs_region) {
+	case DFS_UNINIT_REG:
+	case DFS_UNDEF_REG:
+		channel_map = channel_map_global;
+		break;
+	case DFS_FCC_REG:
+		channel_map = channel_map_us;
+		break;
+	case DFS_ETSI_REG:
+		channel_map = channel_map_eu;
+		break;
+	case DFS_MKK_REG:
+		channel_map = channel_map_jp;
+		break;
+	case DFS_CN_REG:
+		channel_map = channel_map_china;
+		break;
+	case DFS_KR_REG:
+		channel_map = channel_map_eu;
+		break;
+	}
+}
+#endif
+
+
 QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info
 					*regulat_info)
 {
@@ -1881,6 +2444,8 @@ QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info
 
 	phy_id = regulat_info->phy_id;
 	mas_chan_list = soc_reg->mas_chan_params[phy_id].mas_chan_list;
+
+	reg_init_channel_map(regulat_info->dfs_region);
 
 	for (chan_enum = 0; chan_enum < NUM_CHANNELS;
 	     chan_enum++) {
@@ -1931,14 +2496,13 @@ QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info
 
 	if (num_2g_reg_rules != 0)
 		reg_populate_band_channels(MIN_24GHZ_CHANNEL, MAX_24GHZ_CHANNEL,
-				       reg_rule_2g, num_2g_reg_rules,
-				       min_bw_2g, mas_chan_list);
+					   reg_rule_2g, num_2g_reg_rules,
+					   min_bw_2g, mas_chan_list);
 
 	if (num_5g_reg_rules != 0)
 		reg_populate_band_channels(MIN_5GHZ_CHANNEL, MAX_5GHZ_CHANNEL,
-				       reg_rule_5g,
-				       num_5g_reg_rules,
-				       min_bw_5g, mas_chan_list);
+					   reg_rule_5g, num_5g_reg_rules,
+					   min_bw_5g, mas_chan_list);
 
 	soc_reg->cc_src = SOURCE_DRIVER;
 	if (soc_reg->new_user_ctry_pending == true) {
@@ -2023,10 +2587,6 @@ QDF_STATUS wlan_regulatory_psoc_obj_created_notification(
 
 		for (chan_enum = 0; chan_enum < NUM_CHANNELS;
 		     chan_enum++) {
-			mas_chan_list[chan_enum].chan_num =
-				channel_map[chan_enum].chan_num;
-			mas_chan_list[chan_enum].center_freq =
-				channel_map[chan_enum].center_freq;
 			mas_chan_list[chan_enum].chan_flags |=
 				REGULATORY_CHAN_DISABLED;
 			mas_chan_list[chan_enum].state =
@@ -2477,7 +3037,7 @@ QDF_STATUS reg_11d_vdev_delete_update(struct wlan_objmgr_vdev *vdev)
 }
 
 QDF_STATUS reg_get_current_chan_list(struct wlan_objmgr_pdev *pdev,
-			  struct regulatory_channel *chan_list)
+				     struct regulatory_channel *chan_list)
 {
 	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
 
@@ -2659,7 +3219,7 @@ void reg_program_mas_chan_list(struct wlan_objmgr_psoc *psoc,
 	qdf_mem_copy(psoc_priv_obj->cur_country, alpha2,
 		     REG_ALPHA2_LEN);
 
-
+	reg_init_channel_map(dfs_region);
 	for (count = 0; count < NUM_CHANNELS; count++) {
 		reg_channels[count].chan_num =
 			channel_map[count].chan_num;
