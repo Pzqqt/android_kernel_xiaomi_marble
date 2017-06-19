@@ -2169,6 +2169,29 @@ lim_add_sta(tpAniSirGlobal mac_ctx,
 		add_sta_params->vhtCapable =
 			 sta_ds->mlmStaContext.vhtCapability;
 	}
+	/*
+	 * 2G-AS platform: SAP associates with HT (11n)clients as 2x1 in 2G and
+	 * 2X2 in 5G
+	 * Non-2G-AS platform: SAP associates with HT (11n) clients as 2X2 in 2G
+	 * and 5G; and disable async dbs scan when HT client connects
+	 * 5G-AS: Don't care
+	 */
+	if (!policy_mgr_is_hw_dbs_2x2_capable(mac_ctx->psoc) &&
+		LIM_IS_AP_ROLE(session_entry) &&
+		(STA_ENTRY_PEER == sta_ds->staType) &&
+		!add_sta_params->vhtCapable &&
+		(session_entry->nss == 2)) {
+		session_entry->ht_client_cnt++;
+		if ((session_entry->ht_client_cnt == 1) &&
+			!(mac_ctx->lteCoexAntShare &&
+			IS_24G_CH(session_entry->currentOperChannel))) {
+			pe_debug("setting SMPS intolrent vdev_param");
+			wma_cli_set_command(session_entry->smeSessionId,
+				(int)WMI_VDEV_PARAM_SMPS_INTOLERANT,
+				1, VDEV_CMD);
+		}
+	}
+
 #ifdef FEATURE_WLAN_TDLS
 	/* SystemRole shouldn't be matter if staType is TDLS peer */
 	else if (STA_ENTRY_TDLS_PEER == sta_ds->staType) {
@@ -2496,6 +2519,26 @@ lim_del_sta(tpAniSirGlobal pMac,
 		return eSIR_MEM_ALLOC_FAILED;
 	}
 
+	/*
+	 * 2G-AS platform: SAP associates with HT (11n)clients as 2x1 in 2G and
+	 * 2X2 in 5G
+	 * Non-2G-AS platform: SAP associates with HT (11n) clients as 2X2 in 2G
+	 * and 5G; and enable async dbs scan when all HT clients are gone
+	 * 5G-AS: Don't care
+	 */
+	if (!policy_mgr_is_hw_dbs_2x2_capable(pMac->psoc) &&
+		LIM_IS_AP_ROLE(psessionEntry) &&
+		(pStaDs->staType == STA_ENTRY_PEER) &&
+		!pStaDs->mlmStaContext.vhtCapability &&
+		(psessionEntry->nss == 2)) {
+		psessionEntry->ht_client_cnt--;
+		if (psessionEntry->ht_client_cnt == 0) {
+			pe_debug("clearing SMPS intolrent vdev_param");
+			wma_cli_set_command(psessionEntry->smeSessionId,
+				(int)WMI_VDEV_PARAM_SMPS_INTOLERANT,
+				0, VDEV_CMD);
+		}
+	}
 	/* */
 	/* DPH contains the STA index only for "peer" STA entries. */
 	/* LIM global contains "self" STA index */
