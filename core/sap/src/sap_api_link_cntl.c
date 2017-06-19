@@ -408,6 +408,11 @@ wlansap_pre_start_bss_acs_scan_callback(tHalHandle hal_handle, void *pcontext,
 	sap_config_acs_result(hal_handle, sap_ctx,
 			sap_ctx->acs_cfg->ht_sec_ch);
 
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+		  FL("Channel selected = %d"), sap_ctx->channel);
+	sap_ctx->sap_state = eSAP_ACS_CHANNEL_SELECTED;
+	sap_ctx->sap_status = eSAP_STATUS_SUCCESS;
+close_session:
 #ifdef SOFTAP_CHANNEL_RANGE
 	if (sap_ctx->channelList != NULL) {
 		/*
@@ -420,11 +425,6 @@ wlansap_pre_start_bss_acs_scan_callback(tHalHandle hal_handle, void *pcontext,
 		sap_ctx->num_of_channel = 0;
 	}
 #endif
-	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-		  FL("Channel selected = %d"), sap_ctx->channel);
-	sap_ctx->sap_state = eSAP_ACS_CHANNEL_SELECTED;
-	sap_ctx->sap_status = eSAP_STATUS_SUCCESS;
-close_session:
 	sap_hdd_signal_event_handler(sap_ctx);
 	return status;
 }
