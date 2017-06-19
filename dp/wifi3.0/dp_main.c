@@ -321,8 +321,10 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 	if (reo_status_mask)
 		dp_reo_status_ring_handler(soc);
 
-	/* Process Rx monitor interrupts */
+	/* Process LMAC interrupts */
 	for  (ring = 0 ; ring < MAX_PDEV_CNT; ring++) {
+		if (soc->pdev_list[ring] == NULL)
+			continue;
 		if (int_ctx->rx_mon_ring_mask & (1 << ring)) {
 			work_done =
 				dp_mon_process(soc, ring, budget);
@@ -380,6 +382,7 @@ static QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
 		soc->intr_ctx[i].rx_err_ring_mask = 0x1;
 		soc->intr_ctx[i].rx_wbm_rel_ring_mask = 0x1;
 		soc->intr_ctx[i].reo_status_ring_mask = 0x1;
+		soc->intr_ctx[i].rxdma2host_ring_mask = 0x1;
 		soc->intr_ctx[i].soc = soc;
 		soc->intr_ctx[i].lro_ctx = qdf_lro_init();
 	}
@@ -443,11 +446,14 @@ static QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
 			wlan_cfg_get_rx_wbm_rel_ring_mask(soc->wlan_cfg_ctx, i);
 		int reo_status_ring_mask =
 			wlan_cfg_get_reo_status_ring_mask(soc->wlan_cfg_ctx, i);
+		int rxdma2host_ring_mask =
+			wlan_cfg_get_rxdma2host_ring_mask(soc->wlan_cfg_ctx, i);
 
 		soc->intr_ctx[i].tx_ring_mask = tx_mask;
 		soc->intr_ctx[i].rx_ring_mask = rx_mask;
 		soc->intr_ctx[i].rx_mon_ring_mask = rx_mon_mask;
 		soc->intr_ctx[i].rx_err_ring_mask = rx_err_ring_mask;
+		soc->intr_ctx[i].rxdma2host_ring_mask = rxdma2host_ring_mask;
 		soc->intr_ctx[i].rx_wbm_rel_ring_mask = rx_wbm_rel_ring_mask;
 		soc->intr_ctx[i].reo_status_ring_mask = reo_status_ring_mask;
 
@@ -467,10 +473,16 @@ static QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
 					(reo2host_destination_ring1 - j);
 			}
 
+			if (rxdma2host_ring_mask & (1 << j)) {
+				irq_id_map[num_irq++] =
+					rxdma2host_destination_ring_mac1 -
+					wlan_cfg_get_hw_mac_idx(soc->wlan_cfg_ctx, j);
+			}
+
 			if (rx_mon_mask & (1 << j)) {
 				irq_id_map[num_irq++] =
-					(ppdu_end_interrupts_mac1
-					 - j);
+					ppdu_end_interrupts_mac1 -
+					wlan_cfg_get_hw_mac_idx(soc->wlan_cfg_ctx, j);
 			}
 
 			if (rx_wbm_rel_ring_mask & (1 << j))

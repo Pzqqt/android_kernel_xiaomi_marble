@@ -167,6 +167,59 @@ int wlan_cfg_get_rx_mon_ring_mask(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx,
 		int context);
 
 /**
+ * wlan_cfg_set_rxdma2host_ring_mask() - Set rxdma2host ring interrupt mask
+ *				   for the given interrupt context
+ * @wlan_cfg_ctx - Configuration Handle
+ * @context - Numerical ID identifying the Interrupt/NAPI context
+ *
+ */
+void wlan_cfg_set_rxdma2host_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
+	int context, int mask);
+
+/**
+ * wlan_cfg_get_rxdma2host_ring_mask() - Return rxdma2host ring interrupt mask
+ *				   mapped to an interrupt context
+ * @wlan_cfg_ctx - Configuration Handle
+ * @context - Numerical ID identifying the Interrupt/NAPI context
+ *
+ * Return: int_rxdma2host_ring_mask[context]
+ */
+int wlan_cfg_get_rxdma2host_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
+	int context);
+
+/**
+ * wlan_cfg_set_hw_macid() - Set HW MAC Id for the given PDEV index
+ *
+ * @wlan_cfg_ctx - Configuration Handle
+ * @pdev_idx - Index of SW PDEV
+ * @hw_macid - HW MAC Id
+ *
+ */
+void wlan_cfg_set_hw_macid(struct wlan_cfg_dp_soc_ctxt *cfg, int pdev_idx,
+	int hw_macid);
+
+/**
+ * wlan_cfg_get_hw_macid() - Get HW MAC Id for the given PDEV index
+ *
+ * @wlan_cfg_ctx - Configuration Handle
+ * @pdev_idx - Index of SW PDEV
+ *
+ * Return: HW MAC Id
+ */
+int wlan_cfg_get_hw_macid(struct wlan_cfg_dp_soc_ctxt *cfg, int pdev_idx);
+
+/**
+ * wlan_cfg_get_hw_mac_idx() - Get 0 based HW MAC index for the given
+ * PDEV index
+ *
+ * @wlan_cfg_ctx - Configuration Handle
+ * @pdev_idx - Index of SW PDEV
+ *
+ * Return: HW MAC index
+ */
+int wlan_cfg_get_hw_mac_idx(struct wlan_cfg_dp_soc_ctxt *cfg, int pdev_idx);
+
+/**
  * wlan_cfg_get_ce_ring_mask() - Return CE ring interrupt mask
  *				mapped to an interrupt context
  * @wlan_cfg_ctx - Configuration Handle

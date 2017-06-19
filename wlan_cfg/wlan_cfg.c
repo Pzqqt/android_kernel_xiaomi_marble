@@ -118,6 +118,11 @@
 #define WLAN_CFG_REO_STATUS_RING_MASK_2 0x0
 #define WLAN_CFG_REO_STATUS_RING_MASK_3 0x0
 
+#define WLAN_CFG_RXDMA2HOST_RING_MASK_0 0x1
+#define WLAN_CFG_RXDMA2HOST_RING_MASK_1 0x2
+#define WLAN_CFG_RXDMA2HOST_RING_MASK_2 0x4
+#define WLAN_CFG_RXDMA2HOST_RING_MASK_3 0x0
+
 #define WLAN_CFG_DP_TX_NUM_POOLS 3
 /* Change this to a lower value to enforce scattered idle list mode */
 #define WLAN_CFG_MAX_ALLOC_SIZE (2 << 20)
@@ -173,6 +178,12 @@ static const int reo_status_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
 					WLAN_CFG_REO_STATUS_RING_MASK_2,
 					WLAN_CFG_REO_STATUS_RING_MASK_3};
 
+static const int rxdma2host_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
+					WLAN_CFG_RXDMA2HOST_RING_MASK_0,
+					WLAN_CFG_RXDMA2HOST_RING_MASK_1,
+					WLAN_CFG_RXDMA2HOST_RING_MASK_2,
+					WLAN_CFG_RXDMA2HOST_RING_MASK_3};
+
 /**
  * struct wlan_cfg_dp_soc_ctxt - Configuration parameters for SoC (core TxRx)
  * @num_int_ctxts - Number of NAPI/Interrupt contexts to be registered for DP
@@ -194,6 +205,8 @@ static const int reo_status_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
  * @int_rx_ring_mask - Bitmap of Rx interrupts mapped to each NAPI/Intr context
  * @int_rx_mon_ring_mask - Bitmap of Rx monitor ring interrupts mapped to each
  *			  NAPI/Intr context
+ * @int_rxdma2host_ring_mask - Bitmap of RXDMA2host ring interrupts mapped to
+ *		each NAPI/Intr context
  * @int_ce_ring_mask - Bitmap of CE interrupts mapped to each NAPI/Intr context
  * @lro_enabled - is LRO enabled
  * @rx_hash - Enable hash based steering of rx packets
@@ -222,6 +235,7 @@ struct wlan_cfg_dp_soc_ctxt {
 	int int_tx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	int int_rx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	int int_rx_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	int int_rxdma2host_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	int int_ce_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	int int_rx_err_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	int int_rx_wbm_rel_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
@@ -229,6 +243,8 @@ struct wlan_cfg_dp_soc_ctxt {
 	bool lro_enabled;
 	bool rx_hash;
 	int nss_cfg;
+	int hw_macid[MAX_PDEV_CNT];
+	int base_hw_macid;
 };
 
 /**
@@ -294,10 +310,22 @@ struct wlan_cfg_dp_soc_ctxt *wlan_cfg_soc_attach()
 					rx_wbm_rel_ring_mask[i];
 		wlan_cfg_ctx->int_reo_status_ring_mask[i] =
 					reo_status_ring_mask[i];
+		wlan_cfg_ctx->int_rxdma2host_ring_mask[i] =
+			rxdma2host_ring_mask[i];
 	}
 
 	wlan_cfg_ctx->rx_hash = WLAN_RX_HASH_ENABLE;
 	wlan_cfg_ctx->lro_enabled = WLAN_LRO_ENABLE;
+
+	/* This is default mapping and can be overridden by HW config
+	 * received from FW */
+	wlan_cfg_set_hw_macid(wlan_cfg_ctx, 0, 1);
+	if (MAX_PDEV_CNT > 1)
+		wlan_cfg_set_hw_macid(wlan_cfg_ctx, 1, 3);
+	if (MAX_PDEV_CNT > 2)
+		wlan_cfg_set_hw_macid(wlan_cfg_ctx, 2, 2);
+
+	wlan_cfg_ctx->base_hw_macid = 1;
 
 	return wlan_cfg_ctx;
 }
@@ -355,6 +383,37 @@ void wlan_cfg_set_rx_mon_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
 		int context, int mask)
 {
 	cfg->int_rx_mon_ring_mask[context] = mask;
+}
+
+void wlan_cfg_set_rxdma2host_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
+	int context, int mask)
+{
+	cfg->int_rxdma2host_ring_mask[context] = mask;
+}
+
+int wlan_cfg_get_rxdma2host_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
+	int context)
+{
+	return cfg->int_rxdma2host_ring_mask[context];
+}
+
+void wlan_cfg_set_hw_macid(struct wlan_cfg_dp_soc_ctxt *cfg, int pdev_idx,
+	int hw_macid)
+{
+	qdf_assert_always(pdev_idx < MAX_PDEV_CNT);
+	cfg->hw_macid[pdev_idx] = hw_macid;
+}
+
+int wlan_cfg_get_hw_macid(struct wlan_cfg_dp_soc_ctxt *cfg, int pdev_idx)
+{
+	qdf_assert_always(pdev_idx < MAX_PDEV_CNT);
+	return cfg->hw_macid[pdev_idx];
+}
+
+int wlan_cfg_get_hw_mac_idx(struct wlan_cfg_dp_soc_ctxt *cfg, int pdev_idx)
+{
+	qdf_assert_always(pdev_idx < MAX_PDEV_CNT);
+	return cfg->hw_macid[pdev_idx] - cfg->base_hw_macid;
 }
 
 void wlan_cfg_set_ce_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
