@@ -224,6 +224,14 @@ static int __wlan_hdd_ipv6_changed(struct notifier_block *nb,
 		if (errno)
 			goto exit;
 
+		/* Ignore if the interface is down */
+		if (!(ndev->flags & IFF_UP)) {
+			hdd_err("Rcvd change addr request on %s(flags 0x%X)",
+				ndev->name, ndev->flags);
+			hdd_err("NETDEV Interface is down, ignoring...");
+			goto exit;
+		}
+
 		hdd_debug("invoking sme_dhcp_done_ind");
 		sme_dhcp_done_ind(hdd_ctx->hHal, adapter->sessionId);
 		schedule_work(&adapter->ipv6NotifierWorkQueue);
@@ -798,6 +806,13 @@ static int __wlan_hdd_ipv4_changed(struct notifier_block *nb,
 		if (errno)
 			goto exit;
 
+		/* Ignore if the interface is down */
+		if (!(ndev->flags & IFF_UP)) {
+			hdd_err("Rcvd change addr request on %s(flags 0x%X)",
+				ndev->name, ndev->flags);
+			hdd_err("NETDEV Interface is down, ignoring...");
+			goto exit;
+		}
 		hdd_debug("invoking sme_dhcp_done_ind");
 		sme_dhcp_done_ind(hdd_ctx->hHal, adapter->sessionId);
 
