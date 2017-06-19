@@ -18578,9 +18578,16 @@ void csr_release_command(tpAniSirGlobal mac_ctx, tSmeCmd *sme_cmd)
 {
 	struct wlan_serialization_queued_cmd_info cmd_info;
 	struct wlan_serialization_command cmd;
+	struct wlan_objmgr_vdev *vdev;
 
 	if (!sme_cmd) {
 		sme_err("sme_cmd is NULL");
+		return;
+	}
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc,
+			sme_cmd->sessionId, WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("Invalid vdev");
 		return;
 	}
 	qdf_mem_zero(&cmd_info,
@@ -18597,11 +18604,8 @@ void csr_release_command(tpAniSirGlobal mac_ctx, tSmeCmd *sme_cmd)
 		cmd_info.req_type = WLAN_SER_CANCEL_NON_SCAN_CMD;
 	}
 	cmd_info.cmd_type = csr_get_cmd_type(sme_cmd);
-	cmd_info.vdev = wlan_objmgr_get_vdev_by_id_from_psoc(
-			mac_ctx->psoc, sme_cmd->sessionId,
-			WLAN_LEGACY_SME_ID);
-	qdf_mem_zero(&cmd,
-			sizeof(struct wlan_serialization_command));
+	cmd_info.vdev = vdev;
+	qdf_mem_zero(&cmd, sizeof(struct wlan_serialization_command));
 	cmd.cmd_id = cmd_info.cmd_id;
 	cmd.cmd_type = cmd_info.cmd_type;
 	cmd.vdev = cmd_info.vdev;
