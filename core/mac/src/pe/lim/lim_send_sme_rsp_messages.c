@@ -268,6 +268,7 @@ static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
 	uint16_t bss_ie_len;
 	void *bss_ies;
 	bool is_vendor_ap_1_present;
+	tpSirSmeJoinReq join_reassoc_req = NULL;
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	tSirSmeHTProfile *ht_profile;
@@ -365,9 +366,24 @@ static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
 			ht_profile->apChanWidth = session_entry->ch_width;
 		}
 #endif
+		pe_debug("pLimJoinReq:%p, pLimReAssocReq:%p",
+			session_entry->pLimJoinReq,
+			session_entry->pLimReAssocReq);
+
+		if (session_entry->pLimJoinReq)
+			join_reassoc_req = session_entry->pLimJoinReq;
+
+		if (session_entry->pLimReAssocReq)
+			join_reassoc_req = session_entry->pLimReAssocReq;
+
+		if (!join_reassoc_req) {
+			pe_err("both  pLimJoinReq and pLimReAssocReq NULL");
+			return;
+		}
+
 		bss_ie_len = lim_get_ielen_from_bss_description(
-				&session_entry->pLimJoinReq->bssDescription);
-		bss_ies = &session_entry->pLimJoinReq->bssDescription.ieFields;
+				&join_reassoc_req->bssDescription);
+		bss_ies = &join_reassoc_req->bssDescription.ieFields;
 		is_vendor_ap_1_present = (cfg_get_vendor_ie_ptr_from_oui(mac_ctx,
 			SIR_MAC_VENDOR_AP_1_OUI, SIR_MAC_VENDOR_AP_1_OUI_LEN,
 			bss_ies, bss_ie_len) != NULL);
