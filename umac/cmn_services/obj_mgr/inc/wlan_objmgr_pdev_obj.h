@@ -323,6 +323,10 @@ QDF_STATUS wlan_objmgr_trigger_pdev_comp_priv_object_deletion(
  *
  * API to find vdev object pointer by vdev id from pdev's vdev list
  *
+ * This API increments the ref count of the vdev object internally, the
+ * caller has to invoke the wlan_objmgr_vdev_release_ref() to decrement
+ * ref count
+ *
  * Return: vdev pointer
  *         NULL on FAILURE
  */
@@ -339,6 +343,10 @@ struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_id_from_pdev(
  *
  * API to find vdev object pointer by vdev id from pdev's vdev list
  *
+ * This API increments the ref count of the vdev object internally, the
+ * caller has to invoke the wlan_objmgr_vdev_release_ref() to decrement
+ * ref count
+ *
  * Return: vdev pointer
  *         NULL on FAILURE
  */
@@ -353,6 +361,10 @@ struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_id_from_pdev_no_state(
  * @dbg_id: id of the caller
  *
  * API to find vdev object pointer by vdev mac addr from pdev's vdev list
+ *
+ * This API increments the ref count of the vdev object internally, the
+ * caller has to invoke the wlan_objmgr_vdev_release_ref() to decrement
+ * ref count
  *
  * Return: vdev pointer
  *         NULL on FAILURE
@@ -369,6 +381,10 @@ struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_macaddr_from_pdev(
  * @dbg_id: id of the caller
  *
  * API to find vdev object pointer by vdev mac addr from pdev's vdev list
+ *
+ * This API increments the ref count of the vdev object internally, the
+ * caller has to invoke the wlan_objmgr_vdev_release_ref() to decrement
+ * ref count
  *
  * Return: vdev pointer
  *         NULL on FAILURE
