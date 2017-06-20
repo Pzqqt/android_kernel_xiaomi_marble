@@ -268,6 +268,10 @@ static void ptt_cmd_handler(const void *data, int data_len, void *ctx, int pid)
 	ptt_app_reg_req *payload;
 	struct nlattr *tb[CLD80211_ATTR_MAX + 1];
 
+	/*
+	 * audit note: it is ok to pass a NULL policy here since a
+	 * length check on the data is added later already
+	 */
 	if (nla_parse(tb, CLD80211_ATTR_MAX, data, data_len, NULL)) {
 		PTT_TRACE(QDF_TRACE_LEVEL_ERROR, "Invalid ATTR");
 		return;
@@ -275,6 +279,12 @@ static void ptt_cmd_handler(const void *data, int data_len, void *ctx, int pid)
 
 	if (!tb[CLD80211_ATTR_DATA]) {
 		PTT_TRACE(QDF_TRACE_LEVEL_ERROR, "attr ATTR_DATA failed");
+		return;
+	}
+
+	if (nla_len(tb[CLD80211_ATTR_DATA]) < sizeof(struct ptt_app_reg_req)) {
+		PTT_TRACE(QDF_TRACE_LEVEL_ERROR, "%s:attr length check fails\n",
+			__func__);
 		return;
 	}
 

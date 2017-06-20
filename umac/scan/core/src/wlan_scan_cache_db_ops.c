@@ -418,7 +418,7 @@ static bool scm_is_wep_security(struct scan_filter *filter,
 	enum wlan_enc_type neg_mccipher = WLAN_ENCRYPT_TYPE_NONE;
 
 	/* If privacy bit is not set, consider no match */
-	if (db_entry->cap_info.wlan_caps.privacy)
+	if (!db_entry->cap_info.wlan_caps.privacy)
 		return false;
 
 	for (i = 0; i < filter->num_of_mc_enc_type; i++) {
