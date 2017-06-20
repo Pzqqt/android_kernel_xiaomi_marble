@@ -45,6 +45,9 @@
 #include <linux/hardirq.h>
 #include <linux/vmalloc.h>
 #include <linux/pci.h> /* pci_alloc_consistent */
+#include <linux/cache.h> /* L1_CACHE_BYTES */
+
+#define __qdf_cache_line_sz L1_CACHE_BYTES
 #if CONFIG_MCL
 #include <cds_queue.h>
 #else

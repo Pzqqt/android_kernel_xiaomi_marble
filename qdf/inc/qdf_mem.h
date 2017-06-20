@@ -37,6 +37,8 @@
 #include <qdf_types.h>
 #include <i_qdf_mem.h>
 
+#define QDF_CACHE_LINE_SZ __qdf_cache_line_sz
+
 /**
  * qdf_align() - align to the given size.
  * @a: input that needs to be aligned.
