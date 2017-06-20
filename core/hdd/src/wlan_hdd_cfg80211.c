@@ -13662,6 +13662,21 @@ static int wlan_hdd_cfg80211_del_key(struct wiphy *wiphy,
 	return ret;
 }
 
+#ifdef FEATURE_WLAN_WAPI
+static bool hdd_is_wapi_enc_type(eCsrEncryptionType ucEncryptionType)
+{
+	if (ucEncryptionType == eCSR_ENCRYPT_TYPE_WPI)
+		return true;
+
+	return false;
+}
+#else
+static bool hdd_is_wapi_enc_type(eCsrEncryptionType ucEncryptionType)
+{
+	return false;
+}
+#endif
+
 /*
  * FUNCTION: __wlan_hdd_cfg80211_set_default_key
  * This function is used to set the default tx key index
@@ -13711,6 +13726,8 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 	if ((pAdapter->device_mode == QDF_STA_MODE) ||
 	    (pAdapter->device_mode == QDF_P2P_CLIENT_MODE)) {
 		if ((eCSR_ENCRYPT_TYPE_TKIP !=
+		     pHddStaCtx->conn_info.ucEncryptionType) &&
+		    !hdd_is_wapi_enc_type(
 		     pHddStaCtx->conn_info.ucEncryptionType) &&
 		    (eCSR_ENCRYPT_TYPE_AES !=
 		     pHddStaCtx->conn_info.ucEncryptionType) &&
