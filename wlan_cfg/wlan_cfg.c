@@ -65,6 +65,21 @@
 #define WLAN_CFG_RX_MON_RING_MASK_2 0x4
 #define WLAN_CFG_RX_MON_RING_MASK_3 0x0
 
+#define WLAN_CFG_RX_ERR_RING_MASK_0 0x1
+#define WLAN_CFG_RX_ERR_RING_MASK_1 0x0
+#define WLAN_CFG_RX_ERR_RING_MASK_2 0x0
+#define WLAN_CFG_RX_ERR_RING_MASK_3 0x0
+
+#define WLAN_CFG_RX_WBM_REL_RING_MASK_0 0x1
+#define WLAN_CFG_RX_WBM_REL_RING_MASK_1 0x0
+#define WLAN_CFG_RX_WBM_REL_RING_MASK_2 0x0
+#define WLAN_CFG_RX_WBM_REL_RING_MASK_3 0x0
+
+#define WLAN_CFG_REO_STATUS_RING_MASK_0 0x1
+#define WLAN_CFG_REO_STATUS_RING_MASK_1 0x0
+#define WLAN_CFG_REO_STATUS_RING_MASK_2 0x0
+#define WLAN_CFG_REO_STATUS_RING_MASK_3 0x0
+
 #define WLAN_CFG_DP_TX_NUM_POOLS 3
 /* Change this to a lower value to enforce scattered idle list mode */
 #define WLAN_CFG_MAX_ALLOC_SIZE (2 << 20)
@@ -112,6 +127,24 @@ static const int rx_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
 					WLAN_CFG_RX_MON_RING_MASK_2,
 					WLAN_CFG_RX_MON_RING_MASK_3};
 
+static const int rx_err_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
+					WLAN_CFG_RX_ERR_RING_MASK_0,
+					WLAN_CFG_RX_ERR_RING_MASK_1,
+					WLAN_CFG_RX_ERR_RING_MASK_2,
+					WLAN_CFG_RX_ERR_RING_MASK_3};
+
+static const int rx_wbm_rel_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
+					WLAN_CFG_RX_WBM_REL_RING_MASK_0,
+					WLAN_CFG_RX_WBM_REL_RING_MASK_1,
+					WLAN_CFG_RX_WBM_REL_RING_MASK_2,
+					WLAN_CFG_RX_WBM_REL_RING_MASK_3};
+
+static const int reo_status_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
+					WLAN_CFG_REO_STATUS_RING_MASK_0,
+					WLAN_CFG_REO_STATUS_RING_MASK_1,
+					WLAN_CFG_REO_STATUS_RING_MASK_2,
+					WLAN_CFG_REO_STATUS_RING_MASK_3};
+
 /**
  * struct wlan_cfg_dp_soc_ctxt - Configuration parameters for SoC (core TxRx)
  * @num_int_ctxts - Number of NAPI/Interrupt contexts to be registered for DP
@@ -156,6 +189,9 @@ struct wlan_cfg_dp_soc_ctxt {
 	int int_rx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	int int_rx_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	int int_ce_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	int int_rx_err_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	int int_rx_wbm_rel_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	int int_reo_status_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	bool lro_enabled;
 	bool rx_hash;
 	int nss_cfg;
@@ -210,6 +246,11 @@ struct wlan_cfg_dp_soc_ctxt *wlan_cfg_soc_attach()
 		wlan_cfg_ctx->int_tx_ring_mask[i] = tx_ring_mask[i];
 		wlan_cfg_ctx->int_rx_ring_mask[i] = rx_ring_mask[i];
 		wlan_cfg_ctx->int_rx_mon_ring_mask[i] = rx_mon_ring_mask[i];
+		wlan_cfg_ctx->int_rx_err_ring_mask[i] = rx_err_ring_mask[i];
+		wlan_cfg_ctx->int_rx_wbm_rel_ring_mask[i] =
+					rx_wbm_rel_ring_mask[i];
+		wlan_cfg_ctx->int_reo_status_ring_mask[i] =
+					reo_status_ring_mask[i];
 	}
 
 	wlan_cfg_ctx->rx_hash = WLAN_RX_HASH_ENABLE;
@@ -285,6 +326,24 @@ void wlan_cfg_set_rxbuf_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg, int context,
 	cfg->int_rx_ring_mask[context] = mask;
 }
 
+int wlan_cfg_set_rx_err_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
+		int context, int mask)
+{
+	return cfg->int_rx_err_ring_mask[context] = mask;
+}
+
+int wlan_cfg_set_rx_wbm_rel_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
+		int context, int mask)
+{
+	return cfg->int_rx_wbm_rel_ring_mask[context] = mask;
+}
+
+int wlan_cfg_set_reo_status_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
+		int context, int mask)
+{
+	return cfg->int_reo_status_ring_mask[context] = mask;
+}
+
 int wlan_cfg_get_num_contexts(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return cfg->num_int_ctxts;
@@ -298,6 +357,24 @@ int wlan_cfg_get_tx_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg, int context)
 int wlan_cfg_get_rx_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg, int context)
 {
 	return cfg->int_rx_ring_mask[context];
+}
+
+int wlan_cfg_get_rx_err_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
+						int context)
+{
+	return cfg->int_rx_err_ring_mask[context];
+}
+
+int wlan_cfg_get_rx_wbm_rel_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
+					int context)
+{
+	return cfg->int_rx_wbm_rel_ring_mask[context];
+}
+
+int wlan_cfg_get_reo_status_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
+					int context)
+{
+	return cfg->int_reo_status_ring_mask[context];
 }
 
 int wlan_cfg_get_rx_mon_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg, int context)
