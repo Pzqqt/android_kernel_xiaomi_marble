@@ -491,6 +491,13 @@ inline int hal_reo_cmd_update_rx_queue(void *reo_ring, struct hal_soc *soc,
 	HAL_DESC_SET_FIELD(reo_desc, REO_UPDATE_RX_REO_QUEUE_4,
 		BA_WINDOW_SIZE, p->ba_window_size - 1);
 
+	if (p->pn_size == 24)
+		p->pn_size = PN_SIZE_24;
+	else if (p->pn_size == 48)
+		p->pn_size = PN_SIZE_48;
+	else if (p->pn_size == 128)
+		p->pn_size = PN_SIZE_128;
+
 	HAL_DESC_SET_FIELD(reo_desc, REO_UPDATE_RX_REO_QUEUE_4,
 		PN_SIZE, p->pn_size);
 

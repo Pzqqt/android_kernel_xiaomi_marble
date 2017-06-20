@@ -424,7 +424,6 @@ void dfs_nol_timer_cleanup(struct wlan_dfs *dfs)
 	}
 	dfs->dfs_nol = NULL;
 	dfs_nol_update(dfs);
-	dfs_mlme_set_no_chans_available(dfs->dfs_pdev_obj, 0);
 }
 
 int dfs_get_rn_use_nol(struct wlan_dfs *dfs)

@@ -72,6 +72,8 @@ static uint32_t dp_rx_msdus_drop(struct dp_soc *soc, void *ring_desc,
 	struct hal_buf_info buf_info;
 	struct hal_rx_msdu_list msdu_list; /* MSDU's per MPDU */
 	int i;
+	uint8_t *rx_tlv_hdr;
+	uint32_t tid;
 
 	hal_rx_reo_buf_paddr_get(ring_desc, &buf_info);
 
@@ -96,6 +98,13 @@ static uint32_t dp_rx_msdus_drop(struct dp_soc *soc, void *ring_desc,
 		}
 
 		rx_bufs_used++;
+		tid = hal_rx_mpdu_start_tid_get(rx_desc->rx_buf_start);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			"Packet received with PN error for tid :%d", tid);
+
+		rx_tlv_hdr = qdf_nbuf_data(rx_desc->nbuf);
+		if (hal_rx_encryption_info_valid(rx_tlv_hdr))
+			hal_rx_print_pn(rx_tlv_hdr);
 
 		/* Just free the buffers */
 		qdf_nbuf_free(rx_desc->nbuf);
@@ -139,6 +148,7 @@ dp_rx_pn_error_handle(struct dp_soc *soc, void *ring_desc,
 	peer_id = DP_PEER_METADATA_PEER_ID_GET(
 				mpdu_desc_info->peer_meta_data);
 
+
 	peer = dp_peer_find_by_id(soc, peer_id);
 
 	if (qdf_likely(peer)) {
@@ -146,7 +156,16 @@ dp_rx_pn_error_handle(struct dp_soc *soc, void *ring_desc,
 		 * TODO: Check for peer specific policies & set peer_pn_policy
 		 */
 	}
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+		"Packet received with PN error");
 
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		"discard rx due to PN error for peer  %p  "
+		"(%02x:%02x:%02x:%02x:%02x:%02x)\n",
+		peer,
+		peer->mac_addr.raw[0], peer->mac_addr.raw[1],
+		peer->mac_addr.raw[2], peer->mac_addr.raw[3],
+		peer->mac_addr.raw[4], peer->mac_addr.raw[5]);
 
 	/* No peer PN policy -- definitely drop */
 	if (!peer_pn_policy)

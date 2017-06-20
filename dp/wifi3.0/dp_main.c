@@ -3813,6 +3813,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_soc_get_nss_cfg = dp_soc_get_nss_cfg_wifi3,
 	.txrx_intr_attach = dp_soc_interrupt_attach,
 	.txrx_intr_detach = dp_soc_interrupt_detach,
+	.set_pn_check = dp_set_pn_check_wifi3,
 	/* TODO: Add other functions */
 };
 

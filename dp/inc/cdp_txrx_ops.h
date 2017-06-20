@@ -208,6 +208,9 @@ struct cdp_cmn_ops {
 	int(*txrx_soc_get_nss_cfg)(ol_txrx_soc_handle soc);
 	QDF_STATUS (*txrx_intr_attach)(void *soc);
 	void (*txrx_intr_detach)(void *soc);
+	void  (*set_pn_check)(struct cdp_vdev *vdev,
+		struct cdp_peer *peer_handle, enum cdp_sec_type sec_type,
+		 uint32_t *rx_pn);
 };
 
 struct cdp_ctrl_ops {

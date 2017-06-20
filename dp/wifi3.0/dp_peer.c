@@ -806,14 +806,14 @@ try_desc_alloc:
 	 * HTT_T2H_MSG_TYPE_SEC_IND from target
 	 */
 	switch (peer->security[dp_sec_ucast].sec_type) {
-	case htt_sec_type_tkip_nomic:
-	case htt_sec_type_aes_ccmp:
-	case htt_sec_type_aes_ccmp_256:
-	case htt_sec_type_aes_gcmp:
-	case htt_sec_type_aes_gcmp_256:
+	case cdp_sec_type_tkip_nomic:
+	case cdp_sec_type_aes_ccmp:
+	case cdp_sec_type_aes_ccmp_256:
+	case cdp_sec_type_aes_gcmp:
+	case cdp_sec_type_aes_gcmp_256:
 		hal_pn_type = HAL_PN_WPA;
 		break;
-	case htt_sec_type_wapi:
+	case cdp_sec_type_wapi:
 		if (vdev->opmode == wlan_op_mode_ap)
 			hal_pn_type = HAL_PN_WAPI_EVEN;
 		else
@@ -990,7 +990,7 @@ void dp_peer_rx_init(struct dp_pdev *pdev, struct dp_peer *peer)
 	 * send a HTT SEC_IND message to overwrite these defaults.
 	 */
 	peer->security[dp_sec_ucast].sec_type =
-		peer->security[dp_sec_mcast].sec_type = htt_sec_type_none;
+		peer->security[dp_sec_mcast].sec_type = cdp_sec_type_none;
 }
 
 /*
@@ -1139,6 +1139,102 @@ void dp_rx_discard(struct dp_vdev *vdev, struct dp_peer *peer, unsigned tid,
 		qdf_nbuf_free(msdu);
 	}
 }
+
+
+/**
+ * dp_set_pn_check_wifi3() - enable PN check in REO for security
+ * @peer: Datapath peer handle
+ * @vdev: Datapath vdev
+ * @pdev - data path device instance
+ * @sec_type - security type
+ * @rx_pn - Receive pn starting number
+ *
+ */
+
+void
+dp_set_pn_check_wifi3(struct cdp_vdev *vdev_handle, struct cdp_peer *peer_handle, enum cdp_sec_type sec_type,  uint32_t *rx_pn)
+{
+	struct dp_peer *peer =  (struct dp_peer *)peer_handle;
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
+	struct dp_pdev *pdev;
+	struct dp_soc *soc;
+	int i;
+	struct hal_reo_cmd_params params;
+
+	/* preconditions */
+	qdf_assert(vdev);
+
+	pdev = vdev->pdev;
+	soc = pdev->soc;
+
+
+	qdf_mem_zero(&params, sizeof(params));
+
+	params.std.need_status = 1;
+	params.u.upd_queue_params.update_pn_valid = 1;
+	params.u.upd_queue_params.update_pn_size = 1;
+	params.u.upd_queue_params.update_pn = 1;
+	params.u.upd_queue_params.update_pn_check_needed = 1;
+
+	peer->security[dp_sec_ucast].sec_type = sec_type;
+
+	switch (sec_type) {
+	case cdp_sec_type_tkip_nomic:
+	case cdp_sec_type_aes_ccmp:
+	case cdp_sec_type_aes_ccmp_256:
+	case cdp_sec_type_aes_gcmp:
+	case cdp_sec_type_aes_gcmp_256:
+		params.u.upd_queue_params.pn_check_needed = 1;
+		params.u.upd_queue_params.pn_size = 48;
+		break;
+	case cdp_sec_type_wapi:
+		params.u.upd_queue_params.pn_check_needed = 1;
+		params.u.upd_queue_params.pn_size = 128;
+		if (vdev->opmode == wlan_op_mode_ap) {
+			params.u.upd_queue_params.pn_even = 1;
+			params.u.upd_queue_params.update_pn_even = 1;
+		} else {
+			params.u.upd_queue_params.pn_uneven = 1;
+			params.u.upd_queue_params.update_pn_uneven = 1;
+		}
+		break;
+	default:
+		params.u.upd_queue_params.pn_check_needed = 0;
+		break;
+	}
+
+
+	for (i = 0; i < DP_MAX_TIDS; i++) {
+		struct dp_rx_tid *rx_tid = &peer->rx_tid[i];
+		if (rx_tid->hw_qdesc_vaddr_unaligned != NULL) {
+			params.std.addr_lo =
+				rx_tid->hw_qdesc_paddr & 0xffffffff;
+			params.std.addr_hi =
+				(uint64_t)(rx_tid->hw_qdesc_paddr) >> 32;
+
+			if (sec_type != cdp_sec_type_wapi) {
+				params.u.upd_queue_params.update_pn_valid = 0;
+			} else {
+				/*
+				 * Setting PN valid bit for WAPI sec_type,
+				 * since WAPI PN has to be started with
+				 * predefined value
+				 */
+				params.u.upd_queue_params.update_pn_valid = 1;
+				params.u.upd_queue_params.pn_31_0 = rx_pn[0];
+				params.u.upd_queue_params.pn_63_32 = rx_pn[1];
+				params.u.upd_queue_params.pn_95_64 = rx_pn[2];
+				params.u.upd_queue_params.pn_127_96 = rx_pn[3];
+			}
+			dp_reo_send_cmd(soc, CMD_UPDATE_RX_REO_QUEUE, &params,
+				dp_rx_tid_update_cb, rx_tid);
+		} else {
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
+				"PN Check not setup for TID :%d \n", i);
+		}
+	}
+}
+
 
 void
 dp_rx_sec_ind_handler(void *soc_handle, uint16_t peer_id,

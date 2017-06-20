@@ -399,6 +399,7 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
  *
  * @vdev: DP Virtual device handle
  * @nbuf: Buffer pointer
+ * @rx_tlv_hdr: start of rx tlv header
  *
  * This function allocated memory for mesh receive stats and fill the
  * required stats. Stores the memory address in skb cb.
@@ -406,13 +407,13 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
  * Return: void
  */
 static
-void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
+void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
+				uint8_t *rx_tlv_hdr)
 {
 	struct mesh_recv_hdr_s *rx_info = NULL;
 	uint32_t pkt_type;
 	uint32_t nss;
 	uint32_t rate_mcs;
-	uint8_t *rx_tlv_hdr = qdf_nbuf_data(nbuf);
 
 	/* fill recv mesh stats */
 	rx_info = qdf_mem_malloc(sizeof(struct mesh_recv_hdr_s));
@@ -462,6 +463,7 @@ void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
  *
  * @vdev: DP Virtual device handle
  * @nbuf: Buffer pointer
+ * @rx_tlv_hdr: start of rx tlv header
  *
  * This checks if the received packet is matching any filter out
  * catogery and and drop the packet if it matches.
@@ -470,9 +472,9 @@ void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
  */
 
 static inline
-QDF_STATUS dp_rx_filter_mesh_packets(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
+QDF_STATUS dp_rx_filter_mesh_packets(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
+					uint8_t *rx_tlv_hdr)
 {
-	uint8_t *rx_tlv_hdr = qdf_nbuf_data(nbuf);
 	union dp_align_mac_addr mac_addr;
 
 	if (qdf_unlikely(vdev->mesh_rx_filter)) {
@@ -517,12 +519,14 @@ QDF_STATUS dp_rx_filter_mesh_packets(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
 
 #else
 static
-void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
+void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
+				uint8_t *rx_tlv_hdr)
 {
 }
 
 static inline
-QDF_STATUS dp_rx_filter_mesh_packets(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
+QDF_STATUS dp_rx_filter_mesh_packets(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
+					uint8_t *rx_tlv_hdr)
 {
 	return QDF_STATUS_E_FAILURE;
 }
@@ -736,6 +740,77 @@ static void dp_rx_lro(uint8_t *rx_tlv, struct dp_peer *peer,
 }
 #endif
 
+static inline void dp_rx_adjust_nbuf_len(qdf_nbuf_t nbuf, uint16_t *mpdu_len)
+{
+	if (*mpdu_len >= (RX_BUFFER_SIZE - RX_PKT_TLVS_LEN))
+		qdf_nbuf_set_pktlen(nbuf, RX_BUFFER_SIZE);
+	else
+		qdf_nbuf_set_pktlen(nbuf, (*mpdu_len + RX_PKT_TLVS_LEN));
+
+	*mpdu_len -= (RX_BUFFER_SIZE - RX_PKT_TLVS_LEN);
+}
+
+/**
+ * dp_rx_sg_create() - create a frag_list for MSDUs which are spread across
+ *		     multiple nbufs.
+ * @nbuf: nbuf which can may be part of frag_list.
+ * @rx_tlv_hdr: pointer to the start of RX TLV headers.
+ * @mpdu_len: mpdu length.
+ * @is_first_frag: is this the first nbuf in the fragmented MSDU.
+ * @frag_list_len: length of all the fragments combined.
+ * @head_frag_nbuf: parent nbuf
+ * @frag_list_head: pointer to the first nbuf in the frag_list.
+ * @frag_list_tail: pointer to the last nbuf in the frag_list.
+ *
+ * This function implements the creation of RX frag_list for cases
+ * where an MSDU is spread across multiple nbufs.
+ *
+ */
+void dp_rx_sg_create(qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr,
+			uint16_t *mpdu_len, bool *is_first_frag,
+			uint16_t *frag_list_len, qdf_nbuf_t *head_frag_nbuf,
+			qdf_nbuf_t *frag_list_head, qdf_nbuf_t *frag_list_tail)
+{
+	if (qdf_unlikely(qdf_nbuf_is_chfrag_cont(nbuf))) {
+		if (!(*is_first_frag)) {
+			*is_first_frag = 1;
+			qdf_nbuf_set_chfrag_start(nbuf, 1);
+			*mpdu_len = hal_rx_msdu_start_msdu_len_get(rx_tlv_hdr);
+
+			dp_rx_adjust_nbuf_len(nbuf, mpdu_len);
+			*head_frag_nbuf = nbuf;
+		} else {
+			dp_rx_adjust_nbuf_len(nbuf, mpdu_len);
+			qdf_nbuf_pull_head(nbuf, RX_PKT_TLVS_LEN);
+			*frag_list_len += qdf_nbuf_len(nbuf);
+
+			DP_RX_LIST_APPEND(*frag_list_head,
+						*frag_list_tail,
+						nbuf);
+		}
+	} else {
+		if (qdf_unlikely(*is_first_frag)) {
+			qdf_nbuf_set_chfrag_start(nbuf, 0);
+			dp_rx_adjust_nbuf_len(nbuf, mpdu_len);
+			qdf_nbuf_pull_head(nbuf,
+					RX_PKT_TLVS_LEN);
+			*frag_list_len += qdf_nbuf_len(nbuf);
+
+			DP_RX_LIST_APPEND(*frag_list_head,
+						*frag_list_tail,
+						nbuf);
+
+			qdf_nbuf_append_ext_list(*head_frag_nbuf,
+						*frag_list_head,
+						*frag_list_len);
+
+			*is_first_frag = 0;
+			return;
+		}
+		*head_frag_nbuf = nbuf;
+	}
+}
+
 /**
  * dp_rx_process() - Brain of the Rx processing functionality
  *		     Called from the bottom half (tasklet/NET_RX_SOFTIRQ)
@@ -782,6 +857,12 @@ dp_rx_process(struct dp_intr *int_ctx, void *hal_ring, uint32_t quota)
 	struct dp_soc *soc = int_ctx->soc;
 	uint8_t ring_id;
 	uint8_t core_id;
+	bool is_first_frag = 0;
+	uint16_t mpdu_len = 0;
+	qdf_nbuf_t head_frag_nbuf = NULL;
+	qdf_nbuf_t frag_list_head = NULL;
+	qdf_nbuf_t frag_list_tail = NULL;
+	uint16_t frag_list_len = 0;
 
 	DP_HIST_INIT();
 	/* Debug -- Remove later */
@@ -812,7 +893,7 @@ dp_rx_process(struct dp_intr *int_ctx, void *hal_ring, uint32_t quota)
 	 */
 	while (qdf_likely((ring_desc =
 				hal_srng_dst_get_next(hal_soc, hal_ring))
-				&& quota--)) {
+				&& quota)) {
 
 		error = HAL_RX_ERROR_STATUS_GET(ring_desc);
 		ring_id = hal_srng_ring_id_get(hal_ring);
@@ -907,6 +988,15 @@ dp_rx_process(struct dp_intr *int_ctx, void *hal_ring, uint32_t quota)
 		DP_HIST_PACKET_COUNT_INC(vdev->pdev->pdev_id);
 		qdf_nbuf_queue_add(&vdev->rxq, rx_desc->nbuf);
 fail:
+		/*
+		 * if continuation bit is set then we have MSDU spread
+		 * across multiple buffers, let us not decrement quota
+		 * till we reap all buffers of that MSDU.
+		 */
+		if (qdf_likely(!qdf_nbuf_is_chfrag_cont(rx_desc->nbuf)))
+			quota -= 1;
+
+
 		dp_rx_add_to_free_desc_list(&head[rx_desc->pool_id],
 						&tail[rx_desc->pool_id],
 						rx_desc);
@@ -961,8 +1051,44 @@ done:
 				qdf_assert(0);
 			}
 
-			if (qdf_nbuf_is_chfrag_start(nbuf))
-				peer_mdata = hal_rx_mpdu_peer_meta_data_get(rx_tlv_hdr);
+			/*
+			 * The below condition happens when an MSDU is spread
+			 * across multiple buffers. This can happen in two cases
+			 * 1. The nbuf size is smaller then the received msdu.
+			 *    ex: we have set the nbuf size to 2048 during
+			 *        nbuf_alloc. but we received an msdu which is
+			 *        2304 bytes in size then this msdu is spread
+			 *        across 2 nbufs.
+			 *
+			 * 2. AMSDUs when RAW mode is enabled.
+			 *    ex: 1st MSDU is in 1st nbuf and 2nd MSDU is spread
+			 *        across 1st nbuf and 2nd nbuf and last MSDU is
+			 *        spread across 2nd nbuf and 3rd nbuf.
+			 *
+			 * for these scenarios let us create a skb frag_list and
+			 * append these buffers till the last MSDU of the AMSDU
+			 */
+			if (qdf_unlikely(vdev->rx_decap_type ==
+					htt_cmn_pkt_type_raw)) {
+
+				dp_rx_sg_create(nbuf, rx_tlv_hdr, &mpdu_len,
+						&is_first_frag, &frag_list_len,
+						&head_frag_nbuf,
+						&frag_list_head,
+						&frag_list_tail);
+
+				if (is_first_frag)
+					continue;
+				else {
+					nbuf = head_frag_nbuf;
+					rx_tlv_hdr = qdf_nbuf_data(nbuf);
+				}
+			}
+
+			if (qdf_nbuf_is_chfrag_start(nbuf)) {
+				peer_mdata = hal_rx_mpdu_peer_meta_data_get
+								(rx_tlv_hdr);
+			}
 
 			peer_id = DP_PEER_METADATA_PEER_ID_GET(peer_mdata);
 			peer = dp_peer_find_by_id(soc, peer_id);
@@ -1089,11 +1215,18 @@ done:
 			msdu_len = hal_rx_msdu_start_msdu_len_get(rx_tlv_hdr);
 			pkt_len = msdu_len + l2_hdr_offset + RX_PKT_TLVS_LEN;
 
-			/* Set length in nbuf */
-			qdf_nbuf_set_pktlen(nbuf, pkt_len);
+			if (unlikely(qdf_nbuf_get_ext_list(nbuf)))
+				qdf_nbuf_pull_head(nbuf, RX_PKT_TLVS_LEN);
+			else {
+				qdf_nbuf_set_pktlen(nbuf, pkt_len);
+				qdf_nbuf_pull_head(nbuf,
+						RX_PKT_TLVS_LEN +
+						l2_hdr_offset);
+			}
 
 			if (qdf_unlikely(vdev->mesh_vdev)) {
-				if (dp_rx_filter_mesh_packets(vdev, nbuf)
+				if (dp_rx_filter_mesh_packets(vdev, nbuf,
+								rx_tlv_hdr)
 						== QDF_STATUS_SUCCESS) {
 					QDF_TRACE(QDF_MODULE_ID_DP,
 						QDF_TRACE_LEVEL_INFO_MED,
@@ -1104,15 +1237,8 @@ done:
 					qdf_nbuf_free(nbuf);
 					continue;
 				}
-				dp_rx_fill_mesh_stats(vdev, nbuf);
+				dp_rx_fill_mesh_stats(vdev, nbuf, rx_tlv_hdr);
 			}
-
-			/*
-			 * Advance the packet start pointer by total size of
-			 * pre-header TLV's
-			 */
-			qdf_nbuf_pull_head(nbuf,
-					   RX_PKT_TLVS_LEN + l2_hdr_offset);
 
 #ifdef QCA_WIFI_NAPIER_EMULATION_DBG /* Debug code, remove later */
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -1124,18 +1250,23 @@ done:
 					qdf_nbuf_data(nbuf), 128, false);
 #endif /* NAPIER_EMULATION */
 
-			/* WDS Source Port Learning */
-			if (qdf_likely((vdev->wds_enabled) &&
-						(vdev->rx_decap_type ==
-						htt_cmn_pkt_type_ethernet)))
-				dp_rx_wds_srcport_learn(soc, rx_tlv_hdr, peer,
-						nbuf);
+			if (qdf_likely(vdev->rx_decap_type ==
+						htt_cmn_pkt_type_ethernet)) {
+				/* WDS Source Port Learning */
+				if (qdf_likely(vdev->wds_enabled))
+					dp_rx_wds_srcport_learn(soc,
+								rx_tlv_hdr,
+								peer,
+								nbuf);
 
-			/* Intrabss-fwd */
-			if (vdev->opmode != wlan_op_mode_sta)
-				if (dp_rx_intrabss_fwd(soc, peer, rx_tlv_hdr,
-									nbuf))
-					continue; /* Get next descriptor */
+				/* Intrabss-fwd */
+				if (vdev->opmode != wlan_op_mode_sta)
+					if (dp_rx_intrabss_fwd(soc,
+								peer,
+								rx_tlv_hdr,
+								nbuf))
+						continue; /* Get next desc */
+			}
 
 			rx_bufs_used++;
 
