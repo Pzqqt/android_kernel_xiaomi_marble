@@ -4325,7 +4325,7 @@ static bool hdd_is_interface_up(hdd_adapter_t *adapter)
 }
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)) \
-	&& !defined(WITH_BACKPORTS)
+	&& !defined(WITH_BACKPORTS) && !defined(IEEE80211_PRIVACY)
 struct cfg80211_bss *hdd_cfg80211_get_bss(struct wiphy *wiphy,
 					  struct ieee80211_channel *channel,
 					  const u8 *bssid, const u8 *ssid,
