@@ -779,7 +779,7 @@ struct dp_pdev {
 	enum htt_pkt_type rx_decap_mode;
 
 	/* Enhanced Stats is enabled */
-	bool ap_stats_tx_cal_enable;
+	bool enhanced_stats_en;
 
 	qdf_atomic_t num_tx_outstanding;
 

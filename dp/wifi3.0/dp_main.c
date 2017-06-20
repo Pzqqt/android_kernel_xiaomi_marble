@@ -3400,6 +3400,32 @@ dp_get_host_peer_stats(struct cdp_pdev *pdev_handle, char *mac_addr)
 }
 
 /*
+ * dp_enable_enhanced_stats()- API to enable enhanced statistcs
+ * @pdev_handle: DP_PDEV handle
+ *
+ * Return: void
+ */
+static void
+dp_enable_enhanced_stats(struct cdp_pdev *pdev_handle)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	pdev->enhanced_stats_en = 1;
+}
+
+/*
+ * dp_disable_enhanced_stats()- API to disable enhanced statistcs
+ * @pdev_handle: DP_PDEV handle
+ *
+ * Return: void
+ */
+static void
+dp_disable_enhanced_stats(struct cdp_pdev *pdev_handle)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	pdev->enhanced_stats_en = 0;
+}
+
+/*
  * dp_get_fw_peer_stats()- function to print peer stats
  * @pdev_handle: DP_PDEV handle
  * @mac_addr: mac address of the peer
@@ -3871,6 +3897,8 @@ static struct cdp_mon_ops dp_ops_mon = {
 static struct cdp_host_stats_ops dp_ops_host_stats = {
 	.txrx_per_peer_stats = dp_get_host_peer_stats,
 	.get_fw_peer_stats = dp_get_fw_peer_stats,
+	.txrx_enable_enhanced_stats = dp_enable_enhanced_stats,
+	.txrx_disable_enhanced_stats = dp_disable_enhanced_stats,
 	/* TODO */
 };
 
