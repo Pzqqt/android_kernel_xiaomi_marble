@@ -46,6 +46,10 @@ ifeq ($(KERNEL_BUILD), 0)
 	# These are configurable via Kconfig for kernel-based builds
 	# Need to explicitly configure for Android-based builds
 
+	ifneq ($(DEVELOPER_DISABLE_BUILD_TIMESTAMP),y)
+	CONFIG_BUILD_TIMESTAMP := y
+	endif
+
 	ifeq ($(CONFIG_ARCH_MDM9630), y)
 	CONFIG_MOBILE_ROUTER := y
 	endif
@@ -2201,9 +2205,11 @@ ifdef WLAN_HDD_ADAPTER_MAGIC
 CDEFINES += -DWLAN_HDD_ADAPTER_MAGIC=$(WLAN_HDD_ADAPTER_MAGIC)
 endif
 
+# inject some build related information
+ifeq ($(CONFIG_BUILD_TIMESTAMP), y)
+CDEFINES += -DBUILD_TIMESTAMP=\"$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')\"
+endif
+
 # Module information used by KBuild framework
 obj-$(CONFIG_QCA_CLD_WLAN) += $(MODNAME).o
 $(MODNAME)-y := $(OBJS)
-
-# inject some build related information
-CDEFINES += -DBUILD_TIMESTAMP=\"$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')\"

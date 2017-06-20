@@ -140,4 +140,7 @@ config ICMP_DISABLE_PS
 	bool "Enable ICMP packet disable powersave feature"
 	default n
 
+config CONFIG_BUILD_TIMESTAMP
+	bool "Embed timestamp in wlan version"
+	default n
 endif # QCA_CLD_WLAN

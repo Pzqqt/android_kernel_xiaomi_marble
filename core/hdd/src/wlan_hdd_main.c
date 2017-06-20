@@ -280,6 +280,10 @@ void wlan_hdd_txrx_pause_cb(uint8_t vdev_id,
  * post processing
  */
 uint8_t g_wlan_driver_version[] = QWLAN_VERSIONSTR;
+
+#ifndef BUILD_TIMESTAMP
+#define BUILD_TIMESTAMP ""
+#endif
 uint8_t g_wlan_driver_timestamp[] = BUILD_TIMESTAMP;
 
 /**
@@ -10707,7 +10711,7 @@ static int __hdd_module_init(void)
 	pr_err("%s: Loading driver v%s (%s)%s\n",
 	       WLAN_MODULE_NAME,
 	       QWLAN_VERSIONSTR,
-	       BUILD_TIMESTAMP,
+	       g_wlan_driver_timestamp,
 	       TIMER_MANAGER_STR MEMORY_DEBUG_STR);
 
 	ret = wlan_hdd_state_ctrl_param_create();
