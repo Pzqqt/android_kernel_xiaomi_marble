@@ -8012,8 +8012,27 @@ QDF_STATUS csr_roam_connect(tpAniSirGlobal pMac, uint32_t sessionId,
 		/* check if set hw mode needs to be done */
 		if ((pScanFilter->csrPersona == QDF_STA_MODE) ||
 			 (pScanFilter->csrPersona == QDF_P2P_CLIENT_MODE)) {
+			bool ok;
+
 			csr_get_bssdescr_from_scan_handle(hBSSList,
 					first_ap_profile);
+			status = policy_mgr_is_chan_ok_for_dnbs(pMac->psoc,
+					first_ap_profile->channelId, &ok);
+			if (QDF_IS_STATUS_ERROR(status)) {
+				sme_debug("policy_mgr_is_chan_ok_for_dnbs():error:%d",
+					  status);
+				csr_scan_result_purge(pMac, hBSSList);
+				fCallCallback = true;
+				goto error;
+			}
+			if (!ok) {
+				sme_debug("chan:%d not ok for DNBS",
+						first_ap_profile->channelId);
+				csr_scan_result_purge(pMac, hBSSList);
+				fCallCallback = true;
+				status = QDF_STATUS_E_INVAL;
+				goto error;
+			}
 			status = policy_mgr_handle_conc_multiport(pMac->psoc,
 					sessionId, first_ap_profile->channelId);
 			if ((QDF_IS_STATUS_SUCCESS(status)) &&
