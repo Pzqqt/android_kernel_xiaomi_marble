@@ -31,13 +31,54 @@
  * For now, all these configuration parameters are hardcoded.
  * Many of these should actually be coming from dts file/ini file
  */
+
+#ifdef CONFIG_MCL
+#define WLAN_CFG_PER_PDEV_RX_RING 0
+#define NUM_RXDMA_RINGS_PER_PDEV 2
+#define WLAN_LRO_ENABLE 1
+
+/* Tx Descriptor and Tx Extension Descriptor pool sizes */
+#define WLAN_CFG_NUM_TX_DESC  1024
+#define WLAN_CFG_NUM_TX_EXT_DESC 1024
+
+/* Interrupt Mitigation - Batch threshold in terms of number of frames */
+#define WLAN_CFG_INT_BATCH_THRESHOLD_TX 1
+#define WLAN_CFG_INT_BATCH_THRESHOLD_RX 1
+#define WLAN_CFG_INT_BATCH_THRESHOLD_OTHER 1
+
+/* Interrupt Mitigation - Timer threshold in us */
+#define WLAN_CFG_INT_TIMER_THRESHOLD_TX 8
+#define WLAN_CFG_INT_TIMER_THRESHOLD_RX 8
+#define WLAN_CFG_INT_TIMER_THRESHOLD_OTHER 8
+
+#endif
+
+#ifdef CONFIG_WIN
+#define WLAN_CFG_PER_PDEV_RX_RING 1
+#define NUM_RXDMA_RINGS_PER_PDEV 1
+#define WLAN_LRO_ENABLE 0
+
+/* Tx Descriptor and Tx Extension Descriptor pool sizes */
+#define WLAN_CFG_NUM_TX_DESC  (16 << 10)
+#define WLAN_CFG_NUM_TX_EXT_DESC (8 << 10)
+
+/* Interrupt Mitigation - Batch threshold in terms of number of frames */
+#define WLAN_CFG_INT_BATCH_THRESHOLD_TX 256
+#define WLAN_CFG_INT_BATCH_THRESHOLD_RX 128
+#define WLAN_CFG_INT_BATCH_THRESHOLD_OTHER 1
+
+/* Interrupt Mitigation - Timer threshold in us */
+#define WLAN_CFG_INT_TIMER_THRESHOLD_TX 1000
+#define WLAN_CFG_INT_TIMER_THRESHOLD_RX 500
+#define WLAN_CFG_INT_TIMER_THRESHOLD_OTHER 8
+#endif
+
 #define WLAN_CFG_INT_NUM_CONTEXTS 4
 
 #define RXDMA_BUF_RING_SIZE 2048
 #define RXDMA_MONITOR_BUF_RING_SIZE 2048
 #define RXDMA_MONITOR_DEST_RING_SIZE 2048
 #define RXDMA_MONITOR_STATUS_RING_SIZE 2048
-
 
 #ifdef TX_PER_PDEV_DESC_POOL
 #define WLAN_CFG_NUM_TX_DESC_POOL 	MAX_PDEV_CNT
@@ -46,7 +87,6 @@
 #define WLAN_CFG_NUM_TX_DESC_POOL 3
 #define WLAN_CFG_NUM_TXEXT_DESC_POOL 3
 #endif /* TX_PER_PDEV_DESC_POOL */
-
 
 #define WLAN_CFG_TX_RING_MASK_0 0x1
 #define WLAN_CFG_TX_RING_MASK_1 0x2
@@ -75,20 +115,6 @@
 
 #define WLAN_CFG_HTT_PKT_TYPE 2
 #define WLAN_CFG_MAX_PEER_ID 64
-
-#ifdef CONFIG_MCL
-#define WLAN_CFG_PER_PDEV_RX_RING 0
-#define NUM_RXDMA_RINGS_PER_PDEV 2
-#define WLAN_LRO_ENABLE 1
-#define WLAN_CFG_NUM_TX_DESC  1024
-#define WLAN_CFG_NUM_TX_EXT_DESC 1024
-#else
-#define WLAN_CFG_PER_PDEV_RX_RING 1
-#define NUM_RXDMA_RINGS_PER_PDEV 1
-#define WLAN_LRO_ENABLE 0
-#define WLAN_CFG_NUM_TX_DESC  (16 << 10)
-#define WLAN_CFG_NUM_TX_EXT_DESC (8 << 10)
-#endif
 
 #ifdef WLAN_RX_HASH
 #define WLAN_RX_HASH_ENABLE 1
@@ -154,6 +180,12 @@ struct wlan_cfg_dp_soc_ctxt {
 	int num_tx_ext_desc;
 	int max_peer_id;
 	int htt_packet_type;
+	int int_batch_threshold_tx;
+	int int_timer_threshold_tx;
+	int int_batch_threshold_rx;
+	int int_timer_threshold_rx;
+	int int_batch_threshold_other;
+	int int_timer_threshold_other;
 	int int_tx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	int int_rx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	int int_rx_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
@@ -207,6 +239,15 @@ struct wlan_cfg_dp_soc_ctxt *wlan_cfg_soc_attach()
 	wlan_cfg_ctx->num_tx_ext_desc = WLAN_CFG_NUM_TX_EXT_DESC;
 	wlan_cfg_ctx->htt_packet_type = WLAN_CFG_HTT_PKT_TYPE;
 	wlan_cfg_ctx->max_peer_id = WLAN_CFG_MAX_PEER_ID;
+
+	wlan_cfg_ctx->int_batch_threshold_tx = WLAN_CFG_INT_BATCH_THRESHOLD_TX;
+	wlan_cfg_ctx->int_timer_threshold_tx =  WLAN_CFG_INT_TIMER_THRESHOLD_TX;
+	wlan_cfg_ctx->int_batch_threshold_rx = WLAN_CFG_INT_BATCH_THRESHOLD_RX;
+	wlan_cfg_ctx->int_timer_threshold_rx = WLAN_CFG_INT_TIMER_THRESHOLD_RX;
+	wlan_cfg_ctx->int_batch_threshold_other =
+		WLAN_CFG_INT_BATCH_THRESHOLD_OTHER;
+	wlan_cfg_ctx->int_timer_threshold_other =
+		WLAN_CFG_INT_TIMER_THRESHOLD_OTHER;
 
 	for (i = 0; i < WLAN_CFG_INT_NUM_CONTEXTS; i++) {
 		wlan_cfg_ctx->int_tx_ring_mask[i] = tx_ring_mask[i];
@@ -426,4 +467,34 @@ int wlan_cfg_get_dp_soc_nss_cfg(struct wlan_cfg_dp_soc_ctxt *cfg)
 void wlan_cfg_set_dp_soc_nss_cfg(struct wlan_cfg_dp_soc_ctxt *cfg, int nss_cfg)
 {
 	cfg->nss_cfg = nss_cfg;
+}
+
+int wlan_cfg_get_int_batch_threshold_tx(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->int_batch_threshold_tx;
+}
+
+int wlan_cfg_get_int_timer_threshold_tx(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->int_timer_threshold_tx;
+}
+
+int wlan_cfg_get_int_batch_threshold_rx(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->int_batch_threshold_rx;
+}
+
+int wlan_cfg_get_int_timer_threshold_rx(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->int_timer_threshold_rx;
+}
+
+int wlan_cfg_get_int_batch_threshold_other(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->int_batch_threshold_other;
+}
+
+int wlan_cfg_get_int_timer_threshold_other(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->int_timer_threshold_other;
 }

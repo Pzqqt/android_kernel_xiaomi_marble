@@ -120,7 +120,7 @@ const int dp_stats_mapping_table[][STATS_TYPE_MAX] = {
 	{TXRX_FW_STATS_INVALID, TXRX_RX_HOST_STATS},
 };
 
-/**
+/*
  * dp_setup_srng - Internal function to setup SRNG rings used by data path
  */
 static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
@@ -158,11 +158,26 @@ static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
 	ring_params.msi_data = 0;
 	ring_params.msi_addr = 0;
 
-	/* TODO: Setup interrupt timer and batch counter thresholds for
+	/*
+	 * Setup interrupt timer and batch counter thresholds for
 	 * interrupt mitigation based on ring type
 	 */
-	ring_params.intr_timer_thres_us = 8;
-	ring_params.intr_batch_cntr_thres_entries = 1;
+	if (ring_type == REO_DST) {
+		ring_params.intr_timer_thres_us =
+			wlan_cfg_get_int_timer_threshold_rx(soc->wlan_cfg_ctx);
+		ring_params.intr_batch_cntr_thres_entries =
+			wlan_cfg_get_int_batch_threshold_rx(soc->wlan_cfg_ctx);
+	} else if (ring_type == WBM2SW_RELEASE && (ring_num < 3)) {
+		ring_params.intr_timer_thres_us =
+			wlan_cfg_get_int_timer_threshold_tx(soc->wlan_cfg_ctx);
+		ring_params.intr_batch_cntr_thres_entries =
+			wlan_cfg_get_int_batch_threshold_tx(soc->wlan_cfg_ctx);
+	} else {
+		ring_params.intr_timer_thres_us =
+			wlan_cfg_get_int_timer_threshold_other(soc->wlan_cfg_ctx);
+		ring_params.intr_batch_cntr_thres_entries =
+			wlan_cfg_get_int_timer_threshold_other(soc->wlan_cfg_ctx);
+	}
 
 	/* TODO: Currently hal layer takes care of endianness related settings.
 	 * See if these settings need to passed from DP layer
