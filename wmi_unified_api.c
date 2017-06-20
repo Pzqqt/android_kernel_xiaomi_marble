@@ -3292,7 +3292,7 @@ QDF_STATUS wmi_unified_set_active_bpf_mode_cmd(void *wmi_hdl,
 	wmi_unified_t wmi = (wmi_unified_t)wmi_hdl;
 
 	if (!wmi->ops->send_set_active_bpf_mode_cmd) {
-		WMI_LOGI("send_set_active_bpf_mode_cmd op is NULL");
+		WMI_LOGD("send_set_active_bpf_mode_cmd op is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 

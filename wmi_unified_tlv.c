@@ -5506,21 +5506,21 @@ static QDF_STATUS send_roam_scan_offload_mode_cmd_tlv(wmi_unified_t wmi_handle,
 				    roam_req->fw_okc) {
 					WMI_SET_ROAM_OFFLOAD_OKC_ENABLED
 						(roam_offload_11i->flags);
-					WMI_LOGE("LFR3:OKC enabled");
+					WMI_LOGI("LFR3:OKC enabled");
 				} else {
 					WMI_SET_ROAM_OFFLOAD_OKC_DISABLED
 						(roam_offload_11i->flags);
-					WMI_LOGE("LFR3:OKC disabled");
+					WMI_LOGI("LFR3:OKC disabled");
 				}
 				if (roam_req->roam_key_mgmt_offload_enabled &&
 				    roam_req->fw_pmksa_cache) {
 					WMI_SET_ROAM_OFFLOAD_PMK_CACHE_ENABLED
 						(roam_offload_11i->flags);
-					WMI_LOGE("LFR3:PMKSA caching enabled");
+					WMI_LOGI("LFR3:PMKSA caching enabled");
 				} else {
 					WMI_SET_ROAM_OFFLOAD_PMK_CACHE_DISABLED
 						(roam_offload_11i->flags);
-					WMI_LOGE("LFR3:PMKSA caching disabled");
+					WMI_LOGI("LFR3:PMKSA caching disabled");
 				}
 
 				qdf_mem_copy(roam_offload_11i->pmk,
@@ -7154,7 +7154,7 @@ static QDF_STATUS send_pno_start_cmd_tlv(wmi_unified_t wmi_handle,
 		nlo_list[i].bcast_nw_type.valid = true;
 		nlo_list[i].bcast_nw_type.bcast_nw_type =
 			pno->networks_list[i].bc_new_type;
-		WMI_LOGI("Broadcast NW type (%u)",
+		WMI_LOGD("Broadcast NW type (%u)",
 			 nlo_list[i].bcast_nw_type.bcast_nw_type);
 	}
 	buf_ptr += cmd->no_of_ssids * sizeof(nlo_configured_parameters);
