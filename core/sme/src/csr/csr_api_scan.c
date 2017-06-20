@@ -51,14 +51,12 @@
 #include "wlan_hdd_main.h"
 #include "pld_common.h"
 #include "csr_internal.h"
-#ifdef NAPIER_SCAN
 #include <wlan_scan_ucfg_api.h>
 #include <wlan_scan_tgt_api.h>
 #include <wlan_scan_utils_api.h>
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_objmgr_pdev_obj.h>
 #include <wlan_utility.h>
-#endif
 #include "wlan_reg_services_api.h"
 
 #define MIN_CHN_TIME_TO_FIND_GO 100
@@ -5275,7 +5273,6 @@ void csr_scan_active_list_timeout_handle(void *userData)
 	csr_release_command(mac_ctx, scan_cmd);
 }
 
-#ifdef NAPIER_SCAN
 static enum wlan_auth_type csr_covert_auth_type_new(eCsrAuthType auth)
 {
 	switch (auth) {
@@ -5936,4 +5933,3 @@ QDF_STATUS csr_scan_filter_results(tpAniSirGlobal mac_ctx)
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_LEGACY_MAC_ID);
 	return QDF_STATUS_SUCCESS;
 }
-#endif

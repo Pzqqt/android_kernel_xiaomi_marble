@@ -905,12 +905,10 @@ QDF_STATUS csr_start(tpAniSirGlobal pMac)
 			sme_warn("csr_start: Couldn't Init HO control blk ");
 			break;
 		}
-#ifdef NAPIER_SCAN
 		/* Register with scan component */
 		pMac->scan.requester_id = ucfg_scan_register_requester(
 						pMac->psoc,
 						"CSR", csr_scan_callback, pMac);
-#endif
 	} while (0);
 	return status;
 }
