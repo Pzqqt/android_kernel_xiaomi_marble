@@ -179,6 +179,49 @@ static QDF_STATUS wlan_cfg80211_is_pno_allowed(struct wlan_objmgr_vdev *vdev)
 		return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef WLAN_POLICY_MGR_ENABLE
+static bool wlan_cfg80211_is_ap_go_present(struct wlan_objmgr_psoc *psoc)
+{
+	return policy_mgr_mode_specific_connection_count(psoc,
+							  QDF_SAP_MODE,
+							  NULL) ||
+		policy_mgr_mode_specific_connection_count(psoc,
+							  QDF_P2P_GO_MODE,
+							  NULL);
+}
+
+static QDF_STATUS wlan_cfg80211_is_chan_ok_for_dnbs(
+			struct wlan_objmgr_psoc *psoc,
+			u8 channel, bool *ok)
+{
+	QDF_STATUS status = policy_mgr_is_chan_ok_for_dnbs(psoc, channel, ok);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cfg80211_err("DNBS check failed");
+		return status;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static bool wlan_cfg80211_is_ap_go_present(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+
+static QDF_STATUS wlan_cfg80211_is_chan_ok_for_dnbs(
+			struct wlan_objmgr_psoc *psoc,
+			u8 channel,
+			bool *ok)
+{
+	if (!ok)
+		return QDF_STATUS_E_INVAL;
+
+	*ok = true;
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_pdev *pdev,
 	struct net_device *dev,
 	struct cfg80211_sched_scan_request *request,
@@ -231,6 +274,10 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_pdev *pdev,
 		return -ENOMEM;
 	}
 
+	wlan_pdev_obj_lock(pdev);
+	psoc = wlan_pdev_get_psoc(pdev);
+	wlan_pdev_obj_unlock(pdev);
+
 	req->networks_cnt = request->n_match_sets;
 	wlan_vdev_obj_lock(vdev);
 	req->vdev_id = wlan_vdev_get_id(vdev);
@@ -254,11 +301,29 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_pdev *pdev,
 	if (request->n_channels) {
 		char chl[(request->n_channels * 5) + 1];
 		int len = 0;
+		bool ap_or_go_present = wlan_cfg80211_is_ap_go_present(psoc);
 
 		for (i = 0; i < request->n_channels; i++) {
 			channel = request->channels[i]->hw_value;
 			if (wlan_is_dsrc_channel(wlan_chan_to_freq(channel)))
 				continue;
+
+			if (ap_or_go_present) {
+				bool ok;
+
+				status =
+				wlan_cfg80211_is_chan_ok_for_dnbs(psoc,
+								  channel,
+								  &ok);
+				if (QDF_IS_STATUS_ERROR(status)) {
+					cfg80211_err("DNBS check failed");
+					qdf_mem_free(req);
+					ret = -EINVAL;
+					goto error;
+				}
+				if (!ok)
+					continue;
+			}
 			len += snprintf(chl + len, 5, "%d ", channel);
 			valid_ch[num_chan++] = wlan_chan_to_freq(channel);
 		}
@@ -348,9 +413,6 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_pdev *pdev,
 		req->fast_scan_period, req->fast_scan_max_cycles,
 		req->slow_scan_period);
 
-	wlan_pdev_obj_lock(pdev);
-	psoc = wlan_pdev_get_psoc(pdev);
-	wlan_pdev_obj_unlock(pdev);
 	ucfg_scan_register_pno_cb(psoc,
 		wlan_cfg80211_pno_callback, NULL);
 	ucfg_scan_get_pno_def_params(vdev, req);
@@ -1061,7 +1123,6 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 					continue;
 			}
 #endif
-
 			len += snprintf(chl + len, 5, "%d ", channel);
 			req->scan_req.chan_list[num_chan] =
 				wlan_chan_to_freq(channel);
