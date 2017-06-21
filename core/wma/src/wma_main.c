@@ -6782,6 +6782,35 @@ QDF_STATUS wma_get_chain_rssi(tp_wma_handle wma_handle,
 }
 
 /**
+ * wma_process_set_limit_off_chan() - set limit off chanel parameters
+ * @wma_handle: pointer to wma handle
+ * @param: pointer to sir_limit_off_chan
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code.
+ */
+static QDF_STATUS wma_process_limit_off_chan(tp_wma_handle wma_handle,
+	struct sir_limit_off_chan *param)
+{
+	int32_t err;
+	struct wmi_limit_off_chan_param limit_off_chan_param;
+
+	limit_off_chan_param.vdev_id = param->vdev_id;
+	limit_off_chan_param.status = param->is_tos_active;
+	limit_off_chan_param.max_offchan_time = param->max_off_chan_time;
+	limit_off_chan_param.rest_time = param->rest_time;
+	limit_off_chan_param.skip_dfs_chans = param->skip_dfs_chans;
+
+	err = wmi_unified_send_limit_off_chan_cmd(wma_handle->wmi_handle,
+			&limit_off_chan_param);
+	if (err) {
+		WMA_LOGE("\n failed to set limit off chan cmd");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * wma_mc_process_msg() - process wma messages and call appropriate function.
  * @msg: message
  *
@@ -7577,6 +7606,10 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 	case WMA_GET_ARP_STATS_REQ:
 		wma_get_arp_req_stats(wma_handle,
 			(struct get_arp_stats_params *)msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
+	case WMA_SET_LIMIT_OFF_CHAN:
+		wma_process_limit_off_chan(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	default:

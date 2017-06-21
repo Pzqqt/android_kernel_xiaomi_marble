@@ -7664,4 +7664,19 @@ struct get_chain_rssi_req_params {
 	uint8_t session_id;
 };
 
+/*
+ * struct sir_limit_off_chan - limit off-channel command parameters
+ * @vdev_id: vdev id
+ * @is_tos_active: status of the traffic (active/inactive)
+ * @max_off_chan_time: max allowed off channel time
+ * @rest_time: home channel time
+ * @skip_dfs_chans: skip dfs channels during scan
+ */
+struct sir_limit_off_chan {
+	uint8_t vdev_id;
+	bool is_tos_active;
+	uint32_t max_off_chan_time;
+	uint32_t rest_time;
+	bool skip_dfs_chans;
+};
 #endif /* __SIR_API_H */

@@ -255,6 +255,13 @@ static const struct category_info cinfo[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_DFS] = {QDF_TRACE_LEVEL_ALL},
 };
 
+int limit_off_chan_tbl[HDD_MAX_AC][HDD_MAX_OFF_CHAN_ENTRIES] = {
+	{ HDD_AC_BK_BIT, HDD_MAX_OFF_CHAN_TIME_FOR_BK },
+	{ HDD_AC_BE_BIT, HDD_MAX_OFF_CHAN_TIME_FOR_BE },
+	{ HDD_AC_VI_BIT, HDD_MAX_OFF_CHAN_TIME_FOR_VI },
+	{ HDD_AC_VO_BIT, HDD_MAX_OFF_CHAN_TIME_FOR_VO },
+};
+
 /* internal function declaration */
 struct notifier_block hdd_netdev_notifier;
 
@@ -12535,6 +12542,103 @@ int hdd_get_rssi_snr_by_bssid(struct hdd_adapter *adapter, const uint8_t *bssid,
 	}
 
 	return 0;
+}
+
+/**
+ * hdd_send_limit_off_chan_cmd() - send limit off-channel command parameters
+ * @param - pointer to sir_limit_off_chan
+ *
+ * Return: 0 on success and non zero value on failure
+ */
+static int hdd_send_limit_off_chan_cmd(struct sir_limit_off_chan *param)
+{
+	struct scheduler_msg msg = {0};
+
+	msg.type = WMA_SET_LIMIT_OFF_CHAN;
+	msg.reserved = 0;
+	msg.bodyptr = param;
+
+	if (!QDF_IS_STATUS_SUCCESS(scheduler_post_msg(QDF_MODULE_ID_WMA,
+					&msg))) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			FL("Not able to post WMA_SET_LIMIT_OFF_CHAN to WMA"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return 0;
+}
+
+/**
+ * hdd_set_limit_off_chan_for_tos() - set limit off-channel command parameters
+ * @adapter - HDD adapter
+ * @tos - type of service
+ * @status - status of the traffic
+ *
+ * Return: 0 on success and non zero value on failure
+ */
+
+int hdd_set_limit_off_chan_for_tos(struct hdd_adapter *adapter, enum tos tos,
+		bool is_tos_active)
+{
+	int ac_bit;
+	struct sir_limit_off_chan *cmd;
+	struct hdd_context *hdd_ctx;
+	int ret;
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	ret = wlan_hdd_validate_context(hdd_ctx);
+
+	if (ret < 0) {
+		hdd_err("failed to set limit off chan params");
+		return ret;
+	}
+
+	cmd = qdf_mem_malloc(sizeof(struct sir_limit_off_chan));
+	if (!cmd) {
+		hdd_err("qdf_mem_malloc failed for limit off channel");
+		return -ENOMEM;
+	}
+
+	ac_bit = limit_off_chan_tbl[tos][HDD_AC_BIT_INDX];
+
+	if (is_tos_active)
+		hdd_ctx->active_ac |= ac_bit;
+	else
+		hdd_ctx->active_ac &= ~ac_bit;
+
+	if (hdd_ctx->active_ac) {
+		if (hdd_ctx->active_ac & HDD_AC_VO_BIT) {
+			cmd->max_off_chan_time =
+				limit_off_chan_tbl[TOS_VO][HDD_DWELL_TIME_INDX];
+			policy_mgr_set_cur_conc_system_pref(hdd_ctx->hdd_psoc,
+					PM_LATENCY);
+		} else if (hdd_ctx->active_ac & HDD_AC_VI_BIT) {
+			cmd->max_off_chan_time =
+				limit_off_chan_tbl[TOS_VI][HDD_DWELL_TIME_INDX];
+			policy_mgr_set_cur_conc_system_pref(hdd_ctx->hdd_psoc,
+					PM_LATENCY);
+		} else {
+			/*ignore this command if only BE/BK is active */
+			is_tos_active = false;
+			policy_mgr_set_cur_conc_system_pref(hdd_ctx->hdd_psoc,
+					hdd_ctx->config->conc_system_pref);
+		}
+	} else {
+		/* No active tos */
+		policy_mgr_set_cur_conc_system_pref(hdd_ctx->hdd_psoc,
+				hdd_ctx->config->conc_system_pref);
+	}
+
+	cmd->vdev_id = adapter->sessionId;
+	cmd->is_tos_active = is_tos_active;
+	cmd->rest_time = hdd_ctx->config->nRestTimeConc;
+	cmd->skip_dfs_chans = true;
+
+	ret = hdd_send_limit_off_chan_cmd(cmd);
+	if (ret)
+		qdf_mem_free(cmd);
+
+	return ret;
 }
 
 /* Register the module init/exit functions */
