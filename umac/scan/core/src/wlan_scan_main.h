@@ -365,6 +365,9 @@ struct scan_cb {
  * @requesters: requester allocation pool
  * @scan_ids:   last allocated scan id
  * @global_evhandlers:  registered scan event handlers
+ * @pdev_info: pointer to pdev info
+ * @pno_cfg: default pno configuration
+ * @ie_whitelist: default ie whitelist attrs
  */
 struct wlan_scan_obj {
 	qdf_spinlock_t lock;
@@ -376,6 +379,7 @@ struct wlan_scan_obj {
 	struct global_scan_ev_handlers global_evhandlers;
 	struct pdev_scan_info pdev_info[WLAN_UMAC_MAX_PDEVS];
 	struct pno_def_config pno_cfg;
+	struct probe_req_whitelist_attr ie_whitelist;
 };
 
 /**

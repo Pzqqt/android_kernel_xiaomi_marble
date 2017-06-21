@@ -1116,6 +1116,7 @@ QDF_STATUS ucfg_scan_update_user_config(struct wlan_objmgr_psoc *psoc,
 	scan_def->select_5ghz_margin = scan_cfg->select_5ghz_margin;
 	scan_def->adaptive_dwell_time_mode = scan_cfg->scan_dwell_time_mode;
 	scan_def->scan_f_chan_stat_evnt = scan_cfg->is_snr_monitoring_enabled;
+	scan_obj->ie_whitelist = scan_cfg->ie_whitelist;
 
 	ucfg_scan_assign_rssi_category(scan_def,
 			scan_cfg->scan_bucket_threshold,
@@ -1363,4 +1364,38 @@ ucfg_scan_get_max_active_scans(struct wlan_objmgr_psoc *psoc)
 	scan_params = wlan_scan_psoc_get_def_params(psoc);
 
 	return scan_params->max_active_scans_allowed;
+}
+
+bool ucfg_copy_ie_whitelist_attrs(struct wlan_objmgr_psoc *psoc,
+				  struct probe_req_whitelist_attr *ie_whitelist)
+{
+	struct wlan_scan_obj *scan_obj = NULL;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj)
+		return false;
+
+	qdf_mem_copy(ie_whitelist, &scan_obj->ie_whitelist,
+		     sizeof(*ie_whitelist));
+
+	return true;
+}
+
+bool ucfg_ie_whitelist_enabled(struct wlan_objmgr_psoc *psoc,
+			       struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_scan_obj *scan_obj = NULL;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj)
+		return false;
+
+	if ((wlan_vdev_mlme_get_opmode(vdev) != QDF_STA_MODE) ||
+	    wlan_vdev_is_connected(vdev))
+		return false;
+
+	if (!scan_obj->ie_whitelist.white_list)
+		return false;
+
+	return true;
 }

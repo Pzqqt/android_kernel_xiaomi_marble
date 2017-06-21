@@ -549,6 +549,8 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_pdev *pdev,
 	ucfg_scan_register_pno_cb(psoc,
 		wlan_cfg80211_pno_callback, NULL);
 	ucfg_scan_get_pno_def_params(vdev, req);
+	if (ucfg_ie_whitelist_enabled(psoc, vdev))
+		ucfg_copy_ie_whitelist_attrs(psoc, &req->ie_whitelist);
 	status = ucfg_scan_pno_start(vdev, req);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		cfg80211_err("Failed to enable PNO");
@@ -1281,8 +1283,13 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 				request->ie_len);
 	}
 
-	if (!is_p2p_scan)
+	if (!is_p2p_scan) {
 		wlan_scan_rand_attrs(vdev, request, req);
+		if (ucfg_ie_whitelist_enabled(psoc, vdev) &&
+		    ucfg_copy_ie_whitelist_attrs(psoc,
+					&req->scan_req.ie_whitelist))
+			req->scan_req.scan_f_en_ie_whitelist_in_probe = true;
+	}
 
 	if (request->flags & NL80211_SCAN_FLAG_FLUSH)
 		ucfg_scan_flush_results(pdev, NULL);

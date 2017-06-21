@@ -58,6 +58,9 @@ typedef uint32_t wlan_scan_id;
 /* Increase dwell time for P2P search in ms */
 #define P2P_SEARCH_DWELL_TIME_INC 20
 
+#define PROBE_REQ_BITMAP_LEN 8
+#define MAX_PROBE_REQ_OUIS 16
+
 /* forward declaration */
 struct wlan_objmgr_vdev;
 struct wlan_objmgr_pdev;
@@ -480,6 +483,20 @@ struct scan_random_attr {
 };
 
 /**
+ * struct probe_req_whitelist_attr - holds probe req ie whitelist attrs
+ * @white_list: enable/disable whitelist
+ * @ie_bitmap: bitmap of IEs to be enabled
+ * @num_vendor_oui: number of vendor OUIs
+ * @voui: vendor oui buffer
+ */
+struct probe_req_whitelist_attr {
+	bool white_list;
+	uint32_t ie_bitmap[PROBE_REQ_BITMAP_LEN];
+	uint32_t num_vendor_oui;
+	uint32_t voui[MAX_PROBE_REQ_OUIS];
+};
+
+/**
  * struct scan_req_params - start scan request parameter
  * @scan_id: scan id
  * @scan_req_id: scan requester id
@@ -546,6 +563,7 @@ struct scan_random_attr {
  * @ssid: ssid list
  * @bssid_list: Lisst of bssid to scan
  * @scan_random: scan randomization params
+ * @ie_whitelist: probe req IE whitelist attrs
  * @extraie: list of optional/vendor specific ie's to be added in probe requests
  * @htcap: htcap ie
  * @vhtcap: vhtcap ie
@@ -625,6 +643,7 @@ struct scan_req_params {
 	struct wlan_ssid ssid[WLAN_SCAN_MAX_NUM_SSID];
 	struct qdf_mac_addr bssid_list[WLAN_SCAN_MAX_NUM_BSSID];
 	struct scan_random_attr scan_random;
+	struct probe_req_whitelist_attr ie_whitelist;
 	struct element_info extraie;
 	struct element_info htcap;
 	struct element_info vhtcap;
@@ -897,6 +916,7 @@ struct pno_nw_type {
  * to be triggered.
  * @networks_list: Preferred network list
  * @scan_random: scan randomization params
+ * @ie_whitelist: probe req IE whitelist attrs
  *
  * E.g.
  *	{ fast_scan_period=120, fast_scan_max_cycles=2,
@@ -920,6 +940,7 @@ struct pno_scan_req_params {
 	uint32_t channel_prediction_full_scan;
 	struct pno_nw_type networks_list[SCAN_PNO_MAX_SUPP_NETWORKS];
 	struct scan_random_attr scan_random;
+	struct probe_req_whitelist_attr ie_whitelist;
 };
 
 /**
@@ -962,6 +983,7 @@ struct pno_user_cfg {
  * @rssi_cat_gap: set rssi category gap
  * @scan_dwell_time_mode: Adaptive dweltime mode
  * @pno_cfg: Pno related config params
+ * @ie_whitelist: probe req IE whitelist attrs
  */
 struct scan_user_cfg {
 	uint32_t active_dwell;
@@ -979,6 +1001,7 @@ struct scan_user_cfg {
 	uint32_t rssi_cat_gap;
 	enum scan_dwelltime_adaptive_mode scan_dwell_time_mode;
 	struct pno_user_cfg pno_cfg;
+	struct probe_req_whitelist_attr ie_whitelist;
 };
 
 /**
