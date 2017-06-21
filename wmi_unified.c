@@ -2605,47 +2605,47 @@ void *wmi_unified_get_pdev_handle(struct wmi_soc *soc, uint32_t pdev_idx)
 	if (pdev_idx >= WMI_MAX_RADIOS)
 		return NULL;
 
-	/* If wmi pdev is already allocated, just return the handle */
-	if (soc->wmi_pdev[pdev_idx] != NULL)
-		return soc->wmi_pdev[pdev_idx];
+	if (soc->wmi_pdev[pdev_idx] == NULL) {
+		wmi_handle =
+			(struct wmi_unified *) qdf_mem_malloc(
+					sizeof(struct wmi_unified));
+		if (wmi_handle == NULL) {
+			qdf_print("allocation of wmi handle failed %zu\n",
+					sizeof(struct wmi_unified));
+			return NULL;
+		}
+		wmi_handle->scn_handle = soc->scn_handle;
+		wmi_handle->event_id = soc->event_id;
+		wmi_handle->event_handler = soc->event_handler;
+		wmi_handle->ctx = soc->ctx;
+		wmi_handle->ops = soc->ops;
+		qdf_spinlock_create(&wmi_handle->eventq_lock);
+		qdf_nbuf_queue_init(&wmi_handle->event_queue);
 
-	wmi_handle =
-		(struct wmi_unified *) qdf_mem_malloc(
-			sizeof(struct wmi_unified));
-	if (wmi_handle == NULL) {
-		qdf_print("allocation of wmi handle failed %zu\n",
-			sizeof(struct wmi_unified));
-		return NULL;
-	}
-	wmi_handle->scn_handle = soc->scn_handle;
-	wmi_handle->event_id = soc->event_id;
-	wmi_handle->event_handler = soc->event_handler;
-	wmi_handle->ctx = soc->ctx;
-	wmi_handle->ops = soc->ops;
-	qdf_spinlock_create(&wmi_handle->eventq_lock);
-	qdf_nbuf_queue_init(&wmi_handle->event_queue);
+		qdf_create_work(0, &wmi_handle->rx_event_work,
+				wmi_rx_event_work, wmi_handle);
+		wmi_handle->wmi_rx_work_queue =
+			qdf_create_workqueue("wmi_rx_event_work_queue");
+		if (NULL == wmi_handle->wmi_rx_work_queue) {
+			WMI_LOGE("failed to create wmi_rx_event_work_queue");
+			goto error;
+		}
+		wmi_handle->wmi_events = soc->wmi_events;
+		wmi_target_params_init(soc, wmi_handle);
+		wmi_interface_logging_init(wmi_handle);
+		qdf_atomic_init(&wmi_handle->pending_cmds);
+		qdf_atomic_init(&wmi_handle->is_target_suspended);
+		wmi_handle->target_type = soc->target_type;
+		wmi_handle->soc = soc;
 
-	qdf_create_work(0, &wmi_handle->rx_event_work,
-			wmi_rx_event_work, wmi_handle);
-	wmi_handle->wmi_rx_work_queue =
-		qdf_create_workqueue("wmi_rx_event_work_queue");
-	if (NULL == wmi_handle->wmi_rx_work_queue) {
-		WMI_LOGE("failed to create wmi_rx_event_work_queue");
-		goto error;
-	}
-	wmi_handle->wmi_events = soc->wmi_events;
-	wmi_target_params_init(soc, wmi_handle);
-	wmi_interface_logging_init(wmi_handle);
-	qdf_atomic_init(&wmi_handle->pending_cmds);
-	qdf_atomic_init(&wmi_handle->is_target_suspended);
-	wmi_handle->target_type = soc->target_type;
+		soc->wmi_pdev[pdev_idx] = wmi_handle;
+	} else
+		wmi_handle = soc->wmi_pdev[pdev_idx];
+
 	wmi_handle->wmi_stopinprogress = 0;
 	wmi_handle->wmi_endpoint_id = soc->wmi_endpoint_id[pdev_idx];
 	wmi_handle->htc_handle = soc->htc_handle;
 	wmi_handle->max_msg_len = soc->max_msg_len[pdev_idx];
-	wmi_handle->soc = soc;
-
-	soc->wmi_pdev[pdev_idx] = wmi_handle;
 
 	return wmi_handle;
 
