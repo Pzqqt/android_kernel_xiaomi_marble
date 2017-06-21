@@ -2176,6 +2176,58 @@ void wmi_copy_scan_random_mac(uint8_t *mac, uint8_t *mask,
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(mask, mac_mask);
 }
 
+/*
+ * wmi_fill_vendor_oui() - fill vendor OUIs
+ * @buf_ptr: pointer to wmi tlv buffer
+ * @num_vendor_oui: number of vendor OUIs to be filled
+ * @param_voui: pointer to OUI buffer
+ *
+ * This function populates the wmi tlv buffer when vendor specific OUIs are
+ * present.
+ *
+ * Return: None
+ */
+static inline
+void wmi_fill_vendor_oui(uint8_t *buf_ptr, uint32_t num_vendor_oui,
+			 uint32_t *pvoui)
+{
+	wmi_vendor_oui *voui = NULL;
+	uint32_t i;
+
+	voui = (wmi_vendor_oui *)buf_ptr;
+
+	for (i = 0; i < num_vendor_oui; i++) {
+		WMITLV_SET_HDR(&voui[i].tlv_header,
+			       WMITLV_TAG_STRUC_wmi_vendor_oui,
+			       WMITLV_GET_STRUCT_TLVLEN(wmi_vendor_oui));
+		voui[i].oui_type_subtype = pvoui[i];
+	}
+}
+
+/*
+ * wmi_fill_ie_whitelist_attrs() - fill IE whitelist attrs
+ * @ie_bitmap: output pointer to ie bit map in cmd
+ * @num_vendor_oui: output pointer to num vendor OUIs
+ * @ie_whitelist: input parameter
+ *
+ * This function populates the IE whitelist attrs of scan, pno and
+ * scan oui commands for ie_whitelist parameter.
+ *
+ * Return: None
+ */
+static inline
+void wmi_fill_ie_whitelist_attrs(uint32_t *ie_bitmap,
+				 uint32_t *num_vendor_oui,
+				 struct probe_req_whitelist_attr *ie_whitelist)
+{
+	uint32_t i = 0;
+
+	for (i = 0; i < PROBE_REQ_BITMAP_LEN; i++)
+		ie_bitmap[i] = ie_whitelist->ie_bitmap[i];
+
+	*num_vendor_oui = ie_whitelist->num_vendor_oui;
+}
+
 /**
  *  send_scan_start_cmd_tlv() - WMI scan start function
  *  @param wmi_handle      : handle to WMI.
@@ -2196,6 +2248,7 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mac_addr *bssid;
 	int len = sizeof(*cmd);
 	uint8_t extraie_len_with_pad = 0;
+	struct probe_req_whitelist_attr *ie_whitelist = &params->ie_whitelist;
 
 	/* Length TLV placeholder for array of uint32_t */
 	len += WMI_TLV_HDR_SIZE;
@@ -2219,6 +2272,10 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 		extraie_len_with_pad =
 		roundup(params->extraie.len, sizeof(uint32_t));
 		len += extraie_len_with_pad;
+
+	len += WMI_TLV_HDR_SIZE; /* Length of TLV for array of wmi_vendor_oui */
+	if (ie_whitelist->num_vendor_oui)
+		len += ie_whitelist->num_vendor_oui * sizeof(wmi_vendor_oui);
 
 	/* Allocate the memory */
 	wmi_buf = wmi_buf_alloc(wmi_handle, len);
@@ -2265,6 +2322,11 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 					 params->scan_random.mac_mask,
 					 &cmd->mac_addr,
 					 &cmd->mac_mask);
+
+	if (ie_whitelist->white_list)
+		wmi_fill_ie_whitelist_attrs(cmd->ie_bitmap,
+					    &cmd->num_vendor_oui,
+					    ie_whitelist);
 
 	buf_ptr += sizeof(*cmd);
 	tmp_ptr = (uint32_t *) (buf_ptr + WMI_TLV_HDR_SIZE);
@@ -2315,6 +2377,18 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 			     params);
 
 	buf_ptr += WMI_TLV_HDR_SIZE + extraie_len_with_pad;
+
+	/* probe req ie whitelisting */
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		       ie_whitelist->num_vendor_oui * sizeof(wmi_vendor_oui));
+
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	if (cmd->num_vendor_oui) {
+		wmi_fill_vendor_oui(buf_ptr, cmd->num_vendor_oui,
+				    ie_whitelist->voui);
+		buf_ptr += cmd->num_vendor_oui * sizeof(wmi_vendor_oui);
+	}
 
 	ret = wmi_unified_cmd_send(
 			get_pdev_wmi_handle(wmi_handle, cmd->vdev_id), wmi_buf,
@@ -5216,8 +5290,11 @@ static QDF_STATUS send_scan_probe_setoui_cmd_tlv(wmi_unified_t wmi_handle,
 	uint32_t len;
 	uint8_t *buf_ptr;
 	uint32_t *oui_buf;
+	struct probe_req_whitelist_attr *ie_whitelist = &psetoui->ie_whitelist;
 
-	len = sizeof(*cmd);
+	len = sizeof(*cmd) + WMI_TLV_HDR_SIZE +
+		ie_whitelist->num_vendor_oui * sizeof(wmi_vendor_oui);
+
 	wmi_buf = wmi_buf_alloc(wmi_handle, len);
 	if (!wmi_buf) {
 		WMI_LOGE("%s: wmi_buf_alloc failed", __func__);
@@ -5241,6 +5318,25 @@ static QDF_STATUS send_scan_probe_setoui_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->flags = WMI_SCAN_PROBE_OUI_SPOOFED_MAC_IN_PROBE_REQ;
 	if (psetoui->enb_probe_req_sno_randomization)
 		cmd->flags |= WMI_SCAN_PROBE_OUI_RANDOM_SEQ_NO_IN_PROBE_REQ;
+
+	if (ie_whitelist->white_list) {
+		wmi_fill_ie_whitelist_attrs(cmd->ie_bitmap,
+					    &cmd->num_vendor_oui,
+					    ie_whitelist);
+		cmd->flags |=
+			WMI_SCAN_PROBE_OUI_ENABLE_IE_WHITELIST_IN_PROBE_REQ;
+	}
+
+	buf_ptr += sizeof(*cmd);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		       ie_whitelist->num_vendor_oui * sizeof(wmi_vendor_oui));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	if (cmd->num_vendor_oui != 0) {
+		wmi_fill_vendor_oui(buf_ptr, cmd->num_vendor_oui,
+				    ie_whitelist->voui);
+		buf_ptr += cmd->num_vendor_oui * sizeof(wmi_vendor_oui);
+	}
 
 	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
 				 WMI_SCAN_PROB_REQ_OUI_CMDID)) {
@@ -7236,20 +7332,25 @@ static QDF_STATUS send_pno_start_cmd_tlv(wmi_unified_t wmi_handle,
 	uint8_t *buf_ptr;
 	uint8_t i;
 	int ret;
+	struct probe_req_whitelist_attr *ie_whitelist = &pno->ie_whitelist;
 
 	/*
 	 * TLV place holder for array nlo_configured_parameters(nlo_list)
 	 * TLV place holder for array of uint32_t channel_list
 	 * TLV place holder for chnnl prediction cfg
+	 * TLV place holder for array of wmi_vendor_oui
 	 */
 	len = sizeof(*cmd) +
-		WMI_TLV_HDR_SIZE + WMI_TLV_HDR_SIZE + WMI_TLV_HDR_SIZE;
+		WMI_TLV_HDR_SIZE + WMI_TLV_HDR_SIZE + WMI_TLV_HDR_SIZE +
+		WMI_TLV_HDR_SIZE;
 
 	len += sizeof(uint32_t) * QDF_MIN(pno->networks_list[0].channel_cnt,
 					  WMI_NLO_MAX_CHAN);
 	len += sizeof(nlo_configured_parameters) *
 	       QDF_MIN(pno->networks_cnt, WMI_NLO_MAX_SSIDS);
 	len += sizeof(nlo_channel_prediction_cfg);
+	len += sizeof(enlo_candidate_score_params);
+	len += sizeof(wmi_vendor_oui) * ie_whitelist->num_vendor_oui;
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
@@ -7363,10 +7464,31 @@ static QDF_STATUS send_pno_start_cmd_tlv(wmi_unified_t wmi_handle,
 			sizeof(nlo_channel_prediction_cfg));
 	buf_ptr += WMI_TLV_HDR_SIZE;
 	wmi_set_pno_channel_prediction(buf_ptr, pno);
-	buf_ptr += WMI_TLV_HDR_SIZE;
+	buf_ptr += sizeof(nlo_channel_prediction_cfg);
 	/** TODO: Discrete firmware doesn't have command/option to configure
 	 * App IE which comes from wpa_supplicant as of part PNO start request.
 	 */
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_STRUC_enlo_candidate_score_param,
+		       WMITLV_GET_STRUCT_TLVLEN(enlo_candidate_score_params));
+	buf_ptr += sizeof(enlo_candidate_score_params);
+
+	if (ie_whitelist->white_list) {
+		cmd->flags |= WMI_NLO_CONFIG_ENABLE_IE_WHITELIST_IN_PROBE_REQ;
+		wmi_fill_ie_whitelist_attrs(cmd->ie_bitmap,
+					    &cmd->num_vendor_oui,
+					    ie_whitelist);
+	}
+
+	/* ie white list */
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		       ie_whitelist->num_vendor_oui * sizeof(wmi_vendor_oui));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	if (cmd->num_vendor_oui != 0) {
+		wmi_fill_vendor_oui(buf_ptr, cmd->num_vendor_oui,
+				    ie_whitelist->voui);
+		buf_ptr += cmd->num_vendor_oui * sizeof(wmi_vendor_oui);
+	}
+
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_NETWORK_LIST_OFFLOAD_CONFIG_CMDID);
 	if (ret) {
