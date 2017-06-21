@@ -430,9 +430,7 @@ QDF_STATUS tdls_get_vdev_objects(struct wlan_objmgr_vdev *vdev,
 	if (NULL == (*tdls_soc_obj))
 		return QDF_STATUS_E_FAILURE;
 
-	wlan_vdev_obj_lock(vdev);
 	device_mode = wlan_vdev_mlme_get_opmode(vdev);
-	wlan_vdev_obj_unlock(vdev);
 
 	if (device_mode != QDF_STA_MODE &&
 	    device_mode != QDF_P2P_CLIENT_MODE)
