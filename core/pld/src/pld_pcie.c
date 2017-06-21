@@ -201,7 +201,7 @@ static void pld_pcie_uevent(struct pci_dev *pdev, uint32_t status)
 
 	data.uevent = status;
 
-	if (!pld_context->ops->uevent)
+	if (pld_context->ops->uevent)
 		pld_context->ops->uevent(&pdev->dev, &data);
 
 	return;
