@@ -6869,10 +6869,13 @@ static uint8_t hdd_get_safe_channel_from_pcl_and_acs_range(
 		return INVALID_CHANNEL_ID;
 	}
 
-	if (!pcl.pcl_len) {
-		hdd_err("pcl length is zero. this is not expected");
-		return INVALID_CHANNEL_ID;
-	}
+	/*
+	 * In some scenarios, like hw dbs disabled, sap+sap case, if operating
+	 * channel is unsafe channel, the pcl may be empty, instead of return,
+	 * try to choose a safe channel from acs range.
+	 */
+	if (!pcl.pcl_len)
+		hdd_debug("pcl length is zero!");
 
 	hdd_debug("start:%d end:%d",
 		adapter->sessionCtx.ap.sapConfig.acs_cfg.start_ch,
