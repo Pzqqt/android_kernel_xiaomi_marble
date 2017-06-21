@@ -194,9 +194,7 @@ static QDF_STATUS p2p_vdev_obj_create_notification(
 		return QDF_STATUS_E_INVAL;
 	}
 
-	wlan_vdev_obj_lock(vdev);
 	mode = wlan_vdev_mlme_get_opmode(vdev);
-	wlan_vdev_obj_unlock(vdev);
 	p2p_debug("vdev mode:%d", mode);
 	if (mode != QDF_P2P_GO_MODE) {
 		p2p_debug("won't create p2p vdev private object if it is not GO");
@@ -251,9 +249,7 @@ static QDF_STATUS p2p_vdev_obj_destroy_notification(
 		return QDF_STATUS_E_INVAL;
 	}
 
-	wlan_vdev_obj_lock(vdev);
 	mode = wlan_vdev_mlme_get_opmode(vdev);
-	wlan_vdev_obj_unlock(vdev);
 	p2p_debug("vdev mode:%d", mode);
 	if (mode != QDF_P2P_GO_MODE) {
 		p2p_debug("no p2p vdev private object if it is not GO");
@@ -310,19 +306,13 @@ static QDF_STATUS p2p_peer_obj_create_notification(
 		return QDF_STATUS_E_INVAL;
 	}
 
-	wlan_peer_obj_lock(peer);
 	vdev = wlan_peer_get_vdev(peer);
-	wlan_peer_obj_unlock(peer);
 	p2p_vdev_obj = wlan_objmgr_vdev_get_comp_private_obj(vdev,
 						WLAN_UMAC_COMP_P2P);
-	wlan_peer_obj_lock(peer);
 	peer_type = wlan_peer_get_peer_type(peer);
-	wlan_peer_obj_unlock(peer);
 	if ((peer_type == WLAN_PEER_STA) && p2p_vdev_obj) {
 
-		wlan_vdev_obj_lock(vdev);
 		mode = wlan_vdev_mlme_get_opmode(vdev);
-		wlan_vdev_obj_unlock(vdev);
 		if (mode == QDF_P2P_GO_MODE) {
 			p2p_vdev_obj->non_p2p_peer_count++;
 			p2p_debug("Non P2P peer count: %d",
@@ -359,26 +349,18 @@ static QDF_STATUS p2p_peer_obj_destroy_notification(
 		return QDF_STATUS_E_INVAL;
 	}
 
-	wlan_peer_obj_lock(peer);
 	vdev = wlan_peer_get_vdev(peer);
-	wlan_peer_obj_unlock(peer);
 	p2p_vdev_obj = wlan_objmgr_vdev_get_comp_private_obj(vdev,
 						WLAN_UMAC_COMP_P2P);
-	wlan_vdev_obj_lock(vdev);
 	psoc = wlan_vdev_get_psoc(vdev);
-	wlan_vdev_obj_unlock(vdev);
 	if (!p2p_vdev_obj || !psoc) {
 		p2p_err("p2p_vdev_obj:%p psoc:%p", p2p_vdev_obj, psoc);
 		return QDF_STATUS_E_INVAL;
 	}
 
-	wlan_vdev_obj_lock(vdev);
 	mode = wlan_vdev_mlme_get_opmode(vdev);
-	wlan_vdev_obj_unlock(vdev);
 
-	wlan_peer_obj_lock(peer);
 	peer_type = wlan_peer_get_peer_type(peer);
-	wlan_peer_obj_unlock(peer);
 
 	if ((peer_type == WLAN_PEER_STA) && (mode == QDF_P2P_GO_MODE)) {
 
@@ -387,9 +369,7 @@ static QDF_STATUS p2p_peer_obj_destroy_notification(
 		if (!p2p_vdev_obj->non_p2p_peer_count &&
 		    (p2p_vdev_obj->noa_status == false)) {
 
-			wlan_vdev_obj_lock(vdev);
 			vdev_id = wlan_vdev_get_id(vdev);
-			wlan_vdev_obj_unlock(vdev);
 
 			if (ucfg_p2p_set_noa(psoc, vdev_id,
 				 false)	== QDF_STATUS_SUCCESS)
@@ -502,13 +482,9 @@ static QDF_STATUS process_peer_for_noa(struct wlan_objmgr_vdev *vdev,
 		p2p_err("p2p_vdev_obj:%p", p2p_vdev_obj);
 		return QDF_STATUS_E_INVAL;
 	}
-	wlan_vdev_obj_lock(vdev);
 	mode = wlan_vdev_mlme_get_opmode(vdev);
-	wlan_vdev_obj_unlock(vdev);
 
-	wlan_peer_obj_lock(peer);
 	peer_type = wlan_peer_get_peer_type(peer);
-	wlan_peer_obj_unlock(peer);
 
 	disable_noa = ((mode == QDF_P2P_GO_MODE)
 			&& p2p_vdev_obj->non_p2p_peer_count
@@ -516,9 +492,7 @@ static QDF_STATUS process_peer_for_noa(struct wlan_objmgr_vdev *vdev,
 
 	if (disable_noa && (peer_type == WLAN_PEER_STA)) {
 
-		wlan_vdev_obj_lock(vdev);
 		vdev_id = wlan_vdev_get_id(vdev);
-		wlan_vdev_obj_unlock(vdev);
 
 		if (ucfg_p2p_set_noa(psoc, vdev_id,
 				true) == QDF_STATUS_SUCCESS) {
@@ -987,9 +961,7 @@ QDF_STATUS p2p_process_noa(struct p2p_noa_event *noa_event)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	wlan_vdev_obj_lock(vdev);
 	mode = wlan_vdev_mlme_get_opmode(vdev);
-	wlan_vdev_obj_unlock(vdev);
 	p2p_debug("vdev mode:%d", mode);
 	if (mode != QDF_P2P_GO_MODE) {
 		p2p_err("invalid p2p vdev mode:%d", mode);
@@ -1030,9 +1002,7 @@ void p2p_peer_authorized(struct wlan_objmgr_vdev *vdev, uint8_t *mac_addr)
 		p2p_err("vdev:%p", vdev);
 		return;
 	}
-	wlan_vdev_obj_lock(vdev);
 	psoc = wlan_vdev_get_psoc(vdev);
-	wlan_vdev_obj_unlock(vdev);
 	if (!psoc) {
 		p2p_err("psoc:%p", psoc);
 		return;
