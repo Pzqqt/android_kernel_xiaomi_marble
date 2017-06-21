@@ -12697,6 +12697,10 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 		       value[1], value[2]);
 		pr_err("SSR is triggered by iwpriv CRASH_INJECT: %d %d\n",
 			   value[1], value[2]);
+		if (value[1] == 3) {
+			cds_trigger_recovery(false);
+			return 0;
+		}
 		ret = wma_cli_set2_command(pAdapter->sessionId,
 					   GEN_PARAM_CRASH_INJECT,
 					   value[1], value[2], GEN_CMD);
