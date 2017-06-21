@@ -24,7 +24,7 @@
  * under proprietary terms before Copyright ownership was assigned
  * to the Linux Foundation.
  */
- /**
+/**
  * @file cdp_txrx_me.h
  * @brief Define the host data path mcast enhance API functions
  * called by the host control SW and the OS interface module
