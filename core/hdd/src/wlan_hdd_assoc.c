@@ -2718,7 +2718,8 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 				}
 
 				if (ft_carrier_on) {
-					if (!hddDisconInProgress) {
+					if (!hddDisconInProgress &&
+						pRoamInfo->pBssDesc) {
 						struct cfg80211_bss *roam_bss;
 
 						/*

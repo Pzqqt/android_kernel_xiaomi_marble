@@ -9190,8 +9190,7 @@ csr_roaming_state_config_cnf_processor(tpAniSirGlobal mac_ctx,
 		    && csr_roam_is11r_assoc(mac_ctx, session_id)) {
 			status = csr_roam_issue_reassociate(mac_ctx,
 					session_id, bss_desc,
-					(tDot11fBeaconIEs *)
-					(scan_result->Result.pvIes),
+					local_ies,
 					&cmd->u.roamCmd.roamProfile);
 		} else
 #ifdef FEATURE_WLAN_ESE
@@ -9214,8 +9213,7 @@ csr_roaming_state_config_cnf_processor(tpAniSirGlobal mac_ctx,
 			 */
 			status = csr_roam_issue_join(mac_ctx, session_id,
 						    bss_desc,
-						    (tDot11fBeaconIEs *)
-						    (scan_result->Result.pvIes),
+						    local_ies,
 						    &cmd->u.roamCmd.roamProfile,
 						    cmd->u.roamCmd.roamId);
 		}
