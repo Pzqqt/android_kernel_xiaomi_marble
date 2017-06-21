@@ -5268,6 +5268,7 @@ QDF_STATUS wma_scan_probe_setoui(tp_wma_handle wma, tSirScanMacOui *psetoui)
 	set_oui.vdev_id = psetoui->vdev_id;
 	set_oui.enb_probe_req_sno_randomization =
 				psetoui->enb_probe_req_sno_randomization;
+	set_oui.ie_whitelist = psetoui->ie_whitelist;
 
 	return wmi_unified_scan_probe_setoui_cmd(wma->wmi_handle,
 						&set_oui);

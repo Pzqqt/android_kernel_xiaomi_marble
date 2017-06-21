@@ -7514,6 +7514,37 @@ list_destroy:
 }
 
 /**
+ * ie_whitelist_attrs_init() - initialize ie whitelisting attributes
+ * @hdd_ctx: pointer to hdd context
+ *
+ * Return: status of initialization
+ *         0 - success
+ *         negative value - failure
+ */
+static int ie_whitelist_attrs_init(hdd_context_t *hdd_ctx)
+{
+	int ret;
+
+	if (!hdd_ctx->config->probe_req_ie_whitelist)
+		return 0;
+
+	if (!hdd_validate_prb_req_ie_bitmap(hdd_ctx)) {
+		hdd_err("invalid ie bitmap and ouis: disable ie whitelisting");
+		hdd_ctx->config->probe_req_ie_whitelist = false;
+		return -EINVAL;
+	}
+
+	/* parse ini string probe req oui */
+	ret = hdd_parse_probe_req_ouis(hdd_ctx);
+	if (ret) {
+		hdd_err("parsing error: disable ie whitelisting");
+		hdd_ctx->config->probe_req_ie_whitelist = false;
+	}
+
+	return ret;
+}
+
+/**
  * hdd_context_create() - Allocate and inialize HDD context.
  * @dev:	Device Pointer to the underlying device
  *
@@ -7564,6 +7595,8 @@ static hdd_context_t *hdd_context_create(struct device *dev)
 		ret = -EINVAL;
 		goto err_free_config;
 	}
+
+	ie_whitelist_attrs_init(hdd_ctx);
 
 	hdd_debug("setting timer multiplier: %u",
 		  hdd_ctx->config->timer_multiplier);
@@ -11554,6 +11587,29 @@ hdd_update_pno_config(struct pno_user_cfg *pno_cfg,
 }
 #endif
 
+void hdd_update_ie_whitelist_attr(struct probe_req_whitelist_attr *ie_whitelist,
+				  struct hdd_config *cfg)
+{
+	uint8_t i = 0;
+
+	ie_whitelist->white_list = cfg->probe_req_ie_whitelist;
+	if (!ie_whitelist->white_list)
+		return;
+
+	ie_whitelist->ie_bitmap[0] = cfg->probe_req_ie_bitmap_0;
+	ie_whitelist->ie_bitmap[1] = cfg->probe_req_ie_bitmap_1;
+	ie_whitelist->ie_bitmap[2] = cfg->probe_req_ie_bitmap_2;
+	ie_whitelist->ie_bitmap[3] = cfg->probe_req_ie_bitmap_3;
+	ie_whitelist->ie_bitmap[4] = cfg->probe_req_ie_bitmap_4;
+	ie_whitelist->ie_bitmap[5] = cfg->probe_req_ie_bitmap_5;
+	ie_whitelist->ie_bitmap[6] = cfg->probe_req_ie_bitmap_6;
+	ie_whitelist->ie_bitmap[7] = cfg->probe_req_ie_bitmap_7;
+
+	ie_whitelist->num_vendor_oui = cfg->no_of_probe_req_ouis;
+	for (i = 0; i < ie_whitelist->num_vendor_oui; i++)
+		ie_whitelist->voui[i] = cfg->probe_req_voui[i];
+}
+
 /**
  * hdd_update_scan_config - API to update scan configuration parameters
  * @hdd_ctx: HDD context
@@ -11585,6 +11641,7 @@ static int hdd_update_scan_config(hdd_context_t *hdd_ctx)
 	scan_cfg.is_snr_monitoring_enabled = cfg->fEnableSNRMonitoring;
 
 	hdd_update_pno_config(&scan_cfg.pno_cfg, cfg);
+	hdd_update_ie_whitelist_attr(&scan_cfg.ie_whitelist, cfg);
 
 	status = ucfg_scan_update_user_config(psoc, &scan_cfg);
 	if (status != QDF_STATUS_SUCCESS) {

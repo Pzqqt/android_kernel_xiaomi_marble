@@ -4767,6 +4767,7 @@ typedef struct {
 	uint8_t oui[WIFI_SCANNING_MAC_OUI_LENGTH];
 	uint32_t vdev_id;
 	bool enb_probe_req_sno_randomization;
+	struct probe_req_whitelist_attr ie_whitelist;
 } tSirScanMacOui, *tpSirScanMacOui;
 
 enum {

@@ -4430,6 +4430,74 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_REG_OFFLOAD_MIN,
 		     CFG_ENABLE_REG_OFFLOAD_MAX),
 
+	REG_VARIABLE(CFG_PRB_REQ_IE_WHITELIST_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, probe_req_ie_whitelist,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_PRB_REQ_IE_WHITELIST_DEFAULT,
+		     CFG_PRB_REQ_IE_WHITELIST_MIN,
+		     CFG_PRB_REQ_IE_WHITELIST_MAX),
+
+	REG_VARIABLE(CFG_PRB_REQ_IE_BIT_MAP0_NAME, WLAN_PARAM_HexInteger,
+		     struct hdd_config, probe_req_ie_bitmap_0,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_PRB_REQ_IE_BIT_MAP0_DEFAULT,
+		     CFG_PRB_REQ_IE_BIT_MAP0_MIN,
+		     CFG_PRB_REQ_IE_BIT_MAP0_MAX),
+
+	REG_VARIABLE(CFG_PRB_REQ_IE_BIT_MAP1_NAME, WLAN_PARAM_HexInteger,
+		     struct hdd_config, probe_req_ie_bitmap_1,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_PRB_REQ_IE_BIT_MAP1_DEFAULT,
+		     CFG_PRB_REQ_IE_BIT_MAP1_MIN,
+		     CFG_PRB_REQ_IE_BIT_MAP1_MAX),
+
+	REG_VARIABLE(CFG_PRB_REQ_IE_BIT_MAP2_NAME, WLAN_PARAM_HexInteger,
+		     struct hdd_config, probe_req_ie_bitmap_2,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_PRB_REQ_IE_BIT_MAP2_DEFAULT,
+		     CFG_PRB_REQ_IE_BIT_MAP2_MIN,
+		     CFG_PRB_REQ_IE_BIT_MAP2_MAX),
+
+	REG_VARIABLE(CFG_PRB_REQ_IE_BIT_MAP3_NAME, WLAN_PARAM_HexInteger,
+		     struct hdd_config, probe_req_ie_bitmap_3,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_PRB_REQ_IE_BIT_MAP3_DEFAULT,
+		     CFG_PRB_REQ_IE_BIT_MAP3_MIN,
+		     CFG_PRB_REQ_IE_BIT_MAP3_MAX),
+
+	REG_VARIABLE(CFG_PRB_REQ_IE_BIT_MAP4_NAME, WLAN_PARAM_HexInteger,
+		     struct hdd_config, probe_req_ie_bitmap_4,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_PRB_REQ_IE_BIT_MAP4_DEFAULT,
+		     CFG_PRB_REQ_IE_BIT_MAP4_MIN,
+		     CFG_PRB_REQ_IE_BIT_MAP4_MAX),
+
+	REG_VARIABLE(CFG_PRB_REQ_IE_BIT_MAP5_NAME, WLAN_PARAM_HexInteger,
+		     struct hdd_config, probe_req_ie_bitmap_5,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_PRB_REQ_IE_BIT_MAP5_DEFAULT,
+		     CFG_PRB_REQ_IE_BIT_MAP5_MIN,
+		     CFG_PRB_REQ_IE_BIT_MAP5_MAX),
+
+	REG_VARIABLE(CFG_PRB_REQ_IE_BIT_MAP6_NAME, WLAN_PARAM_HexInteger,
+		     struct hdd_config, probe_req_ie_bitmap_6,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_PRB_REQ_IE_BIT_MAP6_DEFAULT,
+		     CFG_PRB_REQ_IE_BIT_MAP6_MIN,
+		     CFG_PRB_REQ_IE_BIT_MAP6_MAX),
+
+	REG_VARIABLE(CFG_PRB_REQ_IE_BIT_MAP7_NAME, WLAN_PARAM_HexInteger,
+		     struct hdd_config, probe_req_ie_bitmap_7,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_PRB_REQ_IE_BIT_MAP7_DEFAULT,
+		     CFG_PRB_REQ_IE_BIT_MAP7_MIN,
+		     CFG_PRB_REQ_IE_BIT_MAP7_MAX),
+
+	REG_VARIABLE_STRING(CFG_PROBE_REQ_OUI_NAME, WLAN_PARAM_String,
+			    struct hdd_config, probe_req_ouis,
+			    VAR_FLAGS_OPTIONAL,
+			    (void *)CFG_PROBE_REQ_OUI_DEFAULT),
+
 	REG_VARIABLE(CFG_FILS_MAX_CHAN_GUARD_TIME_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, fils_max_chan_guard_time,
 		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -5457,6 +5525,46 @@ static void hdd_per_roam_print_ini_config(hdd_context_t *hdd_ctx)
 }
 
 /**
+ * hdd_cfg_print_ie_whitelist_attrs() - print the ie whitelist attrs
+ * @hdd_ctx: pointer to hdd context
+ *
+ * Return: None
+ */
+static void hdd_cfg_print_ie_whitelist_attrs(hdd_context_t *hdd_ctx)
+{
+	hdd_debug("Name = [%s] Value = [%x] ",
+		  CFG_PRB_REQ_IE_WHITELIST_NAME,
+		  hdd_ctx->config->probe_req_ie_whitelist);
+	hdd_debug("Name = [%s] Value = [%x] ",
+		  CFG_PRB_REQ_IE_BIT_MAP0_NAME,
+		  hdd_ctx->config->probe_req_ie_bitmap_0);
+	hdd_debug("Name = [%s] Value = [%x] ",
+		  CFG_PRB_REQ_IE_BIT_MAP1_NAME,
+		  hdd_ctx->config->probe_req_ie_bitmap_1);
+	hdd_debug("Name = [%s] Value = [%x] ",
+		  CFG_PRB_REQ_IE_BIT_MAP2_NAME,
+		  hdd_ctx->config->probe_req_ie_bitmap_2);
+	hdd_debug("Name = [%s] Value = [%x] ",
+		  CFG_PRB_REQ_IE_BIT_MAP3_NAME,
+		  hdd_ctx->config->probe_req_ie_bitmap_3);
+	hdd_debug("Name = [%s] Value = [%x] ",
+		  CFG_PRB_REQ_IE_BIT_MAP4_NAME,
+		  hdd_ctx->config->probe_req_ie_bitmap_4);
+	hdd_debug("Name = [%s] Value = [%x] ",
+		  CFG_PRB_REQ_IE_BIT_MAP5_NAME,
+		  hdd_ctx->config->probe_req_ie_bitmap_5);
+	hdd_debug("Name = [%s] Value = [%x] ",
+		  CFG_PRB_REQ_IE_BIT_MAP6_NAME,
+		  hdd_ctx->config->probe_req_ie_bitmap_6);
+	hdd_debug("Name = [%s] Value = [%x] ",
+		  CFG_PRB_REQ_IE_BIT_MAP7_NAME,
+		  hdd_ctx->config->probe_req_ie_bitmap_7);
+	hdd_debug("Name = [%s] Value =[%s]",
+		  CFG_PROBE_REQ_OUI_NAME,
+		  hdd_ctx->config->probe_req_ouis);
+}
+
+/**
  * hdd_cfg_print() - print the hdd configuration
  * @iniTable: pointer to hdd context
  *
@@ -6172,6 +6280,9 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	hdd_debug("Name = [%s] value = [%u]",
 		 CFG_DROPPED_PKT_DISCONNECT_TH_NAME,
 		 pHddCtx->config->pkt_err_disconn_th);
+
+	hdd_cfg_print_ie_whitelist_attrs(pHddCtx);
+
 	hdd_debug("Name = [%s] value = [%u]",
 		 CFG_FORCE_1X1_NAME,
 		 pHddCtx->config->is_force_1x1);
@@ -6477,8 +6588,7 @@ QDF_STATUS hdd_parse_config_ini(hdd_context_t *pHddCtx)
 				buffer = i_trim(buffer);
 				if (strlen(buffer) > 0) {
 					value = buffer;
-					while (!i_isspace(*buffer)
-					       && *buffer != '\0')
+					while (*buffer != '\0')
 						buffer++;
 					*buffer = '\0';
 					cfgIniTable[i].name = name;
@@ -7922,6 +8032,81 @@ void hdd_get_pmkid_modes(hdd_context_t *pHddCtx,
 			       CFG_PMKID_MODES_OKC) ? 1 : 0;
 	pmkid_modes->fw_pmksa_cache = (pHddCtx->config->pmkid_modes &
 				       CFG_PMKID_MODES_PMKSA_CACHING) ? 1 : 0;
+}
+
+bool hdd_validate_prb_req_ie_bitmap(hdd_context_t *hdd_ctx)
+{
+	if (!(hdd_ctx->config->probe_req_ie_bitmap_0 ||
+	    hdd_ctx->config->probe_req_ie_bitmap_1 ||
+	    hdd_ctx->config->probe_req_ie_bitmap_2 ||
+	    hdd_ctx->config->probe_req_ie_bitmap_3 ||
+	    hdd_ctx->config->probe_req_ie_bitmap_4 ||
+	    hdd_ctx->config->probe_req_ie_bitmap_5 ||
+	    hdd_ctx->config->probe_req_ie_bitmap_6 ||
+	    hdd_ctx->config->probe_req_ie_bitmap_7))
+		return false;
+
+	/*
+	 * check whether vendor oui IE is set and OUIs are present, each OUI
+	 * is entered in the form of string of 8 characters from ini, therefore,
+	 * for atleast one OUI, minimum length is 8 and hence this string length
+	 * is checked for minimum of 8
+	 */
+	if ((hdd_ctx->config->probe_req_ie_bitmap_6 &
+	    VENDOR_SPECIFIC_IE_BITMAP) &&
+	    (strlen(hdd_ctx->config->probe_req_ouis) < 8))
+		return false;
+
+	/* check whether vendor oui IE is not set but OUIs are present */
+	if (!(hdd_ctx->config->probe_req_ie_bitmap_6 &
+	    VENDOR_SPECIFIC_IE_BITMAP) &&
+	    (strlen(hdd_ctx->config->probe_req_ouis) > 0))
+		return false;
+
+	return true;
+}
+
+int hdd_parse_probe_req_ouis(hdd_context_t *hdd_ctx)
+{
+	uint32_t *voui = hdd_ctx->config->probe_req_voui;
+	char *str;
+	uint8_t *token;
+	uint32_t oui_indx = 0;
+	int ret;
+	uint32_t hex_value;
+
+	str = (char *)(hdd_ctx->config->probe_req_ouis);
+	str[MAX_PRB_REQ_VENDOR_OUI_INI_LEN - 1] = '\0';
+	hdd_ctx->config->no_of_probe_req_ouis = 0;
+
+	if (!strlen(str)) {
+		hdd_info("NO OUIS to parse");
+		return 0;
+	}
+
+	token = strsep(&str, " ");
+	while (token) {
+		if (strlen(token) != 8)
+			goto next_token;
+
+		ret = kstrtouint(token, 16, &hex_value);
+		if (ret)
+			goto next_token;
+
+		voui[oui_indx++] = cpu_to_be32(hex_value);
+		if (oui_indx >= MAX_PROBE_REQ_OUIS)
+			break;
+
+		next_token:
+		token = strsep(&str, " ");
+	}
+
+	if (!oui_indx)
+		return -EINVAL;
+
+	hdd_ctx->config->no_of_probe_req_ouis = oui_indx;
+
+	return 0;
 }
 
 /**

@@ -2610,6 +2610,16 @@ void hdd_chip_pwr_save_fail_detected_cb(void *hddctx,
 				*data);
 
 /**
+ * hdd_update_ie_whitelist_attr() - Copy probe req ie whitelist attrs from cfg
+ * @ie_whitelist: output parameter
+ * @cfg: pointer to hdd config
+ *
+ * Return: None
+ */
+void hdd_update_ie_whitelist_attr(struct probe_req_whitelist_attr *ie_whitelist,
+				  struct hdd_config *cfg);
+
+/**
  * hdd_get_rssi_snr_by_bssid() - gets the rssi and snr by bssid from scan cache
  * @adapter: adapter handle
  * @bssid: bssid to look for in scan cache
