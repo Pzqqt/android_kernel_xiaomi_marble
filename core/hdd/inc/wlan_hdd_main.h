@@ -370,6 +370,7 @@
  */
 
 extern spinlock_t hdd_context_lock;
+extern struct mutex hdd_init_deinit_lock;
 
 /* MAX OS Q block time value in msec
  * Prevent from permanent stall, resume OS Q if timer expired
