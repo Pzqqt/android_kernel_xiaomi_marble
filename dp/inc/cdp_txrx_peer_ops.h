@@ -24,7 +24,7 @@
  * under proprietary terms before Copyright ownership was assigned
  * to the Linux Foundation.
  */
- /**
+/**
  * @file cdp_txrx_peer.h
  * @brief Define the host data path peer API functions
  * called by the host control SW and the OS interface module
