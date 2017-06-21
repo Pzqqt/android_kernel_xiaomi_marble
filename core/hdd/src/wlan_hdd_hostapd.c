@@ -8978,6 +8978,12 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 				&params->beacon,
 				params->ssid, params->ssid_len,
 				params->hidden_ssid, true, false);
+
+		if (status != 0) {
+			hdd_err("Error Start bss Failed");
+			goto err_start_bss;
+		}
+
 		/*
 		 * If Do_Not_Break_Stream enabled send avoid channel list
 		 * to application.
@@ -9003,6 +9009,14 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		}
 	}
 
+	goto success;
+
+err_start_bss:
+	if (pAdapter->sessionCtx.ap.beacon)
+		qdf_mem_free(pAdapter->sessionCtx.ap.beacon);
+	pAdapter->sessionCtx.ap.beacon = NULL;
+
+success:
 	EXIT();
 	return status;
 }
