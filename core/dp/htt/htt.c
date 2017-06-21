@@ -599,14 +599,23 @@ QDF_STATUS htt_attach_target(htt_pdev_handle pdev)
 	QDF_STATUS status;
 
 	status = htt_h2t_ver_req_msg(pdev);
-	if (status != QDF_STATUS_SUCCESS)
+	if (status != QDF_STATUS_SUCCESS) {
+		QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_ERROR,
+			  "%s:%d: could not send h2t_ver_req msg",
+			  __func__, __LINE__);
 		return status;
-
+	}
 #if defined(HELIUMPLUS)
 	/*
 	 * Send the frag_desc info to target.
 	 */
-	htt_h2t_frag_desc_bank_cfg_msg(pdev);
+	status = htt_h2t_frag_desc_bank_cfg_msg(pdev);
+	if (status != QDF_STATUS_SUCCESS) {
+		QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_ERROR,
+			  "%s:%d: could not send h2t_frag_desc_bank_cfg msg",
+			  __func__, __LINE__);
+		return status;
+	}
 #endif /* defined(HELIUMPLUS) */
 
 
@@ -620,8 +629,28 @@ QDF_STATUS htt_attach_target(htt_pdev_handle pdev)
 	 */
 
 	status = htt_h2t_rx_ring_rfs_cfg_msg(pdev);
+	if (status != QDF_STATUS_SUCCESS) {
+		QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_ERROR,
+			  "%s:%d: could not send h2t_rx_ring_rfs_cfg msg",
+			  __func__, __LINE__);
+		return status;
+	}
+
 	status = htt_h2t_rx_ring_cfg_msg(pdev);
+	if (status != QDF_STATUS_SUCCESS) {
+		QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_ERROR,
+			  "%s:%d: could not send h2t_rx_ring_cfg msg",
+			  __func__, __LINE__);
+		return status;
+	}
+
 	status = HTT_IPA_CONFIG(pdev, status);
+	if (status != QDF_STATUS_SUCCESS) {
+		QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_ERROR,
+			  "%s:%d: could not send h2t_ipa_uc_rsc_cfg msg",
+			  __func__, __LINE__);
+		return status;
+	}
 
 	return status;
 }
