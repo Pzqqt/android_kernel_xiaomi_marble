@@ -244,21 +244,15 @@ QDF_STATUS tgt_tdls_mgmt_frame_process_rx_cb(
 			tdls_err("current tdls vdev is null, can't get vdev id");
 			return QDF_STATUS_E_FAILURE;
 		}
-		wlan_vdev_obj_lock(vdev);
 		vdev_id = wlan_vdev_get_id(vdev);
-		wlan_vdev_obj_unlock(vdev);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_SB_ID);
 	} else {
-		wlan_peer_obj_lock(peer);
 		vdev = wlan_peer_get_vdev(peer);
-		wlan_peer_obj_unlock(peer);
 		if (!vdev) {
 			tdls_err("vdev is NULL in peer, drop this frame");
 			return QDF_STATUS_E_FAILURE;
 		}
-		wlan_vdev_obj_lock(vdev);
 		vdev_id = wlan_vdev_get_id(vdev);
-		wlan_vdev_obj_unlock(vdev);
 	}
 
 	rx_mgmt_event = qdf_mem_malloc(sizeof(*rx_mgmt_event));

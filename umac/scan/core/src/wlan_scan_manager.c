@@ -364,9 +364,7 @@ scm_scan_start_req(struct scheduler_msg *msg)
 		SCAN_TIMEOUT_GRACE_PERIOD;
 	cmd.vdev = req->vdev;
 
-	wlan_vdev_obj_lock(cmd.vdev);
 	psoc = wlan_vdev_get_psoc(cmd.vdev);
-	wlan_vdev_obj_unlock(cmd.vdev);
 	/*
 	 * Temp Hack to disable Serialization Timer
 	 * Modified Serialization module to ignore timeout of 0 value

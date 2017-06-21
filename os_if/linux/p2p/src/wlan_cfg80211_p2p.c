@@ -72,9 +72,7 @@ static void wlan_p2p_rx_callback(void *user_data,
 		return;
 	}
 
-	wlan_vdev_obj_lock(vdev);
 	osif_priv = wlan_vdev_get_ospriv(vdev);
-	wlan_vdev_obj_unlock(vdev);
 	if (!osif_priv) {
 		cfg80211_err("osif_priv is null");
 		goto fail;
@@ -148,9 +146,7 @@ static void wlan_p2p_action_tx_cnf_callback(void *user_data,
 		return;
 	}
 
-	wlan_vdev_obj_lock(vdev);
 	osif_priv = wlan_vdev_get_ospriv(vdev);
-	wlan_vdev_obj_unlock(vdev);
 	if (!osif_priv) {
 		cfg80211_err("osif_priv is null");
 		goto fail;
@@ -207,9 +203,7 @@ static void wlan_p2p_lo_event_callback(void *user_data,
 		return;
 	}
 
-	wlan_vdev_obj_lock(vdev);
 	osif_priv = wlan_vdev_get_ospriv(vdev);
-	wlan_vdev_obj_unlock(vdev);
 	if (!osif_priv) {
 		cfg80211_err("osif_priv is null");
 		goto fail;
@@ -278,9 +272,7 @@ static void wlan_p2p_event_callback(void *user_data,
 		return;
 	}
 
-	wlan_vdev_obj_lock(vdev);
 	osif_priv = wlan_vdev_get_ospriv(vdev);
-	wlan_vdev_obj_unlock(vdev);
 	if (!osif_priv) {
 		cfg80211_err("osif_priv is null");
 		goto fail;
@@ -360,10 +352,8 @@ int wlan_cfg80211_roc(struct wlan_objmgr_vdev *vdev,
 		return -EINVAL;
 	}
 
-	wlan_vdev_obj_lock(vdev);
 	psoc = wlan_vdev_get_psoc(vdev);
 	vdev_id = wlan_vdev_get_id(vdev);
-	wlan_vdev_obj_unlock(vdev);
 	if (!psoc) {
 		cfg80211_err("psoc handle is NULL");
 		return -EINVAL;
@@ -399,9 +389,7 @@ int wlan_cfg80211_cancel_roc(struct wlan_objmgr_vdev *vdev,
 		return -EINVAL;
 	}
 
-	wlan_vdev_obj_lock(vdev);
 	psoc = wlan_vdev_get_psoc(vdev);
-	wlan_vdev_obj_unlock(vdev);
 	if (!psoc) {
 		cfg80211_err("psoc handle is NULL");
 		return -EINVAL;
@@ -431,10 +419,8 @@ int wlan_cfg80211_mgmt_tx(struct wlan_objmgr_vdev *vdev,
 		return -EINVAL;
 	}
 
-	wlan_vdev_obj_lock(vdev);
 	psoc = wlan_vdev_get_psoc(vdev);
 	vdev_id = wlan_vdev_get_id(vdev);
-	wlan_vdev_obj_unlock(vdev);
 	if (!psoc) {
 		cfg80211_err("psoc handle is NULL");
 		return -EINVAL;
@@ -485,9 +471,7 @@ int wlan_cfg80211_mgmt_tx_cancel(struct wlan_objmgr_vdev *vdev,
 		return -EINVAL;
 	}
 
-	wlan_vdev_obj_lock(vdev);
 	psoc = wlan_vdev_get_psoc(vdev);
-	wlan_vdev_obj_unlock(vdev);
 	if (!psoc) {
 		cfg80211_err("psoc handle is NULL");
 		return -EINVAL;

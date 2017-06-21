@@ -95,9 +95,7 @@ static QDF_STATUS p2p_vdev_check_valid(struct tx_action_context *tx_ctx)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	wlan_vdev_obj_lock(vdev);
 	mode = wlan_vdev_mlme_get_opmode(vdev);
-	wlan_vdev_obj_unlock(vdev);
 	p2p_debug("vdev mode:%d", mode);
 
 	/* drop probe response for sta, go, sap */
@@ -272,9 +270,7 @@ static struct p2p_noa_info *p2p_get_vdev_noa_info(
 		return NULL;
 	}
 
-	wlan_vdev_obj_lock(vdev);
 	mode = wlan_vdev_mlme_get_opmode(vdev);
-	wlan_vdev_obj_unlock(vdev);
 	p2p_debug("vdev mode:%d", mode);
 	if (mode != QDF_P2P_GO_MODE) {
 		p2p_debug("invalid p2p vdev mode:%d", mode);

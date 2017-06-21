@@ -78,9 +78,7 @@ void hdd_notify_teardown_tdls_links(struct wlan_objmgr_vdev *vdev)
 	if (!vdev)
 		return;
 
-	wlan_vdev_obj_lock(vdev);
 	osif_priv = wlan_vdev_get_ospriv(vdev);
-	wlan_vdev_obj_unlock(vdev);
 
 	tdls_priv = osif_priv->osif_tdls;
 
@@ -160,12 +158,9 @@ int wlan_cfg80211_tdls_add_peer(struct wlan_objmgr_pdev *pdev,
 		return -EINVAL;
 	}
 
-	wlan_vdev_obj_lock(vdev);
 	osif_priv = wlan_vdev_get_ospriv(vdev);
 	tdls_priv = osif_priv->osif_tdls;
-
 	add_peer_req->vdev_id = wlan_vdev_get_id(vdev);
-	wlan_vdev_obj_unlock(vdev);
 
 	qdf_mem_copy(add_peer_req->peer_addr, mac, QDF_MAC_ADDR_SIZE);
 
@@ -374,12 +369,9 @@ int wlan_cfg80211_tdls_update_peer(struct wlan_objmgr_pdev *pdev,
 	}
 	wlan_cfg80211_tdls_extract_params(req_info, params);
 
-	wlan_vdev_obj_lock(vdev);
 	osif_priv = wlan_vdev_get_ospriv(vdev);
 	tdls_priv = osif_priv->osif_tdls;
-
 	req_info->vdev_id = wlan_vdev_get_id(vdev);
-	wlan_vdev_obj_unlock(vdev);
 	qdf_mem_copy(req_info->peer_addr, mac, QDF_MAC_ADDR_SIZE);
 
 	reinit_completion(&tdls_priv->tdls_add_peer_comp);
@@ -516,10 +508,8 @@ int wlan_cfg80211_tdls_oper(struct wlan_objmgr_pdev *pdev,
 		}
 		break;
 	case NL80211_TDLS_DISABLE_LINK:
-		wlan_vdev_obj_lock(vdev);
 		osif_priv = wlan_vdev_get_ospriv(vdev);
 		tdls_priv = osif_priv->osif_tdls;
-		wlan_vdev_obj_unlock(vdev);
 		reinit_completion(&tdls_priv->tdls_del_peer_comp);
 		status = ucfg_tdls_oper(vdev, peer, cmd);
 		if (QDF_IS_STATUS_ERROR(status)) {
@@ -573,9 +563,7 @@ void wlan_cfg80211_tdls_rx_callback(void *user_data,
 		return;
 	}
 
-	wlan_vdev_obj_lock(vdev);
 	osif_priv = wlan_vdev_get_ospriv(vdev);
-	wlan_vdev_obj_unlock(vdev);
 	if (!osif_priv) {
 		cfg80211_err("osif_priv is null");
 		goto fail;
@@ -637,9 +625,7 @@ int wlan_cfg80211_tdls_mgmt(struct wlan_objmgr_pdev *pdev,
 		return -EIO;
 	}
 
-	wlan_vdev_obj_lock(vdev);
 	osif_priv = wlan_vdev_get_ospriv(vdev);
-	wlan_vdev_obj_unlock(vdev);
 
 	tdls_priv = osif_priv->osif_tdls;
 
@@ -742,9 +728,7 @@ wlan_cfg80211_tdls_indicate_discovery(struct tdls_osif_indication *ind)
 {
 	struct vdev_osif_priv *osif_vdev;
 
-	wlan_vdev_obj_lock(ind->vdev);
 	osif_vdev = wlan_vdev_get_ospriv(ind->vdev);
-	wlan_vdev_obj_unlock(ind->vdev);
 
 	cfg80211_info("Implicit TDLS, request Send Discovery request");
 	cfg80211_tdls_oper_request(osif_vdev->wdev->netdev,
@@ -757,9 +741,7 @@ wlan_cfg80211_tdls_indicate_setup(struct tdls_osif_indication *ind)
 {
 	struct vdev_osif_priv *osif_vdev;
 
-	wlan_vdev_obj_lock(ind->vdev);
 	osif_vdev = wlan_vdev_get_ospriv(ind->vdev);
-	wlan_vdev_obj_unlock(ind->vdev);
 
 	cfg80211_info("Indication to request TDLS setup");
 	cfg80211_tdls_oper_request(osif_vdev->wdev->netdev,
@@ -772,9 +754,7 @@ wlan_cfg80211_tdls_indicate_teardown(struct tdls_osif_indication *ind)
 {
 	struct vdev_osif_priv *osif_vdev;
 
-	wlan_vdev_obj_lock(ind->vdev);
 	osif_vdev = wlan_vdev_get_ospriv(ind->vdev);
-	wlan_vdev_obj_unlock(ind->vdev);
 
 	cfg80211_info("Teardown reason %d", ind->reason);
 	cfg80211_tdls_oper_request(osif_vdev->wdev->netdev,
@@ -793,10 +773,8 @@ void wlan_cfg80211_tdls_event_callback(void *user_data,
 		cfg80211_err("ind: %p", ind);
 		return;
 	}
-	wlan_vdev_obj_lock(ind->vdev);
 	osif_vdev = wlan_vdev_get_ospriv(ind->vdev);
 	tdls_priv = osif_vdev->osif_tdls;
-	wlan_vdev_obj_unlock(ind->vdev);
 
 	switch (type) {
 	case TDLS_EVENT_MGMT_TX_ACK_CNF:

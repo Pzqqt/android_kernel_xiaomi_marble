@@ -207,16 +207,12 @@ QDF_STATUS tgt_p2p_mgmt_frame_rx_cb(struct wlan_objmgr_psoc *psoc,
 			vdev_id = roc_ctx->vdev_id;
 		}
 	} else {
-		wlan_peer_obj_lock(peer);
 		vdev = wlan_peer_get_vdev(peer);
-		wlan_peer_obj_unlock(peer);
 		if (!vdev) {
 			p2p_err("vdev is NULL in peer, drop this frame");
 			return QDF_STATUS_E_FAILURE;
 		}
-		wlan_vdev_obj_lock(vdev);
 		vdev_id = wlan_vdev_get_id(vdev);
-		wlan_vdev_obj_unlock(vdev);
 	}
 
 	rx_mgmt_event = qdf_mem_malloc(sizeof(*rx_mgmt_event));

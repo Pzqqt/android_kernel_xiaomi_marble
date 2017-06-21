@@ -105,10 +105,8 @@ QDF_STATUS wlan_scan_vdev_destroyed_notification(
 	void *scan_vdev_obj = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	wlan_vdev_obj_lock(vdev);
 	scan_vdev_obj = wlan_objmgr_vdev_get_comp_private_obj(vdev,
 			WLAN_UMAC_COMP_SCAN);
-	wlan_vdev_obj_unlock(vdev);
 
 	if (!scan_vdev_obj) {
 		scm_err("Failed to detach scan in vdev ctx");

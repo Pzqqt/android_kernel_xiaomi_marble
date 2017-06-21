@@ -346,8 +346,9 @@ QDF_STATUS wlan_crypto_setkey(struct wlan_objmgr_vdev *vdev,
 		req_key->flags |= WLAN_CRYPTO_KEY_GROUP;
 	}
 
-	wlan_vdev_obj_lock(vdev);
 	vdev_mode = wlan_vdev_mlme_get_opmode(vdev);
+
+	wlan_vdev_obj_lock(vdev);
 	qdf_mem_copy(macaddr, wlan_vdev_mlme_get_macaddr(vdev), WLAN_ALEN);
 	psoc = wlan_vdev_get_psoc(vdev);
 	if (!psoc) {
@@ -384,9 +385,7 @@ QDF_STATUS wlan_crypto_setkey(struct wlan_objmgr_vdev *vdev,
 			key = crypto_priv->key[req_key->keyix];
 		}
 		if (vdev_mode == QDF_STA_MODE) {
-			wlan_vdev_obj_lock(vdev);
 			peer = wlan_vdev_get_bsspeer(vdev);
-			wlan_vdev_obj_unlock(vdev);
 			if (!peer) {
 				qdf_print("%s[%d] peer is null\n",
 							__func__, __LINE__);
@@ -2135,10 +2134,8 @@ QDF_STATUS wlan_crypto_set_peer_wep_keys(struct wlan_objmgr_vdev *vdev,
 
 	if (!vdev)
 		return QDF_STATUS_E_NULL_VALUE;
-	wlan_vdev_obj_lock(vdev);
 	opmode = wlan_vdev_mlme_get_opmode(vdev);
 	psoc = wlan_vdev_get_psoc(vdev);
-	wlan_vdev_obj_unlock(vdev);
 
 	if (!psoc) {
 		qdf_print("%s[%d] psoc NULL\n", __func__, __LINE__);

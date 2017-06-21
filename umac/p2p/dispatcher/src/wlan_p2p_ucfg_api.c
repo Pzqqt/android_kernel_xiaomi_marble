@@ -203,10 +203,8 @@ QDF_STATUS ucfg_p2p_cleanup_roc(struct wlan_objmgr_vdev *vdev)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	wlan_vdev_obj_lock(vdev);
 	vdev_id = (uint32_t)wlan_vdev_get_id(vdev);
 	psoc = wlan_vdev_get_psoc(vdev);
-	wlan_vdev_obj_unlock(vdev);
 	if (!psoc) {
 		p2p_err("null psoc");
 		return QDF_STATUS_E_INVAL;

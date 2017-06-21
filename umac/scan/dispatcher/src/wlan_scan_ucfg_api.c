@@ -445,9 +445,7 @@ ucfg_scan_cancel_sync(struct scan_cancel_request *req)
 	qdf_event_reset(&cancel_scan_event);
 
 	if (cancel_pdev) {
-		wlan_vdev_obj_lock(vdev);
 		pdev = wlan_vdev_get_pdev(vdev);
-		wlan_vdev_obj_unlock(vdev);
 		while ((ucfg_scan_get_pdev_status(pdev) !=
 		     SCAN_NOT_IN_PROGRESS) && max_wait_iterations) {
 			scm_debug("wait for all pdev scan to get complete");

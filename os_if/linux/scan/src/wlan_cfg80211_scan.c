@@ -135,9 +135,7 @@ static void wlan_cfg80211_pno_callback(struct wlan_objmgr_vdev *vdev,
 
 	cfg80211_info("vdev id = %d", event->vdev_id);
 
-	wlan_vdev_obj_lock(vdev);
 	pdev = wlan_vdev_get_pdev(vdev);
-	wlan_vdev_obj_unlock(vdev);
 	if (!pdev) {
 		cfg80211_err("pdev is NULL");
 		return;
@@ -167,11 +165,9 @@ static QDF_STATUS wlan_cfg80211_is_pno_allowed(struct wlan_objmgr_vdev *vdev)
 	enum tQDF_ADAPTER_MODE vdev_opmode;
 	uint8_t vdev_id;
 
-	wlan_vdev_obj_lock(vdev);
 	vdev_opmode = wlan_vdev_mlme_get_opmode(vdev);
 	state = wlan_vdev_mlme_get_state(vdev);
 	vdev_id = wlan_vdev_get_id(vdev);
-	wlan_vdev_obj_unlock(vdev);
 
 	cfg80211_notice("dev_mode=%d, state=%d vdev id %d",
 		vdev_opmode, state, vdev_id);
@@ -284,9 +280,7 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_pdev *pdev,
 	wlan_pdev_obj_unlock(pdev);
 
 	req->networks_cnt = request->n_match_sets;
-	wlan_vdev_obj_lock(vdev);
 	req->vdev_id = wlan_vdev_get_id(vdev);
-	wlan_vdev_obj_unlock(vdev);
 
 	if ((!req->networks_cnt) ||
 	    (req->networks_cnt > SCAN_PNO_MAX_SUPP_NETWORKS)) {

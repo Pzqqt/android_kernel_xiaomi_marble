@@ -30,13 +30,9 @@ bool son_ol_is_peer_inact(struct wlan_objmgr_peer *peer)
 	struct wlan_objmgr_pdev *pdev = NULL;
 	struct wlan_objmgr_vdev *vdev = NULL;
 
-	wlan_peer_obj_lock(peer);
 	vdev = wlan_peer_get_vdev(peer);
-	wlan_peer_obj_unlock(peer);
 
-	wlan_vdev_obj_lock(vdev);
 	pdev = wlan_vdev_get_pdev(vdev);
-	wlan_vdev_obj_unlock(vdev);
 
 	return cdp_peer_is_inact(ol_if_pdev_get_soc_txhandle(pdev),
 				 (void *)(ol_if_peer_get_txrx_handle(peer)));

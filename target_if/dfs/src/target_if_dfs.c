@@ -78,9 +78,7 @@ static int target_if_dfs_cac_complete_event_handler(
 		return -EINVAL;
 	}
 
-	wlan_vdev_obj_lock(vdev);
 	pdev = wlan_vdev_get_pdev(vdev);
-	wlan_vdev_obj_unlock(vdev);
 	if (!pdev) {
 		target_if_err("null pdev");
 		ret = -EINVAL;

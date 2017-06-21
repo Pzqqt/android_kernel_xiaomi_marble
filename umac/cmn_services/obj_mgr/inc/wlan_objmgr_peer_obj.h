@@ -566,7 +566,6 @@ static inline void wlan_peer_set_next_peer_of_psoc(qdf_list_t *peer_list,
 static inline void wlan_peer_set_peer_type(struct wlan_objmgr_peer *peer,
 			enum wlan_peer_type type)
 {
-	/* This API is invoked with lock acquired, do not add log prints */
 	peer->peer_mlme.peer_type = type;
 }
 
@@ -582,7 +581,6 @@ static inline void wlan_peer_set_peer_type(struct wlan_objmgr_peer *peer,
 static inline enum wlan_peer_type wlan_peer_get_peer_type(
 				struct wlan_objmgr_peer *peer)
 {
-	/* This API is invoked with lock acquired, do not add log prints */
 	return peer->peer_mlme.peer_type;
 }
 
@@ -633,7 +631,6 @@ static inline uint8_t *wlan_peer_get_macaddr(struct wlan_objmgr_peer *peer)
 static inline struct wlan_objmgr_vdev *wlan_peer_get_vdev(
 			struct wlan_objmgr_peer *peer)
 {
-	/* This API is invoked with lock acquired, do not add log prints */
 	return peer->peer_objmgr.vdev;
 }
 
@@ -649,7 +646,6 @@ static inline struct wlan_objmgr_vdev *wlan_peer_get_vdev(
 static inline void wlan_peer_set_vdev(struct wlan_objmgr_peer *peer,
 		struct wlan_objmgr_vdev *vdev)
 {
-	/* This API is invoked with lock acquired, do not add log prints */
 	peer->peer_objmgr.vdev = vdev;
 }
 
@@ -665,7 +661,6 @@ static inline void wlan_peer_set_vdev(struct wlan_objmgr_peer *peer,
 static inline void wlan_peer_mlme_flag_set(struct wlan_objmgr_peer *peer,
 				uint32_t flag)
 {
-	/* This API is invoked with lock acquired, do not add log prints */
 	peer->peer_mlme.peer_flags |= flag;
 }
 
@@ -681,7 +676,6 @@ static inline void wlan_peer_mlme_flag_set(struct wlan_objmgr_peer *peer,
 static inline void wlan_peer_mlme_flag_clear(struct wlan_objmgr_peer *peer,
 				uint32_t flag)
 {
-	/* This API is invoked with lock acquired, do not add log prints */
 	peer->peer_mlme.peer_flags &= ~flag;
 }
 
@@ -697,7 +691,6 @@ static inline void wlan_peer_mlme_flag_clear(struct wlan_objmgr_peer *peer,
 static inline uint8_t wlan_peer_mlme_flag_get(struct wlan_objmgr_peer *peer,
 				uint32_t flag)
 {
-	/* This API is invoked with lock acquired, do not add log prints */
 	return (peer->peer_mlme.peer_flags & flag) ? 1 : 0;
 }
 
@@ -714,7 +707,6 @@ static inline void wlan_peer_mlme_set_state(
 				struct wlan_objmgr_peer *peer,
 				enum wlan_peer_state state)
 {
-	/* This API is invoked with lock acquired, do not add log prints */
 	peer->peer_mlme.state = state;
 }
 
@@ -731,7 +723,6 @@ static inline void wlan_peer_mlme_set_auth_state(
 				struct wlan_objmgr_peer *peer,
 				bool is_authenticated)
 {
-	/* This API is invoked with lock acquired, do not add log prints */
 	peer->peer_mlme.is_authenticated = is_authenticated;
 }
 
@@ -746,7 +737,6 @@ static inline void wlan_peer_mlme_set_auth_state(
 static inline enum wlan_peer_state wlan_peer_mlme_get_state(
 				struct wlan_objmgr_peer *peer)
 {
-	/* This API is invoked with lock acquired, do not add log prints */
 	return peer->peer_mlme.state;
 }
 
@@ -761,7 +751,6 @@ static inline enum wlan_peer_state wlan_peer_mlme_get_state(
 static inline bool wlan_peer_mlme_get_auth_state(
 				struct wlan_objmgr_peer *peer)
 {
-	/* This API is invoked with lock acquired, do not add log prints */
 	return peer->peer_mlme.is_authenticated;
 }
 

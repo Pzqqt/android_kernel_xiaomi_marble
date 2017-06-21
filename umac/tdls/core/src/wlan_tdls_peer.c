@@ -315,9 +315,7 @@ struct tdls_peer *tdls_is_progress(struct tdls_vdev_priv_obj *vdev_obj,
 		return NULL;
 	}
 
-	wlan_vdev_obj_lock(vdev_obj->vdev);
 	psoc = wlan_vdev_get_psoc(vdev_obj->vdev);
-	wlan_vdev_obj_unlock(vdev_obj->vdev);
 	if (!psoc) {
 		tdls_err("invalid psoc");
 		return NULL;
@@ -395,10 +393,8 @@ static void tdls_determine_channel_opclass(struct tdls_soc_priv_obj *soc_obj,
 	if (!(TDLS_IS_OFF_CHANNEL_ENABLED(
 		      soc_obj->tdls_configs.tdls_feature_flags)) ||
 	      soc_obj->tdls_fw_off_chan_mode != ENABLE_CHANSWITCH) {
-		wlan_vdev_obj_lock(vdev_obj->vdev);
 		vdev_id = wlan_vdev_get_id(vdev_obj->vdev);
 		opmode = wlan_vdev_mlme_get_opmode(vdev_obj->vdev);
-		wlan_vdev_obj_unlock(vdev_obj->vdev);
 
 		*channel = policy_mgr_get_channel(soc_obj->soc,
 						  opmode, &vdev_id);
@@ -482,9 +478,7 @@ void tdls_extract_peer_state_param(struct tdls_peer_update_state *peer_param,
 	}
 
 	qdf_mem_zero(peer_param, sizeof(*peer_param));
-	wlan_vdev_obj_lock(vdev_obj->vdev);
 	peer_param->vdev_id = wlan_vdev_get_id(vdev_obj->vdev);
-	wlan_vdev_obj_unlock(vdev_obj->vdev);
 
 	qdf_mem_copy(peer_param->peer_macaddr,
 		     peer->peer_mac.bytes, QDF_MAC_ADDR_SIZE);
