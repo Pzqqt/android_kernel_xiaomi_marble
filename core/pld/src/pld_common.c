@@ -1545,8 +1545,9 @@ int pld_force_assert_target(struct device *dev)
 	case PLD_BUS_TYPE_SNOC:
 		ret = pld_snoc_force_assert_target(dev);
 		break;
-
 	case PLD_BUS_TYPE_PCIE:
+		ret = pld_pcie_force_assert_target(dev);
+		break;
 	case PLD_BUS_TYPE_SDIO:
 		ret = -EINVAL;
 		break;
