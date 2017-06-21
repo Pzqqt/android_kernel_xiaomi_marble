@@ -15099,7 +15099,8 @@ static QDF_STATUS init_cmd_send_tlv(wmi_unified_t wmi_handle,
 		host_mem_chunks[idx].ptr = param->mem_chunks[idx].paddr;
 		host_mem_chunks[idx].size = param->mem_chunks[idx].len;
 		host_mem_chunks[idx].req_id = param->mem_chunks[idx].req_id;
-		qdf_print("chunk %d len %d requested ,ptr  0x%x ",
+		QDF_TRACE(QDF_MODULE_ID_ANY, QDF_TRACE_LEVEL_DEBUG,
+				"chunk %d len %d requested ,ptr  0x%x ",
 				idx, host_mem_chunks[idx].size,
 				host_mem_chunks[idx].ptr);
 	}

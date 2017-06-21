@@ -3519,7 +3519,6 @@ send_wmm_update_cmd_non_tlv(wmi_unified_t wmi_handle,
 	struct wmi_host_wmeParams *wmep;
 
 	buf = wmi_buf_alloc(wmi_handle, len);
-	qdf_print("%s:\n", __func__);
 	if (!buf) {
 		qdf_print("%s:wmi_buf_alloc failed\n", __func__);
 		return QDF_STATUS_SUCCESS;
