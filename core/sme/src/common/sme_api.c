@@ -5712,6 +5712,7 @@ QDF_STATUS sme_open_session(tHalHandle hHal, csr_roam_completeCallback callback,
 	struct cdp_pdev *pdev;
 	ol_txrx_peer_handle peer;
 	uint8_t peer_id;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: type=%d, session_id %d subType=%d addr:%pM",
@@ -5729,7 +5730,7 @@ QDF_STATUS sme_open_session(tHalHandle hHal, csr_roam_completeCallback callback,
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
-	peer = ol_txrx_find_peer_by_addr(pdev, pSelfMacAddr, &peer_id);
+	peer = cdp_peer_find_by_addr(soc, pdev, pSelfMacAddr, &peer_id);
 	if (peer) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Peer=%d exist with same MAC",
