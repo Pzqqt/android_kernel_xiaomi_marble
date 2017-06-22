@@ -736,19 +736,7 @@ void qdf_dp_trace_init(void)
 	uint8_t i;
 
 	qdf_dp_trace_spin_lock_init();
-	g_qdf_dp_trace_data.head = INVALID_QDF_DP_TRACE_ADDR;
-	g_qdf_dp_trace_data.tail = INVALID_QDF_DP_TRACE_ADDR;
-	g_qdf_dp_trace_data.num = 0;
-	g_qdf_dp_trace_data.proto_bitmap = QDF_NBUF_PKT_TRAC_TYPE_EAPOL |
-					   QDF_NBUF_PKT_TRAC_TYPE_DHCP |
-					   QDF_NBUF_PKT_TRAC_TYPE_MGMT_ACTION |
-					   QDF_NBUF_PKT_TRAC_TYPE_ARP;
-	g_qdf_dp_trace_data.no_of_record = 0;
-	g_qdf_dp_trace_data.verbosity    = QDF_DP_TRACE_VERBOSITY_HIGH;
-	g_qdf_dp_trace_data.enable = true;
-	g_qdf_dp_trace_data.tx_count = 0;
-	g_qdf_dp_trace_data.rx_count = 0;
-	g_qdf_dp_trace_data.live_mode = 0;
+	qdf_dp_trace_clear_buffer();
 
 	for (i = 0; i < ARRAY_SIZE(qdf_dp_trace_cb_table); i++)
 		qdf_dp_trace_cb_table[i] = qdf_dp_display_record;
@@ -760,6 +748,7 @@ void qdf_dp_trace_init(void)
 	qdf_dp_trace_cb_table[QDF_DP_TRACE_EAPOL_PACKET_RECORD] =
 	qdf_dp_trace_cb_table[QDF_DP_TRACE_DHCP_PACKET_RECORD] =
 	qdf_dp_trace_cb_table[QDF_DP_TRACE_ARP_PACKET_RECORD] =
+	qdf_dp_trace_cb_table[QDF_DP_TRACE_ICMP_PACKET_RECORD] =
 						qdf_dp_display_proto_pkt;
 	qdf_dp_trace_cb_table[QDF_DP_TRACE_MGMT_PACKET_RECORD] =
 					qdf_dp_display_mgmt_pkt;
@@ -977,6 +966,8 @@ const char *qdf_dp_code_to_string(enum QDF_DP_TRACE_ID code)
 		return "DHCP:";
 	case QDF_DP_TRACE_ARP_PACKET_RECORD:
 		return "ARP:";
+	case QDF_DP_TRACE_ICMP_PACKET_RECORD:
+		return "ICMP:";
 	case QDF_DP_TRACE_MGMT_PACKET_RECORD:
 		return "MGMT:";
 	case QDF_DP_TRACE_EVENT_RECORD:
@@ -1065,6 +1056,8 @@ static const char *qdf_dp_type_to_str(enum qdf_proto_type type)
 		return "EAPOL";
 	case QDF_PROTO_TYPE_ARP:
 		return "ARP";
+	case QDF_PROTO_TYPE_ICMP:
+		return "ICMP";
 	case QDF_PROTO_TYPE_MGMT:
 		return "MGMT";
 	case QDF_PROTO_TYPE_EVENT:
@@ -1108,8 +1101,10 @@ static const char *qdf_dp_subtype_to_str(enum qdf_proto_subtype subtype)
 	case QDF_PROTO_DHCP_DECLINE:
 		return "DECLINE";
 	case QDF_PROTO_ARP_REQ:
+	case QDF_PROTO_ICMP_REQ:
 		return "REQUEST";
 	case QDF_PROTO_ARP_RES:
+	case QDF_PROTO_ICMP_RES:
 		return "RESPONSE";
 	case QDF_PROTO_MGMT_ASSOC:
 		return "ASSOC";
@@ -1327,6 +1322,40 @@ static bool qdf_log_arp_pkt(uint8_t session_id, struct sk_buff *skb,
 }
 
 /**
+ * qdf_log_icmp_pkt() - log ICMP packet
+ * @session_id: vdev_id
+ * @skb: skb pointer
+ * @dir: direction
+ *
+ * Return: true/false
+ */
+static bool qdf_log_icmp_pkt(uint8_t session_id, struct sk_buff *skb,
+			    enum qdf_proto_dir dir, uint8_t pdev_id)
+{
+	enum qdf_proto_subtype proto_subtype;
+
+	if ((qdf_dp_get_proto_bitmap() & QDF_NBUF_PKT_TRAC_TYPE_ICMP) &&
+	    (qdf_nbuf_is_icmp_pkt(skb) == true)) {
+
+		proto_subtype = qdf_nbuf_get_icmp_subtype(skb);
+		DPTRACE(qdf_dp_trace_proto_pkt(QDF_DP_TRACE_ICMP_PACKET_RECORD,
+			session_id, (skb->data + QDF_NBUF_SRC_MAC_OFFSET),
+			(skb->data + QDF_NBUF_DEST_MAC_OFFSET),
+			QDF_PROTO_TYPE_ICMP, proto_subtype, dir, pdev_id));
+		if (QDF_TX == dir)
+			QDF_NBUF_CB_TX_DP_TRACE(skb) = 1;
+		else if (QDF_RX == dir)
+			QDF_NBUF_CB_RX_DP_TRACE(skb) = 1;
+
+		QDF_NBUF_CB_DP_TRACE_PRINT(skb) = true;
+		return true;
+	}
+
+	return false;
+}
+
+
+/**
  * qdf_dp_trace_log_pkt() - log packet type enabled through iwpriv
  * @session_id: vdev_id
  * @skb: skb pointer
@@ -1338,18 +1367,17 @@ static bool qdf_log_arp_pkt(uint8_t session_id, struct sk_buff *skb,
 void qdf_dp_trace_log_pkt(uint8_t session_id, struct sk_buff *skb,
 			  enum qdf_proto_dir dir, uint8_t pdev_id)
 {
-	if (qdf_dp_get_proto_bitmap()) {
-		if (qdf_log_arp_pkt(session_id,
-			skb, dir, pdev_id) == false) {
-			if (qdf_log_dhcp_pkt(session_id,
-				skb, dir, pdev_id) == false) {
-				if (qdf_log_eapol_pkt(session_id,
-					skb, dir, pdev_id) == false) {
-					return;
-				}
-			}
-		}
-	}
+	if (!qdf_dp_get_proto_bitmap())
+		return;
+	if (qdf_log_arp_pkt(session_id, skb, dir, pdev_id))
+		return;
+	if (qdf_log_dhcp_pkt(session_id, skb, dir, pdev_id))
+		return;
+	if (qdf_log_eapol_pkt(session_id, skb, dir, pdev_id))
+		return;
+	if (qdf_log_icmp_pkt(session_id, skb, dir, pdev_id))
+		return;
+
 }
 EXPORT_SYMBOL(qdf_dp_trace_log_pkt);
 
@@ -1675,7 +1703,8 @@ void qdf_dp_trace_clear_buffer(void)
 	g_qdf_dp_trace_data.proto_bitmap = QDF_NBUF_PKT_TRAC_TYPE_EAPOL |
 					   QDF_NBUF_PKT_TRAC_TYPE_DHCP |
 					   QDF_NBUF_PKT_TRAC_TYPE_MGMT_ACTION |
-					   QDF_NBUF_PKT_TRAC_TYPE_ARP;
+					   QDF_NBUF_PKT_TRAC_TYPE_ARP |
+					   QDF_NBUF_PKT_TRAC_TYPE_ICMP;
 	g_qdf_dp_trace_data.no_of_record = 0;
 	g_qdf_dp_trace_data.verbosity    = QDF_DP_TRACE_VERBOSITY_HIGH;
 	g_qdf_dp_trace_data.enable = true;
