@@ -561,7 +561,10 @@ QDF_STATUS wlan_crypto_getkey(struct wlan_objmgr_vdev *vdev,
 			return QDF_STATUS_E_INVAL;
 		}
 
-		key = crypto_priv->key[crypto_priv->def_tx_keyid];
+		if (req_key->keyix == WLAN_CRYPTO_KEYIX_NONE)
+		       key = crypto_priv->key[crypto_priv->def_tx_keyid];
+		else
+		       key = crypto_priv->key[req_key->keyix];
 		if (!key)
 			return QDF_STATUS_E_INVAL;
 	} else {
@@ -585,7 +588,10 @@ QDF_STATUS wlan_crypto_getkey(struct wlan_objmgr_vdev *vdev,
 			return QDF_STATUS_E_INVAL;
 		}
 
-		key = crypto_priv->key[crypto_priv->def_tx_keyid];
+		if (req_key->keyix == WLAN_CRYPTO_KEYIX_NONE)
+		       key = crypto_priv->key[crypto_priv->def_tx_keyid];
+		else
+		       key = crypto_priv->key[req_key->keyix];
 		if (!key)
 			return QDF_STATUS_E_INVAL;
 	}
