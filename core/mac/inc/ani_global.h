@@ -977,11 +977,6 @@ typedef struct sAniSirGlobal {
 	bool ignore_assoc_disallowed;
 } tAniSirGlobal;
 
-typedef enum {
-	eHIDDEN_SSID_NOT_IN_USE,
-	eHIDDEN_SSID_ZERO_LEN,
-	eHIDDEN_SSID_ZERO_CONTENTS
-} tHiddenssId;
 
 #ifdef FEATURE_WLAN_TDLS
 

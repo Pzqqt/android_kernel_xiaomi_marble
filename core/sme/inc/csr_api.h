@@ -237,10 +237,16 @@ typedef struct tagCsrChannelInfo {
 	uint8_t *ChannelList;   /* it will be an array of channels */
 } tCsrChannelInfo, *tpCsrChannelInfo;
 
+typedef enum {
+	eHIDDEN_SSID_NOT_IN_USE,
+	eHIDDEN_SSID_ZERO_LEN,
+	eHIDDEN_SSID_ZERO_CONTENTS
+} tHiddenssId;
+
 typedef struct tagCsrSSIDInfo {
 	tSirMacSSid SSID;
 	bool handoffPermitted;
-	bool ssidHidden;
+	tHiddenssId ssidHidden;
 } tCsrSSIDInfo;
 
 typedef struct tagCsrSSIDs {
