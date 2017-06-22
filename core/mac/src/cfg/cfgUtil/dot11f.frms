@@ -1942,6 +1942,11 @@ IE hs20vendor_ie (EID_VENDOR_SPECIFIC) OUI (0x50, 0x6F, 0x9A, 0x10)
     };
 }
 
+IE osen_ie (EID_VENDOR_SPECIFIC) OUI (0x50, 0x6F, 0x9A, 0x12)
+{
+    data[0..255];
+}
+
 IE QComVendorIE (EID_VENDOR_SPECIFIC) OUI (0x00, 0xA0, 0xC6)
 {
     type,      1;
@@ -3482,6 +3487,7 @@ FRAME AssocRequest                        // 7.2.3.4
     OPTIE  QCN_IE;
     OPTIE  vendor_he_cap;
     OPTIE  MBO_IE;
+    OPTIE  osen_ie;
 } // End frame AssocRequest.
 
 FRAME AssocResponse                       // 7.2.3.5
