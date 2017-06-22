@@ -11665,7 +11665,7 @@ static int wlan_hdd_set_filter(hdd_context_t *hdd_ctx,
 		pmo_set_pkt_fltr_req =
 			qdf_mem_malloc(sizeof(*pmo_set_pkt_fltr_req));
 		if (!pmo_set_pkt_fltr_req) {
-			pmo_err("unable to allocate pmo_set_pkt_fltr_req");
+			hdd_err("unable to allocate pmo_set_pkt_fltr_req");
 			return QDF_STATUS_E_NOMEM;
 		}
 

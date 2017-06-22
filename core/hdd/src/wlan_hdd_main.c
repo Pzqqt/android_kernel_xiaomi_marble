@@ -10725,6 +10725,26 @@ static void wlan_hdd_state_ctrl_param_destroy(void)
 }
 
 /**
+ * component_init - API to init cld component's
+ *
+ * Return: None
+ */
+static void component_init(void)
+{
+	pmo_init();
+}
+
+/**
+ * component_deinit - API to deinit cld component's
+ *
+ * Return: None
+ */
+static void component_deinit(void)
+{
+	pmo_deinit();
+}
+
+/**
  * __hdd_module_init - Module init helper
  *
  * Module init helper function used by both module and static driver.
@@ -10756,6 +10776,9 @@ static int __hdd_module_init(void)
 	}
 
 	dispatcher_init();
+
+	/* Ensure to call post objmgr init */
+	component_init();
 
 	qdf_wake_lock_create(&wlan_wake_lock, "wlan");
 
@@ -10824,6 +10847,9 @@ static void __hdd_module_exit(void)
 	wlan_hdd_unregister_driver();
 
 	qdf_wake_lock_destroy(&wlan_wake_lock);
+
+	/* Ensure to call prior to objmgr deinit */
+	component_deinit();
 
 	dispatcher_deinit();
 	hdd_deinit();
