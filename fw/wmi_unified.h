@@ -4351,7 +4351,7 @@ typedef enum {
      */
     WMI_PDEV_PARAM_ABG_MODE_TX_CHAIN_NUM,
     /** Enable/Disable cck txfir override
-     *  bit 0 - enable (1) or disale (0) CCK tx FIR
+     *  bit 0 - enable (1) or disable (0) CCK tx FIR
      *  bits 31:1 - unused / reserved (set to 0)
      */
     WMI_PDEV_PARAM_ENABLE_CCK_TXFIR_OVERRIDE,
@@ -9255,6 +9255,10 @@ typedef struct {
     A_UINT32 hirssi_scan_delta;
     /** 5G scan upper bound */
     A_UINT32 hirssi_upper_bound;
+    /** roam scan rssi threshold for 5G band.
+     *  offset from roam_scan_rssi_thres, in dB units
+     */
+    A_INT32 rssi_thresh_offset_5g;
     /* The TLVs will follow.
      * wmi_roam_scan_extended_threshold_param extended_param;
      * wmi_roam_earlystop_rssi_thres_param earlystop_param;
@@ -9809,15 +9813,15 @@ enum {
 };
 
 /** lca_enable_source_bitmap */
-#define WMI_ROAM_LCA_DISALLOW_SOURCE_PER        = 0x1,
-#define WMI_ROAM_LCA_DISALLOW_SOURCE_BMISS      = 0x2,
-#define WMI_ROAM_LCA_DISALLOW_SOURCE_LOW_RSSI   = 0x4,
-#define WMI_ROAM_LCA_DISALLOW_SOURCE_HIGH_RSSI  = 0x8,
-#define WMI_ROAM_LCA_DISALLOW_SOURCE_PERIODIC   = 0x10,
-#define WMI_ROAM_LCA_DISALLOW_SOURCE_MAWC       = 0x20, /* MAWC = Motion Aided Wifi connectivity */
-#define WMI_ROAM_LCA_DISALLOW_SOURCE_DENSE      = 0x40,
-#define WMI_ROAM_LCA_DISALLOW_SOURCE_BACKGROUND = 0x80,
-#define WMI_ROAM_LCA_DISALLOW_SOURCE_FORCED     = 0x100,
+#define WMI_ROAM_LCA_DISALLOW_SOURCE_PER        0x1
+#define WMI_ROAM_LCA_DISALLOW_SOURCE_BMISS      0x2
+#define WMI_ROAM_LCA_DISALLOW_SOURCE_LOW_RSSI   0x4
+#define WMI_ROAM_LCA_DISALLOW_SOURCE_HIGH_RSSI  0x8
+#define WMI_ROAM_LCA_DISALLOW_SOURCE_PERIODIC   0x10
+#define WMI_ROAM_LCA_DISALLOW_SOURCE_MAWC       0x20 /* MAWC = Motion Aided Wifi connectivity */
+#define WMI_ROAM_LCA_DISALLOW_SOURCE_DENSE      0x40
+#define WMI_ROAM_LCA_DISALLOW_SOURCE_BACKGROUND 0x80
+#define WMI_ROAM_LCA_DISALLOW_SOURCE_FORCED     0x100
 
 typedef struct {
     A_UINT32 tlv_header;     /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_filter_list_fixed_param */
