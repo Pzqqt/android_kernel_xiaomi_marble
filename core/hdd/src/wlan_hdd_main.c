@@ -2781,6 +2781,8 @@ static void hdd_runtime_suspend_context_deinit(hdd_context_t *hdd_ctx)
 	ctx->roc = NULL;
 	qdf_runtime_lock_deinit(ctx->dfs);
 	ctx->dfs = NULL;
+
+	wlan_scan_runtime_pm_deinit(hdd_ctx->hdd_pdev);
 }
 
 static void hdd_adapter_runtime_suspend_init(hdd_adapter_t *adapter)
@@ -5582,7 +5584,6 @@ static void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 	hdd_green_ap_deinit(hdd_ctx);
 	hdd_request_manager_deinit();
 
-	hdd_runtime_suspend_context_deinit(hdd_ctx);
 	hdd_close_all_adapters(hdd_ctx, false);
 
 	hdd_ipa_cleanup(hdd_ctx);
@@ -9174,6 +9175,8 @@ int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx, bool ftm_mode)
 		hdd_err("Hif context is Null");
 		ret = -EINVAL;
 	}
+
+	hdd_runtime_suspend_context_deinit(hdd_ctx);
 
 	hdd_hif_close(hdd_ctx, hif_ctx);
 
