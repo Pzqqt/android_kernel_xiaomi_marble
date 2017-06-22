@@ -1300,7 +1300,7 @@ QDF_STATUS
 wlansap_modify_acl
 	(void *ctx,
 	uint8_t *peer_sta_mac, eSapACLType list_type, eSapACLCmdType cmd) {
-	eSapBool sta_white_list = eSAP_FALSE, sta_black_list = eSAP_FALSE;
+	bool sta_white_list = false, sta_black_list = false;
 	uint8_t staWLIndex, staBLIndex;
 	ptSapContext sap_ctx = CDS_GET_SAP_CB(ctx);
 

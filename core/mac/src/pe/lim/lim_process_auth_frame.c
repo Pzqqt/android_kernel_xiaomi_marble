@@ -281,7 +281,7 @@ static void lim_process_auth_frame_type1(tpAniSirGlobal mac_ctx,
 	if (sta_ds_ptr) {
 		tLimMlmDisassocReq *pMlmDisassocReq = NULL;
 		tLimMlmDeauthReq *pMlmDeauthReq = NULL;
-		tAniBool isConnected = eSIR_TRUE;
+		bool isConnected = true;
 
 		pMlmDisassocReq =
 			mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDisassocReq;
@@ -294,7 +294,7 @@ static void lim_process_auth_frame_type1(tpAniSirGlobal mac_ctx,
 				MAC_ADDR_ARRAY(
 					pMlmDisassocReq->peer_macaddr.bytes));
 			lim_process_disassoc_ack_timeout(mac_ctx);
-			isConnected = eSIR_FALSE;
+			isConnected = false;
 		}
 		pMlmDeauthReq =
 			mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDeauthReq;
@@ -307,7 +307,7 @@ static void lim_process_auth_frame_type1(tpAniSirGlobal mac_ctx,
 				MAC_ADDR_ARRAY(
 					pMlmDeauthReq->peer_macaddr.bytes));
 			lim_process_deauth_ack_timeout(mac_ctx);
-			isConnected = eSIR_FALSE;
+			isConnected = false;
 		}
 
 		/*

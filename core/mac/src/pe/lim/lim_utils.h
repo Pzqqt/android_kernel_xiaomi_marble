@@ -247,7 +247,7 @@ void lim_update_sta_run_time_ht_info(struct sAniSirGlobal *pMac,
 void lim_cancel_dot11h_channel_switch(tpAniSirGlobal pMac,
 		tpPESession psessionEntry);
 void lim_cancel_dot11h_quiet(tpAniSirGlobal pMac, tpPESession psessionEntry);
-tAniBool lim_is_channel_valid_for_channel_switch(tpAniSirGlobal pMac,
+bool lim_is_channel_valid_for_channel_switch(tpAniSirGlobal pMac,
 		uint8_t channel);
 void lim_frame_transmission_control(tpAniSirGlobal pMac, tLimQuietTxMode type,
 		tLimControlTx mode);

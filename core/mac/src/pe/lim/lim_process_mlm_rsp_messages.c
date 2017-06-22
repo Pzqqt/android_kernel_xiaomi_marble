@@ -756,7 +756,7 @@ lim_fill_assoc_ind_params(tpAniSirGlobal mac_ctx,
 
 	/* Copy the new TITAN capabilities */
 	sme_assoc_ind->spectrumMgtIndicator = assoc_ind->spectrumMgtIndicator;
-	if (assoc_ind->spectrumMgtIndicator == eSIR_TRUE) {
+	if (assoc_ind->spectrumMgtIndicator == true) {
 		sme_assoc_ind->powerCap.minTxPower =
 			assoc_ind->powerCap.minTxPower;
 		sme_assoc_ind->powerCap.maxTxPower =

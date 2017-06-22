@@ -368,7 +368,7 @@ sap_remove_mac_from_acl(struct qdf_mac_addr *macList, uint8_t *size,
 void
 sap_print_acl(struct qdf_mac_addr *macList, uint8_t size);
 
-eSapBool
+bool
 sap_search_mac_list(struct qdf_mac_addr *macList, uint8_t num_mac,
 		 uint8_t *peerMac, uint8_t *index);
 

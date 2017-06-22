@@ -5059,8 +5059,8 @@ QDF_STATUS sme_change_country_code(tHalHandle hHal,
 				   uint8_t *pCountry,
 				   void *pContext,
 				   void *p_cds_context,
-				   tAniBool countryFromUserSpace,
-				   tAniBool sendRegHint)
+				   bool countryFromUserSpace,
+				   bool sendRegHint)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);

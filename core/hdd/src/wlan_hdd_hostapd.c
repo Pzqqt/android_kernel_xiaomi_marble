@@ -1496,7 +1496,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		hdd_debug("MIC MAC " MAC_ADDRESS_STR,
 		       MAC_ADDR_ARRAY(msg.src_addr.sa_data));
 		if (pSapEvent->sapevt.sapStationMICFailureEvent.
-		    multicast == eSAP_TRUE)
+		    multicast == true)
 			msg.flags = IW_MICFAILURE_GROUP;
 		else
 			msg.flags = IW_MICFAILURE_PAIRWISE;
@@ -1513,7 +1513,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 					     ((pSapEvent->sapevt.
 					       sapStationMICFailureEvent.
 					       multicast ==
-					       eSAP_TRUE) ?
+					       true) ?
 					      NL80211_KEYTYPE_GROUP :
 					      NL80211_KEYTYPE_PAIRWISE),
 					     pSapEvent->sapevt.

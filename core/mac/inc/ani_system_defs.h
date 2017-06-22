@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -62,12 +62,6 @@
 #undef true
 #define true    1
 #endif
-
-typedef enum eAniBool {
-	eSIR_FALSE,
-	eSIR_TRUE,
-	eSIR_DONOT_USE_BOOL = SIR_MAX_ENUM_SIZE
-} tAniBool;
 
 /* / Authentication type enum used with peer */
 typedef enum eAniAuthType {
@@ -180,7 +174,7 @@ typedef struct sSirMicFailureInfo {
 	tSirMacAddr srcMacAddr; /* address used to compute MIC */
 	tSirMacAddr taMacAddr;  /* transmitter address */
 	tSirMacAddr dstMacAddr;
-	tAniBool multicast;
+	bool multicast;
 	uint8_t IV1;            /* first byte of IV */
 	uint8_t keyId;          /* second byte of IV */
 	uint8_t TSC[SIR_CIPHER_SEQ_CTR_SIZE];   /* sequence number */

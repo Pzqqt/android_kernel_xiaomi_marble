@@ -14046,7 +14046,7 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 	uint8_t txBFCsnValue = 0;
 	tSirSmeJoinReq *csr_join_req;
 	tSirMacCapabilityInfo *pAP_capabilityInfo;
-	tAniBool fTmp;
+	bool fTmp;
 	int8_t pwrLimit = 0;
 	struct ps_global_info *ps_global_info = &pMac->sme.ps_global_info;
 	struct ps_params *ps_param = &ps_global_info->ps_params[sessionId];
@@ -14656,9 +14656,9 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		 */
 		if (csr_is11h_supported(pMac) && pAP_capabilityInfo->spectrumMgt
 			&& eSIR_11A_NW_TYPE == pBssDescription->nwType) {
-			fTmp = (tAniBool) 1;
+			fTmp = true;
 		} else
-			fTmp = (tAniBool) 0;
+			fTmp = false;
 
 		csr_join_req->spectrumMgtIndicator = fTmp;
 		csr_join_req->powerCap.minTxPower = MIN_TX_PWR_CAP;

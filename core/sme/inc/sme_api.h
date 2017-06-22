@@ -443,8 +443,8 @@ QDF_STATUS sme_change_country_code(tHalHandle hHal,
 		uint8_t *pCountry,
 		void *pContext,
 		void *p_cds_context,
-		tAniBool countryFromUserSpace,
-		tAniBool sendRegHint);
+		bool countryFromUserSpace,
+		bool sendRegHint);
 QDF_STATUS sme_generic_change_country_code(tHalHandle hHal,
 					   uint8_t *pCountry);
 QDF_STATUS sme_tx_fail_monitor_start_stop_ind(tHalHandle hHal,
