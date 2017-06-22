@@ -1420,12 +1420,23 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		}
 		break;
 	case eSAP_DFS_RADAR_DETECT:
+	{
+		int i;
+		tsap_Config_t *sap_config =
+				&pHostapdAdapter->sessionCtx.ap.sapConfig;
+
 		hdd_dfs_indicate_radar(pHddCtx);
 		wlan_hdd_send_svc_nlink_msg(pHddCtx->radio_index,
 					WLAN_SVC_DFS_RADAR_DETECT_IND,
 					    &dfs_info,
 					    sizeof(struct wlan_dfs_info));
 		pHddCtx->dev_dfs_cac_status = DFS_CAC_NEVER_DONE;
+		for (i = 0; i < sap_config->channel_info_count; i++) {
+			if (sap_config->channel_info[i].ieee_chan_number
+							== dfs_info.channel)
+				sap_config->channel_info[i].flags |=
+					IEEE80211_CHAN_RADAR_DFS;
+		}
 		if (QDF_STATUS_SUCCESS !=
 			hdd_send_radar_event(pHddCtx, eSAP_DFS_RADAR_DETECT,
 				dfs_info, &pHostapdAdapter->wdev)) {
@@ -1434,6 +1445,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			hdd_debug("Sent radar detected to user space");
 		}
 		break;
+	}
 	case eSAP_DFS_RADAR_DETECT_DURING_PRE_CAC:
 		hdd_debug("notification for radar detect during pre cac:%d",
 			pHostapdAdapter->sessionId);
@@ -8070,7 +8082,7 @@ error:
 	return ret;
 }
 
-static int hdd_destroy_acs_timer(hdd_adapter_t *adapter)
+int hdd_destroy_acs_timer(hdd_adapter_t *adapter)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 

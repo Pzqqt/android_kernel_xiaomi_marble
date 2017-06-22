@@ -517,6 +517,7 @@ struct sap_acs_cfg {
 	uint8_t    ht_sec_ch;
 	uint8_t    vht_seg0_center_ch;
 	uint8_t    vht_seg1_center_ch;
+	uint32_t   band;
 };
 
 /*
