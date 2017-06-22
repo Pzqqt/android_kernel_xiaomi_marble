@@ -298,6 +298,7 @@ int init_deinit_service_ext_ready_event_handler(ol_scn_t scn_handle,
 	if (err_code)
 		goto free_param_and_exit;
 
+	psoc->total_mac_phy = 0;
 	err_code =  populate_hw_mode_capability(wmi_handle,
 					    event,
 					    &psoc->total_mac_phy,
