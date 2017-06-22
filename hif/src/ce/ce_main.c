@@ -2114,7 +2114,7 @@ void hif_ce_stop(struct hif_softc *scn)
 	 * before cleaning up any memory, ensure irq &
 	 * bottom half contexts will not be re-entered
 	 */
-	hif_nointrs(scn);
+	hif_disable_isr(&scn->osc);
 	hif_destroy_oom_work(scn);
 	scn->hif_init_done = false;
 
