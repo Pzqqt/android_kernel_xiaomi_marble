@@ -2641,7 +2641,11 @@ static void hdd_ipa_uc_offload_enable_disable(hdd_adapter_t *adapter,
 			    "Interface context is NULL");
 		return;
 	}
-
+	if (session_id >= CSR_ROAM_SESSION_MAX) {
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
+			    "invalid session id: %d", session_id);
+		return;
+	}
 	if (enable == hdd_ipa->vdev_offload_enabled[session_id]) {
 		/* IPA offload status is already set as desired */
 		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,

@@ -7011,8 +7011,8 @@ int wlan_hdd_cfg80211_update_apies(hdd_adapter_t *adapter)
 	proberesp_ies = qdf_mem_malloc(beacon->proberesp_ies_len +
 				      MAX_GENIE_LEN);
 	if (proberesp_ies == NULL) {
-		hdd_err("mem alloc failed for probe resp ies %d",
-			proberesp_ies_len);
+		hdd_err("mem alloc failed for probe resp ies, size: %d",
+			beacon->proberesp_ies_len + MAX_GENIE_LEN);
 		ret = -EINVAL;
 		goto done;
 	}
