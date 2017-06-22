@@ -58,29 +58,6 @@ ifeq ($(KERNEL_BUILD), 0)
 	CONFIG_MOBILE_ROUTER := y
 	endif
 
-	# As per target team, build is done as follows:
-	# Defconfig : build with default flags
-	# Slub      : defconfig  + CONFIG_SLUB_DEBUG=y +
-	#	      CONFIG_SLUB_DEBUG_ON=y + CONFIG_PAGE_POISONING=y
-	# Perf      : Using appropriate msmXXXX-perf_defconfig
-	#
-	# Shipment builds (user variants) should not have any debug feature
-	# enabled. This is identified using 'TARGET_BUILD_VARIANT'. Slub builds
-	# are identified using the CONFIG_SLUB_DEBUG_ON configuration. Since
-	# there is no other way to identify defconfig builds, QCOMs internal
-	# representation of perf builds (identified using the string 'perf'),
-	# is used to identify if the build is a slub or defconfig one. This
-	# way no critical debug feature will be enabled for perf and shipment
-	# builds. Other OEMs are also protected using the TARGET_BUILD_VARIANT
-	# config.
-	ifneq ($(TARGET_BUILD_VARIANT),user)
-		ifeq ($(CONFIG_LITHIUM), y)
-			CONFIG_FEATURE_PKTLOG := n
-		else
-			CONFIG_FEATURE_PKTLOG := y
-		endif
-	endif
-
 	#Flag to enable Legacy Fast Roaming2(LFR2)
 	CONFIG_QCACLD_WLAN_LFR2 := y
 	#Flag to enable Legacy Fast Roaming3(LFR3)
@@ -220,6 +197,29 @@ endif
 	# Flag to enable MCC to SCC switch feature
 	CONFIG_MCC_TO_SCC_SWITCH := y
 
+endif
+
+# As per target team, build is done as follows:
+# Defconfig : build with default flags
+# Slub      : defconfig  + CONFIG_SLUB_DEBUG=y +
+#	      CONFIG_SLUB_DEBUG_ON=y + CONFIG_PAGE_POISONING=y
+# Perf      : Using appropriate msmXXXX-perf_defconfig
+#
+# Shipment builds (user variants) should not have any debug feature
+# enabled. This is identified using 'TARGET_BUILD_VARIANT'. Slub builds
+# are identified using the CONFIG_SLUB_DEBUG_ON configuration. Since
+# there is no other way to identify defconfig builds, QCOMs internal
+# representation of perf builds (identified using the string 'perf'),
+# is used to identify if the build is a slub or defconfig one. This
+# way no critical debug feature will be enabled for perf and shipment
+# builds. Other OEMs are also protected using the TARGET_BUILD_VARIANT
+# config.
+ifneq ($(TARGET_BUILD_VARIANT),user)
+	ifeq ($(CONFIG_LITHIUM), y)
+		CONFIG_FEATURE_PKTLOG := n
+	else
+		CONFIG_FEATURE_PKTLOG := y
+	endif
 endif
 
 #Enable WLAN/Power debugfs feature only if debug_fs is enabled
