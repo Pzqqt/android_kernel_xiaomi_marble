@@ -1131,6 +1131,17 @@ done:
 			}
 
 			pdev = vdev->pdev;
+			if (qdf_likely(
+				!hal_rx_attn_tcp_udp_cksum_fail_get(rx_tlv_hdr)
+				&&
+				!hal_rx_attn_ip_cksum_fail_get(rx_tlv_hdr))) {
+				qdf_nbuf_rx_cksum_t cksum = {0};
+
+				cksum.l4_result =
+					QDF_NBUF_RX_CKSUM_TCP_UDP_UNNECESSARY;
+
+				qdf_nbuf_set_rx_cksum(nbuf, &cksum);
+			}
 
 			sgi = hal_rx_msdu_start_sgi_get(rx_tlv_hdr);
 			mcs = hal_rx_msdu_start_rate_mcs_get(rx_tlv_hdr);

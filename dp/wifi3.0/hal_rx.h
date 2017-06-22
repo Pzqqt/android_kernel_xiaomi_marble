@@ -683,6 +683,56 @@ hal_rx_attn_first_mpdu_get(uint8_t *buf)
 	return first_mpdu;
 }
 
+#define HAL_RX_ATTN_TCP_UDP_CKSUM_FAIL_GET(_rx_attn)		\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_attn,		\
+		RX_ATTENTION_1_TCP_UDP_CHKSUM_FAIL_OFFSET)),	\
+		RX_ATTENTION_1_TCP_UDP_CHKSUM_FAIL_MASK,	\
+		RX_ATTENTION_1_TCP_UDP_CHKSUM_FAIL_LSB))
+
+/*
+ * hal_rx_attn_tcp_udp_cksum_fail_get(): get tcp_udp cksum fail bit
+ * from rx attention
+ * @buf: pointer to rx_pkt_tlvs
+ *
+ * Return: tcp_udp_cksum_fail
+ */
+static inline bool
+hal_rx_attn_tcp_udp_cksum_fail_get(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_attention *rx_attn = &pkt_tlvs->attn_tlv.rx_attn;
+	bool tcp_udp_cksum_fail;
+
+	tcp_udp_cksum_fail = HAL_RX_ATTN_TCP_UDP_CKSUM_FAIL_GET(rx_attn);
+
+	return tcp_udp_cksum_fail;
+}
+
+#define HAL_RX_ATTN_IP_CKSUM_FAIL_GET(_rx_attn)		\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_attn,	\
+		RX_ATTENTION_1_IP_CHKSUM_FAIL_OFFSET)),	\
+		RX_ATTENTION_1_IP_CHKSUM_FAIL_MASK,	\
+		RX_ATTENTION_1_IP_CHKSUM_FAIL_LSB))
+
+/*
+ * hal_rx_attn_ip_cksum_fail_get(): get ip cksum fail bit
+ * from rx attention
+ * @buf: pointer to rx_pkt_tlvs
+ *
+ * Return: ip_cksum_fail
+ */
+static inline bool
+hal_rx_attn_ip_cksum_fail_get(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_attention *rx_attn = &pkt_tlvs->attn_tlv.rx_attn;
+	bool ip_cksum_fail;
+
+	ip_cksum_fail = HAL_RX_ATTN_IP_CKSUM_FAIL_GET(rx_attn);
+
+	return ip_cksum_fail;
+}
+
 /*
  * Get peer_meta_data from RX_MPDU_INFO within RX_MPDU_START
  */
