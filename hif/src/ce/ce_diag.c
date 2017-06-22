@@ -396,7 +396,7 @@ QDF_STATUS hif_diag_write_mem(struct hif_opaque_softc *hif_ctx,
 	data_buf = qdf_mem_alloc_consistent(scn->qdf_dev, scn->qdf_dev->dev,
 				    orig_nbytes, &CE_data_base);
 	if (!data_buf) {
-		status = A_NO_MEMORY;
+		status = QDF_STATUS_E_NOMEM;
 		goto done;
 	}
 

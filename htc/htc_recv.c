@@ -586,7 +586,7 @@ A_STATUS htc_add_receive_pkt_multiple(HTC_HANDLE HTCHandle,
 	if (A_FAILED(status)) {
 		/* walk through queue and mark each one canceled */
 		HTC_PACKET_QUEUE_ITERATE_ALLOW_REMOVE(pPktQueue, pPacket) {
-			pPacket->Status = A_ECANCELED;
+			pPacket->Status = QDF_STATUS_E_CANCELED;
 		}
 		HTC_PACKET_QUEUE_ITERATE_END;
 
@@ -616,7 +616,7 @@ void htc_flush_rx_hold_queue(HTC_TARGET *target, HTC_ENDPOINT *pEndpoint)
 		if (pPacket == NULL)
 			break;
 		UNLOCK_HTC_RX(target);
-		pPacket->Status = A_ECANCELED;
+		pPacket->Status = QDF_STATUS_E_CANCELED;
 		pPacket->ActualLength = 0;
 		AR_DEBUG_PRINTF(ATH_DEBUG_RECV,
 				("Flushing RX packet:%p, length:%d, ep:%d\n",
@@ -638,7 +638,7 @@ void htc_recv_init(HTC_TARGET *target)
 }
 
 /* polling routine to wait for a control packet to be received */
-A_STATUS htc_wait_recv_ctrl_message(HTC_TARGET *target)
+QDF_STATUS htc_wait_recv_ctrl_message(HTC_TARGET *target)
 {
 /*    int count = HTC_TARGET_MAX_RESPONSE_POLL; */
 
@@ -648,7 +648,7 @@ A_STATUS htc_wait_recv_ctrl_message(HTC_TARGET *target)
 	if (qdf_wait_single_event(&target->ctrl_response_valid,
 				  HTC_CONTROL_RX_TIMEOUT)) {
 		QDF_BUG(0);
-		return A_ERROR;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	LOCK_HTC_RX(target);
@@ -658,7 +658,7 @@ A_STATUS htc_wait_recv_ctrl_message(HTC_TARGET *target)
 	UNLOCK_HTC_RX(target);
 
 	AR_DEBUG_PRINTF(ATH_DEBUG_TRC, ("-HTCWaitCtrlMessageRecv success\n"));
-	return A_OK;
+	return QDF_STATUS_SUCCESS;
 }
 
 static A_STATUS htc_process_trailer(HTC_TARGET *target,

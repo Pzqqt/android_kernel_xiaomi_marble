@@ -83,7 +83,7 @@ void epping_tx_dup_pkt(epping_adapter_t *pAdapter,
 	skb_len = (int)qdf_nbuf_len(new_skb);
 	/* send the packet */
 	ret = htc_send_pkt(pAdapter->pEpping_ctx->HTCHandle, &cookie->HtcPkt);
-	if (ret != A_OK) {
+	if (ret != QDF_STATUS_SUCCESS) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: htc_send_pkt failed, ret = %d\n", __func__, ret);
 		epping_free_cookie(pAdapter->pEpping_ctx, cookie);
@@ -105,7 +105,7 @@ static int epping_tx_send_int(qdf_nbuf_t skb, epping_adapter_t *pAdapter)
 	HTC_ENDPOINT_ID eid = ENDPOINT_UNUSED;
 	struct epping_cookie *cookie = NULL;
 	A_UINT8 ac = 0;
-	A_STATUS ret = A_OK;
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 	int skb_len;
 	EPPING_HEADER tmpHdr = *eppingHdr;
 
@@ -150,7 +150,7 @@ static int epping_tx_send_int(qdf_nbuf_t skb, epping_adapter_t *pAdapter)
 	/* send the packet */
 	ret = htc_send_pkt(pAdapter->pEpping_ctx->HTCHandle, &cookie->HtcPkt);
 	epping_log_packet(pAdapter, &tmpHdr, ret, __func__);
-	if (ret != A_OK) {
+	if (ret != QDF_STATUS_SUCCESS) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: htc_send_pkt failed, status = %d\n", __func__,
 			   ret);
@@ -320,7 +320,7 @@ void epping_tx_complete_multiple(void *ctx, HTC_PACKET_QUEUE *pPacketQueue)
 	epping_context_t *pEpping_ctx = (epping_context_t *) ctx;
 	epping_adapter_t *pAdapter = pEpping_ctx->epping_adapter;
 	struct net_device *dev = pAdapter->dev;
-	A_STATUS status;
+	QDF_STATUS status;
 	HTC_ENDPOINT_ID eid;
 	qdf_nbuf_t pktSkb;
 	struct epping_cookie *cookie;
@@ -355,7 +355,7 @@ void epping_tx_complete_multiple(void *ctx, HTC_PACKET_QUEUE *pPacketQueue)
 			/* add this to the list, use faster non-lock API */
 			qdf_nbuf_queue_add(&skb_queue, pktSkb);
 
-			if (A_SUCCESS(status)) {
+			if (QDF_IS_STATUS_SUCCESS(status)) {
 				if (htc_pkt->ActualLength !=
 						qdf_nbuf_len(pktSkb)) {
 					EPPING_LOG(QDF_TRACE_LEVEL_ERROR,
@@ -371,12 +371,12 @@ void epping_tx_complete_multiple(void *ctx, HTC_PACKET_QUEUE *pPacketQueue)
 			   __func__, pktSkb, htc_pkt->pBuffer,
 			   htc_pkt->ActualLength, eid);
 
-		if (A_FAILED(status)) {
-			if (status == A_ECANCELED) {
+		if (QDF_IS_STATUS_ERROR(status)) {
+			if (status == QDF_STATUS_E_CANCELED) {
 				/* a packet was flushed  */
 				flushing = true;
 			}
-			if (status != A_NO_RESOURCE) {
+			if (status != QDF_STATUS_E_RESOURCES) {
 				printk("%s() -TX ERROR, status: 0x%x\n",
 				       __func__, status);
 			}

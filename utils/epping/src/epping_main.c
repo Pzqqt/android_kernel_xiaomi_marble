@@ -310,7 +310,7 @@ int epping_enable(struct device *parent_dev)
 	}
 
 	/* start HIF */
-	if (htc_wait_target(pEpping_ctx->HTCHandle) != A_OK) {
+	if (htc_wait_target(pEpping_ctx->HTCHandle) != QDF_STATUS_SUCCESS) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: htc_wait_target error", __func__);
 		goto error_end;
@@ -323,7 +323,7 @@ int epping_enable(struct device *parent_dev)
 			   "%s: htc_wait_targetdone", __func__);
 		goto error_end;
 	}
-	if (htc_start(pEpping_ctx->HTCHandle) != A_OK) {
+	if (htc_start(pEpping_ctx->HTCHandle) != QDF_STATUS_SUCCESS) {
 		goto error_end;
 	}
 	EPPING_LOG(QDF_TRACE_LEVEL_INFO_HIGH, "%s: HTC started", __func__);

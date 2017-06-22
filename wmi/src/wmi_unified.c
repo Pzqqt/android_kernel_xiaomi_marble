@@ -1927,7 +1927,7 @@ QDF_STATUS wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf,
 				uint32_t len, uint32_t cmd_id)
 {
 	HTC_PACKET *pkt;
-	A_STATUS status;
+	QDF_STATUS status;
 	uint16_t htc_tag = 0;
 
 	if (wmi_get_runtime_pm_inprogress(wmi_handle)) {
@@ -2024,15 +2024,13 @@ QDF_STATUS wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf,
 
 	status = htc_send_pkt(wmi_handle->htc_handle, pkt);
 
-	if (A_OK != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		qdf_atomic_dec(&wmi_handle->pending_cmds);
 		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
 		   "%s %d, htc_send_pkt failed", __func__, __LINE__);
 		qdf_mem_free(pkt);
-
+		return status;
 	}
-	if (status)
-		return QDF_STATUS_E_FAILURE;
 
 	return QDF_STATUS_SUCCESS;
 }

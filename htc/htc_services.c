@@ -95,12 +95,12 @@ htc_alt_data_credit_size_update(HTC_TARGET *target,
 }
 #endif
 
-A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
+QDF_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 			     struct htc_service_connect_req *pConnectReq,
 			     struct htc_service_connect_resp *pConnectResp)
 {
 	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(HTCHandle);
-	A_STATUS status = A_OK;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	HTC_PACKET *pSendPacket = NULL;
 	HTC_CONNECT_SERVICE_RESPONSE_MSG *pResponseMsg;
 	HTC_CONNECT_SERVICE_MSG *pConnectMsg;
@@ -145,7 +145,7 @@ A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 
 			if (NULL == pSendPacket) {
 				AR_DEBUG_ASSERT(false);
-				status = A_NO_MEMORY;
+				status = QDF_STATUS_E_NOMEM;
 				break;
 			}
 
@@ -163,7 +163,7 @@ A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 
 			if (NULL == pConnectMsg) {
 				AR_DEBUG_ASSERT(0);
-				status = A_EFAULT;
+				status = QDF_STATUS_E_FAULT;
 				break;
 			}
 
@@ -216,12 +216,12 @@ A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 			status = htc_send_pkt((HTC_HANDLE) target, pSendPacket);
 			/* we don't own it anymore */
 			pSendPacket = NULL;
-			if (A_FAILED(status))
+			if (QDF_IS_STATUS_ERROR(status))
 				break;
 
 			/* wait for response */
 			status = htc_wait_recv_ctrl_message(target);
-			if (A_FAILED(status))
+			if (QDF_IS_STATUS_ERROR(status))
 				break;
 			/* we controlled the buffer creation so it has to be
 			 * properly aligned
@@ -259,7 +259,7 @@ A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 				sizeof(HTC_CONNECT_SERVICE_RESPONSE_MSG))) {
 				/* this message is not valid */
 				AR_DEBUG_ASSERT(false);
-				status = A_EPROTO;
+				status = QDF_STATUS_E_PROTO;
 				break;
 			}
 
@@ -276,7 +276,7 @@ A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 						(" Target failed service 0x%X connect request (status:%d)\n",
 						 rsp_msg_serv_id,
 						 rsp_msg_status));
-				status = A_EPROTO;
+				status = QDF_STATUS_E_PROTO;
 /* TODO: restore the ifdef when FW supports services 301 and 302
  * (HTT_MSG_DATA[23]_MSG_SVC)
  */
@@ -313,7 +313,7 @@ A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 		}
 
 		/* rest of these are parameter checks so set the error status */
-		status = A_EPROTO;
+		status = QDF_STATUS_E_PROTO;
 
 		if (assignedEndpoint >= ENDPOINT_MAX) {
 			AR_DEBUG_ASSERT(false);
@@ -364,7 +364,7 @@ A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 						 &pEndpoint->DL_PipeID,
 						 &pEndpoint->ul_is_polled,
 						 &pEndpoint->dl_is_polled);
-		if (A_FAILED(status))
+		if (QDF_IS_STATUS_ERROR(status))
 			break;
 
 		htc_alt_data_credit_size_update(target,

@@ -317,7 +317,7 @@ void htc_flush_rx_hold_queue(HTC_TARGET *target, HTC_ENDPOINT *pEndpoint);
 void htc_flush_endpoint_tx(HTC_TARGET *target, HTC_ENDPOINT *pEndpoint,
 			   HTC_TX_TAG Tag);
 void htc_recv_init(HTC_TARGET *target);
-A_STATUS htc_wait_recv_ctrl_message(HTC_TARGET *target);
+QDF_STATUS htc_wait_recv_ctrl_message(HTC_TARGET *target);
 void htc_free_control_tx_packet(HTC_TARGET *target, HTC_PACKET *pPacket);
 HTC_PACKET *htc_alloc_control_tx_packet(HTC_TARGET *target);
 uint8_t htc_get_credit_allocation(HTC_TARGET *target, uint16_t service_id);

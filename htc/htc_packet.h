@@ -144,7 +144,7 @@ typedef struct _HTC_PACKET {
 	uint32_t BufferLength;
 	uint32_t ActualLength;
 	HTC_ENDPOINT_ID Endpoint;
-	A_STATUS Status;
+	QDF_STATUS Status;
 	union {
 		struct htc_tx_packet_info AsTx;
 		struct htc_rx_packet_info AsRx;

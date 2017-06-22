@@ -507,9 +507,9 @@ uint8_t htc_get_credit_allocation(HTC_TARGET *target, uint16_t service_id)
 	return allocation;
 }
 
-A_STATUS htc_wait_target(HTC_HANDLE HTCHandle)
+QDF_STATUS htc_wait_target(HTC_HANDLE HTCHandle)
 {
-	A_STATUS status = A_OK;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(HTCHandle);
 	HTC_READY_EX_MSG *pReadyMsg;
 	struct htc_service_connect_req connect;
@@ -526,7 +526,7 @@ A_STATUS htc_wait_target(HTC_HANDLE HTCHandle)
 	do {
 
 		status = hif_start(target->hif_dev);
-		if (A_FAILED(status)) {
+		if (QDF_IS_STATUS_ERROR(status)) {
 			AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
 					("hif_start failed\n"));
 			break;
@@ -534,14 +534,14 @@ A_STATUS htc_wait_target(HTC_HANDLE HTCHandle)
 
 		status = htc_wait_recv_ctrl_message(target);
 
-		if (A_FAILED(status))
+		if (QDF_IS_STATUS_ERROR(status))
 			break;
 
 		if (target->CtrlResponseLength < (sizeof(HTC_READY_EX_MSG))) {
 			AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 					("Invalid HTC Ready Msg Len:%d!\n",
 					 target->CtrlResponseLength));
-			status = A_ECOMM;
+			status = QDF_STATUS_E_BADMSG;
 			break;
 		}
 
@@ -554,7 +554,7 @@ A_STATUS htc_wait_target(HTC_HANDLE HTCHandle)
 			AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 					("Invalid HTC Ready Msg : 0x%X!\n",
 					 htc_rdy_msg_id));
-			status = A_ECOMM;
+			status = QDF_STATUS_E_BADMSG;
 			break;
 		}
 
@@ -578,7 +578,7 @@ A_STATUS htc_wait_target(HTC_HANDLE HTCHandle)
 
 		if ((0 == target->TotalTransmitCredits)
 		    || (0 == target->TargetCreditSize)) {
-			status = A_ECOMM;
+			status = QDF_STATUS_E_ABORTED;
 			break;
 		}
 
@@ -656,12 +656,12 @@ static void reset_endpoint_states(HTC_TARGET *target)
  * htc_start() - Main HTC function to trigger HTC start
  * @HTCHandle: pointer to HTC handle
  *
- * Return: A_OK for success or an appropriate A_STATUS error
+ * Return: QDF_STATUS_SUCCESS for success or an appropriate QDF_STATUS error
  */
-A_STATUS htc_start(HTC_HANDLE HTCHandle)
+QDF_STATUS htc_start(HTC_HANDLE HTCHandle)
 {
 	qdf_nbuf_t netbuf;
-	A_STATUS status = A_OK;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(HTCHandle);
 	HTC_SETUP_COMPLETE_EX_MSG *pSetupComp;
 	HTC_PACKET *pSendPacket;
@@ -678,7 +678,7 @@ A_STATUS htc_start(HTC_HANDLE HTCHandle)
 			AR_DEBUG_ASSERT(false);
 			qdf_print("%s: allocControlTxPacket failed\n",
 				  __func__);
-			status = A_NO_MEMORY;
+			status = QDF_STATUS_E_NOMEM;
 			break;
 		}
 
@@ -720,7 +720,7 @@ A_STATUS htc_start(HTC_HANDLE HTCHandle)
 				       ENDPOINT_0, HTC_SERVICE_TX_PACKET_TAG);
 
 		status = htc_send_pkt((HTC_HANDLE) target, pSendPacket);
-		if (A_FAILED(status))
+		if (QDF_IS_STATUS_ERROR(status))
 			break;
 	} while (false);
 

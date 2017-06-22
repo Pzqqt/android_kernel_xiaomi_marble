@@ -112,7 +112,7 @@ void epping_rx(void *ctx, HTC_PACKET *pPacket)
 	epping_context_t *pEpping_ctx = (epping_context_t *) ctx;
 	epping_adapter_t *pAdapter = pEpping_ctx->epping_adapter;
 	struct net_device *dev = pAdapter->dev;
-	A_STATUS status = pPacket->Status;
+	QDF_STATUS status = pPacket->Status;
 	HTC_ENDPOINT_ID eid = pPacket->Endpoint;
 	struct sk_buff *pktSkb = (struct sk_buff *)pPacket->pPktContext;
 
@@ -121,8 +121,8 @@ void epping_rx(void *ctx, HTC_PACKET *pPacket)
 		   __func__, pAdapter, eid, pktSkb, pPacket->pBuffer,
 		   pPacket->ActualLength, status);
 
-	if (status != A_OK) {
-		if (status != A_ECANCELED) {
+	if (status != QDF_STATUS_SUCCESS) {
+		if (status != QDF_STATUS_E_CANCELED) {
 			printk("%s: RX ERR (%d)\n", __func__, status);
 		}
 		qdf_nbuf_free(pktSkb);

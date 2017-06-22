@@ -755,8 +755,8 @@ static void pktlog_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 	uint32_t *msg_word;
 
 	/* check for successful message reception */
-	if (pkt->Status != A_OK) {
-		if (pkt->Status != A_ECANCELED)
+	if (pkt->Status != QDF_STATUS_SUCCESS) {
+		if (pkt->Status != QDF_STATUS_E_CANCELED)
 			pdev->htc_err_cnt++;
 		qdf_nbuf_free(pktlog_t2h_msg);
 		return;
@@ -818,7 +818,7 @@ static int pktlog_htc_connect_service(struct ol_pktlog_dev_t *pdev)
 {
 	struct htc_service_connect_req connect;
 	struct htc_service_connect_resp response;
-	A_STATUS status;
+	QDF_STATUS status;
 
 	qdf_mem_set(&connect, sizeof(connect), 0);
 	qdf_mem_set(&response, sizeof(response), 0);
@@ -851,7 +851,7 @@ static int pktlog_htc_connect_service(struct ol_pktlog_dev_t *pdev)
 
 	status = htc_connect_service(pdev->htc_pdev, &connect, &response);
 
-	if (status != A_OK) {
+	if (status != QDF_STATUS_SUCCESS) {
 		pdev->mt_pktlog_enabled = false;
 		return -EIO;       /* failure */
 	}

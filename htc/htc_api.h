@@ -436,7 +436,7 @@ void htc_set_credit_distribution(HTC_HANDLE HTCHandle,
  * ready.
  * Return: None
  */
-A_STATUS htc_wait_target(HTC_HANDLE HTCHandle);
+QDF_STATUS htc_wait_target(HTC_HANDLE HTCHandle);
 
 /**
  * htc_start - Start target service communications
@@ -450,7 +450,7 @@ A_STATUS htc_wait_target(HTC_HANDLE HTCHandle);
  * communicating over the endpoints.
  * Return: None
  */
-A_STATUS htc_start(HTC_HANDLE HTCHandle);
+QDF_STATUS htc_start(HTC_HANDLE HTCHandle);
 
 /**
  * htc_add_receive_pkt - Add receive packet to HTC
@@ -474,7 +474,7 @@ A_STATUS htc_add_receive_pkt(HTC_HANDLE HTCHandle, HTC_PACKET *pPacket);
  * User provides callback handlersfor various endpoint events.
  * Return: None
  */
-A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
+QDF_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 			     struct htc_service_connect_req *pReq,
 			     struct htc_service_connect_resp *pResp);
 
@@ -497,9 +497,9 @@ void htc_dump(HTC_HANDLE HTCHandle, uint8_t CmdId, bool start);
  * Caller must initialize packet using SET_HTC_PACKET_INFO_TX() macro.
  * This interface is fully asynchronous.  On error, HTC SendPkt will
  * call the registered Endpoint callback to cleanup the packet.
- * Return: A_OK
+ * Return: QDF_STATUS_SUCCESS
  */
-A_STATUS htc_send_pkt(HTC_HANDLE HTCHandle, HTC_PACKET *pPacket);
+QDF_STATUS htc_send_pkt(HTC_HANDLE HTCHandle, HTC_PACKET *pPacket);
 
 /**
  * htc_send_data_pkt - Send an HTC packet containing a tx descriptor and data
@@ -515,10 +515,10 @@ A_STATUS htc_send_pkt(HTC_HANDLE HTCHandle, HTC_PACKET *pPacket);
  * Return: A_OK
  */
 #ifdef ATH_11AC_TXCOMPACT
-A_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, qdf_nbuf_t netbuf,
+QDF_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, qdf_nbuf_t netbuf,
 			   int Epid, int ActualLength);
 #else                           /*ATH_11AC_TXCOMPACT */
-A_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, HTC_PACKET *pPacket,
+QDF_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, HTC_PACKET *pPacket,
 			   uint8_t more_data);
 #endif /*ATH_11AC_TXCOMPACT */
 
@@ -639,9 +639,9 @@ void htc_unblock_recv(HTC_HANDLE HTCHandle);
  * The caller may allocate the pkt queue on the stack to hold the pkts.
  * This interface is fully asynchronous.  On error, htc_send_pkts will
  * call the registered Endpoint callback to cleanup the packet.
- * Return: A_OK
+ * Return: QDF_STATUS_SUCCESS
  */
-A_STATUS htc_send_pkts_multiple(HTC_HANDLE HTCHandle,
+QDF_STATUS htc_send_pkts_multiple(HTC_HANDLE HTCHandle,
 				HTC_PACKET_QUEUE *pPktQueue);
 
 /**
