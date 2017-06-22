@@ -148,6 +148,7 @@ enum tx_peer_level {
 	TXRX_IEEE11_A_G,
 	TXRX_IEEE11_N,
 	TXRX_IEEE11_AC,
+	TXRX_IEEE11_AX,
 	TXRX_IEEE11_MAX,
 };
 
