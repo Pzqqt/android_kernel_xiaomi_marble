@@ -386,13 +386,12 @@ static QDF_STATUS send_setup_install_key_cmd_non_tlv(wmi_unified_t wmi_handle,
 		/* since wk_recviv and wk_txiv initialized in reverse order,
 		 * Before indicating the Target FW, Reversing TSC and RSC
 		 */
-		for (i = (WPI_IV_LEN-1), j = 0; i >= 0; i--, j++)
-			*(((uint8_t *)&cmd->wpi_key_rsc_counter)+j) =
+		for (i = (WPI_IV_LEN-1), j = 0; i >= 0; i--, j++) {
+			cmd->wpi_key_rsc_counter[j] =
 			    param->rx_iv[i];
-
-		for (i = (WPI_IV_LEN/4-1), j = 0; i >= 0; i--, j++)
-			*(((uint32_t *)&cmd->wpi_key_tsc_counter)+j) =
+			cmd->wpi_key_tsc_counter[j] =
 			    param->tx_iv[i];
+		}
 
 		qdf_print("RSC:");
 		for (i = 0; i < 16; i++)
