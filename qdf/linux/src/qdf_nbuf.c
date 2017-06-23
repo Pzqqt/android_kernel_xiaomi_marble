@@ -1462,8 +1462,10 @@ void qdf_net_buf_debug_exit(void)
 	qdf_nbuf_track_memory_manager_destroy();
 
 #ifdef CONFIG_HALT_KMEMLEAK
-	if (count)
+	if (count) {
+		qdf_print("%d SKBs leaked .. please fix the SKB leak", count);
 		QDF_BUG(0);
+	}
 #endif
 }
 EXPORT_SYMBOL(qdf_net_buf_debug_exit);
