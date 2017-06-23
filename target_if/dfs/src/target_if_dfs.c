@@ -180,9 +180,7 @@ static QDF_STATUS target_if_dfs_register_event_handler(
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct wlan_objmgr_psoc *psoc = NULL;
 
-	wlan_pdev_obj_lock(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
-	wlan_pdev_obj_unlock(pdev);
 	if (!psoc) {
 		target_if_err("null psoc");
 		return QDF_STATUS_E_FAILURE;

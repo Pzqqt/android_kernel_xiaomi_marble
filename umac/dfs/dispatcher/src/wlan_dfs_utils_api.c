@@ -437,9 +437,7 @@ static void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
 	struct wlan_objmgr_psoc *psoc;
 	uint32_t conn_count = 0;
 
-	wlan_pdev_obj_lock(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
-	wlan_pdev_obj_unlock(pdev);
 	if (!psoc) {
 		*num_chan = 0;
 		DFS_PRINTK("%s: null psoc\n", __func__);
@@ -491,9 +489,7 @@ QDF_STATUS dfs_get_random_channel(
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	*target_chan = 0;
-	wlan_pdev_obj_lock(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
-	wlan_pdev_obj_unlock(pdev);
 	if (!psoc) {
 		DFS_PRINTK("%s: null psoc\n", __func__);
 		goto random_chan_error;
@@ -564,9 +560,7 @@ void dfs_init_nol(struct wlan_objmgr_pdev *pdev)
 	int len;
 
 	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
-	wlan_pdev_obj_lock(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
-	wlan_pdev_obj_unlock(pdev);
 	if (!dfs || !psoc) {
 		DFS_PRINTK("%s: dfs %p, psoc %p\n", __func__, dfs, psoc);
 		return;
@@ -611,9 +605,7 @@ void dfs_save_nol(struct wlan_objmgr_pdev *pdev)
 		return;
 	}
 
-	wlan_pdev_obj_lock(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
-	wlan_pdev_obj_unlock(pdev);
 	if (!psoc) {
 		DFS_PRINTK("%s: null psoc\n", __func__);
 		return;

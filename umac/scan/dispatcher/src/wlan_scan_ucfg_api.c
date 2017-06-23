@@ -1097,9 +1097,7 @@ ucfg_scan_cancel_pdev_scan(struct wlan_objmgr_pdev *pdev)
 	}
 	req->vdev = vdev;
 	req->cancel_req.scan_id = INVAL_SCAN_ID;
-	wlan_pdev_obj_lock(pdev);
 	req->cancel_req.pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
-	wlan_pdev_obj_unlock(pdev);
 	req->cancel_req.vdev_id = INVAL_VDEV_ID;
 	req->cancel_req.req_type = WLAN_SCAN_CANCEL_PDEV_ALL;
 	status = ucfg_scan_cancel_sync(req);

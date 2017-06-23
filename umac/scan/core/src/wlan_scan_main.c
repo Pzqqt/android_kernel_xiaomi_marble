@@ -54,10 +54,8 @@ QDF_STATUS wlan_scan_psoc_destroyed_notification(
 	void *scan_obj = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	wlan_psoc_obj_lock(psoc);
 	scan_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
 			WLAN_UMAC_COMP_SCAN);
-	wlan_psoc_obj_unlock(psoc);
 
 	if (!scan_obj) {
 		scm_err("Failed to detach scan in psoc ctx");

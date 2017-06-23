@@ -1609,8 +1609,6 @@ void *wlan_objmgr_psoc_get_comp_private_obj(struct wlan_objmgr_psoc *psoc,
 {
 	void *comp_private_obj;
 
-	/* This API is invoked with lock acquired, don't add any debug prints */
-
 	/* component id is invalid */
 	if (id >= WLAN_UMAC_MAX_COMPONENTS) {
 		QDF_BUG(0);

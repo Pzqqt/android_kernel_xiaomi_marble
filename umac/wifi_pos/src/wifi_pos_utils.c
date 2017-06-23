@@ -67,10 +67,8 @@ struct wifi_pos_psoc_priv_obj *wifi_pos_get_psoc_priv_obj(
 {
 	struct wifi_pos_psoc_priv_obj *obj;
 
-	wlan_psoc_obj_lock(psoc);
 	obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
 						    WLAN_UMAC_COMP_WIFI_POS);
-	wlan_psoc_obj_unlock(psoc);
 
 	return obj;
 }

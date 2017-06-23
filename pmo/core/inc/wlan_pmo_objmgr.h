@@ -141,9 +141,7 @@ pmo_psoc_get_priv(struct wlan_objmgr_psoc *psoc)
 {
 	struct pmo_psoc_priv_obj *psoc_priv;
 
-	wlan_psoc_obj_lock(psoc);
 	psoc_priv = pmo_psoc_get_priv_nolock(psoc);
-	wlan_psoc_obj_unlock(psoc);
 
 	QDF_BUG(psoc_priv);
 
@@ -157,9 +155,7 @@ pmo_pdev_get_psoc(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_objmgr_psoc *psoc;
 
-	wlan_pdev_obj_lock(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
-	wlan_pdev_obj_unlock(pdev);
 
 	QDF_BUG(psoc);
 

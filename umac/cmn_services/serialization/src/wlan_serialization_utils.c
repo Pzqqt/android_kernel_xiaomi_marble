@@ -509,10 +509,8 @@ struct wlan_serialization_psoc_priv_obj *wlan_serialization_get_psoc_priv_obj(
 		struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_serialization_psoc_priv_obj *ser_soc_obj;
-	wlan_psoc_obj_lock(psoc);
 	ser_soc_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
 					WLAN_UMAC_COMP_SERIALIZATION);
-	wlan_psoc_obj_unlock(psoc);
 
 	return ser_soc_obj;
 }
@@ -521,10 +519,8 @@ struct wlan_serialization_pdev_priv_obj *wlan_serialization_get_pdev_priv_obj(
 		struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_serialization_pdev_priv_obj *obj;
-	wlan_pdev_obj_lock(pdev);
 	obj = wlan_objmgr_pdev_get_comp_private_obj(pdev,
 					WLAN_UMAC_COMP_SERIALIZATION);
-	wlan_pdev_obj_unlock(pdev);
 
 	return obj;
 }

@@ -374,11 +374,9 @@ wlan_psoc_get_scan_obj(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_scan_obj *scan_obj;
 
-	wlan_psoc_obj_lock(psoc);
 	scan_obj = (struct wlan_scan_obj *)
 		wlan_objmgr_psoc_get_comp_private_obj(psoc,
 				WLAN_UMAC_COMP_SCAN);
-	wlan_psoc_obj_unlock(psoc);
 
 	return scan_obj;
 }
@@ -394,9 +392,7 @@ wlan_pdev_get_scan_obj(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_objmgr_psoc *psoc;
 
-	wlan_pdev_obj_lock(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
-	wlan_pdev_obj_unlock(pdev);
 
 	return wlan_psoc_get_scan_obj(psoc);
 }
@@ -471,9 +467,7 @@ wlan_pdev_get_pdev_scan_ev_handlers(struct wlan_objmgr_pdev *pdev)
 	struct wlan_scan_obj *scan;
 	struct pdev_scan_ev_handler *pdev_ev_handler;
 
-	wlan_pdev_obj_lock(pdev);
 	pdevid = wlan_objmgr_pdev_get_pdev_id(pdev);
-	wlan_pdev_obj_unlock(pdev);
 
 	scan = wlan_pdev_get_scan_obj(pdev);
 

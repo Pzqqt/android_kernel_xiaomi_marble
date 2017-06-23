@@ -432,7 +432,6 @@ static inline void wlan_pdev_obj_unlock(struct wlan_objmgr_pdev *pdev)
 static inline struct wlan_objmgr_psoc *wlan_pdev_get_psoc(
 			struct wlan_objmgr_pdev *pdev)
 {
-	/* This API is invoked with lock acquired, do not add log prints */
 	return pdev->pdev_objmgr.wlan_psoc;
 }
 
@@ -598,7 +597,6 @@ static inline void wlan_pdev_set_hw_macaddr(struct wlan_objmgr_pdev *pdev,
 static inline struct pdev_osif_priv *wlan_pdev_get_ospriv(
 				struct wlan_objmgr_pdev *pdev)
 {
-	/* This API is invoked with lock acquired, do not add log prints */
 	return pdev->pdev_nif.pdev_ospriv;
 }
 
@@ -735,7 +733,6 @@ void wlan_objmgr_pdev_release_ref(struct wlan_objmgr_pdev *pdev,
 static inline
 uint8_t wlan_objmgr_pdev_get_pdev_id(struct wlan_objmgr_pdev *pdev)
 {
-	/* This API is invoked with lock acquired, do not add log prints */
 	return pdev->pdev_objmgr.wlan_pdev_id;
 }
 

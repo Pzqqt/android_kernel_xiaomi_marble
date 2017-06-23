@@ -91,9 +91,7 @@ QDF_STATUS son_ol_send_null(struct wlan_objmgr_pdev *pdev,
 	struct stats_request_params param = {0};
 	struct wlan_objmgr_psoc *psoc = NULL;
 
-	wlan_pdev_obj_lock(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
-	wlan_pdev_obj_unlock(pdev);
 
 	if( !psoc)
 		return QDF_STATUS_E_FAILURE;
