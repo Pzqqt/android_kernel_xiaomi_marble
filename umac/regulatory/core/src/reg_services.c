@@ -1009,6 +1009,8 @@ enum channel_state reg_get_5g_bonded_channel_state(
 	reg_channels = pdev_priv_obj->cur_chan_list;
 
 	ch_indx = reg_get_chan_enum(ch);
+	if (INVALID_CHANNEL == ch_indx)
+		return CHANNEL_STATE_INVALID;
 	if (CH_WIDTH_5MHZ == bw)
 		bw_enabled = true;
 	else if (CH_WIDTH_10MHZ == bw)
@@ -1085,6 +1087,8 @@ enum channel_state reg_get_2g_bonded_channel_state(
 		return chan_state;
 
 	chan_idx = reg_get_chan_enum(oper_ch);
+	if (INVALID_CHANNEL == chan_idx)
+		return CHANNEL_STATE_INVALID;
 	if (CH_WIDTH_5MHZ == bw)
 		bw_enabled = true;
 	else if (CH_WIDTH_10MHZ == bw)
