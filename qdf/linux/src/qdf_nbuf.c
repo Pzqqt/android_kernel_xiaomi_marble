@@ -1539,6 +1539,7 @@ void qdf_net_buf_debug_add_node(qdf_nbuf_t net_buf, size_t size,
 			p_node->file_name = file_name;
 			p_node->line_num = line_num;
 			p_node->size = size;
+			qdf_mem_skb_inc(size);
 			p_node->p_next = gp_qdf_net_buf_track_tbl[i];
 			gp_qdf_net_buf_track_tbl[i] = p_node;
 		} else
@@ -1601,6 +1602,7 @@ done:
 			  net_buf);
 		QDF_ASSERT(0);
 	} else {
+		qdf_mem_skb_dec(p_node->size);
 		qdf_nbuf_track_free(p_node);
 	}
 }

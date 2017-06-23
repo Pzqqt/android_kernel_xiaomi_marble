@@ -302,5 +302,20 @@ void qdf_mem_multi_pages_free(qdf_device_t osdev,
 int qdf_mem_multi_page_link(qdf_device_t osdev,
 		struct qdf_mem_multi_page_t *pages,
 		uint32_t elem_size, uint32_t elem_count, uint8_t cacheable);
+/**
+ * qdf_mem_skb_inc() - increment total skb allocation size
+ * @size: size to be added
+ *
+ * Return: none
+ */
+void qdf_mem_skb_inc(qdf_size_t size);
+
+/**
+ * qdf_mem_skb_dec() - decrement total skb allocation size
+ * @size: size to be decremented
+ *
+ * Return: none
+ */
+void qdf_mem_skb_dec(qdf_size_t size);
 
 #endif /* __QDF_MEMORY_H */
