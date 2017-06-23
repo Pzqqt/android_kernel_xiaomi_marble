@@ -174,6 +174,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 		next = (*desc_list)->next;
 
 		dp_rx_desc_prep(&((*desc_list)->rx_desc), rx_netbuf);
+		(*desc_list)->rx_desc.in_use = 1;
 
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 				"rx_netbuf=%p, buf=%p, paddr=0x%llx, cookie=%d\n",

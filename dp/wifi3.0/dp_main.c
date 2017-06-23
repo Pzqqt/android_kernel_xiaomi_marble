@@ -403,10 +403,21 @@ static QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
 static void dp_soc_interrupt_detach(void *txrx_soc)
 {
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
+	int i;
 
 	qdf_timer_stop(&soc->int_timer);
 
 	qdf_timer_free(&soc->int_timer);
+
+	for (i = 0; i < wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx); i++) {
+		soc->intr_ctx[i].tx_ring_mask = 0;
+		soc->intr_ctx[i].rx_ring_mask = 0;
+		soc->intr_ctx[i].rx_mon_ring_mask = 0;
+		soc->intr_ctx[i].rx_err_ring_mask = 0;
+		soc->intr_ctx[i].rx_wbm_rel_ring_mask = 0;
+		soc->intr_ctx[i].reo_status_ring_mask = 0;
+		qdf_lro_deinit(soc->intr_ctx[i].lro_ctx);
+	}
 }
 #else
 /*

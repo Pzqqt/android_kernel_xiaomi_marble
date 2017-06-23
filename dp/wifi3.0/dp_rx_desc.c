@@ -55,6 +55,7 @@ QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc, uint32_t pool_id,
 		rx_desc_pool->array[i].next = &rx_desc_pool->array[i+1];
 		rx_desc_pool->array[i].rx_desc.cookie = i | (pool_id << 18);
 		rx_desc_pool->array[i].rx_desc.pool_id = pool_id;
+		rx_desc_pool->array[i].rx_desc.in_use = 0;
 	}
 
 	rx_desc_pool->array[i].next = NULL;
@@ -79,7 +80,7 @@ void dp_rx_desc_pool_free(struct dp_soc *soc, uint32_t pool_id,
 
 	qdf_spin_lock_bh(&soc->rx_desc_mutex[pool_id]);
 	for (i = 0; i < rx_desc_pool->pool_size; i++) {
-		if (rx_desc_pool->array[i].rx_desc.nbuf)
+		if (rx_desc_pool->array[i].rx_desc.in_use)
 			qdf_nbuf_free(rx_desc_pool->array[i].rx_desc.nbuf);
 	}
 	qdf_mem_free(rx_desc_pool->array);

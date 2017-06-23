@@ -70,6 +70,7 @@ struct dp_rx_desc {
 #ifdef RX_DESC_DEBUG_CHECK
 	uint32_t magic;
 #endif
+	uint8_t in_use:1;
 };
 
 #define RX_DESC_COOKIE_INDEX_SHIFT		0
@@ -322,6 +323,7 @@ void dp_rx_add_to_free_desc_list(union dp_rx_desc_list_elem_t **head,
 	qdf_assert(head && new);
 
 	new->nbuf = NULL;
+	new->in_use = 0;
 
 	((union dp_rx_desc_list_elem_t *)new)->next = *head;
 	*head = (union dp_rx_desc_list_elem_t *)new;

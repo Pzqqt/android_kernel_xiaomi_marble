@@ -215,6 +215,7 @@ dp_rx_mon_status_srng_process(struct dp_soc *soc, uint32_t mac_id,
 		paddr = qdf_nbuf_get_frag_paddr(status_nbuf, 0);
 
 		rx_desc->nbuf = status_nbuf;
+		rx_desc->in_use = 1;
 
 		hal_rxdma_buff_addr_info_set(rxdma_mon_status_ring_entry,
 			paddr, rx_desc->cookie, HAL_RX_BUF_RBM_SW3_BM);
@@ -397,6 +398,7 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 		next = (*desc_list)->next;
 
 		(*desc_list)->rx_desc.nbuf = rx_netbuf;
+		(*desc_list)->rx_desc.in_use = 1;
 		hal_rxdma_buff_addr_info_set(rxdma_ring_entry, paddr,
 			(*desc_list)->rx_desc.cookie, owner);
 
