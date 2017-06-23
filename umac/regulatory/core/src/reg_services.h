@@ -187,7 +187,7 @@ QDF_STATUS reg_reset_country(struct wlan_objmgr_psoc *psoc);
 QDF_STATUS reg_enable_dfs_channels(struct wlan_objmgr_pdev *pdev, bool enable);
 
 
-void reg_get_dfs_region(struct wlan_objmgr_psoc *psoc,
+void reg_get_dfs_region(struct wlan_objmgr_pdev *pdev,
 			enum dfs_reg *dfs_reg);
 
 uint32_t reg_get_channel_reg_power(struct wlan_objmgr_pdev *pdev,
@@ -199,7 +199,7 @@ uint32_t reg_get_channel_freq(struct wlan_objmgr_pdev *pdev,
 
 uint16_t reg_get_bw_value(enum phy_ch_width bw);
 
-void reg_set_dfs_region(struct wlan_objmgr_psoc *psoc,
+void reg_set_dfs_region(struct wlan_objmgr_pdev *pdev,
 			enum dfs_reg dfs_reg);
 
 QDF_STATUS reg_get_domain_from_country_code(v_REGDOMAIN_t *reg_domain_ptr,
@@ -249,8 +249,8 @@ QDF_STATUS reg_get_current_chan_list(struct wlan_objmgr_pdev *pdev,
 				     struct regulatory_channel
 				     *chan_list);
 
-QDF_STATUS reg_program_chan_list(struct wlan_objmgr_psoc *psoc,
-		struct cc_regdmn_s *rd);
+QDF_STATUS reg_program_chan_list(struct wlan_objmgr_pdev *pdev,
+				 struct cc_regdmn_s *rd);
 
 void reg_update_nol_ch(struct wlan_objmgr_pdev *pdev, uint8_t *ch_list,
 		       uint8_t num_ch, bool nol_ch);
@@ -290,11 +290,11 @@ void reg_program_mas_chan_list(struct wlan_objmgr_psoc *psoc,
 			       uint8_t *alpha2,
 			       enum dfs_reg dfs_region);
 
-QDF_STATUS reg_program_default_cc(struct wlan_objmgr_psoc *psoc,
-		uint16_t regdmn);
+QDF_STATUS reg_program_default_cc(struct wlan_objmgr_pdev *pdev,
+				  uint16_t regdmn);
 
-QDF_STATUS reg_get_current_cc(struct wlan_objmgr_psoc *psoc,
-		struct cc_regdmn_s *rd);
+QDF_STATUS reg_get_current_cc(struct wlan_objmgr_pdev *pdev,
+			      struct cc_regdmn_s *rd);
 
 QDF_STATUS reg_get_curr_band(struct wlan_objmgr_pdev *pdev,
 		enum band_info *band);

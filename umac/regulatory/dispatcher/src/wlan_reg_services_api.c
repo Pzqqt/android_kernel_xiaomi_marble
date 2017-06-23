@@ -133,13 +133,13 @@ void wlan_reg_set_channel_params(struct wlan_objmgr_pdev *pdev, uint8_t ch,
  *
  * Return: None
  */
-void wlan_reg_get_dfs_region(struct wlan_objmgr_psoc *psoc,
+void wlan_reg_get_dfs_region(struct wlan_objmgr_pdev *pdev,
 			     enum dfs_reg *dfs_reg)
 {
 	/*
 	 * Get the current dfs region
 	 */
-	reg_get_dfs_region(psoc, dfs_reg);
+	reg_get_dfs_region(pdev, dfs_reg);
 }
 
 uint32_t wlan_reg_get_channel_reg_power(struct wlan_objmgr_pdev *pdev,
@@ -202,10 +202,10 @@ enum channel_state wlan_reg_get_bonded_channel_state(
  *
  * Return: None
  */
-void wlan_reg_set_dfs_region(struct wlan_objmgr_psoc *psoc,
+void wlan_reg_set_dfs_region(struct wlan_objmgr_pdev *pdev,
 			     enum dfs_reg dfs_reg)
 {
-	reg_set_dfs_region(psoc, dfs_reg);
+	reg_set_dfs_region(pdev, dfs_reg);
 }
 
 QDF_STATUS wlan_reg_get_domain_from_country_code(v_REGDOMAIN_t *reg_domain_ptr,

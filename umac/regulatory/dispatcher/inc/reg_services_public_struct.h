@@ -457,8 +457,13 @@ struct cur_reg_rule {
 /**
  * struct cur_regulatory_info
  * @psoc: psoc ptr
- * @cc_setting_code: cc setting regdb value
+ * @status_code: status value
+ * @num_phy: number of phy
+ * @phy_id: phy id
+ * @reg_dmn_pair: reg domain pair
+ * @ctry_code: country code
  * @alpha2: country alpha2
+ * @offload_enabled: offload enabled
  * @dfs_reg: dfs region
  * @phybitmap: phy bit map
  * @min_bw_2g: minimum 2G bw
@@ -474,6 +479,7 @@ struct cur_regulatory_info {
 	struct wlan_objmgr_psoc *psoc;
 	enum cc_setting_code status_code;
 	uint8_t num_phy;
+	uint8_t phy_id;
 	uint16_t reg_dmn_pair;
 	uint16_t ctry_code;
 	uint8_t alpha2[REG_ALPHA2_LEN + 1];
@@ -546,6 +552,26 @@ struct reg_sched_payload {
 enum direction {
 	NORTHBOUND,
 	SOUTHBOUND,
+};
+
+/**
+ * struct mas_chan_params
+ * @dfs_region: dfs region
+ * @phybitmap: phybitmap
+ * @mas_chan_list: master chan list
+ * @default_country: default country
+ * @current_country: current country
+ * @reg_dmn_pair: reg domain pair
+ * @ctry_code: country code
+ */
+struct mas_chan_params {
+	enum dfs_reg dfs_region;
+	uint32_t phybitmap;
+	struct regulatory_channel mas_chan_list[NUM_CHANNELS];
+	char default_country[REG_ALPHA2_LEN + 1];
+	char current_country[REG_ALPHA2_LEN + 1];
+	uint16_t reg_dmn_pair;
+	uint16_t ctry_code;
 };
 
 #endif

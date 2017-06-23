@@ -129,7 +129,7 @@ void wlan_reg_set_channel_params(struct wlan_objmgr_pdev *pdev, uint8_t ch,
  *
  * Return: None
  */
-void wlan_reg_get_dfs_region(struct wlan_objmgr_psoc *psoc,
+void wlan_reg_get_dfs_region(struct wlan_objmgr_pdev *pdev,
 			     enum dfs_reg *dfs_reg);
 
 /**
@@ -174,12 +174,12 @@ enum channel_state wlan_reg_get_bonded_channel_state(
 
 /**
  * wlan_reg_set_dfs_region() - set the dfs region
- * @psoc: psoc ptr
+ * @pdev: pdev ptr
  * @dfs_reg: dfs region
  *
  * Return: void
  */
-void wlan_reg_set_dfs_region(struct wlan_objmgr_psoc *psoc,
+void wlan_reg_set_dfs_region(struct wlan_objmgr_pdev *pdev,
 			     enum dfs_reg dfs_reg);
 
 /**

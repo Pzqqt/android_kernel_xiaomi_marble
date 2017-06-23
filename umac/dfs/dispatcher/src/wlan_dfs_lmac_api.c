@@ -87,12 +87,9 @@ void lmac_dfs_disable(struct wlan_objmgr_pdev *pdev, int no_cac)
 
 int lmac_get_dfsdomain(struct wlan_objmgr_pdev *pdev)
 {
-	struct wlan_objmgr_psoc *psoc;
 	enum dfs_reg dfsdomain;
 
-	psoc = wlan_pdev_get_psoc(pdev);
-
-	wlan_reg_get_dfs_region(psoc, &dfsdomain);
+	wlan_reg_get_dfs_region(pdev, &dfsdomain);
 
 	return dfsdomain;
 }

@@ -17800,11 +17800,12 @@ static QDF_STATUS extract_reg_chan_list_update_event_tlv(
 	reg_info->num_2g_reg_rules = chan_list_event_hdr->num_2g_reg_rules;
 	reg_info->num_5g_reg_rules = chan_list_event_hdr->num_5g_reg_rules;
 	qdf_mem_copy(reg_info->alpha2, &(chan_list_event_hdr->alpha2),
-			REG_ALPHA2_LEN);
+		     REG_ALPHA2_LEN);
 	reg_info->dfs_region = chan_list_event_hdr->dfs_region;
 	reg_info->phybitmap = chan_list_event_hdr->phybitmap;
 	reg_info->offload_enabled = true;
 	reg_info->num_phy = chan_list_event_hdr->num_phy;
+	reg_info->phy_id = chan_list_event_hdr->phy_id;
 	reg_info->ctry_code = chan_list_event_hdr->country_id;
 	reg_info->reg_dmn_pair = chan_list_event_hdr->domain_code;
 	if (chan_list_event_hdr->status_code == WMI_REG_SET_CC_STATUS_PASS)

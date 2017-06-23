@@ -501,7 +501,7 @@ QDF_STATUS dfs_get_random_channel(
 		goto random_chan_error;
 	}
 
-	wlan_reg_get_dfs_region(psoc, &dfs_reg);
+	wlan_reg_get_dfs_region(pdev, &dfs_reg);
 	chan_list = qdf_mem_malloc(num_chan * sizeof(*chan_list));
 	if (!chan_list) {
 		DFS_PRINTK("%s: mem alloc failed\n", __func__);
