@@ -593,7 +593,7 @@ bool csr_scan_active_ll_remove_entry(struct sAniSirGlobal *mac_ctx,
 	found_sme_cmd = &sme_cmd->Link;
 	if (found_sme_cmd == entry)
 		return true;
-	
+
 	return false;
 }
 
@@ -1273,7 +1273,7 @@ uint16_t csr_check_concurrent_channel_overlap(tpAniSirGlobal mac_ctx,
 			QDF_MCC_TO_SCC_SWITCH_FORCE_WITHOUT_DISCONNECTION) ||
 		(cc_switch_mode ==
 			QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL))) {
-		if (!((intf_ch < 14 && sap_ch < 14) ||
+		if (!((intf_ch <= 14 && sap_ch <= 14) ||
 			(intf_ch > 14 && sap_ch > 14)))
 			intf_ch = 0;
 		else if (cc_switch_mode ==

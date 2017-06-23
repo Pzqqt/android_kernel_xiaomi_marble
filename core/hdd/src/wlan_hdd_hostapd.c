@@ -2703,6 +2703,7 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 	struct hdd_context *hdd_ctx;
 	hdd_station_ctx_t *hdd_sta_ctx;
 	hdd_adapter_t *sta_adapter;
+	uint8_t temp_channel = 0;
 	hdd_adapter_t *ap_adapter = wlan_hdd_get_adapter_from_vdev(
 					psoc, vdev_id);
 	if (!ap_adapter) {
@@ -2750,11 +2751,17 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 		!policy_mgr_is_safe_channel(psoc,
 			hdd_sta_ctx->conn_info.operationChannel)) {
 		if (policy_mgr_is_hw_dbs_capable(psoc)) {
-			if (WLAN_REG_IS_5GHZ_CH(
-				hdd_sta_ctx->conn_info.operationChannel))
-				intf_ch = CDS_24_GHZ_CHANNEL_6;
-			else
-				intf_ch = CDS_5_GHZ_CHANNEL_36;
+			temp_channel =
+				policy_mgr_get_alternate_channel_for_sap(psoc);
+			if (temp_channel) {
+				intf_ch = temp_channel;
+			} else {
+				if (WLAN_REG_IS_5GHZ_CH(
+					hdd_sta_ctx->conn_info.operationChannel))
+					intf_ch = CDS_24_GHZ_CHANNEL_6;
+				else
+					intf_ch = CDS_5_GHZ_CHANNEL_36;
+			}
 		} else {
 			hdd_debug("can't move sap to %d",
 				hdd_sta_ctx->conn_info.operationChannel);

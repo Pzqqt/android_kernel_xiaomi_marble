@@ -2302,13 +2302,31 @@ uint8_t sap_select_channel(tHalHandle hal, ptSapContext sap_ctx,
 		if (best_ch_num == SAP_CHANNEL_NOT_SELECTED)
 			continue;
 
-		if (operating_band != eCSR_DOT11_MODE_11g)
+		if (operating_band != eCSR_DOT11_MODE_11g) {
+			QDF_TRACE(QDF_MODULE_ID_SAP,
+				QDF_TRACE_LEVEL_INFO_HIGH,
+				"operating_band %d", operating_band);
 			continue;
+		}
 
 		/* Give preference to Non-overlap channels */
 		if (false == sap_filter_over_lap_ch(sap_ctx,
-				spect_info->pSpectCh[count].chNum))
+				spect_info->pSpectCh[count].chNum)) {
+			QDF_TRACE(QDF_MODULE_ID_SAP,
+				QDF_TRACE_LEVEL_INFO_HIGH,
+				"sap_filter_over_lap_ch is false");
 			continue;
+		}
+
+		if (wlan_reg_is_dfs_ch(mac_ctx->pdev,
+				spect_info->pSpectCh[count].chNum) &&
+			policy_mgr_disallow_mcc(mac_ctx->psoc,
+				spect_info->pSpectCh[count].chNum)) {
+			QDF_TRACE(QDF_MODULE_ID_SAP,
+				QDF_TRACE_LEVEL_INFO_HIGH,
+				"No DFS MCC");
+			continue;
+		}
 
 		if (spect_info->pSpectCh[count].weight_copy >
 				sap_ctx->acsBestChannelInfo.weight)
