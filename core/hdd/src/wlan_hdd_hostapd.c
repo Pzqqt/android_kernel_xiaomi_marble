@@ -669,19 +669,23 @@ QDF_STATUS hdd_chan_change_notify(hdd_adapter_t *adapter,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	switch (chan_change.chan_params.sec_ch_offset) {
-	case PHY_SINGLE_CHANNEL_CENTERED:
-		channel_type = NL80211_CHAN_HT20;
-		break;
-	case PHY_DOUBLE_CHANNEL_HIGH_PRIMARY:
-		channel_type = NL80211_CHAN_HT40MINUS;
-		break;
-	case PHY_DOUBLE_CHANNEL_LOW_PRIMARY:
-		channel_type = NL80211_CHAN_HT40PLUS;
-		break;
-	default:
+	if (chan_change.chan_params.ch_width) {
+		switch (chan_change.chan_params.sec_ch_offset) {
+		case PHY_SINGLE_CHANNEL_CENTERED:
+			channel_type = NL80211_CHAN_HT20;
+			break;
+		case PHY_DOUBLE_CHANNEL_HIGH_PRIMARY:
+			channel_type = NL80211_CHAN_HT40MINUS;
+			break;
+		case PHY_DOUBLE_CHANNEL_LOW_PRIMARY:
+			channel_type = NL80211_CHAN_HT40PLUS;
+			break;
+		default:
+			channel_type = NL80211_CHAN_NO_HT;
+			break;
+		}
+	} else {
 		channel_type = NL80211_CHAN_NO_HT;
-		break;
 	}
 
 	cfg80211_chandef_create(&chandef, chan, channel_type);
