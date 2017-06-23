@@ -54,9 +54,9 @@ QDF_STATUS(*htt_h2t_rx_ring_cfg_msg)(struct htt_pdev_t *pdev);
 QDF_STATUS(*htt_h2t_rx_ring_rfs_cfg_msg)(struct htt_pdev_t *pdev);
 
 #ifdef IPA_OFFLOAD
-static A_STATUS htt_ipa_config(htt_pdev_handle pdev, A_STATUS status)
+static QDF_STATUS htt_ipa_config(htt_pdev_handle pdev, QDF_STATUS status)
 {
-	if ((A_OK == status) &&
+	if ((QDF_STATUS_SUCCESS == status) &&
 	    ol_cfg_ipa_uc_offload_enabled(pdev->ctrl_pdev))
 		status = htt_h2t_ipa_uc_rsc_cfg_msg(pdev);
 	return status;
@@ -220,7 +220,7 @@ htt_htc_tx_htt2_service_start(struct htt_pdev_t *pdev,
 			      struct htc_service_connect_req *connect_req,
 			      struct htc_service_connect_resp *connect_resp)
 {
-	A_STATUS status;
+	QDF_STATUS status;
 
 	qdf_mem_set(connect_req, 0, sizeof(struct htc_service_connect_req));
 	qdf_mem_set(connect_resp, 0, sizeof(struct htc_service_connect_resp));
@@ -240,7 +240,7 @@ htt_htc_tx_htt2_service_start(struct htt_pdev_t *pdev,
 
 	status = htc_connect_service(pdev->htc_pdev, connect_req, connect_resp);
 
-	if (status != A_OK) {
+	if (status != QDF_STATUS_SUCCESS) {
 		pdev->htc_tx_htt2_endpoint = ENDPOINT_UNUSED;
 		pdev->htc_tx_htt2_max_size = 0;
 	} else {
@@ -249,7 +249,7 @@ htt_htc_tx_htt2_service_start(struct htt_pdev_t *pdev,
 	}
 
 	qdf_print("TX HTT %s, ep %d size %d\n",
-		  (status == A_OK ? "ON" : "OFF"),
+		  (status == QDF_STATUS_SUCCESS ? "ON" : "OFF"),
 		  pdev->htc_tx_htt2_endpoint,
 		  pdev->htc_tx_htt2_max_size);
 }
@@ -593,12 +593,12 @@ fail1:
 	return ret;
 }
 
-A_STATUS htt_attach_target(htt_pdev_handle pdev)
+QDF_STATUS htt_attach_target(htt_pdev_handle pdev)
 {
-	A_STATUS status;
+	QDF_STATUS status;
 
 	status = htt_h2t_ver_req_msg(pdev);
-	if (status != A_OK)
+	if (status != QDF_STATUS_SUCCESS)
 		return status;
 
 #if defined(HELIUMPLUS)
@@ -696,7 +696,7 @@ int htt_htc_attach(struct htt_pdev_t *pdev, uint16_t service_id)
 {
 	struct htc_service_connect_req connect;
 	struct htc_service_connect_resp response;
-	A_STATUS status;
+	QDF_STATUS status;
 
 	qdf_mem_set(&connect, sizeof(connect), 0);
 	qdf_mem_set(&response, sizeof(response), 0);
@@ -729,7 +729,7 @@ int htt_htc_attach(struct htt_pdev_t *pdev, uint16_t service_id)
 
 	status = htc_connect_service(pdev->htc_pdev, &connect, &response);
 
-	if (status != A_OK) {
+	if (status != QDF_STATUS_SUCCESS) {
 		if (!cds_is_fw_down())
 			QDF_BUG(0);
 

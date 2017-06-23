@@ -1755,7 +1755,7 @@ ol_attach_fail:
 static A_STATUS ol_txrx_pdev_attach_target(struct cdp_pdev *ppdev)
 {
 	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
-	return htt_attach_target(pdev->htt_pdev) == A_OK ? 0:1;
+	return htt_attach_target(pdev->htt_pdev) == QDF_STATUS_SUCCESS ? 0:1;
 }
 
 /**

@@ -85,7 +85,7 @@ htt_attach(struct htt_pdev_t *pdev, int desc_pool_size);
  *
  * @param htt_pdev - handle to the HTT instance being initialized
  */
-A_STATUS htt_attach_target(htt_pdev_handle htt_pdev);
+QDF_STATUS htt_attach_target(htt_pdev_handle htt_pdev);
 
 /**
  * enum htt_op_mode - Virtual device operation mode
