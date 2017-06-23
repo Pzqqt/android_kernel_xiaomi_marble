@@ -52,10 +52,7 @@
 #include "wlan_cfg80211.h"
 #endif
 #include <qca_vendor.h>
-
-#ifdef NAPIER_SCAN
 #include <wlan_cfg80211_scan.h>
-#endif
 
 #define MAX_RATES                       12
 #define HDD_WAKE_LOCK_SCAN_DURATION (5 * 1000) /* in msec */
@@ -287,27 +284,6 @@ static QDF_STATUS wlan_hdd_scan_request_dequeue(hdd_context_t *hdd_ctx,
 }
 #endif
 
-/**
- * hdd_abort_mac_scan() - aborts ongoing mac scan
- * @pHddCtx: Pointer to hdd context
- * @sessionId: session id
- * @scan_id: scan id
- * @reason: abort reason
- *
- * Abort any MAC scan if in progress
- *
- * Return: none
- */
-void hdd_abort_mac_scan(hdd_context_t *pHddCtx, uint8_t sessionId,
-			uint32_t scan_id, eCsrAbortReason reason)
-{
-#ifndef NAPIER_SCAN
-	sme_abort_mac_scan(pHddCtx->hHal, sessionId, scan_id, reason);
-#else
-	wlan_abort_scan(pHddCtx->hdd_pdev, INVAL_PDEV_ID,
-		sessionId, scan_id, false);
-#endif
-}
 /**
  * hdd_vendor_scan_callback() - Scan completed callback event
  * @hddctx: HDD context
@@ -1725,61 +1701,7 @@ int wlan_hdd_cfg80211_vendor_scan(struct wiphy *wiphy,
 
 	return ret;
 }
-/* Below code will be removed once common scan module is available.*/
-#ifndef NAPIER_SCAN
-/**
- * wlan_hdd_get_scanid() - API to get the scan id
- * from the scan cookie attribute.
- * @hdd_ctx: Pointer to HDD context
- * @scan_id: Pointer to scan id
- * @cookie : Scan cookie attribute
- *
- * API to get the scan id from the scan cookie attribute
- * sent from supplicant by matching scan request.
- *
- * Return: 0 for success, non zero for failure
- */
-static int wlan_hdd_get_scanid(hdd_context_t *hdd_ctx,
-			       uint32_t *scan_id, uint64_t cookie)
-{
-	struct hdd_scan_req *scan_req;
-	qdf_list_node_t *node = NULL;
-	qdf_list_node_t *ptr_node = NULL;
-	int ret = -EINVAL;
 
-	qdf_spin_lock(&hdd_ctx->hdd_scan_req_q_lock);
-	if (qdf_list_empty(&hdd_ctx->hdd_scan_req_q)) {
-		qdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
-		return ret;
-	}
-
-	if (QDF_STATUS_SUCCESS !=
-	    qdf_list_peek_front(&hdd_ctx->hdd_scan_req_q,
-	    &ptr_node)) {
-		qdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
-		return ret;
-	}
-
-	do {
-		node = ptr_node;
-		scan_req = container_of(node, struct hdd_scan_req, node);
-
-		if (cookie ==
-		    (uintptr_t)(scan_req->scan_request)) {
-			*scan_id = scan_req->scan_id;
-			ret = 0;
-			break;
-		}
-	} while (QDF_STATUS_SUCCESS ==
-		 qdf_list_peek_next(&hdd_ctx->hdd_scan_req_q,
-		 node, &ptr_node));
-
-	qdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
-
-	return ret;
-
-}
-#endif
 /**
  * __wlan_hdd_vendor_abort_scan() - API to process vendor command for
  * abort scan
@@ -1797,11 +1719,6 @@ static int __wlan_hdd_vendor_abort_scan(
 		int data_len)
 {
 	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
-#ifndef NAPIER_SCAN
-	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_SCAN_MAX + 1];
-	uint32_t scan_id = 0;
-	uint64_t cookie;
-#endif
 	int ret;
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
@@ -1813,30 +1730,9 @@ static int __wlan_hdd_vendor_abort_scan(
 	if (0 != ret)
 		return ret;
 
-/* Below code will be removed once common scan module is available.*/
-#ifndef NAPIER_SCAN
-	ret = -EINVAL;
-	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_SCAN_MAX, data,
-		      data_len, scan_policy)) {
-		hdd_err("Invalid ATTR");
-		return ret;
-	}
-
-	if (tb[QCA_WLAN_VENDOR_ATTR_SCAN_COOKIE]) {
-		cookie = nla_get_u64(
-			    tb[QCA_WLAN_VENDOR_ATTR_SCAN_COOKIE]);
-		ret = wlan_hdd_get_scanid(hdd_ctx,
-					  &scan_id,
-					  cookie);
-		if (ret != 0)
-			return ret;
-		wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
-				HDD_SESSION_ID_INVALID, scan_id, false);
-	}
-#else
 	wlan_vendor_abort_scan(hdd_ctx->hdd_pdev, data,
 				data_len);
-#endif
+
 	return ret;
 }
 
@@ -2103,11 +1999,8 @@ static void __wlan_hdd_cfg80211_abort_scan(struct wiphy *wiphy,
 	if (ret)
 		return;
 
-#ifndef NAPIER_SCAN
-	wlan_hdd_scan_abort(adapter);
-#else
 	wlan_cfg80211_abort_scan(hdd_ctx->hdd_pdev);
-#endif
+
 	EXIT();
 }
 

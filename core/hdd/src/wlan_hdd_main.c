@@ -8987,12 +8987,11 @@ static void hdd_features_deinit(hdd_context_t *hdd_ctx)
 	wlan_hdd_tsf_deinit(hdd_ctx);
 }
 
-#ifdef NAPIER_SCAN
 /**
- * hdd_post_cds_enable_config() - HDD post cds start config helper
- * @adapter - Pointer to the HDD
+ * hdd_register_bcn_cb() - register scan beacon callback
+ * @hdd_ctx - Pointer to the HDD context
  *
- * Return: None
+ * Return: QDF_STATUS
  */
 static inline QDF_STATUS hdd_register_bcn_cb(hdd_context_t *hdd_ctx)
 {
@@ -9009,13 +9008,6 @@ static inline QDF_STATUS hdd_register_bcn_cb(hdd_context_t *hdd_ctx)
 
 	return QDF_STATUS_SUCCESS;
 }
-#else
-static inline QDF_STATUS hdd_register_bcn_cb(hdd_context_t *hdd_ctx)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-#endif
 
 /**
  * hdd_configure_cds() - Configure cds modules

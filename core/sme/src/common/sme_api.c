@@ -5923,25 +5923,6 @@ QDF_STATUS sme_set_keep_alive(tHalHandle hHal, uint8_t session_id,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS sme_abort_mac_scan(tHalHandle hHal, uint8_t sessionId,
-			      uint32_t scan_id, eCsrAbortReason reason)
-{
-	QDF_STATUS status;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_ABORT_MACSCAN, NO_SESSION, 0));
-	status = sme_acquire_global_lock(&pMac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_scan_abort_mac_scan(pMac, sessionId,
-						 scan_id, reason);
-
-		sme_release_global_lock(&pMac->sme);
-	}
-
-	return status;
-}
-
 /* ----------------------------------------------------------------------------
     \fn sme_get_operation_channel
     \brief API to get current channel on which STA is parked
