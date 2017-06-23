@@ -1238,7 +1238,7 @@ static void reg_fill_channel_info(enum channel_enum chan_enum,
 }
 
 
-static void populate_band_channels(enum channel_enum start_chan,
+static void reg_populate_band_channels(enum channel_enum start_chan,
 				   enum channel_enum end_chan,
 				   struct cur_reg_rule *rule_start_ptr,
 				   uint32_t num_reg_rules,
@@ -1280,7 +1280,7 @@ static void populate_band_channels(enum channel_enum start_chan,
 	}
 }
 
-static void update_max_bw_per_rule(uint32_t num_reg_rules,
+static void reg_update_max_bw_per_rule(uint32_t num_reg_rules,
 				   struct cur_reg_rule *reg_rule_start,
 				   uint16_t max_bw)
 {
@@ -1291,7 +1291,7 @@ static void update_max_bw_per_rule(uint32_t num_reg_rules,
 			min(reg_rule_start[count].max_bw, max_bw);
 }
 
-static void do_auto_bw_correction(uint32_t num_reg_rules,
+static void reg_do_auto_bw_correction(uint32_t num_reg_rules,
 				  struct cur_reg_rule *reg_rule_ptr,
 				  uint16_t max_bw)
 {
@@ -1311,7 +1311,7 @@ static void do_auto_bw_correction(uint32_t num_reg_rules,
 	}
 }
 
-static void modify_chan_list_for_dfs_channels(struct regulatory_channel
+static void reg_modify_chan_list_for_dfs_channels(struct regulatory_channel
 					      *chan_list,
 					      bool dfs_enabled)
 {
@@ -1330,7 +1330,7 @@ static void modify_chan_list_for_dfs_channels(struct regulatory_channel
 	}
 }
 
-static void modify_chan_list_for_indoor_channels(struct regulatory_channel
+static void reg_modify_chan_list_for_indoor_channels(struct regulatory_channel
 						 *chan_list, bool
 						 indoor_chan_enabled)
 {
@@ -1350,7 +1350,7 @@ static void modify_chan_list_for_indoor_channels(struct regulatory_channel
 	}
 }
 
-static void modify_chan_list_for_band(struct regulatory_channel *chan_list,
+static void reg_modify_chan_list_for_band(struct regulatory_channel *chan_list,
 				      enum band_info band_val)
 {
 	enum channel_enum chan_enum;
@@ -1376,7 +1376,7 @@ static void modify_chan_list_for_band(struct regulatory_channel *chan_list,
 	}
 }
 
-static void modify_chan_list_for_fcc_channel(struct regulatory_channel
+static void reg_modify_chan_list_for_fcc_channel(struct regulatory_channel
 					     *chan_list,
 					     bool set_fcc_channel)
 {
@@ -1387,7 +1387,7 @@ static void modify_chan_list_for_fcc_channel(struct regulatory_channel
 }
 
 static void
-modify_chan_list_for_nol_list(struct regulatory_channel *chan_list)
+reg_modify_chan_list_for_nol_list(struct regulatory_channel *chan_list)
 {
 	enum channel_enum chan_enum;
 
@@ -1403,7 +1403,7 @@ modify_chan_list_for_nol_list(struct regulatory_channel *chan_list)
 }
 
 static void
-modify_chan_list_for_freq_range(struct regulatory_channel *chan_list,
+reg_modify_chan_list_for_freq_range(struct regulatory_channel *chan_list,
 				uint32_t low_freq_2g,
 				uint32_t high_freq_2g,
 				uint32_t low_freq_5g,
@@ -1469,7 +1469,7 @@ modify_chan_list_for_freq_range(struct regulatory_channel *chan_list,
 	}
 }
 
-static void init_pdev_mas_chan_list(struct wlan_regulatory_pdev_priv_obj
+static void reg_init_pdev_mas_chan_list(struct wlan_regulatory_pdev_priv_obj
 				    *pdev_priv_obj,
 				    struct mas_chan_params
 				    *mas_chan_params)
@@ -1493,35 +1493,35 @@ static void init_pdev_mas_chan_list(struct wlan_regulatory_pdev_priv_obj
 }
 
 
-static void compute_pdev_current_chan_list(struct wlan_regulatory_pdev_priv_obj
+static void reg_compute_pdev_current_chan_list(struct wlan_regulatory_pdev_priv_obj
 					   *pdev_priv_obj)
 {
 	qdf_mem_copy(pdev_priv_obj->cur_chan_list,
 		     pdev_priv_obj->mas_chan_list,
 		     NUM_CHANNELS * sizeof(struct regulatory_channel));
 
-	modify_chan_list_for_freq_range(pdev_priv_obj->cur_chan_list,
+	reg_modify_chan_list_for_freq_range(pdev_priv_obj->cur_chan_list,
 					pdev_priv_obj->range_2g_low,
 					pdev_priv_obj->range_2g_high,
 					pdev_priv_obj->range_5g_low,
 					pdev_priv_obj->range_5g_high);
 
-	modify_chan_list_for_band(pdev_priv_obj->cur_chan_list,
+	reg_modify_chan_list_for_band(pdev_priv_obj->cur_chan_list,
 				  pdev_priv_obj->band_capability);
 
-	modify_chan_list_for_dfs_channels(pdev_priv_obj->cur_chan_list,
+	reg_modify_chan_list_for_dfs_channels(pdev_priv_obj->cur_chan_list,
 					  pdev_priv_obj->dfs_enabled);
 
-	modify_chan_list_for_nol_list(pdev_priv_obj->cur_chan_list);
+	reg_modify_chan_list_for_nol_list(pdev_priv_obj->cur_chan_list);
 
-	modify_chan_list_for_indoor_channels(pdev_priv_obj->cur_chan_list,
+	reg_modify_chan_list_for_indoor_channels(pdev_priv_obj->cur_chan_list,
 					 pdev_priv_obj->indoor_chan_enabled);
 
-	modify_chan_list_for_fcc_channel(pdev_priv_obj->cur_chan_list,
+	reg_modify_chan_list_for_fcc_channel(pdev_priv_obj->cur_chan_list,
 					 pdev_priv_obj->set_fcc_channel);
 }
 
-static void call_chan_change_cbks(struct wlan_objmgr_psoc *psoc,
+static void reg_call_chan_change_cbks(struct wlan_objmgr_psoc *psoc,
 				  struct wlan_objmgr_pdev *pdev)
 {
 	struct chan_change_cbk_entry *cbk_list;
@@ -1584,7 +1584,7 @@ static struct reg_sched_payload
 	return payload;
 }
 
-static QDF_STATUS chan_change_flush_cbk_sb(struct scheduler_msg *msg)
+static QDF_STATUS reg_chan_change_flush_cbk_sb(struct scheduler_msg *msg)
 {
 	struct reg_sched_payload *load = msg->bodyptr;
 	struct wlan_objmgr_psoc *psoc = load->psoc;
@@ -1597,13 +1597,13 @@ static QDF_STATUS chan_change_flush_cbk_sb(struct scheduler_msg *msg)
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS sched_chan_change_cbks_sb(struct scheduler_msg *msg)
+static QDF_STATUS reg_sched_chan_change_cbks_sb(struct scheduler_msg *msg)
 {
 	struct reg_sched_payload *load = msg->bodyptr;
 	struct wlan_objmgr_psoc *psoc = load->psoc;
 	struct wlan_objmgr_pdev *pdev = load->pdev;
 
-	call_chan_change_cbks(psoc, pdev);
+	reg_call_chan_change_cbks(psoc, pdev);
 
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_REGULATORY_SB_ID);
 	wlan_objmgr_psoc_release_ref(psoc, WLAN_REGULATORY_SB_ID);
@@ -1612,7 +1612,7 @@ static QDF_STATUS sched_chan_change_cbks_sb(struct scheduler_msg *msg)
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS chan_change_flush_cbk_nb(struct scheduler_msg *msg)
+static QDF_STATUS reg_chan_change_flush_cbk_nb(struct scheduler_msg *msg)
 {
 	struct reg_sched_payload *load = msg->bodyptr;
 	struct wlan_objmgr_psoc *psoc = load->psoc;
@@ -1625,13 +1625,13 @@ static QDF_STATUS chan_change_flush_cbk_nb(struct scheduler_msg *msg)
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS sched_chan_change_cbks_nb(struct scheduler_msg *msg)
+static QDF_STATUS reg_sched_chan_change_cbks_nb(struct scheduler_msg *msg)
 {
 	struct reg_sched_payload *load = msg->bodyptr;
 	struct wlan_objmgr_psoc *psoc = load->psoc;
 	struct wlan_objmgr_pdev *pdev = load->pdev;
 
-	call_chan_change_cbks(psoc, pdev);
+	reg_call_chan_change_cbks(psoc, pdev);
 
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_REGULATORY_NB_ID);
 	wlan_objmgr_psoc_release_ref(psoc, WLAN_REGULATORY_NB_ID);
@@ -1640,7 +1640,7 @@ static QDF_STATUS sched_chan_change_cbks_nb(struct scheduler_msg *msg)
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS send_scheduler_msg_sb(struct wlan_objmgr_psoc *psoc,
+static QDF_STATUS reg_send_scheduler_msg_sb(struct wlan_objmgr_psoc *psoc,
 					struct wlan_objmgr_pdev *pdev)
 {
 	struct scheduler_msg msg = {0};
@@ -1669,8 +1669,8 @@ static QDF_STATUS send_scheduler_msg_sb(struct wlan_objmgr_psoc *psoc,
 	}
 
 	msg.bodyptr = payload;
-	msg.callback = sched_chan_change_cbks_sb;
-	msg.flush_callback = chan_change_flush_cbk_sb;
+	msg.callback = reg_sched_chan_change_cbks_sb;
+	msg.flush_callback = reg_chan_change_flush_cbk_sb;
 
 	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -1683,7 +1683,7 @@ static QDF_STATUS send_scheduler_msg_sb(struct wlan_objmgr_psoc *psoc,
 	return status;
 }
 
-static QDF_STATUS send_scheduler_msg_nb(struct wlan_objmgr_psoc *psoc,
+static QDF_STATUS reg_send_scheduler_msg_nb(struct wlan_objmgr_psoc *psoc,
 					struct wlan_objmgr_pdev *pdev)
 {
 	struct scheduler_msg msg = {0};
@@ -1711,8 +1711,8 @@ static QDF_STATUS send_scheduler_msg_nb(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_NOMEM;
 	}
 	msg.bodyptr = payload;
-	msg.callback = sched_chan_change_cbks_nb;
-	msg.flush_callback = chan_change_flush_cbk_nb;
+	msg.callback = reg_sched_chan_change_cbks_nb;
+	msg.flush_callback = reg_chan_change_flush_cbk_nb;
 
 	status = scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -1725,7 +1725,7 @@ static QDF_STATUS send_scheduler_msg_nb(struct wlan_objmgr_psoc *psoc,
 	return status;
 }
 
-static QDF_STATUS send_11d_flush_cbk(struct scheduler_msg *msg)
+static QDF_STATUS reg_send_11d_flush_cbk(struct scheduler_msg *msg)
 {
 	struct wlan_objmgr_psoc *psoc = msg->bodyptr;
 
@@ -1734,7 +1734,7 @@ static QDF_STATUS send_11d_flush_cbk(struct scheduler_msg *msg)
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS send_11d_msg_cbk(struct scheduler_msg *msg)
+static QDF_STATUS reg_send_11d_msg_cbk(struct scheduler_msg *msg)
 {
 	struct wlan_objmgr_psoc *psoc = msg->bodyptr;
 	struct wlan_lmac_if_reg_tx_ops *tx_ops;
@@ -1768,7 +1768,7 @@ static QDF_STATUS send_11d_msg_cbk(struct scheduler_msg *msg)
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS sched_11d_msg(struct wlan_objmgr_psoc *psoc)
+static QDF_STATUS reg_sched_11d_msg(struct wlan_objmgr_psoc *psoc)
 {
 	struct scheduler_msg msg = {0};
 	QDF_STATUS status;
@@ -1780,8 +1780,8 @@ static QDF_STATUS sched_11d_msg(struct wlan_objmgr_psoc *psoc)
 	}
 
 	msg.bodyptr = psoc;
-	msg.callback = send_11d_msg_cbk;
-	msg.flush_callback = send_11d_flush_cbk;
+	msg.callback = reg_send_11d_msg_cbk;
+	msg.flush_callback = reg_send_11d_flush_cbk;
 
 	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -1820,10 +1820,10 @@ static void reg_propagate_mas_chan_list_to_pdev(struct wlan_objmgr_psoc *psoc,
 	}
 
 	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
-	init_pdev_mas_chan_list(pdev_priv_obj,
+	reg_init_pdev_mas_chan_list(pdev_priv_obj,
 		      &psoc_priv_obj->mas_chan_params[pdev_id]);
 
-	compute_pdev_current_chan_list(pdev_priv_obj);
+	reg_compute_pdev_current_chan_list(pdev_priv_obj);
 
 	reg_tx_ops = reg_get_psoc_tx_ops(psoc);
 	if(reg_tx_ops->fill_umac_legacy_chanlist)
@@ -1831,9 +1831,9 @@ static void reg_propagate_mas_chan_list_to_pdev(struct wlan_objmgr_psoc *psoc,
 				pdev_priv_obj->cur_chan_list);
 
 	if (*dir == NORTHBOUND)
-		send_scheduler_msg_nb(psoc, pdev);
+		reg_send_scheduler_msg_nb(psoc, pdev);
 	else
-		send_scheduler_msg_sb(psoc, pdev);
+		reg_send_scheduler_msg_sb(psoc, pdev);
 }
 
 static void reg_run_11d_state_machine(struct wlan_objmgr_psoc *psoc)
@@ -1860,7 +1860,7 @@ static void reg_run_11d_state_machine(struct wlan_objmgr_psoc *psoc)
 	reg_debug("inside 11d state machine");
 	if ((temp_11d_support != psoc_priv_obj->enable_11d_supp) &&
 	    (psoc_priv_obj->is_11d_offloaded)) {
-		sched_11d_msg(psoc);
+		reg_sched_11d_msg(psoc);
 	}
 }
 
@@ -1938,27 +1938,27 @@ QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info
 	max_bw_2g = regulat_info->max_bw_2g;
 	reg_rule_2g = regulat_info->reg_rules_2g_ptr;
 	num_2g_reg_rules = regulat_info->num_2g_reg_rules;
-	update_max_bw_per_rule(num_2g_reg_rules,
+	reg_update_max_bw_per_rule(num_2g_reg_rules,
 			       reg_rule_2g, max_bw_2g);
 
 	min_bw_5g = regulat_info->min_bw_5g;
 	max_bw_5g = regulat_info->max_bw_5g;
 	reg_rule_5g = regulat_info->reg_rules_5g_ptr;
 	num_5g_reg_rules = regulat_info->num_5g_reg_rules;
-	update_max_bw_per_rule(num_5g_reg_rules,
+	reg_update_max_bw_per_rule(num_5g_reg_rules,
 			       reg_rule_5g, max_bw_5g);
 
 	if (num_5g_reg_rules != 0)
-		do_auto_bw_correction(num_5g_reg_rules,
+		reg_do_auto_bw_correction(num_5g_reg_rules,
 				      reg_rule_5g, max_bw_5g);
 
 	if (num_2g_reg_rules != 0)
-		populate_band_channels(MIN_24GHZ_CHANNEL, MAX_24GHZ_CHANNEL,
+		reg_populate_band_channels(MIN_24GHZ_CHANNEL, MAX_24GHZ_CHANNEL,
 				       reg_rule_2g, num_2g_reg_rules,
 				       min_bw_2g, mas_chan_list);
 
 	if (num_5g_reg_rules != 0)
-		populate_band_channels(MIN_5GHZ_CHANNEL, MAX_5GHZ_CHANNEL,
+		reg_populate_band_channels(MIN_5GHZ_CHANNEL, MAX_5GHZ_CHANNEL,
 				       reg_rule_5g,
 				       num_5g_reg_rules,
 				       min_bw_5g, mas_chan_list);
@@ -2143,9 +2143,9 @@ QDF_STATUS reg_set_band(struct wlan_objmgr_pdev *pdev,
 	reg_info("setting band_info: %d", band);
 	pdev_priv_obj->band_capability = band;
 
-	compute_pdev_current_chan_list(pdev_priv_obj);
+	reg_compute_pdev_current_chan_list(pdev_priv_obj);
 
-	status = send_scheduler_msg_sb(psoc, pdev);
+	status = reg_send_scheduler_msg_sb(psoc, pdev);
 
 	return status;
 }
@@ -2184,9 +2184,9 @@ QDF_STATUS reg_set_fcc_constraint(struct wlan_objmgr_pdev *pdev,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	compute_pdev_current_chan_list(pdev_priv_obj);
+	reg_compute_pdev_current_chan_list(pdev_priv_obj);
 
-	status = send_scheduler_msg_sb(psoc, pdev);
+	status = reg_send_scheduler_msg_sb(psoc, pdev);
 
 	return status;
 }
@@ -2226,9 +2226,9 @@ QDF_STATUS reg_enable_dfs_channels(struct wlan_objmgr_pdev *pdev,
 
 	pdev_priv_obj->dfs_enabled = enable;
 
-	compute_pdev_current_chan_list(pdev_priv_obj);
+	reg_compute_pdev_current_chan_list(pdev_priv_obj);
 
-	status = send_scheduler_msg_sb(psoc, pdev);
+	status = reg_send_scheduler_msg_sb(psoc, pdev);
 
 	return status;
 }
@@ -2313,12 +2313,12 @@ QDF_STATUS wlan_regulatory_pdev_obj_created_notification(
 	pdev_priv_obj->range_5g_high = range_5g_high;
 	pdev_priv_obj->wireless_modes = reg_cap_ptr->wireless_modes;
 
-	init_pdev_mas_chan_list(pdev_priv_obj,
+	reg_init_pdev_mas_chan_list(pdev_priv_obj,
 				&psoc_priv_obj->mas_chan_params[pdev_id]);
 
-	compute_pdev_current_chan_list(pdev_priv_obj);
+	reg_compute_pdev_current_chan_list(pdev_priv_obj);
 
-	status = send_scheduler_msg_sb(parent_psoc, pdev);
+	status = reg_send_scheduler_msg_sb(parent_psoc, pdev);
 
 	if (QDF_IS_STATUS_ERROR(status)) {
 		qdf_mem_free(pdev_priv_obj);
@@ -2560,7 +2560,7 @@ void reg_update_nol_ch(struct wlan_objmgr_pdev *pdev,
 		mas_chan_list[chan_enum].nol_chan = nol_chan;
 	}
 
-	compute_pdev_current_chan_list(pdev_priv_obj);
+	reg_compute_pdev_current_chan_list(pdev_priv_obj);
 }
 
 static void reg_change_pdev_for_config(struct wlan_objmgr_psoc *psoc,
@@ -2592,9 +2592,9 @@ static void reg_change_pdev_for_config(struct wlan_objmgr_psoc *psoc,
 		psoc_priv_obj->indoor_chan_enabled;
 	pdev_priv_obj->band_capability = psoc_priv_obj->band_capability;
 
-	compute_pdev_current_chan_list(pdev_priv_obj);
+	reg_compute_pdev_current_chan_list(pdev_priv_obj);
 
-	send_scheduler_msg_sb(psoc, pdev);
+	reg_send_scheduler_msg_sb(psoc, pdev);
 }
 
 QDF_STATUS reg_set_config_vars(struct wlan_objmgr_psoc *psoc,
