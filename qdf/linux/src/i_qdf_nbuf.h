@@ -155,53 +155,67 @@ struct qdf_nbuf_cb {
 				uint8_t dp_trace:1,
 						rsrvd:7;
 			} trace;
-		} rx; /* 36 bytes */
+		} rx;
 
 		/* Note: MAX: 40 bytes */
 		struct {
-			struct {
-				unsigned char *vaddr;
-				qdf_paddr_t paddr;
-				uint16_t len;
-				union {
-					struct {
-						uint8_t flag_efrag:1,
-							flag_nbuf:1,
-							num:1,
-							flag_chfrag_start:1,
-							flag_chfrag_cont:1,
-							flag_chfrag_end:1,
-							flag_ext_header:1,
-							reserved:1;
-					} bits;
-					uint8_t u8;
-				} flags;
-			}  extra_frag; /* 19 bytes */
+			unsigned char *vaddr;
+			qdf_paddr_t paddr;
 			union {
 				struct {
+					uint16_t len;
+					union {
+						struct {
+							uint8_t flag_efrag:1,
+								flag_nbuf:1,
+								num:1,
+								flag_chfrag_start:1,
+								flag_chfrag_cont:1,
+								flag_chfrag_end:1,
+								flag_ext_header:1,
+								reserved:1;
+						} bits;
+						uint8_t u8;
+					} flags;
+					uint8_t ftype;
+
 					union {
 						struct {
 							uint8_t packet_state:7,
-							is_packet_priv:1;
+								is_packet_priv:1;
 							uint8_t packet_track:4,
 								proto_type:4;
 							uint8_t dp_trace:1,
 								is_bcast:1,
 								is_mcast:1,
 								packet_type:3,
-							/* used only for hl*/
+								/* used only for hl*/
 								htt2_frm:1,
 								print:1;
 							uint8_t vdev_id;
-						} trace; /* 4 bytes */
+						} trace;
 						uint32_t submit_ts;
 					} u;
-					uint8_t ftype;
 					void *fctx;
 					void *vdev_ctx;
-				} win; /* 21 bytes*/
+				} win;
 				struct {
-					uint32_t data_attr; /* 4 bytes */
+					uint16_t len;
+					union {
+						struct {
+							uint8_t flag_efrag:1,
+								flag_nbuf:1,
+								num:1,
+								flag_chfrag_start:1,
+								flag_chfrag_cont:1,
+								flag_chfrag_end:1,
+								flag_ext_header:1,
+								reserved:1;
+						} bits;
+						uint8_t u8;
+					} flags;
+					uint8_t ftype;
+					uint32_t data_attr;
 					struct{
 						uint8_t packet_state;
 						uint8_t packet_track:4,
@@ -214,18 +228,20 @@ struct qdf_nbuf_cb {
 							htt2_frm:1,
 							print:1;
 						uint8_t vdev_id;
-					} trace; /* 4 bytes */
+					} trace;
 					struct {
 						uint32_t owned:1,
 							priv:31;
-					} ipa; /* 4 */
-					uint16_t desc_id; /* 2 bytes */
-					uint8_t ftype; /*1 byte */
-				} mcl;/* 15 bytes*/
+					} ipa;
+					uint16_t desc_id;
+				} mcl;
 			} dev;
-		} tx; /* 40 bytes */
+		} tx;
 	} u;
 }; /* struct qdf_nbuf_cb: MAX 48 bytes */
+
+QDF_COMPILE_TIME_ASSERT(qdf_nbuf_cb_size,
+	(sizeof(struct qdf_nbuf_cb)) <= FIELD_SIZEOF(struct sk_buff, cb));
 
 /**
  *  access macros to qdf_nbuf_cb
@@ -271,33 +287,62 @@ struct qdf_nbuf_cb {
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.trace.dp_trace)
 
 #define QDF_NBUF_CB_TX_EXTRA_FRAG_VADDR(skb) \
-	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.extra_frag.vaddr)
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.vaddr)
 #define QDF_NBUF_CB_TX_EXTRA_FRAG_PADDR(skb) \
-	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.extra_frag.paddr.dma_addr)
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.paddr.dma_addr)
+
+#ifdef CONFIG_WIN
 #define QDF_NBUF_CB_TX_EXTRA_FRAG_LEN(skb) \
-	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.extra_frag.len)
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.win.len)
 #define QDF_NBUF_CB_TX_NUM_EXTRA_FRAGS(skb) \
-	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.extra_frag.flags.bits.num)
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.win.flags.bits.num)
 #define QDF_NBUF_CB_TX_EXTRA_FRAG_WORDSTR_FLAGS(skb) \
-	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.extra_frag.flags.u8)
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.win.flags.u8)
 #define QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_CHFRAG_START(skb) \
 	(((struct qdf_nbuf_cb *) \
-	((skb)->cb))->u.tx.extra_frag.flags.bits.flag_chfrag_start)
+	((skb)->cb))->u.tx.dev.win.flags.bits.flag_chfrag_start)
 #define QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_CHFRAG_CONT(skb) \
 	(((struct qdf_nbuf_cb *) \
-	((skb)->cb))->u.tx.extra_frag.flags.bits.flag_chfrag_cont)
+	((skb)->cb))->u.tx.dev.win.flags.bits.flag_chfrag_cont)
 #define QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_CHFRAG_END(skb) \
 		(((struct qdf_nbuf_cb *) \
-		((skb)->cb))->u.tx.extra_frag.flags.bits.flag_chfrag_end)
+		((skb)->cb))->u.tx.dev.win.flags.bits.flag_chfrag_end)
 #define QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_EXT_HEADER(skb) \
 		(((struct qdf_nbuf_cb *) \
-		((skb)->cb))->u.tx.extra_frag.flags.bits.flag_ext_header)
+		((skb)->cb))->u.tx.dev.win.flags.bits.flag_ext_header)
 #define QDF_NBUF_CB_TX_EXTRA_FRAG_WORDSTR_EFRAG(skb) \
 	(((struct qdf_nbuf_cb *) \
-		((skb)->cb))->u.tx.extra_frag.flags.bits.flag_efrag)
+		((skb)->cb))->u.tx.dev.win.flags.bits.flag_efrag)
 #define QDF_NBUF_CB_TX_EXTRA_FRAG_WORDSTR_NBUF(skb) \
 	(((struct qdf_nbuf_cb *) \
-		((skb)->cb))->u.tx.extra_frag.flags.bits.flag_nbuf)
+		((skb)->cb))->u.tx.dev.win.flags.bits.flag_nbuf)
+#else
+#define QDF_NBUF_CB_TX_EXTRA_FRAG_LEN(skb) \
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.mcl.len)
+#define QDF_NBUF_CB_TX_NUM_EXTRA_FRAGS(skb) \
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.mcl.flags.bits.num)
+#define QDF_NBUF_CB_TX_EXTRA_FRAG_WORDSTR_FLAGS(skb) \
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.mcl.flags.u8)
+#define QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_CHFRAG_START(skb) \
+	(((struct qdf_nbuf_cb *) \
+	((skb)->cb))->u.tx.dev.mcl.flags.bits.flag_chfrag_start)
+#define QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_CHFRAG_CONT(skb) \
+	(((struct qdf_nbuf_cb *) \
+	((skb)->cb))->u.tx.dev.mcl.flags.bits.flag_chfrag_cont)
+#define QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_CHFRAG_END(skb) \
+		(((struct qdf_nbuf_cb *) \
+		((skb)->cb))->u.tx.dev.mcl.flags.bits.flag_chfrag_end)
+#define QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_EXT_HEADER(skb) \
+		(((struct qdf_nbuf_cb *) \
+		((skb)->cb))->u.tx.dev.mcl.flags.bits.flag_ext_header)
+#define QDF_NBUF_CB_TX_EXTRA_FRAG_WORDSTR_EFRAG(skb) \
+	(((struct qdf_nbuf_cb *) \
+		((skb)->cb))->u.tx.dev.mcl.flags.bits.flag_efrag)
+#define QDF_NBUF_CB_TX_EXTRA_FRAG_WORDSTR_NBUF(skb) \
+	(((struct qdf_nbuf_cb *) \
+		((skb)->cb))->u.tx.dev.mcl.flags.bits.flag_nbuf)
+#endif
+
 #define QDF_NBUF_CB_TX_DATA_ATTR(skb) \
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.mcl.data_attr)
 #define QDF_NBUF_UPDATE_TX_PKT_COUNT(skb, PACKET_STATE) \
@@ -387,7 +432,7 @@ struct qdf_nbuf_cb {
 		((skb)->cb))->u.tx.dev.win.u.trace.proto_type)
 
 #define QDF_NBUF_GET_PACKET_TRACK(skb)\
-	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.win.trace.packet_track)
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.win.u.trace.packet_track)
 
 #define QDF_NBUF_CB_TX_DP_TRACE(skb)\
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.win.u.trace.dp_trace)
