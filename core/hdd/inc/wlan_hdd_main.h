@@ -2226,6 +2226,7 @@ int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			   bool reinit);
 int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx, bool ftm_mode);
 int hdd_start_adapter(hdd_adapter_t *adapter);
+void hdd_populate_random_mac_addr(hdd_context_t *hdd_ctx, uint32_t num);
 
 /**
  * hdd_get_bss_entry() - Get the bss entry matching the chan, bssid and ssid

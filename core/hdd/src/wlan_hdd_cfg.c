@@ -6154,6 +6154,7 @@ QDF_STATUS hdd_update_mac_config(hdd_context_t *pHddCtx)
 	char *line, *buffer = NULL;
 	char *temp = NULL;
 	char *name, *value;
+	int max_mac_addr = QDF_MAX_CONCURRENCY_PERSONA;
 	tCfgIniEntry macTable[QDF_MAX_CONCURRENCY_PERSONA];
 	tSirMacAddr customMacAddr;
 
@@ -6229,6 +6230,9 @@ QDF_STATUS hdd_update_mac_config(hdd_context_t *pHddCtx)
 	}
 
 	update_mac_from_string(pHddCtx, &macTable[0], i);
+	hdd_debug("Populating remaining %d Mac addreses",
+		   max_mac_addr - i);
+	hdd_populate_random_mac_addr(pHddCtx, max_mac_addr - i);
 
 	qdf_mem_copy(&customMacAddr,
 		     &pHddCtx->config->intfMacAddr[0].bytes[0],
