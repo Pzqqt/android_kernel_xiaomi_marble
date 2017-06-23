@@ -32,7 +32,7 @@
 #define SCAN_HASH_SIZE 64
 #define SCAN_GET_HASH(addr) \
 	(((const uint8_t *)(addr))[QDF_MAC_ADDR_SIZE - 1] % SCAN_HASH_SIZE)
-#define MAX_SCAN_CACHE_SIZE 300
+
 /* Hidden ssid age time in millisec */
 #define HIDDEN_SSID_TIME (1*60*1000)
 
