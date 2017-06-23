@@ -134,15 +134,21 @@ struct reg_domain_pair {
 
 /**
  * enum ctl_value - CTL value
- * @CTL_FCC: FCC
- * @CTL_MKK: MKK
- * @CTL_ETSI: ETSI
- * @CTL_NONE: no CTL
+ * @CTL_FCC: CTL FCC
+ * @CTL_MKK: CTL MKK
+ * @CTL_ETSI: CTL ETSI
+ * @CTL_KOR: CTL KOR
+ * @CTL_CHN: CTL CHINA
+ * @CTL_USER_DEF: CTL USER_DEF
+ * @CTL_NONE: CTL NONE
  */
 enum ctl_value {
 	CTL_FCC = 0x10,
-	CTL_MKK = 0x40,
 	CTL_ETSI = 0x30,
+	CTL_MKK = 0x40,
+	CTL_KOR = 0x50,
+	CTL_CHN = 0x60,
+	CTL_USER_DEF = 0x70,
 	CTL_NONE = 0xff
 };
 

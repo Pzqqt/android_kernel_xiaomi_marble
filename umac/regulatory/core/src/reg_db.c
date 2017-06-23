@@ -677,10 +677,10 @@ const struct regdomain regdomains_2g[] = {
 	[MKKA] = {CTL_MKK, DFS_UNINIT_REG, 0, 0, 2, {CHAN_1_13_1, CHAN_14_1} },
 	[MKKC] = {CTL_MKK, DFS_UNINIT_REG, 0, 0, 1, {CHAN_1_13_1} },
 	[ETSIC] = {CTL_ETSI, DFS_UNINIT_REG, 0, 0, 1, {CHAN_1_13_2} },
-	[WORLD_2G_1] = {CTL_FCC, DFS_UNINIT_REG, 0, 0, 1, {CHAN_1_11_2} },
-	[WORLD_2G_2] = {CTL_FCC, DFS_UNINIT_REG, 0, 0, 2,
+	[WORLD_2G_1] = {CTL_NONE, DFS_UNINIT_REG, 0, 0, 1, {CHAN_1_11_2} },
+	[WORLD_2G_2] = {CTL_NONE, DFS_UNINIT_REG, 0, 0, 2,
 			{CHAN_1_11_2, CHAN_12_13_1} },
-	[WORLD_2G_3] = {CTL_FCC, DFS_UNINIT_REG, 0, 0, 3,
+	[WORLD_2G_3] = {CTL_NONE, DFS_UNINIT_REG, 0, 0, 3,
 			{CHAN_1_11_2, CHAN_12_13_1, CHAN_14_2} },
 };
 
@@ -888,10 +888,10 @@ const struct regdomain regdomains_5g[] = {
 					       CHAN_4910_4990_1,
 					       CHAN_5030_5090_1} },
 
-	[WORLD_5G_1] = {CTL_FCC, DFS_UNINIT_REG, 2, 0, 2, {CHAN_5170_5330_1,
+	[WORLD_5G_1] = {CTL_NONE, DFS_UNINIT_REG, 2, 0, 2, {CHAN_5170_5330_1,
 						       CHAN_5735_5835_5} },
 
-	[WORLD_5G_2] = {CTL_FCC, DFS_UNINIT_REG, 2, 0, 3, {CHAN_5170_5330_1,
+	[WORLD_5G_2] = {CTL_NONE, DFS_UNINIT_REG, 2, 0, 3, {CHAN_5170_5330_1,
 						       CHAN_5490_5730_3,
 						       CHAN_5735_5835_5} },
 };
