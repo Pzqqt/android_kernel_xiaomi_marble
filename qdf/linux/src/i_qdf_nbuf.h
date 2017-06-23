@@ -196,9 +196,9 @@ struct qdf_nbuf_cb {
 						} trace; /* 4 bytes */
 						uint32_t submit_ts;
 					} u;
+					uint8_t ftype;
 					void *fctx;
 					void *vdev_ctx;
-					uint8_t ftype;
 				} win; /* 21 bytes*/
 				struct {
 					uint32_t data_attr; /* 4 bytes */
@@ -220,7 +220,8 @@ struct qdf_nbuf_cb {
 							priv:31;
 					} ipa; /* 4 */
 					uint16_t desc_id; /* 2 bytes */
-				} mcl;/* 14 bytes*/
+					uint8_t ftype; /*1 byte */
+				} mcl;/* 15 bytes*/
 			} dev;
 		} tx; /* 40 bytes */
 	} u;
@@ -309,8 +310,6 @@ struct qdf_nbuf_cb {
 #define QDF_NBUF_CB_TX_IPA_PRIV(skb) \
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.mcl.ipa.priv)
 
-#define QDF_NBUF_CB_TX_FTYPE(skb) \
-	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.win.ftype)
 
 #define QDF_NBUF_CB_TX_FCTX(skb) \
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.win.fctx)
@@ -360,6 +359,8 @@ struct qdf_nbuf_cb {
 #define QDF_NBUF_CB_SET_MCAST(skb) \
 	(((struct qdf_nbuf_cb *) \
 		((skb)->cb))->u.tx.dev.mcl.trace.is_mcast = true)
+#define QDF_NBUF_CB_TX_FTYPE(skb) \
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.mcl.ftype)
 
 #else
 
@@ -416,6 +417,9 @@ struct qdf_nbuf_cb {
 #define QDF_NBUF_CB_SET_MCAST(skb) \
 	(((struct qdf_nbuf_cb *) \
 		((skb)->cb))->u.tx.dev.win.u.trace.is_mcast = true)
+
+#define QDF_NBUF_CB_TX_FTYPE(skb) \
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.win.ftype)
 #endif
 
 /* assume the OS provides a single fragment */
@@ -491,6 +495,11 @@ typedef void (*qdf_nbuf_free_t)(__qdf_nbuf_t);
 
 #define __qdf_nbuf_get_vdev_ctx(skb) \
 	QDF_NBUF_CB_TX_VDEV_CTX((skb))
+
+#define __qdf_nbuf_set_ftype(skb, type) \
+	do { \
+		QDF_NBUF_CB_TX_FTYPE((skb)) = (type); \
+	} while (0)
 
 #define __qdf_nbuf_set_fctx_type(skb, ctx, type) \
 	do { \

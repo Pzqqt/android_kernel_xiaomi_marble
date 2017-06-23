@@ -560,6 +560,12 @@ qdf_nbuf_set_vdev_ctx(qdf_nbuf_t buf, void *vdev_ctx)
 }
 
 static inline void
+qdf_nbuf_set_ftype(qdf_nbuf_t buf, uint8_t type)
+{
+	__qdf_nbuf_set_ftype(buf, type);
+}
+
+static inline void
 qdf_nbuf_set_fctx_type(qdf_nbuf_t buf, void *ctx, uint8_t type)
 {
 	__qdf_nbuf_set_fctx_type(buf, ctx, type);
