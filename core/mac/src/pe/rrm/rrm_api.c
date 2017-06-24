@@ -768,6 +768,7 @@ rrm_process_beacon_report_xmit(tpAniSirGlobal mac_ctx,
 	tpPESession session_entry;
 	uint8_t session_id, counter;
 	uint8_t bss_desc_count = 0;
+	uint8_t report_index = 0;
 
 	pe_debug("Received beacon report xmit indication");
 
@@ -881,12 +882,23 @@ rrm_process_beacon_report_xmit(tpAniSirGlobal mac_ctx,
 				break;
 			}
 		}
-		pe_info("Sending Action frame with %d bss info",
-			bss_desc_count);
-		lim_send_radio_measure_report_action_frame(mac_ctx,
-			curr_req->dialog_token, bss_desc_count, report,
-			beacon_xmit_ind->bssId, session_entry);
+		/*
+		 * Each frame can hold RADIO_REPORTS_MAX_IN_A_FRAME reports.
+		 * Multiple frames may be sent if bss_desc_count is larger.
+		 */
+		while (report_index < bss_desc_count) {
+			int m_count;
 
+			m_count = QDF_MIN((bss_desc_count - report_index),
+					RADIO_REPORTS_MAX_IN_A_FRAME);
+			pe_info("Sending Action frame with %d bss info",
+				m_count);
+			lim_send_radio_measure_report_action_frame(mac_ctx,
+				curr_req->dialog_token, m_count,
+				&report[report_index],
+				beacon_xmit_ind->bssId, session_entry);
+			report_index += m_count;
+		}
 		curr_req->sendEmptyBcnRpt = false;
 	}
 
