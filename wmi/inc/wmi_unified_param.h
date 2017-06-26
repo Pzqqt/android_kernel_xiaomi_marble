@@ -1995,6 +1995,7 @@ struct roam_offload_scan_rssi_params {
 	int dense_min_aps_cnt;
 	int initial_dense_status;
 	int traffic_threshold;
+	int32_t rssi_thresh_offset_5g;
 };
 
 /**
