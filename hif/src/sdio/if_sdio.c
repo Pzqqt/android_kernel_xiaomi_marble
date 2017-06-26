@@ -307,7 +307,6 @@ static char *dev_info = "ath_hif_sdio";
  */
 static int init_ath_hif_sdio(void)
 {
-	static int probed;
 	QDF_STATUS status;
 	struct osdrv_callbacks osdrv_callbacks;
 
@@ -318,10 +317,6 @@ static int init_ath_hif_sdio(void)
 	osdrv_callbacks.device_suspend_handler = hif_sdio_suspend;
 	osdrv_callbacks.device_resume_handler = hif_sdio_resume;
 	osdrv_callbacks.device_power_change_handler = hif_sdio_power_change;
-
-	if (probed)
-		return -ENODEV;
-	probed++;
 
 	QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_INFO, "%s %d", __func__,
 		  __LINE__);
