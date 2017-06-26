@@ -5798,6 +5798,29 @@ enum hdd_link_speed_rpt_type {
 #define CFG_RATE_FOR_TX_MGMT_5G_MAX        (WNI_CFG_RATE_FOR_TX_MGMT_5G_STAMAX)
 #define CFG_RATE_FOR_TX_MGMT_5G_DEFAULT    (WNI_CFG_RATE_FOR_TX_MGMT_5G_STADEF)
 
+/*
+ * <ini>
+ * gPreventLinkDown - Enable to prevent bus link from going down
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * Enable to prevent bus link from going down. Useful for platforms that do not
+ * (yet) support link down suspend cases.
+ *
+ * Related: N/A
+ *
+ * Supported Feature: Suspend/Resume
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_PREVENT_LINK_DOWN_NAME		"gPreventLinkDown"
+#define CFG_PREVENT_LINK_DOWN_MIN		(0)
+#define CFG_PREVENT_LINK_DOWN_MAX		(1)
+#define CFG_PREVENT_LINK_DOWN_DEFAULT		(0)
+
 #ifdef FEATURE_WLAN_TDLS
 /*
  * <ini>
@@ -10848,6 +10871,7 @@ struct hdd_config {
 	uint8_t enable_tx_ldpc;
 	uint8_t enable_rx_ldpc;
 	bool enable5gEBT;
+	bool prevent_link_down;
 #ifdef FEATURE_WLAN_TDLS
 	bool fEnableTDLSSupport;
 	bool fEnableTDLSImplicitTrigger;

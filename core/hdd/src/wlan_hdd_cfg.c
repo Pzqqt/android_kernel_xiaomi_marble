@@ -2197,6 +2197,13 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_PPS_ENABLE_5G_EBT_FEATURE_MIN,
 		     CFG_PPS_ENABLE_5G_EBT_FEATURE_MAX),
 
+	REG_VARIABLE(CFG_PREVENT_LINK_DOWN_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, prevent_link_down,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_PREVENT_LINK_DOWN_DEFAULT,
+		     CFG_PREVENT_LINK_DOWN_MIN,
+		     CFG_PREVENT_LINK_DOWN_MAX),
+
 #ifdef FEATURE_WLAN_TDLS
 	REG_VARIABLE(CFG_TDLS_SUPPORT_ENABLE, WLAN_PARAM_Integer,
 		     struct hdd_config, fEnableTDLSSupport,
