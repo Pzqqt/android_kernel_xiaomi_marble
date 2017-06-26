@@ -57,6 +57,7 @@ typedef struct sCsrNeighborRoamCfgParams {
 	uint32_t neighbor_scan_min_period;
 	tCsrChannelInfo channelInfo;
 	uint8_t neighborLookupThreshold;
+	int8_t rssi_thresh_offset_5g;
 	uint8_t neighborReassocThreshold;
 	uint32_t minChannelScanTime;
 	uint32_t maxChannelScanTime;

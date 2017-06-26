@@ -1460,6 +1460,7 @@ static void init_config_param(tpAniSirGlobal pMac)
 	pMac->roam.configParam.neighborRoamConfig.nMaxNeighborRetries = 3;
 	pMac->roam.configParam.neighborRoamConfig.nNeighborLookupRssiThreshold =
 		120;
+	pMac->roam.configParam.neighborRoamConfig.rssi_thresh_offset_5g = 0;
 	pMac->roam.configParam.neighborRoamConfig.nOpportunisticThresholdDiff =
 		30;
 	pMac->roam.configParam.neighborRoamConfig.nRoamRescanRssiDiff = 5;
@@ -2605,6 +2606,8 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		sme_debug("nNeighborLookupRssiThreshold: %d",
 			pMac->roam.configParam.neighborRoamConfig.
 			nNeighborLookupRssiThreshold);
+		sme_debug("rssi_thresh_offset_5g: %d",
+			pMac->roam.configParam.neighborRoamConfig.rssi_thresh_offset_5g);
 		sme_debug("nOpportunisticThresholdDiff: %d",
 			pMac->roam.configParam.neighborRoamConfig.
 			nOpportunisticThresholdDiff);
@@ -17996,6 +17999,9 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 		req_buf->LookupThreshold =
 			(int8_t)roam_info->cfgParams.neighborLookupThreshold *
 			(-1);
+	req_buf->rssi_thresh_offset_5g =
+		roam_info->cfgParams.rssi_thresh_offset_5g;
+	sme_debug("5g offset threshold: %d", req_buf->rssi_thresh_offset_5g);
 	qdf_mem_copy(roam_params_dst, roam_params_src,
 		sizeof(struct roam_ext_params));
 	/*
