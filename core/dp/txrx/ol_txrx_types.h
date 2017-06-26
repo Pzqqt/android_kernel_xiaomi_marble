@@ -256,6 +256,23 @@ enum {
 	OL_TX_SCHED_WRR_ADV_NUM_CATEGORIES /* must be last */
 };
 
+A_COMPILE_TIME_ASSERT(ol_tx_sched_htt_ac_values,
+	/* check that regular WMM AC enum values match */
+	((int)OL_TX_SCHED_WRR_ADV_CAT_VO == (int)HTT_AC_WMM_VO) &&
+	((int)OL_TX_SCHED_WRR_ADV_CAT_VI == (int)HTT_AC_WMM_VI) &&
+	((int)OL_TX_SCHED_WRR_ADV_CAT_BK == (int)HTT_AC_WMM_BK) &&
+	((int)OL_TX_SCHED_WRR_ADV_CAT_BE == (int)HTT_AC_WMM_BE) &&
+
+	/* check that extension AC enum values match */
+	((int)OL_TX_SCHED_WRR_ADV_CAT_NON_QOS_DATA
+		== (int)HTT_AC_EXT_NON_QOS) &&
+	((int)OL_TX_SCHED_WRR_ADV_CAT_UCAST_MGMT
+		== (int)HTT_AC_EXT_UCAST_MGMT) &&
+	((int)OL_TX_SCHED_WRR_ADV_CAT_MCAST_DATA
+		== (int)HTT_AC_EXT_MCAST_DATA) &&
+	((int)OL_TX_SCHED_WRR_ADV_CAT_MCAST_MGMT
+		== (int)HTT_AC_EXT_MCAST_MGMT));
+
 struct ol_tx_reorder_cat_timeout_t {
 	TAILQ_HEAD(, ol_rx_reorder_timeout_list_elem_t) virtual_timer_list;
 	qdf_timer_t timer;
