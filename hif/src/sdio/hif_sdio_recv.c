@@ -488,8 +488,9 @@ static inline QDF_STATUS hif_dev_process_trailer(struct hif_sdio_device *pdev,
 					   pBundledLookAheadRpt->LookAhead3;
 					pBundledLookAheadRpt++;
 				}
-
-				*num_look_aheads = i;
+				if (num_look_aheads) {
+					*num_look_aheads = i;
+				}
 			}
 			break;
 		default:
@@ -733,6 +734,9 @@ static QDF_STATUS hif_dev_issue_recv_packet_bundle(struct hif_sdio_device *pdev,
 	     i++) {
 		packet = htc_packet_dequeue(recv_pkt_queue);
 		A_ASSERT(packet != NULL);
+		if (!packet) {
+			break;
+		}
 		padded_length =
 			DEV_CALC_RECV_PADDED_LEN(pdev, packet->ActualLength);
 
@@ -750,13 +754,16 @@ static QDF_STATUS hif_dev_issue_recv_packet_bundle(struct hif_sdio_device *pdev,
 		}
 		packet->PktInfo.AsRx.HTCRxFlags |= HTC_RX_PKT_PART_OF_BUNDLE;
 
-		HTC_PACKET_ENQUEUE(sync_completion_queue, packet);
-
+		if (sync_completion_queue) {
+			HTC_PACKET_ENQUEUE(sync_completion_queue, packet);
+		}
 		total_length += padded_length;
 	}
 #ifdef DEBUG_BUNDLE
 	qdf_print("Recv bundle count %d, length %d.\n",
-		  HTC_PACKET_QUEUE_DEPTH(sync_completion_queue), total_length);
+		sync_completion_queue ?
+		HTC_PACKET_QUEUE_DEPTH(sync_completion_queue) : 0,
+		total_length);
 #endif
 
 	status = hif_read_write(pdev->HIFDevice,
@@ -926,6 +933,10 @@ QDF_STATUS hif_dev_recv_message_pending_handler(struct hif_sdio_device *pdev,
 				/* dequeue one packet */
 				packet = htc_packet_dequeue(&recv_pkt_queue);
 				A_ASSERT(packet != NULL);
+				if (!packet) {
+					break;
+				}
+
 				packet->Completion = NULL;
 
 				if (HTC_PACKET_QUEUE_DEPTH(&recv_pkt_queue) >
@@ -971,6 +982,9 @@ QDF_STATUS hif_dev_recv_message_pending_handler(struct hif_sdio_device *pdev,
 
 			packet = htc_packet_dequeue(&sync_completed_pkts_queue);
 			A_ASSERT(packet != NULL);
+			if (!packet) {
+				break;
+			}
 
 			num_look_aheads = 0;
 			status =
@@ -1064,7 +1078,7 @@ static QDF_STATUS hif_dev_service_cpu_interrupt(struct hif_sdio_device *pdev)
 	 * of CPU INT register
 	 */
 	if (cpu_int_status & 0x1) {
-		if (pdev && pdev->hif_callbacks.fwEventHandler)
+		if (pdev->hif_callbacks.fwEventHandler)
 			/* It calls into HTC which propagates this
 			 * to ol_target_failure()
 			 */

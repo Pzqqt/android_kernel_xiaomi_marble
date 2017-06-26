@@ -122,6 +122,9 @@ QDF_STATUS do_hif_read_write_scatter(struct hif_sdio_dev *device,
 	req_priv = busrequest->scatter_req;
 
 	A_ASSERT(req_priv != NULL);
+	if (!req_priv) {
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	req = req_priv->hif_scatter_req;
 
@@ -226,7 +229,9 @@ QDF_STATUS do_hif_read_write_scatter(struct hif_sdio_dev *device,
 				 (unsigned long)busrequest, status));
 		/* complete the request */
 		A_ASSERT(req->completion_routine != NULL);
-		req->completion_routine(req);
+		if (req->completion_routine) {
+			req->completion_routine(req);
+		}
 	} else {
 		AR_DEBUG_PRINTF(ATH_DEBUG_SCATTER,
 			("HIF-SCATTER async_task upping busreq : 0x%lX (%d)\n",
@@ -258,6 +263,9 @@ static QDF_STATUS hif_read_write_scatter(struct hif_sdio_dev *device,
 	do {
 
 		A_ASSERT(req_priv != NULL);
+		if (!req_priv) {
+			break;
+		}
 
 		AR_DEBUG_PRINTF(ATH_DEBUG_SCATTER,
 			("HIF-SCATTER: total len: %d Scatter Entries: %d\n",
@@ -455,6 +463,9 @@ void cleanup_hif_scatter_resources(struct hif_sdio_dev *device)
 
 		req_priv = (struct HIF_SCATTER_REQ_PRIV *)req->hif_private[0];
 		A_ASSERT(req_priv != NULL);
+		if (!req_priv) {
+			continue;
+		}
 
 		if (req_priv->busrequest != NULL) {
 			req_priv->busrequest->scatter_req = NULL;
