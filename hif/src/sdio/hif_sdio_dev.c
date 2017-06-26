@@ -62,7 +62,6 @@
  * we also need 2 mbox support just as PCIe LL cases.
  */
 
-#define INVALID_MAILBOX_NUMBER 0xFF
 /**
  * hif_dev_map_pipe_to_mail_box() - maps pipe id to mailbox.
  * @pdev: sdio device context

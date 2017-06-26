@@ -34,6 +34,8 @@
 #include "htc_api.h"
 #include "hif_internal.h"
 
+#define INVALID_MAILBOX_NUMBER 0xFF
+
 #define HIF_SDIO_RX_BUFFER_SIZE            1792
 #define HIF_SDIO_RX_DATA_OFFSET            64
 
