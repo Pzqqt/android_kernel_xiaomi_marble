@@ -40,6 +40,7 @@
 #include "qdf_mem.h"   /* qdf_mem_malloc,free */
 
 #define DP_INTR_POLL_TIMER_MS	10
+#define DP_WDS_AGING_TIMER_DEFAULT_MS	6000
 #define DP_MCS_LENGTH (6*MAX_MCS)
 #define DP_NSS_LENGTH (6*SS_COUNT)
 #define DP_RXDMA_ERR_LENGTH (6*MAX_RXDMA_ERRORS)
@@ -878,6 +879,97 @@ static void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
 #define RXDMA_ERR_DST_RING_SIZE 1024
 
 /*
+ * dp_wds_aging_timer_fn() - Timer callback function for WDS aging
+ * @soc: Datapath SOC handle
+ *
+ * This is a timer function used to age out stale WDS nodes from
+ * AST table
+ */
+#ifdef FEATURE_WDS
+static void dp_wds_aging_timer_fn(void *soc_hdl)
+{
+	struct dp_soc *soc = (struct dp_soc *) soc_hdl;
+	struct dp_pdev *pdev;
+	struct dp_vdev *vdev;
+	struct dp_peer *peer;
+	struct dp_ast_entry *ase;
+	int i;
+
+	qdf_spin_lock_bh(&soc->ast_lock);
+
+	for (i = 0; i < MAX_PDEV_CNT && soc->pdev_list[i]; i++) {
+		pdev = soc->pdev_list[i];
+		DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
+			DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
+				DP_PEER_ITERATE_ASE_LIST(peer, ase) {
+					/*
+					 * Do not expire static ast entries
+					 */
+					if (ase->is_static)
+						continue;
+
+					if (ase->is_active) {
+						ase->is_active = FALSE;
+						continue;
+					}
+
+					soc->cdp_soc.ol_ops->peer_del_wds_entry(
+							pdev->osif_pdev,
+							ase->mac_addr.raw);
+
+					dp_peer_del_ast(soc, ase);
+				}
+			}
+		}
+
+	}
+
+	qdf_spin_unlock_bh(&soc->ast_lock);
+
+	if (qdf_atomic_read(&soc->cmn_init_done))
+		qdf_timer_mod(&soc->wds_aging_timer, DP_WDS_AGING_TIMER_DEFAULT_MS);
+}
+
+/*
+ * dp_soc_wds_attach() - Setup WDS timer and AST table
+ * @soc:		Datapath SOC handle
+ *
+ * Return: None
+ */
+static void dp_soc_wds_attach(struct dp_soc *soc)
+{
+	qdf_spinlock_create(&soc->ast_lock);
+
+	qdf_timer_init(soc->osdev, &soc->wds_aging_timer,
+			dp_wds_aging_timer_fn, (void *)soc,
+			QDF_TIMER_TYPE_WAKE_APPS);
+
+	qdf_timer_mod(&soc->wds_aging_timer, DP_WDS_AGING_TIMER_DEFAULT_MS);
+}
+
+/*
+ * dp_soc_wds_detach() - Detach WDS data structures and timers
+ * @txrx_soc: DP SOC handle
+ *
+ * Return: None
+ */
+static void dp_soc_wds_detach(struct dp_soc *soc)
+{
+	qdf_timer_stop(&soc->wds_aging_timer);
+	qdf_timer_free(&soc->wds_aging_timer);
+	qdf_spinlock_destroy(&soc->ast_lock);
+}
+#else
+static void dp_soc_wds_attach(struct dp_soc *soc)
+{
+}
+
+static void dp_soc_wds_detach(struct dp_soc *soc)
+{
+}
+#endif
+
+/*
  * dp_soc_cmn_setup() - Common SoC level initializion
  * @soc:		Datapath SOC handle
  *
@@ -1034,6 +1126,8 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 			FL("dp_srng_setup failed for reo_status_ring"));
 		goto fail1;
 	}
+
+	dp_soc_wds_attach(soc);
 
 	/* Setup HW REO */
 	qdf_mem_zero(&reo_params, sizeof(reo_params));
@@ -1578,6 +1672,9 @@ static void dp_soc_detach_wifi3(void *txrx_soc)
 
 	dp_reo_desc_freelist_destroy(soc);
 	wlan_cfg_soc_detach(soc->wlan_cfg_ctx);
+
+	dp_soc_wds_detach(soc);
+
 	qdf_mem_free(soc);
 }
 
@@ -1960,11 +2057,8 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 	qdf_mem_zero(peer, sizeof(struct dp_peer));
 
 	TAILQ_INIT(&peer->ast_entry_list);
-	qdf_mem_copy(&peer->self_ast_entry.mac_addr, peer_mac_addr,
-			DP_MAC_ADDR_LEN);
-	peer->self_ast_entry.peer = peer;
-	TAILQ_INSERT_TAIL(&peer->ast_entry_list, &peer->self_ast_entry,
-				ast_entry_elem);
+
+	dp_peer_add_ast(soc, peer, peer_mac_addr, 1);
 
 	qdf_spinlock_create(&peer->peer_info_lock);
 
@@ -2007,6 +2101,7 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 		peer->bss_peer = 1;
 		vdev->vap_bss_peer = peer;
 	}
+
 
 #ifndef CONFIG_WIN
 	dp_local_peer_id_alloc(pdev, peer);
@@ -2257,8 +2352,6 @@ void dp_peer_unref_delete(void *peer_handle)
 	struct dp_peer *tmppeer;
 	int found = 0;
 	uint16_t peer_id;
-	uint16_t hw_peer_id;
-	struct dp_ast_entry *ast_entry;
 
 	/*
 	 * Hold the lock all the way from checking if the peer ref count
@@ -2342,17 +2435,6 @@ void dp_peer_unref_delete(void *peer_handle)
 #ifdef notyet
 		qdf_mempool_free(soc->osdev, soc->mempool_ol_ath_peer, peer);
 #else
-		TAILQ_FOREACH(ast_entry, &peer->ast_entry_list,
-				ast_entry_elem) {
-			hw_peer_id = ast_entry->ast_idx;
-			if (peer->self_ast_entry.ast_idx != hw_peer_id)
-				qdf_mem_free(ast_entry);
-			else
-				peer->self_ast_entry.ast_idx =
-							HTT_INVALID_PEER;
-
-			soc->ast_table[hw_peer_id] = NULL;
-		}
 		qdf_mem_free(peer);
 #endif
 		if (soc->cdp_soc.ol_ops->peer_unref_delete) {
@@ -3584,6 +3666,14 @@ static void dp_set_vdev_param(struct cdp_vdev *vdev_handle,
 	case CDP_UPDATE_TDLS_FLAGS:
 		vdev->tdls_link_connected = val;
 		break;
+	case CDP_CFG_WDS_AGING_TIMER:
+		if (val == 0)
+			qdf_timer_stop(&vdev->pdev->soc->wds_aging_timer);
+		else if (val != vdev->wds_aging_timer_val)
+			qdf_timer_mod(&vdev->pdev->soc->wds_aging_timer, val);
+
+		vdev->wds_aging_timer_val = val;
+		break;
 	default:
 		break;
 	}
@@ -3913,6 +4003,48 @@ static struct cdp_wds_ops dp_ops_wds = {
 	.vdev_set_wds = dp_vdev_set_wds,
 };
 
+/*
+ * dp_peer_delete_ast_entries(): Delete all AST entries for a peer
+ * @soc - datapath soc handle
+ * @peer - datapath peer handle
+ *
+ * Delete the AST entries belonging to a peer
+ */
+#ifdef FEATURE_WDS
+static inline void dp_peer_delete_ast_entries(struct dp_soc *soc,
+		struct dp_peer *peer)
+{
+	struct dp_ast_entry *ast_entry;
+	qdf_spin_lock_bh(&soc->ast_lock);
+	DP_PEER_ITERATE_ASE_LIST(peer, ast_entry) {
+		if (ast_entry->next_hop) {
+			soc->cdp_soc.ol_ops->peer_del_wds_entry(
+					soc->osif_soc,
+					ast_entry->mac_addr.raw);
+		}
+
+		dp_peer_del_ast(soc, ast_entry);
+	}
+	qdf_spin_unlock_bh(&soc->ast_lock);
+}
+#else
+static inline void dp_peer_delete_ast_entries(struct dp_soc *soc,
+		struct dp_peer *peer)
+{
+}
+#endif
+
+#ifdef CONFIG_WIN
+static void dp_peer_teardown_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
+{
+	struct dp_vdev *vdev = (struct dp_vdev *) vdev_hdl;
+	struct dp_peer *peer = (struct dp_peer *) peer_hdl;
+	struct dp_soc *soc = (struct dp_soc *) vdev->pdev->soc;
+
+	dp_peer_delete_ast_entries(soc, peer);
+}
+#endif
+
 static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_soc_attach_target = dp_soc_attach_target_wifi3,
 	.txrx_vdev_attach = dp_vdev_attach_wifi3,
@@ -3921,7 +4053,11 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_pdev_detach = dp_pdev_detach_wifi3,
 	.txrx_peer_create = dp_peer_create_wifi3,
 	.txrx_peer_setup = dp_peer_setup_wifi3,
+#ifdef CONFIG_WIN
+	.txrx_peer_teardown = dp_peer_teardown_wifi3,
+#else
 	.txrx_peer_teardown = NULL,
+#endif
 	.txrx_peer_delete = dp_peer_delete_wifi3,
 	.txrx_vdev_register = dp_vdev_register_wifi3,
 	.txrx_soc_detach = dp_soc_detach_wifi3,

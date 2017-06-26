@@ -344,7 +344,7 @@ void dp_rx_add_to_free_desc_list(union dp_rx_desc_list_elem_t **head,
  *
  * Return: void:
  */
-#ifndef CONFIG_MCL
+#ifdef FEATURE_WDS
 static inline void
 dp_rx_wds_srcport_learn(struct dp_soc *soc,
 			 uint8_t *rx_tlv_hdr,
@@ -359,40 +359,61 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 	memcpy(wds_src_mac, (qdf_nbuf_data(nbuf) + IEEE80211_ADDR_LEN),
 		IEEE80211_ADDR_LEN);
 
-	if (!hal_rx_msdu_end_sa_is_valid_get(rx_tlv_hdr)) {
-		ret = soc->cdp_soc.ol_ops->peer_add_wds_entry(
-						ta_peer->vdev->pdev->osif_pdev,
-						wds_src_mac,
-						ta_peer->mac_addr.raw,
-						flags);
-	} else if (sa_sw_peer_id != ta_peer->peer_ids[0]) {
-		ret = soc->cdp_soc.ol_ops->peer_update_wds_entry(
-						ta_peer->vdev->pdev->osif_pdev,
-						wds_src_mac,
-						ta_peer->mac_addr.raw,
-						flags);
+	if (qdf_unlikely(!hal_rx_msdu_end_sa_is_valid_get(rx_tlv_hdr))) {
+		if (!dp_peer_add_ast(soc, ta_peer, wds_src_mac, 0)) {
+			ret = soc->cdp_soc.ol_ops->peer_add_wds_entry(
+					ta_peer->vdev->pdev->osif_pdev,
+					wds_src_mac,
+					ta_peer->mac_addr.raw,
+					flags);
+		}
+	} else {
+		/*
+		 * Get the AST entry from HW SA index and mark it as active
+		 */
+		struct dp_ast_entry *ast;
+		uint16_t sa_idx = hal_rx_msdu_end_sa_idx_get(rx_tlv_hdr);
+		ast = soc->ast_table[sa_idx];
+
+		/*
+		 * Ensure we are updating the right AST entry by
+		 * validating ast_idx.
+		 * There is a possibility we might arrive here without
+		 * AST MAP event , so this check is mandatory
+		 */
+		if (ast && (ast->ast_idx == sa_idx)) {
+			ast->is_active = TRUE;
+		}
+
+		if (sa_sw_peer_id != ta_peer->peer_ids[0]) {
+			ret = soc->cdp_soc.ol_ops->peer_update_wds_entry(
+					ta_peer->vdev->pdev->osif_pdev,
+					wds_src_mac,
+					ta_peer->mac_addr.raw,
+					flags);
+		}
 	}
 	return;
 }
 #else
-static inline void
+	static inline void
 dp_rx_wds_srcport_learn(struct dp_soc *soc,
-			 uint8_t *rx_tlv_hdr,
-			 struct dp_peer *ta_peer,
-			 qdf_nbuf_t nbuf)
+		uint8_t *rx_tlv_hdr,
+		struct dp_peer *ta_peer,
+		qdf_nbuf_t nbuf)
 {
 }
 #endif
 
 uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t nbuf);
 #define DP_RX_LIST_APPEND(head, tail, elem) \
-do {                                                \
-	if (!(head)) {                              \
-		(head) = (elem);                    \
-	} else {                                    \
-		qdf_nbuf_set_next((tail), (elem));  \
-	}                                           \
-	(tail) = (elem);                            \
+	do {                                                \
+		if (!(head)) {                              \
+			(head) = (elem);                    \
+		} else {                                    \
+			qdf_nbuf_set_next((tail), (elem));  \
+		}                                           \
+		(tail) = (elem);                            \
 	qdf_nbuf_set_next((tail), NULL);            \
 } while (0)
 

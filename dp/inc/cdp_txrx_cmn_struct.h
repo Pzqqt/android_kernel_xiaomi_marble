@@ -485,6 +485,7 @@ enum cdp_vdev_param_type {
 	CDP_ENABLE_WDS,
 	CDP_ENABLE_PROXYSTA,
 	CDP_UPDATE_TDLS_FLAGS,
+	CDP_CFG_WDS_AGING_TIMER,
 };
 
 #define TXRX_FW_STATS_TXSTATS                     1

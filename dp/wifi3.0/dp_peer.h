@@ -54,6 +54,23 @@ void dp_rx_sec_ind_handler(void *soc_handle, uint16_t peer_id,
 uint8_t dp_get_peer_mac_addr_frm_id(struct cdp_soc_t *soc_handle,
 		uint16_t peer_id, uint8_t *peer_mac);
 
+#ifdef FEATURE_WDS
+int dp_peer_add_ast(struct dp_soc *soc, struct dp_peer *peer,
+		uint8_t *mac_addr, bool is_self);
+void dp_peer_del_ast(struct dp_soc *soc,
+		struct dp_ast_entry *ast_entry);
+#else
+static inline int dp_peer_add_ast(struct dp_soc *soc, struct dp_peer *peer,
+		uint8_t *mac_addr, bool is_self)
+{
+	return 0;
+}
+static inline void dp_peer_del_ast(struct dp_soc *soc,
+		struct dp_ast_entry *ast_entry)
+{
+}
+#endif
+
 #ifdef DP_LFR
 /*
  * dp_get_vdev_from_soc_vdev_id_wifi3() -

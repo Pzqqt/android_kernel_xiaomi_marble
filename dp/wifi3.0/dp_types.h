@@ -104,6 +104,15 @@ union dp_tx_desc_list_elem_t;
 struct dp_soc;
 union dp_rx_desc_list_elem_t;
 
+#define DP_PDEV_ITERATE_VDEV_LIST(_pdev, _vdev) \
+	TAILQ_FOREACH((_vdev), &(_pdev)->vdev_list, vdev_list_elem)
+
+#define DP_VDEV_ITERATE_PEER_LIST(_vdev, _peer) \
+	TAILQ_FOREACH((_peer), &(_vdev)->peer_list, peer_list_elem)
+
+#define DP_PEER_ITERATE_ASE_LIST(_peer, _ase) \
+	TAILQ_FOREACH((_ase), &peer->ast_entry_list, ase_list_elem)
+
 #define DP_MUTEX_TYPE qdf_spinlock_t
 
 #define DP_FRAME_IS_MULTICAST(_a)  (*(_a) & 0x01)
@@ -380,12 +389,48 @@ struct reo_desc_list_node {
 	struct dp_rx_tid rx_tid;
 };
 
+#define DP_MAC_ADDR_LEN 6
+union dp_align_mac_addr {
+	uint8_t raw[DP_MAC_ADDR_LEN];
+	struct {
+		uint16_t bytes_ab;
+		uint16_t bytes_cd;
+		uint16_t bytes_ef;
+	} align2;
+	struct {
+		uint32_t bytes_abcd;
+		uint16_t bytes_ef;
+	} align4;
+	struct {
+		uint16_t bytes_ab;
+		uint32_t bytes_cdef;
+	} align4_2;
+};
+
+/*
+ * dp_ast_entry
+ *
+ * @ast_idx: Hardware AST Index
+ * @mac_addr:  MAC Address for this AST entry
+ * @peer: Next Hop peer (for non-WDS nodes, this will be point to
+ *        associated peer with this MAC address)
+ * @next_hop: Set to 1 if this is for a WDS node
+ * @is_active: flag to indicate active data traffic on this node
+ *             (used for aging out/expiry)
+ * @is_static: flag to indicate static entry (should not be expired)
+ * @ase_list_elem: node in peer AST list
+ * @hash_list_elem: node in soc AST hash list (mac address used as hash)
+ */
 struct dp_ast_entry {
 	uint16_t ast_idx;
-	uint8_t mac_addr[DP_MAC_ADDR_LEN];
-	uint8_t next_hop;
+	/* MAC address */
+	union dp_align_mac_addr mac_addr;
 	struct dp_peer *peer;
-	TAILQ_ENTRY(dp_ast_entry) ast_entry_elem;
+	bool next_hop;
+	bool is_active;
+	bool is_static;
+	TAILQ_ENTRY(dp_ast_entry) ase_list_elem;
+	TAILQ_ENTRY(dp_ast_entry) hash_list_elem;
 };
 
 struct mect_entry {
@@ -617,6 +662,14 @@ struct dp_soc {
 	bool process_tx_status;
 
 	struct dp_ast_entry *ast_table[WLAN_UMAC_PSOC_MAX_PEERS];
+	struct {
+		unsigned mask;
+		unsigned idx_bits;
+		TAILQ_HEAD(, dp_ast_entry) * bins;
+	} ast_hash;
+
+	qdf_spinlock_t ast_lock;
+	qdf_timer_t wds_aging_timer;
 
 #ifdef DP_INTR_POLL_BASED
 	/*interrupt timer*/
@@ -667,19 +720,6 @@ enum dp_nac_param_cmd {
 	DP_NAC_PARAM_DEL,
 	/* IEEE80211_NAC_PARAM_LIST */
 	DP_NAC_PARAM_LIST,
-};
-#define DP_MAC_ADDR_LEN 6
-union dp_align_mac_addr {
-	uint8_t raw[DP_MAC_ADDR_LEN];
-	struct {
-		uint16_t bytes_ab;
-		uint16_t bytes_cd;
-		uint16_t bytes_ef;
-	} align2;
-	struct {
-		uint32_t bytes_abcd;
-		uint16_t bytes_ef;
-	} align4;
 };
 
 /**
@@ -920,6 +960,9 @@ struct dp_vdev {
 	/* WDS enabled */
 	bool wds_enabled;
 
+	/* WDS Aging timer period */
+	uint32_t wds_aging_timer_val;
+
 	/* NAWDS enabled */
 	bool nawds_enabled;
 
@@ -968,7 +1011,7 @@ struct dp_peer {
 	/* VDEV to which this peer is associated */
 	struct dp_vdev *vdev;
 
-	struct dp_ast_entry self_ast_entry;
+	struct dp_ast_entry *self_ast_entry;
 
 	qdf_atomic_t ref_cnt;
 
