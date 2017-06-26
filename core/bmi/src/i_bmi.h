@@ -59,7 +59,6 @@
 #define AXI_LOCATION            0x000a0000
 #define AXI_SIZE                0x00018000
 
-#define TOTAL_DUMP_SIZE         0x00200000
 #define PCIE_READ_LIMIT         0x00005000
 
 #define SHA256_DIGEST_SIZE      32

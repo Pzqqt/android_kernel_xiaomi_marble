@@ -28,6 +28,7 @@
 #endif
 
 #define PLD_QCA9377_REV1_1_VERSION          0x5020001
+#define TOTAL_DUMP_SIZE         0x00200000
 
 #ifndef CONFIG_CNSS
 #define PLD_AR6004_VERSION_REV1_3           0x31c8088a
@@ -118,6 +119,67 @@ static inline void *pld_sdio_get_virt_ramdump_mem(struct device *dev,
 
 static inline void pld_sdio_device_crashed(struct device *dev)
 {
+}
+#endif
+
+#ifdef CONFIG_PLD_SDIO_CNSS
+/**
+ * pld_hif_sdio_get_virt_ramdump_mem() - Get virtual ramdump memory
+ * @dev: device
+ * @size: buffer to virtual memory size
+ *
+ * Return: virtual ramdump memory address
+ */
+static inline void *pld_hif_sdio_get_virt_ramdump_mem(struct device *dev,
+						unsigned long *size)
+{
+	return cnss_common_get_virt_ramdump_mem(dev, size);
+}
+
+/**
+ * pld_hif_sdio_release_ramdump_mem() - Release virtual ramdump memory
+ * @address: virtual ramdump memory address
+ *
+ * Return: void
+ */
+static inline void pld_hif_sdio_release_ramdump_mem(unsigned long *address)
+{
+}
+#else
+/**
+ * pld_hif_sdio_get_virt_ramdump_mem() - Get virtual ramdump memory
+ * @dev: device
+ * @size: buffer to virtual memory size
+ *
+ * Return: virtual ramdump memory address
+ */
+static inline void *pld_hif_sdio_get_virt_ramdump_mem(struct device *dev,
+						unsigned long *size)
+{
+	size_t length = 0;
+	int flags = GFP_KERNEL;
+
+	length = TOTAL_DUMP_SIZE;
+
+	if (size != NULL)
+		*size = (unsigned long)length;
+
+	if (in_interrupt() || irqs_disabled() || in_atomic())
+		flags = GFP_ATOMIC;
+
+	return kzalloc(length, flags);
+}
+
+/**
+ * pld_hif_sdio_release_ramdump_mem() - Release virtual ramdump memory
+ * @address: virtual ramdump memory address
+ *
+ * Return: void
+ */
+static inline void pld_hif_sdio_release_ramdump_mem(unsigned long *address)
+{
+	if (address != NULL)
+		kfree(address);
 }
 #endif
 #endif
