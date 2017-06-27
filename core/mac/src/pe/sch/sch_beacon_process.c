@@ -787,8 +787,13 @@ static void __sch_beacon_process_for_session(tpAniSirGlobal mac_ctx,
 			return;
 	}
 
-	if (session->htCapability && bcn->HTInfo.present &&
-			!LIM_IS_IBSS_ROLE(session))
+	/*
+	 * For vht session, if opermode ie or vht oper IE is present
+	 * bandwidth change will be taken care using these vht IEs.
+	 */
+	if (!(session->vhtCapability && (bcn->OperatingMode.present ||
+	   bcn->VHTOperation.present)) && session->htCapability &&
+	   bcn->HTInfo.present && !LIM_IS_IBSS_ROLE(session))
 		lim_update_sta_run_time_ht_switch_chnl_params(mac_ctx,
 						&bcn->HTInfo, bssIdx, session);
 
