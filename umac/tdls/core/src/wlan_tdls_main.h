@@ -375,19 +375,15 @@ wlan_vdev_get_tdls_soc_obj(struct wlan_objmgr_vdev *vdev)
 		return NULL;
 	}
 
-	wlan_vdev_obj_lock(vdev);
 	psoc = wlan_vdev_get_psoc(vdev);
-	wlan_vdev_obj_unlock(vdev);
 	if (!psoc) {
 		tdls_err("can't get psoc");
 		return NULL;
 	}
 
-	wlan_psoc_obj_lock(psoc);
 	soc_obj = (struct tdls_soc_priv_obj *)
 		wlan_objmgr_psoc_get_comp_private_obj(psoc,
 						      WLAN_UMAC_COMP_TDLS);
-	wlan_psoc_obj_unlock(psoc);
 
 	return soc_obj;
 }
@@ -406,11 +402,9 @@ wlan_psoc_get_tdls_soc_obj(struct wlan_objmgr_psoc *psoc)
 		tdls_err("NULL psoc");
 		return NULL;
 	}
-	wlan_psoc_obj_lock(psoc);
 	soc_obj = (struct tdls_soc_priv_obj *)
 		wlan_objmgr_psoc_get_comp_private_obj(psoc,
 						      WLAN_UMAC_COMP_TDLS);
-	wlan_psoc_obj_unlock(psoc);
 
 	return soc_obj;
 }
@@ -431,11 +425,9 @@ wlan_vdev_get_tdls_vdev_obj(struct wlan_objmgr_vdev *vdev)
 		return NULL;
 	}
 
-	wlan_vdev_obj_lock(vdev);
 	vdev_obj = (struct tdls_vdev_priv_obj *)
 		wlan_objmgr_vdev_get_comp_private_obj(vdev,
 						      WLAN_UMAC_COMP_TDLS);
-	wlan_vdev_obj_unlock(vdev);
 
 	return vdev_obj;
 }

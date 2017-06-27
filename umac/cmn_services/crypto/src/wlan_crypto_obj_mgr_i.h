@@ -27,10 +27,8 @@
 static inline void *wlan_get_vdev_crypto_obj(struct wlan_objmgr_vdev *vdev)
 {
 	void *crypto_priv;
-	wlan_vdev_obj_lock(vdev);
 	crypto_priv = wlan_objmgr_vdev_get_comp_private_obj(vdev,
 							WLAN_UMAC_COMP_CRYPTO);
-	wlan_vdev_obj_unlock(vdev);
 
 	return crypto_priv;
 }
@@ -38,10 +36,8 @@ static inline void *wlan_get_vdev_crypto_obj(struct wlan_objmgr_vdev *vdev)
 static inline void *wlan_get_peer_crypto_obj(struct wlan_objmgr_peer *peer)
 {
 	void *crypto_priv;
-	wlan_peer_obj_lock(peer);
 	crypto_priv = wlan_objmgr_peer_get_comp_private_obj(peer,
 							WLAN_UMAC_COMP_CRYPTO);
-	wlan_peer_obj_unlock(peer);
 
 	return crypto_priv;
 }

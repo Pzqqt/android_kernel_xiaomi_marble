@@ -1802,6 +1802,7 @@ static inline void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 	struct dp_soc *soc = NULL;
 	struct dp_vdev *vdev = tx_desc->vdev;
 	struct dp_peer *peer = NULL;
+	struct dp_pdev *pdev = NULL;
 	uint8_t comp_status = 0;
 	qdf_mem_zero(&ts, sizeof(struct hal_tx_completion_status));
 	hal_tx_comp_get_status(&tx_desc->comp, &ts);
@@ -1931,15 +1932,19 @@ static inline void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 	/* TODO: This call is temporary.
 	 * Stats update has to be attached to the HTT PPDU message
 	 */
-	if (soc->cdp_soc.ol_ops->update_dp_stats)
-		soc->cdp_soc.ol_ops->update_dp_stats(vdev->pdev->osif_pdev,
-				&peer->stats, ts.peer_id, UPDATE_PEER_STATS);
-
 out:
-	dp_aggregate_vdev_stats(tx_desc->vdev);
-	if (soc->cdp_soc.ol_ops->update_dp_stats)
+	pdev = vdev->pdev;
+
+	if (pdev->enhanced_stats_en && soc->cdp_soc.ol_ops->update_dp_stats) {
+		if (peer) {
+			soc->cdp_soc.ol_ops->update_dp_stats(pdev->osif_pdev,
+					&peer->stats, ts.peer_id,
+					UPDATE_PEER_STATS);
+		}
+		dp_aggregate_vdev_stats(tx_desc->vdev);
 		soc->cdp_soc.ol_ops->update_dp_stats(vdev->pdev->osif_pdev,
 				&vdev->stats, vdev->vdev_id, UPDATE_VDEV_STATS);
+	}
 fail:
 	return;
 }

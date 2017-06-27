@@ -44,9 +44,7 @@ wlan_vdev_get_scan_txops(struct wlan_objmgr_vdev *vdev)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
 
-	wlan_vdev_obj_lock(vdev);
 	psoc = wlan_vdev_get_psoc(vdev);
-	wlan_vdev_obj_unlock(vdev);
 
 	return wlan_psoc_get_scan_txops(psoc);
 }
@@ -56,9 +54,7 @@ wlan_vdev_get_scan_rxops(struct wlan_objmgr_vdev *vdev)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
 
-	wlan_vdev_obj_lock(vdev);
 	psoc = wlan_vdev_get_psoc(vdev);
-	wlan_vdev_obj_unlock(vdev);
 
 	return &((psoc->soc_cb.rx_ops.scan));
 }
@@ -71,9 +67,7 @@ QDF_STATUS tgt_scan_pno_start(struct wlan_objmgr_vdev *vdev,
 	struct wlan_lmac_if_scan_tx_ops *scan_ops;
 	struct wlan_objmgr_psoc *psoc;
 
-	wlan_vdev_obj_lock(vdev);
 	psoc = wlan_vdev_get_psoc(vdev);
-	wlan_vdev_obj_unlock(vdev);
 
 	scan_ops = wlan_psoc_get_scan_txops(psoc);
 	/* invoke wmi_unified_pno_start_cmd() */
@@ -90,9 +84,7 @@ QDF_STATUS tgt_scan_pno_stop(struct wlan_objmgr_vdev *vdev,
 	struct wlan_lmac_if_scan_tx_ops *scan_ops;
 	struct wlan_objmgr_psoc *psoc;
 
-	wlan_vdev_obj_lock(vdev);
 	psoc = wlan_vdev_get_psoc(vdev);
-	wlan_vdev_obj_unlock(vdev);
 
 	scan_ops = wlan_psoc_get_scan_txops(psoc);
 	/* invoke wmi_unified_pno_stop_cmd() */
@@ -111,9 +103,7 @@ tgt_scan_start(struct scan_start_request *req)
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_vdev *vdev = req->vdev;
 
-	wlan_vdev_obj_lock(vdev);
 	psoc = wlan_vdev_get_psoc(vdev);
-	wlan_vdev_obj_unlock(vdev);
 
 	scan_ops = wlan_psoc_get_scan_txops(psoc);
 	/* invoke wmi_unified_scan_start_cmd_send() */
@@ -132,9 +122,7 @@ tgt_scan_cancel(struct scan_cancel_request *req)
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_vdev *vdev = req->vdev;
 
-	wlan_vdev_obj_lock(vdev);
 	psoc = wlan_vdev_get_psoc(vdev);
-	wlan_vdev_obj_unlock(vdev);
 
 	scan_ops = wlan_psoc_get_scan_txops(psoc);
 	/* invoke wmi_unified_scan_stop_cmd_send() */

@@ -61,9 +61,7 @@ static inline enum tQDF_ADAPTER_MODE pmo_get_vdev_opmode(
 {
 	enum tQDF_ADAPTER_MODE opmode;
 
-	wlan_vdev_obj_lock(vdev);
 	opmode = wlan_vdev_mlme_get_opmode(vdev);
-	wlan_vdev_obj_unlock(vdev);
 
 	return opmode;
 }
@@ -186,9 +184,7 @@ static inline enum tQDF_ADAPTER_MODE pmo_core_get_vdev_op_mode(
 
 	if (!vdev)
 		return op_mode;
-	wlan_vdev_obj_lock(vdev);
 	op_mode = wlan_vdev_mlme_get_opmode(vdev);
-	wlan_vdev_obj_unlock(vdev);
 
 	return op_mode;
 }
@@ -361,9 +357,7 @@ bool pmo_is_vdev_up(struct wlan_objmgr_vdev *vdev)
 		pmo_err("vdev context is invalid!");
 		return false;
 	}
-	wlan_vdev_obj_lock(vdev);
 	state = wlan_vdev_mlme_get_state(vdev);
-	wlan_vdev_obj_unlock(vdev);
 
 	return state == WLAN_VDEV_S_RUN;
 }

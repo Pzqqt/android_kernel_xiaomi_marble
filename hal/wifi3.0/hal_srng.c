@@ -866,10 +866,17 @@ static inline void hal_srng_src_hw_init(struct hal_soc *hal,
 	 * if level mode is required
 	 */
 	reg_val = 0;
+
+	/*
+	 * WAR - Hawkeye v1 has a hardware bug which requires timer value to be
+	 * programmed in terms of 1us resolution instead of 8us resolution as
+	 * given in MLD.
+	 */
 	if (srng->intr_timer_thres_us) {
 		reg_val |= SRNG_SM(SRNG_SRC_FLD(CONSUMER_INT_SETUP_IX0,
 			INTERRUPT_TIMER_THRESHOLD),
-			srng->intr_timer_thres_us >> 3);
+			srng->intr_timer_thres_us);
+		/* For HK v2 this should be (srng->intr_timer_thres_us >> 3) */
 	}
 
 	if (srng->intr_batch_cntr_thres_entries) {

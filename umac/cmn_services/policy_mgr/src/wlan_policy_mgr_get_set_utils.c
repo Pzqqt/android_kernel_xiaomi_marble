@@ -2448,9 +2448,7 @@ bool policy_mgr_is_dnsc_set(struct wlan_objmgr_vdev *vdev)
 		return false;
 	}
 
-	wlan_vdev_obj_lock(vdev);
 	roffchan = wlan_vdev_mlme_cap_get(vdev, WLAN_VDEV_C_RESTRICT_OFFCHAN);
-	wlan_vdev_obj_unlock(vdev);
 
 	policy_mgr_debug("Restrict offchannel:%s",
 			 roffchan  ? "set" : "clear");

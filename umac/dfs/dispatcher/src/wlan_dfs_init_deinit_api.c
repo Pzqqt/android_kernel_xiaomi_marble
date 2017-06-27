@@ -37,10 +37,8 @@ struct dfs_to_mlme global_dfs_to_mlme;
 struct wlan_dfs *wlan_pdev_get_dfs_obj(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_dfs *dfs;
-	wlan_pdev_obj_lock(pdev);
 	dfs = wlan_objmgr_pdev_get_comp_private_obj(pdev,
 			WLAN_UMAC_COMP_DFS);
-	wlan_pdev_obj_unlock(pdev);
 
 	return dfs;
 }
@@ -158,9 +156,7 @@ QDF_STATUS wlan_dfs_pdev_obj_create_notification(struct wlan_objmgr_pdev *pdev,
 	global_dfs_to_mlme.pdev_component_obj_attach(pdev,
 		WLAN_UMAC_COMP_DFS, (void *)dfs, QDF_STATUS_SUCCESS);
 	dfs->dfs_pdev_obj = pdev;
-	wlan_pdev_obj_lock(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
-	wlan_pdev_obj_unlock(pdev);
 	if (!psoc) {
 		DFS_PRINTK("%s: null psoc\n", __func__);
 		return QDF_STATUS_E_FAILURE;

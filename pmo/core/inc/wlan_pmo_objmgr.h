@@ -59,9 +59,7 @@ pmo_vdev_get_id(struct wlan_objmgr_vdev *vdev)
 {
 	uint8_t vdev_id;
 
-	wlan_vdev_obj_lock(vdev);
 	vdev_id = wlan_vdev_get_id(vdev);
-	wlan_vdev_obj_unlock(vdev);
 
 	QDF_BUG(vdev_id < WLAN_UMAC_PSOC_MAX_VDEVS);
 
@@ -141,9 +139,7 @@ pmo_psoc_get_priv(struct wlan_objmgr_psoc *psoc)
 {
 	struct pmo_psoc_priv_obj *psoc_priv;
 
-	wlan_psoc_obj_lock(psoc);
 	psoc_priv = pmo_psoc_get_priv_nolock(psoc);
-	wlan_psoc_obj_unlock(psoc);
 
 	QDF_BUG(psoc_priv);
 
@@ -157,9 +153,7 @@ pmo_pdev_get_psoc(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_objmgr_psoc *psoc;
 
-	wlan_pdev_obj_lock(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
-	wlan_pdev_obj_unlock(pdev);
 
 	QDF_BUG(psoc);
 
@@ -179,9 +173,7 @@ pmo_vdev_get_priv(struct wlan_objmgr_vdev *vdev)
 {
 	struct pmo_vdev_priv_obj *vdev_priv;
 
-	wlan_vdev_obj_lock(vdev);
 	vdev_priv = pmo_vdev_get_priv_nolock(vdev);
-	wlan_vdev_obj_unlock(vdev);
 
 	QDF_BUG(vdev_priv);
 
@@ -193,9 +185,7 @@ pmo_vdev_get_pdev(struct wlan_objmgr_vdev *vdev)
 {
 	struct wlan_objmgr_pdev *pdev;
 
-	wlan_vdev_obj_lock(vdev);
 	pdev = wlan_vdev_get_pdev(vdev);
-	wlan_vdev_obj_unlock(vdev);
 
 	QDF_BUG(pdev);
 

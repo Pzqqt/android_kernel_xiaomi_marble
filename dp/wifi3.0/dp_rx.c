@@ -350,8 +350,8 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 		if (da_peer->vdev == sa_peer->vdev && !da_peer->bss_peer) {
 			memset(nbuf->cb, 0x0, sizeof(nbuf->cb));
 			len = qdf_nbuf_len(nbuf);
-			qdf_nbuf_set_fctx_type(nbuf, (void *)NULL,
-						CB_FTYPE_INTRABSS_FWD);
+			qdf_nbuf_set_ftype(nbuf, CB_FTYPE_INTRABSS_FWD);
+
 			if (!dp_tx_send(sa_peer->vdev, nbuf)) {
 				DP_STATS_INC_PKT(sa_peer, rx.intra_bss.pkts,
 						1, len);
@@ -378,8 +378,8 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 			return false;
 		memset(nbuf_copy->cb, 0x0, sizeof(nbuf_copy->cb));
 		len = qdf_nbuf_len(nbuf_copy);
-		qdf_nbuf_set_fctx_type(nbuf_copy, (void *)NULL,
-					CB_FTYPE_INTRABSS_FWD);
+		qdf_nbuf_set_ftype(nbuf_copy, CB_FTYPE_INTRABSS_FWD);
+
 		if (dp_tx_send(sa_peer->vdev, nbuf_copy)) {
 			DP_STATS_INC_PKT(sa_peer, rx.intra_bss.fail, 1, len);
 			qdf_nbuf_free(nbuf_copy);
@@ -1123,6 +1123,8 @@ done:
 				continue;
 			}
 
+			pdev = vdev->pdev;
+
 			sgi = hal_rx_msdu_start_sgi_get(rx_tlv_hdr);
 			mcs = hal_rx_msdu_start_rate_mcs_get(rx_tlv_hdr);
 			tid = hal_rx_mpdu_start_tid_get(rx_tlv_hdr);
@@ -1279,10 +1281,12 @@ done:
 			DP_STATS_INCC_PKT(peer, rx.multicast, 1, pkt_len,
 					hal_rx_msdu_end_da_is_mcbc_get(
 						rx_tlv_hdr));
+
 			DP_STATS_INC_PKT(peer, rx.to_stack, 1,
 					pkt_len);
 
-			if (hal_rx_attn_first_mpdu_get(rx_tlv_hdr)) {
+			if ((pdev->enhanced_stats_en) &&
+				hal_rx_attn_first_mpdu_get(rx_tlv_hdr)) {
 				if (soc->cdp_soc.ol_ops->update_dp_stats) {
 					soc->cdp_soc.ol_ops->update_dp_stats(
 							vdev->pdev->osif_pdev,
@@ -1302,7 +1306,7 @@ done:
 		}
 
 		if (qdf_unlikely(vdev->rx_decap_type == htt_cmn_pkt_type_raw) ||
-			(vdev->rx_decap_type == htt_cmn_pkt_type_native_wifi))
+				(vdev->rx_decap_type == htt_cmn_pkt_type_native_wifi))
 			dp_rx_deliver_raw(vdev, deliver_list_head);
 		else if (qdf_likely(vdev->osif_rx) && deliver_list_head)
 			vdev->osif_rx(vdev->osif_vdev, deliver_list_head);

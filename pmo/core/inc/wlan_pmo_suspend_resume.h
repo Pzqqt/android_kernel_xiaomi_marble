@@ -156,10 +156,8 @@ uint8_t pmo_core_get_vdev_dtim_period(struct wlan_objmgr_vdev *vdev)
 		QDF_ASSERT(0);
 		return 0;
 	}
-	wlan_vdev_obj_lock(vdev);
 	/* TODO */
 	/* dtim_period = wlan_vdev_mlme_get_dtim_period(vdev); */
-	wlan_vdev_obj_unlock(vdev);
 
 	return dtim_period;
 }
@@ -180,10 +178,8 @@ uint16_t pmo_core_get_vdev_beacon_interval(struct wlan_objmgr_vdev *vdev)
 		QDF_ASSERT(0);
 		return 0;
 	}
-	wlan_vdev_obj_lock(vdev);
 	/* TODO */
 	/* beacon_interval = wlan_vdev_mlme_get_beacon_interval(vdev); */
-	wlan_vdev_obj_unlock(vdev);
 
 	return beacon_interval;
 }

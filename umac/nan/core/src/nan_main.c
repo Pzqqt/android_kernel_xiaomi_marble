@@ -41,9 +41,7 @@ struct nan_vdev_priv_obj *nan_get_vdev_priv_obj(
 		nan_err("vdev is null");
 		return NULL;
 	}
-	wlan_vdev_obj_lock(vdev);
 	obj = wlan_objmgr_vdev_get_comp_private_obj(vdev, WLAN_UMAC_COMP_NAN);
-	wlan_vdev_obj_unlock(vdev);
 
 	return obj;
 }
@@ -57,9 +55,7 @@ struct nan_psoc_priv_obj *nan_get_psoc_priv_obj(
 		nan_err("psoc is null");
 		return NULL;
 	}
-	wlan_psoc_obj_lock(psoc);
 	obj = wlan_objmgr_psoc_get_comp_private_obj(psoc, WLAN_UMAC_COMP_NAN);
-	wlan_psoc_obj_unlock(psoc);
 
 	return obj;
 }

@@ -371,4 +371,53 @@ int wlan_cfg_get_dp_soc_nss_cfg(struct wlan_cfg_dp_soc_ctxt *cfg);
  *
  */
 void wlan_cfg_set_dp_soc_nss_cfg(struct wlan_cfg_dp_soc_ctxt *cfg, int nss_cfg);
+
+
+/*
+ * wlan_cfg_get_int_batch_threshold_tx - Get interrupt mitigation cfg for Tx
+ * @wlan_cfg_soc_ctx
+ *
+ * Return: Batch threshold
+ */
+int wlan_cfg_get_int_batch_threshold_tx(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
+ * wlan_cfg_get_int_timer_threshold_tx - Get interrupt mitigation cfg for Tx
+ * @wlan_cfg_soc_ctx
+ *
+ * Return: Timer threshold
+ */
+int wlan_cfg_get_int_timer_threshold_tx(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
+ * wlan_cfg_get_int_batch_threshold_rx - Get interrupt mitigation cfg for Rx
+ * @wlan_cfg_soc_ctx
+ *
+ * Return: Batch threshold
+ */
+int wlan_cfg_get_int_batch_threshold_rx(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
+ * wlan_cfg_get_int_batch_threshold_rx - Get interrupt mitigation cfg for Rx
+ * @wlan_cfg_soc_ctx
+ *
+ * Return: Timer threshold
+ */
+int wlan_cfg_get_int_timer_threshold_rx(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
+ * wlan_cfg_get_int_batch_threshold_tx - Get interrupt mitigation cfg for other srngs
+ * @wlan_cfg_soc_ctx
+ *
+ * Return: Batch threshold
+ */
+int wlan_cfg_get_int_batch_threshold_other(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
+ * wlan_cfg_get_int_batch_threshold_tx - Get interrupt mitigation cfg for other srngs
+ * @wlan_cfg_soc_ctx
+ *
+ * Return: Timer threshold
+ */
+int wlan_cfg_get_int_timer_threshold_other(struct wlan_cfg_dp_soc_ctxt *cfg);
 #endif

@@ -39,9 +39,7 @@ void lmac_get_caps(struct wlan_objmgr_pdev *pdev,
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
 
-	wlan_pdev_obj_lock(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
-	wlan_pdev_obj_unlock(pdev);
 
 	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
 
@@ -64,9 +62,7 @@ uint64_t lmac_get_tsf64(struct wlan_objmgr_pdev *pdev)
 	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
 	uint64_t tsf64 = 0;
 
-	wlan_pdev_obj_lock(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
-	wlan_pdev_obj_unlock(pdev);
 
 	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
 
@@ -81,9 +77,7 @@ void lmac_dfs_disable(struct wlan_objmgr_pdev *pdev, int no_cac)
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
 
-	wlan_pdev_obj_lock(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
-	wlan_pdev_obj_unlock(pdev);
 
 	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
 
@@ -96,9 +90,7 @@ int lmac_get_dfsdomain(struct wlan_objmgr_pdev *pdev)
 	struct wlan_objmgr_psoc *psoc;
 	enum dfs_reg dfsdomain;
 
-	wlan_pdev_obj_lock(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
-	wlan_pdev_obj_unlock(pdev);
 
 	wlan_reg_get_dfs_region(psoc, &dfsdomain);
 
@@ -120,9 +112,7 @@ void lmac_dfs_enable(struct wlan_objmgr_pdev *pdev,
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
 
-	wlan_pdev_obj_lock(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
-	wlan_pdev_obj_unlock(pdev);
 
 	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
 
@@ -153,9 +143,7 @@ void lmac_dfs_get_thresholds(struct wlan_objmgr_pdev *pdev,
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
 
-	wlan_pdev_obj_lock(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
-	wlan_pdev_obj_unlock(pdev);
 
 	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
 
@@ -177,9 +165,7 @@ bool lmac_is_mode_offload(struct wlan_objmgr_pdev *pdev)
 	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
 	bool is_offload = false;
 
-	wlan_pdev_obj_lock(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
-	wlan_pdev_obj_unlock(pdev);
 
 	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
 
@@ -195,9 +181,7 @@ uint16_t lmac_get_ah_devid(struct wlan_objmgr_pdev *pdev)
 	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
 	uint16_t devid = 0;
 
-	wlan_pdev_obj_lock(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
-	wlan_pdev_obj_unlock(pdev);
 
 	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
 
@@ -213,9 +197,7 @@ uint32_t lmac_get_ext_busy(struct wlan_objmgr_pdev *pdev)
 	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
 	uint32_t ext_chan_busy = 0;
 
-	wlan_pdev_obj_lock(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
-	wlan_pdev_obj_unlock(pdev);
 
 	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
 
@@ -231,9 +213,7 @@ bool lmac_is_countryCode_KOREA_ROC3(struct wlan_objmgr_pdev *pdev)
 	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
 	bool ctry_korea = false;
 
-	wlan_pdev_obj_lock(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
-	wlan_pdev_obj_unlock(pdev);
 
 	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
 
@@ -250,9 +230,7 @@ void lmac_set_use_cac_prssi(struct wlan_objmgr_pdev *pdev)
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
 
-	wlan_pdev_obj_lock(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
-	wlan_pdev_obj_unlock(pdev);
 
 	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
 
@@ -266,9 +244,7 @@ uint32_t lmac_get_target_type(struct wlan_objmgr_pdev *pdev)
 	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
 	uint32_t target_type = 0;
 
-	wlan_pdev_obj_lock(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
-	wlan_pdev_obj_unlock(pdev);
 
 	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
 
@@ -284,9 +260,7 @@ bool lmac_is_countryCode_CHINA(struct wlan_objmgr_pdev *pdev)
 	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
 	bool country_china = false;
 
-	wlan_pdev_obj_lock(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
-	wlan_pdev_obj_unlock(pdev);
 
 	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
 
@@ -303,9 +277,7 @@ uint32_t lmac_get_phymode_info(struct wlan_objmgr_pdev *pdev,
 	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
 	uint32_t mode_info = 0;
 
-	wlan_pdev_obj_lock(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
-	wlan_pdev_obj_unlock(pdev);
 
 	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
 

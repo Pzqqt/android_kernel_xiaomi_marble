@@ -135,17 +135,13 @@ static void wlan_cfg80211_pno_callback(struct wlan_objmgr_vdev *vdev,
 
 	cfg80211_info("vdev id = %d", event->vdev_id);
 
-	wlan_vdev_obj_lock(vdev);
 	pdev = wlan_vdev_get_pdev(vdev);
-	wlan_vdev_obj_unlock(vdev);
 	if (!pdev) {
 		cfg80211_err("pdev is NULL");
 		return;
 	}
 
-	wlan_pdev_obj_lock(pdev);
 	pdev_ospriv = wlan_pdev_get_ospriv(pdev);
-	wlan_pdev_obj_unlock(pdev);
 	if (!pdev_ospriv) {
 		cfg80211_err("pdev_ospriv is NULL");
 		return;
@@ -169,11 +165,9 @@ static QDF_STATUS wlan_cfg80211_is_pno_allowed(struct wlan_objmgr_vdev *vdev)
 	enum tQDF_ADAPTER_MODE vdev_opmode;
 	uint8_t vdev_id;
 
-	wlan_vdev_obj_lock(vdev);
 	vdev_opmode = wlan_vdev_mlme_get_opmode(vdev);
 	state = wlan_vdev_mlme_get_state(vdev);
 	vdev_id = wlan_vdev_get_id(vdev);
-	wlan_vdev_obj_unlock(vdev);
 
 	cfg80211_notice("dev_mode=%d, state=%d vdev id %d",
 		vdev_opmode, state, vdev_id);
@@ -286,9 +280,7 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_pdev *pdev,
 	wlan_pdev_obj_unlock(pdev);
 
 	req->networks_cnt = request->n_match_sets;
-	wlan_vdev_obj_lock(vdev);
 	req->vdev_id = wlan_vdev_get_id(vdev);
-	wlan_vdev_obj_unlock(vdev);
 
 	if ((!req->networks_cnt) ||
 	    (req->networks_cnt > SCAN_PNO_MAX_SUPP_NETWORKS)) {
@@ -420,6 +412,7 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_pdev *pdev,
 		req->fast_scan_period, req->fast_scan_max_cycles,
 		req->slow_scan_period);
 
+	psoc = wlan_pdev_get_psoc(pdev);
 	ucfg_scan_register_pno_cb(psoc,
 		wlan_cfg80211_pno_callback, NULL);
 	ucfg_scan_get_pno_def_params(vdev, req);
@@ -863,9 +856,7 @@ QDF_STATUS wlan_cfg80211_scan_priv_init(struct wlan_objmgr_pdev *pdev)
 	struct wlan_objmgr_psoc *psoc;
 	wlan_scan_requester req_id;
 
-	wlan_pdev_obj_lock(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
-	wlan_pdev_obj_unlock(pdev);
 
 	req_id = ucfg_scan_register_requester(psoc, "CFG",
 		wlan_cfg80211_scan_done_callback, NULL);
@@ -892,10 +883,8 @@ QDF_STATUS wlan_cfg80211_scan_priv_deinit(struct wlan_objmgr_pdev *pdev)
 	struct osif_scan_pdev *scan_priv;
 	struct wlan_objmgr_psoc *psoc;
 
-	wlan_pdev_obj_lock(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
 	osif_priv = wlan_pdev_get_ospriv(pdev);
-	wlan_pdev_obj_unlock(pdev);
 
 	scan_priv = osif_priv->osif_scan;
 	osif_priv->osif_scan = NULL;
@@ -922,9 +911,7 @@ void wlan_cfg80211_cleanup_scan_queue(struct wlan_objmgr_pdev *pdev)
 		return;
 	}
 
-	wlan_pdev_obj_lock(pdev);
 	osif_priv = wlan_pdev_get_ospriv(pdev);
-	wlan_pdev_obj_unlock(pdev);
 
 	scan_priv = osif_priv->osif_scan;
 	qdf_mutex_acquire(&scan_priv->scan_req_q_lock);

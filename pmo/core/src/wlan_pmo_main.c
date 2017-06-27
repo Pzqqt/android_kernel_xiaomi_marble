@@ -85,14 +85,11 @@ QDF_STATUS pmo_get_vdev_bss_peer_mac_addr(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	wlan_vdev_obj_lock(vdev);
 	peer = wlan_vdev_get_bsspeer(vdev);
 	if (!peer) {
-		wlan_vdev_obj_unlock(vdev);
 		pmo_err("peer is null");
 		return QDF_STATUS_E_INVAL;
 	}
-	wlan_vdev_obj_unlock(vdev);
 
 	wlan_peer_obj_lock(peer);
 	qdf_mem_copy(bss_peer_mac_address->bytes, wlan_peer_get_macaddr(peer),
@@ -124,17 +121,13 @@ bool pmo_core_is_vdev_connected(struct wlan_objmgr_vdev *vdev)
 	struct wlan_objmgr_peer *peer;
 	enum wlan_peer_state peer_state;
 
-	wlan_vdev_obj_lock(vdev);
 	peer = wlan_vdev_get_bsspeer(vdev);
-	wlan_vdev_obj_unlock(vdev);
 
 	if (!peer) {
 		pmo_err("peer is null");
 		return false;
 	}
-	wlan_peer_obj_lock(peer);
 	peer_state = wlan_peer_mlme_get_state(peer);
-	wlan_peer_obj_unlock(peer);
 
 	if (peer_state != WLAN_ASSOC_STATE) {
 		pmo_err("peer is not associated.peer state: %d",

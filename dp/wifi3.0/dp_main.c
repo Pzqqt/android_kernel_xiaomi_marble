@@ -120,7 +120,7 @@ const int dp_stats_mapping_table[][STATS_TYPE_MAX] = {
 	{TXRX_FW_STATS_INVALID, TXRX_RX_HOST_STATS},
 };
 
-/**
+/*
  * dp_setup_srng - Internal function to setup SRNG rings used by data path
  */
 static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
@@ -158,11 +158,26 @@ static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
 	ring_params.msi_data = 0;
 	ring_params.msi_addr = 0;
 
-	/* TODO: Setup interrupt timer and batch counter thresholds for
+	/*
+	 * Setup interrupt timer and batch counter thresholds for
 	 * interrupt mitigation based on ring type
 	 */
-	ring_params.intr_timer_thres_us = 8;
-	ring_params.intr_batch_cntr_thres_entries = 1;
+	if (ring_type == REO_DST) {
+		ring_params.intr_timer_thres_us =
+			wlan_cfg_get_int_timer_threshold_rx(soc->wlan_cfg_ctx);
+		ring_params.intr_batch_cntr_thres_entries =
+			wlan_cfg_get_int_batch_threshold_rx(soc->wlan_cfg_ctx);
+	} else if (ring_type == WBM2SW_RELEASE && (ring_num < 3)) {
+		ring_params.intr_timer_thres_us =
+			wlan_cfg_get_int_timer_threshold_tx(soc->wlan_cfg_ctx);
+		ring_params.intr_batch_cntr_thres_entries =
+			wlan_cfg_get_int_batch_threshold_tx(soc->wlan_cfg_ctx);
+	} else {
+		ring_params.intr_timer_thres_us =
+			wlan_cfg_get_int_timer_threshold_other(soc->wlan_cfg_ctx);
+		ring_params.intr_batch_cntr_thres_entries =
+			wlan_cfg_get_int_timer_threshold_other(soc->wlan_cfg_ctx);
+	}
 
 	/* TODO: Currently hal layer takes care of endianness related settings.
 	 * See if these settings need to passed from DP layer
@@ -3383,6 +3398,32 @@ dp_get_host_peer_stats(struct cdp_pdev *pdev_handle, char *mac_addr)
 }
 
 /*
+ * dp_enable_enhanced_stats()- API to enable enhanced statistcs
+ * @pdev_handle: DP_PDEV handle
+ *
+ * Return: void
+ */
+static void
+dp_enable_enhanced_stats(struct cdp_pdev *pdev_handle)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	pdev->enhanced_stats_en = 1;
+}
+
+/*
+ * dp_disable_enhanced_stats()- API to disable enhanced statistcs
+ * @pdev_handle: DP_PDEV handle
+ *
+ * Return: void
+ */
+static void
+dp_disable_enhanced_stats(struct cdp_pdev *pdev_handle)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	pdev->enhanced_stats_en = 0;
+}
+
+/*
  * dp_get_fw_peer_stats()- function to print peer stats
  * @pdev_handle: DP_PDEV handle
  * @mac_addr: mac address of the peer
@@ -3854,6 +3895,8 @@ static struct cdp_mon_ops dp_ops_mon = {
 static struct cdp_host_stats_ops dp_ops_host_stats = {
 	.txrx_per_peer_stats = dp_get_host_peer_stats,
 	.get_fw_peer_stats = dp_get_fw_peer_stats,
+	.txrx_enable_enhanced_stats = dp_enable_enhanced_stats,
+	.txrx_disable_enhanced_stats = dp_disable_enhanced_stats,
 	/* TODO */
 };
 

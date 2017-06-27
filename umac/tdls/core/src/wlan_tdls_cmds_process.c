@@ -142,16 +142,13 @@ static QDF_STATUS tdls_pe_add_peer(struct tdls_add_peer_request *req)
 	addstareq->tdls_oper = TDLS_OPER_ADD;
 	addstareq->transaction_id = 0;
 
-	wlan_vdev_obj_lock(vdev);
 	addstareq->session_id = wlan_vdev_get_id(vdev);
 	peer = wlan_vdev_get_bsspeer(vdev);
 	if (!peer) {
-		wlan_vdev_obj_unlock(vdev);
 		tdls_err("bss peer is NULL");
 		status = QDF_STATUS_E_INVAL;
 		goto error;
 	}
-	wlan_vdev_obj_unlock(vdev);
 	status = wlan_objmgr_peer_try_get_ref(peer, WLAN_TDLS_NB_ID);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		tdls_err("can't get bss peer");
@@ -210,16 +207,13 @@ QDF_STATUS tdls_pe_del_peer(struct tdls_del_peer_request *req)
 
 	delstareq->transaction_id = 0;
 
-	wlan_vdev_obj_lock(vdev);
 	delstareq->session_id = wlan_vdev_get_id(vdev);
 	peer = wlan_vdev_get_bsspeer(vdev);
 	if (!peer) {
-		wlan_vdev_obj_unlock(vdev);
 		tdls_err("bss peer is NULL");
 		status = QDF_STATUS_E_INVAL;
 		goto error;
 	}
-	wlan_vdev_obj_unlock(vdev);
 	status = wlan_objmgr_peer_try_get_ref(peer, WLAN_TDLS_NB_ID);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		tdls_err("can't get bss peer");
@@ -281,16 +275,13 @@ static QDF_STATUS tdls_pe_update_peer(struct tdls_update_peer_request *req)
 	addstareq->tdls_oper = TDLS_OPER_UPDATE;
 	addstareq->transaction_id = 0;
 
-	wlan_vdev_obj_lock(vdev);
 	addstareq->session_id = wlan_vdev_get_id(vdev);
 	peer = wlan_vdev_get_bsspeer(vdev);
 	if (!peer) {
-		wlan_vdev_obj_unlock(vdev);
 		tdls_err("bss peer is NULL");
 		status = QDF_STATUS_E_INVAL;
 		goto error;
 	}
-	wlan_vdev_obj_unlock(vdev);
 	status = wlan_objmgr_peer_try_get_ref(peer, WLAN_TDLS_NB_ID);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		tdls_err("can't get bss peer");
@@ -1477,9 +1468,7 @@ QDF_STATUS tdls_process_del_peer_rsp(struct tdls_del_sta_rsp *rsp)
 				   QDF_MAC_ADDR_ARRAY(macaddr),
 				   curr_peer->link_status);
 
-			wlan_vdev_obj_lock(vdev);
 			id = wlan_vdev_get_id(vdev);
-			wlan_vdev_obj_unlock(vdev);
 
 			if (TDLS_IS_LINK_CONNECTED(curr_peer)) {
 				soc_obj->tdls_dereg_tl_peer(
@@ -1573,14 +1562,13 @@ tdls_update_uapsd(struct wlan_objmgr_psoc *psoc, struct wlan_objmgr_vdev *vdev,
 		tdls_debug("No need to configure auto trigger:psb is 0");
 		return QDF_STATUS_SUCCESS;
 	}
-	wlan_vdev_obj_lock(vdev);
 	vdev_id = wlan_vdev_get_id(vdev);
 	bsspeer = wlan_vdev_get_bsspeer(vdev);
 	if (!bsspeer) {
-		wlan_vdev_obj_unlock(vdev);
 		tdls_err("bss peer is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
+	wlan_vdev_obj_lock(vdev);
 	qdf_mem_copy(macaddr,
 		     wlan_peer_get_macaddr(bsspeer), QDF_MAC_ADDR_SIZE);
 	wlan_vdev_obj_unlock(vdev);
@@ -1663,9 +1651,7 @@ QDF_STATUS tdls_process_enable_link(struct tdls_oper_request *req)
 		tdls_set_peer_link_status(peer, TDLS_LINK_CONNECTED,
 					  TDLS_LINK_SUCCESS);
 
-	wlan_vdev_obj_lock(vdev);
 	id = wlan_vdev_get_id(vdev);
-	wlan_vdev_obj_unlock(vdev);
 	status = soc_obj->tdls_reg_tl_peer(soc_obj->tdls_tl_peer_data,
 					   id, mac, peer->sta_id,
 					   peer->signature, peer->qos);
@@ -1744,9 +1730,7 @@ static QDF_STATUS tdls_config_force_peer(
 		   QDF_MAC_ADDR_ARRAY(macaddr));
 
 	vdev = req->vdev;
-	wlan_vdev_obj_lock(vdev);
 	pdev = wlan_vdev_get_pdev(vdev);
-	wlan_vdev_obj_unlock(vdev);
 	vdev_obj = wlan_vdev_get_tdls_vdev_obj(vdev);
 	soc_obj = wlan_vdev_get_tdls_soc_obj(vdev);
 	if (!pdev || !vdev_obj || !soc_obj) {
@@ -1784,9 +1768,7 @@ static QDF_STATUS tdls_config_force_peer(
 	/* Update the peer mac to firmware, so firmware could update the
 	 * connection table
 	 */
-	wlan_vdev_obj_lock(vdev);
 	peer_update_param->vdev_id = wlan_vdev_get_id(vdev);
-	wlan_vdev_obj_unlock(vdev);
 	qdf_mem_copy(peer_update_param->peer_macaddr,
 		     macaddr, QDF_MAC_ADDR_SIZE);
 	peer_update_param->peer_state = TDLS_PEER_ADD_MAC_ADDR;
@@ -1951,9 +1933,7 @@ QDF_STATUS tdls_process_remove_force_peer(struct tdls_oper_request *req)
 		goto error;
 	}
 
-	wlan_vdev_obj_lock(vdev);
 	peer_update_param->vdev_id = wlan_vdev_get_id(vdev);
-	wlan_vdev_obj_unlock(vdev);
 	qdf_mem_copy(peer_update_param->peer_macaddr,
 		     macaddr, QDF_MAC_ADDR_SIZE);
 	peer_update_param->peer_state = TDLS_PEER_REMOVE_MAC_ADDR;

@@ -1784,11 +1784,9 @@ static void reg_propagate_mas_chan_list_to_pdev(struct wlan_objmgr_psoc *psoc,
 	enum direction *dir = arg;
 	struct wlan_lmac_if_reg_tx_ops *reg_tx_ops;
 
-	wlan_psoc_obj_lock(psoc);
 	psoc_priv_obj = (struct wlan_regulatory_psoc_priv_obj *)
 		wlan_objmgr_psoc_get_comp_private_obj(psoc,
 				       WLAN_UMAC_COMP_REGULATORY);
-	wlan_psoc_obj_unlock(psoc);
 
 	if (NULL == psoc_priv_obj) {
 		reg_err("psoc priv obj is NULL");
@@ -2059,10 +2057,8 @@ QDF_STATUS wlan_regulatory_psoc_obj_destroyed_notification(
 	QDF_STATUS status;
 	struct wlan_regulatory_psoc_priv_obj *soc_reg;
 
-	wlan_psoc_obj_lock(psoc);
 	soc_reg = wlan_objmgr_psoc_get_comp_private_obj(psoc,
 				     WLAN_UMAC_COMP_REGULATORY);
-	wlan_psoc_obj_unlock(psoc);
 
 	if (NULL == soc_reg) {
 		reg_err("reg psoc private obj is NULL");
@@ -2252,11 +2248,9 @@ QDF_STATUS wlan_regulatory_pdev_obj_created_notification(
 	parent_psoc = wlan_pdev_get_psoc(pdev);
 	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
 
-	wlan_psoc_obj_lock(parent_psoc);
 	psoc_priv_obj = (struct wlan_regulatory_psoc_priv_obj *)
 		wlan_objmgr_psoc_get_comp_private_obj(parent_psoc,
 				     WLAN_UMAC_COMP_REGULATORY);
-	wlan_psoc_obj_unlock(parent_psoc);
 
 	if (NULL == psoc_priv_obj) {
 		reg_err("reg psoc private obj is NULL");
@@ -2371,9 +2365,7 @@ QDF_STATUS reg_11d_vdev_created_update(struct wlan_objmgr_vdev *vdev)
 	enum tQDF_ADAPTER_MODE op_mode;
 	uint8_t i;
 
-	wlan_vdev_obj_lock(vdev);
 	op_mode = wlan_vdev_mlme_get_opmode(vdev);
-	wlan_vdev_obj_unlock(vdev);
 
 	parent_pdev = wlan_vdev_get_pdev(vdev);
 	parent_psoc = wlan_pdev_get_psoc(parent_pdev);
@@ -2433,9 +2425,7 @@ QDF_STATUS reg_11d_vdev_delete_update(struct wlan_objmgr_vdev *vdev)
 	uint32_t vdev_id;
 	uint8_t i;
 
-	wlan_vdev_obj_lock(vdev);
 	op_mode = wlan_vdev_mlme_get_opmode(vdev);
-	wlan_vdev_obj_unlock(vdev);
 
 	parent_pdev = wlan_vdev_get_pdev(vdev);
 	parent_psoc = wlan_pdev_get_psoc(parent_pdev);
@@ -2539,10 +2529,8 @@ void reg_update_nol_ch(struct wlan_objmgr_pdev *pdev,
 
 	psoc = wlan_pdev_get_psoc(pdev);
 
-	wlan_psoc_obj_lock(psoc);
 	psoc_priv_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
 						  WLAN_UMAC_COMP_REGULATORY);
-	wlan_psoc_obj_unlock(psoc);
 
 	if (NULL == psoc_priv_obj) {
 		reg_err("reg psoc private obj is NULL");
@@ -2580,11 +2568,9 @@ static void reg_change_pdev_for_config(struct wlan_objmgr_psoc *psoc,
 	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
 	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
 
-	wlan_psoc_obj_lock(psoc);
 	psoc_priv_obj = (struct wlan_regulatory_psoc_priv_obj *)
 		wlan_objmgr_psoc_get_comp_private_obj(psoc,
 					     WLAN_UMAC_COMP_REGULATORY);
-	wlan_psoc_obj_unlock(psoc);
 
 	if (NULL == psoc_priv_obj) {
 		reg_err("psoc priv obj is NULL");
@@ -2618,11 +2604,9 @@ QDF_STATUS reg_set_config_vars(struct wlan_objmgr_psoc *psoc,
 	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
 	QDF_STATUS status;
 
-	wlan_psoc_obj_lock(psoc);
 	psoc_priv_obj = (struct wlan_regulatory_psoc_priv_obj *)
 		wlan_objmgr_psoc_get_comp_private_obj(psoc,
 				       WLAN_UMAC_COMP_REGULATORY);
-	wlan_psoc_obj_unlock(psoc);
 
 	if (NULL == psoc_priv_obj) {
 		reg_err("psoc priv obj is NULL");
@@ -2665,10 +2649,8 @@ bool reg_is_regdb_offloaded(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
 
-	wlan_psoc_obj_lock(psoc);
 	psoc_priv_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
 					WLAN_UMAC_COMP_REGULATORY);
-	wlan_psoc_obj_unlock(psoc);
 
 	if (NULL == psoc_priv_obj) {
 		reg_err("reg psoc private obj is NULL");
@@ -2689,10 +2671,8 @@ void reg_program_mas_chan_list(struct wlan_objmgr_psoc *psoc,
 	uint32_t count;
 	enum direction dir;
 
-	wlan_psoc_obj_lock(psoc);
 	psoc_priv_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
 					WLAN_UMAC_COMP_REGULATORY);
-	wlan_psoc_obj_unlock(psoc);
 
 	if (NULL == psoc_priv_obj) {
 		reg_err("reg psoc private obj is NULL");
@@ -2736,10 +2716,8 @@ void reg_register_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 	uint32_t count;
 
 
-	wlan_psoc_obj_lock(psoc);
 	psoc_priv_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
 					WLAN_UMAC_COMP_REGULATORY);
-	wlan_psoc_obj_unlock(psoc);
 
 	if (NULL == psoc_priv_obj) {
 		reg_err("reg psoc private obj is NULL");
@@ -2766,10 +2744,8 @@ void reg_unregister_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
 	uint32_t count;
 
-	wlan_psoc_obj_lock(psoc);
 	psoc_priv_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
 					WLAN_UMAC_COMP_REGULATORY);
-	wlan_psoc_obj_unlock(psoc);
 
 	if (NULL == psoc_priv_obj) {
 		reg_err("reg psoc private obj is NULL");
@@ -2794,10 +2770,8 @@ enum country_src reg_get_cc_and_src(struct wlan_objmgr_psoc *psoc,
 {
 	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
 
-	wlan_psoc_obj_lock(psoc);
 	psoc_priv_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
 					WLAN_UMAC_COMP_REGULATORY);
-	wlan_psoc_obj_unlock(psoc);
 
 	if (NULL == psoc_priv_obj) {
 		reg_err("reg psoc private obj is NULL");

@@ -256,10 +256,8 @@ static void wifi_pos_populate_vdev_info(struct wlan_objmgr_psoc *psoc,
 {
 	struct app_reg_rsp_vdev_info *vdev_info = arg;
 
-	wlan_vdev_obj_lock(vdev);
 	vdev_info[vdev_idx].dev_mode = wlan_vdev_mlme_get_opmode(vdev);
 	vdev_info[vdev_idx].vdev_id = wlan_vdev_get_id(vdev);
-	wlan_vdev_obj_unlock(vdev);
 	vdev_idx++;
 }
 
