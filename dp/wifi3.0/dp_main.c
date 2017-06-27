@@ -1355,8 +1355,8 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 		goto fail1;
 	}
 
-	/* set the reo destination to 1 during initialization */
-	pdev->reo_dest = 1;
+	/* set the reo destination during initialization */
+	pdev->reo_dest = pdev->pdev_id + 1;
 	return (struct cdp_pdev *)pdev;
 
 fail1:
