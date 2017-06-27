@@ -5437,15 +5437,26 @@ static QDF_STATUS send_roam_scan_offload_mode_cmd_tlv(wmi_unified_t wmi_handle,
 				buf_ptr += WMI_TLV_HDR_SIZE;
 				roam_offload_11i =
 				     (wmi_roam_11i_offload_tlv_param *) buf_ptr;
+
 				if (roam_req->roam_key_mgmt_offload_enabled &&
-				    roam_req->okc_enabled) {
+				    roam_req->fw_okc) {
 					WMI_SET_ROAM_OFFLOAD_OKC_ENABLED
 						(roam_offload_11i->flags);
-					WMI_LOGE("LFR3:OKC Enabled");
+					WMI_LOGE("LFR3:OKC enabled");
 				} else {
 					WMI_SET_ROAM_OFFLOAD_OKC_DISABLED
 						(roam_offload_11i->flags);
-					WMI_LOGE("LFR3:OKC Disabled");
+					WMI_LOGE("LFR3:OKC disabled");
+				}
+				if (roam_req->roam_key_mgmt_offload_enabled &&
+				    roam_req->fw_pmksa_cache) {
+					WMI_SET_ROAM_OFFLOAD_PMK_CACHE_ENABLED
+						(roam_offload_11i->flags);
+					WMI_LOGE("LFR3:PMKSA caching enabled");
+				} else {
+					WMI_SET_ROAM_OFFLOAD_PMK_CACHE_DISABLED
+						(roam_offload_11i->flags);
+					WMI_LOGE("LFR3:PMKSA caching disabled");
 				}
 
 				qdf_mem_copy(roam_offload_11i->pmk,
