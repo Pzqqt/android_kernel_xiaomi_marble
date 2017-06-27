@@ -44,6 +44,8 @@
 #define HTT_MAC_ADDR_LEN 6
 #endif
 
+#define DP_HTT_HTC_PKT_MISCLIST_SIZE          256
+
 struct dp_htt_htc_pkt {
 	void *soc_ctxt;
 	qdf_dma_addr_t nbuf_paddr;
@@ -65,6 +67,7 @@ struct htt_soc {
 	qdf_device_t osdev;
 	HTC_ENDPOINT_ID htc_endpoint;
 	struct dp_htt_htc_pkt_union *htt_htc_pkt_freelist;
+	struct dp_htt_htc_pkt_union *htt_htc_pkt_misclist;
 	struct {
 		u_int8_t major;
 		u_int8_t minor;
@@ -76,6 +79,7 @@ struct htt_soc {
 
 	struct {
 		int htc_err_cnt;
+		int htc_pkt_free;
 	} stats;
 
 	HTT_TX_MUTEX_TYPE htt_tx_mutex;

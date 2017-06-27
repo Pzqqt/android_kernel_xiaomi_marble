@@ -35,6 +35,13 @@
 	((msg_bytes) + HTC_HEADER_LEN + HTC_HDR_ALIGNMENT_PADDING)
 
 #define DP_EXT_MSG_LENGTH 2048
+#define DP_HTT_SEND_HTC_PKT(soc, pkt)                            \
+do {                                                             \
+	if (htc_send_pkt(soc->htc_soc, &pkt->htc_pkt) ==         \
+					QDF_STATUS_SUCCESS)      \
+		htt_htc_misc_pkt_list_add(soc, pkt);             \
+} while (0)
+
 /*
  * htt_htc_pkt_alloc() - Allocate HTC packet buffer
  * @htt_soc:	HTT SOC handle
@@ -89,6 +96,97 @@ htt_htc_pkt_pool_free(struct htt_soc *soc)
 		pkt = next;
 	}
 	soc->htt_htc_pkt_freelist = NULL;
+}
+
+/*
+ * htt_htc_misc_pkt_list_trim() - trim misc list
+ * @htt_soc: HTT SOC handle
+ * @level: max no. of pkts in list
+ */
+static void
+htt_htc_misc_pkt_list_trim(struct htt_soc *soc, int level)
+{
+	struct dp_htt_htc_pkt_union *pkt, *next, *prev = NULL;
+	int i = 0;
+	qdf_nbuf_t netbuf;
+
+	HTT_TX_MUTEX_ACQUIRE(&soc->htt_tx_mutex);
+	pkt = soc->htt_htc_pkt_misclist;
+	while (pkt) {
+		next = pkt->u.next;
+		/* trim the out grown list*/
+		if (++i > level) {
+			netbuf =
+				(qdf_nbuf_t)(pkt->u.pkt.htc_pkt.pNetBufContext);
+			qdf_nbuf_unmap(soc->osdev, netbuf, QDF_DMA_TO_DEVICE);
+			qdf_nbuf_free(netbuf);
+			qdf_mem_free(pkt);
+			pkt = NULL;
+			if (prev)
+				prev->u.next = NULL;
+		}
+		prev = pkt;
+		pkt = next;
+	}
+	HTT_TX_MUTEX_RELEASE(&soc->htt_tx_mutex);
+}
+
+/*
+ * htt_htc_misc_pkt_list_add() - Add pkt to misc list
+ * @htt_soc:	HTT SOC handle
+ * @dp_htt_htc_pkt: pkt to be added to list
+ */
+static void
+htt_htc_misc_pkt_list_add(struct htt_soc *soc, struct dp_htt_htc_pkt *pkt)
+{
+	struct dp_htt_htc_pkt_union *u_pkt =
+				(struct dp_htt_htc_pkt_union *)pkt;
+	int misclist_trim_level = htc_get_tx_queue_depth(soc->htc_soc,
+							pkt->htc_pkt.Endpoint)
+				+ DP_HTT_HTC_PKT_MISCLIST_SIZE;
+
+	HTT_TX_MUTEX_ACQUIRE(&soc->htt_tx_mutex);
+	if (soc->htt_htc_pkt_misclist) {
+		u_pkt->u.next = soc->htt_htc_pkt_misclist;
+		soc->htt_htc_pkt_misclist = u_pkt;
+	} else {
+		soc->htt_htc_pkt_misclist = u_pkt;
+	}
+	HTT_TX_MUTEX_RELEASE(&soc->htt_tx_mutex);
+
+	/* only ce pipe size + tx_queue_depth could possibly be in use
+	 * free older packets in the misclist
+	 */
+	htt_htc_misc_pkt_list_trim(soc, misclist_trim_level);
+}
+
+/*
+ * htt_htc_misc_pkt_pool_free() - free pkts in misc list
+ * @htt_soc:	HTT SOC handle
+ */
+static void
+htt_htc_misc_pkt_pool_free(struct htt_soc *soc)
+{
+	struct dp_htt_htc_pkt_union *pkt, *next;
+	qdf_nbuf_t netbuf;
+
+	pkt = soc->htt_htc_pkt_misclist;
+
+	while (pkt) {
+		next = pkt->u.next;
+		netbuf = (qdf_nbuf_t) (pkt->u.pkt.htc_pkt.pNetBufContext);
+		qdf_nbuf_unmap(soc->osdev, netbuf, QDF_DMA_TO_DEVICE);
+
+		soc->stats.htc_pkt_free++;
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			 "%s: Pkt free count %d\n",
+			 __func__, soc->stats.htc_pkt_free);
+
+		qdf_nbuf_free(netbuf);
+		qdf_mem_free(pkt);
+		pkt = next;
+	}
+	soc->htt_htc_pkt_misclist = NULL;
 }
 
 /*
@@ -225,7 +323,7 @@ static int htt_h2t_ver_req_msg(struct htt_soc *soc)
 		1); /* tag - not relevant here */
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
-	htc_send_pkt(soc->htc_soc, &pkt->htc_pkt);
+	DP_HTT_SEND_HTC_PKT(soc, pkt);
 	return 0;
 }
 
@@ -480,7 +578,7 @@ int htt_srng_setup(void *htt_soc, int mac_id, void *hal_srng,
 		1); /* tag - not relevant here */
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, htt_msg);
-	htc_send_pkt(soc->htc_soc, &pkt->htc_pkt);
+	DP_HTT_SEND_HTC_PKT(soc, pkt);
 
 	return QDF_STATUS_SUCCESS;
 
@@ -916,7 +1014,7 @@ int htt_h2t_rx_ring_cfg(void *htt_soc, int pdev_id, void *hal_srng,
 		1); /* tag - not relevant here */
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, htt_msg);
-	htc_send_pkt(soc->htc_soc, &pkt->htc_pkt);
+	DP_HTT_SEND_HTC_PKT(soc, pkt);
 	return QDF_STATUS_SUCCESS;
 
 fail1:
@@ -1458,6 +1556,7 @@ htt_soc_detach(void *htt_soc)
 {
 	struct htt_soc *soc = (struct htt_soc *)htt_soc;
 
+	htt_htc_misc_pkt_pool_free(soc);
 	htt_htc_pkt_pool_free(soc);
 	HTT_TX_MUTEX_DESTROY(&soc->htt_tx_mutex);
 	qdf_mem_free(soc);
@@ -1558,5 +1657,6 @@ QDF_STATUS dp_h2t_ext_stats_msg_send(struct dp_pdev *pdev,
 			1); /* tag - not relevant here */
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
-	return htc_send_pkt(soc->htc_soc, &pkt->htc_pkt);
+	DP_HTT_SEND_HTC_PKT(soc, pkt);
+	return 0;
 }
