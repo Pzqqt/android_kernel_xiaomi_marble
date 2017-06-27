@@ -54,6 +54,7 @@
 #include "pktlog_ac.h"
 #endif
 #include "epping_main.h"
+#include "pld_sdio.h"
 
 #ifndef ATH_BUS_PM
 #ifdef CONFIG_PM
@@ -168,14 +169,18 @@ static A_STATUS hif_sdio_probe(void *context, void *hif_handle)
 	scn->ol_sc = *ol_sc;
 	ol_sc->target_info.target_type = target_type;
 
-#ifndef TARGET_DUMP_FOR_NON_QC_PLATFORM
-	scn->ramdump_base = ioremap(RAMDUMP_ADDR, RAMDUMP_SIZE);
-	scn->ramdump_size = RAMDUMP_SIZE;
-	if (scn->ramdump_base == NULL) {
-		scn->ramdump_base = 0;
-		scn->ramdump_size = 0;
+	scn->ramdump_base = pld_hif_sdio_get_virt_ramdump_mem(
+					scn->aps_osdev.device,
+					&scn->ramdump_size);
+	if (scn->ramdump_base == NULL || !scn->ramdump_size) {
+		QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_ERROR,
+			"%s: Failed to get RAM dump memory address or size!\n",
+			__func__);
+	} else {
+		QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_INFO,
+			"%s: ramdump base 0x%p size %d\n", __func__,
+			scn->ramdump_base, (int)scn->ramdump_size);
 	}
-#endif
 
 	if (athdiag_procfs_init(scn) != 0) {
 		QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_ERROR,
@@ -190,6 +195,8 @@ static A_STATUS hif_sdio_probe(void *context, void *hif_handle)
 	return 0;
 
 err_attach1:
+	if (scn->ramdump_base)
+		pld_hif_sdio_release_ramdump_mem(scn->ramdump_base);
 	qdf_mem_free(ol_sc);
 err_attach:
 	qdf_mem_free(scn);
