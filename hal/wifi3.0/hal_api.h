@@ -308,6 +308,42 @@ extern void hal_get_shadow_config(void *hal_soc,
 extern void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 	int mac_id, struct hal_srng_params *ring_params);
 
+/* Remapping ids of REO rings */
+#define REO_REMAP_TCL 0
+#define REO_REMAP_SW1 1
+#define REO_REMAP_SW2 2
+#define REO_REMAP_SW3 3
+#define REO_REMAP_SW4 4
+#define REO_REMAP_RELEASE 5
+#define REO_REMAP_FW 6
+#define REO_REMAP_UNUSED 7
+
+/*
+ * currently this macro only works for IX0 since all the rings we are remapping
+ * can be remapped from HWIO_REO_R0_DESTINATION_RING_CTRL_IX_0
+ */
+#define HAL_REO_REMAP_VAL(_ORIGINAL_DEST, _NEW_DEST) \
+	HAL_REO_REMAP_VAL_(_ORIGINAL_DEST, _NEW_DEST)
+/* allow the destination macros to be expanded */
+#define HAL_REO_REMAP_VAL_(_ORIGINAL_DEST, _NEW_DEST) \
+	(_NEW_DEST << \
+	 (HWIO_REO_R0_DESTINATION_RING_CTRL_IX_0_DEST_RING_MAPPING_ ## \
+	  _ORIGINAL_DEST ## _SHFT))
+
+/**
+ * hal_reo_remap_IX0 - Remap REO ring destination
+ * @hal: HAL SOC handle
+ * @remap_val: Remap value
+ */
+extern void hal_reo_remap_IX0(struct hal_soc *hal, uint32_t remap_val);
+
+/**
+ * hal_srng_set_hp_paddr() - Set physical address to SRNG head pointer
+ * @sring: sring pointer
+ * @paddr: physical address
+ */
+extern void hal_srng_set_hp_paddr(struct hal_srng *sring, uint64_t paddr);
+
 /**
  * hal_srng_cleanup - Deinitialize HW SRNG ring.
  * @hal_soc: Opaque HAL SOC handle
@@ -939,11 +975,6 @@ static inline qdf_dma_addr_t hal_srng_get_hp_addr(void *hal_soc, void *hal_ring)
 	struct hal_srng *srng = (struct hal_srng *)hal_ring;
 	struct hal_soc *hal = (struct hal_soc *)hal_soc;
 
-	if (!(srng->flags & HAL_SRNG_LMAC_RING)) {
-		/* Currently this interface is required only for LMAC rings */
-		return (qdf_dma_addr_t)NULL;
-	}
-
 	if (srng->ring_dir == HAL_SRNG_SRC_RING) {
 		return hal->shadow_wrptr_mem_paddr +
 		  ((unsigned long)(srng->u.src_ring.hp_addr) -
@@ -966,11 +997,6 @@ static inline qdf_dma_addr_t hal_srng_get_tp_addr(void *hal_soc, void *hal_ring)
 {
 	struct hal_srng *srng = (struct hal_srng *)hal_ring;
 	struct hal_soc *hal = (struct hal_soc *)hal_soc;
-
-	if (!(srng->flags & HAL_SRNG_LMAC_RING)) {
-		/* Currently this interface is required only for LMAC rings */
-		return (qdf_dma_addr_t)NULL;
-	}
 
 	if (srng->ring_dir == HAL_SRNG_SRC_RING) {
 		return hal->shadow_rdptr_mem_paddr +

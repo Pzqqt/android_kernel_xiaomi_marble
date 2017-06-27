@@ -422,12 +422,12 @@ static struct hal_hw_srng_config hw_srng_table[] = {
 		},
 	},
 	{ /* RXDMA_BUF */
-		.start_ring_id = HAL_SRNG_WMAC1_SW2RXDMA0_BUF,
+		.start_ring_id = HAL_SRNG_WMAC1_SW2RXDMA0_BUF0,
+#ifdef IPA_OFFLOAD
+		.max_rings = 3,
+#else
 		.max_rings = 2,
-		/* TODO: Check if the additional IPA buffer ring needs to be
-		 * setup here (in which case max_rings should be set to 2),
-		 * or it will be setup by IPA host driver
-		 */
+#endif
 		.entry_size = sizeof(struct wbm_buffer_ring) >> 2,
 		.lmac_ring = TRUE,
 		.ring_dir = HAL_SRNG_SRC_RING,
@@ -578,8 +578,8 @@ static void hal_update_srng_hp_tp_address(void *hal_soc,
 }
 
 QDF_STATUS hal_set_one_shadow_config(void *hal_soc,
-				      int ring_type,
-				      int ring_num)
+				     int ring_type,
+				     int ring_num)
 {
 	uint32_t target_register;
 	struct hal_soc *hal = (struct hal_soc *)hal_soc;
@@ -608,9 +608,9 @@ QDF_STATUS hal_set_one_shadow_config(void *hal_soc,
 				      ring_num);
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
-			"%s: target_reg %x, shadow_index %x, ring_type %d, ring num %d\n",
-		       __func__, target_register, shadow_config_index,
-		       ring_type, ring_num);
+	    "%s: target_reg %x, shadow_index %x, ring_type %d, ring num %d\n",
+	    __func__, target_register, shadow_config_index,
+	    ring_type, ring_num);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -813,8 +813,6 @@ extern void hal_detach(void *hal_soc)
 	return;
 }
 
-
-
 /**
  * hal_srng_src_hw_init - Private function to initialize SRNG
  * source ring HW
@@ -955,6 +953,31 @@ static inline void hal_ce_dst_setup(struct hal_soc *hal, struct hal_srng *srng,
 	HAL_REG_WRITE(hal, reg_addr, reg_val);
 }
 
+/**
+ * hal_reo_remap_IX0 - Remap REO ring destination
+ * @hal: HAL SOC handle
+ * @remap_val: Remap value
+ */
+void hal_reo_remap_IX0(struct hal_soc *hal, uint32_t remap_val)
+{
+	uint32_t reg_offset = HWIO_REO_R0_DESTINATION_RING_CTRL_IX_0_ADDR(
+				SEQ_WCSS_UMAC_REO_REG_OFFSET);
+	HAL_REG_WRITE(hal, reg_offset, remap_val);
+}
+
+/**
+ * hal_srng_set_hp_paddr() - Set physical address to SRNG head pointer
+ * @sring: sring pointer
+ * @paddr: physical address
+ */
+void hal_srng_set_hp_paddr(struct hal_srng *sring,
+				uint64_t paddr)
+{
+	SRNG_DST_REG_WRITE(sring, HP_ADDR_LSB,
+			   paddr & 0xffffffff);
+	SRNG_DST_REG_WRITE(sring, HP_ADDR_MSB,
+			   paddr >> 32);
+}
 /**
  * hal_srng_dst_hw_init - Private function to initialize SRNG
  * destination ring HW
@@ -1165,9 +1188,9 @@ void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 
 			if (CHECK_SHADOW_REGISTERS) {
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
-					  QDF_TRACE_LEVEL_ERROR,
-					  "%s: Ring (%d, %d) missing shadow config\n",
-					  __func__, ring_type, ring_num);
+				    QDF_TRACE_LEVEL_ERROR,
+				    "%s: Ring (%d, %d) missing shadow config\n",
+				    __func__, ring_type, ring_num);
 			}
 		} else {
 			hal_validate_shadow_register(hal,
@@ -1200,9 +1223,9 @@ void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 
 			if (CHECK_SHADOW_REGISTERS) {
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
-					  QDF_TRACE_LEVEL_ERROR,
-					  "%s: Ring (%d, %d) missing shadow config\n",
-					  __func__, ring_type, ring_num);
+				    QDF_TRACE_LEVEL_ERROR,
+				    "%s: Ring (%d, %d) missing shadow config\n",
+				    __func__, ring_type, ring_num);
 			}
 		} else {
 			hal_validate_shadow_register(hal,

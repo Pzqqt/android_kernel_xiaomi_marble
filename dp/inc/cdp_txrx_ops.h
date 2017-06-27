@@ -25,7 +25,6 @@
 #ifndef _CDP_TXRX_CMN_OPS_H_
 #define _CDP_TXRX_CMN_OPS_H_
 
-
 #include <cdp_txrx_cmn_struct.h>
 #ifdef CONFIG_WIN
 #include <cdp_txrx_stats_struct.h>
@@ -33,6 +32,9 @@
 #include "cdp_txrx_handle.h"
 #include <cdp_txrx_mon_struct.h>
 #include "wlan_objmgr_psoc_obj.h"
+#ifdef IPA_OFFLOAD
+#include <ipa.h>
+#endif
 
 /******************************************************************************
  *
@@ -757,6 +759,7 @@ struct cdp_lflowctl_ops {
 	void (*vdev_unpause)(struct cdp_vdev *vdev, uint32_t reason);
 };
 
+#ifdef IPA_OFFLOAD
 /**
  * struct cdp_ipa_ops - mcl ipa data path ops
  * @ipa_get_resource:
@@ -768,26 +771,43 @@ struct cdp_lflowctl_ops {
  * @ipa_tx_data_frame:
  */
 struct cdp_ipa_ops {
-	void (*ipa_get_resource)(struct cdp_pdev *pdev,
-		struct ol_txrx_ipa_resources *ipa_res);
-	void (*ipa_set_doorbell_paddr)(struct cdp_pdev *pdev,
-		qdf_dma_addr_t ipa_tx_uc_doorbell_paddr,
-		qdf_dma_addr_t ipa_rx_uc_doorbell_paddr);
-	void (*ipa_set_active)(struct cdp_pdev *pdev,
-		bool uc_active, bool is_tx);
-	void (*ipa_op_response)(struct cdp_pdev *pdev, uint8_t *op_msg);
-	void (*ipa_register_op_cb)(struct cdp_pdev *pdev,
+	QDF_STATUS (*ipa_get_resource)(struct cdp_pdev *pdev);
+	QDF_STATUS (*ipa_set_doorbell_paddr)(struct cdp_pdev *pdev);
+	QDF_STATUS (*ipa_set_active)(struct cdp_pdev *pdev, bool uc_active,
+		bool is_tx);
+	QDF_STATUS (*ipa_op_response)(struct cdp_pdev *pdev, uint8_t *op_msg);
+	QDF_STATUS (*ipa_register_op_cb)(struct cdp_pdev *pdev,
 		void (*ipa_uc_op_cb_type)(uint8_t *op_msg, void *osif_ctxt),
-		void *osif_dev);
-	void (*ipa_get_stat)(struct cdp_pdev *pdev);
+		void *usr_ctxt);
+	QDF_STATUS (*ipa_get_stat)(struct cdp_pdev *pdev);
 	qdf_nbuf_t (*ipa_tx_data_frame)(struct cdp_vdev *vdev, qdf_nbuf_t skb);
-	void (*ipa_set_uc_tx_partition_base)(struct cdp_cfg *cfg_pdev,
+	void (*ipa_set_uc_tx_partition_base)(struct cdp_cfg *pdev,
 		uint32_t value);
-	void (*ipa_uc_get_share_stats)(struct cdp_pdev *pdev,
+#ifdef FEATURE_METERING
+	QDF_STATUS (*ipa_uc_get_share_stats)(struct cdp_pdev *pdev,
 		uint8_t reset_stats);
-	void (*ipa_uc_set_quota)(struct cdp_pdev *pdev,
+	QDF_STATUS (*ipa_uc_set_quota)(struct cdp_pdev *pdev,
 		uint64_t quota_bytes);
+#endif
+	QDF_STATUS (*ipa_enable_autonomy)(struct cdp_pdev *pdev);
+	QDF_STATUS (*ipa_disable_autonomy)(struct cdp_pdev *pdev);
+	QDF_STATUS (*ipa_setup)(struct cdp_pdev *pdev, void *ipa_i2w_cb,
+		void *ipa_w2i_cb, void *ipa_wdi_meter_notifier_cb,
+		uint32_t ipa_desc_size, void *ipa_priv, bool is_rm_enabled,
+		uint32_t *tx_pipe_handle, uint32_t *rx_pipe_handle);
+	QDF_STATUS (*ipa_cleanup)(uint32_t tx_pipe_handle,
+		uint32_t rx_pipe_handle);
+	QDF_STATUS (*ipa_setup_iface)(char *ifname, uint8_t *mac_addr,
+		enum ipa_client_type prod_client,
+		enum ipa_client_type cons_client,
+		uint8_t session_id, bool is_ipv6_enabled);
+	QDF_STATUS (*ipa_cleanup_iface)(char *ifname, bool is_ipv6_enabled);
+	QDF_STATUS (*ipa_enable_pipes)(struct cdp_pdev *pdev);
+	QDF_STATUS (*ipa_disable_pipes)(struct cdp_pdev *pdev);
+	QDF_STATUS (*ipa_set_perf_level)(int client,
+		uint32_t max_supported_bw_mbps);
 };
+#endif
 
 /**
  * struct cdp_bus_ops - mcl bus suspend/resume ops
@@ -919,7 +939,9 @@ struct cdp_ops {
 	struct cdp_cfg_ops          *cfg_ops;
 	struct cdp_flowctl_ops      *flowctl_ops;
 	struct cdp_lflowctl_ops     *l_flowctl_ops;
+#ifdef IPA_OFFLOAD
 	struct cdp_ipa_ops          *ipa_ops;
+#endif
 	struct cdp_bus_ops          *bus_ops;
 	struct cdp_ocb_ops          *ocb_ops;
 	struct cdp_peer_ops         *peer_ops;

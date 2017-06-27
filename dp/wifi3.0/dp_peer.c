@@ -26,6 +26,7 @@
 #include <hal_reo.h>
 #ifdef CONFIG_MCL
 #include <cds_ieee80211_common.h>
+#include <cds_api.h>
 #endif
 #include <cdp_txrx_handle.h>
 #include <wlan_cfg.h>
@@ -1745,6 +1746,34 @@ QDF_STATUS dp_get_vdevid(void *peer_handle, uint8_t *vdev_id)
 			peer, peer->vdev, peer->vdev->vdev_id);
 	*vdev_id = peer->vdev->vdev_id;
 	return QDF_STATUS_SUCCESS;
+}
+
+struct cdp_vdev *dp_get_vdev_by_sta_id(uint8_t sta_id)
+{
+	struct dp_peer *peer = NULL;
+	struct dp_pdev *pdev = NULL;
+
+	if (sta_id >= WLAN_MAX_STA_COUNT) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
+			  "Invalid sta id passed");
+		return NULL;
+	}
+
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	if (!pdev) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
+			  "PDEV not found for sta_id [%d]", sta_id);
+		return NULL;
+	}
+
+	peer = dp_peer_find_by_local_id((struct cdp_pdev *)pdev, sta_id);
+	if (!peer) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
+			  "PEER [%d] not found", sta_id);
+		return NULL;
+	}
+
+	return (struct cdp_vdev *)peer->vdev;
 }
 
 /**

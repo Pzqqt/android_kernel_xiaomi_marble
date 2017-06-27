@@ -143,7 +143,6 @@ union dp_rx_desc_list_elem_t;
  * hardware
  */
 #define DP_SW2HW_MACID(id) ((id) + 1)
-
 #define DP_HW2SW_MACID(id) ((id) > 0 ? ((id) - 1) : 0)
 #define DP_MAC_ADDR_LEN 6
 
@@ -770,7 +769,67 @@ struct dp_soc {
 	uint32_t htt_msg_len;
 	/* work queue to process htt stats */
 	qdf_work_t htt_stats_work;
+
+#ifdef IPA_OFFLOAD
+	/* IPA uC datapath offload Wlan Tx resources */
+	struct {
+		/* Resource info to be passed to IPA */
+		qdf_dma_addr_t ipa_tcl_ring_base_paddr;
+		void *ipa_tcl_ring_base_vaddr;
+		uint32_t ipa_tcl_ring_size;
+		qdf_dma_addr_t ipa_tcl_hp_paddr;
+		uint32_t alloc_tx_buf_cnt;
+
+		qdf_dma_addr_t ipa_wbm_ring_base_paddr;
+		void *ipa_wbm_ring_base_vaddr;
+		uint32_t ipa_wbm_ring_size;
+		qdf_dma_addr_t ipa_wbm_tp_paddr;
+
+		/* TX buffers populated into the WBM ring */
+		void **tx_buf_pool_vaddr;
+	} ipa_uc_tx_rsc;
+
+	/* IPA uC datapath offload Wlan Rx resources */
+	struct {
+		/* Resource info to be passed to IPA */
+		qdf_dma_addr_t ipa_reo_ring_base_paddr;
+		void *ipa_reo_ring_base_vaddr;
+		uint32_t ipa_reo_ring_size;
+		qdf_dma_addr_t ipa_reo_tp_paddr;
+
+		/* Resource info to be passed to firmware and IPA */
+		qdf_dma_addr_t ipa_rx_refill_buf_ring_base_paddr;
+		void *ipa_rx_refill_buf_ring_base_vaddr;
+		uint32_t ipa_rx_refill_buf_ring_size;
+		qdf_dma_addr_t ipa_rx_refill_buf_hp_paddr;
+	} ipa_uc_rx_rsc;
+#endif
 };
+
+#ifdef IPA_OFFLOAD
+/**
+ * dp_ipa_resources - Resources needed for IPA
+ */
+struct dp_ipa_resources {
+	qdf_dma_addr_t tx_ring_base_paddr;
+	uint32_t tx_ring_size;
+	uint32_t tx_num_alloc_buffer;
+
+	qdf_dma_addr_t tx_comp_ring_base_paddr;
+	uint32_t tx_comp_ring_size;
+
+	qdf_dma_addr_t rx_rdy_ring_base_paddr;
+	uint32_t rx_rdy_ring_size;
+
+	qdf_dma_addr_t rx_refill_ring_base_paddr;
+	uint32_t rx_refill_ring_size;
+
+	/* IPA UC doorbell registers paddr */
+	qdf_dma_addr_t tx_comp_doorbell_paddr;
+	qdf_dma_addr_t rx_ready_doorbell_paddr;
+};
+#endif
+
 #define MAX_RX_MAC_RINGS 2
 /* Same as NAC_MAX_CLENT */
 #define DP_NAC_MAX_CLIENT  24
@@ -810,6 +869,11 @@ struct dp_pdev {
 
 	/* Ring used to replenish rx buffers (maybe to the firmware of MAC) */
 	struct dp_srng rx_refill_buf_ring;
+
+#ifdef IPA_OFFLOAD
+	/* Ring used to replenish IPA rx buffers */
+	struct dp_srng ipa_rx_refill_buf_ring;
+#endif
 
 	/* Empty ring used by firmware to post rx buffers to the MAC */
 	struct dp_srng rx_mac_buf_ring[MAX_RX_MAC_RINGS];
@@ -929,6 +993,12 @@ struct dp_pdev {
 
 	/* Number of VAPs with mcast enhancement enabled */
 	qdf_atomic_t mc_num_vap_attached;
+
+#ifdef IPA_OFFLOAD
+	ipa_uc_op_cb_type ipa_uc_op_cb;
+	void *usr_ctxt;
+	struct dp_ipa_resources ipa_resource;
+#endif
 
 	/* TBD */
 

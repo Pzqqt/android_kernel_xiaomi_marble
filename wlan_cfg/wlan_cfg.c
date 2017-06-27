@@ -36,7 +36,11 @@
 #define WLAN_CFG_PER_PDEV_RX_RING 0
 #define NUM_RXDMA_RINGS_PER_PDEV 2
 #define WLAN_LRO_ENABLE 1
+#ifdef IPA_OFFLOAD
+#define WLAN_CFG_TX_RING_SIZE 2048
+#else
 #define WLAN_CFG_TX_RING_SIZE 512
+#endif
 #define WLAN_CFG_TX_COMP_RING_SIZE 1024
 
 /* Tx Descriptor and Tx Extension Descriptor pool sizes */
@@ -161,7 +165,11 @@
 
 #define WLAN_CFG_MAX_CLIENTS 64
 
+#ifdef IPA_OFFLOAD
+#define WLAN_CFG_PER_PDEV_TX_RING 0
+#else
 #define WLAN_CFG_PER_PDEV_TX_RING 1
+#endif
 #define WLAN_CFG_NUM_TCL_DATA_RINGS 3
 #define WLAN_CFG_NUM_REO_DEST_RING 4
 

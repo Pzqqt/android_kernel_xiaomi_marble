@@ -246,6 +246,7 @@ struct txrx_pdev_cfg_param_t {
 	struct ol_tx_sched_wrr_ac_specs_t ac_specs[TX_WMM_AC_NUM];
 };
 
+#ifdef IPA_OFFLOAD
 /**
  * ol_txrx_ipa_resources - Resources needed for IPA
  */
@@ -267,7 +268,15 @@ struct ol_txrx_ipa_resources {
 	uint32_t rx2_rdy_ring_size;
 	qdf_dma_addr_t rx2_proc_done_idx_paddr;
 	void *rx2_proc_done_idx_vaddr;
+
+	/* IPA UC doorbell registers paddr */
+	qdf_dma_addr_t tx_comp_doorbell_paddr;
+	qdf_dma_addr_t rx_ready_doorbell_paddr;
+
+	uint32_t tx_pipe_handle;
+	uint32_t rx_pipe_handle;
 };
+#endif
 
 struct ol_txrx_ocb_chan_info {
 	uint32_t chan_freq;
@@ -401,7 +410,7 @@ typedef void (*tx_pause_callback)(uint8_t vdev_id,
 		enum netif_action_type action,
 		enum netif_reason_type reason);
 
-typedef void (*ipa_op_cb_type)(uint8_t *op_msg,
+typedef void (*ipa_uc_op_cb_type)(uint8_t *op_msg,
 			void *osif_ctxt);
 
 #endif /* __CDP_TXRX_MOB_DEF_H */

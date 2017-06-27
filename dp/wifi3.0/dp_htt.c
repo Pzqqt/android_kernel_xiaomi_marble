@@ -367,25 +367,35 @@ int htt_srng_setup(void *htt_soc, int mac_id, void *hal_srng,
 	case RXDMA_BUF:
 #ifdef QCA_HOST2FW_RXBUF_RING
 		if (srng_params.ring_id ==
-		    (HAL_SRNG_WMAC1_SW2RXDMA0_BUF)) {
+		    (HAL_SRNG_WMAC1_SW2RXDMA0_BUF0)) {
 			htt_ring_id = HTT_HOST1_TO_FW_RXBUF_RING;
 			htt_ring_type = HTT_SW_TO_SW_RING;
+#ifdef IPA_OFFLOAD
+		} else if (srng_params.ring_id ==
+		    (HAL_SRNG_WMAC1_SW2RXDMA0_BUF2)) {
+			htt_ring_id = HTT_HOST2_TO_FW_RXBUF_RING;
+			htt_ring_type = HTT_SW_TO_SW_RING;
+#endif
 #else
 		if (srng_params.ring_id ==
-			(HAL_SRNG_WMAC1_SW2RXDMA0_BUF +
+			(HAL_SRNG_WMAC1_SW2RXDMA0_BUF0 +
 			  (mac_id * HAL_MAX_RINGS_PER_LMAC))) {
 			htt_ring_id = HTT_RXDMA_HOST_BUF_RING;
 			htt_ring_type = HTT_SW_TO_HW_RING;
 #endif
 		} else if (srng_params.ring_id ==
+#ifdef IPA_OFFLOAD
+			 (HAL_SRNG_WMAC1_SW2RXDMA0_BUF1 +
+#else
 			 (HAL_SRNG_WMAC1_SW2RXDMA1_BUF +
+#endif
 			  (mac_id * HAL_MAX_RINGS_PER_LMAC))) {
 			htt_ring_id = HTT_RXDMA_HOST_BUF_RING;
 			htt_ring_type = HTT_SW_TO_HW_RING;
 		} else {
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-					   "%s: Ring %d currently not supported\n",
-					   __func__, srng_params.ring_id);
+				   "%s: Ring %d currently not supported\n",
+				   __func__, srng_params.ring_id);
 			goto fail1;
 		}
 

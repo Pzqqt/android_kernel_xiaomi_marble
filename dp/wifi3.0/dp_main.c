@@ -48,6 +48,8 @@ cdp_dump_flow_pool_info(struct cdp_soc_t *soc)
 	return;
 }
 #endif
+#include <ol_cfg.h>
+#include "dp_ipa.h"
 
 #define DP_INTR_POLL_TIMER_MS	10
 #define DP_WDS_AGING_TIMER_DEFAULT_MS	6000
@@ -58,6 +60,14 @@ cdp_dump_flow_pool_info(struct cdp_soc_t *soc)
 #define DP_CURR_FW_STATS_AVAIL 19
 #define DP_HTT_DBG_EXT_STATS_MAX 256
 
+#ifdef IPA_OFFLOAD
+/* Exclude IPA rings from the interrupt context */
+#define TX_RING_MASK_VAL	0x7
+#define RX_RING_MASK_VAL	0x7
+#else
+#define TX_RING_MASK_VAL	0xF
+#define RX_RING_MASK_VAL	0xF
+#endif
 /**
  * default_dscp_tid_map - Default DSCP-TID mapping
  *
@@ -319,6 +329,8 @@ static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
 	 * See if these settings need to passed from DP layer
 	 */
 	ring_params.flags = 0;
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+		  FL("Ring type: %d, num:%d"), ring_type, ring_num);
 
 	num_entries = (num_entries > max_entries) ? max_entries : num_entries;
 	srng->hal_srng = NULL;
@@ -416,6 +428,201 @@ static void dp_srng_cleanup(struct dp_soc *soc, struct dp_srng *srng,
 				srng->base_vaddr_unaligned,
 				srng->base_paddr_unaligned, 0);
 }
+
+#ifdef IPA_OFFLOAD
+/**
+ * dp_tx_ipa_uc_detach - Free autonomy TX resources
+ * @soc: data path instance
+ * @pdev: core txrx pdev context
+ *
+ * Free allocated TX buffers with WBM SRNG
+ *
+ * Return: none
+ */
+static void dp_tx_ipa_uc_detach(struct dp_soc *soc, struct dp_pdev *pdev)
+{
+	int idx;
+
+	for (idx = 0; idx < soc->ipa_uc_tx_rsc.alloc_tx_buf_cnt; idx++) {
+		if (soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr[idx])
+			qdf_mem_free(soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr[idx]);
+	}
+
+	qdf_mem_free(soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr);
+	soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr = NULL;
+}
+
+/**
+ * dp_rx_ipa_uc_detach - free autonomy RX resources
+ * @soc: data path instance
+ * @pdev: core txrx pdev context
+ *
+ * This function will detach DP RX into main device context
+ * will free DP Rx resources.
+ *
+ * Return: none
+ */
+static void dp_rx_ipa_uc_detach(struct dp_soc *soc, struct dp_pdev *pdev)
+{
+}
+
+static int dp_ipa_uc_detach(struct dp_soc *soc, struct dp_pdev *pdev)
+{
+	/* TX resource detach */
+	dp_tx_ipa_uc_detach(soc, pdev);
+
+	/* RX resource detach */
+	dp_rx_ipa_uc_detach(soc, pdev);
+
+	dp_srng_cleanup(soc, &pdev->ipa_rx_refill_buf_ring, RXDMA_BUF, 2);
+
+	return QDF_STATUS_SUCCESS;	/* success */
+}
+
+/* Hard coded config parameters until dp_ops_cfg.cfg_attach implemented */
+#define CFG_IPA_UC_TX_BUF_SIZE_DEFAULT            (2048)
+
+/**
+ * dp_tx_ipa_uc_attach - Allocate autonomy TX resources
+ * @soc: data path instance
+ * @pdev: Physical device handle
+ *
+ * Allocate TX buffer from non-cacheable memory
+ * Attache allocated TX buffers with WBM SRNG
+ *
+ * Return: int
+ */
+static int dp_tx_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
+{
+	uint32_t tx_buffer_count;
+	uint32_t ring_base_align = 8;
+	void *buffer_vaddr_unaligned;
+	void *buffer_vaddr;
+	qdf_dma_addr_t buffer_paddr_unaligned;
+	qdf_dma_addr_t buffer_paddr;
+	void *wbm_srng = soc->tx_comp_ring[IPA_TX_COMP_RING_IDX].hal_srng;
+	uint32_t paddr_lo;
+	uint32_t paddr_hi;
+	void *ring_entry;
+	int ring_size = ((struct hal_srng *)wbm_srng)->ring_size;
+	int retval = QDF_STATUS_SUCCESS;
+	/*
+	 * Uncomment when dp_ops_cfg.cfg_attach is implemented
+	 * unsigned int uc_tx_buf_sz =
+	 *		dp_cfg_ipa_uc_tx_buf_size(pdev->osif_pdev);
+	 */
+	unsigned int uc_tx_buf_sz = CFG_IPA_UC_TX_BUF_SIZE_DEFAULT;
+	unsigned int alloc_size = uc_tx_buf_sz + ring_base_align - 1;
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+		  "requested %d buffers to be posted to wbm ring",
+			 ring_size);
+
+	soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr = qdf_mem_malloc(ring_size *
+			sizeof(*soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr));
+	if (!soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: IPA WBM Ring mem_info alloc fail", __func__);
+		return -ENOMEM;
+	}
+
+	hal_srng_access_start(soc->hal_soc, wbm_srng);
+
+	/* Allocate TX buffers as many as possible */
+	for (tx_buffer_count = 0;
+		tx_buffer_count < ring_size; tx_buffer_count++) {
+
+		ring_entry = hal_srng_src_get_next(soc->hal_soc, wbm_srng);
+		if (!ring_entry) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				  "Failed to get WBM ring entry\n");
+			goto fail;
+		}
+
+		buffer_vaddr_unaligned = qdf_mem_alloc_consistent(soc->osdev,
+			soc->osdev->dev, alloc_size, &buffer_paddr_unaligned);
+		if (!buffer_vaddr_unaligned) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				  "IPA WDI TX buffer alloc fail %d allocated\n",
+				  tx_buffer_count);
+			break;
+		}
+
+		buffer_vaddr = buffer_vaddr_unaligned +
+			((unsigned long)buffer_vaddr_unaligned %
+			ring_base_align);
+		buffer_paddr = buffer_paddr_unaligned +
+			((unsigned long)(buffer_vaddr) -
+			 (unsigned long)buffer_vaddr_unaligned);
+
+		paddr_lo = ((u64)buffer_paddr & 0x00000000ffffffff);
+		paddr_hi = ((u64)buffer_paddr & 0x0000001f00000000) >> 32;
+		HAL_WBM_PADDR_LO_SET(ring_entry, paddr_lo);
+		HAL_WBM_PADDR_HI_SET(ring_entry, paddr_hi);
+
+		soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr[tx_buffer_count] =
+			buffer_vaddr;
+	}
+
+	hal_srng_access_end(soc->hal_soc, wbm_srng);
+	soc->ipa_uc_tx_rsc.alloc_tx_buf_cnt = tx_buffer_count;
+
+	return retval;
+
+fail:
+	qdf_mem_free(soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr);
+	return retval;
+}
+
+/**
+ * dp_rx_ipa_uc_attach - Allocate autonomy RX resources
+ * @soc: data path instance
+ * @pdev: core txrx pdev context
+ *
+ * This function will attach a DP RX instance into the main
+ * device (SOC) context.
+ *
+ * Return: QDF_STATUS_SUCCESS: success
+ *         QDF_STATUS_E_RESOURCES: Error return
+ */
+static int dp_rx_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static int dp_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
+{
+	int error;
+
+	/* TX resource attach */
+	error = dp_tx_ipa_uc_attach(soc, pdev);
+	if (error) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "DP IPA UC TX attach fail code %d\n", error);
+		return error;
+	}
+
+	/* RX resource attach */
+	error = dp_rx_ipa_uc_attach(soc, pdev);
+	if (error) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "DP IPA UC RX attach fail code %d\n", error);
+		dp_tx_ipa_uc_detach(soc, pdev);
+		return error;
+	}
+
+	return QDF_STATUS_SUCCESS;	/* success */
+}
+#else
+static int dp_ipa_uc_detach(struct dp_soc *soc, struct dp_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+static int dp_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /* TODO: Need this interface from HIF */
 void *hif_get_hal_handle(void *hif_handle);
@@ -578,8 +785,8 @@ static QDF_STATUS dp_soc_interrupt_attach_poll(void *txrx_soc)
 
 	for (i = 0; i < wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx); i++) {
 		soc->intr_ctx[i].dp_intr_id = i;
-		soc->intr_ctx[i].tx_ring_mask = 0xF;
-		soc->intr_ctx[i].rx_ring_mask = 0xF;
+		soc->intr_ctx[i].tx_ring_mask = TX_RING_MASK_VAL;
+		soc->intr_ctx[i].rx_ring_mask = RX_RING_MASK_VAL;
 		soc->intr_ctx[i].rx_mon_ring_mask = 0x1;
 		soc->intr_ctx[i].rx_err_ring_mask = 0x1;
 		soc->intr_ctx[i].rx_wbm_rel_ring_mask = 0x1;
@@ -1330,6 +1537,10 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 					FL("dp_srng_setup failed for tcl_data_ring[%d]"), i);
 				goto fail1;
 			}
+			/*
+			 * TBD: Set IPA WBM ring size with ini IPA UC tx buffer
+			 * count
+			 */
 			if (dp_srng_setup(soc, &soc->tx_comp_ring[i],
 				WBM2SW_RELEASE, i, 0, tx_comp_ring_size)) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
@@ -1604,6 +1815,99 @@ void dp_soc_reset_intr_mask(struct dp_soc *soc, struct dp_pdev *pdev)
 }
 
 /*
+ * dp_ipa_ring_resource_setup() - setup IPA ring resources
+ * @soc: data path SoC handle
+ *
+ * Return: none
+ */
+#ifdef IPA_OFFLOAD
+static inline int dp_ipa_ring_resource_setup(struct dp_soc *soc,
+		struct dp_pdev *pdev)
+{
+	void *hal_srng;
+	struct hal_srng_params srng_params;
+	qdf_dma_addr_t hp_addr, tp_addr;
+
+	/* IPA TCL_DATA Ring - HAL_SRNG_SW2TCL4 */
+	hal_srng = soc->tcl_data_ring[IPA_TCL_DATA_RING_IDX].hal_srng;
+	hal_get_srng_params(soc->hal_soc, hal_srng, &srng_params);
+
+	soc->ipa_uc_tx_rsc.ipa_tcl_ring_base_paddr =
+		srng_params.ring_base_paddr;
+	soc->ipa_uc_tx_rsc.ipa_tcl_ring_base_vaddr =
+		srng_params.ring_base_vaddr;
+	soc->ipa_uc_tx_rsc.ipa_tcl_ring_size =
+		srng_params.num_entries * srng_params.entry_size;
+	hp_addr = hal_srng_get_hp_addr(soc->hal_soc, hal_srng);
+	soc->ipa_uc_tx_rsc.ipa_tcl_hp_paddr = hp_addr;
+
+
+	/* IPA TX COMP Ring - HAL_SRNG_WBM2SW3_RELEASE */
+	hal_srng = soc->tx_comp_ring[IPA_TX_COMP_RING_IDX].hal_srng;
+	hal_get_srng_params(soc->hal_soc, hal_srng, &srng_params);
+
+	soc->ipa_uc_tx_rsc.ipa_wbm_ring_base_paddr =
+		srng_params.ring_base_paddr;
+	soc->ipa_uc_tx_rsc.ipa_wbm_ring_base_vaddr =
+		srng_params.ring_base_vaddr;
+	soc->ipa_uc_tx_rsc.ipa_wbm_ring_size =
+		srng_params.num_entries * srng_params.entry_size;
+	tp_addr = hal_srng_get_tp_addr(soc->hal_soc, hal_srng);
+	soc->ipa_uc_tx_rsc.ipa_wbm_tp_paddr = tp_addr;
+
+	/* IPA REO_DEST Ring - HAL_SRNG_REO2SW4 */
+	hal_srng = soc->reo_dest_ring[IPA_REO_DEST_RING_IDX].hal_srng;
+	hal_get_srng_params(soc->hal_soc, hal_srng, &srng_params);
+
+	soc->ipa_uc_rx_rsc.ipa_reo_ring_base_paddr =
+		srng_params.ring_base_paddr;
+	soc->ipa_uc_rx_rsc.ipa_reo_ring_base_vaddr =
+		srng_params.ring_base_vaddr;
+	soc->ipa_uc_rx_rsc.ipa_reo_ring_size =
+		srng_params.num_entries * srng_params.entry_size;
+	tp_addr = hal_srng_get_tp_addr(soc->hal_soc, hal_srng);
+	soc->ipa_uc_rx_rsc.ipa_reo_tp_paddr = tp_addr;
+
+	/* IPA RX_REFILL_BUF Ring - ipa_rx_refill_buf_ring */
+	if (dp_srng_setup(soc, &pdev->ipa_rx_refill_buf_ring, RXDMA_BUF, 2,
+				pdev->pdev_id, RXDMA_BUF_RING_SIZE)) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+				"%s: dp_srng_setup failed IPA rx refill ring\n",
+				__func__);
+		return -EFAULT;
+	}
+
+	hal_srng = pdev->ipa_rx_refill_buf_ring.hal_srng;
+	hal_get_srng_params(soc->hal_soc, hal_srng, &srng_params);
+	soc->ipa_uc_rx_rsc.ipa_rx_refill_buf_ring_base_paddr =
+		srng_params.ring_base_paddr;
+	soc->ipa_uc_rx_rsc.ipa_rx_refill_buf_ring_base_vaddr =
+		srng_params.ring_base_vaddr;
+	soc->ipa_uc_rx_rsc.ipa_rx_refill_buf_ring_size =
+		srng_params.num_entries * srng_params.entry_size;
+	hp_addr = hal_srng_get_hp_addr(soc->hal_soc, hal_srng);
+	soc->ipa_uc_rx_rsc.ipa_rx_refill_buf_hp_paddr = hp_addr;
+
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		"%s: ring_base_paddr:%p, ring_base_vaddr:%p"
+		"_entries:%d, hp_addr:%p\n",
+		__func__,
+		(void *)srng_params.ring_base_paddr,
+		(void *)srng_params.ring_base_vaddr,
+		srng_params.num_entries,
+		(void *)hp_addr);
+
+	return 0;
+}
+#else
+static inline int dp_ipa_ring_resource_setup(struct dp_soc *soc,
+					     struct dp_pdev *pdev)
+{
+	return 0;
+}
+#endif
+
+/*
 * dp_pdev_attach_wifi3() - attach txrx pdev
 * @osif_pdev: Opaque PDEV handle from OSIF/HDD
 * @txrx_soc: Datapath SOC handle
@@ -1704,7 +2008,6 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 		soc->num_reo_dest_rings++;
 
 	}
-
 	if (dp_srng_setup(soc, &pdev->rx_refill_buf_ring, RXDMA_BUF, 0, pdev_id,
 		RXDMA_REFILL_RING_SIZE)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -1755,11 +2058,20 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 		goto fail1;
 	}
 
+	if (dp_ipa_ring_resource_setup(soc, pdev))
+		goto fail1;
+
+	if (dp_ipa_uc_attach(soc, pdev) != QDF_STATUS_SUCCESS) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"%s: dp_ipa_uc_attach failed\n", __func__);
+		goto fail1;
+	}
+
 	/* Rx specific init */
 	if (dp_rx_pdev_attach(pdev)) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				FL("dp_rx_pdev_attach failed "));
-			goto fail0;
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("dp_rx_pdev_attach failed "));
+		goto fail0;
 	}
 	DP_STATS_INIT(pdev);
 
@@ -1880,7 +2192,9 @@ static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force)
 	dp_neighbour_peers_detach(pdev);
 	qdf_spinlock_destroy(&pdev->tx_mutex);
 
-	/* Setup per PDEV REO rings if configured */
+	dp_ipa_uc_detach(soc, pdev);
+
+	/* Cleanup per PDEV REO rings if configured */
 	if (wlan_cfg_per_pdev_rx_ring(soc->wlan_cfg_ctx)) {
 		dp_srng_cleanup(soc, &soc->reo_dest_ring[pdev->pdev_id],
 			REO_DST, pdev->pdev_id);
@@ -1936,7 +2250,6 @@ static inline void dp_reo_desc_freelist_destroy(struct dp_soc *soc)
 /*
  * dp_soc_detach_wifi3() - Detach txrx SOC
  * @txrx_soc: DP SOC handle, struct cdp_soc_t is first element of struct dp_soc.
- *
  */
 static void dp_soc_detach_wifi3(void *txrx_soc)
 {
@@ -2022,18 +2335,38 @@ static void dp_soc_detach_wifi3(void *txrx_soc)
 }
 
 /*
-* dp_rxdma_ring_config() - configure the RX DMA rings
-*
-* This function is used to configure the MAC rings.
-* On MCL host provides buffers in Host2FW ring
-* FW refills (copies) buffers to the ring and updates
-* ring_idx in register
-*
-* @soc: data path SoC handle
-* @pdev: Physical device handle
-*
-* Return: void
-*/
+ * dp_setup_ipa_rx_refill_buf_ring() - setup IPA RX Refill buffer ring
+ * @soc: data path SoC handle
+ * @pdev: physical device handle
+ *
+ * Return: void
+ */
+#ifdef IPA_OFFLOAD
+static inline void dp_config_ipa_rx_refill_buf_ring(struct dp_soc *soc,
+						   struct dp_pdev *pdev)
+{
+	htt_srng_setup(soc->htt_handle, 0,
+		       pdev->ipa_rx_refill_buf_ring.hal_srng, RXDMA_BUF);
+}
+#else
+static inline void dp_config_ipa_rx_refill_buf_ring(struct dp_soc *soc,
+						   struct dp_pdev *pdev)
+{
+}
+#endif
+
+/*
+ * dp_rxdma_ring_config() - configure the RX DMA rings
+ *
+ * This function is used to configure the MAC rings.
+ * On MCL host provides buffers in Host2FW ring
+ * FW refills (copies) buffers to the ring and updates
+ * ring_idx in register
+ *
+ * @soc: data path SoC handle
+ *
+ * Return: void
+ */
 #ifdef QCA_HOST2FW_RXBUF_RING
 static void dp_rxdma_ring_config(struct dp_soc *soc)
 {
@@ -2053,6 +2386,8 @@ static void dp_rxdma_ring_config(struct dp_soc *soc)
 			htt_srng_setup(soc->htt_handle, 0,
 				 pdev->rx_refill_buf_ring.hal_srng,
 				 RXDMA_BUF);
+
+			dp_config_ipa_rx_refill_buf_ring(soc, pdev);
 
 			if (soc->cdp_soc.ol_ops->
 				is_hw_dbs_2x2_capable) {
@@ -4547,9 +4882,25 @@ static struct cdp_lflowctl_ops dp_ops_l_flowctl = {
 	/* WIFI 3.0 DP NOT IMPLEMENTED YET */
 };
 
+#ifdef IPA_OFFLOAD
 static struct cdp_ipa_ops dp_ops_ipa = {
-	/* WIFI 3.0 DP NOT IMPLEMENTED YET */
+	.ipa_get_resource = dp_ipa_get_resource,
+	.ipa_set_doorbell_paddr = dp_ipa_set_doorbell_paddr,
+	.ipa_op_response = dp_ipa_op_response,
+	.ipa_register_op_cb = dp_ipa_register_op_cb,
+	.ipa_get_stat = dp_ipa_get_stat,
+	.ipa_tx_data_frame = dp_tx_send_ipa_data_frame,
+	.ipa_enable_autonomy = dp_ipa_enable_autonomy,
+	.ipa_disable_autonomy = dp_ipa_disable_autonomy,
+	.ipa_setup = dp_ipa_setup,
+	.ipa_cleanup = dp_ipa_cleanup,
+	.ipa_setup_iface = dp_ipa_setup_iface,
+	.ipa_cleanup_iface = dp_ipa_cleanup_iface,
+	.ipa_enable_pipes = dp_ipa_enable_pipes,
+	.ipa_disable_pipes = dp_ipa_disable_pipes,
+	.ipa_set_perf_level = dp_ipa_set_perf_level
 };
+#endif
 
 static struct cdp_bus_ops dp_ops_bus = {
 	.bus_suspend = dp_bus_suspend,
@@ -4582,6 +4933,7 @@ static struct cdp_peer_ops dp_ops_peer = {
 	.peer_find_by_local_id = dp_peer_find_by_local_id,
 	.peer_state_update = dp_peer_state_update,
 	.get_vdevid = dp_get_vdevid,
+	.get_vdev_by_sta_id = dp_get_vdev_by_sta_id,
 	.peer_get_peer_mac_addr = dp_peer_get_peer_mac_addr,
 	.get_vdev_for_peer = dp_get_vdev_for_peer,
 	.get_peer_state = dp_get_peer_state,
@@ -4607,7 +4959,9 @@ static struct cdp_ops dp_txrx_ops = {
 	.cfg_ops = &dp_ops_cfg,
 	.flowctl_ops = &dp_ops_flowctl,
 	.l_flowctl_ops = &dp_ops_l_flowctl,
+#ifdef IPA_OFFLOAD
 	.ipa_ops = &dp_ops_ipa,
+#endif
 	.bus_ops = &dp_ops_bus,
 	.ocb_ops = &dp_ops_ocb,
 	.peer_ops = &dp_ops_peer,

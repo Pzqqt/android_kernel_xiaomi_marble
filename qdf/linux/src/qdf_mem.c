@@ -1708,3 +1708,27 @@ void qdf_mem_exit(void)
 	qdf_mem_debug_exit();
 }
 EXPORT_SYMBOL(qdf_mem_exit);
+
+/**
+ * qdf_ether_addr_copy() - copy an Ethernet address
+ *
+ * @dst_addr: A six-byte array Ethernet address destination
+ * @src_addr: A six-byte array Ethernet address source
+ *
+ * Please note: dst & src must both be aligned to u16.
+ *
+ * Return: none
+ */
+void qdf_ether_addr_copy(void *dst_addr, const void *src_addr)
+{
+	if ((dst_addr == NULL) || (src_addr == NULL)) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "%s called with NULL parameter, source:%p destination:%p",
+			  __func__, src_addr, dst_addr);
+		QDF_ASSERT(0);
+		return;
+	}
+	ether_addr_copy(dst_addr, src_addr);
+}
+EXPORT_SYMBOL(qdf_ether_addr_copy);
+

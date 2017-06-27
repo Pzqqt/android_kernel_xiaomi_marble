@@ -134,6 +134,8 @@ void qdf_mem_free_consistent(qdf_device_t osdev, void *dev, qdf_size_t size,
 
 void qdf_mem_zero_outline(void *buf, qdf_size_t size);
 
+void qdf_ether_addr_copy(void *dst_addr, const void *src_addr);
+
 /**
  * qdf_mem_cmp() - memory compare
  * @memory1: pointer to one location in memory to compare.

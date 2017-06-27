@@ -1,0 +1,75 @@
+/*
+ * Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+#ifndef _DP_IPA_H_
+#define _DP_IPA_H_
+
+#ifdef IPA_OFFLOAD
+
+#define IPA_TCL_DATA_RING_IDX	2
+#define IPA_TX_COMP_RING_IDX	2
+#define IPA_REO_DEST_RING_IDX	3
+
+/**
+ * struct dp_ipa_uc_tx_hdr - full tx header registered to IPA hardware
+ * @eth:     ether II header
+ */
+struct dp_ipa_uc_tx_hdr {
+	struct ethhdr eth;
+} __packed;
+
+/**
+ * struct dp_ipa_uc_rx_hdr - full rx header registered to IPA hardware
+ * @eth:     ether II header
+ */
+struct dp_ipa_uc_rx_hdr {
+	struct ethhdr eth;
+} __packed;
+
+#define DP_IPA_UC_WLAN_TX_HDR_LEN      sizeof(struct dp_ipa_uc_tx_hdr)
+#define DP_IPA_UC_WLAN_RX_HDR_LEN      sizeof(struct dp_ipa_uc_rx_hdr)
+#define DP_IPA_UC_WLAN_HDR_DES_MAC_OFFSET	0
+
+QDF_STATUS dp_ipa_get_resource(struct cdp_pdev *pdev);
+QDF_STATUS dp_ipa_set_doorbell_paddr(struct cdp_pdev *pdev);
+QDF_STATUS dp_ipa_uc_set_active(struct cdp_pdev *pdev, bool uc_active,
+		bool is_tx);
+QDF_STATUS dp_ipa_op_response(struct cdp_pdev *pdev, uint8_t *op_msg);
+QDF_STATUS dp_ipa_register_op_cb(struct cdp_pdev *pdev, ipa_uc_op_cb_type op_cb,
+		void *usr_ctxt);
+QDF_STATUS dp_ipa_get_stat(struct cdp_pdev *pdev);
+qdf_nbuf_t dp_tx_send_ipa_data_frame(struct cdp_vdev *vdev, qdf_nbuf_t skb);
+QDF_STATUS dp_ipa_enable_autonomy(struct cdp_pdev *pdev);
+QDF_STATUS dp_ipa_disable_autonomy(struct cdp_pdev *pdev);
+QDF_STATUS dp_ipa_setup(struct cdp_pdev *pdev, void *ipa_i2w_cb,
+		void *ipa_w2i_cb, void *ipa_wdi_meter_notifier_cb,
+		uint32_t ipa_desc_size, void *ipa_priv, bool is_rm_enabled,
+		uint32_t *tx_pipe_handle, uint32_t *rx_pipe_handle);
+QDF_STATUS dp_ipa_cleanup(uint32_t tx_pipe_handle,
+		uint32_t rx_pipe_handle);
+QDF_STATUS dp_ipa_remove_header(char *name);
+int dp_ipa_add_header_info(char *ifname, uint8_t *mac_addr,
+		uint8_t session_id, bool is_ipv6_enabled);
+int dp_ipa_register_interface(char *ifname, bool is_ipv6_enabled);
+QDF_STATUS dp_ipa_setup_iface(char *ifname, uint8_t *mac_addr,
+		enum ipa_client_type prod_client,
+		enum ipa_client_type cons_client,
+		uint8_t session_id, bool is_ipv6_enabled);
+QDF_STATUS dp_ipa_cleanup_iface(char *ifname, bool is_ipv6_enabled);
+QDF_STATUS dp_ipa_enable_pipes(struct cdp_pdev *pdev);
+QDF_STATUS dp_ipa_disable_pipes(struct cdp_pdev *pdev);
+QDF_STATUS dp_ipa_set_perf_level(int client,
+		uint32_t max_supported_bw_mbps);
+
+#endif
+#endif /* _DP_IPA_H_ */
