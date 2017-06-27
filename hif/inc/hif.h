@@ -760,6 +760,22 @@ enum ipa_hw_type hif_get_ipa_hw_type(void)
 {
 	return ipa_get_hw_type();
 }
+
+/**
+ * hif_get_ipa_present() - get IPA hw status
+ *
+ * This API return the IPA hw status.
+ *
+ * Return: true if IPA is present or false otherwise
+ */
+static inline
+bool hif_get_ipa_present(void)
+{
+	if (ipa_uc_reg_rdyCB(NULL) != -EPERM)
+		return true;
+	else
+		return false;
+}
 #endif
 int hif_bus_resume(struct hif_opaque_softc *hif_ctx);
 /**
