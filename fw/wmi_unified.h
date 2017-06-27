@@ -7948,10 +7948,16 @@ WMI_STA_PS_PARAM_QPOWER_MAX_TX_BEFORE_WAKE = 7,
 WMI_STA_PS_PARAM_QPOWER_SPEC_PSPOLL_WAKE_INTERVAL = 8,
 
 /**
-             * Max SPEC PSPOLL to be sent when the PSPOLL response has
-             * no-data bit set
+ * Max SPEC PSPOLL to be sent when the PSPOLL response has
+ * no-data bit set
  */
 WMI_STA_PS_PARAM_QPOWER_SPEC_MAX_SPEC_NODATA_PSPOLL = 9,
+
+/**
+ * Max value of ITO reset when there is no tx-rx
+ * after AP has set the TIM bit
+ */
+WMI_STA_PS_PARAM_MAX_RESET_ITO_COUNT_ON_TIM_NO_TXRX = 10,
 };
 
 typedef struct {
