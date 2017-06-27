@@ -1074,6 +1074,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct hdd_chan_change_params chan_change;
 	int ret = 0;
+	struct ch_params sap_ch_param = {0};
 
 	dev = (struct net_device *)usrDataForCallback;
 	if (!dev) {
@@ -1984,13 +1985,23 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		if (pHostapdAdapter->device_mode == QDF_SAP_MODE &&
 		    pHddCtx->config->force_sap_acs)
 			return QDF_STATUS_SUCCESS;
+		sap_ch_param.ch_width =
+			pSapEvent->sapevt.sap_ch_selected.ch_width;
+		sap_ch_param.center_freq_seg0 =
+			pSapEvent->sapevt.sap_ch_selected.vht_seg0_center_ch;
+		sap_ch_param.center_freq_seg1 =
+			pSapEvent->sapevt.sap_ch_selected.vht_seg1_center_ch;
+		wlan_reg_set_channel_params(pHddCtx->hdd_pdev,
+			pSapEvent->sapevt.sap_ch_selected.pri_ch,
+			pSapEvent->sapevt.sap_ch_selected.ht_sec_ch,
+			&sap_ch_param);
 
 		chan_change.chan =
 			pSapEvent->sapevt.sap_ch_selected.pri_ch;
 		chan_change.chan_params.ch_width =
 			pSapEvent->sapevt.sap_ch_selected.ch_width;
 		chan_change.chan_params.sec_ch_offset =
-			pSapEvent->sapevt.sap_ch_selected.ht_sec_ch;
+			sap_ch_param.sec_ch_offset;
 		chan_change.chan_params.center_freq_seg0 =
 			pSapEvent->sapevt.sap_ch_selected.vht_seg0_center_ch;
 		chan_change.chan_params.center_freq_seg1 =
