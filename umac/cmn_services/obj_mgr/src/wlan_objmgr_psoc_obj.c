@@ -1237,6 +1237,7 @@ static qdf_list_t
 		/* Move to next peer */
 		peer_temp = peer;
 		peer = wlan_peer_get_next_peer_of_psoc(obj_list, peer_temp);
+		lock_released = false;
 	}
 
 	/* Not found, return NULL */
