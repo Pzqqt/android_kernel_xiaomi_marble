@@ -1061,7 +1061,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 	struct hdd_config *pconfig = hdd_ctx->config;
 	struct wiphy *wiphy = hdd_ctx->wiphy;
 	struct ieee80211_supported_band *band_5g =
-		wiphy->bands[NL80211_BAND_5GHZ];
+		wiphy->bands[HDD_NL80211_BAND_5GHZ];
 	uint32_t temp = 0;
 	uint32_t ch_width = eHT_CHANNEL_WIDTH_80MHZ;
 
