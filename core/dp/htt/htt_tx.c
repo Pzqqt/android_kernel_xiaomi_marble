@@ -1164,6 +1164,29 @@ static int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 
 	return tx_buffer_count_pwr2;
 }
+
+/**
+ * htt_tx_buf_pool_free() - Free tx buffer pool
+ * @pdev: htt context
+ *
+ * Free memory in tx buffer pool
+ *
+ * Return: 0 success
+ */
+static void htt_tx_buf_pool_free(struct htt_pdev_t *pdev)
+{
+	uint16_t idx;
+
+	for (idx = 0; idx < pdev->ipa_uc_tx_rsc.alloc_tx_buf_cnt; idx++) {
+		if (pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg[idx]) {
+			qdf_mem_free_consistent(
+				pdev->osdev, pdev->osdev->dev,
+				ol_cfg_ipa_uc_tx_buf_size(pdev->ctrl_pdev),
+				pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg[idx],
+				pdev->ipa_uc_tx_rsc.paddr_strg[idx], 0);
+		}
+	}
+}
 #else
 static int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 					  unsigned int uc_tx_buf_sz,
@@ -1265,6 +1288,19 @@ static int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 	}
 
 	return tx_buffer_count_pwr2;
+}
+
+static void htt_tx_buf_pool_free(struct htt_pdev_t *pdev)
+{
+	uint16_t idx;
+	void *buffer_vaddr;
+
+	for (idx = 0; idx < pdev->ipa_uc_tx_rsc.alloc_tx_buf_cnt; idx++) {
+		buffer_vaddr = pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg[idx];
+		if (buffer_vaddr) {
+			qdf_nbuf_free(buffer_vaddr);
+		}
+	}
 }
 #endif
 
@@ -1370,8 +1406,6 @@ free_tx_ce_idx:
  */
 int htt_tx_ipa_uc_detach(struct htt_pdev_t *pdev)
 {
-	uint16_t idx;
-
 	if (pdev->ipa_uc_tx_rsc.tx_ce_idx.vaddr) {
 		qdf_mem_free_consistent(
 			pdev->osdev, pdev->osdev->dev,
@@ -1396,15 +1430,7 @@ int htt_tx_ipa_uc_detach(struct htt_pdev_t *pdev)
 	}
 
 	/* Free each single buffer */
-	for (idx = 0; idx < pdev->ipa_uc_tx_rsc.alloc_tx_buf_cnt; idx++) {
-		if (pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg[idx]) {
-			qdf_mem_free_consistent(
-				pdev->osdev, pdev->osdev->dev,
-				ol_cfg_ipa_uc_tx_buf_size(pdev->ctrl_pdev),
-				pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg[idx],
-				pdev->ipa_uc_tx_rsc.paddr_strg[idx], 0);
-		}
-	}
+	htt_tx_buf_pool_free(pdev);
 
 	/* Free storage */
 	qdf_mem_free(pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg);
