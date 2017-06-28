@@ -37,9 +37,6 @@
 #endif
 #include <i_qdf_lock.h>
 
-/* Function declarations and documenation */
-typedef __qdf_mutex_t qdf_mutex_t;
-
 /**
  * qdf_mutex_create() - Initialize a mutex
  * @m: mutex to initialize
