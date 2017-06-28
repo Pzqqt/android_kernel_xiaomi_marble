@@ -2701,10 +2701,24 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 	hdd_ap_ctx_t *hdd_ap_ctx;
 	uint16_t intf_ch = 0;
 	struct hdd_context *hdd_ctx;
-
+	hdd_station_ctx_t *hdd_sta_ctx;
+	hdd_adapter_t *sta_adapter;
 	hdd_adapter_t *ap_adapter = wlan_hdd_get_adapter_from_vdev(
 					psoc, vdev_id);
 	if (!ap_adapter) {
+		hdd_err("Adapter is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	hdd_ctx = WLAN_HDD_GET_CTX(ap_adapter);
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* TODO: need work for 3 port case with sta+sta */
+	sta_adapter = hdd_get_adapter(hdd_ctx, QDF_STA_MODE);
+	if (!sta_adapter) {
 		hdd_err("Adapter is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2718,19 +2732,44 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 
 	hdd_ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(ap_adapter);
 	hal_handle = WLAN_HDD_GET_HAL_CTX(ap_adapter);
+	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(sta_adapter);
 
 	if (!hal_handle)
 		return QDF_STATUS_E_FAILURE;
 
-	intf_ch = wlansap_check_cc_intf(hdd_ap_ctx->sapContext);
-	hdd_info("intf_ch: %d", intf_ch);
+	/*
+	 * Check if STA's channel is DFS or passive or part of LTE avoided
+	 * channel list. In that case move SAP to other band if DBS is
+	 * supported, return from here if DBS is not supported.
+	 * Need to take care of 3 port cases with 2 STA iface in future.
+	 */
+	if (wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev,
+		hdd_sta_ctx->conn_info.operationChannel) ||
+		wlan_reg_is_passive_or_disable_ch(hdd_ctx->hdd_pdev,
+			hdd_sta_ctx->conn_info.operationChannel) ||
+		!policy_mgr_is_safe_channel(psoc,
+			hdd_sta_ctx->conn_info.operationChannel)) {
+		if (policy_mgr_is_hw_dbs_capable(psoc)) {
+			if (WLAN_REG_IS_5GHZ_CH(
+				hdd_sta_ctx->conn_info.operationChannel))
+				intf_ch = CDS_24_GHZ_CHANNEL_6;
+			else
+				intf_ch = CDS_5_GHZ_CHANNEL_36;
+		} else {
+			hdd_debug("can't move sap to %d",
+				hdd_sta_ctx->conn_info.operationChannel);
+			return QDF_STATUS_E_FAILURE;
+		}
+	} else {
+		intf_ch = wlansap_check_cc_intf(hdd_ap_ctx->sapContext);
+		hdd_info("intf_ch: %d", intf_ch);
+	}
 
 	if (intf_ch == 0) {
 		hdd_err("interface channel is 0");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	hdd_ctx = WLAN_HDD_GET_CTX(ap_adapter);
 	hdd_info("SAP restart orig chan: %d, new chan: %d",
 		 hdd_ap_ctx->sapConfig.channel, intf_ch);
 	hdd_ap_ctx->sapConfig.channel = intf_ch;
