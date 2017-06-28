@@ -39,8 +39,8 @@
 
 #define TX_DESC_LOCK_CREATE(lock)  qdf_spinlock_create(lock)
 #define TX_DESC_LOCK_DESTROY(lock) qdf_spinlock_destroy(lock)
-#define TX_DESC_LOCK_LOCK(lock)    qdf_spin_lock(lock)
-#define TX_DESC_LOCK_UNLOCK(lock)  qdf_spin_unlock(lock)
+#define TX_DESC_LOCK_LOCK(lock)    qdf_spin_lock_bh(lock)
+#define TX_DESC_LOCK_UNLOCK(lock)  qdf_spin_unlock_bh(lock)
 #define MAX_POOL_BUFF_COUNT 10000
 
 QDF_STATUS dp_tx_desc_pool_alloc(struct dp_soc *soc, uint8_t pool_id,
@@ -71,20 +71,21 @@ static inline struct dp_tx_desc_s *dp_tx_desc_alloc(struct dp_soc *soc,
 	TX_DESC_LOCK_LOCK(&soc->tx_desc[desc_pool_id].lock);
 
 	tx_desc = soc->tx_desc[desc_pool_id].freelist;
+
 	/* Pool is exhausted */
 	if (!tx_desc) {
 		TX_DESC_LOCK_UNLOCK(&soc->tx_desc[desc_pool_id].lock);
 		return NULL;
 	}
-	if (soc->tx_desc[desc_pool_id].freelist) {
-		soc->tx_desc[desc_pool_id].freelist =
-			soc->tx_desc[desc_pool_id].freelist->next;
-		soc->tx_desc[desc_pool_id].num_allocated++;
-		soc->tx_desc[desc_pool_id].num_free--;
-	}
+
+	soc->tx_desc[desc_pool_id].freelist =
+		soc->tx_desc[desc_pool_id].freelist->next;
+	soc->tx_desc[desc_pool_id].num_allocated++;
+	soc->tx_desc[desc_pool_id].num_free--;
 
 	DP_STATS_INC(soc, tx.desc_in_use, 1);
 	tx_desc->flags = DP_TX_DESC_FLAG_ALLOCATED;
+
 	TX_DESC_LOCK_UNLOCK(&soc->tx_desc[desc_pool_id].lock);
 
 	return tx_desc;

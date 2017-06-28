@@ -845,8 +845,6 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 			  "%s TCL ring full ring_id:%d\n", __func__, ring_id);
 		DP_STATS_INC(soc, tx.tcl_ring_full[ring_id], 1);
 		DP_STATS_INC(vdev, tx_i.dropped.enqueue_fail, 1);
-		hal_srng_access_end(soc->hal_soc,
-				soc->tcl_data_ring[ring_id].hal_srng);
 		return QDF_STATUS_E_RESOURCES;
 	}
 
@@ -1044,11 +1042,10 @@ static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		goto fail_return;
 	}
 
-	hal_srng_access_end(soc->hal_soc, hal_srng);
-
-	return NULL;
+	nbuf = NULL;
 
 fail_return:
+	hal_srng_access_end(soc->hal_soc, hal_srng);
 	return nbuf;
 }
 
@@ -1695,6 +1692,7 @@ static void dp_tx_inspect_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 			qdf_nbuf_len(tx_desc->nbuf));
 
 	DP_TX_FREE_SINGLE_BUF(soc, tx_desc->nbuf);
+	dp_tx_desc_release(tx_desc, tx_desc->pool_id);
 }
 
 /**
@@ -1719,20 +1717,15 @@ void dp_tx_process_htt_completion(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 	pdev = tx_desc->pdev;
 	soc = pdev->soc;
 
-	tx_status = HTT_TX_WBM_COMPLETION_TX_STATUS_GET(htt_status_word[0]);
+	tx_status = HTT_TX_WBM_COMPLETION_V2_TX_STATUS_GET(htt_status_word[0]);
 
 	switch (tx_status) {
 	case HTT_TX_FW2WBM_TX_STATUS_OK:
-	{
-		qdf_atomic_dec(&pdev->num_tx_exception);
-		DP_TX_FREE_SINGLE_BUF(soc, tx_desc->nbuf);
-		break;
-	}
 	case HTT_TX_FW2WBM_TX_STATUS_DROP:
 	case HTT_TX_FW2WBM_TX_STATUS_TTL:
 	{
-		qdf_atomic_dec(&pdev->num_tx_exception);
 		DP_TX_FREE_SINGLE_BUF(soc, tx_desc->nbuf);
+		dp_tx_desc_release(tx_desc, tx_desc->pool_id);
 		break;
 	}
 	case HTT_TX_FW2WBM_TX_STATUS_REINJECT:
@@ -2122,9 +2115,7 @@ uint32_t dp_tx_comp_handler(struct dp_soc *soc, uint32_t ring_id,
 					"Txdesc invalid, flgs = %x,id = %d",
 					tx_desc->flags,	tx_desc_id);
 
-			/* TODO Handle Freeing of the buffer in this invalid
-			 * descriptor */
-			continue;
+			qdf_assert_always(0);
 		}
 
 		/*
