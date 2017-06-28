@@ -1934,4 +1934,17 @@ bool policy_mgr_is_dnsc_set(struct wlan_objmgr_vdev *vdev);
 QDF_STATUS policy_mgr_get_updated_scan_and_fw_mode_config(
 		struct wlan_objmgr_psoc *psoc, uint32_t *scan_config,
 		uint32_t *fw_mode_config, uint32_t dual_mac_disable_ini);
+
+/**
+ * policy_mgr_is_safe_channel - Check if the channel is in LTE
+ * coex channel avoidance list
+ * @psoc: PSOC object information
+ * @channel: channel to be checked
+ *
+ * Check if the channel is in LTE coex channel avoidance list.
+ *
+ * Return: true for success, else false
+ */
+bool policy_mgr_is_safe_channel(struct wlan_objmgr_psoc *psoc,
+		uint8_t channel);
 #endif /* __WLAN_POLICY_MGR_API_H */

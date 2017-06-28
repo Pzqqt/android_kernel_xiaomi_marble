@@ -609,6 +609,36 @@ static bool policy_mgr_is_restart_sap_allowed(
 	return true;
 }
 
+bool policy_mgr_is_safe_channel(struct wlan_objmgr_psoc *psoc,
+		uint8_t channel)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	bool is_safe = true;
+	uint8_t j;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid context");
+		return is_safe;
+	}
+
+
+	if (pm_ctx->unsafe_channel_count == 0) {
+		policy_mgr_debug("There are no unsafe channels");
+		return is_safe;
+	}
+
+	for (j = 0; j < pm_ctx->unsafe_channel_count; j++) {
+		if (channel == pm_ctx->unsafe_channel_list[j]) {
+			is_safe = false;
+			policy_mgr_warn("CH %d is not safe", channel);
+			break;
+		}
+	}
+
+	return is_safe;
+}
+
 /**
  * policy_mgr_check_sta_ap_concurrent_ch_intf() - Restart SAP in STA-AP case
  * @data: Pointer check concurrent channel work data
@@ -676,6 +706,28 @@ void policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
 			operating_channel, channel);
 }
 
+static bool policy_mgr_valid_sta_channel_check(struct wlan_objmgr_psoc *psoc,
+		uint8_t sta_channel)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid context");
+		return false;
+	}
+
+	if (wlan_reg_is_dfs_ch(pm_ctx->pdev, sta_channel) ||
+		wlan_reg_is_passive_or_disable_ch(pm_ctx->pdev, sta_channel) ||
+		!policy_mgr_is_safe_channel(psoc, sta_channel))
+		if (policy_mgr_is_hw_dbs_capable(psoc))
+			return true;
+		else
+			return false;
+	else
+		return true;
+}
+
 /**
  * policy_mgr_check_concurrent_intf_and_restart_sap() - Check
  * concurrent change intf
@@ -721,11 +773,9 @@ void policy_mgr_check_concurrent_intf_and_restart_sap(
 		policy_mgr_mcc_to_scc_switch_mode_in_user_cfg(psoc);
 	policy_mgr_info("MCC to SCC switch: %d chan: %d",
 			mcc_to_scc_switch, operating_channel);
-	if ((mcc_to_scc_switch != QDF_MCC_TO_SCC_SWITCH_DISABLE)
-#ifdef FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE
-		 && !wlan_reg_is_dfs_ch(pm_ctx->pdev,
+	if ((mcc_to_scc_switch != QDF_MCC_TO_SCC_SWITCH_DISABLE) &&
+		policy_mgr_valid_sta_channel_check(psoc,
 					 operating_channel)
-#endif
 	    ) {
 		qdf_create_work(0, &pm_ctx->sta_ap_intf_check_work,
 				policy_mgr_check_sta_ap_concurrent_ch_intf,
