@@ -213,6 +213,21 @@ typedef enum {
 	QDF_DMA_FROM_DEVICE = __QDF_DMA_FROM_DEVICE,
 } qdf_dma_dir_t;
 
+/**
+ * enum qdf_driver_type - Indicate the driver type and based on this
+ * do appropriate initialization.
+ *
+ * @QDF_DRIVER_TYPE_PRODUCTION: Driver used in the production
+ * @QDF_DRIVER_TYPE_MFG: Driver used in the Factory
+ * @QDF_DRIVER_TYPE_INVALID: Invalid and unrecognized type
+ *
+ */
+enum qdf_driver_type {
+	QDF_DRIVER_TYPE_PRODUCTION = 0,
+	QDF_DRIVER_TYPE_MFG = 1,
+	QDF_DRIVER_TYPE_INVALID = 0x7FFFFFFF
+};
+
 /* work queue(kernel thread)/DPC function callback */
 typedef void (*qdf_defer_fn_t)(void *);
 
