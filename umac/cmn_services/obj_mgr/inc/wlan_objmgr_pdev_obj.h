@@ -147,6 +147,7 @@ struct wlan_objmgr_pdev_mlme {
  * @wlan_psoc:         back pointer to PSOC, its attached to
  * @ref_cnt:           Ref count
  * @ref_id_dbg:        Array to track Ref count
+ * @print_cnt:         Count to throttle Logical delete prints
  */
 struct wlan_objmgr_pdev_objmgr {
 	uint8_t wlan_pdev_id;
@@ -156,6 +157,7 @@ struct wlan_objmgr_pdev_objmgr {
 	struct wlan_objmgr_psoc *wlan_psoc;
 	qdf_atomic_t ref_cnt;
 	qdf_atomic_t ref_id_dbg[WLAN_REF_ID_MAX];
+	uint8_t print_cnt;
 };
 
 /**

@@ -285,4 +285,5 @@ static inline char *string_from_dbgid(wlan_objmgr_ref_dbgid id)
 #else
 #define WLAN_OBJMGR_BUG(val)
 #endif
+#define WLAN_OBJMGR_RATELIMIT_THRESH 2
 #endif /* _WLAN_OBJMGR_CMN_H_*/

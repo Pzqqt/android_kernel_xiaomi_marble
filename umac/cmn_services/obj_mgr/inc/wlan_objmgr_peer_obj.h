@@ -141,11 +141,13 @@ struct wlan_objmgr_peer_mlme {
  * @vdev:              VDEV pointer to which it is associated
  * @ref_cnt:           Ref count
  * @ref_id_dbg:        Array to track Ref count
+ * @print_cnt:         Count to throttle Logical delete prints
  */
 struct wlan_objmgr_peer_objmgr {
 	struct wlan_objmgr_vdev *vdev;
 	qdf_atomic_t ref_cnt;
 	qdf_atomic_t ref_id_dbg[WLAN_REF_ID_MAX];
+	uint8_t print_cnt;
 };
 
 /**

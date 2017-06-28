@@ -324,6 +324,7 @@ struct wlan_objmgr_vdev_nif {
  *  @c_flags:           creation specific flags
  *  @ref_cnt:           Ref count
  *  @ref_id_dbg:        Array to track Ref count
+ *  @print_cnt:         Count to throttle Logical delete prints
  */
 struct wlan_objmgr_vdev_objmgr {
 	uint8_t vdev_id;
@@ -336,6 +337,7 @@ struct wlan_objmgr_vdev_objmgr {
 	uint32_t c_flags;
 	qdf_atomic_t ref_cnt;
 	qdf_atomic_t ref_id_dbg[WLAN_REF_ID_MAX];
+	uint8_t print_cnt;
 };
 
 /**

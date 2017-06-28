@@ -222,6 +222,7 @@ struct wlan_objmgr_psoc_nif {
  * @peer_list:            Peer list
  * @ref_cnt:              Ref count
  * @ref_id_dbg:           Array to track Ref count
+ * @print_cnt:            Count to throttle Logical delete prints
  * @qdf_dev:              QDF Device
  */
 struct wlan_objmgr_psoc_objmgr {
@@ -236,6 +237,7 @@ struct wlan_objmgr_psoc_objmgr {
 	struct wlan_peer_list peer_list;
 	qdf_atomic_t ref_cnt;
 	qdf_atomic_t ref_id_dbg[WLAN_REF_ID_MAX];
+	uint8_t print_cnt;
 	qdf_device_t qdf_dev;
 };
 

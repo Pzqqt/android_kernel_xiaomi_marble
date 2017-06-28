@@ -70,9 +70,9 @@ static QDF_STATUS wlan_objmgr_pdev_obj_free(struct wlan_objmgr_pdev *pdev)
 	uint8_t pdev_id;
 
 	if (pdev == NULL) {
-	obj_mgr_err("pdev obj is NULL");
-	QDF_ASSERT(0);
-	return QDF_STATUS_E_FAILURE;
+		obj_mgr_err("pdev obj is NULL");
+		QDF_ASSERT(0);
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
@@ -129,6 +129,7 @@ struct wlan_objmgr_pdev *wlan_objmgr_pdev_obj_create(
 	/* Save HDD/OSIF pointer */
 	pdev->pdev_nif.pdev_ospriv = osdev_priv;
 	qdf_atomic_init(&pdev->pdev_objmgr.ref_cnt);
+	pdev->pdev_objmgr.print_cnt = 0;
 	wlan_objmgr_pdev_get_ref(pdev, WLAN_OBJMGR_ID);
 	/* Invoke registered create handlers */
 	for (id = 0; id < WLAN_UMAC_MAX_COMPONENTS; id++) {
@@ -185,7 +186,8 @@ static QDF_STATUS wlan_objmgr_pdev_obj_destroy(struct wlan_objmgr_pdev *pdev)
 	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
 
 	if (pdev->obj_state != WLAN_OBJ_STATE_LOGICALLY_DELETED) {
-		obj_mgr_err("pdev object delete is not invoked: pdev-id:%d", pdev_id);
+		obj_mgr_err("pdev object delete is not invoked: pdev-id:%d",
+			pdev_id);
 		WLAN_OBJMGR_BUG(0);
 	}
 
@@ -822,8 +824,11 @@ QDF_STATUS wlan_objmgr_pdev_try_get_ref(struct wlan_objmgr_pdev *pdev,
 	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
 	if (pdev->obj_state == WLAN_OBJ_STATE_LOGICALLY_DELETED) {
 		wlan_pdev_obj_unlock(pdev);
-		obj_mgr_err("pdev obj is in Deletion Progress state: pdev-id: %d",
-			 pdev_id) ;
+		if (pdev->pdev_objmgr.print_cnt++ <=
+				WLAN_OBJMGR_RATELIMIT_THRESH)
+			obj_mgr_err("[Ref id: %d] pdev [%d] is in L-Del state",
+					id, pdev_id);
+
 		return QDF_STATUS_E_RESOURCES;
 	}
 
@@ -848,7 +853,8 @@ void wlan_objmgr_pdev_release_ref(struct wlan_objmgr_pdev *pdev,
 	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
 
 	if (!qdf_atomic_read(&pdev->pdev_objmgr.ref_id_dbg[id])) {
-		obj_mgr_err("pdev (id:%d)ref cnt was not taken by %d", pdev_id, id);
+		obj_mgr_err("pdev (id:%d)ref cnt was not taken by %d",
+				pdev_id, id);
 		wlan_objmgr_print_ref_ids(pdev->pdev_objmgr.ref_id_dbg);
 		WLAN_OBJMGR_BUG(0);
 	}

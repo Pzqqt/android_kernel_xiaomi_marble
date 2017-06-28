@@ -784,7 +784,9 @@ void wlan_objmgr_print_ref_ids(qdf_atomic_t *id)
 	for (i = 0; i < WLAN_REF_ID_MAX; i++) {
 		pending_ref = qdf_atomic_read(&id[i]);
 		if (pending_ref)
-		obj_mgr_info("%s -- %d", string_from_dbgid(i), pending_ref);
+			obj_mgr_info("%s -- %d",
+				string_from_dbgid(i), pending_ref);
 	}
+
 	return;
 }
