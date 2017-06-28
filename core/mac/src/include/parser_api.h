@@ -323,6 +323,7 @@ typedef struct sSirAssocRsp {
 #endif
 	tDot11fIEvendor_vht_ie vendor_vht_ie;
 	tDot11fIEOBSSScanParameters obss_scanparams;
+	tDot11fTLVrssi_assoc_rej rssi_assoc_rej;
 	tSirQCNIE QCN_IE;
 	tDot11fIEvendor_he_cap vendor_he_cap;
 	tDot11fIEvendor_he_op vendor_he_op;

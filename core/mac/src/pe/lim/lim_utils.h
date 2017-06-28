@@ -1079,6 +1079,24 @@ static inline QDF_STATUS lim_populate_he_mcs_set(tpAniSirGlobal mac_ctx,
 #endif
 
 /**
+ * lim_assoc_rej_add_to_rssi_based_reject_list() - Add BSSID to the rssi based
+ * rejection list
+ * @mac_ctx: mac ctx
+ * @rssi_assoc_rej: rssi assoc reject attribute
+ * @bssid : BSSID of the AP
+ * @rssi : RSSI of the assoc resp
+ *
+ * Add BSSID to the rssi based rejection list. Also if number
+ * of entries is greater than MAX_RSSI_AVOID_BSSID_LIST
+ * remove the entry with lowest time delta
+ *
+ * Return: void
+ */
+void lim_assoc_rej_add_to_rssi_based_reject_list(tpAniSirGlobal mac_ctx,
+	tDot11fTLVrssi_assoc_rej  *rssi_assoc_rej,
+	tSirMacAddr bssid, int8_t rssi);
+
+/**
  * lim_decrement_pending_mgmt_count: Decrement mgmt frame count
  * @mac_ctx: Pointer to global MAC structure
  *

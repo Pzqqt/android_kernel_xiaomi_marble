@@ -713,6 +713,13 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 	else
 		lim_stop_reassoc_retry_timer(mac_ctx);
 
+	if (eSIR_MAC_XS_FRAME_LOSS_POOR_CHANNEL_RSSI_STATUS ==
+	   assoc_rsp->statusCode &&
+	    assoc_rsp->rssi_assoc_rej.present)
+		lim_assoc_rej_add_to_rssi_based_reject_list(mac_ctx,
+			&assoc_rsp->rssi_assoc_rej, hdr->sa,
+			WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info));
+
 	if (assoc_rsp->statusCode != eSIR_MAC_SUCCESS_STATUS
 #ifdef WLAN_FEATURE_11W
 		&& (!session_entry->limRmfEnabled ||

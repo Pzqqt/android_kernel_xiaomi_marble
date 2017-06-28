@@ -2972,6 +2972,13 @@ sir_convert_assoc_resp_frame2_struct(tpAniSirGlobal pMac,
 			     sizeof(tDot11fIEvendor_he_op));
 	}
 
+	if (ar.MBO_IE.present && ar.MBO_IE.rssi_assoc_rej.present) {
+		qdf_mem_copy(&pAssocRsp->rssi_assoc_rej,
+				&ar.MBO_IE.rssi_assoc_rej,
+				sizeof(tDot11fTLVrssi_assoc_rej));
+		pe_debug("Received Assoc Response with rssi based assoc rej");
+	}
+
 	return eSIR_SUCCESS;
 
 } /* End sir_convert_assoc_resp_frame2_struct. */
