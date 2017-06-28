@@ -11678,7 +11678,7 @@ static int wlan_hdd_set_filter(hdd_context_t *hdd_ctx,
 		}
 		pmo_set_pkt_fltr_req->num_params = request->num_params;
 		pmo_set_pkt_fltr_req->coalesce_time = 0;
-		pmo_set_pkt_fltr_req->filter_type = HDD_RCV_FILTER_SET;
+		pmo_set_pkt_fltr_req->filter_type = PMO_RCV_FILTER_TYPE_FILTER_PKT;
 		for (i = 0; i < request->num_params; i++) {
 			pmo_set_pkt_fltr_req->params_data[i].protocol_layer =
 				request->params_data[i].protocol_layer;
