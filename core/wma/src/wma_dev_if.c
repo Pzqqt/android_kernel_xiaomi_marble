@@ -2159,6 +2159,24 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 				self_sta_req->fils_max_chan_guard_time);
 		if (QDF_IS_STATUS_ERROR(ret))
 			WMA_LOGE("Failed to set WMI_VDEV_PARAM_FILS_MAX_CHANNEL_GUARD_TIME");
+
+		/* Pass down the Probe Request tx delay(in ms) to FW */
+		ret = wma_vdev_set_param(
+				wma_handle->wmi_handle,
+				self_sta_req->session_id,
+				WMI_VDEV_PARAM_PROBE_DELAY,
+				PROBE_REQ_TX_DELAY);
+		if (QDF_IS_STATUS_ERROR(ret))
+			WMA_LOGE("Failed to set WMI_VDEV_PARAM_PROBE_DELAY");
+
+		/* Pass down the probe request tx time gap(in ms) to FW */
+		ret = wma_vdev_set_param(
+				wma_handle->wmi_handle,
+				self_sta_req->session_id,
+				WMI_VDEV_PARAM_REPEAT_PROBE_TIME,
+				PROBE_REQ_TX_TIME_GAP);
+		if (QDF_IS_STATUS_ERROR(ret))
+			WMA_LOGE("Failed to set WMI_VDEV_PARAM_REPEAT_PROBE_TIME");
 	}
 
 	/* Initialize BMISS parameters */
