@@ -2769,6 +2769,7 @@ int hif_config_ce(struct hif_softc *scn)
 	QDF_STATUS rv = QDF_STATUS_SUCCESS;
 
 	scn->notice_send = true;
+	scn->ce_service_max_rx_ind_flush = MSG_FLUSH_NUM;
 
 	hif_post_static_buf_to_target(scn);
 

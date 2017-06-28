@@ -1276,3 +1276,16 @@ hif_get_ce_service_max_yield_time(struct hif_opaque_softc *hif)
 
 	return hif_ctx->ce_service_max_yield_time;
 }
+
+void hif_set_ce_service_max_rx_ind_flush(struct hif_opaque_softc *hif,
+				       uint8_t ce_service_max_rx_ind_flush)
+{
+	struct hif_softc *hif_ctx = HIF_GET_SOFTC(hif);
+
+	if (ce_service_max_rx_ind_flush == 0 ||
+	    ce_service_max_rx_ind_flush > MSG_FLUSH_NUM)
+		hif_ctx->ce_service_max_rx_ind_flush = MSG_FLUSH_NUM;
+	else
+		hif_ctx->ce_service_max_rx_ind_flush =
+						ce_service_max_rx_ind_flush;
+}

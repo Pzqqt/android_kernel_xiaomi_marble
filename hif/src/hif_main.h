@@ -178,6 +178,7 @@ struct hif_softc {
 #endif /* FEATURE_NAPI */
 	/* stores ce_service_max_yield_time in ns */
 	unsigned long long ce_service_max_yield_time;
+	uint8_t ce_service_max_rx_ind_flush;
 	struct hif_driver_state_callbacks callbacks;
 	uint32_t hif_con_param;
 #ifdef QCA_NSS_WIFI_OFFLOAD_SUPPORT
