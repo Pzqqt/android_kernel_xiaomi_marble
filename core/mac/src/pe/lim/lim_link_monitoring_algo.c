@@ -231,7 +231,7 @@ void lim_delete_sta_context(tpAniSirGlobal mac_ctx,
 				pe_err("Do not process in limMlmState %s(%x) limSmeState %s(%x)",
 				  lim_mlm_state_str(session_entry->limMlmState),
 				  session_entry->limMlmState,
-				  lim_mlm_state_str(session_entry->limSmeState),
+				  lim_sme_state_str(session_entry->limSmeState),
 				  session_entry->limSmeState);
 				qdf_mem_free(msg);
 				return;
