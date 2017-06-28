@@ -35,59 +35,57 @@ void pmo_register_wow_wakeup_events(struct wlan_objmgr_vdev *vdev)
 {
 	uint32_t event_bitmap[PMO_WOW_MAX_EVENT_BM_LEN] = {0};
 	uint8_t vdev_id;
-	enum tQDF_ADAPTER_MODE  vdev_opmode = QDF_MAX_NO_OF_MODE;
+	enum tQDF_ADAPTER_MODE  vdev_opmode;
+	const char *iface_type;
 
 	vdev_opmode = pmo_get_vdev_opmode(vdev);
 	vdev_id = pmo_vdev_get_id(vdev);
 	pmo_info("vdev_opmode %d vdev_id %d", vdev_opmode, vdev_id);
 
 	switch (vdev_opmode) {
-	case QDF_STA_MODE:
+	case QDF_P2P_CLIENT_MODE:
 	case QDF_P2P_DEVICE_MODE:
-		/* Configure STA/P2P CLI mode specific default wake up events */
+	case QDF_OCB_MODE:
+	case QDF_STA_MODE:
+	case QDF_MONITOR_MODE:
+		iface_type = "STA";
 		pmo_set_sta_wow_bitmask(event_bitmap, PMO_WOW_MAX_EVENT_BM_LEN);
-
-		pmo_info("STA specific default wake up event 0x%x%x%x%x vdev id %d",
-			event_bitmap[0], event_bitmap[1], event_bitmap[2],
-			event_bitmap[3], vdev_id);
 		break;
+
 	case QDF_IBSS_MODE:
-		/* Configure IBSS mode specific default wake up events */
+		iface_type = "IBSS";
 		pmo_set_sta_wow_bitmask(event_bitmap, PMO_WOW_MAX_EVENT_BM_LEN);
 		pmo_set_wow_event_bitmap(WOW_BEACON_EVENT,
 					 PMO_WOW_MAX_EVENT_BM_LEN,
 					 event_bitmap);
-		pmo_info("IBSS specific default wake up event 0x%x%x%x%x vdev id %d",
-			event_bitmap[0], event_bitmap[1], event_bitmap[2],
-			event_bitmap[3], vdev_id);
 		break;
+
+	case QDF_P2P_GO_MODE:
 	case QDF_SAP_MODE:
-		/* Configure SAP/GO mode specific default wake up events */
+		iface_type = "SAP";
 		pmo_set_sap_wow_bitmask(event_bitmap, PMO_WOW_MAX_EVENT_BM_LEN);
-		pmo_info("IBSS specific default wake up event 0x%x%x%x%x vdev id %d",
-			event_bitmap[0], event_bitmap[1], event_bitmap[2],
-			event_bitmap[3], vdev_id);
 		break;
+
 	case QDF_NDI_MODE:
-		/*
-		 * Configure NAN data path specific default wake up events.
-		 * Following routine sends the command to firmware.
-		 */
 #ifdef WLAN_FEATURE_NAN_DATAPATH
+		iface_type = "NAN";
 		pmo_set_wow_event_bitmap(WOW_NAN_DATA_EVENT,
 					 PMO_WOW_MAX_EVENT_BM_LEN,
 					 event_bitmap);
-		pmo_info("IBSS specific default wake up event 0x%x%x%x%x vdev id %d",
-			event_bitmap[0], event_bitmap[1], event_bitmap[2],
-			event_bitmap[3], vdev_id);
 #endif
 		break;
+
 	default:
-		pmo_info("unknown vdev_opmode %d", vdev_opmode);
+		pmo_err("Skipping wake event configuration for vdev_opmode %d",
+			vdev_opmode);
 		return;
 	}
-	pmo_tgt_enable_wow_wakeup_event(vdev, event_bitmap);
 
+	pmo_info("Selected %s wake event mask 0x%x%x%x%x, vdev %d",
+		 iface_type, event_bitmap[0], event_bitmap[1],
+		 event_bitmap[2], event_bitmap[3], vdev_id);
+
+	pmo_tgt_enable_wow_wakeup_event(vdev, event_bitmap);
 }
 
 /**
