@@ -8025,7 +8025,7 @@ static int hdd_update_cds_config(hdd_context_t *hdd_ctx)
 		return -ENOMEM;
 	}
 
-	cds_cfg->driver_type = DRIVER_TYPE_PRODUCTION;
+	cds_cfg->driver_type = QDF_DRIVER_TYPE_PRODUCTION;
 	if (!hdd_ctx->config->nMaxPsPoll ||
 			!hdd_ctx->config->enablePowersaveOffload) {
 		cds_cfg->powersave_offload_enabled =

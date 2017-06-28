@@ -127,7 +127,7 @@ int hdd_update_cds_config_ftm(hdd_context_t *hdd_ctx)
 		return -ENOMEM;
 	}
 
-	cds_cfg->driver_type = eDRIVER_TYPE_MFG;
+	cds_cfg->driver_type = QDF_DRIVER_TYPE_MFG;
 	cds_cfg->powersave_offload_enabled =
 			hdd_ctx->config->enablePowersaveOffload;
 	hdd_lpass_populate_cds_config(cds_cfg, hdd_ctx);

@@ -754,7 +754,7 @@ tSirRetStatus pe_open(tpAniSirGlobal pMac, struct cds_config_info *cds_cfg)
 {
 	tSirRetStatus status = eSIR_SUCCESS;
 
-	if (DRIVER_TYPE_MFG == cds_cfg->driver_type)
+	if (QDF_DRIVER_TYPE_MFG == cds_cfg->driver_type)
 		return eSIR_SUCCESS;
 
 	pMac->lim.maxBssId = cds_cfg->max_bssid;
@@ -829,7 +829,7 @@ tSirRetStatus pe_close(tpAniSirGlobal pMac)
 {
 	uint8_t i;
 
-	if (ANI_DRIVER_TYPE(pMac) == eDRIVER_TYPE_MFG)
+	if (ANI_DRIVER_TYPE(pMac) == QDF_DRIVER_TYPE_MFG)
 		return eSIR_SUCCESS;
 
 	qdf_spinlock_destroy(&pMac->sys.bbt_mgmt_lock);
@@ -986,7 +986,7 @@ tSirRetStatus pe_post_msg_api(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 tSirRetStatus pe_process_messages(tpAniSirGlobal pMac,
 				  struct scheduler_msg *pMsg)
 {
-	if (ANI_DRIVER_TYPE(pMac) == eDRIVER_TYPE_MFG) {
+	if (ANI_DRIVER_TYPE(pMac) == QDF_DRIVER_TYPE_MFG) {
 		return eSIR_SUCCESS;
 	}
 	/**

@@ -565,7 +565,7 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 	bool extracted_ext_cap_flag = false;
 
 	/* We don't answer requests in this case*/
-	if (ANI_DRIVER_TYPE(mac_ctx) == eDRIVER_TYPE_MFG)
+	if (ANI_DRIVER_TYPE(mac_ctx) == QDF_DRIVER_TYPE_MFG)
 		return;
 
 	if (NULL == pe_session)

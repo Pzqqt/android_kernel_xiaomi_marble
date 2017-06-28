@@ -31,21 +31,6 @@
 #include "cdp_txrx_mob_def.h"
 
 /**
- * enum driver_type - Indicate the driver type to the cds, and based on this
- * do appropriate initialization.
- *
- * @DRIVER_TYPE_PRODUCTION: Driver used in the production
- * @DRIVER_TYPE_MFG: Driver used in the Factory
- * @DRIVER_TYPE_INVALID: Invalid and unrecognized type
- *
- */
-enum driver_type {
-	DRIVER_TYPE_PRODUCTION = 0,
-	DRIVER_TYPE_MFG = 1,
-	DRIVER_TYPE_INVALID = 0x7FFFFFFF
-};
-
-/**
  * enum cfg_sub_20_channel_width: ini values for su 20 mhz channel width
  * @WLAN_SUB_20_CH_WIDTH_5: Use 5 mhz channel width
  * @WLAN_SUB_20_CH_WIDTH_10: Use 10 mhz channel width
@@ -131,7 +116,7 @@ struct cds_config_info {
 	uint8_t sta_maxlimod_dtim;
 	uint8_t sta_mod_dtim;
 	uint8_t sta_dynamic_dtim;
-	enum driver_type driver_type;
+	enum qdf_driver_type driver_type;
 	uint8_t max_wow_filters;
 	uint8_t wow_enable;
 	uint8_t ol_ini_info;

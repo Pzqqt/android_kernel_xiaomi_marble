@@ -67,7 +67,7 @@ tSirRetStatus mac_start(tHalHandle hHal, void *pHalMacStartParams)
 	pMac->gDriverType =
 		((tHalMacStartParameters *) pHalMacStartParams)->driverType;
 
-	if (ANI_DRIVER_TYPE(pMac) != eDRIVER_TYPE_MFG) {
+	if (ANI_DRIVER_TYPE(pMac) != QDF_DRIVER_TYPE_MFG) {
 		status = pe_start(pMac);
 	}
 
@@ -133,7 +133,7 @@ tSirRetStatus mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
 		 * For Non-FTM cases this value will be reset during mac_start
 		 */
 		if (cds_cfg->driver_type)
-			p_mac->gDriverType = eDRIVER_TYPE_MFG;
+			p_mac->gDriverType = QDF_DRIVER_TYPE_MFG;
 
 		/* Call routine to initialize CFG data structures */
 		if (eSIR_SUCCESS != cfg_init(p_mac))

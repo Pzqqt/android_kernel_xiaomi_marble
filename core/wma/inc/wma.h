@@ -1355,7 +1355,7 @@ typedef struct {
 	qdf_event_t recovery_event;
 	uint16_t max_station;
 	uint16_t max_bssid;
-	enum driver_type driver_type;
+	enum qdf_driver_type driver_type;
 	uint8_t myaddr[IEEE80211_ADDR_LEN];
 	uint8_t hwaddr[IEEE80211_ADDR_LEN];
 	wmi_abi_version target_abi_vers;
@@ -1561,7 +1561,7 @@ struct wma_target_cap {
 typedef struct {
 	void *pConfigBuffer;
 	uint16_t usConfigBufferLen;
-	enum driver_type driver_type;
+	enum qdf_driver_type driver_type;
 	void *pUserData;
 	void *pIndUserData;
 } t_wma_start_req;
@@ -1580,7 +1580,7 @@ typedef enum {
  * @uConfigBufferLen: length of config buffer
  */
 typedef struct qdf_packed sHalMacStartParameter {
-	tDriverType driverType;
+	enum qdf_driver_type driverType;
 	uint32_t uConfigBufferLen;
 
 	/* Following this there is a TLV formatted buffer of length
