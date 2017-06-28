@@ -489,7 +489,7 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 	if (NULL == addbss_param) {
 		pe_err("Unable to allocate memory during ADD_BSS");
 		/* Respond to SME with LIM_MLM_START_CNF */
-		return eSIR_MEM_ALLOC_FAILED;
+		return eSIR_SME_RESOURCES_UNAVAILABLE;
 	}
 
 	/* Fill in tAddBssParams members */
