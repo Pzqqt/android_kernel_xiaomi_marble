@@ -1019,7 +1019,6 @@ static void hdd_ndp_iface_delete_rsp_handler(hdd_adapter_t *adapter,
 				     WLAN_CONTROL_PATH);
 
 	complete(&adapter->disconnect_comp_var);
-	return;
 }
 
 /**
@@ -2121,9 +2120,9 @@ int hdd_init_nan_data_mode(struct hdd_adapter_s *adapter)
 			(int)WMI_PDEV_PARAM_BURST_ENABLE,
 			(int)hdd_ctx->config->enableSifsBurst,
 			PDEV_CMD);
-	if (0 != ret_val) {
+	if (0 != ret_val)
 		hdd_err("WMI_PDEV_PARAM_BURST_ENABLE set failed %d", ret_val);
-	}
+
 
 	update_ndi_state(adapter, NAN_DATA_NDI_CREATING_STATE);
 	return ret_val;
