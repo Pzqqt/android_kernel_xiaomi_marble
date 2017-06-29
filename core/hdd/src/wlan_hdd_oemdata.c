@@ -432,7 +432,7 @@ void hdd_update_channel_bw_info(struct hdd_context *hdd_ctx,
 		 */
 		phy_mode = MODE_UNKNOWN;
 
-	hdd_info("chan %d dot11_mode %d ch_width %d sec offset %d freq_seg0 %d phy_mode %d",
+	hdd_debug("chan %d dot11_mode %d ch_width %d sec offset %d freq_seg0 %d phy_mode %d",
 		chan, wni_dot11_mode, ch_params.ch_width,
 		ch_params.sec_ch_offset,
 		hdd_chan_info->band_center_freq1, phy_mode);
