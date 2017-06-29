@@ -90,3 +90,14 @@ QDF_STATUS wmi_extract_reg_11d_new_cc_event(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
+QDF_STATUS wmi_unified_set_user_country_code_cmd_send(void *wmi_hdl,
+		uint8_t pdev_id, struct cc_regdmn_s *rd)
+{
+	struct wmi_unified *wmi_handle = (struct wmi_unified *) wmi_hdl;
+
+	if (wmi_handle->ops->send_user_country_code_cmd)
+		return wmi_handle->ops->send_user_country_code_cmd(
+				wmi_handle, pdev_id, rd);
+
+	return QDF_STATUS_E_FAILURE;
+}

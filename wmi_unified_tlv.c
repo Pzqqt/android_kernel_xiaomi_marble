@@ -18114,6 +18114,59 @@ end:
 	return qdf_status;
 }
 
+#define WMI_REG_COUNTRY_ALPHA_SET(alpha, val0, val1, val2)          do { \
+	    WMI_SET_BITS(alpha, 0, 8, val0); \
+	    WMI_SET_BITS(alpha, 8, 8, val1); \
+	    WMI_SET_BITS(alpha, 16, 8, val2); \
+	    } while (0)
+
+static QDF_STATUS send_user_country_code_cmd_tlv(wmi_unified_t wmi_handle,
+		uint8_t pdev_id, struct cc_regdmn_s *rd)
+{
+	wmi_set_init_country_cmd_fixed_param *cmd;
+	uint16_t len;
+	wmi_buf_t buf;
+	int ret;
+
+	len = sizeof(wmi_set_init_country_cmd_fixed_param);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s: Failed allocate wmi buffer", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+	cmd = (wmi_set_init_country_cmd_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+			WMITLV_TAG_STRUC_wmi_set_init_country_cmd_fixed_param,
+			WMITLV_GET_STRUCT_TLVLEN
+			(wmi_set_init_country_cmd_fixed_param));
+
+	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(pdev_id);
+
+	if (rd->flags == CC_IS_SET) {
+		cmd->countrycode_type = WMI_COUNTRYCODE_COUNTRY_ID;
+		cmd->country_code.country_id = rd->cc.country_code;
+	} else if (rd->flags == ALPHA_IS_SET) {
+		cmd->countrycode_type = WMI_COUNTRYCODE_ALPHA2;
+		WMI_REG_COUNTRY_ALPHA_SET(cmd->country_code.alpha2,
+				rd->cc.alpha[0],
+				rd->cc.alpha[1],
+				rd->cc.alpha[2]);
+	} else if (rd->flags == REGDMN_IS_SET) {
+		cmd->countrycode_type = WMI_COUNTRYCODE_DOMAIN_CODE;
+		cmd->country_code.domain_code = rd->cc.regdmn_id;
+	}
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+			WMI_SET_INIT_COUNTRY_CMDID);
+	if (ret) {
+		WMI_LOGE("Failed to config wow wakeup event");
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_tlv,
@@ -18495,6 +18548,7 @@ struct wmi_ops tlv_ops =  {
 	.send_stop_11d_scan_cmd = send_stop_11d_scan_cmd_tlv,
 	.extract_reg_11d_new_country_event =
 		extract_reg_11d_new_country_event_tlv,
+	.send_user_country_code_cmd = send_user_country_code_cmd_tlv,
 };
 
 /**
