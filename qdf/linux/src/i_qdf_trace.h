@@ -131,7 +131,7 @@ static inline void qdf_trace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
 #ifdef KSYM_SYMBOL_LEN
 #define __QDF_SYMBOL_LEN KSYM_SYMBOL_LEN
 #else
-#define __QDF_SYMBOL_LEN 0
+#define __QDF_SYMBOL_LEN 1
 #endif
 
 #endif /* __I_QDF_TRACE_H */

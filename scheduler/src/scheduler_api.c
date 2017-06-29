@@ -63,11 +63,13 @@ static QDF_STATUS scheduler_close(struct scheduler_ctx *sched_ctx)
 				"%s: sched_ctx == NULL", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
+
 	/* shut down scheduler thread */
 	qdf_set_bit(MC_SHUTDOWN_EVENT_MASK, &sched_ctx->sch_event_flag);
 	qdf_set_bit(MC_POST_EVENT_MASK, &sched_ctx->sch_event_flag);
 	qdf_wake_up_interruptible(&sched_ctx->sch_wait_queue);
-	/* Wait for MC to exit */
+
+	/* Wait for scheduler thread to exit */
 	qdf_wait_single_event(&sched_ctx->sch_shutdown, 0);
 	sched_ctx->sch_thread = 0;
 
@@ -84,27 +86,32 @@ static QDF_STATUS scheduler_close(struct scheduler_ctx *sched_ctx)
 
 static inline void scheduler_watchdog_notify(struct scheduler_ctx *sched)
 {
-	char symbol[QDF_SYMBOL_LEN] = "<null>";
+	char symbol[QDF_SYMBOL_LEN];
 
 	if (sched->watchdog_callback)
 		qdf_sprint_symbol(symbol, sched->watchdog_callback);
 
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
-		  "%s: Callback %s (type 0x%x) has exceeded its allotted time of %ds",
-		  __func__, symbol, sched->watchdog_msg_type,
-		  SCHEDULER_WATCHDOG_TIMEOUT / 1000);
+	sched_err("Callback %s (type 0x%x) exceeded its allotted time of %ds",
+		  sched->watchdog_callback ? symbol : "<null>",
+		  sched->watchdog_msg_type, SCHEDULER_WATCHDOG_TIMEOUT / 1000);
 }
 
 #ifdef CONFIG_SLUB_DEBUG_ON
-static void scheduler_watchdog_bite(void *arg)
+static void scheduler_watchdog_timeout(void *arg)
 {
-	scheduler_watchdog_notify((struct scheduler_ctx *)arg);
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
-		  "%s: Going down for Scheduler Watchdog Bite!", __func__);
+	struct scheduler_ctx *sched = arg;
+
+	scheduler_watchdog_notify(sched);
+
+	/* avoid crashing during shutdown */
+	if (qdf_test_bit(MC_SHUTDOWN_EVENT_MASK, &sched->sch_event_flag))
+		return;
+
+	sched_fatal("Going down for Scheduler Watchdog Bite!");
 	QDF_BUG(0);
 }
 #else
-static void scheduler_watchdog_bite(void *arg)
+static void scheduler_watchdog_timeout(void *arg)
 {
 	scheduler_watchdog_notify((struct scheduler_ctx *)arg);
 }
@@ -130,7 +137,7 @@ static QDF_STATUS scheduler_open(struct scheduler_ctx *sched_ctx)
 	sched_ctx->sch_event_flag = 0;
 	qdf_timer_init(NULL,
 		       &sched_ctx->watchdog_timer,
-		       &scheduler_watchdog_bite,
+		       &scheduler_watchdog_timeout,
 		       sched_ctx,
 		       QDF_TIMER_TYPE_SW);
 
