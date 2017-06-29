@@ -244,31 +244,44 @@ void dfs_process_radar_found_indication(struct wlan_dfs *dfs,
 		   radar_found->freq_offset, radar_found->is_chirp,
 		   flag, freq_center);
 
-	if ((flag & IEEE80211_CHAN_HT20) ||
-	    (flag & IEEE80211_CHAN_VHT20)) {
+	if ((flag & IEEE80211_CHAN_A)         ||
+	    (flag & IEEE80211_CHAN_11NA_HT20) ||
+	    (flag & IEEE80211_CHAN_HT20)      ||
+	    (flag & IEEE80211_CHAN_VHT20)     ||
+	    (flag & IEEE80211_CHAN_11AXA_HE20)) {
 		if (radar_found->is_chirp ||
 		   (sidx && !(abs(sidx) % DFS_BOUNDRY_SIDX))) {
 			freq_offset.offset[1] -= DFS_CHIRP_OFFSET;
 			freq_offset.offset[2] += DFS_CHIRP_OFFSET;
 		}
 		dfs_radar_chan_for_20(&freq_offset, freq_center);
-	} else if ((flag & IEEE80211_CHAN_VHT40PLUS)  ||
-		   (flag & IEEE80211_CHAN_HT40PLUS)   ||
-		   (flag & IEEE80211_CHAN_VHT40MINUS) ||
-		   (flag & IEEE80211_CHAN_HT40MINUS)) {
+	} else if ((flag & IEEE80211_CHAN_VHT40PLUS)      ||
+		   (flag & IEEE80211_CHAN_VHT40MINUS)     ||
+		   (flag & IEEE80211_CHAN_HT40PLUS)       ||
+		   (flag & IEEE80211_CHAN_HT40MINUS)      ||
+		   (flag & IEEE80211_CHAN_11NA_HT40PLUS)  ||
+		   (flag & IEEE80211_CHAN_11NA_HT40MINUS) ||
+		   (flag & IEEE80211_CHAN_11AXA_HE40PLUS) ||
+		   (flag & IEEE80211_CHAN_11AXA_HE40MINUS)) {
 		if (radar_found->is_chirp || !(abs(sidx) % DFS_BOUNDRY_SIDX)) {
 			freq_offset.offset[1] -= DFS_CHIRP_OFFSET;
 			freq_offset.offset[2] += DFS_CHIRP_OFFSET;
 		}
 		dfs_radar_chan_for_40(&freq_offset, freq_center);
-	} else if ((flag & IEEE80211_CHAN_VHT80)    ||
-		   (flag & IEEE80211_CHAN_VHT80_80) ||
-		   (flag & IEEE80211_CHAN_VHT160)) {
+	} else if ((flag & IEEE80211_CHAN_VHT80)         ||
+		   (flag & IEEE80211_CHAN_VHT80_80)      ||
+		   (flag & IEEE80211_CHAN_VHT160)        ||
+		   (flag & IEEE80211_CHAN_11AXA_HE80)    ||
+		   (flag & IEEE80211_CHAN_11AXA_HE80_80) ||
+		   (flag & IEEE80211_CHAN_11AXA_HE160)) {
 		if (radar_found->is_chirp || !(abs(sidx) % DFS_BOUNDRY_SIDX)) {
 			freq_offset.offset[1] -= DFS_CHIRP_OFFSET;
 			freq_offset.offset[2] += DFS_CHIRP_OFFSET;
 		}
 		dfs_radar_chan_for_80(&freq_offset, freq_center);
+	} else {
+		DFS_PRINTK("%s: channel flag(%d) is invalid\n", __func__, flag);
+		return;
 	}
 
 	for (i = 0; i < DFS_NUM_FREQ_OFFSET; i++) {
