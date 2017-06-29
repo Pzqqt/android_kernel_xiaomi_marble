@@ -168,3 +168,30 @@ next:
 
 	hal_srng_access_end(soc->hal_soc, soc->reo_status_ring.hal_srng);
 }
+
+/**
+ * dp_reo_cmdlist_destroy - Free REO commands in the queue
+ * @soc: DP SoC hanle
+ *
+ */
+void dp_reo_cmdlist_destroy(struct dp_soc *soc)
+{
+	struct dp_reo_cmd_info *reo_cmd = NULL;
+	union hal_reo_status reo_status;
+
+	reo_status.queue_status.header.status =
+			HAL_REO_CMD_FAILED;
+
+	qdf_spin_lock_bh(&soc->rx.reo_cmd_lock);
+	TAILQ_FOREACH(reo_cmd, &soc->rx.reo_cmd_list,
+		      reo_cmd_list_elem) {
+		TAILQ_REMOVE(&soc->rx.reo_cmd_list, reo_cmd,
+		       reo_cmd_list_elem);
+		if (reo_cmd) {
+			reo_cmd->handler(soc, reo_cmd->data,
+					&reo_status);
+			qdf_mem_free(reo_cmd);
+		}
+	}
+	qdf_spin_unlock_bh(&soc->rx.reo_cmd_lock);
+}

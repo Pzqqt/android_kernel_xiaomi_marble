@@ -1675,12 +1675,13 @@ static void dp_soc_detach_wifi3(void *txrx_soc)
 	dp_srng_cleanup(soc, &soc->reo_cmd_ring, REO_CMD, 0);
 	dp_srng_cleanup(soc, &soc->reo_status_ring, REO_STATUS, 0);
 
-	qdf_spinlock_destroy(&soc->rx.reo_cmd_lock);
-
 	qdf_spinlock_destroy(&soc->peer_ref_mutex);
 	htt_soc_detach(soc->htt_handle);
 
+	dp_reo_cmdlist_destroy(soc);
+	qdf_spinlock_destroy(&soc->rx.reo_cmd_lock);
 	dp_reo_desc_freelist_destroy(soc);
+
 	wlan_cfg_soc_detach(soc->wlan_cfg_ctx);
 
 	dp_soc_wds_detach(soc);

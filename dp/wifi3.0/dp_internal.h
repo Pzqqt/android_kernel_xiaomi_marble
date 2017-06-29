@@ -276,6 +276,7 @@ extern QDF_STATUS dp_reo_send_cmd(struct dp_soc *soc,
 	enum hal_reo_cmd_type type, struct hal_reo_cmd_params *params,
 	void (*callback_fn), void *data);
 
+extern void dp_reo_cmdlist_destroy(struct dp_soc *soc);
 extern void dp_reo_status_ring_handler(struct dp_soc *soc);
 void dp_aggregate_vdev_stats(struct dp_vdev *vdev);
 uint16_t dp_tx_me_send_convert_ucast(struct cdp_vdev *vdev_handle,
