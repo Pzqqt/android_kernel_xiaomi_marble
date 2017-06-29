@@ -36,7 +36,78 @@
 #include <wlan_reg_services_api.h>
 #include <dfs_ioctl.h>
 
-/* for loop to traverse the channel list. */
+/**
+ * dfs_nol_timeout() - NOL timeout function.
+ *
+ * Clears the IEEE80211_CHAN_DFS_RADAR_FOUND flag for the NOL timeout channel.
+ */
+static os_timer_func(dfs_nol_timeout)
+{
+	struct dfs_ieee80211_channel *c = NULL, lc;
+	unsigned long oldest, now;
+	struct wlan_dfs *dfs = NULL;
+	int i;
+	int nchans = 0;
+
+	c = &lc;
+
+	OS_GET_TIMER_ARG(dfs, struct wlan_dfs *);
+	dfs_mlme_get_dfs_ch_nchans(dfs->dfs_pdev_obj, &nchans);
+
+	now = oldest = qdf_system_ticks();
+	for (i = 0; i < nchans; i++) {
+		dfs_mlme_get_dfs_ch_channels(dfs->dfs_pdev_obj,
+				&(c->dfs_ch_freq),
+				&(c->dfs_ch_flags),
+				&(c->dfs_ch_flagext),
+				&(c->dfs_ch_ieee),
+				&(c->dfs_ch_vhtop_ch_freq_seg1),
+				&(c->dfs_ch_vhtop_ch_freq_seg2),
+				i);
+		if (IEEE80211_IS_CHAN_RADAR(c)) {
+			if (qdf_system_time_after_eq(now,
+						dfs->dfs_nol_event[i] +
+						dfs_get_nol_timeout(dfs))) {
+				c->dfs_ch_flagext &=
+					~IEEE80211_CHAN_DFS_RADAR_FOUND;
+				if (c->dfs_ch_flags &
+						IEEE80211_CHAN_DFS_RADAR) {
+					/*
+					 * NB: do this here so we get only one
+					 * msg instead of one for every channel
+					 * table entry.
+					 */
+					DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
+						"%s : radar on channel %u (%u MHz) cleared after timeout\n",
+						__func__,
+						c->dfs_ch_ieee,
+						c->dfs_ch_freq);
+				}
+			} else if (dfs->dfs_nol_event[i] < oldest)
+				oldest = dfs->dfs_nol_event[i];
+		}
+	}
+	if (oldest != now) {
+		/* Arrange to process next channel up for a status change. */
+		qdf_timer_mod(&dfs->dfs_nol_timer,
+				dfs_get_nol_timeout(dfs) -
+				qdf_system_ticks_to_msecs(qdf_system_ticks()));
+	}
+}
+
+void dfs_nol_timer_init(struct wlan_dfs *dfs)
+{
+	qdf_timer_init(NULL,
+			&(dfs->dfs_nol_timer),
+			dfs_nol_timeout,
+			(void *)(dfs),
+			QDF_TIMER_TYPE_WAKE_APPS);
+}
+
+void dfs_nol_attach(struct wlan_dfs *dfs)
+{
+	dfs_nol_timer_init(dfs);
+}
 
 /**
  * dfs_nol_delete() - Delete the given frequency/chwidth from the NOL.
@@ -277,7 +348,7 @@ void dfs_nol_addchan(struct wlan_dfs *dfs,
 				__func__, nol->nol_freq, nol->nol_chwidth);
 
 			qdf_timer_stop(&nol->nol_timer);
-			OS_SET_TIMER(&nol->nol_timer,
+			qdf_timer_mod(&nol->nol_timer,
 					dfs_nol_timeout * TIME_IN_MS);
 			return;
 		}
@@ -306,7 +377,7 @@ void dfs_nol_addchan(struct wlan_dfs *dfs,
 	qdf_timer_init(NULL,
 			&elem->nol_timer, dfs_remove_from_nol,
 			elem, QDF_TIMER_TYPE_WAKE_APPS);
-	OS_SET_TIMER(&elem->nol_timer, dfs_nol_timeout * TIME_IN_MS);
+	qdf_timer_mod(&elem->nol_timer, dfs_nol_timeout * TIME_IN_MS);
 
 	/* Update the NOL counter. */
 	dfs->dfs_nol_count++;
@@ -426,6 +497,11 @@ void dfs_nol_timer_cleanup(struct wlan_dfs *dfs)
 	dfs_nol_update(dfs);
 }
 
+void dfs_nol_detach(struct wlan_dfs *dfs)
+{
+	dfs_nol_timer_cleanup(dfs);
+}
+
 int dfs_get_rn_use_nol(struct wlan_dfs *dfs)
 {
 	return dfs->dfs_rinfo.rn_use_nol;
@@ -434,4 +510,33 @@ int dfs_get_rn_use_nol(struct wlan_dfs *dfs)
 int dfs_get_nol_timeout(struct wlan_dfs *dfs)
 {
 	return dfs->wlan_dfs_nol_timeout;
+}
+
+void dfs_getnol(struct wlan_dfs *dfs, void *dfs_nolinfo)
+{
+	struct dfsreq_nolinfo *nolinfo = (struct dfsreq_nolinfo *)dfs_nolinfo;
+
+	dfs_get_nol(dfs, nolinfo->dfs_nol, &(nolinfo->dfs_ch_nchans));
+}
+
+void dfs_clear_nolhistory(struct wlan_dfs *dfs)
+{
+	/* We should have a dfs_clear_nolhistory API from Regdomain. */
+	struct dfs_ieee80211_channel *c, lc;
+	int i;
+	int nchans = 0;
+
+	c = &lc;
+	dfs_mlme_get_dfs_ch_nchans(dfs->dfs_pdev_obj, &nchans);
+	for (i = 0; i < nchans; i++) {
+		dfs_mlme_get_dfs_ch_channels(dfs->dfs_pdev_obj,
+				&(c->dfs_ch_freq),
+				&(c->dfs_ch_flags),
+				&(c->dfs_ch_flagext),
+				&(c->dfs_ch_ieee),
+				&(c->dfs_ch_vhtop_ch_freq_seg1),
+				&(c->dfs_ch_vhtop_ch_freq_seg2),
+				i);
+		IEEE80211_CHAN_CLR_HISTORY_RADAR(c);
+	}
 }

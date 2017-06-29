@@ -61,20 +61,6 @@ QDF_STATUS tgt_dfs_set_current_channel(struct wlan_objmgr_pdev *pdev,
 }
 EXPORT_SYMBOL(tgt_dfs_set_current_channel);
 
-QDF_STATUS tgt_dfs_reset(struct wlan_objmgr_pdev *pdev)
-{
-	struct wlan_dfs *dfs;
-
-	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
-	if (dfs == NULL)
-		return  QDF_STATUS_E_FAILURE;
-
-	dfs_reset(dfs);
-
-	return QDF_STATUS_SUCCESS;
-}
-EXPORT_SYMBOL(tgt_dfs_reset);
-
 QDF_STATUS tgt_dfs_radar_enable(struct wlan_objmgr_pdev *pdev,
 		int no_cac, uint32_t opmode)
 {
@@ -140,18 +126,6 @@ QDF_STATUS tgt_dfs_get_radars(struct wlan_objmgr_pdev *pdev)
 }
 EXPORT_SYMBOL(tgt_dfs_get_radars);
 
-QDF_STATUS tgt_dfs_attach(struct wlan_objmgr_pdev *pdev)
-{
-	struct wlan_dfs *dfs;
-
-	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
-	if (dfs == NULL)
-		return  QDF_STATUS_E_FAILURE;
-
-	return dfs_attach(dfs);
-}
-EXPORT_SYMBOL(tgt_dfs_attach);
-
 QDF_STATUS tgt_dfs_destroy_object(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_dfs *dfs;
@@ -166,31 +140,6 @@ QDF_STATUS tgt_dfs_destroy_object(struct wlan_objmgr_pdev *pdev)
 	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(tgt_dfs_destroy_object);
-
-QDF_STATUS tgt_nif_dfs_reset(struct wlan_objmgr_pdev *pdev)
-{
-	struct wlan_dfs *dfs;
-
-	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
-	if (dfs == NULL)
-		return  QDF_STATUS_E_FAILURE;
-
-	nif_dfs_reset(dfs);
-	return  QDF_STATUS_SUCCESS;
-}
-EXPORT_SYMBOL(tgt_nif_dfs_reset);
-
-QDF_STATUS tgt_sif_dfs_detach(struct wlan_objmgr_pdev *pdev)
-{
-	struct wlan_dfs *dfs;
-
-	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
-	if (dfs == NULL)
-		return  QDF_STATUS_E_FAILURE;
-
-	sif_dfs_detach(dfs);
-	return  QDF_STATUS_SUCCESS;
-}
 
 QDF_STATUS tgt_dfs_control(struct wlan_objmgr_pdev *pdev,
 		u_int id,

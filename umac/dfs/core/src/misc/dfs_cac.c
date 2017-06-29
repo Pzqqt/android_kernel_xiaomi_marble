@@ -34,8 +34,6 @@
 #include "wlan_dfs_mlme_api.h"
 #include "../dfs_internal.h"
 
-static int ieee80211_nol_timeout = 30*60; /* 30 minutes */
-#define NOL_TIMEOUT (ieee80211_nol_timeout*1000)
 #define IS_CHANNEL_WEATHER_RADAR(freq) ((freq >= 5600) && (freq <= 5650))
 #define ADJACENT_WEATHER_RADAR_CHANNEL   5580
 #define CH100_START_FREQ                 5490
@@ -62,23 +60,6 @@ int dfs_get_override_cac_timeout(struct wlan_dfs *dfs, int *cac_timeout)
 	(*cac_timeout) = dfs->dfs_cac_timeout_override;
 
 	return 0;
-}
-
-void nif_dfs_detach(struct wlan_dfs *dfs)
-{
-	if (!dfs->dfs_enable)
-		return;
-
-	dfs->dfs_enable = 0;
-	nif_dfs_reset(dfs);
-	dfs_deinit_precac_list(dfs);
-}
-
-void nif_dfs_reset(struct wlan_dfs *dfs)
-{
-	qdf_timer_stop(&dfs->dfs_cac_timer);
-	dfs->dfs_cac_timeout_override = -1;
-	dfs_zero_cac_reset(dfs);
 }
 
 void dfs_cac_valid_reset(struct wlan_dfs *dfs,
@@ -167,7 +148,7 @@ static os_timer_func(dfs_cac_timeout)
 		 */
 		if (dfs->dfs_cac_valid_time) {
 			dfs->dfs_cac_valid = 1;
-			OS_SET_TIMER(&dfs->dfs_cac_valid_timer,
+			qdf_timer_mod(&dfs->dfs_cac_valid_timer,
 					dfs->dfs_cac_valid_time * 1000);
 		}
 	}
@@ -184,6 +165,36 @@ static os_timer_func(dfs_cac_timeout)
 	}
 }
 
+void dfs_cac_timer_init(struct wlan_dfs *dfs)
+{
+	qdf_timer_init(NULL,
+			&(dfs->dfs_cac_timer),
+			dfs_cac_timeout,
+			(void *)(dfs),
+			QDF_TIMER_TYPE_WAKE_APPS);
+
+	qdf_timer_init(NULL,
+			&(dfs->dfs_cac_valid_timer),
+			dfs_cac_valid_timeout,
+			(void *)(dfs),
+			QDF_TIMER_TYPE_WAKE_APPS);
+}
+
+void dfs_cac_attach(struct wlan_dfs *dfs)
+{
+	dfs->dfs_cac_timeout_override = -1;
+	dfs->wlan_dfs_cac_time = WLAN_DFS_WAIT_MS;
+	dfs_cac_timer_init(dfs);
+}
+
+void dfs_cac_timer_reset(struct wlan_dfs *dfs)
+{
+	qdf_timer_stop(&dfs->dfs_cac_timer);
+	dfs_get_override_cac_timeout(dfs,
+			&(dfs->dfs_cac_timeout_override));
+
+}
+
 int dfs_is_ap_cac_timer_running(struct wlan_dfs *dfs)
 {
 	return dfs->dfs_cac_timer_running;
@@ -191,7 +202,7 @@ int dfs_is_ap_cac_timer_running(struct wlan_dfs *dfs)
 
 void dfs_start_cac_timer(struct wlan_dfs *dfs)
 {
-	OS_SET_TIMER(&dfs->dfs_cac_timer,
+	qdf_timer_mod(&dfs->dfs_cac_timer,
 			dfs_mlme_get_cac_timeout(dfs->dfs_pdev_obj,
 				dfs->dfs_curchan->dfs_ch_freq,
 				dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg2,
@@ -223,87 +234,6 @@ void dfs_stacac_stop(struct wlan_dfs *dfs)
 	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
 		"%s : Stopping STA CAC Timer %d procphyerr 0x%08x\n",
 		__func__, dfs->dfs_curchan->dfs_ch_freq, phyerr);
-}
-
-/**
- * dfs_nol_timeout() - NOL timeout function.
- *
- * Clears the IEEE80211_CHAN_DFS_RADAR_FOUND flag for the NOL timeout channel.
- */
-static os_timer_func(dfs_nol_timeout)
-{
-	struct dfs_ieee80211_channel *c = NULL, lc;
-	unsigned long oldest, now;
-	struct wlan_dfs *dfs = NULL;
-	int i;
-	int nchans = 0;
-
-	c = &lc;
-
-	OS_GET_TIMER_ARG(dfs, struct wlan_dfs *);
-	dfs_mlme_get_dfs_ch_nchans(dfs->dfs_pdev_obj, &nchans);
-
-	now = oldest = qdf_system_ticks();
-	for (i = 0; i < nchans; i++) {
-		dfs_mlme_get_dfs_ch_channels(dfs->dfs_pdev_obj,
-				&(c->dfs_ch_freq),
-				&(c->dfs_ch_flags),
-				&(c->dfs_ch_flagext),
-				&(c->dfs_ch_ieee),
-				&(c->dfs_ch_vhtop_ch_freq_seg1),
-				&(c->dfs_ch_vhtop_ch_freq_seg2),
-				i);
-		if (IEEE80211_IS_CHAN_RADAR(c)) {
-			if (qdf_system_time_after_eq(now,
-				dfs->dfs_nol_event[i] + NOL_TIMEOUT)) {
-				c->dfs_ch_flagext &=
-					~IEEE80211_CHAN_DFS_RADAR_FOUND;
-				if (c->dfs_ch_flags &
-						IEEE80211_CHAN_DFS_RADAR) {
-					/*
-					 * NB: do this here so we get only one
-					 * msg instead of one for every channel
-					 * table entry.
-					 */
-					DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-						"%s : radar on channel %u (%u MHz) cleared after timeout\n",
-						__func__,
-						c->dfs_ch_ieee,
-						c->dfs_ch_freq);
-				}
-			} else if (dfs->dfs_nol_event[i] < oldest)
-				oldest = dfs->dfs_nol_event[i];
-		}
-	}
-	if (oldest != now) {
-		/* Arrange to process next channel up for a status change. */
-		OS_SET_TIMER(&dfs->dfs_nol_timer, NOL_TIMEOUT -
-				qdf_system_ticks_to_msecs(qdf_system_ticks()));
-	}
-}
-
-void nif_dfs_attach(struct wlan_dfs *dfs)
-{
-	dfs->dfs_enable = 1;
-	dfs->dfs_cac_timeout_override = -1;
-	dfs_zero_cac_attach(dfs);
-	qdf_timer_init(NULL,
-			&(dfs->dfs_cac_timer),
-			dfs_cac_timeout,
-			(void *)(dfs),
-			QDF_TIMER_TYPE_WAKE_APPS);
-
-	qdf_timer_init(NULL,
-			&(dfs->dfs_nol_timer),
-			dfs_nol_timeout,
-			(void *)(dfs),
-			QDF_TIMER_TYPE_WAKE_APPS);
-
-	qdf_timer_init(NULL,
-			&(dfs->dfs_cac_valid_timer),
-			dfs_cac_valid_timeout,
-			(void *)(dfs),
-			QDF_TIMER_TYPE_WAKE_APPS);
 }
 
 int dfs_random_channel(struct wlan_dfs *dfs,

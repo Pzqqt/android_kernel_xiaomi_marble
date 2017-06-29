@@ -54,6 +54,12 @@ struct dfs_precac_entry {
 };
 
 /**
+ * dfs_zero_cac_timer_init() - Initialize zero-cac timers
+ * @dfs: Pointer to DFS structure.
+ */
+void dfs_zero_cac_timer_init(struct wlan_dfs *dfs);
+
+/**
  * dfs_print_precaclists() - Print precac list.
  * @dfs: Pointer to wlan_dfs structure.
  */
@@ -80,6 +86,12 @@ void dfs_reset_precaclists(struct wlan_dfs *dfs);
 void dfs_deinit_precac_list(struct wlan_dfs *dfs);
 
 /**
+ * dfs_zero_cac_detach() - Free zero_cac memory.
+ * @dfs: Pointer to wlan_dfs dtructure.
+ */
+void dfs_zero_cac_detach(struct wlan_dfs *dfs);
+
+/**
  * dfs_init_precac_list() - Init precac list.
  * @dfs: Pointer to wlan_dfs dtructure.
  */
@@ -100,8 +112,8 @@ void dfs_start_precac_timer(struct wlan_dfs *dfs,
 void dfs_cancel_precac_timer(struct wlan_dfs *dfs);
 
 /**
- * dfs_zero_cac_attach() - Initializes Zero cac DFS variables.
- * @dfs: Pointer to wlan_dfs structure.
+ * dfs_zero_cac_attach() - Initialize dfs zerocac variables.
+ * @dfs: Pointer to DFS structure.
  */
 void dfs_zero_cac_attach(struct wlan_dfs *dfs);
 
@@ -206,12 +218,6 @@ uint32_t dfs_get_precac_enable(struct wlan_dfs *dfs);
  * @dfs: Pointer to wlan_dfs structure.
  */
 void dfs_zero_cac_reset(struct wlan_dfs *dfs);
-
-/**
- * dfs_zero_cac_attach() - Initializes Zero cac DFS variables.
- * @dfs: Pointer to wlan_dfs structure.
- */
-void dfs_zero_cac_attach(struct wlan_dfs *dfs);
 
 /**
  * dfs_is_ht20_40_80_chan_in_precac_done_list() - Is precac done on a

@@ -1062,6 +1062,14 @@ void dfs_nol_update(struct wlan_dfs *dfs);
 void dfs_nol_timer_cleanup(struct wlan_dfs *dfs);
 
 /**
+ * dfs_nol_detach() - Free NOL variables.
+ * @dfs: Pointer to wlan_dfs structure.
+ *
+ * Cancels the NOL timer and frees the NOL elements.
+ */
+void dfs_nol_detach(struct wlan_dfs *dfs);
+
+/**
  * dfs_retain_bin5_burst_pattern() - Retain the BIN5 burst pattern.
  * @dfs: Pointer to wlan_dfs structure.
  * @diff_ts: Timestamp diff.
@@ -1406,10 +1414,16 @@ bool dfs_is_precac_timer_running(struct wlan_dfs *dfs);
 void dfs_get_radars(struct wlan_dfs *dfs);
 
 /**
- * dfs_attach() - Allocates memory for wlan_dfs members.
+ * dfs_attach() - Wrapper function to allocate memory for wlan_dfs members.
  * @dfs: Pointer to wlan_dfs structure.
  */
 int dfs_attach(struct wlan_dfs *dfs);
+
+/**
+ * dfs_main_attach() - Allocates memory for wlan_dfs members.
+ * @dfs: Pointer to wlan_dfs structure.
+ */
+int dfs_main_attach(struct wlan_dfs *dfs);
 
 /**
  * dfs_create_object() - Creates DFS object.
@@ -1424,12 +1438,6 @@ int dfs_create_object(struct wlan_dfs **dfs);
 void dfs_destroy_object(struct wlan_dfs *dfs);
 
 /**
- * nif_dfs_reset() - DFS reset.
- * @dfs: Pointer to wlan_dfs structure.
- */
-void nif_dfs_reset(struct wlan_dfs *dfs);
-
-/**
  * dfs_random_channel() - Function to choose the random channel from the current
  *                        channel list.
  * @dfs: Pointer to wlan_dfs structure.
@@ -1442,22 +1450,16 @@ int dfs_random_channel(struct wlan_dfs *dfs,
 		uint8_t skip_curchan);
 
 /**
- * sif_dfs_detach() - DFS detach.
+ * dfs_detach() - Wrapper function to free dfs variables.
  * @dfs: Pointer to wlan_dfs structure.
  */
-void sif_dfs_detach(struct wlan_dfs *dfs);
+void dfs_detach(struct wlan_dfs *dfs);
 
 /**
- * nif_dfs_detach() - DFS detach
+ * dfs_main_detach() - Free dfs variables.
  * @dfs: Pointer to wlan_dfs structure.
  */
-void nif_dfs_detach(struct wlan_dfs *dfs);
-
-/**
- * nif_dfs_attach() - DFS attach function.
- * @dfs: Pointer to wlan_dfs structure.
- **/
-void nif_dfs_attach(struct wlan_dfs *dfs);
+void dfs_main_detach(struct wlan_dfs *dfs);
 
 /**
  * dfs_cac_valid_reset() - Cancels the dfs_cac_valid_timer timer.
@@ -1645,6 +1647,36 @@ void dfs_mark_precac_dfs(struct wlan_dfs *dfs,
  */
 int dfs_get_debug_info(struct wlan_dfs *dfs,
 		void *data);
+
+/**
+ * dfs_cac_timer_init() - Initialize cac timers.
+ * @dfs: Pointer to wlan_dfs structure.
+ */
+void dfs_cac_timer_init(struct wlan_dfs *dfs);
+
+/**
+ * dfs_cac_attach() - Initialize dfs cac variables.
+ * @dfs: Pointer to wlan_dfs structure.
+ */
+void dfs_cac_attach(struct wlan_dfs *dfs);
+
+/**
+ * dfs_cac_timer_reset() - Cancel dfs cac timers.
+ * @dfs: Pointer to wlan_dfs structure.
+ */
+void dfs_cac_timer_reset(struct wlan_dfs *dfs);
+
+/**
+ * dfs_nol_timer_init() - Initialize NOL timers.
+ * @dfs: Pointer to wlan_dfs structure.
+ */
+void dfs_nol_timer_init(struct wlan_dfs *dfs);
+
+/**
+ * dfs_nol_attach() - Initialize NOL variables.
+ * @dfs: Pointer to wlan_dfs structure.
+ */
+void dfs_nol_attach(struct wlan_dfs *dfs);
 
 /**
  * dfs_print_nolhistory() - Print NOL history.
@@ -1881,4 +1913,15 @@ void count_the_other_delay_elements(struct wlan_dfs *dfs,
 		int fundamentalpri
 		);
 
+/**
+ * dfs_main_timer_init() - Initialize dfs timers.
+ * @dfs: Pointer to wlan_dfs structure.
+ */
+void dfs_main_timer_init(struct wlan_dfs *dfs);
+
+/**
+ * dfs_main_timer_reset() - Stop dfs timers.
+ * @dfs: Pointer to wlan_dfs structure.
+ */
+void dfs_main_timer_reset(struct wlan_dfs *dfs);
 #endif  /* _DFS_H_ */

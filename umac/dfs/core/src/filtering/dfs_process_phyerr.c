@@ -810,7 +810,7 @@ void dfs_process_phyerr(struct wlan_dfs *dfs, void *buf, uint16_t datalen,
 	}
 	if (!STAILQ_EMPTY(&dfs->dfs_radarq) && !dfs->wlan_radar_tasksched) {
 		dfs->wlan_radar_tasksched = 1;
-		OS_SET_TIMER(&dfs->wlan_dfs_task_timer, 0);
+		qdf_timer_mod(&dfs->wlan_dfs_task_timer, 0);
 	}
 #undef EXT_CH_RADAR_FOUND
 #undef PRI_CH_RADAR_FOUND
