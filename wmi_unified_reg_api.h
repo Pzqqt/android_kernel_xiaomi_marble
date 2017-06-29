@@ -71,4 +71,15 @@ QDF_STATUS wmi_extract_reg_11d_new_cc_event(void *wmi_hdl,
 		uint8_t *evt_buf,
 		struct reg_11d_new_country *reg_11d_new_cc,
 		uint32_t len);
+
+/**
+ * wmi_unified_set_user_country_code_cmd_send() - WMI set country function
+ * @wmi_handle: wmi handle.
+ * @pdev_id: Pdev id
+ * @rd: User country code or regdomain
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_set_user_country_code_cmd_send(void *wmi_hdl,
+		uint8_t pdev_id, struct cc_regdmn_s *rd);
 #endif /* _WMI_UNIFIED_REG_API_H_ */
