@@ -7426,12 +7426,23 @@ typedef enum {
     WMI_VDEV_PARAM_11AX_TXBF,
 
     /** This parameter indicates whether VDEV is SMPS intolerant.
-      * I.e. - SMPS action frame cannot be transmitted by the VDEV to
-      * dynamically change the RX NSS.
-      *
-      * valid values: 1 - VDEV is SMPS intolerant, 0 - VDEV is SMPS tolerant
-      */
+     * I.e. - SMPS action frame cannot be transmitted by the VDEV to
+     * dynamically change the RX NSS.
+     *
+     * valid values: 1 - VDEV is SMPS intolerant, 0 - VDEV is SMPS tolerant
+     */
     WMI_VDEV_PARAM_SMPS_INTOLERANT,
+
+    /** specify probe request Tx delay for scans triggered on this VDEV */
+    WMI_VDEV_PARAM_PROBE_DELAY, /* units = milliseconds */
+
+    /** specify the time gap between each set of probe request transmissions.
+     * The number of probe requests in each set depends on the ssid_list and
+     * bssid_list in the scan request.
+     * This parameter will be applied only for scans triggered on this VDEV.
+     */
+    WMI_VDEV_PARAM_REPEAT_PROBE_TIME, /* units = milliseconds */
+
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
