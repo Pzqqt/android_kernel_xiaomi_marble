@@ -1349,6 +1349,8 @@ QDF_STATUS (*send_set_country_cmd)(wmi_unified_t wmi_handle,
 uint32_t (*convert_pdev_id_host_to_target)(uint32_t pdev_id);
 uint32_t (*convert_pdev_id_target_to_host)(uint32_t pdev_id);
 
+QDF_STATUS (*send_user_country_code_cmd)(wmi_unified_t wmi_handle,
+		uint8_t pdev_id, struct cc_regdmn_s *rd);
 };
 
 struct target_abi_version {

@@ -119,6 +119,13 @@ QDF_STATUS ucfg_reg_init_handler(uint8_t pdev_id);
 QDF_STATUS ucfg_reg_program_default_cc(struct wlan_objmgr_pdev *pdev,
 				       uint16_t regdmn);
 
+/**
+ * ucfg_reg_program_cc() - Program user country code or regdomain
+ * @pdev: The physical dev to program country code or regdomain
+ * @rd: User country code or regdomain
+ *
+ * Return: QDF_STATUS
+ */
 QDF_STATUS ucfg_reg_program_cc(struct wlan_objmgr_pdev *pdev,
 			       struct cc_regdmn_s *rd);
 

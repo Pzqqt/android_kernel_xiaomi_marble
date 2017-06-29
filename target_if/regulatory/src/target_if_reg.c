@@ -251,6 +251,20 @@ static QDF_STATUS tgt_if_regulatory_set_country_code(
 
 }
 
+static QDF_STATUS tgt_if_regulatory_set_user_country_code(
+	struct wlan_objmgr_psoc *psoc, uint8_t pdev_id, struct cc_regdmn_s *rd)
+{
+	wmi_unified_t wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
+
+	if (wmi_unified_set_user_country_code_cmd_send(wmi_handle, pdev_id,
+				rd) != QDF_STATUS_SUCCESS) {
+		target_if_err("Set user country code failed");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 static QDF_STATUS tgt_if_regulatory_register_11d_new_cc_handler(
 	struct wlan_objmgr_psoc *psoc, void *arg)
 {
@@ -318,6 +332,9 @@ QDF_STATUS target_if_register_regulatory_tx_ops(struct wlan_lmac_if_tx_ops
 
 	reg_ops->is_there_serv_ready_extn =
 		tgt_if_regulatory_is_there_serv_ready_extn;
+
+	reg_ops->set_user_country_code =
+		tgt_if_regulatory_set_user_country_code;
 
 	return QDF_STATUS_SUCCESS;
 }

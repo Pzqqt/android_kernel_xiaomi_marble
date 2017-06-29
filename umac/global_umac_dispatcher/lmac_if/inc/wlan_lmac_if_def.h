@@ -563,6 +563,9 @@ struct wlan_lmac_if_reg_tx_ops {
 	QDF_STATUS (*stop_11d_scan)(struct wlan_objmgr_psoc *psoc,
 			struct reg_stop_11d_scan_req *reg_stop_11d_scan_req);
 	bool (*is_there_serv_ready_extn)(struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS (*set_user_country_code)(struct wlan_objmgr_psoc *psoc,
+					    uint8_t pdev_id,
+					    struct cc_regdmn_s *rd);
 };
 
 /**

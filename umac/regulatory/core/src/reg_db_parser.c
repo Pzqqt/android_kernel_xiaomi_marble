@@ -100,8 +100,7 @@ QDF_STATUS reg_get_rdpair_from_country_iso(uint8_t *alpha,
 
 	for (i = 0; i < num_countries; i++) {
 		if ((g_all_countries[i].alpha2_11d[0] == alpha[0]) &&
-			(g_all_countries[i].alpha2_11d[1] == alpha[1]) &&
-			(g_all_countries[i].alpha2_11d[2] == alpha[2]))
+			(g_all_countries[i].alpha2_11d[1] == alpha[1]))
 			break;
 	}
 

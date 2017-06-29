@@ -574,4 +574,34 @@ struct mas_chan_params {
 	uint16_t ctry_code;
 };
 
+/**
+ * enum cc_regdmn_flag: Regdomain flags
+ * @INVALID:       Invalid flag
+ * @CC_IS_SET:     Country code is set
+ * @REGDMN_IS_SET: Regdomain ID is set
+ * @ALPHA_IS_SET:  Country ISO is set
+ */
+enum cc_regdmn_flag {
+	INVALID_CC,
+	CC_IS_SET,
+	REGDMN_IS_SET,
+	ALPHA_IS_SET,
+};
+
+/**
+ * struct cc_regdmn_s: User country code or regdomain
+ * @country_code: Country code
+ * @regdmn_id:    Regdomain pair ID
+ * @alpha:        Country ISO
+ * @flags:        Regdomain flags
+ */
+struct cc_regdmn_s {
+	union {
+		uint16_t country_code;
+		uint16_t regdmn_id;
+		uint8_t alpha[REG_ALPHA2_LEN + 1];
+	} cc;
+	uint8_t flags;
+};
+
 #endif

@@ -70,29 +70,6 @@
 /* EEPROM setting is a country code */
 #define    COUNTRY_ERD_FLAG     0x8000
 
-/**
- * enum cc_regdmn_flag: Regdomain flags
- * @INVALID:       Invalid flag
- * @CC_IS_SET:     Country code is set
- * @REGDMN_IS_SET: Regdomain ID is set
- * @ALPHA_IS_SET:  Country ISO is set
- */
-enum cc_regdmn_flag {
-	INVALID,
-	CC_IS_SET,
-	REGDMN_IS_SET,
-	ALPHA_IS_SET,
-};
-
-struct cc_regdmn_s {
-	union {
-		uint16_t country_code;
-		uint16_t regdmn_id;
-		uint8_t alpha[REG_ALPHA2_LEN + 1];
-	} cc;
-	uint8_t flags;
-};
-
 extern const struct chan_map channel_map[NUM_CHANNELS];
 
 enum channel_enum reg_get_chan_enum(uint32_t chan_num);

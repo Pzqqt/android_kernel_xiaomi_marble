@@ -2867,6 +2867,9 @@ QDF_STATUS reg_program_chan_list(struct wlan_objmgr_pdev *pdev,
 	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
 	uint16_t country_index = -1, regdmn_pair = -1;
 	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_reg_tx_ops *tx_ops;
+	struct wlan_regulatory_psoc_priv_obj *soc_reg;
+	uint8_t pdev_id;
 	QDF_STATUS err;
 
 	pdev_priv_obj = (struct wlan_regulatory_pdev_priv_obj *)
@@ -2878,17 +2881,37 @@ QDF_STATUS reg_program_chan_list(struct wlan_objmgr_pdev *pdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		reg_err("psoc is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	soc_reg = reg_get_psoc_obj(psoc);
+	if (!IS_VALID_PSOC_REG_OBJ(soc_reg)) {
+		reg_err("psoc reg component is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (soc_reg->offload_enabled) {
+		if ((rd->flags == ALPHA_IS_SET) && (rd->cc.alpha[2] == 'O'))
+			pdev_priv_obj->indoor_chan_enabled = false;
+		else
+			pdev_priv_obj->indoor_chan_enabled = true;
+
+		pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+		tx_ops = reg_get_psoc_tx_ops(psoc);
+		if (tx_ops->set_user_country_code)
+			return tx_ops->set_user_country_code(psoc, pdev_id, rd);
+
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	reg_info = (struct cur_regulatory_info *)qdf_mem_malloc
 		(sizeof(struct cur_regulatory_info));
 	if (reg_info == NULL) {
 		reg_err("reg info is NULL");
 		return QDF_STATUS_E_NOMEM;
-	}
-
-	psoc = wlan_pdev_get_psoc(pdev);
-	if (!psoc) {
-		reg_err("psoc is NULL");
-		return QDF_STATUS_E_INVAL;
 	}
 
 	reg_info->psoc = psoc;
