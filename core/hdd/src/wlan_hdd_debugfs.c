@@ -416,8 +416,8 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 	hdd_debug("device mode %d", pAdapter->device_mode);
 	if ((QDF_STA_MODE == pAdapter->device_mode) &&
 	    (!hdd_conn_is_connected(WLAN_HDD_GET_STATION_CTX_PTR(pAdapter)))) {
-			hdd_err("Not in Connected state!");
-			goto failure;
+		hdd_err("Not in Connected state!");
+		goto failure;
 	}
 
 	/* Get pattern */
@@ -815,7 +815,7 @@ static const struct file_operations fops_powerdebugs = {
  */
 static QDF_STATUS wlan_hdd_create_power_stats_file(hdd_adapter_t *adapter)
 {
-	if (!debugfs_create_file("power_stats", S_IRUSR | S_IRGRP | S_IROTH,
+	if (!debugfs_create_file("power_stats", 00400 | 00040 | 00004,
 				adapter->debugfs_phy, adapter,
 				&fops_powerdebugs))
 		return QDF_STATUS_E_FAILURE;
@@ -850,17 +850,17 @@ QDF_STATUS hdd_debugfs_init(hdd_adapter_t *adapter)
 	if (NULL == adapter->debugfs_phy)
 		return QDF_STATUS_E_FAILURE;
 
-	if (NULL == debugfs_create_file("wow_enable", S_IRUSR | S_IWUSR,
+	if (NULL == debugfs_create_file("wow_enable", 00400 | 00200,
 					adapter->debugfs_phy, adapter,
 					&fops_wowenable))
 		return QDF_STATUS_E_FAILURE;
 
-	if (NULL == debugfs_create_file("wow_pattern", S_IRUSR | S_IWUSR,
+	if (NULL == debugfs_create_file("wow_pattern", 00400 | 00200,
 					adapter->debugfs_phy, adapter,
 					&fops_wowpattern))
 		return QDF_STATUS_E_FAILURE;
 
-	if (NULL == debugfs_create_file("pattern_gen", S_IRUSR | S_IWUSR,
+	if (NULL == debugfs_create_file("pattern_gen", 00400 | 00200,
 					adapter->debugfs_phy, adapter,
 					&fops_patterngen))
 		return QDF_STATUS_E_FAILURE;
@@ -884,11 +884,6 @@ QDF_STATUS hdd_debugfs_init(hdd_adapter_t *adapter)
  */
 void hdd_debugfs_exit(hdd_adapter_t *adapter)
 {
-	struct net_device *dev = adapter->dev;
-
-	if (adapter->debugfs_phy)
-		debugfs_remove_recursive(adapter->debugfs_phy);
-	else
-		hdd_debug("Interface %s has no debugfs entry", dev->name);
+	debugfs_remove_recursive(adapter->debugfs_phy);
 }
 #endif /* #ifdef WLAN_OPEN_SOURCE */
