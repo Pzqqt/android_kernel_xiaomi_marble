@@ -3026,6 +3026,11 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 		(params->restart_on_chan_switch == true))
 		wma->interfaces[req.vdev_id].is_channel_switch = true;
 
+	if (params->restart_on_chan_switch == true &&
+			wma->interfaces[req.vdev_id].beacon_filter_enabled)
+		wma_remove_beacon_filter(wma,
+				&wma->interfaces[req.vdev_id].beacon_filter);
+
 	if (QDF_GLOBAL_MONITOR_MODE == cds_get_conparam() &&
 	    wma_is_vdev_up(vdev_id)) {
 		status = wma_switch_channel(wma, &req);
