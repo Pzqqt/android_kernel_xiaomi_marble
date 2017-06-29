@@ -120,6 +120,7 @@
 #include "os_if_nan.h"
 #include "nan_public_structs.h"
 #include "wlan_reg_ucfg_api.h"
+#include "wlan_hdd_rx_monitor.h"
 
 #ifdef CNSS_GENL
 #include <net/cnss_nl.h>
@@ -1701,6 +1702,10 @@ static int __hdd_mon_open(struct net_device *dev)
 	ENTER_DEV(dev);
 	hdd_mon_mode_ether_setup(dev);
 	ret = hdd_set_mon_rx_cb(dev);
+
+	if (!ret)
+		ret = hdd_enable_monitor_mode(dev);
+
 	return ret;
 }
 

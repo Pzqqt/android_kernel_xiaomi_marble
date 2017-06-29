@@ -37,12 +37,18 @@ void hdd_monitor_set_rx_monitor_cb(struct ol_txrx_ops *txrx,
 void hdd_rx_monitor_callback(ol_osif_vdev_handle vdev,
 				qdf_nbuf_t mpdu,
 				void *rx_status);
+
+int hdd_enable_monitor_mode(struct net_device *dev);
 #else
-static void hdd_monitor_set_rx_monitor_cb(struct ol_txrx_ops *txrx,
+static inline void hdd_monitor_set_rx_monitor_cb(struct ol_txrx_ops *txrx,
 					ol_txrx_rx_mon_fp rx_monitor_cb){ }
-static void hdd_rx_monitor_callback(ol_osif_vdev_handle vdev,
+static inline void hdd_rx_monitor_callback(ol_osif_vdev_handle vdev,
 				qdf_nbuf_t mpdu,
 				void *rx_status){ }
+static inline int hdd_enable_monitor_mode(struct net_device *dev)
+{
+	return -ENOSYS;
+}
 #endif /* CONFIG_LITHIUM */
 
 #endif /* __WLAN_HDD_RX_MONITOR_H */

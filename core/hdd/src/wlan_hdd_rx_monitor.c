@@ -118,3 +118,26 @@ void hdd_monitor_set_rx_monitor_cb(struct ol_txrx_ops *txrx,
 {
 	txrx->rx.mon = rx_monitor_cb;
 }
+
+/**
+ * hdd_enable_monitor_mode() - Enable monitor mode
+ * @dev: Pointer to the net_device structure
+ *
+ * This function invokes cdp interface API to enable
+ * monitor mode configuration on the hardware. In this
+ * case sends HTT messages to FW to setup hardware rings
+ *
+ * Return: 0 for success; non-zero for failure
+ */
+int hdd_enable_monitor_mode(struct net_device *dev)
+{
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+
+	ENTER_DEV(dev);
+
+	return cdp_set_monitor_mode(soc,
+			(struct cdp_vdev *)cdp_get_vdev_from_vdev_id(soc,
+			(struct cdp_pdev *)pdev, adapter->sessionId), false);
+}
