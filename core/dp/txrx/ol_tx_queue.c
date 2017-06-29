@@ -807,8 +807,18 @@ ol_tx_bad_peer_update_tx_limit(struct ol_txrx_pdev_t *pdev,
 			       u_int16_t frames,
 			       u_int16_t tx_limit_flag)
 {
+	if (unlikely(NULL == pdev)) {
+		TX_SCHED_DEBUG_PRINT_ALWAYS("Error: NULL pdev handler\n");
+		return;
+	}
+
+	if (unlikely(NULL == txq)) {
+		TX_SCHED_DEBUG_PRINT_ALWAYS("Error: NULL txq\n");
+		return;
+	}
+
 	qdf_spin_lock_bh(&pdev->tx_peer_bal.mutex);
-	if (txq && tx_limit_flag && (txq->peer) &&
+	if (tx_limit_flag && (txq->peer) &&
 	    (txq->peer->tx_limit_flag)) {
 		if (txq->peer->tx_limit < frames)
 			txq->peer->tx_limit = 0;
