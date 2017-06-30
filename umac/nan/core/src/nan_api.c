@@ -88,28 +88,13 @@ static QDF_STATUS nan_psoc_obj_destroyed_notification(
 static QDF_STATUS nan_vdev_obj_created_notification(
 		struct wlan_objmgr_vdev *vdev, void *arg_list)
 {
-	struct wlan_objmgr_psoc *psoc;
 	struct nan_vdev_priv_obj *nan_obj;
-	struct nan_psoc_priv_obj *nan_psoc_obj;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
+	nan_debug("nan_vdev_create_notif called");
 	if (wlan_vdev_mlme_get_opmode(vdev) != QDF_NDI_MODE) {
 		nan_debug("not a ndi vdev. do nothing");
 		return QDF_STATUS_SUCCESS;
-	}
-
-	nan_debug("nan_vdev_create_notif called");
-
-	psoc = wlan_vdev_get_psoc(vdev);
-	if (!psoc) {
-		nan_err("psoc is null");
-		return QDF_STATUS_E_NULL_VALUE;
-	}
-
-	nan_psoc_obj = nan_get_psoc_priv_obj(psoc);
-	if (!nan_psoc_obj) {
-		nan_err("nan_psoc_obj is null");
-		return QDF_STATUS_E_NULL_VALUE;
 	}
 
 	nan_obj = qdf_mem_malloc(sizeof(*nan_obj));
@@ -118,7 +103,6 @@ static QDF_STATUS nan_vdev_obj_created_notification(
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	nan_psoc_obj->vdev = vdev;
 	qdf_spinlock_create(&nan_obj->lock);
 	status = wlan_objmgr_vdev_component_obj_attach(vdev,
 			WLAN_UMAC_COMP_NAN, (void *)nan_obj,
@@ -140,26 +124,13 @@ nan_vdev_notif_failed:
 static QDF_STATUS nan_vdev_obj_destroyed_notification(
 				struct wlan_objmgr_vdev *vdev, void *arg_list)
 {
-	struct wlan_objmgr_psoc *psoc;
 	struct nan_vdev_priv_obj *nan_obj;
-	struct nan_psoc_priv_obj *nan_psoc_obj;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
+	nan_debug("nan_vdev_delete_notif called");
 	if (wlan_vdev_mlme_get_opmode(vdev) != QDF_NDI_MODE) {
 		nan_debug("not a ndi vdev. do nothing");
 		return QDF_STATUS_SUCCESS;
-	}
-
-	nan_debug("nan_vdev_delete_notif called");
-	psoc = wlan_vdev_get_psoc(vdev);
-	if (psoc) {
-		nan_psoc_obj = nan_get_psoc_priv_obj(psoc);
-		if (nan_psoc_obj)
-			nan_psoc_obj->vdev = NULL;
-		else
-			nan_err("nan_psoc_obj is null");
-	} else {
-		nan_err("psoc is null");
 	}
 
 	nan_obj = nan_get_vdev_priv_obj(vdev);

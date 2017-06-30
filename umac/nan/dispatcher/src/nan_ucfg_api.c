@@ -302,26 +302,6 @@ inline QDF_STATUS ucfg_nan_get_callbacks(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-struct wlan_objmgr_vdev *ucfg_nan_get_ndi_vdev(struct wlan_objmgr_psoc *psoc,
-						wlan_objmgr_ref_dbgid dbg_id)
-{
-	QDF_STATUS status;
-	struct nan_psoc_priv_obj *psoc_obj = nan_get_psoc_priv_obj(psoc);
-
-	if (!psoc_obj) {
-		nan_err("nan psoc priv object is NULL");
-		return NULL;
-	}
-
-	status = wlan_objmgr_vdev_try_get_ref(psoc_obj->vdev, dbg_id);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		nan_err("could not get vdev ref. vdev may have been deleted");
-		return NULL;
-	}
-
-	return psoc_obj->vdev;
-}
-
 static struct nan_datapath_initiator_req *ucfg_nan_copy_intiator_req(
 			struct wlan_objmgr_vdev *vdev,
 			struct nan_datapath_initiator_req *in_req)

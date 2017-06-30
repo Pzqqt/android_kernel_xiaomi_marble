@@ -174,16 +174,6 @@ QDF_STATUS ucfg_nan_get_callbacks(struct wlan_objmgr_psoc *psoc,
 				  struct nan_callbacks *cb_obj);
 
 /**
- * ucfg_nan_get_ndi_vdev: ucfg API get ndi vdev from psoc
- * @psoc: psoc obj pointer
- * @dbg_id: component id that will be owner of reference
- *
- * Return: vdev object pointer on success, null otherwise
- */
-struct wlan_objmgr_vdev *ucfg_nan_get_ndi_vdev(struct wlan_objmgr_psoc *psoc,
-						wlan_objmgr_ref_dbgid dbg_id);
-
-/**
  * ucfg_nan_req_processor: ucfg API to be called from HDD/OS_IF to
  * process nan datapath initiator request from userspace
  * @vdev: nan vdev pointer

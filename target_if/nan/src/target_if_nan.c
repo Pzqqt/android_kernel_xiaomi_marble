@@ -927,7 +927,8 @@ static int target_if_ndp_end_rsp_handler(ol_scn_t scn, uint8_t *data,
 		 WMI_NDP_END_RSP_EVENTID, fixed_params->transaction_id,
 		 fixed_params->rsp_status, fixed_params->reason_code);
 
-	vdev = ucfg_nan_get_ndi_vdev(psoc, WLAN_NAN_ID);
+	vdev = wlan_objmgr_get_vdev_by_opmode_from_psoc(psoc, QDF_NDI_MODE,
+							WLAN_NAN_ID);
 	if (!vdev) {
 		target_if_err("vdev is null");
 		return -EINVAL;
@@ -993,7 +994,8 @@ static int target_if_ndp_end_ind_handler(ol_scn_t scn, uint8_t *data,
 		return -EINVAL;
 	}
 
-	vdev = ucfg_nan_get_ndi_vdev(psoc, WLAN_NAN_ID);
+	vdev = wlan_objmgr_get_vdev_by_opmode_from_psoc(psoc, QDF_NDI_MODE,
+							WLAN_NAN_ID);
 	if (!vdev) {
 		target_if_err("vdev is null");
 		return -EINVAL;
