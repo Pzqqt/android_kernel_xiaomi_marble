@@ -821,6 +821,22 @@ void wma_enable_sta_ps_mode(tp_wma_handle wma, tpEnablePsParams ps_req)
 			return;
 		}
 	}
+
+	if (wma->ito_repeat_count) {
+		WMA_LOGI("Set ITO count to %d for vdevId %d",
+					wma->ito_repeat_count, vdev_id);
+
+		ret = wma_unified_set_sta_ps_param(wma->wmi_handle,
+			vdev_id,
+			WMI_STA_PS_PARAM_MAX_RESET_ITO_COUNT_ON_TIM_NO_TXRX,
+			wma->ito_repeat_count);
+		if (QDF_IS_STATUS_ERROR(ret)) {
+			WMA_LOGE("Set ITO count failed vdevId %d Error %d",
+								vdev_id, ret);
+			return;
+		}
+	}
+
 	/* power save request succeeded */
 	iface->in_bmps = true;
 }
@@ -1755,6 +1771,8 @@ static void wma_configure_vdev_suspend_params(tp_wma_handle wma,
 	struct wma_txrx_node *iface = &wma->interfaces[vdev_id];
 	struct sAniSirGlobal *mac;
 	QDF_STATUS ret;
+	uint8_t  ito_repeat_count_value = 0;
+	uint32_t inactivity_time;
 
 	if (iface->type != WMI_VDEV_TYPE_STA)
 		return;
@@ -1780,6 +1798,31 @@ static void wma_configure_vdev_suspend_params(tp_wma_handle wma,
 	if (ret)
 		WMA_LOGE("%s: Setting InActivity time Failed.",
 			__func__);
+
+	if (wlan_cfg_get_int(mac, WNI_CFG_PS_DATA_INACTIVITY_TIMEOUT,
+		&inactivity_time) != eSIR_SUCCESS) {
+		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
+		"Failed to get WNI_CFG_PS_DATA_INACTIVITY_TIMEOUT");
+		inactivity_time = POWERSAVE_DEFAULT_INACTIVITY_TIME;
+	}
+
+	/*
+	 * To keep ito repeat count same in wow mode as in non wow mode,
+	 * modulating ito repeat count value.
+	 */
+	ito_repeat_count_value = (inactivity_time / cfg_data_val) *
+							wma->ito_repeat_count;
+
+	if (ito_repeat_count_value) {
+		ret = wma_unified_set_sta_ps_param(wma->wmi_handle, vdev_id,
+			WMI_STA_PS_PARAM_MAX_RESET_ITO_COUNT_ON_TIM_NO_TXRX ,
+			ito_repeat_count_value);
+		WMA_LOGD("%s: Setting ito_repeat_count_value %d.", __func__,
+				ito_repeat_count_value);
+
+		if (ret)
+			WMA_LOGE("%s: Setting ITO count failed.", __func__);
+	}
 
 }
 

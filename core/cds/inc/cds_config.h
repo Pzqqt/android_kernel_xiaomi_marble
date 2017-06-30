@@ -118,6 +118,7 @@ enum active_bpf_mode {
  * @active_mc_bc_bpf_mode: Setting that determines how BPF is applied in
  *	active mode for MC/BC packets
  * @auto_power_save_fail_mode: auto detect power save failure mode
+ * @ito_repeat_count: Indicates ito repeated count
  * Structure for holding cds ini parameters.
  */
 
@@ -174,5 +175,6 @@ struct cds_config_info {
 	enum active_bpf_mode active_uc_bpf_mode;
 	enum active_bpf_mode active_mc_bc_bpf_mode;
 	bool auto_power_save_fail_mode;
+	uint8_t ito_repeat_count;
 };
 #endif /* !defined( __CDS_CONFIG_H ) */

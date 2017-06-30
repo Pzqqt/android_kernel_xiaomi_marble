@@ -1351,6 +1351,7 @@ struct hw_mode_idx_to_mac_cap_idx {
  * @wmi_cmd_rsp_runtime_lock: wmi command response bus lock
  * @saved_chan: saved channel list sent as part of WMI_SCAN_CHAN_LIST_CMDID
  * @dfs_cac_offload: dfs and cac timer offload
+ * @ito_repeat_count: Indicates ito repeated count
  */
 typedef struct {
 	void *wmi_handle;
@@ -1541,6 +1542,7 @@ typedef struct {
 #endif
 	bool tx_bfee_8ss_enabled;
 	bool in_imps;
+	uint8_t  ito_repeat_count;
 } t_wma_handle, *tp_wma_handle;
 
 /**
