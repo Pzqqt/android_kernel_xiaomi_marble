@@ -37,6 +37,9 @@ struct wlan_objmgr_vdev;
 #define NDP_PMK_LEN 32
 #define NDP_SCID_BUF_LEN 256
 #define NDP_NUM_INSTANCE_ID 255
+#define NAN_MAX_SERVICE_NAME_LEN 255
+#define NAN_PASSPHRASE_MIN_LEN 8
+#define NAN_PASSPHRASE_MAX_LEN 63
 
 /**
  * enum qca_wlan_vendor_attr_ndp_params - vendor attribute parameters
@@ -60,6 +63,8 @@ struct wlan_objmgr_vdev;
  * @QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE: Cipher Suit ID
  * @QCA_WLAN_VENDOR_ATTR_NDP_PMK: Pairwise Master Key
  * @QCA_WLAN_VENDOR_ATTR_NDP_SCID: Security Context ID
+ * @QCA_WLAN_VENDOR_ATTR_NDP_PASSPHRASE - pass phrase
+ * @QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_NAME - service name
  */
 enum qca_wlan_vendor_attr_ndp_params {
 	QCA_WLAN_VENDOR_ATTR_NDP_PARAM_INVALID = 0,
@@ -83,6 +88,8 @@ enum qca_wlan_vendor_attr_ndp_params {
 	QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE,
 	QCA_WLAN_VENDOR_ATTR_NDP_PMK,
 	QCA_WLAN_VENDOR_ATTR_NDP_SCID,
+	QCA_WLAN_VENDOR_ATTR_NDP_PASSPHRASE,
+	QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_NAME,
 
 	QCA_WLAN_VENDOR_ATTR_NDP_PARAMS_AFTER_LAST,
 	QCA_WLAN_VENDOR_ATTR_NDP_PARAMS_MAX =

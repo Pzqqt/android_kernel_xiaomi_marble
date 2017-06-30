@@ -65,6 +65,10 @@ vendor_attr_policy[QCA_WLAN_VENDOR_ATTR_NDP_PARAMS_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_NDP_DRV_RESPONSE_STATUS_TYPE] = { .type =
 					NLA_U32 },
 	[QCA_WLAN_VENDOR_ATTR_NDP_DRV_RETURN_VALUE] = { .type = NLA_U32 },
+	[QCA_WLAN_VENDOR_ATTR_NDP_PASSPHRASE] = { .type = NLA_BINARY,
+					.len = NAN_PASSPHRASE_MAX_LEN },
+	[QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_NAME] = { .type = NLA_BINARY,
+					.len = NAN_MAX_SERVICE_NAME_LEN },
 };
 
 static int os_if_nan_process_ndi_create(struct wlan_objmgr_psoc *psoc,
@@ -170,6 +174,67 @@ static int os_if_nan_process_ndi_delete(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * os_if_nan_parse_security_params() - parse vendor attributes for security
+ * params.
+ * @tb: parsed NL attribute list
+ * @ncs_sk_type: out parameter to populate ncs_sk_type
+ * @pmk: out parameter to populate pmk
+ * @passphrase: out parameter to populate passphrase
+ * @service_name: out parameter to populate service_name
+ *
+ * Return:  0 on success or error code on failure
+ */
+static int os_if_nan_parse_security_params(struct nlattr **tb,
+			uint32_t *ncs_sk_type, struct nan_datapath_pmk *pmk,
+			struct ndp_passphrase *passphrase,
+			struct ndp_service_name *service_name)
+{
+	if (!ncs_sk_type || !pmk || !passphrase || !service_name) {
+		cfg80211_err("out buffers for one ore more parameters is null");
+		return -EINVAL;
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE]) {
+		*ncs_sk_type =
+			nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE]);
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_PMK]) {
+		pmk->pmk_len =
+			nla_len(tb[QCA_WLAN_VENDOR_ATTR_NDP_PMK]);
+		pmk->pmk =
+			nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_PMK]);
+		cfg80211_err("pmk len: %d", pmk->pmk_len);
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
+				   pmk->pmk, pmk->pmk_len);
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_PASSPHRASE]) {
+		passphrase->passphrase_len =
+			nla_len(tb[QCA_WLAN_VENDOR_ATTR_NDP_PASSPHRASE]);
+		passphrase->passphrase =
+			nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_PASSPHRASE]);
+		cfg80211_err("passphrase len: %d", passphrase->passphrase_len);
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
+			passphrase->passphrase, passphrase->passphrase_len);
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_NAME]) {
+		service_name->service_name_len =
+			nla_len(tb[QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_NAME]);
+		service_name->service_name =
+			nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_NAME]);
+		cfg80211_err("service_name len: %d",
+			     service_name->service_name_len);
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
+				service_name->service_name,
+				service_name->service_name_len);
+	}
+
+	return 0;
+}
+
+/**
  * os_if_nan_process_ndp_initiator_req() - NDP initiator request handler
  * @ctx: hdd context
  * @tb: parsed NL attribute list
@@ -185,6 +250,8 @@ static int os_if_nan_process_ndi_delete(struct wlan_objmgr_psoc *psoc,
  * QCA_WLAN_VENDOR_ATTR_NDP_CONFIG_QOS - optional
  * QCA_WLAN_VENDOR_ATTR_NDP_PMK - optional
  * QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE - optional
+ * QCA_WLAN_VENDOR_ATTR_NDP_PASSPHRASE - optional
+ * QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_NAME - optional
  *
  * Return:  0 on success or error code on failure
  */
@@ -276,25 +343,11 @@ static int os_if_nan_process_ndp_initiator_req(struct wlan_objmgr_psoc *psoc,
 			nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_NDP_CONFIG_QOS]);
 	}
 
-	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE] &&
-		!tb[QCA_WLAN_VENDOR_ATTR_NDP_PMK]) {
-		cfg80211_err("PMK cannot be absent when CSID is present.");
+	if (os_if_nan_parse_security_params(tb, &req.ncs_sk_type, &req.pmk,
+			&req.passphrase, &req.service_name)) {
+		cfg80211_err("inconsistent security params in request.");
 		ret = -EINVAL;
 		goto initiator_req_failed;
-	}
-
-	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_PMK]) {
-		req.pmk.pmk = nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_PMK]);
-		req.pmk.pmk_len = nla_len(tb[QCA_WLAN_VENDOR_ATTR_NDP_PMK]);
-		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD,
-				QDF_TRACE_LEVEL_DEBUG,
-				req.pmk.pmk, req.pmk.pmk_len);
-	}
-
-	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE]) {
-		req.ncs_sk_type =
-			nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE]);
-
 	}
 
 	cfg80211_debug("vdev_id: %d, transaction_id: %d, channel: %d, service_instance_id: %d, ndp_app_info_len: %d, csid: %d, peer_discovery_mac_addr: %pM",
@@ -324,6 +377,8 @@ initiator_req_failed:
  * QCA_WLAN_VENDOR_ATTR_NDP_CONFIG_QOS - optional
  * QCA_WLAN_VENDOR_ATTR_NDP_PMK - optional
  * QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE - optional
+ * QCA_WLAN_VENDOR_ATTR_NDP_PASSPHRASE - optional
+ * QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_NAME - optional
  *
  * Return: 0 on success or error code on failure
  */
@@ -406,25 +461,11 @@ static int os_if_nan_process_ndp_responder_req(struct wlan_objmgr_psoc *psoc,
 		cfg80211_debug("NDP config data is unavailable");
 	}
 
-	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE] &&
-		!tb[QCA_WLAN_VENDOR_ATTR_NDP_PMK]) {
-		cfg80211_err("PMK cannot be absent when CSID is present.");
+	if (os_if_nan_parse_security_params(tb, &req.ncs_sk_type, &req.pmk,
+			&req.passphrase, &req.service_name)) {
+		cfg80211_err("inconsistent security params in request.");
 		ret = -EINVAL;
 		goto responder_req_failed;
-	}
-
-	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_PMK]) {
-		req.pmk.pmk = nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_PMK]);
-		req.pmk.pmk_len = nla_len(tb[QCA_WLAN_VENDOR_ATTR_NDP_PMK]);
-		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD,
-				QDF_TRACE_LEVEL_DEBUG,
-				req.pmk.pmk, req.pmk.pmk_len);
-	}
-
-	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE]) {
-		req.ncs_sk_type =
-			nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE]);
-
 	}
 
 	cfg80211_debug("vdev_id: %d, transaction_id: %d, ndp_rsp %d, ndp_instance_id: %d, ndp_app_info_len: %d, csid: %d",
