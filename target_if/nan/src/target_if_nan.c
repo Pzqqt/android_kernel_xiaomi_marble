@@ -120,6 +120,7 @@ static QDF_STATUS target_if_nan_ndp_intiaitor_req(void *req)
 	struct wlan_objmgr_psoc *psoc;
 	struct scheduler_msg pe_msg = {0};
 	wmi_ndp_initiator_req_fixed_param *cmd;
+	uint32_t passphrase_len, service_name_len;
 	struct wlan_lmac_if_nan_rx_ops *nan_rx_ops;
 	uint32_t ndp_cfg_len, ndp_app_info_len, pmk_len;
 	struct nan_datapath_initiator_rsp ndp_rsp = {0};
@@ -155,9 +156,13 @@ static QDF_STATUS target_if_nan_ndp_intiaitor_req(void *req)
 	ndp_cfg_len = qdf_roundup(ndp_req->ndp_config.ndp_cfg_len, 4);
 	ndp_app_info_len = qdf_roundup(ndp_req->ndp_info.ndp_app_info_len, 4);
 	pmk_len = qdf_roundup(ndp_req->pmk.pmk_len, 4);
+	passphrase_len = qdf_roundup(ndp_req->passphrase.passphrase_len, 4);
+	service_name_len =
+		qdf_roundup(ndp_req->service_name.service_name_len, 4);
 	/* allocated memory for fixed params as well as variable size data */
-	len = sizeof(*cmd) + sizeof(*ch_tlv) + (3 * WMI_TLV_HDR_SIZE)
-		+ ndp_cfg_len + ndp_app_info_len + pmk_len;
+	len = sizeof(*cmd) + sizeof(*ch_tlv) + (5 * WMI_TLV_HDR_SIZE)
+		+ ndp_cfg_len + ndp_app_info_len + pmk_len
+		+ passphrase_len + service_name_len;
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
@@ -181,6 +186,8 @@ static QDF_STATUS target_if_nan_ndp_intiaitor_req(void *req)
 	cmd->ndp_channel_cfg = ndp_req->channel_cfg;
 	cmd->nan_pmk_len = ndp_req->pmk.pmk_len;
 	cmd->nan_csid = ndp_req->ncs_sk_type;
+	cmd->nan_passphrase_len = ndp_req->passphrase.passphrase_len;
+	cmd->nan_servicename_len = ndp_req->service_name.service_name_len;
 
 	ch_tlv = (wmi_channel *)&cmd[1];
 	WMITLV_SET_HDR(ch_tlv, WMITLV_TAG_STRUC_wmi_channel,
@@ -207,6 +214,17 @@ static QDF_STATUS target_if_nan_ndp_intiaitor_req(void *req)
 		     cmd->nan_pmk_len);
 	tlv_ptr = tlv_ptr + WMI_TLV_HDR_SIZE + pmk_len;
 
+	WMITLV_SET_HDR(tlv_ptr, WMITLV_TAG_ARRAY_BYTE, passphrase_len);
+	qdf_mem_copy(&tlv_ptr[WMI_TLV_HDR_SIZE], ndp_req->passphrase.passphrase,
+		     cmd->nan_passphrase_len);
+	tlv_ptr = tlv_ptr + WMI_TLV_HDR_SIZE + passphrase_len;
+
+	WMITLV_SET_HDR(tlv_ptr, WMITLV_TAG_ARRAY_BYTE, service_name_len);
+	qdf_mem_copy(&tlv_ptr[WMI_TLV_HDR_SIZE],
+		     ndp_req->service_name.service_name,
+		     cmd->nan_servicename_len);
+	tlv_ptr = tlv_ptr + WMI_TLV_HDR_SIZE + service_name_len;
+
 	target_if_debug("vdev_id = %d, transaction_id: %d, service_instance_id: %d, ch: %d, ch_cfg: %d, csid: %d",
 		cmd->vdev_id, cmd->transaction_id, cmd->service_instance_id,
 		ch_tlv->mhz, cmd->ndp_channel_cfg, cmd->nan_csid);
@@ -227,6 +245,17 @@ static QDF_STATUS target_if_nan_ndp_intiaitor_req(void *req)
 	target_if_debug("pmk len: %d", cmd->nan_pmk_len);
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
 			   ndp_req->pmk.pmk, cmd->nan_pmk_len);
+
+	target_if_debug("pass phrase len: %d", cmd->nan_passphrase_len);
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+			   ndp_req->passphrase.passphrase,
+			   cmd->nan_passphrase_len);
+
+	target_if_debug("service name len: %d", cmd->nan_servicename_len);
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+			   ndp_req->service_name.service_name,
+			   cmd->nan_servicename_len);
+
 	target_if_debug("sending WMI_NDP_INITIATOR_REQ_CMDID(0x%X)",
 		WMI_NDP_INITIATOR_REQ_CMDID);
 
@@ -544,6 +573,7 @@ static QDF_STATUS target_if_nan_ndp_responder_req(
 	struct wlan_objmgr_psoc *psoc;
 	struct scheduler_msg pe_msg = {0};
 	wmi_ndp_responder_req_fixed_param *cmd;
+	uint32_t passphrase_len, service_name_len;
 	struct wlan_lmac_if_nan_rx_ops *nan_rx_ops;
 	struct nan_datapath_responder_rsp rsp = {0};
 	uint32_t vdev_id = 0, ndp_cfg_len, ndp_app_info_len, pmk_len;
@@ -585,9 +615,13 @@ static QDF_STATUS target_if_nan_ndp_responder_req(
 	ndp_cfg_len = qdf_roundup(req->ndp_config.ndp_cfg_len, 4);
 	ndp_app_info_len = qdf_roundup(req->ndp_info.ndp_app_info_len, 4);
 	pmk_len = qdf_roundup(req->pmk.pmk_len, 4);
+	passphrase_len = qdf_roundup(req->passphrase.passphrase_len, 4);
+	service_name_len =
+		qdf_roundup(req->service_name.service_name_len, 4);
+
 	/* allocated memory for fixed params as well as variable size data */
-	len = sizeof(*cmd) + 3*WMI_TLV_HDR_SIZE + ndp_cfg_len + ndp_app_info_len
-		+ pmk_len;
+	len = sizeof(*cmd) + 5*WMI_TLV_HDR_SIZE + ndp_cfg_len + ndp_app_info_len
+		+ pmk_len + passphrase_len + service_name_len;
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
@@ -608,6 +642,8 @@ static QDF_STATUS target_if_nan_ndp_responder_req(
 	cmd->ndp_app_info_len = req->ndp_info.ndp_app_info_len;
 	cmd->nan_pmk_len = req->pmk.pmk_len;
 	cmd->nan_csid = req->ncs_sk_type;
+	cmd->nan_passphrase_len = req->passphrase.passphrase_len;
+	cmd->nan_servicename_len = req->service_name.service_name_len;
 
 	tlv_ptr = (uint8_t *)&cmd[1];
 	WMITLV_SET_HDR(tlv_ptr, WMITLV_TAG_ARRAY_BYTE, ndp_cfg_len);
@@ -626,6 +662,19 @@ static QDF_STATUS target_if_nan_ndp_responder_req(
 		     cmd->nan_pmk_len);
 
 	tlv_ptr = tlv_ptr + WMI_TLV_HDR_SIZE + pmk_len;
+	WMITLV_SET_HDR(tlv_ptr, WMITLV_TAG_ARRAY_BYTE, passphrase_len);
+	qdf_mem_copy(&tlv_ptr[WMI_TLV_HDR_SIZE],
+		     req->passphrase.passphrase,
+		     cmd->nan_passphrase_len);
+	tlv_ptr = tlv_ptr + WMI_TLV_HDR_SIZE + passphrase_len;
+
+	WMITLV_SET_HDR(tlv_ptr, WMITLV_TAG_ARRAY_BYTE, service_name_len);
+	qdf_mem_copy(&tlv_ptr[WMI_TLV_HDR_SIZE],
+		     req->service_name.service_name,
+		     cmd->nan_servicename_len);
+
+	tlv_ptr = tlv_ptr + WMI_TLV_HDR_SIZE + service_name_len;
+
 	target_if_debug("vdev_id = %d, transaction_id: %d, csid: %d",
 		cmd->vdev_id, cmd->transaction_id, cmd->nan_csid);
 
@@ -644,6 +693,16 @@ static QDF_STATUS target_if_nan_ndp_responder_req(
 	target_if_debug("pmk len: %d", cmd->nan_pmk_len);
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
 			   req->pmk.pmk, cmd->nan_pmk_len);
+
+	target_if_debug("pass phrase len: %d", cmd->nan_passphrase_len);
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+			   req->passphrase.passphrase,
+			   cmd->nan_passphrase_len);
+
+	target_if_debug("service name len: %d", cmd->nan_servicename_len);
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+			   req->service_name.service_name,
+			   cmd->nan_servicename_len);
 
 	target_if_debug("sending WMI_NDP_RESPONDER_REQ_CMDID(0x%X)",
 		WMI_NDP_RESPONDER_REQ_CMDID);

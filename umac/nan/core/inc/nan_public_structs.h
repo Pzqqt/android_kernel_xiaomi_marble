@@ -230,6 +230,28 @@ struct nan_datapath_scid {
 };
 
 /**
+ * struct ndp_passphrase - structure to hold passphrase
+ * @passphrase_len: length of passphrase
+ * @passphrase: buffer containing passphrase
+ *
+ */
+struct ndp_passphrase {
+	uint32_t passphrase_len;
+	uint8_t *passphrase;
+};
+
+/**
+ * struct ndp_service_name - structure to hold service_name
+ * @service_name_len: length of service_name
+ * @service_name: buffer containing service_name
+ *
+ */
+struct ndp_service_name {
+	uint32_t service_name_len;
+	uint8_t *service_name;
+};
+
+/**
  * struct peer_nan_datapath_map  - mapping of NDP instances to peer to VDEV
  * @vdev_id: session id of the interface over which ndp is being created
  * @peer_ndi_mac_addr: peer NDI mac address
@@ -295,7 +317,8 @@ struct nan_datapath_inf_delete_rsp {
  * @ndp_info: ndp application info
  * @ncs_sk_type: indicates NCS_SK_128 or NCS_SK_256
  * @pmk: pairwise master key
- *
+ * @passphrase: passphrase
+ * @service_name: service name
  */
 struct nan_datapath_initiator_req {
 	struct wlan_objmgr_vdev *vdev;
@@ -309,6 +332,8 @@ struct nan_datapath_initiator_req {
 	struct nan_datapath_cfg ndp_config;
 	struct nan_datapath_app_info ndp_info;
 	struct nan_datapath_pmk pmk;
+	struct ndp_passphrase passphrase;
+	struct ndp_service_name service_name;
 };
 
 /**
@@ -339,6 +364,8 @@ struct nan_datapath_initiator_rsp {
  * @ndp_info: ndp application info
  * @pmk: pairwise master key
  * @ncs_sk_type: indicates NCS_SK_128 or NCS_SK_256
+ * @passphrase: passphrase
+ * @service_name: service name
  *
  */
 struct nan_datapath_responder_req {
@@ -350,6 +377,8 @@ struct nan_datapath_responder_req {
 	struct nan_datapath_app_info ndp_info;
 	struct nan_datapath_pmk pmk;
 	uint32_t ncs_sk_type;
+	struct ndp_passphrase passphrase;
+	struct ndp_service_name service_name;
 };
 
 /**
