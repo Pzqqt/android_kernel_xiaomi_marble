@@ -6410,11 +6410,13 @@ static QDF_STATUS lim_send_ie(tpAniSirGlobal mac_ctx, uint32_t sme_session_id,
 /**
  * lim_get_rx_ldpc() - gets ldpc setting for given channel(band)
  * @mac_ctx: global mac context
- * @ch: channel for which ldpc setting is required
+ * @ch: channel enum for which ldpc setting is required
+ *      Note: ch param is not absolute channel number rather it is
+ *            channel number enum.
  *
  * Return: true if enabled and false otherwise
  */
-static inline bool lim_get_rx_ldpc(tpAniSirGlobal mac_ctx, uint8_t ch)
+static inline bool lim_get_rx_ldpc(tpAniSirGlobal mac_ctx, enum channel_enum ch)
 {
 	if (mac_ctx->roam.configParam.rx_ldpc_enable &&
 		wma_is_rx_ldpc_supported_for_channel(WLAN_REG_CH_NUM(ch)))
