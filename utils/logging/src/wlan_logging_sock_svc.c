@@ -297,7 +297,7 @@ static int wlan_add_user_log_radio_time_stamp(char *tbuf, size_t tbuf_sz,
 #ifdef CONFIG_MCL
 static inline void print_to_console(char *tbuf, char *to_be_sent)
 {
-	pr_info("%s %s\n", tbuf, to_be_sent);
+	pr_err("%s %s\n", tbuf, to_be_sent);
 }
 #else
 #define print_to_console(str1, str2)
