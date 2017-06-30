@@ -74,6 +74,8 @@ void nan_release_cmd(void *in_req, uint32_t req_type)
 		qdf_mem_free(req->pmk.pmk);
 		qdf_mem_free(req->ndp_info.ndp_app_info);
 		qdf_mem_free(req->ndp_config.ndp_cfg);
+		qdf_mem_free(req->passphrase.passphrase);
+		qdf_mem_free(req->service_name.service_name);
 		break;
 	}
 	case NDP_RESPONDER_REQ: {
@@ -82,6 +84,8 @@ void nan_release_cmd(void *in_req, uint32_t req_type)
 		qdf_mem_free(req->pmk.pmk);
 		qdf_mem_free(req->ndp_info.ndp_app_info);
 		qdf_mem_free(req->ndp_config.ndp_cfg);
+		qdf_mem_free(req->passphrase.passphrase);
+		qdf_mem_free(req->service_name.service_name);
 		break;
 	}
 	case NDP_END_REQ: {
