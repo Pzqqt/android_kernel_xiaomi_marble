@@ -2105,13 +2105,6 @@ struct wlan_objmgr_vdev *hdd_ndi_open(char *iface_name)
 	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
 	ENTER();
-	/* Check for an existing interface of NDI type */
-	adapter = hdd_get_adapter(hdd_ctx, QDF_NDI_MODE);
-	if (adapter) {
-		hdd_err("Cannot support more than one NDI");
-		return NULL;
-	}
-
 	adapter = hdd_open_adapter(hdd_ctx, QDF_NDI_MODE, iface_name,
 			wlan_hdd_get_intf_addr(hdd_ctx), NET_NAME_UNKNOWN,
 			true);
@@ -2162,7 +2155,7 @@ int hdd_ndi_delete(uint8_t vdev_id, char *iface_name, uint16_t transaction_id)
 	hdd_station_ctx_t *sta_ctx;
 	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
-	/* Check if there is already an existing inteface with the same name */
+	/* check if adapter by vdev_id is valid NDI */
 	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
 	if (!adapter || !WLAN_HDD_IS_NDI(adapter)) {
 		hdd_err("NAN data interface %s is not available", iface_name);
