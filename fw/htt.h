@@ -158,9 +158,14 @@
  * 3.37 Add HTT_PEER_TYPE and htt_mac_addr defs
  * 3.38 Add holes_no_filled field to rx_reorder_stats
  * 3.39 Add host_inspected flag to htt_tx_tcl_vdev_metadata
+ * 3.40 Add optional timestamps in the HTT tx completion
+ * 3.41 Add optional tx power spec in the HTT tx completion (for DSRC use)
+ * 3.42 Add PPDU_STATS_CFG + PPDU_STATS_IND
+ * 3.43 Add HTT_STATS_RX_PDEV_FW_STATS_PHY_ERR defs
+ * 3.44 Add htt_tx_wbm_completion_v2
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 39
+#define HTT_CURRENT_VERSION_MINOR 44
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -1612,7 +1617,13 @@ PREPACK struct htt_tx_msdu_desc_ext2_t {
 	nss_mask             : 8,
 	/* Takes enum values of htt_tx_ext2_preamble_type_t */
 	pream_type           : 3,
-	reserved1_31         : 1;
+
+	/*
+	 * When set these custom values will be used for all packets,
+	 * until the next update via this ext header. This is to make
+	 * sure not all packets need to include this header.
+	 */
+	update_peer_cache    : 1;
 
 	/* DWORD 2: tx chain mask, tx retries */
 	A_UINT32
@@ -1639,6 +1650,14 @@ PREPACK struct htt_tx_msdu_desc_ext2_t {
 
 	/* DWORD 4: tx expiry time (TSF) MSBs */
 	A_UINT32 expire_tsf_hi;
+
+	/*
+	 * DWORD 5: reserved
+	 * This structure can be expanded further up to 60 bytes
+	 * by adding further DWORDs as needed.
+	 */
+	A_UINT32 rsvd0;
+
 } POSTPACK;
 
 /* DWORD 0 */
@@ -1692,6 +1711,8 @@ PREPACK struct htt_tx_msdu_desc_ext2_t {
 #define HTT_TX_MSDU_EXT2_DESC_NSS_MASK_S                      20
 #define HTT_TX_MSDU_EXT2_DESC_PREAM_TYPE_M                    0x70000000
 #define HTT_TX_MSDU_EXT2_DESC_PREAM_TYPE_S                    28
+#define HTT_TX_MSDU_EXT2_DESC_UPDATE_PEER_CACHE_M             0x80000000
+#define HTT_TX_MSDU_EXT2_DESC_UPDATE_PEER_CACHE_S             31
 
 /* DWORD 2 */
 #define HTT_TX_MSDU_EXT2_DESC_CHAIN_MASK_M                    0x000000ff
@@ -1946,6 +1967,15 @@ PREPACK struct htt_tx_msdu_desc_ext2_t {
 		((_var) |= ((_val) << HTT_TX_MSDU_EXT2_DESC_PREAMBLE_TYPE_S));\
 	} while (0)
 
+#define HTT_TX_MSDU_EXT2_DESC_UPDATE_PEER_CACHE_GET(_var) 		\
+	(((_var) & HTT_TX_MSDU_EXT2_UPDATE_PEER_CACHE_M) >> 		\
+	HTT_TX_MSDU_EXT2_UPDATE_PEER_CACHE_S)
+#define HTT_TX_MSDU_EXT2_UPDATE_PEER_CACHE_SET(_var, _val) 		\
+	do { \
+		HTT_CHECK_SET_VAL(HTT_TX_MSDU_EXT2_UPDATE_PEER_CACHE, _val); \
+		((_var) |= ((_val) << HTT_TX_MSDU_EXT2_UPDATE_PEER_CACHE_S)); \
+	} while (0)
+
 /* DWORD 2 */
 #define HTT_TX_MSDU_EXT2_DESC_CHAIN_MASK_GET(_var)			\
 	(((_var) & HTT_TX_MSDU_EXT2_DESC_CHAIN_MASK_M) >>		\
@@ -2103,12 +2133,17 @@ typedef enum {
 	HTT_TX_FW2WBM_TX_STATUS_TTL,
 	HTT_TX_FW2WBM_TX_STATUS_REINJECT,
 	HTT_TX_FW2WBM_TX_STATUS_INSPECT,
+	HTT_TX_FW2WBM_TX_STATUS_MEC_NOTIFY,
 
 	HTT_TX_FW2WBM_TX_STATUS_MAX
 } htt_tx_fw2wbm_tx_status_t;
 
 typedef enum {
+	/* deprecated */
 	HTT_TX_FW2WBM_REINJECT_REASON_EAPOL_ENCAP_EXP,
+	/* current */
+	HTT_TX_FW2WBM_REINJECT_REASON_RAW_ENCAP_EXP  =
+		HTT_TX_FW2WBM_REINJECT_REASON_EAPOL_ENCAP_EXP,
 	HTT_TX_FW2WBM_REINJECT_REASON_INJECT_VIA_EXP,
 	HTT_TX_FW2WBM_REINJECT_REASON_MCAST,
 	HTT_TX_FW2WBM_REINJECT_REASON_ARP,
@@ -2210,6 +2245,227 @@ PREPACK struct htt_tx_wbm_completion {
 		HTT_CHECK_SET_VAL(HTT_TX_WBM_COMPLETION_REINJECT_REASON, _val);\
 		((_var) |= ((_val) <<					\
 		    HTT_TX_WBM_COMPLETION_REINJECT_REASON_S));		\
+	} while (0)
+
+/**
+ * @brief HTT TX WBM Completion from firmware to host
+ * @details
+ *  This structure applies only to WLAN chips that contain WLAN Buffer Mgmt
+ *  (WBM) offload HW.
+ *  This structure is passed from firmware to host overlayed on wbm_release_ring
+ *  For software based completions, release_source_module will
+ *  be set to WIFIRELEASE_SOURCE_FW_E. Host SW is expected to inspect using
+ *  struct wbm_release_ring and then switch to this after looking at
+ *  release_source_module.
+ */
+PREPACK struct htt_tx_wbm_completion_v2 {
+	/* Refer to struct wbm_release_ring */
+	A_UINT32 used_by_hw0;
+	/* Refer to struct wbm_release_ring */
+	A_UINT32 used_by_hw1;
+	A_UINT32
+	/* Refer to struct wbm_release_ring */
+	used_by_hw2:            9,
+	/* Takes enum values of htt_tx_fw2wbm_tx_status_t */
+	tx_status:              4,
+	/* Takes enum values of htt_tx_fw2wbm_reinject_reason_t */
+	reinject_reason:        4,
+	exception_frame:        1,
+	/* For future use */
+	rsvd0:                 14;
+	/*
+	 * data0,1 and 2 changes based on tx_status type
+	 * if HTT_TX_FW2WBM_TX_STATUS_OK or HTT_TX_FW2WBM_TX_STATUS_DROP
+	 * or HTT_TX_FW2WBM_TX_STATUS_TTL,
+	 * struct htt_tx_wbm_transmit_status will be used.
+	 * if HTT_TX_FW2WBM_TX_STATUS_REINJECT,
+	 * struct htt_tx_wbm_reinject_status will be used.
+	 * if HTT_TX_FW2WBM_TX_STATUS_MEC_NOTIFY,
+	 * struct htt_tx_wbm_mec_addr_notify will be used.
+	 */
+	A_UINT32
+	data0:                 32;
+	A_UINT32
+	data1:                 32;
+	A_UINT32
+	data2:                 32;
+	/* Refer to struct wbm_release_ring */
+	A_UINT32
+	used_by_hw3;
+} POSTPACK;
+
+/* DWORD 1, 2 and part of 3 are accessed via HW header files */
+/* DWORD 3 */
+#define HTT_TX_WBM_COMPLETION_V2_TX_STATUS_M                 0x00001e00
+#define HTT_TX_WBM_COMPLETION_V2_TX_STATUS_S                 9
+#define HTT_TX_WBM_COMPLETION_V2_REINJECT_REASON_M           0x0001e000
+#define HTT_TX_WBM_COMPLETION_V2_REINJECT_REASON_S           13
+#define HTT_TX_WBM_COMPLETION_V2_EXP_FRAME_M                 0x00020000
+#define HTT_TX_WBM_COMPLETION_V2_EXP_FRAME_S                 17
+
+/* DWORD 3 */
+#define HTT_TX_WBM_COMPLETION_V2_TX_STATUS_GET(_var) \
+    (((_var) & HTT_TX_WBM_COMPLETION_V2_TX_STATUS_M) >> \
+    HTT_TX_WBM_COMPLETION_V2_TX_STATUS_S)
+
+#define HTT_TX_WBM_COMPLETION_V2_TX_STATUS_SET(_var, _val) \
+	do { \
+		HTT_CHECK_SET_VAL(HTT_TX_WBM_COMPLETION_V2_TX_STATUS, _val); \
+		((_var) |= ((_val) << HTT_TX_WBM_COMPLETION_V2_TX_STATUS_S)); \
+	} while (0)
+
+#define HTT_TX_WBM_COMPLETION_V2_REINJECT_REASON_GET(_var) \
+	(((_var) & HTT_TX_WBM_COMPLETION_V2_REINJECT_REASON_M) >> \
+	HTT_TX_WBM_COMPLETION_V2_REINJECT_REASON_S)
+
+#define HTT_TX_WBM_COMPLETION_V2_REINJECT_REASON_SET(_var, _val) \
+	do { \
+		HTT_CHECK_SET_VAL(HTT_TX_WBM_COMPLETION_V2_REINJECT_REASON, _val); \
+		((_var) |= ((_val) << HTT_TX_WBM_COMPLETION_V2_REINJECT_REASON_S)); \
+	} while (0)
+
+#define HTT_TX_WBM_COMPLETION_V2_EXP_FRAME_GET(_var) \
+	(((_var) & HTT_TX_WBM_COMPLETION_V2_EXP_FRAME_M) >> \
+	HTT_TX_WBM_COMPLETION_V2_EXP_FRAME_S)
+
+#define HTT_TX_WBM_COMPLETION_V2_EXP_FRAME_SET(_var, _val) \
+	do { \
+		HTT_CHECK_SET_VAL(HTT_TX_WBM_COMPLETION_V2_EXP_FRAME, _val); \
+		((_var) |= ((_val) << HTT_TX_WBM_COMPLETION_V2_EXP_FRAME_S)); \
+	} while (0)
+
+/**
+ * @brief HTT TX WBM transmit status from firmware to host
+ * @details
+ *  This structure applies only to WLAN chips that contain WLAN Buffer Mgmt
+ *  (WBM) offload HW.
+ *  This structure is passed from firmware to host overlayed on wbm_release_ring.
+ *  used only if tx_status is HTT_TX_FW2WBM_TX_STATUS_OK or HTT_TX_FW2WBM_TX_STATUS_DROP
+ *  or HTT_TX_FW2WBM_TX_STATUS_TTL
+ */
+PREPACK struct htt_tx_wbm_transmit_status {
+	A_UINT32
+	sch_cmd_id:      24,
+	/* If this frame is removed as the result of the
+	 * reception of an ACK or BA, this field indicates
+	 * the RSSI of the received ACK or BA frame.
+	 * When the frame is removed as result of a direct
+	 * remove command from the SW,  this field is set
+	 * to 0x0 (which is never a valid value when real
+	 * RSSI is available).
+	 * Units: dB w.r.t noise floor
+	 */
+	ack_frame_rssi:  8;
+	A_UINT32
+	reserved0:       32;
+	A_UINT32
+	reserved1:       32;
+} POSTPACK;
+
+/* DWORD 4 */
+#define HTT_TX_WBM_COMPLETION_V2_SCH_CMD_ID_M          0x00ffffff
+#define HTT_TX_WBM_COMPLETION_V2_SCH_CMD_ID_S          0
+#define HTT_TX_WBM_COMPLETION_V2_ACK_FRAME_RSSI_M      0xff000000
+#define HTT_TX_WBM_COMPLETION_V2_ACK_FRAME_RSSI_S      24
+
+/* DWORD 4 */
+#define HTT_TX_WBM_COMPLETION_V2_SCH_CMD_ID_GET(_var) \
+	(((_var) & HTT_TX_WBM_COMPLETION_V2_SCH_CMD_ID_M) >> \
+	HTT_TX_WBM_COMPLETION_V2_SCH_CMD_ID_S)
+
+#define HTT_TX_WBM_COMPLETION_V2_SCH_CMD_ID_SET(_var, _val) \
+	do { \
+		HTT_CHECK_SET_VAL(HTT_TX_WBM_COMPLETION_V2_SCH_CMD_ID, _val); \
+		((_var) |= ((_val) << HTT_TX_WBM_COMPLETION_V2_SCH_CMD_ID_S)); \
+	} while (0)
+
+#define HTT_TX_WBM_COMPLETION_V2_ACK_FRAME_RSSI_GET(_var) \
+	(((_var) & HTT_TX_WBM_COMPLETION_V2_ACK_FRAME_RSSI_M) >> \
+	HTT_TX_WBM_COMPLETION_V2_ACK_FRAME_RSSI_S)
+
+#define HTT_TX_WBM_COMPLETION_V2_ACK_FRAME_RSSI_SET(_var, _val) \
+	do { \
+		HTT_CHECK_SET_VAL(HTT_TX_WBM_COMPLETION_V2_ACK_FRAME_RSSI, _val); \
+		((_var) |= ((_val) << HTT_TX_WBM_COMPLETION_V2_ACK_FRAME_RSSI_S)); \
+	} while (0)
+
+/**
+ * @brief HTT TX WBM reinject status from firmware to host
+ * @details
+ *  This structure applies only to WLAN chips that contain WLAN Buffer Mgmt
+ *  (WBM) offload HW.
+ *  This structure is passed from firmware to host overlayed on wbm_release_ring.
+ *  used only if tx_status is HTT_TX_FW2WBM_TX_STATUS_REINJECT.
+ */
+PREPACK struct htt_tx_wbm_reinject_status {
+	A_UINT32
+	reserved0:       32;
+	A_UINT32
+	reserved1:       32;
+	A_UINT32
+	reserved2:       32;
+} POSTPACK;
+
+/**
+ * @brief HTT TX WBM multicast echo check notification from firmware to host
+ * @details
+ *  This structure applies only to WLAN chips that contain WLAN Buffer Mgmt
+ *  (WBM) offload HW.
+ *  This structure is passed from firmware to host overlayed on wbm_release_ring.
+ *  used only if tx_status is HTT_TX_FW2WBM_TX_STATUS_MEC_NOTIFY.
+ *  FW sends SA addresses to host for all multicast/broadcast packets received on
+ *  STA side.
+ */
+PREPACK struct htt_tx_wbm_mec_addr_notify {
+	A_UINT32
+	mec_sa_addr_31_0;
+	A_UINT32
+	mec_sa_addr_47_32: 16,
+	sa_ast_index:      16;
+	A_UINT32
+	vdev_id:            8,
+	reserved0:         24;
+} POSTPACK;
+
+/* DWORD 4 - mec_sa_addr_31_0 */
+/* DWORD 5 */
+#define HTT_TX_WBM_COMPLETION_V2_MEC_SA_ADDR_47_32_M  0x0000ffff
+#define HTT_TX_WBM_COMPLETION_V2_MEC_SA_ADDR_47_32_S  0
+#define HTT_TX_WBM_COMPLETION_V2_SA_AST_INDEX_M       0xffff0000
+#define HTT_TX_WBM_COMPLETION_V2_SA_AST_INDEX_S       16
+
+/* DWORD 6 */
+#define HTT_TX_WBM_COMPLETION_V2_VDEV_ID_M            0x000000ff
+#define HTT_TX_WBM_COMPLETION_V2_VDEV_ID_S            0
+
+#define HTT_TX_WBM_COMPLETION_V2_MEC_SA_ADDR_47_32_GET(_var) \
+	(((_var) & HTT_TX_WBM_COMPLETION_V2_MEC_SA_ADDR_47_32_M) >> \
+	HTT_TX_WBM_COMPLETION_V2_MEC_SA_ADDR_47_32_S)
+
+#define HTT_TX_WBM_COMPLETION_V2_MEC_SA_ADDR_47_32_SET(_var, _val) \
+	do { \
+		HTT_CHECK_SET_VAL(HTT_TX_WBM_COMPLETION_V2_MEC_SA_ADDR_47_32, _val); \
+		((_var) |= ((_val) << HTT_TX_WBM_COMPLETION_V2_MEC_SA_ADDR_47_32_S)); \
+	} while (0)
+
+#define HTT_TX_WBM_COMPLETION_V2_SA_AST_INDEX_GET(_var) \
+	(((_var) & HTT_TX_WBM_COMPLETION_V2_SA_AST_INDEX_M) >> \
+	HTT_TX_WBM_COMPLETION_V2_SA_AST_INDEX_S)
+
+#define HTT_TX_WBM_COMPLETION_V2_SA_AST_INDEX_SET(_var, _val) \
+	do { \
+		HTT_CHECK_SET_VAL(HTT_TX_WBM_COMPLETION_V2_SA_AST_INDEX, _val); \
+		((_var) |= ((_val) << HTT_TX_WBM_COMPLETION_V2_SA_AST_INDEX_S)); \
+	} while (0)
+
+#define HTT_TX_WBM_COMPLETION_V2_VDEV_ID_GET(_var) \
+	(((_var) & HTT_TX_WBM_COMPLETION_V2_VDEV_ID_M) >> \
+	HTT_TX_WBM_COMPLETION_V2_VDEV_ID_S)
+
+#define HTT_TX_WBM_COMPLETION_V2_VDEV_ID_SET(_var, _val) \
+	do { \
+		HTT_CHECK_SET_VAL(HTT_TX_WBM_COMPLETION_V2_VDEV_ID, _val); \
+		((_var) |= ((_val) << HTT_TX_WBM_COMPLETION_V2_VDEV_ID_S)); \
 	} while (0)
 
 typedef enum {
@@ -4260,6 +4516,8 @@ enum htt_srng_ring_id {
 	HTT_HOST1_TO_FW_RXBUF_RING,
 	/* (mobile only) second ring used by host to provide remote RX buffers*/
 	HTT_HOST2_TO_FW_RXBUF_RING,
+	/* Per MDPU indication to host for non-monitor RxDMA traffic upload */
+	HTT_RXDMA_NON_MONITOR_DEST_RING,
 	/*
 	 * Add Other SRING which can't be directly configured by host software
 	 * above this line
@@ -5529,6 +5787,66 @@ HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE_##flag##_##mode##_##type##_##subtype)
 				HTT_H2T_EXT_STATS_REQ_CONFIG_PARAM_S));	\
 	} while (0)
 
+/**
+ * @brief host -> target FW  PPDU_STATS request message
+ *
+ * @details
+ * The following field definitions describe the format of the HTT host
+ * to target FW for PPDU_STATS_CFG msg.
+ * The message allows the host to configure the PPDU_STATS_IND messages
+ * produced by the target.
+ *
+ * |31          24|23          16|15           8|7            0|
+ * |-----------------------------------------------------------|
+ * |    REQ bit mask             |   pdev_mask  |   msg type   |
+ * |-----------------------------------------------------------|
+ * Header fields:
+ *  - MSG_TYPE
+ *    Bits 7:0
+ *    Purpose: identifies this is a req to configure ppdu_stats_ind from target
+ *    Value: 0x11
+ *  - PDEV_MASK
+ *    Bits 8:15
+ *    Purpose: identifies which pdevs this PPDU stats configuration applies to
+ *    Value: This is a overloaded field, refer to usage and interpretation of
+ *           PDEV in interface document.
+ *           Bit   8    :  Reserved for SOC stats
+ *           Bit 9 - 15 :  Indicates PDEV_MASK in DBDC
+ *                         Indicates MACID_MASK in DBS
+ *  - REQ_TLV_BIT_MASK
+ *    Bits 16:31
+ *    Purpose: each set bit indicates the corresponding PPDU stats TLV type
+ *        needs to be included in the target's PPDU_STATS_IND messages.
+ *    Value: refer htt_ppdu_stats_tlv_tag_t
+ *
+ */
+#define HTT_H2T_PPDU_STATS_CFG_MSG_SZ                4 /* bytes */
+
+#define HTT_H2T_PPDU_STATS_CFG_PDEV_MASK_M           0x0000ff00
+#define HTT_H2T_PPDU_STATS_CFG_PDEV_MASK_S           8
+
+#define HTT_H2T_PPDU_STATS_CFG_TLV_BITMASK_M           0xffff0000
+#define HTT_H2T_PPDU_STATS_CFG_TLV_BITMASK_S           16
+
+#define HTT_H2T_PPDU_STATS_CFG_PDEV_MASK_GET(_var)     \
+	(((_var) & HTT_H2T_PPDU_STATS_CFG_PDEV_MASK_M) >>  \
+	 HTT_H2T_PPDU_STATS_CFG_PDEV_MASK_S)
+
+#define HTT_H2T_PPDU_STATS_CFG_PDEV_MASK_SET(_var, _val)            \
+	do {                                                          \
+		HTT_CHECK_SET_VAL(HTT_H2T_PPDU_STATS_CFG_PDEV_MASK, _val);  \
+		((_var) |= ((_val) << HTT_H2T_PPDU_STATS_CFG_PDEV_MASK_S)); \
+	} while (0)
+
+#define HTT_H2T_PPDU_STATS_CFG_TLV_BITMASK_GET(_var)     \
+	(((_var) & HTT_H2T_PPDU_STATS_CFG_TLV_BITMASK_M) >>  \
+	 HTT_H2T_PPDU_STATS_CFG_TLV_BITMASK_S)
+
+#define HTT_H2T_PPDU_STATS_CFG_TLV_BITMASK_SET(_var, _val)            \
+	do {                                                          \
+		HTT_CHECK_SET_VAL(HTT_H2T_PPDU_STATS_CFG_TLV_BITMASK, _val);  \
+		((_var) |= ((_val) << HTT_H2T_PPDU_STATS_CFG_TLV_BITMASK_S)); \
+	} while (0)
 
 /*=== target -> host messages ===============================================*/
 
@@ -5564,6 +5882,7 @@ enum htt_t2h_msg_type {
 	HTT_T2H_MSG_TYPE_SRING_SETUP_DONE         = 0x1a,
 	HTT_T2H_MSG_TYPE_MAP_FLOW_INFO            = 0x1b,
 	HTT_T2H_MSG_TYPE_EXT_STATS_CONF           = 0x1c,
+	HTT_T2H_MSG_TYPE_PPDU_STATS_IND           = 0x1d,
 
 	HTT_T2H_MSG_TYPE_TEST,
 	/* keep this last */
@@ -7809,16 +8128,23 @@ PREPACK struct htt_txq_group {
  * The following diagram shows the format of the TX completion indication sent
  * from the target to the host
  *
- *          |31      25|    24|23        16| 15 |14 11|10   8|7          0|
- *          |-------------------------------------------------------------|
- * header:  | reserved |append|     num    | t_i| tid |status|  msg_type  |
- *          |-------------------------------------------------------------|
- * payload: |            MSDU1 ID          |         MSDU0 ID             |
- *          |-------------------------------------------------------------|
- *          :            MSDU3 ID          :         MSDU2 ID             :
- *          |-------------------------------------------------------------|
- *          |          struct htt_tx_compl_ind_append_retries             |
- *          - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ *          |31   27|26|25|24|23        16| 15 |14 11|10   8|7          0|
+ *          |------------------------------------------------------------|
+ * header:  |  rsvd |TP|A1|A0|     num    | t_i| tid |status|  msg_type  |
+ *          |------------------------------------------------------------|
+ * payload: |           MSDU1 ID          |         MSDU0 ID             |
+ *          |------------------------------------------------------------|
+ *          :           MSDU3 ID          :         MSDU2 ID             :
+ *          |------------------------------------------------------------|
+ *          |         struct htt_tx_compl_ind_append_retries             |
+ *          |- - - - -  - - - - - - - - - - - - - - - - - - - - - - - - -|
+ *          |         struct htt_tx_compl_ind_append_tx_tstamp           |
+ *          |- - - - -  - - - - - - - - - - - - - - - - - - - - - - - - -|
+ *
+ * Where:
+ *     A0 = append (a.k.a. append0)
+ *     A1 = append1
+ *     TP = MSDU tx power presence
  *
  * The following field definitions describe the format of the TX completion
  * indication sent from the target to the host
@@ -7844,10 +8170,19 @@ PREPACK struct htt_txq_group {
  *   Bits 23:16
  *   Purpose: the number of payload in this indication
  *   Value: 1 to 255
- * - append
+ * - append (a.k.a. append0)
  *   Bits 24:24
  *   Purpose: append the struct htt_tx_compl_ind_append_retries which contains
  *            the number of tx retries for one MSDU at the end of this message
+ * - append1
+ *   Bits 25:25
+ *   Purpose: Append the struct htt_tx_compl_ind_append_tx_tstamp which
+ *            contains the timestamp info for each TX msdu id in payload.
+ *            The order of the timestamps matches the order of the MSDU IDs.
+ *            Note that a big-endian host needs to account for the reordering
+ *            of MSDU IDs within each 4-byte MSDU ID pair (during endianness
+ *            conversion) when determining which tx timestamp corresponds to
+ *            which MSDU ID.
  *   Value: 0 indicates no appending; 1 indicates appending
  * Payload fields:
  * - hmsdu_id
@@ -7904,6 +8239,26 @@ PREPACK struct htt_txq_group {
 #define HTT_TX_COMPL_IND_APPEND_GET(_info)				\
 	(((_info) & HTT_TX_COMPL_IND_APPEND_M) >> HTT_TX_COMPL_IND_APPEND_S)
 
+#define HTT_TX_COMPL_IND_APPEND1_SET(_info, _val)                      \
+	do {                                                           \
+		HTT_CHECK_SET_VAL(HTT_TX_COMPL_IND_APPEND1, _val);     \
+		((_info) |= ((_val) << HTT_TX_COMPL_IND_APPEND1_S));   \
+	} while (0)
+
+#define HTT_TX_COMPL_IND_APPEND1_GET(_info)                            \
+	(((_info) & HTT_TX_COMPL_IND_APPEND1_M) >> HTT_TX_COMPL_IND_APPEND1_S)
+
+#define HTT_TX_COMPL_IND_TX_POWER_SET(_info, _val)		       \
+	do {                                                           \
+		HTT_CHECK_SET_VAL(HTT_TX_COMPL_IND_TX_POWER, _val);    \
+		((_info) |= ((_val) << HTT_TX_COMPL_IND_TX_POWER_S));  \
+	} while (0)
+
+#define HTT_TX_COMPL_IND_TX_POWER_GET(_info)                           \
+	(((_info) & HTT_TX_COMPL_IND_TX_POWER_M) >> HTT_TX_COMPL_IND_TX_POWER_S)
+
+#define HTT_TX_COMPL_INV_TX_POWER           0xffff
+
 #define HTT_TX_COMPL_CTXT_SZ                sizeof(A_UINT16)
 #define HTT_TX_COMPL_CTXT_NUM(_bytes)       ((_bytes) >> 1)
 
@@ -7954,6 +8309,10 @@ PREPACK struct htt_tx_compl_ind_append_retries {
 	A_UINT8 tx_retries;
 	A_UINT8 flag;/* Bit 0, 1: another append_retries struct is appended
 				  0: this is the last append_retries struct */
+} POSTPACK;
+
+PREPACK struct htt_tx_compl_ind_append_tx_tstamp {
+	A_UINT32 timestamp[1/*or more*/];
 } POSTPACK;
 
 /**
@@ -9869,6 +10228,82 @@ enum htt_dbg_ext_stats_status {
 	HTT_DBG_EXT_STATS_STATUS_ERROR   = 2,
 	HTT_DBG_EXT_STATS_STATUS_INVALID = 3,
 };
+
+/**
+ * @brief target -> host ppdu stats upload
+ *
+ * @details
+ * The following field definitions describe the format of the HTT target
+ * to host ppdu stats indication message.
+ *
+ *
+ * |31                         16|15           10|9      8|7            0 |
+ * |----------------------------------------------------------------------|
+ * |    payload_size             |    rsvd bits  |mac_id  |    msg type   |
+ * |----------------------------------------------------------------------|
+ * |                          ppdu_id                                     |
+ * |----------------------------------------------------------------------|
+ * |                        Timestamp in us                               |
+ * |----------------------------------------------------------------------|
+ * |                          reserved                                    |
+ * |----------------------------------------------------------------------|
+ * |                    type-specific stats info                          |
+ * |                     (see htt_ppdu_stats.h)                           |
+ * |----------------------------------------------------------------------|
+ * Header fields:
+ *  - MSG_TYPE
+ *    Bits 7:0
+ *    Purpose: Identifies this is a PPDU STATS indication
+ *             message.
+ *    Value: 0x1d
+ *  - mac_id
+ *    Bits 2
+ *    Purpose: mac_id of this ppdu_id
+ *    Value: 0-3
+ *  - payload_size
+ *    Bits 31:16
+ *    Purpose: total tlv size
+ *    Value: payload_size in bytes
+ */
+#define HTT_T2H_PPDU_STATS_IND_HDR_SIZE       16
+
+#define HTT_T2H_PPDU_STATS_MAC_ID_M           0x00000300
+#define HTT_T2H_PPDU_STATS_MAC_ID_S           8
+
+#define HTT_T2H_PPDU_STATS_PAYLOAD_SIZE_M     0xFFFF0000
+#define HTT_T2H_PPDU_STATS_PAYLOAD_SIZE_S     16
+
+#define HTT_T2H_PPDU_STATS_PPDU_ID_M          0xFFFFFFFF
+#define HTT_T2H_PPDU_STATS_PPDU_ID_S          0
+
+#define HTT_T2H_PPDU_STATS_MAC_ID_SET(word, value)             \
+	do {                                                         \
+		HTT_CHECK_SET_VAL(HTT_T2H_PPDU_STATS_MAC_ID, value);   \
+		(word) |= (value)  << HTT_T2H_PPDU_STATS_MAC_ID_S;     \
+	} while (0)
+#define HTT_T2H_PPDU_STATS_MAC_ID_GET(word) \
+	(((word) & HTT_T2H_PPDU_STATS_MAC_ID_M) >> \
+	HTT_T2H_PPDU_STATS_MAC_ID_S)
+
+#define HTT_T2H_PPDU_STATS_PAYLOAD_SIZE_SET(word, value)             \
+	do {                                                         \
+		HTT_CHECK_SET_VAL(HTT_T2H_PPDU_STATS_PAYLOAD_SIZE, value);   \
+		(word) |= (value)  << HTT_T2H_PPDU_STATS_PAYLOAD_SIZE_S;     \
+	} while (0)
+
+#define HTT_T2H_PPDU_STATS_PAYLOAD_SIZE_GET(word) \
+	(((word) & HTT_T2H_PPDU_STATS_PAYLOAD_SIZE_M) >> \
+	HTT_T2H_PPDU_STATS_PAYLOAD_SIZE_S)
+
+#define HTT_T2H_PPDU_STATS_PPDU_ID_SET(word, value)             \
+	do {                                                         \
+		HTT_CHECK_SET_VAL(HTT_T2H_PPDU_STATS_PPDU_ID, value);   \
+		(word) |= (value)  << HTT_T2H_PPDU_STATS_PPDU_ID_S;     \
+	} while (0)
+
+#define HTT_T2H_PPDU_STATS_PPDU_ID_GET(word) \
+	(((word) & HTT_T2H_PPDU_STATS_PPDU_ID_M) >> \
+	HTT_T2H_PPDU_STATS_PPDU_ID_S)
 
 /**
  * @brief target -> host extended statistics upload
