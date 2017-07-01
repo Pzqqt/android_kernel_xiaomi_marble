@@ -69,6 +69,9 @@ struct wlan_regulatory_psoc_priv_obj {
 	bool user_ctry_set;
 	struct chan_change_cbk_entry cbk_list[REG_MAX_CHAN_CHANGE_CBKS];
 	uint8_t num_chan_change_cbks;
+	uint8_t ch_avoid_ind;
+	struct unsafe_ch_list unsafe_chan_list;
+	struct ch_avoid_ind_type avoid_freq_list;
 	qdf_spinlock_t cbk_list_lock;
 };
 
@@ -92,6 +95,7 @@ struct wlan_regulatory_pdev_priv_obj {
 	bool indoor_chan_enabled;
 	bool en_chan_144;
 	uint32_t wireless_modes;
+	struct ch_avoid_ind_type freq_avoid_list;
 };
 
 #endif

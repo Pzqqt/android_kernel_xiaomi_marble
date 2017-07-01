@@ -422,6 +422,10 @@ struct wlan_lmac_if_reg_tx_ops {
 					    uint8_t pdev_id,
 					    struct cc_regdmn_s *rd);
 	QDF_STATUS (*set_country_failed)(struct wlan_objmgr_pdev *pdev);
+	QDF_STATUS (*register_ch_avoid_event_handler)(
+			struct wlan_objmgr_psoc *psoc, void *arg);
+	QDF_STATUS (*unregister_ch_avoid_event_handler)(
+			struct wlan_objmgr_psoc *psoc, void *arg);
 };
 
 /**
@@ -598,6 +602,8 @@ struct wlan_lmac_if_reg_rx_ops {
 			bool val);
 	QDF_STATUS (*get_dfs_region)(struct wlan_objmgr_pdev *pdev,
 			enum dfs_reg *dfs_reg);
+	QDF_STATUS (*reg_ch_avoid_event_handler)(struct wlan_objmgr_psoc *psoc,
+			struct ch_avoid_ind_type *ch_avoid_ind);
 };
 
 #ifdef CONVERGED_P2P_ENABLE

@@ -280,10 +280,10 @@ QDF_STATUS reg_get_curr_band(struct wlan_objmgr_pdev *pdev,
 		enum band_info *band);
 
 typedef void (*reg_chan_change_callback)(struct wlan_objmgr_psoc *psoc,
-					      struct wlan_objmgr_pdev *pdev,
-					      struct regulatory_channel
-					      *chan_list,
-					      void *arg);
+		struct wlan_objmgr_pdev *pdev,
+		struct regulatory_channel *chan_list,
+		struct avoid_freq_ind_data *avoid_freq_ind,
+		void *arg);
 
 void reg_register_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 				       reg_chan_change_callback cbk,
@@ -391,4 +391,14 @@ QDF_STATUS reg_modify_chan_144(struct wlan_objmgr_pdev *pdev,
  * Return: en_chan_144 flag value
  */
 bool reg_get_en_chan_144(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * reg_process_ch_avoid_event() - Process channel avoid event
+ * @psoc: psoc for country information
+ * @ch_avoid_event: channel avoid event buffer
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS reg_process_ch_avoid_event(struct wlan_objmgr_psoc *psoc,
+		struct ch_avoid_ind_type *ch_avoid_event);
 #endif

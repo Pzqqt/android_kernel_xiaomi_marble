@@ -60,4 +60,13 @@ QDF_STATUS tgt_reg_set_regdb_offloaded(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS tgt_reg_set_11d_offloaded(struct wlan_objmgr_psoc *psoc,
 		bool val);
+/**
+ * tgt_reg_process_ch_avoid_event() - process new ch avoid event
+ * @psoc: pointer to psoc
+ * @ch_avoid_evnt: channel avoid event
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS tgt_reg_process_ch_avoid_event(struct wlan_objmgr_psoc *psoc,
+		struct ch_avoid_ind_type *ch_avoid_evnt);
 #endif

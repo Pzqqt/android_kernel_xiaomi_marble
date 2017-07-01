@@ -33,8 +33,10 @@
 #define MAX_STA_VDEV_CNT 4
 #define INVALID_VDEV_ID 0xFF
 #define INVALID_CHANNEL_NUM 0xBAD
+#define CH_AVOID_MAX_RANGE   4
 
 #ifdef CONFIG_LEGACY_CHAN_ENUM
+
 /**
  * enum channel_enum - channel enumeration
  * @CHAN_ENUM_1:  channel number 1
@@ -846,4 +848,45 @@ struct cur_regdmn_info {
 	uint8_t ctl_5g;
 	uint8_t dfs_region;
 };
+
+/**
+ * struct ch_avoid_freq_type
+ * @start_freq: start freq
+ * @end_freq: end freq
+ */
+struct ch_avoid_freq_type {
+	uint32_t start_freq;
+	uint32_t end_freq;
+};
+
+/**
+ * struct ch_avoid_ind_type
+ * @ch_avoid_range_cnt: count
+ * @avoid_freq_range: avoid freq range array
+ */
+struct ch_avoid_ind_type {
+	uint32_t ch_avoid_range_cnt;
+	struct ch_avoid_freq_type avoid_freq_range[CH_AVOID_MAX_RANGE];
+};
+
+/**
+ * struct unsafe_ch_list
+ * @ch_cnt: no.of channels
+ * @ch_list: channel list
+ */
+struct unsafe_ch_list {
+	uint16_t ch_cnt;
+	uint16_t ch_list[NUM_CHANNELS];
+};
+
+/**
+ * struct avoid_freq_ind_data
+ * @freq_list: frequency list
+ * @chan_list: channel list
+ */
+struct avoid_freq_ind_data {
+	struct ch_avoid_ind_type freq_list;
+	struct unsafe_ch_list chan_list;
+};
+
 #endif

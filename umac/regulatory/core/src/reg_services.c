@@ -1947,6 +1947,38 @@ reg_modify_chan_list_for_nol_list(struct regulatory_channel *chan_list)
 }
 
 static void
+reg_modify_chan_list_for_unsafe_ch(struct wlan_regulatory_pdev_priv_obj
+		*pdev_priv_obj)
+{
+	enum channel_enum chan_enum;
+	struct regulatory_channel *chan_list;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
+	struct unsafe_ch_list *unsafe_list;
+	uint8_t i;
+
+	psoc = wlan_pdev_get_psoc(pdev_priv_obj->pdev_ptr);
+	psoc_priv_obj = (struct wlan_regulatory_psoc_priv_obj *)
+		wlan_objmgr_psoc_get_comp_private_obj(psoc,
+					 WLAN_UMAC_COMP_REGULATORY);
+	if (!psoc_priv_obj) {
+		reg_err("psoc priv obj is NULL");
+		return;
+	}
+
+	chan_list = pdev_priv_obj->cur_chan_list;
+	unsafe_list = &psoc_priv_obj->unsafe_chan_list;
+
+	for (i = 0; i < unsafe_list->ch_cnt; i++) {
+		chan_enum = reg_get_chan_enum(unsafe_list->ch_list[i]);
+		if (chan_enum == INVALID_CHANNEL)
+			continue;
+		chan_list[chan_enum].state = CHANNEL_STATE_DISABLE;
+		chan_list[chan_enum].chan_flags |= REGULATORY_CHAN_DISABLED;
+	}
+}
+
+static void
 reg_modify_chan_list_for_freq_range(struct regulatory_channel *chan_list,
 				uint32_t low_freq_2g,
 				uint32_t high_freq_2g,
@@ -2066,6 +2098,8 @@ static void reg_compute_pdev_current_chan_list(struct wlan_regulatory_pdev_priv_
 
 	reg_modify_chan_list_for_chan_144(pdev_priv_obj->cur_chan_list,
 					  pdev_priv_obj->en_chan_144);
+
+	reg_modify_chan_list_for_unsafe_ch(pdev_priv_obj);
 }
 
 static void reg_call_chan_change_cbks(struct wlan_objmgr_psoc *psoc,
@@ -2076,6 +2110,7 @@ static void reg_call_chan_change_cbks(struct wlan_objmgr_psoc *psoc,
 	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
 	struct regulatory_channel *cur_chan_list;
 	uint32_t ctr;
+	struct avoid_freq_ind_data *avoid_freq_ind = NULL;
 	reg_chan_change_callback callback;
 
 	psoc_priv_obj = reg_get_psoc_obj(psoc);
@@ -2101,6 +2136,22 @@ static void reg_call_chan_change_cbks(struct wlan_objmgr_psoc *psoc,
 		     NUM_CHANNELS *
 		     sizeof(struct regulatory_channel));
 
+	if (psoc_priv_obj->ch_avoid_ind) {
+		avoid_freq_ind = qdf_mem_malloc(sizeof(*avoid_freq_ind));
+		if (!avoid_freq_ind) {
+			reg_alert("Mem alloc failed for avoid freq ind");
+			goto skip_ch_avoid_ind;
+		}
+		qdf_mem_copy(&avoid_freq_ind->freq_list,
+				&psoc_priv_obj->avoid_freq_list,
+				sizeof(struct ch_avoid_ind_type));
+		qdf_mem_copy(&avoid_freq_ind->chan_list,
+				&psoc_priv_obj->unsafe_chan_list,
+				sizeof(struct unsafe_ch_list));
+		psoc_priv_obj->ch_avoid_ind = false;
+	}
+
+skip_ch_avoid_ind:
 	cbk_list = psoc_priv_obj->cbk_list;
 
 	for (ctr = 0; ctr < REG_MAX_CHAN_CHANGE_CBKS; ctr++) {
@@ -2110,10 +2161,12 @@ static void reg_call_chan_change_cbks(struct wlan_objmgr_psoc *psoc,
 			callback = cbk_list[ctr].cbk;
 		qdf_spin_unlock_bh(&psoc_priv_obj->cbk_list_lock);
 		if (callback != NULL)
-			callback(psoc, pdev, cur_chan_list,
-				 cbk_list[ctr].arg);
+			callback(psoc, pdev, cur_chan_list, avoid_freq_ind,
+					cbk_list[ctr].arg);
 	}
 	qdf_mem_free(cur_chan_list);
+	if (!avoid_freq_ind)
+		qdf_mem_free(avoid_freq_ind);
 }
 
 static struct reg_sched_payload
@@ -3588,6 +3641,199 @@ QDF_STATUS reg_get_current_cc(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+static QDF_STATUS reg_process_ch_avoid_freq(struct wlan_objmgr_psoc *psoc,
+		struct wlan_objmgr_pdev *pdev)
+{
+	enum channel_enum ch_loop;
+	enum channel_enum start_ch_idx;
+	enum channel_enum end_ch_idx;
+	uint16_t start_channel;
+	uint16_t end_channel;
+	uint32_t i;
+	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
+
+	psoc_priv_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+		WLAN_UMAC_COMP_REGULATORY);
+
+	if (!psoc_priv_obj) {
+		reg_err("reg psoc private obj is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	for (i = 0; i < psoc_priv_obj->avoid_freq_list.ch_avoid_range_cnt;
+		i++) {
+		if (psoc_priv_obj->unsafe_chan_list.ch_cnt >= NUM_CHANNELS) {
+			reg_warn("LTE Coex unsafe channel list full");
+			break;
+		}
+
+		start_ch_idx = INVALID_CHANNEL;
+		end_ch_idx = INVALID_CHANNEL;
+		start_channel = reg_freq_to_chan(pdev,
+			psoc_priv_obj->avoid_freq_list.avoid_freq_range[i].start_freq);
+		end_channel = reg_freq_to_chan(pdev,
+			psoc_priv_obj->avoid_freq_list.avoid_freq_range[i].end_freq);
+		reg_debug("start: freq %d, ch %d, end: freq %d, ch %d",
+			psoc_priv_obj->avoid_freq_list.avoid_freq_range[i].start_freq,
+			start_channel,
+			psoc_priv_obj->avoid_freq_list.avoid_freq_range[i].end_freq,
+			end_channel);
+
+		/* do not process frequency bands that are not mapped to
+		 * predefined channels
+		 */
+		if (start_channel == 0 || end_channel == 0)
+			continue;
+
+		for (ch_loop = 0; ch_loop < NUM_CHANNELS;
+			ch_loop++) {
+			if (REG_CH_TO_FREQ(ch_loop) >= psoc_priv_obj->avoid_freq_list.
+				avoid_freq_range[i].start_freq) {
+				start_ch_idx = ch_loop;
+				break;
+			}
+		}
+		for (ch_loop = 0; ch_loop < NUM_CHANNELS;
+			ch_loop++) {
+			if (REG_CH_TO_FREQ(ch_loop) >= psoc_priv_obj->avoid_freq_list.
+				avoid_freq_range[i].end_freq) {
+				end_ch_idx = ch_loop;
+				if (REG_CH_TO_FREQ(ch_loop) > psoc_priv_obj->avoid_freq_list.
+					avoid_freq_range[i].end_freq)
+					end_ch_idx--;
+				break;
+			}
+		}
+
+		if (start_ch_idx == INVALID_CHANNEL ||
+				end_ch_idx == INVALID_CHANNEL)
+			continue;
+
+		for (ch_loop = start_ch_idx; ch_loop <=	end_ch_idx;
+			ch_loop++) {
+			psoc_priv_obj->unsafe_chan_list.ch_list[
+				psoc_priv_obj->unsafe_chan_list.ch_cnt++] =
+				REG_CH_NUM(ch_loop);
+			if (psoc_priv_obj->unsafe_chan_list.ch_cnt >=
+				NUM_CHANNELS) {
+				reg_warn("LTECoex unsafe ch list full");
+				break;
+			}
+		}
+	}
+
+	reg_debug("number of unsafe channels is %d ",
+		psoc_priv_obj->unsafe_chan_list.ch_cnt);
+
+	if (!psoc_priv_obj->unsafe_chan_list.ch_cnt) {
+		reg_warn("No valid ch are present in avoid freq event");
+		psoc_priv_obj->ch_avoid_ind = false;
+		return QDF_STATUS_SUCCESS;
+	}
+
+	for (ch_loop = 0; ch_loop < psoc_priv_obj->unsafe_chan_list.ch_cnt;
+		ch_loop++) {
+		reg_debug("channel %d is not safe",
+			psoc_priv_obj->unsafe_chan_list.
+			ch_list[ch_loop]);
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * reg_update_unsafe_ch () - Updates unsafe channels in current channel list
+ * @pdev: pointer to pdev object
+ * @ch_avoid_list: pointer to unsafe channel list
+ *
+ * Return: None
+ */
+static void reg_update_unsafe_ch(struct wlan_objmgr_psoc *psoc,
+		void *object, void *arg)
+{
+	struct wlan_objmgr_pdev *pdev = (struct wlan_objmgr_pdev *)object;
+	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+	QDF_STATUS status;
+
+	psoc_priv_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+						  WLAN_UMAC_COMP_REGULATORY);
+
+	if (!psoc_priv_obj) {
+		reg_err("reg psoc private obj is NULL");
+		return;
+	}
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("reg pdev priv obj is NULL");
+		return;
+	}
+
+	if (psoc_priv_obj->ch_avoid_ind) {
+		status = reg_process_ch_avoid_freq(psoc, pdev);
+		if (QDF_IS_STATUS_ERROR(status))
+			psoc_priv_obj->ch_avoid_ind = false;
+	}
+
+	reg_compute_pdev_current_chan_list(pdev_priv_obj);
+	status = reg_send_scheduler_msg_nb(psoc, pdev);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		reg_err("channel change msg schedule failed");
+
+}
+
+QDF_STATUS reg_process_ch_avoid_event(struct wlan_objmgr_psoc *psoc,
+		struct ch_avoid_ind_type *ch_avoid_event)
+{
+	uint32_t i;
+	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
+	QDF_STATUS status;
+
+	psoc_priv_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+			WLAN_UMAC_COMP_REGULATORY);
+	if (!psoc_priv_obj) {
+		reg_err("reg psoc private obj is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	/* Make unsafe channel list */
+	reg_debug("band count %d", ch_avoid_event->ch_avoid_range_cnt);
+
+	/* generate vendor specific event */
+	qdf_mem_zero((void *)&psoc_priv_obj->avoid_freq_list,
+			sizeof(struct ch_avoid_ind_type));
+	qdf_mem_zero((void *)&psoc_priv_obj->unsafe_chan_list,
+			sizeof(struct unsafe_ch_list));
+
+	for (i = 0; i < ch_avoid_event->ch_avoid_range_cnt; i++) {
+		psoc_priv_obj->avoid_freq_list.avoid_freq_range[i].start_freq =
+			ch_avoid_event->avoid_freq_range[i].start_freq;
+		psoc_priv_obj->avoid_freq_list.avoid_freq_range[i].end_freq =
+			ch_avoid_event->avoid_freq_range[i].end_freq;
+	}
+	psoc_priv_obj->avoid_freq_list.ch_avoid_range_cnt =
+		ch_avoid_event->ch_avoid_range_cnt;
+
+	psoc_priv_obj->ch_avoid_ind = true;
+
+	status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_REGULATORY_NB_ID);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		reg_err("error taking psoc ref cnt");
+		return status;
+	}
+
+	status = wlan_objmgr_iterate_obj_list(psoc, WLAN_PDEV_OP,
+			reg_update_unsafe_ch, NULL, 1,
+			WLAN_REGULATORY_NB_ID);
+
+	wlan_objmgr_psoc_release_ref(psoc, WLAN_REGULATORY_NB_ID);
+
+	return status;
+}
+
 QDF_STATUS reg_save_new_11d_country(struct wlan_objmgr_psoc *psoc,
 				    uint8_t *country)
 {
@@ -3606,7 +3852,6 @@ QDF_STATUS reg_save_new_11d_country(struct wlan_objmgr_psoc *psoc,
 
 	return QDF_STATUS_SUCCESS;
 }
-
 
 bool reg_11d_enabled_on_host(struct wlan_objmgr_psoc *psoc)
 {

@@ -18035,6 +18035,55 @@ static QDF_STATUS extract_reg_11d_new_country_event_tlv(
 
 	return QDF_STATUS_SUCCESS;
 }
+
+static QDF_STATUS extract_reg_ch_avoid_event_tlv(
+	wmi_unified_t wmi_handle, uint8_t *evt_buf,
+	struct ch_avoid_ind_type *ch_avoid_ind, uint32_t len)
+{
+	wmi_avoid_freq_ranges_event_fixed_param *afr_fixed_param;
+	wmi_avoid_freq_range_desc *afr_desc;
+	uint32_t num_freq_ranges, freq_range_idx;
+	WMI_WLAN_FREQ_AVOID_EVENTID_param_tlvs *param_buf =
+		(WMI_WLAN_FREQ_AVOID_EVENTID_param_tlvs *) evt_buf;
+
+	if (!param_buf) {
+		WMI_LOGE("Invalid channel avoid event buffer");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	afr_fixed_param = param_buf->fixed_param;
+	if (!afr_fixed_param) {
+		WMI_LOGE("Invalid channel avoid event fixed param buffer");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!ch_avoid_ind) {
+		WMI_LOGE("Invalid channel avoid indication buffer");
+		return QDF_STATUS_E_INVAL;
+	}
+	num_freq_ranges = (afr_fixed_param->num_freq_ranges >
+			CH_AVOID_MAX_RANGE) ? CH_AVOID_MAX_RANGE :
+			afr_fixed_param->num_freq_ranges;
+
+	WMI_LOGD("Channel avoid event received with %d ranges",
+		 num_freq_ranges);
+
+	ch_avoid_ind->ch_avoid_range_cnt = num_freq_ranges;
+	afr_desc = (wmi_avoid_freq_range_desc *)(param_buf->avd_freq_range);
+	for (freq_range_idx = 0; freq_range_idx < num_freq_ranges;
+	     freq_range_idx++) {
+		ch_avoid_ind->avoid_freq_range[freq_range_idx].start_freq =
+			afr_desc->start_freq;
+		ch_avoid_ind->avoid_freq_range[freq_range_idx].end_freq =
+			afr_desc->end_freq;
+		WMI_LOGD("range %d tlv id %u, start freq %u, end freq %u",
+				freq_range_idx, afr_desc->tlv_header,
+				afr_desc->start_freq, afr_desc->end_freq);
+		afr_desc++;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
 #ifdef DFS_COMPONENT_ENABLE
 /**
  * extract_dfs_cac_complete_event_tlv() - extract cac complete event
@@ -18678,6 +18727,8 @@ struct wmi_ops tlv_ops =  {
 	.send_user_country_code_cmd = send_user_country_code_cmd_tlv,
 	.send_limit_off_chan_cmd =
 		send_limit_off_chan_cmd_tlv,
+	.extract_reg_ch_avoid_event =
+		extract_reg_ch_avoid_event_tlv,
 };
 
 /**
