@@ -101,3 +101,17 @@ QDF_STATUS wmi_unified_set_user_country_code_cmd_send(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+QDF_STATUS wmi_extract_reg_ch_avoid_event(void *wmi_hdl,
+		uint8_t *evt_buf,
+		struct ch_avoid_ind_type *ch_avoid_ind,
+		uint32_t len)
+{
+	struct wmi_unified *wmi_handle = (struct wmi_unified *)wmi_hdl;
+
+	if (wmi_handle->ops->extract_reg_ch_avoid_event)
+		return wmi_handle->ops->extract_reg_ch_avoid_event(
+				wmi_handle, evt_buf, ch_avoid_ind, len);
+
+	return QDF_STATUS_E_FAILURE;
+}
