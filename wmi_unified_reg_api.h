@@ -82,4 +82,19 @@ QDF_STATUS wmi_extract_reg_11d_new_cc_event(void *wmi_hdl,
  */
 QDF_STATUS wmi_unified_set_user_country_code_cmd_send(void *wmi_hdl,
 		uint8_t pdev_id, struct cc_regdmn_s *rd);
+
+/**
+ * wmi_extract_reg_ch_avoid_event() - process freq avoid event
+ * @wmi_hdl: wmi handle.
+ * @evt_buf: event buffer
+ * @ch_avoid_ind: buffer pointer to save the event processed data
+ * @len: lenght of buffer
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_reg_ch_avoid_event(void *wmi_hdl,
+		uint8_t *evt_buf,
+		struct ch_avoid_ind_type *ch_avoid_ind,
+		uint32_t len);
+
 #endif /* _WMI_UNIFIED_REG_API_H_ */

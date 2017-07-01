@@ -1332,6 +1332,11 @@ QDF_STATUS (*extract_reg_11d_new_country_event)(wmi_unified_t wmi_handle,
 		struct reg_11d_new_country *reg_11d_country,
 		uint32_t len);
 
+QDF_STATUS (*extract_reg_ch_avoid_event)(wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct ch_avoid_ind_type *ch_avoid_event,
+		uint32_t len);
+
 QDF_STATUS (*extract_chainmask_tables)(wmi_unified_t wmi_handle,
 		uint8_t *evt_buf,
 		struct wlan_psoc_host_chainmask_table *chainmask_table);
