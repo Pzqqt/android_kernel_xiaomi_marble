@@ -185,6 +185,15 @@ extern enum policy_mgr_conc_next_action
 	(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * struct sta_ap_intf_check_work_ctx - sta_ap_intf_check_work
+ * related info
+ * @psoc: pointer to PSOC object information
+ */
+struct sta_ap_intf_check_work_ctx {
+	struct wlan_objmgr_psoc *psoc;
+};
+
+/**
  * struct policy_mgr_psoc_priv_obj - Policy manager private data
  * @psoc: pointer to PSOC object information
  * @pdev: pointer to PDEV object information
@@ -229,34 +238,36 @@ extern enum policy_mgr_conc_next_action
  *      value from INI
  * @unsafe_channel_list: LTE coex channel avoidance list
  * @unsafe_channel_count: LTE coex channel avoidance list count
+ * @sta_ap_intf_check_work_info: Info related to sta_ap_intf_check_work
  */
 struct policy_mgr_psoc_priv_obj {
-		struct wlan_objmgr_psoc *psoc;
-		struct wlan_objmgr_pdev *pdev;
-		qdf_event_t connection_update_done_evt;
-		qdf_mutex_t qdf_conc_list_lock;
-		qdf_mc_timer_t dbs_opportunistic_timer;
-		struct policy_mgr_hdd_cbacks hdd_cbacks;
-		struct policy_mgr_sme_cbacks sme_cbacks;
-		struct policy_mgr_wma_cbacks wma_cbacks;
-		struct policy_mgr_tdls_cbacks tdls_cbacks;
-		struct policy_mgr_cdp_cbacks cdp_cbacks;
-		uint8_t sap_mandatory_channels[QDF_MAX_NUM_CHAN];
-		uint32_t sap_mandatory_channels_len;
-		bool do_hw_mode_change;
-		uint32_t concurrency_mode;
-		uint8_t no_of_open_sessions[QDF_MAX_NO_OF_MODE];
-		uint8_t no_of_active_sessions[QDF_MAX_NO_OF_MODE];
-		qdf_work_t sta_ap_intf_check_work;
-		uint32_t num_dbs_hw_modes;
-		struct dbs_hw_mode_info hw_mode;
-		uint32_t old_hw_mode_index;
-		uint32_t new_hw_mode_index;
-		struct dual_mac_config dual_mac_cfg;
-		uint32_t hw_mode_change_in_progress;
-		struct policy_mgr_user_cfg user_cfg;
-		uint16_t unsafe_channel_list[QDF_MAX_NUM_CHAN];
-		uint16_t unsafe_channel_count;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_pdev *pdev;
+	qdf_event_t connection_update_done_evt;
+	qdf_mutex_t qdf_conc_list_lock;
+	qdf_mc_timer_t dbs_opportunistic_timer;
+	struct policy_mgr_hdd_cbacks hdd_cbacks;
+	struct policy_mgr_sme_cbacks sme_cbacks;
+	struct policy_mgr_wma_cbacks wma_cbacks;
+	struct policy_mgr_tdls_cbacks tdls_cbacks;
+	struct policy_mgr_cdp_cbacks cdp_cbacks;
+	uint8_t sap_mandatory_channels[QDF_MAX_NUM_CHAN];
+	uint32_t sap_mandatory_channels_len;
+	bool do_hw_mode_change;
+	uint32_t concurrency_mode;
+	uint8_t no_of_open_sessions[QDF_MAX_NO_OF_MODE];
+	uint8_t no_of_active_sessions[QDF_MAX_NO_OF_MODE];
+	qdf_work_t sta_ap_intf_check_work;
+	uint32_t num_dbs_hw_modes;
+	struct dbs_hw_mode_info hw_mode;
+	uint32_t old_hw_mode_index;
+	uint32_t new_hw_mode_index;
+	struct dual_mac_config dual_mac_cfg;
+	uint32_t hw_mode_change_in_progress;
+	struct policy_mgr_user_cfg user_cfg;
+	uint16_t unsafe_channel_list[QDF_MAX_NUM_CHAN];
+	uint16_t unsafe_channel_count;
+	struct sta_ap_intf_check_work_ctx *sta_ap_intf_check_work_info;
 };
 
 /**

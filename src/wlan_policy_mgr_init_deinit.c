@@ -364,6 +364,12 @@ QDF_STATUS policy_mgr_psoc_close(struct wlan_objmgr_psoc *psoc)
 		policy_mgr_info("HW list is freed");
 	}
 
+	if (pm_ctx->sta_ap_intf_check_work_info) {
+		qdf_cancel_work(0, &pm_ctx->sta_ap_intf_check_work);
+		qdf_mem_free(pm_ctx->sta_ap_intf_check_work_info);
+		pm_ctx->sta_ap_intf_check_work_info = NULL;
+	}
+
 	return QDF_STATUS_SUCCESS;
 }
 
