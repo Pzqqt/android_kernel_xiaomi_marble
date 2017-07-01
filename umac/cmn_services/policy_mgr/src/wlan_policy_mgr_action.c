@@ -598,14 +598,15 @@ static bool policy_mgr_is_restart_sap_allowed(
 	uint32_t mcc_to_scc_switch)
 {
 	if ((mcc_to_scc_switch == QDF_MCC_TO_SCC_SWITCH_DISABLE) ||
-	    !(policy_mgr_concurrent_open_sessions_running(psoc) &&
-	      ((policy_mgr_get_concurrency_mode(psoc) ==
-	       (QDF_STA_MASK | QDF_SAP_MASK)) ||
-	      (policy_mgr_get_concurrency_mode(psoc) ==
-	       (QDF_STA_MASK | QDF_P2P_GO_MASK))))) {
+		!policy_mgr_concurrent_open_sessions_running(psoc) ||
+		!((policy_mgr_get_concurrency_mode(psoc) ==
+			(QDF_STA_MASK | QDF_SAP_MASK)) ||
+		(policy_mgr_get_concurrency_mode(psoc) ==
+			(QDF_STA_MASK | QDF_P2P_GO_MASK)))) {
 		policy_mgr_err("MCC switch disabled or not concurrent STA/SAP, STA/GO");
 		return false;
 	}
+
 	return true;
 }
 
@@ -649,18 +650,30 @@ bool policy_mgr_is_safe_channel(struct wlan_objmgr_psoc *psoc,
  */
 void policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
 {
-	struct wlan_objmgr_psoc *psoc =
-		(struct wlan_objmgr_psoc *) data;
-	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	struct wlan_objmgr_psoc *psoc;
+	struct policy_mgr_psoc_priv_obj *pm_ctx = NULL;
+	struct sta_ap_intf_check_work_ctx *work_info = NULL;
 	uint32_t mcc_to_scc_switch;
 	QDF_STATUS status;
 	uint8_t channel, sec_ch;
 	uint8_t operating_channel, vdev_id;
 
+	work_info = (struct sta_ap_intf_check_work_ctx *) data;
+	if (!work_info) {
+		policy_mgr_err("Invalid work_info");
+		goto end;
+	}
+
+	psoc = work_info->psoc;
+	if (!psoc) {
+		policy_mgr_err("Invalid psoc");
+		goto end;
+	}
+
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
 		policy_mgr_err("Invalid context");
-		return;
+		goto end;
 	}
 	mcc_to_scc_switch =
 		policy_mgr_mcc_to_scc_switch_mode_in_user_cfg(psoc);
@@ -669,7 +682,7 @@ void policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
 		policy_mgr_concurrent_open_sessions_running(psoc));
 
 	if (!policy_mgr_is_restart_sap_allowed(psoc, mcc_to_scc_switch))
-		return;
+		goto end;
 
 	if (policy_mgr_get_mode_specific_conn_info(psoc,
 						   &operating_channel,
@@ -685,12 +698,12 @@ void policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
 				 operating_channel);
 	} else {
 		policy_mgr_err("Could not retrieve SAP/GO operating channel&vdevid");
-		return;
+		goto end;
 	}
 
 	if (!pm_ctx->hdd_cbacks.wlan_hdd_get_channel_for_sap_restart) {
 		policy_mgr_err("SAP restart get channel callback in NULL");
-		return;
+		goto end;
 	}
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	status = pm_ctx->hdd_cbacks.
@@ -699,11 +712,17 @@ void policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 	if (status != QDF_STATUS_SUCCESS) {
 		policy_mgr_err("Failed to switch SAP channel");
-		return;
+		goto end;
 	}
 
 	policy_mgr_info("SAP restarts due to MCC->SCC switch, old chan :%d new chan: %d",
 			operating_channel, channel);
+end:
+	if (work_info) {
+		qdf_mem_free(work_info);
+		if (pm_ctx)
+			pm_ctx->sta_ap_intf_check_work_info = NULL;
+	}
 }
 
 static bool policy_mgr_valid_sta_channel_check(struct wlan_objmgr_psoc *psoc,
@@ -846,15 +865,30 @@ void policy_mgr_check_concurrent_intf_and_restart_sap(
 		policy_mgr_mcc_to_scc_switch_mode_in_user_cfg(psoc);
 	policy_mgr_info("MCC to SCC switch: %d chan: %d",
 			mcc_to_scc_switch, operating_channel);
+
+	if (!policy_mgr_is_restart_sap_allowed(psoc, mcc_to_scc_switch)) {
+		policy_mgr_debug(
+			"No action taken at check_concurrent_intf_and_restart_sap");
+		return;
+	}
+
 	if ((mcc_to_scc_switch != QDF_MCC_TO_SCC_SWITCH_DISABLE) &&
 		policy_mgr_valid_sta_channel_check(psoc,
 					 operating_channel)
-	    ) {
-		qdf_create_work(0, &pm_ctx->sta_ap_intf_check_work,
+		&& !pm_ctx->sta_ap_intf_check_work_info) {
+		struct sta_ap_intf_check_work_ctx *work_info;
+		work_info = qdf_mem_malloc(
+			sizeof(struct sta_ap_intf_check_work_ctx));
+		pm_ctx->sta_ap_intf_check_work_info = work_info;
+		if (work_info) {
+			work_info->psoc = psoc;
+			qdf_create_work(0, &pm_ctx->sta_ap_intf_check_work,
 				policy_mgr_check_sta_ap_concurrent_ch_intf,
-				psoc);
-		qdf_sched_work(0, &pm_ctx->sta_ap_intf_check_work);
-		policy_mgr_info("Checking for Concurrent Change interference");
+				work_info);
+			qdf_sched_work(0, &pm_ctx->sta_ap_intf_check_work);
+			policy_mgr_info(
+				"Checking for Concurrent Change interference");
+		}
 	}
 }
 #endif /* FEATURE_WLAN_MCC_TO_SCC_SWITCH */
