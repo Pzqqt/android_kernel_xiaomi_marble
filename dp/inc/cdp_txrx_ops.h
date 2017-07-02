@@ -726,10 +726,10 @@ struct cdp_cfg_ops {
  * @dump_flow_pool_info:
  */
 struct cdp_flowctl_ops {
-	QDF_STATUS (*register_pause_cb)(ol_tx_pause_callback_fp);
-
+	QDF_STATUS (*register_pause_cb)(struct cdp_soc_t *soc,
+					tx_pause_callback);
 	void (*set_desc_global_pool_size)(uint32_t num_msdu_desc);
-	void (*dump_flow_pool_info)(void);
+	void (*dump_flow_pool_info)(void *);
 };
 
 /**

@@ -425,7 +425,6 @@ int wlan_cfg_get_dp_soc_nss_cfg(struct wlan_cfg_dp_soc_ctxt *cfg);
  */
 void wlan_cfg_set_dp_soc_nss_cfg(struct wlan_cfg_dp_soc_ctxt *cfg, int nss_cfg);
 
-
 /*
  * wlan_cfg_get_int_batch_threshold_tx - Get interrupt mitigation cfg for Tx
  * @wlan_cfg_soc_ctx
@@ -489,4 +488,9 @@ int wlan_cfg_tx_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
  * Return: Tx Completion ring size
  */
 int wlan_cfg_tx_comp_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
+#ifdef QCA_LL_TX_FLOW_CONTROL_V2
+int wlan_cfg_get_tx_flow_stop_queue_th(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+int wlan_cfg_get_tx_flow_start_queue_offset(struct wlan_cfg_dp_soc_ctxt *cfg);
+#endif /* QCA_LL_TX_FLOW_CONTROL_V2 */
 #endif

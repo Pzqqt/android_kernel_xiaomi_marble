@@ -394,10 +394,10 @@ typedef void (*tx_flow_control_fp)(void *osif_dev,
 			 bool tx_resume);
 
 /**
- * @typedef ol_tx_pause_callback_fp
+ * @typedef tx_pause_callback
  * @brief OSIF function registered with the data path
  */
-typedef void (*ol_tx_pause_callback_fp)(uint8_t vdev_id,
+typedef void (*tx_pause_callback)(uint8_t vdev_id,
 		enum netif_action_type action,
 		enum netif_reason_type reason);
 

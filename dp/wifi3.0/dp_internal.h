@@ -348,4 +348,9 @@ static inline int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 	return 0;
 }
 #endif /* CONFIG_WIN */
+#ifdef QCA_LL_TX_FLOW_CONTROL_V2
+void dp_tx_dump_flow_pool_info(void *soc);
+int dp_tx_delete_flow_pool(struct dp_soc *soc, struct dp_tx_desc_pool_s *pool,
+	bool force);
+#endif /* QCA_LL_TX_FLOW_CONTROL_V2 */
 #endif /* #ifndef _DP_INTERNAL_H_ */

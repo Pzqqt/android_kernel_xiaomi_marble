@@ -36,7 +36,7 @@
 /**
  * cdp_register_pause_cb() - Register flow control callback function pointer
  * @soc - data path soc handle
- * @pause_cb - callback function pointer
+ * @pause_cb - Pause callback intend to register
  *
  * Register flow control callback function pointer and client context pointer
  *
@@ -44,7 +44,7 @@
  */
 static inline QDF_STATUS
 cdp_register_pause_cb(ol_txrx_soc_handle soc,
-		ol_tx_pause_callback_fp pause_cb)
+		tx_pause_callback pause_cb)
 {
 	if (!soc || !soc->ops || !soc->ops->flowctl_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -53,7 +53,7 @@ cdp_register_pause_cb(ol_txrx_soc_handle soc,
 	}
 
 	if (soc->ops->flowctl_ops->register_pause_cb)
-		return soc->ops->flowctl_ops->register_pause_cb(pause_cb);
+		return soc->ops->flowctl_ops->register_pause_cb(soc, pause_cb);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -93,19 +93,21 @@ cdp_set_desc_global_pool_size(ol_txrx_soc_handle soc,
  * return none
  */
 static inline void
-cdp_dump_flow_pool_info(ol_txrx_soc_handle soc)
+cdp_dump_flow_pool_info(struct cdp_soc_t *soc)
 {
+	void *dp_soc = (void *)soc;
+
 	if (!soc || !soc->ops || !soc->ops->flowctl_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
 			"%s invalid instance", __func__);
 		return;
 	}
 
+
 	if (soc->ops->flowctl_ops->dump_flow_pool_info)
-		return soc->ops->flowctl_ops->dump_flow_pool_info();
+		return soc->ops->flowctl_ops->dump_flow_pool_info(dp_soc);
 
 	return;
 }
-
 
 #endif /* _CDP_TXRX_FC_V2_H_ */

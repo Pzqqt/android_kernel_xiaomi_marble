@@ -100,7 +100,7 @@ enum rx_pktlog_mode {
 struct dp_soc_cmn;
 struct dp_pdev;
 struct dp_vdev;
-union dp_tx_desc_list_elem_t;
+struct dp_tx_desc_s;
 struct dp_soc;
 union dp_rx_desc_list_elem_t;
 
@@ -231,6 +231,7 @@ struct dp_tx_ext_desc_pool_s {
  * @pkt_offset: Offset from which the actual packet data starts
  * @me_buffer: Pointer to ME buffer - store this so that it can be freed on
  *		Tx completion of ME packet
+ * @pool: handle to flow_pool this descriptor belongs to.
  */
 struct dp_tx_desc_s {
 	struct dp_tx_desc_s *next;
@@ -248,6 +249,22 @@ struct dp_tx_desc_s {
 	void *me_buffer;
 	void *tso_desc;
 	void *tso_num_desc;
+};
+
+/**
+ * enum flow_pool_status - flow pool status
+ * @FLOW_POOL_ACTIVE_UNPAUSED : pool is active (can take/put descriptors)
+ *				and network queues are unpaused
+ * @FLOW_POOL_ACTIVE_PAUSED: pool is active (can take/put descriptors)
+ *			   and network queues are paused
+ * @FLOW_POOL_INVALID: pool is invalid (put descriptor)
+ * @FLOW_POOL_INACTIVE: pool is inactive (pool is free)
+ */
+enum flow_pool_status {
+	FLOW_POOL_ACTIVE_UNPAUSED = 0,
+	FLOW_POOL_ACTIVE_PAUSED = 1,
+	FLOW_POOL_INVALID = 2,
+	FLOW_POOL_INACTIVE = 3,
 };
 
 /**
@@ -283,23 +300,51 @@ struct dp_tx_tso_num_seg_pool_s {
 /**
  * struct dp_tx_desc_pool_s - Tx Descriptor pool information
  * @elem_size: Size of each descriptor in the pool
- * @elem_count: Total number of descriptors in the pool
- * @num_allocated: Number of used descriptors
+ * @pool_size: Total number of descriptors in the pool
  * @num_free: Number of free descriptors
+ * @num_allocated: Number of used descriptors
  * @freelist: Chain of free descriptors
  * @desc_pages: multiple page allocation information for actual descriptors
+ * @num_invalid_bin: Deleted pool with pending Tx completions.
+ * @flow_pool_array_lock: Lock when operating on flow_pool_array.
+ * @flow_pool_array: List of allocated flow pools
  * @lock- Lock for descriptor allocation/free from/to the pool
  */
 struct dp_tx_desc_pool_s {
 	uint16_t elem_size;
-	uint16_t elem_count;
 	uint32_t num_allocated;
-	uint32_t num_free;
 	struct dp_tx_desc_s *freelist;
 	struct qdf_mem_multi_page_t desc_pages;
+#ifdef QCA_LL_TX_FLOW_CONTROL_V2
+	uint16_t pool_size;
+	uint8_t flow_pool_id;
+	uint8_t num_invalid_bin;
+	uint16_t avail_desc;
+	enum flow_pool_status status;
+	enum htt_flow_type flow_type;
+	uint16_t stop_th;
+	uint16_t start_th;
+	uint16_t pkt_drop_no_desc;
+	qdf_spinlock_t flow_pool_lock;
+	void *pool_owner_ctx;
+#else
+	uint16_t elem_count;
+	uint32_t num_free;
 	qdf_spinlock_t lock;
+#endif
 };
 
+/**
+ * struct dp_txrx_pool_stats - flow pool related statistics
+ * @pool_map_count: flow pool map received
+ * @pool_unmap_count: flow pool unmap received
+ * @pkt_drop_no_pool: packets dropped due to unavailablity of pool
+ */
+struct dp_txrx_pool_stats {
+	uint16_t pool_map_count;
+	uint16_t pool_unmap_count;
+	uint16_t pkt_drop_no_pool;
+};
 
 struct dp_srng {
 	void *hal_srng;
@@ -487,6 +532,11 @@ struct dp_soc {
 	void *wbm_idle_scatter_buf_base_vaddr[MAX_IDLE_SCATTER_BUFS];
 	uint32_t wbm_idle_scatter_buf_size;
 
+#ifdef QCA_LL_TX_FLOW_CONTROL_V2
+	qdf_spinlock_t flow_pool_array_lock;
+	tx_pause_callback pause_cb;
+	struct dp_txrx_pool_stats pool_stats;
+#endif /* !QCA_LL_TX_FLOW_CONTROL_V2 */
 	/* Tx SW descriptor pool */
 	struct dp_tx_desc_pool_s tx_desc[MAX_TXDESC_POOLS];
 
@@ -998,6 +1048,9 @@ struct dp_vdev {
 
 	/* Address search flags to be configured in HAL descriptor */
 	uint8_t hal_desc_addr_search_flags;
+#ifdef QCA_LL_TX_FLOW_CONTROL_V2
+	struct dp_tx_desc_pool_s *pool;
+#endif
 };
 
 

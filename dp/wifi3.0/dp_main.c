@@ -29,6 +29,7 @@
 #include "dp_types.h"
 #include "dp_internal.h"
 #include "dp_tx.h"
+#include "dp_tx_desc.h"
 #include "dp_rx.h"
 #include <cdp_txrx_handle.h>
 #include <wlan_cfg.h>
@@ -38,6 +39,7 @@
 #include "dp_rx_mon.h"
 #include "htt_stats.h"
 #include "qdf_mem.h"   /* qdf_mem_malloc,free */
+#include "cdp_txrx_flow_ctrl_v2.h"
 
 #define DP_INTR_POLL_TIMER_MS	10
 #define DP_WDS_AGING_TIMER_DEFAULT_MS	6000
@@ -1593,7 +1595,7 @@ static inline void dp_reo_desc_freelist_destroy(struct dp_soc *soc)
 
 /*
  * dp_soc_detach_wifi3() - Detach txrx SOC
- * @txrx_soc: DP SOC handle
+ * @txrx_soc: DP SOC handle, struct cdp_soc_t is first element of struct dp_soc.
  *
  */
 static void dp_soc_detach_wifi3(void *txrx_soc)
@@ -1864,6 +1866,7 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 	struct dp_pdev *pdev = (struct dp_pdev *)txrx_pdev;
 	struct dp_soc *soc = pdev->soc;
 	struct dp_vdev *vdev = qdf_mem_malloc(sizeof(*vdev));
+	int tx_ring_size;
 
 	if (!vdev) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -1896,6 +1899,7 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 	vdev->rx_decap_type = wlan_cfg_pkt_type(soc->wlan_cfg_ctx);
 	vdev->dscp_tid_map_id = 0;
 	vdev->mcast_enhancement_en = 0;
+	tx_ring_size = wlan_cfg_tx_ring_size(soc->wlan_cfg_ctx);
 
 	/* TODO: Initialize default HTT meta data that will be used in
 	 * TCL descriptors for packets transmitted from this VDEV
@@ -1908,6 +1912,11 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 	pdev->vdev_count++;
 
 	dp_tx_vdev_attach(vdev);
+
+	if (QDF_STATUS_SUCCESS != dp_tx_flow_pool_map_handler(pdev, vdev_id,
+					FLOW_TYPE_VDEV, vdev_id, tx_ring_size))
+		goto fail1;
+
 
 #ifdef DP_INTR_POLL_BASED
 	if (wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx) != 0) {
@@ -1932,6 +1941,9 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 
 	return (struct cdp_vdev *)vdev;
 
+fail1:
+	dp_tx_vdev_detach(vdev);
+	qdf_mem_free(vdev);
 fail0:
 	return NULL;
 }
@@ -2012,6 +2024,8 @@ static void dp_vdev_detach_wifi3(struct cdp_vdev *vdev_handle,
 	}
 	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 
+	dp_tx_flow_pool_unmap_handler(pdev, vdev->vdev_id, FLOW_TYPE_VDEV,
+		vdev->vdev_id);
 	dp_tx_vdev_detach(vdev);
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
 		FL("deleting vdev object %p (%pM)"), vdev, vdev->mac_addr.raw);
@@ -3983,7 +3997,7 @@ static QDF_STATUS dp_txrx_dump_stats(void *psoc, uint16_t value)
 		break;
 
 	case CDP_DUMP_TX_FLOW_POOL_INFO:
-		/* TODO: NOT IMPLEMENTED */
+		cdp_dump_flow_pool_info((struct cdp_soc_t *)soc);
 		break;
 
 	case CDP_TXRX_DESC_STATS:
@@ -4181,7 +4195,11 @@ static struct cdp_misc_ops dp_ops_misc = {
 };
 
 static struct cdp_flowctl_ops dp_ops_flowctl = {
-	/* WIFI 3.0 DP NOT IMPLEMENTED YET */
+	/* WIFI 3.0 DP implement as required. */
+#ifdef QCA_LL_TX_FLOW_CONTROL_V2
+	.register_pause_cb = dp_txrx_register_pause_cb,
+	.dump_flow_pool_info = dp_tx_dump_flow_pool_info,
+#endif /* QCA_LL_TX_FLOW_CONTROL_V2 */
 };
 
 static struct cdp_lflowctl_ops dp_ops_l_flowctl = {
