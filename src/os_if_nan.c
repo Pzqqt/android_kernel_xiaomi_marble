@@ -296,16 +296,17 @@ static int os_if_nan_process_ndp_initiator_req(struct wlan_objmgr_psoc *psoc,
 	req.transaction_id =
 		nla_get_u16(tb[QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID]);
 
-	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL])
+	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL]) {
 		req.channel = nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL]);
 
-	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL_CONFIG]) {
-		req.channel_cfg =
-		    nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL_CONFIG]);
-	} else {
-		cfg80211_err("Channel config is unavailable");
-		ret = -EINVAL;
-		goto initiator_req_failed;
+		if (tb[QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL_CONFIG]) {
+			req.channel_cfg = nla_get_u32(
+				tb[QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL_CONFIG]);
+		} else {
+			cfg80211_err("Channel config is unavailable");
+			ret = -EINVAL;
+			goto initiator_req_failed;
+		}
 	}
 
 	if (!tb[QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_INSTANCE_ID]) {
