@@ -1833,6 +1833,8 @@ static inline void copy_peer_flags_tlv(
 			cmd->peer_flags |= WMI_PEER_HE;
 	}
 
+	if (param->is_pmf_enabled)
+		cmd->peer_flags |= WMI_PEER_PMF;
 	/*
 	 * Suppress authorization for all AUTH modes that need 4-way handshake
 	 * (during re-association).
