@@ -847,7 +847,8 @@ static bool lim_chk_n_process_wpa_rsn_ie(tpAniSirGlobal mac_ctx,
 						session);
 					return false;
 				}
-			} else if (assoc_req->wpaPresent) {
+			} /* end - if(assoc_req->rsnPresent) */
+			if ((!assoc_req->rsnPresent) && assoc_req->wpaPresent) {
 				/* Unpack the WPA IE */
 				if (assoc_req->wpa.length) {
 					/* OUI is not taken care */
@@ -896,31 +897,7 @@ static bool lim_chk_n_process_wpa_rsn_ie(tpAniSirGlobal mac_ctx,
 						session);
 					return false;
 				} /* end - if(assoc_req->wpa.length) */
-			} else if (assoc_req->wapiPresent) {
-				pe_debug("Assoc req wapiPresent");
-			} else {
-				/*
-				 * When client send AssocReq without any
-				 * cipher IE,We must reject it here,
-				 * otherwise hostapd will not trigger
-				 * eapol and will not delete it, remains
-				 * connected/not-authenticated state
-				 * and block sta scan as checking in
-				 * cds_is_connection_in_progress.
-				 */
-				pe_warn("Re/Assoc rejected from: "
-					MAC_ADDRESS_STR
-					" without cipher suite IE",
-					MAC_ADDR_ARRAY(hdr->sa));
-				lim_send_assoc_rsp_mgmt_frame(mac_ctx,
-					eSIR_MAC_CIPHER_SUITE_REJECTED_STATUS,
-					1,
-					hdr->sa,
-					sub_type,
-					0,
-					session);
-				return false;
-			}
+			} /* end - if(assoc_req->wpaPresent) */
 		}
 		/*
 		 * end of if(session->pLimStartBssReq->privacy
