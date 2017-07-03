@@ -243,6 +243,11 @@ static A_STATUS hif_sdio_remove(void *context, void *hif_handle)
 	iounmap(scn->ramdump_base);
 #endif
 
+	if (ol_sc) {
+		qdf_mem_free(ol_sc);
+		ol_sc = NULL;
+	}
+
 	if (scn) {
 		qdf_mem_free(scn);
 		scn = NULL;
