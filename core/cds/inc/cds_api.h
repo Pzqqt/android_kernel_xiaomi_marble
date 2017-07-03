@@ -64,6 +64,7 @@
  * CDS_DRIVER_STATE_LOADING: Driver probe is in progress.
  * CDS_DRIVER_STATE_UNLOADING: Driver remove is in progress.
  * CDS_DRIVER_STATE_RECOVERING: Recovery in progress.
+ * CDS_DRIVER_STATE_BAD: Driver in bad state.
  */
 enum cds_driver_state {
 	CDS_DRIVER_STATE_UNINITIALIZED	= 0,
@@ -71,6 +72,7 @@ enum cds_driver_state {
 	CDS_DRIVER_STATE_LOADING	= BIT(1),
 	CDS_DRIVER_STATE_UNLOADING	= BIT(2),
 	CDS_DRIVER_STATE_RECOVERING	= BIT(3),
+	CDS_DRIVER_STATE_BAD		= BIT(4)
 };
 
 #define __CDS_IS_DRIVER_STATE(_state, _mask) (((_state) & (_mask)) == (_mask))
@@ -172,6 +174,18 @@ static inline bool cds_is_driver_recovering(void)
 }
 
 /**
+ * cds_is_driver_in_bad_state() - is driver in bad state
+ *
+ * Return: true if driver is in bad state and false otherwise.
+ */
+static inline bool cds_is_driver_in_bad_state(void)
+{
+	enum cds_driver_state state = cds_get_driver_state();
+
+	return __CDS_IS_DRIVER_STATE(state, CDS_DRIVER_STATE_BAD);
+}
+
+/**
  * cds_is_load_or_unload_in_progress() - Is driver load OR unload in progress
  *
  * Return: true if driver is loading OR unloading and false otherwise.
@@ -222,6 +236,20 @@ static inline void cds_set_recovery_in_progress(uint8_t value)
 		cds_set_driver_state(CDS_DRIVER_STATE_RECOVERING);
 	else
 		cds_clear_driver_state(CDS_DRIVER_STATE_RECOVERING);
+}
+
+/**
+ * cds_set_driver_in_bad_state() - Set driver state
+ * @value: value to set
+ *
+ * Return: none
+ */
+static inline void cds_set_driver_in_bad_state(uint8_t value)
+{
+	if (value)
+		cds_set_driver_state(CDS_DRIVER_STATE_BAD);
+	else
+		cds_clear_driver_state(CDS_DRIVER_STATE_BAD);
 }
 
 /**

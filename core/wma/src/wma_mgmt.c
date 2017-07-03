@@ -3490,6 +3490,17 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 		return -EINVAL;
 	}
 
+	if (cds_is_driver_in_bad_state()) {
+		limit_prints_recovery++;
+		if (limit_prints_recovery == RATE_LIMIT) {
+			WMA_LOGD(FL("Driver in bad state"));
+			limit_prints_recovery = 0;
+		}
+		qdf_nbuf_free(buf);
+		qdf_mem_free(rx_pkt);
+		return -EINVAL;
+	}
+
 	/*
 	 * Fill in meta information needed by pe/lim
 	 * TODO: Try to maintain rx metainfo as part of skb->data.

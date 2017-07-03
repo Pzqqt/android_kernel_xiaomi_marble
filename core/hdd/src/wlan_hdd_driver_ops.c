@@ -56,6 +56,9 @@
 
 #define DISABLE_KRAIT_IDLE_PS_VAL      1
 
+#define SSR_MAX_FAIL_CNT 2
+static uint8_t re_init_fail_cnt, probe_fail_cnt;
+
 /*
  * In BMI Phase we are only sending small chunk (256 bytes) of the FW image at
  * a time, and wait for the completion interrupt to start the next transfer.
@@ -349,10 +352,15 @@ static int wlan_hdd_probe(struct device *dev, void *bdev,
 
 	hdd_init_qdf_ctx(dev, bdev, bus_type, (const struct hif_bus_id *)bid);
 
-	if (reinit)
+	if (reinit) {
 		ret = hdd_wlan_re_init();
-	else
+		if (ret)
+			re_init_fail_cnt++;
+	} else {
 		ret = hdd_wlan_startup(dev);
+		if (ret)
+			probe_fail_cnt++;
+	}
 
 	if (ret)
 		goto err_hdd_deinit;
@@ -370,14 +378,27 @@ static int wlan_hdd_probe(struct device *dev, void *bdev,
 
 	cds_set_fw_down(false);
 
+	cds_set_driver_in_bad_state(false);
+	probe_fail_cnt = 0;
+	re_init_fail_cnt = 0;
+
 	return 0;
 
 
 err_hdd_deinit:
-	if (reinit)
+	pr_err("probe/reinit failure counts %hhu/%hhu",
+		probe_fail_cnt, re_init_fail_cnt);
+	if (probe_fail_cnt >= SSR_MAX_FAIL_CNT ||
+	    re_init_fail_cnt >= SSR_MAX_FAIL_CNT)
+		QDF_BUG(0);
+
+	if (reinit) {
+		cds_set_driver_in_bad_state(true);
 		cds_set_recovery_in_progress(false);
+	}
 	else
 		cds_set_load_in_progress(false);
+
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_INIT);
 	hdd_remove_pm_qos(dev);
 
@@ -404,7 +425,6 @@ static void wlan_hdd_remove(struct device *dev)
 	pr_info("%s: Removing driver v%s\n", WLAN_MODULE_NAME,
 		QWLAN_VERSIONSTR);
 
-
 	cds_set_driver_loaded(false);
 	cds_set_unload_in_progress(true);
 
@@ -420,6 +440,7 @@ static void wlan_hdd_remove(struct device *dev)
 		__hdd_wlan_exit();
 	}
 
+	cds_set_driver_in_bad_state(false);
 	cds_set_unload_in_progress(false);
 
 	pr_info("%s: Driver De-initialized\n", WLAN_MODULE_NAME);
@@ -846,7 +867,7 @@ static int __wlan_hdd_bus_resume(void)
 	return 0;
 
 out:
-	if (cds_is_driver_recovering())
+	if (cds_is_driver_recovering() || cds_is_driver_in_bad_state())
 		return 0;
 
 	QDF_BUG(false);

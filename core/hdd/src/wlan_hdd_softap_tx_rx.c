@@ -262,7 +262,7 @@ static int __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 	 * context may not be reinitialized at this time which may
 	 * lead to a crash.
 	 */
-	if (cds_is_driver_recovering()) {
+	if (cds_is_driver_recovering() || cds_is_driver_in_bad_state()) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: Recovery in Progress. Ignore!!!", __func__);
 		goto drop_pkt;
@@ -526,7 +526,7 @@ static void __hdd_softap_tx_timeout(struct net_device *dev)
 	 * recovery here
 	 */
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	if (cds_is_driver_recovering()) {
+	if (cds_is_driver_recovering() || cds_is_driver_in_bad_state()) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
 			 "%s: Recovery in Progress. Ignore!!!", __func__);
 		return;

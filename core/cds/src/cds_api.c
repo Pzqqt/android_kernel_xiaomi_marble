@@ -1002,8 +1002,8 @@ QDF_STATUS cds_post_disable(void)
 	 * - Clean up CE tasklets.
 	 */
 
-	cds_info("send denint sequence to firmware");
-	if (!cds_is_driver_recovering())
+	cds_info("send deinit sequence to firmware");
+	if (!(cds_is_driver_recovering() || cds_is_driver_in_bad_state()))
 		cds_suspend_target(wma_handle);
 	hif_disable_isr(hif_ctx);
 	hif_reset_soc(hif_ctx);
@@ -1718,7 +1718,7 @@ bool cds_is_packet_log_enabled(void)
 
 static void cds_config_recovery_work(qdf_device_t qdf_ctx)
 {
-	if (cds_is_driver_recovering()) {
+	if (cds_is_driver_recovering() || cds_is_driver_in_bad_state()) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			"Recovery is in progress, ignore!");
 	} else {
@@ -2118,7 +2118,7 @@ uint32_t cds_get_log_indicator(void)
 	}
 
 	if (cds_is_load_or_unload_in_progress() ||
-	    cds_is_driver_recovering()) {
+	    cds_is_driver_recovering() || cds_is_driver_in_bad_state()) {
 		return WLAN_LOG_INDICATOR_UNUSED;
 	}
 
@@ -2179,7 +2179,7 @@ QDF_STATUS cds_flush_logs(uint32_t is_fatal,
 		return QDF_STATUS_E_FAILURE;
 	}
 	if (cds_is_load_or_unload_in_progress() ||
-	    cds_is_driver_recovering()) {
+	    cds_is_driver_recovering() || cds_is_driver_in_bad_state()) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 				"%s: un/Load/SSR in progress", __func__);
 		return QDF_STATUS_E_FAILURE;

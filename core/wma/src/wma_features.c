@@ -3877,6 +3877,9 @@ static inline void wma_suspend_target_timeout(bool is_self_recovery_enabled)
 	else if (cds_is_driver_recovering())
 		WMA_LOGE("%s: Module recovering; Ignoring suspend timeout",
 			 __func__);
+	else if (cds_is_driver_in_bad_state())
+		WMA_LOGE("%s: Module in bad state; Ignoring suspend timeout",
+			 __func__);
 	else if (is_self_recovery_enabled)
 		cds_trigger_recovery(false);
 	else

@@ -696,7 +696,8 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 		return;
 	}
 
-	if (cds_is_driver_unloading() || cds_is_driver_recovering()) {
+	if (cds_is_driver_unloading() || cds_is_driver_recovering() ||
+	    cds_is_driver_in_bad_state()) {
 		hdd_err("%s: unloading or ssr in progress, ignore",
 			__func__);
 		return;

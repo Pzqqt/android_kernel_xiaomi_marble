@@ -623,7 +623,7 @@ void ol_target_failure(void *instance, QDF_STATUS status)
 		return;
 	}
 
-	if (cds_is_driver_recovering()) {
+	if (cds_is_driver_recovering() || cds_is_driver_in_bad_state()) {
 		BMI_ERR("%s: Recovery in progress, ignore!\n", __func__);
 		return;
 	}

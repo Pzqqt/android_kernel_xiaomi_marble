@@ -1958,7 +1958,7 @@ static int __wlan_hdd_cfg80211_sched_scan_stop(struct net_device *dev)
 	 * clean up of the second interface will have the dev pointer corresponding
 	 * to the first one leading to a crash.
 	 */
-	if (cds_is_driver_recovering()) {
+	if (cds_is_driver_recovering() || cds_is_driver_in_bad_state()) {
 		hdd_info("Recovery in Progress. State: 0x%x Ignore!!!",
 			 cds_get_driver_state());
 		return 0;
