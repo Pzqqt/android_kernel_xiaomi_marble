@@ -32,6 +32,7 @@
 #include "wlan_objmgr_psoc_obj.h"
 #include "wlan_objmgr_pdev_obj.h"
 #include "wlan_objmgr_vdev_obj.h"
+#include "wlan_utility.h"
 
 /* NLA policy */
 static const struct nla_policy
@@ -86,6 +87,14 @@ static int os_if_nan_process_ndi_create(struct wlan_objmgr_psoc *psoc,
 		return -EINVAL;
 	}
 	iface_name = nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_IFACE_STR]);
+
+	nan_vdev = wlan_util_get_vdev_by_ifname(psoc, iface_name, WLAN_NAN_ID);
+	if (nan_vdev) {
+		cfg80211_err("NAN data interface %s is already present",
+			     iface_name);
+		wlan_objmgr_vdev_release_ref(nan_vdev, WLAN_NAN_ID);
+		return -EEXIST;
+	}
 
 	if (!tb[QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID]) {
 		cfg80211_err("transaction id is unavailable");
