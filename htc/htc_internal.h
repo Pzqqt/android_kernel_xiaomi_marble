@@ -257,19 +257,6 @@ typedef struct _HTC_TARGET {
 	uint8_t wmi_ep_count;
 } HTC_TARGET;
 
-#if defined ENABLE_BUNDLE_TX
-#define HTC_TX_BUNDLE_ENABLED(target) (target->MaxMsgsPerHTCBundle > 1)
-#else
-#define HTC_TX_BUNDLE_ENABLED(target) 0
-#endif
-
-#if defined ENABLE_BUNDLE_RX
-#define HTC_RX_BUNDLE_ENABLED(target) (target->MaxMsgsPerHTCBundle > 1)
-#else
-#define HTC_RX_BUNDLE_ENABLED(target) 0
-#endif
-
-#define HTC_ENABLE_BUNDLE(target) (target->MaxMsgsPerHTCBundle > 1)
 
 #ifdef RX_SG_SUPPORT
 #define RESET_RX_SG_CONFIG(_target) \
@@ -405,4 +392,19 @@ htc_send_complete_check(HTC_ENDPOINT *pEndpoint, int force) {
 #define ENABLE_BUNDLE_RX 1
 #endif
 #endif /*defined(HIF_SDIO) || defined(HIF_USB)*/
+
+#if defined ENABLE_BUNDLE_TX
+#define HTC_TX_BUNDLE_ENABLED(target) (target->MaxMsgsPerHTCBundle > 1)
+#else
+#define HTC_TX_BUNDLE_ENABLED(target) 0
+#endif
+
+#if defined ENABLE_BUNDLE_RX
+#define HTC_RX_BUNDLE_ENABLED(target) (target->MaxMsgsPerHTCBundle > 1)
+#else
+#define HTC_RX_BUNDLE_ENABLED(target) 0
+#endif
+
+#define HTC_ENABLE_BUNDLE(target) (target->MaxMsgsPerHTCBundle > 1)
+
 #endif /* !_HTC_HOST_INTERNAL_H_ */
