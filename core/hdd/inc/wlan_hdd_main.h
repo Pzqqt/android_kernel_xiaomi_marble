@@ -1844,6 +1844,14 @@ int wlan_hdd_validate_context(hdd_context_t *pHddCtx);
  */
 int hdd_validate_adapter(hdd_adapter_t *adapter);
 
+/**
+ * wlan_hdd_validate_context_in_loading() - check the HDD context in loading
+ * @hdd_ctx:	HDD context pointer
+ *
+ * Return: 0 if the context is valid. Error code otherwise
+ */
+int wlan_hdd_validate_context_in_loading(hdd_context_t *hdd_ctx);
+
 bool hdd_is_valid_mac_address(const uint8_t *pMacAddr);
 QDF_STATUS hdd_issta_p2p_clientconnected(hdd_context_t *pHddCtx);
 bool wlan_hdd_validate_modules_state(hdd_context_t *hdd_ctx);
