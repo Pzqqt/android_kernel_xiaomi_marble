@@ -2057,6 +2057,7 @@ struct category_name_info g_qdf_category_name[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_OBJ_MGR] = {"OBJMGR"},
 	[QDF_MODULE_ID_SERIALIZATION] = {"SER"},
 	[QDF_MODULE_ID_NSS] = {"NSS"},
+	[QDF_MODULE_ID_ROAM_DEBUG] = {"roam debug"},
 	[QDF_MODULE_ID_ANY] = {"ANY"},
 };
 EXPORT_SYMBOL(g_qdf_category_name);
@@ -2523,6 +2524,7 @@ static void set_default_trace_levels(struct category_info *cinfo)
 		[QDF_MODULE_ID_OBJ_MGR] = QDF_TRACE_LEVEL_INFO,
 		[QDF_MODULE_ID_SERIALIZATION] = QDF_TRACE_LEVEL_NONE,
 		[QDF_MODULE_ID_NSS] = QDF_TRACE_LEVEL_ERROR,
+		[QDF_MODULE_ID_ROAM_DEBUG] = QDF_TRACE_LEVEL_ERROR,
 		[QDF_MODULE_ID_ANY] = QDF_TRACE_LEVEL_NONE,
 	};
 
