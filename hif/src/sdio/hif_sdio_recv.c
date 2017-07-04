@@ -50,6 +50,11 @@
 #include "if_sdio.h"
 
 #define NBUF_ALLOC_FAIL_WAIT_TIME 100
+/* high nibble */
+#define BUNDLE_COUNT_HIGH(f) ((f & 0x0C) << 2)
+/* low nibble */
+#define BUNDLE_COUNT_LOW(f)  ((f & 0xF0) >> 4)
+#define GET_RECV_BUNDLE_COUNT(f) (BUNDLE_COUNT_HIGH(f) + BUNDLE_COUNT_LOW(f))
 
 static void hif_dev_dump_registers(struct hif_sdio_device *pdev,
 				struct MBOX_IRQ_PROC_REGISTERS *irq_proc_regs,
@@ -180,9 +185,7 @@ QDF_STATUS hif_dev_alloc_and_prepare_rx_packets(struct hif_sdio_device *pdev,
 			 * has the same padded length so that it can
 			 * be optimally fetched as a full bundle
 			 */
-			num_messages =
-				(hdr->Flags & HTC_FLAGS_RECV_BUNDLE_CNT_MASK)
-				>> HTC_FLAGS_RECV_BUNDLE_CNT_SHIFT;
+			num_messages = GET_RECV_BUNDLE_COUNT(hdr->Flags);
 			/* the count doesn't include the starter frame, just
 			 * a count of frames to follow
 			 */
@@ -271,6 +274,10 @@ QDF_STATUS hif_dev_alloc_and_prepare_rx_packets(struct hif_sdio_device *pdev,
 			/* set the amount of data to fetch */
 			packet->ActualLength =
 				hdr->PayloadLen + HTC_HDR_LENGTH;
+			if ((j == (num_messages-1))
+				&& ((hdr->Flags) & HTC_FLAGS_RECV_1MORE_BLOCK))
+				packet->PktInfo.AsRx.HTCRxFlags |=
+				HTC_RX_PKT_LAST_BUNDLED_PKT_HAS_ADDTIONAL_BLOCK;
 			packet->Endpoint = hdr->EndpointID;
 			packet->Completion = NULL;
 		}
@@ -463,7 +470,7 @@ static inline QDF_STATUS hif_dev_process_trailer(struct hif_sdio_device *pdev,
 
 				if ((record->Length /
 				     (sizeof(HTC_BUNDLED_LOOKAHEAD_REPORT)))
-				    > HTC_MAX_MSG_PER_BUNDLE) {
+					> HTC_MAX_MSG_PER_BUNDLE_RX) {
 					/* this should never happen, the target
 					 * restricts the number of messages per
 					 * bundle configured by the host
@@ -708,18 +715,18 @@ static QDF_STATUS hif_dev_issue_recv_packet_bundle(struct hif_sdio_device *pdev,
 
 	target = (HTC_TARGET *) pdev->pTarget;
 
-	if ((HTC_PACKET_QUEUE_DEPTH(recv_pkt_queue) - HTC_MAX_MSG_PER_BUNDLE) >
-	    0) {
+	if ((HTC_PACKET_QUEUE_DEPTH(recv_pkt_queue) -
+		 HTC_MAX_MSG_PER_BUNDLE_RX) > 0) {
 		partial_bundle = true;
 		AR_DEBUG_PRINTF(ATH_DEBUG_WARN,
 				("%s, partial bundle detected num: %d, %d\n",
 				 __func__,
 				 HTC_PACKET_QUEUE_DEPTH(recv_pkt_queue),
-				 HTC_MAX_MSG_PER_BUNDLE));
+				 HTC_MAX_MSG_PER_BUNDLE_RX));
 	}
 
 	bundleSpaceRemaining =
-		HTC_MAX_MSG_PER_BUNDLE * target->TargetCreditSize;
+		HTC_MAX_MSG_PER_BUNDLE_RX * target->TargetCreditSize;
 	packet_rx_bundle = allocate_htc_bundle_packet(target);
 	if (!packet_rx_bundle) {
 		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
@@ -730,7 +737,7 @@ static QDF_STATUS hif_dev_issue_recv_packet_bundle(struct hif_sdio_device *pdev,
 	bundle_buffer = packet_rx_bundle->pBuffer;
 
 	for (i = 0;
-	     !HTC_QUEUE_EMPTY(recv_pkt_queue) && i < HTC_MAX_MSG_PER_BUNDLE;
+	     !HTC_QUEUE_EMPTY(recv_pkt_queue) && i < HTC_MAX_MSG_PER_BUNDLE_RX;
 	     i++) {
 		packet = htc_packet_dequeue(recv_pkt_queue);
 		A_ASSERT(packet != NULL);
@@ -739,7 +746,9 @@ static QDF_STATUS hif_dev_issue_recv_packet_bundle(struct hif_sdio_device *pdev,
 		}
 		padded_length =
 			DEV_CALC_RECV_PADDED_LEN(pdev, packet->ActualLength);
-
+		if (packet->PktInfo.AsRx.HTCRxFlags &
+				HTC_RX_PKT_LAST_BUNDLED_PKT_HAS_ADDTIONAL_BLOCK)
+			padded_length += HIF_MBOX_BLOCK_SIZE;
 		if ((bundleSpaceRemaining - padded_length) < 0) {
 			/* exceeds what we can transfer, put the packet back */
 			HTC_PACKET_ENQUEUE_TO_HEAD(recv_pkt_queue, packet);
@@ -785,6 +794,10 @@ static QDF_STATUS hif_dev_issue_recv_packet_bundle(struct hif_sdio_device *pdev,
 				padded_length =
 					DEV_CALC_RECV_PADDED_LEN(pdev,
 						packet->ActualLength);
+				if (packet->PktInfo.AsRx.HTCRxFlags &
+				HTC_RX_PKT_LAST_BUNDLED_PKT_HAS_ADDTIONAL_BLOCK)
+					padded_length +=
+						HIF_MBOX_BLOCK_SIZE;
 				A_MEMCPY(packet->pBuffer,
 					buffer, padded_length);
 				buffer += padded_length;
@@ -824,7 +837,7 @@ QDF_STATUS hif_dev_recv_message_pending_handler(struct hif_sdio_device *pdev,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	HTC_PACKET *packet;
 	bool asyncProc = false;
-	uint32_t look_aheads[HTC_MAX_MSG_PER_BUNDLE];
+	uint32_t look_aheads[HTC_MAX_MSG_PER_BUNDLE_RX];
 	int pkts_fetched;
 	HTC_PACKET_QUEUE recv_pkt_queue, sync_completed_pkts_queue;
 	bool partial_bundle;
@@ -850,7 +863,7 @@ QDF_STATUS hif_dev_recv_message_pending_handler(struct hif_sdio_device *pdev,
 	if (async_proc != NULL)
 		/* indicate to caller how we decided to process this */
 		*async_proc = asyncProc;
-	if (num_look_aheads > HTC_MAX_MSG_PER_BUNDLE) {
+	if (num_look_aheads > HTC_MAX_MSG_PER_BUNDLE_RX) {
 		A_ASSERT(false);
 		return QDF_STATUS_E_PROTO;
 	}
@@ -861,7 +874,7 @@ QDF_STATUS hif_dev_recv_message_pending_handler(struct hif_sdio_device *pdev,
 		/* reset packets queues */
 		INIT_HTC_PACKET_QUEUE(&recv_pkt_queue);
 		INIT_HTC_PACKET_QUEUE(&sync_completed_pkts_queue);
-		if (num_look_aheads > HTC_MAX_MSG_PER_BUNDLE) {
+		if (num_look_aheads > HTC_MAX_MSG_PER_BUNDLE_RX) {
 			status = QDF_STATUS_E_PROTO;
 			A_ASSERT(false);
 			break;
