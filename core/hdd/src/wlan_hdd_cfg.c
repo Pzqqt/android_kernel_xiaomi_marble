@@ -4259,12 +4259,12 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_SAP_INTERNAL_RESTART_MIN,
 		CFG_SAP_INTERNAL_RESTART_MAX),
 
-	REG_VARIABLE(CFG_SAP_RESTART_ON_CH_AVOID_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, sap_restart_on_ch_avoid,
+	REG_VARIABLE(CFG_RESTART_BEACONING_ON_CH_AVOID_NAME, WLAN_PARAM_Integer,
+		struct hdd_config, restart_beaconing_on_chan_avoid_event,
 		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_SAP_RESTART_ON_CH_AVOID_DEFAULT,
-		CFG_SAP_RESTART_ON_CH_AVOID_MIN,
-		CFG_SAP_RESTART_ON_CH_AVOID_MAX),
+		CFG_RESTART_BEACONING_ON_CH_AVOID_DEFAULT,
+		CFG_RESTART_BEACONING_ON_CH_AVOID_MIN,
+		CFG_RESTART_BEACONING_ON_CH_AVOID_MAX),
 
 	REG_VARIABLE(CFG_PER_ROAM_ENABLE_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, is_per_roam_enabled,
@@ -6028,8 +6028,8 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 		CFG_AUTO_DETECT_POWER_FAIL_MODE_NAME,
 		pHddCtx->config->auto_pwr_save_fail_mode);
 	hdd_debug("Name = [%s] Value = [%d]",
-		CFG_SAP_RESTART_ON_CH_AVOID_NAME,
-		pHddCtx->config->sap_restart_on_ch_avoid);
+		CFG_RESTART_BEACONING_ON_CH_AVOID_NAME,
+		pHddCtx->config->restart_beaconing_on_chan_avoid_event);
 
 	hdd_per_roam_print_ini_config(pHddCtx);
 	hdd_he_print_ini_config(pHddCtx);
