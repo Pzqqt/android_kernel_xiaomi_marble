@@ -386,6 +386,12 @@ static uint8_t scm_get_cipher_suite_type(enum wlan_enc_type enc)
 	case WLAN_ENCRYPT_TYPE_AES:
 		cipher_type = WLAN_CSE_CCMP;
 		break;
+	case WLAN_ENCRYPT_TYPE_AES_GCMP:
+		cipher_type = WLAN_CSE_GCMP_128;
+		break;
+	case WLAN_ENCRYPT_TYPE_AES_GCMP_256:
+		cipher_type = WLAN_CSE_GCMP_256;
+		break;
 	case WLAN_ENCRYPT_TYPE_NONE:
 		cipher_type = WLAN_CSE_NONE;
 		break;
@@ -952,6 +958,8 @@ static bool scm_is_security_match(struct scan_filter *filter,
 			break;
 		case WLAN_ENCRYPT_TYPE_TKIP:
 		case WLAN_ENCRYPT_TYPE_AES:
+		case WLAN_ENCRYPT_TYPE_AES_GCMP:
+		case WLAN_ENCRYPT_TYPE_AES_GCMP_256:
 			/* First check if there is a RSN match */
 			match = scm_is_rsn_security(filter,
 				    db_entry, &local_security);
