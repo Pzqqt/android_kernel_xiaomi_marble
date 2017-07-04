@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -573,6 +573,33 @@ static inline void *hal_srng_src_get_next_reaped(void *hal_soc, void *hal_ring)
 		srng->u.src_ring.hp = (srng->u.src_ring.hp + srng->entry_size) %
 			srng->ring_size;
 
+		return (void *)desc;
+	}
+
+	return NULL;
+}
+
+/**
+ * hal_srng_src_pending_reap_next - Reap next entry from a source ring and
+ * move reap pointer. This API is used in detach path to release any buffers
+ * associated with ring entries which are pending reap.
+ *
+ * @hal_soc: Opaque HAL SOC handle
+ * @hal_ring: Source ring pointer
+ *
+ * Return: Opaque pointer for next ring entry; NULL on failire
+ */
+static inline void *hal_srng_src_pending_reap_next(void *hal_soc, void *hal_ring)
+{
+	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	uint32_t *desc;
+
+	uint32_t next_reap_hp = (srng->u.src_ring.reap_hp + srng->entry_size) %
+		srng->ring_size;
+
+	if (next_reap_hp != srng->u.src_ring.hp) {
+		desc = &(srng->ring_base_vaddr[next_reap_hp]);
+		srng->u.src_ring.reap_hp = next_reap_hp;
 		return (void *)desc;
 	}
 
