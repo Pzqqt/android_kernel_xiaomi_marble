@@ -173,6 +173,7 @@ enum log_event_indicator {
  * @WLAN_LOG_REASON_SCAN_NOT_ALLOWED: scan not allowed due to connection states
  * @WLAN_LOG_REASON_HB_FAILURE: station triggered heart beat failure with AP
  * @WLAN_LOG_REASON_ROAM_HO_FAILURE: Handover failed during LFR3 roaming
+ * @WLAN_LOG_REASON_DISCONNECT: Disconnect because of some failure
  */
 enum log_event_host_reason_code {
 	WLAN_LOG_REASON_CODE_UNUSED,
@@ -188,7 +189,8 @@ enum log_event_host_reason_code {
 	WLAN_LOG_REASON_NO_SCAN_RESULTS,
 	WLAN_LOG_REASON_SCAN_NOT_ALLOWED,
 	WLAN_LOG_REASON_HB_FAILURE,
-	WLAN_LOG_REASON_ROAM_HO_FAILURE
+	WLAN_LOG_REASON_ROAM_HO_FAILURE,
+	WLAN_LOG_REASON_DISCONNECT
 };
 
 

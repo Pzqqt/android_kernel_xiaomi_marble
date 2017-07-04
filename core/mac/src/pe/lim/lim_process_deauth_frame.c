@@ -163,6 +163,17 @@ lim_process_deauth_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 			GET_LIM_SYSTEM_ROLE(psessionEntry), frame_rssi,
 			reasonCode, lim_dot11_reason_str(reasonCode),
 			MAC_ADDR_ARRAY(pHdr->sa));
+
+	if (pMac->roam.configParam.enable_fatal_event &&
+		(reasonCode != eSIR_MAC_UNSPEC_FAILURE_REASON &&
+		reasonCode != eSIR_MAC_DEAUTH_LEAVING_BSS_REASON &&
+		reasonCode != eSIR_MAC_DISASSOC_LEAVING_BSS_REASON)) {
+		cds_flush_logs(WLAN_LOG_TYPE_FATAL,
+				WLAN_LOG_INDICATOR_HOST_DRIVER,
+				WLAN_LOG_REASON_DISCONNECT,
+				false, false);
+	}
+
 	lim_diag_event_report(pMac, WLAN_PE_DIAG_DEAUTH_FRAME_EVENT,
 		psessionEntry, 0, reasonCode);
 
