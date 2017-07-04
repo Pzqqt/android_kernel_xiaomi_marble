@@ -429,6 +429,7 @@ void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	uint32_t pkt_type;
 	uint32_t nss;
 	uint32_t rate_mcs;
+	uint32_t bw;
 
 	/* fill recv mesh stats */
 	rx_info = qdf_mem_malloc(sizeof(struct mesh_recv_hdr_s));
@@ -442,6 +443,7 @@ void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		return;
 	}
 
+	rx_info->rs_flags = MESH_RXHDR_VER1;
 	if (qdf_nbuf_is_chfrag_start(nbuf))
 		rx_info->rs_flags |= MESH_RX_FIRST_MSDU;
 
@@ -451,15 +453,16 @@ void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	if (hal_rx_attn_msdu_get_is_decrypted(rx_tlv_hdr)) {
 		rx_info->rs_flags |= MESH_RX_DECRYPTED;
 		rx_info->rs_keyix = hal_rx_msdu_get_keyid(rx_tlv_hdr);
-		rx_info->rs_flags |= MESH_KEY_NOTFILLED;
 	}
 
 	rx_info->rs_rssi = hal_rx_msdu_start_get_rssi(rx_tlv_hdr);
 	rx_info->rs_channel = hal_rx_msdu_start_get_freq(rx_tlv_hdr);
 	pkt_type = hal_rx_msdu_start_get_pkt_type(rx_tlv_hdr);
 	rate_mcs = hal_rx_msdu_start_rate_mcs_get(rx_tlv_hdr);
+	bw = hal_rx_msdu_start_bw_get(rx_tlv_hdr);
 	nss = hal_rx_msdu_start_nss_get(rx_tlv_hdr);
-	rx_info->rs_ratephy1 = rate_mcs | (nss << 0x4) | (pkt_type << 6);
+	rx_info->rs_ratephy1 = rate_mcs | (nss << 0x8) | (pkt_type << 16) |
+				(bw << 24);
 
 	qdf_nbuf_set_fctx_type(nbuf, (void *)rx_info, CB_FTYPE_MESH_RX_INFO);
 
@@ -1271,7 +1274,8 @@ done:
 #endif /* NAPIER_EMULATION */
 
 			if (qdf_likely(vdev->rx_decap_type ==
-						htt_cmn_pkt_type_ethernet)) {
+						htt_cmn_pkt_type_ethernet) &&
+					(qdf_likely(!vdev->mesh_vdev))) {
 				/* WDS Source Port Learning */
 				if (qdf_likely(vdev->wds_enabled))
 					dp_rx_wds_srcport_learn(soc,
