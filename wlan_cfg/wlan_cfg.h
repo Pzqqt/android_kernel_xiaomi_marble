@@ -473,4 +473,20 @@ int wlan_cfg_get_int_batch_threshold_other(struct wlan_cfg_dp_soc_ctxt *cfg);
  * Return: Timer threshold
  */
 int wlan_cfg_get_int_timer_threshold_other(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
+ * wlan_cfg_tx_ring_size - Get Tx DMA ring size (TCL Data Ring)
+ * @wlan_cfg_soc_ctx
+ *
+ * Return: Tx Ring Size
+ */
+int wlan_cfg_tx_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
+ * wlan_cfg_tx_comp_ring_size - Get Tx completion ring size (WBM Ring)
+ * @wlan_cfg_soc_ctx
+ *
+ * Return: Tx Completion ring size
+ */
+int wlan_cfg_tx_comp_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
 #endif

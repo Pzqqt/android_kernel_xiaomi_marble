@@ -36,6 +36,8 @@
 #define WLAN_CFG_PER_PDEV_RX_RING 0
 #define NUM_RXDMA_RINGS_PER_PDEV 2
 #define WLAN_LRO_ENABLE 1
+#define WLAN_CFG_TX_RING_SIZE 512
+#define WLAN_CFG_TX_COMP_RING_SIZE 1024
 
 /* Tx Descriptor and Tx Extension Descriptor pool sizes */
 #define WLAN_CFG_NUM_TX_DESC  1024
@@ -71,6 +73,17 @@
 #define WLAN_CFG_INT_TIMER_THRESHOLD_TX 1000
 #define WLAN_CFG_INT_TIMER_THRESHOLD_RX 500
 #define WLAN_CFG_INT_TIMER_THRESHOLD_OTHER 8
+
+#define WLAN_CFG_TX_RING_SIZE 512
+
+/* Size the completion ring using following 2 parameters
+ *  - NAPI schedule latency (assuming 1 netdev competing for CPU) = 20 ms (2 jiffies)
+ *  - Worst case PPS requirement = 400K PPS
+ *
+ * Ring size = 20 * 400 = 8000
+ * 8192 is nearest power of 2
+ */
+#define WLAN_CFG_TX_COMP_RING_SIZE (8 << 10)
 #endif
 
 #define WLAN_CFG_INT_NUM_CONTEXTS 4
@@ -232,6 +245,8 @@ struct wlan_cfg_dp_soc_ctxt {
 	int int_timer_threshold_rx;
 	int int_batch_threshold_other;
 	int int_timer_threshold_other;
+	int tx_ring_size;
+	int tx_comp_ring_size;
 	int int_tx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	int int_rx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	int int_rx_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
@@ -291,6 +306,9 @@ struct wlan_cfg_dp_soc_ctxt *wlan_cfg_soc_attach()
 	wlan_cfg_ctx->num_tx_ext_desc = WLAN_CFG_NUM_TX_EXT_DESC;
 	wlan_cfg_ctx->htt_packet_type = WLAN_CFG_HTT_PKT_TYPE;
 	wlan_cfg_ctx->max_peer_id = WLAN_CFG_MAX_PEER_ID;
+
+	wlan_cfg_ctx->tx_ring_size = WLAN_CFG_TX_RING_SIZE;
+	wlan_cfg_ctx->tx_comp_ring_size = WLAN_CFG_TX_COMP_RING_SIZE;
 
 	wlan_cfg_ctx->int_batch_threshold_tx = WLAN_CFG_INT_BATCH_THRESHOLD_TX;
 	wlan_cfg_ctx->int_timer_threshold_tx =  WLAN_CFG_INT_TIMER_THRESHOLD_TX;
@@ -507,6 +525,16 @@ int wlan_cfg_per_pdev_tx_ring(struct wlan_cfg_dp_soc_ctxt *cfg)
 int wlan_cfg_num_tcl_data_rings(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return cfg->num_tcl_data_rings;
+}
+
+int wlan_cfg_tx_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->tx_ring_size;
+}
+
+int wlan_cfg_tx_comp_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->tx_comp_ring_size;
 }
 
 int wlan_cfg_per_pdev_rx_ring(struct wlan_cfg_dp_soc_ctxt *cfg)

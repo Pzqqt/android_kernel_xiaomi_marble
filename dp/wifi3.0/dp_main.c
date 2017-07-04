@@ -862,8 +862,6 @@ static void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
 
 /* TODO: Following should be configurable */
 #define WBM_RELEASE_RING_SIZE 64
-#define TCL_DATA_RING_SIZE 512
-#define TX_COMP_RING_SIZE 1024
 #define TCL_CMD_RING_SIZE 32
 #define TCL_STATUS_RING_SIZE 32
 #define REO_DST_RING_SIZE 2048
@@ -891,6 +889,8 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 {
 	int i;
 	struct hal_reo_params reo_params;
+	int tx_ring_size;
+	int tx_comp_ring_size;
 
 	if (qdf_atomic_read(&soc->cmn_init_done))
 		return 0;
@@ -916,16 +916,20 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 	if (!wlan_cfg_per_pdev_tx_ring(soc->wlan_cfg_ctx)) {
 		soc->num_tcl_data_rings =
 			wlan_cfg_num_tcl_data_rings(soc->wlan_cfg_ctx);
+		tx_comp_ring_size =
+			wlan_cfg_tx_comp_ring_size(soc->wlan_cfg_ctx);
+		tx_ring_size =
+			wlan_cfg_tx_ring_size(soc->wlan_cfg_ctx);
 		for (i = 0; i < soc->num_tcl_data_rings; i++) {
 			if (dp_srng_setup(soc, &soc->tcl_data_ring[i],
-				TCL_DATA, i, 0, TCL_DATA_RING_SIZE)) {
+				TCL_DATA, i, 0, tx_ring_size)) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					QDF_TRACE_LEVEL_ERROR,
 					FL("dp_srng_setup failed for tcl_data_ring[%d]"), i);
 				goto fail1;
 			}
 			if (dp_srng_setup(soc, &soc->tx_comp_ring[i],
-				WBM2SW_RELEASE, i, 0, TX_COMP_RING_SIZE)) {
+				WBM2SW_RELEASE, i, 0, tx_comp_ring_size)) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					QDF_TRACE_LEVEL_ERROR,
 					FL("dp_srng_setup failed for tx_comp_ring[%d]"), i);
@@ -1186,6 +1190,9 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	struct cdp_cfg *ctrl_pdev,
 	HTC_HANDLE htc_handle, qdf_device_t qdf_osdev, uint8_t pdev_id)
 {
+	int tx_ring_size;
+	int tx_comp_ring_size;
+
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
 	struct dp_pdev *pdev = qdf_mem_malloc(sizeof(*pdev));
 
@@ -1232,14 +1239,19 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 
 	/* Setup per PDEV TCL rings if configured */
 	if (wlan_cfg_per_pdev_tx_ring(soc->wlan_cfg_ctx)) {
+		tx_ring_size =
+			wlan_cfg_tx_ring_size(soc->wlan_cfg_ctx);
+		tx_comp_ring_size =
+			wlan_cfg_tx_comp_ring_size(soc->wlan_cfg_ctx);
+
 		if (dp_srng_setup(soc, &soc->tcl_data_ring[pdev_id], TCL_DATA,
-			pdev_id, pdev_id, TCL_DATA_RING_SIZE)) {
+			pdev_id, pdev_id, tx_ring_size)) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				FL("dp_srng_setup failed for tcl_data_ring"));
 			goto fail1;
 		}
 		if (dp_srng_setup(soc, &soc->tx_comp_ring[pdev_id],
-			WBM2SW_RELEASE, pdev_id, pdev_id, TCL_DATA_RING_SIZE)) {
+			WBM2SW_RELEASE, pdev_id, pdev_id, tx_comp_ring_size)) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				FL("dp_srng_setup failed for tx_comp_ring"));
 			goto fail1;
