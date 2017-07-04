@@ -648,8 +648,13 @@ QDF_STATUS
 dp_rx_link_desc_buf_return(struct dp_soc *soc, struct dp_srng *dp_rxdma_srng,
 				void *buf_addr_info);
 
-
 uint32_t
 dp_rxdma_err_process(struct dp_soc *soc, uint32_t mac_id,
 						uint32_t quota);
+
+void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
+				uint8_t *rx_tlv_hdr, struct dp_peer *peer);
+QDF_STATUS dp_rx_filter_mesh_packets(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
+					uint8_t *rx_tlv_hdr);
+
 #endif /* _DP_RX_H */

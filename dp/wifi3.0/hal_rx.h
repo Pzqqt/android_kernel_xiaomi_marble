@@ -1906,7 +1906,7 @@ enum hal_reo_error_code {
  * @ HAL_RXDMA_ERR_FCS           : FCS check on the MPDU frame failed
  * @ HAL_RXDMA_ERR_DECRYPT       : Decryption error
  * @ HAL_RXDMA_ERR_TKIP_MIC      : TKIP MIC error
- * @ HAL_RXDMA_ERR_UNECRYPTED    : Received a frame that was expected to be
+ * @ HAL_RXDMA_ERR_UNENCRYPTED   : Received a frame that was expected to be
  * 			  	   encrypted but wasn’t
  * @ HAL_RXDMA_ERR_MSDU_LEN      : MSDU related length error
  * @ HAL_RXDMA_ERR_MSDU_LIMIT    : Number of MSDUs in the MPDUs exceeded

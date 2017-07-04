@@ -569,6 +569,23 @@ dp_rx_err_deliver(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 	 */
 	qdf_nbuf_pull_head(nbuf, (l2_hdr_offset + RX_PKT_TLVS_LEN));
 
+	qdf_nbuf_set_chfrag_start(nbuf, 1);
+	qdf_nbuf_set_chfrag_end(nbuf, 1);
+	if (dp_rx_filter_mesh_packets(vdev, nbuf,
+				rx_desc->rx_buf_start)
+			== QDF_STATUS_SUCCESS) {
+		QDF_TRACE(QDF_MODULE_ID_DP,
+				QDF_TRACE_LEVEL_INFO_MED,
+				FL("mesh pkt filtered"));
+		DP_STATS_INC(vdev->pdev, dropped.mesh_filter,
+				1);
+
+		qdf_nbuf_free(nbuf);
+		goto fail;
+
+	}
+	dp_rx_fill_mesh_stats(vdev, nbuf, rx_desc->rx_buf_start, peer);
+
 	if (qdf_unlikely(vdev->rx_decap_type == htt_cmn_pkt_type_raw)) {
 		dp_rx_deliver_raw(vdev, nbuf, peer);
 	} else {

@@ -420,7 +420,7 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
  *
  * Return: void
  */
-static
+
 void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				uint8_t *rx_tlv_hdr, struct dp_peer *peer)
 {
@@ -493,7 +493,6 @@ void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
  * Return: status(0 indicates drop, 1 indicate to no drop)
  */
 
-static inline
 QDF_STATUS dp_rx_filter_mesh_packets(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 					uint8_t *rx_tlv_hdr)
 {
@@ -540,13 +539,11 @@ QDF_STATUS dp_rx_filter_mesh_packets(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 }
 
 #else
-static
 void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				uint8_t *rx_tlv_hdr, struct dp_peer *peer)
 {
 }
 
-static inline
 QDF_STATUS dp_rx_filter_mesh_packets(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 					uint8_t *rx_tlv_hdr)
 {
