@@ -779,14 +779,17 @@ static QDF_STATUS hif_dev_issue_recv_packet_bundle(struct hif_sdio_device *pdev,
 	} else {
 		unsigned char *buffer = bundle_buffer;
 		*num_packets_fetched = i;
-		HTC_PACKET_QUEUE_ITERATE_ALLOW_REMOVE(sync_completion_queue,
-						      packet) {
-			padded_length =
-				DEV_CALC_RECV_PADDED_LEN(pdev,
-							 packet->ActualLength);
-			A_MEMCPY(packet->pBuffer, buffer, padded_length);
-			buffer += padded_length;
-		} HTC_PACKET_QUEUE_ITERATE_END;
+		if (sync_completion_queue) {
+			HTC_PACKET_QUEUE_ITERATE_ALLOW_REMOVE(
+				sync_completion_queue, packet) {
+				padded_length =
+					DEV_CALC_RECV_PADDED_LEN(pdev,
+						packet->ActualLength);
+				A_MEMCPY(packet->pBuffer,
+					buffer, padded_length);
+				buffer += padded_length;
+			} HTC_PACKET_QUEUE_ITERATE_END;
+		}
 	}
 	/* free bundle space under Sync mode */
 	free_htc_bundle_packet(target, packet_rx_bundle);
