@@ -213,24 +213,6 @@ void lim_handle_del_bss_in_re_assoc_context(tpAniSirGlobal pMac,
 		psessionEntry->limAssocResponseData = NULL;
 	}
 	break;
-	case eLIM_SME_WT_REASSOC_LINK_FAIL_STATE:
-	{
-		mlmReassocCnf.resultCode =
-			pStaDs->mlmStaContext.disassocReason;
-		mlmReassocCnf.protStatusCode =
-			pStaDs->mlmStaContext.cleanupTrigger;
-		/** Set the SME State back to WT_Reassoc State*/
-		psessionEntry->limSmeState = eLIM_SME_WT_REASSOC_STATE;
-		lim_delete_dph_hash_entry(pMac, pStaDs->staAddr,
-					  pStaDs->assocId, psessionEntry);
-		if (LIM_IS_STA_ROLE(psessionEntry)) {
-			psessionEntry->limMlmState =
-				eLIM_MLM_IDLE_STATE;
-		}
-		lim_post_sme_message(pMac, LIM_MLM_REASSOC_CNF,
-				     (uint32_t *) &mlmReassocCnf);
-	}
-	break;
 	default:
 		pe_err("DelBss in wrong system Role and SME State");
 		mlmReassocCnf.resultCode = eSIR_SME_REFUSED;
@@ -356,33 +338,6 @@ void lim_handle_add_bss_in_re_assoc_context(tpAniSirGlobal pMac,
 		qdf_mem_free(pBeaconStruct);
 	}
 	break;
-	case eLIM_SME_WT_REASSOC_LINK_FAIL_STATE: {
-		/* Case wherein the DisAssoc / Deauth
-		 * being sent as response to ReAssoc Req
-		 * Send the Reason code as the same received
-		 * in Disassoc / Deauth Frame
-		 */
-		mlmReassocCnf.resultCode =
-			pStaDs->mlmStaContext.disassocReason;
-		mlmReassocCnf.protStatusCode =
-			pStaDs->mlmStaContext.cleanupTrigger;
-		/** Set the SME State back to WT_Reassoc State*/
-		psessionEntry->limSmeState = eLIM_SME_WT_REASSOC_STATE;
-		lim_delete_dph_hash_entry(pMac, pStaDs->staAddr,
-					  pStaDs->assocId, psessionEntry);
-		if (LIM_IS_STA_ROLE(psessionEntry)) {
-			psessionEntry->limMlmState =
-				eLIM_MLM_IDLE_STATE;
-			MTRACE(mac_trace
-				       (pMac, TRACE_CODE_MLM_STATE,
-				       psessionEntry->peSessionId,
-				       psessionEntry->limMlmState));
-		}
-
-		lim_post_sme_message(pMac, LIM_MLM_REASSOC_CNF,
-				     (uint32_t *) &mlmReassocCnf);
-	}
-	break;
 	default:
 		pe_err("DelBss in the wrong system Role and SME State");
 		mlmReassocCnf.resultCode = eSIR_SME_REFUSED;
@@ -408,10 +363,9 @@ bool lim_is_reassoc_in_progress(tpAniSirGlobal pMac, tpPESession psessionEntry)
 {
 	if (psessionEntry == NULL)
 		return false;
-	if ((LIM_IS_STA_ROLE(psessionEntry)) &&
-	    ((psessionEntry->limSmeState == eLIM_SME_WT_REASSOC_STATE) ||
-	    (psessionEntry->limSmeState ==
-		      eLIM_SME_WT_REASSOC_LINK_FAIL_STATE)))
+
+	if (LIM_IS_STA_ROLE(psessionEntry) &&
+	    (psessionEntry->limSmeState == eLIM_SME_WT_REASSOC_STATE))
 		return true;
 
 	return false;
