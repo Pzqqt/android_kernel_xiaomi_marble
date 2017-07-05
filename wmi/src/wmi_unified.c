@@ -2144,6 +2144,8 @@ int wmi_unified_register_event_handler(wmi_unified_t wmi_handle,
 		       __func__, evt_id);
 		return QDF_STATUS_E_FAILURE;
 	}
+	QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
+			"Registered event handler for event 0x%8x\n", evt_id);
 	idx = soc->max_event_idx;
 	wmi_handle->event_handler[idx] = handler_func;
 	wmi_handle->event_id[idx] = evt_id;
