@@ -18066,13 +18066,13 @@ static int __wlan_hdd_cfg80211_set_mon_ch(struct wiphy *wiphy,
 	roam_profile.ChannelInfo.ChannelList = &ch_info->channel;
 	roam_profile.ChannelInfo.numOfChannels = 1;
 	roam_profile.phyMode = ch_info->phy_mode;
-	roam_profile.ch_params.ch_width = chandef->width;
+	roam_profile.ch_params.ch_width = hdd_map_nl_chan_width(chandef->width);
 	hdd_select_cbmode(adapter, chan_num, &roam_profile.ch_params);
 
 	qdf_mem_copy(bssid.bytes, adapter->macAddressCurrent.bytes,
 		     QDF_MAC_ADDR_SIZE);
 
-	ch_params.ch_width = chandef->width;
+	ch_params.ch_width = hdd_map_nl_chan_width(chandef->width);
 	/*
 	 * CDS api expects secondary channel for calculating
 	 * the channel params
