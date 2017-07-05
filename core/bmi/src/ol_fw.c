@@ -493,7 +493,10 @@ int ol_copy_ramdump(struct hif_opaque_softc *scn)
 		BMI_ERR("%s qdf_dev is NULL", __func__);
 		return -EINVAL;
 	}
-
+	if (pld_is_fw_dump_skipped(qdf_dev->dev)) {
+		BMI_INFO("%s ssr enabled, skip ramdump", __func__);
+		return 0;
+	}
 	info = qdf_mem_malloc(sizeof(struct ramdump_info));
 	if (!info) {
 		BMI_ERR("%s Memory for Ramdump Allocation failed", __func__);

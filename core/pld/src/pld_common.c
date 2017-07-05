@@ -1558,3 +1558,27 @@ int pld_force_assert_target(struct device *dev)
 	}
 	return ret;
 }
+
+/**
+ * pld_is_fw_dump_skipped() - get fw dump skipped status.
+ *  The subsys ssr status help the driver to decide whether to skip
+ *  the FW memory dump when FW assert.
+ *  For SDIO case, the memory dump progress takes 1 minutes to
+ *  complete, which is not acceptable in SSR enabled.
+ *
+ *  Return: true if need to skip FW dump.
+ */
+bool pld_is_fw_dump_skipped(struct device *dev)
+{
+	bool ret = false;
+	enum pld_bus_type type = pld_get_bus_type(dev);
+
+	switch (type) {
+	case PLD_BUS_TYPE_SDIO:
+		ret = pld_sdio_is_fw_dump_skipped();
+		break;
+	default:
+		break;
+	}
+	return ret;
+}
