@@ -2241,6 +2241,11 @@ QDF_STATUS wlan_crypto_set_peer_wep_keys(struct wlan_objmgr_vdev *vdev,
 				qdf_copy_macaddr((struct qdf_mac_addr *)keymac,
 					(struct qdf_mac_addr *)mac_addr);
 
+				tmp_key->flags &= ~WLAN_CRYPTO_KEY_DEFAULT;
+				if (crypto_priv->def_tx_keyid == i)
+					tmp_key->flags
+						|= WLAN_CRYPTO_KEY_DEFAULT;
+
 				/* setting the broadcast/multicast key for sta*/
 				if (opmode == QDF_STA_MODE ||
 						opmode == QDF_IBSS_MODE){
