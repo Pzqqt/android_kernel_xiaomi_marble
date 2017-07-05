@@ -187,6 +187,9 @@
 #define AR6320V2_SOC_CHIP_ID_VERSION_LSB                  18
 #define AR6320V2_SOC_CHIP_ID_REVISION_MASK                0x00000f00
 #define AR6320V2_SOC_CHIP_ID_REVISION_LSB                 8
+#if defined(HIF_SDIO)
+#define AR6320V2_FW_IND_HELPER                            4
+#endif
 #if defined(HIF_PCI) || defined(HIF_SNOC) || defined(HIF_AHB)
 #define AR6320V2_CE_WRAPPER_BASE_ADDRESS                  0x00034000
 #define AR6320V2_CE0_BASE_ADDRESS                         0x00034400
@@ -746,6 +749,9 @@ struct hostdef_s ar6320v2_hostdef = {
 	.d_MSI_MAGIC_ADDRESS = MSI_MAGIC_ADDRESS,
 	.d_HOST_CE_COUNT = 8,
 	.d_ENABLE_MSI = 0,
+#endif
+#if defined(HIF_SDIO)
+	.d_FW_IND_HELPER = AR6320V2_FW_IND_HELPER,
 #endif
 };
 

@@ -55,6 +55,7 @@
 #endif
 #include "epping_main.h"
 #include "pld_sdio.h"
+#include "targaddrs.h"
 
 #ifndef ATH_BUS_PM
 #ifdef CONFIG_PM
@@ -610,15 +611,28 @@ void hif_trigger_dump(struct hif_opaque_softc *scn, uint8_t cmd_id, bool start)
 }
 
 /**
- * hif_check_fw_reg() - hif_check_fw_reg
- * @scn: scn
- * @state:
+ * hif_check_fw_reg() - check fw selfrecovery indication
+ * @hif_ctx: hif_opaque_softc
  *
  * Return: int
  */
-int hif_check_fw_reg(struct hif_opaque_softc *scn)
+int hif_check_fw_reg(struct hif_opaque_softc *hif_ctx)
 {
-	return 0;
+	int ret = 1;
+	uint32_t fw_indication = 0;
+	struct hif_sdio_softc *scn = HIF_GET_SDIO_SOFTC(hif_ctx);
+
+	if (hif_diag_read_access(hif_ctx, FW_INDICATOR_ADDRESS,
+				 &fw_indication) != QDF_STATUS_SUCCESS) {
+		HIF_ERROR("%s Get fw indication failed\n", __func__);
+		return 1;
+	}
+	HIF_INFO("%s: fw indication is 0x%x def 0x%x.\n", __func__,
+		fw_indication, FW_IND_HELPER);
+	if (fw_indication & FW_IND_HELPER)
+		ret = 0;
+
+	return ret;
 }
 
 /**
