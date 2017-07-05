@@ -14029,7 +14029,7 @@ QDF_STATUS sme_enable_uapsd_for_ac(void *cds_ctx, uint8_t sta_id,
 				   sme_ac_enum_type ac, uint8_t tid,
 				   uint8_t pri, uint32_t srvc_int,
 				   uint32_t sus_int,
-				   sme_tspec_dir_type dir,
+				   sme_qos_wmm_dir_type dir,
 				   uint8_t psb, uint32_t sessionId,
 				   uint32_t delay_interval)
 {

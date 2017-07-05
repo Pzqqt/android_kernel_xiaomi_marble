@@ -5142,7 +5142,7 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 						 (WLAN_HDD_GET_CTX(pAdapter))->pcds_context,
 						 peer_staid, ucAc[ac],
 						 tlTid[ac], tlTid[ac], 0, 0,
-						 SME_BI_DIR, 1,
+						 SME_QOS_WMM_TS_DIR_BOTH, 1,
 						 pAdapter->sessionId,
 						 pHddCtx->config->DelayedTriggerFrmInt);
 				}

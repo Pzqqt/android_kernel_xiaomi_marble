@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -166,19 +166,6 @@ typedef enum {
 } sme_QosWmmUpType;
 
 /*---------------------------------------------------------------------------
-  Enumeration of the various TSPEC directions
-
-  From 802.11e/WMM specifications
-  ---------------------------------------------------------------------------*/
-
-typedef enum {
-	SME_QOS_WMM_TS_DIR_UPLINK = 0,
-	SME_QOS_WMM_TS_DIR_DOWNLINK = 1,
-	SME_QOS_WMM_TS_DIR_RESV = 2,    /* Reserved */
-	SME_QOS_WMM_TS_DIR_BOTH = 3,
-} sme_QosWmmDirType;
-
-/*---------------------------------------------------------------------------
   Enumeration of the various TSPEC ack policies.
 
   From 802.11 WMM specification
@@ -202,7 +189,7 @@ typedef struct {
 	sme_QosWmmAckPolicyType ack_policy;
 	sme_QosWmmUpType up;    /* User priority */
 	uint8_t psb;            /* power-save bit */
-	sme_QosWmmDirType direction;    /* Direction */
+	sme_qos_wmm_dir_type direction;    /* Direction */
 	uint8_t tid;            /* TID : To be filled up by SME-QoS */
 } sme_QosWmmTsInfoType;
 

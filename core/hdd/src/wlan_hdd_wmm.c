@@ -145,7 +145,7 @@ static void hdd_wmm_enable_tl_uapsd(struct hdd_wmm_qos_context *pQosContext)
 	QDF_STATUS status;
 	uint32_t service_interval;
 	uint32_t suspension_interval;
-	sme_QosWmmDirType direction;
+	sme_qos_wmm_dir_type direction;
 	bool psb;
 
 	/* The TSPEC must be valid */
@@ -1840,7 +1840,7 @@ QDF_STATUS hdd_wmm_assoc(hdd_adapter_t *pAdapter,
 						   SME_AC_VO, 7, 7,
 						   pHddCtx->config->InfraUapsdVoSrvIntv,
 						   pHddCtx->config->InfraUapsdVoSuspIntv,
-						   SME_BI_DIR, 1,
+						   SME_QOS_WMM_TS_DIR_BOTH, 1,
 						   pAdapter->sessionId,
 						   pHddCtx->config->DelayedTriggerFrmInt);
 
@@ -1856,7 +1856,7 @@ QDF_STATUS hdd_wmm_assoc(hdd_adapter_t *pAdapter,
 						   SME_AC_VI, 5, 5,
 						   pHddCtx->config->InfraUapsdViSrvIntv,
 						   pHddCtx->config->InfraUapsdViSuspIntv,
-						   SME_BI_DIR, 1,
+						   SME_QOS_WMM_TS_DIR_BOTH, 1,
 						   pAdapter->sessionId,
 						   pHddCtx->config->DelayedTriggerFrmInt);
 
@@ -1872,7 +1872,7 @@ QDF_STATUS hdd_wmm_assoc(hdd_adapter_t *pAdapter,
 						   SME_AC_BK, 2, 2,
 						   pHddCtx->config->InfraUapsdBkSrvIntv,
 						   pHddCtx->config->InfraUapsdBkSuspIntv,
-						   SME_BI_DIR, 1,
+						   SME_QOS_WMM_TS_DIR_BOTH, 1,
 						   pAdapter->sessionId,
 						   pHddCtx->config->DelayedTriggerFrmInt);
 
@@ -1888,7 +1888,7 @@ QDF_STATUS hdd_wmm_assoc(hdd_adapter_t *pAdapter,
 						   SME_AC_BE, 3, 3,
 						   pHddCtx->config->InfraUapsdBeSrvIntv,
 						   pHddCtx->config->InfraUapsdBeSuspIntv,
-						   SME_BI_DIR, 1,
+						   SME_QOS_WMM_TS_DIR_BOTH, 1,
 						   pAdapter->sessionId,
 						   pHddCtx->config->DelayedTriggerFrmInt);
 

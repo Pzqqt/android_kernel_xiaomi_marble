@@ -162,7 +162,7 @@ struct hdd_wmm_ac_status {
 	bool wmmAcIsUapsdEnabled;
 	uint32_t wmmAcUapsdServiceInterval;
 	uint32_t wmmAcUapsdSuspensionInterval;
-	sme_QosWmmDirType wmmAcUapsdDirection;
+	sme_qos_wmm_dir_type wmmAcUapsdDirection;
 
 #ifdef FEATURE_WLAN_ESE
 	uint32_t wmmInactivityTime;
