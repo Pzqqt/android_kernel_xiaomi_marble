@@ -860,7 +860,12 @@ lim_ft_send_aggr_qos_rsp(tpAniSirGlobal pMac, uint8_t rspReqd,
 	rsp->aggrInfo.tspecIdx = aggrQosRsp->tspecIdx;
 	for (i = 0; i < SIR_QOS_NUM_AC_MAX; i++) {
 		if ((1 << i) & aggrQosRsp->tspecIdx) {
-			rsp->aggrInfo.aggrRsp[i].status = aggrQosRsp->status[i];
+			if (QDF_IS_STATUS_SUCCESS(aggrQosRsp->status[i]))
+				rsp->aggrInfo.aggrRsp[i].status =
+					eSIR_MAC_SUCCESS_STATUS;
+			else
+				rsp->aggrInfo.aggrRsp[i].status =
+					eSIR_MAC_UNSPEC_FAILURE_STATUS;
 			rsp->aggrInfo.aggrRsp[i].tspec = aggrQosRsp->tspec[i];
 		}
 	}
