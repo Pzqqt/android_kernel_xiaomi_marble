@@ -33,6 +33,10 @@
 #include <linux/pm.h>
 #include <osapi_linux.h>
 
+#ifdef CONFIG_CNSS_UTILS
+#include <net/cnss_utils.h>
+#endif
+
 #define PLD_IMAGE_FILE               "athwlan.bin"
 #define PLD_UTF_FIRMWARE_FILE        "utf.bin"
 #define PLD_BOARD_DATA_FILE          "fakeboar.bin"
@@ -366,14 +370,150 @@ int pld_get_fw_files_for_target(struct device *dev,
 				u32 target_type, u32 target_version);
 void pld_is_pci_link_down(struct device *dev);
 int pld_shadow_control(struct device *dev, bool enable);
-int pld_set_wlan_unsafe_channel(struct device *dev, u16 *unsafe_ch_list,
-				u16 ch_count);
-int pld_get_wlan_unsafe_channel(struct device *dev, u16 *unsafe_ch_list,
-				u16 *ch_count, u16 buf_len);
-int pld_wlan_set_dfs_nol(struct device *dev, void *info, u16 info_len);
-int pld_wlan_get_dfs_nol(struct device *dev, void *info, u16 info_len);
 void pld_schedule_recovery_work(struct device *dev,
 				enum pld_recovery_reason reason);
+#ifdef CONFIG_CNSS_UTILS
+/**
+ * pld_set_wlan_unsafe_channel() - Set unsafe channel
+ * @dev: device
+ * @unsafe_ch_list: unsafe channel list
+ * @ch_count: number of channel
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+static inline int pld_set_wlan_unsafe_channel(struct device *dev,
+					      u16 *unsafe_ch_list,
+					      u16 ch_count)
+{
+	return cnss_utils_set_wlan_unsafe_channel(dev, unsafe_ch_list,
+						  ch_count);
+}
+/**
+ * pld_get_wlan_unsafe_channel() - Get unsafe channel
+ * @dev: device
+ * @unsafe_ch_list: buffer to unsafe channel list
+ * @ch_count: number of channel
+ * @buf_len: buffer length
+ *
+ * Return WLAN unsafe channel to the buffer.
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+static inline int pld_get_wlan_unsafe_channel(struct device *dev,
+					      u16 *unsafe_ch_list,
+					      u16 *ch_count, u16 buf_len)
+{
+	return cnss_utils_get_wlan_unsafe_channel(dev, unsafe_ch_list,
+						  ch_count, buf_len);
+}
+/**
+ * pld_wlan_set_dfs_nol() - Set DFS info
+ * @dev: device
+ * @info: DFS info
+ * @info_len: info length
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+static inline int pld_wlan_set_dfs_nol(struct device *dev, void *info,
+				       u16 info_len)
+{
+	return cnss_utils_wlan_set_dfs_nol(dev, info, info_len);
+}
+/**
+ * pld_wlan_get_dfs_nol() - Get DFS info
+ * @dev: device
+ * @info: buffer to DFS info
+ * @info_len: info length
+ *
+ * Return DFS info to the buffer.
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+static inline int pld_wlan_get_dfs_nol(struct device *dev,
+				       void *info, u16 info_len)
+{
+	return cnss_utils_wlan_get_dfs_nol(dev, info, info_len);
+}
+/**
+ * pld_get_wlan_mac_address() - API to query MAC address from Platform
+ * Driver
+ * @dev: Device Structure
+ * @num: Pointer to number of MAC address supported
+ *
+ * Platform Driver can have MAC address stored. This API needs to be used
+ * to get those MAC address
+ *
+ * Return: Pointer to the list of MAC address
+ */
+static inline uint8_t *pld_get_wlan_mac_address(struct device *dev,
+						uint32_t *num)
+{
+	return cnss_utils_get_wlan_mac_address(dev, num);
+}
+/**
+ * pld_increment_driver_load_cnt() - Maintain driver load count
+ * @dev: device
+ *
+ * This function maintain a count which get increase whenever wiphy
+ * is registered
+ *
+ * Return: void
+ */
+static inline void pld_increment_driver_load_cnt(struct device *dev)
+{
+	cnss_utils_increment_driver_load_cnt(dev);
+}
+/**
+ * pld_get_driver_load_cnt() - get driver load count
+ * @dev: device
+ *
+ * This function provide total wiphy registration count from starting
+ *
+ * Return: driver load count
+ */
+static inline int pld_get_driver_load_cnt(struct device *dev)
+{
+	return cnss_utils_get_driver_load_cnt(dev);
+}
+#else
+static inline int pld_set_wlan_unsafe_channel(struct device *dev,
+					      u16 *unsafe_ch_list,
+					      u16 ch_count)
+{
+	return -EINVAL;
+}
+static inline int pld_get_wlan_unsafe_channel(struct device *dev,
+					      u16 *unsafe_ch_list,
+					      u16 *ch_count, u16 buf_len)
+{
+	return -EINVAL;
+}
+static inline int pld_wlan_set_dfs_nol(struct device *dev,
+				       void *info, u16 info_len)
+{
+	return -EINVAL;
+}
+static inline int pld_wlan_get_dfs_nol(struct device *dev,
+				       void *info, u16 info_len)
+{
+	return -EINVAL;
+}
+static inline uint8_t *pld_get_wlan_mac_address(struct device *dev,
+						uint32_t *num)
+{
+	*num = 0;
+	return NULL;
+}
+static inline void pld_increment_driver_load_cnt(struct device *dev) {}
+static inline int pld_get_driver_load_cnt(struct device *dev)
+{
+	return -EINVAL;
+}
+#endif
 int pld_wlan_pm_control(struct device *dev, bool vote);
 void *pld_get_virt_ramdump_mem(struct device *dev, unsigned long *size);
 void pld_device_crashed(struct device *dev);
@@ -418,7 +558,6 @@ int pld_get_msi_irq(struct device *dev, unsigned int vector);
 void pld_get_msi_address(struct device *dev, uint32_t *msi_addr_low,
 			 uint32_t *msi_addr_high);
 unsigned int pld_socinfo_get_serial_number(struct device *dev);
-uint8_t *pld_get_wlan_mac_address(struct device *dev, uint32_t *num);
 int pld_is_qmi_disable(struct device *dev);
 int pld_force_assert_target(struct device *dev);
 
