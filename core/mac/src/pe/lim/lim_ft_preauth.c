@@ -352,13 +352,11 @@ tSirRetStatus lim_ft_setup_auth_session(tpAniSirGlobal pMac,
 /**
  * lim_ft_process_pre_auth_result() - Process the Auth frame
  * @pMac: Global MAC context
- * @status: Status code
  * @psessionEntry: PE Session
  *
  * Return: None
  */
 static void lim_ft_process_pre_auth_result(tpAniSirGlobal pMac,
-					   QDF_STATUS status,
 					   tpPESession psessionEntry)
 {
 	if (NULL == psessionEntry ||
@@ -495,7 +493,7 @@ send_rsp:
 		pe_debug("Pre auth on same channel as connected AP channel %d",
 			psessionEntry->ftPEContext.pFTPreAuthReq->
 			preAuthchannelNum);
-		lim_ft_process_pre_auth_result(pMac, status, psessionEntry);
+		lim_ft_process_pre_auth_result(pMac, psessionEntry);
 	}
 }
 
@@ -762,8 +760,7 @@ void lim_preauth_scan_event_handler(tpAniSirGlobal mac_ctx,
 		 * after successful auth, or timed out. Either way, STA
 		 * is back to home channel. Data traffic can continue.
 		 */
-		lim_ft_process_pre_auth_result(mac_ctx, QDF_STATUS_SUCCESS,
-			session_entry);
+		lim_ft_process_pre_auth_result(mac_ctx, session_entry);
 		break;
 
 	case SIR_SCAN_EVENT_FOREIGN_CHANNEL:
