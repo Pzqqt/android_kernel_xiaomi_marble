@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2015, 2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -58,7 +58,7 @@ void lim_restore_from_auth_state(tpAniSirGlobal,
 uint8_t lim_delete_open_auth_pre_auth_node(tpAniSirGlobal mac_ctx);
 
 /* Encryption/Decryption related functions */
-void lim_compute_crc32(uint8_t *, uint8_t *, uint8_t);
+void lim_compute_crc32(uint8_t *, uint8_t *, uint16_t);
 void lim_rc4(uint8_t *, uint8_t *, uint8_t *, uint32_t, uint16_t);
 void lim_encrypt_auth_frame(tpAniSirGlobal, uint8_t, uint8_t *, uint8_t *,
 			    uint8_t *, uint32_t);

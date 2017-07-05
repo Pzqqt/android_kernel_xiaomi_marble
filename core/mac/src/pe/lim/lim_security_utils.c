@@ -562,7 +562,7 @@ lim_encrypt_auth_frame(tpAniSirGlobal pMac, uint8_t keyId, uint8_t *pKey,
  * @return None
  */
 
-void lim_compute_crc32(uint8_t *pDest, uint8_t *pSrc, uint8_t len)
+void lim_compute_crc32(uint8_t *pDest, uint8_t *pSrc, uint16_t len)
 {
 	uint32_t crc;
 	int i;
