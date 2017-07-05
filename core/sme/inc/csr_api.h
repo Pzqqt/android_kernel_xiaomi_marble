@@ -47,6 +47,7 @@ typedef enum {
 	/* MAC layer authentication types */
 	eCSR_AUTH_TYPE_OPEN_SYSTEM,
 	eCSR_AUTH_TYPE_SHARED_KEY,
+	eCSR_AUTH_TYPE_SAE,
 	eCSR_AUTH_TYPE_AUTOSWITCH,
 
 	/* Upper layer authentication types */

@@ -129,6 +129,11 @@ uint8_t ccp_rsn_oui_0c[HDD_RSN_OUI_SIZE] = {0x00, 0x0F, 0xAC, 0x0C};
 /* OWE https://tools.ietf.org/html/rfc8110 */
 uint8_t ccp_rsn_oui_18[HDD_RSN_OUI_SIZE] = {0x00, 0x0F, 0xAC, 0x12};
 
+#ifdef WLAN_FEATURE_SAE
+uint8_t ccp_rsn_oui_80[HDD_RSN_OUI_SIZE] = {0x00, 0x0F, 0xAC, 0x08};
+uint8_t ccp_rsn_oui_90[HDD_RSN_OUI_SIZE] = {0x00, 0x0F, 0xAC, 0x09};
+#endif
+
 /* Offset where the EID-Len-IE, start. */
 #define FT_ASSOC_RSP_IES_OFFSET 6  /* Capability(2) + AID(2) + Status Code(2) */
 #define FT_ASSOC_REQ_IES_OFFSET 4  /* Capability(2) + LI(2) */
@@ -4787,6 +4792,27 @@ static inline void hdd_translate_fils_rsn_to_csr_auth(int8_t auth_suite[4],
 }
 #endif
 
+#ifdef WLAN_FEATURE_SAE
+/**
+ * hdd_translate_sae_rsn_to_csr_auth() - Translate SAE RSN to CSR auth type
+ * @auth_suite: auth suite
+ * @auth_type: pointer to eCsrAuthType
+ *
+ * Return: None
+ */
+static void hdd_translate_sae_rsn_to_csr_auth(int8_t auth_suite[4],
+					eCsrAuthType *auth_type)
+{
+	if (qdf_mem_cmp(auth_suite, ccp_rsn_oui_80, 4) == 0)
+		*auth_type = eCSR_AUTH_TYPE_SAE;
+}
+#else
+static inline void hdd_translate_sae_rsn_to_csr_auth(int8_t auth_suite[4],
+					eCsrAuthType *auth_type)
+{
+}
+#endif
+
 /**
  * hdd_translate_rsn_to_csr_auth_type() - Translate RSN to CSR auth type
  * @auth_suite: auth suite
@@ -4833,6 +4859,7 @@ eCsrAuthType hdd_translate_rsn_to_csr_auth_type(uint8_t auth_suite[4])
 	} else
 	{
 		hdd_translate_fils_rsn_to_csr_auth(auth_suite, &auth_type);
+		hdd_translate_sae_rsn_to_csr_auth(auth_suite, &auth_type);
 	}
 	hdd_debug("auth_type: %d", auth_type);
 	return auth_type;
@@ -5391,6 +5418,11 @@ int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
 
 		roam_profile->AuthType.authType[0] = eCSR_AUTH_TYPE_SHARED_KEY;
 		break;
+
+	case eCSR_AUTH_TYPE_SAE:
+		roam_profile->AuthType.authType[0] = eCSR_AUTH_TYPE_SAE;
+		break;
+
 	default:
 
 #ifdef FEATURE_WLAN_ESE

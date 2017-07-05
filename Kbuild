@@ -182,6 +182,9 @@ ifneq ($(CONFIG_ROME_IF),sdio)
 	#Flag to enable FIPS
 	CONFIG_WLAN_FEATURE_FIPS := y
 
+	#Flag to enable SAE
+	CONFIG_WLAN_FEATURE_SAE := y
+
 	#Flag to enable Fast Path feature
 	CONFIG_WLAN_FASTPATH := y
 
@@ -1905,6 +1908,10 @@ endif
 
 # Enable object manager reference count debug infrastructure
 CDEFINES += -DWLAN_OBJMGR_DEBUG
+
+ifeq ($(CONFIG_WLAN_FEATURE_SAE),y)
+CDEFINES += -DWLAN_FEATURE_SAE
+endif
 
 ifeq ($(BUILD_DIAG_VERSION),1)
 CDEFINES += -DFEATURE_WLAN_DIAG_SUPPORT

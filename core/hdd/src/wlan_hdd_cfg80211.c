@@ -16871,6 +16871,10 @@ static int wlan_hdd_cfg80211_set_auth_type(struct hdd_adapter *adapter,
 		sta_ctx->conn_info.authType = eCSR_AUTH_TYPE_OPEN_SYSTEM;
 		break;
 #endif
+	case NL80211_AUTHTYPE_SAE:
+		hdd_debug("set authentication type to SAE");
+		sta_ctx->conn_info.authType = eCSR_AUTH_TYPE_SAE;
+		break;
 	default:
 		hdd_err("Unsupported authentication type: %d", auth_type);
 		sta_ctx->conn_info.authType = eCSR_AUTH_TYPE_UNKNOWN;
@@ -17206,6 +17210,11 @@ static int wlan_hdd_set_akm_suite(struct hdd_adapter *adapter, u32 key_mgmt)
 		break;
 	case WLAN_AKM_SUITE_EAP_SHA384:
 		hdd_debug("setting key mgmt type to EAP_SHA384");
+		pWextState->authKeyMgmt |= IW_AUTH_KEY_MGMT_802_1X;
+		break;
+
+	case WLAN_AKM_SUITE_SAE:
+		hdd_debug("setting key mgmt type to SAE");
 		pWextState->authKeyMgmt |= IW_AUTH_KEY_MGMT_802_1X;
 		break;
 

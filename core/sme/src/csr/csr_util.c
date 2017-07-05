@@ -124,6 +124,18 @@ uint8_t csr_rsn_oui[][CSR_RSN_OUI_SIZE] = {
 #define ENUM_SUITEB_EAP384 18
 	{0x00, 0x0F, 0xAC, 0x0C},
 
+#ifdef WLAN_FEATURE_SAE
+#define ENUM_SAE 19
+	/* SAE */
+	{0x00, 0x0F, 0xAC, 0x08},
+#define ENUM_FT_SAE 20
+	/* FT SAE */
+	{0x00, 0x0F, 0xAC, 0x09},
+#else
+	{0x00, 0x00, 0x00, 0x00},
+	{0x00, 0x00, 0x00, 0x00},
+#endif
+
 	/* define new oui here, update #define CSR_OUI_***_INDEX  */
 };
 
@@ -2465,6 +2477,9 @@ bool csr_is_profile_rsn(tCsrRoamProfile *pProfile)
 	case eCSR_AUTH_TYPE_SUITEB_EAP_SHA384:
 		fRSNProfile = true;
 		break;
+	case eCSR_AUTH_TYPE_SAE:
+		fRSNProfile = true;
+		break;
 
 	default:
 		fRSNProfile = false;
@@ -3294,6 +3309,24 @@ static bool csr_is_auth_suiteb_eap_384(tpAniSirGlobal mac,
 				csr_rsn_oui[ENUM_SUITEB_EAP384], oui);
 }
 
+#ifdef WLAN_FEATURE_SAE
+/*
+ * csr_is_auth_wpa_sae() - check whether oui is SAE
+ * @mac: Global MAC context
+ * @all_suites: pointer to all supported akm suites
+ * @suite_count: all supported akm suites count
+ * @oui: Oui needs to be matched
+ *
+ * Return: True if OUI is SAE, false otherwise
+ */
+static bool csr_is_auth_wpa_sae(tpAniSirGlobal mac,
+			       uint8_t all_suites[][CSR_RSN_OUI_SIZE],
+			       uint8_t suite_count, uint8_t oui[])
+{
+	return csr_is_oui_match
+		(mac, all_suites, suite_count, csr_rsn_oui[ENUM_SAE], oui);
+}
+#endif
 
 static bool csr_is_auth_wpa(tpAniSirGlobal pMac,
 			    uint8_t AllSuites[][CSR_WPA_OUI_SIZE],
@@ -3445,6 +3478,42 @@ static void csr_is_fils_auth(tpAniSirGlobal mac_ctx,
 {
 }
 #endif
+
+#ifdef WLAN_FEATURE_SAE
+/**
+ * csr_check_sae_auth() - update negotiated auth if matches to SAE auth type
+ * @mac_ctx: pointer to mac context
+ * @authsuites: auth suites
+ * @c_auth_suites: auth suites count
+ * @authentication: authentication
+ * @auth_type: authentication type list
+ * @index: current counter
+ * @neg_authtype: pointer to negotiated auth
+ *
+ * Return: None
+ */
+static void csr_check_sae_auth(tpAniSirGlobal mac_ctx,
+	uint8_t authsuites[][CSR_RSN_OUI_SIZE], uint8_t c_auth_suites,
+	uint8_t authentication[], tCsrAuthList *auth_type,
+	uint8_t index, eCsrAuthType *neg_authtype)
+{
+	if ((*neg_authtype == eCSR_AUTH_TYPE_UNKNOWN) &&
+	   csr_is_auth_wpa_sae(mac_ctx, authsuites,
+	   c_auth_suites, authentication)) {
+		if (eCSR_AUTH_TYPE_SAE == auth_type->authType[index])
+			*neg_authtype = eCSR_AUTH_TYPE_SAE;
+	}
+	sme_debug("negotiated auth type is %d", *neg_authtype);
+}
+#else
+static void csr_check_sae_auth(tpAniSirGlobal mac_ctx,
+	uint8_t authsuites[][CSR_RSN_OUI_SIZE], uint8_t c_auth_suites,
+	uint8_t authentication[], tCsrAuthList *auth_type,
+	uint8_t index, eCsrAuthType *neg_authtype)
+{
+}
+#endif
+
 /**
  * csr_get_rsn_information() - to get RSN infomation
  * @hal: pointer to HAL
@@ -3564,6 +3633,9 @@ static bool csr_get_rsn_information(tHalHandle hal, tCsrAuthList *auth_type,
 		csr_is_fils_auth(mac_ctx, authsuites, c_auth_suites,
 			authentication, auth_type, i, &neg_authtype);
 		/* Changed the AKM suites according to order of preference */
+		csr_check_sae_auth(mac_ctx, authsuites, c_auth_suites,
+			authentication, auth_type, i, &neg_authtype);
+
 		if ((neg_authtype == eCSR_AUTH_TYPE_UNKNOWN) &&
 				csr_is_auth_dpp_rsn(mac_ctx, authsuites,
 					c_auth_suites, authentication)) {

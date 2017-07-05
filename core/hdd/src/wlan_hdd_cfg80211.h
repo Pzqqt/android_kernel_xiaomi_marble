@@ -119,6 +119,10 @@ struct hdd_context;
 #define WLAN_AKM_SUITE_EAP_SHA384 0x000FAC0C
 
 
+#ifndef WLAN_AKM_SUITE_SAE
+#define WLAN_AKM_SUITE_SAE 0x000FAC08
+#endif
+
 #ifdef FEATURE_WLAN_TDLS
 #define WLAN_IS_TDLS_SETUP_ACTION(action) \
 	((SIR_MAC_TDLS_SETUP_REQ <= action) && \
