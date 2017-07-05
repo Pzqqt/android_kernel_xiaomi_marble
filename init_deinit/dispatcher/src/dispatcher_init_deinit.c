@@ -24,9 +24,6 @@
 #include <wlan_scan_ucfg_api.h>
 #include <wlan_mgmt_txrx_utils_api.h>
 #include <wlan_serialization_api.h>
-#ifdef WLAN_PMO_ENABLE
-#include "wlan_pmo_obj_mgmt_api.h"
-#endif
 #ifdef WLAN_POLICY_MGR_ENABLE
 #include "wlan_policy_mgr_api.h"
 #endif
@@ -244,28 +241,6 @@ static QDF_STATUS son_psoc_close(struct wlan_objmgr_psoc *psoc)
 }
 
 #endif /* END of QCA_SUPPORT_SON */
-
-#ifdef WLAN_PMO_ENABLE
-static QDF_STATUS dispatcher_init_pmo(void)
-{
-	return pmo_init();
-}
-
-static QDF_STATUS dispatcher_deinit_pmo(void)
-{
-	return pmo_deinit();
-}
-#else
-static QDF_STATUS dispatcher_init_pmo(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS dispatcher_deinit_pmo(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif /* END of WLAN_PMO_ENABLE */
 
 static QDF_STATUS dispatcher_regulatory_init(void)
 {
@@ -676,9 +651,6 @@ QDF_STATUS dispatcher_init(void)
 	if (QDF_STATUS_SUCCESS != wlan_serialization_init())
 		goto serialization_init_fail;
 
-	if (QDF_STATUS_SUCCESS != dispatcher_init_pmo())
-		goto pmo_init_fail;
-
 	if (QDF_STATUS_SUCCESS != dispatcher_init_crypto())
 		goto crypto_init_fail;
 
@@ -745,8 +717,6 @@ atf_init_fail:
 policy_mgr_init_fail:
 	dispatcher_deinit_crypto();
 crypto_init_fail:
-	dispatcher_deinit_pmo();
-pmo_init_fail:
 	wlan_serialization_deinit();
 serialization_init_fail:
 	tdls_deinit();
@@ -793,8 +763,6 @@ QDF_STATUS dispatcher_deinit(void)
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_policy_mgr_deinit());
 
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_deinit_crypto());
-
-	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_deinit_pmo());
 
 	QDF_BUG(QDF_STATUS_SUCCESS == wlan_serialization_deinit());
 

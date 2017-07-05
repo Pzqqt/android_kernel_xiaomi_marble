@@ -22,9 +22,6 @@
  */
 
 #include "target_if.h"
-#ifdef WLAN_PMO_ENABLE
-#include "target_if_pmo_main.h"
-#endif
 #ifdef WLAN_ATF_ENABLE
 #include "target_if_atf.h"
 #endif
@@ -237,38 +234,12 @@ QDF_STATUS target_if_register_umac_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef WLAN_PMO_ENABLE
-/**
- * target_if_pmo_register_tx_ops_req() - Wrapper API to register pmo tx ops.
- * @tx_ops: psoc's lmac if transmit operations
- *
- * Return: None
- */
-static void target_if_pmo_register_tx_ops_req(
-		struct wlan_lmac_if_tx_ops *tx_ops)
-{
-	target_if_pmo_register_tx_ops(tx_ops);
-}
-#else
-/**
- * target_if_pmo_register_tx_ops_req() - Dummy API to register pmo tx ops.
- * @tx_ops: psoc's lmac if transmit operations
- *
- * Return: None
- */
-static void target_if_pmo_register_tx_ops_req(
-		struct wlan_lmac_if_tx_ops *tx_ops)
-{
-}
-#endif /* WLAN_PMO_ENABLE */
-
 QDF_STATUS target_if_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {
 	/* Converged UMAC components to register their TX-ops */
 	target_if_register_umac_tx_ops(tx_ops);
 
 	/* Components parallel to UMAC to register their TX-ops here */
-	target_if_pmo_register_tx_ops_req(tx_ops);
 	target_if_sptrl_tx_ops_register(tx_ops);
 
 #ifdef CONVERGED_P2P_ENABLE
