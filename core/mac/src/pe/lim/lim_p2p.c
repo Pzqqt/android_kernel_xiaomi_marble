@@ -137,7 +137,9 @@ int lim_process_remain_on_chnl_req(tpAniSirGlobal pMac, uint32_t *pMsg)
 	if (status != QDF_STATUS_SUCCESS) {
 		/* Post the meessage to Sme */
 		lim_send_sme_rsp(pMac, eWNI_SME_REMAIN_ON_CHN_RSP,
-				 status, msgbuff->sessionId, msgbuff->scan_id);
+				 eSIR_SME_HAL_SEND_MESSAGE_FAIL,
+				 msgbuff->sessionId,
+				 msgbuff->scan_id);
 		qdf_mem_free(pMac->lim.gpLimRemainOnChanReq);
 		pMac->lim.gpLimRemainOnChanReq = NULL;
 	}
@@ -338,9 +340,16 @@ void lim_remain_on_chn_rsp(tpAniSirGlobal pMac, QDF_STATUS status, uint32_t *dat
 	}
 
 	/* Post the meessage to Sme */
-	lim_send_sme_rsp(pMac, eWNI_SME_REMAIN_ON_CHN_RSP,
-			status,
-			MsgRemainonChannel->sessionId, 0);
+	if (QDF_IS_STATUS_SUCCESS(status))
+		lim_send_sme_rsp(pMac, eWNI_SME_REMAIN_ON_CHN_RSP,
+				eSIR_SME_SUCCESS,
+				MsgRemainonChannel->sessionId,
+				0);
+	else
+		lim_send_sme_rsp(pMac, eWNI_SME_REMAIN_ON_CHN_RSP,
+				eSIR_SME_REFUSED,
+				MsgRemainonChannel->sessionId,
+				0);
 
 	qdf_mem_free(pMac->lim.gpLimRemainOnChanReq);
 	pMac->lim.gpLimRemainOnChanReq = NULL;
