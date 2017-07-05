@@ -947,8 +947,13 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 			 privcmd->param_value);
 		if ((privcmd->param_id == WMI_PDEV_PARAM_RX_CHAIN_MASK) ||
 		    (privcmd->param_id == WMI_PDEV_PARAM_TX_CHAIN_MASK)) {
-			wma_update_txrx_chainmask(wma->num_rf_chains,
-						  &privcmd->param_value);
+			if (QDF_STATUS_SUCCESS !=
+					wma_check_txrx_chainmask(
+					wma->num_rf_chains,
+					privcmd->param_value)) {
+				WMA_LOGD("Chainmask value is invalid");
+				return;
+			}
 		}
 		pdev_param.param_id = privcmd->param_id;
 		pdev_param.param_value = privcmd->param_value;

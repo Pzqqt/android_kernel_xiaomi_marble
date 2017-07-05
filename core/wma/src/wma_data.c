@@ -913,27 +913,21 @@ free_nbuf:
 }
 
 /**
- * wma_update_txrx_chainmask() - update txrx chainmask
- * @num_rf_chains: number rf chains
+ * wma_check_txrx_chainmask() - check txrx chainmask
+ * @num_rf_chains: number of rf chains
  * @cmd_value: command value
  *
- * Return: none
+ * Return: QDF_STATUS_SUCCESS for success or error code
  */
-void wma_update_txrx_chainmask(int num_rf_chains, int *cmd_value)
+QDF_STATUS wma_check_txrx_chainmask(int num_rf_chains, int cmd_value)
 {
-	if (*cmd_value > WMA_MAX_RF_CHAINS(num_rf_chains)) {
-		WMA_LOGE("%s: Chainmask value exceeds the maximum supported range setting it to maximum value.",
-			__func__);
-		WMA_LOGE("%s: Requested value %d Updated value %d",
-			__func__, *cmd_value, WMA_MAX_RF_CHAINS(num_rf_chains));
-		*cmd_value = WMA_MAX_RF_CHAINS(num_rf_chains);
-	} else if (*cmd_value < WMA_MIN_RF_CHAINS) {
-		WMA_LOGE("%s: Chainmask value is less than the minimum supported range setting it to minimum value.",
-			__func__);
-		WMA_LOGE("%s: Requested value %d Updated value %d",
-			__func__, *cmd_value, WMA_MIN_RF_CHAINS);
-		*cmd_value = WMA_MIN_RF_CHAINS;
+	if ((cmd_value > WMA_MAX_RF_CHAINS(num_rf_chains)) ||
+	    (cmd_value < WMA_MIN_RF_CHAINS)) {
+		WMA_LOGE("%s: Requested value %d over the range",
+			__func__, cmd_value);
+		return QDF_STATUS_E_INVAL;
 	}
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
