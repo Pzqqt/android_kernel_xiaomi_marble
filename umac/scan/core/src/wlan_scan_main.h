@@ -96,7 +96,11 @@
 
 #define SCAN_TIMEOUT_GRACE_PERIOD 10
 /* scan age time in millisec */
+#ifdef QCA_WIFI_NAPIER_EMULATION
+#define SCAN_CACHE_AGING_TIME (90 * 1000)
+#else
 #define SCAN_CACHE_AGING_TIME (30 * 1000)
+#endif
 #define SCAN_MAX_BSS_PDEV 100
 #define SCAN_PRIORITY SCAN_PRIORITY_LOW
 
