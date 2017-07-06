@@ -1596,6 +1596,9 @@ static void wma_discard_fw_event(struct scheduler_msg *msg)
 		qdf_nbuf_free(((wma_process_fw_event_params *)msg->bodyptr)
 				->evt_buf);
 		break;
+	case WMA_SET_LINK_STATE:
+		qdf_mem_free(((tpLinkStateParams) msg->bodyptr)->callbackArg);
+		break;
 	}
 	if (msg->bodyptr)
 		qdf_mem_free(msg->bodyptr);
