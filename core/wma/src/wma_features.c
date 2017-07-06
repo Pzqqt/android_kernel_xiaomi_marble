@@ -72,6 +72,7 @@
 #include "wlan_pmo_ucfg_api.h"
 #include <target_if_scan.h>
 #include "wlan_reg_services_api.h"
+#include "wlan_roam_debug.h"
 
 #ifndef ARRAY_LENGTH
 #define ARRAY_LENGTH(a)         (sizeof(a) / sizeof((a)[0]))
@@ -1823,36 +1824,56 @@ static int wma_extscan_get_eventid_from_tlvtag(uint32_t tag)
  */
 static int wow_get_wmi_eventid(int32_t reason, uint32_t tag)
 {
+	int event_id;
+
 	switch (reason) {
 	case WOW_REASON_AP_ASSOC_LOST:
-		return WMI_ROAM_EVENTID;
+		event_id = WMI_ROAM_EVENTID;
+		break;
 	case WOW_REASON_NLO_SCAN_COMPLETE:
-		return WMI_NLO_SCAN_COMPLETE_EVENTID;
+		event_id = WMI_NLO_SCAN_COMPLETE_EVENTID;
+		break;
 	case WOW_REASON_CSA_EVENT:
-		return WMI_CSA_HANDLING_EVENTID;
+		event_id = WMI_CSA_HANDLING_EVENTID;
+		break;
 	case WOW_REASON_LOW_RSSI:
-		return WMI_ROAM_EVENTID;
+		event_id = WMI_ROAM_EVENTID;
+		break;
 	case WOW_REASON_CLIENT_KICKOUT_EVENT:
-		return WMI_PEER_STA_KICKOUT_EVENTID;
+		event_id = WMI_PEER_STA_KICKOUT_EVENTID;
+		break;
 	case WOW_REASON_EXTSCAN:
-		return wma_extscan_get_eventid_from_tlvtag(tag);
+		event_id = wma_extscan_get_eventid_from_tlvtag(tag);
+		break;
 	case WOW_REASON_RSSI_BREACH_EVENT:
-		return WMI_RSSI_BREACH_EVENTID;
+		event_id = WMI_RSSI_BREACH_EVENTID;
+		break;
 	case WOW_REASON_NAN_EVENT:
-		return WMI_NAN_EVENTID;
+		event_id = WMI_NAN_EVENTID;
+		break;
 	case WOW_REASON_NAN_DATA:
-		return wma_ndp_get_eventid_from_tlvtag(tag);
+		event_id = wma_ndp_get_eventid_from_tlvtag(tag);
+		break;
 	case WOW_REASON_TDLS_CONN_TRACKER_EVENT:
-		return WOW_TDLS_CONN_TRACKER_EVENT;
+		event_id = WOW_TDLS_CONN_TRACKER_EVENT;
+		break;
 	case WOW_REASON_ROAM_HO:
-		return WMI_ROAM_EVENTID;
+		event_id = WMI_ROAM_EVENTID;
+		break;
 	case WOW_REASON_11D_SCAN:
-		return WMI_11D_NEW_COUNTRY_EVENTID;
+		event_id = WMI_11D_NEW_COUNTRY_EVENTID;
+		break;
 	default:
 		WMA_LOGD(FL("No Event Id for WOW reason %s(%d)"),
 			 wma_wow_wake_reason_str(reason), reason);
-		return 0;
+		event_id = 0;
+		break;
 	}
+	wlan_roam_debug_log(WMA_INVALID_VDEV_ID, DEBUG_WOW_REASON,
+			    DEBUG_INVALID_PEER_ID, NULL, NULL,
+			    reason, event_id);
+
+	return event_id;
 }
 
 /**
@@ -2664,6 +2685,11 @@ static int wma_wake_event_piggybacked(
 	 */
 	case WOW_REASON_LOW_RSSI:
 	case WOW_REASON_ROAM_HO:
+		wlan_roam_debug_log(event_param->fixed_param->vdev_id,
+				    DEBUG_WOW_ROAM_EVENT,
+				    DEBUG_INVALID_PEER_ID,
+				    NULL, NULL, wake_reason,
+				    pb_event_len);
 		if (pb_event_len > 0) {
 			errno = wma_roam_event_callback(wma, pb_event,
 							pb_event_len);

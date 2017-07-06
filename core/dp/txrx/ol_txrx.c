@@ -90,6 +90,7 @@
 
 #include <htt_internal.h>
 #include <ol_txrx_ipa.h>
+#include "wlan_roam_debug.h"
 
 #ifdef QCA_SUPPORT_TXRX_LOCAL_PEER_ID
 ol_txrx_peer_handle
@@ -2599,6 +2600,8 @@ ol_txrx_peer_attach(struct cdp_vdev *pvdev, uint8_t *peer_mac_addr)
 		if (QDF_STATUS_SUCCESS != rc) {
 			ol_txrx_err("error waiting for peer_id(%d) deletion, status %d\n",
 				    vdev->wait_on_peer_id, (int) rc);
+			/* Added for debugging only */
+			wlan_roam_debug_dump_table();
 			cds_trigger_recovery(PEER_DEL_TIMEOUT);
 			vdev->wait_on_peer_id = OL_TXRX_INVALID_LOCAL_PEER_ID;
 
@@ -3280,6 +3283,11 @@ int ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer,
 		return -EINVAL;
 	}
 
+	wlan_roam_debug_log(vdev->vdev_id, DEBUG_PEER_UNREF_DELETE,
+			    DEBUG_INVALID_PEER_ID, &peer->mac_addr.raw,
+			    peer, 0,
+			    qdf_atomic_read(&peer->ref_cnt));
+
 
 	/*
 	 * Hold the lock all the way from checking if the peer ref count
@@ -3323,6 +3331,11 @@ int ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer,
 			   fname, line, peer, peer->mac_addr.raw,
 			   qdf_atomic_read(&peer->ref_cnt));
 
+		wlan_roam_debug_log(vdev->vdev_id,
+				    DEBUG_DELETING_PEER_OBJ,
+				    DEBUG_INVALID_PEER_ID,
+				    &peer->mac_addr.raw, peer, 0,
+				    qdf_atomic_read(&peer->ref_cnt));
 		peer_id = peer->local_id;
 		/* remove the reference to the peer from the hash table */
 		ol_txrx_peer_find_hash_remove(pdev, peer);
@@ -3498,6 +3511,8 @@ static QDF_STATUS ol_txrx_clear_peer(struct cdp_pdev *ppdev, uint8_t sta_id)
 void peer_unmap_timer_work_function(void *param)
 {
 	WMA_LOGE("Enter: %s", __func__);
+	/* Added for debugging only */
+	wlan_roam_debug_dump_table();
 	cds_trigger_recovery(QDF_PEER_UNMAP_TIMEDOUT);
 }
 

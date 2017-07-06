@@ -68,6 +68,7 @@
 #include "wma_internal.h"
 #include "wlan_tgt_def_config.h"
 #include "wlan_reg_services_api.h"
+#include "wlan_roam_debug.h"
 
 /* This is temporary, should be removed */
 #include "ol_htt_api.h"
@@ -2276,6 +2277,10 @@ void wma_process_roam_synch_fail(WMA_HANDLE handle,
 			__func__);
 		return;
 	}
+	wlan_roam_debug_log(synch_fail->session_id,
+			    DEBUG_ROAM_SYNCH_FAIL,
+			    DEBUG_INVALID_PEER_ID, NULL, NULL, 0, 0);
+
 	/* Hand Off Failure could happen as an exception, when a roam synch
 	 * indication is posted to Host, but a roam synch complete is not
 	 * posted to the firmware.So, clear the roam synch in progress
@@ -2533,6 +2538,10 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 		goto cleanup_label;
 	}
 
+	wlan_roam_debug_log(synch_event->vdev_id, DEBUG_ROAM_SYNCH_IND,
+			    DEBUG_INVALID_PEER_ID, NULL, NULL,
+			    synch_event->bssid.mac_addr31to0,
+			    synch_event->bssid.mac_addr47to32);
 	DPTRACE(qdf_dp_trace_record_event(QDF_DP_TRACE_EVENT_RECORD,
 		synch_event->vdev_id, QDF_TRACE_DEFAULT_PDEV_ID,
 		QDF_PROTO_TYPE_EVENT, QDF_ROAM_SYNCH));
@@ -2986,6 +2995,9 @@ void wma_process_roam_synch_complete(WMA_HANDLE handle, uint8_t vdev_id)
 		QDF_PROTO_TYPE_EVENT, QDF_ROAM_COMPLETE));
 
 	WMA_LOGI("LFR3: Posting WMA_ROAM_OFFLOAD_SYNCH_CNF");
+	wlan_roam_debug_log(vdev_id, DEBUG_ROAM_SYNCH_CNF,
+			    DEBUG_INVALID_PEER_ID, NULL, NULL, 0, 0);
+
 }
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
@@ -5623,6 +5635,11 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 		WMA_LOGE("Invalid vdev id from firmware");
 		return -EINVAL;
 	}
+	wlan_roam_debug_log(wmi_event->vdev_id, DEBUG_ROAM_EVENT,
+			    DEBUG_INVALID_PEER_ID, NULL, NULL,
+			    wmi_event->reason,
+			    (wmi_event->reason == WMI_ROAM_REASON_INVALID) ?
+				wmi_event->notif : wmi_event->rssi);
 
 	DPTRACE(qdf_dp_trace_record_event(QDF_DP_TRACE_EVENT_RECORD,
 		wmi_event->vdev_id, QDF_TRACE_DEFAULT_PDEV_ID,

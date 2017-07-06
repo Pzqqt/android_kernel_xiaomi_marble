@@ -43,6 +43,7 @@
 #include <ol_txrx.h>            /* ol_txrx_peer_unref_delete */
 #include <ol_txrx_peer_find.h>  /* ol_txrx_peer_find_attach, etc. */
 #include <ol_tx_queue.h>
+#include "wlan_roam_debug.h"
 
 /*=== misc. / utility function definitions ==================================*/
 
@@ -394,6 +395,11 @@ static inline void ol_txrx_peer_find_add_id(struct ol_txrx_pdev_t *pdev,
 		ol_txrx_err(
 			  "%s: peer not found or peer ID is %d invalid",
 			  __func__, peer_id);
+		wlan_roam_debug_log(DEBUG_INVALID_VDEV_ID,
+				    DEBUG_PEER_MAP_EVENT,
+				    peer_id, peer_mac_addr,
+				    peer, 0, 0);
+
 		return;
 	}
 
@@ -433,6 +439,12 @@ static inline void ol_txrx_peer_find_add_id(struct ol_txrx_pdev_t *pdev,
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
 	   "%s: peer %pK ID %d peer_id[%d] peer_id_ref_cnt %d peer->ref_cnt %d",
 	   __func__, peer, peer_id, i, peer_id_ref_cnt, peer_ref_cnt);
+	wlan_roam_debug_log(DEBUG_INVALID_VDEV_ID,
+			    DEBUG_PEER_MAP_EVENT,
+			    peer_id, &peer->mac_addr.raw, peer,
+			    peer_id_ref_cnt,
+			    peer_ref_cnt);
+
 
 	if (status) {
 		/* TBDXXX: assert for now */
@@ -565,6 +577,9 @@ void ol_rx_peer_unmap_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 	if (peer_id == HTT_INVALID_PEER) {
 		ol_txrx_err(
 		   "%s: invalid peer ID %d\n", __func__, peer_id);
+		wlan_roam_debug_log(DEBUG_INVALID_VDEV_ID,
+				    DEBUG_PEER_UNMAP_EVENT,
+				    peer_id, NULL, NULL, 0, 0x100);
 		return;
 	}
 
@@ -578,6 +593,9 @@ void ol_rx_peer_unmap_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 		ref_cnt = qdf_atomic_read(&pdev->peer_id_to_obj_map[peer_id].
 							del_peer_id_ref_cnt);
 		qdf_spin_unlock_bh(&pdev->peer_map_unmap_lock);
+		wlan_roam_debug_log(DEBUG_INVALID_VDEV_ID,
+				    DEBUG_PEER_UNMAP_EVENT,
+				    peer_id, NULL, NULL, ref_cnt, 0x101);
 		ol_txrx_dbg(
 			   "%s: peer already deleted, peer_id %d del_peer_id_ref_cnt %d",
 			   __func__, peer_id, ref_cnt);
@@ -595,6 +613,9 @@ void ol_rx_peer_unmap_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 		ol_txrx_info(
 			   "%s: peer not found for peer_id %d",
 			   __func__, peer_id);
+		wlan_roam_debug_log(DEBUG_INVALID_VDEV_ID,
+				    DEBUG_PEER_UNMAP_EVENT,
+				    peer_id, NULL, NULL, 0, 0x102);
 		return;
 	}
 
@@ -613,6 +634,11 @@ void ol_rx_peer_unmap_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 		(&pdev->peer_id_to_obj_map[peer_id].peer_id_ref_cnt);
 
 	qdf_spin_unlock_bh(&pdev->peer_map_unmap_lock);
+
+	wlan_roam_debug_log(DEBUG_INVALID_VDEV_ID,
+			    DEBUG_PEER_UNMAP_EVENT,
+			    peer_id, &peer->mac_addr.raw, peer, ref_cnt,
+			    qdf_atomic_read(&peer->ref_cnt));
 
 	/*
 	 * Remove a reference to the peer.
