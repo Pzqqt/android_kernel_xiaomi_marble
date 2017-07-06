@@ -409,6 +409,8 @@ static void ol_tx_desc_free_common(struct ol_txrx_pdev_t *pdev,
 
 	ol_tx_desc_reset_pkt_type(tx_desc);
 	ol_tx_desc_reset_timestamp(tx_desc);
+	/* clear the ref cnt */
+	qdf_atomic_init(&tx_desc->ref_cnt);
 	tx_desc->vdev_id = OL_TXRX_INVALID_VDEV_ID;
 }
 
