@@ -224,6 +224,29 @@ const TLV_OPERATING_CHANNEL                  =  17;
 const TLV_INVITATION_FLAGS                   =  18;
 const TLV_P2P_VENDOR_SPECIFIC                = 221;
 
+
+/////////////////////////////////////////////////////////////////////////////
+//                  MBO-OCE Attributes (0, 151-255: Reserved)              //
+/////////////////////////////////////////////////////////////////////////////
+const TLV_MBO_AP_CAP_ATTR                    =   1;
+const TLV_NON_PREFERRED_CHAN_REPORT_ATTR     =   2;
+const TLV_CELLULAR_DATA_CAP_ATTR             =   3;
+const TLV_ASSOC_DISSALLOWED_ATTR             =   4;
+const TLV_CELLULAR_DATA_CON_PREF_ATTR        =   5;
+const TLV_TRANSITION_REASON_CODE_ATTR        =   6;
+const TLV_TRANSITION_REJECT_REASON_CODE_ATTR =   7;
+const TLV_ASSOC_RETRY_DELAY_ATTR             =   8;
+
+// 9-100 : Reserved for MBO //
+
+// OCE ATTRIBUTES //
+const TLV_OCE_CAP_IND_ATTR                   =   101;
+const TLV_RSSI_ASSOC_REJ_ATTR                =   102;
+const TLV_REDUCED_WAN_METRICS_ATTR           =   103;
+// 104-150 : Reserved for OCE
+
+
+
 /////////////////////////////////////////////////////////////////////////////
 // Fixed Fields
 
@@ -1063,6 +1086,76 @@ TLV OperatingChannel ( TLV_OPERATING_CHANNEL ) ( 1 : 2 ) LSB
     channel,         1;
 }
 
+///////////////////////////////////////////////////////////////////////////
+//                       MBO-OCE ATTR TLVs                            //
+///////////////////////////////////////////////////////////////////////////
+
+TLV mbo_ap_cap ( TLV_MBO_AP_CAP_ATTR ) ( 1 : 1 ) LSB
+{
+    mbo_cap_ind, 1;
+}
+
+TLV non_prefferd_chan_rep ( TLV_NON_PREFERRED_CHAN_REPORT_ATTR ) ( 1 : 1 ) LSB
+{
+    oper_class, 1;
+    channel_report[3..254];
+}
+
+TLV cellular_data_cap ( TLV_CELLULAR_DATA_CAP_ATTR ) ( 1 : 1 ) LSB
+{
+    cellular_connectivity, 1;
+}
+
+TLV assoc_disallowed ( TLV_ASSOC_DISSALLOWED_ATTR ) ( 1 : 1 ) LSB
+{
+    reason_code, 1;
+}
+
+TLV cellular_data_con_pref ( TLV_CELLULAR_DATA_CON_PREF_ATTR ) ( 1 : 1 ) LSB
+{
+    cellular_preference, 1;
+}
+
+TLV transition_reason ( TLV_TRANSITION_REASON_CODE_ATTR ) ( 1 : 1 ) LSB
+{
+    transition_reason_code, 1;
+}
+
+TLV transition_reject_reason ( TLV_TRANSITION_REJECT_REASON_CODE_ATTR ) ( 1 : 1 ) LSB
+{
+    transition_reject_code, 1;
+}
+
+TLV assoc_retry_delay ( TLV_ASSOC_RETRY_DELAY_ATTR ) ( 1 : 1 ) LSB
+{
+    delay, 2;
+}
+
+// OCE Attributes //
+
+TLV oce_cap ( TLV_OCE_CAP_IND_ATTR ) ( 1 : 1 ) LSB
+{
+    {
+     oce_release: 3;
+     is_sta_cfon : 1;
+     non_oce_ap_present : 1;
+     reserved: 3;
+    }
+}
+
+TLV rssi_assoc_rej ( TLV_RSSI_ASSOC_REJ_ATTR ) ( 1 : 1 ) LSB
+{
+    delta_rssi, 1;
+    retry_delay, 1;
+}
+
+TLV reduced_wan_metrics ( TLV_REDUCED_WAN_METRICS_ATTR ) ( 1 : 1 ) LSB
+{
+    {
+     downlink_av_cap: 4;
+     uplink_av_cap : 4;
+    }
+}
 
 /**
  * \brief Vendor Extension
@@ -2483,12 +2576,6 @@ IE TimeAdvertisement (EID_TIME_ADVERTISEMENT)   // 8.4.2.63
     time_error[5];
 }
 
-IE MBO_IE (EID_VENDOR_SPECIFIC) OUI ( 0x50, 0x6F, 0x9A, 0x16 )
-{
-    mbo_cap[3];
-    assoc_disallowed[0..3];
-}
-
 IE QCN_IE (EID_VENDOR_SPECIFIC) OUI ( 0x8C, 0xFD, 0xF0, 0x01 )
 {
     version[4];
@@ -3198,6 +3285,21 @@ MULTIIE P2PDeAuth ( EID_VENDOR_SPECIFIC ) OUI( 0x50, 0x6F, 0x9A, 0x09 )
 MULTIIE P2PDisAssoc ( EID_VENDOR_SPECIFIC ) OUI( 0x50, 0x6F, 0x9A, 0x09 )
 {
    MANDATORYTLV MinorReasonCode;
+}
+
+MULTIIE MBO_IE (EID_VENDOR_SPECIFIC) OUI ( 0x50, 0x6F, 0x9A, 0x16 )
+{
+   OPTIONALTLV mbo_ap_cap;
+   OPTIONALTLV non_prefferd_chan_rep;
+   OPTIONALTLV cellular_data_cap ;
+   OPTIONALTLV assoc_disallowed;
+   OPTIONALTLV cellular_data_con_pref;
+   OPTIONALTLV transition_reason;
+   OPTIONALTLV transition_reject_reason;
+   OPTIONALTLV assoc_retry_delay;
+   OPTIONALTLV oce_cap;
+   OPTIONALTLV rssi_assoc_rej;
+   OPTIONALTLV reduced_wan_metrics;
 }
 
 IE vendor_vht_ie (EID_VENDOR_SPECIFIC) OUI (0x00, 0x90, 0x4c)

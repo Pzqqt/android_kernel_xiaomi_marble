@@ -2521,14 +2521,14 @@ tSirRetStatus sir_convert_probe_frame2_struct(tpAniSirGlobal pMac,
 	}
 	if (pr->MBO_IE.present) {
 		pProbeResp->MBO_IE_present = true;
-		pProbeResp->MBO_capability = pr->MBO_IE.mbo_cap[2];
+		if (pr->MBO_IE.cellular_data_cap.present)
+			pProbeResp->MBO_capability =
+				pr->MBO_IE.cellular_data_cap.cellular_connectivity;
 
-		if (pr->MBO_IE.num_assoc_disallowed &&
-			(pr->MBO_IE.assoc_disallowed[0] ==
-				 MBO_IE_ASSOC_DISALLOWED_SUBATTR_ID)) {
+		if (pr->MBO_IE.assoc_disallowed.present) {
 			pProbeResp->assoc_disallowed = true;
 			pProbeResp->assoc_disallowed_reason =
-				pr->MBO_IE.assoc_disallowed[2];
+				pr->MBO_IE.assoc_disallowed.reason_code;
 		}
 	}
 
@@ -3705,14 +3705,14 @@ sir_parse_beacon_ie(tpAniSirGlobal pMac,
 
 	if (pBies->MBO_IE.present) {
 		pBeaconStruct->MBO_IE_present = true;
-		pBeaconStruct->MBO_capability = pBies->MBO_IE.mbo_cap[2];
+		if (pBies->MBO_IE.cellular_data_cap.present)
+			pBeaconStruct->MBO_capability =
+				pBies->MBO_IE.cellular_data_cap.cellular_connectivity;
 
-		if (pBies->MBO_IE.num_assoc_disallowed &&
-			(pBies->MBO_IE.assoc_disallowed[0] ==
-				 MBO_IE_ASSOC_DISALLOWED_SUBATTR_ID)) {
+		if (pBies->MBO_IE.assoc_disallowed.present) {
 			pBeaconStruct->assoc_disallowed = true;
 			pBeaconStruct->assoc_disallowed_reason =
-				pBies->MBO_IE.assoc_disallowed[2];
+				pBies->MBO_IE.assoc_disallowed.reason_code;
 		}
 	}
 
@@ -4078,14 +4078,14 @@ sir_convert_beacon_frame2_struct(tpAniSirGlobal pMac,
 	}
 	if (pBeacon->MBO_IE.present) {
 		pBeaconStruct->MBO_IE_present = true;
-		pBeaconStruct->MBO_capability = pBeacon->MBO_IE.mbo_cap[2];
+		if (pBeacon->MBO_IE.cellular_data_cap.present)
+			pBeaconStruct->MBO_capability =
+				pBeacon->MBO_IE.cellular_data_cap.cellular_connectivity;
 
-		if (pBeacon->MBO_IE.num_assoc_disallowed &&
-			(pBeacon->MBO_IE.assoc_disallowed[0] ==
-				 MBO_IE_ASSOC_DISALLOWED_SUBATTR_ID)) {
+		if (pBeacon->MBO_IE.assoc_disallowed.present) {
 			pBeaconStruct->assoc_disallowed = true;
 			pBeaconStruct->assoc_disallowed_reason =
-				pBeacon->MBO_IE.assoc_disallowed[2];
+				pBeacon->MBO_IE.assoc_disallowed.reason_code;
 		}
 	}
 
