@@ -11717,8 +11717,6 @@ QDF_STATUS sme_process_channel_change_resp(tpAniSirGlobal pMac,
 		proam_info.channelChangeRespEvent->sessionId = SessionId;
 		proam_info.channelChangeRespEvent->newChannelNumber =
 			pChnlParams->channelNumber;
-		proam_info.channelChangeRespEvent->secondaryChannelOffset =
-			pChnlParams->ch_width;
 
 		if (pChnlParams->status == QDF_STATUS_SUCCESS) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_MED,
