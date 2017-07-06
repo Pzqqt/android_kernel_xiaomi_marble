@@ -564,6 +564,7 @@ QDF_STATUS htc_wait_target(HTC_HANDLE HTCHandle)
 			(int)HTC_GET_FIELD(rdy_msg, HTC_READY_MSG, CREDITSIZE);
 		target->MaxMsgsPerHTCBundle =
 			(uint8_t) pReadyMsg->MaxMsgsPerHTCBundle;
+		UPDATE_ALT_CREDIT(target, pReadyMsg->AltDataCreditSize);
 		/* for old fw this value is set to 0. But the minimum value
 		 * should be 1, i.e., no bundling
 		 */

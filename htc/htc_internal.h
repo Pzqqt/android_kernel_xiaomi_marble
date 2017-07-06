@@ -57,6 +57,12 @@ extern "C" {
 #define HTC_MAX_MSG_PER_BUNDLE_TX           32
 #endif
 
+#ifdef HIF_SDIO
+#define UPDATE_ALT_CREDIT(tar, val) (tar->AltDataCreditSize = (uint16_t) val)
+#else
+#define UPDATE_ALT_CREDIT(tar, val) /* no-op */
+#endif
+
 /*
  * HTC_MAX_TX_BUNDLE_SEND_LIMIT -
  * This value is in units of tx frame fragments.
