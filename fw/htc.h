@@ -193,7 +193,10 @@ typedef PREPACK struct {
 typedef PREPACK struct {
 	HTC_READY_MSG Version2_0_Info;  /* legacy version 2.0 information at the front... */
 	/* extended information */
-	A_UINT32 HTCVersion : 8, MaxMsgsPerHTCBundle : 8, reserved : 16;
+	A_UINT32 HTCVersion : 8,
+		 MaxMsgsPerHTCBundle : 8,
+		 AltDataCreditSize : 12,
+		 reserved : 4;
 } POSTPACK HTC_READY_EX_MSG;
 
 #define HTC_READY_EX_MSG_HTCVERSION_LSB               0
