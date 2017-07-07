@@ -3641,7 +3641,6 @@ QDF_STATUS wma_set_app_type2_params_in_fw(tp_wma_handle wma,
 
 	return wmi_unified_set_app_type2_params_in_fw_cmd(wma->wmi_handle,
 							&params);
-
 }
 #endif /* WLAN_FEATURE_EXTWOW_SUPPORT */
 

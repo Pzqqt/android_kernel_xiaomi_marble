@@ -3275,19 +3275,6 @@ int wma_unified_debug_print_event_handler(void *handle, uint8_t *datap,
 }
 
 /**
- * wma_check_scan_in_progress() - check scan is progress or not
- * @handle: wma handle
- *
- * Return: true/false
- */
-bool wma_check_scan_in_progress(WMA_HANDLE handle)
-{
-	tp_wma_handle wma = handle;
-
-	return qdf_atomic_read(&wma->num_pending_scans) > 0;
-}
-
-/**
  * wma_is_sap_active() - check sap is active or not
  * @handle: wma handle
  *

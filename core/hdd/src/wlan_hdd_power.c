@@ -1788,9 +1788,9 @@ next_adapter:
 			return -EAGAIN;
 		}
 
-		if (pScanInfo->mScanPending)
-			wlan_abort_scan(pHddCtx->hdd_pdev, INVAL_PDEV_ID,
-				pAdapter->sessionId, INVALID_SCAN_ID, true);
+		wlan_abort_scan(pHddCtx->hdd_pdev, INVAL_PDEV_ID,
+				pAdapter->sessionId, INVALID_SCAN_ID, false);
+
 		status = hdd_get_next_adapter(pHddCtx, pAdapterNode, &pNext);
 		pAdapterNode = pNext;
 	}
