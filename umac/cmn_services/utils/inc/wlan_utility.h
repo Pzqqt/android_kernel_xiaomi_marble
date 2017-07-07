@@ -29,6 +29,16 @@
 #include <wlan_objmgr_vdev_obj.h>
 
 /**
+ * struct wlan_find_vdev_filter - find vdev filter object. this can be extended
+ * @ifname:           interface name of vdev
+ * @found_vdev:       found vdev object matching one or more of above params
+ */
+struct wlan_find_vdev_filter {
+	char *ifname;
+	struct wlan_objmgr_vdev *found_vdev;
+};
+
+/**
  * wlan_chan_to_freq() - converts channel to frequency
  * @chan: channel number
  *
@@ -89,4 +99,21 @@ bool wlan_is_emulation_platform(uint32_t phy_version);
 uint32_t wlan_get_pdev_id_from_vdev_id(struct wlan_objmgr_psoc *psoc,
 				 uint8_t vdev_id,
 				 wlan_objmgr_ref_dbgid dbg_id);
+
+/**
+ * wlan_util_get_vdev_by_ifname() - function to return vdev object from psoc
+ * matching given interface name
+ * @psoc    : psoc object
+ * @ifname  : interface name
+ * @ref_id  : object manager ref id
+ *
+ * This function returns vdev object from psoc by interface name. If found this
+ * will also take reference with given ref_id
+ *
+ * Return : vdev object if found, NULL otherwise
+ */
+struct wlan_objmgr_vdev *wlan_util_get_vdev_by_ifname(
+				struct wlan_objmgr_psoc *psoc, char *ifname,
+				wlan_objmgr_ref_dbgid ref_id);
+
 #endif /* _WLAN_UTILITY_H_ */
