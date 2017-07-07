@@ -926,7 +926,7 @@ hal_rx_msdu_end_sa_idx_get(uint8_t *buf)
 {
 	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
 	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
-	uint8_t sa_idx;
+	uint16_t sa_idx;
 
 	sa_idx = HAL_RX_MSDU_END_SA_IDX_GET(msdu_end);
 

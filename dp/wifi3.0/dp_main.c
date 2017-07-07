@@ -52,7 +52,7 @@ cdp_dump_flow_pool_info(struct cdp_soc_t *soc)
 #include "dp_ipa.h"
 
 #define DP_INTR_POLL_TIMER_MS	10
-#define DP_WDS_AGING_TIMER_DEFAULT_MS	6000
+#define DP_WDS_AGING_TIMER_DEFAULT_MS	120000
 #define DP_MCS_LENGTH (6*MAX_MCS)
 #define DP_NSS_LENGTH (6*SS_COUNT)
 #define DP_RXDMA_ERR_LENGTH (6*HAL_RXDMA_ERR_MAX)
@@ -2839,12 +2839,13 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 
 	TAILQ_INIT(&peer->ast_entry_list);
 
+	/* store provided params */
+	peer->vdev = vdev;
+
 	dp_peer_add_ast(soc, peer, peer_mac_addr, 1);
 
 	qdf_spinlock_create(&peer->peer_info_lock);
 
-	/* store provided params */
-	peer->vdev = vdev;
 	qdf_mem_copy(
 		&peer->mac_addr.raw[0], peer_mac_addr, OL_TXRX_MAC_ADDR_LEN);
 

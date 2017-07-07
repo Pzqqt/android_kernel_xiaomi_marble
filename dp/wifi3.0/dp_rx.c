@@ -365,7 +365,6 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 		if (da_peer->vdev == sa_peer->vdev && !da_peer->bss_peer) {
 			memset(nbuf->cb, 0x0, sizeof(nbuf->cb));
 			len = qdf_nbuf_len(nbuf);
-			qdf_nbuf_set_ftype(nbuf, CB_FTYPE_INTRABSS_FWD);
 
 			if (!dp_tx_send(sa_peer->vdev, nbuf)) {
 				DP_STATS_INC_PKT(sa_peer, rx.intra_bss.pkts,
@@ -393,7 +392,6 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 			return false;
 		memset(nbuf_copy->cb, 0x0, sizeof(nbuf_copy->cb));
 		len = qdf_nbuf_len(nbuf_copy);
-		qdf_nbuf_set_ftype(nbuf_copy, CB_FTYPE_INTRABSS_FWD);
 
 		if (dp_tx_send(sa_peer->vdev, nbuf_copy)) {
 			DP_STATS_INC_PKT(sa_peer, rx.intra_bss.fail, 1, len);
@@ -1277,11 +1275,10 @@ done:
 						htt_cmn_pkt_type_ethernet) &&
 					(qdf_likely(!vdev->mesh_vdev))) {
 				/* WDS Source Port Learning */
-				if (qdf_likely(vdev->wds_enabled))
-					dp_rx_wds_srcport_learn(soc,
-								rx_tlv_hdr,
-								peer,
-								nbuf);
+				dp_rx_wds_srcport_learn(soc,
+							rx_tlv_hdr,
+							peer,
+							nbuf);
 
 				/* Intrabss-fwd */
 				if ((vdev->opmode != wlan_op_mode_sta) &&

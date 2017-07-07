@@ -274,9 +274,6 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 	uint16_t peer_id = 0xFFFF;
 	struct dp_peer *peer = NULL;
 	uint32_t sgi, rate_mcs, tid;
-	uint8_t count;
-	struct mect_entry *mect_entry;
-	uint8_t *nbuf_data = NULL;
 
 	rx_bufs_used++;
 
@@ -352,26 +349,39 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 	 */
 	qdf_nbuf_pull_head(nbuf, (l2_hdr_offset + RX_PKT_TLVS_LEN));
 
-	nbuf_data = qdf_nbuf_data(nbuf);
-	for (count = 0; count < soc->mect_cnt; count++) {
-		mect_entry = &soc->mect_table[count];
-		mect_entry->ts = jiffies_64;
-		if (!(memcmp(mect_entry->mac_addr, &nbuf_data[DP_MAC_ADDR_LEN],
-				DP_MAC_ADDR_LEN))) {
-			QDF_TRACE(QDF_MODULE_ID_DP,
-				QDF_TRACE_LEVEL_INFO,
-				FL("received pkt with same src MAC"));
+	/*
+	 * This is a Multicast echo check, drop the pkt if we meet
+	 * the Multicast Echo Check condition
+	 */
+	if (hal_rx_msdu_end_sa_is_valid_get(rx_desc->rx_buf_start)) {
+		struct dp_ast_entry *ase;
+		uint16_t sa_idx;
+		uint8_t *nbuf_data = NULL;
 
-			/* Drop & free packet */
-			qdf_nbuf_free(nbuf);
-			/* Statistics */
-			goto fail;
+		nbuf_data = qdf_nbuf_data(nbuf);
+		sa_idx = hal_rx_msdu_end_sa_idx_get(rx_desc->rx_buf_start);
+		if ((sa_idx < 0) || (sa_idx > (WLAN_UMAC_PSOC_MAX_PEERS * 2))) {
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+					"invalid sa_idx: %d", sa_idx);
+			qdf_assert_always(0);
+		}
+
+		ase = soc->ast_table[sa_idx];
+		if (ase) {
+			if (ase->is_mec || (ase->peer != peer)) {
+				QDF_TRACE(QDF_MODULE_ID_DP,
+					QDF_TRACE_LEVEL_INFO,
+					"received pkt with same src mac %pM",
+					&nbuf_data[DP_MAC_ADDR_LEN]);
+
+				qdf_nbuf_free(nbuf);
+				goto fail;
+			}
 		}
 	}
 
 	/* WDS Source Port Learning */
-	if (qdf_likely(vdev->rx_decap_type == htt_cmn_pkt_type_ethernet) &&
-			(vdev->wds_enabled))
+	if (qdf_likely(vdev->rx_decap_type == htt_cmn_pkt_type_ethernet))
 		dp_rx_wds_srcport_learn(soc, rx_desc->rx_buf_start, peer, nbuf);
 
 	if (hal_rx_mpdu_start_mpdu_qos_control_valid_get(

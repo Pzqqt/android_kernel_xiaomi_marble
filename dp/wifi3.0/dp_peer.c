@@ -403,7 +403,7 @@ static inline void dp_peer_map_ast(struct dp_soc *soc,
  *         1 if entry already exists or if allocation has failed
  */
 int dp_peer_add_ast(struct dp_soc *soc, struct dp_peer *peer,
-		uint8_t *mac_addr, bool is_self)
+		uint8_t *mac_addr, uint8_t is_self)
 {
 	struct dp_ast_entry *ast_entry;
 
@@ -434,12 +434,23 @@ int dp_peer_add_ast(struct dp_soc *soc, struct dp_peer *peer,
 	qdf_mem_copy(&ast_entry->mac_addr.raw[0], mac_addr, DP_MAC_ADDR_LEN);
 	ast_entry->peer = peer;
 
-	if (is_self) {
+	switch (is_self) {
+	case 1:
 		peer->self_ast_entry = ast_entry;
 		ast_entry->is_static = TRUE;
-	} else {
+		break;
+	case 0:
 		ast_entry->next_hop = 1;
 		ast_entry->is_static = FALSE;
+		break;
+	case 2:
+		ast_entry->is_mec = 1;
+		ast_entry->next_hop = 1;
+		ast_entry->is_static = FALSE;
+		break;
+	default:
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("Incorrect AST entry type"));
 	}
 
 	ast_entry->is_active = TRUE;
@@ -757,10 +768,10 @@ dp_rx_peer_map_handler(void *soc_handle, uint16_t peer_id, uint16_t hw_peer_id,
 
 	peer = soc->peer_id_to_obj_map[peer_id];
 
-	if ((hw_peer_id < 0) || (hw_peer_id > WLAN_UMAC_PSOC_MAX_PEERS)) {
+	if ((hw_peer_id < 0) || (hw_peer_id > (WLAN_UMAC_PSOC_MAX_PEERS * 2))) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"invalid hw_peer_id: %d", hw_peer_id);
-		QDF_ASSERT(0);
+		qdf_assert_always(0);
 	}
 
 	/*
