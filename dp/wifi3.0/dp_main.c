@@ -1139,7 +1139,11 @@ static void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
 #define WBM_RELEASE_RING_SIZE 64
 #define TCL_CMD_RING_SIZE 32
 #define TCL_STATUS_RING_SIZE 32
+#if defined(QCA_WIFI_QCA6290)
+#define REO_DST_RING_SIZE 1024
+#else
 #define REO_DST_RING_SIZE 2048
+#endif
 #define REO_REINJECT_RING_SIZE 32
 #define RX_RELEASE_RING_SIZE 1024
 #define REO_EXCEPTION_RING_SIZE 128
