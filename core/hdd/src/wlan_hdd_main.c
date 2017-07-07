@@ -921,6 +921,36 @@ static void hdd_update_vdev_nss(hdd_context_t *hdd_ctx)
 }
 
 /**
+ * hdd_update_wiphy_vhtcap() - Updates wiphy vhtcap fields
+ * @hdd_ctx: HDD context
+ *
+ * Updates wiphy vhtcap fields
+ *
+ * Return: None
+ */
+static void hdd_update_wiphy_vhtcap(hdd_context_t *hdd_ctx)
+{
+	struct ieee80211_supported_band *band_5g =
+		hdd_ctx->wiphy->bands[NL80211_BAND_5GHZ];
+	uint32_t val;
+
+	if (!band_5g) {
+		hdd_debug("5GHz band disabled, skipping capability population");
+		return;
+	}
+
+	val = hdd_ctx->config->txBFCsnValue;
+	band_5g->vht_cap.cap |= (val << IEEE80211_VHT_CAP_BEAMFORMEE_STS_SHIFT);
+
+	val = NUM_OF_SOUNDING_DIMENSIONS;
+	band_5g->vht_cap.cap |=
+		(val << IEEE80211_VHT_CAP_SOUNDING_DIMENSIONS_SHIFT);
+
+	hdd_info("Updated wiphy vhtcap:0x%x, CSNAntSupp:%d, NumSoundDim:%d",
+		band_5g->vht_cap.cap, hdd_ctx->config->txBFCsnValue, val);
+}
+
+/**
  * hdd_update_hw_dbs_capable() - sets the dbs capability of the device
  * @hdd_ctx: HDD context
  *
@@ -1584,6 +1614,11 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	hdd_debug("Target BPF %d Host BPF %d 8ss fw support %d txBFCsnValue %d",
 		cfg->bpf_enabled, hdd_ctx->config->bpf_packet_filter_enable,
 		cfg->tx_bfee_8ss_enabled, hdd_ctx->config->txBFCsnValue);
+
+	/*
+	 * Update txBFCsnValue and NumSoundingDim values to vhtcap in wiphy
+	 */
+	hdd_update_wiphy_vhtcap(hdd_ctx);
 	/*
 	 * If BPF is enabled, maxWowFilters set to WMA_STA_WOW_DEFAULT_PTRN_MAX
 	 * because we need atleast WMA_STA_WOW_DEFAULT_PTRN_MAX free slots to
