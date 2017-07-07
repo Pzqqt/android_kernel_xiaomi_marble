@@ -42,6 +42,7 @@
 #include <qdf_trace.h>
 #include <net/ieee80211_radiotap.h>
 #include <qdf_module.h>
+#include <qdf_atomic.h>
 #include <pld_common.h>
 
 #if defined(FEATURE_TSO)
@@ -1214,6 +1215,30 @@ static uint32_t qdf_net_buf_track_max_free;
 static uint32_t qdf_net_buf_track_max_allocated;
 
 /**
+ * struct qdf_nbuf_free_track_t - Network buffer free track structure
+ * @p_next: Pointer to next
+ * @net_buf: Pointer to network buffer
+ * @file_name: File name
+ * @line_num: Line number
+ * @time: Time stamp
+ */
+struct qdf_nbuf_free_track_t {
+	struct qdf_nbuf_track_t *p_next;
+	qdf_nbuf_t net_buf;
+	uint8_t *file_name;
+	uint32_t line_num;
+	uint64_t time;
+};
+
+struct qdf_nbuf_free_record_t {
+	struct qdf_nbuf_free_track_t gp_qdf_netbuf_free_tbl[
+					QDF_NET_BUF_TRACK_MAX_SIZE];
+	qdf_atomic_t count;
+};
+
+static struct qdf_nbuf_free_record_t qdf_nbuf_free_record_info;
+
+/**
  * update_max_used() - update qdf_net_buf_track_max_used tracking variable
  *
  * tracks the max number of network buffers that the wlan driver was tracking
@@ -1514,6 +1539,51 @@ void qdf_net_buf_debug_exit(void)
 #endif
 }
 EXPORT_SYMBOL(qdf_net_buf_debug_exit);
+
+/**
+ * qdf_nbuf_free_dbg_get_index() - Get the next record index
+ * @tbl_index: atomic index variable to increment
+ * @size: array size of the circular buffer
+ *
+ * Return: array index
+ */
+static int qdf_nbuf_free_dbg_get_index(qdf_atomic_t *tbl_index, int size)
+{
+	int index = qdf_atomic_inc_return(tbl_index);
+
+	if (index == size)
+		qdf_atomic_sub(size, tbl_index);
+
+	while (index >= size)
+		index -= size;
+
+	return index;
+}
+
+/**
+ * qdf_netbuf_free_debug_add() - Add netbuff free info to the debug
+ * @netbuf: pointer to network buffer
+ * @file_name: fie name from where net buff is freed
+ * @line_num: line number
+ *
+ * Return: none
+ */
+void qdf_net_buf_free_debug_add(qdf_nbuf_t net_buf, uint8_t *file_name,
+				uint32_t line_num)
+{
+	struct qdf_nbuf_free_track_t *p_node;
+	uint16_t index;
+
+	index = qdf_nbuf_free_dbg_get_index(&qdf_nbuf_free_record_info.count,
+					  QDF_NET_BUF_TRACK_MAX_SIZE);
+
+	p_node = &qdf_nbuf_free_record_info.gp_qdf_netbuf_free_tbl[index];
+	p_node->net_buf = net_buf;
+	p_node->file_name = file_name;
+	p_node->line_num = line_num;
+	p_node->time = qdf_get_log_timestamp();
+}
+EXPORT_SYMBOL(qdf_net_buf_free_debug_add);
 
 /**
  * qdf_net_buf_debug_hash() - hash network buffer pointer
