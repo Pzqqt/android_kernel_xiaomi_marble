@@ -67,6 +67,11 @@
 #include <linux/dma-mapping.h>
 #include <linux/wireless.h>
 #include <linux/if.h>
+#ifdef IPA_OFFLOAD
+#include <linux/ipa.h>
+#endif
+
+typedef struct sg_table __sgtable_t;
 #else
 
 /*
@@ -78,6 +83,9 @@
 #define __dma_addr_t_already_defined__
 typedef unsigned long dma_addr_t;
 #endif
+
+typedef unsigned long phys_addr_t;
+typedef unsigned long __sgtable_t;
 
 #define SIOCGIWAP       0
 #define IWEVCUSTOM      0
@@ -136,6 +144,24 @@ typedef __be16 __qdf_be16_t;
 typedef __be32 __qdf_be32_t;
 typedef __be64 __qdf_be64_t;
 
+#ifdef IPA_OFFLOAD
+typedef struct ipa_wdi_buffer_info __qdf_mem_info_t;
+#else
+/**
+ * struct __qdf_shared_mem_info - shared mem info struct
+ * @pa : physical address
+ * @iova: i/o virtual address
+ * @size: allocated memory size
+ * @result: status
+ */
+typedef struct __qdf_shared_mem_info {
+	phys_addr_t pa;
+	unsigned long iova;
+	size_t size;
+	int result;
+} __qdf_mem_info_t;
+#endif /* IPA_OFFLOAD */
+
 #define qdf_dma_mem_context(context) dma_addr_t context
 #define qdf_get_dma_mem_context(var, field)   ((qdf_dma_context_t)(var->field))
 
@@ -183,7 +209,10 @@ enum qdf_bus_type {
  * @dev: Pointer to device
  * @res: QDF resource
  * @func: Interrupt handler
- * @mem_pool: array to pointer to mem context
+ * @mem_pool: array of pointers to mem pool context
+ * @bus_type: Bus type
+ * @bid: Bus ID
+ * @smmu_s1_enabled: SMMU S1 enabled or not
  */
 struct __qdf_device {
 	void *drv;
@@ -198,6 +227,7 @@ struct __qdf_device {
 #ifdef CONFIG_MCL
 	const struct hif_bus_id *bid;
 #endif
+	bool smmu_s1_enabled;
 };
 typedef struct __qdf_device *__qdf_device_t;
 

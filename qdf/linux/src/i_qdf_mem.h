@@ -70,6 +70,12 @@
 #endif /* __KERNEL__ */
 #include <qdf_status.h>
 
+#ifdef CONFIG_ARM_SMMU
+#include <pld_common.h>
+#include <asm/dma-iommu.h>
+#include <linux/iommu.h>
+#endif
+
 #ifdef __KERNEL__
 typedef struct mempool_elem {
 	STAILQ_ENTRY(mempool_elem) mempool_entry;
@@ -160,7 +166,7 @@ static inline uint32_t __qdf_mem_map_nbytes_single(qdf_device_t osdev,
  * @dir: DMA unmap direction
  * @nbytes: number of bytes to be unmapped.
  *
- * @return - none
+ * Return - none
  */
 static inline void __qdf_mem_unmap_nbytes_single(qdf_device_t osdev,
 						 qdf_dma_addr_t phy_addr,
@@ -204,4 +210,191 @@ static inline int32_t __qdf_mem_cmp(const void *memory1, const void *memory2,
 	return (int32_t) memcmp(memory1, memory2, num_bytes);
 }
 
+/**
+ * __qdf_mem_smmu_s1_enabled() - Return SMMU stage 1 translation enable status
+ * @osdev parent device instance
+ *
+ * Return: true if smmu s1 enabled, false if smmu s1 is bypassed
+ */
+static inline bool __qdf_mem_smmu_s1_enabled(qdf_device_t osdev)
+{
+	return osdev->smmu_s1_enabled;
+}
+
+#ifdef CONFIG_ARM_SMMU
+/**
+ * __qdf_mem_paddr_from_dmaaddr() - get actual physical address from dma_addr
+ * @osdev: parent device instance
+ * @dma_addr: dma_addr
+ *
+ * Get actual physical address from dma_addr based on SMMU enablement status.
+ * IF SMMU Stage 1 tranlation is enabled, DMA APIs return IO virtual address
+ * (IOVA) otherwise returns physical address. So get SMMU physical address
+ * mapping from IOVA.
+ *
+ * Return: dmaable physical address
+ */
+static inline unsigned long
+__qdf_mem_paddr_from_dmaaddr(qdf_device_t osdev,
+			     qdf_dma_addr_t dma_addr)
+{
+	struct dma_iommu_mapping *mapping;
+
+	if (__qdf_mem_smmu_s1_enabled(osdev)) {
+		mapping = pld_smmu_get_mapping(osdev->dev);
+		if (mapping)
+			return iommu_iova_to_phys(mapping->domain, dma_addr);
+	}
+
+	return dma_addr;
+}
+#else
+static inline unsigned long
+__qdf_mem_paddr_from_dmaaddr(qdf_device_t osdev,
+			     qdf_dma_addr_t dma_addr)
+{
+	return dma_addr;
+}
+#endif
+
+/**
+ * __qdf_os_mem_dma_get_sgtable() - Returns DMA memory scatter gather table
+ * @dev: device instace
+ * @sgt: scatter gather table pointer
+ * @cpu_addr: HLOS virtual address
+ * @dma_addr: dma/iova
+ * @size: allocated memory size
+ *
+ * Return: physical address
+ */
+static inline int
+__qdf_os_mem_dma_get_sgtable(struct device *dev, void *sgt, void *cpu_addr,
+			     qdf_dma_addr_t dma_addr, size_t size)
+{
+	return dma_get_sgtable(dev, (struct sg_table *)sgt, cpu_addr, dma_addr,
+				size);
+}
+
+/**
+ * __qdf_mem_get_dma_addr() - Return dma addr based on SMMU translation status
+ * @osdev: parent device instance
+ * @mem_info: Pointer to allocated memory information
+ *
+ * Based on smmu stage 1 translation enablement status, return corresponding dma
+ * address from qdf_mem_info_t. If stage 1 translation enabled, return
+ * IO virtual address otherwise return physical address.
+ *
+ * Return: dma address
+ */
+static inline qdf_dma_addr_t __qdf_mem_get_dma_addr(qdf_device_t osdev,
+						    qdf_mem_info_t *mem_info)
+{
+	if (__qdf_mem_smmu_s1_enabled(osdev))
+		return (qdf_dma_addr_t)mem_info->iova;
+	else
+		return (qdf_dma_addr_t)mem_info->pa;
+}
+
+/**
+ * __qdf_mem_get_dma_addr_ptr() - Return DMA address storage pointer
+ * @osdev: parent device instance
+ * @mem_info: Pointer to allocated memory information
+ *
+ * Based on smmu stage 1 translation enablement status, return corresponding
+ * dma address pointer from qdf_mem_info_t structure. If stage 1 translation
+ * enabled, return pointer to IO virtual address otherwise return pointer to
+ * physical address
+ *
+ * Return: dma address storage pointer
+ */
+static inline qdf_dma_addr_t *
+__qdf_mem_get_dma_addr_ptr(qdf_device_t osdev,
+			   qdf_mem_info_t *mem_info)
+{
+	if (__qdf_mem_smmu_s1_enabled(osdev))
+		return (qdf_dma_addr_t *)(&mem_info->iova);
+	else
+		return (qdf_dma_addr_t *)(&mem_info->pa);
+}
+
+/**
+ * __qdf_update_mem_map_table() - Update DMA memory map info
+ * @osdev: Parent device instance
+ * @mem_info: Pointer to shared memory information
+ * @dma_addr: dma address
+ * @mem_size: memory size allocated
+ *
+ * Store DMA shared memory information
+ *
+ * Return: none
+ */
+static inline void __qdf_update_mem_map_table(qdf_device_t osdev,
+					      qdf_mem_info_t *mem_info,
+					      qdf_dma_addr_t dma_addr,
+					      uint32_t mem_size)
+{
+	mem_info->pa = __qdf_mem_paddr_from_dmaaddr(osdev, dma_addr);
+	mem_info->iova = dma_addr;
+	mem_info->size = mem_size;
+}
+
+/**
+ * __qdf_mem_get_dma_size() - Return DMA memory size
+ * @osdev: parent device instance
+ * @mem_info: Pointer to allocated memory information
+ *
+ * Return: DMA memory size
+ */
+static inline uint32_t
+__qdf_mem_get_dma_size(qdf_device_t osdev,
+		       qdf_mem_info_t *mem_info)
+{
+	return mem_info->size;
+}
+
+/**
+ * __qdf_mem_set_dma_size() - Set DMA memory size
+ * @osdev: parent device instance
+ * @mem_info: Pointer to allocated memory information
+ * @mem_size: memory size allocated
+ *
+ * Return: none
+ */
+static inline void
+__qdf_mem_set_dma_size(qdf_device_t osdev,
+		       qdf_mem_info_t *mem_info,
+		       uint32_t mem_size)
+{
+	mem_info->size = mem_size;
+}
+
+/**
+ * __qdf_mem_get_dma_size() - Return DMA physical address
+ * @osdev: parent device instance
+ * @mem_info: Pointer to allocated memory information
+ *
+ * Return: DMA physical address
+ */
+static inline qdf_dma_addr_t
+__qdf_mem_get_dma_pa(qdf_device_t osdev,
+		     qdf_mem_info_t *mem_info)
+{
+	return mem_info->pa;
+}
+
+/**
+ * __qdf_mem_set_dma_size() - Set DMA physical address
+ * @osdev: parent device instance
+ * @mem_info: Pointer to allocated memory information
+ * @dma_pa: DMA phsical address
+ *
+ * Return: none
+ */
+static inline void
+__qdf_mem_set_dma_pa(qdf_device_t osdev,
+		     qdf_mem_info_t *mem_info,
+		     qdf_dma_addr_t dma_pa)
+{
+	mem_info->pa = dma_pa;
+}
 #endif /* __I_QDF_MEM_H */
