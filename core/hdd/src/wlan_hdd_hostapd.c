@@ -2699,11 +2699,10 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 {
 	tHalHandle *hal_handle;
 	hdd_ap_ctx_t *hdd_ap_ctx;
-	uint16_t intf_ch = 0;
+	uint8_t intf_ch = 0;
 	struct hdd_context *hdd_ctx;
 	hdd_station_ctx_t *hdd_sta_ctx;
 	hdd_adapter_t *sta_adapter;
-	uint8_t temp_channel = 0;
 	hdd_adapter_t *ap_adapter = wlan_hdd_get_adapter_from_vdev(
 					psoc, vdev_id);
 	if (!ap_adapter) {
@@ -2744,36 +2743,20 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 	 * supported, return from here if DBS is not supported.
 	 * Need to take care of 3 port cases with 2 STA iface in future.
 	 */
-	if (wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev,
-		hdd_sta_ctx->conn_info.operationChannel) ||
-		wlan_reg_is_passive_or_disable_ch(hdd_ctx->hdd_pdev,
-			hdd_sta_ctx->conn_info.operationChannel) ||
-		!policy_mgr_is_safe_channel(psoc,
-			hdd_sta_ctx->conn_info.operationChannel)) {
-		if (policy_mgr_is_hw_dbs_capable(psoc)) {
-			temp_channel =
-				policy_mgr_get_alternate_channel_for_sap(psoc);
-			if (temp_channel) {
-				intf_ch = temp_channel;
-			} else {
-				if (WLAN_REG_IS_5GHZ_CH(
-					hdd_sta_ctx->conn_info.operationChannel))
-					intf_ch = CDS_24_GHZ_CHANNEL_6;
-				else
-					intf_ch = CDS_5_GHZ_CHANNEL_36;
-			}
-		} else {
-			hdd_debug("can't move sap to %d",
-				hdd_sta_ctx->conn_info.operationChannel);
-			return QDF_STATUS_E_FAILURE;
-		}
-	} else {
-		intf_ch = wlansap_check_cc_intf(hdd_ap_ctx->sapContext);
-		hdd_info("intf_ch: %d", intf_ch);
+	intf_ch = wlansap_check_cc_intf(hdd_ap_ctx->sapContext);
+	hdd_info("intf_ch: %d", intf_ch);
+	if (QDF_IS_STATUS_ERROR(
+		policy_mgr_valid_sap_conc_channel_check(hdd_ctx->hdd_psoc,
+			&intf_ch,
+			policy_mgr_mode_specific_get_channel(
+				hdd_ctx->hdd_psoc, PM_SAP_MODE)))) {
+		hdd_debug("can't move sap to %d",
+			hdd_sta_ctx->conn_info.operationChannel);
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (intf_ch == 0) {
-		hdd_err("interface channel is 0");
+		hdd_debug("interface channel is 0");
 		return QDF_STATUS_E_FAILURE;
 	}
 
