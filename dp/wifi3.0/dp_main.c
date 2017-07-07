@@ -1510,6 +1510,9 @@ static void dp_soc_detach_wifi3(void *txrx_soc)
 
 	qdf_atomic_set(&soc->cmn_init_done, 0);
 
+	qdf_flush_work(0, &soc->htt_stats_work);
+	qdf_disable_work(0, &soc->htt_stats_work);
+
 	for (i = 0; i < MAX_PDEV_CNT; i++) {
 		if (soc->pdev_list[i])
 			dp_pdev_detach_wifi3(
@@ -1714,6 +1717,10 @@ static int dp_soc_attach_target_wifi3(struct cdp_soc_t *cdp_soc)
 	dp_rxdma_ring_config(soc);
 
 	DP_STATS_INIT(soc);
+
+	/* initialize work queue for stats processing */
+	qdf_create_work(0, &soc->htt_stats_work, htt_t2h_stats_handler, soc);
+
 	return 0;
 }
 

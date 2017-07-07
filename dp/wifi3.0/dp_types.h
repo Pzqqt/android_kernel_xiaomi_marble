@@ -652,6 +652,8 @@ struct dp_soc {
 	qdf_nbuf_queue_t htt_stats_msg;
 	/* T2H Ext stats message length */
 	uint32_t htt_msg_len;
+	/* work queue to process htt stats */
+	qdf_work_t htt_stats_work;
 };
 #define MAX_RX_MAC_RINGS 2
 /* Same as NAC_MAX_CLENT */

@@ -145,4 +145,12 @@ int htt_h2t_rx_ring_cfg(void *htt_soc, int pdev_id, void *hal_srng,
 	int hal_ring_type, int ring_buf_size,
 	struct htt_rx_ring_tlv_filter *htt_tlv_filter);
 
+/*
+ * htt_t2h_stats_handler() - target to host stats work handler
+ * @context:	context (dp soc context)
+ *
+ * Return: void
+ */
+void htt_t2h_stats_handler(void *context);
+
 #endif /* _DP_HTT_H_ */

@@ -1060,6 +1060,15 @@ error:
 		qdf_nbuf_free(htt_msg);
 }
 
+void htt_t2h_stats_handler(void *context)
+{
+	struct dp_soc *soc = (struct dp_soc *)context;
+
+	if (soc && qdf_atomic_read(&soc->cmn_init_done))
+		dp_process_htt_stat_msg(soc);
+
+}
+
 /**
  * dp_txrx_fw_stats_handler():Function to process HTT EXT stats
  * @soc: DP SOC handle
@@ -1116,7 +1125,7 @@ static inline void dp_txrx_fw_stats_handler(struct dp_soc *soc,
 	 * HTT EXT STATS message
 	 */
 	if (done)
-		dp_process_htt_stat_msg(soc);
+		qdf_sched_work(0, &soc->htt_stats_work);
 
 	return;
 
