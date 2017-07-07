@@ -50,6 +50,10 @@ extern const uint8_t rcons[10];
 #ifndef AES_SMALL_TABLES
 
 #define RCON(i) rcon[(i)]
+static inline uint32_t rotr(uint32_t val, int bits)
+{
+	return (val >> bits) | (val << (32 - bits));
+}
 
 #define TE0(i) Te0[((i) >> 24) & 0xff]
 #define TE1(i) Te1[((i) >> 16) & 0xff]
@@ -129,16 +133,16 @@ static inline uint32_t rotr(uint32_t val, int bits)
 #define SWAP(x) (_lrotl(x, 8) & 0x00ff00ff | _lrotr(x, 8) & 0xff00ff00)
 #define GETU32(p) SWAP(*((uint32_t *)(p)))
 #define PUTU32(ct, st) { *((uint32_t *)(ct)) = SWAP((st)); }
-
 #else
+#define SWAP(x) (_lrotl(x, 8) & 0x00ff00ff | _lrotr(x, 8) & 0xff00ff00)
 
-#define GETU32(pt) (((u32)(pt)[0] << 24) ^ ((u32)(pt)[1] << 16) ^ \
-((u32)(pt)[2] <<  8) ^ ((u32)(pt)[3]))
-
-#define PUTU32(ct, st) { \
-(ct)[0] = (u8)((st) >> 24); (ct)[1] = (u8)((st) >> 16); \
-(ct)[2] = (u8)((st) >>  8); (ct)[3] = (u8)(st); }
-
+#define GETU32(pt) (((u32)(pt)[0] << 24) ^ ((u32)(pt)[1] << 16) ^\
+		    ((u32)(pt)[2] <<  8) ^ ((u32)(pt)[3]))
+#define PUTU32(ct, st) {\
+			(ct)[0] = (u8)((st) >> 24);\
+			(ct)[1] = (u8)((st) >> 16);\
+			(ct)[2] = (u8)((st) >>  8);\
+			(ct)[3] = (u8)(st); }
 #endif
 
 #define AES_PRIV_SIZE (4 * 4 * 15 + 4)

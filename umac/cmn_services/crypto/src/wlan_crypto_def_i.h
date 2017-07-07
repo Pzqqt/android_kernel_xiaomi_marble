@@ -419,9 +419,33 @@ struct wlan_crypto_cipher {
 				qdf_nbuf_t, uint8_t,  uint8_t);
 };
 
-/*
-* Return the size of the 802.11 header for a management or data frame.
-*/
+
+/**
+ * wlan_crypto_is_data_protected - check is frame is protected or not
+ *
+ * @data: frame
+ * This function check is frame is protected or not
+ *
+ * Return: TRUE/FALSE
+ */
+static inline bool wlan_crypto_is_data_protected(const void *data)
+{
+	const struct ieee80211_hdr *hdr = (const struct ieee80211_hdr *)data;
+
+	if (hdr->frame_control & WLAN_FC_ISWEP)
+		return true;
+	else
+		return false;
+}
+
+/**
+ * ieee80211_hdrsize - calculate frame header size
+ *
+ * @data: frame
+ * This function calculate frame header size
+ *
+ * Return: header size of the frame
+ */
 static inline int ieee80211_hdrsize(const void *data)
 {
 	const struct ieee80211_hdr *hdr = (const struct ieee80211_hdr *)data;
@@ -442,6 +466,14 @@ static inline int ieee80211_hdrsize(const void *data)
 	return size;
 }
 
+/**
+ * wlan_get_tid - get tid of the frame
+ *
+ * @data: frame
+ * This function get tid of the frame
+ *
+ * Return: tid of the frame
+ */
 static inline int wlan_get_tid(const void *data)
 {
 	const struct ieee80211_hdr *hdr = (const struct ieee80211_hdr *)data;

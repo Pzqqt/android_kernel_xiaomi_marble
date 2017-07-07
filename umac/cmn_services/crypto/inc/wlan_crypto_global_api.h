@@ -201,6 +201,17 @@ QDF_STATUS wlan_crypto_demic(struct wlan_objmgr_vdev *vdev,
 					uint8_t tid);
 
 /**
+ * wlan_crypto_vdev_is_pmf_enabled - called to check is pmf enabled in vdev
+ *
+ * @vdev: vdev
+ *
+ * This function gets called to check is pmf enabled or not in vdev.
+ *
+ * Return: true or false
+ */
+bool wlan_crypto_vdev_is_pmf_enabled(struct wlan_objmgr_vdev *vdev);
+
+/**
  * wlan_crypto_is_pmf_enabled - called by mgmt txrx to check is pmf enabled
  *
  * @vdev: vdev
@@ -378,4 +389,29 @@ QDF_STATUS wlan_crypto_register_crypto_rx_ops(
  */
 struct wlan_lmac_if_crypto_rx_ops *wlan_crypto_get_crypto_rx_ops(
 			struct wlan_objmgr_psoc *psoc);
+/**
+ * wlan_crypto_vdev_has_auth_mode - check authmode for vdev
+ *
+ * @vdev: vdev
+ * @authvalue: authvalue to be checked
+ *
+ * This function check is authvalue passed is set in vdev or not
+ *
+ * Return: true or false
+ */
+bool wlan_crypto_vdev_has_auth_mode(struct wlan_objmgr_vdev *vdev,
+					wlan_crypto_auth_mode authmode);
+
+/**
+ * wlan_crypto_peer_has_auth_mode - check authmode for peer
+ *
+ * @peer: peer
+ * @authvalue: authvalue to be checked
+ *
+ * This function check is authvalue passed is set in peer or not
+ *
+ * Return: true or false
+ */
+bool wlan_crypto_peer_has_auth_mode(struct wlan_objmgr_peer *peer,
+					wlan_crypto_auth_mode authvalue);
 #endif /* end of _WLAN_CRYPTO_GLOBAL_API_H_ */

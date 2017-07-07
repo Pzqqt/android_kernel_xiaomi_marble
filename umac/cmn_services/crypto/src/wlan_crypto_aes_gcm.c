@@ -70,7 +70,7 @@ static void gf_mult(const uint8_t *x, const uint8_t *y, uint8_t *z)
 	uint8_t v[16];
 	int i, j;
 
-	qdf_mem_set(z, 0, 16); /* Z_0 = 0^128 */
+	qdf_mem_set(z, 16, 0); /* Z_0 = 0^128 */
 	qdf_mem_copy(v, y, 16); /* V_0 = Y */
 
 	for (i = 0; i < 16; i++) {
@@ -99,7 +99,7 @@ static void gf_mult(const uint8_t *x, const uint8_t *y, uint8_t *z)
 static void ghash_start(uint8_t *y)
 {
 	/* Y_0 = 0^128 */
-	qdf_mem_set(y, 0, 16);
+	qdf_mem_set(y, 16, 0);
 }
 
 
@@ -127,7 +127,7 @@ static void ghash(const uint8_t *h, const uint8_t *x, size_t xlen, uint8_t *y)
 		/* Add zero padded last block */
 		size_t last = x + xlen - xpos;
 		qdf_mem_copy(tmp, xpos, last);
-		qdf_mem_set(tmp + last, 0, sizeof(tmp) - last);
+		qdf_mem_set(tmp + last, sizeof(tmp) - last, 0);
 
 		/* Y_i = (Y^(i-1) XOR X_i) dot H */
 		xor_block(y, tmp);
