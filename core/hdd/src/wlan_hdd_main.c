@@ -4642,6 +4642,8 @@ QDF_STATUS hdd_start_all_adapters(hdd_context_t *hdd_ctx)
 
 		hdd_wmm_init(adapter);
 
+		adapter->scan_info.mScanPending = false;
+
 		switch (adapter->device_mode) {
 		case QDF_STA_MODE:
 		case QDF_P2P_CLIENT_MODE:
@@ -4653,7 +4655,6 @@ QDF_STATUS hdd_start_all_adapters(hdd_context_t *hdd_ctx)
 			hdd_init_station_mode(adapter);
 			/* Open the gates for HDD to receive Wext commands */
 			adapter->isLinkUpSvcNeeded = false;
-			adapter->scan_info.mScanPending = false;
 
 			/* Indicate disconnect event to supplicant
 			 * if associated previously
