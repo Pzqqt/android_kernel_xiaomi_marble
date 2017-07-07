@@ -732,14 +732,6 @@ QDF_STATUS pmo_core_psoc_bus_suspend_req(struct wlan_objmgr_psoc *psoc,
 
 	psoc_ctx = pmo_psoc_get_priv(psoc);
 
-/* TODO - scan manager need to provide the below public api
-	if (wma_check_scan_in_progress(handle)) {
-		pmo_err("Scan in progress. Aborting suspend");
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto out;
-	}
-*/
-
 	wow_mode_selected = pmo_core_is_wow_enabled(psoc_ctx);
 	pmo_info("wow mode selected %d", wow_mode_selected);
 
