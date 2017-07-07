@@ -65,6 +65,10 @@ while (0)
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_##LVL,       \
 		fmt, ## args)
 
+#define DP_PRINT_STATS(fmt, args ...)	\
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,       \
+		fmt, ## args)
+
 #define DP_STATS_INIT(_handle) \
 	qdf_mem_set(&((_handle)->stats), sizeof((_handle)->stats), 0x0)
 

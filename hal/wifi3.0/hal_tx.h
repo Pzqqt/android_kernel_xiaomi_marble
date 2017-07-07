@@ -125,6 +125,8 @@ enum hal_tx_ret_buf_manager {
   ---------------------------------------------------------------------------*/
 /**
  * struct hal_tx_completion_status - HAL Tx completion descriptor contents
+ * @status: frame acked/failed
+ * @release_src: release source = TQM/FW
  * @ack_frame_rssi: RSSI of the received ACK or BA frame
  * @first_msdu: Indicates this MSDU is the first MSDU in AMSDU
  * @last_msdu: Indicates this MSDU is the last MSDU in AMSDU
@@ -152,6 +154,8 @@ enum hal_tx_ret_buf_manager {
  * @peer_id: Peer ID of the flow or MPDU queue
  */
 struct hal_tx_completion_status {
+	uint8_t status;
+	uint8_t release_src;
 	uint8_t ack_frame_rssi;
 	uint8_t first_msdu:1,
 		last_msdu:1,
@@ -161,9 +165,9 @@ struct hal_tx_completion_status {
 		 stbc:1,
 		 ldpc:1,
 		 sgi:2,
-		 mcs:2,
+		 mcs:4,
 		 ofdma:1,
-		 tones_in_ru:10,
+		 tones_in_ru:12,
 		 valid:1;
 	uint32_t tsf;
 	uint32_t ppdu_id;
@@ -855,7 +859,6 @@ static inline uint8_t hal_tx_comp_get_release_reason(void *hal_desc)
 static inline void hal_tx_comp_get_status(void *desc,
 		struct hal_tx_completion_status *ts)
 {
-
 	uint8_t rate_stats_valid = 0;
 	uint32_t rate_stats = 0;
 
@@ -900,6 +903,9 @@ static inline void hal_tx_comp_get_status(void *desc,
 				rate_stats);
 	}
 
+	ts->release_src = hal_tx_comp_get_buffer_source(desc);
+	ts->status = hal_tx_comp_get_release_reason(desc);
+
 	ts->tsf = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_6,
 			TX_RATE_STATS_INFO_TX_RATE_STATS);
 }
@@ -916,6 +922,9 @@ static inline void hal_tx_comp_get_status(void *desc,
 	ts->last_msdu = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_4, LAST_MSDU);
 	ts->msdu_part_of_amsdu = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_4,
 			MSDU_PART_OF_AMSDU);
+
+	ts->release_src = hal_tx_comp_get_buffer_source(desc);
+	ts->status = hal_tx_comp_get_release_reason(desc);
 }
 #endif
 

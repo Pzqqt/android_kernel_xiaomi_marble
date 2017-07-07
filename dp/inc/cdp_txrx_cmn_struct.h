@@ -44,13 +44,16 @@
 
 #define OL_TXRX_INVALID_LOCAL_PEER_ID 0xffff
 #define CDP_INVALID_VDEV_ID 0xff
-#define MAX_MCS 12
+/* 1 additional MCS is for invalid values */
+#define MAX_MCS (12 + 1)
 #define MAX_MCS_11A 8
 #define MAX_MCS_11B 7
 #define MAX_MCS_11AC 10
+/* 1 additional GI is for invalid values */
+#define MAX_GI (4 + 1)
 #define SS_COUNT 8
-#define SUPPORTED_BW 4
-#define SUPPORTED_RECEPTION_TYPES 4
+#define MAX_BW 4
+#define MAX_RECEPTION_TYPES 4
 
 /* Options for Dump Statistics */
 #define CDP_HDD_STATS               0
@@ -106,28 +109,28 @@ enum cdp_cfg_param_type {
  * The bitmask contains 24 bits.
  */
 enum htt_cmn_dbg_stats_type {
-    HTT_DBG_CMN_STATS_WAL_PDEV_TXRX      = 0,  /* bit 0 -> 0x1 */
-    HTT_DBG_CMN_STATS_RX_REORDER         = 1,  /* bit 1 -> 0x2 */
-    HTT_DBG_CMN_STATS_RX_RATE_INFO       = 2,  /* bit 2 -> 0x4 */
-    HTT_DBG_CMN_STATS_TX_PPDU_LOG        = 3,  /* bit 3 -> 0x8 */
-    HTT_DBG_CMN_STATS_TX_RATE_INFO       = 4,  /* bit 4 -> 0x10 */
-    HTT_DBG_CMN_STATS_TIDQ               = 5,  /* bit 5 -> 0x20 */
-    HTT_DBG_CMN_STATS_TXBF_INFO          = 6,  /* bit 6 -> 0x40 */
-    HTT_DBG_CMN_STATS_SND_INFO           = 7,  /* bit 7 -> 0x80 */
-    HTT_DBG_CMN_STATS_ERROR_INFO         = 8,  /* bit 8  -> 0x100 */
-    HTT_DBG_CMN_STATS_TX_SELFGEN_INFO    = 9,  /* bit 9  -> 0x200 */
-    HTT_DBG_CMN_STATS_TX_MU_INFO         = 10, /* bit 10 -> 0x400 */
-    HTT_DBG_CMN_STATS_SIFS_RESP_INFO     = 11, /* bit 11 -> 0x800 */
-    HTT_DBG_CMN_STATS_RESET_INFO         = 12, /* bit 12 -> 0x1000 */
-    HTT_DBG_CMN_STATS_MAC_WDOG_INFO      = 13, /* bit 13 -> 0x2000 */
-    HTT_DBG_CMN_STATS_TX_DESC_INFO       = 14, /* bit 14 -> 0x4000 */
-    HTT_DBG_CMN_STATS_TX_FETCH_MGR_INFO  = 15, /* bit 15 -> 0x8000 */
-    HTT_DBG_CMN_STATS_TX_PFSCHED_INFO    = 16, /* bit 16 -> 0x10000 */
-    HTT_DBG_CMN_STATS_TX_PATH_STATS_INFO = 17, /* bit 17 -> 0x20000 */
-    /* bits 18-23 currently reserved */
+	HTT_DBG_CMN_STATS_WAL_PDEV_TXRX      = 0,  /* bit 0 -> 0x1 */
+	HTT_DBG_CMN_STATS_RX_REORDER         = 1,  /* bit 1 -> 0x2 */
+	HTT_DBG_CMN_STATS_RX_RATE_INFO       = 2,  /* bit 2 -> 0x4 */
+	HTT_DBG_CMN_STATS_TX_PPDU_LOG        = 3,  /* bit 3 -> 0x8 */
+	HTT_DBG_CMN_STATS_TX_RATE_INFO       = 4,  /* bit 4 -> 0x10 */
+	HTT_DBG_CMN_STATS_TIDQ               = 5,  /* bit 5 -> 0x20 */
+	HTT_DBG_CMN_STATS_TXBF_INFO          = 6,  /* bit 6 -> 0x40 */
+	HTT_DBG_CMN_STATS_SND_INFO           = 7,  /* bit 7 -> 0x80 */
+	HTT_DBG_CMN_STATS_ERROR_INFO         = 8,  /* bit 8  -> 0x100 */
+	HTT_DBG_CMN_STATS_TX_SELFGEN_INFO    = 9,  /* bit 9  -> 0x200 */
+	HTT_DBG_CMN_STATS_TX_MU_INFO         = 10, /* bit 10 -> 0x400 */
+	HTT_DBG_CMN_STATS_SIFS_RESP_INFO     = 11, /* bit 11 -> 0x800 */
+	HTT_DBG_CMN_STATS_RESET_INFO         = 12, /* bit 12 -> 0x1000 */
+	HTT_DBG_CMN_STATS_MAC_WDOG_INFO      = 13, /* bit 13 -> 0x2000 */
+	HTT_DBG_CMN_STATS_TX_DESC_INFO       = 14, /* bit 14 -> 0x4000 */
+	HTT_DBG_CMN_STATS_TX_FETCH_MGR_INFO  = 15, /* bit 15 -> 0x8000 */
+	HTT_DBG_CMN_STATS_TX_PFSCHED_INFO    = 16, /* bit 16 -> 0x10000 */
+	HTT_DBG_CMN_STATS_TX_PATH_STATS_INFO = 17, /* bit 17 -> 0x20000 */
+	/* bits 18-23 currently reserved */
 
-    /* keep this last */
-    HTT_DBG_CMN_NUM_STATS
+	/* keep this last */
+	HTT_DBG_CMN_NUM_STATS
 };
 
 /*
@@ -577,6 +580,7 @@ enum cdp_stat_update_type {
 	UPDATE_VDEV_STATS = 1,
 	UPDATE_PDEV_STATS = 2,
 };
+
 /* packet info */
 struct cdp_pkt_info {
 	/*no of packets*/
@@ -597,6 +601,7 @@ struct cdp_tx_stats {
 	struct cdp_pkt_info tx_success;
 	/* Total Tx failure */
 	uint32_t tx_failed;
+
 	/* Total Packets as ofdma*/
 	uint32_t ofdma;
 	/* Packets in STBC */
@@ -609,39 +614,38 @@ struct cdp_tx_stats {
 	uint32_t non_amsdu_cnt;
 	/* Number of MSDUs part of AMSDU*/
 	uint32_t amsdu_cnt;
+
 	/* RSSI of last packet */
 	uint32_t last_ack_rssi;
 
 	/* Packet Type */
 	struct {
 		/* MCS Count */
-		uint32_t mcs_count[MAX_MCS + 1];
+		uint32_t mcs_count[MAX_MCS];
 	} pkt_type[DOT11_MAX];
+
 	/* SGI count */
-	uint32_t sgi_count[MAX_MCS + 1];
+	uint32_t sgi_count[MAX_GI];
+
 	/* Packet Count for different bandwidths */
-	uint32_t bw[SUPPORTED_BW];
+	uint32_t bw[MAX_BW];
+
 	/* Wireless Multimedia type Count */
 	uint32_t wme_ac_type[WME_AC_MAX];
+
 	/* Wireless Multimedia type Count */
 	uint32_t excess_retries_ac[WME_AC_MAX];
 
 	/* Packets dropped on the Tx side */
 	struct {
 		/* Discarded by firmware */
-		uint32_t fw_discard;
-		/* fw_discard_retired */
-		uint32_t fw_discard_retired;
+		uint32_t fw_rem;
 		/* firmware_discard_untransmitted */
-		uint32_t fw_discard_untransmitted;
-		/* ,pdu_age_out */
-		uint32_t mpdu_age_out;
-		/* firmware_discard_reason1 */
-		uint32_t fw_discard_reason1;
-		/* firmware_discard_reason2 */
-		uint32_t fw_discard_reason2;
-		/* firmware_discard_reason3 */
-		uint32_t fw_discard_reason3;
+		uint32_t fw_rem_notx;
+		/* firmware_discard_transmitted */
+		uint32_t fw_rem_tx;
+		/* aged out in mpdu/msdu queues*/
+		uint32_t age_out;
 	} dropped;
 };
 
@@ -677,18 +681,18 @@ struct cdp_rx_stats {
 	/* Wireless Multimedia type Count */
 	uint32_t wme_ac_type[WME_AC_MAX];
 	/* Reception type os packets */
-	uint32_t reception_type[SUPPORTED_RECEPTION_TYPES];
+	uint32_t reception_type[MAX_RECEPTION_TYPES];
 	/* Packet Type */
 	struct {
 		/* MCS Count */
-		uint32_t mcs_count[MAX_MCS + 1];
+		uint32_t mcs_count[MAX_MCS];
 	} pkt_type[DOT11_MAX];
 	/* SGI count */
-	uint32_t sgi_count[MAX_MCS + 1];
+	uint32_t sgi_count[MAX_GI];
 	/* Packet count in spatiel Streams */
 	uint32_t nss[SS_COUNT];
 	/* Packet Count in different bandwidths */
-	uint32_t bw[SUPPORTED_BW];
+	uint32_t bw[MAX_BW];
 	/*  Number of MSDUs with no MPDU level aggregation */
 	uint32_t non_ampdu_cnt;
 	/* Number of MSDUs part of AMSPU */
@@ -817,7 +821,6 @@ struct cdp_hist_rx_ind {
 	uint32_t pkts_201_plus;
 };
 
-
 struct cdp_pdev_stats {
 	/* packets dropped on rx */
 	struct {
@@ -852,6 +855,7 @@ struct cdp_pdev_stats {
 		/* desc alloc failed errors */
 		uint32_t desc_alloc_fail;
 	} err;
+
 	/* buffers added back in freelist */
 	uint32_t buf_freelist;
 	/* Tx Ingress stats */

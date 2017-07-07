@@ -48,13 +48,10 @@
 #include <hal_api_mon.h>
 #include "hal_rx.h"
 
-#define MAX_TCL_RING 3
-#define MAX_RXDMA_ERRORS 32
-#define SUPPORTED_BW 4
-#define SUPPORTED_RECEPTION_TYPES 4
+#define MAX_BW 4
+#define MAX_RECEPTION_TYPES 4
 #define REPT_MU_MIMO 1
 #define REPT_MU_OFDMA_MIMO 3
-#define REO_ERROR_TYPE_MAX (HAL_REO_ERR_QUEUE_DESC_BLOCKED_SET+1)
 #define DP_VO_TID 6
 
 #define DP_MAX_INTERRUPT_CONTEXTS 8
@@ -72,19 +69,18 @@
 #else
 #define MAX_PDEV_CNT 3
 #endif
+
 #define MAX_LINK_DESC_BANKS 8
 #define MAX_TXDESC_POOLS 4
 #define MAX_RXDESC_POOLS 4
 #define MAX_REO_DEST_RINGS 4
 #define MAX_TCL_DATA_RINGS 4
-#define DP_MAX_TX_RINGS 8
-#define DP_MAX_RX_RINGS 8
 #define MAX_IDLE_SCATTER_BUFS 16
 #define DP_MAX_IRQ_PER_CONTEXT 12
 #define DP_MAX_INTERRUPT_CONTEXTS 8
 #define DEFAULT_HW_PEER_ID 0xffff
 
-#define MAX_TX_HW_QUEUES 3
+#define MAX_TX_HW_QUEUES MAX_TCL_DATA_RINGS
 
 #define DP_MAX_INTERRUPT_CONTEXTS 8
 #define DP_MAX_MECT_ENTRIES 64
@@ -446,6 +442,52 @@ struct reo_desc_list_node {
 	struct dp_rx_tid rx_tid;
 };
 
+/* SoC level data path statistics */
+struct dp_soc_stats {
+	/* SOC level TX stats */
+	struct {
+		/* packets dropped on tx because of no peer */
+		struct cdp_pkt_info tx_invalid_peer;
+		/* descriptors in each tcl ring */
+		uint32_t tcl_ring_full[MAX_TCL_DATA_RINGS];
+		/* Descriptors in use at soc */
+		uint32_t desc_in_use;
+		/* tqm_release_reason == FW removed */
+		uint32_t dropped_fw_removed;
+
+	} tx;
+
+	/* SOC level RX stats */
+	struct {
+		/* Rx errors */
+		/* Total Packets in Rx Error ring */
+		uint32_t err_ring_pkts;
+		/* No of Fragments */
+		uint32_t rx_frags;
+		struct {
+			/* Invalid RBM error count */
+			uint32_t invalid_rbm;
+			/* Invalid VDEV Error count */
+			uint32_t invalid_vdev;
+			/* Invalid PDEV error count */
+			uint32_t invalid_pdev;
+			/* Invalid PEER Error count */
+			struct cdp_pkt_info rx_invalid_peer;
+			/* HAL ring access Fail error count */
+			uint32_t hal_ring_access_fail;
+			/* RX DMA error count */
+			uint32_t rxdma_error[HAL_RXDMA_ERR_MAX];
+			/* REO Error count */
+			uint32_t reo_error[HAL_REO_ERR_MAX];
+			/* HAL REO ERR Count */
+			uint32_t hal_reo_error[MAX_REO_DEST_RINGS];
+		} err;
+
+		/* packet count per core - per ring */
+		uint64_t ring_packets[NR_CPUS][MAX_REO_DEST_RINGS];
+	} rx;
+};
+
 #define DP_MAC_ADDR_LEN 6
 union dp_align_mac_addr {
 	uint8_t raw[DP_MAC_ADDR_LEN];
@@ -679,46 +721,7 @@ struct dp_soc {
 	int max_peers;
 
 	/* SoC level data path statistics */
-	struct {
-		/* SOC level TX stats */
-		struct {
-			/* packets dropped on tx because of no peer */
-			struct cdp_pkt_info tx_invalid_peer;
-			/* descriptors in each tcl ring */
-			uint32_t tcl_ring_full[MAX_TCL_RING];
-			/* Descriptors in use at soc */
-			uint32_t desc_in_use;
-		} tx;
-		/* SOC level RX stats */
-		struct {
-		/* Rx errors */
-			/* Total Packets in Rx Error ring */
-			uint32_t err_ring_pkts;
-			/* No of Fragments */
-			uint32_t rx_frags;
-			struct {
-				/* Invalid RBM error count */
-				uint32_t invalid_rbm;
-				/* Invalid VDEV Error count */
-				uint32_t invalid_vdev;
-				/* Invalid PDEV error count */
-				uint32_t invalid_pdev;
-				/* Invalid PEER Error count */
-				struct cdp_pkt_info rx_invalid_peer;
-				/* HAL ring access Fail error count */
-				uint32_t hal_ring_access_fail;
-				/* RX DMA error count */
-				uint32_t rxdma_error[MAX_RXDMA_ERRORS];
-				/* REO Error count */
-				uint32_t reo_error[REO_ERROR_TYPE_MAX];
-				/* HAL REO ERR Count */
-				uint32_t hal_reo_error[CDP_MAX_RX_RINGS];
-			} err;
-
-			/* packet count per core - per ring */
-			uint64_t ring_packets[NR_CPUS][MAX_REO_DEST_RINGS];
-		} rx;
-	} stats;
+	struct dp_soc_stats stats;
 
 	/* Enable processing of Tx completion status words */
 	bool process_tx_status;
@@ -1247,4 +1250,5 @@ struct dp_tx_me_buf_t {
 	struct dp_tx_me_buf_t *next;
 	uint8_t data[DP_MAC_ADDR_LEN];
 };
+
 #endif /* _DP_TYPES_H_ */

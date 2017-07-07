@@ -1215,11 +1215,11 @@ done:
 					 && (pkt_type == DOT11_AC)));
 			DP_STATS_INCC(peer, rx.pkt_type[pkt_type].
 					mcs_count[MAX_MCS], 1,
-					((mcs >= MAX_MCS)
+					((mcs >= (MAX_MCS-1))
 					 && (pkt_type == DOT11_AX)));
 			DP_STATS_INCC(peer, rx.pkt_type[pkt_type].
 					mcs_count[mcs], 1,
-					((mcs <= MAX_MCS)
+					((mcs <= (MAX_MCS-1))
 					 && (pkt_type == DOT11_AX)));
 
 			/*

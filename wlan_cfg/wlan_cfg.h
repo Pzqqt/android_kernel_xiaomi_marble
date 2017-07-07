@@ -35,13 +35,10 @@
 #define MAX_LINK_DESC_BANKS 8
 #define MAX_TXDESC_POOLS 4
 #define MAX_TCL_DATA_RINGS 4
-#define DP_MAX_TX_RINGS 8
-#define MAX_TX_HW_QUEUES 3
 
 /* Rx configuration */
 #define MAX_RXDESC_POOLS 4
 #define MAX_REO_DEST_RINGS 4
-#define DP_MAX_RX_RINGS 8
 #define MAX_RX_MAC_RINGS 2
 
 /* Miscellaneous configuration */
