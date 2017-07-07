@@ -1636,7 +1636,7 @@ static void wlan_tdd_tdls_reset_tx_rx(tdlsCtx_t *pHddTdlsCtx)
  */
 static void wlan_hdd_tdls_implicit_disable(tdlsCtx_t *pHddTdlsCtx)
 {
-	hdd_info("Disable Implicit TDLS");
+	hdd_debug("Disable Implicit TDLS");
 	wlan_hdd_tdls_timers_stop(pHddTdlsCtx);
 }
 
@@ -1648,7 +1648,7 @@ static void wlan_hdd_tdls_implicit_disable(tdlsCtx_t *pHddTdlsCtx)
  */
 static void wlan_hdd_tdls_implicit_enable(tdlsCtx_t *pHddTdlsCtx)
 {
-	hdd_info("Enable Implicit TDLS");
+	hdd_debug("Enable Implicit TDLS");
 	wlan_hdd_tdls_peer_reset_discovery_processed(pHddTdlsCtx);
 	pHddTdlsCtx->discovery_sent_cnt = 0;
 	wlan_tdd_tdls_reset_tx_rx(pHddTdlsCtx);
@@ -6198,7 +6198,7 @@ static void wlan_hdd_tdls_ct_handler(void *user_data)
 		return;
 	/* If any concurrency is detected */
 	if (!hdd_ctx->enable_tdls_connection_tracker) {
-		hdd_info("Connection tracker is disabled");
+		hdd_debug("Connection tracker is disabled");
 		return;
 	}
 

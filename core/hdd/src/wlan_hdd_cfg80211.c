@@ -10610,7 +10610,7 @@ void hdd_bt_activity_cb(void *context, uint32_t bt_activity)
 	else
 		return;
 
-	hdd_info("a2dp_active:%d vo_active:%d", hdd_ctx->bt_a2dp_active,
+	hdd_debug("a2dp_active: %d vo_active: %d", hdd_ctx->bt_a2dp_active,
 		 hdd_ctx->bt_vo_active);
 }
 
@@ -15705,7 +15705,7 @@ static int wlan_hdd_disconnect(hdd_adapter_t *pAdapter, u16 reason)
 			}
 			if (pAdapter->roam_ho_fail) {
 				INIT_COMPLETION(pAdapter->disconnect_comp_var);
-					hdd_notice("Disabling queues");
+					hdd_info("Disabling queues");
 				wlan_hdd_netif_queue_control(pAdapter,
 					WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
 					WLAN_CONTROL_PATH);
@@ -15717,9 +15717,8 @@ static int wlan_hdd_disconnect(hdd_adapter_t *pAdapter, u16 reason)
 	}
 
 	prev_conn_state = pHddStaCtx->conn_info.connState;
-
-	/* stop tx queues */
-	hdd_debug("Disabling queues");
+	/*stop tx queues */
+	hdd_info("Disabling queues");
 	wlan_hdd_netif_queue_control(pAdapter,
 		WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER, WLAN_CONTROL_PATH);
 	hdd_debug("Set HDD connState to eConnectionState_Disconnecting");

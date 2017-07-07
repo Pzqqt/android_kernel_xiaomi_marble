@@ -409,7 +409,7 @@ static int hdd_ocb_set_config_req(hdd_adapter_t *adapter,
 	}
 	cookie = hdd_request_cookie(hdd_request);
 
-	hdd_notice("Disabling queues");
+	hdd_info("Disabling queues");
 	wlan_hdd_netif_queue_control(adapter,
 				     WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
 				     WLAN_CONTROL_PATH);

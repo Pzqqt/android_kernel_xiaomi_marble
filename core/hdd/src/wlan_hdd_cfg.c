@@ -6114,7 +6114,7 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	hdd_debug("Name = [%s] value = [%u]",
 		 CFG_FORCE_1X1_NAME,
 		 pHddCtx->config->is_force_1x1);
-	hdd_info("Name = [%s] Value = %u",
+	hdd_debug("Name = [%s] Value = %u",
 		CFG_ENABLE_CONNECTED_SCAN_NAME,
 		pHddCtx->config->enable_connected_scan);
 	hdd_debug("Name = [%s] value = [%u]",

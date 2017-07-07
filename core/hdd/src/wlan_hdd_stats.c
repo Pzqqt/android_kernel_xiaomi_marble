@@ -3771,7 +3771,7 @@ static int __wlan_hdd_cfg80211_dump_survey(struct wiphy *wiphy,
 
 	ENTER_DEV(dev);
 
-	hdd_info("dump survey index:%d", idx);
+	hdd_debug("dump survey index: %d", idx);
 	if (idx > QDF_MAX_NUM_CHAN - 1)
 		return -EINVAL;
 

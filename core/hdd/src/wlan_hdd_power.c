@@ -1093,7 +1093,7 @@ hdd_suspend_wlan(void)
 		}
 
 		/* stop all TX queues before suspend */
-		hdd_debug("Disabling queues");
+		hdd_info("Disabling queues");
 		wlan_hdd_netif_queue_control(pAdapter,
 					     WLAN_STOP_ALL_NETIF_QUEUE,
 					     WLAN_CONTROL_PATH);
