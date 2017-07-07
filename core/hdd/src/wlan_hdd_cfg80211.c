@@ -803,24 +803,25 @@ wlan_hdd_cfg80211_get_tdls_capabilities(struct wiphy *wiphy,
 static void wlan_hdd_cfg80211_start_pending_acs(struct work_struct *work);
 #endif
 
-int wlan_hdd_merge_avoid_freqs(tHddAvoidFreqList *destFreqList,
-		tHddAvoidFreqList *srcFreqList)
+int wlan_hdd_merge_avoid_freqs(struct ch_avoid_ind_type *destFreqList,
+		struct ch_avoid_ind_type *srcFreqList)
 {
 	int i;
-	tHddAvoidFreqRange *avoidRange =
-	&destFreqList->avoidFreqRange[destFreqList->avoidFreqRangeCount];
+	struct ch_avoid_freq_type *avoid_range =
+	&destFreqList->avoid_freq_range[destFreqList->ch_avoid_range_cnt];
 
-	destFreqList->avoidFreqRangeCount += srcFreqList->avoidFreqRangeCount;
-	if (destFreqList->avoidFreqRangeCount > HDD_MAX_AVOID_FREQ_RANGES) {
+	destFreqList->ch_avoid_range_cnt += srcFreqList->ch_avoid_range_cnt;
+	if (destFreqList->ch_avoid_range_cnt > HDD_MAX_AVOID_FREQ_RANGES) {
 		hdd_err("avoid freq overflow");
 		return -EINVAL;
 	}
 
-	for (i = 0; i < srcFreqList->avoidFreqRangeCount; i++) {
-		avoidRange->startFreq =
-			srcFreqList->avoidFreqRange[i].startFreq;
-		avoidRange->endFreq = srcFreqList->avoidFreqRange[i].endFreq;
-		avoidRange++;
+	for (i = 0; i < srcFreqList->ch_avoid_range_cnt; i++) {
+		avoid_range->start_freq =
+			srcFreqList->avoid_freq_range[i].start_freq;
+		avoid_range->end_freq =
+			srcFreqList->avoid_freq_range[i].end_freq;
+		avoid_range++;
 	}
 	return 0;
 }
@@ -830,7 +831,7 @@ int wlan_hdd_merge_avoid_freqs(tHddAvoidFreqList *destFreqList,
  * avoid frequency range event to userspace
  */
 int wlan_hdd_send_avoid_freq_event(hdd_context_t *pHddCtx,
-				   tHddAvoidFreqList *pAvoidFreqList)
+				   struct ch_avoid_ind_type *avoid_freq_list)
 {
 	struct sk_buff *vendor_event;
 
@@ -841,23 +842,23 @@ int wlan_hdd_send_avoid_freq_event(hdd_context_t *pHddCtx,
 		return -EINVAL;
 	}
 
-	if (!pAvoidFreqList) {
-		hdd_err("pAvoidFreqList is null");
+	if (!avoid_freq_list) {
+		hdd_err("avoid_freq_list is null");
 		return -EINVAL;
 	}
 
 	vendor_event = cfg80211_vendor_event_alloc(pHddCtx->wiphy,
-						   NULL,
-						   sizeof(tHddAvoidFreqList),
-						   QCA_NL80211_VENDOR_SUBCMD_AVOID_FREQUENCY_INDEX,
-						   GFP_KERNEL);
+			NULL, sizeof(struct ch_avoid_ind_type),
+			QCA_NL80211_VENDOR_SUBCMD_AVOID_FREQUENCY_INDEX,
+			GFP_KERNEL);
+
 	if (!vendor_event) {
 		hdd_err("cfg80211_vendor_event_alloc failed");
 		return -EINVAL;
 	}
 
-	memcpy(skb_put(vendor_event, sizeof(tHddAvoidFreqList)),
-	       (void *)pAvoidFreqList, sizeof(tHddAvoidFreqList));
+	memcpy(skb_put(vendor_event, sizeof(struct ch_avoid_ind_type)),
+	       (void *)avoid_freq_list, sizeof(struct ch_avoid_ind_type));
 
 	cfg80211_vendor_event(vendor_event, GFP_KERNEL);
 
@@ -908,7 +909,7 @@ int wlan_hdd_get_adjacent_chan(uint8_t chan, bool upper)
  */
 int wlan_hdd_send_avoid_freq_for_dnbs(hdd_context_t *pHddCtx, uint8_t op_chan)
 {
-	tHddAvoidFreqList p2p_avoid_freq_list;
+	struct ch_avoid_ind_type p2p_avoid_freq_list;
 	uint8_t min_chan, max_chan;
 	int ret;
 	int chan;
@@ -920,7 +921,7 @@ int wlan_hdd_send_avoid_freq_for_dnbs(hdd_context_t *pHddCtx, uint8_t op_chan)
 		return -EINVAL;
 	}
 
-	qdf_mem_zero(&p2p_avoid_freq_list, sizeof(tHddAvoidFreqList));
+	qdf_mem_zero(&p2p_avoid_freq_list, sizeof(struct ch_avoid_ind_type));
 	/*
 	 * If channel passed is zero, clear the avoid_freq list in application.
 	 */
@@ -928,11 +929,11 @@ int wlan_hdd_send_avoid_freq_for_dnbs(hdd_context_t *pHddCtx, uint8_t op_chan)
 #ifdef FEATURE_WLAN_CH_AVOID
 		mutex_lock(&pHddCtx->avoid_freq_lock);
 		qdf_mem_zero(&pHddCtx->dnbs_avoid_freq_list,
-				sizeof(tHddAvoidFreqList));
-		if (pHddCtx->coex_avoid_freq_list.avoidFreqRangeCount)
+				sizeof(struct ch_avoid_ind_type));
+		if (pHddCtx->coex_avoid_freq_list.ch_avoid_range_cnt)
 			memcpy(&p2p_avoid_freq_list,
 			       &pHddCtx->coex_avoid_freq_list,
-			       sizeof(tHddAvoidFreqList));
+			       sizeof(struct ch_avoid_ind_type));
 		mutex_unlock(&pHddCtx->avoid_freq_lock);
 #endif
 		ret = wlan_hdd_send_avoid_freq_event(pHddCtx,
@@ -956,52 +957,52 @@ int wlan_hdd_send_avoid_freq_for_dnbs(hdd_context_t *pHddCtx, uint8_t op_chan)
 	}
 
 	if ((op_chan > min_chan) && (op_chan < max_chan)) {
-		p2p_avoid_freq_list.avoidFreqRangeCount = 2;
-		p2p_avoid_freq_list.avoidFreqRange[0].startFreq =
+		p2p_avoid_freq_list.ch_avoid_range_cnt = 2;
+		p2p_avoid_freq_list.avoid_freq_range[0].start_freq =
 			wlan_chan_to_freq(min_chan);
 
 		/* Get channel before the op_chan */
 		chan = wlan_hdd_get_adjacent_chan(op_chan, false);
 		if (chan < 0)
 			return -EINVAL;
-		p2p_avoid_freq_list.avoidFreqRange[0].endFreq =
+		p2p_avoid_freq_list.avoid_freq_range[0].end_freq =
 			wlan_chan_to_freq(chan);
 
 		/* Get channel next to the op_chan */
 		chan = wlan_hdd_get_adjacent_chan(op_chan, true);
 		if (chan < 0)
 			return -EINVAL;
-		p2p_avoid_freq_list.avoidFreqRange[1].startFreq =
+		p2p_avoid_freq_list.avoid_freq_range[1].start_freq =
 			wlan_chan_to_freq(chan);
 
-		p2p_avoid_freq_list.avoidFreqRange[1].endFreq =
+		p2p_avoid_freq_list.avoid_freq_range[1].end_freq =
 			wlan_chan_to_freq(max_chan);
 	} else if (op_chan == min_chan) {
-		p2p_avoid_freq_list.avoidFreqRangeCount = 1;
+		p2p_avoid_freq_list.ch_avoid_range_cnt = 1;
 
 		chan = wlan_hdd_get_adjacent_chan(op_chan, true);
 		if (chan < 0)
 			return -EINVAL;
-		p2p_avoid_freq_list.avoidFreqRange[0].startFreq =
+		p2p_avoid_freq_list.avoid_freq_range[0].start_freq =
 			wlan_chan_to_freq(chan);
 
-		p2p_avoid_freq_list.avoidFreqRange[0].endFreq =
+		p2p_avoid_freq_list.avoid_freq_range[0].end_freq =
 			wlan_chan_to_freq(max_chan);
 	} else {
-		p2p_avoid_freq_list.avoidFreqRangeCount = 1;
-		p2p_avoid_freq_list.avoidFreqRange[0].startFreq =
+		p2p_avoid_freq_list.ch_avoid_range_cnt = 1;
+		p2p_avoid_freq_list.avoid_freq_range[0].start_freq =
 			wlan_chan_to_freq(min_chan);
 
 		chan = wlan_hdd_get_adjacent_chan(op_chan, false);
 		if (chan < 0)
 			return -EINVAL;
-		p2p_avoid_freq_list.avoidFreqRange[0].endFreq =
+		p2p_avoid_freq_list.avoid_freq_range[0].end_freq =
 			wlan_chan_to_freq(chan);
 	}
 #ifdef FEATURE_WLAN_CH_AVOID
 	mutex_lock(&pHddCtx->avoid_freq_lock);
 	pHddCtx->dnbs_avoid_freq_list = p2p_avoid_freq_list;
-	if (pHddCtx->coex_avoid_freq_list.avoidFreqRangeCount) {
+	if (pHddCtx->coex_avoid_freq_list.ch_avoid_range_cnt) {
 		ret = wlan_hdd_merge_avoid_freqs(&p2p_avoid_freq_list,
 				&pHddCtx->coex_avoid_freq_list);
 		if (ret) {

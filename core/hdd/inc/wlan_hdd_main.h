@@ -1665,8 +1665,8 @@ struct hdd_context_s {
 	bool dfs_cac_offload;
 	bool reg_offload;
 #ifdef FEATURE_WLAN_CH_AVOID
-	tHddAvoidFreqList coex_avoid_freq_list;
-	tHddAvoidFreqList dnbs_avoid_freq_list;
+	struct ch_avoid_ind_type coex_avoid_freq_list;
+	struct ch_avoid_ind_type dnbs_avoid_freq_list;
 	/* Lock to control access to dnbs and coex avoid freq list */
 	struct mutex avoid_freq_lock;
 #endif
@@ -2334,8 +2334,10 @@ static inline void hdd_enable_fastpath(struct hdd_config *hdd_cfg,
 }
 #endif
 void hdd_wlan_update_target_info(hdd_context_t *hdd_ctx, void *context);
+void hdd_ch_avoid_ind(hdd_context_t *hdd_ctxt,
+		struct unsafe_ch_list *unsafe_chan_list,
+		struct ch_avoid_ind_type *avoid_freq_list);
 enum  sap_acs_dfs_mode wlan_hdd_get_dfs_mode(enum dfs_mode mode);
-void hdd_ch_avoid_cb(void *hdd_context, void *indi_param);
 void hdd_unsafe_channel_restart_sap(hdd_context_t *hdd_ctx);
 int hdd_enable_disable_ca_event(hdd_context_t *hddctx,
 				uint8_t set_value);

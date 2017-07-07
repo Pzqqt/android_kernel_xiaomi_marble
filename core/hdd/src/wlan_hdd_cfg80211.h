@@ -327,7 +327,7 @@ void wlan_hdd_testmode_rx_event(void *buf, size_t buf_len);
 #endif
 
 int wlan_hdd_send_avoid_freq_event(hdd_context_t *pHddCtx,
-				tHddAvoidFreqList * pAvoidFreqList);
+				   struct ch_avoid_ind_type *avoid_freq_list);
 
 int wlan_hdd_send_avoid_freq_for_dnbs(hdd_context_t *pHddCtx, uint8_t op_chan);
 
@@ -573,8 +573,9 @@ int wlan_hdd_get_adjacent_chan(uint8_t chan, bool upper);
  *
  * Merges two avoid_frequency lists
  */
-int wlan_hdd_merge_avoid_freqs(tHddAvoidFreqList *destFreqList,
-		tHddAvoidFreqList *srcFreqList);
+int wlan_hdd_merge_avoid_freqs(struct ch_avoid_ind_type *destFreqList,
+		struct ch_avoid_ind_type *srcFreqList);
+
 
 /**
  * hdd_bt_activity_cb() - callback function to receive bt activity

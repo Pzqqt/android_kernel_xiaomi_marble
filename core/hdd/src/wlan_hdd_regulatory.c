@@ -38,6 +38,7 @@
 #include "wlan_hdd_regulatory.h"
 #include <wlan_reg_ucfg_api.h>
 #include "cds_regdomain.h"
+#include "pld_common.h"
 
 #define REG_RULE_2412_2462    REG_RULE(2412-10, 2462+10, 40, 0, 20, 0)
 
@@ -845,10 +846,85 @@ static void fill_wiphy_band_channels(struct wiphy *wiphy,
 	}
 }
 
+/**
+ * hdd_ch_avoid_ind() - Avoid notified channels from FW handler
+ * @adapter:	HDD adapter pointer
+ * @indParam:	Channel avoid notification parameter
+ *
+ * Avoid channel notification from FW handler.
+ * FW will send un-safe channel list to avoid over wrapping.
+ * hostapd should not use notified channel
+ *
+ * Return: None
+ */
+void hdd_ch_avoid_ind(hdd_context_t *hdd_ctxt,
+		struct unsafe_ch_list *unsafe_chan_list,
+		struct ch_avoid_ind_type *avoid_freq_list)
+{
+
+	/* Basic sanity */
+	if (!hdd_ctxt) {
+		hdd_err("Invalid arguments");
+		return;
+	}
+
+	mutex_lock(&hdd_ctxt->avoid_freq_lock);
+	qdf_mem_copy(&hdd_ctxt->coex_avoid_freq_list, avoid_freq_list,
+			sizeof(struct ch_avoid_ind_type));
+	mutex_unlock(&hdd_ctxt->avoid_freq_lock);
+
+	/* clear existing unsafe channel cache */
+	hdd_ctxt->unsafe_channel_count = 0;
+	qdf_mem_zero(hdd_ctxt->unsafe_channel_list,
+					sizeof(hdd_ctxt->unsafe_channel_list));
+
+	hdd_ctxt->unsafe_channel_count = unsafe_chan_list->ch_cnt;
+
+	qdf_mem_copy(hdd_ctxt->unsafe_channel_list, unsafe_chan_list->ch_list,
+					sizeof(hdd_ctxt->unsafe_channel_list));
+	hdd_debug("number of unsafe channels is %d ",
+	       hdd_ctxt->unsafe_channel_count);
+
+	if (pld_set_wlan_unsafe_channel(hdd_ctxt->parent_dev,
+					hdd_ctxt->unsafe_channel_list,
+				hdd_ctxt->unsafe_channel_count)) {
+		hdd_err("Failed to set unsafe channel");
+
+		/* clear existing unsafe channel cache */
+		hdd_ctxt->unsafe_channel_count = 0;
+		qdf_mem_zero(hdd_ctxt->unsafe_channel_list,
+			sizeof(hdd_ctxt->unsafe_channel_list));
+
+		return;
+	}
+
+	mutex_lock(&hdd_ctxt->avoid_freq_lock);
+	if (hdd_ctxt->dnbs_avoid_freq_list.ch_avoid_range_cnt)
+		if (wlan_hdd_merge_avoid_freqs(avoid_freq_list,
+					&hdd_ctxt->dnbs_avoid_freq_list)) {
+			mutex_unlock(&hdd_ctxt->avoid_freq_lock);
+			hdd_debug("unable to merge avoid freqs");
+			return;
+	}
+	mutex_unlock(&hdd_ctxt->avoid_freq_lock);
+	/*
+	 * first update the unsafe channel list to the platform driver and
+	 * send the avoid freq event to the application
+	 */
+	wlan_hdd_send_avoid_freq_event(hdd_ctxt, avoid_freq_list);
+
+	if (!hdd_ctxt->unsafe_channel_count) {
+		hdd_debug("no unsafe channels - not restarting SAP");
+		return;
+	}
+	hdd_unsafe_channel_restart_sap(hdd_ctxt);
+}
+
 
 static void hdd_regulatory_dyn_cbk(struct wlan_objmgr_psoc *psoc,
 				   struct wlan_objmgr_pdev *pdev,
 				   struct regulatory_channel *chan_list,
+				   struct avoid_freq_ind_data *avoid_freq_ind,
 				   void *arg)
 {
 	struct wiphy *wiphy;
@@ -872,6 +948,10 @@ static void hdd_regulatory_dyn_cbk(struct wlan_objmgr_psoc *psoc,
 
 	sme_generic_change_country_code(hdd_ctx->hHal,
 					hdd_ctx->reg.alpha2);
+
+	if (avoid_freq_ind)
+		hdd_ch_avoid_ind(hdd_ctx, &avoid_freq_ind->chan_list,
+				&avoid_freq_ind->freq_list);
 }
 
 /**
