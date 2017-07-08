@@ -18974,7 +18974,8 @@ static void populate_pdev_param_tlv(uint32_t *pdev_param)
 				WMI_PDEV_PARAM_TX_CHAIN_MASK_1SS;
 	pdev_param[wmi_pdev_param_rx_filter] = WMI_UNAVAILABLE_PARAM;
 	pdev_param[wmi_pdev_set_mcast_to_ucast_tid] = WMI_UNAVAILABLE_PARAM;
-	pdev_param[wmi_pdev_param_mgmt_retry_limit] = WMI_UNAVAILABLE_PARAM;
+	pdev_param[wmi_pdev_param_mgmt_retry_limit] =
+					WMI_PDEV_PARAM_MGMT_RETRY_LIMIT;
 	pdev_param[wmi_pdev_param_aggr_burst] = WMI_UNAVAILABLE_PARAM;
 	pdev_param[wmi_pdev_peer_sta_ps_statechg_enable] =
 						WMI_UNAVAILABLE_PARAM;
