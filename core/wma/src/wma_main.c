@@ -1732,7 +1732,7 @@ static void wma_cleanup_vdev_resp_queue(tp_wma_handle wma)
 		return;
 	}
 
-	while (qdf_list_peek_front(&wma->vdev_resp_queue, &node1) ==
+	while (qdf_list_remove_front(&wma->vdev_resp_queue, &node1) ==
 				   QDF_STATUS_SUCCESS) {
 		req_msg = qdf_container_of(node1, struct wma_target_req, node);
 		qdf_spin_unlock_bh(&wma->vdev_respq_lock);
@@ -1762,7 +1762,7 @@ static void wma_cleanup_hold_req(tp_wma_handle wma)
 	}
 
 	while (QDF_STATUS_SUCCESS ==
-			qdf_list_peek_front(&wma->wma_hold_req_queue, &node1)) {
+		qdf_list_remove_front(&wma->wma_hold_req_queue, &node1)) {
 		req_msg = qdf_container_of(node1, struct wma_target_req, node);
 		qdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
 		/* Cleanup timeout handler */
