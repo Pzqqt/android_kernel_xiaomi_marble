@@ -692,10 +692,13 @@ static void hdd_ipa_uc_loaded_uc_cb(void *priv_ctxt)
 
 	/* When the same uC OPCODE is already pended, just return */
 	if (uc_op_work->msg)
-		return;
+		goto done;
 
 	uc_op_work->msg = msg;
 	schedule_work(&uc_op_work->work);
+
+done:
+	qdf_mem_free(msg);
 }
 
 /**

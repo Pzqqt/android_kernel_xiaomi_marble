@@ -8563,6 +8563,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 				params->inactivity_timeout;
 			sme_update_sta_inactivity_timeout(WLAN_HDD_GET_HAL_CTX
 					(pAdapter), sta_inactivity_timer);
+			qdf_mem_free(sta_inactivity_timer);
 		}
 	}
 

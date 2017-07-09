@@ -6002,7 +6002,7 @@ wlan_hdd_add_tx_ptrn(hdd_adapter_t *adapter, hdd_context_t *hdd_ctx,
 	request_id = nla_get_u32(tb[PARAM_REQUEST_ID]);
 	if (request_id == MAX_REQUEST_ID) {
 		hdd_err("request_id cannot be MAX");
-		return -EINVAL;
+		goto fail;
 	}
 	hdd_debug("Request Id: %u", request_id);
 
