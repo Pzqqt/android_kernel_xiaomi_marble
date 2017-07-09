@@ -1268,7 +1268,6 @@ QDF_STATUS hdd_wlan_shutdown(void)
 	hdd_debug("Invoking packetdump deregistration API");
 	wlan_deregister_txrx_packetdump();
 	wlan_cfg80211_cleanup_scan_queue(pHddCtx->hdd_pdev);
-	hdd_ipa_uc_ssr_deinit();
 	hdd_reset_all_adapters(pHddCtx);
 
 	/* Flush cached rx frame queue */
@@ -1297,6 +1296,7 @@ QDF_STATUS hdd_wlan_shutdown(void)
 		QDF_ASSERT(false);
 	}
 
+	hdd_ipa_uc_ssr_deinit();
 	qdf_mc_timer_stop(&pHddCtx->tdls_source_timer);
 
 	hdd_bus_bandwidth_destroy(pHddCtx);
