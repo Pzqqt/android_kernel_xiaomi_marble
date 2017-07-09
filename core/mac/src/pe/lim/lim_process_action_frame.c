@@ -384,7 +384,7 @@ lim_process_ext_channel_switch_action_frame(tpAniSirGlobal mac_ctx,
 		qdf_mem_free(ext_channel_switch_frame);
 		return;
 	} else if (DOT11F_WARNED(status)) {
-		pe_warn("There were warnings while unpacking CHANSW Request (0x%08x, %d bytes):",
+		pe_debug("There were warnings while unpacking CHANSW Request (0x%08x, %d bytes):",
 		  status, frame_len);
 	}
 
@@ -1251,10 +1251,8 @@ __lim_process_sm_power_save_update(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 				   pBody, frameLen);
 		return;
 	} else if (DOT11F_WARNED(nStatus)) {
-		pe_warn("There were warnings while unpacking a SMPower Save update (0x%08x, %d bytes):",
+		pe_debug("There were warnings while unpacking a SMPower Save update (0x%08x, %d bytes):",
 			nStatus, frameLen);
-		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
-				   pBody, frameLen);
 	}
 
 	pe_debug("Received SM Power save Mode update Frame with PS_Enable: %d"
@@ -1327,10 +1325,8 @@ __lim_process_radio_measure_request(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 				   pBody, frameLen);
 		    goto err;
 	} else if (DOT11F_WARNED(nStatus)) {
-		pe_warn("There were warnings while unpacking a Radio Measure request (0x%08x, %d bytes):",
+		pe_debug("There were warnings while unpacking a Radio Measure request (0x%08x, %d bytes):",
 			nStatus, frameLen);
-		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_WARN,
-				   pBody, frameLen);
 	}
 	/* Call rrm function to handle the request. */
 
@@ -1369,10 +1365,8 @@ __lim_process_link_measurement_req(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 				   pBody, frameLen);
 		return eSIR_FAILURE;
 	} else if (DOT11F_WARNED(nStatus)) {
-		pe_warn("There were warnings while unpacking a Link Measure request (0x%08x, %d bytes):",
+		pe_debug("There were warnings while unpacking a Link Measure request (0x%08x, %d bytes):",
 			nStatus, frameLen);
-		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_WARN,
-				   pBody, frameLen);
 	}
 	/* Call rrm function to handle the request. */
 
@@ -1418,10 +1412,8 @@ __lim_process_neighbor_report(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		qdf_mem_free(pFrm);
 		return;
 	} else if (DOT11F_WARNED(nStatus)) {
-		pe_warn("There were warnings while unpacking a Neighbor report response (0x%08x, %d bytes):",
+		pe_debug("There were warnings while unpacking a Neighbor report response (0x%08x, %d bytes):",
 			nStatus, frameLen);
-		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_WARN,
-				   pBody, frameLen);
 	}
 	/* Call rrm function to handle the request. */
 	rrm_process_neighbor_report_response(pMac, pFrm, psessionEntry);
