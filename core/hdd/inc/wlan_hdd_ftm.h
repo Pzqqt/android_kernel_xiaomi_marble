@@ -41,20 +41,6 @@
 #include "qdf_types.h"
 #include <wlan_ptt_sock_svc.h>
 
-enum wlan_hdd_ftm_state {
-	WLAN_FTM_INITIALIZED,
-	WLAN_FTM_STOPPED,
-	WLAN_FTM_STARTED,
-};
-
-/**
- * struct wlan_hdd_ftm_status - FTM status
- * @ftm_state: The current state of the FTM process
- */
-struct wlan_hdd_ftm_status {
-	enum wlan_hdd_ftm_state ftm_state;
-};
-
 int hdd_update_cds_config_ftm(hdd_context_t *hdd_ctx);
 void hdd_ftm_mc_process_msg(void *message);
 #if  defined(QCA_WIFI_FTM)
