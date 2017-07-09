@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -516,7 +516,58 @@ ce_cancel_send_next_srng(struct CE_handle *copyeng,
 		unsigned int *transfer_idp,
 		uint32_t *toeplitz_hash_result)
 {
-	return QDF_STATUS_E_INVAL;
+	struct CE_state *CE_state;
+	int status = QDF_STATUS_E_FAILURE;
+	struct CE_ring_state *src_ring;
+	unsigned int nentries_mask;
+	unsigned int sw_index;
+	struct hif_softc *scn;
+	struct ce_srng_src_desc *src_desc;
+
+	CE_state = (struct CE_state *)copyeng;
+	src_ring = CE_state->src_ring;
+	if (!src_ring)
+		return QDF_STATUS_E_FAILURE;
+
+	nentries_mask = src_ring->nentries_mask;
+	sw_index = src_ring->sw_index;
+	scn = CE_state->scn;
+
+	if (hal_srng_access_start(scn->hal_soc, src_ring->srng_ctx)) {
+		status = QDF_STATUS_E_FAILURE;
+		return status;
+	}
+
+	src_desc = hal_srng_src_pending_reap_next(scn->hal_soc,
+			src_ring->srng_ctx);
+	if (src_desc) {
+		/* Return data from completed source descriptor */
+		*bufferp = (qdf_dma_addr_t)
+			(((uint64_t)(src_desc)->buffer_addr_lo +
+			  ((uint64_t)((src_desc)->buffer_addr_hi &
+				  0xFF) << 32)));
+		*nbytesp = src_desc->nbytes;
+		*transfer_idp = src_desc->meta_data;
+		*toeplitz_hash_result = 0; /*src_desc->toeplitz_hash_result;*/
+
+		if (per_CE_contextp)
+			*per_CE_contextp = CE_state->send_context;
+
+		/* sw_index is used more like read index */
+		if (per_transfer_contextp)
+			*per_transfer_contextp =
+				src_ring->per_transfer_context[sw_index];
+
+		src_ring->per_transfer_context[sw_index] = 0;   /* sanity */
+
+		/* Update sw_index */
+		sw_index = CE_RING_IDX_INCR(nentries_mask, sw_index);
+		src_ring->sw_index = sw_index;
+		status = QDF_STATUS_SUCCESS;
+	}
+	hal_srng_access_end_reap(scn->hal_soc, src_ring->srng_ctx);
+
+	return status;
 }
 
 /* Shift bits to convert IS_*_RING_*_WATERMARK_MASK to CE_WM_FLAG_*_* */
