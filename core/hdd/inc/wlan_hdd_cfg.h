@@ -657,7 +657,11 @@ enum hdd_dot11_mode {
 #define CFG_SCAN_AGING_PARAM_NAME          "gScanAgingTime"
 #define CFG_SCAN_AGING_PARAM_MIN           (0)
 #define CFG_SCAN_AGING_PARAM_MAX           (200)
+#ifdef QCA_WIFI_NAPIER_EMULATION
+#define CFG_SCAN_AGING_PARAM_DEFAULT       (90)
+#else
 #define CFG_SCAN_AGING_PARAM_DEFAULT       (30)
+#endif
 
 #ifdef FEATURE_WLAN_SCAN_PNO
 /*
