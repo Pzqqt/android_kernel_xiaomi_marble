@@ -1189,7 +1189,7 @@ typedef struct sSirSmeJoinReq {
 	uint8_t htSmps;
 	bool send_smps_action;
 
-	uint8_t isAmsduSupportInAMPDU;
+	uint8_t max_amsdu_num;
 	tAniBool isWMEenabled;
 	tAniBool isQosEnabled;
 	tAniBool isOSENConnection;

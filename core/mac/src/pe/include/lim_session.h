@@ -374,7 +374,7 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM
 	int8_t rssi;
 #endif
-	uint8_t isAmsduSupportInAMPDU;
+	uint8_t max_amsdu_num;
 	uint8_t isCoalesingInIBSSAllowed;
 
 	tSirHTConfig htConfig;

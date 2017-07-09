@@ -1596,8 +1596,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 				pe_debug("SessionId:%d New session created",
 					session_id);
 		}
-		session->isAmsduSupportInAMPDU =
-			sme_join_req->isAmsduSupportInAMPDU;
+		session->max_amsdu_num = sme_join_req->max_amsdu_num;
 
 		/*
 		 * Store Session related parameters

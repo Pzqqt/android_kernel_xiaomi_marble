@@ -409,6 +409,9 @@ static void mlm_add_sta(tpAniSirGlobal mac_ctx, tpAddStaParams sta_param,
 		sta_param->maxAmsduSize =
 			lim_get_ht_capability(mac_ctx, eHT_MAX_AMSDU_LENGTH,
 					      session_entry);
+		sta_param->max_amsdu_num =
+			lim_get_ht_capability(mac_ctx, eHT_MAX_AMSDU_NUM,
+					      session_entry);
 		sta_param->fDsssCckMode40Mhz =
 			lim_get_ht_capability(mac_ctx, eHT_DSSS_CCK_MODE_40MHZ,
 					      session_entry);

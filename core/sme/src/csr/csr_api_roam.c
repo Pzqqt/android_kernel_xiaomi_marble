@@ -2678,8 +2678,8 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->roam.configParam.rx_ldpc_enable = pParam->enable_rx_ldpc;
 		pMac->roam.configParam.ignore_peer_erp_info =
 			pParam->ignore_peer_erp_info;
-		pMac->roam.configParam.isAmsduSupportInAMPDU =
-			pParam->isAmsduSupportInAMPDU;
+		pMac->roam.configParam.max_amsdu_num =
+			pParam->max_amsdu_num;
 		pMac->roam.configParam.nSelect5GHzMargin =
 			pParam->nSelect5GHzMargin;
 		pMac->roam.configParam.isCoalesingInIBSSAllowed =
@@ -2932,7 +2932,7 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 #endif
 	pParam->enable_tx_ldpc = cfg_params->tx_ldpc_enable;
 	pParam->enable_rx_ldpc = cfg_params->rx_ldpc_enable;
-	pParam->isAmsduSupportInAMPDU = cfg_params->isAmsduSupportInAMPDU;
+	pParam->max_amsdu_num = cfg_params->max_amsdu_num;
 	pParam->nSelect5GHzMargin = cfg_params->nSelect5GHzMargin;
 	pParam->isCoalesingInIBSSAllowed = cfg_params->isCoalesingInIBSSAllowed;
 	pParam->allowDFSChannelRoam = cfg_params->allowDFSChannelRoam;
@@ -14661,8 +14661,8 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		csr_join_req->send_smps_action =
 			pMac->roam.configParam.send_smps_action;
 
-		csr_join_req->isAmsduSupportInAMPDU =
-			(uint8_t) pMac->roam.configParam.isAmsduSupportInAMPDU;
+		csr_join_req->max_amsdu_num =
+			(uint8_t) pMac->roam.configParam.max_amsdu_num;
 
 		if (pMac->roam.roamSession[sessionId].fWMMConnection)
 			csr_join_req->isWMEenabled = true;

@@ -512,6 +512,9 @@ void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 		pAddStaParams->maxAmsduSize =
 			lim_get_ht_capability(pMac, eHT_MAX_AMSDU_LENGTH,
 					      psessionEntry);
+		pAddStaParams->max_amsdu_num =
+			lim_get_ht_capability(pMac, eHT_MAX_AMSDU_NUM,
+					      psessionEntry);
 		pAddStaParams->fDsssCckMode40Mhz =
 			lim_get_ht_capability(pMac, eHT_DSSS_CCK_MODE_40MHZ,
 					      psessionEntry);

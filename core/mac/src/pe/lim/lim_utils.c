@@ -2856,6 +2856,10 @@ uint8_t lim_get_ht_capability(tpAniSirGlobal pMac,
 		retVal = (uint8_t) macHTCapabilityInfo.maximalAMSDUsize;
 		break;
 
+	case eHT_MAX_AMSDU_NUM:
+		retVal = (uint8_t) psessionEntry->max_amsdu_num;
+		break;
+
 	case eHT_RX_STBC:
 		retVal = (uint8_t) psessionEntry->htConfig.ht_rx_stbc;
 		break;
