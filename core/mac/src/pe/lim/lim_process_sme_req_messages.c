@@ -2731,23 +2731,23 @@ static void __lim_process_sme_deauth_req(tpAniSirGlobal mac_ctx,
 				ret_code = eSIR_SME_STA_NOT_AUTHENTICATED;
 				deauth_trigger = eLIM_HOST_DEAUTH;
 
-			/*
-			 * here we received deauth request from AP so sme state
-			 * is eLIM_SME_WT_DEAUTH_STATE.if we have ISSUED
-			 * delSta then mlm state should be
-			 * eLIM_MLM_WT_DEL_STA_RSP_STATE and ifwe got delBSS
-			 * rsp then mlm state should be eLIM_MLM_IDLE_STATE
-			 * so the below condition captures the state where
-			 * delSta not done and firmware still in
-			 * connected state.
-			 */
-			if (session_entry->limSmeState ==
+				/*
+				 * here we received deauth request from AP so
+				 * sme state is eLIM_SME_WT_DEAUTH_STATE.if we
+				 * have ISSUED delSta then mlm state should be
+				 * eLIM_MLM_WT_DEL_STA_RSP_STATE and ifwe got
+				 * delBSS rsp then mlm state should be
+				 * eLIM_MLM_IDLE_STATE so the below condition
+				 * captures the state where delSta not done
+				 * and firmware still in connected state.
+				 */
+				if (session_entry->limSmeState ==
 					eLIM_SME_WT_DEAUTH_STATE &&
 					session_entry->limMlmState !=
 					eLIM_MLM_IDLE_STATE &&
 					session_entry->limMlmState !=
 					eLIM_MLM_WT_DEL_STA_RSP_STATE)
-				ret_code = eSIR_SME_DEAUTH_STATUS;
+					ret_code = eSIR_SME_DEAUTH_STATUS;
 				goto send_deauth;
 			}
 			return;
