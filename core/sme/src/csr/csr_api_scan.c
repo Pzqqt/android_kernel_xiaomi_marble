@@ -5874,8 +5874,12 @@ void csr_init_occupied_channels_list(tpAniSirGlobal mac_ctx,
 		ie_ptr = (tDot11fBeaconIEs *) (bss_desc->Result.pvIes);
 		if (!ie_ptr && !QDF_IS_STATUS_SUCCESS(
 			csr_get_parsed_bss_description_ies(mac_ctx,
-				&bss_desc->Result.BssDescriptor, &ie_ptr)))
+				&bss_desc->Result.BssDescriptor, &ie_ptr))) {
+			/* Pick next bss entry before continuing */
+			scan_entry = csr_ll_next(&scan_list->List, scan_entry,
+				     LL_ACCESS_NOLOCK);
 			continue;
+		}
 		csr_scan_add_to_occupied_channels(mac_ctx, bss_desc, sessionId,
 				&mac_ctx->scan.occupiedChannels[sessionId], ie_ptr,
 				true);
