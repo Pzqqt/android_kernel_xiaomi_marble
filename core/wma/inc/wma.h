@@ -271,14 +271,9 @@ enum ds_mode {
 #define WMA_VDEV_STOP_REQUEST_TIMEOUT  (6000)   /* 6 seconds */
 #define WMA_VDEV_HW_MODE_REQUEST_TIMEOUT (5000) /* 5 seconds */
 
-/*
- * The firmware value has been changed recently to 0x127
- * But, to maintain backward compatibility, the old
- * value is also preserved.
- */
 #define WMA_TGT_INVALID_SNR (0)
 
-#define WMA_TGT_IS_VALID_SNR(x)  (((x) >= 0 && (x) < 0x7f) ? true : false)
+#define WMA_TGT_IS_VALID_SNR(x)  ((x) >= 0 && (x) < WMA_TGT_MAX_SNR)
 #define WMA_TGT_IS_INVALID_SNR(x) (!WMA_TGT_IS_VALID_SNR(x))
 
 #define WMA_TX_Q_RECHECK_TIMER_WAIT      2      /* 2 ms */
@@ -1436,6 +1431,9 @@ typedef struct {
 	uint8_t powersave_mode;
 	bool ptrn_match_enable_all_vdev;
 	void *pGetRssiReq;
+	bool get_one_peer_info;
+	bool get_sta_peer_info;
+	struct qdf_mac_addr peer_macaddr;
 	t_thermal_mgmt thermal_mgmt_info;
 	bool roam_offload_enabled;
 	/* Here ol_ini_info is used to store ini

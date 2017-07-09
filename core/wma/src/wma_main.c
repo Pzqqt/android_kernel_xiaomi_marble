@@ -1589,6 +1589,24 @@ QDF_STATUS wma_process_hal_pwr_dbg_cmd(WMA_HANDLE handle,
 	return status;
 }
 
+static void wma_discard_fw_event(struct scheduler_msg *msg)
+{
+	switch (msg->type) {
+	case WMA_PROCESS_FW_EVENT:
+		qdf_nbuf_free(((wma_process_fw_event_params *)msg->bodyptr)
+				->evt_buf);
+		break;
+	case WMA_SET_LINK_STATE:
+		qdf_mem_free(((tpLinkStateParams) msg->bodyptr)->callbackArg);
+		break;
+	}
+	if (msg->bodyptr)
+		qdf_mem_free(msg->bodyptr);
+	msg->bodyptr = NULL;
+	msg->bodyval = 0;
+	msg->type = 0;
+}
+
 /**
  * wma_process_fw_event_handler() - common event handler to serialize
  *                                  event processing through mc_thread
@@ -1616,6 +1634,7 @@ static int wma_process_fw_event_mc_thread_ctx(void *ctx, void *ev)
 	cds_msg.type = WMA_PROCESS_FW_EVENT;
 	cds_msg.bodyptr = params_buf;
 	cds_msg.bodyval = 0;
+	cds_msg.flush_callback = wma_discard_fw_event;
 
 	if (QDF_STATUS_SUCCESS !=
 		scheduler_post_msg(QDF_MODULE_ID_WMA, &cds_msg)) {
@@ -2398,6 +2417,12 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *cds_context,
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   WMI_UPDATE_STATS_EVENTID,
 					   wma_stats_event_handler,
+					   WMA_RX_SERIALIZER_CTX);
+
+	/* register for peer info response event */
+	wmi_unified_register_event_handler(wma_handle->wmi_handle,
+					   WMI_PEER_STATS_INFO_EVENTID,
+					   wma_peer_info_event_handler,
 					   WMA_RX_SERIALIZER_CTX);
 
 #ifdef WLAN_POWER_DEBUGFS
@@ -6831,6 +6856,14 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, struct scheduler_msg *msg)
 	case WMA_SET_SAP_INTRABSS_DIS:
 		wma_set_vdev_intrabss_fwd(wma_handle,
 					  (tDisableIntraBssFwd *) msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
+	case WMA_GET_PEER_INFO:
+		wma_get_peer_info(wma_handle, msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
+	case WMA_GET_PEER_INFO_EXT:
+		wma_get_peer_info_ext(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	case WMA_MODEM_POWER_STATE_IND:

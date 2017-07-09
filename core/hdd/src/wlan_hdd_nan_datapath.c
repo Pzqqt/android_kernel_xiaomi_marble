@@ -280,6 +280,49 @@ static int hdd_ndi_start_bss(hdd_adapter_t *adapter,
 	return ret;
 }
 
+/**
+ * hdd_get_random_nan_mac_addr() - generate random non pre-existent mac address
+ * @hdd_ctx: hdd context pointer
+ * @mac_addr: mac address buffer to populate
+ *
+ * Return: status of operation
+ */
+static int hdd_get_random_nan_mac_addr(hdd_context_t *hdd_ctx,
+				       struct qdf_mac_addr *mac_addr)
+{
+	hdd_adapter_t *adapter;
+	uint8_t i, attempts, max_attempt = 16;
+	struct qdf_mac_addr bcast_mac_addr = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
+
+	for (attempts = 0; attempts < max_attempt; attempts++) {
+		cds_rand_get_bytes(0, (uint8_t *)mac_addr, sizeof(*mac_addr));
+		WLAN_HDD_RESET_LOCALLY_ADMINISTERED_BIT(mac_addr->bytes);
+		/*
+		 * to avoid potential conflict with FW's generated NMI mac addr,
+		 * host sets LSB if 6th byte to 0
+		 */
+		mac_addr->bytes[5] &= 0xFE;
+
+		if (!qdf_mem_cmp(mac_addr, &bcast_mac_addr, sizeof(*mac_addr)))
+			continue;
+
+		for (i = 0; i < QDF_MAX_CONCURRENCY_PERSONA; i++) {
+			if (!qdf_mem_cmp(hdd_ctx->config->intfMacAddr[i].bytes,
+					 mac_addr, sizeof(*mac_addr)))
+				continue;
+		}
+
+		adapter = hdd_get_adapter_by_macaddr(hdd_ctx, mac_addr->bytes);
+		if (!adapter)
+			return 0;
+	}
+
+	hdd_err("unable to get non-pre-existing mac address in %d attempts",
+		max_attempt);
+
+	return -EINVAL;
+}
+
 #ifndef WLAN_FEATURE_NAN_CONVERGENCE
 /**
  * hdd_ndi_create_req_handler() - NDI create request handler
@@ -2102,19 +2145,18 @@ error_register_wext:
 struct wlan_objmgr_vdev *hdd_ndi_open(char *iface_name)
 {
 	hdd_adapter_t *adapter;
+	struct qdf_mac_addr ndi_mac_addr;
 	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
 	ENTER();
-	/* Check for an existing interface of NDI type */
-	adapter = hdd_get_adapter(hdd_ctx, QDF_NDI_MODE);
-	if (adapter) {
-		hdd_err("Cannot support more than one NDI");
+
+	if (hdd_get_random_nan_mac_addr(hdd_ctx, &ndi_mac_addr)) {
+		hdd_err("get random mac address failed");
 		return NULL;
 	}
 
 	adapter = hdd_open_adapter(hdd_ctx, QDF_NDI_MODE, iface_name,
-			wlan_hdd_get_intf_addr(hdd_ctx), NET_NAME_UNKNOWN,
-			true);
+				   ndi_mac_addr.bytes, NET_NAME_UNKNOWN, true);
 	if (!adapter) {
 		hdd_err("hdd_open_adapter failed");
 		return NULL;
@@ -2162,7 +2204,7 @@ int hdd_ndi_delete(uint8_t vdev_id, char *iface_name, uint16_t transaction_id)
 	hdd_station_ctx_t *sta_ctx;
 	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
-	/* Check if there is already an existing inteface with the same name */
+	/* check if adapter by vdev_id is valid NDI */
 	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
 	if (!adapter || !WLAN_HDD_IS_NDI(adapter)) {
 		hdd_err("NAN data interface %s is not available", iface_name);

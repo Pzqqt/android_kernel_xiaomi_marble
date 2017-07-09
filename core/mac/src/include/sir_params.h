@@ -646,6 +646,8 @@ typedef struct sSirMbMsgP2p {
 
 #define SIR_HAL_HIDDEN_SSID_RESTART_RSP     (SIR_HAL_ITC_MSG_TYPES_BEGIN + 379)
 
+#define SIR_HAL_GET_PEER_INFO               (SIR_HAL_ITC_MSG_TYPES_BEGIN + 386)
+#define SIR_HAL_GET_PEER_INFO_EXT           (SIR_HAL_ITC_MSG_TYPES_BEGIN + 387)
 #define SIR_HAL_MSG_TYPES_END               (SIR_HAL_MSG_TYPES_BEGIN + 0x1FF)
 
 /* CFG message types */
