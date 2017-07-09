@@ -17919,6 +17919,67 @@ void wlan_hdd_deinit_chan_info(hdd_context_t *hdd_ctx)
 		qdf_mem_free(chan);
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 0, 0)) || defined(WITH_BACKPORTS)
+static enum rate_info_bw hdd_map_hdd_bw_to_os(enum hdd_rate_info_bw hdd_bw)
+{
+	switch (hdd_bw) {
+	case HDD_RATE_BW_5:
+		return RATE_INFO_BW_5;
+	case HDD_RATE_BW_10:
+		return RATE_INFO_BW_10;
+	case HDD_RATE_BW_20:
+		return RATE_INFO_BW_20;
+	case HDD_RATE_BW_40:
+		return RATE_INFO_BW_40;
+	case HDD_RATE_BW_80:
+		return RATE_INFO_BW_80;
+	case HDD_RATE_BW_160:
+		return RATE_INFO_BW_160;
+	}
+
+	hdd_err("Unhandled HDD_RATE_BW: %d", hdd_bw);
+
+	return RATE_INFO_BW_20;
+}
+
+void hdd_set_rate_bw(struct rate_info *info, enum hdd_rate_info_bw hdd_bw)
+{
+	info->bw = hdd_map_hdd_bw_to_os(hdd_bw);
+}
+#else
+static enum rate_info_flags hdd_map_hdd_bw_to_os(enum hdd_rate_info_bw hdd_bw)
+{
+	switch (hdd_bw) {
+	case HDD_RATE_BW_5:
+	case HDD_RATE_BW_10:
+	case HDD_RATE_BW_20:
+		return (enum rate_info_flags)0;
+	case HDD_RATE_BW_40:
+		return RATE_INFO_FLAGS_40_MHZ_WIDTH;
+	case HDD_RATE_BW_80:
+		return RATE_INFO_FLAGS_80_MHZ_WIDTH;
+	case HDD_RATE_BW_160:
+		return RATE_INFO_FLAGS_160_MHZ_WIDTH;
+	}
+
+	hdd_err("Unhandled HDD_RATE_BW: %d", hdd_bw);
+
+	return (enum rate_info_flags)0;
+}
+
+void hdd_set_rate_bw(struct rate_info *info, enum hdd_rate_info_bw hdd_bw)
+{
+	const enum rate_info_flags all_bws =
+		RATE_INFO_FLAGS_40_MHZ_WIDTH |
+		RATE_INFO_FLAGS_80_MHZ_WIDTH |
+		RATE_INFO_FLAGS_80P80_MHZ_WIDTH |
+		RATE_INFO_FLAGS_160_MHZ_WIDTH;
+
+	info->flags &= ~all_bws;
+	info->flags |= hdd_map_hdd_bw_to_os(hdd_bw);
+}
+#endif
+
 /**
  * struct cfg80211_ops - cfg80211_ops
  *
