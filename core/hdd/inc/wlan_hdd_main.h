@@ -2473,4 +2473,16 @@ void hdd_chip_pwr_save_fail_detected_cb(void *hddctx,
 				struct chip_pwr_save_fail_detected_params
 				*data);
 
+/**
+ * hdd_get_rssi_snr_by_bssid() - gets the rssi and snr by bssid from scan cache
+ * @adapter: adapter handle
+ * @bssid: bssid to look for in scan cache
+ * @rssi: rssi value found
+ * @snr: snr value found
+ *
+ * Return: QDF_STATUS
+ */
+int hdd_get_rssi_snr_by_bssid(hdd_adapter_t *adapter, const uint8_t *bssid,
+			      int8_t *rssi, int8_t *snr);
+
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

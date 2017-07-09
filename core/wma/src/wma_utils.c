@@ -2273,14 +2273,13 @@ static void wma_vdev_stats_lost_link_helper(tp_wma_handle wma,
 		dat_snr = vdev_stats->vdev_snr.dat_snr;
 		WMA_LOGD(FL("get vdev id %d, beancon snr %d, data snr %d"),
 			vdev_stats->vdev_id, bcn_snr, dat_snr);
-		if ((bcn_snr != WMA_TGT_INVALID_SNR_OLD) &&
-			(bcn_snr != WMA_TGT_INVALID_SNR_NEW))
+
+		if (WMA_TGT_IS_VALID_SNR(bcn_snr))
 			rssi = bcn_snr;
-		else if ((dat_snr != WMA_TGT_INVALID_SNR_OLD) &&
-			(dat_snr != WMA_TGT_INVALID_SNR_NEW))
+		else if (WMA_TGT_IS_VALID_SNR(dat_snr))
 			rssi = dat_snr;
 		else
-			rssi = WMA_TGT_INVALID_SNR_OLD;
+			rssi = WMA_TGT_INVALID_SNR;
 
 		/* Get the absolute rssi value from the current rssi value */
 		rssi = rssi + WMA_TGT_NOISE_FLOOR_DBM;
@@ -2340,28 +2339,29 @@ static void wma_update_vdev_stats(tp_wma_handle wma,
 			summary_stats->rts_succ_cnt = vdev_stats->rts_succ_cnt;
 			summary_stats->rts_fail_cnt = vdev_stats->rts_fail_cnt;
 			/* Update SNR and RSSI in SummaryStats */
-			if ((bcn_snr != WMA_TGT_INVALID_SNR_OLD) &&
-				(bcn_snr != WMA_TGT_INVALID_SNR_NEW)) {
+			if (WMA_TGT_IS_VALID_SNR(bcn_snr)) {
 				summary_stats->snr = bcn_snr;
 				summary_stats->rssi =
 					bcn_snr + WMA_TGT_NOISE_FLOOR_DBM;
-			} else if ((dat_snr != WMA_TGT_INVALID_SNR_OLD) &&
-					(dat_snr != WMA_TGT_INVALID_SNR_NEW)) {
+			} else if (WMA_TGT_IS_VALID_SNR(dat_snr)) {
 				summary_stats->snr = dat_snr;
 				summary_stats->rssi =
 					bcn_snr + WMA_TGT_NOISE_FLOOR_DBM;
 			} else {
-				summary_stats->snr = WMA_TGT_INVALID_SNR_OLD;
+				summary_stats->snr = WMA_TGT_INVALID_SNR;
 				summary_stats->rssi = 0;
 			}
 		}
 	}
 
 	if (pGetRssiReq && pGetRssiReq->sessionId == vdev_stats->vdev_id) {
-		if ((bcn_snr == WMA_TGT_INVALID_SNR_OLD ||
-				bcn_snr == WMA_TGT_INVALID_SNR_NEW) &&
-				(dat_snr == WMA_TGT_INVALID_SNR_OLD ||
-				  dat_snr == WMA_TGT_INVALID_SNR_NEW)) {
+		if (WMA_TGT_IS_VALID_SNR(bcn_snr)) {
+			rssi = bcn_snr;
+			rssi = rssi + WMA_TGT_NOISE_FLOOR_DBM;
+		} else if (WMA_TGT_IS_VALID_SNR(dat_snr)) {
+			rssi = dat_snr;
+			rssi = rssi + WMA_TGT_NOISE_FLOOR_DBM;
+		} else {
 			/*
 			 * Firmware sends invalid snr till it sees
 			 * Beacon/Data after connection since after
@@ -2370,21 +2370,6 @@ static void wma_update_vdev_stats(tp_wma_handle wma,
 			 * rssi during connection.
 			 */
 			WMA_LOGE("Invalid SNR from firmware");
-
-		} else {
-			if (bcn_snr != WMA_TGT_INVALID_SNR_OLD &&
-				bcn_snr != WMA_TGT_INVALID_SNR_NEW) {
-				rssi = bcn_snr;
-			} else if (dat_snr != WMA_TGT_INVALID_SNR_OLD &&
-				dat_snr != WMA_TGT_INVALID_SNR_NEW) {
-				rssi = dat_snr;
-			}
-
-			/*
-			 * Get the absolute rssi value from current rssi value
-			 * the sinr value is hardcoded into 0 in the core stack
-			 */
-			rssi = rssi + WMA_TGT_NOISE_FLOOR_DBM;
 		}
 
 		WMA_LOGD("Average Rssi = %d, vdev id= %d", rssi,
@@ -2404,14 +2389,12 @@ static void wma_update_vdev_stats(tp_wma_handle wma,
 	if (node->psnr_req) {
 		tAniGetSnrReq *p_snr_req = node->psnr_req;
 
-		if ((bcn_snr != WMA_TGT_INVALID_SNR_OLD) &&
-			(bcn_snr != WMA_TGT_INVALID_SNR_NEW))
+		if (WMA_TGT_IS_VALID_SNR(bcn_snr))
 			p_snr_req->snr = bcn_snr;
-		else if ((dat_snr != WMA_TGT_INVALID_SNR_OLD) &&
-				(dat_snr != WMA_TGT_INVALID_SNR_NEW))
+		else if (WMA_TGT_IS_VALID_SNR(dat_snr))
 			p_snr_req->snr = dat_snr;
 		else
-			p_snr_req->snr = WMA_TGT_INVALID_SNR_OLD;
+			p_snr_req->snr = WMA_TGT_INVALID_SNR;
 
 		sme_msg.type = eWNI_SME_SNR_IND;
 		sme_msg.bodyptr = p_snr_req;
@@ -2551,12 +2534,10 @@ static void wma_update_per_chain_rssi_stats(tp_wma_handle wma,
 		dat_snr = rssi_stats->rssi_avg_data[i];
 		WMA_LOGD("chain %d beacon snr %d data snr %d",
 			i, bcn_snr, dat_snr);
-		if ((dat_snr != WMA_TGT_INVALID_SNR_OLD) &&
-			(dat_snr != WMA_TGT_INVALID_SNR_NEW))
-			rssi_per_chain_stats->rssi[i] = dat_snr;
-		else if ((bcn_snr != WMA_TGT_INVALID_SNR_OLD) &&
-			(bcn_snr != WMA_TGT_INVALID_SNR_NEW))
+		if (WMA_TGT_IS_VALID_SNR(bcn_snr))
 			rssi_per_chain_stats->rssi[i] = bcn_snr;
+		else if (WMA_TGT_IS_VALID_SNR(dat_snr))
+			rssi_per_chain_stats->rssi[i] = dat_snr;
 		else
 			/*
 			 * Firmware sends invalid snr till it sees
@@ -2565,7 +2546,7 @@ static void wma_update_per_chain_rssi_stats(tp_wma_handle wma,
 			 * In this duartion Host will return an invalid rssi
 			 * value.
 			 */
-			rssi_per_chain_stats->rssi[i] = WMA_TGT_RSSI_INVALID;
+			rssi_per_chain_stats->rssi[i] = WMA_TGT_INVALID_SNR;
 
 		/*
 		 * Get the absolute rssi value from the current rssi value the
