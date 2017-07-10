@@ -144,11 +144,8 @@ static void hdd_scan_inactivity_timer_handler(void *scan_req)
 	else if (cds_is_driver_in_bad_state())
 		hdd_err("%s: Module in bad state; Ignore hdd scan req timeout",
 			 __func__);
-	else if (cds_is_self_recovery_enabled())
-		cds_trigger_recovery(false);
 	else
-		QDF_BUG(0);
-
+		cds_trigger_recovery();
 }
 
 /**
@@ -919,13 +916,9 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 					   WLAN_LOG_REASON_SCAN_NOT_ALLOWED,
 					   false,
 					   pHddCtx->config->enableSelfRecovery);
-				} else if (pHddCtx->config->
-					   enableSelfRecovery) {
-					hdd_err("Triggering SSR due to scan stuck");
-					cds_trigger_recovery(false);
 				} else {
-					hdd_err("QDF_BUG due to scan stuck");
-					QDF_BUG(0);
+					hdd_err("Triggering SSR due to scan stuck");
+					cds_trigger_recovery();
 				}
 			}
 		}

@@ -2504,21 +2504,11 @@ ol_txrx_peer_attach(struct cdp_vdev *pvdev, uint8_t *peer_mac_addr)
 		rc = qdf_wait_single_event(&vdev->wait_delete_comp,
 					   PEER_DELETION_TIMEOUT);
 		if (QDF_STATUS_SUCCESS != rc) {
-			ol_txrx_err(
-				"error waiting for peer(%d) deletion, status %d\n",
-				vdev->wait_on_peer_id, (int) rc);
-			if (cds_is_self_recovery_enabled())
-				cds_trigger_recovery(false);
-			else
-
-				/*
-				 * Add equivalent of following line when it
-				 * becomes available.
-				 * wma_peer_debug_dump();
-				 */
-				QDF_ASSERT(0);
-
+			ol_txrx_err("error waiting for peer(%d) deletion, status %d\n",
+				    vdev->wait_on_peer_id, (int) rc);
+			cds_trigger_recovery();
 			vdev->wait_on_peer_id = OL_TXRX_INVALID_LOCAL_PEER_ID;
+
 			return NULL;
 		}
 	}
@@ -3407,19 +3397,7 @@ static QDF_STATUS ol_txrx_clear_peer(struct cdp_pdev *ppdev, uint8_t sta_id)
 void peer_unmap_timer_work_function(void *param)
 {
 	WMA_LOGE("Enter: %s", __func__);
-	/*
-	 * wma_peer_debug_dump() will be replaced with a new routine.
-	 * Add the equivalent of wma_peer_debug_dump() when available.
-	 */
-	if (cds_is_self_recovery_enabled()) {
-		if (!cds_is_driver_recovering())
-			cds_trigger_recovery(false);
-		else
-			WMA_LOGE("%s: Recovery is in progress, ignore!",
-					__func__);
-	} else {
-		QDF_BUG(0);
-	}
+	cds_trigger_recovery();
 }
 
 /**

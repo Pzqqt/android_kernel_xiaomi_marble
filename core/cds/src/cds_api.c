@@ -138,7 +138,7 @@ v_CONTEXT_t cds_init(void)
 	qdf_lock_stats_init();
 	qdf_mem_init();
 	qdf_mc_timer_manager_init();
-	qdf_register_self_recovery_callback(cds_trigger_recovery_wrapper);
+	qdf_register_self_recovery_callback(cds_trigger_recovery);
 
 	gp_cds_context = &g_cds_context;
 
@@ -1713,97 +1713,134 @@ bool cds_is_packet_log_enabled(void)
 	return pHddCtx->config->enablePacketLog;
 }
 
-/**
- * cds_config_recovery_work() - configure self recovery
- * @qdf_ctx: pointer of qdf context
- *
- * Return: none
- */
-
-static void cds_config_recovery_work(qdf_device_t qdf_ctx)
+static int cds_force_assert_target_via_pld(qdf_device_t qdf)
 {
-	if (cds_is_driver_recovering() || cds_is_driver_in_bad_state()) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			"Recovery is in progress, ignore!");
-	} else {
-		cds_set_recovery_in_progress(true);
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			"schedule recovery work!");
-		pld_schedule_recovery_work(qdf_ctx->dev,
-					   PLD_REASON_DEFAULT);
-	}
+	int errno;
+
+	errno = pld_force_assert_target(qdf->dev);
+	if (errno == -EOPNOTSUPP)
+		cds_info("PLD does not support target force assert");
+	else if (errno)
+		cds_err("Failed PLD target force assert; errno %d", errno);
+	else
+		cds_info("Target force assert triggered via PLD");
+
+	return errno;
 }
 
-void cds_trigger_recovery_wrapper(void)
+static QDF_STATUS cds_force_assert_target_via_wmi(qdf_device_t qdf)
 {
-	cds_trigger_recovery(false);
+	QDF_STATUS status;
+	t_wma_handle *wma;
+
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma) {
+		cds_err("wma is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wma_crash_inject(wma, RECOVERY_SIM_SELF_RECOVERY, 0);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cds_err("Failed target force assert; status %d", status);
+		return status;
+	}
+
+	status = qdf_wait_single_event(&wma->recovery_event,
+				       WMA_CRASH_INJECT_TIMEOUT);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cds_err("Failed target force assert wait; status %d", status);
+		return status;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * cds_force_assert_target() - Send assert command to firmware
+ * @qdf: QDF device instance to assert
+ *
+ * An out-of-band recovery mechanism will cleanup and restart the entire wlan
+ * subsystem in the event of a firmware crash. This API injects a firmware
+ * crash to start this process when the wlan driver is known to be in a bad
+ * state. If a firmware assert inject fails, the wlan driver will schedule
+ * the driver recovery anyway, as a best effort attempt to return to a working
+ * state.
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS cds_force_assert_target(qdf_device_t qdf)
+{
+	int errno;
+	QDF_STATUS status;
+
+	/* first, try target assert inject via pld */
+	errno = cds_force_assert_target_via_pld(qdf);
+	if (!errno)
+		return QDF_STATUS_SUCCESS;
+	if (errno != -EOPNOTSUPP)
+		return QDF_STATUS_E_FAILURE;
+
+	/* pld assert is not supported, try target assert inject via wmi */
+	status = cds_force_assert_target_via_wmi(qdf);
+	if (QDF_IS_STATUS_SUCCESS(status))
+		return QDF_STATUS_SUCCESS;
+
+	/* wmi assert failed, start recovery without the firmware assert */
+	cds_err("Scheduling recovery work without firmware assert");
+	cds_set_recovery_in_progress(true);
+	pld_schedule_recovery_work(qdf->dev, PLD_REASON_DEFAULT);
+
+	return status;
 }
 
 /**
  * cds_trigger_recovery() - trigger self recovery
- * @skip_crash_inject: Boolean value to skip to send crash inject cmd
  *
  * Return: none
  */
-void cds_trigger_recovery(bool skip_crash_inject)
+void cds_trigger_recovery(void)
 {
-	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	qdf_runtime_lock_t recovery_lock;
-	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+	QDF_STATUS status;
+	qdf_runtime_lock_t rtl;
+	qdf_device_t qdf;
 
-	if (!wma_handle) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "WMA context is invalid!");
-		return;
-	}
-	if (!qdf_ctx) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "QDF context is invalid!");
+	if (!cds_is_self_recovery_enabled()) {
+		cds_err("Recovery is not enabled");
+		QDF_BUG(0);
 		return;
 	}
 
-	status = qdf_runtime_lock_init(&recovery_lock);
-	if (QDF_STATUS_SUCCESS != status) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			"Could not acquire runtime pm lock: %d!", status);
+	if (cds_is_driver_recovering() || cds_is_driver_in_bad_state()) {
+		cds_err("Recovery in progress; ignoring recovery trigger");
 		return;
 	}
 
-	qdf_runtime_pm_prevent_suspend(&recovery_lock);
-
-	/*
-	 * If force assert thru platform is available, trigger that interface.
-	 * That should generate recovery by going thru the normal FW
-	 * assert recovery model.
-	 */
-	if (!pld_force_assert_target(qdf_ctx->dev)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
-			"Force assert triggered");
-		goto out;
+	qdf = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+	if (!qdf) {
+		cds_err("Qdf context is null");
+		return;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
-			"Force assert not available at platform");
-
-	if (!skip_crash_inject) {
-
-		wma_crash_inject(wma_handle, RECOVERY_SIM_SELF_RECOVERY, 0);
-		status = qdf_wait_single_event(&wma_handle->recovery_event,
-			WMA_CRASH_INJECT_TIMEOUT);
-
-		if (QDF_STATUS_SUCCESS != status) {
-			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-				"CRASH_INJECT command is timed out!");
-			cds_config_recovery_work(qdf_ctx);
-		}
-	} else {
-		cds_config_recovery_work(qdf_ctx);
+	status = qdf_runtime_lock_init(&rtl);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cds_err("Failed to initialize runtime pm lock");
+		return;
 	}
 
-out:
-	qdf_runtime_pm_allow_suspend(&recovery_lock);
-	qdf_runtime_lock_deinit(&recovery_lock);
+	status = qdf_runtime_pm_prevent_suspend(&rtl);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cds_err("Failed to acquire runtime pm lock");
+		goto deinit_rtl;
+	}
+
+	cds_force_assert_target(qdf);
+
+	status = qdf_runtime_pm_allow_suspend(&rtl);
+	if (QDF_IS_STATUS_ERROR(status))
+		cds_err("Failed to release runtime pm lock");
+
+deinit_rtl:
+	qdf_runtime_lock_deinit(&rtl);
 }
 
 /**

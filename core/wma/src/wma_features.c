@@ -3903,16 +3903,8 @@ static inline void wma_suspend_target_timeout(bool is_self_recovery_enabled)
 	if (cds_is_load_or_unload_in_progress())
 		WMA_LOGE("%s: Module (un)loading; Ignoring suspend timeout",
 			 __func__);
-	else if (cds_is_driver_recovering())
-		WMA_LOGE("%s: Module recovering; Ignoring suspend timeout",
-			 __func__);
-	else if (cds_is_driver_in_bad_state())
-		WMA_LOGE("%s: Module in bad state; Ignoring suspend timeout",
-			 __func__);
-	else if (is_self_recovery_enabled)
-		cds_trigger_recovery(false);
 	else
-		QDF_BUG(0);
+		cds_trigger_recovery();
 }
 
 #ifdef FEATURE_WLAN_TDLS

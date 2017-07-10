@@ -1538,25 +1538,19 @@ int pld_is_qmi_disable(struct device *dev)
  */
 int pld_force_assert_target(struct device *dev)
 {
-	int ret = 0;
 	enum pld_bus_type type = pld_get_bus_type(dev);
 
 	switch (type) {
 	case PLD_BUS_TYPE_SNOC:
-		ret = pld_snoc_force_assert_target(dev);
-		break;
+		return pld_snoc_force_assert_target(dev);
 	case PLD_BUS_TYPE_PCIE:
-		ret = pld_pcie_force_assert_target(dev);
-		break;
+		return pld_pcie_force_assert_target(dev);
 	case PLD_BUS_TYPE_SDIO:
-		ret = -EINVAL;
-		break;
+		return -EINVAL;
 	default:
 		pr_err("Invalid device type %d\n", type);
-		ret = -EINVAL;
-		break;
+		return -EINVAL;
 	}
-	return ret;
 }
 
 /**

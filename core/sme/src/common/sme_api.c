@@ -507,10 +507,8 @@ tSmeCmd *sme_get_command_buffer(tpAniSirGlobal pMac)
 				WLAN_LOG_REASON_SME_OUT_OF_CMD_BUF,
 				false,
 				pMac->sme.enableSelfRecovery ? true : false);
-		else if (pMac->sme.enableSelfRecovery)
-			cds_trigger_recovery(false);
 		else
-			QDF_BUG(0);
+			cds_trigger_recovery();
 	}
 
 	/* memset to zero */

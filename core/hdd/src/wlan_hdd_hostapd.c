@@ -2645,7 +2645,7 @@ static int __iw_softap_set_two_ints_getnone(struct net_device *dev,
 		hdd_err("WE_SET_FW_CRASH_INJECT: %d %d",
 		       value[1], value[2]);
 		if (value[1] == 3) {
-			cds_trigger_recovery(false);
+			cds_trigger_recovery();
 			return 0;
 		}
 		ret = wma_cli_set2_command(adapter->sessionId,
