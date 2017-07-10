@@ -9430,7 +9430,8 @@ enum dot11p_mode {
 			QDF_NBUF_PKT_TRAC_TYPE_DHCP |\
 			QDF_NBUF_PKT_TRAC_TYPE_MGMT_ACTION |\
 			QDF_NBUF_PKT_TRAC_TYPE_ARP |\
-			QDF_NBUF_PKT_TRAC_TYPE_ICMP)\
+			QDF_NBUF_PKT_TRAC_TYPE_ICMP |\
+			QDF_NBUF_PKT_TRAC_TYPE_ICMPv6)\
 
 /* Default verbosity, in case its missing in gDptraceConfig string*/
 #define DP_TRACE_CONFIG_DEFAULT_VERBOSTY QDF_DP_TRACE_VERBOSITY_LOW
@@ -9452,7 +9453,7 @@ enum dot11p_mode {
  * gDptraceConfig = 1, 4
  */
 #define CFG_ENABLE_DP_TRACE_CONFIG		"gDptraceConfig"
-#define CFG_ENABLE_DP_TRACE_CONFIG_DEFAULT	"1, 8, 1, 62"
+#define CFG_ENABLE_DP_TRACE_CONFIG_DEFAULT	"1, 8, 1, 126"
 
 /*
  * This parameter will set the weight to calculate the average low pass

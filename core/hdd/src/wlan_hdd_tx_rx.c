@@ -421,6 +421,9 @@ void wlan_hdd_classify_pkt(struct sk_buff *skb)
 	else if (qdf_nbuf_is_icmp_pkt(skb))
 		QDF_NBUF_CB_GET_PACKET_TYPE(skb) =
 			QDF_NBUF_CB_PACKET_TYPE_ICMP;
+	else if (qdf_nbuf_is_icmpv6_pkt(skb))
+		QDF_NBUF_CB_GET_PACKET_TYPE(skb) =
+			QDF_NBUF_CB_PACKET_TYPE_ICMPv6;
 }
 
 /**
