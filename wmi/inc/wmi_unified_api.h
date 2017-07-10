@@ -1161,6 +1161,9 @@ uint32_t wmi_ready_extract_init_status(void *wmi_hdl, void *ev);
 QDF_STATUS wmi_ready_extract_mac_addr(void *wmi_hdl,
 				void *ev, uint8_t *macaddr);
 
+wmi_host_mac_addr *wmi_ready_extract_mac_addr_list(void *wmi_hdl, void *ev,
+					      uint8_t *num_mac_addr);
+
 QDF_STATUS wmi_extract_fw_version(void *wmi_hdl,
 				void *ev, struct wmi_host_fw_ver *fw_ver);
 
