@@ -413,6 +413,7 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
  * @vdev: DP Virtual device handle
  * @nbuf: Buffer pointer
  * @rx_tlv_hdr: start of rx tlv header
+ * @peer: pointer to peer
  *
  * This function allocated memory for mesh receive stats and fill the
  * required stats. Stores the memory address in skb cb.
@@ -421,7 +422,7 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
  */
 static
 void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
-				uint8_t *rx_tlv_hdr)
+				uint8_t *rx_tlv_hdr, struct dp_peer *peer)
 {
 	struct mesh_recv_hdr_s *rx_info = NULL;
 	uint32_t pkt_type;
@@ -451,6 +452,11 @@ void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	if (hal_rx_attn_msdu_get_is_decrypted(rx_tlv_hdr)) {
 		rx_info->rs_flags |= MESH_RX_DECRYPTED;
 		rx_info->rs_keyix = hal_rx_msdu_get_keyid(rx_tlv_hdr);
+		if (vdev->osif_get_key)
+			vdev->osif_get_key(vdev->osif_vdev,
+					&rx_info->rs_decryptkey[0],
+					&peer->mac_addr.raw[0],
+					rx_info->rs_keyix);
 	}
 
 	rx_info->rs_rssi = hal_rx_msdu_start_get_rssi(rx_tlv_hdr);
@@ -475,7 +481,7 @@ void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 }
 
 /**
- * dp_rx_fill_mesh_stats() - Filters mesh unwanted packets
+ * dp_rx_filter_mesh_packets() - Filters mesh unwanted packets
  *
  * @vdev: DP Virtual device handle
  * @nbuf: Buffer pointer
@@ -536,7 +542,7 @@ QDF_STATUS dp_rx_filter_mesh_packets(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 #else
 static
 void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
-				uint8_t *rx_tlv_hdr)
+				uint8_t *rx_tlv_hdr, struct dp_peer *peer)
 {
 }
 
@@ -1258,7 +1264,8 @@ done:
 					qdf_nbuf_free(nbuf);
 					continue;
 				}
-				dp_rx_fill_mesh_stats(vdev, nbuf, rx_tlv_hdr);
+				dp_rx_fill_mesh_stats(vdev, nbuf,
+							rx_tlv_hdr, peer);
 			}
 
 #ifdef QCA_WIFI_NAPIER_EMULATION_DBG /* Debug code, remove later */
