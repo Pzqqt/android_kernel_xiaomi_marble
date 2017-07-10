@@ -7601,8 +7601,7 @@ static QDF_STATUS send_get_stats_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_TAG_STRUC_wmi_request_stats_cmd_fixed_param,
 		       WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_request_stats_cmd_fixed_param));
-	cmd->stats_id =
-		 WMI_REQUEST_PDEV_STAT;
+	cmd->stats_id = get_stats_param->stats_mask;
 	cmd->vdev_id = get_stats_param->session_id;
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(addr, &cmd->peer_macaddr);
 	WMI_LOGD("STATS REQ VDEV_ID:%d-->", cmd->vdev_id);
