@@ -1647,15 +1647,15 @@ struct hal_buf_info {
  * Return: void
  */
 static inline void hal_rx_msdu_list_get(void *msdu_link_desc,
-			struct hal_rx_msdu_list *msdu_list, uint8_t num_msdus)
+		struct hal_rx_msdu_list *msdu_list, uint16_t *num_msdus)
 {
 	struct rx_msdu_details *msdu_details;
 	struct rx_msdu_desc_info *msdu_desc_info;
 	struct rx_msdu_link *msdu_link = (struct rx_msdu_link *)msdu_link_desc;
 	int i;
 
-	if (num_msdus > HAL_RX_NUM_MSDU_DESC)
-		num_msdus = HAL_RX_NUM_MSDU_DESC;
+	if (*num_msdus > HAL_RX_NUM_MSDU_DESC)
+		*num_msdus = HAL_RX_NUM_MSDU_DESC;
 
 	msdu_details = HAL_RX_LINK_DESC_MSDU0_PTR(msdu_link);
 
@@ -1663,7 +1663,14 @@ static inline void hal_rx_msdu_list_get(void *msdu_link_desc,
 		"[%s][%d] msdu_link=%p msdu_details=%p\n",
 		__func__, __LINE__, msdu_link, msdu_details);
 
-	for (i = 0; i < num_msdus; i++) {
+	for (i = 0; i < *num_msdus; i++) {
+		/* num_msdus received in mpdu descriptor may be incorrect
+		 * sometimes due to HW issue. Check msdu buffer address also */
+		if (HAL_RX_BUFFER_ADDR_31_0_GET(
+			&msdu_details[i].buffer_addr_info_details) == 0) {
+			*num_msdus = i;
+			break;
+		}
 		msdu_desc_info = HAL_RX_MSDU_DESC_INFO_GET(&msdu_details[i]);
 		msdu_list->msdu_info[i].msdu_flags =
 			 HAL_RX_MSDU_FLAGS_GET(msdu_desc_info);

@@ -1335,7 +1335,7 @@ uint32_t dp_rx_frag_handle(struct dp_soc *soc, void *ring_desc,
 
 	/* Get msdu_list for the given MPDU */
 	hal_rx_msdu_list_get(link_desc_va, &msdu_list,
-		mpdu_desc_info->msdu_count);
+		&mpdu_desc_info->msdu_count);
 
 	/* Process all MSDUs in the current MPDU */
 	for (idx = 0; (idx < mpdu_desc_info->msdu_count) && quota--; idx++) {

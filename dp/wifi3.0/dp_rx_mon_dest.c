@@ -112,7 +112,7 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	qdf_nbuf_t msdu;
 	qdf_nbuf_t last;
 	struct hal_rx_msdu_list msdu_list;
-	uint8_t num_msdus;
+	uint16_t num_msdus;
 	uint32_t rx_buf_size, rx_pkt_offset;
 	struct hal_buf_info buf_info;
 	void *p_buf_addr_info;
@@ -136,9 +136,10 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 
 		qdf_assert(rx_msdu_link_desc);
 
-		num_msdus = msdu_cnt;
+		num_msdus = (msdu_cnt > HAL_RX_NUM_MSDU_DESC) ?
+			HAL_RX_NUM_MSDU_DESC:msdu_cnt;
 
-		hal_rx_msdu_list_get(rx_msdu_link_desc, &msdu_list, num_msdus);
+		hal_rx_msdu_list_get(rx_msdu_link_desc, &msdu_list, &num_msdus);
 
 		msdu_cnt -= num_msdus;
 

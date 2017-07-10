@@ -81,9 +81,9 @@ static uint32_t dp_rx_msdus_drop(struct dp_soc *soc, void *ring_desc,
 
 	/* No UNMAP required -- this is "malloc_consistent" memory */
 	hal_rx_msdu_list_get(link_desc_va, &msdu_list,
-		mpdu_desc_info->msdu_count);
+		&mpdu_desc_info->msdu_count);
 
-	for (i = 0; (i < HAL_RX_NUM_MSDU_DESC) && quota--; i++) {
+	for (i = 0; (i < mpdu_desc_info->msdu_count) && quota--; i++) {
 		struct dp_rx_desc *rx_desc =
 			dp_rx_cookie_2_va_rxdma_buf(soc,
 			msdu_list.sw_cookie[i]);
@@ -835,7 +835,7 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	qdf_nbuf_t msdu;
 	qdf_nbuf_t last;
 	struct hal_rx_msdu_list msdu_list;
-	uint8_t num_msdus;
+	uint16_t num_msdus;
 	struct hal_buf_info buf_info;
 	void *p_buf_addr_info;
 	void *p_last_buf_addr_info;
@@ -860,7 +860,7 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 		num_msdus = (msdu_cnt > HAL_RX_NUM_MSDU_DESC)?
 				HAL_RX_NUM_MSDU_DESC:msdu_cnt;
 
-		hal_rx_msdu_list_get(rx_msdu_link_desc, &msdu_list, num_msdus);
+		hal_rx_msdu_list_get(rx_msdu_link_desc, &msdu_list, &num_msdus);
 
 		msdu_cnt -= num_msdus;
 
