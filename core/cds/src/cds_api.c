@@ -583,9 +583,6 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	if (!gp_cds_context->dp_soc)
 		goto err_wma_close;
 
-	if (cdp_txrx_intr_attach(gp_cds_context->dp_soc) != QDF_STATUS_SUCCESS)
-		goto err_wma_close;
-
 	pmo_ucfg_psoc_update_dp_handle(psoc, gp_cds_context->dp_soc);
 
 	cds_set_ac_specs_params(cds_cfg);
@@ -614,28 +611,10 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 		QDF_ASSERT(0);
 		goto err_mac_close;
 	}
-	cds_set_context(QDF_MODULE_ID_TXRX,
-		cdp_pdev_attach(cds_get_context(QDF_MODULE_ID_SOC),
-			gp_cds_context->cfg_ctx,
-			gp_cds_context->htc_ctx,
-			gp_cds_context->qdf_ctx, 0));
-	if (!gp_cds_context->pdev_txrx_ctx) {
-		/* Critical Error ...  Cannot proceed further */
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
-			  "%s: Failed to open TXRX", __func__);
-		QDF_ASSERT(0);
-		goto err_sme_close;
-	}
-	pmo_ucfg_psoc_set_txrx_handle(psoc, gp_cds_context->pdev_txrx_ctx);
 
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "%s: CDS successfully Opened", __func__);
 	cds_register_all_modules();
 
 	return dispatcher_psoc_open(psoc);
-
-err_sme_close:
-	sme_close(gp_cds_context->pMACContext);
 
 err_mac_close:
 	mac_close(gp_cds_context->pMACContext);
@@ -674,6 +653,41 @@ err_probe_event:
 
 	return QDF_STATUS_E_FAILURE;
 } /* cds_open() */
+
+QDF_STATUS cds_dp_open(struct wlan_objmgr_psoc *psoc)
+{
+	if (cdp_txrx_intr_attach(gp_cds_context->dp_soc)
+				!= QDF_STATUS_SUCCESS) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
+			 "%s: Failed to attach interrupts", __func__);
+		goto close;
+	}
+
+	cds_set_context(QDF_MODULE_ID_TXRX,
+		cdp_pdev_attach(cds_get_context(QDF_MODULE_ID_SOC),
+			gp_cds_context->cfg_ctx,
+			gp_cds_context->htc_ctx,
+			gp_cds_context->qdf_ctx, 0));
+	if (!gp_cds_context->pdev_txrx_ctx) {
+		/* Critical Error ...  Cannot proceed further */
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
+			  "%s: Failed to open TXRX", __func__);
+		QDF_ASSERT(0);
+		goto intr_close;
+	}
+
+	pmo_ucfg_psoc_set_txrx_handle(psoc, gp_cds_context->pdev_txrx_ctx);
+
+	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
+		  "%s: CDS successfully Opened", __func__);
+
+	return 0;
+
+intr_close:
+	cdp_txrx_intr_detach(gp_cds_context->dp_soc);
+close:
+	return QDF_STATUS_E_FAILURE;
+}
 
 /**
  * cds_pre_enable() - pre enable cds
@@ -1064,7 +1078,6 @@ QDF_STATUS cds_post_disable(void)
 QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS qdf_status;
-	void *ctx;
 
 	dispatcher_psoc_close(psoc);
 
@@ -1075,18 +1088,11 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc)
 		QDF_ASSERT(0);
 	}
 
-	cdp_txrx_intr_detach(gp_cds_context->dp_soc);
 	if (gp_cds_context->htc_ctx) {
 		htc_destroy(gp_cds_context->htc_ctx);
 		pmo_ucfg_psoc_update_htc_handle(psoc, NULL);
 		gp_cds_context->htc_ctx = NULL;
 	}
-
-	ctx = cds_get_context(QDF_MODULE_ID_TXRX);
-	cds_set_context(QDF_MODULE_ID_TXRX, NULL);
-	pmo_ucfg_psoc_set_txrx_handle(psoc, NULL);
-	cdp_pdev_detach(cds_get_context(QDF_MODULE_ID_SOC),
-		       (struct cdp_pdev *)ctx, 1);
 
 	qdf_status = sme_close(gp_cds_context->pMACContext);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -1146,6 +1152,21 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc)
 	qdf_timer_module_deinit();
 
 	cds_deregister_all_modules();
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS cds_dp_close(struct wlan_objmgr_psoc *psoc)
+{
+	void *ctx;
+
+	cdp_txrx_intr_detach(gp_cds_context->dp_soc);
+
+	ctx = cds_get_context(QDF_MODULE_ID_TXRX);
+	cds_set_context(QDF_MODULE_ID_TXRX, NULL);
+	pmo_ucfg_psoc_set_txrx_handle(psoc, NULL);
+	cdp_pdev_detach(cds_get_context(QDF_MODULE_ID_SOC),
+		       (struct cdp_pdev *)ctx, 1);
 
 	return QDF_STATUS_SUCCESS;
 }

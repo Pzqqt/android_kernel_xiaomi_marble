@@ -6280,6 +6280,8 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 		  hdd_ctx->config->lro_enable);
 	hdd_debug("Name = [active_mode_offload] value = [%d]",
 		  hdd_ctx->config->active_mode_offload);
+	hdd_debug("Name = [gEnableNAPI] value = [%d]",
+		  hdd_ctx->napi_enable);
 	hdd_debug("Name = [gfine_time_meas_cap] value = [%u]",
 		  hdd_ctx->config->fine_time_meas_cap);
 #ifdef WLAN_FEATURE_FASTPATH
