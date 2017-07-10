@@ -181,11 +181,6 @@
 #define WLAN_CFG_HTT_PKT_TYPE 2
 #define WLAN_CFG_MAX_PEER_ID 64
 
-#ifdef WLAN_RX_HASH
-#define WLAN_RX_HASH_ENABLE 1
-#else
-#define WLAN_RX_HASH_ENABLE 0
-#endif
 
 #ifdef CONFIG_MCL
 static const int tx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
@@ -328,9 +323,6 @@ struct wlan_cfg_dp_soc_ctxt *wlan_cfg_soc_attach()
 		wlan_cfg_ctx->int_rxdma2host_ring_mask[i] =
 			rxdma2host_ring_mask[i];
 	}
-
-	wlan_cfg_ctx->rx_hash = WLAN_RX_HASH_ENABLE;
-	wlan_cfg_ctx->lro_enabled = WLAN_LRO_ENABLE;
 
 	/* This is default mapping and can be overridden by HW config
 	 * received from FW */
@@ -675,12 +667,7 @@ int wlan_cfg_get_int_timer_threshold_other(struct wlan_cfg_dp_soc_ctxt *cfg)
  */
 int wlan_cfg_get_tx_flow_stop_queue_th(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
-#ifdef QCA_WIFI_NAPIER_EMULATION
-	/* TODO remove this hack when INI hookup is ready */
-	return 15;
-#else
-	return cfg->tx_flow_stop_queue_th;
-#endif
+	return cfg->tx_flow_stop_queue_threshold;
 }
 
 /**
@@ -692,11 +679,6 @@ int wlan_cfg_get_tx_flow_stop_queue_th(struct wlan_cfg_dp_soc_ctxt *cfg)
  */
 int wlan_cfg_get_tx_flow_start_queue_offset(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
-#ifdef QCA_WIFI_NAPIER_EMULATION
-	/* TODO remove this hack when INI hookup is ready */
-	return 10;
-#else
 	return cfg->tx_flow_start_queue_offset;
-#endif
 }
 #endif /* QCA_LL_TX_FLOW_CONTROL_V2 */

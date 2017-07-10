@@ -100,7 +100,7 @@ static inline struct cdp_pdev *cdp_pdev_attach
 {
 	if (soc->ops->cmn_drv_ops->txrx_pdev_attach)
 		return soc->ops->cmn_drv_ops->txrx_pdev_attach(soc, ctrl_pdev,
-			htc_pdev, osdev, pdev_id);
+						htc_pdev, osdev, pdev_id);
 	return NULL;
 }
 
@@ -559,4 +559,24 @@ static inline int cdp_set_pn_check(ol_txrx_soc_handle soc,
 	return 0;
 }
 
+/**
+ * cdp_update_config_parameters(): function to propagate configuration
+ *                                 parameters to datapath
+ * @soc: opaque soc handle
+ * @cfg: configuration handle
+ *
+ * Return: status: 0 - Success, non-zero: Failure
+ */
+static inline
+QDF_STATUS cdp_update_config_parameters(ol_txrx_soc_handle soc,
+	struct cdp_config_params *cfg)
+{
+	struct cdp_soc *psoc = (struct cdp_soc *)soc;
+
+	if (soc->ops->cmn_drv_ops->update_config_parameters)
+		return soc->ops->cmn_drv_ops->update_config_parameters(psoc,
+									cfg);
+
+	return QDF_STATUS_SUCCESS;
+}
 #endif /* _CDP_TXRX_CMN_H_ */
