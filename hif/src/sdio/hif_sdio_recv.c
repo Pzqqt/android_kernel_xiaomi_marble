@@ -759,7 +759,7 @@ static QDF_STATUS hif_dev_issue_recv_packet_bundle(struct hif_sdio_device *pdev,
 		}
 		total_length += padded_length;
 	}
-#ifdef DEBUG_BUNDLE
+#if DEBUG_BUNDLE
 	qdf_print("Recv bundle count %d, length %d.\n",
 		sync_completion_queue ?
 		HTC_PACKET_QUEUE_DEPTH(sync_completion_queue) : 0,
