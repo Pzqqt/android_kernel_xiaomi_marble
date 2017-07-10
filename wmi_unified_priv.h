@@ -1354,6 +1354,8 @@ uint32_t (*convert_pdev_id_target_to_host)(uint32_t pdev_id);
 
 QDF_STATUS (*send_user_country_code_cmd)(wmi_unified_t wmi_handle,
 		uint8_t pdev_id, struct cc_regdmn_s *rd);
+QDF_STATUS (*send_limit_off_chan_cmd)(wmi_unified_t wmi_handle,
+		struct wmi_limit_off_chan_param *limit_off_chan_param);
 };
 
 struct target_abi_version {

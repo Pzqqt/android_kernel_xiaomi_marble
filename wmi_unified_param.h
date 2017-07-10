@@ -7382,4 +7382,20 @@ struct wmi_dbs_scan_sel_params {
 	uint32_t num_non_dbs_scans[WMI_SCAN_CLIENT_MAX];
 };
 
+/**
+ * struct wmi_limit_off_chan_param - limit off channel parameters
+ * @vdev_id: vdev id
+ * @status: status of the command (enable/disable)
+ * @max_offchan_time: max off channel time
+ * @rest_time: home channel time
+ * @skip_dfs_chans: skip dfs channels during scan
+ */
+struct wmi_limit_off_chan_param {
+	uint32_t vdev_id;
+	bool status;
+	uint32_t max_offchan_time;
+	uint32_t rest_time;
+	bool skip_dfs_chans;
+};
+
 #endif /* _WMI_UNIFIED_PARAM_H_ */
