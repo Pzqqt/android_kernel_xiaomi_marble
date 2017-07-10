@@ -6699,3 +6699,23 @@ QDF_STATUS wmi_unified_send_dbs_scan_sel_params_cmd(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+/**
+ * wmi_unified_send_limit_off_chan_cmd() - send wmi cmd of limit off channel
+ * configuration params
+ * @wmi_hdl:  wmi handler
+ * @limit_off_chan_param: pointer to wmi_limit_off_chan_param
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF failure reason code on failure
+ */
+QDF_STATUS wmi_unified_send_limit_off_chan_cmd(void *wmi_hdl,
+		struct wmi_limit_off_chan_param *limit_off_chan_param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_limit_off_chan_cmd)
+		return wmi_handle->ops->send_limit_off_chan_cmd(wmi_handle,
+				limit_off_chan_param);
+
+	return QDF_STATUS_E_FAILURE;
+}

@@ -1508,4 +1508,7 @@ void wmi_print_mgmt_event_log(wmi_unified_t wmi, uint32_t count,
 
 QDF_STATUS wmi_unified_send_dbs_scan_sel_params_cmd(void *wmi_hdl,
 				struct wmi_dbs_scan_sel_params *wmi_param);
+
+QDF_STATUS wmi_unified_send_limit_off_chan_cmd(void *wmi_hdl,
+		struct wmi_limit_off_chan_param *wmi_param);
 #endif /* _WMI_UNIFIED_API_H_ */

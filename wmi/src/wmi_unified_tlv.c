@@ -18237,6 +18237,63 @@ static QDF_STATUS send_user_country_code_cmd_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * send_limit_off_chan_cmd_tlv() - send wmi cmd of limit off chan
+ * configuration params
+ * @wmi_handle: wmi handler
+ * @limit_off_chan_param: pointer to wmi_off_chan_param
+ *
+ * Return: 0 for success and non zero for failure
+ */
+static
+QDF_STATUS send_limit_off_chan_cmd_tlv(wmi_unified_t wmi_handle,
+		struct wmi_limit_off_chan_param *limit_off_chan_param)
+{
+	wmi_vdev_limit_offchan_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint32_t len = sizeof(*cmd);
+	int err;
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGP("%s: failed to allocate memory for limit off chan cmd",
+				__func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_vdev_limit_offchan_cmd_fixed_param *)wmi_buf_data(buf);
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+			WMITLV_TAG_STRUC_wmi_vdev_limit_offchan_cmd_fixed_param,
+			WMITLV_GET_STRUCT_TLVLEN(
+				wmi_vdev_limit_offchan_cmd_fixed_param));
+
+	cmd->vdev_id = limit_off_chan_param->vdev_id;
+
+	cmd->flags &= 0;
+	if (limit_off_chan_param->status)
+		cmd->flags |= WMI_VDEV_LIMIT_OFFCHAN_ENABLE;
+	if (limit_off_chan_param->skip_dfs_chans)
+		cmd->flags |= WMI_VDEV_LIMIT_OFFCHAN_SKIP_DFS;
+
+	cmd->max_offchan_time = limit_off_chan_param->max_offchan_time;
+	cmd->rest_time = limit_off_chan_param->rest_time;
+
+	WMI_LOGE("%s: vdev_id=%d, flags =%x, max_offchan_time=%d, rest_time=%d",
+			__func__, cmd->vdev_id, cmd->flags, cmd->max_offchan_time,
+			cmd->rest_time);
+
+	err = wmi_unified_cmd_send(wmi_handle, buf,
+			len, WMI_VDEV_LIMIT_OFFCHAN_CMDID);
+	if (QDF_IS_STATUS_ERROR(err)) {
+		WMI_LOGE("Failed to send limit off chan cmd err=%d", err);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_tlv,
@@ -18619,6 +18676,8 @@ struct wmi_ops tlv_ops =  {
 	.extract_reg_11d_new_country_event =
 		extract_reg_11d_new_country_event_tlv,
 	.send_user_country_code_cmd = send_user_country_code_cmd_tlv,
+	.send_limit_off_chan_cmd =
+		send_limit_off_chan_cmd_tlv,
 };
 
 /**
