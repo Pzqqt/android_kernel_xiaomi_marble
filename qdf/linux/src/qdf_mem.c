@@ -1082,8 +1082,6 @@ void qdf_mem_free(void *ptr)
 	if (qdf_mem_prealloc_put(ptr))
 		return;
 
-	if (!qdf_atomic_dec_and_test(&mem_struct->in_use))
-		return;
 
 	qdf_spin_lock_irqsave(&qdf_mem_list_lock);
 
@@ -1112,6 +1110,11 @@ void qdf_mem_free(void *ptr)
 	if (qdf_mem_cmp((uint8_t *) ptr + mem_struct->size,
 			&WLAN_MEM_TAIL[0], sizeof(WLAN_MEM_TAIL)))
 		goto error;
+
+	if (!qdf_atomic_dec_and_test(&mem_struct->in_use)) {
+		qdf_spin_unlock_irqrestore(&qdf_mem_list_lock);
+		return;
+	}
 
 	/*
 	 * make the node an empty list before doing the spin unlock
