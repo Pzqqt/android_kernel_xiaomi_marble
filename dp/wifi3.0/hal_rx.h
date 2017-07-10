@@ -1278,7 +1278,7 @@ hal_rx_msdu_get_keyid(uint8_t *buf)
 
 	keyid_octet = HAL_RX_MSDU_END_KEYID_OCTET_GET(msdu_end);
 
-	return (keyid_octet >> 6) & 0x3;
+	return keyid_octet & 0x3;
 }
 
 #define HAL_RX_MSDU_START_RSSI_GET(_rx_msdu_start)	\
