@@ -15992,7 +15992,6 @@ static uint32_t ready_extract_init_status_tlv(wmi_unified_t wmi_handle,
 	WMI_READY_EVENTID_param_tlvs *param_buf = NULL;
 	wmi_ready_event_fixed_param *ev = NULL;
 
-
 	param_buf = (WMI_READY_EVENTID_param_tlvs *) evt_buf;
 	ev = param_buf->fixed_param;
 
@@ -16022,6 +16021,28 @@ static QDF_STATUS ready_extract_mac_addr_tlv(wmi_unified_t wmi_hamdle,
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&ev->mac_addr, macaddr);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * ready_extract_mac_addr_list_tlv() - extract MAC address list from ready event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param macaddr: Pointer to hold number of MAC addresses
+ *
+ * Return: Pointer to addr list
+ */
+static wmi_host_mac_addr *ready_extract_mac_addr_list_tlv(wmi_unified_t wmi_hamdle,
+	void *evt_buf, uint8_t *num_mac)
+{
+	WMI_READY_EVENTID_param_tlvs *param_buf = NULL;
+	wmi_ready_event_fixed_param *ev = NULL;
+
+	param_buf = (WMI_READY_EVENTID_param_tlvs *) evt_buf;
+	ev = param_buf->fixed_param;
+
+	*num_mac = ev->num_extra_mac_addr;
+
+	return (wmi_host_mac_addr *) param_buf->mac_addr_list;
 }
 
 /**
@@ -18957,6 +18978,7 @@ struct wmi_ops tlv_ops =  {
 	.save_fw_version = save_fw_version_in_service_ready_tlv,
 	.ready_extract_init_status = ready_extract_init_status_tlv,
 	.ready_extract_mac_addr = ready_extract_mac_addr_tlv,
+	.ready_extract_mac_addr_list = ready_extract_mac_addr_list_tlv,
 	.extract_dbglog_data_len = extract_dbglog_data_len_tlv,
 	.extract_vdev_start_resp = extract_vdev_start_resp_tlv,
 	.extract_tbttoffset_update_params =

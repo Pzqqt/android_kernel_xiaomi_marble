@@ -4622,6 +4622,28 @@ QDF_STATUS wmi_ready_extract_mac_addr(void *wmi_hdl, void *ev, uint8_t *macaddr)
 }
 
 /**
+ * wmi_ready_extract_mac_addr() - extract MAC address list from ready event
+ * @wmi_handle: wmi handle
+ * @param ev: pointer to event buffer
+ * @param num_mac_addr: Pointer to number of entries
+ *
+ * Return: address to start of mac addr list
+ */
+wmi_host_mac_addr *wmi_ready_extract_mac_addr_list(void *wmi_hdl, void *ev,
+					      uint8_t *num_mac_addr)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->ready_extract_mac_addr_list)
+		return wmi_handle->ops->ready_extract_mac_addr_list(wmi_handle,
+			ev, num_mac_addr);
+
+	*num_mac_addr = 0;
+
+	return NULL;
+}
+
+/**
  * wmi_extract_dbglog_data_len() - extract debuglog data length
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
