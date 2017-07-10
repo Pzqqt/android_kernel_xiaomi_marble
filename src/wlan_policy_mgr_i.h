@@ -269,6 +269,7 @@ struct policy_mgr_psoc_priv_obj {
 	uint16_t unsafe_channel_list[QDF_MAX_NUM_CHAN];
 	uint16_t unsafe_channel_count;
 	struct sta_ap_intf_check_work_ctx *sta_ap_intf_check_work_info;
+	uint8_t cur_conc_system_pref;
 };
 
 /**

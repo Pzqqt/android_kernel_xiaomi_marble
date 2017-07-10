@@ -1768,6 +1768,8 @@ QDF_STATUS policy_mgr_set_user_cfg(struct wlan_objmgr_psoc *psoc,
 
 	pm_ctx->user_cfg = *user_cfg;
 
+	pm_ctx->cur_conc_system_pref = pm_ctx->user_cfg.conc_system_pref;
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -2586,6 +2588,36 @@ bool policy_mgr_is_scan_simultaneous_capable(struct wlan_objmgr_psoc *psoc)
 		return true;
 
 	return false;
+}
+
+void policy_mgr_set_cur_conc_system_pref(struct wlan_objmgr_psoc *psoc,
+		uint8_t conc_system_pref)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
+
+	policy_mgr_debug("conc_system_pref %hu", conc_system_pref);
+	pm_ctx->cur_conc_system_pref = conc_system_pref;
+}
+
+uint8_t policy_mgr_get_cur_conc_system_pref(struct wlan_objmgr_psoc *psoc)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return PM_THROUGHPUT;
+	}
+
+	policy_mgr_debug("conc_system_pref %hu", pm_ctx->cur_conc_system_pref);
+	return pm_ctx->cur_conc_system_pref;
 }
 
 QDF_STATUS policy_mgr_get_updated_scan_and_fw_mode_config(
