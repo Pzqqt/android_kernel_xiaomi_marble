@@ -781,6 +781,7 @@ void qdf_dp_trace_init(bool live_mode_config, uint8_t thresh,
 	qdf_dp_trace_cb_table[QDF_DP_TRACE_DHCP_PACKET_RECORD] =
 	qdf_dp_trace_cb_table[QDF_DP_TRACE_ARP_PACKET_RECORD] =
 	qdf_dp_trace_cb_table[QDF_DP_TRACE_ICMP_PACKET_RECORD] =
+	qdf_dp_trace_cb_table[QDF_DP_TRACE_ICMPv6_PACKET_RECORD] =
 						qdf_dp_display_proto_pkt;
 	qdf_dp_trace_cb_table[QDF_DP_TRACE_MGMT_PACKET_RECORD] =
 					qdf_dp_display_mgmt_pkt;
@@ -997,6 +998,8 @@ const char *qdf_dp_code_to_string(enum QDF_DP_TRACE_ID code)
 		return "ARP:";
 	case QDF_DP_TRACE_ICMP_PACKET_RECORD:
 		return "ICMP:";
+	case QDF_DP_TRACE_ICMPv6_PACKET_RECORD:
+		return "ICMPv6:";
 	case QDF_DP_TRACE_MGMT_PACKET_RECORD:
 		return "MGMT:";
 	case QDF_DP_TRACE_EVENT_RECORD:
@@ -1087,6 +1090,8 @@ static const char *qdf_dp_type_to_str(enum qdf_proto_type type)
 		return "ARP";
 	case QDF_PROTO_TYPE_ICMP:
 		return "ICMP";
+	case QDF_PROTO_TYPE_ICMPv6:
+		return "ICMPv6";
 	case QDF_PROTO_TYPE_MGMT:
 		return "MGMT";
 	case QDF_PROTO_TYPE_EVENT:
@@ -1131,10 +1136,20 @@ static const char *qdf_dp_subtype_to_str(enum qdf_proto_subtype subtype)
 		return "DECL";
 	case QDF_PROTO_ARP_REQ:
 	case QDF_PROTO_ICMP_REQ:
+	case QDF_PROTO_ICMPV6_REQ:
 		return "REQ";
 	case QDF_PROTO_ARP_RES:
 	case QDF_PROTO_ICMP_RES:
+	case QDF_PROTO_ICMPV6_RES:
 		return "RSP";
+	case QDF_PROTO_ICMPV6_RS:
+		return "RS";
+	case QDF_PROTO_ICMPV6_RA:
+		return "RA";
+	case QDF_PROTO_ICMPV6_NS:
+		return "NS";
+	case QDF_PROTO_ICMPV6_NA:
+		return "NA";
 	case QDF_PROTO_MGMT_ASSOC:
 		return "ASSOC";
 	case QDF_PROTO_MGMT_DISASSOC:
@@ -1270,6 +1285,65 @@ static void qdf_dp_add_record(enum QDF_DP_TRACE_ID code, uint8_t *data,
 	}
 }
 
+
+/**
+ * qdf_log_icmpv6_pkt() - log ICMPv6 packet
+ * @session_id: vdev_id
+ * @skb: skb pointer
+ * @dir: direction
+ *
+ * Return: true/false
+ */
+static bool qdf_log_icmpv6_pkt(uint8_t session_id, struct sk_buff *skb,
+			    enum qdf_proto_dir dir, uint8_t pdev_id)
+{
+	enum qdf_proto_subtype subtype;
+
+	if ((qdf_dp_get_proto_bitmap() & QDF_NBUF_PKT_TRAC_TYPE_ICMPv6) &&
+		((dir == QDF_TX && QDF_NBUF_CB_PACKET_TYPE_ICMPv6 ==
+			QDF_NBUF_CB_GET_PACKET_TYPE(skb)) ||
+		 (dir == QDF_RX && qdf_nbuf_is_icmpv6_pkt(skb) == true))) {
+
+		subtype = qdf_nbuf_get_icmpv6_subtype(skb);
+		DPTRACE(qdf_dp_trace_proto_pkt(
+			QDF_DP_TRACE_ICMPv6_PACKET_RECORD,
+			session_id, (skb->data + QDF_NBUF_SRC_MAC_OFFSET),
+			(skb->data + QDF_NBUF_DEST_MAC_OFFSET),
+			QDF_PROTO_TYPE_ICMPv6, subtype, dir, pdev_id, false));
+		if (dir == QDF_TX)
+			QDF_NBUF_CB_TX_DP_TRACE(skb) = 1;
+		else if (dir == QDF_RX)
+			QDF_NBUF_CB_RX_DP_TRACE(skb) = 1;
+
+		QDF_NBUF_CB_DP_TRACE_PRINT(skb) = false;
+
+		switch (subtype) {
+		case QDF_PROTO_ICMPV6_REQ:
+			g_qdf_dp_trace_data.icmpv6_req++;
+			break;
+		case QDF_PROTO_ICMPV6_RES:
+			g_qdf_dp_trace_data.icmpv6_resp++;
+			break;
+		case QDF_PROTO_ICMPV6_RS:
+			g_qdf_dp_trace_data.icmpv6_rs++;
+			break;
+		case QDF_PROTO_ICMPV6_RA:
+			g_qdf_dp_trace_data.icmpv6_ra++;
+			break;
+		case QDF_PROTO_ICMPV6_NS:
+			g_qdf_dp_trace_data.icmpv6_ns++;
+			break;
+		case QDF_PROTO_ICMPV6_NA:
+			g_qdf_dp_trace_data.icmpv6_na++;
+			break;
+		default:
+			break;
+		}
+		return true;
+	}
+
+	return false;
+}
 
 /**
  * qdf_log_icmp_pkt() - log ICMP packet
@@ -1443,6 +1517,8 @@ bool qdf_dp_trace_log_pkt(uint8_t session_id, struct sk_buff *skb,
 	if (qdf_log_eapol_pkt(session_id, skb, dir, pdev_id))
 		return true;
 	if (qdf_log_icmp_pkt(session_id, skb, dir, pdev_id))
+		return true;
+	if (qdf_log_icmpv6_pkt(session_id, skb, dir, pdev_id))
 		return true;
 	return false;
 }
@@ -1831,13 +1907,20 @@ void qdf_dp_trace_dump_all(uint32_t count, uint8_t pdev_id)
 		g_qdf_dp_trace_data.high_tput_thresh,
 		g_qdf_dp_trace_data.thresh_time_limit);
 
-	DPTRACE_PRINT("DPT: stats - tx %u rx %u icmp(%u %u) arp(%u %u)",
+	DPTRACE_PRINT("DPT: stats - tx %u rx %u icmp(%u %u) arp(%u %u)"
+		"icmpv6 (%u %u) icmpv6_ns_na (%u %u) icmpv6_rs_ra (%u %u)",
 		g_qdf_dp_trace_data.tx_count,
 		g_qdf_dp_trace_data.rx_count,
 		g_qdf_dp_trace_data.icmp_req,
 		g_qdf_dp_trace_data.icmp_resp,
 		g_qdf_dp_trace_data.arp_req,
-		g_qdf_dp_trace_data.arp_resp);
+		g_qdf_dp_trace_data.arp_resp,
+		g_qdf_dp_trace_data.icmpv6_req,
+		g_qdf_dp_trace_data.icmpv6_resp,
+		g_qdf_dp_trace_data.icmpv6_ns,
+		g_qdf_dp_trace_data.icmpv6_na,
+		g_qdf_dp_trace_data.icmpv6_rs,
+		g_qdf_dp_trace_data.icmpv6_ra);
 
 	DPTRACE_PRINT("DPT: Total Records: %d, Head: %d, Tail: %d",
 		      g_qdf_dp_trace_data.num, g_qdf_dp_trace_data.head,

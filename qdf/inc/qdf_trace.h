@@ -179,6 +179,8 @@ typedef struct s_qdf_trace_data {
  * @QDF_DP_TRACE_DHCP_PACKET_RECORD - record DHCP packet
  * @QDF_DP_TRACE_ARP_PACKET_RECORD - record ARP packet
  * @QDF_DP_TRACE_MGMT_PACKET_RECORD - record MGMT pacekt
+ * @QDF_DP_TRACE_ICMP_PACKET_RECORD - record ICMP packet
+ * @QDF_DP_TRACE_ICMPv6_PACKET_RECORD - record ICMPv6 packet
  * QDF_DP_TRACE_EVENT_RECORD - record events
  * @QDF_DP_TRACE_BASE_VERBOSITY - below this are part of base verbosity
  * @QDF_DP_TRACE_ICMP_PACKET_RECORD - record ICMP packets
@@ -220,6 +222,7 @@ enum  QDF_DP_TRACE_ID {
 	QDF_DP_TRACE_EVENT_RECORD,
 	QDF_DP_TRACE_BASE_VERBOSITY,
 	QDF_DP_TRACE_ICMP_PACKET_RECORD,
+	QDF_DP_TRACE_ICMPv6_PACKET_RECORD,
 	QDF_DP_TRACE_HDD_TX_PACKET_RECORD,
 	QDF_DP_TRACE_HDD_RX_PACKET_RECORD,
 	QDF_DP_TRACE_HDD_TX_TIMEOUT,
@@ -351,7 +354,13 @@ struct qdf_dp_trace_record_s {
  *.@arp_req: stats for arp reqs
  *.@arp_resp: stats for arp resps
  *.@icmp_req: stats for icmp reqs
- *.@icmp_req: stats for icmp resps
+ *.@icmp_resp: stats for icmp resps
+ *.@icmpv6_req: stats for icmpv6 reqs
+ *.@icmpv6_resp: stats for icmpv6 resps
+ *.@icmpv6_ns: stats for icmpv6 nss
+ *.@icmpv6_na: stats for icmpv6 nas
+ *.@icmpv6_rs: stats for icmpv6 rss
+ *.@icmpv6_ra: stats for icmpv6 ras
 
  */
 struct s_qdf_dp_trace_data {
@@ -374,6 +383,12 @@ struct s_qdf_dp_trace_data {
 	uint32_t arp_resp;
 	uint32_t icmp_req;
 	uint32_t icmp_resp;
+	uint32_t icmpv6_req;
+	uint32_t icmpv6_resp;
+	uint32_t icmpv6_ns;
+	uint32_t icmpv6_na;
+	uint32_t icmpv6_rs;
+	uint32_t icmpv6_ra;
 };
 
 

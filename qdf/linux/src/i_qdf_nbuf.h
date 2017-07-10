@@ -66,6 +66,7 @@ typedef struct sk_buff *__qdf_nbuf_t;
 #define QDF_NBUF_CB_PACKET_TYPE_WAPI   3
 #define QDF_NBUF_CB_PACKET_TYPE_DHCP   4
 #define QDF_NBUF_CB_PACKET_TYPE_ICMP   5
+#define QDF_NBUF_CB_PACKET_TYPE_ICMPv6 6
 
 
 /* mark the first packet after wow wakeup */
