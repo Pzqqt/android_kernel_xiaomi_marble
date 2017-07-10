@@ -154,10 +154,6 @@ enum hdd_lro_rx_status hdd_lro_rx(hdd_context_t *hdd_ctx,
 		}
 
 		ctx = wlan_hdd_get_lro_ctx(skb);
-
-		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
-			 "%s %d: ctx %p\n", __func__, __LINE__, ctx);
-
 		if (ctx == NULL) {
 			hdd_err("LRO mgr is NULL, vdev could be going down");
 			return status;
