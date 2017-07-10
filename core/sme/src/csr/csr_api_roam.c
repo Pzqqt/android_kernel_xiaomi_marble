@@ -10880,6 +10880,13 @@ csr_roam_chk_lnk_swt_ch_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 				pSwitchChnInd->chan_params.center_freq_seg0;
 		roamInfo.chan_info.band_center_freq2 =
 				pSwitchChnInd->chan_params.center_freq_seg1;
+		if (CSR_IS_PHY_MODE_11ac(mac_ctx->roam.configParam.phyMode))
+			roamInfo.mode = SIR_SME_PHY_MODE_VHT;
+		else if (CSR_IS_PHY_MODE_11n(mac_ctx->roam.configParam.phyMode))
+			roamInfo.mode = SIR_SME_PHY_MODE_HT;
+		else
+			roamInfo.mode = SIR_SME_PHY_MODE_LEGACY;
+
 		status = csr_roam_call_callback(mac_ctx, sessionId,
 				&roamInfo, 0, eCSR_ROAM_STA_CHANNEL_SWITCH,
 				eCSR_ROAM_RESULT_NONE);
