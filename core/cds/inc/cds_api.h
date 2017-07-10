@@ -323,6 +323,17 @@ QDF_STATUS cds_pre_enable(void);
 
 QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc);
 
+/**
+ * cds_dp_open() - Open datapath module
+ * @psoc - object manager soc handle
+ *
+ * API to map the datapath rings to interrupts
+ * and also open the datapath pdev module.
+ *
+ * Return: QDF status
+ */
+QDF_STATUS cds_dp_open(struct wlan_objmgr_psoc *psoc);
+
 QDF_STATUS cds_enable(struct wlan_objmgr_psoc *psoc);
 
 QDF_STATUS cds_disable(struct wlan_objmgr_psoc *psoc);
@@ -330,6 +341,17 @@ QDF_STATUS cds_disable(struct wlan_objmgr_psoc *psoc);
 QDF_STATUS cds_post_disable(void);
 
 QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * cds_dp_close() - Close datapath module
+ * @psoc: Object manager soc handle
+ *
+ * API used to detach interrupts assigned to service
+ * datapath rings and close pdev module
+ *
+ * Return: Status
+ */
+QDF_STATUS cds_dp_close(struct wlan_objmgr_psoc *psoc);
 
 void *cds_get_context(QDF_MODULE_ID moduleId);
 
