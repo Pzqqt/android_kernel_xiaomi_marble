@@ -2085,4 +2085,24 @@ void  policy_mgr_init_sap_mandatory_2g_chan(struct wlan_objmgr_psoc *psoc);
  */
 void policy_mgr_remove_sap_mandatory_chan(struct wlan_objmgr_psoc *psoc,
 		uint8_t chan);
+/*
+ * policy_set_cur_conc_system_pref - set current conc_system_pref
+ * @psoc: soc pointer
+ *
+ * Set the current concurrency system preference.
+ *
+ * Return: None
+ */
+void policy_mgr_set_cur_conc_system_pref(struct wlan_objmgr_psoc *psoc,
+		uint8_t conc_system_pref);
+/**
+ * policy_mgr_get_cur_conc_system_pref - Get current conc_system_pref
+ * @psoc: soc pointer
+ *
+ * Get the current concurrent system preference.
+ *
+ * Return: conc_system_pref
+ */
+uint8_t policy_mgr_get_cur_conc_system_pref(struct wlan_objmgr_psoc *psoc);
+
 #endif /* __WLAN_POLICY_MGR_API_H */
