@@ -838,6 +838,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_pdev_bss_chan_info_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_roam_lca_disallow_config_tlv_param,
     WMITLV_TAG_STRUC_wmi_vdev_limit_offchan_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_roam_rssi_rejection_oce_config_param,
 } WMITLV_TAG_ID;
 
 /*
