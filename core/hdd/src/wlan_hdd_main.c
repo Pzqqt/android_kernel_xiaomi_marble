@@ -489,6 +489,8 @@ struct notifier_block hdd_netdev_notifier = {
 /* variable to hold the insmod parameters */
 static int con_mode;
 
+static int con_mode_ftm;
+
 /* Variable to hold connection mode including module parameter con_mode */
 static int curr_con_mode;
 
@@ -9553,7 +9555,8 @@ int hdd_wlan_startup(struct device *dev)
 	sme_cli_set_command(0, (int)WMI_PDEV_PARAM_ABG_MODE_TX_CHAIN_NUM,
 			    num_abg_tx_chains, PDEV_CMD);
 
-	qdf_mc_timer_start(&hdd_ctx->iface_change_timer,
+	if (QDF_GLOBAL_FTM_MODE != hdd_get_conparam())
+		qdf_mc_timer_start(&hdd_ctx->iface_change_timer,
 			   hdd_ctx->config->iface_change_wait_time);
 
 	hdd_start_complete(0);
@@ -11260,6 +11263,24 @@ static int con_mode_handler(const char *kmessage, struct kernel_param *kp)
 	return ret;
 }
 
+static int con_mode_handler_ftm(const char *kmessage,
+				struct kernel_param *kp)
+{
+	int ret;
+
+	ret = param_set_int(kmessage, kp);
+
+	if (con_mode_ftm != QDF_GLOBAL_FTM_MODE) {
+		pr_err("Only FTM mode supported!");
+		return -ENOTSUPP;
+	}
+
+	hdd_set_conparam(con_mode_ftm);
+	con_mode = con_mode_ftm;
+
+	return ret;
+}
+
 /**
  * hdd_get_conparam() - driver exit point
  *
@@ -12101,6 +12122,9 @@ MODULE_DESCRIPTION("WLAN HOST DEVICE DRIVER");
 
 module_param_call(con_mode, con_mode_handler, param_get_int, &con_mode,
 		  S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+
+module_param_call(con_mode_ftm, con_mode_handler_ftm, param_get_int,
+		  &con_mode_ftm, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
 module_param_call(fwpath, fwpath_changed_handler, param_get_string, &fwpath,
 		  S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
