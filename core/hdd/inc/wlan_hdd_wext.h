@@ -476,4 +476,32 @@ int hdd_check_standard_wext_control(struct hdd_context *hdd_ctx,
 int hdd_check_private_wext_control(struct hdd_context *hdd_ctx,
 				   struct iw_request_info *info);
 
+/**
+ * wlan_hdd_get_peer_rssi() - get station's rssi
+ * @adapter: hostapd interface
+ * @macaddress: peer sta mac address or ff:ff:ff:ff:ff:ff to query all peer
+ * @peer_sta_info: output pointer which will fill by peer sta info
+ *
+ * This function will call sme_get_peer_info to get rssi
+ *
+ * Return: 0 on success, otherwise error value
+ */
+int wlan_hdd_get_peer_rssi(hdd_adapter_t *adapter,
+			   struct qdf_mac_addr *macaddress,
+			   struct sir_peer_sta_info *peer_sta_info);
+
+/**
+ * wlan_hdd_get_peer_info() - get peer info
+ * @adapter: hostapd interface
+ * @macaddress: request peer mac address
+ * @peer_info_ext: one peer extended info retrieved
+ *
+ * This function will call sme_get_peer_info_ext to get peer info
+ *
+ * Return: 0 on success, otherwise error value
+ */
+int wlan_hdd_get_peer_info(hdd_adapter_t *adapter,
+			   struct qdf_mac_addr macaddress,
+			   struct sir_peer_info_ext *peer_info_ext);
+
 #endif /* __WEXT_IW_H__ */

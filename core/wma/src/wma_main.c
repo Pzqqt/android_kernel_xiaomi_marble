@@ -4059,6 +4059,10 @@ static inline void wma_update_target_services(tp_wma_handle wh,
 	}
 
 	wma_he_update_tgt_services(wh, cfg);
+
+	cfg->get_peer_info_enabled =
+		WMI_SERVICE_IS_ENABLED(wh->wmi_service_bitmap,
+				       WMI_SERVICE_PEER_STATS_INFO);
 }
 
 /**

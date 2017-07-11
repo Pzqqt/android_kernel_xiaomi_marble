@@ -774,42 +774,118 @@ enum bss_stop_reason {
 	BSS_STOP_DUE_TO_MCC_SCC_SWITCH = 1,
 };
 
-/*
- * Per station structure kept in HDD for multiple station support for SoftAP
+/**
+ * struct hdd_rate_info - rate_info in HDD
+ * @rate: tx/rx rate (kbps)
+ * @mode: 0->11abg legacy, 1->HT, 2->VHT (refer to sir_sme_phy_mode)
+ * @nss: number of streams
+ * @mcs: mcs index for HT/VHT mode
+ * @rate_flags: rate flags for last tx/rx
+ *
+ * rate info in HDD
+ */
+struct hdd_rate_info {
+	uint32_t rate;
+	uint8_t mode;
+	uint8_t nss;
+	uint8_t mcs;
+	uint8_t rate_flags;
+};
+
+/**
+ * struct hdd_fw_txrx_stats - fw txrx status in HDD
+ *                            (refer to station_info struct in Kernel)
+ * @tx_packets: packets transmitted to this station
+ * @tx_bytes: bytes transmitted to this station
+ * @rx_packets: packets received from this station
+ * @rx_bytes: bytes received from this station
+ * @rx_retries: cumulative retry counts
+ * @tx_failed: number of failed transmissions
+ * @rssi: The signal strength (dbm)
+ * @tx_rate: last used tx rate info
+ * @rx_rate: last used rx rate info
+ *
+ * fw txrx status in HDD
+ */
+struct hdd_fw_txrx_stats {
+	uint32_t tx_packets;
+	uint64_t tx_bytes;
+	uint32_t rx_packets;
+	uint64_t rx_bytes;
+	uint32_t tx_retries;
+	uint32_t tx_failed;
+	int8_t rssi;
+	struct hdd_rate_info tx_rate;
+	struct hdd_rate_info rx_rate;
+};
+
+/**
+ * typedef struct hdd_station_info_t - Per station structure kept in HDD for
+ *                                     multiple station support for SoftAP
+ * @isUsed: The station entry is used or not
+ * @ucSTAId: Station ID reported back from HAL (through SAP).
+ *           Broadcast uses station ID zero by default.
+ * @staType: Type of station i.e. p2p client or infrastructure station
+ * @macAddrSTA: MAC address of the station
+ * @tlSTAState: Current Station state so HDD knows how to deal with packet
+ *              queue. Most recent states used to change TLSHIM STA state.
+ * @isQosEnabled: Track QoS status of station
+ * @isDeauthInProgress: The station entry for which Deauth is in progress
+ * @nss: Number of spatial streams supported
+ * @rate_flags: Rate Flags for this connection
+ * @ecsa_capable: Extended CSA capabilities
+ * @max_phy_rate: Calcuated maximum phy rate based on mode, nss, mcs etc.
+ * @tx_packets: Packets send to current station
+ * @tx_bytes: Bytes send to current station
+ * @rx_packets: Packets received from current station
+ * @rx_bytes: Bytes received from current station
+ * @last_tx_rx_ts: Last tx/rx timestamp with current station
+ * @assoc_ts: Current station association timestamp
+ * @tx_rate: Tx rate with current station reported from F/W
+ * @rx_rate: Rx rate with current station reported from F/W
+ * @ampdu: Ampdu enable or not of the station
+ * @sgi_enable: Short GI enable or not of the station
+ * @tx_stbc: Tx Space-time block coding enable/disable
+ * @rx_stbc: Rx Space-time block coding enable/disable
+ * @ch_width: Channel Width of the connection
+ * @mode: Mode of the connection
+ * @max_supp_idx: Max supported rate index of the station
+ * @max_ext_idx: Max extended supported rate index of the station
+ * @max_mcs_idx: Max supported mcs index of the station
+ * @rx_mcs_map: VHT Rx mcs map
+ * @tx_mcs_map: VHT Tx mcs map
  */
 typedef struct {
-	/** The station entry is used or not  */
 	bool isUsed;
-
-	/* Station ID reported back from HAL (through SAP).
-	 * Broadcast uses station ID zero by default
-	 */
 	uint8_t ucSTAId;
-
-	/* type of station i.e. p2p client or infrastructure station */
 	eStationType staType;
-
-	/** MAC address of the station */
 	struct qdf_mac_addr macAddrSTA;
-
-	/** Current Station state so HDD knows how to deal with packet
-	 *  queue. Most recent states used to change TLSHIM STA state
-	 */
 	enum ol_txrx_peer_state tlSTAState;
-
-	/** Track QoS status of station */
 	bool isQosEnabled;
-
-	/** The station entry for which Deauth is in progress  */
 	bool isDeauthInProgress;
-
-	/** Number of spatial streams supported */
 	uint8_t   nss;
-
-	/** Rate Flags for this connection */
 	uint32_t  rate_flags;
-	/** Extended CSA */
 	uint8_t   ecsa_capable;
+	uint32_t max_phy_rate;
+	uint32_t tx_packets;
+	uint64_t tx_bytes;
+	uint32_t rx_packets;
+	uint64_t rx_bytes;
+	qdf_time_t last_tx_rx_ts;
+	qdf_time_t assoc_ts;
+	uint32_t tx_rate;
+	uint32_t rx_rate;
+	bool ampdu;
+	bool sgi_enable;
+	bool tx_stbc;
+	bool rx_stbc;
+	uint8_t ch_width;
+	uint8_t mode;
+	uint8_t max_supp_idx;
+	uint8_t max_ext_idx;
+	uint8_t max_mcs_idx;
+	uint8_t rx_mcs_map;
+	uint8_t tx_mcs_map;
 } hdd_station_info_t;
 
 struct hdd_ap_ctx {
@@ -866,6 +942,9 @@ struct hdd_ap_ctx {
 	bool vendor_acs_timer_initialized;
 
 	enum bss_stop_reason bss_stop_reason;
+
+	/* Fw txrx stats info */
+	struct hdd_fw_txrx_stats txrx_stats;
 };
 
 /**

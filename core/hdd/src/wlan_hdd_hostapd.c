@@ -105,6 +105,91 @@
 #define SAP_24GHZ_CH_COUNT (14)
 #define ACS_SCAN_EXPIRY_TIMEOUT_S 4
 
+/*
+ * 11B, 11G Rate table include Basic rate and Extended rate
+ * The IDX field is the rate index
+ * The HI field is the rate when RSSI is strong or being ignored
+ * (in this case we report actual rate)
+ * The MID field is the rate when RSSI is moderate
+ * (in this case we cap 11b rates at 5.5 and 11g rates at 24)
+ * The LO field is the rate when RSSI is low
+ * (in this case we don't report rates, actual current rate used)
+ */
+static const struct index_data_rate_type supported_data_rate[] = {
+	/* IDX     HI  HM  LM LO (RSSI-based index */
+	{2,   { 10,  10, 10, 0} },
+	{4,   { 20,  20, 10, 0} },
+	{11,  { 55,  20, 10, 0} },
+	{12,  { 60,  55, 20, 0} },
+	{18,  { 90,  55, 20, 0} },
+	{22,  {110,  55, 20, 0} },
+	{24,  {120,  90, 60, 0} },
+	{36,  {180, 120, 60, 0} },
+	{44,  {220, 180, 60, 0} },
+	{48,  {240, 180, 90, 0} },
+	{66,  {330, 180, 90, 0} },
+	{72,  {360, 240, 90, 0} },
+	{96,  {480, 240, 120, 0} },
+	{108, {540, 240, 120, 0} }
+};
+
+/* MCS Based rate table */
+/* HT MCS parameters with Nss = 1 */
+static const struct index_data_rate_type supported_mcs_rate_nss1[] = {
+	/* MCS  L20   L40   S20  S40 */
+	{0,  { 65,  135,  72,  150} },
+	{1,  { 130, 270,  144, 300} },
+	{2,  { 195, 405,  217, 450} },
+	{3,  { 260, 540,  289, 600} },
+	{4,  { 390, 810,  433, 900} },
+	{5,  { 520, 1080, 578, 1200} },
+	{6,  { 585, 1215, 650, 1350} },
+	{7,  { 650, 1350, 722, 1500} }
+};
+
+/* HT MCS parameters with Nss = 2 */
+static const struct index_data_rate_type supported_mcs_rate_nss2[] = {
+	/* MCS  L20    L40   S20   S40 */
+	{0,  {130,  270,  144,  300} },
+	{1,  {260,  540,  289,  600} },
+	{2,  {390,  810,  433,  900} },
+	{3,  {520,  1080, 578,  1200} },
+	{4,  {780,  1620, 867,  1800} },
+	{5,  {1040, 2160, 1156, 2400} },
+	{6,  {1170, 2430, 1300, 2700} },
+	{7,  {1300, 2700, 1444, 3000} }
+};
+
+/* MCS Based VHT rate table */
+/* MCS parameters with Nss = 1*/
+static const struct index_vht_data_rate_type supported_vht_mcs_rate_nss1[] = {
+	/* MCS  L80    S80     L40   S40    L20   S40*/
+	{0,  {293,  325},  {135,  150},  {65,   72} },
+	{1,  {585,  650},  {270,  300},  {130,  144} },
+	{2,  {878,  975},  {405,  450},  {195,  217} },
+	{3,  {1170, 1300}, {540,  600},  {260,  289} },
+	{4,  {1755, 1950}, {810,  900},  {390,  433} },
+	{5,  {2340, 2600}, {1080, 1200}, {520,  578} },
+	{6,  {2633, 2925}, {1215, 1350}, {585,  650} },
+	{7,  {2925, 3250}, {1350, 1500}, {650,  722} },
+	{8,  {3510, 3900}, {1620, 1800}, {780,  867} },
+	{9,  {3900, 4333}, {1800, 2000}, {780,  867} }
+};
+
+/*MCS parameters with Nss = 2*/
+static const struct index_vht_data_rate_type supported_vht_mcs_rate_nss2[] = {
+	/* MCS  L80    S80     L40   S40    L20   S40*/
+	{0,  {585,  650},  {270,  300},  {130,  144} },
+	{1,  {1170, 1300}, {540,  600},  {260,  289} },
+	{2,  {1755, 1950}, {810,  900},  {390,  433} },
+	{3,  {2340, 2600}, {1080, 1200}, {520,  578} },
+	{4,  {3510, 3900}, {1620, 1800}, {780,  867} },
+	{5,  {4680, 5200}, {2160, 2400}, {1040, 1156} },
+	{6,  {5265, 5850}, {2430, 2700}, {1170, 1300} },
+	{7,  {5850, 6500}, {2700, 3000}, {1300, 1444} },
+	{8,  {7020, 7800}, {3240, 3600}, {1560, 1733} },
+	{9,  {7800, 8667}, {3600, 4000}, {1560, 1733} }
+};
 
 /* Function definitions */
 
@@ -1044,6 +1129,205 @@ static QDF_STATUS hdd_handle_acs_scan_event(tpSap_Event sap_event,
 }
 #endif
 
+/**
+ * get_max_rate_vht() - calculate max rate for VHT mode
+ * @nss: num of streams
+ * @ch_width: channel width
+ * @sgi: short gi
+ * @vht_mcs_map: vht mcs map
+ *
+ * This function calculate max rate for VHT mode
+ *
+ * Return: max rate
+ */
+static int get_max_rate_vht(int nss, int ch_width, int sgi, int vht_mcs_map)
+{
+	const struct index_vht_data_rate_type *supported_vht_mcs_rate;
+	enum data_rate_11ac_max_mcs vht_max_mcs;
+	int maxrate = 0;
+	int maxidx;
+
+	if (nss == 1) {
+		supported_vht_mcs_rate = supported_vht_mcs_rate_nss1;
+	} else if (nss == 2) {
+		supported_vht_mcs_rate = supported_vht_mcs_rate_nss2;
+	} else {
+		/* Not Supported */
+		hdd_err("nss %d not supported", nss);
+		return maxrate;
+	}
+
+	vht_max_mcs =
+		(enum data_rate_11ac_max_mcs)
+		(vht_mcs_map & DATA_RATE_11AC_MCS_MASK);
+
+	if (vht_max_mcs == DATA_RATE_11AC_MAX_MCS_7) {
+		maxidx = 7;
+	} else if (vht_max_mcs == DATA_RATE_11AC_MAX_MCS_8) {
+		maxidx = 8;
+	} else if (vht_max_mcs == DATA_RATE_11AC_MAX_MCS_9) {
+		if (ch_width == eHT_CHANNEL_WIDTH_20MHZ)
+			/* MCS9 is not valid for VHT20 when nss=1,2 */
+			maxidx = 8;
+		else
+			maxidx = 9;
+	} else {
+		hdd_err("vht mcs map %x not supported",
+			vht_mcs_map & DATA_RATE_11AC_MCS_MASK);
+		return maxrate;
+	}
+
+	if (ch_width == eHT_CHANNEL_WIDTH_20MHZ) {
+		maxrate =
+		supported_vht_mcs_rate[maxidx].supported_VHT20_rate[sgi];
+	} else if (ch_width == eHT_CHANNEL_WIDTH_40MHZ) {
+		maxrate =
+		supported_vht_mcs_rate[maxidx].supported_VHT40_rate[sgi];
+	} else if (ch_width == eHT_CHANNEL_WIDTH_80MHZ) {
+		maxrate =
+		supported_vht_mcs_rate[maxidx].supported_VHT80_rate[sgi];
+	} else {
+		hdd_err("ch_width %d not supported", ch_width);
+		return maxrate;
+	}
+
+	return maxrate;
+}
+
+/**
+ * calculate_max_phy_rate() - calcuate maximum phy rate (100kbps)
+ * @mode: phymode: Legacy, 11a/b/g, HT, VHT
+ * @nss: num of stream (maximum num is 2)
+ * @ch_width: channel width
+ * @sgi: short gi enabled or not
+ * @supp_idx: max supported idx
+ * @ext_idx: max extended idx
+ * @ht_mcs_idx: max mcs index for HT
+ * @vht_mcs_map: mcs map for VHT
+ *
+ * return: maximum phy rate in 100kbps
+ */
+static int calcuate_max_phy_rate(int mode, int nss, int ch_width,
+				 int sgi, int supp_idx, int ext_idx,
+				 int ht_mcs_idx, int vht_mcs_map)
+{
+	const struct index_data_rate_type *supported_mcs_rate;
+	int maxidx = 12; /*default 6M mode*/
+	int maxrate = 0, tmprate;
+	int i;
+
+	/* check supported rates */
+	if (supp_idx != 0xff && maxidx < supp_idx)
+		maxidx = supp_idx;
+
+	/* check extended rates */
+	if (ext_idx != 0xff && maxidx < ext_idx)
+		maxidx = ext_idx;
+
+	for (i = 0; i < QDF_ARRAY_SIZE(supported_data_rate); i++) {
+		if (supported_data_rate[i].beacon_rate_index == maxidx)
+			maxrate = supported_data_rate[i].supported_rate[0];
+	}
+
+	if (mode == SIR_SME_PHY_MODE_HT) {
+		/* check for HT Mode */
+		maxidx = ht_mcs_idx;
+		if (nss == 1) {
+			supported_mcs_rate = supported_mcs_rate_nss1;
+		} else if (nss == 2) {
+			supported_mcs_rate = supported_mcs_rate_nss2;
+		} else {
+			/* Not Supported */
+			hdd_err("nss %d not supported", nss);
+			return maxrate;
+		}
+
+		if (ch_width == eHT_CHANNEL_WIDTH_20MHZ) {
+			tmprate = sgi ?
+				supported_mcs_rate[maxidx].supported_rate[2] :
+				supported_mcs_rate[maxidx].supported_rate[0];
+		} else if (ch_width == eHT_CHANNEL_WIDTH_40MHZ) {
+			tmprate = sgi ?
+				supported_mcs_rate[maxidx].supported_rate[3] :
+				supported_mcs_rate[maxidx].supported_rate[1];
+		} else {
+			hdd_err("invalid mode %d ch_width %d",
+				mode, ch_width);
+			return maxrate;
+		}
+
+		if (maxrate < tmprate)
+			maxrate = tmprate;
+	}
+
+	if (mode == SIR_SME_PHY_MODE_VHT) {
+		/* check for VHT Mode */
+		tmprate = get_max_rate_vht(nss, ch_width, sgi, vht_mcs_map);
+		if (maxrate < tmprate)
+			maxrate = tmprate;
+	}
+
+	return maxrate;
+}
+
+/**
+ * hdd_fill_station_info() - fill stainfo once connected
+ * @stainfo: peer stainfo associate to SAP
+ * @event: associate/reassociate event received
+ *
+ * The function is to update rate stats to stainfo
+ *
+ * Return: None.
+ */
+static void hdd_fill_station_info(hdd_station_info_t *stainfo,
+				  tSap_StationAssocReassocCompleteEvent *event)
+{
+	stainfo->staType = event->staType;
+	stainfo->nss = event->chan_info.nss;
+	stainfo->rate_flags = event->chan_info.rate_flags;
+	stainfo->ampdu = event->ampdu;
+	stainfo->sgi_enable = event->sgi_enable;
+	stainfo->tx_stbc = event->tx_stbc;
+	stainfo->rx_stbc = event->rx_stbc;
+	stainfo->ch_width = event->ch_width;
+	stainfo->mode = event->mode;
+	stainfo->max_supp_idx = event->max_supp_idx;
+	stainfo->max_ext_idx = event->max_ext_idx;
+	stainfo->max_mcs_idx = event->max_mcs_idx;
+	stainfo->rx_mcs_map = event->rx_mcs_map;
+	stainfo->tx_mcs_map = event->tx_mcs_map;
+	stainfo->assoc_ts = qdf_system_ticks();
+	stainfo->max_phy_rate =
+		calcuate_max_phy_rate(stainfo->mode,
+				      stainfo->nss,
+				      stainfo->ch_width,
+				      stainfo->sgi_enable,
+				      stainfo->max_supp_idx,
+				      stainfo->max_ext_idx,
+				      stainfo->max_mcs_idx,
+				      stainfo->rx_mcs_map);
+	/* expect max_phy_rate report in kbps */
+	stainfo->max_phy_rate *= 100;
+	hdd_debug("cap %d %d %d %d %d %d %d %d %d %x %d",
+		  stainfo->ampdu,
+		  stainfo->sgi_enable,
+		  stainfo->tx_stbc,
+		  stainfo->rx_stbc,
+		  stainfo->isQosEnabled,
+		  stainfo->ch_width,
+		  stainfo->mode,
+		  event->wmmEnabled,
+		  event->chan_info.nss,
+		  event->chan_info.rate_flags,
+		  stainfo->max_phy_rate);
+	hdd_debug("rate info %d %d %d %d %d",
+		  stainfo->max_supp_idx,
+		  stainfo->max_ext_idx,
+		  stainfo->max_mcs_idx,
+		  stainfo->rx_mcs_map,
+		  stainfo->tx_mcs_map);
+}
+
 QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 				    void *usrDataForCallback)
 {
@@ -1075,6 +1359,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 	hdd_adapter_t *con_sap_adapter;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct hdd_chan_change_params chan_change;
+	tSap_StationAssocReassocCompleteEvent *event;
 	int ret = 0;
 	struct ch_params sap_ch_param = {0};
 	eCsrPhyMode phy_mode;
@@ -1533,10 +1818,10 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 
 	case eSAP_STA_ASSOC_EVENT:
 	case eSAP_STA_REASSOC_EVENT:
+		event = &pSapEvent->sapevt.sapStationAssocReassocCompleteEvent;
 		wrqu.addr.sa_family = ARPHRD_ETHER;
 		memcpy(wrqu.addr.sa_data,
-		       &pSapEvent->sapevt.sapStationAssocReassocCompleteEvent.
-		       staMac, QDF_MAC_ADDR_SIZE);
+		       &event->staMac, QDF_MAC_ADDR_SIZE);
 		hdd_notice(" associated " MAC_ADDRESS_STR,
 		       MAC_ADDR_ARRAY(wrqu.addr.sa_data));
 		we_event = IWEVREGISTERED;
@@ -1558,14 +1843,10 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 						pHostapdAdapter,
 						true,
 						pHddApCtx->uPrivacy,
-						pSapEvent->sapevt.
-						sapStationAssocReassocCompleteEvent.
-						staId, 0, 0,
+						event->staId, 0, 0,
 						(struct qdf_mac_addr *)
 						wrqu.addr.sa_data,
-						pSapEvent->sapevt.
-						sapStationAssocReassocCompleteEvent.
-						wmmEnabled);
+						event->wmmEnabled);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 				hdd_err("Failed to register STA %d "
 					  MAC_ADDRESS_STR "", qdf_status,
@@ -1575,47 +1856,29 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 						pHostapdAdapter,
 						false,
 						pHddApCtx->uPrivacy,
-						pSapEvent->sapevt.
-						sapStationAssocReassocCompleteEvent.
-						staId, 0, 0,
+						event->staId, 0, 0,
 						(struct qdf_mac_addr *)
 						wrqu.addr.sa_data,
-						pSapEvent->sapevt.
-						sapStationAssocReassocCompleteEvent.
-						wmmEnabled);
+						event->wmmEnabled);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 				hdd_err("Failed to register STA %d "
 					  MAC_ADDRESS_STR "", qdf_status,
 				       MAC_ADDR_ARRAY(wrqu.addr.sa_data));
 		}
 
-		staId =
-		   pSapEvent->sapevt.sapStationAssocReassocCompleteEvent.staId;
+		staId = event->staId;
 		if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			pHostapdAdapter->aStaInfo[staId].nss =
-				pSapEvent->sapevt.
-				sapStationAssocReassocCompleteEvent.
-				chan_info.nss;
-			pHostapdAdapter->aStaInfo[staId].rate_flags =
-				pSapEvent->sapevt.
-				sapStationAssocReassocCompleteEvent.
-				chan_info.rate_flags;
-			pHostapdAdapter->aStaInfo[staId].staType =
-				pSapEvent->sapevt.
-				sapStationAssocReassocCompleteEvent.
-				staType;
+			hdd_fill_station_info(
+				&pHostapdAdapter->aStaInfo[staId],
+				event);
 			hdd_debug("hdd_hostapd_sap_event_cb, StaID: %d, StaType: %d",
 			      staId, pHostapdAdapter->aStaInfo[staId].staType);
 		}
 
 		if (hdd_ipa_is_enabled(pHddCtx)) {
 			status = hdd_ipa_wlan_evt(pHostapdAdapter,
-					pSapEvent->sapevt.
-					sapStationAssocReassocCompleteEvent.
-					staId, HDD_IPA_CLIENT_CONNECT_EX,
-					pSapEvent->sapevt.
-					sapStationAssocReassocCompleteEvent.
-					staMac.bytes);
+					event->staId, HDD_IPA_CLIENT_CONNECT_EX,
+					event->staMac.bytes);
 			if (status) {
 				hdd_err("WLAN_CLIENT_CONNECT_EX event failed");
 				goto stopbss;
@@ -1666,9 +1929,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 					      HDD_SAP_WAKE_LOCK_DURATION);
 		{
 			struct station_info *sta_info;
-			uint16_t iesLen =
-				pSapEvent->sapevt.
-				sapStationAssocReassocCompleteEvent.iesLen;
+			uint16_t iesLen = event->iesLen;
 
 			sta_info = qdf_mem_malloc(sizeof(*sta_info));
 			if (!sta_info) {
@@ -1677,8 +1938,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			}
 			if (iesLen <= MAX_ASSOC_IND_IE_LEN) {
 				sta_info->assoc_req_ies =
-					(const u8 *)&pSapEvent->sapevt.
-					sapStationAssocReassocCompleteEvent.ies[0];
+					(const u8 *)&event->ies[0];
 				sta_info->assoc_req_ies_len = iesLen;
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)) && !defined(WITH_BACKPORTS)
 				/*
@@ -1690,10 +1950,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 				sta_info->filled |= STATION_INFO_ASSOC_REQ_IES;
 #endif
 				cfg80211_new_sta(dev,
-						 (const u8 *)&pSapEvent->sapevt.
-						 sapStationAssocReassocCompleteEvent.
-						 staMac.bytes[0], sta_info,
-						 GFP_KERNEL);
+					(const u8 *)&event->staMac.bytes[0],
+					sta_info, GFP_KERNEL);
 			} else {
 				hdd_err("Assoc Ie length is too long");
 			}
@@ -1707,31 +1965,24 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		}
 		if (pHostapdAdapter->device_mode == QDF_P2P_GO_MODE) {
 			/* send peer status indication to oem app */
-			hdd_send_peer_status_ind_to_app(&pSapEvent->sapevt.
-					sapStationAssocReassocCompleteEvent.
-					staMac, ePeerConnected,
-					pSapEvent->sapevt.
-					sapStationAssocReassocCompleteEvent.
-					timingMeasCap,
-					pHostapdAdapter->sessionId,
-					&pSapEvent->sapevt.
-					sapStationAssocReassocCompleteEvent.
-					chan_info,
-					pHostapdAdapter->device_mode);
+			hdd_send_peer_status_ind_to_app(
+				&event->staMac,
+				ePeerConnected,
+				event->timingMeasCap,
+				pHostapdAdapter->sessionId,
+				&event->chan_info,
+				pHostapdAdapter->device_mode);
 		}
 
 		ret = hdd_objmgr_add_peer_object(
 			pHostapdAdapter->hdd_vdev,
 			pHostapdAdapter->device_mode,
-			pSapEvent->sapevt.sapStationAssocReassocCompleteEvent.
-			staMac.bytes,
-			(pHostapdAdapter->aStaInfo[staId].staType
+			event->staMac.bytes,
+			(pHostapdAdapter->aStaInfo[event->staId].staType
 							== eSTA_TYPE_P2P_CLI));
 		if (ret)
 			hdd_err("Peer object "MAC_ADDRESS_STR" add fails!",
-					MAC_ADDR_ARRAY(pSapEvent->sapevt.
-					sapStationAssocReassocCompleteEvent.
-					staMac.bytes));
+					MAC_ADDR_ARRAY(event->staMac.bytes));
 
 		hdd_green_ap_add_sta(pHddCtx);
 		break;
@@ -5397,6 +5648,120 @@ iw_get_softap_linkspeed(struct net_device *dev,
 	return ret;
 }
 
+/**
+ * __iw_get_peer_rssi() - get station's rssi
+ * @dev: net device
+ * @info: iwpriv request information
+ * @wrqu: iwpriv command parameter
+ * @extra
+ *
+ * This function will call wlan_hdd_get_peer_rssi
+ * to get rssi
+ *
+ * Return: 0 on success, otherwise error value
+ */
+static int
+__iw_get_peer_rssi(struct net_device *dev, struct iw_request_info *info,
+		   union iwreq_data *wrqu, char *extra)
+{
+	hdd_adapter_t *adapter = netdev_priv(dev);
+	hdd_context_t *hddctx;
+	char macaddrarray[MAC_ADDRESS_STR_LEN];
+	struct qdf_mac_addr macaddress = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
+	int ret;
+	char *rssi_info_output = extra;
+	struct sir_peer_sta_info peer_sta_info;
+	struct sir_peer_info *rssi_info;
+	int i;
+	int buf;
+	int length;
+
+	ENTER();
+
+	hddctx = WLAN_HDD_GET_CTX(adapter);
+	ret = wlan_hdd_validate_context(hddctx);
+	if (ret != 0)
+		return ret;
+
+	ret = hdd_check_private_wext_control(hddctx, info);
+	if (0 != ret)
+		return ret;
+
+	hdd_debug("wrqu->data.length= %d", wrqu->data.length);
+
+	if (wrqu->data.length >= MAC_ADDRESS_STR_LEN - 1) {
+		if (copy_from_user(macaddrarray,
+				   wrqu->data.pointer,
+				   MAC_ADDRESS_STR_LEN - 1)) {
+			hdd_info("failed to copy data from user buffer");
+			return -EFAULT;
+		}
+
+		macaddrarray[MAC_ADDRESS_STR_LEN - 1] = '\0';
+		hdd_debug("%s", macaddrarray);
+
+		if (!mac_pton(macaddrarray, macaddress.bytes))
+			hdd_err("String to Hex conversion Failed");
+	}
+
+	ret = wlan_hdd_get_peer_rssi(adapter, &macaddress, &peer_sta_info);
+	if (ret) {
+		hdd_err("Unable to retrieve peer rssi: %d", ret);
+		return ret;
+	}
+	/*
+	 * The iwpriv tool default print is before mac addr and rssi.
+	 * Add '\n' before first rssi item to align the first rssi item
+	 * with others
+	 *
+	 * wlan     getRSSI:
+	 * [macaddr1] [rssi1]
+	 * [macaddr2] [rssi2]
+	 * [macaddr3] [rssi3]
+	 */
+	length = scnprintf(rssi_info_output, WE_MAX_STR_LEN, "\n");
+	rssi_info = &peer_sta_info.info[0];
+	for (i = 0; i < peer_sta_info.sta_num; i++) {
+		buf = scnprintf
+			(
+			rssi_info_output + length, WE_MAX_STR_LEN - length,
+			"[%pM] [%d]\n",
+			rssi_info[i].peer_macaddr.bytes,
+			rssi_info[i].rssi
+			);
+		length += buf;
+	}
+	wrqu->data.length = length + 1;
+
+	EXIT();
+
+	return 0;
+}
+
+/**
+ * iw_get_peer_rssi() - get station's rssi
+ * @dev: net device
+ * @info: iwpriv request information
+ * @wrqu: iwpriv command parameter
+ * @extra
+ *
+ * This function will call __iw_get_peer_rssi
+ *
+ * Return: 0 on success, otherwise error value
+ */
+static int
+iw_get_peer_rssi(struct net_device *dev, struct iw_request_info *info,
+		 union iwreq_data *wrqu, char *extra)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __iw_get_peer_rssi(dev, info, wrqu, extra);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
+}
+
 static const iw_handler hostapd_handler[] = {
 	(iw_handler) NULL,      /* SIOCSIWCOMMIT */
 	(iw_handler) NULL,      /* SIOCGIWNAME */
@@ -5805,6 +6170,11 @@ static const struct iw_priv_args hostapd_private_args[] = {
 		IW_PRIV_TYPE_CHAR | 5, "getLinkSpeed"
 	}
 	, {
+		QCSAP_IOCTL_PRIV_GET_RSSI,
+		IW_PRIV_TYPE_CHAR | 18,
+		IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN, "getRSSI"
+	}
+	, {
 		QCSAP_IOCTL_PRIV_SET_THREE_INT_GET_NONE,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 3, 0, ""
 	}
@@ -6013,6 +6383,8 @@ static const iw_handler hostapd_private[] = {
 	[QCSAP_IOCTL_PRIV_GET_SOFTAP_LINK_SPEED -
 	 SIOCIWFIRSTPRIV] =
 		iw_get_softap_linkspeed,
+	[QCSAP_IOCTL_PRIV_GET_RSSI - SIOCIWFIRSTPRIV] =
+		iw_get_peer_rssi,
 	[QCSAP_IOCTL_SET_TX_POWER - SIOCIWFIRSTPRIV] =
 		iw_softap_set_tx_power,
 	[QCSAP_IOCTL_SET_MAX_TX_POWER - SIOCIWFIRSTPRIV] =
