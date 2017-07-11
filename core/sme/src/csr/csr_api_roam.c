@@ -2775,6 +2775,8 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->sta_roam_policy_params.dfs_mode;
 		pMac->roam.configParam.sta_roam_policy.skip_unsafe_channels =
 			pParam->sta_roam_policy_params.skip_unsafe_channels;
+		pMac->roam.configParam.sta_roam_policy.sap_operating_band =
+			pParam->sta_roam_policy_params.sap_operating_band;
 
 		pMac->roam.configParam.tx_aggregation_size =
 			pParam->tx_aggregation_size;
