@@ -2113,8 +2113,11 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
 			   buf_ssid_ie, ssid_ie_len);
 	final_req_ie = qdf_mem_malloc(IW_GENERIC_IE_MAX);
-	if (final_req_ie == NULL)
+	if (final_req_ie == NULL) {
+		if (bss)
+			cfg80211_put_bss(pAdapter->wdev.wiphy, bss);
 		goto done;
+	}
 	buf_ptr = final_req_ie;
 	qdf_mem_copy(buf_ptr, buf_ssid_ie, ssid_ie_len);
 	buf_ptr += ssid_ie_len;
