@@ -9733,6 +9733,20 @@ typedef enum
     (((roam_reason) & WMI_ROAM_SUBNET_CHANGE_STATUS_MASK) >> \
      WMI_ROAM_SUBNET_CHANGE_STATUS_SHIFT)
 
+#define WMI_ROAM_REQUEST_HOST_HW_MODE_CHANGE_MASK     0x40
+#define WMI_ROAM_REQUEST_HOST_HW_MODE_CHANGE_SHIFT    6
+
+#define WMI_SET_ROAM_REQUEST_HOST_HW_MODE_CHANGE(roam_reason, status) \
+    do { \
+        (roam_reason) |= \
+            (((status) << WMI_ROAM_REQUEST_HOST_HW_MODE_CHANGE_SHIFT) & \
+             WMI_ROAM_REQUEST_HOST_HW_MODE_CHANGE_MASK); \
+    } while (0)
+
+#define WMI_GET_ROAM_REQUEST_HOST_HW_MODE_CHANGE(roam_reason) \
+    (((roam_reason) & WMI_ROAM_REQUEST_HOST_HW_MODE_CHANGE_MASK) >> \
+     WMI_ROAM_REQUEST_HOST_HW_MODE_CHANGE_SHIFT)
+
 /* roaming notification */
 #define WMI_ROAM_NOTIF_INVALID           0x0 /** invalid notification. Do not interpret notif field  */
 #define WMI_ROAM_NOTIF_ROAM_START        0x1 /** indicate that roaming is started. sent only in non WOW state */
@@ -14383,6 +14397,8 @@ typedef struct {
     /** roam_reason:
      * bits 0-3 for roam reason   see WMI_ROAM_REASON_XXX
      * bits 4-5 for subnet status see WMI_ROAM_SUBNET_CHANGE_STATUS_XXX.
+     * bit  6   for HW mode status, set 1 to indicate host to schedule
+     *          HW mode change, see WMI_ROAM_REQUEST_HOST_HW_MODE_CHANGE.
      */
     A_UINT32 roam_reason;
     /** associated AP's rssi calculated by FW when reason code is WMI_ROAM_REASON_LOW_RSSI. not valid if roam_reason is BMISS */
