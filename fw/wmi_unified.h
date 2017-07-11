@@ -2188,9 +2188,25 @@ typedef A_UINT32 WLAN_INIT_STATUS;
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_ready_event_fixed_param */
     wmi_abi_version fw_abi_vers;
+    /*
+     * mac_addr is always filled; in addition, there can be a mac_addr_list
+     * TLV following this fixed_param TLV to specify additional MAC addresses,
+     * for cases where the target specifies one MAC address per pdev
+     * (so the host can treat the pdevs within the target as separately
+     * as possible) rather than one MAC address for the whole SOC.
+     */
     wmi_mac_addr mac_addr;
     A_UINT32 status;
     A_UINT32 num_dscp_table;
+    /* num_extra_mac_addr -
+     * how many additional MAC addresses besides the above mac_addr
+     * are provided in the subsequent mac_addr_list TLV
+     */
+    A_UINT32 num_extra_mac_addr;
+/*
+ * This fixed_param TLV is followed by these additional TLVs:
+ * mac_addr_list[num_extra_mac_addr];
+ */
 } wmi_ready_event_fixed_param;
 
 typedef struct {
