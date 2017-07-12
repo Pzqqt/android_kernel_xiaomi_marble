@@ -603,6 +603,8 @@ struct hdd_scan_req {
 	uint32_t scan_id;
 	uint8_t source;
 	uint32_t timestamp;
+	qdf_timer_t hdd_scan_inactivity_timer;
+	uint32_t scan_req_flags;
 };
 
 enum p2p_action_frame_state {

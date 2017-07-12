@@ -30,12 +30,18 @@
 #define WLAN_HDD_SCAN_H
 
 #include "wlan_hdd_main.h"
+#include "csr_inside_api.h"
 #include <wlan_cfg80211_scan.h>
 
 #define MAX_PENDING_LOG 5
 
 /* (30 Mins) */
 #define MIN_TIME_REQUIRED_FOR_NEXT_BUG_REPORT (30 * 60 * 1000)
+
+/* HDD Scan inactivity timeout set to 10 seconds
+ * more than the CSR CMD Timeout */
+#define HDD_SCAN_INACTIVITY_TIMEOUT \
+	(CSR_ACTIVE_SCAN_LIST_CMD_TIMEOUT + (10*1000))
 
 int hdd_scan_context_init(hdd_context_t *hdd_ctx);
 void hdd_scan_context_destroy(hdd_context_t *hdd_ctx);

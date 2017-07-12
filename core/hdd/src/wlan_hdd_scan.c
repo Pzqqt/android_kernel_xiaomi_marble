@@ -185,6 +185,40 @@ static bool wlan_hdd_is_scan_pending(hdd_adapter_t *adapter)
 }
 
 /**
+ * hdd_scan_inactivity_timer_handler() - Function invoked when hdd inactivity
+ * timer expires
+ * @scan_req: void pointer to scan request
+ *
+ * This function is invoked when the scan request enqueued by hdd expires the
+ * given timeout, it shall BUG_ON to provide further details for debugging.
+ *
+ * Return: void
+ */
+static void hdd_scan_inactivity_timer_handler(void *scan_req)
+{
+	struct hdd_scan_req *hdd_scan_req = scan_req;
+
+	hdd_debug("scan_id %d, enqueue timestamp %u, flags 0x%X",
+		hdd_scan_req->scan_id, hdd_scan_req->timestamp,
+		hdd_scan_req->scan_req_flags);
+
+	if (cds_is_load_or_unload_in_progress())
+		hdd_err("%s: Module (un)loading; Ignore hdd scan req timeout",
+			 __func__);
+	else if (cds_is_driver_recovering())
+		hdd_err("%s: Module recovering; Ignore hdd scan req timeout",
+			 __func__);
+	else if (cds_is_driver_in_bad_state())
+		hdd_err("%s: Module in bad state; Ignore hdd scan req timeout",
+			 __func__);
+	else if (cds_is_self_recovery_enabled())
+		cds_trigger_recovery(false);
+	else
+		QDF_BUG(0);
+
+}
+
+/**
  * wlan_hdd_scan_request_enqueue() - enqueue Scan Request
  * @adapter: Pointer to the adapter
  * @scan_req: Pointer to the scan request
@@ -215,6 +249,10 @@ static int wlan_hdd_scan_request_enqueue(hdd_adapter_t *adapter,
 	hdd_scan_req->source = source;
 	hdd_scan_req->scan_id = scan_id;
 	hdd_scan_req->timestamp = timestamp;
+	if (scan_req != NULL)
+		hdd_scan_req->scan_req_flags = scan_req->flags;
+	else
+		hdd_scan_req->scan_req_flags = 0;
 
 	qdf_spin_lock(&hdd_ctx->hdd_scan_req_q_lock);
 	status = qdf_list_insert_back(&hdd_ctx->hdd_scan_req_q,
@@ -226,6 +264,13 @@ static int wlan_hdd_scan_request_enqueue(hdd_adapter_t *adapter,
 		qdf_mem_free(hdd_scan_req);
 		return -EINVAL;
 	}
+
+	qdf_timer_init(NULL, &hdd_scan_req->hdd_scan_inactivity_timer,
+		hdd_scan_inactivity_timer_handler, hdd_scan_req,
+		QDF_TIMER_TYPE_SW);
+	qdf_timer_start(&hdd_scan_req->hdd_scan_inactivity_timer,
+		HDD_SCAN_INACTIVITY_TIMEOUT);
+
 	EXIT();
 	return 0;
 }
@@ -274,6 +319,12 @@ static QDF_STATUS wlan_hdd_scan_request_dequeue(hdd_context_t *hdd_ctx,
 			status = qdf_list_remove_node(&hdd_ctx->hdd_scan_req_q,
 					pNode);
 			if (status == QDF_STATUS_SUCCESS) {
+				qdf_timer_stop(&hdd_scan_req->
+					hdd_scan_inactivity_timer);
+				qdf_timer_free(&hdd_scan_req->
+					hdd_scan_inactivity_timer);
+				hdd_debug("Stopping HDD Scan inactivity timer");
+
 				*req = hdd_scan_req->scan_request;
 				*source = hdd_scan_req->source;
 				*timestamp = hdd_scan_req->timestamp;
