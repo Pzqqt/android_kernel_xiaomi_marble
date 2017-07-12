@@ -40,6 +40,7 @@
 #include "cfg_api.h"
 #include "qdf_status.h"
 #include "cds_sched.h"
+#include "cds_config.h"
 #include "sir_mac_prot_def.h"
 #include "wma_types.h"
 #include <linux/workqueue.h>
@@ -519,18 +520,6 @@ typedef void (*txFailIndCallback)(uint8_t *peer_mac, uint8_t seqNo);
 
 typedef void (*tp_wma_packetdump_cb)(qdf_nbuf_t netbuf,
 			uint8_t status, uint8_t vdev_id, uint8_t type);
-
-/**
- * enum t_wma_drv_type - wma driver type
- * @WMA_DRIVER_TYPE_PRODUCTION: production driver type
- * @WMA_DRIVER_TYPE_MFG: manufacture driver type
- * @WMA_DRIVER_TYPE_INVALID: invalid driver type
- */
-typedef enum {
-	WMA_DRIVER_TYPE_PRODUCTION = 0,
-	WMA_DRIVER_TYPE_MFG = 1,
-	WMA_DRIVER_TYPE_INVALID = 0x7FFFFFFF
-} t_wma_drv_type;
 
 #ifdef FEATURE_WLAN_TDLS
 /**
@@ -1364,7 +1353,7 @@ typedef struct {
 	qdf_event_t recovery_event;
 	uint16_t max_station;
 	uint16_t max_bssid;
-	t_wma_drv_type driver_type;
+	enum driver_type driver_type;
 	uint8_t myaddr[IEEE80211_ADDR_LEN];
 	uint8_t hwaddr[IEEE80211_ADDR_LEN];
 	wmi_abi_version target_abi_vers;
@@ -1571,7 +1560,7 @@ struct wma_target_cap {
 typedef struct {
 	void *pConfigBuffer;
 	uint16_t usConfigBufferLen;
-	t_wma_drv_type driver_type;
+	enum driver_type driver_type;
 	void *pUserData;
 	void *pIndUserData;
 } t_wma_start_req;

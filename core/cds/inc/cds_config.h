@@ -36,11 +36,13 @@
  *
  * @DRIVER_TYPE_PRODUCTION: Driver used in the production
  * @DRIVER_TYPE_MFG: Driver used in the Factory
+ * @DRIVER_TYPE_INVALID: Invalid and unrecognized type
  *
  */
 enum driver_type {
 	DRIVER_TYPE_PRODUCTION = 0,
 	DRIVER_TYPE_MFG = 1,
+	DRIVER_TYPE_INVALID = 0x7FFFFFFF
 };
 
 /**
