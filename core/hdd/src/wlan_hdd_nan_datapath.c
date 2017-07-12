@@ -292,19 +292,20 @@ static int hdd_get_random_nan_mac_addr(hdd_context_t *hdd_ctx,
 {
 	hdd_adapter_t *adapter;
 	uint8_t i, attempts, max_attempt = 16;
-	struct qdf_mac_addr bcast_mac_addr = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
 
 	for (attempts = 0; attempts < max_attempt; attempts++) {
 		cds_rand_get_bytes(0, (uint8_t *)mac_addr, sizeof(*mac_addr));
-		WLAN_HDD_RESET_LOCALLY_ADMINISTERED_BIT(mac_addr->bytes);
+
+		/*
+		 * Reset multicast bit (bit-0) and set locally-administered bit
+		 */
+		mac_addr->bytes[0] = 0x2;
+
 		/*
 		 * to avoid potential conflict with FW's generated NMI mac addr,
 		 * host sets LSB if 6th byte to 0
 		 */
 		mac_addr->bytes[5] &= 0xFE;
-
-		if (!qdf_mem_cmp(mac_addr, &bcast_mac_addr, sizeof(*mac_addr)))
-			continue;
 
 		for (i = 0; i < QDF_MAX_CONCURRENCY_PERSONA; i++) {
 			if (!qdf_mem_cmp(hdd_ctx->config->intfMacAddr[i].bytes,
