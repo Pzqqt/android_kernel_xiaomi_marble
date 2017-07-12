@@ -4226,6 +4226,7 @@ QDF_STATUS sme_get_config_param(tHalHandle hHal, tSmeConfigParams *pParam)
 		qdf_mem_copy(&pParam->rrmConfig,
 				&pMac->rrm.rrmSmeContext.rrmConfig,
 				sizeof(pMac->rrm.rrmSmeContext.rrmConfig));
+		pParam->snr_monitor_enabled = pMac->snr_monitor_enabled;
 		sme_release_global_lock(&pMac->sme);
 	}
 
