@@ -30,3 +30,11 @@
  */
 QDF_STATUS target_if_register_regulatory_tx_ops(struct wlan_lmac_if_tx_ops
 						*tx_ops);
+
+/**
+ * target_if_reg_set_offloaded_info() - populate regulatory offloaded info
+ *
+ * @psoc: psoc pointer
+ * Return: Success or Failure
+ */
+QDF_STATUS target_if_reg_set_offloaded_info(struct wlan_objmgr_psoc *psoc);

@@ -191,6 +191,22 @@ static void wlan_lmac_if_register_nan_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
 }
 #endif /* WLAN_FEATURE_NAN_CONVERGENCE */
 
+static void wlan_lmac_if_umac_reg_rx_ops_register(
+	struct wlan_lmac_if_rx_ops *rx_ops)
+{
+	rx_ops->reg_rx_ops.master_list_handler =
+		tgt_reg_process_master_chan_list;
+
+	rx_ops->reg_rx_ops.reg_11d_new_cc_handler =
+		tgt_reg_process_11d_new_country;
+
+	rx_ops->reg_rx_ops.reg_set_regdb_offloaded =
+		tgt_reg_set_regdb_offloaded;
+
+	rx_ops->reg_rx_ops.reg_set_11d_offloaded =
+		tgt_reg_set_11d_offloaded;
+}
+
 #ifdef CONVERGED_P2P_ENABLE
 static void wlan_lmac_if_umac_rx_ops_register_p2p(
 				struct wlan_lmac_if_rx_ops *rx_ops)
@@ -316,11 +332,7 @@ wlan_lmac_if_umac_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 
 	wlan_lmac_if_register_nan_rx_ops(rx_ops);
 
-	rx_ops->reg_rx_ops.master_list_handler =
-		tgt_reg_process_master_chan_list;
-
-	rx_ops->reg_rx_ops.reg_11d_new_cc_handler =
-		tgt_reg_process_11d_new_country;
+	wlan_lmac_if_umac_reg_rx_ops_register(rx_ops);
 
 	/* p2p rx ops */
 	wlan_lmac_if_umac_rx_ops_register_p2p(rx_ops);

@@ -1872,7 +1872,6 @@ QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info
 	struct cur_reg_rule *reg_rule_2g, *reg_rule_5g;
 	uint16_t min_bw_2g, max_bw_2g, min_bw_5g, max_bw_5g;
 	struct regulatory_channel *mas_chan_list;
-	struct wlan_lmac_if_reg_tx_ops *tx_ops;
 	struct wlan_objmgr_psoc *psoc;
 	enum channel_enum chan_enum;
 	wlan_objmgr_ref_dbgid dbg_id;
@@ -1889,18 +1888,6 @@ QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info
 		reg_err("psoc reg component is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	tx_ops = reg_get_psoc_tx_ops(psoc);
-	if (tx_ops->is_regdb_offloaded)
-		soc_reg->offload_enabled =
-			tx_ops->is_regdb_offloaded(psoc);
-	else
-		soc_reg->offload_enabled = false;
-	if (tx_ops->is_11d_offloaded)
-		soc_reg->is_11d_offloaded =
-			tx_ops->is_11d_offloaded(psoc);
-	else
-		soc_reg->is_11d_offloaded = false;
 
 	phy_id = regulat_info->phy_id;
 	mas_chan_list = soc_reg->mas_chan_params[phy_id].mas_chan_list;
@@ -3014,4 +3001,38 @@ bool reg_11d_enabled_on_host(struct wlan_objmgr_psoc *psoc)
 
 	return (psoc_priv_obj->enable_11d_supp &&
 		!psoc_priv_obj->is_11d_offloaded);
+}
+
+QDF_STATUS reg_set_regdb_offloaded(struct wlan_objmgr_psoc *psoc,
+		bool val)
+{
+	struct wlan_regulatory_psoc_priv_obj *soc_reg;
+
+	soc_reg = reg_get_psoc_obj(psoc);
+
+	if (!IS_VALID_PSOC_REG_OBJ(soc_reg)) {
+		reg_err("psoc reg component is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	soc_reg->offload_enabled = val;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS reg_set_11d_offloaded(struct wlan_objmgr_psoc *psoc,
+		bool val)
+{
+	struct wlan_regulatory_psoc_priv_obj *soc_reg;
+
+	soc_reg = reg_get_psoc_obj(psoc);
+
+	if (!IS_VALID_PSOC_REG_OBJ(soc_reg)) {
+		reg_err("psoc reg component is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	soc_reg->is_11d_offloaded = val;
+
+	return QDF_STATUS_SUCCESS;
 }

@@ -119,6 +119,8 @@ int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 	target_if_scan_set_max_active_scans(psoc,
 				  WLAN_MAX_ACTIVE_SCANS_ALLOWED);
 
+	target_if_reg_set_offloaded_info(psoc);
+
 free_param_and_exit:
 	qdf_mem_free(service_param);
 
