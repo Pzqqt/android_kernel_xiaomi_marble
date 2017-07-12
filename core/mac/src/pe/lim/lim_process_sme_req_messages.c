@@ -5823,7 +5823,7 @@ static void send_extended_chan_switch_action_frame(tpAniSirGlobal mac_ctx,
 		switch_mode = 1;
 
 	if (LIM_IS_AP_ROLE(session_entry)) {
-		for (i = 0; i < mac_ctx->lim.maxStation; i++) {
+		for (i = 0; i <= mac_ctx->lim.maxStation; i++) {
 			psta =
 			  session_entry->dph.dphHashTable.pDphNodeArray + i;
 			if (psta && psta->added)
