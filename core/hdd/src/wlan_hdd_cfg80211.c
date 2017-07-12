@@ -3011,6 +3011,12 @@ __wlan_hdd_cfg80211_get_features(struct wiphy *wiphy,
 	hdd_debug("dbs_capability is %d", dbs_capability);
 
 	if (nla_put_u32(skb,
+			QCA_WLAN_VENDOR_ATTR_CONCURRENCY_CAPA,
+			dbs_capability))
+		goto nla_put_failure;
+
+
+	if (nla_put_u32(skb,
 			QCA_WLAN_VENDOR_ATTR_MAX_CONCURRENT_CHANNELS_2_4_BAND,
 			MAX_CONCURRENT_CHAN_ON_24G))
 		goto nla_put_failure;
