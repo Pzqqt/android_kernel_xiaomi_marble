@@ -650,8 +650,13 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 	if (!iface->handle) {
 		WMA_LOGE("handle of vdev_id %d is NULL vdev is already freed",
 			 vdev_id);
-		qdf_mem_free(pdel_sta_self_req_param);
-		pdel_sta_self_req_param = NULL;
+		pdel_sta_self_req_param->status = status;
+		if (generateRsp) {
+			wma_send_del_sta_self_resp(pdel_sta_self_req_param);
+		} else {
+			qdf_mem_free(pdel_sta_self_req_param);
+			pdel_sta_self_req_param = NULL;
+		}
 		return status;
 	}
 
@@ -2025,7 +2030,7 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 	    (self_sta_req->type == WMI_VDEV_TYPE_OCB) ||
 	    (self_sta_req->type == WMI_VDEV_TYPE_MONITOR) ||
 	    (self_sta_req->type == WMI_VDEV_TYPE_NDI)) {
-		WMA_LOGA("Creating self peer %pM, vdev_id %hu",
+		WMA_LOGD("Creating self peer %pM, vdev_id %hu",
 			 self_sta_req->self_mac_addr, self_sta_req->session_id);
 		status = wma_create_peer(wma_handle, txrx_pdev,
 					 txrx_vdev_handle,

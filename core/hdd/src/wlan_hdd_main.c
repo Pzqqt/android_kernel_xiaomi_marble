@@ -3139,7 +3139,8 @@ int hdd_vdev_create(hdd_adapter_t *adapter)
 	if (!rc) {
 		hdd_err("timed out waiting for open sme session: %ld", rc);
 		errno = -ETIMEDOUT;
-		goto objmgr_vdev_destroy;
+		set_bit(SME_SESSION_OPENED, &adapter->event_flags);
+		goto hdd_vdev_destroy;
 	}
 
 	/* firmware ready for component communication, raise vdev_ready event */
