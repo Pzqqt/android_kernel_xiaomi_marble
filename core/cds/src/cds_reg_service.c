@@ -46,13 +46,13 @@ uint32_t cds_get_vendor_reg_flags(struct wlan_objmgr_pdev *pdev,
 	uint32_t flags = 0;
 	enum channel_state state;
 	struct ch_params ch_params;
+	int sec_channel;
 
 	state = wlan_reg_get_channel_state(pdev, chan);
 	if (state == CHANNEL_STATE_INVALID)
 		return flags;
 	if (state == CHANNEL_STATE_DFS) {
 		flags |= IEEE80211_CHAN_PASSIVE;
-		flags |= IEEE80211_CHAN_DFS;
 	}
 	if (state == CHANNEL_STATE_DISABLE)
 		flags |= IEEE80211_CHAN_BLOCKED;
@@ -63,7 +63,9 @@ uint32_t cds_get_vendor_reg_flags(struct wlan_objmgr_pdev *pdev,
 		    (bandwidth == CH_WIDTH_80MHZ)) {
 			bandwidth = CH_WIDTH_40MHZ;
 		}
-	}
+		flags |= IEEE80211_CHAN_2GHZ;
+	} else
+		flags |= IEEE80211_CHAN_5GHZ;
 
 	switch (bandwidth) {
 	case CH_WIDTH_80P80MHZ:
@@ -95,8 +97,15 @@ uint32_t cds_get_vendor_reg_flags(struct wlan_objmgr_pdev *pdev,
 		ch_params.ch_width = bandwidth;
 		wlan_reg_set_channel_params(pdev, chan, 0, &ch_params);
 
+		if (ch_params.sec_ch_offset == LOW_PRIMARY_CH)
+			sec_channel = chan + 4;
+		else if (ch_params.sec_ch_offset == HIGH_PRIMARY_CH)
+			sec_channel = chan - 4;
+		else
+			sec_channel = 0;
+
 		if (wlan_reg_get_bonded_channel_state(pdev, chan, bandwidth,
-					ch_params.sec_ch_offset) !=
+					sec_channel) !=
 				CHANNEL_STATE_INVALID) {
 			if (ch_params.sec_ch_offset == LOW_PRIMARY_CH) {
 				flags |= IEEE80211_CHAN_HT40PLUS;
@@ -124,6 +133,7 @@ uint32_t cds_get_vendor_reg_flags(struct wlan_objmgr_pdev *pdev,
 				(sub_20_channel_width ==
 				 WLAN_SUB_20_CH_WIDTH_10))
 			flags |= IEEE80211_CHAN_HALF;
+		bandwidth = CH_WIDTH_5MHZ;
 	/* FALLTHROUGH */
 	case CH_WIDTH_5MHZ:
 		if ((wlan_reg_get_bonded_channel_state(pdev, chan, bandwidth,

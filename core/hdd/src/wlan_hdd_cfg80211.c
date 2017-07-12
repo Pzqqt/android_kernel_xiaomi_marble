@@ -1706,6 +1706,8 @@ static int hdd_update_reg_chan_info(hdd_adapter_t *adapter,
 				sap_config->acs_cfg.is_ht_enabled,
 				sap_config->acs_cfg.is_vht_enabled,
 				hdd_ctx->config->enable_sub_20_channel_width);
+		if (icv->flags & IEEE80211_CHAN_PASSIVE)
+			icv->flagext |= IEEE80211_CHAN_DFS;
 
 		hdd_info("freq %d flags %d flagext %d ieee %d maxreg %d maxpw %d minpw %d regClass %d antenna %d seg0 %d seg1 %d",
 			icv->freq, icv->flags,
@@ -1863,12 +1865,12 @@ static void hdd_get_scan_band(hdd_context_t *hdd_ctx,
 	int i, temp_count = 0;
 	int acs_list_count = sap_config->acs_cfg.ch_list_count;
 	/* Get scan band */
-	if ((sap_config->acs_cfg.hw_mode == QCA_ACS_MODE_IEEE80211B) ||
-	   (sap_config->acs_cfg.hw_mode == QCA_ACS_MODE_IEEE80211G)) {
+	if ((sap_config->acs_cfg.band == QCA_ACS_MODE_IEEE80211B) ||
+	   (sap_config->acs_cfg.band == QCA_ACS_MODE_IEEE80211G)) {
 		*band = eCSR_BAND_24;
-	} else if (sap_config->acs_cfg.hw_mode == QCA_ACS_MODE_IEEE80211A) {
+	} else if (sap_config->acs_cfg.band == QCA_ACS_MODE_IEEE80211A) {
 		*band = eCSR_BAND_5G;
-	} else if (sap_config->acs_cfg.hw_mode == QCA_ACS_MODE_IEEE80211ANY) {
+	} else if (sap_config->acs_cfg.band == QCA_ACS_MODE_IEEE80211ANY) {
 		*band = eCSR_BAND_ALL;
 	}
 	/* Auto is not supported currently */
@@ -1956,7 +1958,7 @@ void hdd_cfg80211_update_acs_config(hdd_adapter_t *adapter,
 	hdd_update_reg_chan_info(adapter, channel_count, channel_list);
 	hdd_get_freq_list(channel_list, freq_list, channel_count);
 	/* Get phymode */
-	phy_mode = sme_get_phy_mode(WLAN_HDD_GET_HAL_CTX(adapter));
+	phy_mode = adapter->sessionCtx.ap.sapConfig.acs_cfg.hw_mode;
 
 	skb = cfg80211_vendor_event_alloc(hdd_ctx->wiphy,
 			&(adapter->wdev),
@@ -2161,6 +2163,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		goto out;
 	}
 	hw_mode = nla_get_u8(tb[QCA_WLAN_VENDOR_ATTR_ACS_HW_MODE]);
+	/* This value will be overwritten in wlan_hdd_set_acs_ch_range */
 	sap_config->acs_cfg.hw_mode = hw_mode;
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_ACS_HT_ENABLED])
@@ -2175,6 +2178,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	else
 		ht40_enabled = 0;
 
+	hdd_debug("ht40_enabled %d", ht40_enabled);
 	if (tb[QCA_WLAN_VENDOR_ATTR_ACS_VHT_ENABLED])
 		vht_enabled =
 			nla_get_flag(tb[QCA_WLAN_VENDOR_ATTR_ACS_VHT_ENABLED]);
@@ -2203,6 +2207,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 			ch_width = 20;
 	}
 
+	hdd_debug("channel width =%d", ch_width);
 	if (ch_width == 80)
 		sap_config->acs_cfg.ch_width = CH_WIDTH_80MHZ;
 	else if (ch_width == 40)
@@ -2277,28 +2282,34 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 				  pcl_channels_weight_list[i]);
 		}
 
+	wlan_hdd_set_acs_ch_range(sap_config, ht_enabled, vht_enabled);
 	/* ACS override for android */
+
+	sap_config->acs_cfg.band = hw_mode;
 	if (hdd_ctx->config->sap_p2p_11ac_override && ht_enabled &&
 	    !hdd_ctx->config->sap_force_11n_for_11ac) {
-		hdd_debug("ACS Config override for 11AC");
+		hdd_debug("ACS Config override for 11AC vhtChannelWidth %d",
+			hdd_ctx->config->vhtChannelWidth);
 		vht_enabled = 1;
 		sap_config->acs_cfg.hw_mode = eCSR_DOT11_MODE_11ac;
 		sap_config->acs_cfg.ch_width =
 					hdd_ctx->config->vhtChannelWidth;
+		ch_width = 80;
 		/* No VHT80 in 2.4G so perform ACS accordingly */
 		if (sap_config->acs_cfg.end_ch <= 14 &&
 		    sap_config->acs_cfg.ch_width == eHT_CHANNEL_WIDTH_80MHZ) {
 			sap_config->acs_cfg.ch_width = eHT_CHANNEL_WIDTH_40MHZ;
 			ch_width = 40;
+			hdd_debug("resetting to 40Mhz in 2.4Ghz");
 		}
 	}
 
-	wlan_hdd_set_acs_ch_range(sap_config, ht_enabled, vht_enabled);
 
-	hdd_debug("ACS Config for wlan%d: HW_MODE: %d ACS_BW: %d HT: %d VHT: %d START_CH: %d END_CH: %d",
-		adapter->dev->ifindex, sap_config->acs_cfg.hw_mode,
+	hdd_debug("ACS Config for %s: HW_MODE: %d ACS_BW: %d HT: %d VHT: %d START_CH: %d END_CH: %d band %d",
+		adapter->dev->name, sap_config->acs_cfg.hw_mode,
 		ch_width, ht_enabled, vht_enabled,
-		sap_config->acs_cfg.start_ch, sap_config->acs_cfg.end_ch);
+		sap_config->acs_cfg.start_ch, sap_config->acs_cfg.end_ch,
+		sap_config->acs_cfg.band);
 
 	sap_config->acs_cfg.is_ht_enabled = ht_enabled;
 	sap_config->acs_cfg.is_vht_enabled = vht_enabled;
@@ -2325,7 +2336,6 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	} else {
 		/* Check if vendor specific acs is enabled */
 		if (hdd_ctx->config->vendor_acs_support) {
-			sap_config->acs_cfg.hw_mode = hw_mode;
 			hdd_create_acs_timer(adapter);
 			hdd_update_acs_timer_reason(adapter,
 				QCA_WLAN_VENDOR_ACS_SELECT_REASON_INIT);
@@ -8200,6 +8210,7 @@ int wlan_hdd_sap_get_valid_channellist(hdd_adapter_t *adapter,
 		hdd_err("Failed to get channel list");
 		return -EINVAL;
 	}
+
 	for (i = 0; i < chan_count; i++) {
 		if (*channel_count < QDF_MAX_NUM_CHAN) {
 			if ((eCSR_BAND_24 == band) &&
