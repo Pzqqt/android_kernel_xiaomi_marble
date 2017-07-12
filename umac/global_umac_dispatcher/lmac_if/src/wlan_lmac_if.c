@@ -248,6 +248,7 @@ wlan_lmac_if_umac_dfs_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 	dfs_rx_ops->dfs_set_current_channel = tgt_dfs_set_current_channel;
 	dfs_rx_ops->dfs_process_radar_ind = tgt_dfs_process_radar_ind;
 	dfs_rx_ops->dfs_dfs_cac_complete_ind = tgt_dfs_cac_complete;
+	dfs_rx_ops->dfs_stop = tgt_dfs_stop;
 
 	return QDF_STATUS_SUCCESS;
 }

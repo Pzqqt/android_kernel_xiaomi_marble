@@ -326,6 +326,13 @@ int dfs_attach(struct wlan_dfs *dfs)
 	return 0;
 }
 
+void dfs_stop(struct wlan_dfs *dfs)
+{
+	dfs_init_precac_list(dfs);
+	dfs_nol_timer_cleanup(dfs);
+	dfs_clear_nolhistory(dfs);
+}
+
 void dfs_main_timer_reset(struct wlan_dfs *dfs)
 {
 	if (dfs->wlan_radar_tasksched) {
@@ -350,9 +357,6 @@ void dfs_reset(struct wlan_dfs *dfs)
 	dfs_cac_timer_reset(dfs);
 	dfs_zero_cac_reset(dfs);
 	dfs_main_timer_reset(dfs);
-
-	dfs_nol_timer_cleanup(dfs);
-	dfs_clear_nolhistory(dfs);
 }
 
 void dfs_main_detach(struct wlan_dfs *dfs)
@@ -419,7 +423,6 @@ void dfs_detach(struct wlan_dfs *dfs)
 {
 	dfs_main_detach(dfs);
 	dfs_zero_cac_detach(dfs);
-	dfs_nol_detach(dfs);
 }
 
 void dfs_destroy_object(struct wlan_dfs *dfs)

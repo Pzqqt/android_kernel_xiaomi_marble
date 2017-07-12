@@ -101,7 +101,6 @@ void dfs_zero_cac_reset(struct wlan_dfs *dfs)
 	qdf_timer_stop(&dfs->dfs_precac_timer);
 	dfs->dfs_precac_primary_freq = 0;
 	dfs->dfs_precac_secondary_freq = 0;
-	dfs_init_precac_list(dfs);
 }
 
 int dfs_override_precac_timeout(struct wlan_dfs *dfs, int precac_timeout)

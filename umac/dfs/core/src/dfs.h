@@ -1062,14 +1062,6 @@ void dfs_nol_update(struct wlan_dfs *dfs);
 void dfs_nol_timer_cleanup(struct wlan_dfs *dfs);
 
 /**
- * dfs_nol_detach() - Free NOL variables.
- * @dfs: Pointer to wlan_dfs structure.
- *
- * Cancels the NOL timer and frees the NOL elements.
- */
-void dfs_nol_detach(struct wlan_dfs *dfs);
-
-/**
  * dfs_retain_bin5_burst_pattern() - Retain the BIN5 burst pattern.
  * @dfs: Pointer to wlan_dfs structure.
  * @diff_ts: Timestamp diff.
@@ -1924,4 +1916,10 @@ void dfs_main_timer_init(struct wlan_dfs *dfs);
  * @dfs: Pointer to wlan_dfs structure.
  */
 void dfs_main_timer_reset(struct wlan_dfs *dfs);
+
+/**
+ * dfs_stop() - Clear dfs timers.
+ * @dfs: Pointer to wlan_dfs structure.
+ */
+void dfs_stop(struct wlan_dfs *dfs);
 #endif  /* _DFS_H_ */

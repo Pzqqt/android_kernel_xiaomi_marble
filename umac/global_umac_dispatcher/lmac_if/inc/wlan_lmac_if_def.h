@@ -801,6 +801,7 @@ struct wlan_lmac_if_nan_rx_ops {
  * @dfs_set_current_channel:          Set DFS current channel.
  * @dfs_process_radar_ind:            Process radar found indication.
  * @dfs_dfs_cac_complete_ind:         Process cac complete indication.
+ * @dfs_stop:                         Clear dfs timers.
  */
 struct wlan_lmac_if_dfs_rx_ops {
 	QDF_STATUS (*dfs_get_radars)(struct wlan_objmgr_pdev *pdev);
@@ -856,6 +857,7 @@ struct wlan_lmac_if_dfs_rx_ops {
 	QDF_STATUS (*dfs_dfs_cac_complete_ind)(struct wlan_objmgr_pdev *pdev,
 			uint32_t vdev_id);
 #endif
+	QDF_STATUS (*dfs_stop)(struct wlan_objmgr_pdev *pdev);
 };
 
 struct wlan_lmac_if_mlme_rx_ops {

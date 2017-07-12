@@ -185,4 +185,10 @@ QDF_STATUS tgt_dfs_cac_complete(struct wlan_objmgr_pdev *pdev,
  */
 QDF_STATUS tgt_dfs_reg_ev_handler(struct wlan_objmgr_psoc *psoc,
 		bool dfs_offload);
+
+/**
+ * tgt_dfs_stop() - Clear dfs timers.
+ * @dfs: Pointer to wlan_dfs structure.
+ */
+QDF_STATUS tgt_dfs_stop(struct wlan_objmgr_pdev *pdev);
 #endif /* _WLAN_DFS_TGT_API_H_ */

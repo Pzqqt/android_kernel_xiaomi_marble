@@ -248,3 +248,17 @@ QDF_STATUS tgt_dfs_reg_ev_handler(struct wlan_objmgr_psoc *psoc,
 	return status;
 }
 EXPORT_SYMBOL(tgt_dfs_reg_ev_handler);
+
+QDF_STATUS tgt_dfs_stop(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	if (dfs == NULL)
+		return  QDF_STATUS_E_FAILURE;
+
+	dfs_stop(dfs);
+
+	return QDF_STATUS_SUCCESS;
+}
+EXPORT_SYMBOL(tgt_dfs_stop);

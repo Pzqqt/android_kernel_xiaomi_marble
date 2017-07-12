@@ -497,11 +497,6 @@ void dfs_nol_timer_cleanup(struct wlan_dfs *dfs)
 	dfs_nol_update(dfs);
 }
 
-void dfs_nol_detach(struct wlan_dfs *dfs)
-{
-	dfs_nol_timer_cleanup(dfs);
-}
-
 int dfs_get_rn_use_nol(struct wlan_dfs *dfs)
 {
 	return dfs->dfs_rinfo.rn_use_nol;
