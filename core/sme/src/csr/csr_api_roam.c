@@ -1176,7 +1176,6 @@ QDF_STATUS csr_roam_copy_connect_profile(tpAniSirGlobal pMac,
 		pProfile->mcEncryptionType = connected_prof->mcEncryptionType;
 		pProfile->BSSType = connected_prof->BSSType;
 		pProfile->operationChannel = connected_prof->operationChannel;
-		pProfile->CBMode = connected_prof->CBMode;
 		qdf_mem_copy(&pProfile->bssid, &connected_prof->bssid,
 			sizeof(struct qdf_mac_addr));
 		qdf_mem_copy(&pProfile->SSID, &connected_prof->SSID,
@@ -7577,7 +7576,6 @@ QDF_STATUS csr_roam_copy_profile(tpAniSirGlobal pMac,
 		if (pDstProfile->phyMode & eCSR_DOT11_MODE_11n)
 			pDstProfile->phyMode &= ~eCSR_DOT11_MODE_11n;
 #endif /* FEATURE_WLAN_WAPI */
-	pDstProfile->CBMode = pSrcProfile->CBMode;
 	pDstProfile->ch_params.ch_width = pSrcProfile->ch_params.ch_width;
 	pDstProfile->ch_params.center_freq_seg0 =
 		pSrcProfile->ch_params.center_freq_seg0;
@@ -7714,7 +7712,6 @@ QDF_STATUS csr_roam_copy_connected_profile(tpAniSirGlobal pMac,
 	pDstProfile->negotiatedMCEncryptionType =
 		pSrcProfile->mcEncryptionType;
 	pDstProfile->BSSType = pSrcProfile->BSSType;
-	pDstProfile->CBMode = pSrcProfile->CBMode;
 	qdf_mem_copy(&pDstProfile->Keys, &pSrcProfile->Keys,
 		sizeof(pDstProfile->Keys));
 	if (pSrcProfile->MDID.mdiePresent) {
@@ -8643,12 +8640,6 @@ QDF_STATUS csr_roam_save_connected_infomation(tpAniSirGlobal pMac,
 		pConnectProfile->MFPCapable = pProfile->MFPCapable;
 #endif
 	}
-	if (pIes)
-		pConnectProfile->CBMode = csr_get_cb_mode_from_ies(pMac,
-				pSirBssDesc->channelId, pIes);
-	else
-		sme_err("IE unavailable to derive CB mode");
-
 	/* Save bssid */
 	pConnectProfile->operationChannel = pSirBssDesc->channelId;
 	pConnectProfile->beaconInterval = pSirBssDesc->beaconInterval;

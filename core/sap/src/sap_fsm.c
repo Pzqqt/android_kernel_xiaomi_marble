@@ -3708,8 +3708,6 @@ sapconvert_to_csr_profile(tsap_Config_t *pconfig_params, eCsrRoamBssType bssType
 			     pconfig_params->RSNWPAReqIELength);
 		profile->nRSNReqIELength = pconfig_params->RSNWPAReqIELength;
 	}
-	/* Turn off CB mode */
-	profile->CBMode = eCSR_CB_OFF;
 
 	/* set the phyMode to accept anything */
 	/* Best means everything because it covers all the things we support */
