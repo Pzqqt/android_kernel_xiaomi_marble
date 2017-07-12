@@ -98,8 +98,6 @@
 #define ROAMING_OFFLOAD_TIMER_STOP	2
 #define CSR_ROAMING_OFFLOAD_TIMEOUT_PERIOD    (5 * QDF_MC_TIMER_TO_SEC_UNIT)
 
-static bool b_roam_scan_offload_started;
-
 /* Static Type declarations */
 static tCsrRoamSession csr_roam_roam_session[CSR_ROAM_SESSION_MAX];
 
@@ -926,14 +924,6 @@ QDF_STATUS csr_stop(tpAniSirGlobal pMac, tHalStopType stopType)
 		csr_roam_state_change(pMac, eCSR_ROAMING_STATE_STOP, sessionId);
 		pMac->roam.curSubState[sessionId] = eCSR_ROAM_SUBSTATE_NONE;
 	}
-
-	/* When HAL resets all the context information
-	 * in HAL is lost, so we might need to send the
-	 * scan offload request again when it comes
-	 * out of reset for scan offload to be functional
-	 */
-	if (HAL_STOP_TYPE_SYS_RESET == stopType)
-		b_roam_scan_offload_started = false;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -17284,24 +17274,24 @@ static void check_allowed_ssid_list(tSirRoamOffloadScanReq *req_buffer,
 /*
  * Below Table describe whether RSO command can be send down to fimrware or not.
  * Host check it on the basis of previous RSO command sent down to firmware.
- *||==========================================================================||
- *|| New cmd        |            LAST SENT COMMAND --->                       ||
- *||====|=====================================================================||
- *||    V           | START | STOP | RESTART | UPDATE_CFG| ABORT_SCAN         ||
- *|| -------------------------------------------------------------------------||
- *|| RSO_START      | NO    | YES  |  NO     | NO        | NO                 ||
- *|| RSO_STOP       | YES   | YES  |  YES    | YES       | YES                ||
- *|| RSO_RESTART    | YES   | YES  |  NO     | YES       | YES                ||
- *|| RSO_UPDATE_CFG | YES   | NO   |  YES    | YES       | YES                ||
- *|| RSO_ABORT_SCAN | YES   | NO   |  YES    | YES       | YES                ||
- *||==========================================================================||
+ * ||=========================================================================||
+ * || New cmd        |            LAST SENT COMMAND --->                      ||
+ * ||====|====================================================================||
+ * ||    V           | START | STOP | RESTART | UPDATE_CFG| ABORT_SCAN        ||
+ * || ------------------------------------------------------------------------||
+ * || RSO_START      | NO    | YES  |  NO     | YES       | NO                ||
+ * || RSO_STOP       | YES   | YES  |  YES    | YES       | YES               ||
+ * || RSO_RESTART    | YES   | YES  |  NO     | YES       | YES               ||
+ * || RSO_UPDATE_CFG | YES   | NO   |  YES    | YES       | YES               ||
+ * || RSO_ABORT_SCAN | YES   | NO   |  YES    | YES       | YES               ||
+ * ||=========================================================================||
  **/
 #define RSO_START_BIT       (1<<ROAM_SCAN_OFFLOAD_START)
 #define RSO_STOP_BIT        (1<<ROAM_SCAN_OFFLOAD_STOP)
 #define RSO_RESTART_BIT     (1<<ROAM_SCAN_OFFLOAD_RESTART)
 #define RSO_UPDATE_CFG_BIT  (1<<ROAM_SCAN_OFFLOAD_UPDATE_CFG)
 #define RSO_ABORT_SCAN_BIT  (1<<ROAM_SCAN_OFFLOAD_ABORT_SCAN)
-#define RSO_START_ALLOW_MASK   (RSO_STOP_BIT)
+#define RSO_START_ALLOW_MASK   (RSO_STOP_BIT | RSO_UPDATE_CFG_BIT)
 #define RSO_STOP_ALLOW_MASK    (RSO_UPDATE_CFG_BIT | RSO_RESTART_BIT | \
 		RSO_STOP_BIT | RSO_START_BIT | RSO_ABORT_SCAN_BIT)
 #define RSO_RESTART_ALLOW_MASK (RSO_UPDATE_CFG_BIT | RSO_START_BIT | \
@@ -17694,7 +17684,7 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if ((true == b_roam_scan_offload_started)
+	if ((true == roam_info->b_roam_scan_offload_started)
 	    && (ROAM_SCAN_OFFLOAD_START == command)) {
 		sme_err("Roam Scan Offload is already started");
 		return QDF_STATUS_E_FAILURE;
@@ -17848,9 +17838,9 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 		return QDF_STATUS_E_FAILURE;
 	}
 	if (ROAM_SCAN_OFFLOAD_START == command)
-		b_roam_scan_offload_started = true;
+		roam_info->b_roam_scan_offload_started = true;
 	else if (ROAM_SCAN_OFFLOAD_STOP == command)
-		b_roam_scan_offload_started = false;
+		roam_info->b_roam_scan_offload_started = false;
 
 	/* update the last sent cmd */
 	roam_info->last_sent_cmd = command;
