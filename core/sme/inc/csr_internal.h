@@ -768,24 +768,17 @@ typedef struct tagCsrLinkQualityIndInfo {
 typedef struct tagCsrPeStatsReqInfo {
 	tListElem link;         /* list links */
 	uint32_t statsMask;
-	uint32_t periodicity;
 	bool rspPending;
-	qdf_mc_timer_t hPeStatsTimer;
-	bool timerRunning;
 	uint8_t staId;
 	uint8_t numClient;
 	tpAniSirGlobal pMac;
-	/* To remember if the peStats timer is stopped successfully or not */
-	bool timerStopFailed;
 	uint8_t sessionId;
-
 } tCsrPeStatsReqInfo;
 
 typedef struct tagCsrStatsClientReqInfo {
 	tListElem link;         /* list links */
 	eCsrStatsRequesterType requesterId;
 	tCsrStatsCallback callback;
-	uint32_t periodicity;
 	void *pContext;
 	uint32_t statsMask;
 	tCsrPeStatsReqInfo *pPeStaEntry;
@@ -797,9 +790,6 @@ typedef struct tagCsrStatsClientReqInfo {
 } tCsrStatsClientReqInfo;
 
 typedef struct tagCsrTlStatsReqInfo {
-	uint32_t periodicity;
-	bool timerRunning;
-	qdf_mc_timer_t hTlStatsTimer;
 	uint8_t numClient;
 } tCsrTlStatsReqInfo;
 
@@ -1209,8 +1199,7 @@ bool csr_is_conn_state_connected_infra_ap(tpAniSirGlobal pMac,
 QDF_STATUS csr_get_statistics(tpAniSirGlobal pMac,
 		eCsrStatsRequesterType requesterId,
 		uint32_t statsMask, tCsrStatsCallback callback,
-		uint32_t periodicity, bool cache, uint8_t staId,
-		void *pContext, uint8_t sessionId);
+		uint8_t staId, void *pContext, uint8_t sessionId);
 QDF_STATUS csr_get_rssi(tpAniSirGlobal pMac, tCsrRssiCallback callback,
 		uint8_t staId, struct qdf_mac_addr bssId, int8_t lastRSSI,
 		void *pContext, void *p_cds_context);

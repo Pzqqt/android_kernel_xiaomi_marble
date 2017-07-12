@@ -348,8 +348,7 @@ QDF_STATUS sme_get_config_param(tHalHandle hHal, tSmeConfigParams *pParam);
 QDF_STATUS sme_get_statistics(tHalHandle hHal,
 		eCsrStatsRequesterType requesterId,
 		uint32_t statsMask, tCsrStatsCallback callback,
-		uint32_t periodicity, bool cache, uint8_t staId,
-		void *pContext, uint8_t sessionId);
+		uint8_t staId, void *pContext, uint8_t sessionId);
 QDF_STATUS sme_get_rssi(tHalHandle hHal,
 		tCsrRssiCallback callback,
 		uint8_t staId, struct qdf_mac_addr bssId, int8_t lastRSSI,

@@ -246,18 +246,9 @@ tCsrStatsClientReqInfo *csr_roam_insert_entry_into_list(tpAniSirGlobal pMac,
 							tDblLinkList *pStaList,
 							tCsrStatsClientReqInfo *
 							pStaEntry);
-static void csr_roam_stats_client_timer_handler(void *pv);
-tCsrPeStatsReqInfo *csr_roam_check_pe_stats_req_list(tpAniSirGlobal pMac,
-						     uint32_t statsMask,
-						     uint32_t periodicity,
-						     bool *pFound,
-						uint8_t staId,
-						     uint8_t sessionId);
 static void csr_roam_report_statistics(tpAniSirGlobal pMac, uint32_t statsMask,
 				tCsrStatsCallback callback, uint8_t staId,
 				void *pContext);
-static void csr_roam_tl_stats_timer_handler(void *pv);
-static void csr_roam_pe_stats_timer_handler(void *pv);
 tListElem *csr_roam_check_client_req_list(tpAniSirGlobal pMac,
 					uint32_t statsMask);
 static void csr_roam_remove_entry_from_pe_stats_req_list(tpAniSirGlobal pMac,
@@ -897,8 +888,6 @@ QDF_STATUS csr_start(tpAniSirGlobal pMac)
 		for (i = 0; i < CSR_ROAM_SESSION_MAX; i++)
 			status = csr_neighbor_roam_init(pMac, i);
 		pMac->roam.tlStatsReqInfo.numClient = 0;
-		pMac->roam.tlStatsReqInfo.periodicity = 0;
-		pMac->roam.tlStatsReqInfo.timerRunning = false;
 		/* init the link quality indication also */
 		pMac->roam.vccLinkQuality = eCSR_ROAM_LINK_QUAL_MIN_IND;
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -1083,13 +1072,6 @@ static QDF_STATUS csr_roam_open(tpAniSirGlobal pMac)
 			sme_err("cannot allocate memory for packetdump timer");
 			break;
 		}
-		status = qdf_mc_timer_init(&pMac->roam.tlStatsReqInfo.
-					hTlStatsTimer, QDF_TIMER_TYPE_SW,
-					csr_roam_tl_stats_timer_handler, pMac);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			sme_err("cannot allocate memory for summary Statistics timer");
-			return QDF_STATUS_E_FAILURE;
-		}
 	} while (0);
 	return status;
 }
@@ -1103,8 +1085,6 @@ static QDF_STATUS csr_roam_close(tpAniSirGlobal pMac)
 
 	qdf_mc_timer_stop(&pMac->roam.hTimerWaitForKey);
 	qdf_mc_timer_destroy(&pMac->roam.hTimerWaitForKey);
-	qdf_mc_timer_stop(&pMac->roam.tlStatsReqInfo.hTlStatsTimer);
-	qdf_mc_timer_destroy(&pMac->roam.tlStatsReqInfo.hTlStatsTimer);
 	qdf_mc_timer_stop(&pMac->roam.packetdump_timer);
 	qdf_mc_timer_destroy(&pMac->roam.packetdump_timer);
 	return QDF_STATUS_SUCCESS;
@@ -16135,109 +16115,6 @@ static void csr_roam_link_down(tpAniSirGlobal pMac, uint32_t sessionId)
 
 }
 
-static void csr_roam_tl_stats_timer_handler(void *pv)
-{
-	tpAniSirGlobal pMac = PMAC_STRUCT(pv);
-	QDF_STATUS status;
-
-	pMac->roam.tlStatsReqInfo.timerRunning = false;
-
-	sme_debug("TL stat timer is no-op. It needs to support multiple stations");
-
-	if (!pMac->roam.tlStatsReqInfo.timerRunning) {
-		if (pMac->roam.tlStatsReqInfo.periodicity) {
-			/* start timer */
-			status =
-				qdf_mc_timer_start(&pMac->roam.tlStatsReqInfo.
-						   hTlStatsTimer,
-						   pMac->roam.tlStatsReqInfo.
-						   periodicity);
-			if (!QDF_IS_STATUS_SUCCESS(status)) {
-				sme_err("csr_roam_tl_stats_timer_handler:cannot start TlStatsTimer timer");
-				return;
-			}
-			pMac->roam.tlStatsReqInfo.timerRunning = true;
-		}
-	}
-}
-
-static void csr_roam_pe_stats_timer_handler(void *pv)
-{
-	tCsrPeStatsReqInfo *pPeStatsReqListEntry = (tCsrPeStatsReqInfo *) pv;
-	QDF_STATUS status;
-	tpAniSirGlobal pMac = pPeStatsReqListEntry->pMac;
-	QDF_STATUS qdf_status;
-
-	pPeStatsReqListEntry->timerRunning = false;
-	if (pPeStatsReqListEntry->timerStopFailed == true) {
-		/* If we entered here, meaning the timer could not be
-		 * successfully stopped in
-		 * csr_roam_remove_entry_from_pe_stats_req_list().
-		 * So do it here.
-		 * Destroy the timer
-		 */
-		qdf_status = qdf_mc_timer_destroy(&pPeStatsReqListEntry->
-						hPeStatsTimer);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-			sme_err("csr_roam_pe_stats_timer_handler:failed to destroy hPeStatsTimer timer");
-
-		/* Free the entry */
-		qdf_mem_free(pPeStatsReqListEntry);
-		pPeStatsReqListEntry = NULL;
-	} else {
-		if (!pPeStatsReqListEntry->rspPending) {
-			status = csr_send_mb_stats_req_msg(pMac,
-							  pPeStatsReqListEntry->
-							  statsMask & ~(1 <<
-							eCsrGlobalClassDStats),
-						pPeStatsReqListEntry->staId,
-							  pPeStatsReqListEntry->
-							  sessionId);
-			if (!QDF_IS_STATUS_SUCCESS(status))
-				sme_err("csr_roam_pe_stats_timer_handler:failed to send down stats req to PE");
-			else
-				pPeStatsReqListEntry->rspPending = true;
-		}
-		/* send down a req */
-		if (pPeStatsReqListEntry->periodicity &&
-		    (QDF_TIMER_STATE_STOPPED ==
-		     qdf_mc_timer_get_current_state(&pPeStatsReqListEntry->
-						    hPeStatsTimer))) {
-			if (pPeStatsReqListEntry->periodicity <
-					pMac->roam.configParam.
-					statsReqPeriodicityInPS) {
-				pPeStatsReqListEntry->periodicity =
-					pMac->roam.configParam.
-					statsReqPeriodicityInPS;
-			}
-			/* start timer */
-			qdf_status =
-				qdf_mc_timer_start(&pPeStatsReqListEntry->
-						   hPeStatsTimer,
-						   pPeStatsReqListEntry->
-						   periodicity);
-			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-				sme_err("csr_roam_pe_stats_timer_handler:cannot start hPeStatsTimer timer");
-				return;
-			}
-			pPeStatsReqListEntry->timerRunning = true;
-
-		}
-
-	}
-}
-
-static void csr_roam_stats_client_timer_handler(void *pv)
-{
-	tCsrStatsClientReqInfo *pStaEntry = (tCsrStatsClientReqInfo *) pv;
-
-	if (QDF_TIMER_STATE_STOPPED ==
-	    qdf_mc_timer_get_current_state(&pStaEntry->timer)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			 "roam stats client timer is stopped");
-	}
-}
-
 QDF_STATUS csr_send_mb_stats_req_msg(tpAniSirGlobal pMac, uint32_t statsMask,
 				     uint8_t staId, uint8_t sessionId)
 {
@@ -16447,8 +16324,6 @@ tListElem *csr_roam_checkn_update_client_req_list(tpAniSirGlobal pMac,
 		if ((pTempStaEntry->requesterId == pStaEntry->requesterId)
 		    && (pTempStaEntry->statsMask == pStaEntry->statsMask)) {
 			if (update) {
-				pTempStaEntry->periodicity =
-					pStaEntry->periodicity;
 				pTempStaEntry->callback = pStaEntry->callback;
 				pTempStaEntry->pContext = pStaEntry->pContext;
 			}
@@ -16494,8 +16369,9 @@ tCsrStatsClientReqInfo *csr_roam_insert_entry_into_list(tpAniSirGlobal pMac,
 							pStaEntry)
 {
 	tCsrStatsClientReqInfo *pNewStaEntry = NULL;
-	/* if same entity requested for same set of stats with different
-	 * periodicity & callback update it
+	/*
+	 * if same entity requested for same set of stats with different
+	 * callback update it
 	 */
 	if (NULL == csr_roam_checkn_update_client_req_list(pMac, pStaEntry,
 								true)) {
@@ -16508,7 +16384,6 @@ tCsrStatsClientReqInfo *csr_roam_insert_entry_into_list(tpAniSirGlobal pMac,
 
 		pNewStaEntry->callback = pStaEntry->callback;
 		pNewStaEntry->pContext = pStaEntry->pContext;
-		pNewStaEntry->periodicity = pStaEntry->periodicity;
 		pNewStaEntry->requesterId = pStaEntry->requesterId;
 		pNewStaEntry->statsMask = pStaEntry->statsMask;
 		pNewStaEntry->pPeStaEntry = pStaEntry->pPeStaEntry;
@@ -16519,34 +16394,6 @@ tCsrStatsClientReqInfo *csr_roam_insert_entry_into_list(tpAniSirGlobal pMac,
 		csr_ll_insert_tail(pStaList, &pNewStaEntry->link,
 							LL_ACCESS_LOCK);
 	}
-	return pNewStaEntry;
-}
-
-static
-tCsrPeStatsReqInfo *csr_roam_insert_entry_into_pe_stats_req_list(
-							tpAniSirGlobal pMac,
-							tDblLinkList *pStaList,
-							tCsrPeStatsReqInfo *
-							pStaEntry)
-{
-	tCsrPeStatsReqInfo *pNewStaEntry = NULL;
-
-	pNewStaEntry = qdf_mem_malloc(sizeof(tCsrPeStatsReqInfo));
-	if (NULL == pNewStaEntry) {
-		sme_err("couldn't allocate memory for the entry");
-		return NULL;
-	}
-
-	pNewStaEntry->hPeStatsTimer = pStaEntry->hPeStatsTimer;
-	pNewStaEntry->numClient = pStaEntry->numClient;
-	pNewStaEntry->periodicity = pStaEntry->periodicity;
-	pNewStaEntry->statsMask = pStaEntry->statsMask;
-	pNewStaEntry->pMac = pStaEntry->pMac;
-	pNewStaEntry->staId = pStaEntry->staId;
-	pNewStaEntry->timerRunning = pStaEntry->timerRunning;
-	pNewStaEntry->rspPending = pStaEntry->rspPending;
-
-	csr_ll_insert_tail(pStaList, &pNewStaEntry->link, LL_ACCESS_LOCK);
 	return pNewStaEntry;
 }
 
@@ -16671,19 +16518,6 @@ csr_deregister_client_request(tpAniSirGlobal mac_ctx,
 	}
 	/* check if we need to stop the tl stats timer too */
 	mac_ctx->roam.tlStatsReqInfo.numClient--;
-	if (!mac_ctx->roam.tlStatsReqInfo.numClient) {
-		if (mac_ctx->roam.tlStatsReqInfo.timerRunning) {
-			status = qdf_mc_timer_stop(
-				&mac_ctx->roam.tlStatsReqInfo.hTlStatsTimer);
-			if (!QDF_IS_STATUS_SUCCESS(status)) {
-				sme_err(
-					"cannot stop TlStatsTimer timer");
-				return status;
-			}
-		}
-		mac_ctx->roam.tlStatsReqInfo.periodicity = 0;
-		mac_ctx->roam.tlStatsReqInfo.timerRunning = false;
-	}
 	qdf_mc_timer_stop(&ptr_sta_entry->timer);
 	/* Destroy the qdf timer... */
 	status = qdf_mc_timer_destroy(&ptr_sta_entry->timer);
@@ -16699,16 +16533,13 @@ csr_deregister_client_request(tpAniSirGlobal mac_ctx,
  * csr_insert_stats_request_to_list() - inserts request to existing list
  * @mac_ctx:       mac global context
  * @sta_entry:     stats request entry
- * @periodicity:   periodicity of stats
  *
  * Return: status of operation
  */
 static QDF_STATUS
 csr_insert_stats_request_to_list(tpAniSirGlobal mac_ctx,
-				 tCsrStatsClientReqInfo *sta_entry,
-				 uint32_t periodicity)
+				 tCsrStatsClientReqInfo *sta_entry)
 {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tCsrStatsClientReqInfo *ptr_sta_entry = csr_roam_insert_entry_into_list(
 				mac_ctx, &mac_ctx->roam.statsClientReqList,
 				sta_entry);
@@ -16716,79 +16547,6 @@ csr_insert_stats_request_to_list(tpAniSirGlobal mac_ctx,
 		sme_err("Failed to insert req in statsClientReqList");
 		return QDF_STATUS_E_FAILURE;
 	}
-	/* Init & start timer if needed */
-	ptr_sta_entry->periodicity = periodicity;
-	if (ptr_sta_entry->periodicity) {
-		status = qdf_mc_timer_init(&ptr_sta_entry->timer,
-					QDF_TIMER_TYPE_SW,
-					csr_roam_stats_client_timer_handler,
-					ptr_sta_entry);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			sme_err("cannot init StatsClient timer");
-			return QDF_STATUS_E_FAILURE;
-		}
-		status = qdf_mc_timer_start(&ptr_sta_entry->timer,
-					    ptr_sta_entry->periodicity);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			sme_err("cannot start StatsClient timer");
-			return QDF_STATUS_E_FAILURE;
-		}
-	}
-	return status;
-}
-
-/**
- * csr_get_statistics_from_tl() - fetch stats from tl layer
- * @mac_ctx:       mac global context
- * @cache:         indicate if cached stats are required
- * @staId:         station id
- * @periodicity:   periodicity of stats
- *
- * Return: status of operation
- */
-static QDF_STATUS
-csr_get_statistics_from_tl(tpAniSirGlobal mac_ctx,
-			   bool cache,
-			   uint8_t staId,
-			   uint32_t periodicity)
-{
-	QDF_STATUS status;
-
-	if (cache && mac_ctx->roam.tlStatsReqInfo.numClient) {
-		sme_err("Looking for cached stats from TL");
-		mac_ctx->roam.tlStatsReqInfo.numClient++;
-		return QDF_STATUS_SUCCESS;
-	}
-
-	/* update periodicity */
-	if (mac_ctx->roam.tlStatsReqInfo.periodicity)
-		mac_ctx->roam.tlStatsReqInfo.periodicity =
-		    QDF_MIN(periodicity,
-			    mac_ctx->roam.tlStatsReqInfo.periodicity);
-	else
-		mac_ctx->roam.tlStatsReqInfo.periodicity = periodicity;
-
-	if (mac_ctx->roam.tlStatsReqInfo.periodicity
-	    < CSR_MIN_TL_STAT_QUERY_PERIOD) {
-		mac_ctx->roam.tlStatsReqInfo.periodicity =
-		CSR_MIN_TL_STAT_QUERY_PERIOD;
-	}
-
-	if (!mac_ctx->roam.tlStatsReqInfo.timerRunning) {
-
-		if (mac_ctx->roam.tlStatsReqInfo.periodicity) {
-			/* start timer */
-			status = qdf_mc_timer_start(
-				&mac_ctx->roam.tlStatsReqInfo.hTlStatsTimer,
-				mac_ctx->roam.tlStatsReqInfo.periodicity);
-			if (!QDF_IS_STATUS_SUCCESS(status)) {
-				sme_err("cannot start TlStatsTimer timer");
-				return QDF_STATUS_E_FAILURE;
-			}
-			mac_ctx->roam.tlStatsReqInfo.timerRunning = true;
-		}
-	}
-	mac_ctx->roam.tlStatsReqInfo.numClient++;
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -16796,15 +16554,11 @@ QDF_STATUS csr_get_statistics(tpAniSirGlobal pMac,
 			      eCsrStatsRequesterType requesterId,
 			      uint32_t statsMask,
 			      tCsrStatsCallback callback,
-			      uint32_t periodicity,
-			      bool cache,
 			      uint8_t staId,
 			      void *pContext,
 			      uint8_t sessionId)
 {
 	tCsrStatsClientReqInfo staEntry;
-	tCsrPeStatsReqInfo *pPeStaEntry = NULL;
-	bool found = false;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	bool insertInClientList = false;
 	uint32_t temp_mask = 0;
@@ -16828,77 +16582,38 @@ QDF_STATUS csr_get_statistics(tpAniSirGlobal pMac,
 	if ((statsMask) && (!callback))
 		return csr_deregister_client_request(pMac, &staEntry);
 
-	if (cache && !periodicity) {
-		/* return the cached stats */
-		csr_roam_report_statistics(pMac, statsMask, callback, staId,
-					   pContext);
-		return QDF_STATUS_SUCCESS;
-	}
 	/* add the request in the client req list */
 	staEntry.callback = callback;
 	staEntry.pContext = pContext;
-	staEntry.periodicity = periodicity;
 	staEntry.pPeStaEntry = NULL;
 	staEntry.staId = staId;
 	staEntry.pMac = pMac;
 	staEntry.timerExpired = false;
 	staEntry.sessionId = sessionId;
 
-	/* if periodic report requested with non cached result from PE/TL */
-	if (periodicity) {
-		/* if looking for stats from PE */
-		temp_mask = statsMask & ~(1 << eCsrGlobalClassDStats);
-		if (temp_mask) {
-			/* check if same req made already & waiting for rsp */
-			pPeStaEntry = csr_roam_check_pe_stats_req_list(pMac,
-					temp_mask, periodicity, &found,
-					staId, sessionId);
-			if (!pPeStaEntry)
-				/* bail out, maxed out on num of req for PE */
-				return QDF_STATUS_E_FAILURE;
-			staEntry.pPeStaEntry = pPeStaEntry;
-		}
+	temp_mask = statsMask & ~(1 << eCsrGlobalClassDStats);
+	if (temp_mask) {
+		/* send down a req */
+		status = csr_send_mb_stats_req_msg(pMac,
+					temp_mask, staId, sessionId);
+		if (!QDF_IS_STATUS_SUCCESS(status))
+			sme_err("failed to send down stats req");
 		/*
-		 * request stats from TL rightaway if requested by client,
-		 * update tlStatsReqInfo if needed
+		 * so that when the stats rsp comes back from PE we
+		 * respond to upper layer right away
 		 */
-		temp_mask = statsMask & (1 << eCsrGlobalClassDStats);
-		if (temp_mask) {
-			status = csr_get_statistics_from_tl(pMac, cache, staId,
-							    periodicity);
-			if (!QDF_IS_STATUS_SUCCESS(status))
-				return status;
-		}
+		staEntry.timerExpired = true;
 		insertInClientList = true;
 	}
-	/* if one time report requested with non cached result from PE/TL */
-	else if (!cache && !periodicity) {
-		temp_mask = statsMask & ~(1 << eCsrGlobalClassDStats);
-		if (temp_mask) {
-			/* send down a req */
-			status = csr_send_mb_stats_req_msg(pMac,
-						temp_mask, staId, sessionId);
-			if (!QDF_IS_STATUS_SUCCESS(status))
-				sme_err(
-					"failed to send down stats req");
-			/*
-			 * so that when the stats rsp comes back from PE we
-			 * respond to upper layer right away
-			 */
-			staEntry.timerExpired = true;
-			insertInClientList = true;
-		}
-		/* if looking for stats from TL only */
-		if (!insertInClientList) {
-			/* return the stats */
-			csr_roam_report_statistics(pMac, statsMask, callback,
-						   staId, pContext);
-			return QDF_STATUS_SUCCESS;
-		}
+	/* if looking for stats from TL only */
+	if (!insertInClientList) {
+		/* return the stats */
+		csr_roam_report_statistics(pMac, statsMask, callback,
+					   staId, pContext);
+		return QDF_STATUS_SUCCESS;
 	}
 	if (insertInClientList)
-		return csr_insert_stats_request_to_list(pMac, &staEntry,
-							periodicity);
+		return csr_insert_stats_request_to_list(pMac, &staEntry);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -18168,102 +17883,6 @@ QDF_STATUS csr_roam_offload_scan_rsp_hdlr(tpAniSirGlobal pMac,
 }
 #endif
 
-tCsrPeStatsReqInfo *csr_roam_check_pe_stats_req_list(tpAniSirGlobal pMac,
-						     uint32_t statsMask,
-						     uint32_t periodicity,
-						     bool *pFound,
-						     uint8_t staId,
-							uint8_t sessionId)
-{
-	bool found = false;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tCsrPeStatsReqInfo staEntry;
-	tCsrPeStatsReqInfo *pTempStaEntry = NULL;
-	tListElem *pStaEntry = NULL;
-	QDF_STATUS qdf_status;
-	*pFound = false;
-
-	pStaEntry = csr_roam_find_in_pe_stats_req_list(pMac, statsMask);
-	if (pStaEntry) {
-		pTempStaEntry =
-			GET_BASE_ADDR(pStaEntry, tCsrPeStatsReqInfo, link);
-		if (pTempStaEntry->periodicity) {
-			pTempStaEntry->periodicity =
-				QDF_MIN(periodicity,
-					pTempStaEntry->periodicity);
-		} else {
-			pTempStaEntry->periodicity = periodicity;
-		}
-		pTempStaEntry->numClient++;
-		found = true;
-	} else {
-		qdf_mem_set(&staEntry, sizeof(tCsrPeStatsReqInfo), 0);
-		staEntry.numClient = 1;
-		staEntry.periodicity = periodicity;
-		staEntry.pMac = pMac;
-		staEntry.rspPending = false;
-		staEntry.staId = staId;
-		staEntry.statsMask = statsMask;
-		staEntry.timerRunning = false;
-		staEntry.sessionId = sessionId;
-		pTempStaEntry = csr_roam_insert_entry_into_pe_stats_req_list(
-								pMac,
-								&pMac->roam.
-								peStatsReqList,
-								&staEntry);
-		if (!pTempStaEntry) {
-			sme_err(
-				"Failed to insert req in peStatsReqList");
-			return NULL;
-		}
-	}
-	pTempStaEntry->periodicity =
-		pMac->roam.configParam.statsReqPeriodicityInPS;
-
-	if (!pTempStaEntry->timerRunning) {
-		/* send down a req in case of one time req, for periodic ones
-		 * wait for timer to expire
-		 */
-		if (!pTempStaEntry->rspPending && !pTempStaEntry->periodicity) {
-			status = csr_send_mb_stats_req_msg(pMac,
-							   statsMask & ~(1 <<
-							eCsrGlobalClassDStats),
-							   staId, sessionId);
-			if (!QDF_IS_STATUS_SUCCESS(status))
-				sme_err("csr_roam_check_pe_stats_req_list:failed to send down stats req to PE");
-			else
-				pTempStaEntry->rspPending = true;
-		}
-		if (pTempStaEntry->periodicity) {
-			if (!found) {
-
-				qdf_status = qdf_mc_timer_init(&pTempStaEntry->
-							  hPeStatsTimer,
-							  QDF_TIMER_TYPE_SW,
-						csr_roam_pe_stats_timer_handler,
-							  pTempStaEntry);
-				if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-					sme_err("csr_roam_check_pe_stats_req_list:cannot init hPeStatsTimer timer");
-					return NULL;
-				}
-			}
-			/* start timer */
-			sme_debug("csr_roam_check_pe_stats_req_list:peStatsTimer period %d",
-				pTempStaEntry->periodicity);
-			qdf_status = qdf_mc_timer_start(&pTempStaEntry->
-							hPeStatsTimer,
-						   pTempStaEntry->periodicity);
-			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-				sme_err("csr_roam_check_pe_stats_req_list:cannot start hPeStatsTimer timer");
-				return NULL;
-			}
-			pTempStaEntry->timerRunning = true;
-		}
-	}
-	*pFound = found;
-	return pTempStaEntry;
-}
-
 /* pStaEntry is no longer invalid upon the return of this function. */
 static void csr_roam_remove_stat_list_entry(tpAniSirGlobal pMac,
 						tListElem *pEntry)
@@ -18281,7 +17900,6 @@ static void csr_roam_remove_entry_from_pe_stats_req_list(tpAniSirGlobal pMac,
 {
 	tListElem *pEntry;
 	tCsrPeStatsReqInfo *pTempStaEntry;
-	QDF_STATUS qdf_status;
 
 	pEntry = csr_ll_peek_head(&pMac->roam.peStatsReqList, LL_ACCESS_LOCK);
 	if (!pEntry) {
@@ -18298,42 +17916,10 @@ static void csr_roam_remove_entry_from_pe_stats_req_list(tpAniSirGlobal pMac,
 			continue;
 		}
 		sme_debug("Match found");
-		if (pTempStaEntry->timerRunning) {
-			qdf_status = qdf_mc_timer_stop(
-					&pTempStaEntry->hPeStatsTimer);
-			/*
-			 * If we are not able to stop the timer here, just
-			 * remove the entry from the linked list. Destroy the
-			 * timer object and free the memory in the timer CB
-			 */
-			if (qdf_status == QDF_STATUS_SUCCESS) {
-				/* the timer is successfully stopped */
-				pTempStaEntry->timerRunning = false;
-				/* Destroy the timer */
-				qdf_status = qdf_mc_timer_destroy(
-						&pTempStaEntry->hPeStatsTimer);
-			} else {
-				/*
-				 * the timer could not be stopped. Hence destroy
-				 * and free the memory for the PE stat entry in
-				 * the timer CB.
-				 */
-				pTempStaEntry->timerStopFailed = true;
-			}
-			if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-				sme_err("failed to stop/destroy timer");
-		}
-
 		if (csr_ll_remove_entry(&pMac->roam.peStatsReqList, pEntry,
 					LL_ACCESS_LOCK)) {
-			/*
-			 * Only free the memory if we could stop the timer
-			 * successfully
-			 */
-			if (!pTempStaEntry->timerStopFailed) {
-				qdf_mem_free(pTempStaEntry);
-				pTempStaEntry = NULL;
-			}
+			qdf_mem_free(pTempStaEntry);
+			pTempStaEntry = NULL;
 			break;
 		}
 		pEntry = csr_ll_next(&pMac->roam.peStatsReqList, pEntry,
@@ -18417,7 +18003,6 @@ static QDF_STATUS csr_roam_dereg_statistics_req(tpAniSirGlobal pMac)
 	tListElem *pPrevEntry = NULL;
 	tCsrStatsClientReqInfo *pTempStaEntry = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	QDF_STATUS qdf_status;
 
 	pEntry = csr_ll_peek_head(&pMac->roam.statsClientReqList,
 							LL_ACCESS_LOCK);
@@ -18456,38 +18041,9 @@ static QDF_STATUS csr_roam_dereg_statistics_req(tpAniSirGlobal pMac)
 		}
 		/* check if we need to stop the tl stats timer too */
 		pMac->roam.tlStatsReqInfo.numClient--;
-		if (!pMac->roam.tlStatsReqInfo.numClient) {
-			if (pMac->roam.tlStatsReqInfo.timerRunning) {
-				status =
-					qdf_mc_timer_stop(&pMac->roam.
-							  tlStatsReqInfo.
-							  hTlStatsTimer);
-				if (!QDF_IS_STATUS_SUCCESS(status))
-					sme_err("csr_roam_dereg_statistics_req:cannot stop TlStatsTimer timer");
-					/* we will continue */
-			}
-			pMac->roam.tlStatsReqInfo.periodicity = 0;
-			pMac->roam.tlStatsReqInfo.timerRunning = false;
-		}
-		if (pTempStaEntry->periodicity) {
-			/* While creating StaEntry in csr_get_statistics,
-			 * Initializing and starting timer only when periodicity
-			 * is set. So Stop and Destroy timer only when
-			 * periodicity is set.
-			 */
-
-			qdf_mc_timer_stop(&pTempStaEntry->timer);
-			/* Destroy the qdf timer... */
-			qdf_status =
-				qdf_mc_timer_destroy(&pTempStaEntry->timer);
-			if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-				sme_err("csr_roam_dereg_statistics_req:failed to destroy Client req timer");
-		}
-
 		pPrevEntry = pEntry;
-		pEntry =
-			csr_ll_next(&pMac->roam.statsClientReqList, pEntry,
-				    LL_ACCESS_NOLOCK);
+		pEntry = csr_ll_next(&pMac->roam.statsClientReqList, pEntry,
+				     LL_ACCESS_NOLOCK);
 	}
 	/* the last one */
 	if (pPrevEntry) {
