@@ -238,7 +238,10 @@ static inline int pld_pcie_power_off(struct device *dev)
 {
 	return 0;
 }
-
+static inline int pld_pcie_force_assert_target(struct device *dev)
+{
+	return -EINVAL;
+}
 static inline uint8_t *pld_pcie_get_wlan_mac_address(struct device *dev,
 						     uint32_t *num)
 {
@@ -356,7 +359,10 @@ static inline int pld_pcie_power_off(struct device *dev)
 {
 	return cnss_power_down(dev);
 }
-
+static inline int pld_pcie_force_assert_target(struct device *dev)
+{
+	return cnss_force_fw_assert(dev);
+}
 static inline uint8_t *pld_pcie_get_wlan_mac_address(struct device *dev,
 						     uint32_t *num)
 {
