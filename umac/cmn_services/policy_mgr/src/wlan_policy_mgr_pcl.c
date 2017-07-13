@@ -1571,10 +1571,13 @@ QDF_STATUS policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
 		return status;
 	}
 
-	/* No existing SAP connection and hence a new SAP connection might be
-	 * coming up.
+	/*
+	 * Get inside below loop if no existing SAP connection and hence a new
+	 * SAP connection might be coming up. pcl.pcl_len can be 0 if no common
+	 * channel between PCL & mandatory channel list as well
 	 */
-	if (!pcl.pcl_len) {
+	if (!pcl.pcl_len && !policy_mgr_mode_specific_connection_count(psoc,
+		PM_SAP_MODE, NULL)) {
 		policy_mgr_debug("policy_mgr_get_pcl_for_existing_conn returned no pcl");
 		status = policy_mgr_get_pcl(psoc, PM_SAP_MODE,
 				pcl.pcl_list, &pcl.pcl_len,
@@ -1593,6 +1596,11 @@ QDF_STATUS policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
 	if (QDF_IS_STATUS_ERROR(status)) {
 		policy_mgr_err("Unable to modify SAP PCL");
 		return status;
+	}
+
+	if (!pcl.pcl_len) {
+		policy_mgr_err("No common channel between mandatory list & PCL");
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	*chan = pcl.pcl_list[0];
