@@ -1439,10 +1439,6 @@ out:
 	if (qdf_unlikely(vdev->mesh_vdev))
 		dp_tx_extract_mesh_meta_data(vdev, nbuf, &msdu_info);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"%s , skb %0x:%0x:%0x:%0x:%0x:%0x\n",
-			__func__, nbuf->data[0], nbuf->data[1], nbuf->data[2],
-			nbuf->data[3], nbuf->data[4], nbuf->data[5]);
 	/*
 	 * Get HW Queue to use for this frame.
 	 * TCL supports upto 4 DMA rings, out of which 3 rings are
