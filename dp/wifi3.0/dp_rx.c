@@ -569,6 +569,9 @@ struct dp_vdev *dp_rx_nac_filter(struct dp_pdev *pdev,
 				peer->neighbour_peers_macaddr.raw[3],
 				peer->neighbour_peers_macaddr.raw[4],
 				peer->neighbour_peers_macaddr.raw[5]);
+
+				qdf_spin_unlock_bh(&pdev->neighbour_peer_mutex);
+
 			return pdev->monitor_vdev;
 		}
 	}
