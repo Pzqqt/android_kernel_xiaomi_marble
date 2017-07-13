@@ -186,7 +186,8 @@ static int wlan_hdd_qcmbr_command(hdd_adapter_t *adapter,
 	switch (pqcmbr_data->cmd) {
 	case ATH_XIOCTL_UNIFIED_UTF_CMD: {
 		pqcmbr_data->copy_to_user = 0;
-		if (pqcmbr_data->length) {
+		if (pqcmbr_data->length &&
+			pqcmbr_data->length <= sizeof(pqcmbr_data->buf)) {
 			if (wlan_hdd_ftm_testmode_cmd(pqcmbr_data->buf,
 						      pqcmbr_data->
 						      length)
