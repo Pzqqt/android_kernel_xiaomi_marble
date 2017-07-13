@@ -42,7 +42,7 @@
 		#define DP_TX_GET_RING_ID(vdev) (vdev->pdev->pdev_id)
 	#else
 		#define DP_TX_GET_DESC_POOL_ID(vdev) qdf_get_cpu()
-		#define DP_TX_GET_RING_ID(vdev) qdf_get_cpu()
+		#define DP_TX_GET_RING_ID(vdev) vdev->pdev->soc->tx_ring_map[qdf_get_cpu()]
 	#endif /* TX_PER_VDEV_DESC_POOL */
 #endif /* TX_PER_PDEV_DESC_POOL */
 

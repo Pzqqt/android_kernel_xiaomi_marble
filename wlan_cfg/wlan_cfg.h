@@ -52,6 +52,7 @@
 #define DP_MAX_TIDS 17
 #define DP_NON_QOS_TID 16
 
+#define WLAN_CFG_INT_NUM_CONTEXTS 4
 struct wlan_cfg_dp_pdev_ctxt;
 struct wlan_cfg_dp_soc_ctxt;
 
