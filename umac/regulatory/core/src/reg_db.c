@@ -852,7 +852,7 @@ const struct regdomain regdomains_5g[] = {
 					      CHAN_5250_5330_5,
 					      CHAN_5735_5835_2} },
 
-	[APL16] = {CTL_FCC, DFS_UNINIT_REG, 2, 0, 3, {CHAN_5170_5250_1,
+	[APL16] = {CTL_FCC, DFS_UNINIT_REG, 2, 0, 5, {CHAN_5170_5250_1,
 					    CHAN_5250_5330_6,
 					    CHAN_5490_5590_2,
 					    CHAN_5650_5730_2,
