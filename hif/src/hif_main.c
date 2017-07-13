@@ -799,6 +799,11 @@ int hif_get_device_type(uint32_t device_id,
 		ret = -ENODEV;
 		break;
 	}
+
+	if (*target_type == TARGET_TYPE_UNKNOWN) {
+		HIF_ERROR("%s: Unsupported target_type!", __func__);
+		ret = -ENODEV;
+	}
 end:
 	return ret;
 }

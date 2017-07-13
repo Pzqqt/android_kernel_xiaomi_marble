@@ -97,9 +97,9 @@ typedef void *hif_handle_t;
 /* For Tufello1.0 target_reg_tbl ID*/
 #define TARGET_TYPE_QCA9377V1   17
 #endif /* ENABLE_10_4_FW_HDR */
-/* For Adrastea target */
-#define TARGET_TYPE_ADRASTEA     19
 #endif /* CONFIG_WIN */
+/* For Adrastea target */
+#define TARGET_TYPE_ADRASTEA  19
 #ifndef TARGET_TYPE_QCA8074
 #define TARGET_TYPE_QCA8074   20
 #endif
