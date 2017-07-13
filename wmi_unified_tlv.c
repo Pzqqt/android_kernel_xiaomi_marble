@@ -1418,7 +1418,7 @@ send_dbglog_cmd_tlv(wmi_unified_t wmi_handle,
 {
 	wmi_buf_t buf;
 	wmi_debug_log_config_cmd_fixed_param *configmsg;
-	A_STATUS status = A_OK;
+	QDF_STATUS status;
 	int32_t i;
 	int32_t len;
 	int8_t *buf_ptr;
@@ -1431,7 +1431,7 @@ send_dbglog_cmd_tlv(wmi_unified_t wmi_handle,
 	      (sizeof(int32_t) * MAX_MODULE_ID_BITMAP_WORDS);
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (buf == NULL)
-		return A_NO_MEMORY;
+		return QDF_STATUS_E_NOMEM;
 
 	configmsg =
 		(wmi_debug_log_config_cmd_fixed_param *) (wmi_buf_data(buf));
@@ -1461,7 +1461,7 @@ send_dbglog_cmd_tlv(wmi_unified_t wmi_handle,
 	status = wmi_unified_cmd_send(wmi_handle, buf,
 				      len, WMI_DBGLOG_CFG_CMDID);
 
-	if (status != A_OK)
+	if (status != QDF_STATUS_SUCCESS)
 		wmi_buf_free(buf);
 
 	return status;
@@ -15721,7 +15721,17 @@ static QDF_STATUS extract_vdev_start_resp_tlv(wmi_unified_t wmi_handle,
 
 	vdev_rsp->vdev_id = ev->vdev_id;
 	vdev_rsp->requestor_id = ev->requestor_id;
-	vdev_rsp->resp_type = ev->resp_type;
+	switch (ev->resp_type) {
+	case WMI_VDEV_START_RESP_EVENT:
+		vdev_rsp->resp_type = WMI_HOST_VDEV_START_RESP_EVENT;
+		break;
+	case WMI_VDEV_RESTART_RESP_EVENT:
+		vdev_rsp->resp_type = WMI_HOST_VDEV_RESTART_RESP_EVENT;
+		break;
+	default:
+		qdf_print("Invalid start response event buffer\n");
+		break;
+	};
 	vdev_rsp->status = ev->status;
 	vdev_rsp->chain_mask = ev->chain_mask;
 	vdev_rsp->smps_mode = ev->smps_mode;
