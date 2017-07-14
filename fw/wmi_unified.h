@@ -10665,13 +10665,15 @@ typedef struct {
     A_UINT32 vdev_id;
     A_UINT32 operation; /* 0 reset to fw default, 1 set the bits, 2 add the setting bits, 3 delete the setting bits */
     A_UINT32 action_category_map[MAX_SUPPORTED_ACTION_CATEGORY_ELE_LIST];
-    /* action_bitmaps_per_category -
+    /* This fixed_param TLV is followed by these additional TLV's
+     * action_bitmaps_per_category -
      * Each element is a 32-bit bitmap indicating which subcategories
      * for that particular action category are considered for WoW wakeup
      * (if the subcategory's bit is 0) or ignored for WoW wakeup (if the
      * subcategory's bit is 1).
+     *
+     * A_UINT32 action_bitmaps_per_category[]; <-- variable length array
      */
-    A_UINT32 action_bitmaps_per_category[MAX_SUPPORTED_ACTION_CATEGORY];
 } WMI_WOW_SET_ACTION_WAKE_UP_CMD_fixed_param;
 
 typedef struct wow_event_info_s {
