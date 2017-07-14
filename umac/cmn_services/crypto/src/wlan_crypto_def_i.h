@@ -201,7 +201,9 @@ static inline void wlan_crypto_put_be64(u8 *a, u64 val)
 	do {frm[0] = (v) & 0xff; frm[1] = (v) >> 8; frm += 2; } while (0)
 
 #define	WLAN_CRYPTO_ADDSELECTOR(frm, sel) \
-	do {qdf_mem_copy(frm, (uint8_t *)sel, OUI_SIZE); \
+	do { \
+		uint32_t value = sel;\
+		qdf_mem_copy(frm, (uint8_t *)&value, OUI_SIZE); \
 	frm += OUI_SIZE; } while (0)
 
 #define WLAN_CRYPTO_SELECTOR(a, b, c, d) \
@@ -211,6 +213,9 @@ static inline void wlan_crypto_put_be64(u8 *a, u64 val)
 		(uint32_t) (d))
 
 #define WPA_TYPE_OUI     WLAN_CRYPTO_SELECTOR(0x00, 0x50, 0xf2, 1)
+
+#define WLAN_CRYPTO_WAPI_IE_LEN      20
+#define WLAN_CRYPTO_WAPI_SMS4_CIPHER 0x01
 
 #define WPA_AUTH_KEY_MGMT_NONE \
 				WLAN_CRYPTO_SELECTOR(0x00, 0x50, 0xf2, 0)
@@ -312,7 +317,7 @@ static inline void wlan_crypto_put_be64(u8 *a, u64 val)
 #define UCIPHER_IS_GCMP256(_param) \
 		HAS_UCAST_CIPHER((_param), WLAN_CRYPTO_CIPHER_AES_GCM_256)
 #define UCIPHER_IS_SMS4(_param)    \
-		HAS_UCAST_CIPHER((_param), WLAN_CRYPTO_CIPHER_WAPI)
+		HAS_UCAST_CIPHER((_param), WLAN_CRYPTO_CIPHER_WAPI_SMS4)
 
 #define RESET_MCAST_CIPHERS(_param)   ((_param)->mcastcipherset = 0)
 #define SET_MCAST_CIPHER(_param, _c)  ((_param)->mcastcipherset |= (1<<(_c)))
@@ -336,7 +341,7 @@ static inline void wlan_crypto_put_be64(u8 *a, u64 val)
 #define MCIPHER_IS_GCMP256(_param) \
 		HAS_MCAST_CIPHER((_param), WLAN_CRYPTO_CIPHER_AES_GCM_256)
 #define MCIPHER_IS_SMS4(_param)    \
-		HAS_MCAST_CIPHER((_param), WLAN_CRYPTO_CIPHER_WAPI)
+		HAS_MCAST_CIPHER((_param), WLAN_CRYPTO_CIPHER_WAPI_SMS4)
 
 #define RESET_MGMT_CIPHERS(_param)   ((_param)->mgmtcipherset = 0)
 #define SET_MGMT_CIPHER(_param, _c)  ((_param)->mgmtcipherset |= (1<<(_c)))

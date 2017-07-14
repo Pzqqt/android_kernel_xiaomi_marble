@@ -306,6 +306,33 @@ uint8_t *wlan_crypto_build_rsnie(struct wlan_crypto_params *,
 					uint8_t *iebuf);
 
 /**
+ * wlan_crypto_wapiie_check - called by mlme to check the wapiie
+ *
+ *
+ * @crypto params: crypto params
+ * @iebuf: ie buffer
+ *
+ * This function gets called by mlme to check the contents of wapi is
+ * matching with given crypto params
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS wlan_crypto_wapiie_check(struct wlan_crypto_params *crypto_params,
+					uint8_t *frm);
+
+/**
+ * wlan_crypto_build_wapiie - called by mlme to build wapi ie
+ *
+ * @vdev: vdev
+ * @iebuf: ie buffer
+ *
+ * This function gets called by mlme to build wapi ie from given vdev
+ *
+ * Return: end of buffer
+ */
+uint8_t *wlan_crypto_build_wapiie(struct wlan_objmgr_vdev *vdev,
+					uint8_t *iebuf);
+/**
  * wlan_crypto_rsn_info - check is given params matching with vdev params.
  *
  * @vdev: vdev

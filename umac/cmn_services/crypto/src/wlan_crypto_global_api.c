@@ -2130,6 +2130,199 @@ bool wlan_crypto_rsn_info(struct wlan_objmgr_vdev *vdev,
 	return true;
 }
 
+/*
+ * Convert an WAPI CIPHER suite to to an internal code.
+ */
+static int32_t wlan_crypto_wapi_suite_to_cipher(uint8_t *sel)
+{
+	uint32_t w = LE_READ_4(sel);
+	int32_t status = -1;
+
+	switch (w) {
+	case (WLAN_WAPI_SEL(WLAN_CRYPTO_WAPI_SMS4_CIPHER)):
+		return WLAN_CRYPTO_CIPHER_WAPI_SMS4;
+	}
+
+	return status;
+}
+
+/*
+ * Convert an WAPI key management/authentication algorithm
+ * to an internal code.
+ */
+static int32_t wlan_crypto_wapi_keymgmt(u_int8_t *sel)
+{
+	uint32_t w = LE_READ_4(sel);
+	int32_t status = -1;
+
+	switch (w) {
+	case (WLAN_WAPI_SEL(WLAN_WAI_PSK)):
+		return WLAN_CRYPTO_KEY_MGMT_WAPI_PSK;
+	case (WLAN_WAPI_SEL(WLAN_WAI_CERT_OR_SMS4)):
+		return WLAN_CRYPTO_KEY_MGMT_WAPI_CERT;
+	}
+
+	return status;
+}
+/**
+ * wlan_crypto_wapiie_check - called by mlme to check the wapiie
+ *
+ *
+ * @crypto params: crypto params
+ * @iebuf: ie buffer
+ *
+ * This function gets called by mlme to check the contents of wapi is
+ * matching with given crypto params
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS wlan_crypto_wapiie_check(struct wlan_crypto_params *crypto_params,
+					uint8_t *frm)
+{
+	uint8_t len = frm[1];
+	int32_t w;
+	int n;
+
+	/*
+	 * Check the length once for fixed parts: OUI, type,
+	 * version, mcast cipher, and 2 selector counts.
+	 * Other, variable-length data, must be checked separately.
+	 */
+	RESET_AUTHMODE(crypto_params);
+	SET_AUTHMODE(crypto_params, WLAN_CRYPTO_AUTH_WAPI);
+
+	if (len < WLAN_CRYPTO_WAPI_IE_LEN)
+		return QDF_STATUS_E_INVAL;
+
+
+	frm += 2;
+
+	w = LE_READ_2(frm);
+	frm += 2, len -= 2;
+	if (w != WAPI_VERSION)
+		return QDF_STATUS_E_INVAL;
+
+	n = LE_READ_2(frm);
+	frm += 2, len -= 2;
+	if (len < n*4+2)
+		return QDF_STATUS_E_INVAL;
+
+	RESET_KEY_MGMT(crypto_params);
+	for (; n > 0; n--) {
+		w = wlan_crypto_wapi_keymgmt(frm);
+		if (w < 0)
+			return QDF_STATUS_E_INVAL;
+
+		SET_KEY_MGMT(crypto_params, w);
+		frm += 4, len -= 4;
+	}
+
+	/* unicast ciphers */
+	n = LE_READ_2(frm);
+	frm += 2, len -= 2;
+	if (len < n*4+2)
+		return QDF_STATUS_E_INVAL;
+
+	RESET_UCAST_CIPHERS(crypto_params);
+	for (; n > 0; n--) {
+		w = wlan_crypto_wapi_suite_to_cipher(frm);
+		if (w < 0)
+			return QDF_STATUS_E_INVAL;
+		SET_UCAST_CIPHER(crypto_params, w);
+		frm += 4, len -= 4;
+	}
+
+	if (!crypto_params->ucastcipherset)
+		return QDF_STATUS_E_INVAL;
+
+	/* multicast/group cipher */
+	RESET_MCAST_CIPHERS(crypto_params);
+	w = wlan_crypto_wapi_suite_to_cipher(frm);
+
+	if (w < 0)
+		return QDF_STATUS_E_INVAL;
+
+	SET_MCAST_CIPHER(crypto_params, w);
+	frm += 4, len -= 4;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wlan_crypto_build_wapiie - called by mlme to build wapi ie
+ *
+ * @vdev: vdev
+ * @iebuf: ie buffer
+ *
+ * This function gets called by mlme to build wapi ie from given vdev
+ *
+ * Return: end of buffer
+ */
+uint8_t *wlan_crypto_build_wapiie(struct wlan_objmgr_vdev *vdev,
+				uint8_t *iebuf)
+{
+	uint8_t *frm;
+	uint8_t *selcnt;
+	struct wlan_crypto_comp_priv *crypto_priv;
+	struct wlan_crypto_params *crypto_params;
+
+	frm = iebuf;
+	if (!frm) {
+		qdf_print("%s[%d] ie buffer NULL\n", __func__, __LINE__);
+		return NULL;
+	}
+
+	crypto_params = wlan_crypto_vdev_get_comp_params(vdev, &crypto_priv);
+
+	if (!crypto_params) {
+		qdf_print("%s[%d] crypto_params NULL\n", __func__, __LINE__);
+		return NULL;
+	}
+
+	*frm++ = WLAN_ELEMID_WAPI;
+	*frm++ = 0;
+
+	WLAN_CRYPTO_ADDSHORT(frm, WAPI_VERSION);
+
+	/* authenticator selector list */
+	selcnt = frm;
+	WLAN_CRYPTO_ADDSHORT(frm, 0);
+
+	if (HAS_KEY_MGMT(crypto_params, WLAN_CRYPTO_KEY_MGMT_WAPI_PSK)) {
+		selcnt[0]++;
+		WLAN_CRYPTO_ADDSELECTOR(frm,
+				WLAN_WAPI_SEL(WLAN_WAI_PSK));
+	}
+
+	if (HAS_KEY_MGMT(crypto_params, WLAN_CRYPTO_KEY_MGMT_WAPI_CERT)) {
+		selcnt[0]++;
+		WLAN_CRYPTO_ADDSELECTOR(frm,
+				WLAN_WAPI_SEL(WLAN_WAI_CERT_OR_SMS4));
+	}
+
+	/* unicast cipher list */
+	selcnt = frm;
+	WLAN_CRYPTO_ADDSHORT(frm, 0);
+
+	if (UCIPHER_IS_SMS4(crypto_params)) {
+		selcnt[0]++;
+		WLAN_CRYPTO_ADDSELECTOR(frm,
+				WLAN_WAPI_SEL(WLAN_CRYPTO_WAPI_SMS4_CIPHER));
+	}
+
+	WLAN_CRYPTO_ADDSELECTOR(frm,
+				WLAN_WAPI_SEL(WLAN_CRYPTO_WAPI_SMS4_CIPHER));
+
+	/* optional capabilities */
+	WLAN_CRYPTO_ADDSHORT(frm, crypto_params->rsn_caps);
+
+	/* calculate element length */
+	iebuf[1] = frm - iebuf - 2;
+
+	return frm;
+
+}
+
 /**
  * wlan_crypto_pn_check - called by data patch for PN check
  *
