@@ -597,8 +597,8 @@ static struct CE_pipe_config target_ce_config_wlan_qca8074[] = {
 	{ /* CE4 */ 4, PIPEDIR_OUT, 256, 256,
 		(CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,},
 	/* NB: 50% of src nentries, since tx has 2 frags */
-	/* ipa_uc->target */
-	{ /* CE5 */ 5, PIPEDIR_INOUT_H2H, 0, 0, 0, 0,},
+	/* Target -> host PKTLOG */
+	{ /* CE5 */ 5, PIPEDIR_IN,  32, 2048, 0, 0,},
 	/* Reserved for target autonomous HIF_memcpy */
 	{ /* CE6 */ 6, PIPEDIR_INOUT, 32, 65535, 64, 0,},
 	/* CE7 used only by Host */
@@ -610,8 +610,6 @@ static struct CE_pipe_config target_ce_config_wlan_qca8074[] = {
 	{ /* CE9 */ 9, PIPEDIR_OUT,  32, 2048, 8192, 0,},
 	/* CE10 target->host HTT */
 	{ /* CE10 */ 10, PIPEDIR_INOUT_H2H,  0, 0, 0, 0,},
-	/* Target -> host PKTLOG */
-	{ /* CE11 */ 11, PIPEDIR_IN,  32, 2048, 48, 0,},
 };
 
 static struct CE_attr host_ce_config_wlan_qca8074_pci[] = {

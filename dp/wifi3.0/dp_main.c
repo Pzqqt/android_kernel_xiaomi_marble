@@ -4430,6 +4430,19 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 					&htt_tlv_filter);
 			}
 			break;
+		case WDI_EVENT_LITE_T2H:
+			if (pdev->monitor_vdev) {
+				/* Nothing needs to be done if monitor mode is
+				 * enabled
+				 */
+				return 0;
+			}
+			/* To enable HTT_H2T_MSG_TYPE_PPDU_STATS_CFG in FW
+			 * passing value 0xffff. Once these macros will define in htt
+			 * header file will use proper macros
+			*/
+			dp_h2t_cfg_stats_msg_send(pdev, 0xffff);
+			break;
 		default:
 			/* Nothing needs to be done for other pktlog types */
 			break;
@@ -4453,6 +4466,19 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 					RXDMA_MONITOR_STATUS, RX_BUFFER_SIZE,
 					&htt_tlv_filter);
 			}
+			break;
+		case WDI_EVENT_LITE_T2H:
+			if (pdev->monitor_vdev) {
+				/* Nothing needs to be done if monitor mode is
+				 * enabled
+				 */
+				return 0;
+			}
+			/* To disable HTT_H2T_MSG_TYPE_PPDU_STATS_CFG in FW
+			 * passing value 0. Once these macros will define in htt
+			 * header file will use proper macros
+			*/
+			dp_h2t_cfg_stats_msg_send(pdev, 0);
 			break;
 		default:
 			/* Nothing needs to be done for other pktlog types */

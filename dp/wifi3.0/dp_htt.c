@@ -830,19 +830,19 @@ int htt_h2t_rx_ring_cfg(void *htt_soc, int pdev_id, void *hal_srng,
 	*msg_word = 0;
 
 	if (htt_tlv_filter->enable_fp) {
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, FP,
 				CTRL, 0000, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, FP,
 				CTRL, 0001, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, FP,
 				CTRL, 0010, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, FP,
 				CTRL, 0011, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, FP,
 				CTRL, 0100, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, FP,
 				CTRL, 0101, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, FP,
 				CTRL, 0110, 1);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, FP,
 				CTRL, 0111, 1);
@@ -1326,21 +1326,17 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 		}
 #if defined(CONFIG_WIN) && WDI_EVENT_ENABLE
 #ifndef REMOVE_PKT_LOG
-	case HTT_T2H_MSG_TYPE_PKTLOG:
-		{
-			u_int32_t *pl_hdr;
-			pl_hdr = (msg_word + 1);
-			dp_wdi_event_handler(WDI_EVENT_OFFLOAD_ALL, soc->dp_soc,
-				(void *)pl_hdr, HTT_INVALID_PEER, WDI_NO_VAL, 0);
-			break;
-		}
 	case HTT_T2H_MSG_TYPE_PPDU_STATS_IND:
 		{
+			u_int8_t pdev_id;
 			qdf_nbuf_set_pktlen(htt_t2h_msg, HTT_T2H_MAX_MSG_SIZE);
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
 				"received HTT_T2H_MSG_TYPE_PPDU_STATS_IND\n");
+			pdev_id = HTT_T2H_PPDU_STATS_MAC_ID_GET(*msg_word);
+			pdev_id = DP_HW2SW_MACID(pdev_id);
 			dp_wdi_event_handler(WDI_EVENT_LITE_T2H, soc->dp_soc,
-				htt_t2h_msg, HTT_INVALID_PEER, WDI_NO_VAL, 0);
+				htt_t2h_msg, HTT_INVALID_PEER, WDI_NO_VAL,
+				pdev_id);
 			break;
 		}
 #endif
@@ -1660,3 +1656,88 @@ QDF_STATUS dp_h2t_ext_stats_msg_send(struct dp_pdev *pdev,
 	DP_HTT_SEND_HTC_PKT(soc, pkt);
 	return 0;
 }
+
+/* This macro will revert once proper HTT header will define for
+ * HTT_H2T_MSG_TYPE_PPDU_STATS_CFG in htt.h file
+ * */
+#if defined(CONFIG_WIN) && WDI_EVENT_ENABLE
+/**
+ * dp_h2t_cfg_stats_msg_send(): function to construct HTT message to pass to FW
+ * @pdev: DP PDEV handle
+ * @stats_type_upload_mask: stats type requested by user
+ *
+ * return: QDF STATUS
+ */
+QDF_STATUS dp_h2t_cfg_stats_msg_send(struct dp_pdev *pdev,
+		uint32_t stats_type_upload_mask)
+{
+	struct htt_soc *soc = pdev->soc->htt_handle;
+	struct dp_htt_htc_pkt *pkt;
+	qdf_nbuf_t msg;
+	uint32_t *msg_word;
+	uint8_t pdev_mask;
+
+	msg = qdf_nbuf_alloc(
+			soc->osdev,
+			HTT_MSG_BUF_SIZE(HTT_H2T_PPDU_STATS_CFG_MSG_SZ),
+			HTC_HEADER_LEN + HTC_HDR_ALIGNMENT_PADDING, 4, true);
+
+	if (!msg) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+		"Fail to allocate HTT_H2T_PPDU_STATS_CFG_MSG_SZ msg buffer\n");
+		qdf_assert(0);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	/*TODO:Add support for SOC stats
+	 * Bit 0: SOC Stats
+	 * Bit 1: Pdev stats for pdev id 0
+	 * Bit 2: Pdev stats for pdev id 1
+	 * Bit 3: Pdev stats for pdev id 2
+	 */
+	pdev_mask = 1 << DP_SW2HW_MACID(pdev->pdev_id);
+
+	/*
+	 * Set the length of the message.
+	 * The contribution from the HTC_HDR_ALIGNMENT_PADDING is added
+	 * separately during the below call to qdf_nbuf_push_head.
+	 * The contribution from the HTC header is added separately inside HTC.
+	 */
+	if (qdf_nbuf_put_tail(msg, HTT_H2T_PPDU_STATS_CFG_MSG_SZ) == NULL) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"Failed to expand head for HTT_CFG_STATS\n");
+		qdf_nbuf_free(msg);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	msg_word = (uint32_t *) qdf_nbuf_data(msg);
+
+	qdf_nbuf_push_head(msg, HTC_HDR_ALIGNMENT_PADDING);
+	*msg_word = 0;
+	HTT_H2T_MSG_TYPE_SET(*msg_word, HTT_H2T_MSG_TYPE_PPDU_STATS_CFG);
+	HTT_H2T_PPDU_STATS_CFG_PDEV_MASK_SET(*msg_word, pdev_mask);
+	HTT_H2T_PPDU_STATS_CFG_TLV_BITMASK_SET(*msg_word,
+			stats_type_upload_mask);
+
+	pkt = htt_htc_pkt_alloc(soc);
+	if (!pkt) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"Fail to allocate dp_htt_htc_pkt buffer\n");
+		qdf_assert(0);
+		qdf_nbuf_free(msg);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	pkt->soc_ctxt = NULL; /* not used during send-done callback */
+
+	SET_HTC_PACKET_INFO_TX(&pkt->htc_pkt,
+			dp_htt_h2t_send_complete_free_netbuf,
+			qdf_nbuf_data(msg), qdf_nbuf_len(msg),
+			soc->htc_endpoint,
+			1); /* tag - not relevant here */
+
+	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
+	DP_HTT_SEND_HTC_PKT(soc, pkt);
+	return 0;
+}
+#endif
