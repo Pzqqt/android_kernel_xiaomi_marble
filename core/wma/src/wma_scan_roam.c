@@ -3003,7 +3003,7 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		WMA_LOGE("policy_mgr_get_current_hw_mode failed");
 
-	if ((params->nss == 2) && !hw_mode.dbs_cap) {
+	if (params->nss == 2) {
 		req.preferred_rx_streams = 2;
 		req.preferred_tx_streams = 2;
 	} else {
