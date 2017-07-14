@@ -14250,17 +14250,19 @@ static QDF_STATUS send_roam_invoke_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->vdev_id = roaminvoke->vdev_id;
 	cmd->flags |= (1 << WMI_ROAM_INVOKE_FLAG_REPORT_FAILURE);
 
-	if (roaminvoke->frame_len)
+	if (roaminvoke->frame_len) {
 		cmd->roam_scan_mode = WMI_ROAM_INVOKE_SCAN_MODE_SKIP;
-	else
+		/* packing 1 beacon/probe_rsp frame with WMI cmd */
+		cmd->num_buf = 1;
+	} else {
 		cmd->roam_scan_mode = WMI_ROAM_INVOKE_SCAN_MODE_FIXED_CH;
+		cmd->num_buf = 0;
+	}
 
 	cmd->roam_ap_sel_mode = 0;
 	cmd->roam_delay = 0;
 	cmd->num_chan = 1;
 	cmd->num_bssid = 1;
-	/* packing 1 beacon/probe_rsp frame with WMI cmd */
-	cmd->num_buf = 1;
 
 	buf_ptr += sizeof(wmi_roam_invoke_cmd_fixed_param);
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32,
@@ -14296,7 +14298,11 @@ static QDF_STATUS send_roam_invoke_cmd_tlv(wmi_unified_t wmi_handle,
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
 			buf_ptr + WMI_TLV_HDR_SIZE,
 			roaminvoke->frame_len);
-	WMI_LOGD(FL("flags:%d, scan_mode:%d"), cmd->flags, cmd->roam_scan_mode);
+	WMI_LOGD(FL("flag:%d, MODE scn:%d, ap:%d, dly:%d, n_ch:%d, n_bssid:%d"),
+			cmd->flags, cmd->roam_scan_mode,
+			cmd->roam_ap_sel_mode, cmd->roam_delay,
+			cmd->num_chan, cmd->num_bssid);
+	WMI_LOGD(FL("BSSID: %pM, channel: %d"), roaminvoke->bssid, ch_hz);
 
 	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
 					WMI_ROAM_INVOKE_CMDID)) {
