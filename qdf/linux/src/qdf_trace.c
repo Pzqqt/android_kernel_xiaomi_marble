@@ -919,13 +919,9 @@ void qdf_dp_trace_set_track(qdf_nbuf_t nbuf, enum qdf_proto_dir dir)
 	spin_unlock_bh(&l_dp_trace_lock);
 }
 EXPORT_SYMBOL(qdf_dp_trace_set_track);
-#if CONFIG_MCL
+
 #define DPTRACE_PRINT(args...) \
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_DEBUG, ## args)
-#else
-#define DPTRACE_PRINT(args...) \
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_NONE, ## args)
-#endif
 
 /**
  * dump_hex_trace() - Display the data in buffer
