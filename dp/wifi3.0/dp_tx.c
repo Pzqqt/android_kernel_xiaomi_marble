@@ -2522,6 +2522,8 @@ dp_tx_me_send_convert_ucast(struct cdp_vdev *vdev_handle, qdf_nbuf_t nbuf,
 	uint8_t empty_entry_mac[DP_MAC_ADDR_LEN] = {0};
 	QDF_STATUS status;
 
+	qdf_mem_set(&msdu_info, sizeof(msdu_info), 0x0);
+
 	dp_tx_get_queue(vdev, nbuf, &msdu_info.tx_queue);
 
 	eh = (struct ether_header *) nbuf;
