@@ -76,6 +76,13 @@ QDF_STATUS csr_msg_processor(tpAniSirGlobal mac_ctx, void *msg_buf)
 			break;
 
 		default:
+			if (sme_rsp->messageType ==
+			    eWNI_SME_GET_STATISTICS_RSP) {
+				csr_roam_joined_state_msg_processor(mac_ctx,
+								    msg_buf);
+				break;
+			}
+
 			/*
 			 * For all other messages, we ignore it
 			 * To work-around an issue where checking for set/remove
