@@ -1055,6 +1055,18 @@ QDF_STATUS wlansap_set_invalid_session(void *cds_ctx);
  * Return: None
  */
 void sap_dfs_set_current_channel(void *sap_ctx);
+
+/**
+ * wlansap_cleanup_cac_timer() - Force cleanup DFS CAC timer
+ * @sap_ctx: sap context
+ *
+ * Force cleanup DFS CAC timer when reset all adapters. It will not
+ * check concurrency SAP since just called when reset all adapters.
+ *
+ * Return: None
+ */
+void wlansap_cleanup_cac_timer(void *sap_ctx);
+
 #ifdef __cplusplus
 }
 #endif

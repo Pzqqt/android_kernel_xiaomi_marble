@@ -3745,3 +3745,26 @@ wlansap_set_invalid_session(void *cds_ctx)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+void wlansap_cleanup_cac_timer(void *sap_ctx)
+{
+	tHalHandle hal;
+	ptSapContext psap_ctx;
+	tpAniSirGlobal pmac;
+
+	if (!sap_ctx)
+		return;
+
+	psap_ctx = CDS_GET_SAP_CB(sap_ctx);
+	hal = CDS_GET_HAL_CB(psap_ctx->p_cds_gctx);
+	pmac = PMAC_STRUCT(hal);
+	if (pmac->sap.SapDfsInfo.is_dfs_cac_timer_running) {
+		qdf_mc_timer_stop(&pmac->sap.SapDfsInfo.
+				  sap_dfs_cac_timer);
+		pmac->sap.SapDfsInfo.is_dfs_cac_timer_running = 0;
+		qdf_mc_timer_destroy(
+			&pmac->sap.SapDfsInfo.sap_dfs_cac_timer);
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			FL("sapdfs, force cleanup running dfs cac timer"));
+	}
+}

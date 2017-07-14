@@ -4316,13 +4316,17 @@ QDF_STATUS hdd_reset_all_adapters(hdd_context_t *hdd_ctx)
 			clear_bit(WMM_INIT_DONE, &adapter->event_flags);
 		}
 
-		/*
-		 * If adapter is SAP, set session ID to invalid since SAP
-		 * session will be cleanup during SSR.
-		 */
-		if (adapter->device_mode == QDF_SAP_MODE)
+		if (adapter->device_mode == QDF_SAP_MODE) {
+			/*
+			 * If adapter is SAP, set session ID to invalid
+			 * since SAP session will be cleanup during SSR.
+			 */
 			wlansap_set_invalid_session(
 				WLAN_HDD_GET_SAP_CTX_PTR(adapter));
+
+			wlansap_cleanup_cac_timer(
+				WLAN_HDD_GET_SAP_CTX_PTR(adapter));
+		}
 
 		/* Delete peers if any for STA and P2P client modes */
 		if (adapter->device_mode == QDF_STA_MODE ||
