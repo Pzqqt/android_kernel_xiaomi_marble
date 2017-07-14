@@ -639,8 +639,15 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint8_t vdev_id = pdel_sta_self_req_param->session_id;
 	struct wma_txrx_node *iface = &wma_handle->interfaces[vdev_id];
+	struct wma_target_req *req_msg;
 
 	if (qdf_atomic_read(&iface->bss_status) == WMA_BSS_STATUS_STARTED) {
+		req_msg = wma_find_vdev_req(wma_handle, vdev_id,
+				WMA_TARGET_REQ_TYPE_VDEV_STOP);
+		if (!req_msg)
+			goto send_fail_rsp;
+		if (req_msg->msg_type != WMA_DELETE_BSS_REQ)
+			goto send_fail_rsp;
 		WMA_LOGA("BSS is not yet stopped. Defering vdev(vdev id %x) deletion",
 			vdev_id);
 		iface->del_staself_req = pdel_sta_self_req_param;
@@ -675,6 +682,13 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 				pdel_sta_self_req_param, generateRsp);
 	}
 
+	return status;
+
+send_fail_rsp:
+	WMA_LOGE("rcvd del_self_sta without del_bss, send fail rsp, vdev_id %d",
+			 vdev_id);
+	pdel_sta_self_req_param->status = QDF_STATUS_E_FAILURE;
+	wma_send_del_sta_self_resp(pdel_sta_self_req_param);
 	return status;
 }
 
