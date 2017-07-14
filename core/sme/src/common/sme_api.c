@@ -1121,7 +1121,7 @@ static void sme_update_scan_roam_params(tpAniSirGlobal mac_ctx)
  * Return: Return the status of the updation.
  */
 QDF_STATUS sme_update_roam_params(tHalHandle hal,
-	uint8_t session_id, struct roam_ext_params roam_params_src,
+	uint8_t session_id, struct roam_ext_params *roam_params_src,
 	int update_param)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
@@ -1132,31 +1132,31 @@ QDF_STATUS sme_update_roam_params(tHalHandle hal,
 	switch (update_param) {
 	case REASON_ROAM_EXT_SCAN_PARAMS_CHANGED:
 		roam_params_dst->raise_rssi_thresh_5g =
-			roam_params_src.raise_rssi_thresh_5g;
+			roam_params_src->raise_rssi_thresh_5g;
 		roam_params_dst->drop_rssi_thresh_5g =
-			roam_params_src.drop_rssi_thresh_5g;
+			roam_params_src->drop_rssi_thresh_5g;
 		roam_params_dst->raise_factor_5g =
-			roam_params_src.raise_factor_5g;
+			roam_params_src->raise_factor_5g;
 		roam_params_dst->drop_factor_5g =
-			roam_params_src.drop_factor_5g;
+			roam_params_src->drop_factor_5g;
 		roam_params_dst->max_raise_rssi_5g =
-			roam_params_src.max_raise_rssi_5g;
+			roam_params_src->max_raise_rssi_5g;
 		roam_params_dst->max_drop_rssi_5g =
-			roam_params_src.max_drop_rssi_5g;
+			roam_params_src->max_drop_rssi_5g;
 		roam_params_dst->alert_rssi_threshold =
-			roam_params_src.alert_rssi_threshold;
+			roam_params_src->alert_rssi_threshold;
 		roam_params_dst->is_5g_pref_enabled = true;
 		break;
 	case REASON_ROAM_SET_SSID_ALLOWED:
 		qdf_mem_set(&roam_params_dst->ssid_allowed_list, 0,
 				sizeof(tSirMacSSid) * MAX_SSID_ALLOWED_LIST);
 		roam_params_dst->num_ssid_allowed_list =
-			roam_params_src.num_ssid_allowed_list;
+			roam_params_src->num_ssid_allowed_list;
 		for (i = 0; i < roam_params_dst->num_ssid_allowed_list; i++) {
 			roam_params_dst->ssid_allowed_list[i].length =
-				roam_params_src.ssid_allowed_list[i].length;
+				roam_params_src->ssid_allowed_list[i].length;
 			qdf_mem_copy(roam_params_dst->ssid_allowed_list[i].ssId,
-				roam_params_src.ssid_allowed_list[i].ssId,
+				roam_params_src->ssid_allowed_list[i].ssId,
 				roam_params_dst->ssid_allowed_list[i].length);
 		}
 		break;
@@ -1164,28 +1164,28 @@ QDF_STATUS sme_update_roam_params(tHalHandle hal,
 		qdf_mem_set(&roam_params_dst->bssid_favored, 0,
 			sizeof(tSirMacAddr) * MAX_BSSID_FAVORED);
 		roam_params_dst->num_bssid_favored =
-			roam_params_src.num_bssid_favored;
+			roam_params_src->num_bssid_favored;
 		for (i = 0; i < roam_params_dst->num_bssid_favored; i++) {
 			qdf_mem_copy(&roam_params_dst->bssid_favored[i],
-				&roam_params_src.bssid_favored[i],
+				&roam_params_src->bssid_favored[i],
 				sizeof(tSirMacAddr));
 			roam_params_dst->bssid_favored_factor[i] =
-				roam_params_src.bssid_favored_factor[i];
+				roam_params_src->bssid_favored_factor[i];
 		}
 		break;
 	case REASON_ROAM_SET_BLACKLIST_BSSID:
 		qdf_mem_set(&roam_params_dst->bssid_avoid_list, 0,
 			QDF_MAC_ADDR_SIZE * MAX_BSSID_AVOID_LIST);
 		roam_params_dst->num_bssid_avoid_list =
-			roam_params_src.num_bssid_avoid_list;
+			roam_params_src->num_bssid_avoid_list;
 		for (i = 0; i < roam_params_dst->num_bssid_avoid_list; i++) {
 			qdf_copy_macaddr(&roam_params_dst->bssid_avoid_list[i],
-					&roam_params_src.bssid_avoid_list[i]);
+					&roam_params_src->bssid_avoid_list[i]);
 		}
 		break;
 	case REASON_ROAM_GOOD_RSSI_CHANGED:
 		roam_params_dst->good_rssi_roam =
-			roam_params_src.good_rssi_roam;
+			roam_params_src->good_rssi_roam;
 		break;
 	default:
 		break;

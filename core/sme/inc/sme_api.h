@@ -256,7 +256,7 @@ QDF_STATUS sme_close_session(tHalHandle hHal, uint8_t sessionId,
 		csr_roamSessionCloseCallback callback,
 		void *pContext);
 QDF_STATUS sme_update_roam_params(tHalHandle hHal, uint8_t session_id,
-		struct roam_ext_params roam_params_src, int update_param);
+		struct roam_ext_params *roam_params_src, int update_param);
 QDF_STATUS sme_update_config(tHalHandle hHal,
 		tpSmeConfigParams pSmeConfigParams);
 

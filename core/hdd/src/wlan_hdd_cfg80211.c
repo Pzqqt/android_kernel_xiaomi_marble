@@ -3142,44 +3142,446 @@ wlan_hdd_cfg80211_get_features(struct wiphy *wiphy,
 	QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_WHITE_LIST_SSID_NUM_NETWORKS
 #define PARAM_SET_BSSID \
 	QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_BSSID_PARAMS_BSSID
-#define PRAM_SSID_LIST QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_WHITE_LIST_SSID_LIST
+#define PARAM_SSID_LIST QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_WHITE_LIST_SSID_LIST
 #define PARAM_LIST_SSID  QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_WHITE_LIST_SSID
-
 #define MAX_ROAMING_PARAM \
 	QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_MAX
+#define PARAM_NUM_BSSID \
+	QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_LAZY_ROAM_NUM_BSSID
+#define PARAM_BSSID_PREFS \
+	QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_BSSID_PREFS
+#define PARAM_ROAM_BSSID \
+	QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_LAZY_ROAM_BSSID
+#define PARAM_RSSI_MODIFIER \
+	QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_LAZY_ROAM_RSSI_MODIFIER
+#define PARAMS_NUM_BSSID \
+	QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_BSSID_PARAMS_NUM_BSSID
+#define PARAM_BSSID_PARAMS \
+	QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_BSSID_PARAMS
+#define PARAM_A_BAND_BOOST_THLD \
+	QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_A_BAND_BOOST_THRESHOLD
+#define PARAM_A_BAND_PELT_THLD \
+	QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_A_BAND_PENALTY_THRESHOLD
+#define PARAM_A_BAND_BOOST_FACTOR \
+	QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_A_BAND_BOOST_FACTOR
+#define PARAM_A_BAND_PELT_FACTOR \
+	QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_A_BAND_PENALTY_FACTOR
+#define PARAM_A_BAND_MAX_BOOST \
+	QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_A_BAND_MAX_BOOST
+#define PARAM_ROAM_HISTERESYS \
+	QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_LAZY_ROAM_HISTERESYS
+#define PARAM_RSSI_TRIGGER \
+	QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_ALERT_ROAM_RSSI_TRIGGER
+#define PARAM_ROAM_ENABLE \
+	QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_LAZY_ROAM_ENABLE
+
 
 static const struct nla_policy
 wlan_hdd_set_roam_param_policy[MAX_ROAMING_PARAM + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_ROAMING_SUBCMD] = {.type = NLA_U32},
 	[QCA_WLAN_VENDOR_ATTR_ROAMING_REQ_ID] = {.type = NLA_U32},
 	[PARAM_NUM_NW] = {.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_A_BAND_BOOST_FACTOR] = {
-						.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_A_BAND_PENALTY_FACTOR] = {
-						.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_A_BAND_MAX_BOOST] =	{
-						.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_LAZY_ROAM_HISTERESYS] = {
-						.type = NLA_S32},
-	[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_A_BAND_BOOST_THRESHOLD] = {
-						.type = NLA_S32},
-	[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_A_BAND_PENALTY_THRESHOLD] = {
-						.type = NLA_S32},
-	[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_ALERT_ROAM_RSSI_TRIGGER] = {
-						.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_LAZY_ROAM_ENABLE] = {
-						.type = NLA_S32},
-	[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_LAZY_ROAM_NUM_BSSID] = {
-						.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_LAZY_ROAM_RSSI_MODIFIER] = {
-						.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_BSSID_PARAMS_NUM_BSSID] = {
-						.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_LAZY_ROAM_BSSID] = {
-						.type = NLA_BINARY,
-						.len = QDF_MAC_ADDR_SIZE},
-	[PARAM_SET_BSSID] = {.type = NLA_BINARY, .len = QDF_MAC_ADDR_SIZE},
+	[PARAM_A_BAND_BOOST_FACTOR] = {.type = NLA_U32},
+	[PARAM_A_BAND_PELT_FACTOR] = {.type = NLA_U32},
+	[PARAM_A_BAND_MAX_BOOST] = {.type = NLA_U32},
+	[PARAM_ROAM_HISTERESYS] = {.type = NLA_S32},
+	[PARAM_A_BAND_BOOST_THLD] = {.type = NLA_S32},
+	[PARAM_A_BAND_BOOST_THLD] = {.type = NLA_S32},
+	[PARAM_RSSI_TRIGGER] = {.type = NLA_U32},
+	[PARAM_ROAM_ENABLE] = {	.type = NLA_S32},
+	[PARAM_NUM_BSSID] = {.type = NLA_U32},
+	[PARAM_RSSI_MODIFIER] = {.type = NLA_U32},
+	[PARAMS_NUM_BSSID] = {.type = NLA_U32},
+	[PARAM_ROAM_BSSID] = {.type = NLA_UNSPEC, .len = QDF_MAC_ADDR_SIZE},
+	[PARAM_SET_BSSID] = {.type = NLA_UNSPEC, .len = QDF_MAC_ADDR_SIZE},
 };
+
+/**
+ * hdd_set_white_list() - parse white list
+ * @hddctx:        HDD context
+ * @roam_params:   roam params
+ * @tb:            list of attributes
+ * @session_id:    session id
+ *
+ * Return: 0 on success; error number on failure
+ */
+static int hdd_set_white_list(hdd_context_t *hddctx,
+				struct roam_ext_params *roam_params,
+				struct nlattr **tb, uint8_t session_id)
+{
+	int rem, i;
+	uint32_t buf_len = 0, count;
+	struct nlattr *tb2[MAX_ROAMING_PARAM + 1];
+	struct nlattr *curr_attr = NULL;
+
+	i = 0;
+	if (tb[PARAM_NUM_NW]) {
+		count = nla_get_u32(tb[PARAM_NUM_NW]);
+	} else {
+		hdd_err("Number of networks is not provided");
+		goto fail;
+	}
+
+	if (count && tb[PARAM_SSID_LIST]) {
+		nla_for_each_nested(curr_attr,
+			tb[PARAM_SSID_LIST], rem) {
+			if (nla_parse(tb2,
+				QCA_WLAN_VENDOR_ATTR_ROAM_SUBCMD_MAX,
+				nla_data(curr_attr),
+				nla_len(curr_attr),
+				wlan_hdd_set_roam_param_policy)) {
+				hdd_err("nla_parse failed");
+				goto fail;
+			}
+			/* Parse and Fetch allowed SSID list*/
+			if (!tb2[PARAM_LIST_SSID]) {
+				hdd_err("attr allowed ssid failed");
+				goto fail;
+			}
+			buf_len = nla_len(tb2[PARAM_LIST_SSID]);
+			/*
+			 * Upper Layers include a null termination
+			 * character. Check for the actual permissible
+			 * length of SSID and also ensure not to copy
+			 * the NULL termination character to the driver
+			 * buffer.
+			 */
+			if (buf_len && (i < MAX_SSID_ALLOWED_LIST) &&
+			    ((buf_len - 1) <= SIR_MAC_MAX_SSID_LENGTH)) {
+				nla_memcpy(roam_params->ssid_allowed_list[i].ssId,
+					tb2[PARAM_LIST_SSID], buf_len - 1);
+				roam_params->ssid_allowed_list[i].length = buf_len - 1;
+				hdd_debug("SSID[%d]: %.*s,length = %d",
+					i,
+					roam_params->ssid_allowed_list[i].length,
+					roam_params->ssid_allowed_list[i].ssId,
+					roam_params->ssid_allowed_list[i].length);
+					i++;
+			} else {
+				hdd_err("Invalid buffer length");
+			}
+		}
+	}
+
+	if (i != count) {
+		hdd_err("Invalid number of SSIDs i = %d, count = %d", i, count);
+		goto fail;
+	}
+
+	roam_params->num_ssid_allowed_list = i;
+	hdd_debug("Num of Allowed SSID %d", roam_params->num_ssid_allowed_list);
+	sme_update_roam_params(hddctx->hHal, session_id,
+			       roam_params, REASON_ROAM_SET_SSID_ALLOWED);
+	return 0;
+
+fail:
+	return -EINVAL;
+}
+
+/**
+ * hdd_set_bssid_prefs() - parse set bssid prefs
+ * @hddctx:        HDD context
+ * @roam_params:   roam params
+ * @tb:            list of attributes
+ * @session_id:    session id
+ *
+ * Return: 0 on success; error number on failure
+ */
+static int hdd_set_bssid_prefs(hdd_context_t *hddctx,
+				struct roam_ext_params *roam_params,
+				struct nlattr **tb, uint8_t session_id)
+{
+	int rem, i;
+	uint32_t count;
+	struct nlattr *tb2[MAX_ROAMING_PARAM + 1];
+	struct nlattr *curr_attr = NULL;
+
+	/* Parse and fetch number of preferred BSSID */
+	if (!tb[PARAM_NUM_BSSID]) {
+		hdd_err("attr num of preferred bssid failed");
+		goto fail;
+	}
+	count = nla_get_u32(tb[PARAM_NUM_BSSID]);
+	if (count > MAX_BSSID_FAVORED) {
+		hdd_err("Preferred BSSID count %u exceeds max %u",
+			count, MAX_BSSID_FAVORED);
+		goto fail;
+	}
+	hdd_debug("Num of Preferred BSSID (%d)", count);
+	if (!tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_BSSID_PREFS]) {
+		hdd_err("attr Preferred BSSID failed");
+		goto fail;
+	}
+
+	i = 0;
+	nla_for_each_nested(curr_attr,
+		tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_BSSID_PREFS],
+		rem) {
+		if (i == count) {
+			hdd_warn("Ignoring excess Preferred BSSID");
+			break;
+		}
+
+		if (nla_parse(tb2,
+			QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_MAX,
+			nla_data(curr_attr), nla_len(curr_attr),
+			wlan_hdd_set_roam_param_policy)) {
+			hdd_err("nla_parse failed");
+			goto fail;
+		}
+		/* Parse and fetch MAC address */
+		if (!tb2[PARAM_ROAM_BSSID]) {
+			hdd_err("attr mac address failed");
+			goto fail;
+		}
+		nla_memcpy(roam_params->bssid_favored[i].bytes,
+			  tb2[PARAM_ROAM_BSSID],
+			  QDF_MAC_ADDR_SIZE);
+		hdd_debug(MAC_ADDRESS_STR,
+			  MAC_ADDR_ARRAY(roam_params->bssid_favored[i].bytes));
+		/* Parse and fetch preference factor*/
+		if (!tb2[PARAM_RSSI_MODIFIER]) {
+			hdd_err("BSSID Preference score failed");
+			goto fail;
+		}
+		roam_params->bssid_favored_factor[i] = nla_get_u32(
+			tb2[PARAM_RSSI_MODIFIER]);
+		hdd_debug("BSSID Preference score (%d)",
+			  roam_params->bssid_favored_factor[i]);
+		i++;
+	}
+	if (i < count)
+		hdd_warn("Num Preferred BSSID %u less than expected %u",
+				 i, count);
+
+	roam_params->num_bssid_favored = i;
+	sme_update_roam_params(hddctx->hHal, session_id,
+			       roam_params, REASON_ROAM_SET_FAVORED_BSSID);
+
+	return 0;
+
+fail:
+	return -EINVAL;
+}
+
+/**
+ * hdd_set_blacklist_bssid() - parse set blacklist bssid
+ * @hddctx:        HDD context
+ * @roam_params:   roam params
+ * @tb:            list of attributes
+ * @session_id:    session id
+ *
+ * Return: 0 on success; error number on failure
+ */
+static int hdd_set_blacklist_bssid(hdd_context_t *hddctx,
+				struct roam_ext_params *roam_params,
+				struct nlattr **tb,
+				uint8_t session_id)
+{
+	int rem, i;
+	uint32_t count;
+	struct nlattr *tb2[MAX_ROAMING_PARAM + 1];
+	struct nlattr *curr_attr = NULL;
+
+	/* Parse and fetch number of blacklist BSSID */
+	if (!tb[PARAMS_NUM_BSSID]) {
+		hdd_err("attr num of blacklist bssid failed");
+		goto fail;
+	}
+	count = nla_get_u32(tb[PARAMS_NUM_BSSID]);
+	if (count > MAX_BSSID_AVOID_LIST) {
+		hdd_err("Blacklist BSSID count %u exceeds max %u",
+			count, MAX_BSSID_AVOID_LIST);
+		goto fail;
+	}
+	hdd_debug("Num of blacklist BSSID (%d)", count);
+
+	i = 0;
+	if (count && tb[PARAM_BSSID_PARAMS]) {
+		nla_for_each_nested(curr_attr,
+			tb[PARAM_BSSID_PARAMS],
+			rem) {
+			if (i == count) {
+				hdd_warn("Ignoring excess Blacklist BSSID");
+				break;
+			}
+
+			if (nla_parse(tb2,
+				      QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_MAX,
+				      nla_data(curr_attr),
+				      nla_len(curr_attr),
+				      wlan_hdd_set_roam_param_policy)) {
+				hdd_err("nla_parse failed");
+				goto fail;
+			}
+			/* Parse and fetch MAC address */
+			if (!tb2[PARAM_SET_BSSID]) {
+				hdd_err("attr blacklist addr failed");
+				goto fail;
+			}
+			nla_memcpy(roam_params->bssid_avoid_list[i].bytes,
+				   tb2[PARAM_SET_BSSID], QDF_MAC_ADDR_SIZE);
+			hdd_debug(MAC_ADDRESS_STR,
+				  MAC_ADDR_ARRAY(roam_params->bssid_avoid_list[i].bytes));
+			i++;
+		}
+	}
+
+	if (i < count)
+		hdd_warn("Num Blacklist BSSID %u less than expected %u",
+			 i, count);
+
+	roam_params->num_bssid_avoid_list = i;
+	sme_update_roam_params(hddctx->hHal, session_id,
+			       roam_params, REASON_ROAM_SET_BLACKLIST_BSSID);
+
+	return 0;
+fail:
+	return -EINVAL;
+}
+
+/**
+ * hdd_set_ext_roam_params() - parse ext roam params
+ * @hddctx:        HDD context
+ * @roam_params:   roam params
+ * @tb:            list of attributes
+ * @session_id:    session id
+ *
+ * Return: 0 on success; error number on failure
+ */
+static int hdd_set_ext_roam_params(hdd_context_t *hddctx,
+				const void *data, int data_len,
+				uint8_t session_id,
+				struct roam_ext_params *roam_params)
+{
+	uint32_t cmd_type, req_id;
+	struct nlattr *tb[MAX_ROAMING_PARAM + 1];
+	int ret;
+
+	if (nla_parse(tb, MAX_ROAMING_PARAM, data, data_len,
+		wlan_hdd_set_roam_param_policy)) {
+		hdd_err("Invalid ATTR");
+		return -EINVAL;
+	}
+	/* Parse and fetch Command Type */
+	if (!tb[QCA_WLAN_VENDOR_ATTR_ROAMING_SUBCMD]) {
+		hdd_err("roam cmd type failed");
+		goto fail;
+	}
+
+	cmd_type = nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_ROAMING_SUBCMD]);
+	if (!tb[QCA_WLAN_VENDOR_ATTR_ROAMING_REQ_ID]) {
+		hdd_err("attr request id failed");
+		goto fail;
+	}
+	req_id = nla_get_u32(
+		tb[QCA_WLAN_VENDOR_ATTR_ROAMING_REQ_ID]);
+	hdd_debug("Req Id: %u Cmd Type: %u", req_id, cmd_type);
+	switch (cmd_type) {
+	case QCA_WLAN_VENDOR_ATTR_ROAM_SUBCMD_SSID_WHITE_LIST:
+		ret = hdd_set_white_list(hddctx, roam_params, tb, session_id);
+		if (ret)
+			goto fail;
+		break;
+
+	case QCA_WLAN_VENDOR_ATTR_ROAM_SUBCMD_SET_EXTSCAN_ROAM_PARAMS:
+		/* Parse and fetch 5G Boost Threshold */
+		if (!tb[PARAM_A_BAND_BOOST_THLD]) {
+			hdd_err("5G boost threshold failed");
+			goto fail;
+		}
+		roam_params->raise_rssi_thresh_5g = nla_get_s32(
+			tb[PARAM_A_BAND_BOOST_THLD]);
+		hdd_debug("5G Boost Threshold (%d)",
+			roam_params->raise_rssi_thresh_5g);
+		/* Parse and fetch 5G Penalty Threshold */
+		if (!tb[PARAM_A_BAND_BOOST_THLD]) {
+			hdd_err("5G penalty threshold failed");
+			goto fail;
+		}
+		roam_params->drop_rssi_thresh_5g = nla_get_s32(
+			tb[PARAM_A_BAND_BOOST_THLD]);
+		hdd_debug("5G Penalty Threshold (%d)",
+			roam_params->drop_rssi_thresh_5g);
+		/* Parse and fetch 5G Boost Factor */
+		if (!tb[PARAM_A_BAND_BOOST_FACTOR]) {
+			hdd_err("5G boost Factor failed");
+			goto fail;
+		}
+		roam_params->raise_factor_5g = nla_get_u32(
+			tb[PARAM_A_BAND_BOOST_FACTOR]);
+		hdd_debug("5G Boost Factor (%d)",
+			roam_params->raise_factor_5g);
+		/* Parse and fetch 5G Penalty factor */
+		if (!tb[PARAM_A_BAND_PELT_FACTOR]) {
+			hdd_err("5G Penalty Factor failed");
+			goto fail;
+		}
+		roam_params->drop_factor_5g = nla_get_u32(
+			tb[PARAM_A_BAND_PELT_FACTOR]);
+		hdd_debug("5G Penalty factor (%d)",
+			roam_params->drop_factor_5g);
+		/* Parse and fetch 5G Max Boost */
+		if (!tb[PARAM_A_BAND_MAX_BOOST]) {
+			hdd_err("5G Max Boost failed");
+			goto fail;
+		}
+		roam_params->max_raise_rssi_5g = nla_get_u32(
+			tb[PARAM_A_BAND_MAX_BOOST]);
+		hdd_debug("5G Max Boost (%d)",
+			roam_params->max_raise_rssi_5g);
+		/* Parse and fetch Rssi Diff */
+		if (!tb[PARAM_ROAM_HISTERESYS]) {
+			hdd_err("Rssi Diff failed");
+			goto fail;
+		}
+		roam_params->rssi_diff = nla_get_s32(
+			tb[PARAM_ROAM_HISTERESYS]);
+		hdd_debug("RSSI Diff (%d)",
+			roam_params->rssi_diff);
+		/* Parse and fetch Alert Rssi Threshold */
+		if (!tb[PARAM_RSSI_TRIGGER]) {
+			hdd_err("Alert Rssi Threshold failed");
+			goto fail;
+		}
+		roam_params->alert_rssi_threshold = nla_get_u32(
+			tb[PARAM_RSSI_TRIGGER]);
+		hdd_debug("Alert RSSI Threshold (%d)",
+			roam_params->alert_rssi_threshold);
+		sme_update_roam_params(hddctx->hHal, session_id,
+			roam_params,
+			REASON_ROAM_EXT_SCAN_PARAMS_CHANGED);
+		break;
+	case QCA_WLAN_VENDOR_ATTR_ROAM_SUBCMD_SET_LAZY_ROAM:
+		/* Parse and fetch Activate Good Rssi Roam */
+		if (!tb[PARAM_ROAM_ENABLE]) {
+			hdd_err("Activate Good Rssi Roam failed");
+			goto fail;
+		}
+		roam_params->good_rssi_roam = nla_get_s32(
+			tb[PARAM_ROAM_ENABLE]);
+		hdd_debug("Activate Good Rssi Roam (%d)",
+			roam_params->good_rssi_roam);
+		sme_update_roam_params(hddctx->hHal, session_id,
+			roam_params, REASON_ROAM_GOOD_RSSI_CHANGED);
+		break;
+	case QCA_WLAN_VENDOR_ATTR_ROAM_SUBCMD_SET_BSSID_PREFS:
+		ret = hdd_set_bssid_prefs(hddctx, roam_params, tb, session_id);
+		if (ret)
+			goto fail;
+		break;
+	case QCA_WLAN_VENDOR_ATTR_ROAM_SUBCMD_SET_BLACKLIST_BSSID:
+		ret = hdd_set_blacklist_bssid(hddctx, roam_params, tb, session_id);
+		if (ret)
+			goto fail;
+		break;
+	}
+
+	return 0;
+
+fail:
+	return -EINVAL;
+}
 
 /**
  * __wlan_hdd_cfg80211_set_ext_roam_params() - Settings for roaming parameters
@@ -3200,15 +3602,7 @@ __wlan_hdd_cfg80211_set_ext_roam_params(struct wiphy *wiphy,
 	struct net_device *dev = wdev->netdev;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *pHddCtx = wiphy_priv(wiphy);
-	uint8_t session_id;
-	struct roam_ext_params roam_params;
-	uint32_t cmd_type, req_id;
-	struct nlattr *curr_attr = NULL;
-	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_MAX + 1];
-	struct nlattr *tb2[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_MAX + 1];
-	int rem, i;
-	uint32_t buf_len = 0;
-	uint32_t count;
+	struct roam_ext_params *roam_params = NULL;
 	int ret;
 
 	ENTER_DEV(dev);
@@ -3227,302 +3621,45 @@ __wlan_hdd_cfg80211_set_ext_roam_params(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_MAX,
-		data, data_len,
-		wlan_hdd_set_roam_param_policy)) {
-		hdd_err("Invalid ATTR");
-		return -EINVAL;
+	roam_params = qdf_mem_malloc(sizeof(*roam_params));
+	if (!roam_params) {
+		hdd_err("failed to allocate memory");
+		return -ENOMEM;
 	}
-	/* Parse and fetch Command Type*/
-	if (!tb[QCA_WLAN_VENDOR_ATTR_ROAMING_SUBCMD]) {
-		hdd_err("roam cmd type failed");
+
+	ret = hdd_set_ext_roam_params(pHddCtx, data, data_len,
+				      pAdapter->sessionId, roam_params);
+	if (ret)
 		goto fail;
-	}
-	session_id = pAdapter->sessionId;
-	qdf_mem_set(&roam_params, sizeof(roam_params), 0);
-	cmd_type = nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_ROAMING_SUBCMD]);
-	if (!tb[QCA_WLAN_VENDOR_ATTR_ROAMING_REQ_ID]) {
-		hdd_err("attr request id failed");
-		goto fail;
-	}
-	req_id = nla_get_u32(
-		tb[QCA_WLAN_VENDOR_ATTR_ROAMING_REQ_ID]);
-	hdd_debug("Req Id (%d)", req_id);
-	hdd_debug("Cmd Type (%d)", cmd_type);
-	switch (cmd_type) {
-	case QCA_WLAN_VENDOR_ATTR_ROAM_SUBCMD_SSID_WHITE_LIST:
-		i = 0;
-		if (tb[PARAM_NUM_NW]) {
-			count = nla_get_u32(
-			tb[PARAM_NUM_NW]);
-		} else {
-			hdd_err("Number of networks is not provided");
-			goto fail;
-		}
 
-		if (count &&
-		tb[PRAM_SSID_LIST]) {
-			nla_for_each_nested(curr_attr,
-			tb[PRAM_SSID_LIST], rem) {
-				if (nla_parse(tb2,
-					QCA_WLAN_VENDOR_ATTR_ROAM_SUBCMD_MAX,
-					nla_data(curr_attr), nla_len(curr_attr),
-					wlan_hdd_set_roam_param_policy)) {
-					hdd_err("nla_parse failed");
-					goto fail;
-				}
-				/* Parse and Fetch allowed SSID list*/
-				if (!tb2[PARAM_LIST_SSID]) {
-					hdd_err("attr allowed ssid failed");
-					goto fail;
-				}
-				buf_len = nla_len(tb2[PARAM_LIST_SSID]);
-				/*
-				 * Upper Layers include a null termination
-				 * character. Check for the actual permissible
-				 * length of SSID and also ensure not to copy
-				 * the NULL termination character to the driver
-				 * buffer.
-				 */
-				if (buf_len && (i < MAX_SSID_ALLOWED_LIST) &&
-				    ((buf_len - 1) <=
-				    SIR_MAC_MAX_SSID_LENGTH)) {
-					nla_memcpy(
-					roam_params.ssid_allowed_list[i].ssId,
-					tb2[PARAM_LIST_SSID], buf_len - 1);
-					roam_params.ssid_allowed_list[i].length
-					 = buf_len - 1;
-					hdd_debug("SSID[%d]: %.*s,length = %d",
-					i,
-					roam_params.ssid_allowed_list[i].length,
-					roam_params.ssid_allowed_list[i].ssId,
-					roam_params.ssid_allowed_list[i].length);
-					i++;
-				} else {
-					hdd_err("Invalid buffer length");
-				}
-			}
-		}
-		if (i != count) {
-			hdd_err("Invalid number of SSIDs i = %d, count = %d",
-						i, count);
-			goto fail;
-		}
-
-		roam_params.num_ssid_allowed_list = i;
-		hdd_debug("Num of Allowed SSID %d",
-			roam_params.num_ssid_allowed_list);
-		sme_update_roam_params(pHddCtx->hHal, session_id,
-				roam_params, REASON_ROAM_SET_SSID_ALLOWED);
-		break;
-	case QCA_WLAN_VENDOR_ATTR_ROAM_SUBCMD_SET_EXTSCAN_ROAM_PARAMS:
-		/* Parse and fetch 5G Boost Threshold */
-		if (!tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_A_BAND_BOOST_THRESHOLD]) {
-			hdd_err("5G boost threshold failed");
-			goto fail;
-		}
-		roam_params.raise_rssi_thresh_5g = nla_get_s32(
-			tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_A_BAND_BOOST_THRESHOLD]);
-		hdd_debug("5G Boost Threshold (%d)",
-			roam_params.raise_rssi_thresh_5g);
-		/* Parse and fetch 5G Penalty Threshold */
-		if (!tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_A_BAND_PENALTY_THRESHOLD]) {
-			hdd_err("5G penalty threshold failed");
-			goto fail;
-		}
-		roam_params.drop_rssi_thresh_5g = nla_get_s32(
-			tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_A_BAND_PENALTY_THRESHOLD]);
-		hdd_debug("5G Penalty Threshold (%d)",
-			roam_params.drop_rssi_thresh_5g);
-		/* Parse and fetch 5G Boost Factor */
-		if (!tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_A_BAND_BOOST_FACTOR]) {
-			hdd_err("5G boost Factor failed");
-			goto fail;
-		}
-		roam_params.raise_factor_5g = nla_get_u32(
-			tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_A_BAND_BOOST_FACTOR]);
-		hdd_debug("5G Boost Factor (%d)",
-			roam_params.raise_factor_5g);
-		/* Parse and fetch 5G Penalty factor */
-		if (!tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_A_BAND_PENALTY_FACTOR]) {
-			hdd_err("5G Penalty Factor failed");
-			goto fail;
-		}
-		roam_params.drop_factor_5g = nla_get_u32(
-			tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_A_BAND_PENALTY_FACTOR]);
-		hdd_debug("5G Penalty factor (%d)",
-			roam_params.drop_factor_5g);
-		/* Parse and fetch 5G Max Boost */
-		if (!tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_A_BAND_MAX_BOOST]) {
-			hdd_err("5G Max Boost failed");
-			goto fail;
-		}
-		roam_params.max_raise_rssi_5g = nla_get_u32(
-			tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_A_BAND_MAX_BOOST]);
-		hdd_debug("5G Max Boost (%d)",
-			roam_params.max_raise_rssi_5g);
-		/* Parse and fetch Rssi Diff */
-		if (!tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_LAZY_ROAM_HISTERESYS]) {
-			hdd_err("Rssi Diff failed");
-			goto fail;
-		}
-		roam_params.rssi_diff = nla_get_s32(
-			tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_LAZY_ROAM_HISTERESYS]);
-		hdd_debug("RSSI Diff (%d)",
-			roam_params.rssi_diff);
-		/* Parse and fetch Alert Rssi Threshold */
-		if (!tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_ALERT_ROAM_RSSI_TRIGGER]) {
-			hdd_err("Alert Rssi Threshold failed");
-			goto fail;
-		}
-		roam_params.alert_rssi_threshold = nla_get_u32(
-			tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_ALERT_ROAM_RSSI_TRIGGER]);
-		hdd_debug("Alert RSSI Threshold (%d)",
-			roam_params.alert_rssi_threshold);
-		sme_update_roam_params(pHddCtx->hHal, session_id,
-			roam_params,
-			REASON_ROAM_EXT_SCAN_PARAMS_CHANGED);
-		break;
-	case QCA_WLAN_VENDOR_ATTR_ROAM_SUBCMD_SET_LAZY_ROAM:
-		/* Parse and fetch Activate Good Rssi Roam */
-		if (!tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_LAZY_ROAM_ENABLE]) {
-			hdd_err("Activate Good Rssi Roam failed");
-			goto fail;
-		}
-		roam_params.good_rssi_roam = nla_get_s32(
-			tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_LAZY_ROAM_ENABLE]);
-		hdd_debug("Activate Good Rssi Roam (%d)",
-			roam_params.good_rssi_roam);
-		sme_update_roam_params(pHddCtx->hHal, session_id,
-			roam_params, REASON_ROAM_GOOD_RSSI_CHANGED);
-		break;
-	case QCA_WLAN_VENDOR_ATTR_ROAM_SUBCMD_SET_BSSID_PREFS:
-		/* Parse and fetch number of preferred BSSID */
-		if (!tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_LAZY_ROAM_NUM_BSSID]) {
-			hdd_err("attr num of preferred bssid failed");
-			goto fail;
-		}
-		count = nla_get_u32(
-			tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_LAZY_ROAM_NUM_BSSID]);
-		if (count > MAX_BSSID_FAVORED) {
-			hdd_err("Preferred BSSID count %u exceeds max %u",
-				count, MAX_BSSID_FAVORED);
-			goto fail;
-		}
-		hdd_debug("Num of Preferred BSSID (%d)", count);
-		if (!tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_BSSID_PREFS]) {
-			hdd_err("attr Preferred BSSID failed");
-			goto fail;
-		}
-		i = 0;
-		nla_for_each_nested(curr_attr,
-			tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_BSSID_PREFS],
-			rem) {
-
-			if (i == count) {
-				hdd_warn("Ignoring excess Preferred BSSID");
-				break;
-			}
-
-			if (nla_parse(tb2,
-				QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_MAX,
-				nla_data(curr_attr), nla_len(curr_attr),
-				wlan_hdd_set_roam_param_policy)) {
-				hdd_err("nla_parse failed");
-				goto fail;
-			}
-			/* Parse and fetch MAC address */
-			if (!tb2[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_LAZY_ROAM_BSSID]) {
-				hdd_err("attr mac address failed");
-				goto fail;
-			}
-			nla_memcpy(roam_params.bssid_favored[i].bytes,
-				tb2[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_LAZY_ROAM_BSSID],
-				QDF_MAC_ADDR_SIZE);
-			hdd_debug(MAC_ADDRESS_STR,
-			    MAC_ADDR_ARRAY(roam_params.bssid_favored[i].bytes));
-			/* Parse and fetch preference factor*/
-			if (!tb2[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_LAZY_ROAM_RSSI_MODIFIER]) {
-				hdd_err("BSSID Preference score failed");
-				goto fail;
-			}
-			roam_params.bssid_favored_factor[i] = nla_get_u32(
-				tb2[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_LAZY_ROAM_RSSI_MODIFIER]);
-			hdd_debug("BSSID Preference score (%d)",
-				roam_params.bssid_favored_factor[i]);
-			i++;
-		}
-		if (i < count)
-			hdd_warn("Num Preferred BSSID %u less than expected %u",
-				 i, count);
-		roam_params.num_bssid_favored = i;
-		sme_update_roam_params(pHddCtx->hHal, session_id,
-			roam_params, REASON_ROAM_SET_FAVORED_BSSID);
-		break;
-	case QCA_WLAN_VENDOR_ATTR_ROAM_SUBCMD_SET_BLACKLIST_BSSID:
-		/* Parse and fetch number of blacklist BSSID */
-		if (!tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_BSSID_PARAMS_NUM_BSSID]) {
-			hdd_err("attr num of blacklist bssid failed");
-			goto fail;
-		}
-		count = nla_get_u32(
-			tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_BSSID_PARAMS_NUM_BSSID]);
-		if (count > MAX_BSSID_AVOID_LIST) {
-			hdd_err("Blacklist BSSID count %u exceeds max %u",
-				count, MAX_BSSID_AVOID_LIST);
-			goto fail;
-		}
-		hdd_debug("Num of blacklist BSSID (%d)", count);
-		i = 0;
-
-		if (count &&
-		    tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_BSSID_PARAMS]) {
-			nla_for_each_nested(curr_attr,
-			tb[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_BSSID_PARAMS],
-			rem) {
-
-				if (i == count) {
-					hdd_warn("Ignoring excess Blacklist BSSID");
-					break;
-				}
-
-				if (nla_parse(tb2,
-				   QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_MAX,
-				   nla_data(curr_attr), nla_len(curr_attr),
-				   wlan_hdd_set_roam_param_policy)) {
-					hdd_err("nla_parse failed");
-					goto fail;
-				}
-				/* Parse and fetch MAC address */
-				if (!tb2[PARAM_SET_BSSID]) {
-					hdd_err("attr blacklist addr failed");
-					goto fail;
-				}
-				nla_memcpy(
-				   roam_params.bssid_avoid_list[i].bytes,
-				   tb2[PARAM_SET_BSSID], QDF_MAC_ADDR_SIZE);
-				hdd_debug(MAC_ADDRESS_STR,
-					MAC_ADDR_ARRAY(
-					roam_params.bssid_avoid_list[i].bytes));
-				i++;
-			}
-		}
-		if (i < count)
-			hdd_warn("Num Blacklist BSSID %u less than expected %u",
-				 i, count);
-		roam_params.num_bssid_avoid_list = i;
-		sme_update_roam_params(pHddCtx->hHal, session_id,
-			roam_params, REASON_ROAM_SET_BLACKLIST_BSSID);
-		break;
-	}
+	if (roam_params)
+		qdf_mem_free(roam_params);
 	return 0;
 fail:
-	return -EINVAL;
+	if (roam_params)
+		qdf_mem_free(roam_params);
+
+	return ret;
 }
 #undef PARAM_NUM_NW
 #undef PARAM_SET_BSSID
-#undef PRAM_SSID_LIST
+#undef PARAM_SSID_LIST
 #undef PARAM_LIST_SSID
+#undef MAX_ROAMING_PARAM
+#undef PARAM_NUM_BSSID
+#undef PARAM_BSSID_PREFS
+#undef PARAM_ROAM_BSSID
+#undef PARAM_RSSI_MODIFIER
+#undef PARAMS_NUM_BSSID
+#undef PARAM_BSSID_PARAMS
+#undef PARAM_A_BAND_BOOST_THLD
+#undef PARAM_A_BAND_PELT_THLD
+#undef PARAM_A_BAND_BOOST_FACTOR
+#undef PARAM_A_BAND_PELT_FACTOR
+#undef PARAM_A_BAND_MAX_BOOST
+#undef PARAM_ROAM_HISTERESYS
+#undef PARAM_RSSI_TRIGGER
+#undef PARAM_ROAM_ENABLE
 
 
 /**
