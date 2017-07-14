@@ -968,7 +968,7 @@ int wma_peer_state_change_event_handler(void *handle,
 	event = param_buf->fixed_param;
 	vdev = wma_find_vdev_by_id(wma_handle, event->vdev_id);
 	if (NULL == vdev) {
-		WMA_LOGP("%s: Couldn't find vdev for vdev_id: %d",
+		WMA_LOGD("%s: Couldn't find vdev for vdev_id: %d",
 			 __func__, event->vdev_id);
 		return -EINVAL;
 	}
