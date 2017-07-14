@@ -3188,6 +3188,9 @@ tSirRetStatus lim_process_sme_del_all_tdls_peers(tpAniSirGlobal p_mac,
 
 	lim_check_aid_and_delete_peer(p_mac, session_entry);
 
+	tgt_tdls_peers_deleted_notification(p_mac->psoc,
+					    session_entry->smeSessionId);
+
 	return eSIR_SUCCESS;
 }
 

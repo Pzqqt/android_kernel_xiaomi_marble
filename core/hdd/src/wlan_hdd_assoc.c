@@ -1256,7 +1256,8 @@ static void hdd_send_association_event(struct net_device *dev,
 			hdd_debug("LFR3:hdd_send_association_event");
 			/* Update tdls module about the disconnection event */
 			hdd_notify_sta_disconnect(adapter->sessionId,
-						 true, adapter->hdd_vdev);
+						 true, false,
+						 adapter->hdd_vdev);
 		}
 #endif
 	if (eConnectionState_Associated == sta_ctx->conn_info.connState) {
@@ -1407,6 +1408,7 @@ static void hdd_send_association_event(struct net_device *dev,
 		hdd_lpass_notify_disconnect(adapter);
 		/* Update tdls module about the disconnection event */
 		hdd_notify_sta_disconnect(adapter->sessionId,
+					  false,
 					  false,
 					  adapter->hdd_vdev);
 

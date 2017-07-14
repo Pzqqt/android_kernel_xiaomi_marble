@@ -17526,12 +17526,10 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 				adapter->sessionId, INVALID_SCAN_ID, false);
 		}
 		wlan_hdd_cleanup_remain_on_channel_ctx(adapter);
-#ifdef FEATURE_WLAN_TDLS
 		/* First clean up the tdls peers if any */
-		/* TDLS-TODO */
 		hdd_notify_sta_disconnect(adapter->sessionId,
-					  true, adapter->hdd_vdev);
-#endif
+			  false, true, adapter->hdd_vdev);
+
 		hdd_info("Disconnect request from user space with reason: %d (%s) internal reason code: %d",
 			reason, hdd_ieee80211_reason_code_to_str(reason), reasonCode);
 		status = wlan_hdd_disconnect(adapter, reasonCode);
