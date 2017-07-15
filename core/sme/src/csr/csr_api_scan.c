@@ -3380,13 +3380,14 @@ static QDF_STATUS csr_send_mb_scan_req(tpAniSirGlobal pMac, uint16_t sessionId,
 		}
 		if (CSR_ROAM_SESSION_MAX == i) {
 			uint32_t len = QDF_MAC_ADDR_SIZE;
+			tSirRetStatus sir_status;
 
-			status = wlan_cfg_get_str(pMac, WNI_CFG_STA_ID,
+			sir_status = wlan_cfg_get_str(pMac, WNI_CFG_STA_ID,
 						  selfmac.bytes, &len);
-			if (!QDF_IS_STATUS_SUCCESS(status)
+			if ((sir_status != eSIR_SUCCESS)
 			    || (len < QDF_MAC_ADDR_SIZE)) {
-				sme_err("Can't get self MAC address: %d",
-					status);
+				sme_err("Can't get self MAC: status:%d len:%d",
+					sir_status, len);
 				status = QDF_STATUS_E_FAILURE;
 				goto send_scan_req;
 			}
@@ -4603,18 +4604,20 @@ static void csr_set_cfg_country_code(tpAniSirGlobal pMac, uint8_t *countryCode)
 QDF_STATUS csr_get_country_code(tpAniSirGlobal pMac, uint8_t *pBuf,
 				uint8_t *pbLen)
 {
-	QDF_STATUS status = QDF_STATUS_E_INVAL;
+	tSirRetStatus status;
 	uint32_t len;
 
 	if (pBuf && pbLen && (*pbLen >= WNI_CFG_COUNTRY_CODE_LEN)) {
 		len = *pbLen;
 		status = wlan_cfg_get_str(pMac, WNI_CFG_COUNTRY_CODE, pBuf,
 					&len);
-		if (QDF_IS_STATUS_SUCCESS(status))
+		if (status == eSIR_SUCCESS) {
 			*pbLen = (uint8_t) len;
+			return QDF_STATUS_SUCCESS;
+		}
 	}
 
-	return status;
+	return QDF_STATUS_E_INVAL;
 }
 
 void csr_set_cfg_scan_control_list(tpAniSirGlobal pMac, uint8_t *countryCode,

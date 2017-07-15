@@ -2962,7 +2962,7 @@ sme_qos_ese_save_tspec_response(tpAniSirGlobal pMac, uint8_t sessionId,
 	pAddtsRsp->rc = eSIR_SUCCESS;
 	pAddtsRsp->sessionId = sessionId;
 	pAddtsRsp->rsp.dialogToken = 0;
-	pAddtsRsp->rsp.status = eSIR_SUCCESS;
+	pAddtsRsp->rsp.status = eSIR_MAC_SUCCESS_STATUS;
 	pAddtsRsp->rsp.wmeTspecPresent = pTspec->present;
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: Copy Tspec to local data structure ac=%d, tspecIdx=%d",
@@ -6771,7 +6771,7 @@ QDF_STATUS sme_qos_del_ts_ind_fnp(tpAniSirGlobal pMac, tListElem *pEntry)
 	if (!QDF_IS_STATUS_SUCCESS(lock_status)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: Unable to obtain lock", __func__, __LINE__);
-		return SME_QOS_STATUS_RELEASE_FAILURE_RSP;
+		return QDF_STATUS_E_FAILURE;
 	}
 	/* Call the internal function for QoS release, adding a layer of abstraction */
 	status =
@@ -7538,10 +7538,8 @@ bool qos_process_command(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 				sme_qos_add_ts_req(pMac, (uint8_t) pCommand->sessionId,
 						   &pCommand->u.qosCmd.tspecInfo,
 						   pCommand->u.qosCmd.ac);
-			if (QDF_IS_STATUS_SUCCESS(status)) {
+			if (QDF_IS_STATUS_SUCCESS(status))
 				fRemoveCmd = false;
-				status = SME_QOS_STATUS_SETUP_REQ_PENDING_RSP;
-			}
 			break;
 		case eSmeCommandDelTs:
 			status =

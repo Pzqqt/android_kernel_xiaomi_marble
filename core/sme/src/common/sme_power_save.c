@@ -440,7 +440,7 @@ QDF_STATUS sme_ps_process_command(tpAniSirGlobal mac_ctx, uint32_t session_id,
 
 	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
 		sme_err("Invalid Session_id: %d", session_id);
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_INVAL;
 	}
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 			FL("Power Save command %d"), command);
