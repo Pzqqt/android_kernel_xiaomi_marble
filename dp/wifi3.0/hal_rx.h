@@ -1658,6 +1658,10 @@ struct hal_buf_info {
 	uint32_t sw_cookie;
 };
 
+/* This special cookie value will be used to indicate FW allocated buffers
+ * received through RXDMA2SW ring for RXDMA WARs */
+#define HAL_RX_COOKIE_SPECIAL 0x1fffff
+
 /**
  * hal_rx_msdu_link_desc_get(): API to get the MSDU information
  * from the MSDU link descriptor
@@ -1820,6 +1824,7 @@ enum hal_reo_error_code {
  * @ HAL_RXDMA_ERR_DA_TIMEOUT    : Destination Address  search timeout
  * @ HAL_RXDMA_ERR_FLOW_TIMEOUT  : Flow Search Timeout
  * @ HAL_RXDMA_ERR_FLUSH_REQUEST : RxDMA FIFO Flush request
+ * @ HAL_RXDMA_ERR_WAR           : RxDMA WAR dummy errors
  */
 enum hal_rxdma_error_code {
 	HAL_RXDMA_ERR_OVERFLOW = 0,
@@ -1835,7 +1840,8 @@ enum hal_rxdma_error_code {
 	HAL_RXDMA_ERR_SA_TIMEOUT,
 	HAL_RXDMA_ERR_DA_TIMEOUT,
 	HAL_RXDMA_ERR_FLOW_TIMEOUT,
-	HAL_RXDMA_ERR_FLUSH_REQUEST
+	HAL_RXDMA_ERR_FLUSH_REQUEST,
+	HAL_RXDMA_ERR_WAR = 31
 };
 
 /**

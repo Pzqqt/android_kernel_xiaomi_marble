@@ -956,6 +956,8 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	uint32_t msdu_cnt;
 	uint32_t i;
 	bool mpdu_err;
+	uint8_t push_reason;
+	uint8_t rxdma_error_code = 0;
 
 	msdu = 0;
 
@@ -963,6 +965,13 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 
 	hal_rx_reo_ent_buf_paddr_get(rxdma_dst_ring_desc, &buf_info,
 		&p_last_buf_addr_info, &msdu_cnt, &mpdu_err);
+
+	push_reason =
+		hal_rx_reo_ent_rxdma_push_reason_get(rxdma_dst_ring_desc);
+	if (push_reason == HAL_RX_WBM_RXDMA_PSH_RSN_ERROR) {
+		rxdma_error_code =
+			hal_rx_reo_ent_rxdma_error_code_get(rxdma_dst_ring_desc);
+	}
 
 	do {
 		rx_msdu_link_desc =
@@ -977,11 +986,11 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 
 		msdu_cnt -= num_msdus;
 
-		for (i = 0; i < num_msdus; i++) {
-			struct dp_rx_desc *rx_desc =
-				dp_rx_cookie_2_va_rxdma_buf(soc,
-					msdu_list.sw_cookie[i]);
-
+		if (msdu_list.sw_cookie[0] != HAL_RX_COOKIE_SPECIAL) {
+			for (i = 0; i < num_msdus; i++) {
+				struct dp_rx_desc *rx_desc =
+					dp_rx_cookie_2_va_rxdma_buf(soc,
+						msdu_list.sw_cookie[i]);
 				qdf_assert(rx_desc);
 				msdu = rx_desc->nbuf;
 
@@ -997,6 +1006,9 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 				rx_bufs_used++;
 				dp_rx_add_to_free_desc_list(head,
 					tail, rx_desc);
+			}
+		} else {
+			rxdma_error_code = HAL_RXDMA_ERR_WAR;
 		}
 
 		hal_rx_mon_next_link_desc_get(rx_msdu_link_desc, &buf_info,
@@ -1006,6 +1018,8 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 		p_last_buf_addr_info = p_buf_addr_info;
 
 	} while (buf_info.paddr && msdu_cnt);
+
+	DP_STATS_INC(soc, rx.err.rxdma_error[rxdma_error_code], 1);
 
 	return rx_bufs_used;
 }
