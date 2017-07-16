@@ -1683,21 +1683,17 @@ static inline void hal_rx_msdu_list_get(void *msdu_link_desc,
 	struct rx_msdu_link *msdu_link = (struct rx_msdu_link *)msdu_link_desc;
 	int i;
 
-	if (*num_msdus > HAL_RX_NUM_MSDU_DESC)
-		*num_msdus = HAL_RX_NUM_MSDU_DESC;
-
 	msdu_details = HAL_RX_LINK_DESC_MSDU0_PTR(msdu_link);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 		"[%s][%d] msdu_link=%p msdu_details=%p\n",
 		__func__, __LINE__, msdu_link, msdu_details);
 
-	for (i = 0; i < *num_msdus; i++) {
+	for (i = 0; i < HAL_RX_NUM_MSDU_DESC; i++) {
 		/* num_msdus received in mpdu descriptor may be incorrect
 		 * sometimes due to HW issue. Check msdu buffer address also */
 		if (HAL_RX_BUFFER_ADDR_31_0_GET(
 			&msdu_details[i].buffer_addr_info_details) == 0) {
-			*num_msdus = i;
 			break;
 		}
 		msdu_desc_info = HAL_RX_MSDU_DESC_INFO_GET(&msdu_details[i]);
@@ -1713,6 +1709,7 @@ static inline void hal_rx_msdu_list_get(void *msdu_link_desc,
 			"[%s][%d] i=%d sw_cookie=%d\n",
 			__func__, __LINE__, i, msdu_list->sw_cookie[i]);
 	}
+	*num_msdus = i;
 }
 
 /**

@@ -85,6 +85,27 @@ done:
 }
 
 /**
+ * dp_mon_adjust_frag_len() - MPDU and MSDU may spread across
+ *				multiple nbufs. This function
+ *                              is to return data length in
+ *				fragmented buffer
+ *
+ * @total_len: pointer to remaining data length.
+ * @frag_len: poiter to data length in this fragment.
+*/
+static inline void dp_mon_adjust_frag_len(uint32_t *total_len,
+uint32_t *frag_len)
+{
+	if (*total_len >= (RX_BUFFER_SIZE - RX_PKT_TLVS_LEN)) {
+		*frag_len = RX_BUFFER_SIZE - RX_PKT_TLVS_LEN;
+		*total_len -= *frag_len;
+	} else {
+		*frag_len = *total_len;
+		*total_len = 0;
+	}
+}
+
+/**
  * dp_rx_mon_mpdu_pop() - Return a MPDU link descriptor to HW
  *			      (WBM), following error handling
  *
@@ -121,14 +142,23 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	uint32_t msdu_ppdu_id, msdu_cnt;
 	uint8_t *data;
 	uint32_t i;
-	bool mpdu_fcs_err;
+	bool mpdu_err = false;
+	uint32_t total_frag_len, frag_len;
+	bool is_frag, is_first_msdu;
 
 	msdu = 0;
 
 	last = NULL;
 
 	hal_rx_reo_ent_buf_paddr_get(rxdma_dst_ring_desc, &buf_info,
-		&p_last_buf_addr_info, &msdu_cnt, &mpdu_fcs_err);
+		&p_last_buf_addr_info, &msdu_cnt);
+
+	if(HAL_RX_WBM_RXDMA_PSH_RSN_ERROR ==
+		hal_rx_reo_ent_rxdma_push_reason_get(rxdma_dst_ring_desc))
+		mpdu_err = true;
+
+	is_frag = false;
+	is_first_msdu = true;
 
 	do {
 		rx_msdu_link_desc =
@@ -136,12 +166,7 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 
 		qdf_assert(rx_msdu_link_desc);
 
-		num_msdus = (msdu_cnt > HAL_RX_NUM_MSDU_DESC) ?
-			HAL_RX_NUM_MSDU_DESC:msdu_cnt;
-
 		hal_rx_msdu_list_get(rx_msdu_link_desc, &msdu_list, &num_msdus);
-
-		msdu_cnt -= num_msdus;
 
 		for (i = 0; i < num_msdus; i++) {
 			uint32_t l2_hdr_offset;
@@ -163,8 +188,12 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 					__func__, __LINE__, msdu, data);
 
 				rx_desc_tlv = HAL_RX_MON_DEST_GET_DESC(data);
-				msdu_ppdu_id =
+
+				if(is_first_msdu) {
+					msdu_ppdu_id =
 					HAL_RX_MON_HW_DESC_GET_PPDUID_GET(rx_desc_tlv);
+					is_first_msdu = false;
+				}
 
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					QDF_TRACE_LEVEL_DEBUG,
@@ -179,7 +208,7 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 					__func__, __LINE__, *ppdu_id,
 					msdu_ppdu_id);
 
-				if (*ppdu_id != msdu_ppdu_id) {
+				if ((*ppdu_id != msdu_ppdu_id) && !mpdu_err) {
 					*ppdu_id = msdu_ppdu_id;
 					return rx_bufs_used;
 				}
@@ -187,6 +216,28 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 				if (hal_rx_desc_is_first_msdu(rx_desc_tlv))
 					hal_rx_mon_hw_desc_get_mpdu_status(rx_desc_tlv,
 						&(dp_pdev->ppdu_info.rx_status));
+
+
+				if(msdu_list.msdu_info[i].msdu_flags &
+					HAL_MSDU_F_MSDU_CONTINUATION) {
+					if(!is_frag) {
+						total_frag_len =
+						msdu_list.msdu_info[i].msdu_len;
+						is_frag = true;
+					}
+					dp_mon_adjust_frag_len(
+						&total_frag_len, &frag_len);
+				} else {
+					if(is_frag) {
+						dp_mon_adjust_frag_len(
+							&total_frag_len, &frag_len);
+					} else {
+						frag_len =
+						msdu_list.msdu_info[i].msdu_len;
+					}
+					is_frag = false;
+					msdu_cnt--;
+				}
 
 				rx_pkt_offset = HAL_RX_MON_HW_RX_DESC_SIZE();
 				/*
@@ -199,7 +250,7 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 				hal_rx_msdu_end_l3_hdr_padding_get(data);
 
 				rx_buf_size = rx_pkt_offset + l2_hdr_offset
-					+ msdu_list.msdu_info[i].msdu_len;
+					+ frag_len;
 
 				qdf_nbuf_set_pktlen(msdu, rx_buf_size);
 

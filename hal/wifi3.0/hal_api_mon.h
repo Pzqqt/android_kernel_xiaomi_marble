@@ -158,12 +158,13 @@ HAL_RX_DESC_GET_80211_HDR(void *hw_desc_addr) {
 static inline
 uint32_t HAL_RX_MON_HW_DESC_GET_PPDUID_GET(void *hw_desc_addr)
 {
-	struct rx_attention *rx_attn;
+	struct rx_mpdu_info *rx_mpdu_info;
 	struct rx_pkt_tlvs *rx_desc = (struct rx_pkt_tlvs *)hw_desc_addr;
 
-	rx_attn = &rx_desc->attn_tlv.rx_attn;
+	rx_mpdu_info =
+		&rx_desc->mpdu_start_tlv.rx_mpdu_start.rx_mpdu_info_details;
 
-	return HAL_RX_GET(rx_attn, RX_ATTENTION_0, PHY_PPDU_ID);
+	return HAL_RX_GET(rx_mpdu_info, RX_MPDU_INFO_0, PHY_PPDU_ID);
 }
 
 /* TODO: Move all Rx descriptor functions to hal_rx.h to avoid duplication */
@@ -205,15 +206,13 @@ uint32_t hal_rx_desc_is_first_msdu(void *hw_desc_addr)
  * the current descriptor
  * @ buf_info: structure to return the buffer information
  * @ msdu_cnt: pointer to msdu count in MPDU
- * @ mpdu_fcs_err: pointer to valuable of mpdu fcs error
  * Return: void
  */
 static inline
 void hal_rx_reo_ent_buf_paddr_get(void *rx_desc,
 	struct hal_buf_info *buf_info,
 	void **pp_buf_addr_info,
-	uint32_t *msdu_cnt,
-	bool *mpdu_fcs_err
+	uint32_t *msdu_cnt
 )
 {
 	struct reo_entrance_ring *reo_ent_ring =
@@ -221,23 +220,9 @@ void hal_rx_reo_ent_buf_paddr_get(void *rx_desc,
 	struct buffer_addr_info *buf_addr_info;
 	struct rx_mpdu_desc_info *rx_mpdu_desc_info_details;
 	uint32_t loop_cnt;
-	uint32_t rxdma_push_reason;
-	uint32_t rxdma_error_code;
 
 	rx_mpdu_desc_info_details =
 	&reo_ent_ring->reo_level_mpdu_frame_info.rx_mpdu_desc_info_details;
-
-	rxdma_push_reason = HAL_RX_GET(reo_ent_ring, REO_ENTRANCE_RING_6,
-			RXDMA_PUSH_REASON);
-
-	*mpdu_fcs_err = false;
-
-	if (rxdma_push_reason == HAL_RX_WBM_RXDMA_PSH_RSN_ERROR) {
-		rxdma_error_code = HAL_RX_GET(reo_ent_ring,
-			REO_ENTRANCE_RING_6, RXDMA_ERROR_CODE);
-		if (rxdma_error_code == HAL_RXDMA_ERR_FCS)
-			*mpdu_fcs_err = true;
-	}
 
 	*msdu_cnt = HAL_RX_GET(rx_mpdu_desc_info_details,
 				RX_MPDU_DESC_INFO_0, MSDU_COUNT);
