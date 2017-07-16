@@ -157,6 +157,6 @@ void wlan_crypto_aes_decrypt(void *ctx, const uint8_t *crypt, uint8_t *plain)
 
 void wlan_crypto_aes_decrypt_deinit(void *ctx)
 {
-	qdf_mem_set(ctx, 0, AES_PRIV_SIZE);
+	qdf_mem_set(ctx, AES_PRIV_SIZE, 0);
 	qdf_mem_free(ctx);
 }

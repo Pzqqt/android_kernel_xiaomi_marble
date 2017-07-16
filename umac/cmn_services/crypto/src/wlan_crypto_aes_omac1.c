@@ -47,20 +47,22 @@ int omac1_aes_vector(const uint8_t *key, size_t key_len, size_t num_elem,
 		     const uint8_t *addr[], const size_t *len, uint8_t *mac)
 {
 	void *ctx;
-	uint8_t cbc[AES_BLOCK_SIZE], pad[AES_BLOCK_SIZE];
 	const uint8_t *pos, *end;
 	int32_t status = -1;
 	size_t i, e, left, total_len;
+	uint8_t cbc[AES_BLOCK_SIZE], pad[AES_BLOCK_SIZE];
+
 
 	ctx = wlan_crypto_aes_encrypt_init(key, key_len);
 	if (ctx == NULL)
 		return status;
-	qdf_mem_set(cbc, 0, AES_BLOCK_SIZE);
 
 	total_len = 0;
 	for (e = 0; e < num_elem; e++)
 		total_len += len[e];
 	left = total_len;
+
+	qdf_mem_set(cbc, AES_BLOCK_SIZE, 0);
 
 	e = 0;
 	pos = addr[0];
@@ -87,7 +89,7 @@ int omac1_aes_vector(const uint8_t *key, size_t key_len, size_t num_elem,
 		left -= AES_BLOCK_SIZE;
 	}
 
-	qdf_mem_set(pad, 0, AES_BLOCK_SIZE);
+	qdf_mem_set(pad, AES_BLOCK_SIZE, 0);
 	wlan_crypto_aes_encrypt(ctx, pad, pad);
 	gf_mulx(pad);
 

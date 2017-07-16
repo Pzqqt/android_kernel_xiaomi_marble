@@ -55,21 +55,18 @@ static QDF_STATUS ccmp_encap(struct wlan_crypto_key *key,
 	/*
 	 * Copy down 802.11 header and add the IV, KeyID, and ExtIV.
 	 */
-
 	if (encapdone) {
 		ivp = (uint8_t *)qdf_nbuf_data(wbuf);
 	} else {
 		ivp = (uint8_t *)qdf_nbuf_push_head(wbuf,
 							cipher_table->header);
 		qdf_mem_move(ivp, ivp + cipher_table->header, hdrlen);
-		/* recompute hdr */
-		hdr = (struct ieee80211_hdr *) qdf_nbuf_data(wbuf);
+		ivp = (uint8_t *) qdf_nbuf_data(wbuf);
 	}
 
 	ivp += hdrlen;
 	/* XXX wrap at 48 bits */
 	key->keytsc++;
-
 
 	ivp[0] = key->keytsc >> 0;         /* PN0 */
 	ivp[1] = key->keytsc >> 8;         /* PN1 */

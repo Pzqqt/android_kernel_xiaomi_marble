@@ -52,7 +52,7 @@ static void aes_ccm_auth_start(void *aes, size_t M, size_t L,
 
 	wlan_crypto_put_be16(aad_buf, aad_len);
 	qdf_mem_copy(aad_buf + 2, aad, aad_len);
-	qdf_mem_set(aad_buf + 2 + aad_len, 0, sizeof(aad_buf) - 2 - aad_len);
+	qdf_mem_set(aad_buf + 2 + aad_len, sizeof(aad_buf) - 2 - aad_len, 0);
 
 	xor_aes_block(aad_buf, x);
 	wlan_crypto_aes_encrypt(aes, aad_buf, x); /* X_2 = E(K, X_1 XOR B_1) */
