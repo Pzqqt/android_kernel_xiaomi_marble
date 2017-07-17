@@ -24,7 +24,9 @@
 #include "dp_internal.h"
 #include "dp_rx_mon.h"
 #include "htt_stats.h"
+#include "htt_ppdu_stats.h"
 #include "qdf_mem.h"   /* qdf_mem_malloc,free */
+#include "cdp_txrx_cmn_struct.h"
 
 #define HTT_TLV_HDR_LEN HTT_T2H_EXT_STATS_CONF_TLV_HDR_SIZE
 
@@ -41,6 +43,47 @@ do {                                                             \
 					QDF_STATUS_SUCCESS)      \
 		htt_htc_misc_pkt_list_add(soc, pkt);             \
 } while (0)
+
+/*
+ * dp_tx_stats_update() - Update per-peer statistics
+ * @soc: Datapath soc handle
+ * @peer: Datapath peer handle
+ * @ppdu: PPDU Descriptor
+ * @ack_rssi: RSSI of last ack received
+ *
+ * Return: None
+ */
+#ifdef FEATURE_PERPKT_INFO
+static void dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
+		struct cdp_tx_completion_ppdu_user *ppdu, uint32_t ack_rssi)
+{
+	struct dp_pdev *pdev = peer->vdev->pdev;
+
+	DP_STATS_INC_PKT(peer, tx.comp_pkt,
+			(ppdu->success_msdus + ppdu->retry_msdus +
+			 ppdu->failed_msdus),
+			ppdu->success_bytes);
+	DP_STATS_INC(peer, tx.tx_failed, ppdu->failed_msdus);
+	DP_STATS_INC(peer,
+		tx.pkt_type[ppdu->preamble].mcs_count[ppdu->mcs], 1);
+	DP_STATS_INC(peer, tx.sgi_count[ppdu->gi], 1);
+	DP_STATS_INC(peer, tx.bw[ppdu->bw], 1);
+	DP_STATS_UPD(peer, tx.last_ack_rssi, ack_rssi);
+	DP_STATS_INC(peer, tx.wme_ac_type[TID_TO_WME_AC(ppdu->tid)], 1);
+	DP_STATS_INC(peer, tx.stbc, ppdu->stbc);
+	DP_STATS_INC(peer, tx.ldpc, ppdu->ldpc);
+	DP_STATS_INC_PKT(peer, tx.tx_success, ppdu->success_msdus,
+			ppdu->success_bytes);
+	DP_STATS_INC(peer, tx.retries,
+			(ppdu->long_retries + ppdu->short_retries));
+
+	if (soc->cdp_soc.ol_ops->update_dp_stats) {
+		soc->cdp_soc.ol_ops->update_dp_stats(pdev->osif_pdev,
+				&peer->stats, ppdu->peer_id,
+				UPDATE_PEER_STATS);
+	}
+}
+#endif
 
 /*
  * htt_htc_pkt_alloc() - Allocate HTC packet buffer
@@ -1225,7 +1268,211 @@ void htt_t2h_stats_handler(void *context)
 }
 
 /**
- * dp_txrx_fw_stats_handler():Function to process HTT EXT stats
+ * dp_process_ppdu_stats_user_rate_tlv() - Process htt_ppdu_stats_user_rate_tlv
+ * @pdev: DP pdev handle
+ * @tag_buf: T2H message buffer carrying the user rate TLV
+ *
+ * return:void
+ */
+static void dp_process_ppdu_stats_user_rate_tlv(struct dp_pdev *pdev,
+		uint32_t *tag_buf)
+{
+	uint32_t peer_id;
+	struct dp_peer *peer;
+	struct cdp_tx_completion_ppdu *ppdu_desc;
+	struct cdp_tx_completion_ppdu_user *ppdu_user_desc;
+
+	ppdu_desc =
+	(struct cdp_tx_completion_ppdu *) qdf_nbuf_data(pdev->tx_ppdu_info.buf);
+
+	tag_buf++;
+	peer_id = HTT_PPDU_STATS_USER_RATE_TLV_SW_PEER_ID_GET(*tag_buf);
+	peer = dp_peer_find_by_id(pdev->soc, peer_id);
+
+	if (!peer)
+		return;
+
+	ppdu_user_desc = &ppdu_desc->user[pdev->tx_ppdu_info.curr_user];
+
+	ppdu_user_desc->tid =
+		HTT_PPDU_STATS_USER_RATE_TLV_TID_NUM_GET(*tag_buf);
+
+	ppdu_user_desc->peer_id = peer_id;
+
+	qdf_mem_copy(ppdu_user_desc->mac_addr, peer->mac_addr.raw,
+			DP_MAC_ADDR_LEN);
+
+	tag_buf += 5;
+
+	ppdu_user_desc->ltf_size =
+		HTT_PPDU_STATS_USER_RATE_TLV_LTF_SIZE_GET(*tag_buf);
+	ppdu_user_desc->stbc =
+		HTT_PPDU_STATS_USER_RATE_TLV_STBC_GET(*tag_buf);
+	ppdu_user_desc->he_re =
+		HTT_PPDU_STATS_USER_RATE_TLV_HE_RE_GET(*tag_buf);
+	ppdu_user_desc->txbf =
+		HTT_PPDU_STATS_USER_RATE_TLV_TXBF_GET(*tag_buf);
+	ppdu_user_desc->bw =
+		HTT_PPDU_STATS_USER_RATE_TLV_BW_GET(*tag_buf);
+	ppdu_user_desc->nss = HTT_PPDU_STATS_USER_RATE_TLV_NSS_GET(*tag_buf);
+	ppdu_user_desc->mcs = HTT_PPDU_STATS_USER_RATE_TLV_MCS_GET(*tag_buf);
+	ppdu_user_desc->preamble =
+		HTT_PPDU_STATS_USER_RATE_TLV_PREAMBLE_GET(*tag_buf);
+	ppdu_user_desc->gi = HTT_PPDU_STATS_USER_RATE_TLV_GI_GET(*tag_buf);
+	ppdu_user_desc->dcm = HTT_PPDU_STATS_USER_RATE_TLV_DCM_GET(*tag_buf);
+	ppdu_user_desc->ldpc = HTT_PPDU_STATS_USER_RATE_TLV_LDPC_GET(*tag_buf);
+	ppdu_user_desc->ppdu_type =
+		HTT_PPDU_STATS_USER_RATE_TLV_PPDU_TYPE_GET(*tag_buf);
+}
+
+/**
+ * dp_process_ppdu_tag(): Function to process the PPDU TLVs
+ * @soc: DP Physical device (radio) handle
+ * @tag_buf: TLV buffer
+ *
+ * return: void
+ */
+static void dp_process_ppdu_tag(struct dp_pdev *pdev, uint32_t *tag_buf,
+		uint32_t tlv_len)
+{
+	uint32_t tlv_type = HTT_STATS_TLV_TAG_GET(*tag_buf);
+
+	switch (tlv_type) {
+	case HTT_PPDU_STATS_USR_RATE_TLV:
+		qdf_assert_always(tlv_len ==
+				sizeof(htt_ppdu_stats_user_rate_tlv));
+		dp_process_ppdu_stats_user_rate_tlv(pdev, tag_buf);
+		break;
+	default:
+		break;
+	}
+}
+
+static QDF_STATUS dp_htt_process_tlv(struct dp_pdev *pdev,
+		qdf_nbuf_t htt_t2h_msg)
+{
+	uint32_t length;
+	uint32_t ppdu_id;
+	uint8_t tlv_type;
+	uint32_t tlv_length;
+	uint8_t *tlv_buf;
+	QDF_STATUS status = QDF_STATUS_E_PENDING;
+
+	uint32_t *msg_word = (uint32_t *) qdf_nbuf_data(htt_t2h_msg);
+
+	length = HTT_T2H_PPDU_STATS_PAYLOAD_SIZE_GET(*msg_word);
+
+	msg_word = msg_word + 1;
+	ppdu_id = HTT_T2H_PPDU_STATS_PPDU_ID_GET(*msg_word);
+
+	msg_word = msg_word + 3;
+
+	while (length > 0) {
+		tlv_buf = (uint8_t *)msg_word;
+		tlv_type = HTT_STATS_TLV_TAG_GET(*msg_word);
+		tlv_length = HTT_STATS_TLV_LENGTH_GET(*msg_word);
+
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
+				"HTT PPDU Tag %d, Length %d", tlv_type,
+				tlv_length);
+
+		if (tlv_length == 0)
+			break;
+
+		if (tlv_type == HTT_PPDU_STATS_SCH_CMD_STATUS_TLV)
+			status = QDF_STATUS_SUCCESS;
+
+		tlv_length += HTT_TLV_HDR_LEN;
+		dp_process_ppdu_tag(pdev, msg_word, tlv_length);
+
+		msg_word = (uint32_t *)((uint8_t *)tlv_buf + tlv_length);
+		length -= (tlv_length);
+	}
+
+	return status;
+}
+
+/**
+ * dp_txrx_ppdu_stats_handler() - Function to process HTT PPDU stats from FW
+ * @soc: DP SOC handle
+ * @pdev_id: pdev id
+ * @htt_t2h_msg: HTT message nbuf
+ *
+ * return:void
+ */
+#if defined(CONFIG_WIN) && WDI_EVENT_ENABLE
+#ifdef FEATURE_PERPKT_INFO
+static void dp_txrx_ppdu_stats_handler(struct dp_soc *soc,
+		uint8_t pdev_id, qdf_nbuf_t htt_t2h_msg)
+{
+	struct dp_pdev *pdev = soc->pdev_list[pdev_id];
+	struct dp_vdev *vdev;
+	struct dp_peer *peer;
+	struct cdp_tx_completion_ppdu *ppdu_desc;
+	int status;
+	int i;
+
+	if (!pdev->enhanced_stats_en)
+		return;
+
+	if (!pdev->tx_ppdu_info.buf) {
+		/*
+		 * Todo: For MU/OFDMA, we need to account for multiple user
+		 * descriptors in a PPDU, in skb size.
+		 * The allocation has to be moved to ppdu_cmn tlv processing
+		 */
+		pdev->tx_ppdu_info.buf = qdf_nbuf_alloc(soc->osdev,
+				sizeof(struct cdp_tx_completion_ppdu), 0, 4,
+				TRUE);
+
+		if (!pdev->tx_ppdu_info.buf) {
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+					"Nbuf Allocation failed for HTT PPDU");
+			return;
+		}
+
+		if (qdf_nbuf_put_tail(pdev->tx_ppdu_info.buf,
+			sizeof(struct cdp_tx_completion_ppdu)) == NULL)	{
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+					"No tailroom for HTT PPDU");
+			return;
+		}
+	}
+
+	status = dp_htt_process_tlv(pdev, htt_t2h_msg);
+
+	if (status == QDF_STATUS_SUCCESS) {
+		ppdu_desc = (struct cdp_tx_completion_ppdu *)
+			qdf_nbuf_data(pdev->tx_ppdu_info.buf);
+
+		vdev = dp_get_vdev_from_soc_vdev_id_wifi3(soc,
+				ppdu_desc->vdev_id);
+
+		for (i = 0; i < ppdu_desc->num_users; i++) {
+			peer = dp_peer_find_by_id(soc,
+					ppdu_desc->user[i].peer_id);
+			dp_tx_stats_update(soc, peer, &ppdu_desc->user[i],
+					ppdu_desc->ack_rssi);
+		}
+
+		dp_wdi_event_handler(WDI_EVENT_TX_PPDU_DESC, soc,
+				pdev->tx_ppdu_info.buf, HTT_INVALID_PEER,
+				WDI_NO_VAL, pdev_id);
+
+		pdev->tx_ppdu_info.buf = NULL;
+		pdev->tx_ppdu_info.curr_user = 0;
+	}
+}
+#else
+static void dp_txrx_ppdu_stats_handler(struct dp_soc *soc,
+		uint8_t pdev_id, qdf_nbuf_t htt_t2h_msg)
+{
+}
+#endif
+#endif
+
+/**
+ * dp_txrx_fw_stats_handler() - Function to process HTT EXT stats
  * @soc: DP SOC handle
  * @htt_t2h_msg: HTT message nbuf
  *
@@ -1386,6 +1633,8 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 				"received HTT_T2H_MSG_TYPE_PPDU_STATS_IND\n");
 			pdev_id = HTT_T2H_PPDU_STATS_MAC_ID_GET(*msg_word);
 			pdev_id = DP_HW2SW_MACID(pdev_id);
+			dp_txrx_ppdu_stats_handler(soc->dp_soc, pdev_id,
+					htt_t2h_msg);
 			dp_wdi_event_handler(WDI_EVENT_LITE_T2H, soc->dp_soc,
 				htt_t2h_msg, HTT_INVALID_PEER, WDI_NO_VAL,
 				pdev_id);

@@ -3638,25 +3638,19 @@ void dp_aggregate_vdev_stats(struct dp_vdev *vdev)
 	struct dp_peer *peer = NULL;
 	struct dp_soc *soc = vdev->pdev->soc;
 	int i;
+	uint8_t pream_type;
 
 	qdf_mem_set(&(vdev->stats.tx), sizeof(vdev->stats.tx), 0x0);
 	qdf_mem_set(&(vdev->stats.rx), sizeof(vdev->stats.rx), 0x0);
 
 	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
-		if (!peer)
-			return;
-
-		for (i = 0; i < MAX_MCS; i++) {
-			DP_STATS_AGGR(vdev, peer, tx.pkt_type[0].mcs_count[i]);
-			DP_STATS_AGGR(vdev, peer, tx.pkt_type[1].mcs_count[i]);
-			DP_STATS_AGGR(vdev, peer, tx.pkt_type[2].mcs_count[i]);
-			DP_STATS_AGGR(vdev, peer, tx.pkt_type[3].mcs_count[i]);
-			DP_STATS_AGGR(vdev, peer, tx.pkt_type[4].mcs_count[i]);
-			DP_STATS_AGGR(vdev, peer, rx.pkt_type[0].mcs_count[i]);
-			DP_STATS_AGGR(vdev, peer, rx.pkt_type[1].mcs_count[i]);
-			DP_STATS_AGGR(vdev, peer, rx.pkt_type[2].mcs_count[i]);
-			DP_STATS_AGGR(vdev, peer, rx.pkt_type[3].mcs_count[i]);
-			DP_STATS_AGGR(vdev, peer, rx.pkt_type[4].mcs_count[i]);
+		for (pream_type = 0; pream_type < DOT11_MAX; pream_type++) {
+			for (i = 0; i < MAX_MCS; i++) {
+				DP_STATS_AGGR(vdev, peer,
+					tx.pkt_type[pream_type].mcs_count[i]);
+				DP_STATS_AGGR(vdev, peer,
+					rx.pkt_type[pream_type].mcs_count[i]);
+			}
 		}
 
 		for (i = 0; i < MAX_BW; i++) {
@@ -3735,27 +3729,23 @@ static inline void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 {
 	struct dp_vdev *vdev = NULL;
 	uint8_t i;
+	uint8_t pream_type;
 
 	qdf_mem_set(&(pdev->stats.tx), sizeof(pdev->stats.tx), 0x0);
 	qdf_mem_set(&(pdev->stats.rx), sizeof(pdev->stats.rx), 0x0);
 	qdf_mem_set(&(pdev->stats.tx_i), sizeof(pdev->stats.tx_i), 0x0);
 
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
-		if (!vdev)
-			return;
+
 		dp_aggregate_vdev_stats(vdev);
 
-		for (i = 0; i < MAX_MCS; i++) {
-			DP_STATS_AGGR(pdev, vdev, tx.pkt_type[0].mcs_count[i]);
-			DP_STATS_AGGR(pdev, vdev, tx.pkt_type[1].mcs_count[i]);
-			DP_STATS_AGGR(pdev, vdev, tx.pkt_type[2].mcs_count[i]);
-			DP_STATS_AGGR(pdev, vdev, tx.pkt_type[3].mcs_count[i]);
-			DP_STATS_AGGR(pdev, vdev, tx.pkt_type[4].mcs_count[i]);
-			DP_STATS_AGGR(pdev, vdev, rx.pkt_type[0].mcs_count[i]);
-			DP_STATS_AGGR(pdev, vdev, rx.pkt_type[1].mcs_count[i]);
-			DP_STATS_AGGR(pdev, vdev, rx.pkt_type[2].mcs_count[i]);
-			DP_STATS_AGGR(pdev, vdev, rx.pkt_type[3].mcs_count[i]);
-			DP_STATS_AGGR(pdev, vdev, rx.pkt_type[4].mcs_count[i]);
+		for (pream_type = 0; pream_type < DOT11_MAX; pream_type++) {
+			for (i = 0; i < MAX_MCS; i++) {
+				DP_STATS_AGGR(pdev, vdev,
+					tx.pkt_type[pream_type].mcs_count[i]);
+				DP_STATS_AGGR(pdev, vdev,
+					rx.pkt_type[pream_type].mcs_count[i]);
+			}
 		}
 
 		for (i = 0; i < MAX_BW; i++) {

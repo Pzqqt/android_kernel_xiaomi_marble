@@ -892,6 +892,7 @@ static void dp_tx_classify_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 	is_mcast = DP_FRAME_IS_MULTICAST(hdr_ptr);
 	ether_type = eh->ether_type;
+
 	/*
 	 * Check if packet is dot3 or eth2 type.
 	 */
@@ -917,6 +918,7 @@ static void dp_tx_classify_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 			L3datap = hdr_ptr + sizeof(qdf_ethervlan_header_t);
 		}
 	}
+
 	/*
 	 * Find priority from IP TOS DSCP field
 	 */
@@ -2517,7 +2519,7 @@ QDF_STATUS dp_tx_soc_attach(struct dp_soc *soc)
 	 * only for NPR EMU, should be removed, once NPR platforms
 	 * are stable.
 	 */
-	soc->process_tx_status = 1;
+	soc->process_tx_status = 0;
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 			"%s HAL Tx init Success\n", __func__);

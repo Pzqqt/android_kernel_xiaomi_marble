@@ -42,6 +42,8 @@
 #define OL_TXRX_NUM_LOCAL_PEER_IDS 33   /* default */
 #endif
 
+#define CDP_BA_256_BIT_MAP_SIZE_DWORDS 256
+
 #define OL_TXRX_INVALID_LOCAL_PEER_ID 0xffff
 #define CDP_INVALID_VDEV_ID 0xff
 /* 1 additional MCS is for invalid values */
@@ -436,6 +438,7 @@ typedef void (*ol_txrx_stats_callback)(void *ctxt,
  * configuration, each netbuf may also have a
  * monitor-mode encapsulation header such as a radiotap
  * header added before the MPDU contents.
+ * @rx.std - the OS shim rx function to deliver rx data
  * @proxy_arp - proxy arp function pointer - specified by
  * OS shim, stored by txrx
  * @get_key - function pointer to get key of the peer with
@@ -637,7 +640,6 @@ struct cdp_tx_stats {
 	struct cdp_pkt_info tx_success;
 	/* Total Tx failure */
 	uint32_t tx_failed;
-
 	/* Total Packets as ofdma*/
 	uint32_t ofdma;
 	/* Packets in STBC */
@@ -904,5 +906,255 @@ struct cdp_pdev_stats {
 	struct cdp_hist_tx_comp tx_comp_histogram;
 	/* Number of Rx ring descriptors reaped per interrupt */
 	struct cdp_hist_rx_ind rx_ind_histogram;
+};
+
+/**
+ * struct cdp_tx_completion_ppdu_user - Tx PPDU completion per-user information
+ * @completion_status: completion status - OK/Filter/Abort/Timeout
+ * @tid: TID number
+ * @peer_id: Peer ID
+ * @frame_ctrl: frame control field in 802.11 header
+ * @qos_ctrl: QoS control field in 802.11 header
+ * @mpdu_tried: number of mpdus tried
+ * @mpdu_success: number of mpdus successfully transmitted
+ * @long_retries: long retries
+ * @short_retries: short retries
+ * @is_ampdu: mpdu aggregate or non-aggregate?
+ * @success_bytes: bytes successfully transmitted
+ * @retry_bytes: bytes retried
+ * @failed_msdus: MSDUs failed transmission
+ * @duration: user duration in ppdu
+ * @ltf_size: ltf_size
+ * @stbc: stbc
+ * @he_re: he_re (range extension)
+ * @txbf: txbf
+ * @bw: Transmission bandwidth
+ *       <enum 0 transmit_bw_20_MHz>
+ *       <enum 1 transmit_bw_40_MHz>
+ *       <enum 2 transmit_bw_80_MHz>
+ *       <enum 3 transmit_bw_160_MHz>
+ * @nss: NSS 1,2, ...8
+ * @mcs: MCS index
+ * @preamble: preamble
+ * @gi: guard interval 800/400/1600/3200 ns
+ * @dcm: dcm
+ * @ldpc: ldpc
+ * @ppdu_type: SU/MU_MIMO/MU_OFDMA/MU_MIMO_OFDMA/UL_TRIG/BURST_BCN/UL_BSR_RESP/
+ * UL_BSR_TRIG/UNKNOWN
+ * @ba_seq_no: Block Ack sequence number
+ * @ba_bitmap: Block Ack bitmap
+ * @start_seqa: Sequence number of first MPDU
+ * @enq_bitmap: Enqueue MPDU bitmap
+ */
+struct cdp_tx_completion_ppdu_user {
+	uint32_t completion_status:8,
+		 tid:8,
+		 peer_id:16;
+	uint8_t mac_addr[6];
+	uint32_t frame_ctrl:16,
+		 qos_ctrl:16;
+	uint32_t mpdu_tried:16,
+		 mpdu_success:16;
+	uint32_t long_retries:4,
+		 short_retries:4,
+		 tx_ratecode:8,
+		 is_ampdu:1;
+	uint32_t success_bytes;
+	uint32_t retry_bytes;
+	uint32_t failed_bytes;
+	uint32_t success_msdus:16,
+		 retry_msdus:16;
+	uint32_t failed_msdus:16,
+		 duration:16;
+	uint32_t ltf_size:2,
+		 stbc:1,
+		 he_re:1,
+		 txbf:4,
+		 bw:4,
+		 nss:4,
+		 mcs:4,
+		 preamble:4,
+		 gi:4,
+		 dcm:1,
+		 ldpc:1,
+		 ppdu_type:2;
+	uint32_t ba_seq_no;
+	uint32_t ba_bitmap[CDP_BA_256_BIT_MAP_SIZE_DWORDS];
+	uint32_t start_seq;
+	uint32_t enq_bitmap[CDP_BA_256_BIT_MAP_SIZE_DWORDS];
+};
+
+/**
+ * struct cdp_tx_completion_ppdu - Tx PPDU completion information
+ * @completion_status: completion status - OK/Filter/Abort/Timeout
+ * @ppdu_id: PPDU Id
+ * @vdev_id: VAP Id
+ * @num_users: Number of users
+ * @num_mpdu: Number of MPDUs in PPDU
+ * @num_msdu: Number of MSDUs in PPDU
+ * @channel: Channel informartion
+ * @ack_rssi: RSSI value of last ack packet (units=dB above noise floor)
+ * @ppdu_start_timestamp: TSF at PPDU start
+ * @ppdu_end_timestamp: TSF at PPDU end
+ * @ack_timestamp: TSF at the reception of ACK
+ * @user: per-User stats (array of per-user structures)
+ */
+struct cdp_tx_completion_ppdu {
+	uint32_t ppdu_id;
+	uint16_t vdev_id;
+	uint32_t num_users;
+	uint32_t num_mpdu:9,
+		 num_msdu:16;
+	uint8_t channel;
+	uint32_t ack_rssi;
+	uint32_t ppdu_start_timestamp;
+	uint32_t ppdu_end_timestamp;
+	uint32_t ack_timestamp;
+	struct cdp_tx_completion_ppdu_user user[1];
+};
+
+/**
+ * struct cdp_rate_stats - Tx/Rx Rate statistics
+ * @bw: Indicates the BW of the upcoming transmission -
+ *       <enum 0 transmit_bw_20_MHz>
+ *       <enum 1 transmit_bw_40_MHz>
+ *       <enum 2 transmit_bw_80_MHz>
+ *       <enum 3 transmit_bw_160_MHz>
+ * @pkt_type: Transmit Packet Type
+ * @stbc: When set, STBC transmission rate was used
+ * @ldpc: When set, use LDPC transmission rates
+ * @sgi: <enum 0     0_8_us_sgi > Legacy normal GI
+ *       <enum 1     0_4_us_sgi > Legacy short GI
+ *       <enum 2     1_6_us_sgi > HE related GI
+ *       <enum 3     3_2_us_sgi > HE
+ * @mcs: Transmit MCS Rate
+ * @ofdma: Set when the transmission was an OFDMA transmission
+ * @tones_in_ru: The number of tones in the RU used.
+ * @tsf: Lower 32 bits of the TSF (timestamp when ppdu transmission finished)
+ * @peer_id: Peer ID of the flow or MPDU queue
+ * @tid: TID of the flow or MPDU queue
+ */
+struct cdp_rate_stats {
+	uint32_t rate_stats_info_valid:1,
+		 bw:2,
+		 pkt_type:4,
+		 stbc:1,
+		 ldpc:1,
+		 sgi:2,
+		 mcs:4,
+		 ofdma:1,
+		 tones_in_ru:12,
+		 resvd0:4;
+	uint32_t tsf;
+	uint16_t peer_id;
+	uint8_t tid;
+};
+
+/**
+ * struct cdp_tx_completion_msdu - Tx MSDU completion descriptor
+ * @ppdu_id: PPDU to which this MSDU belongs
+ * @transmit_cnt: Number of times this frame has been transmitted
+ * @ack_frame_rssi: RSSI of the received ACK or BA frame
+ * @first_msdu: Indicates this MSDU is the first MSDU in AMSDU
+ * @last_msdu: Indicates this MSDU is the last MSDU in AMSDU
+ * @msdu_part_of_amsdu : Indicates this MSDU was part of an A-MSDU in MPDU
+ * @extd: Extended structure containing rate statistics
+ */
+struct cdp_tx_completion_msdu {
+	uint32_t ppdu_id;
+	uint8_t transmit_cnt;
+	uint32_t ack_frame_rssi:8,
+		 resvd0:1,
+		 first_msdu:1,
+		 last_msdu:1,
+		 msdu_part_of_amsdu:1,
+		 resvd1:20;
+	struct cdp_rate_stats extd;
+};
+
+/**
+ * struct cdp_rx_indication_ppdu - Rx PPDU indication structure
+ * @ppdu_id: PPDU Id
+ * @is_ampdu: mpdu aggregate or non-aggregate?
+ * @num_mpdu: Number of MPDUs in PPDU
+ * @num_msdu: Number of MSDUs in PPDU
+ * @duration: PPDU duration
+ * @tid: TID number
+ * @peer_id: Peer ID
+ * @ltf_size: ltf_size
+ * @stbc: When set, STBC rate was used
+ * @he_re: he_re (range extension)
+ * @bw: Bandwidth
+ *       <enum 0 bw_20_MHz>
+ *       <enum 1 bw_40_MHz>
+ *       <enum 2 bw_80_MHz>
+ *       <enum 3 bw_160_MHz>
+ * @nss: NSS 1,2, ...8
+ * @mcs: MCS index
+ * @preamble: preamble
+ * @gi: <enum 0     0_8_us_sgi > Legacy normal GI
+ *       <enum 1     0_4_us_sgi > Legacy short GI
+ *       <enum 2     1_6_us_sgi > HE related GI
+ *       <enum 3     3_2_us_sgi > HE
+ * @dcm: dcm
+ * @ldpc: ldpc
+ * @ppdu_type: SU/MU_MIMO/MU_OFDMA/MU_MIMO_OFDMA/UL_TRIG/BURST_BCN/UL_BSR_RESP/
+ * UL_BSR_TRIG/UNKNOWN
+ * @rssi: RSSI value (units = dB above noise floor)
+ * @timestamp: TSF at the reception of PPDU
+ * @channel: Channel informartion
+ * @lsig_A: L-SIG in 802.11 PHY header
+ */
+struct cdp_rx_indication_ppdu {
+	uint32_t ppdu_id;
+	uint32_t is_ampdu:1,
+		 num_mpdu:9,
+		 num_msdu:16;
+	uint16_t duration;
+	uint32_t tid:8,
+		 peer_id:16;
+	union {
+		uint32_t rate_info;
+		struct {
+			uint32_t ltf_size:2,
+				 stbc:1,
+				 he_re:1,
+				 bw:4,
+				 nss:4,
+				 mcs:4,
+				 preamble:4,
+				 gi:4,
+				 dcm:1,
+				 ldpc:1,
+				 ppdu_type:2;
+		};
+	} u;
+	uint32_t lsig_a;
+	uint32_t rssi;
+	uint32_t timestamp;
+	uint8_t channel;
+};
+
+/**
+ * struct cdp_rx_indication_msdu - Rx MSDU info
+ * @ppdu_id: PPDU to which the MSDU belongs
+ * @msdu_len: Length of MSDU in bytes
+ * @ack_frame_rssi: RSSI of the received ACK or BA frame
+ * @first_msdu: Indicates this MSDU is the first MSDU in AMSDU
+ * @last_msdu: Indicates this MSDU is the last MSDU in AMSDU
+ * @msdu_part_of_amsdu : Indicates this MSDU was part of an A-MSDU in MPDU
+ * @extd: Extended structure containing rate statistics
+ */
+struct cdp_rx_indication_msdu {
+	uint32_t ppdu_id;
+	uint16_t msdu_len;
+	uint32_t ack_frame_rssi:8,
+		 resvd0:1,
+		 first_msdu:1,
+		 last_msdu:1,
+		 msdu_part_of_amsdu:1,
+		 msdu_part_of_ampdu:1,
+		 resvd1:19;
+	struct cdp_rate_stats extd;
 };
 #endif

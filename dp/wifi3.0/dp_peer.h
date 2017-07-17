@@ -79,7 +79,6 @@ static inline struct dp_ast_entry *dp_peer_ast_hash_find(struct dp_soc *soc,
 }
 #endif
 
-#ifdef DP_LFR
 /*
  * dp_get_vdev_from_soc_vdev_id_wifi3() -
  * Returns vdev object given the vdev id
@@ -113,5 +112,4 @@ dp_get_vdev_from_soc_vdev_id_wifi3(struct dp_soc *soc,
 	return NULL;
 
 }
-#endif
 #endif /* _DP_PEER_H_ */
