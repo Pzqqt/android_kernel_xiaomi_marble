@@ -352,11 +352,13 @@ static struct wma_target_req *wma_find_remove_req_msgtype(tp_wma_handle wma,
  * @wma: wma handle
  * @vdev_id: vdev id
  * @type: request type
+ * @remove_req_from_list: flag to indicate remove req or not.
  *
  * Return: return target request if found or NULL.
  */
 static struct wma_target_req *wma_find_vdev_req(tp_wma_handle wma,
-						uint8_t vdev_id, uint8_t type)
+						uint8_t vdev_id, uint8_t type,
+						bool remove_req_from_list)
 {
 	struct wma_target_req *req_msg = NULL;
 	bool found = false;
@@ -381,12 +383,16 @@ static struct wma_target_req *wma_find_vdev_req(tp_wma_handle wma,
 			continue;
 
 		found = true;
-		status = qdf_list_remove_node(&wma->vdev_resp_queue, node1);
-		if (QDF_STATUS_SUCCESS != status) {
-			qdf_spin_unlock_bh(&wma->vdev_respq_lock);
-			WMA_LOGD(FL("Failed to target req for vdev_id %d type %d"),
-				 vdev_id, type);
-			return NULL;
+		if (remove_req_from_list) {
+			status = qdf_list_remove_node(&wma->vdev_resp_queue,
+					node1);
+			if (QDF_STATUS_SUCCESS != status) {
+				qdf_spin_unlock_bh(&wma->vdev_respq_lock);
+				WMA_LOGD(FL(
+				"Failed to target req for vdev_id %d type %d"),
+						vdev_id, type);
+				return NULL;
+			}
 		}
 		break;
 	} while (QDF_STATUS_SUCCESS  ==
@@ -452,7 +458,8 @@ static void wma_vdev_detach_callback(void *ctx)
 	if (!WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
 				    WMI_SERVICE_SYNC_DELETE_CMDS)) {
 		req_msg = wma_find_vdev_req(wma, param->session_id,
-					    WMA_TARGET_REQ_TYPE_VDEV_DEL);
+					    WMA_TARGET_REQ_TYPE_VDEV_DEL,
+					    true);
 		if (req_msg) {
 			WMA_LOGD("%s: Found vdev request for vdev id %d",
 				 __func__, param->session_id);
@@ -643,7 +650,7 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 
 	if (qdf_atomic_read(&iface->bss_status) == WMA_BSS_STATUS_STARTED) {
 		req_msg = wma_find_vdev_req(wma_handle, vdev_id,
-				WMA_TARGET_REQ_TYPE_VDEV_STOP);
+				WMA_TARGET_REQ_TYPE_VDEV_STOP, false);
 		if (!req_msg)
 			goto send_fail_rsp;
 		if (req_msg->msg_type != WMA_DELETE_BSS_REQ)
@@ -986,7 +993,8 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 	iface = &wma->interfaces[resp_event->vdev_id];
 
 	req_msg = wma_find_vdev_req(wma, resp_event->vdev_id,
-				    WMA_TARGET_REQ_TYPE_VDEV_START);
+				    WMA_TARGET_REQ_TYPE_VDEV_START,
+				    true);
 
 	if (!req_msg) {
 		WMA_LOGE("%s: Failed to lookup request message for vdev %d",
@@ -1780,7 +1788,7 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 	resp_event = param_buf->fixed_param;
 
 	req_msg = wma_find_vdev_req(wma, resp_event->vdev_id,
-				    WMA_TARGET_REQ_TYPE_VDEV_STOP);
+				    WMA_TARGET_REQ_TYPE_VDEV_STOP, true);
 	if (!req_msg) {
 		WMA_LOGE("%s: Failed to lookup vdev request for vdev id %d",
 			 __func__, resp_event->vdev_id);
@@ -2545,7 +2553,7 @@ int wma_vdev_delete_handler(void *handle, uint8_t *cmd_param_info,
 
 	WMA_LOGD("%s Vdev delete resp vdev id %d", __func__, event->vdev_id);
 	req_msg = wma_find_vdev_req(wma, event->vdev_id,
-				WMA_TARGET_REQ_TYPE_VDEV_DEL);
+				WMA_TARGET_REQ_TYPE_VDEV_DEL, true);
 	if (!req_msg) {
 		WMA_LOGD(FL("Vdev delete resp is not handled! vdev id %d"),
 				event->vdev_id);
@@ -2896,7 +2904,7 @@ void wma_vdev_resp_timer(void *data)
 
 	WMA_LOGA("%s: request %d is timed out for vdev_id - %d", __func__,
 		 tgt_req->msg_type, tgt_req->vdev_id);
-	msg = wma_find_vdev_req(wma, tgt_req->vdev_id, tgt_req->type);
+	msg = wma_find_vdev_req(wma, tgt_req->vdev_id, tgt_req->type, true);
 
 	if (!msg) {
 		WMA_LOGE("%s: Failed to lookup request message - %d",
@@ -3145,7 +3153,7 @@ void wma_remove_vdev_req(tp_wma_handle wma, uint8_t vdev_id,
 {
 	struct wma_target_req *req_msg;
 
-	req_msg = wma_find_vdev_req(wma, vdev_id, type);
+	req_msg = wma_find_vdev_req(wma, vdev_id, type, true);
 	if (!req_msg)
 		return;
 
