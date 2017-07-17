@@ -2192,7 +2192,7 @@ void lim_send_mlm_assoc_ind(tpAniSirGlobal mac_ctx,
 		/* Fill in 802.11h related info */
 		if (assoc_req->powerCapabilityPresent
 			&& assoc_req->supportedChannelsPresent) {
-			assoc_ind->spectrumMgtIndicator = eSIR_TRUE;
+			assoc_ind->spectrumMgtIndicator = true;
 			assoc_ind->powerCap.minTxPower =
 				assoc_req->powerCapability.minTxPower;
 			assoc_ind->powerCap.maxTxPower =
@@ -2200,7 +2200,7 @@ void lim_send_mlm_assoc_ind(tpAniSirGlobal mac_ctx,
 			lim_convert_supported_channels(mac_ctx, assoc_ind,
 				 assoc_req);
 		} else {
-			assoc_ind->spectrumMgtIndicator = eSIR_FALSE;
+			assoc_ind->spectrumMgtIndicator = false;
 		}
 
 		/* This check is to avoid extra Sec IEs present incase of WPS */

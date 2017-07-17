@@ -3824,7 +3824,7 @@ void sap_sort_mac_list(struct qdf_mac_addr *macList, uint8_t size)
 	}
 }
 
-eSapBool
+bool
 sap_search_mac_list(struct qdf_mac_addr *macList,
 		    uint8_t num_mac, uint8_t *peerMac,
 		    uint8_t *index)
@@ -3836,7 +3836,7 @@ sap_search_mac_list(struct qdf_mac_addr *macList,
 	if ((NULL == macList) || (num_mac > MAX_ACL_MAC_ADDRESS)) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		    FL("either buffer is NULL or size = %d is more."), num_mac);
-		return eSAP_FALSE;
+		return false;
 	}
 
 	while (nStart <= nEnd) {
@@ -3856,7 +3856,7 @@ sap_search_mac_list(struct qdf_mac_addr *macList,
 					  QDF_TRACE_LEVEL_INFO_HIGH, "index %d",
 					  *index);
 			}
-			return eSAP_TRUE;
+			return true;
 		}
 		if (nRes < 0)
 			nStart = nMiddle + 1;
@@ -3866,7 +3866,7 @@ sap_search_mac_list(struct qdf_mac_addr *macList,
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "search not succ");
-	return eSAP_FALSE;
+	return false;
 }
 
 void sap_add_mac_to_acl(struct qdf_mac_addr *macList,
@@ -4088,9 +4088,9 @@ static QDF_STATUS sap_get_channel_list(ptSapContext sap_ctx,
 		 * - DFS scan enabled and chan not in CHANNEL_STATE_DISABLE
 		 * - DFS scan disable but chan in CHANNEL_STATE_ENABLE
 		 */
-		if (!(((eSAP_TRUE == mac_ctx->scan.fEnableDFSChnlScan) &&
+		if (!(((true == mac_ctx->scan.fEnableDFSChnlScan) &&
 		      wlan_reg_get_channel_state(mac_ctx->pdev, loop_count)) ||
-		    ((eSAP_FALSE == mac_ctx->scan.fEnableDFSChnlScan) &&
+		    ((false == mac_ctx->scan.fEnableDFSChnlScan) &&
 		     (CHANNEL_STATE_ENABLE ==
 		      wlan_reg_get_channel_state(mac_ctx->pdev, loop_count)))))
 			continue;
@@ -4199,7 +4199,7 @@ uint8_t sap_indicate_radar(ptSapContext sap_ctx)
 	 * if the radar is found in the STARTED state
 	 */
 	if (eSAP_STARTED == sap_ctx->sapsMachine)
-		mac->sap.SapDfsInfo.csaIERequired = eSAP_TRUE;
+		mac->sap.SapDfsInfo.csaIERequired = true;
 
 	if (sap_ctx->csr_roamProfile.disableDFSChSwitch)
 		return sap_ctx->channel;

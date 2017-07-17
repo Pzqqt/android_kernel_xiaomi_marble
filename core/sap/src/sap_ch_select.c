@@ -587,7 +587,7 @@ static bool sap_chan_sel_init(tHalHandle halHandle,
 	if (pSpectCh == NULL) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "In %s, QDF_MALLOC_ERR", __func__);
-		return eSAP_FALSE;
+		return false;
 	}
 
 	/* Initialize the pointers in the DfsParams to the allocated memory */
@@ -658,12 +658,12 @@ static bool sap_chan_sel_init(tHalHandle halHandle,
 
 		if (true == chSafe) {
 			pSpectCh->chNum = *pChans;
-			pSpectCh->valid = eSAP_TRUE;
+			pSpectCh->valid = true;
 			pSpectCh->rssiAgr = SOFTAP_MIN_RSSI;    /* Initialise for all channels */
 			pSpectCh->channelWidth = SOFTAP_HT20_CHANNELWIDTH;      /* Initialise 20MHz for all the Channels */
 		}
 	}
-	return eSAP_TRUE;
+	return true;
 }
 
 /*==========================================================================
@@ -2084,12 +2084,12 @@ static void sap_sort_chl_weight_all(ptSapContext pSapCtx,
 static bool sap_filter_over_lap_ch(ptSapContext pSapCtx, uint16_t chNum)
 {
 	if (pSapCtx->enableOverLapCh)
-		return eSAP_TRUE;
+		return true;
 	else if ((chNum == CHANNEL_1) ||
 		 (chNum == CHANNEL_6) || (chNum == CHANNEL_11))
-		return eSAP_TRUE;
+		return true;
 
-	return eSAP_FALSE;
+	return false;
 }
 
 #ifdef FEATURE_WLAN_CH_AVOID
@@ -2238,7 +2238,7 @@ uint8_t sap_select_channel(tHalHandle hal, ptSapContext sap_ctx,
 	}
 
 	/* Initialize the structure pointed by spect_info */
-	if (sap_chan_sel_init(hal, spect_info, sap_ctx) != eSAP_TRUE) {
+	if (sap_chan_sel_init(hal, spect_info, sap_ctx) != true) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("Ch Select initialization failed"));
 		return SAP_CHANNEL_NOT_SELECTED;

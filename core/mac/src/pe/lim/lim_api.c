@@ -1354,34 +1354,34 @@ lim_update_overlap_sta_param(tpAniSirGlobal pMac, tSirMacAddr bssId,
  * @param  pBeacon  - Parsed Beacon Frame structure
  * @param  pSession - Pointer to the PE session
  *
- * @return eSIR_TRUE if encryption type is matched; eSIR_FALSE otherwise
+ * @return true if encryption type is matched; false otherwise
  */
-static tAniBool lim_ibss_enc_type_matched(tpSchBeaconStruct pBeacon,
+static bool lim_ibss_enc_type_matched(tpSchBeaconStruct pBeacon,
 					  tpPESession pSession)
 {
 	if (!pBeacon || !pSession)
-		return eSIR_FALSE;
+		return false;
 
 	/* Open case */
 	if (pBeacon->capabilityInfo.privacy == 0
 	    && pSession->encryptType == eSIR_ED_NONE)
-		return eSIR_TRUE;
+		return true;
 
 	/* WEP case */
 	if (pBeacon->capabilityInfo.privacy == 1 && pBeacon->wpaPresent == 0
 	    && pBeacon->rsnPresent == 0
 	    && (pSession->encryptType == eSIR_ED_WEP40
 		|| pSession->encryptType == eSIR_ED_WEP104))
-		return eSIR_TRUE;
+		return true;
 
 	/* WPA-None case */
 	if (pBeacon->capabilityInfo.privacy == 1 && pBeacon->wpaPresent == 1
 	    && pBeacon->rsnPresent == 0
 	    && ((pSession->encryptType == eSIR_ED_CCMP) ||
 		(pSession->encryptType == eSIR_ED_TKIP)))
-		return eSIR_TRUE;
+		return true;
 
-	return eSIR_FALSE;
+	return false;
 }
 
 /**
@@ -1424,7 +1424,7 @@ lim_handle_ibss_coalescing(tpAniSirGlobal pMac,
 	    lim_cmp_ssid(&pBeacon->ssId, psessionEntry) ||
 	    (psessionEntry->currentOperChannel != pBeacon->channelNumber))
 		retCode = eSIR_LIM_IGNORE_BEACON;
-	else if (lim_ibss_enc_type_matched(pBeacon, psessionEntry) != eSIR_TRUE) {
+	else if (lim_ibss_enc_type_matched(pBeacon, psessionEntry) != true) {
 		pe_debug("peer privacy: %d peer wpa: %d peer rsn: %d self encType: %d",
 			       pBeacon->capabilityInfo.privacy,
 			       pBeacon->wpaPresent, pBeacon->rsnPresent,
@@ -1985,6 +1985,15 @@ lim_roam_fill_bss_descr(tpAniSirGlobal pMac,
 	bss_desc_ptr->timeStamp[1]   = parsed_frm_ptr->timeStamp[1];
 	qdf_mem_copy(&bss_desc_ptr->capabilityInfo,
 	&bcn_proberesp_ptr[SIR_MAC_HDR_LEN_3A + SIR_MAC_B_PR_CAPAB_OFFSET], 2);
+
+	if (qdf_is_macaddr_zero((struct qdf_mac_addr *)mac_hdr->bssId)) {
+		pe_debug("bssid is 0 in beacon/probe update it with bssId %pM in sync ind",
+			roam_offload_synch_ind_ptr->bssid.bytes);
+		qdf_mem_copy(mac_hdr->bssId,
+			roam_offload_synch_ind_ptr->bssid.bytes,
+			sizeof(tSirMacAddr));
+	}
+
 	qdf_mem_copy((uint8_t *) &bss_desc_ptr->bssId,
 			(uint8_t *) mac_hdr->bssId,
 			sizeof(tSirMacAddr));

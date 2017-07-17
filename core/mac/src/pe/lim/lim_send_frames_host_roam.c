@@ -142,7 +142,7 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 		      LIM_BSS_CAPS_GET(WSM, pe_session->limReassocBssQosCaps);
 
 	if (pe_session->lim11hEnable &&
-	    pe_session->pLimReAssocReq->spectrumMgtIndicator == eSIR_TRUE) {
+	    pe_session->pLimReAssocReq->spectrumMgtIndicator == true) {
 		power_caps_populated = true;
 
 		populate_dot11f_power_caps(mac_ctx, &frm.PowerCaps,
@@ -604,7 +604,7 @@ void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 		     LIM_BSS_CAPS_GET(WSM, psessionEntry->limReassocBssQosCaps);
 
 	if (psessionEntry->lim11hEnable &&
-	    psessionEntry->pLimReAssocReq->spectrumMgtIndicator == eSIR_TRUE) {
+	    psessionEntry->pLimReAssocReq->spectrumMgtIndicator == true) {
 		PowerCapsPopulated = true;
 		populate_dot11f_power_caps(pMac, &frm.PowerCaps, LIM_REASSOC,
 					   psessionEntry);

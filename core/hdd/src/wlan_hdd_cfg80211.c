@@ -2646,6 +2646,7 @@ __wlan_hdd_cfg80211_get_supported_features(struct wiphy *wiphy,
 #endif
 	fset |= WIFI_FEATURE_RSSI_MONITOR;
 	fset |= WIFI_FEATURE_TX_TRANSMIT_POWER;
+	fset |= WIFI_FEATURE_SET_TX_POWER_LIMIT;
 
 	if (hdd_link_layer_stats_supported())
 		fset |= WIFI_FEATURE_LINK_LAYER_STATS;
@@ -8520,7 +8521,7 @@ int wlan_hdd_request_pre_cac(uint8_t channel)
 
 	status = wlan_hdd_cfg80211_start_bss(pre_cac_adapter, NULL,
 			PRE_CAC_SSID, qdf_str_len(PRE_CAC_SSID),
-			eHIDDEN_SSID_NOT_IN_USE, false, false);
+			NL80211_HIDDEN_SSID_NOT_IN_USE, false, false);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("start bss failed");
 		goto stop_close_pre_cac_adapter;
@@ -10385,6 +10386,47 @@ static int wlan_hdd_cfg80211_set_trace_level(struct wiphy *wiphy,
 
 	return ret;
 }
+
+
+void hdd_bt_activity_cb(void *context, uint32_t bt_activity)
+{
+	hdd_context_t *hdd_ctx = (hdd_context_t *)context;
+	int status;
+
+	status = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != status)
+		return;
+
+	if (bt_activity == WLAN_COEX_EVENT_BT_A2DP_PROFILE_ADD)
+		hdd_ctx->bt_a2dp_active = 1;
+	else if (bt_activity == WLAN_COEX_EVENT_BT_A2DP_PROFILE_REMOVE)
+		hdd_ctx->bt_a2dp_active = 0;
+	else if (bt_activity == WLAN_COEX_EVENT_BT_VOICE_PROFILE_ADD)
+		hdd_ctx->bt_vo_active = 1;
+	else if (bt_activity == WLAN_COEX_EVENT_BT_VOICE_PROFILE_REMOVE)
+		hdd_ctx->bt_vo_active = 0;
+	else
+		return;
+
+	hdd_info("a2dp_active:%d vo_active:%d", hdd_ctx->bt_a2dp_active,
+		 hdd_ctx->bt_vo_active);
+}
+
+
+/**
+ * wlan_hdd_is_bt_in_progress() - check if bt activity is in progress
+ * @hdd_ctx : HDD context
+ *
+ * Return: true if BT activity is in progress else false
+ */
+static inline bool wlan_hdd_is_bt_in_progress(hdd_context_t *hdd_ctx)
+{
+	if (hdd_ctx->bt_a2dp_active || hdd_ctx->bt_vo_active)
+		return true;
+
+	return false;
+}
+
 
 const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 	{

@@ -252,6 +252,7 @@ typedef struct tagSmeStruct {
 	void (*stats_ext2_cb)(void *, struct sir_sme_rx_aggr_hole_ind *);
 	void (*chip_power_save_fail_cb)(void *,
 			struct chip_pwr_save_fail_detected_params *);
+	void (*bt_activity_info_cb)(void *context, uint32_t bt_activity);
 } tSmeStruct, *tpSmeStruct;
 
 #endif /* #if !defined( __SMEINTERNAL_H ) */

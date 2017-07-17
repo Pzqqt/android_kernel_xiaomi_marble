@@ -1166,15 +1166,15 @@ typedef struct sSirSmeJoinReq {
 	tAniEdType MgmtEncryptionType;
 #endif
 
-	tAniBool is11Rconnection;
+	bool is11Rconnection;
 #ifdef FEATURE_WLAN_ESE
-	tAniBool isESEFeatureIniEnabled;
-	tAniBool isESEconnection;
+	bool isESEFeatureIniEnabled;
+	bool isESEconnection;
 	tESETspecInfo eseTspecInfo;
 #endif
 
-	tAniBool isFastTransitionEnabled;
-	tAniBool isFastRoamIniFeatureEnabled;
+	bool isFastTransitionEnabled;
+	bool isFastRoamIniFeatureEnabled;
 
 	uint8_t txLdpcIniFeatureEnabled;
 	tSirHTConfig htConfig;
@@ -1190,11 +1190,11 @@ typedef struct sSirSmeJoinReq {
 	bool send_smps_action;
 
 	uint8_t max_amsdu_num;
-	tAniBool isWMEenabled;
-	tAniBool isQosEnabled;
-	tAniBool isOSENConnection;
+	bool isWMEenabled;
+	bool isQosEnabled;
+	bool isOSENConnection;
 	struct rrm_config_param rrm_config;
-	tAniBool spectrumMgtIndicator;
+	bool spectrumMgtIndicator;
 	tSirMacPowerCapInfo powerCap;
 	tSirSupChnl supportedChannels;
 	bool enable_bcast_probe_rsp;
@@ -1310,11 +1310,11 @@ typedef struct sSirSmeAssocInd {
 
 	/* powerCap & supportedChannels are present only when */
 	/* spectrumMgtIndicator flag is set */
-	tAniBool spectrumMgtIndicator;
+	bool spectrumMgtIndicator;
 	tSirMacPowerCapInfo powerCap;
 	tSirSupChnl supportedChannels;
-	tAniBool wmmEnabledSta; /* if present - STA is WMM enabled */
-	tAniBool reassocReq;
+	bool wmmEnabledSta; /* if present - STA is WMM enabled */
+	bool reassocReq;
 	/* Required for indicating the frames to upper layer */
 	uint32_t beaconLength;
 	uint8_t *beaconPtr;
@@ -1563,7 +1563,7 @@ typedef struct sSirSmeDisassocRsp {
 	struct qdf_mac_addr peer_macaddr;
 	tAniStaStatStruct perStaStats;  /* STA stats */
 	uint16_t staId;
-} qdf_packed tSirSmeDisassocRsp, *tpSirSmeDisassocRsp;
+} tSirSmeDisassocRsp, *tpSirSmeDisassocRsp;
 
 /* / Definition for Disassociation indication from peer */
 typedef struct sSirSmeDisassocInd {
@@ -1897,8 +1897,8 @@ typedef struct sAniChangeCountryCodeReq {
 	uint16_t msgType;       /* message type is same as the request type */
 	uint16_t msgLen;        /* length of the entire request */
 	uint8_t countryCode[WNI_CFG_COUNTRY_CODE_LEN]; /* 3 char country code */
-	tAniBool countryFromUserSpace;
-	tAniBool sendRegHint;   /* true if we want to send hint to NL80211 */
+	bool countryFromUserSpace;
+	bool sendRegHint;   /* true if we want to send hint to NL80211 */
 	void *changeCCCallback;
 	void *pDevContext;      /* device context */
 	void *p_cds_context;    /* cds context */

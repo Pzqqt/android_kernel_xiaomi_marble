@@ -2638,7 +2638,11 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, struct scheduler_msg *pMsg)
 							  pMsg->bodyptr);
 		qdf_mem_free(pMsg->bodyptr);
 		break;
-
+	case eWNI_SME_BT_ACTIVITY_INFO_IND:
+		if (pMac->sme.bt_activity_info_cb)
+			pMac->sme.bt_activity_info_cb(pMac->hHdd,
+						      pMsg->bodyval);
+		break;
 	default:
 
 		if ((pMsg->type >= eWNI_SME_MSG_TYPES_BEGIN)
@@ -5059,8 +5063,8 @@ QDF_STATUS sme_change_country_code(tHalHandle hHal,
 				   uint8_t *pCountry,
 				   void *pContext,
 				   void *p_cds_context,
-				   tAniBool countryFromUserSpace,
-				   tAniBool sendRegHint)
+				   bool countryFromUserSpace,
+				   bool sendRegHint)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
@@ -16349,4 +16353,22 @@ QDF_STATUS sme_set_rx_set_blocksize(tHalHandle hal,
 int sme_cli_set_command(int vdev_id, int param_id, int sval, int vpdev)
 {
 	return wma_cli_set_command(vdev_id, param_id, sval, vpdev);
+}
+
+QDF_STATUS sme_set_bt_activity_info_cb(tHalHandle hal,
+			void (*cb)(void *, uint32_t bt_activity))
+{
+	QDF_STATUS status;
+	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		mac->sme.bt_activity_info_cb = cb;
+		sme_release_global_lock(&mac->sme);
+		sme_debug("bt activity info callback set");
+	} else {
+		sme_debug("sme_acquire_global_lock failed %d", status);
+	}
+
+	return status;
 }

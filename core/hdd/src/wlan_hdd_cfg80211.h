@@ -167,6 +167,9 @@ typedef enum {
 #define WIFI_FEATURE_CONFIG_NDO         0x200000  /* ND offload configure */
 #define WIFI_FEATURE_TX_TRANSMIT_POWER  0x400000  /* Tx transmit power levels */
 
+/* Support Tx Power Limit setting */
+#define WIFI_FEATURE_SET_TX_POWER_LIMIT 0x4000000
+
 /* Add more features here */
 #define WIFI_TDLS_SUPPORT			BIT(0)
 #define WIFI_TDLS_EXTERNAL_CONTROL_SUPPORT	BIT(1)
@@ -563,4 +566,13 @@ int wlan_hdd_get_adjacent_chan(uint8_t chan, bool upper);
  */
 int wlan_hdd_merge_avoid_freqs(tHddAvoidFreqList *destFreqList,
 		tHddAvoidFreqList *srcFreqList);
+
+/**
+ * hdd_bt_activity_cb() - callback function to receive bt activity
+ * @context: HDD context
+ * @bt_activity: specifies the kind of bt activity
+ *
+ * Return: none
+ */
+void hdd_bt_activity_cb(void *context, uint32_t bt_activity);
 #endif

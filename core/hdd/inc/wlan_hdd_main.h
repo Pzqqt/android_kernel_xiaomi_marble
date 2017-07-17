@@ -288,6 +288,7 @@
 #define HDD_SESSION_ID_INVALID    0xFF
 
 #define SCAN_REJECT_THRESHOLD_TIME 300000 /* Time is in msec, equal to 5 mins */
+#define SCAN_REJECT_THRESHOLD 15
 
 /* Default Psoc id */
 #define DEFAULT_PSOC_ID 1
@@ -1619,6 +1620,7 @@ struct hdd_context_s {
 	uint8_t last_scan_reject_session_id;
 	enum scan_reject_states last_scan_reject_reason;
 	unsigned long last_scan_reject_timestamp;
+	uint8_t scan_reject_cnt;
 	bool dfs_cac_offload;
 	bool reg_offload;
 #ifdef FEATURE_WLAN_CH_AVOID
@@ -1635,6 +1637,8 @@ struct hdd_context_s {
 	/* the context that is capturing tsf */
 	hdd_adapter_t *cap_tsf_context;
 #endif
+	uint8_t bt_a2dp_active:1;
+	uint8_t bt_vo_active:1;
 };
 
 /**

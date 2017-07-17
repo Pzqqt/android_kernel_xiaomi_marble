@@ -4930,7 +4930,7 @@ void lim_resset_scan_channel_info(tpAniSirGlobal pMac)
  * @param  channel - New channel to which we are expected to move
  * @return None
  */
-tAniBool lim_is_channel_valid_for_channel_switch(tpAniSirGlobal pMac, uint8_t channel)
+bool lim_is_channel_valid_for_channel_switch(tpAniSirGlobal pMac, uint8_t channel)
 {
 	uint8_t index;
 	uint32_t validChannelListLen = WNI_CFG_VALID_CHANNEL_LIST_LEN;
@@ -4941,16 +4941,16 @@ tAniBool lim_is_channel_valid_for_channel_switch(tpAniSirGlobal pMac, uint8_t ch
 			     (uint32_t *) &validChannelListLen) !=
 			eSIR_SUCCESS) {
 		pe_err("could not retrieve valid channel list");
-		return eSIR_FALSE;
+		return false;
 	}
 
 	for (index = 0; index < validChannelListLen; index++) {
 		if (validChannelList[index] == channel)
-			return eSIR_TRUE;
+			return true;
 	}
 
 	/* channel does not belong to list of valid channels */
-	return eSIR_FALSE;
+	return false;
 }
 
 /**------------------------------------------------------

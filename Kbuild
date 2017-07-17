@@ -178,13 +178,9 @@ ifneq ($(CONFIG_ROME_IF),sdio)
 	CONFIG_WLAN_FASTPATH := y
 
 	# Flag to enable NAPI
-ifeq (y,$(CONFIG_LITHIUM))
-	CONFIG_WLAN_NAPI := n
-	CONFIG_WLAN_NAPI_DEBUG := n
-else
 	CONFIG_WLAN_NAPI := y
 	CONFIG_WLAN_NAPI_DEBUG := n
-endif
+
 	# Flag to enable FW based TX Flow control
 	ifeq ($(CONFIG_CNSS_EOS),y)
 		CONFIG_WLAN_TX_FLOW_CONTROL_V2 := y
@@ -887,11 +883,11 @@ UMAC_MGMT_TXRX_OBJS := $(UMAC_MGMT_TXRX_DIR)/core/src/wlan_mgmt_txrx_main.o \
 	$(UMAC_MGMT_TXRX_DIR)/dispatcher/src/wlan_mgmt_txrx_tgt_api.o
 
 ########## POWER MANAGEMENT OFFLOADS (PMO) ##########
-PMO_DIR := $(WLAN_COMMON_ROOT)/pmo
-PMO_INC :=      -I$(WLAN_COMMON_INC)/pmo/core/inc \
-		-I$(WLAN_COMMON_INC)/pmo/dispatcher/inc \
-		-I$(WLAN_COMMON_INC)/pmo/core/src \
-		-I$(WLAN_COMMON_INC)/pmo/dispatcher/src
+PMO_DIR :=	core/components/pmo
+PMO_INC :=	-I$(WLAN_ROOT)/$(PMO_DIR)/core/inc \
+			-I$(WLAN_ROOT)/$(PMO_DIR)/core/src \
+			-I$(WLAN_ROOT)/$(PMO_DIR)/dispatcher/inc \
+			-I$(WLAN_ROOT)/$(PMO_DIR)/dispatcher/src \
 
 PMO_OBJS :=     $(PMO_DIR)/core/src/wlan_pmo_main.o \
 		$(PMO_DIR)/core/src/wlan_pmo_arp.o \
@@ -916,6 +912,24 @@ PMO_OBJS :=     $(PMO_DIR)/core/src/wlan_pmo_main.o \
 		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_suspend_resume.o \
 		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_hw_filter.o \
 		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_pkt_filter.o
+
+########## CLD TARGET_IF #######
+CLD_TARGET_IF_DIR := core/components/target_if
+
+CLD_TARGET_IF_INC := -I$(WLAN_ROOT)/$(CLD_TARGET_IF_DIR)/pmo/inc \
+					 -I$(WLAN_ROOT)/$(CLD_TARGET_IF_DIR)/pmo/src \
+
+CLD_TARGET_IF_OBJ := $(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_arp.o \
+		$(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_gtk.o \
+		$(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_hw_filter.o \
+		$(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_lphb.o \
+		$(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_main.o \
+		$(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_mc_addr_filtering.o \
+		$(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_ns.o \
+		$(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_pkt_filter.o \
+		$(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_static_config.o \
+		$(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_suspend_resume.o \
+		$(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_wow.o \
 
 ############## UMAC P2P ###########
 P2P_DIR := umac/p2p
@@ -977,25 +991,12 @@ TARGET_IF_DIR := $(WLAN_COMMON_ROOT)/target_if
 TARGET_IF_INC := -I$(WLAN_COMMON_INC)/target_if/core/inc \
 		 -I$(WLAN_COMMON_INC)/target_if/core/src \
 		 -I$(WLAN_COMMON_INC)/target_if/init_deinit/inc \
-		 -I$(WLAN_COMMON_INC)/target_if/pmo/inc \
-		 -I$(WLAN_COMMON_INC)/target_if/pmo/src \
 		 -I$(WLAN_COMMON_INC)/target_if/p2p/inc \
 		 -I$(WLAN_COMMON_INC)/target_if/regulatory/inc \
 		 -I$(WLAN_COMMON_INC)/target_if/tdls/inc
 
 TARGET_IF_OBJ := $(TARGET_IF_DIR)/core/src/target_if_main.o \
 		$(TARGET_IF_DIR)/init_deinit/src/service_ready_event_handler.o \
-		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_main.o \
-		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_arp.o \
-		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_ns.o \
-		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_gtk.o \
-		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_wow.o \
-		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_hw_filter.o \
-		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_mc_addr_filtering.o \
-		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_static_config.o \
-		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_lphb.o \
-		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_suspend_resume.o \
-		$(TARGET_IF_DIR)/pmo/src/target_if_pmo_pkt_filter.o \
 		$(TARGET_IF_DIR)/p2p/src/target_if_p2p.o \
 		$(TARGET_IF_DIR)/regulatory/src/target_if_reg.o \
 		$(TARGET_IF_DIR)/tdls/src/target_if_tdls.o
@@ -1256,7 +1257,9 @@ endif
 
 HIF_COMMON_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/ath_procfs.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_main.o \
-                $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/mp_dev.o
+                $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/mp_dev.o \
+                $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_exec.o \
+                $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_irq_affinity.o
 
 HIF_CE_OBJS :=  $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_bmi.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_diag.o \
@@ -1269,6 +1272,7 @@ ifeq ($(CONFIG_LITHIUM), y)
 HIF_CE_OBJS +=  $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/qca6290def.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_service_srng.o
 endif
+
 
 HIF_USB_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_USB_DIR)/usbdrv.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_USB_DIR)/hif_usb.o \
@@ -1416,6 +1420,7 @@ INCS :=		$(HDD_INC) \
 		$(CDS_INC) \
 		$(DFS_INC) \
 		$(TARGET_IF_INC) \
+		$(CLD_TARGET_IF_INC) \
 		$(OS_IF_INC) \
 		$(GLOBAL_LMAC_IF_INC)
 
@@ -1508,6 +1513,7 @@ OBJS +=		$(HIF_OBJS) \
 		$(HTT_OBJS) \
 		$(OS_IF_OBJ) \
 		$(TARGET_IF_OBJ) \
+		$(CLD_TARGET_IF_OBJ) \
 		$(GLOBAL_LMAC_IF_OBJ)
 
 ifeq ($(CONFIG_LITHIUM), y)
@@ -1647,6 +1653,7 @@ CDEFINES +=	-DCONFIG_DP_TRACE
 
 ifeq ($(CONFIG_WLAN_NAPI), y)
 CDEFINES += -DFEATURE_NAPI
+CDEFINES += -DHIF_IRQ_AFFINITY
 ifeq ($(CONFIG_WLAN_NAPI_DEBUG), y)
 CDEFINES += -DFEATURE_NAPI_DEBUG
 endif

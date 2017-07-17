@@ -3634,6 +3634,7 @@ FRAME AssocResponse                       // 7.2.3.5
     OPTIE  vendor_he_op;
     OPTIE  bss_color_change;
     OPTIE  mu_edca_param_set;
+    OPTIE  MBO_IE;
 } // End frame AssocResponse.
 
 FRAME ReAssocRequest                      // 7.2.3.6
@@ -3712,6 +3713,7 @@ FRAME ReAssocResponse                     // 7.2.3.7
     OPTIE  vendor_he_op;
     OPTIE  bss_color_change;
     OPTIE  mu_edca_param_set;
+    OPTIE  MBO_IE;
 } // End frame ReAssocResponse.
 
 FRAME ProbeRequest                        // 7.2.3.8

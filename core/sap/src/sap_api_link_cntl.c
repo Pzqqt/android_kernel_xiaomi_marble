@@ -568,7 +568,7 @@ wlansap_roam_process_dfs_chansw_update(tHalHandle hHal,
 		 * beacon template will be cleared by now. A new beacon template
 		 * with no CSA IE will be sent to firmware.
 		 */
-		dfs_beacon_start_req = eSAP_TRUE;
+		dfs_beacon_start_req = true;
 		sap_ctx->pre_cac_complete = false;
 		*ret_status = sme_roam_start_beacon_req(hHal, sap_ctx->bssid,
 							dfs_beacon_start_req);

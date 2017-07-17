@@ -878,7 +878,7 @@ lim_handle80211_frames(tpAniSirGlobal pMac, struct scheduler_msg *limMsg,
 	tpSirMacMgmtHdr pHdr = NULL;
 	tpPESession psessionEntry = NULL;
 	uint8_t sessionId;
-	tAniBool isFrmFt = false;
+	bool isFrmFt = false;
 
 	*pDeferMsg = false;
 	lim_get_b_dfrom_rx_packet(pMac, limMsg->bodyptr,
