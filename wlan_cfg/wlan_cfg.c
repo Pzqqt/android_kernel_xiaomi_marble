@@ -64,6 +64,7 @@
 #define WLAN_CFG_NUM_TX_DESC  (16 << 10)
 #define WLAN_CFG_NUM_TX_EXT_DESC (8 << 10)
 
+
 /* Interrupt Mitigation - Batch threshold in terms of number of frames */
 #define WLAN_CFG_INT_BATCH_THRESHOLD_TX 256
 #define WLAN_CFG_INT_BATCH_THRESHOLD_RX 128
@@ -85,6 +86,14 @@
  */
 #define WLAN_CFG_TX_COMP_RING_SIZE (8 << 10)
 #endif
+
+/*
+ * The max allowed size for tx comp ring is 8191.
+ * This is limitted by h/w ring max size.
+ * As this is not a power of 2 it does not work with nss offload so the
+ * nearest available size which is power of 2 is 4096 choosen for nss
+ */
+#define NSS_TX_COMP_RING_SIZE (4 << 10)
 
 #define WLAN_CFG_INT_NUM_CONTEXTS 4
 
@@ -647,6 +656,8 @@ int wlan_cfg_get_dp_soc_nss_cfg(struct wlan_cfg_dp_soc_ctxt *cfg)
 void wlan_cfg_set_dp_soc_nss_cfg(struct wlan_cfg_dp_soc_ctxt *cfg, int nss_cfg)
 {
 	cfg->nss_cfg = nss_cfg;
+	if (cfg->nss_cfg)
+		cfg->tx_comp_ring_size = NSS_TX_COMP_RING_SIZE;
 }
 
 int wlan_cfg_get_int_batch_threshold_tx(struct wlan_cfg_dp_soc_ctxt *cfg)
