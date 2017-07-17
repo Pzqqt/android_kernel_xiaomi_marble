@@ -72,8 +72,7 @@ dp_tx_me_init(struct dp_pdev *pdev)
 		p = pdev->me_buf.freelist;
 		for (i = 0; i < num_pool_elems-1; i++) {
 			p->next = (struct dp_tx_me_buf_t *)
-				((char *)p + pdev->me_buf.size +
-				sizeof(struct dp_tx_me_buf_t));
+				((char *)p + pdev->me_buf.size);
 			p = p->next;
 		}
 		p->next = NULL;

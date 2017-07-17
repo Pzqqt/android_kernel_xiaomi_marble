@@ -1140,11 +1140,13 @@ struct dp_invalid_peer_msg {
 
 /*
  * dp_tx_me_buf_t: ME buffer
- * data: Destination Mac address
  * next: pointer to next buffer
+ * data: Destination Mac address
  */
 struct dp_tx_me_buf_t {
-	uint8_t data[DP_MAC_ADDR_LEN];
+	/* Note: ME buf pool initialization logic expects next pointer to
+	 * be the first element. Dont add anything before next */
 	struct dp_tx_me_buf_t *next;
+	uint8_t data[DP_MAC_ADDR_LEN];
 };
 #endif /* _DP_TYPES_H_ */
