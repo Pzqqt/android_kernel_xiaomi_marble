@@ -178,26 +178,22 @@ struct qdf_nbuf_cb {
 						uint8_t u8;
 					} flags;
 					uint8_t ftype;
-
-					union {
-						struct {
-							uint8_t packet_state:7,
-								is_packet_priv:1;
-							uint8_t packet_track:4,
-								proto_type:4;
-							uint8_t dp_trace:1,
-								is_bcast:1,
-								is_mcast:1,
-								packet_type:3,
-								/* used only for hl*/
-								htt2_frm:1,
-								print:1;
-							uint8_t vdev_id;
-						} trace;
-						uint32_t submit_ts;
-					} u;
+					uint8_t vdev_id;
+					struct {
+						uint8_t packet_state:7,
+						is_packet_priv:1;
+						uint8_t packet_track:4,
+							proto_type:4;
+						uint8_t dp_trace:1,
+							is_bcast:1,
+							is_mcast:1,
+							packet_type:3,
+						/* used only for hl*/
+							htt2_frm:1,
+							print:1;
+					} trace;
 					void *fctx;
-					void *vdev_ctx;
+					void *ext_cb_ptr;
 				} win;
 				struct {
 					uint16_t len;
@@ -360,8 +356,10 @@ QDF_COMPILE_TIME_ASSERT(qdf_nbuf_cb_size,
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.win.fctx)
 
 #define QDF_NBUF_CB_TX_VDEV_CTX(skb) \
-		(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.win.vdev_ctx)
+		(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.win.vdev_id)
 
+#define QDF_NBUF_CB_TX_EXT_CB(skb) \
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.win.ext_cb_ptr)
 
 #ifndef CONFIG_WIN
 
@@ -414,54 +412,51 @@ QDF_COMPILE_TIME_ASSERT(qdf_nbuf_cb_size,
 
 #define QDF_NBUF_CB_TX_PACKET_STATE(skb)\
 	(((struct qdf_nbuf_cb *) \
-		((skb)->cb))->u.tx.dev.win.u.trace.packet_state)
+		((skb)->cb))->u.tx.dev.win.trace.packet_state)
 
 #define QDF_NBUF_CB_TX_IS_PACKET_PRIV(skb) \
 	(((struct qdf_nbuf_cb *) \
-		((skb)->cb))->u.tx.dev.win.u.trace.is_packet_priv)
+		((skb)->cb))->u.tx.dev.win.trace.is_packet_priv)
 
 #define QDF_NBUF_CB_TX_PACKET_TRACK(skb)\
 	(((struct qdf_nbuf_cb *) \
-		((skb)->cb))->u.tx.dev.win.u.trace.packet_track)
-
-#define QDF_NBUF_CB_TX_SUBMIT_TS(skb) \
-	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.win.u.submit_ts)
+		((skb)->cb))->u.tx.dev.win.trace.packet_track)
 
 #define QDF_NBUF_CB_TX_PROTO_TYPE(skb)\
 	(((struct qdf_nbuf_cb *) \
-		((skb)->cb))->u.tx.dev.win.u.trace.proto_type)
+		((skb)->cb))->u.tx.dev.win.trace.proto_type)
 
 #define QDF_NBUF_GET_PACKET_TRACK(skb)\
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.win.u.trace.packet_track)
 
 #define QDF_NBUF_CB_TX_DP_TRACE(skb)\
-	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.win.u.trace.dp_trace)
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.win.trace.dp_trace)
 
 #define QDF_NBUF_CB_DP_TRACE_PRINT(skb)	\
-	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.win.u.trace.print)
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.win.trace.print)
 
 #define QDF_NBUF_CB_TX_HL_HTT2_FRM(skb)	\
-	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.win.u.trace.htt2_frm)
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.win.trace.htt2_frm)
 
 #define QDF_NBUF_CB_TX_VDEV_ID(skb)\
-	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.win.u.trace.vdev_id)
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.win.trace.vdev_id)
 
 #define QDF_NBUF_CB_GET_IS_BCAST(skb)\
-	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.win.u.trace.is_bcast)
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.win.trace.is_bcast)
 
 #define QDF_NBUF_CB_GET_IS_MCAST(skb)\
-	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.win.u.trace.is_mcast)
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.win.trace.is_mcast)
 
 #define QDF_NBUF_CB_GET_PACKET_TYPE(skb)\
-	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.win.u.trace.packet_type)
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.win.trace.packet_type)
 
 #define QDF_NBUF_CB_SET_BCAST(skb) \
 	(((struct qdf_nbuf_cb *) \
-		((skb)->cb))->u.tx.dev.win.u.trace.is_bcast = true)
+		((skb)->cb))->u.tx.dev.win.trace.is_bcast = true)
 
 #define QDF_NBUF_CB_SET_MCAST(skb) \
 	(((struct qdf_nbuf_cb *) \
-		((skb)->cb))->u.tx.dev.win.u.trace.is_mcast = true)
+		((skb)->cb))->u.tx.dev.win.trace.is_mcast = true)
 
 #define QDF_NBUF_CB_TX_FTYPE(skb) \
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.win.ftype)
@@ -529,8 +524,10 @@ typedef void (*qdf_nbuf_free_t)(__qdf_nbuf_t);
 							      is_wstrm; \
 	} while (0)
 
-#define __qdf_nbuf_set_vdev_ctx(skb, vdev_ctx) \
-	(QDF_NBUF_CB_TX_VDEV_CTX((skb)) = (vdev_ctx))
+#define __qdf_nbuf_set_vdev_ctx(skb, vdev_id) \
+	do { \
+		QDF_NBUF_CB_TX_VDEV_CTX((skb)) = (vdev_id); \
+	} while (0)
 
 #define __qdf_nbuf_get_vdev_ctx(skb) \
 	QDF_NBUF_CB_TX_VDEV_CTX((skb))
@@ -551,6 +548,14 @@ typedef void (*qdf_nbuf_free_t)(__qdf_nbuf_t);
 
 #define __qdf_nbuf_get_ftype(skb) \
 		 QDF_NBUF_CB_TX_FTYPE((skb))
+
+#define __qdf_nbuf_set_ext_cb(skb, ref) \
+	do { \
+		QDF_NBUF_CB_TX_EXT_CB((skb)) = (ref); \
+	} while (0)
+
+#define __qdf_nbuf_get_ext_cb(skb) \
+	QDF_NBUF_CB_TX_EXT_CB((skb))
 
 #define __qdf_nbuf_set_chfrag_start(skb, val) \
 	((QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_CHFRAG_START((skb))) = val)
@@ -1841,5 +1846,44 @@ static inline uint16_t
 __qdf_nbuf_get_queue_mapping(struct sk_buff *skb)
 {
 	return skb->queue_mapping;
+}
+
+/**
+ * __qdf_nbuf_set_timestamp() - set the timestamp for frame
+ *
+ * @buf: sk buff
+ *
+ * Return: void
+ */
+static inline void
+__qdf_nbuf_set_timestamp(struct sk_buff *skb)
+{
+	__net_timestamp(skb);
+}
+
+/**
+ * __qdf_nbuf_get_timedelta_ms() - get time difference in ms
+ *
+ * @buf: sk buff
+ *
+ * Return: time difference in ms
+ */
+static inline uint64_t
+__qdf_nbuf_get_timedelta_ms(struct sk_buff *skb)
+{
+	return ktime_to_ms(net_timedelta(skb->tstamp));
+}
+
+/**
+ * __qdf_nbuf_get_timedelta_us() - get time difference in micro seconds
+ *
+ * @buf: sk buff
+ *
+ * Return: time difference in micro seconds
+ */
+static inline uint64_t
+__qdf_nbuf_get_timedelta_us(struct sk_buff *skb)
+{
+	return ktime_to_us(net_timedelta(skb->tstamp));
 }
 #endif /*_I_QDF_NET_BUF_H */
