@@ -16461,6 +16461,7 @@ QDF_STATUS csr_get_snr(tpAniSirGlobal pMac,
 
 	status = csr_roam_get_session_id_from_bssid(pMac, &bssId, &sessionId);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		qdf_mem_free(pMsg);
 		sme_err("Couldn't find session_id for given BSSID");
 		return status;
 	}
