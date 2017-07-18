@@ -84,6 +84,23 @@ wlan_lmac_if_get_dfs_rx_ops(struct wlan_objmgr_psoc *psoc)
 }
 
 /**
+ * wlan_lmac_if_get_reg_rx_ops() - retrieve the reg rx_ops
+ * @psoc: psoc context
+ *
+ * API to retrieve the reg rx_ops from the psoc context
+ *
+ * Return: reg_rx_ops pointer
+ */
+static inline struct wlan_lmac_if_reg_rx_ops *
+wlan_lmac_if_get_reg_rx_ops(struct wlan_objmgr_psoc *psoc)
+{
+	if (!psoc)
+		return NULL;
+
+	return &psoc->soc_cb.rx_ops.reg_rx_ops;
+}
+
+/**
  * mgmt_txrx_get_nbuf() - retrieve nbuf from mgmt desc_id
  * @psoc: psoc context
  * @desc_id: mgmt desc_id
