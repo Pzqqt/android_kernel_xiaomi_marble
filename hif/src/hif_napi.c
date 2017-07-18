@@ -410,6 +410,7 @@ int hif_napi_event(struct hif_opaque_softc *hif_ctx, enum qca_napi_event event,
 	int      rc = 0;
 	uint32_t prev_state;
 	int      i;
+	bool state_changed;
 	struct napi_struct *napi;
 	struct hif_softc *hif = HIF_GET_SOFTC(hif_ctx);
 	struct qca_napi_data *napid = &(hif->napi_data);
@@ -559,9 +560,18 @@ int hif_napi_event(struct hif_opaque_softc *hif_ctx, enum qca_napi_event event,
 		break;
 	} /* switch blacklist_pending */
 
+	/* we want to perform the comparison in lock:
+	 * there is a possiblity of hif_napi_event get called
+	 * from two different contexts (driver unload and cpu hotplug
+	 * notification) and napid->state get changed
+	 * in driver unload context and can lead to race condition
+	 * in cpu hotplug context. Therefore, perform the napid->state
+	 * comparison before releasing lock.
+	 */
+	state_changed = (prev_state != napid->state);
 	qdf_spin_unlock_bh(&(napid->lock));
 
-	if (prev_state != napid->state) {
+	if (state_changed) {
 		if (napid->state == ENABLE_NAPI_MASK) {
 			rc = 1;
 			for (i = 0; i < CE_COUNT_MAX; i++) {
