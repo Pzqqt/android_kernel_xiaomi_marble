@@ -3186,7 +3186,7 @@ wlan_hdd_set_roam_param_policy[MAX_ROAMING_PARAM + 1] = {
 	[PARAM_A_BAND_MAX_BOOST] = {.type = NLA_U32},
 	[PARAM_ROAM_HISTERESYS] = {.type = NLA_S32},
 	[PARAM_A_BAND_BOOST_THLD] = {.type = NLA_S32},
-	[PARAM_A_BAND_BOOST_THLD] = {.type = NLA_S32},
+	[PARAM_A_BAND_PELT_THLD] = {.type = NLA_S32},
 	[PARAM_RSSI_TRIGGER] = {.type = NLA_U32},
 	[PARAM_ROAM_ENABLE] = {	.type = NLA_S32},
 	[PARAM_NUM_BSSID] = {.type = NLA_U32},
@@ -3495,12 +3495,12 @@ static int hdd_set_ext_roam_params(hdd_context_t *hddctx,
 		hdd_debug("5G Boost Threshold (%d)",
 			roam_params->raise_rssi_thresh_5g);
 		/* Parse and fetch 5G Penalty Threshold */
-		if (!tb[PARAM_A_BAND_BOOST_THLD]) {
+		if (!tb[PARAM_A_BAND_PELT_THLD]) {
 			hdd_err("5G penalty threshold failed");
 			goto fail;
 		}
 		roam_params->drop_rssi_thresh_5g = nla_get_s32(
-			tb[PARAM_A_BAND_BOOST_THLD]);
+			tb[PARAM_A_BAND_PELT_THLD]);
 		hdd_debug("5G Penalty Threshold (%d)",
 			roam_params->drop_rssi_thresh_5g);
 		/* Parse and fetch 5G Boost Factor */
