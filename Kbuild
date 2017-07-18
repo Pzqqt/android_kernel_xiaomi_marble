@@ -883,7 +883,7 @@ UMAC_MGMT_TXRX_OBJS := $(UMAC_MGMT_TXRX_DIR)/core/src/wlan_mgmt_txrx_main.o \
 	$(UMAC_MGMT_TXRX_DIR)/dispatcher/src/wlan_mgmt_txrx_tgt_api.o
 
 ########## POWER MANAGEMENT OFFLOADS (PMO) ##########
-PMO_DIR :=	core/components/pmo
+PMO_DIR :=	components/pmo
 PMO_INC :=	-I$(WLAN_ROOT)/$(PMO_DIR)/core/inc \
 			-I$(WLAN_ROOT)/$(PMO_DIR)/core/src \
 			-I$(WLAN_ROOT)/$(PMO_DIR)/dispatcher/inc \
@@ -914,7 +914,7 @@ PMO_OBJS :=     $(PMO_DIR)/core/src/wlan_pmo_main.o \
 		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_pkt_filter.o
 
 ########## CLD TARGET_IF #######
-CLD_TARGET_IF_DIR := core/components/target_if
+CLD_TARGET_IF_DIR := components/target_if
 
 CLD_TARGET_IF_INC := -I$(WLAN_ROOT)/$(CLD_TARGET_IF_DIR)/pmo/inc \
 					 -I$(WLAN_ROOT)/$(CLD_TARGET_IF_DIR)/pmo/src \
