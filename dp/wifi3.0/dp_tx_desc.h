@@ -22,7 +22,6 @@
 #include "dp_types.h"
 #include "dp_tx.h"
 #include "dp_internal.h"
-#include "cds_api.h"
 
 /**
  * 21 bits cookie
