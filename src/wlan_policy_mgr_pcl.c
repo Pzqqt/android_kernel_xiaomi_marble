@@ -68,9 +68,12 @@ policy_mgr_next_action_three_connection_table_type
 QDF_STATUS policy_mgr_get_pcl_for_existing_conn(struct wlan_objmgr_psoc *psoc,
 		enum policy_mgr_con_mode mode,
 		uint8_t *pcl_ch, uint32_t *len,
-		uint8_t *pcl_weight, uint32_t weight_len)
+		uint8_t *pcl_weight, uint32_t weight_len,
+		bool all_matching_cxn_to_del)
 {
-	struct policy_mgr_conc_connection_info info;
+	struct policy_mgr_conc_connection_info
+			info[MAX_NUMBER_OF_CONC_CONNECTIONS] = { {0} };
+	uint8_t num_cxn_del = 0;
 
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
@@ -78,13 +81,14 @@ QDF_STATUS policy_mgr_get_pcl_for_existing_conn(struct wlan_objmgr_psoc *psoc,
 
 	if (policy_mgr_mode_specific_connection_count(psoc, mode, NULL) > 0) {
 		/* Check, store and temp delete the mode's parameter */
-		policy_mgr_store_and_del_conn_info(psoc, mode, &info);
+		policy_mgr_store_and_del_conn_info(psoc, mode,
+				all_matching_cxn_to_del, info, &num_cxn_del);
 		/* Get the PCL */
 		status = policy_mgr_get_pcl(psoc, mode, pcl_ch, len,
 					pcl_weight, weight_len);
 		policy_mgr_notice("Get PCL to FW for mode:%d", mode);
 		/* Restore the connection info */
-		policy_mgr_restore_deleted_conn_info(psoc, &info);
+		policy_mgr_restore_deleted_conn_info(psoc, info, num_cxn_del);
 	}
 
 	return status;
@@ -1283,7 +1287,8 @@ policy_mgr_get_nondfs_preferred_channel(struct wlan_objmgr_psoc *psoc,
 		if (QDF_STATUS_SUCCESS != policy_mgr_get_pcl_for_existing_conn(
 					psoc, mode,
 					&pcl_channels[0], &pcl_len,
-					pcl_weight, QDF_ARRAY_SIZE(pcl_weight)))
+					pcl_weight, QDF_ARRAY_SIZE(pcl_weight),
+					false))
 			return channel;
 	} else {
 		if (QDF_STATUS_SUCCESS != policy_mgr_get_pcl(psoc, mode,
@@ -1464,7 +1469,8 @@ QDF_STATUS policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
 
 	status = policy_mgr_get_pcl_for_existing_conn(psoc, PM_SAP_MODE,
 			pcl.pcl_list, &pcl.pcl_len,
-			pcl.weight_list, QDF_ARRAY_SIZE(pcl.weight_list));
+			pcl.weight_list, QDF_ARRAY_SIZE(pcl.weight_list),
+			false);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		policy_mgr_err("Unable to get PCL for SAP");
 		return status;
@@ -1504,7 +1510,9 @@ QDF_STATUS policy_mgr_get_valid_chan_weights(struct wlan_objmgr_psoc *psoc,
 		struct policy_mgr_pcl_chan_weights *weight)
 {
 	uint32_t i, j;
-	struct policy_mgr_conc_connection_info info;
+	struct policy_mgr_conc_connection_info
+			info[MAX_NUMBER_OF_CONC_CONNECTIONS] = { {0} };
+	uint8_t num_cxn_del = 0;
 
 	if (!weight->pcl_list) {
 		policy_mgr_err("Invalid pcl");
@@ -1532,7 +1540,8 @@ QDF_STATUS policy_mgr_get_valid_chan_weights(struct wlan_objmgr_psoc *psoc,
 		 * check can be used as though a new connection is coming up,
 		 * allowing to detect the disallowed channels.
 		 */
-		policy_mgr_store_and_del_conn_info(psoc, PM_STA_MODE, &info);
+		policy_mgr_store_and_del_conn_info(psoc, PM_STA_MODE, false,
+						info, &num_cxn_del);
 		/*
 		 * There is a small window between releasing the above lock
 		 * and acquiring the same in policy_mgr_allow_concurrency,
@@ -1548,7 +1557,7 @@ QDF_STATUS policy_mgr_get_valid_chan_weights(struct wlan_objmgr_psoc *psoc,
 		}
 
 		/* Restore the connection info */
-		policy_mgr_restore_deleted_conn_info(psoc, &info);
+		policy_mgr_restore_deleted_conn_info(psoc, info, num_cxn_del);
 	}
 
 	for (i = 0; i < weight->saved_num_chan; i++) {

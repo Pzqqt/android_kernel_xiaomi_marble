@@ -334,9 +334,12 @@ void policy_mgr_update_conc_list(struct wlan_objmgr_psoc *psoc,
 		bool in_use);
 void policy_mgr_store_and_del_conn_info(struct wlan_objmgr_psoc *psoc,
 				enum policy_mgr_con_mode mode,
-				struct policy_mgr_conc_connection_info *info);
+				bool all_matching_cxn_to_del,
+				struct policy_mgr_conc_connection_info *info,
+				uint8_t *num_cxn_del);
 void policy_mgr_restore_deleted_conn_info(struct wlan_objmgr_psoc *psoc,
-		struct policy_mgr_conc_connection_info *info);
+				struct policy_mgr_conc_connection_info *info,
+				uint8_t num_cxn_del);
 void policy_mgr_update_hw_mode_conn_info(struct wlan_objmgr_psoc *psoc,
 				uint32_t num_vdev_mac_entries,
 				struct policy_mgr_vdev_mac_map *vdev_mac_map,
