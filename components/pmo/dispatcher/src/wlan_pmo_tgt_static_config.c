@@ -25,9 +25,8 @@
 #include "wlan_pmo_main.h"
 
 QDF_STATUS pmo_tgt_send_enhance_multicast_offload_req(
-		struct wlan_objmgr_vdev *vdev,
-		uint8_t vdev_id,
-		uint8_t action)
+	struct wlan_objmgr_vdev *vdev,
+	uint8_t action)
 {
 	QDF_STATUS status;
 	struct wlan_objmgr_psoc *psoc;

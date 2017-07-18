@@ -3028,7 +3028,17 @@ int hdd_vdev_ready(hdd_adapter_t *adapter)
 	QDF_STATUS status;
 
 	status = pmo_vdev_ready(adapter->hdd_vdev);
+	if (QDF_IS_STATUS_ERROR(status))
+		return qdf_status_to_os_return(status);
+
 	status = ucfg_reg_11d_vdev_created_update(adapter->hdd_vdev);
+	if (QDF_IS_STATUS_ERROR(status))
+		return qdf_status_to_os_return(status);
+
+	if (wma_capability_enhanced_mcast_filter())
+		status = pmo_ucfg_enhanced_mc_filter_enable(adapter->hdd_vdev);
+	else
+		status = pmo_ucfg_enhanced_mc_filter_disable(adapter->hdd_vdev);
 
 	return qdf_status_to_os_return(status);
 }

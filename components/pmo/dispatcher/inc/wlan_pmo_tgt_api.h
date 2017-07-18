@@ -172,15 +172,13 @@ QDF_STATUS pmo_tgt_clear_mc_filter_req(struct wlan_objmgr_vdev *vdev,
 
 /**
  * pmo_tgt_send_enhance_multicast_offload_req() - send enhance mc offload req
- * @wma_handle: wma handle
- * @vdev_id: vdev id
+ * @vdev: the vdev to configure
  * @action: enable or disable enhance multicast offload
  *
  * Return: QDF_STATUS_SUCCESS on success else error code
  */
 QDF_STATUS pmo_tgt_send_enhance_multicast_offload_req(
 		struct wlan_objmgr_vdev *vdev,
-		uint8_t vdev_id,
 		uint8_t action);
 
 /**

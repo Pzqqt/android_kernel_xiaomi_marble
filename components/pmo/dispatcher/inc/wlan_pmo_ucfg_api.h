@@ -25,6 +25,7 @@
 #include "wlan_pmo_arp_public_struct.h"
 #include "wlan_pmo_ns_public_struct.h"
 #include "wlan_pmo_gtk_public_struct.h"
+#include "wlan_pmo_mc_addr_filtering.h"
 #include "wlan_pmo_mc_addr_filtering_public_struct.h"
 #include "wlan_pmo_wow_public_struct.h"
 #include "wlan_pmo_common_public_struct.h"
@@ -227,6 +228,30 @@ QDF_STATUS pmo_ucfg_cache_mc_addr_list(
  */
 QDF_STATUS pmo_ucfg_flush_mc_addr_list(struct wlan_objmgr_psoc *psoc,
 	uint8_t vdev_id);
+
+/**
+ * pmo_ucfg_enhance_mc_filter_enable() - enable enhanced multicast filtering
+ * @vdev: the vdev to enable enhanced multicast filtering for
+ *
+ * Return: QDF_STATUS
+ */
+static inline QDF_STATUS
+pmo_ucfg_enhanced_mc_filter_enable(struct wlan_objmgr_vdev *vdev)
+{
+	return pmo_core_enhanced_mc_filter_enable(vdev);
+}
+
+/**
+ * pmo_ucfg_enhance_mc_filter_disable() - disable enhanced multicast filtering
+ * @vdev: the vdev to disable enhanced multicast filtering for
+ *
+ * Return: QDF_STATUS
+ */
+static inline QDF_STATUS
+pmo_ucfg_enhanced_mc_filter_disable(struct wlan_objmgr_vdev *vdev)
+{
+	return pmo_core_enhanced_mc_filter_disable(vdev);
+}
 
 /**
  * pmo_ucfg_enable_mc_addr_filtering_in_fwr(): Enable cached mc add list in fwr

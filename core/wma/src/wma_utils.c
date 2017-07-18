@@ -4228,20 +4228,14 @@ wma_config_debug_module_cmd(wmi_unified_t wmi_handle, A_UINT32 param,
  */
 bool wma_is_p2p_lo_capable(void)
 {
-	tp_wma_handle wma;
-
-	wma = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma) {
-		WMA_LOGE("%s: Invalid WMA handle", __func__);
-		return false;
-	}
-
-	if (WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-			WMI_SERVICE_P2P_LISTEN_OFFLOAD_SUPPORT))
-		return true;
-
-	return false;
+	return wma_is_service_enabled(WMI_SERVICE_P2P_LISTEN_OFFLOAD_SUPPORT);
 }
+
+bool wma_capability_enhanced_mcast_filter(void)
+{
+	return wma_is_service_enabled(WMI_SERVICE_ENHANCED_MCAST_FILTER);
+}
+
 
 bool wma_is_vdev_up(uint8_t vdev_id)
 {
