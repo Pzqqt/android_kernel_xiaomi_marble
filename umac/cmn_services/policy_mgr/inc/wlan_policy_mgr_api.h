@@ -1241,6 +1241,7 @@ uint8_t policy_mgr_get_mcc_operating_channel(struct wlan_objmgr_psoc *psoc,
  * @len: Pointer to the length of the PCL
  * @pcl_weight: Pointer to the weights of the PCL
  * @weight_len: Max length of the weights list
+ * @all_matching_cxn_to_del: Need remove all entries before getting pcl
  *
  * Get the PCL for an existing connection
  *
@@ -1249,7 +1250,8 @@ uint8_t policy_mgr_get_mcc_operating_channel(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS policy_mgr_get_pcl_for_existing_conn(struct wlan_objmgr_psoc *psoc,
 		enum policy_mgr_con_mode mode,
 		uint8_t *pcl_ch, uint32_t *len,
-		uint8_t *weight_list, uint32_t weight_len);
+		uint8_t *weight_list, uint32_t weight_len,
+		bool all_matching_cxn_to_del);
 
 /**
  * policy_mgr_get_valid_chan_weights() - Get the weightage for

@@ -453,7 +453,7 @@ static void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
 				&len, weight_list, weight_len);
 	else
 		policy_mgr_get_pcl_for_existing_conn(psoc, PM_SAP_MODE, pcl_ch,
-				&len, weight_list, weight_len);
+				&len, weight_list, weight_len, true);
 
 	if (*num_chan < len) {
 		DFS_PRINTK("%s: Invalid len src=%d, dst=%d\n",

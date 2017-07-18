@@ -562,7 +562,9 @@ void policy_mgr_update_conc_list(struct wlan_objmgr_psoc *psoc,
 /**
  * policy_mgr_store_and_del_conn_info() - Store and del a connection info
  * @mode: Mode whose entry has to be deleted
- * @info: Struture pointer where the connection info will be saved
+ * @all_matching_cxn_to_del: All the specified mode entries should be deleted
+ * @info: Struture array pointer where the connection info will be saved
+ * @num_cxn_del: Number of connection which are going to be deleted
  *
  * Saves the connection info corresponding to the provided mode
  * and deleted that corresponding entry based on vdev from the
@@ -571,18 +573,22 @@ void policy_mgr_update_conc_list(struct wlan_objmgr_psoc *psoc,
  * Return: None
  */
 void policy_mgr_store_and_del_conn_info(struct wlan_objmgr_psoc *psoc,
-				enum policy_mgr_con_mode mode,
-				struct policy_mgr_conc_connection_info *info)
+	enum policy_mgr_con_mode mode, bool all_matching_cxn_to_del,
+	struct policy_mgr_conc_connection_info *info, uint8_t *num_cxn_del)
 {
-	uint32_t conn_index = 0;
-	bool found = false;
+	int32_t conn_index = 0;
+	uint32_t found_index = 0;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 
+	if (!num_cxn_del) {
+		policy_mgr_err("num_cxn_del is NULL");
+		return;
+	}
+	*num_cxn_del = 0;
 	if (!info) {
 		policy_mgr_err("Invalid connection info");
 		return;
 	}
-	qdf_mem_zero(info, sizeof(*info));
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
 		policy_mgr_err("Invalid Context");
@@ -592,34 +598,47 @@ void policy_mgr_store_and_del_conn_info(struct wlan_objmgr_psoc *psoc,
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	while (PM_CONC_CONNECTION_LIST_VALID_INDEX(conn_index)) {
 		if (mode == pm_conc_connection_list[conn_index].mode) {
-			found = true;
-			break;
+			/*
+			 * Storing the connection entry which will be
+			 * temporarily deleted.
+			 */
+			info[found_index] = pm_conc_connection_list[conn_index];
+			/* Deleting the connection entry */
+			policy_mgr_decr_connection_count(psoc,
+					info[found_index].vdev_id);
+			policy_mgr_notice("Stored %d (%d), deleted STA entry with vdev id %d, index %d",
+				info[found_index].vdev_id,
+				info[found_index].mode,
+				info[found_index].vdev_id, conn_index);
+			found_index++;
+			if (all_matching_cxn_to_del)
+				continue;
+			else
+				break;
 		}
 		conn_index++;
 	}
-
-	if (!found) {
-		qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
-		policy_mgr_err("Mode:%d not available in the conn info", mode);
-		return;
-	}
-
-	/* Storing the STA entry which will be temporarily deleted */
-	*info = pm_conc_connection_list[conn_index];
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 
-	/* Deleting the STA entry */
-	policy_mgr_decr_connection_count(psoc, info->vdev_id);
+	if (!found_index) {
+		*num_cxn_del = 0;
+		policy_mgr_err("Mode:%d not available in the conn info", mode);
+	} else {
+		*num_cxn_del = found_index;
+		policy_mgr_err("Mode:%d number of conn %d temp del",
+				mode, *num_cxn_del);
+	}
 
-	policy_mgr_notice("Stored %d (%d), deleted STA entry with vdev id %d, index %d",
-		info->vdev_id, info->mode, info->vdev_id, conn_index);
-
-	/* Caller should set the PCL and restore the STA entry in conn info */
+	/*
+	 * Caller should set the PCL and restore the connection entry
+	 * in conn info.
+	 */
 }
 
 /**
  * policy_mgr_restore_deleted_conn_info() - Restore connection info
- * @info: Saved connection info that is to be restored
+ * @info: An array saving connection info that is to be restored
+ * @num_cxn_del: Number of connection temporary deleted
  *
  * Restores the connection info of STA that was saved before
  * updating the PCL to the FW
@@ -627,11 +646,17 @@ void policy_mgr_store_and_del_conn_info(struct wlan_objmgr_psoc *psoc,
  * Return: None
  */
 void policy_mgr_restore_deleted_conn_info(struct wlan_objmgr_psoc *psoc,
-		struct policy_mgr_conc_connection_info *info)
+		struct policy_mgr_conc_connection_info *info,
+		uint8_t num_cxn_del)
 {
 	uint32_t conn_index;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 
+	if (MAX_NUMBER_OF_CONC_CONNECTIONS <= num_cxn_del || 0 == num_cxn_del) {
+		policy_mgr_err("Failed to restore %d/%d deleted information",
+				num_cxn_del, MAX_NUMBER_OF_CONC_CONNECTIONS);
+		return;
+	}
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
 		policy_mgr_err("Invalid Context");
@@ -646,7 +671,8 @@ void policy_mgr_restore_deleted_conn_info(struct wlan_objmgr_psoc *psoc,
 	}
 
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
-	pm_conc_connection_list[conn_index] = *info;
+	qdf_mem_copy(&pm_conc_connection_list[conn_index], info,
+			num_cxn_del * sizeof(*info));
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 
 	policy_mgr_notice("Restored the deleleted conn info, vdev:%d, index:%d",
@@ -1157,8 +1183,10 @@ void policy_mgr_pdev_set_pcl(struct wlan_objmgr_psoc *psoc,
 void policy_mgr_set_pcl_for_existing_combo(
 		struct wlan_objmgr_psoc *psoc, enum policy_mgr_con_mode mode)
 {
-	struct policy_mgr_conc_connection_info info;
+	struct policy_mgr_conc_connection_info
+			info[MAX_NUMBER_OF_CONC_CONNECTIONS] = { {0} };
 	enum tQDF_ADAPTER_MODE pcl_mode;
+	uint8_t num_cxn_del = 0;
 
 	switch (mode) {
 	case PM_STA_MODE:
@@ -1183,12 +1211,13 @@ void policy_mgr_set_pcl_for_existing_combo(
 
 	if (policy_mgr_mode_specific_connection_count(psoc, mode, NULL) > 0) {
 		/* Check, store and temp delete the mode's parameter */
-		policy_mgr_store_and_del_conn_info(psoc, mode, &info);
+		policy_mgr_store_and_del_conn_info(psoc, mode, false,
+						info, &num_cxn_del);
 		/* Set the PCL to the FW since connection got updated */
 		policy_mgr_pdev_set_pcl(psoc, pcl_mode);
 		policy_mgr_notice("Set PCL to FW for mode:%d", mode);
 		/* Restore the connection info */
-		policy_mgr_restore_deleted_conn_info(psoc, &info);
+		policy_mgr_restore_deleted_conn_info(psoc, info, num_cxn_del);
 	}
 }
 
