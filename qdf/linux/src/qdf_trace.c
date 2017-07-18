@@ -2566,14 +2566,12 @@ EXPORT_SYMBOL(QDF_PRINT_INFO);
 void qdf_logging_init(void)
 {
 	wlan_logging_sock_init_svc();
-	wlan_logging_sock_activate_svc(1, 10);
 	nl_srv_init(NULL);
 }
 
 void qdf_logging_exit(void)
 {
 	nl_srv_exit();
-	wlan_logging_sock_deactivate_svc();
 	wlan_logging_sock_deinit_svc();
 }
 #else

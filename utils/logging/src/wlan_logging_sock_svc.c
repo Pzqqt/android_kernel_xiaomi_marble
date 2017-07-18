@@ -95,6 +95,9 @@ static uint8_t grx_count;
 
 #define ANI_NL_MSG_LOG_TYPE 89
 #define ANI_NL_MSG_READY_IND_TYPE 90
+#ifndef MAX_LOGMSG_COUNT
+#define MAX_LOGMSG_COUNT 256
+#endif
 #define MAX_LOGMSG_LENGTH 2048
 #define MAX_SKBMSG_LENGTH 4096
 #define MAX_PKTSTATS_LENGTH 2048
@@ -149,7 +152,8 @@ struct wlan_logging {
 	/* Log Fatal and ERROR to console */
 	bool log_to_console;
 	/* Number of buffers to be used for logging */
-	int num_buf;
+	uint32_t num_buf;
+	uint32_t buffer_length;
 	/* Lock to synchronize access to shared logging resource */
 	spinlock_t spin_lock;
 	/* Holds the free node which can be used for filling logs */
@@ -184,7 +188,7 @@ struct wlan_logging {
 };
 
 static struct wlan_logging gwlan_logging;
-static struct log_msg *gplog_msg;
+static struct log_msg gplog_msg[MAX_LOGMSG_COUNT];
 static struct pkt_stats_msg *gpkt_stats_buffers;
 
 /* Need to call this with spin_lock acquired */
@@ -370,8 +374,7 @@ int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
 	pfilled_length = &gwlan_logging.pcur_node->filled_length;
 
 	/* Check if we can accomodate more log into current node/buffer */
-	if ((MAX_LOGMSG_LENGTH <= (*pfilled_length +
-						sizeof(tAniNlHdr))) ||
+	if ((MAX_LOGMSG_LENGTH <= (*pfilled_length + sizeof(tAniNlHdr))) ||
 		((MAX_LOGMSG_LENGTH - (*pfilled_length +
 			sizeof(tAniNlHdr))) < total_log_len)) {
 		wake_up_thread = true;
@@ -829,27 +832,33 @@ static int wlan_logging_thread(void *Arg)
 	return 0;
 }
 
-int wlan_logging_sock_activate_svc(int log_to_console, int num_buf)
+void wlan_logging_set_active(bool active)
+{
+	gwlan_logging.is_active = active;
+}
+
+void wlan_logging_set_log_to_console(bool log_to_console)
+{
+	gwlan_logging.log_to_console = log_to_console;
+}
+
+int wlan_logging_sock_init_svc(void)
 {
 	int i = 0, j, pkt_stats_size;
 	unsigned long irq_flag;
 
-	gplog_msg = (struct log_msg *)vmalloc(num_buf * sizeof(struct log_msg));
-	if (!gplog_msg) {
-		pr_err("%s: Could not allocate memory\n", __func__);
-		return -ENOMEM;
-	}
+	spin_lock_init(&gwlan_logging.spin_lock);
+	spin_lock_init(&gwlan_logging.pkt_stats_lock);
 
-	qdf_mem_zero(gplog_msg, (num_buf * sizeof(struct log_msg)));
-
-	gwlan_logging.log_to_console = !!log_to_console;
-	gwlan_logging.num_buf = num_buf;
+	gwlan_logging.log_to_console = true;
+	gwlan_logging.num_buf = MAX_LOGMSG_COUNT;
+	gwlan_logging.buffer_length = MAX_LOGMSG_LENGTH;
 
 	spin_lock_irqsave(&gwlan_logging.spin_lock, irq_flag);
 	INIT_LIST_HEAD(&gwlan_logging.free_list);
 	INIT_LIST_HEAD(&gwlan_logging.filled_list);
 
-	for (i = 0; i < num_buf; i++) {
+	for (i = 0; i < gwlan_logging.num_buf; i++) {
 		list_add(&gplog_msg[i].node, &gwlan_logging.free_list);
 		gplog_msg[i].index = i;
 	}
@@ -931,17 +940,16 @@ err1:
 	spin_lock_irqsave(&gwlan_logging.spin_lock, irq_flag);
 	gwlan_logging.pcur_node = NULL;
 	spin_unlock_irqrestore(&gwlan_logging.spin_lock, irq_flag);
-	vfree(gplog_msg);
-	gplog_msg = NULL;
+
 	return -ENOMEM;
 }
 
-int wlan_logging_sock_deactivate_svc(void)
+int wlan_logging_sock_deinit_svc(void)
 {
 	unsigned long irq_flag;
-	int i = 0;
+	int i;
 
-	if (!gplog_msg)
+	if (!gwlan_logging.pcur_node)
 		return 0;
 
 #ifdef CONFIG_MCL
@@ -962,8 +970,6 @@ int wlan_logging_sock_deactivate_svc(void)
 	spin_lock_irqsave(&gwlan_logging.spin_lock, irq_flag);
 	gwlan_logging.pcur_node = NULL;
 	spin_unlock_irqrestore(&gwlan_logging.spin_lock, irq_flag);
-	vfree(gplog_msg);
-	gplog_msg = NULL;
 
 	spin_lock_irqsave(&gwlan_logging.pkt_stats_lock, irq_flag);
 	gwlan_logging.pkt_stats_pcur_node = NULL;
@@ -977,24 +983,6 @@ int wlan_logging_sock_deactivate_svc(void)
 
 	vfree(gpkt_stats_buffers);
 	gpkt_stats_buffers = NULL;
-
-	return 0;
-}
-
-int wlan_logging_sock_init_svc(void)
-{
-	spin_lock_init(&gwlan_logging.spin_lock);
-	spin_lock_init(&gwlan_logging.pkt_stats_lock);
-	gwlan_logging.pcur_node = NULL;
-	gwlan_logging.pkt_stats_pcur_node = NULL;
-
-	return 0;
-}
-
-int wlan_logging_sock_deinit_svc(void)
-{
-	gwlan_logging.pcur_node = NULL;
-	gwlan_logging.pkt_stats_pcur_node = NULL;
 
 	return 0;
 }
