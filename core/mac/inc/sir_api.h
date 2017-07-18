@@ -2989,6 +2989,8 @@ struct roam_ext_params {
 	int dense_min_aps_cnt;
 	int initial_dense_status;
 	int traffic_threshold;
+	uint8_t num_rssi_rejection_ap;
+	struct rssi_disallow_bssid rssi_rejection_ap[MAX_RSSI_AVOID_BSSID_LIST];
 };
 
 /**

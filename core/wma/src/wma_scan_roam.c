@@ -1551,7 +1551,7 @@ static QDF_STATUS wma_roam_scan_filter(tp_wma_handle wma_handle,
 	int i;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint32_t num_bssid_black_list = 0, num_ssid_white_list = 0,
-	   num_bssid_preferred_list = 0;
+	   num_bssid_preferred_list = 0,  num_rssi_rejection_ap = 0;
 	uint32_t op_bitmap = 0;
 	struct roam_ext_params *roam_params;
 	struct roam_scan_filter_params *params;
@@ -1585,7 +1585,11 @@ static QDF_STATUS wma_roam_scan_filter(tp_wma_handle wma_handle,
 		case REASON_CTX_INIT:
 			if (roam_req->Command == ROAM_SCAN_OFFLOAD_START) {
 				params->lca_disallow_config_present = true;
-				op_bitmap |= ROAM_FILTER_OP_BITMAP_LCA_DISALLOW;
+				op_bitmap |=
+					ROAM_FILTER_OP_BITMAP_LCA_DISALLOW |
+					ROAM_FILTER_OP_BITMAP_RSSI_REJECTION_OCE;
+				num_rssi_rejection_ap =
+					roam_params->num_rssi_rejection_ap;
 			} else {
 				WMA_LOGD("%s : Roam Filter need not be sent", __func__);
 				qdf_mem_free(params);
@@ -1613,6 +1617,7 @@ static QDF_STATUS wma_roam_scan_filter(tp_wma_handle wma_handle,
 	params->num_bssid_black_list = num_bssid_black_list;
 	params->num_ssid_white_list = num_ssid_white_list;
 	params->num_bssid_preferred_list = num_bssid_preferred_list;
+	params->num_rssi_rejection_ap = num_rssi_rejection_ap;
 	qdf_mem_copy(params->bssid_avoid_list, roam_params->bssid_avoid_list,
 			MAX_BSSID_AVOID_LIST * sizeof(struct qdf_mac_addr));
 
@@ -1632,6 +1637,10 @@ static QDF_STATUS wma_roam_scan_filter(tp_wma_handle wma_handle,
 			MAX_BSSID_FAVORED * sizeof(struct qdf_mac_addr));
 	qdf_mem_copy(params->bssid_favored_factor,
 			roam_params->bssid_favored_factor, MAX_BSSID_FAVORED);
+	qdf_mem_copy(params->rssi_rejection_ap,
+		roam_params->rssi_rejection_ap,
+		MAX_RSSI_AVOID_BSSID_LIST *
+		sizeof(struct rssi_disallow_bssid));
 
 	if (params->lca_disallow_config_present) {
 		params->disallow_duration
