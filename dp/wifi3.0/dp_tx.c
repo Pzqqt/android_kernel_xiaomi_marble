@@ -706,6 +706,7 @@ static qdf_nbuf_t dp_tx_prepare_raw(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 {
 	qdf_nbuf_t curr_nbuf = NULL;
 	uint16_t total_len = 0;
+	qdf_dma_addr_t paddr;
 	int32_t i;
 
 	struct dp_tx_sg_info_s *sg_info = &msdu_info->u.sg_info;
@@ -729,9 +730,9 @@ static qdf_nbuf_t dp_tx_prepare_raw(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 	for (curr_nbuf = nbuf, i = 0; curr_nbuf;
 				curr_nbuf = qdf_nbuf_next(curr_nbuf), i++) {
-		seg_info->frags[i].paddr_lo =
-			qdf_nbuf_get_frag_paddr(curr_nbuf, 0);
-		seg_info->frags[i].paddr_hi = 0x0;
+		paddr = qdf_nbuf_get_frag_paddr(curr_nbuf, 0);
+		seg_info->frags[i].paddr_lo = paddr;
+		seg_info->frags[i].paddr_hi = ((uint64_t)paddr >> 32);
 		seg_info->frags[i].len = qdf_nbuf_len(curr_nbuf);
 		seg_info->frags[i].vaddr = (void *) curr_nbuf;
 		total_len += qdf_nbuf_len(curr_nbuf);
@@ -1273,8 +1274,9 @@ static qdf_nbuf_t dp_tx_prepare_sg(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		return NULL;
 	}
 
-	seg_info->frags[0].paddr_lo = qdf_nbuf_get_frag_paddr(nbuf, 0);
-	seg_info->frags[0].paddr_hi = 0;
+	paddr = qdf_nbuf_get_frag_paddr(nbuf, 0);
+	seg_info->frags[0].paddr_lo = paddr;
+	seg_info->frags[0].paddr_hi = ((uint64_t) paddr) >> 32;
 	seg_info->frags[0].len = qdf_nbuf_headlen(nbuf);
 	seg_info->frags[0].vaddr = (void *) nbuf;
 
@@ -2768,7 +2770,7 @@ dp_tx_me_send_convert_ucast(struct cdp_vdev *vdev_handle, qdf_nbuf_t nbuf,
 	/*preparing data fragment*/
 	data_frag.vaddr = qdf_nbuf_data(nbuf) + IEEE80211_ADDR_LEN;
 	data_frag.paddr_lo = (uint32_t)paddr_data;
-	data_frag.paddr_hi = ((uint64_t)paddr_data & 0xffffffff00000000) >> 32;
+	data_frag.paddr_hi = (((uint64_t) paddr_data)  >> 32);
 	data_frag.len = len - DP_MAC_ADDR_LEN;
 
 	for (new_mac_idx = 0; new_mac_idx < new_mac_cnt; new_mac_idx++) {
@@ -2836,7 +2838,7 @@ dp_tx_me_send_convert_ucast(struct cdp_vdev *vdev_handle, qdf_nbuf_t nbuf,
 		seg_info_new->frags[0].vaddr =  (uint8_t *)mc_uc_buf;
 		seg_info_new->frags[0].paddr_lo = (uint32_t) paddr_mcbuf;
 		seg_info_new->frags[0].paddr_hi =
-			((u64)paddr_mcbuf & 0xffffffff00000000) >> 32;
+			((uint64_t) paddr_mcbuf >> 32);
 		seg_info_new->frags[0].len = DP_MAC_ADDR_LEN;
 
 		seg_info_new->frags[1] = data_frag;
