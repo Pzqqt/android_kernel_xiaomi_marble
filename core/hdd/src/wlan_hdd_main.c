@@ -530,6 +530,7 @@ struct notifier_block hdd_netdev_notifier = {
 static int con_mode;
 
 static int con_mode_ftm;
+int con_mode_monitor;
 
 /* Variable to hold connection mode including module parameter con_mode */
 static int curr_con_mode;
@@ -1816,9 +1817,37 @@ static void hdd_mon_mode_ether_setup(struct net_device *dev)
 static int __hdd_mon_open(struct net_device *dev)
 {
 	int ret;
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	ENTER_DEV(dev);
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret)
+		return ret;
+
 	hdd_mon_mode_ether_setup(dev);
+
+	if (con_mode == QDF_GLOBAL_MONITOR_MODE) {
+		ret = hdd_wlan_start_modules(hdd_ctx, adapter, false);
+		if (ret) {
+			hdd_err("Failed to start WLAN modules return");
+			return ret;
+		}
+		hdd_err("hdd_wlan_start_modules() successful !");
+
+		if (!test_bit(SME_SESSION_OPENED, &adapter->event_flags)) {
+			ret = hdd_start_adapter(adapter);
+			if (ret) {
+				hdd_err("Failed to start adapter :%d",
+						adapter->device_mode);
+				return ret;
+			}
+			hdd_err("hdd_start_adapters() successful !");
+		}
+		set_bit(DEVICE_IFACE_OPENED, &adapter->event_flags);
+	}
+
 	ret = hdd_set_mon_rx_cb(dev);
 
 	if (!ret)
@@ -7974,6 +8003,18 @@ static int hdd_open_interfaces(struct hdd_context *hdd_ctx, bool rtnl_held)
 	struct hdd_adapter *adapter;
 	int ret;
 
+	/* open monitor mode adapter if con_mode is monitor mode */
+	if (con_mode == QDF_GLOBAL_MONITOR_MODE) {
+		adapter = hdd_open_adapter(hdd_ctx, QDF_MONITOR_MODE, "wlan%d",
+				wlan_hdd_get_intf_addr(hdd_ctx),
+				NET_NAME_UNKNOWN, rtnl_held);
+		if (!adapter) {
+			hdd_err("open adapter failed");
+			return -ENOSPC;
+		}
+		return 0;
+	}
+
 	if (hdd_ctx->config->dot11p_mode == WLAN_HDD_11P_STANDALONE)
 		/* Create only 802.11p interface */
 		return hdd_open_ocb_interface(hdd_ctx, rtnl_held);
@@ -11559,6 +11600,24 @@ static int con_mode_handler_ftm(const char *kmessage,
 	return ret;
 }
 
+static int con_mode_handler_monitor(const char *kmessage,
+				struct kernel_param *kp)
+{
+	int ret;
+
+	ret = param_set_int(kmessage, kp);
+
+	if (con_mode_monitor != QDF_GLOBAL_MONITOR_MODE) {
+		pr_err("Only Monitor mode supported!");
+		return -ENOTSUPP;
+	}
+
+	hdd_set_conparam(con_mode_monitor);
+	con_mode = con_mode_monitor;
+
+	return ret;
+}
+
 /**
  * hdd_get_conparam() - driver exit point
  *
@@ -12428,6 +12487,9 @@ module_param_call(con_mode, con_mode_handler, param_get_int, &con_mode,
 
 module_param_call(con_mode_ftm, con_mode_handler_ftm, param_get_int,
 		  &con_mode_ftm, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+
+module_param_call(con_mode_monitor, con_mode_handler_monitor, param_get_int,
+		  &con_mode_monitor, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
 module_param_call(fwpath, fwpath_changed_handler, param_get_string, &fwpath,
 		  S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
