@@ -2179,12 +2179,12 @@ void hdd_switch_sap_channel(struct hdd_adapter *adapter, uint8_t channel);
  *
  * Return: true if supported and false otherwise
  */
-static inline bool hdd_is_memdump_supported(void)
+static inline bool hdd_is_memdump_supported(struct hdd_context *hdd_ctx)
 {
-	return true;
+	return hdd_ctx->fw_mem_dump_enabled;
 }
 #else
-static inline bool hdd_is_memdump_supported(void)
+static inline bool hdd_is_memdump_supported(struct hdd_context *hdd_ctx)
 {
 	return false;
 }
