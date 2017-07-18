@@ -102,40 +102,55 @@ static QDF_STATUS pmo_core_flush_mc_addr_list_from_vdev_priv(
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS pmo_core_enhanced_mc_filter_enable(struct wlan_objmgr_vdev *vdev)
+{
+	QDF_STATUS status;
+
+	PMO_ENTER();
+
+	status = pmo_vdev_get_ref(vdev);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto exit_with_status;
+
+	pmo_tgt_send_enhance_multicast_offload_req(vdev, true);
+
+	pmo_vdev_put_ref(vdev);
+
+exit_with_status:
+	PMO_EXIT();
+
+	return status;
+}
+
+QDF_STATUS pmo_core_enhanced_mc_filter_disable(struct wlan_objmgr_vdev *vdev)
+{
+	QDF_STATUS status;
+
+	PMO_ENTER();
+
+	status = pmo_vdev_get_ref(vdev);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto exit_with_status;
+
+	pmo_tgt_send_enhance_multicast_offload_req(vdev, false);
+
+	pmo_vdev_put_ref(vdev);
+
+exit_with_status:
+	PMO_EXIT();
+
+	return status;
+}
+
 QDF_STATUS pmo_core_set_mc_filter_req(struct wlan_objmgr_vdev *vdev,
 	struct pmo_mc_addr_list *mc_list)
 {
-	uint8_t vdev_id;
 	int i;
 
 	PMO_ENTER();
 
-	vdev_id = pmo_vdev_get_id(vdev);
-	/*
-	 * Configure enhance multicast offload feature for filtering out
-	 * multicast IP data packets transmitted using unicast MAC address
-	 */
-
-	/*
-	* TODO
-	{//(WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-		//WMI_SERVICE_ENHANCED_MCAST_FILTER)) {
-	*/
-	if (1) {
-		pmo_info("FW supports enhance multicast offload");
-		pmo_tgt_send_enhance_multicast_offload_req(vdev, vdev_id,
-			false);
-	} else {
-		pmo_info("FW does not support enhance multicast offload");
-	}
-
-	/*
-	 * set mc_param->action to clear MCList and reset
-	 * to configure the MCList in FW
-	 */
 	for (i = 0; i < mc_list->mc_cnt; i++) {
-		pmo_tgt_set_mc_filter_req(vdev,
-					mc_list->mc_addr[i]);
+		pmo_tgt_set_mc_filter_req(vdev, mc_list->mc_addr[i]);
 	}
 
 	PMO_EXIT();
@@ -146,35 +161,10 @@ QDF_STATUS pmo_core_set_mc_filter_req(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS pmo_core_clear_mc_filter_req(struct wlan_objmgr_vdev *vdev,
 	struct pmo_mc_addr_list *mc_list)
 {
-	uint8_t vdev_id;
 	int i;
 
 	PMO_ENTER();
 
-	vdev_id = pmo_vdev_get_id(vdev);
-
-	/*
-	 * Configure enhance multicast offload feature for filtering out
-	 * multicast IP data packets transmitted using unicast MAC address
-	 */
-
-	/*
-	* TODO
-	{//(WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-		//WMI_SERVICE_ENHANCED_MCAST_FILTER)) {
-	*/
-	if (1) {
-		pmo_info("FW supports enhance multicast offload");
-		pmo_tgt_send_enhance_multicast_offload_req(vdev, vdev_id,
-			true);
-	} else {
-		pmo_info("FW does not support enhance multicast offload");
-	}
-
-	/*
-	 * set mcbc_param->action to clear MCList and reset
-	 * to configure the MCList in FW
-	 */
 	for (i = 0; i < mc_list->mc_cnt; i++) {
 		pmo_tgt_clear_mc_filter_req(vdev, mc_list->mc_addr[i]);
 	}
@@ -439,46 +429,51 @@ static QDF_STATUS pmo_core_handle_enable_mc_list_trigger(
 {
 	struct pmo_vdev_priv_obj *vdev_ctx;
 	QDF_STATUS status;
-	struct pmo_mc_addr_list *op_mc_list_req = NULL;
+	struct pmo_mc_addr_list *op_mc_list_req;
+
+	PMO_ENTER();
 
 	vdev_ctx = pmo_vdev_get_priv(vdev);
 
 	op_mc_list_req = qdf_mem_malloc(sizeof(*op_mc_list_req));
 	if (!op_mc_list_req) {
 		pmo_err("op_mc_list_req is NULL");
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto out;
+		status = QDF_STATUS_E_NOMEM;
+		goto exit_with_status;
 	}
 
 	switch (trigger) {
 	case pmo_mc_list_change_notify:
 		if (!vdev_ctx->pmo_psoc_ctx->psoc_cfg.active_mode_offload) {
 			pmo_info("active offload is disabled, skip in mode: %d",
-				trigger);
+				 trigger);
 			status = QDF_STATUS_E_INVAL;
-			goto out;
+			goto free_req;
 		}
 		status = pmo_core_do_enable_mc_addr_list(vdev, vdev_ctx,
-				op_mc_list_req);
+							 op_mc_list_req);
 		break;
 	case pmo_apps_suspend:
 		if (vdev_ctx->pmo_psoc_ctx->psoc_cfg.active_mode_offload) {
 			pmo_info("active offload is enabled, skip in mode: %d",
 				trigger);
 			status = QDF_STATUS_E_INVAL;
-			goto out;
+			goto free_req;
 		}
 		status = pmo_core_do_enable_mc_addr_list(vdev, vdev_ctx,
-				op_mc_list_req);
+							 op_mc_list_req);
 		break;
 	default:
 		status = QDF_STATUS_E_INVAL;
 		pmo_err("invalid pmo trigger for enable mc list");
 		break;
 	}
-out:
-	if (op_mc_list_req)
-		qdf_mem_free(op_mc_list_req);
+
+free_req:
+	qdf_mem_free(op_mc_list_req);
+
+exit_with_status:
+	PMO_EXIT();
 
 	return status;
 }
@@ -492,32 +487,36 @@ QDF_STATUS pmo_core_enable_mc_addr_filtering_in_fwr(
 	struct wlan_objmgr_vdev *vdev;
 
 	PMO_ENTER();
-	if (!psoc) {
-		pmo_err("psoc is NULL");
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto out;
-	}
+
+	status = pmo_psoc_get_ref(psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto exit_with_status;
 
 	vdev = pmo_psoc_get_vdev(psoc, vdev_id);
 	if (!vdev) {
 		pmo_err("vdev is NULL");
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto out;
+		status = QDF_STATUS_E_INVAL;
+		goto put_psoc;
 	}
 
 	status = pmo_vdev_get_ref(vdev);
 	if (QDF_IS_STATUS_ERROR(status))
-		goto out;
+		goto put_psoc;
 
 	status = pmo_core_mc_addr_flitering_sanity(vdev);
 	if (status != QDF_STATUS_SUCCESS)
-		goto dec_ref;
+		goto put_vdev;
 
 	pmo_info("enable mclist trigger: %d", trigger);
 	status = pmo_core_handle_enable_mc_list_trigger(vdev, trigger);
-dec_ref:
+
+put_vdev:
 	pmo_vdev_put_ref(vdev);
-out:
+
+put_psoc:
+	pmo_psoc_put_ref(psoc);
+
+exit_with_status:
 	PMO_EXIT();
 
 	return status;

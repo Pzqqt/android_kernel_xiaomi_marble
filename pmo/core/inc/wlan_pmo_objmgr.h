@@ -60,7 +60,6 @@ pmo_vdev_get_id(struct wlan_objmgr_vdev *vdev)
 	uint8_t vdev_id;
 
 	vdev_id = wlan_vdev_get_id(vdev);
-
 	QDF_BUG(vdev_id < WLAN_UMAC_PSOC_MAX_VDEVS);
 
 	return vdev_id;
@@ -122,10 +121,9 @@ pmo_psoc_get_vdev(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
 {
 	struct wlan_objmgr_vdev *vdev;
 
-	if (vdev_id >= WLAN_UMAC_PSOC_MAX_VDEVS) {
-		QDF_BUG(0);
+	QDF_BUG(vdev_id < WLAN_UMAC_PSOC_MAX_VDEVS);
+	if (vdev_id >= WLAN_UMAC_PSOC_MAX_VDEVS)
 		return NULL;
-	}
 
 	wlan_psoc_obj_lock(psoc);
 	vdev = psoc->soc_objmgr.wlan_vdev_list[vdev_id];
@@ -140,7 +138,6 @@ pmo_psoc_get_priv(struct wlan_objmgr_psoc *psoc)
 	struct pmo_psoc_priv_obj *psoc_priv;
 
 	psoc_priv = pmo_psoc_get_priv_nolock(psoc);
-
 	QDF_BUG(psoc_priv);
 
 	return psoc_priv;
@@ -154,7 +151,6 @@ pmo_pdev_get_psoc(struct wlan_objmgr_pdev *pdev)
 	struct wlan_objmgr_psoc *psoc;
 
 	psoc = wlan_pdev_get_psoc(pdev);
-
 	QDF_BUG(psoc);
 
 	return psoc;
@@ -174,7 +170,6 @@ pmo_vdev_get_priv(struct wlan_objmgr_vdev *vdev)
 	struct pmo_vdev_priv_obj *vdev_priv;
 
 	vdev_priv = pmo_vdev_get_priv_nolock(vdev);
-
 	QDF_BUG(vdev_priv);
 
 	return vdev_priv;
@@ -186,7 +181,6 @@ pmo_vdev_get_pdev(struct wlan_objmgr_vdev *vdev)
 	struct wlan_objmgr_pdev *pdev;
 
 	pdev = wlan_vdev_get_pdev(vdev);
-
 	QDF_BUG(pdev);
 
 	return pdev;

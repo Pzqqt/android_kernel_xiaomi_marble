@@ -67,6 +67,22 @@ QDF_STATUS pmo_core_flush_mc_addr_list(struct wlan_objmgr_psoc *psoc,
 	uint8_t vdev_id);
 
 /**
+ * pmo_core_enhance_mc_filter_enable() - enable enhanced multicast filtering
+ * @vdev: the vdev to enable enhanced multicast filtering for
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS pmo_core_enhanced_mc_filter_enable(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * pmo_core_enhance_mc_filter_disable() - disable enhanced multicast filtering
+ * @vdev: the vdev to disable enhanced multicast filtering for
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS pmo_core_enhanced_mc_filter_disable(struct wlan_objmgr_vdev *vdev);
+
+/**
  * pmo_core_enable_mc_addr_filtering_in_fwr(): Enable cached mc add list in fwr
  * @psoc: objmgr psoc handle
  * @vdev_id: vdev id
