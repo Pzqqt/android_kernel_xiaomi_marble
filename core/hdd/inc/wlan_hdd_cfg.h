@@ -9285,7 +9285,7 @@ enum dot11p_mode {
  * restart_beaconing_on_chan_avoid_event - control the beaconing entity to move
  * away from active LTE channels
  * @Min: 0
- * @Max: 1
+ * @Max: 2
  * @Default: 1
  *
  * This ini is used to control the beaconing entity (SAP/GO) to move away from
@@ -9294,6 +9294,8 @@ enum dot11p_mode {
  * from active LTE channels
  * restart_beaconing_on_chan_avoid_event=1: Allow beaconing entity move from
  * active LTE channels
+ * restart_beaconing_on_chan_avoid_event=2: Allow beaconing entity move from
+ * 2.4G active LTE channels only
  *
  * Related: None
  *
@@ -9304,9 +9306,9 @@ enum dot11p_mode {
  * </ini>
  */
 #define CFG_RESTART_BEACONING_ON_CH_AVOID_NAME    "restart_beaconing_on_chan_avoid_event"
-#define CFG_RESTART_BEACONING_ON_CH_AVOID_MIN     (0)
-#define CFG_RESTART_BEACONING_ON_CH_AVOID_MAX     (1)
-#define CFG_RESTART_BEACONING_ON_CH_AVOID_DEFAULT (1)
+#define CFG_RESTART_BEACONING_ON_CH_AVOID_MIN     (CH_AVOID_RULE_DO_NOT_RESTART)
+#define CFG_RESTART_BEACONING_ON_CH_AVOID_MAX     (CH_AVOID_RULE_RESTART_24G_ONLY)
+#define CFG_RESTART_BEACONING_ON_CH_AVOID_DEFAULT (CH_AVOID_RULE_RESTART)
 /*
  * This parameter will avoid updating ap_sta_inactivity from hostapd.conf
  * file. If a station does not send anything in ap_max_inactivity seconds, an
@@ -12417,7 +12419,8 @@ struct hdd_config {
 	enum hdd_wext_control standard_wext_control;
 	enum hdd_wext_control private_wext_control;
 	bool sap_internal_restart;
-	bool restart_beaconing_on_chan_avoid_event;
+	enum restart_beaconing_on_ch_avoid_rule
+		restart_beaconing_on_chan_avoid_event;
 	uint8_t is_per_roam_enabled;
 	uint32_t per_roam_high_rate_threshold;
 	uint32_t per_roam_low_rate_threshold;

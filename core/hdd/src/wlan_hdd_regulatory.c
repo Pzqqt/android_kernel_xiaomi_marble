@@ -220,6 +220,8 @@ static void reg_program_config_vars(struct hdd_context *hdd_ctx,
 	config_vars->indoor_chan_enabled =
 		hdd_ctx->config->indoor_channel_support;
 	config_vars->band_capability = hdd_ctx->config->nBandCapability;
+	config_vars->restart_beaconing = hdd_ctx->config->
+		restart_beaconing_on_chan_avoid_event;
 }
 
 
