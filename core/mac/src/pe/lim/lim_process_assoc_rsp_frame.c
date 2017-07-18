@@ -650,17 +650,19 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		session_entry->assocRspLen = 0;
 	}
 
-	session_entry->assocRsp = qdf_mem_malloc(frame_len);
-	if (NULL == session_entry->assocRsp) {
-		pe_err("Unable to allocate memory for assoc res,len: %d",
-			 frame_len);
-	} else {
-		/*
-		 * Store the Assoc response. This is sent
-		 * to csr/hdd in join cnf response.
-		 */
-		qdf_mem_copy(session_entry->assocRsp, body, frame_len);
-		session_entry->assocRspLen = frame_len;
+	if (frame_len) {
+		session_entry->assocRsp = qdf_mem_malloc(frame_len);
+		if (NULL == session_entry->assocRsp) {
+			pe_err("Unable to allocate memory for assoc res,len: %d",
+				 frame_len);
+		} else {
+			/*
+			 * Store the Assoc response. This is sent
+			 * to csr/hdd in join cnf response.
+			 */
+			qdf_mem_copy(session_entry->assocRsp, body, frame_len);
+			session_entry->assocRspLen = frame_len;
+		}
 	}
 
 	lim_update_ric_data(mac_ctx, session_entry, assoc_rsp);
