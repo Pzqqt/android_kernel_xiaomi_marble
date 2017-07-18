@@ -356,7 +356,7 @@ CONFIG_ATH_PCIE_ACCESS_DEBUG := 0
 
 #Enable IPA offload
 ifeq ($(CONFIG_IPA), y)
-CONFIG_IPA_OFFLOAD := 1
+#CONFIG_IPA_OFFLOAD := 1
 endif
 
 #Enable Signed firmware support for split binary format
