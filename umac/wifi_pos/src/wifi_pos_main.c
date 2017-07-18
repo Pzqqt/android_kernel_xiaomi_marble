@@ -278,7 +278,7 @@ static int wifi_pos_process_app_reg_req(struct wlan_objmgr_psoc *psoc,
 			req->pid, req->buf_len);
 
 	sign_str = (char *)req->buf;
-	/* Registration request is only allowed for Qualcomm Application */
+	/* Registration request is only allowed for QTI Application */
 	if ((OEM_APP_SIGNATURE_LEN != req->buf_len) ||
 		(strncmp(sign_str, OEM_APP_SIGNATURE_STR,
 			 OEM_APP_SIGNATURE_LEN))) {
