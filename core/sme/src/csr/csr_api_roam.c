@@ -12952,6 +12952,16 @@ static void csr_merge_supported_and_extended_rates(
 {
 	int i;
 
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
+			FL("supported_rates: %d extended_rates: %d"),
+			supported_rates->numRates, extended_rates->numRates);
+
+	if (supported_rates->numRates > SIR_MAC_RATESET_EID_MAX)
+		supported_rates->numRates = SIR_MAC_RATESET_EID_MAX;
+
+	if (extended_rates->numRates > SIR_MAC_RATESET_EID_MAX)
+		extended_rates->numRates = SIR_MAC_RATESET_EID_MAX;
+
 	qdf_mem_copy(rates->rate,
 			supported_rates->rate,
 			supported_rates->numRates);
@@ -13137,11 +13147,17 @@ csr_roam_get_bss_start_parms(tpAniSirGlobal pMac,
 				opr_ch = tmp_opr_ch;
 			break;
 		}
-		pParam->operationChn = opr_ch;
+
+	pParam->operationChn = opr_ch;
 
 	if (pProfile->supported_rates.numRates ||
 	    pProfile->extended_rates.numRates) {
 		struct merged_mac_rate_set rates_driver, rates_hostapd;
+
+		qdf_mem_zero(&rates_driver,
+			sizeof(struct merged_mac_rate_set));
+		qdf_mem_zero(&rates_hostapd,
+			sizeof(struct merged_mac_rate_set));
 
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				"Merge rates driver");
@@ -18772,7 +18788,10 @@ QDF_STATUS csr_roam_channel_change_req(tpAniSirGlobal pMac,
 	 * give us rates based on original channel which may not be
 	 * suitable for new channel
 	 */
+	qdf_mem_zero(&param, sizeof(tCsrRoamStartBssParams));
+
 	csr_roam_get_bss_start_parms(pMac, profile, &param, true);
+
 	pMsg = qdf_mem_malloc(sizeof(tSirChanChangeRequest));
 	if (!pMsg)
 		return QDF_STATUS_E_NOMEM;
