@@ -1142,9 +1142,13 @@ ol_rx_filter(struct ol_txrx_vdev_t *vdev,
 }
 
 #ifdef WLAN_FEATURE_TSF_PLUS
-static inline void ol_rx_timestamp(void *rx_desc, qdf_nbuf_t msdu)
+static inline void ol_rx_timestamp(struct cdp_cfg *cfg_pdev,
+				   void *rx_desc, qdf_nbuf_t msdu)
 {
 	struct htt_rx_ppdu_desc_t *rx_ppdu_desc;
+
+	if (!ol_cfg_is_ptp_rx_opt_enabled(cfg_pdev))
+		return;
 
 	if (!rx_desc || !msdu)
 		return;
@@ -1152,10 +1156,11 @@ static inline void ol_rx_timestamp(void *rx_desc, qdf_nbuf_t msdu)
 	rx_ppdu_desc = (struct htt_rx_ppdu_desc_t *)((uint8_t *)(rx_desc) -
 			HTT_RX_IND_HL_BYTES + HTT_RX_IND_HDR_PREFIX_BYTES);
 	msdu->tstamp = ns_to_ktime((u_int64_t)rx_ppdu_desc->tsf32 *
-			NSEC_PER_USEC);
+				   NSEC_PER_USEC);
 }
 #else
-static inline void ol_rx_timestamp(void *rx_desc, qdf_nbuf_t msdu)
+static inline void ol_rx_timestamp(struct cdp_cfg *cfg_pdev,
+				   void *rx_desc, qdf_nbuf_t msdu)
 {
 }
 #endif
@@ -1341,7 +1346,7 @@ DONE:
 					       OL_RX_ERR_NONE);
 			TXRX_STATS_MSDU_INCR(vdev->pdev, rx.delivered, msdu);
 
-			ol_rx_timestamp(rx_desc, msdu);
+			ol_rx_timestamp(pdev->ctrl_pdev, rx_desc, msdu);
 			OL_TXRX_LIST_APPEND(deliver_list_head,
 					    deliver_list_tail, msdu);
 		}

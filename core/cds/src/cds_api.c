@@ -43,6 +43,7 @@
 #include "cds_reg_service.h"
 #include "wma_types.h"
 #include "wlan_hdd_main.h"
+#include "wlan_hdd_tsf.h"
 #include <linux/vmalloc.h>
 
 #include "pld_common.h"
@@ -316,6 +317,10 @@ static void cds_cdp_cfg_attach(struct cds_config_info *cds_cfg)
 	 */
 	cdp_cfg_set_packet_log_enabled(soc, gp_cds_context->cfg_ctx,
 		(uint8_t)cds_is_packet_log_enabled());
+
+	/* adjust the ptp rx option default value based on CFG INI setting */
+	cdp_cfg_set_ptp_rx_opt_enabled(soc, gp_cds_context->cfg_ctx,
+				       (uint8_t)cds_is_ptp_rx_opt_enabled());
 }
 static QDF_STATUS cds_register_all_modules(void)
 {
@@ -2216,6 +2221,52 @@ bool cds_is_fatal_event_enabled(void)
 
 	return p_cds_context->enable_fatal_event;
 }
+
+#ifdef WLAN_FEATURE_TSF_PLUS
+bool cds_is_ptp_rx_opt_enabled(void)
+{
+	struct hdd_context *hdd_ctx;
+	p_cds_contextType p_cds_context;
+
+	p_cds_context = cds_get_global_context();
+	if (!p_cds_context) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "%s: cds context is Invalid", __func__);
+		return false;
+	}
+
+	hdd_ctx = (struct hdd_context *)(p_cds_context->pHDDContext);
+	if ((NULL == hdd_ctx) || (NULL == hdd_ctx->config)) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Hdd Context is Null", __func__);
+		return false;
+	}
+
+	return HDD_TSF_IS_RX_SET(hdd_ctx);
+}
+
+bool cds_is_ptp_tx_opt_enabled(void)
+{
+	struct hdd_context *hdd_ctx;
+	p_cds_contextType p_cds_context;
+
+	p_cds_context = cds_get_global_context();
+	if (!p_cds_context) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "%s: cds context is Invalid", __func__);
+		return false;
+	}
+
+	hdd_ctx = (struct hdd_context *)(p_cds_context->pHDDContext);
+	if ((NULL == hdd_ctx) || (NULL == hdd_ctx->config)) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Hdd Context is Null", __func__);
+		return false;
+	}
+
+	return HDD_TSF_IS_TX_SET(hdd_ctx);
+}
+#endif
 
 /**
  * cds_get_log_indicator() - Get the log flush indicator
