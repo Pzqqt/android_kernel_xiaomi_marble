@@ -231,6 +231,8 @@ void ol_target_ready(struct hif_opaque_softc *scn, void *cfg_ctx)
 		hif_set_mailbox_swap(scn);
 	}
 
-	if (value & HI_ACS_FLAGS_SDIO_REDUCE_TX_COMPL_FW_ACK)
+	if (value & HI_ACS_FLAGS_SDIO_REDUCE_TX_COMPL_FW_ACK) {
 		BMI_ERR("Reduced Tx Complete service is enabled!");
+		ol_cfg_set_tx_free_at_download(cfg_ctx);
+	}
 }
