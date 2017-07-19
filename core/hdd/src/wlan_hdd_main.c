@@ -1919,6 +1919,8 @@ static void hdd_disable_power_management(void)
 static void hdd_update_hw_sw_info(hdd_context_t *hdd_ctx)
 {
 	void *hif_sc;
+	size_t target_hw_name_len;
+	const char *target_hw_name;
 
 	hif_sc = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!hif_sc) {
@@ -1930,9 +1932,19 @@ static void hdd_update_hw_sw_info(hdd_context_t *hdd_ctx)
 	 * target hw version/revision would only be retrieved after firmware
 	 * download
 	 */
-	hif_get_hw_info(hif_sc, &hdd_ctx->target_hw_version,
+	hif_get_hw_info(hif_sc,
+			&hdd_ctx->target_hw_version,
 			&hdd_ctx->target_hw_revision,
-			&hdd_ctx->target_hw_name);
+			&target_hw_name);
+
+	if (hdd_ctx->target_hw_name)
+		qdf_mem_free(hdd_ctx->target_hw_name);
+
+	target_hw_name_len = strlen(target_hw_name) + 1;
+	hdd_ctx->target_hw_name = qdf_mem_malloc(target_hw_name_len);
+	if (hdd_ctx->target_hw_name)
+		qdf_mem_copy(hdd_ctx->target_hw_name, target_hw_name,
+			     target_hw_name_len);
 
 	/* Get the wlan hw/fw version */
 	hdd_wlan_get_version(hdd_ctx, NULL, NULL);
@@ -5794,6 +5806,9 @@ static void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 	driver_status = hdd_objmgr_release_and_destroy_psoc(hdd_ctx);
 	if (driver_status)
 		hdd_err("Psoc delete failed");
+
+	qdf_mem_free(hdd_ctx->target_hw_name);
+
 	hdd_context_destroy(hdd_ctx);
 }
 
