@@ -39,7 +39,15 @@
 #include "dp_rx_mon.h"
 #include "htt_stats.h"
 #include "qdf_mem.h"   /* qdf_mem_malloc,free */
+#ifdef QCA_LL_TX_FLOW_CONTROL_V2
 #include "cdp_txrx_flow_ctrl_v2.h"
+#else
+static inline void
+cdp_dump_flow_pool_info(struct cdp_soc_t *soc)
+{
+	return;
+}
+#endif
 
 #define DP_INTR_POLL_TIMER_MS	10
 #define DP_WDS_AGING_TIMER_DEFAULT_MS	6000
