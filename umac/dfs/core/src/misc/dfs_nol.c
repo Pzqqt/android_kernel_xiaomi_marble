@@ -254,7 +254,7 @@ void dfs_print_nolhistory(struct wlan_dfs *dfs)
 				i);
 		if (IEEE80211_IS_CHAN_HISTORY_RADAR(c)) {
 			DFS_PRINTK(
-				"nolhistory:%d channel=%d MHz Flags=%X\n",
+				"nolhistory:%d channel=%d MHz Flags=%llx\n",
 				j, c->dfs_ch_freq, c->dfs_ch_flags);
 			j++;
 		}

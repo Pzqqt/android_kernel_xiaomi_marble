@@ -392,6 +392,21 @@ QDF_STATUS utils_dfs_get_nol_chfreq_and_chwidth(struct wlan_objmgr_pdev *pdev,
 }
 EXPORT_SYMBOL(utils_dfs_get_nol_chfreq_and_chwidth);
 
+QDF_STATUS utils_dfs_update_cur_chan_flags(struct wlan_objmgr_pdev *pdev,
+		uint64_t flags,
+		uint16_t flagext)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	if (dfs == NULL)
+		return  QDF_STATUS_E_FAILURE;
+
+	dfs_update_cur_chan_flags(dfs, flags, flagext);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 static void utils_dfs_get_max_phy_mode(struct wlan_objmgr_pdev *pdev,
 		uint32_t *phy_mode)
 {

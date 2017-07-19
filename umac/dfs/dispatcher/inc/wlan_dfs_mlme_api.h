@@ -38,7 +38,7 @@ extern struct dfs_to_mlme global_dfs_to_mlme;
 void dfs_mlme_channel_mark_radar(struct wlan_objmgr_pdev *pdev,
 		uint16_t freq,
 		uint8_t vhtop_ch_freq_seg2,
-		uint32_t flags);
+		uint64_t flags);
 
 /**
  * dfs_mlme_start_rcsa() - Send RCSA to RootAP.
@@ -58,7 +58,7 @@ void dfs_mlme_mark_dfs(struct wlan_objmgr_pdev *pdev,
 			uint8_t ieee,
 			uint16_t freq,
 			uint8_t vhtop_ch_freq_seg2,
-			uint32_t flags);
+			uint64_t flags);
 
 /**
  * dfs_mlme_start_csa() - Sends CSA in ieeeChan
@@ -130,7 +130,7 @@ void dfs_mlme_find_any_valid_channel(struct wlan_objmgr_pdev *pdev,
  */
 QDF_STATUS dfs_mlme_get_extchan(struct wlan_objmgr_pdev *pdev,
 		uint16_t *dfs_ch_freq,
-		uint32_t *dfs_ch_flags,
+		uint64_t *dfs_ch_flags,
 		uint16_t *dfs_ch_flagext,
 		uint8_t *dfs_ch_ieee,
 		uint8_t *dfs_ch_vhtop_ch_freq_seg1,
@@ -152,7 +152,7 @@ void dfs_mlme_set_no_chans_available(struct wlan_objmgr_pdev *pdev,
  */
 int dfs_mlme_ieee2mhz(struct wlan_objmgr_pdev *pdev,
 		int ieee,
-		int flag);
+		uint64_t flag);
 
 /**
  * dfs_mlme_find_dot11_channel() - Get dot11 channel from ieee, cfreq2 and mode.
@@ -173,7 +173,7 @@ void dfs_mlme_find_dot11_channel(struct wlan_objmgr_pdev *pdev,
 		uint8_t des_cfreq2,
 		int mode,
 		uint16_t *dfs_ch_freq,
-		uint32_t *dfs_ch_flags,
+		uint64_t *dfs_ch_flags,
 		uint16_t *dfs_ch_flagext,
 		uint8_t *dfs_ch_ieee,
 		uint8_t *dfs_ch_vhtop_ch_freq_seg1,
@@ -193,7 +193,7 @@ void dfs_mlme_find_dot11_channel(struct wlan_objmgr_pdev *pdev,
  */
 void dfs_mlme_get_dfs_ch_channels(struct wlan_objmgr_pdev *pdev,
 		uint16_t *dfs_ch_freq,
-		uint32_t *dfs_ch_flags,
+		uint64_t *dfs_ch_flags,
 		uint16_t *dfs_ch_flagext,
 		uint8_t *dfs_ch_ieee,
 		uint8_t *dfs_ch_vhtop_ch_freq_seg1,
@@ -239,6 +239,6 @@ void dfs_mlme_clist_update(struct wlan_objmgr_pdev *pdev,
 int dfs_mlme_get_cac_timeout(struct wlan_objmgr_pdev *pdev,
 		uint16_t dfs_ch_freq,
 		uint8_t dfs_ch_vhtop_ch_freq_seg2,
-		uint32_t dfs_ch_flags);
+		uint64_t dfs_ch_flags);
 
 #endif /* _WLAN_DFS_MLME_API_H_ */

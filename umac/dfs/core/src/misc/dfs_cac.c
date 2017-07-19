@@ -241,7 +241,8 @@ int dfs_random_channel(struct wlan_dfs *dfs,
 		uint8_t skip_curchan)
 {
 	int chanStart, n = 0;
-	uint32_t curChanFlags = 0, chan_flags, chan_flagext = 0;
+	uint64_t curChanFlags = 0, chan_flags;
+	uint16_t chan_flagext = 0;
 	int numGChannels = 0;
 	int numAChannels = 0;
 	int j = 0;

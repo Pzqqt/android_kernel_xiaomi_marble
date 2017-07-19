@@ -846,7 +846,7 @@ struct wlan_lmac_if_dfs_rx_ops {
 			int *precac_timeout);
 	QDF_STATUS (*dfs_set_current_channel)(struct wlan_objmgr_pdev *pdev,
 			uint16_t ic_freq,
-			uint32_t ic_flags,
+			uint64_t ic_flags,
 			uint16_t ic_flagext,
 			uint8_t ic_ieee,
 			uint8_t ic_vhtop_ch_freq_seg1,

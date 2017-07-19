@@ -1054,7 +1054,7 @@ int dfs_get_thresholds(struct wlan_dfs *dfs,
 
 void dfs_set_current_channel(struct wlan_dfs *dfs,
 		uint16_t dfs_ch_freq,
-		uint32_t dfs_ch_flags,
+		uint64_t dfs_ch_flags,
 		uint16_t dfs_ch_flagext,
 		uint8_t dfs_ch_ieee,
 		uint8_t dfs_ch_vhtop_ch_freq_seg1,
@@ -1080,4 +1080,12 @@ u_int dfs_ieee80211_chan2freq(struct dfs_ieee80211_channel *chan)
 
 	return chan == IEEE80211_CHAN_ANYC ?
 		IEEE80211_CHAN_ANY : chan->dfs_ch_freq;
+}
+
+void dfs_update_cur_chan_flags(struct wlan_dfs *dfs,
+		uint64_t flags,
+		uint16_t flagext)
+{
+	dfs->dfs_curchan->dfs_ch_flags = flags;
+	dfs->dfs_curchan->dfs_ch_flagext = flagext;
 }
