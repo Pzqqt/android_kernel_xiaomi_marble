@@ -613,6 +613,9 @@ void dfs_detach(struct ieee80211com *ic)
 	dfs_nol_timer_cleanup(dfs);
 	OS_FREE(dfs);
 
+	ATH_DFSQ_LOCK_DEINIT(dfs);
+	ATH_ARQ_LOCK_DEINIT(dfs);
+	ATH_DFSEVENTQ_LOCK_DEINIT(dfs);
 	/* XXX? */
 	ic->ic_dfs = NULL;
 }

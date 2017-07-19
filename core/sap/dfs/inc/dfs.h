@@ -146,15 +146,19 @@ enum {
 #define ATH_DFSQ_LOCK(_dfs)        qdf_spin_lock_bh((&(_dfs)->dfs_radarqlock))
 #define ATH_DFSQ_UNLOCK(_dfs)      qdf_spin_unlock_bh((&(_dfs)->dfs_radarqlock))
 #define ATH_DFSQ_LOCK_INIT(_dfs)   qdf_spinlock_create(&(_dfs)->dfs_radarqlock)
+#define ATH_DFSQ_LOCK_DEINIT(_dfs) qdf_spinlock_destroy(&(_dfs)->dfs_radarqlock)
 
 #define ATH_ARQ_LOCK(_dfs)         qdf_spin_lock_bh((&(_dfs)->dfs_arqlock))
 #define ATH_ARQ_UNLOCK(_dfs)       qdf_spin_unlock_bh((&(_dfs)->dfs_arqlock))
 #define ATH_ARQ_LOCK_INIT(_dfs)    qdf_spinlock_create(&(_dfs)->dfs_arqlock)
+#define ATH_ARQ_LOCK_DEINIT(_dfs)  qdf_spinlock_destroy(&(_dfs)->dfs_arqlock)
 
 #define ATH_DFSEVENTQ_LOCK(_dfs)   qdf_spin_lock_bh((&(_dfs)->dfs_eventqlock))
 #define ATH_DFSEVENTQ_UNLOCK(_dfs) qdf_spin_unlock_bh((&(_dfs)->dfs_eventqlock))
 #define ATH_DFSEVENTQ_LOCK_INIT(_dfs) \
 				   qdf_spinlock_create((&(_dfs)->dfs_eventqlock))
+#define ATH_DFSEVENTQ_LOCK_DEINIT(_dfs) \
+				qdf_spinlock_destroy((&(_dfs)->dfs_eventqlock))
 /* Mask for time stamp from descriptor */
 #define DFS_TSMASK              0xFFFFFFFF
 /* Shift for time stamp from descriptor */

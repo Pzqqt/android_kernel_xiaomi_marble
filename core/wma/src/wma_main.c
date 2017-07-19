@@ -3730,6 +3730,8 @@ QDF_STATUS wma_close(void *cds_ctx)
 	wma_cleanup_hold_req(wma_handle);
 	qdf_wake_lock_destroy(&wma_handle->wmi_cmd_rsp_wake_lock);
 	qdf_runtime_lock_deinit(&wma_handle->wmi_cmd_rsp_runtime_lock);
+	qdf_spinlock_destroy(&wma_handle->vdev_respq_lock);
+	qdf_spinlock_destroy(&wma_handle->wma_hold_req_q_lock);
 	for (idx = 0; idx < wma_handle->num_mem_chunks; ++idx) {
 		qdf_mem_free_consistent(wma_handle->qdf_dev,
 					wma_handle->qdf_dev->dev,
