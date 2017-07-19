@@ -4877,6 +4877,13 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_CHAN_SWITCH_HOSTAPD_RATE_ENABLED_MIN,
 		CFG_CHAN_SWITCH_HOSTAPD_RATE_ENABLED_MAX),
 
+	REG_VARIABLE(CFG_IS_BSSID_HINT_PRIORITY_NAME, WLAN_PARAM_Integer,
+		struct hdd_config, is_bssid_hint_priority,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_IS_BSSID_HINT_PRIORITY_DEFAULT,
+		CFG_IS_BSSID_HINT_PRIORITY_MIN,
+		CFG_IS_BSSID_HINT_PRIORITY_MAX),
+
 	REG_VARIABLE(CFG_MBO_CANDIDATE_RSSI_THRESHOLD_NAME,
 		WLAN_PARAM_SignedInteger, struct hdd_config,
 		mbo_candidate_rssi_thres,
@@ -6580,6 +6587,9 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 	hdd_debug("Name = [%s] value = [%u]",
 		CFG_CHAN_SWITCH_HOSTAPD_RATE_ENABLED_NAME,
 		hdd_ctx->config->chan_switch_hostapd_rate_enabled);
+	hdd_debug("Name = [%s] value = [%u]",
+		CFG_IS_BSSID_HINT_PRIORITY_NAME,
+		hdd_ctx->config->is_bssid_hint_priority);
 }
 
 

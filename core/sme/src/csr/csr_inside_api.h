@@ -172,6 +172,7 @@ struct tag_csrscan_result {
 	eCsrEncryptionType mcEncryptionType;
 	/* Preferred auth type that matched with the profile. */
 	eCsrAuthType authType;
+	int  bss_score;
 
 	tCsrScanResultInfo Result;
 	/*

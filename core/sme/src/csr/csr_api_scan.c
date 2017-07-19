@@ -5159,7 +5159,6 @@ static QDF_STATUS csr_prepare_scan_filter(tpAniSirGlobal mac_ctx,
 	uint32_t len = 0;
 	QDF_STATUS status;
 	enum policy_mgr_con_mode new_mode;
-	uint8_t weight_list[QDF_MAX_NUM_CHAN];
 
 	filter->num_of_bssid = pFilter->BSSIDs.numOfBSSIDs;
 	if (filter->num_of_bssid > WLAN_SCAN_FILTER_NUM_BSSID)
@@ -5250,10 +5249,13 @@ static QDF_STATUS csr_prepare_scan_filter(tpAniSirGlobal mac_ctx,
 		   &pFilter->csrPersona, &new_mode)) {
 			status = policy_mgr_get_pcl(mac_ctx->psoc, new_mode,
 				filter->pcl_channel_list, &len,
-				weight_list, QDF_ARRAY_SIZE(weight_list));
+				filter->pcl_weight_list, QDF_MAX_NUM_CHAN);
 			filter->num_of_pcl_channels = (uint8_t)len;
 		}
 	}
+	qdf_mem_copy(filter->bssid_hint.bytes,
+			pFilter->bssid_hint.bytes,
+			QDF_MAC_ADDR_SIZE);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -5343,6 +5345,7 @@ static QDF_STATUS csr_fill_bss_from_scan_entry(tpAniSirGlobal mac_ctx,
 		csr_covert_enc_type_old(scan_entry->neg_sec_info.mc_enc);
 	bss->authType =
 		csr_covert_auth_type_old(scan_entry->neg_sec_info.auth_type);
+	bss->bss_score = scan_entry->bss_score;
 
 	result_info = &bss->Result;
 	result_info->ssId.length = scan_entry->ssid.length;

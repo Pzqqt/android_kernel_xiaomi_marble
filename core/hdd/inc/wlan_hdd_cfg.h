@@ -12049,6 +12049,30 @@ enum hdd_external_acs_freq_band {
 #define CFG_SCAN_11D_INTERVAL_DEFAULT   (3600000)
 #define CFG_SCAN_11D_INTERVAL_MIN       (1000)
 #define CFG_SCAN_11D_INTERVAL_MAX       (36000000)
+/*
+ * <ini>
+ * is_bssid_hint_priority - Set priority for connection with bssid_hint
+ * BSSID.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to give priority to BSS for connection which comes
+ * as part of bssid_hint
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+
+#define CFG_IS_BSSID_HINT_PRIORITY_NAME    "is_bssid_hint_priority"
+#define CFG_IS_BSSID_HINT_PRIORITY_DEFAULT (1)
+#define CFG_IS_BSSID_HINT_PRIORITY_MIN     (0)
+#define CFG_IS_BSSID_HINT_PRIORITY_MAX     (1)
 
 /*
  * <ini>
@@ -12986,6 +13010,7 @@ struct hdd_config {
 	bool is_ndi_mac_randomized;
 	uint32_t scan_11d_interval;
 	bool chan_switch_hostapd_rate_enabled;
+	bool is_bssid_hint_priority;
 	/* mbo related thresholds */
 	int8_t mbo_candidate_rssi_thres;
 	int8_t mbo_current_rssi_thres;

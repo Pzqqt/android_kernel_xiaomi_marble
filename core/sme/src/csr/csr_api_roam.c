@@ -8238,6 +8238,35 @@ static bool csr_is_fils_connection(tCsrRoamProfile *pProfile)
 }
 #endif
 
+/**
+ * csr_roam_print_candidate_aps() - print all candidate AP in sorted
+ * score.
+ * @results: scan result
+ *
+ * Return : void
+ */
+static void csr_roam_print_candidate_aps(tScanResultHandle results)
+{
+	tListElem *entry;
+	struct tag_csrscan_result *bss_desc = NULL;
+	struct scan_result_list *bss_list = NULL;
+
+	if (!results)
+		return;
+	bss_list = (struct scan_result_list *)results;
+	entry = csr_ll_peek_head(&bss_list->List, LL_ACCESS_NOLOCK);
+	while (entry) {
+		bss_desc = GET_BASE_ADDR(entry,
+				struct tag_csrscan_result, Link);
+		sme_debug("BSSID" MAC_ADDRESS_STR "score is %d",
+			  MAC_ADDR_ARRAY(bss_desc->Result.BssDescriptor.bssId),
+			  bss_desc->bss_score);
+
+		entry = csr_ll_next(&bss_list->List, entry,
+				LL_ACCESS_NOLOCK);
+	}
+}
+
 QDF_STATUS csr_roam_connect(tpAniSirGlobal pMac, uint32_t sessionId,
 		tCsrRoamProfile *pProfile,
 		uint32_t *pRoamId)
@@ -8354,6 +8383,7 @@ QDF_STATUS csr_roam_connect(tpAniSirGlobal pMac, uint32_t sessionId,
 	}
 	status = csr_scan_get_result(pMac, pScanFilter, &hBSSList);
 	sme_debug("csr_scan_get_result Status: %d", status);
+	csr_roam_print_candidate_aps(hBSSList);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		/* check if set hw mode needs to be done */
 		if ((pScanFilter->csrPersona == QDF_STA_MODE) ||

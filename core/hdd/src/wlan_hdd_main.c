@@ -12025,6 +12025,7 @@ static int hdd_update_scan_config(struct hdd_context *hdd_ctx)
 	scan_cfg.rssi_cat_gap = cfg->nRssiCatGap;
 	scan_cfg.scan_dwell_time_mode = cfg->scan_adaptive_dwell_mode;
 	scan_cfg.is_snr_monitoring_enabled = cfg->fEnableSNRMonitoring;
+	scan_cfg.is_bssid_hint_priority = cfg->is_bssid_hint_priority;
 
 	hdd_update_pno_config(&scan_cfg.pno_cfg, cfg);
 	hdd_update_ie_whitelist_attr(&scan_cfg.ie_whitelist, cfg);
