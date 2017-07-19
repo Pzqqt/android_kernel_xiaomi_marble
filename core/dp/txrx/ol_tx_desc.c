@@ -771,6 +771,7 @@ void ol_tx_desc_frame_free_nonstd(struct ol_txrx_pdev_t *pdev,
 	OL_TX_RESTORE_HDR(tx_desc, (tx_desc->netbuf));
 #endif
 	if (tx_desc->pkt_type == OL_TX_FRM_NO_FREE) {
+
 		/* free the tx desc but don't unmap or free the frame */
 		if (pdev->tx_data_callback.func) {
 			qdf_nbuf_set_next(tx_desc->netbuf, NULL);
@@ -816,15 +817,12 @@ void ol_tx_desc_frame_free_nonstd(struct ol_txrx_pdev_t *pdev,
 		 *  provided to the txrx layer.
 		 *  no need to check it a 2nd time.
 		 */
-		ota_ack_cb = pdev->tx_mgmt.callbacks[mgmt_type].ota_ack_cb;
+		ota_ack_cb = pdev->tx_mgmt_cb.ota_ack_cb;
 		if (ota_ack_cb) {
 			void *ctxt;
-
-			ctxt = pdev->tx_mgmt.callbacks[mgmt_type].ctxt;
+			ctxt = pdev->tx_mgmt_cb.ctxt;
 			ota_ack_cb(ctxt, tx_desc->netbuf, had_error);
 		}
-		/* free the netbuf */
-		qdf_nbuf_free(tx_desc->netbuf);
 	} else if (had_error == htt_tx_status_download_fail) {
 		/* Failed to send to target */
 

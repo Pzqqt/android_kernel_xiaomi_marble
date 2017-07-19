@@ -325,12 +325,10 @@ ol_tx_download_done_base(struct ol_txrx_pdev_t *pdev,
 	 * call the download callback if registered
 	 */
 	if (tx_desc->pkt_type >= OL_TXRX_MGMT_TYPE_BASE) {
-		int tx_mgmt_index = tx_desc->pkt_type - OL_TXRX_MGMT_TYPE_BASE;
 		ol_txrx_mgmt_tx_cb download_cb =
-			pdev->tx_mgmt.callbacks[tx_mgmt_index].download_cb;
-
+			pdev->tx_mgmt_cb.download_cb;
 		if (download_cb) {
-			download_cb(pdev->tx_mgmt.callbacks[tx_mgmt_index].ctxt,
+			download_cb(pdev->tx_mgmt_cb.ctxt,
 				    tx_desc->netbuf, status != A_OK);
 		}
 	}

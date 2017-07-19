@@ -124,7 +124,6 @@ void ol_txrx_mgmt_tx_complete(void *ctxt, qdf_nbuf_t netbuf, int err);
  * ol_txrx_mgmt_tx_cb_set() - Store a callback for delivery
  *	notifications for management frames.
  * @ppdev: the data physical device object
- * @type: the type of mgmt frame the callback is used for
  * @download_cb: the callback for notification of delivery to the target
  * @ota_ack_cb: the callback for notification of delivery to the peer
  * @ctxt: context to use with the callback
@@ -141,7 +140,6 @@ void ol_txrx_mgmt_tx_complete(void *ctxt, qdf_nbuf_t netbuf, int err);
  */
 void
 ol_txrx_mgmt_tx_cb_set(struct cdp_pdev *ppdev,
-		       uint8_t type,
 		       ol_txrx_mgmt_tx_cb download_cb,
 		       ol_txrx_mgmt_tx_cb ota_ack_cb, void *ctxt);
 
