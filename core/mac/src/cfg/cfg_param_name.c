@@ -332,4 +332,12 @@ unsigned char *g_cfg_param_name[] = {
 	(unsigned char *)"SAP_MAX_MCS_DATA",
 	(unsigned char *)"RATE_FOR_TX_MGMT_2G",
 	(unsigned char *)"RATE_FOR_TX_MGMT_5G",
+	(unsigned char *)"EDCA_ETSI_ACBK_LOCAL",
+	(unsigned char *)"EDCA_ETSI_ACBE_LOCAL",
+	(unsigned char *)"EDCA_ETSI_ACVI_LOCAL",
+	(unsigned char *)"EDCA_ETSI_ACVO_LOCAL",
+	(unsigned char *)"EDCA_ETSI_ACBK",
+	(unsigned char *)"EDCA_ETSI_ACBE",
+	(unsigned char *)"EDCA_ETSI_ACVI",
+	(unsigned char *)"EDCA_ETSI_ACVO",
 };

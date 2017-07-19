@@ -85,6 +85,18 @@ void sch_set_beacon_interval(tpAniSirGlobal pMac, tpPESession psessionEntry)
 	pMac->sch.schObject.gSchBeaconInterval = (uint16_t) bi;
 }
 
+static void sch_edca_profile_update_all(tpAniSirGlobal pmac)
+{
+	uint32_t i;
+	tpPESession psession_entry;
+
+	for (i = 0; i < pmac->lim.maxBssId; i++) {
+		psession_entry = &pmac->lim.gpSession[i];
+		if (psession_entry->valid)
+			sch_edca_profile_update(pmac, psession_entry);
+	}
+}
+
 /* -------------------------------------------------------------------- */
 /**
  * sch_process_message
@@ -103,22 +115,20 @@ void sch_set_beacon_interval(tpAniSirGlobal pMac, tpPESession psessionEntry)
 
 void sch_process_message(tpAniSirGlobal pMac, struct scheduler_msg *pSchMsg)
 {
-	uint32_t val;
-
 	tpPESession psessionEntry = &pMac->lim.gpSession[0];
 
 	switch (pSchMsg->type) {
 	case SIR_CFG_PARAM_UPDATE_IND:
-
-		if (wlan_cfg_get_int(pMac, (uint16_t) pSchMsg->bodyval, &val) !=
-		    eSIR_SUCCESS)
-			pe_err("failed to cfg get id %d", pSchMsg->bodyval);
-
 		switch (pSchMsg->bodyval) {
 		case WNI_CFG_BEACON_INTERVAL:
 			/* What to do for IBSS ?? - TBD */
 			if (LIM_IS_AP_ROLE(psessionEntry))
 				sch_set_beacon_interval(pMac, psessionEntry);
+			break;
+
+		case WNI_CFG_COUNTRY_CODE:
+			pe_debug("sch: WNI_CFG_COUNTRY_CODE changed");
+			sch_edca_profile_update_all(pMac);
 			break;
 
 		case WNI_CFG_EDCA_PROFILE:
@@ -172,19 +182,33 @@ sch_get_params(tpAniSirGlobal pMac,
 	uint32_t val;
 	uint32_t i, idx;
 	uint32_t *prf;
-
+	uint8_t country_code_str[WNI_CFG_COUNTRY_CODE_LEN];
+	uint32_t country_code_len = WNI_CFG_COUNTRY_CODE_LEN;
 	uint32_t ani_l[] = {
 	  WNI_CFG_EDCA_ANI_ACBE_LOCAL, WNI_CFG_EDCA_ANI_ACBK_LOCAL,
 	  WNI_CFG_EDCA_ANI_ACVI_LOCAL, WNI_CFG_EDCA_ANI_ACVO_LOCAL};
 	uint32_t wme_l[] = {
 	  WNI_CFG_EDCA_WME_ACBE_LOCAL, WNI_CFG_EDCA_WME_ACBK_LOCAL,
 	  WNI_CFG_EDCA_WME_ACVI_LOCAL, WNI_CFG_EDCA_WME_ACVO_LOCAL};
+	uint32_t etsi_l[] = {WNI_CFG_EDCA_ETSI_ACBE_LOCAL,
+			WNI_CFG_EDCA_ETSI_ACBK_LOCAL,
+			WNI_CFG_EDCA_ETSI_ACVI_LOCAL,
+			WNI_CFG_EDCA_ETSI_ACVO_LOCAL};
 	uint32_t ani_b[] = { WNI_CFG_EDCA_ANI_ACBE, WNI_CFG_EDCA_ANI_ACBK,
 			     WNI_CFG_EDCA_ANI_ACVI, WNI_CFG_EDCA_ANI_ACVO};
 	uint32_t wme_b[] = { WNI_CFG_EDCA_WME_ACBE, WNI_CFG_EDCA_WME_ACBK,
 			     WNI_CFG_EDCA_WME_ACVI, WNI_CFG_EDCA_WME_ACVO};
+	uint32_t etsi_b[] = {WNI_CFG_EDCA_ETSI_ACBE, WNI_CFG_EDCA_ETSI_ACBK,
+			WNI_CFG_EDCA_ETSI_ACVI, WNI_CFG_EDCA_ETSI_ACVO};
 
-	if (wlan_cfg_get_int(pMac, WNI_CFG_EDCA_PROFILE, &val) != eSIR_SUCCESS) {
+	if (wlan_cfg_get_str(pMac, WNI_CFG_COUNTRY_CODE, country_code_str,
+			     &country_code_len) == eSIR_SUCCESS &&
+	    cds_is_etsi_europe_country(country_code_str)) {
+		val = WNI_CFG_EDCA_PROFILE_ETSI_EUROPE;
+		pe_debug("switch to ETSI EUROPE profile country code %c%c",
+			 country_code_str[0], country_code_str[1]);
+	} else if (wlan_cfg_get_int(pMac, WNI_CFG_EDCA_PROFILE, &val) !=
+		   eSIR_SUCCESS) {
 		pe_err("failed to cfg get EDCA_PROFILE id %d",
 			WNI_CFG_EDCA_PROFILE);
 		return eSIR_FAILURE;
@@ -204,6 +228,9 @@ sch_get_params(tpAniSirGlobal pMac,
 		case WNI_CFG_EDCA_PROFILE_WMM:
 			prf = &wme_l[0];
 			break;
+		case WNI_CFG_EDCA_PROFILE_ETSI_EUROPE:
+			prf = &etsi_l[0];
+			break;
 		case WNI_CFG_EDCA_PROFILE_ANI:
 		default:
 			prf = &ani_l[0];
@@ -213,6 +240,9 @@ sch_get_params(tpAniSirGlobal pMac,
 		switch (val) {
 		case WNI_CFG_EDCA_PROFILE_WMM:
 			prf = &wme_b[0];
+			break;
+		case WNI_CFG_EDCA_PROFILE_ETSI_EUROPE:
+			prf = &etsi_b[0];
 			break;
 		case WNI_CFG_EDCA_PROFILE_ANI:
 		default:
