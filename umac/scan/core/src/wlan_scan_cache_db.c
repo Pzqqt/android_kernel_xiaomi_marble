@@ -589,7 +589,6 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 		status = QDF_STATUS_E_INVAL;
 		goto free_nbuf;
 	}
-
 	scm_info("Received %s from BSSID: %pM tsf_delta = %u Seq Num: %x "
 		"ssid:%.*s, rssi: %d",
 		(bcn->frm_type == MGMT_SUBTYPE_PROBE_RESP) ?
@@ -645,11 +644,29 @@ static void scm_list_insert_sorted(struct wlan_objmgr_psoc *psoc,
 	struct scan_cache_node *cur_node;
 	qdf_list_node_t *cur_lst = NULL, *next_lst = NULL;
 	struct scan_default_params *params;
+	int pcl_chan_weight = 0;
 
 	params = wlan_scan_psoc_get_def_params(psoc);
 
-	scm_calculate_bss_score(params, filter,
-			scan_node->entry);
+	if (filter->num_of_pcl_channels > 0 &&
+			(scan_node->entry->rssi_raw > SCM_PCL_RSSI_THRESHOLD)) {
+		if (scm_get_pcl_weight_of_channel(
+					scan_node->entry->channel.chan_idx,
+					filter, &pcl_chan_weight,
+					filter->pcl_weight_list)) {
+			scm_debug("pcl channel %d pcl_chan_weight %d",
+					scan_node->entry->channel.chan_idx,
+					pcl_chan_weight);
+		}
+	}
+	if (params->is_bssid_hint_priority &&
+	    !qdf_mem_cmp(filter->bssid_hint.bytes,
+			 scan_node->entry->bssid.bytes,
+			 QDF_MAC_ADDR_SIZE))
+		scan_node->entry->bss_score = BEST_CANDIDATE_MAX_BSS_SCORE;
+	else
+		scm_calculate_bss_score(psoc, params,
+					scan_node->entry, pcl_chan_weight);
 
 	if (qdf_list_empty(scan_list)) {
 		qdf_list_insert_front(scan_list, &scan_node->node);
@@ -831,7 +848,6 @@ qdf_list_t *scm_get_scan_result(struct wlan_objmgr_pdev *pdev,
 	}
 	qdf_list_create(tmp_list,
 			MAX_SCAN_CACHE_SIZE);
-
 	scm_age_out_entries(psoc, scan_db);
 	scm_get_results(psoc, scan_db, filter, tmp_list);
 

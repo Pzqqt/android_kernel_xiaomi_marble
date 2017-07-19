@@ -1173,6 +1173,7 @@ QDF_STATUS ucfg_scan_update_user_config(struct wlan_objmgr_psoc *psoc,
 	scan_def->adaptive_dwell_time_mode = scan_cfg->scan_dwell_time_mode;
 	scan_def->scan_f_chan_stat_evnt = scan_cfg->is_snr_monitoring_enabled;
 	scan_obj->ie_whitelist = scan_cfg->ie_whitelist;
+	scan_def->is_bssid_hint_priority = scan_cfg->is_bssid_hint_priority;
 
 	ucfg_scan_assign_rssi_category(scan_def,
 			scan_cfg->scan_bucket_threshold,

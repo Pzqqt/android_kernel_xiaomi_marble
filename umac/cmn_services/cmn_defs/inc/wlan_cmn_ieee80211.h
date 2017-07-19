@@ -327,6 +327,7 @@ enum extn_element_ie {
 	WLAN_EXTN_ELEMID_HECAP       = 35,
 	WLAN_EXTN_ELEMID_HEOP        = 36,
 	WLAN_EXTN_ELEMID_SRP         = 39,
+	WLAN_EXTN_ELEMID_ESP         = 11,
 };
 
 #define WLAN_OUI_SIZE 4
@@ -735,6 +736,65 @@ struct wlan_vendor_ie_htinfo {
 } qdf_packed;
 
 /**
+ * struct wlan_ie_vhtcaps - VHT capabilities
+ * @elem_id: VHT caps IE
+ * @elem_len: VHT caps IE len
+ * @max_mpdu_len: MPDU length
+ * @supported_channel_widthset: channel width set
+ * @ldpc_coding: LDPC coding capability
+ * @shortgi80: short GI 80 support
+ * @shortgi160and80plus80: short Gi 160 & 80+80 support
+ * @tx_stbc; Tx STBC cap
+ * @tx_stbc: Rx STBC cap
+ * @su_beam_former: SU beam former cap
+ * @su_beam_formee: SU beam formee cap
+ * @csnof_beamformer_antSup: Antenna support for beamforming
+ * @num_soundingdim: Sound dimensions
+ * @mu_beam_former: MU beam former cap
+ * @mu_beam_formee: MU beam formee cap
+ * @vht_txops: TXOP power save
+ * @htc_vhtcap: HTC VHT capability
+ * @max_ampdu_lenexp: AMPDU length
+ * @vht_link_adapt: VHT link adapatation capable
+ * @rx_antpattern: Rx Antenna pattern
+ * @tx_antpattern: Tx Antenna pattern
+ * @rx_mcs_map: RX MCS map
+ * @rx_high_sup_data_rate : highest RX supported data rate
+ * @tx_mcs_map: TX MCS map
+ * @tx_sup_data_rate: highest TX supported data rate
+ */
+struct wlan_ie_vhtcaps {
+	uint8_t elem_id;
+	uint8_t elem_len;
+	uint32_t max_mpdu_len:2;
+	uint32_t supported_channel_widthset:2;
+	uint32_t ldpc_coding:1;
+	uint32_t shortgi80:1;
+	uint32_t shortgi160and80plus80:1;
+	uint32_t tx_stbc:1;
+	uint32_t rx_stbc:3;
+	uint32_t su_beam_former:1;
+	uint32_t su_beam_formee:1;
+	uint32_t csnof_beamformer_antSup:3;
+	uint32_t num_soundingdim:3;
+	uint32_t mu_beam_former:1;
+	uint32_t mu_beam_formee:1;
+	uint32_t vht_txops:1;
+	uint32_t htc_vhtcap:1;
+	uint32_t max_ampdu_lenexp:3;
+	uint32_t vht_link_adapt:2;
+	uint32_t rx_antpattern:1;
+	uint32_t tx_antpattern:1;
+	uint32_t unused:2;
+	uint16_t rx_mcs_map;
+	uint16_t rx_high_sup_data_rate:13;
+	uint16_t reserved2:3;
+	uint16_t tx_mcs_map;
+	uint16_t tx_sup_data_rate:13;
+	uint16_t reserved3:3;
+} qdf_packed;
+
+/**
  * struct wlan_ie_vhtop: VHT op IE
  * @elem_id: VHT op IE
  * @elem_len: VHT op IE len
@@ -762,6 +822,20 @@ struct wlan_country_ie {
 	uint8_t ie;
 	uint8_t len;
 	uint8_t cc[3];
+} qdf_packed;
+
+/**
+ * struct wlan_country_ie: country IE
+ * @ie: QBSS IE
+ * @len: IE len
+ * @qbss_chan_load: qbss channel load
+ * @qbss_load_avail: qbss_load_avail
+ */
+struct qbss_load_ie {
+	uint8_t ie;
+	uint8_t len;
+	uint8_t qbss_chan_load;
+	uint16_t qbss_load_avail;
 } qdf_packed;
 
 /**
@@ -843,6 +917,84 @@ struct wlan_srp_ie {
 	};
 } qdf_packed;
 
+#define ESP_INFORMATION_LIST_LENGTH 3
+#define MAX_ESP_INFORMATION_FIELD 4
+/*
+ * enum access_category: tells about access category in ESP paramameter
+ * @ESP_AC_BK: ESP access category for background
+ * @ESP_AC_BE: ESP access category for best effort
+ * @ESP_AC_VI: ESP access category for video
+ * @ESP_AC_VO: ESP access category for Voice
+ */
+enum access_category {
+	ESP_AC_BK,
+	ESP_AC_BE,
+	ESP_AC_VI,
+	ESP_AC_VO,
+
+};
+/*
+ * struct wlan_esp_info: structure for Esp information parameter
+ * @access_category: access category info
+ * @reserved: reserved
+ * @data_format: two bits in length and tells about data format
+ * i.e. 0 = No aggregation is expected to be performed for MSDUs or MPDUs with
+ * the Type subfield equal to Data for the corresponding AC
+ * 1 = A-MSDU aggregation is expected to be performed for MSDUs for the
+ * corresponding AC, but A-MPDU aggregation is not expected to be performed
+ * for MPDUs with the Type subfield equal to Data for the corresponding AC
+ * 2 = A-MPDU aggregation is expected to be performed for MPDUs with the Type
+ * subfield equal to Data for the corresponding AC, but A-MSDU aggregation is
+ * not expected to be performed for MSDUs for the corresponding AC
+ * 3 = A-MSDU aggregation is expected to be performed for MSDUs for the
+ * corresponding AC and A-MPDU aggregation is expected to be performed for
+ * MPDUs with the Type subfield equal to Data for the corresponding AC
+ * @ba_window_size: BA Window Size subfield is three bits in length and
+ * indicates the size of the Block Ack window that is
+ * expected for the corresponding access category
+ * @estimated_air_fraction: Estimated Air Time Fraction subfield is 8 bits in
+ * length and contains an unsigned integer that represents
+ * the predicted percentage of time, linearly scaled with 255 representing
+ * 100%, that a new STA joining the
+ * BSS will be allocated for PPDUs that contain only
+ * MPDUs with the Type
+ * subfield equal to Data of the
+ * corresponding access category for that STA.
+ * @ppdu_duration: Data PPDU Duration Target field
+ * is 8 bits in length and is
+ * an unsigned integer that indicates the
+ * expected target duration of PPDUs that contain only MPDUs with the Type
+ * subfield equal to Data for the
+ * corresponding access category in units of 50 μs
+ */
+struct wlan_esp_info {
+	uint8_t access_category:2;
+	uint8_t reserved:1;
+	uint8_t data_format:2;
+	uint8_t ba_window_size:3;
+	uint8_t estimated_air_fraction;
+	uint8_t ppdu_duration;
+};
+
+/**
+ * struct wlan_esp_ie: struct for ESP information
+ * @esp_id: ESP IE id
+ * @esp_len: ESP IE len
+ * @esp_id_extn: ESP Extension ID
+ * @esp_info_AC_BK: ESP information related to BK category
+ * @esp_info_AC_BE: ESP information related to BE category
+ * @esp_info_AC_VI: ESP information related to VI category
+ * @esp_info_AC_VO: ESP information related to VO category
+ */
+struct wlan_esp_ie {
+	uint8_t esp_id;
+	uint8_t esp_len;
+	uint8_t esp_id_extn;
+	struct wlan_esp_info esp_info_AC_BK;
+	struct wlan_esp_info esp_info_AC_BE;
+	struct wlan_esp_info esp_info_AC_VI;
+	struct wlan_esp_info esp_info_AC_VO;
+} qdf_packed;
 /**
  * is_wpa_oui() - If vendor IE is WPA type
  * @frm: vendor IE pointer

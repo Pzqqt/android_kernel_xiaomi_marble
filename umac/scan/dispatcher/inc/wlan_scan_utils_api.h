@@ -651,6 +651,7 @@ util_scan_copy_beacon_data(struct scan_cache_entry *new_entry,
 	ie_lst->heop = conv_ptr(ie_lst->heop, old_ptr, new_ptr);
 	ie_lst->fils_indication = conv_ptr(ie_lst->fils_indication,
 					   old_ptr, new_ptr);
+	ie_lst->esp = conv_ptr(ie_lst->esp, old_ptr, new_ptr);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1353,4 +1354,27 @@ util_scan_entry_is_hidden_ap(struct scan_cache_entry *scan_entry)
     return util_scan_is_hidden_ssid(
 			(struct ie_ssid *)scan_entry->ie_list.ssid);
 }
+
+/**
+ * util_scan_entry_espinfo() - function to read ESP info
+ * @scan_entry: scan entry
+ *
+ * API, function to read ESP info
+ *
+ * Return: erp info
+ */
+static inline uint8_t *
+util_scan_entry_esp_info(struct scan_cache_entry *scan_entry)
+{
+	return scan_entry->ie_list.esp;
+}
+
+/**
+ * util_scan_scm_chan_to_band() - function to tell band for channel number
+ * @chan: Channel number
+ *
+ * Return: Band information as per channel
+ */
+enum wlan_band util_scan_scm_chan_to_band(uint32_t chan);
+
 #endif

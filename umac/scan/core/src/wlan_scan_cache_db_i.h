@@ -53,35 +53,6 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 bool scm_is_better_bss(struct scan_default_params *params,
 	struct scan_cache_entry *bss1,
 	struct scan_cache_entry *bss2);
-
-/**
- * is_channel_found_in_pcl() - to check if channel is present in pcl
- * @channel_id: channel of bss
- * @filter: pointer to filter created through profile
- *
- * to check if provided channel is present in pcl
- *
- * Return: true or false
- */
-static inline bool is_channel_found_in_pcl(int channel_id,
-		struct scan_filter *filter)
-{
-	int i;
-	bool status = false;
-
-	if (!filter)
-		return status;
-
-	for (i = 0; i < filter->num_of_pcl_channels; i++) {
-		if (filter->pcl_channel_list[i] == channel_id) {
-			status = true;
-			break;
-		}
-	}
-
-	return status;
-}
-
 /**
  * scm_derive_prefer_value_from_rssi() - to derive prefer value
  * @params: scan params
@@ -112,15 +83,18 @@ scm_derive_prefer_value_from_rssi(struct scan_default_params *params,
 /**
  * scm_calculate_bss_score() - calculate BSS score used to get
  * the preference
+ * psoc: psoc ptr;
  * @params: scan params
- * @filter: filter to find match from scan result
  * @entry: scan entry for which score needs to be calculated
+ * @pcl_chan_weight: weight for pcl channel
  *
  * Return: scan db for the pdev id
  */
-void scm_calculate_bss_score(struct scan_default_params *params,
-	struct scan_filter *filter,
-	struct scan_cache_entry *entry);
+int scm_calculate_bss_score(
+		struct wlan_objmgr_psoc *psoc,
+		struct scan_default_params *params,
+		struct scan_cache_entry *entry,
+		int pcl_chan_weight);
 
 /**
  * wlan_pdevid_get_scan_db() - private API to get scan db from pdev id
@@ -166,4 +140,20 @@ wlan_pdev_get_scan_db(struct wlan_objmgr_psoc *psoc,
 
 	return wlan_pdevid_get_scan_db(psoc, pdev_id);
 }
+
+/**
+ * scm_get_pcl_weight_of_channel() - Get PCL weight if channel is present in pcl
+ * @channel_id: channel of bss
+ * @filter: filter
+ * @pcl_chan_weight: Get PCL weight for corresponding channel
+ * @weight_list: Weight list for all the pcl channels.
+ *
+ * Get pcl_chan_weight if provided channel is present in pcl list
+ *
+ * Return: true or false
+ */
+bool scm_get_pcl_weight_of_channel(int channel_id,
+		struct scan_filter *filter,
+		int *pcl_chan_weight,
+		uint8_t *weight_list);
 #endif

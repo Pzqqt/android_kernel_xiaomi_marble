@@ -227,6 +227,7 @@ struct pno_def_config {
  * @select_5gh_margin: Prefer connecting to 5G AP even if
  *      its RSSI is lower by select_5gh_margin dbm than 2.4G AP.
  *      applicable if prefer_5ghz is set.
+ * @is_bssid_hint_priority: True if bssid_hint is given priority
  * @bss_prefer_val: bss prefer value for the RSSI category
  * @rssi_cat: RSSI category
  * @max_bss_per_pdev: maximum number of bss entries to be maintained per pdev
@@ -293,6 +294,7 @@ struct scan_default_params {
 	uint32_t scan_cache_aging_time;
 	uint32_t prefer_5ghz;
 	uint32_t select_5ghz_margin;
+	bool is_bssid_hint_priority;
 	/* each RSSI category has one value */
 	uint32_t bss_prefer_val[SCM_NUM_RSSI_CAT];
 	int rssi_cat[SCM_NUM_RSSI_CAT];

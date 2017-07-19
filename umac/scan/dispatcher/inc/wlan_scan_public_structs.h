@@ -37,6 +37,7 @@ typedef uint32_t wlan_scan_id;
 
 #define SCM_PCL_ADVANTAGE       30
 #define SCM_PCL_RSSI_THRESHOLD -75
+#define SCM_MAX_WEIGHT_OF_PCL_CHANNELS 255
 
 #define SCM_BSS_CAP_VALUE_NONE  0/* not much value */
 #define SCM_BSS_CAP_VALUE_HT    1
@@ -127,6 +128,7 @@ struct element_info {
  * @txpwrenvlp: pointer to tx power envelop sub ie
  * @srp: pointer to spatial reuse parameter sub extended ie
  * @fils_indication: pointer to FILS indication ie
+ * @esp: pointer to ESP indication ie
  */
 struct ie_list {
 	uint8_t *tim;
@@ -169,6 +171,7 @@ struct ie_list {
 	uint8_t *heop;
 	uint8_t *srp;
 	uint8_t *fils_indication;
+	uint8_t *esp;
 };
 
 /**
@@ -236,6 +239,8 @@ struct security_info {
  * @tsf_info: TSF info
  * @erp: erp info
  * @dtim_period: dtime period
+ * @air_time_fraction: Air time fraction from ESP param
+ * @nss: supported NSS information
  * @is_p2p_ssid: is P2P entry
  * @scan_entry_time: boottime in microsec when last beacon/probe is received
  * @rssi_timestamp: boottime in microsec when RSSI was updated
@@ -247,6 +252,7 @@ struct security_info {
  * @tsf_delta: TSF delta
  * @prefer_value: Preffer value calulated for the AP
  * @cap_value: Capability value calculated for the AP
+ * @bss_score: bss score calculated on basis of RSSI/caps etc.
  * @neg_sec_info: negotiated security info
  * @rrm_parent_tsf: RRM parent tsf
  * @mlme_info: Mlme info, this will be updated by MLME for the scan entry
@@ -271,6 +277,8 @@ struct scan_cache_entry {
 	} tsf_info;
 	uint8_t erp;
 	uint8_t dtim_period;
+	uint8_t air_time_fraction;
+	uint8_t nss;
 	bool is_p2p;
 	qdf_time_t scan_entry_time;
 	qdf_time_t rssi_timestamp;
@@ -281,6 +289,7 @@ struct scan_cache_entry {
 	uint32_t tsf_delta;
 	uint32_t prefer_value;
 	uint32_t cap_val;
+	uint32_t bss_score;
 	struct security_info neg_sec_info;
 	uint32_t rrm_parent_tsf;
 	struct element_info alt_wcn_ie;
@@ -385,6 +394,8 @@ struct fils_filter_info {
  * @mc_enc_type: multicast cast enc type list
  * @pcl_channel_list: PCL channel list
  * @fils_scan_filter: FILS info
+ * @pcl_weight_list: PCL Weight list
+ * @bssid_hint: Mac address of bssid_hint
  */
 struct scan_filter {
 	uint32_t age_threshold;
@@ -415,6 +426,8 @@ struct scan_filter {
 	enum wlan_enc_type mc_enc_type[WLAN_NUM_OF_ENCRYPT_TYPE];
 	uint8_t pcl_channel_list[QDF_MAX_NUM_CHAN];
 	struct fils_filter_info fils_scan_filter;
+	uint8_t pcl_weight_list[QDF_MAX_NUM_CHAN];
+	struct qdf_mac_addr bssid_hint;
 };
 
 
@@ -1048,6 +1061,7 @@ struct pno_user_cfg {
  * @scan_dwell_time_mode: Adaptive dweltime mode
  * @pno_cfg: Pno related config params
  * @ie_whitelist: probe req IE whitelist attrs
+ * @is_bssid_hint_priority: True if bssid_hint is priority
  */
 struct scan_user_cfg {
 	uint32_t active_dwell;
@@ -1066,6 +1080,7 @@ struct scan_user_cfg {
 	enum scan_dwelltime_adaptive_mode scan_dwell_time_mode;
 	struct pno_user_cfg pno_cfg;
 	struct probe_req_whitelist_attr ie_whitelist;
+	bool is_bssid_hint_priority;
 };
 
 /**

@@ -100,7 +100,7 @@ util_get_last_scan_time(struct wlan_objmgr_vdev *vdev)
 	return scan_obj->pdev_info[pdev_id].last_scan_time;
 }
 
-static enum wlan_band scm_chan_to_band(uint32_t chan)
+enum wlan_band util_scan_scm_chan_to_band(uint32_t chan)
 {
 	if (WLAN_CHAN_IS_2GHZ(chan))
 		return WLAN_BAND_2_4_GHZ;
@@ -120,9 +120,9 @@ bool util_is_scan_entry_match(
 	if (entry1->cap_info.wlan_caps.ess &&
 	   !qdf_mem_cmp(entry1->bssid.bytes,
 	   entry2->bssid.bytes, QDF_MAC_ADDR_SIZE) &&
-	   scm_chan_to_band(
+	   util_scan_scm_chan_to_band(
 	   entry1->channel.chan_idx) ==
-	   scm_chan_to_band(entry2->channel.chan_idx)) {
+	   util_scan_scm_chan_to_band(entry2->channel.chan_idx)) {
 		/* Check for BSS */
 		if (util_is_ssid_match(
 		   &entry1->ssid, &entry2->ssid))
@@ -357,6 +357,9 @@ util_scan_parse_extn_ie(struct scan_cache_entry *scan_params,
 	case WLAN_EXTN_ELEMID_HEOP:
 		scan_params->ie_list.heop  = (uint8_t *)ie;
 		break;
+	case WLAN_EXTN_ELEMID_ESP:
+		scan_params->ie_list.esp = (uint8_t *)ie;
+		break;
 	default:
 		break;
 	}
@@ -557,6 +560,163 @@ util_scan_populate_bcn_ie_list(struct scan_cache_entry *scan_params)
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * util_scan_update_esp_data: update ESP params from beacon/probe response
+ * @esp_information: pointer to wlan_esp_information
+ * @scan_entry: new received entry
+ *
+ * The Estimated Service Parameters element is
+ * used by a AP to provide information to another STA which
+ * can then use the information as input to an algorithm to
+ * generate an estimate of throughput between the two STAs.
+ * The ESP Information List field contains from 1 to 4 ESP
+ * Information fields(each field 24 bits), each corresponding
+ * to an access category for which estimated service parameters
+ * information is provided.
+ *
+ * Return: None
+ */
+static void util_scan_update_esp_data(struct wlan_esp_ie *esp_information,
+		struct scan_cache_entry *scan_entry)
+{
+
+	uint8_t *data;
+	int i = 0;
+	int total_elements;
+	struct wlan_esp_info *esp_info;
+	struct wlan_esp_ie *esp_ie;
+
+	esp_ie = (struct wlan_esp_ie *)
+		util_scan_entry_esp_info(scan_entry);
+
+	total_elements  = esp_ie->esp_len;
+	data = (uint8_t *)esp_ie + 3;
+	do_div(total_elements, ESP_INFORMATION_LIST_LENGTH);
+
+	if (total_elements > MAX_ESP_INFORMATION_FIELD) {
+		scm_err("No of Air time fractions are greater than supported");
+		return;
+	}
+
+	for (i = 0; i < total_elements; i++) {
+		esp_info = (struct wlan_esp_info *)data;
+		if (esp_info->access_category == ESP_AC_BK) {
+			qdf_mem_copy(&esp_information->esp_info_AC_BK,
+					data, 3);
+			data = data + ESP_INFORMATION_LIST_LENGTH;
+			continue;
+		}
+		if (esp_info->access_category == ESP_AC_BE) {
+			qdf_mem_copy(&esp_information->esp_info_AC_BE,
+					data, 3);
+			data = data + ESP_INFORMATION_LIST_LENGTH;
+			continue;
+		}
+		if (esp_info->access_category == ESP_AC_VI) {
+			qdf_mem_copy(&esp_information->esp_info_AC_VI,
+					data, 3);
+			data = data + ESP_INFORMATION_LIST_LENGTH;
+			continue;
+		}
+		if (esp_info->access_category == ESP_AC_VO) {
+			qdf_mem_copy(&esp_information->esp_info_AC_VO,
+					data, 3);
+			data = data + ESP_INFORMATION_LIST_LENGTH;
+			break;
+		}
+	}
+}
+
+/**
+ * util_scan_scm_update_bss_with_esp_dataa: calculate estimated air time
+ * fraction
+ * @scan_entry: new received entry
+ *
+ * This function process all Access category ESP params and provide
+ * best effort air time fraction.
+ * If best effort is not available, it will choose VI, VO and BK in sequence
+ *
+ */
+static void util_scan_scm_update_bss_with_esp_data(
+		struct scan_cache_entry *scan_entry)
+{
+	uint8_t air_time_fraction = 0;
+	struct wlan_esp_ie esp_information;
+
+	if (!scan_entry->ie_list.esp)
+		return;
+
+	util_scan_update_esp_data(&esp_information, scan_entry);
+
+	/*
+	 * If the ESP metric is transmitting multiple airtime fractions, then
+	 * follow the sequence AC_BE, AC_VI, AC_VO, AC_BK and pick whichever is
+	 * the first one available
+	 */
+	if (esp_information.esp_info_AC_BE.access_category
+			== ESP_AC_BE)
+		air_time_fraction =
+			esp_information.esp_info_AC_BE.
+			estimated_air_fraction;
+	else if (esp_information.esp_info_AC_VI.access_category
+			== ESP_AC_VI)
+		air_time_fraction =
+			esp_information.esp_info_AC_VI.
+			estimated_air_fraction;
+	else if (esp_information.esp_info_AC_VO.access_category
+			== ESP_AC_VO)
+		air_time_fraction =
+			esp_information.esp_info_AC_VO.
+			estimated_air_fraction;
+	else if (esp_information.esp_info_AC_BK.access_category
+			== ESP_AC_BK)
+		air_time_fraction =
+			esp_information.esp_info_AC_BK.
+				estimated_air_fraction;
+	scan_entry->air_time_fraction = air_time_fraction;
+}
+
+/**
+ * util_scan_scm_calc_nss_supported_by_ap() - finds out nss from AP
+ * @scan_entry: new received entry
+ *
+ * Return: number of nss advertised by AP
+ */
+static int util_scan_scm_calc_nss_supported_by_ap(
+		struct scan_cache_entry *scan_params)
+{
+	struct htcap_cmn_ie *htcap;
+	struct wlan_ie_vhtcaps *vhtcaps;
+	uint8_t rx_mcs_map;
+
+	htcap = (struct htcap_cmn_ie *)
+		util_scan_entry_htcap(scan_params);
+	vhtcaps = (struct wlan_ie_vhtcaps *)
+		util_scan_entry_vhtcap(scan_params);
+	if (vhtcaps) {
+		rx_mcs_map = vhtcaps->rx_mcs_map;
+		if ((rx_mcs_map & 0xC0) != 0xC0)
+			return 4;
+
+		if ((rx_mcs_map & 0x30) != 0x30)
+			return 3;
+
+		if ((rx_mcs_map & 0x0C) != 0x0C)
+			return 2;
+	} else if (htcap) {
+		if (htcap->mcsset[3])
+			return 4;
+
+		if (htcap->mcsset[2])
+			return 3;
+
+		if (htcap->mcsset[1])
+			return 2;
+
+	}
+	return 1;
+}
+
 struct scan_cache_entry *
 util_scan_unpack_beacon_frame(uint8_t *frame,
 	qdf_size_t frame_len, uint32_t frm_subtype,
@@ -669,6 +829,9 @@ util_scan_unpack_beacon_frame(uint8_t *frame,
 		scan_entry->phy_mode = util_scan_get_phymode_5g(scan_entry);
 	else
 		scan_entry->phy_mode = util_scan_get_phymode_2g(scan_entry);
+
+	scan_entry->nss = util_scan_scm_calc_nss_supported_by_ap(scan_entry);
+	util_scan_scm_update_bss_with_esp_data(scan_entry);
 
 	/* TODO calculate channel struct */
 	return scan_entry;

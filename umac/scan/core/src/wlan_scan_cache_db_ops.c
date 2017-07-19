@@ -26,267 +26,206 @@
 #include "wlan_scan_main.h"
 #include "wlan_scan_cache_db_i.h"
 
-/**
- * scm_get_altered_rssi() - Artificially increase/decrease RSSI
- * @params: scan params
- * @rssi: Actual RSSI of the AP.
- * @channel_id: Channel on which the AP is parked.
- * @bssid: BSSID of the AP to connect to.
- *
- * This routine will apply the boost and penalty parameters
- * if the channel_id is of 5G band and it will also apply
- * the preferred bssid score if there is a match between
- * the bssid and the global preferred bssid list.
- *
- * Return: The modified RSSI Value
- */
-static int scm_get_altered_rssi(struct scan_default_params *params,
-	int rssi, uint8_t channel_id, struct qdf_mac_addr *bssid)
-{
-	int modified_rssi;
-	int boost_factor;
-	int penalty_factor;
-	int i;
-	struct roam_filter_params *roam_params;
-
-	roam_params = &params->roam_params;
-	modified_rssi = rssi;
-
-	/*
-	 * If the 5G pref feature is enabled, apply the roaming
-	 * parameters to boost or penalize the rssi.
-	 * Boost Factor = boost_factor * (Actual RSSI - boost Threshold)
-	 * Penalty Factor = penalty factor * (penalty threshold - Actual RSSI)
-	 */
-	if (roam_params->is_5g_pref_enabled &&
-			WLAN_CHAN_IS_2GHZ(channel_id)) {
-		if (rssi > roam_params->raise_rssi_thresh_5g) {
-			/* Check and boost the threshold*/
-			boost_factor = roam_params->raise_factor_5g *
-				(rssi - roam_params->raise_rssi_thresh_5g);
-			/* Check and penalize the threshold */
-			modified_rssi += QDF_MIN(roam_params->max_raise_rssi_5g,
-				boost_factor);
-		} else if (rssi < roam_params->drop_rssi_thresh_5g) {
-			penalty_factor = roam_params->drop_factor_5g *
-				(roam_params->drop_rssi_thresh_5g - rssi);
-			modified_rssi -= QDF_MIN(roam_params->max_drop_rssi_5g,
-				penalty_factor);
-		}
-	}
-	/*
-	 * Check if there are preferred bssid and then apply the
-	 * preferred score
-	 */
-	if (bssid && roam_params->num_bssid_favored &&
-	   (roam_params->num_bssid_favored <= MAX_FAVORED_BSSID)) {
-		for (i = 0; i < roam_params->num_bssid_favored; i++) {
-			if (!qdf_is_macaddr_equal(
-			   &roam_params->bssid_favored[i], bssid))
-				continue;
-			modified_rssi +=
-				roam_params->bssid_favored_factor[i];
-		}
-	}
-
-	return modified_rssi;
-}
-
-/**
- * scm_is_better_rssi() - Is bss1 better than bss2
- * @params: scan params
- * @bss1: Pointer to the first BSS.
- * @bss2: Pointer to the second BSS.
- *
- * This routine helps in determining the preference value
- * of a particular BSS in the scan result which is further
- * used in the sorting logic of the final candidate AP's.
- *
- * Return: true, if bss1 is better than bss2
- *         false, if bss2 is better than bss1.
- */
-static bool scm_is_better_rssi(struct scan_default_params *params,
-	struct scan_cache_entry *bss1, struct scan_cache_entry *bss2)
-{
-	bool ret;
-	int rssi1, rssi2;
-	struct qdf_mac_addr local_mac;
-
-	rssi1 = bss1->rssi_raw;
-	rssi2 = bss2->rssi_raw;
-	/*
-	 * Apply the boost and penlty logic and check
-	 * which is the best RSSI
-	 */
-	qdf_mem_copy(local_mac.bytes,
-		bss1->bssid.bytes, QDF_MAC_ADDR_SIZE);
-	rssi1 = scm_get_altered_rssi(params, rssi1,
-			bss1->channel.chan_idx,
-			&local_mac);
-	qdf_mem_copy(local_mac.bytes,
-			bss2->bssid.bytes, QDF_MAC_ADDR_SIZE);
-	rssi2 = scm_get_altered_rssi(params, rssi2,
-			bss2->channel.chan_idx,
-			&local_mac);
-	if (rssi1 > rssi2)
-		ret = true;
-	else
-		ret = false;
-
-	return ret;
-}
-
 bool scm_is_better_bss(struct scan_default_params *params,
 	struct scan_cache_entry *bss1,
 	struct scan_cache_entry *bss2)
 {
 	bool ret;
+	if (bss1->bss_score > bss2->bss_score)
+		ret = true;
+	else
+		ret = false;
+	return ret;
 
-	if (bss1->prefer_value > bss2->prefer_value)
-		return true;
+}
+int scm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
+		struct scan_default_params *params,
+		struct scan_cache_entry *entry,
+		int pcl_chan_weight)
+{
+	int32_t score = 0;
+	int32_t ap_load = 0;
+	int32_t normalised_width = BEST_CANDIDATE_20MHZ;
+	int32_t pcl_score = 0;
+	int32_t temp_pcl_chan_weight = 0;
+	int32_t est_air_time_percentage = 0;
+	int32_t congestion = 0;
+	int32_t rssi_diff = 0;
+	int32_t rssi_weight = 0;
+	struct  qbss_load_ie *qbss_load;
+	struct wlan_scan_obj *scan_obj;
+	int32_t ht_score, vht_score, qbss_score = 0;
 
-	if (bss1->prefer_value == bss2->prefer_value) {
-		if (bss1->cap_val > bss2->cap_val)
-			ret = true;
-		else if (bss1->cap_val == bss2->cap_val) {
-			if (scm_is_better_rssi(params, bss1, bss2))
-				ret = true;
-			else
-				ret = false;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj) {
+		scm_err("scan_obj is NULL");
+		return 0;
+	}
+	/*
+	 * Total weight of a BSSID is calculated on basis of 100 in which
+	 * contribution of every factor is considered like this.
+	 * RSSI: RSSI_WEIGHTAGE : 25
+	 * HT_CAPABILITY_WEIGHTAGE: 7
+	 * VHT_CAP_WEIGHTAGE: 5
+	 * BEAMFORMING_CAP_WEIGHTAGE: 2
+	 * CHAN_WIDTH_WEIGHTAGE:10
+	 * CHAN_BAND_WEIGHTAGE: 5
+	 * NSS: 5
+	 * PCL: 10
+	 * CHANNEL_CONGESTION: 5
+	 * Reserved: 31
+	 */
+	/*
+	 * Further bucketization of rssi is also done out of 25 score.
+	 * RSSI > -55=> weight = 2500
+	 * RSSI > -60=> weight = 2250
+	 * RSSI >-65 =>weight = 2000
+	 * RSSI > -70=> weight = 1750
+	 * RSSI > -75=> weight = 1500
+	 * RSSI > -80=> weight = 1250
+	 */
+	if (entry->rssi_raw) {
+		/*
+		 * if RSSI of AP is less then -80, driver should ignore that
+		 * candidate.
+		 */
+		if (entry->rssi_raw < BAD_RSSI) {
+			scm_err("Drop this BSS %pM due to low rssi %d",
+					entry->bssid.bytes, entry->rssi_raw);
+			score = 0;
+			return score;
+		}
+		if (entry->rssi_raw >= EXCELLENT_RSSI) {
+			rssi_weight = EXCELLENT_RSSI_WEIGHT *
+				RSSI_WEIGHTAGE;
 		} else {
-			ret = false;
+			rssi_diff = EXCELLENT_RSSI - entry->rssi_raw;
+			rssi_diff = rssi_diff/5;
+			rssi_weight = (rssi_diff + 1) * RSSI_WEIGHT_BUCKET;
+			rssi_weight = (EXCELLENT_RSSI_WEIGHT *
+					RSSI_WEIGHTAGE) - rssi_weight;
+
+		}
+		score += rssi_weight;
+	}
+	if (pcl_chan_weight) {
+		temp_pcl_chan_weight =
+			(SCM_MAX_WEIGHT_OF_PCL_CHANNELS - pcl_chan_weight);
+		do_div(temp_pcl_chan_weight,
+				20);
+		pcl_score = PCL_WEIGHT - temp_pcl_chan_weight;
+
+		if (pcl_score < 0)
+			pcl_score = 0;
+
+		score += pcl_score * BEST_CANDIDATE_MAX_WEIGHT;
+	}
+	/* If AP supports HT caps, extra 10% score will be added */
+	if (entry->ie_list.htcap) {
+		ht_score = BEST_CANDIDATE_MAX_WEIGHT * HT_CAPABILITY_WEIGHTAGE;
+		score += BEST_CANDIDATE_MAX_WEIGHT * HT_CAPABILITY_WEIGHTAGE;
+	}
+
+	/* If AP supports VHT caps, Extra 6% score will be added to score */
+	if (entry->ie_list.vhtcap) {
+		vht_score = BEST_CANDIDATE_MAX_WEIGHT * VHT_CAP_WEIGHTAGE;
+		score += BEST_CANDIDATE_MAX_WEIGHT * VHT_CAP_WEIGHTAGE;
+	}
+
+	/*
+	 * Channel width is again calculated on basis of 100.
+	 * Where if AP is
+	 * 80MHZ = 100
+	 * 40MHZ = 70
+	 * 20MHZ = 30 weightage is given out of 100.
+	 * Channel width weightage is given as CHAN_WIDTH_WEIGHTAGE (10%).
+	 */
+	if (entry->phy_mode == WLAN_PHYMODE_11AC_VHT20 ||
+	    entry->phy_mode == WLAN_PHYMODE_11AC_VHT40PLUS ||
+	    entry->phy_mode == WLAN_PHYMODE_11AC_VHT40MINUS ||
+	    entry->phy_mode == WLAN_PHYMODE_11AC_VHT40 ||
+	    entry->phy_mode == WLAN_PHYMODE_11AC_VHT80 ||
+	    entry->phy_mode == WLAN_PHYMODE_11AC_VHT80_80 ||
+	    entry->phy_mode == WLAN_PHYMODE_11AC_VHT160)
+		normalised_width = BEST_CANDIDATE_80MHZ;
+	else if (entry->phy_mode == WLAN_PHYMODE_11NA_HT40PLUS ||
+			entry->phy_mode == WLAN_PHYMODE_11NA_HT40MINUS ||
+			entry->phy_mode == WLAN_PHYMODE_11NG_HT40PLUS ||
+			entry->phy_mode == WLAN_PHYMODE_11NG_HT40MINUS ||
+			entry->phy_mode == WLAN_PHYMODE_11NG_HT40 ||
+			entry->phy_mode == WLAN_PHYMODE_11NA_HT40)
+		normalised_width = BEST_CANDIDATE_40MHZ;
+	else
+		normalised_width = BEST_CANDIDATE_20MHZ;
+	score += normalised_width * CHAN_WIDTH_WEIGHTAGE;
+
+	if (util_scan_scm_chan_to_band(
+				entry->channel.chan_idx) == WLAN_BAND_5_GHZ &&
+			entry->rssi_raw > RSSI_THRESHOLD_5GHZ)
+		score += BEST_CANDIDATE_MAX_WEIGHT * CHAN_BAND_WEIGHTAGE;
+	/*
+	 * If ESP is being transmitted by the AP, use the estimated airtime for
+	 * AC_BE from that, Estimated airtime 0-25% = 120, 25-50% = 250, 50-75%
+	 * = 370, 75-100% = 500.
+	 * Else if QBSSLoad is being transmitted and QBSSLoad < 25% = 500
+	 * else assing default weight of 370
+	 */
+	if (entry->air_time_fraction) {
+		est_air_time_percentage =
+			entry->air_time_fraction * ROAM_MAX_CHANNEL_WEIGHT;
+		est_air_time_percentage =
+			est_air_time_percentage/MAX_ESTIMATED_AIR_TIME_FRACTION;
+		/*
+		 * Calculate channel congestion from estimated air time
+		 * fraction.
+		 */
+		congestion = MAX_CHANNEL_UTILIZATION - est_air_time_percentage;
+		if (congestion >= LOW_CHANNEL_CONGESTION &&
+				congestion < MODERATE_CHANNEL_CONGESTION)
+			score += LOW_CHANNEL_CONGESTION_WEIGHT;
+		else if (congestion >= MODERATE_CHANNEL_CONGESTION &&
+				congestion < CONSIDERABLE_CHANNEL_CONGESTION)
+			score += MODERATE_CHANNEL_CONGESTION_WEIGHT;
+		else if (congestion >= CONSIDERABLE_CHANNEL_CONGESTION &&
+				congestion < HIGH_CHANNEL_CONGESTION)
+			score += CONSIDERABLE_CHANNEL_CONGESTION_WEIGHT;
+		else
+			score += HIGH_CHANNEL_CONGESTION_WEIGHT;
+	} else if (entry->ie_list.qbssload) {
+		qbss_load = (struct qbss_load_ie *)
+			util_scan_entry_qbssload(entry);
+		scm_debug("qbss_load is %d", qbss_load->qbss_chan_load);
+		/*
+		 * Calculate ap_load in % from qbss channel load from 0-255
+		 * range
+		 */
+		ap_load = (qbss_load->qbss_chan_load *
+				BEST_CANDIDATE_MAX_WEIGHT);
+		ap_load = ap_load/MAX_AP_LOAD;
+		congestion = ap_load;
+		if (congestion < MODERATE_CHANNEL_CONGESTION) {
+			qbss_score = LOW_CHANNEL_CONGESTION_WEIGHT;
+			score += LOW_CHANNEL_CONGESTION_WEIGHT;
+		} else {
+			qbss_score = HIGH_CHANNEL_CONGESTION_WEIGHT;
+			score += HIGH_CHANNEL_CONGESTION_WEIGHT;
 		}
 	} else {
-		ret = false;
+		qbss_score = MODERATE_CHANNEL_CONGESTION_WEIGHT;
+		scm_debug("qbss load is not present so qbss_Score is %d",
+				qbss_score);
+		score += MODERATE_CHANNEL_CONGESTION_WEIGHT;
 	}
-
-	return ret;
-}
-
-/**
- * scm_get_bss_prefer_value() - Get the preference value for BSS
- * @params: scan params
- * @entry: entry
- *
- * Each entry should be assigned a preference value ranging from
- * 14-0, which will be used as an RSSI bucket score while sorting the
- * scan results.
- *
- * Return: Preference value for the BSSID
- */
-static uint32_t scm_get_bss_prefer_value(struct scan_default_params *params,
-			struct scan_cache_entry *entry)
-{
-	uint32_t ret = 0;
-	int modified_rssi;
-
-	/*
-	 * The RSSI does not get modified in case the 5G
-	 * preference or preferred BSSID is not applicable
-	 */
-	modified_rssi = scm_get_altered_rssi(params,
-		entry->rssi_raw, entry->channel.chan_idx,
-		&entry->bssid);
-	ret = scm_derive_prefer_value_from_rssi(params, modified_rssi);
-
-	return ret;
-}
-
-/**
- * scm_get_bss_cap_value() - get bss capability value
- * @params: def scan params
- * @entry: scan entry entry
- *
- * Return: CapValue base on the capabilities of a BSS
- */
-static uint32_t scm_get_bss_cap_value(struct scan_default_params *params,
-	struct scan_cache_entry *entry)
-{
-	uint32_t ret = SCM_BSS_CAP_VALUE_NONE;
-
-	if (params->prefer_5ghz ||
-	   params->roam_params.is_5g_pref_enabled)
-		if (WLAN_CHAN_IS_5GHZ(entry->channel.chan_idx))
-			ret += SCM_BSS_CAP_VALUE_5GHZ;
-	/*
-	 * if strict select 5GHz is set then ignore
-	 * the capability checking
-	 */
-	if (!params->select_5ghz_margin) {
-		/* give weightage in the order 11ax, 11ac, 11n */
-		if (entry->ie_list.hecap)
-			ret += SCM_BSS_CAP_VALUE_HE;
-		else if (entry->ie_list.vhtcap)
-			ret += SCM_BSS_CAP_VALUE_VHT;
-		else if (entry->ie_list.htcap)
-			ret += SCM_BSS_CAP_VALUE_HT;
-		if (entry->ie_list.wmeinfo ||
-		   entry->ie_list.wmeinfo) {
-			ret += SCM_BSS_CAP_VALUE_WMM;
-			/* TO do Give advantage to UAPSD */
-		}
-	}
-
-	return ret;
-}
-
-/**
- * scm_calc_pref_val_by_pcl() - to calculate preferred value
- * @params: scan params
- * @filter: filter to find match from scan result
- * @entry: scan entry for which score needs to be calculated
- *
- * this routine calculates the new preferred value to be given to
- * provided bss if its channel falls under preferred channel list.
- * Thump rule is higer the RSSI better the boost.
- *
- * Return: success or failure
- */
-static QDF_STATUS scm_calc_pref_val_by_pcl(struct scan_default_params *params,
-	struct scan_filter *filter,
-	struct scan_cache_entry *entry)
-{
-	int temp_rssi = 0, new_pref_val = 0;
-	int orig_pref_val = 0;
-
-	if (!entry)
-		return QDF_STATUS_E_FAILURE;
-
-	if (filter->num_of_bssid) {
-		scm_info("filter has specific bssid, no point of boosting");
-		return QDF_STATUS_SUCCESS;
-	}
-
-	if (is_channel_found_in_pcl(entry->channel.chan_idx, filter) &&
-		(entry->rssi_raw > SCM_PCL_RSSI_THRESHOLD)) {
-		orig_pref_val = scm_derive_prefer_value_from_rssi(params,
-					entry->rssi_raw);
-		temp_rssi = entry->rssi_raw +
-				(SCM_PCL_ADVANTAGE/(SCM_NUM_RSSI_CAT -
-							orig_pref_val));
-		if (temp_rssi > 0)
-			temp_rssi = 0;
-		new_pref_val = scm_derive_prefer_value_from_rssi(params,
-					temp_rssi);
-
-		entry->prefer_value =
-			QDF_MAX(new_pref_val, entry->prefer_value);
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-
-void scm_calculate_bss_score(struct scan_default_params *params,
-	struct scan_filter *filter, struct scan_cache_entry *entry)
-{
-	entry->cap_val =
-		scm_get_bss_cap_value(params, entry);
-
-	entry->prefer_value =
-		scm_get_bss_prefer_value(params, entry);
-
-	if (filter->num_of_pcl_channels)
-		scm_calc_pref_val_by_pcl(params, filter, entry);
+	scm_debug(" ht_score %d vht_score %d and qbss_score %d",
+			ht_score, vht_score, qbss_score);
+	scm_debug(" BSS %pM rssi %d channel %d final score %d",
+			entry->bssid.bytes,
+			entry->rssi_raw, entry->channel.chan_idx,
+			score);
+	scm_info("nss %d", entry->nss);
+	entry->bss_score = score;
+	return score;
 }
 
 /**
@@ -1166,4 +1105,24 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 		return false;
 
 	return true;
+}
+bool scm_get_pcl_weight_of_channel(int channel_id,
+		struct scan_filter *filter,
+		int *pcl_chan_weight,
+		uint8_t *weight_list)
+{
+	int i;
+	bool found = false;
+
+	if (NULL == filter)
+		return found;
+
+	for (i = 0; i < filter->num_of_pcl_channels; i++) {
+		if (filter->pcl_channel_list[i] == channel_id) {
+			*pcl_chan_weight = filter->pcl_weight_list[i];
+			found = true;
+			break;
+		}
+	}
+	return found;
 }
