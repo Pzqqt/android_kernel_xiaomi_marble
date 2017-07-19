@@ -231,9 +231,8 @@ cdp_mgmt_send_ext(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 
 static inline void
 cdp_mgmt_tx_cb_set(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
-			 uint8_t type,
-			 ol_txrx_mgmt_tx_cb download_cb,
-			 ol_txrx_mgmt_tx_cb ota_ack_cb, void *ctxt)
+		   uint8_t type, ol_txrx_mgmt_tx_cb download_cb,
+		   ol_txrx_mgmt_tx_cb ota_ack_cb, void *ctxt)
 {
 	if (soc->ops->cmn_drv_ops->txrx_mgmt_tx_cb_set)
 		return soc->ops->cmn_drv_ops->txrx_mgmt_tx_cb_set

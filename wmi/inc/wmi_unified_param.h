@@ -1372,10 +1372,13 @@ struct tx_send_params {
  * @chanfreq: channel frequency
  * @pdata: frame data
  * @desc_id: descriptor id relyaed back by target
- * @macaddr - macaddr of peer
+ * @macaddr: macaddr of peer
  * @qdf_ctx: qdf context for qdf_nbuf_map
  * @tx_param: TX send parameters
  * @tx_params_valid: Flag that indicates if TX params are valid
+ * @use_6mbps: specify whether management frame to transmit should
+ *  use 6 Mbps rather than 1 Mbps min rate(for 5GHz band or P2P)
+ * @tx_type: type of managment frame (determines what callback to use)
  */
 struct wmi_mgmt_params {
 	void *tx_frame;
@@ -1388,6 +1391,8 @@ struct wmi_mgmt_params {
 	void *qdf_ctx;
 	struct tx_send_params tx_param;
 	bool tx_params_valid;
+	uint8_t use_6mbps;
+	uint8_t tx_type;
 };
 
 /**

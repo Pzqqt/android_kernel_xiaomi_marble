@@ -129,6 +129,7 @@ typedef union {
  * @tx.ipa.owned   : packet owned by IPA
  * @tx.ipa.priv    : private data, used by IPA
  * @tx.desc_id     : tx desc id, used to sync between host and fw
+ * @tx.mgmt_desc_id     : used to get mgmt descriptor for tx completion cb
  */
 struct qdf_nbuf_cb {
 	/* common */
@@ -232,6 +233,7 @@ struct qdf_nbuf_cb {
 							priv:31;
 					} ipa;
 					uint16_t desc_id;
+					uint16_t mgmt_desc_id;
 				} mcl;
 			} dev;
 		} tx;
@@ -373,6 +375,10 @@ QDF_COMPILE_TIME_ASSERT(qdf_nbuf_cb_size,
 
 #define QDF_NBUF_CB_TX_DESC_ID(skb) \
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.mcl.desc_id)
+
+#define QDF_NBUF_CB_MGMT_TXRX_DESC_ID(skb) \
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.mcl.mgmt_desc_id)
+
 #define QDF_NBUF_CB_TX_PACKET_STATE(skb) \
 	(((struct qdf_nbuf_cb *) \
 		((skb)->cb))->u.tx.dev.mcl.trace.packet_state)
