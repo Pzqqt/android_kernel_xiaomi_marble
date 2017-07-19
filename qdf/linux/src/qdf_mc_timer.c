@@ -216,6 +216,7 @@ void qdf_mc_timer_manager_exit(void)
 {
 	qdf_timer_clean();
 	qdf_list_destroy(&qdf_timer_list);
+	qdf_spinlock_destroy(&qdf_timer_list_lock);
 }
 EXPORT_SYMBOL(qdf_mc_timer_manager_exit);
 #endif

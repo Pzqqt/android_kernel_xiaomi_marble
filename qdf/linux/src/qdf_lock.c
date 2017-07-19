@@ -819,7 +819,7 @@ void qdf_lock_stats_deinit(void)
 	qdf_spinlock_destroy(&qdf_lock_list_spinlock);
 	for (i = 0; i < QDF_LOCK_STATS_LIST_SIZE; i++) {
 		if (!qdf_is_lock_cookie_free(&lock_cookies[i]))
-			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_DEBUG,
 				  "%s: lock_not_destroyed, fun: %s, line %d",
 				  __func__, lock_cookies[i].u.cookie.func,
 				  lock_cookies[i].u.cookie.line);

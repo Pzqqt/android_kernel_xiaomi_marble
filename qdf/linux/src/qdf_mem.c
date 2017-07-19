@@ -929,6 +929,7 @@ static void qdf_mem_debug_exit(void)
 	qdf_net_buf_debug_exit();
 	qdf_mem_debug_clean();
 	qdf_list_destroy(&qdf_mem_list);
+	qdf_spinlock_destroy(&qdf_mem_list_lock);
 }
 
 /**

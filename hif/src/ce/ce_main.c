@@ -2134,12 +2134,21 @@ void hif_ce_stop(struct hif_softc *scn)
 
 	for (pipe_num = 0; pipe_num < scn->ce_count; pipe_num++) {
 		struct HIF_CE_pipe_info *pipe_info;
+		struct CE_attr attr;
+		struct CE_handle *ce_diag = hif_state->ce_diag;
 
 		pipe_info = &hif_state->pipe_info[pipe_num];
 		if (pipe_info->ce_hdl) {
+			if (pipe_info->ce_hdl != ce_diag) {
+				attr = hif_state->host_ce_config[pipe_num];
+				if (attr.src_nentries)
+					qdf_spinlock_destroy(&pipe_info->
+							completion_freeq_lock);
+			}
 			ce_fini(pipe_info->ce_hdl);
 			pipe_info->ce_hdl = NULL;
 			pipe_info->buf_sz = 0;
+			qdf_spinlock_destroy(&pipe_info->recv_bufs_needed_lock);
 		}
 	}
 
@@ -2382,6 +2391,7 @@ void hif_ce_close(struct hif_softc *hif_sc)
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_sc);
 
 	qdf_spinlock_destroy(&hif_state->irq_reg_lock);
+	qdf_spinlock_destroy(&hif_state->keep_awake_lock);
 }
 
 /**
