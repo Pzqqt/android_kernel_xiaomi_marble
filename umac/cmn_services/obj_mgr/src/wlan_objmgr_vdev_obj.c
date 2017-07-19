@@ -76,8 +76,8 @@ static QDF_STATUS wlan_objmgr_vdev_obj_free(struct wlan_objmgr_vdev *vdev)
 	struct wlan_objmgr_pdev *pdev;
 
 	if (vdev == NULL) {
-			obj_mgr_err("vdev is NULL");
-			return QDF_STATUS_E_FAILURE;
+		obj_mgr_err("vdev is NULL");
+		return QDF_STATUS_E_FAILURE;
 	}
 	/* if PDEV is NULL, return */
 	pdev = wlan_vdev_get_pdev(vdev);
@@ -174,7 +174,8 @@ struct wlan_objmgr_vdev *wlan_objmgr_vdev_obj_create(
 	if (wlan_vdev_mlme_get_opmode(vdev) == QDF_STA_MODE)
 		vdev->vdev_objmgr.max_peer_count = WLAN_UMAC_MAX_STA_PEERS;
 	else
-		vdev->vdev_objmgr.max_peer_count = WLAN_UMAC_MAX_AP_PEERS;
+		vdev->vdev_objmgr.max_peer_count =
+				wlan_pdev_get_max_peer_count(pdev);
 
 	/* Initialize peer list */
 	qdf_list_create(&vdev->vdev_objmgr.wlan_peer_list,
@@ -597,16 +598,21 @@ QDF_STATUS wlan_objmgr_vdev_peer_attach(struct wlan_objmgr_vdev *vdev,
 						struct wlan_objmgr_peer *peer)
 {
 	struct wlan_objmgr_vdev_objmgr *objmgr = &vdev->vdev_objmgr;
+	struct wlan_objmgr_pdev *pdev;
 
 	wlan_vdev_obj_lock(vdev);
+	pdev = wlan_vdev_get_pdev(vdev);
 	/* If Max peer count exceeds, return failure */
-	if (objmgr->wlan_peer_count > objmgr->max_peer_count) {
+	if ((objmgr->wlan_peer_count >= objmgr->max_peer_count) ||
+	     (wlan_pdev_get_peer_count(pdev) >=
+			wlan_pdev_get_max_peer_count(pdev))) {
 		wlan_vdev_obj_unlock(vdev);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Add peer to vdev's peer list */
 	wlan_obj_vdev_peerlist_add_tail(&objmgr->wlan_peer_list, peer);
 	objmgr->wlan_peer_count++;
+	wlan_pdev_incr_peer_count(wlan_vdev_get_pdev(vdev));
 
 	if ((wlan_peer_get_peer_type(peer) == WLAN_PEER_AP) ||
 	    (wlan_peer_get_peer_type(peer) == WLAN_PEER_P2P_GO)) {
@@ -677,6 +683,7 @@ QDF_STATUS wlan_objmgr_vdev_peer_detach(struct wlan_objmgr_vdev *vdev,
 	}
 	/* decrement peer count */
 	objmgr->wlan_peer_count--;
+	wlan_pdev_decr_peer_count(wlan_vdev_get_pdev(vdev));
 	wlan_vdev_obj_unlock(vdev);
 	/* decrement vdev ref count after peer released its reference */
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_OBJMGR_ID);

@@ -1342,7 +1342,7 @@ static inline void wlan_vdev_reset_ospriv(struct wlan_objmgr_vdev *vdev)
  * wlan_vdev_get_peer_count() - get vdev peer count
  * @vdev: VDEV object
  *
- * API to get OS private pointer from VDEV
+ * API to get peer count from VDEV
  *
  * Return: peer_count - vdev's peer count
  */

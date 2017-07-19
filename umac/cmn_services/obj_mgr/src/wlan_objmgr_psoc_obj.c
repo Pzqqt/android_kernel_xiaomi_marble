@@ -1355,7 +1355,7 @@ QDF_STATUS wlan_objmgr_psoc_peer_attach(struct wlan_objmgr_psoc *psoc,
 	wlan_psoc_obj_lock(psoc);
 	objmgr = &psoc->soc_objmgr;
 	/* Max peer limit is reached, return failure */
-	if (objmgr->wlan_peer_count > WLAN_UMAC_PSOC_MAX_PEERS) {
+	if (objmgr->wlan_peer_count >= WLAN_UMAC_PSOC_MAX_PEERS) {
 		wlan_psoc_obj_unlock(psoc);
 		return QDF_STATUS_E_FAILURE;
 	}

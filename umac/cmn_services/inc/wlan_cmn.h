@@ -41,8 +41,6 @@
 /* Max sequence number */
 #define WLAN_MAX_SEQ_NUM    4096
 
-/* Max no. of Stations can be associated to VDEV*/
-#define WLAN_UMAC_MAX_AP_PEERS WLAN_UMAC_PSOC_MAX_PEERS
 /* Max no. of peers for STA vap */
 #define WLAN_UMAC_MAX_STA_PEERS 2
 /* Max vdev_id */

@@ -126,6 +126,8 @@ struct wlan_objmgr_pdev *wlan_objmgr_pdev_obj_create(
 			WLAN_UMAC_PDEV_MAX_VDEVS);
 	pdev->pdev_objmgr.wlan_vdev_count = 0;
 	pdev->pdev_objmgr.max_vdev_count = WLAN_UMAC_PDEV_MAX_VDEVS;
+	pdev->pdev_objmgr.wlan_peer_count = 0;
+	pdev->pdev_objmgr.max_peer_count = WLAN_UMAC_PSOC_MAX_PEERS;
 	/* Save HDD/OSIF pointer */
 	pdev->pdev_nif.pdev_ospriv = osdev_priv;
 	qdf_atomic_init(&pdev->pdev_objmgr.ref_cnt);
