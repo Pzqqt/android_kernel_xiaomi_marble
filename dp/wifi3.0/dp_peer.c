@@ -358,6 +358,12 @@ static inline void dp_peer_map_ast(struct dp_soc *soc,
 		return;
 	}
 
+	if (soc->cdp_soc.ol_ops->peer_map_event) {
+		soc->cdp_soc.ol_ops->peer_map_event(soc->osif_soc,
+				peer->peer_ids[0], hw_peer_id, vdev_id,
+				mac_addr);
+	}
+
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 		"%s: peer %p ID %d vid %d mac %02x:%02x:%02x:%02x:%02x:%02x\n",
 		__func__, peer, hw_peer_id, vdev_id, mac_addr[0],
@@ -376,12 +382,6 @@ static inline void dp_peer_map_ast(struct dp_soc *soc,
 		}
 	}
 	qdf_spin_unlock_bh(&soc->ast_lock);
-
-	if (soc->cdp_soc.ol_ops->peer_map_event) {
-		soc->cdp_soc.ol_ops->peer_map_event(soc->osif_soc,
-				peer->peer_ids[0], hw_peer_id, vdev_id,
-				mac_addr);
-	}
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"AST entry not found\n");
