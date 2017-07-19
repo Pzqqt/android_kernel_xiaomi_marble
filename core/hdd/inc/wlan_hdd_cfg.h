@@ -6413,9 +6413,9 @@ enum hdd_link_speed_rpt_type {
 /*
  * <ini>
  * gTDLSEnableDeferTime - Timer to defer for enabling TDLS on P2P listen.
- * @Min: 2000
+ * @Min: 500
  * @Max: 6000
- * @Default: 5000
+ * @Default: 2000
  *
  * This ini is used to set the timer to defer for enabling TDLS on P2P
  * listen (value in milliseconds).
@@ -6429,9 +6429,9 @@ enum hdd_link_speed_rpt_type {
  * </ini>
  */
 #define CFG_TDLS_ENABLE_DEFER_TIMER                "gTDLSEnableDeferTime"
-#define CFG_TDLS_ENABLE_DEFER_TIMER_MIN            (2000)
+#define CFG_TDLS_ENABLE_DEFER_TIMER_MIN            (500)
 #define CFG_TDLS_ENABLE_DEFER_TIMER_MAX            (6000)
-#define CFG_TDLS_ENABLE_DEFER_TIMER_DEFAULT        (5000)
+#define CFG_TDLS_ENABLE_DEFER_TIMER_DEFAULT        (2000)
 
 /* Enable/Disable LPWR Image(cMEM uBSP) Transition */
 #define CFG_ENABLE_LPWR_IMG_TRANSITION_NAME        "gEnableLpwrImgTransition"
