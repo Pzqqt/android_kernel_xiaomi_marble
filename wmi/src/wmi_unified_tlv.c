@@ -5807,6 +5807,60 @@ send_roam_scan_mode_cmd:
 	return status;
 }
 
+static QDF_STATUS send_roam_mawc_params_cmd_tlv(wmi_unified_t wmi_handle,
+		struct wmi_mawc_roam_params *params)
+{
+	wmi_buf_t buf = NULL;
+	QDF_STATUS status;
+	int len;
+	uint8_t *buf_ptr;
+	wmi_roam_configure_mawc_cmd_fixed_param *wmi_roam_mawc_params;
+
+	len = sizeof(*wmi_roam_mawc_params);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s : wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+	wmi_roam_mawc_params =
+		(wmi_roam_configure_mawc_cmd_fixed_param *) buf_ptr;
+	WMITLV_SET_HDR(&wmi_roam_mawc_params->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_roam_configure_mawc_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_roam_configure_mawc_cmd_fixed_param));
+	wmi_roam_mawc_params->vdev_id = params->vdev_id;
+	if (params->enable)
+		wmi_roam_mawc_params->enable = 1;
+	else
+		wmi_roam_mawc_params->enable = 0;
+	wmi_roam_mawc_params->traffic_load_threshold =
+		params->traffic_load_threshold;
+	wmi_roam_mawc_params->best_ap_rssi_threshold =
+		params->best_ap_rssi_threshold;
+	wmi_roam_mawc_params->rssi_stationary_high_adjust =
+		params->rssi_stationary_high_adjust;
+	wmi_roam_mawc_params->rssi_stationary_low_adjust =
+		params->rssi_stationary_low_adjust;
+
+	status = wmi_unified_cmd_send(wmi_handle, buf,
+				      len, WMI_ROAM_CONFIGURE_MAWC_CMDID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMI_LOGE("WMI_ROAM_CONFIGURE_MAWC_CMDID failed, Error %d",
+			status);
+		wmi_buf_free(buf);
+		return status;
+	}
+	WMI_LOGD(FL("MAWC roam en=%d, vdev=%d, tr=%d, ap=%d, high=%d, low=%d"),
+		wmi_roam_mawc_params->enable, wmi_roam_mawc_params->vdev_id,
+		wmi_roam_mawc_params->traffic_load_threshold,
+		wmi_roam_mawc_params->best_ap_rssi_threshold,
+		wmi_roam_mawc_params->rssi_stationary_high_adjust,
+		wmi_roam_mawc_params->rssi_stationary_low_adjust);
+
+	return QDF_STATUS_SUCCESS;
+}
 
 /**
  * send_roam_scan_offload_rssi_thresh_cmd_tlv() - set scan offload
@@ -18608,6 +18662,7 @@ struct wmi_ops tlv_ops =  {
 			 send_set_passpoint_network_list_cmd_tlv,
 	.send_roam_scan_offload_rssi_thresh_cmd =
 			send_roam_scan_offload_rssi_thresh_cmd_tlv,
+	.send_roam_mawc_params_cmd = send_roam_mawc_params_cmd_tlv,
 	.send_roam_scan_filter_cmd =
 			send_roam_scan_filter_cmd_tlv,
 	.send_set_epno_network_list_cmd =

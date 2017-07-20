@@ -1686,6 +1686,17 @@ QDF_STATUS wmi_unified_roam_scan_offload_rssi_thresh_cmd(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
+QDF_STATUS wmi_unified_roam_mawc_params_cmd(
+			void *wmi_hdl, struct wmi_mawc_roam_params *params)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_roam_mawc_params_cmd)
+		return wmi_handle->ops->send_roam_mawc_params_cmd(
+				wmi_handle, params);
+
+	return QDF_STATUS_E_FAILURE;
+}
 /**
  * wmi_unified_roam_scan_filter_cmd() - send roam scan whitelist,
  *                                      blacklist and preferred list
