@@ -486,6 +486,13 @@ static void wlan_hdd_shutdown(void)
 		return;
 	}
 
+	if (!hif_ctx) {
+		hdd_err("Failed to get HIF context, ignore SSR shutdown");
+		return;
+	}
+	/* mask the host controller interrupts */
+	hif_mask_interrupt_call(hif_ctx);
+
 	if (cds_is_load_or_unload_in_progress()) {
 		hdd_err("Load/unload in progress, ignore SSR shutdown");
 		return;
@@ -498,10 +505,7 @@ static void wlan_hdd_shutdown(void)
 		hdd_err("Host is not ready for SSR, attempting anyway");
 
 	if (!QDF_IS_EPPING_ENABLED(cds_get_conparam())) {
-		if (!hif_ctx)
-			hdd_err("Invalid hif ctx!");
-		else
-			hif_disable_isr(hif_ctx);
+		hif_disable_isr(hif_ctx);
 		hdd_wlan_shutdown();
 	}
 }
