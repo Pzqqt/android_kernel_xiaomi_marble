@@ -614,6 +614,19 @@ QDF_STATUS wmi_unified_roam_scan_offload_mode_cmd(void *wmi_hdl,
 				struct roam_offload_scan_params *roam_req);
 #endif
 
+/**
+ * wmi_unified_roam_mawc_params_cmd() - configure roaming MAWC parameters
+ * @wmi_hdl: wmi handle
+ * @params: Parameters to be configured
+ *
+ * Pass the MAWC(Motion Aided wireless connectivity) related roaming
+ * parameters from the host to the target
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_roam_mawc_params_cmd(void *wmi_hdl,
+			struct wmi_mawc_roam_params *params);
+
 QDF_STATUS wmi_unified_roam_scan_offload_rssi_thresh_cmd(void *wmi_hdl,
 				struct roam_offload_scan_rssi_params *roam_req);
 

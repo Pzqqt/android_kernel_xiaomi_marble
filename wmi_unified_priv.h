@@ -410,6 +410,9 @@ QDF_STATUS (*send_reset_passpoint_network_list_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_roam_scan_offload_rssi_thresh_cmd)(wmi_unified_t wmi_handle,
 				struct roam_offload_scan_rssi_params *roam_req);
 
+QDF_STATUS (*send_roam_mawc_params_cmd)(wmi_unified_t wmi_handle,
+		struct wmi_mawc_roam_params *params);
+
 QDF_STATUS (*send_roam_scan_filter_cmd)(wmi_unified_t wmi_handle,
 				struct roam_scan_filter_params *roam_req);
 
