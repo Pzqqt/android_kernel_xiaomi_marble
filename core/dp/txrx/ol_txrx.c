@@ -1807,7 +1807,7 @@ static void ol_txrx_pdev_pre_detach(struct cdp_pdev *ppdev, int force)
 	}
 
 	/* to get flow pool status before freeing descs */
-	ol_tx_dump_flow_pool_info();
+	ol_tx_dump_flow_pool_info((void *)pdev);
 
 	for (i = 0; i < pdev->tx_desc.pool_size; i++) {
 		void *htt_tx_desc;
@@ -4566,7 +4566,7 @@ static QDF_STATUS ol_txrx_display_stats(void *soc, uint16_t value)
 		ol_txrx_stats_display_tso(pdev);
 		break;
 	case CDP_DUMP_TX_FLOW_POOL_INFO:
-		ol_tx_dump_flow_pool_info();
+		ol_tx_dump_flow_pool_info((void *)pdev);
 		break;
 	case CDP_TXRX_DESC_STATS:
 		qdf_nbuf_tx_desc_count_display();
@@ -4979,7 +4979,8 @@ exit:
  *
  * Return: QDF status
  */
-static QDF_STATUS ol_txrx_register_pause_cb(ol_tx_pause_callback_fp pause_cb)
+static QDF_STATUS ol_txrx_register_pause_cb(struct cdp_soc_t *soc,
+	tx_pause_callback pause_cb)
 {
 	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
@@ -5348,7 +5349,7 @@ static struct cdp_flowctl_ops ol_ops_flowctl = {
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 	.register_pause_cb = ol_txrx_register_pause_cb,
 	.set_desc_global_pool_size = ol_tx_set_desc_global_pool_size,
-	.dump_flow_pool_info = ol_tx_dump_flow_pool_info
+	.dump_flow_pool_info = ol_tx_dump_flow_pool_info,
 #endif /* QCA_LL_TX_FLOW_CONTROL_V2 */
 };
 

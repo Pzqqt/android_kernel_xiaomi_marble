@@ -514,7 +514,7 @@ uint8_t ol_tx_get_is_mgmt_over_wmi_enabled(void);
 
 void ol_tx_register_flow_control(struct ol_txrx_pdev_t *pdev);
 void ol_tx_deregister_flow_control(struct ol_txrx_pdev_t *pdev);
-void ol_tx_dump_flow_pool_info(void);
+void ol_tx_dump_flow_pool_info(void *);
 void ol_tx_clear_flow_pool_stats(void);
 void ol_tx_flow_pool_map_handler(uint8_t flow_id, uint8_t flow_type,
 				 uint8_t flow_pool_id, uint16_t flow_pool_size);
@@ -557,7 +557,7 @@ static inline void ol_tx_register_flow_control(struct ol_txrx_pdev_t *pdev)
 static inline void ol_tx_deregister_flow_control(struct ol_txrx_pdev_t *pdev)
 {
 }
-static inline void ol_tx_dump_flow_pool_info(void)
+static inline void ol_tx_dump_flow_pool_info(void *ctx)
 {
 }
 static inline void ol_tx_clear_flow_pool_stats(void)

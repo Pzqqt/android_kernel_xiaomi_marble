@@ -128,8 +128,10 @@ void ol_tx_deregister_flow_control(struct ol_txrx_pdev_t *pdev)
 			break;
 		qdf_spin_unlock_bh(&pdev->tx_desc.flow_pool_list_lock);
 		ol_txrx_info("flow pool list is not empty %d!!!\n", i++);
+
 		if (i == 1)
-			ol_tx_dump_flow_pool_info();
+			ol_tx_dump_flow_pool_info((void *)pdev);
+
 		ol_tx_dec_pool_ref(pool, true);
 		qdf_spin_lock_bh(&pdev->tx_desc.flow_pool_list_lock);
 	}
@@ -274,12 +276,11 @@ QDF_STATUS ol_tx_dec_pool_ref(struct ol_tx_flow_pool_t *pool, bool force)
  *
  * Return: none
  */
-void ol_tx_dump_flow_pool_info(void)
+void ol_tx_dump_flow_pool_info(void *ctx)
 {
-	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	struct ol_txrx_pdev_t *pdev = ctx;
 	struct ol_tx_flow_pool_t *pool = NULL, *pool_prev = NULL;
 	struct ol_tx_flow_pool_t tmp_pool;
-
 
 	ol_txrx_info("Global Pool");
 	if (!pdev) {

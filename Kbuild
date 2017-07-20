@@ -182,7 +182,7 @@ ifneq ($(CONFIG_ROME_IF),sdio)
 	CONFIG_WLAN_NAPI_DEBUG := n
 
 	# Flag to enable FW based TX Flow control
-	ifeq ($(CONFIG_CNSS_EOS),y)
+	ifeq (y,$(findstring y,$(CONFIG_CNSS_EOS) $(CONFIG_LITHIUM)))
 		CONFIG_WLAN_TX_FLOW_CONTROL_V2 := y
 	else
 		CONFIG_WLAN_TX_FLOW_CONTROL_V2 := n
@@ -1080,6 +1080,9 @@ DP_OBJS := $(DP_SRC)/dp_main.o \
 		$(DP_SRC)/dp_rx_mon_status.o \
 		$(DP_SRC)/dp_rx_defrag.o \
 		$(DP_SRC)/dp_stats.o
+ifeq ($(CONFIG_WLAN_TX_FLOW_CONTROL_V2), y)
+DP_OBJS += $(DP_SRC)/dp_tx_flow_control.o
+endif
 endif
 
 ############ CFG ############
