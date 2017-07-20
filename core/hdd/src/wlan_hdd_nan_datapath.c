@@ -2081,13 +2081,16 @@ int hdd_init_nan_data_mode(struct hdd_adapter *adapter)
 	QDF_STATUS status;
 	int32_t ret_val = 0;
 
-	sme_set_curr_device_mode(hdd_ctx->hHal, adapter->device_mode);
-
 	ret_val = hdd_vdev_create(adapter);
 	if (ret_val) {
 		hdd_err("failed to create vdev: %d", ret_val);
 		return ret_val;
 	}
+
+	/* Configure self HT/VHT capabilities */
+	sme_set_curr_device_mode(hdd_ctx->hHal, adapter->device_mode);
+	sme_set_pdev_ht_vht_ies(hdd_ctx->hHal, hdd_ctx->config->enable2x2);
+	sme_set_vdev_ies_per_band(hdd_ctx->hHal, adapter->sessionId);
 
 	/* Register wireless extensions */
 	ret_val = hdd_register_wext(wlan_dev);
