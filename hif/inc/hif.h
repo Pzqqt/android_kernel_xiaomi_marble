@@ -939,7 +939,7 @@ ssize_t hif_dump_desc_event(struct hif_softc *scn, char *buf);
  * Return: void
  */
 void hif_set_ce_service_max_yield_time(struct hif_opaque_softc *hif,
-				       uint8_t ce_service_max_yield_time);
+				       uint32_t ce_service_max_yield_time);
 
 /**
  * hif_get_ce_service_max_yield_time() - get CE service max yield time
