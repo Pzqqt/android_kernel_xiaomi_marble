@@ -505,13 +505,15 @@ void *dp_rx_cookie_2_link_desc_va(struct dp_soc *soc,
 				  struct hal_buf_info *buf_info)
 {
 	void *link_desc_va;
+	uint32_t bank_id = LINK_DESC_COOKIE_BANK_ID(buf_info->sw_cookie);
+
 
 	/* TODO */
 	/* Add sanity for  cookie */
 
-	link_desc_va = soc->link_desc_banks[buf_info->sw_cookie].base_vaddr +
+	link_desc_va = soc->link_desc_banks[bank_id].base_vaddr +
 		(buf_info->paddr -
-			soc->link_desc_banks[buf_info->sw_cookie].base_paddr);
+			soc->link_desc_banks[bank_id].base_paddr);
 
 	return link_desc_va;
 }

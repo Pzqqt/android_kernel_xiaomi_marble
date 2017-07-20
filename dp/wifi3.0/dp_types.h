@@ -834,6 +834,21 @@ struct dp_ipa_resources {
 /* Same as NAC_MAX_CLENT */
 #define DP_NAC_MAX_CLIENT  24
 
+/*
+ * Macros to setup link descriptor cookies - for link descriptors, we just
+ * need first 3 bits to store bank ID. The remaining bytes will be used set a
+ * unique ID, which will be useful in debugging
+ */
+#define LINK_DESC_BANK_ID_MASK 0x7
+#define LINK_DESC_ID_SHIFT 3
+#define LINK_DESC_ID_START 0x8000
+
+#define LINK_DESC_COOKIE(_desc_id, _bank_id) \
+	((((_desc_id) + LINK_DESC_ID_START) << LINK_DESC_ID_SHIFT) | (_bank_id))
+
+#define LINK_DESC_COOKIE_BANK_ID(_cookie) \
+	((_cookie) & LINK_DESC_BANK_ID_MASK)
+
 /* same as ieee80211_nac_param */
 enum dp_nac_param_cmd {
 	/* IEEE80211_NAC_PARAM_ADD */

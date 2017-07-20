@@ -1065,6 +1065,7 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 	uint32_t last_bank_size = 0;
 	uint32_t entry_size, num_entries;
 	int i;
+	uint32_t desc_id = 0;
 
 	/* Only Tx queue descriptors are allocated from common link descriptor
 	 * pool Rx queue descriptors are not included in this because (REO queue
@@ -1195,8 +1196,10 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 			while (num_entries && (desc = hal_srng_src_get_next(
 				soc->hal_soc,
 				soc->wbm_idle_link_ring.hal_srng))) {
-				hal_set_link_desc_addr(desc, i, paddr);
+				hal_set_link_desc_addr(desc,
+					LINK_DESC_COOKIE(desc_id, i), paddr);
 				num_entries--;
+				desc_id++;
 				paddr += link_desc_size;
 			}
 		}
@@ -1249,14 +1252,12 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 				/ link_desc_size;
 			unsigned long paddr = (unsigned long)(
 				soc->link_desc_banks[i].base_paddr);
-			void *desc = NULL;
 
-			while (num_link_descs && (desc =
-				hal_srng_src_get_next(soc->hal_soc,
-				soc->wbm_idle_link_ring.hal_srng))) {
+			while (num_link_descs) {
 				hal_set_link_desc_addr((void *)scatter_buf_ptr,
-					i, paddr);
+					LINK_DESC_COOKIE(desc_id, i), paddr);
 				num_link_descs--;
+				desc_id++;
 				paddr += link_desc_size;
 				if (rem_entries) {
 					rem_entries--;
