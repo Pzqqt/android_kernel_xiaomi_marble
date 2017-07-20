@@ -7966,8 +7966,10 @@ QDF_STATUS sme_update_is_mawc_ini_feature_enabled(tHalHandle hHal,
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: MAWCEnabled is changed from %d to %d", __func__,
-			  pMac->roam.configParam.MAWCEnabled, MAWCEnabled);
-		pMac->roam.configParam.MAWCEnabled = MAWCEnabled;
+			  pMac->roam.configParam.csr_mawc_config.mawc_enabled,
+			  MAWCEnabled);
+		pMac->roam.configParam.csr_mawc_config.mawc_enabled =
+			MAWCEnabled;
 		sme_release_global_lock(&pMac->sme);
 	}
 

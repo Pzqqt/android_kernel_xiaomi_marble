@@ -735,6 +735,40 @@ QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 	return qdf_status;
 }
 
+QDF_STATUS wma_roam_scan_mawc_params(tp_wma_handle wma_handle,
+		tSirRoamOffloadScanReq *roam_req)
+{
+	struct wmi_mawc_roam_params *params;
+	QDF_STATUS status;
+
+	if (!roam_req) {
+		WMA_LOGE("No MAWC parameters to send");
+		return QDF_STATUS_E_INVAL;
+	}
+	params = qdf_mem_malloc(sizeof(*params));
+	if (!params) {
+		WMA_LOGE("No memory allocated for MAWC roam params");
+		return QDF_STATUS_E_NOMEM;
+	}
+	params->vdev_id = roam_req->sessionId;
+	params->enable = roam_req->mawc_roam_params.mawc_enabled &&
+		roam_req->mawc_roam_params.mawc_roam_enabled;
+	params->traffic_load_threshold =
+		roam_req->mawc_roam_params.mawc_roam_traffic_threshold;
+	params->best_ap_rssi_threshold =
+		roam_req->mawc_roam_params.mawc_roam_ap_rssi_threshold -
+		WMA_NOISE_FLOOR_DBM_DEFAULT;
+	params->rssi_stationary_high_adjust =
+		roam_req->mawc_roam_params.mawc_roam_rssi_high_adjust;
+	params->rssi_stationary_low_adjust =
+		roam_req->mawc_roam_params.mawc_roam_rssi_low_adjust;
+	status = wmi_unified_roam_mawc_params_cmd(
+			wma_handle->wmi_handle, params);
+	qdf_mem_free(params);
+
+	return status;
+}
+
 /**
  * wma_roam_scan_offload_mode() - send roam scan mode request to fw
  * @wma_handle: wma handle
@@ -1765,8 +1799,8 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 		qdf_mem_free(roam_req);
 		return QDF_STATUS_E_PERM;
 	}
-	WMA_LOGD("%s: roaming in progress set to false for vdev %d",
-			__func__, roam_req->sessionId);
+	WMA_LOGD("%s: RSO Command:%d, reason:%d",
+			__func__, roam_req->Command, roam_req->reason);
 	wma_handle->interfaces[roam_req->sessionId].roaming_in_progress = false;
 	switch (roam_req->Command) {
 	case ROAM_SCAN_OFFLOAD_START:
@@ -1858,6 +1892,11 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 						   roam_req->sessionId);
 		if (qdf_status != QDF_STATUS_SUCCESS)
 			break;
+		qdf_status = wma_roam_scan_mawc_params(wma_handle, roam_req);
+		if (qdf_status != QDF_STATUS_SUCCESS) {
+			WMA_LOGE("Sending roaming MAWC params failed");
+			break;
+		}
 		qdf_status = wma_roam_scan_filter(wma_handle, roam_req);
 		if (qdf_status != QDF_STATUS_SUCCESS) {
 			WMA_LOGE("Sending start for roam scan filter failed");

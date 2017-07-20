@@ -3117,11 +3117,29 @@ struct lca_disallow_config_params{
     uint32_t num_disallowed_aps;
 };
 
+/**
+ * struct mawc_params - Motion Aided Wireless Connectivity configuration
+ * @MAWCEnabled: Global configuration for MAWC (Roaming/PNO/ExtScan)
+ * @mawc_roam_enabled: MAWC roaming enable/disable
+ * @mawc_roam_traffic_threshold: Traffic threshold in kBps for MAWC roaming
+ * @mawc_roam_ap_rssi_threshold: AP RSSI threshold for MAWC roaming
+ * @mawc_roam_rssi_high_adjust: High Adjustment value for suppressing scan
+ * @mawc_roam_rssi_low_adjust: Low Adjustment value for suppressing scan
+ */
+struct mawc_params {
+	bool mawc_enabled;
+	bool mawc_roam_enabled;
+	uint32_t mawc_roam_traffic_threshold;
+	int8_t mawc_roam_ap_rssi_threshold;
+	uint8_t mawc_roam_rssi_high_adjust;
+	uint8_t mawc_roam_rssi_low_adjust;
+};
+
 typedef struct sSirRoamOffloadScanReq {
 	uint16_t message_type;
 	uint16_t length;
 	bool RoamScanOffloadEnabled;
-	bool MAWCEnabled;
+	struct mawc_params mawc_roam_params;
 	int8_t LookupThreshold;
 	int8_t rssi_thresh_offset_5g;
 	uint8_t delay_before_vdev_stop;

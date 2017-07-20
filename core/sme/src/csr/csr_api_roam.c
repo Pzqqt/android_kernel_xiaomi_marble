@@ -99,6 +99,17 @@
 #define ROAMING_OFFLOAD_TIMER_STOP	2
 #define CSR_ROAMING_OFFLOAD_TIMEOUT_PERIOD    (5 * QDF_MC_TIMER_TO_SEC_UNIT)
 
+/*
+ * MAWC_ROAM_TRAFFIC_THRESHOLD_DEFAULT - Indicates the traffic thresold in kBps
+ * MAWC_ROAM_AP_RSSI_THRESHOLD_DEFAULT - indicates the AP RSSI threshold
+ * MAWC_ROAM_RSSI_HIGH_ADJUST_DEFAULT - Adjustable high value to suppress scan
+ * MAWC_ROAM_RSSI_LOW_ADJUST_DEFAULT - Adjustable low value to suppress scan
+ */
+#define MAWC_ROAM_TRAFFIC_THRESHOLD_DEFAULT  300
+#define MAWC_ROAM_AP_RSSI_THRESHOLD_DEFAULT  (-66)
+#define MAWC_ROAM_RSSI_HIGH_ADJUST_DEFAULT   5
+#define MAWC_ROAM_RSSI_LOW_ADJUST_DEFAULT    5
+
 /* Static Type declarations */
 static struct csr_roam_session csr_roam_roam_session[CSR_ROAM_SESSION_MAX];
 
@@ -1496,6 +1507,16 @@ static void init_config_param(tpAniSirGlobal pMac)
 
 	pMac->roam.configParam.nInitialDwellTime = 0;
 	pMac->roam.configParam.initial_scan_no_dfs_chnl = 0;
+	pMac->roam.configParam.csr_mawc_config.mawc_enabled = true;
+	pMac->roam.configParam.csr_mawc_config.mawc_roam_enabled = true;
+	pMac->roam.configParam.csr_mawc_config.mawc_roam_traffic_threshold =
+		MAWC_ROAM_TRAFFIC_THRESHOLD_DEFAULT;
+	pMac->roam.configParam.csr_mawc_config.mawc_roam_ap_rssi_threshold =
+		MAWC_ROAM_AP_RSSI_THRESHOLD_DEFAULT;
+	pMac->roam.configParam.csr_mawc_config.mawc_roam_rssi_high_adjust =
+		MAWC_ROAM_RSSI_HIGH_ADJUST_DEFAULT;
+	pMac->roam.configParam.csr_mawc_config.mawc_roam_rssi_low_adjust =
+		MAWC_ROAM_RSSI_LOW_ADJUST_DEFAULT;
 }
 
 eCsrBand csr_get_current_band(tHalHandle hHal)
@@ -2586,8 +2607,9 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->bFastRoamInConIniFeatureEnabled;
 		pMac->roam.configParam.isFastRoamIniFeatureEnabled =
 			pParam->isFastRoamIniFeatureEnabled;
-		pMac->roam.configParam.MAWCEnabled = pParam->MAWCEnabled;
-
+		qdf_mem_copy(&pMac->roam.configParam.csr_mawc_config,
+				&pParam->csr_mawc_config,
+				sizeof(pParam->csr_mawc_config));
 #ifdef FEATURE_WLAN_ESE
 		pMac->roam.configParam.isEseIniFeatureEnabled =
 			pParam->isEseIniFeatureEnabled;
@@ -3090,6 +3112,9 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 		pMac->roam.configParam.rssi_channel_penalization;
 	pParam->num_disallowed_aps =
 		pMac->roam.configParam.num_disallowed_aps;
+	qdf_mem_copy(&pParam->csr_mawc_config,
+		&pMac->roam.configParam.csr_mawc_config,
+		sizeof(pParam->csr_mawc_config));
 
 	csr_get_he_config_param(pParam, pMac);
 
@@ -17724,8 +17749,16 @@ csr_create_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
 		roam_info->cfgParams.nRoamBmissFinalBcnt;
 	req_buf->RoamBeaconRssiWeight =
 		roam_info->cfgParams.nRoamBeaconRssiWeight;
-	/* MAWC feature */
-	req_buf->MAWCEnabled = mac_ctx->roam.configParam.MAWCEnabled;
+	qdf_mem_copy(&req_buf->mawc_roam_params,
+		&mac_ctx->roam.configParam.csr_mawc_config,
+		sizeof(req_buf->mawc_roam_params));
+	sme_debug("MAWC:global=%d,roam=%d,traffic=%d,ap_rssi=%d,high=%d,low=%d",
+			req_buf->mawc_roam_params.mawc_enabled,
+			req_buf->mawc_roam_params.mawc_roam_enabled,
+			req_buf->mawc_roam_params.mawc_roam_traffic_threshold,
+			req_buf->mawc_roam_params.mawc_roam_ap_rssi_threshold,
+			req_buf->mawc_roam_params.mawc_roam_rssi_high_adjust,
+			req_buf->mawc_roam_params.mawc_roam_rssi_low_adjust);
 #ifdef FEATURE_WLAN_ESE
 	req_buf->IsESEAssoc =
 		csr_roam_is_ese_assoc(mac_ctx, session_id) &&

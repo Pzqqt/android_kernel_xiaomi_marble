@@ -1024,6 +1024,46 @@ struct reg_table_entry g_registry_table[] = {
 			     CFG_LFR_MAWC_FEATURE_ENABLED_MAX,
 			     notify_is_mawc_ini_feature_enabled, 0),
 
+	REG_VARIABLE(CFG_MAWC_ROAM_ENABLED_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, mawc_roam_enabled,
+		     VAR_FLAGS_OPTIONAL |
+		     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_MAWC_ROAM_ENABLED_DEFAULT,
+		     CFG_MAWC_ROAM_ENABLED_MIN,
+		     CFG_MAWC_ROAM_ENABLED_MAX),
+
+	REG_VARIABLE(CFG_MAWC_ROAM_TRAFFIC_THRESHOLD_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, mawc_roam_traffic_threshold,
+		     VAR_FLAGS_OPTIONAL |
+		     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_MAWC_ROAM_TRAFFIC_THRESHOLD_DEFAULT,
+		     CFG_MAWC_ROAM_TRAFFIC_THRESHOLD_MIN,
+		     CFG_MAWC_ROAM_TRAFFIC_THRESHOLD_MAX),
+
+	REG_VARIABLE(CFG_MAWC_ROAM_AP_RSSI_THRESHOLD_NAME,
+		     WLAN_PARAM_SignedInteger, struct hdd_config,
+		     mawc_roam_ap_rssi_threshold, VAR_FLAGS_OPTIONAL |
+		     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_MAWC_ROAM_AP_RSSI_THRESHOLD_DEFAULT,
+		     CFG_MAWC_ROAM_AP_RSSI_THRESHOLD_MIN,
+		     CFG_MAWC_ROAM_AP_RSSI_THRESHOLD_MAX),
+
+	REG_VARIABLE(CFG_MAWC_ROAM_RSSI_HIGH_ADJUST_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, mawc_roam_rssi_high_adjust,
+		     VAR_FLAGS_OPTIONAL |
+		     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_MAWC_ROAM_RSSI_HIGH_ADJUST_DEFAULT,
+		     CFG_MAWC_ROAM_RSSI_HIGH_ADJUST_MIN,
+		     CFG_MAWC_ROAM_RSSI_HIGH_ADJUST_MAX),
+
+	REG_VARIABLE(CFG_MAWC_ROAM_RSSI_LOW_ADJUST_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, mawc_roam_rssi_low_adjust,
+		     VAR_FLAGS_OPTIONAL |
+		     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_MAWC_ROAM_RSSI_LOW_ADJUST_DEFAULT,
+		     CFG_MAWC_ROAM_RSSI_LOW_ADJUST_MIN,
+		     CFG_MAWC_ROAM_RSSI_LOW_ADJUST_MAX),
+
 	/* flag to turn ON/OFF 11r and ESE FastTransition */
 	REG_DYNAMIC_VARIABLE(CFG_FAST_TRANSITION_ENABLED_NAME,
 			     WLAN_PARAM_Integer,
@@ -5578,6 +5618,27 @@ static void hdd_per_roam_print_ini_config(struct hdd_context *hdd_ctx)
 		hdd_ctx->config->min_candidate_rssi);
 }
 
+static void hdd_mawc_cfg_log(struct hdd_context *pHddCtx)
+{
+	hdd_debug("Name = [MAWCEnabled] Value = [%u] ",
+		  pHddCtx->config->MAWCEnabled);
+	hdd_debug("Name = [%s] Value = [%u] ",
+		CFG_MAWC_ROAM_ENABLED_NAME,
+		pHddCtx->config->mawc_roam_enabled);
+	hdd_debug("Name = [%s] Value = [%u] ",
+		CFG_MAWC_ROAM_TRAFFIC_THRESHOLD_NAME,
+		  pHddCtx->config->mawc_roam_traffic_threshold);
+	hdd_debug("Name = [%s] Value = [%d] ",
+		CFG_MAWC_ROAM_AP_RSSI_THRESHOLD_NAME,
+		pHddCtx->config->mawc_roam_ap_rssi_threshold);
+	hdd_debug("Name = [%s] Value = [%u] ",
+		CFG_MAWC_ROAM_RSSI_HIGH_ADJUST_NAME,
+		  pHddCtx->config->mawc_roam_rssi_high_adjust);
+	hdd_debug("Name = [%s] Value = [%u] ",
+		CFG_MAWC_ROAM_RSSI_LOW_ADJUST_NAME,
+		pHddCtx->config->mawc_roam_rssi_low_adjust);
+}
+
 /**
  * hdd_cfg_print_ie_whitelist_attrs() - print the ie whitelist attrs
  * @hdd_ctx: pointer to hdd context
@@ -5726,8 +5787,7 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 		  hdd_ctx->config->allow_tpc_from_ap);
 	hdd_debug("Name = [FastRoamEnabled] Value = [%u] ",
 		  hdd_ctx->config->isFastRoamIniFeatureEnabled);
-	hdd_debug("Name = [MAWCEnabled] Value = [%u] ",
-		  hdd_ctx->config->MAWCEnabled);
+	hdd_mawc_cfg_log(hdd_ctx);
 	hdd_debug("Name = [RoamRssiDiff] Value = [%u] ",
 		  hdd_ctx->config->RoamRssiDiff);
 	hdd_debug("Name = [isWESModeEnabled] Value = [%u] ",
@@ -7800,7 +7860,18 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 		pConfig->fFTResourceReqSupported;
 	smeConfig->csrConfig.isFastRoamIniFeatureEnabled =
 		pConfig->isFastRoamIniFeatureEnabled;
-	smeConfig->csrConfig.MAWCEnabled = pConfig->MAWCEnabled;
+	smeConfig->csrConfig.csr_mawc_config.mawc_enabled =
+		pConfig->MAWCEnabled;
+	smeConfig->csrConfig.csr_mawc_config.mawc_roam_enabled =
+		pConfig->mawc_roam_enabled;
+	smeConfig->csrConfig.csr_mawc_config.mawc_roam_traffic_threshold =
+		pConfig->mawc_roam_traffic_threshold;
+	smeConfig->csrConfig.csr_mawc_config.mawc_roam_ap_rssi_threshold =
+		pConfig->mawc_roam_ap_rssi_threshold;
+	smeConfig->csrConfig.csr_mawc_config.mawc_roam_rssi_high_adjust =
+		pConfig->mawc_roam_rssi_high_adjust;
+	smeConfig->csrConfig.csr_mawc_config.mawc_roam_rssi_low_adjust =
+		pConfig->mawc_roam_rssi_low_adjust;
 #ifdef FEATURE_WLAN_ESE
 	smeConfig->csrConfig.isEseIniFeatureEnabled =
 		pConfig->isEseIniFeatureEnabled;

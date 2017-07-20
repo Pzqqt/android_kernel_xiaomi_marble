@@ -251,6 +251,19 @@ QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 				      tSirRoamOffloadScanReq *roam_req,
 				      uint32_t mode, uint32_t vdev_id);
 
+/**
+ * wma_roam_scan_mawc_params() - send roam scan mode request to fw
+ * @wma_handle: wma handle
+ * @roam_req: roam request param
+ *
+ * Fill the MAWC roaming parameters and send
+ * WMI_ROAM_CONFIGURE_MAWC_CMDID TLV to firmware.
+ *
+ * Return: QDF status
+ */
+QDF_STATUS wma_roam_scan_mawc_params(tp_wma_handle wma_handle,
+		tSirRoamOffloadScanReq *roam_req);
+
 QDF_STATUS wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 					     tSirRoamOffloadScanReq *roam_req);
 

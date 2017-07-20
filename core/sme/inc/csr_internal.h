@@ -524,7 +524,7 @@ struct csr_config {
 	bool ssidHidden;
 	struct csr_11rconfig csr11rConfig;
 	uint8_t isFastRoamIniFeatureEnabled;
-	uint8_t MAWCEnabled;
+	struct mawc_params csr_mawc_config;
 	uint8_t isRoamOffloadScanEnabled;
 	bool bFastRoamInConIniFeatureEnabled;
 #ifdef FEATURE_WLAN_ESE
