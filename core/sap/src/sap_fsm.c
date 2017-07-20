@@ -2451,6 +2451,17 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 		reassoc_complete->wmmEnabled = csr_roaminfo->wmmEnabledSta;
 		reassoc_complete->status = (eSapStatus) context;
 		reassoc_complete->timingMeasCap = csr_roaminfo->timingMeasCap;
+		reassoc_complete->ampdu = csr_roaminfo->ampdu;
+		reassoc_complete->sgi_enable = csr_roaminfo->sgi_enable;
+		reassoc_complete->tx_stbc = csr_roaminfo->tx_stbc;
+		reassoc_complete->rx_stbc = csr_roaminfo->rx_stbc;
+		reassoc_complete->ch_width = csr_roaminfo->ch_width;
+		reassoc_complete->mode = csr_roaminfo->mode;
+		reassoc_complete->max_supp_idx = csr_roaminfo->max_supp_idx;
+		reassoc_complete->max_ext_idx = csr_roaminfo->max_ext_idx;
+		reassoc_complete->max_mcs_idx = csr_roaminfo->max_mcs_idx;
+		reassoc_complete->rx_mcs_map = csr_roaminfo->rx_mcs_map;
+		reassoc_complete->tx_mcs_map = csr_roaminfo->tx_mcs_map;
 		break;
 
 	case eSAP_STA_DISASSOC_EVENT:

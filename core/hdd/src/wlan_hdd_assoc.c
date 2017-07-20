@@ -165,31 +165,30 @@ hdd_conn_set_authenticated(hdd_adapter_t *pAdapter, uint8_t authState)
 
 /**
  * hdd_conn_set_connection_state() - set connection state
- * @pAdapter: pointer to the adapter
- * @connState: connection state
+ * @adapter: pointer to the adapter
+ * @conn_state: connection state
  *
  * This function updates the global HDD station context connection state.
  *
  * Return: none
  */
-void hdd_conn_set_connection_state(hdd_adapter_t *pAdapter,
-				   eConnectionState connState)
+void hdd_conn_set_connection_state(hdd_adapter_t *adapter,
+				   eConnectionState conn_state)
 {
-	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
-	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	hdd_station_ctx_t *hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	/* save the new connection state */
-	hdd_debug("%pS Changed connectionState Changed from oldState:%d to State:%d",
-		(void *)_RET_IP_, pHddStaCtx->conn_info.connState,
-		connState);
+	hdd_debug("%pS Changed conn state from old:%d to new:%d for dev %s",
+		(void *)_RET_IP_, hdd_sta_ctx->conn_info.connState,
+		conn_state, adapter->dev->name);
 
-	hdd_tsf_notify_wlan_state_change(pAdapter,
-					 pHddStaCtx->conn_info.connState,
-					 connState);
-	pHddStaCtx->conn_info.connState = connState;
+	hdd_tsf_notify_wlan_state_change(adapter,
+					 hdd_sta_ctx->conn_info.connState,
+					 conn_state);
+	hdd_sta_ctx->conn_info.connState = conn_state;
 
-	/* Check is pending ROC request or not when connection state changed */
-	schedule_delayed_work(&pHddCtx->roc_req_work, 0);
+	schedule_delayed_work(&hdd_ctx->roc_req_work, 0);
 }
 
 /**
@@ -2474,7 +2473,9 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 	    pHddStaCtx->conn_info.connState)) &&
 	    ((eCSR_ROAM_RESULT_ASSOCIATED == roamResult) ||
 	    (eCSR_ROAM_ASSOCIATION_FAILURE == roamStatus))) {
-		hdd_info("Disconnect from HDD in progress");
+		hdd_info("hddDisconInProgress state=%d, result=%d, status=%d",
+				pHddStaCtx->conn_info.connState,
+				roamResult, roamStatus);
 		hddDisconInProgress = true;
 	}
 
@@ -3207,10 +3208,10 @@ static void hdd_roam_ibss_indication_handler(hdd_adapter_t *pAdapter,
 
 			if (chan_no <= 14)
 				freq = ieee80211_channel_to_frequency(chan_no,
-					  NL80211_BAND_2GHZ);
+					  HDD_NL80211_BAND_2GHZ);
 			else
 				freq = ieee80211_channel_to_frequency(chan_no,
-					  NL80211_BAND_5GHZ);
+					  HDD_NL80211_BAND_5GHZ);
 
 			chan = ieee80211_get_channel(pAdapter->wdev.wiphy, freq);
 
@@ -3350,8 +3351,8 @@ static bool roam_remove_ibss_station(hdd_adapter_t *pAdapter, uint8_t staId)
 
 	if (MAX_PEERS == empty_slots) {
 		/* Last peer departed, set the IBSS state appropriately */
-		pHddStaCtx->conn_info.connState =
-			eConnectionState_IbssDisconnected;
+		hdd_conn_set_connection_state(pAdapter,
+				eConnectionState_IbssDisconnected);
 		hdd_debug("Last IBSS Peer Departed!!!");
 	}
 	/* Find next active staId, to have a valid sta trigger for TL. */

@@ -908,27 +908,6 @@ QDF_STATUS sme_qos_validate_params(tpAniSirGlobal pMac,
 	return status;
 }
 
-void sme_qos_remove_addts_delts_cmd(tpAniSirGlobal mac_ctx, uint8_t session_id)
-{
-	tListElem *entry;
-	tSmeCmd *command;
-
-	entry = csr_nonscan_active_ll_peek_head(mac_ctx, LL_ACCESS_LOCK);
-	if (NULL == entry)
-		return;
-	command = GET_BASE_ADDR(entry, tSmeCmd, Link);
-	if ((eSmeCommandAddTs   == command->command ||
-	    eSmeCommandDelTs == command->command) &&
-	    command->sessionId == session_id) {
-		if (csr_nonscan_active_ll_remove_entry(mac_ctx, entry,
-		    LL_ACCESS_LOCK)) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
-				  "%s: removed addts/delts command", __func__);
-			qos_release_command(mac_ctx, command);
-		}
-	}
-}
-
 /*--------------------------------------------------------------------------
    \brief sme_qos_csr_event_ind() - The QoS sub-module in SME expects notifications
    from CSR when certain events occur as mentioned in sme_qos_csr_event_indType.

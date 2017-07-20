@@ -2416,8 +2416,6 @@ static void lim_tdls_update_hash_node_info(tpAniSirGlobal pMac,
 	tDot11fIEVHTCaps *pVhtCaps_txbf = NULL;
 	tDot11fIEVHTCaps vhtCap;
 	uint8_t cbMode;
-	tpDphHashNode pSessStaDs = NULL;
-	uint16_t aid;
 
 	if (pTdlsAddStaReq->tdlsAddOper == TDLS_OPER_ADD) {
 		populate_dot11f_ht_caps(pMac, psessionEntry, &htCap);
@@ -2516,8 +2514,6 @@ static void lim_tdls_update_hash_node_info(tpAniSirGlobal pMac,
 		else
 			pStaDs->htSecondaryChannelOffset = cbMode;
 	}
-	pSessStaDs = dph_lookup_hash_entry(pMac, psessionEntry->bssId, &aid,
-					   &psessionEntry->dph.dphHashTable);
 	/* Lets enable QOS parameter */
 	pStaDs->qosMode = (pTdlsAddStaReq->capability & CAPABILITIES_QOS_OFFSET)
 				|| pTdlsAddStaReq->htcap_present;

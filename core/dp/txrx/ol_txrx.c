@@ -3333,8 +3333,26 @@ static QDF_STATUS ol_txrx_clear_peer(struct cdp_pdev *ppdev, uint8_t sta_id)
 
 }
 
+void peer_unmap_timer_work_function(void *param)
+{
+	WMA_LOGE("Enter: %s", __func__);
+	/*
+	 * wma_peer_debug_dump() will be replaced with a new routine.
+	 * Add the equivalent of wma_peer_debug_dump() when available.
+	 */
+	if (cds_is_self_recovery_enabled()) {
+		if (!cds_is_driver_recovering())
+			cds_trigger_recovery(false);
+		else
+			WMA_LOGE("%s: Recovery is in progress, ignore!",
+					__func__);
+	} else {
+		QDF_BUG(0);
+	}
+}
+
 /**
- * peer_unmap_timer() - peer unmap timer function
+ * peer_unmap_timer_handler() - peer unmap timer function
  * @data: peer object pointer
  *
  * Return: none
@@ -3342,6 +3360,7 @@ static QDF_STATUS ol_txrx_clear_peer(struct cdp_pdev *ppdev, uint8_t sta_id)
 void peer_unmap_timer_handler(void *data)
 {
 	ol_txrx_peer_handle peer = (ol_txrx_peer_handle)data;
+	ol_txrx_pdev_handle txrx_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	ol_txrx_err("all unmap events not received for peer %p, ref_cnt %d",
 		    peer, qdf_atomic_read(&peer->ref_cnt));
@@ -3351,10 +3370,10 @@ void peer_unmap_timer_handler(void *data)
 		    peer->mac_addr.raw[2], peer->mac_addr.raw[3],
 		    peer->mac_addr.raw[4], peer->mac_addr.raw[5]);
 	if (!cds_is_driver_recovering()) {
-		/*
-		 * Add the equivalent of wma_peer_debug_dump() when available.
-		 */
-		QDF_BUG(0);
+		qdf_create_work(0, &txrx_pdev->peer_unmap_timer_work,
+				peer_unmap_timer_work_function,
+				NULL);
+		qdf_sched_work(0, &txrx_pdev->peer_unmap_timer_work);
 	} else {
 		ol_txrx_err("Recovery is in progress, ignore!");
 	}

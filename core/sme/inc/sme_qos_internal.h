@@ -123,17 +123,6 @@ QDF_STATUS sme_qos_msg_processor(tpAniSirGlobal pMac, uint16_t msg_type,
   ------------------------------------------------------------------------*/
 QDF_STATUS sme_qos_validate_params(tpAniSirGlobal pMac,
 		tSirBssDescription *pBssDesc);
-/**
- * sme_qos_remove_addts_delts_cmd - Remove addts/delts command
- * @mac_ctx: Pointer to the global MAC structure.
- * @session_id: Session id
- *
- * This function is used to remove addts/delts command
- * during csr roam sync callback.
- *
- * Return: void
- */
-void sme_qos_remove_addts_delts_cmd(tpAniSirGlobal mac_ctx, uint8_t session_id);
 QDF_STATUS sme_qos_csr_event_ind(tpAniSirGlobal pMac,
 		uint8_t sessionId,
 		sme_qos_csr_event_indType ind, void *pEvent_info);

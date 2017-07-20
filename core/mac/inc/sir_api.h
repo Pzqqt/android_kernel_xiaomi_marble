@@ -1287,6 +1287,12 @@ typedef struct sSirSmeChanInfo {
 	enum phy_ch_width ch_width;
 } tSirSmeChanInfo, *tpSirSmeChanInfo;
 
+enum sir_sme_phy_mode {
+	SIR_SME_PHY_MODE_LEGACY = 0,
+	SIR_SME_PHY_MODE_HT = 1,
+	SIR_SME_PHY_MODE_VHT = 2
+};
+
 /* / Definition for Association indication from peer */
 /* / MAC ---> */
 typedef struct sSirSmeAssocInd {
@@ -1324,6 +1330,17 @@ typedef struct sSirSmeAssocInd {
 	/* Timing measurement capability */
 	uint8_t timingMeasCap;
 	tSirSmeChanInfo chan_info;
+	bool ampdu;
+	bool sgi_enable;
+	bool tx_stbc;
+	bool rx_stbc;
+	tSirMacHTChannelWidth ch_width;
+	enum sir_sme_phy_mode mode;
+	uint8_t max_supp_idx;
+	uint8_t max_ext_idx;
+	uint8_t max_mcs_idx;
+	uint8_t rx_mcs_map;
+	uint8_t tx_mcs_map;
 } tSirSmeAssocInd, *tpSirSmeAssocInd;
 
 /* / Definition for Association confirm */
@@ -2983,6 +3000,20 @@ struct pmkid_mode_bits {
 	uint32_t unused:30;
 };
 
+/**
+ * struct lca_disallow_config_params - LCA[Last Connected AP]
+ *                                     disallow config params
+ * @disallow_duration: LCA AP disallowed duration
+ * @rssi_channel_penalization: RSSI channel Penalization
+ * @num_disallowed_aps: Maximum number of AP's in LCA list
+ *
+ */
+struct lca_disallow_config_params{
+    uint32_t disallow_duration;
+    uint32_t rssi_channel_penalization;
+    uint32_t num_disallowed_aps;
+};
+
 typedef struct sSirRoamOffloadScanReq {
 	uint16_t message_type;
 	uint16_t length;
@@ -3040,6 +3071,7 @@ typedef struct sSirRoamOffloadScanReq {
 	int8_t early_stop_scan_max_threshold;
 	enum wmi_dwelltime_adaptive_mode roamscan_adaptive_dwell_mode;
 	tSirAddie assoc_ie;
+	struct lca_disallow_config_params lca_config_params;
 } tSirRoamOffloadScanReq, *tpSirRoamOffloadScanReq;
 
 typedef struct sSirRoamOffloadScanRsp {
@@ -5225,6 +5257,9 @@ struct sir_wifi_chan_cca_stats {
  * @peer_id: peer ID
  * @per_ant_snr: per antenna SNR
  * @nf: peer background noise
+ * @per_ant_rx_mpdus: MPDUs received per antenna
+ * @per_ant_tx_mpdus: MPDUs transferred per antenna
+ * @num_chain: valid chain count
  */
 struct sir_wifi_peer_signal_stats {
 	uint32_t vdev_id;
@@ -5235,6 +5270,10 @@ struct sir_wifi_peer_signal_stats {
 
 	/* Background noise */
 	int32_t nf[WIFI_MAX_CHAINS];
+
+	int32_t per_ant_rx_mpdus[WIFI_MAX_CHAINS];
+	int32_t per_ant_tx_mpdus[WIFI_MAX_CHAINS];
+	int32_t num_chain;
 };
 
 #define WIFI_VDEV_NUM           4

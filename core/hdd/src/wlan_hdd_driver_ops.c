@@ -230,6 +230,9 @@ int hdd_hif_open(struct device *dev, void *bdev, const struct hif_bus_id *bid,
 		goto err_hif_close;
 	}
 
+	if (hdd_ctx->config->prevent_link_down)
+		hif_vote_link_up(hif_ctx);
+
 	status = hif_enable(hif_ctx, dev, bdev, bid, bus_type,
 			    (reinit == true) ?  HIF_ENABLE_TYPE_REINIT :
 			    HIF_ENABLE_TYPE_PROBE);

@@ -2775,6 +2775,8 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->sta_roam_policy_params.dfs_mode;
 		pMac->roam.configParam.sta_roam_policy.skip_unsafe_channels =
 			pParam->sta_roam_policy_params.skip_unsafe_channels;
+		pMac->roam.configParam.sta_roam_policy.sap_operating_band =
+			pParam->sta_roam_policy_params.sap_operating_band;
 
 		pMac->roam.configParam.tx_aggregation_size =
 			pParam->tx_aggregation_size;
@@ -2786,6 +2788,12 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->qcn_ie_support;
 		pMac->roam.configParam.fils_max_chan_guard_time =
 			pParam->fils_max_chan_guard_time;
+		pMac->roam.configParam.disallow_duration =
+			pParam->disallow_duration;
+		pMac->roam.configParam.rssi_channel_penalization =
+			pParam->rssi_channel_penalization;
+		pMac->roam.configParam.num_disallowed_aps =
+			pParam->num_disallowed_aps;
 
 		csr_update_he_config_param(pMac, pParam);
 	}
@@ -3025,6 +3033,12 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 		pMac->roam.configParam.qcn_ie_support;
 	pParam->fils_max_chan_guard_time =
 		pMac->roam.configParam.fils_max_chan_guard_time;
+	pParam->disallow_duration =
+		pMac->roam.configParam.disallow_duration;
+	pParam->rssi_channel_penalization =
+		pMac->roam.configParam.rssi_channel_penalization;
+	pParam->num_disallowed_aps =
+		pMac->roam.configParam.num_disallowed_aps;
 
 	csr_get_he_config_param(pParam, pMac);
 
@@ -9838,6 +9852,17 @@ void csr_roam_joined_state_msg_processor(tpAniSirGlobal pMac, void *pMsgBuf)
 		qdf_mem_copy(&pRoamInfo->chan_info,
 			     &pUpperLayerAssocCnf->chan_info,
 			     sizeof(tSirSmeChanInfo));
+		pRoamInfo->ampdu = pUpperLayerAssocCnf->ampdu;
+		pRoamInfo->sgi_enable = pUpperLayerAssocCnf->sgi_enable;
+		pRoamInfo->tx_stbc = pUpperLayerAssocCnf->tx_stbc;
+		pRoamInfo->tx_stbc = pUpperLayerAssocCnf->rx_stbc;
+		pRoamInfo->ch_width = pUpperLayerAssocCnf->ch_width;
+		pRoamInfo->mode = pUpperLayerAssocCnf->mode;
+		pRoamInfo->max_supp_idx = pUpperLayerAssocCnf->max_supp_idx;
+		pRoamInfo->max_ext_idx = pUpperLayerAssocCnf->max_ext_idx;
+		pRoamInfo->max_mcs_idx = pUpperLayerAssocCnf->max_mcs_idx;
+		pRoamInfo->rx_mcs_map = pUpperLayerAssocCnf->rx_mcs_map;
+		pRoamInfo->tx_mcs_map = pUpperLayerAssocCnf->tx_mcs_map;
 		if (CSR_IS_INFRA_AP(pRoamInfo->u.pConnectedProfile)) {
 			pMac->roam.roamSession[sessionId].connectState =
 				eCSR_ASSOC_STATE_TYPE_INFRA_CONNECTED;
@@ -15157,54 +15182,90 @@ QDF_STATUS csr_send_assoc_ind_to_upper_layer_cnf_msg(tpAniSirGlobal pMac,
 		else
 			statusCode = eSIR_SME_ASSOC_REFUSED;
 		qdf_mem_copy(pBuf, &statusCode, sizeof(tSirResultCodes));
-		pBuf += sizeof(tSirResultCodes);
 		/* bssId */
-		qdf_mem_copy((tSirMacAddr *) pBuf, pAssocInd->bssId,
-			     sizeof(tSirMacAddr));
-		pBuf += sizeof(tSirMacAddr);
+		pBuf = (uint8_t *)&pMsg->bssId;
+		qdf_mem_copy((tSirMacAddr *)pBuf, pAssocInd->bssId,
+			sizeof(tSirMacAddr));
 		/* peerMacAddr */
-		qdf_mem_copy((tSirMacAddr *) pBuf, pAssocInd->peerMacAddr,
-			     sizeof(tSirMacAddr));
-		pBuf += sizeof(tSirMacAddr);
+		pBuf = (uint8_t *)&pMsg->peerMacAddr;
+		qdf_mem_copy((tSirMacAddr *)pBuf, pAssocInd->peerMacAddr,
+			sizeof(tSirMacAddr));
 		/* StaId */
+		pBuf = (uint8_t *)&pMsg->aid;
 		wTmp = pAssocInd->staId;
 		qdf_mem_copy(pBuf, &wTmp, sizeof(uint16_t));
-		pBuf += sizeof(uint16_t);
 		/* alternateBssId */
-		qdf_mem_copy((tSirMacAddr *) pBuf, pAssocInd->bssId,
-			     sizeof(tSirMacAddr));
-		pBuf += sizeof(tSirMacAddr);
+		pBuf = (uint8_t *)&pMsg->alternateBssId;
+		qdf_mem_copy((tSirMacAddr *)pBuf, pAssocInd->bssId,
+			sizeof(tSirMacAddr));
 		/* alternateChannelId */
+		pBuf = (uint8_t *)&pMsg->alternateChannelId;
 		*pBuf = 11;
-		pBuf += sizeof(uint8_t);
-		/* Instead of copying roam Info, we just copy only WmmEnabled,
-		 * RsnIE information
+		/*
+		 * Instead of copying roam Info,just copy WmmEnabled,
+		 * RsnIE information.
+		 * Wmm
 		 */
-		/* Wmm */
+		pBuf = (uint8_t *)&pMsg->wmmEnabledSta;
 		*pBuf = pAssocInd->wmmEnabledSta;
-		pBuf += sizeof(uint8_t);
 		/* RSN IE */
-		qdf_mem_copy((tSirRSNie *) pBuf, &pAssocInd->rsnIE,
-			     sizeof(tSirRSNie));
-		pBuf += sizeof(tSirRSNie);
+		pBuf = (uint8_t *)&pMsg->rsnIE;
+		qdf_mem_copy((tSirRSNie *)pBuf, &pAssocInd->rsnIE,
+			sizeof(tSirRSNie));
 #ifdef FEATURE_WLAN_WAPI
 		/* WAPI IE */
-		qdf_mem_copy((tSirWAPIie *) pBuf, &pAssocInd->wapiIE,
-			     sizeof(tSirWAPIie));
-		pBuf += sizeof(tSirWAPIie);
+		pBuf = (uint8_t *)&pMsg->wapiIE;
+		qdf_mem_copy((tSirWAPIie *)pBuf, &pAssocInd->wapiIE,
+			sizeof(tSirWAPIie));
 #endif
 		/* Additional IE */
-		qdf_mem_copy((void *)pBuf, &pAssocInd->addIE,
-			     sizeof(tSirAddie));
-		pBuf += sizeof(tSirAddie);
+		pBuf = (uint8_t *)&pMsg->addIE;
+		qdf_mem_copy((tSirAddie *)pBuf, &pAssocInd->addIE,
+			sizeof(tSirAddie));
 		/* reassocReq */
+		pBuf = (uint8_t *)&pMsg->reassocReq;
 		*pBuf = pAssocInd->reassocReq;
-		pBuf += sizeof(uint8_t);
 		/* timingMeasCap */
+		pBuf = (uint8_t *)&pMsg->timingMeasCap;
 		*pBuf = pAssocInd->timingMeasCap;
-		pBuf += sizeof(uint8_t);
+		/* chan_info */
+		pBuf = (uint8_t *)&pMsg->chan_info;
 		qdf_mem_copy((void *)pBuf, &pAssocInd->chan_info,
-			     sizeof(tSirSmeChanInfo));
+			sizeof(tSirSmeChanInfo));
+		/* ampdu */
+		pBuf = (uint8_t *)&pMsg->ampdu;
+		*((bool *)pBuf) = pAssocInd->ampdu;
+		/* sgi_enable */
+		pBuf = (uint8_t *)&pMsg->sgi_enable;
+		*((bool *)pBuf) = pAssocInd->sgi_enable;
+		/* tx stbc */
+		pBuf = (uint8_t *)&pMsg->tx_stbc;
+		*((bool *)pBuf) = pAssocInd->tx_stbc;
+		/* ch_width */
+		pBuf = (uint8_t *)&pMsg->ch_width;
+		*((tSirMacHTChannelWidth *)pBuf) = pAssocInd->ch_width;
+		/* mode */
+		pBuf = (uint8_t *)&pMsg->mode;
+		*((enum sir_sme_phy_mode *)pBuf) = pAssocInd->mode;
+		/* rx stbc */
+		pBuf = (uint8_t *)&pMsg->rx_stbc;
+		*((bool *)pBuf) = pAssocInd->rx_stbc;
+		/* max supported idx */
+		pBuf = (uint8_t *)&pMsg->max_supp_idx;
+		*pBuf = pAssocInd->max_supp_idx;
+		/* max extended idx */
+		pBuf = (uint8_t *)&pMsg->max_ext_idx;
+		*pBuf = pAssocInd->max_ext_idx;
+		/* max ht mcs idx */
+		pBuf = (uint8_t *)&pMsg->max_mcs_idx;
+		*pBuf = pAssocInd->max_mcs_idx;
+		/* vht rx mcs map */
+		pBuf = (uint8_t *)&pMsg->rx_mcs_map;
+		*pBuf = pAssocInd->rx_mcs_map;
+		/* vht tx mcs map */
+		pBuf = (uint8_t *)&pMsg->tx_mcs_map;
+		*pBuf = pAssocInd->tx_mcs_map;
+
 		msgQ.type = eWNI_SME_UPPER_LAYER_ASSOC_CNF;
 		msgQ.bodyptr = pMsg;
 		msgQ.bodyval = 0;
@@ -16459,6 +16520,7 @@ QDF_STATUS csr_get_snr(tpAniSirGlobal pMac,
 
 	status = csr_roam_get_session_id_from_bssid(pMac, &bssId, &sessionId);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		qdf_mem_free(pMsg);
 		sme_err("Couldn't find session_id for given BSSID");
 		return status;
 	}
@@ -17208,15 +17270,26 @@ csr_create_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
 		mac_ctx->roam.configParam.early_stop_scan_min_threshold;
 	req_buf->early_stop_scan_max_threshold =
 		mac_ctx->roam.configParam.early_stop_scan_max_threshold;
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-		  FL("HomeAwayTime=%d EarlyStopFeature Enable=%d, MinThresh=%d, MaxThresh=%d PMK len=%d"),
-		  req_buf->HomeAwayTime, req_buf->early_stop_scan_enable,
-		  req_buf->early_stop_scan_min_threshold,
-		  req_buf->early_stop_scan_max_threshold,
-		  req_buf->pmk_len);
 	req_buf->roamscan_adaptive_dwell_mode =
 		mac_ctx->roam.configParam.roamscan_adaptive_dwell_mode;
+	req_buf->lca_config_params.disallow_duration =
+		mac_ctx->roam.configParam.disallow_duration;
+	req_buf->lca_config_params.rssi_channel_penalization =
+		mac_ctx->roam.configParam.rssi_channel_penalization;
+	req_buf->lca_config_params.num_disallowed_aps =
+		mac_ctx->roam.configParam.num_disallowed_aps;
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
+		  FL("HomeAwayTime=%d EarlyStopFeature Enable=%d, MinThresh=%d, MaxThresh=%d PMK len=%d disallow_dur=%d rssi_chan_pen=%d num_disallowed_aps=%d"),
+		  req_buf->HomeAwayTime,
+		  req_buf->early_stop_scan_enable,
+		  req_buf->early_stop_scan_min_threshold,
+		  req_buf->early_stop_scan_max_threshold,
+		  req_buf->pmk_len,
+		  req_buf->lca_config_params.disallow_duration,
+		  req_buf->lca_config_params.rssi_channel_penalization,
+		  req_buf->lca_config_params.num_disallowed_aps);
 	req_buf->RoamOffloadEnabled = csr_roamIsRoamOffloadEnabled(mac_ctx);
 	req_buf->RoamKeyMgmtOffloadEnabled = session->RoamKeyMgmtOffloadEnabled;
 	req_buf->pmkid_modes = session->pmkid_modes;
@@ -19984,7 +20057,6 @@ static QDF_STATUS csr_process_roam_sync_callback(tpAniSirGlobal mac_ctx,
 		eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED;
 	sme_qos_csr_event_ind(mac_ctx, session_id,
 		SME_QOS_CSR_REASSOC_COMPLETE, &assoc_info);
-	sme_qos_remove_addts_delts_cmd(mac_ctx, session_id);
 	roam_info->pBssDesc = bss_desc;
 	conn_profile->acm_mask = sme_qos_get_acm_mask(mac_ctx,
 			bss_desc, NULL);

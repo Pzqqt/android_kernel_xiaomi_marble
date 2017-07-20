@@ -1582,6 +1582,7 @@ static QDF_STATUS wma_roam_scan_filter(tp_wma_handle wma_handle,
 	uint32_t op_bitmap = 0;
 	struct roam_ext_params *roam_params;
 	struct roam_scan_filter_params *params;
+	struct lca_disallow_config_params *lca_config_params;
 
 	params = qdf_mem_malloc(sizeof(struct roam_scan_filter_params));
 	if (params == NULL) {
@@ -1590,6 +1591,7 @@ static QDF_STATUS wma_roam_scan_filter(tp_wma_handle wma_handle,
 	}
 
 	roam_params = &roam_req->roam_params;
+	lca_config_params = &roam_req->lca_config_params;
 	if (roam_req->Command != ROAM_SCAN_OFFLOAD_STOP) {
 		switch (roam_req->reason) {
 		case REASON_ROAM_SET_BLACKLIST_BSSID:
@@ -1606,6 +1608,16 @@ static QDF_STATUS wma_roam_scan_filter(tp_wma_handle wma_handle,
 			op_bitmap |= 0x4;
 			num_bssid_preferred_list =
 				roam_params->num_bssid_favored;
+			break;
+		case REASON_CTX_INIT:
+			if (roam_req->Command == ROAM_SCAN_OFFLOAD_START) {
+				params->lca_disallow_config_present = true;
+				op_bitmap |= ROAM_FILTER_OP_BITMAP_LCA_DISALLOW;
+			} else {
+				WMA_LOGD("%s : Roam Filter need not be sent", __func__);
+				qdf_mem_free(params);
+				return QDF_STATUS_SUCCESS;
+			}
 			break;
 		default:
 			WMA_LOGD("%s : Roam Filter need not be sent", __func__);
@@ -1648,6 +1660,14 @@ static QDF_STATUS wma_roam_scan_filter(tp_wma_handle wma_handle,
 	qdf_mem_copy(params->bssid_favored_factor,
 			roam_params->bssid_favored_factor, MAX_BSSID_FAVORED);
 
+	if (params->lca_disallow_config_present) {
+		params->disallow_duration
+				= lca_config_params->disallow_duration;
+		params->rssi_channel_penalization
+				= lca_config_params->rssi_channel_penalization;
+		params->num_disallowed_aps
+				= lca_config_params->num_disallowed_aps;
+	}
 	status = wmi_unified_roam_scan_filter_cmd(wma_handle->wmi_handle,
 					params);
 
@@ -1846,6 +1866,33 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 		break;
 
 	case ROAM_SCAN_OFFLOAD_STOP:
+		/*
+		 * If roam synch propagation is in progress and an user space
+		 * disconnect is requested, then there is no need to send the
+		 * RSO STOP to firmware, since the roaming is already complete.
+		 * If the RSO STOP is sent to firmware, then an HO_FAIL will be
+		 * generated and the expectation from firmware would be to
+		 * clean up the peer context on the host and not send down any
+		 * WMI PEER DELETE commands to firmware. But, if the user space
+		 * disconnect gets processed first, then there is a chance to
+		 * send down the PEER DELETE commands. Hence, if we do not
+		 * receive the HO_FAIL, and we complete the roam sync
+		 * propagation, then the host and firmware will be in sync with
+		 * respect to the peer and then the user space disconnect can
+		 * be handled gracefully in a normal way.
+		 *
+		 * Ensure to check the reason code since the RSO Stop might
+		 * come when roam sync failed as well and at that point it
+		 * should go through to the firmware and receive HO_FAIL
+		 * and clean up.
+		 */
+		if (wma_is_roam_synch_in_progress(wma_handle,
+				roam_req->sessionId) &&
+				roam_req->reason ==
+				REASON_ROAM_STOP_ALL) {
+				WMA_LOGD("Dont send RSO stop during roam sync");
+				break;
+		}
 		wma_handle->suitable_ap_hb_failure = false;
 		if (wma_handle->roam_offload_enabled) {
 			uint32_t mode;
@@ -2416,9 +2463,10 @@ cleanup_label:
 			wma->csr_roam_synch_cb((tpAniSirGlobal)wma->mac_context,
 				roam_synch_ind_ptr, NULL, SIR_ROAMING_ABORT);
 		roam_req = qdf_mem_malloc(sizeof(tSirRoamOffloadScanReq));
-		if (roam_req) {
+		if (roam_req && synch_event) {
 			roam_req->Command = ROAM_SCAN_OFFLOAD_STOP;
 			roam_req->reason = REASON_ROAM_SYNCH_FAILED;
+			roam_req->sessionId = synch_event->vdev_id;
 			wma_process_roaming_config(wma, roam_req);
 		}
 	}
@@ -2955,7 +3003,7 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		WMA_LOGE("policy_mgr_get_current_hw_mode failed");
 
-	if ((params->nss == 2) && !hw_mode.dbs_cap) {
+	if (params->nss == 2) {
 		req.preferred_rx_streams = 2;
 		req.preferred_tx_streams = 2;
 	} else {

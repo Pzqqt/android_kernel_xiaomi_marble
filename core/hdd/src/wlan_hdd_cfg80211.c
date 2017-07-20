@@ -112,6 +112,44 @@
 #include "wlan_utility.h"
 #include "wlan_reg_ucfg_api.h"
 
+/* define short names for get station info attributes */
+#ifndef LINK_INFO_STANDARD_NL80211_ATTR
+#define LINK_INFO_STANDARD_NL80211_ATTR \
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_LINK_STANDARD_NL80211_ATTR
+#endif
+#ifndef AP_INFO_STANDARD_NL80211_ATTR
+#define AP_INFO_STANDARD_NL80211_ATTR \
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_AP_STANDARD_NL80211_ATTR
+#endif
+#ifndef INFO_ROAM_COUNT
+#define INFO_ROAM_COUNT \
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_ROAM_COUNT
+#endif
+#ifndef INFO_AKM
+#define INFO_AKM \
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_AKM
+#endif
+#ifndef WLAN802_11_MODE
+#define WLAN802_11_MODE \
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_802_11_MODE
+#endif
+#ifndef AP_INFO_HS20_INDICATION
+#define AP_INFO_HS20_INDICATION \
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_AP_HS20_INDICATION
+#endif
+#ifndef HT_OPERATION
+#define HT_OPERATION \
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_HT_OPERATION
+#endif
+#ifndef VHT_OPERATION
+#define VHT_OPERATION \
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_VHT_OPERATION
+#endif
+#ifndef INFO_ASSOC_FAIL_REASON
+#define INFO_ASSOC_FAIL_REASON \
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_ASSOC_FAIL_REASON
+#endif
+
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
 #define GET_IE_LEN_IN_BSS_DESC(lenInBss) (lenInBss + sizeof(lenInBss) - \
@@ -130,7 +168,7 @@
 #define IBSS_CFG_PROTECTION_ENABLE_MASK 0x8282
 
 #define HDD2GHZCHAN(freq, chan, flag)   {     \
-		.band =  NL80211_BAND_2GHZ, \
+		.band = HDD_NL80211_BAND_2GHZ, \
 		.center_freq = (freq), \
 		.hw_value = (chan), \
 		.flags = (flag), \
@@ -139,7 +177,7 @@
 }
 
 #define HDD5GHZCHAN(freq, chan, flag)   {     \
-		.band =  NL80211_BAND_5GHZ, \
+		.band =  HDD_NL80211_BAND_5GHZ, \
 		.center_freq = (freq), \
 		.hw_value = (chan), \
 		.flags = (flag), \
@@ -277,7 +315,7 @@ static struct ieee80211_rate a_mode_rates[] = {
 static struct ieee80211_supported_band wlan_hdd_band_2_4_ghz = {
 	.channels = NULL,
 	.n_channels = ARRAY_SIZE(hdd_channels_2_4_ghz),
-	.band = NL80211_BAND_2GHZ,
+	.band = HDD_NL80211_BAND_2GHZ,
 	.bitrates = g_mode_rates,
 	.n_bitrates = g_mode_rates_size,
 	.ht_cap.ht_supported = 1,
@@ -296,7 +334,7 @@ static struct ieee80211_supported_band wlan_hdd_band_2_4_ghz = {
 static struct ieee80211_supported_band wlan_hdd_band_5_ghz = {
 	.channels = NULL,
 	.n_channels = ARRAY_SIZE(hdd_channels_5_ghz),
-	.band = NL80211_BAND_5GHZ,
+	.band = HDD_NL80211_BAND_5GHZ,
 	.bitrates = a_mode_rates,
 	.n_bitrates = a_mode_rates_size,
 	.ht_cap.ht_supported = 1,
@@ -6656,11 +6694,11 @@ static int __wlan_hdd_cfg80211_get_preferred_freq_list(struct wiphy *wiphy,
 		if (pcl[i] <= ARRAY_SIZE(hdd_channels_2_4_ghz))
 			freq_list[i] =
 				ieee80211_channel_to_frequency(pcl[i],
-							NL80211_BAND_2GHZ);
+							HDD_NL80211_BAND_2GHZ);
 		else
 			freq_list[i] =
 				ieee80211_channel_to_frequency(pcl[i],
-							NL80211_BAND_5GHZ);
+							HDD_NL80211_BAND_5GHZ);
 	}
 
 	/* send the freq_list back to supplicant */
@@ -9878,10 +9916,10 @@ static int wlan_hdd_cfg80211_sar_convert_band(u32 nl80211_value, u32 *wmi_value)
 	int ret = 0;
 
 	switch (nl80211_value) {
-	case NL80211_BAND_2GHZ:
+	case HDD_NL80211_BAND_2GHZ:
 		*wmi_value = WMI_SAR_2G_ID;
 		break;
-	case NL80211_BAND_5GHZ:
+	case HDD_NL80211_BAND_5GHZ:
 		*wmi_value = WMI_SAR_5G_ID;
 		break;
 	default:
@@ -11179,7 +11217,8 @@ int wlan_hdd_cfg80211_update_band(hdd_context_t *hdd_ctx, struct wiphy *wiphy,
 					hdd_ctx->hdd_pdev,
 					band->channels[j].hw_value);
 
-			if (NL80211_BAND_2GHZ == i && eCSR_BAND_5G == eBand) {
+			if (HDD_NL80211_BAND_2GHZ == i &&
+				eCSR_BAND_5G == eBand) {
 				/* 5G only */
 #ifdef WLAN_ENABLE_SOCIAL_CHANNELS_5G_ONLY
 				/* Enable Social channels for P2P */
@@ -11194,7 +11233,7 @@ int wlan_hdd_cfg80211_update_band(hdd_context_t *hdd_ctx, struct wiphy *wiphy,
 				band->channels[j].flags |=
 					IEEE80211_CHAN_DISABLED;
 				continue;
-			} else if (NL80211_BAND_5GHZ == i &&
+			} else if (HDD_NL80211_BAND_5GHZ == i &&
 					eCSR_BAND_24 == eBand) {
 				/* 2G only */
 				band->channels[j].flags |=
@@ -11337,14 +11376,14 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 	 * wiphy flags don't get reset because of static memory.
 	 * It's better not to store channel in static memory.
 	 */
-	wiphy->bands[NL80211_BAND_2GHZ] = &wlan_hdd_band_2_4_ghz;
-	wiphy->bands[NL80211_BAND_2GHZ]->channels =
+	wiphy->bands[HDD_NL80211_BAND_2GHZ] = &wlan_hdd_band_2_4_ghz;
+	wiphy->bands[HDD_NL80211_BAND_2GHZ]->channels =
 		qdf_mem_malloc(sizeof(hdd_channels_2_4_ghz));
-	if (wiphy->bands[NL80211_BAND_2GHZ]->channels == NULL) {
+	if (wiphy->bands[HDD_NL80211_BAND_2GHZ]->channels == NULL) {
 		hdd_err("Not enough memory to allocate channels");
 		return -ENOMEM;
 	}
-	qdf_mem_copy(wiphy->bands[NL80211_BAND_2GHZ]->channels,
+	qdf_mem_copy(wiphy->bands[HDD_NL80211_BAND_2GHZ]->channels,
 			&hdd_channels_2_4_ghz[0],
 			sizeof(hdd_channels_2_4_ghz));
 	if ((hdd_is_5g_supported(pHddCtx)) &&
@@ -11352,17 +11391,17 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 		 (eHDD_DOT11_MODE_11g != pCfg->dot11Mode) &&
 		 (eHDD_DOT11_MODE_11b_ONLY != pCfg->dot11Mode) &&
 		 (eHDD_DOT11_MODE_11g_ONLY != pCfg->dot11Mode))) {
-		wiphy->bands[NL80211_BAND_5GHZ] = &wlan_hdd_band_5_ghz;
-		wiphy->bands[NL80211_BAND_5GHZ]->channels =
+		wiphy->bands[HDD_NL80211_BAND_5GHZ] = &wlan_hdd_band_5_ghz;
+		wiphy->bands[HDD_NL80211_BAND_5GHZ]->channels =
 			qdf_mem_malloc(sizeof(hdd_channels_5_ghz));
-		if (wiphy->bands[NL80211_BAND_5GHZ]->channels == NULL) {
+		if (wiphy->bands[HDD_NL80211_BAND_5GHZ]->channels == NULL) {
 			hdd_err("Not enough memory to allocate channels");
 			qdf_mem_free(wiphy->
-				bands[NL80211_BAND_2GHZ]->channels);
-			wiphy->bands[NL80211_BAND_2GHZ]->channels = NULL;
+				bands[HDD_NL80211_BAND_2GHZ]->channels);
+			wiphy->bands[HDD_NL80211_BAND_2GHZ]->channels = NULL;
 			return -ENOMEM;
 		}
-		qdf_mem_copy(wiphy->bands[NL80211_BAND_5GHZ]->channels,
+		qdf_mem_copy(wiphy->bands[HDD_NL80211_BAND_5GHZ]->channels,
 			&hdd_channels_5_ghz[0],
 			sizeof(hdd_channels_5_ghz));
 	}
@@ -11375,7 +11414,7 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 		for (j = 0; j < wiphy->bands[i]->n_channels; j++) {
 			struct ieee80211_supported_band *band = wiphy->bands[i];
 
-			if (NL80211_BAND_2GHZ == i &&
+			if (HDD_NL80211_BAND_2GHZ == i &&
 				eCSR_BAND_5G == pCfg->nBandCapability) {
 				/* 5G only */
 #ifdef WLAN_ENABLE_SOCIAL_CHANNELS_5G_ONLY
@@ -11389,7 +11428,7 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 				band->channels[j].flags |=
 					IEEE80211_CHAN_DISABLED;
 				continue;
-			} else if (NL80211_BAND_5GHZ == i &&
+			} else if (HDD_NL80211_BAND_5GHZ == i &&
 					eCSR_BAND_24 == pCfg->nBandCapability) {
 				/* 2G only */
 				band->channels[j].flags |=
@@ -11490,21 +11529,21 @@ static void wlan_hdd_update_band_cap(hdd_context_t *hdd_ctx)
 	ht_cap_info = (tSirMacHTCapabilityInfo *)&val16;
 
 	if (ht_cap_info->txSTBC == true) {
-		if (NULL != hdd_ctx->wiphy->bands[NL80211_BAND_2GHZ])
-			hdd_ctx->wiphy->bands[NL80211_BAND_2GHZ]->ht_cap.cap |=
+		if (NULL != hdd_ctx->wiphy->bands[HDD_NL80211_BAND_2GHZ])
+			hdd_ctx->wiphy->bands[HDD_NL80211_BAND_2GHZ]->ht_cap.cap |=
 						IEEE80211_HT_CAP_TX_STBC;
-		if (NULL != hdd_ctx->wiphy->bands[NL80211_BAND_5GHZ])
-			hdd_ctx->wiphy->bands[NL80211_BAND_5GHZ]->ht_cap.cap |=
+		if (NULL != hdd_ctx->wiphy->bands[HDD_NL80211_BAND_5GHZ])
+			hdd_ctx->wiphy->bands[HDD_NL80211_BAND_5GHZ]->ht_cap.cap |=
 						IEEE80211_HT_CAP_TX_STBC;
 	}
 
 	if (!sme_is_feature_supported_by_fw(DOT11AC)) {
-		hdd_ctx->wiphy->bands[NL80211_BAND_2GHZ]->
+		hdd_ctx->wiphy->bands[HDD_NL80211_BAND_2GHZ]->
 						vht_cap.vht_supported = 0;
-		hdd_ctx->wiphy->bands[NL80211_BAND_2GHZ]->vht_cap.cap = 0;
-		hdd_ctx->wiphy->bands[NL80211_BAND_5GHZ]->
+		hdd_ctx->wiphy->bands[HDD_NL80211_BAND_2GHZ]->vht_cap.cap = 0;
+		hdd_ctx->wiphy->bands[HDD_NL80211_BAND_5GHZ]->
 						vht_cap.vht_supported = 0;
-		hdd_ctx->wiphy->bands[NL80211_BAND_5GHZ]->vht_cap.cap = 0;
+		hdd_ctx->wiphy->bands[HDD_NL80211_BAND_5GHZ]->vht_cap.cap = 0;
 	}
 }
 
@@ -13426,15 +13465,15 @@ struct cfg80211_bss *wlan_hdd_cfg80211_inform_bss_frame(hdd_adapter_t *pAdapter,
 	}
 
 	if (chan_no <= ARRAY_SIZE(hdd_channels_2_4_ghz) &&
-	    (wiphy->bands[NL80211_BAND_2GHZ] != NULL)) {
+	    (wiphy->bands[HDD_NL80211_BAND_2GHZ] != NULL)) {
 		freq =
 			ieee80211_channel_to_frequency(chan_no,
-						       NL80211_BAND_2GHZ);
+						       HDD_NL80211_BAND_2GHZ);
 	} else if ((chan_no > ARRAY_SIZE(hdd_channels_2_4_ghz))
-		   && (wiphy->bands[NL80211_BAND_5GHZ] != NULL)) {
+		   && (wiphy->bands[HDD_NL80211_BAND_5GHZ] != NULL)) {
 		freq =
 			ieee80211_channel_to_frequency(chan_no,
-						       NL80211_BAND_5GHZ);
+						       HDD_NL80211_BAND_5GHZ);
 	} else {
 		hdd_err("Invalid channel: %d", chan_no);
 		qdf_mem_free(mgmt);
@@ -15453,7 +15492,8 @@ static int wlan_hdd_disconnect(hdd_adapter_t *pAdapter, u16 reason)
 	wlan_hdd_netif_queue_control(pAdapter,
 		WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER, WLAN_CONTROL_PATH);
 	hdd_debug("Set HDD connState to eConnectionState_Disconnecting");
-	pHddStaCtx->conn_info.connState = eConnectionState_Disconnecting;
+	hdd_conn_set_connection_state(pAdapter, eConnectionState_Disconnecting);
+
 	INIT_COMPLETION(pAdapter->disconnect_comp_var);
 
 	/* issue disconnect */

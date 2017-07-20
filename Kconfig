@@ -105,7 +105,7 @@ config WLAN_TX_FLOW_CONTROL_V2
 config WLAN_LRO
 	bool "Enable Large Receive Offload"
 	depends on HELIUMPLUS
-	depends on CONFIG_INET_LRO
+	depends on INET_LRO
 	default n
 
 config WLAN_SYNC_TSF

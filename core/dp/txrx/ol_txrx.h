@@ -128,6 +128,7 @@ void *ol_txrx_find_peer_by_addr(struct cdp_pdev *pdev,
 				uint8_t *peer_id);
 
 void htt_pkt_log_init(struct cdp_pdev *pdev_handle, void *scn);
+void peer_unmap_timer_work_function(void *);
 void peer_unmap_timer_handler(void *data);
 
 #endif /* _OL_TXRX__H_ */

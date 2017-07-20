@@ -1061,7 +1061,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 	struct hdd_config *pconfig = hdd_ctx->config;
 	struct wiphy *wiphy = hdd_ctx->wiphy;
 	struct ieee80211_supported_band *band_5g =
-		wiphy->bands[NL80211_BAND_5GHZ];
+		wiphy->bands[HDD_NL80211_BAND_5GHZ];
 	uint32_t temp = 0;
 	uint32_t ch_width = eHT_CHANNEL_WIDTH_80MHZ;
 
@@ -3196,10 +3196,7 @@ QDF_STATUS hdd_init_station_mode(hdd_adapter_t *adapter)
 		hdd_err("failed to register wireless extensions: %d", status);
 		goto error_register_wext;
 	}
-
-	/* Set the Connection State to Not Connected */
-	hdd_debug("Set HDD connState to eConnectionState_NotConnected");
-	pHddStaCtx->conn_info.connState = eConnectionState_NotConnected;
+	hdd_conn_set_connection_state(adapter, eConnectionState_NotConnected);
 
 	qdf_mem_set(pHddStaCtx->conn_info.staId,
 		sizeof(pHddStaCtx->conn_info.staId), HDD_WLAN_INVALID_STA_ID);
@@ -4316,13 +4313,17 @@ QDF_STATUS hdd_reset_all_adapters(hdd_context_t *hdd_ctx)
 			clear_bit(WMM_INIT_DONE, &adapter->event_flags);
 		}
 
-		/*
-		 * If adapter is SAP, set session ID to invalid since SAP
-		 * session will be cleanup during SSR.
-		 */
-		if (adapter->device_mode == QDF_SAP_MODE)
+		if (adapter->device_mode == QDF_SAP_MODE) {
+			/*
+			 * If adapter is SAP, set session ID to invalid
+			 * since SAP session will be cleanup during SSR.
+			 */
 			wlansap_set_invalid_session(
 				WLAN_HDD_GET_SAP_CTX_PTR(adapter));
+
+			wlansap_cleanup_cac_timer(
+				WLAN_HDD_GET_SAP_CTX_PTR(adapter));
+		}
 
 		/* Delete peers if any for STA and P2P client modes */
 		if (adapter->device_mode == QDF_STA_MODE ||
@@ -4588,10 +4589,10 @@ void hdd_connect_result(struct net_device *dev, const u8 *bssid,
 
 		if (chan_no <= 14)
 			freq = ieee80211_channel_to_frequency(chan_no,
-			NL80211_BAND_2GHZ);
+				HDD_NL80211_BAND_2GHZ);
 		else
 			freq = ieee80211_channel_to_frequency(chan_no,
-			NL80211_BAND_5GHZ);
+				HDD_NL80211_BAND_5GHZ);
 
 		chan = ieee80211_get_channel(padapter->wdev.wiphy, freq);
 		bss = hdd_cfg80211_get_bss(padapter->wdev.wiphy, chan, bssid,

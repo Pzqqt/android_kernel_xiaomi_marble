@@ -624,6 +624,9 @@ typedef struct tagCsrConfig {
 	bool is_force_1x1;
 	uint16_t num_11b_tx_chains;
 	uint16_t num_11ag_tx_chains;
+	uint32_t disallow_duration;
+	uint32_t rssi_channel_penalization;
+	uint32_t num_disallowed_aps;
 } tCsrConfig;
 
 typedef struct tagCsrChannelPowerInfo {
