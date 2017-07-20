@@ -97,6 +97,13 @@ enum qca_napi_event {
 #define NAPI_PIPE2ID(p) ((p)+1)
 
 void *hif_napi_get_lro_info(struct hif_opaque_softc *hif_hdl, int napi_id);
+
+enum qca_blacklist_op {
+	BLACKLIST_QUERY,
+	BLACKLIST_OFF,
+	BLACKLIST_ON
+};
+
 #ifdef FEATURE_NAPI
 
 /**
@@ -146,12 +153,6 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx,
 #define HNC_ACT_COLLAPSE (1)
 #define HNC_ACT_DISPERSE (-1)
 
-enum qca_blacklist_op {
-	BLACKLIST_QUERY,
-	BLACKLIST_OFF,
-	BLACKLIST_ON
-};
-
 /**
  * Local interface to HIF implemented functions of NAPI CPU affinity management.
  * Note:
@@ -172,15 +173,6 @@ enum qca_blacklist_op {
  */
 
 #define NAPI_DEBUG(fmt, ...) /* NO-OP */
-
-static inline int hif_napi_cpu_init(struct hif_opaque_softc *hif)
-{
-	return 0;
-}
-static inline int hif_napi_cpu_deinit(struct hif_opaque_softc *hif)
-{
-	return 0;
-}
 
 static inline int hif_napi_create(struct hif_opaque_softc   *hif,
 				  uint8_t            pipe_id,

@@ -20,6 +20,8 @@
 #include <ce_main.h>
 #include <hif_irq_affinity.h>
 
+static struct hif_exec_context *hif_exec_tasklet_create(void);
+
 /**
  * hif_print_napi_stats() - print NAPI stats
  * @hif_ctx: hif context
