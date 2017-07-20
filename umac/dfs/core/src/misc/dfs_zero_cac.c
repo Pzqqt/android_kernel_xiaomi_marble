@@ -439,6 +439,7 @@ void dfs_zero_cac_attach(struct wlan_dfs *dfs)
 {
 	dfs->dfs_precac_timeout_override = -1;
 	dfs_zero_cac_timer_init(dfs);
+	PRECAC_LIST_LOCK_INIT(dfs);
 }
 
 /**

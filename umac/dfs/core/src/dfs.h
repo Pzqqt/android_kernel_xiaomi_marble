@@ -642,6 +642,7 @@ struct dfs_event_log {
 		&(_dfs)->dfs_precac_lock, (_dfs)->dfs_precac_lock_flags)
 #define PRECAC_LIST_UNLOCK(_dfs)  spin_unlock_irqrestore(  \
 		&(_dfs)->dfs_precac_lock, (_dfs)->dfs_precac_lock_flags)
+#define PRECAC_LIST_LOCK_INIT(_dfs)  spin_lock_init(&(_dfs)->dfs_precac_lock)
 
 /**
  * struct wlan_dfs -        The main dfs structure.
