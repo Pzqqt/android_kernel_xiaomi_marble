@@ -422,11 +422,21 @@ static void hdd_update_timestamp(hdd_adapter_t *adapter,
 	if (!adapter)
 		return;
 
+	/* host time is updated in IRQ context, it's always before target time,
+	 * and so no need to try update last_host_time at present;
+	 * since the interval of capturing TSF
+	 * (WLAN_HDD_CAPTURE_TSF_INTERVAL_SEC) is long enough, host and target
+	 * time are updated in pairs, and one by one, we can return here to
+	 * avoid requiring spin lock, and to speed up the IRQ processing.
+	 */
+	if (host_time > 0) {
+		adapter->cur_host_time = host_time;
+		return;
+	}
+
 	qdf_spin_lock_bh(&adapter->host_target_sync_lock);
 	if (target_time > 0)
 		adapter->cur_target_time = target_time;
-	if (host_time > 0)
-		adapter->cur_host_time = host_time;
 
 	sync_status = hdd_check_timestamp_status(adapter->last_target_time,
 						 adapter->last_host_time,
@@ -494,6 +504,34 @@ static inline int hdd_64bit_plus(uint64_t x, int64_t y, uint64_t *ret)
 	return 0;
 }
 
+static inline int hdd_uint64_plus(uint64_t x, uint64_t y, uint64_t *ret)
+{
+	if (!ret)
+		return -EINVAL;
+
+	if (x > (U64_MAX - y)) {
+		*ret = 0;
+		return -EINVAL;
+	}
+
+	*ret = x + y;
+	return 0;
+}
+
+static inline int hdd_uint64_minus(uint64_t x, uint64_t y, uint64_t *ret)
+{
+	if (!ret)
+		return -EINVAL;
+
+	if (x < y) {
+		*ret = 0;
+		return -EINVAL;
+	}
+
+	*ret = x - y;
+	return 0;
+}
+
 static inline int32_t hdd_get_hosttime_from_targettime(
 	hdd_adapter_t *adapter, uint64_t target_time,
 	uint64_t *host_time)
@@ -532,6 +570,37 @@ static inline int32_t hdd_get_hosttime_from_targettime(
 	return ret;
 }
 
+static inline int32_t hdd_get_targettime_from_hosttime(
+	hdd_adapter_t *adapter, uint64_t host_time,
+	uint64_t *target_time)
+{
+	int32_t ret = -EINVAL;
+	bool in_cap_state;
+
+	if (!adapter || host_time == 0)
+		return ret;
+
+	in_cap_state = hdd_tsf_is_in_cap(adapter);
+	if (in_cap_state)
+		qdf_spin_lock_bh(&adapter->host_target_sync_lock);
+
+	if (host_time < adapter->last_host_time)
+		ret = hdd_uint64_minus(adapter->last_target_time,
+				       (adapter->last_host_time - host_time) /
+					HOST_TO_TARGET_TIME_RATIO,
+				       target_time);
+	else
+		ret = hdd_uint64_plus(adapter->last_target_time,
+				      (host_time - adapter->last_host_time) /
+					HOST_TO_TARGET_TIME_RATIO,
+				      target_time);
+
+	if (in_cap_state)
+		qdf_spin_unlock_bh(&adapter->host_target_sync_lock);
+
+	return ret;
+}
+
 static inline uint64_t hdd_get_monotonic_host_time(void)
 {
 	struct timespec ts;
@@ -539,6 +608,53 @@ static inline uint64_t hdd_get_monotonic_host_time(void)
 	getrawmonotonic(&ts);
 	return timespec_to_ns(&ts);
 }
+
+static ssize_t __hdd_wlan_tsf_show(struct device *dev,
+				   struct device_attribute *attr, char *buf)
+{
+	hdd_station_ctx_t *hdd_sta_ctx;
+	hdd_adapter_t *adapter;
+	ssize_t size;
+	uint64_t host_time, target_time;
+
+	struct net_device *net_dev = container_of(dev, struct net_device, dev);
+
+	adapter = (hdd_adapter_t *)(netdev_priv(net_dev));
+	if (adapter->magic != WLAN_HDD_ADAPTER_MAGIC)
+		return scnprintf(buf, PAGE_SIZE, "Invalid device\n");
+
+	if (!hdd_get_th_sync_status(adapter))
+		return scnprintf(buf, PAGE_SIZE,
+				 "TSF sync is not initialized\n");
+
+	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	if (eConnectionState_Associated != hdd_sta_ctx->conn_info.connState)
+		return scnprintf(buf, PAGE_SIZE, "NOT connected\n");
+
+	host_time = hdd_get_monotonic_host_time();
+	if (hdd_get_targettime_from_hosttime(adapter, host_time,
+					     &target_time))
+		size = scnprintf(buf, PAGE_SIZE, "Invalid timestamp\n");
+	else
+		size = scnprintf(buf, PAGE_SIZE, "%s%llu %llu %pM\n",
+				 buf, target_time, host_time,
+				 hdd_sta_ctx->conn_info.bssId.bytes);
+	return size;
+}
+
+static ssize_t hdd_wlan_tsf_show(struct device *dev,
+				 struct device_attribute *attr, char *buf)
+{
+	ssize_t ret;
+
+	cds_ssr_protect(__func__);
+	ret = __hdd_wlan_tsf_show(dev, attr, buf);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
+}
+
+static DEVICE_ATTR(tsf, 0400, hdd_wlan_tsf_show, NULL);
 
 static void hdd_capture_tsf_timer_expired_handler(void *arg)
 {
@@ -589,6 +705,7 @@ static enum hdd_tsf_op_result hdd_tsf_sync_init(hdd_adapter_t *adapter)
 {
 	QDF_STATUS ret;
 	hdd_context_t *hddctx;
+	struct net_device *net_dev;
 
 	if (!adapter)
 		return HDD_TSF_OP_FAIL;
@@ -622,6 +739,9 @@ static enum hdd_tsf_op_result hdd_tsf_sync_init(hdd_adapter_t *adapter)
 		goto fail;
 	}
 
+	net_dev = adapter->dev;
+		if (net_dev)
+			device_create_file(&net_dev->dev, &dev_attr_tsf);
 	hdd_set_th_sync_status(adapter, true);
 
 	return HDD_TSF_OP_SUCC;
@@ -634,6 +754,7 @@ static enum hdd_tsf_op_result hdd_tsf_sync_deinit(hdd_adapter_t *adapter)
 {
 	QDF_STATUS ret;
 	hdd_context_t *hddctx;
+	struct net_device *net_dev;
 
 	if (!adapter)
 		return HDD_TSF_OP_FAIL;
@@ -644,6 +765,13 @@ static enum hdd_tsf_op_result hdd_tsf_sync_deinit(hdd_adapter_t *adapter)
 	}
 
 	hdd_set_th_sync_status(adapter, false);
+
+	net_dev = adapter->dev;
+	if (net_dev) {
+		struct device *dev = &net_dev->dev;
+
+		device_remove_file(dev, &dev_attr_tsf);
+	}
 
 	ret = qdf_mc_timer_destroy(&adapter->host_target_sync_timer);
 	if (ret != QDF_STATUS_SUCCESS)
