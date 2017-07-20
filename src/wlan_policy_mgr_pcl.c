@@ -353,6 +353,11 @@ static QDF_STATUS policy_mgr_mode_specific_modification_on_pcl(
 		status = policy_mgr_pcl_modification_for_p2p_go(
 			psoc, pcl_channels, pcl_weight, len);
 		break;
+	case PM_STA_MODE:
+	case PM_P2P_CLIENT_MODE:
+	case PM_IBSS_MODE:
+		status = QDF_STATUS_SUCCESS;
+		break;
 	default:
 		policy_mgr_err("unexpected mode %d", mode);
 		break;
@@ -467,11 +472,7 @@ QDF_STATUS policy_mgr_get_pcl(struct wlan_objmgr_psoc *psoc,
 	}
 
 	policy_mgr_mode_specific_modification_on_pcl(
-		psoc, pcl_channels, pcl_weight, len, PM_SAP_MODE);
-
-	policy_mgr_mode_specific_modification_on_pcl(
-		psoc, pcl_channels, pcl_weight, len, PM_P2P_GO_MODE);
-
+		psoc, pcl_channels, pcl_weight, len, mode);
 
 	status = policy_mgr_modify_pcl_based_on_dnbs(psoc, pcl_channels,
 						pcl_weight, len);
