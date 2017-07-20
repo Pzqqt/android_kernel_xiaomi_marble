@@ -3118,7 +3118,7 @@ lim_disable_11a_protection(tpAniSirGlobal mac_ctx,
 
 	/* for station role */
 	if (!LIM_IS_AP_ROLE(pe_session)) {
-		pe_warn("===> Protection from 11A Disabled");
+		pe_debug("===> Protection from 11A Disabled");
 		bcn_prms->llaCoexist = false;
 		pe_session->beaconParams.llaCoexist = false;
 		bcn_prms->paramChangeBitmap |= PARAM_llACOEXIST_CHANGED;
