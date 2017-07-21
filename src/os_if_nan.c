@@ -158,11 +158,9 @@ static int os_if_nan_process_ndi_delete(struct wlan_objmgr_psoc *psoc,
 	wlan_objmgr_vdev_release_ref(nan_vdev, WLAN_NAN_ID);
 
 	/* check if there are active peers on the adapter */
-	if (num_peers) {
-		cfg80211_err("NDP peers active: %d, cannot delete NDI",
+	if (num_peers)
+		cfg80211_err("NDP peers active: %d, active NDPs may not be terminated",
 			     num_peers);
-		return -EINVAL;
-	}
 
 	status = ucfg_nan_get_callbacks(psoc, &cb_obj);
 	if (QDF_IS_STATUS_ERROR(status)) {
