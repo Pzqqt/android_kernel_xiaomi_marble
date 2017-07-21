@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014, 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2014,2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -66,4 +66,28 @@ void ol_register_packetdump_callback(tp_ol_packetdump_cb ol_tx_packetdump_cb,
 			tp_ol_packetdump_cb ol_rx_packetdump_cb);
 void ol_deregister_packetdump_callback(void);
 
+#ifdef WLAN_FEATURE_TSF_PLUS
+typedef int (*tp_ol_timestamp_cb)(qdf_nbuf_t netbuf, uint64_t target_time);
+
+/**
+ * ol_register_timestamp_callback() - set callbacks for timestamp tx msdu.
+ * @ol_tx_timestamp_cb: callback function for time stamp tx msdu
+ *
+ * This function  register timestamp callback, the callback will
+ * be called when tx a msdu
+ *
+ * Return: nothing
+ */
+void ol_register_timestamp_callback(tp_ol_timestamp_cb ol_tx_timestamp_cb);
+
+/**
+ * ol_deregister_timestamp_callback() - reset callbacks for timestamp
+ * tx msdu to NULL.
+ *
+ * This function  reset the timestamp callbacks for tx
+ *
+ * Return: nothing
+ */
+void ol_deregister_timestamp_callback(void);
+#endif
 #endif /* _OL_TXRX_API__H_ */

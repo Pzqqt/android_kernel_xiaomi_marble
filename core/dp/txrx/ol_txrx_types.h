@@ -676,6 +676,10 @@ struct ol_txrx_pdev_t {
 	tp_ol_packetdump_cb ol_tx_packetdump_cb;
 	tp_ol_packetdump_cb ol_rx_packetdump_cb;
 
+#ifdef WLAN_FEATURE_TSF_PLUS
+	tp_ol_timestamp_cb ol_tx_timestamp_cb;
+#endif
+
 	struct {
 		uint16_t pool_size;
 		uint16_t num_free;

@@ -831,6 +831,8 @@ enum hdd_tsf_op_result wlan_hdd_tsf_plus_init(hdd_context_t *hdd_ctx)
 		hdd_err("Failed to register irq handler: %d", ret);
 		return HDD_TSF_OP_FAIL;
 	}
+
+	ol_register_timestamp_callback(hdd_tx_timestamp);
 	return HDD_TSF_OP_SUCC;
 }
 
@@ -839,6 +841,7 @@ enum hdd_tsf_op_result wlan_hdd_tsf_plus_deinit(hdd_context_t *hdd_ctx)
 {
 	int ret;
 
+	ol_deregister_timestamp_callback();
 	ret = cnss_common_unregister_tsf_captured_handler(
 				hdd_ctx->parent_dev,
 				(void *)hdd_ctx);

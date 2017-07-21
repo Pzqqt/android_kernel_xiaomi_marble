@@ -63,6 +63,7 @@
 #include <cdp_txrx_handle.h>
 #include "wlan_hdd_rx_monitor.h"
 #include "wlan_hdd_power.h"
+#include <wlan_hdd_tsf.h>
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 /*
@@ -1253,6 +1254,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 		 */
 		qdf_net_buf_debug_release_skb(skb);
 
+		hdd_rx_timestamp(skb, ktime_to_us(skb->tstamp));
 		if (HDD_LRO_NO_RX ==
 			 hdd_lro_rx(pHddCtx, pAdapter, skb)) {
 			if (hdd_napi_enabled(HDD_NAPI_ANY) &&
@@ -1267,7 +1269,6 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 			else
 				++pAdapter->hdd_stats.hddTxRxStats.
 					 rxRefused[cpu_index];
-
 		} else {
 			++pAdapter->hdd_stats.hddTxRxStats.
 				 rxDelivered[cpu_index];
