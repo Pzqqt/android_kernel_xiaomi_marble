@@ -1246,7 +1246,7 @@ static void os_if_ndp_iface_create_rsp_handler(struct wlan_objmgr_psoc *psoc,
 	bool create_fail = false;
 	struct nan_callbacks cb_obj;
 	struct sk_buff *vendor_event;
-	uint8_t create_transaction_id;
+	uint16_t create_transaction_id;
 	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
 	struct pdev_osif_priv *os_priv = wlan_pdev_get_ospriv(pdev);
 	uint32_t create_status = NAN_DATAPATH_RSP_STATUS_ERROR;
