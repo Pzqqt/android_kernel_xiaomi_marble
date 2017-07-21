@@ -1351,6 +1351,29 @@ struct suspend_resume_stats {
 	uint32_t suspend_fail[SUSPEND_FAIL_MAX_COUNT];
 };
 
+/**
+ * hdd_sta_smps_param  - SMPS parameters to configure from hdd
+ * HDD_STA_SMPS_PARAM_UPPER_RSSI_THRESH: RSSI threshold to enter Dynamic SMPS
+ * mode from inactive mode
+ * HDD_STA_SMPS_PARAM_STALL_RSSI_THRESH:  RSSI threshold to enter
+ * Stalled-D-SMPS mode from D-SMPS mode or to enter D-SMPS mode from
+ * Stalled-D-SMPS mode
+ * HDD_STA_SMPS_PARAM_LOWER_RSSI_THRESH:  RSSI threshold to disable SMPS modes
+ * HDD_STA_SMPS_PARAM_UPPER_BRSSI_THRESH: Upper threshold for beacon-RSSI.
+ * Used to reduce RX chainmask.
+ * HDD_STA_SMPS_PARAM_LOWER_BRSSI_THRESH:  Lower threshold for beacon-RSSI.
+ * Used to increase RX chainmask.
+ * HDD_STA_SMPS_PARAM_DTIM_1CHRX_ENABLE: Enable/Disable DTIM 1chRx feature
+ */
+enum hdd_sta_smps_param {
+	HDD_STA_SMPS_PARAM_UPPER_RSSI_THRESH = 0,
+	HDD_STA_SMPS_PARAM_STALL_RSSI_THRESH = 1,
+	HDD_STA_SMPS_PARAM_LOWER_RSSI_THRESH = 2,
+	HDD_STA_SMPS_PARAM_UPPER_BRSSI_THRESH = 3,
+	HDD_STA_SMPS_PARAM_LOWER_BRSSI_THRESH = 4,
+	HDD_STA_SMPS_PARAM_DTIM_1CHRX_ENABLE = 5
+};
+
 /** Adapter structure definition */
 struct hdd_context_s {
 	/** Global CDS context  */

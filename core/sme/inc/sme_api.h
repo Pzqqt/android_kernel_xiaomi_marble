@@ -1651,6 +1651,17 @@ QDF_STATUS sme_set_bt_activity_info_cb(tHalHandle hal,
 				void (*cb)(void *, uint32_t profile_info));
 
 /**
+ * sme_set_smps_cfg() - set SMPS config params
+ * @vdev_id: virtual device for the command
+ * @param_id: parameter id
+ * @param_val: parameter value
+ *
+ * Return: QDF_STATUS_SUCCESS or non-zero on failure
+ */
+
+QDF_STATUS sme_set_smps_cfg(uint32_t vdev_id, uint32_t param_id,
+				uint32_t param_val);
+/**
  * sme_get_peer_info() - sme api to get peer info
  * @hal: hal handle for getting global mac struct
  * @req: peer info request struct send to wma
