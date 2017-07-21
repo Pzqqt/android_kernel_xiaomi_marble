@@ -382,6 +382,20 @@ QDF_STATUS wlan_crypto_setkey(struct wlan_objmgr_vdev *vdev,
 			}
 			key = crypto_priv->key[req_key->keyix];
 		}
+		if (vdev_mode == QDF_STA_MODE) {
+			peer = wlan_vdev_get_bsspeer(vdev);
+			if (!peer) {
+				qdf_print("%s[%d] peer is null\n",
+							__func__, __LINE__);
+				return QDF_STATUS_E_INVAL;
+			}
+			wlan_objmgr_peer_try_get_ref(peer, WLAN_CRYPTO_ID);
+			wlan_peer_obj_lock(peer);
+			qdf_mem_copy(macaddr, wlan_peer_get_macaddr(peer),
+						WLAN_ALEN);
+			wlan_peer_obj_unlock(peer);
+			wlan_objmgr_peer_release_ref(peer, WLAN_CRYPTO_ID);
+		}
 	} else {
 		peer = wlan_objmgr_get_peer_by_mac_n_vdev(
 					psoc,
