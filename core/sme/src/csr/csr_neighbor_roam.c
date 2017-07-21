@@ -1264,6 +1264,9 @@ QDF_STATUS csr_neighbor_roam_init(tpAniSirGlobal pMac, uint8_t sessionId)
 	pNeighborRoamInfo->cfgParams.neighborScanPeriod =
 		pMac->roam.configParam.neighborRoamConfig.
 		nNeighborScanTimerPeriod;
+	pNeighborRoamInfo->cfgParams.neighbor_scan_min_period =
+		pMac->roam.configParam.neighborRoamConfig.
+		neighbor_scan_min_timer_period;
 	pNeighborRoamInfo->cfgParams.neighborResultsRefreshPeriod =
 		pMac->roam.configParam.neighborRoamConfig.
 		nNeighborResultsRefreshPeriod;

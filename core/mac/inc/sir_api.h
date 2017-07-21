@@ -3028,6 +3028,7 @@ typedef struct sSirRoamOffloadScanReq {
 	uint8_t Command;
 	uint8_t reason;
 	uint16_t NeighborScanTimerPeriod;
+	uint16_t neighbor_scan_min_timer_period;
 	uint16_t NeighborRoamScanRefreshPeriod;
 	uint16_t NeighborScanChannelMinTime;
 	uint16_t NeighborScanChannelMaxTime;

@@ -1428,6 +1428,8 @@ static void init_config_param(tpAniSirGlobal pMac)
 	pMac->roam.configParam.neighborRoamConfig.nNeighborScanMaxChanTime = 40;
 	pMac->roam.configParam.neighborRoamConfig.nNeighborScanTimerPeriod =
 		200;
+	pMac->roam.configParam.neighborRoamConfig.
+		neighbor_scan_min_timer_period = 200;
 	pMac->roam.configParam.neighborRoamConfig.neighborScanChanList.
 	numChannels = 3;
 	pMac->roam.configParam.neighborRoamConfig.neighborScanChanList.
@@ -2558,6 +2560,9 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		sme_debug("nNeighborScanTimerPerioid: %d",
 			pMac->roam.configParam.neighborRoamConfig.
 			nNeighborScanTimerPeriod);
+		sme_debug("neighbor_scan_min_timer_period: %d",
+			pMac->roam.configParam.neighborRoamConfig.
+			neighbor_scan_min_timer_period);
 		sme_debug("nNeighborLookupRssiThreshold: %d",
 			pMac->roam.configParam.neighborRoamConfig.
 			nNeighborLookupRssiThreshold);
@@ -17146,6 +17151,8 @@ csr_create_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
 	req_buf->reason = reason;
 	req_buf->NeighborScanTimerPeriod =
 		roam_info->cfgParams.neighborScanPeriod;
+	req_buf->neighbor_scan_min_timer_period =
+		roam_info->cfgParams.neighbor_scan_min_period;
 	req_buf->NeighborRoamScanRefreshPeriod =
 		roam_info->cfgParams.neighborResultsRefreshPeriod;
 	req_buf->NeighborScanChannelMinTime =

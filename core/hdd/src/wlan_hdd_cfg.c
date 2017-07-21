@@ -175,6 +175,25 @@ cb_notify_set_neighbor_scan_period(hdd_context_t *pHddCtx,
 				     pHddCtx->config->nNeighborScanPeriod);
 }
 
+/*
+ * cb_notify_set_neighbor_scan_min_period() - configure min rest
+ * time during roaming scan
+ *
+ * @hdd_ctx: HDD context data structure
+ * @notify_id: Identifies 1 of the 4 parameters to be modified
+ *
+ * Picks up the value from hdd configuration and passes it to SME.
+ * Return: void
+ */
+static void
+cb_notify_set_neighbor_scan_min_period(hdd_context_t *pHddCtx,
+				   unsigned long notifyId)
+{
+	sme_set_neighbor_scan_min_period(pHddCtx->hHal, 0,
+					 pHddCtx->config->
+					 neighbor_scan_min_period);
+}
+
 static void
 cb_notify_set_neighbor_results_refresh_period(hdd_context_t *pHddCtx,
 					      unsigned long notifyId)
@@ -1274,6 +1293,16 @@ struct reg_table_entry g_registry_table[] = {
 			     CFG_NEIGHBOR_SCAN_TIMER_PERIOD_MIN,
 			     CFG_NEIGHBOR_SCAN_TIMER_PERIOD_MAX,
 			     cb_notify_set_neighbor_scan_period, 0),
+
+	REG_DYNAMIC_VARIABLE(CFG_NEIGHBOR_SCAN_MIN_TIMER_PERIOD_NAME,
+			     WLAN_PARAM_Integer,
+			     struct hdd_config, neighbor_scan_min_period,
+			     VAR_FLAGS_OPTIONAL |
+			     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+			     CFG_NEIGHBOR_SCAN_MIN_TIMER_PERIOD_DEFAULT,
+			     CFG_NEIGHBOR_SCAN_MIN_TIMER_PERIOD_MIN,
+			     CFG_NEIGHBOR_SCAN_MIN_TIMER_PERIOD_MAX,
+			     cb_notify_set_neighbor_scan_min_period, 0),
 
 	REG_DYNAMIC_VARIABLE(CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_NAME,
 			     WLAN_PARAM_Integer,
@@ -5522,6 +5551,8 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 		  pHddCtx->config->nMaxNeighborReqTries);
 	hdd_info("Name = [nNeighborScanPeriod] Value = [%u] ",
 		  pHddCtx->config->nNeighborScanPeriod);
+	hdd_info("Name = [n_neighbor_scan_min_period] Value = [%u] ",
+		  pHddCtx->config->neighbor_scan_min_period);
 	hdd_info("Name = [nNeighborScanResultsRefreshPeriod] Value = [%u] ",
 		  pHddCtx->config->nNeighborResultsRefreshPeriod);
 	hdd_info("Name = [nEmptyScanRefreshPeriod] Value = [%u] ",
@@ -7484,6 +7515,9 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 		pConfig->nNeighborScanMinChanTime;
 	smeConfig->csrConfig.neighborRoamConfig.nNeighborScanTimerPeriod =
 		pConfig->nNeighborScanPeriod;
+	smeConfig->csrConfig.neighborRoamConfig.
+		neighbor_scan_min_timer_period =
+		pConfig->neighbor_scan_min_period;
 	smeConfig->csrConfig.neighborRoamConfig.nMaxNeighborRetries =
 		pConfig->nMaxNeighborReqTries;
 	smeConfig->csrConfig.neighborRoamConfig.nNeighborResultsRefreshPeriod =
