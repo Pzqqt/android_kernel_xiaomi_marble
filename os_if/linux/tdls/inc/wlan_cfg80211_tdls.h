@@ -44,11 +44,13 @@
  * @tdls_mgmt_comp: Completion to send tdls mgmt packets
  * @tdls_link_establish_req_comp: Completion to establish link, sync to
  * send establish params to firmware, not used today.
- * @tdls_teardown_comp: tdls teardown completion event
+ * @tdls_teardown_comp: Completion to teardown tdls peer
  * @tdls_user_cmd_comp: tdls user command completion event
+ * @tdls_antenna_switch_comp: Completion to switch antenna
  * @tdls_add_peer_status: Peer status after add peer
  * @mgmt_tx_completion_status: Tdls mgmt frames TX completion status code
  * @tdls_user_cmd_len: tdls user command written buffer length
+ * @tdls_antenna_switch_status: return status after antenna switch
  */
 struct osif_tdls_vdev {
 	struct completion tdls_add_peer_comp;
@@ -57,9 +59,11 @@ struct osif_tdls_vdev {
 	struct completion tdls_link_establish_req_comp;
 	struct completion tdls_teardown_comp;
 	struct completion tdls_user_cmd_comp;
+	struct completion tdls_antenna_switch_comp;
 	QDF_STATUS tdls_add_peer_status;
 	uint32_t mgmt_tx_completion_status;
 	uint32_t tdls_user_cmd_len;
+	int tdls_antenna_switch_status;
 };
 
 /**
@@ -182,6 +186,15 @@ int wlan_cfg80211_tdls_mgmt(struct wlan_objmgr_pdev *pdev,
 				uint8_t action_code, uint8_t dialog_token,
 				uint16_t status_code, uint32_t peer_capability,
 				const uint8_t *buf, size_t len);
+
+/**
+ * wlan_tdls_antenna_switch() - process tdls antenna switch
+ * @vdev: vdev object
+ * @mode: antenna mode
+ *
+ * Return: 0 on success; -EAGAIN to retry
+ */
+int wlan_tdls_antenna_switch(struct wlan_objmgr_vdev *vdev, uint32_t mode);
 
 /**
  * wlan_cfg80211_tdls_event_callback() - callback for tdls module

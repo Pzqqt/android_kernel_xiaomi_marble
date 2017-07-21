@@ -250,6 +250,26 @@ QDF_STATUS tdls_process_remove_force_peer(struct tdls_oper_request *req);
 QDF_STATUS tdls_process_update_peer(struct tdls_update_peer_request *req);
 
 /**
+ * tdls_process_antenna_switch() - handle TDLS antenna switch
+ * @req: TDLS antenna switch request
+ *
+ * Rely on callback to indicate the antenna switch state to caller.
+ *
+ * Return: QDF_STATUS_SUCCESS if success; other value if failed.
+ */
+QDF_STATUS tdls_process_antenna_switch(struct tdls_antenna_switch_request *req);
+
+/**
+ * tdls_antenna_switch_flush_callback() - flush TDLS antenna switch request
+ * @msg: scheduler message contains tdls antenna switch event
+ *
+ * This function call is invoked when scheduler thread is going down
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS tdls_antenna_switch_flush_callback(struct scheduler_msg *msg);
+
+/**
  * tdls_pe_del_peer() - send TDLS delete peer request to PE
  * @req: TDLS delete peer request
  *
