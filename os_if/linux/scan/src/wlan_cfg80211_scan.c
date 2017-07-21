@@ -234,37 +234,6 @@ static void wlan_cfg80211_pno_callback(struct wlan_objmgr_vdev *vdev,
 	cfg80211_sched_scan_results(pdev_ospriv->wiphy);
 }
 
-/**
- * wlan_cfg80211_is_pno_allowed() -  Check if PNO is allowed
- * @vdev: vdev ptr
- *
- * The PNO Start request is coming from upper layers.
- * It is to be allowed only for Infra STA device type
- * and the link should be in a disconnected state.
- *
- * Return: Success if PNO is allowed, Failure otherwise.
- */
-static QDF_STATUS wlan_cfg80211_is_pno_allowed(struct wlan_objmgr_vdev *vdev)
-{
-	enum wlan_vdev_state state;
-	enum tQDF_ADAPTER_MODE vdev_opmode;
-	uint8_t vdev_id;
-
-	vdev_opmode = wlan_vdev_mlme_get_opmode(vdev);
-	state = wlan_vdev_mlme_get_state(vdev);
-	vdev_id = wlan_vdev_get_id(vdev);
-
-	cfg80211_notice("dev_mode=%d, state=%d vdev id %d",
-		vdev_opmode, state, vdev_id);
-
-	if ((vdev_opmode == QDF_STA_MODE) &&
-	   ((state == WLAN_VDEV_S_INIT) ||
-	   (state == WLAN_VDEV_S_STOP)))
-		return QDF_STATUS_SUCCESS;
-	else
-		return QDF_STATUS_E_FAILURE;
-}
-
 #ifdef WLAN_POLICY_MGR_ENABLE
 static bool wlan_cfg80211_is_ap_go_present(struct wlan_objmgr_psoc *psoc)
 {
@@ -354,6 +323,36 @@ static void wlan_pno_scan_rand_attr(struct wlan_objmgr_vdev *vdev,
 }
 #endif
 
+/**
+ * wlan_hdd_sched_scan_update_relative_rssi() - update CPNO params
+ * @pno_request: pointer to PNO scan request
+ * @request: Pointer to cfg80211 scheduled scan start request
+ *
+ * This function is used to update Connected PNO params sent by kernel
+ *
+ * Return: None
+ */
+#if defined(CFG80211_REPORT_BETTER_BSS_IN_SCHED_SCAN)
+static inline void wlan_hdd_sched_scan_update_relative_rssi(
+			struct pno_scan_req_params *pno_request,
+			struct cfg80211_sched_scan_request *request)
+{
+	pno_request->relative_rssi_set = request->relative_rssi_set;
+	pno_request->relative_rssi = request->relative_rssi;
+	if (NL80211_BAND_2GHZ == request->rssi_adjust.band)
+		pno_request->band_rssi_pref.band = WLAN_BAND_2_4_GHZ;
+	else if (NL80211_BAND_5GHZ == request->rssi_adjust.band)
+		pno_request->band_rssi_pref.band = WLAN_BAND_5_GHZ;
+	pno_request->band_rssi_pref.rssi = request->rssi_adjust.delta;
+}
+#else
+static inline void wlan_hdd_sched_scan_update_relative_rssi(
+			struct pno_scan_req_params *pno_request,
+			struct cfg80211_sched_scan_request *request)
+{
+}
+#endif
+
 int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_pdev *pdev,
 	struct net_device *dev,
 	struct cfg80211_sched_scan_request *request,
@@ -372,13 +371,6 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_pdev *pdev,
 	if (!vdev) {
 		cfg80211_err("vdev object is NULL");
 		return -EIO;
-	}
-
-	status = wlan_cfg80211_is_pno_allowed(vdev);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		cfg80211_err("pno is not allowed");
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
-		return -ENOTSUPP;
 	}
 
 	if (ucfg_scan_get_pno_in_progress(vdev)) {
@@ -544,6 +536,7 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_pdev *pdev,
 	cfg80211_notice("Base scan interval: %d sec, scan cycles: %d, slow scan interval %d",
 		req->fast_scan_period, req->fast_scan_max_cycles,
 		req->slow_scan_period);
+	wlan_hdd_sched_scan_update_relative_rssi(req, request);
 
 	psoc = wlan_pdev_get_psoc(pdev);
 	ucfg_scan_register_pno_cb(psoc,

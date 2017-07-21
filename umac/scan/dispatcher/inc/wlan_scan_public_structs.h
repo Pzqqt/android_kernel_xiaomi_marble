@@ -917,6 +917,17 @@ struct pno_nw_type {
 };
 
 /**
+ * struct connected_pno_band_rssi_pref - BSS preference based on band
+ * and RSSI
+ * @band: band preference
+ * @rssi_pref: RSSI preference
+ */
+struct cpno_band_rssi_pref {
+	int8_t band;
+	int8_t rssi;
+};
+
+/**
  * struct pno_scan_req_params - PNO Scan request structure
  * @networks_cnt: Number of networks
  * @vdev_id: vdev id
@@ -937,6 +948,10 @@ struct pno_nw_type {
  * @networks_list: Preferred network list
  * @scan_random: scan randomization params
  * @ie_whitelist: probe req IE whitelist attrs
+ * @relative_rssi_set: Flag to check whether realtive_rssi is set or not
+ * @relative_rssi: Relative rssi threshold, used for connected pno
+ * @band_rssi_pref: Band and RSSI preference that can be given to one BSS
+ *     over the other BSS
  *
  * E.g.
  *	{ fast_scan_period=120, fast_scan_max_cycles=2,
@@ -961,6 +976,9 @@ struct pno_scan_req_params {
 	struct pno_nw_type networks_list[SCAN_PNO_MAX_SUPP_NETWORKS];
 	struct scan_random_attr scan_random;
 	struct probe_req_whitelist_attr ie_whitelist;
+	bool relative_rssi_set;
+	int8_t relative_rssi;
+	struct cpno_band_rssi_pref band_rssi_pref;
 };
 
 /**
