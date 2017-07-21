@@ -742,3 +742,43 @@ void ucfg_tdls_update_tx_pkt_cnt(struct wlan_objmgr_vdev *vdev,
 
 }
 
+QDF_STATUS ucfg_tdls_antenna_switch(struct wlan_objmgr_vdev *vdev,
+				    uint32_t mode)
+{
+	QDF_STATUS status;
+	struct tdls_antenna_switch_request *req;
+	struct scheduler_msg msg = {0, };
+
+	req = qdf_mem_malloc(sizeof(*req));
+	if (!req) {
+		tdls_err("mem allocate fail");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	status = wlan_objmgr_vdev_try_get_ref(vdev, WLAN_TDLS_NB_ID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		tdls_err("can't get vdev");
+		goto error;
+	}
+
+	req->vdev = vdev;
+	req->mode = mode;
+
+	msg.bodyptr = req;
+	msg.callback = tdls_process_cmd;
+	msg.flush_callback = tdls_antenna_switch_flush_callback;
+	msg.type = TDLS_CMD_ANTENNA_SWITCH;
+	status = scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		tdls_err("post antenna switch msg fail");
+		goto dec_ref;
+	}
+
+	return status;
+
+dec_ref:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
+error:
+	qdf_mem_free(req);
+	return status;
+}

@@ -68,6 +68,9 @@
 /** Maximum waittime for TDLS teardown links **/
 #define WAIT_TIME_FOR_TDLS_TEARDOWN_LINKS 10000
 
+/** Maximum waittime for TDLS antenna switch **/
+#define WAIT_TIME_FOR_TDLS_ANTENNA_SWITCH 1000
+
 #define TDLS_TEARDOWN_PEER_UNREACHABLE   25
 #define TDLS_TEARDOWN_PEER_UNSPEC_REASON 26
 
@@ -185,6 +188,7 @@ enum tdls_feature_mode {
  * @TDLS_CMD_TEARDOWN_LINKS: notify teardown
  * @TDLS_NOTIFY_RESET_ADAPTERS: notify adapater reset
  * @TDLS_CMD_GET_ALL_PEERS: get all the tdls peers from the list
+ * @TDLS_CMD_ANTENNA_SWITCH: dynamic tdls antenna switch
  */
 enum tdls_command_type {
 	TDLS_CMD_TX_ACTION = 1,
@@ -206,6 +210,7 @@ enum tdls_command_type {
 	TDLS_CMD_TEARDOWN_LINKS,
 	TDLS_NOTIFY_RESET_ADAPTERS,
 	TDLS_CMD_GET_ALL_PEERS,
+	TDLS_CMD_ANTENNA_SWITCH
 };
 
 /**
@@ -220,6 +225,7 @@ enum tdls_command_type {
  * @TDLS_EVENT_SETUP_REQ: setup request
  * @TDLS_EVENT_TEARDOWN_LINKS_DONE: teardown completion event
  * @TDLS_EVENT_USER_CMD: tdls user command
+ * @TDLS_EVENT_ANTENNA_SWITCH: antenna switch event
  */
 enum tdls_event_type {
 	TDLS_EVENT_VDEV_STATE_CHANGE = 0,
@@ -232,6 +238,7 @@ enum tdls_event_type {
 	TDLS_EVENT_SETUP_REQ,
 	TDLS_EVENT_TEARDOWN_LINKS_DONE,
 	TDLS_EVENT_USER_CMD,
+	TDLS_EVENT_ANTENNA_SWITCH,
 };
 
 /**
@@ -417,6 +424,8 @@ enum tdls_feature_bit {
  * @tdls_pre_off_chan_bw: tdls off channel bandwidth
  * @tdls_peer_kickout_threshold: sta kickout threshold for tdls peer
  * @delayed_trig_framint: delayed trigger frame interval
+ * @tdls_vdev_nss_2g: tdls NSS setting for 2G band
+ * @tdls_vdev_nss_5g: tdls NSS setting for 5G band
  */
 struct tdls_user_config {
 	uint32_t tdls_tx_states_period;
@@ -437,6 +446,8 @@ struct tdls_user_config {
 	uint32_t tdls_pre_off_chan_bw;
 	uint32_t tdls_peer_kickout_threshold;
 	uint32_t delayed_trig_framint;
+	uint8_t tdls_vdev_nss_2g;
+	uint8_t tdls_vdev_nss_5g;
 };
 
 /**
@@ -1066,4 +1077,13 @@ struct tdls_del_all_tdls_peers {
 	struct qdf_mac_addr bssid;
 };
 
+/**
+ * struct tdls_antenna_switch_request - TDLS antenna switch request
+ * @vdev: vdev object
+ * @mode: antenna mode, 1x1 or 2x2
+ */
+struct tdls_antenna_switch_request {
+	struct wlan_objmgr_vdev *vdev;
+	uint32_t mode;
+};
 #endif

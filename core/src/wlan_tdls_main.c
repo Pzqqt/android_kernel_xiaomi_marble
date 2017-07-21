@@ -292,6 +292,8 @@ QDF_STATUS tdls_process_cmd(struct scheduler_msg *msg)
 		break;
 	case TDLS_NOTIFY_RESET_ADAPTERS:
 		tdls_notify_reset_adapter(msg->bodyptr);
+	case TDLS_CMD_ANTENNA_SWITCH:
+		tdls_process_antenna_switch(msg->bodyptr);
 		break;
 	case TDLS_CMD_GET_ALL_PEERS:
 		tdls_get_all_peers_from_list(msg->bodyptr);
