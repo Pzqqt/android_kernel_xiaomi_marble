@@ -3633,6 +3633,14 @@ int hdd_set_fw_params(hdd_adapter_t *adapter)
 		return 0;
 	}
 
+	ret = sme_cli_set_command(adapter->sessionId,
+				WMI_PDEV_PARAM_DTIM_SYNTH,
+				hdd_ctx->config->enable_lprx, PDEV_CMD);
+	if (ret) {
+		hdd_err("Failed to set LPRx");
+		goto error;
+	}
+
 	if (hdd_ctx->config->enable2x2) {
 		hdd_debug("configuring 2x2 mode fw params");
 
