@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -35,18 +35,14 @@
 #include "sir_api.h"
 
 #define MAX_SME_SESSIONS 5
-/* Auto Ps Entry Timer Default value - 1000 ms */
-#define AUTO_PS_ENTRY_TIMER_DEFAULT_VALUE 1000
-
-/* Auto Deferred Ps Entry Timer value - 20000 ms */
-#define AUTO_DEFERRED_PS_ENTRY_TIMER_DEFAULT_VALUE 20000
 
 /*
  * Auto Ps Entry User default timeout value, used instead of negative timeouts
  * from user space - 5000ms
  */
 #define AUTO_PS_ENTRY_USER_TIMER_DEFAULT_VALUE 5000
-
+#define AUTO_PS_ENTRY_TIMER_DEFAULT_VALUE 1000
+#define AUTO_PS_DEFER_TIMEOUT_MS 1500
 
 /**
  * enum ps_state - State of the power save

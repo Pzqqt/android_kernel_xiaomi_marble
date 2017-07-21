@@ -2242,7 +2242,7 @@ static int hdd_change_sta_state_authenticated(hdd_adapter_t *adapter,
 		sme_ps_enable_auto_ps_timer(
 			WLAN_HDD_GET_HAL_CTX(adapter),
 			adapter->sessionId,
-			timeout, false);
+			timeout);
 	}
 
 	return qdf_status_to_os_return(status);
