@@ -25,16 +25,16 @@
 
 /**
  * 21 bits cookie
- * 3 bits ring id 0 ~ 7,      mask 0x1C0000, offset 18
- * 8 bits page id 0 ~ 255,    mask 0x03C800, offset 10
- * 10 bits offset id 0 ~ 1023 mask 0x0003FF, offset 0
+ * 3 bits ring id 0 ~ 7,
+ * 8 bits page id 0 ~ 512
+ * 5 bits offset id 0 ~ 31 (Desc size = 128, Num descs per page = 4096/128 = 32)
  */
 /* ???Ring ID needed??? */
-#define DP_TX_DESC_ID_POOL_MASK    0x1C0000
-#define DP_TX_DESC_ID_POOL_OS      18
-#define DP_TX_DESC_ID_PAGE_MASK    0x03FC00
-#define DP_TX_DESC_ID_PAGE_OS      10
-#define DP_TX_DESC_ID_OFFSET_MASK  0x0003FF
+#define DP_TX_DESC_ID_POOL_MASK    0x01C000
+#define DP_TX_DESC_ID_POOL_OS      14
+#define DP_TX_DESC_ID_PAGE_MASK    0x003FE0
+#define DP_TX_DESC_ID_PAGE_OS      5
+#define DP_TX_DESC_ID_OFFSET_MASK  0x00001F
 #define DP_TX_DESC_ID_OFFSET_OS    0
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
