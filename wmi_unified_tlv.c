@@ -7465,16 +7465,19 @@ static QDF_STATUS send_pno_start_cmd_tlv(wmi_unified_t wmi_handle,
 	uint8_t i;
 	int ret;
 	struct probe_req_whitelist_attr *ie_whitelist = &pno->ie_whitelist;
+	connected_nlo_rssi_params *nlo_relative_rssi;
+	connected_nlo_bss_band_rssi_pref *nlo_band_rssi;
 
 	/*
 	 * TLV place holder for array nlo_configured_parameters(nlo_list)
 	 * TLV place holder for array of uint32_t channel_list
 	 * TLV place holder for chnnl prediction cfg
 	 * TLV place holder for array of wmi_vendor_oui
+	 * TLV place holder for array of connected_nlo_bss_band_rssi_pref
 	 */
 	len = sizeof(*cmd) +
 		WMI_TLV_HDR_SIZE + WMI_TLV_HDR_SIZE + WMI_TLV_HDR_SIZE +
-		WMI_TLV_HDR_SIZE;
+		WMI_TLV_HDR_SIZE + WMI_TLV_HDR_SIZE;
 
 	len += sizeof(uint32_t) * QDF_MIN(pno->networks_list[0].channel_cnt,
 					  WMI_NLO_MAX_CHAN);
@@ -7483,6 +7486,8 @@ static QDF_STATUS send_pno_start_cmd_tlv(wmi_unified_t wmi_handle,
 	len += sizeof(nlo_channel_prediction_cfg);
 	len += sizeof(enlo_candidate_score_params);
 	len += sizeof(wmi_vendor_oui) * ie_whitelist->num_vendor_oui;
+	len += sizeof(connected_nlo_rssi_params);
+	len += sizeof(connected_nlo_bss_band_rssi_pref);
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
@@ -7620,6 +7625,48 @@ static QDF_STATUS send_pno_start_cmd_tlv(wmi_unified_t wmi_handle,
 				    ie_whitelist->voui);
 		buf_ptr += cmd->num_vendor_oui * sizeof(wmi_vendor_oui);
 	}
+
+	if (pno->relative_rssi_set)
+		cmd->flags |= WMI_NLO_CONFIG_ENABLE_CNLO_RSSI_CONFIG;
+
+	/*
+	 * Firmware calculation using connected PNO params:
+	 * New AP's RSSI >= (Connected AP's RSSI + relative_rssi +/- rssi_pref)
+	 * deduction of rssi_pref for chosen band_pref and
+	 * addition of rssi_pref for remaining bands (other than chosen band).
+	 */
+	nlo_relative_rssi = (connected_nlo_rssi_params *) buf_ptr;
+	WMITLV_SET_HDR(&nlo_relative_rssi->tlv_header,
+		WMITLV_TAG_STRUC_wmi_connected_nlo_rssi_params,
+		WMITLV_GET_STRUCT_TLVLEN(connected_nlo_rssi_params));
+	nlo_relative_rssi->relative_rssi = pno->relative_rssi;
+	WMI_LOGD("relative_rssi %d", nlo_relative_rssi->relative_rssi);
+	buf_ptr += sizeof(*nlo_relative_rssi);
+
+	/*
+	 * As of now Kernel and Host supports one band and rssi preference.
+	 * Firmware supports array of band and rssi preferences
+	 */
+	cmd->num_cnlo_band_pref = 1;
+	WMITLV_SET_HDR(buf_ptr,
+		WMITLV_TAG_ARRAY_STRUC,
+		cmd->num_cnlo_band_pref *
+		sizeof(connected_nlo_bss_band_rssi_pref));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	nlo_band_rssi = (connected_nlo_bss_band_rssi_pref *) buf_ptr;
+	for (i = 0; i < cmd->num_cnlo_band_pref; i++) {
+		WMITLV_SET_HDR(&nlo_band_rssi[i].tlv_header,
+			WMITLV_TAG_STRUC_wmi_connected_nlo_bss_band_rssi_pref,
+			WMITLV_GET_STRUCT_TLVLEN(
+				connected_nlo_bss_band_rssi_pref));
+		nlo_band_rssi[i].band = pno->band_rssi_pref.band;
+		nlo_band_rssi[i].rssi_pref = pno->band_rssi_pref.rssi;
+		WMI_LOGI("band_pref %d, rssi_pref %d",
+			nlo_band_rssi[i].band,
+			nlo_band_rssi[i].rssi_pref);
+	}
+	buf_ptr += cmd->num_cnlo_band_pref * sizeof(*nlo_band_rssi);
 
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_NETWORK_LIST_OFFLOAD_CONFIG_CMDID);
