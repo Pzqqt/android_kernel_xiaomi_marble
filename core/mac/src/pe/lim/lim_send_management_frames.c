@@ -1258,14 +1258,11 @@ lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 		    assoc_req->vendor_vht_ie.VHTCaps.present) {
 			pe_debug("Populate Vendor VHT IEs in Assoc Rsponse");
 			frm.vendor_vht_ie.present = 1;
-			frm.vendor_vht_ie.type =
-				pe_session->vendor_specific_vht_ie_type;
-			frm.vendor_vht_ie.sub_type =
-				pe_session->vendor_specific_vht_ie_sub_type;
-
 			frm.vendor_vht_ie.VHTCaps.present = 1;
 			populate_dot11f_vht_caps(mac_ctx, pe_session,
 				&frm.vendor_vht_ie.VHTCaps);
+			populate_dot11f_vht_operation(mac_ctx, pe_session,
+					&frm.vendor_vht_ie.VHTOperation);
 			is_vht = true;
 		}
 		populate_dot11f_ext_cap(mac_ctx, is_vht, &frm.ExtCap,
@@ -1868,11 +1865,6 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 			pe_session->is_vendor_specific_vhtcaps) {
 		pe_debug("Populate Vendor VHT IEs in Assoc Request");
 		frm->vendor_vht_ie.present = 1;
-		frm->vendor_vht_ie.type =
-			pe_session->vendor_specific_vht_ie_type;
-		frm->vendor_vht_ie.sub_type =
-			pe_session->vendor_specific_vht_ie_sub_type;
-
 		frm->vendor_vht_ie.VHTCaps.present = 1;
 		populate_dot11f_vht_caps(mac_ctx, pe_session,
 				&frm->vendor_vht_ie.VHTCaps);

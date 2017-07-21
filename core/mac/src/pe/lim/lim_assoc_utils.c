@@ -3242,10 +3242,6 @@ lim_check_and_announce_join_success(tpAniSirGlobal mac_ctx,
 	if ((IS_DOT11_MODE_VHT(session_entry->dot11mode)) &&
 		beacon_probe_rsp->vendor_vht_ie.VHTCaps.present) {
 		session_entry->is_vendor_specific_vhtcaps = true;
-		session_entry->vendor_specific_vht_ie_type =
-			beacon_probe_rsp->vendor_vht_ie.type;
-		session_entry->vendor_specific_vht_ie_sub_type =
-			beacon_probe_rsp->vendor_vht_ie.sub_type;
 		pe_debug("VHT caps are present in vendor specific IE");
 	}
 
