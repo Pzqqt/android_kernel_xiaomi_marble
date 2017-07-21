@@ -11364,7 +11364,7 @@ static QDF_STATUS send_vdev_spectral_configure_cmd_tlv(wmi_unified_t wmi_handle,
 	WMITLV_SET_HDR(&cmd->tlv_header,
 		WMITLV_TAG_STRUC_wmi_vdev_spectral_configure_cmd_fixed_param,
 		WMITLV_GET_STRUCT_TLVLEN(
-		WMITLV_TAG_STRUC_wmi_vdev_spectral_configure_cmd_fixed_param));
+		wmi_vdev_spectral_configure_cmd_fixed_param));
 
 	cmd->vdev_id = param->vdev_id;
 	cmd->spectral_scan_count = param->count;
@@ -11467,7 +11467,7 @@ static QDF_STATUS send_vdev_spectral_enable_cmd_tlv(wmi_unified_t wmi_handle,
 	WMITLV_SET_HDR(&cmd->tlv_header,
 		WMITLV_TAG_STRUC_wmi_vdev_spectral_enable_cmd_fixed_param,
 		WMITLV_GET_STRUCT_TLVLEN(
-		WMITLV_TAG_STRUC_wmi_vdev_spectral_enable_cmd_fixed_param));
+		wmi_vdev_spectral_enable_cmd_fixed_param));
 
 	cmd->vdev_id = param->vdev_id;
 
