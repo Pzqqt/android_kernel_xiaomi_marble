@@ -22,6 +22,8 @@
 
 #include "wlan_utility.h"
 #include <wlan_cmn.h>
+#include "wlan_osif_priv.h"
+#include <net/cfg80211.h>
 
 uint32_t wlan_chan_to_freq(uint8_t chan)
 {
@@ -126,3 +128,38 @@ uint32_t wlan_get_pdev_id_from_vdev_id(struct wlan_objmgr_psoc *psoc,
 	return pdev_id;
 }
 EXPORT_SYMBOL(wlan_get_pdev_id_from_vdev_id);
+
+static void wlan_util_get_vdev_by_ifname_cb(struct wlan_objmgr_psoc *psoc,
+					    void *obj, void *arg)
+{
+	struct wlan_objmgr_vdev *vdev = obj;
+	struct wlan_find_vdev_filter *filter = arg;
+
+	if (filter->found_vdev)
+		return;
+
+	wlan_vdev_obj_lock(vdev);
+	if (!qdf_str_cmp(vdev->vdev_nif.osdev->wdev->netdev->name,
+			 filter->ifname)) {
+		filter->found_vdev = vdev;
+	}
+	wlan_vdev_obj_unlock(vdev);
+}
+
+struct wlan_objmgr_vdev *wlan_util_get_vdev_by_ifname(
+				struct wlan_objmgr_psoc *psoc, char *ifname,
+				wlan_objmgr_ref_dbgid ref_id)
+{
+	struct wlan_find_vdev_filter filter = {0};
+
+	filter.ifname = ifname;
+	wlan_objmgr_iterate_obj_list(psoc, WLAN_VDEV_OP,
+				     wlan_util_get_vdev_by_ifname_cb,
+				     &filter, 0, ref_id);
+
+	if (filter.found_vdev)
+		wlan_objmgr_vdev_get_ref(filter.found_vdev, ref_id);
+
+	return filter.found_vdev;
+}
+EXPORT_SYMBOL(wlan_util_get_vdev_by_ifname);
