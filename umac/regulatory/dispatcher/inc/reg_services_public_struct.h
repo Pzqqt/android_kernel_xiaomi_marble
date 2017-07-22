@@ -604,4 +604,21 @@ struct cc_regdmn_s {
 	uint8_t flags;
 };
 
+/**
+ * struct cur_regdmn_info: Current regulatory info
+ * @regdmn_pair_id: Current regdomain pair ID
+ * @dmn_id_2g: 2GHz regdomain ID
+ * @dmn_id_5g: 5GHz regdomain ID
+ * @ctl_2g: 2GHz CTL value
+ * @ctl_5g: 5GHzCTL value
+ * @dfs_region: dfs region
+ */
+struct cur_regdmn_info {
+	uint16_t regdmn_pair_id;
+	uint16_t dmn_id_2g;
+	uint16_t dmn_id_5g;
+	uint8_t ctl_2g;
+	uint8_t ctl_5g;
+	uint8_t dfs_region;
+};
 #endif

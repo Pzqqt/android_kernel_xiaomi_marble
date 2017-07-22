@@ -416,4 +416,13 @@ QDF_STATUS wlan_reg_get_freq_range(struct wlan_objmgr_pdev *pdev,
 struct wlan_lmac_if_reg_tx_ops *
 wlan_reg_get_tx_ops(struct wlan_objmgr_psoc *psoc);
 
+/**
+ * wlan_reg_get_curr_regdomain() - Get current regdomain in use
+ * @pdev: pdev pointer
+ * @cur_regdmn: Current regdomain info
+ *
+ * Return: QDF status
+ */
+QDF_STATUS wlan_reg_get_curr_regdomain(struct wlan_objmgr_pdev *pdev,
+		struct cur_regdmn_info *cur_regdmn);
 #endif
