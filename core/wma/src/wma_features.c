@@ -3812,91 +3812,6 @@ QDF_STATUS wma_set_led_flashing(tp_wma_handle wma_handle,
 }
 #endif /* WLAN_FEATURE_GPIO_LED_FLASHING */
 
-#ifdef FEATURE_WLAN_CH_AVOID
-/**
- * wma_channel_avoid_evt_handler() -  process channel to avoid event from FW.
- * @handle: wma handle
- * @event: event buffer
- * @len: buffer length
- *
- * Return: 0 for success or error code
- */
-int wma_channel_avoid_evt_handler(void *handle, uint8_t *event,
-				  uint32_t len)
-{
-	wmi_avoid_freq_ranges_event_fixed_param *afr_fixed_param;
-	wmi_avoid_freq_range_desc *afr_desc;
-	uint32_t num_freq_ranges, freq_range_idx;
-	tSirChAvoidIndType *sca_indication;
-	QDF_STATUS qdf_status;
-	struct scheduler_msg sme_msg = { 0 };
-	WMI_WLAN_FREQ_AVOID_EVENTID_param_tlvs *param_buf =
-		(WMI_WLAN_FREQ_AVOID_EVENTID_param_tlvs *) event;
-
-	if (!param_buf) {
-		WMA_LOGE("Invalid channel avoid event buffer");
-		return -EINVAL;
-	}
-
-	afr_fixed_param = param_buf->fixed_param;
-	if (!afr_fixed_param) {
-		WMA_LOGE("Invalid channel avoid event fixed param buffer");
-		return -EINVAL;
-	}
-
-	num_freq_ranges =
-		(afr_fixed_param->num_freq_ranges >
-		 SIR_CH_AVOID_MAX_RANGE) ? SIR_CH_AVOID_MAX_RANGE :
-		afr_fixed_param->num_freq_ranges;
-
-	WMA_LOGD("Channel avoid event received with %d ranges",
-		 num_freq_ranges);
-	for (freq_range_idx = 0; freq_range_idx < num_freq_ranges;
-	     freq_range_idx++) {
-		afr_desc = (wmi_avoid_freq_range_desc *)
-				((void *)param_buf->avd_freq_range +
-					freq_range_idx *
-					sizeof(wmi_avoid_freq_range_desc));
-
-		WMA_LOGD("range %d tlv id = %u, start freq = %u, end freq = %u",
-			freq_range_idx, afr_desc->tlv_header,
-			afr_desc->start_freq, afr_desc->end_freq);
-	}
-
-	sca_indication = (tSirChAvoidIndType *)
-			 qdf_mem_malloc(sizeof(tSirChAvoidIndType));
-	if (!sca_indication) {
-		WMA_LOGE("Invalid channel avoid indication buffer");
-		return -EINVAL;
-	}
-
-	sca_indication->avoid_range_count = num_freq_ranges;
-	for (freq_range_idx = 0; freq_range_idx < num_freq_ranges;
-	     freq_range_idx++) {
-		afr_desc = (wmi_avoid_freq_range_desc *)
-				((void *)param_buf->avd_freq_range +
-					freq_range_idx *
-					 sizeof(wmi_avoid_freq_range_desc));
-		sca_indication->avoid_freq_range[freq_range_idx].start_freq =
-			afr_desc->start_freq;
-		sca_indication->avoid_freq_range[freq_range_idx].end_freq =
-			afr_desc->end_freq;
-	}
-
-	sme_msg.type = eWNI_SME_CH_AVOID_IND;
-	sme_msg.bodyptr = sca_indication;
-	sme_msg.bodyval = 0;
-
-	qdf_status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		WMA_LOGE("Fail to post eWNI_SME_CH_AVOID_IND msg to SME");
-		qdf_mem_free(sca_indication);
-		return -EINVAL;
-	}
-
-	return 0;
-}
-
 /**
  * wma_process_ch_avoid_update_req() - handles channel avoid update request
  * @wma_handle: wma handle
@@ -3930,7 +3845,7 @@ QDF_STATUS wma_process_ch_avoid_update_req(tp_wma_handle wma_handle,
 		 __func__);
 	return status;
 }
-#endif /* FEATURE_WLAN_CH_AVOID */
+
 /**
  * wma_send_regdomain_info_to_fw() - send regdomain info to fw
  * @reg_dmn: reg domain

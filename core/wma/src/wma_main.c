@@ -3256,19 +3256,6 @@ QDF_STATUS wma_start(void *cds_ctx)
 					WMA_RX_TASKLET_CTX);
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 
-#ifdef FEATURE_WLAN_CH_AVOID
-	WMA_LOGD("Registering channel to avoid handler");
-
-	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-						WMI_WLAN_FREQ_AVOID_EVENTID,
-						wma_channel_avoid_evt_handler,
-						WMA_RX_SERIALIZER_CTX);
-	if (status) {
-		WMA_LOGE("Failed to register channel to avoid event cb");
-		qdf_status = QDF_STATUS_E_FAILURE;
-		goto end;
-	}
-#endif /* FEATURE_WLAN_CH_AVOID */
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 	WMA_LOGD("Registering auto shutdown handler");
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,

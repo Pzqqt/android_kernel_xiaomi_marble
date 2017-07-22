@@ -173,9 +173,6 @@ enum eWniMsgTypes {
 	eWNI_SME_TSM_IE_IND,
 
 	eWNI_SME_READY_TO_SUSPEND_IND,
-#ifdef FEATURE_WLAN_CH_AVOID
-	eWNI_SME_CH_AVOID_IND,
-#endif /* FEATURE_WLAN_CH_AVOID */
 	/* DFS EVENTS */
 	eWNI_SME_DFS_RADAR_FOUND,       /* RADAR found indication from DFS */
 	eWNI_SME_CHANNEL_CHANGE_REQ,    /* Channel Change Request from SAP */

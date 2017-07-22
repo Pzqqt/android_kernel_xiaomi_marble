@@ -772,24 +772,7 @@ QDF_STATUS sme_update_fw_tdls_state(tHalHandle hHal, void *psmeTdlsParams,
 QDF_STATUS sme_update_tdls_peer_state(tHalHandle hHal,
 		tSmeTdlsPeerStateParams *pPeerStateParams);
 #endif /* FEATURE_WLAN_TDLS */
-#ifdef FEATURE_WLAN_CH_AVOID
-QDF_STATUS sme_add_ch_avoid_callback(tHalHandle hHal,
-	void (*pCallbackfn)(void *hdd_context, void *indi_param));
 QDF_STATUS sme_ch_avoid_update_req(tHalHandle hHal);
-#else
-static inline
-QDF_STATUS sme_add_ch_avoid_callback(tHalHandle hHal,
-	void (*pCallbackfn)(void *hdd_context, void *indi_param))
-{
-	return QDF_STATUS_E_NOSUPPORT;
-}
-
-static inline
-QDF_STATUS sme_ch_avoid_update_req(tHalHandle hHal)
-{
-	return QDF_STATUS_E_NOSUPPORT;
-}
-#endif /* FEATURE_WLAN_CH_AVOID */
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 QDF_STATUS sme_set_auto_shutdown_cb(tHalHandle hHal, void (*pCallbackfn)(void));
 QDF_STATUS sme_set_auto_shutdown_timer(tHalHandle hHal, uint32_t timer_value);

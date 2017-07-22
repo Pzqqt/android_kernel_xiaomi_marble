@@ -2358,20 +2358,6 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, struct scheduler_msg *pMsg)
 		}
 		break;
 #endif
-#ifdef FEATURE_WLAN_CH_AVOID
-	/* channel avoid message arrived, send IND to client */
-	case eWNI_SME_CH_AVOID_IND:
-		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_RX_WMA_MSG,
-				 NO_SESSION, pMsg->type));
-		if (pMac->sme.pChAvoidNotificationCb) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
-				  FL("CH avoid notification"));
-			pMac->sme.pChAvoidNotificationCb(pMac->hHdd,
-							 pMsg->bodyptr);
-		}
-		qdf_mem_free(pMsg->bodyptr);
-		break;
-#endif /* FEATURE_WLAN_CH_AVOID */
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 	case eWNI_SME_AUTO_SHUTDOWN_IND:
 		if (pMac->sme.pAutoShutdownNotificationCb) {
@@ -11500,36 +11486,6 @@ QDF_STATUS sme_set_auto_shutdown_timer(tHalHandle hHal, uint32_t timer_val)
 }
 #endif
 
-#ifdef FEATURE_WLAN_CH_AVOID
-/* ---------------------------------------------------------------------------
-    \fn sme_add_ch_avoid_callback
-    \brief  Used to plug in callback function
-	    Which notify channel may not be used with SAP or P2PGO mode.
-	    Notification come from FW.
-    \param  hHal
-    \param  pCallbackfn : callback function pointer should be plugged in
-   \- return QDF_STATUS
-    -------------------------------------------------------------------------*/
-QDF_STATUS sme_add_ch_avoid_callback
-	(tHalHandle hHal, void (*pCallbackfn)(void *pAdapter, void *indParam)
-	) {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-		  "%s: Plug in CH AVOID CB", __func__);
-
-	status = sme_acquire_global_lock(&pMac->sme);
-	if (QDF_STATUS_SUCCESS == status) {
-		if (NULL != pCallbackfn) {
-			pMac->sme.pChAvoidNotificationCb = pCallbackfn;
-		}
-		sme_release_global_lock(&pMac->sme);
-	}
-
-	return status;
-}
-
 /* ---------------------------------------------------------------------------
     \fn sme_ch_avoid_update_req
     \API to request channel avoidance update from FW.
@@ -11578,7 +11534,6 @@ QDF_STATUS sme_ch_avoid_update_req(tHalHandle hHal)
 
 	return status;
 }
-#endif /* FEATURE_WLAN_CH_AVOID */
 
 /**
  * sme_set_miracast() - Function to set miracast value to UMAC

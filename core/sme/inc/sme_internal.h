@@ -172,9 +172,6 @@ typedef struct tagSmeStruct {
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 	host_event_wlan_status_payload_type eventPayload;
 #endif
-#ifdef FEATURE_WLAN_CH_AVOID
-	void (*pChAvoidNotificationCb)(void *hdd_context, void *indi_param);
-#endif /* FEATURE_WLAN_CH_AVOID */
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
 	void (*pLinkLayerStatsIndCallback)(void *callbackContext,
 			int indType, void *pRsp);
