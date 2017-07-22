@@ -469,7 +469,7 @@ dp_rx_pdev_mon_status_attach(struct dp_pdev *pdev) {
 
 	status = dp_rx_desc_pool_alloc(soc, pdev_id, rxdma_entries+1,
 			rx_desc_pool);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			"%s: dp_rx_desc_pool_alloc() failed \n", __func__);
 		return status;
@@ -482,7 +482,7 @@ dp_rx_pdev_mon_status_attach(struct dp_pdev *pdev) {
 	status = dp_rx_mon_status_buffers_replenish(soc, pdev_id, rxdma_srng,
 			rx_desc_pool, rxdma_entries, &desc_list, &tail,
 			HAL_RX_BUF_RBM_SW3_BM);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			"%s: dp_rx_buffers_replenish() failed \n", __func__);
 		return status;
