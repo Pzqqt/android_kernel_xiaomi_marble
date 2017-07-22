@@ -437,7 +437,17 @@ ucfg_scan_start(struct scan_start_request *req)
 	scm_info("reqid: %d, scanid: %d, vdevid: %d",
 		req->scan_req.scan_req_id, req->scan_req.scan_id,
 		req->scan_req.vdev_id);
+	if (scan_obj->scan_def.usr_cfg_probe_rpt_time) {
+		req->scan_req.repeat_probe_time =
+			scan_obj->scan_def.usr_cfg_probe_rpt_time;
+		scm_debug("usr_cfg_probe_rpt_time %d",
+				req->scan_req.repeat_probe_time);
+	}
 
+	if (scan_obj->scan_def.usr_cfg_num_probes) {
+		req->scan_req.n_probes = scan_obj->scan_def.usr_cfg_num_probes;
+		scm_debug("usr_cfg_num_probes %d", req->scan_req.n_probes);
+	}
 	ucfg_scan_update_dbs_scan_ctrl_ext_flag(req);
 	if (req->scan_req.scan_f_passive)
 		req->scan_req.scan_ctrl_flags_ext |=
@@ -966,7 +976,6 @@ ucfg_scan_init_default_params(struct wlan_objmgr_vdev *vdev,
 		def->adaptive_dwell_time_mode;
 	req->scan_req.scan_flags = def->scan_flags;
 	req->scan_req.scan_events = def->scan_events;
-
 	ucfg_scan_req_update_params(vdev, req);
 
 	return QDF_STATUS_SUCCESS;
@@ -1216,6 +1225,8 @@ QDF_STATUS ucfg_scan_update_user_config(struct wlan_objmgr_psoc *psoc,
 	scan_def->adaptive_dwell_time_mode = scan_cfg->scan_dwell_time_mode;
 	scan_def->scan_f_chan_stat_evnt = scan_cfg->is_snr_monitoring_enabled;
 	scan_obj->ie_whitelist = scan_cfg->ie_whitelist;
+	scan_def->usr_cfg_probe_rpt_time = scan_cfg->usr_cfg_probe_rpt_time;
+	scan_def->usr_cfg_num_probes = scan_cfg->usr_cfg_num_probes;
 	scan_def->is_bssid_hint_priority = scan_cfg->is_bssid_hint_priority;
 
 	ucfg_scan_assign_rssi_category(scan_def,
