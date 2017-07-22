@@ -1438,6 +1438,9 @@ typedef enum {
     /* Thermal Throttling stats event id for every pdev and zones, etc */
     WMI_THERM_THROT_STATS_EVENTID,
 
+    /* WMI UNIT TEST event */
+    WMI_UNIT_TEST_EVENTID,
+
     /* GPIO Event */
     WMI_GPIO_INPUT_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_GPIO),
     /** upload H_CV info WMI event
@@ -1539,8 +1542,8 @@ typedef enum {
     WMI_NDP_END_RSP_EVENTID,
     WMI_NDP_INDICATION_EVENTID,
     WMI_NDP_CONFIRM_EVENTID,
-	WMI_NDP_END_INDICATION_EVENTID,
-	WMI_WLAN_COEX_BT_ACTIVITY_EVENTID,
+    WMI_NDP_END_INDICATION_EVENTID,
+    WMI_WLAN_COEX_BT_ACTIVITY_EVENTID,
 } WMI_EVT_ID;
 
 /* defines for OEM message sub-types */
@@ -6452,32 +6455,28 @@ typedef struct {
 #define WMI_HECAP_PHY_RXLDPC_SET(he_cap_phy, value) WMI_HECAP_PHY_LDPC_SET(he_cap_phy, value)
 
 /*
- * B0: Indicates support of reception of 1x LTF and 0.8us guard interval
- *     duration for HE SU PPDUs.
- * B1: Indicates support of reception of 1x LTF and 1.6us guard interval
+ * B0: Indicates support of reception of 1x LTF and 0.8us guard interval duration for HE SU PPDUs.
  */
-#define WMI_HECAP_PHY_LTFGIFORHE_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 14, 2)
-#define WMI_HECAP_PHY_LTFGIFORHE_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 14, 2, value)
-
-
-/* Below 2 macros are for maintaining backward compatability - Deprecated use WMI_HECAP_PHY_LTFGIFORHE_GET instead */
-#define WMI_HECAP_PHY_OLTF_GET(he_cap_phy) WMI_HECAP_PHY_LTFGIFORHE_GET(he_cap_phy)
-#define WMI_HECAP_PHY_OLTF_SET(he_cap_phy, value) WMI_HECAP_PHY_LTFGIFORHE_SET(he_cap_phy, value)
+#define WMI_HECAP_PHY_LTFGIFORHE_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 14, 1)
+#define WMI_HECAP_PHY_LTFGIFORHE_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 14, 1, value)
 
 /*
- * B0: For a transmitting STA acting as beamformer, it indicates support of
- *     NDP transmission using 4x LTFand 3.2 us guard interval duration
- * B1: For a transmitting STA acting as beamformee, it indicates support of
+ * bit 15: reserved
+ * bit 16: reserved
+ */
+
+/*
+ * B0: For a transmitting STA acting as beamformee, it indicates support of
  *     NDP reception using 4x LTF and 3.2 us guard interval duration
  */
-#define WMI_HECAP_PHY_LTFGIFORNDP_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 16, 2)
-#define WMI_HECAP_PHY_LTFGIFORNDP_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 16, 2, value)
+#define WMI_HECAP_PHY_LTFGIFORNDP_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 17, 1)
+#define WMI_HECAP_PHY_LTFGIFORNDP_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 17, 1, value)
 
-/* indicates support for the transmission of HE PPDUs using STBC with one spatial stream */
+/* indicates support for the transmission of HE PPDUs using STBC with one spatial stream for <= 80MHz Tx*/
 #define WMI_HECAP_PHY_TXSTBC_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 18, 1)
 #define WMI_HECAP_PHY_TXSTBC_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 18, 1, value)
 
-/* indicates support for the reception of HE PPDUs using STBC with one spatial stream */
+/* indicates support for the reception of HE PPDUs using STBC with one spatial stream for <= 80MHz Tx*/
 #define WMI_HECAP_PHY_RXSTBC_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 19, 1)
 #define WMI_HECAP_PHY_RXSTBC_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 19, 1, value)
 
@@ -6510,13 +6509,6 @@ typedef struct {
  */
 #define WMI_HECAP_PHY_ULMUMIMOOFDMA_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 23, 1)
 #define WMI_HECAP_PHY_ULMUMIMOOFDMA_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 23, 1, value)
-/* START TEMPORARY WORKAROUND -
- * Leave legacy names as aliases for new names, until all references to the
- * legacy names have been removed.
- */
-#define WMI_HECAP_PHY_ULOFDMA_GET WMI_HECAP_PHY_ULMUMIMOOFDMA_GET
-#define WMI_HECAP_PHY_ULOFDMA_SET WMI_HECAP_PHY_ULMUMIMOOFDMA_SET
-/* END TEMPORARY WORKAROUND */
 
 /* Tx DCM
  * B0:B1
@@ -6544,9 +6536,6 @@ typedef struct {
 #define WMI_HECAP_PHY_DCMRX_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 27, 3)
 #define WMI_HECAP_PHY_DCMRX_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 27, 3, value)
 
-/* DEPRECATED - use WMI_HECAP_PHY_DCMRX or WMI_HECAP_PHY_DCMTX */
-#define WMI_HECAP_PHY_DCM_GET(he_cap_phy) WMI_HECAP_PHY_DCMRX_GET(he_cap_phy)
-#define WMI_HECAP_PHY_DCM_SET(he_cap_phy, value) WMI_HECAP_PHY_DCMRX_SET(he_cap_phy, value)
 
 /*
  * Indicates that the STA supports the reception of an HE MU PPDU payload
@@ -6575,27 +6564,14 @@ typedef struct {
 #define WMI_HECAP_PHY_BFMESTSLT80MHZ_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 2, 3)
 #define WMI_HECAP_PHY_BFMESTSLT80MHZ_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 2, 3, value)
 
-/*
- * The maximum value for NSTS-1<=80MHz,(min val 3)total that can be sent
- * to the STA in a DL MU-MIMO transmission on full or partial bandwidth
- */
-#define WMI_HECAP_PHY_NSTSLT80MHZ_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 5, 3)
-#define WMI_HECAP_PHY_NSTSLT80MHZ_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 5, 3, value)
 
 /*
  * Num STS -1 for > 80MHz (min val 3)
  * The maximum number of space-time streams minus 1 that the STA can
  * receive in an HE NDP
  */
-#define WMI_HECAP_PHY_BFMESTSGT80MHZ_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 8, 3)
-#define WMI_HECAP_PHY_BFMESTSGT80MHZ_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 8, 3, value)
-
-/*
- * The maximum value for NSTS-1 > 80MHz (min val 3) total that can be sent
- * to the STA in a DL MU-MIMO transmission on full or partial bandwidth
- */
-#define WMI_HECAP_PHY_NSTSGT80MHZ_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 11, 3)
-#define WMI_HECAP_PHY_NSTSGT80MHZ_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 11, 3, value)
+#define WMI_HECAP_PHY_BFMESTSGT80MHZ_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 5, 3)
+#define WMI_HECAP_PHY_BFMESTSGT80MHZ_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 5, 3, value)
 
 /*
  * Number Of Sounding Dimensions For <= 80 MHz
@@ -6603,8 +6579,8 @@ typedef struct {
  * TXVECTOR parameter NUM_STS minus 1.
  * Otherwise, reserved.
  */
-#define WMI_HECAP_PHY_NUMSOUNDLT80MHZ_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 14, 3)
-#define WMI_HECAP_PHY_NUMSOUNDLT80MHZ_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 14, 3, value)
+#define WMI_HECAP_PHY_NUMSOUNDLT80MHZ_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 8, 3)
+#define WMI_HECAP_PHY_NUMSOUNDLT80MHZ_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 8, 3, value)
 
 /*
  * Number Of Sounding Dimensions For > 80 MHz
@@ -6612,77 +6588,107 @@ typedef struct {
  * TXVECTOR parameter NUM_STS minus 1.
  * Otherwise, reserved.
  */
-#define WMI_HECAP_PHY_NUMSOUNDGT80MHZ_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 17, 3)
-#define WMI_HECAP_PHY_NUMSOUNDGT80MHZ_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 17, 3, value)
+#define WMI_HECAP_PHY_NUMSOUNDGT80MHZ_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 11, 3)
+#define WMI_HECAP_PHY_NUMSOUNDGT80MHZ_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 11, 3, value)
 
 /*
  * Indicates if the HE beamformee is capable of feedback with tone
  * grouping of 16 in the HE Compressed Beamforming Report field for
  * a SU-type feedback.
  */
-#define WMI_HECAP_PHY_NG16SUFEEDBACKLT80_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 20, 1)
-#define WMI_HECAP_PHY_NG16SUFEEDBACKLT80_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 20, 1, value)
+#define WMI_HECAP_PHY_NG16SUFEEDBACKLT80_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 14, 1)
+#define WMI_HECAP_PHY_NG16SUFEEDBACKLT80_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 14, 1, value)
 
 /*
  * Indicates if the HE beamformee is capable of feedback with tone
  * grouping of 16 in the HE Compressed Beamforming Report field for
  * a MU-type feedback.
  */
-#define WMI_HECAP_PHY_NG16MUFEEDBACKGT80_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 21, 1)
-#define WMI_HECAP_PHY_NG16MUFEEDBACKGT80_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 21, 1, value)
+#define WMI_HECAP_PHY_NG16MUFEEDBACKGT80_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 15, 1)
+#define WMI_HECAP_PHY_NG16MUFEEDBACKGT80_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 15, 1, value)
 
 /*
  * Indicates if HE beamformee is capable of feedback with codebook
  * size {4, 2} in the HECompressed Beamforming Report field for
  * a SU-type feedback.
  */
-#define WMI_HECAP_PHY_CODBK42SU_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 22, 1)
-#define WMI_HECAP_PHY_CODBK42SU_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 22, 1, value)
+#define WMI_HECAP_PHY_CODBK42SU_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 16, 1)
+#define WMI_HECAP_PHY_CODBK42SU_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 16, 1, value)
 
 /*
  * Indicates if HE beamformee is capable of feedback with codebook
  * size {7, 5} in the HE Compressed Beamforming Report field for
  * a MU-type feedback.
  */
-#define WMI_HECAP_PHY_CODBK75MU_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 23, 1)
-#define WMI_HECAP_PHY_CODBK75MU_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 23, 1, value)
+#define WMI_HECAP_PHY_CODBK75MU_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 17, 1)
+#define WMI_HECAP_PHY_CODBK75MU_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 17, 1, value)
 
 /*
- * Beamforming Feedback With Trigger Frame*/
-/*If the transmitting STA is an AP STA:
-  B0: indicates support of reception of SU-Type partial(1) and full bandwidth feedback(0)
-  B1: indicates support of reception of MU-Type partial(1) bandwidth feedback
-  B2: indicates support of reception of CQI-Only partial and full bandwidth feedback
-  If the transmitting STA is a non-AP STA:
-  B0: indicates support of transmission of SU-Type partial(1) and full bandwidth(0) feedback
-  B1: indicates support of transmission of MU-Type partial(1) bandwidth feedback
-  B2: indicates support of transmission of CQI-Onlypartial (1)and full bandwidth feedback*/
-#define WMI_HECAP_PHY_BFFEEDBACKTRIG_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 24, 3)
-#define WMI_HECAP_PHY_BFFEEDBACKTRIG_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 24, 3, value)
+ * Beamforming Feedback With Trigger Frame
+ * If the transmitting STA is an AP STA:
+ * B0: indicates support of reception of SU-Type partial(1) and full bandwidth feedback(0)
+ * B1: indicates support of reception of MU-Type partial(1) bandwidth feedback
+ * B2: indicates support of reception of CQI-Only partial and full bandwidth feedback
+ * If the transmitting STA is a non-AP STA:
+ * B0: indicates support of transmission of SU-Type partial(1) and full bandwidth(0) feedback
+ * B1: indicates support of transmission of MU-Type partial(1) bandwidth feedback
+ * B2: indicates support of transmission of CQI-Onlypartial (1)and full bandwidth feedback
+ */
+#define WMI_HECAP_PHY_BFFEEDBACKTRIG_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 18, 3)
+#define WMI_HECAP_PHY_BFFEEDBACKTRIG_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 18, 3, value)
 
-/*Indicates the support of transmission and reception of an HE extended range SU PPDU payload transmitted over the right 106-tone RU */
-#define WMI_HECAP_PHY_HEERSU_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 27, 1)
-#define WMI_HECAP_PHY_HEERSU_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 27, 1, value)
+/* Indicates the support of transmission and reception of an HE extended range SU PPDU payload transmitted
+ * over the right 106-tone RU or partial BW ER
+ */
+#define WMI_HECAP_PHY_HEERSU_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 21, 1)
+#define WMI_HECAP_PHY_HEERSU_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 21, 1, value)
 
-/*Indicates that the non-AP STA supports reception of a DL MU-MIMO transmission on an RU in an HE MU PPDU where the RU does not span the entire PPDU bandwidth.*/
-#define WMI_HECAP_PHY_DLMUMIMOPARTIALBW_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 28, 1)
-#define WMI_HECAP_PHY_DLMUMIMOPARTIALBW_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 28, 1, value)
+/* Indicates that the non-AP STA supports reception of a DL MU-MIMO transmission on an RU in an HE MU PPDU
+ * where the RU does not span the entire PPDU bandwidth.
+ */
+#define WMI_HECAP_PHY_DLMUMIMOPARTIALBW_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 22, 1)
+#define WMI_HECAP_PHY_DLMUMIMOPARTIALBW_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 22, 1, value)
 
-/*Indicates whether or not the PPE Threshold field is present*/
-#define WMI_HECAP_PHY_PETHRESPRESENT_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 29, 1)
-#define WMI_HECAP_PHY_PETHRESPRESENT_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 29, 1, value)
+/* Indicates whether or not the PPE Threshold field is present */
+#define WMI_HECAP_PHY_PETHRESPRESENT_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 23, 1)
+#define WMI_HECAP_PHY_PETHRESPRESENT_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 23, 1, value)
 
-/*Indicates that the STA supports SRP-based SR operation*/
-#define WMI_HECAP_PHY_SRPSPRESENT_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 30, 1)
-#define WMI_HECAP_PHY_SRPPRESENT_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 30, 1, value)
+/* Indicates that the STA supports SRP-based SR operation */
+#define WMI_HECAP_PHY_SRPSPRESENT_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 24, 1)
+#define WMI_HECAP_PHY_SRPPRESENT_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 24, 1, value)
 
-/*Indicates that the STA supports a power boost factor ar for the r-th RU in the range [0.5, 2]*/
-#define WMI_HECAP_PHY_PWRBOOSTAR_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 31, 1)
-#define WMI_HECAP_PHY_PWRBOOSTAR_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 31, 1, value)
+/* Indicates that the STA supports a power boost factor ar for the r-th RU in the range [0.5, 2] */
+#define WMI_HECAP_PHY_PWRBOOSTAR_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 25, 1)
+#define WMI_HECAP_PHY_PWRBOOSTAR_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 25, 1, value)
 
-/*Indicates support for the reception of 4x LTF and 0.8us guard interval duration for HE SU PPDUs.*/
-#define WMI_HECAP_PHY_4XLTFAND800NSECSGI_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[2], 0, 1)
-#define WMI_HECAP_PHY_4XLTFAND800NSECSGI_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[2], 0, 1, value)
+/* Indicates support for the reception of 4x LTF and 0.8us guard interval duration for HE SU PPDUs. */
+#define WMI_HECAP_PHY_4XLTFAND800NSECSGI_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 26, 1)
+#define WMI_HECAP_PHY_4XLTFAND800NSECSGI_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 26, 1, value)
+
+/* For a transmitting STA acting as a beamformee, it indicates the maximum Nc for beamforming sounding
+ * feedback supported If SU beamformee capable, then set to the maximum Nc for beamforming sounding feedback
+ * minus 1. Otherwise, reserved.
+ */
+#define WMI_HECAP_PHY_MAXNC_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 27, 3)
+#define WMI_HECAP_PHY_MAXNC_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 27, 3, value)
+
+/* Indicates support for the transmission of an HE PPDU that has a bandwidth greater than 80 MHz and is using
+ * STBC with one spatial stream
+ */
+#define WMI_HECAP_PHY_STBCTXGT80_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 30, 1)
+#define WMI_HECAP_PHY_STBCTXGT80_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 30, 1, value)
+
+/* Indicates support for the reception of an HE PPDU that has a bandwidth greater than 80 MHz and is using
+ * STBC with one spatial stream
+ */
+#define WMI_HECAP_PHY_STBCRXGT80_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 31, 1)
+#define WMI_HECAP_PHY_STBCRXGT80_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 31, 1, value)
+
+/* Indicates support for the reception of an HE ER SU PPDU with 4x LTF and 0.8 us guard interval duration */
+#define WMI_HECAP_PHY_ERSU4X800NSECGI_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[2], 0, 1)
+#define WMI_HECAP_PHY_ERSU4X800NSECGI_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[2], 0, 1, value)
+
+
 
 /*HTC + HE Support  Set to 1 if STA supports reception of HE Variant HT control Field*/
 #define WMI_HECAP_MAC_HECTRL_GET(he_cap) WMI_GET_BITS(he_cap, 0, 1)
@@ -6789,26 +6795,48 @@ typedef struct {
 #define WMI_HECAP_MAC_MBSS_GET(he_cap) WMI_GET_BITS(he_cap, 31, 1)
 #define WMI_HECAP_MAC_MBSS_SET(he_cap, value) WMI_SET_BITS(he_cap, 31, 1, value)
 
-/*BSRP A-MPDU Aggregation
-  maintaining compatability since we dont support this now so not wasting memory*/
+/* BSRP A-MPDU Aggregation
+ * maintaining compatability since we dont support this now so not wasting memory
+ */
 #define WMI_HECAP_MAC_BSRPAMPDU_GET(he_cap) (0)
 #define WMI_HECAP_MAC_BSRPAMPDU_SET(he_cap, value) {;}
 
 /* Quiet Time Period (QTP) operation
-  maintaining compatability since we dont support this now so not wasting memory*/
+ * maintaining compatability since we dont support this now so not wasting memory
+ */
 #define WMI_HECAP_MAC_QTP_GET(he_cap) (0)
 #define WMI_HECAP_MAC_QTP_SET(he_cap, value) {;}
 
-/*support by an AP for receiving an (A-)MPDU that contains a BQR in the
-  A-Control subfield and support by a non-AP STA for generating an (A-)MPDU
-  that contains a BQR in the A-Control subfield
-  maintaining compatability since we dont support this now so not wasting memory*/
+/* support by an AP for receiving an (A-)MPDU that contains a BQR in the
+ * A-Control subfield and support by a non-AP STA for generating an (A-)MPDU
+ * that contains a BQR in the A-Control subfield
+ * maintaining compatability since we dont support this now so not wasting memory
+ */
 #define WMI_HECAP_MAC_ABQR_GET(he_cap) (0)
 #define WMI_HECAP_MAC_ABQR_SET(he_cap, value) {;}
 
-/*BELOW MACROS ARE DEPRECATED Also we are not defining bits for capabilities
-   beyond bit 31 we donot support as it adds additional dword to our struct which may be later
-   removed by standard*/
+/*Indicates support by the STA for the role of SR Responder.*/
+#define WMI_HECAP_MAC_SRRESP_GET(he_cap) (0)
+#define WMI_HECAP_MAC_SRRESP_SET(he_cap, value) {;}
+
+/* Indicates support for an AP to encode OPS information to TIM element of the FILS Discovery
+ * frames or TIM frames as described in AP operation for opportunistic power save.
+ * Indicates support for a non-AP STA to receive the opportunistic power save encoded TIM elements
+ */
+#define WMI_HECAP_MAC_OPS_GET(he_cap) (0)
+#define WMI_HECAP_MAC_OPS_SET(he_cap, value) {;}
+
+
+/* Indicates support for a non-AP STA to follow the NDP feedback report procedure and respond to
+ * the NDP Feedback Report Poll Trigger frame.
+ */
+#define WMI_HECAP_MAC_NDPFDBKRPT_GET(he_cap) (0)
+#define WMI_HECAP_MAC_NDPFDBKRPT_SET(he_cap, value) {;}
+
+/* BELOW MACROS ARE DEPRECATED Also we are not defining bits for capabilities
+ * beyond bit 31 we donot support as it adds additional dword to our struct which may be later
+ * removed by standard
+ */
 #define WMI_HECAP_MAC_MBAHECTRL_GET(he_cap) (0) /* DO NOT USE - DEPRECATED*/
 #define WMI_HECAP_MAC_MBAHECTRL_SET(he_cap, value) {;} /* DO NOT USE - DEPRECATED*/
 
@@ -6818,6 +6846,11 @@ typedef struct {
 /*Deprecate use  WMI_HECAP_PHY_PREAMBLEPUNCRX instead*/
 #define WMI_HECAP_PHY_CBMODE_GET(he_cap_phy) WMI_HECAP_PHY_CBMODE_GET(he_cap_phy)
 #define WMI_HECAP_PHY_CBMODE_SET(he_cap_phy, value) WMI_HECAP_PHY_CBMODE_SET(he_cap_phy, value)
+
+
+/* Below 2 macros are for maintaining backward compatability - Deprecated use WMI_HECAP_PHY_LTFGIFORHE_GET instead */
+#define WMI_HECAP_PHY_OLTF_GET(he_cap_phy) WMI_HECAP_PHY_LTFGIFORHE_GET(he_cap_phy)
+#define WMI_HECAP_PHY_OLTF_SET(he_cap_phy, value) WMI_HECAP_PHY_LTFGIFORHE_SET(he_cap_phy, value)
 
 
 /*DEPRECATED - USE WMI_HECAP_PHY_BFMENLTSGT80MHZ*/
@@ -6846,11 +6879,32 @@ typedef struct {
 #define WMI_HECAP_PHY_40MHZNSS_SET(he_cap_phy, value) {;}
 
 
+/* START TEMPORARY WORKAROUND -
+ * Leave legacy names as aliases for new names, until all references to the
+ * legacy names have been removed.
+ */
+#define WMI_HECAP_PHY_ULOFDMA_GET WMI_HECAP_PHY_ULMUMIMOOFDMA_GET
+#define WMI_HECAP_PHY_ULOFDMA_SET WMI_HECAP_PHY_ULMUMIMOOFDMA_SET
+/* END TEMPORARY WORKAROUND */
+
+/* DEPRECATED - use WMI_HECAP_PHY_DCMRX or WMI_HECAP_PHY_DCMTX */
+#define WMI_HECAP_PHY_DCM_GET(he_cap_phy) WMI_HECAP_PHY_DCMRX_GET(he_cap_phy)
+#define WMI_HECAP_PHY_DCM_SET(he_cap_phy, value) WMI_HECAP_PHY_DCMRX_SET(he_cap_phy, value)
+
+/*
+ * The maximum value for NSTS-1<=80MHz,(min val 3)total that can be sent
+ * to the STA in a DL MU-MIMO transmission on full or partial bandwidth
+ */
+#define WMI_HECAP_PHY_NSTSLT80MHZ_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 5, 3)
+#define WMI_HECAP_PHY_NSTSLT80MHZ_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 5, 3, value)
 
 
-
-
-
+/*
+ * The maximum value for NSTS-1 > 80MHz (min val 3) total that can be sent
+ * to the STA in a DL MU-MIMO transmission on full or partial bandwidth
+ */
+#define WMI_HECAP_PHY_NSTSGT80MHZ_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[1], 8, 3)
+#define WMI_HECAP_PHY_NSTSGT80MHZ_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[1], 8, 3, value)
 
 
 #define WMI_GET_HW_RATECODE_PREAM_V1(_rcode)     (((_rcode) >> 8) & 0x7)
@@ -11729,6 +11783,8 @@ typedef struct {
     A_UINT32 module_id;
     /* Num of test arguments passed */
     A_UINT32 num_args;
+    /* unique id identifying the unit test cmd, generated by the caller */
+    A_UINT32 diag_token;
 /**
  * TLV (tag length value) parameters follow the wmi_roam_chan_list
  * structure. The TLV's are:
@@ -19841,6 +19897,52 @@ typedef struct {
      */
 } wmi_pdev_set_diversity_gain_cmd_fixed_param;
 
+/* flags for unit_test_event  */
+#define WMI_UNIT_TEST_EVENT_FLAG_STATUS			0   /* 0 = success, 1 = fail */
+#define WMI_UNIT_TEST_EVENT_FLAG_DONE			1   /* 0 = not done, 1 = done  */
+
+/* from bit 2 to bit 31 are reserved */
+
+#define WMI_SET_UNIT_TEST_EVENT_FLAG_STATUS_SUCCESS(flag) do {	\
+        (flag) |= (1 << WMI_UNIT_TEST_EVENT_FLAG_STATUS);	\
+     } while (0)
+
+#define WMI_SET_UNIT_TEST_EVENT_FLAG_STATUS_FAIL(flag) do {	\
+        (flag) &= ~(1 << WMI_UNIT_TEST_EVENT_FLAG_STATUS);	\
+     } while (0)
+
+#define WMI_GET_UNIT_TEST_EVENT_FLAG_STSTUS(flag)		\
+        ((flag) & (1 << WMI_UNIT_TEST_EVENT_FLAG_STATUS))
+
+#define WMI_SET_UNIT_TEST_EVENT_FLAG_DONE(flag) do {		\
+        (flag) |= (1 << WMI_UNIT_TEST_EVENT_FLAG_DONE);		\
+     } while (0)
+
+#define WMI_CLR_UNIT_TEST_EVENT_FLAG_DONE(flag) do {		\
+        (flag) &= ~(1 << WMI_UNIT_TEST_EVENT_FLAG_DONE);	\
+     } while (0)
+
+#define WMI_GET_UNIT_TEST_EVENT_FLAG_DONE(flag)			\
+        ((flag) & (1 << WMI_UNIT_TEST_EVENT_FLAG_DONE))
+
+typedef struct {
+    /* TLV tag and len; tag equals WMI_UNIT_TEST_EVENTID */
+    A_UINT32 tlv_header;
+    /* unique id identifying the VDEV, generated by the caller */
+    A_UINT32 vdev_id;
+    /* Identify the wlan module */
+    A_UINT32 module_id;
+    /* unique id identifying the unit test cmd, generated by the caller */
+    A_UINT32 diag_token;
+    /* flag for the status of the unit_test_cmd */
+    A_UINT32 flag;
+    /* data length number of bytes for current dump */
+    A_UINT32 payload_len;
+    /* TLV/Payload after this structure is sent in little endian
+     * format for the length mentioned in this structure.
+     * A_UINT8 payload[1];
+     */
+} wmi_unit_test_event_fixed_param;
 
 /* ADD NEW DEFS HERE */
 
