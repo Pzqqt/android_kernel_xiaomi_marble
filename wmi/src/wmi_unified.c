@@ -2777,6 +2777,12 @@ void wmi_unified_detach(struct wmi_unified *wmi_handle)
 			}
 
 			wmi_log_buffer_free(soc->wmi_pdev[i]);
+
+			/* Free events logs list */
+			if (soc->wmi_pdev[i]->events_logs_list)
+				qdf_mem_free(
+					soc->wmi_pdev[i]->events_logs_list);
+
 			qdf_spinlock_destroy(&soc->wmi_pdev[i]->eventq_lock);
 			qdf_mem_free(soc->wmi_pdev[i]);
 		}

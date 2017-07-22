@@ -563,7 +563,7 @@ void dfs_radar_found_action(struct wlan_dfs *dfs)
 		dfs->wlan_dfstest = 1;
 		dfs->wlan_dfstest_ieeechan = dfs->dfs_curchan->dfs_ch_ieee;
 		dfs->wlan_dfstesttime = 1;   /* 1ms */
-		OS_SET_TIMER(&dfs->wlan_dfstesttimer,
+		qdf_timer_mod(&dfs->wlan_dfstesttimer,
 				dfs->wlan_dfstesttime);
 	}
 

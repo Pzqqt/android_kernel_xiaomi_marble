@@ -786,15 +786,11 @@ struct wlan_lmac_if_nan_rx_ops {
 /**
  * struct wlan_lmac_if_dfs_rx_ops - Function pointers to call dfs functions
  *                                  from lmac/offload.
- * @dfs_reset:                        Reset dfs.
  * @dfs_get_radars:                   Calls init radar table functions.
  * @dfs_process_phyerr:               Process phyerr.
  * @dfs_destroy_object:               Destroys the DFS object.
  * @dfs_radar_enable:                 Enables the radar.
- * @dfs_attach:                       Allocates memory for wlan_dfs members.
- * @dfs_sif_dfs_detach:               DFS detach.
  * @dfs_control:                      Used to process ioctls related to DFS.
- * @dfs_nif_dfs_reset:                DFS reset.
  * @dfs_is_precac_timer_running:      Check whether precac timer is running.
  * @dfs_find_vht80_chan_for_precac:   Find VHT80 channel for precac.
  * @dfs_cancel_precac_timer:          Cancel the precac timer.
@@ -805,9 +801,9 @@ struct wlan_lmac_if_nan_rx_ops {
  * @dfs_set_current_channel:          Set DFS current channel.
  * @dfs_process_radar_ind:            Process radar found indication.
  * @dfs_dfs_cac_complete_ind:         Process cac complete indication.
+ * @dfs_stop:                         Clear dfs timers.
  */
 struct wlan_lmac_if_dfs_rx_ops {
-	QDF_STATUS (*dfs_reset)(struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*dfs_get_radars)(struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*dfs_process_phyerr)(struct wlan_objmgr_pdev *pdev,
 			void *buf,
@@ -820,8 +816,6 @@ struct wlan_lmac_if_dfs_rx_ops {
 	QDF_STATUS (*dfs_radar_enable)(struct wlan_objmgr_pdev *pdev,
 			int no_cac,
 			uint32_t opmode);
-	QDF_STATUS (*dfs_attach)(struct wlan_objmgr_pdev *pdev);
-	QDF_STATUS (*dfs_sif_dfs_detach)(struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*dfs_control)(struct wlan_objmgr_pdev *pdev,
 			u_int id,
 			void *indata,
@@ -829,7 +823,6 @@ struct wlan_lmac_if_dfs_rx_ops {
 			void *outdata,
 			uint32_t *outsize,
 			int *error);
-	QDF_STATUS (*dfs_nif_dfs_reset)(struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*dfs_is_precac_timer_running)(struct wlan_objmgr_pdev *pdev,
 			bool *is_precac_timer_running);
 	QDF_STATUS (*dfs_find_vht80_chan_for_precac)(struct wlan_objmgr_pdev *pdev,
@@ -864,6 +857,7 @@ struct wlan_lmac_if_dfs_rx_ops {
 	QDF_STATUS (*dfs_dfs_cac_complete_ind)(struct wlan_objmgr_pdev *pdev,
 			uint32_t vdev_id);
 #endif
+	QDF_STATUS (*dfs_stop)(struct wlan_objmgr_pdev *pdev);
 };
 
 struct wlan_lmac_if_mlme_rx_ops {

@@ -94,22 +94,10 @@
 #include "wlan_dfs_mlme_api.h"
 #include "../dfs_internal.h"
 
-static os_timer_func(dfs_precac_timeout);
-
-void dfs_zero_cac_attach(struct wlan_dfs *dfs)
-{
-	dfs->dfs_precac_timeout_override = -1;
-	dfs_init_precac_list(dfs);
-	qdf_timer_init(NULL,
-			&(dfs->dfs_precac_timer),
-			dfs_precac_timeout,
-			(void *) dfs,
-			QDF_TIMER_TYPE_WAKE_APPS);
-}
-
 void dfs_zero_cac_reset(struct wlan_dfs *dfs)
 {
-	dfs->dfs_precac_timeout_override = -1;
+	dfs_get_override_precac_timeout(dfs,
+			&(dfs->dfs_precac_timeout_override));
 	qdf_timer_stop(&dfs->dfs_precac_timer);
 	dfs->dfs_precac_primary_freq = 0;
 	dfs->dfs_precac_secondary_freq = 0;
@@ -289,7 +277,7 @@ void dfs_mark_precac_dfs(struct wlan_dfs *dfs,
 					precac_entry->vht80_freq);
 				TAILQ_INSERT_TAIL(&dfs->dfs_precac_nol_list,
 						precac_entry, pe_list);
-				OS_SET_TIMER(&precac_entry->precac_nol_timer,
+				qdf_timer_mod(&precac_entry->precac_nol_timer,
 						dfs_get_nol_timeout(dfs)*1000);
 				found = 1;
 				break;
@@ -322,7 +310,7 @@ void dfs_mark_precac_dfs(struct wlan_dfs *dfs,
 					precac_entry->vht80_freq);
 				TAILQ_INSERT_TAIL(&dfs->dfs_precac_nol_list,
 						precac_entry, pe_list);
-				OS_SET_TIMER(&precac_entry->precac_nol_timer,
+				qdf_timer_mod(&precac_entry->precac_nol_timer,
 						dfs_get_nol_timeout(dfs)*1000);
 				break;
 			}
@@ -438,6 +426,21 @@ static os_timer_func(dfs_precac_timeout)
 	dfs_mlme_channel_change_by_precac(dfs->dfs_pdev_obj);
 }
 
+void dfs_zero_cac_timer_init(struct wlan_dfs *dfs)
+{
+	qdf_timer_init(NULL,
+			&(dfs->dfs_precac_timer),
+			dfs_precac_timeout,
+			(void *) dfs,
+			QDF_TIMER_TYPE_WAKE_APPS);
+}
+
+void dfs_zero_cac_attach(struct wlan_dfs *dfs)
+{
+	dfs->dfs_precac_timeout_override = -1;
+	dfs_zero_cac_timer_init(dfs);
+}
+
 /**
  * dfs_precac_nol_timeout() - NOL timeout for precac channel.
  *
@@ -481,7 +484,7 @@ void dfs_init_precac_list(struct wlan_dfs *dfs)
 	 * beginning we do not know how many uniq frequencies are present.
 	 * Therefore, we calculate the MAX size and allocate a temporary
 	 * list/array. However we fill the temporary array with uniq frequencies
-	 * and copy the uniq list of frequencies to* the final list with exact
+	 * and copy the uniq list of frequencies to the final list with exact
 	 * size.
 	 */
 	TAILQ_INIT(&dfs->dfs_precac_required_list);
@@ -598,6 +601,11 @@ void dfs_deinit_precac_list(struct wlan_dfs *dfs)
 
 }
 
+void dfs_zero_cac_detach(struct wlan_dfs *dfs)
+{
+	dfs_deinit_precac_list(dfs);
+}
+
 uint8_t dfs_get_freq_from_precac_required_list(struct wlan_dfs *dfs,
 		uint8_t exclude_ieee_freq)
 {
@@ -684,7 +692,7 @@ void dfs_start_precac_timer(struct wlan_dfs *dfs, uint8_t precac_chan)
 	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
 		"%s : precactimeout = %d\n",
 		__func__, (precac_timeout)*1000);
-	OS_SET_TIMER(&dfs->dfs_precac_timer, (precac_timeout) * 1000);
+	qdf_timer_mod(&dfs->dfs_precac_timer, (precac_timeout) * 1000);
 }
 
 void dfs_print_precaclists(struct wlan_dfs *dfs)

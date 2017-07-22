@@ -37,7 +37,7 @@ struct dfs_nol_info {
 	struct dfsreq_nolelem dfs_nol[DFS_MAX_NOL_CHANNEL];
 };
 
-QDF_STATUS utils_nif_dfs_attach(struct wlan_objmgr_pdev *pdev)
+QDF_STATUS utils_dfs_reset(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_dfs *dfs;
 
@@ -45,25 +45,10 @@ QDF_STATUS utils_nif_dfs_attach(struct wlan_objmgr_pdev *pdev)
 	if (dfs == NULL)
 		return  QDF_STATUS_E_FAILURE;
 
-	nif_dfs_attach(dfs);
+	dfs_reset(dfs);
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(utils_nif_dfs_attach);
-
-QDF_STATUS utils_nif_dfs_detach(struct wlan_objmgr_pdev *pdev)
-{
-	struct wlan_dfs *dfs;
-
-	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
-	if (dfs == NULL)
-		return  QDF_STATUS_E_FAILURE;
-
-	nif_dfs_detach(dfs);
-
-	return QDF_STATUS_SUCCESS;
-}
-EXPORT_SYMBOL(utils_nif_dfs_detach);
 
 QDF_STATUS utils_dfs_cac_valid_reset(struct wlan_objmgr_pdev *pdev,
 		uint8_t prevchan_ieee,

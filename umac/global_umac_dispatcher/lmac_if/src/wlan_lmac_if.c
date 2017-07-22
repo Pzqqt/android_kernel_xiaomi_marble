@@ -229,15 +229,11 @@ wlan_lmac_if_umac_dfs_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 
 	dfs_rx_ops = &rx_ops->dfs_rx_ops;
 
-	dfs_rx_ops->dfs_reset = tgt_dfs_reset;
 	dfs_rx_ops->dfs_get_radars = tgt_dfs_get_radars;
 	dfs_rx_ops->dfs_process_phyerr = tgt_dfs_process_phyerr;
 	dfs_rx_ops->dfs_destroy_object = tgt_dfs_destroy_object;
 	dfs_rx_ops->dfs_radar_enable = tgt_dfs_radar_enable;
-	dfs_rx_ops->dfs_attach = tgt_dfs_attach;
-	dfs_rx_ops->dfs_sif_dfs_detach = tgt_sif_dfs_detach;
 	dfs_rx_ops->dfs_control = tgt_dfs_control;
-	dfs_rx_ops->dfs_nif_dfs_reset = tgt_nif_dfs_reset;
 	dfs_rx_ops->dfs_is_precac_timer_running =
 		tgt_dfs_is_precac_timer_running;
 	dfs_rx_ops->dfs_find_vht80_chan_for_precac =
@@ -252,6 +248,7 @@ wlan_lmac_if_umac_dfs_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 	dfs_rx_ops->dfs_set_current_channel = tgt_dfs_set_current_channel;
 	dfs_rx_ops->dfs_process_radar_ind = tgt_dfs_process_radar_ind;
 	dfs_rx_ops->dfs_dfs_cac_complete_ind = tgt_dfs_cac_complete;
+	dfs_rx_ops->dfs_stop = tgt_dfs_stop;
 
 	return QDF_STATUS_SUCCESS;
 }

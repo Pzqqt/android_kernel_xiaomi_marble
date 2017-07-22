@@ -50,15 +50,6 @@ QDF_STATUS tgt_dfs_set_current_channel(struct wlan_objmgr_pdev *pdev,
 		uint8_t dfs_ch_vhtop_ch_freq_seg2);
 
 /**
- * tgt_dfs_reset() - DFS reset
- * @pdev: Pointer to DFS pdev object.
- *
- * Wrapper function for dfs_reset(). This function called from outside of DFS
- * component.
- */
-QDF_STATUS tgt_dfs_reset(struct wlan_objmgr_pdev *pdev);
-
-/**
  * tgt_dfs_get_radars() - Based on the chipset, calls init radar table functions
  * @pdev: Pointer to DFS pdev object.
  *
@@ -109,24 +100,6 @@ QDF_STATUS tgt_dfs_radar_enable(struct wlan_objmgr_pdev *pdev,
 	int no_cac, uint32_t opmode);
 
 /**
- * tgt_dfs_attach() - Allocates memory for wlan_dfs members.
- * @pdev: Pointer to DFS pdev object.
- *
- * Wrapper function for dfs_attach(). This function called from
- * outside of DFS component.
- */
-QDF_STATUS tgt_dfs_attach(struct wlan_objmgr_pdev *pdev);
-
-/**
- * tgt_sif_dfs_detach() - DFS detach.
- * @pdev: Pointer to DFS pdev object.
- *
- * Wrapper function for sif_dfs_attach(). This function called from
- * outside of DFS component.
- */
-QDF_STATUS tgt_sif_dfs_detach(struct wlan_objmgr_pdev *pdev);
-
-/**
  * tgt_dfs_control()- Used to process ioctls related to DFS.
  * @pdev: Pointer to DFS pdev object.
  * @id: Command type.
@@ -142,15 +115,6 @@ QDF_STATUS tgt_dfs_control(struct wlan_objmgr_pdev *pdev,
 	void *outdata,
 	uint32_t *outsize,
 	int *error);
-
-/**
- * tgt_nif_dfs_reset() - DFS reset.
- * @pdev: Pointer to DFS pdev object.
- *
- * Wrapper function for nif_dfs_reset(). This function called from
- * outside of DFS component.
- */
-QDF_STATUS tgt_nif_dfs_reset(struct wlan_objmgr_pdev *pdev);
 
 /**
  * tgt_dfs_is_precac_timer_running() - Check whether precac timer is running.
@@ -221,4 +185,10 @@ QDF_STATUS tgt_dfs_cac_complete(struct wlan_objmgr_pdev *pdev,
  */
 QDF_STATUS tgt_dfs_reg_ev_handler(struct wlan_objmgr_psoc *psoc,
 		bool dfs_offload);
+
+/**
+ * tgt_dfs_stop() - Clear dfs timers.
+ * @dfs: Pointer to wlan_dfs structure.
+ */
+QDF_STATUS tgt_dfs_stop(struct wlan_objmgr_pdev *pdev);
 #endif /* _WLAN_DFS_TGT_API_H_ */
