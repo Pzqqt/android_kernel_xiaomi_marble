@@ -37,7 +37,7 @@ wlan_psoc_get_dfs_txops(struct wlan_objmgr_psoc *psoc)
 
 QDF_STATUS tgt_dfs_set_current_channel(struct wlan_objmgr_pdev *pdev,
 		uint16_t dfs_ch_freq,
-		uint32_t dfs_ch_flags,
+		uint64_t dfs_ch_flags,
 		uint16_t dfs_ch_flagext,
 		uint8_t dfs_ch_ieee,
 		uint8_t dfs_ch_vhtop_ch_freq_seg1,

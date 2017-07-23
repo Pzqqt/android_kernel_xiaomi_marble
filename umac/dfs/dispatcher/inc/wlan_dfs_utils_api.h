@@ -427,4 +427,13 @@ uint8_t utils_dfs_freq_to_chan(uint32_t freq);
  */
 uint32_t utils_dfs_chan_to_freq(uint8_t chan);
 
+/**
+ * utils_dfs_update_cur_chan_flags() - Update DFS channel flag and flagext.
+ * @pdev: Pointer to DFS pdev object.
+ * @flags: New channel flags
+ * @flagext: New Extended flags
+ */
+QDF_STATUS utils_dfs_update_cur_chan_flags(struct wlan_objmgr_pdev *pdev,
+		uint64_t flags,
+		uint16_t flagext);
 #endif /* _WLAN_DFS_UTILS_API_H_ */

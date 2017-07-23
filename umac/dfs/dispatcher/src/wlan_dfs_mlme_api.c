@@ -33,7 +33,7 @@
 void dfs_mlme_channel_mark_radar(struct wlan_objmgr_pdev *pdev,
 		uint16_t freq,
 		uint8_t vhtop_ch_freq_seg2,
-		uint32_t flags)
+		uint64_t flags)
 {
 	if (global_dfs_to_mlme.dfs_channel_mark_radar != NULL)
 		global_dfs_to_mlme.dfs_channel_mark_radar(pdev,
@@ -53,7 +53,7 @@ void dfs_mlme_mark_dfs(struct wlan_objmgr_pdev *pdev,
 		uint8_t ieee,
 		uint16_t freq,
 		uint8_t vhtop_ch_freq_seg2,
-		uint32_t flags)
+		uint64_t flags)
 {
 	if (global_dfs_to_mlme.mlme_mark_dfs != NULL)
 		global_dfs_to_mlme.mlme_mark_dfs(pdev,
@@ -82,7 +82,7 @@ void dfs_mlme_mark_dfs(struct wlan_objmgr_pdev *pdev,
 		uint8_t ieee,
 		uint16_t freq,
 		uint8_t vhtop_ch_freq_seg2,
-		uint32_t flags)
+		uint64_t flags)
 {
 	if (!pdev) {
 		DFS_PRINTK("%s: null pdev\n", __func__);
@@ -174,7 +174,7 @@ void dfs_mlme_find_any_valid_channel(struct wlan_objmgr_pdev *pdev,
 
 QDF_STATUS dfs_mlme_get_extchan(struct wlan_objmgr_pdev *pdev,
 		uint16_t *dfs_ch_freq,
-		uint32_t *dfs_ch_flags,
+		uint64_t *dfs_ch_flags,
 		uint16_t *dfs_ch_flagext,
 		uint8_t *dfs_ch_ieee,
 		uint8_t *dfs_ch_vhtop_ch_freq_seg1,
@@ -201,7 +201,7 @@ void dfs_mlme_set_no_chans_available(struct wlan_objmgr_pdev *pdev,
 				val);
 }
 
-int dfs_mlme_ieee2mhz(struct wlan_objmgr_pdev *pdev, int ieee, int flag)
+int dfs_mlme_ieee2mhz(struct wlan_objmgr_pdev *pdev, int ieee, uint64_t flag)
 {
 	int freq = 0;
 
@@ -219,7 +219,7 @@ void dfs_mlme_find_dot11_channel(struct wlan_objmgr_pdev *pdev,
 		uint8_t des_cfreq2,
 		int mode,
 		uint16_t *dfs_ch_freq,
-		uint32_t *dfs_ch_flags,
+		uint64_t *dfs_ch_flags,
 		uint16_t *dfs_ch_flagext,
 		uint8_t *dfs_ch_ieee,
 		uint8_t *dfs_ch_vhtop_ch_freq_seg1,
@@ -240,7 +240,7 @@ void dfs_mlme_find_dot11_channel(struct wlan_objmgr_pdev *pdev,
 
 void dfs_mlme_get_dfs_ch_channels(struct wlan_objmgr_pdev *pdev,
 		uint16_t *dfs_ch_freq,
-		uint32_t *dfs_ch_flags,
+		uint64_t *dfs_ch_flags,
 		uint16_t *dfs_ch_flagext,
 		uint8_t *dfs_ch_ieee,
 		uint8_t *dfs_ch_vhtop_ch_freq_seg1,
@@ -260,7 +260,7 @@ void dfs_mlme_get_dfs_ch_channels(struct wlan_objmgr_pdev *pdev,
 
 uint32_t dfs_mlme_dfs_ch_flags_ext(struct wlan_objmgr_pdev *pdev)
 {
-	uint32_t flag_ext = 0;
+	uint16_t flag_ext = 0;
 
 	if (global_dfs_to_mlme.mlme_dfs_ch_flags_ext != NULL)
 		global_dfs_to_mlme.mlme_dfs_ch_flags_ext(pdev,
@@ -296,7 +296,7 @@ void dfs_mlme_clist_update(struct wlan_objmgr_pdev *pdev,
 int dfs_mlme_get_cac_timeout(struct wlan_objmgr_pdev *pdev,
 		uint16_t dfs_ch_freq,
 		uint8_t dfs_ch_vhtop_ch_freq_seg2,
-		uint32_t dfs_ch_flags)
+		uint64_t dfs_ch_flags)
 {
 	int cac_timeout = 0;
 

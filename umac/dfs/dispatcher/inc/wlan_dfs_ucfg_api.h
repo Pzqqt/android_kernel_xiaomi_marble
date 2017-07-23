@@ -70,13 +70,13 @@ struct dfs_to_mlme {
 	QDF_STATUS (*dfs_channel_mark_radar)(struct wlan_objmgr_pdev *pdev,
 			uint16_t freq,
 			uint8_t vhtop_ch_freq_seg2,
-			uint32_t flags);
+			uint64_t flags);
 	QDF_STATUS (*dfs_start_rcsa)(struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*mlme_mark_dfs)(struct wlan_objmgr_pdev *pdev,
 			uint8_t ieee,
 			uint16_t freq,
 			uint8_t vhtop_ch_freq_seg2,
-			uint32_t flags);
+			uint64_t flags);
 	QDF_STATUS (*mlme_start_csa)(struct wlan_objmgr_pdev *pdev,
 			uint8_t ieeeChan);
 	QDF_STATUS (*mlme_proc_cac)(struct wlan_objmgr_pdev *pdev);
@@ -98,7 +98,7 @@ struct dfs_to_mlme {
 			int *ret_val);
 	QDF_STATUS (*mlme_get_extchan)(struct wlan_objmgr_pdev *pdev,
 			uint16_t *dfs_ch_freq,
-			uint32_t *dfs_ch_flags,
+			uint64_t *dfs_ch_flags,
 			uint16_t *dfs_ch_flagext,
 			uint8_t *dfs_ch_ieee,
 			uint8_t *dfs_ch_vhtop_ch_freq_seg1,
@@ -107,14 +107,14 @@ struct dfs_to_mlme {
 			int val);
 	QDF_STATUS (*mlme_ieee2mhz)(struct wlan_objmgr_pdev *pdev,
 			int ieee,
-			int flag,
+			uint64_t flag,
 			int *freq);
 	QDF_STATUS (*mlme_find_dot11_channel)(struct wlan_objmgr_pdev *pdev,
 			uint8_t ieee,
 			uint8_t des_cfreq2,
 			int mode,
 			uint16_t *dfs_ch_freq,
-			uint32_t *dfs_ch_flags,
+			uint64_t *dfs_ch_flags,
 			uint16_t *dfs_ch_flagext,
 			uint8_t *dfs_ch_ieee,
 			uint8_t *dfs_ch_vhtop_ch_freq_seg1,
@@ -122,14 +122,14 @@ struct dfs_to_mlme {
 
 	QDF_STATUS (*mlme_get_dfs_ch_channels)(struct wlan_objmgr_pdev *pdev,
 			uint16_t *dfs_ch_freq,
-			uint32_t *dfs_ch_flags,
+			uint64_t *dfs_ch_flags,
 			uint16_t *dfs_ch_flagext,
 			uint8_t *dfs_ch_ieee,
 			uint8_t *dfs_ch_vhtop_ch_freq_seg1,
 			uint8_t *dfs_ch_vhtop_ch_freq_seg2,
 			int index);
 	QDF_STATUS (*mlme_dfs_ch_flags_ext)(struct wlan_objmgr_pdev *pdev,
-			uint32_t *flag_ext);
+			uint16_t *flag_ext);
 	QDF_STATUS (*mlme_channel_change_by_precac)(
 			struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*mlme_nol_timeout_notification)(
@@ -140,7 +140,7 @@ struct dfs_to_mlme {
 	QDF_STATUS (*mlme_get_cac_timeout)(struct wlan_objmgr_pdev *pdev,
 			uint16_t dfs_ch_freq,
 			uint8_t c_vhtop_ch_freq_seg2,
-			uint32_t dfs_ch_flags,
+			uint64_t dfs_ch_flags,
 			int *cac_timeout);
 };
 

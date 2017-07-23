@@ -448,7 +448,7 @@ struct dfs_filtertype {
  */
 struct dfs_ieee80211_channel {
 	uint16_t       dfs_ch_freq;
-	uint32_t       dfs_ch_flags;
+	uint64_t       dfs_ch_flags;
 	uint16_t       dfs_ch_flagext;
 	uint8_t        dfs_ch_ieee;
 	uint8_t        dfs_ch_vhtop_ch_freq_seg1;
@@ -1743,7 +1743,7 @@ void ol_if_dfs_clist_update(struct wlan_dfs *dfs,
  */
 void dfs_set_current_channel(struct wlan_dfs *dfs,
 		uint16_t dfs_ch_freq,
-		uint32_t dfs_ch_flags,
+		uint64_t dfs_ch_flags,
 		uint16_t dfs_ch_flagext,
 		uint8_t dfs_ch_ieee,
 		uint8_t dfs_ch_vhtop_ch_freq_seg1,
@@ -1922,4 +1922,14 @@ void dfs_main_timer_reset(struct wlan_dfs *dfs);
  * @dfs: Pointer to wlan_dfs structure.
  */
 void dfs_stop(struct wlan_dfs *dfs);
+
+/**
+ * dfs_update_cur_chan_flags() - Update DFS channel flag and flagext.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @flags: New channel flags
+ * @flagext: New Extended flags
+ */
+void dfs_update_cur_chan_flags(struct wlan_dfs *dfs,
+		uint64_t flags,
+		uint16_t flagext);
 #endif  /* _DFS_H_ */
