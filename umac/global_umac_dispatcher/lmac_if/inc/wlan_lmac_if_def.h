@@ -595,6 +595,8 @@ struct wlan_lmac_if_reg_rx_ops {
 			bool val);
 	QDF_STATUS (*reg_set_11d_offloaded)(struct wlan_objmgr_psoc *psoc,
 			bool val);
+	QDF_STATUS (*get_dfs_region)(struct wlan_objmgr_pdev *pdev,
+			enum dfs_reg *dfs_reg);
 };
 
 #ifdef CONVERGED_P2P_ENABLE

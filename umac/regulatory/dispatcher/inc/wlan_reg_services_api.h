@@ -127,9 +127,9 @@ void wlan_reg_set_channel_params(struct wlan_objmgr_pdev *pdev, uint8_t ch,
  * wlan_reg_get_dfs_region () - Get the current dfs region
  * @dfs_reg: pointer to dfs region
  *
- * Return: None
+ * Return: Status
  */
-void wlan_reg_get_dfs_region(struct wlan_objmgr_pdev *pdev,
+QDF_STATUS wlan_reg_get_dfs_region(struct wlan_objmgr_pdev *pdev,
 			     enum dfs_reg *dfs_reg);
 
 /**
