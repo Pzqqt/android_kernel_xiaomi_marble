@@ -610,10 +610,10 @@ struct dp_soc {
 	struct dp_srng wbm_desc_rel_ring;
 
 	/* Tx ring map for interrupt processing */
-	struct dp_srng *tx_ring_map[DP_MAX_TX_RINGS];
+	uint8_t tx_ring_map[WLAN_CFG_INT_NUM_CONTEXTS];
 
 	/* Rx ring map for interrupt processing */
-	struct dp_srng *rx_ring_map[DP_MAX_RX_RINGS];
+	uint8_t rx_ring_map[WLAN_CFG_INT_NUM_CONTEXTS];
 
 	/* peer ID to peer object map (array of pointers to peer objects) */
 	struct dp_peer **peer_id_to_obj_map;

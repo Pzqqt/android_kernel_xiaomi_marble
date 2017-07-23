@@ -83,12 +83,33 @@ static uint8_t default_dscp_tid_map[DSCP_TID_MAP_MAX] = {
 };
 
 /**
+ * @brief Cpu ring map types
+ */
+enum dp_cpu_ring_map_types {
+	DP_DEFAULT_MAP,
+	DP_NSS_FIRST_RADIO_OFFLOADED_MAP,
+	DP_NSS_SECOND_RADIO_OFFLOADED_MAP,
+	DP_NSS_ALL_RADIO_OFFLOADED_MAP,
+	DP_CPU_RING_MAP_MAX
+};
+
+/**
+ * @brief Cpu to tx ring map
+ */
+static uint8_t dp_cpu_ring_map[DP_CPU_RING_MAP_MAX][WLAN_CFG_INT_NUM_CONTEXTS] = {
+	{0x0, 0x1, 0x2, 0x0},
+	{0x1, 0x2, 0x1, 0x2},
+	{0x0, 0x2, 0x0, 0x2},
+	{0x2, 0x2, 0x2, 0x2}
+};
+
+/**
  * @brief Select the type of statistics
  */
 enum dp_stats_type {
-	STATS_FW   = 0,
+	STATS_FW = 0,
 	STATS_HOST = 1,
-	STATS_TYPE_MAX  = 2,
+	STATS_TYPE_MAX = 2,
 };
 
 /**
@@ -980,6 +1001,38 @@ static void dp_soc_wds_detach(struct dp_soc *soc)
 #endif
 
 /*
+ * dp_soc_reset_ring_map() - Reset cpu ring map
+ * @soc: Datapath soc handler
+ *
+ * This api resets the default cpu ring map
+ */
+
+static void dp_soc_reset_cpu_ring_map(struct dp_soc *soc)
+{
+	uint8_t i;
+	int nss_config = wlan_cfg_get_dp_soc_nss_cfg(soc->wlan_cfg_ctx);
+
+	for (i = 0; i < WLAN_CFG_INT_NUM_CONTEXTS; i++) {
+		if (nss_config == 1) {
+			/*
+			 * Setting Tx ring map for one nss offloaded radio
+			 */
+			soc->tx_ring_map[i] = dp_cpu_ring_map[DP_NSS_FIRST_RADIO_OFFLOADED_MAP][i];
+		} else if (nss_config == 2) {
+			/*
+			 * Setting Tx ring for two nss offloaded radios
+			 */
+			soc->tx_ring_map[i] = dp_cpu_ring_map[DP_NSS_SECOND_RADIO_OFFLOADED_MAP][i];
+		} else {
+			/*
+			 * Setting Tx ring map for all nss offloaded radios
+			 */
+			soc->tx_ring_map[i] = dp_cpu_ring_map[DP_NSS_ALL_RADIO_OFFLOADED_MAP][i];
+		}
+	}
+}
+
+/*
  * dp_soc_cmn_setup() - Common SoC level initializion
  * @soc:		Datapath SOC handle
  *
@@ -1139,6 +1192,11 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 
 	dp_soc_wds_attach(soc);
 
+	/* Reset the cpu ring map if radio is NSS offloaded */
+	if (wlan_cfg_get_dp_soc_nss_cfg(soc->wlan_cfg_ctx)) {
+		dp_soc_reset_cpu_ring_map(soc);
+	}
+
 	/* Setup HW REO */
 	qdf_mem_zero(&reo_params, sizeof(reo_params));
 
@@ -1280,6 +1338,24 @@ dp_dscp_tid_map_setup(struct dp_pdev *pdev)
 }
 
 /*
+ * dp_reset_intr_mask() - reset interrupt mask
+ * @dp_soc - DP Soc handle
+ * @dp_pdev - DP pdev handle
+ *
+ * Return: Return void
+ */
+static inline
+void dp_soc_reset_intr_mask(struct dp_soc *soc, struct dp_pdev *pdev)
+{
+	/*
+	 * We will set the interrupt mask to zero for NSS offloaded radio
+	 */
+	wlan_cfg_set_tx_ring_mask(soc->wlan_cfg_ctx, pdev->pdev_id, 0x0);
+	wlan_cfg_set_rx_ring_mask(soc->wlan_cfg_ctx, pdev->pdev_id, 0x0);
+	wlan_cfg_set_rxdma2host_ring_mask(soc->wlan_cfg_ctx, pdev->pdev_id, 0x0);
+}
+
+/*
 * dp_pdev_attach_wifi3() - attach txrx pdev
 * @osif_pdev: Opaque PDEV handle from OSIF/HDD
 * @txrx_soc: Datapath SOC handle
@@ -1319,7 +1395,7 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	 * set nss pdev config based on soc config
 	 */
 	wlan_cfg_set_dp_pdev_nss_enabled(pdev->wlan_cfg_ctx,
-			(wlan_cfg_get_dp_soc_nss_cfg(soc->wlan_cfg_ctx) & (1 << pdev->pdev_id)));
+			(wlan_cfg_get_dp_soc_nss_cfg(soc->wlan_cfg_ctx) & (1 << pdev_id)));
 
 	pdev->soc = soc;
 	pdev->osif_pdev = ctrl_pdev;
@@ -1460,6 +1536,14 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 
 	/* set the reo destination during initialization */
 	pdev->reo_dest = pdev->pdev_id + 1;
+
+	/*
+	 * reset the interrupt mask for offloaded radio
+	 */
+	if (wlan_cfg_get_dp_pdev_nss_enabled(pdev->wlan_cfg_ctx)) {
+		dp_soc_reset_intr_mask(soc, pdev);
+	}
+
 	return (struct cdp_pdev *)pdev;
 
 fail1:
@@ -1849,12 +1933,6 @@ static void dp_soc_set_nss_cfg_wifi3(struct cdp_soc_t *cdp_soc, int config)
 {
 	struct dp_soc *dsoc = (struct dp_soc *)cdp_soc;
 	wlan_cfg_set_dp_soc_nss_cfg(dsoc->wlan_cfg_ctx, config);
-	if (config) {
-		/*
-		 * disable dp interrupt if nss enabled
-		 */
-		wlan_cfg_set_num_contexts(dsoc->wlan_cfg_ctx, 0);
-	}
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				FL("nss-wifi<0> nss config is enabled"));
 }
@@ -4285,6 +4363,20 @@ static struct cdp_ops dp_txrx_ops = {
 };
 
 /*
+ * dp_soc_set_txrx_ring_map()
+ * @dp_soc: DP handler for soc
+ *
+ * Return: Void
+ */
+static void dp_soc_set_txrx_ring_map(struct dp_soc *soc)
+{
+	uint32_t i;
+	for (i = 0; i < WLAN_CFG_INT_NUM_CONTEXTS; i++) {
+		soc->tx_ring_map[i] = dp_cpu_ring_map[DP_DEFAULT_MAP][i];
+	}
+}
+
+/*
  * dp_soc_attach_wifi3() - Attach txrx SOC
  * @osif_soc:		Opaque SOC handle from OSIF/HDD
  * @htc_handle:	Opaque HTC handle
@@ -4350,6 +4442,8 @@ void *dp_soc_attach_wifi3(void *osif_soc, void *hif_handle,
 	qdf_spinlock_create(&soc->reo_desc_freelist_lock);
 	qdf_list_create(&soc->reo_desc_freelist, REO_DESC_FREELIST_SIZE);
 
+	/* fill the tx/rx cpu ring map*/
+	dp_soc_set_txrx_ring_map(soc);
 	return (void *)soc;
 
 fail2:
