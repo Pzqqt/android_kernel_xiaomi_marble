@@ -4374,6 +4374,11 @@ typedef enum {
      *  bits 31:1 - unused / reserved (set to 0)
      */
     WMI_PDEV_PARAM_ENABLE_CCK_TXFIR_OVERRIDE,
+    /** Enable/Disable DTIM Synth
+     *   1- Enable DTIM Synth
+     *   0- Disable DTIM Synth
+     */
+    WMI_PDEV_PARAM_DTIM_SYNTH,
 } WMI_PDEV_PARAM;
 
 typedef struct {
