@@ -2024,7 +2024,7 @@ static void __wlan_hdd_cfg80211_abort_scan(struct wiphy *wiphy,
 	}
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (!ret)
+	if (ret)
 		return;
 
 #ifndef NAPIER_SCAN
