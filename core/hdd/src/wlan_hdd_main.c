@@ -12640,6 +12640,8 @@ static int hdd_update_tdls_config(struct hdd_context *hdd_ctx)
 		 1 << TDLS_FEAUTRE_IMPLICIT_TRIGGER : 0) |
 		(cfg->fTDLSExternalControl ?
 		 1 << TDLS_FEATURE_EXTERNAL_CONTROL : 0));
+	config->tdls_vdev_nss_2g = CFG_TDLS_NSS(cfg->vdev_type_nss_2g);
+	config->tdls_vdev_nss_5g = CFG_TDLS_NSS(cfg->vdev_type_nss_5g);
 
 	tdls_cfg.tdls_send_mgmt_req = eWNI_SME_TDLS_SEND_MGMT_REQ;
 	tdls_cfg.tdls_add_sta_req = eWNI_SME_TDLS_ADD_STA_REQ;

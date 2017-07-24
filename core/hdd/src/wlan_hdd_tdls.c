@@ -826,6 +826,9 @@ int wlan_hdd_tdls_antenna_switch(struct hdd_context *hdd_ctx,
 				 struct hdd_adapter *adapter,
 				 uint32_t mode)
 {
+	if (hdd_ctx->tdls_umac_comp_active)
+		return wlan_tdls_antenna_switch(adapter->hdd_vdev, mode);
+
 	return 0;
 }
 

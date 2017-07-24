@@ -6426,8 +6426,9 @@ static int drv_cmd_set_antenna_mode(struct hdd_adapter *adapter,
 	int mode;
 	uint8_t *value = command;
 
-	if (((1 << QDF_STA_MODE) != hdd_ctx->concurrency_mode) ||
-	    (hdd_ctx->no_of_active_sessions[QDF_STA_MODE] > 1)) {
+	if (((1 << QDF_STA_MODE) !=
+		    policy_mgr_get_concurrency_mode(hdd_ctx->hdd_psoc)) ||
+	    (policy_mgr_is_multiple_active_sta_sessions(hdd_ctx->hdd_psoc))) {
 		hdd_err("Operation invalid in non sta or concurrent mode");
 		ret = -EPERM;
 		goto exit;
