@@ -1113,6 +1113,16 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 	return 0;
 }
 
+static bool wma_is_vdev_valid(uint32_t vdev_id)
+{
+	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+
+	if (NULL == wma_handle)
+		return false;
+
+	return wma_handle->interfaces[vdev_id].vdev_active;
+}
+
 /**
  * wma_vdev_set_param() - set per vdev params in fw
  * @wmi_handle: wmi handle
@@ -1127,6 +1137,13 @@ wma_vdev_set_param(wmi_unified_t wmi_handle, uint32_t if_id,
 				uint32_t param_id, uint32_t param_value)
 {
 	struct vdev_set_params param = {0};
+
+	if (!wma_is_vdev_valid(if_id)) {
+		WMA_LOGE(FL("vdev_id: %d is not active reject the req: param id %d val %d"),
+			if_id, param_id, param_value);
+		QDF_ASSERT(0);
+		return QDF_STATUS_E_INVAL;
+	}
 
 	param.if_id = if_id;
 	param.param_id = param_id;
