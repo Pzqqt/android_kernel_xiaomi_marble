@@ -6627,12 +6627,20 @@ static bool hdd_update_vht_cap_in_cfg(hdd_context_t *hdd_ctx)
 	if ((config->dot11Mode == eHDD_DOT11_MODE_AUTO) ||
 	    (config->dot11Mode == eHDD_DOT11_MODE_11ac_ONLY) ||
 	    (config->dot11Mode == eHDD_DOT11_MODE_11ac)) {
-		/* Currently shortGI40Mhz is used for shortGI80Mhz */
+		/* Currently shortGI40Mhz is used for shortGI80Mhz and 160MHz*/
 		if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_VHT_SHORT_GI_80MHZ,
 			config->ShortGI40MhzEnable) == QDF_STATUS_E_FAILURE) {
 			status = false;
 			hdd_err("Couldn't pass WNI_VHT_SHORT_GI_80MHZ to CFG");
 		}
+
+		if (sme_cfg_set_int(hdd_ctx->hHal,
+			WNI_CFG_VHT_SHORT_GI_160_AND_80_PLUS_80MHZ,
+			config->ShortGI40MhzEnable) == QDF_STATUS_E_FAILURE) {
+			status = false;
+			hdd_err("Couldn't pass SHORT_GI_160MHZ to CFG");
+		}
+
 		/* Hardware is capable of doing
 		 * 128K AMPDU in 11AC mode
 		 */
