@@ -2874,7 +2874,7 @@ sir_convert_assoc_resp_frame2_struct(tpAniSirGlobal pMac,
 			     sizeof(tDot11fIEFTInfo));
 	}
 
-	if (ar.num_RICDataDesc <= 2) {
+	if (ar.num_RICDataDesc && ar.num_RICDataDesc <= 2) {
 		for (cnt = 0; cnt < ar.num_RICDataDesc; cnt++) {
 			if (ar.RICDataDesc[cnt].present) {
 				qdf_mem_copy(&pAssocRsp->RICData[cnt],
