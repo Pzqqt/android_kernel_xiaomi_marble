@@ -603,6 +603,19 @@ int qdf_set_dma_coherent_mask(struct device *dev, uint8_t addr_bits)
 }
 
 /**
+ * qdf_do_div() - wrapper function for kernel macro(do_div).
+ * @dividend: Dividend value
+ * @divisor : Divisor value
+ *
+ * Return: Quotient
+ */
+static inline
+uint64_t qdf_do_div(uint64_t dividend, uint32_t divisor)
+{
+	return __qdf_do_div(dividend, divisor);
+}
+
+/**
  * qdf_get_random_bytes() - returns nbytes bytes of random
  * data
  *

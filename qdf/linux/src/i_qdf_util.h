@@ -422,4 +422,19 @@ void __qdf_get_random_bytes(void *buf, int nbytes)
 	return get_random_bytes(buf, nbytes);
 }
 
+/**
+ * __qdf_do_div() - wrapper function for kernel macro(do_div).
+ * @dividend: Dividend value
+ * @divisor : Divisor value
+ *
+ * Return: Quotient
+ */
+static inline
+uint64_t __qdf_do_div(uint64_t dividend, uint32_t divisor)
+{
+	do_div(dividend, divisor);
+	/*do_div macro updates dividend with Quotient of dividend/divisor */
+	return dividend;
+}
+
 #endif /*_I_QDF_UTIL_H*/
