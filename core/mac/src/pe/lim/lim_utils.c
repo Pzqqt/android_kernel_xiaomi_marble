@@ -4333,6 +4333,11 @@ void lim_update_sta_run_time_ht_switch_chnl_params(tpAniSirGlobal pMac,
 		return;
 	}
 
+	if (psessionEntry->ch_switch_in_progress == true) {
+		pe_debug("ch switch is in progress, ignore HT IE BW update");
+		return;
+	}
+
 	if (!pHTInfo->primaryChannel) {
 		pe_debug("Ignore as primary channel is 0 in HT info");
 		return;

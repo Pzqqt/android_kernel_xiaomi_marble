@@ -1084,6 +1084,8 @@ struct wma_txrx_node {
 	uint32_t he_ops;
 #endif
 	bool in_bmps;
+	struct beacon_filter_param beacon_filter;
+	bool beacon_filter_enabled;
 };
 
 #if defined(QCA_WIFI_FTM)

@@ -1099,6 +1099,9 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 			} else {
 				wma_vdev_set_mlme_state(wma,
 					resp_event->vdev_id, WLAN_VDEV_S_RUN);
+				if (iface->beacon_filter_enabled)
+					wma_add_beacon_filter(wma,
+							&iface->beacon_filter);
 			}
 		}
 

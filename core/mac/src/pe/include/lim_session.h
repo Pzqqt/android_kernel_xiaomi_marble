@@ -516,6 +516,7 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 #endif
 	bool enable_bcast_probe_rsp;
 	uint8_t ht_client_cnt;
+	bool ch_switch_in_progress;
 } tPESession, *tpPESession;
 
 /*-------------------------------------------------------------------------
