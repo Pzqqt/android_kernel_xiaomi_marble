@@ -67,6 +67,9 @@
 	 - REG_CH_TO_FREQ(reg_get_chan_enum(curchan))	\
 	 > REG_SBS_SEPARATION_THRESHOLD)
 
+#define IS_VALID_PSOC_REG_OBJ(psoc_priv_obj) (NULL != psoc_priv_obj)
+#define IS_VALID_PDEV_REG_OBJ(pdev_priv_obj) (NULL != pdev_priv_obj)
+
 /* EEPROM setting is a country code */
 #define    COUNTRY_ERD_FLAG     0x8000
 
@@ -335,6 +338,15 @@ QDF_STATUS reg_11d_vdev_delete_update(struct wlan_objmgr_vdev *vdev);
 QDF_STATUS reg_11d_vdev_created_update(struct wlan_objmgr_vdev *vdev);
 
 /**
+ * reg_get_psoc_obj() - Provides the reg component object pointer
+ * @psoc: pointer to psoc object.
+ *
+ * Return: reg component object pointer
+ */
+struct wlan_regulatory_psoc_priv_obj *reg_get_psoc_obj(
+		struct wlan_objmgr_psoc *psoc);
+
+/**
  * reg_set_regdb_offloaded() - set/clear regulatory offloaded flag
  *
  * @psoc: psoc pointer
@@ -351,4 +363,14 @@ QDF_STATUS reg_set_regdb_offloaded(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS reg_set_11d_offloaded(struct wlan_objmgr_psoc *psoc,
 		bool val);
+
+/**
+ * reg_get_curr_regdomain() - Get current regdomain in use
+ * @pdev: pdev pointer
+ * @cur_regdmn: Current regdomain info
+ *
+ * Return: QDF status
+ */
+QDF_STATUS reg_get_curr_regdomain(struct wlan_objmgr_pdev *pdev,
+		struct cur_regdmn_info *cur_regdmn);
 #endif

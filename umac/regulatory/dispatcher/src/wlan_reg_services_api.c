@@ -28,6 +28,7 @@
 #include <wlan_reg_services_api.h>
 #include "../../core/src/reg_services.h"
 #include "../../core/src/reg_priv.h"
+#include "../../core/src/reg_db_parser.h"
 
 /**
  * wlan_reg_get_channel_list_with_power() - Provide the channel list with power
@@ -487,4 +488,10 @@ struct wlan_lmac_if_reg_tx_ops *
 wlan_reg_get_tx_ops(struct wlan_objmgr_psoc *psoc)
 {
 	return reg_get_psoc_tx_ops(psoc);
+}
+
+QDF_STATUS wlan_reg_get_curr_regdomain(struct wlan_objmgr_pdev *pdev,
+		struct cur_regdmn_info *cur_regdmn)
+{
+	return reg_get_curr_regdomain(pdev, cur_regdmn);
 }

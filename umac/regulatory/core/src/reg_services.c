@@ -39,10 +39,6 @@
 #define MAX_PWR_FCC_CHAN_13 2
 #define SCAN_11D_PERIOD_MS 360000
 
-#define IS_VALID_PSOC_REG_OBJ(psoc_priv_obj) (NULL != psoc_priv_obj)
-#define IS_VALID_PDEV_REG_OBJ(pdev_priv_obj) (NULL != pdev_priv_obj)
-
-
 const struct bonded_channel bonded_chan_40mhz_list[] = {
 	{36, 40},
 	{44, 48},
@@ -230,13 +226,7 @@ static const struct reg_dmn_op_class_map_t japan_op_class[] = {
 	{0, 0, 0, {0} },
 };
 
-/**
- * reg_get_psoc_obj() - Provides the reg component object pointer
- * @psoc: pointer to psoc object.
- *
- * Return: reg component object pointer
- */
-static struct wlan_regulatory_psoc_priv_obj *reg_get_psoc_obj(
+struct wlan_regulatory_psoc_priv_obj *reg_get_psoc_obj(
 		struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_regulatory_psoc_priv_obj *soc_reg;
@@ -3056,6 +3046,48 @@ QDF_STATUS reg_set_11d_offloaded(struct wlan_objmgr_psoc *psoc,
 	}
 
 	soc_reg->is_11d_offloaded = val;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS reg_get_curr_regdomain(struct wlan_objmgr_pdev *pdev,
+		struct cur_regdmn_info *cur_regdmn)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_regulatory_psoc_priv_obj *soc_reg;
+	uint16_t index;
+	int num_reg_dmn;
+	uint8_t phy_id;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	soc_reg = reg_get_psoc_obj(psoc);
+	if (!IS_VALID_PSOC_REG_OBJ(soc_reg)) {
+		reg_err("soc reg component is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	phy_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+	cur_regdmn->regdmn_pair_id =
+		soc_reg->mas_chan_params[phy_id].reg_dmn_pair;
+
+	reg_get_num_reg_dmn_pairs(&num_reg_dmn);
+	for (index = 0; index < num_reg_dmn; index++) {
+		if (g_reg_dmn_pairs[index].reg_dmn_pair_id ==
+				cur_regdmn->regdmn_pair_id)
+			break;
+	}
+
+	if (index == num_reg_dmn) {
+		reg_err("invalid regdomain");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cur_regdmn->dmn_id_2g = g_reg_dmn_pairs[index].dmn_id_2g;
+	cur_regdmn->dmn_id_5g = g_reg_dmn_pairs[index].dmn_id_5g;
+	cur_regdmn->ctl_2g = regdomains_2g[cur_regdmn->dmn_id_2g].ctl_val;
+	cur_regdmn->ctl_5g = regdomains_5g[cur_regdmn->dmn_id_5g].ctl_val;
+	cur_regdmn->dfs_region =
+		regdomains_5g[cur_regdmn->dmn_id_5g].dfs_region;
 
 	return QDF_STATUS_SUCCESS;
 }

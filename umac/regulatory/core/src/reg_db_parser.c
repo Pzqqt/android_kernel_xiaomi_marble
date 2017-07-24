@@ -26,6 +26,7 @@
 #include "reg_db_parser.h"
 #include <qdf_mem.h>
 #include "reg_priv.h"
+#include "reg_services.h"
 
 QDF_STATUS reg_is_country_code_valid(uint8_t alpha[3])
 {
@@ -213,7 +214,8 @@ static inline QDF_STATUS reg_get_reginfo_form_country_code_and_regdmn_pair(
 
 		reg_info->ctry_code =
 			g_all_countries[country_index].country_code;
-		reg_info->reg_dmn_pair = 0;
+		reg_info->reg_dmn_pair =
+			g_reg_dmn_pairs[regdmn_pair].reg_dmn_pair_id;
 		reg_info->dfs_region = regdomains_5g[dmn_id_5g].dfs_region;
 		reg_info->phybitmap =
 			g_all_countries[country_index].phymode_bitmap;
