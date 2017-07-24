@@ -944,6 +944,23 @@ struct pno_scan_req_params {
 };
 
 /**
+ * struct nlo_mawc_params - Motion Aided Wireless Connectivity based
+ *                          Network List Offload configuration
+ * @vdev_id: VDEV ID on which the configuration needs to be applied
+ * @enable: flag to enable or disable
+ * @exp_backoff_ratio: ratio of exponential backoff
+ * @init_scan_interval: initial scan interval(msec)
+ * @max_scan_interval:  max scan interval(msec)
+ */
+struct nlo_mawc_params {
+	uint8_t vdev_id;
+	bool enable;
+	uint32_t exp_backoff_ratio;
+	uint32_t init_scan_interval;
+	uint32_t max_scan_interval;
+};
+
+/**
  * struct pno_user_cfg - user configuration required for PNO
  * @channel_prediction: config PNO channel prediction feature status
  * @top_k_num_of_channels: def top K number of channels are used for tanimoto
