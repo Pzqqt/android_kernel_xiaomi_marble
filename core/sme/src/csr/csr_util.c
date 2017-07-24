@@ -2954,9 +2954,12 @@ static bool csr_match_wpaoui_index(tpAniSirGlobal pMac,
 				   uint8_t cAllCyphers, uint8_t ouiIndex,
 				   uint8_t Oui[])
 {
-	return csr_is_oui_match
-		(pMac, AllCyphers, cAllCyphers, csr_wpa_oui[ouiIndex], Oui);
-
+	if (ouiIndex < QDF_ARRAY_SIZE(csr_wpa_oui))
+		return csr_is_oui_match
+			(pMac, AllCyphers, cAllCyphers,
+			 csr_wpa_oui[ouiIndex], Oui);
+	else
+		return false;
 }
 
 #ifdef FEATURE_WLAN_WAPI
@@ -4355,6 +4358,7 @@ static bool csr_validate_wep(tpAniSirGlobal mac_ctx,
 	bool match = false;
 	eCsrAuthType negotiated_auth = eCSR_AUTH_TYPE_OPEN_SYSTEM;
 	eCsrEncryptionType negotiated_mccipher = eCSR_ENCRYPT_TYPE_UNKNOWN;
+	uint8_t oui_index;
 
 	/* If privacy bit is not set, consider no match */
 	if (!csr_is_privacy(bss_descr))
@@ -4420,10 +4424,11 @@ static bool csr_validate_wep(tpAniSirGlobal mac_ctx,
 
 	/* else we can use the encryption type directly */
 	if (ie_ptr->WPA.present) {
-		match = (!qdf_mem_cmp(ie_ptr->WPA.multicast_cipher,
-				csr_wpa_oui[csr_get_oui_index_from_cipher(
-					uc_encry_type)],
-				CSR_WPA_OUI_SIZE));
+		oui_index = csr_get_oui_index_from_cipher(uc_encry_type);
+		if (oui_index < QDF_ARRAY_SIZE(csr_wpa_oui))
+			match = (!qdf_mem_cmp(ie_ptr->WPA.multicast_cipher,
+					csr_wpa_oui[oui_index],
+					CSR_WPA_OUI_SIZE));
 		if (match)
 			goto end;
 	}
