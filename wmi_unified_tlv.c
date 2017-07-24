@@ -7368,6 +7368,62 @@ static void wmi_set_pno_channel_prediction(uint8_t *buf_ptr,
 }
 
 /**
+ * send_nlo_mawc_cmd_tlv() - Send MAWC NLO configuration
+ * @wmi_handle: wmi handle
+ * @params: configuration parameters
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS send_nlo_mawc_cmd_tlv(wmi_unified_t wmi_handle,
+		struct nlo_mawc_params *params)
+{
+	wmi_buf_t buf = NULL;
+	QDF_STATUS status;
+	int len;
+	uint8_t *buf_ptr;
+	wmi_nlo_configure_mawc_cmd_fixed_param *wmi_nlo_mawc_params;
+
+	len = sizeof(*wmi_nlo_mawc_params);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s : wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+	wmi_nlo_mawc_params =
+		(wmi_nlo_configure_mawc_cmd_fixed_param *) buf_ptr;
+	WMITLV_SET_HDR(&wmi_nlo_mawc_params->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_nlo_configure_mawc_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_nlo_configure_mawc_cmd_fixed_param));
+	wmi_nlo_mawc_params->vdev_id = params->vdev_id;
+	if (params->enable)
+		wmi_nlo_mawc_params->enable = 1;
+	else
+		wmi_nlo_mawc_params->enable = 0;
+	wmi_nlo_mawc_params->exp_backoff_ratio = params->exp_backoff_ratio;
+	wmi_nlo_mawc_params->init_scan_interval = params->init_scan_interval;
+	wmi_nlo_mawc_params->max_scan_interval = params->max_scan_interval;
+
+	status = wmi_unified_cmd_send(wmi_handle, buf,
+				      len, WMI_NLO_CONFIGURE_MAWC_CMDID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMI_LOGE("WMI_NLO_CONFIGURE_MAWC_CMDID failed, Error %d",
+			status);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+	WMI_LOGD(FL("MAWC NLO en=%d, vdev=%d, ratio=%d, SCAN init=%d, max=%d"),
+		wmi_nlo_mawc_params->enable, wmi_nlo_mawc_params->vdev_id,
+		wmi_nlo_mawc_params->exp_backoff_ratio,
+		wmi_nlo_mawc_params->init_scan_interval,
+		wmi_nlo_mawc_params->max_scan_interval);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * send_pno_start_cmd_tlv() - PNO start request
  * @wmi_handle: wmi handle
  * @pno: PNO request
@@ -18685,6 +18741,7 @@ struct wmi_ops tlv_ops =  {
 	.send_plm_start_cmd = send_plm_start_cmd_tlv,
 	.send_pno_stop_cmd = send_pno_stop_cmd_tlv,
 	.send_pno_start_cmd = send_pno_start_cmd_tlv,
+	.send_nlo_mawc_cmd = send_nlo_mawc_cmd_tlv,
 	.send_set_ric_req_cmd = send_set_ric_req_cmd_tlv,
 	.send_process_ll_stats_clear_cmd = send_process_ll_stats_clear_cmd_tlv,
 	.send_process_ll_stats_set_cmd = send_process_ll_stats_set_cmd_tlv,

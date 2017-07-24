@@ -1974,6 +1974,24 @@ QDF_STATUS wmi_unified_pno_start_cmd(void *wmi_hdl,
 }
 #endif
 
+/**
+ * wmi_unified_nlo_mawc_cmd() - NLO MAWC cmd configuration
+ * @wmi_hdl: wmi handle
+ * @params: Configuration parameters
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_nlo_mawc_cmd(void *wmi_hdl,
+		struct nlo_mawc_params *params)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_nlo_mawc_cmd)
+		return wmi_handle->ops->send_nlo_mawc_cmd(wmi_handle, params);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 /* wmi_unified_set_ric_req_cmd() - set ric request element
  * @wmi_hdl: wmi handle
  * @msg: message
