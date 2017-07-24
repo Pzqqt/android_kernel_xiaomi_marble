@@ -260,6 +260,14 @@ static inline int pld_athdiag_write(struct device *dev,
 {
 	return 0;
 }
+static inline void *pld_hif_sdio_get_virt_ramdump_mem(struct device *dev,
+						unsigned long *size)
+{
+	return NULL;
+}
+static inline void pld_hif_sdio_release_ramdump_mem(unsigned long *address)
+{
+}
 
 #endif
 #endif
