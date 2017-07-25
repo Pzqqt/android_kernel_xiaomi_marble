@@ -228,6 +228,8 @@ typedef struct _cds_context_type {
 	struct cds_config_info *cds_cfg;
 
 	struct ol_tx_sched_wrr_ac_specs_t ac_specs[TX_WMM_AC_NUM];
+	qdf_work_t cds_recovery_work;
+	qdf_workqueue_t *cds_recovery_wq;
 } cds_context_type, *p_cds_contextType;
 
 /*---------------------------------------------------------------------------
