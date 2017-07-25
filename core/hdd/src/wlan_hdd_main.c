@@ -121,6 +121,7 @@
 #include "nan_public_structs.h"
 #include "wlan_reg_ucfg_api.h"
 #include "wlan_hdd_rx_monitor.h"
+#include "sme_power_save_api.h"
 
 #ifdef CNSS_GENL
 #include <net/cnss_nl.h>
@@ -2496,7 +2497,17 @@ static int __hdd_stop(struct net_device *dev)
 
 	/* Make sure the interface is marked as closed */
 	clear_bit(DEVICE_IFACE_OPENED, &adapter->event_flags);
-	hdd_debug("Disabling queues");
+
+	hdd_debug("Disabling Auto Power save timer");
+	sme_ps_disable_auto_ps_timer(
+		WLAN_HDD_GET_HAL_CTX(adapter),
+		adapter->sessionId);
+
+	/*
+	 * Disable TX on the interface, after this hard_start_xmit() will not
+	 * be called on that interface
+	 */
+	hdd_notice("Disabling queues");
 	wlan_hdd_netif_queue_control(adapter,
 				     WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
 				     WLAN_CONTROL_PATH);
