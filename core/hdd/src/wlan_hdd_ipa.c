@@ -1921,12 +1921,23 @@ static int hdd_ipa_uc_handle_first_con(struct hdd_ipa_priv *hdd_ipa)
 			/* RM PROD request sync return
 			 * enable pipe immediately
 			 */
+			if (!hdd_ipa->ipa_pipes_down) {
+				HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG,
+					"%s: IPA WDI Pipe already activated",
+					__func__);
+				return 0;
+			}
+
 			if (hdd_ipa_uc_enable_pipes(hdd_ipa)) {
 				HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 					"IPA WDI Pipe activation failed");
 				hdd_ipa->resource_loading = false;
 				return -EBUSY;
 			}
+		} else {
+			HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
+				    "%s: IPA WDI Pipe activation deferred",
+					__func__);
 		}
 	} else {
 		/* RM Disabled
