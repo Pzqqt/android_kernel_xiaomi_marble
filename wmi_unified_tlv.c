@@ -14772,6 +14772,9 @@ static QDF_STATUS send_roam_invoke_cmd_tlv(wmi_unified_t wmi_handle,
 	WMITLV_GET_STRUCT_TLVLEN(wmi_roam_invoke_cmd_fixed_param));
 	cmd->vdev_id = roaminvoke->vdev_id;
 	cmd->flags |= (1 << WMI_ROAM_INVOKE_FLAG_REPORT_FAILURE);
+	if (roaminvoke->is_same_bssid)
+		cmd->flags |= (1 << WMI_ROAM_INVOKE_FLAG_NO_NULL_FRAME_TO_AP);
+	WMI_LOGD(FL("is_same_bssid flag: %d"), roaminvoke->is_same_bssid);
 
 	if (roaminvoke->frame_len) {
 		cmd->roam_scan_mode = WMI_ROAM_INVOKE_SCAN_MODE_SKIP;
