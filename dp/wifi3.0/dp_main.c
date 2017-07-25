@@ -1476,7 +1476,7 @@ static void dp_wds_aging_timer_fn(void *soc_hdl)
 	struct dp_pdev *pdev;
 	struct dp_vdev *vdev;
 	struct dp_peer *peer;
-	struct dp_ast_entry *ase;
+	struct dp_ast_entry *ase, *temp_ase;
 	int i;
 
 	qdf_spin_lock_bh(&soc->ast_lock);
@@ -1485,7 +1485,7 @@ static void dp_wds_aging_timer_fn(void *soc_hdl)
 		pdev = soc->pdev_list[i];
 		DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
 			DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
-				DP_PEER_ITERATE_ASE_LIST(peer, ase) {
+				DP_PEER_ITERATE_ASE_LIST(peer, ase, temp_ase) {
 					/*
 					 * Do not expire static ast entries
 					 */
@@ -4730,12 +4730,12 @@ static struct cdp_wds_ops dp_ops_wds = {
 static inline void dp_peer_delete_ast_entries(struct dp_soc *soc,
 		struct dp_peer *peer)
 {
-	struct dp_ast_entry *ast_entry;
+	struct dp_ast_entry *ast_entry, *temp_ast_entry;
 	qdf_spin_lock_bh(&soc->ast_lock);
-	DP_PEER_ITERATE_ASE_LIST(peer, ast_entry) {
+	DP_PEER_ITERATE_ASE_LIST(peer, ast_entry, temp_ast_entry) {
 		if (ast_entry->next_hop) {
 			soc->cdp_soc.ol_ops->peer_del_wds_entry(
-					soc->osif_soc,
+					peer->vdev->pdev->osif_pdev,
 					ast_entry->mac_addr.raw);
 		}
 

@@ -105,8 +105,8 @@ union dp_rx_desc_list_elem_t;
 #define DP_VDEV_ITERATE_PEER_LIST(_vdev, _peer) \
 	TAILQ_FOREACH((_peer), &(_vdev)->peer_list, peer_list_elem)
 
-#define DP_PEER_ITERATE_ASE_LIST(_peer, _ase) \
-	TAILQ_FOREACH((_ase), &peer->ast_entry_list, ase_list_elem)
+#define DP_PEER_ITERATE_ASE_LIST(_peer, _ase, _temp_ase) \
+	TAILQ_FOREACH_SAFE((_ase), &peer->ast_entry_list, ase_list_elem, (_temp_ase))
 
 #define DP_MUTEX_TYPE qdf_spinlock_t
 
