@@ -3515,6 +3515,7 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 	tDot11fIEVHTCaps *vht_caps = NULL;
 	tDot11fIEVHTOperation *vht_oper = NULL;
 	tAddStaParams *sta_context;
+	uint32_t listen_interval = WNI_CFG_LISTEN_INTERVAL_STADEF;
 
 	/* Package SIR_HAL_ADD_BSS_REQ message parameters */
 	pAddBssParams = qdf_mem_malloc(sizeof(tAddBssParams));
@@ -3697,8 +3698,10 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 
 	qdf_mem_copy(pAddBssParams->staContext.bssId,
 			bssDescription->bssId, sizeof(tSirMacAddr));
-	pAddBssParams->staContext.listenInterval =
-		bssDescription->beaconInterval;
+	if (wlan_cfg_get_int(pMac, WNI_CFG_LISTEN_INTERVAL, &listen_interval) !=
+				eSIR_SUCCESS)
+		pe_err("Couldn't get LISTEN_INTERVAL");
+	pAddBssParams->staContext.listenInterval = listen_interval;
 
 	/* Fill Assoc id from the dph table */
 	pStaDs = dph_lookup_hash_entry(pMac, pAddBssParams->staContext.bssId,
@@ -4033,6 +4036,7 @@ tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t update
 	uint8_t chanWidthSupp = 0;
 	tDot11fIEVHTOperation *vht_oper = NULL;
 	tDot11fIEVHTCaps *vht_caps = NULL;
+	uint32_t listen_interval = WNI_CFG_LISTEN_INTERVAL_STADEF;
 
 	tpSirBssDescription bssDescription =
 		&psessionEntry->pLimJoinReq->bssDescription;
@@ -4241,9 +4245,10 @@ tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t update
 
 	qdf_mem_copy(pAddBssParams->staContext.bssId,
 			bssDescription->bssId, sizeof(tSirMacAddr));
-	pAddBssParams->staContext.listenInterval =
-		bssDescription->beaconInterval;
-
+	if (wlan_cfg_get_int(pMac, WNI_CFG_LISTEN_INTERVAL, &listen_interval) !=
+				eSIR_SUCCESS)
+		pe_err("Couldn't get LISTEN_INTERVAL");
+	pAddBssParams->staContext.listenInterval = listen_interval;
 	pAddBssParams->staContext.assocId = 0;
 	pAddBssParams->staContext.uAPSD = 0;
 	pAddBssParams->staContext.maxSPLen = 0;
