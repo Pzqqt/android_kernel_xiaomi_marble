@@ -149,6 +149,7 @@ enum cdp_host_txrx_stats {
 	TXRX_TX_RATE_STATS  = 2,
 	TXRX_TX_HOST_STATS  = 3,
 	TXRX_RX_HOST_STATS  = 4,
+	TXRX_AST_STATS = 5,
 	TXRX_HOST_STATS_MAX,
 };
 

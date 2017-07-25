@@ -254,6 +254,7 @@ const int dp_stats_mapping_table[][STATS_TYPE_MAX] = {
 	{TXRX_FW_STATS_INVALID, TXRX_TX_RATE_STATS},
 	{TXRX_FW_STATS_INVALID, TXRX_TX_HOST_STATS},
 	{TXRX_FW_STATS_INVALID, TXRX_RX_HOST_STATS},
+	{TXRX_FW_STATS_INVALID, TXRX_AST_STATS},
 };
 
 /**
@@ -406,6 +407,58 @@ static void dp_srng_msi_setup(struct dp_soc *soc, struct hal_srng_params
 }
 
 /**
+ * dp_print_ast_stats() - Dump AST table contents
+ * @soc: Datapath soc handle
+ *
+ * return void
+ */
+#ifdef FEATURE_WDS
+static void dp_print_ast_stats(struct dp_soc *soc)
+{
+	uint8_t i;
+	uint8_t num_entries = 0;
+	struct dp_vdev *vdev;
+	struct dp_pdev *pdev;
+	struct dp_peer *peer;
+	struct dp_ast_entry *ase, *tmp_ase;
+
+	DP_PRINT_STATS("AST Stats:");
+	DP_PRINT_STATS("	Entries Added   = %d", soc->stats.ast.added);
+	DP_PRINT_STATS("	Entries Deleted = %d", soc->stats.ast.deleted);
+	DP_PRINT_STATS("	Entries Agedout = %d", soc->stats.ast.aged_out);
+	DP_PRINT_STATS("AST Table:");
+	for (i = 0; i < MAX_PDEV_CNT && soc->pdev_list[i]; i++) {
+		pdev = soc->pdev_list[i];
+		DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
+			DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
+				DP_PEER_ITERATE_ASE_LIST(peer, ase, tmp_ase) {
+					DP_PRINT_STATS("%6d mac_addr = %pM"
+							" peer_mac_addr = %pM"
+							" type = %d"
+							" next_hop = %d"
+							" is_active = %d"
+							" is_bss = %d",
+							++num_entries,
+							ase->mac_addr.raw,
+							ase->peer->mac_addr.raw,
+							ase->type,
+							ase->next_hop,
+							ase->is_active,
+							ase->is_bss);
+				}
+			}
+		}
+	}
+}
+#else
+static void dp_print_ast_stats(struct dp_soc *soc)
+{
+	DP_PRINT_STATS("AST Stats not available.Enable FEATURE_WDS");
+	return;
+}
+#endif
+
+/*
  * dp_setup_srng - Internal function to setup SRNG rings used by data path
  */
 static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
@@ -1510,6 +1563,8 @@ static void dp_wds_aging_timer_fn(void *soc_hdl)
 						ase->is_active = FALSE;
 						continue;
 					}
+
+					DP_STATS_INC(soc, ast.aged_out, 1);
 
 					soc->cdp_soc.ol_ops->peer_del_wds_entry(
 							pdev->osif_pdev,
@@ -4248,6 +4303,7 @@ static inline void dp_print_peer_stats(struct dp_peer *peer)
  * TXRX_TX_RATE_STATS: Print Tx Rate Info
  * TXRX_TX_HOST_STATS: Print Tx Stats
  * TXRX_RX_HOST_STATS: Print Rx Stats
+ * TXRX_AST_STATS: Print AST Stats
  *
  * Return: 0 on success, print error message in case of failure
  */
@@ -4258,6 +4314,7 @@ dp_print_host_stats(struct cdp_vdev *vdev_handle, enum cdp_host_txrx_stats type)
 	struct dp_pdev *pdev = (struct dp_pdev *)vdev->pdev;
 
 	dp_aggregate_pdev_stats(pdev);
+
 	switch (type) {
 	case TXRX_CLEAR_STATS:
 		dp_txrx_host_stats_clr(vdev);
@@ -4275,6 +4332,9 @@ dp_print_host_stats(struct cdp_vdev *vdev_handle, enum cdp_host_txrx_stats type)
 	case TXRX_RX_HOST_STATS:
 		dp_print_pdev_rx_stats(pdev);
 		dp_print_soc_rx_stats(pdev->soc);
+		break;
+	case TXRX_AST_STATS:
+		dp_print_ast_stats(pdev->soc);
 		break;
 	default:
 		DP_TRACE(FATAL, "Wrong Input For TxRx Host Stats");

@@ -443,6 +443,12 @@ struct reo_desc_list_node {
 
 /* SoC level data path statistics */
 struct dp_soc_stats {
+	struct {
+		uint32_t added;
+		uint32_t deleted;
+		uint32_t aged_out;
+	} ast;
+
 	/* SOC level TX stats */
 	struct {
 		/* packets dropped on tx because of no peer */
