@@ -39,6 +39,19 @@
 
 #define TDLS_MAX_NO_OF_2_4_CHANNELS 14
 
+static int wlan_cfg80211_tdls_validate_mac_addr(const uint8_t *mac)
+{
+	static const uint8_t temp_mac[QDF_MAC_ADDR_SIZE] = {0};
+
+	if (!qdf_mem_cmp(mac, temp_mac, QDF_MAC_ADDR_SIZE)) {
+		cfg80211_debug("Invalid Mac address " QDF_MAC_ADDRESS_STR " cmd declined.",
+		QDF_MAC_ADDR_ARRAY(mac));
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 QDF_STATUS wlan_cfg80211_tdls_priv_init(struct vdev_osif_priv *osif_priv)
 {
 	struct osif_tdls_vdev *tdls_priv;
@@ -146,6 +159,11 @@ int wlan_cfg80211_tdls_add_peer(struct wlan_objmgr_pdev *pdev,
 	struct vdev_osif_priv *osif_priv;
 	struct osif_tdls_vdev *tdls_priv;
 	unsigned long rc;
+
+	status = wlan_cfg80211_tdls_validate_mac_addr(mac);
+
+	if (status)
+		return status;
 
 	cfg80211_debug("Add TDLS peer " QDF_MAC_ADDRESS_STR,
 		       QDF_MAC_ADDR_ARRAY(mac));
@@ -357,6 +375,11 @@ int wlan_cfg80211_tdls_update_peer(struct wlan_objmgr_pdev *pdev,
 	struct osif_tdls_vdev *tdls_priv;
 	unsigned long rc;
 
+	status = wlan_cfg80211_tdls_validate_mac_addr(mac);
+
+	if (status)
+		return status;
+
 	cfg80211_debug("Update TDLS peer " QDF_MAC_ADDRESS_STR,
 		       QDF_MAC_ADDR_ARRAY(mac));
 	vdev = wlan_objmgr_get_vdev_by_macaddr_from_pdev(pdev, dev->dev_addr,
@@ -483,6 +506,11 @@ int wlan_cfg80211_tdls_oper(struct wlan_objmgr_pdev *pdev,
 	int status;
 	unsigned long rc;
 	enum tdls_command_type cmd;
+
+	status = wlan_cfg80211_tdls_validate_mac_addr(peer);
+
+	if (status)
+		return status;
 
 	if (NL80211_TDLS_DISCOVERY_REQ == oper) {
 		cfg80211_warn(
@@ -621,6 +649,11 @@ int wlan_cfg80211_tdls_mgmt(struct wlan_objmgr_pdev *pdev,
 	int max_sta_failed = 0;
 	struct tdls_validate_action_req chk_frame;
 	struct tdls_set_responder_req set_responder;
+
+	status = wlan_cfg80211_tdls_validate_mac_addr(peer_mac);
+
+	if (status)
+		return status;
 
 	vdev = wlan_objmgr_get_vdev_by_macaddr_from_pdev(pdev,
 							 dev->dev_addr,
