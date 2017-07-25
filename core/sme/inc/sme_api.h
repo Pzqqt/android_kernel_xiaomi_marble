@@ -640,6 +640,8 @@ uint16_t sme_get_neighbor_scan_max_chan_time(tHalHandle hHal,
 QDF_STATUS sme_set_neighbor_scan_period(tHalHandle hHal, uint8_t sessionId,
 		const uint16_t nNeighborScanPeriod);
 uint16_t sme_get_neighbor_scan_period(tHalHandle hHal, uint8_t sessionId);
+QDF_STATUS sme_set_neighbor_scan_min_period(tHalHandle h_hal,
+		uint8_t session_id, const uint16_t neighbor_scan_min_period);
 QDF_STATUS sme_set_roam_bmiss_first_bcnt(tHalHandle hHal,
 		uint8_t sessionId, const uint8_t nRoamBmissFirstBcnt);
 uint8_t sme_get_roam_bmiss_first_bcnt(tHalHandle hHal);
