@@ -7784,12 +7784,18 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 			retval = -EIO;
 			goto free;
 		}
-		if (phddctx->config->nChannelBondingMode5GHz)
-			phddctx->wiphy->bands[HDD_NL80211_BAND_5GHZ]->ht_cap.cap
-				|= IEEE80211_HT_CAP_SUP_WIDTH_20_40;
-		else
-			phddctx->wiphy->bands[HDD_NL80211_BAND_5GHZ]->ht_cap.cap
-				&= ~IEEE80211_HT_CAP_SUP_WIDTH_20_40;
+
+		if (band_5g) {
+			struct ieee80211_supported_band *band;
+
+			band = phddctx->wiphy->bands[HDD_NL80211_BAND_5GHZ];
+			if (phddctx->config->nChannelBondingMode5GHz)
+				band->ht_cap.cap |=
+					IEEE80211_HT_CAP_SUP_WIDTH_20_40;
+			else
+				band->ht_cap.cap &=
+					~IEEE80211_HT_CAP_SUP_WIDTH_20_40;
+		}
 
 		hdd_debug("New_Phymode= %d ch_bonding=%d band=%d VHT_ch_width=%u",
 			phymode, chwidth, curr_band, vhtchanwidth);
@@ -12755,7 +12761,8 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 	hdd_debug("change band to %u", band);
 
 	if ((band == BAND_2G && hdd_ctx->config->nBandCapability == 2) ||
-	    (band == BAND_5G && hdd_ctx->config->nBandCapability == 1)) {
+	    (band == BAND_5G && hdd_ctx->config->nBandCapability == 1) ||
+	    (band == BAND_ALL && hdd_ctx->config->nBandCapability != 0)) {
 		hdd_err("band value %u violate INI settings %u",
 			  band, hdd_ctx->config->nBandCapability);
 		return -EIO;
