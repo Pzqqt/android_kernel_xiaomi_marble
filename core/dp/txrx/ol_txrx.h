@@ -46,7 +46,9 @@ int ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer,
 					      const char *fname,
 					      int line);
 
-
+ol_txrx_peer_handle ol_txrx_find_peer_by_addr_inc_ref(ol_txrx_pdev_handle pdev,
+						uint8_t *peer_addr,
+						uint8_t *peer_id);
 /**
  * ol_tx_desc_pool_size_hl() - allocate tx descriptor pool size for HL systems
  * @ctrl_pdev: the control pdev handle

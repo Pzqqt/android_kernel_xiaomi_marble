@@ -310,7 +310,7 @@ ol_txrx_find_peer_by_addr_and_vdev(struct cdp_pdev *ppdev,
 	if (!peer)
 		return NULL;
 	*peer_id = peer->local_id;
-	OL_TXRX_PEER_DEC_REF_CNT(peer);
+	OL_TXRX_PEER_UNREF_DELETE(peer);
 	return peer;
 }
 
@@ -355,6 +355,19 @@ static struct cdp_vdev *ol_txrx_get_vdev_by_sta_id(uint8_t sta_id)
 	return (struct cdp_vdev *)peer->vdev;
 }
 
+/**
+ * ol_txrx_find_peer_by_addr() - find peer via peer mac addr and peer_id
+ * @ppdev: pointer of type cdp_pdev
+ * @peer_addr: peer mac addr
+ * @peer_id: pointer to fill in the value of peer->local_id for caller
+ *
+ * This function finds a peer with given mac address and returns its peer_id.
+ * Note that this function does not increment the peer->ref_cnt.
+ * This means that the peer may be deleted in some other parallel context after
+ * its been found.
+ *
+ * Return: peer handle if peer is found, NULL if peer is not found.
+ */
 void *ol_txrx_find_peer_by_addr(struct cdp_pdev *ppdev,
 					      uint8_t *peer_addr,
 					      uint8_t *peer_id)
@@ -362,11 +375,48 @@ void *ol_txrx_find_peer_by_addr(struct cdp_pdev *ppdev,
 	struct ol_txrx_peer_t *peer;
 	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 
-	peer = ol_txrx_peer_find_hash_find(pdev, peer_addr, 0, 1);
+	peer = ol_txrx_peer_find_hash_find_inc_ref(pdev, peer_addr, 0, 1);
 	if (!peer)
 		return NULL;
 	*peer_id = peer->local_id;
-	OL_TXRX_PEER_DEC_REF_CNT(peer);
+	OL_TXRX_PEER_UNREF_DELETE(peer);
+	return peer;
+}
+
+/**
+ * ol_txrx_find_peer_by_addr_inc_ref() - find peer via peer mac addr and peer_id
+ * @pdev: pointer of type ol_txrx_pdev_handle
+ * @peer_addr: peer mac addr
+ * @peer_id: pointer to fill in the value of peer->local_id for caller
+ *
+ * This function finds the peer with given mac address and returns its peer_id.
+ * Note that this function increments the peer->ref_cnt.
+ * This makes sure that peer will be valid. This also means the caller needs to
+ * call the corresponding API - OL_TXRX_PEER_UNREF_DELETE to delete the peer
+ * reference.
+ * Sample usage:
+ *    {
+ *      //the API call below increments the peer->ref_cnt
+ *      peer = ol_txrx_find_peer_by_addr_inc_ref(pdev, peer_addr, peer_id);
+ *
+ *      // Once peer usage is done
+ *
+ *      //the API call below decrements the peer->ref_cnt
+ *       OL_TXRX_PEER_UNREF_DELETE(peer);
+ *    }
+ *
+ * Return: peer handle if the peer is found, NULL if peer is not found.
+ */
+ol_txrx_peer_handle ol_txrx_find_peer_by_addr_inc_ref(ol_txrx_pdev_handle pdev,
+						uint8_t *peer_addr,
+						uint8_t *peer_id)
+{
+	struct ol_txrx_peer_t *peer;
+
+	peer = ol_txrx_peer_find_hash_find_inc_ref(pdev, peer_addr, 0, 1);
+	if (!peer)
+		return NULL;
+	*peer_id = peer->local_id;
 	return peer;
 }
 
@@ -2919,7 +2969,7 @@ QDF_STATUS ol_txrx_peer_state_update(struct cdp_pdev *ppdev,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	peer =  ol_txrx_peer_find_hash_find(pdev, peer_mac, 0, 1);
+	peer =  ol_txrx_peer_find_hash_find_inc_ref(pdev, peer_mac, 0, 1);
 	if (NULL == peer) {
 		ol_txrx_err(
 			   "%s: peer is null for peer_mac 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x\n",
@@ -2996,7 +3046,7 @@ ol_txrx_peer_update(ol_txrx_vdev_handle vdev,
 	struct ol_txrx_peer_t *peer;
 	int    peer_ref_cnt;
 
-	peer = ol_txrx_peer_find_hash_find(vdev->pdev, peer_mac, 0, 1);
+	peer = ol_txrx_peer_find_hash_find_inc_ref(vdev->pdev, peer_mac, 0, 1);
 	if (!peer) {
 		ol_txrx_dbg("%s: peer is null",
 			   __func__);
@@ -3167,6 +3217,11 @@ int ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer,
 	if (qdf_atomic_dec_and_test(&peer->ref_cnt)) {
 		u_int16_t peer_id;
 
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+			   "[%s][%d]: Deleting peer %p (%pM) ref_cnt %d\n",
+			   fname, line, peer, peer->mac_addr.raw,
+			   qdf_atomic_read(&peer->ref_cnt));
+
 		peer_id = peer->local_id;
 		/* remove the reference to the peer from the hash table */
 		ol_txrx_peer_find_hash_remove(pdev, peer);
@@ -3271,8 +3326,8 @@ int ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer,
 	} else {
 		qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-			  "ref delete(%s): peer %p peer->ref_cnt = %d",
-			  fname, peer, rc);
+			  "[%s][%d]: ref delete peer %p peer->ref_cnt = %d",
+			  fname, line, peer, rc);
 	}
 
 	return rc;
@@ -3496,8 +3551,7 @@ ol_txrx_peer_handle
 ol_txrx_peer_find_by_addr(struct ol_txrx_pdev_t *pdev, uint8_t *peer_mac_addr)
 {
 	struct ol_txrx_peer_t *peer;
-
-	peer = ol_txrx_peer_find_hash_find(pdev, peer_mac_addr, 0, 0);
+	peer = ol_txrx_peer_find_hash_find_inc_ref(pdev, peer_mac_addr, 0, 0);
 	if (peer) {
 		ol_txrx_info_high(
 			   "%s: Delete extra reference %p", __func__, peer);
