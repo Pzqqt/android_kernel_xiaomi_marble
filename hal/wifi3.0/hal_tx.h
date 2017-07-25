@@ -25,7 +25,6 @@
 #include "hal_api.h"
 #include "wcss_version.h"
 
-
 #define WBM_RELEASE_RING_5_TX_RATE_STATS_OFFSET   0x00000014
 #define WBM_RELEASE_RING_5_TX_RATE_STATS_LSB      0
 #define WBM_RELEASE_RING_5_TX_RATE_STATS_MASK     0xffffffff
@@ -95,11 +94,11 @@ do {                                            \
 /*
  * Offset of HTT Tx Descriptor in WBM Completion
  * HTT Tx Desc structure is passed from firmware to host overlayed
- * on wbm_release_ring DWORD 3 and 4 for software based completions
+ * on wbm_release_ring DWORDs 2,3 ,4 and 5for software based completions
  * (Exception frames and TQM bypass frames)
  */
-#define HAL_TX_COMP_HTT_STATUS_OFFSET 12
-#define HAL_TX_COMP_HTT_STATUS_LEN 8
+#define HAL_TX_COMP_HTT_STATUS_OFFSET 8
+#define HAL_TX_COMP_HTT_STATUS_LEN 16
 
 #define HAL_TX_BUF_TYPE_BUFFER 0
 #define HAL_TX_BUF_TYPE_EXT_DESC 1

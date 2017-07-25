@@ -1676,6 +1676,47 @@ static void dp_tx_inspect_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 }
 
 /**
+ * dp_tx_comp_free_buf() - Free nbuf associated with the Tx Descriptor
+ * @soc: Soc handle
+ * @desc: software Tx descriptor to be processed
+ *
+ * Return: none
+ */
+static inline void dp_tx_comp_free_buf(struct dp_soc *soc,
+		struct dp_tx_desc_s *desc)
+{
+	struct dp_vdev *vdev = desc->vdev;
+	qdf_nbuf_t nbuf = desc->nbuf;
+
+	/* 0 : MSDU buffer, 1 : MLE */
+	if (desc->msdu_ext_desc) {
+		/* TSO free */
+		if (hal_tx_ext_desc_get_tso_enable(
+					desc->msdu_ext_desc->vaddr)) {
+			/* If remaining number of segment is 0
+			 * actual TSO may unmap and free */
+			if (!DP_DESC_NUM_FRAG(desc)) {
+				qdf_nbuf_unmap(soc->osdev, nbuf,
+						QDF_DMA_TO_DEVICE);
+				qdf_nbuf_free(nbuf);
+				return;
+			}
+		}
+	}
+
+	if (desc->flags & DP_TX_DESC_FLAG_ME)
+		dp_tx_me_free_buf(desc->pdev, desc->me_buffer);
+
+	qdf_nbuf_unmap(soc->osdev, nbuf, QDF_DMA_TO_DEVICE);
+
+	if (!vdev->mesh_vdev) {
+		qdf_nbuf_free(nbuf);
+	} else {
+		vdev->osif_tx_free_ext((nbuf));
+	}
+}
+
+/**
  * dp_tx_process_htt_completion() - Tx HTT Completion Indication Handler
  * @tx_desc: software descriptor head pointer
  * @status : Tx completion status from HTT descriptor
@@ -1704,7 +1745,7 @@ void dp_tx_process_htt_completion(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 	case HTT_TX_FW2WBM_TX_STATUS_DROP:
 	case HTT_TX_FW2WBM_TX_STATUS_TTL:
 	{
-		DP_TX_FREE_SINGLE_BUF(soc, tx_desc->nbuf);
+		dp_tx_comp_free_buf(soc, tx_desc);
 		dp_tx_desc_release(tx_desc, tx_desc->pool_id);
 		break;
 	}
@@ -1922,7 +1963,6 @@ fail:
 	return;
 }
 
-
 /**
  * dp_tx_comp_process_desc() - Tx complete software descriptor handler
  * @soc: core txrx main context
@@ -1934,7 +1974,7 @@ fail:
  * Return: none
  */
 static void dp_tx_comp_process_desc(struct dp_soc *soc,
-				    struct dp_tx_desc_s *comp_head)
+		struct dp_tx_desc_s *comp_head)
 {
 	struct dp_tx_desc_s *desc;
 	struct dp_tx_desc_s *next;
@@ -1946,52 +1986,20 @@ static void dp_tx_comp_process_desc(struct dp_soc *soc,
 	desc = comp_head;
 
 	while (desc) {
-
 		hal_tx_comp_get_status(&desc->comp, &ts);
 		peer = dp_peer_find_by_id(soc, ts.peer_id);
 		length = qdf_nbuf_len(desc->nbuf);
-		/* Error Handling */
-		if (hal_tx_comp_get_buffer_source(&desc->comp) ==
-				HAL_TX_COMP_RELEASE_SOURCE_FW) {
-			dp_tx_comp_process_exception(desc);
-			desc = desc->next;
-			continue;
-		}
 
 		/* Process Tx status in descriptor */
 		if (soc->process_tx_status ||
 				(desc->vdev && desc->vdev->mesh_vdev))
 			dp_tx_comp_process_tx_status(desc, length);
 
-		/* 0 : MSDU buffer, 1 : MLE */
-		if (desc->msdu_ext_desc) {
-			/* TSO free */
-			if (hal_tx_ext_desc_get_tso_enable(
-				desc->msdu_ext_desc->vaddr)) {
-				/* If remaining number of segment is 0
-				 * actual TSO may unmap and free */
-				if (!DP_DESC_NUM_FRAG(desc)) {
-					qdf_nbuf_unmap(soc->osdev, desc->nbuf,
-							QDF_DMA_TO_DEVICE);
-					qdf_nbuf_free(desc->nbuf);
-				}
-			} else {
-				/* SG free */
-				/* Free buffer */
-				DP_TX_FREE_DMA_TO_DEVICE(soc, desc->vdev,
-								desc->nbuf);
-			}
-		} else {
-			/* Free buffer */
-			DP_TX_FREE_DMA_TO_DEVICE(soc, desc->vdev, desc->nbuf);
-		}
+		dp_tx_comp_free_buf(soc, desc);
 
 		DP_HIST_PACKET_COUNT_INC(desc->pdev->pdev_id);
+
 		next = desc->next;
-
-		if (desc->flags & DP_TX_DESC_FLAG_ME)
-			dp_tx_me_free_buf(desc->pdev, desc->me_buffer);
-
 		dp_tx_desc_release(desc, desc->pool_id);
 		desc = next;
 	}

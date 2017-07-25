@@ -40,16 +40,6 @@ do {                                                           \
 	qdf_nbuf_free(buf);                                    \
 } while (0)
 
-#define DP_TX_FREE_DMA_TO_DEVICE(soc, vdev, buf)               \
-do {                                                           \
-	qdf_nbuf_unmap(soc->osdev, buf, QDF_DMA_TO_DEVICE);    \
-	if (!vdev->mesh_vdev) {                                \
-		qdf_nbuf_free(buf);                            \
-	} else {                                               \
-		vdev->osif_tx_free_ext((buf));		       \
-	}                                                      \
-} while (0)
-
 #define OCB_HEADER_VERSION	 1
 
 /**
