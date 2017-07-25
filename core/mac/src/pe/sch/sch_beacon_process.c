@@ -535,7 +535,7 @@ sch_bcn_update_he_ies(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
 static void
 sch_bcn_update_opmode_change(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
 				tpPESession session, tpSchBeaconStruct bcn,
-				tpSirMacMgmtHdr mac_hdr)
+				tpSirMacMgmtHdr mac_hdr, uint8_t cb_mode)
 {
 	bool skip_opmode_update = false;
 	uint8_t oper_mode;
@@ -543,10 +543,22 @@ sch_bcn_update_opmode_change(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
 	uint8_t ch_width = 0;
 
 	if (session->vhtCapability && bcn->OperatingMode.present) {
+		update_nss(mac_ctx, sta_ds, bcn, session, mac_hdr);
 		oper_mode = get_operating_channel_width(sta_ds);
 		if ((oper_mode == eHT_CHANNEL_WIDTH_80MHZ) &&
 		    (bcn->OperatingMode.chanWidth > eHT_CHANNEL_WIDTH_80MHZ))
 			skip_opmode_update = true;
+		if (WNI_CFG_CHANNEL_BONDING_MODE_DISABLE == cb_mode) {
+			/*
+			 * if channel bonding is disabled from INI and
+			 * receiving beacon which has operating mode IE
+			 * containing channel width change then don't update
+			 * CH_WIDTH
+			 */
+			pe_err("CB disabled & CH_WIDTH changed old[%d] new[%d]",
+				oper_mode, bcn->OperatingMode.chanWidth);
+			return;
+		}
 
 		if (!skip_opmode_update &&
 			((oper_mode != bcn->OperatingMode.chanWidth) ||
@@ -608,6 +620,17 @@ sch_bcn_update_opmode_change(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
 	    (oper_mode < bcn->VHTOperation.chanWidth))
 		skip_opmode_update = true;
 
+	if (WNI_CFG_CHANNEL_BONDING_MODE_DISABLE == cb_mode) {
+		/*
+		 * if channel bonding is disabled from INI and
+		 * receiving beacon which has operating mode IE
+		 * containing channel width change then don't update
+		 * CH_WIDTH
+		 */
+		pe_err("CB disabled & CH_WIDTH changed old[%d] new[%d]",
+			oper_mode, bcn->OperatingMode.chanWidth);
+		return;
+	}
 	if (!skip_opmode_update &&
 	    (oper_mode != bcn->VHTOperation.chanWidth)) {
 		pe_debug("received VHTOP CHWidth %d staIdx = %d",
@@ -695,12 +718,11 @@ sch_bcn_process_sta_ibss(tpAniSirGlobal mac_ctx,
 	/* check for VHT capability */
 	pStaDs = dph_lookup_hash_entry(mac_ctx, pMh->sa, &aid,
 			&session->dph.dphHashTable);
-	if ((NULL == pStaDs) ||
-	  (WNI_CFG_CHANNEL_BONDING_MODE_DISABLE == cb_mode) ||
-	  ((NULL != pStaDs) &&
-	   (STA_INVALID_IDX == pStaDs->staIndex)))
+	if ((NULL == pStaDs) || ((NULL != pStaDs) &&
+					(STA_INVALID_IDX == pStaDs->staIndex)))
 		return;
-	sch_bcn_update_opmode_change(mac_ctx, pStaDs, session, bcn, pMh);
+	sch_bcn_update_opmode_change(mac_ctx, pStaDs, session, bcn, pMh,
+				     cb_mode);
 	sch_bcn_update_he_ies(mac_ctx, pStaDs, session, bcn, pMh);
 	return;
 }
