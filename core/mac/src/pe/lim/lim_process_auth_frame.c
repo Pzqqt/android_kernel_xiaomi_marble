@@ -1042,7 +1042,7 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 {
 	uint8_t *body_ptr, key_id, cfg_privacy_opt_imp;
 	uint8_t defaultkey[SIR_MAC_KEY_LENGTH];
-	uint8_t plainbody[256];
+	uint8_t plainbody[LIM_ENCR_AUTH_BODY_LEN];
 	uint8_t decrypt_result;
 	uint16_t frame_len, curr_seq_num = 0;
 	uint32_t val, key_length = 8;
