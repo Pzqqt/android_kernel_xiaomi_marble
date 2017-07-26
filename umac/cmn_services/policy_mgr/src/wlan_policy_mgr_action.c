@@ -705,11 +705,9 @@ void policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
 		policy_mgr_err("SAP restart get channel callback in NULL");
 		goto end;
 	}
-	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	status = pm_ctx->hdd_cbacks.
 		wlan_hdd_get_channel_for_sap_restart(psoc, vdev_id,
 			&channel, &sec_ch);
-	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 	if (status != QDF_STATUS_SUCCESS) {
 		policy_mgr_err("Failed to switch SAP channel");
 		goto end;
