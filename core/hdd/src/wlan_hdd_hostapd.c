@@ -630,9 +630,10 @@ static int hdd_stop_bss_link(hdd_adapter_t *pHostapdAdapter,
 
 /**
  * hdd_chan_change_notify() - Function to notify hostapd about channel change
- * @hostapd_adapter	hostapd adapter
+ * @hostapd_adapter:	hostapd adapter
  * @dev:		Net device structure
  * @chan_change:	New channel change parameters
+ * @legacy_phymode:	is the phymode legacy
  *
  * This function is used to notify hostapd about the channel change
  *
@@ -641,7 +642,8 @@ static int hdd_stop_bss_link(hdd_adapter_t *pHostapdAdapter,
  */
 QDF_STATUS hdd_chan_change_notify(hdd_adapter_t *adapter,
 		struct net_device *dev,
-		struct hdd_chan_change_params chan_change)
+		struct hdd_chan_change_params chan_change,
+		bool legacy_phymode)
 {
 	struct ieee80211_channel *chan;
 	struct cfg80211_chan_def chandef;
@@ -669,7 +671,9 @@ QDF_STATUS hdd_chan_change_notify(hdd_adapter_t *adapter,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (chan_change.chan_params.ch_width) {
+	if (legacy_phymode) {
+		channel_type = NL80211_CHAN_NO_HT;
+	} else {
 		switch (chan_change.chan_params.sec_ch_offset) {
 		case PHY_SINGLE_CHANNEL_CENTERED:
 			channel_type = NL80211_CHAN_HT20;
@@ -684,8 +688,6 @@ QDF_STATUS hdd_chan_change_notify(hdd_adapter_t *adapter,
 			channel_type = NL80211_CHAN_NO_HT;
 			break;
 		}
-	} else {
-		channel_type = NL80211_CHAN_NO_HT;
 	}
 
 	cfg80211_chandef_create(&chandef, chan, channel_type);
@@ -1075,6 +1077,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 	struct hdd_chan_change_params chan_change;
 	int ret = 0;
 	struct ch_params sap_ch_param = {0};
+	eCsrPhyMode phy_mode;
+	bool legacy_phymode;
 
 	dev = (struct net_device *)usrDataForCallback;
 	if (!dev) {
@@ -2008,6 +2012,21 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			pSapEvent->sapevt.sap_ch_selected.ht_sec_ch,
 			&sap_ch_param);
 
+		phy_mode = wlan_sap_get_phymode(
+				WLAN_HDD_GET_SAP_CTX_PTR(pHostapdAdapter));
+
+		switch (phy_mode) {
+		case eCSR_DOT11_MODE_11n:
+		case eCSR_DOT11_MODE_11n_ONLY:
+		case eCSR_DOT11_MODE_11ac:
+		case eCSR_DOT11_MODE_11ac_ONLY:
+			legacy_phymode = false;
+			break;
+		default:
+			legacy_phymode = true;
+			break;
+		}
+
 		chan_change.chan =
 			pSapEvent->sapevt.sap_ch_selected.pri_ch;
 		chan_change.chan_params.ch_width =
@@ -2020,7 +2039,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			pSapEvent->sapevt.sap_ch_selected.vht_seg1_center_ch;
 
 		return hdd_chan_change_notify(pHostapdAdapter, dev,
-					      chan_change);
+					      chan_change, legacy_phymode);
 	case eSAP_ACS_SCAN_SUCCESS_EVENT:
 		return hdd_handle_acs_scan_event(pSapEvent, pHostapdAdapter);
 
