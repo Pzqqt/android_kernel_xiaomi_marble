@@ -1179,7 +1179,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 		skb->next = NULL;
 
 #ifdef QCA_WIFI_NAPIER_EMULATION /* Debug code, remove later */
-		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO,
 			 "%s: skb %p skb->len %d\n", __func__, skb, skb->len);
 #endif
 
