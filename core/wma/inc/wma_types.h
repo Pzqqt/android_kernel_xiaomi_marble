@@ -715,6 +715,22 @@ QDF_STATUS wma_tx_packet(void *pWMA,
 QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *p_cds_context,
 		    wma_tgt_cfg_cb pTgtUpdCB, struct cds_config_info *cds_cfg);
 
+/**
+ * wma_vdev_init() - initialize a wma vdev
+ * @vdev: the vdev to initialize
+ *
+ * Return: None
+ */
+void wma_vdev_init(struct wma_txrx_node *vdev);
+
+/**
+ * wma_vdev_deinit() - de-initialize a wma vdev
+ * @vdev: the vdev to de-initialize
+ *
+ * Return: None
+ */
+void wma_vdev_deinit(struct wma_txrx_node *vdev);
+
 QDF_STATUS wma_register_mgmt_frm_client(void);
 
 QDF_STATUS wma_de_register_mgmt_frm_client(void);

@@ -4259,19 +4259,20 @@ bool wma_is_vdev_up(uint8_t vdev_id)
 	return (state == WLAN_VDEV_S_RUN) ? true : false;
 }
 
-void wma_acquire_wmi_resp_wakelock(t_wma_handle *wma, uint32_t msec)
+void wma_acquire_wakelock(qdf_wake_lock_t *wl, uint32_t msec)
 {
-	cds_host_diag_log_work(&wma->wmi_cmd_rsp_wake_lock,
-			       msec,
-			       WIFI_POWER_EVENT_WAKELOCK_WMI_CMD_RSP);
-	qdf_wake_lock_timeout_acquire(&wma->wmi_cmd_rsp_wake_lock, msec);
+	t_wma_handle *wma = cds_get_context(QDF_MODULE_ID_WMA);
+
+	cds_host_diag_log_work(wl, msec, WIFI_POWER_EVENT_WAKELOCK_WMI_CMD_RSP);
+	qdf_wake_lock_timeout_acquire(wl, msec);
 	qdf_runtime_pm_prevent_suspend(wma->wmi_cmd_rsp_runtime_lock);
 }
 
-void wma_release_wmi_resp_wakelock(t_wma_handle *wma)
+void wma_release_wakelock(qdf_wake_lock_t *wl)
 {
-	qdf_wake_lock_release(&wma->wmi_cmd_rsp_wake_lock,
-			      WIFI_POWER_EVENT_WAKELOCK_WMI_CMD_RSP);
+	t_wma_handle *wma = cds_get_context(QDF_MODULE_ID_WMA);
+
+	qdf_wake_lock_release(wl, WIFI_POWER_EVENT_WAKELOCK_WMI_CMD_RSP);
 	qdf_runtime_pm_allow_suspend(wma->wmi_cmd_rsp_runtime_lock);
 }
 
@@ -4279,11 +4280,13 @@ QDF_STATUS
 wma_send_vdev_start_to_fw(t_wma_handle *wma, struct vdev_start_params *params)
 {
 	QDF_STATUS status;
+	struct wma_txrx_node *vdev = &wma->interfaces[params->vdev_id];
 
-	wma_acquire_wmi_resp_wakelock(wma, WMA_VDEV_START_REQUEST_TIMEOUT);
+	wma_acquire_wakelock(&vdev->vdev_start_wakelock,
+			     WMA_VDEV_START_REQUEST_TIMEOUT);
 	status = wmi_unified_vdev_start_send(wma->wmi_handle, params);
 	if (QDF_IS_STATUS_ERROR(status))
-		wma_release_wmi_resp_wakelock(wma);
+		wma_release_wakelock(&vdev->vdev_start_wakelock);
 
 	return status;
 }
@@ -4291,11 +4294,13 @@ wma_send_vdev_start_to_fw(t_wma_handle *wma, struct vdev_start_params *params)
 QDF_STATUS wma_send_vdev_stop_to_fw(t_wma_handle *wma, uint8_t vdev_id)
 {
 	QDF_STATUS status;
+	struct wma_txrx_node *vdev = &wma->interfaces[vdev_id];
 
-	wma_acquire_wmi_resp_wakelock(wma, WMA_VDEV_STOP_REQUEST_TIMEOUT);
+	wma_acquire_wakelock(&vdev->vdev_stop_wakelock,
+			     WMA_VDEV_STOP_REQUEST_TIMEOUT);
 	status = wmi_unified_vdev_stop_send(wma->wmi_handle, vdev_id);
 	if (QDF_IS_STATUS_ERROR(status))
-		wma_release_wmi_resp_wakelock(wma);
+		wma_release_wakelock(&vdev->vdev_stop_wakelock);
 
 	return status;
 }
@@ -4310,6 +4315,30 @@ bool wma_is_service_enabled(WMI_SERVICE service_type)
 	}
 
 	return WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap, service_type);
+}
+
+QDF_STATUS wma_send_vdev_up_to_fw(t_wma_handle *wma,
+				  struct vdev_up_params *params,
+				  uint8_t bssid[IEEE80211_ADDR_LEN])
+{
+	QDF_STATUS status;
+	struct wma_txrx_node *vdev = &wma->interfaces[params->vdev_id];
+
+	status = wmi_unified_vdev_up_send(wma->wmi_handle, bssid, params);
+	wma_release_wakelock(&vdev->vdev_start_wakelock);
+
+	return status;
+}
+
+QDF_STATUS wma_send_vdev_down_to_fw(t_wma_handle *wma, uint8_t vdev_id)
+{
+	QDF_STATUS status;
+	struct wma_txrx_node *vdev = &wma->interfaces[vdev_id];
+
+	status = wmi_unified_vdev_down_send(wma->wmi_handle, vdev_id);
+	wma_release_wakelock(&vdev->vdev_start_wakelock);
+
+	return status;
 }
 
 tSirWifiPeerType wmi_to_sir_peer_type(enum wmi_peer_type type)

@@ -1006,6 +1006,8 @@ typedef struct {
  * @wow_stats: stat counters for WoW related events
  * It stores parameters per vdev in wma.
  * @in_bmps : Whether bmps for this interface has been enabled
+ * @vdev_start_wakelock: wakelock to protect vdev start op with firmware
+ * @vdev_stop_wakelock: wakelock to protect vdev stop op with firmware
  */
 struct wma_txrx_node {
 	uint8_t addr[IEEE80211_ADDR_LEN];
@@ -1086,6 +1088,8 @@ struct wma_txrx_node {
 	bool in_bmps;
 	struct beacon_filter_param beacon_filter;
 	bool beacon_filter_enabled;
+	qdf_wake_lock_t vdev_start_wakelock;
+	qdf_wake_lock_t vdev_stop_wakelock;
 };
 
 #if defined(QCA_WIFI_FTM)
