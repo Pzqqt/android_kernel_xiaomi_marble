@@ -4522,6 +4522,11 @@ bool hdd_check_for_opened_interfaces(hdd_context_t *hdd_ctx)
 	QDF_STATUS status;
 	bool close_modules = true;
 
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+		hdd_info("FTM mode, don't close the module");
+		return false;
+	}
+
 	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
 	while ((NULL != adapter_node) && (QDF_STATUS_SUCCESS == status)) {
 		if (test_bit(DEVICE_IFACE_OPENED,
