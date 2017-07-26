@@ -8554,8 +8554,8 @@ static int wlan_hdd_validate_and_get_pre_cac_ch(hdd_context_t *hdd_ctx,
 			hdd_err("Failed to get channel list");
 			return -EINVAL;
 		}
-		policy_mgr_update_with_safe_channel_list(channel_list, &len,
-				pcl_weights, weight_len);
+		policy_mgr_update_with_safe_channel_list(hdd_ctx->hdd_psoc,
+				channel_list, &len, pcl_weights, weight_len);
 		ret = wlan_hdd_sap_get_nol(ap_adapter, nol, &nol_len);
 		for (i = 0; i < len; i++) {
 			found = false;
