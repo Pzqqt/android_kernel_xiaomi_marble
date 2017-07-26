@@ -212,11 +212,19 @@ dp_rx_chain_msdus(struct dp_soc *soc, qdf_nbuf_t nbuf,
 		struct dp_rx_desc *rx_desc)
 {
 	bool mpdu_done = false;
+	/* TODO: Currently only single radio is supported, hence
+	 * pdev hard coded to '0' index
+	 */
+	struct dp_pdev *dp_pdev = soc->pdev_list[0];
 
 	if (hal_rx_msdu_end_first_msdu_get(rx_desc->rx_buf_start)) {
 		qdf_nbuf_set_chfrag_start(rx_desc->nbuf, 1);
 		soc->invalid_peer_head_msdu = NULL;
 		soc->invalid_peer_tail_msdu = NULL;
+
+		hal_rx_mon_hw_desc_get_mpdu_status(rx_desc->rx_buf_start,
+				&(dp_pdev->ppdu_info.rx_status));
+
 	}
 
 	if (hal_rx_msdu_end_last_msdu_get(rx_desc->rx_buf_start)) {

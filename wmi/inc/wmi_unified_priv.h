@@ -32,9 +32,12 @@
 #ifndef _WMI_UNIFIED_PRIV_H_
 #define _WMI_UNIFIED_PRIV_H_
 #include <osdep.h>
-#include "a_types.h"
+#include "wmi_unified_api.h"
 #include "wmi_unified_param.h"
 #include "wlan_scan_ucfg_api.h"
+#ifdef CONFIG_MCL
+#include <wmi_unified.h>
+#endif
 #include "qdf_atomic.h"
 #include "wlan_objmgr_psoc_service_ready_api.h"
 
