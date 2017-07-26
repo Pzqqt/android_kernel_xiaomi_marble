@@ -59,12 +59,10 @@ struct scheduler_msg;
  * struct nan_psoc_priv_obj - nan private psoc obj
  * @lock: lock to be acquired before reading or writing to object
  * @cb_obj: struct contaning callback pointers
- * @vdev: ndi vdev
  */
 struct nan_psoc_priv_obj {
 	qdf_spinlock_t lock;
 	struct nan_callbacks cb_obj;
-	struct wlan_objmgr_vdev *vdev;
 };
 
 /**
