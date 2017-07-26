@@ -4153,7 +4153,7 @@ enum station_keepalive_method {
 #define CFG_ROAM_BMISS_FINAL_BCNT_NAME                  "gRoamBmissFinalBcnt"
 #define CFG_ROAM_BMISS_FINAL_BCNT_MIN                   (5)
 #define CFG_ROAM_BMISS_FINAL_BCNT_MAX                   (100)
-#define CFG_ROAM_BMISS_FINAL_BCNT_DEFAULT               (10)
+#define CFG_ROAM_BMISS_FINAL_BCNT_DEFAULT               (20)
 
 #define CFG_ROAM_BEACON_RSSI_WEIGHT_NAME                "gRoamBeaconRssiWeight"
 #define CFG_ROAM_BEACON_RSSI_WEIGHT_MIN                 (0)
