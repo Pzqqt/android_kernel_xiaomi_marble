@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -47,6 +47,10 @@ extern "C" {
 typedef __qdf_event_t qdf_event_t;
 /* Function declarations and documenation */
 
+#ifdef CONFIG_MCL
+typedef void (*qdf_self_recovery_callback)(void);
+#endif
+
 QDF_STATUS qdf_event_create(qdf_event_t *event);
 
 QDF_STATUS qdf_event_set(qdf_event_t *event);
@@ -64,6 +68,23 @@ QDF_STATUS qdf_wait_single_event(qdf_event_t *event,
  * Return: QDF status
  */
 QDF_STATUS qdf_exit_thread(QDF_STATUS status);
+
+#ifdef CONFIG_MCL
+/**
+ * qdf_register_self_recovery_callback () - register self recovery callback
+ * @callback:  self recovery callback
+ *
+ * Return: None
+ */
+void qdf_register_self_recovery_callback(qdf_self_recovery_callback callback);
+
+/**
+ * qdf_trigger_self_recovery () - tirgger self recovery
+ *
+ * Return: None
+ */
+void qdf_trigger_self_recovery(void);
+#endif
 
 #ifdef __cplusplus
 }
