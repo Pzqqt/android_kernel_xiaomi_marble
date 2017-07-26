@@ -3059,6 +3059,8 @@ typedef enum {
  *                              current AP to avoid ping pong effects
  * @good_rssi_roam:             Lazy Roam
  * @is_5g_pref_enabled:         5GHz BSSID preference feature enable/disable.
+ * @bg_scan_bad_rssi_thresh:    Bad RSSI threshold to perform bg scan.
+ * @bg_scan_client_bitmap:      Bitmap to identify the client scans to snoop.
  *
  * This structure holds all the key parameters related to
  * initial connection and also roaming connections.
@@ -3089,6 +3091,8 @@ struct roam_ext_params {
 	int traffic_threshold;
 	uint8_t num_rssi_rejection_ap;
 	struct rssi_disallow_bssid rssi_rejection_ap[MAX_RSSI_AVOID_BSSID_LIST];
+	int8_t bg_scan_bad_rssi_thresh;
+	uint32_t bg_scan_client_bitmap;
 };
 
 /**

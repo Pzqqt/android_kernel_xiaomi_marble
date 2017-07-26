@@ -899,7 +899,9 @@ QDF_STATUS wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 	params.traffic_threshold =
 			roam_params->traffic_threshold;
 	params.initial_dense_status = roam_params->initial_dense_status;
-
+	params.bg_scan_bad_rssi_thresh = roam_params->bg_scan_bad_rssi_thresh -
+		WMA_NOISE_FLOOR_DBM_DEFAULT;
+	params.bg_scan_client_bitmap = roam_params->bg_scan_client_bitmap;
 
 	/*
 	 * The current Noise floor in firmware is -96dBm. Penalty/Boost
@@ -957,8 +959,10 @@ QDF_STATUS wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 
 	status = wmi_unified_roam_scan_offload_rssi_thresh_cmd(
 			wma_handle->wmi_handle, &params);
-	if (QDF_IS_STATUS_ERROR(status))
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMA_LOGE("roam_scan_offload_rssi_thresh_cmd failed %d", status);
 		return status;
+	}
 
 	WMA_LOGD(FL("roam_scan_rssi_thresh=%d, roam_rssi_thresh_diff=%d"),
 		rssi_thresh, rssi_thresh_diff);
@@ -971,6 +975,9 @@ QDF_STATUS wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 			roam_params->dense_min_aps_cnt,
 			roam_params->traffic_threshold,
 			roam_params->initial_dense_status);
+	WMA_LOGD(FL("BG Scan Bad RSSI:%d, bitmap:0x%x"),
+			roam_params->bg_scan_bad_rssi_thresh,
+			roam_params->bg_scan_client_bitmap);
 	return status;
 }
 

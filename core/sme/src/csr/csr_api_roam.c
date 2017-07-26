@@ -2760,6 +2760,16 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->roam.configParam.roam_params.traffic_threshold =
 			pParam->roam_dense_traffic_thresh;
 
+		pMac->roam.configParam.roam_params.bg_scan_bad_rssi_thresh =
+			pParam->roam_bg_scan_bad_rssi_thresh;
+		pMac->roam.configParam.roam_params.bg_scan_client_bitmap =
+			pParam->roam_bg_scan_client_bitmap;
+
+		pMac->roam.configParam.roam_params.bg_scan_bad_rssi_thresh =
+			pParam->roam_bg_scan_bad_rssi_thresh;
+		pMac->roam.configParam.roam_params.bg_scan_client_bitmap =
+			pParam->roam_bg_scan_client_bitmap;
+
 		pMac->roam.configParam.scan_adaptive_dwell_mode =
 			pParam->scan_adaptive_dwell_mode;
 		pMac->roam.configParam.roamscan_adaptive_dwell_mode =
@@ -3001,6 +3011,11 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 			cfg_params->roam_params.dense_min_aps_cnt;
 	pParam->roam_dense_traffic_thresh =
 			cfg_params->roam_params.traffic_threshold;
+
+	pParam->roam_bg_scan_bad_rssi_thresh =
+		cfg_params->roam_params.bg_scan_bad_rssi_thresh;
+	pParam->roam_bg_scan_client_bitmap =
+		cfg_params->roam_params.bg_scan_client_bitmap;
 
 	pParam->scan_adaptive_dwell_mode =
 			cfg_params->scan_adaptive_dwell_mode;
@@ -18490,7 +18505,7 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 		roam_info->cfgParams.rssi_thresh_offset_5g;
 	sme_debug("5g offset threshold: %d", req_buf->rssi_thresh_offset_5g);
 	qdf_mem_copy(roam_params_dst, roam_params_src,
-		sizeof(struct roam_ext_params));
+		sizeof(*roam_params_dst));
 	/*
 	 * rssi_diff which is updated via framework is equivalent to the
 	 * INI RoamRssiDiff parameter and hence should be updated.
@@ -18525,6 +18540,9 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 		roam_params_dst->traffic_threshold,
 		roam_params_dst->initial_dense_status,
 		mac_ctx->scan.roam_candidate_count[session_id]);
+	sme_debug("BG Scan Bad RSSI:%d, bitmap:0x%x",
+			roam_params_dst->bg_scan_bad_rssi_thresh,
+			roam_params_dst->bg_scan_client_bitmap);
 
 	for (i = 0; i < roam_params_dst->num_bssid_avoid_list; i++) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,

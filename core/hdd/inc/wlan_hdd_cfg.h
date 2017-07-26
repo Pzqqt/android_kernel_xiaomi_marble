@@ -1985,6 +1985,66 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
+ * roam_bg_scan_bad_rssi_thresh - RSSI threshold for background roam
+ * @Min: -96
+ * @Max: 0
+ * @Default: -76
+ *
+ * If the DUT is connected to an AP with weak signal, then the bad RSSI
+ * threshold will be used as an opportunity to use the scan results
+ * from other scan clients and try to roam if there is a better AP
+ * available in the environment.
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ROAM_BG_SCAN_BAD_RSSI_THRESHOLD_NAME  "roam_bg_scan_bad_rssi_thresh"
+#define CFG_ROAM_BG_SCAN_BAD_RSSI_THRESHOLD_MIN     (-96)
+#define CFG_ROAM_BG_SCAN_BAD_RSSI_THRESHOLD_MAX     (0)
+#define CFG_ROAM_BG_SCAN_BAD_RSSI_THRESHOLD_DEFAULT (-76)
+
+/*
+ * <ini>
+ * roam_bg_scan_client_bitmap - Bitmap used to identify the scan clients
+ * @Min: 0
+ * @Max: 0x3FF
+ * @Default: 0x
+ *
+ * This bitmap is used to define the client scans that need to be used
+ * by the roaming module to perform a background roaming.
+ * Currently supported bit positions are as follows:
+ * Bit 0 is reserved in the firmware.
+ * WMI_SCAN_CLIENT_NLO - 1
+ * WMI_SCAN_CLIENT_EXTSCAN - 2
+ * WMI_SCAN_CLIENT_ROAM - 3
+ * WMI_SCAN_CLIENT_P2P - 4
+ * WMI_SCAN_CLIENT_LPI - 5
+ * WMI_SCAN_CLIENT_NAN - 6
+ * WMI_SCAN_CLIENT_ANQP - 7
+ * WMI_SCAN_CLIENT_OBSS - 8
+ * WMI_SCAN_CLIENT_PLM - 9
+ * WMI_SCAN_CLIENT_HOST - 10
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ROAM_BG_SCAN_CLIENT_BITMAP_NAME     "roam_bg_scan_client_bitmap"
+#define CFG_ROAM_BG_SCAN_CLIENT_BITMAP_MIN      (0)
+#define CFG_ROAM_BG_SCAN_CLIENT_BITMAP_MAX      (0x7FF)
+#define CFG_ROAM_BG_SCAN_CLIENT_BITMAP_DEFAULT  (0x424)
+
+/*
+ * <ini>
  * roamscan_adaptive_dwell_mode - Sets dwell time adaptive mode
  * @Min: 0
  * @Max: 4
@@ -12590,6 +12650,8 @@ struct hdd_config {
 	uint32_t roam_dense_rssi_thresh_offset;
 	bool ignore_peer_ht_opmode;
 	uint32_t roam_dense_min_aps;
+	int8_t roam_bg_scan_bad_rssi_thresh;
+	uint32_t roam_bg_scan_client_bitmap;
 	bool enable_edca_params;
 	uint32_t edca_vo_cwmin;
 	uint32_t edca_vi_cwmin;
