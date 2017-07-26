@@ -2322,6 +2322,7 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 		assoc_ind->assocReqLength = csr_roaminfo->assocReqLength;
 		assoc_ind->assocReqPtr = csr_roaminfo->assocReqPtr;
 		assoc_ind->fWmmEnabled = csr_roaminfo->wmmEnabledSta;
+		assoc_ind->ecsa_capable = csr_roaminfo->ecsa_capable;
 		if (csr_roaminfo->u.pConnectedProfile != NULL) {
 			assoc_ind->negotiatedAuthType =
 				csr_roaminfo->u.pConnectedProfile->AuthType;
@@ -2462,6 +2463,7 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 		reassoc_complete->max_mcs_idx = csr_roaminfo->max_mcs_idx;
 		reassoc_complete->rx_mcs_map = csr_roaminfo->rx_mcs_map;
 		reassoc_complete->tx_mcs_map = csr_roaminfo->tx_mcs_map;
+		reassoc_complete->ecsa_capable = csr_roaminfo->ecsa_capable;
 		break;
 
 	case eSAP_STA_DISASSOC_EVENT:

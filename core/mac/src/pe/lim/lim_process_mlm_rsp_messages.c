@@ -783,6 +783,7 @@ lim_fill_assoc_ind_params(tpAniSirGlobal mac_ctx,
 	sme_assoc_ind->max_mcs_idx = assoc_ind->max_mcs_idx;
 	sme_assoc_ind->rx_mcs_map = assoc_ind->rx_mcs_map;
 	sme_assoc_ind->tx_mcs_map = assoc_ind->tx_mcs_map;
+	sme_assoc_ind->ecsa_capable = assoc_ind->ecsa_capable;
 }
 
 /**

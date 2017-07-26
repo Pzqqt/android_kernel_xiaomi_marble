@@ -1368,6 +1368,13 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 			(uint8_t) vht_caps->ldpcCodingCap;
 	}
 
+	if (assoc_req->ExtCap.present)
+		sta_ds->non_ecsa_capable =
+		    !((struct s_ext_cap *)assoc_req->ExtCap.bytes)->
+		    ext_chan_switch;
+	else
+		sta_ds->non_ecsa_capable = 1;
+
 	if (!assoc_req->wmeInfoPresent) {
 		sta_ds->mlmStaContext.htCapability = 0;
 		sta_ds->mlmStaContext.vhtCapability = 0;
@@ -2390,6 +2397,10 @@ void lim_send_mlm_assoc_ind(tpAniSirGlobal mac_ctx,
 			assoc_ind->max_mcs_idx = maxidx;
 		}
 		fill_mlm_assoc_ind_vht(assoc_req, sta_ds, assoc_ind);
+		if (assoc_req->ExtCap.present)
+			assoc_ind->ecsa_capable =
+			((struct s_ext_cap *)assoc_req->ExtCap.bytes)->
+			ext_chan_switch;
 
 		/* updates VHT information in assoc indication */
 		lim_fill_assoc_ind_vht_info(mac_ctx, session_entry, assoc_req,

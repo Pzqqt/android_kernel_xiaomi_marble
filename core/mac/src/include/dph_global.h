@@ -265,6 +265,8 @@ typedef struct sDphHashNode {
 	int8_t del_sta_ctx_rssi;
 	bool sta_deletion_in_progress;
 	struct parsed_ies parsed_ies;
+	/* Flag indicating connected STA doesn't support ECSA */
+	uint8_t non_ecsa_capable;
 
 #ifdef WLAN_FEATURE_11AX
 	tDot11fIEvendor_he_cap he_config;

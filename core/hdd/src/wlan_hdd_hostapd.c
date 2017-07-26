@@ -1186,6 +1186,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			}
 		}
 
+		pHostapdAdapter->aStaInfo[staId].ecsa_capable = pSapEvent->
+			sapevt.sapStationAssocReassocCompleteEvent.ecsa_capable;
+
 		if (hdd_ipa_is_enabled(pHddCtx)) {
 			status = hdd_ipa_wlan_evt(pHostapdAdapter,
 					pHddApCtx->uBCStaId,
@@ -5127,18 +5130,19 @@ QDF_STATUS hdd_softap_get_sta_info(hdd_adapter_t *pAdapter, uint8_t *pBuf,
 	maxSta = hdd_ctx->config->maxNumberOfPeers;
 
 	for (i = 0; i <= maxSta; i++) {
-		if (pAdapter->aStaInfo[i].isUsed) {
-			len =
-				scnprintf(pBuf, buf_len,
-					  "%5d .%02x:%02x:%02x:%02x:%02x:%02x",
-					  pAdapter->aStaInfo[i].ucSTAId,
-					  pAdapter->aStaInfo[i].macAddrSTA.bytes[0],
-					  pAdapter->aStaInfo[i].macAddrSTA.bytes[1],
-					  pAdapter->aStaInfo[i].macAddrSTA.bytes[2],
-					  pAdapter->aStaInfo[i].macAddrSTA.bytes[3],
-					  pAdapter->aStaInfo[i].macAddrSTA.bytes[4],
-					  pAdapter->aStaInfo[i].macAddrSTA.
-					  bytes[5]);
+		hdd_station_info_t *sta_info_ptr = &pAdapter->aStaInfo[i];
+
+		if (sta_info_ptr->isUsed) {
+			len = scnprintf(pBuf, buf_len,
+					"%d %x:%x:%x:%x:%x:%x \t ecsa=%d\n",
+					sta_info_ptr->ucSTAId,
+					sta_info_ptr->macAddrSTA.bytes[0],
+					sta_info_ptr->macAddrSTA.bytes[1],
+					sta_info_ptr->macAddrSTA.bytes[2],
+					sta_info_ptr->macAddrSTA.bytes[3],
+					sta_info_ptr->macAddrSTA.bytes[4],
+					sta_info_ptr->macAddrSTA.bytes[5],
+					sta_info_ptr->ecsa_capable);
 			pBuf += len;
 			buf_len -= len;
 		}

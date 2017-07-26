@@ -3031,6 +3031,17 @@ lim_delete_dph_hash_entry(tpAniSirGlobal mac_ctx, tSirMacAddr sta_addr,
 					sta_ds, &beacon_params, session_entry);
 		}
 
+		if (sta_ds->non_ecsa_capable) {
+			if (session_entry->lim_non_ecsa_cap_num == 0) {
+				pe_debug("NonECSA sta 0, id %d is ecsa",
+					 sta_id);
+			} else {
+				session_entry->lim_non_ecsa_cap_num--;
+				pe_debug("reducing the non ECSA num to %d",
+					 session_entry->lim_non_ecsa_cap_num);
+			}
+		}
+
 		if (LIM_IS_IBSS_ROLE(session_entry))
 			lim_ibss_decide_protection_on_delete(mac_ctx, sta_ds,
 				     &beacon_params, session_entry);
