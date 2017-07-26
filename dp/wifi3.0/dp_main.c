@@ -341,7 +341,19 @@ static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
 		(unsigned long)srng->base_vaddr_unaligned);
 	ring_params.num_entries = num_entries;
 
-	dp_srng_msi_setup(soc, &ring_params, ring_type, ring_num);
+	if (soc->intr_mode == DP_INTR_MSI) {
+		dp_srng_msi_setup(soc, &ring_params, ring_type, ring_num);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("Using MSI for ring_type: %d, ring_num %d"),
+			ring_type, ring_num);
+
+	} else {
+		ring_params.msi_data = 0;
+		ring_params.msi_addr = 0;
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("Skipping MSI for ring_type: %d, ring_num %d"),
+			ring_type, ring_num);
+	}
 
 	/*
 	 * Setup interrupt timer and batch counter thresholds for
@@ -525,6 +537,7 @@ budget_done:
 	return dp_budget - budget;
 }
 
+#ifdef DP_INTR_POLL_BASED
 /* dp_interrupt_timer()- timer poll for interrupts
  *
  * @arg: SoC Handle
@@ -532,7 +545,6 @@ budget_done:
  * Return:
  *
  */
-#ifdef DP_INTR_POLL_BASED
 static void dp_interrupt_timer(void *arg)
 {
 	struct dp_soc *soc = (struct dp_soc *) arg;
@@ -548,7 +560,7 @@ static void dp_interrupt_timer(void *arg)
 }
 
 /*
- * dp_soc_interrupt_attach() - Register handlers for DP interrupts
+ * dp_soc_interrupt_attach_poll() - Register handlers for DP interrupts
  * @txrx_soc: DP SOC handle
  *
  * Host driver will register for “DP_NUM_INTERRUPT_CONTEXTS” number of NAPI
@@ -557,10 +569,12 @@ static void dp_interrupt_timer(void *arg)
  *
  * Return: 0 for success. nonzero for failure.
  */
-static QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
+static QDF_STATUS dp_soc_interrupt_attach_poll(void *txrx_soc)
 {
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
 	int i;
+
+	soc->intr_mode = DP_INTR_POLL;
 
 	for (i = 0; i < wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx); i++) {
 		soc->intr_ctx[i].dp_intr_id = i;
@@ -582,32 +596,38 @@ static QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef CONFIG_MCL
+extern int con_mode_monitor;
+static QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc);
+
 /*
- * dp_soc_interrupt_detach() - Deregister any allocations done for interrupts
+ * dp_soc_interrupt_attach_wrapper() - Register handlers for DP interrupts
  * @txrx_soc: DP SOC handle
  *
- * Return: void
+ * Call the appropriate attach function based on the mode of operation.
+ * This is a WAR for enabling monitor mode.
+ *
+ * Return: 0 for success. nonzero for failure.
  */
-static void dp_soc_interrupt_detach(void *txrx_soc)
+static QDF_STATUS dp_soc_interrupt_attach_wrapper(void *txrx_soc)
 {
-	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
-	int i;
-
-	qdf_timer_stop(&soc->int_timer);
-
-	qdf_timer_free(&soc->int_timer);
-
-	for (i = 0; i < wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx); i++) {
-		soc->intr_ctx[i].tx_ring_mask = 0;
-		soc->intr_ctx[i].rx_ring_mask = 0;
-		soc->intr_ctx[i].rx_mon_ring_mask = 0;
-		soc->intr_ctx[i].rx_err_ring_mask = 0;
-		soc->intr_ctx[i].rx_wbm_rel_ring_mask = 0;
-		soc->intr_ctx[i].reo_status_ring_mask = 0;
-		qdf_lro_deinit(soc->intr_ctx[i].lro_ctx);
+	if (con_mode_monitor == QDF_GLOBAL_MONITOR_MODE) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("Attach interrupts in Poll mode"));
+		return dp_soc_interrupt_attach_poll(txrx_soc);
+	} else {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("Attach interrupts in MSI mode"));
+		return dp_soc_interrupt_attach(txrx_soc);
 	}
 }
 #else
+static QDF_STATUS dp_soc_interrupt_attach_wrapper(void *txrx_soc)
+{
+	return dp_soc_interrupt_attach_poll(txrx_soc);
+}
+#endif
+#endif
 
 static void dp_soc_interrupt_map_calculate_integrated(struct dp_soc *soc,
 		int intr_ctx_num, int *irq_id_map, int *num_irq_r)
@@ -678,6 +698,8 @@ static void dp_soc_interrupt_map_calculate_msi(struct dp_soc *soc,
 		(intr_ctx_num % msi_vector_count) + msi_vector_start;
 	int num_irq = 0;
 
+	soc->intr_mode = DP_INTR_MSI;
+
 	if (tx_mask | rx_mask | rx_mon_mask | rx_err_ring_mask |
 	    rx_wbm_rel_ring_mask | reo_status_ring_mask)
 		irq_id_map[num_irq++] =
@@ -722,7 +744,6 @@ static QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
 
 	int i = 0;
 	int num_irq = 0;
-
 
 	for (i = 0; i < wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx); i++) {
 		int ret = 0;
@@ -791,6 +812,11 @@ static void dp_soc_interrupt_detach(void *txrx_soc)
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
 	int i;
 
+	if (soc->intr_mode == DP_INTR_POLL) {
+		qdf_timer_stop(&soc->int_timer);
+		qdf_timer_free(&soc->int_timer);
+	}
+
 	for (i = 0; i < wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx); i++) {
 		soc->intr_ctx[i].tx_ring_mask = 0;
 		soc->intr_ctx[i].rx_ring_mask = 0;
@@ -802,7 +828,6 @@ static void dp_soc_interrupt_detach(void *txrx_soc)
 		qdf_lro_deinit(soc->intr_ctx[i].lro_ctx);
 	}
 }
-#endif
 
 #define AVG_MAX_MPDUS_PER_TID 128
 #define AVG_TIDS_PER_CLIENT 2
@@ -2224,12 +2249,11 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 		goto fail1;
 
 
-#ifdef DP_INTR_POLL_BASED
-	if (wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx) != 0) {
+	if ((soc->intr_mode == DP_INTR_POLL) &&
+			wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx) != 0) {
 		if (pdev->vdev_count == 1)
 			qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
 	}
-#endif
 
 	dp_lro_hash_setup(soc);
 
@@ -4410,7 +4434,11 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.display_stats = dp_txrx_dump_stats,
 	.txrx_soc_set_nss_cfg = dp_soc_set_nss_cfg_wifi3,
 	.txrx_soc_get_nss_cfg = dp_soc_get_nss_cfg_wifi3,
+#ifdef DP_INTR_POLL_BASED
+	.txrx_intr_attach = dp_soc_interrupt_attach_wrapper,
+#else
 	.txrx_intr_attach = dp_soc_interrupt_attach,
+#endif
 	.txrx_intr_detach = dp_soc_interrupt_detach,
 	.set_pn_check = dp_set_pn_check_wifi3,
 	/* TODO: Add other functions */
@@ -4472,13 +4500,13 @@ static struct cdp_pflow_ops dp_ops_pflow = {
 };
 #endif /* CONFIG_WIN */
 
-#ifdef DP_INTR_POLL_BASED
 static QDF_STATUS dp_bus_suspend(struct cdp_pdev *opaque_pdev)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)opaque_pdev;
 	struct dp_soc *soc = pdev->soc;
 
-	qdf_timer_stop(&soc->int_timer);
+	if (soc->intr_mode == DP_INTR_POLL)
+		qdf_timer_stop(&soc->int_timer);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -4488,21 +4516,11 @@ static QDF_STATUS dp_bus_resume(struct cdp_pdev *opaque_pdev)
 	struct dp_pdev *pdev = (struct dp_pdev *)opaque_pdev;
 	struct dp_soc *soc = pdev->soc;
 
-	qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
+	if (soc->intr_mode == DP_INTR_POLL)
+		qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
 
 	return QDF_STATUS_SUCCESS;
 }
-#else
-static QDF_STATUS dp_bus_suspend(struct cdp_pdev *opaque_pdev)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS dp_bus_resume(struct cdp_pdev *opaque_pdev)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif /* DP_INTR_POLL_BASED */
 
 #ifndef CONFIG_WIN
 static struct cdp_misc_ops dp_ops_misc = {

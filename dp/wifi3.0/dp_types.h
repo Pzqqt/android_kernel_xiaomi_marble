@@ -148,6 +148,18 @@ union dp_rx_desc_list_elem_t;
 #define DP_MAC_ADDR_LEN 6
 
 /**
+ * enum dp_intr_mode
+ * @DP_INTR_LEGACY: Legacy/Line interrupts, for WIN
+ * @DP_INTR_MSI: MSI interrupts, for MCL
+ * @DP_INTR_POLL: Polling
+ */
+enum dp_intr_mode {
+	DP_INTR_LEGACY = 0,
+	DP_INTR_MSI,
+	DP_INTR_POLL,
+};
+
+/**
  * enum dp_tx_frm_type
  * @dp_tx_frm_std: Regular frame, no added header fragments
  * @dp_tx_frm_tso: TSO segment, with a modified IP header added
@@ -722,10 +734,10 @@ struct dp_soc {
 	qdf_spinlock_t ast_lock;
 	qdf_timer_t wds_aging_timer;
 
-#ifdef DP_INTR_POLL_BASED
 	/*interrupt timer*/
 	qdf_timer_t int_timer;
-#endif
+	uint8_t intr_mode;
+
 	qdf_list_t reo_desc_freelist;
 	qdf_spinlock_t reo_desc_freelist_lock;
 	struct mect_entry mect_table[DP_MAX_MECT_ENTRIES];
