@@ -2010,6 +2010,45 @@ QDF_STATUS hdd_roam_register_sta(hdd_adapter_t *pAdapter,
 }
 
 /**
+ * hdd_send_roamed_ind() - send roamed indication to cfg80211
+ * @dev: network device
+ * @bss: cfg80211 roamed bss pointer
+ * @req_ie: IEs used in reassociation request
+ * @req_ie_len: Length of the @req_ie
+ * @resp_ie: IEs received in successful reassociation response
+ * @resp_ie_len: Length of @resp_ie
+ *
+ * Return: none
+ */
+#if defined CFG80211_ROAMED_API_UNIFIED || \
+	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0))
+static void hdd_send_roamed_ind(struct net_device *dev,
+				struct cfg80211_bss *bss, const uint8_t *req_ie,
+				size_t req_ie_len, const uint8_t *resp_ie,
+				size_t resp_ie_len)
+{
+	struct cfg80211_roam_info info = {0};
+
+	info.bss = bss;
+	info.req_ie = req_ie;
+	info.req_ie_len = req_ie_len;
+	info.resp_ie = resp_ie;
+	info.resp_ie_len = resp_ie_len;
+	cfg80211_roamed(dev, &info, GFP_KERNEL);
+}
+#else
+static inline void hdd_send_roamed_ind(struct net_device *dev,
+				       struct cfg80211_bss *bss,
+				       const uint8_t *req_ie, size_t req_ie_len,
+				       const uint8_t *resp_ie,
+				       size_t resp_ie_len)
+{
+	cfg80211_roamed_bss(dev, bss, req_ie, req_ie_len, resp_ie, resp_ie_len,
+			    GFP_KERNEL);
+}
+#endif
+
+/**
  * hdd_send_re_assoc_event() - send reassoc event
  * @dev: pointer to net device
  * @pAdapter: pointer to adapter
@@ -2127,9 +2166,9 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	hdd_debug("Req RSN IE:");
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
 			   final_req_ie, (ssid_ie_len + reqRsnLength));
-	cfg80211_roamed_bss(dev, bss,
-			final_req_ie, (ssid_ie_len + reqRsnLength),
-			rspRsnIe, rspRsnLength, GFP_KERNEL);
+	hdd_send_roamed_ind(dev, bss, final_req_ie,
+			    (ssid_ie_len + reqRsnLength), rspRsnIe,
+			    rspRsnLength);
 
 	qdf_mem_copy(assoc_req_ies,
 		(u8 *)pCsrRoamInfo->pbFrames + pCsrRoamInfo->nBeaconLength,
@@ -2773,13 +2812,13 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 							pConnectedProfile->SSID.ssId,
 							pRoamInfo->u.
 							pConnectedProfile->SSID.length);
-						cfg80211_roamed_bss(dev,
-							roam_bss,
-							pFTAssocReq,
-							assocReqlen,
-							pFTAssocRsp,
-							assocRsplen,
-							GFP_KERNEL);
+						hdd_send_roamed_ind(
+								dev,
+								roam_bss,
+								pFTAssocReq,
+								assocReqlen,
+								pFTAssocRsp,
+								assocRsplen);
 						wlan_hdd_send_roam_auth_event(
 							pAdapter,
 							pRoamInfo->bssid.bytes,
