@@ -4173,6 +4173,9 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 #endif
 #endif
 
+		if (adapter->device_mode == QDF_STA_MODE)
+			wlan_cfg80211_sched_scan_stop(hdd_ctx->hdd_pdev,
+						      adapter->dev);
 		/*
 		 * It is possible that the caller of this function does not
 		 * wish to close the session
