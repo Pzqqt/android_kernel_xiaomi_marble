@@ -1976,6 +1976,8 @@ struct roam_offload_scan_params {
  * @dense_min_aps_cnt: dense roam minimum APs
  * @initial_dense_status: dense status detected by host
  * @traffic_threshold: dense roam RSSI threshold
+ * @bg_scan_bad_rssi_thresh: Bad RSSI threshold to perform bg scan
+ * @bg_scan_client_bitmap: Bitmap used to identify the client scans to snoop
  */
 struct roam_offload_scan_rssi_params {
 	int8_t rssi_thresh;
@@ -1999,6 +2001,8 @@ struct roam_offload_scan_rssi_params {
 	int initial_dense_status;
 	int traffic_threshold;
 	int32_t rssi_thresh_offset_5g;
+	int8_t bg_scan_bad_rssi_thresh;
+	uint32_t bg_scan_client_bitmap;
 };
 
 /**
