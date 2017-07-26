@@ -5905,6 +5905,7 @@ static QDF_STATUS send_roam_scan_offload_rssi_thresh_cmd_tlv(wmi_unified_t wmi_h
 	wmi_roam_scan_extended_threshold_param *ext_thresholds = NULL;
 	wmi_roam_earlystop_rssi_thres_param *early_stop_thresholds = NULL;
 	wmi_roam_dense_thres_param *dense_thresholds = NULL;
+	wmi_roam_bg_scan_roaming_param *bg_scan_params = NULL;
 
 	len = sizeof(wmi_roam_scan_rssi_threshold_fixed_param);
 	len += WMI_TLV_HDR_SIZE; /* TLV for ext_thresholds*/
@@ -5913,6 +5914,8 @@ static QDF_STATUS send_roam_scan_offload_rssi_thresh_cmd_tlv(wmi_unified_t wmi_h
 	len += sizeof(wmi_roam_earlystop_rssi_thres_param);
 	len += WMI_TLV_HDR_SIZE; /* TLV for dense thresholds*/
 	len += sizeof(wmi_roam_dense_thres_param);
+	len += WMI_TLV_HDR_SIZE; /* TLV for BG Scan*/
+	len += sizeof(wmi_roam_bg_scan_roaming_param);
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
 		WMI_LOGE("%s : wmi_buf_alloc failed", __func__);
@@ -5994,6 +5997,20 @@ static QDF_STATUS send_roam_scan_offload_rssi_thresh_cmd_tlv(wmi_unified_t wmi_h
 			WMITLV_TAG_STRUC_wmi_roam_dense_thres_param,
 			WMITLV_GET_STRUCT_TLVLEN
 			(wmi_roam_dense_thres_param));
+
+	buf_ptr += sizeof(wmi_roam_dense_thres_param);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+			 sizeof(wmi_roam_bg_scan_roaming_param));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	bg_scan_params = (wmi_roam_bg_scan_roaming_param *) buf_ptr;
+	bg_scan_params->roam_bg_scan_bad_rssi_thresh =
+		roam_req->bg_scan_bad_rssi_thresh;
+	bg_scan_params->roam_bg_scan_client_bitmap =
+		roam_req->bg_scan_client_bitmap;
+	WMITLV_SET_HDR(&bg_scan_params->tlv_header,
+			WMITLV_TAG_STRUC_wmi_roam_bg_scan_roaming_param,
+			WMITLV_GET_STRUCT_TLVLEN
+			(wmi_roam_bg_scan_roaming_param));
 
 	status = wmi_unified_cmd_send(wmi_handle, buf,
 				      len, WMI_ROAM_SCAN_RSSI_THRESHOLD);
