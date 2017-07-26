@@ -635,7 +635,7 @@ QDF_STATUS pmo_core_enable_wow_in_fw(struct wlan_objmgr_psoc *psoc,
 			pmo_tgt_psoc_get_pending_cmnds(psoc));
 		pmo_tgt_update_target_suspend_flag(psoc, false);
 		status = QDF_STATUS_E_FAILURE;
-		QDF_BUG(0);
+		qdf_trigger_self_recovery();
 		goto out;
 	}
 
@@ -653,12 +653,7 @@ QDF_STATUS pmo_core_enable_wow_in_fw(struct wlan_objmgr_psoc *psoc,
 		pmo_err("No Credits after HTC ACK:%d, pending_cmds:%d,"
 			 "cannot resume back", host_credits, wmi_pending_cmds);
 		htc_dump_counter_info(pmo_core_psoc_get_htc_handle(psoc));
-/*
-		if (!cds_is_driver_recovering())
-			QDF_BUG(0);
-		else
-			pmo_err("SSR in progress, ignore no credit issue");
-*/
+		qdf_trigger_self_recovery();
 	}
 	pmo_debug("WOW enabled successfully in fw: credits:%d pending_cmds: %d",
 		host_credits, wmi_pending_cmds);
@@ -953,7 +948,7 @@ QDF_STATUS pmo_core_psoc_send_host_wakeup_ind_to_fw(
 		pmo_err("Pending commands %d credits %d",
 			pmo_tgt_psoc_get_pending_cmnds(psoc),
 			pmo_tgt_psoc_get_host_credits(psoc));
-		QDF_BUG(0);
+		qdf_trigger_self_recovery();
 	} else {
 		pmo_debug("Host wakeup received");
 	}
@@ -1026,7 +1021,7 @@ QDF_STATUS pmo_core_psoc_resume_target(struct wlan_objmgr_psoc *psoc,
 		pmo_fatal("Pending commands %d credits %d",
 			pmo_tgt_psoc_get_pending_cmnds(psoc),
 			pmo_tgt_psoc_get_host_credits(psoc));
-		QDF_BUG(0);
+		qdf_trigger_self_recovery();
 	} else {
 		pmo_debug("Host wakeup received");
 	}
