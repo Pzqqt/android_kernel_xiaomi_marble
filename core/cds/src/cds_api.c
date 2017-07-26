@@ -138,6 +138,7 @@ v_CONTEXT_t cds_init(void)
 	qdf_lock_stats_init();
 	qdf_mem_init();
 	qdf_mc_timer_manager_init();
+	qdf_register_self_recovery_callback(cds_trigger_recovery_wrapper);
 
 	gp_cds_context = &g_cds_context;
 
@@ -1731,6 +1732,11 @@ static void cds_config_recovery_work(qdf_device_t qdf_ctx)
 		pld_schedule_recovery_work(qdf_ctx->dev,
 					   PLD_REASON_DEFAULT);
 	}
+}
+
+void cds_trigger_recovery_wrapper(void)
+{
+	cds_trigger_recovery(false);
 }
 
 /**

@@ -345,6 +345,12 @@ bool cds_is_packet_log_enabled(void);
 
 uint64_t cds_get_monotonic_boottime(void);
 
+/**
+ * cds_trigger_recovery_wrapper() - a temp wrapper to trigger self recovery
+ *
+ * Return: none
+ */
+void cds_trigger_recovery_wrapper(void);
 void cds_trigger_recovery(bool);
 
 void cds_set_wakelock_logging(bool value);
