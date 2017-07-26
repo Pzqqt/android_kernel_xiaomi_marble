@@ -210,7 +210,7 @@ typedef  enum  {
     WMI_SERVICE_CHAN_LOAD_INFO=128, /* The values in WMI_CHAN_INFO_EVENTID is the difference in cycle counters */
     WMI_SERVICE_TX_PPDU_INFO_STATS_SUPPORT=129, /* support to report tx ppdu info stats via htt events */
     WMI_SERVICE_VDEV_LIMIT_OFFCHAN_SUPPORT=130, /* support to report the offchannel duration limiting capability on connected interface */
-
+    WMI_SERVICE_FILS_SUPPORT=131, /* support for FILS */
     /******* ADD NEW SERVICES HERE *******/
 
     WMI_MAX_EXT_SERVICE
