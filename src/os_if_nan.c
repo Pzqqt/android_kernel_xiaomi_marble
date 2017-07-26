@@ -32,6 +32,7 @@
 #include "wlan_objmgr_psoc_obj.h"
 #include "wlan_objmgr_pdev_obj.h"
 #include "wlan_objmgr_vdev_obj.h"
+#include "wlan_utility.h"
 
 /* NLA policy */
 static const struct nla_policy
@@ -87,6 +88,14 @@ static int os_if_nan_process_ndi_create(struct wlan_objmgr_psoc *psoc,
 	}
 	iface_name = nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_IFACE_STR]);
 
+	nan_vdev = wlan_util_get_vdev_by_ifname(psoc, iface_name, WLAN_NAN_ID);
+	if (nan_vdev) {
+		cfg80211_err("NAN data interface %s is already present",
+			     iface_name);
+		wlan_objmgr_vdev_release_ref(nan_vdev, WLAN_NAN_ID);
+		return -EEXIST;
+	}
+
 	if (!tb[QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID]) {
 		cfg80211_err("transaction id is unavailable");
 		return -EINVAL;
@@ -140,7 +149,7 @@ static int os_if_nan_process_ndi_delete(struct wlan_objmgr_psoc *psoc,
 		return -EINVAL;
 	}
 
-	nan_vdev = ucfg_nan_get_ndi_vdev(psoc, WLAN_NAN_ID);
+	nan_vdev = wlan_util_get_vdev_by_ifname(psoc, iface_name, WLAN_NAN_ID);
 	if (!nan_vdev) {
 		cfg80211_err("Nan datapath interface is not present");
 		return -EINVAL;
@@ -151,9 +160,8 @@ static int os_if_nan_process_ndi_delete(struct wlan_objmgr_psoc *psoc,
 	vdev_id = wlan_vdev_get_id(nan_vdev);
 	num_peers = ucfg_nan_get_active_peers(nan_vdev);
 	/*
-	 * wlan_objmgr_get_vdev_by_opmode_from_psoc API will have incremented
-	 * ref count - decrement here since vdev returned by that api is not
-	 * used any more
+	 * wlan_util_get_vdev_by_ifname increments ref count
+	 * decrement here since vdev returned by that api is not used any more
 	 */
 	wlan_objmgr_vdev_release_ref(nan_vdev, WLAN_NAN_ID);
 
@@ -270,9 +278,14 @@ static int os_if_nan_process_ndp_initiator_req(struct wlan_objmgr_psoc *psoc,
 	}
 
 	iface_name = nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_IFACE_STR]);
-	nan_vdev = ucfg_nan_get_ndi_vdev(psoc, WLAN_NAN_ID);
+	nan_vdev = wlan_util_get_vdev_by_ifname(psoc, iface_name, WLAN_NAN_ID);
 	if (!nan_vdev) {
 		cfg80211_err("NAN data interface %s not available", iface_name);
+		return -EINVAL;
+	}
+
+	if (nan_vdev->vdev_mlme.vdev_opmode != QDF_NDI_MODE) {
+		cfg80211_err("Interface found is not NDI");
 		return -EINVAL;
 	}
 
@@ -399,9 +412,14 @@ static int os_if_nan_process_ndp_responder_req(struct wlan_objmgr_psoc *psoc,
 
 	iface_name = nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_IFACE_STR]);
 	/* Check if there is already an existing NAN interface */
-	nan_vdev = ucfg_nan_get_ndi_vdev(psoc, WLAN_NAN_ID);
+	nan_vdev = wlan_util_get_vdev_by_ifname(psoc, iface_name, WLAN_NAN_ID);
 	if (!nan_vdev) {
 		cfg80211_err("NAN data interface %s not available", iface_name);
+		return -EINVAL;
+	}
+
+	if (nan_vdev->vdev_mlme.vdev_opmode != QDF_NDI_MODE) {
+		cfg80211_err("Interface found is not NDI");
 		return -EINVAL;
 	}
 
@@ -524,7 +542,8 @@ static int os_if_nan_process_ndp_end_req(struct wlan_objmgr_psoc *psoc,
 	cfg80211_debug("sending ndp_end_req to SME, transaction_id: %d",
 		req.transaction_id);
 
-	nan_vdev = ucfg_nan_get_ndi_vdev(psoc, WLAN_NAN_ID);
+	nan_vdev = wlan_objmgr_get_vdev_by_opmode_from_psoc(psoc, QDF_NDI_MODE,
+							    WLAN_NAN_ID);
 	if (!nan_vdev) {
 		cfg80211_err("NAN data interface is not available");
 		return -EINVAL;
