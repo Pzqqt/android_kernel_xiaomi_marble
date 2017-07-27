@@ -2340,7 +2340,7 @@ struct plm_req_params {
 #define MAX_SSID_ALLOWED_LIST    4
 #define MAX_BSSID_AVOID_LIST     16
 #define MAX_BSSID_FAVORED      16
-
+#define MAX_RSSI_AVOID_BSSID_LIST 10
 
 /**
  * struct mac_ts_info_tfc - mac ts info parameters
@@ -3215,6 +3215,19 @@ struct ssid_hotlist_param {
 };
 
 /**
+ * struct rssi_disallow_bssid - Structure holding Rssi based avoid candidate
+ * @bssid: BSSID of the AP
+ * @remaining_duration: remaining disallow duration in ms
+ * @expected_rssi: RSSI at which STA can initate in dBm
+ */
+struct rssi_disallow_bssid {
+	struct qdf_mac_addr bssid;
+	uint32_t remaining_duration;
+	int8_t expected_rssi;
+};
+
+
+/**
  * struct roam_scan_filter_params - Structure holding roaming scan
  *                                  parameters
  * @op_bitmap:                bitmap to determine reason of roaming
@@ -3259,6 +3272,8 @@ struct roam_scan_filter_params {
 	uint32_t disallow_duration;
 	uint32_t rssi_channel_penalization;
 	uint32_t num_disallowed_aps;
+	uint32_t num_rssi_rejection_ap;
+	struct rssi_disallow_bssid rssi_rejection_ap[MAX_RSSI_AVOID_BSSID_LIST];
 };
 
 /**
