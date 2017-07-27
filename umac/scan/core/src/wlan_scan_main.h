@@ -104,6 +104,17 @@
 #define SCAN_MAX_BSS_PDEV 100
 #define SCAN_PRIORITY SCAN_PRIORITY_LOW
 
+/* DBS Scan policy selection ext flags */
+#define SCAN_FLAG_EXT_DBS_SCAN_POLICY_MASK  0x00000003
+#define SCAN_FLAG_EXT_DBS_SCAN_POLICY_BIT   0
+#define SCAN_DBS_POLICY_DEFAULT             0x0
+#define SCAN_DBS_POLICY_FORCE_NONDBS        0x1
+#define SCAN_DBS_POLICY_IGNORE_DUTY         0x2
+#define SCAN_DBS_POLICY_MAX                 0x3
+/* Minimum number of channels for enabling DBS Scan */
+#define SCAN_MIN_CHAN_DBS_SCAN_THRESHOLD         8
+
+
 /**
  * struct cb_handler - defines scan event handler
  * call back function and arguments

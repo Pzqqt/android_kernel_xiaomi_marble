@@ -26,11 +26,15 @@
 #include <wlan_objmgr_cmn.h>
 #include <wlan_serialization_api.h>
 #include <wlan_scan_tgt_api.h>
+#include <wlan_reg_services_api.h>
 #include "../../core/src/wlan_scan_main.h"
 #include "../../core/src/wlan_scan_manager.h"
 #include "../../core/src/wlan_scan_cache_db.h"
 #ifdef WLAN_PMO_ENABLE
 #include <wlan_pmo_obj_mgmt_api.h>
+#endif
+#ifdef WLAN_POLICY_MGR_ENABLE
+#include <wlan_policy_mgr_api.h>
 #endif
 
 QDF_STATUS ucfg_scan_register_bcn_cb(struct wlan_objmgr_psoc *psoc,
@@ -328,6 +332,64 @@ ucfg_scan_update_pno_config(struct pno_def_config *pno,
 
 #endif
 
+/**
+ * ucfg_scan_update_dbs_scan_ctrl_ext_flag() - update dbs scan ctrl flags
+ * @req: pointer to scan request
+ *
+ * This function updates the dbs scan ctrl flags.
+ * Non-DBS scan is requested if any of the below case is met:
+ * 1. HW is DBS incapable
+ * 2. Directed scan
+ * 3. Channel list has only few channels
+ * 4. Channel list has single band channels
+ * For remaining cases, dbs scan is requested.
+ *
+ * Return: None
+ */
+static void
+ucfg_scan_update_dbs_scan_ctrl_ext_flag(struct scan_start_request *req)
+{
+	uint32_t num_chan;
+	struct wlan_objmgr_psoc *psoc;
+	uint32_t scan_dbs_policy = SCAN_DBS_POLICY_FORCE_NONDBS;
+
+	psoc = wlan_vdev_get_psoc(req->vdev);
+
+	/* Resetting the scan_ctrl_flags_ext to 0 */
+	req->scan_req.scan_ctrl_flags_ext = 0;
+
+	if (!policy_mgr_is_hw_dbs_capable(psoc))
+		goto end;
+
+	if (!qdf_is_macaddr_zero(&req->scan_req.bssid_list[0]))
+		goto end;
+
+	num_chan = req->scan_req.num_chan;
+
+	/* num_chan=0 means all channels */
+	if (!num_chan)
+		scan_dbs_policy = SCAN_DBS_POLICY_DEFAULT;
+
+	if (num_chan < SCAN_MIN_CHAN_DBS_SCAN_THRESHOLD)
+		goto end;
+
+	while (num_chan > 1) {
+		if (!WLAN_REG_IS_SAME_BAND_CHANNELS(
+					req->scan_req.chan_list[0],
+					req->scan_req.chan_list[num_chan-1])) {
+			scan_dbs_policy = SCAN_DBS_POLICY_DEFAULT;
+			break;
+		}
+		num_chan--;
+	}
+
+end:
+	req->scan_req.scan_ctrl_flags_ext |=
+		((scan_dbs_policy << SCAN_FLAG_EXT_DBS_SCAN_POLICY_BIT)
+		 & SCAN_FLAG_EXT_DBS_SCAN_POLICY_MASK);
+	scm_debug("scan_ctrl_flags_ext: 0x%x",
+			req->scan_req.scan_ctrl_flags_ext);
+}
 
 QDF_STATUS
 ucfg_scan_start(struct scan_start_request *req)
@@ -344,6 +406,8 @@ ucfg_scan_start(struct scan_start_request *req)
 	scm_info("reqid: %d, scanid: %d, vdevid: %d",
 		req->scan_req.scan_req_id, req->scan_req.scan_id,
 		req->scan_req.vdev_id);
+
+	ucfg_scan_update_dbs_scan_ctrl_ext_flag(req);
 
 	/* Try to get vdev reference. Return if reference could
 	 * not be taken. Reference will be released once scan
