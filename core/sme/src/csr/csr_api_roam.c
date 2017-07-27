@@ -3494,7 +3494,7 @@ static QDF_STATUS csr_init11d_info(tpAniSirGlobal pMac, tCsr11dinfo *ps11dinfo)
 			count++;
 		}
 		if (count) {
-			csr_save_to_channel_power2_g_5_g(pMac,
+			status = csr_save_to_channel_power2_g_5_g(pMac,
 							 count *
 							sizeof(tSirMacChanInfo),
 							 pChanInfoStart);
