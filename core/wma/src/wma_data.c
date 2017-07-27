@@ -1230,6 +1230,8 @@ void wma_set_linkstate(tp_wma_handle wma, tpLinkStateParams params)
 			WMA_LOGP("%s: %d Failed to send vdev stop",
 				 __func__, __LINE__);
 			params->status = false;
+			wma_remove_vdev_req(wma, vdev_id,
+				WMA_TARGET_REQ_TYPE_VDEV_STOP);
 		} else {
 			WMA_LOGP("%s: %d vdev stop sent vdev %d",
 				 __func__, __LINE__, vdev_id);
