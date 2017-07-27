@@ -67,6 +67,7 @@ QDF_STATUS sys_build_message_header(SYS_MSG_ID sysMsgId,
 static QDF_STATUS sys_mc_process_msg(struct scheduler_msg *pMsg)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	data_stall_detect_cb data_stall_detect_callback;
 	tpAniSirGlobal mac_ctx;
 	void *hHal;
 
@@ -126,6 +127,12 @@ static QDF_STATUS sys_mc_process_msg(struct scheduler_msg *pMsg)
 			qdf_mem_free(pMsg->bodyptr);
 			break;
 
+		case SYS_MSG_ID_DATA_STALL_MSG:
+			data_stall_detect_callback = pMsg->callback;
+			if (NULL != data_stall_detect_callback)
+				data_stall_detect_callback(pMsg->bodyptr);
+			qdf_mem_free(pMsg->bodyptr);
+			break;
 		default:
 			QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_ERROR,
 				"Unknown message type msgType= %d [0x%08x]",

@@ -85,6 +85,8 @@
 #include "epping_main.h"
 #include <a_types.h>
 #include <cdp_txrx_handle.h>
+#include "wlan_qct_sys.h"
+
 #include <htt_internal.h>
 #include <ol_txrx_ipa.h>
 
@@ -5149,6 +5151,60 @@ static QDF_STATUS ol_deregister_data_stall_detect_cb(
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * ol_txrx_post_data_stall_event() - post data stall event
+ * @indicator: Module triggering data stall
+ * @data_stall_type: data stall event type
+ * @pdev_id: pdev id
+ * @vdev_id_bitmap: vdev id bitmap
+ * @recovery_type: data stall recovery type
+ *
+ * Return: None
+ */
+static void ol_txrx_post_data_stall_event(
+				enum data_stall_log_event_indicator indicator,
+				enum data_stall_log_event_type data_stall_type,
+				uint32_t pdev_id, uint32_t vdev_id_bitmap,
+				enum data_stall_log_recovery_type recovery_type)
+{
+	struct scheduler_msg msg = {0};
+	QDF_STATUS status;
+	struct data_stall_event_info *data_stall_info;
+	ol_txrx_pdev_handle pdev;
+
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	if (!pdev) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "%s: pdev is NULL.", __func__);
+		return;
+	}
+	data_stall_info = qdf_mem_malloc(sizeof(*data_stall_info));
+	if (!data_stall_info) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"%s: data_stall_info is NULL.", __func__);
+		return;
+	}
+	data_stall_info->indicator = indicator;
+	data_stall_info->data_stall_type = data_stall_type;
+	data_stall_info->vdev_id_bitmap = vdev_id_bitmap;
+	data_stall_info->pdev_id = pdev_id;
+	data_stall_info->recovery_type = recovery_type;
+
+	sys_build_message_header(SYS_MSG_ID_DATA_STALL_MSG, &msg);
+	/* Save callback and data */
+	msg.callback = pdev->data_stall_detect_callback;
+	msg.bodyptr = data_stall_info;
+	msg.bodyval = 0;
+
+	status = scheduler_post_msg(QDF_MODULE_ID_SYS, &msg);
+
+	if (status != QDF_STATUS_SUCCESS) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "%s: failed to post data stall msg to SYS", __func__);
+		qdf_mem_free(data_stall_info);
+	}
+}
+
 void
 ol_txrx_dump_pkt(qdf_nbuf_t nbuf, uint32_t nbuf_paddr, int len)
 {
@@ -5490,6 +5546,7 @@ static struct cdp_misc_ops ol_ops_misc = {
 	.set_wisa_mode = ol_txrx_set_wisa_mode,
 	.txrx_data_stall_cb_register = ol_register_data_stall_detect_cb,
 	.txrx_data_stall_cb_deregister = ol_deregister_data_stall_detect_cb,
+	.txrx_post_data_stall_event = ol_txrx_post_data_stall_event,
 #ifdef FEATURE_RUNTIME_PM
 	.runtime_suspend = ol_txrx_runtime_suspend,
 	.runtime_resume = ol_txrx_runtime_resume,
