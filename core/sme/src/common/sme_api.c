@@ -16055,3 +16055,17 @@ void sme_display_disconnect_stats(tHalHandle hal, uint8_t session_id)
 	sme_debug("No. of Disconnections due to Peer Kickout: %d",
 		  session->disconnect_stats.peer_kickout);
 }
+
+/**
+ * sme_set_bmiss_bcnt() - set bmiss config parameters
+ * @vdev_id: virtual device for the command
+ * @first_cnt: bmiss first value
+ * @final_cnt: bmiss final value
+ *
+ * Return: QDF_STATUS_SUCCESS or non-zero on failure
+ */
+QDF_STATUS sme_set_bmiss_bcnt(uint32_t vdev_id, uint32_t first_cnt,
+		uint32_t final_cnt)
+{
+	return wma_config_bmiss_bcnt_params(vdev_id, first_cnt, final_cnt);
+}

@@ -5438,6 +5438,7 @@ wlan_hdd_wifi_config_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_CHAIN] = {.type = NLA_U32 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_SELFTEST] = {.type = NLA_U32 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_SELFTEST_INTVL] = {.type = NLA_U32 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_TOTAL_BEACON_MISS_COUNT] = {.type = NLA_U8},
 };
 
 /**
@@ -5765,6 +5766,7 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	uint32_t ant_div_usrcfg;
 	uint32_t antdiv_enable, antdiv_chain;
 	uint32_t antdiv_selftest, antdiv_selftest_intvl;
+	uint8_t bmiss_bcnt;
 
 	ENTER_DEV(dev);
 
@@ -6228,6 +6230,38 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		if (ret_val) {
 			hdd_err("Failed to set antdiv_selftest_intvl");
 			return ret_val;
+		}
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_TOTAL_BEACON_MISS_COUNT]) {
+		bmiss_bcnt = nla_get_u8(
+		tb[QCA_WLAN_VENDOR_ATTR_CONFIG_TOTAL_BEACON_MISS_COUNT]);
+		if (hdd_ctx->config->nRoamBmissFirstBcnt < bmiss_bcnt) {
+			hdd_ctx->config->nRoamBmissFinalBcnt = bmiss_bcnt
+				- hdd_ctx->config->nRoamBmissFirstBcnt;
+			hdd_debug("Bmiss first cnt(%d), Bmiss final cnt(%d)",
+				hdd_ctx->config->nRoamBmissFirstBcnt,
+				hdd_ctx->config->nRoamBmissFinalBcnt);
+			ret_val = sme_set_roam_bmiss_final_bcnt(hdd_ctx->hHal,
+				0, hdd_ctx->config->nRoamBmissFinalBcnt);
+
+			if (ret_val) {
+				hdd_err("Failed to set bmiss final Bcnt");
+				return ret_val;
+			}
+
+			ret_val = sme_set_bmiss_bcnt(adapter->sessionId,
+				hdd_ctx->config->nRoamBmissFirstBcnt,
+				hdd_ctx->config->nRoamBmissFinalBcnt);
+			if (ret_val) {
+				hdd_err("Failed to set bmiss Bcnt");
+				return ret_val;
+			}
+		} else {
+			hdd_err("Bcnt(%d) needs to exceed BmissFirstBcnt(%d)",
+				bmiss_bcnt,
+				hdd_ctx->config->nRoamBmissFirstBcnt);
+			return -EINVAL;
 		}
 	}
 

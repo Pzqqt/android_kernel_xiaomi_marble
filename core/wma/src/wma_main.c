@@ -8156,3 +8156,32 @@ void wma_ipa_uc_stat_request(wma_cli_set_cmd_t *privcmd)
 	if (wma_set_priv_cfg(wma, privcmd))
 		WMA_LOGE("Failed to set wma priv congiuration");
 }
+
+/**
+ * wma_config_bmiss_bcnt_params() - set bmiss config parameters
+ * @vdev_id: virtual device for the command
+ * @first_cnt: bmiss first value
+ * @final_cnt: bmiss final value
+ *
+ * Return: QDF_STATUS_SUCCESS or non-zero on failure
+ */
+QDF_STATUS wma_config_bmiss_bcnt_params(uint32_t vdev_id, uint32_t first_cnt,
+		uint32_t final_cnt)
+{
+	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	int status = QDF_STATUS_E_INVAL;
+
+	if (!wma_handle) {
+		WMA_LOGE("%s: Failed to get wma", __func__);
+		return status;
+	}
+
+	status = wma_roam_scan_bmiss_cnt(wma_handle, first_cnt, final_cnt,
+			vdev_id);
+
+	if (status)
+		WMA_LOGE("Failed to set Bmiss Param");
+
+	return status;
+}
+
