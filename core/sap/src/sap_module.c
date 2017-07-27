@@ -3762,14 +3762,22 @@ wlansap_set_invalid_session(void *cds_ctx)
 void wlansap_cleanup_cac_timer(void *sap_ctx)
 {
 	tHalHandle hal;
-	ptSapContext psap_ctx;
 	tpAniSirGlobal pmac;
+	ptSapContext psap_ctx = CDS_GET_SAP_CB(sap_ctx);
 
-	if (!sap_ctx)
+	if (!psap_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			FL("Invalid SAP context"));
 		return;
+	}
 
-	psap_ctx = CDS_GET_SAP_CB(sap_ctx);
 	hal = CDS_GET_HAL_CB(psap_ctx->p_cds_gctx);
+	if (!hal) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			FL("Invalid hal pointer"));
+		return;
+	}
+
 	pmac = PMAC_STRUCT(hal);
 	if (pmac->sap.SapDfsInfo.is_dfs_cac_timer_running) {
 		qdf_mc_timer_stop(&pmac->sap.SapDfsInfo.
