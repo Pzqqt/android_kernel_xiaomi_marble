@@ -12966,6 +12966,12 @@ QDF_STATUS sme_ll_stats_clear_req(tHalHandle hHal,
 		  pclearStatsReq->statsClearReqMask);
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 		  "stopReq = %u", pclearStatsReq->stopReq);
+	if (!sme_is_session_id_valid(hHal, pclearStatsReq->staId)) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  "%s: invalid staId %d",
+			  __func__, pclearStatsReq->staId);
+		return QDF_STATUS_E_INVAL;
+	}
 
 	clear_stats_req = qdf_mem_malloc(sizeof(*clear_stats_req));
 
