@@ -742,6 +742,32 @@ static void lim_nan_register_callbacks(tpAniSirGlobal mac_ctx)
 }
 #endif
 
+/*
+ * pe_shutdown_notifier_cb - Shutdown notifier callback
+ * @ctx: Pointer to Global MAC structure
+ *
+ * Return: None
+ */
+static void pe_shutdown_notifier_cb(void *ctx)
+{
+	tpAniSirGlobal mac_ctx = (tpAniSirGlobal)ctx;
+	tpPESession session;
+	uint8_t i;
+
+	for (i = 0; i < mac_ctx->lim.maxBssId; i++) {
+		session = &mac_ctx->lim.gpSession[i];
+		if (session->valid == true) {
+			if (LIM_IS_AP_ROLE(session))
+				qdf_mc_timer_stop(&session->
+						 protection_fields_reset_timer);
+#ifdef WLAN_FEATURE_11W
+			qdf_mc_timer_stop(&session->pmfComebackTimer);
+#endif
+			lim_deactivate_timers(mac_ctx);
+		}
+	}
+}
+
 /** -------------------------------------------------------------
    \fn pe_open
    \brief will be called in Open sequence from mac_open
@@ -805,6 +831,11 @@ tSirRetStatus pe_open(tpAniSirGlobal pMac, struct cds_config_info *cds_cfg)
 #endif
 	lim_register_debug_callback();
 	lim_nan_register_callbacks(pMac);
+
+	if (!QDF_IS_STATUS_SUCCESS(
+	    cds_shutdown_notifier_register(pe_shutdown_notifier_cb, pMac))) {
+		pe_err("%s: Shutdown notifier register failed", __func__);
+	}
 
 	return status; /* status here will be eSIR_SUCCESS */
 

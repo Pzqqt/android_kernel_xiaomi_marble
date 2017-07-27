@@ -143,6 +143,15 @@ void lim_update_short_preamble(tpAniSirGlobal pMac, tSirMacAddr peerMacAddr,
 void lim_update_short_slot_time(tpAniSirGlobal pMac, tSirMacAddr peerMacAddr,
 		tpUpdateBeaconParams pBeaconParams,
 		tpPESession psessionEntry);
+/*
+ * lim_deactivate_timers() - Function to deactivate lim timers
+ * @mac_ctx: Pointer to global mac structure
+ *
+ *	This function is used to deactivate lim timers
+ *
+ * Return: None
+ */
+void lim_deactivate_timers(tpAniSirGlobal mac_ctx);
 
 /*
  * The below 'product' check tobe removed if 'Association' is

@@ -618,6 +618,86 @@ static void lim_deactivate_del_sta(tpAniSirGlobal mac_ctx, uint32_t bss_entry,
 }
 #endif
 
+void lim_deactivate_timers(tpAniSirGlobal mac_ctx)
+{
+	uint32_t n;
+	tLimTimers *lim_timer = &mac_ctx->lim.limTimers;
+
+	/* Deactivate Reassociation failure timer. */
+	tx_timer_deactivate(&lim_timer->gLimReassocFailureTimer);
+
+	/* Deactivate FT Preauth response timer */
+	tx_timer_deactivate(&lim_timer->gLimFTPreAuthRspTimer);
+
+	/* Deactivate Periodic Probe channel timers. */
+	tx_timer_deactivate(&lim_timer->gLimPeriodicProbeReqTimer);
+
+	/* Deactivate channel switch timer. */
+	tx_timer_deactivate(&lim_timer->gLimChannelSwitchTimer);
+
+	/* Deactivate addts response timer. */
+	tx_timer_deactivate(&lim_timer->gLimAddtsRspTimer);
+
+	/* Deactivate Join failure timer. */
+	tx_timer_deactivate(&lim_timer->gLimJoinFailureTimer);
+
+	/* Deactivate Periodic Join Probe Request timer. */
+	tx_timer_deactivate(&lim_timer->gLimPeriodicJoinProbeReqTimer);
+
+	/* Deactivate Auth Retry timer. */
+	tx_timer_deactivate
+			(&lim_timer->g_lim_periodic_auth_retry_timer);
+
+	/* Deactivate Association failure timer. */
+	tx_timer_deactivate(&lim_timer->gLimAssocFailureTimer);
+
+	/* Deactivate Open system auth timer. */
+	tx_timer_deactivate(&lim_timer->open_sys_auth_timer);
+
+	/* Deactivate Authentication failure timer. */
+	tx_timer_deactivate(&lim_timer->gLimAuthFailureTimer);
+
+	/* Deactivate wait-for-probe-after-Heartbeat timer. */
+	tx_timer_deactivate(&lim_timer->gLimProbeAfterHBTimer);
+
+	/* Deactivate and delete Quiet timer. */
+	tx_timer_deactivate(&lim_timer->gLimQuietTimer);
+
+	/* Deactivate Quiet BSS timer. */
+	tx_timer_deactivate(&lim_timer->gLimQuietBssTimer);
+
+	/* Deactivate cnf wait timer */
+	for (n = 0; n < (mac_ctx->lim.maxStation + 1); n++) {
+		tx_timer_deactivate(&lim_timer->gpLimCnfWaitTimer[n]);
+	}
+
+	/* Deactivate any Authentication response timers */
+	lim_delete_pre_auth_list(mac_ctx);
+
+	tx_timer_deactivate(&lim_timer->gLimUpdateOlbcCacheTimer);
+	tx_timer_deactivate(&lim_timer->gLimPreAuthClnupTimer);
+
+	/* Deactivate remain on channel timer */
+	tx_timer_deactivate(&lim_timer->gLimRemainOnChannelTimer);
+
+	tx_timer_deactivate(&lim_timer->gLimDisassocAckTimer);
+
+	tx_timer_deactivate(&lim_timer->gLimDeauthAckTimer);
+
+	/* Deactivate Reassociation failure timer. */
+	tx_timer_deactivate(&lim_timer->gLimReassocFailureTimer);
+
+	/* Deactivate FT Preauth response timer */
+	tx_timer_deactivate(&lim_timer->gLimFTPreAuthRspTimer);
+
+	tx_timer_deactivate(&lim_timer->
+			gLimP2pSingleShotNoaInsertTimer);
+
+	tx_timer_deactivate(&lim_timer->
+			gLimActiveToPassiveChannelTimer);
+}
+
+
 /**
  * lim_cleanup_mlm() - This function is called to cleanup
  * @mac_ctx: Pointer to Global MAC structure
@@ -642,94 +722,69 @@ void lim_cleanup_mlm(tpAniSirGlobal mac_ctx)
 		lim_timer = &mac_ctx->lim.limTimers;
 
 		lim_delete_timers_host_roam(mac_ctx);
-		/* Deactivate and delete Periodic Probe channel timers. */
-		tx_timer_deactivate(&lim_timer->gLimPeriodicProbeReqTimer);
+
+		lim_deactivate_timers(mac_ctx);
+		/* Delete Periodic Probe channel timers. */
 		tx_timer_delete(&lim_timer->gLimPeriodicProbeReqTimer);
 
-		/* Deactivate and delete channel switch timer. */
-		tx_timer_deactivate(&lim_timer->gLimChannelSwitchTimer);
+		/* Delete channel switch timer. */
 		tx_timer_delete(&lim_timer->gLimChannelSwitchTimer);
 
-		/* Deactivate and delete addts response timer. */
-		tx_timer_deactivate(&lim_timer->gLimAddtsRspTimer);
+		/* Delete addts response timer. */
 		tx_timer_delete(&lim_timer->gLimAddtsRspTimer);
 
-		/* Deactivate and delete Join failure timer. */
-		tx_timer_deactivate(&lim_timer->gLimJoinFailureTimer);
+		/* Delete Join failure timer. */
 		tx_timer_delete(&lim_timer->gLimJoinFailureTimer);
 
-		/* Deactivate and delete Periodic Join Probe Request timer. */
-		tx_timer_deactivate(&lim_timer->gLimPeriodicJoinProbeReqTimer);
+		/* Delete Periodic Join Probe Request timer. */
 		tx_timer_delete(&lim_timer->gLimPeriodicJoinProbeReqTimer);
 
-		/* Deactivate and delete Auth Retry timer. */
-		tx_timer_deactivate
-				(&lim_timer->g_lim_periodic_auth_retry_timer);
+		/* Delete Auth Retry timer. */
 		tx_timer_delete(&lim_timer->g_lim_periodic_auth_retry_timer);
 
-		/* Deactivate and delete Association failure timer. */
-		tx_timer_deactivate(&lim_timer->gLimAssocFailureTimer);
+		/* Delete Association failure timer. */
 		tx_timer_delete(&lim_timer->gLimAssocFailureTimer);
 
-		/* Deactivate and delete Open system auth timer. */
-		tx_timer_deactivate(&lim_timer->open_sys_auth_timer);
+		/* Delete Open system auth timer. */
 		tx_timer_delete(&lim_timer->open_sys_auth_timer);
 
-		/* Deactivate and delete Authentication failure timer. */
-		tx_timer_deactivate(&lim_timer->gLimAuthFailureTimer);
+		/* Delete Authentication failure timer. */
 		tx_timer_delete(&lim_timer->gLimAuthFailureTimer);
 
-		/* Deactivate and delete wait-for-probe-after-Heartbeat timer. */
-		tx_timer_deactivate(&lim_timer->gLimProbeAfterHBTimer);
+		/* Delete wait-for-probe-after-Heartbeat timer. */
 		tx_timer_delete(&lim_timer->gLimProbeAfterHBTimer);
 
-		/* Deactivate and delete Quiet timer. */
-		tx_timer_deactivate(&lim_timer->gLimQuietTimer);
+		/* Delete Quiet timer. */
 		tx_timer_delete(&lim_timer->gLimQuietTimer);
 
-		/* Deactivate and delete Quiet BSS timer. */
-		tx_timer_deactivate(&lim_timer->gLimQuietBssTimer);
+		/* Delete Quiet BSS timer. */
 		tx_timer_delete(&lim_timer->gLimQuietBssTimer);
 
-		/* Deactivate and delete cnf wait timer */
+		/* Delete cnf wait timer */
 		for (n = 0; n < (mac_ctx->lim.maxStation + 1); n++) {
-			tx_timer_deactivate(&lim_timer->gpLimCnfWaitTimer[n]);
 			tx_timer_delete(&lim_timer->gpLimCnfWaitTimer[n]);
 		}
 
 		pAuthNode = mac_ctx->lim.gLimPreAuthTimerTable.pTable;
-
-		/* Deactivate any Authentication response timers */
-		lim_delete_pre_auth_list(mac_ctx);
 
 		/* Delete any Auth rsp timers, which might have been started */
 		for (n = 0; n < mac_ctx->lim.gLimPreAuthTimerTable.numEntry;
 				n++)
 			tx_timer_delete(&pAuthNode[n]->timer);
 
-		tx_timer_deactivate(&lim_timer->gLimUpdateOlbcCacheTimer);
 		tx_timer_delete(&lim_timer->gLimUpdateOlbcCacheTimer);
-		tx_timer_deactivate(&lim_timer->gLimPreAuthClnupTimer);
 		tx_timer_delete(&lim_timer->gLimPreAuthClnupTimer);
 
-		/* Deactivate and delete remain on channel timer */
-		tx_timer_deactivate(&lim_timer->gLimRemainOnChannelTimer);
+		/* Delete remain on channel timer */
 		tx_timer_delete(&lim_timer->gLimRemainOnChannelTimer);
 
-
-		tx_timer_deactivate(&lim_timer->gLimDisassocAckTimer);
 		tx_timer_delete(&lim_timer->gLimDisassocAckTimer);
 
-		tx_timer_deactivate(&lim_timer->gLimDeauthAckTimer);
 		tx_timer_delete(&lim_timer->gLimDeauthAckTimer);
 
-		tx_timer_deactivate(&lim_timer->
-				gLimP2pSingleShotNoaInsertTimer);
 		tx_timer_delete(&lim_timer->
 				gLimP2pSingleShotNoaInsertTimer);
 
-		tx_timer_deactivate(&lim_timer->
-				gLimActiveToPassiveChannelTimer);
 		tx_timer_delete(&lim_timer->
 				gLimActiveToPassiveChannelTimer);
 
