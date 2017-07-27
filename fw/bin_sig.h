@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012,2014, 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -28,17 +28,16 @@
 #ifndef BIN_SIGN_H_
 #define BIN_SIGN_H_
 
-
 /* Signed binary MetaData */
 typedef struct {
-	unsigned int magic_num;
-	unsigned int total_len;
-	unsigned int rampatch_len;
-	unsigned int product_id;
-	unsigned int patch_ver;
-	unsigned short sign_format_ver;
-	unsigned short sign_algorithm;
-	unsigned char reserved[8];
+    unsigned int magic_num;
+    unsigned int total_len;
+    unsigned int rampatch_len;
+    unsigned int product_id;
+    unsigned int patch_ver;
+    unsigned short sign_format_ver;
+    unsigned short sign_algorithm;
+    unsigned char reserved[8];
 } SIGN_HEADER_T;
 
 #endif /*  BIN_SIGN_H_ */

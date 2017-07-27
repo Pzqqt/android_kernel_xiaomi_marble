@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -32,6 +32,7 @@
  * Support for Copy Engine over PCI.
  * Structures shared between Host software and Target firmware.
  */
+#include <a_types.h> /* A_UINT32 */
 
 /*
  * Total number of PCIe MSI interrupts requested for all interrupt sources.
@@ -54,6 +55,9 @@
 #define MSI_ASSIGN_CE_INITIAL 1 /* 7 MSIs for Copy Engines */
 #define MSI_ASSIGN_CE_MAX     7
 
+
+
+
 /*
  * PCI-specific Target state.  Much of this may be of interest
  * to the Host so HOST_INTEREST->hi_interconnect_state points
@@ -62,50 +66,49 @@
  * required to initialize pipe_cfg_addr and svc_to_pipe_map.
  */
 struct pcie_state_s {
-	uint32_t pipe_cfg_addr; /* Pipe configuration Target address */
-	/* NB: CE_pipe_config[CE_COUNT] */
+    A_UINT32 pipe_cfg_addr;      /* Pipe configuration Target address */
+                                 /* NB: CE_pipe_config[CE_COUNT] */
 
-	uint32_t svc_to_pipe_map;       /* Service to pipe map Target address */
-	/* NB: service_to_pipe[PIPE_TO_CE_MAP_CN] */
+    A_UINT32 svc_to_pipe_map;    /* Service to pipe map Target address */
+                                 /* NB: service_to_pipe[PIPE_TO_CE_MAP_CN] */
 
-	uint32_t MSI_requested; /* number of MSI interrupts requested */
-	uint32_t MSI_granted;   /* number of MSI interrupts granted */
-	uint32_t MSI_addr;      /* Message Signalled Interrupt address */
-	uint32_t MSI_data;      /* Base data */
-	uint32_t MSI_fw_intr_data;      /* Data for firmware interrupt;
-	                                   MSI data for other interrupts are
-	                                   in various SoC registers */
+    A_UINT32 MSI_requested;      /* number of MSI interrupts requested */
+    A_UINT32 MSI_granted;        /* number of MSI interrupts granted */
+    A_UINT32 MSI_addr;           /* Message Signalled Interrupt address */
+    A_UINT32 MSI_data;           /* Base data */
+    A_UINT32 MSI_fw_intr_data;   /* Data for firmware interrupt;
+                                    MSI data for other interrupts are
+                                    in various SoC registers */
 
-	uint32_t power_mgmt_method;     /* PCIE_PWR_METHOD_* */
-	uint32_t config_flags;  /* PCIE_CONFIG_FLAG_* */
+    A_UINT32 power_mgmt_method;  /* PCIE_PWR_METHOD_* */
+    A_UINT32 config_flags;       /* PCIE_CONFIG_FLAG_* */
 };
 
 /*
  * PCIE_CONFIG_FLAG definitions
  */
-#if defined(AR900B)
-#define CE_PKTLOG_PIPE   8      /* used by both host and target side */
-#endif
 
-#define PCIE_CONFIG_FLAG_ENABLE_L1          0x0000001
+#define PCIE_CONFIG_FLAG_ENABLE_L1  0x0000001
+#define CE_PKTLOG_PIPE   8      /* used by both host and target side */
+
 #define PCIE_CONFIG_FLAG_CLK_GATING_L1      0x0000001
 #define PCIE_CONFIG_FLAG_CLK_SWITCH_WAIT    0x0000002
 #define PCIE_CONFIG_FLAG_AXI_CLK_GATE       0x0000004
 #define PCIE_CONFIG_FLAG_CLK_REQ_L1         0x0000008
 
-#define PIPE_TO_CE_MAP_CNT 32   /* simple implementation constant */
+#define PIPE_TO_CE_MAP_CNT 32 /* simple implementation constant */
 
 /*
  * Configuration information for a Copy Engine pipe.
  * Passed from Host to Target during startup (one per CE).
  */
 struct CE_pipe_config {
-	uint32_t pipenum;
-	uint32_t pipedir;
-	uint32_t nentries;
-	uint32_t nbytes_max;
-	uint32_t flags;
-	uint32_t reserved;
+    A_UINT32 pipenum;
+    A_UINT32 pipedir;
+    A_UINT32 nentries;
+    A_UINT32 nbytes_max;
+    A_UINT32 flags;
+    A_UINT32 reserved;
 };
 
 #endif /* __CEPCI_H__ */

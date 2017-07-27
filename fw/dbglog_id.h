@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2010-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -41,20 +41,21 @@ extern "C" {
  */
 
 /*
- * The target state machine framework will send dbglog messages on behalf on
- * other modules. We do this do avoid each module adding identical dbglog code
- * for state transitions and event processing. We also don't want to force each
- * module to define the the same XXX_DBGID_SM_MSG with the same value below.
- * Instead we use a special ID that the host dbglog code recognizes as a
- * message sent by the SM on behalf on another module.
- */
+* The target state machine framework will send dbglog messages on behalf on
+* other modules. We do this do avoid each module adding identical dbglog code
+* for state transitions and event processing. We also don't want to force each
+* module to define the the same XXX_DBGID_SM_MSG with the same value below.
+* Instead we use a special ID that the host dbglog code recognizes as a
+* message sent by the SM on behalf on another module.
+*/
 #define DBGLOG_DBGID_SM_FRAMEWORK_PROXY_DBGLOG_MSG 1000
+
 
 /* INF debug identifier definitions */
 #define INF_DBGID_DEFINITION_START                    0
 #define INF_ASSERTION_FAILED                          1
 #define INF_TARGET_ID                                 2
-#define INF_TARGET_MEM_REMAING                                3
+#define INF_TARGET_MEM_REMAING                3
 #define INF_TARGET_MEM_EXT_REMAING                    4
 #define INF_TARGET_MEM_ALLOC_TRACK                    5
 #define INF_TARGET_MEM_ALLOC_RAM                      6
@@ -297,7 +298,7 @@ extern "C" {
 #define WHAL_ERROR_XTAL_SET                        49
 #define WHAL_DBGID_DEFINITION_END                  50
 
-#define COEX_DEBUGID_START              0
+#define COEX_DEBUGID_START                          0
 #define BTCOEX_DBG_MCI_1                            1
 #define BTCOEX_DBG_MCI_2                            2
 #define BTCOEX_DBG_MCI_3                            3
@@ -687,7 +688,6 @@ extern "C" {
 #define WAL_DBGID_TX_SCH_REGISTER_TIDQ              12
 #define WAL_DBGID_TX_SCH_UNREGISTER_TIDQ            13
 #define WAL_DBGID_TX_SCH_TICKLE_TIDQ                14
-
 #define WAL_DBGID_XCESS_FAILURES                    15
 #define WAL_DBGID_AST_ADD_WDS_ENTRY                 16
 #define WAL_DBGID_AST_DEL_WDS_ENTRY                 17
@@ -765,7 +765,8 @@ extern "C" {
 #define WAL_DBGID_TX_MGMT_ENQUEUE_FAILED            89
 #define WAL_DBGID_TX_ARP                            90
 #define WAL_DBGID_TX_DHCP                           91
-#define WAL_DBGID_DEFINITION_END                    92
+#define WAL_DBGID_DEV_WMM_PARAM                     92
+#define WAL_DBGID_DEFINITION_END                    93
 
 #define ANI_DBGID_POLL                               0
 #define ANI_DBGID_CONTROL                            1
@@ -780,7 +781,6 @@ extern "C" {
 #define ANI_DBGID_MRC_CCK                           10
 #define ANI_DBGID_SELF_CORR_LOW                     11
 #define ANI_DBGID_ENABLE                            12
-
 #define ANI_DBGID_CURRENT_LEVEL                     13
 #define ANI_DBGID_POLL_PERIOD                       14
 #define ANI_DBGID_LISTEN_PERIOD                     15
@@ -865,7 +865,8 @@ extern "C" {
 #define P2P_GO_BCN_TX_COMP                                  38
 #define P2P_DBGID_DEFINITION_END                            39
 
-/* CSA modules DBGIDs */
+
+//CSA modules DBGIDs
 #define CSA_DBGID_DEFINITION_START 0
 #define CSA_OFFLOAD_POOL_INIT 1
 #define CSA_OFFLOAD_REGISTER_VDEV 2
@@ -924,6 +925,7 @@ extern "C" {
 #define WOW_BEACON_OFFLOAD_CFG   22
 #define WOW_IBSS_VDEV_ALLOW      23
 #define WOW_DBGID_DEFINITION_END 24
+
 
 /* SWBMISS module DBGIDs */
 #define SWBMISS_DBGID_DEFINITION_START  0
@@ -1144,7 +1146,6 @@ extern "C" {
 #define RTT_CHANNEL_SWITCH_PREEMPT    18
 #define RTT_CHANNEL_SWITCH_STOP       19
 #define RTT_TIMER_START               20
-
 #define RTT_FTM_PARAM_INFO            21
 #define RTT_RX_TM_FRAME               22
 #define RTT_INITR_TSTAMP              23
@@ -1186,7 +1187,7 @@ extern "C" {
 #define WLAN_PHTERR_DFS_DBDID_FILTER_STATUS       5
 #define WLAN_PHYERR_DFS_DBGID_DEFINITION_END      6
 
-/* RMC DBGIDs */
+/* RMC DBGIDs*/
 #define RMC_DBGID_DEFINITION_START             0
 #define RMC_CREATE_INSTANCE                    1
 #define RMC_DELETE_INSTANCE                    2
@@ -1246,6 +1247,7 @@ extern "C" {
 #define WLAN_STATS_DBGID_RSSI                            6
 #define WLAN_STATS_DBGID_CNE_RSSI                        7
 #define WLAN_STATS_DBGID_DEFINITION_END                  8
+
 /* NAN DBGIDs */
 #define NAN_DBGID_START                             0
 
@@ -1490,51 +1492,46 @@ extern "C" {
 #define NAN_DBGID_BEACON_RX_LAST                (NAN_DBGID_OTA_PKT_LAST + 20)
 
 /* NaN Datapath Timekeeper debug IDs */
-/* 116 + 20 = 136 */
-#define NAN_DBGID_TMKR_BASE                        NAN_DBGID_BEACON_RX_LAST
-/* 136 */
-#define NAN_DBGID_TMKR_INIT                        (NAN_DBGID_TMKR_BASE + 0)
-#define NAN_DBGID_TMKR_OPEN                        (NAN_DBGID_TMKR_BASE + 1)
-#define NAN_DBGID_TMKR_CLOSE                       (NAN_DBGID_TMKR_BASE + 2)
-#define NAN_DBGID_TMKR_NEGOTIATE                   (NAN_DBGID_TMKR_BASE + 3)
-#define NAN_DBGID_TMKR_TMR_HNDLR                   (NAN_DBGID_TMKR_BASE + 4)
-#define NAN_DBGID_TMKR_UNITTEST                    (NAN_DBGID_TMKR_BASE + 5)
-#define NAN_DBGID_TMKR_LF_TMR_HNDLR                (NAN_DBGID_TMKR_BASE + 6)
-#define NAN_DBGID_TMKR_DEINIT                      (NAN_DBGID_TMKR_BASE + 7)
-#define NAN_DBGID_TMKR_SLOTBITMAP                  (NAN_DBGID_TMKR_BASE + 8)
-#define NAN_DBGID_TMKR_CANCEL_SLOTBITMAP           (NAN_DBGID_TMKR_BASE + 9)
-#define NAN_DBGID_TMKR_CONFIRM_SLOTBITMAP          (NAN_DBGID_TMKR_BASE + 10)
-#define NAN_DBGID_TMKR_RESOLVE_SLOTBITMAP          (NAN_DBGID_TMKR_BASE + 11)
-#define NAN_DBGID_TMKR_ADD_CHAN_ELEMENT            (NAN_DBGID_TMKR_BASE + 12)
-#define NAN_DBGID_TMKR_REMOVE_CHAN_ELEMENT         (NAN_DBGID_TMKR_BASE + 13)
-/* 150 */
-#define NAN_DBGID_TMKR_FIND_CHAN_ELEMENT           (NAN_DBGID_TMKR_BASE + 14)
-#define NAN_DBGID_TMKR_QUERY_COMMITTED_SLOTBITMAP  (NAN_DBGID_TMKR_BASE + 15)
-#define NAN_DBGID_TMKR_ENCODE_SLOTBITMAP           (NAN_DBGID_TMKR_BASE + 16)
-#define NAN_DBGID_TMKR_SLOT_ARRAY_DBG              (NAN_DBGID_TMKR_BASE + 17)
-#define NAN_DBGID_TMKR_POPULATE_MASTER             (NAN_DBGID_TMKR_BASE + 18)
-#define NAN_DBGID_TMKR_ALLOCATE_SLOTS              (NAN_DBGID_TMKR_BASE + 19)
-#define NAN_DBGID_TMKR_RELEASE_SLOTS               (NAN_DBGID_TMKR_BASE + 20)
-#define NAN_DBGID_TMKR_ENABLE                      (NAN_DBGID_TMKR_BASE + 21)
-#define NAN_DBGID_TMKR_DISABLE                     (NAN_DBGID_TMKR_BASE + 22)
-#define NAN_DBGID_TMKR_GET_NEXT_SLOTWINDOW         (NAN_DBGID_TMKR_BASE + 23)
-#define NAN_DBGID_TMKR_RESUME_TIMEKEEPING          (NAN_DBGID_TMKR_BASE + 24)
-#define NAN_DBGID_TMKR_RESYNC_TO_DISCOVERY_WINDOW  (NAN_DBGID_TMKR_BASE + 25)
-/* 162 */
-#define NAN_DBGID_TMKR_SUSPEND_TIMEKEEPING         (NAN_DBGID_TMKR_BASE + 26)
-#define NAN_DBGID_TMKR_SYNC_TO_DISCOVERY_WINDOW    (NAN_DBGID_TMKR_BASE + 27)
-#define NAN_DBGID_TMKR_GET_NEXT_TSFTIME            (NAN_DBGID_TMKR_BASE + 28)
-#define NAN_DBGID_TMKR_SETUP_NEXT_INTERVAL         (NAN_DBGID_TMKR_BASE + 29)
-#define NAN_DBGID_TMKR_SCHEDULE_EVENT              (NAN_DBGID_TMKR_BASE + 30)
-#define NAN_DBGID_TMKR_ENABLE_TIMEKEEPING_EVENT    (NAN_DBGID_TMKR_BASE + 31)
-#define NAN_DBGID_TMKR_DISABLE_TIMEKEEPING_EVENT   (NAN_DBGID_TMKR_BASE + 32)
-#define NAN_DBGID_TMKR_SYNC_WITH_DW_EVENT          (NAN_DBGID_TMKR_BASE + 33)
-#define NAN_DBGID_TMKR_INTERVAL_EXPIRED_EVENT      (NAN_DBGID_TMKR_BASE + 34)
-#define NAN_DBGID_TMKR_PAUSE_TIMEKEEPING_EVENT     (NAN_DBGID_TMKR_BASE + 35)
-/* 172 */
-#define NAN_DBGID_TMKR_RESUME_TIMEKEEPING_EVENT    (NAN_DBGID_TMKR_BASE + 36)
-#define NAN_DBGID_TMKR_RESYNC_TO_DW_EVENT          (NAN_DBGID_TMKR_BASE + 37)
-#define NAN_DBGID_TMKR_LAST                        (NAN_DBGID_TMKR_BASE + 38)
+#define NAN_DBGID_TMKR_BASE                        NAN_DBGID_BEACON_RX_LAST   /* 116 + 20 = 136 */
+#define NAN_DBGID_TMKR_INIT                        (NAN_DBGID_TMKR_BASE + 0)  /* 136 */
+#define NAN_DBGID_TMKR_OPEN                        (NAN_DBGID_TMKR_BASE + 1)  /* 137 */
+#define NAN_DBGID_TMKR_CLOSE                       (NAN_DBGID_TMKR_BASE + 2)  /* 138 */
+#define NAN_DBGID_TMKR_NEGOTIATE                   (NAN_DBGID_TMKR_BASE + 3)  /* 139 */
+#define NAN_DBGID_TMKR_TMR_HNDLR                   (NAN_DBGID_TMKR_BASE + 4)  /* 140 */
+#define NAN_DBGID_TMKR_UNITTEST                    (NAN_DBGID_TMKR_BASE + 5)  /* 141 */
+#define NAN_DBGID_TMKR_LF_TMR_HNDLR                (NAN_DBGID_TMKR_BASE + 6)  /* 142 */
+#define NAN_DBGID_TMKR_DEINIT                      (NAN_DBGID_TMKR_BASE + 7)  /* 143 */
+#define NAN_DBGID_TMKR_SLOTBITMAP                  (NAN_DBGID_TMKR_BASE + 8)  /* 144 */
+#define NAN_DBGID_TMKR_CANCEL_SLOTBITMAP           (NAN_DBGID_TMKR_BASE + 9)  /* 145 */
+#define NAN_DBGID_TMKR_CONFIRM_SLOTBITMAP          (NAN_DBGID_TMKR_BASE + 10) /* 146 */
+#define NAN_DBGID_TMKR_RESOLVE_SLOTBITMAP          (NAN_DBGID_TMKR_BASE + 11) /* 147 */
+#define NAN_DBGID_TMKR_ADD_CHAN_ELEMENT            (NAN_DBGID_TMKR_BASE + 12) /* 148 */
+#define NAN_DBGID_TMKR_REMOVE_CHAN_ELEMENT         (NAN_DBGID_TMKR_BASE + 13) /* 149 */
+#define NAN_DBGID_TMKR_FIND_CHAN_ELEMENT           (NAN_DBGID_TMKR_BASE + 14) /* 150 */
+#define NAN_DBGID_TMKR_QUERY_COMMITTED_SLOTBITMAP  (NAN_DBGID_TMKR_BASE + 15) /* 151 */
+#define NAN_DBGID_TMKR_ENCODE_SLOTBITMAP           (NAN_DBGID_TMKR_BASE + 16) /* 152 */
+#define NAN_DBGID_TMKR_SLOT_ARRAY_DBG              (NAN_DBGID_TMKR_BASE + 17) /* 153 */
+#define NAN_DBGID_TMKR_POPULATE_MASTER             (NAN_DBGID_TMKR_BASE + 18) /* 154 */
+#define NAN_DBGID_TMKR_ALLOCATE_SLOTS              (NAN_DBGID_TMKR_BASE + 19) /* 155 */
+#define NAN_DBGID_TMKR_RELEASE_SLOTS               (NAN_DBGID_TMKR_BASE + 20) /* 156 */
+#define NAN_DBGID_TMKR_ENABLE                      (NAN_DBGID_TMKR_BASE + 21) /* 157 */
+#define NAN_DBGID_TMKR_DISABLE                     (NAN_DBGID_TMKR_BASE + 22) /* 158 */
+#define NAN_DBGID_TMKR_GET_NEXT_SLOTWINDOW         (NAN_DBGID_TMKR_BASE + 23) /* 159 */
+#define NAN_DBGID_TMKR_RESUME_TIMEKEEPING          (NAN_DBGID_TMKR_BASE + 24) /* 160 */
+#define NAN_DBGID_TMKR_RESYNC_TO_DISCOVERY_WINDOW  (NAN_DBGID_TMKR_BASE + 25) /* 161 */
+#define NAN_DBGID_TMKR_SUSPEND_TIMEKEEPING         (NAN_DBGID_TMKR_BASE + 26) /* 162 */
+#define NAN_DBGID_TMKR_SYNC_TO_DISCOVERY_WINDOW    (NAN_DBGID_TMKR_BASE + 27) /* 163 */
+#define NAN_DBGID_TMKR_GET_NEXT_TSFTIME            (NAN_DBGID_TMKR_BASE + 28) /* 164 */
+#define NAN_DBGID_TMKR_SETUP_NEXT_INTERVAL         (NAN_DBGID_TMKR_BASE + 29) /* 165 */
+#define NAN_DBGID_TMKR_SCHEDULE_EVENT              (NAN_DBGID_TMKR_BASE + 30) /* 166 */
+#define NAN_DBGID_TMKR_ENABLE_TIMEKEEPING_EVENT    (NAN_DBGID_TMKR_BASE + 31) /* 167 */
+#define NAN_DBGID_TMKR_DISABLE_TIMEKEEPING_EVENT   (NAN_DBGID_TMKR_BASE + 32) /* 168 */
+#define NAN_DBGID_TMKR_SYNC_WITH_DW_EVENT          (NAN_DBGID_TMKR_BASE + 33) /* 169 */
+#define NAN_DBGID_TMKR_INTERVAL_EXPIRED_EVENT      (NAN_DBGID_TMKR_BASE + 34) /* 170 */
+#define NAN_DBGID_TMKR_PAUSE_TIMEKEEPING_EVENT     (NAN_DBGID_TMKR_BASE + 35) /* 171 */
+#define NAN_DBGID_TMKR_RESUME_TIMEKEEPING_EVENT    (NAN_DBGID_TMKR_BASE + 36) /* 172 */
+#define NAN_DBGID_TMKR_RESYNC_TO_DW_EVENT          (NAN_DBGID_TMKR_BASE + 37) /* 173 */
+#define NAN_DBGID_TMKR_LAST                        (NAN_DBGID_TMKR_BASE + 38) /* 174 */
 
 #define NAN_DBGID_END                              (NAN_DBGID_TMKR_LAST)
 
@@ -1635,7 +1632,6 @@ extern "C" {
 #define ERE_DBGID_STATS_RX                              12
 #define ERE_DBGID_DEFINITION_END                        13
 /* IDs 14 - 251 reserved for ERE */
-
 /* Timekeeper debug IDs */
 #define TIMEKEEPER_INIT                                 252
 #define TIMEKEEPER_OPEN                                 253
@@ -1741,8 +1737,9 @@ extern "C" {
 #define WLAN_MODULE_QBOOST_DBGID_WLAN_PEER_NOT_FOUND      1
 #define WLAN_MODULE_QBOOST_DEFINITION_END                 2
 
-
 #ifdef __cplusplus
 }
 #endif
+
 #endif /* _DBGLOG_ID_H_ */
+

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -59,6 +59,7 @@
  * BMI handles all required Target-side cache flushing.
  */
 
+
 /* Maximum data size used for BMI transfers */
 #define BMI_DATASZ_MAX                      256
 
@@ -67,34 +68,34 @@
 #define BMI_NO_COMMAND                      0
 
 #define BMI_DONE                            1
-/*
- * Semantics: Host is done using BMI
- * Request format:
- *    A_UINT32      command (BMI_DONE)
- * Response format: none
- */
+        /*
+         * Semantics: Host is done using BMI
+         * Request format:
+         *    A_UINT32      command (BMI_DONE)
+         * Response format: none
+         */
 
 #define BMI_READ_MEMORY                     2
-/*
- * Semantics: Host reads AR6K memory
- * Request format:
- *    A_UINT32      command (BMI_READ_MEMORY)
- *    A_UINT32      address
- *    A_UINT32      length, at most BMI_DATASZ_MAX
- * Response format:
- *    A_UINT8       data[length]
- */
+        /*
+         * Semantics: Host reads AR6K memory
+         * Request format:
+         *    A_UINT32      command (BMI_READ_MEMORY)
+         *    A_UINT32      address
+         *    A_UINT32      length, at most BMI_DATASZ_MAX
+         * Response format:
+         *    A_UINT8       data[length]
+         */
 
 #define BMI_WRITE_MEMORY                    3
-/*
- * Semantics: Host writes AR6K memory
- * Request format:
- *    A_UINT32      command (BMI_WRITE_MEMORY)
- *    A_UINT32      address
- *    A_UINT32      length, at most BMI_DATASZ_MAX
- *    A_UINT8       data[length]
- * Response format: none
- */
+        /*
+         * Semantics: Host writes AR6K memory
+         * Request format:
+         *    A_UINT32      command (BMI_WRITE_MEMORY)
+         *    A_UINT32      address
+         *    A_UINT32      length, at most BMI_DATASZ_MAX
+         *    A_UINT8       data[length]
+         * Response format: none
+         */
 /*
  * Capbility to write "segmented files" is provided for two reasons
  * 1) backwards compatibility for certain situations where Hosts
@@ -148,16 +149,16 @@
 
 /* File header for a segmented file */
 struct bmi_segmented_file_header {
-	A_UINT32 magic_num;
-	A_UINT32 file_flags;
+    A_UINT32 magic_num;
+    A_UINT32 file_flags;
 };
-#define BMI_SGMTFILE_MAGIC_NUM          0x544d4753      /* "SGMT" */
+#define BMI_SGMTFILE_MAGIC_NUM          0x544d4753 /* "SGMT" */
 #define BMI_SGMTFILE_FLAG_COMPRESS      1
 
 /* Metadata for a segmented file segment */
 struct bmi_segmented_metadata {
-	A_UINT32 addr;
-	A_UINT32 length;
+    A_UINT32 addr;
+    A_UINT32 length;
 };
 /* Special values for bmi_segmented_metadata.length (all have high bit set) */
 #define BMI_SGMTFILE_DONE               0xffffffff      /* end of segmented data */
@@ -166,15 +167,15 @@ struct bmi_segmented_metadata {
 #define BMI_SGMTFILE_EXEC               0xfffffffc      /* immediate function execution */
 
 #define BMI_EXECUTE                         4
-/*
- * Semantics: Causes AR6K to execute code
- * Request format:
- *    A_UINT32      command (BMI_EXECUTE)
- *    A_UINT32      address
- *    A_UINT32      parameter
- * Response format:
- *    A_UINT32      return value
- */
+        /*
+         * Semantics: Causes AR6K to execute code
+         * Request format:
+         *    A_UINT32      command (BMI_EXECUTE)
+         *    A_UINT32      address
+         *    A_UINT32      parameter
+         * Response format:
+         *    A_UINT32      return value
+         */
 /*
  * Note: In order to support the segmented file feature
  * (see BMI_WRITE_MEMORY), when the address specified in a
@@ -184,61 +185,60 @@ struct bmi_segmented_metadata {
  */
 
 #define BMI_SET_APP_START                   5
-/*
- * Semantics: Set Target application starting address
- * Request format:
- *    A_UINT32      command (BMI_SET_APP_START)
- *    A_UINT32      address
- * Response format: none
- */
+        /*
+         * Semantics: Set Target application starting address
+         * Request format:
+         *    A_UINT32      command (BMI_SET_APP_START)
+         *    A_UINT32      address
+         * Response format: none
+         */
 
 #define BMI_READ_SOC_REGISTER               6
 #define BMI_READ_SOC_WORD                   6
-/*
- * Semantics: Read a 32-bit Target SOC word.
- * Request format:
- *    A_UINT32      command (BMI_READ_REGISTER)
- *    A_UINT32      address
- * Response format:
- *    A_UINT32      value
- */
+        /*
+         * Semantics: Read a 32-bit Target SOC word.
+         * Request format:
+         *    A_UINT32      command (BMI_READ_REGISTER)
+         *    A_UINT32      address
+         * Response format:
+         *    A_UINT32      value
+         */
 
 #define BMI_WRITE_SOC_REGISTER              7
 #define BMI_WRITE_SOC_WORD                  7
-/*
- * Semantics: Write a 32-bit Target SOC word.
- * Request format:
- *    A_UINT32      command (BMI_WRITE_REGISTER)
- *    A_UINT32      address
- *    A_UINT32      value
- *
- * Response format: none
- */
+        /*
+         * Semantics: Write a 32-bit Target SOC word.
+         * Request format:
+         *    A_UINT32      command (BMI_WRITE_REGISTER)
+         *    A_UINT32      address
+         *    A_UINT32      value
+         *
+         * Response format: none
+         */
 
 #define BMI_GET_TARGET_ID                  8
 #define BMI_GET_TARGET_INFO                8
-/*
- * Semantics: Fetch the 4-byte Target information
- * Request format:
- *    A_UINT32      command (BMI_GET_TARGET_ID/INFO)
- *
- * Response format1 (old firmware):
- *    A_UINT32      TargetVersionID
- *
- * Response format2 (intermediate firmware, during transition):
- *    A_UINT32      TARGET_VERSION_SENTINAL
- *    struct bmi_target_info;
- *
- * Response format3 (newest firmware)
- *    struct bmi_target_info;
- */
-PREPACK struct bmi_target_info {
-	/* size of this structure */
-	A_UINT32 target_info_byte_count;
-	A_UINT32 target_ver;
-	A_UINT32 target_type;
-} POSTPACK;
+        /*
+         * Semantics: Fetch the 4-byte Target information
+         * Request format:
+         *    A_UINT32      command (BMI_GET_TARGET_ID/INFO)
+         *
+         * Response format1 (old firmware):
+         *    A_UINT32      TargetVersionID
+         *
+         * Response format2 (intermediate firmware, during transition):
+         *    A_UINT32      TARGET_VERSION_SENTINAL
+         *    struct bmi_target_info;
+         *
+         * Response format3 (newest firmware)
+         *    struct bmi_target_info;
+         */
 
+PREPACK struct bmi_target_info {
+    A_UINT32 target_info_byte_count; /* size of this structure */
+    A_UINT32 target_ver;             /* Target Version ID */
+    A_UINT32 target_type;            /* Target type */
+} POSTPACK;
 #define TARGET_VERSION_SENTINAL 0xffffffff
 #define TARGET_TYPE_UNKNOWN   0
 #define TARGET_TYPE_AR6001    1
@@ -252,127 +252,124 @@ PREPACK struct bmi_target_info {
 /* For attach Peregrine 2.0 board target_reg_tbl only */
 #define TARGET_TYPE_AR9888V2  10
 /* For attach Rome1.0 target_reg_tbl only*/
-#define TARGET_TYPE_AR6320V1  11
+#define TARGET_TYPE_AR6320V1    11
 /* For Rome2.0/2.1 target_reg_tbl ID*/
-#define TARGET_TYPE_AR6320V2  12
+#define TARGET_TYPE_AR6320V2    12
 /* For Rome3.0 target_reg_tbl ID*/
-#define TARGET_TYPE_AR6320V3  13
+#define TARGET_TYPE_AR6320V3    13
 /* For Tufello1.0 target_reg_tbl ID*/
-#define TARGET_TYPE_QCA9377V1 14
-/* cascade */
-#define TARGET_TYPE_QCA9984   15
-/* dakota */
-#define TARGET_TYPE_IPQ4019   16
-/* besra */
-#define TARGET_TYPE_QCA9888   17
-/* For Adrastea target */
-#define TARGET_TYPE_ADRASTEA  19
+#define TARGET_TYPE_QCA9377V1   14
+#define TARGET_TYPE_QCA9984     15 /* cascade */
+#define TARGET_TYPE_IPQ4019     16 /* dakota */
+#define TARGET_TYPE_QCA9888     17 /* besra */
 
 extern void target_register_tbl_attach(A_UINT32 target_type);
 
 #define BMI_ROMPATCH_INSTALL               9
-/*
- * Semantics: Install a ROM Patch.
- * Request format:
- *    A_UINT32      command (BMI_ROMPATCH_INSTALL)
- *    A_UINT32      Target ROM Address
- *    A_UINT32      Target RAM Address or Value (depending on Target Type)
- *    A_UINT32      Size, in bytes
- *    A_UINT32      Activate? 1-->activate;
- *                            0-->install but do not activate
- * Response format:
- *    A_UINT32      PatchID
- */
+        /*
+         * Semantics: Install a ROM Patch.
+         * Request format:
+         *    A_UINT32      command (BMI_ROMPATCH_INSTALL)
+         *    A_UINT32      Target ROM Address
+         *    A_UINT32      Target RAM Address or Value (depending on Target Type)
+         *    A_UINT32      Size, in bytes
+         *    A_UINT32      Activate? 1-->activate;
+         *                            0-->install but do not activate
+         * Response format:
+         *    A_UINT32      PatchID
+         */
 
 #define BMI_ROMPATCH_UNINSTALL             10
-/*
- * Semantics: Uninstall a previously-installed ROM Patch,
- * automatically deactivating, if necessary.
- * Request format:
- *    A_UINT32      command (BMI_ROMPATCH_UNINSTALL)
- *    A_UINT32      PatchID
- *
- * Response format: none
- */
+        /*
+         * Semantics: Uninstall a previously-installed ROM Patch,
+         * automatically deactivating, if necessary.
+         * Request format:
+         *    A_UINT32      command (BMI_ROMPATCH_UNINSTALL)
+         *    A_UINT32      PatchID
+         *
+         * Response format: none
+         */
 
 #define BMI_ROMPATCH_ACTIVATE              11
-/*
- * Semantics: Activate a list of previously-installed ROM Patches.
- * Request format:
- *    A_UINT32      command (BMI_ROMPATCH_ACTIVATE)
- *    A_UINT32      rompatch_count
- *    A_UINT32      PatchID[rompatch_count]
- *
- * Response format: none
- */
+        /*
+         * Semantics: Activate a list of previously-installed ROM Patches.
+         * Request format:
+         *    A_UINT32      command (BMI_ROMPATCH_ACTIVATE)
+         *    A_UINT32      rompatch_count
+         *    A_UINT32      PatchID[rompatch_count]
+         *
+         * Response format: none
+         */
 
 #define BMI_ROMPATCH_DEACTIVATE            12
-/*
- * Semantics: Deactivate a list of active ROM Patches.
- * Request format:
- *    A_UINT32      command (BMI_ROMPATCH_DEACTIVATE)
- *    A_UINT32      rompatch_count
- *    A_UINT32      PatchID[rompatch_count]
- *
- * Response format: none
- */
+        /*
+         * Semantics: Deactivate a list of active ROM Patches.
+         * Request format:
+         *    A_UINT32      command (BMI_ROMPATCH_DEACTIVATE)
+         *    A_UINT32      rompatch_count
+         *    A_UINT32      PatchID[rompatch_count]
+         *
+         * Response format: none
+         */
+
 
 #define BMI_LZ_STREAM_START                13
-/*
- * Semantics: Begin an LZ-compressed stream of input
- * which is to be uncompressed by the Target to an
- * output buffer at address.  The output buffer must
- * be sufficiently large to hold the uncompressed
- * output from the compressed input stream.  This BMI
- * command should be followed by a series of 1 or more
- * BMI_LZ_DATA commands.
- *    A_UINT32      command (BMI_LZ_STREAM_START)
- *    A_UINT32      address
- * Note: Not supported on all versions of ROM firmware.
- */
+        /*
+         * Semantics: Begin an LZ-compressed stream of input
+         * which is to be uncompressed by the Target to an
+         * output buffer at address.  The output buffer must
+         * be sufficiently large to hold the uncompressed
+         * output from the compressed input stream.  This BMI
+         * command should be followed by a series of 1 or more
+         * BMI_LZ_DATA commands.
+         *    A_UINT32      command (BMI_LZ_STREAM_START)
+         *    A_UINT32      address
+         * Note: Not supported on all versions of ROM firmware.
+         */
 
 #define BMI_LZ_DATA                        14
-/*
- * Semantics: Host writes AR6K memory with LZ-compressed
- * data which is uncompressed by the Target.  This command
- * must be preceded by a BMI_LZ_STREAM_START command. A series
- * of BMI_LZ_DATA commands are considered part of a single
- * input stream until another BMI_LZ_STREAM_START is issued.
- * Request format:
- *    A_UINT32      command (BMI_LZ_DATA)
- *    A_UINT32      length (of compressed data),
- *                  at most BMI_DATASZ_MAX
- *    A_UINT8       CompressedData[length]
- * Response format: none
- * Note: Not supported on all versions of ROM firmware.
- */
+        /*
+         * Semantics: Host writes AR6K memory with LZ-compressed
+         * data which is uncompressed by the Target.  This command
+         * must be preceded by a BMI_LZ_STREAM_START command. A series
+         * of BMI_LZ_DATA commands are considered part of a single
+         * input stream until another BMI_LZ_STREAM_START is issued.
+         * Request format:
+         *    A_UINT32      command (BMI_LZ_DATA)
+         *    A_UINT32      length (of compressed data),
+         *                  at most BMI_DATASZ_MAX
+         *    A_UINT8       CompressedData[length]
+         * Response format: none
+         * Note: Not supported on all versions of ROM firmware.
+         */
 
 #define BMI_NVRAM_PROCESS                  15
 #define BMI_NVRAM_SEG_NAME_SZ 16
-/*
- * Semantics: Cause Target to search NVRAM (if any) for a
- * segment with the specified name and process it according
- * to NVRAM metadata.
- * Request format:
- *    A_UINT32      command (BMI_NVRAM_PROCESS)
- *    A_UCHAR       name[BMI_NVRAM_SEG_NAME_SZ] name (LE format)
- * Response format:
- *    A_UINT32      0, if nothing was executed;
- *                  otherwise the value returned from the
- *                  last NVRAM segment that was executed
- */
+        /*
+         * Semantics: Cause Target to search NVRAM (if any) for a
+         * segment with the specified name and process it according
+         * to NVRAM metadata.
+         * Request format:
+         *    A_UINT32      command (BMI_NVRAM_PROCESS)
+         *    A_UCHAR       name[BMI_NVRAM_SEG_NAME_SZ] name (LE format)
+         * Response format:
+         *    A_UINT32      0, if nothing was executed;
+         *                  otherwise the value returned from the
+         *                  last NVRAM segment that was executed
+         */
 
-#define BMI_SIGN_STREAM_START               17
-/*
- * Semantics: Trigger target start/end binary signature verification
- * flow.
- * Request format:
- *    A_UINT32      command (BMI_SIGN_STREAM_START)
- *    A_UINT32      address
- *    A_UINT32      length, at most BMI_DATASZ_MAX
- *    A_UINT8       data[length]
- * Response format: none
- */
+#define BMI_SIGN_STREAM_START		    17
+        /*
+	 * Semantics: Trigger target start/end binary signature verification
+	 * flow.
+	 * Request format:
+	 *    A_UINT32      command (BMI_SIGN_STREAM_START)
+	 *    A_UINT32      address
+	 *    A_UINT32      length, at most BMI_DATASZ_MAX
+	 *    A_UINT8       data[length]
+	 * Response format: none
+	 */
+
 
 #ifndef ATH_TARGET
 #include "athendpack.h"

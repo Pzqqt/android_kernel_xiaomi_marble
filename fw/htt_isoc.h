@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2013 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -41,7 +41,7 @@
 #include <a_osapi.h>          /* A_COMPILE_TIME_ASSERT */
 
 #ifdef ATHR_WIN_NWF
-#pragma warning(disable:4214) /* bit field types other than int */
+#pragma warning( disable:4214 ) //bit field types other than int
 #endif
 
 #include "htt_common.h"
@@ -49,39 +49,40 @@
 /*=== definitions that apply to all messages ================================*/
 
 typedef enum htt_isoc_t2h_msg_type {
-	/* 0x0 reserved for VERSION message (probably not needed) */
+    /* 0x0 reserved for VERSION message (probably not needed) */
 
-	/* PEER_INFO - specify ID and parameters of a new peer */
-	HTT_ISOC_T2H_MSG_TYPE_PEER_INFO = 0x1,
+    /* PEER_INFO - specify ID and parameters of a new peer */
+    HTT_ISOC_T2H_MSG_TYPE_PEER_INFO     = 0x1,
 
-	/* PEER_UNMAP - deallocate the ID that refers to a peer */
-	HTT_ISOC_T2H_MSG_TYPE_PEER_UNMAP = 0x2,
+    /* PEER_UNMAP - deallocate the ID that refers to a peer */
+    HTT_ISOC_T2H_MSG_TYPE_PEER_UNMAP    = 0x2,
 
-	/* ADDBA - start rx aggregation for the specified peer-TID */
-	HTT_ISOC_T2H_MSG_TYPE_RX_ADDBA = 0x3,
+    /* ADDBA - start rx aggregation for the specified peer-TID */
+    HTT_ISOC_T2H_MSG_TYPE_RX_ADDBA      = 0x3,
 
-	/* DELBA - stop rx aggregation for the specified peer-TID */
-	HTT_ISOC_T2H_MSG_TYPE_RX_DELBA = 0x4,
+    /* DELBA - stop rx aggregation for the specified peer-TID */
+    HTT_ISOC_T2H_MSG_TYPE_RX_DELBA      = 0x4,
 
-	/* TX_COMPL_IND - over-the-air tx completion notification for a tx frame */
-	HTT_ISOC_T2H_MSG_TYPE_TX_COMPL_IND = 0x5,
+    /* TX_COMPL_IND - over-the-air tx completion notification for a tx frame */
+    HTT_ISOC_T2H_MSG_TYPE_TX_COMPL_IND  = 0x5,
 
-	/* SEC_IND - notification of the type of security used for a new peer */
-	HTT_ISOC_T2H_MSG_TYPE_SEC_IND = 0x6,
+    /* SEC_IND - notification of the type of security used for a new peer */
+    HTT_ISOC_T2H_MSG_TYPE_SEC_IND       = 0x6,
 
-	/* PEER_TX_READY - the target is ready to transmit to a new peer */
-	HTT_ISOC_T2H_MSG_TYPE_PEER_TX_READY = 0x7,
+    /* PEER_TX_READY - the target is ready to transmit to a new peer */
+    HTT_ISOC_T2H_MSG_TYPE_PEER_TX_READY = 0x7,
 
-	/* RX_ERR - notification that an rx frame was discarded due to errors */
-	HTT_ISOC_T2H_MSG_TYPE_RX_ERR = 0x8,
+    /* RX_ERR - notification that an rx frame was discarded due to errors */
+    HTT_ISOC_T2H_MSG_TYPE_RX_ERR        = 0x8,
 
-	/* NLO_MATCH - notification that target found NLO match */
-	HTT_ISOC_T2H_MSG_TYPE_NLO_MATCH     = 0x9,
+    /*NLO_MATCH - notification that target found NLO match */
+    HTT_ISOC_T2H_MSG_TYPE_NLO_MATCH     = 0x9,
 
-	/* NLO_SCAN_END - notification that target NLO SCAN END 1:1 map with  NLO_MATCH */
-	HTT_ISOC_T2H_MSG_TYPE_NLO_SCAN_END  = 0xA,
-	/* keep this last */
-	HTT_ISOC_T2H_NUM_MSGS
+    /*NLO_SCAN_END - notification that target NLO SCAN END 1:1 map with  NLO_MATCH*/
+    HTT_ISOC_T2H_MSG_TYPE_NLO_SCAN_END  = 0xA,
+
+    /* keep this last */
+    HTT_ISOC_T2H_NUM_MSGS
 } htt_isoc_t2h_msg_type;
 
 /*
@@ -92,9 +93,9 @@ typedef enum htt_isoc_t2h_msg_type {
 #define HTT_ISOC_T2H_MSG_TYPE_S      0
 
 #define HTT_ISOC_T2H_MSG_TYPE_SET(msg_addr, msg_type) \
-	(*((A_UINT8 *) msg_addr) = (msg_type))
+    (*((A_UINT8 *) msg_addr) = (msg_type))
 #define HTT_ISOC_T2H_MSG_TYPE_GET(msg_addr) \
-	(*((A_UINT8 *) msg_addr))
+    (*((A_UINT8 *) msg_addr))
 
 #ifndef INLINE
 #ifdef QCA_SUPPORT_INTEGRATED_SOC
@@ -109,20 +110,20 @@ typedef enum htt_isoc_t2h_msg_type {
 
 static INLINE void
 htt_isoc_t2h_field_set(
-	A_UINT32 *msg_addr32,
-	unsigned offset32,
-	unsigned mask,
-	unsigned shift,
-	unsigned value)
+    A_UINT32 *msg_addr32,
+    unsigned offset32,
+    unsigned mask,
+    unsigned shift,
+    unsigned value)
 {
-	/* sanity check: make sure the value fits within the field */
-	/* qdf_assert(value << shift == (value << shift) | mask); */
+    /* sanity check: make sure the value fits within the field */
+    //adf_os_assert(value << shift == (value << shift) | mask);
 
-	msg_addr32 += offset32;
-	/* clear the field */
-	*msg_addr32 &= ~mask;
-	/* write the new value */
-	*msg_addr32 |= (value << shift);
+    msg_addr32 += offset32;
+    /* clear the field */
+    *msg_addr32 &= ~mask;
+    /* write the new value */
+    *msg_addr32 |= (value << shift);
 }
 
 #ifdef HTT_ISOC_INLINE_DEF
@@ -131,35 +132,36 @@ htt_isoc_t2h_field_set(
 #endif
 
 #define HTT_ISOC_T2H_FIELD_GET(msg_addr32, offset32, mask, shift) \
-	(((*(msg_addr32 + offset32)) & mask) >> shift)
+    (((*(msg_addr32 + offset32)) & mask) >> shift)
 
 typedef enum {
-	/* ASSOC - "real" peer from STA-AP association */
-	HTT_ISOC_T2H_PEER_TYPE_ASSOC = 0x0,
+    /* ASSOC - "real" peer from STA-AP association */
+    HTT_ISOC_T2H_PEER_TYPE_ASSOC = 0x0,
 
-	/* SELF - self-peer for unicast tx to unassociated peer */
-	HTT_ISOC_T2H_PEER_TYPE_SELF = 0x1,
+    /* SELF - self-peer for unicast tx to unassociated peer */
+    HTT_ISOC_T2H_PEER_TYPE_SELF  = 0x1,
 
-	/* BSSID - reserved for FW use for BT-AMP+IBSS */
-	HTT_ISOC_T2H_PEER_TYPE_BSSID = 0x2,
+    /* BSSID - reserved for FW use for BT-AMP+IBSS */
+    HTT_ISOC_T2H_PEER_TYPE_BSSID = 0x2,
 
-	/* BCAST - self-peer for multicast / broadcast tx */
-	HTT_ISOC_T2H_PEER_TYPE_BCAST = 0x3
+    /* BCAST - self-peer for multicast / broadcast tx */
+    HTT_ISOC_T2H_PEER_TYPE_BCAST = 0x3
 } HTT_ISOC_T2H_PEER_TYPE_ENUM;
 
 enum {
-	HTT_ISOC_NON_QOS = 0,
-	HTT_ISOC_QOS = 1
+    HTT_ISOC_NON_QOS = 0,
+    HTT_ISOC_QOS     = 1
 };
 
 enum {
-	HTT_ISOC_RMF_DISABLED = 0,
-	HTT_ISOC_RMF_ENABLED = 1
+    HTT_ISOC_RMF_DISABLED = 0,
+    HTT_ISOC_RMF_ENABLED  = 1
 };
 
 enum {
-	HTT_ISOC_TID_MGMT = 7
+    HTT_ISOC_TID_MGMT = 7
 };
+
 
 /*=== definitions for specific messages =====================================*/
 
@@ -258,16 +260,27 @@ enum {
  *         vdev the self-peer represents.
  */
 typedef struct htt_isoc_t2h_peer_info_s {
-	/* word 0 */
-	A_UINT32 msg_type:8,    /* HTT_ISOC_T2H_MSG_TYPE_PEER_INFO */
-		 dpu_idx:8, bcast_dpu_idx:8, mgmt_dpu_idx:8;
-	/* word 1 */
-	A_UINT32 peer_id:11, dpu_sig:7, bcast_dpu_sig:7, mgmt_dpu_sig:7;
-	/* word 2 */
-	A_UINT32
-		peer_type:6, rmf_enabled:1, reserved0:1, vdev_id:8, mac_addr_l16:16;
-	/* word 3 */
-	A_UINT32 mac_addr_u32;
+    /* word 0 */
+    A_UINT32
+        msg_type:      8, /* HTT_ISOC_T2H_MSG_TYPE_PEER_INFO */
+        dpu_idx:       8,
+        bcast_dpu_idx: 8,
+        mgmt_dpu_idx:  8;
+    /* word 1 */
+    A_UINT32
+        peer_id:      11,
+        dpu_sig:       7,
+        bcast_dpu_sig: 7,
+        mgmt_dpu_sig:  7;
+    /* word 2 */
+    A_UINT32
+        peer_type:     6,
+        rmf_enabled:   1,
+        reserved0:     1,
+        vdev_id:       8,
+        mac_addr_l16: 16;
+    /* word 3 */
+    A_UINT32 mac_addr_u32;
 } htt_isoc_t2h_peer_info_t;
 
 /* word 0 */
@@ -322,101 +335,102 @@ typedef struct htt_isoc_t2h_peer_info_s {
 #define HTT_ISOC_T2H_PEER_INFO_MAC_ADDR_U32_M          0xffffffff
 #define HTT_ISOC_T2H_PEER_INFO_MAC_ADDR_U32_S          0
 
+
 /* general field access macros */
 
 #define HTT_ISOC_T2H_PEER_INFO_FIELD_SET(field, msg_addr, value) \
-	htt_isoc_t2h_field_set(					     \
-		((A_UINT32 *) msg_addr),				 \
-		HTT_ISOC_T2H_PEER_INFO_ ## field ## _OFFSET32,		 \
-		HTT_ISOC_T2H_PEER_INFO_ ## field ## _M,			 \
-		HTT_ISOC_T2H_PEER_INFO_ ## field ## _S,			 \
-		value)
+    htt_isoc_t2h_field_set(                                      \
+        ((A_UINT32 *) msg_addr),                                 \
+        HTT_ISOC_T2H_PEER_INFO_ ## field ## _OFFSET32,           \
+        HTT_ISOC_T2H_PEER_INFO_ ## field ## _M,                  \
+        HTT_ISOC_T2H_PEER_INFO_ ## field ## _S,                  \
+        value)
 
 #define HTT_ISOC_T2H_PEER_INFO_FIELD_GET(field, msg_addr) \
-	HTT_ISOC_T2H_FIELD_GET(				      \
-		((A_UINT32 *) msg_addr),			  \
-		HTT_ISOC_T2H_PEER_INFO_ ## field ## _OFFSET32,	  \
-		HTT_ISOC_T2H_PEER_INFO_ ## field ## _M,		  \
-		HTT_ISOC_T2H_PEER_INFO_ ## field ## _S)
+    HTT_ISOC_T2H_FIELD_GET(                               \
+        ((A_UINT32 *) msg_addr),                          \
+        HTT_ISOC_T2H_PEER_INFO_ ## field ## _OFFSET32,    \
+        HTT_ISOC_T2H_PEER_INFO_ ## field ## _M,           \
+        HTT_ISOC_T2H_PEER_INFO_ ## field ## _S)
 
 /* access macros for specific fields */
 
 #define HTT_ISOC_T2H_PEER_INFO_DPU_IDX_SET(msg_addr, value) \
-	HTT_ISOC_T2H_PEER_INFO_FIELD_SET(DPU_IDX, msg_addr, value)
+    HTT_ISOC_T2H_PEER_INFO_FIELD_SET(DPU_IDX, msg_addr, value)
 #define HTT_ISOC_T2H_PEER_INFO_DPU_IDX_GET(msg_addr) \
-	HTT_ISOC_T2H_PEER_INFO_FIELD_GET(DPU_IDX, msg_addr)
+    HTT_ISOC_T2H_PEER_INFO_FIELD_GET(DPU_IDX, msg_addr)
 
-A_COMPILE_TIME_ASSERT(HTT_ISOC_T2H_PEER_INFO_BCAST_DPU_IDX_M_Size_Check,
-	(HTT_ISOC_T2H_PEER_INFO_BCAST_DPU_IDX_M >> HTT_ISOC_T2H_PEER_INFO_BCAST_DPU_IDX_S) \
-		<= ((A_UINT8)~((A_UINT8)0)));
+A_COMPILE_TIME_ASSERT(HTT_ISOC_T2H_PEER_INFO_BCAST_DPU_IDX_M_Size_Check, \
+    (HTT_ISOC_T2H_PEER_INFO_BCAST_DPU_IDX_M >> HTT_ISOC_T2H_PEER_INFO_BCAST_DPU_IDX_S)\
+    <= ((A_UINT8)~((A_UINT8)0)));
 #define HTT_ISOC_T2H_PEER_INFO_BCAST_DPU_IDX_SET(msg_addr, value) \
-	HTT_ISOC_T2H_PEER_INFO_FIELD_SET(BCAST_DPU_IDX, msg_addr, value)
+    HTT_ISOC_T2H_PEER_INFO_FIELD_SET(BCAST_DPU_IDX, msg_addr, value)
 #define HTT_ISOC_T2H_PEER_INFO_BCAST_DPU_IDX_GET(msg_addr) \
-	(A_UINT8)(HTT_ISOC_T2H_PEER_INFO_FIELD_GET(BCAST_DPU_IDX, msg_addr))
+    (A_UINT8)(HTT_ISOC_T2H_PEER_INFO_FIELD_GET(BCAST_DPU_IDX, msg_addr))
 
-A_COMPILE_TIME_ASSERT(HTT_ISOC_T2H_PEER_INFO_MGMT_DPU_IDX_M_Size_Check,
-	(HTT_ISOC_T2H_PEER_INFO_MGMT_DPU_IDX_M >> HTT_ISOC_T2H_PEER_INFO_MGMT_DPU_IDX_S) \
-		<= ((A_UINT8)~((A_UINT8)0)));
+A_COMPILE_TIME_ASSERT(HTT_ISOC_T2H_PEER_INFO_MGMT_DPU_IDX_M_Size_Check,\
+   (HTT_ISOC_T2H_PEER_INFO_MGMT_DPU_IDX_M >> HTT_ISOC_T2H_PEER_INFO_MGMT_DPU_IDX_S) \
+                      <= ((A_UINT8)~((A_UINT8)0)));
 #define HTT_ISOC_T2H_PEER_INFO_MGMT_DPU_IDX_SET(msg_addr, value) \
-	HTT_ISOC_T2H_PEER_INFO_FIELD_SET(MGMT_DPU_IDX, msg_addr, value)
+    HTT_ISOC_T2H_PEER_INFO_FIELD_SET(MGMT_DPU_IDX, msg_addr, value)
 #define HTT_ISOC_T2H_PEER_INFO_MGMT_DPU_IDX_GET(msg_addr) \
-	(A_UINT8)(HTT_ISOC_T2H_PEER_INFO_FIELD_GET(MGMT_DPU_IDX, msg_addr))
+    (A_UINT8)(HTT_ISOC_T2H_PEER_INFO_FIELD_GET(MGMT_DPU_IDX, msg_addr))
 
 #define HTT_ISOC_T2H_PEER_INFO_PEER_ID_SET(msg_addr, value) \
-	HTT_ISOC_T2H_PEER_INFO_FIELD_SET(PEER_ID, msg_addr, value)
+    HTT_ISOC_T2H_PEER_INFO_FIELD_SET(PEER_ID, msg_addr, value)
 #define HTT_ISOC_T2H_PEER_INFO_PEER_ID_GET(msg_addr) \
-	HTT_ISOC_T2H_PEER_INFO_FIELD_GET(PEER_ID, msg_addr)
+    HTT_ISOC_T2H_PEER_INFO_FIELD_GET(PEER_ID, msg_addr)
 
-A_COMPILE_TIME_ASSERT(HTT_ISOC_T2H_PEER_INFO_DPU_SIG_M_Size_Check,
-	(HTT_ISOC_T2H_PEER_INFO_DPU_SIG_M >> HTT_ISOC_T2H_PEER_INFO_DPU_SIG_S)\
-		<= ((A_UINT8)~((A_UINT8)0)));
+A_COMPILE_TIME_ASSERT(HTT_ISOC_T2H_PEER_INFO_DPU_SIG_M_Size_Check,\
+  (HTT_ISOC_T2H_PEER_INFO_DPU_SIG_M >> HTT_ISOC_T2H_PEER_INFO_DPU_SIG_S)\
+               <= ((A_UINT8)~((A_UINT8)0)));
 #define HTT_ISOC_T2H_PEER_INFO_DPU_SIG_SET(msg_addr, value) \
-	HTT_ISOC_T2H_PEER_INFO_FIELD_SET(DPU_SIG, msg_addr, value)
+    HTT_ISOC_T2H_PEER_INFO_FIELD_SET(DPU_SIG, msg_addr, value)
 #define HTT_ISOC_T2H_PEER_INFO_DPU_SIG_GET(msg_addr) \
-	(A_UINT8)(HTT_ISOC_T2H_PEER_INFO_FIELD_GET(DPU_SIG, msg_addr))
+    (A_UINT8)(HTT_ISOC_T2H_PEER_INFO_FIELD_GET(DPU_SIG, msg_addr))
 
-A_COMPILE_TIME_ASSERT(HTT_ISOC_T2H_PEER_INFO_BCAST_DPU_SIG_M_Size_Check,
-	(HTT_ISOC_T2H_PEER_INFO_BCAST_DPU_SIG_M >> HTT_ISOC_T2H_PEER_INFO_BCAST_DPU_SIG_S)\
-		<= ((A_UINT8)~((A_UINT8)0)));
+A_COMPILE_TIME_ASSERT(HTT_ISOC_T2H_PEER_INFO_BCAST_DPU_SIG_M_Size_Check,\
+  (HTT_ISOC_T2H_PEER_INFO_BCAST_DPU_SIG_M >> HTT_ISOC_T2H_PEER_INFO_BCAST_DPU_SIG_S)\
+  <= ((A_UINT8)~((A_UINT8)0)));
 #define HTT_ISOC_T2H_PEER_INFO_BCAST_DPU_SIG_SET(msg_addr, value) \
-	HTT_ISOC_T2H_PEER_INFO_FIELD_SET(BCAST_DPU_SIG, msg_addr, value)
+    HTT_ISOC_T2H_PEER_INFO_FIELD_SET(BCAST_DPU_SIG, msg_addr, value)
 #define HTT_ISOC_T2H_PEER_INFO_BCAST_DPU_SIG_GET(msg_addr) \
-	(A_UINT8)(HTT_ISOC_T2H_PEER_INFO_FIELD_GET(BCAST_DPU_SIG, msg_addr))
+    (A_UINT8)(HTT_ISOC_T2H_PEER_INFO_FIELD_GET(BCAST_DPU_SIG, msg_addr))
 
 #define HTT_ISOC_T2H_PEER_INFO_MGMT_DPU_SIG_SET(msg_addr, value) \
-	HTT_ISOC_T2H_PEER_INFO_FIELD_SET(MGMT_DPU_SIG, msg_addr, value)
+    HTT_ISOC_T2H_PEER_INFO_FIELD_SET(MGMT_DPU_SIG, msg_addr, value)
 #define HTT_ISOC_T2H_PEER_INFO_MGMT_DPU_SIG_GET(msg_addr) \
-	HTT_ISOC_T2H_PEER_INFO_FIELD_GET(MGMT_DPU_SIG, msg_addr)
+    HTT_ISOC_T2H_PEER_INFO_FIELD_GET(MGMT_DPU_SIG, msg_addr)
 
 #define HTT_ISOC_T2H_PEER_INFO_PEER_TYPE_SET(msg_addr, value) \
-	HTT_ISOC_T2H_PEER_INFO_FIELD_SET(PEER_TYPE, msg_addr, value)
+    HTT_ISOC_T2H_PEER_INFO_FIELD_SET(PEER_TYPE, msg_addr, value)
 #define HTT_ISOC_T2H_PEER_INFO_PEER_TYPE_GET(msg_addr) \
-	HTT_ISOC_T2H_PEER_INFO_FIELD_GET(PEER_TYPE, msg_addr)
+    HTT_ISOC_T2H_PEER_INFO_FIELD_GET(PEER_TYPE, msg_addr)
 
-#define HTT_ISOC_T2H_PEER_INFO_QOS_CAPABLE_SET(msg_addr, value)	\
-	HTT_ISOC_T2H_PEER_INFO_FIELD_SET(QOS_CAPABLE, msg_addr, value)
+#define HTT_ISOC_T2H_PEER_INFO_QOS_CAPABLE_SET(msg_addr, value) \
+    HTT_ISOC_T2H_PEER_INFO_FIELD_SET(QOS_CAPABLE, msg_addr, value)
 #define HTT_ISOC_T2H_PEER_INFO_QOS_CAPABLE_GET(msg_addr) \
-	HTT_ISOC_T2H_PEER_INFO_FIELD_GET(QOS_CAPABLE, msg_addr)
+    HTT_ISOC_T2H_PEER_INFO_FIELD_GET(QOS_CAPABLE, msg_addr)
 
-#define HTT_ISOC_T2H_PEER_INFO_RMF_ENABLED_SET(msg_addr, value)	\
-	HTT_ISOC_T2H_PEER_INFO_FIELD_SET(RMF_ENABLED, msg_addr, value)
+#define HTT_ISOC_T2H_PEER_INFO_RMF_ENABLED_SET(msg_addr, value) \
+    HTT_ISOC_T2H_PEER_INFO_FIELD_SET(RMF_ENABLED, msg_addr, value)
 #define HTT_ISOC_T2H_PEER_INFO_RMF_ENABLED_GET(msg_addr) \
-	HTT_ISOC_T2H_PEER_INFO_FIELD_GET(RMF_ENABLED, msg_addr)
+    HTT_ISOC_T2H_PEER_INFO_FIELD_GET(RMF_ENABLED, msg_addr)
 
 #define HTT_ISOC_T2H_PEER_INFO_VDEV_ID_SET(msg_addr, value) \
-	HTT_ISOC_T2H_PEER_INFO_FIELD_SET(VDEV_ID, msg_addr, value)
+    HTT_ISOC_T2H_PEER_INFO_FIELD_SET(VDEV_ID, msg_addr, value)
 #define HTT_ISOC_T2H_PEER_INFO_VDEV_ID_GET(msg_addr) \
-	HTT_ISOC_T2H_PEER_INFO_FIELD_GET(VDEV_ID, msg_addr)
+    HTT_ISOC_T2H_PEER_INFO_FIELD_GET(VDEV_ID, msg_addr)
 
 #define HTT_ISOC_T2H_PEER_INFO_MAC_ADDR_L16_SET(msg_addr, value) \
-	HTT_ISOC_T2H_PEER_INFO_FIELD_SET(MAC_ADDR_L16, msg_addr, value)
+    HTT_ISOC_T2H_PEER_INFO_FIELD_SET(MAC_ADDR_L16, msg_addr, value)
 #define HTT_ISOC_T2H_PEER_INFO_MAC_ADDR_L16_GET(msg_addr) \
-	HTT_ISOC_T2H_PEER_INFO_FIELD_GET(MAC_ADDR_L16, msg_addr)
+    HTT_ISOC_T2H_PEER_INFO_FIELD_GET(MAC_ADDR_L16, msg_addr)
 
 #define HTT_ISOC_T2H_PEER_INFO_MAC_ADDR_U32_SET(msg_addr, value) \
-	HTT_ISOC_T2H_PEER_INFO_FIELD_SET(MAC_ADDR_U32, msg_addr, value)
+    HTT_ISOC_T2H_PEER_INFO_FIELD_SET(MAC_ADDR_U32, msg_addr, value)
 #define HTT_ISOC_T2H_PEER_INFO_MAC_ADDR_U32_GET(msg_addr) \
-	HTT_ISOC_T2H_PEER_INFO_FIELD_GET(MAC_ADDR_U32, msg_addr)
+    HTT_ISOC_T2H_PEER_INFO_FIELD_GET(MAC_ADDR_U32, msg_addr)
 
 /*=== PEER_UNMAP message ===*/
 
@@ -447,9 +461,11 @@ A_COMPILE_TIME_ASSERT(HTT_ISOC_T2H_PEER_INFO_BCAST_DPU_SIG_M_Size_Check,
  *     Purpose: The ID that the target has allocated to refer to the peer
  */
 typedef struct htt_isoc_t2h_peer_unmap_s {
-	/* word 0 */
-	A_UINT32 msg_type:8,    /* HTT_ISOC_T2H_MSG_TYPE_PEER_UNMAP */
-		 peer_id:11, reserved0:13;
+    /* word 0 */
+    A_UINT32
+        msg_type:      8, /* HTT_ISOC_T2H_MSG_TYPE_PEER_UNMAP */
+        peer_id:      11,
+        reserved0:    13;
 } htt_isoc_t2h_peer_unmap_t;
 
 /* word 0 */
@@ -457,38 +473,39 @@ typedef struct htt_isoc_t2h_peer_unmap_s {
 #define HTT_ISOC_T2H_PEER_UNMAP_PEER_ID_M               0x0007ff00
 #define HTT_ISOC_T2H_PEER_UNMAP_PEER_ID_S               8
 
+
 /* general field access macros */
 
 #define HTT_ISOC_T2H_PEER_UNMAP_FIELD_SET(field, msg_addr, value) \
-	htt_isoc_t2h_field_set(					      \
-		((A_UINT32 *) msg_addr),				  \
-		HTT_ISOC_T2H_PEER_UNMAP_ ## field ## _OFFSET32,		  \
-		HTT_ISOC_T2H_PEER_UNMAP_ ## field ## _M,		  \
-		HTT_ISOC_T2H_PEER_UNMAP_ ## field ## _S,		  \
-		value)
+    htt_isoc_t2h_field_set(                                       \
+        ((A_UINT32 *) msg_addr),                                  \
+        HTT_ISOC_T2H_PEER_UNMAP_ ## field ## _OFFSET32,           \
+        HTT_ISOC_T2H_PEER_UNMAP_ ## field ## _M,                  \
+        HTT_ISOC_T2H_PEER_UNMAP_ ## field ## _S,                  \
+        value)
 
 #define HTT_ISOC_T2H_PEER_UNMAP_FIELD_GET(field, msg_addr) \
-	HTT_ISOC_T2H_FIELD_GET(				       \
-		((A_UINT32 *) msg_addr),			   \
-		HTT_ISOC_T2H_PEER_UNMAP_ ## field ## _OFFSET32,	   \
-		HTT_ISOC_T2H_PEER_UNMAP_ ## field ## _M,	   \
-		HTT_ISOC_T2H_PEER_UNMAP_ ## field ## _S)
+    HTT_ISOC_T2H_FIELD_GET(                                \
+        ((A_UINT32 *) msg_addr),                           \
+        HTT_ISOC_T2H_PEER_UNMAP_ ## field ## _OFFSET32,    \
+        HTT_ISOC_T2H_PEER_UNMAP_ ## field ## _M,           \
+        HTT_ISOC_T2H_PEER_UNMAP_ ## field ## _S)
 
 /* access macros for specific fields */
 
-A_COMPILE_TIME_ASSERT(HTT_ISOC_T2H_PEER_UNMAP_PEER_ID_M_Size_Check,
-	(HTT_ISOC_T2H_PEER_UNMAP_PEER_ID_M >> HTT_ISOC_T2H_PEER_UNMAP_PEER_ID_S) \
-		< ((A_UINT16)~((A_UINT16)0)));
+A_COMPILE_TIME_ASSERT(HTT_ISOC_T2H_PEER_UNMAP_PEER_ID_M_Size_Check,\
+  (HTT_ISOC_T2H_PEER_UNMAP_PEER_ID_M >> HTT_ISOC_T2H_PEER_UNMAP_PEER_ID_S)\
+  < ((A_UINT16)~((A_UINT16)0)));
 #define HTT_ISOC_T2H_PEER_UNMAP_PEER_ID_SET(msg_addr, value) \
-	HTT_ISOC_T2H_PEER_UNMAP_FIELD_SET(PEER_ID, msg_addr, value)
+    HTT_ISOC_T2H_PEER_UNMAP_FIELD_SET(PEER_ID, msg_addr, value)
 #define HTT_ISOC_T2H_PEER_UNMAP_PEER_ID_GET(msg_addr) \
-	(A_UINT16)(HTT_ISOC_T2H_PEER_UNMAP_FIELD_GET(PEER_ID, msg_addr))
+    (A_UINT16)(HTT_ISOC_T2H_PEER_UNMAP_FIELD_GET(PEER_ID, msg_addr))
 
 /*=== ADDBA message ===*/
 enum {
-	htt_isoc_addba_success = 0,
-	/* TBD: use different failure values to specify failure causes? */
-	htt_isoc_addba_fail = 1,
+    htt_isoc_addba_success = 0,
+    /* TBD: use different failure values to specify failure causes? */
+    htt_isoc_addba_fail = 1,
 };
 
 /**
@@ -540,11 +557,15 @@ enum {
  *     Value: 0 - SUCCESS, 1 - FAILURE
  */
 typedef struct htt_isoc_t2h_addba_s {
-	/* word 0 */
-	A_UINT32 msg_type:8,    /* HTT_ISOC_T2H_MSG_TYPE_ADDBA */
-		 win_size:8, tid:4, peer_id:12;
-	/* word 1 */
-	A_UINT32 start_seq_num:12, status:1, reserved0:19;
+    /* word 0 */
+    A_UINT32 msg_type:       8, /* HTT_ISOC_T2H_MSG_TYPE_ADDBA */
+             win_size:       8,
+             tid:            4,
+             peer_id:       12;
+    /* word 1 */
+    A_UINT32 start_seq_num: 12,
+             status:         1,
+             reserved0:     19;
 } htt_isoc_t2h_addba_t;
 
 /* word 0 */
@@ -571,49 +592,49 @@ typedef struct htt_isoc_t2h_addba_s {
 
 /* general field access macros */
 #define HTT_ISOC_T2H_ADDBA_FIELD_SET(field, msg_addr, value) \
-	htt_isoc_t2h_field_set(					      \
-		((A_UINT32 *) msg_addr),				  \
-		HTT_ISOC_T2H_ADDBA_ ## field ## _OFFSET32,	     \
-		HTT_ISOC_T2H_ADDBA_ ## field ## _M,		     \
-		HTT_ISOC_T2H_ADDBA_ ## field ## _S,		     \
-		value)
+    htt_isoc_t2h_field_set(                                       \
+        ((A_UINT32 *) msg_addr),                                  \
+        HTT_ISOC_T2H_ADDBA_ ## field ## _OFFSET32,           \
+        HTT_ISOC_T2H_ADDBA_ ## field ## _M,                  \
+        HTT_ISOC_T2H_ADDBA_ ## field ## _S,                  \
+        value)
 
 #define HTT_ISOC_T2H_ADDBA_FIELD_GET(field, msg_addr) \
-	HTT_ISOC_T2H_FIELD_GET(				       \
-		((A_UINT32 *) msg_addr),			   \
-		HTT_ISOC_T2H_ADDBA_ ## field ## _OFFSET32,    \
-		HTT_ISOC_T2H_ADDBA_ ## field ## _M,	      \
-		HTT_ISOC_T2H_ADDBA_ ## field ## _S)
+    HTT_ISOC_T2H_FIELD_GET(                                \
+        ((A_UINT32 *) msg_addr),                           \
+        HTT_ISOC_T2H_ADDBA_ ## field ## _OFFSET32,    \
+        HTT_ISOC_T2H_ADDBA_ ## field ## _M,           \
+        HTT_ISOC_T2H_ADDBA_ ## field ## _S)
 
 /* access macros for specific fields */
 
 #define HTT_ISOC_T2H_ADDBA_WIN_SIZE_SET(msg_addr, value) \
-	HTT_ISOC_T2H_ADDBA_FIELD_SET(WIN_SIZE, msg_addr, value)
+    HTT_ISOC_T2H_ADDBA_FIELD_SET(WIN_SIZE, msg_addr, value)
 #define HTT_ISOC_T2H_ADDBA_WIN_SIZE_GET(msg_addr) \
-	HTT_ISOC_T2H_ADDBA_FIELD_GET(WIN_SIZE, msg_addr)
+    HTT_ISOC_T2H_ADDBA_FIELD_GET(WIN_SIZE, msg_addr)
 
-A_COMPILE_TIME_ASSERT(HTT_ISOC_T2H_ADDBA_TID_M_Size_Check,
-	(HTT_ISOC_T2H_ADDBA_TID_M >> HTT_ISOC_T2H_ADDBA_TID_S) \
-		< ((A_UINT8)~((A_UINT8)0)));
+A_COMPILE_TIME_ASSERT(HTT_ISOC_T2H_ADDBA_TID_M_Size_Check,\
+  (HTT_ISOC_T2H_ADDBA_TID_M >> HTT_ISOC_T2H_ADDBA_TID_S) \
+  < ((A_UINT8)~((A_UINT8)0)));
 #define HTT_ISOC_T2H_ADDBA_TID_SET(msg_addr, value) \
-	HTT_ISOC_T2H_ADDBA_FIELD_SET(TID, msg_addr, value)
+    HTT_ISOC_T2H_ADDBA_FIELD_SET(TID, msg_addr, value)
 #define HTT_ISOC_T2H_ADDBA_TID_GET(msg_addr) \
-	(A_UINT8)(HTT_ISOC_T2H_ADDBA_FIELD_GET(TID, msg_addr))
+    (A_UINT8)(HTT_ISOC_T2H_ADDBA_FIELD_GET(TID, msg_addr))
 
-#define HTT_ISOC_T2H_ADDBA_PEER_ID_SET(msg_addr, value)	\
-	HTT_ISOC_T2H_ADDBA_FIELD_SET(PEER_ID, msg_addr, value)
+#define HTT_ISOC_T2H_ADDBA_PEER_ID_SET(msg_addr, value) \
+    HTT_ISOC_T2H_ADDBA_FIELD_SET(PEER_ID, msg_addr, value)
 #define HTT_ISOC_T2H_ADDBA_PEER_ID_GET(msg_addr) \
-	HTT_ISOC_T2H_ADDBA_FIELD_GET(PEER_ID, msg_addr)
+    HTT_ISOC_T2H_ADDBA_FIELD_GET(PEER_ID, msg_addr)
 
 #define HTT_ISOC_T2H_ADDBA_START_SEQ_NUM_SET(msg_addr, value) \
-	HTT_ISOC_T2H_ADDBA_FIELD_SET(START_SEQ_NUM, msg_addr, value)
+    HTT_ISOC_T2H_ADDBA_FIELD_SET(START_SEQ_NUM, msg_addr, value)
 #define HTT_ISOC_T2H_ADDBA_START_SEQ_NUM_GET(msg_addr) \
-	HTT_ISOC_T2H_ADDBA_FIELD_GET(START_SEQ_NUM, msg_addr)
+    HTT_ISOC_T2H_ADDBA_FIELD_GET(START_SEQ_NUM, msg_addr)
 
 #define HTT_ISOC_T2H_ADDBA_STATUS_SET(msg_addr, value) \
-	HTT_ISOC_T2H_ADDBA_FIELD_SET(STATUS, msg_addr, value)
-#define HTT_ISOC_T2H_ADDBA_STATUS_GET(msg_addr)	\
-	HTT_ISOC_T2H_ADDBA_FIELD_GET(STATUS, msg_addr)
+    HTT_ISOC_T2H_ADDBA_FIELD_SET(STATUS, msg_addr, value)
+#define HTT_ISOC_T2H_ADDBA_STATUS_GET(msg_addr) \
+    HTT_ISOC_T2H_ADDBA_FIELD_GET(STATUS, msg_addr)
 
 /*=== DELBA message ===*/
 
@@ -654,9 +675,13 @@ A_COMPILE_TIME_ASSERT(HTT_ISOC_T2H_ADDBA_TID_M_Size_Check,
  *     Value: 0 - SUCCESS, 1 - FAILURE
  */
 typedef struct htt_isoc_t2h_delba_s {
-	/* word 0 */
-	A_UINT32 msg_type:8,    /* HTT_ISOC_T2H_MSG_TYPE_DELBA */
-		 status:1, reserved0:7, tid:4, peer_id:12;
+    /* word 0 */
+    A_UINT32
+        msg_type:       8, /* HTT_ISOC_T2H_MSG_TYPE_DELBA */
+        status:         1,
+        reserved0:      7,
+        tid:            4,
+        peer_id:       12;
 } htt_isoc_t2h_delba_t;
 
 /* word 0 */
@@ -675,39 +700,39 @@ typedef struct htt_isoc_t2h_delba_s {
 /* general field access macros */
 
 #define HTT_ISOC_T2H_DELBA_FIELD_SET(field, msg_addr, value) \
-	htt_isoc_t2h_field_set(					      \
-		((A_UINT32 *) msg_addr),				  \
-		HTT_ISOC_T2H_DELBA_ ## field ## _OFFSET32,	     \
-		HTT_ISOC_T2H_DELBA_ ## field ## _M,		     \
-		HTT_ISOC_T2H_DELBA_ ## field ## _S,		     \
-		value)
+    htt_isoc_t2h_field_set(                                       \
+        ((A_UINT32 *) msg_addr),                                  \
+        HTT_ISOC_T2H_DELBA_ ## field ## _OFFSET32,           \
+        HTT_ISOC_T2H_DELBA_ ## field ## _M,                  \
+        HTT_ISOC_T2H_DELBA_ ## field ## _S,                  \
+        value)
 
 #define HTT_ISOC_T2H_DELBA_FIELD_GET(field, msg_addr) \
-	HTT_ISOC_T2H_FIELD_GET(				       \
-		((A_UINT32 *) msg_addr),			   \
-		HTT_ISOC_T2H_DELBA_ ## field ## _OFFSET32,    \
-		HTT_ISOC_T2H_DELBA_ ## field ## _M,	      \
-		HTT_ISOC_T2H_DELBA_ ## field ## _S)
+    HTT_ISOC_T2H_FIELD_GET(                                \
+        ((A_UINT32 *) msg_addr),                           \
+        HTT_ISOC_T2H_DELBA_ ## field ## _OFFSET32,    \
+        HTT_ISOC_T2H_DELBA_ ## field ## _M,           \
+        HTT_ISOC_T2H_DELBA_ ## field ## _S)
 
 /* access macros for specific fields */
 
-A_COMPILE_TIME_ASSERT(HTT_ISOC_T2H_DELBA_TID_M_Size_Check,
-	(HTT_ISOC_T2H_DELBA_TID_M >> HTT_ISOC_T2H_DELBA_TID_S) \
-		< ((A_UINT8)~((A_UINT8)0)));
+A_COMPILE_TIME_ASSERT(HTT_ISOC_T2H_DELBA_TID_M_Size_Check,\
+  (HTT_ISOC_T2H_DELBA_TID_M >> HTT_ISOC_T2H_DELBA_TID_S) \
+  < ((A_UINT8)~((A_UINT8)0)));
 #define HTT_ISOC_T2H_DELBA_TID_SET(msg_addr, value) \
-	HTT_ISOC_T2H_DELBA_FIELD_SET(TID, msg_addr, value)
+    HTT_ISOC_T2H_DELBA_FIELD_SET(TID, msg_addr, value)
 #define HTT_ISOC_T2H_DELBA_TID_GET(msg_addr) \
-	(A_UINT8)HTT_ISOC_T2H_DELBA_FIELD_GET(TID, msg_addr)
+    (A_UINT8)HTT_ISOC_T2H_DELBA_FIELD_GET(TID, msg_addr)
 
-#define HTT_ISOC_T2H_DELBA_PEER_ID_SET(msg_addr, value)	\
-	HTT_ISOC_T2H_DELBA_FIELD_SET(PEER_ID, msg_addr, value)
+#define HTT_ISOC_T2H_DELBA_PEER_ID_SET(msg_addr, value) \
+    HTT_ISOC_T2H_DELBA_FIELD_SET(PEER_ID, msg_addr, value)
 #define HTT_ISOC_T2H_DELBA_PEER_ID_GET(msg_addr) \
-	HTT_ISOC_T2H_DELBA_FIELD_GET(PEER_ID, msg_addr)
+    HTT_ISOC_T2H_DELBA_FIELD_GET(PEER_ID, msg_addr)
 
 #define HTT_ISOC_T2H_DELBA_STATUS_SET(msg_addr, value) \
-	HTT_ISOC_T2H_DELBA_FIELD_SET(STATUS, msg_addr, value)
-#define HTT_ISOC_T2H_DELBA_STATUS_GET(msg_addr)	\
-	HTT_ISOC_T2H_DELBA_FIELD_GET(STATUS, msg_addr)
+    HTT_ISOC_T2H_DELBA_FIELD_SET(STATUS, msg_addr, value)
+#define HTT_ISOC_T2H_DELBA_STATUS_GET(msg_addr) \
+    HTT_ISOC_T2H_DELBA_FIELD_GET(STATUS, msg_addr)
 
 /*=== SEC_IND message ===*/
 
@@ -759,15 +784,18 @@ A_COMPILE_TIME_ASSERT(HTT_ISOC_T2H_DELBA_TID_M_Size_Check,
  *     Purpose: Mickey2
  */
 typedef struct htt_isoc_t2h_sec_ind_s {
-	/* word 0 */
-	A_UINT32 msg_type:8,    /* HTT_ISOC_T2H_MSG_TYPE_SEC_IND */
-		 peer_id:8, sec_type:8, is_unicast:8;
-	/* word 1 */
-	A_UINT32 mic_key1;
-	/* word 2 */
-	A_UINT32 mic_key2;
-	/* word 3 */
-	A_UINT32 status;
+    /* word 0 */
+    A_UINT32
+        msg_type:      8, /* HTT_ISOC_T2H_MSG_TYPE_SEC_IND */
+        peer_id:       8,
+        sec_type:      8,
+        is_unicast:    8;
+    /* word 1 */
+    A_UINT32 mic_key1;
+    /* word 2 */
+    A_UINT32 mic_key2;
+    /* word 3 */
+    A_UINT32 status;
 } htt_isoc_t2h_sec_ind_t;
 
 /* word 0 */
@@ -793,47 +821,48 @@ typedef struct htt_isoc_t2h_sec_ind_s {
 #define HTT_ISOC_T2H_SEC_IND_MIC2_M                  0xffffffff
 #define HTT_ISOC_T2H_SEC_IND_MIC2_S                  0
 
+
 /* general field access macros */
 #define HTT_ISOC_T2H_SEC_IND_FIELD_SET(field, msg_addr, value) \
-	htt_isoc_t2h_field_set(					     \
-		((A_UINT32 *) msg_addr),				 \
-		HTT_ISOC_T2H_SEC_IND_ ## field ## _OFFSET32,	       \
-		HTT_ISOC_T2H_SEC_IND_ ## field ## _M,		       \
-		HTT_ISOC_T2H_SEC_IND_ ## field ## _S,		       \
-		value)
+    htt_isoc_t2h_field_set(                                      \
+        ((A_UINT32 *) msg_addr),                                 \
+        HTT_ISOC_T2H_SEC_IND_ ## field ## _OFFSET32,           \
+        HTT_ISOC_T2H_SEC_IND_ ## field ## _M,                  \
+        HTT_ISOC_T2H_SEC_IND_ ## field ## _S,                  \
+        value)
 
-#define HTT_ISOC_T2H_SEC_IND_FIELD_GET(field, msg_addr)	\
-	HTT_ISOC_T2H_FIELD_GET(				      \
-		((A_UINT32 *) msg_addr),			  \
-		HTT_ISOC_T2H_SEC_IND_ ## field ## _OFFSET32,	\
-		HTT_ISOC_T2H_SEC_IND_ ## field ## _M,		\
-		HTT_ISOC_T2H_SEC_IND_ ## field ## _S)
+#define HTT_ISOC_T2H_SEC_IND_FIELD_GET(field, msg_addr) \
+    HTT_ISOC_T2H_FIELD_GET(                               \
+        ((A_UINT32 *) msg_addr),                          \
+        HTT_ISOC_T2H_SEC_IND_ ## field ## _OFFSET32,    \
+        HTT_ISOC_T2H_SEC_IND_ ## field ## _M,           \
+        HTT_ISOC_T2H_SEC_IND_ ## field ## _S)
 
 /* access macros for specific fields */
 #define HTT_ISOC_T2H_SEC_IND_PEER_ID_SET(msg_addr, value) \
-	HTT_ISOC_T2H_SEC_IND_FIELD_SET(PEER_ID, msg_addr, value)
+    HTT_ISOC_T2H_SEC_IND_FIELD_SET(PEER_ID, msg_addr, value)
 #define HTT_ISOC_T2H_SEC_IND_PEER_ID_GET(msg_addr) \
-	HTT_ISOC_T2H_SEC_IND_FIELD_GET(PEER_ID, msg_addr)
+    HTT_ISOC_T2H_SEC_IND_FIELD_GET(PEER_ID, msg_addr)
 
 #define HTT_ISOC_T2H_SEC_IND_SEC_TYPE_SET(msg_addr, value) \
-	HTT_ISOC_T2H_SEC_IND_FIELD_SET(SEC_TYPE, msg_addr, value)
+    HTT_ISOC_T2H_SEC_IND_FIELD_SET(SEC_TYPE, msg_addr, value)
 #define HTT_ISOC_T2H_SEC_IND_SEC_TYPE_GET(msg_addr) \
-	HTT_ISOC_T2H_SEC_IND_FIELD_GET(SEC_TYPE, msg_addr)
+    HTT_ISOC_T2H_SEC_IND_FIELD_GET(SEC_TYPE, msg_addr)
 
 #define HTT_ISOC_T2H_SEC_IND_IS_UNICAST_SET(msg_addr, value) \
-	HTT_ISOC_T2H_SEC_IND_FIELD_SET(IS_UNICAST, msg_addr, value)
+    HTT_ISOC_T2H_SEC_IND_FIELD_SET(IS_UNICAST, msg_addr, value)
 #define HTT_ISOC_T2H_SEC_IND_IS_UNICAST_GET(msg_addr) \
-	HTT_ISOC_T2H_SEC_IND_FIELD_GET(IS_UNICAST, msg_addr)
+    HTT_ISOC_T2H_SEC_IND_FIELD_GET(IS_UNICAST, msg_addr)
 
 #define HTT_ISOC_T2H_SEC_IND_MIC1_SET(msg_addr, value) \
-	HTT_ISOC_T2H_SEC_IND_FIELD_SET(MIC1, msg_addr, value)
-#define HTT_ISOC_T2H_SEC_IND_MIC1_GET(msg_addr)	\
-	HTT_ISOC_T2H_SEC_IND_FIELD_GET(MIC1, msg_addr)
+    HTT_ISOC_T2H_SEC_IND_FIELD_SET(MIC1, msg_addr, value)
+#define HTT_ISOC_T2H_SEC_IND_MIC1_GET(msg_addr) \
+    HTT_ISOC_T2H_SEC_IND_FIELD_GET(MIC1, msg_addr)
 
 #define HTT_ISOC_T2H_SEC_IND_MIC2_SET(msg_addr, value) \
-	HTT_ISOC_T2H_SEC_IND_FIELD_SET(MIC2, msg_addr, value)
-#define HTT_ISOC_T2H_SEC_IND_MIC2_GET(msg_addr)	\
-	HTT_ISOC_T2H_SEC_IND_FIELD_GET(MIC2, msg_addr)
+    HTT_ISOC_T2H_SEC_IND_FIELD_SET(MIC2, msg_addr, value)
+#define HTT_ISOC_T2H_SEC_IND_MIC2_GET(msg_addr) \
+    HTT_ISOC_T2H_SEC_IND_FIELD_GET(MIC2, msg_addr)
 
 /*=== PEER_TX_READY message ===*/
 
@@ -864,9 +893,11 @@ typedef struct htt_isoc_t2h_sec_ind_s {
  *     Purpose: The ID assigned to the peer by the PEER_INFO message
  */
 typedef struct htt_isoc_t2h_peer_tx_ready_s {
-	/* word 0 */
-	A_UINT32 msg_type:8,    /* HTT_ISOC_T2H_MSG_TYPE_PEER_TX_READY */
-		 peer_id:11, reserved0:13;
+    /* word 0 */
+    A_UINT32
+        msg_type:      8, /* HTT_ISOC_T2H_MSG_TYPE_PEER_TX_READY */
+        peer_id:      11,
+        reserved0:    13;
 } htt_isoc_t2h_peer_tx_ready_t;
 
 /* word 0 */
@@ -874,33 +905,32 @@ typedef struct htt_isoc_t2h_peer_tx_ready_s {
 #define HTT_ISOC_T2H_PEER_TX_READY_PEER_ID_M               0x0007ff00
 #define HTT_ISOC_T2H_PEER_TX_READY_PEER_ID_S               8
 
+
 /* general field access macros */
 
 #define HTT_ISOC_T2H_PEER_TX_READY_FIELD_SET(field, msg_addr, value) \
-	htt_isoc_t2h_field_set(					      \
-		((A_UINT32 *) msg_addr),				  \
-		HTT_ISOC_T2H_PEER_TX_READY_ ## field ## _OFFSET32,	     \
-		HTT_ISOC_T2H_PEER_TX_READY_ ## field ## _M,		     \
-		HTT_ISOC_T2H_PEER_TX_READY_ ## field ## _S,		     \
-		value)
+    htt_isoc_t2h_field_set(                                       \
+        ((A_UINT32 *) msg_addr),                                  \
+        HTT_ISOC_T2H_PEER_TX_READY_ ## field ## _OFFSET32,           \
+        HTT_ISOC_T2H_PEER_TX_READY_ ## field ## _M,                  \
+        HTT_ISOC_T2H_PEER_TX_READY_ ## field ## _S,                  \
+        value)
 
 #define HTT_ISOC_T2H_PEER_TX_READY_FIELD_GET(field, msg_addr) \
-	HTT_ISOC_T2H_FIELD_GET(				       \
-		((A_UINT32 *) msg_addr),			   \
-		HTT_ISOC_T2H_PEER_TX_READY_ ## field ## _OFFSET32,    \
-		HTT_ISOC_T2H_PEER_TX_READY_ ## field ## _M,	      \
-		HTT_ISOC_T2H_PEER_TX_READY_ ## field ## _S)
+    HTT_ISOC_T2H_FIELD_GET(                                \
+        ((A_UINT32 *) msg_addr),                           \
+        HTT_ISOC_T2H_PEER_TX_READY_ ## field ## _OFFSET32,    \
+        HTT_ISOC_T2H_PEER_TX_READY_ ## field ## _M,           \
+        HTT_ISOC_T2H_PEER_TX_READY_ ## field ## _S)
 
 /* access macros for specific fields */
 
-A_COMPILE_TIME_ASSERT(HTT_ISOC_T2H_PEER_TX_READY_PEER_ID_M_Size_Check,
-	(HTT_ISOC_T2H_PEER_TX_READY_PEER_ID_M >> \
-	HTT_ISOC_T2H_PEER_TX_READY_PEER_ID_S) < ((A_UINT16)~((A_UINT16)0)));
+A_COMPILE_TIME_ASSERT(HTT_ISOC_T2H_PEER_TX_READY_PEER_ID_M_Size_Check, (HTT_ISOC_T2H_PEER_TX_READY_PEER_ID_M >> HTT_ISOC_T2H_PEER_TX_READY_PEER_ID_S) < ((A_UINT16)~((A_UINT16)0)));
 
 #define HTT_ISOC_T2H_PEER_TX_READY_PEER_ID_SET(msg_addr, value) \
-	HTT_ISOC_T2H_PEER_TX_READY_FIELD_SET(PEER_ID, msg_addr, value)
+    HTT_ISOC_T2H_PEER_TX_READY_FIELD_SET(PEER_ID, msg_addr, value)
 #define HTT_ISOC_T2H_PEER_TX_READY_PEER_ID_GET(msg_addr) \
-	((A_UINT16)(HTT_ISOC_T2H_PEER_TX_READY_FIELD_GET(PEER_ID, msg_addr)))
+    ((A_UINT16)(HTT_ISOC_T2H_PEER_TX_READY_FIELD_GET(PEER_ID, msg_addr)))
 
 
 /*=== RX_ERR message ===*/
@@ -989,17 +1019,22 @@ A_COMPILE_TIME_ASSERT(HTT_ISOC_T2H_PEER_TX_READY_PEER_ID_M_Size_Check,
  *         erroneous rx frames.
  */
 typedef struct htt_isoc_t2h_rx_err_s {
-	/* word 0 */
-	A_UINT32 msg_type:8,    /* HTT_ISOC_T2H_MSG_TYPE_RX_ERR */
-		 rx_err_type:8, peer_id:16;
-	/* word 1 */
-	A_UINT32
-		ext_tid:5,
-		reserved1:1,
-		mcast:1,
-		l2_hdr_is_80211:1, l2_hdr_bytes:8, sec_hdr_bytes:8, rx_err_cnt:8;
-	/* words 2 - M-1: L2 header */
-	/* words M - N: security header */
+    /* word 0 */
+    A_UINT32
+        msg_type:        8, /* HTT_ISOC_T2H_MSG_TYPE_RX_ERR */
+        rx_err_type:     8,
+        peer_id:        16;
+    /* word 1 */
+    A_UINT32
+        ext_tid:         5,
+        reserved1:       1,
+        mcast:           1,
+        l2_hdr_is_80211: 1,
+        l2_hdr_bytes:    8,
+        sec_hdr_bytes:   8,
+        rx_err_cnt:      8;
+    /* words 2 - M-1: L2 header */
+    /* words M - N: security header */
 } htt_isoc_t2h_rx_err_t;
 
 /* This needs to be exact bytes for structure htt_isoc_t2h_rx_err_t
@@ -1010,7 +1045,7 @@ typedef struct htt_isoc_t2h_rx_err_s {
 /* word 0 */
 #define HTT_ISOC_T2H_RX_ERR_TYPE_OFFSET32             0
 #define HTT_ISOC_T2H_RX_ERR_TYPE_M                    0x0000ff00
-#define HTT_ISOC_T2H_RX_ERR_TYPE_ID_S                 8
+#define HTT_ISOC_T2H_RX_ERR_TYPE_S                    8
 
 #define HTT_ISOC_T2H_RX_ERR_PEER_ID_OFFSET32          0
 #define HTT_ISOC_T2H_RX_ERR_PEER_ID_M                 0xffff0000
@@ -1045,64 +1080,62 @@ typedef struct htt_isoc_t2h_rx_err_s {
 /* general field access macros */
 
 #define HTT_ISOC_T2H_RX_ERR_FIELD_SET(field, msg_addr, value) \
-	htt_isoc_t2h_field_set(					      \
-		((A_UINT32 *) msg_addr),				  \
-		HTT_ISOC_T2H_RX_ERR_ ## field ## _OFFSET32,	      \
-		HTT_ISOC_T2H_RX_ERR_ ## field ## _M,		      \
-		HTT_ISOC_T2H_RX_ERR_ ## field ## _S,		      \
-		value)
+    htt_isoc_t2h_field_set(                                       \
+        ((A_UINT32 *) msg_addr),                                  \
+        HTT_ISOC_T2H_RX_ERR_ ## field ## _OFFSET32,           \
+        HTT_ISOC_T2H_RX_ERR_ ## field ## _M,                  \
+        HTT_ISOC_T2H_RX_ERR_ ## field ## _S,                  \
+        value)
 
 #define HTT_ISOC_T2H_RX_ERR_FIELD_GET(field, msg_addr) \
-	HTT_ISOC_T2H_FIELD_GET(				       \
-		((A_UINT32 *) msg_addr),			   \
-		HTT_ISOC_T2H_RX_ERR_ ## field ## _OFFSET32,    \
-		HTT_ISOC_T2H_RX_ERR_ ## field ## _M,	       \
-		HTT_ISOC_T2H_RX_ERR_ ## field ## _S)
+    HTT_ISOC_T2H_FIELD_GET(                                \
+        ((A_UINT32 *) msg_addr),                           \
+        HTT_ISOC_T2H_RX_ERR_ ## field ## _OFFSET32,    \
+        HTT_ISOC_T2H_RX_ERR_ ## field ## _M,           \
+        HTT_ISOC_T2H_RX_ERR_ ## field ## _S)
 
 /* access macros for specific fields */
 
 #define HTT_ISOC_T2H_RX_ERR_TYPE_SET(msg_addr, value) \
-	HTT_ISOC_T2H_RX_ERR_FIELD_SET(TYPE, msg_addr, value)
+    HTT_ISOC_T2H_RX_ERR_FIELD_SET(TYPE, msg_addr, value)
 #define HTT_ISOC_T2H_RX_ERR_TYPE_GET(msg_addr) \
-	HTT_ISOC_T2H_RX_ERR_FIELD_GET(TYPE, msg_addr)
+    HTT_ISOC_T2H_RX_ERR_FIELD_GET(TYPE, msg_addr)
 
-A_COMPILE_TIME_ASSERT(HTT_ISOC_T2H_RX_ERR_PEER_ID_M_Size_Check,
-	(HTT_ISOC_T2H_RX_ERR_PEER_ID_M >> HTT_ISOC_T2H_RX_ERR_PEER_ID_S) \
-		<= ((A_UINT16)~((A_UINT16)0)));
+A_COMPILE_TIME_ASSERT(HTT_ISOC_T2H_RX_ERR_PEER_ID_M_Size_Check, (HTT_ISOC_T2H_RX_ERR_PEER_ID_M >> HTT_ISOC_T2H_RX_ERR_PEER_ID_S) <= ((A_UINT16)~((A_UINT16)0)));
 #define HTT_ISOC_T2H_RX_ERR_PEER_ID_SET(msg_addr, value) \
-	HTT_ISOC_T2H_RX_ERR_FIELD_SET(PEER_ID, msg_addr, value)
+    HTT_ISOC_T2H_RX_ERR_FIELD_SET(PEER_ID, msg_addr, value)
 #define HTT_ISOC_T2H_RX_ERR_PEER_ID_GET(msg_addr) \
-	((A_UINT16)HTT_ISOC_T2H_RX_ERR_FIELD_GET(PEER_ID, msg_addr))
+    ((A_UINT16)HTT_ISOC_T2H_RX_ERR_FIELD_GET(PEER_ID, msg_addr))
 
 #define HTT_ISOC_T2H_RX_ERR_EXT_TID_SET(msg_addr, value) \
-	HTT_ISOC_T2H_RX_ERR_FIELD_SET(EXT_TID, msg_addr, value)
+    HTT_ISOC_T2H_RX_ERR_FIELD_SET(EXT_TID, msg_addr, value)
 #define HTT_ISOC_T2H_RX_ERR_EXT_TID_GET(msg_addr) \
-	HTT_ISOC_T2H_RX_ERR_FIELD_GET(EXT_TID, msg_addr)
+    HTT_ISOC_T2H_RX_ERR_FIELD_GET(EXT_TID, msg_addr)
 
 #define HTT_ISOC_T2H_RX_ERR_MCAST_SET(msg_addr, value) \
-	HTT_ISOC_T2H_RX_ERR_FIELD_SET(MCAST, msg_addr, value)
-#define HTT_ISOC_T2H_RX_ERR_MCAST_GET(msg_addr)	\
-	HTT_ISOC_T2H_RX_ERR_FIELD_GET(MCAST, msg_addr)
+    HTT_ISOC_T2H_RX_ERR_FIELD_SET(MCAST, msg_addr, value)
+#define HTT_ISOC_T2H_RX_ERR_MCAST_GET(msg_addr) \
+    HTT_ISOC_T2H_RX_ERR_FIELD_GET(MCAST, msg_addr)
 
 #define HTT_ISOC_T2H_RX_ERR_L2_HDR_IS_80211_SET(msg_addr, value) \
-	HTT_ISOC_T2H_RX_ERR_FIELD_SET(L2_HDR_IS_80211, msg_addr, value)
+    HTT_ISOC_T2H_RX_ERR_FIELD_SET(L2_HDR_IS_80211, msg_addr, value)
 #define HTT_ISOC_T2H_RX_ERR_L2_HDR_IS_80211_GET(msg_addr) \
-	HTT_ISOC_T2H_RX_ERR_FIELD_GET(L2_HDR_IS_80211, msg_addr)
+    HTT_ISOC_T2H_RX_ERR_FIELD_GET(L2_HDR_IS_80211, msg_addr)
 
 #define HTT_ISOC_T2H_RX_ERR_L2_HDR_BYTES_SET(msg_addr, value) \
-	HTT_ISOC_T2H_RX_ERR_FIELD_SET(L2_HDR_BYTES, msg_addr, value)
+    HTT_ISOC_T2H_RX_ERR_FIELD_SET(L2_HDR_BYTES, msg_addr, value)
 #define HTT_ISOC_T2H_RX_ERR_L2_HDR_BYTES_GET(msg_addr) \
-	HTT_ISOC_T2H_RX_ERR_FIELD_GET(L2_HDR_BYTES, msg_addr)
+    HTT_ISOC_T2H_RX_ERR_FIELD_GET(L2_HDR_BYTES, msg_addr)
 
 #define HTT_ISOC_T2H_RX_ERR_SEC_HDR_BYTES_SET(msg_addr, value) \
-	HTT_ISOC_T2H_RX_ERR_FIELD_SET(SEC_HDR_BYTES, msg_addr, value)
-#define HTT_ISOC_T2H_RX_ERR_SEC_HDR_BYTES_GET(msg_addr)	\
-	HTT_ISOC_T2H_RX_ERR_FIELD_GET(SEC_HDR_BYTES, msg_addr)
+    HTT_ISOC_T2H_RX_ERR_FIELD_SET(SEC_HDR_BYTES, msg_addr, value)
+#define HTT_ISOC_T2H_RX_ERR_SEC_HDR_BYTES_GET(msg_addr) \
+    HTT_ISOC_T2H_RX_ERR_FIELD_GET(SEC_HDR_BYTES, msg_addr)
 
 #define HTT_ISOC_T2H_RX_ERR_CNT_SET(msg_addr, value) \
-	HTT_ISOC_T2H_RX_ERR_FIELD_SET(CNT, msg_addr, value)
+    HTT_ISOC_T2H_RX_ERR_FIELD_SET(CNT, msg_addr, value)
 #define HTT_ISOC_T2H_RX_ERR_CNT_GET(msg_addr) \
-	HTT_ISOC_T2H_RX_ERR_FIELD_GET(CNT, msg_addr)
+    HTT_ISOC_T2H_RX_ERR_FIELD_GET(CNT, msg_addr)
 
 /*=== TX OTA complete indication message ===*/
 
@@ -1133,12 +1166,11 @@ A_COMPILE_TIME_ASSERT(HTT_ISOC_T2H_RX_ERR_PEER_ID_M_Size_Check,
  *     Purpose: TX completion status
  */
 typedef struct htt_isoc_t2h_tx_compl_s {
-	/* word 0 */
-	A_UINT32
-	/* HTT_ISOC_T2H_MSG_TYPE_TX_COMPL_IND */
-	qmsg_type:8,
-	status:11,
-	reserved0:13;
+    /* word 0 */
+    A_UINT32
+        msg_type:      8, /* HTT_ISOC_T2H_MSG_TYPE_TX_COMPL_IND */
+        status:       11,
+        reserved0:    13;
 } htt_isoc_t2h_tx_compl_t;
 
 /* word 0 */
@@ -1150,26 +1182,26 @@ typedef struct htt_isoc_t2h_tx_compl_s {
 /* general field access macros */
 
 #define HTT_ISOC_T2H_TX_COMPL_IND_FIELD_SET(field, msg_addr, value) \
-	htt_isoc_t2h_field_set(                                       \
-	((A_UINT32 *) msg_addr),                                  \
-	HTT_ISOC_T2H_TX_COMPL_IND_ ## field ## _OFFSET32,           \
-	HTT_ISOC_T2H_TX_COMPL_IND_ ## field ## _M,                  \
-	HTT_ISOC_T2H_TX_COMPL_IND_ ## field ## _S,                  \
-	value)
+    htt_isoc_t2h_field_set(                                       \
+        ((A_UINT32 *) msg_addr),                                  \
+        HTT_ISOC_T2H_TX_COMPL_IND_ ## field ## _OFFSET32,           \
+        HTT_ISOC_T2H_TX_COMPL_IND_ ## field ## _M,                  \
+        HTT_ISOC_T2H_TX_COMPL_IND_ ## field ## _S,                  \
+        value)
 
 #define HTT_ISOC_T2H_TX_COMPL_IND_FIELD_GET(field, msg_addr) \
-	HTT_ISOC_T2H_FIELD_GET(                                \
-	((A_UINT32 *) msg_addr),                           \
-	HTT_ISOC_T2H_TX_COMPL_IND_ ## field ## _OFFSET32,    \
-	HTT_ISOC_T2H_TX_COMPL_IND_ ## field ## _M,           \
-	HTT_ISOC_T2H_TX_COMPL_IND_ ## field ## _S)
+    HTT_ISOC_T2H_FIELD_GET(                                \
+        ((A_UINT32 *) msg_addr),                           \
+        HTT_ISOC_T2H_TX_COMPL_IND_ ## field ## _OFFSET32,    \
+        HTT_ISOC_T2H_TX_COMPL_IND_ ## field ## _M,           \
+        HTT_ISOC_T2H_TX_COMPL_IND_ ## field ## _S)
 
 /* access macros for specific fields */
 
 #define HTT_ISOC_T2H_TX_COMPL_IND_STATUS_SET(msg_addr, value) \
-	HTT_ISOC_T2H_TX_COMPL_IND_FIELD_SET(STATUS, msg_addr, value)
+    HTT_ISOC_T2H_TX_COMPL_IND_FIELD_SET(STATUS, msg_addr, value)
 #define HTT_ISOC_T2H_TX_COMPL_IND_STATUS_GET(msg_addr) \
-	HTT_ISOC_T2H_TX_COMPL_IND_FIELD_GET(STATUS, msg_addr)
+    HTT_ISOC_T2H_TX_COMPL_IND_FIELD_GET(STATUS, msg_addr)
 
 #define HTT_TX_COMPL_IND_STAT_OK          0
 #define HTT_TX_COMPL_IND_STAT_DISCARD     1
@@ -1191,8 +1223,8 @@ typedef struct htt_isoc_t2h_tx_compl_s {
 * |                      reserved                       |     msg type    |
 * |-----------------------------------------------------------------------|
 *
-*
-* The following field definitions describe the format of NLO MATCH indication
+ *
+ * The following field definitions describe the format of NLO MATCH indication
 * message sent from the target to the host.
 *
 * WORD 0:
@@ -1203,11 +1235,11 @@ typedef struct htt_isoc_t2h_tx_compl_s {
 *     Value: 0xA - HTT_ISOC_T2H_MSG_TYPE_NLO_SCAN_END
 */
 typedef struct htt_isoc_t2h_nlo_ind_s {
-	/* word 0 */
-	A_UINT32
-	msg_type:8,
-	vdev_id:8,
-	reserved0:16;
+    /* word 0 */
+    A_UINT32
+        msg_type:      8,
+        vdev_id:       8,
+        reserved0:    16;
 } htt_isoc_t2h_nlo_ind_t;
 
 /* word 0 */
@@ -1219,26 +1251,26 @@ typedef struct htt_isoc_t2h_nlo_ind_s {
 /* general field access macros */
 
 #define HTT_ISOC_T2H_NLO_IND_FIELD_SET(field, msg_addr, value)  \
-	htt_isoc_t2h_field_set(                                     \
-	((A_UINT32 *) msg_addr),                                \
-	HTT_ISOC_T2H_NLO_IND_ ## field ## _OFFSET32,            \
-	HTT_ISOC_T2H_NLO_IND_ ## field ## _M,                   \
-	HTT_ISOC_T2H_NLO_IND_ ## field ## _S,                   \
-	value)
+    htt_isoc_t2h_field_set(                                     \
+        ((A_UINT32 *) msg_addr),                                \
+        HTT_ISOC_T2H_NLO_IND_ ## field ## _OFFSET32,            \
+        HTT_ISOC_T2H_NLO_IND_ ## field ## _M,                   \
+        HTT_ISOC_T2H_NLO_IND_ ## field ## _S,                   \
+        value)
 
 #define HTT_ISOC_T2H_NLO_IND_FIELD_GET(field, msg_addr)     \
-	HTT_ISOC_T2H_FIELD_GET(                                 \
-	((A_UINT32 *) msg_addr),                            \
-	HTT_ISOC_T2H_NLO_IND_ ## field ## _OFFSET32,        \
-	HTT_ISOC_T2H_NLO_IND_ ## field ## _M,               \
-	HTT_ISOC_T2H_NLO_IND_ ## field ## _S)
+    HTT_ISOC_T2H_FIELD_GET(                                 \
+        ((A_UINT32 *) msg_addr),                            \
+        HTT_ISOC_T2H_NLO_IND_ ## field ## _OFFSET32,        \
+        HTT_ISOC_T2H_NLO_IND_ ## field ## _M,               \
+        HTT_ISOC_T2H_NLO_IND_ ## field ## _S)
 
 /* access macros for specific fields */
 
 #define HTT_ISOC_T2H_NLO_IND_VDEVID_SET(msg_addr, value) \
-	HTT_ISOC_T2H_NLO_IND_FIELD_SET(VDEVID, msg_addr, value)
+    HTT_ISOC_T2H_NLO_IND_FIELD_SET(VDEVID, msg_addr, value)
 #define HTT_ISOC_T2H_NLO_IND_VDEVID_GET(msg_addr) \
-	HTT_ISOC_T2H_NLO_IND_FIELD_GET(VDEVID, msg_addr)
+    HTT_ISOC_T2H_NLO_IND_FIELD_GET(VDEVID, msg_addr)
 
 
 #endif /* _HTT_ISOC_H_ */
