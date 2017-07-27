@@ -5655,12 +5655,11 @@ QDF_STATUS sme_qos_process_add_ts_success_rsp(tpAniSirGlobal pMac,
 
 	/* Inform this TSPEC IE change to FW */
 	csr_session = CSR_GET_SESSION(pMac, sessionId);
-	if (csr_session != NULL &&
-		csr_session->pCurRoamProfile->csrPersona == QDF_STA_MODE) {
+	if ((csr_session != NULL) && (NULL != csr_session->pCurRoamProfile) &&
+	    (csr_session->pCurRoamProfile->csrPersona == QDF_STA_MODE))
 		csr_roam_offload_scan(pMac, sessionId,
 				      ROAM_SCAN_OFFLOAD_UPDATE_CFG,
 				      REASON_CONNECT_IES_CHANGED);
-	}
 
 	(void)sme_qos_process_buffered_cmd(sessionId);
 	return QDF_STATUS_SUCCESS;
