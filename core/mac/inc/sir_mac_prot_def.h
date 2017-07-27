@@ -563,11 +563,13 @@
 #define SIR_MAC_AUTH_CHALLENGE_LENGTH        253
 #define SIR_MAC_WEP_IV_LENGTH                4
 #define SIR_MAC_WEP_ICV_LENGTH               4
+#define SIR_MAC_CHALLENGE_ID_LEN             2
 
 /* 2 bytes each for auth algo number, transaction number and status code */
 #define SIR_MAC_AUTH_FRAME_INFO_LEN          6
 /* 2 bytes for ID and length + SIR_MAC_AUTH_CHALLENGE_LENGTH */
-#define SIR_MAC_AUTH_CHALLENGE_BODY_LEN    (2 + SIR_MAC_AUTH_CHALLENGE_LENGTH)
+#define SIR_MAC_AUTH_CHALLENGE_BODY_LEN    (SIR_MAC_CHALLENGE_ID_LEN + \
+					    SIR_MAC_AUTH_CHALLENGE_LENGTH)
 
 /* / MAX key length when ULA is used */
 #define SIR_MAC_MAX_KEY_LENGTH               32
