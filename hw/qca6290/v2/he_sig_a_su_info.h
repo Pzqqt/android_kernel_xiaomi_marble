@@ -205,7 +205,7 @@ cp_ltf_size
 			
 			NOTE:
 			
-			For QCA proprietary mode
+			For QC proprietary mode
 			
 			If ( DCM == 1 ) and ( MCS > 0 ) and (STBC == 0) 
 			
@@ -587,7 +587,7 @@ rx_ndp
 			
 			NOTE:
 			
-			For QCA proprietary mode
+			For QC proprietary mode
 			
 			If ( DCM == 1 ) and ( MCS > 0 ) and (STBC == 0) 
 			

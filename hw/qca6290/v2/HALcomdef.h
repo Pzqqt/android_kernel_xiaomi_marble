@@ -29,7 +29,7 @@ DESCRIPTION:
 
                              Edit History
 
-$Header: //depot/prj/qca/lithium/wcss/verif/native/register/include/HALcomdef.h#6 $
+$Header: //depot/bringup/ar6k/test_tufello/1.0/Tufello_WIFI_Emu/napier/sandbox/to_randy/wcss/include/HALcomdef.h#1 $
 
 when       who     what, where, why
 --------   ---     -----------------------------------------------------------

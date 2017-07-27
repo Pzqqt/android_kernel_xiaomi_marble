@@ -61,7 +61,7 @@ DESCRIPTION
 This section contains comments describing changes made to this file.
 Notice that changes are listed in reverse chronological order.
 
-$Header: //depot/prj/qca/lithium/wcss/verif/native/register/include/com_dtypes.h#5 $
+$Header: //depot/sw/branches/rome_emulation_dev/wlan/mac_e7_r8_0509/lithium-napier-swi/include/com_dtypes.h#1 $
 
 when       who     what, where, why
 --------   ---     ----------------------------------------------------------
