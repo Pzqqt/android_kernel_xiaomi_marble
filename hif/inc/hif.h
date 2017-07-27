@@ -895,6 +895,7 @@ void hif_update_pipe_callback(struct hif_opaque_softc *osc,
 				u_int8_t pipeid,
 				struct hif_msg_callbacks *callbacks);
 
+void hif_print_napi_stats(struct hif_opaque_softc *hif_ctx);
 #ifdef __cplusplus
 }
 #endif

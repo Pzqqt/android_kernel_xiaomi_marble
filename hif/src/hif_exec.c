@@ -20,6 +20,41 @@
 #include <ce_main.h>
 #include <hif_irq_affinity.h>
 
+/**
+ * hif_print_napi_stats() - print NAPI stats
+ * @hif_ctx: hif context
+ *
+ * return: void
+ */
+void hif_print_napi_stats(struct hif_opaque_softc *hif_ctx)
+{
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_ctx);
+	struct hif_exec_context *hif_ext_group;
+	struct qca_napi_stat *napi_stats;
+	int i, j;
+
+	QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_FATAL,
+		"NAPI[#ctx]CPU[#] |schedules |polls |completes |workdone\n");
+
+	for (i = 0; i < hif_state->hif_num_extgroup; i++) {
+		if (hif_state->hif_ext_group[i]) {
+			hif_ext_group = hif_state->hif_ext_group[i];
+			for (j = 0; j < num_possible_cpus(); j++) {
+				napi_stats = &(hif_ext_group->stats[j]);
+				if (napi_stats->napi_schedules != 0)
+					QDF_TRACE(QDF_MODULE_ID_HIF,
+						QDF_TRACE_LEVEL_FATAL,
+						"NAPI[%2d]CPU[%d]: "
+						"%7d %7d %7d %7d \n",
+						i, j,
+						napi_stats->napi_schedules,
+						napi_stats->napi_polls,
+						napi_stats->napi_completes,
+						napi_stats->napi_workdone);
+			}
+		}
+	}
+}
 
 static void hif_exec_tasklet_schedule(struct hif_exec_context *ctx)
 {
@@ -65,6 +100,7 @@ static int hif_exec_poll(struct napi_struct *napi, int budget)
 	struct hif_exec_context *hif_ext_group = &exec_ctx->exec_ctx;
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ext_group->hif);
 	int work_done;
+	int cpu = smp_processor_id();
 
 	work_done = hif_ext_group->handler(hif_ext_group->context, budget);
 
@@ -75,11 +111,15 @@ static int hif_exec_poll(struct napi_struct *napi, int budget)
 		napi_complete(napi);
 		qdf_atomic_dec(&scn->active_grp_tasklet_cnt);
 		hif_ext_group->irq_enable(hif_ext_group);
+		hif_ext_group->stats[cpu].napi_completes++;
 	} else {
 		/* if the ext_group supports time based yield, claim full work
 		 * done anyways */
 		work_done = budget;
 	}
+
+	hif_ext_group->stats[cpu].napi_polls++;
+	hif_ext_group->stats[cpu].napi_workdone += work_done;
 
 	return work_done;
 }
@@ -91,6 +131,7 @@ static int hif_exec_poll(struct napi_struct *napi, int budget)
 static void hif_exec_napi_schedule(struct hif_exec_context *ctx)
 {
 	struct hif_napi_exec_context *n_ctx = hif_exec_get_napi(ctx);
+	ctx->stats[smp_processor_id()].napi_schedules++;
 
 	napi_schedule(&n_ctx->napi);
 }

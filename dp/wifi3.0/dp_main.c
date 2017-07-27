@@ -3894,6 +3894,15 @@ static int dp_txrx_stats(struct cdp_vdev *vdev, enum cdp_stats stats)
 }
 
 /*
+ * dp_print_napi_stats(): NAPI stats
+ * @soc - soc handle
+ */
+static void dp_print_napi_stats(struct dp_soc *soc)
+{
+	hif_print_napi_stats(soc->hif_handle);
+}
+
+/*
  * dp_print_per_ring_stats(): Packet count per ring
  * @soc - soc handle
  */
@@ -4085,6 +4094,10 @@ static QDF_STATUS dp_txrx_dump_stats(void *psoc, uint16_t value)
 
 	case CDP_DUMP_TX_FLOW_POOL_INFO:
 		cdp_dump_flow_pool_info((struct cdp_soc_t *)soc);
+		break;
+
+	case CDP_DP_NAPI_STATS:
+		dp_print_napi_stats(soc);
 		break;
 
 	case CDP_TXRX_DESC_STATS:
