@@ -28,9 +28,31 @@
 #include <linux/fs.h>
 #include <linux/debugfs.h>
 
+typedef struct dentry *__qdf_dentry_t;
+typedef struct seq_file *__qdf_debugfs_file_t;
+
 #ifdef WLAN_DEBUGFS
 
+/**
+ * qdf_debugfs_get_root() - get debugfs root
+ *
+ * Return: dentry * or NULL in case of failure
+ */
 struct dentry *qdf_debugfs_get_root(void);
+
+/**
+ * qdf_debugfs_get_filemode() - get Linux specific file mode
+ * @mode: This is a bitmap of file modes,
+ *		QDF_FILE_USR_READ
+ *		QDF_FILE_USR_WRITE
+ *		QDF_FILE_OTH_READ
+ *		QDF_FILE_OTH_WRITE
+ *		QDF_FILE_GRP_READ
+ *		QDF_FILE_GRP_WRITE
+ *
+ * Return: Linux specific file mode
+ */
+umode_t qdf_debugfs_get_filemode(uint16_t mode);
 
 #endif /* WLAN_DEBUGFS */
 #endif /* _I_QDF_DEBUGFS_H */

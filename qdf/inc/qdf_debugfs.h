@@ -28,6 +28,17 @@
 #include <i_qdf_debugfs.h>
 
 #ifdef WLAN_DEBUGFS
+
+/* qdf file modes */
+#define QDF_FILE_USR_READ	00400
+#define QDF_FILE_USR_WRITE	00200
+
+#define QDF_FILE_GRP_READ	00040
+#define QDF_FILE_GRP_WRITE	00020
+
+#define QDF_FILE_OTH_READ	00004
+#define QDF_FILE_OTH_WRITE	00002
+
 /**
  * qdf_debugfs_init() - initialize debugfs
  *

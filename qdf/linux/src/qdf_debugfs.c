@@ -52,3 +52,24 @@ struct dentry *qdf_debugfs_get_root(void)
 	return qdf_debugfs_root;
 }
 
+umode_t qdf_debugfs_get_filemode(uint16_t mode)
+{
+	umode_t ret = 0;
+
+	if (mode & QDF_FILE_USR_READ)
+		ret |= 0400;
+	if (mode & QDF_FILE_USR_WRITE)
+		ret |= 0200;
+
+	if (mode & QDF_FILE_GRP_READ)
+		ret |= 0040;
+	if (mode & QDF_FILE_GRP_WRITE)
+		ret |= 0020;
+
+	if (mode & QDF_FILE_OTH_READ)
+		ret |= 0004;
+	if (mode & QDF_FILE_OTH_WRITE)
+		ret |= 0002;
+
+	return ret;
+}
