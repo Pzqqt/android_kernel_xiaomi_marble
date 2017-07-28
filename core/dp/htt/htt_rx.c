@@ -541,6 +541,12 @@ moretofill:
 	}
 
 fail:
+	/*
+	 * Make sure alloc index write is reflected correctly before FW polls
+	 * remote ring write index as compiler can reorder the instructions
+	 * based on optimizations.
+	 */
+	qdf_mb();
 	*(pdev->rx_ring.alloc_idx.vaddr) = idx;
 	htt_rx_dbg_rxbuf_indupd(pdev, idx);
 
