@@ -1266,7 +1266,8 @@ done:
 								nbuf);
 
 				/* Intrabss-fwd */
-				if (vdev->opmode != wlan_op_mode_sta)
+				if ((vdev->opmode != wlan_op_mode_sta) &&
+						!vdev->nawds_enabled)
 					if (dp_rx_intrabss_fwd(soc,
 								peer,
 								rx_tlv_hdr,
