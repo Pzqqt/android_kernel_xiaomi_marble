@@ -3433,7 +3433,7 @@ void peer_unmap_timer_handler(void *data)
 		    peer->mac_addr.raw[0], peer->mac_addr.raw[1],
 		    peer->mac_addr.raw[2], peer->mac_addr.raw[3],
 		    peer->mac_addr.raw[4], peer->mac_addr.raw[5]);
-	if (!cds_is_driver_recovering()) {
+	if (!cds_is_driver_recovering() && !cds_is_fw_down()) {
 		qdf_create_work(0, &txrx_pdev->peer_unmap_timer_work,
 				peer_unmap_timer_work_function,
 				NULL);
