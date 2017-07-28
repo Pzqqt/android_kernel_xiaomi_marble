@@ -1008,6 +1008,10 @@ QDF_STATUS cds_post_disable(void)
 	hif_disable_isr(hif_ctx);
 	hif_reset_soc(hif_ctx);
 
+	if (gp_cds_context->htc_ctx) {
+		htc_stop(gp_cds_context->htc_ctx);
+	}
+
 	cdp_pdev_pre_detach(cds_get_context(QDF_MODULE_ID_SOC),
 		       (struct cdp_pdev *)txrx_pdev, 1);
 
@@ -1040,7 +1044,6 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc, v_CONTEXT_t cds_context)
 
 	cdp_txrx_intr_detach(gp_cds_context->dp_soc);
 	if (gp_cds_context->htc_ctx) {
-		htc_stop(gp_cds_context->htc_ctx);
 		htc_destroy(gp_cds_context->htc_ctx);
 		pmo_ucfg_psoc_update_htc_handle(psoc, NULL);
 		gp_cds_context->htc_ctx = NULL;
