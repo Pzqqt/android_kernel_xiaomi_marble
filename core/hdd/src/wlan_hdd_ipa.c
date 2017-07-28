@@ -5983,14 +5983,16 @@ static int __hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 				hdd_ipa_uc_handle_last_discon(hdd_ipa);
 			}
 
-			qdf_mutex_release(&hdd_ipa->event_lock);
-
 			if (hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx) &&
-			    hdd_ipa->sta_connected)
+			    hdd_ipa->sta_connected) {
+				qdf_mutex_release(&hdd_ipa->event_lock);
 				hdd_ipa_uc_offload_enable_disable(
 					hdd_get_adapter(hdd_ipa->hdd_ctx,
 							QDF_STA_MODE),
 					SIR_STA_RX_DATA_OFFLOAD, false);
+			} else {
+				qdf_mutex_release(&hdd_ipa->event_lock);
+			}
 		} else {
 			qdf_mutex_release(&hdd_ipa->event_lock);
 		}
