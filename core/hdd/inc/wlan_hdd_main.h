@@ -262,6 +262,9 @@
 #define WLAN_HDD_QOS_MAP_CONFIGURE 4
 #define HDD_SAP_WAKE_LOCK_DURATION 10000        /* in msecs */
 
+/* SAP client disconnect wake lock duration in milli seconds */
+#define HDD_SAP_CLIENT_DISCONNECT_WAKE_LOCK_DURATION (1000)
+
 #if defined(CONFIG_HL_SUPPORT)
 #define HDD_MOD_EXIT_SSR_MAX_RETRIES 200
 #else

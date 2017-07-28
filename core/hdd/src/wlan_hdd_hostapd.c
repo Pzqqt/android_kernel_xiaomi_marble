@@ -1825,6 +1825,11 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		wlan_hdd_auto_shutdown_enable(pHddCtx, true);
 #endif
 
+		cds_host_diag_log_work(&pHddCtx->sap_wake_lock,
+				       HDD_SAP_WAKE_LOCK_DURATION,
+				       WIFI_POWER_EVENT_WAKELOCK_SAP);
+		qdf_wake_lock_timeout_acquire(&pHddCtx->sap_wake_lock,
+			 HDD_SAP_CLIENT_DISCONNECT_WAKE_LOCK_DURATION);
 		cfg80211_del_sta(dev,
 				 (const u8 *)&pSapEvent->sapevt.
 				 sapStationDisassocCompleteEvent.staMac.
