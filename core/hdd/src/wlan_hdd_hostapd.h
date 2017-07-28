@@ -52,8 +52,6 @@ hdd_adapter_t *hdd_wlan_create_ap_dev(hdd_context_t *pHddCtx,
 				      unsigned char name_assign_type,
 				      uint8_t *name);
 
-QDF_STATUS hdd_register_hostapd(hdd_adapter_t *pAdapter, uint8_t rtnl_held);
-
 QDF_STATUS hdd_unregister_hostapd(hdd_adapter_t *pAdapter, bool rtnl_held);
 
 eCsrAuthType

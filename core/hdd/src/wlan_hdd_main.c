@@ -2971,29 +2971,42 @@ static hdd_adapter_t *hdd_alloc_station_adapter(hdd_context_t *hdd_ctx,
 	return adapter;
 }
 
-static QDF_STATUS hdd_register_interface(hdd_adapter_t *adapter,
-					 bool rtnl_held)
+static QDF_STATUS hdd_register_interface(hdd_adapter_t *adapter, bool rtnl_held)
 {
-	struct net_device *pWlanDev = adapter->dev;
+	struct net_device *dev = adapter->dev;
+	int ret;
+
+	ENTER();
 
 	if (rtnl_held) {
-		if (strnchr(pWlanDev->name, strlen(pWlanDev->name), '%')) {
-			if (dev_alloc_name(pWlanDev, pWlanDev->name) < 0) {
-				hdd_err("Failed:dev_alloc_name");
+		if (strnchr(dev->name, IFNAMSIZ - 1, '%')) {
+
+			ret = dev_alloc_name(dev, dev->name);
+			if (ret < 0) {
+				hdd_err(
+				    "unable to get dev name: %s, err = 0x%x",
+				    dev->name, ret);
 				return QDF_STATUS_E_FAILURE;
 			}
 		}
-		if (register_netdevice(pWlanDev)) {
-			hdd_err("Failed:register_netdev");
+
+		ret = register_netdevice(dev);
+		if (ret) {
+			hdd_err("register_netdevice(%s) failed, err = 0x%x",
+				dev->name, ret);
 			return QDF_STATUS_E_FAILURE;
 		}
 	} else {
-		if (register_netdev(pWlanDev)) {
-			hdd_err("Failed:register_netdev");
+		ret = register_netdev(dev);
+		if (ret) {
+			hdd_err("register_netdev(%s) failed, err = 0x%x",
+				dev->name, ret);
 			return QDF_STATUS_E_FAILURE;
 		}
 	}
 	set_bit(NET_DEVICE_REGISTERED, &adapter->event_flags);
+
+	EXIT();
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -3848,7 +3861,7 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 			NL80211_IFTYPE_P2P_GO;
 		adapter->device_mode = session_type;
 
-		status = hdd_register_hostapd(adapter, rtnl_held);
+		status = hdd_register_interface(adapter, rtnl_held);
 		if (QDF_STATUS_SUCCESS != status) {
 			hdd_deinit_adapter(hdd_ctx, adapter, rtnl_held);
 			goto err_free_netdev;

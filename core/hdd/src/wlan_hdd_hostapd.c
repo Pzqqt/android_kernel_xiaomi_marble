@@ -6318,43 +6318,6 @@ hdd_adapter_t *hdd_wlan_create_ap_dev(hdd_context_t *pHddCtx,
 }
 
 /**
- * hdd_register_hostapd() - register hostapd
- * @pAdapter: Pointer to hostapd adapter
- * @rtnl_lock_held: RTNL lock held
- *
- * Return: QDF status
- */
-QDF_STATUS hdd_register_hostapd(hdd_adapter_t *pAdapter,
-				uint8_t rtnl_lock_held) {
-	struct net_device *dev = pAdapter->dev;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	ENTER();
-
-	if (rtnl_lock_held) {
-		if (strnchr(dev->name, strlen(dev->name), '%')) {
-			if (dev_alloc_name(dev, dev->name) < 0) {
-				hdd_err("Failed:dev_alloc_name");
-				return QDF_STATUS_E_FAILURE;
-			}
-		}
-		if (register_netdevice(dev)) {
-			hdd_err("Failed:register_netdevice");
-			return QDF_STATUS_E_FAILURE;
-		}
-	} else {
-		if (register_netdev(dev)) {
-			hdd_err("Failed:register_netdev");
-			return QDF_STATUS_E_FAILURE;
-		}
-	}
-	set_bit(NET_DEVICE_REGISTERED, &pAdapter->event_flags);
-
-	EXIT();
-	return status;
-}
-
-/**
  * hdd_unregister_hostapd() - unregister hostapd
  * @pAdapter: Pointer to hostapd adapter
  * @rtnl_held: true if rtnl lock held; false otherwise
