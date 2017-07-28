@@ -209,18 +209,18 @@ dp_rx_2k_jump_handle(struct dp_soc *soc, void *ring_desc,
 
 static bool
 dp_rx_chain_msdus(struct dp_soc *soc, qdf_nbuf_t nbuf,
-		struct dp_rx_desc *rx_desc)
+		struct dp_rx_desc *rx_desc, uint8_t mac_id)
 {
 	bool mpdu_done = false;
 	/* TODO: Currently only single radio is supported, hence
 	 * pdev hard coded to '0' index
 	 */
-	struct dp_pdev *dp_pdev = soc->pdev_list[0];
+	struct dp_pdev *dp_pdev = soc->pdev_list[mac_id];
 
 	if (hal_rx_msdu_end_first_msdu_get(rx_desc->rx_buf_start)) {
 		qdf_nbuf_set_chfrag_start(rx_desc->nbuf, 1);
-		soc->invalid_peer_head_msdu = NULL;
-		soc->invalid_peer_tail_msdu = NULL;
+		dp_pdev->invalid_peer_head_msdu = NULL;
+		dp_pdev->invalid_peer_tail_msdu = NULL;
 
 		hal_rx_mon_hw_desc_get_mpdu_status(rx_desc->rx_buf_start,
 				&(dp_pdev->ppdu_info.rx_status));
@@ -232,8 +232,8 @@ dp_rx_chain_msdus(struct dp_soc *soc, qdf_nbuf_t nbuf,
 		mpdu_done = true;
 	}
 
-	DP_RX_LIST_APPEND(soc->invalid_peer_head_msdu,
-				soc->invalid_peer_tail_msdu,
+	DP_RX_LIST_APPEND(dp_pdev->invalid_peer_head_msdu,
+				dp_pdev->invalid_peer_tail_msdu,
 				nbuf);
 
 	return mpdu_done;
@@ -277,6 +277,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 	struct dp_ast_entry *ase;
 	uint16_t sa_idx;
 	uint8_t *data;
+	uint8_t pool_id;
 
 	rx_bufs_used++;
 
@@ -286,6 +287,8 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 				QDF_DMA_BIDIRECTIONAL);
 
 	rx_desc->rx_buf_start = qdf_nbuf_data(nbuf);
+
+	pool_id = rx_desc->pool_id;
 
 	l2_hdr_offset =
 		hal_rx_msdu_end_l3_hdr_padding_get(rx_desc->rx_buf_start);
@@ -319,7 +322,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 		FL("peer is NULL"));
 
-		mpdu_done = dp_rx_chain_msdus(soc, nbuf, rx_desc);
+		mpdu_done = dp_rx_chain_msdus(soc, nbuf, rx_desc, pool_id);
 		if (mpdu_done)
 			dp_rx_process_invalid_peer(soc, nbuf);
 

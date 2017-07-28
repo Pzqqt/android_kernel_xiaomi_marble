@@ -754,8 +754,6 @@ struct dp_soc {
 
 	/* Obj Mgr SoC */
 	struct wlan_objmgr_psoc *psoc;
-	qdf_nbuf_t invalid_peer_head_msdu;
-	qdf_nbuf_t invalid_peer_tail_msdu;
 #ifdef QCA_SUPPORT_SON
 	/* The timer to check station's inactivity status */
 	os_timer_t pdev_bs_inact_timer;
@@ -966,6 +964,9 @@ struct dp_pdev {
 	qdf_spinlock_t neighbour_peer_mutex;
 	/* Neighnour peer list */
 	TAILQ_HEAD(, dp_neighbour_peer) neighbour_peers_list;
+	/* msdu chain head & tail */
+	qdf_nbuf_t invalid_peer_head_msdu;
+	qdf_nbuf_t invalid_peer_tail_msdu;
 
 	/* Band steering  */
 	/* TBD */

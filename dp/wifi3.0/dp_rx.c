@@ -646,8 +646,8 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu)
 			vdev = dp_rx_nac_filter(pdev, rx_pkt_hdr);
 			if (vdev) {
 				dp_rx_mon_deliver(soc, i,
-						soc->invalid_peer_head_msdu,
-						soc->invalid_peer_tail_msdu);
+						pdev->invalid_peer_head_msdu,
+						pdev->invalid_peer_tail_msdu);
 				return 0;
 			}
 		}
