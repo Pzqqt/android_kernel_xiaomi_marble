@@ -1391,7 +1391,7 @@ static inline uint16_t wlan_vdev_get_peer_count(struct wlan_objmgr_vdev *vdev)
  *
  * Return: void
  */
-void wlan_objmgr_vdev_get_ref(struct wlan_objmgr_vdev *vdev,
+QDF_STATUS wlan_objmgr_vdev_get_ref(struct wlan_objmgr_vdev *vdev,
 				wlan_objmgr_ref_dbgid id);
 
 /**
@@ -1416,7 +1416,7 @@ QDF_STATUS wlan_objmgr_vdev_try_get_ref(struct wlan_objmgr_vdev *vdev,
  *
  * Return: void
  */
-void wlan_objmgr_vdev_release_ref(struct wlan_objmgr_vdev *vdev,
+QDF_STATUS wlan_objmgr_vdev_release_ref(struct wlan_objmgr_vdev *vdev,
 						wlan_objmgr_ref_dbgid id);
 
 /**

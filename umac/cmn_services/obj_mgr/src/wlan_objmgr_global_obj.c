@@ -101,7 +101,8 @@ QDF_STATUS wlan_objmgr_register_psoc_create_handler(
 	/* If there is a valid entry, return failure */
 	if (g_umac_glb_obj->psoc_create_handler[id] != NULL) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		obj_mgr_err("Callback for comp %d is already registered", id);
+		obj_mgr_err("Callback for comp %s is already registered",
+						string_from_dbgid(id));
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -128,7 +129,8 @@ QDF_STATUS wlan_objmgr_unregister_psoc_create_handler(
 	/* If there is an invalid entry, return failure */
 	if (g_umac_glb_obj->psoc_create_handler[id] != handler) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		obj_mgr_err("Callback for comp %d is not registered", id);
+		obj_mgr_err("Callback for comp %s is not registered",
+						string_from_dbgid(id));
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -155,7 +157,8 @@ QDF_STATUS wlan_objmgr_register_psoc_destroy_handler(
 	/* If there is a valid entry, return failure */
 	if (g_umac_glb_obj->psoc_destroy_handler[id] != NULL) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		obj_mgr_err("Callback for comp %d is already registered", id);
+		obj_mgr_err("Callback for comp %s is already registered",
+						string_from_dbgid(id));
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -182,7 +185,8 @@ QDF_STATUS wlan_objmgr_unregister_psoc_destroy_handler(
 	/* If there is an invalid entry, return failure */
 	if (g_umac_glb_obj->psoc_destroy_handler[id] != handler) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		obj_mgr_err("Callback for comp %d is not registered", id);
+		obj_mgr_err("Callback for comp %s is not registered",
+						string_from_dbgid(id));
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -209,7 +213,8 @@ QDF_STATUS wlan_objmgr_register_psoc_status_handler(
 	/* If there is a valid entry, return failure */
 	if (g_umac_glb_obj->psoc_status_handler[id] != NULL) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		obj_mgr_err("Callback for comp %d is already registered", id);
+		obj_mgr_err("Callback for comp %s is already registered",
+						string_from_dbgid(id));
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Store handler and args in Global object table */
@@ -234,7 +239,8 @@ QDF_STATUS wlan_objmgr_unregister_psoc_status_handler(
 	/* If there is an invalid entry, return failure */
 	if (g_umac_glb_obj->psoc_status_handler[id] != handler) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		obj_mgr_err("Callback for comp %d is not registered", id);
+		obj_mgr_err("Callback for comp %s is not registered",
+						string_from_dbgid(id));
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Reset handlers, and args to NULL */
@@ -260,7 +266,8 @@ QDF_STATUS wlan_objmgr_register_pdev_create_handler(
 	/* If there is a valid entry, return failure */
 	if (g_umac_glb_obj->pdev_create_handler[id] != NULL) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		obj_mgr_err("Callback for comp %d is already registered", id);
+		obj_mgr_err("Callback for comp %s is already registered",
+						string_from_dbgid(id));
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -287,7 +294,8 @@ QDF_STATUS wlan_objmgr_unregister_pdev_create_handler(
 	/* If there is an invalid entry, return failure */
 	if (g_umac_glb_obj->pdev_create_handler[id] != handler) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		obj_mgr_err("Callback for comp %d is not registered", id);
+		obj_mgr_err("Callback for comp %s is not registered",
+						string_from_dbgid(id));
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -314,7 +322,8 @@ QDF_STATUS wlan_objmgr_register_pdev_destroy_handler(
 	/* If there is a valid entry, return failure */
 	if (g_umac_glb_obj->pdev_destroy_handler[id] != NULL) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		obj_mgr_err("Callback for comp %d is already registered", id);
+		obj_mgr_err("Callback for comp %s is already registered",
+						string_from_dbgid(id));
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -341,7 +350,8 @@ QDF_STATUS wlan_objmgr_unregister_pdev_destroy_handler(
 	/* If there is an invalid entry, return failure */
 	if (g_umac_glb_obj->pdev_destroy_handler[id] != handler) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		obj_mgr_err("Callback for Component %d is not registered", id);
+		obj_mgr_err("Callback for comp %s is not registered",
+						string_from_dbgid(id));
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -368,7 +378,8 @@ QDF_STATUS wlan_objmgr_register_pdev_status_handler(
 	/* If there is a valid entry, return failure */
 	if (g_umac_glb_obj->pdev_status_handler[id] != NULL) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		obj_mgr_err("Callback for comp %d is already registered", id);
+		obj_mgr_err("Callback for comp %s is already registered",
+						string_from_dbgid(id));
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Store handler and args in Global object table */
@@ -393,7 +404,8 @@ QDF_STATUS wlan_objmgr_unregister_pdev_status_handler(
 	/* If there is an invalid entry, return failure */
 	if (g_umac_glb_obj->pdev_status_handler[id] != handler) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		obj_mgr_err("Callback for Component %d is not registered", id);
+		obj_mgr_err("Callback for comp %s is not registered",
+						string_from_dbgid(id));
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Reset handlers, and args to NULL */
@@ -419,7 +431,8 @@ QDF_STATUS wlan_objmgr_register_vdev_create_handler(
 	/* If there is a valid entry, return failure */
 	if (g_umac_glb_obj->vdev_create_handler[id] != NULL) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		obj_mgr_err("Callback for comp %d is already registered", id);
+		obj_mgr_err("Callback for comp %s is already registered",
+						string_from_dbgid(id));
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -445,7 +458,8 @@ QDF_STATUS wlan_objmgr_unregister_vdev_create_handler(
 	/* If there is an invalid entry, return failure */
 	if (g_umac_glb_obj->vdev_create_handler[id] != handler) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		obj_mgr_err("Callback for comp %d is not registered", id);
+		obj_mgr_err("Callback for comp %s is not registered",
+						string_from_dbgid(id));
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -471,7 +485,8 @@ QDF_STATUS wlan_objmgr_register_vdev_destroy_handler(
 	/* If there is a valid entry, return failure */
 	if (g_umac_glb_obj->vdev_destroy_handler[id] != NULL) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		obj_mgr_err("Callback for comp %d is already registered", id);
+		obj_mgr_err("Callback for comp %s is already registered",
+						string_from_dbgid(id));
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -497,7 +512,8 @@ QDF_STATUS wlan_objmgr_unregister_vdev_destroy_handler(
 	/* If there is an invalid entry, return failure */
 	if (g_umac_glb_obj->vdev_destroy_handler[id] != handler) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		obj_mgr_err("Callback for comp %d is not registered", id);
+		obj_mgr_err("Callback for comp %s is not registered",
+						string_from_dbgid(id));
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -523,7 +539,8 @@ QDF_STATUS wlan_objmgr_register_vdev_status_handler(
 	/* If there is a valid entry, return failure */
 	if (g_umac_glb_obj->vdev_status_handler[id] != NULL) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		obj_mgr_err("Callback for comp %d is already registered", id);
+		obj_mgr_err("Callback for comp %s is already registered",
+						string_from_dbgid(id));
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Store handler and args in Global object table */
@@ -548,7 +565,8 @@ QDF_STATUS wlan_objmgr_unregister_vdev_status_handler(
 	/* If there is an invalid entry, return failure */
 	if (g_umac_glb_obj->vdev_status_handler[id] != handler) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		obj_mgr_err("Callback for Component %d is not registered", id);
+		obj_mgr_err("Callback for comp %s is not registered",
+						string_from_dbgid(id));
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Reset handlers, and args to NULL */
@@ -574,7 +592,8 @@ QDF_STATUS wlan_objmgr_register_peer_create_handler(
 	/* If there is a valid entry, return failure */
 	if (g_umac_glb_obj->peer_create_handler[id] != NULL) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		obj_mgr_err("Callback for comp %d is already registered", id);
+		obj_mgr_err("Callback for comp %s is already registered",
+						string_from_dbgid(id));
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -601,7 +620,8 @@ QDF_STATUS wlan_objmgr_unregister_peer_create_handler(
 	/* If there is an invalid entry, return failure */
 	if (g_umac_glb_obj->peer_create_handler[id] != handler) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		obj_mgr_err("Callback for comp %d is not registered", id);
+		obj_mgr_err("Callback for comp %s is not registered",
+						string_from_dbgid(id));
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -627,7 +647,8 @@ QDF_STATUS wlan_objmgr_register_peer_destroy_handler(
 	/* If there is a valid entry, return failure */
 	if (g_umac_glb_obj->peer_destroy_handler[id] != NULL) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		obj_mgr_err("Callback for comp %d is already registered", id);
+		obj_mgr_err("Callback for comp %s is already registered",
+						string_from_dbgid(id));
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -653,7 +674,8 @@ QDF_STATUS wlan_objmgr_unregister_peer_destroy_handler(
 	/* If there is an invalid entry, return failure */
 	if (g_umac_glb_obj->peer_destroy_handler[id] != handler) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		obj_mgr_err("Callback for comp %d is not registered", id);
+		obj_mgr_err("Callback for comp %s is not registered",
+						string_from_dbgid(id));
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -679,7 +701,8 @@ QDF_STATUS wlan_objmgr_register_peer_status_handler(
 	/* If there is a valid entry, return failure */
 	if (g_umac_glb_obj->peer_status_handler[id] != NULL) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		obj_mgr_err("Callback for comp %d is already registered", id);
+		obj_mgr_err("Callback for comp %s is already registered",
+						string_from_dbgid(id));
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Store handler and args in Global object table */
@@ -704,7 +727,8 @@ QDF_STATUS wlan_objmgr_unregister_peer_status_handler(
 	/* If there is an invalid entry, return failure */
 	if (g_umac_glb_obj->peer_status_handler[id] != handler) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-		obj_mgr_err("Callback for comp %d is not registered", id);
+		obj_mgr_err("Callback for comp %s is not registered",
+						string_from_dbgid(id));
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Reset handlers, and args to NULL */

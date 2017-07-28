@@ -82,8 +82,8 @@ static QDF_STATUS wlan_objmgr_vdev_obj_free(struct wlan_objmgr_vdev *vdev)
 	/* if PDEV is NULL, return */
 	pdev = wlan_vdev_get_pdev(vdev);
 	if (pdev == NULL) {
-		obj_mgr_err("pdev is NULL for vdev-id: %d",
-			vdev->vdev_objmgr.vdev_id);
+		obj_mgr_err("pdev is NULL for vdev[%d]",
+			wlan_vdev_get_id(vdev));
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -124,8 +124,8 @@ struct wlan_objmgr_vdev *wlan_objmgr_vdev_obj_create(
 	psoc = wlan_pdev_get_psoc(pdev);
 	/* PSOC is NULL */
 	if (psoc == NULL) {
-		obj_mgr_err("psoc is NULL for pdev-id:%d",
-			pdev->pdev_objmgr.wlan_pdev_id);
+		obj_mgr_err("psoc is NULL for pdev[%d]",
+			wlan_objmgr_pdev_get_pdev_id(pdev));
 		return NULL;
 	}
 	/* Allocate vdev object memory */
@@ -137,8 +137,7 @@ struct wlan_objmgr_vdev *wlan_objmgr_vdev_obj_create(
 	/* Attach VDEV to PSOC VDEV's list */
 	if (wlan_objmgr_psoc_vdev_attach(psoc, vdev) !=
 				QDF_STATUS_SUCCESS) {
-		obj_mgr_err("psoc vdev attach failed for vdev-id:%d",
-					vdev->vdev_objmgr.vdev_id);
+		obj_mgr_err("psoc attach failed for vdev");
 		qdf_mem_free(vdev);
 		return NULL;
 	}
@@ -147,8 +146,8 @@ struct wlan_objmgr_vdev *wlan_objmgr_vdev_obj_create(
 	/* Attach vdev to PDEV */
 	if (wlan_objmgr_pdev_vdev_attach(pdev, vdev) !=
 				QDF_STATUS_SUCCESS) {
-		obj_mgr_err("pdev vdev attach failed for vdev-id:%d",
-				vdev->vdev_objmgr.vdev_id);
+		obj_mgr_err("pdev attach failed for vdev[%d]",
+				wlan_vdev_get_id(vdev));
 		wlan_objmgr_psoc_vdev_detach(psoc, vdev);
 		qdf_mem_free(vdev);
 		return NULL;
@@ -216,9 +215,9 @@ struct wlan_objmgr_vdev *wlan_objmgr_vdev_obj_create(
 	/* Component object failed to be created, clean up the object */
 	} else if (obj_status == QDF_STATUS_E_FAILURE) {
 		/* Clean up the psoc */
+		obj_mgr_err("Component object creation failed for vdev[%d]",
+			wlan_vdev_get_id(vdev));
 		wlan_objmgr_vdev_obj_delete(vdev);
-		obj_mgr_err("VDEV comp objects creation failed for vdev-id:%d",
-			vdev->vdev_objmgr.vdev_id);
 		return NULL;
 	}
 	return vdev;
@@ -231,18 +230,26 @@ static QDF_STATUS wlan_objmgr_vdev_obj_destroy(struct wlan_objmgr_vdev *vdev)
 	wlan_objmgr_vdev_destroy_handler handler;
 	QDF_STATUS obj_status;
 	void *arg;
-	uint8_t vdev_id;
 
 	if (vdev == NULL) {
 		obj_mgr_err("vdev is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	vdev_id = wlan_vdev_get_id(vdev);
-
 	if (vdev->obj_state != WLAN_OBJ_STATE_LOGICALLY_DELETED) {
-		obj_mgr_err("vdev object delete is not invoked: vdev-id:%d",
-			wlan_vdev_get_id(vdev));
+
+		struct wlan_objmgr_pdev *pdev;
+
+		pdev = wlan_vdev_get_pdev(vdev);
+		if (!pdev) {
+			obj_mgr_err("pdev is NULL for vdev[%d]",
+							wlan_vdev_get_id(vdev));
+			return QDF_STATUS_E_FAILURE;
+		}
+		obj_mgr_err(
+			"Object delete is not invoked for vdev[%d] pdev[%d]",
+			wlan_vdev_get_id(vdev),
+			wlan_objmgr_pdev_get_pdev_id(pdev));
 		WLAN_OBJMGR_BUG(0);
 	}
 
@@ -259,8 +266,18 @@ static QDF_STATUS wlan_objmgr_vdev_obj_destroy(struct wlan_objmgr_vdev *vdev)
 	obj_status = wlan_objmgr_vdev_object_status(vdev);
 
 	if (obj_status == QDF_STATUS_E_FAILURE) {
-		obj_mgr_err("VDEV object deletion failed: vdev-id: %d",
-				vdev_id);
+
+		struct wlan_objmgr_pdev *pdev;
+
+		pdev = wlan_vdev_get_pdev(vdev);
+		if (!pdev) {
+			obj_mgr_err("pdev is null for vdev[%d]",
+							wlan_vdev_get_id(vdev));
+			return QDF_STATUS_E_FAILURE;
+		}
+		obj_mgr_err("Object deletion failed for vdev[%d] pdev[%d]",
+			wlan_vdev_get_id(vdev),
+			wlan_objmgr_pdev_get_pdev_id(pdev));
 		/* Ideally should not happen */
 		/* This leads to memleak ??? how to handle */
 		QDF_BUG(0);
@@ -289,8 +306,18 @@ QDF_STATUS wlan_objmgr_vdev_obj_delete(struct wlan_objmgr_vdev *vdev)
 	print_idx = qdf_get_pidx();
 	if (qdf_print_is_verbose_enabled(print_idx, QDF_MODULE_ID_OBJ_MGR,
 		QDF_TRACE_LEVEL_DEBUG)) {
-		obj_mgr_debug("Logically deleting the vdev(id:%d)",
-					vdev->vdev_objmgr.vdev_id);
+		struct wlan_objmgr_pdev *pdev;
+
+		pdev = wlan_vdev_get_pdev(vdev);
+		if (!pdev) {
+			obj_mgr_err("pdev is NULL for vdev[%d]",
+							wlan_vdev_get_id(vdev));
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		obj_mgr_debug("L-Del vdev[%d] pdev[%d]",
+			wlan_vdev_get_id(vdev),
+			wlan_objmgr_pdev_get_pdev_id(pdev));
 		wlan_objmgr_print_ref_ids(vdev->vdev_objmgr.ref_id_dbg);
 	}
 
@@ -451,19 +478,25 @@ QDF_STATUS wlan_objmgr_iterate_peerobj_list(
 	qdf_list_t *peer_list = NULL;
 	struct wlan_objmgr_peer *peer = NULL;
 	struct wlan_objmgr_peer *peer_next = NULL;
-	uint8_t vdev_id;
 
 	if (vdev == NULL) {
 		obj_mgr_err("VDEV is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
-	wlan_vdev_obj_lock(vdev);
-	vdev_id = wlan_vdev_get_id(vdev);
 
 	if (vdev->obj_state ==
 		WLAN_OBJ_STATE_LOGICALLY_DELETED) {
-		wlan_vdev_obj_unlock(vdev);
-		obj_mgr_err("VDEV is in delete progress: vdev-id:%d", vdev_id);
+		struct wlan_objmgr_pdev *pdev;
+		pdev = wlan_vdev_get_pdev(vdev);
+		if (!pdev) {
+			obj_mgr_err("pdev is NULL for vdev[%d]",
+							wlan_vdev_get_id(vdev));
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		obj_mgr_err("vdev[%d] pdev[%d] is in delete progress",
+					wlan_vdev_get_id(vdev),
+					wlan_objmgr_pdev_get_pdev_id(pdev));
 		return QDF_STATUS_E_FAILURE;
 	}
 	wlan_objmgr_vdev_get_ref(vdev, dbg_id);
@@ -484,7 +517,6 @@ QDF_STATUS wlan_objmgr_iterate_peerobj_list(
 		}
 	}
 	wlan_objmgr_vdev_release_ref(vdev, dbg_id);
-	wlan_vdev_obj_unlock(vdev);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -713,77 +745,85 @@ void *wlan_objmgr_vdev_get_comp_private_obj(
 }
 EXPORT_SYMBOL(wlan_objmgr_vdev_get_comp_private_obj);
 
-void wlan_objmgr_vdev_get_ref(struct wlan_objmgr_vdev *vdev,
+QDF_STATUS wlan_objmgr_vdev_get_ref(struct wlan_objmgr_vdev *vdev,
 						wlan_objmgr_ref_dbgid id)
 {
+	if (id >= WLAN_REF_ID_MAX) {
+		obj_mgr_err("Component-id %d is not supported", id);
+		return QDF_STATUS_MAXCOMP_FAIL;
+	}
+
 	if (vdev == NULL) {
-		obj_mgr_err("vdev obj is NULL for id:%d", id);
+		obj_mgr_err("vdev is NULL for %s", string_from_dbgid(id));
 		QDF_ASSERT(0);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 	/* Increment ref count */
 	qdf_atomic_inc(&vdev->vdev_objmgr.ref_cnt);
 	qdf_atomic_inc(&vdev->vdev_objmgr.ref_id_dbg[id]);
 
-	return;
+	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(wlan_objmgr_vdev_get_ref);
 
 QDF_STATUS wlan_objmgr_vdev_try_get_ref(struct wlan_objmgr_vdev *vdev,
 						wlan_objmgr_ref_dbgid id)
 {
-	uint8_t vdev_id;
+
+	if (id >= WLAN_REF_ID_MAX) {
+		obj_mgr_err("Component-id %d is not supported", id);
+		return QDF_STATUS_MAXCOMP_FAIL;
+	}
 
 	if (vdev == NULL) {
-		obj_mgr_err("vdev obj is NULL for id:%d", id);
+		obj_mgr_err("vdev is NULL for %s", string_from_dbgid(id));
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	wlan_vdev_obj_lock(vdev);
-	vdev_id = wlan_vdev_get_id(vdev);
 	if (vdev->obj_state == WLAN_OBJ_STATE_LOGICALLY_DELETED) {
 		wlan_vdev_obj_unlock(vdev);
 		if (vdev->vdev_objmgr.print_cnt++ <=
 				WLAN_OBJMGR_RATELIMIT_THRESH)
-			obj_mgr_err("[Ref id: %d] vdev(%d) is in Log Del",
-				id, vdev_id);
+			obj_mgr_err("[Ref id: %s] vdev[%d] is in L-Del state",
+				string_from_dbgid(id), wlan_vdev_get_id(vdev));
 
 		return QDF_STATUS_E_RESOURCES;
 	}
 
 	/* Increment ref count */
 	wlan_objmgr_vdev_get_ref(vdev, id);
-	wlan_vdev_obj_unlock(vdev);
 
 	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(wlan_objmgr_vdev_try_get_ref);
 
-void wlan_objmgr_vdev_release_ref(struct wlan_objmgr_vdev *vdev,
+QDF_STATUS wlan_objmgr_vdev_release_ref(struct wlan_objmgr_vdev *vdev,
 						wlan_objmgr_ref_dbgid id)
 {
-	uint8_t vdev_id;
 
-	if (vdev == NULL) {
-		obj_mgr_err("vdev obj is NULL for id:%d", id);
-		QDF_ASSERT(0);
-		return;
+	if (id >= WLAN_REF_ID_MAX) {
+		obj_mgr_err("Component-id %d is not supported", id);
+		return QDF_STATUS_MAXCOMP_FAIL;
 	}
 
-	vdev_id = wlan_vdev_get_id(vdev);
+	if (vdev == NULL) {
+		obj_mgr_err("vdev is NULL for %s", string_from_dbgid(id));
+		QDF_ASSERT(0);
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	if (!qdf_atomic_read(&vdev->vdev_objmgr.ref_id_dbg[id])) {
-		obj_mgr_err("vdev (id:%d)ref cnt was not taken by %d",
-				vdev_id, id);
+		obj_mgr_err("vdev[%d] ref cnt was not taken by %s",
+						wlan_vdev_get_id(vdev),
+						string_from_dbgid(id));
 		wlan_objmgr_print_ref_ids(vdev->vdev_objmgr.ref_id_dbg);
 		WLAN_OBJMGR_BUG(0);
 	}
 
 	if (!qdf_atomic_read(&vdev->vdev_objmgr.ref_cnt)) {
-		obj_mgr_err("vdev ref cnt is 0");
+		obj_mgr_err("vdev[%d] ref cnt is 0", wlan_vdev_get_id(vdev));
 		WLAN_OBJMGR_BUG(0);
-		return;
 	}
 	qdf_atomic_dec(&vdev->vdev_objmgr.ref_id_dbg[id]);
 
@@ -791,7 +831,7 @@ void wlan_objmgr_vdev_release_ref(struct wlan_objmgr_vdev *vdev,
 	if (qdf_atomic_dec_and_test(&vdev->vdev_objmgr.ref_cnt))
 		wlan_objmgr_vdev_obj_destroy(vdev);
 
-	return;
+	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(wlan_objmgr_vdev_release_ref);
 

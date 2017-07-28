@@ -95,7 +95,7 @@ static QDF_STATUS wlan_objmgr_psoc_obj_free(struct wlan_objmgr_psoc *psoc)
 
 	/* Detach PSOC from global object's psoc list  */
 	if (wlan_objmgr_psoc_object_detach(psoc) == QDF_STATUS_E_FAILURE) {
-		obj_mgr_err("PSOC object detach failed");
+		obj_mgr_err("psoc detach failed");
 		return QDF_STATUS_E_FAILURE;
 	}
 	wlan_objmgr_psoc_peer_list_deinit(&psoc->soc_objmgr.peer_list);
@@ -120,7 +120,7 @@ struct wlan_objmgr_psoc *wlan_objmgr_psoc_obj_create(uint32_t phy_version,
 
 	psoc = qdf_mem_malloc(sizeof(*psoc));
 	if (psoc == NULL) {
-		obj_mgr_err("PSOC allocation failed");
+		obj_mgr_err("psoc allocation failed");
 		return NULL;
 	}
 	qdf_spinlock_create(&psoc->psoc_lock);
@@ -168,7 +168,7 @@ struct wlan_objmgr_psoc *wlan_objmgr_psoc_obj_create(uint32_t phy_version,
 		psoc->obj_state = WLAN_OBJ_STATE_PARTIALLY_CREATED;
 	} else if (obj_status == QDF_STATUS_E_FAILURE) {
 		/* Component object failed to be created, clean up the object */
-		obj_mgr_err("PSOC component objects allocation failed");
+		obj_mgr_err("psoc component objects allocation failed");
 		/* Clean up the psoc */
 		wlan_objmgr_psoc_obj_delete(psoc);
 		return NULL;
@@ -176,7 +176,7 @@ struct wlan_objmgr_psoc *wlan_objmgr_psoc_obj_create(uint32_t phy_version,
 
 	if (wlan_objmgr_psoc_object_attach(psoc) !=
 				QDF_STATUS_SUCCESS) {
-		obj_mgr_err("PSOC object attach failed");
+		obj_mgr_err("psoc object attach failed");
 		wlan_objmgr_psoc_obj_delete(psoc);
 		return NULL;
 	}
@@ -215,7 +215,7 @@ static QDF_STATUS wlan_objmgr_psoc_obj_destroy(struct wlan_objmgr_psoc *psoc)
 	obj_status = wlan_objmgr_psoc_object_status(psoc);
 
 	if (obj_status == QDF_STATUS_E_FAILURE) {
-		obj_mgr_err("PSOC component object free failed");
+		obj_mgr_err("psoc component object free failed");
 		/* Ideally should not happen
 		 * This leads to memleak, BUG_ON to find which component
 		 * delete notification failed and fix it.
@@ -247,7 +247,7 @@ QDF_STATUS wlan_objmgr_psoc_obj_delete(struct wlan_objmgr_psoc *psoc)
 
 	if (qdf_print_is_verbose_enabled(print_idx, QDF_MODULE_ID_OBJ_MGR,
 		QDF_TRACE_LEVEL_DEBUG)) {
-		obj_mgr_debug("Logically deleting the psoc");
+		obj_mgr_debug("L-Del psoc");
 		wlan_objmgr_print_ref_ids(psoc->soc_objmgr.ref_id_dbg);
 	}
 
@@ -1402,7 +1402,7 @@ QDF_STATUS wlan_objmgr_psoc_peer_detach(struct wlan_objmgr_psoc *psoc,
 				QDF_STATUS_E_FAILURE) {
 		qdf_spin_unlock_bh(&peer_list->peer_list_lock);
 		wlan_psoc_obj_unlock(psoc);
-		obj_mgr_err("Failed to detach peer");
+		obj_mgr_err("psoc failed to detach peer");
 		return QDF_STATUS_E_FAILURE;
 	}
 	qdf_spin_unlock_bh(&peer_list->peer_list_lock);
@@ -1669,26 +1669,35 @@ void *wlan_objmgr_psoc_get_comp_private_obj(struct wlan_objmgr_psoc *psoc,
 }
 EXPORT_SYMBOL(wlan_objmgr_psoc_get_comp_private_obj);
 
-void wlan_objmgr_psoc_get_ref(struct wlan_objmgr_psoc *psoc,
+QDF_STATUS wlan_objmgr_psoc_get_ref(struct wlan_objmgr_psoc *psoc,
 						wlan_objmgr_ref_dbgid id)
 {
+	if (id >= WLAN_REF_ID_MAX) {
+		obj_mgr_err("Component-id %d is not supported", id);
+		return QDF_STATUS_MAXCOMP_FAIL;
+	}
+
 	if (psoc == NULL) {
-		obj_mgr_err("psoc obj is NULL for id:%d", id);
+		obj_mgr_err("psoc is NULL for %s", string_from_dbgid(id));
 		QDF_ASSERT(0);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 	/* Increment ref count */
 	qdf_atomic_inc(&psoc->soc_objmgr.ref_cnt);
 	qdf_atomic_inc(&psoc->soc_objmgr.ref_id_dbg[id]);
-	return;
+	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(wlan_objmgr_psoc_get_ref);
 
 QDF_STATUS wlan_objmgr_psoc_try_get_ref(struct wlan_objmgr_psoc *psoc,
 						wlan_objmgr_ref_dbgid id)
 {
+	if (id >= WLAN_REF_ID_MAX) {
+		obj_mgr_err("Component-id %d is not supported", id);
+		return QDF_STATUS_MAXCOMP_FAIL;
+	}
 	if (psoc == NULL) {
-		obj_mgr_err("psoc obj is NULL for id:%d", id);
+		obj_mgr_err("psoc is NULL for %s", string_from_dbgid(id));
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1698,7 +1707,8 @@ QDF_STATUS wlan_objmgr_psoc_try_get_ref(struct wlan_objmgr_psoc *psoc,
 		wlan_psoc_obj_unlock(psoc);
 		if (psoc->soc_objmgr.print_cnt++ <=
 				WLAN_OBJMGR_RATELIMIT_THRESH)
-			obj_mgr_err("[Ref id: %d] psoc is in L-Del state", id);
+			obj_mgr_err("[Ref id: %s] psoc is in L-Del state",
+							string_from_dbgid(id));
 
 		return QDF_STATUS_E_RESOURCES;
 	}
@@ -1711,17 +1721,22 @@ QDF_STATUS wlan_objmgr_psoc_try_get_ref(struct wlan_objmgr_psoc *psoc,
 }
 EXPORT_SYMBOL(wlan_objmgr_psoc_try_get_ref);
 
-void wlan_objmgr_psoc_release_ref(struct wlan_objmgr_psoc *psoc,
+QDF_STATUS wlan_objmgr_psoc_release_ref(struct wlan_objmgr_psoc *psoc,
 						wlan_objmgr_ref_dbgid id)
 {
+	if (id >= WLAN_REF_ID_MAX) {
+		obj_mgr_err("component-id %d is not supported", id);
+		return QDF_STATUS_MAXCOMP_FAIL;
+	}
 	if (psoc == NULL) {
-		obj_mgr_err("psoc obj is NULLi for id:%d", id);
+		obj_mgr_err("psoc is NULL for %s", string_from_dbgid(id));
 		QDF_ASSERT(0);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!qdf_atomic_read(&psoc->soc_objmgr.ref_id_dbg[id])) {
-		obj_mgr_err("psoc ref cnt was not taken by %d", id);
+		obj_mgr_err("psoc ref cnt was not taken by %s",
+			string_from_dbgid(id));
 		wlan_objmgr_print_ref_ids(psoc->soc_objmgr.ref_id_dbg);
 		WLAN_OBJMGR_BUG(0);
 	}
@@ -1729,7 +1744,6 @@ void wlan_objmgr_psoc_release_ref(struct wlan_objmgr_psoc *psoc,
 	if (!qdf_atomic_read(&psoc->soc_objmgr.ref_cnt)) {
 		obj_mgr_err("psoc ref cnt is 0");
 		WLAN_OBJMGR_BUG(0);
-		return;
 	}
 
 	qdf_atomic_dec(&psoc->soc_objmgr.ref_id_dbg[id]);
@@ -1737,7 +1751,7 @@ void wlan_objmgr_psoc_release_ref(struct wlan_objmgr_psoc *psoc,
 	if (qdf_atomic_dec_and_test(&psoc->soc_objmgr.ref_cnt))
 		wlan_objmgr_psoc_obj_destroy(psoc);
 
-	return;
+	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(wlan_objmgr_psoc_release_ref);
 
@@ -1792,17 +1806,21 @@ QDF_STATUS wlan_objmgr_print_ref_all_objects_per_psoc(
 	wlan_objmgr_iterate_obj_list_all(psoc, WLAN_PEER_OP,
 				wlan_objmgr_psoc_peer_ref_print, NULL, 1,
 				WLAN_OBJMGR_ID);
+	obj_mgr_info("----------------------------------");
 	obj_mgr_info("Ref counts of VDEV");
 	wlan_objmgr_iterate_obj_list_all(psoc, WLAN_VDEV_OP,
 				wlan_objmgr_psoc_vdev_ref_print, NULL, 1,
 				WLAN_OBJMGR_ID);
+	obj_mgr_info("----------------------------------");
 	obj_mgr_info("Ref counts of PDEV");
 	wlan_objmgr_iterate_obj_list_all(psoc, WLAN_PDEV_OP,
 				wlan_objmgr_psoc_pdev_ref_print, NULL, 1,
 				WLAN_OBJMGR_ID);
+	obj_mgr_info("----------------------------------");
 
-	obj_mgr_info(" Ref counts of PSOC");
+	obj_mgr_info("Ref counts of PSOC");
 	wlan_objmgr_print_ref_ids(psoc->soc_objmgr.ref_id_dbg);
+	obj_mgr_info("----------------------------------");
 
 	return QDF_STATUS_SUCCESS;
 }
