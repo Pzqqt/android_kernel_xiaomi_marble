@@ -372,8 +372,15 @@ ucfg_scan_update_dbs_scan_ctrl_ext_flag(struct scan_start_request *req)
 			wlan_objmgr_psoc_get_dual_mac_disable(psoc))
 		goto end;
 
-	if (!qdf_is_macaddr_zero(&req->scan_req.bssid_list[0]))
+	if (req->scan_req.num_ssids) {
+		scm_debug("directed SSID");
 		goto end;
+	}
+
+	if (req->scan_req.num_bssid) {
+		scm_debug("directed BSSID");
+		goto end;
+	}
 
 	num_chan = req->scan_req.num_chan;
 
