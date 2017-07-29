@@ -254,7 +254,18 @@ void wlan_hdd_update_wiphy(hdd_context_t *hdd_ctx);
 void wlan_hdd_update_11n_mode(struct hdd_config *cfg);
 
 int wlan_hdd_cfg80211_register(struct wiphy *wiphy);
-void wlan_hdd_cfg80211_register_frames(hdd_adapter_t *pAdapter);
+
+/**
+ * wlan_hdd_cfg80211_register_frames() - register frame types and callbacks
+ * with the PE.
+ * @pAdapter: pointer to adapter
+ *
+ * This function is used by HDD to register frame types which are interested
+ * by supplicant, callbacks for rx frame indication and ack.
+ *
+ * Return: 0 on success and non zero value on failure
+ */
+int wlan_hdd_cfg80211_register_frames(hdd_adapter_t *pAdapter);
 
 void wlan_hdd_cfg80211_deregister_frames(hdd_adapter_t *pAdapter);
 
