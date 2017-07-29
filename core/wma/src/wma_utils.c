@@ -1259,7 +1259,7 @@ static int wma_unified_link_peer_stats_event_handler(void *handle,
  *
  * Return: 0 on success, error number otherwise.
  */
-static int wma_unified_radio_tx_mem_free(void *handle)
+int wma_unified_radio_tx_mem_free(void *handle)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
 	tSirWifiRadioStat *rs_results;

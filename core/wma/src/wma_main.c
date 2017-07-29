@@ -3682,10 +3682,7 @@ QDF_STATUS wma_close(void *cds_ctx)
 		wma_handle->pGetRssiReq = NULL;
 	}
 
-	if (wma_handle->link_stats_results) {
-		qdf_mem_free(wma_handle->link_stats_results);
-		wma_handle->link_stats_results = NULL;
-	}
+	wma_unified_radio_tx_mem_free(wma_handle);
 
 	wma_ndp_unregister_all_event_handlers(wma_handle);
 	if (wma_handle->pdev) {
