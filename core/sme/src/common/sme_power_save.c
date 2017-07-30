@@ -543,6 +543,13 @@ QDF_STATUS sme_ps_timer_flush_sync(tHalHandle hal, uint8_t session_id)
 	if (tstate != QDF_TIMER_STATE_RUNNING)
 		return QDF_STATUS_SUCCESS;
 
+	if (QDF_STATUS_SUCCESS != sme_enable_sta_ps_check(mac_ctx,
+					session_id)) {
+		sme_debug("Power save not allowed for vdev id %d", session_id);
+		qdf_mc_timer_stop(&ps_parm->auto_ps_enable_timer);
+		return QDF_STATUS_SUCCESS;
+	}
+
 	sme_debug("flushing powersave enable for vdev %u", session_id);
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
