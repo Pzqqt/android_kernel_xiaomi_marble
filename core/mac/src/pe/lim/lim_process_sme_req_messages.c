@@ -1686,9 +1686,10 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		/*Store Persona */
 		session->pePersona = sme_join_req->staPersona;
 		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
-			  FL("PE PERSONA=%d cbMode %u nwType: %d dot11mode: %d"),
+			  FL("PE PERSONA=%d cbMode %u nwType: %d dot11mode: %d force_24ghz_in_ht20 %d"),
 			  session->pePersona, sme_join_req->cbMode,
-			  session->nwType, session->dot11mode);
+			  session->nwType, session->dot11mode,
+			  sme_join_req->force_24ghz_in_ht20);
 
 		/* Copy The channel Id to the session Table */
 		session->currentOperChannel = bss_desc->channelId;
@@ -1731,6 +1732,8 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		/*Phy mode */
 		session->gLimPhyMode = bss_desc->nwType;
 		handle_ht_capabilityand_ht_info(mac_ctx, session);
+		session->force_24ghz_in_ht20 =
+			sme_join_req->force_24ghz_in_ht20;
 		/* cbMode is already merged value of peer and self -
 		 * done by csr in csr_get_cb_mode_from_ies */
 		session->htSupportedChannelWidthSet =

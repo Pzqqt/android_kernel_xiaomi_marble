@@ -684,9 +684,13 @@ sch_bcn_process_sta_ibss(tpAniSirGlobal mac_ctx,
 	uint16_t aid;
 	uint8_t cb_mode;
 
-	if (CHAN_ENUM_14 >= session->currentOperChannel)
-		cb_mode = mac_ctx->roam.configParam.channelBondingMode24GHz;
-	else
+	if (CHAN_ENUM_14 >= session->currentOperChannel) {
+		if (session->force_24ghz_in_ht20)
+			cb_mode = WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
+		else
+			cb_mode =
+			   mac_ctx->roam.configParam.channelBondingMode24GHz;
+	} else
 		cb_mode = mac_ctx->roam.configParam.channelBondingMode5GHz;
 	/* check for VHT capability */
 	pStaDs = dph_lookup_hash_entry(mac_ctx, pMh->sa, &aid,

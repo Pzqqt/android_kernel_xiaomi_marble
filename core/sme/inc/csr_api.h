@@ -1000,6 +1000,7 @@ typedef struct tagCsrRoamProfile {
 	tSirMacRateSet  supported_rates;
 	tSirMacRateSet  extended_rates;
 	struct qdf_mac_addr bssid_hint;
+	bool force_24ghz_in_ht20;
 	bool do_not_roam;
 	uint32_t cac_duration_ms;
 	uint32_t dfs_regdomain;

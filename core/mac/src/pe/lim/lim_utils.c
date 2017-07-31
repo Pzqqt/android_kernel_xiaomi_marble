@@ -4371,6 +4371,12 @@ void lim_update_sta_run_time_ht_switch_chnl_params(tpAniSirGlobal pMac,
 		    (pMac, eHT_SUPPORTED_CHANNEL_WIDTH_SET, psessionEntry))
 		return;
 
+	if (WLAN_REG_IS_24GHZ_CH(psessionEntry->currentOperChannel) &&
+		psessionEntry->force_24ghz_in_ht20) {
+		pe_debug("force_24ghz_in_ht20 is set and channel is 2.4 Ghz");
+		return;
+	}
+
 	if (psessionEntry->ftPEContext.ftPreAuthSession) {
 		pe_err("FT PREAUTH channel change is in progress");
 		return;

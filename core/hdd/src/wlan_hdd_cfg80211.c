@@ -16002,6 +16002,55 @@ static bool wlan_hdd_reassoc_bssid_hint(hdd_adapter_t *adapter,
 }
 #endif
 
+
+/**
+ * wlan_hdd_check_ht20_ht40_ind() - check if Supplicant has indicated to
+ * connect in HT20 mode
+ * @hdd_ctx: hdd context
+ * @adapter: Pointer to the HDD adapter
+ * @req: Pointer to the structure cfg_connect_params receieved from user space
+ *
+ * This function will check if supplicant has indicated to to connect in HT20
+ * mode. this is currently applicable only for 2.4Ghz mode only.
+ * if feature is enabled and supplicant indicate HT20 set
+ * force_24ghz_in_ht20 to true to force 2.4Ghz in HT20 else set it to false.
+ *
+ * Return: void
+ */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 3, 0)
+static void wlan_hdd_check_ht20_ht40_ind(hdd_context_t *hdd_ctx,
+	hdd_adapter_t *adapter,
+	struct cfg80211_connect_params *req)
+{
+	hdd_wext_state_t *wext_state = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
+	tCsrRoamProfile *roam_profile;
+
+	roam_profile = &wext_state->roamProfile;
+	roam_profile->force_24ghz_in_ht20 = false;
+
+	if (hdd_ctx->config->override_ht20_40_24g &&
+	    !(req->ht_capa.cap_info &
+	      IEEE80211_HT_CAP_SUP_WIDTH_20_40))
+		roam_profile->force_24ghz_in_ht20 = true;
+
+	hdd_debug("req->ht_capa.cap_info %x override_ht20_40_24g %d",
+		  req->ht_capa.cap_info,
+		  hdd_ctx->config->override_ht20_40_24g);
+}
+#else
+static inline void wlan_hdd_check_ht20_ht40_ind(hdd_context_t *hdd_ctx,
+	hdd_adapter_t *adapter,
+	struct cfg80211_connect_params *req)
+{
+	hdd_wext_state_t *wext_state = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
+	tCsrRoamProfile *roam_profile;
+
+	roam_profile = &wext_state->roamProfile;
+
+	roam_profile->force_24ghz_in_ht20 = false;
+}
+#endif
+
 /**
  * __wlan_hdd_cfg80211_connect() - cfg80211 connect api
  * @wiphy: Pointer to wiphy
@@ -16150,6 +16199,9 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 		channel = req->channel->hw_value;
 	else
 		channel = 0;
+
+	wlan_hdd_check_ht20_ht40_ind(pHddCtx, pAdapter, req);
+
 	status = wlan_hdd_cfg80211_connect_start(pAdapter, req->ssid,
 						 req->ssid_len, req->bssid,
 						 bssid_hint, channel, 0);

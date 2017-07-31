@@ -4328,6 +4328,12 @@ QDF_STATUS csr_roam_prepare_bss_config(tpAniSirGlobal pMac,
 	else
 		pBssConfig->cbMode = PHY_SINGLE_CHANNEL_CENTERED;
 
+	if (WLAN_REG_IS_24GHZ_CH(pBssDesc->channelId) &&
+	    pProfile->force_24ghz_in_ht20) {
+		pBssConfig->cbMode = PHY_SINGLE_CHANNEL_CENTERED;
+		sme_debug("force_24ghz_in_ht20 is set so set cbmode to 0");
+	}
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -7848,6 +7854,7 @@ QDF_STATUS csr_roam_copy_profile(tpAniSirGlobal pMac,
 	/*Save the WPS info */
 	pDstProfile->bWPSAssociation = pSrcProfile->bWPSAssociation;
 	pDstProfile->bOSENAssociation = pSrcProfile->bOSENAssociation;
+	pDstProfile->force_24ghz_in_ht20 = pSrcProfile->force_24ghz_in_ht20;
 	pDstProfile->uapsd_mask = pSrcProfile->uapsd_mask;
 	pDstProfile->beaconInterval = pSrcProfile->beaconInterval;
 	pDstProfile->privacy = pSrcProfile->privacy;
@@ -14715,8 +14722,11 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		csr_join_req->staPersona = (uint8_t) pProfile->csrPersona;
 		csr_join_req->wps_registration = pProfile->bWPSAssociation;
 		csr_join_req->cbMode = (uint8_t) pSession->bssParams.cbMode;
-		sme_debug("CSR PERSONA: %d CSR CbMode: %d",
-			  pProfile->csrPersona, pSession->bssParams.cbMode);
+		csr_join_req->force_24ghz_in_ht20 =
+			pProfile->force_24ghz_in_ht20;
+		sme_debug("CSR PERSONA: %d CSR CbMode: %d force 24gh ht20 %d",
+			  pProfile->csrPersona, pSession->bssParams.cbMode,
+			  csr_join_req->force_24ghz_in_ht20);
 		csr_join_req->uapsdPerAcBitmask = pProfile->uapsd_mask;
 		pSession->uapsd_mask = pProfile->uapsd_mask;
 		status =

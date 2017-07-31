@@ -1246,6 +1246,7 @@ typedef struct sSirSmeJoinReq {
 	struct cds_fils_connection_info fils_con_info;
 #endif
 	/* Pls make this as last variable in struct */
+	bool force_24ghz_in_ht20;
 	tSirBssDescription bssDescription;
 	/*
 	 * WARNING: Pls make bssDescription as last variable in struct
