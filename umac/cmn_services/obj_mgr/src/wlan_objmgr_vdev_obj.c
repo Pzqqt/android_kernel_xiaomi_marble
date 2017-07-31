@@ -614,24 +614,24 @@ QDF_STATUS wlan_objmgr_vdev_peer_attach(struct wlan_objmgr_vdev *vdev,
 	objmgr->wlan_peer_count++;
 	wlan_pdev_incr_peer_count(wlan_vdev_get_pdev(vdev));
 
-	if ((wlan_peer_get_peer_type(peer) == WLAN_PEER_AP) ||
-	    (wlan_peer_get_peer_type(peer) == WLAN_PEER_P2P_GO)) {
-		if (WLAN_ADDR_EQ(wlan_peer_get_macaddr(peer),
-				 wlan_vdev_mlme_get_macaddr(vdev)) ==
-					QDF_STATUS_SUCCESS) {
-			/*
-			 * if peer mac address and vdev mac address match, set
-			 * this peer as self peer
-			 */
-			wlan_vdev_set_selfpeer(vdev, peer);
-			/* For AP mode, self peer and BSS peer are same */
-			if (wlan_vdev_mlme_get_opmode(vdev) == QDF_SAP_MODE)
-				wlan_vdev_set_bsspeer(vdev, peer);
-		}
-		/* set BSS peer for sta */
-		if (wlan_vdev_mlme_get_opmode(vdev) == QDF_STA_MODE)
+	if (WLAN_ADDR_EQ(wlan_peer_get_macaddr(peer),
+			 wlan_vdev_mlme_get_macaddr(vdev)) ==
+				QDF_STATUS_SUCCESS) {
+		/*
+		 * if peer mac address and vdev mac address match, set
+		 * this peer as self peer
+		 */
+		wlan_vdev_set_selfpeer(vdev, peer);
+		/* For AP mode, self peer and BSS peer are same */
+		if (wlan_vdev_mlme_get_opmode(vdev) == QDF_SAP_MODE)
 			wlan_vdev_set_bsspeer(vdev, peer);
 	}
+	/* set BSS peer for sta */
+	if ((wlan_vdev_mlme_get_opmode(vdev) == QDF_STA_MODE) &&
+		((wlan_peer_get_peer_type(peer) == WLAN_PEER_AP) ||
+		 (wlan_peer_get_peer_type(peer) == WLAN_PEER_P2P_GO)))
+		wlan_vdev_set_bsspeer(vdev, peer);
+
 	/* Increment vdev ref count to make sure it won't be destroyed before */
 	wlan_objmgr_vdev_get_ref(vdev, WLAN_OBJMGR_ID);
 	wlan_vdev_obj_unlock(vdev);

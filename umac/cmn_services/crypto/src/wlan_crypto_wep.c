@@ -56,12 +56,21 @@ static QDF_STATUS wep_encap(struct wlan_crypto_key *key,
 		ivp = (uint8_t *)qdf_nbuf_data(wbuf);
 	} else {
 		ivp = (uint8_t *)qdf_nbuf_push_head(wbuf,
-						cipher_table->header);
-		memmove(ivp, ivp + cipher_table->header, hdrlen);
+						cipher_table->header
+						+ cipher_table->trailer);
+		qdf_mem_move(ivp,
+			ivp + cipher_table->header + cipher_table->trailer,
+			hdrlen);
+		qdf_mem_move(ivp + hdrlen + cipher_table->header,
+			ivp + hdrlen
+			+ cipher_table->header + cipher_table->trailer,
+			(qdf_nbuf_len(wbuf) - hdrlen
+			- cipher_table->header + cipher_table->trailer));
+		ivp = (uint8_t *)qdf_nbuf_data(wbuf);
 	}
 
 	ivp += hdrlen;
-
+	key->keytsc++;
 #if _BYTE_ORDER == _BIG_ENDIAN
 	ivp[2] = key->keyrsc[0] >> 0;
 	ivp[1] = key->keyrsc[0] >> 8;

@@ -30,6 +30,7 @@
 #include <wlan_objmgr_peer_obj.h>
 
 #include "wlan_crypto_global_def.h"
+#include "wlan_crypto_global_api.h"
 #include "wlan_crypto_def_i.h"
 #include "wlan_crypto_main_i.h"
 #include "wlan_crypto_obj_mgr_i.h"
@@ -97,6 +98,7 @@ static QDF_STATUS wlan_crypto_vdev_obj_create_handler(
 	struct wlan_crypto_comp_priv *crypto_priv;
 	struct wlan_objmgr_pdev *pdev;
 	struct wlan_crypto_params *crypto_param;
+	QDF_STATUS status;
 
 	if (!vdev)
 		return QDF_STATUS_E_INVAL;
@@ -127,10 +129,14 @@ static QDF_STATUS wlan_crypto_vdev_obj_create_handler(
 	/* update the fw_caps into ciphercaps then attach to objmgr*/
 	wlan_crypto_register_all_ciphers(crypto_param);
 
-	return wlan_objmgr_vdev_component_obj_attach(vdev,
+	status = wlan_objmgr_vdev_component_obj_attach(vdev,
 							WLAN_UMAC_COMP_CRYPTO,
 							(void *)crypto_priv,
 							QDF_STATUS_SUCCESS);
+	if (status != QDF_STATUS_SUCCESS)
+		qdf_mem_free(crypto_priv);
+
+	return status;
 }
 
 static QDF_STATUS wlan_crypto_peer_obj_create_handler(
@@ -138,6 +144,8 @@ static QDF_STATUS wlan_crypto_peer_obj_create_handler(
 						void *arg)
 {
 	struct wlan_crypto_comp_priv *crypto_priv;
+	uint8_t keymac[WLAN_ALEN];
+	QDF_STATUS status;
 
 	if (!peer)
 		return QDF_STATUS_E_INVAL;
@@ -146,10 +154,24 @@ static QDF_STATUS wlan_crypto_peer_obj_create_handler(
 	if (!crypto_priv)
 		return QDF_STATUS_E_NOMEM;
 
-	return wlan_objmgr_peer_component_obj_attach(peer,
-							WLAN_UMAC_COMP_CRYPTO,
-							(void *)crypto_priv,
-							QDF_STATUS_SUCCESS);
+	status = wlan_objmgr_peer_component_obj_attach(peer,
+				WLAN_UMAC_COMP_CRYPTO, (void *)crypto_priv,
+				QDF_STATUS_SUCCESS);
+
+	if (status == QDF_STATUS_SUCCESS) {
+		if (wlan_vdev_get_selfpeer(peer->peer_objmgr.vdev) != peer) {
+			qdf_copy_macaddr((struct qdf_mac_addr *)keymac,
+			(struct qdf_mac_addr *)wlan_peer_get_macaddr(peer));
+			wlan_crypto_set_peer_wep_keys(
+					wlan_peer_get_vdev(peer), keymac);
+		}
+	} else {
+		qdf_print("%s[%d] peer obj failed status %d\n",
+					__func__, __LINE__, status);
+		qdf_mem_free(crypto_priv);
+	}
+
+	return status;
 }
 
 static QDF_STATUS wlan_crypto_psoc_obj_destroy_handler(
