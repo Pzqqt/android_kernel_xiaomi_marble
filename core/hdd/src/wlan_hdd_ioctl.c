@@ -2181,8 +2181,9 @@ static int hdd_set_dwell_time(hdd_adapter_t *adapter, uint8_t *command)
 	tHalHandle hHal;
 	struct hdd_config *pCfg;
 	uint8_t *value = command;
-	tSmeConfigParams smeConfig;
+	tSmeConfigParams *sme_config;
 	int val = 0, temp = 0;
+	int retval = 0;
 
 	pCfg = (WLAN_HDD_GET_CTX(adapter))->config;
 	hHal = WLAN_HDD_GET_HAL_CTX(adapter);
@@ -2191,8 +2192,13 @@ static int hdd_set_dwell_time(hdd_adapter_t *adapter, uint8_t *command)
 		return -EINVAL;
 	}
 
-	qdf_mem_zero(&smeConfig, sizeof(smeConfig));
-	sme_get_config_param(hHal, &smeConfig);
+	sme_config = qdf_mem_malloc(sizeof(*sme_config));
+	if (!sme_config) {
+		hdd_err("failed to allocate memory for sme_config");
+		return -ENOMEM;
+	}
+	qdf_mem_zero(sme_config, sizeof(*sme_config));
+	sme_get_config_param(hHal, sme_config);
 
 	if (strncmp(command, "SETDWELLTIME ACTIVE MAX", 23) == 0) {
 		value = value + 24;
@@ -2200,60 +2206,68 @@ static int hdd_set_dwell_time(hdd_adapter_t *adapter, uint8_t *command)
 		if (temp != 0 || val < CFG_ACTIVE_MAX_CHANNEL_TIME_MIN ||
 		    val > CFG_ACTIVE_MAX_CHANNEL_TIME_MAX) {
 			hdd_err("argument passed for SETDWELLTIME ACTIVE MAX is incorrect");
-			return -EFAULT;
+			retval = -EFAULT;
+			goto free;
 		}
 		pCfg->nActiveMaxChnTime = val;
-		smeConfig.csrConfig.nActiveMaxChnTime = val;
-		sme_update_config(hHal, &smeConfig);
+		sme_config->csrConfig.nActiveMaxChnTime = val;
+		sme_update_config(hHal, sme_config);
 	} else if (strncmp(command, "SETDWELLTIME ACTIVE MIN", 23) == 0) {
 		value = value + 24;
 		temp = kstrtou32(value, 10, &val);
 		if (temp != 0 || val < CFG_ACTIVE_MIN_CHANNEL_TIME_MIN ||
 		    val > CFG_ACTIVE_MIN_CHANNEL_TIME_MAX) {
 			hdd_err("argument passed for SETDWELLTIME ACTIVE MIN is incorrect");
-			return -EFAULT;
+			retval = -EFAULT;
+			goto free;
 		}
 		pCfg->nActiveMinChnTime = val;
-		smeConfig.csrConfig.nActiveMinChnTime = val;
-		sme_update_config(hHal, &smeConfig);
+		sme_config->csrConfig.nActiveMinChnTime = val;
+		sme_update_config(hHal, sme_config);
 	} else if (strncmp(command, "SETDWELLTIME PASSIVE MAX", 24) == 0) {
 		value = value + 25;
 		temp = kstrtou32(value, 10, &val);
 		if (temp != 0 || val < CFG_PASSIVE_MAX_CHANNEL_TIME_MIN ||
 		    val > CFG_PASSIVE_MAX_CHANNEL_TIME_MAX) {
 			hdd_err("argument passed for SETDWELLTIME PASSIVE MAX is incorrect");
-			return -EFAULT;
+			retval = -EFAULT;
+			goto free;
 		}
 		pCfg->nPassiveMaxChnTime = val;
-		smeConfig.csrConfig.nPassiveMaxChnTime = val;
-		sme_update_config(hHal, &smeConfig);
+		sme_config->csrConfig.nPassiveMaxChnTime = val;
+		sme_update_config(hHal, sme_config);
 	} else if (strncmp(command, "SETDWELLTIME PASSIVE MIN", 24) == 0) {
 		value = value + 25;
 		temp = kstrtou32(value, 10, &val);
 		if (temp != 0 || val < CFG_PASSIVE_MIN_CHANNEL_TIME_MIN ||
 		    val > CFG_PASSIVE_MIN_CHANNEL_TIME_MAX) {
 			hdd_err("argument passed for SETDWELLTIME PASSIVE MIN is incorrect");
-			return -EFAULT;
+			retval = -EFAULT;
+			goto free;
 		}
 		pCfg->nPassiveMinChnTime = val;
-		smeConfig.csrConfig.nPassiveMinChnTime = val;
-		sme_update_config(hHal, &smeConfig);
+		sme_config->csrConfig.nPassiveMinChnTime = val;
+		sme_update_config(hHal, sme_config);
 	} else if (strncmp(command, "SETDWELLTIME", 12) == 0) {
 		value = value + 13;
 		temp = kstrtou32(value, 10, &val);
 		if (temp != 0 || val < CFG_ACTIVE_MAX_CHANNEL_TIME_MIN ||
 		    val > CFG_ACTIVE_MAX_CHANNEL_TIME_MAX) {
 			hdd_err("argument passed for SETDWELLTIME is incorrect");
-			return -EFAULT;
+			retval = -EFAULT;
+			goto free;
 		}
 		pCfg->nActiveMaxChnTime = val;
-		smeConfig.csrConfig.nActiveMaxChnTime = val;
-		sme_update_config(hHal, &smeConfig);
+		sme_config->csrConfig.nActiveMaxChnTime = val;
+		sme_update_config(hHal, sme_config);
 	} else {
-		return -EINVAL;
+		retval = -EINVAL;
+		goto free;
 	}
 
-	return 0;
+free:
+	qdf_mem_free(sme_config);
+	return retval;
 }
 
 struct link_status_priv {

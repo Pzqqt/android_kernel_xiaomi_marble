@@ -17806,8 +17806,9 @@ __wlan_hdd_cfg80211_set_ap_channel_width(struct wiphy *wiphy,
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *pHddCtx;
 	QDF_STATUS status;
-	tSmeConfigParams sme_config;
+	tSmeConfigParams *sme_config;
 	bool cbModeChange = false;
+	int retval = 0;
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -17824,58 +17825,66 @@ __wlan_hdd_cfg80211_set_ap_channel_width(struct wiphy *wiphy,
 	if (status)
 		return status;
 
-	qdf_mem_zero(&sme_config, sizeof(tSmeConfigParams));
-	sme_get_config_param(pHddCtx->hHal, &sme_config);
+	sme_config = qdf_mem_malloc(sizeof(*sme_config));
+	if (!sme_config) {
+		hdd_err("failed to allocate memory for sme_config");
+		return -ENOMEM;
+	}
+	qdf_mem_zero(sme_config, sizeof(*sme_config));
+	sme_get_config_param(pHddCtx->hHal, sme_config);
 	switch (chandef->width) {
 	case NL80211_CHAN_WIDTH_20:
 	case NL80211_CHAN_WIDTH_20_NOHT:
-		if (sme_config.csrConfig.channelBondingMode24GHz !=
+		if (sme_config->csrConfig.channelBondingMode24GHz !=
 		    eCSR_INI_SINGLE_CHANNEL_CENTERED) {
-			sme_config.csrConfig.channelBondingMode24GHz =
+			sme_config->csrConfig.channelBondingMode24GHz =
 				eCSR_INI_SINGLE_CHANNEL_CENTERED;
-			sme_update_config(pHddCtx->hHal, &sme_config);
+			sme_update_config(pHddCtx->hHal, sme_config);
 			cbModeChange = true;
 		}
 		break;
 
 	case NL80211_CHAN_WIDTH_40:
-		if (sme_config.csrConfig.channelBondingMode24GHz ==
+		if (sme_config->csrConfig.channelBondingMode24GHz ==
 		    eCSR_INI_SINGLE_CHANNEL_CENTERED) {
 			if (NL80211_CHAN_HT40MINUS ==
 			    cfg80211_get_chandef_type(chandef))
-				sme_config.csrConfig.channelBondingMode24GHz =
+				sme_config->csrConfig.channelBondingMode24GHz =
 					eCSR_INI_DOUBLE_CHANNEL_HIGH_PRIMARY;
 			else
-				sme_config.csrConfig.channelBondingMode24GHz =
+				sme_config->csrConfig.channelBondingMode24GHz =
 					eCSR_INI_DOUBLE_CHANNEL_LOW_PRIMARY;
-			sme_update_config(pHddCtx->hHal, &sme_config);
+			sme_update_config(pHddCtx->hHal, sme_config);
 			cbModeChange = true;
 		}
 		break;
 
 	default:
 		hdd_err("Error!!! Invalid HT20/40 mode !");
-		return -EINVAL;
+		retval = -EINVAL;
+		goto free;
 	}
 
 	if (!cbModeChange)
-		return 0;
+		goto free;
 
 	if (QDF_SAP_MODE != pAdapter->device_mode)
-		return 0;
+		goto free;
 
 	hdd_debug("Channel bonding changed to %d",
-	       sme_config.csrConfig.channelBondingMode24GHz);
+	       sme_config->csrConfig.channelBondingMode24GHz);
 
 	/* Change SAP ht2040 mode */
 	status = hdd_set_sap_ht2040_mode(pAdapter,
 					 cfg80211_get_chandef_type(chandef));
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("Cannot set SAP HT20/40 mode!");
-		return -EINVAL;
+		retval = -EINVAL;
 	}
 
-	return 0;
+free:
+	qdf_mem_free(sme_config);
+	return retval;
 }
 
 /**

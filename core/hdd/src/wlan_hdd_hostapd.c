@@ -7466,7 +7466,7 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 	int32_t i;
 	struct hdd_config *iniConfig;
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pHostapdAdapter);
-	tSmeConfigParams sme_config;
+	tSmeConfigParams *sme_config;
 	bool MFPCapable = false;
 	bool MFPRequired = false;
 	uint16_t prev_rsn_length = 0;
@@ -7490,6 +7490,12 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 			hdd_err("qdf wait for event failed!!");
 			return -EINVAL;
 		}
+	}
+
+	sme_config = qdf_mem_malloc(sizeof(*sme_config));
+	if (!sme_config) {
+		hdd_err("failed to allocate memory");
+		return -ENOMEM;
 	}
 
 	iniConfig = pHddCtx->config;
@@ -7889,21 +7895,21 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 			pConfig->SapHw_mode = eCSR_DOT11_MODE_11n;
 	}
 
-	qdf_mem_zero(&sme_config, sizeof(tSmeConfigParams));
-	sme_get_config_param(pHddCtx->hHal, &sme_config);
+	qdf_mem_zero(sme_config, sizeof(*sme_config));
+	sme_get_config_param(pHddCtx->hHal, sme_config);
 	/* Override hostapd.conf wmm_enabled only for 11n and 11AC configs (IOT)
 	 * As per spec 11N/AC STA are QOS STA and may not connect or throughput
 	 * may not be good with non QOS 11N AP
 	 * Default: enable QOS for SAP unless WMM IE not present for 11bga
 	 */
-	sme_config.csrConfig.WMMSupportMode = eCsrRoamWmmAuto;
+	sme_config->csrConfig.WMMSupportMode = eCsrRoamWmmAuto;
 	pIe = wlan_hdd_get_vendor_oui_ie_ptr(WMM_OUI_TYPE, WMM_OUI_TYPE_SIZE,
 					pBeacon->tail, pBeacon->tail_len);
 	if (!pIe && (pConfig->SapHw_mode == eCSR_DOT11_MODE_11a ||
 		pConfig->SapHw_mode == eCSR_DOT11_MODE_11g ||
 		pConfig->SapHw_mode == eCSR_DOT11_MODE_11b))
-		sme_config.csrConfig.WMMSupportMode = eCsrRoamWmmNoQos;
-	sme_update_config(pHddCtx->hHal, &sme_config);
+		sme_config->csrConfig.WMMSupportMode = eCsrRoamWmmNoQos;
+	sme_update_config(pHddCtx->hHal, sme_config);
 
 	if (!pHddCtx->config->sap_force_11n_for_11ac) {
 		pConfig->ch_width_orig =
@@ -7970,7 +7976,8 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 		/* TODO Probably it should update some beacon params. */
 		hdd_debug("Bss Already started...Ignore the request");
 		EXIT();
-		return 0;
+		ret = 0;
+		goto free;
 	}
 
 	if (check_for_concurrency) {
@@ -8056,7 +8063,8 @@ int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 	pHostapdState->bCommit = true;
 	EXIT();
 
-	return 0;
+	ret = 0;
+	goto free;
 
 error:
 	clear_bit(SOFTAP_INIT_DONE, &pHostapdAdapter->event_flags);
@@ -8065,6 +8073,9 @@ error:
 			acs_cfg.ch_list);
 		pHostapdAdapter->sessionCtx.ap.sapConfig.acs_cfg.ch_list = NULL;
 	}
+
+free:
+	qdf_mem_free(sme_config);
 	return ret;
 }
 

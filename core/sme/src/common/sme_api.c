@@ -15699,24 +15699,31 @@ QDF_STATUS sme_update_sta_roam_policy(tHalHandle hal_handle,
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_handle);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tSmeConfigParams sme_config;
+	tSmeConfigParams *sme_config;
 
 	if (!mac_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
 				"%s: mac_ctx is null", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
-	qdf_mem_zero(&sme_config, sizeof(sme_config));
-	sme_get_config_param(hal_handle, &sme_config);
 
-	sme_config.csrConfig.sta_roam_policy_params.dfs_mode =
+	sme_config = qdf_mem_malloc(sizeof(*sme_config));
+	if (!sme_config) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			FL("failed to allocate memory for sme_config"));
+		return QDF_STATUS_E_FAILURE;
+	}
+	qdf_mem_zero(sme_config, sizeof(*sme_config));
+	sme_get_config_param(hal_handle, sme_config);
+
+	sme_config->csrConfig.sta_roam_policy_params.dfs_mode =
 		dfs_mode;
-	sme_config.csrConfig.sta_roam_policy_params.skip_unsafe_channels =
+	sme_config->csrConfig.sta_roam_policy_params.skip_unsafe_channels =
 		skip_unsafe_channels;
-	sme_config.csrConfig.sta_roam_policy_params.sap_operating_band =
+	sme_config->csrConfig.sta_roam_policy_params.sap_operating_band =
 		sap_operating_band;
 
-	sme_update_config(hal_handle, &sme_config);
+	sme_update_config(hal_handle, sme_config);
 
 	status = csr_update_channel_list(mac_ctx);
 	if (QDF_STATUS_SUCCESS != status) {
@@ -15727,6 +15734,8 @@ QDF_STATUS sme_update_sta_roam_policy(tHalHandle hal_handle,
 		csr_roam_offload_scan(mac_ctx, session_id,
 				ROAM_SCAN_OFFLOAD_UPDATE_CFG,
 				REASON_ROAM_SCAN_STA_ROAM_POLICY_CHANGED);
+
+	qdf_mem_free(sme_config);
 	return status;
 }
 
