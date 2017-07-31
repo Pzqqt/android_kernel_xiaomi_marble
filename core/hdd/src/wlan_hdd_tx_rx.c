@@ -1258,7 +1258,8 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 		if (HDD_LRO_NO_RX ==
 			 hdd_lro_rx(pHddCtx, pAdapter, skb)) {
 			if (hdd_napi_enabled(HDD_NAPI_ANY) &&
-				!pHddCtx->enableRxThread)
+				!pHddCtx->enableRxThread &&
+				!QDF_NBUF_CB_RX_PEER_CACHED_FRM(skb))
 				rxstat = netif_receive_skb(skb);
 			else
 				rxstat = netif_rx_ni(skb);

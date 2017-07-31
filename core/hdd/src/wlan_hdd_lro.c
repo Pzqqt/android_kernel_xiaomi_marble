@@ -142,7 +142,8 @@ enum hdd_lro_rx_status hdd_lro_rx(hdd_context_t *hdd_ctx,
 	enum hdd_lro_rx_status status = HDD_LRO_NO_RX;
 
 	if ((adapter->dev->features & NETIF_F_LRO) &&
-		 QDF_NBUF_CB_RX_TCP_PROTO(skb)) {
+		 QDF_NBUF_CB_RX_TCP_PROTO(skb) &&
+		 !QDF_NBUF_CB_RX_PEER_CACHED_FRM(skb)) {
 		struct qdf_lro_info info;
 		struct net_lro_desc *lro_desc = NULL;
 		struct hif_opaque_softc *hif_hdl =

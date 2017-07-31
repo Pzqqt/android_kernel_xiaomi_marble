@@ -4647,7 +4647,7 @@ static inline int ol_txrx_drop_nbuf_list(qdf_nbuf_t buf_list)
 
 	buf = buf_list;
 	while (buf) {
-		QDF_NBUF_CB_RX_LRO_INELIGIBLE(buf) = 1;
+		QDF_NBUF_CB_RX_PEER_CACHED_FRM(buf) = 1;
 		next_buf = qdf_nbuf_queue_next(buf);
 		if (pdev)
 			TXRX_STATS_MSDU_INCR(pdev,
