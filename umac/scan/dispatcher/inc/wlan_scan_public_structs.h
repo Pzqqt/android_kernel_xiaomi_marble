@@ -670,19 +670,6 @@ struct scan_cancel_request {
 };
 
 /**
- * struct mlme_update_info - meta information required to
- * update mlme info in scan entry
- * @vdev: vdev object
- * @bss: bss identifier
- * @mlme_info: mlme info to update
- */
-struct mlme_update_info {
-	struct wlan_objmgr_vdev *vdev;
-	struct bss_info bss;
-	struct mlme_info mlme_info;
-};
-
-/**
  * enum scan_event_type - scan event types
  * @SCAN_EVENT_TYPE_STARTED: scan started
  * @SCAN_EVENT_TYPE_COMPLETED: scan completed

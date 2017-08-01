@@ -1316,5 +1316,15 @@ util_scan_entry_fils_indication(struct scan_cache_entry *scan_entry)
 qdf_time_t
 util_get_last_scan_time(struct wlan_objmgr_vdev *vdev);
 
+/**
+ * util_scan_entry_update_mlme_info() - function to update mlme info
+ * @scan_entry: scan entry object
+ *
+ * API, function to update mlme info in scan DB
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+util_scan_entry_update_mlme_info(struct wlan_objmgr_pdev *pdev,
+	struct scan_cache_entry *scan_entry);
 #endif
-

@@ -105,13 +105,15 @@ QDF_STATUS scm_purge_scan_results(qdf_list_t *scan_result);
 
 /**
  * scm_update_scan_mlme_info() - updates scan entry with mlme data
- * @mlme_info: mlme info to be updated in scan db
+ * @pdev: pdev object
+ * @scan_entry: source scan entry to read mlme info
  *
- * This function updates scan db with mlme data
+ * This function updates scan db with scan_entry->mlme_info
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS scm_update_scan_mlme_info(struct mlme_update_info *mlme_info);
+QDF_STATUS scm_update_scan_mlme_info(struct wlan_objmgr_pdev *pdev,
+	struct scan_cache_entry *scan_entry);
 
 /**
  * scm_flush_results() - flush scan entries matching the filter

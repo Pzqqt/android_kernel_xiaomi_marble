@@ -119,7 +119,7 @@ bool util_is_scan_entry_match(
 
 	if (entry1->cap_info.wlan_caps.ess &&
 	   !qdf_mem_cmp(entry1->bssid.bytes,
-	   entry1->bssid.bytes, QDF_MAC_ADDR_SIZE) &&
+	   entry2->bssid.bytes, QDF_MAC_ADDR_SIZE) &&
 	   scm_chan_to_band(
 	   entry1->channel.chan_idx) ==
 	   scm_chan_to_band(entry2->channel.chan_idx)) {
@@ -140,7 +140,7 @@ bool util_is_scan_entry_match(
 	} else if (!entry1->cap_info.wlan_caps.ibss &&
 	   !entry1->cap_info.wlan_caps.ess &&
 	   !qdf_mem_cmp(entry1->bssid.bytes,
-	   entry1->bssid.bytes, QDF_MAC_ADDR_SIZE)) {
+	   entry2->bssid.bytes, QDF_MAC_ADDR_SIZE)) {
 		/* In case of P2P devices, ess and ibss will be set to zero */
 		return true;
 	}
@@ -673,4 +673,17 @@ util_scan_unpack_beacon_frame(uint8_t *frame,
 
 	/* TODO calculate channel struct */
 	return scan_entry;
+}
+
+QDF_STATUS
+util_scan_entry_update_mlme_info(struct wlan_objmgr_pdev *pdev,
+	struct scan_cache_entry *scan_entry)
+{
+
+	if (!pdev || !scan_entry) {
+		scm_err("pdev 0x%p, scan_entry: 0x%p", pdev, scan_entry);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return scm_update_scan_mlme_info(pdev, scan_entry);
 }
