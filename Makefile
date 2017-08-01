@@ -19,5 +19,7 @@ LINUXINCLUDE    += \
                 -include $(srctree)/techpack/audio/config/sdm845autoconf.h
 endif
 
-obj-y           += drivers/
-obj-y           += sound/
+obj-y += asoc/
+obj-y += dsp/
+obj-y += ipc/
+obj-y += soc/
