@@ -699,6 +699,9 @@ static void hdd_ipa_uc_loaded_uc_cb(void *priv_ctxt)
 	uc_op_work->msg = msg;
 	schedule_work(&uc_op_work->work);
 
+	/* work handler will free the msg buffer */
+	return;
+
 done:
 	qdf_mem_free(msg);
 }
@@ -2348,6 +2351,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 	if (HDD_IPA_UC_OPCODE_MAX <= msg->op_code) {
 		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			    "%s, INVALID OPCODE %d", __func__, msg->op_code);
+		qdf_mem_free(op_msg);
 		return;
 	}
 
