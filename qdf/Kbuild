@@ -27,7 +27,7 @@ INCS += -I$(obj)/$(HOST_CMN_CONVG_PTT)/inc \
         -I$(obj)/$(DEPTH)/cmn_dev/utils/host_diag_log/inc \
         -I$(obj)/$(DEPTH)/cmn_dev/utils/host_diag_log/src \
         -I$(obj)/$(DEPTH)/cmn_dev/utils/ptt/inc \
-        -I$(obj)/$(DEPTH)/cmn_dev/pld_stub/inc
+        -I$(WLAN_TOP)/pld/inc
 
 obj-m += qdf.o
 
