@@ -2763,6 +2763,7 @@ void wma_hold_req_timer(void *data)
 				tgt_req->msg_type, tgt_req->type);
 		QDF_BUG(0);
 	}
+	qdf_mc_timer_destroy(&tgt_req->event_timeout);
 	qdf_mem_free(tgt_req);
 }
 
