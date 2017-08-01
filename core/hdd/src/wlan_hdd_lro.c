@@ -46,7 +46,7 @@
 	(LRO_DESC | LRO_ELIGIBILITY_CHECKED | LRO_TCP_ACK_NUM | \
 	 LRO_TCP_DATA_CSUM | LRO_TCP_SEQ_NUM | LRO_TCP_WIN)
 
-#if defined(QCA_WIFI_NAPIER_EMULATION)
+#if defined(QCA_WIFI_QCA6290)
 /**
  * hdd_lro_init() - initialization for LRO
  * @hdd_ctx: HDD context
