@@ -7816,7 +7816,6 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 		sme_update_config(hal, sme_config);
 
 		phddctx->config->dot11Mode = hdd_dot11mode;
-		phddctx->config->nBandCapability = curr_band;
 		phddctx->config->nChannelBondingMode24GHz =
 			sme_config->csrConfig.channelBondingMode24GHz;
 		phddctx->config->nChannelBondingMode5GHz =
@@ -12772,13 +12771,15 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 	}
 
 	if (QDF_STATUS_SUCCESS != ucfg_reg_get_curr_band(pHddCtx->hdd_pdev,
-				&currBand)) {
+							 &currBand)) {
 		hdd_debug("Failed to get current band config");
 		return -EIO;
 	}
 
 	if (currBand == band)
 		return 0;
+
+	pHddCtx->curr_band = band;
 
 	/* Change band request received.
 	 * Abort pending scan requests, flush the existing scan results,

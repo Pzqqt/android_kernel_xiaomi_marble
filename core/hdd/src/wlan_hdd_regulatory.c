@@ -389,7 +389,7 @@ static void hdd_process_regulatory_data(struct hdd_context *hdd_ctx,
 	struct regulatory_channel *cds_chan;
 	uint8_t band_capability;
 
-	band_capability = hdd_ctx->config->nBandCapability;
+	band_capability = hdd_ctx->curr_band;
 
 	for (band_num = 0; band_num < HDD_NUM_NL80211_BANDS; band_num++) {
 

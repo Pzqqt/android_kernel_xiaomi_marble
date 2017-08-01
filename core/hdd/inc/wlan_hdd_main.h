@@ -1808,6 +1808,7 @@ struct hdd_context {
 #endif
 	uint8_t bt_a2dp_active:1;
 	uint8_t bt_vo_active:1;
+	eCsrBand curr_band;
 };
 
 /**
