@@ -112,31 +112,6 @@ void hif_pci_route_adrastea_interrupt(struct hif_pci_softc *sc)
 #endif
 
 
-#ifndef CONFIG_PLD_PCIE_INIT
-#ifdef QCA_WIFI_NAPIER_EMULATION
-static void __iomem *napier_emu_ioremap(struct pci_dev *dev,
-		int bar, unsigned long maxlen)
-{
-	resource_size_t start = pci_resource_start(dev, bar);
-	resource_size_t len = 0xD00000;
-	unsigned long flags = pci_resource_flags(dev, bar);
-
-	if (!len || !start)
-		return NULL;
-
-	if ((flags & IORESOURCE_IO) || (flags & IORESOURCE_MEM)) {
-		if (flags & IORESOURCE_CACHEABLE && !(flags & IORESOURCE_IO))
-			return ioremap(start, len);
-		else
-			return ioremap_nocache(start, len);
-	}
-
-	return NULL;
-}
-#endif
-#endif
-
-
 /**
  * pci_dispatch_ce_irq() - pci_dispatch_ce_irq
  * @scn: scn
@@ -2206,11 +2181,7 @@ static int hif_enable_pci(struct hif_pci_softc *sc,
 	pci_set_master(pdev);
 
 	/* Arrange for access to Target SoC registers. */
-#ifdef QCA_WIFI_NAPIER_EMULATION
-	mem = napier_emu_ioremap(pdev, BAR_NUM, 0);
-#else
 	mem = pci_iomap(pdev, BAR_NUM, 0);
-#endif
 	if (!mem) {
 		HIF_ERROR("%s: PCI iomap error", __func__);
 		ret = -EIO;
@@ -2288,7 +2259,6 @@ static void hif_disable_pci(struct hif_pci_softc *sc)
 	ol_sc->mem = NULL;
 }
 
-#ifndef QCA_WIFI_NAPIER_EMULATION
 static int hif_pci_probe_tgt_wakeup(struct hif_pci_softc *sc)
 {
 	int ret = 0;
@@ -2357,7 +2327,6 @@ static int hif_pci_probe_tgt_wakeup(struct hif_pci_softc *sc)
 end:
 	return ret;
 }
-#endif
 
 static void wlan_tasklet_msi(unsigned long data)
 {
@@ -3771,7 +3740,6 @@ end:
 	return 0;
 }
 
-#ifndef QCA_WIFI_NAPIER_EMULATION
 /**
  * hif_target_sync() : ensure the target is ready
  * @scn: hif controll structure
@@ -3823,7 +3791,6 @@ static void hif_target_sync(struct hif_softc *scn)
 	hif_write32_mb(scn->mem + PCIE_LOCAL_BASE_ADDRESS +
 			PCIE_SOC_WAKE_ADDRESS, PCIE_SOC_WAKE_RESET);
 }
-#endif /* QCA_WIFI_QCA8074_VP */
 
 #ifdef CONFIG_PLD_PCIE_INIT
 static void hif_pci_get_soc_info(struct hif_pci_softc *sc, struct device *dev)
@@ -3910,15 +3877,12 @@ again:
 	hif_register_tbl_attach(ol_sc, hif_type);
 	hif_target_register_tbl_attach(ol_sc, target_type);
 
-	if ((id->device == RUMIM2M_DEVICE_ID_NODE0) ||
-	    (id->device == RUMIM2M_DEVICE_ID_NODE1) ||
-	    (id->device == RUMIM2M_DEVICE_ID_NODE2) ||
-	    (id->device == RUMIM2M_DEVICE_ID_NODE3))
-		HIF_TRACE("%s:Skip tgt_wake up for PCI based 8074\n", __func__);
-	else {
-#ifndef QCA_WIFI_NAPIER_EMULATION
+	tgt_info->target_type = target_type;
+
+	if (ce_srng_based(ol_sc)) {
+		HIF_TRACE("%s:Skip tgt_wake up for srng devices\n", __func__);
+	} else {
 		ret = hif_pci_probe_tgt_wakeup(sc);
-#endif
 		if (ret < 0) {
 			HIF_ERROR("%s: ERROR - hif_pci_prob_wakeup error = %d",
 					__func__, ret);
@@ -3929,21 +3893,14 @@ again:
 		HIF_TRACE("%s: hif_pci_probe_tgt_wakeup done", __func__);
 	}
 
-	tgt_info->target_type = target_type;
-
 	if (!ol_sc->mem_pa) {
 		HIF_ERROR("%s: ERROR - BAR0 uninitialized", __func__);
 		ret = -EIO;
 		goto err_tgtstate;
 	}
 
-	if ((id->device != RUMIM2M_DEVICE_ID_NODE0) &&
-	    (id->device != RUMIM2M_DEVICE_ID_NODE1) &&
-	    (id->device != RUMIM2M_DEVICE_ID_NODE2) &&
-	    (id->device != RUMIM2M_DEVICE_ID_NODE3)) {
-#ifndef QCA_WIFI_NAPIER_EMULATION
+	if (!ce_srng_based(ol_sc)) {
 		hif_target_sync(ol_sc);
-#endif
 
 		if (ADRASTEA_BU)
 			hif_vote_link_up(hif_hdl);
