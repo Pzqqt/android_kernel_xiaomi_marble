@@ -287,6 +287,13 @@ ol_tx_desc_alloc_hl(struct ol_txrx_pdev_t *pdev,
 static inline void
 ol_tx_desc_vdev_rm(struct ol_tx_desc_t *tx_desc)
 {
+	/*
+	 * In module exit context, vdev handle could be destroyed but still
+	 * we need to free pending completion tx_desc.
+	 */
+	if (!tx_desc || !tx_desc->vdev)
+		return;
+
 	qdf_atomic_dec(&tx_desc->vdev->tx_desc_count);
 	tx_desc->vdev = NULL;
 }
