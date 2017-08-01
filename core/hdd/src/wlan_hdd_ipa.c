@@ -4143,9 +4143,8 @@ static void hdd_ipa_send_pkt_to_tl(
 		ipa_tx_desc->skb);
 	if (skb) {
 		HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "TLSHIM tx fail");
-		ipa_free_skb(ipa_tx_desc);
+		qdf_nbuf_free(skb);
 		iface_context->stats.num_tx_err++;
-		hdd_ipa_rm_try_release(hdd_ipa);
 		return;
 	}
 
