@@ -7107,6 +7107,8 @@ struct encrypt_decrypt_req_params {
  *                        to be communicated separately.
  * @WMI_HOST_HW_MODE_DBS_SBS: 3 PHYs, with 2 on the same band doing SBS
  *                           as in WMI_HW_MODE_SBS, and 3rd on the other band
+ * @WMI_HOST_HW_MODE_DBS_OR_SBS: Two PHY with one PHY capabale of both 2G and
+ *                        5G. It can support SBS (5G + 5G) OR DBS (5G + 2G).
  * @WMI_HOST_HW_MODE_MAX: Max hw_mode_id. Used to indicate invalid mode.
  */
 enum wmi_host_hw_mode_config_type {
@@ -7115,6 +7117,7 @@ enum wmi_host_hw_mode_config_type {
 	WMI_HOST_HW_MODE_SBS_PASSIVE  = 2,
 	WMI_HOST_HW_MODE_SBS          = 3,
 	WMI_HOST_HW_MODE_DBS_SBS      = 4,
+	WMI_HOST_HW_MODE_DBS_OR_SBS   = 5,
 	WMI_HOST_HW_MODE_MAX,
 };
 
