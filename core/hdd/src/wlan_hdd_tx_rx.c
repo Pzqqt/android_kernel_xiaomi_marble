@@ -109,7 +109,7 @@ void hdd_tx_resume_timer_expired_handler(void *adapter_context)
 		return;
 	}
 
-	hdd_info("Enabling queues");
+	hdd_debug("Enabling queues");
 	wlan_hdd_netif_queue_control(pAdapter, WLAN_WAKE_ALL_NETIF_QUEUE,
 				     WLAN_CONTROL_PATH);
 }
@@ -130,7 +130,7 @@ hdd_tx_resume_false(hdd_adapter_t *pAdapter, bool tx_resume)
 		return;
 
 	/* Pause TX  */
-	hdd_info("Disabling queues");
+	hdd_debug("Disabling queues");
 	wlan_hdd_netif_queue_control(pAdapter, WLAN_STOP_ALL_NETIF_QUEUE,
 				     WLAN_DATA_FLOW_CONTROL);
 
@@ -198,7 +198,7 @@ void hdd_tx_resume_cb(void *adapter_context, bool tx_resume)
 						   tx_flow_control_timer)) {
 			qdf_mc_timer_stop(&pAdapter->tx_flow_control_timer);
 		}
-		hdd_info("Enabling queues");
+		hdd_debug("Enabling queues");
 		wlan_hdd_netif_queue_control(pAdapter,
 					     WLAN_WAKE_ALL_NETIF_QUEUE,
 					     WLAN_DATA_FLOW_CONTROL);
@@ -261,7 +261,7 @@ void hdd_get_tx_resource(hdd_adapter_t *adapter,
 	    cdp_fc_get_tx_resource(cds_get_context(QDF_MODULE_ID_SOC), STAId,
 				   adapter->tx_flow_low_watermark,
 				   adapter->tx_flow_high_watermark_offset)) {
-		hdd_info("Disabling queues lwm %d hwm offset %d",
+		hdd_debug("Disabling queues lwm %d hwm offset %d",
 			 adapter->tx_flow_low_watermark,
 			 adapter->tx_flow_high_watermark_offset);
 		wlan_hdd_netif_queue_control(adapter, WLAN_STOP_ALL_NETIF_QUEUE,

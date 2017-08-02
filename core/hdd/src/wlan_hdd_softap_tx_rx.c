@@ -115,7 +115,7 @@ void hdd_softap_tx_resume_timer_expired_handler(void *adapter_context)
 		return;
 	}
 
-	hdd_info("Enabling queues");
+	hdd_debug("Enabling queues");
 	wlan_hdd_netif_queue_control(pAdapter, WLAN_WAKE_ALL_NETIF_QUEUE,
 				     WLAN_CONTROL_PATH);
 }
@@ -136,7 +136,7 @@ hdd_softap_tx_resume_false(hdd_adapter_t *pAdapter, bool tx_resume)
 	if (true == tx_resume)
 		return;
 
-	hdd_info("Disabling queues");
+	hdd_debug("Disabling queues");
 	wlan_hdd_netif_queue_control(pAdapter, WLAN_STOP_ALL_NETIF_QUEUE,
 				     WLAN_DATA_FLOW_CONTROL);
 
@@ -188,7 +188,7 @@ void hdd_softap_tx_resume_cb(void *adapter_context, bool tx_resume)
 			qdf_mc_timer_stop(&pAdapter->tx_flow_control_timer);
 		}
 
-		hdd_info("Enabling queues");
+		hdd_debug("Enabling queues");
 		wlan_hdd_netif_queue_control(pAdapter,
 					WLAN_WAKE_ALL_NETIF_QUEUE,
 					WLAN_DATA_FLOW_CONTROL);
@@ -950,8 +950,7 @@ QDF_STATUS hdd_softap_register_sta(hdd_adapter_t *pAdapter,
 
 	}
 
-	/* Enable Tx queue */
-	hdd_info("Enabling queues");
+	hdd_debug("Enabling queues");
 	wlan_hdd_netif_queue_control(pAdapter,
 				   WLAN_START_ALL_NETIF_QUEUE_N_CARRIER,
 				   WLAN_CONTROL_PATH);

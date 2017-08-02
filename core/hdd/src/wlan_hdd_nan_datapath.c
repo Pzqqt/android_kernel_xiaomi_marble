@@ -83,9 +83,9 @@ qca_wlan_vendor_ndp_policy[QCA_WLAN_VENDOR_ATTR_NDP_PARAMS_MAX + 1] = {
  */
 void hdd_ndp_print_ini_config(hdd_context_t *hdd_ctx)
 {
-	hdd_info("Name = [%s] Value = [%u]", CFG_ENABLE_NAN_DATAPATH_NAME,
+	hdd_debug("Name = [%s] Value = [%u]", CFG_ENABLE_NAN_DATAPATH_NAME,
 		hdd_ctx->config->enable_nan_datapath);
-	hdd_info("Name = [%s] Value = [%u]", CFG_ENABLE_NAN_NDI_CHANNEL_NAME,
+	hdd_debug("Name = [%s] Value = [%u]", CFG_ENABLE_NAN_NDI_CHANNEL_NAME,
 		hdd_ctx->config->nan_datapath_ndi_channel);
 }
 
@@ -1996,10 +1996,10 @@ static int __wlan_hdd_cfg80211_process_ndp_cmd(struct wiphy *wiphy,
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_IFACE_STR]) {
 		iface_name = nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_IFACE_STR]);
-		hdd_err("Transaction Id: %d NDP Cmd: %d iface_name: %s",
+		hdd_debug("Transaction Id: %d NDP Cmd: %d iface_name: %s",
 			transaction_id, ndp_cmd_type, iface_name);
 	} else {
-		hdd_err("Transaction Id: %d NDP Cmd: %d iface_name: unspecified",
+		hdd_debug("Transaction Id: %d NDP Cmd: %d iface_name: unspecified",
 			transaction_id, ndp_cmd_type);
 	}
 

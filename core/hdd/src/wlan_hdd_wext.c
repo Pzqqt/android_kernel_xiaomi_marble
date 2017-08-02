@@ -7272,7 +7272,7 @@ static int __iw_set_mlme(struct net_device *dev,
 			(WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter))->authKeyMgmt =
 				0;
 
-			hdd_info("Disabling queues");
+			hdd_debug("Disabling queues");
 			wlan_hdd_netif_queue_control(pAdapter,
 					WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
 					WLAN_CONTROL_PATH);
@@ -10645,7 +10645,7 @@ static int iw_get_policy_manager_ut_ops(hdd_context_t *hdd_ctx,
 		uint8_t weight_list[QDF_MAX_NUM_CHAN] = {0};
 		uint32_t pcl_len = 0, i = 0;
 
-		hdd_err("<iwpriv wlan0 pm_pcl> is called");
+		hdd_debug("<iwpriv wlan0 pm_pcl> is called");
 
 		policy_mgr_get_pcl(hdd_ctx->hdd_psoc, apps_args[0],
 				pcl, &pcl_len,
@@ -10689,7 +10689,7 @@ static int iw_get_policy_manager_ut_ops(hdd_context_t *hdd_ctx,
 	{
 		enum policy_mgr_conc_next_action action;
 
-		hdd_notice("<iwpriv wlan0 pm_query_action> is called");
+		hdd_debug("<iwpriv wlan0 pm_query_action> is called");
 		action = policy_mgr_current_connections_update(
 			hdd_ctx->hdd_psoc,
 			adapter->sessionId, apps_args[0],

@@ -3716,7 +3716,7 @@ void hdd_chip_pwr_save_fail_detected_cb(void *hddctx,
 		return;
 
 	if (!data) {
-		hdd_notice("data is null");
+		hdd_debug("data is null");
 		return;
 	}
 
@@ -12758,7 +12758,7 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 			}
 			if (params->supported_oper_classes_len >
 			    CDS_MAX_SUPP_OPER_CLASSES) {
-				hdd_notice("received oper classes:%d, resetting it to max supported: %d",
+				hdd_debug("rcvd oper classes:%d, rst to max %d",
 					  params->supported_oper_classes_len,
 					  CDS_MAX_SUPP_OPER_CLASSES);
 				params->supported_oper_classes_len =
@@ -15706,7 +15706,7 @@ static int wlan_hdd_disconnect(hdd_adapter_t *pAdapter, u16 reason)
 			}
 			if (pAdapter->roam_ho_fail) {
 				INIT_COMPLETION(pAdapter->disconnect_comp_var);
-					hdd_info("Disabling queues");
+				hdd_debug("Disabling queues");
 				wlan_hdd_netif_queue_control(pAdapter,
 					WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
 					WLAN_CONTROL_PATH);

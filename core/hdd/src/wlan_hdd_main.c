@@ -2340,7 +2340,7 @@ static int __hdd_open(struct net_device *dev)
 
 	set_bit(DEVICE_IFACE_OPENED, &adapter->event_flags);
 	if (hdd_conn_is_connected(WLAN_HDD_GET_STATION_CTX_PTR(adapter))) {
-		hdd_info("Enabling Tx Queues");
+		hdd_debug("Enabling Tx Queues");
 		/* Enable TX queues only when we are connected */
 		wlan_hdd_netif_queue_control(adapter,
 					     WLAN_START_ALL_NETIF_QUEUE,
@@ -2349,7 +2349,7 @@ static int __hdd_open(struct net_device *dev)
 
 	/* Enable carrier and transmit queues for NDI */
 	if (WLAN_HDD_IS_NDI(adapter)) {
-		hdd_notice("Enabling Tx Queues");
+		hdd_debug("Enabling Tx Queues");
 		wlan_hdd_netif_queue_control(adapter,
 			WLAN_START_ALL_NETIF_QUEUE_N_CARRIER,
 			WLAN_CONTROL_PATH);
@@ -2411,13 +2411,7 @@ static int __hdd_stop(struct net_device *dev)
 
 	/* Make sure the interface is marked as closed */
 	clear_bit(DEVICE_IFACE_OPENED, &adapter->event_flags);
-	hdd_notice("Disabling OS Tx queues");
-
-	/*
-	 * Disable TX on the interface, after this hard_start_xmit() will not
-	 * be called on that interface
-	 */
-	hdd_info("Disabling queues");
+	hdd_debug("Disabling queues");
 	wlan_hdd_netif_queue_control(adapter,
 				     WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
 				     WLAN_CONTROL_PATH);
@@ -3852,7 +3846,7 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 		}
 
 		/* Stop the Interface TX queue. */
-		hdd_info("Disabling queues");
+		hdd_debug("Disabling queues");
 		wlan_hdd_netif_queue_control(adapter,
 					WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
 					WLAN_CONTROL_PATH);
@@ -3888,7 +3882,7 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 			hdd_deinit_adapter(hdd_ctx, adapter, rtnl_held);
 			goto err_free_netdev;
 		}
-		hdd_info("Disabling queues");
+		hdd_debug("Disabling queues");
 		wlan_hdd_netif_queue_control(adapter,
 					WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
 					WLAN_CONTROL_PATH);
@@ -3909,7 +3903,7 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 			goto err_free_netdev;
 		}
 		/* Stop the Interface TX queue. */
-		hdd_info("Disabling queues");
+		hdd_debug("Disabling queues");
 		wlan_hdd_netif_queue_control(adapter,
 					WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
 					WLAN_CONTROL_PATH);
@@ -4119,7 +4113,7 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 	ENTER();
 
 	scan_info = &adapter->scan_info;
-	hdd_info("Disabling queues");
+	hdd_debug("Disabling queues");
 	wlan_hdd_netif_queue_control(adapter,
 				     WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
 				     WLAN_CONTROL_PATH);

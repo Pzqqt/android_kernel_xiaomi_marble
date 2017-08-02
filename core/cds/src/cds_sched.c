@@ -834,7 +834,7 @@ static int cds_ol_rx_thread(void *arg)
 		}
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: Exiting CDS OL rx thread", __func__);
 	complete_and_exit(&pSchedContext->ol_rx_shutdown, 0);
 }
