@@ -1368,7 +1368,8 @@ void hif_pci_enable_power_management(struct hif_softc *hif_sc,
 		hif_enable_power_gating(pci_ctx);
 
 	if (!CONFIG_ATH_PCIE_MAX_PERF &&
-	    CONFIG_ATH_PCIE_AWAKE_WHILE_DRIVER_LOAD) {
+	    CONFIG_ATH_PCIE_AWAKE_WHILE_DRIVER_LOAD &&
+	    !ce_srng_based(hif_sc)) {
 		/* allow sleep for PCIE_AWAKE_WHILE_DRIVER_LOAD feature */
 		if (hif_pci_target_sleep_state_adjust(hif_sc, true, false) < 0)
 			HIF_ERROR("%s, failed to set target to sleep",
@@ -2019,8 +2020,9 @@ int hif_pci_bus_configure(struct hif_softc *hif_sc)
 
 	A_TARGET_ACCESS_LIKELY(hif_sc);
 
-	if (CONFIG_ATH_PCIE_MAX_PERF ||
-		CONFIG_ATH_PCIE_AWAKE_WHILE_DRIVER_LOAD) {
+	if ((CONFIG_ATH_PCIE_MAX_PERF ||
+	     CONFIG_ATH_PCIE_AWAKE_WHILE_DRIVER_LOAD) &&
+	    !ce_srng_based(hif_sc)) {
 		/*
 		 * prevent sleep for PCIE_AWAKE_WHILE_DRIVER_LOAD feature
 		 * prevent sleep when we want to keep firmware always awake
@@ -3204,7 +3206,6 @@ static inline void hif_msm_pcie_debug_info(struct hif_pci_softc *sc)
 static inline void hif_msm_pcie_debug_info(struct hif_pci_softc *sc) {};
 #endif
 
-#ifndef QCA_WIFI_NAPIER_EMULATION
 /**
  * hif_log_soc_wakeup_timeout() - API to log PCIe and SOC Info
  * @sc: HIF PCIe Context
@@ -3269,7 +3270,6 @@ static int hif_log_soc_wakeup_timeout(struct hif_pci_softc *sc)
 	pld_is_pci_link_down(sc->dev);
 	return -EACCES;
 }
-#endif
 
 /*
  * For now, we use simple on-demand sleep/wake.
@@ -3310,7 +3310,6 @@ static int hif_log_soc_wakeup_timeout(struct hif_pci_softc *sc)
 int hif_pci_target_sleep_state_adjust(struct hif_softc *scn,
 			      bool sleep_ok, bool wait_for_it)
 {
-#ifndef QCA_WIFI_NAPIER_EMULATION
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 	A_target_id_t pci_addr = scn->mem;
 	static int max_delay;
@@ -3416,7 +3415,6 @@ int hif_pci_target_sleep_state_adjust(struct hif_softc *scn,
 				CE_WRAPPER_INTERRUPT_SUMMARY_ADDRESS));
 	}
 
-#endif
 	return 0;
 }
 

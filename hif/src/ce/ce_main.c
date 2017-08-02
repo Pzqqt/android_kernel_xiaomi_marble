@@ -2454,6 +2454,13 @@ static inline void hif_post_static_buf_to_target(struct hif_softc *scn)
 }
 #endif
 
+static int hif_srng_sleep_state_adjust(struct hif_softc *scn, bool sleep_ok,
+				bool wait_for_it)
+{
+	/* todo */
+	return 0;
+}
+
 /**
  * hif_config_ce() - configure copy engines
  * @scn: hif context
@@ -2484,6 +2491,10 @@ int hif_config_ce(struct hif_softc *scn)
 	hif_state->fw_indicator_address = FW_INDICATOR_ADDRESS;
 
 	hif_config_rri_on_ddr(scn);
+
+	if (ce_srng_based(scn))
+		scn->bus_ops.hif_target_sleep_state_adjust =
+			&hif_srng_sleep_state_adjust;
 
 	for (pipe_num = 0; pipe_num < scn->ce_count; pipe_num++) {
 		struct CE_attr *attr;
