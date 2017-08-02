@@ -421,6 +421,7 @@ struct wlan_lmac_if_reg_tx_ops {
 	QDF_STATUS (*set_user_country_code)(struct wlan_objmgr_psoc *psoc,
 					    uint8_t pdev_id,
 					    struct cc_regdmn_s *rd);
+	QDF_STATUS (*set_country_failed)(struct wlan_objmgr_pdev *pdev);
 };
 
 /**

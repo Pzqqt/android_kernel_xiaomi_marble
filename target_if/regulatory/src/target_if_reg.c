@@ -320,6 +320,8 @@ QDF_STATUS target_if_register_regulatory_tx_ops(struct wlan_lmac_if_tx_ops
 
 	reg_ops->fill_umac_legacy_chanlist = NULL;
 
+	reg_ops->set_country_failed = NULL;
+
 	reg_ops->register_11d_new_cc_handler =
 		tgt_if_regulatory_register_11d_new_cc_handler;
 

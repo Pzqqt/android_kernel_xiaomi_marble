@@ -2431,6 +2431,7 @@ QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info
 	enum direction dir;
 	uint8_t phy_id;
 	struct wlan_objmgr_pdev *pdev;
+	struct wlan_lmac_if_reg_tx_ops *tx_ops;
 
 	reg_debug("process reg master chan list");
 
@@ -2443,6 +2444,33 @@ QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info
 	}
 
 	phy_id = regulat_info->phy_id;
+
+	if (soc_reg->offload_enabled) {
+		dbg_id = WLAN_REGULATORY_NB_ID;
+		dir = NORTHBOUND;
+	} else {
+		dbg_id = WLAN_REGULATORY_SB_ID;
+		dir = SOUTHBOUND;
+	}
+
+	if (regulat_info->status_code != REG_SET_CC_STATUS_PASS) {
+		reg_err("Setting country code failed, status code is %d",
+				regulat_info->status_code);
+
+		pdev = wlan_objmgr_get_pdev_by_id(psoc, phy_id, dbg_id);
+		if (!pdev) {
+			reg_err("pdev is NULL");
+			return QDF_STATUS_E_FAILURE;
+		}
+		wlan_objmgr_pdev_release_ref(pdev, dbg_id);
+
+		tx_ops = reg_get_psoc_tx_ops(psoc);
+		if (tx_ops->set_country_failed)
+			tx_ops->set_country_failed(pdev);
+
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	mas_chan_list = soc_reg->mas_chan_params[phy_id].mas_chan_list;
 
 	reg_init_channel_map(regulat_info->dfs_region);
@@ -2522,14 +2550,6 @@ QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info
 		qdf_mem_copy(soc_reg->def_country,
 			     regulat_info->alpha2,
 			     REG_ALPHA2_LEN + 1);
-	}
-
-	if (soc_reg->offload_enabled) {
-		dbg_id = WLAN_REGULATORY_NB_ID;
-		dir = NORTHBOUND;
-	} else {
-		dbg_id = WLAN_REGULATORY_SB_ID;
-		dir = SOUTHBOUND;
 	}
 
 	pdev = wlan_objmgr_get_pdev_by_id(psoc, phy_id, dbg_id);
