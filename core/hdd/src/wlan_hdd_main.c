@@ -2767,6 +2767,10 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 	if (0 != status)
 		goto out;
 
+	status = hdd_validate_adapter(adapter);
+	if (status)
+		goto out;
+
 	mc_list_request = qdf_mem_malloc(sizeof(*mc_list_request));
 	if (!mc_list_request) {
 		hdd_err("Cannot allocate mc_list_request");
