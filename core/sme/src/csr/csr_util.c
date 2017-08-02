@@ -3935,6 +3935,7 @@ static bool csr_get_wpa_cyphers(tpAniSirGlobal mac_ctx, tCsrAuthList *auth_type,
 	uint8_t authentication[CSR_WPA_OUI_SIZE];
 	uint8_t mccipher_arr[1][CSR_WPA_OUI_SIZE];
 	uint8_t i;
+	uint8_t index;
 	eCsrAuthType neg_authtype = eCSR_AUTH_TYPE_UNKNOWN;
 
 	if (!wpa_ie->present)
@@ -3944,20 +3945,38 @@ static bool csr_get_wpa_cyphers(tpAniSirGlobal mac_ctx, tCsrAuthList *auth_type,
 	c_ucast_cipher = (uint8_t) (wpa_ie->unicast_cipher_count);
 	c_auth_suites = (uint8_t) (wpa_ie->auth_suite_count);
 
+	/*
+	 * csr_match_wpaoui_index will provide the index of the
+	 * array csr_wpa_oui to be read and determine if it is
+	 * accepatable cipher or not. Below check ensures that
+	 * the index will not be out of range of the array size.
+	 */
+	index = csr_get_oui_index_from_cipher(encr_type);
+	if (!(index < (sizeof(csr_wpa_oui)/CSR_WPA_OUI_SIZE))) {
+		sme_debug("Unacceptable index: %d", index);
+		goto end;
+	}
+
+	sme_debug("kw_dbg: index: %d", index);
 	/* Check - Is requested unicast Cipher supported by the BSS. */
 	acceptable_cipher = csr_match_wpaoui_index(mac_ctx,
 				wpa_ie->unicast_ciphers, c_ucast_cipher,
-				csr_get_oui_index_from_cipher(encr_type),
-				unicast);
+				index, unicast);
 	if (!acceptable_cipher)
 		goto end;
 	/* unicast is supported. Pick the first matching Group cipher, if any */
 	for (i = 0; i < mc_encryption->numEntries; i++) {
+		index = csr_get_oui_index_from_cipher(
+				mc_encryption->encryptionType[i]);
+		sme_debug("kw_dbg: index: %d", index);
+		if (!(index < (sizeof(csr_wpa_oui)/CSR_WPA_OUI_SIZE))) {
+			sme_debug("Unacceptable MC index: %d", index);
+			acceptable_cipher = false;
+			continue;
+		}
 		acceptable_cipher = csr_match_wpaoui_index(mac_ctx,
 					mccipher_arr, c_mcast_cipher,
-					csr_get_oui_index_from_cipher(
-					    mc_encryption->encryptionType[i]),
-					multicast);
+					index, multicast);
 		if (acceptable_cipher)
 			break;
 	}
