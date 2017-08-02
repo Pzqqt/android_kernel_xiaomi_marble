@@ -9965,13 +9965,13 @@ enum dot11p_mode {
 
 /*
  * <ini>
- * ce_service_max_yield_time - Control to set ce service max yield time (in ms)
+ * ce_service_max_yield_time - Control to set ce service max yield time (in us)
  *
- * @Min: 1
- * @Max: 10
- * @Default: 10
+ * @Min: 500
+ * @Max: 10000
+ * @Default: 10000
  *
- * This ini is used to set ce service max yield time (in ms)
+ * This ini is used to set ce service max yield time (in us)
  *
  * Supported Feature: NAPI
  *
@@ -9980,9 +9980,9 @@ enum dot11p_mode {
  * </ini>
  */
 #define CFG_CE_SERVICE_MAX_YIELD_TIME_NAME     "ce_service_max_yield_time"
-#define CFG_CE_SERVICE_MAX_YIELD_TIME_MIN      (1)
-#define CFG_CE_SERVICE_MAX_YIELD_TIME_MAX      (10)
-#define CFG_CE_SERVICE_MAX_YIELD_TIME_DEFAULT  (10)
+#define CFG_CE_SERVICE_MAX_YIELD_TIME_MIN      (500)
+#define CFG_CE_SERVICE_MAX_YIELD_TIME_MAX      (10000)
+#define CFG_CE_SERVICE_MAX_YIELD_TIME_DEFAULT  (10000)
 
 /*
  * <ini>
@@ -14831,7 +14831,7 @@ struct hdd_config {
 #endif
 	uint8_t dot11p_mode;
 	uint8_t rx_mode;
-	uint8_t ce_service_max_yield_time;
+	uint32_t ce_service_max_yield_time;
 	uint8_t ce_service_max_rx_ind_flush;
 	uint8_t cpu_map_list[CFG_RPS_RX_QUEUE_CPU_MAP_LIST_LEN];
 #ifdef FEATURE_WLAN_EXTSCAN
