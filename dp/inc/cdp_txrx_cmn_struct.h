@@ -215,6 +215,16 @@ enum ol_txrx_peer_state {
 	OL_TXRX_PEER_STATE_AUTH,    /* authentication successful */
 };
 
+/**
+ * struct ol_txrx_ast_type - AST entry type information
+ */
+enum cdp_txrx_ast_entry_type {
+	CDP_TXRX_AST_TYPE_NONE,	/* static ast entry for connected peer */
+	CDP_TXRX_AST_TYPE_STATIC,/* static ast entry for connected peer */
+	CDP_TXRX_AST_TYPE_WDS,	/* WDS peer ast entry type*/
+	CDP_TXRX_AST_TYPE_MEC,	/* Multicast echo ast entry type */
+	CDP_TXRX_AST_TYPE_MAX
+};
 
 /**
  * struct cdp_sec_type - security type information

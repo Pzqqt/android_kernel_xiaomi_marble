@@ -354,15 +354,10 @@ static inline void dp_peer_map_ast(struct dp_soc *soc,
 	uint8_t vdev_id)
 {
 	struct dp_ast_entry *ast_entry;
+	enum cdp_txrx_ast_entry_type peer_type = CDP_TXRX_AST_TYPE_NONE;
 
 	if (!peer) {
 		return;
-	}
-
-	if (soc->cdp_soc.ol_ops->peer_map_event) {
-		soc->cdp_soc.ol_ops->peer_map_event(soc->osif_soc,
-				peer->peer_ids[0], hw_peer_id, vdev_id,
-				mac_addr);
 	}
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
@@ -378,7 +373,14 @@ static inline void dp_peer_map_ast(struct dp_soc *soc,
 			ast_entry->ast_idx = hw_peer_id;
 			soc->ast_table[hw_peer_id] = ast_entry;
 			ast_entry->is_active = TRUE;
+			peer_type = ast_entry->type;
 			qdf_spin_unlock_bh(&soc->ast_lock);
+			if (soc->cdp_soc.ol_ops->peer_map_event) {
+				soc->cdp_soc.ol_ops->peer_map_event(
+				soc->osif_soc, peer->peer_ids[0],
+				hw_peer_id, vdev_id,
+				mac_addr, peer_type);
+			}
 			return;
 		}
 	}
@@ -417,7 +419,7 @@ int dp_peer_add_ast(struct dp_soc *soc, struct dp_peer *peer,
 	/* If AST entry already exists , just return from here */
 	ast_entry = dp_peer_ast_hash_find(soc, mac_addr, 0);
 	if (ast_entry) {
-		if (ast_entry->is_mec)
+		if (ast_entry->type == CDP_TXRX_AST_TYPE_MEC)
 			ast_entry->is_active = TRUE;
 
 		qdf_spin_unlock_bh(&soc->ast_lock);
@@ -441,16 +443,15 @@ int dp_peer_add_ast(struct dp_soc *soc, struct dp_peer *peer,
 	switch (is_self) {
 	case 1:
 		peer->self_ast_entry = ast_entry;
-		ast_entry->is_static = TRUE;
+		ast_entry->type = CDP_TXRX_AST_TYPE_STATIC;
 		break;
 	case 0:
 		ast_entry->next_hop = 1;
-		ast_entry->is_static = FALSE;
+		ast_entry->type = CDP_TXRX_AST_TYPE_WDS;
 		break;
 	case 2:
-		ast_entry->is_mec = 1;
 		ast_entry->next_hop = 1;
-		ast_entry->is_static = FALSE;
+		ast_entry->type = CDP_TXRX_AST_TYPE_MEC;
 		break;
 	default:
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,

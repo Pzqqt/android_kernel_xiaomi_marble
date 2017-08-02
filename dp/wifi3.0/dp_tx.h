@@ -149,6 +149,11 @@ uint32_t dp_tx_comp_handler(struct dp_soc *soc, uint32_t ring_id,
 int32_t
 dp_tx_prepare_send_me(struct dp_vdev *vdev, qdf_nbuf_t nbuf);
 
+
+#ifdef FEATURE_WDS
+void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status);
+#endif
+
 /* TODO TX_FEATURE_NOT_YET */
 static inline void dp_tx_comp_process_exception(struct dp_tx_desc_s *tx_desc)
 {

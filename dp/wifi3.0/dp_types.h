@@ -515,8 +515,9 @@ union dp_align_mac_addr {
  * @next_hop: Set to 1 if this is for a WDS node
  * @is_active: flag to indicate active data traffic on this node
  *             (used for aging out/expiry)
- * @is_static: flag to indicate static entry (should not be expired)
  * @ase_list_elem: node in peer AST list
+ * @is_bss: flag to indicate if entry corresponds to bss peer
+ * @type: flag to indicate type of the entry(static/WDS/MEC)
  * @hash_list_elem: node in soc AST hash list (mac address used as hash)
  */
 struct dp_ast_entry {
@@ -526,9 +527,8 @@ struct dp_ast_entry {
 	struct dp_peer *peer;
 	bool next_hop;
 	bool is_active;
-	bool is_static;
-	bool is_mec;
 	bool is_bss;
+	enum cdp_txrx_ast_entry_type type;
 	TAILQ_ENTRY(dp_ast_entry) ase_list_elem;
 	TAILQ_ENTRY(dp_ast_entry) hash_list_elem;
 };

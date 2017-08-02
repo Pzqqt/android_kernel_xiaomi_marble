@@ -372,7 +372,8 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 		ase = dp_peer_ast_hash_find(soc, &data[DP_MAC_ADDR_LEN], 0);
 
 	if (ase) {
-		if (ase->is_mec || (ase->peer != peer)) {
+		if ((ase->type == CDP_TXRX_AST_TYPE_MEC) ||
+				(ase->peer != peer)) {
 			qdf_spin_unlock_bh(&soc->ast_lock);
 			QDF_TRACE(QDF_MODULE_ID_DP,
 				QDF_TRACE_LEVEL_INFO,

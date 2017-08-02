@@ -1684,7 +1684,7 @@ static inline void dp_tx_comp_free_buf(struct dp_soc *soc,
  * Return: none
  */
 #ifdef FEATURE_WDS
-static void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status)
+void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status)
 {
 
 	struct dp_soc *soc;
