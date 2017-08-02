@@ -1647,10 +1647,18 @@ ol_rx_offload_paddr_deliver_ind_handler(htt_pdev_handle htt_pdev,
 	int msdu_iter = 0;
 
 	while (msdu_count) {
-		htt_rx_offload_paddr_msdu_pop_ll(htt_pdev, msg_word, msdu_iter,
+		if (htt_rx_offload_paddr_msdu_pop_ll(
+						htt_pdev, msg_word, msdu_iter,
 						 &vdev_id, &peer_id, &tid,
 						 &fw_desc, &head_buf,
-						 &tail_buf);
+						 &tail_buf)) {
+			msdu_iter++;
+			msdu_count--;
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+				  "skip msg_word %p, msdu #%d, continue next",
+				  msg_word, msdu_iter);
+			continue;
+		}
 
 		peer = ol_txrx_peer_find_by_id(htt_pdev->txrx_pdev, peer_id);
 		if (peer) {

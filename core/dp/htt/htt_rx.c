@@ -1501,6 +1501,12 @@ htt_rx_offload_msdu_pop_ll(htt_pdev_handle pdev,
 	uint32_t *msdu_hdr, msdu_len;
 
 	*head_buf = *tail_buf = buf = htt_rx_netbuf_pop(pdev);
+
+	if (qdf_unlikely(NULL == buf)) {
+		qdf_print("%s: netbuf pop failed!\n", __func__);
+		return 1;
+	}
+
 	/* Fake read mpdu_desc to keep desc ptr in sync */
 	htt_rx_mpdu_desc_list_next(pdev, NULL);
 	qdf_nbuf_set_pktlen(buf, HTT_RX_BUF_SIZE);
@@ -1548,7 +1554,7 @@ htt_rx_offload_paddr_msdu_pop_ll(htt_pdev_handle pdev,
 
 	if (qdf_unlikely(NULL == buf)) {
 		qdf_print("%s: netbuf pop failed!\n", __func__);
-		return 0;
+		return 1;
 	}
 	qdf_nbuf_set_pktlen(buf, HTT_RX_BUF_SIZE);
 #ifdef DEBUG_DMA_DONE
