@@ -608,6 +608,7 @@ populate_dot11f_ht_caps(tpAniSirGlobal pMac,
 	uint8_t nCfgValue8;
 	tSirRetStatus nSirStatus;
 	tSirMacHTParametersInfo *pHTParametersInfo;
+	uint8_t disable_high_ht_mcs_2x2 = 0;
 	union {
 		uint16_t nCfgValue16;
 		tSirMacHTCapabilityInfo htCapInfo;
@@ -676,6 +677,11 @@ populate_dot11f_ht_caps(tpAniSirGlobal pMac,
 		    SIZE_OF_SUPPORTED_MCS_SET);
 
 	if (psessionEntry) {
+		disable_high_ht_mcs_2x2 =
+				pMac->roam.configParam.disable_high_ht_mcs_2x2;
+		pe_debug("disable HT high MCS INI param[%d]",
+			 disable_high_ht_mcs_2x2);
+
 		if (pMac->lteCoexAntShare
 		    && (IS_24G_CH(psessionEntry->currentOperChannel))) {
 			if (!(IS_2X2_CHAIN(psessionEntry->chainMask))) {
@@ -686,8 +692,17 @@ populate_dot11f_ht_caps(tpAniSirGlobal pMac,
 				}
 			}
 		}
-		if (psessionEntry->nss == NSS_1x1_MODE)
+		if (psessionEntry->nss == NSS_1x1_MODE) {
 			pDot11f->supportedMCSSet[1] = 0;
+		} else if (IS_24G_CH(psessionEntry->currentOperChannel) &&
+			   disable_high_ht_mcs_2x2 &&
+			   (psessionEntry->pePersona == QDF_STA_MODE)) {
+				pe_debug("Disabling high HT MCS [%d]",
+					 disable_high_ht_mcs_2x2);
+				pDot11f->supportedMCSSet[1] =
+					(pDot11f->supportedMCSSet[1] >>
+						disable_high_ht_mcs_2x2);
+		}
 	}
 
 	/* If STA mode, session supported NSS > 1 and
