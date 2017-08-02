@@ -4477,6 +4477,14 @@ typedef enum {
      *   0- Disable DTIM Synth
      */
     WMI_PDEV_PARAM_DTIM_SYNTH,
+    /** Configure auto detect power failure feature.
+     *   0 - FW will trigger crash if power failure happens.
+     *   1 - FW will send a failure notification to host, and the host
+     *       framework determines how to respond to the power failure
+     *   2 - Silently rejuvenate if power failure occurs.
+     *   3 - Feature disabled.
+    */
+    WMI_PDEV_AUTO_DETECT_POWER_FAILURE,
 } WMI_PDEV_PARAM;
 
 typedef struct {
