@@ -2489,7 +2489,9 @@ void hdd_perform_roam_set_key_complete(struct hdd_adapter *adapter)
 	sta_ctx->roam_info.deferKeyComplete = false;
 }
 
-#if defined(WLAN_FEATURE_FILS_SK) && defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT)
+#if defined(WLAN_FEATURE_FILS_SK) && \
+	(defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT) || \
+		 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)))
 void hdd_clear_fils_connection_info(struct hdd_adapter *adapter)
 {
 	struct hdd_wext_state *wext_state;

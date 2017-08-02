@@ -4706,9 +4706,10 @@ struct cfg80211_bss *hdd_cfg80211_get_bss(struct wiphy *wiphy,
 }
 #endif
 
-#if defined CFG80211_CONNECT_BSS
+#if defined CFG80211_CONNECT_BSS || \
+	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 7, 0))
 #if defined CFG80211_CONNECT_TIMEOUT_REASON_CODE || \
-	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0))
+	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0))
 /**
  * hdd_convert_timeout_reason() - Convert to kernel specific enum
  * @timeout_reason: reason for connect timeout
@@ -4784,7 +4785,8 @@ static void __hdd_connect_bss(struct net_device *dev, const u8 *bssid,
 			     nl_timeout_reason);
 }
 #else
-#if defined CFG80211_CONNECT_TIMEOUT
+#if defined CFG80211_CONNECT_TIMEOUT || \
+	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 8, 0))
 static void hdd_cfg80211_connect_timeout(struct net_device *dev,
 					 const u8 *bssid,
 					 tSirResultCodes timeout_reason)
@@ -4821,7 +4823,8 @@ static void __hdd_connect_bss(struct net_device *dev, const u8 *bssid,
  *
  * Return: Void
  */
-#if defined CFG80211_CONNECT_TIMEOUT
+#if defined CFG80211_CONNECT_TIMEOUT || \
+	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 8, 0))
 static void hdd_connect_bss(struct net_device *dev, const u8 *bssid,
 			struct cfg80211_bss *bss, const u8 *req_ie,
 			size_t req_ie_len, const u8 *resp_ie,
@@ -4848,9 +4851,11 @@ static void hdd_connect_bss(struct net_device *dev, const u8 *bssid,
 }
 #endif
 
-#ifdef WLAN_FEATURE_FILS_SK
-#ifdef CFG80211_CONNECT_DONE
-#ifdef CFG80211_FILS_SK_OFFLOAD_SUPPORT
+#if defined(WLAN_FEATURE_FILS_SK)
+#if defined(CFG80211_CONNECT_DONE) || \
+	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0))
+#if defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT) || \
+		 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0))
 /**
  * hdd_populate_fils_params() - Populate FILS keys to connect response
  * @fils_params: connect response to supplicant
@@ -5035,7 +5040,9 @@ hdd_connect_done(struct net_device *dev, const u8 *bssid,
 #endif
 #endif
 
-#if defined(CFG80211_CONNECT_DONE) && defined(WLAN_FEATURE_FILS_SK)
+#if defined(WLAN_FEATURE_FILS_SK) && \
+	(defined(CFG80211_CONNECT_DONE) || \
+		(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 7, 0)))
 /**
  * hdd_fils_update_connect_results() - API to send fils connection status to
  * supplicant.
