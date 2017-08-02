@@ -290,6 +290,12 @@ dp_get_vdev_from_peer(struct dp_soc *soc,
 	}
 	return vdev;
 }
+/*
+ * In case of LFR, this is an empty inline function
+ */
+static inline void dp_rx_peer_validity_check(struct dp_peer *peer)
+{
+}
 #else
 static inline struct dp_vdev *
 dp_get_vdev_from_peer(struct dp_soc *soc,
@@ -306,6 +312,14 @@ dp_get_vdev_from_peer(struct dp_soc *soc,
 	} else {
 		return peer->vdev;
 	}
+}
+
+/*
+ * Assert if PEER is NULL
+ */
+static inline void dp_rx_peer_validity_check(struct dp_peer *peer)
+{
+	qdf_assert_always(peer);
 }
 #endif
 
@@ -846,7 +860,7 @@ dp_rx_process(struct dp_intr *int_ctx, void *hal_ring, uint32_t quota)
 	struct hal_rx_mpdu_desc_info mpdu_desc_info;
 	struct hal_rx_msdu_desc_info msdu_desc_info;
 	enum hal_reo_error_status error;
-	static uint32_t peer_mdata;
+	uint32_t peer_mdata;
 	uint8_t *rx_tlv_hdr;
 	uint32_t rx_bufs_reaped[MAX_PDEV_CNT] = { 0 };
 	uint32_t sgi, mcs, tid, nss, bw, reception_type, pkt_type;
@@ -932,6 +946,9 @@ dp_rx_process(struct dp_intr *int_ctx, void *hal_ring, uint32_t quota)
 		hal_rx_mpdu_desc_info_get(ring_desc, &mpdu_desc_info);
 		peer_id = DP_PEER_METADATA_PEER_ID_GET(
 				mpdu_desc_info.peer_meta_data);
+
+		hal_rx_mpdu_peer_meta_data_set(qdf_nbuf_data(rx_desc->nbuf),
+						mpdu_desc_info.peer_meta_data);
 
 		peer = dp_peer_find_by_id(soc, peer_id);
 
@@ -1089,33 +1106,19 @@ done:
 				}
 			}
 
-			if (qdf_nbuf_is_chfrag_start(nbuf)) {
-				peer_mdata = hal_rx_mpdu_peer_meta_data_get
-								(rx_tlv_hdr);
-			}
-
+			peer_mdata = hal_rx_mpdu_peer_meta_data_get(rx_tlv_hdr);
 			peer_id = DP_PEER_METADATA_PEER_ID_GET(peer_mdata);
 			peer = dp_peer_find_by_id(soc, peer_id);
 
-			/* TODO */
 			/*
-			 * In case of roaming peer object may not be
-			 * immediately available -- need to handle this
-			 * Cannot drop these packets right away.
+			 * This is a redundant sanity check, Ideally peer
+			 * should never be NULL here. if for any reason it
+			 * is NULL we will assert.
+			 * Do nothing for LFR case.
 			 */
-			/* Peer lookup failed */
-			if (!peer && !vdev) {
-				dp_rx_process_invalid_peer(soc, nbuf);
-				DP_STATS_INC_PKT(soc, rx.err.rx_invalid_peer, 1,
-						qdf_nbuf_len(nbuf));
-				/* Drop & free packet */
-				qdf_nbuf_free(nbuf);
+			dp_rx_peer_validity_check(peer);
 
-				/* Statistics */
-				continue;
-			}
-
-			if (peer && qdf_unlikely(peer->bss_peer)) {
+			if (qdf_unlikely(peer->bss_peer)) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					QDF_TRACE_LEVEL_INFO,
 					FL("received pkt with same src MAC"));

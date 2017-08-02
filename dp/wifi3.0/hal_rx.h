@@ -687,6 +687,31 @@ hal_rx_mpdu_peer_meta_data_get(uint8_t *buf)
 	return peer_meta_data;
 }
 
+#define HAL_RX_MPDU_PEER_META_DATA_SET(_rx_mpdu_info, peer_mdata)	\
+		((*(((uint32_t *)_rx_mpdu_info) +			\
+		(RX_MPDU_INFO_8_PEER_META_DATA_OFFSET >> 2))) =		\
+		(peer_mdata << RX_MPDU_INFO_8_PEER_META_DATA_LSB) &	\
+		RX_MPDU_INFO_8_PEER_META_DATA_MASK)
+
+/*
+ * @ hal_rx_mpdu_peer_meta_data_set: set peer meta data in RX mpdu start tlv
+ *
+ * @ buf: rx_tlv_hdr of the received packet
+ * @ peer_mdata: peer meta data to be set.
+ * @ Return: void
+ */
+static inline void
+hal_rx_mpdu_peer_meta_data_set(uint8_t *buf, uint32_t peer_mdata)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_mpdu_start *mpdu_start =
+				 &pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
+
+	struct rx_mpdu_info *mpdu_info = &mpdu_start->rx_mpdu_info_details;
+
+	HAL_RX_MPDU_PEER_META_DATA_SET(mpdu_info, peer_mdata);
+}
+
 #if defined(WCSS_VERSION) && \
 	((defined(CONFIG_WIN) && (WCSS_VERSION > 81)) || \
 	 (defined(CONFIG_MCL) && (WCSS_VERSION >= 72)))
@@ -1683,21 +1708,17 @@ static inline void hal_rx_msdu_list_get(void *msdu_link_desc,
 	struct rx_msdu_link *msdu_link = (struct rx_msdu_link *)msdu_link_desc;
 	int i;
 
-	if (*num_msdus > HAL_RX_NUM_MSDU_DESC)
-		*num_msdus = HAL_RX_NUM_MSDU_DESC;
-
 	msdu_details = HAL_RX_LINK_DESC_MSDU0_PTR(msdu_link);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 		"[%s][%d] msdu_link=%p msdu_details=%p\n",
 		__func__, __LINE__, msdu_link, msdu_details);
 
-	for (i = 0; i < *num_msdus; i++) {
+	for (i = 0; i < HAL_RX_NUM_MSDU_DESC; i++) {
 		/* num_msdus received in mpdu descriptor may be incorrect
 		 * sometimes due to HW issue. Check msdu buffer address also */
 		if (HAL_RX_BUFFER_ADDR_31_0_GET(
 			&msdu_details[i].buffer_addr_info_details) == 0) {
-			*num_msdus = i;
 			break;
 		}
 		msdu_desc_info = HAL_RX_MSDU_DESC_INFO_GET(&msdu_details[i]);
@@ -1713,6 +1734,7 @@ static inline void hal_rx_msdu_list_get(void *msdu_link_desc,
 			"[%s][%d] i=%d sw_cookie=%d\n",
 			__func__, __LINE__, i, msdu_list->sw_cookie[i]);
 	}
+	*num_msdus = i;
 }
 
 /**

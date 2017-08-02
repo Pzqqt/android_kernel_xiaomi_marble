@@ -557,9 +557,9 @@ qdf_nbuf_set_frag_is_wordstream(qdf_nbuf_t buf,
 }
 
 static inline void
-qdf_nbuf_set_vdev_ctx(qdf_nbuf_t buf, void *vdev_ctx)
+qdf_nbuf_set_vdev_ctx(qdf_nbuf_t buf, uint8_t vdev_id)
 {
-	__qdf_nbuf_set_vdev_ctx(buf, vdev_ctx);
+	__qdf_nbuf_set_vdev_ctx(buf, vdev_id);
 }
 
 static inline void
@@ -569,12 +569,18 @@ qdf_nbuf_set_ftype(qdf_nbuf_t buf, uint8_t type)
 }
 
 static inline void
+qdf_nbuf_set_ext_cb(qdf_nbuf_t buf, void *ref)
+{
+	__qdf_nbuf_set_ext_cb(buf, ref);
+}
+
+static inline void
 qdf_nbuf_set_fctx_type(qdf_nbuf_t buf, void *ctx, uint8_t type)
 {
 	__qdf_nbuf_set_fctx_type(buf, ctx, type);
 }
 
-static inline void *
+static inline uint8_t
 qdf_nbuf_get_vdev_ctx(qdf_nbuf_t buf)
 {
 	return  __qdf_nbuf_get_vdev_ctx(buf);
@@ -588,6 +594,12 @@ static inline void *qdf_nbuf_get_fctx(qdf_nbuf_t buf)
 static inline uint8_t qdf_nbuf_get_ftype(qdf_nbuf_t buf)
 {
 	return  __qdf_nbuf_get_ftype(buf);
+}
+
+static inline void *
+qdf_nbuf_get_ext_cb(qdf_nbuf_t buf)
+{
+	return  __qdf_nbuf_get_ext_cb(buf);
 }
 
 static inline qdf_dma_addr_t
@@ -2349,4 +2361,42 @@ qdf_nbuf_reg_free_cb(qdf_nbuf_free_t cb_func_ptr)
 	 __qdf_nbuf_reg_free_cb(cb_func_ptr);
 }
 
+/**
+ * qdf_nbuf_set_timestamp() - set the timestamp for frame
+ *
+ * @buf: sk buff
+ *
+ * Return: void
+ */
+static inline void
+qdf_nbuf_set_timestamp(struct sk_buff *skb)
+{
+	__qdf_nbuf_set_timestamp(skb);
+}
+
+/**
+ * qdf_nbuf_get_timedelta_ms() - get time difference in ms
+ *
+ * @buf: sk buff
+ *
+ * Return: time difference ms
+ */
+static inline uint64_t
+qdf_nbuf_get_timedelta_ms(struct sk_buff *skb)
+{
+	return __qdf_nbuf_get_timedelta_ms(skb);
+}
+
+/**
+ * qdf_nbuf_get_timedelta_us() - get time difference in micro seconds
+ *
+ * @buf: sk buff
+ *
+ * Return: time difference in micro seconds
+ */
+static inline uint64_t
+qdf_nbuf_get_timedelta_us(struct sk_buff *skb)
+{
+	return __qdf_nbuf_get_timedelta_us(skb);
+}
 #endif /* _QDF_NBUF_H */
