@@ -3828,7 +3828,7 @@ static bool csr_scan_filter_given_chnl_band(tpAniSirGlobal mac_ctx,
 	 * In case if no-concurrent IBSS session exist then scan
 	 * full band
 	 */
-	if ((dst_req->ChannelInfo.numOfChannels == 0)) {
+	if (dst_req->ChannelInfo.numOfChannels == 0) {
 		csr_get_cfg_valid_channels(mac_ctx, valid_chnl_list,
 				&valid_chnl_len);
 	} else {

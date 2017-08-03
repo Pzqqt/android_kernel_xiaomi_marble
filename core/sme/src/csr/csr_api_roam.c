@@ -20083,8 +20083,8 @@ static QDF_STATUS csr_process_roam_sync_callback(tpAniSirGlobal mac_ctx,
 	 *      with AP after this point and sends new keys to the driver.
 	 *      Driver starts wait_for_key timer for that purpose.
 	 */
-	if ((roam_synch_data->authStatus
-				== CSR_ROAM_AUTH_STATUS_AUTHENTICATED)) {
+	if (roam_synch_data->authStatus
+				== CSR_ROAM_AUTH_STATUS_AUTHENTICATED) {
 		QDF_TRACE(QDF_MODULE_ID_SME,
 				QDF_TRACE_LEVEL_DEBUG,
 				FL("LFR3:Don't start waitforkey timer"));

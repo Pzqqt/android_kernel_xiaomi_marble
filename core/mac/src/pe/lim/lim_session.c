@@ -532,17 +532,18 @@ tpPESession pe_find_session_by_bss_idx(tpAniSirGlobal pMac, uint8_t bssIdx)
 
    \sa
    --------------------------------------------------------------------------*/
-tpPESession pe_find_session_by_session_id(tpAniSirGlobal pMac, uint8_t sessionId)
+tpPESession pe_find_session_by_session_id(tpAniSirGlobal pMac,
+					  uint8_t sessionId)
 {
 	if (sessionId >= pMac->lim.maxBssId) {
 		pe_err("Invalid sessionId: %d", sessionId);
 		return NULL;
 	}
-	if ((pMac->lim.gpSession[sessionId].valid == true)) {
-		return &pMac->lim.gpSession[sessionId];
-	}
-	return NULL;
 
+	if (pMac->lim.gpSession[sessionId].valid)
+		return &pMac->lim.gpSession[sessionId];
+
+	return NULL;
 }
 
 /**

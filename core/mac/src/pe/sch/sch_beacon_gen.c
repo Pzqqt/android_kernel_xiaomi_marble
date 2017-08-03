@@ -437,7 +437,7 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 		}
 	}
 
-	if ((LIM_IS_AP_ROLE(session))) {
+	if (LIM_IS_AP_ROLE(session)) {
 		/*
 		 * Can be efficiently updated whenever new IE added  in Probe
 		 * response in future

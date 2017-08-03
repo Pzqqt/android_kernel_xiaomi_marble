@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2002-2014, 2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -458,7 +458,7 @@ dfs_bin_pri_check(struct ath_dfs *dfs, struct dfs_filter *rf,
 		}
 
 		if (primatch && (deltadur < durmargin)) {
-			if ((numpulses == 1)) {
+			if (numpulses == 1) {
 				numpulses++;
 			} else {
 				delta_time_stamps =

@@ -984,8 +984,7 @@ static void __lim_process_del_ts_req(tpAniSirGlobal mac_ctx,
 	tsinfo = delts.wmeTspecPresent ? &delts.tspec.tsinfo : &delts.tsinfo;
 
 	/* if no Admit Control, ignore the request */
-	if ((tsinfo->traffic.accessPolicy == SIR_MAC_ACCESSPOLICY_EDCA)) {
-
+	if (tsinfo->traffic.accessPolicy == SIR_MAC_ACCESSPOLICY_EDCA) {
 		if (upToAc(tsinfo->traffic.userPrio) >= MAX_NUM_AC) {
 			pe_warn("DelTs with UP: %d has no AC - ignoring req",
 				tsinfo->traffic.userPrio);

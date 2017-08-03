@@ -211,7 +211,7 @@ tSirRetStatus rrm_set_max_tx_power_rsp(tpAniSirGlobal pMac,
 
 	if (qdf_is_macaddr_broadcast(&pMaxTxParams->bssId)) {
 		for (i = 0; i < pMac->lim.maxBssId; i++) {
-			if ((pMac->lim.gpSession[i].valid == true)) {
+			if (pMac->lim.gpSession[i].valid == true) {
 				pSessionEntry = &pMac->lim.gpSession[i];
 				rrm_cache_mgmt_tx_power(pMac, pMaxTxParams->power,
 							pSessionEntry);
