@@ -1089,3 +1089,12 @@ QDF_STATUS csr_roam_set_bss_config_cfg(tpAniSirGlobal mac_ctx,
 		bool reset_country);
 void csr_prune_channel_list_for_mode(tpAniSirGlobal pMac,
 				     tCsrChannel *pChannelList);
+
+#ifdef WLAN_FEATURE_11W
+bool csr_is_mfpc_capable(struct sDot11fIERSN *rsn);
+#else
+static inline bool csr_is_mfpc_capable(struct sDot11fIERSN *rsn)
+{
+	return false;
+}
+#endif
