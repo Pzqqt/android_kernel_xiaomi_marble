@@ -182,6 +182,14 @@ int hdd_napi_destroy(int force)
 							i,
 							NAPI_PIPE2ID(i), force);
 				}
+	} else {
+		struct hif_opaque_softc *hif_ctx;
+		hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+
+		if (unlikely(NULL == hif_ctx))
+			QDF_ASSERT(NULL != hif_ctx);
+		else
+			rc = hif_napi_cpu_deinit(hif_ctx);
 	}
 
 	/* if all instances are removed, it is likely that hif_context has been
