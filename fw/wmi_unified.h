@@ -5124,6 +5124,24 @@ typedef struct {
 } wmi_debug_mesg_flush_fixed_param;
 
 typedef struct {
+    A_UINT32 tlv_header;        /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_debug_mesg_fw_data_stall_param */
+    A_UINT32 vdev_id_bitmap;    /** bitmap representation for vdev_id's where data stall happened */
+    A_UINT32 data_stall_type;   /** wlan_dbg_data_stall_type_e */
+    /** reason_code1:
+     * The information stored in reason_code1 varies based on the data stally
+     * type values:
+     * data_stall_type      | reason_code1
+     * -----------------------------------------------------
+     * HWSCHED_CMD_FLUSH    | flush req reason (0-40)
+     * RX_REFILL_FAILED     | ring_id (0-7)
+     * RX_FCS_LEN_ERROR     | exact error type
+     */
+    A_UINT32 reason_code1;
+    A_UINT32 reason_code2;      /** on which tid/hwq stall happened */
+    A_UINT32 recovery_type;     /** wlan_dbg_data_stall_recovery_type_e */
+} wmi_debug_mesg_fw_data_stall_param;
+
+typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_debug_mesg_flush_complete_fixed_param*/
     A_UINT32 reserved0; /** placeholder for future */
 } wmi_debug_mesg_flush_complete_fixed_param;
