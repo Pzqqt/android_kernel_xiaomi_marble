@@ -46,6 +46,8 @@
 
 #define DP_HTT_HTC_PKT_MISCLIST_SIZE          256
 
+#define HTT_T2H_EXT_STATS_TLV_START_OFFSET    3
+
 struct dp_htt_htc_pkt {
 	void *soc_ctxt;
 	qdf_dma_addr_t nbuf_paddr;
@@ -156,5 +158,17 @@ int htt_h2t_rx_ring_cfg(void *htt_soc, int pdev_id, void *hal_srng,
  * Return: void
  */
 void htt_t2h_stats_handler(void *context);
+
+/**
+ * struct htt_stats_context - htt stats information
+ * @soc: Size of each descriptor in the pool
+ * @msg: T2H Ext stats message queue
+ * @msg_len: T2H Ext stats message length
+ */
+struct htt_stats_context {
+	struct dp_soc *soc;
+	qdf_nbuf_queue_t msg;
+	uint32_t msg_len;
+};
 
 #endif /* _DP_HTT_H_ */

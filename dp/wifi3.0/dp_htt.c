@@ -1035,7 +1035,7 @@ fail0:
 
 /**
  * dp_process_htt_stat_msg(): Process the list of buffers of HTT EXT stats
- * @soc: DP SOC handle
+ * @htt_stats: htt stats info
  *
  * The FW sends the HTT EXT STATS as a stream of T2H messages. Each T2H message
  * contains sub messages which are identified by a TLV header.
@@ -1053,7 +1053,7 @@ fail0:
  *
  * return: void
  */
-static inline void dp_process_htt_stat_msg(struct dp_soc *soc)
+static inline void dp_process_htt_stat_msg(struct htt_stats_context *htt_stats)
 {
 	htt_tlv_tag_t tlv_type = 0xff;
 	qdf_nbuf_t htt_msg = NULL;
@@ -1065,12 +1065,13 @@ static inline void dp_process_htt_stat_msg(struct dp_soc *soc)
 	uint32_t *tlv_start;
 
 	/* Process node in the HTT message queue */
-	while ((htt_msg = qdf_nbuf_queue_remove(&soc->htt_stats_msg)) != NULL) {
+	while ((htt_msg = qdf_nbuf_queue_remove(&htt_stats->msg))
+		!= NULL) {
 		msg_word = (uint32_t *) qdf_nbuf_data(htt_msg);
 		/* read 5th word */
 		msg_word = msg_word + 4;
-		msg_remain_len = qdf_min(soc->htt_msg_len,
-				(uint32_t)DP_EXT_MSG_LENGTH);
+		msg_remain_len = qdf_min(htt_stats->msg_len,
+				(uint32_t) DP_EXT_MSG_LENGTH);
 
 		/* Keep processing the node till node length is 0 */
 		while (msg_remain_len) {
@@ -1151,19 +1152,17 @@ static inline void dp_process_htt_stat_msg(struct dp_soc *soc)
 			}
 		}
 
-		if (soc->htt_msg_len >= DP_EXT_MSG_LENGTH) {
-			soc->htt_msg_len -= DP_EXT_MSG_LENGTH;
+		if (htt_stats->msg_len >= DP_EXT_MSG_LENGTH) {
+			htt_stats->msg_len -= DP_EXT_MSG_LENGTH;
 		}
 
 		qdf_nbuf_free(htt_msg);
 	}
-	soc->htt_msg_len = 0;
 	return;
 
 error:
 	qdf_nbuf_free(htt_msg);
-	soc->htt_msg_len = 0;
-	while ((htt_msg = qdf_nbuf_queue_remove(&soc->htt_stats_msg))
+	while ((htt_msg = qdf_nbuf_queue_remove(&htt_stats->msg))
 			!= NULL)
 		qdf_nbuf_free(htt_msg);
 }
@@ -1171,10 +1170,58 @@ error:
 void htt_t2h_stats_handler(void *context)
 {
 	struct dp_soc *soc = (struct dp_soc *)context;
+	struct htt_stats_context htt_stats;
+	uint32_t length;
+	uint32_t *msg_word;
+	qdf_nbuf_t htt_msg = NULL;
+	uint8_t done;
+	uint8_t rem_stats;
 
-	if (soc && qdf_atomic_read(&soc->cmn_init_done))
-		dp_process_htt_stat_msg(soc);
+	if (!soc || !qdf_atomic_read(&soc->cmn_init_done)) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"soc: 0x%p, init_done: %d", soc,
+			qdf_atomic_read(&soc->cmn_init_done));
+		return;
+	}
 
+	qdf_mem_zero(&htt_stats, sizeof(htt_stats));
+	qdf_nbuf_queue_init(&htt_stats.msg);
+
+	/* pull one completed stats from soc->htt_stats_msg and process */
+	qdf_spin_lock_bh(&soc->htt_stats.lock);
+	if (!soc->htt_stats.num_stats) {
+		qdf_spin_unlock_bh(&soc->htt_stats.lock);
+		return;
+	}
+	while ((htt_msg = qdf_nbuf_queue_remove(&soc->htt_stats.msg)) != NULL) {
+		msg_word = (uint32_t *) qdf_nbuf_data(htt_msg);
+		msg_word = msg_word + HTT_T2H_EXT_STATS_TLV_START_OFFSET;
+		length = HTT_T2H_EXT_STATS_CONF_TLV_LENGTH_GET(*msg_word);
+		done = HTT_T2H_EXT_STATS_CONF_TLV_DONE_GET(*msg_word);
+		qdf_nbuf_queue_add(&htt_stats.msg, htt_msg);
+		/*
+		 * HTT EXT stats response comes as stream of TLVs which span over
+		 * multiple T2H messages.
+		 * The first message will carry length of the response.
+		 * For rest of the messages length will be zero.
+		 */
+		if (length)
+			htt_stats.msg_len = length;
+		/*
+		 * Done bit signifies that this is the last T2H buffer in the
+		 * stream of HTT EXT STATS message
+		 */
+		if (done)
+			break;
+	}
+	rem_stats = --soc->htt_stats.num_stats;
+	qdf_spin_unlock_bh(&soc->htt_stats.lock);
+
+	dp_process_htt_stat_msg(&htt_stats);
+
+	/* If there are more stats to process, schedule stats work again */
+	if (rem_stats)
+		qdf_sched_work(0, &soc->htt_stats.work);
 }
 
 /**
@@ -1187,15 +1234,12 @@ void htt_t2h_stats_handler(void *context)
 static inline void dp_txrx_fw_stats_handler(struct dp_soc *soc,
 		qdf_nbuf_t htt_t2h_msg)
 {
-	uint32_t length;
 	uint8_t done;
 	qdf_nbuf_t msg_copy;
 	uint32_t *msg_word;
 
 	msg_word = (uint32_t *) qdf_nbuf_data(htt_t2h_msg);
 	msg_word = msg_word + 3;
-	done = 0;
-	length = HTT_T2H_EXT_STATS_CONF_TLV_LENGTH_GET(*msg_word);
 	done = HTT_T2H_EXT_STATS_CONF_TLV_DONE_GET(*msg_word);
 
 	/*
@@ -1203,14 +1247,7 @@ static inline void dp_txrx_fw_stats_handler(struct dp_soc *soc,
 	 * multiple T2H messages.
 	 * The first message will carry length of the response.
 	 * For rest of the messages length will be zero.
-	 */
-	if (soc->htt_msg_len && length)
-		goto error;
-
-	if (length)
-		soc->htt_msg_len = length;
-
-	/*
+	 *
 	 * Clone the T2H message buffer and store it in a list to process
 	 * it later.
 	 *
@@ -1222,26 +1259,31 @@ static inline void dp_txrx_fw_stats_handler(struct dp_soc *soc,
 	if (!msg_copy) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
 				"T2H messge clone failed for HTT EXT STATS");
-		soc->htt_msg_len = 0;
 		goto error;
 	}
 
-	qdf_nbuf_queue_add(&soc->htt_stats_msg, msg_copy);
-
+	qdf_spin_lock_bh(&soc->htt_stats.lock);
+	qdf_nbuf_queue_add(&soc->htt_stats.msg, msg_copy);
 	/*
 	 * Done bit signifies that this is the last T2H buffer in the stream of
 	 * HTT EXT STATS message
 	 */
-	if (done)
-		qdf_sched_work(0, &soc->htt_stats_work);
+	if (done) {
+		soc->htt_stats.num_stats++;
+		qdf_sched_work(0, &soc->htt_stats.work);
+	}
+	qdf_spin_unlock_bh(&soc->htt_stats.lock);
 
 	return;
 
 error:
-	while ((msg_copy = qdf_nbuf_queue_remove(&soc->htt_stats_msg))
+	qdf_spin_lock_bh(&soc->htt_stats.lock);
+	while ((msg_copy = qdf_nbuf_queue_remove(&soc->htt_stats.msg))
 			!= NULL) {
 		qdf_nbuf_free(msg_copy);
 	}
+	soc->htt_stats.num_stats = 0;
+	qdf_spin_unlock_bh(&soc->htt_stats.lock);
 	return;
 
 }
