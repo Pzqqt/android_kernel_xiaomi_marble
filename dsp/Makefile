@@ -5,6 +5,6 @@ obj-$(CONFIG_MSM_ADSP_LOADER) += adsp-loader.o
 obj-$(CONFIG_MSM_QDSP6_SSR) += audio_ssr.o
 obj-$(CONFIG_MSM_QDSP6_PDR) += audio_pdr.o
 obj-$(CONFIG_MSM_QDSP6_NOTIFIER) += audio_notifier.o
-obj-$(CONFIG_MSM_CDSP_LOADER) += cdsp-loader.o
 obj-$(CONFIG_MSM_ULTRASOUND) += usf.o usfcdev.o q6usm.o
+obj-$(CONFIG_MSM_AVTIMER) += avtimer.o
 obj-$(CONFIG_MSM_QDSP6V2_CODECS)  += codecs/
