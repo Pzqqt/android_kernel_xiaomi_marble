@@ -728,6 +728,79 @@ static bool policy_mgr_valid_sta_channel_check(struct wlan_objmgr_psoc *psoc,
 		return true;
 }
 
+QDF_STATUS policy_mgr_valid_sap_conc_channel_check(
+	struct wlan_objmgr_psoc *psoc, uint8_t *con_ch, uint8_t sap_ch)
+{
+	uint8_t channel = *con_ch;
+	uint8_t temp_channel = 0;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid context");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/*
+	 * if force SCC is set, Check if conc channel is DFS
+	 * or passive or part of LTE avoided channel list.
+	 * In that case move SAP to other band if DBS is supported,
+	 * return otherwise
+	 */
+	if (!policy_mgr_is_force_scc(psoc))
+		return QDF_STATUS_SUCCESS;
+
+	/*
+	 * if interference is 0, check if it is DBS case. If DBS case
+	 * return from here. If SCC, check further if SAP can move to
+	 * STA's channel.
+	 */
+	if (!channel &&
+		(sap_ch != policy_mgr_mode_specific_get_channel(
+			psoc, PM_STA_MODE)))
+		return QDF_STATUS_SUCCESS;
+	else if (!channel)
+		channel = sap_ch;
+
+	if (policy_mgr_valid_sta_channel_check(psoc, channel)) {
+		if (wlan_reg_is_dfs_ch(pm_ctx->pdev, channel) ||
+			wlan_reg_is_passive_or_disable_ch(
+				pm_ctx->pdev, channel) ||
+			!policy_mgr_is_safe_channel(psoc, channel)) {
+			if (policy_mgr_is_hw_dbs_capable(psoc)) {
+				temp_channel =
+				policy_mgr_get_alternate_channel_for_sap(psoc);
+				policy_mgr_debug("temp_channel is %d",
+					temp_channel);
+				if (temp_channel) {
+					channel = temp_channel;
+				} else {
+					if (WLAN_REG_IS_5GHZ_CH(channel))
+						channel = PM_24_GHZ_CHANNEL_6;
+					else
+						channel = PM_5_GHZ_CHANNEL_36;
+				}
+				if (!policy_mgr_is_safe_channel(
+					psoc, channel)) {
+					policy_mgr_warn(
+						"Can't have concurrency on %d as it is not safe",
+						channel);
+					return QDF_STATUS_E_FAILURE;
+				}
+			} else {
+				policy_mgr_warn("Can't have concurrency on %d",
+					channel);
+				return QDF_STATUS_E_FAILURE;
+			}
+		}
+	}
+
+	if (channel != sap_ch)
+		*con_ch = channel;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * policy_mgr_check_concurrent_intf_and_restart_sap() - Check
  * concurrent change intf

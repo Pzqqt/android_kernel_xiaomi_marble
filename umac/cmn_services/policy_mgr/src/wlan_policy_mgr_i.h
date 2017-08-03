@@ -43,6 +43,9 @@
 #define CONNECTION_UPDATE_TIMEOUT 1000
 #endif
 
+#define PM_24_GHZ_CHANNEL_6   (6)
+#define PM_5_GHZ_CHANNEL_36   (36)
+
 /**
  * Policy Mgr hardware mode list bit-mask definitions.
  * Bits 4:0, 31:29 are unused.
@@ -426,4 +429,17 @@ void policy_mgr_reg_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 		struct regulatory_channel *chan_list,
 		struct avoid_freq_ind_data *avoid_freq_ind,
 		void *arg);
+
+/**
+ * policy_mgr_mode_specific_get_channel() - Get channel for a
+ * connection type
+ * @psoc: PSOC object information
+ * @chan_list: Connection type
+ *
+ * Get channel for a connection type
+ *
+ * Return: channel number
+ */
+uint8_t policy_mgr_mode_specific_get_channel(
+	struct wlan_objmgr_psoc *psoc, enum policy_mgr_con_mode mode);
 #endif

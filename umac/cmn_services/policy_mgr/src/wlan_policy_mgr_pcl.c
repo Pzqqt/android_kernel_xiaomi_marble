@@ -41,7 +41,6 @@
 #include "qdf_trace.h"
 #include "wlan_objmgr_global_obj.h"
 
-#define PM_24_GHZ_CHANNEL_6   (6)
 /**
  * first_connection_pcl_table - table which provides PCL for the
  * very first connection in the system
@@ -1653,8 +1652,9 @@ QDF_STATUS policy_mgr_get_valid_chan_weights(struct wlan_objmgr_psoc *psoc,
 		 */
 		for (i = 0; i < weight->saved_num_chan; i++) {
 			if (policy_mgr_allow_concurrency(psoc, PM_STA_MODE,
-						  weight->saved_chan_list[i],
-						  HW_MODE_20_MHZ)) {
+					weight->saved_chan_list[i],
+					HW_MODE_20_MHZ) &&
+					!policy_mgr_is_force_scc(psoc)) {
 				weight->weighed_valid_list[i] =
 					WEIGHT_OF_NON_PCL_CHANNELS;
 			}
@@ -1676,4 +1676,48 @@ QDF_STATUS policy_mgr_get_valid_chan_weights(struct wlan_objmgr_psoc *psoc,
 	}
 
 	return QDF_STATUS_SUCCESS;
+}
+
+uint8_t policy_mgr_mode_specific_get_channel(
+	struct wlan_objmgr_psoc *psoc, enum policy_mgr_con_mode mode)
+{
+	uint32_t conn_index;
+	uint8_t channel = 0;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return channel;
+	}
+	/* provides the channel for the first matching mode type */
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	for (conn_index = 0; conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
+		conn_index++) {
+		if ((pm_conc_connection_list[conn_index].mode == mode) &&
+			pm_conc_connection_list[conn_index].in_use) {
+			channel = pm_conc_connection_list[conn_index].chan;
+			break;
+		}
+	}
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+
+	return channel;
+}
+
+uint8_t policy_mgr_get_alternate_channel_for_sap(
+	struct wlan_objmgr_psoc *psoc)
+{
+	uint8_t pcl_channels[QDF_MAX_NUM_CHAN];
+	uint8_t pcl_weight[QDF_MAX_NUM_CHAN];
+	uint8_t channel = 0;
+	uint32_t pcl_len;
+
+	if (QDF_STATUS_SUCCESS == policy_mgr_get_pcl(psoc, PM_SAP_MODE,
+		&pcl_channels[0], &pcl_len,
+		pcl_weight, QDF_ARRAY_SIZE(pcl_weight))) {
+		channel = pcl_channels[0];
+	}
+
+	return channel;
 }
