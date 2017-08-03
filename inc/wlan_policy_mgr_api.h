@@ -1947,4 +1947,40 @@ QDF_STATUS policy_mgr_get_updated_scan_and_fw_mode_config(
  */
 bool policy_mgr_is_safe_channel(struct wlan_objmgr_psoc *psoc,
 		uint8_t channel);
+
+/**
+ * policy_mgr_is_force_scc() - checks if SCC needs to be
+ * mandated
+ * @psoc: PSOC object information
+ *
+ * This function checks if SCC needs to be mandated or not
+ *
+ * Return: True if SCC to be mandated, false otherwise
+ */
+bool policy_mgr_is_force_scc(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * policy_mgr_valid_sap_conc_channel_check() - checks & updates
+ * the channel SAP to come up on in case of STA+SAP concurrency
+ * @psoc: PSOC object information
+ * @con_ch: pointer to the channel on which sap will come up
+ * @sap_ch: initial channel for SAP
+ *
+ * This function checks & updates the channel SAP to come up on in
+ * case of STA+SAP concurrency
+ * Return: Success if SAP can come up on a channel
+ */
+QDF_STATUS policy_mgr_valid_sap_conc_channel_check(
+	struct wlan_objmgr_psoc *psoc, uint8_t *con_ch, uint8_t sap_ch);
+
+/**
+ * policy_mgr_get_alternate_channel_for_sap() - Get an alternate
+ * channel to move the SAP to
+ * @psoc: PSOC object information
+ *
+ * This function returns an alternate channel for SAP to move to
+ * Return: The new channel for SAP
+ */
+uint8_t policy_mgr_get_alternate_channel_for_sap(
+	struct wlan_objmgr_psoc *psoc);
 #endif /* __WLAN_POLICY_MGR_API_H */

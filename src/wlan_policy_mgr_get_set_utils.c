@@ -2627,3 +2627,19 @@ QDF_STATUS policy_mgr_get_updated_scan_and_fw_mode_config(
 
 	return QDF_STATUS_SUCCESS;
 }
+
+bool policy_mgr_is_force_scc(struct wlan_objmgr_psoc *psoc)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return 0;
+	}
+
+	return ((pm_ctx->user_cfg.mcc_to_scc_switch_mode ==
+		QDF_MCC_TO_SCC_SWITCH_FORCE_WITHOUT_DISCONNECTION) ||
+			(pm_ctx->user_cfg.mcc_to_scc_switch_mode ==
+		QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL));
+}
