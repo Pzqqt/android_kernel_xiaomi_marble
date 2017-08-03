@@ -1146,9 +1146,14 @@ static int hnc_hotplug_hook(struct hif_softc *hif_sc, int install)
 			= hnc_cpu_notify_cb;
 		rc = register_hotcpu_notifier(
 			&hif_sc->napi_data.hnc_cpu_notifier);
+		if (rc == 0)
+			hif_sc->napi_data.cpu_notifier_registered = true;
 	} else {
-		unregister_hotcpu_notifier(
-			&hif_sc->napi_data.hnc_cpu_notifier);
+		if (hif_sc->napi_data.cpu_notifier_registered == true) {
+			unregister_hotcpu_notifier(
+				&hif_sc->napi_data.hnc_cpu_notifier);
+			hif_sc->napi_data.cpu_notifier_registered = false;
+		}
 	}
 
 	NAPI_DEBUG("<--%s()[%d]", __func__, rc);

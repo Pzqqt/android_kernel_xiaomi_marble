@@ -151,6 +151,8 @@ static void hif_exec_napi_kill(struct hif_exec_context *ctx)
 
 	for (irq_ind = 0; irq_ind < ctx->numirq; irq_ind++)
 		hif_irq_affinity_remove(ctx->os_irq[irq_ind]);
+
+	netif_napi_del(&(n_ctx->napi));
 }
 
 struct hif_execution_ops napi_sched_ops = {
@@ -412,4 +414,43 @@ void hif_exec_destroy(struct hif_exec_context *ctx)
 {
 	qdf_spinlock_destroy(&ctx->irq_lock);
 	qdf_mem_free(ctx);
+}
+
+/**
+ * hif_deregister_exec_group() - API to free the exec contexts
+ * @hif_ctx: HIF context
+ * @context_name: name of the module whose contexts need to be deregistered
+ *
+ * This function deregisters the contexts of the requestor identified
+ * based on the context_name & frees the memory.
+ *
+ * Return: void
+ */
+void hif_deregister_exec_group(struct hif_opaque_softc *hif_ctx,
+				const char *context_name)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+	struct hif_exec_context *hif_ext_group;
+	int i;
+
+	for (i = 0; i < HIF_MAX_GROUP; i++) {
+		hif_ext_group = hif_state->hif_ext_group[i];
+
+		if (!hif_ext_group)
+			continue;
+
+		HIF_INFO("%s: Deregistering grp id %d name %s\n",
+				__func__,
+				hif_ext_group->grp_id,
+				hif_ext_group->context_name);
+
+		if (strcmp(hif_ext_group->context_name, context_name) == 0) {
+			hif_ext_group->sched_ops->kill(hif_ext_group);
+			hif_state->hif_ext_group[i] = NULL;
+			hif_exec_destroy(hif_ext_group);
+			hif_state->hif_num_extgroup--;
+		}
+
+	}
 }

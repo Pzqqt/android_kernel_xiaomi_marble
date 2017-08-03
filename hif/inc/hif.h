@@ -299,6 +299,7 @@ struct qca_napi_data {
 	int                  lilcl_head, bigcl_head;
 	enum qca_napi_tput_state napi_mode;
 	struct notifier_block hnc_cpu_notifier;
+	bool cpu_notifier_registered;
 	uint8_t              flags;
 };
 
@@ -890,6 +891,8 @@ uint32_t  hif_register_ext_group(struct hif_opaque_softc *hif_ctx,
 		uint32_t numirq, uint32_t irq[], ext_intr_handler handler,
 		void *cb_ctx, const char *context_name,
 		uint32_t budget);
+void hif_deregister_exec_group(struct hif_opaque_softc *hif_ctx,
+				const char *context_name);
 
 void hif_update_pipe_callback(struct hif_opaque_softc *osc,
 				u_int8_t pipeid,

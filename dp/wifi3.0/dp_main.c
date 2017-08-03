@@ -1188,6 +1188,8 @@ static void dp_soc_interrupt_detach(void *txrx_soc)
 	if (soc->intr_mode == DP_INTR_POLL) {
 		qdf_timer_stop(&soc->int_timer);
 		qdf_timer_free(&soc->int_timer);
+	} else {
+		hif_deregister_exec_group(soc->hif_handle, "dp_intr");
 	}
 
 	for (i = 0; i < wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx); i++) {
