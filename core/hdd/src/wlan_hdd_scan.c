@@ -442,6 +442,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	uint8_t curr_session_id;
 	enum scan_reject_states curr_reason;
 	static uint32_t scan_ebusy_cnt;
+	struct scan_params params;
 
 	ENTER();
 
@@ -600,6 +601,8 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 		return 0;
 	}
 
+	params.source = source;
+	params.default_ie.len = 0;
 	/* Store the Scan IE's in Adapter*/
 	if (request->ie_len) {
 		/* save this for future association (join requires this) */
@@ -611,19 +614,39 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 		wlan_hdd_update_scan_ies(pAdapter, pScanInfo,
 				pScanInfo->scanAddIE.addIEdata,
 				&pScanInfo->scanAddIE.length);
-
-		if ((QDF_STA_MODE == pAdapter->device_mode) ||
-		    (QDF_P2P_CLIENT_MODE == pAdapter->device_mode) ||
-		    (QDF_P2P_DEVICE_MODE == pAdapter->device_mode)
-		    ) {
-			pwextBuf->roamProfile.pAddIEScan =
-				pScanInfo->scanAddIE.addIEdata;
-			pwextBuf->roamProfile.nAddIEScanLength =
-				pScanInfo->scanAddIE.length;
+	} else {
+		if (pScanInfo->default_scan_ies &&
+		    pScanInfo->default_scan_ies_len) {
+			qdf_mem_copy(pScanInfo->scanAddIE.addIEdata,
+				     pScanInfo->default_scan_ies,
+				     pScanInfo->default_scan_ies_len);
+			pScanInfo->scanAddIE.length =
+				pScanInfo->default_scan_ies_len;
+			params.default_ie.ptr =
+				qdf_mem_malloc(pScanInfo->default_scan_ies_len);
+			if (params.default_ie.ptr != NULL) {
+				qdf_mem_copy(params.default_ie.ptr,
+					     pScanInfo->default_scan_ies,
+					     pScanInfo->default_scan_ies_len);
+				params.default_ie.len =
+						pScanInfo->default_scan_ies_len;
+			}
 		}
 	}
+
+	if ((QDF_STA_MODE == pAdapter->device_mode) ||
+	    (QDF_P2P_CLIENT_MODE == pAdapter->device_mode) ||
+	    (QDF_P2P_DEVICE_MODE == pAdapter->device_mode)) {
+		pwextBuf->roamProfile.pAddIEScan =
+			pScanInfo->scanAddIE.addIEdata;
+		pwextBuf->roamProfile.nAddIEScanLength =
+			pScanInfo->scanAddIE.length;
+	}
 #ifdef NAPIER_SCAN
-	return wlan_cfg80211_scan(hdd_ctx->hdd_pdev, request, source);
+	status = wlan_cfg80211_scan(hdd_ctx->hdd_pdev, request, &params);
+	if (params.default_ie.ptr)
+		qdf_mem_free(params.default_ie.ptr);
+	return status;
 #else
 	/* Below code will be removed once common scan module is available.*/
 	qdf_mem_zero(&scan_req, sizeof(scan_req));
@@ -756,9 +779,6 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 			pAdapter->sessionId);
 	}
 	if (request->ie_len) {
-		scan_req.uIEFieldLen = pScanInfo->scanAddIE.length;
-		scan_req.pIEField = pScanInfo->scanAddIE.addIEdata;
-
 		pP2pIe = wlan_hdd_get_p2p_ie_ptr((uint8_t *) request->ie,
 						 request->ie_len);
 		if (pP2pIe != NULL) {
@@ -809,16 +829,10 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 					scan_req.skipDfsChnlInP2pSearch = 0;
 			}
 		}
-	} else {
-		if (pScanInfo->default_scan_ies &&
-				pScanInfo->default_scan_ies_len) {
-			qdf_mem_copy(pScanInfo->scanAddIE.addIEdata,
-					pScanInfo->default_scan_ies,
-					pScanInfo->default_scan_ies_len);
-			pScanInfo->scanAddIE.length =
-					pScanInfo->default_scan_ies_len;
-		}
 	}
+
+	scan_req.uIEFieldLen = pScanInfo->scanAddIE.length;
+	scan_req.pIEField = pScanInfo->scanAddIE.addIEdata;
 
 	/* acquire the wakelock to avoid the apps suspend during the scan. To
 	 * address the following issues.
