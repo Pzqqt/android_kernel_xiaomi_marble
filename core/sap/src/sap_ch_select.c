@@ -2310,6 +2310,10 @@ uint8_t sap_select_channel(tHalHandle hal, ptSapContext sap_ctx,
 				spect_info->pSpectCh[count].chNum))
 			continue;
 
+		if (spect_info->pSpectCh[count].weight_copy >
+				sap_ctx->acsBestChannelInfo.weight)
+			continue;
+
 		tmp_ch_num = spect_info->pSpectCh[count].chNum;
 		tmp_ch_num = sap_select_preferred_channel_from_channel_list(
 					tmp_ch_num, sap_ctx, spect_info);
