@@ -1677,10 +1677,110 @@ int htt_mon_rx_handle_amsdu_packet(qdf_nbuf_t msdu, htt_pdev_handle pdev,
 	return 1;
 }
 
+#define SHORT_PREAMBLE 1
+#define LONG_PREAMBLE  0
+#ifdef HELIUMPLUS
 /**
- * htt_mon_rx_get_phy_info() - Get rate interms of 500Kbps.
- * @rx_desc: Pointer to struct htt_host_rx_desc_base
- * @rx_status: Return variable updated with phy_info in rx_status
+ * htt_rx_get_rate() - get rate info in terms of 500Kbps from htt_rx_desc
+ * @l_sig_rate_select: OFDM or CCK rate
+ * @l_sig_rate:
+ *
+ * If l_sig_rate_select is 0:
+ * 0x8: OFDM 48 Mbps
+ * 0x9: OFDM 24 Mbps
+ * 0xA: OFDM 12 Mbps
+ * 0xB: OFDM 6 Mbps
+ * 0xC: OFDM 54 Mbps
+ * 0xD: OFDM 36 Mbps
+ * 0xE: OFDM 18 Mbps
+ * 0xF: OFDM 9 Mbps
+ * If l_sig_rate_select is 1:
+ * 0x1:  DSSS 1 Mbps long preamble
+ * 0x2:  DSSS 2 Mbps long preamble
+ * 0x3:  CCK 5.5 Mbps long preamble
+ * 0x4:  CCK 11 Mbps long preamble
+ * 0x5:  DSSS 2 Mbps short preamble
+ * 0x6:  CCK 5.5 Mbps
+ * 0x7:  CCK 11 Mbps short  preamble
+ *
+ * Return: rate interms of 500Kbps.
+ */
+static unsigned char htt_rx_get_rate(uint32_t l_sig_rate_select,
+					uint32_t l_sig_rate, uint8_t *preamble)
+{
+	char ret = 0x0;
+	*preamble = LONG_PREAMBLE;
+	if (l_sig_rate_select == 0) {
+		switch (l_sig_rate) {
+		case 0x8:
+			ret = 0x60;
+			break;
+		case 0x9:
+			ret = 0x30;
+			break;
+		case 0xA:
+			ret = 0x18;
+			break;
+		case 0xB:
+			ret = 0x0c;
+			break;
+		case 0xC:
+			ret = 0x6c;
+			break;
+		case 0xD:
+			ret = 0x48;
+			break;
+		case 0xE:
+			ret = 0x24;
+			break;
+		case 0xF:
+			ret = 0x12;
+			break;
+		default:
+			break;
+		}
+	} else if (l_sig_rate_select == 1) {
+		switch (l_sig_rate) {
+		case 0x1:
+			ret = 0x2;
+			*preamble = LONG_PREAMBLE;
+			break;
+		case 0x2:
+			ret = 0x4;
+			*preamble = LONG_PREAMBLE;
+			break;
+		case 0x3:
+			ret = 0xB;
+			*preamble = LONG_PREAMBLE;
+			break;
+		case 0x4:
+			ret = 0x16;
+			*preamble = LONG_PREAMBLE;
+			break;
+		case 0x5:
+			ret = 0x4;
+			*preamble = SHORT_PREAMBLE;
+			break;
+		case 0x6:
+			ret = 0xB;
+			break;
+		case 0x7:
+			ret = 0x16;
+			*preamble = SHORT_PREAMBLE;
+			break;
+		default:
+			break;
+		}
+	} else {
+		qdf_print("Invalid rate info\n");
+	}
+	return ret;
+}
+#else
+/**
+ * htt_rx_get_rate() - get rate info in terms of 500Kbps from htt_rx_desc
+ * @l_sig_rate_select: OFDM or CCK rate
+ * @l_sig_rate:
  *
  * If l_sig_rate_select is 0:
  * 0x8: OFDM 48 Mbps
@@ -1693,54 +1793,45 @@ int htt_mon_rx_handle_amsdu_packet(qdf_nbuf_t msdu, htt_pdev_handle pdev,
  * 0xF: OFDM 9 Mbps
  * If l_sig_rate_select is 1:
  * 0x8: CCK 11 Mbps long preamble
- * 0x9: CCK 5.5 Mbps long preamble
+ *  0x9: CCK 5.5 Mbps long preamble
  * 0xA: CCK 2 Mbps long preamble
  * 0xB: CCK 1 Mbps long preamble
  * 0xC: CCK 11 Mbps short preamble
  * 0xD: CCK 5.5 Mbps short preamble
  * 0xE: CCK 2 Mbps short preamble
  *
- * Return: None
+ * Return: rate interms of 500Kbps.
  */
-static void htt_mon_rx_get_phy_info(struct htt_host_rx_desc_base *rx_desc,
-				    struct mon_rx_status *rx_status)
+static unsigned char htt_rx_get_rate(uint32_t l_sig_rate_select,
+					uint32_t l_sig_rate, uint8_t *preamble)
 {
-#define SHORT_PREAMBLE 1
-#define LONG_PREAMBLE  0
-	char rate = 0x0;
-	uint8_t preamble = SHORT_PREAMBLE;
-	uint8_t preamble_type = rx_desc->ppdu_start.preamble_type;
-	uint8_t mcs = 0, nss = 0, sgi = 0, bw = 0, beamformed = 0;
-	uint16_t vht_flags = 0, ht_flags = 0;
-	uint32_t l_sig_rate_select = rx_desc->ppdu_start.l_sig_rate_select;
-	uint32_t l_sig_rate = rx_desc->ppdu_start.l_sig_rate;
-	bool is_stbc = 0, ldpc = 0;
-
+	char ret = 0x0;
+	*preamble = SHORT_PREAMBLE;
 	if (l_sig_rate_select == 0) {
 		switch (l_sig_rate) {
 		case 0x8:
-			rate = 0x60;
+			ret = 0x60;
 			break;
 		case 0x9:
-			rate = 0x30;
+			ret = 0x30;
 			break;
 		case 0xA:
-			rate = 0x18;
+			ret = 0x18;
 			break;
 		case 0xB:
-			rate = 0x0c;
+			ret = 0x0c;
 			break;
 		case 0xC:
-			rate = 0x6c;
+			ret = 0x6c;
 			break;
 		case 0xD:
-			rate = 0x48;
+			ret = 0x48;
 			break;
 		case 0xE:
-			rate = 0x24;
+			ret = 0x24;
 			break;
 		case 0xF:
-			rate = 0x12;
+			ret = 0x12;
 			break;
 		default:
 			break;
@@ -1748,29 +1839,29 @@ static void htt_mon_rx_get_phy_info(struct htt_host_rx_desc_base *rx_desc,
 	} else if (l_sig_rate_select == 1) {
 		switch (l_sig_rate) {
 		case 0x8:
-			rate = 0x16;
-			preamble = LONG_PREAMBLE;
+			ret = 0x16;
+			*preamble = LONG_PREAMBLE;
 			break;
 		case 0x9:
-			rate = 0x0B;
-			preamble = LONG_PREAMBLE;
+			ret = 0x0B;
+			*preamble = LONG_PREAMBLE;
 			break;
 		case 0xA:
-			rate = 0x04;
-			preamble = LONG_PREAMBLE;
+			ret = 0x4;
+			*preamble = LONG_PREAMBLE;
 			break;
 		case 0xB:
-			rate = 0x02;
-			preamble = LONG_PREAMBLE;
+			ret = 0x02;
+			*preamble = LONG_PREAMBLE;
 			break;
 		case 0xC:
-			rate = 0x16;
+			ret = 0x16;
 			break;
 		case 0xD:
-			rate = 0x0B;
+			ret = 0x0B;
 			break;
 		case 0xE:
-			rate = 0x04;
+			ret = 0x04;
 			break;
 		default:
 			break;
@@ -1778,8 +1869,33 @@ static void htt_mon_rx_get_phy_info(struct htt_host_rx_desc_base *rx_desc,
 	} else {
 		qdf_print("Invalid rate info\n");
 	}
+	return ret;
+}
+#endif /* HELIUMPLUS */
+/**
+ * htt_mon_rx_get_phy_info() - Get phy info
+ * @rx_desc: Pointer to struct htt_host_rx_desc_base
+ * @rx_status: Return variable updated with phy_info in rx_status
+ *
+ * Return: None
+ */
+static void htt_mon_rx_get_phy_info(struct htt_host_rx_desc_base *rx_desc,
+				    struct mon_rx_status *rx_status)
+{
+	uint8_t preamble = 0;
+	uint8_t preamble_type = rx_desc->ppdu_start.preamble_type;
+	uint8_t mcs = 0, nss = 0, sgi = 0, bw = 0, beamformed = 0;
+	uint16_t vht_flags = 0, ht_flags = 0;
+	uint32_t l_sig_rate_select = rx_desc->ppdu_start.l_sig_rate_select;
+	uint32_t l_sig_rate = rx_desc->ppdu_start.l_sig_rate;
+	bool is_stbc = 0, ldpc = 0;
 
 	switch (preamble_type) {
+	case 4:
+	/* legacy */
+		rx_status->rate = htt_rx_get_rate(l_sig_rate_select, l_sig_rate,
+						&preamble);
+		break;
 	case 8:
 		is_stbc = ((VHT_SIG_A_2(rx_desc) >> 4) & 3);
 		/* fallthrough */
@@ -1838,7 +1954,6 @@ static void htt_mon_rx_get_phy_info(struct htt_host_rx_desc_base *rx_desc,
 	rx_status->ldpc = ldpc;
 	rx_status->beamformed = beamformed;
 	rx_status->vht_flag_values3[0] = mcs << 0x4 | (nss + 1);
-	rx_status->rate = rate;
 	rx_status->ht_flags = ht_flags;
 	rx_status->vht_flags = vht_flags;
 	rx_status->rtap_flags |= ((preamble == SHORT_PREAMBLE) ? BIT(1) : 0);
