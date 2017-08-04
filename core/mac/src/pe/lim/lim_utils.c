@@ -6697,7 +6697,7 @@ void lim_update_extcap_struct(tpAniSirGlobal mac_ctx,
 	}
 
 	if (DOT11F_EID_EXTCAP != buf[0] || buf[1] > DOT11F_IE_EXTCAP_MAX_LEN) {
-		pe_warn("Invalid IEs eid: %d elem_len: %d",
+		pe_debug_rate_limited(30, "Invalid IEs eid: %d elem_len: %d",
 				buf[0], buf[1]);
 		return;
 	}
