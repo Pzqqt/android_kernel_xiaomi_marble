@@ -419,9 +419,13 @@ static void scm_delete_duplicate_entry(struct scan_dbs *scan_db,
 		if (time_gap > WLAN_RSSI_AVERAGING_TIME)
 			scan_params->avg_rssi =
 				WLAN_RSSI_IN(scan_params->rssi_raw);
-		else
+		else {
+			/* Copy previous average rssi to new entry */
+			scan_params->avg_rssi = scan_entry->avg_rssi;
+			/* Average with previous samples */
 			WLAN_RSSI_LPF(scan_params->avg_rssi,
 					scan_params->rssi_raw);
+		}
 
 		scan_params->rssi_timestamp = scan_params->scan_entry_time;
 	}
@@ -568,12 +572,12 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 		goto free_nbuf;
 	}
 
-
-	scm_info("Received %s from BSSID: %pM tsf_delta = %u Seq Num: %x ssid:%.*s",
+	scm_info("Received %s from BSSID: %pM tsf_delta = %u Seq Num: %x "
+		"ssid:%.*s, rssi: %d",
 		(bcn->frm_type == MGMT_SUBTYPE_PROBE_RESP) ?
 		"Probe Rsp" : "Beacon", scan_entry->bssid.bytes,
 		scan_entry->tsf_delta, scan_entry->seq_num,
-		scan_entry->ssid.length, scan_entry->ssid.ssid);
+		scan_entry->ssid.length, scan_entry->ssid.ssid, scan_entry->rssi_raw);
 
 	if (scan_obj->cb.update_beacon)
 		scan_obj->cb.update_beacon(pdev, scan_entry);
