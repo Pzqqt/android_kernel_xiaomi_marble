@@ -344,6 +344,19 @@ void pmo_register_wow_default_patterns(struct wlan_objmgr_vdev *vdev)
 
 }
 
+/**
+ * set_action_id_drop_pattern_for_spec_mgmt() - Set action id of action
+ * frames for spectrum mgmt frames to be droppped in fw.
+ *
+ * @action_id_per_category: Pointer to action id bitmaps.
+ */
+static void set_action_id_drop_pattern_for_spec_mgmt(
+					uint32_t *action_id_per_category)
+{
+	action_id_per_category[PMO_MAC_ACTION_SPECTRUM_MGMT]
+				= DROP_SPEC_MGMT_ACTION_FRAME_BITMAP;
+}
+
 void pmo_register_action_frame_patterns(struct wlan_objmgr_vdev *vdev)
 {
 
@@ -363,6 +376,8 @@ void pmo_register_action_frame_patterns(struct wlan_objmgr_vdev *vdev)
 	cmd.action_category_map[i++] = ALLOWED_ACTION_FRAMES_BITMAP6;
 	cmd.action_category_map[i++] = ALLOWED_ACTION_FRAMES_BITMAP7;
 
+	set_action_id_drop_pattern_for_spec_mgmt(cmd.action_per_category);
+
 	for (i = 0; i < PMO_SUPPORTED_ACTION_CATE_ELE_LIST; i++) {
 		if (i < ALLOWED_ACTION_FRAME_MAP_WORDS)
 			pmo_debug("%s: %d action Wakeup pattern 0x%x in fw",
@@ -370,6 +385,9 @@ void pmo_register_action_frame_patterns(struct wlan_objmgr_vdev *vdev)
 		else
 			cmd.action_category_map[i] = 0;
 	}
+
+	pmo_debug("Spectrum mgmt action id drop bitmap: 0x%x",
+			cmd.action_per_category[PMO_MAC_ACTION_SPECTRUM_MGMT]);
 
 	/*  config action frame patterns */
 	status = pmo_tgt_send_action_frame_pattern_req(vdev, &cmd);
