@@ -2706,7 +2706,7 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 	hdd_adapter_t *ap_adapter = wlan_hdd_get_adapter_from_vdev(
 					psoc, vdev_id);
 	if (!ap_adapter) {
-		hdd_err("Adapter is NULL");
+		hdd_err("ap_adapter is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -2719,23 +2719,28 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 	/* TODO: need work for 3 port case with sta+sta */
 	sta_adapter = hdd_get_adapter(hdd_ctx, QDF_STA_MODE);
 	if (!sta_adapter) {
-		hdd_err("Adapter is NULL");
+		hdd_err("sta_adapter is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (NULL == channel || NULL == sec_ch) {
 		hdd_err("Null parameters");
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!test_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags))
+	if (!test_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags)) {
+		hdd_err("SOFTAP_BSS_STARTED not set");
 		return QDF_STATUS_E_FAILURE;
+	}
 
 	hdd_ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(ap_adapter);
 	hal_handle = WLAN_HDD_GET_HAL_CTX(ap_adapter);
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(sta_adapter);
 
-	if (!hal_handle)
+	if (!hal_handle) {
+		hdd_err("hal_handle is NULL");
 		return QDF_STATUS_E_FAILURE;
+	}
 
 	/*
 	 * Check if STA's channel is DFS or passive or part of LTE avoided
