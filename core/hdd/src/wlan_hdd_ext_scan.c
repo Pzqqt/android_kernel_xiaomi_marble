@@ -2399,7 +2399,7 @@ static void hdd_remove_passive_channels(struct wiphy *wiphy,
 	int i, j, k;
 
 	for (i = 0; i < *num_channels; i++)
-		for (j = 0; j < NUM_NL80211_BANDS; j++) {
+		for (j = 0; j < HDD_NUM_NL80211_BANDS; j++) {
 			if (wiphy->bands[j] == NULL)
 				continue;
 			for (k = 0; k < wiphy->bands[j]->n_channels; k++) {

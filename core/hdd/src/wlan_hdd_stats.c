@@ -3734,7 +3734,7 @@ static bool wlan_hdd_update_survey_info(struct wiphy *wiphy,
 
 	mutex_lock(&pHddCtx->chan_info_lock);
 
-	for (i = 0; i < NUM_NL80211_BANDS && !filled; i++) {
+	for (i = 0; i < HDD_NUM_NL80211_BANDS && !filled; i++) {
 		if (wiphy->bands[i] == NULL)
 			continue;
 
@@ -3794,7 +3794,6 @@ static int __wlan_hdd_cfg80211_dump_survey(struct wiphy *wiphy,
 
 	if (pHddCtx->config->fEnableSNRMonitoring == 0)
 		return -ENONET;
-
 
 	if (pHddStaCtx->hdd_ReassocScenario) {
 		hdd_info("Roaming in progress, hence return");

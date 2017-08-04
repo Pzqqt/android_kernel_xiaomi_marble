@@ -389,7 +389,7 @@ static void hdd_process_regulatory_data(hdd_context_t *hdd_ctx,
 
 	band_capability = hdd_ctx->config->nBandCapability;
 
-	for (band_num = 0; band_num < NUM_NL80211_BANDS; band_num++) {
+	for (band_num = 0; band_num < HDD_NUM_NL80211_BANDS; band_num++) {
 
 		if (wiphy->bands[band_num] == NULL)
 			continue;
@@ -636,7 +636,7 @@ static void hdd_restore_custom_reg_settings(struct wiphy *wiphy,
 	    (country_alpha2[1] == '0') &&
 	    (wiphy->flags & WIPHY_FLAG_CUSTOM_REGULATORY)) {
 
-		for (band = 0; band < NUM_NL80211_BANDS; band++) {
+		for (band = 0; band < HDD_NUM_NL80211_BANDS; band++) {
 			sband = wiphy->bands[band];
 			if (!sband)
 				continue;
