@@ -1365,6 +1365,27 @@ static void wlan_hdd_update_queue_oper_stats(hdd_adapter_t *adapter,
 }
 
 /**
+ * hdd_netdev_queue_is_locked()
+ * @txq: net device tx queue
+ *
+ * For SMP system, always return false and we could safely rely on
+ * __netif_tx_trylock().
+ *
+ * Return: true locked; false not locked
+ */
+#ifdef QCA_CONFIG_SMP
+static inline bool hdd_netdev_queue_is_locked(struct netdev_queue *txq)
+{
+	return false;
+}
+#else
+static inline bool hdd_netdev_queue_is_locked(struct netdev_queue *txq)
+{
+	return txq->xmit_lock_owner != -1;
+}
+#endif
+
+/**
  * wlan_hdd_update_txq_timestamp() - update txq timestamp
  * @dev: net device
  *
@@ -1377,9 +1398,19 @@ static void wlan_hdd_update_txq_timestamp(struct net_device *dev)
 
 	for (i = 0; i < NUM_TX_QUEUES; i++) {
 		txq = netdev_get_tx_queue(dev, i);
-		if (__netif_tx_trylock(txq)) {
-			txq_trans_update(txq);
-			__netif_tx_unlock(txq);
+
+		/*
+		 * On UP system, kernel will trigger watchdog bite if spinlock
+		 * recursion is detected. Unfortunately recursion is possible
+		 * when it is called in dev_queue_xmit() context, where stack
+		 * grabs the lock before calling driver's ndo_start_xmit
+		 * callback.
+		 */
+		if (!hdd_netdev_queue_is_locked(txq)) {
+			if (__netif_tx_trylock(txq)) {
+				txq_trans_update(txq);
+				__netif_tx_unlock(txq);
+			}
 		}
 	}
 }
