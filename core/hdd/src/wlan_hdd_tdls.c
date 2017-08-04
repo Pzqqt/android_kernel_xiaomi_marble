@@ -712,7 +712,7 @@ void hdd_tdls_context_init(hdd_context_t *hdd_ctx, bool ssr)
 	if (!ssr)
 		hdd_ctx->tdls_external_peer_count = 0;
 
-	/* This flag will set  be true, only when device operates in
+	/* This flag will set be true, only when device operates in
 	 * standalone STA mode
 	 */
 	hdd_ctx->enable_tdls_connection_tracker = false;
@@ -881,6 +881,9 @@ void wlan_hdd_tdls_exit(hdd_adapter_t *pAdapter)
 			  FL("pHddCtx is NULL"));
 		return;
 	}
+
+	if (pHddCtx->tdls_umac_comp_active)
+		return;
 
 	if (!test_bit(TDLS_INIT_DONE, &pAdapter->event_flags)) {
 		hdd_info("TDLS init was not done, exit");
