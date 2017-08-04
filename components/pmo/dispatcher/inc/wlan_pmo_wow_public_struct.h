@@ -60,6 +60,8 @@
 #define PMO_MAC_ACTION_VHT            21
 #define PMO_MAC_ACTION_MAX            256
 
+#define PMO_MAC_ACTION_MEASURE_REQUEST_ID      0
+#define PMO_MAC_ACTION_TPC_REQUEST_ID          2
 /*
  * ALLOWED_ACTION_FRAMES_BITMAP
  *
@@ -112,6 +114,30 @@
 
 #define ALLOWED_ACTION_FRAME_MAP_WORDS (PMO_MAC_ACTION_MAX / 32)
 
+#ifndef ANI_SUPPORT_11H
+/*
+ * DROP_SPEC_MGMT_ACTION_FRAME_BITMAP
+ *
+ * Bitmask is based on the below. The frames with 1's
+ * set to their corresponding bit can be dropped in FW.
+ *
+ * ----------------------------------+-----+------+
+ *         Type                      | Bit | Drop |
+ * ----------------------------------+-----+------+
+ * SIR_MAC_ACTION_MEASURE_REQUEST_ID    0     1
+ * SIR_MAC_ACTION_TPC_REQUEST_ID        1     1
+ * ----------------------------------+-----+------+
+ */
+#define DROP_SPEC_MGMT_ACTION_FRAME_BITMAP \
+		((1 << PMO_MAC_ACTION_MEASURE_REQUEST_ID) |\
+		 (1 << PMO_MAC_ACTION_TPC_REQUEST_ID))
+#else
+/*
+ * If 11H support is defined, dont drop the above action category of
+ * spectrum mgmt action frames as host driver is processing them.
+ */
+#define DROP_SPEC_MGMT_ACTION_FRAME_BITMAP 0
+#endif /* ANI_SUPPORT_11H */
 
 #define PMO_SUPPORTED_ACTION_CATE           256
 #define PMO_SUPPORTED_ACTION_CATE_ELE_LIST (PMO_SUPPORTED_ACTION_CATE/32)
@@ -122,11 +148,13 @@
  * @operation: 0 reset to fw default, 1 set the bits,
  *    2 add the setting bits, 3 delete the setting bits
  * @action_category_map: bit mapping.
+ * @action_per_category: bitmap per action category
  */
 struct pmo_action_wakeup_set_params {
 	uint32_t vdev_id;
 	uint32_t operation;
 	uint32_t action_category_map[PMO_SUPPORTED_ACTION_CATE_ELE_LIST];
+	uint32_t action_per_category[PMO_SUPPORTED_ACTION_CATE];
 };
 
 /**
