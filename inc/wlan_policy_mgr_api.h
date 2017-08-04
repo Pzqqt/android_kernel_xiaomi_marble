@@ -1983,4 +1983,19 @@ QDF_STATUS policy_mgr_valid_sap_conc_channel_check(
  */
 uint8_t policy_mgr_get_alternate_channel_for_sap(
 	struct wlan_objmgr_psoc *psoc);
+
+/**
+ * policy_mgr_disallow_mcc() - Check for mcc
+ *
+ * @psoc: PSOC object information
+ * @channel: channel on which new connection is coming up
+ *
+ * When a new connection is about to come up check if current
+ * concurrency combination including the new connection is
+ * causing MCC
+ *
+ * Return: True if it is causing MCC
+ */
+bool policy_mgr_disallow_mcc(struct wlan_objmgr_psoc *psoc,
+		uint8_t channel);
 #endif /* __WLAN_POLICY_MGR_API_H */

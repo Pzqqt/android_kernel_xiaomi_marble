@@ -1653,8 +1653,7 @@ QDF_STATUS policy_mgr_get_valid_chan_weights(struct wlan_objmgr_psoc *psoc,
 		for (i = 0; i < weight->saved_num_chan; i++) {
 			if (policy_mgr_allow_concurrency(psoc, PM_STA_MODE,
 					weight->saved_chan_list[i],
-					HW_MODE_20_MHZ) &&
-					!policy_mgr_is_force_scc(psoc)) {
+					HW_MODE_20_MHZ)) {
 				weight->weighed_valid_list[i] =
 					WEIGHT_OF_NON_PCL_CHANNELS;
 			}
