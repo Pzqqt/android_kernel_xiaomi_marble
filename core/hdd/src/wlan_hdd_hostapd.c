@@ -6998,6 +6998,13 @@ int wlan_hdd_cfg80211_update_apies(hdd_adapter_t *adapter)
 		goto done;
 	}
 
+	if (wlan_hdd_add_ie(adapter, genie, &total_ielen,
+			    MBO_OUI_TYPE, MBO_OUI_TYPE_SIZE)) {
+		hdd_err("Adding mbo ie failed");
+		ret = -EINVAL;
+		goto done;
+	}
+
 	wlan_hdd_add_sap_obss_scan_ie(adapter, genie, &total_ielen);
 
 	qdf_copy_macaddr(&updateIE.bssid, &adapter->macAddressCurrent);
