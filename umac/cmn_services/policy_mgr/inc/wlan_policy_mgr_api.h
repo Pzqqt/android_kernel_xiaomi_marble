@@ -1998,4 +1998,17 @@ uint8_t policy_mgr_get_alternate_channel_for_sap(
  */
 bool policy_mgr_disallow_mcc(struct wlan_objmgr_psoc *psoc,
 		uint8_t channel);
+
+/**
+ * policy_mgr_mode_specific_get_channel() - Get channel for a
+ * connection type
+ * @psoc: PSOC object information
+ * @chan_list: Connection type
+ *
+ * Get channel for a connection type
+ *
+ * Return: channel number
+ */
+uint8_t policy_mgr_mode_specific_get_channel(
+	struct wlan_objmgr_psoc *psoc, enum policy_mgr_con_mode mode);
 #endif /* __WLAN_POLICY_MGR_API_H */
