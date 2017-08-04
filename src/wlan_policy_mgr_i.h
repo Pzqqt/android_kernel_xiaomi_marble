@@ -438,17 +438,4 @@ void policy_mgr_reg_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 		struct regulatory_channel *chan_list,
 		struct avoid_freq_ind_data *avoid_freq_ind,
 		void *arg);
-
-/**
- * policy_mgr_mode_specific_get_channel() - Get channel for a
- * connection type
- * @psoc: PSOC object information
- * @chan_list: Connection type
- *
- * Get channel for a connection type
- *
- * Return: channel number
- */
-uint8_t policy_mgr_mode_specific_get_channel(
-	struct wlan_objmgr_psoc *psoc, enum policy_mgr_con_mode mode);
 #endif
