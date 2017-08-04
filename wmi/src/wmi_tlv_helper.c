@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -517,6 +517,13 @@ wmitlv_check_and_pad_tlvs(void *os_handle, void *param_struc_ptr,
 		return error;
 	}
 	/* NOTE: the returned number of TLVs is in "attr_struct_ptr.cmd_num_tlv" */
+
+	if (param_buf_len < WMI_TLV_HDR_SIZE) {
+		wmi_tlv_print_error
+			("%s: ERROR: Incorrect param buf length passed\n",
+			__func__);
+		return error;
+	}
 
 	/* Create base structure of format wmi_cmd_event_id##_param_tlvs */
 	len_wmi_cmd_struct_buf =
