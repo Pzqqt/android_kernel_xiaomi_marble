@@ -1519,9 +1519,11 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	uint8_t antenna_mode;
 
 	/* Reuse same pdev for module start/stop or SSR */
-	if ((hdd_get_conparam() == QDF_GLOBAL_FTM_MODE) ||
-	    !cds_is_driver_loading()) {
-		hdd_err("Reuse pdev for module start/stop or SSR");
+	if (((hdd_get_conparam() == QDF_GLOBAL_FTM_MODE) ||
+		(hdd_get_conparam() == QDF_GLOBAL_MONITOR_MODE) ||
+	    !cds_is_driver_loading()) && (hdd_ctx->hdd_pdev != NULL)) {
+		hdd_debug("Reuse pdev for module start/stop or SSR pdev_id = %u",
+			hdd_ctx->hdd_pdev->pdev_objmgr.wlan_pdev_id);
 		/* Restore pdev to MAC/WMA contexts */
 		sme_store_pdev(hdd_ctx->hHal, hdd_ctx->hdd_pdev);
 	} else {
@@ -1529,7 +1531,9 @@ void hdd_update_tgt_cfg(void *context, void *param)
 		if (ret) {
 			hdd_err("pdev creation fails!");
 			QDF_BUG(0);
-		}
+		} else
+			hdd_debug("New pdev has been created with pdev_id = %u",
+				hdd_ctx->hdd_pdev->pdev_objmgr.wlan_pdev_id);
 	}
 
 	if (cds_cfg) {
