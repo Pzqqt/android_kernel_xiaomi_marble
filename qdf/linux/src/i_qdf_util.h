@@ -65,7 +65,6 @@
 #include <linux/byteorder/generic.h>
 #endif
 
-typedef struct task_struct __qdf_thread_t;
 typedef wait_queue_head_t __qdf_wait_queue_head_t;
 
 /* Generic compiler-dependent macros if defined by the OS */

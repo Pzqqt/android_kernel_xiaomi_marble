@@ -44,6 +44,7 @@
 #include <linux/interrupt.h>
 #include <linux/export.h>
 #include <linux/kthread.h>
+#include <stacktrace.h>
 
 /* Function declarations and documenation */
 
@@ -129,3 +130,28 @@ int qdf_wake_up_process(qdf_thread_t *thread)
 	return wake_up_process(thread);
 }
 EXPORT_SYMBOL(qdf_wake_up_process);
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 13, 0)) ||\
+	defined(BACKPORTED_EXPORT_SAVE_STACK_TRACE_TSK)
+/* save_stack_trace_tsk is not generally exported for arm architectures */
+#define QDF_PRINT_TRACE_COUNT 32
+void qdf_print_thread_trace(qdf_thread_t *thread)
+{
+	const int spaces = 4;
+	struct task_struct *task = thread;
+	unsigned long entries[QDF_PRINT_TRACE_COUNT] = {0};
+	struct stack_trace trace = {
+		.nr_entries = 0,
+		.skip = 0,
+		.entries = &entries[0],
+		.max_entries = QDF_PRINT_TRACE_COUNT,
+	};
+
+	save_stack_trace_tsk(task, &trace);
+	print_stack_trace(&trace, spaces);
+}
+#else
+void qdf_print_thread_trace(qdf_thread_t *thread) { }
+#endif /* KERNEL_VERSION(4, 13, 0) */
+EXPORT_SYMBOL(qdf_print_thread_trace);
+

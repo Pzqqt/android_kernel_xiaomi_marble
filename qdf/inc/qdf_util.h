@@ -41,7 +41,6 @@
 #define QDF_MAX_AVAILABLE_CPU	1
 #endif
 
-typedef __qdf_thread_t qdf_thread_t;
 typedef __qdf_wait_queue_head_t qdf_wait_queue_head_t;
 
 /**
