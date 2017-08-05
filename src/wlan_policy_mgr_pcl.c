@@ -40,6 +40,7 @@
 #include "qdf_types.h"
 #include "qdf_trace.h"
 #include "wlan_objmgr_global_obj.h"
+#include "wlan_utility.h"
 
 /**
  * first_connection_pcl_table - table which provides PCL for the
@@ -1404,6 +1405,22 @@ policy_mgr_get_nondfs_preferred_channel(struct wlan_objmgr_psoc *psoc,
 	return channel;
 }
 
+static void policy_mgr_remove_dsrc_channels(uint8_t *chan_list,
+				uint32_t *num_channels)
+{
+	uint32_t num_chan_temp = 0;
+	int i;
+
+	for (i = 0; i < *num_channels; i++) {
+		if (!wlan_is_dsrc_channel(wlan_chan_to_freq(chan_list[i]))) {
+			chan_list[num_chan_temp] = chan_list[i];
+			num_chan_temp++;
+		}
+	}
+
+	*num_channels = num_chan_temp;
+}
+
 QDF_STATUS policy_mgr_get_valid_chans(struct wlan_objmgr_psoc *psoc,
 				uint8_t *chan_list, uint32_t *list_len)
 {
@@ -1431,6 +1448,8 @@ QDF_STATUS policy_mgr_get_valid_chans(struct wlan_objmgr_psoc *psoc,
 		*list_len = 0;
 		return status;
 	}
+
+	policy_mgr_remove_dsrc_channels(chan_list, list_len);
 
 	return QDF_STATUS_SUCCESS;
 }
