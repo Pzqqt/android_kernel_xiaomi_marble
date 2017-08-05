@@ -4123,6 +4123,47 @@ static inline void wma_update_target_vht_cap(tp_wma_handle wh,
 }
 
 /**
+ * wma_update_supported_bands() - update supported bands from service ready ext
+ * @wma_handle: pointer to wma handle
+ * @supported_bands: Supported band given by FW through service ready ext params
+ * @new_supported_bands: New supported band which needs to be updated by
+ *			 this API which WMA layer understands
+ *
+ * This API will convert FW given supported band to enum which WMA layer
+ * understands
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS wma_update_supported_bands(t_wma_handle *wma_handle,
+			WLAN_BAND_CAPABILITY supported_bands,
+			WMI_PHY_CAPABILITY *new_supported_bands)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (!wma_handle) {
+		WMA_LOGE("%s: NULL wma_handle", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	if (!new_supported_bands) {
+		WMA_LOGE("%s: NULL new supported band variable", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	switch (supported_bands) {
+	case WLAN_2G_CAPABILITY:
+		*new_supported_bands |= WMI_11G_CAPABILITY;
+		break;
+	case WLAN_5G_CAPABILITY:
+		*new_supported_bands |= WMI_11A_CAPABILITY;
+		break;
+	default:
+		WMA_LOGE("%s: wrong supported band", __func__);
+		status = QDF_STATUS_E_FAILURE;
+		break;
+	}
+	return status;
+}
+
+/**
  * wma_derive_ext_ht_cap() - Derive HT caps based on given value
  * @wma_handle: pointer to wma_handle
  * @ht_cap: given pointer to HT caps which needs to be updated
@@ -4438,6 +4479,35 @@ static void wma_update_ra_rate_limit(tp_wma_handle wma_handle,
 #endif
 
 /**
+ * wma_update_hdd_band_cap() - update band cap which hdd understands
+ * @supported_band: supported band which has been given by FW
+ * @tgt_cfg: target configuration to be updated
+ *
+ * Convert WMA given supported band to enum which HDD understands
+ *
+ * Return: None
+ */
+static void wma_update_hdd_band_cap(WMI_PHY_CAPABILITY supported_band,
+				    struct wma_tgt_cfg *tgt_cfg)
+{
+	switch (supported_band) {
+	case WMI_11G_CAPABILITY:
+	case WMI_11NG_CAPABILITY:
+		tgt_cfg->band_cap = eCSR_BAND_24;
+		break;
+	case WMI_11A_CAPABILITY:
+	case WMI_11NA_CAPABILITY:
+	case WMI_11AC_CAPABILITY:
+		tgt_cfg->band_cap = eCSR_BAND_5G;
+		break;
+	case WMI_11AG_CAPABILITY:
+	case WMI_11NAG_CAPABILITY:
+	default:
+		tgt_cfg->band_cap = eCSR_BAND_ALL;
+	}
+}
+
+/**
  * wma_update_hdd_cfg() - update HDD config
  * @wma_handle: wma handle
  *
@@ -4453,22 +4523,6 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	tgt_cfg.sub_20_support = wma_handle->sub_20_support;
 	tgt_cfg.reg_domain = wma_handle->reg_cap.eeprom_rd;
 	tgt_cfg.eeprom_rd_ext = wma_handle->reg_cap.eeprom_rd_ext;
-
-	switch (wma_handle->phy_capability) {
-	case WMI_11G_CAPABILITY:
-	case WMI_11NG_CAPABILITY:
-		tgt_cfg.band_cap = eCSR_BAND_24;
-		break;
-	case WMI_11A_CAPABILITY:
-	case WMI_11NA_CAPABILITY:
-	case WMI_11AC_CAPABILITY:
-		tgt_cfg.band_cap = eCSR_BAND_5G;
-		break;
-	case WMI_11AG_CAPABILITY:
-	case WMI_11NAG_CAPABILITY:
-	default:
-		tgt_cfg.band_cap = eCSR_BAND_ALL;
-	}
 
 	tgt_cfg.max_intf_count = wma_handle->wlan_resource_config.num_vdevs;
 
@@ -4496,6 +4550,7 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	tgt_cfg.bpf_enabled = wma_handle->bpf_enabled;
 	tgt_cfg.dfs_cac_offload = wma_handle->dfs_cac_offload;
 	wma_update_ra_rate_limit(wma_handle, &tgt_cfg);
+	wma_update_hdd_band_cap(wma_handle->phy_capability, &tgt_cfg);
 	tgt_cfg.fine_time_measurement_cap =
 		wma_handle->fine_time_measurement_cap;
 	tgt_cfg.wmi_max_len = wmi_get_max_msg_len(wma_handle->wmi_handle)
@@ -5362,6 +5417,8 @@ static QDF_STATUS wma_update_hw_mode_list(t_wma_handle *wma_handle)
 	uint32_t dbs_mode, sbs_mode;
 	struct mac_ss_bw_info mac0_ss_bw_info = {0};
 	struct mac_ss_bw_info mac1_ss_bw_info = {0};
+	WMI_PHY_CAPABILITY new_supported_band = 0;
+	bool supported_band_update_failure = false;
 
 	if (!wma_handle) {
 		WMA_LOGE("%s: Invalid wma handle", __func__);
@@ -5413,6 +5470,10 @@ static QDF_STATUS wma_update_hw_mode_list(t_wma_handle *wma_handle)
 		mac1_ss_bw_info.mac_tx_stream = 0;
 		mac1_ss_bw_info.mac_rx_stream = 0;
 		mac1_ss_bw_info.mac_bw = 0;
+		if (QDF_STATUS_SUCCESS != wma_update_supported_bands(wma_handle,
+						tmp->supported_bands,
+						&new_supported_band))
+			supported_band_update_failure = true;
 
 		/* SBS and DBS have dual MAC. Upto 2 MACs are considered. */
 		if ((hw_config_type == WMI_HW_MODE_DBS) ||
@@ -5426,6 +5487,11 @@ static QDF_STATUS wma_update_hw_mode_list(t_wma_handle *wma_handle)
 			if ((hw_config_type == WMI_HW_MODE_SBS_PASSIVE) ||
 			    (hw_config_type == WMI_HW_MODE_SBS))
 				sbs_mode = HW_MODE_SBS;
+			if (QDF_STATUS_SUCCESS !=
+					wma_update_supported_bands(wma_handle,
+						tmp->supported_bands,
+						&new_supported_band))
+				supported_band_update_failure = true;
 		}
 
 		/* Updating HW mode list */
@@ -5434,8 +5500,17 @@ static QDF_STATUS wma_update_hw_mode_list(t_wma_handle *wma_handle)
 				       sbs_mode);
 	}
 
+	/* overwrite phy_capability which we got from service ready event */
+	if (!supported_band_update_failure) {
+		WMA_LOGD("%s: updating supported band from old[%d] to new[%d]",
+			 __func__, wma_handle->phy_capability,
+			 new_supported_band);
+		wma_handle->phy_capability = new_supported_band;
+	}
+
 	if (QDF_STATUS_SUCCESS !=
-	policy_mgr_update_hw_mode_list(wma_handle->psoc, phy_caps))
+			policy_mgr_update_hw_mode_list(wma_handle->psoc,
+						       phy_caps))
 		WMA_LOGE("%s: failed to update policy manager", __func__);
 	wma_dump_dbs_hw_mode(wma_handle);
 	return QDF_STATUS_SUCCESS;
