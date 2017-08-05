@@ -637,7 +637,7 @@ void wlan_hdd_one_connection_scenario(struct hdd_context *hdd_ctx)
 	QDF_STATUS ret;
 	struct policy_mgr_sme_cbacks sme_cbacks;
 
-	sme_cbacks.sme_get_valid_channels = sme_get_cfg_valid_channels;
+	sme_cbacks.sme_get_valid_channels = sme_get_valid_channels;
 	sme_cbacks.sme_get_nss_for_vdev = sme_get_vdev_type_nss;
 	/* flush the entire table first */
 	ret = policy_mgr_psoc_enable(hdd_ctx->hdd_psoc);
@@ -697,7 +697,7 @@ void wlan_hdd_two_connections_scenario(struct hdd_context *hdd_ctx,
 		sub_type < PM_MAX_NUM_OF_MODE; sub_type++) {
 		type = wlan_hdd_valid_type_of_persona(sub_type);
 
-		sme_cbacks.sme_get_valid_channels = sme_get_cfg_valid_channels;
+		sme_cbacks.sme_get_valid_channels = sme_get_valid_channels;
 		sme_cbacks.sme_get_nss_for_vdev = sme_get_vdev_type_nss;
 		/* flush the entire table first */
 		ret = policy_mgr_psoc_enable(hdd_ctx->hdd_psoc);
@@ -734,7 +734,8 @@ void wlan_hdd_two_connections_scenario(struct hdd_context *hdd_ctx,
 			pcl_len = 0;
 			pcl_type = policy_mgr_get_pcl_from_second_conn_table(
 				second_index, next_sub_type, system_pref,
-				policy_mgr_is_hw_dbs_capable(hdd_ctx->hdd_psoc));
+				policy_mgr_is_hw_dbs_capable(
+					hdd_ctx->hdd_psoc));
 			/* check PCL for second connection is correct or no */
 			policy_mgr_get_pcl(hdd_ctx->hdd_psoc,
 				next_sub_type, pcl, &pcl_len,
@@ -802,7 +803,7 @@ void wlan_hdd_three_connections_scenario(struct hdd_context *hdd_ctx,
 
 		type_1 = wlan_hdd_valid_type_of_persona(sub_type_1);
 
-		sme_cbacks.sme_get_valid_channels = sme_get_cfg_valid_channels;
+		sme_cbacks.sme_get_valid_channels = sme_get_valid_channels;
 		sme_cbacks.sme_get_nss_for_vdev = sme_get_vdev_type_nss;
 		/* flush the entire table first */
 		ret = policy_mgr_psoc_enable(hdd_ctx->hdd_psoc);

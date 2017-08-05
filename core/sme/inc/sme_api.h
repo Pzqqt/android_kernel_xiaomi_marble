@@ -1682,4 +1682,17 @@ QDF_STATUS sme_get_chain_rssi(tHalHandle hal,
 			      struct get_chain_rssi_req_params *input,
 			      get_chain_rssi_callback callback,
 			      void *context);
+
+/**
+ * sme_get_valid_channels() - sme api to get valid channels for
+ * current regulatory domain
+ * @chan_list: list of the valid channels
+ * @list_len: length of the channel list
+ *
+ * This function will get valid channels for current regulatory
+ * domain
+ *
+ * Return: QDF_STATUS_SUCCESS or non-zero on failure
+ */
+QDF_STATUS sme_get_valid_channels(uint8_t *chan_list, uint32_t *list_len);
 #endif /* #if !defined( __SME_API_H ) */

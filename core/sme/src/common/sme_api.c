@@ -1318,6 +1318,24 @@ QDF_STATUS sme_hdd_ready_ind(tHalHandle hHal)
 	return status;
 }
 
+QDF_STATUS sme_get_valid_channels(uint8_t *chan_list, uint32_t *list_len)
+{
+	tpAniSirGlobal mac_ctx = sme_get_mac_context();
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (NULL == mac_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			FL("Invalid MAC context"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (eSIR_SUCCESS != wlan_cfg_get_str(mac_ctx,
+			WNI_CFG_VALID_CHANNEL_LIST, chan_list, list_len))
+		status = QDF_STATUS_E_INVAL;
+
+	return status;
+}
+
 /*--------------------------------------------------------------------------
 
    \brief sme_start() - Put all SME modules at ready state.
@@ -1346,7 +1364,7 @@ QDF_STATUS sme_start(tHalHandle hHal)
 			break;
 		}
 		sme_cbacks.sme_get_nss_for_vdev = sme_get_vdev_type_nss;
-		sme_cbacks.sme_get_valid_channels = sme_get_cfg_valid_channels;
+		sme_cbacks.sme_get_valid_channels = sme_get_valid_channels;
 		sme_cbacks.sme_nss_update_request = sme_nss_update_request;
 		sme_cbacks.sme_pdev_set_hw_mode = sme_pdev_set_hw_mode;
 		sme_cbacks.sme_pdev_set_pcl = sme_pdev_set_pcl;
