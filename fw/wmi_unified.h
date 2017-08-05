@@ -7951,12 +7951,24 @@ typedef struct {
      */
     A_UINT32 ext_csa_switch_count_offset; /* units = bytes */
 
+    /** Specify when to send the CSA switch count status from FW to host.
+     * See WMI_CSA_EVENT_BMAP* below for more information.
+     * E.g. if CSA switch count event is needed to be sent when the switch count
+     * is 0, 1, 4 and 5, set the bitmap to (0X80000033)
+     */
+    A_UINT32 csa_event_bitmap;
+
 /*
  * The TLVs follows:
  *    wmi_bcn_prb_info bcn_prb_info; <-- beacon probe capabilities and IEs
  *    A_UINT8  data[]; <-- Variable length data
  */
 } wmi_bcn_tmpl_cmd_fixed_param;
+
+#define WMI_CSA_EVENT_BMAP_VALID_MASK           0X80000000  /* Follow bitmap for sending the CSA switch count event */
+#define WMI_CSA_EVENT_BMAP_SWITCH_COUNT_ZERO    0           /* Send only when the switch count becomes zero, added for backward compatibility
+                                                            Same can also be achieved by setting bitmap to 0X80000001 */
+#define WMI_CSA_EVENT_BMAP_ALL                  0XFFFFFFFF  /* Send CSA switch count event for every update to switch count */
 
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_prb_tmpl_cmd_fixed_param */
