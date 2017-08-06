@@ -8787,6 +8787,7 @@ static void wlan_hdd_p2p_lo_event_callback(void *context_ptr,
 	hdd_context_t *hdd_ctx = (hdd_context_t *)context_ptr;
 	struct sir_p2p_lo_event *evt = event_ptr;
 	struct sk_buff *vendor_event;
+	hdd_adapter_t *adapter;
 
 	ENTER();
 
@@ -8795,9 +8796,16 @@ static void wlan_hdd_p2p_lo_event_callback(void *context_ptr,
 		return;
 	}
 
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, evt->vdev_id);
+	if (!adapter) {
+		hdd_err("Cannot find adapter by vdev_id = %d",
+				evt->vdev_id);
+		return;
+	}
+
 	vendor_event =
 		cfg80211_vendor_event_alloc(hdd_ctx->wiphy,
-			NULL, sizeof(uint32_t) + NLMSG_HDRLEN,
+			&(adapter->wdev), sizeof(uint32_t) + NLMSG_HDRLEN,
 			QCA_NL80211_VENDOR_SUBCMD_P2P_LO_EVENT_INDEX,
 			GFP_KERNEL);
 
@@ -8815,6 +8823,8 @@ static void wlan_hdd_p2p_lo_event_callback(void *context_ptr,
 	}
 
 	cfg80211_vendor_event(vendor_event, GFP_KERNEL);
+	hdd_debug("Sent P2P_LISTEN_OFFLOAD_STOP event for vdev_id = %d",
+			evt->vdev_id);
 }
 
 /**
