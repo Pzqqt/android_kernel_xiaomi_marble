@@ -211,7 +211,7 @@ static int __wlan_hdd_cfg80211_get_fw_mem_dump(struct wiphy *wiphy,
 
 	if (!hdd_ctx->fw_mem_dump_enabled) {
 		hdd_notice("FW memory dump not supported by this FW");
-		return -ENOTSUPP;
+		return -EOPNOTSUPP;
 	}
 	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	if (!qdf_ctx) {
