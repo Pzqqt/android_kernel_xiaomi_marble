@@ -252,4 +252,6 @@ int omac1_aes_128(const uint8_t *key, const uint8_t *data,
 				size_t data_len, uint8_t *mac);
 int omac1_aes_256(const uint8_t *key, const uint8_t *data,
 				size_t data_len, uint8_t *mac);
+int omac1_aes_vector(const uint8_t *key, size_t key_len, size_t num_elem,
+		     const uint8_t *addr[], const size_t *len, uint8_t *mac);
 #endif /* WLAN_CRYPTO_AES_I_H */

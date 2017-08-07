@@ -24,6 +24,7 @@
 #define _WLAN_CRYPTO_GLOBAL_DEF_H_
 
 #include <wlan_cmn.h>
+#include "wlan_crypto_fils_def.h"
 
 #define WLAN_CRYPTO_TID_SIZE         (17)
 #define WLAN_CRYPTO_KEYBUF_SIZE      (32)
@@ -100,7 +101,8 @@ typedef enum wlan_crypto_cipher_type {
 	WLAN_CRYPTO_CIPHER_AES_GMAC     = 11,
 	WLAN_CRYPTO_CIPHER_AES_GMAC_256 = 12,
 	WLAN_CRYPTO_CIPHER_WAPI_GCM4    = 13,
-	WLAN_CRYPTO_CIPHER_NONE         = 14,
+	WLAN_CRYPTO_CIPHER_FILS_AEAD    = 14,
+	WLAN_CRYPTO_CIPHER_NONE         = 15,
 	WLAN_CRYPTO_CIPHER_MAX          = WLAN_CRYPTO_CIPHER_NONE,
 } wlan_crypto_cipher_type;
 
@@ -136,6 +138,7 @@ typedef enum wlan_crypto_cap {
 	WLAN_CRYPTO_CAP_PMF              = 14,
 	WLAN_CRYPTO_CAP_PMF_OFFLOAD      = 15,
 	WLAN_CRYPTO_CAP_PN_TID_BASED     = 16,
+	WLAN_CRYPTO_CAP_FILS_AEAD        = 17,
 } wlan_crypto_cap;
 
 typedef enum wlan_crypto_rsn_cap {
@@ -248,6 +251,8 @@ struct wlan_crypto_req_key {
 	uint8_t    txiv[WLAN_CRYPTO_WAPI_IV_SIZE];
 	/* wapi key rx iv */
 	uint8_t    recviv[WLAN_CRYPTO_WAPI_IV_SIZE];
+	/* FILS AEAD data */
+	struct     wlan_crypto_fils_aad_key   filsaad;
 };
 
 /**

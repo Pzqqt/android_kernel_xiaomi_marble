@@ -441,4 +441,26 @@ bool wlan_crypto_vdev_has_auth_mode(struct wlan_objmgr_vdev *vdev,
  */
 bool wlan_crypto_peer_has_auth_mode(struct wlan_objmgr_peer *peer,
 					wlan_crypto_auth_mode authvalue);
+
+/**
+ * wlan_crypto_get_peer_fils_aead - Get peer fils aead set flag
+ * @peer: Peer object
+ *
+ * This function returns the peer fils aead set flag value.
+ *
+ * Return: 1 for enabled, 0 for disabled
+ */
+uint8_t wlan_crypto_get_peer_fils_aead(struct wlan_objmgr_peer *peer);
+
+/**
+ * wlan_crypto_set_peer_fils_aead - Set peer fils aead set flag
+ * @peer: Peer object
+ * @value: Value to set the flag
+ *
+ * This function set the peer fils aead set flag once FILS AUTH received.
+ *
+ * Return: None
+ */
+void wlan_crypto_set_peer_fils_aead(
+			struct wlan_objmgr_peer *peer, uint8_t value);
 #endif /* end of _WLAN_CRYPTO_GLOBAL_API_H_ */

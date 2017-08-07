@@ -34,6 +34,7 @@
 #include "wlan_crypto_def_i.h"
 #include "wlan_crypto_main_i.h"
 #include "wlan_crypto_obj_mgr_i.h"
+#include "wlan_crypto_fils_api.h"
 
 
 extern const struct wlan_crypto_cipher *wep_register(void);
@@ -72,6 +73,10 @@ static QDF_STATUS wlan_crypto_register_all_ciphers(
 	if (HAS_CIPHER_CAP(crypto_param, WLAN_CRYPTO_CAP_WAPI_SMS4)) {
 		wlan_crypto_cipher_ops[WLAN_CRYPTO_CIPHER_WAPI_SMS4]
 							= wapi_register();
+	}
+	if (HAS_CIPHER_CAP(crypto_param, WLAN_CRYPTO_CAP_FILS_AEAD)) {
+		wlan_crypto_cipher_ops[WLAN_CRYPTO_CIPHER_FILS_AEAD]
+							= fils_register();
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -124,6 +129,7 @@ static QDF_STATUS wlan_crypto_vdev_obj_create_handler(
 		SET_CIPHER_CAP(crypto_param, WLAN_CRYPTO_CAP_CKIP);
 	if (wlan_pdev_nif_fw_cap_get(pdev, WLAN_SOC_C_WAPI))
 		SET_CIPHER_CAP(crypto_param, WLAN_CRYPTO_CAP_WAPI_SMS4);
+	SET_CIPHER_CAP(crypto_param, WLAN_CRYPTO_CAP_FILS_AEAD);
 	wlan_pdev_obj_unlock(pdev);
 	/* update the crypto cipher table based on the fw caps*/
 	/* update the fw_caps into ciphercaps then attach to objmgr*/

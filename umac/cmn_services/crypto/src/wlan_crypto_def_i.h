@@ -341,6 +341,8 @@ static inline void wlan_crypto_put_be64(u8 *a, u64 val)
 				 (_c == WLAN_CRYPTO_CIPHER_AES_GMAC) || \
 				 (_c == WLAN_CRYPTO_CIPHER_AES_GMAC_256))
 
+#define IS_FILS_CIPHER(_c)      ((_c) == WLAN_CRYPTO_CIPHER_FILS_AEAD)
+
 #define MGMT_CIPHER_IS_CMAC(_param)    \
 		HAS_MGMT_CIPHER((_param), WLAN_CRYPTO_CIPHER_AES_CMAC)
 #define MGMT_CIPHER_IS_CMAC256(_param) \
@@ -388,6 +390,7 @@ struct wlan_crypto_comp_priv {
 	uint32_t igtk_key_type;
 	uint8_t def_tx_keyid;
 	uint8_t def_igtk_tx_keyid;
+	uint8_t fils_aead_set;
 };
 
 

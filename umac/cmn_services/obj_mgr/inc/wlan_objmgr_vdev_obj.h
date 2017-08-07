@@ -150,6 +150,8 @@
 #define WLAN_VDEV_FEXT_SON_SPL_RPT          0x00800000
 /* SON IE update in MGMT frame */
 #define WLAN_VDEV_FEXT_SON_INFO_UPDATE      0x01000000
+/* FILS AEAD in MGMT frame */
+#define WLAN_VDEV_FEXT_FILS                 0x02000000
 
 /* VDEV OP flags  */
   /* if the vap destroyed by user */
