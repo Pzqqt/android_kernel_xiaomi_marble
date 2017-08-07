@@ -2157,13 +2157,6 @@ static void wma_wow_parse_data_pkt(struct sir_vdev_wow_stats *stats,
 		break;
 	default:
 		stats->ucast++;
-
-		/* mcast ipv4/6 in ucast mac counts for both */
-		if (wma_pkt_is_tcpv4_mcast(data, length))
-			stats->ipv4_mcast++;
-		if (wma_pkt_is_tcpv6_mcast(data, length))
-			stats->ipv6_mcast++;
-
 		break;
 	}
 
