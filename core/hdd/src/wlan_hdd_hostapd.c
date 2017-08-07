@@ -7307,7 +7307,8 @@ static int wlan_hdd_setup_driver_overrides(hdd_adapter_t *ap_adapter)
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(ap_adapter);
 
 	if (ap_adapter->device_mode == QDF_SAP_MODE &&
-				hdd_ctx->config->force_sap_acs)
+				hdd_ctx->config->force_sap_acs &&
+				!hdd_ctx->config->vendor_acs_support)
 		goto setup_acs_overrides;
 
 	/* Fixed channel 11AC override:

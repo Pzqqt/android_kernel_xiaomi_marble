@@ -1507,6 +1507,59 @@ int wlan_hdd_sap_cfg_dfs_override(hdd_adapter_t *adapter)
 }
 
 /**
+ * wlan_hdd_reset_force_acs_chan_range: Set acs channel ranges as per force ACS
+ * configuration.
+ * @hdd_ctx: pointer to hdd context
+ * @sap_config: pointer to SAP config struct
+ *
+ * Return: 0 if success else error code
+ */
+static int wlan_hdd_reset_force_acs_chan_range(hdd_context_t *hdd_ctx,
+						tsap_Config_t *sap_config)
+{
+	bool is_dfs_mode_enabled = false;
+	uint32_t i, num_channels = 0;
+	uint8_t channels[WNI_CFG_VALID_CHANNEL_LIST_LEN] = {0};
+
+	if (hdd_ctx->config->force_sap_acs_st_ch >
+			hdd_ctx->config->force_sap_acs_end_ch) {
+		hdd_err("invalid configuration for start and end channel");
+		return -EINVAL;
+	}
+	if (hdd_ctx->config->enableDFSMasterCap)
+		is_dfs_mode_enabled = true;
+
+	sap_config->acs_cfg.start_ch =
+			hdd_ctx->config->force_sap_acs_st_ch;
+	sap_config->acs_cfg.end_ch =
+			hdd_ctx->config->force_sap_acs_end_ch;
+
+	for (i = sap_config->acs_cfg.start_ch;
+			i <= sap_config->acs_cfg.end_ch; i++) {
+		if ((CHANNEL_STATE_ENABLE ==
+		     wlan_reg_get_channel_state(hdd_ctx->hdd_pdev, i)) ||
+		    (is_dfs_mode_enabled &&
+		     CHANNEL_STATE_DFS ==
+		     wlan_reg_get_channel_state(hdd_ctx->hdd_pdev, i))) {
+			channels[num_channels] = i;
+			num_channels++;
+		}
+	}
+	if (sap_config->acs_cfg.ch_list)
+		qdf_mem_free(sap_config->acs_cfg.ch_list);
+
+	sap_config->acs_cfg.ch_list = qdf_mem_malloc(num_channels);
+	if (!sap_config->acs_cfg.ch_list) {
+		hdd_err("ACS config alloc fail");
+		return -ENOMEM;
+	}
+	qdf_mem_copy(sap_config->acs_cfg.ch_list, channels, num_channels);
+	sap_config->acs_cfg.ch_list_count = num_channels;
+
+	return 0;
+}
+
+/**
  * wlan_hdd_set_acs_ch_range : Start ACS channel range values
  * @sap_cfg: pointer to SAP config struct
  *
@@ -1515,7 +1568,6 @@ int wlan_hdd_sap_cfg_dfs_override(hdd_adapter_t *adapter)
  *
  * Return: None
  */
-
 static void wlan_hdd_set_acs_ch_range(tsap_Config_t *sap_cfg, bool ht_enabled,
 							bool vht_enabled)
 {
@@ -1544,7 +1596,6 @@ static void wlan_hdd_set_acs_ch_range(tsap_Config_t *sap_cfg, bool ht_enabled,
 
 	if (vht_enabled)
 		sap_cfg->acs_cfg.hw_mode = eCSR_DOT11_MODE_11ac;
-
 
 	/* Parse ACS Chan list from hostapd */
 	if (!sap_cfg->acs_cfg.ch_list)
@@ -2177,6 +2228,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_ACS_MAX + 1];
 	bool ht_enabled, ht40_enabled, vht_enabled;
 	uint8_t ch_width, hw_mode;
+	QDF_STATUS qdf_status;
 
 	/* ***Note*** Donot set SME config related to ACS operation here because
 	 * ACS operation is not synchronouse and ACS for Second AP may come when
@@ -2325,12 +2377,12 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	hdd_debug("get pcl for DO_ACS vendor command");
 
 	/* consult policy manager to get PCL */
-	status = policy_mgr_get_pcl(hdd_ctx->hdd_psoc, PM_SAP_MODE,
+	qdf_status = policy_mgr_get_pcl(hdd_ctx->hdd_psoc, PM_SAP_MODE,
 				sap_config->acs_cfg.pcl_channels,
 				&sap_config->acs_cfg.pcl_ch_count,
 				sap_config->acs_cfg.pcl_channels_weight_list,
 				QDF_MAX_NUM_CHAN);
-	if (QDF_STATUS_SUCCESS != status)
+	if (QDF_STATUS_SUCCESS != qdf_status)
 		hdd_err("Get PCL failed");
 
 	if (sap_config->acs_cfg.pcl_ch_count) {
@@ -2342,12 +2394,20 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 				  pcl_channels[i],
 				  sap_config->acs_cfg.
 				  pcl_channels_weight_list[i]);
-		}
+	}
 
 	wlan_hdd_set_acs_ch_range(sap_config, ht_enabled, vht_enabled);
-	/* ACS override for android */
+
+	if (hdd_ctx->config->force_sap_acs) {
+		hdd_debug("forcing SAP acs start and end channel");
+		status = wlan_hdd_reset_force_acs_chan_range(hdd_ctx,
+						sap_config);
+		if (status != 0)
+			goto out;
+	}
 
 	sap_config->acs_cfg.band = hw_mode;
+	/* ACS override for android */
 	if (hdd_ctx->config->sap_p2p_11ac_override && ht_enabled &&
 	    !hdd_ctx->config->sap_force_11n_for_11ac) {
 		hdd_debug("ACS Config override for 11AC vhtChannelWidth %d",
@@ -2365,7 +2425,6 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 			hdd_debug("resetting to 40Mhz in 2.4Ghz");
 		}
 	}
-
 
 	hdd_debug("ACS Config for %s: HW_MODE: %d ACS_BW: %d HT: %d VHT: %d START_CH: %d END_CH: %d band %d",
 		adapter->dev->name, sap_config->acs_cfg.hw_mode,
@@ -9878,7 +9937,6 @@ static int hdd_update_acs_channel(hdd_adapter_t *adapter, uint8_t reason,
 	default:
 		hdd_info("invalid reason for timer invoke");
 	}
-	qdf_mem_free(channel_list);
 	EXIT();
 	return status;
 }
@@ -9939,6 +9997,10 @@ static int hdd_parse_vendor_acs_chan_config(struct hdd_vendor_chan_info
 
 	channel_list = qdf_mem_malloc(sizeof(struct hdd_vendor_chan_info) *
 					(*channel_cnt));
+	if (NULL == channel_list) {
+		hdd_err("Could not allocate for channel_list");
+		return -ENOMEM;
+	}
 
 	i = 0;
 	nla_for_each_nested(curr_attr, tb[SET_CHAN_CHAN_LIST], rem) {
@@ -10020,6 +10082,7 @@ static int __wlan_hdd_cfg80211_update_vendor_channel(struct wiphy *wiphy,
 	struct hdd_vendor_chan_info *channel_list = NULL;
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(wdev->netdev);
 	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	struct hdd_vendor_chan_info *channel_list_ptr;
 
 	ENTER();
 
@@ -10041,6 +10104,7 @@ static int __wlan_hdd_cfg80211_update_vendor_channel(struct wiphy *wiphy,
 
 	ret_val = hdd_parse_vendor_acs_chan_config(&channel_list, &reason,
 					&channel_cnt, data, data_len);
+	channel_list_ptr = channel_list;
 	if (ret_val)
 		return ret_val;
 
@@ -10051,16 +10115,27 @@ static int __wlan_hdd_cfg80211_update_vendor_channel(struct wiphy *wiphy,
 					channel_list->chan_width);
 		if (qdf_status == QDF_STATUS_SUCCESS)
 			break;
+		else if (channel_cnt == 1) {
+			hdd_err("invalid channel %d received from app",
+				channel_list->pri_ch);
+			channel_list->pri_ch = 0;
+			break;
+		}
+
 		channel_cnt--;
 		channel_list++;
 	}
+	hdd_debug("received primary channel as %d", channel_list->pri_ch);
 	if ((channel_cnt <= 0) || !channel_list) {
-		hdd_err("no available channel/chanlist %p", channel_list);
+		hdd_err("no available channel/chanlist %d/%p", channel_cnt,
+			channel_list);
+		qdf_mem_free(channel_list_ptr);
 		return -EINVAL;
 	}
 
 	qdf_status = hdd_update_acs_channel(adapter, reason,
 				      channel_cnt, channel_list);
+	qdf_mem_free(channel_list_ptr);
 	return qdf_status_to_os_return(qdf_status);
 }
 
