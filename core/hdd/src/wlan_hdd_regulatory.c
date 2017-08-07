@@ -213,6 +213,7 @@ static void reg_program_config_vars(hdd_context_t *hdd_ctx,
 				    struct reg_config_vars *config_vars)
 {
 	config_vars->enable_11d_support = hdd_ctx->config->Is11dSupportEnabled;
+	config_vars->scan_11d_interval = hdd_ctx->config->scan_11d_interval;
 	config_vars->userspace_ctry_priority =
 		hdd_ctx->config->fSupplicantCountryCodeHasPriority;
 	config_vars->dfs_enabled = hdd_ctx->config->enableDFSChnlScan;

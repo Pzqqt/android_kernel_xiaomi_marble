@@ -11518,6 +11518,29 @@ enum hdd_external_acs_freq_band {
 #define CFG_DTIM_1CHRX_ENABLE_DEFAULT   (1)
 
 /*
+ * <ini>
+ * scan_11d_interval - 11d scan interval in ms
+ * @Min: 1 sec
+ * @Max: 10 hr
+ * @Default: 1 hr
+ *
+ * This ini sets the 11d scan interval in FW
+ *
+ *
+ *
+ * Supported Feature: STA
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+
+#define CFG_SCAN_11D_INTERVAL_NAME      "scan_11d_interval"
+#define CFG_SCAN_11D_INTERVAL_DEFAULT   (3600000)
+#define CFG_SCAN_11D_INTERVAL_MIN       (1000)
+#define CFG_SCAN_11D_INTERVAL_MAX       (36000000)
+
+/*
  * Type declarations
  */
 
@@ -12305,6 +12328,7 @@ struct hdd_config {
 	bool enable_dtim_1chrx;
 	int8_t rssi_thresh_offset_5g;
 	bool is_ndi_mac_randomized;
+	uint32_t scan_11d_interval;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))
