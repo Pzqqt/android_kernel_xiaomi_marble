@@ -64,6 +64,7 @@ struct wlan_regulatory_psoc_priv_obj {
 	uint8_t vdev_id_for_11d_scan;
 	uint8_t master_vdev_cnt;
 	uint8_t vdev_cnt_11d;
+	uint32_t scan_11d_interval;
 	uint8_t vdev_ids_11d[MAX_STA_VDEV_CNT];
 	bool user_ctry_priority;
 	bool user_ctry_set;

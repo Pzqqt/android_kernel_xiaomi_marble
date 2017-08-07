@@ -40,7 +40,6 @@
 #define CHAN_13_CENT_FREQ 2472
 #define MAX_PWR_FCC_CHAN_13 2
 #define CHAN_144_CENT_FREQ 5720
-#define SCAN_11D_PERIOD_MS 360000
 
 #define IS_VALID_PSOC_REG_OBJ(psoc_priv_obj) (NULL != psoc_priv_obj)
 #define IS_VALID_PDEV_REG_OBJ(pdev_priv_obj) (NULL != pdev_priv_obj)
@@ -2354,7 +2353,7 @@ static QDF_STATUS reg_send_11d_msg_cbk(struct scheduler_msg *msg)
 
 	if (psoc_priv_obj->enable_11d_supp) {
 		start_req.vdev_id = psoc_priv_obj->vdev_id_for_11d_scan;
-		start_req.scan_period_msec = SCAN_11D_PERIOD_MS;
+		start_req.scan_period_msec = psoc_priv_obj->scan_11d_interval;
 		start_req.start_interval_msec = 0;
 		reg_debug("sending start msg");
 		tx_ops->start_11d_scan(psoc, &start_req);
@@ -3252,6 +3251,8 @@ QDF_STATUS reg_set_config_vars(struct wlan_objmgr_psoc *psoc,
 
 	psoc_priv_obj->enable_11d_supp_original =
 		config_vars.enable_11d_support;
+	psoc_priv_obj->scan_11d_interval =
+		config_vars.scan_11d_interval;
 	psoc_priv_obj->user_ctry_priority =
 		config_vars.userspace_ctry_priority;
 	psoc_priv_obj->dfs_enabled =

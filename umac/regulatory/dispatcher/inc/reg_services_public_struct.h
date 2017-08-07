@@ -738,6 +738,7 @@ enum band_info {
 /**
  * struct reg_config_vars
  * @enable_11d_support: enable 11d support
+ * @scan_11d_interval: 11d scan interval in ms
  * @userspace_ctry_priority: user priority
  * @band_capability: band capability
  * @dfs_disable: dfs disabled
@@ -745,6 +746,7 @@ enum band_info {
  */
 struct reg_config_vars {
 	uint32_t enable_11d_support;
+	uint32_t scan_11d_interval;
 	uint32_t userspace_ctry_priority;
 	enum band_info band_capability;
 	uint32_t dfs_enabled;
