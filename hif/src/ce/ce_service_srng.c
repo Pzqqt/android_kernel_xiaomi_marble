@@ -625,6 +625,35 @@ static void ce_srng_src_ring_setup(struct hif_softc *scn, uint32_t ce_id,
 			&ring_params);
 }
 
+/**
+ * ce_srng_initialize_dest_timer_interrupt_war() - war initialization
+ * @dest_ring: ring being initialized
+ * @ring_params: pointer to initialized parameters
+ *
+ * For Napier & Hawkeye v1, the status ring timer interrupts do not work
+ * As a work arround host configures the destination rings to be a proxy for
+ * work needing to be done.
+ *
+ * The interrupts are setup such that if the destination ring is less than fully
+ * posted, there is likely undone work for the status ring that the host should
+ * process.
+ *
+ * There is a timing bug in srng based copy engines such that a fully posted
+ * srng based copy engine has 2 empty entries instead of just one.  The copy
+ * engine data sturctures work with 1 empty entry, but the software frequently
+ * fails to post the last entry due to the race condition.
+ */
+static void ce_srng_initialize_dest_timer_interrupt_war(
+		struct CE_ring_state *dest_ring,
+		struct hal_srng_params *ring_params) {
+	int num_buffers_when_fully_posted = dest_ring->nentries - 2;
+
+	ring_params->low_threshold = num_buffers_when_fully_posted - 1;
+	ring_params->intr_timer_thres_us = 1024;
+	ring_params->intr_batch_cntr_thres_entries = 0;
+	ring_params->flags |= HAL_SRNG_LOW_THRES_INTR_ENABLE;
+}
+
 static void ce_srng_dest_ring_setup(struct hif_softc *scn, uint32_t ce_id,
 				struct CE_ring_state *dest_ring,
 				struct CE_attr *attr)
@@ -642,11 +671,8 @@ static void ce_srng_dest_ring_setup(struct hif_softc *scn, uint32_t ce_id,
 	if (!(CE_ATTR_DISABLE_INTR & attr->flags)) {
 		ce_srng_msi_ring_params_setup(scn, ce_id, &ring_params);
 		if (status_ring_timer_thresh_work_arround) {
-			/* hw bug work arround*/
-			ring_params.low_threshold = dest_ring->nentries - 1;
-			ring_params.intr_timer_thres_us = 1024;
-			ring_params.intr_batch_cntr_thres_entries = 0;
-			ring_params.flags |= HAL_SRNG_LOW_THRES_INTR_ENABLE;
+			ce_srng_initialize_dest_timer_interrupt_war(
+					dest_ring, &ring_params);
 		} else {
 			/* normal behavior for future chips */
 			ring_params.low_threshold = dest_ring->nentries >> 3;

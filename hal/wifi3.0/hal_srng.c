@@ -882,6 +882,7 @@ static inline void hal_srng_src_hw_init(struct hal_soc *hal,
 	}
 	SRNG_SRC_REG_WRITE(srng, CONSUMER_INT_SETUP_IX0, reg_val);
 
+	reg_val = 0;
 	if (srng->flags & HAL_SRNG_LOW_THRES_INTR_ENABLE) {
 		reg_val |= SRNG_SM(SRNG_SRC_FLD(CONSUMER_INT_SETUP_IX1,
 			LOW_THRESHOLD), srng->u.src_ring.low_threshold);
