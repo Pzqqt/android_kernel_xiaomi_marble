@@ -12122,6 +12122,12 @@ static int __iw_set_packet_filter_params(struct net_device *dev,
 		return -EINVAL;
 	}
 
+	if (adapter->device_mode != QDF_STA_MODE) {
+		hdd_err("Packet filter not supported for this mode :%d",
+			adapter->device_mode);
+		return -ENOTSUPP;
+	}
+
 	if (!hdd_conn_is_connected(WLAN_HDD_GET_STATION_CTX_PTR(adapter))) {
 		hdd_err("Packet filter not supported in disconnected state");
 		return -ENOTSUPP;
