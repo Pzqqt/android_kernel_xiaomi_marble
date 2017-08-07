@@ -411,6 +411,7 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 #endif
 
 uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t nbuf);
+
 #define DP_RX_LIST_APPEND(head, tail, elem) \
 	do {                                                \
 		if (!(head)) {                              \

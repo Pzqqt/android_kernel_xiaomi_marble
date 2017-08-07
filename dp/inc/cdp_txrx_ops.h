@@ -627,6 +627,9 @@ struct ol_if_ops {
 
 	int (*get_dp_cfg_param)(void *ol_soc_handle, enum cdp_cfg_param_type param_num);
 
+	void (*rx_mic_error)(void *ol_soc_handle,
+			 uint16_t vdev_id, void *wh);
+
 	/* TODO: Add any other control path calls required to OL_IF/WMA layer */
 };
 

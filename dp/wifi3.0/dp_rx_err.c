@@ -599,6 +599,75 @@ fail:
 }
 
 /**
+ * dp_rx_process_mic_error(): Function to pass mic error indication to umac
+ * @soc: DP SOC handle
+ * @rx_desc : pointer to the sw rx descriptor
+ * @head: pointer to head of rx descriptors to be added to free list
+ * @tail: pointer to tail of rx descriptors to be added to free list
+ *
+ * return: void
+ */
+static void
+dp_rx_process_mic_error(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
+			union dp_rx_desc_list_elem_t **head,
+			union dp_rx_desc_list_elem_t **tail)
+{
+	struct dp_vdev *vdev = NULL;
+	struct dp_pdev *pdev = NULL;
+	struct ol_if_ops *tops = NULL;
+	qdf_nbuf_t nbuf;
+	struct ieee80211_frame *wh;
+	uint8_t *rx_pkt_hdr;
+	uint8_t *rx_tlv_hdr;
+	uint8_t i;
+
+	nbuf = rx_desc->nbuf;
+	qdf_nbuf_unmap_single(soc->osdev, nbuf, QDF_DMA_BIDIRECTIONAL);
+	rx_tlv_hdr = qdf_nbuf_data(nbuf);
+
+	if (!hal_rx_msdu_end_first_msdu_get(rx_tlv_hdr))
+		goto fail;
+
+	rx_pkt_hdr = hal_rx_pkt_hdr_get(qdf_nbuf_data(nbuf));
+	wh = (struct ieee80211_frame *)rx_pkt_hdr;
+
+	for (i = 0; i < MAX_PDEV_CNT; i++) {
+		pdev = soc->pdev_list[i];
+		if (!pdev) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+					"PDEV not found");
+			continue;
+		}
+
+		TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+			if (qdf_mem_cmp(wh->i_addr1, vdev->mac_addr.raw,
+						DP_MAC_ADDR_LEN) == 0) {
+				goto out;
+			}
+		}
+	}
+
+	if (!vdev) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"VDEV not found");
+		goto fail;
+	}
+
+out:
+	tops = pdev->soc->cdp_soc.ol_ops;
+	if (tops->rx_mic_error)
+		tops->rx_mic_error(pdev->osif_pdev, vdev->vdev_id, wh);
+
+fail:
+	qdf_nbuf_free(rx_desc->nbuf);
+	dp_rx_add_to_free_desc_list(&head[rx_desc->pool_id],
+				&tail[rx_desc->pool_id], rx_desc);
+
+	return;
+}
+
+
+/**
  * dp_rx_link_desc_return() - Return a MPDU link descriptor to HW
  *			      (WBM), following error handling
  *
@@ -949,6 +1018,20 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 								quota);
 					continue;
 
+				case HAL_RXDMA_ERR_TKIP_MIC:
+					dp_rx_process_mic_error(soc,
+							rx_desc,
+							&head[pool_id],
+							&tail[pool_id]);
+					 rx_bufs_used[pool_id]++;
+					continue;
+
+				case HAL_RXDMA_ERR_DECRYPT:
+					QDF_TRACE(QDF_MODULE_ID_DP,
+						QDF_TRACE_LEVEL_ERROR,
+					"Packet received with Decrypt error");
+					break;
+
 				default:
 					QDF_TRACE(QDF_MODULE_ID_DP,
 							QDF_TRACE_LEVEL_ERROR,
@@ -1088,6 +1171,11 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	} while (buf_info.paddr && msdu_cnt);
 
 	DP_STATS_INC(soc, rx.err.rxdma_error[rxdma_error_code], 1);
+
+	if (rxdma_error_code == HAL_RXDMA_ERR_DECRYPT) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			"Packet received with Decrypt error");
+	}
 
 	return rx_bufs_used;
 }
