@@ -994,7 +994,7 @@ static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  "%s Tx_desc prepare Fail vdev %p queue %d\n",
 			  __func__, vdev, tx_q->desc_pool_id);
-		goto fail_return;
+		return nbuf;
 	}
 
 	if (qdf_unlikely(hal_srng_access_start(soc->hal_soc, hal_srng))) {
