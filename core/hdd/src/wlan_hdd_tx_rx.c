@@ -1243,7 +1243,8 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 		}
 
 		/* hold configurable wakelock for unicast traffic */
-		if (pHddCtx->config->rx_wakelock_timeout)
+		if (pHddCtx->config->rx_wakelock_timeout &&
+				pHddStaCtx->conn_info.uIsAuthenticated)
 			wake_lock = hdd_is_rx_wake_lock_needed(skb);
 
 		if (wake_lock) {
