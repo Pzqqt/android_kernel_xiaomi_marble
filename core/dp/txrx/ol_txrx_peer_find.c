@@ -422,14 +422,7 @@ static inline void ol_txrx_peer_find_add_id(struct ol_txrx_pdev_t *pdev,
 	}
 
 	if (qdf_atomic_read(&peer->fw_create_pending) == 1) {
-		/*
-		 * First peer map event signifies successful peer
-		 * creation in firmware. Decrement the ref count
-		 * which was incremented when peer create command
-		 * was sent to firmware.
-		 */
 		qdf_atomic_set(&peer->fw_create_pending, 0);
-		OL_TXRX_PEER_UNREF_DELETE(peer);
 	}
 
 	qdf_spin_unlock(&pdev->peer_map_unmap_lock);
