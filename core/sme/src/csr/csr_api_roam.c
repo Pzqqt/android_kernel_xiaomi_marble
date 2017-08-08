@@ -667,17 +667,23 @@ scan_list_sort_error:
  * Return: QDF_STATUS enumeration
  */
 #ifdef QCA_WIFI_NAPIER_EMULATION
+#define SCAN_CHAN_LIST_5G_LEN 6
+#define SCAN_CHAN_LIST_2G_LEN 3
+static const uint8_t
+csr_scan_chan_list_5g[SCAN_CHAN_LIST_5G_LEN] = { 36, 44, 52, 56, 140, 149 };
+static const uint8_t
+csr_scan_chan_list_2g[SCAN_CHAN_LIST_2G_LEN] = { 1, 6, 11 };
 static QDF_STATUS csr_emu_chan_req(uint32_t channel)
 {
 	int i;
 	if (WLAN_REG_IS_24GHZ_CH(channel)) {
-		for (i = 0; i < QDF_ARRAY_SIZE(csr_start_ibss_channels24); i++) {
-			if (csr_start_ibss_channels24[i] == channel)
+		for (i = 0; i < QDF_ARRAY_SIZE(csr_scan_chan_list_2g); i++) {
+			if (csr_scan_chan_list_2g[i] == channel)
 				return QDF_STATUS_SUCCESS;
 		}
 	} else if (WLAN_REG_IS_5GHZ_CH(channel)) {
-		for (i = 0; i < QDF_ARRAY_SIZE(csr_start_ibss_channels50); i++) {
-			if (csr_start_ibss_channels50[i] == channel)
+		for (i = 0; i < QDF_ARRAY_SIZE(csr_scan_chan_list_5g); i++) {
+			if (csr_scan_chan_list_5g[i] == channel)
 				return QDF_STATUS_SUCCESS;
 		}
 	}
