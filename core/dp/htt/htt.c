@@ -463,6 +463,7 @@ htt_attach(struct htt_pdev_t *pdev, int desc_pool_size)
 
 	HTT_TX_MUTEX_INIT(&pdev->htt_tx_mutex);
 	HTT_TX_NBUF_QUEUE_MUTEX_INIT(pdev);
+	HTT_TX_MUTEX_INIT(&pdev->credit_mutex);
 
 	/* pre-allocate some HTC_PACKET objects */
 	for (i = 0; i < HTT_HTC_PKT_POOL_INIT_SIZE; i++) {
@@ -633,6 +634,7 @@ void htt_detach(htt_pdev_handle pdev)
 #ifdef ATH_11AC_TXCOMPACT
 	htt_htc_misc_pkt_pool_free(pdev);
 #endif
+	HTT_TX_MUTEX_DESTROY(&pdev->credit_mutex);
 	HTT_TX_MUTEX_DESTROY(&pdev->htt_tx_mutex);
 	HTT_TX_NBUF_QUEUE_MUTEX_DESTROY(pdev);
 	htt_rx_dbg_rxbuf_deinit(pdev);

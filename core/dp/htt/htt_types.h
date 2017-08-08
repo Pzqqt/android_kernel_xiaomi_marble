@@ -415,6 +415,7 @@ struct htt_pdev_t {
 				       qdf_nbuf_t msdu, uint16_t msdu_id);
 
 	HTT_TX_MUTEX_TYPE htt_tx_mutex;
+	HTT_TX_MUTEX_TYPE credit_mutex;
 
 	struct {
 		int htc_err_cnt;
