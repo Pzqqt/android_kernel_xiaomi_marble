@@ -1125,6 +1125,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 		wiphy->bands[HDD_NL80211_BAND_5GHZ];
 	uint32_t temp = 0;
 	uint32_t ch_width = eHT_CHANNEL_WIDTH_80MHZ;
+	uint32_t hw_rx_ldpc_enabled;
 
 	if (!band_5g) {
 		hdd_debug("5GHz band disabled, skipping capability population");
@@ -1197,11 +1198,12 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 		value = 0;
 	}
 
-	/* Set the LDPC capability */
-	if (value && !cfg->vht_rx_ldpc) {
+	/* Set HW RX LDPC capability */
+	hw_rx_ldpc_enabled = !!cfg->vht_rx_ldpc;
+	if (hw_rx_ldpc_enabled != value) {
 		status = sme_cfg_set_int(hdd_ctx->hHal,
 					 WNI_CFG_VHT_LDPC_CODING_CAP,
-					 cfg->vht_rx_ldpc);
+					 hw_rx_ldpc_enabled);
 
 		if (status == QDF_STATUS_E_FAILURE)
 			hdd_err("could not set VHT LDPC CODING CAP to CCM");

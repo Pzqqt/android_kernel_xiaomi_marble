@@ -6862,13 +6862,17 @@ static bool hdd_update_vht_cap_in_cfg(hdd_context_t *hdd_ctx)
 		hdd_err("Couldn't pass on WNI_CFG_VHT_TXSTBC to CFG");
 	}
 
+	/* first get HW RX LDPC capability */
 	if (sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_VHT_LDPC_CODING_CAP, &val) ==
 							QDF_STATUS_E_FAILURE) {
-		status &= false;
+		status = false;
 		hdd_err("Could not get WNI_CFG_VHT_LDPC_CODING_CAP");
 	}
+
+	/* enable RX LDPC only when both INI and HW are enabled */
 	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_VHT_LDPC_CODING_CAP,
-			config->enable_rx_ldpc & val) == QDF_STATUS_E_FAILURE) {
+				config->enable_rx_ldpc && val) ==
+			QDF_STATUS_E_FAILURE) {
 		status = false;
 		hdd_err("Couldn't pass on WNI_CFG_VHT_LDPC_CODING_CAP to CFG");
 	}

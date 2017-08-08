@@ -15512,6 +15512,17 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(tpAniSirGlobal pMac, uint32_t
 	pMsg->bssPersona = pParam->bssPersona;
 	pMsg->txLdpcIniFeatureEnabled = pMac->roam.configParam.tx_ldpc_enable;
 
+	/*
+	 * If RX LDPC has been disabled for 2.4GHz channels and enabled
+	 * for 5Ghz for STA like persona then here is how to handle
+	 * those cases (by now channel has been decided).
+	 */
+	if (eSIR_IBSS_MODE == pMsg->bssType ||
+		!policy_mgr_is_dbs_enable(pMac->psoc))
+		csr_set_ldpc_exception(pMac, pSession,
+				pMsg->channelId,
+				pMac->roam.configParam.rx_ldpc_enable);
+
 	qdf_mem_copy(&pMsg->vht_config,
 		     &pSession->vht_config,
 		     sizeof(pSession->vht_config));
@@ -15557,16 +15568,7 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(tpAniSirGlobal pMac, uint32_t
 	qdf_mem_copy(&pMsg->extendedRateSet,
 		     &pParam->extendedRateSet,
 		     sizeof(tSirMacRateSet));
-	/*
-	 * If RX LDPC has been disabled for 2.4GHz channels and enabled
-	 * for 5Ghz for STA like persona then here is how to handle
-	 * those cases (by now channel has been decided).
-	 */
-	if (eSIR_IBSS_MODE == pMsg->bssType ||
-		!policy_mgr_is_dbs_enable(pMac->psoc))
-		csr_set_ldpc_exception(pMac, pSession,
-				pMsg->channelId,
-				pMac->roam.configParam.rx_ldpc_enable);
+
 	if (IS_DOT11_MODE_HE(pMsg->dot11mode))
 		csr_start_bss_copy_he_cap(pMsg, pSession);
 
