@@ -5623,6 +5623,30 @@ enum hdd_link_speed_rpt_type {
 #define CFG_FORCE_SAP_ACS_END_CH_DEFAULT   (11)
 
 /*
+ * <ini>
+ * gEnableSAPManadatoryChanList - Enable SAP Mandatory channel list
+ * Options.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable the SAP manadatory chan list
+ * 0 - Disable SAP mandatory chan list
+ * 1 - Enable SAP mandatory chan list
+ *
+ * Supported Feature: SAP
+ *
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_SAP_MANDATORY_CHAN_LIST       "gEnableSAPManadatoryChanList"
+#define CFG_ENABLE_SAP_MANDATORY_CHAN_LIST_MIN   (0)
+#define CFG_ENABLE_SAP_MANDATORY_CHAN_LIST_MAX   (1)
+#define CFG_ENABLE_SAP_MANDATORY_CHAN_LIST_DEFAULT (0)
+
+/*
  * Skip DFS Channel in case of P2P Search
  * Options
  * 0 - Don't Skip DFS Channel in case of P2P Search
@@ -12354,6 +12378,8 @@ struct hdd_config {
 	uint8_t force_sap_acs;
 	uint8_t force_sap_acs_st_ch;
 	uint8_t force_sap_acs_end_ch;
+
+	bool enable_sap_mandatory_chan_list;
 
 	int32_t dfsRadarPriMultiplier;
 	uint8_t reorderOffloadSupport;

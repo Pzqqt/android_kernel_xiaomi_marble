@@ -8813,6 +8813,9 @@ static int hdd_pre_enable_configure(struct hdd_context *hdd_ctx)
 
 	hdd_init_channel_avoidance(hdd_ctx);
 
+	/* update enable sap mandatory chan list */
+	policy_mgr_enable_disable_sap_mandatory_chan_list(hdd_ctx->hdd_psoc,
+			hdd_ctx->config->enable_sap_mandatory_chan_list);
 out:
 	return ret;
 }
