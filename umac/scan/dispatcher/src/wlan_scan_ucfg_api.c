@@ -332,6 +332,7 @@ ucfg_scan_update_pno_config(struct pno_def_config *pno,
 
 #endif
 
+#ifdef WLAN_POLICY_MGR_ENABLE
 /**
  * ucfg_scan_update_dbs_scan_ctrl_ext_flag() - update dbs scan ctrl flags
  * @req: pointer to scan request
@@ -390,6 +391,12 @@ end:
 	scm_debug("scan_ctrl_flags_ext: 0x%x",
 			req->scan_req.scan_ctrl_flags_ext);
 }
+#else
+static void
+ucfg_scan_update_dbs_scan_ctrl_ext_flag(struct scan_start_request *req)
+{
+}
+#endif
 
 QDF_STATUS
 ucfg_scan_start(struct scan_start_request *req)
