@@ -556,6 +556,7 @@ ol_tx_prepare_ll_fast(struct ol_txrx_pdev_t *pdev,
 	}
 
 	htt_tx_desc = tx_desc->htt_tx_desc;
+	qdf_mem_zero(tx_desc->htt_frag_desc, sizeof(struct msdu_ext_desc_t));
 
 	/* Make sure frags num is set to 0 */
 	/*
