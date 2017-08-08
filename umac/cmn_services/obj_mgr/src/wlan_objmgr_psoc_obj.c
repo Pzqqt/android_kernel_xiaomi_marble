@@ -812,9 +812,9 @@ QDF_STATUS wlan_objmgr_psoc_vdev_attach(struct wlan_objmgr_psoc *psoc,
 		 * The map is two DWORDS(32 bits), so, map_index
 		 * adjust_ix derived based on the id value
 		 */
-		if (id == ((map_index+1)*map_entry_size)) {
-			adjust_ix = map_index*map_entry_size;
+		if (id == ((map_index + 1) * map_entry_size)) {
 			map_index++;
+			adjust_ix = map_index * map_entry_size;
 		}
 	}
 	/* If no free slot, return failure */
