@@ -2688,6 +2688,13 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_IPA_LOW_BANDWIDTH_MBPS_DEFAULT,
 		     CFG_IPA_LOW_BANDWIDTH_MBPS_MIN,
 		     CFG_IPA_LOW_BANDWIDTH_MBPS_MAX),
+
+	REG_VARIABLE(CFG_IPA_MCC_TX_DESC_SIZE, WLAN_PARAM_Integer,
+		     struct hdd_config, IpaMccTxDescSize,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_IPA_MCC_TX_DESC_SIZE_DEFAULT,
+		     CFG_IPA_MCC_TX_DESC_SIZE_MIN,
+		     CFG_IPA_MCC_TX_DESC_SIZE_MAX),
 #endif
 
 	REG_VARIABLE(CFG_VHT_AMPDU_LEN_EXPONENT_NAME, WLAN_PARAM_Integer,
@@ -5783,6 +5790,8 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 		  pHddCtx->config->IpaMediumBandwidthMbps);
 	hdd_debug("Name = [IpaLowBandwidthMbps] Value = [%u] ",
 		  pHddCtx->config->IpaLowBandwidthMbps);
+	hdd_info("Name = [IpaMccTxDescSize] Value = [%u] ",
+		  pHddCtx->config->IpaMccTxDescSize);
 #endif
 	hdd_debug("Name = [gEnableOverLapCh] Value = [%u] ",
 		  pHddCtx->config->gEnableOverLapCh);
