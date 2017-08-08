@@ -278,6 +278,8 @@ uint32_t hif_configure_ext_group_interrupts(struct hif_opaque_softc *hif_ctx)
 			status = hif_grp_irq_configure(scn, hif_ext_group);
 		if (status != 0)
 			HIF_ERROR("%s: failed for group %d", __func__, i);
+		qdf_spinlock_create(&hif_ext_group->irq_lock);
+		hif_ext_group->irq_enabled = true;
 	}
 
 	scn->ext_grp_irq_configured = true;
@@ -405,5 +407,6 @@ struct hif_exec_context *hif_exec_create(enum hif_exec_type type)
  */
 void hif_exec_destroy(struct hif_exec_context *ctx)
 {
+	qdf_spinlock_destroy(&ctx->irq_lock);
 	qdf_mem_free(ctx);
 }

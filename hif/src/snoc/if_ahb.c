@@ -687,17 +687,27 @@ void hif_ahb_exec_grp_irq_disable(struct hif_exec_context *hif_ext_group)
 {
 	int i;
 
-	for (i = 0; i < hif_ext_group->numirq; i++) {
-		disable_irq_nosync(hif_ext_group->os_irq[i]);
+	qdf_spin_lock_irqsave(&hif_ext_group->irq_lock);
+	if (hif_ext_group->irq_enabled) {
+		for (i = 0; i < hif_ext_group->numirq; i++) {
+			disable_irq_nosync(hif_ext_group->os_irq[i]);
+		}
+		hif_ext_group->irq_enabled = false;
 	}
+	qdf_spin_unlock_irqrestore(&hif_ext_group->irq_lock);
 }
 
 void hif_ahb_exec_grp_irq_enable(struct hif_exec_context *hif_ext_group)
 {
 	int i;
 
-	for (i = 0; i < hif_ext_group->numirq; i++) {
-		enable_irq(hif_ext_group->os_irq[i]);
+	qdf_spin_lock_irqsave(&hif_ext_group->irq_lock);
+	if (!hif_ext_group->irq_enabled) {
+		for (i = 0; i < hif_ext_group->numirq; i++) {
+			enable_irq(hif_ext_group->os_irq[i]);
+		}
+		hif_ext_group->irq_enabled = true;
 	}
+	qdf_spin_unlock_irqrestore(&hif_ext_group->irq_lock);
 }
 

@@ -69,6 +69,8 @@ struct hif_exec_context {
 	bool inited;
 	bool configured;
 	bool irq_requested;
+	bool irq_enabled;
+	qdf_spinlock_t irq_lock;
 };
 
 /**
