@@ -5241,8 +5241,16 @@ QDF_STATUS wma_get_caps_for_phyidx_hwmode(struct wma_caps_per_phy *caps_per_phy,
 	}
 
 	if (0 == wma_handle->phy_caps.num_hw_modes.num_hw_modes) {
-		WMA_LOGE("Invalid number of hw modes");
-		return QDF_STATUS_E_FAILURE;
+		WMA_LOGD("Invalid number of hw modes, use legacy HT/VHT caps");
+		caps_per_phy->ht_2g = wma_handle->ht_cap_info;
+		caps_per_phy->ht_5g = wma_handle->ht_cap_info;
+		caps_per_phy->vht_2g = wma_handle->vht_cap_info;
+		caps_per_phy->vht_5g = wma_handle->vht_cap_info;
+		/* legacy platform doesn't support HE IE */
+		caps_per_phy->he_2g = 0;
+		caps_per_phy->he_5g = 0;
+
+		return QDF_STATUS_SUCCESS;
 	}
 
 	if (!policy_mgr_is_dbs_enable(wma_handle->psoc))
@@ -5282,6 +5290,7 @@ QDF_STATUS wma_get_caps_for_phyidx_hwmode(struct wma_caps_per_phy *caps_per_phy,
  */
 bool wma_is_rx_ldpc_supported_for_channel(uint32_t channel)
 {
+	t_wma_handle *wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 	struct wma_caps_per_phy caps_per_phy = {0};
 	enum cds_band_type band;
 	bool status;
@@ -5296,10 +5305,20 @@ bool wma_is_rx_ldpc_supported_for_channel(uint32_t channel)
 						HW_MODE_DBS, band)) {
 		return false;
 	}
-	if (WLAN_REG_IS_24GHZ_CH(channel))
-		status = (!!(caps_per_phy.ht_2g & WMI_HT_CAP_RX_LDPC));
-	else
-		status = (!!(caps_per_phy.ht_5g & WMI_HT_CAP_RX_LDPC));
+
+	/*
+	 * Legacy platforms like Rome set WMI_HT_CAP_LDPC to specify RX LDPC
+	 * capability. But new platforms like Helium set WMI_HT_CAP_RX_LDPC
+	 * instead.
+	 */
+	if (wma_handle->phy_caps.num_hw_modes.num_hw_modes == 0) {
+		status = (!!(caps_per_phy.ht_2g & WMI_HT_CAP_LDPC));
+	} else {
+		if (WLAN_REG_IS_24GHZ_CH(channel))
+			status = (!!(caps_per_phy.ht_2g & WMI_HT_CAP_RX_LDPC));
+		else
+			status = (!!(caps_per_phy.ht_5g & WMI_HT_CAP_RX_LDPC));
+	}
 
 	return status;
 }
