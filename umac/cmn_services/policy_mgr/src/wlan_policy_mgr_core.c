@@ -2681,3 +2681,129 @@ QDF_STATUS policy_mgr_reset_sap_mandatory_channels(
 
 	return QDF_STATUS_SUCCESS;
 }
+
+void policy_mgr_enable_disable_sap_mandatory_chan_list(
+		struct wlan_objmgr_psoc *psoc, bool val)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
+
+	pm_ctx->enable_sap_mandatory_chan_list = val;
+}
+
+void policy_mgr_add_sap_mandatory_chan(struct wlan_objmgr_psoc *psoc,
+		uint8_t chan)
+{
+	int i;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
+
+	for (i = 0; i < pm_ctx->sap_mandatory_channels_len; i++) {
+		if (chan == pm_ctx->sap_mandatory_channels[i])
+			return;
+	}
+
+	policy_mgr_debug("chan %hu", chan);
+	pm_ctx->sap_mandatory_channels[pm_ctx->sap_mandatory_channels_len++]
+		= chan;
+}
+
+bool policy_mgr_is_sap_mandatory_chan_list_enabled(
+		struct wlan_objmgr_psoc *psoc)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return false;
+	}
+
+	return pm_ctx->enable_sap_mandatory_chan_list;
+}
+
+uint32_t policy_mgr_get_sap_mandatory_chan_list_len(
+		struct wlan_objmgr_psoc *psoc)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return 0;
+	}
+
+	return pm_ctx->sap_mandatory_channels_len;
+}
+
+void  policy_mgr_init_sap_mandatory_2g_chan(struct wlan_objmgr_psoc *psoc)
+{
+	uint8_t chan_list[QDF_MAX_NUM_CHAN] = {0};
+	uint32_t len = 0;
+	int i;
+	QDF_STATUS status;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
+
+	status = policy_mgr_get_valid_chans(psoc, chan_list, &len);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		policy_mgr_err("Error in getting valid channels");
+		return;
+	}
+	for (i = 0; i < len; i++) {
+		if (WLAN_REG_IS_24GHZ_CH(chan_list[i])) {
+			policy_mgr_debug("Add chan %hu to mandatory list",
+					chan_list[i]);
+			pm_ctx->sap_mandatory_channels[
+				pm_ctx->sap_mandatory_channels_len++] =
+				chan_list[i];
+		}
+	}
+}
+
+void policy_mgr_remove_sap_mandatory_chan(struct wlan_objmgr_psoc *psoc,
+		uint8_t chan)
+{
+	uint8_t chan_list[QDF_MAX_NUM_CHAN] = {0};
+	uint32_t num_chan = 0;
+	int i;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
+
+	if (pm_ctx->sap_mandatory_channels_len >= QDF_MAX_NUM_CHAN) {
+		policy_mgr_err("Invalid channel len %d ",
+				pm_ctx->sap_mandatory_channels_len);
+		return;
+	}
+
+	for (i = 0; i < pm_ctx->sap_mandatory_channels_len; i++) {
+		if (chan == pm_ctx->sap_mandatory_channels[i])
+			continue;
+		chan_list[num_chan++] = pm_ctx->sap_mandatory_channels[i];
+	}
+
+	qdf_mem_zero(pm_ctx->sap_mandatory_channels,
+			pm_ctx->sap_mandatory_channels_len);
+	qdf_mem_copy(pm_ctx->sap_mandatory_channels, chan_list, num_chan);
+	pm_ctx->sap_mandatory_channels_len = num_chan;
+}
