@@ -1186,10 +1186,16 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 		pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 		if ((pHddStaCtx->conn_info.proxyARPService) &&
 			cfg80211_is_gratuitous_arp_unsolicited_na(skb)) {
-			++pAdapter->hdd_stats.hddTxRxStats.rxDropped[cpu_index];
-			QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO,
-				  "%s: Dropping HS 2.0 Gratuitous ARP or Unsolicited NA",
-				  __func__);
+			uint32_t rx_dropped;
+
+			rx_dropped = ++pAdapter->hdd_stats.hddTxRxStats.
+							rxDropped[cpu_index];
+			/* rate limit error messages to 1/8th */
+			if ((rx_dropped & 0x07) == 0)
+				QDF_TRACE(QDF_MODULE_ID_HDD_DATA,
+					  QDF_TRACE_LEVEL_INFO,
+					  "%s: Dropping HS 2.0 Gratuitous ARP or Unsolicited NA count=%u",
+					  __func__, rx_dropped);
 			/* Remove SKB from internal tracking table before submitting
 			 * it to stack
 			 */
