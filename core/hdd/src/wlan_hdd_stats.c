@@ -3208,8 +3208,10 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	myRate = pAdapter->hdd_stats.ClassA_stat.tx_rate * 5;
 	if (!(rate_flags & eHAL_TX_RATE_LEGACY)) {
 		nss = pAdapter->hdd_stats.ClassA_stat.nss;
-		if (policy_mgr_is_current_hwmode_dbs(pHddCtx->hdd_psoc)) {
-			hdd_debug("Hw mode is DBS, Reduce nss to 1");
+		if ((nss > 1) &&
+		    policy_mgr_is_current_hwmode_dbs(pHddCtx->hdd_psoc) &&
+		    !policy_mgr_is_hw_dbs_2x2_capable(pHddCtx->hdd_psoc)) {
+			hdd_debug("Hw mode is DBS, Reduce nss(%d) to 1", nss);
 			nss--;
 		}
 
