@@ -324,12 +324,12 @@ int8_t policy_mgr_get_matching_hw_mode_index(
 	for (i = 0; i < pm_ctx->num_dbs_hw_modes; i++) {
 		t_mac0_tx_ss = POLICY_MGR_HW_MODE_MAC0_TX_STREAMS_GET(
 				pm_ctx->hw_mode.hw_mode_list[i]);
-		if (t_mac0_tx_ss != mac0_tx_ss)
+		if (t_mac0_tx_ss < mac0_tx_ss)
 			continue;
 
 		t_mac0_rx_ss = POLICY_MGR_HW_MODE_MAC0_RX_STREAMS_GET(
 				pm_ctx->hw_mode.hw_mode_list[i]);
-		if (t_mac0_rx_ss != mac0_rx_ss)
+		if (t_mac0_rx_ss < mac0_rx_ss)
 			continue;
 
 		t_mac0_bw = POLICY_MGR_HW_MODE_MAC0_BANDWIDTH_GET(
@@ -344,12 +344,12 @@ int8_t policy_mgr_get_matching_hw_mode_index(
 
 		t_mac1_tx_ss = POLICY_MGR_HW_MODE_MAC1_TX_STREAMS_GET(
 				pm_ctx->hw_mode.hw_mode_list[i]);
-		if (t_mac1_tx_ss != mac1_tx_ss)
+		if (t_mac1_tx_ss < mac1_tx_ss)
 			continue;
 
 		t_mac1_rx_ss = POLICY_MGR_HW_MODE_MAC1_RX_STREAMS_GET(
 				pm_ctx->hw_mode.hw_mode_list[i]);
-		if (t_mac1_rx_ss != mac1_rx_ss)
+		if (t_mac1_rx_ss < mac1_rx_ss)
 			continue;
 
 		t_mac1_bw = POLICY_MGR_HW_MODE_MAC1_BANDWIDTH_GET(
