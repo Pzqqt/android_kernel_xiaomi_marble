@@ -2855,13 +2855,7 @@ void wma_vdev_resp_timer(void *data)
 	void *peer;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
-	tpAniSirGlobal mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
-
-	if (NULL == mac_ctx) {
-		WMA_LOGE("%s: Failed to get mac_ctx", __func__);
-		wma_cleanup_target_req_param(tgt_req);
-		goto free_tgt_req;
-	}
+	tpAniSirGlobal mac_ctx;
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
@@ -2891,6 +2885,15 @@ void wma_vdev_resp_timer(void *data)
 		wma_cleanup_target_req_param(tgt_req);
 		goto free_tgt_req;
 	}
+
+#ifdef FEATURE_AP_MCC_CH_AVOIDANCE
+	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+	if (!mac_ctx) {
+		WMA_LOGE("%s: Failed to get mac_ctx", __func__);
+		wma_cleanup_target_req_param(tgt_req);
+		goto free_tgt_req;
+	}
+#endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 
 	if (tgt_req->msg_type == WMA_CHNL_SWITCH_REQ) {
 		tpSwitchChannelParams params =
