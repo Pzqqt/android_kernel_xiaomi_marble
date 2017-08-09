@@ -188,7 +188,8 @@ static QDF_STATUS target_if_dfs_register_event_handler(
 		return target_if_dfs_reg_phyerr_events(psoc);
 
 	/* dfs offload case, send offload enable command first */
-	status = wmi_unified_dfs_phyerr_offload_en_cmd(pdev->tgt_if_handle, 0);
+	status = wmi_unified_dfs_phyerr_offload_en_cmd(pdev->tgt_if_handle,
+			WMI_HOST_PDEV_ID_SOC);
 	if (QDF_IS_STATUS_SUCCESS(status))
 		status = target_if_dfs_reg_offload_events(psoc);
 
