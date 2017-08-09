@@ -13,7 +13,7 @@
 #define MSM_SDW_H
 
 #include <sound/soc.h>
-#include <sound/q6afe-v2.h>
+#include <dsp/q6afe-v2.h>
 #include "msm_sdw_registers.h"
 
 #define MSM_SDW_MAX_REGISTER 0x400

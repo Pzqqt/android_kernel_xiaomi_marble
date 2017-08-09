@@ -18,8 +18,7 @@
 #include <linux/kthread.h>
 #include <linux/delay.h>
 #include <sound/soc.h>
-#include <linux/mfd/wcd9xxx/wcd9330_registers.h>
-#include <linux/mfd/wcd9335/registers.h>
+#include "wcd9335_registers.h"
 #include "core.h"
 #include "cpe_cmi.h"
 #include "wcd_cpe_services.h"

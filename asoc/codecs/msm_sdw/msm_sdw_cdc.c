@@ -14,25 +14,25 @@
 #include <linux/io.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>
-#include <linux/mfd/msm-cdc-pinctrl.h>
 #include <linux/printk.h>
 #include <linux/debugfs.h>
 #include <linux/bitops.h>
 #include <linux/regmap.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>
-#include <linux/qdsp6v2/apr.h>
-#include <linux/soundwire/swr-wcd.h>
-#include <linux/qdsp6v2/audio_notifier.h>
-#include <sound/apr_audio-v2.h>
 #include <sound/pcm.h>
 #include <sound/pcm_params.h>
 #include <sound/soc.h>
 #include <sound/soc-dapm.h>
-#include <sound/q6core.h>
 #include <sound/tlv.h>
+#include <ipc/apr.h>
+#include <soc/swr-wcd.h>
+#include <dsp/audio_notifier.h>
+#include <dsp/apr_audio-v2.h>
+#include <dsp/q6core.h>
 #include "msm_sdw.h"
 #include "msm_sdw_registers.h"
+#include "../msm-cdc-pinctrl.h"
 
 #define MSM_SDW_RATES (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |\
 			SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_48000)
@@ -937,9 +937,8 @@ static int msm_sdw_ear_spkr_pa_gain_put(struct snd_kcontrol *kcontrol,
 static int msm_sdw_vi_feed_mixer_get(struct snd_kcontrol *kcontrol,
 				   struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_dapm_widget_list *wlist =
-					dapm_kcontrol_get_wlist(kcontrol);
-	struct snd_soc_dapm_widget *widget = wlist->widgets[0];
+	struct snd_soc_dapm_widget *widget =
+				snd_soc_dapm_kcontrol_widget(kcontrol);
 	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(widget->dapm);
 	struct msm_sdw_priv *msm_sdw_p = snd_soc_codec_get_drvdata(codec);
 
@@ -951,9 +950,8 @@ static int msm_sdw_vi_feed_mixer_get(struct snd_kcontrol *kcontrol,
 static int msm_sdw_vi_feed_mixer_put(struct snd_kcontrol *kcontrol,
 				   struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_dapm_widget_list *wlist =
-					dapm_kcontrol_get_wlist(kcontrol);
-	struct snd_soc_dapm_widget *widget = wlist->widgets[0];
+	struct snd_soc_dapm_widget *widget =
+				snd_soc_dapm_kcontrol_widget(kcontrol);
 	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(widget->dapm);
 	struct msm_sdw_priv *msm_sdw_p = snd_soc_codec_get_drvdata(codec);
 	struct soc_multi_mixer_control *mixer =

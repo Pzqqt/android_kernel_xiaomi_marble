@@ -23,12 +23,12 @@
 #include <sound/soc.h>
 #include <sound/info.h>
 #include <sound/lsm_params.h>
-#include <sound/cpe_cmi.h>
 #include <soc/qcom/pm.h>
 #include <dsp/audio_cal_utils.h>
 #include "core.h"
 #include "cpe_core.h"
 #include "cpe_err.h"
+#include "cpe_cmi.h"
 #include "wcd_cpe_core.h"
 #include "wcd_cpe_services.h"
 #include "wcd_cmi_api.h"

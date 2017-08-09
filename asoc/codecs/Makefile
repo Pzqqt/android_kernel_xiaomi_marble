@@ -1,12 +1,24 @@
 snd-soc-wcd9xxx-v2-objs := wcd9xxx-common-v2.o wcd9xxx-resmgr-v2.o wcdcal-hwdep.o wcd9xxx-soc-init.o
 snd-soc-wcd-cpe-objs := wcd_cpe_services.o wcd_cpe_core.o
 snd-soc-wsa881x-objs := wsa881x.o wsa881x-tables.o wsa881x-regmap.o wsa881x-temp-sensor.o
-snd-soc-wcd-mbhc-objs := wcd-mbhc-v2.o wcd-mbhc-adc.o
+snd-soc-wcd-mbhc-objs := wcd-mbhc-v2.o
+ifneq (,$(filter $(CONFIG_SND_SOC_WCD_MBHC_LEGACY),y m))
+	snd-soc-wcd-mbhc-objs += wcd-mbhc-legacy.o
+endif
+ifneq (,$(filter $(CONFIG_SND_SOC_WCD_MBHC_ADC),y m))
+	snd-soc-wcd-mbhc-objs += wcd-mbhc-adc.o
+endif
 snd-soc-wcd-dsp-utils-objs := wcd-dsp-utils.o
 snd-soc-wcd-dsp-mgr-objs := wcd-dsp-mgr.o
 snd-soc-wcd-spi-objs := wcd-spi.o
+snd-soc-wcd9335-objs := wcd9335.o
+snd-soc-wcd-cpe-objs := wcd_cpe_services.o wcd_cpe_core.o
 
+obj-$(CONFIG_SND_SOC_WCD9335) += snd-soc-wcd9335.o
+obj-$(CONFIG_SND_SOC_WCD_CPE)   += snd-soc-wcd-cpe.o
 obj-$(CONFIG_SND_SOC_WCD934X)	+= wcd934x/
+obj-$(CONFIG_SND_SOC_SDM660_CDC) += sdm660_cdc/
+obj-$(CONFIG_SND_SOC_MSM_SDW) += msm_sdw/
 ifeq ($(CONFIG_COMMON_CLK_MSM), y)
 	obj-$(CONFIG_AUDIO_EXT_CLK)	+= audio-ext-clk.o
 endif

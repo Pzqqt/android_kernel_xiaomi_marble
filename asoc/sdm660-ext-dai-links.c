@@ -16,7 +16,7 @@
 #include <sound/soc-dapm.h>
 #include <sound/pcm.h>
 #include <sound/pcm_params.h>
-#include "qdsp6v2/msm-pcm-routing-v2.h"
+#include "msm-pcm-routing-v2.h"
 #include "sdm660-common.h"
 #include "sdm660-external.h"
 #include "codecs/core.h"
