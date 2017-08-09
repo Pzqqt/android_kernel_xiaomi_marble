@@ -1031,7 +1031,6 @@ bool csr_elected_country_info(tpAniSirGlobal pMac);
 void csr_add_vote_for_country_info(tpAniSirGlobal pMac, uint8_t *pCountryCode);
 void csr_clear_votes_for_country_info(tpAniSirGlobal pMac);
 
-#endif
 QDF_STATUS csr_send_ext_change_channel(tpAniSirGlobal mac_ctx,
 				uint32_t channel, uint8_t session_id);
 
@@ -1100,3 +1099,5 @@ static inline bool csr_is_mfpc_capable(struct sDot11fIERSN *rsn)
 	return false;
 }
 #endif
+
+#endif /* CSR_INSIDE_API_H__ */
