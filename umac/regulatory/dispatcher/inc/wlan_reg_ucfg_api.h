@@ -153,6 +153,24 @@ QDF_STATUS ucfg_reg_get_current_chan_list(struct wlan_objmgr_pdev *pdev,
 				    struct regulatory_channel *chan_list);
 
 /**
+ * ucfg_reg_modify_chan_144() - Enable/Disable channel 144
+ * @pdev: pdev pointer
+ * @enable_chan_144: flag to disable/enable channel 144
+ *
+ * Return: Success or Failure
+ */
+QDF_STATUS ucfg_reg_modify_chan_144(struct wlan_objmgr_pdev *pdev,
+				    bool enable_ch_144);
+
+/**
+ * ucfg_reg_get_en_chan_144() - get en_chan_144 flag value
+ * @pdev: pdev pointer
+ *
+ * Return: en_chan_144 flag value
+ */
+bool ucfg_reg_get_en_chan_144(struct wlan_objmgr_pdev *pdev);
+
+/**
  * ucfg_reg_is_regdb_offloaded () - is regulatory database offloaded
  * @psoc: psoc ptr
  *

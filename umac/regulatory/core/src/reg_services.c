@@ -39,6 +39,7 @@
 #define MAX_PWR_FCC_CHAN_12 8
 #define CHAN_13_CENT_FREQ 2472
 #define MAX_PWR_FCC_CHAN_13 2
+#define CHAN_144_CENT_FREQ 5720
 #define SCAN_11D_PERIOD_MS 360000
 
 #define IS_VALID_PSOC_REG_OBJ(psoc_priv_obj) (NULL != psoc_priv_obj)
@@ -1861,7 +1862,7 @@ static void reg_modify_chan_list_for_indoor_channels(struct regulatory_channel
 }
 
 static void reg_modify_chan_list_for_band(struct regulatory_channel *chan_list,
-				      enum band_info band_val)
+					  enum band_info band_val)
 {
 	enum channel_enum chan_enum;
 
@@ -1887,8 +1888,8 @@ static void reg_modify_chan_list_for_band(struct regulatory_channel *chan_list,
 }
 
 static void reg_modify_chan_list_for_fcc_channel(struct regulatory_channel
-					     *chan_list,
-					     bool set_fcc_channel)
+						 *chan_list,
+						 bool set_fcc_channel)
 {
 	enum channel_enum chan_enum;
 
@@ -1902,6 +1903,25 @@ static void reg_modify_chan_list_for_fcc_channel(struct regulatory_channel
 			    CHAN_13_CENT_FREQ)
 				chan_list[chan_enum].tx_power =
 					MAX_PWR_FCC_CHAN_13;
+		}
+	}
+}
+
+static void reg_modify_chan_list_for_chan_144(struct regulatory_channel
+					      *chan_list,
+					      bool en_chan_144)
+{
+	enum channel_enum chan_enum;
+
+	if (en_chan_144)
+		return;
+
+	for (chan_enum = 0; chan_enum < NUM_CHANNELS; chan_enum++) {
+		if (chan_list[chan_enum].center_freq == CHAN_144_CENT_FREQ) {
+			chan_list[chan_enum].chan_flags |=
+				REGULATORY_CHAN_DISABLED;
+			chan_list[chan_enum].state =
+				CHANNEL_STATE_DISABLE;
 		}
 	}
 }
@@ -2014,31 +2034,34 @@ static void reg_init_pdev_mas_chan_list(struct wlan_regulatory_pdev_priv_obj
 
 
 static void reg_compute_pdev_current_chan_list(struct wlan_regulatory_pdev_priv_obj
-					   *pdev_priv_obj)
+					       *pdev_priv_obj)
 {
 	qdf_mem_copy(pdev_priv_obj->cur_chan_list,
 		     pdev_priv_obj->mas_chan_list,
 		     NUM_CHANNELS * sizeof(struct regulatory_channel));
 
 	reg_modify_chan_list_for_freq_range(pdev_priv_obj->cur_chan_list,
-					pdev_priv_obj->range_2g_low,
-					pdev_priv_obj->range_2g_high,
-					pdev_priv_obj->range_5g_low,
-					pdev_priv_obj->range_5g_high);
+					    pdev_priv_obj->range_2g_low,
+					    pdev_priv_obj->range_2g_high,
+					    pdev_priv_obj->range_5g_low,
+					    pdev_priv_obj->range_5g_high);
 
 	reg_modify_chan_list_for_band(pdev_priv_obj->cur_chan_list,
-				  pdev_priv_obj->band_capability);
+				      pdev_priv_obj->band_capability);
 
 	reg_modify_chan_list_for_dfs_channels(pdev_priv_obj->cur_chan_list,
-					  pdev_priv_obj->dfs_enabled);
+					      pdev_priv_obj->dfs_enabled);
 
 	reg_modify_chan_list_for_nol_list(pdev_priv_obj->cur_chan_list);
 
 	reg_modify_chan_list_for_indoor_channels(pdev_priv_obj->cur_chan_list,
-					 pdev_priv_obj->indoor_chan_enabled);
+					   pdev_priv_obj->indoor_chan_enabled);
 
 	reg_modify_chan_list_for_fcc_channel(pdev_priv_obj->cur_chan_list,
-					 pdev_priv_obj->set_fcc_channel);
+					     pdev_priv_obj->set_fcc_channel);
+
+	reg_modify_chan_list_for_chan_144(pdev_priv_obj->cur_chan_list,
+					  pdev_priv_obj->en_chan_144);
 }
 
 static void reg_call_chan_change_cbks(struct wlan_objmgr_psoc *psoc,
@@ -2346,7 +2369,7 @@ static void reg_propagate_mas_chan_list_to_pdev(struct wlan_objmgr_psoc *psoc,
 	reg_compute_pdev_current_chan_list(pdev_priv_obj);
 
 	reg_tx_ops = reg_get_psoc_tx_ops(psoc);
-	if(reg_tx_ops->fill_umac_legacy_chanlist)
+	if (reg_tx_ops->fill_umac_legacy_chanlist)
 		reg_tx_ops->fill_umac_legacy_chanlist(pdev,
 				pdev_priv_obj->cur_chan_list);
 
@@ -2838,6 +2861,7 @@ QDF_STATUS wlan_regulatory_pdev_obj_created_notification(
 	pdev_priv_obj->band_capability =  psoc_priv_obj->band_capability;
 	pdev_priv_obj->indoor_chan_enabled =
 		psoc_priv_obj->indoor_chan_enabled;
+	pdev_priv_obj->en_chan_144 = true;
 
 	reg_cap_ptr = parent_psoc->ext_service_param.reg_cap;
 
@@ -3670,4 +3694,61 @@ QDF_STATUS reg_get_curr_regdomain(struct wlan_objmgr_pdev *pdev,
 		regdomains_5g[cur_regdmn->dmn_id_5g].dfs_region;
 
 	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS reg_modify_chan_144(struct wlan_objmgr_pdev *pdev,
+				    bool enable_ch_144)
+{
+	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_reg_tx_ops *reg_tx_ops;
+	QDF_STATUS status;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("pdev reg component is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (pdev_priv_obj->en_chan_144 == enable_ch_144) {
+		reg_info("chan 144 is already  %d", enable_ch_144);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		reg_err("psoc is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc_priv_obj = reg_get_psoc_obj(psoc);
+	if (!IS_VALID_PSOC_REG_OBJ(psoc_priv_obj)) {
+		reg_err("psoc reg component is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	reg_debug("setting chan 144: %d", enable_ch_144);
+	pdev_priv_obj->en_chan_144 = enable_ch_144;
+
+	reg_compute_pdev_current_chan_list(pdev_priv_obj);
+
+	reg_tx_ops = reg_get_psoc_tx_ops(psoc);
+	if (reg_tx_ops->fill_umac_legacy_chanlist)
+		reg_tx_ops->fill_umac_legacy_chanlist(pdev,
+				pdev_priv_obj->cur_chan_list);
+
+	status = reg_send_scheduler_msg_sb(psoc, pdev);
+
+	return status;
+
+}
+
+bool reg_get_en_chan_144(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+	return pdev_priv_obj->en_chan_144;
 }

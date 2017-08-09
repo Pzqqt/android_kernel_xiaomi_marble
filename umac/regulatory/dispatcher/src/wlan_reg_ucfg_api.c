@@ -51,6 +51,17 @@ QDF_STATUS ucfg_reg_get_current_chan_list(struct wlan_objmgr_pdev *pdev,
 	return reg_get_current_chan_list(pdev, chan_list);
 }
 
+QDF_STATUS ucfg_reg_modify_chan_144(struct wlan_objmgr_pdev *pdev,
+				    bool enable_ch_144)
+{
+	return reg_modify_chan_144(pdev, enable_ch_144);
+}
+
+bool ucfg_reg_get_en_chan_144(struct wlan_objmgr_pdev *pdev)
+{
+	return reg_get_en_chan_144(pdev);
+}
+
 QDF_STATUS ucfg_reg_set_config_vars(struct wlan_objmgr_psoc *psoc,
 				 struct reg_config_vars config_vars)
 {

@@ -372,5 +372,23 @@ QDF_STATUS reg_set_11d_offloaded(struct wlan_objmgr_psoc *psoc,
  * Return: QDF status
  */
 QDF_STATUS reg_get_curr_regdomain(struct wlan_objmgr_pdev *pdev,
-		struct cur_regdmn_info *cur_regdmn);
+				  struct cur_regdmn_info *cur_regdmn);
+
+/**
+ * reg_modify_chan_144() - Enable/Disable channel 144
+ * @pdev: pdev pointer
+ * @enable_chan_144: flag to disable/enable channel 144
+ *
+ * Return: Success or Failure
+ */
+QDF_STATUS reg_modify_chan_144(struct wlan_objmgr_pdev *pdev,
+			       bool en_chan_144);
+
+/**
+ * reg_get_en_chan_144() - get en_chan_144 flag value
+ * @pdev: pdev pointer
+ *
+ * Return: en_chan_144 flag value
+ */
+bool reg_get_en_chan_144(struct wlan_objmgr_pdev *pdev);
 #endif
