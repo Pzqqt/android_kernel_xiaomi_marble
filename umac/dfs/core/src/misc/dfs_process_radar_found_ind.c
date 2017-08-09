@@ -100,7 +100,7 @@ static void dfs_radar_add_to_nol(struct wlan_dfs *dfs,
 		}
 		last_chan = freq_offset->chan_num[i];
 		dfs_nol_addchan(dfs, (uint16_t)freq_offset->freq[i],
-				DFS_NOL_TIMEOUT_S);
+				dfs->wlan_dfs_nol_timeout);
 		nollist[num_ch++] = last_chan;
 		DFS_PRINTK("%s: ch=%d Added to NOL\n", __func__, last_chan);
 	}

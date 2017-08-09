@@ -141,7 +141,6 @@ QDF_STATUS wlan_dfs_pdev_obj_create_notification(struct wlan_objmgr_pdev *pdev,
 {
 	struct wlan_dfs *dfs = NULL;
 	struct wlan_objmgr_psoc *psoc;
-	bool dfs_offload = false;
 
 	if (pdev == NULL) {
 		DFS_PRINTK("%s: null pdev\n", __func__);
@@ -161,17 +160,15 @@ QDF_STATUS wlan_dfs_pdev_obj_create_notification(struct wlan_objmgr_pdev *pdev,
 		DFS_PRINTK("%s: null psoc\n", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
-	dfs_offload =
+	dfs->dfs_is_offload_enabled =
 		DFS_OFFLOAD_IS_ENABLED(psoc->service_param.service_bitmap);
-	DFS_PRINTK("%s: dfs_offload %d\n", __func__, dfs_offload);
+	DFS_PRINTK("%s: dfs_offload %d\n", __func__,
+		dfs->dfs_is_offload_enabled);
 	dfs = wlan_pdev_get_dfs_obj(pdev);
-	if (!dfs_offload) {
-		if (dfs_attach(dfs) == 1) {
-			DFS_PRINTK("%s: dfs_attch failed\n", __func__);
-			dfs_destroy_object(dfs);
-			return QDF_STATUS_E_FAILURE;
-		}
-		dfs_get_radars(dfs);
+	if (dfs_attach(dfs) == 1) {
+		DFS_PRINTK("%s: dfs_attch failed\n", __func__);
+		dfs_destroy_object(dfs);
+		return QDF_STATUS_E_FAILURE;
 	}
 	dfs_init_nol(pdev);
 	dfs_print_nol(dfs);

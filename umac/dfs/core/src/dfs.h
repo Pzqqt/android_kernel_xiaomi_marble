@@ -729,6 +729,7 @@ struct dfs_event_log {
  * @dfs_precac_required_list: PreCAC required list.
  * @dfs_precac_done_list:  PreCAC done list.
  * @dfs_precac_nol_list:   PreCAC NOL List.
+ * @dfs_is_offload_enabled: Set if DFS offload enabled.
  */
 struct wlan_dfs {
 	uint32_t  dfs_debug_mask;
@@ -817,6 +818,7 @@ struct wlan_dfs {
 	TAILQ_HEAD(, dfs_precac_entry) dfs_precac_nol_list;
 	struct dfs_ieee80211_channel *dfs_curchan;
 	struct wlan_objmgr_pdev *dfs_pdev_obj;
+	bool dfs_is_offload_enabled;
 };
 
 /**

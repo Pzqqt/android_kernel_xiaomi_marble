@@ -106,6 +106,7 @@ void dfs_nol_timer_init(struct wlan_dfs *dfs)
 
 void dfs_nol_attach(struct wlan_dfs *dfs)
 {
+	dfs->wlan_dfs_nol_timeout = DFS_NOL_TIMEOUT_S;
 	dfs_nol_timer_init(dfs);
 }
 

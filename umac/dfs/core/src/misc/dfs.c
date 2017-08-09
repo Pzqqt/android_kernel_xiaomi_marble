@@ -285,7 +285,7 @@ int dfs_main_attach(struct wlan_dfs *dfs)
 	dfs->dfs_phyerr_queued_count = 0;
 	dfs->dfs_phyerr_w53_counter  = 0;
 	dfs->dfs_pri_multiplier      = 2;
-	dfs->wlan_dfs_nol_timeout = DFS_NOL_TIMEOUT_S;
+	dfs_get_radars(dfs);
 
 	return 0;
 
@@ -315,10 +315,13 @@ int dfs_attach(struct wlan_dfs *dfs)
 {
 	int ret;
 
-	ret = dfs_main_attach(dfs);
-	if (ret)
-		return ret;
-
+	if (!dfs->dfs_is_offload_enabled) {
+		ret = dfs_main_attach(dfs);
+		if (ret) {
+			DFS_PRINTK("%s: dfs_main_attach failed\n", __func__);
+			return ret;
+		}
+	}
 	dfs_cac_attach(dfs);
 	dfs_zero_cac_attach(dfs);
 	dfs_nol_attach(dfs);
@@ -421,7 +424,8 @@ void dfs_main_detach(struct wlan_dfs *dfs)
 
 void dfs_detach(struct wlan_dfs *dfs)
 {
-	dfs_main_detach(dfs);
+	if (!dfs->dfs_is_offload_enabled)
+		dfs_main_detach(dfs);
 	dfs_zero_cac_detach(dfs);
 }
 
