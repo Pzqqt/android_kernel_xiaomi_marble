@@ -263,7 +263,7 @@ typedef enum eSirScanType {
 /* / Result codes Firmware return to Host SW */
 typedef enum eSirResultCodes {
 	eSIR_SME_SUCCESS,
-	eSIR_LOGP_EXCEPTION,
+	eSIR_LOGE_EXCEPTION,
 	eSIR_SME_INVALID_PARAMETERS = 500,
 	eSIR_SME_UNEXPECTED_REQ_RESULT_CODE,
 	eSIR_SME_RESOURCES_UNAVAILABLE,

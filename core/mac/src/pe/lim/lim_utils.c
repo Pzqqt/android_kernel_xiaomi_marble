@@ -446,8 +446,8 @@ char *lim_result_code_str(tSirResultCodes resultCode)
 	switch (resultCode) {
 	case eSIR_SME_SUCCESS:
 		return "eSIR_SME_SUCCESS";
-	case eSIR_LOGP_EXCEPTION:
-		return "eSIR_LOGP_EXCEPTION";
+	case eSIR_LOGE_EXCEPTION:
+		return "eSIR_LOGE_EXCEPTION";
 	case eSIR_SME_INVALID_PARAMETERS:
 		return "eSIR_SME_INVALID_PARAMETERS";
 	case eSIR_SME_UNEXPECTED_REQ_RESULT_CODE:

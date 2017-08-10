@@ -765,7 +765,7 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 
 		/* Store Persona */
 		session->pePersona = sme_start_bss_req->bssPersona;
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			  FL("PE PERSONA=%d"), session->pePersona);
 
 		/* Update the phymode */
@@ -890,7 +890,7 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			sme_start_bss_req->sec_ch_offset;
 		session->htRecommendedTxWidthSet =
 			(session->htSecondaryChannelOffset) ? 1 : 0;
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			  FL("cbMode %u"), sme_start_bss_req->cbMode);
 		if (lim_is_session_he_capable(session) ||
 		    session->vhtCapability || session->htCapability) {
@@ -988,7 +988,7 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			if (ret_status != eSIR_SUCCESS) {
 				pe_err("Get Auto Gen BSSID fail,Status: %d",
 					ret_status);
-				ret_code = eSIR_LOGP_EXCEPTION;
+				ret_code = eSIR_LOGE_EXCEPTION;
 				goto free;
 			}
 
@@ -1685,7 +1685,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 
 		/*Store Persona */
 		session->pePersona = sme_join_req->staPersona;
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			  FL("PE PERSONA=%d cbMode %u nwType: %d dot11mode: %d force_24ghz_in_ht20 %d"),
 			  session->pePersona, sme_join_req->cbMode,
 			  session->nwType, session->dot11mode,
@@ -3146,7 +3146,7 @@ static void lim_process_sme_get_wpspbc_sessions(tpAniSirGlobal mac_ctx,
 
 	pe_debug("wpsPBCOverlap %d", sap_get_wpspbc_event->wpsPBCOverlap);
 	lim_print_mac_addr(mac_ctx,
-				sap_get_wpspbc_event->addr.bytes, LOG4);
+				sap_get_wpspbc_event->addr.bytes, LOGD);
 
 	sap_get_wpspbc_event->status = QDF_STATUS_SUCCESS;
 
@@ -5306,7 +5306,7 @@ static void lim_process_sme_start_beacon_req(tpAniSirGlobal pMac, uint32_t *pMsg
 		 * Tx right after the WMA_ADD_BSS_RSP.
 		 */
 		lim_apply_configuration(pMac, psessionEntry);
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			  FL("Start Beacon with ssid %s Ch %d"),
 			  psessionEntry->ssId.ssId,
 			  psessionEntry->currentOperChannel);
