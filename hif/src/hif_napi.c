@@ -916,16 +916,16 @@ void hif_napi_stats(struct qca_napi_data *napid)
 	struct qca_napi_cpu *cpu;
 
 	if (napid == NULL) {
-		qdf_print("%s: napiid struct is null", __func__);
+		qdf_debug("%s: napiid struct is null", __func__);
 		return;
 	}
 
 	cpu = napid->napi_cpu;
-	qdf_print("NAPI CPU TABLE");
-	qdf_print("lilclhead=%d, bigclhead=%d",
+	qdf_debug("NAPI CPU TABLE");
+	qdf_debug("lilclhead=%d, bigclhead=%d",
 		  napid->lilcl_head, napid->bigcl_head);
 	for (i = 0; i < NR_CPUS; i++) {
-		qdf_print("CPU[%02d]: state:%d crid=%02d clid=%02d crmk:0x%0lx thmk:0x%0lx frq:%d napi = 0x%08x lnk:%d",
+		qdf_debug("CPU[%02d]: state:%d crid=%02d clid=%02d crmk:0x%0lx thmk:0x%0lx frq:%d napi = 0x%08x lnk:%d",
 			  i,
 			  cpu[i].state, cpu[i].core_id, cpu[i].cluster_id,
 			  cpu[i].core_mask.bits[0],

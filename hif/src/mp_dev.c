@@ -180,9 +180,9 @@ void priv_dump_chaninfo(struct hif_softc *scn)
 					hif_read32_mb(scn->mem +
 						     BB_chn_tables_intf_data) &
 					0x0000ffff;
-				qdf_print("0x%x\t", val);
+				qdf_debug("0x%x\t", val);
 				if (i % 4 == 0)
-					qdf_print("\n");
+					qdf_debug("\n");
 			}
 		} else {
 			len = (bw == 2) ? 59 : 60;
@@ -190,10 +190,10 @@ void priv_dump_chaninfo(struct hif_softc *scn)
 				tmp =
 					hif_read32_mb(scn->mem +
 						     BB_chn_tables_intf_data);
-				qdf_print("0x%x\t", ((tmp >> 16) & 0x0000ffff));
-				qdf_print("0x%x\t", (tmp & 0x0000ffff));
+				qdf_debug("0x%x\t", ((tmp >> 16) & 0x0000ffff));
+				qdf_debug("0x%x\t", (tmp & 0x0000ffff));
 				if (i % 2 == 0)
-					qdf_print("\n");
+					qdf_debug("\n");
 			}
 			if (bw > 2) {
 				/* bw == 3 for vht80 */
@@ -205,11 +205,11 @@ void priv_dump_chaninfo(struct hif_softc *scn)
 					tmp =
 						hif_read32_mb(scn->mem +
 						     BB_chn_tables_intf_data);
-					qdf_print("0x%x\t",
+					qdf_debug("0x%x\t",
 					       ((tmp >> 16) & 0x0000ffff));
-					qdf_print("0x%x\t", (tmp & 0x0000ffff));
+					qdf_debug("0x%x\t", (tmp & 0x0000ffff));
 					if (i % 2 == 0)
-						qdf_print("\n");
+						qdf_debug("\n");
 				}
 			}
 		}
@@ -222,9 +222,9 @@ void priv_dump_chaninfo(struct hif_softc *scn)
 					hif_read32_mb(scn->mem +
 						BB_chn1_tables_intf_data) &
 					0x0000ffff;
-				qdf_print("0x%x\t", val);
+				qdf_debug("0x%x\t", val);
 				if (i % 4 == 0)
-					qdf_print("\n");
+					qdf_debug("\n");
 			}
 		} else {
 			len = (bw == 2) ? 59 : 60;
@@ -232,10 +232,10 @@ void priv_dump_chaninfo(struct hif_softc *scn)
 				tmp =
 					hif_read32_mb(scn->mem +
 						     BB_chn1_tables_intf_data);
-				qdf_print("0x%x\n", (tmp >> 16) & 0x0000ffff);
-				qdf_print("0x%x\n", tmp & 0x0000ffff);
+				qdf_debug("0x%x\n", (tmp >> 16) & 0x0000ffff);
+				qdf_debug("0x%x\n", tmp & 0x0000ffff);
 				if (i % 2 == 0)
-					qdf_print("\n");
+					qdf_debug("\n");
 			}
 			if (bw > 2) {
 				/* bw == 3 for vht80 */
@@ -247,11 +247,11 @@ void priv_dump_chaninfo(struct hif_softc *scn)
 					tmp =
 						hif_read32_mb(scn->mem +
 						     BB_chn1_tables_intf_data);
-					qdf_print("0x%x\t",
+					qdf_debug("0x%x\t",
 					       ((tmp >> 16) & 0x0000ffff));
-					qdf_print("0x%x\t", (tmp & 0x0000ffff));
+					qdf_debug("0x%x\t", (tmp & 0x0000ffff));
 					if (i % 2 == 0)
-						qdf_print("\n");
+						qdf_debug("\n");
 				}
 			}
 		}
@@ -287,9 +287,9 @@ void priv_dump_agc(struct hif_softc *scn)
 				BB_chaninfo_tab_b0 + i * 4);
 			val = hif_read32_mb(scn->mem +
 				PHY_BB_CHN_TABLES_INTF_DATA);
-			qdf_print("0x%x\t", val);
+			qdf_debug("0x%x\t", val);
 			if (i % 4 == 0)
-				qdf_print("\n");
+				qdf_debug("\n");
 		}
 	}
 	if (chain1) {
@@ -299,9 +299,9 @@ void priv_dump_agc(struct hif_softc *scn)
 				BB_chaninfo_tab_b0 + i * 4);
 			val = hif_read32_mb(scn->mem +
 				PHY_BB_CHN1_TABLES_INTF_DATA);
-			qdf_print("0x%x\t", val);
+			qdf_debug("0x%x\t", val);
 			if (i % 4 == 0)
-				qdf_print("\n");
+				qdf_debug("\n");
 		}
 	}
 	HIF_TRACE("%s: AGC history buffer dump X", __func__);
@@ -319,12 +319,12 @@ void priv_dump_bbwatchdog(struct hif_softc *scn)
 
 	HIF_TRACE("%s: BB watchdog dump E", __func__);
 	val = hif_read32_mb(scn->mem + BB_watchdog_status);
-	qdf_print("0x%x\t", val);
+	qdf_debug("0x%x\t", val);
 	val = hif_read32_mb(scn->mem + BB_watchdog_ctrl_1);
-	qdf_print("0x%x\t", val);
+	qdf_debug("0x%x\t", val);
 	val = hif_read32_mb(scn->mem + BB_watchdog_ctrl_2);
-	qdf_print("0x%x\t", val);
+	qdf_debug("0x%x\t", val);
 	val = hif_read32_mb(scn->mem + BB_watchdog_status_B);
-	qdf_print("0x%x", val);
+	qdf_debug("0x%x", val);
 	HIF_TRACE("%s: BB watchdog dump X", __func__);
 }

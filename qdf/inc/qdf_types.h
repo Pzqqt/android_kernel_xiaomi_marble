@@ -540,7 +540,11 @@ void __printf(3, 4) qdf_trace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
 #define qdf_print(args...) \
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR, ## args)
 
+#define qdf_debug(args...) \
+	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_DEBUG, ## args)
+
 #else
+#define qdf_debug printk
 #define qdf_print printk
 #endif /* CONFIG_MCL */
 

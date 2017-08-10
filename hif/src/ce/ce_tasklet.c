@@ -346,7 +346,7 @@ void hif_display_ce_stats(struct HIF_CE_state *hif_ce_state)
 	char str_buffer[STR_SIZE];
 	int size, ret;
 
-	qdf_print("CE interrupt statistics:");
+	qdf_debug("CE interrupt statistics:");
 	for (i = 0; i < CE_COUNT_MAX; i++) {
 		size = STR_SIZE;
 		pos = 0;
@@ -358,7 +358,7 @@ void hif_display_ce_stats(struct HIF_CE_state *hif_ce_state)
 			size -= ret;
 			pos += ret;
 		}
-		qdf_print("CE id[%2d] - %s", i, str_buffer);
+		qdf_debug("CE id[%2d] - %s", i, str_buffer);
 	}
 #undef STR_SIZE
 }
