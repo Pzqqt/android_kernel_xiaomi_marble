@@ -5109,6 +5109,46 @@ static QDF_STATUS ol_txrx_register_pause_cb(struct cdp_soc_t *soc,
 }
 #endif
 
+/**
+ * ol_register_data_stall_detect_cb() - register data stall callback
+ * @data_stall_detect_callback: data stall callback function
+ *
+ *
+ * Return: QDF_STATUS Enumeration
+ */
+static QDF_STATUS ol_register_data_stall_detect_cb(
+				data_stall_detect_cb data_stall_detect_callback)
+{
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+
+	if (pdev == NULL) {
+		ol_txrx_err("%s: pdev NULL!", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+	pdev->data_stall_detect_callback = data_stall_detect_callback;
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * ol_deregister_data_stall_detect_cb() - de-register data stall callback
+ * @data_stall_detect_callback: data stall callback function
+ *
+ *
+ * Return: QDF_STATUS Enumeration
+ */
+static QDF_STATUS ol_deregister_data_stall_detect_cb(
+				data_stall_detect_cb data_stall_detect_callback)
+{
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+
+	if (pdev == NULL) {
+		ol_txrx_err("%s: pdev NULL!", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+	pdev->data_stall_detect_callback = NULL;
+	return QDF_STATUS_SUCCESS;
+}
+
 void
 ol_txrx_dump_pkt(qdf_nbuf_t nbuf, uint32_t nbuf_paddr, int len)
 {
@@ -5448,6 +5488,8 @@ static struct cdp_misc_ops ol_ops_misc = {
 	.tx_non_std = ol_tx_non_std,
 	.get_vdev_id = ol_txrx_get_vdev_id,
 	.set_wisa_mode = ol_txrx_set_wisa_mode,
+	.txrx_data_stall_cb_register = ol_register_data_stall_detect_cb,
+	.txrx_data_stall_cb_deregister = ol_deregister_data_stall_detect_cb,
 #ifdef FEATURE_RUNTIME_PM
 	.runtime_suspend = ol_txrx_runtime_suspend,
 	.runtime_resume = ol_txrx_runtime_resume,
