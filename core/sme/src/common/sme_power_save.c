@@ -531,6 +531,7 @@ QDF_STATUS sme_ps_enable_disable(tHalHandle hal_ctx, uint32_t session_id,
 
 QDF_STATUS sme_ps_timer_flush_sync(tHalHandle hal, uint8_t session_id)
 {
+	QDF_STATUS status;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	struct ps_params *ps_parm;
 	enum ps_state ps_state;
@@ -538,27 +539,26 @@ QDF_STATUS sme_ps_timer_flush_sync(tHalHandle hal, uint8_t session_id)
 	struct sEnablePsParams *req;
 	t_wma_handle *wma;
 
+	status = sme_enable_sta_ps_check(mac_ctx, session_id);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_debug("Power save not allowed for vdev id %d", session_id);
+		return QDF_STATUS_SUCCESS;
+	}
+
 	ps_parm = &mac_ctx->sme.ps_global_info.ps_params[session_id];
 	tstate = qdf_mc_timer_get_current_state(&ps_parm->auto_ps_enable_timer);
 	if (tstate != QDF_TIMER_STATE_RUNNING)
 		return QDF_STATUS_SUCCESS;
 
-	if (QDF_STATUS_SUCCESS != sme_enable_sta_ps_check(mac_ctx,
-					session_id)) {
-		sme_debug("Power save not allowed for vdev id %d", session_id);
-		qdf_mc_timer_stop(&ps_parm->auto_ps_enable_timer);
-		return QDF_STATUS_SUCCESS;
-	}
-
 	sme_debug("flushing powersave enable for vdev %u", session_id);
+
+	qdf_mc_timer_stop(&ps_parm->auto_ps_enable_timer);
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
 		sme_err("wma is null");
 		return QDF_STATUS_E_INVAL;
 	}
-
-	qdf_mc_timer_stop(&ps_parm->auto_ps_enable_timer);
 
 	req = qdf_mem_malloc(sizeof(*req));
 	if (!req) {
