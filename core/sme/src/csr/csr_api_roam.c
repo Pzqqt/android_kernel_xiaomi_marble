@@ -771,7 +771,7 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 				CSR_STA_ROAM_POLICY_DFS_DISABLED) &&
 				(channel_state == CHANNEL_STATE_DFS)) {
 				QDF_TRACE(QDF_MODULE_ID_SME,
-					QDF_TRACE_LEVEL_INFO,
+					QDF_TRACE_LEVEL_DEBUG,
 					FL("skip dfs channel %d"),
 					channel);
 				continue;
@@ -794,7 +794,7 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 					 roam_policy->sap_operating_band ==
 					eCSR_BAND_5G))) {
 					QDF_TRACE(QDF_MODULE_ID_SME,
-					QDF_TRACE_LEVEL_INFO,
+					QDF_TRACE_LEVEL_DEBUG,
 					FL("ignoring unsafe channel %d"),
 					channel);
 					continue;
@@ -812,7 +812,7 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 					pChanList->chanParam[num_channel].pwr =
 						MAX_PWR_FCC_CHAN_12;
 					QDF_TRACE(QDF_MODULE_ID_SME,
-						  QDF_TRACE_LEVEL_INFO,
+						  QDF_TRACE_LEVEL_DEBUG,
 						  "txpow for channel 12 is %d",
 						  MAX_PWR_FCC_CHAN_12);
 				}
@@ -821,7 +821,7 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 					pChanList->chanParam[num_channel].pwr =
 						MAX_PWR_FCC_CHAN_13;
 					QDF_TRACE(QDF_MODULE_ID_SME,
-						  QDF_TRACE_LEVEL_INFO,
+						  QDF_TRACE_LEVEL_DEBUG,
 						  "txpow for channel 13 is %d",
 						  MAX_PWR_FCC_CHAN_13);
 				}
@@ -839,7 +839,7 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 					= 1;
 			else if (cds_is_10_mhz_enabled())
 				pChanList->chanParam[num_channel].half_rate = 1;
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				"channel:%d, pwr=%d, DFS=%d qrate %d hrate %d ",
 				pChanList->chanParam[num_channel].chanId,
 				pChanList->chanParam[num_channel].pwr,
@@ -874,7 +874,7 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 		csr_roam_sort_channel_for_early_stop(pMac, pChanList,
 						     num_channel);
 	else
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			FL("Early Stop Scan Feature not supported"));
 
 	if ((pMac->roam.configParam.uCfgDot11Mode ==
@@ -1038,7 +1038,7 @@ void csr_set_global_cfgs(tpAniSirGlobal pMac)
  */
 static void csr_packetdump_timer_handler(void *pv)
 {
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			"%s Invoking packetdump deregistration API", __func__);
 	wlan_deregister_txrx_packetdump();
 }
@@ -2020,7 +2020,7 @@ QDF_STATUS csr_set_band(tHalHandle hHal, uint8_t sessionId, eCsrBand eBand)
 			  pMac->roam.configParam.uCfgDot11Mode, eBand);
 		return QDF_STATUS_E_INVAL;
 	}
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "Band changed to %u (0 - ALL, 1 - 2.4 GHZ, 2 - 5GHZ)", eBand);
 	pMac->roam.configParam.eBand = eBand;
 	pMac->roam.configParam.bandCapability = eBand;
@@ -14494,12 +14494,12 @@ static QDF_STATUS csr_set_ldpc_exception(tpAniSirGlobal mac_ctx,
 	if (usr_cfg_rx_ldpc && wma_is_rx_ldpc_supported_for_channel(channel)) {
 		session->htConfig.ht_rx_ldpc = 1;
 		session->vht_config.ldpc_coding = 1;
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_HIGH,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			"LDPC enable for chnl[%d]", channel);
 	} else {
 		session->htConfig.ht_rx_ldpc = 0;
 		session->vht_config.ldpc_coding = 0;
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_HIGH,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			"LDPC disable for chnl[%d]", channel);
 	}
 	return QDF_STATUS_SUCCESS;
@@ -18561,7 +18561,7 @@ QDF_STATUS csr_roam_offload_scan_rsp_hdlr(tpAniSirGlobal pMac,
 		break;
 
 	default:
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "Rsp for Roam Scan Offload with reason %d",
 			  scanOffloadRsp->reason);
 	}
@@ -19963,7 +19963,7 @@ bool csr_clear_joinreq_param(tpAniSirGlobal mac_ctx,
 	if (NULL != bss_list) {
 		csr_scan_result_purge(mac_ctx,
 			sta_session->stored_roam_profile.bsslist_handle);
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			FL("bss list is released for session %d"), session_id);
 		sta_session->stored_roam_profile.bsslist_handle = NULL;
 	}
