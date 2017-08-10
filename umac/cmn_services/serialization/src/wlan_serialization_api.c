@@ -227,7 +227,8 @@ wlan_serialization_request(struct wlan_serialization_command *cmd)
 	for (comp_id = 0; comp_id < WLAN_UMAC_COMP_ID_MAX; comp_id++) {
 		if (!ser_soc_obj->comp_info_cb[cmd->cmd_type][comp_id])
 			continue;
-		(ser_soc_obj->comp_info_cb[cmd->cmd_type][comp_id])(&info);
+		(ser_soc_obj->comp_info_cb[cmd->cmd_type][comp_id])(cmd->vdev,
+			&info);
 		if (!ser_soc_obj->apply_rules_cb[cmd->cmd_type])
 			continue;
 		if (!ser_soc_obj->apply_rules_cb[cmd->cmd_type](&info, comp_id))

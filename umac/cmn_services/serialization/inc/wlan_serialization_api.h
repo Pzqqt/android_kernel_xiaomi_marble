@@ -94,6 +94,7 @@ typedef QDF_STATUS (*wlan_serialization_cmd_callback) (void *wlan_cmd,
 
 /**
  * wlan_serialization_comp_info_cb() - callback to fill the rules information
+ * @vdev: VDEV object for which the command has been received
  * @comp_info: Information filled by the component
  *
  * This callback is registered dynamically by the component with the
@@ -103,7 +104,7 @@ typedef QDF_STATUS (*wlan_serialization_cmd_callback) (void *wlan_cmd,
  *
  * Return: None
  */
-typedef void (*wlan_serialization_comp_info_cb)(
+typedef void (*wlan_serialization_comp_info_cb)(struct wlan_objmgr_vdev *vdev,
 		union wlan_serialization_rules_info *comp_info);
 
 /**
