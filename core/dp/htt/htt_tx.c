@@ -1023,28 +1023,28 @@ void htt_tx_desc_display(void *tx_desc)
 	htt_tx_desc = (struct htt_tx_msdu_desc_t *)tx_desc;
 
 	/* only works for little-endian */
-	qdf_print("HTT tx desc (@ %pK):", htt_tx_desc);
-	qdf_print("  msg type = %d", htt_tx_desc->msg_type);
-	qdf_print("  pkt subtype = %d", htt_tx_desc->pkt_subtype);
-	qdf_print("  pkt type = %d", htt_tx_desc->pkt_type);
-	qdf_print("  vdev ID = %d", htt_tx_desc->vdev_id);
-	qdf_print("  ext TID = %d", htt_tx_desc->ext_tid);
-	qdf_print("  postponed = %d", htt_tx_desc->postponed);
-	qdf_print("  extension = %d", htt_tx_desc->extension);
-	qdf_print("  cksum_offload = %d", htt_tx_desc->cksum_offload);
-	qdf_print("  tx_compl_req= %d", htt_tx_desc->tx_compl_req);
-	qdf_print("  length = %d", htt_tx_desc->len);
-	qdf_print("  id = %d", htt_tx_desc->id);
+	qdf_debug("HTT tx desc (@ %pK):", htt_tx_desc);
+	qdf_debug("  msg type = %d", htt_tx_desc->msg_type);
+	qdf_debug("  pkt subtype = %d", htt_tx_desc->pkt_subtype);
+	qdf_debug("  pkt type = %d", htt_tx_desc->pkt_type);
+	qdf_debug("  vdev ID = %d", htt_tx_desc->vdev_id);
+	qdf_debug("  ext TID = %d", htt_tx_desc->ext_tid);
+	qdf_debug("  postponed = %d", htt_tx_desc->postponed);
+	qdf_debug("  extension = %d", htt_tx_desc->extension);
+	qdf_debug("  cksum_offload = %d", htt_tx_desc->cksum_offload);
+	qdf_debug("  tx_compl_req= %d", htt_tx_desc->tx_compl_req);
+	qdf_debug("  length = %d", htt_tx_desc->len);
+	qdf_debug("  id = %d", htt_tx_desc->id);
 #if HTT_PADDR64
-	qdf_print("  frag desc addr.lo = %#x",
+	qdf_debug("  frag desc addr.lo = %#x",
 		  htt_tx_desc->frags_desc_ptr.lo);
-	qdf_print("  frag desc addr.hi = %#x",
+	qdf_debug("  frag desc addr.hi = %#x",
 		  htt_tx_desc->frags_desc_ptr.hi);
 #else /* ! HTT_PADDR64 */
-	qdf_print("  frag desc addr = %#x", htt_tx_desc->frags_desc_ptr);
+	qdf_debug("  frag desc addr = %#x", htt_tx_desc->frags_desc_ptr);
 #endif /* HTT_PADDR64 */
-	qdf_print("  peerid = %d", htt_tx_desc->peerid);
-	qdf_print("  chanfreq = %d", htt_tx_desc->chanfreq);
+	qdf_debug("  peerid = %d", htt_tx_desc->peerid);
+	qdf_debug("  chanfreq = %d", htt_tx_desc->chanfreq);
 }
 #endif
 
