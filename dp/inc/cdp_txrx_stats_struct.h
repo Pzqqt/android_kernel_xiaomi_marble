@@ -496,6 +496,7 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_ACS_SRLOADVAR = 352,
 	OL_ATH_PARAM_MGMT_RSSI_THRESHOLD = 353,
 	OL_ATH_PARAM_EXT_NSS_CAPABLE = 354,
+	OL_ATH_PARAM_MGMT_PDEV_STATS_TIMER = 355,
 };
 
 /* Enumeration of PDEV Configuration parameter */
