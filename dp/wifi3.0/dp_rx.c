@@ -1108,6 +1108,8 @@ done:
 				if (is_first_frag)
 					continue;
 				else {
+					frag_list_head = NULL;
+					frag_list_tail = NULL;
 					nbuf = head_frag_nbuf;
 					rx_tlv_hdr = qdf_nbuf_data(nbuf);
 				}
