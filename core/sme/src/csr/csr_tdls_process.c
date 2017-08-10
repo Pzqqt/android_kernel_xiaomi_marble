@@ -691,7 +691,7 @@ QDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msgType,
 		tCsrRoamInfo roam_info = {0};
 
 		/* remove pending eSmeCommandTdlsDiscovery command */
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			FL("sme_rsp->sessionId[%d] eSmeCommandTdlsSendMgmt"),
 			sme_rsp->sessionId);
 		csr_tdls_remove_sme_cmd(pMac, eSmeCommandTdlsSendMgmt,
