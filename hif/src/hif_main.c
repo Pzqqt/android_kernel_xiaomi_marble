@@ -40,12 +40,12 @@
 #include "hif_hw_version.h"
 #if defined(HIF_PCI) || defined(HIF_SNOC) || defined(HIF_AHB)
 #include "ce_tasklet.h"
+#include "ce_api.h"
 #endif
 #include "qdf_trace.h"
 #include "qdf_status.h"
 #include "hif_debug.h"
 #include "mp_dev.h"
-#include "ce_api.h"
 #ifdef QCA_WIFI_QCA8074
 #include "hal_api.h"
 #endif
