@@ -143,6 +143,74 @@ static uint8_t lim_get_nss_supported_by_beacon(tpSchBeaconStruct bcn,
 }
 
 /**
+ * lim_check_vendor_ap_present() - checks if the Vendor OUIs are present
+ * in the IE buffer
+ *
+ * @mac_ctx:    mac context.
+ * @ie:         ie buffer
+ * @ie_len:     length of ie buffer
+ *
+ * This function parses the IE buffer and finds if any of the vendor OUI
+ * is present in it.
+ *
+ * Return: true if the vendor OUI is present, else false
+ */
+static bool
+lim_check_vendor_ap_present(tpAniSirGlobal mac_ctx, uint8_t *ie,
+			    uint16_t ie_len)
+{
+	uint8_t *ptr = NULL;
+	uint8_t elem_len;
+	uint8_t elem_data[SIR_MAC_VENDOR_AP_2_DATA_LEN];
+
+	if (cfg_get_vendor_ie_ptr_from_oui(mac_ctx,
+					   SIR_MAC_VENDOR_AP_1_OUI,
+					   SIR_MAC_VENDOR_AP_1_OUI_LEN,
+					   ie, ie_len)) {
+		pe_debug("In lim_check_vendor_ap_present match Vendor AP 1");
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+				SIR_MAC_VENDOR_AP_1_OUI,
+				SIR_MAC_VENDOR_AP_1_OUI_LEN);
+		return true;
+	}
+
+	/*
+	 * for SIR_MAC_VENDOR_AP_2_OUI check for Vendor IE Data also
+	 */
+	ptr = cfg_get_vendor_ie_ptr_from_oui(mac_ctx,
+					     SIR_MAC_VENDOR_AP_2_OUI,
+					     SIR_MAC_VENDOR_AP_2_OUI_LEN,
+					     ie, ie_len);
+	if (!ptr)
+		return false;
+
+	elem_len = ptr[1];
+	qdf_mem_copy(&elem_data, &ptr[2 + SIR_MAC_VENDOR_AP_2_OUI_LEN],
+			SIR_MAC_VENDOR_AP_2_DATA_LEN);
+	/*
+	 * Byte 2 of Vendor IE data might change dynamically, masking it
+	 */
+	elem_data[1] |= 0xFF;
+
+	if ((elem_len == (SIR_MAC_VENDOR_AP_2_OUI_LEN +
+	     SIR_MAC_VENDOR_AP_2_DATA_LEN)) &&
+	     ((qdf_mem_cmp(&elem_data, SIR_MAC_VENDOR_AP_2_DATA,
+	     SIR_MAC_VENDOR_AP_2_DATA_LEN) == 0) ||
+	     (qdf_mem_cmp(&elem_data, SIR_MAC_VENDOR_AP_2_DATA_2,
+	     SIR_MAC_VENDOR_AP_2_DATA_LEN) == 0))) {
+		pe_debug("In lim_check_vendor_ap_present match Vendor AP 2");
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+				SIR_MAC_VENDOR_AP_2_OUI,
+				SIR_MAC_VENDOR_AP_2_OUI_LEN);
+		pe_debug("Verifying vendor IE Data "MAC_ADDRESS_STR,
+			MAC_ADDR_ARRAY(&ptr[2 + SIR_MAC_VENDOR_AP_2_OUI_LEN]));
+		return true;
+	}
+
+	return false;
+}
+
+/**
  * lim_extract_ap_capability() - extract AP's HCF/WME/WSM capability
  * @mac_ctx: Pointer to Global MAC structure
  * @p_ie: Pointer to starting IE in Beacon/Probe Response
@@ -168,6 +236,7 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 	tSirRetStatus cfg_get_status = eSIR_FAILURE;
 	uint8_t ap_bcon_ch_width;
 	bool new_ch_width_dfn = false;
+	bool is_vendor_ap_present;
 	tDot11fIEVHTOperation *vht_op;
 	uint8_t fw_vht_ch_wd;
 	uint8_t vht_ch_wd;
@@ -193,9 +262,11 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 		return;
 	}
 
+	is_vendor_ap_present = lim_check_vendor_ap_present(mac_ctx, p_ie,
+							   ie_len);
+
 	if (mac_ctx->roam.configParam.is_force_1x1 &&
-		cfg_get_vendor_ie_ptr_from_oui(mac_ctx, SIR_MAC_VENDOR_AP_1_OUI,
-				SIR_MAC_VENDOR_AP_1_OUI_LEN, p_ie, ie_len) &&
+		is_vendor_ap_present &&
 		lim_get_nss_supported_by_beacon(beacon_struct, session) == 2 &&
 		mac_ctx->lteCoexAntShare &&
 		IS_24G_CH(session->currentOperChannel)) {
