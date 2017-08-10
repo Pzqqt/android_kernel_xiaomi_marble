@@ -1575,8 +1575,13 @@ static QDF_STATUS send_stats_request_cmd_tlv(wmi_unified_t wmi_handle,
 			       (wmi_request_stats_cmd_fixed_param));
 	cmd->stats_id = param->stats_id;
 	cmd->vdev_id = param->vdev_id;
+	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+							param->pdev_id);
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(macaddr, &cmd->peer_macaddr);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 					 WMI_REQUEST_STATS_CMDID);
+	WMI_LOGD("STATS REQ STATS_ID:%d VDEV_ID:%d PDEV_ID:%d-->",
+				cmd->stats_id, cmd->vdev_id, cmd->pdev_id);
 	if (ret) {
 		WMI_LOGE("Failed to send status request to fw =%d", ret);
 		wmi_buf_free(buf);
@@ -7972,50 +7977,6 @@ static QDF_STATUS send_process_ll_stats_get_cmd_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * send_get_stats_cmd_tlv() - get stats request
- * @wmi_handle: wmi handle
- * @get_stats_param: stats params
- * @addr: mac address
- *
- * Return: CDF status
- */
-static QDF_STATUS send_get_stats_cmd_tlv(wmi_unified_t wmi_handle,
-		       struct pe_stats_req  *get_stats_param,
-			   uint8_t addr[IEEE80211_ADDR_LEN])
-{
-	wmi_buf_t buf;
-	wmi_request_stats_cmd_fixed_param *cmd;
-	uint8_t len = sizeof(wmi_request_stats_cmd_fixed_param);
-
-	buf = wmi_buf_alloc(wmi_handle, len);
-	if (!buf) {
-		WMI_LOGE("%s: Failed to allocate wmi buffer", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-
-	cmd = (wmi_request_stats_cmd_fixed_param *) wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_request_stats_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_request_stats_cmd_fixed_param));
-	cmd->stats_id = get_stats_param->stats_mask;
-	cmd->vdev_id = get_stats_param->session_id;
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(addr, &cmd->peer_macaddr);
-	WMI_LOGD("STATS REQ VDEV_ID:%d-->", cmd->vdev_id);
-	if (wmi_unified_cmd_send(wmi_handle, buf, len,
-				 WMI_REQUEST_STATS_CMDID)) {
-
-		WMI_LOGE("%s: Failed to send WMI_REQUEST_STATS_CMDID",
-			 __func__);
-		wmi_buf_free(buf);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	return QDF_STATUS_SUCCESS;
-
-}
 
 /**
  * send_congestion_cmd_tlv() - send request to fw to get CCA
@@ -17179,7 +17140,8 @@ static QDF_STATUS extract_all_stats_counts_tlv(wmi_unified_t wmi_handle,
 	stats_param->num_peer_stats = ev->num_peer_stats;
 	stats_param->num_bcnflt_stats = ev->num_bcnflt_stats;
 	stats_param->num_chan_stats = ev->num_chan_stats;
-	stats_param->pdev_id = 0;
+	stats_param->pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host(
+							ev->pdev_id);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -19160,7 +19122,6 @@ struct wmi_ops tlv_ops =  {
 	.send_process_ll_stats_clear_cmd = send_process_ll_stats_clear_cmd_tlv,
 	.send_process_ll_stats_set_cmd = send_process_ll_stats_set_cmd_tlv,
 	.send_process_ll_stats_get_cmd = send_process_ll_stats_get_cmd_tlv,
-	.send_get_stats_cmd = send_get_stats_cmd_tlv,
 	.send_congestion_cmd = send_congestion_cmd_tlv,
 	.send_snr_request_cmd = send_snr_request_cmd_tlv,
 	.send_snr_cmd = send_snr_cmd_tlv,
