@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2014, 2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -53,7 +53,7 @@
 #define CFG_CTL_NTF_PHY       0x00800000
 #define CFG_CTL_NTF_MAC       0x01000000
 #define CFG_CTL_NTF_LOG       0x02000000
-#define CFG_CTL_NTF_HAL       0x04000000
+#define CFG_CTL_NTF_TARGET    0x04000000
 #define CFG_CTL_NTF_DPH       0x08000000
 #define CFG_CTL_NTF_ARQ       0x10000000
 #define CFG_CTL_NTF_SCH       0x20000000

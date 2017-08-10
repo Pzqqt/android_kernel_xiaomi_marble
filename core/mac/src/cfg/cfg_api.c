@@ -892,7 +892,7 @@ static void notify(tpAniSirGlobal pMac, uint16_t cfgId, uint32_t ntfMask)
 	if ((ntfMask & CFG_CTL_NTF_LIM) != 0)
 		lim_post_msg_api(pMac, &mmhMsg);
 
-	if ((ntfMask & CFG_CTL_NTF_HAL) != 0)
+	if ((ntfMask & CFG_CTL_NTF_TARGET) != 0)
 		wma_post_ctrl_msg(pMac, &mmhMsg);
 
 	/* notify ARQ */
