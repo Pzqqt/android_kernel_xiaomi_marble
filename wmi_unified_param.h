@@ -6760,6 +6760,10 @@ typedef struct {
  * @chan_tx_pwr_tp: channel tx power per throughput
  * @rx_frame_count: rx frame count
  * @rx_11b_mode_data_duration: 11b mode data duration
+ * @my_bss_rx_cycle_count: BSS rx cycle count
+ * @tx_frame_cnt: tx frame count
+ * @mac_clk_mhz: mac clock
+ * @vdev_id: unique id identifying the VDEV
  */
 typedef struct {
 	uint32_t pdev_id;
@@ -6773,6 +6777,10 @@ typedef struct {
 	uint32_t chan_tx_pwr_tp;
 	uint32_t rx_frame_count;
 	uint32_t rx_11b_mode_data_duration;
+	uint32_t my_bss_rx_cycle_count;
+	uint32_t tx_frame_cnt;
+	uint32_t mac_clk_mhz;
+	uint32_t vdev_id;
 } wmi_host_chan_info_event;
 
 /**
