@@ -681,12 +681,13 @@ void tdls_scan_done_callback(struct tdls_soc_priv_obj *tdls_soc);
 
 /**
  * tdls_scan_serialization_comp_info_cb() - callback for scan start
+ * @vdev: VDEV on which the scan command is being processed
  * @comp_info: serialize rules info
  *
  * Return: negative = caller should stop and return error code immediately
  *         1 = caller can continue to scan
  */
-void tdls_scan_serialization_comp_info_cb(
+void tdls_scan_serialization_comp_info_cb(struct wlan_objmgr_vdev *vdev,
 		union wlan_serialization_rules_info *comp_info);
 
 /**

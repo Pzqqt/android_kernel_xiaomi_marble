@@ -1332,7 +1332,7 @@ return_success:
 	return status;
 }
 
-void tdls_scan_serialization_comp_info_cb(
+void tdls_scan_serialization_comp_info_cb(struct wlan_objmgr_vdev *vdev,
 		union wlan_serialization_rules_info *comp_info)
 {
 	struct tdls_soc_priv_obj *tdls_soc;
