@@ -19352,8 +19352,10 @@ static void populate_pdev_param_tlv(uint32_t *pdev_param)
 	pdev_param[wmi_pdev_param_sensitivity_level] = WMI_UNAVAILABLE_PARAM;
 	pdev_param[wmi_pdev_param_signed_txpower_2g] = WMI_UNAVAILABLE_PARAM;
 	pdev_param[wmi_pdev_param_signed_txpower_5g] = WMI_UNAVAILABLE_PARAM;
-	pdev_param[wmi_pdev_param_enable_per_tid_amsdu] = WMI_UNAVAILABLE_PARAM;
-	pdev_param[wmi_pdev_param_enable_per_tid_ampdu] = WMI_UNAVAILABLE_PARAM;
+	pdev_param[wmi_pdev_param_enable_per_tid_amsdu] =
+		WMI_PDEV_PARAM_ENABLE_PER_TID_AMSDU;
+	pdev_param[wmi_pdev_param_enable_per_tid_ampdu] =
+		WMI_PDEV_PARAM_ENABLE_PER_TID_AMPDU;
 	pdev_param[wmi_pdev_param_cca_threshold] = WMI_UNAVAILABLE_PARAM;
 	pdev_param[wmi_pdev_param_rts_fixed_rate] = WMI_UNAVAILABLE_PARAM;
 	pdev_param[wmi_pdev_param_cal_period] = WMI_UNAVAILABLE_PARAM;
