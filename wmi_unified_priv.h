@@ -481,9 +481,6 @@ QDF_STATUS (*send_process_ll_stats_get_cmd)
 	(wmi_unified_t wmi_handle, const struct ll_stats_get_params  *get_req,
 		 uint8_t addr[IEEE80211_ADDR_LEN]);
 
-QDF_STATUS (*send_get_stats_cmd)(wmi_unified_t wmi_handle,
-		       struct pe_stats_req  *get_stats_param,
-			   uint8_t addr[IEEE80211_ADDR_LEN]);
 
 QDF_STATUS (*send_congestion_cmd)(wmi_unified_t wmi_handle,
 			A_UINT8 vdev_id);

@@ -817,23 +817,17 @@ typedef enum {
 	WMI_HOST_REQUEST_VDEV_EXTD_STAT =  0x100,
 } wmi_host_stats_id;
 
-typedef struct {
-	uint16_t cfg_retry_count;
-	uint16_t retry_count;
-} wmi_host_inst_rssi_args;
 
 /**
  * struct stats_request_params - stats_request cmd parameter
- * @stats_id: statistics id
+ * @stats_id: Bit mask of all the STATS request are specified with values from wmi_host_stats_id
  * @vdev_id: vdev id
- * @wmi_host_inst_rssi_args: Instantaneous rssi stats args
+ * @pdev_id: pdev_id
  */
 struct stats_request_params {
 	uint32_t stats_id;
-	uint32_t vdev_id;
-#ifndef CONFIG_MCL
-	wmi_host_inst_rssi_args rssi_args;
-#endif
+	uint8_t vdev_id;
+	uint8_t pdev_id;
 };
 
 /**
@@ -2595,23 +2589,6 @@ struct ll_stats_get_params {
 	uint32_t param_id_mask;
 };
 
-/**
- * struct pe_stats_req - pe stats parameter
- * @msg_type: message type is same as the request type
- * @msg_len: length of the entire request
- * @sta_id: Per STA stats request must contain valid
- * @stats_mask: categories of stats requested
- * @session_id: wsm ts spec flag
- */
-struct pe_stats_req {
-	/* Common for all types are requests */
-	uint16_t msg_type;
-	uint16_t msg_len;
-	uint32_t sta_id;
-	/* categories of stats requested. look at ePEStatsMask */
-	uint32_t stats_mask;
-	uint8_t session_id;
-};
 
 /**
  * struct link_status_params - link stats parameter
