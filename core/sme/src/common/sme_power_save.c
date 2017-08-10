@@ -176,7 +176,7 @@ static QDF_STATUS sme_ps_enable_ps_req_params(tpAniSirGlobal mac_ctx,
 	status = sme_post_ps_msg_to_wma(WMA_ENTER_PS_REQ, enable_ps_req_params);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		return QDF_STATUS_E_FAILURE;
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		FL("Message WMA_ENTER_PS_REQ Successfully sent to WMA"));
 	ps_param->ps_state = ps_state;
 	return QDF_STATUS_SUCCESS;
@@ -207,7 +207,7 @@ static QDF_STATUS sme_ps_disable_ps_req_params(tpAniSirGlobal mac_ctx,
 	status = sme_post_ps_msg_to_wma(WMA_EXIT_PS_REQ, disable_ps_req_params);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		return QDF_STATUS_E_FAILURE;
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			FL("Message WMA_EXIT_PS_REQ Successfully sent to WMA"));
 	sme_set_ps_state(mac_ctx, session_id, FULL_POWER_MODE);
 	return QDF_STATUS_SUCCESS;
@@ -245,7 +245,7 @@ static QDF_STATUS sme_ps_enable_uapsd_req_params(tpAniSirGlobal mac_ctx,
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		return QDF_STATUS_E_FAILURE;
 
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		    FL("Msg WMA_ENABLE_UAPSD_REQ Successfully sent to WMA"));
 	sme_set_ps_state(mac_ctx, session_id, ps_state);
 	return QDF_STATUS_SUCCESS;
@@ -283,7 +283,7 @@ static QDF_STATUS sme_ps_disable_uapsd_req_params(tpAniSirGlobal mac_ctx,
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		return QDF_STATUS_E_FAILURE;
 
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		FL("Message WMA_DISABLE_UAPSD_REQ Successfully sent to WMA"));
 	sme_set_ps_state(mac_ctx, session_id, LEGACY_POWER_SAVE_MODE);
 	return QDF_STATUS_SUCCESS;
@@ -383,7 +383,7 @@ static QDF_STATUS sme_ps_enter_wowl_req_params(tpAniSirGlobal mac_ctx,
 
 	if (QDF_STATUS_SUCCESS == sme_post_ps_msg_to_wma(WMA_WOWL_ENTER_REQ,
 							hal_wowl_params)){
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			FL("Msg WMA_WOWL_ENTER_REQ Successfully sent to WMA"));
 		return QDF_STATUS_SUCCESS;
 	} else {
@@ -417,7 +417,7 @@ static QDF_STATUS sme_ps_exit_wowl_req_params(tpAniSirGlobal mac_ctx,
 
 	if (QDF_STATUS_SUCCESS == sme_post_ps_msg_to_wma(WMA_WOWL_EXIT_REQ,
 							hal_wowl_msg)){
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			FL("Msg WMA_WOWL_EXIT_REQ Successfully sent to WMA"));
 		return QDF_STATUS_SUCCESS;
 	} else {
@@ -443,7 +443,7 @@ QDF_STATUS sme_ps_process_command(tpAniSirGlobal mac_ctx, uint32_t session_id,
 		sme_err("Invalid Session_id: %d", session_id);
 		return QDF_STATUS_E_INVAL;
 	}
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			FL("Power Save command %d"), command);
 	switch (command) {
 	case SME_PS_ENABLE:
@@ -755,7 +755,7 @@ QDF_STATUS sme_set_ps_host_offload(tHalHandle hal_ctx,
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_ctx);
 	tCsrRoamSession *session = CSR_GET_SESSION(mac_ctx, session_id);
 
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			"%s: IP address = %d.%d.%d.%d", __func__,
 			request->params.hostIpv4Addr[0],
 			request->params.hostIpv4Addr[1],
