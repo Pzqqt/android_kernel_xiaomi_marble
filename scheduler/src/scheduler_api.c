@@ -71,7 +71,7 @@ static QDF_STATUS scheduler_close(struct scheduler_ctx *sched_ctx)
 
 	/* Wait for scheduler thread to exit */
 	qdf_wait_single_event(&sched_ctx->sch_shutdown, 0);
-	sched_ctx->sch_thread = 0;
+	sched_ctx->sch_thread = NULL;
 
 	/* Clean up message queues of MC thread */
 	scheduler_flush_mqs(sched_ctx);
@@ -102,6 +102,8 @@ static void scheduler_watchdog_timeout(void *arg)
 	struct scheduler_ctx *sched = arg;
 
 	scheduler_watchdog_notify(sched);
+	if (sched->sch_thread)
+		qdf_print_thread_trace(sched->sch_thread);
 
 	/* avoid crashing during shutdown */
 	if (qdf_test_bit(MC_SHUTDOWN_EVENT_MASK, &sched->sch_event_flag))
