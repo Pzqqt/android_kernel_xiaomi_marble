@@ -46,7 +46,7 @@ wlan_serialization_put_back_to_global_list(qdf_list_t *queue,
 		QDF_ASSERT(0);
 		return status;
 	}
-	serialization_info("cmd_id-%d, cmd_type-%d", cmd_list->cmd.cmd_id,
+	serialization_debug("cmd_id-%d, cmd_type-%d", cmd_list->cmd.cmd_id,
 				cmd_list->cmd.cmd_type);
 	qdf_mem_zero(&cmd_list->cmd, sizeof(struct wlan_serialization_command));
 	status = qdf_list_insert_back(&ser_pdev_obj->global_cmd_pool_list,
@@ -402,7 +402,7 @@ wlan_serialization_is_active_scan_cmd_allowed(struct wlan_objmgr_pdev *pdev)
 			wlan_serialization_active_scan_cmd_count_handler,
 			&count, 1, WLAN_SERIALIZATION_ID);
 	if (count < ucfg_scan_get_max_active_scans(psoc)) {
-		serialization_notice("count is [%d]", count);
+		serialization_debug("count is [%d]", count);
 		return true;
 	}
 
@@ -461,7 +461,7 @@ wlan_serialization_is_active_cmd_allowed(struct wlan_serialization_command *cmd)
 QDF_STATUS wlan_serialization_validate_cmdtype(
 		 enum wlan_serialization_cmd_type cmd_type)
 {
-	serialization_info("validate cmd_type:%d", cmd_type);
+	serialization_debug("validate cmd_type:%d", cmd_type);
 
 	if (cmd_type < 0 || cmd_type >= WLAN_SER_CMD_MAX) {
 		serialization_err("Invalid cmd or comp passed");
@@ -475,7 +475,7 @@ QDF_STATUS wlan_serialization_validate_cmd(
 		 enum wlan_umac_comp_id comp_id,
 		 enum wlan_serialization_cmd_type cmd_type)
 {
-	serialization_info("validate cmd_type:%d, comp_id:%d",
+	serialization_debug("validate cmd_type:%d, comp_id:%d",
 			cmd_type, comp_id);
 	if (cmd_type < 0 || comp_id < 0 ||
 			cmd_type >= WLAN_SER_CMD_MAX ||

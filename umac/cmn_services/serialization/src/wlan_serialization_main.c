@@ -106,7 +106,7 @@ static QDF_STATUS wlan_serialization_psoc_obj_create_notification(
 	wlan_objmgr_psoc_component_obj_attach(psoc,
 			WLAN_UMAC_COMP_SERIALIZATION, soc_ser_obj,
 			QDF_STATUS_SUCCESS);
-	serialization_info("ser psoc obj created");
+	serialization_debug("ser psoc obj created");
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -128,7 +128,7 @@ static void wlan_serialization_destroy_cmd_pool(
 		qdf_list_remove_front(&ser_pdev_obj->global_cmd_pool_list,
 				&node);
 		cmd_list = (struct wlan_serialization_command_list *)node;
-		serialization_info("Node being freed from global pool %pK",
+		serialization_debug("Node being freed from global pool %pK",
 				cmd_list);
 		qdf_mem_free(cmd_list);
 
@@ -168,7 +168,7 @@ wlan_serialization_create_cmd_pool(struct wlan_objmgr_pdev *pdev,
 		qdf_list_insert_back(
 				&ser_pdev_obj->global_cmd_pool_list,
 				&cmd_list_ptr->node);
-		serialization_info("Created node at %pK and inserted to pool",
+		serialization_debug("Created node at %pK and inserted to pool",
 				cmd_list_ptr);
 	}
 
@@ -254,7 +254,7 @@ static QDF_STATUS wlan_serialization_psoc_obj_destroy_notification(
 			ser_soc_obj);
 	if (status != QDF_STATUS_SUCCESS)
 		serialization_err("ser psoc private obj detach failed");
-	serialization_info("ser psoc obj deleted with status %d", status);
+	serialization_debug("ser psoc obj deleted with status %d", status);
 	qdf_mem_free(ser_soc_obj);
 
 	return status;
@@ -290,7 +290,7 @@ static QDF_STATUS wlan_serialization_pdev_obj_destroy_notification(
 	wlan_serialization_destroy_list(ser_pdev_obj,
 					&ser_pdev_obj->pending_scan_list);
 	wlan_serialization_destroy_cmd_pool(ser_pdev_obj);
-	serialization_info("ser pdev obj deleted with status %d", status);
+	serialization_debug("ser pdev obj deleted with status %d", status);
 	qdf_mem_free(ser_pdev_obj);
 
 	return status;
@@ -393,7 +393,7 @@ QDF_STATUS wlan_serialization_init(void)
 		serialization_err("Failed to reg vdev ser obj delete handler");
 		goto err_vdev_delete;
 	}
-	serialization_info("serialization handlers registered with obj mgr");
+	serialization_debug("serialization handlers registered with obj mgr");
 	/*
 	 * Initialize the structure so all callbacks are registered
 	 * initially as NULL.

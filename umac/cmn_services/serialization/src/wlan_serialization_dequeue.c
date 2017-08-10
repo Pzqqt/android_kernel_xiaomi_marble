@@ -48,13 +48,13 @@ void wlan_serialization_move_pending_to_active(
 		pending_queue = &ser_pdev_obj->pending_list;
 
 	if (qdf_list_empty(pending_queue)) {
-		serialization_info("nothing to move from pend to active queue");
-		serialization_info("cmd_type - %d", cmd_type);
+		serialization_debug("nothing to move from pend to active que");
+		serialization_debug("cmd_type - %d", cmd_type);
 		return;
 	}
 	if (QDF_STATUS_SUCCESS != qdf_list_peek_front(pending_queue, &nnode)) {
 		serialization_err("can't read from pending queue");
-		serialization_info("cmd_type - %d", cmd_type);
+		serialization_debug("cmd_type - %d", cmd_type);
 		return;
 	}
 	cmd_list = qdf_container_of(nnode,
@@ -411,7 +411,7 @@ wlan_serialization_dequeue_cmd(struct wlan_serialization_command *cmd,
 		serialization_err("ser_pdev_obj is empty");
 		return status;
 	}
-	serialization_info("command high_priority[%d] cmd_type[%d] cmd_id[%d]",
+	serialization_debug("command high_priority[%d] cmd_type[%d] cmd_id[%d]",
 			cmd->is_high_priority, cmd->cmd_type, cmd->cmd_id);
 	/*
 	 *  Pass the copy of command, instead of actual command because
@@ -450,7 +450,7 @@ wlan_serialization_dequeue_cmd(struct wlan_serialization_command *cmd,
 			QDF_ASSERT(0);
 			status = WLAN_SER_CMD_NOT_FOUND;
 		}
-		serialization_info("Request to remove only from active queue");
+		serialization_debug("Request to remove only from active queue");
 		return status;
 	}
 	qdf_mem_copy(&cmd_backup, cmd,

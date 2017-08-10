@@ -151,7 +151,7 @@ enum wlan_serialization_cmd_status
 wlan_serialization_non_scan_cmd_status(struct wlan_objmgr_pdev *pdev,
 		enum wlan_serialization_cmd_type cmd_id)
 {
-	serialization_info("pdev non cmd status entry");
+	serialization_enter();
 
 	return WLAN_SER_CMD_NOT_FOUND;
 }
@@ -162,7 +162,7 @@ wlan_serialization_cancel_request(
 {
 	QDF_STATUS status;
 
-	serialization_info("serialization cancel request entry");
+	serialization_enter();
 	if (!req) {
 		serialization_err("given request is empty");
 		return WLAN_SER_CMD_NOT_FOUND;
@@ -181,7 +181,7 @@ void wlan_serialization_remove_cmd(
 {
 	QDF_STATUS status;
 
-	serialization_info("serialization remove request entry");
+	serialization_enter();
 	if (!cmd) {
 		serialization_err("given request is empty");
 		QDF_ASSERT(0);
@@ -207,7 +207,7 @@ wlan_serialization_request(struct wlan_serialization_command *cmd)
 	struct wlan_serialization_psoc_priv_obj *ser_soc_obj;
 	union wlan_serialization_rules_info info;
 
-	serialization_info("serialization queue cmd entry");
+	serialization_enter();
 	if (!cmd) {
 		serialization_err("serialization cmd is null");
 		return WLAN_SER_CMD_DENIED_UNSPECIFIED;
@@ -262,7 +262,7 @@ wlan_serialization_vdev_scan_status(struct wlan_objmgr_vdev *vdev)
 void wlan_serialization_flush_cmd(
 		struct wlan_serialization_queued_cmd_info *cmd)
 {
-	serialization_info("serialization cmd flushed");
+	serialization_enter();
 	if (!cmd) {
 		serialization_err("cmd is null, can't flush");
 		return;

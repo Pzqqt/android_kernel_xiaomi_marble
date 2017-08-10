@@ -173,7 +173,7 @@ wlan_serialization_enqueue_cmd(struct wlan_serialization_command *cmd,
 		return status;
 	}
 
-	serialization_info("command high_priority[%d] cmd_type[%d] cmd_id[%d]",
+	serialization_debug("command high_priority[%d] cmd_type[%d] cmd_id[%d]",
 			cmd->is_high_priority, cmd->cmd_type, cmd->cmd_id);
 	if (cmd->cmd_type < WLAN_SER_CMD_NONSCAN) {
 		if (is_cmd_for_active_queue)

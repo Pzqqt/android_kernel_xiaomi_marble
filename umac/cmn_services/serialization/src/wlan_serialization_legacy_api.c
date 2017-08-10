@@ -152,7 +152,7 @@ wlan_serialization_peek_head_active_cmd_using_psoc(
 
 	cmd_list = qdf_container_of(nnode,
 			struct wlan_serialization_command_list, node);
-	serialization_info("cmd_type[%d]", cmd_list->cmd.cmd_type);
+	serialization_debug("cmd_type[%d]", cmd_list->cmd.cmd_type);
 	cmd = &cmd_list->cmd;
 
 	return cmd;
@@ -191,7 +191,7 @@ wlan_serialization_peek_head_pending_cmd_using_psoc(
 	}
 	cmd_list = qdf_container_of(nnode,
 			struct wlan_serialization_command_list, node);
-	serialization_info("cmd_type[%d] matched", cmd_list->cmd.cmd_type);
+	serialization_debug("cmd_type[%d] matched", cmd_list->cmd.cmd_type);
 	cmd = &cmd_list->cmd;
 
 	return cmd;
@@ -239,7 +239,7 @@ wlan_serialization_get_list_next_node(qdf_list_t *queue,
 		serialization_err("Can't locate next command");
 		return NULL;
 	} else {
-		serialization_info("next node is empty, so fine");
+		serialization_debug("next node is empty, so fine");
 		return NULL;
 	}
 }
@@ -364,7 +364,7 @@ wlan_serialization_get_scan_cmd_using_scan_id(
 				struct wlan_serialization_command_list, node);
 		if ((cmd_list->cmd.cmd_id == scan_id) &&
 				(cmd_list->cmd.vdev == vdev)) {
-			serialization_info("cmd_id[%d] matched", scan_id);
+			serialization_debug("cmd_id[%d] matched", scan_id);
 			cmd = &cmd_list->cmd;
 			break;
 		}
