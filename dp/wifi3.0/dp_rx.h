@@ -568,6 +568,42 @@ static inline QDF_STATUS dp_rx_defrag_concat(qdf_nbuf_t dst, qdf_nbuf_t src)
 	return QDF_STATUS_SUCCESS;
 }
 
+/*
+ * dp_rx_ast_set_active() - set the active flag of the astentry
+ *				    corresponding to a hw index.
+ * @soc: core txrx main context
+ * @sa_idx: hw idx
+ * @is_active: active flag
+ *
+ */
+#ifdef FEATURE_WDS
+static inline QDF_STATUS dp_rx_ast_set_active(struct dp_soc *soc, uint16_t sa_idx, bool is_active)
+{
+	struct dp_ast_entry *ast;
+	qdf_spin_lock_bh(&soc->ast_lock);
+	ast = soc->ast_table[sa_idx];
+
+	/*
+	 * Ensure we are updating the right AST entry by
+	 * validating ast_idx.
+	 * There is a possibility we might arrive here without
+	 * AST MAP event , so this check is mandatory
+	 */
+	if (ast && (ast->ast_idx == sa_idx)) {
+		ast->is_active = is_active;
+		qdf_spin_unlock_bh(&soc->ast_lock);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	qdf_spin_unlock_bh(&soc->ast_lock);
+	return QDF_STATUS_E_FAILURE;
+}
+#else
+static inline QDF_STATUS dp_rx_ast_set_active(struct dp_soc *soc, uint16_t sa_idx, bool is_active)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /*
  * dp_rx_buffers_replenish() - replenish rxdma ring with rx nbufs
