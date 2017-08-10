@@ -250,7 +250,7 @@ void lim_process_mlm_start_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 		}
 		if (send_bcon_ind) {
 			/* Configure beacon and send beacons to HAL */
-			QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 					FL("Start Beacon with ssid %s Ch %d"),
 					psessionEntry->ssId.ssId,
 					psessionEntry->currentOperChannel);
@@ -1830,7 +1830,7 @@ void lim_process_ap_mlm_del_sta_rsp(tpAniSirGlobal mac_ctx,
 
 	pe_debug("Deleted STA AssocID %d staId %d MAC",
 		sta_ds->assocId, sta_ds->staIndex);
-	lim_print_mac_addr(mac_ctx, sta_ds->staAddr, LOG1);
+	lim_print_mac_addr(mac_ctx, sta_ds->staAddr, LOGD);
 	if (eLIM_MLM_WT_ASSOC_DEL_STA_RSP_STATE ==
 	    sta_ds->mlmStaContext.mlmState) {
 		qdf_mem_free(del_sta_params);
@@ -1984,7 +1984,7 @@ void lim_process_ap_mlm_add_sta_rsp(tpAniSirGlobal pMac,
 	pStaDs->mlmStaContext.mlmState = eLIM_MLM_WT_ASSOC_CNF_STATE;
 	pe_debug("AddStaRsp Success.STA AssocID %d staId %d MAC",
 		pStaDs->assocId, pStaDs->staIndex);
-	lim_print_mac_addr(pMac, pStaDs->staAddr, LOG1);
+	lim_print_mac_addr(pMac, pStaDs->staAddr, LOGD);
 
 	/* For BTAMP-AP, the flow sequence shall be:
 	 * 1) PE sends eWNI_SME_ASSOC_IND to SME

@@ -3445,7 +3445,7 @@ void __lim_process_sme_assoc_cnf_new(tpAniSirGlobal mac_ctx, uint32_t msg_type,
 	if (sta_ds == NULL) {
 		pe_err("Rcvd invalid msg %X due to no STA ctx, aid %d, peer",
 				msg_type, assoc_cnf.aid);
-		lim_print_mac_addr(mac_ctx, assoc_cnf.peer_macaddr.bytes, LOG1);
+		lim_print_mac_addr(mac_ctx, assoc_cnf.peer_macaddr.bytes, LOGE);
 
 		/*
 		 * send a DISASSOC_IND message to WSM to make sure
@@ -3464,7 +3464,7 @@ void __lim_process_sme_assoc_cnf_new(tpAniSirGlobal mac_ctx, uint32_t msg_type,
 				QDF_MAC_ADDR_SIZE)) {
 		pe_debug("peerMacAddr mismatched for aid %d, peer ",
 				assoc_cnf.aid);
-		lim_print_mac_addr(mac_ctx, assoc_cnf.peer_macaddr.bytes, LOG1);
+		lim_print_mac_addr(mac_ctx, assoc_cnf.peer_macaddr.bytes, LOGD);
 		goto end;
 	}
 
@@ -3476,7 +3476,7 @@ void __lim_process_sme_assoc_cnf_new(tpAniSirGlobal mac_ctx, uint32_t msg_type,
 		pe_debug("not in MLM_WT_ASSOC_CNF_STATE, for aid %d, peer"
 			"StaD mlmState: %d",
 			assoc_cnf.aid, sta_ds->mlmStaContext.mlmState);
-		lim_print_mac_addr(mac_ctx, assoc_cnf.peer_macaddr.bytes, LOG1);
+		lim_print_mac_addr(mac_ctx, assoc_cnf.peer_macaddr.bytes, LOGD);
 		goto end;
 	}
 	/*
@@ -3642,13 +3642,13 @@ static void __lim_process_sme_addts_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 	/* ship out the message now */
 	lim_send_addts_req_action_frame(pMac, peerMac, &pSirAddts->req,
 					psessionEntry);
-	pe_debug("Sent ADDTS request");
+	pe_err("Sent ADDTS request");
 	/* start a timer to wait for the response */
 	if (pSirAddts->timeout)
 		timeout = pSirAddts->timeout;
 	else if (wlan_cfg_get_int(pMac, WNI_CFG_ADDTS_RSP_TIMEOUT, &timeout) !=
 		 eSIR_SUCCESS) {
-		pe_err("Unable to get Cfg param %d (Addts Rsp Timeout)",
+		pe_debug("Unable to get Cfg param %d (Addts Rsp Timeout)",
 			WNI_CFG_ADDTS_RSP_TIMEOUT);
 		goto send_failure_addts_rsp;
 	}

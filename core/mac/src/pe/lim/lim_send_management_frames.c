@@ -1423,7 +1423,7 @@ lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 		pe_debug("*** Sending ReAssoc Resp status %d aid %d to",
 			status_code, aid);
 
-	lim_print_mac_addr(mac_ctx, mac_hdr->da, LOG1);
+	lim_print_mac_addr(mac_ctx, mac_hdr->da, LOGD);
 
 	if (addn_ie_len && addn_ie_len <= WNI_CFG_ASSOC_RSP_ADDNIE_DATA_LEN)
 		qdf_mem_copy(frame + sizeof(tSirMacMgmtHdr) + payload,

@@ -728,12 +728,12 @@ static void lim_handle_unknown_a2_index_frames(tpAniSirGlobal mac_ctx,
 	mac_hdr = WMA_GET_RX_MPDUHEADER3A(rx_pkt_buffer);
 
 	if (lim_is_group_addr(mac_hdr->addr2)) {
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO_HIGH,
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			FL("Ignoring A2 Invalid Packet received for MC/BC:"));
-		lim_print_mac_addr(mac_ctx, mac_hdr->addr2, LOG2);
+		lim_print_mac_addr(mac_ctx, mac_hdr->addr2, LOGD);
 		return;
 	}
-	QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			FL("type=0x%x, subtype=0x%x"),
 		mac_hdr->fc.type, mac_hdr->fc.subType);
 	/* Currently only following type and subtype are handled.
@@ -793,7 +793,7 @@ lim_check_mgmt_registered_frames(tpAniSirGlobal mac_ctx, uint8_t *buff_desc,
 		if ((type == SIR_MAC_MGMT_FRAME)
 		    && (fc.type == SIR_MAC_MGMT_FRAME)
 		    && (sub_type == SIR_MAC_MGMT_RESERVED15)) {
-			QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO_HIGH,
+			QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 				FL
 				("rcvd frm match for SIR_MAC_MGMT_RESERVED15"));
 			match = true;
@@ -825,7 +825,7 @@ lim_check_mgmt_registered_frames(tpAniSirGlobal mac_ctx, uint8_t *buff_desc,
 	}
 
 	if (match) {
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			FL("rcvd frame match with registered frame params"));
 		/* Indicate this to SME */
 		lim_send_sme_mgmt_frame_ind(mac_ctx, hdr->fc.subType,
@@ -942,7 +942,7 @@ lim_handle80211_frames(tpAniSirGlobal pMac, struct scheduler_msg *limMsg,
 			pe_debug("ProtVersion %d, Type %d, Subtype %d rateIndex=%d",
 				fc.protVer, fc.type, fc.subType,
 				WMA_GET_RX_MAC_RATE_IDX(pRxPacketInfo));
-			lim_print_mac_addr(pMac, pHdr->bssId, LOG1);
+			lim_print_mac_addr(pMac, pHdr->bssId, LOGD);
 			if (lim_process_auth_frame_no_session
 				    (pMac, pRxPacketInfo,
 				    limMsg->bodyptr) == eSIR_SUCCESS) {
@@ -1198,20 +1198,20 @@ static void lim_process_sme_obss_scan_ind(tpAniSirGlobal mac_ctx,
 	session = pe_find_session_by_bssid(mac_ctx,
 			ht40_scanind->mac_addr.bytes, &session_id);
 	if (session == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			"OBSS Scan not started: session id is NULL");
 		return;
 	}
 	if (session->htSupportedChannelWidthSet ==
 			WNI_CFG_CHANNEL_BONDING_MODE_ENABLE) {
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			"OBSS Scan Start Req: session id %d"
 			"htSupportedChannelWidthSet %d",
 			session->peSessionId,
 			session->htSupportedChannelWidthSet);
 		lim_send_ht40_obss_scanind(mac_ctx, session);
 	} else {
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			"OBSS Scan not started: channel width - %d session %d",
 			session->htSupportedChannelWidthSet,
 			session->peSessionId);
@@ -1360,7 +1360,7 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 		lim_handle80211_frames(mac_ctx, &new_msg, &defer_msg);
 
 		if (defer_msg == true) {
-			QDF_TRACE(QDF_MODULE_ID_PE, LOG1,
+			QDF_TRACE(QDF_MODULE_ID_PE, LOGD,
 					FL("Defer Msg type=%x"), msg->type);
 			if (lim_defer_msg(mac_ctx, msg) != TX_SUCCESS) {
 				QDF_TRACE(QDF_MODULE_ID_PE, LOGE,
@@ -1522,7 +1522,7 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 		session_entry = pe_find_session_by_sta_id(mac_ctx,
 			tdls_ind->staIdx, &session_id);
 		if (session_entry == NULL) {
-			pe_err("No session exist for given bssId");
+			pe_debug("No session exist for given bssId");
 				qdf_mem_free(msg->bodyptr);
 				msg->bodyptr = NULL;
 				return;
@@ -1674,7 +1674,7 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 	case SIR_HAL_TDLS_SHOULD_TEARDOWN:
 	case SIR_HAL_TDLS_PEER_DISCONNECTED:
 	case SIR_HAL_TDLS_CONNECTION_TRACKER_NOTIFICATION:
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			("%s received tdls event: 0x%x"), __func__, msg->type);
 		lim_send_sme_tdls_event_notify(mac_ctx, msg->type,
 					(void *)msg->bodyptr);
@@ -2176,10 +2176,10 @@ void lim_log_session_states(tpAniSirGlobal mac_ctx)
 
 	for (i = 0; i < mac_ctx->lim.maxBssId; i++) {
 		if (mac_ctx->lim.gpSession[i].valid) {
-			QDF_TRACE(QDF_MODULE_ID_PE, LOG1,
+			QDF_TRACE(QDF_MODULE_ID_PE, LOGD,
 				FL("sysRole(%d) Session (%d)"),
 				mac_ctx->lim.gLimSystemRole, i);
-			QDF_TRACE(QDF_MODULE_ID_PE, LOG1,
+			QDF_TRACE(QDF_MODULE_ID_PE, LOGD,
 				FL("SME: Curr %s,Prev %s,MLM: Curr %s,Prev %s"),
 				lim_sme_state_str(
 				mac_ctx->lim.gpSession[i].limSmeState),

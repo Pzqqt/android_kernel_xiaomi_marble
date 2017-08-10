@@ -1448,7 +1448,7 @@ lim_update_short_preamble(tpAniSirGlobal mac_ctx, tSirMacAddr peer_mac_addr,
 
 	pe_debug("Short Preamble is not enabled in Assoc Req from");
 
-	lim_print_mac_addr(mac_ctx, peer_mac_addr, LOG1);
+	lim_print_mac_addr(mac_ctx, peer_mac_addr, LOGD);
 
 	for (i = 0; i < LIM_PROT_STA_CACHE_SIZE; i++) {
 		if (LIM_IS_AP_ROLE(psession_entry) &&
@@ -6569,7 +6569,7 @@ tSirRetStatus lim_strip_ie(tpAniSirGlobal mac_ctx,
 	uint16_t elem_len;
 
 	if (NULL == addn_ie) {
-		pe_err("NULL addn_ie pointer");
+		pe_debug("NULL addn_ie pointer");
 		return eSIR_IGNORE_IE;
 	}
 
@@ -6733,7 +6733,7 @@ tSirRetStatus lim_strip_extcap_update_struct(tpAniSirGlobal mac_ctx,
 			      NULL, 0, extracted_buff,
 			      DOT11F_IE_EXTCAP_MAX_LEN);
 	if (eSIR_SUCCESS != status) {
-		pe_err("Failed to strip extcap IE status: %d", status);
+		pe_debug("Failed to strip extcap IE status: %d", status);
 		return status;
 	}
 

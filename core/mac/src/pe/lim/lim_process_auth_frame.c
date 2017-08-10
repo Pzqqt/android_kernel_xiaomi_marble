@@ -167,7 +167,7 @@ static void lim_process_auth_shared_system_algo(tpAniSirGlobal mac_ctx,
 
 		pe_debug("Alloc new data: %p id: %d peer ",
 			auth_node, auth_node->authNodeIdx);
-		lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOG1);
+		lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOGD);
 		/* / Create and activate Auth Response timer */
 		if (tx_timer_change_context(&auth_node->timer,
 				auth_node->authNodeIdx) != TX_SUCCESS) {
@@ -554,7 +554,7 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 			 */
 			pe_debug("rx Auth frm2 from peer in state: %d addr",
 				pe_session->limMlmState);
-			lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOG1);
+			lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOGD);
 		}
 		return;
 	}
@@ -1539,8 +1539,6 @@ tSirRetStatus lim_process_auth_frame_no_session(tpAniSirGlobal pMac, uint8_t *pB
 			true;
 	}
 
-	pe_debug("Pre-Auth response received from neighbor");
-	pe_debug("Pre-Auth done state");
 	/* Stopping timer now, that we have our unicast from the AP */
 	/* of our choice. */
 	lim_deactivate_and_change_timer(pMac, eLIM_FT_PREAUTH_RSP_TIMER);

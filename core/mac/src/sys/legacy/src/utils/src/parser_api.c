@@ -1271,14 +1271,10 @@ populate_dot11f_ht_info(tpAniSirGlobal pMac,
 	pHTInfoField1->serviceIntervalGranularity =
 		pMac->lim.gHTServiceIntervalGranularity;
 
-	if (psessionEntry == NULL) {
-		pe_debug("Keep the value retrieved from cfg for secondary channel offset and recommended Tx Width set");
-	} else {
 		pHTInfoField1->secondaryChannelOffset =
 			psessionEntry->htSecondaryChannelOffset;
 		pHTInfoField1->recommendedTxWidthSet =
 			psessionEntry->htRecommendedTxWidthSet;
-	}
 
 	if ((psessionEntry) && LIM_IS_AP_ROLE(psessionEntry)) {
 		CFG_GET_INT(nSirStatus, pMac, WNI_CFG_HT_INFO_FIELD2,

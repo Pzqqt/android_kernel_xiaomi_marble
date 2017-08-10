@@ -3107,7 +3107,7 @@ QDF_STATUS sme_get_ap_channel_from_scan_cache(
 			if (0 != first_ap_profile.channelId) {
 				*ap_chnl_id = first_ap_profile.channelId;
 				QDF_TRACE(QDF_MODULE_ID_SME,
-					  QDF_TRACE_LEVEL_ERROR,
+					  QDF_TRACE_LEVEL_DEBUG,
 					  FL("Found best AP & its on chnl[%d]"),
 					  first_ap_profile.channelId);
 			} else {
@@ -6990,7 +6990,7 @@ QDF_STATUS sme_8023_multicast_list(tHalHandle hHal, uint8_t sessionId,
 	if (!CSR_IS_SESSION_VALID(pMac, sessionId) ||
 			(!csr_is_conn_state_infra(pMac, sessionId) &&
 			 !csr_is_ndi_started(pMac, sessionId))) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_WARN,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Unable to find the session Id: %d", __func__,
 			  sessionId);
 		return QDF_STATUS_E_FAILURE;
