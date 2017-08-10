@@ -16987,6 +16987,14 @@ static QDF_STATUS extract_chan_info_event_tlv(wmi_unified_t wmi_handle,
 	chan_info->pdev_id = wlan_get_pdev_id_from_vdev_id(
 			(struct wlan_objmgr_psoc *)wmi_handle->soc->wmi_psoc,
 			ev->vdev_id, WLAN_SCAN_ID);
+	chan_info->chan_tx_pwr_range = ev->chan_tx_pwr_range;
+	chan_info->chan_tx_pwr_tp = ev->chan_tx_pwr_tp;
+	chan_info->my_bss_rx_cycle_count = ev->my_bss_rx_cycle_count;
+	chan_info->rx_11b_mode_data_duration = ev->rx_11b_mode_data_duration;
+	chan_info->tx_frame_cnt = ev->tx_frame_cnt;
+	chan_info->rx_frame_count = ev->rx_frame_count;
+	chan_info->mac_clk_mhz = ev->mac_clk_mhz;
+	chan_info->vdev_id = ev->vdev_id;
 
 	return QDF_STATUS_SUCCESS;
 }
