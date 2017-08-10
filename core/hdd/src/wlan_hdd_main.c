@@ -7675,6 +7675,7 @@ static hdd_context_t *hdd_context_create(struct device *dev)
 		[QDF_MODULE_ID_P2P] = {QDF_TRACE_LEVEL_ALL},
 		[QDF_MODULE_ID_TDLS] = {QDF_TRACE_LEVEL_ALL},
 		[QDF_MODULE_ID_REGULATORY] = {QDF_TRACE_LEVEL_ALL},
+		[QDF_MODULE_ID_SERIALIZATION] = {QDF_TRACE_LEVEL_ALL},
 		};
 
 	status = qdf_print_setup();
