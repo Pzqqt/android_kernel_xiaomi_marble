@@ -259,4 +259,29 @@ static inline void cdp_cfg_get_max_peer_id(ol_txrx_soc_handle soc,
 		struct cdp_cfg *cfg_pdev)
 {
 }
+
+/**
+ * cdp_cfg_set_ptp_rx_opt_enabled() - enable/disable ptp rx timestamping
+ * @soc - data path soc handle
+ * @pdev - data path device instance
+ * @val - enable or disable packet log
+ *
+ * ptp rx timestamping enable or disable
+ *
+ * return NONE
+ */
+static inline void
+cdp_cfg_set_ptp_rx_opt_enabled(ol_txrx_soc_handle soc,
+			       struct cdp_cfg *cfg_pdev, uint8_t val)
+{
+	if (!soc || !soc->ops || !soc->ops->cfg_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			  "%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->cfg_ops->set_ptp_rx_opt_enabled)
+		return soc->ops->cfg_ops->set_ptp_rx_opt_enabled(cfg_pdev,
+								 val);
+}
 #endif /* _CDP_TXRX_CFG_H_ */
