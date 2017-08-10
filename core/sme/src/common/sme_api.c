@@ -1450,7 +1450,7 @@ static QDF_STATUS dfs_msg_processor(tpAniSirGlobal mac,
 		session_id = msg->bodyval;
 		roam_status = eCSR_ROAM_DFS_RADAR_IND;
 		roam_result = eCSR_ROAM_RESULT_DFS_RADAR_FOUND_IND;
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_MED,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "sapdfs: Radar indication event occurred");
 		break;
 	}
@@ -1465,7 +1465,7 @@ static QDF_STATUS dfs_msg_processor(tpAniSirGlobal mac,
 		session_id = csa_ie_tx_complete_rsp->sessionId;
 		roam_status = eCSR_ROAM_DFS_CHAN_SW_NOTIFY;
 		roam_result = eCSR_ROAM_RESULT_DFS_CHANSW_UPDATE_SUCCESS;
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_MED,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "eWNI_SME_DFS_CSAIE_TX_COMPLETE_IND session=%d",
 			  session_id);
 		break;
@@ -1475,7 +1475,7 @@ static QDF_STATUS dfs_msg_processor(tpAniSirGlobal mac,
 		session_id = msg->bodyval;
 		roam_status = eCSR_ROAM_CAC_COMPLETE_IND;
 		roam_result = eCSR_ROAM_RESULT_CAC_END_IND;
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_MED,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "sapdfs: Received eWNI_SME_DFS_CAC_COMPLETE vdevid%d",
 			  session_id);
 		break;
@@ -1536,7 +1536,7 @@ QDF_STATUS sme_update_new_channel_event(tHalHandle hal, uint8_t session_id)
 
 	roamStatus = eCSR_ROAM_CHANNEL_COMPLETE_IND;
 	roamResult = eCSR_ROAM_RESULT_DFS_RADAR_FOUND_IND;
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_MED,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "sapdfs: Updated new channel event");
 
 	/* Indicate channel Event to SAP */
@@ -1635,7 +1635,7 @@ QDF_STATUS sme_update_is_ese_feature_enabled(tHalHandle hHal,
 
 	if (pMac->roam.configParam.isEseIniFeatureEnabled ==
 	    isEseIniFeatureEnabled) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: ESE Mode is already enabled or disabled, nothing to do (returning) old(%d) new(%d)",
 			  __func__,
 			  pMac->roam.configParam.isEseIniFeatureEnabled,
@@ -1643,7 +1643,7 @@ QDF_STATUS sme_update_is_ese_feature_enabled(tHalHandle hHal,
 		return QDF_STATUS_SUCCESS;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: EseEnabled is changed from %d to %d", __func__,
 		  pMac->roam.configParam.isEseIniFeatureEnabled,
 		  isEseIniFeatureEnabled);
@@ -1709,14 +1709,14 @@ QDF_STATUS sme_set_plm_request(tHalHandle hHal, tpSirPlmReq pPlmReq)
 				 * transmitted. Ignoring these channels.
 				 */
 				QDF_TRACE(QDF_MODULE_ID_SME,
-					  QDF_TRACE_LEVEL_INFO,
+					  QDF_TRACE_LEVEL_DEBUG,
 					  FL("DFS channel %d ignored for PLM"),
 					  pPlmReq->plmChList[count]);
 				continue;
 			}
 		} else if (!ret) {
 			/* Not supported, ignore the channel */
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				  FL("Unsupported channel %d ignored for PLM"),
 				  pPlmReq->plmChList[count]);
 			continue;
@@ -2359,7 +2359,7 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, struct scheduler_msg *pMsg)
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 	case eWNI_SME_AUTO_SHUTDOWN_IND:
 		if (pMac->sme.pAutoShutdownNotificationCb) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				  FL("Auto shutdown notification"));
 			pMac->sme.pAutoShutdownNotificationCb();
 		}
@@ -5670,7 +5670,7 @@ QDF_STATUS sme_open_session(tHalHandle hHal, csr_roam_completeCallback callback,
 	uint8_t peer_id;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
-	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: type=%d, session_id %d subType=%d addr:%pM",
 		  __func__, type, session_id, subType, pSelfMacAddr);
 
@@ -5883,7 +5883,7 @@ QDF_STATUS sme_set_keep_alive(tHalHandle hHal, uint8_t session_id,
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, session_id);
 
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_LOW,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			FL("WMA_SET_KEEP_ALIVE message"));
 
 	if (pSession == NULL) {
@@ -5901,7 +5901,7 @@ QDF_STATUS sme_set_keep_alive(tHalHandle hHal, uint8_t session_id,
 	qdf_copy_macaddr(&request->bssid, &pSession->connectedProfile.bssid);
 	qdf_mem_copy(request_buf, request, sizeof(tSirKeepAliveReq));
 
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_LOW,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			"buff TP %d input TP %d ", request_buf->timePeriod,
 		  request->timePeriod);
 	request_buf->sessionId = session_id;
@@ -6575,7 +6575,7 @@ uint8_t sme_get_concurrent_operation_channel(tHalHandle hHal)
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 
 		channel = csr_get_concurrent_operation_channel(pMac);
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_HIGH, "%s: "
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG, "%s: "
 			  " Other Concurrent Channel = %d", __func__, channel);
 		sme_release_global_lock(&pMac->sme);
 	}
@@ -6980,7 +6980,7 @@ QDF_STATUS sme_8023_multicast_list(tHalHandle hHal, uint8_t sessionId,
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tCsrRoamSession *pSession = NULL;
 
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO, "%s: "
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG, "%s: "
 		  "ulMulticastAddrCnt=%d, multicastAddr[0]=%p", __func__,
 		  pMulticastAddrs->ulMulticastAddrCnt,
 		  pMulticastAddrs->multicastAddr[0].bytes);
@@ -7460,7 +7460,7 @@ QDF_STATUS sme_update_roam_prefer5_g_hz(tHalHandle hHal, bool nRoamPrefer5GHz)
 			 TRACE_CODE_SME_RX_HDD_UPDATE_RP5G, NO_SESSION, 0));
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: gRoamPrefer5GHz is changed from %d to %d",
 			  __func__, pMac->roam.configParam.nRoamPrefer5GHz,
 			  nRoamPrefer5GHz);
@@ -7489,7 +7489,7 @@ QDF_STATUS sme_set_roam_intra_band(tHalHandle hHal, const bool nRoamIntraBand)
 			 TRACE_CODE_SME_RX_HDD_SET_ROAMIBAND, NO_SESSION, 0));
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: gRoamIntraBand is changed from %d to %d",
 			  __func__, pMac->roam.configParam.nRoamIntraBand,
 			  nRoamIntraBand);
@@ -7521,7 +7521,7 @@ QDF_STATUS sme_update_roam_scan_n_probes(tHalHandle hHal, uint8_t sessionId,
 			 NO_SESSION, 0));
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: gRoamScanNProbes is changed from %d to %d",
 			  __func__, pMac->roam.configParam.nProbes, nProbes);
 		pMac->roam.configParam.nProbes = nProbes;
@@ -7560,7 +7560,7 @@ QDF_STATUS sme_update_roam_scan_home_away_time(tHalHandle hHal,
 			 NO_SESSION, 0));
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: gRoamScanHomeAwayTime is changed from %d to %d",
 			  __func__,
 			  pMac->roam.configParam.nRoamScanHomeAwayTime,
@@ -7724,7 +7724,7 @@ QDF_STATUS sme_update_fast_transition_enabled(tHalHandle hHal,
 			 0));
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: FastTransitionEnabled is changed from %d to %d",
 			  __func__,
 			  pMac->roam.configParam.isFastTransitionEnabled,
@@ -7938,7 +7938,7 @@ QDF_STATUS sme_update_is_mawc_ini_feature_enabled(tHalHandle hHal,
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: MAWCEnabled is changed from %d to %d", __func__,
 			  pMac->roam.configParam.MAWCEnabled, MAWCEnabled);
 		pMac->roam.configParam.MAWCEnabled = MAWCEnabled;
@@ -9637,7 +9637,7 @@ QDF_STATUS sme_send_tdls_chan_switch_req(tHalHandle hal,
 	chan_switch_params->is_responder = ch_switch_params->is_responder;
 	chan_switch_params->oper_class = ch_switch_params->opclass;
 
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		FL("Country Code=%s, Req offset=%d, Selected Operate Class=%d"),
 		mac->scan.countryCodeCurrent,
 		chan_switch_params->tdls_off_ch_bw_offset,
@@ -9865,7 +9865,7 @@ QDF_STATUS sme_handoff_request(tHalHandle hHal,
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: invoked", __func__);
 		status = csr_handoff_request(pMac, sessionId, pHandoffInfo);
 		sme_release_global_lock(&pMac->sme);
@@ -10948,7 +10948,7 @@ QDF_STATUS sme_notify_ht2040_mode(tHalHandle hHal, uint16_t staId,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: Notifed FW about OP mode: %d for staId=%d",
 		  __func__, pHtOpMode->opMode, staId);
 
@@ -10975,7 +10975,7 @@ QDF_STATUS sme_set_ht2040_mode(tHalHandle hHal, uint8_t sessionId,
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	ePhyChanBondState cbMode;
 
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: Update HT operation beacon IE, channel_type=%d",
 		  __func__, channel_type);
 
@@ -11323,7 +11323,7 @@ QDF_STATUS sme_update_sta_inactivity_timeout(tHalHandle hal_handle,
 			"%s: fail to alloc inactivity_time", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			FL("sta_inactivity_timeout: %d"),
 			sta_inactivity_timer->sta_inactivity_timeout);
 	inactivity_time->session_id = sta_inactivity_timer->session_id;
@@ -11445,7 +11445,7 @@ QDF_STATUS sme_set_auto_shutdown_timer(tHalHandle hHal, uint32_t timer_val)
 			sme_release_global_lock(&pMac->sme);
 			return QDF_STATUS_E_FAILURE;
 		}
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: Posted Auto shutdown MSG", __func__);
 		sme_release_global_lock(&pMac->sme);
 	}
@@ -11495,7 +11495,7 @@ QDF_STATUS sme_ch_avoid_update_req(tHalHandle hHal)
 			sme_release_global_lock(&pMac->sme);
 			return QDF_STATUS_E_FAILURE;
 		}
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: Posted Ch Avoid Update MSG", __func__);
 		sme_release_global_lock(&pMac->sme);
 	}
@@ -11642,14 +11642,14 @@ QDF_STATUS sme_process_channel_change_resp(tpAniSirGlobal pMac,
 			pChnlParams->channelNumber;
 
 		if (pChnlParams->status == QDF_STATUS_SUCCESS) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_MED,
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				  "sapdfs: Received success eWNI_SME_CHANNEL_CHANGE_RSP for sessionId[%d]",
 				  SessionId);
 			proam_info.channelChangeRespEvent->channelChangeStatus =
 				1;
 			roamResult = eCSR_ROAM_RESULT_CHANNEL_CHANGE_SUCCESS;
 		} else {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_MED,
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				  "sapdfs: Received failure eWNI_SME_CHANNEL_CHANGE_RSP for sessionId[%d]",
 				  SessionId);
 			proam_info.channelChangeRespEvent->channelChangeStatus =
@@ -12927,12 +12927,12 @@ QDF_STATUS sme_ll_stats_clear_req(tHalHandle hHal,
 	struct scheduler_msg message = {0};
 	tSirLLStatsClearReq *clear_stats_req;
 
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "staId = %u", pclearStatsReq->staId);
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "statsClearReqMask = 0x%X",
 		  pclearStatsReq->statsClearReqMask);
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "stopReq = %u", pclearStatsReq->stopReq);
 	if (!sme_is_session_id_valid(hHal, pclearStatsReq->staId)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -12993,10 +12993,10 @@ QDF_STATUS sme_ll_stats_set_req(tHalHandle hHal, tSirLLStatsSetReq *psetStatsReq
 	struct scheduler_msg message = {0};
 	tSirLLStatsSetReq *set_stats_req;
 
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "%s:  MPDU Size = %u", __func__,
 		  psetStatsReq->mpduSizeThreshold);
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  " Aggressive Stats Collections = %u",
 		  psetStatsReq->aggressiveStatisticsGathering);
 
@@ -13367,7 +13367,7 @@ QDF_STATUS sme_update_roam_offload_enabled(tHalHandle hHal,
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: LFR3:gRoamOffloadEnabled is changed from %d to %d",
 			  __func__, pMac->roam.configParam.isRoamOffloadEnabled,
 			  nRoamOffloadEnabled);
@@ -13401,7 +13401,7 @@ QDF_STATUS sme_update_roam_key_mgmt_offload_enabled(tHalHandle hal_ctx,
 	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		if (CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				"%s: LFR3: key_mgmt_offload_enabled changed to %d",
 				  __func__, key_mgmt_offload_enabled);
 			status = csr_roam_set_key_mgmt_offload(mac_ctx,
@@ -14297,20 +14297,20 @@ QDF_STATUS sme_fw_mem_dump(tHalHandle hHal, void *recvd_req)
 	}
 	qdf_mem_copy(send_req, recvd_req, sizeof(*send_req));
 
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  FL("request_id:%d num_seg:%d"),
 		  send_req->request_id, send_req->num_seg);
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  FL("Segment Information"));
 	for (loop = 0; loop < send_req->num_seg; loop++) {
 		seg_req = send_req->segment[loop];
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  FL("seg_number:%d"), loop);
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  FL("seg_id:%d start_addr_lo:0x%x start_addr_hi:0x%x"),
 			  seg_req.seg_id, seg_req.seg_start_addr_lo,
 			  seg_req.seg_start_addr_hi);
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  FL("seg_length:%d dst_addr_lo:0x%x dst_addr_hi:0x%x"),
 			  seg_req.seg_length, seg_req.dst_addr_lo,
 			  seg_req.dst_addr_hi);
@@ -14741,7 +14741,7 @@ QDF_STATUS sme_update_roam_scan_hi_rssi_scan_params(tHalHandle hal_handle,
 		nr_info   = &mac_ctx->roam.neighborRoamInfo[session_id];
 		switch (notify_id) {
 		case eCSR_HI_RSSI_SCAN_MAXCOUNT_ID:
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				"%s: gRoamScanHirssiMaxCount %d => %d",
 				__func__, nr_config->nhi_rssi_scan_max_count,
 				val);
@@ -14751,7 +14751,7 @@ QDF_STATUS sme_update_roam_scan_hi_rssi_scan_params(tHalHandle hal_handle,
 		break;
 
 		case eCSR_HI_RSSI_SCAN_RSSI_DELTA_ID:
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				FL("gRoamScanHiRssiDelta %d => %d"),
 				nr_config->nhi_rssi_scan_rssi_delta,
 				val);
@@ -14761,7 +14761,7 @@ QDF_STATUS sme_update_roam_scan_hi_rssi_scan_params(tHalHandle hal_handle,
 			break;
 
 		case eCSR_HI_RSSI_SCAN_DELAY_ID:
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				FL("gRoamScanHiRssiDelay %d => %d"),
 				nr_config->nhi_rssi_scan_delay,
 				val);
@@ -14771,7 +14771,7 @@ QDF_STATUS sme_update_roam_scan_hi_rssi_scan_params(tHalHandle hal_handle,
 			break;
 
 		case eCSR_HI_RSSI_SCAN_RSSI_UB_ID:
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				FL("gRoamScanHiRssiUpperBound %d => %d"),
 				nr_config->nhi_rssi_scan_rssi_ub,
 				val);
@@ -14781,7 +14781,7 @@ QDF_STATUS sme_update_roam_scan_hi_rssi_scan_params(tHalHandle hal_handle,
 			break;
 
 		default:
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				FL("invalid parameter notify_id %d"),
 				notify_id);
 			status = QDF_STATUS_E_INVAL;
@@ -14814,7 +14814,7 @@ void sme_update_tgt_services(tHalHandle hal, struct wma_tgt_services *cfg)
 	mac_ctx->lteCoexAntShare = cfg->lte_coex_ant_share;
 	mac_ctx->beacon_offload = cfg->beacon_offload;
 	mac_ctx->pmf_offload = cfg->pmf_offload;
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		FL("mac_ctx->pmf_offload: %d"), mac_ctx->pmf_offload);
 
 	return;
