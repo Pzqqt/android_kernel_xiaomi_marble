@@ -1121,7 +1121,7 @@ static void lim_process_mlm_auth_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 	mac_ctx->auth_ack_status = LIM_AUTH_ACK_NOT_RCD;
 	lim_send_auth_mgmt_frame(mac_ctx,
 		&auth_frame_body, mac_ctx->lim.gpLimMlmAuthReq->peerMacAddr,
-		LIM_NO_WEP_IN_FC, session, true);
+		LIM_NO_WEP_IN_FC, session);
 
 	/* assign appropriate session_id to the timer object */
 	mac_ctx->lim.limTimers.gLimAuthFailureTimer.sessionId = session_id;
@@ -2301,7 +2301,7 @@ static void lim_process_auth_retry_timer(tpAniSirGlobal mac_ctx)
 			lim_send_auth_mgmt_frame(mac_ctx,
 				&auth_frame,
 				mac_ctx->lim.gpLimMlmAuthReq->peerMacAddr,
-				LIM_NO_WEP_IN_FC, session_entry, true);
+				LIM_NO_WEP_IN_FC, session_entry);
 		}
 
 		lim_deactivate_and_change_timer(mac_ctx, eLIM_AUTH_RETRY_TIMER);

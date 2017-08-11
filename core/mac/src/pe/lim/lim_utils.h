@@ -508,7 +508,21 @@ bool lim_check_membership_user_position(tpAniSirGlobal pMac,
 		uint32_t membership, uint32_t userPosition,
 		uint8_t staId);
 
-#ifdef FEATURE_WLAN_DIAG_SUPPORT
+/**
+ * enum ack_status - Indicate TX status of ASSOC/AUTH
+ * @ACKED : Ack is received.
+ * @NOT_ACKED : No Ack received.
+ * @SENT_FAIL : Failure while sending.
+ *
+ * Indicate if driver is waiting for ACK status of assoc/auth or ACK received
+ * for ASSOC/AUTH OR NO ACK is received for the assoc/auth sent or assoc/auth
+ * sent failed.
+ */
+enum assoc_ack_status {
+	ACKED,
+	NOT_ACKED,
+	SENT_FAIL,
+};
 
 typedef enum {
 	WLAN_PE_DIAG_SCAN_REQ_EVENT = 0,
@@ -589,11 +603,18 @@ typedef enum {
 	WLAN_PE_DIAG_AUTH_TIMEOUT,
 	WLAN_PE_DIAG_DEAUTH_FRAME_EVENT,
 	WLAN_PE_DIAG_DISASSOC_FRAME_EVENT,
+	WLAN_PE_DIAG_AUTH_ACK_EVENT,
+	WLAN_PE_DIAG_ASSOC_ACK_EVENT,
 } WLAN_PE_DIAG_EVENT_TYPE;
 
+#ifdef FEATURE_WLAN_DIAG_SUPPORT
 void lim_diag_event_report(tpAniSirGlobal pMac, uint16_t eventType,
 		tpPESession pSessionEntry, uint16_t status,
 		uint16_t reasonCode);
+#else
+static inline void lim_diag_event_report(tpAniSirGlobal pMac, uint16_t
+		eventType, tpPESession pSessionEntry, uint16_t status,
+		uint16_t reasonCode) {}
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
 void pe_set_resume_channel(tpAniSirGlobal pMac, uint16_t channel,
