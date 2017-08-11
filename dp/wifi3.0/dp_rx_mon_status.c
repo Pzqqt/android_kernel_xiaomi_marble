@@ -434,7 +434,7 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 
 	qdf_assert(rxdma_srng);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 		"[%s][%d] requested %d buffers for replenish\n",
 		__func__, __LINE__, num_req_buffers);
 
@@ -456,9 +456,10 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 			return QDF_STATUS_E_NOMEM;
 		}
 
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"[%s][%d] %d rx desc allocated\n", __func__, __LINE__,
 			num_alloc_desc);
+
 		num_req_buffers = num_alloc_desc;
 	}
 
@@ -466,7 +467,7 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 	num_entries_avail = hal_srng_src_num_avail(dp_soc->hal_soc,
 				rxdma_srng, sync_hw_ptr);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 		"[%s][%d] no of availble entries in rxdma ring: %d\n",
 		  __func__, __LINE__, num_entries_avail);
 
@@ -514,13 +515,13 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 
 	hal_srng_access_end(dp_soc->hal_soc, rxdma_srng);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 		"successfully replenished %d buffers\n", num_req_buffers);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 		"%d rx desc added back to free list\n", num_desc_to_free);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 		"[%s][%d] desc_list=%p, tail=%p rx_desc=%p, cookie=%d\n",
 		__func__, __LINE__, desc_list, tail, &(*desc_list)->rx_desc,
 		(*desc_list)->rx_desc.cookie);

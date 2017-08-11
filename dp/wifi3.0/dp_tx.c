@@ -1958,7 +1958,7 @@ static inline void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 	struct dp_peer *peer = NULL;
 	hal_tx_comp_get_status(&tx_desc->comp, &ts);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 				"-------------------- \n"
 				"Tx Completion Stats: \n"
 				"-------------------- \n"

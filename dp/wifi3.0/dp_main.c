@@ -804,16 +804,13 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 	/* Process Tx completion interrupts first to return back buffers */
 	while (tx_mask) {
 		if (tx_mask & 0x1) {
-			work_done =
-				dp_tx_comp_handler(soc,
+			work_done = dp_tx_comp_handler(soc,
 					soc->tx_comp_ring[ring].hal_srng,
 					remaining_quota);
 
-			QDF_TRACE(QDF_MODULE_ID_DP,
-					QDF_TRACE_LEVEL_INFO,
-					"tx mask 0x%x ring %d,"
-					"budget %d, work_done %d",
-					tx_mask, ring, budget, work_done);
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+				"tx mask 0x%x ring %d, budget %d, work_done %d",
+				tx_mask, ring, budget, work_done);
 
 			budget -= work_done;
 			if (budget <= 0)
@@ -832,9 +829,9 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 				soc->reo_exception_ring.hal_srng,
 				remaining_quota);
 
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-				"REO Exception Ring: work_done %d budget %d",
-				work_done, budget);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			"REO Exception Ring: work_done %d budget %d",
+			work_done, budget);
 
 		budget -=  work_done;
 		if (budget <= 0) {
@@ -848,9 +845,9 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 		work_done = dp_rx_wbm_err_process(soc,
 				soc->rx_rel_ring.hal_srng, remaining_quota);
 
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-				"WBM Release Ring: work_done %d budget %d",
-				work_done, budget);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			"WBM Release Ring: work_done %d budget %d",
+			work_done, budget);
 
 		budget -=  work_done;
 		if (budget <= 0) {
@@ -863,17 +860,13 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 	if (rx_mask) {
 		for (ring = 0; ring < soc->num_reo_dest_rings; ring++) {
 			if (rx_mask & (1 << ring)) {
-				work_done =
-					dp_rx_process(int_ctx,
+				work_done = dp_rx_process(int_ctx,
 					    soc->reo_dest_ring[ring].hal_srng,
 					    remaining_quota);
 
-				QDF_TRACE(QDF_MODULE_ID_DP,
-						QDF_TRACE_LEVEL_INFO,
-						"rx mask 0x%x ring %d,"
-						"work_done %d budget %d",
-						rx_mask, ring, work_done,
-						budget);
+				QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+					"rx mask 0x%x ring %d, work_done %d budget %d",
+					rx_mask, ring, work_done, budget);
 
 				budget -=  work_done;
 				if (budget <= 0)
@@ -891,15 +884,13 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 		if (soc->pdev_list[ring] == NULL)
 			continue;
 		if (int_ctx->rx_mon_ring_mask & (1 << ring)) {
-			work_done =
-				dp_mon_process(soc, ring, remaining_quota);
+			work_done = dp_mon_process(soc, ring, remaining_quota);
 			budget -= work_done;
 			remaining_quota = budget;
 		}
 
 		if (int_ctx->rxdma2host_ring_mask & (1 << ring)) {
-			work_done =
-				dp_rxdma_err_process(soc, ring,
+			work_done = dp_rxdma_err_process(soc, ring,
 						remaining_quota);
 			budget -=  work_done;
 		}

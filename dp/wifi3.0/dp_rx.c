@@ -207,6 +207,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 		"successfully replenished %d buffers", num_req_buffers);
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 		"%d rx desc added back to free list", num_desc_to_free);
+
 	DP_STATS_INC(dp_pdev, buf_freelist, num_desc_to_free);
 	DP_STATS_INC_PKT(dp_pdev, replenish.pkts, num_req_buffers,
 			(RX_BUFFER_SIZE * num_req_buffers));
@@ -593,7 +594,7 @@ struct dp_vdev *dp_rx_nac_filter(struct dp_pdev *pdev,
 		if (qdf_mem_cmp(&peer->neighbour_peers_macaddr.raw[0],
 				wh->i_addr2, DP_MAC_ADDR_LEN) == 0) {
 			QDF_TRACE(
-				QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+				QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 				FL("NAC configuration matched for mac-%2x:%2x:%2x:%2x:%2x:%2x"),
 				peer->neighbour_peers_macaddr.raw[0],
 				peer->neighbour_peers_macaddr.raw[1],
@@ -697,27 +698,27 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu)
 #if defined(FEATURE_LRO)
 static void dp_rx_print_lro_info(uint8_t *rx_tlv)
 {
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 	FL("----------------------RX DESC LRO----------------------\n"));
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 		FL("lro_eligible 0x%x"), HAL_RX_TLV_GET_LRO_ELIGIBLE(rx_tlv));
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 		FL("pure_ack 0x%x"), HAL_RX_TLV_GET_TCP_PURE_ACK(rx_tlv));
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 		FL("chksum 0x%x"), HAL_RX_TLV_GET_TCP_CHKSUM(rx_tlv));
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 		FL("TCP seq num 0x%x"), HAL_RX_TLV_GET_TCP_SEQ(rx_tlv));
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 		FL("TCP ack num 0x%x"), HAL_RX_TLV_GET_TCP_ACK(rx_tlv));
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 		FL("TCP window 0x%x"), HAL_RX_TLV_GET_TCP_WIN(rx_tlv));
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 		FL("TCP protocol 0x%x"), HAL_RX_TLV_GET_TCP_PROTO(rx_tlv));
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 		FL("TCP offset 0x%x"), HAL_RX_TLV_GET_TCP_OFFSET(rx_tlv));
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 		FL("toeplitz 0x%x"), HAL_RX_TLV_GET_FLOW_ID_TOEPLITZ(rx_tlv));
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 	FL("---------------------------------------------------------\n"));
 }
 
@@ -736,7 +737,7 @@ static void dp_rx_lro(uint8_t *rx_tlv, struct dp_peer *peer,
 	 qdf_nbuf_t msdu, qdf_lro_ctx_t ctx)
 {
 	if (!peer || !peer->vdev || !peer->vdev->lro_enable) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
 			 FL("no peer, no vdev or LRO disabled"));
 		QDF_NBUF_CB_RX_LRO_ELIGIBLE(msdu) = 0;
 		return;
@@ -1193,7 +1194,7 @@ done:
 		mcs = hal_rx_msdu_start_rate_mcs_get(rx_tlv_hdr);
 		tid = hal_rx_mpdu_start_tid_get(rx_tlv_hdr);
 
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%s: %d, SGI: %d, tid: %d",
 			__func__, __LINE__, sgi, tid);
 
@@ -1271,7 +1272,7 @@ done:
 		 * the buffer beginning where the L2 header
 		 * begins.
 		 */
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			FL("rxhash: flow id toeplitz: 0x%x\n"),
 			hal_rx_msdu_start_toeplitz_get(rx_tlv_hdr));
 
