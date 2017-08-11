@@ -337,6 +337,22 @@ struct roam_filter_params {
 #define WLAN_SCAN_FILTER_NUM_SSID 5
 #define WLAN_SCAN_FILTER_NUM_BSSID 5
 
+#define REAM_HASH_LEN 2
+#define CACHE_IDENTIFIER_LEN 2
+#define HESSID_LEN 6
+
+/**
+ * struct fils_filter_info: FILS info present in scan filter
+ * @realm_check: whether realm check is required
+ * @fils_realm: realm hash value
+ * @security_type: type of security supported
+ */
+struct fils_filter_info {
+	bool realm_check;
+	uint8_t fils_realm[REAM_HASH_LEN];
+	uint8_t security_type;
+};
+
 /**
  * @age_threshold: If set return entry which are newer than the age_threshold
  * @p2p_results: If only p2p entries is required
@@ -368,6 +384,7 @@ struct roam_filter_params {
  * @enc_type: unicast enc type list
  * @mc_enc_type: multicast cast enc type list
  * @pcl_channel_list: PCL channel list
+ * @fils_scan_filter: FILS info
  */
 struct scan_filter {
 	uint32_t age_threshold;
@@ -397,6 +414,7 @@ struct scan_filter {
 	enum wlan_enc_type enc_type[WLAN_NUM_OF_ENCRYPT_TYPE];
 	enum wlan_enc_type mc_enc_type[WLAN_NUM_OF_ENCRYPT_TYPE];
 	uint8_t pcl_channel_list[QDF_MAX_NUM_CHAN];
+	struct fils_filter_info fils_scan_filter;
 };
 
 

@@ -369,6 +369,10 @@ enum extn_element_ie {
 #define WLAN_AKM_FT_PSK           0x04
 #define WLAN_AKM_SHA256_IEEE8021X 0x05
 #define WLAN_AKM_SHA256_PSK       0x06
+#define WLAN_AKM_FILS_SHA256      0x0E
+#define WLAN_AKM_FILS_SHA384      0x0F
+#define WLAN_AKM_FILS_FT_SHA256   0x10
+#define WLAN_AKM_FILS_FT_SHA384   0x11
 
 #define WLAN_ASE_NONE                    0x00
 #define WLAN_ASE_8021X_UNSPEC            0x01
@@ -610,6 +614,35 @@ struct htcap_ie {
 	struct htcap_cmn_ie ie;
 } qdf_packed;
 
+/**
+ * struct fils_indication_ie: FILS indication IE element
+ * @id: id
+ * @len: len
+ * @public_key_identifiers_cnt: public key identifiers count
+ * @realm_identifiers_cnt: realm identifiers count
+ * @is_ip_config_supported: whether ip config is supported in AP
+ * @is_cache_id_present: whether cache identifier is present
+ * @is_hessid_present: whether hessid is present
+ * @is_fils_sk_auth_supported: FILS shared key authentication is supported
+ * @is_fils_sk_auth_pfs_supported: FILS shared key auth with PFS is supported
+ * @is_pk_auth_supported: FILS public key authentication is supported
+ * @reserved: reserved
+ * @variable_data: pointer to data depends on initial variables
+ */
+struct fils_indication_ie {
+	uint8_t id;
+	uint8_t len;
+	uint16_t public_key_identifiers_cnt:3;
+	uint16_t realm_identifiers_cnt:3;
+	uint16_t is_ip_config_supported:1;
+	uint16_t is_cache_id_present:1;
+	uint16_t is_hessid_present:1;
+	uint16_t is_fils_sk_auth_supported:1;
+	uint16_t is_fils_sk_auth_pfs_supported:1;
+	uint16_t is_pk_auth_supported:1;
+	uint16_t reserved:4;
+	uint8_t variable_data[255];
+} qdf_packed;
 
 /**
  * struct wlan_vendor_ie_htcap: vendor private HT Capability IE

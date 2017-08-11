@@ -600,6 +600,46 @@ static bool scm_is_rsn_security(struct scan_filter *filter,
 		 */
 		if (scm_is_cipher_match(rsn.akm_suites,
 		   rsn.akm_suite_count,
+		   WLAN_RSN_SEL(WLAN_AKM_FILS_FT_SHA384))) {
+			if (WLAN_AUTH_TYPE_FT_FILS_SHA384 ==
+			   filter->auth_type[i]) {
+				neg_auth = WLAN_AUTH_TYPE_FT_FILS_SHA384;
+				match = true;
+				break;
+			}
+		}
+		if (scm_is_cipher_match(rsn.akm_suites,
+		   rsn.akm_suite_count,
+		   WLAN_RSN_SEL(WLAN_AKM_FILS_FT_SHA256))) {
+			if (WLAN_AUTH_TYPE_FT_FILS_SHA256 ==
+			   filter->auth_type[i]) {
+				neg_auth = WLAN_AUTH_TYPE_FT_FILS_SHA256;
+				match = true;
+				break;
+			}
+		}
+		if (scm_is_cipher_match(rsn.akm_suites,
+		   rsn.akm_suite_count,
+		   WLAN_RSN_SEL(WLAN_AKM_FILS_SHA384))) {
+			if (WLAN_AUTH_TYPE_FILS_SHA384 ==
+			   filter->auth_type[i]) {
+				neg_auth = WLAN_AUTH_TYPE_FILS_SHA384;
+				match = true;
+				break;
+			}
+		}
+		if (scm_is_cipher_match(rsn.akm_suites,
+		   rsn.akm_suite_count,
+		   WLAN_RSN_SEL(WLAN_AKM_FILS_SHA256))) {
+			if (WLAN_AUTH_TYPE_FILS_SHA256 ==
+			   filter->auth_type[i]) {
+				neg_auth = WLAN_AUTH_TYPE_FILS_SHA256;
+				match = true;
+				break;
+			}
+		}
+		if (scm_is_cipher_match(rsn.akm_suites,
+		   rsn.akm_suite_count,
 		   WLAN_RSN_SEL(WLAN_AKM_FT_IEEE8021X))) {
 			if (WLAN_AUTH_TYPE_FT_RSN ==
 			   filter->auth_type[i]) {
@@ -920,6 +960,51 @@ static bool scm_is_def_security(struct scan_filter *filter,
 }
 
 /**
+ * scm_is_fils_config_match() - Check if FILS config matches
+ * @filter: scan filter
+ * @db_entry: db entry
+ *
+ * Return: true if FILS config matches else false
+ */
+static bool scm_is_fils_config_match(struct scan_filter *filter,
+	struct scan_cache_entry *db_entry)
+{
+	int i;
+	struct fils_indication_ie *indication_ie;
+	uint8_t *data;
+
+	if (!filter->fils_scan_filter.realm_check)
+		return true;
+
+	if (!db_entry->ie_list.fils_indication)
+		return false;
+
+
+	indication_ie =
+		(struct fils_indication_ie *) db_entry->ie_list.fils_indication;
+
+	data = indication_ie->variable_data;
+	if (indication_ie->is_cache_id_present)
+		data += CACHE_IDENTIFIER_LEN;
+
+	if (indication_ie->is_hessid_present)
+		data += HESSID_LEN;
+
+	for (i = 1; i <= indication_ie->realm_identifiers_cnt; i++) {
+		if (!qdf_mem_cmp(filter->fils_scan_filter.fils_realm,
+				 data, REAM_HASH_LEN))
+			return true;
+		/* Max realm count reached */
+		if (indication_ie->realm_identifiers_cnt == i)
+			break;
+		else
+			data = data + REAM_HASH_LEN;
+	}
+
+	return false;
+}
+
+/**
  * scm_is_security_match() - Check if security in filter match
  * @filter: scan filter
  * @db_entry: db entry
@@ -1066,6 +1151,10 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 	if (filter->only_wmm_ap &&
 	   !db_entry->ie_list.wmeinfo &&
 	   !db_entry->ie_list.wmeparam)
+		return false;
+
+	/* Match realm */
+	if (!scm_is_fils_config_match(filter, db_entry))
 		return false;
 
 	if (!util_country_code_match(filter->country,
