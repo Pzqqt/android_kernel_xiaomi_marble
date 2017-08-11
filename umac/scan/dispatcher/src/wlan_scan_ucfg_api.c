@@ -757,6 +757,7 @@ wlan_scan_global_init(struct wlan_scan_obj *scan_obj)
 	scan_obj->scan_def.scan_ev_completed = true;
 	scan_obj->scan_def.scan_ev_bss_chan = true;
 	scan_obj->scan_def.scan_ev_foreign_chan = true;
+	scan_obj->scan_def.scan_ev_foreign_chn_exit = true;
 	scan_obj->scan_def.scan_ev_dequeued = true;
 	scan_obj->scan_def.scan_ev_preempted = true;
 	scan_obj->scan_def.scan_ev_start_failed = true;

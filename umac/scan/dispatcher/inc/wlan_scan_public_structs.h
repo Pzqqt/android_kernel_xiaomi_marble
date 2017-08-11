@@ -803,6 +803,7 @@ enum scan_completion_reason {
  * @chan_freq: channel centre frequency
  * @requester: requester id
  * @scan_id: scan id
+ * @timestamp: timestamp in microsec recorded by target for the scan event
  */
 struct scan_event {
 	uint32_t vdev_id;
@@ -811,6 +812,7 @@ struct scan_event {
 	uint32_t chan_freq;
 	uint32_t requester;
 	uint32_t scan_id;
+	uint32_t timestamp;
 };
 
 /**
