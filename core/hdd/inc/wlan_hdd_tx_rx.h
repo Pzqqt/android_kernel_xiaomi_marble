@@ -71,10 +71,29 @@ QDF_STATUS hdd_get_peer_sta_id(hdd_station_ctx_t *sta_ctx,
 
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 void hdd_tx_resume_cb(void *adapter_context, bool tx_resume);
+
+/**
+ * hdd_tx_flow_control_is_pause() - Is TX Q paused by flow control
+ * @adapter_context: pointer to vdev apdapter
+ *
+ * Return: true if TX Q is paused by flow control
+ */
+bool hdd_tx_flow_control_is_pause(void *adapter_context);
 void hdd_tx_resume_timer_expired_handler(void *adapter_context);
+
+/**
+ * hdd_register_tx_flow_control() - Register TX Flow control
+ * @adapter: adapter handle
+ * @timer_callback: timer callback
+ * @flow_control_fp: txrx flow control
+ * @flow_control_is_pause_fp: is txrx paused by flow control
+ *
+ * Return: none
+ */
 void hdd_register_tx_flow_control(hdd_adapter_t *adapter,
 		qdf_mc_timer_callback_t timer_callback,
-		ol_txrx_tx_flow_control_fp flowControl);
+		ol_txrx_tx_flow_control_fp flowControl,
+		ol_txrx_tx_flow_control_is_pause_fp flow_control_is_pause);
 void hdd_deregister_tx_flow_control(hdd_adapter_t *adapter);
 void hdd_get_tx_resource(hdd_adapter_t *adapter,
 			uint8_t STAId, uint16_t timer_value);
@@ -83,12 +102,17 @@ void hdd_get_tx_resource(hdd_adapter_t *adapter,
 static inline void hdd_tx_resume_cb(void *adapter_context, bool tx_resume)
 {
 }
+static inline bool hdd_tx_flow_control_is_pause(void *adapter_context)
+{
+	return false;
+}
 static inline void hdd_tx_resume_timer_expired_handler(void *adapter_context)
 {
 }
 static inline void hdd_register_tx_flow_control(hdd_adapter_t *adapter,
 		qdf_mc_timer_callback_t timer_callback,
-		ol_txrx_tx_flow_control_fp flowControl)
+		ol_txrx_tx_flow_control_fp flowControl,
+		ol_txrx_tx_flow_control_is_pause_fp flow_control_is_pause)
 {
 }
 static inline void hdd_deregister_tx_flow_control(hdd_adapter_t *adapter)

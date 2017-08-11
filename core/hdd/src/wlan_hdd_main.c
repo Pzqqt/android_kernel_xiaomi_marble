@@ -4872,7 +4872,8 @@ QDF_STATUS hdd_start_all_adapters(hdd_context_t *hdd_ctx)
 
 			hdd_register_tx_flow_control(adapter,
 					hdd_tx_resume_timer_expired_handler,
-					hdd_tx_resume_cb);
+					hdd_tx_resume_cb,
+					hdd_tx_flow_control_is_pause);
 
 			break;
 
@@ -7798,7 +7799,8 @@ int hdd_start_station_adapter(hdd_adapter_t *adapter)
 
 	hdd_register_tx_flow_control(adapter,
 		hdd_tx_resume_timer_expired_handler,
-		hdd_tx_resume_cb);
+		hdd_tx_resume_cb,
+		hdd_tx_flow_control_is_pause);
 
 	EXIT();
 	return 0;
@@ -7827,7 +7829,8 @@ int hdd_start_ap_adapter(hdd_adapter_t *adapter)
 
 	hdd_register_tx_flow_control(adapter,
 		hdd_softap_tx_resume_timer_expired_handler,
-		hdd_softap_tx_resume_cb);
+		hdd_softap_tx_resume_cb,
+		hdd_tx_flow_control_is_pause);
 
 	EXIT();
 	return 0;

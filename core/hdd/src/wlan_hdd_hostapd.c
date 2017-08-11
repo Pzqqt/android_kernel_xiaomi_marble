@@ -1172,7 +1172,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 
 			hdd_register_tx_flow_control(pHostapdAdapter,
 				hdd_softap_tx_resume_timer_expired_handler,
-				hdd_softap_tx_resume_cb);
+				hdd_softap_tx_resume_cb,
+				hdd_tx_flow_control_is_pause);
 
 			/* @@@ need wep logic here to set privacy bit */
 			qdf_status =

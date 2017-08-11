@@ -128,6 +128,21 @@ void ol_txrx_flow_control_cb(struct cdp_vdev *pvdev, bool tx_resume)
 }
 
 /**
+ * ol_txrx_flow_control_is_pause() - is osif paused by flow control
+ * @vdev: vdev handle
+ *
+ * Return: true if osif is paused by flow control
+ */
+static bool ol_txrx_flow_control_is_pause(ol_txrx_vdev_handle vdev)
+{
+	bool is_pause = false;
+	if ((vdev->osif_flow_control_is_pause) && (vdev->osif_fc_ctx))
+		is_pause = vdev->osif_flow_control_is_pause(vdev->osif_fc_ctx);
+
+	return is_pause;
+}
+
+/**
  * ol_tx_flow_ct_unpause_os_q() - Unpause OS Q
  * @pdev: physical device object
  *
@@ -139,8 +154,9 @@ static void ol_tx_flow_ct_unpause_os_q(ol_txrx_pdev_handle pdev)
 	struct ol_txrx_vdev_t *vdev;
 
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
-		if (qdf_atomic_read(&vdev->os_q_paused) &&
-		    (vdev->tx_fl_hwm != 0)) {
+		if ((qdf_atomic_read(&vdev->os_q_paused) &&
+		    (vdev->tx_fl_hwm != 0)) ||
+		    ol_txrx_flow_control_is_pause(vdev)) {
 			qdf_spin_lock(&pdev->tx_mutex);
 			if (pdev->tx_desc.num_free > vdev->tx_fl_hwm) {
 				qdf_atomic_set(&vdev->os_q_paused, 0);
