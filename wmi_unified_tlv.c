@@ -16399,6 +16399,7 @@ static QDF_STATUS extract_vdev_scan_ev_param_tlv(wmi_unified_t wmi_handle,
 	param->requester = evt->requestor;
 	param->scan_id = evt->scan_id;
 	param->vdev_id = evt->vdev_id;
+	param->timestamp = evt->tsf_timestamp;
 
 	return QDF_STATUS_SUCCESS;
 }
