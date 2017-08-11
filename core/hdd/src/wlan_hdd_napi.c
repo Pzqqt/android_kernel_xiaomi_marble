@@ -275,7 +275,7 @@ int hdd_napi_event(enum qca_napi_event event, void *data)
  *         !0: error, or action error code
  */
 static int napi_tput_policy_delay;
-int hdd_napi_apply_throughput_policy(struct hdd_context_s *hddctx,
+int hdd_napi_apply_throughput_policy(struct hdd_context *hddctx,
 				     uint64_t              tx_packets,
 				     uint64_t              rx_packets)
 {

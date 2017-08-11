@@ -1052,7 +1052,7 @@ int hdd_indicate_tsf(hdd_adapter_t *adapter, uint32_t *buf, int len)
  */
 int hdd_get_tsf_cb(void *pcb_cxt, struct stsf *ptsf)
 {
-	struct hdd_context_s *hddctx;
+	struct hdd_context *hddctx;
 	struct hdd_adapter *adapter;
 	int status;
 
@@ -1061,7 +1061,7 @@ int hdd_get_tsf_cb(void *pcb_cxt, struct stsf *ptsf)
 			return -EINVAL;
 	}
 
-	hddctx = (struct hdd_context_s *)pcb_cxt;
+	hddctx = (struct hdd_context *)pcb_cxt;
 	status = wlan_hdd_validate_context(hddctx);
 	if (0 != status)
 		return -EINVAL;
@@ -1235,14 +1235,14 @@ int wlan_hdd_cfg80211_handle_tsf_cmd(struct wiphy *wiphy,
 
 /**
  * wlan_hdd_tsf_init() - set callback to handle tsf value.
- * @hdd_ctx: pointer to the struct hdd_context_s
+ * @hdd_ctx: pointer to the struct hdd_context
  *
  * This function set the callback to sme module, the callback will be
  * called when a tsf event is reported by firmware
  *
  * Return: none
  */
-void wlan_hdd_tsf_init(struct hdd_context_s *hdd_ctx)
+void wlan_hdd_tsf_init(struct hdd_context *hdd_ctx)
 {
 	QDF_STATUS hal_status;
 

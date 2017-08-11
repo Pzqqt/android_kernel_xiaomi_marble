@@ -210,7 +210,7 @@ typedef struct connection_info_s {
 
 /* Forward declarations */
 typedef struct hdd_adapter hdd_adapter_t;
-typedef struct hdd_context_s hdd_context_t;
+typedef struct hdd_context hdd_context_t;
 typedef struct hdd_station_ctx hdd_station_ctx_t;
 typedef struct hdd_ap_ctx_s hdd_ap_ctx_t;
 

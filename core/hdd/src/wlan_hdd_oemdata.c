@@ -51,7 +51,7 @@
 #include <net/cnss_nl.h>
 #endif
 
-static struct hdd_context_s *p_hdd_ctx;
+static struct hdd_context *p_hdd_ctx;
 
 /**
  * populate_oem_data_cap() - populate oem capabilities
@@ -790,7 +790,7 @@ void hdd_send_peer_status_ind_to_oem_app(struct qdf_mac_addr *peerMac,
  *
  * Return: 0 if success, error code otherwise
  */
-static int oem_app_reg_req_handler(struct hdd_context_s *hdd_ctx,
+static int oem_app_reg_req_handler(struct hdd_context *hdd_ctx,
 					tAniMsgHdr *msg_hdr, int pid)
 {
 	char *sign_str = NULL;
@@ -825,7 +825,7 @@ static int oem_app_reg_req_handler(struct hdd_context_s *hdd_ctx,
  *
  * Return: 0 if success, error code otherwise
  */
-static int oem_data_req_handler(struct hdd_context_s *hdd_ctx,
+static int oem_data_req_handler(struct hdd_context *hdd_ctx,
 				tAniMsgHdr *msg_hdr, int pid)
 {
 	hdd_debug("Received Oem Data Request length: %d from pid: %d",
@@ -862,7 +862,7 @@ static int oem_data_req_handler(struct hdd_context_s *hdd_ctx,
  *
  * Return: 0 if success, error code otherwise
  */
-static int oem_chan_info_req_handler(struct hdd_context_s *hdd_ctx,
+static int oem_chan_info_req_handler(struct hdd_context *hdd_ctx,
 					tAniMsgHdr *msg_hdr, int pid)
 {
 	hdd_debug("Received channel info request, num channel(%d) from pid: %d",
@@ -899,7 +899,7 @@ static int oem_chan_info_req_handler(struct hdd_context_s *hdd_ctx,
  *
  * Return: 0 if success, error code otherwise
  */
-static int oem_set_cap_req_handler(struct hdd_context_s *hdd_ctx,
+static int oem_set_cap_req_handler(struct hdd_context *hdd_ctx,
 					tAniMsgHdr *msg_hdr, int pid)
 {
 	hdd_info("Received set oem cap req of length:%d from pid: %d",
@@ -936,7 +936,7 @@ static int oem_set_cap_req_handler(struct hdd_context_s *hdd_ctx,
  *
  * Return: 0 if success, error code otherwise
  */
-static int oem_get_cap_req_handler(struct hdd_context_s *hdd_ctx,
+static int oem_get_cap_req_handler(struct hdd_context *hdd_ctx,
 					tAniMsgHdr *msg_hdr, int pid)
 {
 	hdd_info("Rcvd get oem capability req - length:%d from pid: %d",
@@ -1062,7 +1062,7 @@ static void oem_cmd_handler(const void *data, int data_len, void *ctx, int pid)
  *
  * Return: 0
  */
-int oem_activate_service(struct hdd_context_s *hdd_ctx)
+int oem_activate_service(struct hdd_context *hdd_ctx)
 {
 	p_hdd_ctx = hdd_ctx;
 	register_cld_cmd_cb(WLAN_NL_MSG_OEM, oem_cmd_handler, NULL);
@@ -1144,7 +1144,7 @@ static int __oem_msg_callback(struct sk_buff *skb)
  * Return: zero on success
  *         On error, error number will be returned.
  */
-int oem_activate_service(struct hdd_context_s *hdd_ctx)
+int oem_activate_service(struct hdd_context *hdd_ctx)
 {
 	p_hdd_ctx = hdd_ctx;
 

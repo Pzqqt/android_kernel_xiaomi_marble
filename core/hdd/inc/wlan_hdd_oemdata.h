@@ -184,14 +184,14 @@ void hdd_send_peer_status_ind_to_oem_app(struct qdf_mac_addr *peerMac,
 int iw_get_oem_data_cap(struct net_device *dev, struct iw_request_info *info,
 			union iwreq_data *wrqu, char *extra);
 
-int oem_activate_service(struct hdd_context_s *hdd_ctx);
+int oem_activate_service(struct hdd_context *hdd_ctx);
 
 void hdd_send_oem_data_rsp_msg(struct oem_data_rsp *oem_rsp);
 void hdd_update_channel_bw_info(hdd_context_t *hdd_ctx,
 				uint16_t chan,
 				void *hdd_chan_info);
 #else
-static inline int oem_activate_service(struct hdd_context_s *hdd_ctx)
+static inline int oem_activate_service(struct hdd_context *hdd_ctx)
 {
 	return 0;
 }

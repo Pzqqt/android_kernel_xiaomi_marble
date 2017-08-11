@@ -116,7 +116,7 @@ static const char *hdd_he_wni_cfg_to_string(uint16_t cfg_id)
  *
  * Return: 0 on success and errno on failure
  */
-static int hdd_he_set_wni_cfg(struct hdd_context_s *hdd_ctx,
+static int hdd_he_set_wni_cfg(struct hdd_context *hdd_ctx,
 				     uint16_t cfg_id, uint32_t new_value)
 {
 	QDF_STATUS status;
@@ -128,7 +128,7 @@ static int hdd_he_set_wni_cfg(struct hdd_context_s *hdd_ctx,
 	return qdf_status_to_os_return(status);
 }
 
-void hdd_update_tgt_he_cap(struct hdd_context_s *hdd_ctx,
+void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 			   struct wma_tgt_cfg *cfg)
 {
 	uint32_t ppet_size = sizeof(tDot11fIEppe_threshold);

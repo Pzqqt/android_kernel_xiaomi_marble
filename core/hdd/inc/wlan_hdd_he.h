@@ -26,7 +26,7 @@
 #if !defined(WLAN_HDD_HE_H)
 #define WLAN_HDD_HE_H
 
-struct hdd_context_s;
+struct hdd_context;
 struct wma_tgt_cfg;
 struct beacon_data_s;
 struct sap_Config;
@@ -77,7 +77,7 @@ enum qca_wlan_vendor_attr_get_he_capabilities {
  *
  * Return: None
  */
-void hdd_update_tgt_he_cap(struct hdd_context_s *hdd_ctx,
+void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 			   struct wma_tgt_cfg *cfg);
 
 /**
@@ -144,7 +144,7 @@ int wlan_hdd_cfg80211_get_he_cap(struct wiphy *wiphy,
 },
 
 #else
-static inline void hdd_update_tgt_he_cap(struct hdd_context_s *hdd_ctx,
+static inline void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 					 struct wma_tgt_cfg *cfg)
 {
 }

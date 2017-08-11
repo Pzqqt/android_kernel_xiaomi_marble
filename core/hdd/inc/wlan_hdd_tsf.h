@@ -77,7 +77,7 @@ enum hdd_tsf_capture_state {
  *
  * Return: nothing
  */
-void wlan_hdd_tsf_init(struct hdd_context_s *hdd_ctx);
+void wlan_hdd_tsf_init(struct hdd_context *hdd_ctx);
 
 /**
  * wlan_hdd_tsf_deinit() - reset callbacks for capturing tsf, deinit tsf_plus
@@ -132,7 +132,7 @@ int wlan_hdd_cfg80211_handle_tsf_cmd(struct wiphy *wiphy,
 
 int hdd_get_tsf_cb(void *pcb_cxt, struct stsf *ptsf);
 #else
-static inline void wlan_hdd_tsf_init(struct hdd_context_s *hdd_ctx)
+static inline void wlan_hdd_tsf_init(struct hdd_context *hdd_ctx)
 {
 }
 

@@ -462,7 +462,7 @@ struct iw_request_info;
  * status, this function will log a message if the ioctls are disabled
  * or deprecated.
  */
-int hdd_check_standard_wext_control(struct hdd_context_s *hdd_ctx,
+int hdd_check_standard_wext_control(struct hdd_context *hdd_ctx,
 				    struct iw_request_info *info);
 
 /**
@@ -480,7 +480,7 @@ int hdd_check_standard_wext_control(struct hdd_context_s *hdd_ctx,
  * status, this function will log a message if the ioctls are disabled
  * or deprecated.
  */
-int hdd_check_private_wext_control(struct hdd_context_s *hdd_ctx,
+int hdd_check_private_wext_control(struct hdd_context *hdd_ctx,
 				   struct iw_request_info *info);
 
 #endif /* __WEXT_IW_H__ */

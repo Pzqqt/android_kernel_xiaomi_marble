@@ -2974,14 +2974,14 @@ static int hdd_check_wext_control(enum hdd_wext_control wext_control,
 	}
 }
 
-int hdd_check_standard_wext_control(struct hdd_context_s *hdd_ctx,
+int hdd_check_standard_wext_control(struct hdd_context *hdd_ctx,
 				    struct iw_request_info *info)
 {
 	return hdd_check_wext_control(hdd_ctx->config->standard_wext_control,
 				      info);
 }
 
-int hdd_check_private_wext_control(struct hdd_context_s *hdd_ctx,
+int hdd_check_private_wext_control(struct hdd_context *hdd_ctx,
 				   struct iw_request_info *info)
 {
 	return hdd_check_wext_control(hdd_ctx->config->private_wext_control,

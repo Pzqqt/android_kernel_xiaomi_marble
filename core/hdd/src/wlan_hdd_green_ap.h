@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -34,7 +34,7 @@
  * WLAN Host Device Driver Green AP API specification
  */
 
-struct hdd_context_s;
+struct hdd_context;
 struct wma_tgt_cfg;
 
 #ifdef FEATURE_GREEN_AP
@@ -44,7 +44,7 @@ struct wma_tgt_cfg;
  *
  * Return: none
  */
-void hdd_green_ap_init(struct hdd_context_s *hdd_ctx);
+void hdd_green_ap_init(struct hdd_context *hdd_ctx);
 
 /**
  * hdd_green_ap_deinit() - De-initialize Green AP feature
@@ -52,7 +52,7 @@ void hdd_green_ap_init(struct hdd_context_s *hdd_ctx);
  *
  * Return: none
  */
-void hdd_green_ap_deinit(struct hdd_context_s *hdd_ctx);
+void hdd_green_ap_deinit(struct hdd_context *hdd_ctx);
 
 /**
  * hdd_green_ap_start_bss() - Notify Green AP of Start BSS event
@@ -60,7 +60,7 @@ void hdd_green_ap_deinit(struct hdd_context_s *hdd_ctx);
  *
  * Return: none
  */
-void hdd_green_ap_start_bss(struct hdd_context_s *hdd_ctx);
+void hdd_green_ap_start_bss(struct hdd_context *hdd_ctx);
 
 /**
  * hdd_green_ap_stop_bss() - Notify Green AP of Stop BSS event
@@ -68,7 +68,7 @@ void hdd_green_ap_start_bss(struct hdd_context_s *hdd_ctx);
  *
  * Return: none
  */
-void hdd_green_ap_stop_bss(struct hdd_context_s *hdd_ctx);
+void hdd_green_ap_stop_bss(struct hdd_context *hdd_ctx);
 
 /**
  * hdd_green_ap_add_sta() - Notify Green AP of Add Station event
@@ -76,7 +76,7 @@ void hdd_green_ap_stop_bss(struct hdd_context_s *hdd_ctx);
  *
  * Return: none
  */
-void hdd_green_ap_add_sta(struct hdd_context_s *hdd_ctx);
+void hdd_green_ap_add_sta(struct hdd_context *hdd_ctx);
 
 /**
  * hdd_green_ap_del_sta() - Notify Green AP of Delete Station event
@@ -84,7 +84,7 @@ void hdd_green_ap_add_sta(struct hdd_context_s *hdd_ctx);
  *
  * Return: none
  */
-void hdd_green_ap_del_sta(struct hdd_context_s *hdd_ctx);
+void hdd_green_ap_del_sta(struct hdd_context *hdd_ctx);
 
 /**
  * hdd_enable_egap() - Enable Enhance Green AP
@@ -92,7 +92,7 @@ void hdd_green_ap_del_sta(struct hdd_context_s *hdd_ctx);
  *
  * Return: 0 on success, negative errno on failure
  */
-int hdd_enable_egap(struct hdd_context_s *hdd_ctx);
+int hdd_enable_egap(struct hdd_context *hdd_ctx);
 
 /**
  * hdd_green_ap_target_config() - Handle Green AP target configuration
@@ -104,20 +104,20 @@ int hdd_enable_egap(struct hdd_context_s *hdd_ctx);
  *
  * Return: none
  */
-void hdd_green_ap_target_config(struct hdd_context_s *hdd_ctx,
+void hdd_green_ap_target_config(struct hdd_context *hdd_ctx,
 				struct wma_tgt_cfg *target_config);
 #else
-static inline void hdd_green_ap_init(struct hdd_context_s *hdd_ctx) {}
-static inline void hdd_green_ap_deinit(struct hdd_context_s *hdd_ctx) {}
-static inline void hdd_green_ap_start_bss(struct hdd_context_s *hdd_ctx) {}
-static inline void hdd_green_ap_stop_bss(struct hdd_context_s *hdd_ctx) {}
-static inline void hdd_green_ap_add_sta(struct hdd_context_s *hdd_ctx) {}
-static inline void hdd_green_ap_del_sta(struct hdd_context_s *hdd_ctx) {}
-static inline int hdd_enable_egap(struct hdd_context_s *hdd_ctx)
+static inline void hdd_green_ap_init(struct hdd_context *hdd_ctx) {}
+static inline void hdd_green_ap_deinit(struct hdd_context *hdd_ctx) {}
+static inline void hdd_green_ap_start_bss(struct hdd_context *hdd_ctx) {}
+static inline void hdd_green_ap_stop_bss(struct hdd_context *hdd_ctx) {}
+static inline void hdd_green_ap_add_sta(struct hdd_context *hdd_ctx) {}
+static inline void hdd_green_ap_del_sta(struct hdd_context *hdd_ctx) {}
+static inline int hdd_enable_egap(struct hdd_context *hdd_ctx)
 {
 	return -EINVAL;
 }
-static inline void hdd_green_ap_target_config(struct hdd_context_s *hdd_ctx,
+static inline void hdd_green_ap_target_config(struct hdd_context *hdd_ctx,
 					      struct wma_tgt_cfg *target_config)
 {
 }

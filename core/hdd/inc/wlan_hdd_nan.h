@@ -34,7 +34,7 @@
  * WLAN Host Device Driver NAN API specification
  */
 
-struct hdd_context_s;
+struct hdd_context;
 
 #ifdef WLAN_FEATURE_NAN
 struct wiphy;

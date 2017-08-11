@@ -1378,7 +1378,7 @@ enum hdd_sta_smps_param {
 };
 
 /** Adapter structure definition */
-struct hdd_context_s {
+struct hdd_context {
 	/** Global CDS context  */
 	v_CONTEXT_t pcds_context;
 

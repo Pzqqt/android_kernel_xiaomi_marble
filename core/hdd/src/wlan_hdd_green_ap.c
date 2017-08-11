@@ -101,7 +101,7 @@ struct hdd_green_ap_ctx {
  *
  * Return: none
  */
-static void hdd_green_ap_update(struct hdd_context_s *hdd_ctx,
+static void hdd_green_ap_update(struct hdd_context *hdd_ctx,
 				enum hdd_green_ap_ps_state state,
 				enum hdd_green_ap_event event)
 {
@@ -138,7 +138,7 @@ static int hdd_green_ap_enable(hdd_adapter_t *adapter, uint8_t enable)
  *
  * Return: none
  */
-static void hdd_green_ap_mc(struct hdd_context_s *hdd_ctx,
+static void hdd_green_ap_mc(struct hdd_context *hdd_ctx,
 			    enum hdd_green_ap_event event)
 {
 	struct hdd_green_ap_ctx *green_ap;
@@ -282,7 +282,7 @@ done:
  */
 static void hdd_green_ap_timer_fn(void *ctx)
 {
-	struct hdd_context_s *hdd_ctx = ctx;
+	struct hdd_context *hdd_ctx = ctx;
 	struct hdd_green_ap_ctx *green_ap;
 
 	if (wlan_hdd_validate_context(hdd_ctx))
@@ -299,7 +299,7 @@ static void hdd_green_ap_timer_fn(void *ctx)
  *
  * Return: QDF_STATUS_SUCCESS on success, otherwise QDF_STATUS_E_** error
  */
-static QDF_STATUS hdd_green_ap_attach(struct hdd_context_s *hdd_ctx)
+static QDF_STATUS hdd_green_ap_attach(struct hdd_context *hdd_ctx)
 {
 	struct hdd_green_ap_ctx *green_ap;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -336,7 +336,7 @@ error:
  *
  * Return: QDF_STATUS_SUCCESS on success, otherwise QDF_STATUS_E_** error
  */
-static QDF_STATUS hdd_green_ap_deattach(struct hdd_context_s *hdd_ctx)
+static QDF_STATUS hdd_green_ap_deattach(struct hdd_context *hdd_ctx)
 {
 	struct hdd_green_ap_ctx *green_ap = hdd_ctx->green_ap_ctx;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -373,7 +373,7 @@ done:
  * hdd_green_ap_init() - Initialize Green AP feature
  * (public function documented in wlan_hdd_green_ap.h)
  */
-void hdd_green_ap_init(struct hdd_context_s *hdd_ctx)
+void hdd_green_ap_init(struct hdd_context *hdd_ctx)
 {
 	if (!QDF_IS_STATUS_SUCCESS(hdd_green_ap_attach(hdd_ctx)))
 		hdd_err("Failed to allocate Green-AP resource");
@@ -383,7 +383,7 @@ void hdd_green_ap_init(struct hdd_context_s *hdd_ctx)
  * hdd_green_ap_deinit() - De-initialize Green AP feature
  * (public function documented in wlan_hdd_green_ap.h)
  */
-void hdd_green_ap_deinit(struct hdd_context_s *hdd_ctx)
+void hdd_green_ap_deinit(struct hdd_context *hdd_ctx)
 {
 	if (!QDF_IS_STATUS_SUCCESS(hdd_green_ap_deattach(hdd_ctx)))
 		hdd_err("Cannot deallocate Green-AP resource");
@@ -413,7 +413,7 @@ static bool hdd_is_egap_enabled(bool fw_egap_support, struct hdd_config *cfg)
  *
  * Return: 0 on success, negative errno on failure
  */
-int hdd_enable_egap(struct hdd_context_s *hdd_ctx)
+int hdd_enable_egap(struct hdd_context *hdd_ctx)
 {
 	struct hdd_config *cfg;
 
@@ -450,7 +450,7 @@ int hdd_enable_egap(struct hdd_context_s *hdd_ctx)
  * hdd_green_ap_start_bss() - Notify Green AP of Start BSS event
  * (public function documented in wlan_hdd_green_ap.h)
  */
-void hdd_green_ap_start_bss(struct hdd_context_s *hdd_ctx)
+void hdd_green_ap_start_bss(struct hdd_context *hdd_ctx)
 {
 	struct hdd_config *cfg;
 
@@ -494,7 +494,7 @@ void hdd_green_ap_start_bss(struct hdd_context_s *hdd_ctx)
  * hdd_green_ap_stop_bss() - Notify Green AP of Stop BSS event
  * (public function documented in wlan_hdd_green_ap.h)
  */
-void hdd_green_ap_stop_bss(struct hdd_context_s *hdd_ctx)
+void hdd_green_ap_stop_bss(struct hdd_context *hdd_ctx)
 {
 	struct hdd_config *cfg;
 
@@ -531,7 +531,7 @@ void hdd_green_ap_stop_bss(struct hdd_context_s *hdd_ctx)
  * hdd_green_ap_add_sta() - Notify Green AP of Add Station event
  * (public function documented in wlan_hdd_green_ap.h)
  */
-void hdd_green_ap_add_sta(struct hdd_context_s *hdd_ctx)
+void hdd_green_ap_add_sta(struct hdd_context *hdd_ctx)
 {
 	struct hdd_config *cfg;
 
@@ -563,7 +563,7 @@ void hdd_green_ap_add_sta(struct hdd_context_s *hdd_ctx)
  * hdd_green_ap_del_sta() - Notify Green AP of Delete Station event
  * (public function documented in wlan_hdd_green_ap.h)
  */
-void hdd_green_ap_del_sta(struct hdd_context_s *hdd_ctx)
+void hdd_green_ap_del_sta(struct hdd_context *hdd_ctx)
 {
 	struct hdd_config *cfg;
 
@@ -598,7 +598,7 @@ void hdd_green_ap_del_sta(struct hdd_context_s *hdd_ctx)
  * Implementation notes:
  * Target indicates whether or not Enhanced Green AP (EGAP) is supported
  */
-void hdd_green_ap_target_config(struct hdd_context_s *hdd_ctx,
+void hdd_green_ap_target_config(struct hdd_context *hdd_ctx,
 				struct wma_tgt_cfg *target_config)
 {
 	struct hdd_green_ap_ctx *green_ap = hdd_ctx->green_ap_ctx;

@@ -26,7 +26,7 @@
 #ifndef __WLAN_HDD_NAN_DATAPATH_H
 #define __WLAN_HDD_NAN_DATAPATH_H
 
-struct hdd_context_s;
+struct hdd_context;
 struct hdd_tgt_cfg;
 struct hdd_config;
 struct hdd_adapter;
@@ -209,8 +209,8 @@ struct nan_datapath_ctx {
 #endif
 
 #ifdef WLAN_FEATURE_NAN_DATAPATH
-void hdd_ndp_print_ini_config(struct hdd_context_s *hdd_ctx);
-void hdd_nan_datapath_target_config(struct hdd_context_s *hdd_ctx,
+void hdd_ndp_print_ini_config(struct hdd_context *hdd_ctx);
+void hdd_nan_datapath_target_config(struct hdd_context *hdd_ctx,
 						struct wma_tgt_cfg *cfg);
 void hdd_ndp_event_handler(struct hdd_adapter *adapter,
 	tCsrRoamInfo *roam_info, uint32_t roam_id, eRoamCmdStatus roam_status,
@@ -220,10 +220,10 @@ int wlan_hdd_cfg80211_process_ndp_cmd(struct wiphy *wiphy,
 int hdd_init_nan_data_mode(struct hdd_adapter *adapter);
 void hdd_ndp_session_end_handler(hdd_adapter_t *adapter);
 #else
-static inline void hdd_ndp_print_ini_config(struct hdd_context_s *hdd_ctx)
+static inline void hdd_ndp_print_ini_config(struct hdd_context *hdd_ctx)
 {
 }
-static inline void hdd_nan_datapath_target_config(struct hdd_context_s *hdd_ctx,
+static inline void hdd_nan_datapath_target_config(struct hdd_context *hdd_ctx,
 						struct wma_tgt_cfg *cfg)
 {
 }
