@@ -51,6 +51,18 @@
 #include <linux/ip.h>
 #endif /* FEATURE_TSO */
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 13, 0)
+#define qdf_nbuf_users_inc atomic_inc
+#define qdf_nbuf_users_dec atomic_dec
+#define qdf_nbuf_users_set atomic_set
+#define qdf_nbuf_users_read atomic_read
+#else
+#define qdf_nbuf_users_inc refcount_inc
+#define qdf_nbuf_users_dec refcount_dec
+#define qdf_nbuf_users_set refcount_set
+#define qdf_nbuf_users_read refcount_read
+#endif /* KERNEL_VERSION(4, 13, 0) */
+
 /* Packet Counter */
 static uint32_t nbuf_tx_mgmt[QDF_NBUF_TX_PKT_STATE_MAX];
 static uint32_t nbuf_tx_data[QDF_NBUF_TX_PKT_STATE_MAX];
@@ -2196,14 +2208,14 @@ EXPORT_SYMBOL(__qdf_nbuf_get_tso_num_seg);
 
 struct sk_buff *__qdf_nbuf_inc_users(struct sk_buff *skb)
 {
-	atomic_inc(&skb->users);
+	qdf_nbuf_users_inc(&skb->users);
 	return skb;
 }
 EXPORT_SYMBOL(__qdf_nbuf_inc_users);
 
 int __qdf_nbuf_get_users(struct sk_buff *skb)
 {
-	return atomic_read(&skb->users);
+	return qdf_nbuf_users_read(&skb->users);
 }
 EXPORT_SYMBOL(__qdf_nbuf_get_users);
 
@@ -2923,3 +2935,22 @@ void qdf_nbuf_classify_pkt(struct sk_buff *skb)
 			QDF_NBUF_CB_PACKET_TYPE_WAPI;
 }
 EXPORT_SYMBOL(qdf_nbuf_classify_pkt);
+
+void __qdf_nbuf_init(__qdf_nbuf_t nbuf)
+{
+	qdf_nbuf_users_set(&nbuf->users, 1);
+	nbuf->data = nbuf->head + NET_SKB_PAD;
+	skb_reset_tail_pointer(nbuf);
+}
+EXPORT_SYMBOL(__qdf_nbuf_init);
+
+#ifdef WLAN_FEATURE_FASTPATH
+void qdf_nbuf_init_fast(qdf_nbuf_t nbuf)
+{
+	qdf_nbuf_users_set(&nbuf->users, 1);
+	nbuf->data = nbuf->head + NET_SKB_PAD;
+	skb_reset_tail_pointer(nbuf);
+}
+EXPORT_SYMBOL(qdf_nbuf_init_fast);
+#endif /* WLAN_FEATURE_FASTPATH */
+

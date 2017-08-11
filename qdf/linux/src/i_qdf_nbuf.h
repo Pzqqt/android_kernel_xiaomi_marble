@@ -1653,12 +1653,7 @@ static inline size_t __qdf_nbuf_tcp_tso_size(struct sk_buff *skb)
  *
  * Return: none
  */
-static inline void __qdf_nbuf_init(__qdf_nbuf_t nbuf)
-{
-	atomic_set(&nbuf->users, 1);
-	nbuf->data = nbuf->head + NET_SKB_PAD;
-	skb_reset_tail_pointer(nbuf);
-}
+void __qdf_nbuf_init(__qdf_nbuf_t nbuf);
 
 /**
  * __qdf_nbuf_set_rx_info() - set rx info
