@@ -144,19 +144,18 @@ struct ol_tx_desc_t *ol_tx_desc_alloc(struct ol_txrx_pdev_t *pdev,
 	qdf_spin_lock_bh(&pdev->tx_mutex);
 	if (pdev->tx_desc.freelist) {
 		tx_desc = ol_tx_get_desc_global_pool(pdev);
+		if (!tx_desc) {
+			qdf_spin_unlock_bh(&pdev->tx_mutex);
+			return NULL;
+		}
 		ol_tx_desc_dup_detect_set(pdev, tx_desc);
 		ol_tx_desc_sanity_checks(pdev, tx_desc);
 		ol_tx_desc_compute_delay(tx_desc);
+		ol_tx_desc_vdev_update(tx_desc, vdev);
+		ol_tx_desc_count_inc(vdev);
+		qdf_atomic_inc(&tx_desc->ref_cnt);
 	}
 	qdf_spin_unlock_bh(&pdev->tx_mutex);
-
-	if (!tx_desc)
-		return NULL;
-
-	ol_tx_desc_vdev_update(tx_desc, vdev);
-	ol_tx_desc_count_inc(vdev);
-	qdf_atomic_inc(&tx_desc->ref_cnt);
-
 	return tx_desc;
 }
 
