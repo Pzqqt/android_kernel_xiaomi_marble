@@ -194,18 +194,16 @@ typedef enum {
 	SME_AC_VO = 3
 } sme_ac_enum_type;
 
-/*---------------------------------------------------------------------------
-  Enumeration of the various TSPEC directions
-
-  From 802.11e/WMM specifications
-  ---------------------------------------------------------------------------*/
-
-typedef enum {
+/*
+ * Enumeration of the various TSPEC directions
+ * From 802.11e/WMM specifications
+ */
+enum sme_qos_wmm_dir_type {
 	SME_QOS_WMM_TS_DIR_UPLINK = 0,
 	SME_QOS_WMM_TS_DIR_DOWNLINK = 1,
 	SME_QOS_WMM_TS_DIR_RESV = 2,    /* Reserved */
 	SME_QOS_WMM_TS_DIR_BOTH = 3,
-} sme_qos_wmm_dir_type;
+};
 
 /**
  * struct sme_oem_capability - OEM capability to be exchanged between host
@@ -969,7 +967,7 @@ QDF_STATUS sme_enable_uapsd_for_ac(void *cds_ctx, uint8_t sta_id,
 				      sme_ac_enum_type ac, uint8_t tid,
 				      uint8_t pri, uint32_t srvc_int,
 				      uint32_t sus_int,
-				      sme_qos_wmm_dir_type dir,
+				      enum sme_qos_wmm_dir_type dir,
 				      uint8_t psb, uint32_t sessionId,
 				      uint32_t delay_interval);
 

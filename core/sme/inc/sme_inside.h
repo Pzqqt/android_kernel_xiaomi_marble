@@ -75,7 +75,7 @@ typedef struct sGenericPmcCmd {
 } tGenericPmcCmd;
 
 typedef struct sGenericQosCmd {
-	sme_QosWmmTspecInfo tspecInfo;
+	struct sme_qos_wmmtspecinfo tspecInfo;
 	sme_QosEdcaAcType ac;
 	uint8_t tspec_mask;
 } tGenericQosCmd;

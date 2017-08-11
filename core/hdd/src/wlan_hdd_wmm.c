@@ -145,7 +145,7 @@ static void hdd_wmm_enable_tl_uapsd(struct hdd_wmm_qos_context *pQosContext)
 	QDF_STATUS status;
 	uint32_t service_interval;
 	uint32_t suspension_interval;
-	sme_qos_wmm_dir_type direction;
+	enum sme_qos_wmm_dir_type direction;
 	bool psb;
 
 	/* The TSPEC must be valid */
@@ -501,10 +501,10 @@ hdd_wmm_disable_inactivity_timer(struct hdd_wmm_qos_context *pQosContext)
  * Return: QDF_STATUS enumeration
  */
 static QDF_STATUS hdd_wmm_sme_callback(tHalHandle hHal,
-				       void *hddCtx,
-				       sme_QosWmmTspecInfo *pCurrentQosInfo,
-				       sme_QosStatusType smeStatus,
-				       uint32_t qosFlowId)
+			void *hddCtx,
+			struct sme_qos_wmmtspecinfo *pCurrentQosInfo,
+			enum sme_qos_statustype smeStatus,
+			uint32_t qosFlowId)
 {
 	struct hdd_wmm_qos_context *pQosContext = hddCtx;
 	hdd_adapter_t *pAdapter;
@@ -1017,9 +1017,9 @@ static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
 	sme_ac_enum_type acType;
 	struct hdd_wmm_ac_status *pAc;
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
-	sme_QosStatusType smeStatus;
+	enum sme_qos_statustype smeStatus;
 #endif
-	sme_QosWmmTspecInfo qosInfo;
+	struct sme_qos_wmmtspecinfo qosInfo;
 	hdd_context_t *hdd_ctx;
 
 	hdd_debug("Entered, context %p", pQosContext);
@@ -1277,7 +1277,7 @@ static void hdd_wmm_do_implicit_qos(struct work_struct *work)
  */
 QDF_STATUS hdd_wmm_init(hdd_adapter_t *pAdapter)
 {
-	sme_QosWmmUpType *hddWmmDscpToUpMap = pAdapter->hddWmmDscpToUpMap;
+	enum sme_qos_wmmuptype *hddWmmDscpToUpMap = pAdapter->hddWmmDscpToUpMap;
 	uint8_t dscp;
 
 	ENTER();
@@ -1410,7 +1410,7 @@ QDF_STATUS hdd_wmm_adapter_close(hdd_adapter_t *pAdapter)
 static
 void hdd_wmm_classify_pkt(hdd_adapter_t *adapter,
 			  struct sk_buff *skb,
-			  sme_QosWmmUpType *user_pri,
+			  enum sme_qos_wmmuptype *user_pri,
 			  bool *is_eapol)
 {
 	unsigned char dscp;
@@ -1581,7 +1581,7 @@ uint16_t hdd_hostapd_select_queue(struct net_device *dev, struct sk_buff *skb
 
 )
 {
-	sme_QosWmmUpType up = SME_QOS_WMM_UP_BE;
+	enum sme_qos_wmmuptype up = SME_QOS_WMM_UP_BE;
 	uint16_t queueIndex;
 	hdd_adapter_t *adapter = (hdd_adapter_t *) netdev_priv(dev);
 	hdd_context_t *hddctx = WLAN_HDD_GET_CTX(adapter);
@@ -1613,7 +1613,7 @@ uint16_t hdd_hostapd_select_queue(struct net_device *dev, struct sk_buff *skb
  */
 uint16_t hdd_wmm_select_queue(struct net_device *dev, struct sk_buff *skb)
 {
-	sme_QosWmmUpType up = SME_QOS_WMM_UP_BE;
+	enum sme_qos_wmmuptype up = SME_QOS_WMM_UP_BE;
 	uint16_t queueIndex;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	bool is_eapol = false;
@@ -2096,12 +2096,12 @@ bool hdd_wmm_is_acm_allowed(struct wlan_objmgr_vdev **vdev)
  */
 hdd_wlan_wmm_status_e hdd_wmm_addts(hdd_adapter_t *pAdapter,
 				    uint32_t handle,
-				    sme_QosWmmTspecInfo *pTspec)
+				    struct sme_qos_wmmtspecinfo *pTspec)
 {
 	struct hdd_wmm_qos_context *pQosContext;
 	hdd_wlan_wmm_status_e status = HDD_WLAN_WMM_STATUS_SETUP_SUCCESS;
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
-	sme_QosStatusType smeStatus;
+	enum sme_qos_statustype smeStatus;
 #endif
 	bool found = false;
 
@@ -2273,7 +2273,7 @@ hdd_wlan_wmm_status_e hdd_wmm_delts(hdd_adapter_t *pAdapter, uint32_t handle)
 	uint32_t qosFlowId = 0;
 	hdd_wlan_wmm_status_e status = HDD_WLAN_WMM_STATUS_SETUP_SUCCESS;
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
-	sme_QosStatusType smeStatus;
+	enum sme_qos_statustype smeStatus;
 #endif
 
 	hdd_debug("Entered with handle 0x%x", handle);

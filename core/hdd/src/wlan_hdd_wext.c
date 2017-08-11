@@ -11138,7 +11138,7 @@ static int __iw_add_tspec(struct net_device *dev, struct iw_request_info *info,
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	hdd_wlan_wmm_status_e *pStatus = (hdd_wlan_wmm_status_e *) extra;
 	int params[HDD_WLAN_WMM_PARAM_COUNT];
-	sme_QosWmmTspecInfo tSpec;
+	struct sme_qos_wmmtspecinfo tSpec;
 	uint32_t handle;
 	struct iw_point s_priv_data;
 	hdd_context_t *hdd_ctx;

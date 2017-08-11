@@ -158,11 +158,11 @@ struct hdd_wmm_ac_status {
 	bool wmmAcAccessAllowed;
 	bool wmmAcTspecValid;
 	bool wmmAcUapsdInfoValid;
-	sme_QosWmmTspecInfo wmmAcTspecInfo;
+	struct sme_qos_wmmtspecinfo wmmAcTspecInfo;
 	bool wmmAcIsUapsdEnabled;
 	uint32_t wmmAcUapsdServiceInterval;
 	uint32_t wmmAcUapsdSuspensionInterval;
-	sme_qos_wmm_dir_type wmmAcUapsdDirection;
+	enum sme_qos_wmm_dir_type wmmAcUapsdDirection;
 
 #ifdef FEATURE_WLAN_ESE
 	uint32_t wmmInactivityTime;
@@ -364,7 +364,7 @@ bool hdd_wmm_is_acm_allowed(struct wlan_objmgr_vdev **vdev);
  */
 hdd_wlan_wmm_status_e hdd_wmm_addts(hdd_adapter_t *pAdapter,
 				    uint32_t handle,
-				    sme_QosWmmTspecInfo *pTspec);
+				    struct sme_qos_wmmtspecinfo *pTspec);
 
 /**
  * hdd_wmm_delts() - Function which will delete a traffic spec at the
