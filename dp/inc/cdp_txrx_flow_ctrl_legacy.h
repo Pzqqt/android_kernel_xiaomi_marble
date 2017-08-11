@@ -40,6 +40,7 @@
  * @vdev_id - virtual interface id to register flow control
  * @flowControl - callback function pointer
  * @osif_fc_ctx - client context pointer
+ * @flow_control_is_pause: is vdev paused by flow control
  *
  * Register flow control callback function pointer and client context pointer
  *
@@ -47,7 +48,8 @@
  */
 static inline int
 cdp_fc_register(ol_txrx_soc_handle soc, uint8_t vdev_id,
-		ol_txrx_tx_flow_control_fp flowControl, void *osif_fc_ctx)
+		ol_txrx_tx_flow_control_fp flowControl, void *osif_fc_ctx,
+		ol_txrx_tx_flow_control_is_pause_fp flow_control_is_pause)
 {
 	if (!soc || !soc->ops || !soc->ops->l_flowctl_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -57,7 +59,8 @@ cdp_fc_register(ol_txrx_soc_handle soc, uint8_t vdev_id,
 
 	if (soc->ops->l_flowctl_ops->register_tx_flow_control)
 		return soc->ops->l_flowctl_ops->register_tx_flow_control(
-			vdev_id, flowControl, osif_fc_ctx);
+			vdev_id, flowControl, osif_fc_ctx,
+			flow_control_is_pause);
 
 	return 0;
 }

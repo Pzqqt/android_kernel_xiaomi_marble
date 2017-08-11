@@ -748,7 +748,8 @@ struct cdp_flowctl_ops {
  */
 struct cdp_lflowctl_ops {
 	int (*register_tx_flow_control)(uint8_t vdev_id,
-		ol_txrx_tx_flow_control_fp flowControl, void *osif_fc_ctx);
+		ol_txrx_tx_flow_control_fp flowControl, void *osif_fc_ctx,
+		ol_txrx_tx_flow_control_is_pause_fp flow_control_is_pause);
 	int (*deregister_tx_flow_control_cb)(uint8_t vdev_id);
 	void (*flow_control_cb)(struct cdp_vdev *vdev, bool tx_resume);
 	bool (*get_tx_resource)(uint8_t sta_id,

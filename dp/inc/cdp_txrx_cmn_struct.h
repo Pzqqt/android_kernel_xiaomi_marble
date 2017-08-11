@@ -312,6 +312,15 @@ typedef void (*ol_txrx_tx_flow_control_fp)(void *osif_dev,
 					    bool tx_resume);
 
 /**
+ * ol_txrx_tx_flow_control_is_pause_fp - is tx paused by flow control
+ * function from txrx to OS shim
+ * @osif_dev - the virtual device's OS shim object
+ *
+ * Return: true if tx is paused by flow control
+ */
+typedef bool (*ol_txrx_tx_flow_control_is_pause_fp)(void *osif_dev);
+
+/**
  * ol_txrx_rx_fp - receive function to hand batches of data
  * frames from txrx to OS shim
  * @data_vdev - handle to the OSIF virtual device object
