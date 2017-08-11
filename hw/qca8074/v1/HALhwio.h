@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -22,10 +22,10 @@
 ===========================================================================
 */
 /**
-  @file HALhwio.h 
-  
+  @file HALhwio.h
+
   Public interface include file for accessing the HWIO HAL definitions.
-  
+
   The HALhwio.h file is the public API interface to the HW I/O (HWIO)
   register access definitions.
 */
@@ -46,10 +46,10 @@
 ** Macros
 ** ----------------------------------------------------------------------- */
 
-/** 
+/**
   @addtogroup macros
-  @{ 
-*/ 
+  @{
+*/
 
 /**
  * Map a base name to the pointer to access the base.
@@ -59,6 +59,8 @@
  *
  */
 #define HWIO_BASE_PTR(base) base##_BASE_PTR
+
+
 
 
 /**
@@ -79,10 +81,10 @@
 */
 
 
-/** 
+/**
   @addtogroup hwio_macros
-  @{ 
-*/ 
+  @{
+*/
 
 /**
  * @name Address Macros
@@ -282,7 +284,7 @@
 /**
  * @name Shadow Register Macros
  *
- * These macros are used for directly reading the value stored in a 
+ * These macros are used for directly reading the value stored in a
  * shadow register.
  * Shadow registers are defined for write-only registers.  Generally these
  * macros should not be necessary as HWIO_OUTM* macros will automatically use
@@ -294,7 +296,7 @@
 #define HWIO_SHDWI(hwiosym, index)                       __msmhwio_shdwi(hwiosym, index)
 /** @} */
 
-/** 
+/**
   @}
 */ /* end_group */
 
@@ -302,7 +304,7 @@
 /** @cond */
 
 /*
- * Map to final symbols.  This remapping is done to allow register 
+ * Map to final symbols.  This remapping is done to allow register
  * redefinitions.  If we just define HWIO_IN(xreg) as HWIO_##xreg##_IN
  * then remappings like "#define xreg xregnew" do not work as expected.
  */
@@ -330,7 +332,7 @@
 #define __msmhwio_physi(hwiosym, index)                         HWIO_##hwiosym##_PHYS(index)
 #define __msmhwio_physi2(hwiosym, idx1, idx2)                   HWIO_##hwiosym##_PHYS(idx1, idx2)
 #define __msmhwio_physi3(hwiosym, idx1, idx2, idx3)             HWIO_##hwiosym##_PHYS(idx1, idx2, idx3)
-#define __msmhwio_offs(hwiosym)                                 HWIO_##hwiosym##_OFFS 
+#define __msmhwio_offs(hwiosym)                                 HWIO_##hwiosym##_OFFS
 #define __msmhwio_offsi(hwiosym, index)                         HWIO_##hwiosym##_OFFS(index)
 #define __msmhwio_offsi2(hwiosym, idx1, idx2)                   HWIO_##hwiosym##_OFFS(idx1, idx2)
 #define __msmhwio_offsi3(hwiosym, idx1, idx2, idx3)             HWIO_##hwiosym##_OFFS(idx1, idx2, idx3)
@@ -364,13 +366,13 @@
                                                                                 HWIO_##hwiosym##_OUTM(base, mask1, val1); \
                                                                                 HWIO_##hwiosym##_OUTM(base, mask2, val2); \
                                                                                 HWIO_##hwiosym##_OUTM(base, mask3, val3); \
-                                                                               }  
+                                                                               }
 #define __msmhwio_outxm4(base, hwiosym, mask1, mask2, mask3, mask4, val1, val2, val3, val4) { \
                                                                                 HWIO_##hwiosym##_OUTM(base, mask1, val1); \
                                                                                 HWIO_##hwiosym##_OUTM(base, mask2, val2); \
                                                                                 HWIO_##hwiosym##_OUTM(base, mask3, val3); \
                                                                                 HWIO_##hwiosym##_OUTM(base, mask4, val4); \
-                                                                               } 
+                                                                               }
 
 
 #define __msmhwio_outxmi(base, hwiosym, index, mask, val)             HWIO_##hwiosym##_OUTMI(base, index, mask, val)
@@ -397,16 +399,82 @@
 #define HWIO_INTFREE()
 
 
+#if defined(VISUAL_STUDIO) || defined(TEST_FRAMEWORK)
+extern unsigned int registerRead(unsigned int port);
+extern void registerWrite(unsigned int port, unsigned int val);
+#define __inp(port)       registerRead(port)
+#define __inpw(port)       registerRead(port)
+#define __inpdw(port)       registerRead(port)
+#define __outp(port, val)  registerWrite(port, val)
+#define __outpw(port, val)  registerWrite(port, val)
+#define __outpdw(port, val)  registerWrite(port, val)
+
+#else
+#if defined(CONFIG_SIMHW)
+extern unsigned char * simhw_get_mac_addr(void);
+extern uint8 __sim_inp(uint32 addr);
+extern uint16 __sim_inpw(uint32 addr);
+extern uint32 __sim_inpdw(uint32 addr);
+extern void __sim_outp(uint32 addr, uint8  data);
+extern void __sim_outpw(uint32 addr, uint16 data);
+extern void __sim_outpdw(uint32 addr, uint32 data);
+
+#define  __inp(port)          __sim_inp((unsigned int)port)
+#define  __inpw(port)         __sim_inpw((unsigned int)port)
+#define  __inpdw(port)        __sim_inpdw((unsigned int)port)
+#define  __outp(port, val)     __sim_outp((unsigned int)port, val)
+#define  __outpw(port, val)   __sim_outpw((unsigned int)port, val)
+#define  __outpdw(port, val)  __sim_outpdw((unsigned int)port, val)
+
+#define registerRead(port) __sim_inpdw(port)
+#define registerWrite(port, val)  __sim_outpdw(port, val)
+
+#else // CONFIG_SIMHW
+
+#ifdef FPGA
+#define MAC_ADDRESS_POWER_CHECK
+#else
+#undef MAC_ADDRESS_POWER_CHECK
+#endif
+#ifdef MAC_ADDRESS_POWER_CHECK
+extern void whal_pwr_debug_register_address_check(uint32 addr, int is_write);
+#endif
+
+
 /*
  * Input/output port macros for memory mapped IO.
  */
-#define __inp(port)         (*((volatile uint8 *) (port)))
-#define __inpw(port)        (*((volatile uint16 *) (port)))
-#define __inpdw(port)       (*((volatile uint32 *) (port)))
-#define __outp(port, val)   (*((volatile uint8 *) (port)) = ((uint8) (val)))
-#define __outpw(port, val)  (*((volatile uint16 *) (port)) = ((uint16) (val)))
-#define __outpdw(port, val) (*((volatile uint32 *) (port)) = ((uint32) (val)))
+#define __inp(port)         (*((volatile uint8 *) ((uint32)(port))))
+#define __inpw(port)        (*((volatile uint16 *) ((uint32)(port))))
+#ifdef MAC_ADDRESS_POWER_CHECK
+static inline uint32 __inpdw(uint32 port){
+    whal_pwr_debug_register_address_check(port, FALSE);
+    return (*((volatile uint32 *) (port)));
+}
+#else
+#define __inpdw(port)       (*((volatile uint32 *) ((uint32)(port))))
+#endif
 
+extern void busywait(uint32 pause_time_us);
+
+#define __outp(port, val)   (*((volatile uint8 *) ((uint32)(port))) = ((uint8) (val)))
+#define __outpw(port, val)  (*((volatile uint16 *) ((uint32)(port))) = ((uint16) (val)))
+#ifdef MAC_ADDRESS_POWER_CHECK
+static inline void __outpdw(uint32 port ,uint32 val){
+    whal_pwr_debug_register_address_check(port, TRUE);
+    (*((volatile uint32 *) (port)) = ((uint32) (val)));
+}
+#else
+static inline void __outpdw(uint32 port ,uint32 val){
+    (*((volatile uint32 *) (port)) = ((uint32) (val)));
+     busywait(1);
+}
+#endif
+
+#define registerRead(port) (*((volatile uint32 *) ((uint32)(port) )))
+#define registerWrite(port, val) (*((volatile uint32 *) ((uint32)(port) )) = ((uint32) (val)))
+#endif // CONFIG_SIMHW
+#endif
 
 #ifdef HAL_HWIO_EXTERNAL
 
@@ -420,7 +488,7 @@
 #undef  __outpw
 #undef  __outpdw
 
-#define  __inp(port)          __inp_extern(port)         
+#define  __inp(port)          __inp_extern(port)
 #define  __inpw(port)         __inpw_extern(port)
 #define  __inpdw(port)        __inpdw_extern(port)
 #define  __outp(port, val)    __outp_extern(port, val)
@@ -441,7 +509,7 @@ extern void    __outpdw_extern   ( uint32 nAddr, uint32 nData );
  * Base 8-bit byte accessing macros.
  */
 #define in_byte(addr)               (__inp(addr))
-#define in_byte_masked(addr, mask)  (__inp(addr) & (mask)) 
+#define in_byte_masked(addr, mask)  (__inp(addr) & (mask))
 #define out_byte(addr, val)         __outp(addr,val)
 #define out_byte_masked(io, mask, val, shadow)  \
   HWIO_INTLOCK();    \
@@ -472,9 +540,15 @@ extern void    __outpdw_extern   ( uint32 nAddr, uint32 nData );
 /*
  * Base 32-bit double-word accessing macros.
  */
+#ifdef MAC_ADDRESS_POWER_CHECK
+#define in_dword(addr)              (__inpdw((uint32)addr))
+#define in_dword_masked(addr, mask) (__inpdw((uint32)addr) & (mask))
+#define out_dword(addr, val)        __outpdw((uint32)addr,val)
+#else
 #define in_dword(addr)              (__inpdw(addr))
 #define in_dword_masked(addr, mask) (__inpdw(addr) & (mask))
-#define out_dword(addr, val)        __outpdw(addr,val)
+#define out_dword(addr, val)        __outpdw((uint32)addr,val)
+#endif
 #define out_dword_masked(io, mask, val, shadow)  \
    HWIO_INTLOCK(); \
    shadow = (shadow & (uint32)(~(mask))) | ((uint32)((val) & (mask))); \
@@ -484,6 +558,9 @@ extern void    __outpdw_extern   ( uint32 nAddr, uint32 nData );
   out_dword( io, ((current_reg_content & (uint32)(~(mask))) | \
                  ((uint32)((val) & (mask)))) )
 
+#define out_dword_masked_ns_shift(io, mask, val, current_reg_content, shift) \
+  out_dword( io, ((current_reg_content & (uint32)(~(mask))) | \
+                 (((uint32)((val) & (mask))) << shift )) )
 /** @endcond */
 
 #endif /* HAL_HWIO_H */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -22,7 +22,7 @@
  * - This is an extension of standard msmhwio.h to support relative addressing
  *   scheme used in SCALe auto-generated sequences.
  * - The objective of this new addressing scheme is enable the same C function
- *   definition to be applicable to multiple baseances of the same block. 
+ *   definition to be applicable to multiple baseances of the same block.
  * - Such code reuse is not feasible with the standard HWIO macros that use a
  *   absolute addressing scheme.
  * - Compared to the standard HWIO macros, the new macros defined here take an
@@ -93,11 +93,11 @@ typedef enum {
     NS
 } SEQ_TimeUnit;
 
-extern void seq_wait(uint32 time_value, SEQ_TimeUnit time_unit);
+void seq_wait(uint32 time_value, SEQ_TimeUnit time_unit);
 
 
 /************ seq_poll() ************/
-extern uint32 seq_poll(uint32 reg_offset, uint32 expect_value, uint32 value_mask, uint32 value_shift, uint32 max_poll_cnt);
+uint32 seq_poll(uint32 reg_offset, uint32 expect_value, uint32 value_mask, uint32 value_shift, uint32 max_poll_cnt);
 
 #endif /* __SEQ_H__ */
 

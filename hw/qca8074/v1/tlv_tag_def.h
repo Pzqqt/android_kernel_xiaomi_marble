@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -178,7 +178,7 @@ typedef enum {
   WIFIMPDU_INFO_E                          = 150 /* 0x96 */,
   WIFIPDG_USER_SETUP_E                     = 151 /* 0x97 */,
   WIFITX_11AH_SETUP_E                      = 152 /* 0x98 */,
-  WIFITX_CV_START_E                        = 153 /* 0x99 */,
+  WIFIREO_UPDATE_RX_REO_QUEUE_STATUS_E     = 153 /* 0x99 */,
   WIFITX_PEER_ENTRY_E                      = 154 /* 0x9a */,
   WIFITX_RAW_OR_NATIVE_FRAME_SETUP_E       = 155 /* 0x9b */,
   WIFIEXAMPLE_STRUCT_NAME_E                = 156 /* 0x9c */,
@@ -445,7 +445,7 @@ typedef enum {
   WIFITQM_UPDATE_TX_MSDU_FLOW_STATUS_E     = 417 /* 0x1a1 */,
   WIFITQM_UPDATE_TX_MPDU_QUEUE_HEAD_STATUS_E = 418 /* 0x1a2 */,
   WIFIREO_UPDATE_RX_REO_QUEUE_E            = 419 /* 0x1a3 */,
-  WIFIREO_UPDATE_RX_REO_QUEUE_STATUS_E     = 420 /* 0x1a4 */,
+  WIFICE_DST_DESC_E                        = 420 /* 0x1a4 */,
   WIFITLV_BASE_E                           = 511 /* 0x1ff */
 
 } tlv_tag_def__e; ///< tlv_tag_def Enum Type

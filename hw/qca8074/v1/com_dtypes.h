@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -21,28 +21,28 @@
 
 /**
   @file com_dtypes.h
-  @brief This header file contains general data types that are of use to all 
-  modules.  
+  @brief This header file contains general data types that are of use to all
+  modules.
 
 */
 /*===========================================================================
-NOTE: The @brief description and any detailed descriptions above do not appear 
-      in the PDF. 
+NOTE: The @brief description and any detailed descriptions above do not appear
+      in the PDF.
 
-      The Utility_Services_API_mainpage.dox file contains all file/group 
-      descriptions that are in the output PDF generated using Doxygen and 
-      Latex. To edit or update any of the file/group text in the PDF, edit 
+      The Utility_Services_API_mainpage.dox file contains all file/group
+      descriptions that are in the output PDF generated using Doxygen and
+      Latex. To edit or update any of the file/group text in the PDF, edit
       the Utility_Services_API_mainpage.dox file or contact Tech Pubs.
 
-      The above description for this file is part of the "utils_services" 
-	  group description in the Utility_Services_API_mainpage.dox file. 
+      The above description for this file is part of the "utils_services"
+	  group description in the Utility_Services_API_mainpage.dox file.
 ===========================================================================*/
 /*===========================================================================
 
                    S T A N D A R D    D E C L A R A T I O N S
 
 DESCRIPTION
-  This header file contains general data types that are of use to all modules.  
+  This header file contains general data types that are of use to all modules.
   The values or definitions are dependent on the specified
   target.  T_WINNT specifies Windows NT based targets, otherwise the
   default is for ARM targets.
@@ -61,7 +61,7 @@ DESCRIPTION
 This section contains comments describing changes made to this file.
 Notice that changes are listed in reverse chronological order.
 
-$Header: /prj/iceng/SCALe/repository/cvs/scale/source/data/com_dtypes.h,v 1.1.1.1 2012/09/19 22:33:30 rjindal Exp $
+$Header: //depot/prj/qca/lithium/ip/wmac/wmac_recipes/xml/autoseq/com_dtypes.h#2 $
 
 when       who     what, where, why
 --------   ---     ----------------------------------------------------------
@@ -91,7 +91,7 @@ extern "C" {
    #endif
    #include <stdlib.h>
 #endif
-
+#include <stdint.h>
 /* ------------------------------------------------------------------------
 ** Constants
 ** ------------------------------------------------------------------------ */
@@ -116,7 +116,7 @@ extern "C" {
 #define  OFF  0    /**< OFF value. */
 
 #ifndef NULL
-  #define NULL  0  /**< NULL value. */  
+  #define NULL  0  /**< NULL value. */
 #endif
 /** @} */ /* end_name_group Macros for Common Data Types */
 
@@ -134,15 +134,15 @@ extern "C" {
 
 /** @addtogroup utils_services
 @{ */
-/** Boolean value type. 
+/** Boolean value type.
 */
-typedef  unsigned char      boolean;     
+typedef  unsigned char      boolean;
 #define _BOOLEAN_DEFINED
 #endif
 
-/** @cond 
+/** @cond
 */
-#if defined(DALSTDDEF_H) /* guards against a known re-definer */
+//#if defined(DALSTDDEF_H) /* guards against a known re-definer */
 #define _BOOLEAN_DEFINED
 #define _UINT32_DEFINED
 #define _UINT16_DEFINED
@@ -153,48 +153,48 @@ typedef  unsigned char      boolean;
 #define _UINT64_DEFINED
 #define _INT64_DEFINED
 #define _BYTE_DEFINED
-#endif /* #if !defined(DALSTDDEF_H) */
+//#endif /* #if !defined(DALSTDDEF_H) */
 /** @endcond */
 
 #ifndef _UINT32_DEFINED
 /** Unsigned 32-bit value.
 */
-typedef  unsigned long int  uint32;      
+typedef  unsigned int uint32_t;
 #define _UINT32_DEFINED
 #endif
 
 #ifndef _UINT16_DEFINED
 /** Unsigned 16-bit value.
 */
-typedef  unsigned short     uint16;      
+typedef  unsigned short     uint16_t;
 #define _UINT16_DEFINED
 #endif
 
 #ifndef _UINT8_DEFINED
-/** Unsigned 8-bit value. 
+/** Unsigned 8-bit value.
 */
-typedef  unsigned char      uint8;       
+typedef  unsigned char      uint8_t;
 #define _UINT8_DEFINED
 #endif
 
 #ifndef _INT32_DEFINED
 /** Signed 32-bit value.
 */
-typedef  signed long int    int32;
+typedef  signed int    int32_t;
 #define _INT32_DEFINED
 #endif
 
 #ifndef _INT16_DEFINED
 /** Signed 16-bit value.
 */
-typedef  signed short       int16;
+typedef  signed short       int16_t;
 #define _INT16_DEFINED
 #endif
 
 #ifndef _INT8_DEFINED
 /** Signed 8-bit value.
 */
-typedef  signed char        int8;        
+typedef  signed char        int8_t;
 #define _INT8_DEFINED
 #endif
 
@@ -206,7 +206,7 @@ typedef  signed char        int8;
 #ifndef _BYTE_DEFINED
 /** DEPRECATED: Unsigned 8  bit value type.
 */
-typedef  unsigned char      byte;         
+typedef  unsigned char      byte;
 #define  _BYTE_DEFINED
 #endif
 
@@ -215,7 +215,7 @@ typedef  unsigned char      byte;
 typedef  unsigned short     word;
 /** DEPRECATED: Unsigned 32 bit value type.
 */
-typedef  unsigned long      dword;        
+typedef  unsigned int       dword;
 
 /** DEPRECATED: Unsigned 8  bit value type.
 */
@@ -225,35 +225,35 @@ typedef  unsigned char      uint1;
 typedef  unsigned short     uint2;
 /** DEPRECATED: Unsigned 32 bit value type.
 */
-typedef  unsigned long      uint4;        
+typedef  unsigned int      uint4;
 
-/** DEPRECATED: Signed 8  bit value type. 
+/** DEPRECATED: Signed 8  bit value type.
 */
 typedef  signed char        int1;
 /** DEPRECATED: Signed 16 bit value type.
-*/         
+*/
 typedef  signed short       int2;
-/** DEPRECATED: Signed 32 bit value type. 
-*/     
-typedef  long int           int4;         
+/** DEPRECATED: Signed 32 bit value type.
+*/
+typedef  long int           int4;
 
 /** DEPRECATED: Signed 32 bit value.
 */
 typedef  signed long        sint31;
-/** DEPRECATED: Signed 16 bit value. 
-*/       
+/** DEPRECATED: Signed 16 bit value.
+*/
 typedef  signed short       sint15;
 /** DEPRECATED: Signed 8  bit value.
-*/       
-typedef  signed char        sint7; 
+*/
+typedef  signed char        sint7;
 
-typedef uint16 UWord16 ;
-typedef uint32 UWord32 ;
-typedef int32  Word32 ;
-typedef int16  Word16 ;
-typedef uint8  UWord8 ;
-typedef int8   Word8 ;
-typedef int32  Vect32 ;
+typedef uint16_t UWord16 ;
+typedef uint32_t UWord32 ;
+typedef int32_t  Word32 ;
+typedef int16_t  Word16 ;
+typedef uint8_t  UWord8 ;
+typedef int8_t   Word8 ;
+typedef int32_t  Vect32 ;
 /** @endcond */
 
 #if (! defined T_WINNT) && (! defined __GNUC__)
@@ -261,18 +261,18 @@ typedef int32  Vect32 ;
   #ifndef _INT64_DEFINED
     /** Signed 64-bit value.
 	*/
-    typedef long long     int64;       
+    typedef long long     int64;
     #define _INT64_DEFINED
   #endif
   #ifndef _UINT64_DEFINED
     /** Unsigned 64-bit value.
 	*/
-    typedef  unsigned long long  uint64;      
+    typedef  unsigned long long  uint64;
     #define _UINT64_DEFINED
   #endif
 #else /* T_WINNT || TARGET_OS_SOLARIS || __GNUC__ */
   /* WINNT or SOLARIS based targets */
-  #if (defined __GNUC__) 
+  #if (defined __GNUC__)
     #ifndef _INT64_DEFINED
       typedef long long           int64;
       #define _INT64_DEFINED
