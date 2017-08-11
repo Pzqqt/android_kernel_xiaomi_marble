@@ -764,7 +764,7 @@ typedef struct {
 	uint8_t   ecsa_capable;
 } hdd_station_info_t;
 
-struct hdd_ap_ctx_s {
+struct hdd_ap_ctx {
 	hdd_hostapd_state_t HostapdState;
 
 	/* Memory differentiation mode is enabled */
