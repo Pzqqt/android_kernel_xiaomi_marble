@@ -3778,7 +3778,7 @@ static void csr_scan_copy_request_valid_channels_only(tpAniSirGlobal mac_ctx,
 					sta_roam_policy.sap_operating_band ==
 						eCSR_BAND_5G))) {
 					QDF_TRACE(QDF_MODULE_ID_SME,
-						QDF_TRACE_LEVEL_INFO,
+						QDF_TRACE_LEVEL_DEBUG,
 					      FL("ignoring unsafe channel %d"),
 						src_req->ChannelInfo.
 						ChannelList[index]);
@@ -4477,15 +4477,15 @@ static void csr_set_cfg_valid_channel_list(tpAniSirGlobal pMac,
 	uint32_t dataLen = sizeof(uint8_t) * NumChannels;
 	QDF_STATUS status;
 
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: dump valid channel list(NumChannels(%d))",
 		  __func__, NumChannels);
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			   pChannelList, NumChannels);
 	cfg_set_str(pMac, WNI_CFG_VALID_CHANNEL_LIST, pChannelList,
 			dataLen);
 
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "Scan offload is enabled, update default chan list");
 	/*
 	 * disable fcc constraint since new country code
@@ -4677,10 +4677,10 @@ void csr_set_cfg_scan_control_list(tpAniSirGlobal pMac, uint8_t *countryCode,
 				}
 
 			}
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				  "%s: dump scan control list", __func__);
 			QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_SME,
-					   QDF_TRACE_LEVEL_INFO, pControlList,
+					   QDF_TRACE_LEVEL_DEBUG, pControlList,
 					   len);
 
 			cfg_set_str(pMac, WNI_CFG_SCAN_CONTROL_LIST,
