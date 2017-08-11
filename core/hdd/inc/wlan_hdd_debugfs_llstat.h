@@ -52,7 +52,7 @@
  *
  * Return: None
  */
-void hdd_debugfs_process_peer_stats(struct hdd_adapter_s *adapter, void *data);
+void hdd_debugfs_process_peer_stats(struct hdd_adapter *adapter, void *data);
 
 /**
  * hdd_debugfs_process_radio_stats() - Parse Radio stats and add it to buffer
@@ -66,7 +66,7 @@ void hdd_debugfs_process_peer_stats(struct hdd_adapter_s *adapter, void *data);
  *
  * Return: None
  */
-void hdd_debugfs_process_radio_stats(struct hdd_adapter_s *adapter,
+void hdd_debugfs_process_radio_stats(struct hdd_adapter *adapter,
 		uint32_t more_data, void *data, uint32_t num_radio);
 
 /**
@@ -81,7 +81,7 @@ void hdd_debugfs_process_radio_stats(struct hdd_adapter_s *adapter,
  *
  * Return: None
  */
-void hdd_debugfs_process_iface_stats(struct hdd_adapter_s *adapter,
+void hdd_debugfs_process_iface_stats(struct hdd_adapter *adapter,
 		void *data, uint32_t num_peers);
 
 /**
@@ -90,25 +90,25 @@ void hdd_debugfs_process_iface_stats(struct hdd_adapter_s *adapter,
  *
  * Return: 0 on success and errno on failure
  */
-int wlan_hdd_create_ll_stats_file(struct hdd_adapter_s *adapter);
+int wlan_hdd_create_ll_stats_file(struct hdd_adapter *adapter);
 #else
-static inline void hdd_debugfs_process_peer_stats(struct hdd_adapter_s *adapter,
+static inline void hdd_debugfs_process_peer_stats(struct hdd_adapter *adapter,
 						  void *data)
 {
 }
 
 static inline void hdd_debugfs_process_radio_stats(
-			struct hdd_adapter_s *adapter,
+			struct hdd_adapter *adapter,
 			uint32_t more_data, void *data, uint32_t num_radio)
 {
 }
 
 static inline void hdd_debugfs_process_iface_stats(
-				struct hdd_adapter_s *adapter,
+				struct hdd_adapter *adapter,
 				void *data, uint32_t num_peers)
 {
 }
-static inline int wlan_hdd_create_ll_stats_file(struct hdd_adapter_s *adapter)
+static inline int wlan_hdd_create_ll_stats_file(struct hdd_adapter *adapter)
 {
 	return 0;
 }

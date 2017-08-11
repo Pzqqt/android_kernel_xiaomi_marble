@@ -31,7 +31,7 @@
 struct cds_config_info;
 struct wma_tgt_cfg;
 struct hdd_context_s;
-struct hdd_adapter_s;
+struct hdd_adapter;
 
 #ifdef WLAN_FEATURE_LPSS
 /**
@@ -82,7 +82,7 @@ void hdd_lpass_populate_pmo_config(struct pmo_psoc_cfg *pmo_config,
  *
  * Return: none
  */
-void hdd_lpass_notify_connect(struct hdd_adapter_s *adapter);
+void hdd_lpass_notify_connect(struct hdd_adapter *adapter);
 
 /**
  * hdd_lpass_notify_disconnect() - Notify LPASS of interface disconnect
@@ -93,7 +93,7 @@ void hdd_lpass_notify_connect(struct hdd_adapter_s *adapter);
  *
  * Return: none
  */
-void hdd_lpass_notify_disconnect(struct hdd_adapter_s *adapter);
+void hdd_lpass_notify_disconnect(struct hdd_adapter *adapter);
 
 /**
  * hdd_lpass_notify_mode_change() - Notify LPASS of interface mode change
@@ -104,7 +104,7 @@ void hdd_lpass_notify_disconnect(struct hdd_adapter_s *adapter);
  *
  * Return: none
  */
-void hdd_lpass_notify_mode_change(struct hdd_adapter_s *adapter);
+void hdd_lpass_notify_mode_change(struct hdd_adapter *adapter);
 
 /**
  * hdd_lpass_notify_start() - Notify LPASS of driver start
@@ -154,13 +154,13 @@ void hdd_lpass_populate_pmo_config(struct pmo_psoc_cfg *pmo_config,
 {
 }
 
-static inline void hdd_lpass_notify_connect(struct hdd_adapter_s *adapter)
+static inline void hdd_lpass_notify_connect(struct hdd_adapter *adapter)
 {
 }
-static inline void hdd_lpass_notify_disconnect(struct hdd_adapter_s *adapter)
+static inline void hdd_lpass_notify_disconnect(struct hdd_adapter *adapter)
 {
 }
-static inline void hdd_lpass_notify_mode_change(struct hdd_adapter_s *adapter)
+static inline void hdd_lpass_notify_mode_change(struct hdd_adapter *adapter)
 {
 }
 static inline void hdd_lpass_notify_start(struct hdd_context_s *hdd_ctx) { }

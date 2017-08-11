@@ -126,13 +126,13 @@ static bool hdd_tsf_is_initialized(hdd_adapter_t *adapter)
  * Return: TSF_RETURN on Success, TSF_RESET_GPIO_FAIL on failure
  */
 #ifdef QCA_WIFI_3_0
-static int hdd_tsf_reset_gpio(struct hdd_adapter_s *adapter)
+static int hdd_tsf_reset_gpio(struct hdd_adapter *adapter)
 {
 	/* No GPIO Host timer sync for integrated WIFI Device */
 	return TSF_RETURN;
 }
 #else
-static int hdd_tsf_reset_gpio(struct hdd_adapter_s *adapter)
+static int hdd_tsf_reset_gpio(struct hdd_adapter *adapter)
 {
 	int ret;
 
@@ -1053,7 +1053,7 @@ int hdd_indicate_tsf(hdd_adapter_t *adapter, uint32_t *buf, int len)
 int hdd_get_tsf_cb(void *pcb_cxt, struct stsf *ptsf)
 {
 	struct hdd_context_s *hddctx;
-	struct hdd_adapter_s *adapter;
+	struct hdd_adapter *adapter;
 	int status;
 
 	if (pcb_cxt == NULL || ptsf == NULL) {

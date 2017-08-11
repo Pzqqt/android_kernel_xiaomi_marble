@@ -209,7 +209,7 @@ typedef struct connection_info_s {
 } connection_info_t;
 
 /* Forward declarations */
-typedef struct hdd_adapter_s hdd_adapter_t;
+typedef struct hdd_adapter hdd_adapter_t;
 typedef struct hdd_context_s hdd_context_t;
 typedef struct hdd_station_ctx hdd_station_ctx_t;
 typedef struct hdd_ap_ctx_s hdd_ap_ctx_t;
@@ -338,7 +338,7 @@ QDF_STATUS hdd_update_dp_vdev_flags(void *cbk_data,
 				    uint32_t vdev_param,
 				    bool is_link_up);
 
-QDF_STATUS hdd_roam_register_sta(struct hdd_adapter_s *adapter,
+QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 					struct tagCsrRoamInfo *roam_info,
 					uint8_t sta_id,
 					struct qdf_mac_addr *peer_mac_addr,

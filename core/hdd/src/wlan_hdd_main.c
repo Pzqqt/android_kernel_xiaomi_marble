@@ -11333,7 +11333,7 @@ void hdd_clean_up_pre_cac_interface(hdd_context_t *hdd_ctx)
 {
 	uint8_t session_id;
 	QDF_STATUS status;
-	struct hdd_adapter_s *precac_adapter;
+	struct hdd_adapter *precac_adapter;
 
 	status = wlan_sap_get_pre_cac_vdev_id(hdd_ctx->hHal, &session_id);
 	if (QDF_IS_STATUS_ERROR(status)) {

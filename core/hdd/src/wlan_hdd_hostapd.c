@@ -3476,7 +3476,7 @@ static int __iw_softap_get_three(struct net_device *dev,
 	uint32_t sub_cmd = value[0];
 	int ret = 0; /* success */
 	struct hdd_context_s *hdd_ctx;
-	struct hdd_adapter_s *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);

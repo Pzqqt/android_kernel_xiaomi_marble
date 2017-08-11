@@ -933,7 +933,7 @@ struct hdd_connect_pm_context {
 #endif
 #endif
 
-struct hdd_adapter_s {
+struct hdd_adapter {
 	/* Magic cookie for adapter sanity verification.  Note that this
 	 * needs to be at the beginning of the private data structure so
 	 * that it will exists at the beginning of dev->priv and hence

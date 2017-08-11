@@ -207,7 +207,7 @@ static int wlan_hdd_gen_wlan_version_pack(struct wlan_version_data *data,
  *
  * Return: none
  */
-static void wlan_hdd_send_status_pkg(struct hdd_adapter_s *adapter,
+static void wlan_hdd_send_status_pkg(struct hdd_adapter *adapter,
 				     struct hdd_station_ctx *sta_ctx,
 				     uint8_t is_on, uint8_t is_connected)
 {
@@ -346,7 +346,7 @@ void hdd_lpass_populate_pmo_config(struct pmo_psoc_cfg *pmo_config,
  * hdd_lpass_notify_connect() - Notify LPASS of interface connect
  * (public function documented in wlan_hdd_lpass.h)
  */
-void hdd_lpass_notify_connect(struct hdd_adapter_s *adapter)
+void hdd_lpass_notify_connect(struct hdd_adapter *adapter)
 {
 	struct hdd_station_ctx *sta_ctx;
 
@@ -367,7 +367,7 @@ void hdd_lpass_notify_connect(struct hdd_adapter_s *adapter)
  * hdd_lpass_notify_disconnect() - Notify LPASS of interface disconnect
  * (public function documented in wlan_hdd_lpass.h)
  */
-void hdd_lpass_notify_disconnect(struct hdd_adapter_s *adapter)
+void hdd_lpass_notify_disconnect(struct hdd_adapter *adapter)
 {
 	struct hdd_station_ctx *sta_ctx;
 
@@ -383,7 +383,7 @@ void hdd_lpass_notify_disconnect(struct hdd_adapter_s *adapter)
  * implementation note: when one interfaces changes we notify the
  * state of all of the interfaces.
  */
-void hdd_lpass_notify_mode_change(struct hdd_adapter_s *adapter)
+void hdd_lpass_notify_mode_change(struct hdd_adapter *adapter)
 {
 	struct hdd_context_s *hdd_ctx;
 

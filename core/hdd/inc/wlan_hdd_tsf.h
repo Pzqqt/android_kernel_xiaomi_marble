@@ -99,7 +99,7 @@ void wlan_hdd_tsf_deinit(hdd_context_t *hdd_ctx);
  *
  * Return: 0 for success or non-zero negative failure code
  */
-int hdd_capture_tsf(struct hdd_adapter_s *adapter, uint32_t *buf, int len);
+int hdd_capture_tsf(struct hdd_adapter *adapter, uint32_t *buf, int len);
 
 /**
  * hdd_indicate_tsf() - return tsf to uplayer
@@ -112,7 +112,7 @@ int hdd_capture_tsf(struct hdd_adapter_s *adapter, uint32_t *buf, int len);
  *
  * Return: Describe the execute result of this routine
  */
-int hdd_indicate_tsf(struct hdd_adapter_s *adapter, uint32_t *buf, int len);
+int hdd_indicate_tsf(struct hdd_adapter *adapter, uint32_t *buf, int len);
 
 /**
  * wlan_hdd_cfg80211_handle_tsf_cmd(): Setup TSF operations
@@ -140,14 +140,14 @@ static inline void wlan_hdd_tsf_deinit(hdd_context_t *hdd_ctx)
 {
 }
 
-static inline int hdd_indicate_tsf(struct hdd_adapter_s *adapter, uint32_t *buf,
+static inline int hdd_indicate_tsf(struct hdd_adapter *adapter, uint32_t *buf,
 				int len)
 {
 	return -ENOTSUPP;
 }
 
 static inline int
-hdd_capture_tsf(struct hdd_adapter_s *adapter, uint32_t *buf, int len)
+hdd_capture_tsf(struct hdd_adapter *adapter, uint32_t *buf, int len)
 {
 	return -ENOTSUPP;
 }

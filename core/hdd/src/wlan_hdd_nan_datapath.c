@@ -2054,7 +2054,7 @@ int wlan_hdd_cfg80211_process_ndp_cmd(struct wiphy *wiphy,
 }
 
 #ifndef WLAN_FEATURE_NAN_CONVERGENCE
-static int update_ndi_state(struct hdd_adapter_s *adapter, uint32_t state)
+static int update_ndi_state(struct hdd_adapter *adapter, uint32_t state)
 {
 	struct nan_datapath_ctx *ndp_ctx = WLAN_HDD_GET_NDP_CTX_PTR(adapter);
 
@@ -2062,7 +2062,7 @@ static int update_ndi_state(struct hdd_adapter_s *adapter, uint32_t state)
 	return 0;
 }
 #else
-static int update_ndi_state(struct hdd_adapter_s *adapter, uint32_t state)
+static int update_ndi_state(struct hdd_adapter *adapter, uint32_t state)
 {
 	return os_if_nan_set_ndi_state(adapter->hdd_vdev, state);
 }
@@ -2074,7 +2074,7 @@ static int update_ndi_state(struct hdd_adapter_s *adapter, uint32_t state)
  *
  * Returns: 0 on success negative error code on error
  */
-int hdd_init_nan_data_mode(struct hdd_adapter_s *adapter)
+int hdd_init_nan_data_mode(struct hdd_adapter *adapter)
 {
 	struct net_device *wlan_dev = adapter->dev;
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);

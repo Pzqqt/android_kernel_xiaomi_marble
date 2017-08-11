@@ -28,8 +28,8 @@
 struct net_device;
 struct iw_request_info;
 union iwreq_data;
-struct hdd_adapter_s;
-void fips_test(struct hdd_adapter_s *adapter);
+struct hdd_adapter;
+void fips_test(struct hdd_adapter *adapter);
 
 #define FIPS_KEY_LEN 32
 struct iw_fips_test_request {
