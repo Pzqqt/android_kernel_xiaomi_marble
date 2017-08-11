@@ -410,13 +410,10 @@ static inline int hal_srng_access_start(void *hal_soc, void *hal_ring)
 static inline void *hal_srng_dst_get_next(void *hal_soc, void *hal_ring)
 {
 	struct hal_srng *srng = (struct hal_srng *)hal_ring;
-	volatile uint32_t *desc = &(srng->ring_base_vaddr[srng->u.dst_ring.tp]);
-	uint32_t desc_loop_cnt;
+	uint32_t *desc;
 
-	desc_loop_cnt = (desc[srng->entry_size - 1] & SRNG_LOOP_CNT_MASK)
-		>> SRNG_LOOP_CNT_LSB;
-
-	if (srng->u.dst_ring.loop_cnt == desc_loop_cnt) {
+	if (srng->u.dst_ring.tp != srng->u.dst_ring.cached_hp) {
+		desc = &(srng->ring_base_vaddr[srng->u.dst_ring.tp]);
 		/* TODO: Using % is expensive, but we have to do this since
 		 * size of some SRNG rings is not power of 2 (due to descriptor
 		 * sizes). Need to create separate API for rings used
@@ -426,12 +423,9 @@ static inline void *hal_srng_dst_get_next(void *hal_soc, void *hal_ring)
 		srng->u.dst_ring.tp = (srng->u.dst_ring.tp + srng->entry_size) %
 			srng->ring_size;
 
-		srng->u.dst_ring.loop_cnt = (srng->u.dst_ring.loop_cnt +
-			!srng->u.dst_ring.tp) &
-			(SRNG_LOOP_CNT_MASK >> SRNG_LOOP_CNT_LSB);
-		/* TODO: Confirm if loop count mask is same for all rings */
 		return (void *)desc;
 	}
+
 	return NULL;
 }
 
@@ -449,14 +443,10 @@ static inline void *hal_srng_dst_get_next(void *hal_soc, void *hal_ring)
 static inline void *hal_srng_dst_peek(void *hal_soc, void *hal_ring)
 {
 	struct hal_srng *srng = (struct hal_srng *)hal_ring;
-	uint32_t *desc = &(srng->ring_base_vaddr[srng->u.dst_ring.tp]);
-	uint32_t desc_loop_cnt;
 
-	desc_loop_cnt = (desc[srng->entry_size - 1] & SRNG_LOOP_CNT_MASK)
-		>> SRNG_LOOP_CNT_LSB;
+	if (srng->u.dst_ring.tp != srng->u.dst_ring.cached_hp)
+		return (void *)(&(srng->ring_base_vaddr[srng->u.dst_ring.tp]));
 
-	if (srng->u.dst_ring.loop_cnt == desc_loop_cnt)
-		return (void *)desc;
 	return NULL;
 }
 
