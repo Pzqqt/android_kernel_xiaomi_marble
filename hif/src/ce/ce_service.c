@@ -229,7 +229,7 @@ bool hif_ce_service_should_yield(struct hif_softc *scn,
 
 	yield =  time_limit_reached || rxpkt_thresh_reached;
 
-	if (yield)
+	if (yield && ce_state->htt_rx_data)
 		hif_napi_update_yield_stats(ce_state,
 					    time_limit_reached,
 					    rxpkt_thresh_reached);
