@@ -1539,6 +1539,20 @@ void wlan_hdd_inc_suspend_stats(hdd_context_t *hdd_ctx,
 	wlan_hdd_print_suspend_fail_stats(hdd_ctx);
 }
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 12, 0)
+static inline void
+hdd_sched_scan_results(struct wiphy *wiphy, uint64_t reqid)
+{
+	cfg80211_sched_scan_results(wiphy);
+}
+#else
+static inline void
+hdd_sched_scan_results(struct wiphy *wiphy, uint64_t reqid)
+{
+	cfg80211_sched_scan_results(wiphy, reqid);
+}
+#endif
+
 /**
  * __wlan_hdd_cfg80211_resume_wlan() - cfg80211 resume callback
  * @wiphy: Pointer to wiphy
@@ -1639,7 +1653,7 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 				hdd_prevent_suspend_timeout(
 					HDD_WAKELOCK_TIMEOUT_RESUME,
 					WIFI_POWER_EVENT_WAKELOCK_RESUME_WLAN);
-				cfg80211_sched_scan_results(pHddCtx->wiphy);
+				hdd_sched_scan_results(pHddCtx->wiphy, 0);
 			}
 
 			hdd_debug("cfg80211 scan result database updated");
