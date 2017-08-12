@@ -910,6 +910,13 @@ typedef enum {
     /* set udp pkt filter for wlan HB */
     WMI_HB_SET_UDP_PKT_FILTER_CMDID,
 
+    /* OIC ping keep alive */
+    WMI_HB_OIC_PING_OFFLOAD_PARAM_CMDID,
+    WMI_HB_OIC_PING_OFFLOAD_SET_ENABLE_CMDID,
+
+    /* WMI commands related to DHCP Lease Renew Offload **/
+    WMI_HB_DHCP_LEASE_RENEW_OFFLOAD_CMDID,
+
     /** Wlan RMC commands*/
     /** enable/disable RMC */
     WMI_RMC_SET_MODE_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_RMC),
@@ -10634,6 +10641,9 @@ typedef enum wake_reason_e {
     WOW_REASON_CHIP_POWER_FAILURE_DETECT,
     WOW_REASON_11D_SCAN,
     WOW_REASON_THERMAL_CHANGE,
+    WOW_REASON_OIC_PING_OFFLOAD,
+    WOW_REASON_WLAN_DHCP_RENEW,
+
     WOW_REASON_DEBUG_TEST = 0xFF,
 } WOW_WAKE_REASON_TYPE;
 
@@ -12776,27 +12786,27 @@ typedef struct {
 typedef struct {
     /** TLV tag and len; tag equals
      *  WMITLV_TAG_STRUC_wmi_hb_set_enable_cmd_fixed_param */
-    A_UINT32 tlv_header;
-    A_UINT32 vdev_id;
-    A_UINT32 enable;
-    A_UINT32 item;
-    A_UINT32 session;
+    A_UINT32 tlv_header;     /** TLV header*/
+    A_UINT32 vdev_id;        /** Vdev ID */
+    A_UINT32 enable;         /** 1: Enable, 0: Disable`*/
+    A_UINT32 item;           /** 1: UDP, 2: TCP */
+    A_UINT32 session;        /** Session ID from HOST */
 } wmi_hb_set_enable_cmd_fixed_param;
 
 typedef struct {
     /** TLV tag and len; tag equals
      *  WMITLV_TAG_STRUC_wmi_hb_set_tcp_params_cmd_fixed_param */
-    A_UINT32 tlv_header;
-    A_UINT32 vdev_id;
-    A_UINT32 srv_ip;
-    A_UINT32 dev_ip;
-    A_UINT32 seq;
-    A_UINT32 src_port;
-    A_UINT32 dst_port;
-    A_UINT32 interval;
-    A_UINT32 timeout;
-    A_UINT32 session;
-    wmi_mac_addr gateway_mac;
+    A_UINT32 tlv_header;      /** TLV header*/
+    A_UINT32 vdev_id;         /** Vdev ID */
+    A_UINT32 srv_ip;          /** Server IP address (IPv4) */
+    A_UINT32 dev_ip;          /** Device IP address (IPv4) */
+    A_UINT32 seq;             /** TCP Sequence no */
+    A_UINT32 src_port;        /** Source port */
+    A_UINT32 dst_port;        /** Destination port */
+    A_UINT32 interval;        /** Keep alive interval */
+    A_UINT32 timeout;         /** Timeout if keep alive fails */
+    A_UINT32 session;         /** Session ID from HOST */
+    wmi_mac_addr gateway_mac; /** Server Mac Address */
 } wmi_hb_set_tcp_params_cmd_fixed_param;
 
 typedef struct {
@@ -12844,11 +12854,138 @@ typedef enum {
 } WMI_HB_WAKEUP_REASON;
 
 typedef struct {
-    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_hb_ind_event_fixed_param */
-    A_UINT32 vdev_id;    /* unique id identifying the VDEV */
-    A_UINT32 session;    /* Session ID from driver */
-    A_UINT32 reason;     /* wakeup reason */
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_hb_ind_event_fixed_param */
+    A_UINT32 vdev_id;    /** unique id identifying the VDEV */
+    A_UINT32 session;    /** Session ID from HOST */
+    A_UINT32 reason;     /** wakeup reason */
 } wmi_hb_ind_event_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     *  WMITLV_TAG_STRUC_wmi_oic_set_enable_cmd_fixed_param */
+    A_UINT32 tlv_header;           /** TLV Header */
+    A_UINT32 vdev_id;              /** Vdev ID */
+    A_UINT32 session;              /** Session number from the HOST */
+    A_UINT32 srv_ip;               /** IPv4 address of the OCF server */
+    A_UINT32 dev_ip;               /** IPv4 address of the device */
+    A_UINT32 tcp_tx_seq;           /** TCP sequence number */
+    A_UINT32 src_port;             /** Source port */
+    A_UINT32 dst_port;             /** Destination port */
+    A_UINT32 protocol;             /** Protocol used: TCP:0, UDP:1 */
+    A_UINT32 wlan_hb_session;      /** Linked WLAN HB session. If a keepalive is configured for the TCP session, the session ID of the TCP keepalive */
+    A_UINT32 timeout_retries;      /** timeout[31:16]: TCP ACK timeout, time to wait for a TCP ACK in ms
+                                       retries[15:0]: Number of TCP level retries of OIC ping request */
+    wmi_mac_addr peer_macaddr;     /** MAC address of the OCF server */
+    A_UINT32 oic_ping_pkt0;        /** OIC ping packet content [Byte03:Byte00] */
+    A_UINT32 oic_ping_pkt1;        /** OIC ping packet content [Byte07:Byte04] */
+    A_UINT32 oic_ping_pkt2;        /** OIC ping packet content [Byte11:Byte08] */
+    A_UINT32 oic_ping_pkt3;        /** OIC ping packet content [Byte15:Byte12] */
+
+    A_UINT32 tls_cipher_suite_version; /** Cipher suite [31:16] as defined in https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml
+                                       TLS version  [15:00] */
+    A_UINT32 tls_tx_seq0;          /** Tx sequence number [31:00], incremented after every TLS packet transmission */
+    A_UINT32 tls_tx_seq1;          /** Tx sequence number [63:32] */
+    A_UINT32 tls_rx_seq0;          /** Rx sequence number [31:00], incremented after every TLS packet reception */
+    A_UINT32 tls_rx_seq1;          /** Rx sequence number [63:32] */
+    A_UINT32 tls_tx_key0;          /** client_write_key[Byte03:Byte00] refer Section 6.3 RFC 5246 */
+    A_UINT32 tls_tx_key1;          /** client_write_key[Byte07:Byte04] */
+    A_UINT32 tls_tx_key2;          /** client_write_key[Byte11:Byte08] */
+    A_UINT32 tls_tx_key3;          /** client_write_key[Byte15:Byte12] */
+    A_UINT32 tls_rx_key0;          /** server_write_key[Byte03:Byte00] */
+    A_UINT32 tls_rx_key1;          /** server_write_key[Byte07:Byte04] */
+    A_UINT32 tls_rx_key2;          /** server_write_key[Byte11:Byte08] */
+    A_UINT32 tls_rx_key3;          /** server_write_key[Byte15:Byte12] */
+    A_UINT32 tls_MAC_write_key0;   /** client_write_MAC_key[Byte03:Byte00] refer Section 6.3 RFC 5246 */
+    A_UINT32 tls_MAC_write_key1;   /** client_write_MAC_key[Byte07:Byte04] */
+    A_UINT32 tls_MAC_write_key2;   /** client_write_MAC_key[Byte11:Byte08] */
+    A_UINT32 tls_MAC_write_key3;   /** client_write_MAC_key[Byte15:Byte12] */
+    A_UINT32 tls_MAC_write_key4;   /** client_write_MAC_key[Byte19:Byte16] */
+    A_UINT32 tls_MAC_write_key5;   /** client_write_MAC_key[Byte23:Byte20] */
+    A_UINT32 tls_MAC_write_key6;   /** client_write_MAC_key[Byte27:Byte24] */
+    A_UINT32 tls_MAC_write_key7;   /** client_write_MAC_key[Byte31:Byte28] */
+    A_UINT32 tls_MAC_read_key0;    /** server_write_MAC_key[Byte03:Byte00] refer Section 6.3 RFC 5246 */
+    A_UINT32 tls_MAC_read_key1;    /** server_write_MAC_key[Byte07:Byte04] */
+    A_UINT32 tls_MAC_read_key2;    /** server_write_MAC_key[Byte11:Byte08] */
+    A_UINT32 tls_MAC_read_key3;    /** server_write_MAC_key[Byte15:Byte12] */
+    A_UINT32 tls_MAC_read_key4;    /** server_write_MAC_key[Byte19:Byte16] */
+    A_UINT32 tls_MAC_read_key5;    /** server_write_MAC_key[Byte23:Byte20] */
+    A_UINT32 tls_MAC_read_key6;    /** server_write_MAC_key[Byte27:Byte24] */
+    A_UINT32 tls_MAC_read_key7;    /** server_write_MAC_key[Byte31:Byte28] */
+    A_UINT32 tls_client_IV0;       /** CBC Mode: CBC_residue [Byte03:Byte00] refer section 6.2.3.2. CBC Block Cipher in RFC 5246
+                                   GCM Mode: GCMNonce.salt [Byte03:Byte00] refer Section 3 of RFC 5288 */
+    A_UINT32 tls_client_IV1;       /** CBC Mode: CBC_residue [Byte7:Byte4] */
+    A_UINT32 tls_client_IV2;       /** CBC Mode: CBC_residue [Byte11:Byte8] */
+    A_UINT32 tls_client_IV3;       /** CBC Mode: CBC_residue [Byte15:Byte12] */
+    A_UINT32 tls_server_IV0;       /** CBC Mode: CBC_residue [Byte3:Byte0] refer section 6.2.3.2. CBC Block Cipher in RFC 5246
+                                   GCM Mode: GCMNonce.salt [Byte4: Byte0] refer Section 3 of RFC 5288 */
+    A_UINT32 tls_server_IV1;       /** CBC Mode: CBC_residue [Byte7:Byte4] */
+    A_UINT32 tls_server_IV2;       /** CBC Mode: CBC_residue [Byte11:Byte8] */
+    A_UINT32 tls_server_IV3;       /** CBC Mode: CBC_residue [Byte15:Byte12] */
+} wmi_oic_ping_offload_params_cmd_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     *  WMITLV_TAG_STRUC_wmi_oic_set_enable_cmd_fixed_param */
+    A_UINT32 tlv_header; /** TLV Header*/
+    A_UINT32 vdev_id;    /** Interface number */
+    A_UINT32 session;    /** Session ID*/
+    A_UINT32 enable;     /** 1: Enable , 0: Disable */
+} wmi_oic_ping_offload_set_enable_cmd_fixed_param;
+
+/** wlan OIC events */
+typedef enum {
+    WMI_WLAN_OIC_REASON_UNKNOWN      = 0, /** Unknown */
+    WMI_WLAN_OIC_REASON_HOST_WAKE    = 1, /** No error , but host is woken up due to other reasons */
+    WMI_WLAN_OIC_REASON_TCP_TIMEOUT  = 2, /** TCP Timeout */
+    WMI_WLAN_OIC_REASON_PING_TIMEOUT = 3, /** OIC Ping resposnse timeout */
+    WMI_WLAN_OIC_REASON_TLS_ERROR    = 4, /** TLS decryption error */
+} WMI_OIC_WAKEUP_REASON;
+
+typedef struct {
+    A_UINT32 tlv_header;           /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_oic_ind_event_fixed_param */
+    A_UINT32 vdev_id;              /** unique id identifying the VDEV */
+    A_UINT32 session;              /** Session ID from driver */
+    A_UINT32 reason;               /** wakeup reason as per WMI_OIC_WAKEUP_REASON */
+    A_UINT32 tcp_tx_seq;           /** Current TCP sequence number */
+    A_UINT32 tcp_ack_num;          /** Current TCP Acknowledgement number */
+    A_UINT32 tls_tx_seq0;          /** Tx sequence number [31:00], incremented after every TLS packet transmission */
+    A_UINT32 tls_tx_seq1;          /** Tx sequence number [63:32] */
+    A_UINT32 tls_rx_seq0;          /** Rx sequence number [31:00], incremented after every TLS packet reception */
+    A_UINT32 tls_rx_seq1;          /** Rx sequence number [63:32] */
+    A_UINT32 tls_client_IV0;       /** CBC Mode: CBC_residue [Byte03:Byte00] refer section 6.2.3.2. CBC Block Cipher in RFC 5246 */
+    A_UINT32 tls_client_IV1;       /** CBC Mode: CBC_residue [Byte7:Byte4] */
+    A_UINT32 tls_client_IV2;       /** CBC Mode: CBC_residue [Byte11:Byte8] */
+    A_UINT32 tls_client_IV3;       /** CBC Mode: CBC_residue [Byte15:Byte12] */
+    A_UINT32 tls_server_IV0;       /** CBC Mode: CBC_residue [Byte3:Byte0] refer section 6.2.3.2. CBC Block Cipher in RFC 5246 */
+    A_UINT32 tls_server_IV1;       /** CBC Mode: CBC_residue [Byte7:Byte4] */
+    A_UINT32 tls_server_IV2;       /** CBC Mode: CBC_residue [Byte11:Byte8] */
+    A_UINT32 tls_server_IV3;       /** CBC Mode: CBC_residue [Byte15:Byte12] */
+} wmi_oic_ping_handoff_event;
+
+typedef struct {
+   /** TLV tag and len; tag equals
+    * WMITLV_TAG_STRUC_wmi_dhcp_lease_renew_offload_fixed_param */
+    A_UINT32 tlv_header;     /** TLV Header*/
+    A_UINT32 vdev_id;        /** Vdev ID */
+    A_UINT32 enable;         /** 1: Enable 0: Disable*/
+    A_UINT32 srv_ip;         /** DHCP Server IP address (IPv4) */
+    A_UINT32 client_ip;      /** Device IP address (IPv4) */
+    wmi_mac_addr srv_mac;    /** DHCP Server MAC address */
+    A_UINT32 parameter_list; /** Optional Parameter list. RFC 1533 gives the complete set of options defined for use with DHCP */
+} wmi_dhcp_lease_renew_offload_cmd_fixed_param;
+
+/** WLAN DHCP Lease Renew Events */
+typedef enum {
+    WMI_WLAN_DHCP_RENEW_REASON_UNKNOWN  = 0, /** Unknown */
+    WMI_WLAN_DHCP_RENEW_REASON_ACK_TIMEOUT  = 1, /** DHCP ACK Timeout */
+    WMI_WLAN_DHCP_RENEW_REASON_NACK     = 2, /** DHCP error */
+} WMI_DHCP_RENEW_WAKEUP_REASON;
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_dhcp_renew_ind_event_fixed_param */
+    A_UINT32 vdev_id;    /** unique id identifying the VDEV */
+    A_UINT32 reason;     /** wakeup reason as per enum WMI_DHCP_RENEW_WAKEUP_REASON*/
+} wmi_dhcp_lease_renew_event;
 
 /** WMI_STA_SMPS_PARAM_CMDID */
 typedef enum {

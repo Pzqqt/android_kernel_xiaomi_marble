@@ -211,6 +211,9 @@ typedef  enum  {
     WMI_SERVICE_TX_PPDU_INFO_STATS_SUPPORT=129, /* support to report tx ppdu info stats via htt events */
     WMI_SERVICE_VDEV_LIMIT_OFFCHAN_SUPPORT=130, /* support to report the offchannel duration limiting capability on connected interface */
     WMI_SERVICE_FILS_SUPPORT=131, /* support for FILS */
+    WMI_SERVICE_WLAN_OIC_PING_OFFLOAD=132, /* Support for wlan OIC ping service */
+    WMI_SERVICE_WLAN_DHCP_RENEW=133, /* Support for wlan DHCP Renew service */
+
     /******* ADD NEW SERVICES HERE *******/
 
     WMI_MAX_EXT_SERVICE

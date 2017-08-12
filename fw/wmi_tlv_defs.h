@@ -847,6 +847,11 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_roam_fils_synch_tlv_param,
     WMITLV_TAG_STRUC_wmi_gtk_offload_extended_tlv_param,
     WMITLV_TAG_STRUC_wmi_roam_bg_scan_roaming_param,
+    WMITLV_TAG_STRUC_wmi_oic_ping_offload_params_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_oic_ping_offload_set_enable_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_oic_ping_handoff_event,
+    WMITLV_TAG_STRUC_wmi_dhcp_lease_renew_offload_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_dhcp_lease_renew_event,
 } WMITLV_TAG_ID;
 
 /*
@@ -1185,6 +1190,9 @@ typedef enum {
     OP(WMI_VDEV_LIMIT_OFFCHAN_CMDID) \
     OP(WMI_PDEV_UPDATE_FILS_HLP_PKT_CMDID) \
     OP(WMI_PDEV_UPDATE_PMK_CACHE_CMDID) \
+    OP(WMI_HB_OIC_PING_OFFLOAD_PARAM_CMDID) \
+    OP(WMI_HB_OIC_PING_OFFLOAD_SET_ENABLE_CMDID) \
+    OP(WMI_HB_DHCP_LEASE_RENEW_OFFLOAD_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -3397,6 +3405,20 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_GET_ARP_STAT_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_therm_throt_level_config_info, therm_throt_level_config_info, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_THERM_THROT_SET_CONF_CMDID);
 
+/* OIC ping offload cmd */
+#define WMITLV_TABLE_WMI_HB_OIC_PING_OFFLOAD_PARAM_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_oic_ping_offload_params_cmd_fixed_param, wmi_oic_ping_offload_params_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_HB_OIC_PING_OFFLOAD_PARAM_CMDID);
+
+#define WMITLV_TABLE_WMI_HB_OIC_PING_OFFLOAD_SET_ENABLE_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_oic_ping_offload_set_enable_cmd_fixed_param, wmi_oic_ping_offload_set_enable_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_HB_OIC_PING_OFFLOAD_SET_ENABLE_CMDID);
+
+/* DHCP Lease Renew Offload cmd */
+#define WMITLV_TABLE_WMI_HB_DHCP_LEASE_RENEW_OFFLOAD_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len,WMITLV_TAG_STRUC_wmi_dhcp_lease_renew_offload_cmd_fixed_param, wmi_dhcp_lease_renew_offload_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_HB_DHCP_LEASE_RENEW_OFFLOAD_CMDID);
+
 
 /************************** TLV definitions of WMI events *******************************/
 
@@ -3649,7 +3671,9 @@ WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_SYNCH_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, WOW_EVENT_INFO_SECTION_BITMAP, wow_bitmap_info, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, wow_packet_buffer, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_hb_ind_event_fixed_param, hb_indevt, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, WMI_GTK_OFFLOAD_STATUS_EVENT_fixed_param, wow_gtkigtk, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, WMI_GTK_OFFLOAD_STATUS_EVENT_fixed_param, wow_gtkigtk, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_oic_ping_handoff_event, wow_oic_ping_handoff, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_dhcp_lease_renew_event, wow_dhcp_lease_renew, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_WOW_WAKEUP_HOST_EVENTID);
 
 #define WMITLV_TABLE_WMI_WOW_INITIAL_WAKEUP_EVENTID(id,op,buf,len) \
