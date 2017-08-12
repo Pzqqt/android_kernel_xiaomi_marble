@@ -7834,6 +7834,10 @@ static hdd_context_t *hdd_context_create(struct device *dev)
 	if (ret)
 		goto err_deinit_hdd_context;
 
+	ret = hdd_init_netlink_services(hdd_ctx);
+	if (ret)
+		goto err_deinit_txrx_histogram;
+
 	wlan_logging_set_log_to_console(hdd_ctx->config->wlanLoggingToConsole);
 	wlan_logging_set_active(hdd_ctx->config->wlanLoggingEnable);
 
@@ -7843,6 +7847,9 @@ skip_multicast_logging:
 	EXIT();
 
 	return hdd_ctx;
+
+err_deinit_txrx_histogram:
+	wlan_hdd_deinit_tx_rx_histogram(hdd_ctx);
 
 err_deinit_hdd_context:
 	hdd_context_deinit(hdd_ctx);
@@ -9648,17 +9655,13 @@ int hdd_wlan_startup(struct device *dev)
 	mutex_init(&hdd_ctx->avoid_freq_lock);
 #endif
 
-	ret = hdd_init_netlink_services(hdd_ctx);
-	if (ret)
-		goto err_hdd_free_psoc;
-
 	hdd_request_manager_init();
 	hdd_green_ap_init(hdd_ctx);
 
 	ret = hdd_wlan_start_modules(hdd_ctx, NULL, false);
 	if (ret) {
 		hdd_err("Failed to start modules: %d", ret);
-		goto err_exit_nl_srv;
+		goto err_hdd_free_psoc;
 	}
 
 	wlan_init_bug_report_lock();
@@ -9811,7 +9814,7 @@ err_wiphy_unregister:
 err_stop_modules:
 	hdd_wlan_stop_modules(hdd_ctx, false);
 
-err_exit_nl_srv:
+err_hdd_free_psoc:
 	if (DRIVER_MODULES_CLOSED == hdd_ctx->driver_status) {
 		status = cds_sched_close(hdd_ctx->pcds_context);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -9826,7 +9829,6 @@ err_exit_nl_srv:
 
 	cds_deinit_ini_config();
 
-err_hdd_free_psoc:
 	hdd_objmgr_release_and_destroy_psoc(hdd_ctx);
 
 err_hdd_free_context:
