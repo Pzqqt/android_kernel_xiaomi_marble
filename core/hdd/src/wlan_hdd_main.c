@@ -8280,6 +8280,8 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 	cds_cfg->max_station = hdd_ctx->config->maxNumberOfPeers;
 	cds_cfg->sub_20_channel_width = WLAN_SUB_20_CH_WIDTH_NONE;
 	cds_cfg->flow_steering_enabled = hdd_ctx->config->flow_steering_enable;
+	cds_cfg->max_msdus_per_rxinorderind =
+		hdd_ctx->config->max_msdus_per_rxinorderind;
 	cds_cfg->self_recovery_enabled = hdd_ctx->config->enableSelfRecovery;
 	cds_cfg->fw_timeout_crash = hdd_ctx->config->fw_timeout_crash;
 	cds_cfg->active_uc_bpf_mode = hdd_ctx->config->active_uc_bpf_mode;

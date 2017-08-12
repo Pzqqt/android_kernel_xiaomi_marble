@@ -8568,6 +8568,20 @@ enum hdd_link_speed_rpt_type {
 #define CFG_FLOW_STEERING_ENABLED_DEFAULT     (0)
 
 /*
+ * Max number of MSDUs per HTT RX IN ORDER INDICATION msg.
+ * Note that this has a direct impact on the size of source CE rings.
+ * It is possible to go below 8, but would require testing; so we are
+ * restricting the lower limit to 8 artificially
+ *
+ * It is recommended that this value is a POWER OF 2.
+ *
+ * Values lower than 8 are for experimental purposes only.
+ */
+#define CFG_MAX_MSDUS_PER_RXIND_NAME          "maxMSDUsPerRxInd"
+#define CFG_MAX_MSDUS_PER_RXIND_MIN           (4)
+#define CFG_MAX_MSDUS_PER_RXIND_MAX           (32)
+#define CFG_MAX_MSDUS_PER_RXIND_DEFAULT       (32)
+/*
  * In static display use case when APPS is in stand alone power save mode enable
  * active offload mode which helps FW to filter out MC/BC data packets to avoid
  * APPS wake up and save more power.
@@ -13762,6 +13776,7 @@ struct hdd_config {
 	bool tso_enable;
 	bool lro_enable;
 	bool flow_steering_enable;
+	uint8_t max_msdus_per_rxinorderind;
 	bool active_mode_offload;
 	bool bpf_packet_filter_enable;
 	/* parameter for defer timer for enabling TDLS on p2p listen */
